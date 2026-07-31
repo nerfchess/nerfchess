@@ -31,6 +31,24 @@
 //   ForgeColossus — the glyph itself, writ huge, slams the board centre
 //   GorgonIdol    — colossal idol head rises, radiating petrifying gaze rings
 //   ChronoLord    — hourglass time sovereign + great clock ring with a hand
+// STAGING (geometry contract, see docs/animation-design-brief.md §0). Every
+// card declares an anchor, and every anchor here is inside the set
+// scripts/lib/anchor-rule.ts derives from the card's own category and rule
+// text. That lands the split where the mechanic puts it rather than where the
+// art would like it: plays that name a few pieces reach for them ("aim"),
+// plays that land on a square or a region play there ("cast"), and the ones
+// with no board location at all — drafts, clocks, turn skips, nerf relief —
+// plus the genuine whole-army events stay centred ("board"), which for those
+// cards is the only truthful staging rather than a compromise.
+// The action rides `Stage` (BoardWideStage: the 14-cell canvas, anchored and
+// self-clamping); the two layers that genuinely mean "the BOARD" rather than
+// "the scene" — the rim vignette and the apex letterbox bars — live inside
+// `BoardFrame` so they stay square with the board at any anchor. `Rake` is the
+// shared directional layer: the god-light hangs over the board centre, so an
+// off-centre landing rakes its shadow outward along --fx-ox / --fx-oy, and the
+// per-square `TargetHit` fires in the real victim order (--fx-index) along its
+// own leg (--fx-ang / --fx-aim-x / --fx-aim-y / --fx-side).
+//
 //   SkullStrike   — APEX (tier 9, culling only): death's bowling night — the
 //                   skull glyph writ huge bowls the width of the crop, piece-
 //                   pins scatter, STRIKE flare + triple shockwave
@@ -86,7 +104,8 @@
 import "./godPlays.css";
 
 import type { ComponentType, CSSProperties, ReactNode } from "react";
-import type { SigPlugin } from "./sigPlugins";
+import type { SigPlugin, SigRole } from "./sigPlugins";
+import { BoardFrame, BoardWideStage } from "./stage";
 
 /* =============================================================================
    Shared bits
@@ -98,6 +117,10 @@ interface TemplateProps {
   palette: Palette;
   glyph: ReactNode;
   lead: boolean;
+  /** Which beat this render is: the board-scale lead, a per-square target hit,
+   * or the card arriving in a hand. `lead` stays as the derived alias the
+   * templates were written against. */
+  role?: SigRole;
   delayMs: number;
   /** Per-card structural flourish key. Cards sharing a template each pass a
    * unique key that arms a card-specific scene addition inside the template
@@ -130,12 +153,58 @@ function mix(a: string, b: string, t: number): string {
 const SJ = { strokeLinejoin: "round", strokeLinecap: "round" } as const;
 
 /** The oversized-clipped board-wide stage (the overlay mounts inside ONE
- * square; this canvas is ~14 squares wide — the board is the central ~57%). */
+ * square; this canvas is ~14 squares wide — the board is the central ~57%).
+ *
+ * This is `BoardWideStage` now rather than a hand-rolled copy of it, which is
+ * what makes anchoring safe: the shared stage carries the at-most-half-a-cell
+ * clamp (`--fx-anchor-dx/dy`) that keeps a corner cast's canvas over the whole
+ * board. Board-anchored cards get the same box, centred, exactly as before. */
 function Stage({ children }: { children: ReactNode }) {
+  return <BoardWideStage>{children}</BoardWideStage>;
+}
+
+/** RAKE — the shared directional layer, and the reason these scenes now point
+ * at something. The god-light hangs over the middle of the board, so a landing
+ * off-centre throws its shadow OUTWARD, away from the centre: the further from
+ * the middle the cast square is, the longer and harder the rake. A board-wide
+ * marquee scene sits at the centre by construction, so its rake is neutral,
+ * which is the honest answer for a scene with nothing to point at.
+ *
+ * `lean` / `tip` arrive from the caller as --fx-ox / --fx-oy expressions so the
+ * geometry is declared where the scene is composed. */
+function Rake({
+  delayMs,
+  tone,
+  lean,
+  tip,
+  cx = 50,
+  cy = 62,
+  width = 34,
+}: {
+  delayMs: number;
+  tone: string;
+  lean: string;
+  tip: string;
+  cx?: number;
+  cy?: number;
+  width?: number;
+}) {
   return (
-    <span className="pointer-events-none absolute inset-0 z-30" aria-hidden="true">
-      <span className="absolute left-[-650%] top-[-650%] block h-[1400%] w-[1400%]">{children}</span>
-    </span>
+    <span
+      className="gp-rake absolute block rounded-full"
+      style={
+        {
+          left: `${cx - width / 2}%`,
+          top: `${cy}%`,
+          width: `${width}%`,
+          height: "5.4%",
+          background: `radial-gradient(closest-side, ${tone}, transparent)`,
+          "--gp-lean": lean,
+          "--gp-tip": tip,
+          animationDelay: `${delayMs}ms`,
+        } as CSSProperties
+      }
+    />
   );
 }
 
@@ -487,13 +556,19 @@ function heavy(flourish: string | undefined, keylessIsHeavy = false): boolean {
 }
 
 /** The tier-8 / apex rim vignette: the board's edges darken and HOLD through
- * the strike (opacity-only inset radial gradient). */
+ * the strike (opacity-only inset radial gradient).
+ *
+ * This one means the BOARD's rim, not the scene's, so it rides `BoardFrame`:
+ * anchored on a corner cast the stage slides, and a vignette pinned to the
+ * stage would darken the wrong edges. */
 function Vignette({ delayMs }: { delayMs: number }) {
   return (
-    <span
-      className="gp-vignette absolute inset-0 block"
-      style={{ background: "radial-gradient(ellipse at 50% 50%, transparent 46%, rgba(4,4,10,0.85) 82%)", animationDelay: `${delayMs}ms` }}
-    />
+    <BoardFrame>
+      <span
+        className="gp-vignette absolute inset-0 block"
+        style={{ background: "radial-gradient(ellipse at 50% 50%, transparent 46%, rgba(4,4,10,0.85) 82%)", animationDelay: `${delayMs}ms` }}
+      />
+    </BoardFrame>
   );
 }
 
@@ -535,7 +610,19 @@ function Sil({ d, fill, stroke }: { d: string; fill: string; stroke: string }) {
 
 /** Compact per-square hit for non-lead ("target") renders: glyph pop + a small
  * shock ring + three palette sparks. Zone-fed cards mount one per square, so
- * this must NOT be board-wide. */
+ * this must NOT be board-wide.
+ *
+ * THIS is where the module's directional geometry does its real work. A lead
+ * gets `neutralGeo` (nothing to aim at yet), but every target square carries
+ * its own leg, so the hit:
+ *   - runs a lance IN along that leg, rotated by --fx-ang and lengthened by
+ *     --fx-len, so a multi-victim play visibly travels victim to victim
+ *     instead of popping identically on every square;
+ *   - throws its sparks down the leg (--fx-aim-x / --fx-aim-y);
+ *   - leans its lingering afterglow toward the caster's edge (--fx-side);
+ *   - tightens its tell the deeper into the victim order it is (--fx-index),
+ *     so the last piece in a cull gets the quickest, meanest cue.
+ */
 const HIT_SPARKS = [
   { dx: "170%", dy: "-150%", rot: "140deg", d: 0 },
   { dx: "-160%", dy: "-120%", rot: "-160deg", d: 18 },
@@ -545,10 +632,39 @@ function TargetHit({ palette, glyph, delayMs }: { palette: Palette; glyph: React
   const [p0, p1, p2] = palette;
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
-      {/* tell: a focus ring converges onto the square an instant before the hit */}
+      {/* tell: a focus ring converges onto the square an instant before the
+          hit, wound tighter the later this square falls in the order */}
       <span
         className="gp-focus absolute block rounded-full"
-        style={{ left: "8%", top: "8%", width: "84%", height: "84%", border: `2px solid ${tint(p0, 0.9)}`, animationDelay: `${delayMs}ms` }}
+        style={
+          {
+            left: "8%",
+            top: "8%",
+            width: "84%",
+            height: "84%",
+            border: `2px solid ${tint(p0, 0.9)}`,
+            "--gp-wind": "calc(45deg + var(--fx-index, 0) * 16deg)",
+            animationDelay: `${delayMs}ms`,
+          } as CSSProperties
+        }
+      />
+      {/* the strike ARRIVES: a lance drawn back down this square's own leg,
+          as long as the leg is and pointing the way it came */}
+      <span
+        className="gp-lance absolute block"
+        style={
+          {
+            left: "50%",
+            top: "48%",
+            width: "calc(24% + var(--fx-len, 0) * 46%)",
+            height: "4%",
+            marginTop: "-2%",
+            transformOrigin: "0% 50%",
+            rotate: "calc(var(--fx-ang, 0) * 1deg)",
+            background: `linear-gradient(270deg, ${tint(p1, 0.9)}, ${tint(p0, 0.35)} 55%, transparent)`,
+            animationDelay: `${delayMs + 90}ms`,
+          } as CSSProperties
+        }
       />
       <span
         className="gp-flash absolute block rounded-full"
@@ -561,18 +677,23 @@ function TargetHit({ palette, glyph, delayMs }: { palette: Palette; glyph: React
         className="gp-tring absolute block rounded-full"
         style={{ left: "10%", top: "10%", width: "80%", height: "80%", border: `2px solid ${tint(p1, 0.95)}`, animationDelay: `${delayMs + 280}ms` }}
       />
-      {/* settle: a small ember-glow lingers on the struck square */}
+      {/* settle: a small ember-glow lingers on the struck square and slides
+          toward whichever edge the caster is sitting at */}
       <span
         className="gp-afterglow absolute block rounded-full"
-        style={{
-          left: "24%",
-          top: "28%",
-          width: "52%",
-          height: "44%",
-          background: `radial-gradient(closest-side, ${tint(p1, 0.5)}, transparent)`,
-          animationDelay: `${delayMs + 640}ms`,
-        }}
+        style={
+          {
+            left: "24%",
+            top: "28%",
+            width: "52%",
+            height: "44%",
+            background: `radial-gradient(closest-side, ${tint(p1, 0.5)}, transparent)`,
+            "--gp-drift": "calc(var(--fx-side, 1) * 9%)",
+            animationDelay: `${delayMs + 640}ms`,
+          } as CSSProperties
+        }
       />
+      {/* the debris keeps going the way the strike was travelling */}
       {HIT_SPARKS.map((v, i) => (
         <span
           key={i}
@@ -583,8 +704,8 @@ function TargetHit({ palette, glyph, delayMs }: { palette: Palette; glyph: React
               top: "39.5%",
               width: "21%",
               height: "21%",
-              "--dx": v.dx,
-              "--dy": v.dy,
+              "--dx": `calc(${v.dx} + var(--fx-aim-x, 1) * 130%)`,
+              "--dy": `calc(${v.dy} + var(--fx-aim-y, 0) * 130%)`,
               "--rot": v.rot,
               animationDelay: `${delayMs + 260 + v.d}ms`,
             } as CSSProperties
@@ -600,6 +721,44 @@ function TargetHit({ palette, glyph, delayMs }: { palette: Palette; glyph: React
 }
 
 /* =============================================================================
+   ENTRANCE — the card ARRIVING in a hand (draft pick, steal, grant), before it
+   is ever played. Not the play: no board takeover, no colossus, no letterbox.
+   The apex fiction shrunk to a reliquary at ~56% of the crop — the god-light
+   opens, the card's own glyph is set into a halo ring, and the light closes
+   again. Same three palette colours and the same central object as the play,
+   its own short arrival beat.
+   ========================================================================== */
+function EntranceCut({ palette, glyph, delayMs }: { palette: Palette; glyph: ReactNode; delayMs: number }) {
+  const [p0, p1, p2] = palette;
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      {/* tell: the light gathers into a slot before anything is there */}
+      <span
+        className="gp-entglow absolute block rounded-full"
+        style={{ left: "22%", top: "40%", width: "56%", height: "20%", background: `radial-gradient(closest-side, ${tint(p1, 0.75)}, transparent)`, animationDelay: `${delayMs}ms` }}
+      />
+      {/* strike: the halo ring opens and the glyph is set into it */}
+      <span
+        className="gp-entring absolute block rounded-full"
+        style={{ left: "22%", top: "22%", width: "56%", height: "56%", border: `2px solid ${tint(p0, 0.9)}`, animationDelay: `${delayMs + 190}ms` }}
+      />
+      <span className="gp-entrise absolute block" style={{ left: "28%", top: "28%", width: "44%", height: "44%", animationDelay: `${delayMs + 280}ms` }}>
+        {glyph}
+      </span>
+      {/* settle: the light closes over it, one mote hanging behind */}
+      <span
+        className="gp-entseal absolute block rounded-full"
+        style={{ left: "30%", top: "30%", width: "40%", height: "40%", border: `1px solid ${tint(p2, 0.85)}`, animationDelay: `${delayMs + 560}ms` }}
+      />
+      <span
+        className="gp-emberhang absolute block rounded-full"
+        style={{ left: "48%", top: "56%", width: "3.4%", height: "3.4%", background: tint(p1, 0.9), animationDelay: `${delayMs + 700}ms` }}
+      />
+    </span>
+  );
+}
+
+/* =============================================================================
    Template 1: GodDescent — haloed robed deity descends in a 5-ray god-fan,
    the card glyph blazoned on its chest.
    ========================================================================== */
@@ -610,6 +769,17 @@ function GodDescent({ palette, glyph, lead, delayMs, flourish }: TemplateProps) 
     <Stage>
       <Wash color={tint(p0, 0.28)} delayMs={delayMs} />
       <Tell hex={p1} delayMs={delayMs} cy={56} />
+      {/* the deity's shadow is RAKED by where this landed: the god-light hangs over
+          the middle of the board, so the further out the cast square sits the
+          longer the shadow is thrown away from it (--fx-ox / --fx-oy) */}
+      <Rake
+        delayMs={delayMs + 300}
+        tone={tint(p2, 0.55)}
+        lean="calc(var(--fx-ox, 0) * 3.1%)"
+        tip="calc(var(--fx-oy, 0) * 1.9%)"
+        cy={68}
+        width={34}
+      />
       {/* the deity's shadow falls across the ranks before it breaks the sky */}
       <ShadowPass delayMs={delayMs + 40} top={46} height={18} />
       {heavy(flourish) && <Vignette delayMs={delayMs + 120} />}
@@ -974,6 +1144,17 @@ function TitanRise({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
     <Stage>
       <Wash color={tint(p0, 0.26)} delayMs={delayMs} />
       <Tell hex={p1} delayMs={delayMs} cy={60} />
+      {/* the titan's shadow is RAKED by where this landed: the god-light hangs over
+          the middle of the board, so the further out the cast square sits the
+          longer the shadow is thrown away from it (--fx-ox / --fx-oy) */}
+      <Rake
+        delayMs={delayMs + 320}
+        tone={tint(p2, 0.55)}
+        lean="calc(var(--fx-ox, 0) * 3.1%)"
+        tip="calc(var(--fx-oy, 0) * 1.9%)"
+        cy={74}
+        width={38}
+      />
       {heavy(flourish) && <Vignette delayMs={delayMs + 120} />}
       {/* rubble kicked up as the ground splits */}
       <Lobs delayMs={delayMs + 120} fill={tint(p0, 0.95)} stroke={p2} />
@@ -1134,6 +1315,17 @@ function SkyWrath({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
     <Stage>
       <Wash color={tint(p0, 0.25)} delayMs={delayMs} />
       <Tell hex={p2} delayMs={delayMs} cy={60} />
+      {/* the storm-shadow is RAKED by where this landed: the god-light hangs over
+          the middle of the board, so the further out the cast square sits the
+          longer the shadow is thrown away from it (--fx-ox / --fx-oy) */}
+      <Rake
+        delayMs={delayMs + 300}
+        tone={tint(p2, 0.55)}
+        lean="calc(var(--fx-ox, 0) * 3.1%)"
+        tip="calc(var(--fx-oy, 0) * 1.9%)"
+        cy={72}
+        width={30}
+      />
       {/* the storm front's shadow rolls over the ranks ahead of the bank */}
       <ShadowPass delayMs={delayMs + 30} top={44} height={20} alpha={0.45} />
       {heavy(flourish) && <Vignette delayMs={delayMs + 120} />}
@@ -1291,6 +1483,17 @@ function AbyssMaw({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
       {/* gathering darkness instead of light */}
       <Wash color={tint(p2, 0.42)} delayMs={delayMs} />
       <Tell hex={p1} delayMs={delayMs} cy={46} />
+      {/* the maw's shadow is RAKED by where this landed: the god-light hangs over
+          the middle of the board, so the further out the cast square sits the
+          longer the shadow is thrown away from it (--fx-ox / --fx-oy) */}
+      <Rake
+        delayMs={delayMs + 300}
+        tone={tint(p2, 0.55)}
+        lean="calc(var(--fx-ox, 0) * 3.1%)"
+        tip="calc(var(--fx-oy, 0) * 1.9%)"
+        cy={60}
+        width={32}
+      />
       {/* something vast passes beneath the boards before the rift opens */}
       <ShadowPass delayMs={delayMs + 30} top={38} height={18} alpha={0.5} />
       {heavy(flourish, true) && <Vignette delayMs={delayMs + 120} />}
@@ -1433,6 +1636,17 @@ function ReaperSweep({ palette, glyph, lead, delayMs, flourish }: TemplateProps)
     <Stage>
       <Wash color={tint(p0, 0.3)} delayMs={delayMs} />
       <Tell hex={p1} delayMs={delayMs} cy={58} />
+      {/* the reaper's shadow is RAKED by where this landed: the god-light hangs over
+          the middle of the board, so the further out the cast square sits the
+          longer the shadow is thrown away from it (--fx-ox / --fx-oy) */}
+      <Rake
+        delayMs={delayMs + 300}
+        tone={tint(p2, 0.55)}
+        lean="calc(var(--fx-ox, 0) * 3.1%)"
+        tip="calc(var(--fx-oy, 0) * 1.9%)"
+        cy={70}
+        width={36}
+      />
       {/* the reaper's shadow strides the ranks a beat ahead of the reaper */}
       <ShadowPass delayMs={delayMs + 20} top={50} height={16} alpha={0.5} />
       {heavy(flourish) && <Vignette delayMs={delayMs + 120} />}
@@ -1604,6 +1818,17 @@ function HostMarch({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
     <Stage>
       <Wash color={tint(p0, 0.25)} delayMs={delayMs} />
       <Tell hex={p1} delayMs={delayMs} cy={62} />
+      {/* the host's shadow is RAKED by where this landed: the god-light hangs over
+          the middle of the board, so the further out the cast square sits the
+          longer the shadow is thrown away from it (--fx-ox / --fx-oy) */}
+      <Rake
+        delayMs={delayMs + 320}
+        tone={tint(p2, 0.55)}
+        lean="calc(var(--fx-ox, 0) * 3.1%)"
+        tip="calc(var(--fx-oy, 0) * 1.9%)"
+        cy={76}
+        width={40}
+      />
       {/* SIGNATURE: the banners' shadows pass over the board FIRST — two long
           shades sweeping the ranks before the host itself crosses */}
       <ShadowPass delayMs={delayMs + 20} top={30} height={13} alpha={0.45} />
@@ -1748,6 +1973,17 @@ function CelestialRing({ palette, glyph, lead, delayMs, flourish }: TemplateProp
     <Stage>
       <Wash color={tint(p0, 0.25)} delayMs={delayMs} />
       <Tell hex={p1} delayMs={delayMs} cy={50} />
+      {/* the ring's shadow is RAKED by where this landed: the god-light hangs over
+          the middle of the board, so the further out the cast square sits the
+          longer the shadow is thrown away from it (--fx-ox / --fx-oy) */}
+      <Rake
+        delayMs={delayMs + 300}
+        tone={tint(p2, 0.55)}
+        lean="calc(var(--fx-ox, 0) * 3.1%)"
+        tip="calc(var(--fx-oy, 0) * 1.9%)"
+        cy={64}
+        width={34}
+      />
       {heavy(flourish, true) && <Vignette delayMs={delayMs + 120} />}
       {/* SIGNATURE: the ring arrives GYROSCOPING — it tips edge-on out of the
           sky, precesses in 3D, and locks flat just as the true ring settles */}
@@ -1999,22 +2235,36 @@ function FrostTitan({ palette, glyph, lead, delayMs, flourish }: TemplateProps) 
     <Stage>
       <Wash color={tint(p0, 0.28)} delayMs={delayMs} />
       <Tell hex={p1} delayMs={delayMs} cy={60} />
+      {/* the glacier's shadow is RAKED by where this landed: the god-light hangs over
+          the middle of the board, so the further out the cast square sits the
+          longer the shadow is thrown away from it (--fx-ox / --fx-oy) */}
+      <Rake
+        delayMs={delayMs + 320}
+        tone={tint(p2, 0.55)}
+        lean="calc(var(--fx-ox, 0) * 3.1%)"
+        tip="calc(var(--fx-oy, 0) * 1.9%)"
+        cy={74}
+        width={36}
+      />
       {heavy(flourish) && <Vignette delayMs={delayMs + 120} />}
-      {/* frost panes wiping across the board */}
-      {PANES.map((p, i) => (
-        <span
-          key={i}
-          className="gp-pane absolute block"
-          style={{
-            left: "12%",
-            top: `${p.t}%`,
-            width: "76%",
-            height: "7%",
-            background: `linear-gradient(90deg, ${tint(p1, 0.55)}, ${tint(p0, 0.3)} 70%, transparent)`,
-            animationDelay: `${delayMs + p.d}ms`,
-          }}
-        />
-      ))}
+      {/* frost panes wiping across the BOARD — framed, so they wipe the
+          playing area rather than a strip beside it on an off-centre cast */}
+      <BoardFrame>
+        {PANES.map((p, i) => (
+          <span
+            key={i}
+            className="gp-pane absolute block"
+            style={{
+              left: "-16.5%",
+              top: `${((p.t - 21.4286) / 57.1429) * 100}%`,
+              width: "133%",
+              height: "12.25%",
+              background: `linear-gradient(90deg, ${tint(p1, 0.55)}, ${tint(p0, 0.3)} 70%, transparent)`,
+              animationDelay: `${delayMs + p.d}ms`,
+            }}
+          />
+        ))}
+      </BoardFrame>
       {/* ice shards fanning up from the rift */}
       <Lobs delayMs={delayMs + 140} fill={tint(p0, 0.9)} stroke={p2} top={60} sizePct={5} />
       {/* the glacial colossus, rising */}
@@ -2135,6 +2385,17 @@ function ForgeColossus({ palette, glyph, lead, delayMs, flourish }: TemplateProp
     <Stage>
       <Wash color={tint(p0, 0.26)} delayMs={delayMs} />
       <Tell hex={p2} delayMs={delayMs} cy={56} />
+      {/* the colossus's shadow is RAKED by where this landed: the god-light hangs over
+          the middle of the board, so the further out the cast square sits the
+          longer the shadow is thrown away from it (--fx-ox / --fx-oy) */}
+      <Rake
+        delayMs={delayMs + 300}
+        tone={tint(p2, 0.55)}
+        lean="calc(var(--fx-ox, 0) * 3.1%)"
+        tip="calc(var(--fx-oy, 0) * 1.9%)"
+        cy={70}
+        width={34}
+      />
       {/* the implement's shadow grows over the anvil-ground before it falls */}
       <ShadowPass delayMs={delayMs + 40} top={46} height={16} alpha={0.45} />
       {heavy(flourish) && <Vignette delayMs={delayMs + 120} />}
@@ -2258,6 +2519,17 @@ function GorgonIdol({ palette, glyph, lead, delayMs, flourish }: TemplateProps) 
     <Stage>
       <Wash color={tint(p0, 0.26)} delayMs={delayMs} />
       <Tell hex={p1} delayMs={delayMs} cy={58} />
+      {/* the idol's shadow is RAKED by where this landed: the god-light hangs over
+          the middle of the board, so the further out the cast square sits the
+          longer the shadow is thrown away from it (--fx-ox / --fx-oy) */}
+      <Rake
+        delayMs={delayMs + 300}
+        tone={tint(p2, 0.55)}
+        lean="calc(var(--fx-ox, 0) * 3.1%)"
+        tip="calc(var(--fx-oy, 0) * 1.9%)"
+        cy={70}
+        width={32}
+      />
       {heavy(flourish) && <Vignette delayMs={delayMs + 120} />}
       {/* the idol head, grinding up out of the board */}
       <span className="gp-rise absolute block" style={{ left: "31%", top: "19%", width: "38%", height: "52%", animationDelay: `${delayMs + 150}ms` }}>
@@ -2311,17 +2583,19 @@ function GorgonIdol({ palette, glyph, lead, delayMs, flourish }: TemplateProps) 
       {/* SIGNATURE: the petrification TAKES the board square by square — a
           stone-grey scan band clicks across the crop in rank-wide steps,
           leaving a grey hush behind it */}
-      <span
-        className="gp-petrify absolute block"
-        style={{
-          left: "24%",
-          top: "36%",
-          width: "52%",
-          height: "32%",
-          background: `linear-gradient(90deg, transparent, ${tint("#8d8d94", 0.55)} 35%, ${tint(p1, 0.35)} 55%, ${tint("#8d8d94", 0.55)} 65%, transparent)`,
-          animationDelay: `${delayMs + 640}ms`,
-        }}
-      />
+      <BoardFrame>
+        <span
+          className="gp-petrify absolute block"
+          style={{
+            left: "4.5%",
+            top: "25.5%",
+            width: "91%",
+            height: "56%",
+            background: `linear-gradient(90deg, transparent, ${tint("#8d8d94", 0.55)} 35%, ${tint(p1, 0.35)} 55%, ${tint("#8d8d94", 0.55)} 65%, transparent)`,
+            animationDelay: `${delayMs + 640}ms`,
+          }}
+        />
+      </BoardFrame>
       <Sparks delayMs={delayMs + 680} fill={p1} stroke={p2} sizePct={6.5} cy={52} />
       <Boom delayMs={delayMs + 860} color={tint(p0, 0.85)} />
       {heavy(flourish) && <Boom delayMs={delayMs + 990} color={tint(p2, 0.7)} thickness={2} />}
@@ -2470,26 +2744,41 @@ function ChronoLord({ palette, glyph, lead, delayMs, flourish }: TemplateProps) 
     <Stage>
       <Wash color={tint(p0, 0.25)} delayMs={delayMs} />
       <Tell hex={p1} delayMs={delayMs} cy={54} />
+      {/* the clock's shadow is RAKED by where this landed: the god-light hangs over
+          the middle of the board, so the further out the cast square sits the
+          longer the shadow is thrown away from it (--fx-ox / --fx-oy) */}
+      <Rake
+        delayMs={delayMs + 300}
+        tone={tint(p2, 0.55)}
+        lean="calc(var(--fx-ox, 0) * 3.1%)"
+        tip="calc(var(--fx-oy, 0) * 1.9%)"
+        cy={68}
+        width={34}
+      />
       {heavy(flourish, true) && <Vignette delayMs={delayMs + 120} />}
       {/* SIGNATURE: a ghost clock-face the size of the BOARD fades up beneath
-          everything, and its spectral minute hand sweeps the strike in */}
-      <span className="gp-clockghost absolute block" style={{ left: "13%", top: "13%", width: "74%", height: "74%", animationDelay: `${delayMs + 60}ms` }}>
-        <svg viewBox="0 0 40 40" className="block h-full w-full" aria-hidden="true">
-          <circle cx="20" cy="20" r="19" fill="none" stroke={tint(p1, 0.4)} strokeWidth="0.5" />
-          <path
-            d="M20 1.6 V4 M20 36 V38.4 M1.6 20 H4 M36 20 H38.4 M7 7 L8.7 8.7 M33 7 L31.3 8.7 M7 33 L8.7 31.3 M33 33 L31.3 31.3"
-            stroke={tint(p1, 0.35)}
-            strokeWidth="0.6"
-            strokeLinecap="round"
-          />
-        </svg>
-        <span className="absolute block" style={{ left: "49%", top: "14%", width: "2%", height: "36%" }}>
-          <span
-            className="gp-handsweep absolute inset-0 block"
-            style={{ background: `linear-gradient(180deg, ${tint(p1, 0.55)}, transparent)`, transformOrigin: "50% 100%", animationDelay: `${delayMs + 140}ms` }}
-          />
+          everything, and its spectral minute hand sweeps the strike in. It
+          means the board, so it is FRAMED: a board-sized dial that drifted off
+          with the cast square would read as a mistake rather than as time. */}
+      <BoardFrame>
+        <span className="gp-clockghost absolute block" style={{ left: "-14.75%", top: "-14.75%", width: "129.5%", height: "129.5%", animationDelay: `${delayMs + 60}ms` }}>
+          <svg viewBox="0 0 40 40" className="block h-full w-full" aria-hidden="true">
+            <circle cx="20" cy="20" r="19" fill="none" stroke={tint(p1, 0.4)} strokeWidth="0.5" />
+            <path
+              d="M20 1.6 V4 M20 36 V38.4 M1.6 20 H4 M36 20 H38.4 M7 7 L8.7 8.7 M33 7 L31.3 8.7 M7 33 L8.7 31.3 M33 33 L31.3 31.3"
+              stroke={tint(p1, 0.35)}
+              strokeWidth="0.6"
+              strokeLinecap="round"
+            />
+          </svg>
+          <span className="absolute block" style={{ left: "49%", top: "14%", width: "2%", height: "36%" }}>
+            <span
+              className="gp-handsweep absolute inset-0 block"
+              style={{ background: `linear-gradient(180deg, ${tint(p1, 0.55)}, transparent)`, transformOrigin: "50% 100%", animationDelay: `${delayMs + 140}ms` }}
+            />
+          </span>
         </span>
-      </span>
+      </BoardFrame>
       {/* the great clock ring settles over the board */}
       <span className="gp-ringset absolute block" style={{ left: "21%", top: "22%", width: "58%", height: "58%", animationDelay: `${delayMs + 120}ms` }}>
         <svg viewBox="0 0 40 40" className="block h-full w-full" aria-hidden="true">
@@ -2574,6 +2863,12 @@ function ChronoLord({ palette, glyph, lead, delayMs, flourish }: TemplateProps) 
 /* =============================================================================
    APEX helpers (tier 9/10) — letterbox bars for the two set-piece templates.
    ========================================================================== */
+/** A letterbox brackets the SHOT, not the room: these bars stay on the scene
+ * canvas so they crop the apex composition itself (SkullStrike's bowling lane,
+ * PlanetAlign's syzygy) wherever it is anchored. `BoardFrame` would be right
+ * for a rim treatment of the board (see `Vignette`), and wrong here: it would
+ * leave culling's lane running outside its own letterbox on an off-centre
+ * cast. */
 function Bars({ delayMs }: { delayMs: number }) {
   return (
     <>
@@ -2610,6 +2905,17 @@ function SkullStrike({ palette, glyph, lead, delayMs }: TemplateProps) {
     <Stage>
       <Wash color={tint(p1, 0.4)} delayMs={delayMs} />
       <Tell hex={p0} delayMs={delayMs} cy={48} />
+      {/* the lane's shadow is RAKED by where this landed: the god-light hangs over
+          the middle of the board, so the further out the cast square sits the
+          longer the shadow is thrown away from it (--fx-ox / --fx-oy) */}
+      <Rake
+        delayMs={delayMs + 320}
+        tone={tint(p2, 0.55)}
+        lean="calc(var(--fx-ox, 0) * 3.1%)"
+        tip="calc(var(--fx-oy, 0) * 1.9%)"
+        cy={64}
+        width={40}
+      />
       <Bars delayMs={delayMs} />
       <Vignette delayMs={delayMs + 160} />
       {/* the ball's shadow races the lane a beat ahead of the skull itself */}
@@ -2699,6 +3005,17 @@ function PlanetAlign({ palette, glyph, lead, delayMs }: TemplateProps) {
     <Stage>
       <Wash color={tint(p0, 0.42)} delayMs={delayMs} />
       <Tell hex={p1} delayMs={delayMs} cy={44} />
+      {/* the syzygy's shadow is RAKED by where this landed: the god-light hangs over
+          the middle of the board, so the further out the cast square sits the
+          longer the shadow is thrown away from it (--fx-ox / --fx-oy) */}
+      <Rake
+        delayMs={delayMs + 320}
+        tone={tint(p2, 0.55)}
+        lean="calc(var(--fx-ox, 0) * 3.1%)"
+        tip="calc(var(--fx-oy, 0) * 1.9%)"
+        cy={62}
+        width={38}
+      />
       <Bars delayMs={delayMs} />
       <Vignette delayMs={delayMs + 160} />
       {/* the syzygy line kindles down the board's spine — the rail the three
@@ -3079,21 +3396,21 @@ function AbsoluteZero(props: TemplateProps) {
         {[24, 41, 58, 75].map((l, i) => (
           <span key={i} className="gp-glint absolute block" style={{ left: `${l}%`, top: "49.4%", width: "2.8%", height: "2.8%", animationDelay: `${delayMs + 220 + i * 90}ms` }}>
             <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
-              <path d="M5 0 L6.1 3.9 L10 5 L6.1 6.1 L5 10 L3.9 6.1 L0 5 L3.9 3.9 Z" fill={i % 2 ? "#ffffff" : p1} />
+              <path d="M5 0 L6.1 3.9 L10 5 L6.1 6.1 L5 10 L3.9 6.1 L0 5 L3.9 3.9 Z" fill={i % 2 ? "#fff4d6" : p1} />
             </svg>
           </span>
         ))}
         {/* the breath-cloud puffs out... */}
         <span className="gp-breath absolute block" style={{ left: "43%", top: "33%", width: "14%", height: "9%", animationDelay: `${delayMs + 760}ms` }}>
           <svg viewBox="0 0 16 9" className="block h-full w-full" aria-hidden="true">
-            <path d="M1.5 6.5 Q2 3.5 4.5 4 Q5.5 1 8.5 2.2 Q11.5 0.8 13 3.4 Q15.2 3.8 14.6 6.2 Q12 8.4 8 8 Q4 8.6 1.5 6.5 Z" fill="rgba(255,255,255,0.85)" stroke={tint(p0, 0.9)} strokeWidth="0.5" {...SJ} />
+            <path d="M1.5 6.5 Q2 3.5 4.5 4 Q5.5 1 8.5 2.2 Q11.5 0.8 13 3.4 Q15.2 3.8 14.6 6.2 Q12 8.4 8 8 Q4 8.6 1.5 6.5 Z" fill="rgba(255,244,214,0.85)" stroke={tint(p0, 0.9)} strokeWidth="0.5" {...SJ} />
           </svg>
         </span>
         {/* ...freezes SOLID... */}
         <span className="gp-crack absolute block" style={{ left: "43%", top: "33%", width: "14%", height: "9%", animationDelay: `${delayMs + 1240}ms` }}>
           <svg viewBox="0 0 16 9" className="block h-full w-full" aria-hidden="true">
             <path d="M1.5 6.5 L4 3.6 L7 1.8 L10.5 1.6 L13.6 3 L14.6 6.2 L11 8.2 L5 8.3 Z" fill={tint(p0, 0.85)} stroke={p2} strokeWidth="0.7" {...SJ} />
-            <path d="M4.5 6.8 L8 3 M8.4 7.6 L11.6 3.2" stroke="#ffffff" strokeWidth="0.4" strokeLinecap="round" />
+            <path d="M4.5 6.8 L8 3 M8.4 7.6 L11.6 3.2" stroke="#fff4d6" strokeWidth="0.4" strokeLinecap="round" />
           </svg>
         </span>
         {/* ...and tinkles down in shards */}
@@ -3132,6 +3449,19 @@ function SabbaticalScene(props: TemplateProps) {
     <>
       <ChronoLord {...props} />
       <Stage>
+        {/* TELL: the rope is slung between the posts and shivers taut before
+            there is any hammock hanging off it */}
+        <span
+          className="gp-rumble absolute block"
+          style={{
+            left: "36%",
+            top: "53.5%",
+            width: "28%",
+            height: "0.9%",
+            background: `linear-gradient(90deg, transparent, ${tint(p2, 0.9)} 20%, ${tint(p2, 0.9)} 80%, transparent)`,
+            animationDelay: `${delayMs + 180}ms`,
+          }}
+        />
         {/* the hammock, swinging lazily under the great clock */}
         <span className="gp-sway absolute block" style={{ left: "36%", top: "52%", width: "28%", height: "17%", transformOrigin: "50% 0%", animationDelay: `${delayMs + 620}ms` }}>
           <svg viewBox="0 0 28 17" className="block h-full w-full" aria-hidden="true">
@@ -3162,6 +3492,19 @@ function SabbaticalScene(props: TemplateProps) {
             </svg>
           </span>
         ))}
+        {/* SETTLE: the afternoon goes long — a warm pool of light hangs under
+            the hammock and fades out with the nap */}
+        <span
+          className="gp-afterglow absolute block rounded-full"
+          style={{
+            left: "37%",
+            top: "62%",
+            width: "26%",
+            height: "9%",
+            background: `radial-gradient(closest-side, ${tint(p2, 0.5)}, transparent)`,
+            animationDelay: `${delayMs + 1400}ms`,
+          }}
+        />
       </Stage>
     </>
   );
@@ -3181,6 +3524,12 @@ function BanHammerScene(props: TemplateProps) {
     <>
       <ForgeColossus {...props} />
       <Stage>
+        {/* TELL: the moderator lines the offender up first — a reticle snaps
+            shut over the square a beat before the gavel comes down */}
+        <span
+          className="gp-focus absolute block rounded-full"
+          style={{ left: "36%", top: "37%", width: "28%", height: "28%", border: "2px solid rgba(214,35,79,0.85)", animationDelay: `${delayMs + 200}ms` }}
+        />
         {/* the BAN seal stamps over the point of impact */}
         <span className="gp-seal absolute block" style={{ left: "39%", top: "40%", width: "22%", height: "22%", animationDelay: `${delayMs + 700}ms` }}>
           <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
@@ -3220,6 +3569,19 @@ function BanHammerScene(props: TemplateProps) {
             </svg>
           </span>
         ))}
+        {/* SETTLE: the verdict burns on the board after the room has gone
+            quiet — the seal's red bleeds out and fades */}
+        <span
+          className="gp-afterglow absolute block rounded-full"
+          style={{
+            left: "38%",
+            top: "42%",
+            width: "24%",
+            height: "18%",
+            background: "radial-gradient(closest-side, rgba(214,35,79,0.5), transparent)",
+            animationDelay: `${delayMs + 1300}ms`,
+          }}
+        />
       </Stage>
     </>
   );
@@ -3242,6 +3604,19 @@ function SaltedEarthScene(props: TemplateProps) {
     <>
       <TitanRise {...props} />
       <Stage>
+        {/* TELL: the urn tips and the first grains hiss along the furrow
+            before the curtain of salt comes down on it */}
+        <span
+          className="gp-rumble absolute block"
+          style={{
+            left: "30%",
+            top: "61%",
+            width: "40%",
+            height: "1%",
+            background: "linear-gradient(90deg, transparent, rgba(242,234,210,0.8) 30%, rgba(242,234,210,0.8) 70%, transparent)",
+            animationDelay: `${delayMs + 240}ms`,
+          }}
+        />
         {/* salt grains pour and patter down */}
         {SALT.map((v, i) => (
           <span
@@ -3301,6 +3676,19 @@ function PhoenixLineScene(props: TemplateProps) {
     <>
       <TitanRise {...props} />
       <Stage>
+        {/* TELL: the ash-bed under the strike glows red from beneath — the
+            bird is coming up through it */}
+        <span
+          className="gp-rumble absolute block"
+          style={{
+            left: "34%",
+            top: "57%",
+            width: "32%",
+            height: "1.4%",
+            background: "linear-gradient(90deg, transparent, rgba(255,122,41,0.9) 30%, rgba(255,209,102,0.9) 70%, transparent)",
+            animationDelay: `${delayMs + 220}ms`,
+          }}
+        />
         {/* the phoenix climbs out of the strike */}
         <span className="gp-phoenix absolute block" style={{ left: "39%", top: "34%", width: "22%", height: "22%", animationDelay: `${delayMs + 720}ms` }}>
           <svg viewBox="0 0 22 22" className="block h-full w-full" aria-hidden="true">
@@ -3339,6 +3727,19 @@ function PhoenixLineScene(props: TemplateProps) {
             <Sil d={SIL.p} fill="#ffd76a" stroke="#d6234f" />
           </span>
         ))}
+        {/* SETTLE: the fire the line was born from burns down along the rank
+            and goes out */}
+        <span
+          className="gp-afterglow absolute block rounded-full"
+          style={{
+            left: "33%",
+            top: "56%",
+            width: "34%",
+            height: "10%",
+            background: "radial-gradient(closest-side, rgba(255,122,41,0.5), transparent)",
+            animationDelay: `${delayMs + 1480}ms`,
+          }}
+        />
       </Stage>
     </>
   );
@@ -3358,6 +3759,19 @@ function LostFortnightScene(props: TemplateProps) {
     <>
       <ChronoLord {...props} />
       <Stage>
+        {/* TELL: the calendar's spine shivers on its nail — a fortnight is
+            about to be torn out of it */}
+        <span
+          className="gp-rumble absolute block"
+          style={{
+            left: "42%",
+            top: "33%",
+            width: "14%",
+            height: "1%",
+            background: "linear-gradient(90deg, transparent, rgba(205,214,255,0.9), transparent)",
+            animationDelay: `${delayMs + 300}ms`,
+          }}
+        />
         {PAGES.map((v, i) => (
           <span
             key={i}
@@ -3395,6 +3809,19 @@ function LostFortnightScene(props: TemplateProps) {
             <path d="M1.6 3.8 L7.4 8.6 M7.4 3.8 L1.6 8.6" stroke="#c94a3a" strokeWidth="0.7" strokeLinecap="round" />
           </svg>
         </span>
+        {/* SETTLE: a bare patch of wall where the fortnight used to hang,
+            fading as the last leaf clears the board */}
+        <span
+          className="gp-afterglow absolute block rounded-full"
+          style={{
+            left: "41%",
+            top: "34%",
+            width: "18%",
+            height: "13%",
+            background: "radial-gradient(closest-side, rgba(90,107,143,0.5), transparent)",
+            animationDelay: `${delayMs + 1600}ms`,
+          }}
+        />
       </Stage>
     </>
   );
@@ -3415,6 +3842,19 @@ function NobleRoutScene(props: TemplateProps) {
     <>
       <HostMarch {...props} />
       <Stage>
+        {/* TELL: the line wavers before it breaks — a shiver runs down the
+            rank the nobles are still standing in */}
+        <span
+          className="gp-rumble absolute block"
+          style={{
+            left: "34%",
+            top: "51%",
+            width: "34%",
+            height: "1%",
+            background: `linear-gradient(90deg, transparent, ${tint(p2, 0.85)} 25%, ${tint(p2, 0.85)} 75%, transparent)`,
+            animationDelay: `${delayMs + 240}ms`,
+          }}
+        />
         {FLEE.map((v, i) => (
           <span key={i} className="gp-flee absolute block" style={{ left: "40%", top: `${v.t}%`, width: `${v.s}%`, height: `${v.s * 1.5}%`, animationDelay: `${delayMs + 620 + v.d}ms` }}>
             <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
@@ -3452,6 +3892,18 @@ function NobleRoutScene(props: TemplateProps) {
             <path d="M1.4 7 V1.6 L3.5 3.6 L5 0.8 L6.5 3.6 L8.6 1.6 V7 Z" fill="#e8b04b" stroke={p2} strokeWidth="0.5" {...SJ} />
           </svg>
         </span>
+        {/* SETTLE: the ground they abandoned, still hanging with their dust */}
+        <span
+          className="gp-afterglow absolute block rounded-full"
+          style={{
+            left: "33%",
+            top: "56%",
+            width: "30%",
+            height: "12%",
+            background: `radial-gradient(closest-side, ${tint(p2, 0.45)}, transparent)`,
+            animationDelay: `${delayMs + 1400}ms`,
+          }}
+        />
       </Stage>
     </>
   );
@@ -3475,6 +3927,12 @@ function TotalPlunderScene(props: TemplateProps) {
     <>
       <AbyssMaw {...props} />
       <Stage>
+        {/* TELL: the hoard rings before it moves — a ring of gold light
+            tightens over the buffs that are about to be lifted */}
+        <span
+          className="gp-focus absolute block rounded-full"
+          style={{ left: "38%", top: "34%", width: "24%", height: "24%", border: "2px solid rgba(255,215,106,0.85)", animationDelay: `${delayMs + 260}ms` }}
+        />
         {/* the hoard, hoovered up into the maw */}
         {COINS.map((v, i) => (
           <span
@@ -3532,6 +3990,22 @@ function LeadenLimbsScene(props: TemplateProps) {
     <>
       <ForgeColossus {...props} />
       <Stage>
+        {/* TELL: three shadows darken the ranks — something very heavy is
+            already overhead before anything lands */}
+        {WEIGHTS.map((v, i) => (
+          <span
+            key={`s${i}`}
+            className="gp-rake absolute block rounded-full"
+            style={{
+              left: `${v.l - 1}%`,
+              top: `${v.t + v.s * 1.1}%`,
+              width: `${v.s + 2}%`,
+              height: "3.4%",
+              background: "radial-gradient(closest-side, rgba(8,8,14,0.6), transparent)",
+              animationDelay: `${delayMs + 240}ms`,
+            }}
+          />
+        ))}
         {WEIGHTS.map((v, i) => (
           <span key={i} className="gp-pod absolute block" style={{ left: `${v.l}%`, top: `${v.t}%`, width: `${v.s}%`, height: `${v.s * 1.2}%`, animationDelay: `${delayMs + 520 + v.d}ms` }}>
             <svg viewBox="0 0 10 12" className="block h-full w-full" aria-hidden="true">
@@ -3570,6 +4044,31 @@ function LeadenLimbsScene(props: TemplateProps) {
             }
           />
         ))}
+        {/* the boards themselves SAG under the tonnage: a bowed seam pressed
+            down between the three weights as the last one lands */}
+        <span
+          className="gp-rumble absolute block"
+          style={{
+            left: "29%",
+            top: "50%",
+            width: "42%",
+            height: "1.2%",
+            background: `linear-gradient(90deg, transparent, ${tint(p1, 0.85)} 25%, ${tint(p1, 0.85)} 75%, transparent)`,
+            animationDelay: `${delayMs + 760}ms`,
+          }}
+        />
+        {/* SETTLE: the dust pall hangs over the pinned ranks and thins out */}
+        <span
+          className="gp-afterglow absolute block rounded-full"
+          style={{
+            left: "28%",
+            top: "44%",
+            width: "44%",
+            height: "13%",
+            background: "radial-gradient(closest-side, rgba(200,200,210,0.42), transparent)",
+            animationDelay: `${delayMs + 1500}ms`,
+          }}
+        />
       </Stage>
     </>
   );
@@ -3610,7 +4109,7 @@ const GLYPH: Record<string, ReactNode> = {
       <path d="M5 3.8 V9.2" stroke="#d6234f" strokeWidth="0.8" strokeLinecap="round" />
       <circle cx="5" cy="2.6" r="1.6" fill="#ffd76a" stroke="#d6234f" strokeWidth="0.5" />
       <path d="M3.4 1.4 L5 0.2 L6.6 1.4" fill="none" stroke="#d6234f" strokeWidth="0.5" {...SJ} />
-      <circle cx="4.4" cy="2" r="0.4" fill="#ffffff" />
+      <circle cx="4.4" cy="2" r="0.4" fill="#fff4d6" />
     </Gl>
   ),
   // queen silhouette
@@ -3638,7 +4137,7 @@ const GLYPH: Record<string, ReactNode> = {
   full_pardon: (
     <Gl>
       <path d="M4 3 A2.2 2.2 0 1 0 4 7" fill="none" stroke="#ffd76a" strokeWidth="0.9" strokeLinecap="round" />
-      <path d="M6 3 A2.2 2.2 0 1 1 6 7" fill="none" stroke="#ffffff" strokeWidth="0.9" strokeLinecap="round" />
+      <path d="M6 3 A2.2 2.2 0 1 1 6 7" fill="none" stroke="#fff4d6" strokeWidth="0.9" strokeLinecap="round" />
       <path d="M4.6 1.6 L5.4 0.6 M4.8 8.4 L5.6 9.4" stroke="#5fc9b0" strokeWidth="0.5" strokeLinecap="round" />
     </Gl>
   ),
@@ -3647,7 +4146,7 @@ const GLYPH: Record<string, ReactNode> = {
     <Gl>
       <path d="M2.6 8.2 L3.4 9 L2.6 9.8 L1.8 9 Z" fill="#b98cff" />
       <path d="M4.8 4.6 L6 5.8 L4.8 7 L3.6 5.8 Z" fill="#ffd76a" />
-      <path d="M7 0.6 L8.6 2.2 L7 3.8 L5.4 2.2 Z" fill="#ffffff" stroke="#b98cff" strokeWidth="0.4" {...SJ} />
+      <path d="M7 0.6 L8.6 2.2 L7 3.8 L5.4 2.2 Z" fill="#fff4d6" stroke="#b98cff" strokeWidth="0.4" {...SJ} />
     </Gl>
   ),
   // third eye
@@ -3791,7 +4290,7 @@ const GLYPH: Record<string, ReactNode> = {
   queen_storm: (
     <Gl>
       <path d="M2 3.6 V1 L3.5 2.2 L5 0.6 L6.5 2.2 L8 1 V3.6 Z" fill="#ffd76a" stroke="#b98cff" strokeWidth="0.4" {...SJ} />
-      <path d="M5.6 4.4 L3.6 7 L5 7.3 L4.2 9.6 L6.6 6.6 L5.2 6.3 L6.4 4.4 Z" fill="#ffffff" stroke="#b98cff" strokeWidth="0.4" {...SJ} />
+      <path d="M5.6 4.4 L3.6 7 L5 7.3 L4.2 9.6 L6.6 6.6 L5.2 6.3 L6.4 4.4 Z" fill="#fff4d6" stroke="#b98cff" strokeWidth="0.4" {...SJ} />
     </Gl>
   ),
 
@@ -3944,7 +4443,7 @@ const GLYPH: Record<string, ReactNode> = {
       <ellipse cx="5" cy="7.6" rx="1.4" ry="1.1" fill="#ffd76a" stroke="#7a9a4e" strokeWidth="0.4" />
       <path d="M5 6.6 V4" fill="none" stroke="#a8e07f" strokeWidth="0.6" strokeLinecap="round" />
       <path d="M5 4 C3.6 4 2.8 3 2.8 1.8 C4.2 1.8 5 2.8 5 4 Z M5 4 C6.4 4 7.2 3 7.2 1.8 C5.8 1.8 5 2.8 5 4 Z" fill="#a8e07f" stroke="#7a9a4e" strokeWidth="0.35" {...SJ} />
-      <circle cx="7.6" cy="1" r="0.4" fill="#ffffff" />
+      <circle cx="7.6" cy="1" r="0.4" fill="#fff4d6" />
     </Gl>
   ),
   // hex portal
@@ -3966,9 +4465,9 @@ const GLYPH: Record<string, ReactNode> = {
     <Gl>
       <path d="M1.4 8.6 C3 5.4 7 4.6 8.6 1.4" fill="none" stroke="#8f6bff" strokeWidth="0.6" strokeLinecap="round" />
       <circle cx="2" cy="7.6" r="0.55" fill="#6fe3ff" />
-      <circle cx="3.4" cy="6" r="0.55" fill="#ffffff" />
+      <circle cx="3.4" cy="6" r="0.55" fill="#fff4d6" />
       <circle cx="5" cy="5" r="0.55" fill="#6fe3ff" />
-      <circle cx="6.6" cy="4" r="0.55" fill="#ffffff" />
+      <circle cx="6.6" cy="4" r="0.55" fill="#fff4d6" />
       <circle cx="8" cy="2.4" r="0.55" fill="#6fe3ff" />
     </Gl>
   ),
@@ -3988,7 +4487,7 @@ const GLYPH: Record<string, ReactNode> = {
       <path d="M8.8 5 L9.6 3.6 M8.8 5 L7.4 4.4" stroke="#a8e07f" strokeWidth="0.5" strokeLinecap="round" />
       <path d="M5 8.8 A3.8 3.8 0 0 1 1.2 5" fill="none" stroke="#8f6bff" strokeWidth="0.7" strokeLinecap="round" />
       <path d="M1.2 5 L0.4 6.4 M1.2 5 L2.6 5.6" stroke="#8f6bff" strokeWidth="0.5" strokeLinecap="round" />
-      <circle cx="5" cy="5" r="0.6" fill="#ffffff" />
+      <circle cx="5" cy="5" r="0.6" fill="#fff4d6" />
     </Gl>
   ),
   // three aligned orbs
@@ -4024,14 +4523,14 @@ const GLYPH: Record<string, ReactNode> = {
     <Gl>
       <path d="M5 0.8 V9.2 M1.4 2.9 L8.6 7.1 M8.6 2.9 L1.4 7.1" stroke="#6fe3ff" strokeWidth="0.6" strokeLinecap="round" />
       <path d="M4 1.8 L5 2.8 L6 1.8 M4 8.2 L5 7.2 L6 8.2 M1.8 4.4 L2.9 3.8 L2.6 2.6 M8.2 5.6 L7.1 6.2 L7.4 7.4" fill="none" stroke="#6fe3ff" strokeWidth="0.45" {...SJ} />
-      <circle cx="5" cy="5" r="0.6" fill="#ffffff" stroke="#3f7fb5" strokeWidth="0.3" />
+      <circle cx="5" cy="5" r="0.6" fill="#fff4d6" stroke="#3f7fb5" strokeWidth="0.3" />
     </Gl>
   ),
   // zero in a crystal
   absolute_zero: (
     <Gl>
       <path d="M5 0.6 L9 5 L5 9.4 L1 5 Z" fill="#bfe6ff" stroke="#1c3a5e" strokeWidth="0.5" {...SJ} />
-      <ellipse cx="5" cy="5" rx="1.3" ry="1.9" fill="#ffffff" stroke="#1c3a5e" strokeWidth="0.55" />
+      <ellipse cx="5" cy="5" rx="1.3" ry="1.9" fill="#fff4d6" stroke="#1c3a5e" strokeWidth="0.55" />
     </Gl>
   ),
   // ice shard
@@ -4203,8 +4702,14 @@ function G(
 ): SigPlugin {
   return {
     config,
-    Render: function GodPlayRender({ lead, delayMs }: { lead: boolean; delayMs: number }) {
-      return <Template palette={palette} glyph={glyph} lead={lead} delayMs={delayMs} flourish={flourish} />;
+    Render: function GodPlayRender({ lead, role, delayMs }: { lead: boolean; role: SigRole; delayMs: number }) {
+      // The card arriving in a hand is NOT the play: every template in this
+      // module is a board-scale event, so routing entrances here (rather than
+      // branching inside all twenty-five scenes) keeps one arrival beat that
+      // cannot accidentally take the board over. It still carries the card's
+      // own palette and its own glyph, so it reads as this card.
+      if (role === "entrance") return <EntranceCut palette={palette} glyph={glyph} delayMs={delayMs} />;
+      return <Template palette={palette} glyph={glyph} lead={lead} role={role} delayMs={delayMs} flourish={flourish} />;
     },
   };
 }
@@ -4212,229 +4717,229 @@ function G(
 export const PLAYS: Record<string, SigPlugin> = {
   /* --- GodDescent ------------------------------------------------------- */
   draft_tyranny: G(GodDescent, ["#d6234f", "#ffd76a", "#1c0f18"], GLYPH.draft_tyranny, {
-    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "coronation",
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "coronation", anchor: "board",
   }, "tier_brand"),
   sovereign_draft: G(GodDescent, ["#ffd76a", "#fff7de", "#c9a84c"], GLYPH.sovereign_draft, {
-    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "coronation",
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "coronation", anchor: "board",
   }, "twin_claim"),
-  draft_supremacy: G(GodDescent, ["#ffd76a", "#d6234f", "#ffffff"], GLYPH.draft_supremacy, {
-    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "coronation",
+  draft_supremacy: G(GodDescent, ["#ffd76a", "#d6234f", "#fff4d6"], GLYPH.draft_supremacy, {
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "coronation", anchor: "board",
   }, "draft_seize"),
   divine_legion: G(GodDescent, ["#fff2c9", "#ffd76a", "#b98cff"], GLYPH.divine_legion, {
-    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "crownrain", source: "summon",
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "crownrain", source: "summon", anchor: "cast",
   }),
   absolute_aegis: G(GodDescent, ["#5fc9b0", "#ffd76a", "#e8fff7"], GLYPH.absolute_aegis, {
-    ordering: "radial", staggerMs: 40, victims: "all", hasLead: true, sound: "aegis", source: "shield",
+    ordering: "radial", staggerMs: 40, victims: "all", hasLead: true, sound: "aegis", source: "shield", anchor: "cast",
   }, "aegis_dome"),
   checkmate_denial: G(GodDescent, ["#dfe8ff", "#ffd76a", "#5a8fc0"], GLYPH.checkmate_denial, {
-    ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "shades", source: "kingSafe",
+    ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "shades", source: "kingSafe", anchor: "cast",
   }, "king_ward"),
-  full_pardon: G(GodDescent, ["#ffffff", "#ffd76a", "#5fc9b0"], GLYPH.full_pardon, {
-    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "cathedral",
+  full_pardon: G(GodDescent, ["#fff4d6", "#ffd76a", "#5fc9b0"], GLYPH.full_pardon, {
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "cathedral", anchor: "cast",
   }, "chain_snap"),
-  transcendence: G(GodDescent, ["#b98cff", "#ffd76a", "#ffffff"], GLYPH.transcendence, {
-    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "coronation",
+  transcendence: G(GodDescent, ["#b98cff", "#ffd76a", "#fff4d6"], GLYPH.transcendence, {
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "coronation", anchor: "board",
   }, "ascension"),
   mind_empire: G(GodDescent, ["#8f2bbf", "#e3d0ff", "#ffd76a"], GLYPH.mind_empire, {
-    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades",
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades", anchor: "aim",
   }, "mind_seize"),
   mass_mind_control: G(GodDescent, ["#c94ad1", "#12081f", "#6fe3ff"], GLYPH.mass_mind_control, {
-    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades",
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades", anchor: "aim",
   }, "twin_thrall"),
   throne_and_silence: G(GodDescent, ["#5a6b8f", "#ffd76a", "#c9cdd6"], GLYPH.throne_and_silence, {
-    ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "snooze", source: "stun",
+    ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "snooze", source: "stun", anchor: "board",
   }, "hush_veil"),
   abdication_edict: G(GodDescent, ["#6b4a8f", "#ffd76a", "#2a1030"], GLYPH.abdication_edict, {
-    ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "snooze", source: "stun",
+    ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "snooze", source: "stun", anchor: "board",
   }, "crown_topple"),
   wa_dominate_major: G(GodDescent, ["#8f2bbf", "#ffd76a", "#e3d0ff"], GLYPH.wa_dominate_major, {
-    ordering: "radial", staggerMs: 60, victims: ["r", "q"], hasLead: true, sound: "shades",
+    ordering: "radial", staggerMs: 60, victims: ["r", "q"], hasLead: true, sound: "shades", anchor: "aim",
   }, "puppet_strings"),
 
   /* --- TitanRise ---------------------------------------------------------- */
   great_divide: G(TitanRise, ["#b0a68f", "#8a7a63", "#ffd76a"], GLYPH.great_divide, {
-    ordering: "sweep", staggerMs: 70, victims: "all", hasLead: true, sound: "wall", source: "blindfold",
+    ordering: "sweep", staggerMs: 70, victims: "all", hasLead: true, sound: "wall", source: "blindfold", anchor: "cast",
   }, "rank_wall"),
   sundering: G(TitanRise, ["#5c5348", "#ff9d3d", "#d9d2c0"], GLYPH.sundering, {
-    ordering: "sweep", staggerMs: 70, victims: "all", hasLead: true, sound: "cataclysm", source: "blindfold",
+    ordering: "sweep", staggerMs: 70, victims: "all", hasLead: true, sound: "cataclysm", source: "blindfold", anchor: "board",
   }, "triple_rift"),
   fortress_realm: G(TitanRise, ["#8a94a8", "#5fc9b0", "#d9d2c0"], GLYPH.fortress_realm, {
-    ordering: "radial", staggerMs: 50, victims: "all", hasLead: true, sound: "cathedral", source: "shield",
+    ordering: "radial", staggerMs: 50, victims: "all", hasLead: true, sound: "cathedral", source: "shield", anchor: "cast",
   }, "keep_walls"),
   molten_heart: G(TitanRise, ["#ff5c1a", "#e6432c", "#3a1c12"], GLYPH.molten_heart, {
-    ordering: "sweep", staggerMs: 70, victims: "all", hasLead: true, sound: "cataclysm", source: "blindfold",
+    ordering: "sweep", staggerMs: 70, victims: "all", hasLead: true, sound: "cataclysm", source: "blindfold", anchor: "cast",
   }, "magma_veins"),
   salted_earth: G(SaltedEarthScene, ["#e8dcc0", "#b0a68f", "#8faf4a"], GLYPH.salted_earth, {
-    ordering: "sweep", staggerMs: 70, victims: ["p"], hasLead: true, sound: "extinction",
+    ordering: "sweep", staggerMs: 70, victims: ["p"], hasLead: true, sound: "extinction", anchor: "board",
   }),
   unshackled_wrath: G(TitanRise, ["#e6432c", "#3a3a40", "#ffd166"], GLYPH.unshackled_wrath, {
-    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "blitz", source: "stun",
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "blitz", source: "stun", anchor: "board",
   }),
   phoenix_line: G(PhoenixLineScene, ["#ff7a29", "#ffd76a", "#d6234f"], GLYPH.phoenix_line, {
-    ordering: "sweep", staggerMs: 80, victims: ["p"], hasLead: true, sound: "wall", source: "summon",
+    ordering: "sweep", staggerMs: 80, victims: ["p"], hasLead: true, sound: "wall", source: "summon", anchor: "aim",
   }),
 
   /* --- SkyWrath ------------------------------------------------------------ */
   chain_atomic: G(ChainAtomic, ["#ff9d3d", "#e6432c", "#ffd166"], GLYPH.chain_atomic, {
-    ordering: "octagon", staggerMs: 70, victims: "all", hasLead: true, sound: "atomic",
+    ordering: "octagon", staggerMs: 70, victims: "all", hasLead: true, sound: "atomic", anchor: "cast",
   }),
   total_atomic: G(TotalAtomic, ["#e6432c", "#7a1a10", "#ffd166"], GLYPH.total_atomic, {
-    ordering: "octagon", staggerMs: 70, victims: "all", hasLead: true, sound: "atomic",
+    ordering: "octagon", staggerMs: 70, victims: "all", hasLead: true, sound: "atomic", anchor: "board",
   }),
   scorched_earth: G(SkyWrath, ["#ff7a29", "#3a1c12", "#ffb454"], GLYPH.scorched_earth, {
-    ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "cataclysm", source: "blindfold",
+    ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "cataclysm", source: "blindfold", anchor: "board",
   }, "firefield"),
   rift_storm: G(SkyWrath, ["#8f6bff", "#12081f", "#6fe3ff"], GLYPH.rift_storm, {
-    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "lightning",
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "lightning", anchor: "aim",
   }),
-  queen_storm: G(SkyWrath, ["#ffd76a", "#b98cff", "#ffffff"], GLYPH.queen_storm, {
-    ordering: "sweep", staggerMs: 70, victims: ["p"], hasLead: true, sound: "crownrain",
+  queen_storm: G(SkyWrath, ["#ffd76a", "#b98cff", "#fff4d6"], GLYPH.queen_storm, {
+    ordering: "sweep", staggerMs: 70, victims: ["p"], hasLead: true, sound: "crownrain", anchor: "aim",
   }, "crown_rain"),
 
   /* --- AbyssMaw ------------------------------------------------------------- */
   buff_plunder: G(AbyssMaw, ["#ffd76a", "#8f2bbf", "#2a2a38"], GLYPH.buff_plunder, {
-    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "rampage",
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "rampage", anchor: "board",
   }),
   total_plunder: G(TotalPlunderScene, ["#ffd76a", "#1c0f18", "#c94ad1"], GLYPH.total_plunder, {
-    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "rampage",
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "rampage", anchor: "board",
   }),
   grand_nullify: G(AbyssMaw, ["#8a94a8", "#8f6bff", "#eef1f7"], GLYPH.grand_nullify, {
-    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades",
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades", anchor: "board",
   }, "sigil_snuff"),
   absolute_nullify: G(AbyssMaw, ["#3a3a45", "#c94a5a", "#c9cdd6"], GLYPH.absolute_nullify, {
-    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades",
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades", anchor: "board",
   }, "double_void"),
 
   /* --- ReaperSweep ------------------------------------------------------------ */
   endless_night: G(EndlessNight, ["#2c3e6b", "#cdd6ff", "#8a94a8"], GLYPH.endless_night, {
-    ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "shades", source: "slow",
+    ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "shades", source: "slow", anchor: "board",
   }),
   peace_of_the_grave: G(ReaperSweep, ["#eef1f7", "#8a94a8", "#5fae7f"], GLYPH.peace_of_the_grave, {
-    ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "extinction",
+    ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "extinction", anchor: "cast",
   }, "grave_cordon"),
   withered_hands: G(ReaperSweep, ["#8a94a8", "#6b4a8f", "#c9b0e8"], GLYPH.withered_hands, {
-    ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "petrify",
+    ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "petrify", anchor: "cast",
   }),
   grand_malediction: G(ReaperSweep, ["#6b4a8f", "#8faf4a", "#2a1030"], GLYPH.grand_malediction, {
-    ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "shades", source: "slow",
+    ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "shades", source: "slow", anchor: "board",
   }, "hex_seal"),
   blighted_furrows: G(ReaperSweep, ["#8faf4a", "#5c5348", "#2f3a26"], GLYPH.blighted_furrows, {
-    ordering: "sweep", staggerMs: 55, victims: ["p"], hasLead: true, sound: "extinction",
+    ordering: "sweep", staggerMs: 55, victims: ["p"], hasLead: true, sound: "extinction", anchor: "board",
   }, "crop_rot"),
   // APEX (tier 9) — bespoke SkullStrike set piece: death's bowling night.
   culling: G(SkullStrike, ["#d6234f", "#1c1c22", "#eef1f7"], GLYPH.culling, {
-    ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "extinction",
+    ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "extinction", anchor: "cast",
   }),
   poisoned_counsel: G(ReaperSweep, ["#8faf4a", "#2f3a26", "#c9b0e8"], GLYPH.poisoned_counsel, {
-    ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "petrify",
+    ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "petrify", anchor: "board",
   }, "venom_pour"),
 
   /* --- HostMarch --------------------------------------------------------------- */
   age_of_heroes: G(HostMarch, ["#ffd76a", "#c94a3a", "#fff2c9"], GLYPH.age_of_heroes, {
-    ordering: "sweep", staggerMs: 60, victims: ["n", "b", "r"], hasLead: true, sound: "blitz", source: "rally",
+    ordering: "sweep", staggerMs: 60, victims: ["n", "b", "r"], hasLead: true, sound: "blitz", source: "rally", anchor: "aim",
   }),
   grand_retreat: G(HostMarch, ["#5a8fc0", "#c9cdd6", "#ffd76a"], GLYPH.grand_retreat, {
-    ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "blitz",
+    ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "blitz", anchor: "cast",
   }, "about_face"),
   noble_rout: G(NobleRoutScene, ["#6b1a2a", "#c9cdd6", "#e8b04b"], GLYPH.noble_rout, {
-    ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "rampage",
+    ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "rampage", anchor: "cast",
   }),
   sacked_capital: G(HostMarch, ["#ff9d3d", "#2b1218", "#c94a3a"], GLYPH.sacked_capital, {
-    ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "cataclysm", source: "slow",
+    ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "cataclysm", source: "slow", anchor: "board",
   }, "city_burn"),
 
   /* --- CelestialRing -------------------------------------------------------------- */
-  genesis: G(CelestialRing, ["#a8e07f", "#ffffff", "#ffd76a"], GLYPH.genesis, {
-    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "cathedral",
+  genesis: G(CelestialRing, ["#a8e07f", "#fff4d6", "#ffd76a"], GLYPH.genesis, {
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "cathedral", anchor: "board",
   }, "board_reborn"),
   reality_warp: G(CelestialRing, ["#c94ad1", "#6fe3ff", "#e3d0ff"], GLYPH.reality_warp, {
-    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "clockcage",
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "clockcage", anchor: "aim",
   }, "matter_rewrite"),
   total_warp: G(CelestialRing, ["#5b2b8f", "#6fe3ff", "#ffd76a"], GLYPH.total_warp, {
-    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "clockcage",
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "clockcage", anchor: "board",
   }),
-  warp_cataclysm: G(CelestialRing, ["#6fe3ff", "#8f6bff", "#ffffff"], GLYPH.warp_cataclysm, {
-    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "clockcage",
+  warp_cataclysm: G(CelestialRing, ["#6fe3ff", "#8f6bff", "#fff4d6"], GLYPH.warp_cataclysm, {
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "clockcage", anchor: "aim",
   }, "quad_blink"),
   warp_sovereign: G(CelestialRing, ["#8f6bff", "#ffd76a", "#e3d0ff"], GLYPH.warp_sovereign, {
-    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "clockcage",
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "clockcage", anchor: "aim",
   }, "triple_swap"),
-  nerf_reversal: G(CelestialRing, ["#a8e07f", "#8f6bff", "#ffffff"], GLYPH.nerf_reversal, {
-    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "aegis",
+  nerf_reversal: G(CelestialRing, ["#a8e07f", "#8f6bff", "#fff4d6"], GLYPH.nerf_reversal, {
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "aegis", anchor: "cast",
   }, "polarity_flip"),
   celestial_alignment: G(CelestialRing, ["#2c3e6b", "#cdd6ff", "#ffd76a"], GLYPH.celestial_alignment, {
-    ordering: "radial", staggerMs: 45, victims: "all", hasLead: true, sound: "clockice", source: "frozen",
+    ordering: "radial", staggerMs: 45, victims: "all", hasLead: true, sound: "clockice", source: "frozen", anchor: "board",
   }, "starlock"),
   // APEX (tier 9) — bespoke PlanetAlign set piece: the planets align.
   grand_conjunction: G(PlanetAlign, ["#3b1a5e", "#e3d0ff", "#ffd76a"], GLYPH.grand_conjunction, {
-    ordering: "radial", staggerMs: 45, victims: "all", hasLead: true, sound: "clockice", source: "frozen",
+    ordering: "radial", staggerMs: 45, victims: "all", hasLead: true, sound: "clockice", source: "frozen", anchor: "board",
   }),
 
   /* --- FrostTitan ---------------------------------------------------------------- */
   glacial_tomb: G(FrostTitan, ["#9fd8ff", "#e8f8ff", "#4f8fd1"], GLYPH.glacial_tomb, {
-    ordering: "radial", staggerMs: 45, victims: "all", hasLead: true, sound: "massfreeze", source: "frozen",
+    ordering: "radial", staggerMs: 45, victims: "all", hasLead: true, sound: "massfreeze", source: "frozen", anchor: "board",
   }, "ice_tombs"),
-  frozen_solid: G(FrostTitan, ["#6fe3ff", "#ffffff", "#3f7fb5"], GLYPH.frozen_solid, {
-    ordering: "radial", staggerMs: 45, victims: "all", hasLead: true, sound: "massfreeze", source: "frozen",
+  frozen_solid: G(FrostTitan, ["#6fe3ff", "#fff4d6", "#3f7fb5"], GLYPH.frozen_solid, {
+    ordering: "radial", staggerMs: 45, victims: "all", hasLead: true, sound: "massfreeze", source: "frozen", anchor: "aim",
   }),
-  absolute_zero: G(AbsoluteZero, ["#bfe6ff", "#ffffff", "#1c3a5e"], GLYPH.absolute_zero, {
-    ordering: "radial", staggerMs: 45, victims: "all", hasLead: true, sound: "massfreeze", source: "frozen",
+  absolute_zero: G(AbsoluteZero, ["#bfe6ff", "#fff4d6", "#1c3a5e"], GLYPH.absolute_zero, {
+    ordering: "radial", staggerMs: 45, victims: "all", hasLead: true, sound: "massfreeze", source: "frozen", anchor: "board",
   }),
   everfrost_shard: G(FrostTitan, ["#9fd8ff", "#8f6bff", "#e8f8ff"], GLYPH.everfrost_shard, {
-    ordering: "radial", staggerMs: 45, victims: "all", hasLead: true, sound: "massfreeze", source: "frozen",
+    ordering: "radial", staggerMs: 45, victims: "all", hasLead: true, sound: "massfreeze", source: "frozen", anchor: "aim",
   }, "shard_aura"),
 
   /* --- ForgeColossus --------------------------------------------------------------- */
   ban_hammer: G(BanHammerScene, ["#4fa3d1", "#8a94a8", "#ffd76a"], GLYPH.ban_hammer, {
-    ordering: "sweep", staggerMs: 80, victims: ["n", "b", "r"], hasLead: true, sound: "siege",
+    ordering: "sweep", staggerMs: 80, victims: ["n", "b", "r"], hasLead: true, sound: "siege", anchor: "board",
   }),
   dragonslayer: G(ForgeColossus, ["#c9cdd6", "#d6234f", "#ffd76a"], GLYPH.dragonslayer, {
-    ordering: "radial", staggerMs: 0, victims: ["r", "q"], hasLead: true, sound: "siege",
+    ordering: "radial", staggerMs: 0, victims: ["r", "q"], hasLead: true, sound: "siege", anchor: "board",
   }),
   world_lock: G(ForgeColossus, ["#8a94a8", "#4fa3d1", "#ffd76a"], GLYPH.world_lock, {
-    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "clockcage",
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "clockcage", anchor: "cast",
   }, "border_chain"),
   sealed_archive: G(ForgeColossus, ["#c9a84c", "#8a6a3a", "#e8dcc0"], GLYPH.sealed_archive, {
-    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "wall",
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "wall", anchor: "board",
   }, "vault_brick"),
   sealed_ramparts: G(ForgeColossus, ["#8a94a8", "#5c5c63", "#c94a3a"], GLYPH.sealed_ramparts, {
-    ordering: "sweep", staggerMs: 70, victims: ["r"], hasLead: true, sound: "wall",
+    ordering: "sweep", staggerMs: 70, victims: ["r"], hasLead: true, sound: "wall", anchor: "aim",
   }, "portcullis_drop"),
   leaden_limbs: G(LeadenLimbsScene, ["#6e6e78", "#c9a84c", "#3a3a40"], GLYPH.leaden_limbs, {
-    ordering: "sweep", staggerMs: 70, victims: "all", hasLead: true, sound: "petrify",
+    ordering: "sweep", staggerMs: 70, victims: "all", hasLead: true, sound: "petrify", anchor: "board",
   }),
 
   /* --- GorgonIdol ------------------------------------------------------------------ */
   walnut_court: G(GorgonIdol, ["#8a6a4a", "#c9b89a", "#7fae5a"], GLYPH.walnut_court, {
-    ordering: "sweep", staggerMs: 60, victims: ["r"], hasLead: true, sound: "petrify", source: "walnut",
+    ordering: "sweep", staggerMs: 60, victims: ["r"], hasLead: true, sound: "petrify", source: "walnut", anchor: "aim",
   }, "court_walnuts"),
   obsidian_bastions: G(GorgonIdol, ["#2a2a35", "#8f6bff", "#8a94a8"], GLYPH.obsidian_bastions, {
-    ordering: "sweep", staggerMs: 60, victims: ["r"], hasLead: true, sound: "petrify", source: "walnut",
+    ordering: "sweep", staggerMs: 60, victims: ["r"], hasLead: true, sound: "petrify", source: "walnut", anchor: "aim",
   }, "glass_towers"),
   statue_garden: G(GorgonIdol, ["#8d8d94", "#7fae5a", "#c9c9cf"], GLYPH.statue_garden, {
-    ordering: "sweep", staggerMs: 60, victims: ["n", "b"], hasLead: true, sound: "petrifiedforest", source: "walnut",
+    ordering: "sweep", staggerMs: 60, victims: ["n", "b"], hasLead: true, sound: "petrifiedforest", source: "walnut", anchor: "aim",
   }, "garden_plinths"),
   cockatrice_gaze: G(GorgonIdol, ["#7fae5a", "#e8b04b", "#2f3a26"], GLYPH.cockatrice_gaze, {
-    ordering: "sweep", staggerMs: 60, victims: ["n", "b"], hasLead: true, sound: "petrify", source: "walnut",
+    ordering: "sweep", staggerMs: 60, victims: ["n", "b"], hasLead: true, sound: "petrify", source: "walnut", anchor: "aim",
   }),
   chisel_curse: G(GorgonIdol, ["#b0a68f", "#8d8d94", "#e8dcc0"], GLYPH.chisel_curse, {
-    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "petrify", source: "walnut",
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "petrify", source: "walnut", anchor: "cast",
   }, "chisel_spread"),
   crown_and_castle: G(GorgonIdol, ["#ffd76a", "#8d8d94", "#8a6a4a"], GLYPH.crown_and_castle, {
-    ordering: "sweep", staggerMs: 60, victims: ["q", "r"], hasLead: true, sound: "petrifiedforest", source: "walnut",
+    ordering: "sweep", staggerMs: 60, victims: ["q", "r"], hasLead: true, sound: "petrifiedforest", source: "walnut", anchor: "aim",
   }, "heavy_court"),
 
   /* --- ChronoLord ------------------------------------------------------------------- */
   full_rewind: G(ChronoLord, ["#6fe3ff", "#ffd76a", "#2a2a38"], GLYPH.full_rewind, {
-    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "clockcage",
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "clockcage", anchor: "aim",
   }, "time_reverse"),
-  endless_turn: G(ChronoLord, ["#e6432c", "#ffd76a", "#ffffff"], GLYPH.endless_turn, {
-    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "blitz", source: "rally",
+  endless_turn: G(ChronoLord, ["#e6432c", "#ffd76a", "#fff4d6"], GLYPH.endless_turn, {
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "blitz", source: "rally", anchor: "cast",
   }),
   lost_fortnight: G(LostFortnightScene, ["#5a6b8f", "#cdd6ff", "#ffd76a"], GLYPH.lost_fortnight, {
-    ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "snooze", source: "slow",
+    ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "snooze", source: "slow", anchor: "board",
   }),
   sabbatical: G(SabbaticalScene, ["#5fc9b0", "#fff7de", "#ffd76a"], GLYPH.sabbatical, {
-    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "snooze",
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "snooze", anchor: "board",
   }),
 };

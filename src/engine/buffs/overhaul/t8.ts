@@ -497,6 +497,7 @@ export const OVERHAUL_T8: Buff[] = [
       category: "item",
       icon: "FerrisWheel",
       flavor: "The calliope is load-bearing.",
+      fx: { motif: "slow", pieces: "all" },
     },
     {
       kind: "passive",
@@ -1178,6 +1179,7 @@ export const OVERHAUL_T8: Buff[] = [
       category: "tempo",
       icon: "Landmark",
       flavor: "The rook party demands open files for all.",
+      fx: { motif: "rally", pieces: "all", self: true },
     },
     {
       kind: "passive",

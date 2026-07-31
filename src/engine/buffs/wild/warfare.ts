@@ -392,6 +392,7 @@ export const WILD_WARFARE: Buff[] = [
       tier: 2,
       category: "pieces",
       flavor: "No body left behind. Especially not a useful one.",
+      fx: { motif: "rally", pieces: "all", self: true },
     },
     {
       kind: "passive",
@@ -845,6 +846,7 @@ export const WILD_WARFARE: Buff[] = [
       tier: 3,
       category: "pieces",
       flavor: "Held back for exactly this moment.",
+      fx: { motif: "rally", pieces: "all", self: true },
     },
     {
       kind: "passive",
@@ -891,6 +893,7 @@ export const WILD_WARFARE: Buff[] = [
       tier: 1,
       category: "pieces",
       flavor: "For every rider lost, a recruit patched up and sent forward.",
+      fx: { motif: "ward", pieces: ["n"], self: true },
     },
     {
       kind: "passive",

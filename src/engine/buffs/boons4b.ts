@@ -364,24 +364,33 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_smoke_break_union", name: "Smoke Break Union", tier: 5, category: "nerf", icon: "Cigarette",
-      description: "Suspend your nerf for your next 18 turns. When it returns, gain 1 draft reroll.",
+      description: "Suspend your nerf for your next 6 turns. Each capture you make while it is suspended adds 2 more turns, up to 18 in total.",
       flavor: "Any excuse counts, per the collective agreement." },
     {
+      // The union's break is short but every excuse extends it, so this one is
+      // earned rather than granted: it rewards staying active during relief.
       kind: "passive",
       init: (inst, api) => {
-        susp(api, 18);
-        inst.state.turns = 18;
+        susp(api, 6);
+        inst.state.turns = 6;
+        inst.state.granted = 6;
       },
       onMovePlayed: (inst, move, api) => {
         if (inst.spent || move.color !== api.me) return;
-        const t = ((inst.state.turns as number) ?? 18) - 1;
-        inst.state.turns = t;
-        if (t <= 0) {
-          api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
-          inst.spent = true;
+        let t = ((inst.state.turns as number) ?? 6) - 1;
+        const granted = (inst.state.granted as number) ?? 6;
+        if (move.captured && move.captured !== "k" && granted < 18) {
+          const add = Math.min(2, 18 - granted);
+          inst.state.granted = granted + add;
+          t += add;
+          susp(api, t);
         }
+        inst.state.turns = t;
+        if (t <= 0) inst.spent = true;
       },
-      status: (inst) => `${(inst.state.turns as number) ?? 18} turns of suspension left`,
+      status: (inst) =>
+        `${(inst.state.turns as number) ?? 6} turns of break left, ` +
+        `${18 - ((inst.state.granted as number) ?? 6)} still bankable`,
     },
   ),
   card(
@@ -461,7 +470,7 @@ export const BOON_WAVE4B: Buff[] = [
   card(
     { id: "bn4_coronation_rest", name: "Coronation Rest", tier: 4, category: "nerf", icon: "Crown",
       description: "The first time one of your pawns promotes, your nerf is suspended for your next 10 turns.",
-      flavor: "A new crown outshines every old chain.", requires: ["p"] },
+      flavor: "A new crown outshines every old chain.", requires: ["p"], fx: { motif: "rally", pieces: "all", self: true } },
     reliefOn(1, 10, (m, api) => m.color === api.me && !!m.promotion, "crownings"),
   ),
   card(
@@ -480,24 +489,26 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_salt_in_the_wound", name: "Salt in the Wound", tier: 5, category: "nerf", icon: "CloudLightning",
-      description: "Suspend your nerf for your next 18 turns. When it returns, gain 1 draft reroll.",
+      description: "Suspend your nerf for your next 12 turns. When it returns, take 20 seconds from your opponent's clock.",
       flavor: "Their parade, your permission slip." },
     {
+      // The payoff lands on the opponent rather than on your own draft, which
+      // is what the name is about: the relief ending is their problem too.
       kind: "passive",
       init: (inst, api) => {
-        susp(api, 18);
-        inst.state.turns = 18;
+        susp(api, 12);
+        inst.state.turns = 12;
       },
       onMovePlayed: (inst, move, api) => {
         if (inst.spent || move.color !== api.me) return;
-        const t = ((inst.state.turns as number) ?? 18) - 1;
+        const t = ((inst.state.turns as number) ?? 12) - 1;
         inst.state.turns = t;
         if (t <= 0) {
-          api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+          api.adjustClock({ stealFlatSec: 20, stealCapSec: 20 });
           inst.spent = true;
         }
       },
-      status: (inst) => `${(inst.state.turns as number) ?? 18} turns of suspension left`,
+      status: (inst) => `${(inst.state.turns as number) ?? 12} turns before the sting`,
     },
   ),
   card(
@@ -1683,7 +1694,7 @@ export const BOON_WAVE4B: Buff[] = [
     { id: "bn4_relay_baton", name: "Relay Baton", tier: 6, category: "tempo", icon: "Zap",
       description: "The first time you castle or one of your pawns promotes, you immediately take an extra move. You cannot capture the king on that bonus move: your opponent replies first. The next two castles or promotions each grant one draft reroll, then the baton is dropped.",
       tip: "Hold it until a promotion is close, so the free move lands in a sharp position.",
-      flavor: "Pass the baton. Keep running anyway." },
+      flavor: "Pass the baton. Keep running anyway.", fx: { motif: "rally", pieces: "all", self: true } },
     {
       kind: "passive",
       onMovePlayed: (inst, move, api) => {
@@ -1862,10 +1873,12 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_debtors_holiday", name: "Debtor's Holiday", tier: 7, category: "nerf", icon: "Banknote",
-      description: "Suspend your nerf for your next 8 turns; your next draft offer rolls one tier higher.",
+      description: "Suspend your nerf for your next 12 turns, and gain 2 draft rerolls.",
       flavor: "The ledgers closed for the season. The season is you." },
-    suspendNow(8, (api) => {
-      api.mine.flags.bankBonus = Math.min(1, (api.mine.flags.bankBonus ?? 0) + 1);
+    // Forgiveness rather than promotion: a longer holiday paid in rerolls,
+    // which is what separates it from Jubilee's one-tier draft bump.
+    suspendNow(12, (api) => {
+      api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 2;
     }),
   ),
   card(
@@ -2349,7 +2362,7 @@ export const BOON_WAVE4B: Buff[] = [
   card(
     { id: "bn4_saints_procession", name: "Saint's Procession", tier: 7, category: "protection", icon: "Sparkles",
       description: "For your opponent's next 2 turns, none of your pieces can be captured and your king cannot be taken. The blessing ends the moment one of your pieces makes a capture.",
-      flavor: "The relics pass. Every blade waits its turn to kneel." },
+      flavor: "The relics pass. Every blade waits its turn to kneel.", fx: { motif: "ward", pieces: "all", self: true } },
     {
       kind: "passive",
       init: (_inst, api) => {
@@ -2446,7 +2459,7 @@ export const BOON_WAVE4B: Buff[] = [
   card(
     { id: "bn4_lightning_rod", name: "Lightning Rod", tier: 7, category: "tempo", icon: "Zap",
       description: "The next time your opponent puts your king in check, you immediately gain an extra move. You cannot capture the king on a bonus move: your opponent replies first.",
-      flavor: "Every strike grounds itself through you, and you keep the charge." },
+      flavor: "Every strike grounds itself through you, and you keep the charge.", fx: { motif: "rally", pieces: "all", self: true } },
     {
       kind: "passive",
       init: (inst) => {
@@ -2667,30 +2680,37 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_liberators_march", name: "Liberator's March", tier: 8, category: "nerf", icon: "Footprints",
-      description: "Suspend your nerf for your next 18 turns. When it returns, gain 1 draft reroll.",
+      description: "Suspend your nerf for your next 18 turns. Each capture you make while it is suspended gains you 1 draft reroll, up to 3.",
       flavor: "Each blow rings twice: once for you, once for the ones still chained." },
     {
+      // Every blow pays out during the march rather than one payout when it
+      // ends, so the relief is a window to press in, not a window to survive.
       kind: "passive",
       init: (inst, api) => {
         susp(api, 18);
         inst.state.turns = 18;
+        inst.state.paid = 0;
       },
       onMovePlayed: (inst, move, api) => {
         if (inst.spent || move.color !== api.me) return;
+        const paid = (inst.state.paid as number) ?? 0;
+        if (move.captured && move.captured !== "k" && paid < 3) {
+          api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+          inst.state.paid = paid + 1;
+        }
         const t = ((inst.state.turns as number) ?? 18) - 1;
         inst.state.turns = t;
-        if (t <= 0) {
-          api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
-          inst.spent = true;
-        }
+        if (t <= 0) inst.spent = true;
       },
-      status: (inst) => `${(inst.state.turns as number) ?? 18} turns of suspension left`,
+      status: (inst) =>
+        `${(inst.state.turns as number) ?? 18} turns of march left, ` +
+        `${3 - ((inst.state.paid as number) ?? 0)} rerolls still owed`,
     },
   ),
   card(
     { id: "bn4_council_of_peace", name: "Council of Peace", tier: 8, category: "nerf", icon: "Landmark",
       description: "Suspend your nerf for your next 8 turns; for your opponent's next 2 turns each of your pieces cannot be captured and your king cannot be taken. A protected piece loses its protection once it makes a capture.",
-      flavor: "The delegates argued for years. The treaty took a minute." },
+      flavor: "The delegates argued for years. The treaty took a minute.", fx: { motif: "ward", pieces: "all", self: true } },
     {
       // Per-piece protection: a square-list shield (which follows each piece as
       // it moves) instead of a whole-army one, so the shield square of a piece
@@ -2727,24 +2747,27 @@ export const BOON_WAVE4B: Buff[] = [
   ),
   card(
     { id: "bn4_year_of_jubilee", name: "Year of Jubilee", tier: 8, category: "nerf", icon: "Sun",
-      description: "Suspend your nerf for your next 18 turns. When it returns, gain 1 draft reroll.",
+      description: "Suspend your nerf for your next 25 turns. When it returns, gain 1 draft reroll.",
       flavor: "Not forever. Just longer than most games dare to last." },
     {
+      // The unconditional one, and deliberately the longest in the family: its
+      // whole identity is length, which is what separates it at tier 8 from the
+      // shorter conditional reliefs below it.
       kind: "passive",
       init: (inst, api) => {
-        susp(api, 18);
-        inst.state.turns = 18;
+        susp(api, 25);
+        inst.state.turns = 25;
       },
       onMovePlayed: (inst, move, api) => {
         if (inst.spent || move.color !== api.me) return;
-        const t = ((inst.state.turns as number) ?? 18) - 1;
+        const t = ((inst.state.turns as number) ?? 25) - 1;
         inst.state.turns = t;
         if (t <= 0) {
           api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
           inst.spent = true;
         }
       },
-      status: (inst) => `${(inst.state.turns as number) ?? 18} turns of suspension left`,
+      status: (inst) => `${(inst.state.turns as number) ?? 25} turns of jubilee left`,
     },
   ),
   card(
@@ -2759,7 +2782,7 @@ export const BOON_WAVE4B: Buff[] = [
   card(
     { id: "bn4_meek_inherit", name: "The Meek Inherit", tier: 8, category: "nerf", icon: "Bird",
       description: "Beginning after your opponent's next move, your nerf is suspended while your opponent has at least as many pieces as you (kings aside). Pull ahead in material, and it wakes.",
-      flavor: "Blessed are the down-a-piece, for the rules shall carry them." },
+      flavor: "Blessed are the down-a-piece, for the rules shall carry them.", fx: { motif: "rally", pieces: "all", self: true } },
     {
       // Delayed start: no init suspension, so relief begins only after the
       // opponent replies; it re-checks material on each of their moves.
@@ -3283,7 +3306,7 @@ export const BOON_WAVE4B: Buff[] = [
   card(
     { id: "bn4_triumphal_arch", name: "Triumphal Arch", tier: 8, category: "tempo", icon: "Landmark",
       description: "Your next capture grants you an immediate extra move. You cannot capture the king on that bonus move: your opponent replies first. Each of the two captures after that grants you 1 draft reroll instead.",
-      flavor: "March through, wheel around, march through again." },
+      flavor: "March through, wheel around, march through again.", fx: { motif: "rally", pieces: "all", self: true } },
     {
       kind: "passive",
       init: (inst) => {

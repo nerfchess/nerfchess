@@ -426,6 +426,7 @@ export const CROSSREF_CARDS: Buff[] = [
       tier: 4,
       category: "nerf",
       flavor: "Every wound you deal me loosens my chains.",
+      fx: { motif: "rally", pieces: "all", self: true },
     },
     {
       kind: "passive",

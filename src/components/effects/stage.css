@@ -1,0 +1,44 @@
+/* Scene staging geometry. See stage.tsx for what each box means.
+
+   Everything here is transform/position only: no animation, no filter. The
+   stage is a positioning primitive, not an effect, so it must never compete
+   with the art it carries.
+
+   UNITS. The stage is `left:-650% top:-650% w:1400% h:1400%` inside a ONE-CELL
+   wrapper, so it spans -6.5 .. +7.5 cells relative to that cell's left edge —
+   14 cells wide, centred on the cell CENTRE (+0.5). Percentages resolved
+   INSIDE the stage are therefore percentages of 14 cells, and one cell is
+   100/14 = 7.142857% of the stage. Every conversion below is that constant.
+   Getting this wrong scales the board frame by 14x, so it is spelled out
+   rather than folded into a magic number. */
+
+/* The oversized scene canvas. `translate()` percentages resolve against the
+   element's OWN size (14 cells), so a one-cell clamp correction is 7.142857%.
+   The correction is at most half a cell, and zero on most squares; it exists
+   so a corner cast still covers the board. The defaults keep the stage usable
+   outside Board, where no geometry vars are set (the dev galleries). */
+.fx-stage {
+  transform: translate(
+    calc(var(--fx-anchor-dx, 0) * 7.142857%),
+    calc(var(--fx-anchor-dy, 0) * 7.142857%)
+  );
+}
+
+/* Exactly the board, wherever the stage is anchored.
+
+   The stage's own origin sits 6.5 cells left of and above the anchor cell's
+   left/top edge, and the board's top-left is `-col, -row` cells from that same
+   edge (that is what --fx-board-dx/dy carry). So the board starts at
+   (6.5 + board-dx) cells from the stage origin and runs 8 cells.
+   Default -3.5 = a centred board, i.e. the pre-anchoring behaviour. */
+.fx-board-frame {
+  left: calc((6.5 + var(--fx-board-dx, -3.5)) * 7.142857%);
+  top: calc((6.5 + var(--fx-board-dy, -3.5)) * 7.142857%);
+  width: 57.142857%;
+  height: 57.142857%;
+}
+
+/* Aim: art authored pointing right is rotated onto the real attack vector. */
+.fx-aim {
+  transform: rotate(calc(var(--fx-ang, 0) * 1deg));
+}

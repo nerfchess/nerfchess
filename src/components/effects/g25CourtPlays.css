@@ -1,0 +1,1020 @@
+/* ============================================================================
+   g25CourtPlays.css — motion for the 20 king / royalty / authority plays
+   (src/components/effects/g25CourtPlays.tsx).
+
+   House discipline, same as g26ShieldPlays.css / boonPlays.css:
+   - keyframes animate ONLY transform and opacity (a static drop-shadow filter
+     is fine, animating one is not);
+   - every animation is a one-shot with `both` fill, so the inline
+     animation-delay staggers (stagger + beat + place in the victim order) land
+     cleanly;
+   - every duration is scaled by --fx-dur (Settings animation-speed);
+   - every track ENDS at opacity 0, so a play never lingers: persistent state is
+     carried by the card's own zone overlay, never by the play;
+   - no border-radius is set here at all (house rule, scripts/check-rounded.ts);
+     the few round dots and capsules are inline 50% / 999px on the element;
+   - the whole g25- family is parked when animations are off (guard at the
+     bottom of this file).
+
+   GEOMETRY-DRIVEN TRACKS. The court is a room full of people, so most of the
+   directional work here is about WHO moves and in WHAT ORDER:
+     .g25-stepin     an attendant walks in from the CASTER's own side (--fx-side)
+     .g25-hitside    the per-square hit arrives from the same side  (--fx-side)
+     .g25-leanshadow the thrown shadow leans away from board centre (--fx-ox/oy)
+     .g25-runout     a walk that crosses the play's real distance   (--fx-len)
+     .g25-rs-bow     the bow travels down the real receiving line   (--fx-index)
+     .g25-tk-back    the line steps back in the real victim order   (--fx-index)
+     .g25-ct-avert   faces turn aside one after another             (--fx-index)
+     .g25-fc-laugh   the laugh runs down the room                   (--fx-index)
+     .g25-hb-hedge   the hedge runs as far as the play reaches      (--fx-n)
+     .g25-sf-gloss   the wax spreads over the squares it caught     (--fx-n)
+   plus the aim-vector tracks (--fx-aim-x/y): the block pushed across the
+   counter, the arm's push-back, the hand through the closing curtain, the
+   glide over the wax, the retreat to the door and the handshake's snap.
+   ========================================================================= */
+
+/* --- Board-scale atmosphere (always inside <BoardFrame>) ------------------- */
+
+@keyframes g25-wash {
+  0% { opacity: 0; }
+  24% { opacity: 1; }
+  68% { opacity: 0.44; }
+  100% { opacity: 0; }
+}
+.g25-wash { animation: g25-wash calc(1.6s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g25-rim {
+  0% { opacity: 0; transform: scale(0.94); }
+  38% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.03); }
+}
+.g25-rim { animation: g25-rim calc(1s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g25-veil {
+  0% { opacity: 0; }
+  20% { opacity: 1; }
+  72% { opacity: 0.8; }
+  100% { opacity: 0; }
+}
+.g25-veil { animation: g25-veil calc(1.5s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- Geometry-driven shared tracks ---------------------------------------- */
+
+/* An attendant walking on from behind the caster's own back rank. */
+@keyframes g25-stepin {
+  0% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 120%)) scale(0.84); }
+  34% { opacity: 1; transform: translateY(calc(var(--fx-side, 1) * 8%)) scale(1.04); }
+  50% { transform: translateY(0) scale(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(0) scale(1); }
+}
+.g25-stepin { animation: g25-stepin calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+/* The shadow a standing figure throws, away from the middle of the board. */
+@keyframes g25-leanshadow {
+  0% { opacity: 0; transform: translate(0, 0) scaleX(0.3); }
+  36% { opacity: 0.9; transform: translate(calc(var(--fx-ox, 0) * 2.2%), calc(var(--fx-oy, 0) * 1.4%)) scaleX(1); }
+  82% { opacity: 0.55; transform: translate(calc(var(--fx-ox, 0) * 2.6%), calc(var(--fx-oy, 0) * 1.6%)) scaleX(1); }
+  100% { opacity: 0; transform: translate(calc(var(--fx-ox, 0) * 2.6%), calc(var(--fx-oy, 0) * 1.6%)) scaleX(1); }
+}
+.g25-leanshadow { animation: g25-leanshadow calc(1s * var(--fx-dur, 1)) ease-out both; }
+
+/* A run of floor as long as the play's own leg. The 0.55 floor keeps it
+   visible on a cast lead, where there is no travel to measure. */
+@keyframes g25-runout {
+  0% { opacity: 0; transform: scaleX(0.04); }
+  34% { opacity: 1; transform: scaleX(calc(0.55 + var(--fx-len, 0) * 0.09)); }
+  80% { opacity: 0.8; transform: scaleX(calc(0.55 + var(--fx-len, 0) * 0.09)); }
+  100% { opacity: 0; transform: scaleX(calc(0.6 + var(--fx-len, 0) * 0.09)); }
+}
+.g25-runout { animation: g25-runout calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+/* --- Per-square target cut ------------------------------------------------ */
+
+@keyframes g25-hit {
+  0% { opacity: 0; transform: scale(0.38); }
+  36% { opacity: 1; transform: scale(1.1); }
+  54% { transform: scale(1); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.02); }
+}
+.g25-hit { animation: g25-hit calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g25-hit2 {
+  0% { opacity: 0; transform: scale(0.2); }
+  44% { opacity: 1; transform: scale(1.06); }
+  62% { transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.08); }
+}
+.g25-hit2 { animation: g25-hit2 calc(0.7s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g25-hitside {
+  0% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 88%)) scale(0.7); }
+  40% { opacity: 1; transform: translateY(0) scale(1.06); }
+  58% { transform: translateY(0) scale(1); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * -12%)) scale(1); }
+}
+.g25-hitside { animation: g25-hitside calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.85, 0.3, 1) both; }
+
+/* --- Entrance beats (the card arriving in a hand, ~56% crop) --------------- */
+
+@keyframes g25-ent-rise {
+  0% { opacity: 0; transform: translateY(34%) scale(0.78); }
+  34% { opacity: 1; transform: translateY(0) scale(1.05); }
+  48% { transform: translateY(0) scale(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-4%) scale(1); }
+}
+.g25-ent-rise { animation: g25-ent-rise calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g25-ent-drop {
+  0% { opacity: 0; transform: translateY(-64%) scale(0.9); }
+  36% { opacity: 1; transform: translateY(5%) scale(1); }
+  50% { transform: translateY(0) scale(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(0) scale(1); }
+}
+.g25-ent-drop { animation: g25-ent-drop calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.4, 1) both; }
+
+@keyframes g25-ent-pop {
+  0% { opacity: 0; transform: scale(0.3); }
+  34% { opacity: 1; transform: scale(1.16); }
+  52% { transform: scale(1); }
+  82% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.04); }
+}
+.g25-ent-pop { animation: g25-ent-pop calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g25-ent-mote {
+  0% { opacity: 0; transform: translateY(24%) scale(0.7); }
+  38% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-30%) scale(0.94); }
+}
+.g25-ent-mote { animation: g25-ent-mote calc(1.05s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- Shared seasoning ------------------------------------------------------ */
+
+@keyframes g25-sift {
+  0% { opacity: 0; transform: translateY(-40%) scale(0.5); }
+  30% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(110%) scale(0.6); }
+}
+.g25-sift { animation: g25-sift calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.6, 1) both; }
+
+@keyframes g25-glint {
+  0% { opacity: 0; transform: scale(0.2); }
+  42% { opacity: 1; transform: scale(1.5); }
+  100% { opacity: 0; transform: scale(0.5); }
+}
+.g25-glint { animation: g25-glint calc(0.5s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 1. Royal Food Taster — the taster folds ------------------------------- */
+
+@keyframes g25-tf-cloche {
+  0% { opacity: 0; transform: translateY(6%) scale(0.9); }
+  30% { opacity: 1; transform: translateY(0) scale(1); }
+  62% { transform: translateY(-52%) scale(1.02); }
+  100% { opacity: 0; transform: translateY(-88%) scale(1.04); }
+}
+.g25-tf-cloche { animation: g25-tf-cloche calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.35, 1) both; }
+
+@keyframes g25-tf-dish {
+  0% { opacity: 0; transform: scaleX(0.3); }
+  40% { opacity: 1; transform: scaleX(1.04); }
+  56% { transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.g25-tf-dish { animation: g25-tf-dish calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g25-tf-spoon {
+  0% { opacity: 0; transform: rotate(38deg) translateY(20%); }
+  36% { opacity: 1; transform: rotate(-6deg) translateY(0); }
+  60% { transform: rotate(2deg); }
+  100% { opacity: 0; transform: rotate(24deg) translateY(14%); }
+}
+.g25-tf-spoon { animation: g25-tf-spoon calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+@keyframes g25-tf-fold {
+  0% { opacity: 0; transform: rotate(0deg) scaleY(1); }
+  22% { opacity: 1; transform: rotate(-5deg) scaleY(1); }
+  46% { transform: rotate(9deg) scaleY(0.96); }
+  74% { transform: rotate(64deg) scaleY(0.72); }
+  100% { opacity: 0; transform: rotate(86deg) scaleY(0.6); }
+}
+.g25-tf-fold { animation: g25-tf-fold calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.45, 0, 0.6, 1) both; }
+
+/* --- 2. Squire's Ascension — the roll is called ---------------------------- */
+
+@keyframes g25-rc-unroll {
+  0% { opacity: 0; transform: scaleX(0.06); }
+  38% { opacity: 1; transform: scaleX(1.05); }
+  54% { transform: scaleX(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: scaleX(0.98); }
+}
+.g25-rc-unroll { animation: g25-rc-unroll calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g25-rc-kneel {
+  0% { opacity: 0; transform: translateY(-8%) scale(0.94); }
+  34% { opacity: 1; transform: translateY(0) scale(1); }
+  76% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(3%) scale(0.98); }
+}
+.g25-rc-kneel { animation: g25-rc-kneel calc(1.1s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g25-rc-name {
+  0% { opacity: 0; transform: scaleX(0.02); }
+  46% { opacity: 1; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.g25-rc-name { animation: g25-rc-name calc(0.75s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.85, 0.35, 1) both; }
+
+@keyframes g25-rc-rise {
+  0% { opacity: 0; transform: translateY(46%) scaleY(0.62); }
+  40% { opacity: 1; transform: translateY(-4%) scaleY(1.06); }
+  58% { transform: translateY(0) scaleY(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-6%) scaleY(1); }
+}
+.g25-rc-rise { animation: g25-rc-rise calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+/* The knight the squire has become, thrown as a shadow away from the middle. */
+@keyframes g25-rc-shadow {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.4); }
+  44% { opacity: 0.9; transform: translate(calc(var(--fx-ox, 0) * 2.4%), calc(var(--fx-oy, 0) * 1.2%)) scale(1.1); }
+  76% { opacity: 0.6; transform: translate(calc(var(--fx-ox, 0) * 3%), calc(var(--fx-oy, 0) * 1.6%)) scale(1.16); }
+  100% { opacity: 0; transform: translate(calc(var(--fx-ox, 0) * 3.2%), calc(var(--fx-oy, 0) * 1.8%)) scale(1.2); }
+}
+.g25-rc-shadow { animation: g25-rc-shadow calc(1.05s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 3. Royal Taster — the cup goes round first ---------------------------- */
+
+@keyframes g25-cr-pour {
+  0% { opacity: 0; transform: rotate(0deg) translateY(-14%); }
+  30% { opacity: 1; transform: rotate(0deg) translateY(0); }
+  56% { transform: rotate(38deg); }
+  76% { transform: rotate(6deg); }
+  100% { opacity: 0; transform: rotate(0deg); }
+}
+.g25-cr-pour { animation: g25-cr-pour calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.35, 1) both; }
+
+@keyframes g25-cr-cup {
+  0% { opacity: 0; transform: translateY(30%) scale(0.7); }
+  42% { opacity: 1; transform: translateY(0) scale(1.08); }
+  58% { transform: scale(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-6%) scale(1); }
+}
+.g25-cr-cup { animation: g25-cr-cup calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g25-cr-sip {
+  0% { opacity: 0; transform: rotate(0deg); }
+  30% { opacity: 1; transform: rotate(0deg); }
+  52% { transform: rotate(-16deg); }
+  74% { transform: rotate(-2deg); }
+  100% { opacity: 0; transform: rotate(0deg); }
+}
+.g25-cr-sip { animation: g25-cr-sip calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.8, 0.4, 1) both; }
+
+@keyframes g25-cr-tick {
+  0% { opacity: 0; transform: scaleX(0.02) rotate(-18deg); }
+  44% { opacity: 1; transform: scaleX(1) rotate(-18deg); }
+  100% { opacity: 0; transform: scaleX(1) rotate(-18deg); }
+}
+.g25-cr-tick { animation: g25-cr-tick calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g25-cr-pass {
+  0% { opacity: 0; transform: translateX(0) scaleX(0.5); }
+  40% { opacity: 1; transform: translateX(30%) scaleX(1); }
+  100% { opacity: 0; transform: translateX(120%) scaleX(1); }
+}
+.g25-cr-pass { animation: g25-cr-pass calc(0.85s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 4. The Food Taster — every dish refused ------------------------------- */
+
+@keyframes g25-fd-offer {
+  0% { opacity: 0; transform: translateX(-40%) scale(0.86); }
+  40% { opacity: 1; transform: translateX(0) scale(1); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(4%) scale(1); }
+}
+.g25-fd-offer { animation: g25-fd-offer calc(1s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g25-fd-wave {
+  0% { opacity: 0; transform: translateX(20%) rotate(16deg); }
+  34% { opacity: 1; transform: translateX(0) rotate(-8deg); }
+  52% { transform: rotate(10deg); }
+  70% { transform: rotate(-4deg); }
+  100% { opacity: 0; transform: rotate(0deg); }
+}
+.g25-fd-wave { animation: g25-fd-wave calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.8, 0.3, 1) both; }
+
+@keyframes g25-fd-recoil {
+  0% { opacity: 0; transform: translateX(0) rotate(0deg); }
+  26% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(-90%) rotate(-14deg); }
+}
+.g25-fd-recoil { animation: g25-fd-recoil calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.7, 1) both; }
+
+/* Chairs shoved back, away from the middle of the board. */
+@keyframes g25-fd-scrape {
+  0% { opacity: 0; transform: translateX(0) rotate(0deg); }
+  32% { opacity: 1; transform: translateX(0) rotate(0deg); }
+  70% { transform: translateX(calc(var(--fx-ox, 0) * 3% + 22%)) rotate(7deg); }
+  100% { opacity: 0; transform: translateX(calc(var(--fx-ox, 0) * 3.6% + 30%)) rotate(9deg); }
+}
+.g25-fd-scrape { animation: g25-fd-scrape calc(1s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.4, 1) both; }
+
+@keyframes g25-fd-gap {
+  0% { opacity: 0; transform: scale(0.2); }
+  48% { opacity: 1; transform: scale(1.08); }
+  100% { opacity: 0; transform: scale(1.3); }
+}
+.g25-fd-gap { animation: g25-fd-gap calc(0.95s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 5. Glass Ceiling — the hand on the glass ------------------------------ */
+
+/* The reach comes up out of the caster's own side of the room. */
+@keyframes g25-gc-reach {
+  0% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 90%)) scale(0.8); }
+  40% { opacity: 1; transform: translateY(calc(var(--fx-side, 1) * 10%)) scale(1); }
+  70% { transform: translateY(0) scale(1.02); }
+  100% { opacity: 0; transform: translateY(0) scale(1.02); }
+}
+.g25-gc-reach { animation: g25-gc-reach calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g25-gc-pane {
+  0% { opacity: 0; transform: translateX(-70%); }
+  46% { opacity: 1; transform: translateX(2%); }
+  60% { transform: translateX(0); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(0); }
+}
+.g25-gc-pane { animation: g25-gc-pane calc(1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g25-gc-palm {
+  0% { opacity: 0; transform: translateY(30%) scaleY(1); }
+  38% { opacity: 1; transform: translateY(0) scaleY(0.82); }
+  56% { transform: translateY(0) scaleY(0.88); }
+  100% { opacity: 0; transform: translateY(2%) scaleY(0.88); }
+}
+.g25-gc-palm { animation: g25-gc-palm calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.9, 0.35, 1) both; }
+
+@keyframes g25-gc-print {
+  0% { opacity: 0; transform: scale(0.3); }
+  40% { opacity: 1; transform: scale(1.1); }
+  100% { opacity: 0; transform: scale(1.24); }
+}
+.g25-gc-print { animation: g25-gc-print calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g25-gc-crack {
+  0% { opacity: 0; transform: scale(0.14) rotate(-6deg); }
+  44% { opacity: 1; transform: scale(1.04) rotate(0deg); }
+  60% { transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.02); }
+}
+.g25-gc-crack { animation: g25-gc-crack calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.95, 0.3, 1) both; }
+
+@keyframes g25-gc-slip {
+  0% { opacity: 0; transform: translateY(0) scale(1); }
+  24% { opacity: 0.9; }
+  100% { opacity: 0; transform: translateY(54%) scale(0.88); }
+}
+.g25-gc-slip { animation: g25-gc-slip calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.6, 1) both; }
+
+/* --- 6. Iron Quota — the quartermaster shuts his shutter ------------------- */
+
+@keyframes g25-iq-counter {
+  0% { opacity: 0; transform: scaleX(0.2); }
+  38% { opacity: 1; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.g25-iq-counter { animation: g25-iq-counter calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g25-iq-shutter {
+  0% { opacity: 0; transform: scaleY(0.06); }
+  36% { opacity: 1; transform: scaleY(1.1); }
+  50% { transform: scaleY(0.94); }
+  62% { transform: scaleY(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+.g25-iq-shutter { animation: g25-iq-shutter calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.95, 0.35, 1) both; }
+
+@keyframes g25-iq-peg {
+  0% { opacity: 0; transform: translateY(-26%) scale(0.8); }
+  42% { opacity: 1; transform: translateY(0) scale(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(0) scale(1); }
+}
+.g25-iq-peg { animation: g25-iq-peg calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+/* Pushed across the counter, down the play's own vector. */
+@keyframes g25-iq-push {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.86); }
+  36% { opacity: 1; transform: translate(calc(var(--fx-aim-x, 1) * 14%), calc(var(--fx-aim-y, 0) * 14%)) scale(1); }
+  74% { transform: translate(calc(var(--fx-aim-x, 1) * 52%), calc(var(--fx-aim-y, 0) * 52%)) scale(1); }
+  100% { opacity: 0; transform: translate(calc(var(--fx-aim-x, 1) * 64%), calc(var(--fx-aim-y, 0) * 64%)) scale(1); }
+}
+.g25-iq-push { animation: g25-iq-push calc(1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.35, 1) both; }
+
+@keyframes g25-iq-shrug {
+  0% { opacity: 0; transform: translateY(8%); }
+  36% { opacity: 1; transform: translateY(-8%); }
+  56% { transform: translateY(0); }
+  76% { transform: translateY(-4%); }
+  100% { opacity: 0; transform: translateY(0); }
+}
+.g25-iq-shrug { animation: g25-iq-shrug calc(0.95s * var(--fx-dur, 1)) ease-in-out both; }
+
+/* --- 7. The Quarrel — the fan and the turned chair ------------------------- */
+
+@keyframes g25-qr-chair {
+  0% { opacity: 0; transform: translateY(24%) scale(0.86); }
+  38% { opacity: 1; transform: translateY(0) scale(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(0) scale(1); }
+}
+.g25-qr-chair { animation: g25-qr-chair calc(1s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g25-qr-fan {
+  0% { opacity: 0; transform: scaleX(0.08) rotate(-14deg); }
+  40% { opacity: 1; transform: scaleX(1.06) rotate(4deg); }
+  56% { transform: scaleX(1) rotate(0deg); }
+  82% { opacity: 1; transform: scaleX(1) rotate(-3deg); }
+  100% { opacity: 0; transform: scaleX(0.2) rotate(-10deg); }
+}
+.g25-qr-fan { animation: g25-qr-fan calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g25-qr-whisper {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.5); }
+  40% { opacity: 1; transform: translate(60%, -30%) scale(1); }
+  100% { opacity: 0; transform: translate(150%, -70%) scale(0.6); }
+}
+.g25-qr-whisper { animation: g25-qr-whisper calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g25-qr-turn {
+  0% { opacity: 0; transform: rotateY(0deg) translateX(0); }
+  40% { opacity: 1; transform: rotateY(120deg) translateX(-8%); }
+  64% { transform: rotateY(180deg) translateX(-14%); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: rotateY(180deg) translateX(-16%); }
+}
+.g25-qr-turn { animation: g25-qr-turn calc(1s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.85, 0.35, 1) both; }
+
+@keyframes g25-qr-note {
+  0% { opacity: 0; transform: translateY(-40%) rotate(-20deg); }
+  46% { opacity: 1; transform: translateY(0) rotate(6deg); }
+  62% { transform: rotate(0deg); }
+  100% { opacity: 0; transform: translateY(6%) rotate(-4deg); }
+}
+.g25-qr-note { animation: g25-qr-note calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.8, 0.4, 1) both; }
+
+/* --- 8. Thistle Crown — knees on the flagstones ---------------------------- */
+
+/* The line steps back, later places in the real victim order stepping further. */
+@keyframes g25-tk-back {
+  0% { opacity: 0; transform: translateX(0) scale(0.94); }
+  30% { opacity: 1; transform: translateX(0) scale(1); }
+  68% { transform: translateX(calc(-22% - var(--fx-index, 0) * 3%)) scale(0.97); }
+  100% { opacity: 0; transform: translateX(calc(-30% - var(--fx-index, 0) * 4%)) scale(0.95); }
+}
+.g25-tk-back { animation: g25-tk-back calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.4, 1) both; }
+
+@keyframes g25-tk-knees {
+  0% { opacity: 0; transform: translateY(-30%) scaleY(1.1); }
+  38% { opacity: 1; transform: translateY(0) scaleY(0.86); }
+  52% { transform: translateY(0) scaleY(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(0) scaleY(1); }
+}
+.g25-tk-knees { animation: g25-tk-knees calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.4, 0.95, 0.4, 1) both; }
+
+@keyframes g25-tk-dust {
+  0% { opacity: 0; transform: scaleX(0.2) scaleY(0.6); }
+  36% { opacity: 0.9; transform: scaleX(1.1) scaleY(1); }
+  100% { opacity: 0; transform: scaleX(1.6) scaleY(0.5) translateY(-30%); }
+}
+.g25-tk-dust { animation: g25-tk-dust calc(0.85s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g25-tk-burr {
+  0% { opacity: 0; transform: scale(0.2) rotate(-40deg); }
+  44% { opacity: 1; transform: scale(1.1) rotate(8deg); }
+  60% { transform: scale(1) rotate(0deg); }
+  100% { opacity: 0; transform: scale(1) rotate(14deg); }
+}
+.g25-tk-burr { animation: g25-tk-burr calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+/* --- 9. Wilted Garland — the chaperone's arm ------------------------------- */
+
+@keyframes g25-wg-lean {
+  0% { opacity: 0; transform: translateX(-16%) rotate(0deg); }
+  36% { opacity: 1; transform: translateX(0) rotate(9deg); }
+  70% { transform: translateX(0) rotate(2deg); }
+  100% { opacity: 0; transform: translateX(-6%) rotate(0deg); }
+}
+.g25-wg-lean { animation: g25-wg-lean calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.85, 0.35, 1) both; }
+
+@keyframes g25-wg-bar {
+  0% { opacity: 0; transform: rotate(-82deg); }
+  40% { opacity: 1; transform: rotate(6deg); }
+  56% { transform: rotate(-3deg); }
+  70% { transform: rotate(0deg); }
+  88% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(0deg); }
+}
+.g25-wg-bar { animation: g25-wg-bar calc(1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g25-wg-shed {
+  0% { opacity: 0; transform: translateY(-14%) scaleY(1); }
+  34% { opacity: 1; transform: translateY(0) scaleY(1); }
+  72% { opacity: 0.8; transform: translateY(8%) scaleY(0.86); }
+  100% { opacity: 0; transform: translateY(22%) scaleY(0.76); }
+}
+.g25-wg-shed { animation: g25-wg-shed calc(1.05s * var(--fx-dur, 1)) ease-in-out both; }
+
+/* Held off down the play's own vector. */
+@keyframes g25-wg-push {
+  0% { opacity: 0; transform: translate(0, 0); }
+  34% { opacity: 1; transform: translate(0, 0); }
+  72% { transform: translate(calc(var(--fx-aim-x, 1) * 44%), calc(var(--fx-aim-y, 0) * 44%)); }
+  100% { opacity: 0; transform: translate(calc(var(--fx-aim-x, 1) * 56%), calc(var(--fx-aim-y, 0) * 56%)); }
+}
+.g25-wg-push { animation: g25-wg-push calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.4, 1) both; }
+
+/* --- 10. Ivy Crown — the ivy runs ahead ------------------------------------ */
+
+@keyframes g25-iv-run {
+  0% { opacity: 0; transform: scaleX(0.05); }
+  44% { opacity: 1; transform: scaleX(1.04); }
+  58% { transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.g25-iv-run { animation: g25-iv-run calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g25-iv-stone {
+  0% { opacity: 0; transform: scale(0.4); }
+  40% { opacity: 1; transform: scale(1.12); }
+  58% { transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.05); }
+}
+.g25-iv-stone { animation: g25-iv-stone calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g25-iv-stride {
+  0% { opacity: 0; transform: translateX(0) translateY(0); }
+  26% { opacity: 1; transform: translateX(10%) translateY(-16%); }
+  50% { transform: translateX(60%) translateY(0); }
+  70% { transform: translateX(78%) translateY(-12%); }
+  90% { opacity: 1; transform: translateX(128%) translateY(0); }
+  100% { opacity: 0; transform: translateX(136%) translateY(0); }
+}
+.g25-iv-stride { animation: g25-iv-stride calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.4, 1) both; }
+
+@keyframes g25-iv-leaf {
+  0% { opacity: 0; transform: scale(0.1) rotate(-50deg); }
+  46% { opacity: 1; transform: scale(1.08) rotate(6deg); }
+  62% { transform: scale(1) rotate(0deg); }
+  100% { opacity: 0; transform: scale(0.94) rotate(10deg); }
+}
+.g25-iv-leaf { animation: g25-iv-leaf calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g25-iv-knit {
+  0% { opacity: 0; transform: scaleX(0.1); }
+  40% { opacity: 1; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1) scaleY(0.7); }
+}
+.g25-iv-knit { animation: g25-iv-knit calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- 11. Promotion Paperwork — the papers are stamped ---------------------- */
+
+@keyframes g25-pp-slide {
+  0% { opacity: 0; transform: translateX(-56%) rotate(-8deg); }
+  40% { opacity: 1; transform: translateX(2%) rotate(1deg); }
+  54% { transform: translateX(0) rotate(0deg); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(0) rotate(0deg); }
+}
+.g25-pp-slide { animation: g25-pp-slide calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g25-pp-stamp {
+  0% { opacity: 0; transform: translateY(-90%) scale(1.2); }
+  40% { opacity: 1; transform: translateY(0) scale(0.94); }
+  54% { transform: translateY(-12%) scale(1); }
+  100% { opacity: 0; transform: translateY(-70%) scale(1.06); }
+}
+.g25-pp-stamp { animation: g25-pp-stamp calc(0.75s * var(--fx-dur, 1)) cubic-bezier(0.4, 0.95, 0.4, 1) both; }
+
+@keyframes g25-pp-stamp2 {
+  0% { opacity: 0; transform: translateY(-80%) rotate(8deg) scale(1.15); }
+  42% { opacity: 1; transform: translateY(0) rotate(-4deg) scale(0.96); }
+  56% { transform: translateY(-10%) rotate(0deg) scale(1); }
+  100% { opacity: 0; transform: translateY(-64%) rotate(4deg) scale(1.04); }
+}
+.g25-pp-stamp2 { animation: g25-pp-stamp2 calc(0.75s * var(--fx-dur, 1)) cubic-bezier(0.4, 0.95, 0.4, 1) both; }
+
+@keyframes g25-pp-ink {
+  0% { opacity: 0; transform: scale(0.3); }
+  44% { opacity: 1; transform: scale(1.06); }
+  100% { opacity: 0; transform: scale(1.3); }
+}
+.g25-pp-ink { animation: g25-pp-ink calc(0.8s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g25-pp-scrawl {
+  0% { opacity: 0; transform: scaleX(0.02) rotate(-4deg); }
+  50% { opacity: 1; transform: scaleX(1) rotate(-4deg); }
+  100% { opacity: 0; transform: scaleX(1) rotate(-4deg); }
+}
+.g25-pp-scrawl { animation: g25-pp-scrawl calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g25-pp-file {
+  0% { opacity: 0; transform: translateY(0) scale(1); }
+  22% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-70%) scale(0.7) rotate(-6deg); }
+}
+.g25-pp-file { animation: g25-pp-file calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.7, 1) both; }
+
+/* --- 12. Counterfeit Crown — the place cards are swapped ------------------- */
+
+@keyframes g25-pc-card {
+  0% { opacity: 0; transform: translateY(-28%) rotateX(70deg); }
+  42% { opacity: 1; transform: translateY(0) rotateX(0deg); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(0) rotateX(0deg); }
+}
+.g25-pc-card { animation: g25-pc-card calc(1s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+/* The hand darts in from the caster's own side and is gone. */
+@keyframes g25-pc-sly {
+  0% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 80%)) rotate(-14deg); }
+  36% { opacity: 1; transform: translateY(0) rotate(4deg); }
+  60% { opacity: 1; transform: translateY(0) rotate(-4deg); }
+  100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 60%)) rotate(0deg); }
+}
+.g25-pc-sly { animation: g25-pc-sly calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.85, 0.35, 1) both; }
+
+@keyframes g25-pc-swapa {
+  0% { opacity: 0; transform: translate(0, 0); }
+  30% { opacity: 1; transform: translate(40%, -34%); }
+  70% { transform: translate(120%, -20%); }
+  86% { opacity: 1; transform: translate(155%, 0); }
+  100% { opacity: 0; transform: translate(155%, 0); }
+}
+.g25-pc-swapa { animation: g25-pc-swapa calc(1s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.75, 0.35, 1) both; }
+
+@keyframes g25-pc-swapb {
+  0% { opacity: 0; transform: translate(0, 0); }
+  30% { opacity: 1; transform: translate(-40%, 30%); }
+  70% { transform: translate(-120%, 18%); }
+  86% { opacity: 1; transform: translate(-155%, 0); }
+  100% { opacity: 0; transform: translate(-155%, 0); }
+}
+.g25-pc-swapb { animation: g25-pc-swapb calc(1s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.75, 0.35, 1) both; }
+
+@keyframes g25-pc-squint {
+  0% { opacity: 0; transform: scaleY(0.9) translateY(6%); }
+  40% { opacity: 1; transform: scaleY(1) translateY(0); }
+  62% { transform: scaleY(0.94) translateX(4%); }
+  82% { transform: scaleY(1) translateX(0); }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+.g25-pc-squint { animation: g25-pc-squint calc(0.95s * var(--fx-dur, 1)) ease-in-out both; }
+
+/* --- 13. Royal Stroll — the bow ripples down the line ---------------------- */
+
+@keyframes g25-rs-stride {
+  0% { opacity: 0; transform: translateX(-20%) translateY(0); }
+  30% { opacity: 1; transform: translateX(0) translateY(-8%); }
+  56% { transform: translateX(34%) translateY(0); }
+  80% { transform: translateX(58%) translateY(-6%); }
+  100% { opacity: 0; transform: translateX(86%) translateY(0); }
+}
+.g25-rs-stride { animation: g25-rs-stride calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.7, 0.4, 1) both; }
+
+/* Later places in the real receiving line bow a shade deeper. */
+@keyframes g25-rs-bow {
+  0% { opacity: 0; transform: rotate(0deg) translateY(0); }
+  30% { opacity: 1; transform: rotate(0deg) translateY(0); }
+  58% { transform: rotate(calc(22deg + var(--fx-index, 0) * 2deg)) translateY(6%); }
+  82% { transform: rotate(calc(16deg + var(--fx-index, 0) * 2deg)) translateY(4%); }
+  100% { opacity: 0; transform: rotate(4deg) translateY(0); }
+}
+.g25-rs-bow { animation: g25-rs-bow calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.85, 0.35, 1) both; }
+
+@keyframes g25-rs-print {
+  0% { opacity: 0; transform: scale(0.3); }
+  36% { opacity: 0.9; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.1); }
+}
+.g25-rs-print { animation: g25-rs-print calc(0.85s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g25-rs-up {
+  0% { opacity: 0; transform: translateY(16%) scaleY(0.86); }
+  44% { opacity: 1; transform: translateY(0) scaleY(1.04); }
+  60% { transform: scaleY(1); }
+  100% { opacity: 0; transform: translateY(-4%) scaleY(1); }
+}
+.g25-rs-up { animation: g25-rs-up calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+/* --- 14. Halo of the Crown — the curtain is drawn -------------------------- */
+
+@keyframes g25-hc-hand {
+  0% { opacity: 0; transform: translateY(-24%) scale(0.8); }
+  40% { opacity: 1; transform: translateY(0) scale(1); }
+  78% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(4%) scale(0.96); }
+}
+.g25-hc-hand { animation: g25-hc-hand calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g25-hc-left {
+  0% { opacity: 0; transform: translateX(-40%) scaleX(0.4); }
+  46% { opacity: 1; transform: translateX(0) scaleX(1); }
+  62% { transform: translateX(2%) scaleX(1.02); }
+  86% { opacity: 1; transform: translateX(0) scaleX(1); }
+  100% { opacity: 0; transform: translateX(0) scaleX(1); }
+}
+.g25-hc-left { animation: g25-hc-left calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+@keyframes g25-hc-right {
+  0% { opacity: 0; transform: translateX(40%) scaleX(0.4); }
+  46% { opacity: 1; transform: translateX(0) scaleX(1); }
+  62% { transform: translateX(-2%) scaleX(1.02); }
+  86% { opacity: 1; transform: translateX(0) scaleX(1); }
+  100% { opacity: 0; transform: translateX(0) scaleX(1); }
+}
+.g25-hc-right { animation: g25-hc-right calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+/* One hand gets through the last of the gap, along the play's own vector. */
+@keyframes g25-hc-slip {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.7); }
+  38% { opacity: 1; transform: translate(calc(var(--fx-aim-x, 1) * 22%), calc(var(--fx-aim-y, 0) * 22%)) scale(1); }
+  100% { opacity: 0; transform: translate(calc(var(--fx-aim-x, 1) * 76%), calc(var(--fx-aim-y, 0) * 76%)) scale(0.9); }
+}
+.g25-hc-slip { animation: g25-hc-slip calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.4, 1) both; }
+
+@keyframes g25-hc-seam {
+  0% { opacity: 0; transform: scaleY(0.1); }
+  42% { opacity: 1; transform: scaleY(1); }
+  100% { opacity: 0; transform: scaleY(1) scaleX(2.4); }
+}
+.g25-hc-seam { animation: g25-hc-seam calc(0.8s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g25-hc-glow {
+  0% { opacity: 0; transform: scale(0.7); }
+  40% { opacity: 0.9; transform: scale(1.05); }
+  100% { opacity: 0; transform: scale(0.86); }
+}
+.g25-hc-glow { animation: g25-hc-glow calc(1s * var(--fx-dur, 1)) ease-in-out both; }
+
+/* --- 15. Sticky Floorboards — somebody waxed the throne room --------------- */
+
+@keyframes g25-sf-cloth {
+  0% { opacity: 0; transform: rotate(-38deg) translateX(-20%); }
+  40% { opacity: 1; transform: rotate(6deg) translateX(0); }
+  66% { transform: rotate(22deg) translateX(30%); }
+  100% { opacity: 0; transform: rotate(30deg) translateX(56%); }
+}
+.g25-sf-cloth { animation: g25-sf-cloth calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.4, 1) both; }
+
+/* The wax spreads over as many squares as the play caught. */
+@keyframes g25-sf-gloss {
+  0% { opacity: 0; transform: scaleX(0.1); }
+  40% { opacity: 1; transform: scaleX(calc(0.5 + var(--fx-n, 1) * 0.08)); }
+  82% { opacity: 0.7; transform: scaleX(calc(0.5 + var(--fx-n, 1) * 0.08)); }
+  100% { opacity: 0; transform: scaleX(calc(0.55 + var(--fx-n, 1) * 0.08)); }
+}
+.g25-sf-gloss { animation: g25-sf-gloss calc(1s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g25-sf-heel {
+  0% { opacity: 0; transform: rotate(0deg) translateY(0); }
+  32% { opacity: 1; transform: rotate(-14deg) translateY(-16%); }
+  54% { transform: rotate(-18deg) translateY(-22%); }
+  76% { transform: rotate(2deg) translateY(0); }
+  100% { opacity: 0; transform: rotate(0deg) translateY(0); }
+}
+.g25-sf-heel { animation: g25-sf-heel calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.5, 0, 0.5, 1) both; }
+
+@keyframes g25-sf-stuck {
+  0% { opacity: 0; transform: rotate(0deg); }
+  30% { opacity: 1; transform: rotate(-8deg); }
+  48% { transform: rotate(7deg); }
+  66% { transform: rotate(-4deg); }
+  84% { transform: rotate(2deg); }
+  100% { opacity: 0; transform: rotate(0deg); }
+}
+.g25-sf-stuck { animation: g25-sf-stuck calc(1.05s * var(--fx-dur, 1)) ease-in-out both; }
+
+/* One person is grand enough to glide anyway, straight down the vector. */
+@keyframes g25-sf-glide {
+  0% { opacity: 0; transform: translate(0, 0); }
+  30% { opacity: 1; transform: translate(calc(var(--fx-aim-x, 1) * 16%), calc(var(--fx-aim-y, 0) * 16%)); }
+  100% { opacity: 0; transform: translate(calc(var(--fx-aim-x, 1) * 96%), calc(var(--fx-aim-y, 0) * 96%)); }
+}
+.g25-sf-glide { animation: g25-sf-glide calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.7, 0.3, 1) both; }
+
+/* --- 16. Tilted Crown — the curtsy goes wrong ------------------------------ */
+
+@keyframes g25-ct-dip {
+  0% { opacity: 0; transform: scaleY(1) translateY(-6%); }
+  38% { opacity: 1; transform: scaleY(0.88) translateY(0); }
+  64% { transform: scaleY(0.8) translateY(2%); }
+  100% { opacity: 0; transform: scaleY(0.84) translateY(2%); }
+}
+.g25-ct-dip { animation: g25-ct-dip calc(1s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.85, 0.35, 1) both; }
+
+@keyframes g25-ct-tip {
+  0% { opacity: 0; transform: rotate(0deg) scaleY(0.84); }
+  32% { opacity: 1; transform: rotate(-16deg) scaleY(0.86); }
+  56% { transform: rotate(9deg) scaleY(0.92); }
+  76% { transform: rotate(-4deg) scaleY(0.98); }
+  100% { opacity: 0; transform: rotate(0deg) scaleY(1); }
+}
+.g25-ct-tip { animation: g25-ct-tip calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.4, 0.9, 0.4, 1) both; }
+
+@keyframes g25-ct-steady {
+  0% { opacity: 0; transform: translateY(52%) rotate(-24deg); }
+  40% { opacity: 1; transform: translateY(0) rotate(6deg); }
+  60% { transform: rotate(-3deg); }
+  100% { opacity: 0; transform: translateY(-8%) rotate(0deg); }
+}
+.g25-ct-steady { animation: g25-ct-steady calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.95, 0.3, 1) both; }
+
+/* Faces turn aside one after another, further along the real line. */
+@keyframes g25-ct-avert {
+  0% { opacity: 0; transform: rotate(0deg) scale(0.8); }
+  36% { opacity: 1; transform: rotate(0deg) scale(1); }
+  70% { transform: rotate(calc(-26deg - var(--fx-index, 0) * 3deg)) scale(1); }
+  100% { opacity: 0; transform: rotate(calc(-34deg - var(--fx-index, 0) * 3deg)) scale(0.96); }
+}
+.g25-ct-avert { animation: g25-ct-avert calc(1s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.4, 1) both; }
+
+@keyframes g25-ct-pin {
+  0% { opacity: 0; transform: translate(0, -60%) rotate(0deg); }
+  36% { opacity: 1; transform: translate(30%, 0) rotate(120deg); }
+  100% { opacity: 0; transform: translate(120%, 6%) rotate(400deg); }
+}
+.g25-ct-pin { animation: g25-ct-pin calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.7, 1) both; }
+
+/* --- 17. Crown Indemnity — backing out of the room ------------------------- */
+
+@keyframes g25-bo-bow {
+  0% { opacity: 0; transform: rotate(0deg) translateY(10%); }
+  36% { opacity: 1; transform: rotate(14deg) translateY(0); }
+  62% { transform: rotate(4deg); }
+  100% { opacity: 0; transform: rotate(0deg); }
+}
+.g25-bo-bow { animation: g25-bo-bow calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+/* He walks backwards down the vector, never turning round. */
+@keyframes g25-bo-back {
+  0% { opacity: 0; transform: translate(0, 0) scale(1); }
+  28% { opacity: 1; transform: translate(calc(var(--fx-aim-x, 1) * 16%), calc(var(--fx-aim-y, 0) * 16%)) scale(0.99); }
+  64% { transform: translate(calc(var(--fx-aim-x, 1) * 78%), calc(var(--fx-aim-y, 0) * 78%)) scale(0.94); }
+  88% { opacity: 1; transform: translate(calc(var(--fx-aim-x, 1) * 128%), calc(var(--fx-aim-y, 0) * 128%)) scale(0.9); }
+  100% { opacity: 0; transform: translate(calc(var(--fx-aim-x, 1) * 140%), calc(var(--fx-aim-y, 0) * 140%)) scale(0.9); }
+}
+.g25-bo-back { animation: g25-bo-back calc(1.25s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.75, 0.4, 1) both; }
+
+@keyframes g25-bo-pass {
+  0% { opacity: 0; transform: translateY(26%) scale(0.86); }
+  40% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-14%) scale(0.96); }
+}
+.g25-bo-pass { animation: g25-bo-pass calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+@keyframes g25-bo-door {
+  0% { opacity: 0; transform: scaleX(0.1); }
+  44% { opacity: 1; transform: scaleX(1.04); }
+  60% { transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.g25-bo-door { animation: g25-bo-door calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.9, 0.35, 1) both; }
+
+/* --- 18. Velcro Gloves — the handshake that will not let go ---------------- */
+
+@keyframes g25-vg-clasp {
+  0% { opacity: 0; transform: scaleX(0.3) scaleY(0.7); }
+  38% { opacity: 1; transform: scaleX(1.04) scaleY(1); }
+  52% { transform: scaleX(1) scaleY(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: scaleX(1) scaleY(1); }
+}
+.g25-vg-clasp { animation: g25-vg-clasp calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+/* He hauls away down the vector and gets nowhere. */
+@keyframes g25-vg-pull {
+  0% { opacity: 0; transform: translate(0, 0); }
+  30% { opacity: 1; transform: translate(calc(var(--fx-aim-x, 1) * 34%), calc(var(--fx-aim-y, 0) * 34%)); }
+  62% { transform: translate(calc(var(--fx-aim-x, 1) * 58%), calc(var(--fx-aim-y, 0) * 58%)); }
+  100% { opacity: 0; transform: translate(calc(var(--fx-aim-x, 1) * 62%), calc(var(--fx-aim-y, 0) * 62%)); }
+}
+.g25-vg-pull { animation: g25-vg-pull calc(1s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.7, 0.5, 1) both; }
+
+@keyframes g25-vg-rip {
+  0% { opacity: 0; transform: scaleY(0.1) rotate(-8deg); }
+  40% { opacity: 1; transform: scaleY(1.12) rotate(4deg); }
+  58% { transform: scaleY(1) rotate(0deg); }
+  100% { opacity: 0; transform: scaleY(1.2) rotate(6deg); }
+}
+.g25-vg-rip { animation: g25-vg-rip calc(0.75s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.95, 0.3, 1) both; }
+
+@keyframes g25-vg-snap {
+  0% { opacity: 0; transform: translate(calc(var(--fx-aim-x, 1) * 62%), calc(var(--fx-aim-y, 0) * 62%)); }
+  20% { opacity: 1; transform: translate(calc(var(--fx-aim-x, 1) * 62%), calc(var(--fx-aim-y, 0) * 62%)); }
+  56% { transform: translate(calc(var(--fx-aim-x, 1) * -10%), calc(var(--fx-aim-y, 0) * -10%)) scaleX(0.92); }
+  76% { transform: translate(0, 0) scaleX(1); }
+  100% { opacity: 0; transform: translate(0, 0); }
+}
+.g25-vg-snap { animation: g25-vg-snap calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.5, 0.05, 0.3, 1.2) both; }
+
+@keyframes g25-vg-glove {
+  0% { opacity: 0; transform: rotate(-20deg) translateY(-10%); }
+  42% { opacity: 1; transform: rotate(8deg) translateY(0); }
+  66% { transform: rotate(-5deg); }
+  100% { opacity: 0; transform: rotate(0deg) translateY(8%); }
+}
+.g25-vg-glove { animation: g25-vg-glove calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.85, 0.35, 1) both; }
+
+/* --- 19. Paper Crown — the fool tumbles in --------------------------------- */
+
+@keyframes g25-fc-tumble {
+  0% { opacity: 0; transform: translateX(calc(var(--fx-side, 1) * -70%)) rotate(-180deg) scale(0.7); }
+  40% { opacity: 1; transform: translateX(-10%) rotate(60deg) scale(1); }
+  62% { transform: translateX(0) rotate(0deg) scale(1.06); }
+  76% { transform: scale(1); }
+  100% { opacity: 0; transform: translateX(0) rotate(0deg) scale(1); }
+}
+.g25-fc-tumble { animation: g25-fc-tumble calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+@keyframes g25-fc-hat {
+  0% { opacity: 0; transform: translateY(-120%) rotate(-40deg); }
+  44% { opacity: 1; transform: translateY(6%) rotate(8deg); }
+  58% { transform: translateY(0) rotate(-4deg); }
+  74% { transform: rotate(0deg); }
+  100% { opacity: 0; transform: translateY(0) rotate(0deg); }
+}
+.g25-fc-hat { animation: g25-fc-hat calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.95, 0.35, 1) both; }
+
+/* The laugh runs down the room, later places louder. */
+@keyframes g25-fc-laugh {
+  0% { opacity: 0; transform: scale(0.3) translateY(10%); }
+  40% { opacity: 1; transform: scale(calc(1.05 + var(--fx-index, 0) * 0.04)) translateY(-6%); }
+  60% { transform: scale(1) translateY(0); }
+  100% { opacity: 0; transform: scale(1.1) translateY(-12%); }
+}
+.g25-fc-laugh { animation: g25-fc-laugh calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g25-fc-bell {
+  0% { opacity: 0; transform: scale(0.2) translateY(-40%); }
+  40% { opacity: 1; transform: scale(1.3) translateY(0); }
+  100% { opacity: 0; transform: scale(0.6) translateY(20%); }
+}
+.g25-fc-bell { animation: g25-fc-bell calc(0.6s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g25-fc-scrap {
+  0% { opacity: 0; transform: translate(0, -70%) rotate(0deg); }
+  34% { opacity: 1; transform: translate(20%, -20%) rotate(90deg); }
+  100% { opacity: 0; transform: translate(-30%, 90%) rotate(300deg); }
+}
+.g25-fc-scrap { animation: g25-fc-scrap calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.6, 1) both; }
+
+/* --- 20. Hedgerow Buds — the gardener's pinch ------------------------------ */
+
+/* The hedge runs as far along the row as the play reaches. */
+@keyframes g25-hb-hedge {
+  0% { opacity: 0; transform: scaleX(0.05); }
+  42% { opacity: 1; transform: scaleX(calc(0.6 + var(--fx-n, 1) * 0.07)); }
+  84% { opacity: 0.85; transform: scaleX(calc(0.6 + var(--fx-n, 1) * 0.07)); }
+  100% { opacity: 0; transform: scaleX(calc(0.62 + var(--fx-n, 1) * 0.07)); }
+}
+.g25-hb-hedge { animation: g25-hb-hedge calc(1s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g25-hb-pinch {
+  0% { opacity: 0; transform: scale(0.5) rotate(-10deg); }
+  36% { opacity: 1; transform: scale(1) rotate(0deg); }
+  56% { transform: scaleX(0.72) scaleY(1.1); }
+  76% { transform: scale(1); }
+  100% { opacity: 0; transform: scale(1); }
+}
+.g25-hb-pinch { animation: g25-hb-pinch calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.85, 0.35, 1) both; }
+
+@keyframes g25-hb-open {
+  0% { opacity: 0; transform: scale(0.1) rotate(-60deg); }
+  46% { opacity: 1; transform: scale(1.16) rotate(6deg); }
+  62% { transform: scale(1) rotate(0deg); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.04) rotate(4deg); }
+}
+.g25-hb-open { animation: g25-hb-open calc(1s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g25-hb-shut {
+  0% { opacity: 0; transform: scaleY(0.8); }
+  40% { opacity: 0.9; transform: scaleY(1); }
+  66% { transform: scaleY(0.94); }
+  100% { opacity: 0; transform: scaleY(0.94); }
+}
+.g25-hb-shut { animation: g25-hb-shut calc(0.9s * var(--fx-dur, 1)) ease-in-out both; }
+
+/* --- Global kill switch ----------------------------------------------------
+   Settings animations-off parks every g25 play outright. */
+html[data-anim="off"] [class^="g25-"], html[data-anim="off"] [class*=" g25-"] { animation: none !important; opacity: 0 !important; }

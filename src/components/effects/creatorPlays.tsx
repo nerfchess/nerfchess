@@ -22,7 +22,7 @@
 import "./creatorPlays.css";
 
 import type { CSSProperties, ReactNode } from "react";
-import type { SigPlugin } from "./sigPlugins";
+import type { SigPlugin, SigRole } from "./sigPlugins";
 
 /** Inline animation-delay: every choreography offset flows through this. */
 const d = (ms: number): CSSProperties => ({ animationDelay: `${ms}ms` });
@@ -60,10 +60,45 @@ function Star({ id, mark }: { id: string; mark: ReactNode }) {
    Shared staging (module-local, deliberately not imported from other modules)
    ========================================================================== */
 
-/** A board-centred stage. Board-wide scenes must centre on the BOARD, never on
- * the cast square, or they clip mid-screen (design brief, edge safety). */
+interface SceneProps {
+  lead: boolean;
+  role: SigRole;
+  delayMs: number;
+}
+
+/** The scene box: exactly the square the scene is anchored on.
+ *
+ * Every scene here is composed inside ONE cell (`inset: 0`), so it carries no
+ * board-scale layer at all and nothing has to move into a `BoardFrame` when a
+ * card stops being board-centred. Four of the five now declare `anchor:
+ * "cast"` and play on the square they were cast on; only the one that changes
+ * a rule for the whole board stays `"board"`. */
 function Stage({ children, className = "" }: { children: ReactNode; className?: string }) {
   return <span className={`cpl-stage ${className}`}>{children}</span>;
+}
+
+/** The entrance cut: the card arriving in a hand. Same palette and the same
+ * central mark as the play, at ~56% of the crop, no board takeover — the mark
+ * steps in from the caster's own side (--fx-side, in @keyframes cpl-arrive)
+ * and one ring opens behind it. */
+function Arrival({
+  delayMs,
+  hue,
+  children,
+}: {
+  delayMs: number;
+  hue: string;
+  children: ReactNode;
+}) {
+  return (
+    <Stage className="cpl-arrival">
+      <span className="cpl-arrive-ring" style={dv(delayMs + 40, { "--cpl-hue": hue })} />
+      <span className="cpl-arrive-mark" style={d(delayMs + 160)}>
+        {children}
+      </span>
+      <Settle delayMs={delayMs + 520} hue={hue} />
+    </Stage>
+  );
 }
 
 /** The tell: a single dim-and-inhale beat under 300ms that every scene opens
@@ -149,17 +184,24 @@ const MARK_CHAT = (
 /** THE STALLING BISHOP. Tell: the board dims and a ring inhales. Strike: the
  * ring SLAMS shut around the mitre and two crossed bars snap over it (cannot be
  * taken, cannot take). Settle: the ring breathes once, and stays. */
-function StallingBishopScene({ delayMs }: { lead: boolean; delayMs: number }) {
+function StallingBishopScene({ role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} hue="200 220 255">
+        <Star id="cr_stalling_bishop" mark={MARK_BISHOP} />
+      </Arrival>
+    );
+  }
   return (
     <Stage className="cpl-bishop">
       <Tell delayMs={delayMs} hue="200 220 255" />
-      <span className="cpl-bishop__ring" style={d(delayMs + 240)} />
-      <span className="cpl-bishop__star" style={d(delayMs + 300)}>
+      <span className="cpl-bishop-ring" style={d(delayMs + 240)} />
+      <span className="cpl-bishop-star" style={d(delayMs + 300)}>
         <Star id="cr_stalling_bishop" mark={MARK_BISHOP} />
       </span>
-      <span className="cpl-bishop__bar cpl-bishop__bar--a" style={d(delayMs + 380)} />
-      <span className="cpl-bishop__bar cpl-bishop__bar--b" style={d(delayMs + 440)} />
-      <Settle delayMs={delayMs + 620} hue="200 220 255" />
+      <span className="cpl-bishop-bar cpl-bishop-bar-a" style={d(delayMs + 380)} />
+      <span className="cpl-bishop-bar cpl-bishop-bar-b" style={d(delayMs + 440)} />
+      <Settle delayMs={delayMs + 900} hue="200 220 255" />
     </Stage>
   );
 }
@@ -167,22 +209,29 @@ function StallingBishopScene({ delayMs }: { lead: boolean; delayMs: number }) {
 /** OH NO MY QUEEN. Tell: a red panic flash and a downward shadow. Strike: the
  * crown is YANKED across the stage on an arc while four shock-pips fire out at
  * the frozen attackers. Settle: gold dust drifts, and a clock pip ticks up. */
-function OhNoMyQueenScene({ delayMs }: { lead: boolean; delayMs: number }) {
+function OhNoMyQueenScene({ role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} hue="255 215 106">
+        <Star id="cr_oh_no_my_queen" mark={MARK_CROWN} />
+      </Arrival>
+    );
+  }
   return (
     <Stage className="cpl-queen">
       <Tell delayMs={delayMs} hue="255 120 96" />
-      <span className="cpl-queen__panic" style={d(delayMs + 60)} />
-      <span className="cpl-queen__star" style={d(delayMs + 260)}>
+      <span className="cpl-queen-panic" style={d(delayMs + 60)} />
+      <span className="cpl-queen-star" style={d(delayMs + 260)}>
         <Star id="cr_oh_no_my_queen" mark={MARK_CROWN} />
       </span>
       {[0, 1, 2, 3].map((i) => (
         <span
           key={i}
-          className="cpl-queen__pip"
+          className="cpl-queen-pip"
           style={dv(delayMs + 420 + i * 55, { "--cpl-a": `${i * 90 + 45}deg` })}
         />
       ))}
-      <span className="cpl-queen__tick" style={d(delayMs + 700)} />
+      <span className="cpl-queen-tick" style={d(delayMs + 700)} />
       <Settle delayMs={delayMs + 760} hue="255 215 106" />
     </Stage>
   );
@@ -191,25 +240,32 @@ function OhNoMyQueenScene({ delayMs }: { lead: boolean; delayMs: number }) {
 /** FAMILY GAME NIGHT. Tell: the stage warms. Strike: two hands close in from the
  * edges and a lamp blooms over the shared square, then both card fans flip face
  * up. Settle: the warm glow lingers, nobody is hiding anything. */
-function FamilyGameNightScene({ delayMs }: { lead: boolean; delayMs: number }) {
+function FamilyGameNightScene({ role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} hue="255 214 150">
+        <Star id="cr_family_game_night" mark={MARK_HANDS} />
+      </Arrival>
+    );
+  }
   return (
     <Stage className="cpl-family">
       <Tell delayMs={delayMs} hue="255 214 150" />
-      <span className="cpl-family__lamp" style={d(delayMs + 220)} />
-      <span className="cpl-family__star" style={d(delayMs + 280)}>
+      <span className="cpl-family-lamp" style={d(delayMs + 220)} />
+      <span className="cpl-family-star" style={d(delayMs + 280)}>
         <Star id="cr_family_game_night" mark={MARK_HANDS} />
       </span>
       {[0, 1, 2].map((i) => (
         <span
           key={`l${i}`}
-          className="cpl-family__card cpl-family__card--l"
+          className="cpl-family-card cpl-family-card-l"
           style={dv(delayMs + 420 + i * 70, { "--cpl-r": `${-14 + i * 14}deg` })}
         />
       ))}
       {[0, 1, 2].map((i) => (
         <span
           key={`r${i}`}
-          className="cpl-family__card cpl-family__card--r"
+          className="cpl-family-card cpl-family-card-r"
           style={dv(delayMs + 460 + i * 70, { "--cpl-r": `${14 - i * 14}deg` })}
         />
       ))}
@@ -221,22 +277,31 @@ function FamilyGameNightScene({ delayMs }: { lead: boolean; delayMs: number }) {
 /** SPEEDRUN PROTOCOL. Tell: a single countdown pip. Strike: six speed lines rake
  * across the board in a tight stagger while the gauge needle pins over. Settle:
  * the lines thin out to a steady pulse, the pressure is still on. */
-function SpeedrunProtocolScene({ delayMs }: { lead: boolean; delayMs: number }) {
+function SpeedrunProtocolScene({ role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} hue="255 138 52">
+        <Star id="cr_speedrun_protocol" mark={MARK_GAUGE} />
+      </Arrival>
+    );
+  }
   return (
     <Stage className="cpl-speed">
       <Tell delayMs={delayMs} hue="255 138 52" />
+      {/* the countdown pip: the one beat of anticipation before the rake */}
+      <span className="cpl-speed-pip" style={d(delayMs + 140)} />
       {[0, 1, 2, 3, 4, 5].map((i) => (
         <span
           key={i}
-          className="cpl-speed__line"
+          className="cpl-speed-line"
           style={dv(delayMs + 200 + i * 45, { "--cpl-y": `${12 + i * 14}%` })}
         />
       ))}
-      <span className="cpl-speed__star" style={d(delayMs + 300)}>
+      <span className="cpl-speed-star" style={d(delayMs + 300)}>
         <Star id="cr_speedrun_protocol" mark={MARK_GAUGE} />
       </span>
-      <span className="cpl-speed__pulse" style={d(delayMs + 640)} />
-      <Settle delayMs={delayMs + 720} hue="255 138 52" />
+      <span className="cpl-speed-pulse" style={d(delayMs + 640)} />
+      <Settle delayMs={delayMs + 880} hue="255 138 52" />
     </Stage>
   );
 }
@@ -244,45 +309,54 @@ function SpeedrunProtocolScene({ delayMs }: { lead: boolean; delayMs: number }) 
 /** CHAT PICKS. Tell: the stage cools and a cursor blinks. Strike: three chat
  * lines scroll up fast, then ONE of them is seized and stamped over the board.
  * Settle: the stamp's ink bleeds out and fades. */
-function ChatPicksScene({ delayMs }: { lead: boolean; delayMs: number }) {
+function ChatPicksScene({ role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} hue="143 168 224">
+        <Star id="cr_chat_picks" mark={MARK_CHAT} />
+      </Arrival>
+    );
+  }
   return (
     <Stage className="cpl-chat">
       <Tell delayMs={delayMs} hue="143 168 224" />
+      {/* the cursor blinks first: chat is about to say something */}
+      <span className="cpl-chat-cursor" style={d(delayMs + 150)} />
       {[0, 1, 2].map((i) => (
         <span
           key={i}
-          className="cpl-chat__line"
+          className="cpl-chat-line"
           style={dv(delayMs + 180 + i * 80, { "--cpl-y": `${58 - i * 12}%`, "--cpl-w": `${34 + i * 12}%` })}
         />
       ))}
-      <span className="cpl-chat__star" style={d(delayMs + 420)}>
+      <span className="cpl-chat-star" style={d(delayMs + 420)}>
         <Star id="cr_chat_picks" mark={MARK_CHAT} />
       </span>
-      <span className="cpl-chat__stamp" style={d(delayMs + 520)} />
-      <Settle delayMs={delayMs + 700} hue="143 168 224" />
+      <span className="cpl-chat-stamp" style={d(delayMs + 520)} />
+      <Settle delayMs={delayMs + 880} hue="143 168 224" />
     </Stage>
   );
 }
 
 export const PLAYS: Record<string, SigPlugin> = {
   cr_stalling_bishop: {
-    config: { ordering: "radial", staggerMs: 0, victims: ["b"], hasLead: true, sound: "aegis" },
+    config: { ordering: "radial", staggerMs: 0, victims: ["b"], hasLead: true, sound: "aegis", anchor: "cast" },
     Render: StallingBishopScene,
   },
   cr_oh_no_my_queen: {
-    config: { ordering: "radial", staggerMs: 60, victims: ["q"], hasLead: true, sound: "coronation" },
+    config: { ordering: "radial", staggerMs: 60, victims: ["q"], hasLead: true, sound: "coronation", anchor: "board" },
     Render: OhNoMyQueenScene,
   },
   cr_family_game_night: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", anchor: "board" },
     Render: FamilyGameNightScene,
   },
   cr_speedrun_protocol: {
-    config: { ordering: "radial", staggerMs: 40, victims: "all", hasLead: true, sound: "blitz" },
+    config: { ordering: "radial", staggerMs: 40, victims: "all", hasLead: true, sound: "blitz", anchor: "board" },
     Render: SpeedrunProtocolScene,
   },
   cr_chat_picks: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coinflip" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coinflip", anchor: "board" },
     Render: ChatPicksScene,
   },
 };

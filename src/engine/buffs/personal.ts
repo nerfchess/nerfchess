@@ -859,6 +859,7 @@ const FOCUS: Buff[] = [
       category: "pieces",
       icon: "Home",
       flavor: "Population small, spirit enormous.",
+      fx: { motif: "rally", pieces: "all", self: true },
     },
     {
       kind: "passive",

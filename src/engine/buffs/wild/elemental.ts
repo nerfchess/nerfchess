@@ -1392,6 +1392,7 @@ export const WILD_ELEMENTAL: Buff[] = [
       tier: 4,
       category: "attack",
       flavor: "It rolls sideways.",
+      fx: { motif: "empower", pieces: "all", self: true },
     },
     captureExplosion({ beside: true, charges: 2 }),
   ),

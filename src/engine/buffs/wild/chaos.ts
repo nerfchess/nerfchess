@@ -1218,6 +1218,7 @@ export const WILD_CHAOS: Buff[] = [
       tier: 4,
       category: "attack",
       flavor: "Ouch. Why did that hurt me.",
+      fx: { motif: "ward", pieces: "all", self: true },
     },
     {
       kind: "passive",

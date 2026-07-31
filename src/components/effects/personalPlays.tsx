@@ -28,7 +28,8 @@
 // placement (summon).
 
 import type { CSSProperties, ReactNode } from "react";
-import type { SigPlugin } from "./sigPlugins";
+import type { SigPlugin, SigRole } from "./sigPlugins";
+import { BoardFrame } from "./stage";
 import "./personalPlays.css";
 
 /* ------------------------------------------------------------------------- */
@@ -57,6 +58,98 @@ function Wide({ children }: { children: ReactNode }) {
   return (
     <span className="pnp pointer-events-none absolute inset-0 z-30" aria-hidden="true">
       <span className="absolute left-[-650%] top-[-650%] block h-[1400%] w-[1400%]">{children}</span>
+    </span>
+  );
+}
+
+/** The same 14-cell composition for a lead that declares `anchor: "cast"`,
+ * pinned to the BOARD.
+ *
+ * These scenes carry genuinely board-scale layers — a barbell spanning the
+ * whole board, soundwave ribbons washing it, veins of light running the files
+ * — and the design brief is explicit that a layer meaning "the board" goes in
+ * a `BoardFrame` rather than at a fixed percentage of an anchored canvas. The
+ * canvas is 14 cells and the board is the middle 8, so the art is re-expanded
+ * to 175% of the frame and offset -37.5%, which reproduces the old framing
+ * exactly at any anchor. The cast square then carries the play's own local
+ * beats; see `Spot`. */
+function Framed({ children }: { children: ReactNode }) {
+  return (
+    <span className="pnp pointer-events-none absolute inset-0 z-30" aria-hidden="true">
+      <span className="fx-stage absolute left-[-650%] top-[-650%] block h-[1400%] w-[1400%]">
+        <BoardFrame>
+          <span className="absolute left-[-37.5%] top-[-37.5%] block h-[175%] w-[175%]">{children}</span>
+        </BoardFrame>
+      </span>
+    </span>
+  );
+}
+
+interface SceneProps {
+  lead: boolean;
+  role: SigRole;
+  delayMs: number;
+}
+
+/** The cast square's own three beats, at one-cell scale on the square the card
+ * was actually played on: a ring inhales (tell), the square lights (strike),
+ * and a mote drifts off it (settle).
+ *
+ * The drift is the module's directional layer. --fx-side is +1 when the
+ * caster's home rank is drawn at the bottom of the screen and -1 when it is at
+ * the top, so the mote trails back toward the player who played the card
+ * rather than "down", which is backwards for one of the two seats. */
+function Spot({
+  tell,
+  hit,
+  settle,
+  tone,
+  glow,
+}: {
+  tell: CSSProperties;
+  hit: CSSProperties;
+  settle: CSSProperties;
+  tone: string;
+  glow: string;
+}) {
+  return (
+    <span className="pnp pointer-events-none absolute inset-0 z-30 block" aria-hidden="true">
+      <span
+        className="pnp-spot-tell absolute block"
+        style={{ left: "8%", top: "8%", width: "84%", height: "84%", borderRadius: "50%", border: `2px solid ${glow}`, ...tell }}
+      />
+      <span
+        className="pnp-spot-hit absolute inset-0 block"
+        style={{ background: `radial-gradient(circle, ${glow} 0%, transparent 62%)`, ...hit }}
+      />
+      <span
+        className="pnp-spot-drift absolute block"
+        style={{ left: "26%", top: "26%", width: "48%", height: "48%", borderRadius: "50%", background: `radial-gradient(circle, ${tone} 0%, transparent 66%)`, ...settle }}
+      />
+    </span>
+  );
+}
+
+/** The entrance cut: the card arriving in a hand.
+ *
+ * The play's own star at ~56% of the crop, stepping in from the caster's side
+ * over a soft elliptical ground shadow — a free-standing character, never a
+ * photo card and never a rectangular wash behind a portrait (design brief §3).
+ * No board takeover. */
+function Arrival({ delayMs, tone, glow, children }: { delayMs: number; tone: string; glow: string; children: ReactNode }) {
+  return (
+    <span className="pnp pointer-events-none absolute inset-0 z-30 block" aria-hidden="true">
+      <span
+        className="pnp-arrive-ring absolute block"
+        style={{ left: "20%", top: "20%", width: "60%", height: "60%", borderRadius: "50%", border: `2px solid ${glow}`, ...d(delayMs + 40) }}
+      />
+      <span className="pnp-arrive absolute block" style={{ left: "22%", top: "18%", width: "56%", height: "60%", ...d(delayMs + 180) }}>
+        {children}
+      </span>
+      <span
+        className="pnp-spot-drift absolute block"
+        style={{ left: "30%", top: "62%", width: "40%", height: "16%", borderRadius: "50%", background: `radial-gradient(closest-side, ${tone}, transparent 74%)`, ...d(delayMs + 700) }}
+      />
     </span>
   );
 }
@@ -213,14 +306,34 @@ function KissMark({ x, y, s = 1, fill = "#e8506e" }: { x: number; y: number; s?:
 function AthleteScene({
   id,
   lead,
+  role,
   delayMs,
   wash = "rgba(232,237,246,0.14)",
+  tone = "#e8edf6",
+  glow = "#ffd76a",
+  tell,
+  hit,
+  settle,
 }: {
   id: string;
   lead: boolean;
+  role: SigRole;
   delayMs: number;
   wash?: string;
+  tone?: string;
+  glow?: string;
+  tell?: CSSProperties;
+  hit?: CSSProperties;
+  settle?: CSSProperties;
 }) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="rgba(232,237,246,0.42)" glow="#ffd76a">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={`/gym/${id}.svg`} alt="" aria-hidden draggable={false} className="h-full w-full select-none object-contain" />
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Stage>
@@ -237,7 +350,8 @@ function AthleteScene({
     );
   }
   return (
-    <Wide>
+    <>
+      <Framed>
       <Wash color={wash} delayMs={delayMs} />
       {/* TELL: the chalk clap, before anyone appears */}
       <Prop left="40%" top="40%" width="10%" height="10%">
@@ -270,6 +384,24 @@ function AthleteScene({
           <img src={`/gym/${id}.svg`} alt="" aria-hidden draggable={false} className="h-full w-full select-none object-contain" />
         </span>
       </Prop>
+      {/* SETTLE (directional): the chalk cloud does not just fall, it hangs
+          and drifts back toward the lifter's OWN side of the board. --fx-side
+          is +1 when the caster's home rank is drawn at the bottom of the
+          screen and -1 when it is at the top, so this is right in both seats;
+          "downward" would be backwards for one of them. */}
+      <Prop
+        left="40%"
+        top="52%"
+        width="20%"
+        height="10%"
+        className="pnp-chalkdrift"
+        style={{ ...d(delayMs + 1240), "--pnp-lean": "calc(var(--fx-side, 1) * 24%)" } as CSSProperties}
+      >
+        <span
+          className="absolute inset-0 block rounded-full"
+          style={{ background: "radial-gradient(closest-side, rgba(232,237,246,0.5), transparent 72%)" }}
+        />
+      </Prop>
       {/* SETTLE: loose chalk specks drift back down */}
       {[
         { l: "39%", t: "38%", dl: 1050 },
@@ -284,28 +416,107 @@ function AthleteScene({
           </svg>
         </Prop>
       ))}
-    </Wide>
+      </Framed>
+      {/* the square he is actually lifting on keeps its own three beats */}
+      <Spot
+        tone={tone}
+        glow={glow}
+        tell={tell ?? d(delayMs + 100)}
+        hit={hit ?? d(delayMs + 860)}
+        settle={settle ?? d(delayMs + 1900)}
+      />
+    </>
   );
 }
 
-const HandstandPushupPlay = ({ lead, delayMs }: { lead: boolean; delayMs: number }) => (
-  <AthleteScene id="handstand_pushup" lead={lead} delayMs={delayMs} />
-);
-const FullPlanchePlay = ({ lead, delayMs }: { lead: boolean; delayMs: number }) => (
-  <AthleteScene id="full_planche" lead={lead} delayMs={delayMs} wash="rgba(255,215,106,0.12)" />
-);
-const FingertipMaltesePlay = ({ lead, delayMs }: { lead: boolean; delayMs: number }) => (
-  <AthleteScene id="fingertip_maltese" lead={lead} delayMs={delayMs} wash="rgba(159,208,234,0.13)" />
-);
-const OneArmDreamPlay = ({ lead, delayMs }: { lead: boolean; delayMs: number }) => (
-  <AthleteScene id="onearmmuscleupismydream" lead={lead} delayMs={delayMs} wash="rgba(255,215,106,0.10)" />
-);
+/* The four calisthenics cards share AthleteScene but not its timing: each one
+ * names its own tell / strike / settle so the hold matches the skill (a
+ * handstand push-up snaps, a maltese is held). They used to be bare arrow
+ * consts with an expression body, which is also why the complexity gate could
+ * not read them at all. */
+function HandstandPushupPlay({ lead, role, delayMs }: SceneProps) {
+  return (
+    <AthleteScene
+      id="handstand_pushup"
+      lead={lead}
+      role={role}
+      delayMs={delayMs}
+      tone="#e8edf6"
+      glow="#ffd76a"
+      tell={d(delayMs + 90)}
+      hit={d(delayMs + 780)}
+      settle={d(delayMs + 1800)}
+    />
+  );
+}
+
+function FullPlanchePlay({ lead, role, delayMs }: SceneProps) {
+  return (
+    <AthleteScene
+      id="full_planche"
+      lead={lead}
+      role={role}
+      delayMs={delayMs}
+      wash="rgba(255,215,106,0.12)"
+      tone="#ffd76a"
+      glow="#e8edf6"
+      tell={d(delayMs + 110)}
+      hit={d(delayMs + 900)}
+      settle={d(delayMs + 2000)}
+    />
+  );
+}
+
+function FingertipMaltesePlay({ lead, role, delayMs }: SceneProps) {
+  return (
+    <AthleteScene
+      id="fingertip_maltese"
+      lead={lead}
+      role={role}
+      delayMs={delayMs}
+      wash="rgba(159,208,234,0.13)"
+      tone="#9fd0ea"
+      glow="#e8edf6"
+      tell={d(delayMs + 120)}
+      hit={d(delayMs + 960)}
+      settle={d(delayMs + 2100)}
+    />
+  );
+}
+
+function OneArmDreamPlay({ lead, role, delayMs }: SceneProps) {
+  return (
+    <AthleteScene
+      id="onearmmuscleupismydream"
+      lead={lead}
+      role={role}
+      delayMs={delayMs}
+      wash="rgba(255,215,106,0.10)"
+      tone="#ffd76a"
+      glow="#e8edf6"
+      tell={d(delayMs + 100)}
+      hit={d(delayMs + 880)}
+      settle={d(delayMs + 1950)}
+    />
+  );
+}
 
 /* ------------------------------------------------------------------------- */
 /* 1. Muscle Up (t4) — chalk hits the bar, dead hang, EXPLOSIVE rise          */
 /* ------------------------------------------------------------------------- */
 
-function MuscleUpPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+function MuscleUpPlay({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="rgba(232,237,246,0.42)" glow="#ffd76a">
+        <svg viewBox="0 0 100 100" className="h-full w-full">
+          <rect x={10} y={22} width={80} height={6} rx={3} fill="#aab6c8" stroke="#5c6880" strokeWidth={1.8} />
+          <path d="M40 50 q3 -12 10 -18 m20 18 q-3 -12 -10 -18" fill="none" stroke="#7a6a4a" strokeWidth={3.4} strokeLinecap="round" />
+          <Pawn x={50} y={58} s={2.4} />
+        </svg>
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Stage>
@@ -324,7 +535,8 @@ function MuscleUpPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     );
   }
   return (
-    <Wide>
+    <>
+      <Framed>
       <Wash color="rgba(232,237,246,0.14)" delayMs={delayMs} />
       <Prop left="29%" top="25%" width="42%" height="42%">
         <svg viewBox="0 0 100 100" className="h-full w-full">
@@ -363,7 +575,9 @@ function MuscleUpPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         </svg>
       </Prop>
       <Ring color="rgba(255,215,106,0.85)" delayMs={delayMs + 1050} />
-    </Wide>
+      </Framed>
+      <Spot tone="#e8edf6" glow="#ffd76a" tell={d(delayMs + 100)} hit={d(delayMs + 880)} settle={d(delayMs + 1950)} />
+    </>
   );
 }
 
@@ -371,7 +585,19 @@ function MuscleUpPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 /* 2. 225 Bench (t6) — the loaded barbell presses across the board            */
 /* ------------------------------------------------------------------------- */
 
-function Bench225Play({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+function Bench225Play({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="rgba(232,77,91,0.4)" glow="#aab6c8">
+        <svg viewBox="0 0 100 100" className="h-full w-full">
+          <rect x={6} y={46} width={88} height={7} rx={3.5} fill="#aab6c8" stroke="#5c6880" strokeWidth={2} />
+          <circle cx={20} cy={49} r={18} fill="#39445c" stroke="#232a38" strokeWidth={2.4} />
+          <circle cx={80} cy={49} r={18} fill="#39445c" stroke="#232a38" strokeWidth={2.4} />
+          <text x={50} y={84} fontSize={20} fontWeight={900} fill="#e84d5b" textAnchor="middle">225</text>
+        </svg>
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Stage>
@@ -385,7 +611,8 @@ function Bench225Play({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     );
   }
   return (
-    <Wide>
+    <>
+      <Framed>
       <Wash color="rgba(57,68,92,0.2)" delayMs={delayMs} />
       {/* the bar spans the whole visible board */}
       <Prop left="17%" top="39%" width="66%" height="21%">
@@ -445,7 +672,9 @@ function Bench225Play({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         </svg>
       </Prop>
       <Ring color="rgba(232,77,91,0.85)" delayMs={delayMs + 700} />
-    </Wide>
+      </Framed>
+      <Spot tone="#e84d5b" glow="#aab6c8" tell={d(delayMs + 110)} hit={d(delayMs + 940)} settle={d(delayMs + 2050)} />
+    </>
   );
 }
 
@@ -453,7 +682,20 @@ function Bench225Play({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 /* 3. Monkeytype (t3) — caret, word stream, WPM climbing, keycaps raining     */
 /* ------------------------------------------------------------------------- */
 
-function MonkeytypePlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+function MonkeytypePlay({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="rgba(232,210,77,0.4)" glow="#e8edf6">
+        <svg viewBox="0 0 100 100" className="h-full w-full">
+          <rect x={8} y={28} width={84} height={44} rx={6} fill="#1c212e" stroke="#39445c" strokeWidth={3} />
+          <rect x={18} y={44} width={22} height={6} rx={3} fill="#e8d24d" />
+          <rect x={44} y={44} width={30} height={6} rx={3} fill="#e8edf6" />
+          <rect x={18} y={58} width={38} height={6} rx={3} fill="#3d4a66" />
+          <rect x={14} y={41} width={2.6} height={12} rx={1.3} fill="#e8d24d" />
+        </svg>
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Stage>
@@ -469,7 +711,8 @@ function MonkeytypePlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     );
   }
   return (
-    <Stage inset="-150%">
+    <>
+      <Stage inset="-150%">
       <svg viewBox="0 0 100 100" className="h-full w-full">
         {/* the test line: a calm dark card, monkeytype-style; the card takes a
             focus breath (two soft pulses) before the first keystroke — the tell */}
@@ -514,7 +757,9 @@ function MonkeytypePlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           </g>
         ))}
       </svg>
-    </Stage>
+      </Stage>
+      <Spot tone="#e8d24d" glow="#e8edf6" tell={d(delayMs + 90)} hit={d(delayMs + 820)} settle={d(delayMs + 1900)} />
+    </>
   );
 }
 
@@ -524,7 +769,19 @@ function MonkeytypePlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 
 const CUBE_COLS = ["#e6432c", "#ffd23f", "#4fa3d1", "#6abf5f", "#ff9d3d", "#f5f7fb", "#e6432c", "#4fa3d1", "#ffd23f"];
 
-function RubiksCubePlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+function RubiksCubePlay({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="rgba(255,210,63,0.4)" glow="#4fa3d1">
+        <svg viewBox="0 0 100 100" className="h-full w-full">
+          <rect x={12} y={12} width={76} height={76} rx={9} fill="#232a38" stroke="#12161f" strokeWidth={3} />
+          {CUBE_COLS.map((c, i) => (
+            <rect key={i} x={18 + (i % 3) * 22} y={18 + Math.floor(i / 3) * 22} width={20} height={20} rx={4} fill={c} />
+          ))}
+        </svg>
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Stage>
@@ -542,7 +799,8 @@ function RubiksCubePlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     );
   }
   return (
-    <Wide>
+    <>
+      <Framed>
       <Wash color="rgba(35,42,56,0.18)" delayMs={delayMs} />
       <Prop left="31%" top="28%" width="38%" height="38%">
         <svg viewBox="0 0 100 100" className="h-full w-full">
@@ -581,7 +839,9 @@ function RubiksCubePlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         </svg>
       </Prop>
       <Ring color="rgba(255,210,63,0.85)" delayMs={delayMs + 1260} />
-    </Wide>
+      </Framed>
+      <Spot tone="#ffd23f" glow="#4fa3d1" tell={d(delayMs + 100)} hit={d(delayMs + 900)} settle={d(delayMs + 2000)} />
+    </>
   );
 }
 
@@ -602,7 +862,19 @@ function RibbonWave({ y, color, w = 3.2 }: { y: number; color: string; w?: numbe
   );
 }
 
-function WhimperingAudiosPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+function WhimperingAudiosPlay({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="rgba(242,119,143,0.4)" glow="#c9b0e8">
+        <svg viewBox="0 0 100 100" className="h-full w-full">
+          <path d="M18 58 a32 32 0 0 1 64 0" fill="none" stroke="#b34760" strokeWidth={7} strokeLinecap="round" />
+          <rect x={10} y={52} width={14} height={24} rx={7} fill="#f2778f" stroke="#b34760" strokeWidth={2.4} />
+          <rect x={76} y={52} width={14} height={24} rx={7} fill="#f2778f" stroke="#b34760" strokeWidth={2.4} />
+          <path d="M50 20 c-2.4 -4 -8 -2.4 -8 1.6 c0 3.2 4.4 6 8 8.4 c3.6 -2.4 8 -5.2 8 -8.4 c0 -4 -5.6 -5.6 -8 -1.6 Z" fill="#c9b0e8" />
+        </svg>
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Stage>
@@ -619,7 +891,8 @@ function WhimperingAudiosPlay({ lead, delayMs }: { lead: boolean; delayMs: numbe
     );
   }
   return (
-    <Wide>
+    <>
+      <Wide>
       <Wash color="rgba(242,119,143,0.16)" delayMs={delayMs} />
       {/* TELL: a soft charm glow breathes where the halo will settle */}
       <Glow left="40%" top="37%" width="20%" height="18%" color="rgba(242,119,143,0.4)" delayMs={delayMs} />
@@ -668,7 +941,9 @@ function WhimperingAudiosPlay({ lead, delayMs }: { lead: boolean; delayMs: numbe
         </svg>
       </Prop>
       <Ring color="rgba(242,119,143,0.85)" delayMs={delayMs + 1500} />
-    </Wide>
+      </Wide>
+      <Spot tone="#f2778f" glow="#c9b0e8" tell={d(delayMs + 120)} hit={d(delayMs + 1000)} settle={d(delayMs + 2200)} />
+    </>
   );
 }
 
@@ -676,7 +951,18 @@ function WhimperingAudiosPlay({ lead, delayMs }: { lead: boolean; delayMs: numbe
 /* 6. I Love Making Out (t6) — two pieces lean together, kiss-mark confetti   */
 /* ------------------------------------------------------------------------- */
 
-function ILoveMakingOutPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+function ILoveMakingOutPlay({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="rgba(232,80,110,0.4)" glow="#ffb3c1">
+        <svg viewBox="0 0 100 100" className="h-full w-full">
+          <Pawn x={34} y={70} s={2.2} fill="#f5f7fb" stroke="#5c6880" />
+          <Pawn x={66} y={70} s={2.2} fill="#39435c" stroke="#1c212e" />
+          <g transform="rotate(-10 50 34)"><KissMark x={50} y={34} s={2.6} /></g>
+        </svg>
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Stage>
@@ -689,7 +975,8 @@ function ILoveMakingOutPlay({ lead, delayMs }: { lead: boolean; delayMs: number 
     );
   }
   return (
-    <Wide>
+    <>
+      <Framed>
       <Wash color="rgba(232,80,110,0.14)" delayMs={delayMs} />
       <Prop left="32%" top="28%" width="36%" height="38%">
         <svg viewBox="0 0 100 100" className="h-full w-full">
@@ -720,7 +1007,9 @@ function ILoveMakingOutPlay({ lead, delayMs }: { lead: boolean; delayMs: number 
         </svg>
       </Prop>
       <Ring color="rgba(255,179,193,0.9)" delayMs={delayMs + 1250} />
-    </Wide>
+      </Framed>
+      <Spot tone="#e8506e" glow="#ffb3c1" tell={d(delayMs + 100)} hit={d(delayMs + 920)} settle={d(delayMs + 2050)} />
+    </>
   );
 }
 
@@ -744,7 +1033,14 @@ function Footprints({ s = 1 }: { s?: number }) {
   );
 }
 
-function HyeinPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+function HyeinPlay({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="rgba(127,214,138,0.4)" glow="#a8e063">
+        <Portrait src="/newjeans/hyein.svg" />
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Stage>
@@ -758,7 +1054,8 @@ function HyeinPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     );
   }
   return (
-    <Wide>
+    <>
+      <Framed>
       {/* ambient: a spring-green ellipse along her diagonal, smaller than her
           silhouette (no rectangular washes behind portraits — brief §3) */}
       <Glow left="39%" top="36%" width="22%" height="22%" color="rgba(127,214,138,0.32)" delayMs={delayMs + 300} />
@@ -807,7 +1104,9 @@ function HyeinPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         </svg>
       </Prop>
       <Ring color="rgba(168,224,99,0.85)" delayMs={delayMs + 1500} />
-    </Wide>
+      </Framed>
+      <Spot tone="#7fd68a" glow="#a8e063" tell={d(delayMs + 110)} hit={d(delayMs + 960)} settle={d(delayMs + 2100)} />
+    </>
   );
 }
 
@@ -825,7 +1124,16 @@ function MuteBadge({ s = 1 }: { s?: number }) {
   );
 }
 
-function DanielCaesarPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+function DanielCaesarPlay({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="rgba(201,176,232,0.4)" glow="#ffd7e0">
+        <svg viewBox="0 0 100 100" className="h-full w-full">
+          <g transform="translate(50 50) scale(2.6)"><MuteBadge /></g>
+        </svg>
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Stage>
@@ -838,7 +1146,8 @@ function DanielCaesarPlay({ lead, delayMs }: { lead: boolean; delayMs: number })
     );
   }
   return (
-    <Wide>
+    <>
+      <Wide>
       <Wash color="rgba(28,44,82,0.22)" delayMs={delayMs} />
       {/* silk soundwaves glide over the whole board — only AFTER the needle */}
       <Prop left="21%" top="30%" width="58%" height="40%">
@@ -887,7 +1196,9 @@ function DanielCaesarPlay({ lead, delayMs }: { lead: boolean; delayMs: number })
         </Prop>
       ))}
       <Ring color="rgba(159,196,255,0.8)" delayMs={delayMs + 1350} />
-    </Wide>
+      </Wide>
+      <Spot tone="#c9b0e8" glow="#ffd7e0" tell={d(delayMs + 120)} hit={d(delayMs + 1000)} settle={d(delayMs + 2200)} />
+    </>
   );
 }
 
@@ -895,7 +1206,18 @@ function DanielCaesarPlay({ lead, delayMs }: { lead: boolean; delayMs: number })
 /* 9. Middle Part (t5) — a golden comb draws the part; both halves shimmer    */
 /* ------------------------------------------------------------------------- */
 
-function MiddlePartPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+function MiddlePartPlay({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="rgba(255,215,106,0.4)" glow="#e8edf6">
+        <svg viewBox="0 0 100 100" className="h-full w-full">
+          <path d="M50 8 V92" stroke="#ffd76a" strokeWidth={5} strokeLinecap="round" />
+          <Pawn x={30} y={66} s={2.1} fill="#f5f7fb" stroke="#5c6880" />
+          <Pawn x={70} y={66} s={2.1} fill="#f5f7fb" stroke="#5c6880" />
+        </svg>
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Stage>
@@ -917,7 +1239,8 @@ function MiddlePartPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     );
   }
   return (
-    <Wide>
+    <>
+      <Framed>
       <Wash color="rgba(255,215,106,0.12)" delayMs={delayMs} />
       {/* the part: a gold seam revealed straight down the center file */}
       <Prop left="49.4%" top="24%" width="1.2%" height="52%">
@@ -974,7 +1297,9 @@ function MiddlePartPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         </Prop>
       ))}
       <Ring color="rgba(255,215,106,0.85)" delayMs={delayMs + 1100} />
-    </Wide>
+      </Framed>
+      <Spot tone="#ffd76a" glow="#e8edf6" tell={d(delayMs + 100)} hit={d(delayMs + 900)} settle={d(delayMs + 2000)} />
+    </>
   );
 }
 
@@ -992,7 +1317,16 @@ function VeinStreak({ color = "#ff8a7a" }: { color?: string }) {
   );
 }
 
-function ForearmVeinsPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+function ForearmVeinsPlay({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="rgba(255,138,122,0.4)" glow="#ffd76a">
+        <svg viewBox="0 0 100 100" className="h-full w-full">
+          <g transform="translate(50 50) scale(3.2)"><VeinStreak /></g>
+        </svg>
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Stage>
@@ -1008,7 +1342,8 @@ function ForearmVeinsPlay({ lead, delayMs }: { lead: boolean; delayMs: number })
     );
   }
   return (
-    <Wide>
+    <>
+      <Wide>
       <Wash color="rgba(214,35,79,0.13)" delayMs={delayMs} />
       {/* veins of light surge straight up five files — AFTER the clench tell */}
       {[
@@ -1046,7 +1381,9 @@ function ForearmVeinsPlay({ lead, delayMs }: { lead: boolean; delayMs: number })
       {/* SETTLE: the pump's crimson afterglow lingers over the crush */}
       <Glow left="42%" top="41%" width="16%" height="14%" color="rgba(214,35,79,0.35)" delayMs={delayMs + 1300} />
       <Ring color="rgba(214,35,79,0.85)" delayMs={delayMs + 1450} />
-    </Wide>
+      </Wide>
+      <Spot tone="#ff8a7a" glow="#ffd76a" tell={d(delayMs + 110)} hit={d(delayMs + 940)} settle={d(delayMs + 2100)} />
+    </>
   );
 }
 
@@ -1063,7 +1400,14 @@ function HexPane({ color }: { color: string }) {
   );
 }
 
-function MinjiPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+function MinjiPlay({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="rgba(143,180,255,0.4)" glow="#e6efff">
+        <Portrait src="/newjeans/minji.svg" />
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Stage>
@@ -1077,7 +1421,8 @@ function MinjiPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     );
   }
   return (
-    <Wide>
+    <>
+      <Framed>
       {/* ambient: a cool blue ellipse behind her, smaller than her silhouette
           (no rectangular washes behind portraits — brief §3) */}
       <Glow left="39%" top="34%" width="22%" height="24%" color="rgba(90,127,214,0.35)" delayMs={delayMs + 160} />
@@ -1122,7 +1467,9 @@ function MinjiPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
       ))}
       <Ring color="rgba(159,196,255,0.9)" delayMs={delayMs + 1450} />
       <Ring color="rgba(90,127,214,0.75)" delayMs={delayMs + 1600} />
-    </Wide>
+      </Framed>
+      <Spot tone="#8fb4ff" glow="#e6efff" tell={d(delayMs + 100)} hit={d(delayMs + 900)} settle={d(delayMs + 2000)} />
+    </>
   );
 }
 
@@ -1138,7 +1485,14 @@ function FrostArm({ color }: { color: string }) {
   );
 }
 
-function HanniPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+function HanniPlay({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="rgba(159,208,234,0.4)" glow="#e8edf6">
+        <Portrait src="/newjeans/hanni.svg" />
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Stage>
@@ -1152,7 +1506,8 @@ function HanniPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     );
   }
   return (
-    <Wide>
+    <>
+      <Wide>
       {/* ambient: a pale green ellipse behind her, smaller than her silhouette
           (no rectangular washes behind portraits — brief §3) */}
       <Glow left="39.5%" top="35%" width="21%" height="23%" color="rgba(191,230,168,0.35)" delayMs={delayMs + 160} />
@@ -1194,7 +1549,9 @@ function HanniPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         </Prop>
       ))}
       <Ring color="rgba(191,230,168,0.9)" delayMs={delayMs + 1400} />
-    </Wide>
+      </Wide>
+      <Spot tone="#9fd0ea" glow="#e8edf6" tell={d(delayMs + 120)} hit={d(delayMs + 1000)} settle={d(delayMs + 2200)} />
+    </>
   );
 }
 
@@ -1202,7 +1559,14 @@ function HanniPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 /* 13. Danielle (sunshine) — dawn rays fan out, parachute pawns drift in      */
 /* ------------------------------------------------------------------------- */
 
-function DaniellePlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+function DaniellePlay({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="rgba(255,215,106,0.4)" glow="#fff2c9">
+        <Portrait src="/newjeans/danielle.svg" />
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Stage>
@@ -1218,7 +1582,8 @@ function DaniellePlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     );
   }
   return (
-    <Wide>
+    <>
+      <Framed>
       {/* ambient: a warm dawn ellipse behind her, smaller than her silhouette
           (no rectangular washes behind portraits — brief §3) */}
       <Glow left="39%" top="34%" width="22%" height="24%" color="rgba(255,215,106,0.35)" delayMs={delayMs + 160} />
@@ -1260,7 +1625,9 @@ function DaniellePlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         </Prop>
       ))}
       <Ring color="rgba(255,215,106,0.9)" delayMs={delayMs + 1250} />
-    </Wide>
+      </Framed>
+      <Spot tone="#ffd76a" glow="#fff2c9" tell={d(delayMs + 100)} hit={d(delayMs + 920)} settle={d(delayMs + 2050)} />
+    </>
   );
 }
 
@@ -1268,7 +1635,14 @@ function DaniellePlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 /* 14. Haerin (the cat) — ink slashes rake the board, she pounces through     */
 /* ------------------------------------------------------------------------- */
 
-function HaerinPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+function HaerinPlay({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="rgba(95,174,82,0.4)" glow="#e8edf6">
+        <Portrait src="/newjeans/haerin.svg" />
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Stage>
@@ -1288,7 +1662,8 @@ function HaerinPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     );
   }
   return (
-    <Wide>
+    <>
+      <Framed>
       {/* ambient: a moody elliptical night pool under the hunt — radial, never
           a rectangular wash (brief §3) */}
       <Glow left="34%" top="34%" width="32%" height="30%" color="rgba(18,20,25,0.45)" delayMs={delayMs} />
@@ -1345,7 +1720,9 @@ function HaerinPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         </svg>
       </Prop>
       <Ring color="rgba(236,239,241,0.85)" delayMs={delayMs + 1450} />
-    </Wide>
+      </Framed>
+      <Spot tone="#5fae52" glow="#e8edf6" tell={d(delayMs + 110)} hit={d(delayMs + 940)} settle={d(delayMs + 2100)} />
+    </>
   );
 }
 
@@ -1353,7 +1730,14 @@ function HaerinPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 /* 15. I Love Cami (t6) — Cami arrives; a rank+file cross-sweep of light      */
 /* ------------------------------------------------------------------------- */
 
-function ILoveCamPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+function ILoveCamPlay({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="rgba(143,208,160,0.4)" glow="#ffd76a">
+        <Portrait src="/companions/cami.svg" />
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Stage>
@@ -1370,7 +1754,8 @@ function ILoveCamPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     );
   }
   return (
-    <Wide>
+    <>
+      <Framed>
       {/* ambient: a pink ellipse behind her, smaller than her silhouette
           (portraits are free-standing characters — brief §3) */}
       <Glow left="40%" top="34%" width="20%" height="26%" color="rgba(255,143,177,0.35)" delayMs={delayMs + 160} />
@@ -1417,7 +1802,9 @@ function ILoveCamPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
       </Prop>
       <Ring color="rgba(255,143,177,0.9)" delayMs={delayMs + 1200} />
       <Ring color="rgba(255,215,106,0.75)" delayMs={delayMs + 1350} />
-    </Wide>
+      </Framed>
+      <Spot tone="#8fd0a0" glow="#ffd76a" tell={d(delayMs + 100)} hit={d(delayMs + 900)} settle={d(delayMs + 2000)} />
+    </>
   );
 }
 
@@ -1442,7 +1829,16 @@ function Feather({ fill, vein }: { fill: string; vein: string }) {
   );
 }
 
-function ILoveChaewonPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+function ILoveChaewonPlay({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="rgba(242,144,159,0.4)" glow="#ffd7e0">
+        <svg viewBox="0 0 100 100" className="h-full w-full">
+          <g transform="translate(50 50) scale(3)"><Feather fill="#ffd7e0" vein="#f2909f" /></g>
+        </svg>
+      </Arrival>
+    );
+  }
   if (!lead) {
     // Square-local: a feather settles with a soft sparkle.
     return (
@@ -1467,7 +1863,8 @@ function ILoveChaewonPlay({ lead, delayMs }: { lead: boolean; delayMs: number })
     { left: "56%", top: "38%", gx: "130%", gy: "34%", delay: 540 },
   ];
   return (
-    <Wide>
+    <>
+      <Framed>
       <Wash color="rgba(255,157,192,0.16)" delayMs={delayMs} />
       {/* TELL: a soft stage light warms the floor before the feather falls */}
       <Glow left="42%" top="36%" width="16%" height="14%" color="rgba(255,157,192,0.4)" delayMs={delayMs} />
@@ -1522,7 +1919,9 @@ function ILoveChaewonPlay({ lead, delayMs }: { lead: boolean; delayMs: number })
 
       <Ring color="rgba(255,157,192,0.9)" delayMs={delayMs + 1160} />
       <Ring color="rgba(255,242,246,0.7)" delayMs={delayMs + 1300} />
-    </Wide>
+      </Framed>
+      <Spot tone="#f2909f" glow="#ffd7e0" tell={d(delayMs + 110)} hit={d(delayMs + 960)} settle={d(delayMs + 2100)} />
+    </>
   );
 }
 
@@ -1540,46 +1939,46 @@ function ILoveChaewonPlay({ lead, delayMs }: { lead: boolean; delayMs: number })
 // diff-less board-wide lead path. `sound` keys are all existing SigSoundKeys.
 export const PLAYS: Record<string, SigPlugin> = {
   muscle_up: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz" },
-    Render: ({ lead, delayMs }) => <AthleteScene id="muscle_up" lead={lead} delayMs={delayMs} />,
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz", anchor: "cast" },
+    Render: ({ lead, role, delayMs }) => <AthleteScene id="muscle_up" lead={lead} role={role} delayMs={delayMs} />,
   },
   bench_225: {
-    config: { ordering: "sweep", staggerMs: 70, victims: "all", hasLead: true, sound: "colossus" },
-    Render: ({ lead, delayMs }) => <AthleteScene id="bench_225" lead={lead} delayMs={delayMs} />,
+    config: { ordering: "sweep", staggerMs: 70, victims: "all", hasLead: true, sound: "colossus", anchor: "cast" },
+    Render: ({ lead, role, delayMs }) => <AthleteScene id="bench_225" lead={lead} role={role} delayMs={delayMs} />,
   },
   // Calisthenics athletes (owner request: show a GUY actually doing the
   // skill). Configs copied from the retired core entries; the athlete SVG
   // loops its own reps via SMIL.
   handstand_pushup: {
-    config: { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "coronation", source: "empower" },
+    config: { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "coronation", source: "empower", anchor: "cast" },
     Render: HandstandPushupPlay,
   },
   full_planche: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis", source: "shield" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis", source: "shield", anchor: "cast" },
     Render: FullPlanchePlay,
   },
   fingertip_maltese: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "massfreeze", source: "frozen" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "massfreeze", source: "frozen", anchor: "cast" },
     Render: FingertipMaltesePlay,
   },
   onearmmuscleupismydream: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation", source: "empower" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation", source: "empower", anchor: "cast" },
     Render: OneArmDreamPlay,
   },
   monkeytype: {
-    config: { ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "blitz" },
+    config: { ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "blitz", anchor: "cast" },
     Render: MonkeytypePlay,
   },
   rubiks_cube: {
-    config: { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "wall" },
+    config: { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "wall", anchor: "cast" },
     Render: RubiksCubePlay,
   },
   ilovewhimperingaudios: {
-    config: { ordering: "radial", staggerMs: 45, victims: ["q", "r", "b", "n"], hasLead: true, sound: "shades" },
+    config: { ordering: "radial", staggerMs: 45, victims: ["q", "r", "b", "n"], hasLead: true, sound: "shades", anchor: "board" },
     Render: WhimperingAudiosPlay,
   },
   ilovemakingout: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation", anchor: "cast" },
     Render: ILoveMakingOutPlay,
   },
   // I Love Chaewon (t6 movement): repositions up to 3 pieces to empty squares
@@ -1587,7 +1986,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   // paint no fx zone), so a lead-only config riding the diff-less board-wide
   // lead path. "coronation" is an elegant chime for the graceful choreography.
   ilovechaewon: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation", anchor: "cast" },
     Render: ILoveChaewonPlay,
   },
   // The five members are simple one-shot / passive cards again; each entry's
@@ -1596,44 +1995,44 @@ export const PLAYS: Record<string, SigPlugin> = {
   hyein: {
     // Permanent pawn-stride grant: fx {motif:"rally", pieces:["p"], self}
     // paints the rally banner zone.
-    config: { ordering: "sweep", staggerMs: 60, victims: ["p"], hasLead: true, sound: "blitz", source: "rally" },
+    config: { ordering: "sweep", staggerMs: 60, victims: ["p"], hasLead: true, sound: "blitz", source: "rally", anchor: "cast" },
     Render: HyeinPlay,
   },
   minji: {
     // Linked-arms guard: shields every ally beside the king (shield zone).
-    config: { ordering: "radial", staggerMs: 40, victims: "all", hasLead: true, sound: "aegis", source: "shield" },
+    config: { ordering: "radial", staggerMs: 40, victims: "all", hasLead: true, sound: "aegis", source: "shield", anchor: "cast" },
     Render: MinjiPlay,
   },
   hanni: {
     // Spotlight charm: freezes the target and its neighbors (frozen zone).
-    config: { ordering: "radial", staggerMs: 45, victims: "all", hasLead: true, sound: "massfreeze", source: "frozen" },
+    config: { ordering: "radial", staggerMs: 45, victims: "all", hasLead: true, sound: "massfreeze", source: "frozen", anchor: "board" },
     Render: HanniPlay,
   },
   danielle: {
     // Sunshine: places two shielded pawns (summon zone).
-    config: { ordering: "sweep", staggerMs: 80, victims: ["p"], hasLead: true, sound: "wall", source: "summon" },
+    config: { ordering: "sweep", staggerMs: 80, victims: ["p"], hasLead: true, sound: "wall", source: "summon", anchor: "cast" },
     Render: DaniellePlay,
   },
   haerin: {
     // Pounce: snatches an enemy off the board — a plain removal diff, so no
     // zone source; the lead plays through the piece-diff path.
-    config: { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "rampage" },
+    config: { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "rampage", anchor: "cast" },
     Render: HaerinPlay,
   },
   i_love_cam: {
-    config: { ordering: "radial", staggerMs: 40, victims: "all", hasLead: true, sound: "lightning", source: "summon" },
+    config: { ordering: "radial", staggerMs: 40, victims: "all", hasLead: true, sound: "lightning", source: "summon", anchor: "cast" },
     Render: ILoveCamPlay,
   },
   daniel_caesar: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze", anchor: "board" },
     Render: DanielCaesarPlay,
   },
   middle_part: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall", source: "summon" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall", source: "summon", anchor: "cast" },
     Render: MiddlePartPlay,
   },
   forearm_veins: {
-    config: { ordering: "sweep", staggerMs: 45, victims: ["p"], hasLead: true, sound: "coronation", source: "empower" },
+    config: { ordering: "sweep", staggerMs: 45, victims: ["p"], hasLead: true, sound: "coronation", source: "empower", anchor: "board" },
     Render: ForearmVeinsPlay,
   },
 };

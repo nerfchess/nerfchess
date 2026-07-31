@@ -1,0 +1,650 @@
+/* ============================================================================
+   g34ExchangePlays.css — TWO THINGS CHANGING PLACES, AND THE MOMENT THEY PASS.
+
+   The 19 swap / exchange / teleport cards in src/components/effects/
+   g34ExchangePlays.tsx. House discipline, same as g20RampartPlays.css:
+
+   - keyframes animate ONLY transform and opacity (a static filter is fine);
+   - every animation is a one-shot with `both` fill so the inline
+     animation-delay staggers cleanly;
+   - every duration rides --fx-dur (Settings animation speed);
+   - every track ENDS at opacity 0: the play never leaves paint behind;
+   - border-radius is only ever 0 / 1px / 2px / 50% / 999px;
+   - class + keyframe prefix `g34-` so nothing can collide with another module.
+
+   DIRECTIONAL BY CONSTRUCTION. Every card here is a MECHANISM OF EXCHANGE, and
+   an exchange has a direction: the two things cross the real distance between
+   the real squares. So each scene stages inside <AimStage> with its art drawn
+   pointing RIGHT, and the travel vocabulary below is written in --fx-len:
+
+       a layer sized to ONE CELL (7.142857% of the 14-cell stage) travels
+       exactly --fx-len cells with translateX(calc(var(--fx-len) * 100%)),
+
+   which is how the outbound boat, car, bucket, wagon, dancer or locomotive
+   crosses the true gap and the inbound one crosses it the other way. The pass
+   layers sit at half of --fx-len: the midpoint of the real leg. --fx-side
+   leans the settle away from whichever end of the screen the caster is on, and
+   --fx-index times the courses that arrive in the real victim order.
+
+   Layout: 1. atmosphere, 2. tells, 3. the seven TRAVEL PAIRS (out / back),
+   4. the moment they pass, 5. per-mechanism motions, 6. settles,
+   7. the entrance and per-square target cuts.
+   ========================================================================= */
+
+/* ---------------------------------------------------------------------------
+   1. Atmosphere. Always inside <BoardFrame>: a fixed percentage of the stage
+      is NOT the board once the stage is anchored on the cast square.
+   ------------------------------------------------------------------------ */
+
+@keyframes g34-wash {
+  0% { opacity: 0; }
+  24% { opacity: 1; }
+  64% { opacity: 0.44; }
+  100% { opacity: 0; }
+}
+.g34-wash { animation: g34-wash calc(1.3s * var(--fx-dur, 1)) ease-out both; }
+
+/* The board itself taking a breath as the two halves trade. */
+@keyframes g34-swell {
+  0% { opacity: 0; transform: scale(1.04); }
+  30% { opacity: 0.82; transform: scale(1); }
+  70% { opacity: 0.5; transform: scale(0.996); }
+  100% { opacity: 0; transform: scale(1.01); }
+}
+.g34-swell { animation: g34-swell calc(1.15s * var(--fx-dur, 1)) ease-in-out both; }
+
+/* ---------------------------------------------------------------------------
+   2. Tells (<=300ms of anticipation, before anything moves)
+   ------------------------------------------------------------------------ */
+
+/* The way is scribed from the cast square to the far square: the chalk line,
+   the tow path, the running rail. Sized in --fx-len by the caller. */
+@keyframes g34-tellrail {
+  0% { opacity: 0; transform: scaleX(0.02); }
+  45% { opacity: 0.95; }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.g34-tellrail {
+  animation: g34-tellrail calc(0.3s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both;
+  transform-origin: 0% 50%;
+}
+
+/* Both ends acknowledge each other before either one moves. */
+@keyframes g34-tellpair {
+  0% { opacity: 0; transform: scale(0.4); }
+  50% { opacity: 0.9; transform: scale(1.08); }
+  100% { opacity: 0; transform: scale(0.92); }
+}
+.g34-tellpair { animation: g34-tellpair calc(0.29s * var(--fx-dur, 1)) ease-out both; }
+
+/* Mass squatting before it is moved: the inhale. */
+@keyframes g34-tellsquat {
+  0% { opacity: 0; transform: scale(1, 0.72); }
+  55% { opacity: 0.85; transform: scale(0.97, 1.05); }
+  100% { opacity: 0; transform: scale(1, 1); }
+}
+.g34-tellsquat {
+  animation: g34-tellsquat calc(0.3s * var(--fx-dur, 1)) ease-out both;
+  transform-origin: 50% 100%;
+}
+
+/* A crosshair scribed at the halfway mark: where they will pass. */
+@keyframes g34-tellmark {
+  0% { opacity: 0; transform: rotate(-40deg) scale(0.3); }
+  55% { opacity: 0.9; transform: rotate(0deg) scale(1.05); }
+  100% { opacity: 0; transform: rotate(6deg) scale(0.9); }
+}
+.g34-tellmark { animation: g34-tellmark calc(0.3s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.9, 0.35, 1) both; }
+
+/* A shadow pooling under something about to be lifted. */
+@keyframes g34-tellshade {
+  0% { opacity: 0; transform: scale(0.3, 0.55); }
+  58% { opacity: 0.7; transform: scale(1, 1); }
+  100% { opacity: 0; transform: scale(1.16, 1); }
+}
+.g34-tellshade {
+  animation: g34-tellshade calc(0.3s * var(--fx-dur, 1)) ease-out both;
+  transform-origin: 50% 100%;
+}
+
+/* ---------------------------------------------------------------------------
+   3. The seven travel pairs. Every "-out" starts on the cast square and runs
+      --fx-len cells; every "-back" starts at the far square and runs the same
+      distance the other way. Author the art pointing RIGHT: <AimStage> puts it
+      on the real source -> target vector.
+   ------------------------------------------------------------------------ */
+
+/* (a) HAULED. Steady, loaded, a little bob at each end. */
+@keyframes g34-haul-out {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.84); }
+  14% { opacity: 1; transform: translate(0, 0) scale(1); }
+  52% { opacity: 1; transform: translate(calc(var(--fx-len, 3) * 50%), -6%) scale(1.03); }
+  84% { opacity: 1; transform: translate(calc(var(--fx-len, 3) * 100%), 0) scale(1); }
+  100% { opacity: 0; transform: translate(calc(var(--fx-len, 3) * 100%), 0) scale(0.95); }
+}
+.g34-haul-out { animation: g34-haul-out calc(0.92s * var(--fx-dur, 1)) cubic-bezier(0.4, 0.05, 0.3, 1) both; }
+
+@keyframes g34-haul-back {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.84); }
+  14% { opacity: 1; transform: translate(0, 0) scale(1); }
+  52% { opacity: 1; transform: translate(calc(var(--fx-len, 3) * -50%), 6%) scale(1.03); }
+  84% { opacity: 1; transform: translate(calc(var(--fx-len, 3) * -100%), 0) scale(1); }
+  100% { opacity: 0; transform: translate(calc(var(--fx-len, 3) * -100%), 0) scale(0.95); }
+}
+.g34-haul-back { animation: g34-haul-back calc(0.92s * var(--fx-dur, 1)) cubic-bezier(0.4, 0.05, 0.3, 1) both; }
+
+/* (b) COUNTERWEIGHTED. One rises the whole way across as the other falls:
+   the paternoster car, the well bucket, the boat in the filling chamber. */
+@keyframes g34-lift-up {
+  0% { opacity: 0; transform: translate(0, 46%) scale(0.9); }
+  16% { opacity: 1; transform: translate(0, 46%) scale(1); }
+  56% { opacity: 1; transform: translate(calc(var(--fx-len, 3) * 50%), 0) scale(1.02); }
+  86% { opacity: 1; transform: translate(calc(var(--fx-len, 3) * 100%), -46%) scale(1); }
+  100% { opacity: 0; transform: translate(calc(var(--fx-len, 3) * 100%), -52%) scale(0.96); }
+}
+.g34-lift-up { animation: g34-lift-up calc(1s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.1, 0.3, 1) both; }
+
+@keyframes g34-lift-down {
+  0% { opacity: 0; transform: translate(0, -46%) scale(0.9); }
+  16% { opacity: 1; transform: translate(0, -46%) scale(1); }
+  56% { opacity: 1; transform: translate(calc(var(--fx-len, 3) * -50%), 0) scale(1.02); }
+  86% { opacity: 1; transform: translate(calc(var(--fx-len, 3) * -100%), 46%) scale(1); }
+  100% { opacity: 0; transform: translate(calc(var(--fx-len, 3) * -100%), 52%) scale(0.96); }
+}
+.g34-lift-down { animation: g34-lift-down calc(1s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.1, 0.3, 1) both; }
+
+/* (c) BOWED. They take opposite sides of the way and never meet: the double
+   helix, the passing loop, the two lanes of a revolving door. */
+@keyframes g34-arc-over {
+  0% { opacity: 0; transform: translate(0, 0) rotate(0deg) scale(0.8); }
+  15% { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(1); }
+  50% { opacity: 1; transform: translate(calc(var(--fx-len, 3) * 50%), -66%) rotate(-13deg) scale(1.05); }
+  86% { opacity: 1; transform: translate(calc(var(--fx-len, 3) * 100%), 0) rotate(0deg) scale(1); }
+  100% { opacity: 0; transform: translate(calc(var(--fx-len, 3) * 100%), 0) rotate(0deg) scale(0.94); }
+}
+.g34-arc-over { animation: g34-arc-over calc(0.96s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.05, 0.3, 1) both; }
+
+@keyframes g34-arc-under {
+  0% { opacity: 0; transform: translate(0, 0) rotate(0deg) scale(0.8); }
+  15% { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(1); }
+  50% { opacity: 1; transform: translate(calc(var(--fx-len, 3) * -50%), 66%) rotate(13deg) scale(1.05); }
+  86% { opacity: 1; transform: translate(calc(var(--fx-len, 3) * -100%), 0) rotate(0deg) scale(1); }
+  100% { opacity: 0; transform: translate(calc(var(--fx-len, 3) * -100%), 0) rotate(0deg) scale(0.94); }
+}
+.g34-arc-under { animation: g34-arc-under calc(0.96s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.05, 0.3, 1) both; }
+
+/* (d) SLID. A flat, decisive shove into the gap, with a stop at the end. */
+@keyframes g34-slide-out {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.94); }
+  18% { opacity: 1; transform: translate(0, 0) scale(1); }
+  70% { opacity: 1; transform: translate(calc(var(--fx-len, 3) * 104%), 0) scale(1); }
+  80% { transform: translate(calc(var(--fx-len, 3) * 100%), 0) scale(1.04, 0.94); }
+  90% { transform: translate(calc(var(--fx-len, 3) * 100%), 0) scale(1); }
+  100% { opacity: 0; transform: translate(calc(var(--fx-len, 3) * 100%), 0) scale(1); }
+}
+.g34-slide-out { animation: g34-slide-out calc(0.82s * var(--fx-dur, 1)) cubic-bezier(0.5, 0, 0.2, 1) both; }
+
+@keyframes g34-slide-back {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.94); }
+  18% { opacity: 1; transform: translate(0, 0) scale(1); }
+  70% { opacity: 1; transform: translate(calc(var(--fx-len, 3) * -104%), 0) scale(1); }
+  80% { transform: translate(calc(var(--fx-len, 3) * -100%), 0) scale(1.04, 0.94); }
+  90% { transform: translate(calc(var(--fx-len, 3) * -100%), 0) scale(1); }
+  100% { opacity: 0; transform: translate(calc(var(--fx-len, 3) * -100%), 0) scale(1); }
+}
+.g34-slide-back { animation: g34-slide-back calc(0.82s * var(--fx-dur, 1)) cubic-bezier(0.5, 0, 0.2, 1) both; }
+
+/* (e) HAND OVER HAND. The rope ferry and the tally counter: pulled in bites,
+   not driven. Four distinct grabs on the way across. */
+@keyframes g34-jerk-out {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.88); }
+  12% { opacity: 1; transform: translate(0, 0) scale(1); }
+  30% { transform: translate(calc(var(--fx-len, 3) * 28%), 0) scale(1); }
+  40% { transform: translate(calc(var(--fx-len, 3) * 30%), 0) scale(1); }
+  58% { transform: translate(calc(var(--fx-len, 3) * 58%), 0) scale(1); }
+  66% { transform: translate(calc(var(--fx-len, 3) * 60%), 0) scale(1); }
+  88% { opacity: 1; transform: translate(calc(var(--fx-len, 3) * 100%), 0) scale(1); }
+  100% { opacity: 0; transform: translate(calc(var(--fx-len, 3) * 100%), 0) scale(0.95); }
+}
+.g34-jerk-out { animation: g34-jerk-out calc(0.98s * var(--fx-dur, 1)) linear both; }
+
+@keyframes g34-jerk-back {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.88); }
+  12% { opacity: 1; transform: translate(0, 0) scale(1); }
+  30% { transform: translate(calc(var(--fx-len, 3) * -28%), 0) scale(1); }
+  40% { transform: translate(calc(var(--fx-len, 3) * -30%), 0) scale(1); }
+  58% { transform: translate(calc(var(--fx-len, 3) * -58%), 0) scale(1); }
+  66% { transform: translate(calc(var(--fx-len, 3) * -60%), 0) scale(1); }
+  88% { opacity: 1; transform: translate(calc(var(--fx-len, 3) * -100%), 0) scale(1); }
+  100% { opacity: 0; transform: translate(calc(var(--fx-len, 3) * -100%), 0) scale(0.95); }
+}
+.g34-jerk-back { animation: g34-jerk-back calc(0.98s * var(--fx-dur, 1)) linear both; }
+
+/* (f) TURNED. They travel while turning about each other: the allemande, the
+   thimblerig cross, the coat on the rail coming round. */
+@keyframes g34-swing-out {
+  0% { opacity: 0; transform: translate(0, 0) rotate(0deg) scale(0.82); }
+  16% { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(1); }
+  52% { opacity: 1; transform: translate(calc(var(--fx-len, 3) * 50%), -40%) rotate(96deg) scale(1.04); }
+  86% { opacity: 1; transform: translate(calc(var(--fx-len, 3) * 100%), 0) rotate(180deg) scale(1); }
+  100% { opacity: 0; transform: translate(calc(var(--fx-len, 3) * 100%), 0) rotate(186deg) scale(0.93); }
+}
+.g34-swing-out { animation: g34-swing-out calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.4, 0.02, 0.3, 1) both; }
+
+@keyframes g34-swing-back {
+  0% { opacity: 0; transform: translate(0, 0) rotate(0deg) scale(0.82); }
+  16% { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(1); }
+  52% { opacity: 1; transform: translate(calc(var(--fx-len, 3) * -50%), 40%) rotate(96deg) scale(1.04); }
+  86% { opacity: 1; transform: translate(calc(var(--fx-len, 3) * -100%), 0) rotate(180deg) scale(1); }
+  100% { opacity: 0; transform: translate(calc(var(--fx-len, 3) * -100%), 0) rotate(186deg) scale(0.93); }
+}
+.g34-swing-back { animation: g34-swing-back calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.4, 0.02, 0.3, 1) both; }
+
+/* (g) COUNTERFLOW. A slug of fluid down the tube and another back up the
+   shell, each stretching as it runs. */
+@keyframes g34-flow-out {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.4, 1); }
+  18% { opacity: 1; transform: translate(0, 0) scale(1.3, 1); }
+  60% { transform: translate(calc(var(--fx-len, 3) * 62%), 0) scale(0.85, 1); }
+  88% { opacity: 1; transform: translate(calc(var(--fx-len, 3) * 100%), 0) scale(1.25, 1); }
+  100% { opacity: 0; transform: translate(calc(var(--fx-len, 3) * 100%), 0) scale(0.5, 1); }
+}
+.g34-flow-out { animation: g34-flow-out calc(0.94s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.1, 0.3, 1) both; }
+
+@keyframes g34-flow-back {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.4, 1); }
+  18% { opacity: 1; transform: translate(0, 0) scale(1.3, 1); }
+  60% { transform: translate(calc(var(--fx-len, 3) * -62%), 0) scale(0.85, 1); }
+  88% { opacity: 1; transform: translate(calc(var(--fx-len, 3) * -100%), 0) scale(1.25, 1); }
+  100% { opacity: 0; transform: translate(calc(var(--fx-len, 3) * -100%), 0) scale(0.5, 1); }
+}
+.g34-flow-back { animation: g34-flow-back calc(0.94s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.1, 0.3, 1) both; }
+
+/* ---------------------------------------------------------------------------
+   4. The moment they pass. These sit at half of --fx-len, on the real
+      midpoint of the real leg, and are the point of the whole batch.
+   ------------------------------------------------------------------------ */
+
+@keyframes g34-pass {
+  0% { opacity: 0; transform: scale(0.2); }
+  60% { opacity: 0.95; transform: scale(1.14); }
+  100% { opacity: 0; transform: scale(1.5); }
+}
+.g34-pass { animation: g34-pass calc(0.44s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.8, 0.35, 1) both; }
+
+/* The seam the two of them open between each other as they clear. */
+@keyframes g34-seam {
+  0% { opacity: 0; transform: scaleY(0.1) scaleX(1); }
+  40% { opacity: 0.9; transform: scaleY(1.15) scaleX(1); }
+  100% { opacity: 0; transform: scaleY(0.5) scaleX(1); }
+}
+.g34-seam { animation: g34-seam calc(0.5s * var(--fx-dur, 1)) ease-out both; }
+
+/* Two arrowheads crossing nose to nose at the midpoint. */
+@keyframes g34-cross {
+  0% { opacity: 0; transform: rotate(0deg) scale(0.5); }
+  46% { opacity: 1; transform: rotate(0deg) scale(1.1); }
+  100% { opacity: 0; transform: rotate(0deg) scale(0.85); }
+}
+.g34-cross { animation: g34-cross calc(0.46s * var(--fx-dur, 1)) ease-out both; }
+
+/* ---------------------------------------------------------------------------
+   5. Per-mechanism motions. One card's own machinery each.
+   ------------------------------------------------------------------------ */
+
+/* The revolving stage drum, bringing the next set round. */
+@keyframes g34-drum {
+  0% { opacity: 0; transform: rotate(0deg) scale(0.9); }
+  16% { opacity: 0.95; transform: rotate(0deg) scale(1); }
+  78% { opacity: 0.9; transform: rotate(180deg) scale(1); }
+  90% { transform: rotate(184deg) scale(1); }
+  100% { opacity: 0; transform: rotate(180deg) scale(0.98); }
+}
+.g34-drum { animation: g34-drum calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.42, 0.02, 0.3, 1) both; }
+
+/* The proscenium curtain lifting off the revolve. */
+@keyframes g34-curtain {
+  0% { opacity: 0; transform: scaleY(1); }
+  22% { opacity: 0.95; transform: scaleY(1); }
+  100% { opacity: 0; transform: scaleY(0.06); }
+}
+.g34-curtain {
+  animation: g34-curtain calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.4, 0.05, 0.2, 1) both;
+  transform-origin: 50% 0%;
+}
+
+/* A lock gate leaf swinging back out of the way. */
+@keyframes g34-gate {
+  0% { opacity: 0; transform: scaleX(1) skewX(0deg); }
+  22% { opacity: 1; transform: scaleX(1) skewX(0deg); }
+  70% { opacity: 1; transform: scaleX(0.22) skewX(-14deg); }
+  100% { opacity: 0; transform: scaleX(0.14) skewX(-16deg); }
+}
+.g34-gate {
+  animation: g34-gate calc(0.72s * var(--fx-dur, 1)) cubic-bezier(0.4, 0.05, 0.25, 1) both;
+  transform-origin: 50% 100%;
+}
+
+/* A chamber filling: the level climbs from the cill. */
+@keyframes g34-fill {
+  0% { opacity: 0; transform: scaleY(0.06); }
+  20% { opacity: 0.9; transform: scaleY(0.1); }
+  76% { opacity: 0.9; transform: scaleY(1); }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+.g34-fill {
+  animation: g34-fill calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.1, 0.35, 1) both;
+  transform-origin: 50% 100%;
+}
+
+/* The other chamber emptying at the same moment. */
+@keyframes g34-drain {
+  0% { opacity: 0; transform: scaleY(1); }
+  20% { opacity: 0.9; transform: scaleY(1); }
+  76% { opacity: 0.9; transform: scaleY(0.08); }
+  100% { opacity: 0; transform: scaleY(0.06); }
+}
+.g34-drain {
+  animation: g34-drain calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.1, 0.35, 1) both;
+  transform-origin: 50% 100%;
+}
+
+/* An endless chain or belt running the length of the leg, dash by dash. */
+@keyframes g34-chain {
+  0% { opacity: 0; transform: translateX(0); }
+  18% { opacity: 0.9; transform: translateX(0); }
+  100% { opacity: 0; transform: translateX(-14%); }
+}
+.g34-chain { animation: g34-chain calc(1s * var(--fx-dur, 1)) linear both; }
+
+/* A wheel, drum head or sheave spinning as the rope runs over it. */
+@keyframes g34-sheave {
+  0% { opacity: 0; transform: rotate(0deg); }
+  16% { opacity: 1; transform: rotate(20deg); }
+  86% { opacity: 1; transform: rotate(340deg); }
+  100% { opacity: 0; transform: rotate(368deg); }
+}
+.g34-sheave { animation: g34-sheave calc(1s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.05, 0.35, 1) both; }
+
+/* The turntable deck, taking the whole locomotive end for end. */
+@keyframes g34-deck {
+  0% { opacity: 0; transform: rotate(0deg) scale(0.86); }
+  18% { opacity: 1; transform: rotate(0deg) scale(1); }
+  74% { opacity: 1; transform: rotate(174deg) scale(1); }
+  86% { transform: rotate(182deg) scale(1); }
+  100% { opacity: 0; transform: rotate(180deg) scale(0.97); }
+}
+.g34-deck { animation: g34-deck calc(1s * var(--fx-dur, 1)) cubic-bezier(0.4, 0.03, 0.3, 1) both; }
+
+/* A pivoting panel: the priest hole's turning wall, the revolving door leaf.
+   Squeezes to nothing edge-on, then opens out on its other face. */
+@keyframes g34-panel {
+  0% { opacity: 0; transform: scaleX(1) skewY(0deg); }
+  20% { opacity: 1; transform: scaleX(1) skewY(0deg); }
+  52% { opacity: 1; transform: scaleX(0.04) skewY(5deg); }
+  84% { opacity: 1; transform: scaleX(-1) skewY(0deg); }
+  100% { opacity: 0; transform: scaleX(-1) skewY(0deg); }
+}
+.g34-panel {
+  animation: g34-panel calc(0.86s * var(--fx-dur, 1)) cubic-bezier(0.45, 0.05, 0.3, 1) both;
+  transform-origin: 50% 50%;
+}
+
+/* Two spiral flights winding past each other without ever meeting. */
+@keyframes g34-helix {
+  0% { opacity: 0; transform: scaleY(0.2) scaleX(1); }
+  26% { opacity: 0.95; transform: scaleY(1.06) scaleX(1); }
+  72% { opacity: 0.85; transform: scaleY(1) scaleX(1); }
+  100% { opacity: 0; transform: scaleY(0.94) scaleX(1); }
+}
+.g34-helix {
+  animation: g34-helix calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.7, 0.3, 1) both;
+  transform-origin: 50% 50%;
+}
+
+/* A line drawn taut between the two ends: hawser, tally cord, tow rope. */
+@keyframes g34-taut {
+  0% { opacity: 0; transform: scaleX(0.04) scaleY(1.8); }
+  26% { opacity: 1; transform: scaleX(1) scaleY(1.8); }
+  38% { transform: scaleX(1) scaleY(0.7); }
+  50% { transform: scaleX(1) scaleY(1.2); }
+  70% { transform: scaleX(1) scaleY(1); }
+  100% { opacity: 0; transform: scaleX(1) scaleY(1); }
+}
+.g34-taut {
+  animation: g34-taut calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both;
+  transform-origin: 0% 50%;
+}
+
+/* Point blades thrown over, sending the two trains into their own roads. */
+@keyframes g34-points {
+  0% { opacity: 0; transform: rotate(0deg) scaleX(0.5); }
+  30% { opacity: 1; transform: rotate(0deg) scaleX(1); }
+  56% { transform: rotate(-9deg) scaleX(1); }
+  86% { opacity: 1; transform: rotate(0deg) scaleX(1); }
+  100% { opacity: 0; transform: rotate(0deg) scaleX(1); }
+}
+.g34-points {
+  animation: g34-points calc(0.78s * var(--fx-dur, 1)) cubic-bezier(0.5, 0.1, 0.3, 1) both;
+  transform-origin: 0% 50%;
+}
+
+/* A balance beam trading heights between its two pans. */
+@keyframes g34-beam {
+  0% { opacity: 0; transform: rotate(-13deg); }
+  18% { opacity: 1; transform: rotate(-13deg); }
+  62% { transform: rotate(13deg); }
+  78% { transform: rotate(-4deg); }
+  90% { opacity: 1; transform: rotate(1deg); }
+  100% { opacity: 0; transform: rotate(0deg); }
+}
+.g34-beam { animation: g34-beam calc(0.98s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.6, 0.3, 1) both; }
+
+/* The shell of an exchanger breathing as the two flows trade through it. */
+@keyframes g34-shell {
+  0% { opacity: 0; transform: scale(0.94, 0.8); }
+  24% { opacity: 0.9; transform: scale(1, 1); }
+  58% { transform: scale(1.02, 1.06); }
+  82% { opacity: 0.75; transform: scale(1, 1); }
+  100% { opacity: 0; transform: scale(0.99, 0.96); }
+}
+.g34-shell { animation: g34-shell calc(1.05s * var(--fx-dur, 1)) ease-in-out both; }
+
+/* An escapement pallet rocking: one tooth let go as the other is caught. */
+@keyframes g34-pallet {
+  0% { opacity: 0; transform: rotate(-11deg); }
+  22% { opacity: 1; transform: rotate(-11deg); }
+  48% { transform: rotate(11deg); }
+  70% { transform: rotate(-6deg); }
+  88% { opacity: 1; transform: rotate(2deg); }
+  100% { opacity: 0; transform: rotate(0deg); }
+}
+.g34-pallet { animation: g34-pallet calc(0.86s * var(--fx-dur, 1)) cubic-bezier(0.5, 0.1, 0.4, 1) both; }
+
+/* An auctioneer's hammer, a spade, a lid: something brought down hard. */
+@keyframes g34-fall {
+  0% { opacity: 0; transform: translateY(-46%) rotate(-34deg); }
+  38% { opacity: 1; transform: translateY(0) rotate(4deg); }
+  50% { transform: translateY(-6%) rotate(-4deg); }
+  64% { transform: translateY(0) rotate(0deg); }
+  100% { opacity: 0; transform: translateY(0) rotate(0deg); }
+}
+.g34-fall {
+  animation: g34-fall calc(0.6s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 0.3, 1) both;
+  transform-origin: 90% 90%;
+}
+
+/* A plug of turf lifted clean out, leaving its socket. */
+@keyframes g34-lift-plug {
+  0% { opacity: 0; transform: translateY(0) scale(0.9); }
+  30% { opacity: 1; transform: translateY(-34%) scale(1.04); }
+  74% { opacity: 1; transform: translateY(-30%) scale(1); }
+  100% { opacity: 0; transform: translateY(-8%) scale(0.96); }
+}
+.g34-lift-plug { animation: g34-lift-plug calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.3, 1) both; }
+
+/* The empty socket a sliding tile leaves behind, waiting to be filled. */
+@keyframes g34-gap {
+  0% { opacity: 0; transform: scale(0.7); }
+  30% { opacity: 0.85; transform: scale(1); }
+  74% { opacity: 0.7; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.82); }
+}
+.g34-gap { animation: g34-gap calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+
+/* A row of courses / rungs / stalls arriving in the real victim order. */
+@keyframes g34-rung {
+  0% { opacity: 0; transform: translateY(-30%) scaleY(0.5); }
+  46% { opacity: 0.95; transform: translateY(0) scaleY(1.06); }
+  64% { transform: translateY(0) scaleY(1); }
+  100% { opacity: 0; transform: translateY(0) scaleY(1); }
+}
+.g34-rung {
+  animation: g34-rung calc(0.6s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.85, 0.35, 1) both;
+  animation-delay: calc(var(--fx-index, 0) * 55ms * var(--fx-dur, 1));
+  transform-origin: 50% 100%;
+}
+
+/* A ticket, a docket, a name plate flipping over to the other side. */
+@keyframes g34-flip {
+  0% { opacity: 0; transform: scaleY(1) translateY(-14%); }
+  22% { opacity: 1; transform: scaleY(1) translateY(0); }
+  50% { transform: scaleY(0.06) translateY(0); }
+  78% { opacity: 1; transform: scaleY(1) translateY(0); }
+  100% { opacity: 0; transform: scaleY(1) translateY(0); }
+}
+.g34-flip { animation: g34-flip calc(0.72s * var(--fx-dur, 1)) cubic-bezier(0.5, 0.05, 0.3, 1) both; }
+
+/* A mirror ball's light sweep raking the floor. */
+@keyframes g34-rake {
+  0% { opacity: 0; transform: rotate(-30deg) scaleX(0.6); }
+  24% { opacity: 0.85; transform: rotate(-12deg) scaleX(1); }
+  100% { opacity: 0; transform: rotate(34deg) scaleX(1); }
+}
+.g34-rake {
+  animation: g34-rake calc(1.1s * var(--fx-dur, 1)) ease-in-out both;
+  transform-origin: 50% 0%;
+}
+
+/* Two hands closing on each other's wrist before the turn. */
+@keyframes g34-clasp {
+  0% { opacity: 0; transform: scaleX(1.9) scaleY(0.7); }
+  46% { opacity: 1; transform: scaleX(0.9) scaleY(1.08); }
+  62% { transform: scaleX(1) scaleY(1); }
+  100% { opacity: 0; transform: scaleX(1) scaleY(1); }
+}
+.g34-clasp { animation: g34-clasp calc(0.52s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.85, 0.3, 1) both; }
+
+/* ---------------------------------------------------------------------------
+   6. Settles. Short decays, leaning away from the caster by --fx-side.
+   ------------------------------------------------------------------------ */
+
+@keyframes g34-motes {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.7); }
+  34% { opacity: 0.8; transform: translate(2%, calc(var(--fx-side, 1) * -8%)) scale(1); }
+  100% { opacity: 0; transform: translate(6%, calc(var(--fx-side, 1) * -26%)) scale(1.16); }
+}
+.g34-motes { animation: g34-motes calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g34-dust {
+  0% { opacity: 0; transform: scale(0.4, 0.6); }
+  40% { opacity: 0.72; transform: scale(1, 1); }
+  100% { opacity: 0; transform: scale(1.4, 1.1); }
+}
+.g34-dust { animation: g34-dust calc(0.8s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g34-ripple {
+  0% { opacity: 0; transform: scale(0.24); }
+  36% { opacity: 0.8; transform: scale(0.8); }
+  100% { opacity: 0; transform: scale(1.7); }
+}
+.g34-ripple { animation: g34-ripple calc(0.86s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.75, 0.35, 1) both; }
+
+@keyframes g34-drip {
+  0% { opacity: 0; transform: translateY(-24%) scaleY(0.5); }
+  30% { opacity: 0.85; transform: translateY(0) scaleY(1); }
+  100% { opacity: 0; transform: translateY(52%) scaleY(1.3); }
+}
+.g34-drip { animation: g34-drip calc(0.78s * var(--fx-dur, 1)) cubic-bezier(0.4, 0.1, 0.6, 1) both; }
+
+@keyframes g34-glint {
+  0% { opacity: 0; transform: rotate(0deg) scale(0.2); }
+  40% { opacity: 0.95; transform: rotate(24deg) scale(1.1); }
+  100% { opacity: 0; transform: rotate(46deg) scale(0.6); }
+}
+.g34-glint { animation: g34-glint calc(0.62s * var(--fx-dur, 1)) ease-out both; }
+
+/* ---------------------------------------------------------------------------
+   7. The one-crop cuts: entrance (card arriving in a hand) and target (the
+      per-square hit). No board takeover, no oversized stage.
+   ------------------------------------------------------------------------ */
+
+@keyframes g34-ent {
+  0% { opacity: 0; transform: translateY(16%) scale(0.72); }
+  46% { opacity: 1; transform: translateY(0) scale(1.06); }
+  62% { transform: translateY(0) scale(1); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-4%) scale(0.98); }
+}
+.g34-ent { animation: g34-ent calc(0.78s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.85, 0.35, 1) both; }
+
+/* The entrance crossing: two objects trade sides inside the crop. */
+@keyframes g34-ent-out {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.8); }
+  24% { opacity: 1; transform: translate(0, 0) scale(1); }
+  56% { transform: translate(30%, -22%) scale(1.04); }
+  86% { opacity: 1; transform: translate(58%, 0) scale(1); }
+  100% { opacity: 0; transform: translate(58%, 0) scale(0.94); }
+}
+.g34-ent-out { animation: g34-ent-out calc(0.86s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.05, 0.3, 1) both; }
+
+@keyframes g34-ent-back {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.8); }
+  24% { opacity: 1; transform: translate(0, 0) scale(1); }
+  56% { transform: translate(-30%, 22%) scale(1.04); }
+  86% { opacity: 1; transform: translate(-58%, 0) scale(1); }
+  100% { opacity: 0; transform: translate(-58%, 0) scale(0.94); }
+}
+.g34-ent-back { animation: g34-ent-back calc(0.86s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.05, 0.3, 1) both; }
+
+/* The entrance settle: the machinery ticking over once it has swapped. */
+@keyframes g34-ent-turn {
+  0% { opacity: 0; transform: rotate(-16deg) scale(0.6); }
+  40% { opacity: 0.95; transform: rotate(0deg) scale(1.04); }
+  74% { opacity: 0.8; transform: rotate(10deg) scale(1); }
+  100% { opacity: 0; transform: rotate(18deg) scale(0.9); }
+}
+.g34-ent-turn { animation: g34-ent-turn calc(0.82s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g34-hit {
+  0% { opacity: 0; transform: scale(0.44) rotate(-8deg); }
+  44% { opacity: 1; transform: scale(1.08) rotate(0deg); }
+  62% { transform: scale(1) rotate(0deg); }
+  100% { opacity: 0; transform: scale(0.94) rotate(0deg); }
+}
+.g34-hit { animation: g34-hit calc(0.5s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.35, 1) both; }
+
+/* The per-square swap: two halves of the square trade over. */
+@keyframes g34-hit-out {
+  0% { opacity: 0; transform: translate(-26%, 0) scale(0.8); }
+  30% { opacity: 1; transform: translate(-26%, 0) scale(1); }
+  76% { opacity: 1; transform: translate(26%, -10%) scale(1); }
+  100% { opacity: 0; transform: translate(26%, 0) scale(0.9); }
+}
+.g34-hit-out { animation: g34-hit-out calc(0.54s * var(--fx-dur, 1)) cubic-bezier(0.4, 0.05, 0.3, 1) both; }
+
+@keyframes g34-hit-back {
+  0% { opacity: 0; transform: translate(26%, 0) scale(0.8); }
+  30% { opacity: 1; transform: translate(26%, 0) scale(1); }
+  76% { opacity: 1; transform: translate(-26%, 10%) scale(1); }
+  100% { opacity: 0; transform: translate(-26%, 0) scale(0.9); }
+}
+.g34-hit-back { animation: g34-hit-back calc(0.54s * var(--fx-dur, 1)) cubic-bezier(0.4, 0.05, 0.3, 1) both; }
+
+/* The per-square settle. */
+@keyframes g34-hit-fade {
+  0% { opacity: 0; transform: scale(0.5); }
+  40% { opacity: 0.7; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.34); }
+}
+.g34-hit-fade { animation: g34-hit-fade calc(0.6s * var(--fx-dur, 1)) ease-out both; }

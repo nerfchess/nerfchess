@@ -126,6 +126,13 @@ jobs:
       - name: Animation registry
         run: npm run test:animations
 
+      # Every scene meets the design brief's floor: three beats, the tier's
+      # layer count, warm whites, a layer driven by the directional geometry
+      # vars, and a declared anchor. Ratcheted against
+      # scripts/scene-complexity-baseline.json so the count can only shrink.
+      - name: Scene complexity
+        run: npm run test:scene-complexity
+
       # Every passive composition carries a sound cue and every cue family has a
       # wired voice.
       - name: Sound coverage
@@ -143,6 +150,18 @@ jobs:
       # draft.ts's exclusive COMBO_TAGS families filed as an incidental rider.
       - name: Card categories
         run: npm run test:card-categories
+
+      # Two cards that are not byte-identical but are still the same card twice
+      # are what the animation gates cannot see. Shrink-only ratchet on the
+      # count of rule-text near-duplicates within a category, tier and family.
+      - name: Card similarity
+        run: npm run test:card-similarity
+
+      # A passive has no cast moment, so its persistent piece icon is the only
+      # thing telling a player the rule is still in force. Shrink-only ratchet
+      # on passives that mark pieces but show nothing.
+      - name: Passive piece icons
+        run: npm run test:passive-motifs
 
       # Category keywords match at a word boundary: "spawns" is not a pawn card
       # and "attacking" is not a king card, so the codex chips and the

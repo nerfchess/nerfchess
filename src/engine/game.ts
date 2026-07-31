@@ -1930,6 +1930,62 @@ const AI_PIECE_VALUE: Record<PieceType, number> = { p: 1, n: 3, b: 3, r: 5, q: 9
 
 /** Score a candidate square for auto-targeting: enemy pieces dominate (by
  * value), then own pieces, then empty squares by centrality. */
+/**
+ * Does this card DESTROY the piece the player picks?
+ *
+ * The picker's normal instinct -- take the most valuable piece available -- is
+ * right for a shield and catastrophic for a bomb, and nothing distinguished the
+ * two. Detonate ("sacrifice one pawn to clear all pieces on its adjacent
+ * squares") measured -42.5 points because the bot reliably picked its most
+ * central pawn, whose neighbours in the opening are its OWN pieces, and blew up
+ * its own position. Funeral Pyre and Blood Price failed the same way: three of
+ * the five worst cards in the library shared this one cause.
+ *
+ * Derived from rules text rather than a per-card flag, so a card written later
+ * is covered without anyone remembering to tag it.
+ */
+function pickIsSacrifice(def: Buff): boolean {
+  const d = (def.description ?? "").toLowerCase();
+  return (
+    /\bsacrifice\b/.test(d) ||
+    /destroy one of your own/.test(d) ||
+    /\bone of your own pieces\b[^.]*\b(?:destroyed|removed|lost)\b/.test(d) ||
+    // Crosses a sentence break on purpose: Funeral Pyre says "choose any of
+    // your pieces (your king aside). It is removed, and every enemy piece
+    // adjacent to it is destroyed" -- the removal lands in the NEXT sentence,
+    // and a pattern that stopped at the full stop missed one of the three
+    // cards this rule exists for.
+    /\b(?:choose|pick) (?:any of )?your (?:own )?pieces?\b[\s\S]{0,90}\b(?:it )?is removed\b/.test(d)
+  );
+}
+
+/**
+ * Square score for a card that will destroy what it picks.
+ *
+ * Inverted on the owner's side -- cheapest piece wins -- and paid for by the
+ * enemy material standing next to it, so a blast is aimed at a cluster of
+ * theirs rather than at the middle of the board.
+ */
+function aiSacrificeScore(game: NerfGame, me: Color, sq: Square): number {
+  const p = game.board.pieces[sq];
+  if (!p) return 0;
+  const opp: Color = me === "w" ? "b" : "w";
+  let enemyNear = 0;
+  let friendNear = 0;
+  for (let t = 0; t < 64; t++) {
+    if (t === sq) continue;
+    if (Math.abs(FILE(t) - FILE(sq)) > 1 || Math.abs(RANK(t) - RANK(sq)) > 1) continue;
+    const n = game.board.pieces[t];
+    if (!n || n.type === "k") continue;
+    if (n.color === opp) enemyNear += AI_PIECE_VALUE[n.type];
+    else friendNear += AI_PIECE_VALUE[n.type];
+  }
+  // What the trade is worth: their material caught in it, minus ours, minus
+  // the piece being spent. Offered as a positive score so the caller's
+  // "highest wins" loop still works.
+  return 100 + (enemyNear - friendNear - AI_PIECE_VALUE[p.type]) * 10;
+}
+
 function aiSquareScore(game: NerfGame, me: Color, sq: Square): number {
   const p = game.board.pieces[sq];
   const centrality = 7 - Math.max(Math.abs(FILE(sq) - 3.5), Math.abs(RANK(sq) - 3.5)) * 2;
@@ -1949,20 +2005,34 @@ function aiCollectPicks(
   const opp: Color = color === "w" ? "b" : "w";
   const picks: BuffPick[] = [];
   let value = 0;
+  const inst0 = game.buffs?.players[color].buffs[buffIndex];
+  const def0 = inst0 && BUFF_BY_ID[inst0.id];
+  const sacrifice = !!def0 && pickIsSacrifice(def0);
   for (let step = 0; step < 16; step++) {
     const target = buffNextTarget(game, color, buffIndex, picks);
     if (!target) return { picks, value };
     if (target.kind === "square") {
       if (!target.squares.length) return null;
       let best = target.squares[0];
-      let bestScore = -1;
+      let bestScore = -Infinity;
       for (const sq of target.squares) {
-        const score = aiSquareScore(game, color, sq);
+        // A card that destroys its pick needs the opposite instinct from one
+        // that protects it, so the scorer is chosen from the card, not fixed.
+        const score = sacrifice
+          ? aiSacrificeScore(game, color, sq)
+          : aiSquareScore(game, color, sq);
         if (score > bestScore) {
           bestScore = score;
           best = sq;
         }
       }
+      // For a sacrifice, the "value" of the pick is the NET trade, so the
+      // caller can refuse a blast that catches nothing. Without this the
+      // worth-firing gate only ever counted enemy pieces among the picks --
+      // and a sacrifice card picks one of YOUR pieces, so it scored zero and
+      // fired unconditionally. Funeral Pyre spent a piece per game for
+      // whatever happened to be standing nearby.
+      if (sacrifice) value = Math.max(value, (bestScore - 100) / 10);
       const piece = game.board.pieces[best];
       if (piece && piece.color === opp) value = Math.max(value, AI_PIECE_VALUE[piece.type]);
       picks.push({ square: best });
@@ -2007,6 +2077,8 @@ export function aiChooseBuffActivation(
   if (!bs || bs.diff || game.result || game.board.turn !== color) return null;
   const ps = bs.players[color];
   const inDanger = gameInCheck(game, color);
+  // Computed lazily: most calls never reach the protection branch.
+  let oppAttacks: Set<Square> | null = null;
   for (let i = 0; i < ps.buffs.length; i++) {
     const inst = ps.buffs[i];
     const def = BUFF_BY_ID[inst.id];
@@ -2040,10 +2112,36 @@ export function aiChooseBuffActivation(
       const piece = p.square !== undefined ? game.board.pieces[p.square] : null;
       return !!piece && piece.color !== color;
     });
+    // A sacrifice must actually pay: their material caught in the blast has to
+    // exceed ours plus the piece being spent. Firing at a loss is worse than
+    // not firing, and this card cannot be "saved for later" into a worse spot.
+    if (pickIsSacrifice(def) && collected.value <= 0) continue;
     // Offensive one-shots hold out for a knight's worth of value.
     if (hitsEnemy && collected.value < 3) continue;
-    // Protective cards wait for actual danger instead of firing blind.
-    if (!hitsEnemy && def.category === "protection" && !inDanger) continue;
+    // In check, the turn is not spare. A turn-consuming activation costs this
+    // move (see activateBuff), and nothing here makes the check go away, so
+    // firing one leaves the king still attacked with the escape move already
+    // spent. That was near-fatal every time, and the rule below made it the
+    // COMMON case: protective cards only fire when in danger, and "in danger"
+    // is exactly being in check, so this bot reliably answered a check by
+    // raising a shield that does not even cover the king.
+    //
+    // Free actions are exempt because they cost no turn, so the escape is
+    // still available afterwards.
+    if (inDanger && !def.freeAction) continue;
+    // Protective cards wait for actual danger instead of firing blind -- but
+    // "danger" is a piece of theirs actually under attack, NOT being in check.
+    // Keying it to check was what forced the bad trade above: the only moment
+    // a shield was allowed to fire was the one moment its turn could not be
+    // spared. A threatened piece is the real cue, and it leaves the escape
+    // move free.
+    if (!hitsEnemy && def.category === "protection") {
+      if (!oppAttacks) oppAttacks = attackedBy(game.board, color === "w" ? "b" : "w");
+      const threatened = collected.picks.some(
+        (p) => p.square !== undefined && oppAttacks!.has(p.square),
+      );
+      if (!threatened) continue;
+    }
     return { buffIndex: i, picks: collected.picks };
   }
   return null;

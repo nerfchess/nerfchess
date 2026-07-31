@@ -18,8 +18,15 @@
 // scene scales with the board; reduced motion hides the layer outright.
 
 import type { CSSProperties, ReactNode } from "react";
-import type { SigPlugin } from "./sigPlugins";
+import type { SigPlugin, SigRole } from "./sigPlugins";
+import { AimStage, BoardFrame } from "./stage";
 import "./memePlays.css";
+
+interface SceneProps {
+  lead: boolean;
+  role: SigRole;
+  delayMs: number;
+}
 
 /* ------------------------------------------------------------------------- */
 /* Shared staging                                                             */
@@ -39,14 +46,103 @@ function Stage({ children, inset = "0" }: { children: ReactNode; inset?: string 
   );
 }
 
-/** Board-crop stage for wide leads: oversized around the lead square so the
- * scene takes over the whole visible board (the caller's crop clips it).
+/** Board-crop stage for a lead that declares `anchor: "board"`: oversized
+ * around the lead square so the scene takes over the whole visible board.
  * Same geometry as the core BoardWideStage — a 1400% canvas is ~14 cells, so
- * the 8x8 board is the middle ~57% — rebuilt here to avoid the import cycle. */
+ * the 8x8 board is the middle ~57%.
+ *
+ * Board.tsx already re-centres the wrapper on the board for a "board" anchor,
+ * so this canvas must NOT correct itself a second time. Cast- and aim-anchored
+ * leads use `Framed`. */
 function Wide({ children }: { children: ReactNode }) {
   return (
     <span className="mnp pointer-events-none absolute inset-0 z-30" aria-hidden="true">
       <span className="absolute left-[-650%] top-[-650%] block h-[1400%] w-[1400%]">{children}</span>
+    </span>
+  );
+}
+
+/** The same 14-cell composition for a lead that declares `anchor: "cast"` or
+ * `"aim"`, pinned to the BOARD.
+ *
+ * These scenes carry genuinely board-scale layers — Saturn's rings sweeping
+ * the whole board, banks of fridge fog, a ribbon spiral wider than the crop —
+ * and the design brief is explicit that anything meaning "the board" goes in a
+ * `BoardFrame` rather than at a fixed percentage of an anchored canvas. The
+ * canvas is 14 cells and the board is the middle 8, so the art is re-expanded
+ * to 175% of the frame and offset -37.5%, which reproduces the old framing
+ * exactly at any anchor. The cast square then carries the play's own local
+ * beats; see `Spot`. */
+function Framed({ children }: { children: ReactNode }) {
+  return (
+    <span className="mnp pointer-events-none absolute inset-0 z-30" aria-hidden="true">
+      <span className="fx-stage absolute left-[-650%] top-[-650%] block h-[1400%] w-[1400%]">
+        <BoardFrame>
+          <span className="absolute left-[-37.5%] top-[-37.5%] block h-[175%] w-[175%]">{children}</span>
+        </BoardFrame>
+      </span>
+    </span>
+  );
+}
+
+/** The cast square's own three beats, at one-cell scale on the square the card
+ * was actually played on: a ring inhales (tell), the square thumps (strike),
+ * and a mote drifts off it (settle). Deliberately unhurried — these are the
+ * comedy cards, and the hold before the punchline is the joke.
+ *
+ * The drift is the module's directional layer. --fx-side is +1 when the
+ * caster's home rank is drawn at the bottom of the screen and -1 when it is at
+ * the top, so the mote trails back toward the player who played the card
+ * rather than "down", which would be backwards for one of the two seats. */
+function Spot({
+  tell,
+  hit,
+  settle,
+  tone,
+  glow,
+}: {
+  tell: CSSProperties;
+  hit: CSSProperties;
+  settle: CSSProperties;
+  tone: string;
+  glow: string;
+}) {
+  return (
+    <span className="mnp pointer-events-none absolute inset-0 z-30 block" aria-hidden="true">
+      <span
+        className="mnp-spot-tell absolute block"
+        style={{ left: "8%", top: "8%", width: "84%", height: "84%", borderRadius: "50%", border: `2px solid ${glow}`, ...tell }}
+      />
+      <span
+        className="mnp-spot-hit absolute inset-0 block"
+        style={{ background: `radial-gradient(circle, ${glow} 0%, transparent 62%)`, ...hit }}
+      />
+      <span
+        className="mnp-spot-drift absolute block"
+        style={{ left: "26%", top: "26%", width: "48%", height: "48%", borderRadius: "50%", background: `radial-gradient(circle, ${tone} 0%, transparent 66%)`, ...settle }}
+      />
+    </span>
+  );
+}
+
+/** The entrance cut: the card arriving in a hand. The play's own character at
+ * ~56% of the crop, stepping in from the caster's side over a soft ground
+ * shadow — a free-standing figure, never a photo card, and no board takeover.
+ * The hold before it settles is a beat longer than feels safe on purpose. */
+function Arrival({ delayMs, tone, glow, children }: { delayMs: number; tone: string; glow: string; children: ReactNode }) {
+  return (
+    <span className="mnp pointer-events-none absolute inset-0 z-30 block" aria-hidden="true">
+      <span
+        className="mnp-arrive-ring absolute block"
+        style={{ left: "20%", top: "20%", width: "60%", height: "60%", borderRadius: "50%", border: `2px solid ${glow}`, ...d(delayMs + 40) }}
+      />
+      <span className="mnp-arrive absolute block" style={{ left: "22%", top: "20%", width: "56%", height: "60%", ...d(delayMs + 180) }}>
+        {children}
+      </span>
+      <span
+        className="mnp-spot-drift absolute block"
+        style={{ left: "32%", top: "62%", width: "36%", height: "16%", borderRadius: "50%", background: `radial-gradient(closest-side, ${tone}, transparent 72%)`, ...d(delayMs + 700) }}
+      />
     </span>
   );
 }
@@ -139,7 +235,14 @@ function SparkStar({ x, y, s = 1, fill = "#ffd76a" }: { x: number; y: number; s?
 /* 1. Cappuccino Assassino (t6) — blade flurry, coffee splash, gone           */
 /* ------------------------------------------------------------------------- */
 
-function CappuccinoAssassinoPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+function CappuccinoAssassinoPlay({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="rgba(125,78,44,0.5)" glow="#c2d2e0">
+        <Figure id="cappuccino_assassino" />
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Stage>
@@ -159,7 +262,8 @@ function CappuccinoAssassinoPlay({ lead, delayMs }: { lead: boolean; delayMs: nu
     );
   }
   return (
-    <Wide>
+    <>
+      <Framed>
       <Wash color="rgba(78,45,21,0.2)" delayMs={delayMs} />
       {/* the assassin blurs clean across the board */}
       <Prop left="36.5%" top="30%" width="27%" height="32%" className="mnp-assassin" style={d(delayMs)}>
@@ -205,7 +309,32 @@ function CappuccinoAssassinoPlay({ lead, delayMs }: { lead: boolean; delayMs: nu
         </svg>
       </Prop>
       <Ring color="rgba(194,210,224,0.85)" delayMs={delayMs + 900} />
-    </Wide>
+      </Framed>
+      {/* THE STRIKE ITSELF TRAVELS. The assassin above is an upright character
+          and stays square with the board — AimStage would lay him on his side
+          — so only the blade run goes in one, authored pointing RIGHT so it
+          rotates onto the real source -> victim leg. How far it reaches is
+          --fx-len: a kill next door is a flick, one across the board is a
+          full lunge. */}
+      <AimStage>
+        {[0, 1, 2].map((i) => (
+          <span
+            key={i}
+            className="mnp-lunge absolute block"
+            style={{
+              left: "48%",
+              top: `${48.2 + i * 1.1}%`,
+              width: "5%",
+              height: "0.9%",
+              borderRadius: "999px",
+              background: i % 2 ? "linear-gradient(90deg, rgba(194,210,224,0), #c2d2e0)" : "linear-gradient(90deg, rgba(244,248,252,0), #f4f8fc)",
+              ...dv(delayMs + 420 + i * 90, { "--mnp-run": `${26 + i * 8}` }),
+            }}
+          />
+        ))}
+      </AimStage>
+      <Spot tone="#7d4e2c" glow="#c2d2e0" tell={d(delayMs + 100)} hit={d(delayMs + 780)} settle={d(delayMs + 1700)} />
+    </>
   );
 }
 
@@ -226,7 +355,14 @@ function RibbonSpiral({ color }: { color: string }) {
   );
 }
 
-function BallerinaCappuccinaPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+function BallerinaCappuccinaPlay({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="rgba(245,168,192,0.5)" glow="#ffd9e4">
+        <Figure id="ballerina_cappuccina" />
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Stage>
@@ -242,7 +378,8 @@ function BallerinaCappuccinaPlay({ lead, delayMs }: { lead: boolean; delayMs: nu
     );
   }
   return (
-    <Wide>
+    <>
+      <Framed>
       <Wash color="rgba(245,168,192,0.16)" delayMs={delayMs} />
       {/* the ribbon spiral winds around her, spinning the other way */}
       <Prop left="25%" top="22%" width="50%" height="54%" className="mnp-ribbonspin" style={d(delayMs + 150)}>
@@ -271,7 +408,9 @@ function BallerinaCappuccinaPlay({ lead, delayMs }: { lead: boolean; delayMs: nu
         </Prop>
       ))}
       <Ring color="rgba(245,168,192,0.85)" delayMs={delayMs + 1050} />
-    </Wide>
+      </Framed>
+      <Spot tone="#f5a8c0" glow="#ffd9e4" tell={d(delayMs + 90)} hit={d(delayMs + 700)} settle={d(delayMs + 1600)} />
+    </>
   );
 }
 
@@ -279,7 +418,14 @@ function BallerinaCappuccinaPlay({ lead, delayMs }: { lead: boolean; delayMs: nu
 /* 3. La Vaca Saturno Saturnita (t7) — rings sweep the board, cow in orbit    */
 /* ------------------------------------------------------------------------- */
 
-function LaVacaPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+function LaVacaPlay({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="rgba(226,200,242,0.5)" glow="#f2c46a">
+        <Figure id="la_vaca_saturno_saturnita" />
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Stage inset="-15%">
@@ -294,7 +440,8 @@ function LaVacaPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     );
   }
   return (
-    <Wide>
+    <>
+      <Framed>
       <Wash color="rgba(94,58,134,0.22)" delayMs={delayMs} slow />
       {/* Saturn's rings sweep the WHOLE board, twice, tilted */}
       <Prop left="15%" top="25%" width="70%" height="50%" className="mnp-ringsweep" style={d(delayMs + 100)}>
@@ -326,7 +473,10 @@ function LaVacaPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
         </Prop>
       ))}
       <Ring color="rgba(242,196,106,0.85)" delayMs={delayMs + 1500} />
-    </Wide>
+      </Framed>
+      {/* the rim square she actually settles onto keeps its own beats */}
+      <Spot tone="#f2c46a" glow="#e2c8f2" tell={d(delayMs + 110)} hit={d(delayMs + 1000)} settle={d(delayMs + 1900)} />
+    </>
   );
 }
 
@@ -334,7 +484,14 @@ function LaVacaPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 /* 4. Frigo Camelo (t5) — the door swings open, cold fog rolls out            */
 /* ------------------------------------------------------------------------- */
 
-function FrigoCameloPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+function FrigoCameloPlay({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="rgba(143,216,242,0.5)" glow="#dff6ff">
+        <Figure id="frigo_camelo" />
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Stage>
@@ -351,7 +508,8 @@ function FrigoCameloPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) 
     );
   }
   return (
-    <Wide>
+    <>
+      <Wide>
       <Wash color="rgba(79,168,204,0.16)" delayMs={delayMs} />
       {/* the fridge-camel backs in from the left */}
       <Prop left="24%" top="25%" width="26%" height="36%" className="mnp-slidein" style={d(delayMs)}>
@@ -387,7 +545,9 @@ function FrigoCameloPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) 
         </Prop>
       ))}
       <Ring color="rgba(143,216,242,0.85)" delayMs={delayMs + 1200} />
-    </Wide>
+      </Wide>
+      <Spot tone="#8fd8f2" glow="#dff6ff" tell={d(delayMs + 80)} hit={d(delayMs + 900)} settle={d(delayMs + 1800)} />
+    </>
   );
 }
 
@@ -395,7 +555,14 @@ function FrigoCameloPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) 
 /* 5. Trippi Troppi (t3) — corrupted-video glitch jitter                      */
 /* ------------------------------------------------------------------------- */
 
-function TrippiTroppiPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+function TrippiTroppiPlay({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="rgba(242,130,90,0.5)" glow="#5db6e8">
+        <Figure id="trippi_troppi" />
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Stage>
@@ -415,7 +582,8 @@ function TrippiTroppiPlay({ lead, delayMs }: { lead: boolean; delayMs: number })
     );
   }
   return (
-    <Stage inset="-140%">
+    <>
+      <Stage inset="-140%">
       {/* chromatic ghost copies, out of phase */}
       <span className="mnp-glitch absolute left-[8%] top-[6%] block h-[80%] w-[80%] opacity-40" style={d(delayMs + 60)}>
         <Figure id="trippi_troppi" />
@@ -445,7 +613,9 @@ function TrippiTroppiPlay({ lead, delayMs }: { lead: boolean; delayMs: number })
         {/* the settle: one clean spark once the feed dies */}
         <g className="mnp-star" style={d(delayMs + 1250)}><SparkStar x={50} y={12} s={1.4} fill="#f2825a" /></g>
       </svg>
-    </Stage>
+      </Stage>
+      <Spot tone="#f2825a" glow="#5db6e8" tell={d(delayMs + 70)} hit={d(delayMs + 620)} settle={d(delayMs + 1700)} />
+    </>
   );
 }
 
@@ -453,7 +623,14 @@ function TrippiTroppiPlay({ lead, delayMs }: { lead: boolean; delayMs: number })
 /* 6. Chill Guy (t2) — he just slides across the bottom. that's it. that's the joke */
 /* ------------------------------------------------------------------------- */
 
-function ChillGuyPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+function ChillGuyPlay({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="rgba(139,147,162,0.45)" glow="#c9d2dc">
+        <Figure id="chill_guy" />
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Stage>
@@ -467,7 +644,8 @@ function ChillGuyPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     );
   }
   return (
-    <Wide>
+    <>
+      <Wide>
       {/* everything calms down. that's the whole effect. */}
       <Wash color="rgba(139,147,162,0.14)" delayMs={delayMs} slow />
       {/* the man himself, sliding across the bottom of the board at a truly
@@ -492,7 +670,10 @@ function ChillGuyPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           <g className="mnp-star" style={d(delayMs + 1900)}><SparkStar x={10} y={10} s={0.8} fill="#c9d2dc" /></g>
         </svg>
       </Prop>
-    </Wide>
+      </Wide>
+      {/* the hold is the joke: the tell is early, the settle is very, very late */}
+      <Spot tone="#8b93a2" glow="#c9d2dc" tell={d(delayMs + 120)} hit={d(delayMs + 1100)} settle={d(delayMs + 2400)} />
+    </>
   );
 }
 
@@ -500,7 +681,14 @@ function ChillGuyPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 /* 7. Moai Head (t4) — descends, THUDS, then holds the longest deadpan pause  */
 /* ------------------------------------------------------------------------- */
 
-function MoaiHeadPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+function MoaiHeadPlay({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="rgba(180,188,196,0.5)" glow="#848e98">
+        <Figure id="moai_head" />
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Stage>
@@ -520,7 +708,8 @@ function MoaiHeadPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     );
   }
   return (
-    <Wide>
+    <>
+      <Framed>
       {/* the impact flash-wash: one hard pulse when it lands */}
       <Wash color="rgba(78,88,98,0.24)" delayMs={delayMs + 480} />
       {/* the moai descends. gravity means it. */}
@@ -566,7 +755,11 @@ function MoaiHeadPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
           </g>
         </svg>
       </Prop>
-    </Wide>
+      </Framed>
+      {/* he lands on ONE square, and that square is the one that gets the THUD.
+          The settle sits out past the deadpan pause on purpose. */}
+      <Spot tone="#b4bcc4" glow="#848e98" tell={d(delayMs + 90)} hit={d(delayMs + 520)} settle={d(delayMs + 2100)} />
+    </>
   );
 }
 
@@ -574,7 +767,14 @@ function MoaiHeadPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
 /* 8. Skibidi Flush (t5) — a giant vortex drags ghost pieces home             */
 /* ------------------------------------------------------------------------- */
 
-function SkibidiFlushPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+function SkibidiFlushPlay({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="rgba(93,182,232,0.5)" glow="#8fd4f5">
+        <Figure id="skibidi_flush" />
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Stage>
@@ -591,7 +791,8 @@ function SkibidiFlushPlay({ lead, delayMs }: { lead: boolean; delayMs: number })
     );
   }
   return (
-    <Wide>
+    <>
+      <Wide>
       <Wash color="rgba(42,110,168,0.2)" delayMs={delayMs} />
       {/* the giant vortex: three nested spirals winding the whole board */}
       <Prop left="22%" top="22%" width="56%" height="56%" className="mnp-vortex" style={d(delayMs)}>
@@ -634,7 +835,9 @@ function SkibidiFlushPlay({ lead, delayMs }: { lead: boolean; delayMs: number })
         <Figure id="skibidi_flush" />
       </Prop>
       <Ring color="rgba(143,212,245,0.85)" delayMs={delayMs + 1450} />
-    </Wide>
+      </Wide>
+      <Spot tone="#5db6e8" glow="#8fd4f5" tell={d(delayMs + 90)} hit={d(delayMs + 800)} settle={d(delayMs + 1900)} />
+    </>
   );
 }
 
@@ -642,7 +845,14 @@ function SkibidiFlushPlay({ lead, delayMs }: { lead: boolean; delayMs: number })
 /* 9. Tung Tung Tung Sahur (t?) — HE marches the board himself, drum thunder  */
 /* ------------------------------------------------------------------------- */
 
-function TungTungSahurPlay({ lead, delayMs }: { lead: boolean; delayMs: number }) {
+function TungTungSahurPlay({ lead, role, delayMs }: SceneProps) {
+  if (role === "entrance") {
+    return (
+      <Arrival delayMs={delayMs} tone="rgba(217,159,92,0.5)" glow="#ffd76a">
+        <Figure id="tung_tung_sahur" />
+      </Arrival>
+    );
+  }
   if (!lead) {
     return (
       <Stage>
@@ -659,7 +869,8 @@ function TungTungSahurPlay({ lead, delayMs }: { lead: boolean; delayMs: number }
     );
   }
   return (
-    <Wide>
+    <>
+      <Wide>
       <Wash color="rgba(122,74,32,0.22)" delayMs={delayMs} />
       {/* the man himself — the glossy log, board-COLOSSAL, marching across
           (~28% of the 14x14 canvas is ~half the visible board) */}
@@ -698,7 +909,9 @@ function TungTungSahurPlay({ lead, delayMs }: { lead: boolean; delayMs: number }
       ))}
       <Ring color="rgba(217,159,92,0.9)" delayMs={delayMs + 1750} />
       <Ring color="rgba(255,215,106,0.7)" delayMs={delayMs + 1900} />
-    </Wide>
+      </Wide>
+      <Spot tone="#d99f5c" glow="#ffd76a" tell={d(delayMs + 100)} hit={d(delayMs + 740)} settle={d(delayMs + 2200)} />
+    </>
   );
 }
 
@@ -716,42 +929,42 @@ function TungTungSahurPlay({ lead, delayMs }: { lead: boolean; delayMs: number }
 // sleepy "snooze" voice; the moai THUD borrows the siege thump.
 export const PLAYS: Record<string, SigPlugin> = {
   cappuccino_assassino: {
-    config: { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "blitz" },
+    config: { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "blitz", anchor: "aim" },
     Render: CappuccinoAssassinoPlay,
   },
   ballerina_cappuccina: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation", anchor: "cast" },
     Render: BallerinaCappuccinaPlay,
   },
   la_vaca_saturno_saturnita: {
-    config: { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "colossus", source: "summon" },
+    config: { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "colossus", source: "summon", anchor: "cast" },
     Render: LaVacaPlay,
   },
   frigo_camelo: {
-    config: { ordering: "radial", staggerMs: 70, victims: "all", hasLead: true, sound: "clockice", source: "shield" },
+    config: { ordering: "radial", staggerMs: 70, victims: "all", hasLead: true, sound: "clockice", source: "shield", anchor: "board" },
     Render: FrigoCameloPlay,
   },
   trippi_troppi: {
-    config: { ordering: "radial", staggerMs: 55, victims: ["p", "n", "b", "r", "q"], hasLead: true, sound: "petrify", source: "walnut" },
+    config: { ordering: "radial", staggerMs: 55, victims: ["p", "n", "b", "r", "q"], hasLead: true, sound: "petrify", source: "walnut", anchor: "board" },
     Render: TrippiTroppiPlay,
   },
   chill_guy: {
-    config: { ordering: "sweep", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze" },
+    config: { ordering: "sweep", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze", anchor: "board" },
     Render: ChillGuyPlay,
   },
   moai_head: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "siege" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "siege", anchor: "cast" },
     Render: MoaiHeadPlay,
   },
   skibidi_flush: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall" },
+    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall", anchor: "board" },
     Render: SkibidiFlushPlay,
   },
   // The drum-man in PERSON (his core "drumbonk" entry was removed so this
   // renders): same stun-zone read and siege thump as before, but the lead is
   // HIM — the glossy /brainrot figure marching the board to his own beat.
   tung_tung_sahur: {
-    config: { ordering: "radial", staggerMs: 60, victims: ["p", "n", "b", "r", "q"], hasLead: true, sound: "siege", source: "stun" },
+    config: { ordering: "radial", staggerMs: 60, victims: ["p", "n", "b", "r", "q"], hasLead: true, sound: "siege", source: "stun", anchor: "board" },
     Render: TungTungSahurPlay,
   },
 };

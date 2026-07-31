@@ -10,8 +10,151 @@ Design language (applies to EVERY play):
   leans on the category theme; whites are warm (#fff4d6-ish), never pure #fff.
 - Character over abstraction: prefer a thing happening (an anvil, a beam, a claw)
   over generic rings/sparks. Rings/sparks are seasoning, not the meal.
-- Edge safety: board-wide scenes must center on the BOARD (leadShift / cellStage),
-  never on the cast square, so nothing clips mid-screen.
+- **Anchoring (replaces the old edge-safety rule).** Scenes happen on the square
+  the card was cast on. The rule this supersedes said board-wide scenes must
+  center on the BOARD so nothing clips mid-screen; that was true of the fix in
+  place at the time (`leadShift`) but far stronger than the actual constraint,
+  and it made a card cast on a1 render identically to one cast on e4. See §7.
+
+## 0. Anchoring and direction (the geometry contract)
+
+Full derivation in `src/components/effects/geometry.ts`; the staging boxes are
+in `src/components/effects/stage.tsx`.
+
+**Where a scene plays** is declared per card by `anchor`:
+
+- `"cast"` — anchored on the cast square. **The default for new scenes.**
+- `"aim"` — as `"cast"`, plus the stage rotates onto the source -> target
+  vector. Author the art pointing RIGHT; it aims itself.
+- `"board"` — centred on the board wherever it was cast. Only for scenes that
+  genuinely depict something happening to the WHOLE board (the tier 9/10
+  marquee set). This is also the default for any scene that has not declared
+  one, so un-migrated art is unchanged.
+
+**Why anchoring is safe.** Scene art lives on a 14-cell canvas centred on its
+square (`BoardWideStage`), and the board crop is `overflow: hidden`. A 14-cell
+canvas covers an 8-cell board whenever its centre sits in `[1, 7]`; square
+centres run 0.5 to 7.5, so the worst case (a corner) is a **half-cell**
+correction, applied automatically by `clampAnchor`. Nothing clips.
+
+**The three staging boxes.** Using the wrong one is the main way to get this
+wrong:
+
+| Box | Its `0..100%` is | Use for |
+|---|---|---|
+| `BoardWideStage` | the 14-cell canvas, centred on the cast square | the action |
+| `BoardFrame` | exactly the BOARD, at any anchor | washes, rain, horizons, edge rings |
+| `AimStage` | the canvas, rotated onto the attack vector | beams, charges, sweeps |
+
+A fixed percentage of the stage does **not** mean the board any more. Anything
+that means "the whole board" goes in `BoardFrame`.
+
+**`AimStage` rotates everything inside it**, which is right for a beam, a
+trench or a ram, and wrong for a character: a town crier does not lie on his
+side to point at a victim. When a scene has both an upright subject and a
+travelling part, stage them separately - the subject in `BoardWideStage` on the
+cast square, only the travelling part in `AimStage`. The herald module
+(`g17HeraldPlays`) composes exactly that and is the reference for it.
+
+**Geometry reaches the art as inheriting CSS custom properties**, set on the
+wrapper span (never on the transform wrapper, whose `z-30` stacking-context fix
+is load-bearing):
+
+| Var | Meaning |
+|---|---|
+| `--fx-ox`, `--fx-oy` | cast square offset from board centre, in cells |
+| `--fx-board-dx`, `--fx-board-dy` | where the board sits in the canvas (drives `BoardFrame`) |
+| `--fx-anchor-dx`, `--fx-anchor-dy` | the clamp correction |
+| `--fx-ang` | aim angle, degrees, CSS rotate convention |
+| `--fx-aim-x`, `--fx-aim-y` | the same aim as a unit vector |
+| `--fx-len` | source -> target distance, in cells |
+| `--fx-index`, `--fx-n` | this square's place in the victim order, and the total |
+| `--fx-side` | `+1` caster at the bottom of the screen, `-1` at the top |
+
+Never write "the bottom of the board" into art: that is wrong for one of the
+two players. Lean on `--fx-side`.
+
+**Multi-target plays travel.** `orderSignature` builds legs along the real
+victim order, so a sweep rolls square to square and a chain hops victim to
+victim rather than firing one centred burst plus a row of identical pops. Each
+target square carries its own leg's `--fx-ang` and `--fx-len`, and the canvas
+layer draws the same legs (`VfxPlay.targets[].from`, `CardVfx.chain`).
+
+## 0b. The scene floor (enforced)
+
+`npm run test:scene-complexity` measures every scene and ratchets the count
+below this floor downward. `npm run test:animations` additionally ratchets the
+count of cards with no hand-made art at all (F5) toward zero.
+
+- **Exactly three beats**: a tell in the first third, the strike, a settle in
+  the last half.
+- **Distinct animated layers by tier**: t1-3 >= 4, t4-6 >= 5, t7-8 >= 6,
+  t9-10 >= 8. A layer is a distinct thing happening with its own delay, not a
+  distinct element.
+- **Exactly three palette colours** (core / glow / deep accent). Warm whites,
+  never pure `#fff`.
+- **At least one layer driven by a geometry var** from §0. This is what makes a
+  scene point at what it is doing.
+- **A declared anchor, and one the card can justify.** See §0d.
+- **An `entrance` role**, so the card arrives with art of its own rather than a
+  shared category arrival. Checked at module granularity, because several
+  modules route the entrance through their scene factory once instead of
+  repeating it per scene (`godPlays`'s `G` is the reference); the check cannot
+  tell a thin entrance from a good one, only a present one from an absent one.
+- <= 16 animated nodes; transform/opacity only; no new sound keys.
+
+## 0d. The anchor is derived, not chosen
+
+The rule is: **a general effect is centralized; an effect landing on a few
+pieces lasers them down.** With ~2,448 cards, applying that by eye does not
+finish and does not stay decided, so it is derived mechanically in
+`scripts/lib/anchor-rule.ts` and enforced by the complexity gate.
+
+The derivation returns the **set** of anchors that are defensible for a card,
+not a single verdict. The 58-category taxonomy is mechanical but not infinitely
+fine: `capture-denial` holds "your queen cannot be captured" and "no piece may
+capture this turn" alike, and forcing one answer there would overrule correct
+art. So the category sets a base, the rule text resolves what the category left
+open, and the gate fails a card only when its declared anchor is **outside** the
+set.
+
+Two asymmetries in it are deliberate:
+
+- **Scope beats kind.** The taxonomy files a card by its most distinctive hook,
+  not by how many pieces it touches, and the two come apart. Shield Wall ("any
+  of your pawns beside another cannot be captured") is filed
+  `single-piece-shield` and is army-wide. A card whose text names an open set,
+  or whose payload is a clock or a draft, re-admits `"board"` whatever its
+  category thought.
+- **Widening is loose, narrowing is strict.** The widening rule can only ever
+  add an option, so a loose match costs a missed catch. The narrowing rule
+  takes an option away, so it only resolves categories that were left open.
+
+**If the rule demands an anchor that is wrong for a card, fix the rule, not the
+art.** Four separate authoring passes pushed back with cards the derivation was
+getting wrong, and every one was a genuine bug; the last round of fixes cleared
+81 cards library-wide. A forced anchor is worse than a reported one.
+
+### When you re-anchor an existing scene
+
+A scene that stops being board-anchored plays off the board centre, and any
+layer that means "the whole board" (washes, horizons, edge rings, vignettes)
+must move inside `<BoardFrame>` or it will be drawn relative to the cast square
+instead. This is the single most common way to break one of these.
+
+The reverse also bites: a `"board"`-anchored lead has **already** been slid to
+the board centre, so applying `BoardFrame`'s offsets on top of that shifts it
+again, by up to 3.5 cells. Modules that support both anchors branch on it.
+
+## 0c. The three roles
+
+Every scene renders `role`:
+
+- `"lead"` — the board-scale flourish on the cast square.
+- `"target"` — the per-square hit. Small, fast, no board-wide art.
+- `"entrance"` — the card arriving in a hand, at ~56% of the crop. Same palette
+  and central object as the play, no board takeover, its own short arrival
+  beat. A scene that does not handle it falls back to its target cut.
 
 ## 1. CastSpectacle rework (BoardEffects.tsx — core, done by orchestrator)
 - Cards WITH bespoke art: no more giant face-icon slam over the play. Keep the name
@@ -75,3 +218,22 @@ Priority inside each module: tier 8-10 first, then 5-7, then the rest.
   punchline ~200ms longer than feels safe).
 - stubPlays: replace the shared StubBurst with per-card mini-scenes still ≤80 lines each.
 - basicPlays: keep shared machinery, add per-family tell beats.
+
+## 7. Anchoring: what changed, and what it replaced
+
+Before this pass every board-wide lead scene was translated so its canvas
+re-centred on the board (`leadShift`, Board.tsx). That shim existed for a real
+bug — an edge cast used to clip most of the animation away, the "only 1/4 of
+the animation shows" report — and the rule written around it ("board-wide
+scenes must center on the BOARD, never on the cast square") was the honest
+generalisation at the time.
+
+It was too strong. The clipping constraint is a half-cell, not three and a
+half (§0), so centring everything threw away the one thing an effect should
+communicate: where it happened. A card cast on a1 looked exactly like the same
+card cast on e4.
+
+Scenes now anchor on the cast square by default and declare `anchor: "board"`
+only when they genuinely mean the whole board. `BoardFrame` gives the layers
+that DO mean the whole board an exact box at any anchor, which is what makes
+the change safe rather than a trade.

@@ -272,6 +272,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
       tier: 7,
       category: "tempo",
       flavor: "Opposites attract, and so does the cavalry.",
+      fx: { motif: "empower", pieces: ["n"], self: true },
     },
     {
       kind: "passive",
@@ -320,6 +321,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
       tier: 7,
       category: "hex",
       flavor: "Cover your cough.",
+      fx: { motif: "jail", pieces: ["p", "n", "b", "r", "q"] },
     },
     {
       kind: "passive",
@@ -377,6 +379,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
       tier: 6,
       category: "protection",
       flavor: "Someone up there is watching.",
+      fx: { motif: "ward", pieces: ["p", "n", "b", "r", "q"], self: true },
     },
     {
       kind: "passive",

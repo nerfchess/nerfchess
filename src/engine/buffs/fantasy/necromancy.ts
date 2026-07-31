@@ -245,6 +245,7 @@ export const FANTASY_NECROMANCY: Buff[] = [
       tier: 5,
       category: "pieces",
       flavor: "You cannot kill what refuses to stay dead.",
+      fx: { motif: "ward", pieces: ["q"], self: true },
     },
     {
       kind: "passive",

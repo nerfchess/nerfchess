@@ -62,7 +62,7 @@ export {
 } from "../helpers";
 export { buffRegistry } from "../registry";
 export { FILE, RANK, SQ, inBoard };
-export type { Buff, BuffApi, BuffPick, Color, CosmeticSkin, Move, PieceType, Square, Tier };
+export type { Buff, BuffApi, BuffPick, CardFx, Color, CosmeticSkin, Move, PieceType, Square, Tier };
 
 import {
   addEffect,

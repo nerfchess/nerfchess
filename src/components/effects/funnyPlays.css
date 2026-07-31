@@ -21,6 +21,55 @@
 /* --- shared stage tracks ---------------------------------------------------- */
 
 /* Soft board wash behind a wide lead. */
+/* --- the cast square's own beats --------------------------------------------
+ * The full-crop skits are pinned to the BOARD (funnyPlays.tsx `Framed` ->
+ * BoardFrame) for the cards that land on a square, so these three one-cell
+ * layers are what says WHERE the card was played: a ring inhales on the
+ * square, the square pops, and a mote drifts off it. The gap between them is
+ * wide on purpose - these are the joke cards, and the hold before the
+ * punchline is the joke.
+ *
+ * The drift is the module's directional layer: it leans along --fx-side, which
+ * is +1 when the caster's home rank is drawn at the bottom of the screen and
+ * -1 when it is at the top. "Down the screen" would be right for one seat and
+ * backwards for the other. */
+@keyframes fnp-spot-tell {
+  0% { opacity: 0; transform: scale(1.6); }
+  55% { opacity: 0.9; transform: scale(0.94); }
+  100% { opacity: 0; transform: scale(1.04); }
+}
+.fnp-spot-tell { animation: fnp-spot-tell calc(0.44s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.9, 0.3, 1) both; }
+
+@keyframes fnp-spot-hit {
+  0% { opacity: 0; transform: scale(0.35); }
+  26% { opacity: 0.95; transform: scale(1.14); }
+  100% { opacity: 0; transform: scale(1.4); }
+}
+.fnp-spot-hit { animation: fnp-spot-hit calc(0.64s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes fnp-spot-drift {
+  0% { opacity: 0; transform: translateY(0) scale(0.6); }
+  30% { opacity: 0.72; transform: translateY(calc(var(--fx-side, 1) * 8%)) scale(1); }
+  100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 34%)) scale(1.5); }
+}
+.fnp-spot-drift { animation: fnp-spot-drift calc(1.35s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- the entrance cut ------------------------------------------------------- */
+@keyframes fnp-arrive-ring {
+  0% { opacity: 0; transform: scale(0.4); }
+  40% { opacity: 0.68; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.34); }
+}
+.fnp-arrive-ring { animation: fnp-arrive-ring calc(0.8s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes fnp-arrive {
+  0% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 32%)) scale(0.62); }
+  50% { opacity: 1; transform: translateY(-4%) scale(1.07); }
+  76% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(0) scale(1.02); }
+}
+.fnp-arrive { animation: fnp-arrive calc(1s * var(--fx-dur, 1)) cubic-bezier(0.2, 1.3, 0.35, 1) both; }
+
 @keyframes fnp-wash {
   0% { opacity: 0; transform: scale(1.04); }
   16% { opacity: 0.9; transform: scale(1); }

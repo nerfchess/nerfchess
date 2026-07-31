@@ -10,15 +10,15 @@
    "nerf": 360
   },
   "flagged": {
-   "duplicateSignature": 278,
-   "nearDuplicate": 247,
-   "dominatedCandidates": 92,
+   "duplicateSignature": 269,
+   "nearDuplicate": 205,
+   "dominatedCandidates": 90,
    "misleading": 0,
    "broken": 0,
    "untested": 0,
    "noAnimation": 0
   },
-  "reviewed": 2384
+  "reviewed": 2386
  },
  "rows": [
   {
@@ -926,7 +926,9 @@
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [],
+   "flags": [
+    "duplicate-signature(op_tactical_withdrawal)"
+   ],
    "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
   },
   {
@@ -1182,7 +1184,7 @@
    "duration": "unstated",
    "targets": "self",
    "signature": "tempo|activated|effect|unstated|self|advance,draft,n:20,n:30,n:50,pawn,random,reroll,square",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/overhaul/gambling.ts",
    "tests": [
     "lab-run-all.ts"
@@ -1256,7 +1258,7 @@
    "duration": "permanent",
    "targets": "enemy",
    "signature": "info|instant|effect|permanent|enemy|draft,see",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/funny/meta.ts",
    "tests": [
     "lab-run-all.ts"
@@ -2025,7 +2027,7 @@
    "duration": "unstated",
    "targets": "self",
    "signature": "tempo|activated|effect|unstated|self|freeze",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/brainrot.ts",
    "tests": [
     "lab-run-all.ts"
@@ -2217,7 +2219,7 @@
    "duration": "2-turns",
    "targets": "self",
    "signature": "nerf|instant|effect|2-turns|self|clock,n:2,n:30,seconds",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/funny/meta.ts",
    "tests": [
     "lab-run-all.ts"
@@ -3310,7 +3312,7 @@
    "duration": "one-shot",
    "targets": "enemy",
    "signature": "info|passive|init+onMove|one-shot|enemy|draft,reveal",
-   "animation": "plugin+passive",
+   "animation": "passive",
    "location": "src/engine/buffs/funny/pranks.ts",
    "tests": [
     "lab-run-all.ts"
@@ -4394,7 +4396,7 @@
    "duration": "unstated",
    "targets": "self",
    "signature": "pieces|activated|effect|unstated|self|n:15,n:25,n:60,pawn,rank",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/overhaul/gambling.ts",
    "tests": [
     "lab-run-all.ts"
@@ -5118,20 +5120,18 @@
    "name": "Salt in the Wound",
    "kind": "boon",
    "tier": 5,
-   "effect": "Suspend your nerf for your next 18 turns. When it returns, gain 1 draft reroll.",
+   "effect": "Suspend your nerf for your next 12 turns. When it returns, take 20 seconds from your opponent's clock.",
    "trigger": "passive",
-   "duration": "18-turns",
-   "targets": "self",
-   "signature": "nerf|passive|init+onMove|18-turns|self|draft,n:1,n:18,reroll,return",
+   "duration": "12-turns",
+   "targets": "enemy",
+   "signature": "nerf|passive|init+onMove|12-turns|enemy|clock,n:12,n:20,return,seconds",
    "animation": "passive",
    "location": "src/engine/buffs/boons4b.ts",
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [
-    "duplicate-signature(bn4_smoke_break_union,bn4_liberators_march,bn4_year_of_jubilee)"
-   ],
-   "action": "pending-review"
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
   },
   {
    "id": "bn4_scapegoat",
@@ -5174,19 +5174,17 @@
    "name": "Smoke Break Union",
    "kind": "boon",
    "tier": 5,
-   "effect": "Suspend your nerf for your next 18 turns. When it returns, gain 1 draft reroll.",
+   "effect": "Suspend your nerf for your next 6 turns. Each capture you make while it is suspended adds 2 more turns, up to 18 in total.",
    "trigger": "passive",
-   "duration": "18-turns",
+   "duration": "6-turns",
    "targets": "self",
-   "signature": "nerf|passive|init+onMove|18-turns|self|draft,n:1,n:18,reroll,return",
+   "signature": "nerf|passive|init+onMove|6-turns|self|capture,n:18,n:2,n:6",
    "animation": "passive",
    "location": "src/engine/buffs/boons4b.ts",
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [
-    "duplicate-signature(bn4_salt_in_the_wound,bn4_liberators_march,bn4_year_of_jubilee)"
-   ],
+   "flags": [],
    "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
   },
   {
@@ -6627,19 +6625,17 @@
    "name": "Debtor's Holiday",
    "kind": "boon",
    "tier": 7,
-   "effect": "Suspend your nerf for your next 8 turns; your next draft offer rolls one tier higher.",
+   "effect": "Suspend your nerf for your next 12 turns, and gain 2 draft rerolls.",
    "trigger": "instant",
-   "duration": "8-turns",
+   "duration": "12-turns",
    "targets": "self",
-   "signature": "nerf|instant|effect|8-turns|self|draft,n:8",
+   "signature": "nerf|instant|effect|12-turns|self|draft,n:12,n:2,reroll",
    "animation": "generated",
    "location": "src/engine/buffs/boons4b.ts",
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [
-    "duplicate-signature(bn4_jubilee)"
-   ],
+   "flags": [],
    "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
   },
   {
@@ -6871,9 +6867,7 @@
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [
-    "duplicate-signature(bn4_debtors_holiday)"
-   ],
+   "flags": [],
    "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
   },
   {
@@ -7883,21 +7877,18 @@
    "name": "Liberator's March",
    "kind": "boon",
    "tier": 8,
-   "effect": "Suspend your nerf for your next 18 turns. When it returns, gain 1 draft reroll.",
+   "effect": "Suspend your nerf for your next 18 turns. Each capture you make while it is suspended gains you 1 draft reroll, up to 3.",
    "trigger": "passive",
    "duration": "18-turns",
    "targets": "self",
-   "signature": "nerf|passive|init+onMove|18-turns|self|draft,n:1,n:18,reroll,return",
+   "signature": "nerf|passive|init+onMove|18-turns|self|capture,draft,n:1,n:18,n:3,reroll",
    "animation": "passive",
    "location": "src/engine/buffs/boons4b.ts",
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [
-    "duplicate-signature(bn4_smoke_break_union,bn4_salt_in_the_wound,bn4_year_of_jubilee)",
-    "dominated-candidate(higher-tier-of-duplicate-pair)"
-   ],
-   "action": "pending-review"
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
   },
   {
    "id": "bn4_long_winter",
@@ -8242,20 +8233,17 @@
    "name": "Year of Jubilee",
    "kind": "boon",
    "tier": 8,
-   "effect": "Suspend your nerf for your next 18 turns. When it returns, gain 1 draft reroll.",
+   "effect": "Suspend your nerf for your next 25 turns. When it returns, gain 1 draft reroll.",
    "trigger": "passive",
-   "duration": "18-turns",
+   "duration": "25-turns",
    "targets": "self",
-   "signature": "nerf|passive|init+onMove|18-turns|self|draft,n:1,n:18,reroll,return",
+   "signature": "nerf|passive|init+onMove|25-turns|self|draft,n:1,n:25,reroll,return",
    "animation": "passive",
    "location": "src/engine/buffs/boons4b.ts",
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [
-    "duplicate-signature(bn4_smoke_break_union,bn4_salt_in_the_wound,bn4_liberators_march)",
-    "dominated-candidate(higher-tier-of-duplicate-pair)"
-   ],
+   "flags": [],
    "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
   },
   {
@@ -8558,7 +8546,7 @@
    "duration": "one-shot",
    "targets": "enemy",
    "signature": "tempo|activated|effect+targets|one-shot|enemy|draft,extra,move,n:50,n:75,reroll,reveal,skip",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/overhaul/gambling.ts",
    "tests": [
     "lab-run-all.ts"
@@ -8576,7 +8564,7 @@
    "duration": "unstated",
    "targets": "unstated",
    "signature": "movement|activated|effect+targets|unstated|unstated|advance,pawn,square",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/overhaul/gambling.ts",
    "tests": [
     "lab-run-all.ts"
@@ -8594,7 +8582,7 @@
    "duration": "3-turns",
    "targets": "self",
    "signature": "tempo|passive|init+onMove|3-turns|self|move,n:1,n:3,n:3,pawn,random,square,time",
-   "animation": "plugin+passive",
+   "animation": "passive",
    "location": "src/engine/buffs/overhaul/gambling.ts",
    "tests": [
     "lab-run-all.ts"
@@ -8771,19 +8759,17 @@
    "name": "Bridle Path",
    "kind": "buff",
    "tier": 1,
-   "effect": "Once, your b-file pawn may advance two squares from wherever it stands. Both squares must be empty; it cannot capture this way. If the advance is on offer on your turn but you play something else, the charge is spent.",
+   "effect": "Once, your b-file pawn may canter two squares from wherever it stands, if both squares are empty and one of your knights has already moved. The charge is spent if the canter is on offer and you play something else.",
    "trigger": "passive",
    "duration": "one-shot",
    "targets": "self",
-   "signature": "movement|passive|init+aug+onMove|one-shot|self|advance,capture,file,file:b,pawn,square",
+   "signature": "movement|passive|init+aug+onMove|one-shot|self|file,file:b,knight,move,pawn,square",
    "animation": "passive",
    "location": "UNKNOWN",
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [
-    "near-duplicate(op_old_post_road:1.00)"
-   ],
+   "flags": [],
    "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
   },
   {
@@ -9147,22 +9133,17 @@
    "name": "Ferry Crossing",
    "kind": "buff",
    "tier": 1,
-   "effect": "Once, your f-file pawn may advance two squares from wherever it stands. Both squares must be empty; it cannot capture this way.",
+   "effect": "Once, your f-file pawn may cross two squares from wherever it stands. Both squares must be empty. The ferryman takes his fare: the crossing consumes your next unused reroll, if any.",
    "trigger": "passive",
    "duration": "one-shot",
    "targets": "self",
-   "signature": "movement|passive|init+aug+onMove|one-shot|self|advance,capture,file,file:f,pawn,square",
+   "signature": "movement|passive|init+aug+onMove|one-shot|self|file,file:f,pawn,reroll,square",
    "animation": "passive",
    "location": "UNKNOWN",
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [
-    "near-duplicate(op_towpath:1.00)",
-    "near-duplicate(op_corduroy_road:1.00)",
-    "near-duplicate(op_pilgrim_road:1.00)",
-    "near-duplicate(op_goat_track:1.00)"
-   ],
+   "flags": [],
    "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
   },
   {
@@ -9416,22 +9397,17 @@
    "name": "Goat Track",
    "kind": "buff",
    "tier": 1,
-   "effect": "Once, your g-file pawn may advance two squares from wherever it stands. Both squares must be empty; it cannot capture this way.",
+   "effect": "Once, your g-file pawn may climb two squares from wherever it stands, forward or backward, if both squares are empty.",
    "trigger": "passive",
    "duration": "one-shot",
    "targets": "self",
-   "signature": "movement|passive|init+aug+onMove|one-shot|self|advance,capture,file,file:g,pawn,square",
+   "signature": "movement|passive|init+aug+onMove|one-shot|self|file,file:g,pawn,square",
    "animation": "passive",
    "location": "UNKNOWN",
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [
-    "near-duplicate(op_towpath:1.00)",
-    "near-duplicate(op_corduroy_road:1.00)",
-    "near-duplicate(op_pilgrim_road:1.00)",
-    "near-duplicate(op_ferry_crossing:1.00)"
-   ],
+   "flags": [],
    "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
   },
   {
@@ -9487,10 +9463,7 @@
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [
-    "near-duplicate(op_star_dressing_room:0.86)",
-    "near-duplicate(op_set_change:0.86)"
-   ],
+   "flags": [],
    "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
   },
   {
@@ -9638,8 +9611,6 @@
    ],
    "flags": [
     "duplicate-signature(op_regroup_at_camp)",
-    "near-duplicate(op_tactical_withdrawal:0.92)",
-    "near-duplicate(op_second_thoughts:0.79)",
     "near-duplicate(op_sidestep_and_bow:0.77)"
    ],
    "action": "REBALANCED: band retreats now run twice (see op_second_thoughts)"
@@ -9873,19 +9844,17 @@
    "name": "Late Spring",
    "kind": "buff",
    "tier": 1,
-   "effect": "After your 9th move, one of your pawns with an empty square ahead advances one square at random. If none can, the floor lands instead: one of your second-rank pawns, chosen at random, cannot be captured during your opponent's next four turns.",
+   "effect": "After your 9th move, one of your pawns with an empty square ahead advances one square at random. If none can, spring comes anyway: one of your second-rank pawns, chosen at random, cannot be captured during your opponent's next 4 turns.",
    "trigger": "passive",
-   "duration": "unstated",
+   "duration": "4-turns",
    "targets": "enemy",
-   "signature": "movement|passive|init+onMove|unstated|enemy|advance,capture,move,pawn,random,rank,square",
+   "signature": "movement|passive|init+onMove|4-turns|enemy|advance,capture,move,n:4,pawn,random,rank,square",
    "animation": "passive",
    "location": "UNKNOWN",
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [
-    "near-duplicate(op_sap_run:0.90)"
-   ],
+   "flags": [],
    "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
   },
   {
@@ -10004,19 +9973,17 @@
    "name": "Old Post Road",
    "kind": "buff",
    "tier": 1,
-   "effect": "Once, your d-file pawn may advance two squares from wherever it stands. Both squares must be empty; it cannot capture this way. If the advance is on offer on your turn but you play something else, the charge is spent.",
+   "effect": "Once, on one of your first 7 moves, your d-file pawn may cover two squares from wherever it stands. Both squares must be empty. The coach never waits: the charge is spent if you leave the run on offer.",
    "trigger": "passive",
    "duration": "one-shot",
    "targets": "self",
-   "signature": "movement|passive|init+aug+onMove|one-shot|self|advance,capture,file,file:d,pawn,square",
+   "signature": "movement|passive|init+aug+onMove|one-shot|self|file,file:d,move,n:7,pawn,square",
    "animation": "passive",
    "location": "UNKNOWN",
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [
-    "near-duplicate(op_bridle_path:1.00)"
-   ],
+   "flags": [],
    "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
   },
   {
@@ -10178,22 +10145,17 @@
    "name": "Pilgrim Road",
    "kind": "buff",
    "tier": 1,
-   "effect": "Once, your e-file pawn may advance two squares from wherever it stands. Both squares must be empty; it cannot capture this way.",
+   "effect": "Once, your e-file pawn may stride two squares from wherever it stands. Both squares must be empty, and no enemy piece may be attacking the far one.",
    "trigger": "passive",
    "duration": "one-shot",
-   "targets": "self",
-   "signature": "movement|passive|init+aug+onMove|one-shot|self|advance,capture,file,file:e,pawn,square",
+   "targets": "enemy",
+   "signature": "movement|passive|init+aug+onMove|one-shot|enemy|file,file:e,pawn,square",
    "animation": "passive",
    "location": "UNKNOWN",
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [
-    "near-duplicate(op_towpath:1.00)",
-    "near-duplicate(op_corduroy_road:1.00)",
-    "near-duplicate(op_ferry_crossing:1.00)",
-    "near-duplicate(op_goat_track:1.00)"
-   ],
+   "flags": [],
    "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
   },
   {
@@ -10299,19 +10261,17 @@
    "name": "Quickstep",
    "kind": "buff",
    "tier": 1,
-   "effect": "Once, your king may move two squares sideways toward the h-file. Both squares must be empty. If unused by your 12th move, the charge becomes one draft reroll.",
+   "effect": "Once, your king may move two squares sideways toward the h-file. Both squares must be empty, and your h-file rook must still stand in its corner. If unused by your 12th move, the charge becomes one draft reroll.",
    "trigger": "passive",
    "duration": "one-shot",
    "targets": "self",
-   "signature": "movement|passive|init+aug+onMove|one-shot|self|become,draft,file,file:h,king,move,reroll,square",
+   "signature": "movement|passive|init+aug+onMove|one-shot|self|become,draft,file,file:h,file:h,king,move,reroll,rook,square",
    "animation": "passive",
    "location": "UNKNOWN",
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [
-    "near-duplicate(op_waltz_left:1.00)"
-   ],
+   "flags": [],
    "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
   },
   {
@@ -10349,8 +10309,6 @@
    ],
    "flags": [
     "duplicate-signature(op_homesick_private)",
-    "near-duplicate(op_tactical_withdrawal:0.92)",
-    "near-duplicate(op_second_thoughts:0.79)",
     "near-duplicate(op_sidestep_and_bow:0.77)"
    ],
    "action": "REBALANCED: band retreats now run twice (see op_second_thoughts)"
@@ -10438,19 +10396,17 @@
    "name": "Sap Run",
    "kind": "buff",
    "tier": 1,
-   "effect": "After your 5th move, one of your d- or e-file pawns with an empty square ahead advances one square at random. If none can, the floor lands instead: one of your second-rank pawns, chosen at random, cannot be captured during your opponent's next four turns.",
+   "effect": "After your 5th move, one of your d- or e-file pawns with an empty square ahead advances one square at random. If neither can, the tap still drips: you gain 8 seconds and one draft reroll.",
    "trigger": "passive",
    "duration": "unstated",
-   "targets": "enemy",
-   "signature": "movement|passive|init+onMove|unstated|enemy|advance,capture,file,file:e,move,pawn,random,rank,square",
+   "targets": "self",
+   "signature": "movement|passive|init+onMove|unstated|self|advance,draft,file,file:e,move,n:8,pawn,random,reroll,seconds,square",
    "animation": "passive",
    "location": "UNKNOWN",
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [
-    "near-duplicate(op_late_spring:0.90)"
-   ],
+   "flags": [],
    "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
   },
   {
@@ -10478,21 +10434,17 @@
    "name": "Second Thoughts",
    "kind": "buff",
    "tier": 1,
-   "effect": "Once, one of your pawns on the d- or e-file may step one square straight backward onto an empty square.",
+   "effect": "Once, after your 6th move, one of your pawns on the d- or e-file may step one square straight backward onto an empty square.",
    "trigger": "passive",
    "duration": "one-shot",
    "targets": "self",
-   "signature": "movement|passive|init+aug+onMove|one-shot|self|file,file:e,pawn,square",
+   "signature": "movement|passive|init+aug+onMove|one-shot|self|file,file:e,move,pawn,square",
    "animation": "passive",
    "location": "UNKNOWN",
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [
-    "near-duplicate(op_tactical_withdrawal:0.85)",
-    "near-duplicate(op_homesick_private:0.79)",
-    "near-duplicate(op_regroup_at_camp:0.79)"
-   ],
+   "flags": [],
    "action": "REBALANCED: band retreats now run twice; the any-file Tactical Withdrawal no longer strictly dominates"
   },
   {
@@ -10538,20 +10490,17 @@
    "name": "Set Change",
    "kind": "buff",
    "tier": 1,
-   "effect": "Once, while on your back rank, one of your rooks may hop exactly 2 squares sideways along it, ignoring anything between. The destination must be empty. The hop becomes available only after your opponent's next move.",
+   "effect": "Once, while on your back rank, one of your rooks may hop exactly 2 squares sideways along it, ignoring anything between. The destination must be empty. Scenery shifts between acts, so the hop waits for the first capture of the game.",
    "trigger": "passive",
-   "duration": "next-turn",
-   "targets": "enemy",
-   "signature": "movement|passive|init+aug+onMove|next-turn|enemy|become,move,n:2,rank,rook,square",
+   "duration": "one-shot",
+   "targets": "self",
+   "signature": "movement|passive|init+aug+onMove|one-shot|self|capture,n:2,rank,rook,square",
    "animation": "passive",
    "location": "UNKNOWN",
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [
-    "near-duplicate(op_green_room:0.86)",
-    "near-duplicate(op_star_dressing_room:0.93)"
-   ],
+   "flags": [],
    "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
   },
   {
@@ -10570,7 +10519,7 @@
     "lab-run-all.ts"
    ],
    "flags": [
-    "duplicate-signature(spring_pawn,op_tactical_withdrawal)",
+    "duplicate-signature(spring_pawn)",
     "near-duplicate(op_homesick_private:0.77)",
     "near-duplicate(op_regroup_at_camp:0.77)"
    ],
@@ -10691,20 +10640,17 @@
    "name": "Star Dressing Room",
    "kind": "buff",
    "tier": 1,
-   "effect": "Once, while on your back rank, one of your queens may hop exactly 2 squares sideways along it, ignoring anything between. The destination must be empty. The hop becomes available only after your opponent's next move.",
+   "effect": "Once, your queen may cross exactly 2 squares sideways along your back rank onto an empty square, ignoring whatever stands between. She waits for her cue: the walk is on offer only after your opponent's next move.",
    "trigger": "passive",
    "duration": "next-turn",
    "targets": "enemy",
-   "signature": "movement|passive|init+aug+onMove|next-turn|enemy|become,move,n:2,queen,rank,square",
+   "signature": "movement|passive|init+aug+onMove|next-turn|enemy|move,n:2,queen,rank,square",
    "animation": "passive",
    "location": "UNKNOWN",
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [
-    "near-duplicate(op_green_room:0.86)",
-    "near-duplicate(op_set_change:0.93)"
-   ],
+   "flags": [],
    "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
   },
   {
@@ -10730,21 +10676,18 @@
    "name": "Tactical Withdrawal",
    "kind": "buff",
    "tier": 1,
-   "effect": "Once, one of your pawns may step one square straight backward onto an empty square.",
+   "effect": "Once, a pawn of yours that an enemy piece is attacking may fall back one square onto the empty square behind it.",
    "trigger": "passive",
    "duration": "one-shot",
-   "targets": "self",
-   "signature": "movement|passive|init+aug+onMove|one-shot|self|pawn,square",
+   "targets": "enemy",
+   "signature": "movement|passive|init+aug+onMove|one-shot|enemy|pawn,square",
    "animation": "passive",
    "location": "UNKNOWN",
    "tests": [
     "lab-run-all.ts"
    ],
    "flags": [
-    "duplicate-signature(spring_pawn,op_sidestep_and_bow)",
-    "near-duplicate(op_homesick_private:0.92)",
-    "near-duplicate(op_regroup_at_camp:0.92)",
-    "near-duplicate(op_second_thoughts:0.85)"
+    "duplicate-signature(bn4_side_shuffle)"
    ],
    "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
   },
@@ -10876,10 +10819,7 @@
     "lab-run-all.ts"
    ],
    "flags": [
-    "near-duplicate(op_corduroy_road:1.00)",
-    "near-duplicate(op_pilgrim_road:1.00)",
-    "near-duplicate(op_ferry_crossing:1.00)",
-    "near-duplicate(op_goat_track:1.00)"
+    "near-duplicate(op_corduroy_road:1.00)"
    ],
    "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
   },
@@ -11036,7 +10976,7 @@
    "name": "Waltz Left",
    "kind": "buff",
    "tier": 1,
-   "effect": "Once, your king may move two squares sideways toward the a-file. Both squares must be empty. If unused by your 12th move, the charge becomes one draft reroll.",
+   "effect": "Once, your king may glide two squares sideways toward the a-file across empty squares. The figure takes three counts: the glide waits until after your 3rd move. If unused by your 12th move, the charge becomes one draft reroll.",
    "trigger": "passive",
    "duration": "one-shot",
    "targets": "self",
@@ -11046,9 +10986,7 @@
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [
-    "near-duplicate(op_quickstep:1.00)"
-   ],
+   "flags": [],
    "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
   },
   {
@@ -11752,7 +11690,7 @@
    "duration": "6-turns",
    "targets": "self",
    "signature": "tempo|passive|init+onMove|6-turns|self|clock,n:10,n:6,seconds",
-   "animation": "plugin+passive",
+   "animation": "passive",
    "location": "src/engine/buffs/funny/meta.ts",
    "tests": [
     "lab-run-all.ts"
@@ -11900,7 +11838,7 @@
    "duration": "unstated",
    "targets": "self",
    "signature": "pieces|instant|effect|unstated|self|bishop,knight,n:20,n:40,pawn,seconds",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/pt/casino.ts",
    "tests": [
     "lab-run-all.ts"
@@ -12008,7 +11946,7 @@
    "duration": "unstated",
    "targets": "enemy",
    "signature": "draft|activated|effect|unstated|enemy|draft,queen,reroll",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/overhaul/gambling.ts",
    "tests": [
     "lab-run-all.ts"
@@ -12044,7 +11982,7 @@
    "duration": "unstated",
    "targets": "self",
    "signature": "movement|activated|effect+targets+aug+onMove|unstated|self|capture,pawn,rank",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/personal.ts",
    "tests": [
     "lab-run-all.ts"
@@ -12253,9 +12191,6 @@
     "lab-run-all.ts"
    ],
    "flags": [
-    "near-duplicate(op_harbor_gull:0.86)",
-    "near-duplicate(op_market_dog:0.86)",
-    "near-duplicate(op_garden_scarecrow:0.86)",
     "near-duplicate(op_tower_warden:0.82)"
    ],
    "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
@@ -12285,7 +12220,7 @@
    "name": "Cloister Bell",
    "kind": "buff",
    "tier": 2,
-   "effect": "The first time an enemy piece attacks your c-file pawn, that pawn cannot be captured during your opponent's next turn. The guard ends once it has turned that reply aside. One use.",
+   "effect": "The first time an enemy piece attacks your c-file pawn, the bell tolls: that pawn cannot be captured during your opponent's next turn, and the attacker is marked until you reply. One use.",
    "trigger": "passive",
    "duration": "next-turn",
    "targets": "enemy",
@@ -12295,10 +12230,7 @@
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [
-    "near-duplicate(op_lighthouse_keeper:1.00)",
-    "near-duplicate(op_lady_in_waiting:0.88)"
-   ],
+   "flags": [],
    "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
   },
   {
@@ -12317,10 +12249,7 @@
     "lab-run-all.ts"
    ],
    "flags": [
-    "near-duplicate(op_towpath:1.00)",
-    "near-duplicate(op_pilgrim_road:1.00)",
-    "near-duplicate(op_ferry_crossing:1.00)",
-    "near-duplicate(op_goat_track:1.00)"
+    "near-duplicate(op_towpath:1.00)"
    ],
    "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
   },
@@ -12481,7 +12410,7 @@
    "name": "Gallery Docent",
    "kind": "buff",
    "tier": 2,
-   "effect": "The first time an enemy piece attacks your g-file pawn, that pawn cannot be captured during your opponent's next turn. The guard ends immediately if the guarded pawn captures. One use.",
+   "effect": "The first time an enemy piece attacks your g-file pawn, the ropes go up and it cannot be captured during your opponent's next turn. The exhibit must touch nothing: the guard drops the moment that pawn captures. One use.",
    "trigger": "passive",
    "duration": "next-turn",
    "targets": "enemy",
@@ -12491,12 +12420,7 @@
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [
-    "near-duplicate(op_harbor_gull:0.75)",
-    "near-duplicate(op_market_dog:0.75)",
-    "near-duplicate(op_parade_marshal:1.00)",
-    "near-duplicate(op_garden_scarecrow:0.75)"
-   ],
+   "flags": [],
    "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
   },
   {
@@ -12525,7 +12449,7 @@
    "name": "Garden Scarecrow",
    "kind": "buff",
    "tier": 2,
-   "effect": "The first time an enemy piece attacks your f-file pawn, that pawn cannot be captured during your opponent's next turn, except by a pawn. One use.",
+   "effect": "The first time an enemy piece attacks your f-file pawn, the straw figure spooks it: that pawn cannot be captured during your opponent's next turn. Enemy pawns are not fooled and may still take it. One use.",
    "trigger": "passive",
    "duration": "next-turn",
    "targets": "enemy",
@@ -12535,14 +12459,7 @@
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [
-    "near-duplicate(op_harbor_gull:1.00)",
-    "near-duplicate(op_market_dog:1.00)",
-    "near-duplicate(op_parade_marshal:0.75)",
-    "near-duplicate(op_gallery_docent:0.75)",
-    "near-duplicate(op_tower_warden:0.86)",
-    "near-duplicate(op_chapel_warden:0.86)"
-   ],
+   "flags": [],
    "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
   },
   {
@@ -12550,24 +12467,17 @@
    "name": "Harbor Gull",
    "kind": "buff",
    "tier": 2,
-   "effect": "The first time an enemy piece attacks your a-file pawn, that pawn cannot be captured during your opponent's next turn, except by a pawn. One use.",
+   "effect": "The first time an enemy piece attacks your a-file pawn, the gull mobs it: that pawn cannot be captured during your opponent's next turn, except by a pawn. The gull will not fly inland, so the watch lapses if that pawn leaves the a-file. One use.",
    "trigger": "passive",
    "duration": "next-turn",
    "targets": "enemy",
-   "signature": "movement|passive|filter+onMove|next-turn|enemy|capture,file,file:a,pawn,time",
+   "signature": "movement|passive|filter+onMove|next-turn|enemy|capture,file,file:a,file:a,pawn,time",
    "animation": "passive",
    "location": "UNKNOWN",
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [
-    "near-duplicate(op_market_dog:1.00)",
-    "near-duplicate(op_parade_marshal:0.75)",
-    "near-duplicate(op_garden_scarecrow:1.00)",
-    "near-duplicate(op_gallery_docent:0.75)",
-    "near-duplicate(op_tower_warden:0.86)",
-    "near-duplicate(op_chapel_warden:0.86)"
-   ],
+   "flags": [],
    "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
   },
   {
@@ -12606,10 +12516,7 @@
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [
-    "near-duplicate(op_cloister_bell:0.88)",
-    "near-duplicate(op_lighthouse_keeper:0.88)"
-   ],
+   "flags": [],
    "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
   },
   {
@@ -12627,9 +12534,7 @@
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [
-    "near-duplicate(op_sandbag_hurdle:0.77)"
-   ],
+   "flags": [],
    "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
   },
   {
@@ -12637,20 +12542,17 @@
    "name": "Lighthouse Keeper",
    "kind": "buff",
    "tier": 2,
-   "effect": "The first time an enemy piece attacks your h-file pawn, that pawn cannot be captured during your opponent's next turn. The guard ends once it has turned that reply aside. One use.",
+   "effect": "The lamp is lit from your 6th move on. Before then the keeper sleeps, and after it, the first attack on your h-file pawn leaves that pawn safe from capture for one enemy turn. One use.",
    "trigger": "passive",
-   "duration": "next-turn",
+   "duration": "unstated",
    "targets": "enemy",
-   "signature": "movement|passive|filter+onMove|next-turn|enemy|capture,file,file:h,pawn,time",
+   "signature": "movement|passive|filter+onMove|unstated|enemy|capture,file,file:h,move,pawn,sleep",
    "animation": "passive",
    "location": "UNKNOWN",
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [
-    "near-duplicate(op_cloister_bell:1.00)",
-    "near-duplicate(op_lady_in_waiting:0.88)"
-   ],
+   "flags": [],
    "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
   },
   {
@@ -12658,7 +12560,7 @@
    "name": "Market Dog",
    "kind": "buff",
    "tier": 2,
-   "effect": "The first time an enemy piece attacks your d-file pawn, that pawn cannot be captured during your opponent's next turn, except by a pawn. One use.",
+   "effect": "The first time an enemy piece attacks your d-file pawn, the dog barks: that pawn cannot be captured during your opponent's next turn, except by a pawn. The dog needs a stallholder, so one of your pieces must stand beside that pawn. One use.",
    "trigger": "passive",
    "duration": "next-turn",
    "targets": "enemy",
@@ -12668,14 +12570,7 @@
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [
-    "near-duplicate(op_harbor_gull:1.00)",
-    "near-duplicate(op_parade_marshal:0.75)",
-    "near-duplicate(op_garden_scarecrow:1.00)",
-    "near-duplicate(op_gallery_docent:0.75)",
-    "near-duplicate(op_tower_warden:0.86)",
-    "near-duplicate(op_chapel_warden:0.86)"
-   ],
+   "flags": [],
    "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
   },
   {
@@ -12739,7 +12634,7 @@
    "name": "Ordination Day",
    "kind": "buff",
    "tier": 2,
-   "effect": "When your first bishop moves, it cannot be captured during your opponent's next turn, and the guard ends the moment that bishop makes a capture. One use, automatic.",
+   "effect": "When your first bishop moves, he is ordained and cannot be captured during your opponent's next turn. A calling that begins with a capture is refused, and no guard is granted. One use, automatic.",
    "trigger": "passive",
    "duration": "next-turn",
    "targets": "enemy",
@@ -12749,9 +12644,7 @@
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [
-    "near-duplicate(op_tower_inspection:0.91)"
-   ],
+   "flags": [],
    "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
   },
   {
@@ -12759,22 +12652,17 @@
    "name": "Parade Marshal",
    "kind": "buff",
    "tier": 2,
-   "effect": "The first time an enemy piece attacks your e-file pawn, that pawn cannot be captured during your opponent's next turn. The guard ends immediately if the guarded pawn captures. One use.",
+   "effect": "While your king still stands on his home square, the first enemy piece to attack your e-file pawn is waved off: that pawn cannot be captured during your opponent's next turn. One use.",
    "trigger": "passive",
    "duration": "next-turn",
    "targets": "enemy",
-   "signature": "movement|passive|filter+onMove|next-turn|enemy|capture,file,file:e,pawn,time",
+   "signature": "movement|passive|filter+onMove|next-turn|enemy|capture,file,file:e,king,pawn,square",
    "animation": "passive",
    "location": "UNKNOWN",
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [
-    "near-duplicate(op_harbor_gull:0.75)",
-    "near-duplicate(op_market_dog:0.75)",
-    "near-duplicate(op_garden_scarecrow:0.75)",
-    "near-duplicate(op_gallery_docent:1.00)"
-   ],
+   "flags": [],
    "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
   },
   {
@@ -12820,20 +12708,17 @@
    "name": "Sandbag Hurdle",
    "kind": "buff",
    "tier": 2,
-   "effect": "One of your rooks may hop over an adjacent friendly pawn on its rank or file, landing on the square directly beyond, once. The landing square must be empty.",
+   "effect": "One of your rooks may hop over an adjacent friendly pawn on its rank or file, landing on the empty square directly beyond, once. The sandbags hold: that pawn cannot be captured during your opponent's next turn.",
    "trigger": "passive",
-   "duration": "one-shot",
-   "targets": "self",
-   "signature": "movement|passive|init+aug+onMove|one-shot|self|adjacent,file,pawn,rank,rook,square",
+   "duration": "next-turn",
+   "targets": "enemy",
+   "signature": "movement|passive|init+aug+onMove|next-turn|enemy|adjacent,capture,file,pawn,rank,rook,square",
    "animation": "passive",
    "location": "UNKNOWN",
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [
-    "near-duplicate(op_leapfrog_lesson:0.77)",
-    "near-duplicate(op_stable_gate:0.90)"
-   ],
+   "flags": [],
    "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
   },
   {
@@ -12880,7 +12765,7 @@
    "name": "Stable Gate",
    "kind": "buff",
    "tier": 2,
-   "effect": "One of your rooks may hop over an adjacent friendly knight on its rank or file, landing on the square directly beyond, once. The landing square must be empty.",
+   "effect": "One of your rooks may hop over an adjacent friendly knight on its rank or file, landing on the empty square directly beyond, once. The gate only opens while that knight still stands on your back rank.",
    "trigger": "passive",
    "duration": "one-shot",
    "targets": "self",
@@ -12890,9 +12775,7 @@
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [
-    "near-duplicate(op_sandbag_hurdle:0.90)"
-   ],
+   "flags": [],
    "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
   },
   {
@@ -12995,7 +12878,7 @@
    "name": "Tower Inspection",
    "kind": "buff",
    "tier": 2,
-   "effect": "When your first rook moves, it cannot be captured during your opponent's next turn, and the guard ends the moment that rook makes a capture. One use, automatic.",
+   "effect": "When your first rook moves, the inspector signs off: it cannot be captured during your opponent's next turn, and the certificate is void the moment that rook makes a capture. One use, automatic.",
    "trigger": "passive",
    "duration": "next-turn",
    "targets": "enemy",
@@ -13005,9 +12888,7 @@
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [
-    "near-duplicate(op_ordination_day:0.91)"
-   ],
+   "flags": [],
    "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
   },
   {
@@ -13026,9 +12907,6 @@
     "lab-run-all.ts"
    ],
    "flags": [
-    "near-duplicate(op_harbor_gull:0.86)",
-    "near-duplicate(op_market_dog:0.86)",
-    "near-duplicate(op_garden_scarecrow:0.86)",
     "near-duplicate(op_chapel_warden:0.82)"
    ],
    "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
@@ -13818,7 +13696,7 @@
    "duration": "unstated",
    "targets": "enemy",
    "signature": "tempo|instant|effect|unstated|enemy|clock,n:35,seconds",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/funny/pranks.ts",
    "tests": [
     "lab-run-all.ts"
@@ -13836,7 +13714,7 @@
    "duration": "3-turns",
    "targets": "enemy",
    "signature": "tempo|passive|init+onMove|3-turns|enemy|clock,n:1,n:3,n:3,n:8,seconds",
-   "animation": "plugin+passive",
+   "animation": "passive",
    "location": "src/engine/buffs/funny/pranks.ts",
    "tests": [
     "lab-run-all.ts"
@@ -14031,7 +13909,7 @@
     "lab-run-all.ts"
    ],
    "flags": [
-    "duplicate-signature(op_tactical_withdrawal,op_sidestep_and_bow)",
+    "duplicate-signature(op_sidestep_and_bow)",
     "dominated-candidate(higher-tier-of-duplicate-pair)"
    ],
    "action": "pending-review"
@@ -14226,7 +14104,7 @@
    "duration": "unstated",
    "targets": "enemy",
    "signature": "tempo|instant|effect|unstated|enemy|clock,n:60,seconds",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/funny/meta.ts",
    "tests": [
     "lab-run-all.ts"
@@ -14334,7 +14212,7 @@
    "duration": "unstated",
    "targets": "self",
    "signature": "pieces|instant|effect|unstated|self|draft,knight,n:30,seconds,skip",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/pt/casino.ts",
    "tests": [
     "lab-run-all.ts"
@@ -14352,7 +14230,7 @@
    "duration": "unstated",
    "targets": "self",
    "signature": "pieces|instant|effect|unstated|self|draft,knight,n:35,pawn,reroll,seconds",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/pt/casino.ts",
    "tests": [
     "lab-run-all.ts"
@@ -14370,7 +14248,7 @@
    "duration": "unstated",
    "targets": "self",
    "signature": "pieces|instant|effect|unstated|self|knight,n:45,place,pull,rook,seconds",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/pt/casino.ts",
    "tests": [
     "lab-run-all.ts"
@@ -14388,7 +14266,7 @@
    "duration": "next-turn",
    "targets": "enemy",
    "signature": "pieces|activated|init+effect+targets+onMove|next-turn|enemy|bishop,capture,knight,move,pawn,return,square",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/funny/meta.ts",
    "tests": [
     "lab-run-all.ts"
@@ -14465,7 +14343,7 @@
    "duration": "unstated",
    "targets": "self",
    "signature": "pieces|activated|effect+targets|unstated|self|king,pawn,place,square",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/funny/meta.ts",
    "tests": [
     "lab-run-all.ts"
@@ -14501,7 +14379,7 @@
    "duration": "1-turns",
    "targets": "enemy",
    "signature": "tempo|activated|effect+targets+onMove|1-turns|enemy|adjacent,freeze,move,n:1",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/library.ts",
    "tests": [
     "lab-run-all.ts"
@@ -14557,7 +14435,7 @@
    "duration": "5-turns",
    "targets": "self",
    "signature": "pieces|activated|effect+targets+aug+onMove|5-turns|self|advance,king,n:20,n:3,n:5,pawn,promote,queen,time",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/overhaul/gambling.ts",
    "tests": [
     "lab-run-all.ts"
@@ -14575,7 +14453,7 @@
    "duration": "unstated",
    "targets": "self",
    "signature": "pieces|activated|effect+targets|unstated|self|knight,n:10,n:20,n:25,n:45,pawn,rook",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/overhaul/gambling.ts",
    "tests": [
     "lab-run-all.ts"
@@ -14593,7 +14471,7 @@
    "duration": "unstated",
    "targets": "enemy",
    "signature": "attack|activated|effect|unstated|enemy|king,pawn,random,steal",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/overhaul/gambling.ts",
    "tests": [
     "lab-run-all.ts"
@@ -14611,7 +14489,7 @@
    "duration": "5-turns",
    "targets": "enemy",
    "signature": "attack|passive|init+onMove|5-turns|enemy|capture,king,knight,n:3,n:5,pawn,rank",
-   "animation": "plugin+passive",
+   "animation": "passive",
    "location": "src/engine/buffs/overhaul/gambling.ts",
    "tests": [
     "lab-run-all.ts"
@@ -14744,7 +14622,7 @@
    "duration": "unstated",
    "targets": "enemy",
    "signature": "tempo|instant|effect|unstated|enemy|clock,draft,n:30,reroll,reveal,seconds,see,untimed",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/funny/meta.ts",
    "tests": [
     "lab-run-all.ts"
@@ -14834,7 +14712,7 @@
    "duration": "unstated",
    "targets": "self",
    "signature": "movement|activated|effect+targets|unstated|self|king,n:2,square",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/personal.ts",
    "tests": [
     "lab-run-all.ts"
@@ -15414,7 +15292,7 @@
    "duration": "unstated",
    "targets": "enemy",
    "signature": "tempo|instant|effect|unstated|enemy|king,move,n:2,n:2,random",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/funny/pranks.ts",
    "tests": [
     "lab-run-all.ts"
@@ -15432,7 +15310,7 @@
    "duration": "unstated",
    "targets": "enemy",
    "signature": "tempo|instant|effect|unstated|enemy|clock,draft,n:10,n:25,reroll,reveal,seconds,see,untimed",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/funny/pranks.ts",
    "tests": [
     "lab-run-all.ts"
@@ -16770,7 +16648,7 @@
    "duration": "unstated",
    "targets": "self",
    "signature": "pieces|instant|effect|unstated|self|n:45,rook,seconds",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/pt/casino.ts",
    "tests": [
     "lab-run-all.ts"
@@ -16788,7 +16666,7 @@
    "duration": "unstated",
    "targets": "enemy",
    "signature": "pieces|instant|effect|unstated|enemy|n:20,seconds,time",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/pt/casino.ts",
    "tests": [
     "lab-run-all.ts"
@@ -16806,7 +16684,7 @@
    "duration": "2-turns",
    "targets": "self",
    "signature": "movement|passive|init+aug+onMove|2-turns|self|n:2,pawn,rank,square",
-   "animation": "plugin+passive",
+   "animation": "passive",
    "location": "src/engine/buffs/funny/meta.ts",
    "tests": [
     "lab-run-all.ts"
@@ -16901,7 +16779,7 @@
    "duration": "permanent",
    "targets": "enemy",
    "signature": "attack|passive|aug+onMove|permanent|enemy|capture,move,pawn,square",
-   "animation": "plugin+passive",
+   "animation": "passive",
    "location": "src/engine/buffs/personal.ts",
    "tests": [
     "lab-run-all.ts"
@@ -16955,7 +16833,7 @@
    "duration": "unstated",
    "targets": "unstated",
    "signature": "pieces|activated|effect+targets|unstated|unstated|draft,knight,n:10,n:15,n:20,n:25,n:30,pawn,reroll,rook",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/overhaul/gambling.ts",
    "tests": [
     "lab-run-all.ts"
@@ -17228,7 +17106,7 @@
    "duration": "one-shot",
    "targets": "self",
    "signature": "pieces|activated|effect+targets|one-shot|self|file,file:a,file:h,king,queen,square",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/personal.ts",
    "tests": [
     "lab-run-all.ts"
@@ -17246,7 +17124,7 @@
    "duration": "4-turns",
    "targets": "self",
    "signature": "protection|activated|effect+targets|4-turns|self|capture,move,n:4,square",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/brainrot.ts",
    "tests": [
     "lab-run-all.ts"
@@ -17264,9 +17142,10 @@
    "duration": "one-shot",
    "targets": "enemy",
    "signature": "movement|activated|effect+targets|one-shot|enemy|file,king,pull,square",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/personal.ts",
    "tests": [
+    "audit-scene-complexity.ts",
     "lab-run-all.ts"
    ],
    "flags": [],
@@ -17789,7 +17668,7 @@
    "duration": "next-turn",
    "targets": "enemy",
    "signature": "tempo|passive|init+filter+onMove|next-turn|enemy|move,square",
-   "animation": "plugin+passive",
+   "animation": "passive",
    "location": "src/engine/buffs/funny/pranks.ts",
    "tests": [
     "lab-run-all.ts"
@@ -17807,7 +17686,7 @@
    "duration": "3-turns",
    "targets": "enemy",
    "signature": "tempo|passive|init+onMove|3-turns|enemy|freeze,jump,king,n:10,n:3,random,time",
-   "animation": "plugin+passive",
+   "animation": "passive",
    "location": "src/engine/buffs/funny/pranks.ts",
    "tests": [
     "lab-run-all.ts"
@@ -17825,7 +17704,7 @@
    "duration": "5-turns",
    "targets": "enemy",
    "signature": "protection|activated|effect+targets+onMove|5-turns|enemy|king,n:1,n:5,square",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/funny/pranks.ts",
    "tests": [
     "lab-run-all.ts"
@@ -17843,7 +17722,7 @@
    "duration": "next-turn",
    "targets": "enemy",
    "signature": "attack|passive|onMove|next-turn|enemy|capture,move,n:2,square",
-   "animation": "plugin+passive",
+   "animation": "passive",
    "location": "src/engine/buffs/funny/pranks.ts",
    "tests": [
     "lab-run-all.ts"
@@ -17989,7 +17868,7 @@
    "duration": "unstated",
    "targets": "enemy",
    "signature": "tempo|activated|effect+targets|unstated|enemy|capture,king,n:3,square",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/brainrot.ts",
    "tests": [
     "lab-run-all.ts"
@@ -19326,7 +19205,7 @@
    "duration": "unstated",
    "targets": "self",
    "signature": "tempo|activated|effect+targets|unstated|self|capture,king,square",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/brainrot.ts",
    "tests": [
     "lab-run-all.ts"
@@ -19474,7 +19353,7 @@
    "duration": "unstated",
    "targets": "self",
    "signature": "pieces|instant|effect|unstated|self|bishop,knight,n:30,pawn,random,seconds",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/pt/casino.ts",
    "tests": [
     "lab-run-all.ts"
@@ -19492,7 +19371,7 @@
    "duration": "2-turns",
    "targets": "enemy",
    "signature": "pieces|activated|effect+targets|2-turns|enemy|n:2,pawn,square",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/personal.ts",
    "tests": [
     "test-companions.cjs",
@@ -19601,7 +19480,7 @@
    "duration": "3-turns",
    "targets": "self",
    "signature": "movement|passive|init+aug+onMove|3-turns|self|file,n:3,queen,rook,slide",
-   "animation": "plugin+passive",
+   "animation": "passive",
    "location": "src/engine/buffs/funny/expansion.ts",
    "tests": [
     "test-expansion.cjs",
@@ -19715,7 +19594,7 @@
    "duration": "unstated",
    "targets": "self",
    "signature": "pieces|activated|effect+targets|unstated|self|bishop,knight,n:10,n:35,n:55,pawn,rook",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/overhaul/gambling.ts",
    "tests": [
     "lab-run-all.ts"
@@ -19770,7 +19649,7 @@
    "duration": "next-turn",
    "targets": "enemy",
    "signature": "attack|activated|effect+targets|next-turn|enemy|check,knight,leap,shield,square",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/personal.ts",
    "tests": [
     "test-companions.cjs",
@@ -19789,7 +19668,7 @@
    "duration": "2-turns",
    "targets": "enemy",
    "signature": "tempo|activated|effect+targets|2-turns|enemy|king,move,n:2,square",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/personal.ts",
    "tests": [
     "test-companions.cjs",
@@ -19828,7 +19707,7 @@
    "duration": "unstated",
    "targets": "self",
    "signature": "movement|passive|aug|unstated|self|pawn,square",
-   "animation": "plugin+passive",
+   "animation": "passive",
    "location": "src/engine/buffs/personal.ts",
    "tests": [
     "test-companions.cjs",
@@ -19901,7 +19780,7 @@
    "duration": "4-turns",
    "targets": "enemy",
    "signature": "protection|activated|effect+targets+onMove|4-turns|enemy|capture,n:4",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/funny/meta.ts",
    "tests": [
     "lab-run-all.ts"
@@ -19973,7 +19852,7 @@
    "duration": "5-turns",
    "targets": "enemy",
    "signature": "protection|activated|effect+filter+onMove|5-turns|enemy|capture,king,n:5,protect,square",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/personal.ts",
    "tests": [
     "test-companions.cjs",
@@ -20010,7 +19889,7 @@
    "duration": "one-shot",
    "targets": "self",
    "signature": "movement|activated|effect+targets+aug+onMove|one-shot|self|bishop,move,slide",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/personal.ts",
    "tests": [
     "lab-run-all.ts"
@@ -20586,7 +20465,7 @@
    "duration": "4-turns",
    "targets": "self",
    "signature": "pieces|activated|effect+targets+onMove|4-turns|self|knight,n:4,place,square",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/funny/meta.ts",
    "tests": [
     "lab-run-all.ts"
@@ -20717,7 +20596,7 @@
    "duration": "next-turn",
    "targets": "enemy",
    "signature": "movement|activated|effect+targets+onMove|next-turn|enemy|king,move,n:2,n:3,square,swap",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/personal.ts",
    "tests": [
     "lab-run-all.ts"
@@ -21705,7 +21584,7 @@
    "duration": "unstated",
    "targets": "enemy",
    "signature": "tempo|activated|effect+targets|unstated|enemy|block,capture,n:225,n:3,rank,square",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/personal.ts",
    "tests": [
     "lab-run-all.ts"
@@ -21966,7 +21845,7 @@
    "duration": "2-turns",
    "targets": "enemy",
    "signature": "protection|activated|effect+targets|2-turns|enemy|capture,king,n:1,n:2",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/brainrot.ts",
    "tests": [
     "lab-run-all.ts"
@@ -21984,7 +21863,7 @@
    "duration": "5-turns",
    "targets": "enemy",
    "signature": "protection|activated|effect+targets+aug+onMove|5-turns|enemy|capture,file,n:5,rank,rook,slide",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/personal.ts",
    "tests": [
     "lab-run-all.ts"
@@ -22038,7 +21917,7 @@
    "duration": "unstated",
    "targets": "self",
    "signature": "draft|activated|effect|unstated|self|draft,n:50,n:50,push,skip",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/overhaul/gambling.ts",
    "tests": [
     "lab-run-all.ts"
@@ -22056,7 +21935,7 @@
    "duration": "unstated",
    "targets": "self",
    "signature": "pieces|activated|effect|unstated|self|knight,pawn,rook",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/overhaul/gambling.ts",
    "tests": [
     "lab-run-all.ts"
@@ -22074,7 +21953,7 @@
    "duration": "6-turns",
    "targets": "enemy",
    "signature": "pieces|passive|init+onMove|6-turns|enemy|capture,knight,n:2,n:4,n:6,n:6,pawn,place,rook,summon,time",
-   "animation": "plugin+passive",
+   "animation": "passive",
    "location": "src/engine/buffs/overhaul/gambling.ts",
    "tests": [
     "lab-run-all.ts"
@@ -22092,7 +21971,7 @@
    "duration": "unstated",
    "targets": "enemy",
    "signature": "pieces|activated|effect|unstated|enemy|bishop,knight,pawn,random,reroll,reveal,rook",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/overhaul/gambling.ts",
    "tests": [
     "lab-run-all.ts"
@@ -22110,7 +21989,7 @@
    "duration": "6-turns",
    "targets": "self",
    "signature": "draft|passive|init+onMove|6-turns|self|draft,n:2,n:4,n:6,pawn,rank,reroll",
-   "animation": "plugin+passive",
+   "animation": "passive",
    "location": "src/engine/buffs/overhaul/gambling.ts",
    "tests": [
     "lab-run-all.ts"
@@ -22293,7 +22172,7 @@
    "duration": "unstated",
    "targets": "self",
    "signature": "movement|activated|effect+targets+aug+onMove|unstated|self|bishop,capture,knight,move,queen,rook",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/personal.ts",
    "tests": [
     "lab-run-all.ts"
@@ -22946,7 +22825,7 @@
    "duration": "unstated",
    "targets": "self",
    "signature": "pieces|activated|effect+targets|unstated|self|bishop,draft,knight,rook,skip,square",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/funny/meta.ts",
    "tests": [
     "lab-run-all.ts"
@@ -23110,7 +22989,7 @@
    "duration": "next-turn",
    "targets": "enemy",
    "signature": "pieces|activated|effect+targets+onMove|next-turn|enemy|capture,move,rook,square",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/funny/meta.ts",
    "tests": [
     "lab-run-all.ts"
@@ -23220,7 +23099,7 @@
    "duration": "5-turns",
    "targets": "enemy",
    "signature": "tempo|passive|init+onMove|5-turns|enemy|king,move,n:2,n:5",
-   "animation": "plugin+canvas+passive",
+   "animation": "canvas+passive",
    "location": "src/engine/buffs/brainrot.ts",
    "tests": [
     "lab-run-all.ts"
@@ -23975,7 +23854,7 @@
    "duration": "next-turn",
    "targets": "enemy",
    "signature": "attack|instant|effect|next-turn|enemy|destroy,king,stun",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/brainrot.ts",
    "tests": [
     "lab-run-all.ts"
@@ -24047,7 +23926,7 @@
    "duration": "5-turns",
    "targets": "enemy",
    "signature": "draft|activated|effect+targets+aug+onMove|5-turns|enemy|move,n:5",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/creators.ts",
    "tests": [
     "lab-run-all.ts"
@@ -24065,7 +23944,7 @@
    "duration": "4-turns",
    "targets": "enemy",
    "signature": "info|activated|effect+targets+filter|4-turns|enemy|capture,n:4,see",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/creators.ts",
    "tests": [
     "lab-run-all.ts"
@@ -24083,7 +23962,7 @@
    "duration": "3-turns",
    "targets": "enemy",
    "signature": "protection|activated|effect+targets+aug+onMove|3-turns|enemy|bishop,capture,n:3",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/creators.ts",
    "tests": [
     "lab-run-all.ts"
@@ -24180,7 +24059,7 @@
    "duration": "3-turns",
    "targets": "enemy",
    "signature": "attack|activated|effect+targets|3-turns|enemy|freeze,move,n:3,square",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/personal.ts",
    "tests": [
     "lab-run-all.ts"
@@ -24253,7 +24132,7 @@
    "duration": "2-turns",
    "targets": "self",
    "signature": "pieces|activated|effect|2-turns|self|capture,n:2,n:2,n:6,n:6,n:60,pawn,random,return",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/overhaul/gambling.ts",
    "tests": [
     "lab-run-all.ts"
@@ -24382,7 +24261,7 @@
    "duration": "3-turns",
    "targets": "enemy",
    "signature": "pieces|activated|effect+targets+aug+filter+onMove|3-turns|enemy|capture,knight,leap,n:2,n:3,place,queen,square",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/personal.ts",
    "tests": [
     "test-companions.cjs",
@@ -24401,7 +24280,7 @@
    "duration": "unstated",
    "targets": "self",
    "signature": "movement|activated|effect+targets|unstated|self|n:3,square",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/personal.ts",
    "tests": [
     "lab-run-all.ts"
@@ -24473,7 +24352,7 @@
    "duration": "2-turns",
    "targets": "enemy",
    "signature": "pieces|activated|effect+targets+onMove|2-turns|enemy|capture,knight,n:2,place,square",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/brainrot.ts",
    "tests": [
     "lab-run-all.ts"
@@ -25205,7 +25084,7 @@
    "duration": "unstated",
    "targets": "enemy",
    "signature": "protection|activated|effect+targets+filter+onMove|unstated|enemy|capture,check,king,shield",
-   "animation": "plugin+canvas",
+   "animation": "canvas",
    "location": "src/engine/buffs/wild/warfare.ts",
    "tests": [
     "lab-run-all.ts"
@@ -25460,7 +25339,7 @@
    "duration": "2-turns",
    "targets": "enemy",
    "signature": "pieces|activated|effect|2-turns|enemy|n:2,n:30,queen,seconds,square",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/creators.ts",
    "tests": [
     "lab-run-all.ts"
@@ -25478,7 +25357,7 @@
    "duration": "6-turns",
    "targets": "enemy",
    "signature": "tempo|passive|init+filter+onMove|6-turns|enemy|capture,check,move,n:3,n:6,pawn,seconds",
-   "animation": "plugin+passive",
+   "animation": "passive",
    "location": "src/engine/buffs/creators.ts",
    "tests": [
     "lab-run-all.ts"
@@ -25609,7 +25488,7 @@
    "duration": "6-turns",
    "targets": "self",
    "signature": "pieces|activated|effect+targets+aug+onMove|6-turns|self|capture,knight,leap,n:2,n:30,n:6,n:70,push,queen,return,slide,square",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/overhaul/gambling.ts",
    "tests": [
     "lab-run-all.ts"
@@ -25700,7 +25579,7 @@
    "duration": "next-turn",
    "targets": "enemy",
    "signature": "pieces|activated|effect+onMove|next-turn|enemy|bishop,king,knight,move,n:3,queen,rook",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/personal.ts",
    "tests": [
     "lab-run-all.ts"
@@ -28772,7 +28651,7 @@
    "duration": "unstated",
    "targets": "enemy",
    "signature": "hex|activated|effect+onMove|unstated|enemy|freeze,move,n:25,n:35,n:40,pawn,random,square",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/overhaul/gambling.ts",
    "tests": [
     "lab-run-all.ts",
@@ -29661,7 +29540,7 @@
    "duration": "2-turns",
    "targets": "enemy",
    "signature": "hex|activated|effect+targets+onMove|2-turns|enemy|king,move,n:2,square,time",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/funny/meta.ts",
    "tests": [
     "lab-run-all.ts",
@@ -29762,7 +29641,7 @@
    "duration": "2-turns",
    "targets": "enemy",
    "signature": "hex|activated|effect+targets+onMove|2-turns|enemy|king,move,n:2,n:3,square,time",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/brainrot.ts",
    "tests": [
     "lab-run-all.ts",
@@ -29935,7 +29814,7 @@
    "duration": "2-turns",
    "targets": "enemy",
    "signature": "hex|passive|init+filter+onMove|2-turns|enemy|capture,n:2",
-   "animation": "plugin+passive",
+   "animation": "passive",
    "location": "src/engine/buffs/personal.ts",
    "tests": [
     "lab-run-all.ts",
@@ -31238,7 +31117,7 @@
    "duration": "3-turns",
    "targets": "enemy",
    "signature": "hex|passive|init+filter+onMove|3-turns|enemy|capture,move,n:3,queen,rook",
-   "animation": "plugin+passive",
+   "animation": "passive",
    "location": "src/engine/buffs/funny/meta.ts",
    "tests": [
     "lab-run-all.ts",
@@ -31392,7 +31271,7 @@
    "duration": "3-turns",
    "targets": "enemy",
    "signature": "hex|passive|init+filter+onMove|3-turns|enemy|bishop,capture,knight,n:3",
-   "animation": "plugin+passive",
+   "animation": "passive",
    "location": "src/engine/buffs/funny/meta.ts",
    "tests": [
     "lab-run-all.ts",
@@ -31686,7 +31565,7 @@
    "duration": "3-turns",
    "targets": "enemy",
    "signature": "hex|passive|init+onMove|3-turns|enemy|move,n:1,n:3,n:3,place",
-   "animation": "plugin+passive",
+   "animation": "passive",
    "location": "src/engine/buffs/overhaul/gambling.ts",
    "tests": [
     "lab-run-all.ts",
@@ -37067,7 +36946,7 @@
    "duration": "5-turns",
    "targets": "enemy",
    "signature": "item|activated|effect|5-turns|enemy|draft,king,n:20,n:35,n:45,n:5,pawn,rank",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/overhaul/gambling.ts",
    "tests": [
     "lab-run-all.ts"
@@ -37085,7 +36964,7 @@
    "duration": "unstated",
    "targets": "self",
    "signature": "item|activated|effect|unstated|self|n:15,n:35,pawn,pull,random,rank,time",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/overhaul/gambling.ts",
    "tests": [
     "lab-run-all.ts"
@@ -37129,7 +37008,6 @@
     "lab-run-all.ts"
    ],
    "flags": [
-    "near-duplicate(op_first_frost:0.80)",
     "near-duplicate(op_four_winds:0.75)",
     "near-duplicate(op_halo_moon:0.80)"
    ],
@@ -37165,23 +37043,17 @@
    "name": "Bread for the Table",
    "kind": "item",
    "tier": 1,
-   "effect": "Use once as a free action: a d- or e-file pawn advances one square immediately. The square ahead must be empty.",
+   "effect": "Use once as a free action: a d- or e-file pawn carries the loaves one square forward. The square ahead must be empty, and no enemy piece may be attacking it.",
    "trigger": "activated/free",
    "duration": "one-shot",
-   "targets": "unstated",
-   "signature": "item|activated|effect+targets|one-shot|unstated|advance,file,file:e,pawn,square",
+   "targets": "enemy",
+   "signature": "item|activated|effect+targets|one-shot|enemy|file,file:e,pawn,square",
    "animation": "generated",
    "location": "UNKNOWN",
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [
-    "near-duplicate(op_fetch_the_flour:0.87)",
-    "near-duplicate(op_run_for_eggs:0.87)",
-    "near-duplicate(op_soups_on:0.87)",
-    "near-duplicate(op_spice_run:1.00)",
-    "near-duplicate(op_salt_from_the_coast:1.00)"
-   ],
+   "flags": [],
    "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
   },
   {
@@ -37240,11 +37112,7 @@
     "lab-run-all.ts"
    ],
    "flags": [
-    "duplicate-signature(op_reserved_table)",
-    "near-duplicate(op_private_booth:0.90)",
-    "near-duplicate(op_closed_for_cleaning:0.77)",
-    "near-duplicate(op_wet_floor_sign:0.78)",
-    "near-duplicate(op_do_not_disturb:0.77)"
+    "near-duplicate(op_wet_floor_sign:0.78)"
    ],
    "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
   },
@@ -37291,7 +37159,7 @@
    "name": "Closed for Cleaning",
    "kind": "item",
    "tier": 1,
-   "effect": "Use once as a free action: choose an empty square on your back rank. Enemy pieces cannot end a move there for your opponent's next 2 turns.",
+   "effect": "Use once as a free action: rope off one empty square on your back rank. Nobody at all, yours or theirs, may end a move there for the next 2 turns.",
    "trigger": "activated/free",
    "duration": "2-turns",
    "targets": "enemy",
@@ -37302,10 +37170,7 @@
     "lab-run-all.ts"
    ],
    "flags": [
-    "duplicate-signature(op_do_not_disturb)",
-    "near-duplicate(op_reserved_table:0.77)",
-    "near-duplicate(op_private_booth:0.77)",
-    "near-duplicate(op_chairs_on_tables:0.77)"
+    "duplicate-signature(op_do_not_disturb)"
    ],
    "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
   },
@@ -37382,7 +37247,7 @@
    "name": "Distant Thunder",
    "kind": "item",
    "tier": 1,
-   "effect": "An omen flashes over the enemy king's square until your opponent replies, and you gain 3 seconds on your clock.",
+   "effect": "Thunder rolls over the enemy king's square and over every enemy piece standing beside him until your opponent replies, and you gain 3 seconds on your clock.",
    "trigger": "instant",
    "duration": "unstated",
    "targets": "enemy",
@@ -37392,10 +37257,7 @@
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [
-    "duplicate-signature(op_first_frost)",
-    "near-duplicate(op_halo_moon:0.76)"
-   ],
+   "flags": [],
    "action": "keep: cosmetic twin of First Frost by design (omen locus differs)"
   },
   {
@@ -37403,7 +37265,7 @@
    "name": "Do Not Disturb",
    "kind": "item",
    "tier": 1,
-   "effect": "Use once as a free action: choose an empty square on your second rank. Enemy pieces cannot end a move there for your opponent's next 2 turns.",
+   "effect": "Use once as a free action: hang the sign on an empty square on your second rank beside one of your pieces. Enemy pieces cannot end a move there for your opponent's next 2 turns.",
    "trigger": "activated/free",
    "duration": "2-turns",
    "targets": "enemy",
@@ -37414,10 +37276,7 @@
     "lab-run-all.ts"
    ],
    "flags": [
-    "duplicate-signature(op_closed_for_cleaning)",
-    "near-duplicate(op_reserved_table:0.77)",
-    "near-duplicate(op_private_booth:0.77)",
-    "near-duplicate(op_chairs_on_tables:0.77)"
+    "duplicate-signature(op_closed_for_cleaning)"
    ],
    "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
   },
@@ -37515,10 +37374,7 @@
     "lab-run-all.ts"
    ],
    "flags": [
-    "duplicate-signature(op_run_for_eggs,op_soups_on)",
-    "near-duplicate(op_spice_run:0.87)",
-    "near-duplicate(op_salt_from_the_coast:0.87)",
-    "near-duplicate(op_bread_for_the_table:0.87)"
+    "duplicate-signature(op_run_for_eggs,op_soups_on)"
    ],
    "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
   },
@@ -37537,9 +37393,7 @@
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [
-    "near-duplicate(op_siege_survey:0.78)"
-   ],
+   "flags": [],
    "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
   },
   {
@@ -37547,21 +37401,17 @@
    "name": "First Frost",
    "kind": "item",
    "tier": 1,
-   "effect": "An omen flashes over your king's square until your opponent replies, and you gain 3 seconds on your clock.",
+   "effect": "Frost settles on your king's square and on every pawn still in its bed until your opponent replies, and you gain 3 seconds on your clock.",
    "trigger": "instant",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "item|instant|effect|unstated|enemy|clock,king,n:3,seconds,square",
+   "signature": "item|instant|effect|unstated|enemy|clock,king,n:3,pawn,seconds,square",
    "animation": "generated",
    "location": "UNKNOWN",
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [
-    "duplicate-signature(op_distant_thunder)",
-    "near-duplicate(op_halo_moon:0.87)",
-    "near-duplicate(op_barometer_falling:0.80)"
-   ],
+   "flags": [],
    "action": "keep: cosmetic twin of Distant Thunder by design (omen locus differs); openers embrace skin pairs"
   },
   {
@@ -37758,8 +37608,6 @@
     "lab-run-all.ts"
    ],
    "flags": [
-    "near-duplicate(op_first_frost:0.87)",
-    "near-duplicate(op_distant_thunder:0.76)",
     "near-duplicate(op_barometer_falling:0.80)"
    ],
    "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
@@ -38122,19 +37970,17 @@
    "name": "Portrait of a Lady",
    "kind": "item",
    "tier": 1,
-   "effect": "Use once as a free action: the enemy queen flashes on the board until your opponent replies.",
+   "effect": "Use once as a free action: the enemy queen flashes on the board until your opponent replies. Every portrait needs a sitter, so if she has already fallen, the frame hangs on their king instead.",
    "trigger": "activated/free",
    "duration": "one-shot",
    "targets": "enemy",
-   "signature": "item|activated|effect|one-shot|enemy|queen",
+   "signature": "item|activated|effect|one-shot|enemy|king,queen",
    "animation": "generated",
    "location": "UNKNOWN",
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [
-    "near-duplicate(op_siege_survey:0.81)"
-   ],
+   "flags": [],
    "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
   },
   {
@@ -38160,7 +38006,7 @@
    "name": "Private Booth",
    "kind": "item",
    "tier": 1,
-   "effect": "Use once as a free action: choose an empty square next to your king. Enemy pieces cannot end a move there for your opponent's next turn.",
+   "effect": "Use once as a free action, while your king still sits at his own table: reserve one empty square beside him. No enemy piece may end a move there during your opponent's next turn.",
    "trigger": "activated/free",
    "duration": "next-turn",
    "targets": "enemy",
@@ -38170,13 +38016,7 @@
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [
-    "near-duplicate(op_reserved_table:0.90)",
-    "near-duplicate(op_closed_for_cleaning:0.77)",
-    "near-duplicate(op_wet_floor_sign:0.78)",
-    "near-duplicate(op_chairs_on_tables:0.90)",
-    "near-duplicate(op_do_not_disturb:0.77)"
-   ],
+   "flags": [],
    "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
   },
   {
@@ -38245,23 +38085,17 @@
    "name": "Reserved Table",
    "kind": "item",
    "tier": 1,
-   "effect": "Use once as a free action: choose an empty square in your half. Enemy pieces cannot end a move there for your opponent's next turn.",
+   "effect": "Use once as a free action: put the brass sign on any empty square in your half except your back rank. Enemy pieces cannot end a move there for your opponent's next turn.",
    "trigger": "activated/free",
    "duration": "next-turn",
    "targets": "enemy",
-   "signature": "item|activated|effect+targets|next-turn|enemy|move,square",
+   "signature": "item|activated|effect+targets|next-turn|enemy|move,rank,square",
    "animation": "generated",
    "location": "UNKNOWN",
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [
-    "duplicate-signature(op_chairs_on_tables)",
-    "near-duplicate(op_private_booth:0.90)",
-    "near-duplicate(op_closed_for_cleaning:0.77)",
-    "near-duplicate(op_wet_floor_sign:0.78)",
-    "near-duplicate(op_do_not_disturb:0.77)"
-   ],
+   "flags": [],
    "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
   },
   {
@@ -38382,10 +38216,7 @@
     "lab-run-all.ts"
    ],
    "flags": [
-    "duplicate-signature(op_fetch_the_flour,op_soups_on)",
-    "near-duplicate(op_spice_run:0.87)",
-    "near-duplicate(op_salt_from_the_coast:0.87)",
-    "near-duplicate(op_bread_for_the_table:0.87)"
+    "duplicate-signature(op_fetch_the_flour,op_soups_on)"
    ],
    "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
   },
@@ -38394,23 +38225,17 @@
    "name": "Salt from the Coast",
    "kind": "item",
    "tier": 1,
-   "effect": "Use once as a free action: a a- or h-file pawn advances one square immediately. The square ahead must be empty.",
+   "effect": "Use once as a free action, from your 4th move on: an a- or h-file pawn hauls the barrel one square forward. The square ahead must be empty. The coast road is long.",
    "trigger": "activated/free",
    "duration": "one-shot",
-   "targets": "unstated",
-   "signature": "item|activated|effect+targets|one-shot|unstated|advance,file,file:h,pawn,square",
+   "targets": "self",
+   "signature": "item|activated|effect+targets+onMove|one-shot|self|file,file:h,move,pawn,square",
    "animation": "generated",
    "location": "UNKNOWN",
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [
-    "near-duplicate(op_fetch_the_flour:0.87)",
-    "near-duplicate(op_run_for_eggs:0.87)",
-    "near-duplicate(op_soups_on:0.87)",
-    "near-duplicate(op_spice_run:1.00)",
-    "near-duplicate(op_bread_for_the_table:1.00)"
-   ],
+   "flags": [],
    "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
   },
   {
@@ -38439,7 +38264,7 @@
    "name": "Siege Survey",
    "kind": "item",
    "tier": 1,
-   "effect": "Use once as a free action: every enemy queen and rook flashes on the board until your opponent replies.",
+   "effect": "Use once as a free action: every enemy queen and rook flashes on the board until your opponent replies, along with each of your pieces they are aimed at.",
    "trigger": "activated/free",
    "duration": "one-shot",
    "targets": "enemy",
@@ -38449,10 +38274,7 @@
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [
-    "near-duplicate(op_field_sketch:0.78)",
-    "near-duplicate(op_portrait_of_a_lady:0.81)"
-   ],
+   "flags": [],
    "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
   },
   {
@@ -38471,10 +38293,7 @@
     "lab-run-all.ts"
    ],
    "flags": [
-    "duplicate-signature(op_fetch_the_flour,op_run_for_eggs)",
-    "near-duplicate(op_spice_run:0.87)",
-    "near-duplicate(op_salt_from_the_coast:0.87)",
-    "near-duplicate(op_bread_for_the_table:0.87)"
+    "duplicate-signature(op_fetch_the_flour,op_run_for_eggs)"
    ],
    "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
   },
@@ -38501,23 +38320,17 @@
    "name": "Spice Run",
    "kind": "item",
    "tier": 1,
-   "effect": "Use once as a free action: a b- or g-file pawn advances one square immediately. The square ahead must be empty.",
+   "effect": "Use once as a free action: a b- or g-file pawn still on its home square steps one square forward. The square ahead must be empty.",
    "trigger": "activated/free",
    "duration": "one-shot",
    "targets": "unstated",
-   "signature": "item|activated|effect+targets|one-shot|unstated|advance,file,file:g,pawn,square",
+   "signature": "item|activated|effect+targets|one-shot|unstated|file,file:g,pawn,square",
    "animation": "generated",
    "location": "UNKNOWN",
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [
-    "near-duplicate(op_fetch_the_flour:0.87)",
-    "near-duplicate(op_run_for_eggs:0.87)",
-    "near-duplicate(op_soups_on:0.87)",
-    "near-duplicate(op_salt_from_the_coast:1.00)",
-    "near-duplicate(op_bread_for_the_table:1.00)"
-   ],
+   "flags": [],
    "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
   },
   {
@@ -38697,8 +38510,6 @@
     "lab-run-all.ts"
    ],
    "flags": [
-    "near-duplicate(op_reserved_table:0.78)",
-    "near-duplicate(op_private_booth:0.78)",
     "near-duplicate(op_chairs_on_tables:0.78)"
    ],
    "action": "keep: reviewed mirror/skin family; parity, band, or cosmetic locus differs"
@@ -38935,7 +38746,7 @@
    "duration": "unstated",
    "targets": "self",
    "signature": "item|activated|effect|unstated|self|advance,draw,n:55,pawn,random,rank",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/overhaul/gambling.ts",
    "tests": [
     "lab-run-all.ts"
@@ -39097,7 +38908,7 @@
    "duration": "next-turn",
    "targets": "self",
    "signature": "item|activated|init+effect+targets+aug+onMove|next-turn|self|draft,knight,leap,move,n:15,n:25,n:5,n:5,n:55,pawn,random,rank,spawn",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/overhaul/gambling.ts",
    "tests": [
     "lab-run-all.ts"
@@ -39387,7 +39198,7 @@
    "duration": "unstated",
    "targets": "self",
    "signature": "item|activated|effect|unstated|self|n:12,n:3,n:30,n:4,n:55,n:7,pawn,pull,random,rank,spawn",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/overhaul/gambling.ts",
    "tests": [
     "lab-run-all.ts"
@@ -39459,7 +39270,7 @@
    "duration": "2-turns",
    "targets": "enemy",
    "signature": "item|activated|effect|2-turns|enemy|capture,draw,freeze,knight,n:2,pawn,random,revive,shield,stun,summon",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/overhaul/gambling.ts",
    "tests": [
     "lab-run-all.ts"
@@ -39513,7 +39324,7 @@
    "duration": "one-shot",
    "targets": "enemy",
    "signature": "item|activated|effect|one-shot|enemy|capture,draft,knight,pawn,promote,random,reroll,revive,stun,summon",
-   "animation": "plugin",
+   "animation": "generated",
    "location": "src/engine/buffs/overhaul/gambling.ts",
    "tests": [
     "lab-run-all.ts"
@@ -41948,11 +41759,11 @@
    "name": "Solar Flare",
    "kind": "nerf",
    "tier": 4,
-   "effect": "You can only capture on light squares, starting on your second move. The forbidden dark squares are shown from the start.",
+   "effect": "The flare burns for 3 of your turns, then sleeps for 2, over and over. While it burns you can only capture on light squares. The dark squares are shown whenever it is up.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|capture,move,square",
+   "signature": "nerf|3-turns|capture,n:2,n:3,sleep,square",
    "animation": "passive",
    "location": "src/engine/nerfs/extras.ts",
    "tests": [

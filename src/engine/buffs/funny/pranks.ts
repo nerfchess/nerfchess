@@ -302,6 +302,7 @@ export const FUNNY_PRANKS: Buff[] = [
       tier: 4,
       category: "attack",
       flavor: "L + ratio + skill issue + it is your move now.",
+      fx: { motif: "slow", pieces: "all" },
     },
     // Delayed a beat: instead of punishing the capture they already made, wait
     // for the opponent's next move, then bonk it back if THAT move captured.

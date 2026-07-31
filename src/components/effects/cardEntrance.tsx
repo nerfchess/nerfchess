@@ -19,6 +19,12 @@
 import React from "react";
 import type { LucideIcon } from "lucide-react";
 import type { BuffCategory } from "@/engine/buff";
+// The entrance layer renders the card's OWN scene when it has one. Importing
+// SignatureOverlay from BoardEffects is safe in this direction: BoardEffects
+// imports CategoryArrival from here, and the overlay itself is the lazy-chunk
+// facade, so no art is pulled into the eager bundle.
+import { SIGNATURES, SignatureOverlay, type SigVisual } from "./BoardEffects";
+import { PLUGIN_ID_SET } from "./sigPlugins";
 import "./cardEntrance.css";
 
 /** Same hues as BoardEffects' CAST_THEME (kept local: BoardEffects imports us). */
@@ -557,6 +563,18 @@ export function CardEntrance({
   const t = ARRIVAL_THEME[category];
   const marquee = tier >= 8;
   const isOpener = !!cardId?.startsWith("op_");
+  // Does this card have hand-made art of its own? PLUGIN_ID_SET is the EAGER
+  // mirror of the plugin registry (the art itself rides the lazy chunk), so
+  // asking costs nothing and is answerable before the chunk loads.
+  const ownScene = !!cardId && PLUGIN_ID_SET.has(cardId);
+  // Core SIGNATURES cards used to be excluded here, on the grounds that their
+  // visuals are keyed by shared visual name rather than by card id. That was
+  // true of the KEY, not of the ART: SIGNATURES is eager, so the key is
+  // answerable straight away, and sigVisuals now stages the entrance role for
+  // core the same way godPlays does for its 25 scenes. So a core card also
+  // arrives as the thing it will later do, instead of falling through to the
+  // category arrival with 302 others.
+  const coreVisual = !ownScene && cardId ? SIGNATURES[cardId]?.visual : undefined;
   return (
     <span className="ce-scene pointer-events-none absolute inset-0 z-40 block" aria-hidden="true">
       {marquee && <span className="ce-dim absolute inset-0 block" style={{ background: "rgba(6,10,16,0.45)" }} />}
@@ -564,10 +582,21 @@ export function CardEntrance({
         className="ce-wash absolute inset-0 block"
         style={{ background: `radial-gradient(circle at 50% 42%, ${t.soft}, transparent 70%)` }}
       />
-      {/* the arrival plays in a centered stage, ~56% of the crop; openers
-          swap in their unique per-card generated entrance */}
+      {/* The arrival plays in a centered stage, ~56% of the crop.
+          Preference order, most specific first:
+            1. the card's OWN plug-in scene, cut for the entrance beat, so a
+               card announces itself as the thing it will later do;
+            2. the card's own CORE signature scene, cut the same way;
+            3. an opener's unique generated entrance (op_* cards already have
+               genuinely per-card arrivals);
+            4. the category arrival, the floor that guarantees every card
+               announces itself somehow. */}
       <span className="absolute left-[22%] top-[14%] block h-[56%] w-[56%]">
-        {isOpener && cardId ? (
+        {ownScene ? (
+          <SignatureOverlay visual={`x:${cardId}` as SigVisual} role="entrance" delayMs={80} />
+        ) : coreVisual ? (
+          <SignatureOverlay visual={coreVisual} role="entrance" delayMs={80} />
+        ) : isOpener && cardId ? (
           <OpenerArrival seed={cardId} icon={icon} />
         ) : (
           <CategoryArrival category={category} icon={icon} delayMs={80} />

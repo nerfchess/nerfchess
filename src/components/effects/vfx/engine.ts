@@ -925,9 +925,16 @@ export function createVfxEngine(
     // keep the whole sequence inside ~2.1s (cinematic) / ~1s (standard) at
     // the default duration setting; the user's multiplier stretches all of it
     const maxDelay = (cinematic ? 480 : 300) * playDur;
+    // Each target carries its OWN origin. Most plays leave `from` unset and
+    // every leg starts at the play's source (the classic fan); a play that
+    // travels along its victim order sets `from` per target so leg N starts
+    // where leg N-1 landed.
     const targets = spec.targets.map((t, i) => ({
       x: t.p.x * w,
       y: t.p.y * h,
+      fx: (t.from?.x ?? src.x) * w,
+      fy: (t.from?.y ?? src.y) * h,
+      ownFrom: t.from != null,
       delay: clamp((t.delayMs ?? (travel === "chain" ? i * 70 : 0)) * playDur, 0, maxDelay),
     }));
 
@@ -964,20 +971,20 @@ export function createVfxEngine(
       }
       case "bolt": {
         for (const t of targets) {
-          const dist = Math.hypot(t.x - sx, t.y - sy);
+          const dist = Math.hypot(t.x - t.fx, t.y - t.fy);
           const dur = clamp(120 + dist * 0.55, 140, cinematic ? 420 : 340);
           const at = t0 + t.delay;
-          timers.push({ at, fn: () => launchBolt(sx, sy, t.x, t.y, palette, sq, at, dur) });
+          timers.push({ at, fn: () => launchBolt(t.fx, t.fy, t.x, t.y, palette, sq, at, dur) });
           scheduleImpact(t.x, t.y, at + dur * playDur);
         }
         break;
       }
       case "arc": {
         for (const t of targets) {
-          const dist = Math.hypot(t.x - sx, t.y - sy);
+          const dist = Math.hypot(t.x - t.fx, t.y - t.fy);
           const dur = clamp(340 + dist * 0.4, 380, cinematic ? 560 : 460);
           const at = t0 + t.delay;
-          timers.push({ at, fn: () => launchArc(sx, sy, t.x, t.y, palette, sq, at, dur) });
+          timers.push({ at, fn: () => launchArc(t.fx, t.fy, t.x, t.y, palette, sq, at, dur) });
           scheduleImpact(t.x, t.y, at + dur * playDur);
         }
         break;
@@ -987,7 +994,7 @@ export function createVfxEngine(
           const at = t0 + t.delay;
           timers.push({
             at,
-            fn: () => addBeam(sx, sy, t.x, t.y, palette, sq, cinematic ? 420 : 340),
+            fn: () => addBeam(t.fx, t.fy, t.x, t.y, palette, sq, cinematic ? 420 : 340),
           });
           scheduleImpact(t.x, t.y, at + 70 * playDur);
         }
@@ -997,7 +1004,7 @@ export function createVfxEngine(
         for (const t of targets) {
           const at = t0 + t.delay;
           const dur = cinematic ? 500 : 420;
-          timers.push({ at, fn: () => addWave(sx, sy, t.x, t.y, palette, sq, dur) });
+          timers.push({ at, fn: () => addWave(t.fx, t.fy, t.x, t.y, palette, sq, dur) });
           // the eased front covers ~90% of the distance around t≈0.72
           scheduleImpact(t.x, t.y, at + dur * playDur * 0.72);
         }
@@ -1021,8 +1028,10 @@ export function createVfxEngine(
         let py = sy;
         for (const t of ordered) {
           const at = t0 + t.delay;
-          const ax = px;
-          const ay = py;
+          // A target that declared its own origin uses it; otherwise the chain
+          // walks from wherever the previous jump landed, as it always has.
+          const ax = t.ownFrom ? t.fx : px;
+          const ay = t.ownFrom ? t.fy : py;
           timers.push({
             at,
             fn: () => addChainSegment(ax, ay, t.x, t.y, palette, sq, cinematic ? 260 : 200),

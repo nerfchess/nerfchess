@@ -24,10 +24,25 @@
 // Woe). The CARD -> TEMPLATE / PALETTE / GLYPH table is the PLAYS registry
 // at the bottom of this file.
 
+// STAGING. Every card declares an anchor, so a hex happens where it was
+// actually laid. `Stage` is the shared <BoardWideStage>, which clamps itself
+// over the board from --fx-anchor-dx/dy; anything that means THE BOARD (the
+// curse-light wash) renders inside <BoardFrame> so it stays exact at any
+// anchor. Cards that bind or drag NAMED pieces are `anchor: "aim"` and lay a
+// travelling chain down the real source -> target vector: <ChainLeg> carries
+// AimStage's own `fx-aim` rotation and is the ONLY thing that gets it, because
+// an upright subject rotated onto the vector would lie on its side.
+//
+// Geometry reaches the art through cursePlays.css: cwp-rise climbs out of the
+// VICTIM's edge (--fx-side), cwp-pop lands leaning from it, cwp-settle drifts
+// away from the board centre (--fx-ox/--fx-oy), cwp-beam and cwp-lash reach by
+// --fx-len, and cwp-chain/cwp-chainlink are sized by --fx-len outright.
+
 import "./cursePlays.css";
 
 import type { ComponentType, CSSProperties, ReactNode } from "react";
-import type { SigPlugin } from "./sigPlugins";
+import type { SigPlugin, SigRole } from "./sigPlugins";
+import { BoardFrame, BoardWideStage } from "./stage";
 
 /* =============================================================================
    Shared bits
@@ -39,10 +54,14 @@ interface TemplateProps {
   palette: Palette;
   glyph: ReactNode;
   lead: boolean;
+  role: SigRole;
   delayMs: number;
   /** Per-card structural flourish key: every card using a shared template
    * carries one, and every key has a dedicated dressing block below. */
   flourish?: string;
+  /** Set for `anchor: "aim"` cards: drag the chain down the real
+   * source -> target vector as well as playing the template's own beats. */
+  aim?: boolean;
 }
 
 /** hex "#rrggbb" -> rgba() at the given alpha (glow fills, gradients). */
@@ -56,18 +75,52 @@ function tint(hex: string, alpha: number): string {
 const SJ = { strokeLinejoin: "round", strokeLinecap: "round" } as const;
 
 /** The oversized-clipped board-wide stage (the overlay mounts inside ONE
- * square; this canvas is ~14 squares wide — the board is the central ~57%). */
+ * square; this canvas is ~14 squares wide, anchored on the cast square and
+ * clamping itself over the board — see stage.tsx). */
 function Stage({ children }: { children: ReactNode }) {
+  return <BoardWideStage>{children}</BoardWideStage>;
+}
+
+/** Full-board curse-light wash. Inside <BoardFrame>, so it is exactly the
+ * board at any anchor rather than a fixed slice of a canvas that has moved. */
+function Wash({ color, delayMs }: { color: string; delayMs: number }) {
   return (
-    <span className="pointer-events-none absolute inset-0 z-30" aria-hidden="true">
-      <span className="absolute left-[-650%] top-[-650%] block h-[1400%] w-[1400%]">{children}</span>
-    </span>
+    <BoardFrame>
+      <span className="cwp-wash absolute inset-0 block" style={{ background: color, animationDelay: `${delayMs}ms` }} />
+    </BoardFrame>
   );
 }
 
-/** Full-board curse-light wash. */
-function Wash({ color, delayMs }: { color: string; delayMs: number }) {
-  return <span className="cwp-wash absolute inset-0 block" style={{ background: color, animationDelay: `${delayMs}ms` }} />;
+/** The travelling part of an `anchor: "aim"` hex: a spectral chain dragged
+ * from the cast square down the real source -> target leg, its reach driven by
+ * --fx-len and its shackle cinching onto the victim's square.
+ *
+ * Authored pointing RIGHT; `fx-aim` (the rotation AimStage applies internally)
+ * turns it onto the vector. It is applied HERE rather than by wrapping the
+ * chain in <AimStage>, because this already renders inside <Stage>: a second
+ * staging box would multiply the 14-cell canvas by 14 again. Nothing upright
+ * may go inside it - a subject rotated onto the vector lies on its side. */
+function ChainLeg({ color, delayMs }: { color: string; delayMs: number }) {
+  return (
+    <span className="fx-aim absolute inset-0 block" aria-hidden="true">
+      <span
+        className="cwp-chain absolute block"
+        style={{
+          left: "50%",
+          top: "49.7%",
+          width: "7.15%",
+          height: "0.7%",
+          background: `repeating-linear-gradient(90deg, ${color} 0 42%, transparent 42% 100%)`,
+          transformOrigin: "0% 50%",
+          animationDelay: `${delayMs}ms`,
+        }}
+      />
+      <span
+        className="cwp-chainlink absolute block rounded-full"
+        style={{ left: "49.3%", top: "48.9%", width: "1.4%", height: "1.4%", border: `2px solid ${color}`, animationDelay: `${delayMs + 90}ms` }}
+      />
+    </span>
+  );
 }
 
 /** Tell: stray curse-light gathering onto the point the working will claim. */
@@ -210,18 +263,110 @@ function CurseHit({ palette, glyph, delayMs }: { palette: Palette; glyph: ReactN
   );
 }
 
+/** The ENTRANCE cut: the card arriving in a hand, at ~56% of the crop. Same
+ * palette and the play's own central object, three short beats (the curse
+ * light gathers, the object sears in, two flecks sift off it), and no board
+ * takeover — nothing here leaves the one square it is mounted on. `mark` is
+ * the scene's own central object; without one the card's device stands in. */
+function EntranceCut({ palette, glyph, delayMs, mark }: { palette: Palette; glyph: ReactNode; delayMs: number; mark?: ReactNode }) {
+  const [p0, p1, p2] = palette;
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      {/* tell: the curse light gathers behind the card */}
+      <span
+        className="cwp-tellglow absolute block rounded-full"
+        style={{ left: "18%", top: "18%", width: "64%", height: "64%", background: `radial-gradient(circle, ${tint(p1, 0.45)}, transparent 70%)`, animationDelay: `${delayMs}ms` }}
+      />
+      {/* strike: the central object sears in */}
+      <span className="cwp-rise absolute block" style={{ left: "22%", top: "22%", width: "56%", height: "56%", animationDelay: `${delayMs + 150}ms` }}>
+        {mark ?? glyph}
+      </span>
+      {/* settle: two flecks sift off it */}
+      {[
+        { l: 30, t: 60, dx: "-70%", dy: "130%", rot: "-100deg", d: 0 },
+        { l: 62, t: 30, dx: "70%", dy: "140%", rot: "120deg", d: 90 },
+      ].map((v, i) => (
+        <span
+          key={i}
+          className="cwp-settle absolute block"
+          style={
+            {
+              left: `${v.l}%`,
+              top: `${v.t}%`,
+              width: "10%",
+              height: "10%",
+              "--dx": v.dx,
+              "--dy": v.dy,
+              "--rot": v.rot,
+              animationDelay: `${delayMs + 460 + v.d}ms`,
+            } as CSSProperties
+          }
+        >
+          <Mote color={tint(p2, 0.85)} />
+        </span>
+      ))}
+      <span
+        className="cwp-tring absolute block rounded-full"
+        style={{ left: "14%", top: "14%", width: "72%", height: "72%", border: `2px solid ${tint(p0, 0.85)}`, animationDelay: `${delayMs + 380}ms` }}
+      />
+    </span>
+  );
+}
+
+/** Each shared template's central object, drawn small enough to carry an
+ * entrance on its own. Kept beside EntranceCut so the card arriving in a hand
+ * and the card being played show the SAME thing. */
+const MARK: Record<string, (p: Palette) => ReactNode> = {
+  seal: ([p0, p1, p2]) => (
+    <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+      <circle cx="10" cy="10" r="7.4" fill={tint(p0, 0.6)} stroke={tint(p1, 0.9)} strokeWidth="0.9" />
+      <circle cx="10" cy="10" r="5.4" fill="none" stroke={tint(p2, 0.7)} strokeWidth="0.4" strokeDasharray="1.5 1.1" />
+      <path d="M10 1.4 V3 M10 17 V18.6 M1.4 10 H3 M17 10 H18.6" stroke={tint(p2, 0.85)} strokeWidth="0.7" strokeLinecap="round" />
+    </svg>
+  ),
+  bell: ([p0, p1, p2]) => (
+    <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+      <path d="M5 14.4 C5 7.6 7 4.6 10 4.6 C13 4.6 15 7.6 15 14.4 Z" fill={tint(p0, 0.72)} stroke={tint(p1, 0.9)} strokeWidth="0.7" {...SJ} />
+      <path d="M3.8 15.2 H16.2" stroke={tint(p1, 0.9)} strokeWidth="0.9" strokeLinecap="round" />
+      <circle cx="10" cy="17" r="1.1" fill={tint(p2, 0.9)} />
+    </svg>
+  ),
+  blight: ([p0, p1, p2]) => (
+    <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+      <rect x="3" y="8.4" width="14" height="8" fill={tint(p0, 0.75)} stroke={tint(p2, 0.8)} strokeWidth="0.6" />
+      <path d="M10 8.4 C10 5 8.4 3.4 6.4 2.8 C7.6 4.8 7.6 6.8 10 8.4 Z" fill={tint(p1, 0.85)} />
+      <path d="M10 8.4 C10 5.8 11.4 4.4 13.4 4 C12.4 5.6 12.2 7 10 8.4 Z" fill={tint(p1, 0.65)} />
+    </svg>
+  ),
+  shackle: ([p0, p1, p2]) => (
+    <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+      <circle cx="10" cy="11.4" r="5" fill="none" stroke={tint(p1, 0.9)} strokeWidth="1.6" />
+      <path d="M6.6 6.8 C6.6 3.6 13.4 3.6 13.4 6.8" fill="none" stroke={tint(p2, 0.85)} strokeWidth="1.2" {...SJ} />
+      <circle cx="10" cy="11.4" r="1.6" fill={tint(p0, 0.9)} />
+    </svg>
+  ),
+  veil: ([p0, p1, p2]) => (
+    <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+      <path d="M2 6 C6 4 14 4 18 6 C17 12 14 16 10 17.4 C6 16 3 12 2 6 Z" fill={tint(p1, 0.55)} stroke={tint(p0, 0.9)} strokeWidth="0.7" {...SJ} />
+      <path d="M6 8.4 C8 9.6 12 9.6 14 8.4" fill="none" stroke={tint(p2, 0.85)} strokeWidth="0.7" strokeLinecap="round" />
+    </svg>
+  ),
+};
+
 /* =============================================================================
    Template 1: HexBrand — a smoking witch-seal slams down flat over the board
    and SEARS: the scorch ring (the template's signature beat) runs outward
    from the wax while the card's glyph burns in the seal's heart.
    Flourishes: veto, longroad, bloodprice, tarnish, rations, stacked.
    ========================================================================== */
-function HexBrand({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
+function HexBrand({ palette, glyph, lead, role, delayMs, flourish, aim }: TemplateProps) {
   const [p0, p1, p2] = palette;
+  if (role === "entrance") return <EntranceCut palette={palette} glyph={glyph} delayMs={delayMs} mark={MARK.seal(palette)} />;
   if (!lead) return <CurseHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
     <Stage>
       <Wash color={tint(p0, 0.24)} delayMs={delayMs} />
+      {aim && <ChainLeg color={tint(p1, 0.9)} delayMs={delayMs + 300} />}
       <Tell color={tint(p1, 0.35)} delayMs={delayMs} />
       {/* the seal, stamped down like hot wax */}
       <span className="cwp-stamp absolute block" style={{ left: "31%", top: "27%", width: "38%", height: "38%", animationDelay: `${delayMs + 160}ms` }}>
@@ -527,12 +672,14 @@ function HexBrand({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
    glyph glows beneath it.
    Flourishes: omen, halfmeasure, midnight, toil.
    ========================================================================== */
-function OmenBell({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
+function OmenBell({ palette, glyph, lead, role, delayMs, flourish, aim }: TemplateProps) {
   const [p0, p1, p2] = palette;
+  if (role === "entrance") return <EntranceCut palette={palette} glyph={glyph} delayMs={delayMs} mark={MARK.bell(palette)} />;
   if (!lead) return <CurseHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
     <Stage>
       <Wash color={tint(p0, 0.24)} delayMs={delayMs} />
+      {aim && <ChainLeg color={tint(p1, 0.9)} delayMs={delayMs + 300} />}
       <Tell color={tint(p1, 0.35)} delayMs={delayMs} left={42} top={24} />
       {/* the bell, descending on its phantom rope, then rocking */}
       <span className="cwp-drop absolute block" style={{ left: "38%", top: "18%", width: "24%", height: "30%", animationDelay: `${delayMs + 140}ms` }}>
@@ -737,12 +884,14 @@ const BLIGHT_TILES = [
   { l: 47, t: 51.5, d: 310, s: 8.5 },
   { l: 40.5, t: 37, d: 400, s: 7 },
 ];
-function BlightGarden({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
+function BlightGarden({ palette, glyph, lead, role, delayMs, flourish, aim }: TemplateProps) {
   const [p0, p1, p2] = palette;
+  if (role === "entrance") return <EntranceCut palette={palette} glyph={glyph} delayMs={delayMs} mark={MARK.blight(palette)} />;
   if (!lead) return <CurseHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
     <Stage>
       <Wash color={tint(p0, 0.22)} delayMs={delayMs} />
+      {aim && <ChainLeg color={tint(p1, 0.9)} delayMs={delayMs + 300} />}
       <Tell color={tint(p1, 0.32)} delayMs={delayMs} left={41} top={41} />
       {/* SIGNATURE: the rot spreading tile to tile */}
       {BLIGHT_TILES.map((v, i) => (
@@ -968,13 +1117,15 @@ function BlightGarden({ palette, glyph, lead, delayMs, flourish }: TemplateProps
    card's glyph.
    Flourishes: twin, noreins, recoil, ransom, courtlock.
    ========================================================================== */
-function ChainWeb({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
+function ChainWeb({ palette, glyph, lead, role, delayMs, flourish, aim }: TemplateProps) {
   const [p0, p1, p2] = palette;
+  if (role === "entrance") return <EntranceCut palette={palette} glyph={glyph} delayMs={delayMs} mark={MARK.shackle(palette)} />;
   if (!lead) return <CurseHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   const chain = (alpha: number) => `repeating-linear-gradient(90deg, ${tint(p1, alpha)} 0 7px, transparent 7px 12px)`;
   return (
     <Stage>
       <Wash color={tint(p0, 0.24)} delayMs={delayMs} />
+      {aim && <ChainLeg color={tint(p1, 0.9)} delayMs={delayMs + 300} />}
       <Tell color={tint(p1, 0.34)} delayMs={delayMs} left={42} top={40} />
       {/* SIGNATURE: the two chain lashes, whipped across with overshoot */}
       <span className="absolute block" style={{ left: "22%", top: "38%", width: "56%", height: "1.2%", rotate: "14deg" }}>
@@ -1188,12 +1339,14 @@ const VEIL_MEN = [
   { k: "n" as const, l: 44, t: 45, d: 170 },
   { k: "r" as const, l: 54, t: 46, d: 340 },
 ];
-function MidasVeil({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
+function MidasVeil({ palette, glyph, lead, role, delayMs, flourish, aim }: TemplateProps) {
   const [p0, p1, p2] = palette;
+  if (role === "entrance") return <EntranceCut palette={palette} glyph={glyph} delayMs={delayMs} mark={MARK.veil(palette)} />;
   if (!lead) return <CurseHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
     <Stage>
       <Wash color={tint(p0, 0.22)} delayMs={delayMs} />
+      {aim && <ChainLeg color={tint(p1, 0.9)} delayMs={delayMs + 300} />}
       <Tell color={tint(p1, 0.35)} delayMs={delayMs} left={30} top={42} />
       {/* the veil itself, a soft gold curtain crossing the ranks */}
       <span
@@ -1337,14 +1490,16 @@ function MidasVeil({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
 
 interface SceneProps {
   lead: boolean;
+  role: SigRole;
   delayMs: number;
 }
 
 /* --- Death Knell: the great cracked bell descends over the doomed piece,
    tolls four counted strokes, and the numeral IV burns down to I. ---------- */
 const KNELL: Palette = ["#2a1030", "#c9b0e8", "#8a94a8"];
-function DeathKnellScene({ lead, delayMs }: SceneProps) {
+function DeathKnellScene({ lead, role, delayMs }: SceneProps) {
   const [p0, p1, p2] = KNELL;
+  if (role === "entrance") return <EntranceCut palette={KNELL} glyph={GLYPH.hw2_death_knell} delayMs={delayMs} />;
   if (!lead) return <CurseHit palette={KNELL} glyph={GLYPH.hw2_death_knell} delayMs={delayMs} />;
   return (
     <Stage>
@@ -1409,8 +1564,9 @@ function DeathKnellScene({ lead, delayMs }: SceneProps) {
 /* --- The Hollow Crown: a throne rises, the great crown lowers onto it and
    hollows to a shell, and the whole court bows into mourning. -------------- */
 const HOLLOW: Palette = ["#2b1218", "#e8b04b", "#8a94a8"];
-function HollowCrownScene({ lead, delayMs }: SceneProps) {
+function HollowCrownScene({ lead, role, delayMs }: SceneProps) {
   const [p0, p1, p2] = HOLLOW;
+  if (role === "entrance") return <EntranceCut palette={HOLLOW} glyph={GLYPH.hw2_hollow_crown} delayMs={delayMs} />;
   if (!lead) return <CurseHit palette={HOLLOW} glyph={GLYPH.hw2_hollow_crown} delayMs={delayMs} />;
   return (
     <Stage>
@@ -1471,8 +1627,9 @@ function HollowCrownScene({ lead, delayMs }: SceneProps) {
 /* --- Tide of Ash: the ash wall rolls in from the victim's board edge,
    swallowing rank-bands one by one while a pawn scrambles ahead of it. ----- */
 const ASHTIDE: Palette = ["#3a3a40", "#c9c9cf", "#ff9d3d"];
-function TideOfAshScene({ lead, delayMs }: SceneProps) {
+function TideOfAshScene({ lead, role, delayMs }: SceneProps) {
   const [p0, p1, p2] = ASHTIDE;
+  if (role === "entrance") return <EntranceCut palette={ASHTIDE} glyph={GLYPH.hw2_tide_of_ash} delayMs={delayMs} />;
   if (!lead) return <CurseHit palette={ASHTIDE} glyph={GLYPH.hw2_tide_of_ash} delayMs={delayMs} />;
   return (
     <Stage>
@@ -1522,8 +1679,9 @@ function TideOfAshScene({ lead, delayMs }: SceneProps) {
 /* --- Crown of Thorns: the briar closes around your king; a reaching enemy
    blade is caught mid-strike and wrapped where it stands. ------------------ */
 const THORNS: Palette = ["#2f3a26", "#8faf4a", "#c94a5a"];
-function CrownOfThornsScene({ lead, delayMs }: SceneProps) {
+function CrownOfThornsScene({ lead, role, delayMs }: SceneProps) {
   const [p0, p1, p2] = THORNS;
+  if (role === "entrance") return <EntranceCut palette={THORNS} glyph={GLYPH.hw2_crown_of_thorns} delayMs={delayMs} />;
   if (!lead) return <CurseHit palette={THORNS} glyph={GLYPH.hw2_crown_of_thorns} delayMs={delayMs} />;
   return (
     <Stage>
@@ -1586,8 +1744,9 @@ function CrownOfThornsScene({ lead, delayMs }: SceneProps) {
 /* --- Pauper's Crown: the queen's crown lifts off, shatters to shards, and
    rook battlements are stamped onto her brow in its place. ----------------- */
 const PAUPER: Palette = ["#1c1c2a", "#c94ad1", "#c9b89a"];
-function PauperCrownScene({ lead, delayMs }: SceneProps) {
+function PauperCrownScene({ lead, role, delayMs }: SceneProps) {
   const [p0, p1, p2] = PAUPER;
+  if (role === "entrance") return <EntranceCut palette={PAUPER} glyph={GLYPH.hw2_pauper_crown} delayMs={delayMs} />;
   if (!lead) return <CurseHit palette={PAUPER} glyph={GLYPH.hw2_pauper_crown} delayMs={delayMs} />;
   return (
     <Stage>
@@ -1642,8 +1801,9 @@ function PauperCrownScene({ lead, delayMs }: SceneProps) {
 /* --- Beacon of Woe: the watchtower rises, the doom-flame catches, six
    count-runes ring it, and frost-light plays over the distant army. -------- */
 const BEACON: Palette = ["#1c1c24", "#ff9d3d", "#9fd8ff"];
-function BeaconOfWoeScene({ lead, delayMs }: SceneProps) {
+function BeaconOfWoeScene({ lead, role, delayMs }: SceneProps) {
   const [p0, p1, p2] = BEACON;
+  if (role === "entrance") return <EntranceCut palette={BEACON} glyph={GLYPH.hw2_beacon_of_woe} delayMs={delayMs} />;
   if (!lead) return <CurseHit palette={BEACON} glyph={GLYPH.hw2_beacon_of_woe} delayMs={delayMs} />;
   return (
     <Stage>
@@ -1714,8 +1874,9 @@ function BeaconOfWoeScene({ lead, delayMs }: SceneProps) {
 /* --- The Enemy Within: a marked heavy piece's own shadow peels away and
    turns its coat to the caster on the third move. ------------------------- */
 const ENEMY_WITHIN: Palette = ["#26262e", "#8a94a8", "#c94a5a"];
-function EnemyWithinScene({ lead, delayMs }: SceneProps) {
+function EnemyWithinScene({ lead, role, delayMs }: SceneProps) {
   const [p0, p1, p2] = ENEMY_WITHIN;
+  if (role === "entrance") return <EntranceCut palette={ENEMY_WITHIN} glyph={GLYPH.hw3_enemy_within} delayMs={delayMs} />;
   if (!lead) return <CurseHit palette={ENEMY_WITHIN} glyph={GLYPH.hw3_enemy_within} delayMs={delayMs} />;
   return (
     <Stage>
@@ -1746,8 +1907,9 @@ function EnemyWithinScene({ lead, delayMs }: SceneProps) {
 /* --- The Long Eclipse: a black moon slides across the sun and the diagonal
    court goes dark for the duration. --------------------------------------- */
 const ECLIPSE: Palette = ["#12121c", "#ff9d3d", "#c9b0e8"];
-function EclipseScene({ lead, delayMs }: SceneProps) {
+function EclipseScene({ lead, role, delayMs }: SceneProps) {
   const [p0, p1, p2] = ECLIPSE;
+  if (role === "entrance") return <EntranceCut palette={ECLIPSE} glyph={GLYPH.hw3_eclipse} delayMs={delayMs} />;
   if (!lead) return <CurseHit palette={ECLIPSE} glyph={GLYPH.hw3_eclipse} delayMs={delayMs} />;
   return (
     <Stage>
@@ -1782,13 +1944,16 @@ function EclipseScene({ lead, delayMs }: SceneProps) {
 /* --- Hydra Hex: the branded head is struck off and two rise in its place,
    each seizing the nearest piece in frost. -------------------------------- */
 const HYDRA: Palette = ["#1c2a1c", "#7fae4a", "#9fd8ff"];
-function HydraScene({ lead, delayMs }: SceneProps) {
+function HydraScene({ lead, role, delayMs }: SceneProps) {
   const [p0, p1, p2] = HYDRA;
+  if (role === "entrance") return <EntranceCut palette={HYDRA} glyph={GLYPH.hw3_hydra_hex} delayMs={delayMs} />;
   if (!lead) return <CurseHit palette={HYDRA} glyph={GLYPH.hw3_hydra_hex} delayMs={delayMs} />;
   return (
     <Stage>
       <Wash color={tint(p0, 0.32)} delayMs={delayMs} />
       <Tell color={tint(p1, 0.34)} delayMs={delayMs} left={44} top={40} />
+      {/* the leg: the head is branded down the real source -> target vector */}
+      <ChainLeg color="rgba(122,201,106,0.85)" delayMs={delayMs + 300} />
       <span className="cwp-settle absolute block" style={{ left: "46%", top: "44%", width: "8%", height: "10%", "--dx": "0%", "--dy": "60%", "--rot": "20deg", animationDelay: `${delayMs + 360}ms` } as CSSProperties}>
         <svg viewBox="0 0 10 12" className="block h-full w-full" aria-hidden="true">
           <path d="M5 1 C7 2.4 7 5 5 6.4 C6.4 7 7 8 6.6 9.4 H3.4 C3 8 3.6 7 5 6.4 C3 5 3 2.4 5 1 Z" fill={tint(p1, 0.9)} stroke={p0} strokeWidth="0.5" {...SJ} />
@@ -1826,8 +1991,9 @@ function HydraScene({ lead, delayMs }: SceneProps) {
 /* --- Pyrrhic Toll: every capture rings a bell and a laurel wilts as some
    bystander piece is caught cold. ----------------------------------------- */
 const PYRRHIC: Palette = ["#2f3a26", "#c9b89a", "#9fd8ff"];
-function PyrrhicScene({ lead, delayMs }: SceneProps) {
+function PyrrhicScene({ lead, role, delayMs }: SceneProps) {
   const [p0, p1, p2] = PYRRHIC;
+  if (role === "entrance") return <EntranceCut palette={PYRRHIC} glyph={GLYPH.hw3_pyrrhic_toll} delayMs={delayMs} />;
   if (!lead) return <CurseHit palette={PYRRHIC} glyph={GLYPH.hw3_pyrrhic_toll} delayMs={delayMs} />;
   return (
     <Stage>
@@ -1868,8 +2034,9 @@ function PyrrhicScene({ lead, delayMs }: SceneProps) {
 /* --- Martyr's Crown: the king's briar crown drinks the second check and
    lashes frost around every piece that stands beside him. ----------------- */
 const MARTYR: Palette = ["#2a2030", "#8faf4a", "#c94a5a"];
-function MartyrCrownScene({ lead, delayMs }: SceneProps) {
+function MartyrCrownScene({ lead, role, delayMs }: SceneProps) {
   const [p0, p1, p2] = MARTYR;
+  if (role === "entrance") return <EntranceCut palette={MARTYR} glyph={GLYPH.hw3_martyrs_crown} delayMs={delayMs} />;
   if (!lead) return <CurseHit palette={MARTYR} glyph={GLYPH.hw3_martyrs_crown} delayMs={delayMs} />;
   return (
     <Stage>
@@ -1918,8 +2085,9 @@ function MartyrCrownScene({ lead, delayMs }: SceneProps) {
 /* --- The Curse Engine: two iron gears grind up the winding, and every third
    turn a cold discharge seizes the strongest piece. ----------------------- */
 const CURSE_ENGINE: Palette = ["#2a2a32", "#8a94a8", "#9fd8ff"];
-function CurseEngineScene({ lead, delayMs }: SceneProps) {
+function CurseEngineScene({ lead, role, delayMs }: SceneProps) {
   const [p0, p1, p2] = CURSE_ENGINE;
+  if (role === "entrance") return <EntranceCut palette={CURSE_ENGINE} glyph={GLYPH.hw3_curse_engine} delayMs={delayMs} />;
   if (!lead) return <CurseHit palette={CURSE_ENGINE} glyph={GLYPH.hw3_curse_engine} delayMs={delayMs} />;
   const gear = (fill: string) => (
     <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
@@ -1957,8 +2125,9 @@ function CurseEngineScene({ lead, delayMs }: SceneProps) {
 /* --- Blood Tithe: every heavy capture drags one of their own pawns off to
    the tithe-ledger as tribute. -------------------------------------------- */
 const BLOOD_TITHE: Palette = ["#2b1218", "#e8b04b", "#c94a5a"];
-function BloodTitheScene({ lead, delayMs }: SceneProps) {
+function BloodTitheScene({ lead, role, delayMs }: SceneProps) {
   const [p0, p1, p2] = BLOOD_TITHE;
+  if (role === "entrance") return <EntranceCut palette={BLOOD_TITHE} glyph={GLYPH.hw3_blood_tithe} delayMs={delayMs} />;
   if (!lead) return <CurseHit palette={BLOOD_TITHE} glyph={GLYPH.hw3_blood_tithe} delayMs={delayMs} />;
   return (
     <Stage>
@@ -1984,8 +2153,9 @@ function BloodTitheScene({ lead, delayMs }: SceneProps) {
 /* --- The Inverted Crown: every promoted pawn's crown flips to a tin knight's
    helm, whatever they chose. ---------------------------------------------- */
 const INVERTED: Palette = ["#26262e", "#c9b89a", "#8faf4a"];
-function InvertedCrownScene({ lead, delayMs }: SceneProps) {
+function InvertedCrownScene({ lead, role, delayMs }: SceneProps) {
   const [p0, p1, p2] = INVERTED;
+  if (role === "entrance") return <EntranceCut palette={INVERTED} glyph={GLYPH.hw3_inverted_crown} delayMs={delayMs} />;
   if (!lead) return <CurseHit palette={INVERTED} glyph={GLYPH.hw3_inverted_crown} delayMs={delayMs} />;
   return (
     <Stage>
@@ -2572,10 +2742,21 @@ function G(
   config: SigPlugin["config"],
   flourish?: string,
 ): SigPlugin {
+  const aim = config.anchor === "aim";
   return {
     config,
-    Render: function CursePlayRender({ lead, delayMs }: { lead: boolean; delayMs: number }) {
-      return <Template palette={palette} glyph={glyph} lead={lead} delayMs={delayMs} flourish={flourish} />;
+    Render: function CursePlayRender({ lead, role, delayMs }: { lead: boolean; role: SigRole; delayMs: number }) {
+      return (
+        <Template
+          palette={palette}
+          glyph={glyph}
+          lead={lead}
+          role={role}
+          delayMs={delayMs}
+          flourish={flourish}
+          aim={aim}
+        />
+      );
     },
   };
 }
@@ -2584,8 +2765,8 @@ function G(
 function S(Scene: ComponentType<SceneProps>, config: SigPlugin["config"]): SigPlugin {
   return {
     config,
-    Render: function CurseSceneRender({ lead, delayMs }: { lead: boolean; delayMs: number }) {
-      return <Scene lead={lead} delayMs={delayMs} />;
+    Render: function CurseSceneRender({ lead, role, delayMs }: { lead: boolean; role: SigRole; delayMs: number }) {
+      return <Scene lead={lead} role={role} delayMs={delayMs} />;
     },
   };
 }
@@ -2594,94 +2775,133 @@ export const PLAYS: Record<string, SigPlugin> = {
   /* --- HexBrand (marks, contracts, tallies) ------------------------------- */
   hw2_witchs_veto: G(HexBrand, ["#6b4a8f", "#c9b0e8", "#2a1030"], GLYPH.hw2_witchs_veto, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades",
+    anchor: "cast",
   }, "veto"),
   hw2_long_road_home: G(HexBrand, ["#5a6b8f", "#c9a84c", "#2b2218"], GLYPH.hw2_long_road_home, {
     ordering: "radial", staggerMs: 0, victims: ["n", "b", "r"], hasLead: true, sound: "shades",
+    anchor: "aim",
   }, "longroad"),
   hw2_blood_price: G(HexBrand, ["#6b1a2a", "#e8b04b", "#2b1218"], GLYPH.hw2_blood_price, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades",
+    anchor: "board",
   }, "bloodprice"),
+  // The tarnish takes each promoting pawn one at a time, on the promotion
+  // square, so the seal is stamped there. HexBrand's only board-scale layer is
+  // <Wash> (inside <BoardFrame>); everything else is composed about the stage
+  // centre, so it travels to a corner cast intact.
   hw2_tarnished_crown: G(HexBrand, ["#4a3a22", "#e8b04b", "#2a2a30"], GLYPH.hw2_tarnished_crown, {
     ordering: "sweep", staggerMs: 55, victims: ["p"], hasLead: true, sound: "clockice",
+    anchor: "board",
   }, "tarnish"),
   hw2_war_rations: G(HexBrand, ["#8a7a63", "#e8dcc0", "#3a3026"], GLYPH.hw2_war_rations, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades",
+    anchor: "board",
   }, "rations"),
   hw2_compounding_misery: G(HexBrand, ["#5b2b8f", "#8f6bff", "#12081f"], GLYPH.hw2_compounding_misery, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", source: "frozen",
+    anchor: "board",
   }, "stacked"),
 
   /* --- OmenBell (countdowns, rhythms, delayed dooms) ----------------------- */
   hw2_bad_omen: G(OmenBell, ["#2c3e6b", "#cdd6ff", "#0d1326"], GLYPH.hw2_bad_omen, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades",
+    anchor: "board",
   }, "omen"),
   hw2_tolling_bell: G(OmenBell, ["#6b4a8f", "#c9b0e8", "#1c0f18"], GLYPH.hw2_tolling_bell, {
     ordering: "sweep", staggerMs: 55, victims: ["b", "r", "q"], hasLead: true, sound: "cathedral",
+    anchor: "board",
   }, "halfmeasure"),
   hw2_witching_hour: G(OmenBell, ["#1c1c2a", "#9fd8ff", "#2c3e6b"], GLYPH.hw2_witching_hour, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "clockcage",
+    anchor: "board",
   }, "midnight"),
+  // One overworked piece collapses at a time, where it stands. OmenBell hangs
+  // its bell, ripples and glyph about the stage centre and puts nothing
+  // board-scale outside <BoardFrame>, so the bell simply tolls over the cast
+  // square instead of the middle of the board.
   hw2_weight_of_toil: G(OmenBell, ["#8a7a63", "#c9a84c", "#3a3026"], GLYPH.hw2_weight_of_toil, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "petrify",
+    anchor: "cast",
   }, "toil"),
 
   /* --- BlightGarden (cursed and remembering ground) ------------------------ */
+  // The ice takes the SQUARE a piece just left — a single square per trigger —
+  // so the rot spreads from the cast square outward. BlightGarden's tiles,
+  // weeds and glyph all sit about the stage centre; only <Wash> is board-scale
+  // and it is already inside <BoardFrame>.
   hw2_cold_footprints: G(BlightGarden, ["#2c3e6b", "#9fd8ff", "#e8f8ff"], GLYPH.hw2_cold_footprints, {
     ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "clockice",
+    anchor: "cast",
   }, "footprints"),
   hw2_creeping_blight: G(BlightGarden, ["#2f3a26", "#8faf4a", "#c9d69a"], GLYPH.hw2_creeping_blight, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades",
+    anchor: "board",
   }, "creep"),
   hw2_gravebloom: G(BlightGarden, ["#1c241c", "#7fae5a", "#c94a5a"], GLYPH.hw2_gravebloom, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "petrifiedforest",
+    anchor: "board",
   }, "gravebloom"),
   hw2_gathering_storm: G(BlightGarden, ["#2c3e6b", "#5a6b8f", "#9fd8ff"], GLYPH.hw2_gathering_storm, {
     ordering: "sweep", staggerMs: 45, victims: "all", hasLead: true, sound: "shades",
+    anchor: "board",
   }, "stormwall"),
 
   /* --- ChainWeb (binds, compulsions, ransoms) ------------------------------ */
   hw2_twinned_torment: G(ChainWeb, ["#5b2b8f", "#c9b0e8", "#c94a5a"], GLYPH.hw2_twinned_torment, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice",
+    anchor: "aim",
   }, "twin"),
   hw2_no_reins: G(ChainWeb, ["#3a3026", "#c9a84c", "#8a6a3a"], GLYPH.hw2_no_reins, {
     ordering: "sweep", staggerMs: 55, victims: ["b", "r", "q"], hasLead: true, sound: "blitz",
+    anchor: "board",
   }, "noreins"),
   hw2_curse_of_recoil: G(ChainWeb, ["#4a3a2a", "#ff9d3d", "#c9cdd6"], GLYPH.hw2_curse_of_recoil, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "siege",
+    anchor: "board",
   }, "recoil"),
   hw2_queens_ransom: G(ChainWeb, ["#5b2b8f", "#ffd76a", "#1c0f18"], GLYPH.hw2_queens_ransom, {
     ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "clockice",
+    anchor: "board",
   }, "ransom"),
   hw2_bound_court: G(ChainWeb, ["#3a3a40", "#8a94a8", "#ffd76a"], GLYPH.hw2_bound_court, {
     ordering: "sweep", staggerMs: 60, victims: ["n", "b"], hasLead: true, sound: "petrify", source: "walnut",
+    anchor: "board",
   }, "courtlock"),
 
   /* --- MidasVeil (transferring / accumulating marks) ----------------------- */
   hw2_cursed_coin: G(MidasVeil, ["#3a3026", "#e8b04b", "#c9cdd6"], GLYPH.hw2_cursed_coin, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades",
+    anchor: "aim",
   }, "coin"),
   hw2_gilded_rot: G(MidasVeil, ["#2a2a30", "#e8b04b", "#c9b89a"], GLYPH.hw2_gilded_rot, {
     ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "coronation",
+    anchor: "board",
   }, "gilded"),
 
   /* --- Bespoke scenes (tier 7–8 flagships) --------------------------------- */
   hw2_death_knell: S(DeathKnellScene, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral",
+    anchor: "cast",
   }),
   hw2_hollow_crown: S(HollowCrownScene, {
     ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "coronation",
+    anchor: "board",
   }),
   hw2_tide_of_ash: S(TideOfAshScene, {
     ordering: "sweep", staggerMs: 45, victims: "all", hasLead: true, sound: "cataclysm",
+    anchor: "board",
   }),
   hw2_crown_of_thorns: S(CrownOfThornsScene, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "aegis",
+    anchor: "cast",
   }),
   hw2_pauper_crown: S(PauperCrownScene, {
     ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "crownrain",
+    anchor: "cast",
   }),
   hw2_beacon_of_woe: S(BeaconOfWoeScene, {
     ordering: "radial", staggerMs: 60, victims: ["n", "b", "r", "q"], hasLead: true, sound: "nova",
+    anchor: "board",
   }),
 
   /* === WAVE 3 ============================================================== */
@@ -2689,132 +2909,196 @@ export const PLAYS: Record<string, SigPlugin> = {
   /* --- HexBrand (marks / contracts / taxes / tallies) --------------------- */
   hw3_wrong_foot: G(HexBrand, ["#6b4a8f", "#c9b0e8", "#2a1030"], GLYPH.hw3_wrong_foot, {
     ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "shades",
+    anchor: "board",
   }, "wrongfoot"),
+  // The seizure takes ONE piece — the one moved twice running — and freezes it
+  // where it stands, so the brand is stamped on that square. Anchor-safe:
+  // HexBrand keeps <Wash> in <BoardFrame> and nothing else claims the board.
   hw3_overexertion: G(HexBrand, ["#3a3a44", "#8a94a8", "#12121a"], GLYPH.hw3_overexertion, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", source: "frozen",
+    anchor: "cast",
   }, "overexert"),
   hw3_toll_road: G(HexBrand, ["#5a6b8f", "#c9a84c", "#2b2218"], GLYPH.hw3_toll_road, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades",
+    anchor: "board",
   }, "tollroad"),
+  // The frenzy COMPELS a piece onto its next victim, so the play is a vector,
+  // not a bloom: "aim" gives HexBrand its <ChainLeg>, which reaches from the
+  // branded square down the real source -> target leg by --fx-len. The
+  // "bloodlust" flourish already drags its queen rightward, the authored-right
+  // convention the leg's `fx-aim` rotation assumes; the queen herself stays
+  // upright (only the leg is rotated), and <Wash> stays in <BoardFrame>.
   hw3_bloodlust: G(HexBrand, ["#6b1a2a", "#e8b04b", "#2b1218"], GLYPH.hw3_bloodlust, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades",
+    anchor: "aim",
   }, "bloodlust"),
   hw3_exiles_mark: G(HexBrand, ["#5a6b8f", "#c9a84c", "#1c2418"], GLYPH.hw3_exiles_mark, {
     ordering: "radial", staggerMs: 0, victims: ["n", "b", "r"], hasLead: true, sound: "shades",
+    anchor: "aim",
   }, "exile"),
   hw3_debtors_mark: G(HexBrand, ["#4a3a22", "#c9a84c", "#2a2a30"], GLYPH.hw3_debtors_mark, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", source: "frozen",
+    anchor: "cast",
   }, "debtor"),
+  // Each coronation freezes ONE other piece, on its own square, so the tax is
+  // levied there rather than over the whole board. Anchor-safe for the same
+  // reason as its HexBrand siblings: only <Wash> means "the board", and it is
+  // inside <BoardFrame>.
   hw3_coronation_tax: G(HexBrand, ["#4a3a22", "#e8b04b", "#2c3e6b"], GLYPH.hw3_coronation_tax, {
     ordering: "sweep", staggerMs: 55, victims: ["p"], hasLead: true, sound: "clockice", source: "frozen",
+    anchor: "cast",
   }, "coronationtax"),
   hw3_pilgrimage: G(HexBrand, ["#5b2b8f", "#c9b0e8", "#1c0f18"], GLYPH.hw3_pilgrimage, {
     ordering: "radial", staggerMs: 0, victims: ["n", "b", "r"], hasLead: true, sound: "shades",
+    anchor: "aim",
   }, "pilgrimage"),
   hw3_bounty_mark: G(HexBrand, ["#6b1a2a", "#c94a5a", "#2b1218"], GLYPH.hw3_bounty_mark, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", source: "frozen",
+    anchor: "cast",
   }, "bounty"),
   hw3_feeding_frenzy: G(HexBrand, ["#5b2b8f", "#8f6bff", "#12081f"], GLYPH.hw3_feeding_frenzy, {
     ordering: "radial", staggerMs: 0, victims: ["b", "r", "q"], hasLead: true, sound: "shades",
+    anchor: "board",
   }, "feedingfrenzy"),
 
   /* --- OmenBell (countdowns / fuses / delayed dooms) ---------------------- */
   hw3_slow_poison: G(OmenBell, ["#2f3a26", "#7fae4a", "#1c241c"], GLYPH.hw3_slow_poison, {
     ordering: "radial", staggerMs: 0, victims: ["b", "r", "q"], hasLead: true, sound: "shades",
+    anchor: "cast",
   }, "slowpoison"),
   hw3_jammed_castle: G(OmenBell, ["#3a3a40", "#8a94a8", "#1c1c24"], GLYPH.hw3_jammed_castle, {
     ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "clockice", source: "frozen",
+    anchor: "cast",
   }, "jammedgate"),
   hw3_time_bomb: G(OmenBell, ["#3a3a40", "#ff9d3d", "#1c1c24"], GLYPH.hw3_time_bomb, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "siege",
+    anchor: "board",
   }, "powderkeg"),
   hw3_collapsing_floor: G(OmenBell, ["#4a4a52", "#c9cdd6", "#1c1c24"], GLYPH.hw3_collapsing_floor, {
     ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "clockice", source: "frozen",
+    anchor: "board",
   }, "collapse"),
   hw3_doomed_vow: G(OmenBell, ["#2a1030", "#c9b0e8", "#8a94a8"], GLYPH.hw3_doomed_vow, {
     ordering: "radial", staggerMs: 0, victims: ["b", "r", "q"], hasLead: true, sound: "cathedral",
+    anchor: "cast",
   }, "doomedvow"),
 
   /* --- BlightGarden (hazards / contagion / terrain) ----------------------- */
   hw3_wandering_sentry: G(BlightGarden, ["#2f3a26", "#8faf4a", "#c9d69a"], GLYPH.hw3_wandering_sentry, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades",
+    anchor: "board",
   }, "sentry"),
   hw3_sinking_mire: G(BlightGarden, ["#2f3a26", "#6f8a4a", "#1c241c"], GLYPH.hw3_sinking_mire, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades",
+    anchor: "board",
   }, "mire"),
+  // The miasma is breathed in by the one piece that crowds a neighbour, and it
+  // is that piece's square that rots. BlightGarden spreads its tiles from the
+  // stage centre outward, so the rot now spreads from the cast square; <Wash>
+  // is the only board-scale layer and lives in <BoardFrame>.
   hw3_miasma: G(BlightGarden, ["#2f3a26", "#8faf4a", "#6f9a3a"], GLYPH.hw3_miasma, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "petrifiedforest",
+    anchor: "cast",
   }, "miasma"),
   hw3_roaming_void: G(BlightGarden, ["#12081f", "#8f6bff", "#5b2b8f"], GLYPH.hw3_roaming_void, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades",
+    anchor: "board",
   }, "maw"),
   hw3_wildfire: G(BlightGarden, ["#2b1208", "#ff9d3d", "#7a2a10"], GLYPH.hw3_wildfire, {
     ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "shades",
+    anchor: "aim",
   }, "wildfire"),
   hw3_effigy_of_dread: G(BlightGarden, ["#1c2a1c", "#8faf4a", "#3a3a40"], GLYPH.hw3_effigy_of_dread, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "petrifiedforest", source: "summon",
+    anchor: "board",
   }, "effigy"),
   hw3_avalanche: G(BlightGarden, ["#3a3a40", "#c9cdd6", "#8a94a8"], GLYPH.hw3_avalanche, {
     ordering: "sweep", staggerMs: 45, victims: "all", hasLead: true, sound: "shades",
+    anchor: "board",
   }, "avalanche"),
 
   /* --- ChainWeb (binds / leashes / sympathetic links) --------------------- */
   hw3_binding_oath: G(ChainWeb, ["#3a3a40", "#8a94a8", "#c94a5a"], GLYPH.hw3_binding_oath, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades",
+    anchor: "aim",
   }, "bindingoath"),
   hw3_bloodbond: G(ChainWeb, ["#5b2b8f", "#c9b0e8", "#9fd8ff"], GLYPH.hw3_bloodbond, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", source: "frozen",
+    anchor: "aim",
   }, "bloodbond"),
   hw3_shared_fate: G(ChainWeb, ["#3a2630", "#c9b0e8", "#c94a5a"], GLYPH.hw3_shared_fate, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades",
+    anchor: "board",
   }, "sharedfate"),
   hw3_kings_guard: G(ChainWeb, ["#2c3e6b", "#8a94a8", "#9fd8ff"], GLYPH.hw3_kings_guard, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", source: "frozen",
+    anchor: "board",
   }, "kingsguard"),
   hw3_no_retreat: G(ChainWeb, ["#3a3026", "#c9a84c", "#8a6a3a"], GLYPH.hw3_no_retreat, {
     ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "shades",
+    anchor: "board",
   }, "noretreat"),
 
   /* --- MidasVeil (possession / transferring marks) ------------------------ */
   hw3_fifth_column: G(MidasVeil, ["#3a2a4a", "#8f6bff", "#1c1024"], GLYPH.hw3_fifth_column, {
     ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "shades",
+    anchor: "cast",
   }, "fifthcolumn"),
   hw3_curse_hop: G(MidasVeil, ["#3a3026", "#e8b04b", "#c9cdd6"], GLYPH.hw3_curse_hop, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades",
+    anchor: "board",
   }, "handeddown"),
+  // ONE knight turns its coat, on the spot, the first time it captures — a
+  // single square, not a board state. MidasVeil's curtain sweep, gilded rank
+  // and glyph are all composed about the stage centre, and its only
+  // board-scale layer, <Wash>, is inside <BoardFrame>.
   hw3_mutiny: G(MidasVeil, ["#42264a", "#a07bff", "#1c1024"], GLYPH.hw3_mutiny, {
     ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "shades",
+    anchor: "cast",
   }, "mutiny"),
   hw3_defectors_mark: G(MidasVeil, ["#32284a", "#8f6bff", "#160f24"], GLYPH.hw3_defectors_mark, {
     ordering: "radial", staggerMs: 0, victims: ["n", "b"], hasLead: true, sound: "shades",
+    anchor: "cast",
   }, "sleeper"),
+  // The blade ages the capturing piece "on the spot" — one piece, one square,
+  // per trigger — so the veil passes over that square. Anchor-safe: <Wash> is
+  // the only layer that means the board and it is inside <BoardFrame>.
   hw3_aging_blade: G(MidasVeil, ["#3a3026", "#c9cdd6", "#5a6b8f"], GLYPH.hw3_aging_blade, {
     ordering: "radial", staggerMs: 60, victims: ["b", "r", "q"], hasLead: true, sound: "shades",
+    anchor: "cast",
   }, "agingblade"),
 
   /* --- Tier 7-8 bespoke scenes -------------------------------------------- */
   hw3_enemy_within: S(EnemyWithinScene, {
     ordering: "radial", staggerMs: 0, victims: ["r", "q"], hasLead: true, sound: "shades",
+    anchor: "cast",
   }),
   hw3_eclipse: S(EclipseScene, {
     ordering: "radial", staggerMs: 0, victims: ["b", "q"], hasLead: true, sound: "shades",
+    anchor: "board",
   }),
   hw3_hydra_hex: S(HydraScene, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "petrify", source: "frozen",
+    anchor: "aim",
   }),
   hw3_pyrrhic_toll: S(PyrrhicScene, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "cathedral", source: "frozen",
+    anchor: "board",
   }),
   hw3_martyrs_crown: S(MartyrCrownScene, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "aegis", source: "frozen",
+    anchor: "board",
   }),
   hw3_curse_engine: S(CurseEngineScene, {
     ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "clockcage", source: "frozen",
+    anchor: "board",
   }),
   hw3_blood_tithe: S(BloodTitheScene, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "rampage",
+    anchor: "board",
   }),
   hw3_inverted_crown: S(InvertedCrownScene, {
     ordering: "sweep", staggerMs: 55, victims: ["p"], hasLead: true, sound: "shades",
+    anchor: "board",
   }),
 };

@@ -50,6 +50,7 @@ export const OVERHAUL_T1: Buff[] = [
       icon: "Bird",
       flavor: "The mail always gets through. Usually onto someone's head.",
       requires: ["q"],
+      fx: { motif: "blindfold", pieces: "all" },
     },
     {
       kind: "passive",
@@ -359,6 +360,7 @@ export const OVERHAUL_T1: Buff[] = [
       category: "info",
       icon: "Footprints",
       flavor: "You cannot sneak up on a man who buys discount footwear for his enemies.",
+      fx: { motif: "blindfold", pieces: "all" },
     },
     {
       kind: "passive",

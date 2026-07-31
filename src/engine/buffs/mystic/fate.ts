@@ -44,6 +44,7 @@ export const MYSTIC_FATE: Buff[] = [
       tier: 6,
       category: "tempo",
       flavor: "The Fates do not take requests. You did not ask.",
+      fx: { motif: "rally", pieces: "all", self: true },
     },
     {
       kind: "passive",

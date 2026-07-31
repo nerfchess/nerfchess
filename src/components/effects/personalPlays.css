@@ -25,6 +25,66 @@
 
 /* Soft board wash behind a wide lead (NEVER behind a portrait — those scenes
    use pnp-glow, the elliptical ambient, per the design brief §3). */
+/* --- the cast square's own beats --------------------------------------------
+ * The board-scale layers (the barbell spanning the board, the soundwave
+ * ribbons, the veins running the files) are pinned to the BOARD for the cards
+ * that land on a square (personalPlays.tsx `Framed` -> BoardFrame), so these
+ * three one-cell layers are what says WHERE the card was played: a ring
+ * inhales on the square, the square lights, and a mote drifts off it.
+ *
+ * The drift is the module's directional layer: it leans along --fx-side, which
+ * is +1 when the caster's home rank is drawn at the bottom of the screen and
+ * -1 when it is at the top. "Down the screen" would be right for one seat and
+ * backwards for the other. */
+/* The athlete cards' chalk cloud: it hangs, then drifts back toward the
+   lifter's own side of the board. --pnp-lean is set inline from --fx-side, so
+   the same rule is correct for a caster at either end of the screen. */
+@keyframes pnp-chalkdrift {
+  0% { opacity: 0; transform: translateY(0) scale(0.7); }
+  30% { opacity: 0.75; transform: translateY(calc(var(--pnp-lean, 0%) * 0.25)) scale(1); }
+  100% { opacity: 0; transform: translateY(var(--pnp-lean, 0%)) scale(1.45); }
+}
+.pnp-chalkdrift { animation: pnp-chalkdrift calc(1.5s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes pnp-spot-tell {
+  0% { opacity: 0; transform: scale(1.6); }
+  55% { opacity: 0.9; transform: scale(0.94); }
+  100% { opacity: 0; transform: scale(1.04); }
+}
+.pnp-spot-tell { animation: pnp-spot-tell calc(0.44s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.9, 0.3, 1) both; }
+
+@keyframes pnp-spot-hit {
+  0% { opacity: 0; transform: scale(0.35); }
+  26% { opacity: 0.95; transform: scale(1.14); }
+  100% { opacity: 0; transform: scale(1.4); }
+}
+.pnp-spot-hit { animation: pnp-spot-hit calc(0.66s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes pnp-spot-drift {
+  0% { opacity: 0; transform: translateY(0) scale(0.6); }
+  30% { opacity: 0.72; transform: translateY(calc(var(--fx-side, 1) * 8%)) scale(1); }
+  100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 34%)) scale(1.5); }
+}
+.pnp-spot-drift { animation: pnp-spot-drift calc(1.4s * var(--fx-dur, 1)) ease-out both; }
+
+/* --- the entrance cut -------------------------------------------------------
+ * A free-standing character rising in over a soft ground shadow, never a photo
+ * card and never a rectangular wash behind a portrait (design brief 3). */
+@keyframes pnp-arrive-ring {
+  0% { opacity: 0; transform: scale(0.4); }
+  40% { opacity: 0.65; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.34); }
+}
+.pnp-arrive-ring { animation: pnp-arrive-ring calc(0.82s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes pnp-arrive {
+  0% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 34%)) scale(0.6); }
+  50% { opacity: 1; transform: translateY(-4%) scale(1.06); }
+  76% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(0) scale(1.02); }
+}
+.pnp-arrive { animation: pnp-arrive calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.2, 1.28, 0.35, 1) both; }
+
 @keyframes pnp-wash {
   0% { opacity: 0; transform: scale(1.04); }
   16% { opacity: 0.9; transform: scale(1); }

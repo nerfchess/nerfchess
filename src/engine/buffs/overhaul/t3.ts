@@ -314,6 +314,7 @@ export const OVERHAUL_T3: Buff[] = [
       category: "info",
       icon: "Gamepad2",
       flavor: "JUST TAKE THE ROOK.",
+      fx: { motif: "rally", pieces: "all", self: true },
     },
     {
       kind: "passive",
@@ -571,6 +572,7 @@ export const OVERHAUL_T3: Buff[] = [
       category: "attack",
       icon: "Ghost",
       flavor: "The rattling is free. The giggling costs extra.",
+      fx: { motif: "slow", pieces: ["p"] },
     },
     {
       kind: "passive",
@@ -943,6 +945,7 @@ export const OVERHAUL_T3: Buff[] = [
       category: "protection",
       icon: "Bed",
       flavor: "Structurally unsound. Emotionally impenetrable.",
+      fx: { motif: "blindfold", pieces: ["b", "r", "q"] },
     },
     timedOppFilter(1, (moves, _inst, api) => {
       const k = kingSquare(api.board, api.me);

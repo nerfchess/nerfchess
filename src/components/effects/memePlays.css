@@ -21,6 +21,65 @@
 /* --- shared stage tracks ---------------------------------------------------- */
 
 /* Soft board wash behind a wide lead. */
+/* --- the cast square's own beats --------------------------------------------
+ * The board-scale layers (Saturn's rings, the fog banks, the vortex) are
+ * pinned to the BOARD, so these three one-cell layers are what says WHERE the
+ * card was played: a ring inhales on the square, the square thumps, and a mote
+ * drifts off it. Deliberately unhurried — these are the comedy cards and the
+ * hold before the punchline is the joke.
+ *
+ * The drift is the module's directional layer: it leans along --fx-side, which
+ * is +1 when the caster's home rank is drawn at the bottom of the screen and
+ * -1 when it is at the top. "Down the screen" would be right for one seat and
+ * backwards for the other. */
+@keyframes mnp-spot-tell {
+  0% { opacity: 0; transform: scale(1.6); }
+  55% { opacity: 0.9; transform: scale(0.94); }
+  100% { opacity: 0; transform: scale(1.04); }
+}
+.mnp-spot-tell { animation: mnp-spot-tell calc(0.46s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.9, 0.3, 1) both; }
+
+@keyframes mnp-spot-hit {
+  0% { opacity: 0; transform: scale(0.35); }
+  26% { opacity: 0.95; transform: scale(1.14); }
+  100% { opacity: 0; transform: scale(1.4); }
+}
+.mnp-spot-hit { animation: mnp-spot-hit calc(0.66s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes mnp-spot-drift {
+  0% { opacity: 0; transform: translateY(0) scale(0.6); }
+  30% { opacity: 0.72; transform: translateY(calc(var(--fx-side, 1) * 8%)) scale(1); }
+  100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 34%)) scale(1.5); }
+}
+.mnp-spot-drift { animation: mnp-spot-drift calc(1.4s * var(--fx-dur, 1)) ease-out both; }
+
+/* Cappuccino Assassino's blade run, inside an AimStage: authored pointing
+   RIGHT, so it is already rotated onto the real source -> victim leg. --mnp-run
+   is this streak's share of the lunge and --fx-len is the leg's true length in
+   cells, so a kill next door is a flick and one across the board is a lunge. */
+@keyframes mnp-lunge {
+  0% { opacity: 0; transform: translateX(0) scaleX(0.3); }
+  20% { opacity: 1; transform: translateX(calc(var(--mnp-run, 26) * var(--fx-len, 2) * 0.25%)) scaleX(1); }
+  100% { opacity: 0; transform: translateX(calc(var(--mnp-run, 26) * var(--fx-len, 2) * 1%)) scaleX(0.6); }
+}
+.mnp-lunge { animation: mnp-lunge calc(0.62s * var(--fx-dur, 1)) cubic-bezier(0.25, 0, 0.35, 1) both; }
+
+/* --- the entrance cut ------------------------------------------------------- */
+@keyframes mnp-arrive-ring {
+  0% { opacity: 0; transform: scale(0.4); }
+  40% { opacity: 0.65; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.34); }
+}
+.mnp-arrive-ring { animation: mnp-arrive-ring calc(0.8s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes mnp-arrive {
+  0% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 34%)) scale(0.6); }
+  50% { opacity: 1; transform: translateY(-4%) scale(1.07); }
+  76% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(0) scale(1.02); }
+}
+.mnp-arrive { animation: mnp-arrive calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.2, 1.3, 0.35, 1) both; }
+
 @keyframes mnp-wash {
   0% { opacity: 0; transform: scale(1.04); }
   16% { opacity: 0.9; transform: scale(1); }

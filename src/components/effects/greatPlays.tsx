@@ -48,11 +48,41 @@
 //
 // The CARD -> TEMPLATE / PALETTE / GLYPH table lives in the PLAYS registry at
 // the bottom of this file (116 entries, one per still-uncovered tier 5-6 card).
+//
+// ANCHORING (docs/animation-design-brief.md §0). Every card declares an anchor
+// in its config, chosen from what the card actually DOES, not from what stages
+// nicely, and checked against the card's own category by
+// scripts/lib/anchor-rule.ts:
+//   "cast"  the effect lands on one square or one named piece;
+//   "aim"   it lands on a few named pieces or squares, so the art reaches down
+//           the real source -> victim vector;
+//   "board" it covers the whole board, both armies, or it is a rule / draft /
+//           clock change with no square to point at. Most of CardRite and
+//           ThiefHand are honestly this: a stolen buff and a skipped draft
+//           happen nowhere on the board, so centring is the truthful staging
+//           rather than the lazy one.
+// A scene anchored on the cast square can no longer treat a fixed percentage
+// of its 14-cell canvas as "the board", so the two layers that DO mean the
+// board — the wash and the tier-6 edge glow — go through <Frame>, which is a
+// <BoardFrame> when anchored and the historic central 57% when not.
+//
+// THE GEOMETRY BEAT. Every template lands one layer (<Reach>) driven by the
+// directional vars rather than by the canvas: a rail of the play's own light
+// leaving the cast square along --fx-ang and running as far as the play
+// travels (--fx-len). The settle tail drifts downwind of the caster
+// (--fx-side) and a target hit throws its debris along its own leg, so a
+// multi-square play reads as travelling instead of as a row of identical pops.
+//
+// THREE ROLES. "lead" is the board-scale flourish, "target" the per-square
+// hit, and "entrance" the card ARRIVING in a hand: the template's own central
+// object at ~56% of the crop, the card's glyph resolving inside it, one short
+// arrival beat and a settle. No stage, no board takeover.
 
 import "./greatPlays.css";
 
 import type { ComponentType, CSSProperties, ReactNode } from "react";
-import type { SigPlugin } from "./sigPlugins";
+import type { SigPlugin, SigRole } from "./sigPlugins";
+import { BoardFrame } from "./stage";
 
 /* =============================================================================
    Shared bits
@@ -64,6 +94,15 @@ interface TemplateProps {
   palette: Palette;
   glyph: ReactNode;
   lead: boolean;
+  /** Which beat of the card's life this is: the board-scale lead on the cast
+   * square, a per-square target hit, or the card ARRIVING in a hand. */
+  role: SigRole;
+  /** True when the card declared anchor "cast" / "aim", so its canvas sits on
+   * the square the card was played on. Board-scale layers (the wash, the
+   * tier-6 edge glow) then need <BoardFrame> to find the board; a scene still
+   * at anchor "board" has already been slid to the board centre by Board
+   * itself and must NOT use it, or it double-corrects. */
+  anchored: boolean;
   delayMs: number;
   /** Optional bespoke-flourish key for marquee cards (extra scene dressing
    * layered on the shared template; never changes the template's core beats). */
@@ -81,18 +120,95 @@ function tint(hex: string, alpha: number): string {
 const SJ = { strokeLinejoin: "round", strokeLinecap: "round" } as const;
 
 /** The oversized-clipped board-wide stage (the overlay mounts inside ONE
- * square; this canvas is ~14 squares wide — the board is the central ~57%). */
-function Stage({ children }: { children: ReactNode }) {
+ * square; this canvas is ~14 squares wide — the board is the central ~57%).
+ *
+ * An ANCHORED scene adds `fx-stage`, whose transform carries the at-most
+ * half-cell clamp that keeps a corner cast's 14-cell canvas over the 8-cell
+ * board. A board-anchored scene must not: Board has already centred it. */
+function Stage({ anchored, children }: { anchored?: boolean; children: ReactNode }) {
   return (
     <span className="pointer-events-none absolute inset-0 z-30" aria-hidden="true">
-      <span className="absolute left-[-650%] top-[-650%] block h-[1400%] w-[1400%]">{children}</span>
+      <span
+        className={`${anchored ? "fx-stage " : ""}absolute left-[-650%] top-[-650%] block h-[1400%] w-[1400%]`}
+      >
+        {children}
+      </span>
+    </span>
+  );
+}
+
+/** Exactly the board, for the layers that MEAN the board (the wash, the
+ * tier-6 edge glow) rather than the action.
+ *
+ * Anchored on the cast square only `BoardFrame` knows where the board is. A
+ * scene left at anchor "board" has been translated onto the board centre by
+ * Board's own lead shift, so for it the board simply IS the central 57% of
+ * the canvas, and applying the frame offsets on top would throw the layer up
+ * to 3.5 cells off. */
+function Frame({ anchored, children }: { anchored?: boolean; children: ReactNode }) {
+  if (anchored) return <BoardFrame>{children}</BoardFrame>;
+  // The same numbers BoardFrame resolves to at a centred board: one cell is
+  // 100/14 of the canvas, the board is 8 of them, and it starts 3 cells in.
+  return (
+    <span
+      className="absolute block"
+      style={{ left: "21.428571%", top: "21.428571%", width: "57.142857%", height: "57.142857%" }}
+    >
+      {children}
     </span>
   );
 }
 
 /** Full-board colour wash. */
-function Wash({ color, delayMs }: { color: string; delayMs: number }) {
-  return <span className="grp-wash absolute inset-0 block" style={{ background: color, animationDelay: `${delayMs}ms` }} />;
+function Wash({ color, delayMs, anchored }: { color: string; delayMs: number; anchored?: boolean }) {
+  return (
+    <Frame anchored={anchored}>
+      <span className="grp-wash absolute inset-0 block" style={{ background: color, animationDelay: `${delayMs}ms` }} />
+    </Frame>
+  );
+}
+
+/* --- The geometry beat ------------------------------------------------------
+   Every template lands ONE layer driven by the play's own geometry rather than
+   by the canvas: a rail of the play's light that leaves the cast square along
+   the real source -> victim vector (`--fx-ang`) and runs as far as the play
+   actually travels (`--fx-len`, in cells; one cell is 100/14 of the 14-cell
+   canvas). This is what makes a curse LEAN toward the piece it curses instead
+   of blossoming in place. A single-target play reports len 0 and keeps the
+   short stub, so the rail reads as a nub on the square rather than vanishing.
+   The rotation lives on a static shell so it composes with the keyframed
+   scaleX of the animated child instead of fighting it. */
+function Reach({
+  delayMs,
+  color,
+  top = 49.2,
+  thickness = 1.4,
+  minCells = 2.4,
+}: {
+  delayMs: number;
+  color: string;
+  top?: number;
+  thickness?: number;
+  minCells?: number;
+}) {
+  return (
+    <span
+      className="absolute block"
+      style={{
+        left: "50%",
+        top: `${top}%`,
+        width: `calc((${minCells} + var(--fx-len, 0)) * 7.142857%)`,
+        height: `${thickness}%`,
+        rotate: "calc(var(--fx-ang, 0) * 1deg)",
+        transformOrigin: "0% 50%",
+      }}
+    >
+      <span
+        className="grp-reach absolute inset-0 block"
+        style={{ background: `linear-gradient(90deg, ${color}, transparent)`, animationDelay: `${delayMs}ms` }}
+      />
+    </span>
+  );
 }
 
 /** THE shockwave ring — one per tier-5 play; tier-6 plays earn a second,
@@ -395,7 +511,11 @@ function Settle({
               width: `${sizePct}%`,
               height: `${sizePct}%`,
               "--dx": v.dx,
-              "--dy": `${sign * parseFloat(v.dy)}%`,
+              // The tail drifts DOWNWIND of whoever cast the play: `--fx-side`
+              // is +1 when the caster sits at the bottom of the screen, so the
+              // decay carries away from them rather than in a fixed direction
+              // that is wrong for one of the two players.
+              "--dy": `calc(${sign * parseFloat(v.dy)}% + var(--fx-side, 1) * -22%)`,
               "--rot": v.rot,
               animationDelay: `${delayMs + v.d}ms`,
             } as CSSProperties
@@ -463,12 +583,15 @@ function TargetHit({ palette, glyph, delayMs }: { palette: Palette; glyph: React
         className="grp-tring absolute block rounded-full"
         style={{ left: "10%", top: "10%", width: "80%", height: "80%", border: `2px solid ${tint(p1, 0.9)}`, animationDelay: `${delayMs + 280}ms` }}
       />
+      {/* the debris is thrown along THIS square's own leg of the play, so a
+          chain reads as travelling rather than as a row of identical pops */}
       {HIT_SPARKS.map((v, i) => (
         <span
           key={i}
           className="grp-spark absolute block"
           style={
             {
+              rotate: "calc(var(--fx-ang, 0) * 1deg)",
               left: "40%",
               top: "40%",
               width: "20%",
@@ -550,16 +673,75 @@ const TIER6 = new Set([
 
 /** Tier-6 accent: a board-edge glow frame (the crop is the central ~57% of
  * the canvas) + a second, later shock ring. Renders nothing for tier-5. */
-function GrandAccent({ flourish, color, delayMs }: { flourish?: string; color: string; delayMs: number }) {
+function GrandAccent({
+  flourish,
+  color,
+  delayMs,
+  anchored,
+}: {
+  flourish?: string;
+  color: string;
+  delayMs: number;
+  anchored?: boolean;
+}) {
   if (!flourish || !TIER6.has(flourish)) return null;
   return (
     <>
-      <span
-        className="grp-edgeglow absolute block"
-        style={{ left: "21.5%", top: "21.5%", width: "57%", height: "57%", borderRadius: "3%", border: `3px solid ${color}`, animationDelay: `${delayMs}ms` }}
-      />
+      {/* the rim of the BOARD kindles, so this one goes through the Frame */}
+      <Frame anchored={anchored}>
+        <span
+          className="grp-edgeglow absolute inset-0 block"
+          style={{ borderRadius: "2px", border: `3px solid ${color}`, animationDelay: `${delayMs}ms` }}
+        />
+      </Frame>
       <Boom delayMs={delayMs + 90} color={color} thickness={2} />
     </>
+  );
+}
+
+/* --- The entrance role --------------------------------------------------------
+   The card ARRIVING in a hand (draft pick, steal, grant), before it is ever
+   played: the template's own central object at ~56% of the crop with the card's
+   glyph resolving inside it, one short arrival beat and a settle. No stage, no
+   board takeover — this cut is one square's worth of art. */
+function EntranceCut({
+  palette,
+  glyph,
+  delayMs,
+  motif,
+  from = "below",
+}: {
+  palette: Palette;
+  glyph: ReactNode;
+  delayMs: number;
+  motif: ReactNode;
+  from?: "below" | "above";
+}) {
+  const [p0, p1] = palette;
+  const rise = from === "below";
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      {/* tell: the card's own light gathers on the slot it is landing in */}
+      <span
+        className="grp-tellglow absolute block rounded-full"
+        style={{ left: "20%", top: "22%", width: "60%", height: "56%", background: tint(p1, 0.34), animationDelay: `${delayMs}ms` }}
+      />
+      <span
+        className={`${rise ? "grp-rise" : "grp-drop"} absolute block`}
+        style={{ left: "22%", top: "22%", width: "56%", height: "56%", animationDelay: `${delayMs + 120}ms` }}
+      >
+        {motif}
+      </span>
+      <span className="grp-facein absolute block" style={{ left: "34%", top: "34%", width: "32%", height: "32%", animationDelay: `${delayMs + 400}ms` }}>
+        {glyph}
+      </span>
+      <span
+        className="grp-tring absolute block rounded-full"
+        style={{ left: "16%", top: "16%", width: "68%", height: "68%", border: `2px solid ${tint(p1, 0.8)}`, animationDelay: `${delayMs + 540}ms` }}
+      />
+      {/* settle: the arrival's own motes, carried off the caster's side */}
+      <Settle delayMs={delayMs + 640} dir={rise ? "rise" : "fall"} sizePct={4} render={(i) => <Mote color={tint(i % 2 ? p1 : p0, 0.75)} />} />
+    </span>
   );
 }
 
@@ -583,12 +765,29 @@ const CIRCLE_EDGES = [
   { l: 33, t: 62.5, rot: "180deg", d: 180 },
   { l: 14.5, t: 46, rot: "270deg", d: 270 },
 ];
-function WitchCircle({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
+function WitchCircle({ palette, glyph, lead, role, anchored, delayMs, flourish }: TemplateProps) {
   const [p0, p1, p2] = palette;
+  if (role === "entrance")
+    return (
+      <EntranceCut
+        palette={palette}
+        glyph={glyph}
+        delayMs={delayMs}
+        from="above"
+        motif={
+          <svg viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+            <circle cx="12" cy="12" r="10" fill="none" stroke={tint(p1, 0.9)} strokeWidth="1.2" />
+            <circle cx="12" cy="12" r="7.4" fill="none" stroke={tint(p2, 0.7)} strokeWidth="0.6" strokeDasharray="2 1.6" />
+            <path d="M12 3.4 L19.4 16.4 H4.6 Z" fill="none" stroke={tint(p1, 0.55)} strokeWidth="0.8" {...SJ} />
+            <path d="M12 0.8 V3 M12 21 V23.2 M0.8 12 H3 M21 12 H23.2" stroke={tint(p2, 0.9)} strokeWidth="1" strokeLinecap="round" />
+          </svg>
+        }
+      />
+    );
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
-    <Stage>
-      <Wash color={tint(p0, 0.26)} delayMs={delayMs} />
+    <Stage anchored={anchored}>
+      <Wash color={tint(p0, 0.26)} delayMs={delayMs} anchored={anchored} />
       {/* tell: stray hex-light gathers to the point the circle will claim */}
       <TellGlow delayMs={delayMs} color={tint(p1, 0.32)} left={40} top={36} w={20} h={18} />
       <TellRays delayMs={delayMs + 20} color={tint(p1, 0.8)} />
@@ -857,7 +1056,7 @@ function WitchCircle({ palette, glyph, lead, delayMs, flourish }: TemplateProps)
               <circle cx="6" cy="6" r="5.2" fill={tint(p2, 0.96)} />
             </svg>
           </span>
-          <Wash color={tint(p2, 0.42)} delayMs={delayMs + 960} />
+          <Wash color={tint(p2, 0.42)} delayMs={delayMs + 960} anchored={anchored} />
         </>
       )}
       {/* bespoke: Hexed Satchel — the cursed bag gulps down the incoming cards
@@ -1065,7 +1264,9 @@ function WitchCircle({ palette, glyph, lead, delayMs, flourish }: TemplateProps)
       <Flash delayMs={delayMs + 720} color={tint(p1, 0.6)} left={42} top={41} w={16} h={11} />
       <Sparks delayMs={delayMs + 760} fill={p1} stroke={p2} cy={46} />
       <Boom delayMs={delayMs + 820} color={tint(p1, 0.85)} />
-      <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 960} />
+      {/* geometry: the working REACHES: hex-light runs off the circle down the real line to the piece it is binding */}
+      <Reach delayMs={delayMs + 460} color={tint(p1, 0.85)} top={48.6} thickness={1.2} />
+      <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 960} anchored={anchored} />
       <Glint delayMs={delayMs + 1150} color={p1} left={48} top={40} />
       {/* settle: candle-smoke embers lift off the guttering circle */}
       <Afterglow delayMs={delayMs + 960} color={tint(p1, 0.28)} left={38} top={34} w={24} h={22} />
@@ -1078,12 +1279,29 @@ function WitchCircle({ palette, glyph, lead, delayMs, flourish }: TemplateProps)
    Template 2: StoneGaze — a gorgon bust rises at the board's heart and rakes
    the crop with a petrifying gaze beam; stone chips spall off the victims.
    ========================================================================== */
-function StoneGaze({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
+function StoneGaze({ palette, glyph, lead, role, anchored, delayMs, flourish }: TemplateProps) {
   const [p0, p1, p2] = palette;
+  if (role === "entrance")
+    return (
+      <EntranceCut
+        palette={palette}
+        glyph={glyph}
+        delayMs={delayMs}
+        from="below"
+        motif={
+          <svg viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+            <path d="M8 6.4 C5.4 5 4.6 2.8 6.4 1.4 M12 5.6 C11.2 3.2 12.2 1.4 14.4 0.8 M16 6.4 C18.6 5 19.4 2.8 17.6 1.4" fill="none" stroke={tint(p1, 0.9)} strokeWidth="1" {...SJ} />
+            <path d="M7.4 16.6 L8 7.8 C8 5.4 16 5.4 16 7.8 L16.6 16.6 Z" fill={tint(p0, 0.92)} stroke={p2} strokeWidth="1" {...SJ} />
+            <path d="M9.6 11 H11.2 M12.8 11 H14.4" stroke={p1} strokeWidth="1.1" strokeLinecap="round" />
+            <path d="M5.4 20.4 H18.6 V23.4 H5.4 Z" fill={tint(p2, 0.85)} stroke={tint(p0, 0.8)} strokeWidth="0.7" {...SJ} />
+          </svg>
+        }
+      />
+    );
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
-    <Stage>
-      <Wash color={tint(p0, 0.26)} delayMs={delayMs} />
+    <Stage anchored={anchored}>
+      <Wash color={tint(p0, 0.26)} delayMs={delayMs} anchored={anchored} />
       {/* tell: the boards shadow over and grit shivers where the bust will breach */}
       <TellShadow delayMs={delayMs} color={tint(p2, 0.55)} left={37} top={62} w={26} h={7} />
       <TellGlow delayMs={delayMs + 40} color={tint(p1, 0.3)} left={41} top={30} w={18} h={16} />
@@ -1203,7 +1421,9 @@ function StoneGaze({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
       <Flash delayMs={delayMs + 680} color={tint(p1, 0.55)} left={41} top={50} w={18} h={11} />
       <Sparks delayMs={delayMs + 720} fill={tint(p0, 0.95)} stroke={p2} cy={54} />
       <Boom delayMs={delayMs + 780} color={tint(p1, 0.85)} />
-      <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 920} />
+      {/* geometry: the gaze does not rake at random: it runs the real line to the piece being taken */}
+      <Reach delayMs={delayMs + 520} color={tint(p1, 0.9)} top={33} thickness={2.6} minCells={2.8} />
+      <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 920} anchored={anchored} />
       <Glint delayMs={delayMs + 1120} color={p1} left={48} top={30} />
       {/* settle: masonry dust sifts down off the fresh stone */}
       <Afterglow delayMs={delayMs + 920} color={tint(p0, 0.3)} left={38} top={38} w={24} h={20} />
@@ -1222,12 +1442,27 @@ const FROST_STRIPES = [
   { t: 47, d: 240 },
   { t: 62, d: 340 },
 ];
-function ColdFront({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
+function ColdFront({ palette, glyph, lead, role, anchored, delayMs, flourish }: TemplateProps) {
   const [p0, p1, p2] = palette;
+  if (role === "entrance")
+    return (
+      <EntranceCut
+        palette={palette}
+        glyph={glyph}
+        delayMs={delayMs}
+        from="above"
+        motif={
+          <svg viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+            <path d="M3 22 L2 6 L6 11 L7 1.6 L11.4 8.6 L13 3 L17 9.6 L19 4.6 L22 12 L22 22 Z" fill={tint(p0, 0.6)} stroke={tint(p1, 0.9)} strokeWidth="1" {...SJ} />
+            <path d="M7 5.6 L7.6 15 M13 7 L13.6 16.4 M19 9 L19 18" fill="none" stroke={tint(p2, 0.6)} strokeWidth="0.7" />
+          </svg>
+        }
+      />
+    );
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
-    <Stage>
-      <Wash color={tint(p0, 0.26)} delayMs={delayMs} />
+    <Stage anchored={anchored}>
+      <Wash color={tint(p0, 0.26)} delayMs={delayMs} anchored={anchored} />
       {/* tell: the cold draft — a pale gleam gathers at the west wing */}
       <TellGlow delayMs={delayMs} color={tint(p1, 0.3)} left={24} top={36} w={18} h={20} />
       <TellRays delayMs={delayMs + 20} color={tint(p1, 0.75)} />
@@ -1287,7 +1522,7 @@ function ColdFront({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
           <span className="grp-bonk absolute block" style={{ left: "47%", top: "55%", width: "6%", height: "7%", animationDelay: `${delayMs + 1360}ms` }}>
             <svg viewBox="0 0 8 9" className="block h-full w-full" aria-hidden="true">
               <path d="M4 0.8 L7 4 L6 8.4 H2 L1 4 Z" fill={tint(p0, 0.85)} stroke={p2} strokeWidth="0.6" {...SJ} />
-              <path d="M3 3 L4.6 5.4" stroke="#ffffff" strokeWidth="0.5" strokeLinecap="round" />
+              <path d="M3 3 L4.6 5.4" stroke={tint(p1, 0.9)} strokeWidth="0.5" strokeLinecap="round" />
             </svg>
           </span>
         </>
@@ -1307,7 +1542,7 @@ function ColdFront({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
             <span key={i} className="grp-pop absolute block" style={{ left: `${v.l}%`, top: `${v.t}%`, width: "6%", height: "6.5%", animationDelay: `${delayMs + 980}ms` }}>
               <svg viewBox="0 0 8 9" className="block h-full w-full" aria-hidden="true">
                 <path d="M1 2.6 L4 0.8 L7 2.6 V6.4 L4 8.2 L1 6.4 Z" fill={tint(p0, 0.6)} stroke={tint(p2, 0.95)} strokeWidth="0.6" {...SJ} />
-                <path d="M1.8 3.2 L3.4 4.8" stroke="#ffffff" strokeWidth="0.5" strokeLinecap="round" />
+                <path d="M1.8 3.2 L3.4 4.8" stroke={tint(p1, 0.9)} strokeWidth="0.5" strokeLinecap="round" />
               </svg>
             </span>
           ))}
@@ -1322,7 +1557,7 @@ function ColdFront({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
           top: "30%",
           width: "56%",
           height: "38%",
-          background: `linear-gradient(105deg, ${tint(p0, 0.28)}, ${tint("#ffffff", 0.3)} 48%, ${tint(p0, 0.22)} 52%, ${tint(p1, 0.18)})`,
+          background: `linear-gradient(105deg, ${tint(p0, 0.28)}, ${tint(p1, 0.34)} 48%, ${tint(p0, 0.22)} 52%, ${tint(p1, 0.18)})`,
           transformOrigin: "0% 50%",
           animationDelay: `${delayMs + 780}ms`,
         }}
@@ -1331,11 +1566,13 @@ function ColdFront({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
       <Flash delayMs={delayMs + 900} color={tint(p1, 0.6)} left={44} top={42} w={17} h={12} />
       <Sparks delayMs={delayMs + 940} fill={p1} stroke={p2} cy={47} />
       <Boom delayMs={delayMs + 1000} color={tint(p1, 0.85)} />
-      <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 1140} />
+      {/* geometry: the front runs the play's own line, not a fixed compass bearing */}
+      <Reach delayMs={delayMs + 700} color={tint(p1, 0.8)} top={46} thickness={2.2} minCells={3} />
+      <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 1140} anchored={anchored} />
       <Glint delayMs={delayMs + 1320} color={p1} left={52} top={34} />
       {/* settle: fine snow sifts down in the front's wake */}
       <Afterglow delayMs={delayMs + 1140} color={tint(p1, 0.26)} left={38} top={36} w={26} h={22} />
-      <Settle delayMs={delayMs + 1180} dir="fall" sizePct={2} render={() => <Mote color={tint("#ffffff", 0.85)} />} />
+      <Settle delayMs={delayMs + 1180} dir="fall" sizePct={2} render={() => <Mote color={tint(p1, 0.85)} />} />
     </Stage>
   );
 }
@@ -1344,14 +1581,32 @@ function ColdFront({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
    Template 4: SiegeRoll — a siege engine rolls in from the left wing, its arm
    swings, and the payload arcs across to a strike flash on the far side.
    ========================================================================== */
-function SiegeRoll({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
+function SiegeRoll({ palette, glyph, lead, role, anchored, delayMs, flourish }: TemplateProps) {
   const [p0, p1, p2] = palette;
   // Comic-timing: the party cannon holds its wind-up a beat before the punchline.
   const hold = flourish === "confetti" ? 200 : 0;
+  if (role === "entrance")
+    return (
+      <EntranceCut
+        palette={palette}
+        glyph={glyph}
+        delayMs={delayMs}
+        from="below"
+        motif={
+          <svg viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+            <path d="M3 18 L8 8 H16 L21 18 Z" fill={tint(p0, 0.9)} stroke={p2} strokeWidth="1.1" {...SJ} />
+            <circle cx="7" cy="20" r="2.8" fill={tint(p2, 0.9)} stroke={tint(p0, 0.8)} strokeWidth="0.8" />
+            <circle cx="17" cy="20" r="2.8" fill={tint(p2, 0.9)} stroke={tint(p0, 0.8)} strokeWidth="0.8" />
+            <path d="M11.4 9 L13.2 1.6 L15.4 2.2 L13.6 9.4 Z" fill={tint(p0, 0.95)} stroke={p2} strokeWidth="0.7" {...SJ} />
+            <circle cx="14.4" cy="2.6" r="1.9" fill={tint(p1, 0.95)} stroke={p2} strokeWidth="0.6" />
+          </svg>
+        }
+      />
+    );
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
-    <Stage>
-      <Wash color={tint(p0, 0.24)} delayMs={delayMs} />
+    <Stage anchored={anchored}>
+      <Wash color={tint(p0, 0.24)} delayMs={delayMs} anchored={anchored} />
       {/* tell: the ground shadows under the incoming engine's track */}
       <TellShadow delayMs={delayMs} color={tint(p2, 0.55)} left={24} top={64} w={26} h={6} />
       <TellGlow delayMs={delayMs + 40} color={tint(p1, 0.28)} left={28} top={36} w={18} h={18} />
@@ -1429,7 +1684,9 @@ function SiegeRoll({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
       <Flash delayMs={delayMs + 1000 + hold} color={tint(p1, 0.8)} left={60} top={37} w={18} h={13} />
       <Sparks delayMs={delayMs + 1040 + hold} fill={p1} stroke={p2} sizePct={6.5} cx={68} cy={42} />
       <Boom delayMs={delayMs + 1080 + hold} color={tint(p1, 0.85)} thickness={4} />
-      <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 1220 + hold} />
+      {/* geometry: the shot's line of fire, laid down the real source -> victim vector */}
+      <Reach delayMs={delayMs + 640 + hold} color={tint(p1, 0.85)} top={40} thickness={1.6} minCells={3} />
+      <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 1220 + hold} anchored={anchored} />
       <Glint delayMs={delayMs + 1360 + hold} color={p1} left={67} top={33} sizePct={7} />
       {/* settle: powder smoke drifts down off the impact */}
       <Afterglow delayMs={delayMs + 1200 + hold} color={tint(p1, 0.28)} left={56} top={32} w={22} h={18} />
@@ -1444,12 +1701,29 @@ function SiegeRoll({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
    Template 5: WarBanner — a great command banner slams in mid-board while two
    shield-wall ranks rise at its flanks; a rally flare rolls out.
    ========================================================================== */
-function WarBanner({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
+function WarBanner({ palette, glyph, lead, role, anchored, delayMs, flourish }: TemplateProps) {
   const [p0, p1, p2] = palette;
+  if (role === "entrance")
+    return (
+      <EntranceCut
+        palette={palette}
+        glyph={glyph}
+        delayMs={delayMs}
+        from="above"
+        motif={
+          <svg viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+            <path d="M12 23 V1.6" stroke={p2} strokeWidth="1.4" strokeLinecap="round" />
+            <circle cx="12" cy="1.6" r="1.2" fill={p1} />
+            <path d="M4 4 H20 V15 L12 19 L4 15 Z" fill={tint(p1, 0.9)} stroke={p2} strokeWidth="1" {...SJ} />
+            <path d="M6 6 V13.6 M18 6 V13.6" fill="none" stroke={tint(p2, 0.45)} strokeWidth="0.6" />
+          </svg>
+        }
+      />
+    );
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
-    <Stage>
-      <Wash color={tint(p0, 0.24)} delayMs={delayMs} />
+    <Stage anchored={anchored}>
+      <Wash color={tint(p0, 0.24)} delayMs={delayMs} anchored={anchored} />
       {/* tell: the standard's shadow falls on the muster ground first */}
       <TellShadow delayMs={delayMs} color={tint(p2, 0.55)} left={39} top={66} w={22} h={6} />
       <TellGlow delayMs={delayMs + 40} color={tint(p1, 0.3)} left={40} top={26} w={20} h={18} />
@@ -1666,7 +1940,9 @@ function WarBanner({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
       <Flash delayMs={delayMs + 760} color={tint(p1, 0.65)} left={42} top={44} w={16} h={12} />
       <Sparks delayMs={delayMs + 800} fill={p1} stroke={p2} cy={49} />
       <Boom delayMs={delayMs + 860} color={tint(p1, 0.85)} />
-      <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 1000} />
+      {/* geometry: the rally runs the line: the ward reaches the piece it is covering */}
+      <Reach delayMs={delayMs + 560} color={tint(p1, 0.8)} top={52} thickness={1.8} />
+      <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 1000} anchored={anchored} />
       <Glint delayMs={delayMs + 1180} color={p1} left={49} top={24} />
       {/* settle: pennant threads and rally-light sift down over the ranks */}
       <Afterglow delayMs={delayMs + 1000} color={tint(p1, 0.26)} left={38} top={34} w={24} h={22} />
@@ -1679,12 +1955,28 @@ function WarBanner({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
    Template 6: Grove — a great tree bursts up through the board's heart, its
    canopy unfurling while petals drift down; the glyph glows in a trunk knot.
    ========================================================================== */
-function Grove({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
+function Grove({ palette, glyph, lead, role, anchored, delayMs, flourish }: TemplateProps) {
   const [p0, p1, p2] = palette;
+  if (role === "entrance")
+    return (
+      <EntranceCut
+        palette={palette}
+        glyph={glyph}
+        delayMs={delayMs}
+        from="below"
+        motif={
+          <svg viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+            <path d="M10.6 23 V13 H13.4 V23 Z" fill={p0} stroke={p2} strokeWidth="0.7" {...SJ} />
+            <path d="M12 1.4 C17.6 3 21 7 20 11.6 C19.2 15.2 15.8 16.6 12 16.6 C8.2 16.6 4.8 15.2 4 11.6 C3 7 6.4 3 12 1.4 Z" fill={tint(p1, 0.85)} stroke={tint(p2, 0.9)} strokeWidth="0.9" {...SJ} />
+            <path d="M12 16 V6.6 M12 10.4 L9 8 M12 12.4 L15 10" fill="none" stroke={tint(p2, 0.7)} strokeWidth="0.7" strokeLinecap="round" />
+          </svg>
+        }
+      />
+    );
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
-    <Stage>
-      <Wash color={tint(p0, 0.24)} delayMs={delayMs} />
+    <Stage anchored={anchored}>
+      <Wash color={tint(p0, 0.24)} delayMs={delayMs} anchored={anchored} />
       {/* tell: the soil bulges and green light seeps up before the trunk breaches */}
       <TellShadow delayMs={delayMs} color={tint(p2, 0.5)} left={37} top={64} w={26} h={7} />
       <TellGlow delayMs={delayMs + 40} color={tint(p1, 0.3)} left={40} top={44} w={20} h={18} />
@@ -1849,7 +2141,9 @@ function Grove({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
       <Flash delayMs={delayMs + 700} color={tint(p1, 0.55)} left={42} top={52} w={16} h={11} />
       <Sparks delayMs={delayMs + 740} fill={p1} stroke={p2} cy={56} />
       <Boom delayMs={delayMs + 800} color={tint(p1, 0.85)} />
-      <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 940} />
+      {/* geometry: a root runs the real line to whatever the grove is seizing */}
+      <Reach delayMs={delayMs + 520} color={tint(p1, 0.85)} top={56} thickness={1.6} minCells={2.8} />
+      <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 940} anchored={anchored} />
       <Glint delayMs={delayMs + 1130} color={p1} left={49} top={24} />
       {/* settle: pollen motes hang and sink in the canopy's shade */}
       <Afterglow delayMs={delayMs + 940} color={tint(p1, 0.26)} left={36} top={30} w={28} h={22} />
@@ -1867,12 +2161,29 @@ const GHOSTS = [
   { l: 40, t: 25, w: 17, d: 0 },
   { l: 59, t: 32, w: 14, d: 220 },
 ];
-function PhantomParade({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
+function PhantomParade({ palette, glyph, lead, role, anchored, delayMs, flourish }: TemplateProps) {
   const [p0, p1, p2] = palette;
+  if (role === "entrance")
+    return (
+      <EntranceCut
+        palette={palette}
+        glyph={glyph}
+        delayMs={delayMs}
+        from="above"
+        motif={
+          <svg viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+            <path d="M9.4 6 H14.6 L16 18.4 C16 20.6 8 20.6 8 18.4 Z" fill={tint(p1, 0.5)} stroke={tint(p1, 0.95)} strokeWidth="0.9" {...SJ} />
+            <path d="M10.4 6 V3.4 C10.4 1.6 13.6 1.6 13.6 3.4 V6" fill="none" stroke={tint(p2, 0.9)} strokeWidth="0.9" {...SJ} />
+            <ellipse cx="12" cy="13.6" rx="2.2" ry="3.2" fill={tint(p1, 0.9)} />
+            <path d="M6 22.4 C8 20.6 16 20.6 18 22.4" fill="none" stroke={tint(p0, 0.8)} strokeWidth="0.8" strokeLinecap="round" />
+          </svg>
+        }
+      />
+    );
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
-    <Stage>
-      <Wash color={tint(p0, 0.24)} delayMs={delayMs} />
+    <Stage anchored={anchored}>
+      <Wash color={tint(p0, 0.24)} delayMs={delayMs} anchored={anchored} />
       {/* tell: a graveside chill gathers where the parade will pass */}
       <TellGlow delayMs={delayMs} color={tint(p1, 0.26)} left={30} top={32} w={22} h={22} />
       <TellRays delayMs={delayMs + 20} color={tint(p1, 0.6)} />
@@ -2039,7 +2350,9 @@ function PhantomParade({ palette, glyph, lead, delayMs, flourish }: TemplateProp
       <Flash delayMs={delayMs + 880} color={tint(p1, 0.5)} left={44} top={40} w={15} h={11} />
       <Sparks delayMs={delayMs + 920} fill={p1} stroke={p2} cy={45} />
       <Boom delayMs={delayMs + 980} color={tint(p1, 0.8)} />
-      <GrandAccent flourish={flourish} color={tint(p1, 0.7)} delayMs={delayMs + 1120} />
+      {/* geometry: the procession's road, laid down the play's own line */}
+      <Reach delayMs={delayMs + 640} color={tint(p1, 0.75)} top={44} thickness={1.4} minCells={3} />
+      <GrandAccent flourish={flourish} color={tint(p1, 0.7)} delayMs={delayMs + 1120} anchored={anchored} />
       <Glint delayMs={delayMs + 1290} color={p1} left={57} top={30} />
       {/* settle: lantern-light wisps rise off the parade's wake */}
       <Afterglow delayMs={delayMs + 1120} color={tint(p1, 0.24)} left={36} top={32} w={28} h={22} />
@@ -2052,12 +2365,29 @@ function PhantomParade({ palette, glyph, lead, delayMs, flourish }: TemplateProp
    Template 8: ClockSpire — a clock tower rises mid-board, its great pendulum
    swinging twice beneath the face; a time-ring pulse rolls out.
    ========================================================================== */
-function ClockSpire({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
+function ClockSpire({ palette, glyph, lead, role, anchored, delayMs, flourish }: TemplateProps) {
   const [p0, p1, p2] = palette;
+  if (role === "entrance")
+    return (
+      <EntranceCut
+        palette={palette}
+        glyph={glyph}
+        delayMs={delayMs}
+        from="below"
+        motif={
+          <svg viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+            <path d="M7 22 L8.6 7 H15.4 L17 22 Z" fill={tint(p0, 0.9)} stroke={p2} strokeWidth="1" {...SJ} />
+            <path d="M12 1.2 L15.4 7 H8.6 Z" fill={tint(p1, 0.8)} stroke={p2} strokeWidth="0.8" {...SJ} />
+            <circle cx="12" cy="11.4" r="4.2" fill={tint(p2, 0.85)} stroke={tint(p1, 0.95)} strokeWidth="1" />
+            <path d="M12 11.4 V8.4 M12 11.4 L14.4 12.6" stroke={p1} strokeWidth="1" strokeLinecap="round" />
+          </svg>
+        }
+      />
+    );
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
-    <Stage>
-      <Wash color={tint(p0, 0.24)} delayMs={delayMs} />
+    <Stage anchored={anchored}>
+      <Wash color={tint(p0, 0.24)} delayMs={delayMs} anchored={anchored} />
       {/* tell: the tower's shadow stretches over the square before it rises */}
       <TellShadow delayMs={delayMs} color={tint(p2, 0.55)} left={40} top={64} w={20} h={6} />
       <TellGlow delayMs={delayMs + 40} color={tint(p1, 0.3)} left={42} top={24} w={16} h={16} />
@@ -2101,7 +2431,7 @@ function ClockSpire({ palette, glyph, lead, delayMs, flourish }: TemplateProps) 
           hangs; the single resuming TICK glints only after the held beat */}
       {flourish === "timestop" && (
         <>
-          <Wash color={tint(p2, 0.4)} delayMs={delayMs + 780} />
+          <Wash color={tint(p2, 0.4)} delayMs={delayMs + 780} anchored={anchored} />
           <span
             className="grp-hold absolute block rounded-full"
             style={{ left: "44.4%", top: "28.2%", width: "11.2%", height: "6.4%", border: `2px solid ${tint(p1, 0.9)}`, animationDelay: `${delayMs + 700}ms` }}
@@ -2205,7 +2535,9 @@ function ClockSpire({ palette, glyph, lead, delayMs, flourish }: TemplateProps) 
       <Flash delayMs={delayMs + 900} color={tint(p1, 0.6)} left={43} top={32} w={14} h={11} />
       <Sparks delayMs={delayMs + 940} fill={p1} stroke={p2} cy={38} />
       <Boom delayMs={delayMs + 1000} color={tint(p1, 0.85)} />
-      <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 1140} />
+      {/* geometry: the spire's shadow falls down the play's own line, onto the clock it is stopping */}
+      <Reach delayMs={delayMs + 660} color={tint(p1, 0.85)} top={46} thickness={1.4} />
+      <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 1140} anchored={anchored} />
       <Glint delayMs={delayMs + 1320} color={p1} left={49} top={18} />
       {/* settle: loosed clock-dust — for Rewind it climbs back UP the hour */}
       <Afterglow delayMs={delayMs + 1140} color={tint(p1, 0.24)} left={40} top={26} w={20} h={20} />
@@ -2218,12 +2550,28 @@ function ClockSpire({ palette, glyph, lead, delayMs, flourish }: TemplateProps) 
    Template 9: CardRite — a colossal card is dealt down over the board and its
    face resolves into the play; sparks scatter off the deal.
    ========================================================================== */
-function CardRite({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
+function CardRite({ palette, glyph, lead, role, anchored, delayMs, flourish }: TemplateProps) {
   const [p0, p1, p2] = palette;
+  if (role === "entrance")
+    return (
+      <EntranceCut
+        palette={palette}
+        glyph={glyph}
+        delayMs={delayMs}
+        from="above"
+        motif={
+          <svg viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+            <path d="M5.4 2.4 H18.6 V21.6 H5.4 Z" fill={tint(p0, 0.9)} stroke={tint(p1, 0.95)} strokeWidth="1.1" {...SJ} />
+            <path d="M7.6 4.6 H16.4 V19.4 H7.6 Z" fill="none" stroke={tint(p2, 0.7)} strokeWidth="0.6" strokeDasharray="1.8 1.4" />
+            <path d="M12 6.6 L14 10.8 L18 12 L14 13.2 L12 17.4 L10 13.2 L6 12 L10 10.8 Z" fill={tint(p1, 0.55)} />
+          </svg>
+        }
+      />
+    );
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
-    <Stage>
-      <Wash color={tint(p0, 0.24)} delayMs={delayMs} />
+    <Stage anchored={anchored}>
+      <Wash color={tint(p0, 0.24)} delayMs={delayMs} anchored={anchored} />
       {/* tell: the card's shadow grows on the boards as it falls */}
       <TellShadow delayMs={delayMs} color={tint(p2, 0.55)} left={40} top={44} w={20} h={22} />
       <TellGlow delayMs={delayMs + 40} color={tint(p1, 0.28)} left={42} top={30} w={16} h={16} />
@@ -2626,7 +2974,9 @@ function CardRite({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
       <Flash delayMs={delayMs + 780} color={tint(p1, 0.6)} left={42} top={44} w={16} h={12} />
       <Sparks delayMs={delayMs + 820} fill={p1} stroke={p2} cy={49} />
       <Boom delayMs={delayMs + 880} color={tint(p1, 0.85)} />
-      <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 1020} />
+      {/* geometry: the deal reaches its mark: the rite runs the real line to the piece it names */}
+      <Reach delayMs={delayMs + 560} color={tint(p1, 0.8)} top={50} thickness={1.4} />
+      <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 1020} anchored={anchored} />
       <Glint delayMs={delayMs + 1200} color={p1} left={54} top={27} />
       {/* settle: paper-fate flecks drift off the deal — Death's rise as souls */}
       <Afterglow delayMs={delayMs + 1020} color={tint(p1, 0.24)} left={40} top={32} w={20} h={22} />
@@ -2644,12 +2994,27 @@ function CardRite({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
    Template 10: ThiefHand — the prize gleams at mid-board, then a shadow
    gauntlet sweeps in from the right wing and drags it off the board.
    ========================================================================== */
-function ThiefHand({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
+function ThiefHand({ palette, glyph, lead, role, anchored, delayMs, flourish }: TemplateProps) {
   const [p0, p1, p2] = palette;
+  if (role === "entrance")
+    return (
+      <EntranceCut
+        palette={palette}
+        glyph={glyph}
+        delayMs={delayMs}
+        from="above"
+        motif={
+          <svg viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+            <path d="M4 13.4 C4 11.4 6 10.6 7.4 11.6 L9.6 13 V4.6 C9.6 2.6 12.6 2.6 12.6 4.6 V11.6 L14 5.6 C14.4 3.6 17.4 4.2 17 6.2 L15.6 13 L19.4 11.4 C21 10.8 22 13.2 20.4 14.2 L14.6 18.2 C12 20 8.4 19.4 6.6 17 Z" fill={tint(p0, 0.9)} stroke={p2} strokeWidth="1" {...SJ} />
+            <circle cx="19.4" cy="5.4" r="2.2" fill={tint(p1, 0.95)} stroke={p2} strokeWidth="0.6" />
+          </svg>
+        }
+      />
+    );
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
-    <Stage>
-      <Wash color={tint(p2, 0.32)} delayMs={delayMs} />
+    <Stage anchored={anchored}>
+      <Wash color={tint(p2, 0.32)} delayMs={delayMs} anchored={anchored} />
       {/* tell: the prize glimmers awake while a shadow creeps in from the wing */}
       <TellGlow delayMs={delayMs} color={tint(p1, 0.35)} left={40} top={34} w={16} h={16} />
       <TellShadow delayMs={delayMs + 60} color={tint(p2, 0.7)} left={58} top={40} w={24} h={12} />
@@ -2885,7 +3250,9 @@ function ThiefHand({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
       <Flash delayMs={delayMs + 820} color={tint(p1, 0.55)} left={42} top={38} w={15} h={11} />
       <Sparks delayMs={delayMs + 860} fill={p1} stroke={p0} cy={44} />
       <Boom delayMs={delayMs + 920} color={tint(p1, 0.8)} />
-      <GrandAccent flourish={flourish} color={tint(p1, 0.7)} delayMs={delayMs + 1060} />
+      {/* geometry: the reach itself: the arm runs the real line out to the prize */}
+      <Reach delayMs={delayMs + 560} color={tint(p1, 0.85)} top={42} thickness={1.6} minCells={3} />
+      <GrandAccent flourish={flourish} color={tint(p1, 0.7)} delayMs={delayMs + 1060} anchored={anchored} />
       <Glint delayMs={delayMs + 1230} color={p1} left={47} top={36} />
       {/* settle: shadow-smoke curls up where the prize used to sit */}
       <Afterglow delayMs={delayMs + 1060} color={tint(p1, 0.22)} left={38} top={32} w={22} h={20} />
@@ -2898,12 +3265,28 @@ function ThiefHand({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
    Template 11: CrownForge — the old kings' anvil rises mid-board, the hammer
    falls in a fan of sparks, and the finished work comes out glowing.
    ========================================================================== */
-function CrownForge({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
+function CrownForge({ palette, glyph, lead, role, anchored, delayMs, flourish }: TemplateProps) {
   const [p0, p1, p2] = palette;
+  if (role === "entrance")
+    return (
+      <EntranceCut
+        palette={palette}
+        glyph={glyph}
+        delayMs={delayMs}
+        from="below"
+        motif={
+          <svg viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+            <path d="M4 12 H20 L17 15.4 H16 V19 H8 V15.4 H7 Z" fill={tint(p0, 0.9)} stroke={p2} strokeWidth="1" {...SJ} />
+            <path d="M6 19.6 H18 V22.4 H6 Z" fill={tint(p2, 0.9)} stroke={tint(p0, 0.8)} strokeWidth="0.7" {...SJ} />
+            <path d="M6.4 9.6 L7.6 2.6 L10.4 6.4 L12 1.6 L13.6 6.4 L16.4 2.6 L17.6 9.6 Z" fill={tint(p1, 0.92)} stroke={p2} strokeWidth="0.8" {...SJ} />
+          </svg>
+        }
+      />
+    );
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
-    <Stage>
-      <Wash color={tint(p0, 0.24)} delayMs={delayMs} />
+    <Stage anchored={anchored}>
+      <Wash color={tint(p0, 0.24)} delayMs={delayMs} anchored={anchored} />
       {/* tell: forge-heat pools under the boards before the anvil breaches */}
       <TellShadow delayMs={delayMs} color={tint(p2, 0.55)} left={38} top={62} w={24} h={7} />
       <TellGlow delayMs={delayMs + 40} color={tint(p1, 0.35)} left={40} top={44} w={20} h={16} />
@@ -3190,7 +3573,9 @@ function CrownForge({ palette, glyph, lead, delayMs, flourish }: TemplateProps) 
         />
       ))}
       <Boom delayMs={delayMs + 940} color={tint(p1, 0.85)} thickness={4} />
-      <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 1080} />
+      {/* geometry: the finished work is carried down the real line to the piece it crowns */}
+      <Reach delayMs={delayMs + 620} color={tint(p1, 0.85)} top={50} thickness={1.8} />
+      <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 1080} anchored={anchored} />
       <Glint delayMs={delayMs + 1260} color={p1} left={49} top={27} />
       {/* settle: forge embers climb and gutter out over the cooling work */}
       <Afterglow delayMs={delayMs + 1080} color={tint(p1, 0.28)} left={38} top={36} w={24} h={20} />
@@ -3203,12 +3588,29 @@ function CrownForge({ palette, glyph, lead, delayMs, flourish }: TemplateProps) 
    Template 12: RiftGate — twin obelisks rise flanking the centre and an aurora
    pane stretches open between them; the glyph shines through the gate.
    ========================================================================== */
-function RiftGate({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
+function RiftGate({ palette, glyph, lead, role, anchored, delayMs, flourish }: TemplateProps) {
   const [p0, p1, p2] = palette;
+  if (role === "entrance")
+    return (
+      <EntranceCut
+        palette={palette}
+        glyph={glyph}
+        delayMs={delayMs}
+        from="below"
+        motif={
+          <svg viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+            <path d="M3.4 22 L4.6 5 H7.4 L8.6 22 Z" fill={tint(p0, 0.9)} stroke={p2} strokeWidth="0.9" {...SJ} />
+            <path d="M15.4 22 L16.6 5 H19.4 L20.6 22 Z" fill={tint(p0, 0.9)} stroke={p2} strokeWidth="0.9" {...SJ} />
+            <path d="M9.4 6.4 H14.6 V21 H9.4 Z" fill={tint(p1, 0.45)} stroke={tint(p1, 0.95)} strokeWidth="0.9" {...SJ} />
+            <path d="M10.6 8.4 V19 M13.4 9.4 V18" fill="none" stroke={tint(p2, 0.75)} strokeWidth="0.7" strokeLinecap="round" />
+          </svg>
+        }
+      />
+    );
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
-    <Stage>
-      <Wash color={tint(p0, 0.24)} delayMs={delayMs} />
+    <Stage anchored={anchored}>
+      <Wash color={tint(p0, 0.24)} delayMs={delayMs} anchored={anchored} />
       {/* tell: stray aurora light converges on the two footings */}
       <TellGlow delayMs={delayMs} color={tint(p1, 0.3)} left={35} top={40} w={10} h={20} />
       <TellGlow delayMs={delayMs + 60} color={tint(p1, 0.3)} left={55} top={40} w={10} h={20} />
@@ -3375,7 +3777,9 @@ function RiftGate({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
       <Flash delayMs={delayMs + 800} color={tint(p1, 0.6)} left={43} top={42} w={14} h={11} />
       <Sparks delayMs={delayMs + 840} fill={p1} stroke={p2} cy={47} />
       <Boom delayMs={delayMs + 900} color={tint(p1, 0.85)} />
-      <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 1040} />
+      {/* geometry: the gate opens ONTO somewhere: the current runs the play's real vector */}
+      <Reach delayMs={delayMs + 580} color={tint(p1, 0.85)} top={47} thickness={2} minCells={3} />
+      <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 1040} anchored={anchored} />
       <Glint delayMs={delayMs + 1220} color={p1} left={49} top={31} />
       {/* settle: gate-light motes float up as the pane lets go */}
       <Afterglow delayMs={delayMs + 1040} color={tint(p1, 0.26)} left={39} top={32} w={22} h={24} />
@@ -3388,14 +3792,32 @@ function RiftGate({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
    Template 13: BeastRush — a horned beast charges the full width of the crop,
    dust kicked up behind it; the card's glyph rides on its flank drape.
    ========================================================================== */
-function BeastRush({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
+function BeastRush({ palette, glyph, lead, role, anchored, delayMs, flourish }: TemplateProps) {
   const [p0, p1, p2] = palette;
   // Comic-timing: the bonk holds its beat before the punchline lands.
   const hold = flourish === "sahur" ? 200 : 0;
+  if (role === "entrance")
+    return (
+      <EntranceCut
+        palette={palette}
+        glyph={glyph}
+        delayMs={delayMs}
+        from="below"
+        motif={
+          <svg viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+            <path d="M5 12.6 C5 8 8.2 5.4 12 5.4 C15.8 5.4 19 8 19 12.6 C19 17.6 16 21 12 21 C8 21 5 17.6 5 12.6 Z" fill={tint(p0, 0.9)} stroke={p2} strokeWidth="1" {...SJ} />
+            <path d="M6.6 7.4 C4 5.6 3 3 3.6 1.4 C5.6 2.2 7.4 3.8 8.4 5.8 M17.4 7.4 C20 5.6 21 3 20.4 1.4 C18.4 2.2 16.6 3.8 15.6 5.8" fill="none" stroke={tint(p1, 0.95)} strokeWidth="1.2" {...SJ} />
+            <circle cx="9.6" cy="12" r="1.1" fill={p1} />
+            <circle cx="14.4" cy="12" r="1.1" fill={p1} />
+            <path d="M10 17 H14" stroke={tint(p2, 0.8)} strokeWidth="0.9" strokeLinecap="round" />
+          </svg>
+        }
+      />
+    );
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
-    <Stage>
-      <Wash color={tint(p0, 0.24)} delayMs={delayMs} />
+    <Stage anchored={anchored}>
+      <Wash color={tint(p0, 0.24)} delayMs={delayMs} anchored={anchored} />
       {/* tell: hoofbeat rumble — the ground shadows and speed-light gathers */}
       <TellShadow delayMs={delayMs} color={tint(p2, 0.55)} left={26} top={58} w={26} h={6} />
       <TellRays delayMs={delayMs + 20} color={tint(p1, 0.7)} />
@@ -3520,7 +3942,9 @@ function BeastRush({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
       <Flash delayMs={delayMs + 820 + hold} color={tint(p1, 0.7)} left={56} top={38} w={16} h={12} />
       <Sparks delayMs={delayMs + 860 + hold} fill={p1} stroke={p2} cx={63} cy={43} />
       <Boom delayMs={delayMs + 900 + hold} color={tint(p1, 0.85)} thickness={4} />
-      <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 1040 + hold} />
+      {/* geometry: the charge line, laid down the real source -> victim vector */}
+      <Reach delayMs={delayMs + 560 + hold} color={tint(p1, 0.85)} top={52} thickness={2.4} minCells={3} />
+      <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 1040 + hold} anchored={anchored} />
       <Glint delayMs={delayMs + 1220 + hold} color={p1} left={62} top={33} />
       {/* settle: the kicked-up trail dust sinks back to the boards */}
       <Afterglow delayMs={delayMs + 1040 + hold} color={tint(p1, 0.22)} left={44} top={34} w={26} h={18} />
@@ -3693,7 +4117,7 @@ const GLYPH: Record<string, ReactNode> = {
       <path d="M1 5 C2.6 2.6 7.4 2.6 9 5 C7.4 7.4 2.6 7.4 1 5 Z" fill="#12081f" stroke="#c94ad1" strokeWidth="0.5" {...SJ} />
       <circle cx="5" cy="5" r="1.7" fill="#c94ad1" />
       <circle cx="5" cy="5" r="0.8" fill="none" stroke="#12081f" strokeWidth="0.4" />
-      <circle cx="5" cy="5" r="0.3" fill="#ffffff" />
+      <circle cx="5" cy="5" r="0.3" fill="#fff4d6" />
     </Gl>
   ),
   // the eye fixed on a tower
@@ -3797,7 +4221,7 @@ const GLYPH: Record<string, ReactNode> = {
     <Gl>
       <circle cx="5" cy="4" r="1.4" fill="#bfe6ff" stroke="#4f8fd1" strokeWidth="0.5" />
       <path d="M3.2 9 C3.2 6.8 6.8 6.8 6.8 9 Z" fill="#bfe6ff" stroke="#4f8fd1" strokeWidth="0.5" {...SJ} />
-      <path d="M2.6 3.4 C3.4 2.4 6.6 2.4 7.4 3.4" fill="none" stroke="#ffffff" strokeWidth="0.8" strokeLinecap="round" />
+      <path d="M2.6 3.4 C3.4 2.4 6.6 2.4 7.4 3.4" fill="none" stroke="#eef8ff" strokeWidth="0.8" strokeLinecap="round" />
       <path d="M1.6 6.2 L2.4 6.2 M2 5.8 L2 6.6" stroke="#9fd8ff" strokeWidth="0.4" strokeLinecap="round" />
     </Gl>
   ),
@@ -3806,7 +4230,7 @@ const GLYPH: Record<string, ReactNode> = {
     <Gl>
       <path d="M2 3.6 L5 1.6 L8 3.6 L8 7.6 L5 9.4 L2 7.6 Z" fill="#bfe6ff" fillOpacity="0.55" stroke="#4f8fd1" strokeWidth="0.5" {...SJ} />
       <path d="M4 4 H5.6 V6 C6.4 6 7 6.4 7 7.2 H4 Z" fill="#5a6b8f" stroke="#2c3e6b" strokeWidth="0.4" {...SJ} />
-      <path d="M2.8 4.4 L4 5.6" stroke="#ffffff" strokeWidth="0.4" strokeLinecap="round" />
+      <path d="M2.8 4.4 L4 5.6" stroke="#eef8ff" strokeWidth="0.4" strokeLinecap="round" />
     </Gl>
   ),
   // frost creeping finger by finger
@@ -3822,14 +4246,14 @@ const GLYPH: Record<string, ReactNode> = {
       <path d="M1.6 7.6 C1.6 5.6 2.4 4.6 3.6 4.4 L4.2 5.4 L3.6 6 C3.6 6.8 3.2 7.6 2.6 7.6 Z" fill="#bfe6ff" stroke="#4f8fd1" strokeWidth="0.4" {...SJ} />
       <path d="M6.4 7.6 L6.7 5.6 C7 5 7.8 5 8.1 5.6 L8.4 7.6 Z" fill="#bfe6ff" stroke="#4f8fd1" strokeWidth="0.4" {...SJ} />
       <circle cx="7.4" cy="4.4" r="0.5" fill="#bfe6ff" stroke="#4f8fd1" strokeWidth="0.3" />
-      <path d="M5 2 V3.2 M4.5 2.6 H5.5" stroke="#ffffff" strokeWidth="0.5" strokeLinecap="round" />
+      <path d="M5 2 V3.2 M4.5 2.6 H5.5" stroke="#eef8ff" strokeWidth="0.5" strokeLinecap="round" />
     </Gl>
   ),
   // total whiteout: the blizzard flake
   total_whiteout: (
     <Gl>
-      <path d="M5 0.8 V9.2 M1.4 2.9 L8.6 7.1 M8.6 2.9 L1.4 7.1" stroke="#ffffff" strokeWidth="0.7" strokeLinecap="round" />
-      <path d="M4 1.8 L5 2.8 L6 1.8 M4 8.2 L5 7.2 L6 8.2 M1.9 4.2 L3 3.7 M1.9 5.8 L3 6.3 M8.1 4.2 L7 3.7 M8.1 5.8 L7 6.3" fill="none" stroke="#ffffff" strokeWidth="0.5" {...SJ} />
+      <path d="M5 0.8 V9.2 M1.4 2.9 L8.6 7.1 M8.6 2.9 L1.4 7.1" stroke="#eef8ff" strokeWidth="0.7" strokeLinecap="round" />
+      <path d="M4 1.8 L5 2.8 L6 1.8 M4 8.2 L5 7.2 L6 8.2 M1.9 4.2 L3 3.7 M1.9 5.8 L3 6.3 M8.1 4.2 L7 3.7 M8.1 5.8 L7 6.3" fill="none" stroke="#eef8ff" strokeWidth="0.5" {...SJ} />
     </Gl>
   ),
   // numbed hand, fingers iced over
@@ -3842,7 +4266,7 @@ const GLYPH: Record<string, ReactNode> = {
   // every neighbouring piece iced at once: ring of shards
   total_freeze: (
     <Gl>
-      <circle cx="5" cy="5" r="1.3" fill="#ffffff" stroke="#4f8fd1" strokeWidth="0.4" />
+      <circle cx="5" cy="5" r="1.3" fill="#eef8ff" stroke="#4f8fd1" strokeWidth="0.4" />
       <path d="M5 0.8 L5.8 2.6 H4.2 Z M5 9.2 L4.2 7.4 H5.8 Z M0.8 5 L2.6 4.2 V5.8 Z M9.2 5 L7.4 5.8 V4.2 Z" fill="#9fd8ff" stroke="#4f8fd1" strokeWidth="0.35" {...SJ} />
     </Gl>
   ),
@@ -4095,7 +4519,7 @@ const GLYPH: Record<string, ReactNode> = {
   time_stop_short: (
     <Gl>
       <circle cx="5" cy="5" r="3.8" fill="none" stroke="#6fe3ff" strokeWidth="0.6" />
-      <path d="M5 5 L5 2.2 M5 5 L7.2 6.2" stroke="#ffffff" strokeWidth="0.8" strokeLinecap="round" />
+      <path d="M5 5 L5 2.2 M5 5 L7.2 6.2" stroke="#fff4d6" strokeWidth="0.8" strokeLinecap="round" />
       <path d="M3 3.4 L7 6.8" stroke="#3a3766" strokeWidth="0.9" strokeLinecap="round" />
     </Gl>
   ),
@@ -4425,7 +4849,7 @@ const GLYPH: Record<string, ReactNode> = {
     <Gl>
       <path d="M3.4 3.6 L3 1.8 L4.1 2.6 L5 1.2 L5.9 2.6 L7 1.8 L6.6 3.6 Z" fill="#ffd76a" stroke="#8a6a3a" strokeWidth="0.4" {...SJ} />
       <path d="M5 4.6 V9 M2.8 6.8 H7.2 M3.4 5.2 L6.6 8.4 M6.6 5.2 L3.4 8.4" stroke="#6fe3ff" strokeWidth="0.55" strokeLinecap="round" />
-      <circle cx="5" cy="6.8" r="0.6" fill="#ffffff" stroke="#3a5fbf" strokeWidth="0.3" />
+      <circle cx="5" cy="6.8" r="0.6" fill="#eef8ff" stroke="#3a5fbf" strokeWidth="0.3" />
     </Gl>
   ),
   // the knight in amazon regalia
@@ -4469,7 +4893,7 @@ const GLYPH: Record<string, ReactNode> = {
   mirror_of_souls: (
     <Gl>
       <ellipse cx="5" cy="4.8" rx="2.8" ry="3.6" fill="#bfe6ff" fillOpacity="0.5" stroke="#c9a84c" strokeWidth="0.6" />
-      <path d="M3.8 3 C4.6 2.4 5.6 2.4 6.4 3.2" fill="none" stroke="#ffffff" strokeWidth="0.5" strokeLinecap="round" />
+      <path d="M3.8 3 C4.6 2.4 5.6 2.4 6.4 3.2" fill="none" stroke="#eef8ff" strokeWidth="0.5" strokeLinecap="round" />
       <path d="M4.2 5.8 C4.2 4.6 5.8 4.6 5.8 5.8 L5.6 6.8 H4.4 Z" fill="#5a6b8f" stroke="#2c3e6b" strokeWidth="0.35" {...SJ} />
       <path d="M3.6 9.2 H6.4 M5 8.4 V9.2" stroke="#c9a84c" strokeWidth="0.5" strokeLinecap="round" />
     </Gl>
@@ -4544,10 +4968,25 @@ function G(
   config: SigPlugin["config"],
   flourish?: string,
 ): SigPlugin {
+  // A card that declared anchor "cast" / "aim" plays ON the square it was
+  // played on, so its board-scale layers have to go through <BoardFrame> to
+  // find the board. One left at "board" is re-centred by Board itself and must
+  // not: see the Frame helper at the top of this file.
+  const anchored = config.anchor === "cast" || config.anchor === "aim";
   return {
     config,
-    Render: function GreatPlayRender({ lead, delayMs }: { lead: boolean; delayMs: number }) {
-      return <Template palette={palette} glyph={glyph} lead={lead} delayMs={delayMs} flourish={flourish} />;
+    Render: function GreatPlayRender({ lead, role, delayMs }: { lead: boolean; role: SigRole; delayMs: number }) {
+      return (
+        <Template
+          palette={palette}
+          glyph={glyph}
+          lead={lead}
+          role={role}
+          anchored={anchored}
+          delayMs={delayMs}
+          flourish={flourish}
+        />
+      );
     },
   };
 }
@@ -4555,372 +4994,377 @@ function G(
 export const PLAYS: Record<string, SigPlugin> = {
   /* --- WitchCircle (the hex pool) ---------------------------------------- */
   ball_and_chain: G(WitchCircle, ["#6b4a8f", "#c9b0e8", "#2a1030"], GLYPH.ball_and_chain, {
-    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades",
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades", anchor: "cast",
   }, "shackle"),
   royal_summons: G(WitchCircle, ["#8f2bbf", "#ffd76a", "#2a1030"], GLYPH.royal_summons, {
-    ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "shades",
+    ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "shades", anchor: "cast",
   }, "summons"),
   palsied_hands: G(WitchCircle, ["#6b4a8f", "#8faf4a", "#2f3a26"], GLYPH.palsied_hands, {
-    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades",
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades", anchor: "board",
   }, "palsy"),
   throne_bound: G(WitchCircle, ["#5b2b8f", "#c94ad1", "#1c0f18"], GLYPH.throne_bound, {
-    ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "shades",
+    ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "shades", anchor: "cast",
   }, "tether"),
   lone_sovereign: G(WitchCircle, ["#5a6b8f", "#cdd6ff", "#1c1c2a"], GLYPH.lone_sovereign, {
-    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades",
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades", anchor: "board",
   }, "sovereign"),
   peasant_levy: G(WitchCircle, ["#8a7a63", "#c9a84c", "#3a3026"], GLYPH.peasant_levy, {
-    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades",
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades", anchor: "board",
   }, "levy"),
   court_in_exile: G(WitchCircle, ["#6b1a2a", "#e8b04b", "#2b1218"], GLYPH.court_in_exile, {
-    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades",
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades", anchor: "cast",
   }, "exile"),
   cast_a_nerf: G(WitchCircle, ["#8f6bff", "#ff9d3d", "#2a1030"], GLYPH.cast_a_nerf, {
-    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades",
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades", anchor: "board",
   }),
   royal_handicap: G(WitchCircle, ["#8f2bbf", "#e3d0ff", "#1c0f18"], GLYPH.royal_handicap, {
-    ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "shades",
+    ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "shades", anchor: "cast",
   }, "nodiag"),
   queens_handicap: G(WitchCircle, ["#c94ad1", "#e3d0ff", "#2a1030"], GLYPH.queens_handicap, {
-    ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "shades",
+    ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "shades", anchor: "cast",
   }, "escort"),
   grounded_command: G(WitchCircle, ["#6b4a8f", "#ffd76a", "#1c1c2a"], GLYPH.grounded_command, {
-    ordering: "sweep", staggerMs: 55, victims: ["q", "r"], hasLead: true, sound: "shades",
+    ordering: "sweep", staggerMs: 55, victims: ["q", "r"], hasLead: true, sound: "shades", anchor: "cast",
   }, "grounded"),
   lunar_eclipse: G(WitchCircle, ["#2c3e6b", "#cdd6ff", "#0d1326"], GLYPH.lunar_eclipse, {
-    ordering: "sweep", staggerMs: 55, victims: ["q", "r"], hasLead: true, sound: "shades",
+    ordering: "sweep", staggerMs: 55, victims: ["q", "r"], hasLead: true, sound: "shades", anchor: "cast",
   }, "eclipse"),
   hexed_satchel: G(WitchCircle, ["#8a6a3a", "#a8e07f", "#2f3a26"], GLYPH.hexed_satchel, {
-    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades",
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades", anchor: "board",
   }, "satchel"),
   iron_furrow: G(WitchCircle, ["#8faf4a", "#c9a84c", "#2f3a26"], GLYPH.iron_furrow, {
-    ordering: "sweep", staggerMs: 55, victims: ["p"], hasLead: true, sound: "shades",
+    ordering: "sweep", staggerMs: 55, victims: ["p"], hasLead: true, sound: "shades", anchor: "cast",
   }, "furrow"),
   leaden_fields: G(WitchCircle, ["#6e6e78", "#e8dcc0", "#2a2a30"], GLYPH.leaden_fields, {
-    ordering: "sweep", staggerMs: 55, victims: ["p"], hasLead: true, sound: "petrify",
+    ordering: "sweep", staggerMs: 55, victims: ["p"], hasLead: true, sound: "petrify", anchor: "board",
   }, "leadcast"),
   wc_voodoo_doll: G(WitchCircle, ["#6b4a8f", "#c94a5a", "#1c0f18"], GLYPH.wc_voodoo_doll, {
-    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades",
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades", anchor: "cast",
   }, "voodoo"),
   wc_sticky_floor: G(WitchCircle, ["#c9a84c", "#ffd23f", "#4a3a22"], GLYPH.wc_sticky_floor, {
-    ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "snooze",
+    ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "snooze", anchor: "board",
   }, "sticky"),
   threads_of_fate: G(WitchCircle, ["#5a6b8f", "#cdd6ff", "#2c3e6b"], GLYPH.threads_of_fate, {
-    ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "shades", source: "stun",
+    ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "shades", source: "stun", anchor: "cast",
   }, "loom"),
   mind_control: G(WitchCircle, ["#8f2bbf", "#c94ad1", "#12081f"], GLYPH.mind_control, {
-    ordering: "radial", staggerMs: 0, victims: ["n", "b"], hasLead: true, sound: "shades",
+    ordering: "radial", staggerMs: 0, victims: ["n", "b"], hasLead: true, sound: "shades", anchor: "cast",
   }, "puppet"),
   mind_dominion: G(WitchCircle, ["#5b2b8f", "#8f6bff", "#12081f"], GLYPH.mind_dominion, {
-    ordering: "radial", staggerMs: 0, victims: ["r", "b"], hasLead: true, sound: "shades",
+    ordering: "radial", staggerMs: 0, victims: ["r", "b"], hasLead: true, sound: "shades", anchor: "cast",
   }, "dominion"),
 
   /* --- StoneGaze (the walnut / petrify pool) -------------------------------- */
   medusas_verdict: G(StoneGaze, ["#8d8d94", "#7fae5a", "#4c4c53"], GLYPH.medusas_verdict, {
-    ordering: "radial", staggerMs: 50, victims: "all", hasLead: true, sound: "petrify", source: "walnut",
+    ordering: "radial", staggerMs: 50, victims: "all", hasLead: true, sound: "petrify", source: "walnut", anchor: "cast",
   }, "medusa"),
   granite_ramparts: G(StoneGaze, ["#8a8478", "#c9b89a", "#4a4036"], GLYPH.granite_ramparts, {
-    ordering: "sweep", staggerMs: 60, victims: ["r"], hasLead: true, sound: "petrify", source: "walnut",
+    ordering: "sweep", staggerMs: 60, victims: ["r"], hasLead: true, sound: "petrify", source: "walnut", anchor: "cast",
   }, "rampart"),
   stone_menagerie: G(StoneGaze, ["#8d8d94", "#c9c9cf", "#3a3a40"], GLYPH.stone_menagerie, {
-    ordering: "sweep", staggerMs: 60, victims: ["n", "b"], hasLead: true, sound: "petrifiedforest", source: "walnut",
+    ordering: "sweep", staggerMs: 60, victims: ["n", "b"], hasLead: true, sound: "petrifiedforest", source: "walnut", anchor: "board",
   }, "menagerie"),
   stone_curse: G(StoneGaze, ["#8a6a4a", "#c9b89a", "#4a3a2a"], GLYPH.stone_curse, {
-    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "petrify", source: "walnut",
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "petrify", source: "walnut", anchor: "cast",
   }),
   stone_riders: G(StoneGaze, ["#8d8d94", "#b58a5a", "#4c4c53"], GLYPH.stone_riders, {
-    ordering: "sweep", staggerMs: 60, victims: ["n"], hasLead: true, sound: "petrifiedforest", source: "walnut",
+    ordering: "sweep", staggerMs: 60, victims: ["n"], hasLead: true, sound: "petrifiedforest", source: "walnut", anchor: "cast",
   }, "contagion"),
   stone_prelates: G(StoneGaze, ["#9a9a9a", "#e8dcc0", "#5c5c63"], GLYPH.stone_prelates, {
-    ordering: "sweep", staggerMs: 60, victims: ["b"], hasLead: true, sound: "petrifiedforest", source: "walnut",
+    ordering: "sweep", staggerMs: 60, victims: ["b"], hasLead: true, sound: "petrifiedforest", source: "walnut", anchor: "board",
   }, "pews"),
   stone_bastions: G(StoneGaze, ["#8a94a8", "#c9b89a", "#3a3a40"], GLYPH.stone_bastions, {
-    ordering: "sweep", staggerMs: 60, victims: ["r"], hasLead: true, sound: "petrify", source: "walnut",
+    ordering: "sweep", staggerMs: 60, victims: ["r"], hasLead: true, sound: "petrify", source: "walnut", anchor: "cast",
   }, "bastion"),
   queen_of_stone: G(StoneGaze, ["#8d8d94", "#ffd76a", "#4c4c53"], GLYPH.queen_of_stone, {
-    ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "petrify", source: "walnut",
+    ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "petrify", source: "walnut", anchor: "cast",
   }, "stoneshoes"),
   eternal_statue: G(StoneGaze, ["#c9c9cf", "#7fae5a", "#6e6e74"], GLYPH.eternal_statue, {
-    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "petrifiedforest", source: "walnut",
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "petrifiedforest", source: "walnut", anchor: "cast",
   }, "statue"),
   nerf_hammer: G(StoneGaze, ["#8a6a4a", "#ff9d3d", "#4a3a2a"], GLYPH.nerf_hammer, {
-    ordering: "radial", staggerMs: 0, victims: ["n", "b", "r"], hasLead: true, sound: "petrify", source: "walnut",
+    ordering: "radial", staggerMs: 0, victims: ["n", "b", "r"], hasLead: true, sound: "petrify", source: "walnut", anchor: "cast",
   }, "hammer"),
 
   /* --- ColdFront (the freeze pool) --------------------------------------------- */
   the_big_chill: G(ColdFront, ["#9fd8ff", "#e8f8ff", "#3f7fb5"], GLYPH.the_big_chill, {
-    ordering: "sweep", staggerMs: 45, victims: "all", hasLead: true, sound: "massfreeze", source: "frozen",
+    ordering: "sweep", staggerMs: 45, victims: "all", hasLead: true, sound: "massfreeze", source: "frozen", anchor: "cast",
   }, "bigchill"),
-  frozen_moment: G(ColdFront, ["#bfe6ff", "#ffffff", "#4f8fd1"], GLYPH.frozen_moment, {
-    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice",
+  frozen_moment: G(ColdFront, ["#bfe6ff", "#eef8ff", "#4f8fd1"], GLYPH.frozen_moment, {
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", anchor: "cast",
   }, "midmove"),
   creeping_frost: G(ColdFront, ["#7fd8d8", "#dff7f7", "#3f6f9f"], GLYPH.creeping_frost, {
-    ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "clockice", source: "frozen",
+    ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "clockice", source: "frozen", anchor: "aim",
   }, "creepfrost"),
   glacial_flanks: G(ColdFront, ["#9fd8ff", "#c9cdd6", "#4f8fd1"], GLYPH.glacial_flanks, {
-    ordering: "sweep", staggerMs: 50, victims: ["n", "b"], hasLead: true, sound: "massfreeze", source: "frozen",
+    ordering: "sweep", staggerMs: 50, victims: ["n", "b"], hasLead: true, sound: "massfreeze", source: "frozen", anchor: "cast",
   }, "pincer"),
-  total_whiteout: G(ColdFront, ["#e8f8ff", "#ffffff", "#6fb5e8"], GLYPH.total_whiteout, {
-    ordering: "sweep", staggerMs: 45, victims: "all", hasLead: true, sound: "massfreeze", source: "frozen",
+  total_whiteout: G(ColdFront, ["#e8f8ff", "#eef8ff", "#6fb5e8"], GLYPH.total_whiteout, {
+    ordering: "sweep", staggerMs: 45, victims: "all", hasLead: true, sound: "massfreeze", source: "frozen", anchor: "board",
   }, "whiteout"),
   we_frostbite_curse: G(ColdFront, ["#9fd8ff", "#eef8ff", "#5a8fc0"], GLYPH.we_frostbite_curse, {
-    ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "clockice",
+    ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "clockice", anchor: "board",
   }),
   total_freeze: G(ColdFront, ["#bfe6ff", "#e8f8ff", "#3f6f9f"], GLYPH.total_freeze, {
-    ordering: "radial", staggerMs: 45, victims: "all", hasLead: true, sound: "massfreeze", source: "frozen",
+    ordering: "radial", staggerMs: 45, victims: "all", hasLead: true, sound: "massfreeze", source: "frozen", anchor: "board",
   }, "totalfreeze"),
 
   /* --- SiegeRoll (bombs / demolitions / barrages) --------------------------------- */
   atomic_captures: G(SiegeRoll, ["#ff9d3d", "#ffd166", "#3a1c12"], GLYPH.atomic_captures, {
-    ordering: "octagon", staggerMs: 70, victims: "all", hasLead: true, sound: "atomic",
+    ordering: "octagon", staggerMs: 70, victims: "all", hasLead: true, sound: "atomic", anchor: "board",
   }, "mushroom"),
   atomic_reaction: G(SiegeRoll, ["#e6432c", "#ffd166", "#3a1c12"], GLYPH.atomic_reaction, {
-    ordering: "octagon", staggerMs: 70, victims: "all", hasLead: true, sound: "atomic",
+    ordering: "octagon", staggerMs: 70, victims: "all", hasLead: true, sound: "atomic", anchor: "aim",
   }, "chain"),
   detonation_field: G(SiegeRoll, ["#c94a3a", "#ff9d3d", "#2b1218"], GLYPH.detonation_field, {
-    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "cataclysm",
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "cataclysm", anchor: "cast",
   }, "threebombs"),
   ww_demolition_charge: G(SiegeRoll, ["#7c8a4a", "#ffd166", "#3a3526"], GLYPH.ww_demolition_charge, {
-    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "siege",
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "siege", anchor: "cast",
   }),
   wc_confetti_cannon: G(SiegeRoll, ["#c94ad1", "#ffcf4d", "#3a1030"], GLYPH.wc_confetti_cannon, {
-    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "siege",
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "siege", anchor: "board",
   }, "confetti"),
   we_firestorm: G(SiegeRoll, ["#ff7a29", "#ffd166", "#3a1c12"], GLYPH.we_firestorm, {
-    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "cataclysm",
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "cataclysm", anchor: "board",
   }, "firestorm"),
   giants_maul: G(SiegeRoll, ["#8a94a8", "#ffd166", "#3a3a40"], GLYPH.giants_maul, {
-    ordering: "line", staggerMs: 70, victims: "all", mover: "r", hasLead: true, sound: "siege",
+    ordering: "line", staggerMs: 70, victims: "all", mover: "r", hasLead: true, sound: "siege", anchor: "board",
   }, "maul"),
   scorched_middle: G(SiegeRoll, ["#ff7a29", "#ffb454", "#3a1c12"], GLYPH.scorched_middle, {
-    ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "cataclysm",
+    ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "cataclysm", anchor: "board",
   }, "scorch"),
 
   /* --- WarBanner (protection / musters / holds) -------------------------------------- */
   checkmate_immunity: G(WarBanner, ["#5a8fc0", "#dfe8ff", "#2c3e6b"], GLYPH.checkmate_immunity, {
-    ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "aegis",
+    ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "aegis", anchor: "cast",
   }, "parry"),
   iron_reign: G(WarBanner, ["#8a94a8", "#ffd76a", "#3a3a40"], GLYPH.iron_reign, {
-    ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "aegis", source: "kingSafe",
+    ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "aegis", source: "kingSafe", anchor: "cast",
   }),
   ironclad: G(WarBanner, ["#aab6c8", "#e3e9f2", "#3a4556"], GLYPH.ironclad, {
-    ordering: "sweep", staggerMs: 50, victims: "all", hasLead: true, sound: "aegis", source: "shield",
+    ordering: "sweep", staggerMs: 50, victims: "all", hasLead: true, sound: "aegis", source: "shield", anchor: "board",
   }, "plate"),
   ww_iron_bulwark: G(WarBanner, ["#8a94a8", "#c94a3a", "#3a3a40"], GLYPH.ww_iron_bulwark, {
-    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall", source: "shield",
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall", source: "shield", anchor: "cast",
   }, "bulwark"),
   ww_praetorian_guard: G(WarBanner, ["#c9a84c", "#c94a3a", "#4a3a22"], GLYPH.ww_praetorian_guard, {
-    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis", source: "shield",
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis", source: "shield", anchor: "cast",
   }, "praetorian"),
   round_table: G(WarBanner, ["#c9b89a", "#ffd76a", "#5a4a36"], GLYPH.round_table, {
-    ordering: "radial", staggerMs: 60, victims: ["n"], hasLead: true, sound: "coronation",
+    ordering: "radial", staggerMs: 60, victims: ["n"], hasLead: true, sound: "coronation", anchor: "cast",
   }, "roundtable"),
   ww_bridgehead: G(WarBanner, ["#7c8a4a", "#c94a3a", "#3a3526"], GLYPH.ww_bridgehead, {
-    ordering: "radial", staggerMs: 60, victims: ["n", "p"], hasLead: true, sound: "wall", source: "summon",
+    ordering: "radial", staggerMs: 60, victims: ["n", "p"], hasLead: true, sound: "wall", source: "summon", anchor: "cast",
   }, "bridge"),
   sealed_avenues: G(WarBanner, ["#8a94a8", "#ffd76a", "#5c5c63"], GLYPH.sealed_avenues, {
-    ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "wall",
+    ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "wall", anchor: "board",
   }, "gates"),
 
   /* --- Grove (nature / roots / blooms) --------------------------------------------------- */
   dryad_grove: G(Grove, ["#8a6a3a", "#a8e07f", "#3f8f3f"], GLYPH.dryad_grove, {
-    ordering: "radial", staggerMs: 0, victims: ["b"], hasLead: true, sound: "cathedral", source: "summon",
+    ordering: "radial", staggerMs: 0, victims: ["b"], hasLead: true, sound: "cathedral", source: "summon", anchor: "aim",
   }),
   we_overgrowth: G(Grove, ["#3f8f3f", "#ffd76a", "#1c4a1c"], GLYPH.we_overgrowth, {
-    ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "coronation",
+    ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "coronation", anchor: "cast",
   }, "bloom"),
   we_rooted: G(Grove, ["#4a3a22", "#a8e07f", "#2f3a26"], GLYPH.we_rooted, {
-    ordering: "sweep", staggerMs: 55, victims: ["r", "q"], hasLead: true, sound: "petrifiedforest",
+    ordering: "sweep", staggerMs: 55, victims: ["r", "q"], hasLead: true, sound: "petrifiedforest", anchor: "cast",
   }, "roots"),
   we_quagmire: G(Grove, ["#5c5348", "#8faf4a", "#3a3026"], GLYPH.we_quagmire, {
-    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "petrifiedforest",
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "petrifiedforest", anchor: "cast",
   }, "quagmire"),
   thorn_hedge: G(Grove, ["#1c4a1c", "#a8e07f", "#0f2a0f"], GLYPH.thorn_hedge, {
-    ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "wall",
+    ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "wall", anchor: "board",
   }, "briar"),
 
   /* --- PhantomParade (spirits / veils / phasings) ------------------------------------------- */
   gossamer_veil: G(PhantomParade, ["#8f6bff", "#e3d0ff", "#3b1a5e"], GLYPH.gossamer_veil, {
-    ordering: "sweep", staggerMs: 50, victims: "all", hasLead: true, sound: "aegis", source: "shield",
+    ordering: "sweep", staggerMs: 50, victims: "all", hasLead: true, sound: "aegis", source: "shield", anchor: "cast",
   }, "gossamer"),
   starlight_ward: G(PhantomParade, ["#2c3e6b", "#cdd6ff", "#12122a"], GLYPH.starlight_ward, {
-    ordering: "sweep", staggerMs: 50, victims: "all", hasLead: true, sound: "cathedral", source: "shield",
+    ordering: "sweep", staggerMs: 50, victims: "all", hasLead: true, sound: "cathedral", source: "shield", anchor: "cast",
   }, "starward"),
   spirit_guide: G(PhantomParade, ["#4a6b8f", "#7fd8d8", "#12303a"], GLYPH.spirit_guide, {
-    ordering: "radial", staggerMs: 0, victims: ["b"], hasLead: true, sound: "shades", source: "summon",
+    ordering: "radial", staggerMs: 0, victims: ["b"], hasLead: true, sound: "shades", source: "summon", anchor: "cast",
   }),
   phase_army: G(PhantomParade, ["#5b2b8f", "#e3d0ff", "#2a1030"], GLYPH.phase_army, {
-    ordering: "sweep", staggerMs: 55, victims: ["b", "r", "q"], hasLead: true, sound: "shades",
+    ordering: "sweep", staggerMs: 55, victims: ["b", "r", "q"], hasLead: true, sound: "shades", anchor: "aim",
   }, "phase"),
   ghost_legion: G(PhantomParade, ["#5a6b8f", "#eef8ff", "#2c3e6b"], GLYPH.ghost_legion, {
-    ordering: "sweep", staggerMs: 55, victims: ["p"], hasLead: true, sound: "shades",
+    ordering: "sweep", staggerMs: 55, victims: ["p"], hasLead: true, sound: "shades", anchor: "aim",
   }, "leapfrog"),
   valkyrie: G(PhantomParade, ["#5a6b8f", "#ffd76a", "#2c3e6b"], GLYPH.valkyrie, {
-    ordering: "radial", staggerMs: 0, victims: ["q", "r"], hasLead: true, sound: "coronation", source: "summon",
+    ordering: "radial", staggerMs: 0, victims: ["q", "r"], hasLead: true, sound: "coronation", source: "summon", anchor: "cast",
   }, "chooser"),
 
   /* --- ClockSpire (tempo / stolen hours / lost days) -------------------------------------------- */
   extra_move_repeat: G(ClockSpire, ["#6fe3ff", "#ffd76a", "#1c3a4a"], GLYPH.extra_move_repeat, {
-    ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "blitz",
+    ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "blitz", anchor: "board",
   }),
   time_stop_short: G(ClockSpire, ["#3a3766", "#6fe3ff", "#12122a"], GLYPH.time_stop_short, {
-    ordering: "radial", staggerMs: 45, victims: "all", hasLead: true, sound: "clockcage", source: "frozen",
+    ordering: "radial", staggerMs: 45, victims: "all", hasLead: true, sound: "clockcage", source: "frozen", anchor: "board",
   }, "timestop"),
   time_rewind: G(ClockSpire, ["#5b2b8f", "#6fe3ff", "#2a1030"], GLYPH.time_rewind, {
-    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage",
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage", anchor: "board",
   }, "rewind"),
   lost_days: G(ClockSpire, ["#5a6b8f", "#cdd6ff", "#2c3e6b"], GLYPH.lost_days, {
-    ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "snooze", source: "stun",
+    ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "snooze", source: "stun", anchor: "board",
   }, "lostdays"),
   wa_stolen_hours: G(ClockSpire, ["#e8c97a", "#6fe3ff", "#4a3a22"], GLYPH.wa_stolen_hours, {
-    ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "clockcage",
+    ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "clockcage", anchor: "cast",
   }, "stealhours"),
 
   /* --- CardRite (drafts / fates / contracts / paperwork) -------------------------------------------- */
   sever: G(CardRite, ["#6b4a8f", "#c94a5a", "#2a1030"], GLYPH.sever, {
-    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades",
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades", anchor: "board",
   }, "sever"),
   draft_domination: G(CardRite, ["#3a3a45", "#c94a5a", "#1c1c22"], GLYPH.draft_domination, {
-    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades",
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades", anchor: "board",
   }, "downgrade"),
   total_nullify: G(CardRite, ["#5c5c63", "#c94a5a", "#2a2a30"], GLYPH.total_nullify, {
-    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades",
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades", anchor: "board",
   }, "nullseal"),
   favorable_stars: G(CardRite, ["#2c3e6b", "#ffd76a", "#12122a"], GLYPH.favorable_stars, {
-    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral",
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", anchor: "board",
   }, "constellation"),
   the_tower: G(CardRite, ["#2c3e6b", "#c94a3a", "#12122a"], GLYPH.the_tower, {
-    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cataclysm",
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cataclysm", anchor: "cast",
   }, "tower"),
   death_arcana: G(CardRite, ["#12081f", "#8f6bff", "#0d0618"], GLYPH.death_arcana, {
-    ordering: "radial", staggerMs: 0, victims: ["n", "b", "r", "q"], hasLead: true, sound: "extinction",
+    ordering: "radial", staggerMs: 0, victims: ["n", "b", "r", "q"], hasLead: true, sound: "extinction", anchor: "cast",
   }, "death"),
   chess_diff: G(CardRite, ["#5a6b8f", "#eef1f7", "#2c3e6b"], GLYPH.chess_diff, {
-    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation",
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation", anchor: "board",
   }, "sidegame"),
   wa_greed: G(CardRite, ["#8a6a3a", "#ffd76a", "#4a3a22"], GLYPH.wa_greed, {
-    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "rampage",
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "rampage", anchor: "board",
   }, "bothcards"),
   riddle_game: G(CardRite, ["#8a6a3a", "#e8dcc0", "#4a3a22"], GLYPH.riddle_game, {
-    ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "snooze", source: "stun",
+    ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "snooze", source: "stun", anchor: "board",
   }, "riddle"),
   rehab: G(CardRite, ["#5fc9b0", "#eef1f7", "#1c4a3a"], GLYPH.rehab, {
-    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral",
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", anchor: "board",
   }, "unshackle"),
   parole: G(CardRite, ["#5a6b8f", "#eef1f7", "#2c3e6b"], GLYPH.parole, {
-    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral",
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", anchor: "cast",
   }, "celldoor"),
   long_leash: G(CardRite, ["#b58a5a", "#e8dcc0", "#5a4a36"], GLYPH.long_leash, {
-    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis",
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis", anchor: "board",
   }),
   wardens_bribe: G(CardRite, ["#8a6a3a", "#ffd76a", "#4a3a22"], GLYPH.wardens_bribe, {
-    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "rampage",
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "rampage", anchor: "board",
   }, "bribe"),
   iron_will: G(CardRite, ["#8a94a8", "#c9cdd6", "#3a3a40"], GLYPH.iron_will, {
-    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis",
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis", anchor: "board",
   }, "unbowed"),
   wc_wrong_way: G(CardRite, ["#c94a5a", "#e8dcc0", "#5a1512"], GLYPH.wc_wrong_way, {
-    ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "shades",
+    ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "shades", anchor: "board",
   }, "wrongway"),
   wc_broken_elevator: G(CardRite, ["#8a94a8", "#ffe9b0", "#3a3a40"], GLYPH.wc_broken_elevator, {
-    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall",
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall", anchor: "board",
   }, "elevator"),
   unseelie_bargain: G(CardRite, ["#2a1030", "#8f6bff", "#12081f"], GLYPH.unseelie_bargain, {
-    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades",
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades", anchor: "cast",
   }, "bargain"),
 
   /* --- ThiefHand (steals / seizures / nullifies) --------------------------------------------------- */
   buff_thief: G(ThiefHand, ["#8f6bff", "#ffd76a", "#2a2a38"], GLYPH.buff_thief, {
-    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "rampage",
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "rampage", anchor: "board",
   }),
   buff_siphon: G(ThiefHand, ["#c94ad1", "#ffd76a", "#1c0f18"], GLYPH.buff_siphon, {
-    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "rampage",
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "rampage", anchor: "board",
   }, "siphon"),
   wa_spelltheft: G(ThiefHand, ["#5b2b8f", "#e3d0ff", "#1c0f2a"], GLYPH.wa_spelltheft, {
-    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades",
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades", anchor: "aim",
   }, "trade"),
   draft_seize: G(ThiefHand, ["#6b4a8f", "#cdd6ff", "#2a1030"], GLYPH.draft_seize, {
-    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "rampage",
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "rampage", anchor: "board",
   }, "seize"),
   collapse: G(ThiefHand, ["#8f6bff", "#c9cdd6", "#1c1c2a"], GLYPH.collapse, {
-    ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "shades",
+    ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "shades", anchor: "aim",
   }, "undertow"),
   void: G(ThiefHand, ["#5b2b8f", "#b98cff", "#0d0618"], GLYPH.void, {
-    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades",
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades", anchor: "cast",
   }, "voidmaw"),
   wa_sabotage: G(ThiefHand, ["#5a6b8f", "#cdd6ff", "#1c1c2a"], GLYPH.wa_sabotage, {
-    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades",
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades", anchor: "board",
   }, "sabotage"),
   empty_handed: G(ThiefHand, ["#8a94a8", "#c94a5a", "#2a2a30"], GLYPH.empty_handed, {
-    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades",
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades", anchor: "board",
   }, "emptypockets"),
 
   /* --- CrownForge (promotions / reforgings) --------------------------------------------------------- */
   double_queen: G(CrownForge, ["#ffd76a", "#fff2c9", "#8a6414"], GLYPH.double_queen, {
-    ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "coronation",
+    ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "coronation", anchor: "cast",
   }, "doublequeen"),
   twin_queens: G(CrownForge, ["#ffd76a", "#ffe9b0", "#7a5b23"], GLYPH.twin_queens, {
-    ordering: "radial", staggerMs: 60, victims: ["p"], hasLead: true, sound: "crownrain",
+    // Two named pawns, so the forge reaches for them rather than crowning the
+    // whole board: the card promotes exactly two, and CrownForge's anchored
+    // branch already frames its board-scale layers and carries the Reach leg.
+    ordering: "radial", staggerMs: 60, victims: ["p"], hasLead: true, sound: "crownrain", anchor: "aim",
   }, "twincrowns"),
   promotion_storm: G(CrownForge, ["#c9cdd6", "#ffd76a", "#5a6b8f"], GLYPH.promotion_storm, {
-    ordering: "sweep", staggerMs: 60, victims: ["p"], hasLead: true, sound: "crownrain",
+    ordering: "sweep", staggerMs: 60, victims: ["p"], hasLead: true, sound: "crownrain", anchor: "board",
   }, "helmrain"),
   mass_promote_minor: G(CrownForge, ["#b58a5a", "#ffd76a", "#5a4a36"], GLYPH.mass_promote_minor, {
-    ordering: "sweep", staggerMs: 60, victims: ["p"], hasLead: true, sound: "coronation",
+    // Two pawns again, and the sweep ordering already walks them in order, so
+    // the leg has a real vector to run along.
+    ordering: "sweep", staggerMs: 60, victims: ["p"], hasLead: true, sound: "coronation", anchor: "aim",
   }),
   resurrect_queen: G(CrownForge, ["#6b1a2a", "#ffd76a", "#3a0e1a"], GLYPH.resurrect_queen, {
-    ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "coronation", source: "summon",
+    ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "coronation", source: "summon", anchor: "cast",
   }, "requeen"),
   legendary_forge: G(CrownForge, ["#ff9d3d", "#ffd166", "#3a1c12"], GLYPH.legendary_forge, {
-    ordering: "radial", staggerMs: 0, victims: ["n", "b"], hasLead: true, sound: "colossus",
+    ordering: "radial", staggerMs: 0, victims: ["n", "b"], hasLead: true, sound: "colossus", anchor: "cast",
   }, "reforge"),
   royal_ascension: G(CrownForge, ["#b98cff", "#ffd76a", "#3b1a5e"], GLYPH.royal_ascension, {
-    ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "coronation",
+    ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "coronation", anchor: "cast",
   }, "ascension"),
   second_king: G(CrownForge, ["#ffd76a", "#ffe9b0", "#8a6a3a"], GLYPH.second_king, {
-    ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "coronation",
+    ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "coronation", anchor: "cast",
   }, "secondking"),
   wa_leaden_crown: G(CrownForge, ["#6e6e78", "#c9a84c", "#2a2a30"], GLYPH.wa_leaden_crown, {
-    ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "coronation", source: "shield",
+    ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "coronation", source: "shield", anchor: "cast",
   }, "leadcrown"),
   overclock_major: G(CrownForge, ["#6fe3ff", "#ffd76a", "#1c3a4a"], GLYPH.overclock_major, {
-    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "blitz",
+    ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "blitz", anchor: "aim",
   }, "overclock"),
   ascendant_knight: G(CrownForge, ["#b98cff", "#e3d0ff", "#3b1a5e"], GLYPH.ascendant_knight, {
-    ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "coronation", source: "shield",
+    ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "coronation", source: "shield", anchor: "cast",
   }, "wings"),
   nerf_breaker: G(CrownForge, ["#8a94a8", "#ffd166", "#3a3a40"], GLYPH.nerf_breaker, {
-    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "colossus",
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "colossus", anchor: "board",
   }, "chainbreak"),
 
   /* --- RiftGate (teleports / conjurings / mirrors) ---------------------------------------------------- */
   fey_step: G(RiftGate, ["#3f8f3f", "#a8e07f", "#1c4a1c"], GLYPH.fey_step, {
-    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades",
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades", anchor: "aim",
   }, "hedgerow"),
   rift_walker: G(RiftGate, ["#5b2b8f", "#6fe3ff", "#12081f"], GLYPH.rift_walker, {
-    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage",
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage", anchor: "aim",
   }),
   mirror_of_souls: G(RiftGate, ["#5a8fc0", "#bfe6ff", "#2c3e6b"], GLYPH.mirror_of_souls, {
-    ordering: "radial", staggerMs: 0, victims: ["n", "b"], hasLead: true, sound: "shades",
+    ordering: "radial", staggerMs: 0, victims: ["n", "b"], hasLead: true, sound: "shades", anchor: "aim",
   }, "mirror"),
   wa_conjure_rook: G(RiftGate, ["#8f6bff", "#e3d0ff", "#2a1030"], GLYPH.wa_conjure_rook, {
-    ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "clockcage", source: "summon",
+    ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "clockcage", source: "summon", anchor: "cast",
   }, "conjure"),
   wa_twin_familiars: G(RiftGate, ["#7fd8d8", "#e3d0ff", "#12303a"], GLYPH.wa_twin_familiars, {
-    ordering: "radial", staggerMs: 60, victims: ["b"], hasLead: true, sound: "shades",
+    ordering: "radial", staggerMs: 60, victims: ["b"], hasLead: true, sound: "shades", anchor: "aim",
   }, "familiars"),
   ley_line: G(RiftGate, ["#5fc9b0", "#a8e07f", "#1c4a3a"], GLYPH.ley_line, {
-    ordering: "file", staggerMs: 50, victims: "all", hasLead: true, sound: "wall",
+    ordering: "file", staggerMs: 50, victims: "all", hasLead: true, sound: "wall", anchor: "aim",
   }, "leyline"),
 
   /* --- BeastRush (hunts / mounts / charges) ------------------------------------------------------------- */
   wild_hunt: G(BeastRush, ["#3b1a5e", "#b98cff", "#12081f"], GLYPH.wild_hunt, {
-    ordering: "sweep", staggerMs: 60, victims: ["n", "b"], hasLead: true, sound: "rampage",
+    ordering: "sweep", staggerMs: 60, victims: ["n", "b"], hasLead: true, sound: "rampage", anchor: "board",
   }, "hunt"),
   dragon_mount: G(BeastRush, ["#4a8f5f", "#d6234f", "#1c4a2c"], GLYPH.dragon_mount, {
-    ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "blitz",
+    ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "blitz", anchor: "cast",
   }, "dragon"),
   sahur: G(BeastRush, ["#8a6a3a", "#c94a3a", "#4a3a22"], GLYPH.sahur, {
-    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz",
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz", anchor: "cast",
   }, "sahur"),
 };

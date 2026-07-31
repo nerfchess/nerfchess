@@ -209,6 +209,7 @@ export const OVERHAUL_GAMBLING: Buff[] = [
       category: "tempo",
       icon: "Ticket",
       flavor: "Winners are drawn hourly. Pawns are drawn onward.",
+      fx: { motif: "rally", pieces: "all", self: true },
     },
     {
       kind: "passive",
@@ -398,6 +399,7 @@ export const OVERHAUL_GAMBLING: Buff[] = [
       category: "attack",
       icon: "TrendingUp",
       flavor: "Nobody believes in you. That is the whole payout structure.",
+      fx: { motif: "rally", pieces: "all", self: true },
     },
     {
       kind: "passive",
@@ -737,6 +739,7 @@ export const OVERHAUL_GAMBLING: Buff[] = [
       category: "pieces",
       icon: "Trophy",
       flavor: "The pot does not care whose blood filled it.",
+      fx: { motif: "rally", pieces: "all", self: true },
     },
     {
       kind: "passive",
@@ -1211,6 +1214,7 @@ export const OVERHAUL_GAMBLING: Buff[] = [
       category: "hex",
       icon: "Ticket",
       flavor: "Everyone is a winner. Of glue.",
+      fx: { motif: "jail", pieces: "all" },
     },
     {
       kind: "passive",

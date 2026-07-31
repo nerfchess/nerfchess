@@ -13,6 +13,20 @@
      Settings (guard at the bottom of this file);
    - whole plays land inside ~1.4-1.9s. Tier 7-8 bespoke scenes stack a
      second, later shock ring plus a board-edge glow (bwp-edge) for scale.
+
+   DIRECTION. Five of these tracks read the board-geometry custom properties
+   published on the effect wrapper (see effects/geometry.ts), so a boon points
+   at what it is doing instead of decorating the middle of the screen:
+
+     .bwp-rise    subjects arrive from the CASTER's own edge   (--fx-side)
+     .bwp-target  the per-square hit leans in from that edge   (--fx-side)
+     .bwp-glint   the settle drifts away from board centre     (--fx-ox/oy)
+     .bwp-rain    the fall slants with the cast square         (--fx-ox)
+     .bwp-beam    the beam reaches as far as the play does     (--fx-len)
+     .bwp-leg     the aim lance is the leg, end to end         (--fx-len)
+
+   Every one has a default in its var() call, so the same art still plays
+   correctly in the dev galleries where no geometry is published.
    ========================================================================= */
 
 /* --- Atmosphere ----------------------------------------------------------- */
@@ -26,6 +40,15 @@
 }
 .bwp-wash { animation: bwp-wash calc(1.6s * var(--fx-dur, 1)) ease-out both; }
 
+/* The tell: light gathers on the point the play will claim, then gives way to
+   the strike. Short on purpose — anticipation, not a beat of its own. */
+@keyframes bwp-tell {
+  0% { opacity: 0; transform: scale(0.42); }
+  58% { opacity: 0.85; transform: scale(1.06); }
+  100% { opacity: 0; transform: scale(0.74); }
+}
+.bwp-tell { animation: bwp-tell calc(0.36s * var(--fx-dur, 1)) ease-in both; }
+
 /* Board-edge glow — tier 7-8 grandeur only. */
 @keyframes bwp-edge {
   0% { opacity: 0; transform: scale(0.92); }
@@ -36,13 +59,16 @@
 
 /* --- Arrivals ------------------------------------------------------------- */
 
-/* Rise out of the boards, settle, breathe out. */
+/* Rise out of the boards, settle, breathe out. The rise comes UP out of the
+   caster's own edge of the board: --fx-side is +1 when they sit at the bottom
+   of the screen and -1 when they sit at the top, so a boon never arrives from
+   the wrong player's side. */
 @keyframes bwp-rise {
-  0% { opacity: 0; transform: translateY(42%) scale(0.72); }
+  0% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 42%)) scale(0.72); }
   30% { opacity: 1; transform: translateY(0) scale(1.04); }
   42% { transform: translateY(0) scale(1); }
   82% { opacity: 1; }
-  100% { opacity: 0; transform: translateY(-4%) scale(1); }
+  100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * -4%)) scale(1); }
 }
 .bwp-rise { animation: bwp-rise calc(1.25s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
 
@@ -85,20 +111,24 @@
 }
 .bwp-ring { animation: bwp-ring calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.8, 0.4, 1) both; }
 
-/* Diamond sparkle pop. */
+/* Diamond sparkle pop. The settle drifts OUTWARD from the board centre: on a
+   corner cast the sparks trail off toward that corner, on a centre cast they
+   barely move at all (--fx-ox/--fx-oy run -3.5 .. +3.5 cells). */
 @keyframes bwp-glint {
-  0% { opacity: 0; transform: scale(0.2) rotate(0deg); }
-  40% { opacity: 1; transform: scale(1.15) rotate(24deg); }
-  100% { opacity: 0; transform: scale(0.5) rotate(45deg); }
+  0% { opacity: 0; transform: translate(0, 0) scale(0.2) rotate(0deg); }
+  40% { opacity: 1; transform: translate(calc(var(--fx-ox, 0) * 6%), calc(var(--fx-oy, 0) * 6%)) scale(1.15) rotate(24deg); }
+  100% { opacity: 0; transform: translate(calc(var(--fx-ox, 0) * 14%), calc(var(--fx-oy, 0) * 14%)) scale(0.5) rotate(45deg); }
 }
 .bwp-glint { animation: bwp-glint calc(0.55s * var(--fx-dur, 1)) ease-out both; }
 
-/* A light beam opening from its left edge. */
+/* A light beam opening from its left edge. It reaches as far as the play does:
+   --fx-len is the source -> target distance in cells (0 when there is no leg,
+   which leaves the beam at exactly its authored length). */
 @keyframes bwp-beam {
   0% { opacity: 0; transform: scaleX(0); }
-  30% { opacity: 1; transform: scaleX(1.02); }
-  70% { opacity: 0.85; transform: scaleX(1); }
-  100% { opacity: 0; transform: scaleX(1); }
+  30% { opacity: 1; transform: scaleX(calc(1.02 + var(--fx-len, 0) * 0.04)); }
+  70% { opacity: 0.85; transform: scaleX(calc(1 + var(--fx-len, 0) * 0.04)); }
+  100% { opacity: 0; transform: scaleX(calc(1 + var(--fx-len, 0) * 0.04)); }
 }
 .bwp-beam { animation: bwp-beam calc(0.75s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
 
@@ -166,12 +196,13 @@
 }
 .bwp-march { animation: bwp-march calc(1.1s * var(--fx-dur, 1)) linear both; }
 
-/* Fall from above (coins, crowns, confetti). */
+/* Fall from above (coins, crowns, confetti), slanting with the cast square:
+   the further off centre the play landed, the more the fall leans that way. */
 @keyframes bwp-rain {
-  0% { opacity: 0; transform: translateY(-260%); }
+  0% { opacity: 0; transform: translate(calc(var(--fx-ox, 0) * -9%), -260%); }
   30% { opacity: 1; }
-  72% { opacity: 1; transform: translateY(0); }
-  100% { opacity: 0; transform: translateY(6%); }
+  72% { opacity: 1; transform: translate(0, 0); }
+  100% { opacity: 0; transform: translate(calc(var(--fx-ox, 0) * 3%), 6%); }
 }
 .bwp-rain { animation: bwp-rain calc(0.75s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.6, 1) both; }
 
@@ -295,15 +326,39 @@
 }
 .bwp-swapin { animation: bwp-swapin calc(1.05s * var(--fx-dur, 1)) ease-out both; }
 
-/* Compact per-square target pop (non-lead renders). */
+/* Compact per-square target pop (non-lead renders). It leans in from the
+   caster's own edge, so a boon reads as arriving FROM its owner rather than
+   simply appearing on top of the piece. */
 @keyframes bwp-target {
-  0% { opacity: 0; transform: scale(0.4); }
-  35% { opacity: 1; transform: scale(1.1); }
-  55% { transform: scale(1); }
+  0% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 24%)) scale(0.4); }
+  35% { opacity: 1; transform: translateY(0) scale(1.1); }
+  55% { transform: translateY(0) scale(1); }
   80% { opacity: 1; }
-  100% { opacity: 0; transform: scale(1); }
+  100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * -5%)) scale(1); }
 }
 .bwp-target { animation: bwp-target calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+/* --- The aim leg (anchor: "aim" cards only) --------------------------------
+   Authored pointing RIGHT inside <AimStage>, which rotates it onto the real
+   source -> target vector. The lance is exactly one cell wide at rest and is
+   stretched to the leg's true length by --fx-len; the tip rides out to the
+   victim's square (one cell is 7.142857% of the 14-cell stage, and the tip is
+   1.2% of it wide, so 7.142857 / 1.2 = 595% of its own box per cell). */
+@keyframes bwp-leg {
+  0% { opacity: 0; transform: scaleX(0); }
+  34% { opacity: 1; transform: scaleX(calc(var(--fx-len, 1) + 0.2)); }
+  76% { opacity: 0.8; transform: scaleX(calc(var(--fx-len, 1) + 0.2)); }
+  100% { opacity: 0; transform: scaleX(calc(var(--fx-len, 1) + 0.35)); }
+}
+.bwp-leg { animation: bwp-leg calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes bwp-legtip {
+  0% { opacity: 0; transform: translateX(0) scale(0.4); }
+  30% { opacity: 1; transform: translateX(calc(var(--fx-len, 1) * 297%)) scale(1.2); }
+  72% { opacity: 1; transform: translateX(calc(var(--fx-len, 1) * 595%)) scale(1); }
+  100% { opacity: 0; transform: translateX(calc(var(--fx-len, 1) * 595%)) scale(0.6); }
+}
+.bwp-legtip { animation: bwp-legtip calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.4, 1) both; }
 
 /* --- WAVE 3 bespoke-scene beats ------------------------------------------- */
 

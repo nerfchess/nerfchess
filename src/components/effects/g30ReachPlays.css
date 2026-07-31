@@ -1,0 +1,808 @@
+/* ============================================================================
+   g30ReachPlays.css — reach in every direction at once.
+
+   The 21 queen / high-power cards in src/components/effects/g30ReachPlays.tsx.
+   House discipline, same as g20RampartPlays.css:
+
+   - keyframes animate ONLY transform and opacity (a static filter is fine);
+   - every animation is a one-shot with `both` fill so the inline
+     animation-delay staggers cleanly;
+   - every duration rides --fx-dur (Settings animation speed);
+   - every track ENDS at opacity 0: the play never leaves paint behind;
+   - border-radius is only ever 0 / 1px / 2px / 50% / 999px;
+   - class + keyframe prefix `g30-` so nothing can collide with another module.
+
+   DIRECTIONAL BY CONSTRUCTION. This is the eight-lines batch, so the shared
+   vocabulary reads the geometry vars rather than hard-coding screen directions:
+
+     --fx-len   a beam, a wake, a hook or a bead covers the REAL source ->
+                target distance. A body sized to exactly ONE CELL travels it
+                with translateX(calc(var(--fx-len) * 100%)); a lane is already
+                calc(var(--fx-len) * 7.142857%) wide, so it only has to grow
+                from scaleX(0) to 1. The leaky quiver clamps that same run with
+                min(var(--fx-len), 4), which is the card's rule in one line.
+     --fx-side  every settle (motes, sand, drips, smoke) drifts AWAY from the
+                caster, whichever end of the screen the caster is on.
+     --fx-aim-x/y  the per-square hit leans in off the attack vector.
+     --fx-index    applied inline by rayD(): each arm of a fan leaves in the
+                   real victim order rather than in a decorative loop.
+
+   Layout: shared vocabulary first (tells, board atmosphere, travel, hits,
+   settles, entrances), then the per-card signature motions in card order.
+   ========================================================================= */
+
+/* ---------------------------------------------------------------------------
+   1. Tells (<=300ms anticipation)
+   ------------------------------------------------------------------------ */
+
+/* Mass about to arrive pools its shadow first. */
+@keyframes g30-tell {
+  0% { opacity: 0; transform: scale(0.3, 0.5); }
+  55% { opacity: 0.78; transform: scale(1, 1); }
+  100% { opacity: 0; transform: scale(1.16, 1.04); }
+}
+.g30-tell { animation: g30-tell calc(0.34s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 100%; }
+
+/* A line scribed from the cast square down the real vector, authored pointing
+   RIGHT and aimed by <AimStage>. Its WIDTH is already --fx-len cells. */
+@keyframes g30-tellline {
+  0% { opacity: 0; transform: scaleX(0.02); }
+  40% { opacity: 0.95; }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.g30-tellline { animation: g30-tellline calc(0.3s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; transform-origin: 0% 50%; }
+
+/* A hairline circle inscribed around the hub before the eight lines fire. */
+@keyframes g30-tellring {
+  0% { opacity: 0; transform: scale(0.42) rotate(-14deg); }
+  50% { opacity: 0.85; }
+  100% { opacity: 0; transform: scale(1.06) rotate(6deg); }
+}
+.g30-tellring { animation: g30-tellring calc(0.36s * var(--fx-dur, 1)) ease-out both; }
+
+/* ---------------------------------------------------------------------------
+   2. Board-scale atmosphere (always inside <BoardFrame>)
+   ------------------------------------------------------------------------ */
+
+@keyframes g30-wash {
+  0% { opacity: 0; }
+  26% { opacity: 1; }
+  66% { opacity: 0.44; }
+  100% { opacity: 0; }
+}
+.g30-wash { animation: g30-wash calc(1.4s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g30-rim {
+  0% { opacity: 0; transform: scale(1.03); }
+  36% { opacity: 0.9; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.994); }
+}
+.g30-rim { animation: g30-rim calc(1s * var(--fx-dur, 1)) ease-out both; }
+
+/* ---------------------------------------------------------------------------
+   3. Travel along the real line (--fx-len)
+   ------------------------------------------------------------------------ */
+
+/* A ONE-CELL body running the true distance to the victim. */
+@keyframes g30-run {
+  0% { opacity: 0; transform: translateX(0) scaleX(0.82); }
+  14% { opacity: 1; transform: translateX(0) scaleX(1); }
+  72% { opacity: 1; transform: translateX(calc(var(--fx-len, 3) * 100%)) scaleX(1); }
+  84% { transform: translateX(calc(var(--fx-len, 3) * 100% - 6%)) scaleX(1.05); }
+  100% { opacity: 0; transform: translateX(calc(var(--fx-len, 3) * 100%)) scaleX(1); }
+}
+.g30-run { animation: g30-run calc(0.82s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.3, 1) both; }
+
+/* ---------------------------------------------------------------------------
+   4. The per-square hit and the hand entrance
+   ------------------------------------------------------------------------ */
+
+@keyframes g30-hit {
+  0% { opacity: 0; transform: scale(0.62); }
+  44% { opacity: 1; transform: scale(1.08); }
+  60% { transform: scale(0.98); }
+  72% { transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.02); }
+}
+.g30-hit { animation: g30-hit calc(0.62s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.9, 0.3, 1) both; }
+
+@keyframes g30-hit2 {
+  0% { opacity: 0; transform: scaleX(0.1); }
+  38% { opacity: 0.95; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1.08); }
+}
+.g30-hit2 { animation: g30-hit2 calc(0.44s * var(--fx-dur, 1)) ease-out both; }
+
+/* The hit that leans in off the real attack vector. */
+@keyframes g30-hitside {
+  0% { opacity: 0; transform: translate(calc(var(--fx-aim-x, 1) * -36%), calc(var(--fx-aim-y, 0) * -36%)) scale(0.78); }
+  46% { opacity: 1; transform: translate(0, 0) scale(1.07); }
+  64% { transform: translate(0, 0) scale(1); }
+  100% { opacity: 0; transform: translate(calc(var(--fx-aim-x, 1) * 14%), calc(var(--fx-aim-y, 0) * 14%)) scale(1); }
+}
+.g30-hitside { animation: g30-hitside calc(0.66s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.85, 0.3, 1) both; }
+
+@keyframes g30-ent {
+  0% { opacity: 0; transform: scale(0.6) rotate(-8deg); }
+  50% { opacity: 1; transform: scale(1.05) rotate(1deg); }
+  68% { transform: scale(1) rotate(0deg); }
+  100% { opacity: 0; transform: scale(1.02); }
+}
+.g30-ent { animation: g30-ent calc(0.78s * var(--fx-dur, 1)) cubic-bezier(0.28, 0.9, 0.3, 1) both; }
+
+@keyframes g30-ent2 {
+  0% { opacity: 0; transform: scaleX(0.06); }
+  44% { opacity: 0.95; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1.04); }
+}
+.g30-ent2 { animation: g30-ent2 calc(0.6s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+
+@keyframes g30-ent3 {
+  0% { opacity: 0; transform: scale(0.4); }
+  48% { opacity: 1; transform: scale(1.1); }
+  66% { transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.16); }
+}
+.g30-ent3 { animation: g30-ent3 calc(0.66s * var(--fx-dur, 1)) ease-out both; }
+
+/* ---------------------------------------------------------------------------
+   5. Settles, leaning away from the caster (--fx-side)
+   ------------------------------------------------------------------------ */
+
+@keyframes g30-mote {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.35); }
+  38% { opacity: 0.95; transform: translate(0, calc(var(--fx-side, 1) * -26%)) scale(1); }
+  100% { opacity: 0; transform: translate(0, calc(var(--fx-side, 1) * -140%)) scale(0.66); }
+}
+.g30-mote { animation: g30-mote calc(1.05s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g30-sift {
+  0% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * -26%)) scale(0.55); }
+  42% { opacity: 0.88; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 96%)) scale(1.12); }
+}
+.g30-sift { animation: g30-sift calc(0.95s * var(--fx-dur, 1)) ease-in both; }
+
+/* ---------------------------------------------------------------------------
+   6. Card 1 — the eight-sided lens
+   ------------------------------------------------------------------------ */
+
+@keyframes g30-lens {
+  0% { opacity: 0; transform: scale(0.34) rotate(-40deg); }
+  44% { opacity: 1; transform: scale(1.06) rotate(4deg); }
+  60% { transform: scale(1) rotate(0deg); }
+  100% { opacity: 0; transform: scale(1.04) rotate(10deg); }
+}
+.g30-lens { animation: g30-lens calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; }
+
+/* Each beam grows to the distance its own line has to cover. */
+@keyframes g30-beam {
+  0% { opacity: 0; transform: scaleX(0.05); }
+  24% { opacity: 1; }
+  70% { transform: scaleX(calc(0.3 + var(--fx-len, 3) * 0.2)); }
+  100% { opacity: 0; transform: scaleX(calc(0.36 + var(--fx-len, 3) * 0.24)); }
+}
+.g30-beam { animation: g30-beam calc(0.94s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.85, 0.3, 1) both; transform-origin: 0% 50%; }
+
+@keyframes g30-lamp {
+  0% { opacity: 0; transform: scale(0.2); }
+  36% { opacity: 1; transform: scale(1.18); }
+  56% { transform: scale(0.94); }
+  70% { transform: scale(1.04); }
+  100% { opacity: 0; transform: scale(1.1); }
+}
+.g30-lamp { animation: g30-lamp calc(0.86s * var(--fx-dur, 1)) ease-out both; }
+
+/* ---------------------------------------------------------------------------
+   7. Card 2 — the eight blades
+   ------------------------------------------------------------------------ */
+
+@keyframes g30-oar {
+  0% { opacity: 0; transform: rotate(-34deg) scaleX(0.7); }
+  34% { opacity: 1; transform: rotate(-14deg) scaleX(1); }
+  62% { transform: rotate(22deg) scaleX(1); }
+  80% { transform: rotate(14deg); }
+  100% { opacity: 0; transform: rotate(18deg); }
+}
+.g30-oar { animation: g30-oar calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.85, 0.3, 1) both; }
+
+@keyframes g30-wake {
+  0% { opacity: 0; transform: scaleX(0.04) scaleY(0.5); }
+  30% { opacity: 0.9; }
+  74% { transform: scaleX(1) scaleY(1); }
+  100% { opacity: 0; transform: scaleX(1) scaleY(1.5); }
+}
+.g30-wake { animation: g30-wake calc(1s * var(--fx-dur, 1)) ease-out both; transform-origin: 0% 50%; }
+
+/* ---------------------------------------------------------------------------
+   8. Card 3 — the gilded cage
+   ------------------------------------------------------------------------ */
+
+@keyframes g30-bar {
+  0% { opacity: 0; transform: rotate(-72deg) scaleX(0.5); }
+  46% { opacity: 1; transform: rotate(6deg) scaleX(1); }
+  62% { transform: rotate(-3deg); }
+  76% { transform: rotate(0deg); }
+  100% { opacity: 0; transform: rotate(0deg); }
+}
+.g30-bar { animation: g30-bar calc(0.72s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.28, 1) both; }
+
+@keyframes g30-finial {
+  0% { opacity: 0; transform: translateY(-88%) scale(0.86) rotate(-16deg); }
+  50% { opacity: 1; transform: translateY(4%) scale(1.05) rotate(2deg); }
+  66% { transform: translateY(-2%) scale(0.99); }
+  78% { transform: translateY(0) scale(1) rotate(0deg); }
+  100% { opacity: 0; }
+}
+.g30-finial { animation: g30-finial calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.42, 0, 0.24, 1) both; }
+
+@keyframes g30-latch {
+  0% { opacity: 0; transform: scale(1.5) rotate(-10deg); }
+  40% { opacity: 1; transform: scale(0.9) rotate(3deg); }
+  56% { transform: scale(1.06); }
+  70% { transform: scale(1) rotate(0deg); }
+  100% { opacity: 0; transform: scale(1.02); }
+}
+.g30-latch { animation: g30-latch calc(0.6s * var(--fx-dur, 1)) cubic-bezier(0.5, 0, 0.3, 1) both; }
+
+/* ---------------------------------------------------------------------------
+   9. Card 4 — the vitrine
+   ------------------------------------------------------------------------ */
+
+@keyframes g30-plinth {
+  0% { opacity: 0; transform: translateY(60%) scaleY(0.4); }
+  48% { opacity: 1; transform: translateY(0) scaleY(1.06); }
+  64% { transform: scaleY(1); }
+  100% { opacity: 0; }
+}
+.g30-plinth { animation: g30-plinth calc(0.56s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.85, 0.25, 1) both; transform-origin: 50% 100%; }
+
+@keyframes g30-pane {
+  0% { opacity: 0; transform: translateX(64%) scaleX(0.6) skewY(6deg); }
+  50% { opacity: 0.95; transform: translateX(0) scaleX(1.02) skewY(0deg); }
+  66% { transform: scaleX(1); }
+  100% { opacity: 0; }
+}
+.g30-pane { animation: g30-pane calc(0.68s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.9, 0.3, 1) both; transform-origin: 0% 50%; }
+
+@keyframes g30-seam {
+  0% { opacity: 0; transform: scale(0.86); }
+  32% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.16); }
+}
+.g30-seam { animation: g30-seam calc(0.52s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g30-cap {
+  0% { opacity: 0; transform: translateY(-110%) scale(0.9); }
+  52% { opacity: 1; transform: translateY(3%) scale(1.04); }
+  70% { transform: translateY(0) scale(1); }
+  100% { opacity: 0; }
+}
+.g30-cap { animation: g30-cap calc(0.66s * var(--fx-dur, 1)) cubic-bezier(0.42, 0, 0.24, 1) both; }
+
+/* ---------------------------------------------------------------------------
+   10. Card 5 — the sand fountain
+   ------------------------------------------------------------------------ */
+
+@keyframes g30-quarter {
+  0% { opacity: 0; transform: scaleY(0.5); }
+  34% { opacity: 0.85; transform: scaleY(1); }
+  70% { opacity: 0.5; }
+  100% { opacity: 0; }
+}
+.g30-quarter { animation: g30-quarter calc(1.25s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 100%; }
+
+@keyframes g30-jet {
+  0% { opacity: 0; transform: scaleX(0.06) scaleY(0.5); }
+  30% { opacity: 1; transform: scaleX(1) scaleY(1); }
+  62% { transform: scaleX(0.72) scaleY(0.6); }
+  100% { opacity: 0; transform: scaleX(0.12) scaleY(0.3); }
+}
+.g30-jet { animation: g30-jet calc(0.86s * var(--fx-dur, 1)) cubic-bezier(0.15, 0.9, 0.4, 1) both; }
+
+@keyframes g30-funnel {
+  0% { opacity: 0; transform: scale(0.3) rotate(-24deg); }
+  44% { opacity: 1; transform: scale(1.06) rotate(6deg); }
+  100% { opacity: 0; transform: scale(0.92) rotate(20deg); }
+}
+.g30-funnel { animation: g30-funnel calc(0.95s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g30-post {
+  0% { opacity: 0; transform: rotate(0deg) translateY(-20%); }
+  34% { opacity: 1; transform: rotate(4deg) translateY(0); }
+  100% { opacity: 0; transform: rotate(26deg) translateY(46%); }
+}
+.g30-post { animation: g30-post calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.5, 1) both; }
+
+/* ---------------------------------------------------------------------------
+   11. Card 6 — the mourning veil
+   ------------------------------------------------------------------------ */
+
+@keyframes g30-dim {
+  0% { opacity: 0; transform: scale(0.8); }
+  34% { opacity: 1; transform: scale(1.04); }
+  70% { opacity: 0.55; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.97); }
+}
+.g30-dim { animation: g30-dim calc(0.8s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g30-lace {
+  0% { opacity: 0; transform: scaleX(0.1) scaleY(0.4) rotate(-8deg); }
+  48% { opacity: 0.95; transform: scaleX(1) scaleY(1) rotate(2deg); }
+  70% { transform: rotate(0deg); }
+  100% { opacity: 0; transform: scaleX(1) scaleY(1.08); }
+}
+.g30-lace { animation: g30-lace calc(0.86s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; transform-origin: 0% 50%; }
+
+@keyframes g30-hem {
+  0% { opacity: 0; transform: scale(1.24); }
+  44% { opacity: 0.9; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.94); }
+}
+.g30-hem { animation: g30-hem calc(0.72s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g30-bead {
+  0% { opacity: 0; transform: translateY(-40%) scale(0.5); }
+  36% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(150%) scale(0.8); }
+}
+.g30-bead { animation: g30-bead calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.6, 1) both; }
+
+/* ---------------------------------------------------------------------------
+   12. Card 7 — the spider at the hub
+   ------------------------------------------------------------------------ */
+
+@keyframes g30-thread {
+  0% { opacity: 0; transform: scaleX(0.04) scaleY(2.4); }
+  40% { opacity: 1; transform: scaleX(1) scaleY(1); }
+  56% { transform: scaleX(0.96) scaleY(1.8); }
+  70% { transform: scaleX(1) scaleY(1); }
+  100% { opacity: 0; transform: scaleX(1) scaleY(0.8); }
+}
+.g30-thread { animation: g30-thread calc(0.78s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.95, 0.3, 1) both; transform-origin: 0% 50%; }
+
+@keyframes g30-spider {
+  0% { opacity: 0; transform: scale(0.5) rotate(-12deg); }
+  46% { opacity: 1; transform: scale(1.08) rotate(3deg); }
+  62% { transform: scale(0.96) rotate(-2deg); }
+  76% { transform: scale(1) rotate(0deg); }
+  100% { opacity: 0; transform: scale(1.02); }
+}
+.g30-spider { animation: g30-spider calc(0.74s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.9, 0.3, 1) both; }
+
+@keyframes g30-dew {
+  0% { opacity: 0; transform: scale(0.3); }
+  40% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: translate(calc(var(--fx-side, 1) * -8%), calc(var(--fx-side, 1) * 60%)) scale(0.6); }
+}
+.g30-dew { animation: g30-dew calc(0.88s * var(--fx-dur, 1)) ease-in both; }
+
+/* ---------------------------------------------------------------------------
+   13. Card 8 — the compass rose
+   ------------------------------------------------------------------------ */
+
+@keyframes g30-point {
+  0% { opacity: 0; transform: scaleX(0.2) scaleY(0.6); }
+  40% { opacity: 1; transform: scaleX(1.06) scaleY(1); }
+  58% { transform: scaleX(0.98); }
+  100% { opacity: 0; transform: scaleX(1.1); }
+}
+.g30-point { animation: g30-point calc(0.52s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; transform-origin: 0% 50%; }
+
+@keyframes g30-needle {
+  0% { opacity: 0; transform: rotate(-46deg) scaleX(0.7); }
+  36% { opacity: 1; transform: rotate(16deg) scaleX(1); }
+  58% { transform: rotate(-8deg); }
+  74% { transform: rotate(3deg); }
+  88% { transform: rotate(0deg); }
+  100% { opacity: 0; transform: rotate(0deg); }
+}
+.g30-needle { animation: g30-needle calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.9, 0.3, 1) both; }
+
+@keyframes g30-pin {
+  0% { opacity: 0; transform: scale(1.8); }
+  40% { opacity: 1; transform: scale(0.92); }
+  58% { transform: scale(1.06); }
+  72% { transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.24); }
+}
+.g30-pin { animation: g30-pin calc(0.72s * var(--fx-dur, 1)) ease-out both; }
+
+/* ---------------------------------------------------------------------------
+   14. Card 9 — the processional wheel
+   ------------------------------------------------------------------------ */
+
+@keyframes g30-spoke {
+  0% { opacity: 0; transform: scaleX(0.02); }
+  34% { opacity: 1; }
+  76% { transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.g30-spoke { animation: g30-spoke calc(0.96s * var(--fx-dur, 1)) cubic-bezier(0.35, 0.6, 0.4, 1) both; transform-origin: 0% 50%; }
+
+@keyframes g30-nave {
+  0% { opacity: 0; transform: scale(0.5) rotate(-22deg); }
+  46% { opacity: 1; transform: scale(1.05) rotate(0deg); }
+  78% { transform: scale(1) rotate(22deg); }
+  100% { opacity: 0; transform: scale(1) rotate(24deg); }
+}
+.g30-nave { animation: g30-nave calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.7, 0.3, 1) both; }
+
+@keyframes g30-felloe {
+  0% { opacity: 0; transform: scale(0.9); }
+  40% { opacity: 0.95; transform: scale(1.02); }
+  100% { opacity: 0; transform: scale(1.1); }
+}
+.g30-felloe { animation: g30-felloe calc(0.78s * var(--fx-dur, 1)) ease-out both; }
+
+/* ---------------------------------------------------------------------------
+   15. Card 10 — the dandelion clock
+   ------------------------------------------------------------------------ */
+
+@keyframes g30-stem {
+  0% { opacity: 0; transform: rotate(0deg) scaleY(0.6); }
+  46% { opacity: 1; transform: rotate(-9deg) scaleY(1); }
+  70% { transform: rotate(5deg); }
+  100% { opacity: 0; transform: rotate(1deg); }
+}
+.g30-stem { animation: g30-stem calc(0.6s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g30-seed {
+  0% { opacity: 0; transform: translateX(-10%) rotate(-14deg) scale(0.5); }
+  26% { opacity: 1; transform: translateX(0) rotate(0deg) scale(1); }
+  100% { opacity: 0; transform: translateX(230%) translateY(calc(var(--fx-side, 1) * -40%)) rotate(28deg) scale(0.8); }
+}
+.g30-seed { animation: g30-seed calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.6, 0.4, 1) both; }
+
+@keyframes g30-head {
+  0% { opacity: 0; transform: scale(0.55); }
+  42% { opacity: 1; transform: scale(1.06); }
+  60% { transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.9); }
+}
+.g30-head { animation: g30-head calc(0.86s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g30-whisper {
+  0% { opacity: 0; transform: scale(0.5); }
+  34% { opacity: 0.8; }
+  100% { opacity: 0; transform: scale(1.2); }
+}
+.g30-whisper { animation: g30-whisper calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+
+/* ---------------------------------------------------------------------------
+   16. Card 11 — quicksilver
+   ------------------------------------------------------------------------ */
+
+@keyframes g30-elbow {
+  0% { opacity: 0; transform: scaleY(0.06); }
+  40% { opacity: 1; transform: scaleY(1); }
+  100% { opacity: 0; transform: scaleY(1.1); }
+}
+.g30-elbow { animation: g30-elbow calc(0.6s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+@keyframes g30-turn {
+  0% { opacity: 0; transform: translateY(0) scale(0.7); }
+  26% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * -260%)) scale(0.86); }
+}
+.g30-turn { animation: g30-turn calc(0.82s * var(--fx-dur, 1)) cubic-bezier(0.35, 0, 0.4, 1) both; }
+
+@keyframes g30-split {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.4); }
+  36% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: translate(24%, calc(var(--fx-side, 1) * -90%)) scale(0.5); }
+}
+.g30-split { animation: g30-split calc(0.76s * var(--fx-dur, 1)) ease-out both; }
+
+/* ---------------------------------------------------------------------------
+   17. Card 12 — the hearth that calls her back
+   ------------------------------------------------------------------------ */
+
+@keyframes g30-emberpath {
+  0% { opacity: 0; transform: scaleX(0.04); }
+  22% { opacity: 1; transform: scaleX(1); }
+  56% { opacity: 0.9; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(0.04); }
+}
+.g30-emberpath { animation: g30-emberpath calc(0.98s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.3, 1) both; transform-origin: 0% 50%; }
+
+@keyframes g30-hearth {
+  0% { opacity: 0; transform: scale(0.6) scaleY(0.8); }
+  40% { opacity: 1; transform: scale(1.12) scaleY(1.06); }
+  58% { transform: scale(0.96); }
+  74% { transform: scale(1.04); }
+  100% { opacity: 0; transform: scale(0.98); }
+}
+.g30-hearth { animation: g30-hearth calc(0.88s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 100%; }
+
+/* ---------------------------------------------------------------------------
+   18. Card 13 — the leaky quiver
+   ------------------------------------------------------------------------ */
+
+/* Flies the real line, but never further than four cells: the card's rule. */
+@keyframes g30-short {
+  0% { opacity: 0; transform: translateX(0) scaleX(0.7); }
+  16% { opacity: 1; transform: translateX(0) scaleX(1); }
+  62% { transform: translateX(calc(min(var(--fx-len, 3), 4) * 100%)) rotate(0deg); }
+  80% { transform: translateX(calc(min(var(--fx-len, 3), 4) * 100%)) rotate(8deg); }
+  100% { opacity: 0; transform: translateX(calc(min(var(--fx-len, 3), 4) * 100%)) rotate(20deg); }
+}
+.g30-short { animation: g30-short calc(0.88s * var(--fx-dur, 1)) cubic-bezier(0.3, 0, 0.5, 1) both; }
+
+@keyframes g30-quiver {
+  0% { opacity: 0; transform: rotate(-6deg) translateY(-16%); }
+  40% { opacity: 1; transform: rotate(10deg) translateY(0); }
+  64% { transform: rotate(24deg); }
+  100% { opacity: 0; transform: rotate(30deg); }
+}
+.g30-quiver { animation: g30-quiver calc(0.82s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.4, 1) both; transform-origin: 50% 100%; }
+
+@keyframes g30-spill {
+  0% { opacity: 0; transform: scaleX(0.2) rotate(-18deg); }
+  44% { opacity: 1; transform: scaleX(1) rotate(0deg); }
+  100% { opacity: 0; transform: scaleX(1) rotate(10deg); }
+}
+.g30-spill { animation: g30-spill calc(0.66s * var(--fx-dur, 1)) ease-out both; transform-origin: 0% 50%; }
+
+/* ---------------------------------------------------------------------------
+   19. Card 14 — the slippery scepter
+   ------------------------------------------------------------------------ */
+
+@keyframes g30-grip {
+  0% { opacity: 0; transform: scale(1.4); }
+  46% { opacity: 0.9; transform: scale(0.86); }
+  100% { opacity: 0; transform: scale(1.3); }
+}
+.g30-grip { animation: g30-grip calc(0.4s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g30-tumble {
+  0% { opacity: 0; transform: translate(-14%, 18%) rotate(0deg) scale(0.8); }
+  30% { opacity: 1; transform: translate(0, -10%) rotate(120deg) scale(1); }
+  70% { transform: translate(16%, 6%) rotate(300deg); }
+  100% { opacity: 0; transform: translate(22%, 22%) rotate(400deg) scale(0.94); }
+}
+.g30-tumble { animation: g30-tumble calc(0.94s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.1, 0.4, 1) both; }
+
+@keyframes g30-glintfan {
+  0% { opacity: 0; transform: scaleX(0.1); }
+  30% { opacity: 1; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1.3); }
+}
+.g30-glintfan { animation: g30-glintfan calc(0.46s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g30-clatter {
+  0% { opacity: 0; transform: scaleX(0.2) translateY(-30%); }
+  32% { opacity: 1; transform: scaleX(1) translateY(0); }
+  48% { transform: translateY(-14%); }
+  62% { transform: translateY(0); }
+  100% { opacity: 0; transform: scaleX(1.06); }
+}
+.g30-clatter { animation: g30-clatter calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.3, 1) both; }
+
+/* ---------------------------------------------------------------------------
+   20. Card 15 — the belfry
+   ------------------------------------------------------------------------ */
+
+@keyframes g30-fileband {
+  0% { opacity: 0; transform: scaleX(0.4); }
+  36% { opacity: 0.9; transform: scaleX(1); }
+  72% { opacity: 0.5; }
+  100% { opacity: 0; }
+}
+.g30-fileband { animation: g30-fileband calc(1.2s * var(--fx-dur, 1)) ease-out both; transform-origin: 0% 50%; }
+
+@keyframes g30-rope {
+  0% { opacity: 0; transform: scaleY(0.1); }
+  40% { opacity: 1; transform: scaleY(1); }
+  62% { transform: scaleY(0.86); }
+  100% { opacity: 0; transform: scaleY(0.96); }
+}
+.g30-rope { animation: g30-rope calc(0.46s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.9, 0.3, 1) both; }
+
+@keyframes g30-swing {
+  0% { opacity: 0; transform: rotate(-4deg) scale(0.86); }
+  26% { opacity: 1; transform: rotate(18deg) scale(1); }
+  48% { transform: rotate(-20deg); }
+  70% { transform: rotate(14deg); }
+  86% { transform: rotate(-6deg); }
+  100% { opacity: 0; transform: rotate(0deg); }
+}
+.g30-swing { animation: g30-swing calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.4, 1) both; transform-origin: 50% 12%; }
+
+@keyframes g30-louvre {
+  0% { opacity: 0; transform: scaleX(0.14) rotate(-10deg); }
+  36% { opacity: 1; transform: scaleX(1) rotate(0deg); }
+  100% { opacity: 0; transform: scaleX(1.2) rotate(6deg); }
+}
+.g30-louvre { animation: g30-louvre calc(0.58s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g30-toll {
+  0% { opacity: 0; transform: scale(0.4); }
+  30% { opacity: 0.85; }
+  100% { opacity: 0; transform: scale(1.32); }
+}
+.g30-toll { animation: g30-toll calc(1.05s * var(--fx-dur, 1)) ease-out both; }
+
+/* ---------------------------------------------------------------------------
+   21. Card 16 — the crane jib
+   ------------------------------------------------------------------------ */
+
+@keyframes g30-jib {
+  0% { opacity: 0; transform: rotate(-30deg) scaleX(0.3); }
+  42% { opacity: 1; transform: rotate(-8deg) scaleX(1); }
+  70% { transform: rotate(4deg) scaleX(1); }
+  86% { transform: rotate(0deg); }
+  100% { opacity: 0; transform: rotate(0deg); }
+}
+.g30-jib { animation: g30-jib calc(0.92s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.85, 0.3, 1) both; }
+
+@keyframes g30-hook {
+  0% { opacity: 0; transform: translateX(0) translateY(-24%); }
+  20% { opacity: 1; transform: translateY(0); }
+  74% { transform: translateX(calc(var(--fx-len, 3) * 100%)) translateY(0); }
+  88% { transform: translateX(calc(var(--fx-len, 3) * 100%)) translateY(12%); }
+  100% { opacity: 0; transform: translateX(calc(var(--fx-len, 3) * 100%)) translateY(4%); }
+}
+.g30-hook { animation: g30-hook calc(0.94s * var(--fx-dur, 1)) cubic-bezier(0.35, 0, 0.3, 1) both; }
+
+@keyframes g30-counter {
+  0% { opacity: 0; transform: translateX(34%) scale(0.8); }
+  46% { opacity: 1; transform: translateX(-8%) scale(1); }
+  72% { transform: translateX(2%); }
+  100% { opacity: 0; transform: translateX(0); }
+}
+.g30-counter { animation: g30-counter calc(0.86s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.85, 0.3, 1) both; }
+
+/* ---------------------------------------------------------------------------
+   22. Card 17 — the follow spot
+   ------------------------------------------------------------------------ */
+
+@keyframes g30-blade {
+  0% { opacity: 0; transform: scaleX(0.2) rotate(16deg); }
+  50% { opacity: 1; transform: scaleX(1) rotate(0deg); }
+  100% { opacity: 0; transform: scaleX(0.9) rotate(-6deg); }
+}
+.g30-blade { animation: g30-blade calc(0.5s * var(--fx-dur, 1)) ease-out both; }
+
+@keyframes g30-cone {
+  0% { opacity: 0; transform: scaleY(0.2) rotate(-8deg); }
+  40% { opacity: 1; transform: scaleY(1.04) rotate(2deg); }
+  58% { transform: scaleY(1) rotate(0deg); }
+  100% { opacity: 0; transform: scaleY(1) rotate(0deg); }
+}
+.g30-cone { animation: g30-cone calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.9, 0.3, 1) both; }
+
+@keyframes g30-pool {
+  0% { opacity: 0; transform: scale(2.2); }
+  40% { opacity: 1; transform: scale(0.96); }
+  58% { transform: scale(1.04); }
+  74% { transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.06); }
+}
+.g30-pool { animation: g30-pool calc(0.86s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.9, 0.3, 1) both; }
+
+@keyframes g30-gobo {
+  0% { opacity: 0; transform: scale(1.3); }
+  44% { opacity: 0.9; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.08); }
+}
+.g30-gobo { animation: g30-gobo calc(0.6s * var(--fx-dur, 1)) ease-out both; }
+
+/* ---------------------------------------------------------------------------
+   23. Card 18 — the painter's cradle
+   ------------------------------------------------------------------------ */
+
+@keyframes g30-rope2 {
+  0% { opacity: 0; transform: scaleX(0.04) scaleY(0.6); }
+  36% { opacity: 1; transform: scaleX(1) scaleY(1); }
+  100% { opacity: 0; transform: scaleX(1) scaleY(0.8); }
+}
+.g30-rope2 { animation: g30-rope2 calc(0.66s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; transform-origin: 0% 50%; }
+
+@keyframes g30-flick {
+  0% { opacity: 0; transform: scaleX(0.1); }
+  34% { opacity: 1; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1.24); }
+}
+.g30-flick { animation: g30-flick calc(0.54s * var(--fx-dur, 1)) ease-out both; }
+
+/* ---------------------------------------------------------------------------
+   24. Card 19 — the parasol
+   ------------------------------------------------------------------------ */
+
+@keyframes g30-rib {
+  0% { opacity: 0; transform: scaleX(0.16) rotate(20deg); }
+  46% { opacity: 1; transform: scaleX(1.04) rotate(-3deg); }
+  64% { transform: scaleX(1) rotate(0deg); }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.g30-rib { animation: g30-rib calc(0.62s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.95, 0.3, 1) both; }
+
+@keyframes g30-canopy {
+  0% { opacity: 0; transform: scale(0.3, 0.5); }
+  46% { opacity: 1; transform: scale(1.05, 1.04); }
+  62% { transform: scale(0.99, 0.98); }
+  76% { transform: scale(1, 1); }
+  100% { opacity: 0; transform: scale(1.02, 1); }
+}
+.g30-canopy { animation: g30-canopy calc(0.72s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; transform-origin: 50% 100%; }
+
+@keyframes g30-shaft {
+  0% { opacity: 0; transform: scaleY(0.1); }
+  44% { opacity: 1; transform: scaleY(1.04); }
+  60% { transform: scaleY(1); }
+  100% { opacity: 0; }
+}
+.g30-shaft { animation: g30-shaft calc(0.56s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.9, 0.3, 1) both; }
+
+/* ---------------------------------------------------------------------------
+   25. Card 20 — the portrait flash
+   ------------------------------------------------------------------------ */
+
+@keyframes g30-oval {
+  0% { opacity: 0; transform: translateY(-40%) rotate(-12deg) scale(0.8); }
+  46% { opacity: 1; transform: translateY(0) rotate(4deg) scale(1.02); }
+  66% { transform: rotate(-2deg) scale(1); }
+  82% { transform: rotate(0deg); }
+  100% { opacity: 0; }
+}
+.g30-oval { animation: g30-oval calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.85, 0.3, 1) both; }
+
+@keyframes g30-pan {
+  0% { opacity: 0; transform: scaleX(0.3) scaleY(0.6); }
+  40% { opacity: 1; transform: scaleX(1) scaleY(1.6); }
+  100% { opacity: 0; transform: scaleX(1.1) scaleY(0.6); }
+}
+.g30-pan { animation: g30-pan calc(0.42s * var(--fx-dur, 1)) ease-out both; }
+
+/* The star flare: one bearing per line she threatens, all at once. */
+@keyframes g30-flare {
+  0% { opacity: 0; transform: scaleX(0.04); }
+  18% { opacity: 1; transform: scaleX(calc(0.7 + var(--fx-n, 3) * 0.04)); }
+  100% { opacity: 0; transform: scaleX(calc(0.9 + var(--fx-n, 3) * 0.05)); }
+}
+.g30-flare { animation: g30-flare calc(0.56s * var(--fx-dur, 1)) cubic-bezier(0.1, 0.9, 0.3, 1) both; }
+
+@keyframes g30-smoke {
+  0% { opacity: 0; transform: translateY(0) scale(0.5); }
+  40% { opacity: 0.85; transform: scale(1); }
+  100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * -80%)) scale(1.3); }
+}
+.g30-smoke { animation: g30-smoke calc(1.05s * var(--fx-dur, 1)) ease-out both; }
+
+/* ---------------------------------------------------------------------------
+   26. Card 21 — the holiday shades
+   ------------------------------------------------------------------------ */
+
+@keyframes g30-chair {
+  0% { opacity: 0; transform: scale(0.4, 0.2) rotate(-14deg); }
+  50% { opacity: 1; transform: scale(1.04, 1.06) rotate(3deg); }
+  68% { transform: scale(1, 1) rotate(0deg); }
+  100% { opacity: 0; }
+}
+.g30-chair { animation: g30-chair calc(0.62s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1) both; transform-origin: 50% 100%; }
+
+@keyframes g30-shades {
+  0% { opacity: 0; transform: translateY(-120%) rotate(-8deg) scale(0.9); }
+  46% { opacity: 1; transform: translateY(6%) rotate(2deg) scale(1.04); }
+  62% { transform: translateY(-2%) rotate(0deg) scale(1); }
+  78% { transform: translateY(0); }
+  100% { opacity: 0; }
+}
+.g30-shades { animation: g30-shades calc(0.74s * var(--fx-dur, 1)) cubic-bezier(0.42, 0, 0.24, 1) both; }
+
+/* Out on all eight bearings, and then, having changed nothing, down again. */
+@keyframes g30-sunray {
+  0% { opacity: 0; transform: scaleX(0.06) rotate(0deg); }
+  34% { opacity: 1; transform: scaleX(1) rotate(0deg); }
+  62% { transform: scaleX(0.94) rotate(5deg); }
+  100% { opacity: 0; transform: scaleX(0.5) rotate(12deg); }
+}
+.g30-sunray { animation: g30-sunray calc(0.98s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.4, 1) both; }
+
+@keyframes g30-fizz {
+  0% { opacity: 0; transform: scale(0.5); }
+  36% { opacity: 0.8; transform: scale(1.02); }
+  100% { opacity: 0; transform: scale(0.86); }
+}
+.g30-fizz { animation: g30-fizz calc(0.86s * var(--fx-dur, 1)) ease-out both; }

@@ -1,4 +1,5 @@
 {
-  "sharedFlagshipTier5plus": 42,
-  "sharedFlagshipTotal": 86
+  "sharedFlagshipTier5plus": 0,
+  "sharedFlagshipTotal": 0,
+  "genFallbackCount": 0
 }

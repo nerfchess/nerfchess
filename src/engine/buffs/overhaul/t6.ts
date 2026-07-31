@@ -1097,6 +1097,7 @@ export const OVERHAUL_T6: Buff[] = [
       category: "protection",
       icon: "FileStack",
       flavor: "Please fill out the capture in triplicate.",
+      fx: { motif: "jail", pieces: "all" },
     },
     {
       kind: "passive",

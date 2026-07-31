@@ -428,6 +428,7 @@ export const OVERHAUL_T7: Buff[] = [
       category: "attack",
       icon: "CloudLightning",
       flavor: "You have reached Zeus. Leave a target after the thunder.",
+      fx: { motif: "jail", pieces: ["p", "n", "b", "r", "q"] },
     },
     {
       kind: "passive",
@@ -815,6 +816,7 @@ export const OVERHAUL_T7: Buff[] = [
       category: "protection",
       icon: "Stamp",
       flavor: "Form 7-K (Regicide, Attempted) is missing a signature.",
+      fx: { motif: "ward", pieces: ["k"], self: true },
     },
     {
       kind: "passive",

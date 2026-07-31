@@ -242,6 +242,7 @@ export const OVERHAUL_T2: Buff[] = [
       category: "protection",
       icon: "Shield",
       flavor: "Reflect on what you have done.",
+      fx: { motif: "ward", pieces: ["n", "b"], self: true },
     },
     {
       kind: "passive",
@@ -758,6 +759,7 @@ export const OVERHAUL_T2: Buff[] = [
       category: "tempo",
       icon: "Drama",
       flavor: "The crowd demands a second act.",
+      fx: { motif: "rally", pieces: "all", self: true },
     },
     {
       kind: "passive",
@@ -821,6 +823,7 @@ export const OVERHAUL_T2: Buff[] = [
       category: "movement",
       icon: "Hand",
       flavor: "The grip is temporary. The rip is forever.",
+      fx: { motif: "empower", pieces: "all", self: true },
     },
     {
       kind: "passive",

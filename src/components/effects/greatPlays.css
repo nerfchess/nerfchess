@@ -177,6 +177,23 @@
 }
 .grp-spinback { animation: grp-spinback calc(0.95s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 50% 50%; }
 
+/* THE GEOMETRY BEAT. The rail of the play's own light, drawn out of the cast
+   square along the real source -> target vector. Only the SCALE is keyframed:
+   the direction comes from `rotate: calc(var(--fx-ang) * 1deg)` on the static
+   shell and the length from `--fx-len` in the element's own width, so this one
+   layer is what makes a play point at what it is doing instead of decorating
+   the square it landed on. Origin at the cast end, so it grows outward. */
+@keyframes grp-reach {
+  0% { opacity: 0; transform: scaleX(0.06) scaleY(0.5); }
+  30% { opacity: 0.95; transform: scaleX(1) scaleY(1); }
+  64% { opacity: 0.5; }
+  100% { opacity: 0; transform: scaleX(1.04) scaleY(0.7); }
+}
+.grp-reach {
+  animation: grp-reach calc(0.75s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  transform-origin: 0% 50%;
+}
+
 /* A gaze / lens beam stretching across the crop (origin at the eye). */
 @keyframes grp-beam {
   0% { opacity: 0; transform: scaleX(0.05); }

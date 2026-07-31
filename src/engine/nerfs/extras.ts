@@ -116,6 +116,15 @@ export const PAWN_DUTY: Nerf = db({
   },
 });
 
+/**
+ * Solar Flare's duty cycle: 3 of the owner's turns burning, then 2 asleep.
+ * Derived from the turn count with no stored state, so the move filter and the
+ * board overlay cannot disagree about whether the flare is up.
+ */
+function flareIsUp(myTurns: number): boolean {
+  return myTurns >= 1 && (myTurns - 1) % 5 < 3;
+}
+
 export const VAMPIRIC: Nerf = db({
   id: "vampiric",
   name: "Vampiric",
@@ -138,16 +147,20 @@ export const VAMPIRIC: Nerf = db({
 export const SOLAR_FLARE: Nerf = db({
   id: "solar_flare",
   name: "Solar Flare",
-  description: "You can only capture on light squares, starting on your second move. The forbidden dark squares are shown from the start.",
-  flavor: "Daylight, only.",
+  description: "The flare burns for 3 of your turns, then sleeps for 2, over and over. While it burns you can only capture on light squares. The dark squares are shown whenever it is up.",
+  flavor: "Daylight, in bursts.",
   tier: 4,
   icon: "sun",
   implemented: true,
+  // Episodic rather than constant: a flare that never stops is just Vampiric
+  // with the colours swapped. The cycle is derived from the turn count alone,
+  // so it needs no state and reads identically on both clients.
   filterMoves: (moves, _s, ctx) =>
-    ctx.moveNumber < 1
+    !flareIsUp(ctx.moveNumber)
       ? moves
       : moves.filter((m) => !m.captured || (FILE(m.to) + RANK(m.to)) % 2 === 1),
-  visual: () => {
+  visual: (_state, ctx) => {
+    if (!flareIsUp(ctx.moveNumber)) return {};
     const dark: number[] = [];
     for (let sq = 0; sq < 64; sq++) if ((FILE(sq) + RANK(sq)) % 2 === 0) dark.push(sq);
     return { bannedSquares: dark };

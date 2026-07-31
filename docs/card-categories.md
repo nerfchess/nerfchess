@@ -9,27 +9,27 @@ Cards do several things at once, so the ladder is priority-ordered and first-mat
 | category | what it covers | total | buff | hex | boon | item | apex | nerf |
 |---|---|---|---|---|---|---|---|---|
 | [single-piece-freeze](#single-piece-freeze) | Freezes one piece | 139 | 39 | 74 | 8 | 9 | 1 | 8 |
-| [movement-upgrade](#movement-upgrade) | Widens how your pieces move | 138 | 117 | - | 18 | - | 3 | - |
+| [movement-upgrade](#movement-upgrade) | Widens how your pieces move | 134 | 113 | - | 18 | - | 3 | - |
 | [capture-denial](#capture-denial) | Forbids capturing | 122 | 21 | 51 | 6 | 1 | 2 | 41 |
 | [single-piece-shield](#single-piece-shield) | Makes one piece hard to capture | 116 | 67 | 2 | 33 | 14 | - | - |
-| [self-movement-restriction](#self-movement-restriction) | Narrows how you may move | 106 | 9 | 6 | 22 | - | - | 69 |
-| [zone-denial](#zone-denial) | Closes off squares, ranks or files | 105 | 16 | 41 | 2 | 6 | 1 | 39 |
+| [self-movement-restriction](#self-movement-restriction) | Narrows how you may move | 107 | 10 | 6 | 22 | - | - | 69 |
+| [zone-denial](#zone-denial) | Closes off squares, ranks or files | 103 | 16 | 41 | 2 | 4 | 1 | 39 |
 | [mass-freeze](#mass-freeze) | Freezes the whole enemy army | 99 | 30 | 54 | 5 | 1 | 4 | 5 |
-| [enemy-movement-restriction](#enemy-movement-restriction) | Narrows how the opponent may move | 96 | 15 | 71 | 10 | - | - | - |
+| [enemy-movement-restriction](#enemy-movement-restriction) | Narrows how the opponent may move | 98 | 15 | 71 | 10 | 2 | - | - |
 | [instant-piece-spawn](#instant-piece-spawn) | Instantly spawns a piece | 95 | 58 | 2 | 19 | 9 | 2 | 5 |
+| [draft-advantage](#draft-advantage) | Improves your own drafts | 90 | 55 | 3 | 26 | 6 | - | - |
 | [movement-phase-jump](#movement-phase-jump) | Lets a piece jump or pass through pieces | 90 | 45 | 35 | 9 | - | 1 | - |
-| [draft-advantage](#draft-advantage) | Improves your own drafts | 87 | 52 | 3 | 26 | 6 | - | - |
 | [nerf-relief](#nerf-relief) | Suspends or removes your own nerf | 82 | - | - | 81 | - | - | 1 |
 | [forced-move](#forced-move) | Forces a specific move | 75 | 1 | 11 | - | - | 1 | 62 |
 | [info-reveal](#info-reveal) | Reveals hidden information | 65 | 22 | - | 22 | 21 | - | - |
-| [piece-downgrade-transform](#piece-downgrade-transform) | Turns a piece into something weaker | 60 | 12 | 45 | - | - | 1 | 2 |
+| [piece-downgrade-transform](#piece-downgrade-transform) | Turns a piece into something weaker | 58 | 10 | 45 | - | - | 1 | 2 |
 | [promotion-grant](#promotion-grant) | Promotes a pawn early or for free | 55 | 23 | 11 | 16 | - | 1 | 4 |
-| [piece-nudge-reposition](#piece-nudge-reposition) | Shoves a piece without a move | 54 | 36 | 5 | 2 | 10 | 1 | - |
+| [piece-nudge-reposition](#piece-nudge-reposition) | Shoves a piece without a move | 53 | 37 | 5 | 2 | 8 | 1 | - |
 | [teleport-relocate](#teleport-relocate) | Teleports a piece | 49 | 27 | - | 15 | 1 | - | 6 |
 | [mass-removal](#mass-removal) | Removes several pieces at once | 48 | 32 | 2 | 8 | 1 | 5 | - |
 | [alt-win-loss-condition](#alt-win-loss-condition) | Changes how the game is won or lost | 47 | 5 | - | - | - | - | 42 |
+| [delayed-contract](#delayed-contract) | Sets a delayed or conditional payoff | 44 | 32 | 3 | 4 | 2 | - | 3 |
 | [clock-gain-self](#clock-gain-self) | Adds time to your clock | 41 | 24 | - | 8 | 9 | - | - |
-| [delayed-contract](#delayed-contract) | Sets a delayed or conditional payoff | 41 | 31 | 3 | 4 | - | - | 3 |
 | [piece-revival](#piece-revival) | Brings a captured piece back | 41 | 21 | 1 | 19 | - | - | - |
 | [piece-class-lockdown](#piece-class-lockdown) | Shuts down a whole piece class | 38 | 5 | 18 | 3 | - | - | 12 |
 | [terrain-hazard](#terrain-hazard) | Puts a hazard on the board | 37 | 14 | 19 | - | 1 | - | 3 |
@@ -220,7 +220,7 @@ Cards do several things at once, so the ladder is priority-ordered and first-mat
 
 **Widens how your pieces move** - New directions, longer strides or a borrowed movement pattern for the holder.
 
-138 cards.
+134 cards.
 
 | id | name | family | tier | trigger | rule |
 |---|---|---|---|---|---|
@@ -231,41 +231,37 @@ Cards do several things at once, so the ladder is priority-ordered and first-mat
 | diagonal_step | Diagonal Step | buff | 1 | passive | Your king moves like a bishop on your very next move only: whether or not you take it, the charge is then spent. |
 | ferz_king | Ferz King | buff | 1 | passive | Your king may move two squares diagonally to an empty square, once per game. It cannot capture. |
 | op_back_alley | Back Alley | buff | 1 | passive | Once, your a-file pawn may step one square sideways to the b-file. The destination must be empty; not a capture. |
-| op_bridle_path | Bridle Path | buff | 1 | passive | Once, your b-file pawn may advance two squares from wherever it stands. Both squares must be empty; it cannot capture this way. If the advance is on offer on your turn but you play something else, the charge is spent. |
 | op_cellar_hatch | Cellar Hatch | buff | 1 | passive | Once, one of your pawns on files a, b, g, h may step one square diagonally forward onto an empty square. Not a capture. |
 | op_dead_letter_office | Dead Letter Office | buff | 1 | passive | Once, your d-file pawn may capture the enemy piece directly ahead; the square it lands on is sealed to both players until your next turn, so nothing may move onto it. |
 | op_drawbridge_in | Drawbridge | buff | 1 | passive | Once, one of your pawns (any file) may step one square diagonally forward onto an empty square. Not a capture. The step must angle toward the center files. If the step is on offer on your turn but you move elsewhere, the charge is spent. |
 | op_edge_of_the_map | Edge of the Map | buff | 1 | passive | Twice, one of your pawns on the a- or h-file may step one square straight backward onto an empty square. The narrower district runs the errand twice. If unused by your 12th move, the remaining charge becomes one draft reroll. |
-| op_ferry_crossing | Ferry Crossing | buff | 1 | passive | Once, your f-file pawn may advance two squares from wherever it stands. Both squares must be empty; it cannot capture this way. |
 | op_fire_escape | Fire Escape | buff | 1 | passive | Once, one of your pawns on files a, b, g, h may step one square diagonally forward onto an empty square. Not a capture. If the step is on offer on your turn but you move elsewhere, the charge is spent. |
 | op_foxtrot_slide | Foxtrot Slide | buff | 1 | passive | Once, your king may move two squares diagonally forward toward the h-file. Both squares must be empty. When you take the dash you gain 5 seconds. |
 | op_gallery_row | Gallery Row | buff | 1 | passive | Once, your d-file pawn may sidestep one square to an empty central-file square (c or e); the square it leaves is blocked to both players until your next turn. |
-| op_goat_track | Goat Track | buff | 1 | passive | Once, your g-file pawn may advance two squares from wherever it stands. Both squares must be empty; it cannot capture this way. |
 | op_grand_march | Grand March | buff | 1 | passive | Once, your king may move two squares straight forward. Both squares must be empty. If the dash is on offer on your turn but you play something else, the charge is spent. |
 | op_harbor_walk | Harbor Walk | buff | 1 | passive | Your a-file pawn may step one square sideways, once. The destination must be empty. If unused by your 12th move, the charge becomes one draft reroll. |
 | op_harborside_h | Lighthouse Walk | buff | 1 | passive | Your g-file or h-file pawn may step one square sideways, once. The destination must be empty. |
 | op_homesick_private | Homesick Private | buff | 1 | passive | Once, one of your pawns on files e, f, g, h may step one square straight backward onto an empty square. |
-| op_old_post_road | Old Post Road | buff | 1 | passive | Once, your d-file pawn may advance two squares from wherever it stands. Both squares must be empty; it cannot capture this way. If the advance is on offer on your turn but you play something else, the charge is spent. |
 | op_palace_gate | Palace Gate | buff | 1 | passive | Once, one of your pawns on the d- or e-file may step one square diagonally forward onto an empty square. Not a capture. If the step is on offer on your turn but you move elsewhere, the charge is spent. |
 | op_parade_route | Parade Route | buff | 1 | passive | Once, any pawn still on its starting rank may step one square sideways to an empty square. Taking this sidestep is your move for the turn, so no other pawn makes a special move that turn. |
-| op_pilgrim_road | Pilgrim Road | buff | 1 | passive | Once, your e-file pawn may advance two squares from wherever it stands. Both squares must be empty; it cannot capture this way. |
+| op_pilgrim_road | Pilgrim Road | buff | 1 | passive | Once, your e-file pawn may stride two squares from wherever it stands. Both squares must be empty, and no enemy piece may be attacking the far one. |
 | op_prompt_corner | Prompt Corner | buff | 1 | passive | Once, while on your back rank, one of your bishops may hop exactly 1 square sideways along it, ignoring anything between. The destination must be empty. Taking this hop consumes your next unused reroll, if any. |
-| op_quickstep | Quickstep | buff | 1 | passive | Once, your king may move two squares sideways toward the h-file. Both squares must be empty. If unused by your 12th move, the charge becomes one draft reroll. |
+| op_quickstep | Quickstep | buff | 1 | passive | Once, your king may move two squares sideways toward the h-file. Both squares must be empty, and your h-file rook must still stand in its corner. If unused by your 12th move, the charge becomes one draft reroll. |
 | op_regroup_at_camp | Regroup at Camp | buff | 1 | passive | Once, one of your pawns on files c, d, e, f may step one square straight backward onto an empty square. |
 | op_revolving_door | Revolving Door | buff | 1 | passive | Once, one of your pawns on files c, d, e, f may step one square diagonally forward onto an empty square. Not a capture. |
-| op_second_thoughts | Second Thoughts | buff | 1 | passive | Once, one of your pawns on the d- or e-file may step one square straight backward onto an empty square. |
+| op_second_thoughts | Second Thoughts | buff | 1 | passive | Once, after your 6th move, one of your pawns on the d- or e-file may step one square straight backward onto an empty square. |
 | op_servants_entrance | Servants' Entrance | buff | 1 | passive | Once, one of your pawns on files a, b, c, d may step one square diagonally forward onto an empty square. Not a capture. |
+| op_set_change | Set Change | buff | 1 | passive | Once, while on your back rank, one of your rooks may hop exactly 2 squares sideways along it, ignoring anything between. The destination must be empty. Scenery shifts between acts, so the hop waits for the first capture of the game. |
 | op_sidestep_and_bow | Sidestep and Bow | buff | 1 | passive | Once, one of your pawns may step one square diagonally backward onto an empty square. |
 | op_silk_curtain | Silk Curtain | buff | 1 | passive | Your queen may hop over an adjacent friendly bishop on a diagonal, landing on the square directly beyond, once. The landing square must be empty. |
 | op_smugglers_lane | Smugglers' Lane | buff | 1 | passive | Twice, your h-file pawn may advance two squares from wherever it stands. Both squares must be empty; it cannot capture this way. The second advance must start from a different square than the first. |
 | op_squires_errand | Squire's Errand | buff | 1 | passive | Twice, one of your pawns on the b- or g-file may step one square straight backward onto an empty square. The narrower district runs the errand twice. If the retreat is on offer on your turn but you play something else, the charge is spent. |
 | op_stage_left | Stage Left | buff | 1 | passive | Once, while on your back rank, one of your knights may hop exactly 2 squares sideways along it, ignoring anything between. The destination must be empty. Taking this hop consumes your next unused reroll, if any. |
-| op_tactical_withdrawal | Tactical Withdrawal | buff | 1 | passive | Once, one of your pawns may step one square straight backward onto an empty square. |
 | op_tango_dip | Tango Dip | buff | 1 | passive | Once, your king may move two squares diagonally forward toward the a-file. Both squares must be empty. After the dash resolves, gain one draft reroll. |
 | op_towpath | Towpath | buff | 1 | passive | Once, your a-file or b-file pawn may advance two squares from wherever it stands. Both squares must be empty; it cannot capture this way. |
 | op_trapdoor_exit | Bishop's Hatch | buff | 1 | passive | Once, while on your back rank, one of your bishops may hop exactly 2 squares sideways along it, passing over the one square between, which may hold a friendly piece. The destination must be empty. |
 | op_vaulting_horse | Vaulting Horse | buff | 1 | passive | One of your bishops may hop over an adjacent friendly knight on its diagonal, landing on the square directly beyond, once. The landing square must be empty. Taking this hop consumes your next unused reroll, if any. |
-| op_waltz_left | Waltz Left | buff | 1 | passive | Once, your king may move two squares sideways toward the a-file. Both squares must be empty. If unused by your 12th move, the charge becomes one draft reroll. |
+| op_waltz_left | Waltz Left | buff | 1 | passive | Once, your king may glide two squares sideways toward the a-file across empty squares. The figure takes three counts: the glide waits until after your 3rd move. If unused by your 12th move, the charge becomes one draft reroll. |
 | ov_left_foot_first | Left Foot First | buff | 1 | passive | Once, your king may lunge two squares toward the queenside if both squares are empty. Making the lunge spends your next unused draft reroll, if you have one. |
 | ov_sugar_glider | Sugar Glider | buff | 1 | passive | One knight's next move may be a (2,2) diagonal glide instead. |
 | quiet_march | Quiet March | buff | 1 | passive | One pawn can move backward one square, once. It cannot be captured during your opponent's next turn. |
@@ -283,8 +279,8 @@ Cards do several things at once, so the ladder is priority-ordered and first-mat
 | op_do_si_do | Do-Si-Do | buff | 2 | passive | Once, your king may hop sideways over an adjacent friendly piece on his rank, landing on the empty square directly beyond. |
 | op_garden_door | Garden Door | buff | 2 | passive | Once, one of your pawns on files e, f, g, h may step one square diagonally forward onto an empty square. Not a capture. |
 | op_leapfrog_lesson | Leapfrog Lesson | buff | 2 | passive | One of your bishops may hop over an adjacent friendly pawn on its diagonal, landing on the square directly beyond, once. The landing square must be empty. |
-| op_sandbag_hurdle | Sandbag Hurdle | buff | 2 | passive | One of your rooks may hop over an adjacent friendly pawn on its rank or file, landing on the square directly beyond, once. The landing square must be empty. |
-| op_stable_gate | Stable Gate | buff | 2 | passive | One of your rooks may hop over an adjacent friendly knight on its rank or file, landing on the square directly beyond, once. The landing square must be empty. |
+| op_sandbag_hurdle | Sandbag Hurdle | buff | 2 | passive | One of your rooks may hop over an adjacent friendly pawn on its rank or file, landing on the empty square directly beyond, once. The sandbags hold: that pawn cannot be captured during your opponent's next turn. |
+| op_stable_gate | Stable Gate | buff | 2 | passive | One of your rooks may hop over an adjacent friendly knight on its rank or file, landing on the empty square directly beyond, once. The gate only opens while that knight still stands on your back rank. |
 | op_storm_door | Storm Door | buff | 2 | passive | Once, one of your pawns (any file) may step one square diagonally forward onto an empty square. Not a capture. The step must angle toward the board's edge. |
 | ov_chariot_lessons | Chariot Lessons | buff | 2 | activated | Hitch up one rook: for 5 of your turns it is a chariot, keeping its rook moves and adding one-square diagonal steps. |
 | ov_second_breakfast | Second Breakfast | buff | 2 | passive | One of your pawns may march two single steps forward as your very next move: both squares must be empty, no capturing. Whether or not you take it, the charge is spent the moment you next move. |
@@ -525,22 +521,22 @@ Cards do several things at once, so the ladder is priority-ordered and first-mat
 | loose_pawn | Tight Formation | buff | 2 | passive | Pawns still standing on your second rank cannot be captured, for the game. Once a pawn steps forward it is on its own. |
 | op_alley_cat | Alley Cat | buff | 2 | passive | One use: the first time an enemy piece attacks your b-file pawn, that pawn cannot be captured for one turn, but the guard begins only after your opponent's next move. |
 | op_chapel_warden | Chapel Warden | buff | 2 | passive | The first time an enemy piece attacks one of your bishops, that bishop cannot be captured during your opponent's next turn, except by a pawn. One use. |
-| op_cloister_bell | Cloister Bell | buff | 2 | passive | The first time an enemy piece attacks your c-file pawn, that pawn cannot be captured during your opponent's next turn. The guard ends once it has turned that reply aside. One use. |
+| op_cloister_bell | Cloister Bell | buff | 2 | passive | The first time an enemy piece attacks your c-file pawn, the bell tolls: that pawn cannot be captured during your opponent's next turn, and the attacker is marked until you reply. One use. |
 | op_debutante_ball | Debutante Ball | buff | 2 | passive | When your queen makes her first move, she cannot be captured during your opponent's turn after next (the guard begins only after their next reply). One use, automatic. |
 | op_exchange_student | Exchange Student | buff | 2 | passive | The first of your pieces to enter the enemy half cannot be captured during your opponent's next turn, except by a pawn. One use, automatic. |
 | op_first_day_badge | First Day Badge | buff | 2 | passive | The first of your pawns to reach your fourth rank cannot be captured during your opponent's next turn, and the guard ends the moment that pawn makes a capture. One use, automatic. |
-| op_gallery_docent | Gallery Docent | buff | 2 | passive | The first time an enemy piece attacks your g-file pawn, that pawn cannot be captured during your opponent's next turn. The guard ends immediately if the guarded pawn captures. One use. |
-| op_garden_scarecrow | Garden Scarecrow | buff | 2 | passive | The first time an enemy piece attacks your f-file pawn, that pawn cannot be captured during your opponent's next turn, except by a pawn. One use. |
-| op_harbor_gull | Harbor Gull | buff | 2 | passive | The first time an enemy piece attacks your a-file pawn, that pawn cannot be captured during your opponent's next turn, except by a pawn. One use. |
+| op_gallery_docent | Gallery Docent | buff | 2 | passive | The first time an enemy piece attacks your g-file pawn, the ropes go up and it cannot be captured during your opponent's next turn. The exhibit must touch nothing: the guard drops the moment that pawn captures. One use. |
+| op_garden_scarecrow | Garden Scarecrow | buff | 2 | passive | The first time an enemy piece attacks your f-file pawn, the straw figure spooks it: that pawn cannot be captured during your opponent's next turn. Enemy pawns are not fooled and may still take it. One use. |
+| op_harbor_gull | Harbor Gull | buff | 2 | passive | The first time an enemy piece attacks your a-file pawn, the gull mobs it: that pawn cannot be captured during your opponent's next turn, except by a pawn. The gull will not fly inland, so the watch lapses if that pawn leaves the a-file. One use. |
 | op_lady_in_waiting | Lady in Waiting | buff | 2 | passive | The first time an enemy piece attacks your queen, that queen cannot be captured during your opponent's next turn. The guard ends once it has turned that reply aside. One use. |
-| op_lighthouse_keeper | Lighthouse Keeper | buff | 2 | passive | The first time an enemy piece attacks your h-file pawn, that pawn cannot be captured during your opponent's next turn. The guard ends once it has turned that reply aside. One use. |
-| op_market_dog | Market Dog | buff | 2 | passive | The first time an enemy piece attacks your d-file pawn, that pawn cannot be captured during your opponent's next turn, except by a pawn. One use. |
-| op_ordination_day | Ordination Day | buff | 2 | passive | When your first bishop moves, it cannot be captured during your opponent's next turn, and the guard ends the moment that bishop makes a capture. One use, automatic. |
-| op_parade_marshal | Parade Marshal | buff | 2 | passive | The first time an enemy piece attacks your e-file pawn, that pawn cannot be captured during your opponent's next turn. The guard ends immediately if the guarded pawn captures. One use. |
+| op_lighthouse_keeper | Lighthouse Keeper | buff | 2 | passive | The lamp is lit from your 6th move on. Before then the keeper sleeps, and after it, the first attack on your h-file pawn leaves that pawn safe from capture for one enemy turn. One use. |
+| op_market_dog | Market Dog | buff | 2 | passive | The first time an enemy piece attacks your d-file pawn, the dog barks: that pawn cannot be captured during your opponent's next turn, except by a pawn. The dog needs a stallholder, so one of your pieces must stand beside that pawn. One use. |
+| op_ordination_day | Ordination Day | buff | 2 | passive | When your first bishop moves, he is ordained and cannot be captured during your opponent's next turn. A calling that begins with a capture is refused, and no guard is granted. One use, automatic. |
+| op_parade_marshal | Parade Marshal | buff | 2 | passive | While your king still stands on his home square, the first enemy piece to attack your e-file pawn is waved off: that pawn cannot be captured during your opponent's next turn. One use. |
 | op_riding_certificate | Riding Certificate | buff | 2 | passive | The first of your knights to land on your fourth rank or beyond cannot be captured during your opponent's next turn; the guard ends once it has turned that reply aside. One use, automatic. |
 | op_stable_groom | Stable Groom | buff | 2 | passive | One use: the first time an enemy piece attacks one of your knights, that knight cannot be captured for one turn, but the guard begins only after your opponent's next move. |
 | op_stage_armor | Stage Armor | buff | 2 | passive | The first time you give check, the piece that gave check cannot be captured during your opponent's next turn, and the guard ends the moment that piece captures. One use. |
-| op_tower_inspection | Tower Inspection | buff | 2 | passive | When your first rook moves, it cannot be captured during your opponent's next turn, and the guard ends the moment that rook makes a capture. One use, automatic. |
+| op_tower_inspection | Tower Inspection | buff | 2 | passive | When your first rook moves, the inspector signs off: it cannot be captured during your opponent's next turn, and the certificate is void the moment that rook makes a capture. One use, automatic. |
 | op_tower_warden | Tower Warden | buff | 2 | passive | The first time an enemy piece attacks one of your rooks, that rook cannot be captured during your opponent's next turn, except by a pawn. One use. |
 | op_trellis | Trellis | buff | 2 | passive | After your 6th move, once your opponent has replied, your most advanced pawn cannot be captured during your opponent's next turn. |
 | ov_pet_rock | Pet Rock | buff | 2 | activated | One of your pawns cannot be captured during your opponent's next turn. The rock is watching. |
@@ -623,12 +619,13 @@ Cards do several things at once, so the ladder is priority-ordered and first-mat
 
 **Narrows how you may move** - The holder loses options: the shape most nerfs take.
 
-106 cards.
+107 cards.
 
 | id | name | family | tier | trigger | rule |
 |---|---|---|---|---|---|
 | bn4_quiet_after | The Quiet After | boon | 1 | passive | While your queen is off the board, your nerf is suspended, but the relief applies only to movement restrictions: you may move only one square at a time. |
 | bn4_two_breaths | Two Breaths | boon | 1 | passive | Suspend your nerf for your next turn, and again for one more turn after your next 3 turns. On that final turn you may move only one square at a time. |
+| op_old_post_road | Old Post Road | buff | 1 | passive | Once, on one of your first 7 moves, your d-file pawn may cover two squares from wherever it stands. Both squares must be empty. The coach never waits: the charge is spent if you leave the run on offer. |
 | untitled_duck | Untitled duck nerf | nerf | 1 | passive-rule | A duck occupies one random square, marked from the opening turn, all game. No piece may land on it and sliders cannot pass through it, though knights may leap over. If the duck would leave you fewer than three legal moves, it steps aside for that turn. |
 | bn4_saints_day | Saint's Day | boon | 2 | passive | After your next 4 turns, your nerf is suspended for the 4 turns that follow. On the final turn the relief applies only to movement restrictions: you may move only one square at a time. |
 | bn4_spring_in_the_step | Spring in the Step | boon | 2 | passive | Suspend your nerf for your next 2 turns, and your most advanced pawn immediately steps one square forward if the way is clear. On the second of those turns the relief applies only to movement restrictions: you may move only one square at a time. |
@@ -738,18 +735,16 @@ Cards do several things at once, so the ladder is priority-ordered and first-mat
 
 **Closes off squares, ranks or files** - Part of the board is off limits: pieces may not enter or pass through it.
 
-105 cards.
+103 cards.
 
 | id | name | family | tier | trigger | rule |
 |---|---|---|---|---|---|
 | hx4_no_mans_reach | No Man's Reach | hex | 1 | passive | For your opponent's next 3 turns, their knights may not land on your two back ranks. |
 | hx4_tangled_reins | Tangled Reins | hex | 1 | passive | For your opponent's next 2 turns, their knights may not land on any edge square of the board. |
 | op_chairs_on_tables | Chairs on Tables | item | 1 | activated | Use once as a free action: choose an empty center square (d4, d5, e4 or e5). Enemy pieces cannot end a move there for your opponent's next turn. |
-| op_closed_for_cleaning | Closed for Cleaning | item | 1 | activated | Use once as a free action: choose an empty square on your back rank. Enemy pieces cannot end a move there for your opponent's next 2 turns. |
-| op_do_not_disturb | Do Not Disturb | item | 1 | activated | Use once as a free action: choose an empty square on your second rank. Enemy pieces cannot end a move there for your opponent's next 2 turns. |
+| op_do_not_disturb | Do Not Disturb | item | 1 | activated | Use once as a free action: hang the sign on an empty square on your second rank beside one of your pieces. Enemy pieces cannot end a move there for your opponent's next 2 turns. |
 | op_invitation_only | Invitation Only | buff | 1 | passive | On your opponent's next turn, enemy pieces cannot end a move on your back two ranks. The ban is spent on that one opponent turn whether or not it actually turns a move away. |
-| op_private_booth | Private Booth | item | 1 | activated | Use once as a free action: choose an empty square next to your king. Enemy pieces cannot end a move there for your opponent's next turn. |
-| op_reserved_table | Reserved Table | item | 1 | activated | Use once as a free action: choose an empty square in your half. Enemy pieces cannot end a move there for your opponent's next turn. |
+| op_reserved_table | Reserved Table | item | 1 | activated | Use once as a free action: put the brass sign on any empty square in your half except your back rank. Enemy pieces cannot end a move there for your opponent's next turn. |
 | op_wet_floor_sign | Wet Floor Sign | item | 1 | activated | Use once as a free action: choose an empty square directly in front of one of your pawns. Enemy pieces cannot end a move there for your opponent's next turn. |
 | ov_wet_paint | Wet Paint | buff | 1 | activated | Choose a square; enemy pieces cannot end their move on it for your opponent's next 2 turns. |
 | watchtower | Watchtower | boon | 1 | passive | The tower spots the cavalry a mile out: enemy knights cannot move into your half of the board, except to capture, for your opponent's next 3 turns. |
@@ -960,7 +955,7 @@ Cards do several things at once, so the ladder is priority-ordered and first-mat
 
 **Narrows how the opponent may move** - The opponent keeps their turn but loses options: a catch-all denial bucket.
 
-96 cards.
+98 cards.
 
 | id | name | family | tier | trigger | rule |
 |---|---|---|---|---|---|
@@ -969,8 +964,10 @@ Cards do several things at once, so the ladder is priority-ordered and first-mat
 | hw2_bad_omen | Bad Omen | hex | 1 | passive | A dark omen is read over their camp: on your opponent's 3rd turn from now, it strikes, and for that one turn they may move only a pawn or their king. They can see it coming and set up around it. |
 | hw3_no_retreat | No Retreat | hex | 1 | passive | For your opponent's next 4 turns, none of their pieces may move toward their own back rank: no retreating, no sidestepping backward. They may advance or move straight across. The king is exempt, and a piece with no forward move is freed for that turn. |
 | hx4_puddle | The Puddle | hex | 1 | activated | Choose an empty square: it becomes a deep puddle for 2 of your opponent's turns, and none of their pieces will stop in it. The first piece the puddle would turn away may step in once, then it binds fully. |
+| op_bread_for_the_table | Bread for the Table | item | 1 | activated | Use once as a free action: a d- or e-file pawn carries the loaves one square forward. The square ahead must be empty, and no enemy piece may be attacking it. |
 | op_fresh_sod | Fresh Sod | buff | 1 | passive | On your opponent's next turn, enemy pieces cannot end a non-capturing move on the four center squares (a capture may still land there). |
 | op_personal_space | Personal Space | buff | 1 | passive | On your opponent's next turn, enemy pieces cannot end a non-capturing move next to your king (a capture may still land there). |
+| op_private_booth | Private Booth | item | 1 | activated | Use once as a free action, while your king still sits at his own table: reserve one empty square beside him. No enemy piece may end a move there during your opponent's next turn. |
 | bn4_boundary_stones | Boundary Stones | boon | 2 | activated | Mark 2 empty squares in your half: no enemy piece may move onto them for 4 turns. |
 | hw3_toll_road | Toll Road | hex | 2 | passive | For your opponent's next 6 turns, any turn they move a piece out of their own half and into yours, their following turn is taxed: they may move only a pawn or their king. Kings crossing pay the same toll. |
 | hx4_bridge_toll | Bridge Toll | hex | 2 | passive | For your opponent's next 2 turns, only their pawns and king may cross the midline into your half. The bridge keeper distrusts officers. |
@@ -1165,6 +1162,105 @@ Cards do several things at once, so the ladder is priority-ordered and first-mat
 | second_coming | Second Coming | apex | 9 | activated | Summon a queen on an empty square in your half, and your whole army cannot be captured for your opponent's next turn. |
 | grand_army | Grand Army | apex | 10 | instant | A fresh queen, rook, bishop, and knight join your pocket to drop onto empty squares on later turns. |
 
+## draft-advantage
+
+**Improves your own drafts** - Rerolls, banking, higher tiers, wider offers: better cards for the holder.
+
+90 cards.
+
+| id | name | family | tier | trigger | rule |
+|---|---|---|---|---|---|
+| bn4_lucky_coin | Lucky Coin | boon | 1 | passive | Gain 1 draft reroll. If you do not spend it within your next two draft offers, it is reclaimed. |
+| bn4_paper_crown | Paper Crown | item | 1 | instant | Your king wears a splendid paper crown for the rest of the game (purely decorative), and you gain 1 draft reroll. |
+| hx4_red_tape | Red Tape | hex | 1 | passive | Your opponent's next draft offer excludes draft manipulation cards, and after that draft resolves you gain one reroll. The paperwork was misfiled. |
+| op_bridle_path | Bridle Path | buff | 1 | passive | Once, your b-file pawn may canter two squares from wherever it stands, if both squares are empty and one of your knights has already moved. The charge is spent if the canter is on offer and you play something else. |
+| op_carbon_copy | Carbon Copy | item | 1 | instant | You will see the cards in your opponent's next draft offer. |
+| op_change_of_address | Change of Address | buff | 1 | passive | When you castle, gain a draft reroll. If you have not castled by your 12th move, gain a draft reroll instead. One use. |
+| op_compost_heap | Future Compost | buff | 1 | passive | After your 7th move, your next draft offer rolls one tier higher. You are shown the pending reward one of your moves before it lands. |
+| op_ferry_crossing | Ferry Crossing | buff | 1 | passive | Once, your f-file pawn may cross two squares from wherever it stands. Both squares must be empty. The ferryman takes his fare: the crossing consumes your next unused reroll, if any. |
+| op_home_office | Home Office | buff | 1 | passive | When you castle, the castled rook is named Home Office, purely cosmetically, forever, and you gain a draft reroll. One use. |
+| op_intermission | Intermission | buff | 1 | passive | The first 2 times you give check, gain a draft reroll. 2 uses. |
+| op_keys_copied | Keys Copied | buff | 1 | passive | When your opponent castles, you gain a draft reroll. 2 uses. |
+| op_layaway_plan | Layaway Plan | item | 1 | instant | Your next draft offer rolls one tier higher. |
+| op_lucky_stirrup | Lucky Stirrup | buff | 1 | passive | If your first move is a knight move, that knight becomes a plush toy, purely cosmetically, forever, and you gain a draft reroll. Judged once, on your first move. |
+| op_prophecy_fulfilled | Prophecy Fulfilled | buff | 1 | passive | Whatever your first move is, that piece is named The Chosen One, purely cosmetically, forever, and you gain a draft reroll. Judged once, on your first move. |
+| op_sampler_platter | Sampler Platter | item | 1 | instant | Your next draft offers three cards instead of two. |
+| op_second_harvest | Second Harvest | buff | 1 | passive | After your 12th move, gain a draft reroll. |
+| op_special_order | Special Order | item | 1 | instant | Your next draft is dealt from tier 2. |
+| op_star_dressing_room | Star Dressing Room | buff | 1 | passive | Once, your queen may cross exactly 2 squares sideways along your back rank onto an empty square, ignoring whatever stands between. She waits for her cue: the walk is on offer only after your opponent's next move. |
+| op_store_credit | Store Credit | item | 1 | instant | Gain one extra draft reroll. |
+| op_transfer_window | Transfer Window | buff | 1 | passive | When you make your first capture of the game, gain a draft reroll. One use. |
+| ov_coupon | Coupon | buff | 1 | passive | Clip it: gain one draft reroll. Thrifty shopper bonus: if you still hold an unused reroll when your third draft arrives, gain another. |
+| tempo_shuffle | Tempo Shuffle | buff | 1 | passive | Move one pawn sideways one square, once. Gain one draft reroll when it resolves. |
+| bn4_coupon_book | Coupon Book | boon | 2 | instant | Your next draft offer rolls one tier higher. The redemption fee is one of your rerolls, if you have any. |
+| bn4_window_shopping | Window Shopping | boon | 2 | instant | See the cards in your opponent's next draft offer. |
+| draft_insight | Draft Insight | boon | 2 | instant | Your next draft is fated to offer tier 3 cards. |
+| op_bumper_crop | Bumper Crop | buff | 2 | passive | After your 7th move, your next draft offers three cards instead of two. You are shown the pending reward one of your moves before it lands. |
+| op_slow_burn | Slow Burn | buff | 2 | passive | After your 6th move, gain a draft reroll. |
+| op_widdershins | Widdershins | buff | 2 | passive | If your first move starts on the queenside files (a through d), gain a draft reroll. Judged once, on your first move. |
+| oracles_eye | Oracle's Eye | boon | 2 | instant | The oracle inhales the vapors and names a better price: your bank offer improves by one tier, unless your opponent's next draft is already skipped, in which case the oracle offers nothing. |
+| ov_free_sample | Free Sample | buff | 2 | instant | The next shared draft round arrives one full turn sooner for both players. |
+| ov_slingshot | Slingshot | buff | 2 | activated | One of your pawns shoots down an enemy pawn up to 2 squares directly ahead of it. The shooter stays put. Using it consumes your next unused draft reroll, if any. |
+| prep | Prep | buff | 2 | instant | Your next buff draft shows three cards to pick from instead of two, once. |
+| sealed_orders | Sealed Orders | hex | 2 | instant | Your opponent's next draft offer contains no draft-manipulation cards, and you take a draft reroll. |
+| bn4_bakers_dozen | Baker's Dozen | boon | 3 | instant | Your next draft shows three cards, and you gain 1 draft reroll. |
+| bn4_over_the_shoulder | Over the Shoulder | boon | 3 | instant | See the cards in your opponent's next draft offer, and gain 1 draft reroll. If that draft is already skipped, only the reroll arrives. |
+| bn4_punch_card | Punch Card | boon | 3 | instant | Gain 2 draft rerolls. |
+| bn4_trade_secret | Trade Secret | boon | 3 | passive | Your next draft offer is fated to deal tier 4 cards. If it has not been dealt within two of your drafts, the fated offer is reclaimed. |
+| cs_scratch_card | Scratch Card | buff | 3 | instant | Scratch off three panels with the edge of a coin. Match all three for a knight in your pocket. Match two for 35 seconds, a free forward pawn step when one is open, and a draft reroll. Three blanks and the dud ticket costs you your weakest pawn. |
+| gamble | Gamble | buff | 3 | instant | Flip a fair coin. Heads: your next two draft offers give you every card instead of one, and your next offer rolls a tier higher. Tails: you and your opponent both skip your next draft, but your following offer still rolls a tier higher. |
+| glamour | Glamour | buff | 3 | activated | The courts trade changelings: one enemy pawn you choose joins your army, and one of your pawns you choose joins theirs. Using it consumes your next unused reroll, if you have one. |
+| mystery_box | Mystery Box | buff | 3 | instant | Rattle the crate and pop the lid: your next draft offer rolls at a completely random tier, anywhere from 2 to 7. |
+| north_star | North Star | boon | 3 | instant | The fixed star steadies your hand: your next draft is fated to offer tier 4 cards. |
+| second_wind_major | Second Wind Major | buff | 3 | activated | Return a captured rook to any empty back-rank square, once. Using it spends your next unused reroll, if any. |
+| wa_arcane_reroll | Arcane Reroll | buff | 3 | passive | Gain two draft rerolls. Any you have not spent within your next two draft offers are reclaimed. |
+| wa_high_roll | High Roll | buff | 3 | instant | Force your next draft offer to roll at tier 5. |
+| wa_suppress_magic | Suppress Magic | buff | 3 | instant | Your opponent's next draft offer contains no draft-manipulation cards, and the next buff they draft arrives nullified. |
+| will_o_wisp | Will-o'-Wisp | buff | 3 | activated | A cold flame dances ahead of one enemy piece and it follows: lure one enemy piece except a king one square diagonally forward, toward your side, onto an empty square you choose. Using it consumes your next unused reroll, if you have one. |
+| bn4_private_auction | Private Auction | boon | 4 | passive | Your next draft offer is fated to deal tier 5 cards. If it has not been dealt within two of your drafts, the fated offer is reclaimed. |
+| bn4_season_ticket | Season Ticket | boon | 4 | instant | Gain 2 draft rerolls. |
+| bw3_double_down | Double Down | boon | 4 | instant | Push it all onto the next hand: your next draft shows three cards and you keep all three of them. In return, the draft after that is skipped. |
+| chess_diff | Chess Diff | boon | 4 | instant | Chess diff! The game is paused and a fresh, completely normal game of 1+0 chess is played on a clean board: no drafts, no cards, no powers of any kind. Whoever WINS the diff seizes an apex (tier 9) buff, then the paused game (board and clocks) resumes. |
+| gm_crash_game | Crash Game | buff | 4 | activated | Strap a pawn to the rocket and let it ride: 30% it lands with a free sidestep, 25% it comes back a knight, 20% a knight plus a draft reroll, 10% it comes back a ROOK, 15% the rocket crashes and the pawn burns up. |
+| mass_recall | Mass Recall | buff | 4 | activated | Return any two pieces to your back rank, once. Using it spends your next unused reroll, if any. |
+| metamorphosis | Metamorphosis | buff | 4 | activated | Force a violent change of form on one of your own pawns, knights, or bishops: it reshapes itself into a rook, once. Using it consumes your next unused reroll, if you have one. |
+| ov_private_gallery | Private Gallery | buff | 4 | instant | Your next draft offers 3 cards, and you pocket 10 seconds at the door. |
+| ov_tasting_flight | Tasting Flight | buff | 4 | instant | Your next draft offers 3 cards instead of 2. |
+| recast | Recast | boon | 4 | passive | Gain an extra draft reroll, and your next draft rolls one tier higher. The bonus reroll expires after two drafts if unspent. |
+| wa_mind_read | Mind Read | buff | 4 | instant | Your opponent's next drafted buff arrives nullified, and their reroll token slips away if they hold one. |
+| bn4_harvest_and_fallow | Harvest and Fallow | boon | 5 | instant | You keep both cards of your next draft offer. The draft after it is skipped while the field rests. |
+| bn4_velvet_queue | Velvet Queue | boon | 5 | instant | Your next draft offer is fated to deal tier 6 cards. |
+| fur_elise | Fur Elise | buff | 5 | activated | Run your fingers down the keys. Choose a bishop and glide it along one diagonal, sweeping away up to 3 enemy pieces in its path as it lands. Using it spends your next unused draft reroll, if you have one. |
+| heros_journey | Hero's Journey | buff | 5 | instant | The call to adventure rings out: your next draft shows three cards to pick from, and your bank offer improves by one tier. |
+| hx4_paper_orders | Paper Orders | hex | 5 | passive | Your opponent's next draft offer excludes draft manipulation cards, and after that draft resolves you gain one reroll. The couriers were paid to lose that satchel. |
+| ov_checkmate_rehearsal | Checkmate Rehearsal | buff | 5 | activated | Run the rehearsal, once: every enemy piece currently attacking one of your pieces is spotlighted, and the director's notes include one free draft reroll. |
+| ov_duplicate_glitch | Duplicate Glitch | buff | 5 | instant | Dupe glitch: gain a second copy of a random unspent card you hold. If your hand is empty, gain 2 draft rerolls instead. |
+| ov_insider_trading | Insider Trading | buff | 5 | instant | See the cards of your opponent's next draft, and pocket 10 seconds for the tip. |
+| ov_upper_shelf | Upper Shelf | buff | 5 | passive | Your next draft is dealt from one tier higher. If it goes unused, the lift expires after two of your drafts. |
+| wc_rubber_duck_squad | Rubber Duck Squad | buff | 5 | passive | Your bishops are secretly rubber: for your opponent's next 3 turns, any enemy piece that captures one of your bishops bounces straight back to the square it came from. Rigging the bounce burns your next unused draft reroll, if you have one. |
+| zodiac_wheel | Zodiac Wheel | buff | 5 | instant | You read all twelve houses at once: your next draft shows three cards to pick from, all fated to tier 4. |
+| all_in | All In | buff | 6 | instant | Push everything to the center. Your next draft offer is skipped. The offer after that shows three cards, and you take all three. |
+| bn4_ravens_court | Raven's Court | boon | 6 | instant | See both the cards and the tier of your opponent's next draft offer, and gain 2 draft rerolls. |
+| bn4_royal_banquet | Royal Banquet | boon | 6 | instant | Your next draft shows three cards, and you keep all three. |
+| draft_domination | Draft Domination | buff | 6 | instant | Force your opponent's next draft down to tier 2, so both cards they are offered come from a weak tier. |
+| favorable_stars | Favorable Stars | buff | 6 | instant | You cast your chart and the houses agree: your next draft is fated to offer tier 6 cards. |
+| gm_the_house | The House | buff | 6 | passive | For 6 of your turns you ARE the house: every draft either player resolves pays you a chip. Cash out automatically: 2 chips buy a reroll, 4 chips a fresh pawn on your second rank. |
+| ov_season_pass | Season Pass | buff | 6 | instant | Swipe the gold card: gain 3 draft rerolls. |
+| bn4_crown_commission | Crown Commission | boon | 7 | instant | You keep both cards of your next draft offer, at its usual tier. |
+| bn4_feast_of_fools | Feast of Fools | boon | 7 | instant | You keep both cards of your next draft offer, and gain 2 draft rerolls. |
+| bn4_patrons_favor | Patron's Favor | boon | 7 | instant | Your next draft offer is fated to deal tier 7 cards. The favor costs the draft after it, which is skipped. |
+| bw2_kingmakers_pact | Kingmaker's Pact | boon | 7 | passive | Sign with the power behind every throne: for your opponent's next four turns, every one of your draft offers rolls one tier higher. In exchange you forfeit your draft rerolls now. The pact ends the moment your opponent spends a reroll. |
+| bw3_futures_market | Futures Market | boon | 7 | instant | Take the whole of the next hand: your next draft deals its two cards at the usual tier and you keep both of them, with no draft skipped. |
+| draft_tyranny | Draft Tyranny | buff | 7 | passive | After your opponent's next move, both cards in your next draft are set to tier 7, once. |
+| dragonslayer | Dragonslayer | buff | 7 | activated | The old blade remembers its work: name one enemy rook or queen and it is slain where it stands. Using it consumes your next unused reroll, if you have one. |
+| ov_patch_notes | Write the Patch Notes | buff | 7 | activated | Spend your turn: plant a new pawn on an empty square of your second rank, and your next draft is dealt exactly one tier higher. |
+| wa_greed | Greed | buff | 7 | instant | Your next draft offer, you take both cards instead of choosing one. |
+| bn4_deck_of_kings | Deck of Kings | boon | 8 | instant | Your next draft offer rolls one tier higher. |
+| bn4_midas_charter | Midas Charter | boon | 8 | passive | For your opponent's next 4 turns, every one of your drafts rolls one tier higher; it ends early if your opponent spends a draft reroll. The gold rush costs your next 2 drafts, which are skipped. |
+| heavens_wrath | Heaven's Wrath | buff | 8 | activated | The sky splits and three bolts of wrath descend: smite three enemy knights, bishops, rooks, or queens you name from the board. Calling the storm consumes your next unused reroll, if you have one. |
+| ov_cartographers_vault | Cartographer's Vault | buff | 8 | passive | Your next 2 drafts each offer 3 cards. |
+| ov_the_menu | The Menu | buff | 8 | instant | Your next draft is dealt three cards, and you keep every one of them. |
+
 ## movement-phase-jump
 
 **Lets a piece jump or pass through pieces** - Movement that ignores blockers: leaping, phasing, sliding through.
@@ -1264,102 +1360,6 @@ Cards do several things at once, so the ladder is priority-ordered and first-mat
 | hx4_maze_of_thorns | Maze of Thorns | hex | 8 | passive | Thorn hedges spring up across every lane: for your opponent's next 4 turns, no piece of theirs may move more than 1 square, except knights, who leap the hedges. Their king is exempt. |
 | ov_antigravity_gala | Anti-Gravity Gala | apex | 9 | passive | For 3 of your turns everything floats: your sliding pieces may pass over the first piece in their path, friend or foe, and continue beyond it. Kings are too dignified to be floated over. |
 
-## draft-advantage
-
-**Improves your own drafts** - Rerolls, banking, higher tiers, wider offers: better cards for the holder.
-
-87 cards.
-
-| id | name | family | tier | trigger | rule |
-|---|---|---|---|---|---|
-| bn4_lucky_coin | Lucky Coin | boon | 1 | passive | Gain 1 draft reroll. If you do not spend it within your next two draft offers, it is reclaimed. |
-| bn4_paper_crown | Paper Crown | item | 1 | instant | Your king wears a splendid paper crown for the rest of the game (purely decorative), and you gain 1 draft reroll. |
-| hx4_red_tape | Red Tape | hex | 1 | passive | Your opponent's next draft offer excludes draft manipulation cards, and after that draft resolves you gain one reroll. The paperwork was misfiled. |
-| op_carbon_copy | Carbon Copy | item | 1 | instant | You will see the cards in your opponent's next draft offer. |
-| op_change_of_address | Change of Address | buff | 1 | passive | When you castle, gain a draft reroll. If you have not castled by your 12th move, gain a draft reroll instead. One use. |
-| op_compost_heap | Future Compost | buff | 1 | passive | After your 7th move, your next draft offer rolls one tier higher. You are shown the pending reward one of your moves before it lands. |
-| op_home_office | Home Office | buff | 1 | passive | When you castle, the castled rook is named Home Office, purely cosmetically, forever, and you gain a draft reroll. One use. |
-| op_intermission | Intermission | buff | 1 | passive | The first 2 times you give check, gain a draft reroll. 2 uses. |
-| op_keys_copied | Keys Copied | buff | 1 | passive | When your opponent castles, you gain a draft reroll. 2 uses. |
-| op_layaway_plan | Layaway Plan | item | 1 | instant | Your next draft offer rolls one tier higher. |
-| op_lucky_stirrup | Lucky Stirrup | buff | 1 | passive | If your first move is a knight move, that knight becomes a plush toy, purely cosmetically, forever, and you gain a draft reroll. Judged once, on your first move. |
-| op_prophecy_fulfilled | Prophecy Fulfilled | buff | 1 | passive | Whatever your first move is, that piece is named The Chosen One, purely cosmetically, forever, and you gain a draft reroll. Judged once, on your first move. |
-| op_sampler_platter | Sampler Platter | item | 1 | instant | Your next draft offers three cards instead of two. |
-| op_second_harvest | Second Harvest | buff | 1 | passive | After your 12th move, gain a draft reroll. |
-| op_special_order | Special Order | item | 1 | instant | Your next draft is dealt from tier 2. |
-| op_store_credit | Store Credit | item | 1 | instant | Gain one extra draft reroll. |
-| op_transfer_window | Transfer Window | buff | 1 | passive | When you make your first capture of the game, gain a draft reroll. One use. |
-| ov_coupon | Coupon | buff | 1 | passive | Clip it: gain one draft reroll. Thrifty shopper bonus: if you still hold an unused reroll when your third draft arrives, gain another. |
-| tempo_shuffle | Tempo Shuffle | buff | 1 | passive | Move one pawn sideways one square, once. Gain one draft reroll when it resolves. |
-| bn4_coupon_book | Coupon Book | boon | 2 | instant | Your next draft offer rolls one tier higher. The redemption fee is one of your rerolls, if you have any. |
-| bn4_window_shopping | Window Shopping | boon | 2 | instant | See the cards in your opponent's next draft offer. |
-| draft_insight | Draft Insight | boon | 2 | instant | Your next draft is fated to offer tier 3 cards. |
-| op_bumper_crop | Bumper Crop | buff | 2 | passive | After your 7th move, your next draft offers three cards instead of two. You are shown the pending reward one of your moves before it lands. |
-| op_slow_burn | Slow Burn | buff | 2 | passive | After your 6th move, gain a draft reroll. |
-| op_widdershins | Widdershins | buff | 2 | passive | If your first move starts on the queenside files (a through d), gain a draft reroll. Judged once, on your first move. |
-| oracles_eye | Oracle's Eye | boon | 2 | instant | The oracle inhales the vapors and names a better price: your bank offer improves by one tier, unless your opponent's next draft is already skipped, in which case the oracle offers nothing. |
-| ov_free_sample | Free Sample | buff | 2 | instant | The next shared draft round arrives one full turn sooner for both players. |
-| ov_slingshot | Slingshot | buff | 2 | activated | One of your pawns shoots down an enemy pawn up to 2 squares directly ahead of it. The shooter stays put. Using it consumes your next unused draft reroll, if any. |
-| prep | Prep | buff | 2 | instant | Your next buff draft shows three cards to pick from instead of two, once. |
-| sealed_orders | Sealed Orders | hex | 2 | instant | Your opponent's next draft offer contains no draft-manipulation cards, and you take a draft reroll. |
-| bn4_bakers_dozen | Baker's Dozen | boon | 3 | instant | Your next draft shows three cards, and you gain 1 draft reroll. |
-| bn4_over_the_shoulder | Over the Shoulder | boon | 3 | instant | See the cards in your opponent's next draft offer, and gain 1 draft reroll. If that draft is already skipped, only the reroll arrives. |
-| bn4_punch_card | Punch Card | boon | 3 | instant | Gain 2 draft rerolls. |
-| bn4_trade_secret | Trade Secret | boon | 3 | passive | Your next draft offer is fated to deal tier 4 cards. If it has not been dealt within two of your drafts, the fated offer is reclaimed. |
-| cs_scratch_card | Scratch Card | buff | 3 | instant | Scratch off three panels with the edge of a coin. Match all three for a knight in your pocket. Match two for 35 seconds, a free forward pawn step when one is open, and a draft reroll. Three blanks and the dud ticket costs you your weakest pawn. |
-| gamble | Gamble | buff | 3 | instant | Flip a fair coin. Heads: your next two draft offers give you every card instead of one, and your next offer rolls a tier higher. Tails: you and your opponent both skip your next draft, but your following offer still rolls a tier higher. |
-| glamour | Glamour | buff | 3 | activated | The courts trade changelings: one enemy pawn you choose joins your army, and one of your pawns you choose joins theirs. Using it consumes your next unused reroll, if you have one. |
-| mystery_box | Mystery Box | buff | 3 | instant | Rattle the crate and pop the lid: your next draft offer rolls at a completely random tier, anywhere from 2 to 7. |
-| north_star | North Star | boon | 3 | instant | The fixed star steadies your hand: your next draft is fated to offer tier 4 cards. |
-| second_wind_major | Second Wind Major | buff | 3 | activated | Return a captured rook to any empty back-rank square, once. Using it spends your next unused reroll, if any. |
-| wa_arcane_reroll | Arcane Reroll | buff | 3 | passive | Gain two draft rerolls. Any you have not spent within your next two draft offers are reclaimed. |
-| wa_high_roll | High Roll | buff | 3 | instant | Force your next draft offer to roll at tier 5. |
-| wa_suppress_magic | Suppress Magic | buff | 3 | instant | Your opponent's next draft offer contains no draft-manipulation cards, and the next buff they draft arrives nullified. |
-| will_o_wisp | Will-o'-Wisp | buff | 3 | activated | A cold flame dances ahead of one enemy piece and it follows: lure one enemy piece except a king one square diagonally forward, toward your side, onto an empty square you choose. Using it consumes your next unused reroll, if you have one. |
-| bn4_private_auction | Private Auction | boon | 4 | passive | Your next draft offer is fated to deal tier 5 cards. If it has not been dealt within two of your drafts, the fated offer is reclaimed. |
-| bn4_season_ticket | Season Ticket | boon | 4 | instant | Gain 2 draft rerolls. |
-| bw3_double_down | Double Down | boon | 4 | instant | Push it all onto the next hand: your next draft shows three cards and you keep all three of them. In return, the draft after that is skipped. |
-| chess_diff | Chess Diff | boon | 4 | instant | Chess diff! The game is paused and a fresh, completely normal game of 1+0 chess is played on a clean board: no drafts, no cards, no powers of any kind. Whoever WINS the diff seizes an apex (tier 9) buff, then the paused game (board and clocks) resumes. |
-| gm_crash_game | Crash Game | buff | 4 | activated | Strap a pawn to the rocket and let it ride: 30% it lands with a free sidestep, 25% it comes back a knight, 20% a knight plus a draft reroll, 10% it comes back a ROOK, 15% the rocket crashes and the pawn burns up. |
-| mass_recall | Mass Recall | buff | 4 | activated | Return any two pieces to your back rank, once. Using it spends your next unused reroll, if any. |
-| metamorphosis | Metamorphosis | buff | 4 | activated | Force a violent change of form on one of your own pawns, knights, or bishops: it reshapes itself into a rook, once. Using it consumes your next unused reroll, if you have one. |
-| ov_private_gallery | Private Gallery | buff | 4 | instant | Your next draft offers 3 cards, and you pocket 10 seconds at the door. |
-| ov_tasting_flight | Tasting Flight | buff | 4 | instant | Your next draft offers 3 cards instead of 2. |
-| recast | Recast | boon | 4 | passive | Gain an extra draft reroll, and your next draft rolls one tier higher. The bonus reroll expires after two drafts if unspent. |
-| wa_mind_read | Mind Read | buff | 4 | instant | Your opponent's next drafted buff arrives nullified, and their reroll token slips away if they hold one. |
-| bn4_harvest_and_fallow | Harvest and Fallow | boon | 5 | instant | You keep both cards of your next draft offer. The draft after it is skipped while the field rests. |
-| bn4_velvet_queue | Velvet Queue | boon | 5 | instant | Your next draft offer is fated to deal tier 6 cards. |
-| fur_elise | Fur Elise | buff | 5 | activated | Run your fingers down the keys. Choose a bishop and glide it along one diagonal, sweeping away up to 3 enemy pieces in its path as it lands. Using it spends your next unused draft reroll, if you have one. |
-| heros_journey | Hero's Journey | buff | 5 | instant | The call to adventure rings out: your next draft shows three cards to pick from, and your bank offer improves by one tier. |
-| hx4_paper_orders | Paper Orders | hex | 5 | passive | Your opponent's next draft offer excludes draft manipulation cards, and after that draft resolves you gain one reroll. The couriers were paid to lose that satchel. |
-| ov_checkmate_rehearsal | Checkmate Rehearsal | buff | 5 | activated | Run the rehearsal, once: every enemy piece currently attacking one of your pieces is spotlighted, and the director's notes include one free draft reroll. |
-| ov_duplicate_glitch | Duplicate Glitch | buff | 5 | instant | Dupe glitch: gain a second copy of a random unspent card you hold. If your hand is empty, gain 2 draft rerolls instead. |
-| ov_insider_trading | Insider Trading | buff | 5 | instant | See the cards of your opponent's next draft, and pocket 10 seconds for the tip. |
-| ov_upper_shelf | Upper Shelf | buff | 5 | passive | Your next draft is dealt from one tier higher. If it goes unused, the lift expires after two of your drafts. |
-| wc_rubber_duck_squad | Rubber Duck Squad | buff | 5 | passive | Your bishops are secretly rubber: for your opponent's next 3 turns, any enemy piece that captures one of your bishops bounces straight back to the square it came from. Rigging the bounce burns your next unused draft reroll, if you have one. |
-| zodiac_wheel | Zodiac Wheel | buff | 5 | instant | You read all twelve houses at once: your next draft shows three cards to pick from, all fated to tier 4. |
-| all_in | All In | buff | 6 | instant | Push everything to the center. Your next draft offer is skipped. The offer after that shows three cards, and you take all three. |
-| bn4_ravens_court | Raven's Court | boon | 6 | instant | See both the cards and the tier of your opponent's next draft offer, and gain 2 draft rerolls. |
-| bn4_royal_banquet | Royal Banquet | boon | 6 | instant | Your next draft shows three cards, and you keep all three. |
-| draft_domination | Draft Domination | buff | 6 | instant | Force your opponent's next draft down to tier 2, so both cards they are offered come from a weak tier. |
-| favorable_stars | Favorable Stars | buff | 6 | instant | You cast your chart and the houses agree: your next draft is fated to offer tier 6 cards. |
-| gm_the_house | The House | buff | 6 | passive | For 6 of your turns you ARE the house: every draft either player resolves pays you a chip. Cash out automatically: 2 chips buy a reroll, 4 chips a fresh pawn on your second rank. |
-| ov_season_pass | Season Pass | buff | 6 | instant | Swipe the gold card: gain 3 draft rerolls. |
-| bn4_crown_commission | Crown Commission | boon | 7 | instant | You keep both cards of your next draft offer, at its usual tier. |
-| bn4_feast_of_fools | Feast of Fools | boon | 7 | instant | You keep both cards of your next draft offer, and gain 2 draft rerolls. |
-| bn4_patrons_favor | Patron's Favor | boon | 7 | instant | Your next draft offer is fated to deal tier 7 cards. The favor costs the draft after it, which is skipped. |
-| bw2_kingmakers_pact | Kingmaker's Pact | boon | 7 | passive | Sign with the power behind every throne: for your opponent's next four turns, every one of your draft offers rolls one tier higher. In exchange you forfeit your draft rerolls now. The pact ends the moment your opponent spends a reroll. |
-| bw3_futures_market | Futures Market | boon | 7 | instant | Take the whole of the next hand: your next draft deals its two cards at the usual tier and you keep both of them, with no draft skipped. |
-| draft_tyranny | Draft Tyranny | buff | 7 | passive | After your opponent's next move, both cards in your next draft are set to tier 7, once. |
-| dragonslayer | Dragonslayer | buff | 7 | activated | The old blade remembers its work: name one enemy rook or queen and it is slain where it stands. Using it consumes your next unused reroll, if you have one. |
-| ov_patch_notes | Write the Patch Notes | buff | 7 | activated | Spend your turn: plant a new pawn on an empty square of your second rank, and your next draft is dealt exactly one tier higher. |
-| wa_greed | Greed | buff | 7 | instant | Your next draft offer, you take both cards instead of choosing one. |
-| bn4_deck_of_kings | Deck of Kings | boon | 8 | instant | Your next draft offer rolls one tier higher. |
-| bn4_midas_charter | Midas Charter | boon | 8 | passive | For your opponent's next 4 turns, every one of your drafts rolls one tier higher; it ends early if your opponent spends a draft reroll. The gold rush costs your next 2 drafts, which are skipped. |
-| heavens_wrath | Heaven's Wrath | buff | 8 | activated | The sky splits and three bolts of wrath descend: smite three enemy knights, bishops, rooks, or queens you name from the board. Calling the storm consumes your next unused reroll, if you have one. |
-| ov_cartographers_vault | Cartographer's Vault | buff | 8 | passive | Your next 2 drafts each offer 3 cards. |
-| ov_the_menu | The Menu | buff | 8 | instant | Your next draft is dealt three cards, and you keep every one of them. |
-
 ## nerf-relief
 
 **Suspends or removes your own nerf** - The boon pool's core promise: the holder's hidden handicap goes away for a while.
@@ -1412,8 +1412,8 @@ Cards do several things at once, so the ladder is priority-ordered and first-mat
 | bn4_kings_indulgence | King's Indulgence | boon | 5 | activated | Free action: suspend your nerf for your next 4 turns, used at the moment you choose. |
 | bn4_open_season | Open Season | boon | 5 | passive | For the rest of the game, every capture you make suspends your nerf for your next turn. |
 | bn4_royal_household | Royal Household | boon | 5 | passive | After your opponent's next move, the next 5 times you move your queen your nerf is suspended for your next turn. |
-| bn4_salt_in_the_wound | Salt in the Wound | boon | 5 | passive | Suspend your nerf for your next 18 turns. When it returns, gain 1 draft reroll. |
-| bn4_smoke_break_union | Smoke Break Union | boon | 5 | passive | Suspend your nerf for your next 18 turns. When it returns, gain 1 draft reroll. |
+| bn4_salt_in_the_wound | Salt in the Wound | boon | 5 | passive | Suspend your nerf for your next 12 turns. When it returns, take 20 seconds from your opponent's clock. |
+| bn4_smoke_break_union | Smoke Break Union | boon | 5 | passive | Suspend your nerf for your next 6 turns. Each capture you make while it is suspended adds 2 more turns, up to 18 in total. |
 | rehab | Rehab | boon | 5 | instant | Check into rehab: your nerf is suspended permanently for the rest of the game, but your next two drafts are skipped. |
 | wardens_bribe | Warden's Bribe | boon | 5 | activated | Free action: suspend your nerf for your next 6 turns, used at the moment you choose. |
 | bn4_diplomatic_pouch | Diplomatic Pouch | boon | 6 | instant | Suspend your nerf for your next 5 turns, and see the cards in your opponent's next draft offer. |
@@ -1428,7 +1428,7 @@ Cards do several things at once, so the ladder is priority-ordered and first-mat
 | long_leash | Long Leash | boon | 6 | instant | Suspend your nerf for your next 7 turns. |
 | nerf_breaker | Nerf Breaker | boon | 6 | instant | Suspend your nerf for your next 10 turns. |
 | bn4_champions_rest | Champion's Rest | boon | 7 | passive | For the rest of the game, every rook or queen you capture suspends your nerf for your next 4 turns. |
-| bn4_debtors_holiday | Debtor's Holiday | boon | 7 | instant | Suspend your nerf for your next 8 turns; your next draft offer rolls one tier higher. |
+| bn4_debtors_holiday | Debtor's Holiday | boon | 7 | instant | Suspend your nerf for your next 12 turns, and gain 2 draft rerolls. |
 | bn4_grand_bargain | The Grand Bargain | boon | 7 | instant | Suspend your nerf for your next 14 turns, and your next draft shows three cards, of which you keep one. |
 | bn4_half_moon_charter | Half-Moon Charter | boon | 7 | passive | For the rest of the game, your nerf is suspended on every other one of your turns, starting with your next. The charter costs you your next two drafts, which are skipped. |
 | bn4_hundred_days | The Hundred Days | boon | 7 | instant | Suspend your nerf for your next 11 turns. |
@@ -1442,13 +1442,13 @@ Cards do several things at once, so the ladder is priority-ordered and first-mat
 | bn4_flag_on_their_wall | Flag on Their Wall | boon | 8 | passive | While any piece of yours stands on your opponent's back rank, your nerf is suspended. |
 | bn4_great_armistice | The Great Armistice | boon | 8 | instant | Both players' nerfs are suspended for their next 10 turns, and neither side's pieces can be captured on the opponent's next turn. |
 | bn4_hundred_year_lease | Hundred-Year Lease | boon | 8 | passive | After your opponent's next move, the lease begins: your nerf is suspended for the 30 turns that follow. |
-| bn4_liberators_march | Liberator's March | boon | 8 | passive | Suspend your nerf for your next 18 turns. When it returns, gain 1 draft reroll. |
+| bn4_liberators_march | Liberator's March | boon | 8 | passive | Suspend your nerf for your next 18 turns. Each capture you make while it is suspended gains you 1 draft reroll, up to 3. |
 | bn4_meek_inherit | The Meek Inherit | boon | 8 | passive | Beginning after your opponent's next move, your nerf is suspended while your opponent has at least as many pieces as you (kings aside). Pull ahead in material, and it wakes. |
 | bn4_queens_aegis | Queen's Aegis | boon | 8 | passive | While your queen stands on the board, your nerf is suspended. Lose her, and it returns. |
 | bn4_royal_privilege | Royal Privilege | boon | 8 | passive | For the rest of the game, every time you move your queen, your nerf is suspended for your next 2 turns. Your next 2 drafts are skipped. |
 | bn4_unequal_treaty | The Unequal Treaty | boon | 8 | instant | Your nerf is suspended for your next 10 turns; your opponent's is suspended for their next 3. Diplomacy, as practiced. |
 | bn4_written_in_stone | Written in Stone | boon | 8 | passive | After your next 10 turns, the inscription takes effect: your nerf is suspended for the 20 turns that follow. |
-| bn4_year_of_jubilee | Year of Jubilee | boon | 8 | passive | Suspend your nerf for your next 18 turns. When it returns, gain 1 draft reroll. |
+| bn4_year_of_jubilee | Year of Jubilee | boon | 8 | passive | Suspend your nerf for your next 25 turns. When it returns, gain 1 draft reroll. |
 | transcendence | Transcendence | boon | 8 | instant | Suspend your nerf for your next 20 turns, then it returns. Your next draft shows three cards. |
 
 ## forced-move
@@ -1568,11 +1568,11 @@ Cards do several things at once, so the ladder is priority-ordered and first-mat
 | op_night_census | Night Census | item | 1 | activated | Use once as a free action: every enemy piece on a dark square flashes on the board until your opponent replies. |
 | op_opposition_research | Opposition Research | buff | 1 | passive | When you make your first capture of the game, you learn the tier of your opponent's next draft offer. One use. |
 | op_palace_floor_plan | Palace Floor Plan | item | 1 | activated | Use once as a free action: every enemy piece adjacent to the enemy king flashes on the board until your opponent replies. |
-| op_portrait_of_a_lady | Portrait of a Lady | item | 1 | activated | Use once as a free action: the enemy queen flashes on the board until your opponent replies. |
+| op_portrait_of_a_lady | Portrait of a Lady | item | 1 | activated | Use once as a free action: the enemy queen flashes on the board until your opponent replies. Every portrait needs a sitter, so if she has already fallen, the frame hangs on their king instead. |
 | op_price_check | Price Check | item | 1 | instant | You will learn the tier of your opponent's next draft offer. |
 | op_rabbits_foot | Rabbit's Foot | item | 1 | activated | Use once as a free action: flip a fair coin. Heads: gain a draft reroll. Tails: nothing but a sheepish flash on your king. |
 | op_regina_dossier | Regina Dossier | buff | 1 | passive | The first time the enemy queen moves, she is marked until you reply; since that mark changes no legal decision, you also gain a draft reroll and learn the tier of your next draft offer. One use. |
-| op_siege_survey | Siege Survey | item | 1 | activated | Use once as a free action: every enemy queen and rook flashes on the board until your opponent replies. |
+| op_siege_survey | Siege Survey | item | 1 | activated | Use once as a free action: every enemy queen and rook flashes on the board until your opponent replies, along with each of your pieces they are aimed at. |
 | op_starboard_chart | Starboard Chart | item | 1 | activated | Use once as a free action: every enemy piece on files e through h flashes on the board until your opponent replies. |
 | op_tea_leaves | Tea Leaves | item | 1 | activated | Use once as a free action: flip a fair coin. Heads: learn the tier of your opponent's next draft offer. Tails: nothing but a sheepish flash on your king. |
 | op_threat_ledger | Threat Ledger | item | 1 | activated | Use once as a free action: every enemy piece currently attacking one of your pieces flashes on the board until your opponent replies. |
@@ -1613,7 +1613,7 @@ Cards do several things at once, so the ladder is priority-ordered and first-mat
 
 **Turns a piece into something weaker** - A piece is demoted, petrified into scenery or reduced in kind. Usually an enemy piece; on a nerf it is your own.
 
-60 cards.
+58 cards.
 
 | id | name | family | tier | trigger | rule |
 |---|---|---|---|---|---|
@@ -1622,9 +1622,7 @@ Cards do several things at once, so the ladder is priority-ordered and first-mat
 | op_garden_hedge | Garden Hedge | buff | 1 | passive | Your queen may hop over an adjacent friendly pawn in any direction, landing on the square directly beyond, once. The landing square must be empty. The hop becomes available only after your opponent's next move. |
 | op_green_room | Green Room | buff | 1 | passive | Once, while on your back rank, one of your knights may hop exactly 1 square sideways along it, ignoring anything between. The destination must be empty. The hop becomes available only after your opponent's next move. |
 | op_piggyback | Piggyback | buff | 1 | passive | One of your pawns may hop over the friendly pawn directly ahead of it, landing on the square directly beyond, once. The landing square must be empty. The hop becomes available only after your opponent's next move. |
-| op_set_change | Set Change | buff | 1 | passive | Once, while on your back rank, one of your rooks may hop exactly 2 squares sideways along it, ignoring anything between. The destination must be empty. The hop becomes available only after your opponent's next move. |
 | op_signal_rocket | Signal Rocket | buff | 1 | passive | Once, one of your knights may make a launch of exactly 4 straight, clearing anything between. It may capture on landing. The leap becomes available only after your opponent's next move. |
-| op_star_dressing_room | Star Dressing Room | buff | 1 | passive | Once, while on your back rank, one of your queens may hop exactly 2 squares sideways along it, ignoring anything between. The destination must be empty. The hop becomes available only after your opponent's next move. |
 | op_tower_bridge | Tower Bridge | buff | 1 | passive | One of your rooks may hop over your other rook when adjacent on a rank or file, landing on the square directly beyond, once. The landing square must be empty. The hop becomes available only after your opponent's next move. |
 | hx4_gum_wrapper | Gum Wrapper | hex | 2 | activated | One enemy pawn you target is wrapped up like a sweet: after your opponent's next move it becomes a walnut for 2 of their turns, shuffling one square at best. |
 | basilisk_stare | Basilisk's Gaze | hex | 3 | activated | Turn one enemy piece to stone. It may make one last legal move to escape; then it becomes a walnut that can only shuffle one square at a time for 4 of their turns, and while petrified it cannot capture. Kings cannot be targeted. |
@@ -1746,23 +1744,22 @@ Cards do several things at once, so the ladder is priority-ordered and first-mat
 
 **Shoves a piece without a move** - A piece is dragged, bounced or advanced a square by the card itself, not by its owner playing a move.
 
-54 cards.
+53 cards.
 
 | id | name | family | tier | trigger | rule |
 |---|---|---|---|---|---|
 | nudge | Nudge | buff | 1 | activated | Push one enemy pawn back one square if empty behind, once. Using it spends your next unused reroll, if any. |
-| op_bread_for_the_table | Bread for the Table | item | 1 | activated | Use once as a free action: a d- or e-file pawn advances one square immediately. The square ahead must be empty. |
 | op_cloister_step | Cloister Step | item | 1 | activated | Use once as a free action: step one of your bishops one square diagonally onto an empty square (not a capture); your c-file pawn nearest it then sidesteps one square toward that bishop if that square is empty. |
 | op_fetch_the_flour | Fetch the Flour | item | 1 | activated | Use once as a free action: a pawn on files a, b, c, d advances one square immediately. The square ahead must be empty. |
 | op_first_robin | First Robin | buff | 1 | passive | After your 6th move, one of your kingside (files e through h) pawns with an empty square ahead advances one square at random. If none can, you gain 15 seconds and it retries after each later move. |
-| op_late_spring | Late Spring | buff | 1 | passive | After your 9th move, one of your pawns with an empty square ahead advances one square at random. If none can, the floor lands instead: one of your second-rank pawns, chosen at random, cannot be captured during your opponent's next four turns. |
+| op_late_spring | Late Spring | buff | 1 | passive | After your 9th move, one of your pawns with an empty square ahead advances one square at random. If none can, spring comes anyway: one of your second-rank pawns, chosen at random, cannot be captured during your opponent's next 4 turns. |
 | op_market_lane | Market Lane | buff | 1 | passive | Once, your b-file pawn may sidestep one square inward to the c-file (empty destination, not a capture). On that pawn's next move this card grants both forward-diagonal captures, reopening a side another effect has closed. |
 | op_river_breakup | River Breakup | buff | 1 | passive | After your 7th move, one of your central (files c through f) pawns with an empty square ahead advances one square at random. If none can, you gain 15 seconds (or 2 rerolls in untimed games) and it retries after each later move. |
 | op_run_for_eggs | Run for Eggs | item | 1 | activated | Use once as a free action: a pawn on files e, f, g, h advances one square immediately. The square ahead must be empty. |
-| op_salt_from_the_coast | Salt from the Coast | item | 1 | activated | Use once as a free action: a a- or h-file pawn advances one square immediately. The square ahead must be empty. |
-| op_sap_run | Sap Run | buff | 1 | passive | After your 5th move, one of your d- or e-file pawns with an empty square ahead advances one square at random. If none can, the floor lands instead: one of your second-rank pawns, chosen at random, cannot be captured during your opponent's next four turns. |
+| op_salt_from_the_coast | Salt from the Coast | item | 1 | activated | Use once as a free action, from your 4th move on: an a- or h-file pawn hauls the barrel one square forward. The square ahead must be empty. The coast road is long. |
+| op_sap_run | Sap Run | buff | 1 | passive | After your 5th move, one of your d- or e-file pawns with an empty square ahead advances one square at random. If neither can, the tap still drips: you gain 8 seconds and one draft reroll. |
 | op_soups_on | Soup's On | item | 1 | activated | Use once as a free action: a pawn on files c, d, e, f advances one square immediately. The square ahead must be empty. |
-| op_spice_run | Spice Run | item | 1 | activated | Use once as a free action: a b- or g-file pawn advances one square immediately. The square ahead must be empty. |
+| op_tactical_withdrawal | Tactical Withdrawal | buff | 1 | passive | Once, a pawn of yours that an enemy piece is attacking may fall back one square onto the empty square behind it. |
 | ov_lucky_penny | Lucky Penny | buff | 1 | activated | Pick a pawn and flip the coin: 50% heads, the pawn advances one square now (the jackpot); tails, it stays put and the failed flip is banked as two draft rerolls. |
 | steady_march | Steady March | buff | 1 | activated | Two pawns each advance one square immediately. |
 | bn4_half_step_back | Half Step Back | boon | 2 | passive | Once, one of your pawns may retreat one square straight back onto an empty square (never onto your back rank). |
@@ -1976,69 +1973,22 @@ Cards do several things at once, so the ladder is priority-ordered and first-mat
 | wn_glass_army | Glass Army | nerf | 8 | passive-rule | You lose the moment the opponent captures any of your non-pawn pieces (knight, bishop, rook, or queen). |
 | wn_house_of_cards | House of Cards | nerf | 8 | passive-rule | From your 5th move on, you lose if you end one of your turns with any of your pieces or pawns (other than the king) attacked and undefended. |
 
-## clock-gain-self
-
-**Adds time to your clock** - Pure clock profit for the holder.
-
-41 cards.
-
-| id | name | family | tier | trigger | rule |
-|---|---|---|---|---|---|
-| bn4_pinch_of_sand | Pinch of Sand | boon | 1 | instant | Add 15 seconds to your clock and gain 2 draft rerolls. In untimed games only the rerolls arrive. |
-| op_barometer_falling | Barometer Falling | item | 1 | instant | An omen flashes over your rooks until your opponent replies, and you gain 3 seconds on your clock. |
-| op_distant_thunder | Distant Thunder | item | 1 | instant | An omen flashes over the enemy king's square until your opponent replies, and you gain 3 seconds on your clock. |
-| op_early_bird | Early Bird | buff | 1 | passive | After your 4th move, see your opponent's next draft offer and gain 5 seconds. |
-| op_first_frost | First Frost | item | 1 | instant | An omen flashes over your king's square until your opponent replies, and you gain 3 seconds on your clock. |
-| op_four_winds | Four Winds | item | 1 | instant | An omen flashes over the four corners until your opponent replies, and you gain 3 seconds on your clock. |
-| op_grandfathers_watch | Grandfather's Watch | item | 1 | activated | Use once as a free action: flip a fair coin. Heads: gain 4 seconds on your clock. Tails: nothing but a sheepish flash on your king. |
-| op_halo_moon | Halo Round the Moon | item | 1 | instant | An omen flashes over your queen's square until your opponent replies, and you gain 3 seconds on your clock. |
-| op_hoofbeat_log | Hoofbeat Log | buff | 1 | passive | The first enemy knight to move is marked until you reply, every one of your pieces it could capture flashes, and you gain 5 seconds. One use. |
-| op_housewarming_gift | Housewarming Gift | buff | 1 | passive | When you castle, gain 9 seconds on your clock. One use. |
-| op_incident_report | Incident Report | buff | 1 | passive | When the enemy makes their first capture, the capturer and every one of your pieces attacking it are marked until you reply, every one of your pieces the capturer could capture flashes, and you gain 5 seconds. One use. |
-| op_morning_constitutional | Morning Constitutional | buff | 1 | passive | When your king makes his first non-castling move, he earns a hat, purely cosmetically, forever, every enemy piece he could capture flashes until your opponent replies, and you gain 5 seconds. One use, automatic. |
-| op_opening_chord | Opening Chord | buff | 1 | passive | The first time you give check, gain 8 seconds on your clock, plus a draft reroll and a look at the tier of your next draft offer; in untimed games only the reroll and the reveal apply. One use. |
-| op_red_sky_morning | Red Sky at Morning | item | 1 | instant | An omen flashes over the four center squares until your opponent replies, and you gain 3 seconds on your clock. |
-| op_second_wind_sip | Water Break | buff | 1 | passive | After your 8th move, gain 11 seconds, one draft reroll, and see the tier of your opponent's next draft offer. |
-| op_stoppage_time | Stoppage Time | buff | 1 | passive | When you make your first capture of the game, gain 9 seconds on your clock, advance one of your pawns one square, and gain a draft reroll. One use. |
-| battle_pass | Battle Pass | buff | 2 | passive | Season rewards trickle in: at the end of each of your next 6 turns, your clock gains 10 seconds. |
-| bn4_egg_timer | Egg Timer | boon | 2 | instant | Add 20 seconds to your clock, gain 1 draft reroll, and learn the tier of your opponent's next draft offer. In untimed games only the reroll and the reveal apply. |
-| bn4_hourglass_flip | Hourglass Flip | boon | 2 | instant | Add 30 seconds to your clock. In untimed games it adds nothing. |
-| ov_alt_account | Alt Account | buff | 2 | passive | Go incognito for 5 of your turns: your king wears sunglasses, and your first capture while disguised earns 15 seconds. |
-| ov_rubber_stamp | Rubber Stamp | buff | 2 | passive | For your next 3 turns, every pawn move you make refunds 8 seconds. |
-| ov_speedrun_timer | Speedrun Timer | buff | 2 | passive | For your next 3 turns, each move you make refunds 9 seconds. A capture counts as a gold split and refunds 13 instead. |
-| ov_sponsored_segment | Sponsored Segment | buff | 2 | instant | Roll the sponsor banner: gain 20 seconds. |
-| overtime_pay | Overtime Pay | buff | 2 | instant | You clock in and cash out on the spot: 105 seconds go straight onto your own clock the moment you play this. Time and a half, paid in full. |
-| bn4_overtime_claim | Overtime Claim | boon | 3 | instant | Add 45 seconds to your clock. In untimed games it adds nothing. |
-| bn4_pocket_metronome | Pocket Metronome | boon | 3 | instant | Add 25 seconds to your clock, gain 1 draft reroll, and learn the tier of your opponent's next draft offer. In untimed games only the reroll and the tier reveal arrive. |
-| bw3_deep_position | Deep Position | boon | 3 | passive | Break into their camp and the clock rewards the incursion: the first time any of your pieces reaches your opponent's back two ranks, you gain 45 seconds. In untimed games it grants nothing. |
-| ov_bake_sale | Bake Sale | buff | 3 | passive | Gain 15 seconds now. For your next 5 turns, every pawn move you make sells another cookie for 5 more seconds. You also gain one draft reroll and see the tier of your opponent's next draft. In untimed games only the reroll and the reveal apply. |
-| ov_compound_interest | Compound Interest | buff | 3 | passive | The vault locks for 6 of your turns. When it opens, if your queen is still on the board: your next draft offers three cards and you gain 20 seconds. If she is gone, the investment is lost. |
-| ov_gold_rush | Gold Rush | item | 3 | passive | Gold is buried under 3 random empty squares for 6 of your turns. Land one of your pieces on a nugget to gain 10 seconds; an enemy piece landing there first tramples that nugget into worthless dust. |
-| ov_royal_wedding | Royal Wedding | buff | 3 | activated | Usable while your king and queen stand adjacent: place up to 2 pawns on empty squares beside either of them, and gain 20 seconds. |
-| overtime_whistle | Overtime Whistle | buff | 3 | instant | Blow the whistle for overtime: add 35 seconds to your own clock, flag the last enemy piece that moved until your opponent replies, and gain a draft reroll. In untimed games only the flag and the reroll apply. |
-| pr_donation_alert | Subscriber Raid | buff | 3 | instant | A fake donation alert blasts across the board: add 25 seconds to your clock while your opponent loses 10 to the chaos. You also gain a draft reroll and see the tier of their next offer. In untimed games only the reroll and the reveal apply. |
-| bn4_grandfather_clock | Grandfather Clock | boon | 4 | instant | Add 60 seconds to your clock. In untimed games it adds nothing. |
-| ov_vampire_court | Vampire Court | buff | 4 | activated | Up to 2 of your knights or bishops become vampires: each of their captures gains you 6 seconds, and the first time one is killed it returns 3 of your turns later on a square next to where it fell. |
-| ov_algorithm_boost | Algorithm Boost | buff | 5 | instant | The algorithm optimizes your feed: your next draft offers three cards, you gain a draft reroll, and you gain 15 seconds. |
-| ov_fourth_wall_crew | Fourth Wall Repair Crew | buff | 5 | passive | For your next 3 turns, every enemy piece you capture is carried off-screen by the crew, gaining you 4 seconds each. |
-| ov_speedhack | Speedhack | buff | 5 | passive | Each of your next 5 moves puts 6 seconds back on your clock. |
-| bn4_hourglass_throne | Hourglass Throne | boon | 6 | instant | Add 60 seconds to your clock and steal 30 more from your opponent's. In untimed games nothing changes hands. |
-| ov_standing_ovation | Standing Ovation | buff | 6 | passive | An audience gathers for 5 of your turns: each of your moves that leaves the enemy king under attack earns 10 seconds of applause. |
-| ov_wish_fish | Wish Fish | item | 6 | instant | Reel it in and take the wish it grants: 30 seconds on your clock, a new pawn beside your king, or 2 draft rerolls. The fish decides. |
-
 ## delayed-contract
 
 **Sets a delayed or conditional payoff** - Nothing happens now: a trigger is armed and pays out later.
 
-41 cards.
+44 cards.
 
 | id | name | family | tier | trigger | rule |
 |---|---|---|---|---|---|
 | half_step | Half Step | buff | 1 | passive | One pawn moves diagonally forward without capturing, once. |
 | long_knight | Long Knight | buff | 1 | passive | One knight makes two knight-leaps in a single move, once. |
+| op_closed_for_cleaning | Closed for Cleaning | item | 1 | activated | Use once as a free action: rope off one empty square on your back rank. Nobody at all, yours or theirs, may end a move there for the next 2 turns. |
+| op_goat_track | Goat Track | buff | 1 | passive | Once, your g-file pawn may climb two squares from wherever it stands, forward or backward, if both squares are empty. |
 | op_long_jump | Long Jump | buff | 1 | passive | Once, one of your knights may make a jump of exactly 3 diagonally, clearing anything between. Not a capture; the landing square must be empty. |
 | op_parade_elephant | Parade Elephant | buff | 1 | passive | Once, one of your knights may make an elephant hop, exactly 2 diagonally, jumping anything between. Not a capture; the landing square must be empty. |
 | op_pole_vault | Pole Vault | buff | 1 | passive | Once, one of your knights may make a vault of exactly 3 straight, jumping anything between. Not a capture; the landing square must be empty. |
+| op_spice_run | Spice Run | item | 1 | activated | Use once as a free action: a b- or g-file pawn still on its home square steps one square forward. The square ahead must be empty. |
 | ov_tiny_trebuchet | Tiny Trebuchet | buff | 1 | passive | Launch one of your pawns two squares straight ahead, once. Both squares must be empty; no capturing on landing. It arms only after your opponent's next move. |
 | vault | Vault | buff | 1 | passive | One rook jumps its own pawn to the far side, once. |
 | ww_field_hospital | Field Hospital | buff | 1 | passive | The first time your opponent captures one of your knights, a new pawn is raised on an empty square of your back rank. |
@@ -2075,6 +2025,56 @@ Cards do several things at once, so the ladder is priority-ordered and first-mat
 | bn4_worldgate | Worldgate | boon | 8 | activated | Open the great door: move up to 3 of your pieces (your king excepted) to empty squares anywhere on the board, all at once. |
 | bw3_turn_the_tide | Turn the Tide | boon | 8 | instant | The whole line surges as one: every one of your pawns that can advance takes one non-capturing step forward at once, into the empty square directly ahead. Pawns whose square ahead is occupied, or that would reach the final rank, hold their ground. |
 | neat_freak | Neat Freak | nerf | 8 | passive-rule | After move 8, no two of your non-pawn pieces of the same type may share a rank, file, or diagonal. If the opponent's move creates the alignment you get one move to break it; a move of your own that makes or keeps one loses at once. |
+
+## clock-gain-self
+
+**Adds time to your clock** - Pure clock profit for the holder.
+
+41 cards.
+
+| id | name | family | tier | trigger | rule |
+|---|---|---|---|---|---|
+| bn4_pinch_of_sand | Pinch of Sand | boon | 1 | instant | Add 15 seconds to your clock and gain 2 draft rerolls. In untimed games only the rerolls arrive. |
+| op_barometer_falling | Barometer Falling | item | 1 | instant | An omen flashes over your rooks until your opponent replies, and you gain 3 seconds on your clock. |
+| op_distant_thunder | Distant Thunder | item | 1 | instant | Thunder rolls over the enemy king's square and over every enemy piece standing beside him until your opponent replies, and you gain 3 seconds on your clock. |
+| op_early_bird | Early Bird | buff | 1 | passive | After your 4th move, see your opponent's next draft offer and gain 5 seconds. |
+| op_first_frost | First Frost | item | 1 | instant | Frost settles on your king's square and on every pawn still in its bed until your opponent replies, and you gain 3 seconds on your clock. |
+| op_four_winds | Four Winds | item | 1 | instant | An omen flashes over the four corners until your opponent replies, and you gain 3 seconds on your clock. |
+| op_grandfathers_watch | Grandfather's Watch | item | 1 | activated | Use once as a free action: flip a fair coin. Heads: gain 4 seconds on your clock. Tails: nothing but a sheepish flash on your king. |
+| op_halo_moon | Halo Round the Moon | item | 1 | instant | An omen flashes over your queen's square until your opponent replies, and you gain 3 seconds on your clock. |
+| op_hoofbeat_log | Hoofbeat Log | buff | 1 | passive | The first enemy knight to move is marked until you reply, every one of your pieces it could capture flashes, and you gain 5 seconds. One use. |
+| op_housewarming_gift | Housewarming Gift | buff | 1 | passive | When you castle, gain 9 seconds on your clock. One use. |
+| op_incident_report | Incident Report | buff | 1 | passive | When the enemy makes their first capture, the capturer and every one of your pieces attacking it are marked until you reply, every one of your pieces the capturer could capture flashes, and you gain 5 seconds. One use. |
+| op_morning_constitutional | Morning Constitutional | buff | 1 | passive | When your king makes his first non-castling move, he earns a hat, purely cosmetically, forever, every enemy piece he could capture flashes until your opponent replies, and you gain 5 seconds. One use, automatic. |
+| op_opening_chord | Opening Chord | buff | 1 | passive | The first time you give check, gain 8 seconds on your clock, plus a draft reroll and a look at the tier of your next draft offer; in untimed games only the reroll and the reveal apply. One use. |
+| op_red_sky_morning | Red Sky at Morning | item | 1 | instant | An omen flashes over the four center squares until your opponent replies, and you gain 3 seconds on your clock. |
+| op_second_wind_sip | Water Break | buff | 1 | passive | After your 8th move, gain 11 seconds, one draft reroll, and see the tier of your opponent's next draft offer. |
+| op_stoppage_time | Stoppage Time | buff | 1 | passive | When you make your first capture of the game, gain 9 seconds on your clock, advance one of your pawns one square, and gain a draft reroll. One use. |
+| battle_pass | Battle Pass | buff | 2 | passive | Season rewards trickle in: at the end of each of your next 6 turns, your clock gains 10 seconds. |
+| bn4_egg_timer | Egg Timer | boon | 2 | instant | Add 20 seconds to your clock, gain 1 draft reroll, and learn the tier of your opponent's next draft offer. In untimed games only the reroll and the reveal apply. |
+| bn4_hourglass_flip | Hourglass Flip | boon | 2 | instant | Add 30 seconds to your clock. In untimed games it adds nothing. |
+| ov_alt_account | Alt Account | buff | 2 | passive | Go incognito for 5 of your turns: your king wears sunglasses, and your first capture while disguised earns 15 seconds. |
+| ov_rubber_stamp | Rubber Stamp | buff | 2 | passive | For your next 3 turns, every pawn move you make refunds 8 seconds. |
+| ov_speedrun_timer | Speedrun Timer | buff | 2 | passive | For your next 3 turns, each move you make refunds 9 seconds. A capture counts as a gold split and refunds 13 instead. |
+| ov_sponsored_segment | Sponsored Segment | buff | 2 | instant | Roll the sponsor banner: gain 20 seconds. |
+| overtime_pay | Overtime Pay | buff | 2 | instant | You clock in and cash out on the spot: 105 seconds go straight onto your own clock the moment you play this. Time and a half, paid in full. |
+| bn4_overtime_claim | Overtime Claim | boon | 3 | instant | Add 45 seconds to your clock. In untimed games it adds nothing. |
+| bn4_pocket_metronome | Pocket Metronome | boon | 3 | instant | Add 25 seconds to your clock, gain 1 draft reroll, and learn the tier of your opponent's next draft offer. In untimed games only the reroll and the tier reveal arrive. |
+| bw3_deep_position | Deep Position | boon | 3 | passive | Break into their camp and the clock rewards the incursion: the first time any of your pieces reaches your opponent's back two ranks, you gain 45 seconds. In untimed games it grants nothing. |
+| ov_bake_sale | Bake Sale | buff | 3 | passive | Gain 15 seconds now. For your next 5 turns, every pawn move you make sells another cookie for 5 more seconds. You also gain one draft reroll and see the tier of your opponent's next draft. In untimed games only the reroll and the reveal apply. |
+| ov_compound_interest | Compound Interest | buff | 3 | passive | The vault locks for 6 of your turns. When it opens, if your queen is still on the board: your next draft offers three cards and you gain 20 seconds. If she is gone, the investment is lost. |
+| ov_gold_rush | Gold Rush | item | 3 | passive | Gold is buried under 3 random empty squares for 6 of your turns. Land one of your pieces on a nugget to gain 10 seconds; an enemy piece landing there first tramples that nugget into worthless dust. |
+| ov_royal_wedding | Royal Wedding | buff | 3 | activated | Usable while your king and queen stand adjacent: place up to 2 pawns on empty squares beside either of them, and gain 20 seconds. |
+| overtime_whistle | Overtime Whistle | buff | 3 | instant | Blow the whistle for overtime: add 35 seconds to your own clock, flag the last enemy piece that moved until your opponent replies, and gain a draft reroll. In untimed games only the flag and the reroll apply. |
+| pr_donation_alert | Subscriber Raid | buff | 3 | instant | A fake donation alert blasts across the board: add 25 seconds to your clock while your opponent loses 10 to the chaos. You also gain a draft reroll and see the tier of their next offer. In untimed games only the reroll and the reveal apply. |
+| bn4_grandfather_clock | Grandfather Clock | boon | 4 | instant | Add 60 seconds to your clock. In untimed games it adds nothing. |
+| ov_vampire_court | Vampire Court | buff | 4 | activated | Up to 2 of your knights or bishops become vampires: each of their captures gains you 6 seconds, and the first time one is killed it returns 3 of your turns later on a square next to where it fell. |
+| ov_algorithm_boost | Algorithm Boost | buff | 5 | instant | The algorithm optimizes your feed: your next draft offers three cards, you gain a draft reroll, and you gain 15 seconds. |
+| ov_fourth_wall_crew | Fourth Wall Repair Crew | buff | 5 | passive | For your next 3 turns, every enemy piece you capture is carried off-screen by the crew, gaining you 4 seconds each. |
+| ov_speedhack | Speedhack | buff | 5 | passive | Each of your next 5 moves puts 6 seconds back on your clock. |
+| bn4_hourglass_throne | Hourglass Throne | boon | 6 | instant | Add 60 seconds to your clock and steal 30 more from your opponent's. In untimed games nothing changes hands. |
+| ov_standing_ovation | Standing Ovation | buff | 6 | passive | An audience gathers for 5 of your turns: each of your moves that leaves the enemy king under attack earns 10 seconds of applause. |
+| ov_wish_fish | Wish Fish | item | 6 | instant | Reel it in and take the wish it grants: 30 seconds on your clock, a new pawn beside your king, or 2 draft rerolls. The fish decides. |
 
 ## piece-revival
 
@@ -2511,7 +2511,7 @@ Cards do several things at once, so the ladder is priority-ordered and first-mat
 | oddball | Oddball | nerf | 4 | passive-rule | Can only capture on odd-numbered moves. |
 | pull_of_the_center | Pull of the Center | nerf | 4 | passive-rule | Your pawns can only capture toward the center files. |
 | snipers | Snipers | nerf | 4 | passive-rule | Bishops can only capture from distance ≥ 4. |
-| solar_flare | Solar Flare | nerf | 4 | passive-rule | You can only capture on light squares, starting on your second move. The forbidden dark squares are shown from the start. |
+| solar_flare | Solar Flare | nerf | 4 | passive-rule | The flare burns for 3 of your turns, then sleeps for 2, over and over. While it burns you can only capture on light squares. The dark squares are shown whenever it is up. |
 | vampiric | Vampiric | nerf | 4 | passive-rule | You can only capture on dark squares, starting on your second move. The forbidden light squares are shown from the start. |
 | doctor_octopus | Doctor Octopus | nerf | 5 | passive-rule | Can only capture non-king pieces 8 times total. |
 | even_keeled | Even Keeled | nerf | 5 | passive-rule | Can only capture on even-numbered moves. |
