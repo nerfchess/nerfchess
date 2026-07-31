@@ -704,28 +704,12 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
   const [myOpen, setMyOpen] = useState(true);
   const [oppOpen, setOppOpen] = useState(true);
 
-  // Latest pocket auto-minimize: ~5s after the newest card landed (keyed by
-  // the hand sizes, which only grow) the pocket folds to a one-line strip.
-  // A manual toggle pins the pocket (the timer stops overriding it) until the
-  // next card arrives and resets the cycle.
-  const bs0 = game.buffs;
-  const latestKey = bs0
-    ? `${bs0.players[myColor].buffs.length}:${bs0.players[myColor === "w" ? "b" : "w"].buffs.length}`
-    : "";
-  const [latestMinState, setLatestMinState] = useState({ key: latestKey, min: false, pinned: false });
-  // A fresh card reopens the pocket: adjust during render (same pattern as
-  // useBuffTargeting's deactivation) so no stale minimized frame ever paints.
-  if (latestMinState.key !== latestKey) {
-    setLatestMinState({ key: latestKey, min: false, pinned: false });
-  }
-  useEffect(() => {
-    const t = window.setTimeout(() => {
-      setLatestMinState((s) => (s.key === latestKey && !s.pinned ? { ...s, min: true } : s));
-    }, 5000);
-    return () => window.clearTimeout(t);
-  }, [latestKey]);
-  const latestMin = latestMinState.key === latestKey && latestMinState.min;
-  const toggleLatest = () => setLatestMinState({ key: latestKey, min: !latestMin, pinned: true });
+  // The Latest pocket used to auto-fold to a one-line strip ~5s after a card
+  // landed, with a "pinned" flag so a manual toggle could out-argue the timer,
+  // and a render-phase reset keyed to the hand sizes. That was three pieces of
+  // state and a timer to save one row — and it moved the dock under the
+  // player's cursor five seconds after they last touched it, which is the one
+  // thing a status surface must not do. The pocket is just a row now.
 
   const bs = game.buffs;
   if (!bs) return null;
@@ -817,6 +801,37 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
       : 0;
   const myDraftBlocked = (bs.players[myColor].flags.blockedDrafts ?? 0) > 0;
   const oppDraftBlocked = bs.players[oppColor].flags.blockedDrafts ?? 0;
+  const takeBoth = (bs.players[myColor].flags.takeBoth ?? 0) > 0;
+
+  // The one "Now" line. The LABEL always answers the question the player
+  // actually has — when is my next draft — and the two side facts ride as
+  // trailing chips rather than replacing it. Only a blocked draft takes the
+  // label over, because then there is no "when" to report.
+  const draftStatus = myDraftBlocked
+    ? {
+        label: "Next draft blocked",
+        frame: "border-oxblood-glow/40 bg-oxblood/10",
+        ink: "text-oxblood-glow",
+        Icon: Ban,
+      }
+    : draftMovesLeft == null
+      ? takeBoth
+        ? {
+            label: "Next draft: take BOTH cards",
+            frame: "border-gold/50 bg-gold/10",
+            ink: "text-gold-leaf",
+            Icon: Layers,
+          }
+        : null
+      : {
+          label:
+            draftMovesLeft === 0
+              ? "Draft now"
+              : `Next draft in ${draftMovesLeft} move${draftMovesLeft === 1 ? "" : "s"}`,
+          frame: takeBoth || draftMovesLeft === 0 ? "border-gold/50 bg-gold/10" : "border-[color:var(--edge)] bg-white/[0.03]",
+          ink: takeBoth || draftMovesLeft === 0 ? "text-gold-leaf" : "text-parchment-400",
+          Icon: Hourglass,
+        };
 
   // Constraints currently running against me (see againstYouRows above).
   const againstRows = againstYouRows(game, myColor);
@@ -1076,45 +1091,58 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
   return (
     <div data-buff-dock className="plate flex h-full min-h-0 flex-col overflow-hidden">
       <div className="min-h-0 flex-1 space-y-2 overflow-y-auto bg-inherit px-3 pb-2">
-        {/* Next-draft indicator: how many of your moves until the shared
-            draft fires, with a small bar filling toward it. Hidden for older
-            saves without nextDraftAtPly and once the game ends. Blocked
-            drafts (opponent hexes) take over the chip in alert colors. */}
-        {draftMovesLeft != null && (
+        {/* ZONE A — "Now": ONE status line about the next draft.
+            This was three separate stacked rows (the countdown chip, a
+            take-both banner, and an opponent-blocked banner) that could all be
+            on screen at once, pushing the actual card lists below the fold in a
+            320px column. They are all facts about the same event, so they are
+            one row: the countdown states rank by urgency, and the two side
+            facts ride as trailing chips instead of owning a row each. */}
+        {draftStatus && (
           <div
             role="status"
             className={
-              "mt-2 flex items-center gap-2 rounded-[1px] border px-2 py-1.5 " +
-              (myDraftBlocked
-                ? "border-oxblood-glow/40 bg-oxblood/10"
-                : draftMovesLeft === 0
-                ? "border-gold/50 bg-gold/10"
-                : "border-[color:var(--edge)] bg-white/[0.03]")
+              "mt-2 flex items-center gap-2 rounded-[1px] border px-2 py-1.5 " + draftStatus.frame
             }
           >
-            <Hourglass
+            <draftStatus.Icon
               aria-hidden
               size={11}
               strokeWidth={2.2}
-              className={"shrink-0 " + (myDraftBlocked ? "text-oxblood-glow" : "text-parchment-400")}
+              className={"shrink-0 " + draftStatus.ink}
             />
-            <span
-              className={
-                "smallcaps min-w-0 truncate text-[12px] " +
-                (myDraftBlocked
-                  ? "text-oxblood-glow"
-                  : draftMovesLeft === 0
-                  ? "text-gold-leaf"
-                  : "text-parchment-400")
-              }
-            >
-              {myDraftBlocked
-                ? "Next draft blocked"
-                : draftMovesLeft === 0
-                ? "Draft now"
-                : `Next draft in ${draftMovesLeft} move${draftMovesLeft === 1 ? "" : "s"}`}
+            <span className={"smallcaps min-w-0 flex-1 truncate text-[12px] " + draftStatus.ink}>
+              {draftStatus.label}
             </span>
-            <DraftProgressRing fraction={draftFrac} blocked={myDraftBlocked} />
+            {/* The next offer is taken whole. A chip, not a banner: it changes
+                what the draft is, but the player still needs the countdown. */}
+            {takeBoth && draftMovesLeft != null && !myDraftBlocked && (
+              <span
+                title="Your next draft takes BOTH cards"
+                className="smallcaps flex shrink-0 items-center gap-1 rounded-[1px] border border-gold/50 bg-gold/10 px-1 py-px text-[12px] font-semibold text-gold-leaf"
+              >
+                <Layers aria-hidden size={10} strokeWidth={2.4} />
+                Both
+              </span>
+            )}
+            {/* Your hex sealed their draft: their problem, not yours, so it is a
+                chip on this row rather than an alert of its own. */}
+            {oppDraftBlocked > 0 && !game.result && (
+              <span
+                title={
+                  oppDraftBlocked === 1
+                    ? "Opponent's next draft is blocked"
+                    : `Opponent's next ${oppDraftBlocked} drafts are blocked`
+                }
+                className="smallcaps flex shrink-0 items-center gap-1 rounded-[1px] border border-oxblood-glow/40 bg-oxblood/15 px-1 py-px text-[12px] font-semibold text-oxblood-glow"
+              >
+                <Ban aria-hidden size={10} strokeWidth={2.4} />
+                {oppDraftBlocked > 1 ? oppDraftBlocked : ""}
+              </span>
+            )}
+            {draftMovesLeft != null && !myDraftBlocked && (
+              <DraftProgressRing fraction={draftFrac} blocked={false} />
+            )}
           </div>
         )}
 
@@ -1122,55 +1150,17 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
             opponent's side shows a face-down card while hidden. */}
         {(lastMine || lastTheirs) && (
           <div className="sticky top-0 z-10 -mx-3 border-b border-[color:var(--edge)] bg-inherit px-3 pb-2 pt-2">
-            {latestMin ? (
-              /* Minimized strip: the pocket folds to one line ~5s after the
-                 newest card landed. Names stay readable (truncated); one tap
-                 reopens the full pocket with its hover popovers. */
-              <button
-                type="button"
-                onClick={toggleLatest}
-                aria-expanded={false}
-                title="Show latest cards"
-                className="dock-card flex w-full items-center gap-2 rounded-[1px] border border-[color:var(--edge)] bg-white/[0.03] px-2 py-1 text-left"
-              >
-                <Inbox aria-hidden size={11} strokeWidth={2.2} className="shrink-0 text-sun/70" />
-                <span className="smallcaps shrink-0 text-[11px] text-sun/80">Latest</span>
-                <span className="min-w-0 flex-1 truncate text-[11px] text-parchment-300">
-                  {[
-                    lastMine ? lastMineDef?.name ?? "Banked" : null,
-                    lastTheirs && !lastTheirsHidden ? BUFF_BY_ID[lastTheirs.id]?.name ?? null : null,
-                  ]
-                    .filter(Boolean)
-                    .join(" · ")}
-                </span>
-                <ChevronRight aria-hidden size={11} strokeWidth={2.4} className="shrink-0 text-parchment-400" />
-              </button>
-            ) : (
-            /* The pocket: a rounded slot that flashes a brief mint/sun glow
-                whenever a fresh card lands (keying by the card counts remounts
-                it, replaying the one-shot CSS animation). */
+            {/* The pocket: a slot that flashes a brief mint/sun glow whenever a
+                fresh card lands (keying by the card counts remounts it,
+                replaying the one-shot CSS animation). */}
             <div
               key={`pocket-${mine.length}-${theirs.length}`}
               className="dock-pocket-flash flex items-center gap-2 rounded-[1px] border border-[color:var(--edge)] bg-white/[0.03] px-2 py-1.5"
             >
-              {/* The label doubles as the fold control (the card names beside
-                  it keep their own popover buttons, so they stay separate). */}
-              <button
-                type="button"
-                onClick={toggleLatest}
-                aria-expanded
-                title="Minimize"
-                className="flex shrink-0 items-center gap-2"
-              >
+              <span className="flex shrink-0 items-center gap-2">
                 <Inbox aria-hidden size={12} strokeWidth={2.2} className="shrink-0 text-sun" />
                 <span className="smallcaps shrink-0 text-[12px] text-sun/90">Latest</span>
-                <ChevronRight
-                  aria-hidden
-                  size={11}
-                  strokeWidth={2.4}
-                  className="shrink-0 rotate-90 text-parchment-400"
-                />
-              </button>
+              </span>
             {lastMine && (
               <motion.span
                 key={`m${mine.length}`}
@@ -1205,7 +1195,6 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
               </motion.span>
             )}
             </div>
-            )}
           </div>
         )}
 
@@ -1214,19 +1203,6 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
             opponent's side of the table, not buried at the foot of the list. */}
         {plays && plays.length > 0 && <OppPlaysDockSection plays={plays} />}
 
-        {/* Pending take-both: the next offer is taken whole, and the player
-            should know before the draft opens, not discover it inside. */}
-        {(bs.players[myColor].flags.takeBoth ?? 0) > 0 && (
-          <div
-            role="status"
-            className="flex items-center gap-2 rounded-[1px] border border-gold/50 bg-gold/10 px-2 py-1.5"
-          >
-            <span aria-hidden className="h-1.5 w-1.5 shrink-0 bg-gold-leaf animate-flicker" />
-            <span className="font-display text-[12px] font-semibold text-gold-leaf">
-              Next draft: you take BOTH cards
-            </span>
-          </div>
-        )}
 
         {/* "Against you": every constraint currently limiting your play, with
             remaining duration. New rows flash in once when a constraint
@@ -1367,39 +1343,6 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
                 (and any still-masked card) stay fully invisible to the
                 opponent, on the left side included. */}
           </>
-        )}
-
-        {/* Blocked-draft moment: your hex sealed the opponent's next draft(s).
-            Reads as an event: face-down minis with a bar across flip in.
-            Keyed by the count so stacking another block replays it. */}
-        {oppDraftBlocked > 0 && !game.result && (
-          <motion.div
-            key={`opp-blocked-${oppDraftBlocked}`}
-            role="status"
-            initial={reduceMotion ? false : { opacity: 0, rotateY: 90 }}
-            animate={{ opacity: 1, rotateY: 0 }}
-            transition={{ duration: 0.35, ease: "easeOut" }}
-            className="flex items-center gap-2 rounded-[1px] border border-oxblood-glow/40 bg-oxblood/10 px-2 py-1.5"
-          >
-            <Ban aria-hidden size={11} strokeWidth={2.2} className="shrink-0 text-oxblood-glow" />
-            <span className="smallcaps min-w-0 flex-1 truncate text-[12px] text-oxblood-glow">
-              {oppDraftBlocked === 1
-                ? "Opponent's next draft blocked"
-                : `Opponent's next ${oppDraftBlocked} drafts blocked`}
-            </span>
-            <span className="flex shrink-0 items-center gap-1">
-              {Array.from({ length: Math.min(oppDraftBlocked, 3) }).map((_, i) => (
-                <span
-                  key={i}
-                  aria-hidden
-                  className="relative flex h-6 w-[18px] items-center justify-center rounded-[1px] border border-oxblood-glow/40 bg-ink-950"
-                >
-                  <span className="absolute inset-[2px] rounded-[1px] border border-[color:var(--edge)]" />
-                  <span className="absolute inset-x-[2px] top-1/2 h-px bg-oxblood-glow/80" />
-                </span>
-              ))}
-            </span>
-          </motion.div>
         )}
 
       </div>
