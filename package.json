@@ -36,6 +36,7 @@
     "test:card-registry": "npx -y tsx scripts/gen-card-registry.ts --check",
     "gen:card-categories": "npx -y tsx scripts/gen-card-categories.ts",
     "test:card-categories": "npx -y tsx scripts/gen-card-categories.ts --check",
+    "report:winrate": "npx -y tsx scripts/report-card-winrate.ts",
     "test:card-similarity": "npx -y tsx scripts/audit-card-similarity.ts",
     "test:passive-motifs": "npx -y tsx scripts/audit-passive-motifs.ts",
     "test:nerf-categories": "npx -y tsx scripts/test-nerf-categories.ts",
