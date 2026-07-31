@@ -42,6 +42,7 @@ const H5 = tierHexes(5);
 const H6 = tierHexes(6);
 const H7 = tierHexes(7);
 const H8 = tierHexes(8);
+const H9 = tierHexes(9);
 
 /** Chebyshev (king-step) distance between two squares. */
 const cheb = (a: Square, b: Square) =>
@@ -1132,7 +1133,7 @@ export const HEX_WAVE2: Buff[] = [
   // the mirror of the occult Hex Doll (which kills a piece IF it captures):
   // here the piece dies UNLESS it captures. The victim reads the exact count
   // on the board and chooses: feed the bell, trade the piece off, or lose it.
-  H7(
+  H9(
     {
       id: "hw2_death_knell",
       name: "Death Knell",

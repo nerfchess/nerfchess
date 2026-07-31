@@ -127,7 +127,7 @@ export const FANTASY_ELEMENTS: Buff[] = [
       name: "Sinkhole",
       description:
         "The earth chooses where to open: three sinkholes appear on random empty squares in your opponent's half. Any enemy piece except a king that steps onto one plunges out of the game. They stay open the rest of the match.",
-      tier: 5,
+      tier: 6,
       category: "attack",
       flavor: "The ground had other plans.",
     },

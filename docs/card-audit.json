@@ -2,11 +2,11 @@
  "summary": {
   "total": 2448,
   "byKind": {
-   "buff": 971,
-   "hex": 543,
+   "buff": 970,
+   "hex": 542,
    "boon": 418,
    "item": 129,
-   "apex": 27,
+   "apex": 29,
    "nerf": 360
   },
   "flagged": {
@@ -115,6 +115,25 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "hw2_death_knell",
+   "name": "Death Knell",
+   "kind": "apex",
+   "tier": 9,
+   "effect": "Toll the knell over one enemy piece: in 3 of their turns it crumbles to dust and is removed. The bell accepts one bribe: if the doomed piece captures anything before the last toll, the curse breaks and it lives. Kings cannot be tolled.",
+   "trigger": "activated/lingering",
+   "duration": "3-turns",
+   "targets": "enemy",
+   "signature": "hex|activated|effect+targets+onMove|3-turns|enemy|capture,king,n:3,remove",
+   "animation": "generated",
+   "location": "src/engine/buffs/hexes/wave2.ts",
+   "tests": [
+    "lab-run-all.ts",
+    "test-hexes.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "hw3_curse_engine",
    "name": "The Curse Engine",
    "kind": "apex",
@@ -164,6 +183,24 @@
    "signature": "tempo|activated|effect+targets|3-turns|enemy|freeze,king,move,n:3",
    "animation": "bespoke+canvas",
    "location": "src/engine/buffs/tier9.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "ilovewhimperingaudios",
+   "name": "I Love Whimpering Audios",
+   "kind": "apex",
+   "tier": 9,
+   "effect": "After your opponent's next move, the charm sets in: on each of their following 3 moves, the enemy queen, rook, bishop, or knight nearest your king is charmed and joins your army. Kings never fall for it.",
+   "trigger": "activated/lingering",
+   "duration": "next-turn",
+   "targets": "enemy",
+   "signature": "pieces|activated|effect+onMove|next-turn|enemy|bishop,king,knight,move,n:3,queen,rook",
+   "animation": "generated",
+   "location": "src/engine/buffs/personal.ts",
    "tests": [
     "lab-run-all.ts"
    ],
@@ -11803,30 +11840,11 @@
    "animation": "passive",
    "location": "src/engine/buffs/library.ts",
    "tests": [
+    "sim-card-winrate.ts",
     "lab-run-all.ts"
    ],
    "flags": [],
    "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "counterstep",
-   "name": "Counterstep",
-   "kind": "buff",
-   "tier": 2,
-   "effect": "After your opponent's next capture, you take two moves in reply, once. You cannot capture the king on the bonus move: your opponent replies first.",
-   "trigger": "passive",
-   "duration": "one-shot",
-   "targets": "enemy",
-   "signature": "tempo|passive|onMove|one-shot|enemy|capture,king,move",
-   "animation": "passive",
-   "location": "src/engine/buffs/library.ts",
-   "tests": [
-    "lab-run-all.ts"
-   ],
-   "flags": [
-    "near-duplicate(extra_move:0.79)"
-   ],
-   "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
   },
   {
    "id": "cs_let_it_ride",
@@ -14203,6 +14221,26 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "counterstep",
+   "name": "Counterstep",
+   "kind": "buff",
+   "tier": 3,
+   "effect": "After your opponent's next capture, you take two moves in reply, once. You cannot capture the king on the bonus move: your opponent replies first.",
+   "trigger": "passive",
+   "duration": "one-shot",
+   "targets": "enemy",
+   "signature": "tempo|passive|onMove|one-shot|enemy|capture,king,move",
+   "animation": "passive",
+   "location": "src/engine/buffs/library.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [
+    "near-duplicate(extra_move:0.79)"
+   ],
+   "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
+  },
+  {
    "id": "cs_roulette",
    "name": "Roulette Wheel",
    "kind": "buff",
@@ -15445,24 +15483,6 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "sea_monkeys",
-   "name": "Sea Monkeys",
-   "kind": "buff",
-   "tier": 3,
-   "effect": "Just add water: four tiny pawns hatch on random empty squares in your half and grow into real pawns.",
-   "trigger": "instant",
-   "duration": "unstated",
-   "targets": "self",
-   "signature": "pieces|instant|effect|unstated|self|pawn,random,square",
-   "animation": "bespoke+canvas",
-   "location": "src/engine/buffs/pt/curseschaos.ts",
-   "tests": [
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
    "id": "seance",
    "name": "Seance",
    "kind": "buff",
@@ -15916,6 +15936,24 @@
    "targets": "self",
    "signature": "pieces|activated|effect+targets|one-shot|self|draft,knight,pawn,reroll",
    "animation": "generated",
+   "location": "src/engine/buffs/wild/arcane.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "wa_twin_blink",
+   "name": "Twin Blink",
+   "kind": "buff",
+   "tier": 3,
+   "effect": "Two knots in the world come undone at once: choose one of your pieces and one enemy piece (kings aside); each blinks away to a random empty square.",
+   "trigger": "activated",
+   "duration": "one-shot",
+   "targets": "enemy",
+   "signature": "movement|activated|effect+targets|one-shot|enemy|king,random,square",
+   "animation": "bespoke+canvas",
    "location": "src/engine/buffs/wild/arcane.ts",
    "tests": [
     "lab-run-all.ts"
@@ -16508,6 +16546,24 @@
     "near-duplicate(divine_legion:0.86)"
    ],
    "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+  },
+  {
+   "id": "borrowed_time",
+   "name": "Borrowed Time",
+   "kind": "buff",
+   "tier": 4,
+   "effect": "Your queen becomes uncapturable for your next 4 moves, and then her time runs out: she is removed from the board.",
+   "trigger": "instant",
+   "duration": "unstated",
+   "targets": "self",
+   "signature": "protection|instant|effect|unstated|self|become,move,n:4,queen,remove,time",
+   "animation": "bespoke+canvas",
+   "location": "src/engine/buffs/funny/tradeoffs.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
   },
   {
    "id": "buff_thief_minor",
@@ -17841,6 +17897,24 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "sea_monkeys",
+   "name": "Sea Monkeys",
+   "kind": "buff",
+   "tier": 4,
+   "effect": "Just add water: four tiny pawns hatch on random empty squares in your half and grow into real pawns.",
+   "trigger": "instant",
+   "duration": "unstated",
+   "targets": "self",
+   "signature": "pieces|instant|effect|unstated|self|pawn,random,square",
+   "animation": "bespoke+canvas",
+   "location": "src/engine/buffs/pt/curseschaos.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "shieldmaiden",
    "name": "Shieldmaiden",
    "kind": "buff",
@@ -18379,24 +18453,6 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "wa_twin_blink",
-   "name": "Twin Blink",
-   "kind": "buff",
-   "tier": 4,
-   "effect": "Two knots in the world come undone at once: choose one of your pieces and one enemy piece (kings aside); each blinks away to a random empty square.",
-   "trigger": "activated",
-   "duration": "one-shot",
-   "targets": "enemy",
-   "signature": "movement|activated|effect+targets|one-shot|enemy|king,random,square",
-   "animation": "bespoke+canvas",
-   "location": "src/engine/buffs/wild/arcane.ts",
-   "tests": [
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
    "id": "warding_circle",
    "name": "Warding Circle",
    "kind": "buff",
@@ -18890,24 +18946,6 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "ww_claymore_line",
-   "name": "Claymore Line",
-   "kind": "buff",
-   "tier": 4,
-   "effect": "Mark two empty squares: the first enemy piece to step onto either one, a king aside, is destroyed along with every enemy piece on the squares around it. The mines stay armed for the game.",
-   "trigger": "activated/lingering",
-   "duration": "unstated",
-   "targets": "enemy",
-   "signature": "protection|activated|effect+targets+onMove|unstated|enemy|destroy,king,square",
-   "animation": "bespoke+canvas",
-   "location": "src/engine/buffs/wild/warfare.ts",
-   "tests": [
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
    "id": "ww_command_tent",
    "name": "Command Tent",
    "kind": "buff",
@@ -19124,24 +19162,6 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "abyss",
-   "name": "Abyss",
-   "kind": "buff",
-   "tier": 5,
-   "effect": "Two squares you pick open an abyss for the game: any enemy piece except a king that enters is swallowed. The defender keeps one bridge, the void nearest the enemy king, which never swallows.",
-   "trigger": "activated/lingering",
-   "duration": "unstated",
-   "targets": "enemy",
-   "signature": "attack|activated|effect+targets+onMove|unstated|enemy|king,square",
-   "animation": "bespoke+canvas",
-   "location": "src/engine/buffs/library.ts",
-   "tests": [
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
    "id": "apotheosis",
    "name": "Apotheosis",
    "kind": "buff",
@@ -19243,24 +19263,6 @@
    "signature": "tempo|activated|effect+targets|2-turns|enemy|king,move,n:2,n:24,n:5,n:5,remove,square,stun",
    "animation": "bespoke+canvas",
    "location": "src/engine/buffs/brainrot.ts",
-   "tests": [
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "borrowed_time",
-   "name": "Borrowed Time",
-   "kind": "buff",
-   "tier": 5,
-   "effect": "Your queen becomes uncapturable for your next 4 moves, and then her time runs out: she is removed from the board.",
-   "trigger": "instant",
-   "duration": "unstated",
-   "targets": "self",
-   "signature": "protection|instant|effect|unstated|self|become,move,n:4,queen,remove,time",
-   "animation": "bespoke+canvas",
-   "location": "src/engine/buffs/funny/tradeoffs.ts",
    "tests": [
     "lab-run-all.ts"
    ],
@@ -19825,24 +19827,6 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "minefield",
-   "name": "Minefield",
-   "kind": "buff",
-   "tier": 5,
-   "effect": "Seed three mines on empty squares. The first enemy piece, never a king, to step on each mine is destroyed, and the blast removes every enemy piece except kings on the 8 squares around it. Shielded pieces resist the blast.",
-   "trigger": "activated/lingering",
-   "duration": "unstated",
-   "targets": "enemy",
-   "signature": "attack|activated|effect+targets+onMove|unstated|enemy|destroy,king,n:8,remove,see,shield,square",
-   "animation": "bespoke+canvas",
-   "location": "src/engine/buffs/funny/chaos.ts",
-   "tests": [
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
    "id": "minji",
    "name": "Minji",
    "kind": "buff",
@@ -20276,24 +20260,6 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "ov_royal_food_taster",
-   "name": "Royal Food Taster",
-   "kind": "buff",
-   "tier": 5,
-   "effect": "Place a Taster pawn on an empty square next to your queen. The next time your queen is captured, the Taster dies in her place and your queen returns on the Taster's square.",
-   "trigger": "activated/lingering",
-   "duration": "unstated",
-   "targets": "self",
-   "signature": "protection|activated|effect+targets+onMove|unstated|self|capture,pawn,place,queen,return,square,time",
-   "animation": "generated",
-   "location": "src/engine/buffs/overhaul/t4.ts",
-   "tests": [
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
    "id": "ov_speedhack",
    "name": "Speedhack",
    "kind": "buff",
@@ -20680,24 +20646,6 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "sinkhole",
-   "name": "Sinkhole",
-   "kind": "buff",
-   "tier": 5,
-   "effect": "The earth chooses where to open: three sinkholes appear on random empty squares in your opponent's half. Any enemy piece except a king that steps onto one plunges out of the game. They stay open the rest of the match.",
-   "trigger": "passive",
-   "duration": "unstated",
-   "targets": "enemy",
-   "signature": "attack|passive|init+onMove|unstated|enemy|king,random,square",
-   "animation": "bespoke+canvas+passive",
-   "location": "src/engine/buffs/fantasy/elements.ts",
-   "tests": [
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
    "id": "spirit_guide",
    "name": "Spirit Guide",
    "kind": "buff",
@@ -21048,24 +20996,6 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "wc_deal_with_the_devil",
-   "name": "Deal with the Devil",
-   "kind": "buff",
-   "tier": 5,
-   "effect": "Sign here: promote one of your pawns to a queen at once, but the devil collects and you skip your next 2 turns, and the signing burns your next unused draft reroll, if you have one.",
-   "trigger": "activated",
-   "duration": "2-turns",
-   "targets": "self",
-   "signature": "pieces|activated|effect+targets|2-turns|self|draft,n:2,pawn,promote,queen,reroll,skip",
-   "animation": "bespoke+canvas",
-   "location": "src/engine/buffs/wild/chaos.ts",
-   "tests": [
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
    "id": "wc_haunted_house",
    "name": "Haunted House",
    "kind": "buff",
@@ -21094,6 +21024,24 @@
    "targets": "enemy",
    "signature": "tempo|passive|init+filter+onMove|next-turn|enemy|capture,king,move,queen",
    "animation": "bespoke+canvas+passive",
+   "location": "src/engine/buffs/wild/chaos.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "wc_musical_chairs",
+   "name": "Musical Chairs",
+   "kind": "buff",
+   "tier": 5,
+   "effect": "The music stops: swap the squares of one of your pieces and one of your opponent's pieces, once. Neither may be a king.",
+   "trigger": "activated",
+   "duration": "one-shot",
+   "targets": "enemy",
+   "signature": "movement|activated|effect+targets|one-shot|enemy|king,square,swap",
+   "animation": "bespoke+canvas",
    "location": "src/engine/buffs/wild/chaos.ts",
    "tests": [
     "lab-run-all.ts"
@@ -21303,6 +21251,24 @@
    "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
   },
   {
+   "id": "ww_claymore_line",
+   "name": "Claymore Line",
+   "kind": "buff",
+   "tier": 5,
+   "effect": "Mark two empty squares: the first enemy piece to step onto either one, a king aside, is destroyed along with every enemy piece on the squares around it. The mines stay armed for the game.",
+   "trigger": "activated/lingering",
+   "duration": "unstated",
+   "targets": "enemy",
+   "signature": "protection|activated|effect+targets+onMove|unstated|enemy|destroy,king,square",
+   "animation": "bespoke+canvas",
+   "location": "src/engine/buffs/wild/warfare.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "ww_demolition_charge",
    "name": "Demolition Charge",
    "kind": "buff",
@@ -21464,6 +21430,24 @@
    ],
    "flags": [],
    "action": "keep: T4 three-card + fated-tier composite"
+  },
+  {
+   "id": "abyss",
+   "name": "Abyss",
+   "kind": "buff",
+   "tier": 6,
+   "effect": "Two squares you pick open an abyss for the game: any enemy piece except a king that enters is swallowed. The defender keeps one bridge, the void nearest the enemy king, which never swallows.",
+   "trigger": "activated/lingering",
+   "duration": "unstated",
+   "targets": "enemy",
+   "signature": "attack|activated|effect+targets+onMove|unstated|enemy|king,square",
+   "animation": "bespoke+canvas",
+   "location": "src/engine/buffs/library.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
   },
   {
    "id": "all_in",
@@ -22217,24 +22201,6 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "joseph_leung",
-   "name": "Joseph Leung",
-   "kind": "buff",
-   "tier": 6,
-   "effect": "Sign the board. Bind one of your pieces: for the game it moves as a knight and queen at once, and cannot be captured for your opponent's next 4 turns.",
-   "trigger": "activated/lingering",
-   "duration": "4-turns",
-   "targets": "enemy",
-   "signature": "movement|activated|effect+targets+aug+onMove|4-turns|enemy|capture,knight,move,n:4,queen",
-   "animation": "bespoke+canvas",
-   "location": "src/engine/buffs/personal.ts",
-   "tests": [
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
    "id": "landlord",
    "name": "Landlord",
    "kind": "buff",
@@ -22290,17 +22256,17 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "mirror_of_souls",
-   "name": "Mirror of Souls",
+   "id": "minefield",
+   "name": "Minefield",
    "kind": "buff",
    "tier": 6,
-   "effect": "You hold the glass between two reflections: name one of your pieces and an enemy piece of the same kind. After your opponent's next move, they trade places. Kings cast no reflection.",
+   "effect": "Seed three mines on empty squares. The first enemy piece, never a king, to step on each mine is destroyed, and the blast removes every enemy piece except kings on the 8 squares around it. Shielded pieces resist the blast.",
    "trigger": "activated/lingering",
-   "duration": "next-turn",
+   "duration": "unstated",
    "targets": "enemy",
-   "signature": "movement|activated|effect+targets+onMove|next-turn|enemy|king,move,place",
-   "animation": "canvas",
-   "location": "src/engine/buffs/mystic/occult.ts",
+   "signature": "attack|activated|effect+targets+onMove|unstated|enemy|destroy,king,n:8,remove,see,shield,square",
+   "animation": "bespoke+canvas",
+   "location": "src/engine/buffs/funny/chaos.ts",
    "tests": [
     "lab-run-all.ts"
    ],
@@ -22687,6 +22653,24 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "ov_royal_food_taster",
+   "name": "Royal Food Taster",
+   "kind": "buff",
+   "tier": 6,
+   "effect": "Place a Taster pawn on an empty square next to your queen. The next time your queen is captured, the Taster dies in her place and your queen returns on the Taster's square.",
+   "trigger": "activated/lingering",
+   "duration": "unstated",
+   "targets": "self",
+   "signature": "protection|activated|effect+targets+onMove|unstated|self|capture,pawn,place,queen,return,square,time",
+   "animation": "generated",
+   "location": "src/engine/buffs/overhaul/t4.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "ov_season_pass",
    "name": "Season Pass",
    "kind": "buff",
@@ -22980,6 +22964,24 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "sinkhole",
+   "name": "Sinkhole",
+   "kind": "buff",
+   "tier": 6,
+   "effect": "The earth chooses where to open: three sinkholes appear on random empty squares in your opponent's half. Any enemy piece except a king that steps onto one plunges out of the game. They stay open the rest of the match.",
+   "trigger": "passive",
+   "duration": "unstated",
+   "targets": "enemy",
+   "signature": "attack|passive|init+onMove|unstated|enemy|king,random,square",
+   "animation": "bespoke+canvas+passive",
+   "location": "src/engine/buffs/fantasy/elements.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "smurf_account",
    "name": "Smurf Account",
    "kind": "buff",
@@ -23009,24 +23011,6 @@
    "signature": "protection|instant|effect|3-turns|enemy|capture,king,n:3,square",
    "animation": "canvas",
    "location": "src/engine/buffs/mystic/celestial.ts",
-   "tests": [
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "threads_of_fate",
-   "name": "Threads of Fate",
-   "kind": "buff",
-   "tier": 6,
-   "effect": "The loom repays every cut thread: for your opponent's next 3 captures, you weave an extra move into your reply.",
-   "trigger": "passive",
-   "duration": "unstated",
-   "targets": "enemy",
-   "signature": "tempo|passive|init+onMove|unstated|enemy|capture,extra,move,n:3",
-   "animation": "canvas+passive",
-   "location": "src/engine/buffs/mystic/fate.ts",
    "tests": [
     "lab-run-all.ts"
    ],
@@ -23351,15 +23335,15 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "wc_musical_chairs",
-   "name": "Musical Chairs",
+   "id": "wc_deal_with_the_devil",
+   "name": "Deal with the Devil",
    "kind": "buff",
    "tier": 6,
-   "effect": "The music stops: swap the squares of one of your pieces and one of your opponent's pieces, once. Neither may be a king.",
+   "effect": "Sign here: promote one of your pawns to a queen at once, but the devil collects and you skip your next 2 turns, and the signing burns your next unused draft reroll, if you have one.",
    "trigger": "activated",
-   "duration": "one-shot",
-   "targets": "enemy",
-   "signature": "movement|activated|effect+targets|one-shot|enemy|king,square,swap",
+   "duration": "2-turns",
+   "targets": "self",
+   "signature": "pieces|activated|effect+targets|2-turns|self|draft,n:2,pawn,promote,queen,reroll,skip",
    "animation": "bespoke+canvas",
    "location": "src/engine/buffs/wild/chaos.ts",
    "tests": [
@@ -23782,24 +23766,6 @@
    "signature": "movement|activated|init+effect+targets+aug+onMove|one-shot|self|jump,knight,leap,move,queen",
    "animation": "bespoke+canvas",
    "location": "src/engine/buffs/funny/transforms.ts",
-   "tests": [
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "berserker",
-   "name": "Berserker",
-   "kind": "buff",
-   "tier": 7,
-   "effect": "For your next 3 turns, all your pieces except your king also move like a queen. For the 2 turns after that, all your pieces can move only one square.",
-   "trigger": "passive",
-   "duration": "3-turns",
-   "targets": "self",
-   "signature": "movement|passive|init+aug+onMove|3-turns|self|king,move,n:2,n:3,queen,square",
-   "animation": "bespoke+canvas+passive",
-   "location": "src/engine/buffs/funny/tradeoffs.ts",
    "tests": [
     "lab-run-all.ts"
    ],
@@ -24307,6 +24273,24 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "joseph_leung",
+   "name": "Joseph Leung",
+   "kind": "buff",
+   "tier": 7,
+   "effect": "Sign the board. Bind one of your pieces: for the game it moves as a knight and queen at once, and cannot be captured for your opponent's next 4 turns.",
+   "trigger": "activated/lingering",
+   "duration": "4-turns",
+   "targets": "enemy",
+   "signature": "movement|activated|effect+targets+aug+onMove|4-turns|enemy|capture,knight,move,n:4,queen",
+   "animation": "bespoke+canvas",
+   "location": "src/engine/buffs/personal.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "judgment_day",
    "name": "Judgment Day",
    "kind": "buff",
@@ -24415,6 +24399,24 @@
    "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
   },
   {
+   "id": "mirror_of_souls",
+   "name": "Mirror of Souls",
+   "kind": "buff",
+   "tier": 7,
+   "effect": "You hold the glass between two reflections: name one of your pieces and an enemy piece of the same kind. After your opponent's next move, they trade places. Kings cast no reflection.",
+   "trigger": "activated/lingering",
+   "duration": "next-turn",
+   "targets": "enemy",
+   "signature": "movement|activated|effect+targets+onMove|next-turn|enemy|king,move,place",
+   "animation": "canvas",
+   "location": "src/engine/buffs/mystic/occult.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "necromancer",
    "name": "Necromancer",
    "kind": "buff",
@@ -24426,24 +24428,6 @@
    "signature": "pieces|activated|effect+targets|5-turns|self|capture,n:5,square",
    "animation": "bespoke+canvas",
    "location": "src/engine/buffs/pt/curseschaos.ts",
-   "tests": [
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "orb_of_dominion",
-   "name": "Orb of Dominion",
-   "kind": "buff",
-   "tier": 7,
-   "effect": "Choose one enemy rook or queen; after your opponent's next move you take control of it for the rest of the game, once. While you still hold the dominated piece, the enemy queen cannot capture. Kings cannot be taken.",
-   "trigger": "activated/lingering",
-   "duration": "permanent",
-   "targets": "enemy",
-   "signature": "pieces|activated|effect+targets+filter+onMove|permanent|enemy|capture,control,king,move,queen,rook",
-   "animation": "bespoke+canvas",
-   "location": "src/engine/buffs/fantasy/artifacts.ts",
    "tests": [
     "lab-run-all.ts"
    ],
@@ -24854,6 +24838,24 @@
    "action": "keep: T7 benchmark the T8 circle was rebalanced against"
   },
   {
+   "id": "threads_of_fate",
+   "name": "Threads of Fate",
+   "kind": "buff",
+   "tier": 7,
+   "effect": "The loom repays every cut thread: for your opponent's next 3 captures, you weave an extra move into your reply.",
+   "trigger": "passive",
+   "duration": "unstated",
+   "targets": "enemy",
+   "signature": "tempo|passive|init+onMove|unstated|enemy|capture,extra,move,n:3",
+   "animation": "canvas+passive",
+   "location": "src/engine/buffs/mystic/fate.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "total_warp",
    "name": "Total Warp",
    "kind": "buff",
@@ -25194,6 +25196,24 @@
    "signature": "attack|activated|effect+targets|permanent|enemy|bishop,knight,rook",
    "animation": "canvas",
    "location": "src/engine/buffs/funny/meta.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "berserker",
+   "name": "Berserker",
+   "kind": "buff",
+   "tier": 8,
+   "effect": "For your next 3 turns, all your pieces except your king also move like a queen. For the 2 turns after that, all your pieces can move only one square.",
+   "trigger": "passive",
+   "duration": "3-turns",
+   "targets": "self",
+   "signature": "movement|passive|init+aug+onMove|3-turns|self|king,move,n:2,n:3,queen,square",
+   "animation": "bespoke+canvas+passive",
+   "location": "src/engine/buffs/funny/tradeoffs.ts",
    "tests": [
     "lab-run-all.ts"
    ],
@@ -25570,24 +25590,6 @@
    "action": "keep: comedy single freeze with self-cost at T1; Hailstorm T4 is the mass version"
   },
   {
-   "id": "ilovewhimperingaudios",
-   "name": "I Love Whimpering Audios",
-   "kind": "buff",
-   "tier": 8,
-   "effect": "After your opponent's next move, the charm sets in: on each of their following 3 moves, the enemy queen, rook, bishop, or knight nearest your king is charmed and joins your army. Kings never fall for it.",
-   "trigger": "activated/lingering",
-   "duration": "next-turn",
-   "targets": "enemy",
-   "signature": "pieces|activated|effect+onMove|next-turn|enemy|bishop,king,knight,move,n:3,queen,rook",
-   "animation": "generated",
-   "location": "src/engine/buffs/personal.ts",
-   "tests": [
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
    "id": "immortal_king",
    "name": "Immortal King",
    "kind": "buff",
@@ -25635,6 +25637,24 @@
    "signature": "movement|passive|init+aug+onMove|3-turns|self|bishop,knight,n:3,queen,rook,square",
    "animation": "bespoke+canvas+passive",
    "location": "src/engine/buffs/library.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "orb_of_dominion",
+   "name": "Orb of Dominion",
+   "kind": "buff",
+   "tier": 8,
+   "effect": "Choose one enemy rook or queen; after your opponent's next move you take control of it for the rest of the game, once. While you still hold the dominated piece, the enemy queen cannot capture. Kings cannot be taken.",
+   "trigger": "activated/lingering",
+   "duration": "permanent",
+   "targets": "enemy",
+   "signature": "pieces|activated|effect+targets+filter+onMove|permanent|enemy|capture,control,king,move,queen,rook",
+   "animation": "bespoke+canvas",
+   "location": "src/engine/buffs/fantasy/artifacts.ts",
    "tests": [
     "lab-run-all.ts"
    ],
@@ -28796,25 +28816,6 @@
    "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
   },
   {
-   "id": "hw3_exiles_mark",
-   "name": "Exile's Mark",
-   "kind": "hex",
-   "tier": 3,
-   "effect": "Brand one enemy knight, bishop or rook: every move it makes must carry it closer to your side, and if it has not set foot in your half within 5 of their turns it crumbles to dust. The mark lifts the moment it stands in your half. Kings are never exiled.",
-   "trigger": "activated/lingering",
-   "duration": "5-turns",
-   "targets": "enemy",
-   "signature": "hex|activated|effect+targets+filter+onMove|5-turns|enemy|bishop,king,knight,move,n:5,rook",
-   "animation": "generated",
-   "location": "src/engine/buffs/hexes/wave3.ts",
-   "tests": [
-    "lab-run-all.ts",
-    "test-hexes.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
    "id": "hw3_jammed_castle",
    "name": "Jammed Portcullis",
    "kind": "hex",
@@ -30133,6 +30134,25 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "hw3_exiles_mark",
+   "name": "Exile's Mark",
+   "kind": "hex",
+   "tier": 4,
+   "effect": "Brand one enemy knight, bishop or rook: every move it makes must carry it closer to your side, and if it has not set foot in your half within 5 of their turns it crumbles to dust. The mark lifts the moment it stands in your half. Kings are never exiled.",
+   "trigger": "activated/lingering",
+   "duration": "5-turns",
+   "targets": "enemy",
+   "signature": "hex|activated|effect+targets+filter+onMove|5-turns|enemy|bishop,king,knight,move,n:5,rook",
+   "animation": "generated",
+   "location": "src/engine/buffs/hexes/wave3.ts",
+   "tests": [
+    "lab-run-all.ts",
+    "test-hexes.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "hw3_miasma",
    "name": "Miasma",
    "kind": "hex",
@@ -30199,25 +30219,6 @@
    "duration": "4-turns",
    "targets": "enemy",
    "signature": "hex|instant|init+onMove|4-turns|enemy|n:4,square",
-   "animation": "generated",
-   "location": "src/engine/buffs/hexes/wave3.ts",
-   "tests": [
-    "lab-run-all.ts",
-    "test-hexes.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "hw3_time_bomb",
-   "name": "Powder Keg",
-   "kind": "hex",
-   "tier": 4,
-   "effect": "Roll a powder keg onto an empty square in your opponent's half with a lit 4-turn fuse, in full view. When it blows, every enemy piece except the king standing on or next to that square is blown off the board, and you gain one draft reroll.",
-   "trigger": "activated/lingering",
-   "duration": "unstated",
-   "targets": "enemy",
-   "signature": "hex|activated|effect+targets+onMove|unstated|enemy|draft,king,n:4,reroll,square",
    "animation": "generated",
    "location": "src/engine/buffs/hexes/wave3.ts",
    "tests": [
@@ -31421,25 +31422,6 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "changeling",
-   "name": "Changeling",
-   "kind": "hex",
-   "tier": 5,
-   "effect": "The cradle swap ran the other way: one enemy knight or bishop you choose was a changeling all along. The glamour breaks and it is just a pawn.",
-   "trigger": "activated",
-   "duration": "unstated",
-   "targets": "enemy",
-   "signature": "hex|activated|effect+targets|unstated|enemy|bishop,knight,pawn,swap",
-   "animation": "canvas",
-   "location": "src/engine/buffs/fantasy/fey.ts",
-   "tests": [
-    "lab-run-all.ts",
-    "test-hexes.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
    "id": "curse_of_frailty",
    "name": "Curse of Frailty",
    "kind": "hex",
@@ -31755,25 +31737,6 @@
    "duration": "3-turns",
    "targets": "enemy",
    "signature": "hex|activated|effect+targets+onMove|3-turns|enemy|king,move,n:2,n:3,rank",
-   "animation": "generated",
-   "location": "src/engine/buffs/hexes/wave3.ts",
-   "tests": [
-    "lab-run-all.ts",
-    "test-hexes.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "hw3_defectors_mark",
-   "name": "Sleeper Cell",
-   "kind": "hex",
-   "tier": 5,
-   "effect": "Plant a sleeper in one enemy knight or bishop. On their 3rd turn from now it wakes and defects: yours to command for your next 3 turns, then it slips back. Until it turns it is still theirs. Kings are never turned.",
-   "trigger": "activated/lingering",
-   "duration": "3-turns",
-   "targets": "enemy",
-   "signature": "hex|activated|effect+targets+onMove|3-turns|enemy|bishop,king,knight,n:3,sleep",
    "animation": "generated",
    "location": "src/engine/buffs/hexes/wave3.ts",
    "tests": [
@@ -32885,25 +32848,6 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "rust",
-   "name": "Rust",
-   "kind": "hex",
-   "tier": 5,
-   "effect": "Idle enemy pieces seize up: any enemy piece (never a king) that has stood still for 2 of your opponent's turns rusts solid and may only move if the move is a capture, until it finally moves.",
-   "trigger": "passive",
-   "duration": "unstated",
-   "targets": "enemy",
-   "signature": "hex|passive|filter+onMove|unstated|enemy|capture,king,move,n:2",
-   "animation": "bespoke+canvas+passive",
-   "location": "src/engine/buffs/pt/passives.ts",
-   "tests": [
-    "lab-run-all.ts",
-    "test-hexes.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
    "id": "sahur",
    "name": "Bobrito Bandito",
    "kind": "hex",
@@ -33130,6 +33074,25 @@
    "signature": "hex|passive|init+filter+onMove|5-turns|enemy|draw,move,n:5",
    "animation": "canvas+passive",
    "location": "src/engine/buffs/library.ts",
+   "tests": [
+    "lab-run-all.ts",
+    "test-hexes.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "changeling",
+   "name": "Changeling",
+   "kind": "hex",
+   "tier": 6,
+   "effect": "The cradle swap ran the other way: one enemy knight or bishop you choose was a changeling all along. The glamour breaks and it is just a pawn.",
+   "trigger": "activated",
+   "duration": "unstated",
+   "targets": "enemy",
+   "signature": "hex|activated|effect+targets|unstated|enemy|bishop,knight,pawn,swap",
+   "animation": "canvas",
+   "location": "src/engine/buffs/fantasy/fey.ts",
    "tests": [
     "lab-run-all.ts",
     "test-hexes.cjs"
@@ -33423,15 +33386,15 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "hw3_doomed_vow",
-   "name": "Doomed Vow",
+   "id": "hw3_defectors_mark",
+   "name": "Sleeper Cell",
    "kind": "hex",
    "tier": 6,
-   "effect": "Condemn one enemy piece: in 4 of their turns it is dragged off the board, unless their own king comes to stand on a square next to it first, which breaks the vow at once. Kings themselves cannot be condemned.",
+   "effect": "Plant a sleeper in one enemy knight or bishop. On their 3rd turn from now it wakes and defects: yours to command for your next 3 turns, then it slips back. Until it turns it is still theirs. Kings are never turned.",
    "trigger": "activated/lingering",
-   "duration": "4-turns",
+   "duration": "3-turns",
    "targets": "enemy",
-   "signature": "hex|activated|effect+targets+onMove|4-turns|enemy|king,n:4,square",
+   "signature": "hex|activated|effect+targets+onMove|3-turns|enemy|bishop,king,knight,n:3,sleep",
    "animation": "generated",
    "location": "src/engine/buffs/hexes/wave3.ts",
    "tests": [
@@ -33511,6 +33474,26 @@
    "animation": "passive",
    "location": "src/engine/buffs/hexes/wave3.ts",
    "tests": [
+    "lab-run-all.ts",
+    "test-hexes.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "hw3_time_bomb",
+   "name": "Powder Keg",
+   "kind": "hex",
+   "tier": 6,
+   "effect": "Roll a powder keg onto an empty square in your opponent's half with a lit 4-turn fuse, in full view. When it blows, every enemy piece except the king standing on or next to that square is blown off the board, and you gain one draft reroll.",
+   "trigger": "activated/lingering",
+   "duration": "unstated",
+   "targets": "enemy",
+   "signature": "hex|activated|effect+targets+onMove|unstated|enemy|draft,king,n:4,reroll,square",
+   "animation": "generated",
+   "location": "src/engine/buffs/hexes/wave3.ts",
+   "tests": [
+    "propose-retiers.ts",
     "lab-run-all.ts",
     "test-hexes.cjs"
    ],
@@ -34459,6 +34442,25 @@
    "action": "keep: king-forcing axis at T5"
   },
   {
+   "id": "rust",
+   "name": "Rust",
+   "kind": "hex",
+   "tier": 6,
+   "effect": "Idle enemy pieces seize up: any enemy piece (never a king) that has stood still for 2 of your opponent's turns rusts solid and may only move if the move is a capture, until it finally moves.",
+   "trigger": "passive",
+   "duration": "unstated",
+   "targets": "enemy",
+   "signature": "hex|passive|filter+onMove|unstated|enemy|capture,king,move,n:2",
+   "animation": "bespoke+canvas+passive",
+   "location": "src/engine/buffs/pt/passives.ts",
+   "tests": [
+    "lab-run-all.ts",
+    "test-hexes.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "sealed_avenues",
    "name": "Sealed Avenues",
    "kind": "hex",
@@ -34770,25 +34772,6 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "hw2_death_knell",
-   "name": "Death Knell",
-   "kind": "hex",
-   "tier": 7,
-   "effect": "Toll the knell over one enemy piece: in 3 of their turns it crumbles to dust and is removed. The bell accepts one bribe: if the doomed piece captures anything before the last toll, the curse breaks and it lives. Kings cannot be tolled.",
-   "trigger": "activated/lingering",
-   "duration": "3-turns",
-   "targets": "enemy",
-   "signature": "hex|activated|effect+targets+onMove|3-turns|enemy|capture,king,n:3,remove",
-   "animation": "generated",
-   "location": "src/engine/buffs/hexes/wave2.ts",
-   "tests": [
-    "lab-run-all.ts",
-    "test-hexes.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
    "id": "hw2_hollow_crown",
    "name": "The Hollow Crown",
    "kind": "hex",
@@ -34819,6 +34802,25 @@
    "signature": "hex|passive|init+onMove|3-turns|enemy|move,n:3,rank",
    "animation": "passive",
    "location": "src/engine/buffs/hexes/wave2.ts",
+   "tests": [
+    "lab-run-all.ts",
+    "test-hexes.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "hw3_doomed_vow",
+   "name": "Doomed Vow",
+   "kind": "hex",
+   "tier": 7,
+   "effect": "Condemn one enemy piece: in 4 of their turns it is dragged off the board, unless their own king comes to stand on a square next to it first, which breaks the vow at once. Kings themselves cannot be condemned.",
+   "trigger": "activated/lingering",
+   "duration": "4-turns",
+   "targets": "enemy",
+   "signature": "hex|activated|effect+targets+onMove|4-turns|enemy|king,n:4,square",
+   "animation": "generated",
+   "location": "src/engine/buffs/hexes/wave3.ts",
    "tests": [
     "lab-run-all.ts",
     "test-hexes.cjs"

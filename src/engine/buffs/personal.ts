@@ -1173,7 +1173,7 @@ const AFFECTION: Buff[] = [
       name: "I Love Whimpering Audios",
       description:
         "After your opponent's next move, the charm sets in: on each of their following 3 moves, the enemy queen, rook, bishop, or knight nearest your king is charmed and joins your army. Kings never fall for it.",
-      tier: 8,
+      tier: 9,
       category: "pieces",
       icon: "AudioLines",
       flavor: "Press play and the fight just leaves them.",
@@ -1742,7 +1742,7 @@ const NAMED: Buff[] = [
       name: "Joseph Leung",
       description:
         "Sign the board. Bind one of your pieces: for the game it moves as a knight and queen at once, and cannot be captured for your opponent's next 4 turns.",
-      tier: 6,
+      tier: 7,
       category: "movement",
       icon: "Fingerprint",
       flavor: "One name, all over it.",

@@ -8538,30 +8538,6 @@
       "target": "square"
     },
     {
-      "id": "counterstep",
-      "name": "Counterstep",
-      "kind": "buff",
-      "category": "tempo",
-      "effectCategory": "extra-move",
-      "tier": 2,
-      "mechanic": "passive",
-      "implemented": true,
-      "descriptionLength": 146,
-      "description": "After your opponent's next capture, you take two moves in reply, once. You cannot capture the king on the bonus move: your opponent replies first.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "strike",
-        "primitives": [
-          "bolt",
-          "drainFlow"
-        ],
-        "sigil": "zap"
-      },
-      "soundCue": "passive/strike",
-      "soundFamily": "strike",
-      "target": "pieceClass"
-    },
-    {
       "id": "crossed_wires",
       "name": "Crossed Wires",
       "kind": "buff",
@@ -14183,6 +14159,30 @@
       "target": null
     },
     {
+      "id": "counterstep",
+      "name": "Counterstep",
+      "kind": "buff",
+      "category": "tempo",
+      "effectCategory": "extra-move",
+      "tier": 3,
+      "mechanic": "passive",
+      "implemented": true,
+      "descriptionLength": 146,
+      "description": "After your opponent's next capture, you take two moves in reply, once. You cannot capture the king on the bonus move: your opponent replies first.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "strike",
+        "primitives": [
+          "bolt",
+          "drainFlow"
+        ],
+        "sigil": "zap"
+      },
+      "soundCue": "passive/strike",
+      "soundFamily": "strike",
+      "target": "pieceClass"
+    },
+    {
       "id": "cream_pie",
       "name": "Cream Pie",
       "kind": "buff",
@@ -14760,23 +14760,6 @@
       "implemented": true,
       "descriptionLength": 237,
       "description": "For your opponent's next 6 turns, whenever one of two bound enemy pieces captures anything, the other is frozen for 2 of their turns. The very first capture by either is free. Trade either away and the bond is cut. Kings cannot be bound.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
-    },
-    {
-      "id": "hw3_exiles_mark",
-      "name": "Exile's Mark",
-      "kind": "buff",
-      "category": "hex",
-      "effectCategory": "piece-mind-control",
-      "tier": 3,
-      "mechanic": "activated",
-      "implemented": true,
-      "descriptionLength": 253,
-      "description": "Brand one enemy knight, bishop or rook: every move it makes must carry it closer to your side, and if it has not set foot in your half within 5 of their turns it crumbles to dust. The mark lifts the moment it stands in your half. Kings are never exiled.",
       "soundSource": "cast-voice",
       "animation": null,
       "soundCue": null,
@@ -16751,23 +16734,6 @@
       "target": null
     },
     {
-      "id": "sea_monkeys",
-      "name": "Sea Monkeys",
-      "kind": "buff",
-      "category": "pieces",
-      "effectCategory": "randomness-gamble",
-      "tier": 3,
-      "mechanic": "instant",
-      "implemented": true,
-      "descriptionLength": 100,
-      "description": "Just add water: four tiny pawns hatch on random empty squares in your half and grow into real pawns.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
-    },
-    {
       "id": "seance",
       "name": "Seance",
       "kind": "buff",
@@ -17404,6 +17370,23 @@
       "implemented": true,
       "descriptionLength": 108,
       "description": "Turn one of your pawns into a knight, once. Using it also spends one of your draft rerolls, if you have any.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
+      "id": "wa_twin_blink",
+      "name": "Twin Blink",
+      "kind": "buff",
+      "category": "movement",
+      "effectCategory": "teleport-relocate",
+      "tier": 3,
+      "mechanic": "activated",
+      "implemented": true,
+      "descriptionLength": 147,
+      "description": "Two knots in the world come undone at once: choose one of your pieces and one enemy piece (kings aside); each blinks away to a random empty square.",
       "soundSource": "cast-voice",
       "animation": null,
       "soundCue": null,
@@ -19017,6 +19000,23 @@
       "target": "pieceClass"
     },
     {
+      "id": "borrowed_time",
+      "name": "Borrowed Time",
+      "kind": "buff",
+      "category": "protection",
+      "effectCategory": "single-piece-shield",
+      "tier": 4,
+      "mechanic": "instant",
+      "implemented": true,
+      "descriptionLength": 113,
+      "description": "Your queen becomes uncapturable for your next 4 moves, and then her time runs out: she is removed from the board.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
       "id": "buff_thief_minor",
       "name": "Buff Thief (Minor)",
       "kind": "buff",
@@ -20197,6 +20197,23 @@
       "target": null
     },
     {
+      "id": "hw3_exiles_mark",
+      "name": "Exile's Mark",
+      "kind": "buff",
+      "category": "hex",
+      "effectCategory": "piece-mind-control",
+      "tier": 4,
+      "mechanic": "activated",
+      "implemented": true,
+      "descriptionLength": 253,
+      "description": "Brand one enemy knight, bishop or rook: every move it makes must carry it closer to your side, and if it has not set foot in your half within 5 of their turns it crumbles to dust. The mark lifts the moment it stands in your half. Kings are never exiled.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
       "id": "hw3_miasma",
       "name": "Miasma",
       "kind": "buff",
@@ -20274,23 +20291,6 @@
       "implemented": true,
       "descriptionLength": 230,
       "description": "A mire of four squares opens in your opponent's half: no enemy piece may step onto it, though pieces caught inside may still climb out. It drains away one square on each of their turns until nothing is left, over 4 of their turns.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
-    },
-    {
-      "id": "hw3_time_bomb",
-      "name": "Powder Keg",
-      "kind": "buff",
-      "category": "hex",
-      "effectCategory": "mass-removal",
-      "tier": 4,
-      "mechanic": "activated",
-      "implemented": true,
-      "descriptionLength": 239,
-      "description": "Roll a powder keg onto an empty square in your opponent's half with a lit 4-turn fuse, in full view. When it blows, every enemy piece except the king standing on or next to that square is blown off the board, and you gain one draft reroll.",
       "soundSource": "cast-voice",
       "animation": null,
       "soundCue": null,
@@ -22510,6 +22510,23 @@
       "target": "pieceClass"
     },
     {
+      "id": "sea_monkeys",
+      "name": "Sea Monkeys",
+      "kind": "buff",
+      "category": "pieces",
+      "effectCategory": "randomness-gamble",
+      "tier": 4,
+      "mechanic": "instant",
+      "implemented": true,
+      "descriptionLength": 100,
+      "description": "Just add water: four tiny pawns hatch on random empty squares in your half and grow into real pawns.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
       "id": "sealed_gate",
       "name": "Sealed Gate",
       "kind": "buff",
@@ -23256,23 +23273,6 @@
       "target": null
     },
     {
-      "id": "wa_twin_blink",
-      "name": "Twin Blink",
-      "kind": "buff",
-      "category": "movement",
-      "effectCategory": "teleport-relocate",
-      "tier": 4,
-      "mechanic": "activated",
-      "implemented": true,
-      "descriptionLength": 147,
-      "description": "Two knots in the world come undone at once: choose one of your pieces and one enemy piece (kings aside); each blinks away to a random empty square.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
-    },
-    {
       "id": "warding_circle",
       "name": "Warding Circle",
       "kind": "buff",
@@ -23797,23 +23797,6 @@
       "target": null
     },
     {
-      "id": "ww_claymore_line",
-      "name": "Claymore Line",
-      "kind": "buff",
-      "category": "protection",
-      "effectCategory": "conditional-piece-removal",
-      "tier": 4,
-      "mechanic": "activated",
-      "implemented": true,
-      "descriptionLength": 187,
-      "description": "Mark two empty squares: the first enemy piece to step onto either one, a king aside, is destroyed along with every enemy piece on the squares around it. The mines stay armed for the game.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
-    },
-    {
       "id": "ww_command_tent",
       "name": "Command Tent",
       "kind": "buff",
@@ -24050,23 +24033,6 @@
       "implemented": true,
       "descriptionLength": 155,
       "description": "A wyvern folds its wings and dives: one of your knights streaks in a straight line, snatches the first enemy piece it reaches, and lands just beyond, once.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
-    },
-    {
-      "id": "abyss",
-      "name": "Abyss",
-      "kind": "buff",
-      "category": "attack",
-      "effectCategory": "conditional-piece-removal",
-      "tier": 5,
-      "mechanic": "activated",
-      "implemented": true,
-      "descriptionLength": 190,
-      "description": "Two squares you pick open an abyss for the game: any enemy piece except a king that enters is swallowed. The defender keeps one bridge, the void nearest the enemy king, which never swallows.",
       "soundSource": "cast-voice",
       "animation": null,
       "soundCue": null,
@@ -24957,23 +24923,6 @@
       "target": null
     },
     {
-      "id": "borrowed_time",
-      "name": "Borrowed Time",
-      "kind": "buff",
-      "category": "protection",
-      "effectCategory": "single-piece-shield",
-      "tier": 5,
-      "mechanic": "instant",
-      "implemented": true,
-      "descriptionLength": 113,
-      "description": "Your queen becomes uncapturable for your next 4 moves, and then her time runs out: she is removed from the board.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
-    },
-    {
       "id": "buff_thief",
       "name": "Buff Thief",
       "kind": "buff",
@@ -25231,23 +25180,6 @@
       "soundCue": "passive/bind",
       "soundFamily": "bind",
       "target": "piece"
-    },
-    {
-      "id": "changeling",
-      "name": "Changeling",
-      "kind": "buff",
-      "category": "hex",
-      "effectCategory": "piece-swap",
-      "tier": 5,
-      "mechanic": "activated",
-      "implemented": true,
-      "descriptionLength": 142,
-      "description": "The cradle swap ran the other way: one enemy knight or bishop you choose was a changeling all along. The glamour breaks and it is just a pawn.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
     },
     {
       "id": "checkmate_immunity",
@@ -25979,23 +25911,6 @@
       "implemented": true,
       "descriptionLength": 245,
       "description": "Crack one rank in your opponent's half. It lies quiet until after their next move, then 3 of their turns later the floor gives way and every piece of theirs still standing on that rank is frozen for 2 of their turns. Their king is never trapped.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
-    },
-    {
-      "id": "hw3_defectors_mark",
-      "name": "Sleeper Cell",
-      "kind": "buff",
-      "category": "hex",
-      "effectCategory": "piece-mind-control",
-      "tier": 5,
-      "mechanic": "activated",
-      "implemented": true,
-      "descriptionLength": 214,
-      "description": "Plant a sleeper in one enemy knight or bishop. On their 3rd turn from now it wakes and defects: yours to command for your next 3 turns, then it slips back. Until it turns it is still theirs. Kings are never turned.",
       "soundSource": "cast-voice",
       "animation": null,
       "soundCue": null,
@@ -27269,23 +27184,6 @@
       "target": null
     },
     {
-      "id": "minefield",
-      "name": "Minefield",
-      "kind": "buff",
-      "category": "attack",
-      "effectCategory": "mass-removal",
-      "tier": 5,
-      "mechanic": "activated",
-      "implemented": true,
-      "descriptionLength": 221,
-      "description": "Seed three mines on empty squares. The first enemy piece, never a king, to step on each mine is destroyed, and the blast removes every enemy piece except kings on the 8 squares around it. Shielded pieces resist the blast.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
-    },
-    {
       "id": "minji",
       "name": "Minji",
       "kind": "buff",
@@ -27759,23 +27657,6 @@
       "target": null
     },
     {
-      "id": "ov_royal_food_taster",
-      "name": "Royal Food Taster",
-      "kind": "buff",
-      "category": "protection",
-      "effectCategory": "instant-piece-spawn",
-      "tier": 5,
-      "mechanic": "activated",
-      "implemented": true,
-      "descriptionLength": 172,
-      "description": "Place a Taster pawn on an empty square next to your queen. The next time your queen is captured, the Taster dies in her place and your queen returns on the Taster's square.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
-    },
-    {
       "id": "ov_speedhack",
       "name": "Speedhack",
       "kind": "buff",
@@ -28237,30 +28118,6 @@
       "target": null
     },
     {
-      "id": "rust",
-      "name": "Rust",
-      "kind": "buff",
-      "category": "hex",
-      "effectCategory": "enemy-movement-restriction",
-      "tier": 5,
-      "mechanic": "passive",
-      "implemented": true,
-      "descriptionLength": 190,
-      "description": "Idle enemy pieces seize up: any enemy piece (never a king) that has stood still for 2 of your opponent's turns rusts solid and may only move if the move is a capture, until it finally moves.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "bind",
-        "primitives": [
-          "sigilStamp",
-          "pulseRing"
-        ],
-        "sigil": "link"
-      },
-      "soundCue": "passive/bind",
-      "soundFamily": "bind",
-      "target": "piece"
-    },
-    {
       "id": "sahur",
       "name": "Bobrito Bandito",
       "kind": "buff",
@@ -28361,30 +28218,6 @@
       "soundCue": null,
       "soundFamily": null,
       "target": null
-    },
-    {
-      "id": "sinkhole",
-      "name": "Sinkhole",
-      "kind": "buff",
-      "category": "attack",
-      "effectCategory": "randomness-gamble",
-      "tier": 5,
-      "mechanic": "passive",
-      "implemented": true,
-      "descriptionLength": 217,
-      "description": "The earth chooses where to open: three sinkholes appear on random empty squares in your opponent's half. Any enemy piece except a king that steps onto one plunges out of the game. They stay open the rest of the match.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "territory",
-        "primitives": [
-          "zoneSweep",
-          "edgeBurn"
-        ],
-        "sigil": "ArrowDownToLine"
-      },
-      "soundCue": "passive/territory",
-      "soundFamily": "territory",
-      "target": "zone"
     },
     {
       "id": "spirit_guide",
@@ -28933,23 +28766,6 @@
       "target": null
     },
     {
-      "id": "wc_deal_with_the_devil",
-      "name": "Deal with the Devil",
-      "kind": "buff",
-      "category": "pieces",
-      "effectCategory": "promotion-grant",
-      "tier": 5,
-      "mechanic": "activated",
-      "implemented": true,
-      "descriptionLength": 181,
-      "description": "Sign here: promote one of your pawns to a queen at once, but the devil collects and you skip your next 2 turns, and the signing burns your next unused draft reroll, if you have one.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
-    },
-    {
       "id": "wc_haunted_house",
       "name": "Haunted House",
       "kind": "buff",
@@ -28990,6 +28806,23 @@
       "soundCue": "passive/decree",
       "soundFamily": "decree",
       "target": "pieceClass"
+    },
+    {
+      "id": "wc_musical_chairs",
+      "name": "Musical Chairs",
+      "kind": "buff",
+      "category": "movement",
+      "effectCategory": "piece-swap",
+      "tier": 5,
+      "mechanic": "activated",
+      "implemented": true,
+      "descriptionLength": 119,
+      "description": "The music stops: swap the squares of one of your pieces and one of your opponent's pieces, once. Neither may be a king.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
     },
     {
       "id": "wc_repo_rook",
@@ -29265,6 +29098,23 @@
       "target": null
     },
     {
+      "id": "ww_claymore_line",
+      "name": "Claymore Line",
+      "kind": "buff",
+      "category": "protection",
+      "effectCategory": "conditional-piece-removal",
+      "tier": 5,
+      "mechanic": "activated",
+      "implemented": true,
+      "descriptionLength": 187,
+      "description": "Mark two empty squares: the first enemy piece to step onto either one, a king aside, is destroyed along with every enemy piece on the squares around it. The mines stay armed for the game.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
       "id": "ww_demolition_charge",
       "name": "Demolition Charge",
       "kind": "buff",
@@ -29419,6 +29269,23 @@
       "implemented": true,
       "descriptionLength": 104,
       "description": "You read all twelve houses at once: your next draft shows three cards to pick from, all fated to tier 4.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
+      "id": "abyss",
+      "name": "Abyss",
+      "kind": "buff",
+      "category": "attack",
+      "effectCategory": "conditional-piece-removal",
+      "tier": 6,
+      "mechanic": "activated",
+      "implemented": true,
+      "descriptionLength": 190,
+      "description": "Two squares you pick open an abyss for the game: any enemy piece except a king that enters is swallowed. The defender keeps one bridge, the void nearest the enemy king, which never swallows.",
       "soundSource": "cast-voice",
       "animation": null,
       "soundCue": null,
@@ -30511,6 +30378,23 @@
       "target": null
     },
     {
+      "id": "changeling",
+      "name": "Changeling",
+      "kind": "buff",
+      "category": "hex",
+      "effectCategory": "piece-swap",
+      "tier": 6,
+      "mechanic": "activated",
+      "implemented": true,
+      "descriptionLength": 142,
+      "description": "The cradle swap ran the other way: one enemy knight or bishop you choose was a changeling all along. The glamour breaks and it is just a pawn.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
       "id": "chaos_theory",
       "name": "Chaos Theory",
       "kind": "buff",
@@ -31386,16 +31270,16 @@
       "target": "zone"
     },
     {
-      "id": "hw3_doomed_vow",
-      "name": "Doomed Vow",
+      "id": "hw3_defectors_mark",
+      "name": "Sleeper Cell",
       "kind": "buff",
       "category": "hex",
-      "effectCategory": "piece-nudge-reposition",
+      "effectCategory": "piece-mind-control",
       "tier": 6,
       "mechanic": "activated",
       "implemented": true,
-      "descriptionLength": 208,
-      "description": "Condemn one enemy piece: in 4 of their turns it is dragged off the board, unless their own king comes to stand on a square next to it first, which breaks the vow at once. Kings themselves cannot be condemned.",
+      "descriptionLength": 214,
+      "description": "Plant a sleeper in one enemy knight or bishop. On their 3rd turn from now it wakes and defects: yours to command for your next 3 turns, then it slips back. Until it turns it is still theirs. Kings are never turned.",
       "soundSource": "cast-voice",
       "animation": null,
       "soundCue": null,
@@ -31482,6 +31366,23 @@
       "soundCue": "passive/bind",
       "soundFamily": "bind",
       "target": "piece"
+    },
+    {
+      "id": "hw3_time_bomb",
+      "name": "Powder Keg",
+      "kind": "buff",
+      "category": "hex",
+      "effectCategory": "mass-removal",
+      "tier": 6,
+      "mechanic": "activated",
+      "implemented": true,
+      "descriptionLength": 239,
+      "description": "Roll a powder keg onto an empty square in your opponent's half with a lit 4-turn fuse, in full view. When it blows, every enemy piece except the king standing on or next to that square is blown off the board, and you gain one draft reroll.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
     },
     {
       "id": "hx4_avalanche_pass",
@@ -32405,23 +32306,6 @@
       "target": null
     },
     {
-      "id": "joseph_leung",
-      "name": "Joseph Leung",
-      "kind": "buff",
-      "category": "movement",
-      "effectCategory": "movement-upgrade",
-      "tier": 6,
-      "mechanic": "activated",
-      "implemented": true,
-      "descriptionLength": 150,
-      "description": "Sign the board. Bind one of your pieces: for the game it moves as a knight and queen at once, and cannot be captured for your opponent's next 4 turns.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
-    },
-    {
       "id": "kraken",
       "name": "Kraken",
       "kind": "buff",
@@ -32594,16 +32478,16 @@
       "target": null
     },
     {
-      "id": "mirror_of_souls",
-      "name": "Mirror of Souls",
+      "id": "minefield",
+      "name": "Minefield",
       "kind": "buff",
-      "category": "movement",
-      "effectCategory": "piece-swap",
+      "category": "attack",
+      "effectCategory": "mass-removal",
       "tier": 6,
       "mechanic": "activated",
       "implemented": true,
-      "descriptionLength": 182,
-      "description": "You hold the glass between two reflections: name one of your pieces and an enemy piece of the same kind. After your opponent's next move, they trade places. Kings cast no reflection.",
+      "descriptionLength": 221,
+      "description": "Seed three mines on empty squares. The first enemy piece, never a king, to step on each mine is destroyed, and the blast removes every enemy piece except kings on the 8 squares around it. Shielded pieces resist the blast.",
       "soundSource": "cast-voice",
       "animation": null,
       "soundCue": null,
@@ -33068,6 +32952,23 @@
       "target": "pieceClass"
     },
     {
+      "id": "ov_royal_food_taster",
+      "name": "Royal Food Taster",
+      "kind": "buff",
+      "category": "protection",
+      "effectCategory": "instant-piece-spawn",
+      "tier": 6,
+      "mechanic": "activated",
+      "implemented": true,
+      "descriptionLength": 172,
+      "description": "Place a Taster pawn on an empty square next to your queen. The next time your queen is captured, the Taster dies in her place and your queen returns on the Taster's square.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
       "id": "ov_season_pass",
       "name": "Season Pass",
       "kind": "buff",
@@ -33441,6 +33342,30 @@
       "target": "square"
     },
     {
+      "id": "rust",
+      "name": "Rust",
+      "kind": "buff",
+      "category": "hex",
+      "effectCategory": "enemy-movement-restriction",
+      "tier": 6,
+      "mechanic": "passive",
+      "implemented": true,
+      "descriptionLength": 190,
+      "description": "Idle enemy pieces seize up: any enemy piece (never a king) that has stood still for 2 of your opponent's turns rusts solid and may only move if the move is a capture, until it finally moves.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "bind",
+        "primitives": [
+          "sigilStamp",
+          "pulseRing"
+        ],
+        "sigil": "link"
+      },
+      "soundCue": "passive/bind",
+      "soundFamily": "bind",
+      "target": "piece"
+    },
+    {
       "id": "sealed_avenues",
       "name": "Sealed Avenues",
       "kind": "buff",
@@ -33473,6 +33398,30 @@
       "soundCue": null,
       "soundFamily": null,
       "target": null
+    },
+    {
+      "id": "sinkhole",
+      "name": "Sinkhole",
+      "kind": "buff",
+      "category": "attack",
+      "effectCategory": "randomness-gamble",
+      "tier": 6,
+      "mechanic": "passive",
+      "implemented": true,
+      "descriptionLength": 217,
+      "description": "The earth chooses where to open: three sinkholes appear on random empty squares in your opponent's half. Any enemy piece except a king that steps onto one plunges out of the game. They stay open the rest of the match.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "territory",
+        "primitives": [
+          "zoneSweep",
+          "edgeBurn"
+        ],
+        "sigil": "ArrowDownToLine"
+      },
+      "soundCue": "passive/territory",
+      "soundFamily": "territory",
+      "target": "zone"
     },
     {
       "id": "smurf_account",
@@ -33598,30 +33547,6 @@
       "soundCue": "passive/territory",
       "soundFamily": "territory",
       "target": "zone"
-    },
-    {
-      "id": "threads_of_fate",
-      "name": "Threads of Fate",
-      "kind": "buff",
-      "category": "tempo",
-      "effectCategory": "extra-move",
-      "tier": 6,
-      "mechanic": "passive",
-      "implemented": true,
-      "descriptionLength": 111,
-      "description": "The loom repays every cut thread: for your opponent's next 3 captures, you weave an extra move into your reply.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "tempo",
-        "primitives": [
-          "orbitSpark",
-          "pulseRing"
-        ],
-        "sigil": "timer"
-      },
-      "soundCue": "passive/tempo",
-      "soundFamily": "tempo",
-      "target": "clock"
     },
     {
       "id": "time_lock",
@@ -33976,16 +33901,16 @@
       "target": null
     },
     {
-      "id": "wc_musical_chairs",
-      "name": "Musical Chairs",
+      "id": "wc_deal_with_the_devil",
+      "name": "Deal with the Devil",
       "kind": "buff",
-      "category": "movement",
-      "effectCategory": "piece-swap",
+      "category": "pieces",
+      "effectCategory": "promotion-grant",
       "tier": 6,
       "mechanic": "activated",
       "implemented": true,
-      "descriptionLength": 119,
-      "description": "The music stops: swap the squares of one of your pieces and one of your opponent's pieces, once. Neither may be a king.",
+      "descriptionLength": 181,
+      "description": "Sign here: promote one of your pawns to a queen at once, but the devil collects and you skip your next 2 turns, and the signing burns your next unused draft reroll, if you have one.",
       "soundSource": "cast-voice",
       "animation": null,
       "soundCue": null,
@@ -34429,31 +34354,6 @@
       "soundCue": null,
       "soundFamily": null,
       "target": null
-    },
-    {
-      "id": "berserker",
-      "name": "Berserker",
-      "kind": "buff",
-      "category": "movement",
-      "effectCategory": "piece-upgrade-transform",
-      "tier": 7,
-      "mechanic": "passive",
-      "implemented": true,
-      "descriptionLength": 149,
-      "description": "For your next 3 turns, all your pieces except your king also move like a queen. For the 2 turns after that, all your pieces can move only one square.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "decree",
-        "primitives": [
-          "sigilStamp",
-          "crackLines",
-          "drainFlow"
-        ],
-        "sigil": "Axe"
-      },
-      "soundCue": "passive/decree",
-      "soundFamily": "decree",
-      "target": "pieceClass"
     },
     {
       "id": "bn4_cathedral_choir",
@@ -36187,23 +36087,6 @@
       "target": "square"
     },
     {
-      "id": "hw2_death_knell",
-      "name": "Death Knell",
-      "kind": "buff",
-      "category": "hex",
-      "effectCategory": "conditional-piece-removal",
-      "tier": 7,
-      "mechanic": "activated",
-      "implemented": true,
-      "descriptionLength": 235,
-      "description": "Toll the knell over one enemy piece: in 3 of their turns it crumbles to dust and is removed. The bell accepts one bribe: if the doomed piece captures anything before the last toll, the curse breaks and it lives. Kings cannot be tolled.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
-    },
-    {
       "id": "hw2_hollow_crown",
       "name": "The Hollow Crown",
       "kind": "buff",
@@ -36251,6 +36134,23 @@
       "soundCue": "passive/territory",
       "soundFamily": "territory",
       "target": "rank"
+    },
+    {
+      "id": "hw3_doomed_vow",
+      "name": "Doomed Vow",
+      "kind": "buff",
+      "category": "hex",
+      "effectCategory": "piece-nudge-reposition",
+      "tier": 7,
+      "mechanic": "activated",
+      "implemented": true,
+      "descriptionLength": 208,
+      "description": "Condemn one enemy piece: in 4 of their turns it is dragged off the board, unless their own king comes to stand on a square next to it first, which breaks the vow at once. Kings themselves cannot be condemned.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
     },
     {
       "id": "hw3_eclipse",
@@ -37167,6 +37067,23 @@
       "target": null
     },
     {
+      "id": "joseph_leung",
+      "name": "Joseph Leung",
+      "kind": "buff",
+      "category": "movement",
+      "effectCategory": "movement-upgrade",
+      "tier": 7,
+      "mechanic": "activated",
+      "implemented": true,
+      "descriptionLength": 150,
+      "description": "Sign the board. Bind one of your pieces: for the game it moves as a knight and queen at once, and cannot be captured for your opponent's next 4 turns.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
       "id": "judgment_day",
       "name": "Judgment Day",
       "kind": "buff",
@@ -37277,6 +37194,23 @@
       "target": null
     },
     {
+      "id": "mirror_of_souls",
+      "name": "Mirror of Souls",
+      "kind": "buff",
+      "category": "movement",
+      "effectCategory": "piece-swap",
+      "tier": 7,
+      "mechanic": "activated",
+      "implemented": true,
+      "descriptionLength": 182,
+      "description": "You hold the glass between two reflections: name one of your pieces and an enemy piece of the same kind. After your opponent's next move, they trade places. Kings cast no reflection.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
       "id": "molten_heart",
       "name": "Molten Heart",
       "kind": "buff",
@@ -37355,23 +37289,6 @@
       "soundCue": "passive/fracture",
       "soundFamily": "fracture",
       "target": "pieceClass"
-    },
-    {
-      "id": "orb_of_dominion",
-      "name": "Orb of Dominion",
-      "kind": "buff",
-      "category": "pieces",
-      "effectCategory": "piece-mind-control",
-      "tier": 7,
-      "mechanic": "activated",
-      "implemented": true,
-      "descriptionLength": 215,
-      "description": "Choose one enemy rook or queen; after your opponent's next move you take control of it for the rest of the game, once. While you still hold the dominated piece, the enemy queen cannot capture. Kings cannot be taken.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
     },
     {
       "id": "ov_all_the_kings_men",
@@ -37890,6 +37807,30 @@
       "soundCue": "passive/fracture",
       "soundFamily": "fracture",
       "target": "piece"
+    },
+    {
+      "id": "threads_of_fate",
+      "name": "Threads of Fate",
+      "kind": "buff",
+      "category": "tempo",
+      "effectCategory": "extra-move",
+      "tier": 7,
+      "mechanic": "passive",
+      "implemented": true,
+      "descriptionLength": 111,
+      "description": "The loom repays every cut thread: for your opponent's next 3 captures, you weave an extra move into your reply.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "tempo",
+        "primitives": [
+          "orbitSpark",
+          "pulseRing"
+        ],
+        "sigil": "timer"
+      },
+      "soundCue": "passive/tempo",
+      "soundFamily": "tempo",
+      "target": "clock"
     },
     {
       "id": "throne_and_silence",
@@ -38416,6 +38357,31 @@
       "soundCue": null,
       "soundFamily": null,
       "target": null
+    },
+    {
+      "id": "berserker",
+      "name": "Berserker",
+      "kind": "buff",
+      "category": "movement",
+      "effectCategory": "piece-upgrade-transform",
+      "tier": 8,
+      "mechanic": "passive",
+      "implemented": true,
+      "descriptionLength": 149,
+      "description": "For your next 3 turns, all your pieces except your king also move like a queen. For the 2 turns after that, all your pieces can move only one square.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "decree",
+        "primitives": [
+          "sigilStamp",
+          "crackLines",
+          "drainFlow"
+        ],
+        "sigil": "Axe"
+      },
+      "soundCue": "passive/decree",
+      "soundFamily": "decree",
+      "target": "pieceClass"
     },
     {
       "id": "blighted_furrows",
@@ -40747,23 +40713,6 @@
       "target": null
     },
     {
-      "id": "ilovewhimperingaudios",
-      "name": "I Love Whimpering Audios",
-      "kind": "buff",
-      "category": "pieces",
-      "effectCategory": "self-movement-restriction",
-      "tier": 8,
-      "mechanic": "activated",
-      "implemented": true,
-      "descriptionLength": 203,
-      "description": "After your opponent's next move, the charm sets in: on each of their following 3 moves, the enemy queen, rook, bishop, or knight nearest your king is charmed and joins your army. Kings never fall for it.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
-    },
-    {
       "id": "immortal_king",
       "name": "Immortal King",
       "kind": "buff",
@@ -40911,6 +40860,23 @@
       "soundCue": "passive/blessing",
       "soundFamily": "blessing",
       "target": "pieceClass"
+    },
+    {
+      "id": "orb_of_dominion",
+      "name": "Orb of Dominion",
+      "kind": "buff",
+      "category": "pieces",
+      "effectCategory": "piece-mind-control",
+      "tier": 8,
+      "mechanic": "activated",
+      "implemented": true,
+      "descriptionLength": 215,
+      "description": "Choose one enemy rook or queen; after your opponent's next move you take control of it for the rest of the game, once. While you still hold the dominated piece, the enemy queen cannot capture. Kings cannot be taken.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
     },
     {
       "id": "ov_board_of_directors",
@@ -41863,6 +41829,23 @@
       "target": null
     },
     {
+      "id": "hw2_death_knell",
+      "name": "Death Knell",
+      "kind": "buff",
+      "category": "hex",
+      "effectCategory": "conditional-piece-removal",
+      "tier": 9,
+      "mechanic": "activated",
+      "implemented": true,
+      "descriptionLength": 235,
+      "description": "Toll the knell over one enemy piece: in 3 of their turns it crumbles to dust and is removed. The bell accepts one bribe: if the doomed piece captures anything before the last toll, the curse breaks and it lives. Kings cannot be tolled.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
       "id": "hw3_curse_engine",
       "name": "The Curse Engine",
       "kind": "buff",
@@ -41923,6 +41906,23 @@
       "implemented": true,
       "descriptionLength": 121,
       "description": "Choose up to three enemy pieces other than the king; each freezes solid and cannot move for your opponent's next 3 turns.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
+      "id": "ilovewhimperingaudios",
+      "name": "I Love Whimpering Audios",
+      "kind": "buff",
+      "category": "pieces",
+      "effectCategory": "self-movement-restriction",
+      "tier": 9,
+      "mechanic": "activated",
+      "implemented": true,
+      "descriptionLength": 203,
+      "description": "After your opponent's next move, the charm sets in: on each of their following 3 moves, the enemy queen, rook, bishop, or knight nearest your king is charmed and joins your army. Kings never fall for it.",
       "soundSource": "cast-voice",
       "animation": null,
       "soundCue": null,
