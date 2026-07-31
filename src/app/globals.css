@@ -169,6 +169,21 @@ body {
   --dur-2: 200ms;
   --dur-3: 320ms;
 
+  /* --- Theme character -------------------------------------------------------
+     A flagship theme is not a recolour. These four tokens are what let one
+     change how the interface FEELS: how far a control gives under a press, how
+     hard the light sits on a panel, how much bloom an accent is allowed, and
+     which curve the theme reveals things on. Every flagship overrides them
+     together with its palette, so obsidian lands heavy and neon snaps.
+
+     Keep them cheap and physical. Anything that changes LAYOUT (radius,
+     spacing, type scale) does not belong here — a theme must never move the
+     furniture, only change the light and the weight. */
+  --feel-press: 0.98; /* .press:active scale */
+  --feel-sheen: 0.028; /* top-light alpha on .plate */
+  --feel-glow: 1; /* multiplier on accent bloom */
+  --ease-signature: var(--ease-out); /* the theme's reveal curve */
+
   /* --- Fluid type scale ------------------------------------------------------
      One ratio, computed once, so every surface pulls headings from the same
      ramp instead of ad-hoc text-2xl/4xl guesses. Display sizes tighten their
@@ -248,6 +263,205 @@ html[data-theme="nebula"] { /* violet dusk */
   --bg-raised: #2b2238;
   --border-subtle: #362c48;
 }
+
+/* ============================================================================
+   FLAGSHIP THEMES
+
+   The blocks above are TINTS: four background tokens each, sharing one gold
+   accent, so the game reads identically in all of them. The five below are the
+   other kind. A flagship owns its own primary accent, its own surface material,
+   and its own motion — it should feel like a different room, not a filter.
+
+   Each one sets, in this order:
+     palette   background + border + text
+     accent    the PRIMARY accent only (--accent-gold and its aliases), plus
+               the ink that sits on top of an accent fill
+     feel      press depth, panel sheen, accent bloom, durations, curve
+
+   Three things a flagship must NEVER touch:
+     - The SEMANTIC accents. Nerf red, Buff blue and positive green mean mode,
+       danger and a win. Recolouring them would make the theme lie about the
+       game, so every flagship hue here is deliberately clear of that
+       red/blue/green rather than a shade of it.
+     - The BOARD. Board colours are the player's own setting (BOARD_THEMES,
+       applied inline as --sq-light/--sq-dark), and a theme must not fight it.
+     - LAYOUT. No radius, spacing or type-scale changes: a theme changes the
+       light and the weight, never where the furniture sits.
+
+   applyUiPrefs also feeds each theme's accent in from SITE_THEMES while the
+   accent setting is on "auto", so the two definitions must agree. Picking an
+   explicit accent colour in Settings still overrides the theme, by design.
+   ========================================================================= */
+
+/* --- Obsidian: volcanic glass, molten ember ------------------------------- */
+/* Near-black with a violet-cool cast so the ember accent reads as heat against
+   it. The heaviest of the five: a deep press, a hard specular edge on panels,
+   and slow, weighted durations. */
+html[data-theme="obsidian"] {
+  --bg-base: #0b0a0c;
+  --bg-panel: #16131a;
+  --bg-raised: #211c26;
+  --border-subtle: #322b39;
+  --text-primary: #f0ecf2;
+  --text-secondary: #a79fb0;
+  --text-muted: #6f6678;
+  --text-primary-rgb: 240 236 242;
+  --text-secondary-rgb: 167 159 176;
+  --accent-gold: #ff7a2f;
+  --accent-gold-hi: #ff9a5c;
+  --accent-gold-rgb: 255 122 47;
+  --accent-gold-hi-rgb: 255 154 92;
+  --accent-gold-dim-rgb: 200 90 28;
+  --text-on-accent: #2a1204;
+  /* Glass is hard and heavy: it barely gives, catches a sharp highlight, and
+     everything it does takes a beat longer than the base theme. */
+  --feel-press: 0.965;
+  --feel-sheen: 0.05;
+  --feel-glow: 1.25;
+  --dur-1: 150ms;
+  --dur-2: 260ms;
+  --dur-3: 420ms;
+  --ease-out: cubic-bezier(0.16, 0.84, 0.24, 1);
+  --ease-signature: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* --- Porcelain: glazed white, cobalt ink ---------------------------------- */
+/* The paper flagship. Where Light is plain stock, this is glaze: a cooler
+   white, a blue-black ink, and cobalt doing the work gold does elsewhere.
+   Crisp and quick — short durations, almost no bloom, a shallow press. */
+html[data-theme="porcelain"] {
+  --bg-base: #eeeae2;
+  --bg-panel: #fbf9f5;
+  --bg-raised: #ffffff;
+  --border-subtle: #d9d3c7;
+  --text-primary: #23212b;
+  --text-secondary: #55525f;
+  --text-muted: #837f8c;
+  --text-primary-rgb: 35 33 43;
+  --text-secondary-rgb: 85 82 95;
+  --board-highlight-a: 0.5;
+  --accent-gold: #2a55b8;
+  --accent-gold-hi: #3466d6;
+  --accent-gold-rgb: 42 85 184;
+  --accent-gold-hi-rgb: 52 102 214;
+  --accent-gold-dim-rgb: 30 64 144;
+  /* The semantic three, darkened exactly as the Light theme darkens them, so
+     they still clear AA as text on paper. Same meanings, same hues. */
+  --accent-nerf: #c0322f;
+  --accent-nerf-rgb: 192 50 47;
+  --accent-nerf-hi-rgb: 209 74 69;
+  --accent-buff: #2b6aa0;
+  --accent-buff-rgb: 43 106 160;
+  --accent-buff-hi-rgb: 58 127 187;
+  --accent-positive: #457539;
+  --accent-positive-rgb: 69 117 57;
+  --accent-positive-hi-rgb: 85 136 74;
+  --text-on-accent: #ffffff;
+  --feel-press: 0.985;
+  --feel-sheen: 0;
+  --feel-glow: 0.35;
+  --dur-1: 90ms;
+  --dur-2: 150ms;
+  --dur-3: 240ms;
+  --ease-out: cubic-bezier(0.3, 0.9, 0.2, 1);
+  --ease-signature: cubic-bezier(0.25, 1, 0.35, 1);
+}
+/* Glaze, not paper: porcelain's panels are a flatter, cooler white than the
+   Light theme's warm stock, with a hairline that reads as a glaze edge. */
+html[data-theme="porcelain"][data-light] .plate {
+  background: rgba(255, 255, 255, 0.72);
+  border-color: rgba(35, 33, 43, 0.13);
+}
+
+/* --- Neon: arcade indigo, hot magenta ------------------------------------- */
+/* The loud one. Deep indigo, magenta primary, and the only theme that lets an
+   accent actually bloom. Snappy and slightly overshooting: everything arrives
+   fast and lands with a click. */
+html[data-theme="neon"] {
+  --bg-base: #0a0714;
+  --bg-panel: #150e28;
+  --bg-raised: #1f1637;
+  --border-subtle: #33235c;
+  --text-primary: #f0e9ff;
+  --text-secondary: #a99cd4;
+  --text-muted: #6f639b;
+  --text-primary-rgb: 240 233 255;
+  --text-secondary-rgb: 169 156 212;
+  --accent-gold: #ff45c8;
+  --accent-gold-hi: #ff78d8;
+  --accent-gold-rgb: 255 69 200;
+  --accent-gold-hi-rgb: 255 120 216;
+  --accent-gold-dim-rgb: 216 30 163;
+  --text-on-accent: #2a0620;
+  --feel-press: 0.955;
+  --feel-sheen: 0.045;
+  --feel-glow: 2;
+  --dur-1: 80ms;
+  --dur-2: 140ms;
+  --dur-3: 220ms;
+  --ease-out: cubic-bezier(0.2, 0.9, 0.1, 1);
+  --ease-signature: cubic-bezier(0.2, 1.5, 0.4, 1);
+}
+
+/* --- Jade: lacquer green, jade inlay -------------------------------------- */
+/* The calm one. Near-black lacquer with a green undertone and a cool jade
+   primary that never competes with the positive green. Long, even easing and
+   almost no bloom: nothing here snaps at you. */
+html[data-theme="jade"] {
+  --bg-base: #08110f;
+  --bg-panel: #0f1f1a;
+  --bg-raised: #172e26;
+  --border-subtle: #214036;
+  --text-primary: #e9f2ec;
+  --text-secondary: #93a89b;
+  --text-muted: #63776b;
+  --text-primary-rgb: 233 242 236;
+  --text-secondary-rgb: 147 168 155;
+  --accent-gold: #2fbf9f;
+  --accent-gold-hi: #5ad6bb;
+  --accent-gold-rgb: 47 191 159;
+  --accent-gold-hi-rgb: 90 214 187;
+  --accent-gold-dim-rgb: 34 150 124;
+  --text-on-accent: #04261d;
+  --feel-press: 0.99;
+  --feel-sheen: 0.022;
+  --feel-glow: 0.6;
+  --dur-1: 160ms;
+  --dur-2: 280ms;
+  --dur-3: 440ms;
+  --ease-out: cubic-bezier(0.33, 0.7, 0.25, 1);
+  --ease-signature: cubic-bezier(0.4, 0.7, 0.2, 1);
+}
+
+/* --- Aurora: polar night, violet light ------------------------------------ */
+/* Cold navy under a violet sky. The floaty one: soft, long rises and a diffuse
+   bloom, as if everything were lit from somewhere above the page. */
+html[data-theme="aurora"] {
+  --bg-base: #070d18;
+  --bg-panel: #0e172a;
+  --bg-raised: #17233d;
+  --border-subtle: #23324f;
+  --text-primary: #e8effc;
+  --text-secondary: #94a5c4;
+  --text-muted: #62718d;
+  --text-primary-rgb: 232 239 252;
+  --text-secondary-rgb: 148 165 196;
+  --accent-gold: #9d7bff;
+  --accent-gold-hi: #b79dff;
+  --accent-gold-rgb: 157 123 255;
+  --accent-gold-hi-rgb: 183 157 255;
+  --accent-gold-dim-rgb: 122 90 224;
+  --text-on-accent: #150a2e;
+  --feel-press: 0.985;
+  --feel-sheen: 0.035;
+  --feel-glow: 1.5;
+  --dur-1: 140ms;
+  --dur-2: 300ms;
+  --dur-3: 480ms;
+  --ease-out: cubic-bezier(0.22, 0.75, 0.2, 1);
+  --ease-signature: cubic-bezier(0.18, 0.9, 0.25, 1);
+}
+
 /* Light: the one non-dark theme. It overrides the bg + border tokens (paper
    and ink) and the text tokens (dark ink on paper for contrast), and lifts the
    board-highlight opacity so the gold read stays visible on the light board.
@@ -282,17 +496,17 @@ html[data-theme="light"] {
   --accent-positive-hi-rgb: 85 136 74;
   --text-on-accent: #ffffff;
 }
-html[data-theme="light"] .plate {
+html[data-light] .plate {
   background: rgba(255, 255, 255, 0.55);
   border-color: rgba(0, 0, 0, 0.14);
 }
-html[data-theme="light"] .text-parchment,
-html[data-theme="light"] .text-parchment-50,
-html[data-theme="light"] .text-parchment-100,
-html[data-theme="light"] .text-parchment-200 { color: #2b2822; }
-html[data-theme="light"] .text-parchment-300 { color: #4a463e; }
-html[data-theme="light"] .text-parchment-400 { color: #6b665c; }
-html[data-theme="light"] .text-parchment-500 { color: #86816f; }
+html[data-light] .text-parchment,
+html[data-light] .text-parchment-50,
+html[data-light] .text-parchment-100,
+html[data-light] .text-parchment-200 { color: var(--text-primary); }
+html[data-light] .text-parchment-300 { color: color-mix(in srgb, var(--text-primary) 55%, var(--text-secondary)); }
+html[data-light] .text-parchment-400 { color: color-mix(in srgb, var(--text-secondary) 55%, var(--text-muted)); }
+html[data-light] .text-parchment-500 { color: var(--text-muted); }
 
 /* High contrast preference (Settings): brighter foregrounds, firmer borders. */
 html[data-contrast="high"] { --paper: #efece4; --paper-dim: #bab5aa; }
@@ -458,7 +672,7 @@ body {
   background: #1c1a17;
   box-shadow: 0 0 0 1px rgb(255 255 255 / 0.28);
 }
-html[data-theme="light"] .mode-seam::after { background: #e4e0d6; }
+html[data-light] .mode-seam::after { background: #e4e0d6; }
 
 /* Header / edge variant: the seam as a bottom border, warm on the left, cool on
    the right, anchoring the whole site under the nav. */
@@ -516,7 +730,7 @@ html[data-theme="light"] .mode-seam::after { background: #e4e0d6; }
 /* Press physics: an instant scale-down on activation, easing back on release.
    Complements the existing translateY presses on the metal buttons. */
 .press { transition: transform var(--dur-1) var(--ease-out); }
-.press:active { transform: scale(0.98); }
+.press:active { transform: scale(var(--feel-press)); }
 
 /* Hover lift: a 1px rise with a WARM near-black shadow (never a colored glow),
    only where a true pointer exists so touch devices get no sticky hover. */
@@ -538,7 +752,7 @@ html[data-theme="light"] .mode-seam::after { background: #e4e0d6; }
   from { opacity: 0; }
   to { opacity: 1; }
 }
-.stagger-in > * { animation: row-in var(--dur-3) var(--ease-out) both; }
+.stagger-in > * { animation: row-in var(--dur-3) var(--ease-signature) both; }
 .stagger-in > *:nth-child(1) { animation-delay: 0ms; }
 .stagger-in > *:nth-child(2) { animation-delay: 24ms; }
 .stagger-in > *:nth-child(3) { animation-delay: 48ms; }
@@ -580,7 +794,7 @@ html[data-theme="light"] .mode-seam::after { background: #e4e0d6; }
    of plates can share a page, so the material must whisper. */
 .plate {
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.028), transparent 26%, rgba(0, 0, 0, 0.1) 100%),
+    linear-gradient(180deg, rgba(255, 255, 255, var(--feel-sheen)), transparent 26%, rgba(0, 0, 0, 0.1) 100%),
     var(--surface-panel);
   border: 1px solid var(--edge);
   /* Structure over glow: a dark drop for lift plus an inner hairline so the
@@ -634,7 +848,7 @@ html[data-anim="off"] .tv-tuning-ring { animation: none; }
     0 10px 34px -26px rgba(0, 0, 0, 0.65);
   border-radius: 1px;
 }
-html[data-theme="light"] .rail-panel {
+html[data-light] .rail-panel {
   background: rgba(255, 255, 255, 0.5);
   border-color: rgba(0, 0, 0, 0.14);
 }
@@ -684,6 +898,7 @@ html[data-theme="light"] .rail-panel {
 .gilt {
   box-shadow:
     0 0 0 1px rgb(var(--accent-rgb) / 0.45),
+    0 0 calc(28px * var(--feel-glow)) -14px rgb(var(--accent-rgb) / calc(0.55 * var(--feel-glow))),
     0 14px 50px -22px rgba(0,0,0,0.6);
 }
 
@@ -748,7 +963,7 @@ html[data-theme="light"] .rail-panel {
   0% { opacity: 0; transform: translateY(18px) scale(0.965); }
   100% { opacity: 1; transform: translateY(0) scale(1); }
 }
-.draft-in { animation: draft-in 0.44s var(--ease-out) both; }
+.draft-in { animation: draft-in 0.44s var(--ease-signature) both; }
 
 /* --- Buttons: the cosmic dungeon control set -------------------------------
    Level-2 primary controls read as ANCIENT SLABS WITH A COSMIC CORE: a dark
@@ -873,7 +1088,7 @@ html[data-theme="light"] .rail-panel {
   background: rgb(var(--accent-rgb) / 0.85);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.22),
-    0 0 30px -10px rgb(var(--accent-rgb) / 0.6),
+    0 0 calc(30px * var(--feel-glow)) -10px rgb(var(--accent-rgb) / calc(0.6 * var(--feel-glow))),
     0 10px 30px -16px rgba(0, 0, 0, 0.8);
 }
 .btn-glass--primary:hover:not(:disabled) {
@@ -1089,7 +1304,7 @@ html[data-anim="off"] .rune-loader { animation: none; }
     inset 0 -14px 24px -18px rgba(0, 0, 0, 0.7),
     0 24px 60px -28px rgba(0, 0, 0, 0.85);
 }
-html[data-theme="light"] .dgn-slab {
+html[data-light] .dgn-slab {
   background: rgba(255, 255, 255, 0.6);
   border-color: rgba(0, 0, 0, 0.16);
   box-shadow: 0 24px 60px -36px rgba(43, 40, 34, 0.5);
@@ -1441,7 +1656,7 @@ html[data-anim="off"] .victory-burst { display: none; }
   text-wrap: balance;
   text-shadow: 0 1px 0 rgba(0, 0, 0, 0.38), 0 -1px 0 rgba(255, 255, 255, 0.045);
 }
-html[data-theme="light"] .masthead {
+html[data-light] .masthead {
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6), 0 -1px 0 rgba(0, 0, 0, 0.06);
 }
 
@@ -1557,7 +1772,7 @@ html[data-theme="light"] .masthead {
   mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   mask-composite: exclude;
 }
-html[data-theme="light"] .tv-frame::before { display: none; }
+html[data-light] .tv-frame::before { display: none; }
 @media (hover: hover) {
   .tv-frame:hover {
     transform: translateY(-2px);
@@ -1568,7 +1783,7 @@ html[data-theme="light"] .tv-frame::before { display: none; }
       0 38px 96px -32px rgba(0, 0, 0, 0.95);
   }
 }
-html[data-theme="light"] .tv-frame {
+html[data-light] .tv-frame {
   background: rgba(255, 255, 255, 0.9);
   border-color: rgba(43, 40, 34, 0.18);
   box-shadow:
@@ -2832,49 +3047,49 @@ html[data-perf="low"][data-custom-bg="on"] body {
 /* Form fields: the site-wide input recipe is bg-ink-900/60 + border-white/15,
    which stays near-black on paper. Remap the ink washes to translucent white
    and give every field dark text. */
-html[data-theme="light"] .bg-ink-900\/60,
-html[data-theme="light"] .bg-ink-900\/70,
-html[data-theme="light"] .bg-ink-800\/60 {
+html[data-light] .bg-ink-900\/60,
+html[data-light] .bg-ink-900\/70,
+html[data-light] .bg-ink-800\/60 {
   background-color: rgba(255, 255, 255, 0.65);
 }
-html[data-theme="light"] input,
-html[data-theme="light"] textarea,
-html[data-theme="light"] select {
+html[data-light] input,
+html[data-light] textarea,
+html[data-light] select {
   color: #2b2822;
 }
-html[data-theme="light"] ::placeholder {
+html[data-light] ::placeholder {
   color: #86816f;
 }
 
 /* White hairlines and dividers are invisible on paper; restate them in ink at
    comparable strengths. */
-html[data-theme="light"] .border-white\/5 { border-color: rgba(43, 40, 34, 0.08); }
-html[data-theme="light"] .border-white\/10 { border-color: rgba(43, 40, 34, 0.12); }
-html[data-theme="light"] .border-white\/12 { border-color: rgba(43, 40, 34, 0.14); }
-html[data-theme="light"] .border-white\/15 { border-color: rgba(43, 40, 34, 0.16); }
-html[data-theme="light"] .divide-white\/5 > :not([hidden]) ~ :not([hidden]),
-html[data-theme="light"] .divide-white\/10 > :not([hidden]) ~ :not([hidden]),
-html[data-theme="light"] .divide-white\/\[0\.06\] > :not([hidden]) ~ :not([hidden]) {
+html[data-light] .border-white\/5 { border-color: rgba(43, 40, 34, 0.08); }
+html[data-light] .border-white\/10 { border-color: rgba(43, 40, 34, 0.12); }
+html[data-light] .border-white\/12 { border-color: rgba(43, 40, 34, 0.14); }
+html[data-light] .border-white\/15 { border-color: rgba(43, 40, 34, 0.16); }
+html[data-light] .divide-white\/5 > :not([hidden]) ~ :not([hidden]),
+html[data-light] .divide-white\/10 > :not([hidden]) ~ :not([hidden]),
+html[data-light] .divide-white\/\[0\.06\] > :not([hidden]) ~ :not([hidden]) {
   border-color: rgba(43, 40, 34, 0.1);
 }
 
 /* White-tint raises and hovers read as ink tints on paper. */
-html[data-theme="light"] .bg-white\/5,
-html[data-theme="light"] .bg-white\/\[0\.01\],
-html[data-theme="light"] .bg-white\/\[0\.02\],
-html[data-theme="light"] .bg-white\/\[0\.03\],
-html[data-theme="light"] .bg-white\/\[0\.04\],
-html[data-theme="light"] .bg-white\/\[0\.06\] {
+html[data-light] .bg-white\/5,
+html[data-light] .bg-white\/\[0\.01\],
+html[data-light] .bg-white\/\[0\.02\],
+html[data-light] .bg-white\/\[0\.03\],
+html[data-light] .bg-white\/\[0\.04\],
+html[data-light] .bg-white\/\[0\.06\] {
   background-color: rgba(43, 40, 34, 0.05);
 }
-html[data-theme="light"] .hover\:bg-white\/5:hover,
-html[data-theme="light"] .hover\:bg-white\/\[0\.03\]:hover,
-html[data-theme="light"] .hover\:bg-white\/\[0\.04\]:hover {
+html[data-light] .hover\:bg-white\/5:hover,
+html[data-light] .hover\:bg-white\/\[0\.03\]:hover,
+html[data-light] .hover\:bg-white\/\[0\.04\]:hover {
   background-color: rgba(43, 40, 34, 0.07);
 }
 
 /* Frosted glass buttons: white-on-white otherwise. */
-html[data-theme="light"] .btn-glass {
+html[data-light] .btn-glass {
   background: rgba(255, 255, 255, 0.72);
   color: #2b2822;
   border-color: rgba(43, 40, 34, 0.22);
@@ -2882,35 +3097,35 @@ html[data-theme="light"] .btn-glass {
     inset 0 1px 0 rgba(255, 255, 255, 0.85),
     0 10px 30px -18px rgba(43, 40, 34, 0.35);
 }
-html[data-theme="light"] .btn-glass:hover:not(:disabled) {
+html[data-light] .btn-glass:hover:not(:disabled) {
   border-color: rgba(43, 40, 34, 0.38);
   background: rgba(255, 255, 255, 0.9);
 }
 
 /* Ghost buttons: same treatment, one step quieter. */
-html[data-theme="light"] .btn-ghost {
+html[data-light] .btn-ghost {
   background: rgba(255, 255, 255, 0.5);
   color: #2b2822;
   border-color: rgba(43, 40, 34, 0.18);
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.7) inset;
 }
-html[data-theme="light"] .btn-ghost:hover:not(:disabled) {
+html[data-light] .btn-ghost:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.75);
   border-color: rgba(43, 40, 34, 0.3);
 }
 
 /* Buff dock cards: swap the white sheen for a paper lift. */
-html[data-theme="light"] .dock-card {
+html[data-light] .dock-card {
   background-image: none;
   background-color: rgba(255, 255, 255, 0.55);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
 /* Loading skeletons: ink shimmer instead of white-on-white. */
-html[data-theme="light"] .skeleton {
+html[data-light] .skeleton {
   background: rgba(43, 40, 34, 0.09);
 }
-html[data-theme="light"] .skeleton::after {
+html[data-light] .skeleton::after {
   background: linear-gradient(
     90deg,
     transparent 0%,
@@ -2920,7 +3135,7 @@ html[data-theme="light"] .skeleton::after {
 }
 
 /* Floating draft timer chip. */
-html[data-theme="light"] .draft-timer {
+html[data-light] .draft-timer {
   background: rgba(255, 255, 255, 0.9);
   border-color: rgba(43, 40, 34, 0.2);
   box-shadow:
@@ -2929,7 +3144,7 @@ html[data-theme="light"] .draft-timer {
 }
 
 /* Settings modal scrim: black/70 over paper is too heavy in light mode. */
-html[data-theme="light"] .bg-black\/70 {
+html[data-light] .bg-black\/70 {
   background-color: rgba(43, 40, 34, 0.35);
 }
 /* === END THEME CUSTOMIZATION === */
@@ -3375,7 +3590,7 @@ html[data-anim="off"] .waiting-ellipsis::after { opacity: 1; }
 }
 /* Perf mode and the light theme drop the whole field. */
 html[data-perf="low"] .starfield,
-html[data-theme="light"] .starfield {
+html[data-light] .starfield {
   display: none;
 }
 
@@ -3389,7 +3604,7 @@ html[data-theme="light"] .starfield {
   height: 1px;
   background: rgb(216 181 110 / 0.4);
 }
-html[data-theme="light"] .hall-hairline {
+html[data-light] .hall-hairline {
   background: rgba(43, 40, 34, 0.25);
 }
 
@@ -3423,7 +3638,7 @@ html[data-theme="light"] .hall-hairline {
 .hall-row--nerf { --row-rgb: var(--seam-warm-rgb); }
 .hall-row--buff { --row-rgb: var(--seam-cool-rgb); }
 .hall-row--live { --row-rgb: 239 138 95; } /* coral, for legacy live games */
-html[data-theme="light"] .hall-row {
+html[data-light] .hall-row {
   background: rgba(255, 255, 255, 0.4);
   border-color: rgba(43, 40, 34, 0.12);
   border-left-color: rgb(var(--row-rgb) / 0.6);

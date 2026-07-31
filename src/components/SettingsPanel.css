@@ -45,7 +45,7 @@
   color: var(--paper);
   text-shadow: 0 1px 0 rgba(0, 0, 0, 0.7), 0 -1px 0 rgba(255, 255, 255, 0.05);
 }
-html[data-theme="light"] .settings-title {
+html[data-light] .settings-title {
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6), 0 -1px 0 rgba(0, 0, 0, 0.06);
 }
 
@@ -79,7 +79,7 @@ html[data-theme="light"] .settings-title {
   color: rgb(255 200 130);
   text-shadow: 0 0 12px rgb(var(--energy-ember-rgb) / 0.35);
 }
-html[data-theme="light"] .settings-tab[aria-selected="true"] {
+html[data-light] .settings-tab[aria-selected="true"] {
   text-shadow: none;
 }
 

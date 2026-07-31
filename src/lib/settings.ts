@@ -46,7 +46,13 @@ export type SiteTheme =
   | "ember"
   | "crimson"
   | "moss"
-  | "nebula";
+  | "nebula"
+  // Flagships: full identities rather than tints (see FLAGSHIP_THEMES).
+  | "obsidian"
+  | "porcelain"
+  | "neon"
+  | "jade"
+  | "aurora";
 export type SoundTheme = "lichess" | "classic";
 
 // Full site themes. "dark" and "light" are the two originals; the rest are
@@ -89,6 +95,69 @@ const LIGHT_GOLD_ACCENT: AccentDef = {
   rgbDim: "96 74 12",
 };
 
+// --- Flagship accents -------------------------------------------------------
+// The tinted themes above all share gold, because a tint is only a background
+// change and the game must read the same in all of them. A FLAGSHIP is the
+// other kind of theme: it owns its own primary accent, its own material, and
+// its own motion, so it reads as a different room rather than a filter.
+//
+// What a flagship must NOT touch: the three SEMANTIC accents. Nerf red, Buff
+// blue and positive green carry meaning — mode identity, danger, a win — and a
+// theme that recolours them would be lying about the game. So every flagship
+// hue below is deliberately clear of that red/blue/green, and the board stays
+// on whatever board theme the player picked.
+const EMBER_ACCENT: AccentDef = {
+  accent: "#ff7a2f",
+  accentHi: "#ff9a5c",
+  rgb: "255 122 47",
+  rgbHi: "255 154 92",
+  rgbDim: "200 90 28",
+};
+// Cobalt for the paper flagship. Both steps are dark enough to clear WCAG AA
+// as text on porcelain (6.3:1 and 4.9:1), the way LIGHT_GOLD_ACCENT does.
+const COBALT_ACCENT: AccentDef = {
+  accent: "#2a55b8",
+  accentHi: "#3466d6",
+  rgb: "42 85 184",
+  rgbHi: "52 102 214",
+  rgbDim: "30 64 144",
+};
+const MAGENTA_ACCENT: AccentDef = {
+  accent: "#ff45c8",
+  accentHi: "#ff78d8",
+  rgb: "255 69 200",
+  rgbHi: "255 120 216",
+  rgbDim: "216 30 163",
+};
+const JADE_ACCENT: AccentDef = {
+  accent: "#2fbf9f",
+  accentHi: "#5ad6bb",
+  rgb: "47 191 159",
+  rgbHi: "90 214 187",
+  rgbDim: "34 150 124",
+};
+const AURORA_ACCENT: AccentDef = {
+  accent: "#9d7bff",
+  accentHi: "#b79dff",
+  rgb: "157 123 255",
+  rgbHi: "183 157 255",
+  rgbDim: "122 90 224",
+};
+
+/** The five flagship ids, in picker order. Everything else in SITE_THEMES is a
+ *  tint of the base palette. */
+export const FLAGSHIP_THEMES: SiteTheme[] = [
+  "obsidian",
+  "porcelain",
+  "neon",
+  "jade",
+  "aurora",
+];
+
+export function isFlagshipTheme(theme: SiteTheme): boolean {
+  return FLAGSHIP_THEMES.includes(theme);
+}
+
 export const SITE_THEMES: Record<
   SiteTheme,
   {
@@ -109,6 +178,13 @@ export const SITE_THEMES: Record<
   crimson:  { label: "Crimson",  hint: "Deep blood red",                  scheme: "dark",  swatch: { bg: "#150a0c", panel: "#291015", glow: "#d4a017" }, accent: GOLD_ACCENT },
   moss:     { label: "Moss",     hint: "Deep forest green",               scheme: "dark",  swatch: { bg: "#0f140e", panel: "#1a2318", glow: "#d4a017" }, accent: GOLD_ACCENT },
   nebula:   { label: "Nebula",   hint: "Violet dusk",                     scheme: "dark",  swatch: { bg: "#131019", panel: "#1f1929", glow: "#d4a017" }, accent: GOLD_ACCENT },
+
+  // --- Flagships: own accent, own material, own motion. ---
+  obsidian:  { label: "Obsidian",  hint: "Volcanic glass, molten ember",   scheme: "dark",  swatch: { bg: "#0b0a0c", panel: "#16131a", glow: "#ff7a2f" }, accent: EMBER_ACCENT },
+  porcelain: { label: "Porcelain", hint: "Glazed white, cobalt ink",       scheme: "light", swatch: { bg: "#eeeae2", panel: "#fbf9f5", glow: "#2a55b8" }, accent: COBALT_ACCENT },
+  neon:      { label: "Neon",      hint: "Arcade indigo, hot magenta",     scheme: "dark",  swatch: { bg: "#0a0714", panel: "#150e28", glow: "#ff45c8" }, accent: MAGENTA_ACCENT },
+  jade:      { label: "Jade",      hint: "Lacquer green, jade inlay",      scheme: "dark",  swatch: { bg: "#08110f", panel: "#0f1f1a", glow: "#2fbf9f" }, accent: JADE_ACCENT },
+  aurora:    { label: "Aurora",    hint: "Polar night, violet light",      scheme: "dark",  swatch: { bg: "#070d18", panel: "#0e172a", glow: "#9d7bff" }, accent: AURORA_ACCENT },
 };
 
 export interface Settings {
@@ -481,7 +557,13 @@ export function applyUiPrefs(s: Settings) {
         : "dark"
       : s.siteTheme;
   // color-scheme only accepts light/dark; every named theme maps to one.
-  html.style.colorScheme = SITE_THEMES[html.dataset.theme as SiteTheme]?.scheme ?? "dark";
+  const scheme = SITE_THEMES[html.dataset.theme as SiteTheme]?.scheme ?? "dark";
+  html.style.colorScheme = scheme;
+  // Paper-scheme treatments (plate fills, ink text ramps, border alphas) hang
+  // off this flag rather than off one theme id, so every light theme gets them
+  // and a new one costs no CSS.
+  if (scheme === "light") html.dataset.light = "on";
+  else delete html.dataset.light;
   const theme = SITE_THEMES[html.dataset.theme as SiteTheme] ?? SITE_THEMES.dark;
   const accent =
     s.accentColor === "auto"
