@@ -96,8 +96,10 @@ body {
   --bruise-rgb: 138 136 168;
   /* Two clean sans faces, weight (400/500/600) doing the hierarchy work.
      Headings are Inter, body text Noto Sans (the UI font Lichess ships).
-     next/font in layout.tsx self-hosts BOTH and defines --font-display and
-     --font-body on <body>; only the mono stack lives here. No serifs. */
+     next/font in layout.tsx self-hosts all three and defines --font-display,
+     --font-body and --font-mono on <body>, which override these.
+     What stays here is the pre-hydration fallback: <body>'s variables are the
+     real values, this stack is only what paints before they land. */
   --font-mono: "Cascadia Mono", "JetBrains Mono", Consolas, monospace;
   --accent: var(--accent-gold);
   --accent-hi: var(--accent-gold-hi);
@@ -1297,9 +1299,6 @@ select:focus-visible {
 }
 html[data-anim="off"] .btn-leaf, html[data-anim="off"] .btn-ghost { transition: none; }
 
-/* Kept as an alias so any stale references stay on-brand (blue, not green). */
-.btn-lichess { }
-
 /* --- Cosmic dungeon shared components ---------------------------------------
    The reusable pieces every surface draws from, so loaders, rims, badges,
    and empty states read as one crafted system instead of per-page inventions.
@@ -1959,67 +1958,10 @@ html[data-light] .tv-frame {
   86%, 100% { transform: translateX(452%) skewX(-18deg); }
 }
 
-/* Open Lobby CTA: the quiet secondary in the blue family. A desaturated
-   steel-blue tint of the brand azure with dark ink — present and airy, but
-   reads as subordinate to the saturated .btn-cyan primary below it. Same
-   metal-button physics as .btn-leaf. */
-.btn-sky {
-  background: #9cb6d1;
-  color: #16283a;
-  border: 1px solid rgba(0, 0, 0, 0.28);
-  border-radius: 1px;
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.35) inset,
-    0 2px 6px -2px rgba(0, 0, 0, 0.5);
-  transition: background 160ms ease, filter 160ms ease, box-shadow 180ms ease, transform 120ms ease;
-  font-weight: 600;
-  letter-spacing: 0.005em;
-}
-.btn-sky:hover { filter: brightness(1.05); }
-
-/* --- Nebula: the play surfaces go full space -------------------------------
-   Under the nebula theme the big play CTAs and the mode cards trade their
-   daylight blues for deep-space violet with a starfield speckle, matching the
-   page's dusk wash. Stars are layered radial dots — no images, no motion. */
-html[data-theme="nebula"] .btn-sky,
-html[data-theme="nebula"] .btn-cyan {
-  color: #efe9ff;
-  text-shadow: 0 1px 6px rgba(20, 10, 40, 0.8);
-}
-/* Open Lobby: deep-space BLUE. */
-html[data-theme="nebula"] .btn-sky {
-  background:
-    radial-gradient(1px 1px at 12% 30%, rgba(255, 255, 255, 0.9), transparent 55%),
-    radial-gradient(1px 1px at 78% 22%, rgba(255, 255, 255, 0.7), transparent 55%),
-    radial-gradient(1.5px 1.5px at 55% 68%, rgba(190, 214, 255, 0.8), transparent 55%),
-    radial-gradient(1px 1px at 32% 82%, rgba(255, 255, 255, 0.55), transparent 55%),
-    radial-gradient(2px 2px at 68% 40%, rgba(255, 255, 255, 0.35), transparent 60%),
-    linear-gradient(135deg, #2c4a86 0%, #223768 52%, #16224a 100%);
-  border: 1px solid rgba(140, 172, 235, 0.55);
-  box-shadow:
-    inset 0 1px 0 rgba(190, 214, 255, 0.35),
-    0 0 26px -8px rgba(111, 149, 218, 0.7),
-    0 2px 8px -2px rgba(0, 0, 0, 0.6);
-}
-/* Play Someone: LIGHT PURPLE space. */
-html[data-theme="nebula"] .btn-cyan {
-  background:
-    radial-gradient(1px 1px at 16% 28%, rgba(255, 255, 255, 0.9), transparent 55%),
-    radial-gradient(1px 1px at 74% 20%, rgba(255, 255, 255, 0.7), transparent 55%),
-    radial-gradient(1.5px 1.5px at 52% 70%, rgba(232, 218, 255, 0.85), transparent 55%),
-    radial-gradient(1px 1px at 30% 84%, rgba(255, 255, 255, 0.55), transparent 55%),
-    radial-gradient(2px 2px at 66% 42%, rgba(255, 255, 255, 0.35), transparent 60%),
-    linear-gradient(135deg, #7a5cb8 0%, #62479c 52%, #45306f 100%);
-  border: 1px solid rgba(200, 174, 245, 0.6);
-  box-shadow:
-    inset 0 1px 0 rgba(232, 218, 255, 0.4),
-    0 0 26px -8px rgba(180, 148, 226, 0.75),
-    0 2px 8px -2px rgba(0, 0, 0, 0.6);
-}
-html[data-theme="nebula"] .btn-sky:hover,
-html[data-theme="nebula"] .btn-cyan:hover {
-  filter: brightness(1.12);
-}
+/* --- Nebula: the mode cards go full space ----------------------------------
+   Under the nebula theme the mode cards trade their daylight blues for
+   deep-space violet with a starfield speckle, matching the page's dusk wash.
+   Stars are layered radial dots — no images, no motion. */
 html[data-theme="nebula"] .mode-def-card {
   background:
     radial-gradient(1px 1px at 18% 26%, rgba(255, 255, 255, 0.5), transparent 55%),
@@ -2027,53 +1969,6 @@ html[data-theme="nebula"] .mode-def-card {
     radial-gradient(1.5px 1.5px at 86% 24%, rgba(255, 255, 255, 0.35), transparent 55%),
     var(--surface-panel);
 }
-.btn-sky:active {
-  filter: brightness(0.95);
-  transform: translateY(0.5px);
-}
-
-/* Play Someone CTA: the loud primary in brand azure with white type,
-   unmistakably "go". Anchors the blue family; .btn-sky above is its quieter
-   sibling. */
-.btn-cyan {
-  background: linear-gradient(to bottom, var(--accent-buff-hi), var(--accent-buff));
-  color: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.32);
-  border-radius: 1px;
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.28) inset,
-    0 2px 6px -2px rgba(0, 0, 0, 0.5);
-  transition: background 160ms ease, filter 160ms ease, box-shadow 180ms ease, transform 120ms ease;
-  font-weight: 600;
-  letter-spacing: 0.005em;
-}
-.btn-cyan:hover { filter: brightness(1.05); }
-.btn-cyan:active {
-  filter: brightness(0.95);
-  transform: translateY(0.5px);
-}
-
-/* Welcoming mint CTA: a friendly spring green with dark ink type, softer than
-   the utility green and clearly distinct from the accent blue. Same
-   metal-button physics as .btn-leaf. */
-.btn-mint {
-  background: linear-gradient(to bottom, var(--mint-glow), var(--mint));
-  color: #10281d;
-  border: 1px solid rgba(0, 0, 0, 0.28);
-  border-radius: 1px;
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.28) inset,
-    0 2px 6px -2px rgba(0, 0, 0, 0.5);
-  transition: background 160ms ease, filter 160ms ease, box-shadow 180ms ease, transform 120ms ease;
-  font-weight: 600;
-  letter-spacing: 0.005em;
-}
-.btn-mint:hover { filter: brightness(1.05); }
-.btn-mint:active {
-  filter: brightness(0.95);
-  transform: translateY(0.5px);
-}
-
 /* The home screen's signature animation: the knight plays Geometry Dash. A
    200%-wide obstacle strip (blocks + spikes on a ground line) scrolls past on
    a 24s seamless loop while the knight holds its lane and jumps with a full
@@ -3026,8 +2921,7 @@ html[data-anim="off"] .dc-orbit-counter.spin, html[data-anim="off"] .dc-orbit-co
 html[data-anim="off"] * { transition: none !important; }
 
 @media (max-width: 640px) {
-  .btn-leaf, .btn-ghost, .btn-cyan, .btn-sky, .btn-mint,
-  .btn-glass, .btn-cta { min-height: 44px; }
+  .btn-leaf, .btn-ghost, .btn-glass, .btn-cta { min-height: 44px; }
 }
 
 ::selection { background: rgb(var(--accent-gold-rgb) / 0.4); color: var(--text-on-accent); }

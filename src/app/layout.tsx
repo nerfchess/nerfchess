@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Noto_Sans } from "next/font/google";
+import { Inter, JetBrains_Mono, Noto_Sans } from "next/font/google";
 import { AchievementToast } from "@/components/AchievementToast";
 import { SettingsBootstrap } from "@/components/SettingsBootstrap";
 import "./globals.css";
@@ -21,6 +21,19 @@ const inter = Inter({
   weight: ["400", "500", "600", "700"],
   display: "swap",
   variable: "--font-display",
+});
+
+// Clocks, ratings, ids and board coordinates. --font-mono was a system stack
+// ("Cascadia Mono", "JetBrains Mono", Consolas, monospace), so on any machine
+// without one of those installed — most Linux, most phones — tabular figures
+// fell through to generic monospace and the clock's digits stopped lining up
+// with the rest of the UI. Self-hosting it makes the face real everywhere.
+// The :root stack in globals.css stays as the pre-hydration fallback.
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  display: "swap",
+  variable: "--font-mono",
 });
 
 export const metadata: Metadata = {
@@ -170,7 +183,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
         />
       </head>
-      <body className={`no-tap-highlight font-body ${notoSans.variable} ${inter.variable}`}>
+      <body
+        className={`no-tap-highlight font-body ${notoSans.variable} ${inter.variable} ${jetbrainsMono.variable}`}
+      >
         <SettingsBootstrap />
         {children}
         {/* Site-wide, desktop-only unlock popups (bottom right). */}

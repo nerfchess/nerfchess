@@ -30,7 +30,7 @@
      reads. Custom properties resolve at use time, so --chest-glow being set by
      a later band rule on this same element is fine. */
   --chest-lumen: 1;
-  --chest-lit: calc(var(--chest-lit) * var(--chest-lumen));
+  --chest-lit: calc(var(--chest-glow, 0.5) * var(--chest-lumen));
 }
 .chest-shell--opening { cursor: default; }
 
