@@ -698,11 +698,14 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
     setExpanded((prev) => ({ ...prev, [key]: !(prev[key] ?? false) }));
   const reduceMotion = useReducedMotion();
 
-  // Whole-section collapse for the two arsenals (session state only; nothing
-  // persisted). Headers keep their count chips so a folded section still says
-  // how much it holds.
-  const [myOpen, setMyOpen] = useState(true);
-  const [oppOpen, setOppOpen] = useState(true);
+  // One tab, replacing three independent whole-section collapses (your
+  // arsenal, their arsenal, their play log) plus a fourth for "Against you".
+  // Four things that could each be open or shut meant sixteen possible dock
+  // heights in a fixed-height column, and the player got no say in which of
+  // them they were looking at — only in how much of everything to hide. A tab
+  // set answers the actual question ("whose stuff am I looking at?") and caps
+  // the column height by construction rather than by folding.
+  const [tab, setTab] = useState<"yours" | "theirs" | "log">("yours");
 
   // The Latest pocket used to auto-fold to a one-line strip ~5s after a card
   // landed, with a "pinned" flag so a manual toggle could out-argue the timer,
@@ -1198,16 +1201,51 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
           </div>
         )}
 
-        {/* The opponent's play ledger ("their pocket") lives at the TOP of the
-            dock, right under the Latest slot — their plays land up here by the
-            opponent's side of the table, not buried at the foot of the list. */}
-        {plays && plays.length > 0 && <OppPlaysDockSection plays={plays} />}
+        {/* ZONE C — one tab set. "Against you" lives under Theirs rather than
+            in a section of its own: a constraint running against you and the
+            card that cast it are the same story told from two ends, and they
+            were two unbounded lists stacked in a 320px column. */}
+        <div role="tablist" aria-label="Dock contents" className="flex gap-1 pt-1">
+          {(
+            [
+              { id: "yours", label: "Yours", n: mine.length },
+              { id: "theirs", label: "Theirs", n: theirsShown.length + againstRows.length },
+              { id: "log", label: "Log", n: plays?.length ?? 0 },
+            ] as const
+          ).map((t) => (
+            <button
+              key={t.id}
+              role="tab"
+              type="button"
+              aria-selected={tab === t.id}
+              onClick={() => setTab(t.id)}
+              className={
+                "flex flex-1 items-center justify-center gap-1.5 border-b-2 px-2 py-1.5 font-display text-[12px] transition " +
+                (tab === t.id
+                  ? "border-[color:var(--accent)] text-parchment-50"
+                  : "border-transparent text-parchment-300 hover:text-parchment-100")
+              }
+            >
+              {t.label}
+              {t.n > 0 && (
+                <span className="tabular text-[11px] text-parchment-400">{t.n}</span>
+              )}
+            </button>
+          ))}
+        </div>
 
+        {/* Their play ledger. */}
+        {tab === "log" &&
+          (plays && plays.length > 0 ? (
+            <OppPlaysDockSection plays={plays} />
+          ) : (
+            <p className="text-[12px] text-parchment-400">Nothing played yet.</p>
+          ))}
 
         {/* "Against you": every constraint currently limiting your play, with
             remaining duration. New rows flash in once when a constraint
             lands (row keys are stable while an effect holds). */}
-        {againstRows.length > 0 && (
+        {tab === "theirs" && againstRows.length > 0 && (
           <>
             <DockSectionHeader icon={ShieldAlert} label="Against you" count={againstRows.length} accent="against" />
             <div className="space-y-1">
@@ -1281,18 +1319,10 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
           </>
         )}
 
-        <DockSectionHeader
-          icon={Layers}
-          label={`Your ${nounPlural}`}
-          count={mine.length}
-          accent="mine"
-          open={myOpen}
-          onToggle={() => setMyOpen((o) => !o)}
-        />
         {/* The next-draft chip above already says when cards arrive; repeating
             it here went stale after banks ("your first draft" forever). An
             empty section costs one quiet line, never a tall blank plate. */}
-        {myOpen && mine.length === 0 && (
+        {tab === "yours" && mine.length === 0 && (
           <p className="text-[12px] text-parchment-400">None yet.</p>
         )}
         {/* A thin blue spine brackets your arsenal so "these are mine" is
@@ -1300,7 +1330,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
             Live cards sit up top; your spent ones gather under a "Used" rule at
             the foot of the same section (tier descending), so used cards stay
             clearly YOURS. */}
-        {myOpen && mine.length > 0 && (
+        {tab === "yours" && mine.length > 0 && (
           <div className="space-y-1 border-l border-mode-buff/30 pl-2">
             {mineLiveRows.map(myRow)}
             {mineDeadRows.length > 0 && (
@@ -1312,22 +1342,17 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
           </div>
         )}
 
-        {theirsShown.length > 0 && (
+        {tab === "theirs" && theirsShown.length > 0 && (
           <>
-            <div className="border-t border-[color:var(--edge)] pt-2">
-              <DockSectionHeader
-                icon={Swords}
-                label={`Opponent's ${nounPlural}`}
-                count={theirsShown.length}
-                accent="opponent"
-                open={oppOpen}
-                onToggle={() => setOppOpen((o) => !o)}
-              />
-            </div>
+            <DockSectionHeader
+              icon={Swords}
+              label={`Their ${nounPlural}`}
+              count={theirsShown.length}
+              accent="opponent"
+            />
             {/* Opponent's cards mirror yours: live rows first, then their used
                 ones under the same "Used" rule, kept in the opponent's own
                 section rather than blended into a shared pile. */}
-            {oppOpen && (
             <div className="space-y-1">
               {theirsLiveRows.map(oppEntry)}
               {theirsDeadRows.length > 0 && (
@@ -1337,7 +1362,6 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
                 </>
               )}
             </div>
-            )}
             {/* Opponent hidden cards render nothing at all: no face-down minis
                 and no "N hidden" count. Cards summoned via the owner god panel
                 (and any still-masked card) stay fully invisible to the
