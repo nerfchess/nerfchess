@@ -94,13 +94,13 @@ body {
   --verdigris: var(--accent-positive);
   --bruise: #8a88a8;
   --bruise-rgb: 138 136 168;
-  /* Two clean sans faces, weight (400/500/600) doing the hierarchy work.
-     Headings are Inter, body text Noto Sans (the UI font Lichess ships).
-     next/font in layout.tsx self-hosts all three and defines --font-display,
-     --font-body and --font-mono on <body>, which override these.
-     What stays here is the pre-hydration fallback: <body>'s variables are the
-     real values, this stack is only what paints before they land. */
-  --font-mono: "Cascadia Mono", "JetBrains Mono", Consolas, monospace;
+  /* The type roles. layout.tsx self-hosts every face under a neutral --f-*
+     name on <html>; these three names are the ROLES, and a flagship theme
+     claims them below. Tints inherit the defaults: Inter headings over Noto
+     Sans body, the UI font Lichess ships, with weight doing the hierarchy. */
+  --font-display: var(--f-inter);
+  --font-body: var(--f-noto);
+  --font-mono: var(--f-mono), "Cascadia Mono", Consolas, monospace;
   --accent: var(--accent-gold);
   --accent-hi: var(--accent-gold-hi);
   --accent-rgb: var(--accent-gold-rgb);
@@ -287,13 +287,44 @@ html[data-theme="nebula"] { /* violet dusk */
        red/blue/green rather than a shade of it.
      - The BOARD. Board colours are the player's own setting (BOARD_THEMES,
        applied inline as --sq-light/--sq-dark), and a theme must not fight it.
-     - LAYOUT. No radius, spacing or type-scale changes: a theme changes the
-       light and the weight, never where the furniture sits.
+     - LAYOUT GEOMETRY. No radius or spacing changes: a theme changes the
+       light, the weight and the lettering, never where the furniture sits.
+       (Typefaces were on this list until the flagships were given their own —
+       the TYPE SCALE is still fixed, only the faces change.)
 
    applyUiPrefs also feeds each theme's accent in from SITE_THEMES while the
    accent setting is on "auto", so the two definitions must agree. Picking an
    explicit accent colour in Settings still overrides the theme, by design.
    ========================================================================= */
+
+/* --- Flagship typefaces ----------------------------------------------------
+   Each flagship claims the two type ROLES; the faces themselves are self-hosted
+   in layout.tsx under neutral --f-* names. Kept together rather than scattered
+   through the palette blocks, because the point of the set is that no two
+   pairings share a genus — that is only checkable side by side.
+
+   The type SCALE (--step-0..5) is untouched by every one of them. A theme
+   changes the lettering, not the sizes, so nothing reflows when you switch. */
+html[data-theme="obsidian"] {
+  --font-display: var(--f-bricolage);   /* chiselled, fractured glass */
+  --font-body: var(--f-inter-tight);
+}
+html[data-theme="porcelain"] {
+  --font-display: var(--f-fraunces);    /* high-contrast serif: ink on paper */
+  --font-body: var(--f-public-sans);
+}
+html[data-theme="neon"] {
+  --font-display: var(--f-chakra);      /* clipped corners, arcade-technical */
+  --font-body: var(--f-space-grotesk);
+}
+html[data-theme="jade"] {
+  --font-display: var(--f-spectral);    /* low-contrast serif, lacquer-quiet */
+  --font-body: var(--f-plex-sans);
+}
+html[data-theme="aurora"] {
+  --font-display: var(--f-syne);        /* weights widen: drifting light */
+  --font-body: var(--f-manrope);
+}
 
 /* --- Obsidian: volcanic glass, molten ember ------------------------------- */
 /* Near-black with a violet-cool cast so the ember accent reads as heat against
