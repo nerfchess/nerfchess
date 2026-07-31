@@ -103,6 +103,11 @@ const [SHARD_I, SHARD_N] = SHARD ? SHARD.split("/").map(Number) : [0, 1];
  *  games finish inside the ply cap. */
 const SKILL: HouseSkill = 1350;
 
+/** The card Black holds in both arms, so cards that target an opponent's card
+ *  have something to target. A tier-1 information card measured at exactly
+ *  +0.0, chosen to perturb the baseline as little as possible. */
+const OPPONENT_CARD = "extra_glance";
+
 /** Cards between partial saves. Small enough that a kill costs minutes, large
  *  enough that the write is not the bottleneck. */
 const FLUSH_EVERY = 10;
@@ -273,6 +278,20 @@ interface GameRun {
 function playGame(seed: number, cardId: string | null, tier: Tier): GameRun {
   const game: NerfGame = newGame(UNRESTRICTED_NERF, UNRESTRICTED_NERF, seed);
   enableDraftMode(game, seed);
+  // Black holds a card too, in BOTH arms of every pair.
+  //
+  // Without it, six cards could never fire at all: buff_thief, buff_plunder,
+  // buff_siphon, total_plunder, sever and buff_thief_minor all steal or
+  // destroy an OPPONENT'S card, and the opponent held nothing. They were
+  // reported as unmeasurable, which was true but was a fact about the setup
+  // rather than about the cards.
+  //
+  // It costs the pairing nothing because both arms get the same card: the only
+  // difference between them is still White's card, which is what the delta
+  // attributes. Deliberately a tier-1 whose own measured delta is 0.0, so the
+  // baseline game moves as little as possible while still being a real target.
+  const oppDef = BUFF_BY_ID[OPPONENT_CARD];
+  if (oppDef?.implemented) acquireBuff(game, "b", OPPONENT_CARD, oppDef.tier);
   if (cardId) acquireBuff(game, "w", cardId, tier);
   // "Fired" means the card got its chance to matter, and that means something
   // different for each kind:
