@@ -32,3 +32,9 @@ dist/
 # Playwright artifacts
 /test-results/
 /playwright-report/
+
+# Win-rate sweep shard partials. These are RESUMPTION STATE, not results: each
+# is rewritten every 10 cards so a killed run continues instead of restarting,
+# so a committed snapshot would be a fraction of a sweep that reads like a
+# finished one. The merged result is committed on completion.
+docs/card-winrate.shard*.json
