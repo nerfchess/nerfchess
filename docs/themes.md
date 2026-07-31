@@ -34,7 +34,8 @@ A flagship is a different room, not a filter. Each one owns:
 | --- | --- |
 | **Palette** | background, border and text tokens |
 | **Accent** | its own primary accent (`--accent-gold` and aliases) plus the ink that sits on an accent fill |
-| **Material** | how the light sits on a panel, how far a control gives |
+| **Atmosphere** | a fixed layer on `html::after` — the light in the room |
+| **Material** | its own `.plate` box-shadow — what a panel is made of under that light |
 | **Motion** | its own durations and reveal curve |
 | **Chests** | its own draft-chest material and brightness |
 
@@ -58,6 +59,28 @@ A flagship is a different room, not a filter. Each one owns:
   applied inline as `--sq-light` / `--sq-dark`). A site theme must not fight it.
 - **Layout.** No radius, spacing or type-scale changes. A theme changes the light
   and the weight, never where the furniture sits.
+
+## The three page layers
+
+A palette alone leaves five pages that differ only in hue, so a flagship also
+owns the light in the room. Three fixed layers stack behind every page:
+
+| Layer | What it is |
+| --- | --- |
+| `html` background-color | the canvas fill, so nothing flashes before paint |
+| `html::before` | the token-derived page wash (every theme gets it free) |
+| `html::after` | the flagship atmosphere (only the five define one) |
+
+**`body` must stay `background-color: transparent`.** Body's background paints
+after html's negative-z children, so an opaque colour there covers both fixed
+layers — which is exactly what used to happen, leaving the page wash this file
+documents invisible on every theme. A custom background image still works: that
+sets `background-image` on body and layers over the same canvas.
+
+Atmospheres are decoration, so all five park under Performance mode
+(`html[data-perf="low"]::after { display: none }`). Aurora's is the only animated
+one; it moves by transform alone and stops under Performance mode or when
+animations are off.
 
 ## Theme character tokens
 
@@ -109,7 +132,9 @@ cyan one means a mythic, and that promise has to hold everywhere.
    tokens; a flagship needs palette, accent, `--text-on-accent` and the feel
    tokens. Keep the accent in step with the `AccentDef` in `SITE_THEMES` — while
    the accent setting is on "auto", `applyUiPrefs` feeds that one in.
-3. For a flagship, add its chest block in `DraftChest.css`.
-4. Check contrast: body text, secondary text and the accent should all clear
-   4.5:1 on `--surface-panel`, and `--text-on-accent` should clear 4.5:1 on the
-   accent fill.
+3. For a flagship, add its atmosphere (`html[data-theme="<id>"]::after`, listed
+   in the shared `content: ""` rule) and its `.plate` material.
+4. For a flagship, add its chest block in `DraftChest.css`.
+5. Check contrast with the atmosphere on: body text, secondary text and the
+   accent should all clear 4.5:1 on `--surface-panel`, and `--text-on-accent`
+   should clear 4.5:1 on the accent fill.

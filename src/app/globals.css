@@ -462,6 +462,126 @@ html[data-theme="aurora"] {
   --ease-signature: cubic-bezier(0.18, 0.9, 0.25, 1);
 }
 
+/* ============================================================================
+   FLAGSHIP SIGNATURES
+
+   A palette alone still leaves five pages that differ only in hue. These are
+   the two layers that make a flagship recognisable at a glance:
+
+     ATMOSPHERE  a fixed layer on html::after — the light in the room
+     MATERIAL    what a .plate is made of under that light
+
+   html::before already carries the token-derived page wash every theme gets for
+   free. This sits ON TOP of it, so it stays quiet enough that text keeps the
+   contrast the palette promised (all five were measured against --surface-panel
+   with these layers on).
+
+   Both are decoration, so both park under Performance mode, and the one
+   animated layer is transform-only and stops when animations are off.
+   ============================================================================ */
+html[data-theme="obsidian"]::after,
+html[data-theme="porcelain"]::after,
+html[data-theme="neon"]::after,
+html[data-theme="jade"]::after,
+html[data-theme="aurora"]::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* Obsidian: magma pooling below the fold, and one specular streak raking the
+   glass. Static — volcanic rock does not shimmer. */
+html[data-theme="obsidian"]::after {
+  background:
+    linear-gradient(118deg, transparent 38%, rgba(255, 255, 255, 0.03) 48%, transparent 57%),
+    radial-gradient(125% 46% at 50% 108%, rgb(255 122 47 / 0.17), transparent 62%);
+}
+html[data-theme="obsidian"] .plate {
+  /* Glass: a hard specular top edge, a deep foot, and a shadow that falls
+     further than the base theme's. */
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.02),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.5),
+    0 14px 44px -26px rgba(0, 0, 0, 0.9);
+}
+
+/* Porcelain: a cool cobalt cast from above and a soft vignette, so a page of
+   white reads as glazed rather than blank. */
+html[data-theme="porcelain"]::after {
+  background:
+    radial-gradient(120% 70% at 50% -12%, rgb(42 85 184 / 0.055), transparent 62%),
+    radial-gradient(150% 95% at 50% 50%, transparent 52%, rgb(35 33 43 / 0.055));
+}
+html[data-theme="porcelain"][data-light] .plate {
+  /* Glaze: one crisp hairline and a shadow tight enough to read as a lifted
+     tile, not a drop shadow. */
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 1px 2px rgba(35, 33, 43, 0.06),
+    0 8px 24px -18px rgba(35, 33, 43, 0.4);
+}
+
+/* Neon: a magenta horizon burning up from the bottom, under fine scanlines.
+   The scanline period is 3px so it reads as texture at any zoom instead of
+   moireing against the type. */
+html[data-theme="neon"]::after {
+  background:
+    repeating-linear-gradient(0deg, rgb(255 69 200 / 0.045) 0 1px, transparent 1px 3px),
+    linear-gradient(0deg, rgb(255 69 200 / 0.13), rgb(120 60 255 / 0.05) 22%, transparent 46%);
+}
+html[data-theme="neon"] .plate {
+  /* Tube light: the panel edge is lit by the accent rather than by white. */
+  box-shadow:
+    inset 0 0 0 1px rgb(var(--accent-rgb) / 0.12),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.4),
+    0 12px 40px -24px rgba(0, 0, 0, 0.85);
+}
+
+/* Jade: a wide lacquer sheen raking the page, and a jade cast from overhead.
+   The quietest of the five on purpose. */
+html[data-theme="jade"]::after {
+  background:
+    linear-gradient(100deg, transparent 18%, rgba(255, 255, 255, 0.022) 34%, transparent 48%),
+    radial-gradient(95% 60% at 50% -10%, rgb(47 191 159 / 0.075), transparent 62%);
+}
+html[data-theme="jade"] .plate {
+  /* Lacquer: no hard edge anywhere, just a deep soft interior. */
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.022),
+    inset 0 -2px 8px rgba(0, 0, 0, 0.3),
+    0 10px 34px -24px rgba(0, 0, 0, 0.7);
+}
+
+/* Aurora: two soft bands over the horizon, drifting. The only animated
+   atmosphere, and it moves by transform alone (no repaint) over 28s, which is
+   slow enough to notice only if you look for it. */
+html[data-theme="aurora"]::after {
+  background:
+    radial-gradient(62% 40% at 22% -8%, rgb(157 123 255 / 0.22), transparent 70%),
+    radial-gradient(56% 34% at 76% -12%, rgb(79 224 200 / 0.15), transparent 70%);
+  animation: aurora-drift 28s ease-in-out infinite alternate;
+}
+@keyframes aurora-drift {
+  to { transform: translate3d(-4%, 2%, 0); }
+}
+html[data-anim="off"][data-theme="aurora"]::after,
+html[data-perf="low"][data-theme="aurora"]::after { animation: none; }
+html[data-theme="aurora"] .plate {
+  /* Ice: a cool top light and a faint violet bloom under the panel. */
+  box-shadow:
+    inset 0 1px 0 rgba(183, 157, 255, 0.1),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.02),
+    0 12px 44px -26px rgb(var(--accent-rgb) / 0.3),
+    0 12px 40px -24px rgba(0, 0, 0, 0.75);
+}
+
+/* Performance mode drops every atmosphere. Listed after the theme rules so it
+   wins the specificity tie. */
+html[data-perf="low"]::after { display: none; }
+
 /* Light: the one non-dark theme. It overrides the bg + border tokens (paper
    and ink) and the text tokens (dark ink on paper for contrast), and lifts the
    board-highlight opacity so the gold read stays visible on the light board.
@@ -520,13 +640,21 @@ html[data-contrast="high"] .text-parchment-500 { color: #97948e; }
    gradient hasn't painted yet, which otherwise flash the default white. Lifted
    and warmed a step: dark, but never dim, with a faint color wash (warm
    top-left, cool bottom-right) so the page has weather. */
-html, body {
+html {
+  /* The canvas fill. Propagated to the viewport, so the page is never white
+     before paint, and it sits UNDER the two fixed layers below. */
   background-color: var(--bg-base);
-  /* The page gradient lives on the html::before fixed pseudo-element below
-     (painted once, only translated on scroll) instead of a body
-     background-image. This supersedes the earlier `background-attachment:
-     scroll` fix on master — both target the same scroll-jank, and keeping the
-     body gradient too would double-paint over the pseudo-element. */
+}
+body {
+  /* Transparent on purpose, and load-bearing. The page gradient lives on the
+     html::before fixed pseudo-element below (painted once, only translated on
+     scroll) instead of a body background-image. An opaque colour here paints
+     over it — body's background is drawn after html's negative-z children —
+     which is what was happening: the wash this file documents was invisible on
+     every theme, and so was anything else layered on html. html keeps the
+     colour, so nothing flashes. A custom background image still applies, since
+     that sets background-IMAGE on body and layers over the same canvas. */
+  background-color: transparent;
   color: var(--paper);
   /* dvh, not vh: on iOS Safari `100vh` is the LARGE viewport, so with the URL
      bar showing every short page was ~90-115px taller than the screen and
