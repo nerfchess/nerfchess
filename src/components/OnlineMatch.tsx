@@ -13,6 +13,7 @@ import { BoardSplashHost } from "@/components/BoardSplash";
 import { ChatPanel } from "@/components/ChatPanel";
 import { ClockPill } from "@/components/ClockPill";
 import { RailResizeHandle, useRailWidth } from "@/components/RailResizeHandle";
+import { CommandRail, railGridClass } from "@/components/match/CommandRail";
 import { ConnectionBanner } from "@/components/ConnectionBanner";
 import { DraftNotice } from "@/components/DraftNotice";
 import { GodPanelNotice, type GodPanelNoticeItem } from "@/components/GodPanelNotice";
@@ -2898,109 +2899,66 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         {/* The opponent-drafting status lives in the waiting overlay below
             (and inside the draft overlay while my own pick is open). */}
         <div
-          className={
-            // Expanded, the rail column tracks the draggable --match-rail-w and
-            // a thin resize-handle column sits between rail and board; the
-            // 6px gaps + 4px handle keep the same 16px gutter as before.
-            "match-grid grid min-h-0 flex-1 gap-y-2 lg:justify-center lg:gap-x-1.5 " +
-            (railCollapsed
-              ? "lg:grid-cols-[auto]"
-              : "lg:grid-cols-[var(--match-rail-w,320px)_0.25rem_auto]")
-          }
+          className={railGridClass(railCollapsed)}
           style={{ ...railHeightStyle, ...railWidthStyle }}
         >
           {/* The command rail: one framed column (mode header, opponent, dock
               + chat, you) instead of three floating islands, so the left side
               reads as a single control surface. */}
-          <aside
-            className={
-              "rail-panel rail-lux corner-cut hidden min-h-0 gap-2 overflow-y-auto p-2.5 lg:min-h-[var(--board-height)] lg:max-h-full lg:grid-rows-[auto_auto_minmax(8rem,1fr)_auto] lg:self-start " +
-              (railCollapsed ? "" : "lg:grid")
+          <CommandRail
+            mode={isBuffMode ? "buff" : "nerf"}
+            subtitle={subtitle}
+            collapsed={railCollapsed}
+            onToggleCollapse={toggleRail}
+            opponentCharged={chargedColor === oppColor}
+            selfCharged={chargedColor === myColor}
+            opponent={
+              <PlayerNerfCard
+                board={boardForDisplay}
+                playerColor={oppColor}
+                myColor={myColor}
+                name={oppName}
+                elo={oppRating}
+                provisional={oppProvisional}
+                avatar={start.players?.[oppColor]?.avatar}
+                nerf={opponentNerf}
+                revealed={oppNerfShown}
+                hideNerf={hideOppNerfCard}
+                ownerLabel=""
+                compact
+                connected={!opponentGone}
+              />
             }
-          >
-            <div className="seam-edge-b relative flex items-center justify-between gap-2 px-1 pb-2">
-              <span
+            center={
+              <div
                 className={
-                  "flex items-center gap-1.5 font-display text-xs font-bold uppercase tracking-[0.14em] " +
-                  (isBuffMode ? "text-mode-buffGlow" : "text-mode-nerfGlow")
+                  "hidden min-h-0 gap-2 lg:grid " +
+                  (isDraft && game.buffs
+                    ? // The dock owns the column; chat rests as a compact strip
+                      // (auto row) and expands in place on demand.
+                      "grid-rows-[minmax(0,1fr)_auto]"
+                    : "grid-rows-[minmax(0,1fr)]")
                 }
               >
-                {/* A lit mode ember anchors the rail's identity at a glance. */}
-                <span
-                  aria-hidden
-                  className="h-1.5 w-1.5 shrink-0 rounded-full bg-current"
-                  style={{ boxShadow: "0 0 8px 1px currentColor" }}
-                />
-                {isBuffMode ? "Buff mode" : "Nerf mode"}
-              </span>
-              {subtitle && (
-                <span className="smallcaps min-w-0 truncate text-[12px] text-parchment-400">{subtitle}</span>
-              )}
-              {/* Collapse the rail for a bigger board; a matching expand
-                  control rides the opponent bar while collapsed. */}
-              <button
-                type="button"
-                onClick={toggleRail}
-                aria-label="Collapse side panel"
-                title="Collapse side panel for a bigger board"
-                className="btn-ghost grid h-7 w-7 shrink-0 place-items-center text-parchment-300 hover:text-parchment-100"
-              >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                  <polyline points="11 17 6 12 11 7" />
-                  <polyline points="18 17 13 12 18 7" />
-                </svg>
-              </button>
-              {/* A gold gleam that occasionally travels the header hairline. */}
-              <span aria-hidden className="rail-header-sheen" />
-            </div>
-            {/* The active player's card wears a soft breathing gold halo while
-                their clock is charged (decorative wrapper only). */}
-            <div className={"rail-glow-wrap" + (chargedColor === oppColor ? " rail-glow-wrap--active" : "")}>
-            <PlayerNerfCard
-              board={boardForDisplay}
-              playerColor={oppColor}
-              myColor={myColor}
-              name={oppName}
-              elo={oppRating}
-              provisional={oppProvisional}
-              avatar={start.players?.[oppColor]?.avatar}
-              nerf={opponentNerf}
-              revealed={oppNerfShown}
-              hideNerf={hideOppNerfCard}
-              ownerLabel=""
-              compact
-              connected={!opponentGone}
-            />
-            </div>
-            <div
-              className={
-                "hidden min-h-0 gap-2 lg:grid " +
-                (isDraft && game.buffs
-                  ? // The dock owns the column; chat rests as a compact strip
-                    // (auto row) and expands in place on demand.
-                    "grid-rows-[minmax(0,1fr)_auto]"
-                  : "grid-rows-[minmax(0,1fr)]")
-              }
-            >
-              {isDraft && game.buffs && (
-                <BuffDock
-                  game={game}
+                {isDraft && game.buffs && (
+                  <BuffDock
+                    game={game}
+                    myColor={myColor}
+                    canAct={draftCanAct}
+                    onStartUse={startBuffUse}
+                    plays={oppLog}
+                  />
+                )}
+                <ChatPanel
+                  messages={chatMessages}
                   myColor={myColor}
-                  canAct={draftCanAct}
-                  onStartUse={startBuffUse}
-                  plays={oppLog}
+                  onSend={handleSendChat}
+                  collapsible={isDraft && !!game.buffs}
+                  className={isDraft && game.buffs ? "" : "h-full"}
                 />
-              )}
-              <ChatPanel
-                messages={chatMessages}
-                myColor={myColor}
-                onSend={handleSendChat}
-                collapsible={isDraft && !!game.buffs}
-                className={isDraft && game.buffs ? "" : "h-full"}
-              />
-            </div>
-            <div className="space-y-2">
-              <div className={"rail-glow-wrap" + (chargedColor === myColor ? " rail-glow-wrap--active" : "")}>
+              </div>
+            }
+            self={
               <PlayerNerfCard
                 board={boardForDisplay}
                 playerColor={myColor}
@@ -3017,11 +2975,14 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 compact
                 connected={!connectionLost}
               />
-              </div>
-              {!isBuffMode && revealControl}
-              {ratingStakes && <RatingStakes stakes={ratingStakes} />}
-            </div>
-          </aside>
+            }
+            footer={
+              <>
+                {!isBuffMode && revealControl}
+                {ratingStakes && <RatingStakes stakes={ratingStakes} />}
+              </>
+            }
+          />
           {!railCollapsed && !recordingLayout && (
             <RailResizeHandle railWidth={railWidth} resizeRail={resizeRail} />
           )}

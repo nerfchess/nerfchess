@@ -3426,9 +3426,9 @@ html[data-anim="off"] .sq-invalid-shake { animation: none !important; }
   pointer-events: none;
   z-index: 4;
   background:
-    linear-gradient(135deg, transparent 8px, rgb(216 181 110 / 0.75) 9px, rgb(216 181 110 / 0.75) 10px, transparent 11px) no-repeat,
-    linear-gradient(90deg, rgb(216 181 110 / 0.5), transparent 85%) 13px 0 / 30px 1px no-repeat,
-    linear-gradient(180deg, rgb(216 181 110 / 0.5), transparent 85%) 0 13px / 1px 30px no-repeat;
+    linear-gradient(135deg, transparent 8px, rgb(var(--accent-rgb) / 0.75) 9px, rgb(var(--accent-rgb) / 0.75) 10px, transparent 11px) no-repeat,
+    linear-gradient(90deg, rgb(var(--accent-rgb) / 0.5), transparent 85%) 13px 0 / 30px 1px no-repeat,
+    linear-gradient(180deg, rgb(var(--accent-rgb) / 0.5), transparent 85%) 0 13px / 1px 30px no-repeat;
   animation: rail-filigree-glint 5.5s ease-in-out infinite;
 }
 .rail-lux::before {
@@ -3482,8 +3482,8 @@ html[data-anim="off"] .sq-invalid-shake { animation: none !important; }
   border-radius: 1px;
   pointer-events: none;
   box-shadow:
-    0 0 0 1px rgb(216 181 110 / 0.4),
-    0 0 22px -4px rgb(216 181 110 / 0.45);
+    0 0 0 1px rgb(var(--accent-rgb) / 0.4),
+    0 0 22px -4px rgb(var(--accent-rgb) / 0.45);
   animation: rail-glow-breathe 3s ease-in-out infinite;
 }
 @keyframes rail-glow-breathe {
@@ -3513,13 +3513,13 @@ html[data-anim="off"] .rail-header-sheen::before {
 @keyframes waiting-breathe {
   0%, 100% {
     box-shadow:
-      0 0 0 1px rgb(216 181 110 / 0.30),
-      0 0 18px -6px rgb(216 181 110 / 0.35);
+      0 0 0 1px rgb(var(--accent-rgb) / 0.30),
+      0 0 18px -6px rgb(var(--accent-rgb) / 0.35);
   }
   50% {
     box-shadow:
-      0 0 0 1px rgb(216 181 110 / 0.55),
-      0 0 26px -4px rgb(216 181 110 / 0.60);
+      0 0 0 1px rgb(var(--accent-rgb) / 0.55),
+      0 0 26px -4px rgb(var(--accent-rgb) / 0.60);
   }
 }
 .waiting-ping {
@@ -3552,8 +3552,11 @@ html[data-anim="off"] .waiting-ellipsis::after { opacity: 1; }
    radial-gradient speckle), a handful of 4-point brass glints that twinkle,
    and two slow diagonal shooting stars. Everything is transform/opacity only,
    no JS, no canvas. Node budget: 3 layers + 12 glints + 2 shooting = 17
-   animated nodes (10 on phones). Colors are the brass/candle family
-   (216 181 110 / 255 233 170) — gold dust, never sci-fi white.
+   animated nodes (10 on phones). The dust is the ACTIVE THEME's accent
+   (--accent-rgb) rather than a literal brass, so Neon's dust is magenta and
+   Jade's is green — it used to be gold in every theme, which read as the
+   default palette leaking through whatever the player had chosen. Warm
+   candle-white highlights stay literal: they are light, not hue.
    Fully dropped when animations are off in Settings, in perf mode, and under
    the light theme (pale dust on paper is just noise). */
 .starfield {
@@ -3588,11 +3591,11 @@ html[data-anim="off"] .waiting-ellipsis::after { opacity: 1; }
   --tile: 360px;
   animation-duration: 260s;
   background-image:
-    radial-gradient(1px 1px at 23px 41px, rgb(216 181 110 / 0.5), transparent 60%),
-    radial-gradient(1px 1px at 133px 89px, rgb(216 181 110 / 0.34), transparent 60%),
+    radial-gradient(1px 1px at 23px 41px, rgb(var(--accent-rgb) / 0.5), transparent 60%),
+    radial-gradient(1px 1px at 133px 89px, rgb(var(--accent-rgb) / 0.34), transparent 60%),
     radial-gradient(1px 1px at 279px 157px, rgb(255 233 170 / 0.4), transparent 60%),
-    radial-gradient(1px 1px at 81px 231px, rgb(216 181 110 / 0.3), transparent 60%),
-    radial-gradient(1px 1px at 317px 305px, rgb(216 181 110 / 0.44), transparent 60%),
+    radial-gradient(1px 1px at 81px 231px, rgb(var(--accent-rgb) / 0.3), transparent 60%),
+    radial-gradient(1px 1px at 317px 305px, rgb(var(--accent-rgb) / 0.44), transparent 60%),
     radial-gradient(1px 1px at 191px 337px, rgb(255 233 170 / 0.26), transparent 60%);
 }
 /* Mid layer: slightly larger sparks, a notch quicker. */
@@ -3600,10 +3603,10 @@ html[data-anim="off"] .waiting-ellipsis::after { opacity: 1; }
   --tile: 460px;
   animation-duration: 170s;
   background-image:
-    radial-gradient(1.4px 1.4px at 61px 117px, rgb(216 181 110 / 0.5), transparent 60%),
+    radial-gradient(1.4px 1.4px at 61px 117px, rgb(var(--accent-rgb) / 0.5), transparent 60%),
     radial-gradient(1.2px 1.2px at 233px 47px, rgb(255 233 170 / 0.42), transparent 60%),
-    radial-gradient(1.4px 1.4px at 397px 203px, rgb(216 181 110 / 0.38), transparent 60%),
-    radial-gradient(1.2px 1.2px at 147px 331px, rgb(216 181 110 / 0.46), transparent 60%),
+    radial-gradient(1.4px 1.4px at 397px 203px, rgb(var(--accent-rgb) / 0.38), transparent 60%),
+    radial-gradient(1.2px 1.2px at 147px 331px, rgb(var(--accent-rgb) / 0.46), transparent 60%),
     radial-gradient(1.4px 1.4px at 329px 411px, rgb(255 233 170 / 0.32), transparent 60%);
 }
 /* Near layer: the brightest, fastest dust — hidden on phones. */
@@ -3612,16 +3615,16 @@ html[data-anim="off"] .waiting-ellipsis::after { opacity: 1; }
   animation-duration: 110s;
   background-image:
     radial-gradient(1.8px 1.8px at 97px 73px, rgb(255 233 170 / 0.55), transparent 60%),
-    radial-gradient(1.6px 1.6px at 341px 181px, rgb(216 181 110 / 0.5), transparent 60%),
-    radial-gradient(1.8px 1.8px at 203px 359px, rgb(216 181 110 / 0.42), transparent 60%),
+    radial-gradient(1.6px 1.6px at 341px 181px, rgb(var(--accent-rgb) / 0.5), transparent 60%),
+    radial-gradient(1.8px 1.8px at 203px 359px, rgb(var(--accent-rgb) / 0.42), transparent 60%),
     radial-gradient(1.6px 1.6px at 471px 449px, rgb(255 233 170 / 0.38), transparent 60%),
-    radial-gradient(2px 2px at 519px 61px, rgb(216 181 110 / 0.34), transparent 60%);
+    radial-gradient(2px 2px at 519px 61px, rgb(var(--accent-rgb) / 0.34), transparent 60%);
 }
 /* 4-point glint stars: a soft candle core clipped to a star, pulsing scale and
    opacity on individually offset beats so the field never reads mechanical. */
 .star-glint {
   position: absolute;
-  background: radial-gradient(circle, rgb(255 240 190 / 0.95) 0%, rgb(216 181 110 / 0.8) 34%, rgb(216 181 110 / 0) 72%);
+  background: radial-gradient(circle, rgb(255 240 190 / 0.95) 0%, rgb(var(--accent-rgb) / 0.8) 34%, rgb(var(--accent-rgb) / 0) 72%);
   clip-path: polygon(50% 0%, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0% 50%, 40% 40%);
   animation: star-twinkle var(--glint-dur, 4.5s) ease-in-out var(--glint-delay, 0s) infinite;
 }
@@ -3637,7 +3640,7 @@ html[data-anim="off"] .waiting-ellipsis::after { opacity: 1; }
   width: 120px;
   height: 2px;
   border-radius: 999px;
-  background: linear-gradient(90deg, transparent, rgb(216 181 110 / 0.4) 45%, rgb(255 236 180 / 0.95));
+  background: linear-gradient(90deg, transparent, rgb(var(--accent-rgb) / 0.4) 45%, rgb(255 236 180 / 0.95));
   opacity: 0;
   transform: translate3d(0, 0, 0) rotate(38deg);
   animation: star-shoot 28s linear var(--shoot-delay, 5s) infinite;

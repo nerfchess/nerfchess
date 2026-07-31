@@ -5,6 +5,8 @@ import { Board, NERF_REVEAL_SKIP, type NerfRevealInfo } from "@/components/Board
 import { BoardPlayerRow } from "@/components/BoardPlayerRow";
 import { ClockPill } from "@/components/ClockPill";
 import { RailResizeHandle, useRailWidth } from "@/components/RailResizeHandle";
+import { CommandRail, railGridClass } from "@/components/match/CommandRail";
+import { Button } from "@/components/ui/Button";
 // The end screen is never part of first paint; loading it on demand keeps it
 // out of the page's initial bundle.
 const GameOver = dynamic(() => import("@/components/GameOver").then((m) => m.GameOver), {
@@ -1930,105 +1932,83 @@ function GamePage() {
           // The rail column tracks the draggable --match-rail-w and a thin
           // resize-handle column sits between rail and board; the 6px gaps +
           // 4px handle keep the same 16px gutter as before.
-          className="grid min-h-0 flex-1 gap-y-2 lg:grid-cols-[var(--match-rail-w,320px)_0.25rem_auto] lg:justify-center lg:gap-x-1.5"
+          className={railGridClass(false)}
           style={{ ...railHeightStyle, ...railWidthStyle }}
         >
           {/* The command rail: one framed column (mode header, opponent, dock,
-              you) instead of floating islands; mirrors the online layout. */}
-          <aside className="rail-panel corner-cut hidden min-h-0 gap-3 overflow-hidden p-2.5 lg:grid lg:min-h-[var(--board-height)] lg:max-h-full lg:grid-rows-[auto_auto_minmax(8rem,1fr)_auto] lg:self-start">
-            <div className="seam-edge-b flex items-center justify-between gap-2 px-1 pb-2">
-              <span
-                className={
-                  "flex items-center gap-1.5 font-display text-xs font-bold uppercase tracking-[0.14em] " +
-                  (plainMode
-                    ? "text-parchment-300"
-                    : gameMode === "buff"
-                    ? "text-mode-buffGlow"
-                    : "text-mode-nerfGlow")
-                }
-              >
-                {/* A lit mode ember anchors the rail's identity at a glance. */}
-                <span
-                  aria-hidden
-                  className="h-1.5 w-1.5 shrink-0 rounded-full bg-current"
-                  style={{ boxShadow: "0 0 8px 1px currentColor" }}
-                />
-                {plainMode ? "Plain chess" : gameMode === "buff" ? "Buff mode" : "Nerf mode"}
-              </span>
-              <span className="smallcaps min-w-0 truncate text-[12px] text-parchment-400">
-                Casual · vs bot
-              </span>
-            </div>
-            <PlayerNerfCard
-              board={boardForDisplay}
-              playerColor={myColor === "w" ? "b" : "w"}
-              myColor={myColor}
-              name={`${difficulty[0].toUpperCase()}${difficulty.slice(1)} Bot`}
-              elo={BOT_ELO[difficulty]}
-              nerf={opponentNerf}
-              revealed={oppRevealed}
-              hideNerf={hideOppNerfCard}
-              ownerLabel=""
-              compact
-              action={
-                // Section games: the opponent's rule stays fully hidden until
-                // the game ends, so there is no self-peek. Plain chess has no
-                // rule to reveal at all.
-                gameMode == null && !plainMode && !oppRevealed && !uiSettings.hideOpponentReveal ? (
-                  <button
-                    onClick={() => setOppPeek(true)}
-                    className="w-full px-3 py-2 border border-white/15 bg-white/[0.03] text-parchment-200 hover:border-white/30 hover:bg-white/[0.06] transition text-xs font-semibold"
-                  >
-                    Reveal their rule
-                  </button>
-                ) : null
-              }
-            />
-            {game.buffs ? (
-              <BuffDock
-                game={game}
+              you) instead of floating islands; the same component the online
+              match uses, so the two layouts cannot drift apart again. */}
+          <CommandRail
+            mode={plainMode ? "plain" : gameMode === "buff" ? "buff" : "nerf"}
+            subtitle="Casual · vs bot"
+            opponent={
+              <PlayerNerfCard
+                board={boardForDisplay}
+                playerColor={myColor === "w" ? "b" : "w"}
                 myColor={myColor}
-                canAct={
-                  !game.result && game.board.turn === myColor && !myOffer && !isReviewingHistory
+                name={`${difficulty[0].toUpperCase()}${difficulty.slice(1)} Bot`}
+                elo={BOT_ELO[difficulty]}
+                nerf={opponentNerf}
+                revealed={oppRevealed}
+                hideNerf={hideOppNerfCard}
+                ownerLabel=""
+                compact
+                action={
+                  // Section games: the opponent's rule stays fully hidden until
+                  // the game ends, so there is no self-peek. Plain chess has no
+                  // rule to reveal at all.
+                  gameMode == null && !plainMode && !oppRevealed && !uiSettings.hideOpponentReveal ? (
+                    <Button tone="ghost" size="sm" block onClick={() => setOppPeek(true)}>
+                      Reveal their rule
+                    </Button>
+                  ) : null
                 }
-                onStartUse={(i) => {
-                  snapshotMySignature(i);
-                  buffTargeting.start(i);
-                }}
-                plays={oppLog}
               />
-            ) : (
-              <div className="hidden lg:block" />
-            )}
-            <PlayerNerfCard
-              board={boardForDisplay}
-              playerColor={myColor}
-              myColor={myColor}
-              name="You"
-              elo={playerElo}
-              nerf={myNerf}
-              hideNerf={hideMyNerfCard}
-              ownerLabel=""
-              compact
-              progress={myNerf.progress?.(myState, myCtx) ?? null}
-              boons={myHeldBoons}
-              action={
-                gameMode === "buff" || plainMode ? null : (
-                  <button
-                    onClick={() => setSharedMine((v) => !v)}
-                    className={
-                      "w-full px-3 py-2 border transition text-xs font-semibold " +
-                      (sharedMine
-                        ? "border-gold/50 bg-gold/10 text-gold-leaf"
-                        : "border-white/15 bg-white/[0.03] text-parchment-200 hover:border-white/30 hover:bg-white/[0.06]")
-                    }
-                  >
-                    {sharedMine ? "Rule shared with opponent" : "Reveal my rule to opponent"}
-                  </button>
-                )
-              }
-            />
-          </aside>
+            }
+            center={
+              game.buffs ? (
+                <BuffDock
+                  game={game}
+                  myColor={myColor}
+                  canAct={
+                    !game.result && game.board.turn === myColor && !myOffer && !isReviewingHistory
+                  }
+                  onStartUse={(i) => {
+                    snapshotMySignature(i);
+                    buffTargeting.start(i);
+                  }}
+                  plays={oppLog}
+                />
+              ) : undefined
+            }
+            self={
+              <PlayerNerfCard
+                board={boardForDisplay}
+                playerColor={myColor}
+                myColor={myColor}
+                name="You"
+                elo={playerElo}
+                nerf={myNerf}
+                hideNerf={hideMyNerfCard}
+                ownerLabel=""
+                compact
+                progress={myNerf.progress?.(myState, myCtx) ?? null}
+                boons={myHeldBoons}
+                action={
+                  gameMode === "buff" || plainMode ? null : (
+                    <Button
+                      tone={sharedMine ? "leaf" : "ghost"}
+                      size="sm"
+                      block
+                      onClick={() => setSharedMine((v) => !v)}
+                    >
+                      {sharedMine ? "Rule shared with opponent" : "Reveal my rule to opponent"}
+                    </Button>
+                  )
+                }
+              />
+            }
+          />
           <RailResizeHandle railWidth={railWidth} resizeRail={resizeRail} />
           <div className="flex min-h-0 flex-col gap-2 sm:flex-row sm:items-stretch sm:justify-start">
             <div ref={boardShellRef} className="min-h-0 min-w-0 sm:flex-none">
