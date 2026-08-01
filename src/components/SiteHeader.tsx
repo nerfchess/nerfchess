@@ -14,6 +14,7 @@ import { SettingsPanel } from "@/components/SettingsPanel";
 import { AccountUser, ensureAccount, logout } from "@/lib/authClient";
 import { playChallenge } from "@/lib/sounds";
 import { Button } from "@/components/ui/Button";
+import { LinkButton } from "@/components/ui/Button";
 
 // Site-wide header, Lichess-style: main nav on the left; on the right a user
 // search, incoming challenges, notifications, and the account menu.
@@ -499,12 +500,11 @@ export function SiteHeader({ active }: { active?: string }) {
         {user === undefined ? (
           <span className="h-9 w-24" />
         ) : !user ? (
-          <Link
+          <LinkButton tone="ghost"
             href="/login"
-            className="btn-ghost press ml-1 inline-flex items-center min-h-[44px] px-3 py-2 font-display text-sm text-gold-leaf no-underline"
-          >
+            className="ml-1 px-3 py-2 text-sm text-gold-leaf">
             Sign in
-          </Link>
+          </LinkButton>
         ) : (
           <>
             <div className="ml-1 flex items-center gap-1">
@@ -536,12 +536,11 @@ export function SiteHeader({ active }: { active?: string }) {
               {user.isGuest && (
                 <>
                   <span aria-hidden className="hidden text-parchment-500 sm:inline">·</span>
-                  <Link
+                  <LinkButton tone="ghost"
                     href="/login"
-                    className="btn-ghost press hidden min-h-[44px] items-center px-2.5 py-1.5 font-display text-sm text-gold-leaf no-underline sm:inline-flex"
-                  >
+                    className="hidden px-2.5 py-1.5 text-sm text-gold-leaf sm:inline-flex">
                     Sign in
-                  </Link>
+                  </LinkButton>
                 </>
               )}
             </div>

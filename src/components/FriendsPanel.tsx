@@ -9,6 +9,7 @@ import { PresenceBadge } from "./PresenceBadge";
 import { derivePresence, useLobbyFeed, type PresenceState } from "@/lib/presence";
 import type { MPLobby } from "@/lib/multiplayer";
 import { Button } from "@/components/ui/Button";
+import { LinkButton } from "@/components/ui/Button";
 
 // Friends list + add-a-friend + incoming/outgoing requests, with a one-tap
 // Challenge that deep-links into the friend-game flow (/friend?challenge=name),
@@ -283,12 +284,11 @@ export function FriendsPanel() {
       {empty ? (
         <div className="empty-vault">
           <p className="text-[13px]">Add friends by username to challenge them in one tap.</p>
-          <Link
+          <LinkButton tone="ghost"
             href="/lobby"
-            className="btn-ghost press inline-flex min-h-[44px] items-center px-4 font-display text-[13px] no-underline sm:min-h-9"
-          >
+            className="px-4 text-[13px] sm:min-h-9">
             Find players
-          </Link>
+          </LinkButton>
         </div>
       ) : (
         friends.length > 0 && (
@@ -363,24 +363,22 @@ function FriendRow({
         {/* Labels compress to icon-only below sm so actions never wrap; the
             aria-labels keep them readable. */}
         {presence.state === "in-game" && presence.gameId && (
-          <Link
+          <LinkButton tone="ghost"
             href={`/game/${encodeURIComponent(presence.gameId)}`}
             aria-label={`Watch ${f.username}'s game`}
-            className="btn-ghost press inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-1.5 px-3 font-display text-[13px] no-underline"
-          >
+            className="min-w-[44px] px-3 text-[13px]">
             <Eye size={14} strokeWidth={2.2} aria-hidden />
             <span className="hidden sm:inline">Watch</span>
-          </Link>
+          </LinkButton>
         )}
         {presence.state !== "in-game" && (
-          <Link
+          <LinkButton tone="leaf"
             href={`/friend?challenge=${encodeURIComponent(f.username)}`}
             aria-label={`Challenge ${f.username}`}
-            className="btn-leaf press inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-1.5 px-3 font-display text-[13px] font-semibold no-underline"
-          >
+            className="min-w-[44px] px-3 text-[13px] font-semibold">
             <Swords size={14} strokeWidth={2.3} aria-hidden />
             <span className="hidden sm:inline">Challenge</span>
-          </Link>
+          </LinkButton>
         )}
         <button
           onClick={onRemove}

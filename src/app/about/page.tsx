@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { InfoPageLayout, InfoSection } from "@/components/InfoPageLayout";
+import { LinkButton } from "@/components/ui/Button";
 
 export const metadata: Metadata = {
   title: "About Nerf Chess: the chess variant with secrets and power-ups",
@@ -47,12 +48,12 @@ export default function AboutPage() {
           rule library before you sit down at the board.
         </p>
         <div className="pt-2 flex flex-wrap gap-3">
-          <Link href="/play" className="px-5 py-2.5 rounded-sm btn-leaf font-display">
+          <LinkButton tone="leaf" href="/play" className="px-5 py-2.5">
             Start a game
-          </Link>
-          <Link href="/tutorial" className="px-5 py-2.5 rounded-sm btn-ghost font-display">
+          </LinkButton>
+          <LinkButton tone="ghost" href="/tutorial" className="px-5 py-2.5">
             Read the rules
-          </Link>
+          </LinkButton>
         </div>
       </InfoSection>
     </InfoPageLayout>

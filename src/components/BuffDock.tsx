@@ -17,6 +17,7 @@ import { BuffCard } from "./BuffCard";
 import { OppPlaysDockSection, type OppPlay } from "./OppPlaysLog";
 // Shares the dock pocket flash keyframes (and nothing else) with the overlay.
 import "./DraftOverlay.css";
+import { Button } from "@/components/ui/Button";
 
 // ---------------------------------------------------------------------------
 // Buff dock and targeting.
@@ -960,8 +961,9 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
             </p>
             {activatable &&
               (usable ? (
-                <button
-                  type="button"
+                <Button
+                  tone="leaf"
+                  size="xs"
                   // Second input path (additive): drag the usable card onto a
                   // highlighted board square to pick it. Native HTML5 drag is
                   // separate from the board's pointer-drag, so the click flow is
@@ -982,10 +984,10 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
                   // frosted btn-glass: this Use control rests in the dock for the
                   // whole game, and resting glass is reserved for the draft
                   // lock-in peak only (design system §5).
-                  className="btn-leaf mt-1.5 touch-manipulation px-2.5 py-1 font-display text-[13px] font-semibold tracking-wide max-sm:min-h-[44px] max-sm:w-full max-sm:px-4 max-sm:text-[14px] sm:cursor-grab sm:active:cursor-grabbing"
+                  className="mt-1.5 touch-manipulation px-2.5 py-1 text-[13px] font-semibold tracking-wide max-sm:min-h-[44px] max-sm:w-full max-sm:px-4 max-sm:text-[14px] sm:cursor-grab sm:active:cursor-grabbing"
                 >
                   Use
-                </button>
+                </Button>
               ) : (
                 <button
                   type="button"

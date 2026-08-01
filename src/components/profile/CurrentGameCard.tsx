@@ -13,6 +13,7 @@ import { emitTv } from "@/lib/telemetry/tv";
 import { clockLabel } from "@/lib/tournaments";
 import type { Color, Move } from "@/engine/types";
 import type { DraftMode } from "@/engine/buff";
+import { LinkButton } from "@/components/ui/Button";
 
 // "Playing right now": the profile's live-game plate. It is a THIN wrapper over
 // the exact same featured-tune pipeline the TV surfaces use (useFeaturedTune ->
@@ -244,12 +245,11 @@ export function CurrentGameCard({
                 </span>
               )}
             </span>
-            <Link
+            <LinkButton tone="leaf"
               href={`/game/${gameId}`}
-              className="relative z-10 btn-leaf inline-flex min-h-[44px] items-center px-4 font-display text-sm font-semibold"
-            >
+              className="relative z-10 px-4 text-sm font-semibold">
               {over ? "View replay" : "Watch live"}
-            </Link>
+            </LinkButton>
           </div>
         </>
       ) : (
@@ -266,12 +266,11 @@ export function CurrentGameCard({
                 : "Tuning in..."}
             </span>
           </span>
-          <Link
+          <LinkButton tone="leaf"
             href={`/game/${gameId}`}
-            className="relative z-10 btn-leaf inline-flex min-h-[44px] shrink-0 items-center px-4 font-display text-sm font-semibold"
-          >
+            className="relative z-10 shrink-0 px-4 text-sm font-semibold">
             Watch live
-          </Link>
+          </LinkButton>
         </div>
       )}
     </div>

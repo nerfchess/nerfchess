@@ -22,6 +22,7 @@ import { AccountUser, fetchMe } from "@/lib/authClient";
 import { ActiveGame, loadActiveGame, clearActiveGame } from "@/lib/multiplayer";
 import { NewHereChip } from "@/components/NewHereChip";
 import { Button } from "@/components/ui/Button";
+import { LinkButton } from "@/components/ui/Button";
 
 export default function HomePage() {
   return (
@@ -679,14 +680,13 @@ function CommunityProof() {
         )}
         <div className="flex flex-wrap items-center justify-center gap-3">
           {links.map(({ href, label, Icon }) => (
-            <Link
+            <LinkButton tone="ghost"
               key={href}
               href={href}
-              className="btn-ghost press flex items-center gap-2 px-4 py-2 text-[14px] no-underline"
-            >
+              className="flex px-4 py-2 text-[14px]">
               <Icon size={16} aria-hidden />
               {label}
-            </Link>
+            </LinkButton>
           ))}
         </div>
       </div>

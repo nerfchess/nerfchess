@@ -74,6 +74,7 @@ import {
 } from "@/lib/spectate/spectatorSync";
 import type { DraftMode } from "@/engine/buff";
 import { Button } from "@/components/ui/Button";
+import { LinkButton } from "@/components/ui/Button";
 
 type Mode =
   | { kind: "loading" }
@@ -464,9 +465,9 @@ export default function OnlineGamePage() {
             to the lobby in {redirectIn}s&hellip;
           </p>
           <div className="mt-8 flex items-center justify-center gap-3">
-            <Link href="/tv" className="inline-block px-5 py-2 rounded-sm btn-leaf font-body">
+            <LinkButton tone="leaf" href="/tv" className="inline-block px-5 py-2 font-body">
               Watch another game
-            </Link>
+            </LinkButton>
             <Link
               href="/"
               className="inline-block px-5 py-2 rounded-sm border border-parchment-700 font-body text-parchment-200 hover:text-parchment-50"
@@ -489,9 +490,9 @@ export default function OnlineGamePage() {
             ? mode.message
             : "This game doesn't exist, or it hasn't been played yet."}
         </p>
-        <Link href="/lobby" className="inline-block mt-8 px-5 py-2 rounded-sm btn-leaf font-body">
+        <LinkButton tone="leaf" href="/lobby" className="inline-block mt-8 px-5 py-2 font-body">
           Back to the lobby
-        </Link>
+        </LinkButton>
       </section>
     </main>
   );

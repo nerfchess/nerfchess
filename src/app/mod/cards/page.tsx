@@ -234,16 +234,19 @@ export default function ModCardsPage() {
                 className="w-64 max-w-full bg-ink-900/70 border border-white/15 rounded-[1px] px-3 py-1.5 text-sm text-parchment placeholder:text-parchment-400/60 focus:outline-none focus:border-gold/60"
               />
               {(["all", "buff", "nerf"] as const).map((k) => (
-                <button
+                <Button
                   key={k}
                   onClick={() => setKind(k)}
                   aria-pressed={kind === k}
-                  className={`px-3 py-1.5 rounded-[1px] text-sm capitalize ${
-                    kind === k ? "border border-gold/60 bg-gold/10 text-gold-leaf" : "btn-ghost"
-                  }`}
+                  tone={kind === k ? "quiet" : "ghost"}
+                  size="sm"
+                  className={
+                    "capitalize " +
+                    (kind === k ? "border-gold/60 bg-gold/10 text-gold-leaf" : "")
+                  }
                 >
                   {k === "all" ? "All" : `${k}s`}
-                </button>
+                </Button>
               ))}
               <label className="flex items-center gap-2 text-sm text-parchment-300 ml-1">
                 <input

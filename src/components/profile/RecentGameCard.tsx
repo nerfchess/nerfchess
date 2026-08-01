@@ -7,6 +7,7 @@ import { PlayerLink } from "../PlayerLink";
 import { relativeTime } from "./relativeTime";
 import { clockLabel } from "@/lib/tournaments";
 import type { DraftMode } from "@/engine/buff";
+import { LinkButton } from "@/components/ui/Button";
 
 // One finished-game row as served by GET /api/users/[username]/games (and the
 // same shape the profile payload's recentGames carries). Only the fields this
@@ -117,12 +118,11 @@ export function RecentGameCard({ game, viewer }: { game: RecentGameRow; viewer: 
       </div>
 
       <div className="relative z-10 mt-3">
-        <Link
+        <LinkButton tone="leaf"
           href={`/game/${game.id}`}
-          className="relative z-10 btn-leaf inline-flex min-h-[44px] items-center px-4 font-display text-sm font-semibold"
-        >
+          className="relative z-10 px-4 text-sm font-semibold">
           View replay
-        </Link>
+        </LinkButton>
       </div>
     </div>
   );

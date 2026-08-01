@@ -314,15 +314,12 @@ export function ClipModal({
             </div>
 
             <div className="mt-3 grid grid-cols-1 gap-2">
-              <button
-                type="button"
+              <Button
+                tone={recording ? "ghost" : "leaf"}
                 onClick={record}
                 disabled={recording || !ready}
                 data-clip-record
-                className={
-                  "min-h-[44px] rounded-sm px-5 py-2.5 font-display font-semibold " +
-                  (recording ? "btn-ghost opacity-80 cursor-default" : "btn-leaf")
-                }
+                className={"font-semibold " + (recording ? "opacity-80 cursor-default" : "")}
               >
                 {recording ? (
                   <span className="inline-flex items-center gap-2">
@@ -339,7 +336,7 @@ export function ClipModal({
                 ) : (
                   "Record clip"
                 )}
-              </button>
+              </Button>
             </div>
 
             {error && (

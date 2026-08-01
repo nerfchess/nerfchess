@@ -17,6 +17,7 @@ import {
   tournamentPhase,
 } from "@/lib/tournaments";
 import { Button } from "@/components/ui/Button";
+import { LinkButton } from "@/components/ui/Button";
 
 type DetailResponse = {
   tournament: TournamentDetail;
@@ -92,9 +93,9 @@ export default function TournamentDetailPage() {
         <SiteHeader active="/tournaments" />
         <section className="mx-auto max-w-3xl px-6 py-16 text-center">
           <p className="text-parchment-300">{error}</p>
-          <Link href="/tournaments" className="mt-4 inline-block btn-ghost px-4 py-2 font-display text-sm">
+          <LinkButton tone="ghost" href="/tournaments" className="mt-4 inline-block px-4 py-2 text-sm">
             Back to tournaments
-          </Link>
+          </LinkButton>
         </section>
       </main>
     );
@@ -154,12 +155,11 @@ export default function TournamentDetailPage() {
                 {me === undefined ? null : phase === "finished" ? (
                   <span className="smallcaps text-[11px] text-parchment-500">Event over</span>
                 ) : !me ? (
-                  <Link
+                  <LinkButton tone="leaf"
                     href={`/login?next=/tournaments/${encodeURIComponent(id)}`}
-                    className="btn-leaf flex items-center gap-1.5 px-5 py-2.5 font-display text-sm font-semibold"
-                  >
+                    className="flex px-5 py-2.5 text-sm font-semibold">
                     <LogIn size={15} /> Sign in to join
-                  </Link>
+                  </LinkButton>
                 ) : entered ? (
                   <Button tone="ghost"
                     onClick={() => entry("withdraw")}

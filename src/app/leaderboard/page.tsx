@@ -15,6 +15,7 @@ import { isProvisionalRd, PROVISIONAL_RD } from "@/lib/ratingDisplay";
 import { laurelTier } from "@/lib/laurels";
 import { LaurelBadge } from "@/components/LaurelBadge";
 import { Button } from "@/components/ui/Button";
+import { LinkButton } from "@/components/ui/Button";
 
 interface Row {
   username: string;
@@ -160,9 +161,9 @@ export default function LeaderboardPage() {
                 className="px-4 py-2 text-sm font-semibold">
                 Retry
               </Button>
-              <Link href="/lobby" className="btn-ghost press px-4 py-2 text-sm">
+              <LinkButton tone="ghost" href="/lobby" className="px-4 py-2 text-sm">
                 Back to lobby
-              </Link>
+              </LinkButton>
             </div>
           </div>
         )}

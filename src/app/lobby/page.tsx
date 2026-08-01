@@ -18,6 +18,7 @@ import { categoryForTimeControl, getCategory } from "@/lib/ratingCategories";
 import { EngravedLabel } from "@/components/dungeon/primitives";
 import "@/components/dungeon/dungeon-lobby.css";
 import { Button } from "@/components/ui/Button";
+import { LinkButton } from "@/components/ui/Button";
 
 // The lobby: the central place to find a game, dressed edge to edge in the
 // dungeon material set (dungeon-lobby.css): a torchlit wash over the shared
@@ -1155,17 +1156,16 @@ function LiveGameRow({ game }: { game: MPLobbyGame }) {
           {game.watchers > 0 && <span>{game.watchers} watching</span>}
         </div>
       </div>
-      <Link
+      <LinkButton tone="ghost"
         href={`/game/${game.id}${game.origin === "arena" ? "?src=arena" : ""}`}
         aria-label={`Watch ${game.players.w.name} versus ${game.players.b.name}`}
-        className="btn-ghost press shrink-0 inline-flex items-center gap-1.5 px-4 py-2 font-display text-sm"
-      >
+        className="shrink-0 px-4 py-2 text-sm">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
           <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
           <circle cx="12" cy="12" r="3" />
         </svg>
         Watch
-      </Link>
+      </LinkButton>
     </li>
   );
 }

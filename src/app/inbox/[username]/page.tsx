@@ -7,6 +7,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { PlayerLink } from "@/components/PlayerLink";
 import { AccountUser, fetchMe } from "@/lib/authClient";
 import { Button } from "@/components/ui/Button";
+import { LinkButton } from "@/components/ui/Button";
 
 type ThreadMessage = { id: string; fromMe: boolean; text: string; at: number };
 type Thread = { peer: { username: string; avatar: string | null }; messages: ThreadMessage[] };
@@ -173,12 +174,11 @@ export default function ThreadPage() {
                 className="px-5 text-[13px] font-semibold">
                 Retry
               </Button>
-              <Link
+              <LinkButton tone="ghost"
                 href="/inbox"
-                className="btn-ghost flex min-h-[44px] items-center px-5 font-display text-[13px]"
-              >
+                className="flex px-5 text-[13px]">
                 Back to inbox
-              </Link>
+              </LinkButton>
             </div>
           </div>
         )}

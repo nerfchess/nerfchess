@@ -179,6 +179,13 @@ jobs:
       - name: Rounded corner guard
         run: npm run test:rounded
 
+      # Every button comes from <Button>, so a themed flagship material (the
+      # --btn-* contract) actually reaches it. Fails on a NEW hand-rolled
+      # button or on any call-site naming a btn-* class directly; the baseline
+      # of files still awaiting conversion may only shrink.
+      - name: Button guard
+        run: npm run test:buttons
+
       # Draft RNG fairness, offer sequencing, and deadline handling.
       - name: Draft fairness
         run: npm run test:draft-fairness

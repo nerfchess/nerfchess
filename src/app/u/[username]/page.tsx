@@ -48,6 +48,7 @@ import { fileToDataUrl } from "@/lib/imageUpload";
 import type { DraftMode } from "@/engine/buff";
 import { useModalChrome } from "@/lib/useModalChrome";
 import { Button } from "@/components/ui/Button";
+import { LinkButton } from "@/components/ui/Button";
 
 type Relationship = "self" | "none" | "friends" | "incoming" | "outgoing";
 
@@ -284,9 +285,9 @@ function ProfileContent() {
       <section className="mx-auto max-w-6xl px-5 py-8 sm:px-6">
         <h1 className="font-display text-4xl">Player not found</h1>
         <p className="mt-3 text-parchment-200">No account with that name.</p>
-        <Link href="/lobby" className="mt-6 inline-flex btn-leaf px-4 py-2 font-display text-sm font-semibold">
+        <LinkButton tone="leaf" href="/lobby" className="mt-6 px-4 py-2 text-sm font-semibold">
           Back to the lobby
-        </Link>
+        </LinkButton>
       </section>
     );
   }
@@ -820,12 +821,11 @@ function HeaderActions({
   if (isOwner) {
     return (
       <div className="flex shrink-0 flex-wrap items-center gap-2">
-        <Link
+        <LinkButton tone="ghost"
           href="/profile/edit"
-          className="btn-ghost inline-flex min-h-[44px] items-center px-4 font-display text-sm"
-        >
+          className="px-4 text-sm">
           Edit profile
-        </Link>
+        </LinkButton>
         <ShareButton username={user.username} />
       </div>
     );

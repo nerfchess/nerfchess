@@ -40,6 +40,7 @@ import { EmptyState } from "../EmptyState";
 import { derivePresence, useLobbyFeed, type Presence, type PresenceState } from "@/lib/presence";
 import type { MPLobby } from "@/lib/multiplayer";
 import { Button } from "@/components/ui/Button";
+import { LinkButton } from "@/components/ui/Button";
 
 // ---- Shared shapes ----------------------------------------------------------
 
@@ -332,22 +333,20 @@ function FriendRow({
       <Identity f={f} lobby={lobby} presence={presence} />
       <div className="ml-auto flex shrink-0 items-center gap-1.5">
         {presence.state === "in-game" && presence.gameId && (
-          <Link
+          <LinkButton tone="ghost"
             href={`/game/${encodeURIComponent(presence.gameId)}`}
-            className="btn-ghost inline-flex min-h-[44px] items-center gap-1.5 px-3 font-display text-[13px] no-underline"
-          >
+            className="px-3 text-[13px]">
             <Eye size={14} strokeWidth={2.2} aria-hidden />
             Watch
-          </Link>
+          </LinkButton>
         )}
         {presence.state === "online" && (
-          <Link
+          <LinkButton tone="leaf"
             href={`/friend?challenge=${encodeURIComponent(f.username)}`}
-            className="btn-leaf inline-flex min-h-[44px] items-center gap-1.5 px-3 font-display text-[13px] font-semibold no-underline"
-          >
+            className="px-3 text-[13px] font-semibold">
             <Swords size={14} strokeWidth={2.3} aria-hidden />
             Challenge
-          </Link>
+          </LinkButton>
         )}
         <RowMenu username={f.username} busy={busy} onRemove={onRemove} />
       </div>
@@ -528,13 +527,12 @@ function PublicFriends({ username }: { username: string }) {
             >
               <Identity f={f} lobby={lobby} presence={presence} tag={f.mutual ? "Mutual" : undefined} />
               {presence.state === "in-game" && presence.gameId && (
-                <Link
+                <LinkButton tone="ghost"
                   href={`/game/${encodeURIComponent(presence.gameId)}`}
-                  className="btn-ghost ml-auto inline-flex min-h-[44px] shrink-0 items-center gap-1.5 px-3 font-display text-[13px] no-underline"
-                >
+                  className="ml-auto shrink-0 px-3 text-[13px]">
                   <Eye size={14} strokeWidth={2.2} aria-hidden />
                   Watch
-                </Link>
+                </LinkButton>
               )}
             </div>
           );

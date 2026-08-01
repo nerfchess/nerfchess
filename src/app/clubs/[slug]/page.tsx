@@ -12,6 +12,7 @@ import { CLUB_ICON_COLORS, CLUB_ICON_NAMES, encodeClubIcon, isUploadedClubIcon, 
 import { fileToDataUrl } from "@/lib/imageUpload";
 import type { ClubMemberRow, ClubPostRow, ClubTournamentRow } from "@/app/api/clubs/[slug]/route";
 import { Button } from "@/components/ui/Button";
+import { LinkButton } from "@/components/ui/Button";
 
 // Club home, lichess-teams-style: description and members on one side, the
 // club's events and a members-only message board on the other.
@@ -282,9 +283,9 @@ export default function ClubPage() {
         <SiteHeader active="/clubs" />
         <section className="mx-auto max-w-3xl px-6 py-16 text-center">
           <p className="text-parchment-300">{error}</p>
-          <Link href="/clubs" className="mt-4 inline-block btn-ghost px-4 py-2 font-display text-sm">
+          <LinkButton tone="ghost" href="/clubs" className="mt-4 inline-block px-4 py-2 text-sm">
             Back to clubs
-          </Link>
+          </LinkButton>
         </section>
       </main>
     );
@@ -350,12 +351,11 @@ export default function ClubPage() {
                   </Button>
                 )}
                 {isMember && (
-                  <Link
+                  <LinkButton tone="ghost"
                     href={`/tournaments?club=${encodeURIComponent(club.id)}`}
-                    className="btn-ghost flex items-center gap-1.5 px-4 py-2 font-display text-sm"
-                  >
+                    className="flex px-4 py-2 text-sm">
                     <Trophy size={14} /> New event
-                  </Link>
+                  </LinkButton>
                 )}
               </div>
             </div>

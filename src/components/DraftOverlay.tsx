@@ -2085,11 +2085,12 @@ export function DraftOverlay({
         )}
 
         <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-center">
-          <button
+          <Button
+            tone="primary"
             onClick={confirmSelection}
             disabled={selected == null || chosen != null || banking}
             className={
-              "btn-glass btn-glass--primary w-full touch-manipulation px-8 py-3 font-display text-base font-semibold tracking-wide sm:w-auto" +
+              "w-full touch-manipulation px-8 py-3 text-base font-semibold tracking-wide sm:w-auto" +
               // With a card selected the commit is THE action: it picks up a
               // gold ready-glow so it clearly outranks Reroll / Skip & bank.
               (selected != null && chosen == null && !banking ? " draft-confirm-ready" : "")
@@ -2100,7 +2101,7 @@ export function DraftOverlay({
             {selected != null
               ? `Confirm ${BUFF_BY_ID[offer.cards[selected]?.id]?.name ?? "pick"}`
               : "Pick a card"}
-          </button>
+          </Button>
           {canReroll && (
             <Button tone="glass"
               onClick={handleReroll}
@@ -2117,12 +2118,13 @@ export function DraftOverlay({
               <>
                 {/* Second step: banking sends this draft to the bank and rolls
                     your next one a tier higher, so it asks before committing. */}
-                <button
+                <Button
+                  tone="glass"
                   ref={bankBtnRef}
                   onClick={handleBank}
                   disabled={chosen != null || banking}
                   className={
-                    "btn-glass w-full touch-manipulation rounded-[1px] border border-coral/50 px-6 py-3 font-display text-sm font-semibold tracking-wide text-coral-glow sm:w-auto" +
+                    "w-full touch-manipulation border-coral/50 px-6 py-3 font-semibold tracking-wide text-coral-glow sm:w-auto" +
                     // The vault takes the deposit: one pulse as the face-down
                     // cards land in the button.
                     (banking ? " bank-pulse" : "")
@@ -2130,7 +2132,7 @@ export function DraftOverlay({
                   title="Bank this draft and roll a tier higher next time"
                 >
                   Bank this draft?
-                </button>
+                </Button>
                 <button
                   type="button"
                   onClick={() => setBankArmed(false)}

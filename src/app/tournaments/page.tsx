@@ -16,6 +16,7 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Plus, Trophy, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { LinkButton } from "@/components/ui/Button";
 
 interface Club {
   id: string;
@@ -190,9 +191,9 @@ export default function TournamentsPage() {
             <p className="mt-2 text-[13px] text-parchment-300">Scheduled arenas for the Nerfchess ladder.</p>
           </div>
           <div className="flex items-center gap-2">
-            <Link href="/clubs" className="btn-ghost press px-4 py-2 font-display text-[13px]">
+            <LinkButton tone="ghost" href="/clubs" className="px-4 py-2 text-[13px]">
               Clubs
-            </Link>
+            </LinkButton>
             <Button tone="leaf"
              
               onClick={() => setShowCreate((v) => !v)}
@@ -217,9 +218,9 @@ export default function TournamentsPage() {
                 className="px-4 py-2 text-[13px] font-semibold">
                 Retry
               </Button>
-              <Link href="/lobby" className="btn-ghost press px-4 py-2 font-display text-[13px]">
+              <LinkButton tone="ghost" href="/lobby" className="px-4 py-2 text-[13px]">
                 Back to lobby
-              </Link>
+              </LinkButton>
             </div>
           </div>
         )}

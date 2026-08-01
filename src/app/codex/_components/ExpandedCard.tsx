@@ -6,6 +6,7 @@ import { ExternalLink, Link2, X } from "lucide-react";
 import { affectedLine } from "./affected";
 import { entryPath, type CodexEntry } from "./codexData";
 import { Button } from "@/components/ui/Button";
+import { LinkButton } from "@/components/ui/Button";
 
 // The full card renderers pull in framer-motion (NerfCard) and the heavier card
 // faces; load them only when a row is actually expanded, so they stay out of
@@ -37,13 +38,12 @@ export function ExpandedCard({
   return (
     <div className="plate-raised rounded-sm border border-[color:var(--edge-strong)] p-3">
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <Link
+        <LinkButton tone="ghost"
           href={path}
-          className="inline-flex items-center gap-1.5 rounded-sm btn-ghost px-3 py-1.5 font-display text-[13px]"
-        >
+          className="px-3 py-1.5 text-[13px]">
           <ExternalLink size={14} aria-hidden />
           Open card page
-        </Link>
+        </LinkButton>
         <Button tone="ghost"
          
           onClick={onCopy}

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { LinkButton } from "@/components/ui/Button";
 
 // The four rule families a player can suggest. Nerfs are the secret handicaps;
 // buffs are Buff-mode draft cards; boons are Nerf-mode relief cards; hexes are
@@ -167,17 +168,15 @@ export default function SuggestRulePage() {
               ? "border border-mode-nerf/50 bg-mode-nerf/10 text-mode-nerfGlow"
               : "border border-mode-buff/50 bg-mode-buff/10 text-mode-buffGlow";
             return (
-              <button
+              <Button
                 key={rt.id}
-                type="button"
                 onClick={() => setType(rt.id)}
                 aria-pressed={selected}
-                className={`inline-flex items-center gap-2 px-4 py-2 rounded-[1px] font-display text-sm transition ${
-                  selected ? activeClass : "btn-ghost"
-                }`}
+                tone={selected ? "quiet" : "ghost"}
+                className={selected ? activeClass : ""}
               >
                 {rt.label}
-              </button>
+              </Button>
             );
           })}
         </div>
@@ -199,9 +198,9 @@ export default function SuggestRulePage() {
                 className="px-5 py-2.5 text-sm">
                 Suggest another
               </Button>
-              <Link href="/codex" className="btn-leaf px-5 py-2.5 font-display text-sm font-semibold inline-flex items-center">
+              <LinkButton tone="leaf" href="/codex" className="px-5 py-2.5 text-sm font-semibold">
                 Back to the rules
-              </Link>
+              </LinkButton>
             </div>
           </div>
         ) : (

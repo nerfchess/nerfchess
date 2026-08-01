@@ -43,6 +43,7 @@ import {
 } from "@/components/settings/controls";
 import "./SettingsPanel.css";
 import { Button } from "@/components/ui/Button";
+import { LinkButton } from "@/components/ui/Button";
 
 interface Props {
   open: boolean;
@@ -785,12 +786,11 @@ function AccountSettings() {
           <div className="text-[13px] font-medium text-parchment-100">Profile</div>
           <p className="text-[12px] text-parchment-400">Avatar, bio, and game history</p>
         </div>
-        <Link
+        <LinkButton tone="ghost"
           href="/profile"
-          className="btn-ghost press min-h-[36px] shrink-0 rounded-[1px] px-3 py-1.5 font-display text-[13px]"
-        >
+          className="shrink-0 px-3 py-1.5 text-[13px]">
           Edit profile
-        </Link>
+        </LinkButton>
       </div>
       {[
         { label: "Change username", hint: "Not available yet" },

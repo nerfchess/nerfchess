@@ -67,10 +67,84 @@ const NOT_PRODUCT = [
   "src/app/global-error.tsx", // renders without the app shell by design
 ];
 
-// Files still carrying bespoke buttons. This list may only SHRINK. Populated
-// from a report-only run; --strict fails on any file not listed here, and on
-// any listed file that has since been cleaned (a stale entry).
-const BASELINE: string[] = [];
+// Files still carrying bespoke buttons. This list may only SHRINK. --strict
+// fails on any file not listed here, and on any listed file that has since
+// been cleaned, so a converted file cannot silently stay listed.
+//
+// The mechanical debt is already paid: a codemod took the raw btn-* call-sites
+// from 212 to 8. What is left is the judgement work — every entry below is a
+// button hand-rolled from inline Tailwind, and some of them are not buttons at
+// all (an identity chip with a hairline is an affordance, and turning it into a
+// slab would be a regression). They come off this list as their surface is
+// touched, not in one sweep.
+const BASELINE: string[] = [
+  "src/app/achievements/page.tsx",
+  "src/app/analysis/page.tsx",
+  "src/app/clubs/[slug]/page.tsx",
+  "src/app/clubs/page.tsx",
+  "src/app/codex/_components/CodexBrowser.tsx",
+  "src/app/codex/_components/CodexRow.tsx",
+  "src/app/codex/suggest/page.tsx",
+  "src/app/community/page.tsx",
+  "src/app/error.tsx",
+  "src/app/game/[id]/page.tsx",
+  "src/app/game/page.tsx",
+  "src/app/history/[id]/page.tsx",
+  "src/app/history/page.tsx",
+  "src/app/inbox/page.tsx",
+  "src/app/lobby/page.tsx",
+  "src/app/login/page.tsx",
+  "src/app/mod/cards/page.tsx",
+  "src/app/mod/house/page.tsx",
+  "src/app/mod/page.tsx",
+  "src/app/mod/stats/page.tsx",
+  "src/app/page.tsx",
+  "src/app/play/page.tsx",
+  "src/app/profile/edit/page.tsx",
+  "src/app/profile/page.tsx",
+  "src/app/tournaments/[id]/page.tsx",
+  "src/app/tournaments/page.tsx",
+  "src/app/tutorial/walkthrough/page.tsx",
+  "src/app/tv/page.tsx",
+  "src/app/u/[username]/page.tsx",
+  "src/components/AccountChip.tsx",
+  "src/components/AchievementToast.tsx",
+  "src/components/AdminGodPanel.tsx",
+  "src/components/Board.tsx",
+  "src/components/BuffDock.tsx",
+  "src/components/ChatPanel.tsx",
+  "src/components/CurrentGameCard.tsx",
+  "src/components/DraftOverlay.tsx",
+  "src/components/FriendGame.tsx",
+  "src/components/GameOver.tsx",
+  "src/components/LiveRvPanel.tsx",
+  "src/components/MobileBuffDrawer.tsx",
+  "src/components/MobileMoveDrawer.tsx",
+  "src/components/MobileNavMenu.tsx",
+  "src/components/MoveList.tsx",
+  "src/components/NewHereChip.tsx",
+  "src/components/OnlineMatch.tsx",
+  "src/components/OpenLobbyPanel.tsx",
+  "src/components/OppPlaysLog.tsx",
+  "src/components/OpponentDraftPanel.tsx",
+  "src/components/OpponentDraftViewer.tsx",
+  "src/components/PlayerSearch.tsx",
+  "src/components/PlayerStatsPanel.tsx",
+  "src/components/QueueButton.tsx",
+  "src/components/RatingChart.tsx",
+  "src/components/SettingsBootstrap.tsx",
+  "src/components/SettingsPanel.tsx",
+  "src/components/SiteHeader.tsx",
+  "src/components/SpectatorPill.tsx",
+  "src/components/clip/ClipModal.tsx",
+  "src/components/codex/CardDetail.tsx",
+  "src/components/guide/KeyTerms.tsx",
+  "src/components/mod/PlayersSection.tsx",
+  "src/components/mod/ui.tsx",
+  "src/components/profile/FriendsModule.tsx",
+  "src/components/ratings/CategoryTabs.tsx",
+  "src/components/ratings/RatingHistoryPanel.tsx",
+];
 
 function walk(dir: string, out: string[] = []): string[] {
   for (const entry of readdirSync(dir)) {

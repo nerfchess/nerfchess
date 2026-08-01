@@ -259,16 +259,17 @@ function AnalysisInner() {
               <button className={navBtn} onClick={reset} aria-label="Reset board" title="Reset board">
                 <RotateCcw size={15} />
               </button>
-              <button
+              <Button
+                tone={engineOn ? "quiet" : "ghost"}
+                size="sm"
                 onClick={() => setEngineOn((v) => !v)}
                 className={
-                  "press ml-auto flex items-center gap-1.5 px-3 py-2 text-sm transition-colors " +
-                  (engineOn ? "bg-white/10 text-gold-leaf" : "btn-ghost text-parchment-300")
+                  "ml-auto " + (engineOn ? "bg-white/10 text-gold-leaf" : "text-parchment-300")
                 }
                 title="Toggle engine"
               >
                 <Cpu size={14} /> Engine
-              </button>
+              </Button>
             </div>
           </div>
         </div>
