@@ -98,7 +98,7 @@
   height: min(190px, 47vw);
   margin-inline: auto;
   transform-style: preserve-3d;
-  animation: chest-breathe 3.4s ease-in-out 0.6s infinite;
+  animation: chest-breathe var(--chest-breathe-dur, 3.4s) ease-in-out 0.6s infinite;
 }
 .chest-shell--mini .chest-scene {
   width: 168px;
@@ -111,7 +111,7 @@
   95% { transform: translateY(-1px) rotate(-0.25deg); }
 }
 .chest-shell--opening .chest-scene {
-  animation: chest-quake 0.34s linear both;
+  animation: chest-quake var(--chest-quake-dur, 0.34s) linear both;
 }
 @keyframes chest-quake {
   0%, 100% { transform: translate(0, 0) rotate(0deg); }
@@ -159,7 +159,7 @@ html[data-anim="off"] .chest-scene { animation: none; }
   -webkit-mask-image: radial-gradient(circle, #000 0%, rgba(0,0,0,0.5) 34%, transparent 62%);
   mask-image: radial-gradient(circle, #000 0%, rgba(0,0,0,0.5) 34%, transparent 62%);
   opacity: 0.8;
-  animation: chest-rays-turn 26s linear infinite;
+  animation: chest-rays-turn var(--chest-rays-dur, 26s) linear infinite;
 }
 @keyframes chest-rays-turn { to { transform: rotate(360deg); } }
 html[data-anim="off"] .chest-rays { animation: none; opacity: 0.4; }
@@ -170,7 +170,7 @@ html[data-anim="off"] .chest-rays { animation: none; opacity: 0.4; }
   position: absolute;
   inset: -12% -8%;
   pointer-events: none;
-  animation: chest-runes-orbit 14s linear infinite;
+  animation: chest-runes-orbit var(--chest-runes-dur, 14s) linear infinite;
 }
 .chest-runes b {
   position: absolute;
@@ -253,7 +253,7 @@ html[data-anim="off"] .chest-runes { animation: none; opacity: 0.4; }
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 .chest-shell--opening .chest-lid {
-  animation: chest-lid-open 0.62s cubic-bezier(0.34, 1.3, 0.5, 1) 0.16s both;
+  animation: chest-lid-open var(--chest-lid-dur, 0.62s) var(--chest-lid-ease, cubic-bezier(0.34, 1.3, 0.5, 1)) 0.16s both;
 }
 @keyframes chest-lid-open {
   0% { transform: rotateX(0deg); }
@@ -312,7 +312,7 @@ html[data-anim="off"] .chest-seam { animation: none; }
   z-index: 1;
 }
 .chest-shell--opening .chest-shaft {
-  animation: chest-shaft-rise 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.24s both;
+  animation: chest-shaft-rise var(--chest-shaft-dur, 0.6s) var(--chest-lid-ease, cubic-bezier(0.2, 0.8, 0.2, 1)) 0.24s both;
 }
 @keyframes chest-shaft-rise {
   0% { transform: translateX(-50%) scaleY(0); opacity: 0; }
@@ -704,3 +704,86 @@ html[data-theme="aurora"] .chest-shell[data-band="gilded"] {
   --chest-wood: #1e1f3e;
   --chest-wood-deep: #131328;
 }
+
+/* --- Flagship chest motion -------------------------------------------------
+   Each flagship already re-skinned the three mundane bands and set a brightness
+   multiplier. What it did not own was HOW THE CHEST MOVES, which is the part a
+   player actually watches: the same 0.34s quake and the same overshooting lid
+   in every theme, however different the room around it looked.
+
+   Motion is tokens now, defaulted to today's values (the ten tints are
+   unchanged). The tier bands, the tier tint and the relic treatments are still
+   deliberately untouched everywhere — a violet arcane chest meaning tier 7-8 is
+   a promise that has to hold in every room. Only the CHOREOGRAPHY is themed. */
+
+/* Obsidian: heavy. A long low shudder like something geological giving way,
+   and a lid that swings without a hint of bounce. */
+html[data-theme="obsidian"] .chest-shell {
+  --chest-quake-dur: 0.52s;
+  --chest-lid-dur: 0.78s;
+  --chest-lid-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --chest-shaft-dur: 0.72s;
+  --chest-breathe-dur: 4.6s;
+  --chest-rays-dur: 34s;
+  --chest-runes-dur: 18s;
+}
+
+/* Porcelain: no drama. Barely a tremor and a fast, exact lid — a display case
+   being opened, not a vault being cracked. */
+html[data-theme="porcelain"] .chest-shell {
+  --chest-quake-dur: 0.2s;
+  --chest-lid-dur: 0.38s;
+  --chest-lid-ease: cubic-bezier(0.25, 1, 0.35, 1);
+  --chest-shaft-dur: 0.34s;
+  --chest-breathe-dur: 5.5s;
+  --chest-rays-dur: 44s;
+  --chest-runes-dur: 24s;
+}
+/* A glass case does not shake. The quake becomes a single crisp settle. */
+html[data-theme="porcelain"] .chest-shell--opening .chest-scene {
+  animation: chest-porcelain-settle 0.2s var(--ease-out) both;
+}
+@keyframes chest-porcelain-settle {
+  0% { transform: translateY(0) scale(1); }
+  45% { transform: translateY(-1.5px) scale(1.012); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+/* Neon: snappy and overshooting, the way the whole theme moves. */
+html[data-theme="neon"] .chest-shell {
+  --chest-quake-dur: 0.22s;
+  --chest-lid-dur: 0.44s;
+  --chest-lid-ease: cubic-bezier(0.2, 1.75, 0.4, 1);
+  --chest-shaft-dur: 0.4s;
+  --chest-breathe-dur: 2.4s;
+  --chest-rays-dur: 14s;
+  --chest-runes-dur: 8s;
+}
+
+/* Jade: long and even. Nothing snaps, nothing overshoots — the lid rises on
+   one unbroken curve, which is the entire theme in one movement. */
+html[data-theme="jade"] .chest-shell {
+  --chest-quake-dur: 0.44s;
+  --chest-lid-dur: 0.86s;
+  --chest-lid-ease: cubic-bezier(0.4, 0.7, 0.2, 1);
+  --chest-shaft-dur: 0.8s;
+  --chest-breathe-dur: 5.2s;
+  --chest-rays-dur: 40s;
+  --chest-runes-dur: 22s;
+}
+
+/* Aurora: floaty. Slow rises, a long shaft, and the whole thing drifts rather
+   than settles. */
+html[data-theme="aurora"] .chest-shell {
+  --chest-quake-dur: 0.46s;
+  --chest-lid-dur: 0.8s;
+  --chest-lid-ease: cubic-bezier(0.18, 0.9, 0.25, 1);
+  --chest-shaft-dur: 0.86s;
+  --chest-breathe-dur: 4.8s;
+  --chest-rays-dur: 30s;
+  --chest-runes-dur: 20s;
+}
+
+/* Motion is still motion: the bespoke porcelain settle stands down with the
+   rest under data-anim="off", the same as the quake it replaces. */
+html[data-anim="off"] .chest-shell--opening .chest-scene { animation: none; }

@@ -24,9 +24,12 @@
    Porcelain's paper. The torch pools and treasure light already read energy
    tokens; what did not was the stone itself, the iron, and the engraved ink.
 
-   Those are tokens now, at exactly today's values. A flagship re-skins the
-   gate by setting these and nothing else — see docs/themes.md. */
-.dgn-gate {
+   Those are tokens now, at exactly today's values. They live on :root, NOT on
+   .dgn-gate: a value set on the element itself would beat the one a theme
+   inherits down from html[data-theme], and the gate would stay warm granite in
+   every room no matter what the theme asked for. A flagship re-skins the gate
+   by setting these and nothing else — see docs/themes.md. */
+:root {
   --gate-stone-hi: #3a332b;   /* the lit top course */
   --gate-stone-mid: #2a241e;
   --gate-stone-lo: #1d1915;   /* the shadowed foot */
@@ -38,6 +41,9 @@
   --gate-ink-hover: #fdf3d8;  /* the label once the runes ignite */
   --gate-light: 255 235 200;  /* face light, top light, grain sparks */
 
+}
+
+.dgn-gate {
   position: relative;
   overflow: hidden;
   isolation: isolate;
