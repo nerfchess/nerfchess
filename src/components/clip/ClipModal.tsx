@@ -8,7 +8,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { BoardState, Color, Move } from "@/engine/types";
 import type { GameResult } from "@/engine/game";
-import { BOARD_THEMES, PIECE_THEMES, loadSettings } from "@/lib/settings";
+import {
+  BOARD_THEMES,
+  PIECE_THEMES,
+  loadSettings,
+  resolveBoardTheme,
+  resolvePieceTheme,
+} from "@/lib/settings";
 import { buildClipTimeline } from "./clipReplay";
 import { ClipRenderer, clipTimings, type ClipRendererHandle } from "./ClipRenderer";
 import { useModalChrome } from "@/lib/useModalChrome";
@@ -64,10 +70,13 @@ export function ClipModal({
   // mid-session and the modal is short-lived).
   const { colors, pieceSet } = useMemo(() => {
     const s = loadSettings();
-    const theme = BOARD_THEMES[s.boardTheme] ?? BOARD_THEMES.wood;
+    // Resolve through the same path the live board uses: on "auto" the
+    // board is the theme's, and a clip that ignored that would export a
+    // different board than the one the player just watched.
+    const theme = BOARD_THEMES[resolveBoardTheme(s)] ?? BOARD_THEMES.wood;
     return {
       colors: { light: theme.light, dark: theme.dark },
-      pieceSet: PIECE_THEMES[s.pieceTheme]?.assetSet ?? "cburnett",
+      pieceSet: PIECE_THEMES[resolvePieceTheme(s)]?.assetSet ?? "cburnett",
     };
     // Re-read when the modal reopens.
     // eslint-disable-next-line react-hooks/exhaustive-deps

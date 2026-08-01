@@ -326,6 +326,223 @@ html[data-theme="aurora"] {
   --font-body: var(--f-manrope);
 }
 
+/* --- Flagship materials ----------------------------------------------------
+   What each theme's controls and surfaces are MADE of, via the --btn-* and
+   --gate-* contracts. Colour already came from the accent tokens; this is the
+   part that makes a volcanic-glass button and a glazed-porcelain one different
+   objects rather than the same object in two colours.
+
+   No gradient washes. Every treatment here is an edge, an inset, a raking
+   streak or a scanline — something that says what the surface is, not just what
+   hue it is. --btn-face is the one layer painted across a filled button, and
+   three of the five deliberately leave it `none`. */
+
+/* Obsidian: volcanic glass. A hard warm specular on the top edge, a deep floor,
+   sharp rivet glints, and one raking streak across the face as if a light
+   source were grazing polished stone. Heaviest of the five. */
+html[data-theme="obsidian"] {
+  --btn-rim: rgba(0, 0, 0, 0.72);
+  --btn-top-light: rgba(255, 214, 184, 0.30);
+  --btn-floor: rgba(0, 0, 0, 0.78);
+  --btn-drop: rgba(0, 0, 0, 0.7);
+  --btn-glint-1: 0.72;
+  --btn-glint-2: 0.5;
+  --btn-face: linear-gradient(104deg, transparent 34%, rgba(255, 236, 216, 0.09) 45%, rgba(255, 236, 216, 0.02) 49%, transparent 56%);
+  --btn-ghost-fill: linear-gradient(to bottom, rgba(255, 220, 200, 0.045), rgba(0, 0, 0, 0.06)), rgba(0, 0, 0, 0.3);
+  --btn-ghost-edge: rgba(255, 160, 100, 0.16);
+  --btn-ghost-edge-hover: rgba(255, 160, 100, 0.4);
+  --btn-ghost-fill-hover: rgba(255, 190, 150, 0.08);
+  --btn-ghost-fill-active: rgba(255, 190, 150, 0.13);
+  --btn-ghost-top-light: rgba(255, 220, 200, 0.1);
+  --btn-ghost-floor: rgba(0, 0, 0, 0.6);
+  --btn-glass-pane: rgba(255, 200, 160, 0.05);
+  --btn-glass-edge: rgba(255, 170, 110, 0.22);
+  --btn-glass-pane-hover: rgba(255, 200, 160, 0.09);
+  --btn-glass-edge-hover: rgba(255, 170, 110, 0.45);
+  --btn-glass-top-light: rgba(255, 226, 200, 0.2);
+  --btn-glass-blur: 6px;
+  /* The gate is cooled basalt with the magma still in the joints. */
+  --gate-stone-hi: #2b2430;
+  --gate-stone-mid: #1d1822;
+  --gate-stone-lo: #120e17;
+  --gate-iron: 150 110 78;
+  --gate-iron-plate: 74 56 44;
+  --gate-rivet: 255 196 150;
+  --gate-ink: #f4e3d6;
+  --gate-ink-hi: #ffeeda;
+  --gate-ink-hover: #fff6e8;
+  --gate-light: 255 214 184;
+}
+
+/* Porcelain: glazed tile. A hairline edge instead of an iron rim, a bright
+   glaze highlight, almost no floor (glaze does not pool shadow), no rivet
+   glints, no face treatment and no frost. The restraint IS the material. */
+html[data-theme="porcelain"] {
+  --btn-rim: rgba(35, 33, 43, 0.24);
+  --btn-top-light: rgba(255, 255, 255, 0.9);
+  --btn-floor: rgba(35, 33, 43, 0.08);
+  --btn-drop: rgba(35, 33, 43, 0.18);
+  --btn-glint-1: 0;
+  --btn-glint-2: 0;
+  --btn-face: none;
+  --btn-ghost-fill: linear-gradient(to bottom, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.72)), #ffffff;
+  --btn-ghost-edge: rgba(42, 85, 184, 0.28);
+  --btn-ghost-edge-hover: rgba(42, 85, 184, 0.55);
+  --btn-ghost-fill-hover: rgba(42, 85, 184, 0.07);
+  --btn-ghost-fill-active: rgba(42, 85, 184, 0.12);
+  --btn-ghost-top-light: rgba(255, 255, 255, 0.95);
+  --btn-ghost-floor: rgba(35, 33, 43, 0.09);
+  --btn-glass-pane: rgba(255, 255, 255, 0.72);
+  --btn-glass-edge: rgba(35, 33, 43, 0.16);
+  --btn-glass-pane-hover: rgba(255, 255, 255, 0.9);
+  --btn-glass-edge-hover: rgba(42, 85, 184, 0.45);
+  --btn-glass-top-light: rgba(255, 255, 255, 0.95);
+  --btn-glass-blur: 0px;
+  /* The gate becomes a glazed white slab with cobalt ink, not dark granite. */
+  --gate-stone-hi: #ffffff;
+  --gate-stone-mid: #f4f1ea;
+  --gate-stone-lo: #e3ded2;
+  --gate-iron: 42 85 184;
+  --gate-iron-plate: 200 205 220;
+  --gate-rivet: 42 85 184;
+  --gate-ink: #23212b;
+  --gate-ink-hi: #1a2a52;
+  --gate-ink-hover: #2a55b8;
+  --gate-light: 42 85 184;
+}
+
+/* Neon: the edge is lit by the accent rather than by white, and a fine
+   scanline sits over the face. The only theme with a face treatment you can
+   actually see from across the room. */
+html[data-theme="neon"] {
+  --btn-rim: rgb(var(--accent-rgb) / 0.5);
+  --btn-top-light: rgba(255, 150, 224, 0.5);
+  --btn-floor: rgba(10, 7, 20, 0.82);
+  --btn-drop: rgba(20, 8, 40, 0.7);
+  --btn-glint-1: 0.9;
+  --btn-glint-2: 0.7;
+  --btn-face: repeating-linear-gradient(0deg, rgba(6, 2, 16, 0.17) 0 1px, transparent 1px 3px);
+  --btn-ghost-fill: repeating-linear-gradient(0deg, rgba(6, 2, 16, 0.16) 0 1px, transparent 1px 3px), linear-gradient(to bottom, rgba(255, 69, 200, 0.07), rgba(255, 69, 200, 0.02)), rgba(10, 7, 20, 0.5);
+  --btn-ghost-edge: rgb(var(--accent-rgb) / 0.32);
+  --btn-ghost-edge-hover: rgb(var(--accent-rgb) / 0.8);
+  --btn-ghost-fill-hover: rgb(var(--accent-rgb) / 0.14);
+  --btn-ghost-fill-active: rgb(var(--accent-rgb) / 0.22);
+  --btn-ghost-top-light: rgba(255, 150, 224, 0.22);
+  --btn-ghost-floor: rgba(6, 2, 16, 0.7);
+  --btn-glass-pane: rgba(255, 69, 200, 0.07);
+  --btn-glass-edge: rgb(var(--accent-rgb) / 0.45);
+  --btn-glass-pane-hover: rgba(255, 69, 200, 0.13);
+  --btn-glass-edge-hover: rgb(var(--accent-rgb) / 0.9);
+  --btn-glass-top-light: rgba(255, 150, 224, 0.3);
+  --btn-glass-blur: 10px;
+  /* The gate is an arcade cabinet bezel: dark indigo with magenta tubing. */
+  --gate-stone-hi: #221838;
+  --gate-stone-mid: #170f28;
+  --gate-stone-lo: #0e0819;
+  --gate-iron: 255 69 200;
+  --gate-iron-plate: 70 40 110;
+  --gate-rivet: 255 150 224;
+  --gate-ink: #f6e9ff;
+  --gate-ink-hi: #ffffff;
+  --gate-ink-hover: #ffd6f4;
+  --gate-light: 255 120 216;
+}
+
+/* Jade: lacquer. No hard edge anywhere — no rivet glints, no bright top light,
+   no face treatment. Everything is a soft deep interior, which is what lacquer
+   over wood actually looks like. The quietest of the five, on purpose. */
+html[data-theme="jade"] {
+  --btn-rim: rgba(4, 30, 24, 0.5);
+  --btn-top-light: rgba(233, 242, 236, 0.11);
+  --btn-floor: rgba(3, 18, 14, 0.55);
+  --btn-drop: rgba(3, 18, 14, 0.5);
+  --btn-glint-1: 0;
+  --btn-glint-2: 0;
+  --btn-face: none;
+  --btn-ghost-fill: linear-gradient(to bottom, rgba(233, 242, 236, 0.035), rgba(3, 18, 14, 0.05)), rgba(6, 26, 21, 0.4);
+  --btn-ghost-edge: rgba(47, 191, 159, 0.16);
+  --btn-ghost-edge-hover: rgba(47, 191, 159, 0.36);
+  --btn-ghost-fill-hover: rgba(47, 191, 159, 0.08);
+  --btn-ghost-fill-active: rgba(47, 191, 159, 0.13);
+  --btn-ghost-top-light: rgba(233, 242, 236, 0.05);
+  --btn-ghost-floor: rgba(3, 18, 14, 0.45);
+  --btn-glass-pane: rgba(47, 191, 159, 0.05);
+  --btn-glass-edge: rgba(47, 191, 159, 0.2);
+  --btn-glass-pane-hover: rgba(47, 191, 159, 0.1);
+  --btn-glass-edge-hover: rgba(47, 191, 159, 0.42);
+  --btn-glass-top-light: rgba(233, 242, 236, 0.1);
+  --btn-glass-blur: 8px;
+  /* The gate is a lacquered green panel with jade inlay, not carved granite. */
+  --gate-stone-hi: #14332a;
+  --gate-stone-mid: #0d241d;
+  --gate-stone-lo: #071812;
+  --gate-iron: 47 191 159;
+  --gate-iron-plate: 30 74 62;
+  --gate-rivet: 122 220 196;
+  --gate-ink: #e9f2ec;
+  --gate-ink-hi: #f4fbf7;
+  --gate-ink-hover: #ffffff;
+  --gate-light: 160 235 214;
+}
+
+/* Aurora: light from above, cool. A pale top light rather than a warm one, soft
+   half-strength glints, and a violet bloom under the slab instead of a black
+   drop — the shadow is lit, which is what polar light does. */
+html[data-theme="aurora"] {
+  --btn-rim: rgba(10, 16, 34, 0.62);
+  --btn-top-light: rgba(206, 224, 255, 0.3);
+  --btn-floor: rgba(7, 11, 24, 0.58);
+  --btn-drop: rgba(90, 60, 190, 0.45);
+  --btn-glint-1: 0.4;
+  --btn-glint-2: 0.28;
+  --btn-face: none;
+  --btn-ghost-fill: linear-gradient(to bottom, rgba(206, 224, 255, 0.06), rgba(157, 123, 255, 0.03)), rgba(9, 14, 30, 0.4);
+  --btn-ghost-edge: rgba(157, 123, 255, 0.22);
+  --btn-ghost-edge-hover: rgba(157, 123, 255, 0.5);
+  --btn-ghost-fill-hover: rgba(157, 123, 255, 0.1);
+  --btn-ghost-fill-active: rgba(157, 123, 255, 0.16);
+  --btn-ghost-top-light: rgba(206, 224, 255, 0.12);
+  --btn-ghost-floor: rgba(7, 11, 24, 0.5);
+  --btn-glass-pane: rgba(157, 123, 255, 0.06);
+  --btn-glass-edge: rgba(157, 123, 255, 0.26);
+  --btn-glass-pane-hover: rgba(157, 123, 255, 0.12);
+  --btn-glass-edge-hover: rgba(157, 123, 255, 0.55);
+  --btn-glass-top-light: rgba(206, 224, 255, 0.22);
+  --btn-glass-blur: 12px;
+  /* The gate is polar rock under a violet sky. */
+  --gate-stone-hi: #1b2540;
+  --gate-stone-mid: #121a30;
+  --gate-stone-lo: #0b1122;
+  --gate-iron: 157 123 255;
+  --gate-iron-plate: 52 66 106;
+  --gate-rivet: 200 214 255;
+  --gate-ink: #e8effc;
+  --gate-ink-hi: #f4f7ff;
+  --gate-ink-hover: #ffffff;
+  --gate-light: 190 210 255;
+}
+
+/* --- Flagship piece treatment ----------------------------------------------
+   The piece SET stays the player's own choice (PIECE_THEMES). What a theme
+   gets is the LIGHT falling on it: a filter on the rendered silhouette, which
+   costs no new asset and works for the inline SVG and the Lichess sets alike.
+
+   Parked under Performance mode with everything else decorative. */
+html:not([data-perf="low"]) .piece-inline,
+html:not([data-perf="low"]) .piece-asset {
+  filter: var(--piece-light, none);
+}
+/* Obsidian: a hard specular rim and a shadow that falls further. */
+html[data-theme="obsidian"] { --piece-light: drop-shadow(0 -1px 0 rgb(255 196 150 / 0.3)) drop-shadow(0 3px 5px rgb(0 0 0 / 0.62)); }
+/* Porcelain: flat ink on paper. One soft drop, no glow at all. */
+html[data-theme="porcelain"] { --piece-light: drop-shadow(0 1px 2px rgb(35 33 43 / 0.3)); }
+/* Neon: the accent blooms off the stroke, with a faint chromatic offset. */
+html[data-theme="neon"] { --piece-light: drop-shadow(0 0 5px rgb(var(--accent-rgb) / 0.55)) drop-shadow(1px 0 0 rgb(90 200 255 / 0.22)); }
+/* Jade: a soft interior shadow and no rim anywhere. */
+html[data-theme="jade"] { --piece-light: drop-shadow(0 2px 4px rgb(3 18 14 / 0.55)); }
+/* Aurora: a diffuse violet halo, low contrast. */
+html[data-theme="aurora"] { --piece-light: drop-shadow(0 0 7px rgb(157 123 255 / 0.42)) drop-shadow(0 2px 3px rgb(7 11 24 / 0.5)); }
+
 /* --- Obsidian: volcanic glass, molten ember ------------------------------- */
 /* Near-black with a violet-cool cast so the ember accent reads as heat against
    it. The heaviest of the five: a deep press, a hard specular edge on panels,
