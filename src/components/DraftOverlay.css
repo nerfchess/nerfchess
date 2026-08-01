@@ -171,9 +171,9 @@ html[data-anim="off"] .draft-fx:hover .draft-fx__glow {
      is blocking the cards"). */
   pointer-events: none;
   border-radius: 1px;
-  border: 1px solid rgb(255 138 52 / 0.32);
+  border: 1px solid rgb(var(--chamber-torch) / 0.32);
   background:
-    radial-gradient(90% 70% at 50% 110%, rgb(224 92 40 / 0.1), transparent 60%),
+    radial-gradient(90% 70% at 50% 110%, rgb(var(--chamber-ember) / 0.1), transparent 60%),
     #16110b;
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.55);
 }
@@ -181,7 +181,7 @@ html[data-anim="off"] .draft-fx:hover .draft-fx__glow {
   content: "";
   position: absolute;
   inset: 6px;
-  border: 1px solid rgb(255 138 52 / 0.16);
+  border: 1px solid rgb(var(--chamber-torch) / 0.16);
 }
 .draft-card-back__numeral {
   font-size: 46px;
@@ -724,11 +724,11 @@ html[data-anim="off"] .draft-prep-dot { animation: none; opacity: 0.8; }
   pointer-events: none;
   background: linear-gradient(
     120deg,
-    rgb(255 138 52 / 0.6),
+    rgb(var(--chamber-torch) / 0.6),
     rgb(168 119 216 / 0.35) 34%,
     rgb(255 190 110 / 0.4) 52%,
     rgb(34 211 238 / 0.3) 70%,
-    rgb(224 92 40 / 0.55)
+    rgb(var(--chamber-ember) / 0.55)
   );
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
@@ -910,16 +910,16 @@ html[data-anim="off"] .draft-fx[data-tier="8"] .draft-fx__sheen::before {
      bottom: torch bloom at the foot, cold dark at the crown, faint stone
      block courses (two offset repeating gradients), then the umber base. */
   background:
-    radial-gradient(120% 60% at 50% 106%, rgb(255 138 52 / 0.09), transparent 58%),
+    radial-gradient(120% 60% at 50% 106%, rgb(var(--chamber-torch) / 0.09), transparent 58%),
     radial-gradient(140% 50% at 50% -8%, rgba(0, 0, 0, 0.34), transparent 60%),
     repeating-linear-gradient(0deg, transparent 0 64px, rgba(0, 0, 0, 0.16) 64px 65px),
     repeating-linear-gradient(90deg, transparent 0 118px, rgba(0, 0, 0, 0.09) 118px 119px),
-    linear-gradient(165deg, #241c12, #1b1510 44%, #171209 100%) !important;
-  border-color: rgb(122 96 58 / 0.5) !important;
+    linear-gradient(165deg, var(--chamber-stone-hi), var(--chamber-stone-mid) 44%, var(--chamber-stone-lo) 100%) !important;
+  border-color: rgb(var(--chamber-edge) / 0.5) !important;
   box-shadow:
-    inset 0 1px 0 rgb(255 178 96 / 0.16),
+    inset 0 1px 0 rgb(var(--chamber-light) / 0.16),
     inset 0 0 0 1px rgba(0, 0, 0, 0.55),
-    inset 0 -14px 30px -18px rgb(224 92 40 / 0.22),
+    inset 0 -14px 30px -18px rgb(var(--chamber-ember) / 0.22),
     0 28px 70px -28px rgba(0, 0, 0, 0.9);
 }
 .draft-frame {
@@ -941,7 +941,7 @@ html[data-anim="off"] .draft-fx[data-tier="8"] .draft-fx__sheen::before {
     115deg,
     transparent 40%,
     rgb(255 190 110 / 0.1) 47%,
-    rgb(255 138 52 / 0.03) 52%,
+    rgb(var(--chamber-torch) / 0.03) 52%,
     transparent 60%
   );
   transform: translateX(-70%);
@@ -986,9 +986,9 @@ html[data-anim="off"] .draft-frame::after {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(120% 70% at 50% 108%, rgb(255 138 52 / 0.1), transparent 55%),
-    radial-gradient(90% 60% at 8% 100%, rgb(224 92 40 / 0.08), transparent 55%),
-    radial-gradient(90% 60% at 92% 100%, rgb(224 92 40 / 0.08), transparent 55%),
+    radial-gradient(120% 70% at 50% 108%, rgb(var(--chamber-torch) / 0.1), transparent 55%),
+    radial-gradient(90% 60% at 8% 100%, rgb(var(--chamber-ember) / 0.08), transparent 55%),
+    radial-gradient(90% 60% at 92% 100%, rgb(var(--chamber-ember) / 0.08), transparent 55%),
     radial-gradient(120% 80% at 50% 0%, rgba(0, 0, 0, 0.3), transparent 55%),
     radial-gradient(85% 65% at 50% 46%, transparent 55%, rgba(0, 0, 0, 0.26) 100%);
   animation: dgn-chamber-in 0.7s var(--ease-out, ease-out) both;
@@ -1061,9 +1061,9 @@ html[data-anim="off"] .draft-frame::after {
   background: linear-gradient(
     100deg,
     transparent 34%,
-    rgb(var(--mood-rgb, 255 138 52) / 0.05) 44%,
+    rgb(var(--mood-rgb, var(--chamber-torch)) / 0.05) 44%,
     rgb(255 200 120 / 0.1) 50%,
-    rgb(var(--mood-rgb, 224 92 40) / 0.05) 56%,
+    rgb(var(--mood-rgb, var(--chamber-ember)) / 0.05) 56%,
     transparent 66%
   );
   transform: translateX(-22%);
@@ -1086,7 +1086,7 @@ html[data-anim="off"] .draft-frame::after {
   background: radial-gradient(
     circle,
     rgb(var(--mood-rgb, 255 154 60) / 0.16),
-    rgb(var(--mood-rgb, 224 92 40) / 0.08) 42%,
+    rgb(var(--mood-rgb, var(--chamber-ember)) / 0.08) 42%,
     transparent 68%
   );
   will-change: transform, opacity;
@@ -1150,8 +1150,8 @@ html[data-anim="off"] .draft-frame::after {
   width: 3px;
   height: 3px;
   border-radius: 50%;
-  background: rgb(255 178 96 / 0.9);
-  box-shadow: 0 0 6px 1px rgb(255 138 52 / 0.55);
+  background: rgb(var(--chamber-light) / 0.9);
+  box-shadow: 0 0 6px 1px rgb(var(--chamber-torch) / 0.55);
   opacity: 0;
   will-change: transform, opacity;
   animation: stage-mote var(--mdur, 14s) linear var(--mdelay, 0s) infinite;
@@ -1293,9 +1293,9 @@ html[data-anim="off"] .pick-dissolve > i {
   pointer-events: none;
   background: linear-gradient(
     120deg,
-    rgb(255 138 52 / 0.55),
+    rgb(var(--chamber-torch) / 0.55),
     rgb(122 110 96 / 0.25) 45%,
-    rgb(224 92 40 / 0.45)
+    rgb(var(--chamber-ember) / 0.45)
   );
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
@@ -1440,7 +1440,7 @@ html[data-anim="off"] li > .dock-card.dock-pocket-flash {
   background: linear-gradient(180deg, #574b3d, #3a332a 70%, #2b251e);
   border: 1px solid rgba(0, 0, 0, 0.6);
   box-shadow:
-    inset 0 1px 0 rgb(255 178 96 / 0.25),
+    inset 0 1px 0 rgb(var(--chamber-light) / 0.25),
     0 4px 10px -4px rgba(0, 0, 0, 0.8);
   clip-path: polygon(15% 0, 85% 0, 100% 100%, 0 100%);
 }
@@ -1452,7 +1452,7 @@ html[data-anim="off"] li > .dock-card.dock-pocket-flash {
   height: 74px;
   margin-left: -37px;
   border-radius: 999px;
-  background: radial-gradient(circle, rgb(255 176 92 / 0.4), rgb(224 92 40 / 0.14) 45%, transparent 70%);
+  background: radial-gradient(circle, rgb(255 176 92 / 0.4), rgb(var(--chamber-ember) / 0.14) 45%, transparent 70%);
   animation: dgn-halo 2.6s ease-in-out infinite;
 }
 @keyframes dgn-halo {
@@ -1472,7 +1472,7 @@ html[data-anim="off"] li > .dock-card.dock-pocket-flash {
   height: 26px;
   margin-left: -8px;
   border-radius: 50% 50% 50% 50% / 62% 62% 38% 38%;
-  background: radial-gradient(60% 55% at 50% 78%, #ffdf9e 0%, #ffab4e 45%, #e05c28 78%, rgb(224 92 40 / 0) 100%);
+  background: radial-gradient(60% 55% at 50% 78%, #ffdf9e 0%, #ffab4e 45%, #e05c28 78%, rgb(var(--chamber-ember) / 0) 100%);
   transform-origin: 50% 100%;
   animation: dgn-flame 0.9s ease-in-out infinite;
 }
@@ -1506,7 +1506,7 @@ html[data-anim="off"] li > .dock-card.dock-pocket-flash {
   height: 3px;
   border-radius: 50%;
   background: rgb(255 200 120 / 0.95);
-  box-shadow: 0 0 5px 1px rgb(255 138 52 / 0.6);
+  box-shadow: 0 0 5px 1px rgb(var(--chamber-torch) / 0.6);
   opacity: 0;
   animation: dgn-spark 2.1s ease-out infinite;
 }
@@ -1534,7 +1534,7 @@ html[data-anim="off"] li > .dock-card.dock-pocket-flash {
   position: absolute;
   background: var(--brace-metal);
   box-shadow:
-    inset 0 1px 0 rgb(255 178 96 / 0.28),
+    inset 0 1px 0 rgb(var(--chamber-light) / 0.28),
     inset 0 -1px 0 rgba(0, 0, 0, 0.6);
 }
 /* The two arms of the L. */
@@ -1547,7 +1547,7 @@ html[data-anim="off"] li > .dock-card.dock-pocket-flash {
   height: 6px;
   border-radius: 50%;
   background: radial-gradient(circle at 35% 30%, #8a7a64, #574b3d 55%, #2b251e);
-  box-shadow: 0 0 4px 0 rgb(255 138 52 / 0.35), inset 0 0 0 1px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 4px 0 rgb(var(--chamber-torch) / 0.35), inset 0 0 0 1px rgba(0, 0, 0, 0.5);
 }
 /* Only the frame's two SQUARE corners take braces (top-right, bottom-left);
    the chamfered corner-cut owns the other two, and a brace across a 45-degree
@@ -1576,12 +1576,12 @@ html[data-anim="off"] li > .dock-card.dock-pocket-flash {
   color: #ecdfc8;
   text-shadow:
     0 1px 0 rgba(0, 0, 0, 0.9),
-    0 0 18px rgb(255 138 52 / 0.35),
-    0 0 42px rgb(224 92 40 / 0.2);
+    0 0 18px rgb(var(--chamber-torch) / 0.35),
+    0 0 42px rgb(var(--chamber-ember) / 0.2);
 }
 /* The smallcaps chamber label above it takes a quiet ember tint. */
 .dgn-label {
-  color: rgb(255 178 96 / 0.75) !important;
+  color: rgb(var(--chamber-light) / 0.75) !important;
 }
 
 /* --- Anim-off gating for the dungeon pass ---------------------------------- */
@@ -1937,4 +1937,111 @@ html[data-anim="off"] .dpv * {
     transparent 78%
   );
   animation-iteration-count: 5;
+}
+
+/* --- Draft chamber material ------------------------------------------------
+   The draft is the loudest moment in the product and it was built entirely
+   from warm literals — umber stone, orange torchlight, an ember rim — so the
+   chamber looked identical whichever theme you were in. Under Neon the page
+   went indigo, the rail went magenta, and then the draft opened a gold-lit
+   dungeon on top of it.
+
+   These are the chamber's material, defaulted to exactly today's values (the
+   ten tints are unchanged), and claimed per flagship below. */
+:root {
+  --chamber-stone-hi: #241c12;
+  --chamber-stone-mid: #1b1510;
+  --chamber-stone-lo: #171209;
+  --chamber-edge: 122 96 58;
+  --chamber-torch: 255 138 52;   /* the pool at the foot of the slab */
+  --chamber-ember: 224 92 40;    /* the sconces and the deeper glow */
+  --chamber-light: 255 178 96;   /* the top edge catching the light */
+}
+
+/* Obsidian: the chamber IS the theme — volcanic glass with magma in the
+   joints. The one flagship whose default look was already close. */
+html[data-theme="obsidian"] {
+  --chamber-stone-hi: #241a26;
+  --chamber-stone-mid: #191220;
+  --chamber-stone-lo: #120d18;
+  --chamber-edge: 150 110 78;
+  --chamber-torch: 255 122 47;
+  --chamber-ember: 224 74 30;
+  --chamber-light: 255 196 150;
+}
+
+/* Porcelain: a lit gallery, not a crypt. The stone goes to glazed white and
+   the "torchlight" becomes cool daylight from the foot, because an orange
+   glow on paper reads as a stain rather than as light. */
+html[data-theme="porcelain"] {
+  --chamber-stone-hi: #ffffff;
+  --chamber-stone-mid: #f6f3ed;
+  --chamber-stone-lo: #e8e3d8;
+  --chamber-edge: 42 85 184;
+  --chamber-torch: 120 160 235;
+  --chamber-ember: 42 85 184;
+  --chamber-light: 255 255 255;
+}
+
+/* Neon: an arcade cabinet. Indigo housing, magenta tubing at the foot, cyan
+   bleed at the crown. */
+html[data-theme="neon"] {
+  --chamber-stone-hi: #241a3c;
+  --chamber-stone-mid: #18102c;
+  --chamber-stone-lo: #0f0820;
+  --chamber-edge: 255 69 200;
+  --chamber-torch: 255 69 200;
+  --chamber-ember: 150 60 255;
+  --chamber-light: 255 150 224;
+}
+
+/* Jade: a lacquer room. No torch at all — the light is a wide, even sheen,
+   which is the whole point of the theme. */
+html[data-theme="jade"] {
+  --chamber-stone-hi: #15352b;
+  --chamber-stone-mid: #0e261e;
+  --chamber-stone-lo: #071a14;
+  --chamber-edge: 47 191 159;
+  --chamber-torch: 90 214 187;
+  --chamber-ember: 34 150 124;
+  --chamber-light: 160 235 214;
+}
+
+/* Aurora: polar rock under a violet sky. The glow comes from ABOVE here
+   rather than pooling at the foot, so the crown reads lit. */
+html[data-theme="aurora"] {
+  --chamber-stone-hi: #1c2745;
+  --chamber-stone-mid: #131b34;
+  --chamber-stone-lo: #0a1022;
+  --chamber-edge: 157 123 255;
+  --chamber-torch: 157 123 255;
+  --chamber-ember: 110 150 235;
+  --chamber-light: 200 214 255;
+}
+
+/* --- Light-scheme chamber --------------------------------------------------
+   Porcelain turns the chamber into a lit white gallery, and every text and
+   torch treatment in this file was written for dark stone: cream lettering
+   with a black shadow and a warm bloom, which on paper is white on white.
+
+   Keyed to html[data-light] rather than to porcelain, so a second light
+   flagship costs nothing — the same rule the palette blocks already follow. */
+html[data-light] .dgn-title {
+  color: var(--text-primary);
+  /* No bloom. On paper the letterform IS the contrast; a glow only smears it. */
+  text-shadow: 0 1px 0 rgb(255 255 255 / 0.7);
+}
+html[data-light] .dgn-label {
+  color: rgb(var(--chamber-edge) / 0.9) !important;
+}
+/* The wall sconces are the one thing that cannot survive the translation: a
+   burning torch on a white gallery wall reads as a rendering bug, not as
+   light. A lit room does not need them. */
+html[data-light] .dgn-torch {
+  display: none;
+}
+/* Cards deal onto paper, so their frame needs a real edge rather than relying
+   on being lighter than the wall behind them. */
+html[data-light] .draft-panel {
+  border-color: rgb(var(--chamber-edge) / 0.35) !important;
 }
