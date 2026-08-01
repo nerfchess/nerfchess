@@ -34,18 +34,36 @@ A flagship is a different room, not a filter. Each one owns:
 | --- | --- |
 | **Palette** | background, border and text tokens |
 | **Accent** | its own primary accent (`--accent-gold` and aliases) plus the ink that sits on an accent fill |
+| **Typefaces** | its own display and body face (`--font-display` / `--font-body`) |
+| **Button material** | the `--btn-*` contract: rim, top light, floor, glints, face treatment |
+| **Gate** | the `--gate-*` contract on the Open Lobby gate |
+| **Chamber** | the `--chamber-*` contract on the draft overlay |
+| **Board + pieces** | the board and piece set it asks for while those settings are on `auto`, plus the light falling on a piece (`--piece-light`) |
 | **Atmosphere** | a fixed layer on `html::after` — the light in the room |
 | **Material** | its own `.plate` box-shadow — what a panel is made of under that light |
 | **Motion** | its own durations and reveal curve |
 | **Chests** | its own draft-chest material and brightness |
 
-| Theme | Reads as | Accent | Feel |
-| --- | --- | --- | --- |
-| Obsidian | Volcanic glass, molten ember | `#ff7a2f` | Heavy. Deep press, hard specular edge, slow |
-| Porcelain | Glazed white, cobalt ink | `#2a55b8` | Crisp. Light scheme, no bloom, fast |
-| Neon | Arcade indigo, hot magenta | `#ff45c8` | Snappy. Max bloom, overshooting reveal |
-| Jade | Lacquer green, jade inlay | `#2fbf9f` | Calm. Long even easing, quiet |
-| Aurora | Polar night, violet light | `#9d7bff` | Floaty. Soft diffuse bloom, long rises |
+| Theme | Reads as | Accent | Display / Body | Board |
+| --- | --- | --- | --- | --- |
+| Obsidian | Volcanic glass, molten ember | `#ff7a2f` | Bricolage Grotesque / Inter Tight | Basalt |
+| Porcelain | Glazed white, cobalt ink | `#2a55b8` | Fraunces / Public Sans | Glaze |
+| Neon | Arcade indigo, hot magenta | `#ff45c8` | Chakra Petch / Space Grotesk | Grid |
+| Jade | Lacquer green, jade inlay | `#2fbf9f` | Spectral / IBM Plex Sans | Lacquer |
+| Aurora | Polar night, violet light | `#9d7bff` | Syne / Manrope | Ice |
+
+No two pairings share a genus, so the five never read as one family with the
+weight changed. Faces are self-hosted in `layout.tsx` under neutral `--f-*`
+names **on `<html>`**, and `--font-display` / `--font-body` are roles in `:root`
+that a theme block claims. That indirection is load-bearing: `next/font` puts
+its variables on the element carrying the class, and a value on `<body>` beats
+one on `<html>` for everything inside it — while Inter literally *was*
+`--font-display`, no theme could override it.
+
+Every flagship face is `preload: false`. A browser downloads a webfont only
+when rendered text resolves to it, so a visitor loads two faces, not thirteen —
+but a `<link rel="preload">` downloads unconditionally, and `next/font` emits
+one per face. The build should show exactly **3** font preloads.
 
 ### What a flagship must never touch
 
@@ -55,10 +73,16 @@ A flagship is a different room, not a filter. Each one owns:
   clear of that red/blue/green rather than being a shade of it. Porcelain is the
   one theme that adjusts them, and only in the way the Light theme does: darkened
   to the same hues so they still clear WCAG AA as text on paper.
-- **The board.** Board colours are the player's own setting (`BOARD_THEMES`,
-  applied inline as `--sq-light` / `--sq-dark`). A site theme must not fight it.
-- **Layout.** No radius, spacing or type-scale changes. A theme changes the light
-  and the weight, never where the furniture sits.
+- **An explicit board or piece pick.** Board and piece colours are still the
+  player's own setting. What changed is the DEFAULT: both settings now ship as
+  `"auto"`, and a flagship supplies the board and piece set it wants while they
+  sit there. A player who explicitly picked Green gets Green in every theme —
+  `resolveBoardTheme` / `resolvePieceTheme` return the stored value untouched
+  unless it is `"auto"`.
+- **Layout geometry.** No radius or spacing changes, and **no type-scale
+  changes**: a flagship swaps the FACES, never `--step-0..5`. Nothing reflows
+  when you switch themes. A theme changes the light, the weight and the
+  lettering, never where the furniture sits.
 
 ## The three page layers
 

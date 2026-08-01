@@ -30,15 +30,15 @@ The single visual and interaction contract for every route. Written during the 2
 | Tiers | `.tier-1..10` + `.tier-bg-*` | Card tiers everywhere, no exceptions |
 
 Rules:
-- No new colors. If a design wants a color not in this table, the design is wrong.
+- No new colors. If a design wants a color not in this table, the design is wrong. Board and piece palettes are the one exception: they are the player's setting, and the five flagship themes each add one of each (`BOARD_THEMES`), selected while the setting is on `auto`.
 - Mode hues never mean success/failure. Positive/danger never brand a mode.
 - One accent-colored primary action per view region. Everything else is quiet.
 
 ## 3. Typography
 
-Faces: `--font-display` (Inter) for headings and numbers that matter, `--font-body` (Noto Sans) for content, `--font-mono` for ids, clocks, and coordinates.
+Faces are **roles, not fixed families**: `--font-display` for headings and numbers that matter, `--font-body` for content, `--font-mono` (JetBrains Mono, self-hosted) for ids, clocks, and coordinates. Tints resolve to Inter over Noto Sans; each of the five flagship themes claims its own pairing (see `docs/themes.md`). Never name a family directly in a component — use the role.
 
-Scale: the fluid ramp `--step-0..5` only. No ad-hoc `text-4xl` in new code.
+Scale: the fluid ramp `--step-0..5` only. No ad-hoc `text-4xl` in new code. **The scale is theme-invariant** — a theme swaps faces, never sizes, so nothing reflows when you switch.
 
 Hierarchy is weight + size + color, in that order. Never letter-spacing alone.
 
@@ -78,7 +78,9 @@ Rules:
 
 ## 7. Components
 
-- Buttons: `.btn-leaf` primary (one per region), `.btn-ghost` secondary, plain link tertiary, `.btn-cursed` destructive (Resign/Delete/Leave/Decline/Remove), `.btn-gold` reserved for reward/prestige moments, `.btn-glass` for emotional-peak commits. Loading = `.btn-busy` + a `.rune-loader` in the label. Min touch target 44x44 mobile, 36px desktop. All buttons `.press`. Bespoke one-off button styles are retired: every new button picks from this set.
+- Buttons: use **`<Button>` / `<LinkButton>`** from `src/components/ui/Button.tsx`. Tones: `leaf` primary (one per region), `ghost` secondary, `quiet` tertiary inline action, `danger` destructive (Resign/Delete/Leave/Decline/Remove), `gold` for reward/prestige, `glass`/`primary` for emotional-peak commits, `cta` hero, `slab` caller-tinted. `loading` gives the busy state; `.press` is on by default. Min touch target 44x44 mobile, 36px desktop.
+
+  The component emits the material class and geometry **only, never a colour** — colour and material come from the theme's `--btn-*` contract in `globals.css`, which is what lets one `<Button tone="leaf">` be volcanic glass in Obsidian and a glazed tile in Porcelain. A hand-rolled button is invisible to that contract and will keep the old theme's look in all five. `npm run test:buttons` reports the remaining bespoke call sites.
 - Tabs: underline style (current), 13px+ label, active = parchment-50 + accent underline, inactive = parchment-300. Same component on every route.
 - Chips/badges: 12px, `.tier-bg-*` for tiers, mode chips for Buff/Nerf, `LIVE` badge = pos dot + label.
 - Lists and tables: row hover `--surface-hover`, dividers `--edge`, never zebra. Rank/rating right-aligned tabular.
