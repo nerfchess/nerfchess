@@ -22,6 +22,7 @@
 // owning it here would split one calculation across two files.
 
 import type { ReactNode } from "react";
+import { Button } from "@/components/ui/Button";
 
 /** Which game this rail is fronting. `plain` is the bot game's no-cards mode;
  *  the online rail can never be plain, which is why this is a mode rather than
@@ -125,13 +126,12 @@ export function CommandRail({
         {/* Collapse the rail for a bigger board; a matching expand control
             rides the opponent bar while collapsed. */}
         {onToggleCollapse && (
-          <button
-            type="button"
+          <Button tone="ghost"
+           
             onClick={onToggleCollapse}
             aria-label="Collapse side panel"
             title="Collapse side panel for a bigger board"
-            className="btn-ghost grid h-7 w-7 shrink-0 place-items-center text-parchment-300 hover:text-parchment-100"
-          >
+            className="grid h-7 w-7 shrink-0 place-items-center text-parchment-300 hover:text-parchment-100">
             <svg
               width="13"
               height="13"
@@ -146,7 +146,7 @@ export function CommandRail({
               <polyline points="11 17 6 12 11 7" />
               <polyline points="18 17 13 12 18 7" />
             </svg>
-          </button>
+          </Button>
         )}
         {/* A gold gleam that occasionally travels the header hairline. */}
         <span aria-hidden className="rail-header-sheen" />

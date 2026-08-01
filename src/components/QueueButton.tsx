@@ -10,6 +10,7 @@ import { MPSession, saveOnlineSeat } from "@/lib/multiplayer";
 import { getCategory, type RatingCategoryId } from "@/lib/ratingCategories";
 import { useSharedMode } from "@/lib/modeState";
 import type { DraftMode } from "@/engine/buff";
+import { Button } from "@/components/ui/Button";
 
 // Wire names must match QUEUE_POOLS in worker.ts.
 const QUEUE_POOL_OPTIONS: { pool: string; label: string; speed: RatingCategoryId }[] = [
@@ -213,12 +214,11 @@ export function QueueButton({
                 opponent… ({selected.label})
               </span>
             </span>
-            <button
+            <Button tone="ghost"
               onClick={cancelSearch}
-              className="min-h-[44px] px-4 py-2 btn-ghost text-sm font-display"
-            >
+              className="px-4 py-2 text-sm">
               Cancel
-            </button>
+            </Button>
           </div>
           {/* Elapsed time so the queue never reads as a dead "Connecting…":
               the counter ticking is proof the search is live. */}
@@ -293,17 +293,16 @@ export function QueueButton({
           {/* The one button that actually queues, at the bottom so the flow
               reads mode, clock, play. A mode is always selected (Buff by
               default), so it names the exact game it will find. */}
-          <button
+          <Button tone="slab"
             onClick={() => startSearch(mode)}
             // The forged mode slab: the shared .btn-slab physics with the
             // selected mode's energy core, so the matchmaking primary reads
             // as part of the dungeon control set while keeping its
             // Nerf-terracotta / Buff-sky identity.
             style={{ ["--slab-rgb" as string]: mode === "nerf" ? "196 120 95" : "91 155 212" }}
-            className="btn-slab cta-shine press mt-4 w-full px-8 py-4 font-display text-xl sm:text-2xl font-semibold"
-          >
+            className="cta-shine mt-4 w-full px-8 py-4 text-xl sm:text-2xl font-semibold">
             {`Find a ${selected.label} ${mode === "nerf" ? "Nerf" : "Buff"} Game`}
-          </button>
+          </Button>
 
           {/* Signed-out or guest players can queue and play right away; this
               is a nudge, never a gate. Their rating is throwaway until they

@@ -42,6 +42,7 @@ import {
   Toggle,
 } from "@/components/settings/controls";
 import "./SettingsPanel.css";
+import { Button } from "@/components/ui/Button";
 
 interface Props {
   open: boolean;
@@ -811,12 +812,11 @@ function AccountSettings() {
         </div>
       ))}
       <form action="/api/auth/logout" method="post">
-        <button
+        <Button tone="danger"
           type="submit"
-          className="btn-cursed press min-h-[44px] w-full rounded-[1px] px-3 py-2 font-display text-[13px] font-semibold"
-        >
+          className="w-full px-3 py-2 text-[13px] font-semibold">
           Log out
-        </button>
+        </Button>
       </form>
     </div>
   );

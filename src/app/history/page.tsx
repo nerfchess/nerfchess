@@ -15,6 +15,7 @@ import {
 
 import { TIER_LABEL } from "@/lib/tiers";
 import { useModalChrome } from "@/lib/useModalChrome";
+import { Button } from "@/components/ui/Button";
 
 type Filter = "all" | GameOutcome;
 
@@ -234,16 +235,15 @@ function GameSummary({ game, onClose }: { game: CompletedGame; onClose: () => vo
               {style.label}
             </h2>
           </div>
-          <button
-            type="button"
+          <Button tone="ghost"
+           
             onClick={onClose}
             aria-label="Close"
-            className="btn-ghost h-8 w-8 inline-flex items-center justify-center text-sm"
-          >
+            className="h-8 w-8 text-sm">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <path d="M18 6 6 18M6 6l12 12" />
             </svg>
-          </button>
+          </Button>
         </div>
 
         <dl className="mt-5 space-y-2.5 text-sm">

@@ -73,6 +73,7 @@ import {
   sweepSpectatorSync,
 } from "@/lib/spectate/spectatorSync";
 import type { DraftMode } from "@/engine/buff";
+import { Button } from "@/components/ui/Button";
 
 type Mode =
   | { kind: "loading" }
@@ -413,13 +414,12 @@ export default function OnlineGamePage() {
                   : "This is taking longer than usual to connect."}
               </span>
               <div className="flex items-center gap-2">
-                <button
-                  type="button"
+                <Button tone="leaf"
+                 
                   onClick={() => window.location.reload()}
-                  className="min-h-[36px] rounded-sm btn-leaf px-3 py-1.5 font-display text-xs font-semibold"
-                >
+                  className="px-3 py-1.5 text-xs font-semibold">
                   Retry
-                </button>
+                </Button>
                 <Link
                   href="/lobby"
                   className="min-h-[36px] inline-flex items-center rounded-sm border border-parchment-700 px-3 py-1.5 font-display text-xs text-parchment-200 hover:text-parchment-50"
@@ -945,13 +945,12 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
       />
     )}
     {result && !showResult && (
-      <button
-        type="button"
+      <Button tone="leaf"
+       
         onClick={() => setShowResult(true)}
-        className="btn-leaf fixed bottom-14 right-3 z-40 px-4 py-2 font-display text-sm font-semibold shadow-xl sm:bottom-4"
-      >
+        className="fixed bottom-14 right-3 z-40 px-4 py-2 text-sm font-semibold shadow-xl sm:bottom-4">
         Show result
-      </button>
+      </Button>
     )}
     </>
   );
@@ -1247,13 +1246,12 @@ function SpectatorChat({
           aria-label="Spectator chat message"
           className="min-w-0 flex-1 rounded-sm border border-[color:var(--edge)] bg-ink-900/60 px-2 py-1.5 text-base text-parchment placeholder:text-parchment-400/60 focus-visible:border-gold/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--accent-rgb))] sm:text-[13px]"
         />
-        <button
+        <Button tone="ghost"
           type="submit"
           disabled={!draft.trim()}
-          className="btn-ghost min-h-[36px] shrink-0 rounded-sm px-3 py-1.5 font-display text-[13px] disabled:opacity-40"
-        >
+          className="shrink-0 px-3 py-1.5 text-[13px]">
           Send
-        </button>
+        </Button>
       </form>
     </div>
   );
@@ -1349,17 +1347,16 @@ function ReplayView({ game }: { game: ReplayGame }) {
       }
       nerfs={{ w: game.white_nerf_id, b: game.black_nerf_id }}
       rail={
-        <button
-          type="button"
+        <Button tone="ghost"
+         
           onClick={handleCopyPGN}
-          className="mt-3 w-full rounded-sm px-4 py-2 btn-ghost font-display text-sm inline-flex items-center justify-center gap-2"
-        >
+          className="mt-3 w-full px-4 py-2 text-sm">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
             <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
           </svg>
           {pgnCopied ? "Copied" : "Copy PGN"}
-        </button>
+        </Button>
       }
     />
     {game.winner != null && showResult && (
@@ -1389,13 +1386,12 @@ function ReplayView({ game }: { game: ReplayGame }) {
       />
     )}
     {game.winner != null && !showResult && (
-      <button
-        type="button"
+      <Button tone="leaf"
+       
         onClick={() => setShowResult(true)}
-        className="btn-leaf fixed bottom-14 right-3 z-40 px-4 py-2 font-display text-sm font-semibold shadow-xl sm:bottom-4"
-      >
+        className="fixed bottom-14 right-3 z-40 px-4 py-2 text-sm font-semibold shadow-xl sm:bottom-4">
         Show result
-      </button>
+      </Button>
     )}
     </>
   );

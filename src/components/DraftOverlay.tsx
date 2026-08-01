@@ -18,6 +18,7 @@ import { BuffCard } from "./BuffCard";
 import { DraftChest } from "./DraftChest";
 import { OpponentDraftPanel } from "./OpponentDraftPanel";
 import "./DraftOverlay.css";
+import { Button } from "@/components/ui/Button";
 
 interface Props {
   offer: BuffOffer;
@@ -1392,19 +1393,18 @@ export function DraftOverlay({
                 is flex-1, inserting a third one resized and re-wrapped Reroll
                 and Bank the instant you clicked a card: the row moved under the
                 cursor mid-click. The full overlay already does it this way. */}
-            <button
+            <Button tone="leaf"
               disabled={selected == null || settled}
               onClick={() => {
                 if (selected == null || settled) return;
                 setChosen(selected);
                 commit(selected);
               }}
-              className="btn-leaf min-w-[6rem] min-h-[44px] flex-1 touch-manipulation px-3 py-2 font-display text-xs font-semibold tracking-wide disabled:opacity-40"
-            >
+              className="min-w-[6rem] flex-1 touch-manipulation px-3 py-2 text-xs font-semibold tracking-wide">
               {selected != null
                 ? `Confirm ${BUFF_BY_ID[offer.cards[selected]?.id]?.name ?? "pick"}`
                 : "Pick a card"}
-            </button>
+            </Button>
             {canReroll && (
               <button
                 onClick={handleReroll}
@@ -1547,14 +1547,19 @@ export function DraftOverlay({
             entirely (the card reveals themselves keep animating). */}
         {!reduceMotion && !fxCalm && (
           <>
+            {/* Five full-viewport layers, down from seven: the two nebulae and
+                the two fog banks each merged onto one node. Their parallax was
+                never readable through the scrim at these alphas, and each pair
+                cost a second composited layer on the heaviest screen we ship. */}
             <span className="draft-stage__nebula" />
-            <span className="draft-stage__nebula draft-stage__nebula--teal" />
             <span className="draft-stage__torch draft-stage__torch--l" />
             <span className="draft-stage__torch draft-stage__torch--r" />
             <span className="draft-stage__fog" />
-            <span className="draft-stage__fog draft-stage__fog--far" />
             <span className="draft-stage__aurora" />
-            {Array.from({ length: 14 }).map((_, i) => (
+            {/* Six motes, down from fourteen. The field reads as "sparks rising
+                off unseen coals" at six; the other eight were paying full
+                animated-node cost to make it very slightly denser. */}
+            {Array.from({ length: 6 }).map((_, i) => (
               <i
                 key={i}
                 style={{
@@ -2097,17 +2102,15 @@ export function DraftOverlay({
               : "Pick a card"}
           </button>
           {canReroll && (
-            <button
+            <Button tone="glass"
               onClick={handleReroll}
               disabled={rerolling}
               // Quiet secondary: btn-glass is reserved for the lock-in commits
               // (Confirm pick / Bank this draft), one glass primary per region.
-              className="flex w-full touch-manipulation items-center justify-center gap-1.5 rounded-[1px] border border-[color:var(--edge)] bg-white/[0.03] px-6 py-3 font-display text-sm font-semibold tracking-wide text-parchment-200 transition hover:border-gold/50 hover:text-gold-leaf disabled:opacity-40 sm:w-auto"
-              title="Discard this offer and roll fresh cards at the same tier"
-            >
+              className="flex w-full touch-manipulation border border-[color:var(--edge)] bg-white/[0.03] px-6 py-3 text-sm font-semibold tracking-wide text-parchment-200 hover:border-gold/50 hover:text-gold-leaf sm:w-auto" title="Discard this offer and roll fresh cards at the same tier">
               <RerollIcon className={"text-gold-leaf" + (rerolling ? " reroll-spin" : "")} />
               Reroll <span className="text-parchment-400">({rerollBadge})</span>
-            </button>
+            </Button>
           )}
           <div className="relative flex w-full items-center gap-2 sm:w-auto">
             {bankArmed ? (

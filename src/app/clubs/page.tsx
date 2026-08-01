@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { ChevronRight, Plus, Search, Users, X } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 
 interface Club {
   id: string;
@@ -125,15 +126,14 @@ export default function ClubsPage() {
             <Link href="/tournaments" className="btn-ghost press px-4 py-2 font-display text-[13px]">
               Tournaments
             </Link>
-            <button
-              type="button"
+            <Button tone="leaf"
+             
               onClick={() => setShowCreate((v) => !v)}
               aria-expanded={showCreate}
-              className="btn-leaf press inline-flex items-center gap-1.5 px-4 py-2 font-display text-[13px] font-semibold"
-            >
+              className="px-4 py-2 text-[13px] font-semibold">
               {showCreate ? <X size={15} /> : <Plus size={15} />}
               {showCreate ? "Close" : "New club"}
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -183,13 +183,12 @@ export default function ClubsPage() {
                     className="mt-1 w-full resize-none border border-white/15 bg-ink-900/60 px-3 py-2 text-[13px] text-parchment"
                   />
                 </div>
-                <button
+                <Button tone="leaf"
                   type="submit"
                   disabled={busy || name.trim().length < 3}
-                  className="btn-leaf press h-fit w-full px-4 py-2.5 font-display text-[13px] font-semibold disabled:opacity-50"
-                >
+                  className="h-fit w-full px-4 py-2.5 text-[13px] font-semibold disabled:opacity-50">
                   {busy ? "Creating..." : "Create club"}
-                </button>
+                </Button>
               </div>
             )}
           </form>
@@ -253,13 +252,12 @@ export default function ClubsPage() {
               <div role="alert" className="px-5 py-8 text-center">
                 <p className="text-[13px] text-parchment-200">{loadError}</p>
                 <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
-                  <button
-                    type="button"
+                  <Button tone="leaf"
+                   
                     onClick={reload}
-                    className="btn-leaf press px-4 py-2 font-display text-[13px] font-semibold"
-                  >
+                    className="px-4 py-2 text-[13px] font-semibold">
                     Retry
-                  </button>
+                  </Button>
                   <Link href="/lobby" className="btn-ghost press px-4 py-2 font-display text-[13px]">
                     Back to lobby
                   </Link>
@@ -272,13 +270,12 @@ export default function ClubsPage() {
                   {clubs.length === 0 ? "No clubs yet. Start the first one." : "No clubs match that search."}
                 </p>
                 {clubs.length === 0 && !showCreate && (
-                  <button
-                    type="button"
+                  <Button tone="leaf"
+                   
                     onClick={() => setShowCreate(true)}
-                    className="btn-leaf press mt-3 inline-flex items-center gap-1.5 px-4 py-2 font-display text-[13px] font-semibold"
-                  >
+                    className="mt-3 px-4 py-2 text-[13px] font-semibold">
                     <Plus size={15} /> New club
-                  </button>
+                  </Button>
                 )}
               </div>
             ) : (

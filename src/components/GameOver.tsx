@@ -18,6 +18,7 @@ import { haptic } from "@/lib/haptics";
 import { ThumbsDown, ThumbsUp } from "lucide-react";
 
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
+import { Button } from "@/components/ui/Button";
 
 // A single card marker on the match timeline. `ply` is the half-move the card
 // landed on; `cardId`/`tier` name it for the hover label and tier tint. Callers
@@ -944,22 +945,20 @@ export function GameOver({
               </div>
             )}
             <div className="grid grid-cols-2 gap-2">
-              <button
+              <Button tone="leaf"
                 ref={primaryRef}
-                type="button"
+               
                 onClick={dismiss}
-                className="min-h-[44px] rounded-sm px-5 py-2.5 btn-leaf font-display"
-              >
+                className="px-5 py-2.5">
                 Close
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button tone="ghost"
+               
                 onClick={handleShare}
-                className="min-h-[44px] rounded-sm px-5 py-2.5 btn-ghost font-display text-sm inline-flex items-center justify-center gap-2"
-              >
+                className="px-5 py-2.5 text-sm">
                 {shareIcon}
                 {shared ? "Copied" : "Share game"}
-              </button>
+              </Button>
               {analysisHref && (
                 <Link
                   href={analysisHref}
@@ -969,14 +968,13 @@ export function GameOver({
                 </Link>
               )}
               {moves && (
-                <button
-                  type="button"
+                <Button tone="ghost"
+                 
                   onClick={handleCopyPGN}
-                  className="min-h-[44px] rounded-sm px-5 py-2.5 btn-ghost font-display text-sm inline-flex items-center justify-center gap-2"
-                >
+                  className="px-5 py-2.5 text-sm">
                   {pgnIcon}
                   {pgnCopied ? "Copied" : "Copy PGN"}
-                </button>
+                </Button>
               )}
             </div>
             <Link
@@ -992,14 +990,13 @@ export function GameOver({
               {rematchStatus === "offered" && opponentLeft && onCancelRematch ? (
                 // The opponent is gone, so "waiting" is a dead end: offer the way
                 // out instead.
-                <button
+                <Button tone="ghost"
                   ref={primaryRef}
-                  type="button"
+                 
                   onClick={onCancelRematch}
-                  className="min-h-[44px] rounded-sm px-5 py-2.5 btn-ghost font-display"
-                >
+                  className="px-5 py-2.5">
                   Cancel rematch offer
-                </button>
+                </Button>
               ) : (
                 <button
                   ref={primaryRef}
@@ -1032,14 +1029,13 @@ export function GameOver({
                 and both players' profiles (real usernames). One entry each;
                 the clip and move-review entry points live in the game view. */}
             <div className="mt-2 grid grid-cols-2 gap-2">
-              <button
-                type="button"
+              <Button tone="ghost"
+               
                 onClick={handleShare}
-                className="min-h-[44px] rounded-sm px-4 py-2 btn-ghost font-display text-sm inline-flex items-center justify-center gap-2"
-              >
+                className="px-4 py-2 text-sm">
                 {shareIcon}
                 {shared ? "Copied" : "Share game"}
-              </button>
+              </Button>
               {analysisHref && (
                 <Link
                   href={analysisHref}
@@ -1057,14 +1053,13 @@ export function GameOver({
                 </Link>
               )}
               {moves && (
-                <button
-                  type="button"
+                <Button tone="ghost"
+                 
                   onClick={handleCopyPGN}
-                  className="min-h-[44px] rounded-sm px-4 py-2 btn-ghost font-display text-sm inline-flex items-center justify-center gap-2"
-                >
+                  className="px-4 py-2 text-sm">
                   {pgnIcon}
                   {pgnCopied ? "Copied" : "Copy PGN"}
-                </button>
+                </Button>
               )}
               {linkedProfiles.map((p) => (
                 <Link

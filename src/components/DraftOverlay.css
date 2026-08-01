@@ -1028,24 +1028,19 @@ html[data-anim="off"] .draft-frame::after {
 }
 /* Nebula: two vast soft energy clouds (void purple, abyssal teal) breathing
    behind the chamber. Oversized radial blobs moved by transform only. */
+/* Both nebulae on ONE layer. They used to be two independently-drifting
+   elements at opposite corners; the counter-drift was not readable through a
+   scrim at 10% alpha, and it cost a second full-viewport composited layer on
+   the heaviest screen in the product. Two positioned gradients on one node
+   read the same and composite once. */
 .draft-stage__nebula {
   position: absolute;
-  width: 70vmax;
-  height: 55vmax;
-  top: -18%;
-  left: -16%;
-  background: radial-gradient(50% 50% at 50% 50%, rgb(168 119 216 / 0.1), rgb(168 119 216 / 0.03) 55%, transparent 75%);
+  inset: -20%;
+  background:
+    radial-gradient(38% 34% at 18% 16%, rgb(168 119 216 / 0.1), rgb(168 119 216 / 0.03) 55%, transparent 75%),
+    radial-gradient(36% 32% at 84% 86%, rgb(34 211 238 / 0.08), rgb(34 211 238 / 0.02) 55%, transparent 75%);
   will-change: transform, opacity;
   animation: dgn-nebula-drift 34s ease-in-out infinite alternate;
-}
-.draft-stage__nebula--teal {
-  top: auto;
-  left: auto;
-  right: -20%;
-  bottom: -22%;
-  background: radial-gradient(50% 50% at 50% 50%, rgb(34 211 238 / 0.08), rgb(34 211 238 / 0.02) 55%, transparent 75%);
-  animation-duration: 42s;
-  animation-direction: alternate-reverse;
 }
 @keyframes dgn-nebula-drift {
   from { transform: translate3d(-3%, 2%, 0) scale(1); opacity: 0.8; }
@@ -1114,27 +1109,20 @@ html[data-anim="off"] .draft-frame::after {
 }
 /* Crypt fog: two soft haze bands crawling in opposite directions along the
    floor. Oversized gradients moved by transform only. */
+/* Both fog banks on ONE layer, for the same reason as the nebulae: they sat
+   4% and 6% off the same edge, so the parallax between them was never visible
+   and the second node was pure compositing cost. */
 .draft-stage__fog {
   position: absolute;
   left: -60%;
   right: -60%;
   bottom: -4%;
-  height: 34%;
-  background: radial-gradient(
-    60% 100% at 50% 100%,
-    rgb(120 108 96 / 0.1),
-    rgb(90 80 70 / 0.05) 55%,
-    transparent 80%
-  );
+  height: 44%;
+  background:
+    radial-gradient(60% 74% at 50% 100%, rgb(120 108 96 / 0.1), rgb(90 80 70 / 0.05) 55%, transparent 80%),
+    radial-gradient(52% 46% at 50% 76%, rgb(120 108 96 / 0.07), transparent 80%);
   will-change: transform;
   animation: dgn-fog-drift 26s ease-in-out infinite alternate;
-}
-.draft-stage__fog--far {
-  bottom: 6%;
-  height: 22%;
-  opacity: 0.7;
-  animation-duration: 34s;
-  animation-direction: alternate-reverse;
 }
 @keyframes dgn-fog-drift {
   from { transform: translateX(-9%); }

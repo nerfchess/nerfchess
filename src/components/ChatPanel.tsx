@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Color } from "@/engine/types";
 import { MPChatMessage } from "@/lib/multiplayer";
 import { loadSettings, saveSettings, SETTINGS_CHANGED_EVENT } from "@/lib/settings";
+import { Button } from "@/components/ui/Button";
 
 // In-game chat between the two players. The server relays and stores the
 // last 50 messages, so a reload keeps the transcript. A mute toggle (persisted
@@ -218,13 +219,12 @@ export function ChatPanel({
               // page on focus, which is what used to box the input off-screen.
               className="min-w-0 flex-1 rounded-sm border border-white/15 bg-ink-900/60 px-2 py-1.5 text-base sm:text-[12px] text-parchment placeholder:text-parchment-400/40 focus:border-gold/60 focus:outline-none"
             />
-            <button
+            <Button tone="ghost"
               type="submit"
               disabled={!draft.trim()}
-              className="btn-ghost shrink-0 rounded-sm px-2.5 py-1.5 font-display text-[11px] disabled:opacity-40"
-            >
+              className="shrink-0 px-2.5 py-1.5 text-[11px]">
               Send
-            </button>
+            </Button>
           </form>
         </>
       )}

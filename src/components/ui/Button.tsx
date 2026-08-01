@@ -24,6 +24,7 @@
 // is a new token value in the material contract, not a new tone.
 
 import Link from "next/link";
+import { forwardRef } from "react";
 import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from "react";
 
 export type ButtonTone =
@@ -121,20 +122,28 @@ export type ButtonProps = Shape & {
   children?: ReactNode;
 } & Omit<ButtonHTMLAttributes<HTMLButtonElement>, "className" | "children">;
 
-export function Button({
-  tone,
-  size,
-  block,
-  iconOnly,
-  press,
-  className,
-  loading,
-  disabled,
-  children,
-  ...rest
-}: ButtonProps) {
+/** Forwards its ref, because real call-sites need the node: focusing the
+ *  primary action when a dialog opens, measuring, scroll-into-view. A button
+ *  primitive that swallowed refs would force those back onto a raw <button>
+ *  and straight out of the theme contract. */
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
+  {
+    tone,
+    size,
+    block,
+    iconOnly,
+    press,
+    className,
+    loading,
+    disabled,
+    children,
+    ...rest
+  },
+  ref,
+) {
   return (
     <button
+      ref={ref}
       // Default to "button": a bare <button> inside a <form> submits it, which
       // is almost never what a call-site converted from an onClick handler
       // wants. Pass type="submit" explicitly where it is.
@@ -155,7 +164,7 @@ export function Button({
       {children}
     </button>
   );
-}
+});
 
 export type LinkButtonProps = Shape & {
   href: string;

@@ -20,6 +20,7 @@ import { initialBoard } from "@/engine/board";
 import { BoardState, Color, Move } from "@/engine/types";
 import { START_FEN, boardToFen, fenToBoard } from "@/lib/fen";
 import { gameToPGN } from "@/lib/pgn";
+import { Button } from "@/components/ui/Button";
 
 // Lichess-style analysis board: move pieces for both sides, navigate the
 // line, and read the engine's eval bar and best move. Accepts ?fen=... or
@@ -346,18 +347,17 @@ function AnalysisInner() {
                   (fenError ? "border-oxblood-glow" : "border-white/10")
                 }
               />
-              <button onClick={loadFen} className="btn-ghost press shrink-0 px-3 py-1.5 text-sm">
+              <Button tone="ghost" onClick={loadFen} className="shrink-0 px-3 py-1.5 text-sm">
                 Load
-              </button>
+              </Button>
             </div>
             {fenError && <p className="mt-1 text-xs text-oxblood-glow">Couldn&apos;t parse that FEN.</p>}
             {!customStart && moves.length > 0 && (
-              <button
+              <Button tone="ghost"
                 onClick={downloadPgn}
-                className="btn-ghost press mt-3 flex items-center gap-1.5 px-3 py-1.5 text-sm"
-              >
+                className="mt-3 flex px-3 py-1.5 text-sm">
                 <Download size={14} /> Download PGN
-              </button>
+              </Button>
             )}
           </div>
         </aside>

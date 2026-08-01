@@ -19,6 +19,7 @@ import {
   type AchievementCategory,
   type AchievementRarity,
 } from "@/lib/achievements";
+import { Button } from "@/components/ui/Button";
 
 interface AchievementView {
   id: string;
@@ -502,8 +503,8 @@ function AchievementsContent() {
             <p className="text-[13px] text-parchment-300">
               Your progress could not load, so the wall shows everything locked.
             </p>
-            <button
-              type="button"
+            <Button tone="ghost"
+             
               onClick={() => {
                 setState("loading");
                 setData(null);
@@ -511,10 +512,9 @@ function AchievementsContent() {
                 // possible here; a full reload is the simplest recovery.
                 window.location.reload();
               }}
-              className="btn-ghost press shrink-0 px-4 py-2 text-[13px]"
-            >
+              className="shrink-0 px-4 py-2 text-[13px]">
               Retry
-            </button>
+            </Button>
           </div>
         )}
 

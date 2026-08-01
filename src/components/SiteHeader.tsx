@@ -13,6 +13,7 @@ import { PlayerSearch } from "@/components/PlayerSearch";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { AccountUser, ensureAccount, logout } from "@/lib/authClient";
 import { playChallenge } from "@/lib/sounds";
+import { Button } from "@/components/ui/Button";
 
 // Site-wide header, Lichess-style: main nav on the left; on the right a user
 // search, incoming challenges, notifications, and the account menu.
@@ -408,18 +409,16 @@ export function SiteHeader({ active }: { active?: string }) {
                           </div>
                         </div>
                         <div className="flex shrink-0 gap-1.5">
-                          <button
+                          <Button tone="leaf"
                             onClick={() => respondChallenge(challenge, "accepted")}
-                            className="btn-leaf inline-flex min-h-[44px] items-center px-3 font-display text-xs font-semibold"
-                          >
+                            className="px-3 text-xs font-semibold">
                             Accept
-                          </button>
-                          <button
+                          </Button>
+                          <Button tone="ghost"
                             onClick={() => respondChallenge(challenge, "declined")}
-                            className="btn-ghost inline-flex min-h-[44px] items-center px-3 font-display text-xs"
-                          >
+                            className="px-3 text-xs">
                             Decline
-                          </button>
+                          </Button>
                         </div>
                       </li>
                     ))}
@@ -716,13 +715,12 @@ function RenameBanner({ onRenamed }: { onRenamed: (name: string) => void }) {
           aria-label="New username"
           className="input-rune w-40 px-2 py-1.5 focus:outline-none"
         />
-        <button
+        <Button tone="leaf"
           type="submit"
           disabled={busy || !name.trim()}
-          className="btn-leaf px-3 py-1.5 font-display text-sm disabled:opacity-50"
-        >
+          className="px-3 py-1.5 text-sm disabled:opacity-50">
           {busy ? "Renaming…" : "Rename"}
-        </button>
+        </Button>
         {error && <span className="w-full text-xs text-oxblood-glow">{error}</span>}
       </form>
     </div>

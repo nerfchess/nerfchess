@@ -95,6 +95,7 @@ import {
 } from "@/lib/multiplayer";
 import { premoveOptionsFor, premoveSelfChecks, previewMovesFor } from "@/lib/premoves";
 import { isMuted, playCapture, playChallenge, playCheck, playError, playGameStart, playMove as playMoveSfx, playNerf, setMuted } from "@/lib/sounds";
+import { Button } from "@/components/ui/Button";
 
 // Mirrors the server's start-of-game grace: each side's first move gets this
 // many free milliseconds before their clock starts charging.
@@ -2324,12 +2325,11 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               </div>
               {nerfSelected != null && (
                 <div className="mt-4 text-center">
-                  <button
+                  <Button tone="primary"
                     onClick={() => sendPick(nerfSelected)}
-                    className="btn-glass btn-glass--primary px-8 py-3 font-display text-base font-semibold tracking-wide"
-                  >
+                    className="px-8 py-3 text-base font-semibold tracking-wide">
                     Confirm pick
-                  </button>
+                  </Button>
                 </div>
               )}
             </>
@@ -2582,12 +2582,11 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         >
           Reveal
         </button>
-        <button
+        <Button tone="ghost"
           onClick={() => setMyRevealState("hidden")}
-          className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 btn-ghost text-xs font-display tracking-wide"
-        >
+          className="min-w-0 px-3 py-2 text-xs tracking-wide">
           Cancel
-        </button>
+        </Button>
       </div>
     </div>
   ) : (
@@ -2609,12 +2608,11 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         >
           Confirm
         </button>
-        <button
+        <Button tone="ghost"
           onClick={() => setConfirmMovePending(null)}
-          className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 btn-ghost text-xs font-display tracking-wide"
-        >
+          className="min-w-0 px-3 py-2 text-xs tracking-wide">
           Cancel
-        </button>
+        </Button>
       </div>
     </div>
   ) : confirmingDraw ? (
@@ -2627,33 +2625,30 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         >
           Offer draw
         </button>
-        <button
+        <Button tone="ghost"
           onClick={() => setConfirmingDraw(false)}
-          className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 btn-ghost text-xs font-display tracking-wide"
-        >
+          className="min-w-0 px-3 py-2 text-xs tracking-wide">
           Cancel
-        </button>
+        </Button>
       </div>
     </div>
   ) : confirmingResign ? (
     <div className="space-y-2">
       <div className="smallcaps text-[12px] text-parchment-300">Resign the game?</div>
       <div className="grid grid-cols-2 gap-2">
-        <button
+        <Button tone="danger"
           onClick={() => {
             onResign();
             setConfirmingResign(false);
           }}
-          className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 btn-cursed text-xs font-display font-semibold tracking-wide"
-        >
+          className="min-w-0 px-3 py-2 text-xs font-semibold tracking-wide">
           Yes
-        </button>
-        <button
+        </Button>
+        <Button tone="ghost"
           onClick={() => setConfirmingResign(false)}
-          className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 btn-ghost text-xs font-display tracking-wide"
-        >
+          className="min-w-0 px-3 py-2 text-xs tracking-wide">
           Cancel
-        </button>
+        </Button>
       </div>
     </div>
   ) : claimReady ? (
@@ -2669,12 +2664,11 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         >
           Claim win
         </button>
-        <button
+        <Button tone="ghost"
           onClick={onClaimDraw}
-          className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 btn-ghost text-xs font-display font-semibold tracking-wide"
-        >
+          className="min-w-0 px-3 py-2 text-xs font-semibold tracking-wide">
           Claim draw
-        </button>
+        </Button>
       </div>
     </div>
   ) : opponentGone && !game?.result ? (
@@ -2698,12 +2692,11 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         >
           Allow
         </button>
-        <button
+        <Button tone="ghost"
           onClick={onDeclineTakeback}
-          className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 btn-ghost text-xs font-display font-semibold tracking-wide"
-        >
+          className="min-w-0 px-3 py-2 text-xs font-semibold tracking-wide">
           Decline
-        </button>
+        </Button>
       </div>
     </div>
   ) : drawOfferBy && drawOfferBy !== myColor ? (
@@ -2717,19 +2710,17 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         >
           Accept
         </button>
-        <button
+        <Button tone="ghost"
           onClick={onDeclineDraw}
-          className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 btn-ghost text-xs font-display font-semibold tracking-wide"
-        >
+          className="min-w-0 px-3 py-2 text-xs font-semibold tracking-wide">
           Decline
-        </button>
+        </Button>
       </div>
-      <button
+      <Button tone="danger"
         onClick={requestResign}
-        className="w-full min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 btn-cursed text-xs font-display font-semibold tracking-wide"
-      >
+        className="w-full min-w-0 px-3 py-2 text-xs font-semibold tracking-wide">
         Resign
-      </button>
+      </Button>
     </div>
   ) : (
     <div className="space-y-2">
@@ -2768,12 +2759,11 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
             {takebackStatus === "offering" ? "Asked" : "Takeback"}
           </button>
         )}
-        <button
+        <Button tone="danger"
           onClick={requestResign}
-          className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 btn-cursed text-xs font-display font-semibold tracking-wide"
-        >
+          className="min-w-0 px-3 py-2 text-xs font-semibold tracking-wide">
           Resign
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -2802,12 +2792,11 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               ? `You've aborted too many of your recent games, so starting new games is paused for about ${abortNotice.minutes ?? 10} minutes.`
               : "You've aborted several of your recent games. Abort another soon and starting new games will be paused for a while."}
           </p>
-          <button
+          <Button tone="ghost"
             onClick={() => setAbortNotice(null)}
-            className="mt-2 btn-ghost px-2 py-1 text-[11px] font-display tracking-wide"
-          >
+            className="mt-2 px-2 py-1 text-[11px] tracking-wide">
             Dismiss
-          </button>
+          </Button>
         </div>
       )}
       <nav className="sticky top-0 z-20 flex w-full shrink-0 items-center justify-between px-5 py-3">
@@ -2839,12 +2828,11 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
             {subtitle}
           </div>
           <SpectatorPill n={spectators.n} names={spectators.names} />
-          <button
+          <Button tone="ghost"
             onClick={toggleMute}
             aria-label={muted ? "Unmute" : "Mute"}
             title={muted ? "Sound off" : "Sound on"}
-            className="h-11 w-11 sm:h-9 sm:w-9 inline-flex items-center justify-center rounded-full btn-ghost"
-          >
+            className="h-11 w-11 sm:h-9 sm:w-9 rounded-full">
             {muted ? (
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
@@ -2858,18 +2846,17 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
               </svg>
             )}
-          </button>
-          <button
+          </Button>
+          <Button tone="ghost"
             onClick={() => setSettingsOpen(true)}
             aria-label="Settings"
             title="Settings"
-            className="h-11 w-11 sm:h-9 sm:w-9 inline-flex items-center justify-center rounded-full btn-ghost"
-          >
+            className="h-11 w-11 sm:h-9 sm:w-9 rounded-full">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <circle cx="12" cy="12" r="3" />
               <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
             </svg>
-          </button>
+          </Button>
         </div>
       </nav>
 
@@ -2994,18 +2981,17 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   across the screen. The rails keep the rules/moves/chat. */}
               <div className="board-strip flex items-center justify-between gap-2">
                 {railCollapsed && (
-                  <button
-                    type="button"
+                  <Button tone="ghost"
+                   
                     onClick={toggleRail}
                     aria-label="Show side panel"
                     title="Show the side panel"
-                    className="btn-ghost hidden h-8 w-8 shrink-0 place-items-center text-parchment-300 hover:text-parchment-100 lg:grid"
-                  >
+                    className="hidden h-8 w-8 shrink-0 place-items-center text-parchment-300 hover:text-parchment-100 lg:grid">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                       <polyline points="13 17 18 12 13 7" />
                       <polyline points="6 17 11 12 6 7" />
                     </svg>
-                  </button>
+                  </Button>
                 )}
                 <BoardPlayerRow
                   // Material counts read the COMMITTED position (a queued premove
@@ -3707,23 +3693,21 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           <span className="min-w-0 truncate font-display text-sm text-parchment-100">
             {oppName} wants a rematch
           </span>
-          <button
-            type="button"
+          <Button tone="leaf"
+           
             onClick={handleRematch}
-            className="btn-leaf shrink-0 px-3 py-1.5 font-display text-xs font-semibold"
-          >
+            className="shrink-0 px-3 py-1.5 text-xs font-semibold">
             Accept
-          </button>
+          </Button>
         </motion.div>
       )}
       {game.result && !showResult && (
-        <button
-          type="button"
+        <Button tone="leaf"
+         
           onClick={() => setShowResult(true)}
-          className="btn-leaf fixed bottom-24 right-3 z-40 px-4 py-2 font-display text-sm font-semibold shadow-xl sm:bottom-16 lg:bottom-4"
-        >
+          className="fixed bottom-24 right-3 z-40 px-4 py-2 text-sm font-semibold shadow-xl sm:bottom-16 lg:bottom-4">
           Show result
-        </button>
+        </Button>
       )}
       {game.result && showResult && (
         <GameOver

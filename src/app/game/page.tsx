@@ -6,7 +6,6 @@ import { BoardPlayerRow } from "@/components/BoardPlayerRow";
 import { ClockPill } from "@/components/ClockPill";
 import { RailResizeHandle, useRailWidth } from "@/components/RailResizeHandle";
 import { CommandRail, railGridClass } from "@/components/match/CommandRail";
-import { Button } from "@/components/ui/Button";
 // The end screen is never part of first paint; loading it on demand keeps it
 // out of the page's initial bundle.
 const GameOver = dynamic(() => import("@/components/GameOver").then((m) => m.GameOver), {
@@ -89,6 +88,7 @@ import type { AIWorkerRequest, AIWorkerResponse } from "@/workers/aiWorker";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, type CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Button } from "@/components/ui/Button";
 
 function pickRandomNerf(): Nerf {
   // Random rolls respect the temporary opening cap (tiers 1-2 only).
@@ -1483,12 +1483,11 @@ function GamePage() {
             </div>
             {nerfSelected != null && (
               <div className="mt-4 text-center">
-                <button
+                <Button tone="primary"
                   onClick={() => startDraftGame(nerfDraft.myOptions[nerfSelected])}
-                  className="btn-glass btn-glass--primary px-8 py-3 font-display text-base font-semibold tracking-wide"
-                >
+                  className="px-8 py-3 text-base font-semibold tracking-wide">
                   Confirm pick
-                </button>
+                </Button>
               </div>
             )}
             {/* Nerf mode: the opponent's rule is completely hidden until the
@@ -1747,12 +1746,11 @@ function GamePage() {
         >
           Confirm
         </button>
-        <button
+        <Button tone="ghost"
           onClick={() => setConfirmMovePending(null)}
-          className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 btn-ghost text-xs font-display tracking-wide"
-        >
+          className="min-w-0 px-3 py-2 text-xs tracking-wide">
           Cancel
-        </button>
+        </Button>
       </div>
     </div>
   ) : confirmingDraw ? (
@@ -1765,30 +1763,27 @@ function GamePage() {
         >
           Offer draw
         </button>
-        <button
+        <Button tone="ghost"
           onClick={() => setConfirmingDraw(false)}
-          className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 btn-ghost text-xs font-display tracking-wide"
-        >
+          className="min-w-0 px-3 py-2 text-xs tracking-wide">
           Cancel
-        </button>
+        </Button>
       </div>
     </div>
   ) : confirmingResign ? (
     <div className="space-y-2">
       <div className="smallcaps text-[12px] text-parchment-300">Resign the game?</div>
       <div className="grid grid-cols-2 gap-2">
-        <button
+        <Button tone="danger"
           onClick={() => { onResign(); setConfirmingResign(false); }}
-          className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 btn-cursed text-xs font-display font-semibold tracking-wide"
-        >
+          className="min-w-0 px-3 py-2 text-xs font-semibold tracking-wide">
           Yes
-        </button>
-        <button
+        </Button>
+        <Button tone="ghost"
           onClick={() => setConfirmingResign(false)}
-          className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 btn-ghost text-xs font-display tracking-wide"
-        >
+          className="min-w-0 px-3 py-2 text-xs tracking-wide">
           Cancel
-        </button>
+        </Button>
       </div>
     </div>
   ) : (
@@ -1806,14 +1801,13 @@ function GamePage() {
         >
           {drawOfferStatus === "offering" ? "Offering..." : "Draw"}
         </button>
-        <button
+        <Button tone="danger"
           onClick={requestResign}
           title="Resign the game"
           aria-label="Resign the game"
-          className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 btn-cursed text-xs font-display font-semibold tracking-wide"
-        >
+          className="min-w-0 px-3 py-2 text-xs font-semibold tracking-wide">
           Resign
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -1823,8 +1817,8 @@ function GamePage() {
   // can't be reconstructed (board rewritten by a card, no stored positions).
   const clipButton =
     game.board.history.length >= 2 ? (
-      <button
-        type="button"
+      <Button tone="ghost"
+       
         onClick={openClip}
         disabled={clipPlies < 2}
         data-clip-open
@@ -1833,14 +1827,13 @@ function GamePage() {
             ? "Clip unavailable: these moves can't be replayed (the board was rewritten by a card)"
             : "Save the last moves as a short video clip"
         }
-        className="min-w-0 min-h-[44px] w-full inline-flex items-center justify-center gap-2 px-3 py-2 btn-ghost text-xs font-display tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
-      >
+        className="min-w-0 w-full px-3 py-2 text-xs tracking-wide disabled:opacity-50">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
           <polygon points="23 7 16 12 23 17 23 7" />
           <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
         </svg>
         Clip last moves
-      </button>
+      </Button>
     ) : null;
 
   const moveListFooter =
@@ -1871,12 +1864,11 @@ function GamePage() {
             {plainMode && <>plain chess · </>}
             bot on {difficulty} · {rated ? "rated" : "casual"}
           </div>
-          <button
+          <Button tone="ghost"
             onClick={toggleMute}
             aria-label={muted ? "Unmute" : "Mute"}
             title={muted ? "Sound off" : "Sound on"}
-            className="h-11 w-11 sm:h-9 sm:w-9 inline-flex items-center justify-center rounded-full btn-ghost"
-          >
+            className="h-11 w-11 sm:h-9 sm:w-9 rounded-full">
             {muted ? (
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
@@ -1890,18 +1882,17 @@ function GamePage() {
                 <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
               </svg>
             )}
-          </button>
-          <button
+          </Button>
+          <Button tone="ghost"
             onClick={() => setSettingsOpen(true)}
             aria-label="Settings"
             title="Settings"
-            className="h-11 w-11 sm:h-9 sm:w-9 inline-flex items-center justify-center rounded-full btn-ghost"
-          >
+            className="h-11 w-11 sm:h-9 sm:w-9 rounded-full">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <circle cx="12" cy="12" r="3" />
               <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
             </svg>
-          </button>
+          </Button>
         </div>
       </nav>
 
@@ -2339,13 +2330,12 @@ function GamePage() {
       )}
 
       {game.result && !showResult && (
-        <button
-          type="button"
+        <Button tone="leaf"
+         
           onClick={() => setShowResult(true)}
-          className="btn-leaf fixed bottom-24 right-3 z-40 px-4 py-2 font-display text-sm font-semibold shadow-xl sm:bottom-16 lg:bottom-4"
-        >
+          className="fixed bottom-24 right-3 z-40 px-4 py-2 text-sm font-semibold shadow-xl sm:bottom-16 lg:bottom-4">
           Show result
-        </button>
+        </Button>
       )}
       {game.result && showResult && (
         <GameOver

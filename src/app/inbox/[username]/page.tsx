@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { PlayerLink } from "@/components/PlayerLink";
 import { AccountUser, fetchMe } from "@/lib/authClient";
+import { Button } from "@/components/ui/Button";
 
 type ThreadMessage = { id: string; fromMe: boolean; text: string; at: number };
 type Thread = { peer: { username: string; avatar: string | null }; messages: ThreadMessage[] };
@@ -164,15 +165,14 @@ export default function ThreadPage() {
               We could not load this conversation. Check your connection and try again.
             </p>
             <div className="flex gap-2">
-              <button
+              <Button tone="leaf"
                 onClick={() => {
                   setLoadError(false);
                   setReloadKey((k) => k + 1);
                 }}
-                className="btn-leaf min-h-[44px] px-5 font-display text-[13px] font-semibold"
-              >
+                className="px-5 text-[13px] font-semibold">
                 Retry
-              </button>
+              </Button>
               <Link
                 href="/inbox"
                 className="btn-ghost flex min-h-[44px] items-center px-5 font-display text-[13px]"
@@ -235,13 +235,12 @@ export default function ThreadPage() {
                 aria-label={`Message ${thread?.peer.username ?? username}`}
                 className="min-h-[44px] min-w-0 flex-1 rounded-sm border border-white/15 bg-ink-900/60 px-4 py-3 text-[13px] text-parchment placeholder:text-parchment-400/50"
               />
-              <button
+              <Button tone="leaf"
                 onClick={send}
                 disabled={!draft.trim() || sending}
-                className="btn-leaf min-h-[44px] px-5 font-display text-[13px] font-semibold disabled:opacity-50"
-              >
+                className="px-5 text-[13px] font-semibold disabled:opacity-50">
                 {sending ? "Sending…" : "Send"}
-              </button>
+              </Button>
             </div>
             {error && <p className="mt-2 text-sm text-oxblood-glow">{error}</p>}
           </>

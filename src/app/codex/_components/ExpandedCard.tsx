@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { ExternalLink, Link2, X } from "lucide-react";
 import { affectedLine } from "./affected";
 import { entryPath, type CodexEntry } from "./codexData";
+import { Button } from "@/components/ui/Button";
 
 // The full card renderers pull in framer-motion (NerfCard) and the heavier card
 // faces; load them only when a row is actually expanded, so they stay out of
@@ -43,22 +44,20 @@ export function ExpandedCard({
           <ExternalLink size={14} aria-hidden />
           Open card page
         </Link>
-        <button
-          type="button"
+        <Button tone="ghost"
+         
           onClick={onCopy}
-          className="inline-flex items-center gap-1.5 rounded-sm btn-ghost px-3 py-1.5 font-display text-[13px]"
-        >
+          className="px-3 py-1.5 text-[13px]">
           <Link2 size={14} aria-hidden />
           {copied ? "Link copied" : "Copy link"}
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button tone="ghost"
+         
           onClick={onCollapse}
-          className="ml-auto inline-flex items-center gap-1.5 rounded-sm btn-ghost px-3 py-1.5 font-display text-[13px]"
-        >
+          className="ml-auto px-3 py-1.5 text-[13px]">
           <X size={14} aria-hidden />
           Collapse
-        </button>
+        </Button>
       </div>
 
       <div className="mx-auto max-w-md">

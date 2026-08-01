@@ -11,6 +11,7 @@ import type { Nerf } from "@/engine/nerf";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { AccountUser, fetchMe } from "@/lib/authClient";
+import { Button } from "@/components/ui/Button";
 
 type Kind = "buff" | "nerf";
 
@@ -378,23 +379,21 @@ function FragmentRow({
         <td className="px-3 py-2 text-parchment-300">{enabled ? "Yes" : "No"}</td>
         <td className="px-3 py-2 text-right whitespace-nowrap">
           {isEditing ? (
-            <button onClick={onCancel} className="btn-ghost px-3 py-1 rounded-[1px] text-xs" disabled={busy}>
+            <Button tone="ghost" onClick={onCancel} className="px-3 py-1 text-xs" disabled={busy}>
               Cancel
-            </button>
+            </Button>
           ) : (
             <>
-              <button onClick={onEdit} className="btn-ghost px-3 py-1 rounded-[1px] text-xs">
+              <Button tone="ghost" onClick={onEdit} className="px-3 py-1 text-xs">
                 Edit
-              </button>
+              </Button>
               {overridden && (
-                <button
+                <Button tone="ghost"
                   onClick={onReset}
-                  className="ml-2 btn-ghost px-3 py-1 rounded-[1px] text-xs"
-                  disabled={busy}
-                  title="Delete the override and fall back to the code definition"
-                >
+                  className="ml-2 px-3 py-1 text-xs" disabled={busy}
+                  title="Delete the override and fall back to the code definition">
                   Reset to code
-                </button>
+                </Button>
               )}
             </>
           )}
@@ -455,9 +454,9 @@ function FragmentRow({
                 Enabled (unchecked = never offered in drafts or dealt as a nerf)
               </label>
               <div className="flex items-center justify-end gap-2">
-                <button onClick={onSave} className="btn-glass px-4 py-1.5 rounded-[1px] text-sm" disabled={busy}>
+                <Button tone="glass" onClick={onSave} className="px-4 py-1.5 text-sm" disabled={busy}>
                   {busy ? "Saving…" : "Save"}
-                </button>
+                </Button>
               </div>
             </div>
           </td>

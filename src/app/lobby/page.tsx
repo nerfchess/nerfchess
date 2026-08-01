@@ -17,6 +17,7 @@ import { StarField } from "@/components/StarField";
 import { categoryForTimeControl, getCategory } from "@/lib/ratingCategories";
 import { EngravedLabel } from "@/components/dungeon/primitives";
 import "@/components/dungeon/dungeon-lobby.css";
+import { Button } from "@/components/ui/Button";
 
 // The lobby: the central place to find a game, dressed edge to edge in the
 // dungeon material set (dungeon-lobby.css): a torchlit wash over the shared
@@ -611,15 +612,14 @@ function LobbyInner() {
                   ))}
                 </ul>
                 {sortedPlayers.length > ONLINE_LIST_FOLD && (
-                  <button
-                    type="button"
+                  <Button tone="ghost"
+                   
                     onClick={() => setShowAllPlayers((v) => !v)}
-                    className="mt-2 min-h-[44px] sm:min-h-0 w-full btn-ghost press px-3 py-2 text-xs font-medium text-parchment-300"
-                  >
+                    className="mt-2 sm:min-h-0 w-full px-3 py-2 text-xs font-medium text-parchment-300">
                     {showAllPlayers
                       ? "Show fewer"
                       : `View all ${sortedPlayers.length} players`}
-                  </button>
+                  </Button>
                 )}
                 {lobby.players.length > 0 && lobby.anonymous > 0 && (
                   <p className="mt-3 text-xs text-parchment-400">
@@ -674,13 +674,12 @@ function LobbyInner() {
                     ))}
                   </ul>
                   {lobby.games.length > WATCH_RAIL_FOLD && (
-                    <button
-                      type="button"
+                    <Button tone="ghost"
+                     
                       onClick={() => setTab("watch")}
-                      className="mt-2 min-h-[44px] sm:min-h-0 w-full btn-ghost press px-3 py-2 text-xs font-medium text-parchment-300"
-                    >
+                      className="mt-2 sm:min-h-0 w-full px-3 py-2 text-xs font-medium text-parchment-300">
                       {`See all ${lobby.games.length} live games`}
-                    </button>
+                    </Button>
                   )}
                 </>
               )}
@@ -963,13 +962,12 @@ function LobbyRailError({ message, onRetry }: { message: string; onRetry: () => 
   return (
     <div role="alert" className="mt-3 space-y-2">
       <p className="text-sm text-parchment-300">{message}</p>
-      <button
-        type="button"
+      <Button tone="ghost"
+       
         onClick={onRetry}
-        className="min-h-[44px] sm:min-h-0 btn-ghost press px-3 py-2 text-xs font-medium text-parchment-200"
-      >
+        className="sm:min-h-0 px-3 py-2 text-xs font-medium text-parchment-200">
         Retry
-      </button>
+      </Button>
     </div>
   );
 }
@@ -1079,14 +1077,13 @@ function SeekRow({
           Your seek
         </span>
       ) : (
-        <button
+        <Button tone="leaf"
           onClick={onJoin}
           disabled={busy}
           aria-label={`Join ${seek.name}'s ${clock} game`}
-          className="btn-leaf press shrink-0 inline-flex items-center px-4 py-2 font-display text-sm font-semibold disabled:opacity-50"
-        >
+          className="shrink-0 px-4 py-2 text-sm font-semibold disabled:opacity-50">
           {joining ? "Joining…" : "Join"}
-        </button>
+        </Button>
       )}
     </li>
   );
@@ -1123,14 +1120,13 @@ function ChallengeRow({ challenge }: { challenge: MPLobbyChallenge }) {
           </span>
         </div>
       </div>
-      <button
-        type="button"
+      <Button tone="leaf"
+       
         onClick={() => joinWithCode(challenge.id)}
         aria-label={`Accept ${challenge.host.name}'s challenge`}
-        className="btn-leaf press shrink-0 inline-flex items-center px-4 py-2 font-display text-sm font-semibold"
-      >
+        className="shrink-0 px-4 py-2 text-sm font-semibold">
         Accept
-      </button>
+      </Button>
     </li>
   );
 }

@@ -5,6 +5,7 @@
 // styling (tracks, thumbs, hit areas) lives in SettingsPanel.css.
 
 import { ChevronDown } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 
 /** Forged toggle: a carved recess in the stone with a gem thumb that lights
  *  with the accent energy when on. The visual stays 44x24; the CSS ::before
@@ -149,12 +150,11 @@ export function Swatches({
 /** Small secondary action button (e.g. Reset, Apply, Remove). */
 export function GhostButton({ label, onClick }: { label: string; onClick?: () => void }) {
   return (
-    <button
-      type="button"
+    <Button tone="ghost"
+     
       onClick={onClick}
-      className="btn-ghost press min-h-[36px] shrink-0 rounded-[1px] px-3 py-1.5 text-[13px] font-medium"
-    >
+      className="shrink-0 px-3 py-1.5 text-[13px] font-medium">
       {label}
-    </button>
+    </Button>
   );
 }

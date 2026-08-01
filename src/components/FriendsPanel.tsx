@@ -8,6 +8,7 @@ import { PlayerLink } from "./PlayerLink";
 import { PresenceBadge } from "./PresenceBadge";
 import { derivePresence, useLobbyFeed, type PresenceState } from "@/lib/presence";
 import type { MPLobby } from "@/lib/multiplayer";
+import { Button } from "@/components/ui/Button";
 
 // Friends list + add-a-friend + incoming/outgoing requests, with a one-tap
 // Challenge that deep-links into the friend-game flow (/friend?challenge=name),
@@ -137,13 +138,12 @@ export function FriendsPanel() {
         {loadFailed ? (
           <div className="mt-4 text-sm text-parchment-300">
             <p>Could not load your friends.</p>
-            <button
-              type="button"
+            <Button tone="ghost"
+             
               onClick={() => void load()}
-              className="btn-ghost mt-2 inline-flex min-h-[40px] items-center px-3 font-display text-sm"
-            >
+              className="mt-2 px-3 text-sm">
               Try again
-            </button>
+            </Button>
           </div>
         ) : (
           <div className="mt-4 space-y-2" aria-hidden>
@@ -263,14 +263,13 @@ export function FriendsPanel() {
           maxLength={24}
           className="input-rune min-h-[44px] min-w-0 flex-1 px-3 text-[16px] sm:text-sm"
         />
-        <button
+        <Button tone="leaf"
           type="submit"
           disabled={busy || !addName.trim()}
-          className="btn-leaf press inline-flex min-h-[44px] shrink-0 items-center gap-1.5 px-4 font-display text-sm font-semibold disabled:opacity-40"
-        >
+          className="shrink-0 px-4 text-sm font-semibold">
           <UserPlus size={15} strokeWidth={2.2} aria-hidden />
           Add
-        </button>
+        </Button>
       </form>
       {note && (
         <p className={"mt-2 text-[12px] " + (note.kind === "ok" ? "text-verdigris-glow" : "text-oxblood-glow")}>

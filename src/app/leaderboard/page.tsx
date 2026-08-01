@@ -14,6 +14,7 @@ import { DEFAULT_CATEGORY, getCategory, type RatingCategoryId } from "@/lib/rati
 import { isProvisionalRd, PROVISIONAL_RD } from "@/lib/ratingDisplay";
 import { laurelTier } from "@/lib/laurels";
 import { LaurelBadge } from "@/components/LaurelBadge";
+import { Button } from "@/components/ui/Button";
 
 interface Row {
   username: string;
@@ -131,14 +132,13 @@ export default function LeaderboardPage() {
         {/* Controls: search and the jump-to-me shortcut. */}
         <div className="mt-4 flex flex-wrap items-center gap-3">
           {canJump && (
-            <button
-              type="button"
+            <Button tone="ghost"
+             
               onClick={jumpToMe}
-              className="btn-ghost press ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 text-[13px]"
-            >
+              className="ml-auto px-3 py-1.5 text-[13px]">
               <Trophy size={13} aria-hidden />
               Jump to my rank
-            </button>
+            </Button>
           )}
         </div>
 
@@ -154,13 +154,12 @@ export default function LeaderboardPage() {
           >
             <span className="text-sm text-parchment">{error}</span>
             <div className="flex shrink-0 items-center gap-2">
-              <button
-                type="button"
+              <Button tone="leaf"
+               
                 onClick={() => setReloadKey((k) => k + 1)}
-                className="btn-leaf press px-4 py-2 text-sm font-semibold"
-              >
+                className="px-4 py-2 text-sm font-semibold">
                 Retry
-              </button>
+              </Button>
               <Link href="/lobby" className="btn-ghost press px-4 py-2 text-sm">
                 Back to lobby
               </Link>
@@ -230,27 +229,25 @@ export default function LeaderboardPage() {
 
             {pageCount > 1 && (
               <div className="mt-4 flex items-center justify-between gap-3">
-                <button
-                  type="button"
+                <Button tone="ghost"
+                 
                   onClick={() => setPage((p) => Math.max(0, p - 1))}
                   disabled={safePage === 0}
-                  className="btn-ghost press inline-flex min-h-[44px] items-center px-4 text-sm disabled:cursor-not-allowed disabled:opacity-40 sm:min-h-0 sm:py-2"
-                >
+                  className="px-4 text-sm sm:min-h-0 sm:py-2">
                   Previous
-                </button>
+                </Button>
                 <span className="font-mono text-xs tabular-nums text-parchment-400">
                   Ranks {safePage * PAGE_SIZE + 1}
                   {"-"}
                   {Math.min(filtered.length, (safePage + 1) * PAGE_SIZE)} of {filtered.length}
                 </span>
-                <button
-                  type="button"
+                <Button tone="ghost"
+                 
                   onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
-                  disabled={safePage >= pageCount - 1}
-                  className="btn-ghost press inline-flex min-h-[44px] items-center px-4 text-sm disabled:cursor-not-allowed disabled:opacity-40 sm:min-h-0 sm:py-2"
-                >
+                  disabled={safePage>= pageCount - 1}
+                  className="px-4 text-sm sm:min-h-0 sm:py-2" >
                   Next
-                </button>
+                </Button>
               </div>
             )}
 

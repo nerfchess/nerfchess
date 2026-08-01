@@ -13,6 +13,7 @@ import { DEFAULT_CATEGORY, getCategory, isRatingCategoryId } from "@/lib/ratingC
 import { isProvisionalRd } from "@/lib/ratingDisplay";
 import { countdownLabel, modeLabel } from "@/lib/tournaments";
 import type { MPLobbyGame } from "@/lib/multiplayer";
+import { Button } from "@/components/ui/Button";
 
 // The community hub: friends who are around, who you have just played, the
 // latest games, and the doors to clubs, tournaments, and the ladder. Every
@@ -739,9 +740,9 @@ function SectionError({ onRetry }: { onRetry: () => void }) {
         This section could not load right now.
       </p>
       <div className="flex items-center gap-2">
-        <button type="button" onClick={onRetry} className="btn-ghost press px-3 py-1.5 text-sm">
+        <Button tone="ghost" onClick={onRetry} className="px-3 py-1.5 text-sm">
           Retry
-        </button>
+        </Button>
         <Link href="/lobby" className="text-sm text-parchment-400 transition-colors hover:text-gold-leaf">
           Back to lobby
         </Link>
@@ -756,9 +757,9 @@ function RailError({ onRetry }: { onRetry: () => void }) {
   return (
     <div role="alert" className="mt-2 space-y-2">
       <p className="text-sm text-parchment-400">Could not load this list.</p>
-      <button type="button" onClick={onRetry} className="btn-ghost press px-3 py-1 text-xs">
+      <Button tone="ghost" onClick={onRetry} className="px-3 py-1 text-xs">
         Retry
-      </button>
+      </Button>
     </div>
   );
 }
