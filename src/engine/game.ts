@@ -1794,6 +1794,8 @@ export function activateBuff(
     return false;
   }
   const effectsBefore = bs.effects.length;
+  // Snapshot before the effect: see passTurnAfterBuff.
+  const skipsBeforeEffect = bs.skips[color === "w" ? "b" : "w"];
   def.effect?.(inst, makeBuffApi(game, color), picks);
   // A turn-consuming activation costs the activator this turn, so protective
   // timers it just created must not also burn a tick on the opponent's
@@ -1824,7 +1826,7 @@ export function activateBuff(
   // Using a buff consumes the turn unless the card is a free action (the
   // extra-move family, which already acts within the activator's turn).
   if (!game.result && !def.freeAction && game.board.turn === color) {
-    passTurnAfterBuff(game, color);
+    passTurnAfterBuff(game, color, skipsBeforeEffect);
   }
   return true;
 }
@@ -1833,7 +1835,7 @@ export function activateBuff(
  * playMove does after a regular move: tick the activator's effect timers,
  * hand the move over (extra moves and pending skips still absorb it), start
  * the new mover's turn, and apply the forced-pass / no-move rules. */
-function passTurnAfterBuff(game: NerfGame, color: Color) {
+function passTurnAfterBuff(game: NerfGame, color: Color, skipsBefore?: number) {
   const bs = game.buffs!;
   for (const e of bs.effects) {
     if (e.turns != null && effectTickColor(e) === color) e.turns -= 1;
@@ -1842,9 +1844,20 @@ function passTurnAfterBuff(game: NerfGame, color: Color) {
   bs.effects = bs.effects.filter((e) => e.turns == null || e.turns > 0);
   pruneOrphanedSquareEffects(game);
   const opp: Color = color === "w" ? "b" : "w";
+  // A skip this very activation just created must NOT be eaten here.
+  //
+  // Blackout ("your opponent's next turn is skipped") sets skips[opp] += 1 in
+  // its effect, and this handover then consumed it to refund the activation's
+  // own turn cost -- so a tier-9 card paid for itself and the opponent was
+  // never skipped. It measured +0.0 across 20 paired games with BYTE-IDENTICAL
+  // play, which is what sent me looking: a turn skip cannot be worth nothing.
+  //
+  // Only a skip that already existed before the effect ran may absorb this
+  // handover. 21 sites across the card library grant a skip this way.
+  const absorbable = skipsBefore ?? bs.skips[opp];
   if (bs.extraMoves[color] > 0) {
     bs.extraMoves[color] -= 1;
-  } else if (bs.skips[opp] > 0) {
+  } else if (bs.skips[opp] > 0 && absorbable > 0) {
     bs.skips[opp] -= 1;
   } else {
     game.board.turn = opp;

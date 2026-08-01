@@ -33,7 +33,7 @@ Cards do several things at once, so the ladder is priority-ordered and first-mat
 | [piece-revival](#piece-revival) | Brings a captured piece back | 41 | 21 | 1 | 19 | - | - | - |
 | [piece-class-lockdown](#piece-class-lockdown) | Shuts down a whole piece class | 38 | 5 | 18 | 3 | - | - | 12 |
 | [terrain-hazard](#terrain-hazard) | Puts a hazard on the board | 37 | 14 | 19 | - | 1 | - | 3 |
-| [conditional-piece-removal](#conditional-piece-removal) | Deletes a piece on a trigger | 35 | 26 | 3 | 3 | - | 2 | 1 |
+| [conditional-piece-removal](#conditional-piece-removal) | Deletes a piece on a trigger | 35 | 26 | 4 | 3 | - | 1 | 1 |
 | [move-budget-change](#move-budget-change) | Caps or extends how far a move may go | 35 | 3 | 25 | - | - | - | 7 |
 | [capture-permission](#capture-permission) | Grants an unusual way to capture | 31 | 25 | 5 | 1 | - | - | - |
 | [piece-swap](#piece-swap) | Swaps two pieces | 31 | 20 | 1 | 4 | 6 | - | - |
@@ -516,7 +516,7 @@ Cards do several things at once, so the ladder is priority-ordered and first-mat
 | bn4_parade_polish | Parade Polish | boon | 2 | activated | Gild one of your pieces (your king excepted): it wears the shine for the rest of the game and cannot be captured on your opponent's next turn. |
 | bn4_pocket_shield | Pocket Shield | boon | 2 | activated | One of your pieces (your king excepted) cannot be captured for your opponent's next 2 turns. |
 | bn4_rubber_duck | Rubber Duck | item | 2 | activated | One of your pieces (your king excepted) becomes delightfully plush for the rest of the game (purely decorative) and cannot be captured for your opponent's next 2 turns. |
-| cornerstone | Cornerstone | buff | 2 | passive | Your rooks cannot be captured while on their starting squares. |
+| cornerstone | Cornerstone | buff | 2 | passive | Your rooks cannot be captured while they stand on your back rank. |
 | firm_footing | Firm Footing | buff | 2 | activated | Choose one piece: it and your pawns on the squares beside it cannot be captured for your opponent's next 2 turns. |
 | loose_pawn | Tight Formation | buff | 2 | passive | Pawns still standing on your second rank cannot be captured, for the game. Once a pawn steps forward it is on its own. |
 | op_alley_cat | Alley Cat | buff | 2 | passive | One use: the first time an enemy piece attacks your b-file pawn, that pawn cannot be captured for one turn, but the guard begins only after your opponent's next move. |
@@ -2258,10 +2258,10 @@ Cards do several things at once, so the ladder is priority-ordered and first-mat
 | chain_atomic | Chain Atomic | buff | 7 | passive | For your next 3 turns, whenever a capture involves one of your pieces the capturing piece is destroyed, along with up to one enemy piece beside it, kings aside. No chains. |
 | molten_heart | Molten Heart | hex | 7 | passive | Their blades run molten: for your opponent's next 2 captures, the capturing piece is destroyed along with its victim. Their single most valuable piece is exempt and captures freely, and kings burn nothing and are never destroyed. |
 | bombardiro_croc | Bombardiro Crocodilo | buff | 8 | activated | Paint a square, then the payload drops after your opponent's next move: up to four enemy pieces except kings in the 5 by 5 area centred on it are destroyed, the four nearest the centre first. Anything that flees the area before it lands is spared. |
+| hw2_death_knell | Death Knell | hex | 8 | activated | Toll the knell over one enemy piece: in 3 of their turns it crumbles to dust and is removed. The bell accepts one bribe: if the doomed piece captures anything before the last toll, the curse breaks and it lives. Kings cannot be tolled. |
 | total_annihilation | Total Annihilation | buff | 8 | activated | Choose any square: the enemy piece there, unless it is a king, is removed, along with up to two adjacent enemy pieces. Shielded pieces and pawns survive the collateral blast. |
 | void_realm | The Void Realm | buff | 8 | activated | Three squares you pick become voids for your opponent's next three turns: any enemy piece except a king that lands directly on one is swallowed. Pieces beside a void are safe. |
 | culling | The Culling | apex | 9 | activated | Two random enemy pieces other than the king are marked: one is destroyed after your opponent's next turn, the other freezes for your opponent's next 2 turns. |
-| hw2_death_knell | Death Knell | apex | 9 | activated | Toll the knell over one enemy piece: in 3 of their turns it crumbles to dust and is removed. The bell accepts one bribe: if the doomed piece captures anything before the last toll, the curse breaks and it lives. Kings cannot be tolled. |
 
 ## move-budget-change
 

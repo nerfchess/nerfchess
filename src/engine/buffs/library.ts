@@ -1104,17 +1104,30 @@ const TIER1: Buff[] = [
   def(
     // Guards the rooks without a shield effect, so the ward motif is the only
     // board paint it gets.
-    { id: "cornerstone", name: "Cornerstone", description: "Your rooks cannot be captured while on their starting squares.", tier: 2, category: "protection", fx: { motif: "ward", pieces: ["r"], self: true } },
+    { id: "cornerstone", name: "Cornerstone", description: "Your rooks cannot be captured while they stand on your back rank.", tier: 2, category: "protection", fx: { motif: "ward", pieces: ["r"], self: true } },
+    // Widened from the two CORNER squares to the whole back rank.
+    //
+    // As written it warded a1 and h1 only, and the sweep measured it at exactly
+    // zero across 20 paired games: a rook sits on its original square about a
+    // third of the time, but the ward only pays when the opponent tries to
+    // capture it THERE, which almost never happens while the rook is still
+    // tucked in the corner. The card was correct and effectively unplayable.
+    //
+    // The rank is the honest reading of the fiction anyway: a cornerstone
+    // anchors the foundation, not one brick. Rooks return to the back rank
+    // constantly, so the ward is now live when it matters.
     oppFilter((moves, _inst, api) => {
       const hr = api.me === "w" ? 0 : 7;
-      const corners = [SQ(0, hr), SQ(7, hr)].filter((sq) => {
+      const warded: number[] = [];
+      for (let f = 0; f < 8; f++) {
+        const sq = SQ(f, hr);
         const p = api.board.pieces[sq];
-        return p?.type === "r" && p.color === api.me;
-      });
-      if (!corners.length) return moves;
+        if (p?.type === "r" && p.color === api.me) warded.push(sq);
+      }
+      if (!warded.length) return moves;
       return moves.filter((m) => {
         const cap = captureSquare(m);
-        return cap == null || !corners.includes(cap);
+        return cap == null || !warded.includes(cap);
       });
     }),
   ),

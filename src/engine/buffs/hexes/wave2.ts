@@ -1133,7 +1133,7 @@ export const HEX_WAVE2: Buff[] = [
   // the mirror of the occult Hex Doll (which kills a piece IF it captures):
   // here the piece dies UNLESS it captures. The victim reads the exact count
   // on the board and chooses: feed the bell, trade the piece off, or lose it.
-  H9(
+  H8(
     {
       id: "hw2_death_knell",
       name: "Death Knell",

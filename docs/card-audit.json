@@ -3,10 +3,10 @@
   "total": 2448,
   "byKind": {
    "buff": 970,
-   "hex": 542,
+   "hex": 543,
    "boon": 418,
    "item": 129,
-   "apex": 29,
+   "apex": 28,
    "nerf": 360
   },
   "flagged": {
@@ -110,25 +110,6 @@
    "location": "src/engine/buffs/mystic/fate.ts",
    "tests": [
     "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "hw2_death_knell",
-   "name": "Death Knell",
-   "kind": "apex",
-   "tier": 9,
-   "effect": "Toll the knell over one enemy piece: in 3 of their turns it crumbles to dust and is removed. The bell accepts one bribe: if the doomed piece captures anything before the last toll, the curse breaks and it lives. Kings cannot be tolled.",
-   "trigger": "activated/lingering",
-   "duration": "3-turns",
-   "targets": "enemy",
-   "signature": "hex|activated|effect+targets+onMove|3-turns|enemy|capture,king,n:3,remove",
-   "animation": "generated",
-   "location": "src/engine/buffs/hexes/wave2.ts",
-   "tests": [
-    "lab-run-all.ts",
-    "test-hexes.cjs"
    ],
    "flags": [],
    "action": "keep (auto: no flags, harness-executed)"
@@ -11832,11 +11813,11 @@
    "name": "Cornerstone",
    "kind": "buff",
    "tier": 2,
-   "effect": "Your rooks cannot be captured while on their starting squares.",
+   "effect": "Your rooks cannot be captured while they stand on your back rank.",
    "trigger": "passive",
    "duration": "unstated",
-   "targets": "enemy",
-   "signature": "protection|passive|filter|unstated|enemy|capture,rook,square",
+   "targets": "self",
+   "signature": "protection|passive|filter|unstated|self|capture,rank,rook",
    "animation": "passive",
    "location": "src/engine/buffs/library.ts",
    "tests": [
@@ -35875,6 +35856,25 @@
    "targets": "enemy",
    "signature": "hex|passive|init+onMove|5-turns|enemy|check,king,move,n:2,n:5,root",
    "animation": "passive",
+   "location": "src/engine/buffs/hexes/wave2.ts",
+   "tests": [
+    "lab-run-all.ts",
+    "test-hexes.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "hw2_death_knell",
+   "name": "Death Knell",
+   "kind": "hex",
+   "tier": 8,
+   "effect": "Toll the knell over one enemy piece: in 3 of their turns it crumbles to dust and is removed. The bell accepts one bribe: if the doomed piece captures anything before the last toll, the curse breaks and it lives. Kings cannot be tolled.",
+   "trigger": "activated/lingering",
+   "duration": "3-turns",
+   "targets": "enemy",
+   "signature": "hex|activated|effect+targets+onMove|3-turns|enemy|capture,king,n:3,remove",
+   "animation": "generated",
    "location": "src/engine/buffs/hexes/wave2.ts",
    "tests": [
     "lab-run-all.ts",

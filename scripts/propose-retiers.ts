@@ -123,7 +123,13 @@ function main(): void {
     // so a noisy measurement cannot buy a tier on its own.
     if (Math.abs(gap) < Math.max(15, 2 * r.stderr)) continue;
     const steps = Math.min(2, Math.max(1, Math.floor(Math.abs(gap) / 20)));
-    const to = Math.max(1, Math.min(10, r.tier + (gap > 0 ? steps : -steps)));
+    // Hexes are capped at tier 8 unless flagged `special` (tier 9 is the apex
+    // pool, which is not in the normal draft). test:rules enforces this, and
+    // the first pass pushed Death Knell to t9 and turned that suite red -- the
+    // tool has to know a category's legal band before it prices anything into
+    // one.
+    const ceiling = r.category === "hex" ? 8 : 10;
+    const to = Math.max(1, Math.min(ceiling, r.tier + (gap > 0 ? steps : -steps)));
     if (to === r.tier) continue;
     proposals.push({
       row: r,
