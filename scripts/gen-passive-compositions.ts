@@ -271,14 +271,46 @@ function detectSigil(card: SrcCard, family: PassiveFamily): string {
 // Composition builder.
 // ---------------------------------------------------------------------------
 
+// The bespoke-nerf physicality accent (docs section 3): the new primitive that
+// makes a nerf's reveal read physical, chosen from card semantics. Rule slabs
+// slam down for decrees, shackles clamp and cages rise for movement binds,
+// a fissure blooms for loss-condition rules, the ground rumbles under
+// high-tier strikes. Always drawn from the family's own vocabulary.
+function nerfAccent(family: PassiveFamily, target: PassiveTargetType, tier: number): PrimitiveKey | null {
+  if (target === "winCondition") return "crackBloom";
+  switch (family) {
+    case "decree":
+      return "slabSlam";
+    case "bind":
+      return target === "square" || target === "zone" || target === "board" ? "barCage" : "shackleDrop";
+    case "fracture":
+      return "crackBloom";
+    case "strike":
+      return tier >= 5 ? "quakeRumble" : null;
+    default:
+      return null;
+  }
+}
+
 function buildComposition(
   family: PassiveFamily,
   target: PassiveTargetType,
   tier: number,
+  cardFamily: CardFamily,
 ): PrimitiveKey[] {
   const vocab = FAMILY_VOCAB[family];
   const comp: PrimitiveKey[] = [vocab[0]];
   const count = primitiveCountForTier(tier);
+
+  // Bespoke nerf physicality: the semantic accent joins right after the
+  // family signature so the slam/shackle/crack reads as the card's identity
+  // (nerf wave only; buffs keep their original grammar). Tier 1-2 stays a
+  // single primitive per the section-6 ladder; those cards differentiate via
+  // their cue sheet instead.
+  if (cardFamily === "nerf" && count >= 2) {
+    const accent = nerfAccent(family, target, tier);
+    if (accent && vocab.includes(accent) && !comp.includes(accent)) comp.push(accent);
+  }
 
   // Target-driven accent for file/rank effects.
   const targetPrim: PrimitiveKey | null =
@@ -379,7 +411,7 @@ function main(): void {
     const target = detectTarget(card, t, family);
     const palette = detectPalette(card, t, family);
     const sigil = detectSigil(card, family);
-    const base = buildComposition(family, target, card.tier);
+    const base = buildComposition(family, target, card.tier, card.cardFamily);
 
     // Candidate primitive arrays: base first, then every ordered selection from
     // the family vocab. First whose full sentence is unused wins.

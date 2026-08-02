@@ -15,10 +15,12 @@
 import { PASSIVE_COMPOSITIONS } from "./compositions";
 import {
   auraForTarget,
+  deriveSpawnCue,
   exitForFamily,
   nodeBudgetForTier,
   PALETTE_HEX,
   pulseForTarget,
+  SPAWN_CUE_OVERRIDES,
   spawnDurationForTier,
   spectatorVisibilityFor,
   type AuraKey,
@@ -31,6 +33,7 @@ import {
   type PrimitiveKey,
   type PulseKey,
   type ReplayVisibility,
+  type SpawnCue,
   type SpectatorVisibility,
 } from "./spec";
 
@@ -45,6 +48,7 @@ export type {
   PrimitiveKey,
   PulseKey,
   ReplayVisibility,
+  SpawnCue,
   SpectatorVisibility,
 };
 
@@ -86,6 +90,10 @@ export interface PassiveVisual {
   pulseKey: PulseKey;
   /** Exit treatment (section 7.5). */
   exitKey: ExitKey;
+  /** Per-card spawn cue sheet (section 3.1): the bespoke performance layer on
+   *  top of the shared primitives. Derived deterministically per card, with
+   *  flagship hand-authored overrides. */
+  cue: SpawnCue;
   /** Reduced-motion static fallback (section 3, section 10). */
   reducedMotion: ReducedMotionFallback;
   /** Opponent/spectator visibility (section 9). */
@@ -104,6 +112,13 @@ export function passiveKey(cardFamily: CardFamily, cardId: string): string {
 
 function expand(row: PassiveComposition): PassiveVisual {
   const replayVisibility: ReplayVisibility = "onCrossPly";
+  // Cue precedence: derived base, then the flagship hand-authored override,
+  // then any per-row data override from compositions.ts.
+  const cue: SpawnCue = {
+    ...deriveSpawnCue(row.cardFamily, row.cardId, row.primitives),
+    ...SPAWN_CUE_OVERRIDES[passiveKey(row.cardFamily, row.cardId)],
+    ...row.cue,
+  };
   return {
     cardId: row.cardId,
     cardFamily: row.cardFamily,
@@ -116,6 +131,7 @@ function expand(row: PassiveComposition): PassiveVisual {
     sigilIcon: row.sigilIcon,
     spawnDurationMs: spawnDurationForTier(row.tier),
     maxNodes: nodeBudgetForTier(row.tier),
+    cue,
     auraKey: auraForTarget(row.targetType),
     pulseKey: pulseForTarget(row.targetType),
     exitKey: exitForFamily(row.family),

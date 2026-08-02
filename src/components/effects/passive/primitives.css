@@ -23,7 +23,20 @@
   transform: translate(-50%, -50%);
   transform-origin: center;
   will-change: transform, opacity;
-  animation-delay: var(--pfx-delay, 0ms);
+  /* Per-node stagger (--pfx-delay, set inline by the component) composes with
+   * the per-layer cue beat (--pfx-beat, set on the .pfx-cue wrapper). */
+  animation-delay: calc(var(--pfx-beat, 0ms) + var(--pfx-delay, 0ms));
+}
+
+/* Per-card cue-sheet wrapper (docs section 3.1): carries the card's rotation
+ * jitter, scale accent, and mirror as one STATIC transform (nothing here
+ * animates), plus the layer's attack beat via --pfx-beat. */
+.pfx-cue {
+  position: absolute;
+  inset: 0;
+  display: block;
+  pointer-events: none;
+  transform-origin: center;
 }
 
 /* Reduced-motion static fallback: a faded ring standing in for the static
@@ -245,7 +258,7 @@
   border-radius: 999px;
   opacity: 0;
   animation: pfx-shock var(--pfx-d) ease-out both;
-  animation-delay: calc(var(--pfx-d) * 0.4);
+  animation-delay: calc(var(--pfx-beat, 0ms) + var(--pfx-d) * 0.4);
 }
 
 /* ---- riseGlow: warm glow rises and blooms ---- */
@@ -402,6 +415,184 @@
   100% { opacity: 0; transform: translate(-50%, -50%) scale(1.7); }
 }
 
+/* ---- slabSlam: rule slab slams down, quake-adjacent settle ---- */
+.pfx-slab-el {
+  width: 68%;
+  height: 26%;
+  border: 2px solid var(--pfx-c);
+  border-radius: 6%;
+  background: linear-gradient(color-mix(in srgb, var(--pfx-c) 35%, transparent), color-mix(in srgb, var(--pfx-c) 12%, transparent));
+  opacity: 0;
+  animation: pfx-slab var(--pfx-d) cubic-bezier(0.55, 0, 0.65, 1) both;
+}
+@keyframes pfx-slab {
+  0% { opacity: 0; transform: translate(-50%, -260%) scaleY(1.08); }
+  38% { opacity: 1; transform: translate(-50%, -50%) scaleY(0.92); }
+  46% { transform: translate(-51.5%, -46%) scaleY(1.03); }
+  54% { transform: translate(-48.5%, -53%) scaleY(0.98); }
+  62% { transform: translate(-50.5%, -49%) scaleY(1.01); }
+  100% { opacity: 0.55; transform: translate(-50%, -50%) scaleY(1); }
+}
+.pfx-slab-dust-el {
+  top: 62%;
+  width: 84%;
+  height: 4%;
+  background: linear-gradient(90deg, transparent, var(--pfx-c), transparent);
+  opacity: 0;
+  transform: translate(-50%, -50%) scaleX(0.2);
+  animation: pfx-slab-dust var(--pfx-d) ease-out both;
+  animation-delay: calc(var(--pfx-beat, 0ms) + var(--pfx-d) * 0.34);
+}
+@keyframes pfx-slab-dust {
+  0% { opacity: 0.8; transform: translate(-50%, -50%) scaleX(0.2); }
+  45% { opacity: 0.5; transform: translate(-50%, -50%) scaleX(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scaleX(1.15); }
+}
+
+/* ---- quakeRumble: ground strokes shudder laterally and still ---- */
+.pfx-quake-el {
+  width: 30%;
+  height: 3.5%;
+  background: linear-gradient(90deg, transparent, var(--pfx-c), transparent);
+  opacity: 0;
+  animation: pfx-quake var(--pfx-d) ease-out both;
+}
+@keyframes pfx-quake {
+  0% { opacity: 0; transform: translate(-50%, -50%); }
+  18% { opacity: 0.85; transform: translate(-58%, -50%); }
+  34% { transform: translate(-42%, -50%); }
+  50% { transform: translate(-55%, -50%); }
+  64% { transform: translate(-46%, -50%); }
+  76% { transform: translate(-52%, -50%); }
+  100% { opacity: 0.3; transform: translate(-50%, -50%); }
+}
+
+/* ---- shackleDrop: cuffs drop and clamp, pin snaps in ---- */
+.pfx-shackle-el {
+  width: 30%;
+  height: 42%;
+  border: 3px solid var(--pfx-c);
+  border-radius: 999px;
+  opacity: 0;
+}
+.pfx-shackle-l {
+  border-right-color: transparent;
+  animation: pfx-shackle-l var(--pfx-d) cubic-bezier(0.5, 0, 0.6, 1) both;
+}
+.pfx-shackle-r {
+  border-left-color: transparent;
+  animation: pfx-shackle-r var(--pfx-d) cubic-bezier(0.5, 0, 0.6, 1) both;
+}
+@keyframes pfx-shackle-l {
+  0% { opacity: 0; transform: translate(-105%, -240%) rotate(-18deg); }
+  48% { opacity: 1; transform: translate(-88%, -50%) rotate(-4deg); }
+  60% { transform: translate(-82%, -50%) rotate(0deg); }
+  66% { transform: translate(-86%, -50%) rotate(-1deg); }
+  100% { opacity: 0.6; transform: translate(-84%, -50%) rotate(0deg); }
+}
+@keyframes pfx-shackle-r {
+  0% { opacity: 0; transform: translate(5%, -240%) rotate(18deg); }
+  48% { opacity: 1; transform: translate(-12%, -50%) rotate(4deg); }
+  60% { transform: translate(-18%, -50%) rotate(0deg); }
+  66% { transform: translate(-14%, -50%) rotate(1deg); }
+  100% { opacity: 0.6; transform: translate(-16%, -50%) rotate(0deg); }
+}
+.pfx-shackle-pin-el {
+  width: 9%;
+  height: 9%;
+  background: var(--pfx-c);
+  border-radius: 999px;
+  opacity: 0;
+  animation: pfx-shackle-pin var(--pfx-d) cubic-bezier(0.3, 1.5, 0.4, 1) both;
+  animation-delay: calc(var(--pfx-beat, 0ms) + var(--pfx-d) * 0.55);
+}
+@keyframes pfx-shackle-pin {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(2.2); }
+  55% { opacity: 1; transform: translate(-50%, -50%) scale(0.9); }
+  100% { opacity: 0.7; transform: translate(-50%, -50%) scale(1); }
+}
+
+/* ---- barCage: bars rise from below, lintel drops to lock ---- */
+.pfx-cagebar-el {
+  top: 12%;
+  width: 7%;
+  height: 82%;
+  transform: translate(-50%, 105%);
+  transform-origin: bottom center;
+  background: linear-gradient(transparent, var(--pfx-c) 30%, var(--pfx-c));
+  opacity: 0;
+  animation: pfx-cagebar var(--pfx-d) cubic-bezier(0.25, 0.9, 0.3, 1) both;
+}
+@keyframes pfx-cagebar {
+  0% { opacity: 0; transform: translate(-50%, 105%); }
+  55% { opacity: 0.85; transform: translate(-50%, -3%); }
+  66% { transform: translate(-50%, 2%); }
+  100% { opacity: 0.5; transform: translate(-50%, 0); }
+}
+.pfx-cagelintel-el {
+  top: 12%;
+  width: 74%;
+  height: 6%;
+  background: var(--pfx-c);
+  border-radius: 999px;
+  opacity: 0;
+  transform: translate(-50%, -50%);
+  animation: pfx-cagelintel var(--pfx-d) cubic-bezier(0.55, 0, 0.7, 1) both;
+  animation-delay: calc(var(--pfx-beat, 0ms) + var(--pfx-d) * 0.4);
+}
+@keyframes pfx-cagelintel {
+  0% { opacity: 0; transform: translate(-50%, -320%); }
+  55% { opacity: 0.9; transform: translate(-50%, -42%); }
+  68% { transform: translate(-50%, -56%); }
+  100% { opacity: 0.55; transform: translate(-50%, -50%); }
+}
+
+/* ---- crackBloom: a fissure splits open, branch cracks bloom outward ---- */
+.pfx-fissure-el {
+  width: 7%;
+  height: 74%;
+  background: linear-gradient(transparent, var(--pfx-c) 18%, var(--pfx-c) 82%, transparent);
+  clip-path: polygon(50% 0, 78% 18%, 42% 34%, 70% 52%, 38% 68%, 62% 84%, 46% 100%, 34% 82%, 58% 64%, 28% 46%, 60% 28%, 36% 12%);
+  opacity: 0;
+  animation: pfx-fissure var(--pfx-d) cubic-bezier(0.2, 0.8, 0.25, 1) both;
+}
+@keyframes pfx-fissure {
+  0% { opacity: 0; transform: translate(-50%, -50%) scaleY(0.05) scaleX(0.6); }
+  30% { opacity: 1; transform: translate(-50%, -50%) scaleY(1) scaleX(1); }
+  44% { transform: translate(-50%, -50%) scaleY(1) scaleX(1.35); }
+  100% { opacity: 0.45; transform: translate(-50%, -50%) scaleY(1) scaleX(1.1); }
+}
+.pfx-bloomcrack-el {
+  width: 3.5%;
+  height: 40%;
+  transform-origin: bottom center;
+  background: linear-gradient(var(--pfx-c), transparent);
+  opacity: 0;
+  animation: pfx-bloomcrack var(--pfx-d) ease-out both;
+}
+@keyframes pfx-bloomcrack {
+  0% { opacity: 0; }
+  26% { opacity: 0.9; }
+  100% { opacity: 0.35; }
+}
+
+/* ---- Reveal press (docs section 9): a nerf's reveal-variant spawn presses
+ * into the board. The whole composition arrives with a physical push: a
+ * compress, an overshoot, a settle wobble. Transform-only, single play, and
+ * suppressed entirely under reduced motion (the spawn already collapses to the
+ * static fallback there, and the guard below hard-stops this too). ---- */
+.pfx-spawn-reveal .pfx-anchor {
+  animation: pfx-reveal-press var(--pfx-d, 850ms) cubic-bezier(0.3, 1.2, 0.35, 1) both;
+}
+@keyframes pfx-reveal-press {
+  0% { transform: scale(0.9); }
+  16% { transform: scale(1.06); }
+  30% { transform: scale(0.982) rotate(-0.7deg); }
+  46% { transform: scale(1.014) rotate(0.45deg); }
+  62% { transform: scale(0.996); }
+  100% { transform: scale(1); }
+}
+
 /* ---- Persistent auras (section 4). Information, so they stay under reduced
  * motion; only the gentle breathe stops. Alphas raised past the original
  * section-4 maxima (owner report: auras read as "little to none" on real
@@ -525,6 +716,9 @@
     opacity: 0.4 !important;
   }
   .pfx-aura-piece {
+    animation: none !important;
+  }
+  .pfx-spawn-reveal .pfx-anchor {
     animation: none !important;
   }
 }
