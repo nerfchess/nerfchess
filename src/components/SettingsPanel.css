@@ -207,8 +207,26 @@ html[data-light] .settings-tab[aria-selected="true"] {
   border-radius: 999px;
 }
 
+/* --- Drill-down view slide -------------------------------------------------------
+   Home grid and each sub-page enter with a short horizontal settle: transform
+   and opacity only, one shot on mount (the view remounts on navigation). */
+.settings-view {
+  animation: settings-view-in 180ms var(--ease-out, ease-out);
+}
+@keyframes settings-view-in {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 /* --- Anim-off gating ------------------------------------------------------------ */
 html[data-anim="off"] .settings-slab { animation: none; }
+html[data-anim="off"] .settings-view { animation: none; }
 html[data-anim="off"] .settings-tab,
 html[data-anim="off"] .settings-toggle,
 html[data-anim="off"] .settings-toggle__thumb { transition: none; }
