@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Nerf, Tier } from "@/engine/nerf";
 import { BoardState, Color } from "@/engine/types";
 import { Piece } from "@/components/Pieces";
@@ -11,6 +11,9 @@ import { NERF_TURN_COST, TurnCost } from "@/engine/buff";
 import { TurnCostBadge } from "@/components/TurnCostBadge";
 
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
+// Supplies .nerf-heartbeat (also loaded by the board's FruitionLayer; the
+// bundler dedupes, and standalone hosts like galleries get it from here).
+import "@/components/effects/fruition/fruition.css";
 
 /** Compact row for a held boon shown in the corner card (nerf mode). */
 export interface HeldBoon {
@@ -47,6 +50,11 @@ interface Props {
   // Live socket state for this seat, when the caller knows it: a small dot
   // beside the name (green = connected, red = disconnected). Omitted = no dot.
   connected?: boolean | null;
+  /** Bumped (to the current ply) whenever this seat's nerf onTurnStart hook
+   * advanced its state — the handicap's per-turn heartbeat. Each new value
+   * replays one soft edge breath on the card; the first observation seeds
+   * silently so a reload never pulses. Fed from the engine's fx-event log. */
+  heartbeatKey?: number | null;
 }
 
 export function PlayerNerfCard({
@@ -66,7 +74,15 @@ export function PlayerNerfCard({
   action,
   compact = false,
   connected = null,
+  heartbeatKey = null,
 }: Props) {
+  // Heartbeat replay: each NEW key plays one breath; the first observed key
+  // seeds silently (a reload or rebuild must not pulse). Transition handled
+  // during render so the pulse mounts in the same frame its ply arrives.
+  const [hb, setHb] = useState<{ prev: number | null; fire: number }>({ prev: null, fire: 0 });
+  if (heartbeatKey != null && heartbeatKey !== hb.prev) {
+    setHb((s) => ({ prev: heartbeatKey, fire: s.prev === null ? 0 : s.fire + 1 }));
+  }
   const pieces = capturedPiecesFor(board, playerColor);
   const mineValue = capturedValue(capturedPiecesFor(board, myColor));
   const opponentValue = capturedValue(capturedPiecesFor(board, opponentOf(myColor)));
@@ -86,6 +102,14 @@ export function PlayerNerfCard({
         (revealed && !hideNerf ? `tier-bg-${nerf.tier}` : "border-white/10 bg-ink-900/45")
       }
     >
+      {/* One breath per heartbeat tick; keyed so each tick replays from zero. */}
+      {hb.fire > 0 && (
+        <span
+          key={hb.fire}
+          aria-hidden
+          className="nerf-heartbeat pointer-events-none absolute inset-0"
+        />
+      )}
       <div className="flex items-start gap-3">
         {showAvatar ? (
           <PlayerAvatar name={name} avatar={avatar} size={compact ? 32 : 36} />

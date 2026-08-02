@@ -1937,6 +1937,11 @@ function GamePage() {
                 board={boardForDisplay}
                 playerColor={myColor === "w" ? "b" : "w"}
                 myColor={myColor}
+                heartbeatKey={
+                  game.fx?.find(
+                    (e) => e.kind === "nerf-turnstart" && e.color === (myColor === "w" ? "b" : "w"),
+                  )?.ply ?? null
+                }
                 name={`${difficulty[0].toUpperCase()}${difficulty.slice(1)} Bot`}
                 elo={BOT_ELO[difficulty]}
                 nerf={opponentNerf}
@@ -1977,6 +1982,9 @@ function GamePage() {
                 board={boardForDisplay}
                 playerColor={myColor}
                 myColor={myColor}
+                heartbeatKey={
+                  game.fx?.find((e) => e.kind === "nerf-turnstart" && e.color === myColor)?.ply ?? null
+                }
                 name="You"
                 elo={playerElo}
                 nerf={myNerf}
@@ -2080,6 +2088,9 @@ function GamePage() {
                   passiveNerfs={passiveNerfs}
                   passiveBuffs={isReviewingHistory ? null : game.buffs}
                   reviewingHistory={isReviewingHistory}
+                  // The engine's per-cycle fx narration (nerf bites, victim
+                  // receives, expiries) for the FruitionLayer.
+                  fx={isReviewingHistory ? null : game.fx ?? null}
                   disabled={!!game.result || premovePending || isReviewingHistory || !!confirmMovePending || !!myOffer}
                   premoveMode={!isReviewingHistory && premoveMode}
                   premoves={isReviewingHistory ? [] : validPremoves}

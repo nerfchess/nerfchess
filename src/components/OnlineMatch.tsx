@@ -2904,6 +2904,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 board={boardForDisplay}
                 playerColor={oppColor}
                 myColor={myColor}
+                heartbeatKey={
+                  game.fx?.find((e) => e.kind === "nerf-turnstart" && e.color === oppColor)?.ply ?? null
+                }
                 name={oppName}
                 elo={oppRating}
                 provisional={oppProvisional}
@@ -2950,6 +2953,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 board={boardForDisplay}
                 playerColor={myColor}
                 myColor={myColor}
+                heartbeatKey={
+                  game.fx?.find((e) => e.kind === "nerf-turnstart" && e.color === myColor)?.ply ?? null
+                }
                 name={myName}
                 elo={myRating}
                 provisional={myProvisional}
@@ -3059,6 +3065,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   nerfReveals={nerfReveals}
                   passiveNerfs={passiveNerfs}
                   reviewingHistory={isReviewingHistory}
+                  // The engine's per-cycle fx narration (nerf bites, victim
+                  // receives, expiries) for the FruitionLayer.
+                  fx={isReviewingHistory ? null : game.fx ?? null}
                   fxTimePressure={
                     clockEnabled && !game.result && (whiteMs < 15_000 || blackMs < 15_000)
                   }
