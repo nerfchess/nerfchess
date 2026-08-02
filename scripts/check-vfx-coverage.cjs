@@ -24,6 +24,16 @@
 //      dead weight, and usually a typo'd or renamed card id. Here plugins DO
 //      count: an entry is legitimate if any of the 13 modules draws that card.
 //
+//   3. ENTRANCES — every library card, buff AND nerf, must resolve to a
+//      renderable acquire-entrance. The probe runs the REAL resolver
+//      (src/components/effects/entranceResolve.ts: motif first, category
+//      second, neutral floor last) over the whole library, and this script
+//      cross-checks each resolution against the renderer tables in
+//      cardEntrance.tsx (MOTIF_ARRIVAL / ARRIVAL_BY_CATEGORY / the
+//      DefaultArrival floor), read with the shared source scanner since that
+//      module is JSX and cannot be imported headlessly. A card resolving to
+//      nothing, or to a motif/category no renderer backs, fails the gate.
+//
 // The old in-file self-check got both halves slightly wrong: it looked only at
 // `CARD_VFX` for coverage (so a card covered via vfxExtra read as missing) and
 // only at god/great/basic PLAYS for orphans (so the other ten plugin modules'
@@ -40,11 +50,24 @@ const { execFileSync } = require("child_process");
 const { extractPlayKeys, EFFECTS, SIG_PLUGINS } = require("./check-sig-plugins.cjs");
 
 const BOARD_EFFECTS = path.join(EFFECTS, "BoardEffects.tsx");
+const CARD_ENTRANCE = path.join(EFFECTS, "cardEntrance.tsx");
 
 /** Card ids with bespoke core art, from BoardEffects' SIGNATURES table. */
 function signatureIds() {
   const src = fs.readFileSync(BOARD_EFFECTS, "utf8");
   return extractPlayKeys(src, "BoardEffects.tsx", "export const SIGNATURES");
+}
+
+/** The entrance renderer tables in cardEntrance.tsx: which motifs and
+ * categories actually have an arrival scene, and whether the neutral floor
+ * exists. JSX module, so read with the shared source scanner. */
+function entranceRenderers() {
+  const src = fs.readFileSync(CARD_ENTRANCE, "utf8");
+  return {
+    motifs: new Set(extractPlayKeys(src, "cardEntrance.tsx", "export const MOTIF_ARRIVAL")),
+    categories: new Set(extractPlayKeys(src, "cardEntrance.tsx", "const ARRIVAL_BY_CATEGORY")),
+    hasDefault: src.includes("function DefaultArrival"),
+  };
 }
 
 /** Card ids any plugin module supplies art for (all 13 modules). */
@@ -74,7 +97,7 @@ function vfxTables() {
 }
 
 function main() {
-  const { cardVfx, extraVfx, tiers } = vfxTables();
+  const { cardVfx, extraVfx, tiers, entrances } = vfxTables();
   const covered = new Set([...cardVfx, ...extraVfx]);
   const signatures = signatureIds();
   const plugins = pluginIds();
@@ -102,20 +125,59 @@ function main() {
     );
   }
 
+  // 3. Entrances — the whole library (buffs and nerfs), no fallthrough.
+  const renderers = entranceRenderers();
+  const entries = Object.entries(entrances ?? {});
+  const unresolved = [];
+  const counts = { motif: 0, category: 0, default: 0 };
+  for (const [id, res] of entries) {
+    if (!res) {
+      unresolved.push(`${id} (resolved to nothing)`);
+    } else if (res.startsWith("motif:")) {
+      const motif = res.slice("motif:".length);
+      if (renderers.motifs.has(motif)) counts.motif++;
+      else unresolved.push(`${id} (motif "${motif}" has no MOTIF_ARRIVAL scene)`);
+    } else if (res.startsWith("category:")) {
+      const cat = res.slice("category:".length);
+      if (renderers.categories.has(cat)) counts.category++;
+      else unresolved.push(`${id} (category "${cat}" has no ARRIVAL_BY_CATEGORY scene)`);
+    } else if (res === "default") {
+      if (renderers.hasDefault) counts.default++;
+      else unresolved.push(`${id} (needs the DefaultArrival floor, which is missing)`);
+    } else {
+      unresolved.push(`${id} (unknown resolution "${res}")`);
+    }
+  }
+  if (!entries.length) {
+    errors.push("entrance probe returned no cards at all (probe/library import broke)");
+  }
+  if (unresolved.length) {
+    const shown = unresolved.slice(0, 40);
+    errors.push(
+      `${unresolved.length} card(s) do not resolve to a renderable entrance:\n    - ${shown.join("\n    - ")}` +
+        (unresolved.length > shown.length ? `\n    ... and ${unresolved.length - shown.length} more` : ""),
+    );
+  }
+
   if (errors.length) {
     console.error("vfx-coverage check FAILED:");
     for (const e of errors) console.error("  - " + e);
     console.error(
       "\nFix: add a fiction-matched CardVfx (travel/impact/aftermath/palette/source)" +
         "\n     to src/components/effects/vfxSpecs.ts (core) or vfxExtra.ts (plugin sets)," +
-        "\n     or drop the stale key. Shake stays a tier 7+ privilege.",
+        "\n     or drop the stale key. Shake stays a tier 7+ privilege." +
+        "\n     Entrance fallthroughs: add the missing scene to MOTIF_ARRIVAL /" +
+        "\n     ARRIVAL_BY_CATEGORY in cardEntrance.tsx (or restore DefaultArrival);" +
+        "\n     the resolver itself lives in entranceResolve.ts.",
     );
     process.exit(1);
   }
 
   console.log(
     `vfx-coverage: ${covered.size} specs cover every bespoke tier>=4 card ` +
-      `(${signatures.length} core signatures + ${plugins.length} plugin ids), no orphans`,
+      `(${signatures.length} core signatures + ${plugins.length} plugin ids), no orphans; ` +
+      `entrances: ${entries.length}/${entries.length} library cards resolve ` +
+      `(${counts.motif} motif, ${counts.category} category, ${counts.default} neutral floor)`,
   );
 }
 

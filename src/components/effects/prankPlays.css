@@ -175,13 +175,9 @@
 }
 .prk-spin { animation: prk-spin calc(1.5s * var(--fx-dur, 1)) linear both; transform-origin: 50% 50%; }
 
-/* Blinking badge (LIVE / cursor / alert). */
-@keyframes prk-blink {
-  0%, 100% { opacity: 0; }
-  20%, 40%, 60%, 80% { opacity: 1; }
-  30%, 50%, 70% { opacity: 0.25; }
-}
-.prk-blink { animation: prk-blink calc(1.5s * var(--fx-dur, 1)) steps(1, end) both; }
+/* (prk-blink retired: the blinking LIVE/alert badge was never mounted by any
+   scene — a generic blink telling no event, removed in the useless-flash
+   pass.) */
 
 /* Rubber stamp slam. */
 @keyframes prk-stamp {

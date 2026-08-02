@@ -331,14 +331,38 @@
   30% { opacity: 1; }
   100% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
 }
-.ce-click {
-  transform: scale(1);
-  animation: ce-click calc(0.3s * var(--fx-dur, 1)) ease-out both;
+/* --- motif arrivals (cardEntrance.tsx MOTIF_ARRIVAL) --------------------------
+   The motif-first generic arrivals compose the category keyframes above
+   (ce-tick / ce-stamp / ce-circle / ce-ring...); only the two verbs that
+   vocabulary was missing live here. Same laws: transform/opacity only,
+   one-shot with `both` fill, --fx-dur scaled, hidden with the rest of the
+   scene under html[data-anim="off"] (the .ce-scene gate below). */
+
+/* jail: an iron bar drops from above and clangs to rest. */
+.ce-bar {
+  transform: translateY(-320%);
+  opacity: 0;
+  animation: ce-bar calc(0.42s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 0.7, 0.5) both;
 }
-@keyframes ce-click {
-  0% { transform: scale(1); }
-  45% { transform: scale(1.07); }
-  100% { transform: scale(1); }
+@keyframes ce-bar {
+  0% { transform: translateY(-320%); opacity: 0; }
+  18% { opacity: 1; }
+  72% { transform: translateY(0); }
+  84% { transform: translateY(-4%); }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+/* blindfold: the band sweeps in from the left and SETTLES over the eyes. */
+.ce-band {
+  transform: translateX(-240%) scaleX(0.7);
+  opacity: 0;
+  animation: ce-band calc(0.5s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.3, 1.1) both;
+}
+@keyframes ce-band {
+  0% { transform: translateX(-240%) scaleX(0.7); opacity: 0; }
+  22% { opacity: 1; }
+  80% { transform: translateX(3%) scaleX(1); }
+  100% { transform: translateX(0) scaleX(1); opacity: 0.95; }
 }
 
 /* --- entrance-only chrome ------------------------------------------------------ */

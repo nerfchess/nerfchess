@@ -118,13 +118,8 @@
 }
 .csp-flash { animation: csp-flash calc(1.6s * var(--fx-dur, 1)) ease-out both; }
 
-/* Sweeping diagonal highlight (chrome/foil sheen). */
-@keyframes csp-shine {
-  0% { opacity: 0; transform: translateX(-140%); }
-  30% { opacity: 0.9; }
-  100% { opacity: 0; transform: translateX(160%); }
-}
-.csp-shine { animation: csp-shine calc(1.4s * var(--fx-dur, 1)) ease-in-out both; }
+/* (csp-shine retired: the generic chrome-sheen sweep was never mounted by any
+   scene — removed in the useless-flash pass.) */
 
 /* Star twinkle (jackpot sparkle). */
 @keyframes csp-star {

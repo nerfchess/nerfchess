@@ -19,27 +19,27 @@
 import React from "react";
 import type { LucideIcon } from "lucide-react";
 import type { BuffCategory } from "@/engine/buff";
+import { BUFF_BY_ID } from "@/engine/buffs/library";
 // The entrance layer renders the card's OWN scene when it has one. Importing
 // SignatureOverlay from BoardEffects is safe in this direction: BoardEffects
 // imports CategoryArrival from here, and the overlay itself is the lazy-chunk
 // facade, so no art is pulled into the eager bundle.
 import { SIGNATURES, SignatureOverlay, type SigVisual } from "./BoardEffects";
 import { PLUGIN_ID_SET } from "./sigPlugins";
+// The arrival palettes and the motif-first resolver live in a plain-TS module
+// so scripts/vfx-coverage-probe.mts can run the REAL resolution headlessly:
+// check-vfx-coverage.cjs asserts every library card (buffs and nerfs alike)
+// resolves to one of the arrival tables rendered below.
+import {
+  ARRIVAL_THEME,
+  DEFAULT_ARRIVAL_THEME,
+  MOTIF_ARRIVAL_THEME,
+  resolveEntrance,
+  type EntranceMotif,
+} from "./entranceResolve";
 import "./cardEntrance.css";
 
-/** Same hues as BoardEffects' CAST_THEME (kept local: BoardEffects imports us). */
-export const ARRIVAL_THEME: Record<BuffCategory, { color: string; soft: string; deep: string }> = {
-  movement: { color: "#67e8f9", soft: "rgba(103,232,249,0.14)", deep: "#0e4a56" },
-  pieces: { color: "#e6bf6a", soft: "rgba(230,191,106,0.14)", deep: "#4a3a12" },
-  tempo: { color: "#f4c430", soft: "rgba(244,196,48,0.13)", deep: "#4a3a06" },
-  protection: { color: "#7eb59a", soft: "rgba(126,181,154,0.15)", deep: "#1d3a2d" },
-  attack: { color: "#e05252", soft: "rgba(224,82,82,0.14)", deep: "#4a1212" },
-  info: { color: "#8ba9c4", soft: "rgba(139,169,196,0.14)", deep: "#233242" },
-  draft: { color: "#e07ab8", soft: "rgba(224,122,184,0.13)", deep: "#45183a" },
-  nerf: { color: "#5eead4", soft: "rgba(94,234,212,0.14)", deep: "#0e4038" },
-  hex: { color: "#a877d8", soft: "rgba(168,119,216,0.15)", deep: "#331a4a" },
-  item: { color: "#a3d160", soft: "rgba(163,209,96,0.14)", deep: "#2c3a12" },
-};
+export { ARRIVAL_THEME } from "./entranceResolve";
 
 interface ArrivalProps {
   category: BuffCategory;
@@ -438,6 +438,403 @@ export function CategoryArrival(props: ArrivalProps) {
   return ARRIVAL_BY_CATEGORY[props.category](props);
 }
 
+// --- Motif arrivals ----------------------------------------------------------
+// A card that declares a CardFx motif arrives as THAT: bars drop for a jail,
+// straps clamp for a muzzle, a plumb weight sinks for an anchor... The motif
+// is the most specific identity a card without hand-made art carries, so it
+// outranks the category choreography (entranceResolve.ts is the ordering
+// authority). Same house rules as the category scenes above: three beats,
+// three colors, transform/opacity only, every keyframe one-shot and
+// --fx-dur scaled in cardEntrance.css.
+
+interface MotifArrivalProps {
+  /** The card's own face icon (cardFaceIcon result). */
+  icon: LucideIcon;
+  /** Extra ms before the scene starts (layering under banners). */
+  delayMs?: number;
+}
+
+// jail: the emblem is stamped down, then iron bars drop shut over it.
+function JailArrival({ icon: Icon, delayMs = 0 }: MotifArrivalProps) {
+  const t = MOTIF_ARRIVAL_THEME.jail;
+  return (
+    <span className="absolute inset-0 block">
+      <span
+        className="ce-shadow absolute left-1/2 top-[66%] block h-[6%] w-[34%] rounded-[50%]"
+        style={{ background: "rgba(8,10,14,0.75)", ...dm(delayMs, 0) }}
+      />
+      <span
+        className="ce-tick absolute left-1/2 top-1/2 ml-[-13%] mt-[-13%] flex h-[26%] w-[26%] items-center justify-center"
+        style={{ color: t.color, opacity: 0.9, filter: `drop-shadow(0 0 8px ${t.soft})`, ...dm(delayMs, 60) }}
+      >
+        <Icon className="h-full w-full" strokeWidth={1.7} />
+      </span>
+      {[34, 49, 64].map((left, i) => (
+        <span
+          key={i}
+          className="ce-bar absolute top-[22%] block h-[56%] w-[3%] rounded-full"
+          style={{
+            left: `${left}%`,
+            background: `linear-gradient(180deg, ${t.color}, ${t.deep})`,
+            boxShadow: `0 0 8px ${t.soft}`,
+            ...dm(delayMs, 260 + i * 80),
+          }}
+        />
+      ))}
+      {[
+        { dx: "-90%", dy: "-30%" },
+        { dx: "80%", dy: "-40%" },
+      ].map((p, i) => (
+        <span
+          key={i}
+          className="ce-dust absolute left-[48%] top-[70%] block h-[4%] w-[4%] rounded-full"
+          style={{ background: "#d9cbb0", "--dx": p.dx, "--dy": p.dy, ...dm(delayMs, 520 + i * 70) } as React.CSSProperties}
+        />
+      ))}
+      <span
+        className="ce-ring absolute left-1/2 top-1/2 block h-[48%] w-[48%] rounded-full"
+        style={{ border: `2px solid ${t.color}`, ...dm(delayMs, 640) }}
+      />
+    </span>
+  );
+}
+
+// muzzle: two straps slide shut into an X across the emblem, ink bleeds.
+function MuzzleArrival({ icon: Icon, delayMs = 0 }: MotifArrivalProps) {
+  const t = MOTIF_ARRIVAL_THEME.muzzle;
+  const strap = (deg: number, side: "l" | "r", extra: number) => (
+    <span
+      className="absolute left-1/2 top-1/2 ml-[-24%] mt-[-3.5%] block h-[7%] w-[48%]"
+      style={{ transform: `rotate(${deg}deg)` }}
+    >
+      <span
+        className={`ce-clamp-${side} absolute inset-0 block rounded-full`}
+        style={{
+          background: `linear-gradient(${side === "l" ? "90deg" : "270deg"}, transparent, ${t.deep})`,
+          border: `1.5px solid ${t.color}`,
+          ...dm(delayMs, extra),
+        }}
+      />
+    </span>
+  );
+  return (
+    <span className="absolute inset-0 block">
+      <span
+        className="ce-tick absolute left-1/2 top-1/2 ml-[-13%] mt-[-13%] flex h-[26%] w-[26%] items-center justify-center"
+        style={{ color: t.color, filter: `drop-shadow(0 0 8px ${t.soft})`, ...dm(delayMs, 0) }}
+      >
+        <Icon className="h-full w-full" strokeWidth={1.7} />
+      </span>
+      {strap(38, "l", 280)}
+      {strap(-38, "r", 360)}
+      <span
+        className="ce-ink absolute left-1/2 top-1/2 block h-[42%] w-[42%] rounded-full"
+        style={{ border: `2.5px solid ${t.color}`, ...dm(delayMs, 620) }}
+      />
+    </span>
+  );
+}
+
+// anchor: a plumb weight drops onto the emblem and pins it, dust kicks.
+function AnchorArrival({ icon: Icon, delayMs = 0 }: MotifArrivalProps) {
+  const t = MOTIF_ARRIVAL_THEME.anchor;
+  return (
+    <span className="absolute inset-0 block">
+      <span
+        className="ce-shadow absolute left-1/2 top-[64%] block h-[6%] w-[32%] rounded-[50%]"
+        style={{ background: "rgba(8,10,14,0.75)", ...dm(delayMs, 0) }}
+      />
+      <span
+        className="ce-tick absolute left-1/2 top-[38%] ml-[-12%] flex h-[24%] w-[24%] items-center justify-center"
+        style={{ color: t.color, filter: `drop-shadow(0 0 8px ${t.soft})`, ...dm(delayMs, 40) }}
+      >
+        <Icon className="h-full w-full" strokeWidth={1.7} />
+      </span>
+      {/* the weight: a trapezoid block slamming down over the emblem's foot */}
+      <span
+        className="ce-stamp absolute left-1/2 top-[52%] ml-[-11%] block h-[14%] w-[22%]"
+        style={{
+          background: `linear-gradient(180deg, ${t.color}, ${t.deep})`,
+          clipPath: "polygon(18% 0, 82% 0, 100% 100%, 0 100%)",
+          ...dm(delayMs, 300),
+        }}
+      />
+      {[
+        { dx: "-100%", dy: "-26%" },
+        { dx: "95%", dy: "-34%" },
+      ].map((p, i) => (
+        <span
+          key={i}
+          className="ce-dust absolute left-[48%] top-[64%] block h-[4.5%] w-[4.5%] rounded-full"
+          style={{ background: "#d9cbb0", "--dx": p.dx, "--dy": p.dy, ...dm(delayMs, 520 + i * 60) } as React.CSSProperties}
+        />
+      ))}
+      <span
+        className="ce-ring absolute left-1/2 top-[58%] block h-[38%] w-[38%] rounded-full"
+        style={{ border: `2px solid ${t.color}`, ...dm(delayMs, 620) }}
+      />
+    </span>
+  );
+}
+
+// blindfold: the emblem is revealed, then a dark band sweeps over its eyes.
+function BlindfoldArrival({ icon: Icon, delayMs = 0 }: MotifArrivalProps) {
+  const t = MOTIF_ARRIVAL_THEME.blindfold;
+  return (
+    <span className="absolute inset-0 block">
+      <span
+        className="ce-iris absolute left-1/2 top-1/2 ml-[-22%] mt-[-22%] block h-[44%] w-[44%] rounded-full"
+        style={{ border: `2px solid ${t.color}66`, boxShadow: `inset 0 0 16px ${t.soft}`, ...dm(delayMs, 0) }}
+      />
+      <span
+        className="ce-sigil absolute left-1/2 top-1/2 ml-[-12%] mt-[-12%] flex h-[24%] w-[24%] items-center justify-center"
+        style={{ color: t.color, ...dm(delayMs, 120) }}
+      >
+        <Icon className="h-full w-full" strokeWidth={1.7} />
+      </span>
+      {/* the band: sweeps in from the left and SETTLES across the eye line */}
+      <span
+        className="ce-band absolute left-[26%] top-[42%] block h-[9%] w-[48%] rounded-sm"
+        style={{
+          background: `linear-gradient(90deg, ${t.deep}dd, ${t.deep}, ${t.deep}dd)`,
+          borderTop: `1px solid ${t.color}88`,
+          borderBottom: `1px solid ${t.color}88`,
+          ...dm(delayMs, 360),
+        }}
+      />
+      <span className="absolute left-1/2 top-1/2 ml-[-22%] mt-[-22%] block h-[44%] w-[44%] overflow-hidden rounded-full">
+        <span
+          className="ce-glint absolute left-[32%] top-[-10%] block h-[120%] w-[14%]"
+          style={{
+            background: "linear-gradient(90deg, transparent, rgba(255,250,235,0.55), transparent)",
+            ...dm(delayMs, 680),
+          }}
+        />
+      </span>
+    </span>
+  );
+}
+
+// slow: the dial drags through one heavy sweep, molasses drips off the rim.
+function SlowArrival({ icon: Icon, delayMs = 0 }: MotifArrivalProps) {
+  const t = MOTIF_ARRIVAL_THEME.slow;
+  return (
+    <span className="absolute inset-0 block">
+      <span
+        className="ce-iris absolute left-1/2 top-1/2 ml-[-24%] mt-[-24%] block h-[48%] w-[48%] rounded-full"
+        style={{ border: `2px solid ${t.color}66`, ...dm(delayMs, 0) }}
+      />
+      {/* the hand, dragging: same sweep as tempo but at nearly double length */}
+      <span
+        className="ce-hand absolute left-1/2 top-1/2 ml-[-1%] mt-[-21%] block h-[21%] w-[2%] rounded-full"
+        style={{
+          background: `linear-gradient(180deg, ${t.color}, transparent)`,
+          animationDuration: `calc(1.25s * var(--fx-dur, 1))`,
+          ...dm(delayMs, 80),
+        }}
+      />
+      <span
+        className="ce-tick absolute left-1/2 top-1/2 ml-[-12%] mt-[-12%] flex h-[24%] w-[24%] items-center justify-center"
+        style={{ color: t.color, filter: `drop-shadow(0 0 8px ${t.soft})`, ...dm(delayMs, 560) }}
+      >
+        <Icon className="h-full w-full" strokeWidth={1.7} />
+      </span>
+      {[-11, 12].map((off, i) => (
+        <span
+          key={i}
+          className="ce-drip absolute top-[64%] block w-[2%] rounded-b-full"
+          style={{
+            left: `${49 + off}%`,
+            height: "8%",
+            background: `linear-gradient(180deg, ${t.color}, transparent)`,
+            ...dm(delayMs, 700 + i * 140),
+          }}
+        />
+      ))}
+    </span>
+  );
+}
+
+// empower: the emblem springs up crowned in light, sparks climb off it.
+function EmpowerArrival({ icon: Icon, delayMs = 0 }: MotifArrivalProps) {
+  const t = MOTIF_ARRIVAL_THEME.empower;
+  return (
+    <span className="absolute inset-0 block">
+      <span
+        className="ce-iris absolute left-1/2 top-1/2 ml-[-23%] mt-[-23%] block h-[46%] w-[46%] rounded-full"
+        style={{ background: `radial-gradient(circle, ${t.soft}, transparent 70%)`, ...dm(delayMs, 0) }}
+      />
+      <span
+        className="ce-pop absolute left-1/2 top-1/2 ml-[-13%] mt-[-13%] flex h-[26%] w-[26%] items-center justify-center"
+        style={{ color: t.color, filter: `drop-shadow(0 0 10px ${t.soft})`, ...dm(delayMs, 220) }}
+      >
+        <Icon className="h-full w-full" strokeWidth={1.7} />
+      </span>
+      {[
+        { dx: "-140%", dy: "-210%", rot: "-160deg" },
+        { dx: "10%", dy: "-260%", rot: "40deg" },
+        { dx: "150%", dy: "-190%", rot: "180deg" },
+      ].map((s, i) => (
+        <span
+          key={i}
+          className="ce-shard absolute left-1/2 top-1/2 ml-[-2.5%] mt-[-2.5%] block h-[5%] w-[5%]"
+          style={
+            {
+              background: i % 2 ? t.color : "#fff4d6",
+              clipPath: "polygon(50% 0, 100% 80%, 0 80%)",
+              "--dx": s.dx,
+              "--dy": s.dy,
+              "--rot": s.rot,
+              ...dm(delayMs, 420 + i * 50),
+            } as React.CSSProperties
+          }
+        />
+      ))}
+      <span
+        className="ce-ring absolute left-1/2 top-1/2 block h-[46%] w-[46%] rounded-full"
+        style={{ border: `2.5px solid ${t.color}`, ...dm(delayMs, 560) }}
+      />
+    </span>
+  );
+}
+
+// ward: a solid guard circle inscribes around the emblem and seals shut.
+function WardArrival({ icon: Icon, delayMs = 0 }: MotifArrivalProps) {
+  const t = MOTIF_ARRIVAL_THEME.ward;
+  return (
+    <span className="absolute inset-0 block">
+      <span
+        className="ce-tick absolute left-1/2 top-1/2 ml-[-12%] mt-[-12%] flex h-[24%] w-[24%] items-center justify-center"
+        style={{ color: t.color, filter: `drop-shadow(0 0 8px ${t.soft})`, ...dm(delayMs, 0) }}
+      >
+        <Icon className="h-full w-full" strokeWidth={1.8} />
+      </span>
+      <span
+        className="ce-circle absolute left-1/2 top-1/2 ml-[-23%] mt-[-23%] block h-[46%] w-[46%] rounded-full"
+        style={{
+          border: `2.5px solid ${t.color}`,
+          boxShadow: `inset 0 0 14px ${t.soft}, 0 0 14px ${t.soft}`,
+          ...dm(delayMs, 220),
+        }}
+      />
+      <span
+        className="ce-seam absolute left-1/2 top-1/2 ml-[-0.75%] mt-[-23%] block h-[46%] w-[1.5%] rounded-full"
+        style={{ background: "#fff4d6", boxShadow: `0 0 12px ${t.color}`, ...dm(delayMs, 560) }}
+      />
+      <span
+        className="ce-ring absolute left-1/2 top-1/2 block h-[52%] w-[52%] rounded-full"
+        style={{ border: `2px solid ${t.color}`, ...dm(delayMs, 640) }}
+      />
+    </span>
+  );
+}
+
+// rally: chevron banners surge in behind the emblem, which pops to the front.
+function RallyArrival({ icon: Icon, delayMs = 0 }: MotifArrivalProps) {
+  const t = MOTIF_ARRIVAL_THEME.rally;
+  return (
+    <span className="absolute inset-0 block">
+      {[0, 1, 2].map((i) => (
+        <span
+          key={i}
+          className="ce-dash absolute top-1/2 block h-[12%] w-[16%]"
+          style={{
+            left: `${26 + i * 16}%`,
+            marginTop: "-6%",
+            background: i === 1 ? t.color : t.deep,
+            clipPath: "polygon(0 0, 60% 0, 100% 50%, 60% 100%, 0 100%, 40% 50%)",
+            opacity: 0.9,
+            ...dm(delayMs, i * 90),
+          }}
+        />
+      ))}
+      <span
+        className="ce-pop absolute left-1/2 top-1/2 ml-[-12%] mt-[-12%] flex h-[24%] w-[24%] items-center justify-center"
+        style={{ color: t.color, filter: `drop-shadow(0 0 9px ${t.soft})`, ...dm(delayMs, 380) }}
+      >
+        <Icon className="h-full w-full" strokeWidth={1.7} />
+      </span>
+      {[
+        { dx: "-110%", dy: "-40%" },
+        { dx: "90%", dy: "-50%" },
+      ].map((p, i) => (
+        <span
+          key={i}
+          className="ce-dust absolute left-[46%] top-[60%] block h-[4%] w-[4%] rounded-full"
+          style={{ background: "#d9cbb0", "--dx": p.dx, "--dy": p.dy, ...dm(delayMs, 560 + i * 70) } as React.CSSProperties}
+        />
+      ))}
+      <span
+        className="ce-ring absolute left-1/2 top-1/2 block h-[44%] w-[44%] rounded-full"
+        style={{ border: `2px solid ${t.color}`, ...dm(delayMs, 620) }}
+      />
+    </span>
+  );
+}
+
+/** One renderer per CardFx motif. Record over EntranceMotif so a new motif
+ * cannot ship without a scene; check-vfx-coverage.cjs reads these keys with
+ * the shared source scanner and cross-checks them against the resolver. */
+export const MOTIF_ARRIVAL: Record<EntranceMotif, (p: MotifArrivalProps) => React.ReactElement> = {
+  jail: (p) => <JailArrival {...p} />,
+  muzzle: (p) => <MuzzleArrival {...p} />,
+  anchor: (p) => <AnchorArrival {...p} />,
+  blindfold: (p) => <BlindfoldArrival {...p} />,
+  slow: (p) => <SlowArrival {...p} />,
+  empower: (p) => <EmpowerArrival {...p} />,
+  ward: (p) => <WardArrival {...p} />,
+  rally: (p) => <RallyArrival {...p} />,
+};
+
+// --- Neutral floor -----------------------------------------------------------
+// The guaranteed-last resort of the resolution (cards outside the buff
+// taxonomy: nerfs). Quiet parchment: an aperture opens, the card's sigil
+// stamps in, one ring settles. Deliberately plainer than any motif or
+// category scene, but never nothing.
+function DefaultArrival({ icon: Icon, delayMs = 0 }: MotifArrivalProps) {
+  const t = DEFAULT_ARRIVAL_THEME;
+  return (
+    <span className="absolute inset-0 block">
+      <span
+        className="ce-iris absolute left-1/2 top-1/2 ml-[-22%] mt-[-22%] block h-[44%] w-[44%] rounded-full"
+        style={{ border: `2px solid ${t.color}88`, boxShadow: `inset 0 0 14px ${t.soft}`, ...dm(delayMs, 0) }}
+      />
+      <span
+        className="ce-sigil absolute left-1/2 top-1/2 ml-[-12%] mt-[-12%] flex h-[24%] w-[24%] items-center justify-center"
+        style={{ color: t.color, filter: `drop-shadow(0 0 8px ${t.soft})`, ...dm(delayMs, 260) }}
+      >
+        <Icon className="h-full w-full" strokeWidth={1.7} />
+      </span>
+      <span
+        className="ce-ring absolute left-1/2 top-1/2 block h-[46%] w-[46%] rounded-full"
+        style={{ border: `2px solid ${t.color}`, ...dm(delayMs, 560) }}
+      />
+    </span>
+  );
+}
+
+/** The generic arrival for a card, motif-first: the total floor under the
+ * bespoke/opener preferences in CardEntrance below. Exported so any future
+ * mount (the cast layer, previews) can reuse the same guaranteed-non-null
+ * resolution instead of re-deriving it. */
+export function GenericArrival({
+  category,
+  cardId,
+  icon,
+  delayMs = 0,
+}: {
+  category?: BuffCategory;
+  cardId?: string;
+  icon: LucideIcon;
+  delayMs?: number;
+}) {
+  const def = cardId ? BUFF_BY_ID[cardId] : undefined;
+  const resolved = resolveEntrance({ category: def?.category ?? category, fx: def?.fx });
+  if (resolved.kind === "motif") return MOTIF_ARRIVAL[resolved.motif]({ icon, delayMs });
+  if (resolved.kind === "category") return <CategoryArrival category={resolved.category} icon={icon} delayMs={delayMs} />;
+  return <DefaultArrival icon={icon} delayMs={delayMs} />;
+}
+
 // --- Acquire entrance ---------------------------------------------------------
 
 /** Board-level one-shot fired the moment a card ENTERS a hand (draft pick,
@@ -560,7 +957,14 @@ export function CardEntrance({
   /** Card id: openers (op_*) swap in their unique generated entrance. */
   cardId?: string;
 }) {
-  const t = ARRIVAL_THEME[category];
+  // Motif-first resolution (entranceResolve.ts): the card's own CardFx motif
+  // outranks its category scene, and the neutral floor guarantees a card with
+  // neither (or an unknown category) still arrives as SOMETHING. Also the
+  // palette authority for the wash / title / marquee chrome, so the whole
+  // composition wears the resolved flavor's colors.
+  const def = cardId ? BUFF_BY_ID[cardId] : undefined;
+  const resolved = resolveEntrance({ category: def?.category ?? category, fx: def?.fx });
+  const t = resolved.theme;
   const marquee = tier >= 8;
   const isOpener = !!cardId?.startsWith("op_");
   // Does this card have hand-made art of its own? PLUGIN_ID_SET is the EAGER
@@ -589,8 +993,9 @@ export function CardEntrance({
             2. the card's own CORE signature scene, cut the same way;
             3. an opener's unique generated entrance (op_* cards already have
                genuinely per-card arrivals);
-            4. the category arrival, the floor that guarantees every card
-               announces itself somehow. */}
+            4. the generic arrival, resolved motif-first with the category
+               scene as fallback and a neutral floor under both — the
+               guarantee that NO card resolves to nothing. */}
       <span className="absolute left-[22%] top-[14%] block h-[56%] w-[56%]">
         {ownScene ? (
           <SignatureOverlay visual={`x:${cardId}` as SigVisual} role="entrance" delayMs={80} />
@@ -599,7 +1004,7 @@ export function CardEntrance({
         ) : isOpener && cardId ? (
           <OpenerArrival seed={cardId} icon={icon} />
         ) : (
-          <CategoryArrival category={category} icon={icon} delayMs={80} />
+          <GenericArrival category={category} cardId={cardId} icon={icon} delayMs={80} />
         )}
       </span>
       {marquee && (
