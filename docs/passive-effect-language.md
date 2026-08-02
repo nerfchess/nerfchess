@@ -32,10 +32,29 @@ Implemented once each as CSS/SVG/WAAPI building blocks, composed per card:
 
 `bolt` `shockRing` `crackLines` `crystallize` `chainLink` `sigilStamp` `zoneSweep` `edgeBurn` `fogRoll` `beamVertical` `beamHorizontal` `dropImpact` `riseGlow` `moonCircle` `gateSlam` `cardLift` `weightDrop` `tickPips` `orbitSpark` `shatterExit` `drainFlow` `pulseRing`
 
+The bespoke-nerf physicality wave adds five more, composed under the same rules:
+
+- `slabSlam`: a rule slab slams down from above and settles with a quake-adjacent shudder, dust kicking out at impact. The decree family's physical accent.
+- `quakeRumble`: ground strokes shudder laterally under the target and still. The heavy-settle accent for slams and high-tier strikes.
+- `shackleDrop`: two shackle cuffs drop and clamp shut around the target, the pin snapping in last. Movement restriction on a piece.
+- `barCage`: cage bars rise from below (the inverse of `gateSlam`) and a lintel drops to lock them. Movement restriction on a region.
+- `crackBloom`: a central fissure splits open, then branch cracks bloom outward. The loss-condition mark: the ground itself gives way.
+
 Rules:
 - A composition uses 1 to 3 primitives, no more.
 - Particles are bounded: max 24 nodes per effect, pooled, transform/opacity only.
 - Every primitive has a reduced-motion equivalent: a 160ms fade plus its static sigil.
+
+### 3.1 Spawn cue sheets (per-card bespoke performance)
+
+Two cards may share primitives, but no two nerfs may share the full spawn PERFORMANCE. Each registry entry carries a cue sheet, derived deterministically from the card's stable identity (hash of `cardFamily:cardId`), that turns the shared primitives into that card's own physical delivery:
+
+- seed: drives node spread geometry, so two cards sharing `crackLines` fracture along different lines.
+- beats: per-layer attack offsets (fractions of the spawn duration, 0 to 0.3). Layer 0 always leads; later layers land on their own beat. A layer delayed by its beat plays SHORTER by the same amount, so every layer still settles inside the tier's duration budget. Cues never add nodes.
+- scale: a geometry accent (0.92 to 1.12), applied only where a primitive's cue freedom allows it.
+- mirror: flips the performance horizontally where meaningful (a sweep ignites from the other edge, a bolt slants the other way).
+
+Cue freedom is per primitive: board-aligned primitives (beams, sweeps, washes) hold their axis, gravity primitives never rotate but may mirror, radial primitives rotate freely. Flagship nerfs carry hand-authored cue overrides (`SPAWN_CUE_OVERRIDES`); compositions may also carry a per-row `cue` override in data. The coverage test enforces that every nerf's full reveal performance (composition, target, duration, cue) is unique across all 360.
 
 ## 4. Target taxonomy (the noun: where it lands)
 
@@ -110,7 +129,7 @@ Every other passive gets a composition in the registry following this grammar, a
 ## 9. Visibility rules
 
 - Player: full effects for own passives and revealed opponent effects.
-- Opponent and spectators: effects only for public passives (instant cards, revealed rules, board-visible physics). Hidden nerfs render nothing opponent-facing until the reveal moment, then play the reveal variant of the spawn (same composition, preceded by a 300ms card-flip).
+- Opponent and spectators: effects only for public passives (instant cards, revealed rules, board-visible physics). Hidden nerfs render nothing opponent-facing until the reveal moment, then play the reveal variant of the spawn (same composition, preceded by a 300ms card-flip). The reveal variant is the nerf's big entrance: the whole composition presses into the board with a transform-only compress, overshoot, and settle wobble (`pfx-reveal-press`), suppressed under reduced motion.
 - Replay and history review: spawn plays when the scrubber crosses the activation ply going forward, aura is present at any ply where the passive is active, skippable via the existing animation settings.
 - Reconnect: auras restore from state without replaying intros; the intro replays only if the activation is within the last 2 plies.
 - TV, profile mini-boards, homepage hero: aura layer only, no spawn intros (small boards, ambient context), except the featured full-size TV board which gets full effects.
