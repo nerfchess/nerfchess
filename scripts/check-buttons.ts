@@ -113,6 +113,14 @@ const BASELINE: string[] = [
   "src/components/Board.tsx",
   "src/components/ChatPanel.tsx",
   "src/components/CurrentGameCard.tsx",
+  // The dock split (BuffDock.tsx -> components/dock/) carried the monolith's
+  // remaining bespoke affordances with it: row/chip toggles, the segmented
+  // hand filter, and the targeting banner's Done/Cancel pair. A move, not new
+  // debt — the old BuffDock.tsx entry retired and the net count shrank.
+  "src/components/dock/BuffDock.tsx",
+  "src/components/dock/DockAgainstYou.tsx",
+  "src/components/dock/DockRow.tsx",
+  "src/components/dock/targeting.tsx",
   "src/components/DraftOverlay.tsx",
   "src/components/FriendGame.tsx",
   "src/components/GameOver.tsx",
