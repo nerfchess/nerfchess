@@ -112,7 +112,11 @@ export function ClockRaidLayer({ fx }: { fx?: FxEvent[] | null }) {
   const [raids, setRaids] = React.useState<Raid[]>([]);
   const timersRef = React.useRef(new Map<number, number>());
   const [mounted, setMounted] = React.useState(false);
-  React.useEffect(() => setMounted(true), []);
+  // Deferred like PassiveLayer's queue appends: the lint (correctly) rejects
+  // synchronous setState inside an effect body.
+  React.useEffect(() => {
+    queueMicrotask(() => setMounted(true));
+  }, []);
 
   const remove = React.useCallback((uid: number) => {
     const t = timersRef.current.get(uid);
@@ -161,7 +165,7 @@ export function ClockRaidLayer({ fx }: { fx?: FxEvent[] | null }) {
         window.setTimeout(() => remove(r.uid), CLEANUP_MS),
       );
     }
-    setRaids((cur) => [...cur, ...fresh].slice(-MAX_RAIDS));
+    queueMicrotask(() => setRaids((cur) => [...cur, ...fresh].slice(-MAX_RAIDS)));
   }, [fx, fxHidden, remove]);
 
   React.useEffect(() => {
