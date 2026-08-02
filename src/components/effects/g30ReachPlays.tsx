@@ -45,6 +45,7 @@ import "./g30ReachPlays.css";
 import type { CSSProperties, ReactNode } from "react";
 import type { SigPlugin, SigRole } from "./sigPlugins";
 import { AimStage, BoardFrame, BoardWideStage } from "./stage";
+import { LaserStrike, PieceShatter, Shockwave, QUAKE_CLASS, impactVars } from "./impact/impact";
 
 interface SceneProps {
   lead: boolean;
@@ -143,24 +144,182 @@ function Frame({ base, tone, rim }: { base: number; tone: string; rim?: string }
 }
 
 /** Cast-anchored lead: the action sits on the cast square. */
-function Lead({ frame, children }: { frame?: ReactNode; children: ReactNode }) {
-  return (
-    <BoardWideStage>
+function Lead({ frame, d, imp, children }: { frame?: ReactNode; d?: number; imp?: ImpCue; children: ReactNode }) {
+  const inner = (
+    <>
       {frame}
       {children}
+      {imp ? <ImpactHit d={d ?? 0} imp={imp} /> : null}
+    </>
+  );
+  return (
+    <BoardWideStage>
+      {imp ? (
+        <QuakeBox d={d ?? 0} imp={imp}>
+          {inner}
+        </QuakeBox>
+      ) : (
+        inner
+      )}
     </BoardWideStage>
   );
 }
 
 /** Aim-anchored lead: board atmosphere stays square, the art turns. */
-function AimLead({ frame, children }: { frame?: ReactNode; children: ReactNode }) {
+function AimLead({ frame, d, imp, children }: { frame?: ReactNode; d?: number; imp?: ImpCue; children: ReactNode }) {
+  const inner = (
+    <>
+      {children}
+      {imp ? <ImpactHit d={d ?? 0} imp={imp} /> : null}
+    </>
+  );
   return (
     <>
       {frame ? <BoardWideStage>{frame}</BoardWideStage> : null}
-      <AimStage>{children}</AimStage>
+      <AimStage>
+        {imp ? (
+          <QuakeBox d={d ?? 0} imp={imp}>
+            {inner}
+          </QuakeBox>
+        ) : (
+          inner
+        )}
+      </AimStage>
     </>
   );
 }
+
+/* =============================================================================
+   FLAGSHIP IMPACT LAYER - the shared violence vocabulary (impact/impact.tsx)
+   staged per card. Each lead names ONE cue in IMP: the moment its own action
+   physically LANDS. The laser leads the beat by 0.4s; the shatter halves,
+   shard spray, ground shockwave and the whole-stage quake all land ON `at`,
+   so the composite reads as one hit. `x`/`y` are % of the 14-cell stage
+   (`far` parks the hit at the aim lane's far end instead), `rot` turns the
+   whole composite so a column can strike along the lane or up from the ground,
+   and `rgb` stays inside the card's own three-colour palette. Kill switch:
+   every node rides a `g30-impx` wrapper, covered by this module's prefix
+   rule; the imp-* internals are covered by the global data-anim gate.
+   ========================================================================== */
+interface ImpCue {
+  /** ms after the lead's own delay: the impact beat. */
+  at: number;
+  /** centre of the struck cell, % of the stage (ignored when `far`). */
+  x?: number;
+  y?: number;
+  /** "r g b" tint, from the card's own palette. */
+  rgb: string;
+  /** the descending column of light. */
+  laser?: boolean;
+  /** index into IMPACT_GLYPHS: silhouette split in half on the beat. */
+  glyph?: number;
+  /** a second, later shockwave: the double boom. */
+  boom?: boolean;
+  /** static rotation of the whole composite, deg. */
+  rot?: number;
+  /** box size, % of the stage. */
+  size?: number;
+  /** park the hit at the far end of the real aim lane. */
+  far?: boolean;
+}
+
+const IMPACT_GLYPHS: ReactNode[] = [
+  <svg key="a" viewBox="0 0 10 12" className="block h-full w-full" aria-hidden="true">
+    <g style={{ fill: "rgb(var(--imp-rgb, 216 181 110))" }}><path d="M2.6 4.2 3.3 1.8 4.4 3.4 5 1.3l.6 2.1 1.1-1.6.7 2.4zM3.2 10.8 4 4.8h2l.8 6z" /></g>
+  </svg>,
+  <svg key="b" viewBox="0 0 10 12" className="block h-full w-full" aria-hidden="true">
+    <g style={{ fill: "rgb(var(--imp-rgb, 216 181 110))" }}><path d="M5 .8 6 3.6 8.8 2.4 7.4 5 10 6 7.4 7l1.4 2.6L6 8.4 5 11.2 4 8.4 1.2 9.6 2.6 7 0 6l2.6-1L1.2 2.4 4 3.6z" /></g>
+  </svg>,
+];
+
+/** The whole stage jolts on the cue's beat. Rides an INNER wrapper because the
+ * stage canvas carries the anchor-clamp transform, which must never be
+ * animated over. In-scene only: the real board crop never shakes. */
+function QuakeBox({ d, imp, children }: { d: number; imp: ImpCue; children: ReactNode }) {
+  return (
+    <span className={`g30-impx ${QUAKE_CLASS} absolute inset-0 block`} style={impactVars(undefined, (d + imp.at) / 1000)}>
+      {children}
+    </span>
+  );
+}
+
+/** The composite hit itself: laser column, split silhouette, shockwave(s). */
+function ImpactHit({ d, imp }: { d: number; imp: ImpCue }) {
+  const size = imp.size ?? 7.2;
+  const pos = imp.far
+    ? { left: `calc(50% + var(--fx-len, 3) * 7.142857% - ${(size / 2).toFixed(3)}%)`, top: `${((imp.y ?? 50) - size / 2).toFixed(3)}%` }
+    : { left: `${((imp.x ?? 50) - size / 2).toFixed(3)}%`, top: `${((imp.y ?? 50) - size / 2).toFixed(3)}%` };
+  return (
+    <span
+      className="g30-impx absolute block"
+      style={{
+        ...pos,
+        width: `${size}%`,
+        height: `${size}%`,
+        ...(imp.rot ? { transform: `rotate(${imp.rot}deg)` } : null),
+        ...impactVars(imp.rgb, (d + imp.at) / 1000),
+      }}
+    >
+      {imp.laser ? <LaserStrike /> : null}
+      {imp.glyph != null ? <PieceShatter glyph={IMPACT_GLYPHS[imp.glyph]} /> : null}
+      <Shockwave />
+      {imp.boom ? (
+        <span className="g30-impx absolute inset-0 block" style={impactVars(imp.rgb, (d + imp.at + 200) / 1000)}>
+          <Shockwave />
+        </span>
+      ) : null}
+    </span>
+  );
+}
+
+/** THE IMPACT CUE SHEET: one named moment of physical contact per card,
+ * choreographed onto that card's own climax - position, beat, tint and
+ * primitive combo all differ per card, so no two siblings land the same hit. */
+const IMP: Record<string, ImpCue> = {
+  // Return of the Queen: THE LAMP TAKES - the lens seats with a hammerfall and the dark shatters
+  bn4_return_of_the_queen: { at: 1040, x: 50, y: 47, rgb: "242 200 92", laser: true, glyph: 1, boom: true },
+  // Harbor Queen: THE PROW STRIKES THE QUAY - the galley runs the water and hits the stones
+  bn4_harbor_queen: { at: 1000, rgb: "111 183 200", laser: true, boom: true, rot: -90, far: true },
+  // Gilded Cage: THE CAGE DROPS ON HER - the bars slam and the queen's shadow splits
+  hx4_gilded_cage: { at: 960, x: 50, y: 49, rgb: "217 174 78", laser: true, glyph: 0 },
+  // Glass Case: THE VITRINE SEATS - the panes land together with a double ring
+  bn4_glass_case: { at: 900, x: 50, y: 48, rgb: "169 216 230", laser: true, boom: true },
+  // Quicksand Quarter: THE CRUST GIVES - the quarter drops an inch, twice
+  hx4_quicksand_quarter: { at: 880, x: 51, y: 52, rgb: "217 176 113", boom: true, size: 8.6 },
+  // Widow's Veil: THE LACE PINNED - one pale column pins the veil to the crown
+  hx4_widows_veil: { at: 860, x: 50, y: 46, rgb: "239 227 208", laser: true },
+  // Doting Retinue: THE THREADS SNAP TAUT - the web sets with a double pluck
+  hx4_doting_retinue: { at: 840, x: 50, y: 50, rgb: "185 198 216", boom: true },
+  // Danger Sense: THE NEEDLE SLAMS THE BEARING - the compass lance strikes the true square
+  bn4_danger_sense: { at: 840, rgb: "232 115 74", laser: true, rot: -90, far: true },
+  // Slow Procession: THE NOTCH TURN - the wheel advances one tooth with two knocks
+  bn4_slow_procession: { at: 820, x: 49, y: 51, rgb: "203 178 122", boom: true },
+  // Court Gossip: THE HEAD LETS GO - the clock bursts in one breath, rippling twice
+  hx4_court_gossip: { at: 800, x: 50, y: 48, rgb: "207 224 168", boom: true, size: 8 },
+  // Quicksilver: THE BEAD BANKS THE CORNER - and slams the channel's end
+  ov_quicksilver: { at: 820, rgb: "184 196 204", laser: true, rot: -90, far: true },
+  // Homesick Queen: THE HEARTH CALL - the pull lands in her chest as a double beat
+  hx4_homesick_queen: { at: 780, x: 50, y: 52, rgb: "231 155 90", boom: true },
+  // Leaky Quiver: THE ARROW FALLS SHORT - it lands at the range's true end, tumbling
+  hx4_leaky_quiver: { at: 780, rgb: "168 189 125", boom: true, far: true },
+  // Slippery Scepter: THE GRIP GOES - the scepter squirts out at a comic angle
+  hx4_slippery_scepter: { at: 760, x: 53, y: 50, rgb: "227 192 90", rot: 25 },
+  // Matins Bell: THE BELL STROKE - the first stroke, then its echo through the louvres
+  hx4_matins_bell: { at: 760, x: 50, y: 47, rgb: "195 178 138", boom: true, size: 8 },
+  // Crane Swing: THE LOAD SET DOWN - the jib lands it at the far mark, twice
+  op_crane_swing: { at: 760, rgb: "224 168 60", boom: true, far: true },
+  // Follow Spot: THE SPOT SNAPS ON - one hot column out of the dark
+  op_follow_spot: { at: 740, x: 50, y: 48, rgb: "246 227 154", laser: true },
+  // Painter's Lift: THE CRADLE SETTLES - one ring as the ropes take
+  op_painters_lift: { at: 720, rgb: "143 178 160", far: true },
+  // Parasol Bearer: THE RIBS SNAP OPEN - the canopy pops with a double flutter
+  op_parasol_bearer: { at: 740, x: 51, y: 47, rgb: "232 143 162", boom: true },
+  // Portrait of a Lady: THE POWDER FLASH - the tray fires a column and the studio jumps
+  op_portrait_of_a_lady: { at: 760, x: 50, y: 46, rgb: "201 143 168", laser: true, boom: true },
+  // Queen's Holiday: THE DECKCHAIR CLACK - one ring as the chair locks flat
+  op_queens_holiday: { at: 720, x: 52, y: 51, rgb: "97 208 168", size: 5.6 },
+};
+
 
 const SJ = { strokeLinejoin: "round", strokeLinecap: "round" } as const;
 
@@ -209,7 +368,7 @@ function LighthouseLens({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead frame={<Frame base={delayMs} tone="rgba(242,200,92,0.3)" rim="rgba(255,244,214,0.32)" />}>
+    <Lead d={delayMs} imp={IMP.bn4_return_of_the_queen} frame={<Frame base={delayMs} tone="rgba(242,200,92,0.3)" rim="rgba(255,244,214,0.32)" />}>
       {/* tell: the keeper's shadow crosses the dark lantern room */}
       <span className="g30-tell absolute block" style={st({ ...d(delayMs, 110), ...box(3.4, 1.1, 0, 1.1), background: "radial-gradient(ellipse, rgba(42,31,12,0.85), transparent 72%)" })} />
       {/* strike: the eight-sided lens seats itself around the lamp */}
@@ -266,7 +425,7 @@ function HarborOars({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead frame={<Frame base={delayMs} tone="rgba(111,183,200,0.3)" rim="rgba(18,48,58,0.42)" />}>
+    <AimLead d={delayMs} imp={IMP.bn4_harbor_queen} frame={<Frame base={delayMs} tone="rgba(111,183,200,0.3)" rim="rgba(18,48,58,0.42)" />}>
       {/* tell: the coxswain's course, called down the whole line */}
       <span className="g30-tellline absolute block" style={st({ ...d(delayMs, 110), ...lane(0.16), background: "#fdf0cf" })} />
       {/* strike: the hull runs the real length of the vector */}
@@ -332,7 +491,7 @@ function GildedCage({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead frame={<Frame base={delayMs} tone="rgba(217,174,78,0.26)" rim="rgba(43,33,16,0.5)" />}>
+    <Lead d={delayMs} imp={IMP.hx4_gilded_cage} frame={<Frame base={delayMs} tone="rgba(217,174,78,0.26)" rim="rgba(43,33,16,0.5)" />}>
       {/* tell: the shadow of the cage falls before the cage does */}
       <span className="g30-tell absolute block" style={st({ ...d(delayMs, 110), ...box(4.2, 1.3, 0, 1.4), background: "radial-gradient(ellipse, rgba(43,33,16,0.8), transparent 72%)" })} />
       {/* strike: eight gilt bars swing down, one bearing after another */}
@@ -392,7 +551,7 @@ function GlassVitrine({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead frame={<Frame base={delayMs} tone="rgba(169,216,230,0.26)" rim="rgba(255,244,214,0.28)" />}>
+    <Lead d={delayMs} imp={IMP.bn4_glass_case} frame={<Frame base={delayMs} tone="rgba(169,216,230,0.26)" rim="rgba(255,244,214,0.28)" />}>
       {/* tell: the velvet plinth rises under whatever is about to be protected */}
       <span className="g30-plinth absolute block" style={st({ ...d(delayMs, 120), ...box(3, 0.7, 0, 1.4), background: "linear-gradient(180deg, #1d2a33, rgba(29,42,51,0.2))" })} />
       {/* strike: eight museum panes lower on eight bearings and meet */}
@@ -450,7 +609,7 @@ function SandFountain({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead
+    <Lead d={delayMs} imp={IMP.hx4_quicksand_quarter}
       frame={
         <BoardFrame>
           <span className="g30-wash absolute inset-0 block" style={st({ ...d(delayMs, 60), background: "radial-gradient(circle at 50% 50%, rgba(217,176,113,0.24), transparent 72%)" })} />
@@ -523,7 +682,7 @@ function WidowsVeil({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead frame={<Frame base={delayMs} tone="rgba(23,19,31,0.6)" rim="rgba(109,100,130,0.4)" />}>
+    <Lead d={delayMs} imp={IMP.hx4_widows_veil} frame={<Frame base={delayMs} tone="rgba(23,19,31,0.6)" rim="rgba(109,100,130,0.4)" />}>
       {/* tell: the crown under the veil goes out */}
       <svg viewBox="0 0 24 24" className="g30-dim absolute block" style={st({ ...d(delayMs, 110), ...box(2.4, 2.4) })}>
         <path d={CROWN} fill="#6d6482" stroke="#17131f" strokeWidth="1.1" {...SJ} />
@@ -582,7 +741,7 @@ function ThreadHub({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead frame={<Frame base={delayMs} tone="rgba(185,198,216,0.24)" rim="rgba(26,31,43,0.45)" />}>
+    <Lead d={delayMs} imp={IMP.hx4_doting_retinue} frame={<Frame base={delayMs} tone="rgba(185,198,216,0.24)" rim="rgba(26,31,43,0.45)" />}>
       {/* tell: the first orb thread is cast */}
       <span className="g30-tellring absolute block" style={st({ ...d(delayMs, 110), ...box(4.4, 4.4), borderRadius: "50%", border: "1px solid rgba(185,198,216,0.9)" })} />
       {/* strike: eight silks snap taut, one per neighbour, in victim order */}
@@ -644,7 +803,7 @@ function CompassRose({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead frame={<Frame base={delayMs} tone="rgba(232,115,74,0.26)" />}>
+    <AimLead d={delayMs} imp={IMP.bn4_danger_sense} frame={<Frame base={delayMs} tone="rgba(232,115,74,0.26)" />}>
       {/* tell: the bearing is scribed down the real vector */}
       <span className="g30-tellline absolute block" style={st({ ...d(delayMs, 110), ...lane(0.12), background: "#ffe9c4" })} />
       {/* strike: the rose's eight points strike, one after another */}
@@ -699,7 +858,7 @@ function ProcessionWheel({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead frame={<Frame base={delayMs} tone="rgba(203,178,122,0.26)" rim="rgba(36,29,16,0.42)" />}>
+    <Lead d={delayMs} imp={IMP.bn4_slow_procession} frame={<Frame base={delayMs} tone="rgba(203,178,122,0.26)" rim="rgba(36,29,16,0.42)" />}>
       {/* tell: the wheel's shadow, and a first notch of turn */}
       <span className="g30-tell absolute block" style={st({ ...d(delayMs, 110), ...box(4, 1.2, 0, 1.6), background: "radial-gradient(ellipse, rgba(36,29,16,0.8), transparent 74%)" })} />
       {/* strike: light walks out along each spoke in turn, from the nave */}
@@ -764,7 +923,7 @@ function DandelionClock({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead frame={<Frame base={delayMs} tone="rgba(207,224,168,0.24)" />}>
+    <Lead d={delayMs} imp={IMP.hx4_court_gossip} frame={<Frame base={delayMs} tone="rgba(207,224,168,0.24)" />}>
       {/* tell: the stem bends, an inhale before the word gets out */}
       <span className="g30-stem absolute block" style={st({ ...d(delayMs, 110), ...box(0.24, 3.2, 0, 1.8), background: "linear-gradient(180deg, #cfe0a8, #232a17)", transformOrigin: "50% 100%" })} />
       {/* strike: the whole head lets go, eight seeds on eight bearings */}
@@ -813,7 +972,7 @@ function QuicksilverBead({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead frame={<Frame base={delayMs} tone="rgba(184,196,204,0.22)" />}>
+    <AimLead d={delayMs} imp={IMP.ov_quicksilver} frame={<Frame base={delayMs} tone="rgba(184,196,204,0.22)" />}>
       {/* tell: the channel is scribed, exactly as far as she may run */}
       <span className="g30-tellline absolute block" style={st({ ...d(delayMs, 110), ...lane(0.2), background: "#b8c4cc" })} />
       {/* strike: the bead runs the real length of the line (one-cell body) */}
@@ -871,7 +1030,7 @@ function HearthPull({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead frame={<Frame base={delayMs} tone="rgba(231,155,90,0.28)" rim="rgba(44,22,8,0.45)" />}>
+    <Lead d={delayMs} imp={IMP.hx4_homesick_queen} frame={<Frame base={delayMs} tone="rgba(231,155,90,0.28)" rim="rgba(44,22,8,0.45)" />}>
       {/* tell: the hearth ring warms before anything moves */}
       <span className="g30-tellring absolute block" style={st({ ...d(delayMs, 110), ...box(3.4, 3.4), borderRadius: "50%", border: "1px solid rgba(255,230,192,0.85)" })} />
       {/* strike: eight ember trails run out, then are hauled straight back */}
@@ -935,7 +1094,7 @@ function LeakyQuiver({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead frame={<Frame base={delayMs} tone="rgba(168,189,125,0.24)" />}>
+    <AimLead d={delayMs} imp={IMP.hx4_leaky_quiver} frame={<Frame base={delayMs} tone="rgba(168,189,125,0.24)" />}>
       {/* tell: the range she means to shoot, called the whole way */}
       <span className="g30-tellline absolute block" style={st({ ...d(delayMs, 110), ...lane(0.14), background: "#f6ecc9" })} />
       {/* strike: the arrow flies, and stops at four cells however long the line */}
@@ -999,7 +1158,7 @@ function SlipperyScepter({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead frame={<Frame base={delayMs} tone="rgba(227,192,90,0.26)" />}>
+    <Lead d={delayMs} imp={IMP.hx4_slippery_scepter} frame={<Frame base={delayMs} tone="rgba(227,192,90,0.26)" />}>
       {/* tell: the grip closes on it, one last time */}
       <span className="g30-grip absolute block" style={st({ ...d(delayMs, 110), ...box(1.9, 1.9, -0.5, 0.9), borderRadius: "50%", border: "3px solid rgba(255,242,207,0.8)" })} />
       {/* strike: it squirts out of the hand and tumbles */}
@@ -1060,7 +1219,7 @@ function MatinsBell({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead
+    <Lead d={delayMs} imp={IMP.hx4_matins_bell}
       frame={
         <BoardFrame>
           <span className="g30-wash absolute inset-0 block" style={st({ ...d(delayMs, 60), background: "radial-gradient(circle at 50% 50%, rgba(195,178,138,0.24), transparent 72%)" })} />
@@ -1129,7 +1288,7 @@ function CraneJib({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead frame={<Frame base={delayMs} tone="rgba(224,168,60,0.24)" />}>
+    <AimLead d={delayMs} imp={IMP.op_crane_swing} frame={<Frame base={delayMs} tone="rgba(224,168,60,0.24)" />}>
       {/* tell: the swing radius chalked out to the far end of the line */}
       <span className="g30-tellline absolute block" style={st({ ...d(delayMs, 110), ...lane(0.12), background: "#ffeec6" })} />
       {/* strike: the jib sweeps round onto the vector, lattice and all */}
@@ -1176,7 +1335,7 @@ function FollowSpot({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead frame={<Frame base={delayMs} tone="rgba(25,23,18,0.62)" rim="rgba(246,227,154,0.3)" />}>
+    <Lead d={delayMs} imp={IMP.op_follow_spot} frame={<Frame base={delayMs} tone="rgba(25,23,18,0.62)" rim="rgba(246,227,154,0.3)" />}>
       {/* tell: eight iris blades crank open around the lamp */}
       {EIGHT.map((i) => (
         <Ray key={i} i={i} size={3.2}>
@@ -1231,7 +1390,7 @@ function PaintersLift({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead frame={<Frame base={delayMs} tone="rgba(143,178,160,0.24)" />}>
+    <AimLead d={delayMs} imp={IMP.op_painters_lift} frame={<Frame base={delayMs} tone="rgba(143,178,160,0.24)" />}>
       {/* tell: the plumb line, dropped the whole length of the run */}
       <span className="g30-tellline absolute block" style={st({ ...d(delayMs, 110), ...lane(0.1), background: "#fdf2d6" })} />
       {/* the rope pays out exactly as far as she is going */}
@@ -1288,7 +1447,7 @@ function ParasolRibs({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead frame={<Frame base={delayMs} tone="rgba(232,143,162,0.26)" />}>
+    <Lead d={delayMs} imp={IMP.op_parasol_bearer} frame={<Frame base={delayMs} tone="rgba(232,143,162,0.26)" />}>
       {/* tell: the bearer's shadow reaches the square first */}
       <span className="g30-tell absolute block" style={st({ ...d(delayMs, 110), ...box(3.2, 1, 0, 1.5), background: "radial-gradient(ellipse, rgba(44,21,32,0.8), transparent 72%)" })} />
       {/* strike: the eight ribs snap open, one after another */}
@@ -1350,7 +1509,7 @@ function PortraitFlash({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead frame={<Frame base={delayMs} tone="rgba(201,143,168,0.26)" rim="rgba(36,23,34,0.5)" />}>
+    <Lead d={delayMs} imp={IMP.op_portrait_of_a_lady} frame={<Frame base={delayMs} tone="rgba(201,143,168,0.26)" rim="rgba(36,23,34,0.5)" />}>
       {/* tell: the gilt oval swings in on its wire */}
       <svg viewBox="0 0 24 24" className="g30-oval absolute block" style={st({ ...d(delayMs, 110), ...box(3.4, 4) })}>
         <ellipse cx="12" cy="12" rx="10" ry="11.4" fill="rgba(36,23,34,0.9)" stroke="#c98fa8" strokeWidth="2" />
@@ -1410,7 +1569,7 @@ function HolidayShades({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead frame={<Frame base={delayMs} tone="rgba(97,208,168,0.24)" />}>
+    <Lead d={delayMs} imp={IMP.op_queens_holiday} frame={<Frame base={delayMs} tone="rgba(97,208,168,0.24)" />}>
       {/* tell: the deckchair unfolds, which takes a moment */}
       <svg viewBox="0 0 24 24" className="g30-chair absolute block" style={st({ ...d(delayMs, 110), ...box(2.6, 2.2, -1.9, 1.2) })}>
         <path d="M3 21L9 5M21 21L11 9M6 13h12" fill="none" stroke="#143026" strokeWidth="2.2" {...SJ} />

@@ -37,6 +37,7 @@ import "./g25CourtPlays.css";
 import type { CSSProperties, ReactNode } from "react";
 import type { SigPlugin, SigRole } from "./sigPlugins";
 import { AimStage, BoardFrame, BoardWideStage } from "./stage";
+import { LaserStrike, PieceShatter, Shockwave, QUAKE_CLASS, impactVars } from "./impact/impact";
 
 interface SceneProps {
   lead: boolean;
@@ -144,19 +145,37 @@ function Cut({ d, children }: { d: number; children: ReactNode }) {
 }
 
 /** Cast-anchored lead: action on the cast square, `frame` over the board. */
-function Lead({ d, frame, children }: { d: number; frame?: ReactNode; children: ReactNode }) {
+function Lead({ d, frame, imp, children }: { d: number; frame?: ReactNode; imp?: ImpCue; children: ReactNode }) {
+  const inner = (
+    <>
+      {frame ? <BoardFrame>{frame}</BoardFrame> : null}
+      {children}
+      {imp ? <ImpactHit d={d} imp={imp} /> : null}
+    </>
+  );
   return (
     <span className={ROOT} style={rootStyle(d)} aria-hidden="true">
       <BoardWideStage>
-        {frame ? <BoardFrame>{frame}</BoardFrame> : null}
-        {children}
+        {imp ? (
+          <QuakeBox d={d} imp={imp}>
+            {inner}
+          </QuakeBox>
+        ) : (
+          inner
+        )}
       </BoardWideStage>
     </span>
   );
 }
 
 /** Aim-anchored lead: `frame` stays square with the board, the art rotates. */
-function AimLead({ d, frame, children }: { d: number; frame?: ReactNode; children: ReactNode }) {
+function AimLead({ d, frame, imp, children }: { d: number; frame?: ReactNode; imp?: ImpCue; children: ReactNode }) {
+  const inner = (
+    <>
+      {children}
+      {imp ? <ImpactHit d={d} imp={imp} /> : null}
+    </>
+  );
   return (
     <span className={ROOT} style={rootStyle(d)} aria-hidden="true">
       {frame ? (
@@ -164,10 +183,148 @@ function AimLead({ d, frame, children }: { d: number; frame?: ReactNode; childre
           <BoardFrame>{frame}</BoardFrame>
         </BoardWideStage>
       ) : null}
-      <AimStage>{children}</AimStage>
+      <AimStage>
+        {imp ? (
+          <QuakeBox d={d} imp={imp}>
+            {inner}
+          </QuakeBox>
+        ) : (
+          inner
+        )}
+      </AimStage>
     </span>
   );
 }
+
+/* =============================================================================
+   FLAGSHIP IMPACT LAYER - the shared violence vocabulary (impact/impact.tsx)
+   staged per card. Each lead names ONE cue in IMP: the moment its own action
+   physically LANDS. The laser leads the beat by 0.4s; the shatter halves,
+   shard spray, ground shockwave and the whole-stage quake all land ON `at`,
+   so the composite reads as one hit. `x`/`y` are % of the 14-cell stage
+   (`far` parks the hit at the aim lane's far end instead), `rot` turns the
+   whole composite so a column can strike along the lane or up from the ground,
+   and `rgb` stays inside the card's own three-colour palette. Kill switch:
+   every node rides a `g25-impx` wrapper, covered by this module's prefix
+   rule; the imp-* internals are covered by the global data-anim gate.
+   ========================================================================== */
+interface ImpCue {
+  /** ms after the lead's own delay: the impact beat. */
+  at: number;
+  /** centre of the struck cell, % of the stage (ignored when `far`). */
+  x?: number;
+  y?: number;
+  /** "r g b" tint, from the card's own palette. */
+  rgb: string;
+  /** the descending column of light. */
+  laser?: boolean;
+  /** index into IMPACT_GLYPHS: silhouette split in half on the beat. */
+  glyph?: number;
+  /** a second, later shockwave: the double boom. */
+  boom?: boolean;
+  /** static rotation of the whole composite, deg. */
+  rot?: number;
+  /** box size, % of the stage. */
+  size?: number;
+  /** park the hit at the far end of the real aim lane. */
+  far?: boolean;
+}
+
+const IMPACT_GLYPHS: ReactNode[] = [
+  <svg key="a" viewBox="0 0 10 12" className="block h-full w-full" aria-hidden="true">
+    <g style={{ fill: "rgb(var(--imp-rgb, 216 181 110))" }}><path d="M2 2.4h6v2.8H2zM4.4 5.2h1.2V11H4.4z" /></g>
+  </svg>,
+  <svg key="b" viewBox="0 0 10 12" className="block h-full w-full" aria-hidden="true">
+    <g style={{ fill: "rgb(var(--imp-rgb, 216 181 110))" }}><path d="M2.6 1h4.8c0 2.4-1 3.8-2 4.2V9H7v1.6H3V9h1.4V5.2c-1-.4-1.8-1.8-1.8-4.2z" /></g>
+  </svg>,
+];
+
+/** The whole stage jolts on the cue's beat. Rides an INNER wrapper because the
+ * stage canvas carries the anchor-clamp transform, which must never be
+ * animated over. In-scene only: the real board crop never shakes. */
+function QuakeBox({ d, imp, children }: { d: number; imp: ImpCue; children: ReactNode }) {
+  return (
+    <span className={`g25-impx ${QUAKE_CLASS} absolute inset-0 block`} style={impactVars(undefined, (d + imp.at) / 1000)}>
+      {children}
+    </span>
+  );
+}
+
+/** The composite hit itself: laser column, split silhouette, shockwave(s). */
+function ImpactHit({ d, imp }: { d: number; imp: ImpCue }) {
+  const size = imp.size ?? 7.2;
+  const pos = imp.far
+    ? { left: `calc(50% + var(--fx-len, 3) * 7.142857% - ${(size / 2).toFixed(3)}%)`, top: `${((imp.y ?? 50) - size / 2).toFixed(3)}%` }
+    : { left: `${((imp.x ?? 50) - size / 2).toFixed(3)}%`, top: `${((imp.y ?? 50) - size / 2).toFixed(3)}%` };
+  return (
+    <span
+      className="g25-impx absolute block"
+      style={{
+        ...pos,
+        width: `${size}%`,
+        height: `${size}%`,
+        ...(imp.rot ? { transform: `rotate(${imp.rot}deg)` } : null),
+        ...impactVars(imp.rgb, (d + imp.at) / 1000),
+      }}
+    >
+      {imp.laser ? <LaserStrike /> : null}
+      {imp.glyph != null ? <PieceShatter glyph={IMPACT_GLYPHS[imp.glyph]} /> : null}
+      <Shockwave />
+      {imp.boom ? (
+        <span className="g25-impx absolute inset-0 block" style={impactVars(imp.rgb, (d + imp.at + 200) / 1000)}>
+          <Shockwave />
+        </span>
+      ) : null}
+    </span>
+  );
+}
+
+/** THE IMPACT CUE SHEET: one named moment of physical contact per card,
+ * choreographed onto that card's own climax - position, beat, tint and
+ * primitive combo all differ per card, so no two siblings land the same hit. */
+const IMP: Record<string, ImpCue> = {
+  // Royal Food Taster: THE CUP DASHED DOWN - the verdict beam smashes the goblet in half
+  ov_royal_food_taster: { at: 900, x: 51, y: 50, rgb: "216 178 92", laser: true, glyph: 1 },
+  // Squire's Ascension: THE ROLL STRUCK - the name lands as a column and the hall stamps
+  ov_squires_ascension: { at: 920, x: 50, y: 47, rgb: "224 192 106", laser: true, boom: true },
+  // Royal Taster: THE ROUND REFUSED - the suspect cup is beamed down and split
+  bn4_royal_taster: { at: 880, x: 52, y: 51, rgb: "205 216 168", laser: true, glyph: 1 },
+  // Food Taster: THE DISH REFUSED - the goblet is knocked apart where it stands
+  hx4_food_taster: { at: 860, x: 49, y: 52, rgb: "159 176 200", glyph: 1 },
+  // Glass Ceiling: THE PANE VERDICT - the ruling strikes the glass overhead, twice
+  hx4_glass_ceiling: { at: 880, x: 50, y: 44, rgb: "168 220 240", laser: true, boom: true },
+  // Iron Quota: THE QUOTA STAMPED - one iron column, no appeal
+  hx4_iron_quota: { at: 840, x: 51, y: 49, rgb: "176 138 90", laser: true },
+  // The Quarrel: THE POINT MADE - the argument lands at an angle and echoes
+  hx4_the_quarrel: { at: 900, x: 48, y: 50, rgb: "154 111 168", laser: true, boom: true, rot: -10 },
+  // Thistle Crown: THE PRICKED VERDICT - the thistle ruling descends in one column
+  hx4_thistle_crown: { at: 860, x: 50, y: 46, rgb: "157 134 192", laser: true },
+  // Wilted Garland: THE GARLAND DROPPED - the verdict beam finds the far end of the line
+  hx4_wilted_garland: { at: 880, rgb: "181 168 96", laser: true, far: true },
+  // Ivy Crown: THE VINE LANCE - the ivy runs the lane and strikes the far square
+  ov_ivy_crown: { at: 860, rgb: "142 200 122", laser: true, rot: -90, far: true },
+  // Promotion Paperwork: THE STAMP DESCENDS - the office stamp comes down as a column
+  bn4_promotion_paperwork: { at: 820, x: 52, y: 50, rgb: "224 154 112", laser: true },
+  // Counterfeit Crown: THE FAKE EXPOSED - the assay beam hits and the table bangs twice
+  ov_counterfeit_crown: { at: 840, x: 50, y: 49, rgb: "134 194 200", laser: true, boom: true },
+  // Royal Stroll: THE PROMENADE END - the stroll halts with a double heel-click
+  bn4_royal_stroll: { at: 800, rgb: "232 196 122", boom: true, far: true },
+  // Halo of the Crown: THE HALO PINNED - one column fixes the halo in place
+  hx4_halo_of_the_crown: { at: 780, x: 50, y: 45, rgb: "176 106 122", laser: true },
+  // Sticky Floorboards: THE BOOT PULLS FREE - and comes down twice as hard
+  hx4_sticky_floorboards: { at: 760, x: 51, y: 56, rgb: "234 217 168", boom: true },
+  // Tilted Crown: THE SLIPPED VERDICT - one shock, noticeably off level
+  hx4_tilted_crown: { at: 780, x: 49, y: 47, rgb: "208 160 216", rot: 18 },
+  // Crown Indemnity: THE CLAUSE INVOKED - the indemnity beam lands at the far end of the retreat
+  op_crown_indemnity: { at: 800, rgb: "192 184 160", laser: true, far: true },
+  // Velcro Gloves: THE RIP AND GRAB - the far square takes the double tug
+  ov_velcro_gloves: { at: 780, rgb: "224 138 106", boom: true, far: true },
+  // Paper Crown: THE PAPER POP - the lightest possible coronation, one small ring
+  bn4_paper_crown: { at: 740, x: 50, y: 48, rgb: "240 168 200", size: 5.6 },
+  // Hedgerow Buds: THE BUDBURST - the hedge pops its buds in a double ripple
+  op_hedgerow_buds: { at: 760, x: 52, y: 53, rgb: "168 200 106", boom: true },
+};
+
 
 /** Board-wide wash, always inside a BoardFrame. */
 function Wash({ tone, d = 0 }: { tone: string; d?: number }) {
@@ -235,7 +392,7 @@ function TasterFoldsScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead
+    <Lead imp={IMP.ov_royal_food_taster}
       d={delayMs}
       frame={
         <>
@@ -293,7 +450,7 @@ function RollCalledScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(224,192,106,0.26)" />}>
+    <Lead imp={IMP.ov_squires_ascension} d={delayMs} frame={<Wash tone="rgba(224,192,106,0.26)" />}>
       <V c="g25-rc-kneel" l={44} t={42} w={10} h={14} d={70}><path d={KNEELFIG} fill="#e0c06a" stroke="#2a2110" strokeWidth="0.9" {...SJ} /></V>
       <V c="g25-rc-unroll" l={36} t={30} w={28} h={14} d={200} st={{ transformOrigin: "50% 50%" }}>{roll}</V>
       <L c="g25-rc-name" l={41} t={35} w={18} h={1.6} d={340} st={{ borderRadius: "999px", background: "#fff2d8", transformOrigin: "0% 50%" }} />
@@ -342,7 +499,7 @@ function CupRoundScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(205,216,168,0.26)" />}>
+    <Lead imp={IMP.bn4_royal_taster} d={delayMs} frame={<Wash tone="rgba(205,216,168,0.26)" />}>
       <V c="g25-cr-pour" l={36} t={34} w={12} h={14} d={90} st={{ transformOrigin: "20% 80%" }}>{jug}</V>
       <V c="g25-cr-cup" l={47} t={40} w={9} h={12} d={260}>{cup}</V>
       <V c="g25-cr-sip" l={53} t={38} w={9} h={15} d={400} st={{ transformOrigin: "40% 100%" }}>
@@ -385,7 +542,7 @@ function DishRefusedScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead
+    <Lead imp={IMP.hx4_food_taster}
       d={delayMs}
       frame={
         <>
@@ -439,7 +596,7 @@ function GlassCeilingScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(168,220,240,0.24)" />}>
+    <Lead imp={IMP.hx4_glass_ceiling} d={delayMs} frame={<Wash tone="rgba(168,220,240,0.24)" />}>
       <V c="g25-gc-reach" l={45} t={44} w={9} h={13} d={80}><path d={HAND} fill="#a8dcf0" stroke="#14262f" strokeWidth="0.9" {...SJ} /></V>
       <V c="g25-gc-pane" l={34} t={36} w={32} h={7} d={220} par="none">{pane}</V>
       <V c="g25-gc-palm" l={46} t={38} w={7} h={9} d={420}><path d={HAND} fill="#fff4d6" /></V>
@@ -482,7 +639,7 @@ function IronQuotaScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(176,138,90,0.26)" />}>
+    <Lead imp={IMP.hx4_iron_quota} d={delayMs} frame={<Wash tone="rgba(176,138,90,0.26)" />}>
       <L c="g25-iq-counter" l={36} t={50} w={28} h={2.4} d={80} st={{ borderRadius: "999px", background: "#2b1d10" }} />
       <V c="g25-iq-shutter" l={36} t={31} w={28} h={10} d={220} st={{ transformOrigin: "50% 0%" }} par="none" vb="0 0 40 14">
         <rect x="0.6" y="0.6" width="38.8" height="12.8" rx="1" fill="#b08a5a" stroke="#2b1d10" strokeWidth="1" />
@@ -532,7 +689,7 @@ function QuarrelScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(154,111,168,0.26)" />}>
+    <Lead imp={IMP.hx4_the_quarrel} d={delayMs} frame={<Wash tone="rgba(154,111,168,0.26)" />}>
       {[0, 1].map((i) => (
         <V key={i} c="g25-qr-chair" l={39 + i * 15} t={41} w={7} h={12} d={90 + i * 70} st={{ transformOrigin: "50% 80%", scale: i ? "-1 1" : undefined }}>
           <path d={CHAIR} fill="#9a6fa8" stroke="#23122c" strokeWidth="0.9" {...SJ} />
@@ -582,7 +739,7 @@ function ThistleCrownScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(157,134,192,0.26)" />}>
+    <Lead imp={IMP.hx4_thistle_crown} d={delayMs} frame={<Wash tone="rgba(157,134,192,0.26)" />}>
       <V c="g25-stepin" l={45} t={40} w={9} h={15} d={80}><path d={FIG} fill="#fff4d6" stroke="#1e1730" strokeWidth="0.9" {...SJ} /></V>
       {[0, 1, 2].map((i) => (
         <V key={i} c="g25-tk-back" l={35 + i * 10} t={39} w={8} h={13} d={220 + i * 70} per={45}>
@@ -638,7 +795,7 @@ function WiltedGarlandScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead d={delayMs} frame={<Wash tone="rgba(181,168,96,0.26)" />}>
+    <AimLead imp={IMP.hx4_wilted_garland} d={delayMs} frame={<Wash tone="rgba(181,168,96,0.26)" />}>
       <V c="g25-wg-lean" l={43} t={41} w={9} h={14} d={90}><path d={FIG} fill="#b5a860" stroke="#2a2712" strokeWidth="0.9" {...SJ} /></V>
       <V c="g25-wg-bar" l={49} t={43} w={16} h={7} d={280} st={{ transformOrigin: "0% 50%" }}>{arm}</V>
       <L c="g25-runout" l={49} t={46} w={26} h={1.6} d={400} st={{ borderRadius: "999px", background: "linear-gradient(90deg, #fff2d6, rgba(181,168,96,0))", transformOrigin: "0% 50%" }} />
@@ -679,7 +836,7 @@ function IvyCrownScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead d={delayMs} frame={<Wash tone="rgba(142,200,122,0.26)" />}>
+    <AimLead imp={IMP.ov_ivy_crown} d={delayMs} frame={<Wash tone="rgba(142,200,122,0.26)" />}>
       <L c="g25-runout" l={47} t={49} w={26} h={2} d={80} st={{ borderRadius: "999px", background: "linear-gradient(90deg, #8ec87a, rgba(142,200,122,0))", transformOrigin: "0% 50%" }} />
       {[0, 1].map((i) => (
         <L key={i} c="g25-iv-stone" l={51 + i * 7} t={46} w={6} h={6} d={220 + i * 120} st={{ border: "2px solid #fff4d6" }} />
@@ -730,7 +887,7 @@ function PaperworkScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(224,154,112,0.26)" />}>
+    <Lead imp={IMP.bn4_promotion_paperwork} d={delayMs} frame={<Wash tone="rgba(224,154,112,0.26)" />}>
       <V c="g25-pp-slide" l={42} t={38} w={16} h={20} d={80}>{form}</V>
       <V c="g25-pp-stamp" l={44} t={32} w={11} h={11} d={260}>{stamp}</V>
       <V c="g25-pp-stamp2" l={49} t={38} w={9} h={9} d={400}>{stamp}</V>
@@ -774,7 +931,7 @@ function PlaceCardsScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(134,194,200,0.26)" />}>
+    <Lead imp={IMP.ov_counterfeit_crown} d={delayMs} frame={<Wash tone="rgba(134,194,200,0.26)" />}>
       <V c="g25-pc-card" l={39} t={42} w={9} h={10} d={80}>{card("KING", "#fff4d6")}</V>
       <V c="g25-pc-card" l={53} t={42} w={9} h={10} d={150}>{card("QUEEN", "#86c2c8")}</V>
       <V c="g25-pc-sly" l={45} t={30} w={10} h={13} d={280}>{sly}</V>
@@ -811,7 +968,7 @@ function RoyalStrollScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead d={delayMs} frame={<Wash tone="rgba(232,196,122,0.26)" />}>
+    <AimLead imp={IMP.bn4_royal_stroll} d={delayMs} frame={<Wash tone="rgba(232,196,122,0.26)" />}>
       <L c="g25-runout" l={46} t={53} w={26} h={1.8} d={80} st={{ borderRadius: "999px", background: "linear-gradient(90deg, #e8c47a, rgba(232,196,122,0))", transformOrigin: "0% 50%" }} />
       <V c="g25-rs-stride" l={43} t={40} w={9} h={15} d={140}><path d={FIG} fill="#fff4d6" stroke="#2d2412" strokeWidth="0.9" {...SJ} /></V>
       {[0, 1, 2, 3].map((i) => (
@@ -857,7 +1014,7 @@ function CurtainDrawnScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead
+    <Lead imp={IMP.hx4_halo_of_the_crown}
       d={delayMs}
       frame={
         <>
@@ -913,7 +1070,7 @@ function StickyFloorScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(234,217,168,0.26)" />}>
+    <Lead imp={IMP.hx4_sticky_floorboards} d={delayMs} frame={<Wash tone="rgba(234,217,168,0.26)" />}>
       <V c="g25-sf-cloth" l={38} t={40} w={14} h={12} d={80} st={{ transformOrigin: "20% 60%" }}>{cloth}</V>
       <L c="g25-sf-gloss" l={38} t={51} w={26} h={2.4} d={240} st={{ borderRadius: "999px", background: "linear-gradient(90deg, transparent, #fff2dc, transparent)" }} />
       <V c="g25-sf-heel" l={44} t={42} w={7} h={11} d={420} st={{ transformOrigin: "50% 100%" }}>{boot}</V>
@@ -967,7 +1124,7 @@ function CurtsyScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(208,160,216,0.26)" />}>
+    <Lead imp={IMP.hx4_tilted_crown} d={delayMs} frame={<Wash tone="rgba(208,160,216,0.26)" />}>
       <V c="g25-ct-dip" l={44} t={40} w={10} h={15} d={90} st={{ transformOrigin: "50% 100%" }}>{lady("#d0a0d8")}</V>
       <V c="g25-ct-tip" l={44} t={40} w={10} h={15} d={280} st={{ transformOrigin: "50% 100%" }}>{lady("#fff4d6")}</V>
       <V c="g25-ct-steady" l={51} t={34} w={7} h={9} d={420}><path d={HAND} fill="#fff4d6" stroke="#2a1a30" strokeWidth="0.9" {...SJ} /></V>
@@ -1011,7 +1168,7 @@ function BackingOutScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead d={delayMs} frame={<Wash tone="rgba(192,184,160,0.26)" />}>
+    <AimLead imp={IMP.op_crown_indemnity} d={delayMs} frame={<Wash tone="rgba(192,184,160,0.26)" />}>
       <V c="g25-bo-bow" l={43} t={40} w={9} h={15} d={90} st={{ transformOrigin: "70% 100%" }}>
         <path d={BOWFIG} fill="#fff4d6" stroke="#26221a" strokeWidth="0.9" {...SJ} />
       </V>
@@ -1063,7 +1220,7 @@ function VelcroGlovesScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead d={delayMs} frame={<Wash tone="rgba(224,138,106,0.26)" />}>
+    <AimLead imp={IMP.ov_velcro_gloves} d={delayMs} frame={<Wash tone="rgba(224,138,106,0.26)" />}>
       <V c="g25-vg-clasp" l={43} t={44} w={16} h={8} d={90}>{clasp}</V>
       <V c="g25-vg-pull" l={54} t={41} w={9} h={14} d={280}><path d={FIG} fill="#e08a6a" stroke="#2e1710" strokeWidth="0.9" {...SJ} /></V>
       <V c="g25-vg-rip" l={50} t={40} w={8} h={8} d={440}>
@@ -1110,7 +1267,7 @@ function FoolTumblesScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(240,168,200,0.26)" />}>
+    <Lead imp={IMP.bn4_paper_crown} d={delayMs} frame={<Wash tone="rgba(240,168,200,0.26)" />}>
       <V c="g25-fc-tumble" l={40} t={40} w={10} h={15} d={80} st={{ transformOrigin: "50% 80%" }}>
         <path d={FIG} fill="#f0a8c8" stroke="#2c1424" strokeWidth="0.9" {...SJ} />
       </V>
@@ -1161,7 +1318,7 @@ function HedgerowBudsScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(168,200,106,0.26)" />}>
+    <Lead imp={IMP.op_hedgerow_buds} d={delayMs} frame={<Wash tone="rgba(168,200,106,0.26)" />}>
       <V c="g25-stepin" l={38} t={40} w={9} h={14} d={80}><path d={FIG} fill="#a8c86a" stroke="#1f2a12" strokeWidth="0.9" {...SJ} /></V>
       <L c="g25-hb-hedge" l={38} t={51} w={26} h={3} d={200} st={{ borderRadius: "999px", background: "#1f2a12", transformOrigin: "0% 50%" }} />
       {[0, 1].map((i) => (

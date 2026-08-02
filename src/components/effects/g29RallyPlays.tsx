@@ -37,6 +37,7 @@ import "./g29RallyPlays.css";
 import type { CSSProperties, ReactNode } from "react";
 import type { SigPlugin, SigRole } from "./sigPlugins";
 import { AimStage, BoardFrame, BoardWideStage } from "./stage";
+import { LaserStrike, PieceShatter, Shockwave, QUAKE_CLASS, impactVars } from "./impact/impact";
 
 interface SceneProps {
   lead: boolean;
@@ -123,19 +124,37 @@ function Cut({ d, children }: { d: number; children: ReactNode }) {
 }
 
 /** Cast-anchored lead: action on the cast square, `frame` over the board. */
-function Lead({ d, frame, children }: { d: number; frame?: ReactNode; children: ReactNode }) {
+function Lead({ d, frame, imp, children }: { d: number; frame?: ReactNode; imp?: ImpCue; children: ReactNode }) {
+  const inner = (
+    <>
+      {frame ? <BoardFrame>{frame}</BoardFrame> : null}
+      {children}
+      {imp ? <ImpactHit d={d} imp={imp} /> : null}
+    </>
+  );
   return (
     <span className={ROOT} style={rootStyle(d)} aria-hidden="true">
       <BoardWideStage>
-        {frame ? <BoardFrame>{frame}</BoardFrame> : null}
-        {children}
+        {imp ? (
+          <QuakeBox d={d} imp={imp}>
+            {inner}
+          </QuakeBox>
+        ) : (
+          inner
+        )}
       </BoardWideStage>
     </span>
   );
 }
 
 /** Aim-anchored lead: `frame` stays square with the board, the art rotates. */
-function AimLead({ d, frame, children }: { d: number; frame?: ReactNode; children: ReactNode }) {
+function AimLead({ d, frame, imp, children }: { d: number; frame?: ReactNode; imp?: ImpCue; children: ReactNode }) {
+  const inner = (
+    <>
+      {children}
+      {imp ? <ImpactHit d={d} imp={imp} /> : null}
+    </>
+  );
   return (
     <span className={ROOT} style={rootStyle(d)} aria-hidden="true">
       {frame ? (
@@ -143,10 +162,156 @@ function AimLead({ d, frame, children }: { d: number; frame?: ReactNode; childre
           <BoardFrame>{frame}</BoardFrame>
         </BoardWideStage>
       ) : null}
-      <AimStage>{children}</AimStage>
+      <AimStage>
+        {imp ? (
+          <QuakeBox d={d} imp={imp}>
+            {inner}
+          </QuakeBox>
+        ) : (
+          inner
+        )}
+      </AimStage>
     </span>
   );
 }
+
+/* =============================================================================
+   FLAGSHIP IMPACT LAYER - the shared violence vocabulary (impact/impact.tsx)
+   staged per card. Each lead names ONE cue in IMP: the moment its own action
+   physically LANDS. The laser leads the beat by 0.4s; the shatter halves,
+   shard spray, ground shockwave and the whole-stage quake all land ON `at`,
+   so the composite reads as one hit. `x`/`y` are % of the 14-cell stage
+   (`far` parks the hit at the aim lane's far end instead), `rot` turns the
+   whole composite so a column can strike along the lane or up from the ground,
+   and `rgb` stays inside the card's own three-colour palette. Kill switch:
+   every node rides a `g29-impx` wrapper, covered by this module's prefix
+   rule; the imp-* internals are covered by the global data-anim gate.
+   ========================================================================== */
+interface ImpCue {
+  /** ms after the lead's own delay: the impact beat. */
+  at: number;
+  /** centre of the struck cell, % of the stage (ignored when `far`). */
+  x?: number;
+  y?: number;
+  /** "r g b" tint, from the card's own palette. */
+  rgb: string;
+  /** the descending column of light. */
+  laser?: boolean;
+  /** index into IMPACT_GLYPHS: silhouette split in half on the beat. */
+  glyph?: number;
+  /** a second, later shockwave: the double boom. */
+  boom?: boolean;
+  /** static rotation of the whole composite, deg. */
+  rot?: number;
+  /** box size, % of the stage. */
+  size?: number;
+  /** park the hit at the far end of the real aim lane. */
+  far?: boolean;
+}
+
+const IMPACT_GLYPHS: ReactNode[] = [
+  <svg key="a" viewBox="0 0 10 12" className="block h-full w-full" aria-hidden="true">
+    <g style={{ fill: "rgb(var(--imp-rgb, 216 181 110))" }}><path d="M3 1h1v10H3zM4.2 1.6h4.4L7.4 3.3l1.2 1.7H4.2z" /></g>
+  </svg>,
+  <svg key="b" viewBox="0 0 10 12" className="block h-full w-full" aria-hidden="true">
+    <g style={{ fill: "rgb(var(--imp-rgb, 216 181 110))" }}><ellipse cx="5" cy="4" rx="3.2" ry="1" /><path d="M1.8 4h6.4v5c0 .8-1.6 1.2-3.2 1.2S1.8 9.8 1.8 9z" /></g>
+  </svg>,
+];
+
+/** The whole stage jolts on the cue's beat. Rides an INNER wrapper because the
+ * stage canvas carries the anchor-clamp transform, which must never be
+ * animated over. In-scene only: the real board crop never shakes. */
+function QuakeBox({ d, imp, children }: { d: number; imp: ImpCue; children: ReactNode }) {
+  return (
+    <span className={`g29-impx ${QUAKE_CLASS} absolute inset-0 block`} style={impactVars(undefined, (d + imp.at) / 1000)}>
+      {children}
+    </span>
+  );
+}
+
+/** The composite hit itself: laser column, split silhouette, shockwave(s). */
+function ImpactHit({ d, imp }: { d: number; imp: ImpCue }) {
+  const size = imp.size ?? 7.2;
+  const pos = imp.far
+    ? { left: `calc(50% + var(--fx-len, 3) * 7.142857% - ${(size / 2).toFixed(3)}%)`, top: `${((imp.y ?? 50) - size / 2).toFixed(3)}%` }
+    : { left: `${((imp.x ?? 50) - size / 2).toFixed(3)}%`, top: `${((imp.y ?? 50) - size / 2).toFixed(3)}%` };
+  return (
+    <span
+      className="g29-impx absolute block"
+      style={{
+        ...pos,
+        width: `${size}%`,
+        height: `${size}%`,
+        ...(imp.rot ? { transform: `rotate(${imp.rot}deg)` } : null),
+        ...impactVars(imp.rgb, (d + imp.at) / 1000),
+      }}
+    >
+      {imp.laser ? <LaserStrike /> : null}
+      {imp.glyph != null ? <PieceShatter glyph={IMPACT_GLYPHS[imp.glyph]} /> : null}
+      <Shockwave />
+      {imp.boom ? (
+        <span className="g29-impx absolute inset-0 block" style={impactVars(imp.rgb, (d + imp.at + 200) / 1000)}>
+          <Shockwave />
+        </span>
+      ) : null}
+    </span>
+  );
+}
+
+/** THE IMPACT CUE SHEET: one named moment of physical contact per card,
+ * choreographed onto that card's own climax - position, beat, tint and
+ * primitive combo all differ per card, so no two siblings land the same hit. */
+const IMP: Record<string, ImpCue> = {
+  // Elder Wyrm: THE HEAD COMES DOWN - the wyrm strikes the far square like a falling tower
+  ov_elder_wyrm: { at: 1040, rgb: "255 155 61", laser: true, boom: true, size: 9.6, far: true },
+  // House of Banners: THE STANDARD RAMMED IN - the great banner splits its own pole-seat
+  bn4_house_of_banners: { at: 980, x: 50, y: 48, rgb: "255 209 102", glyph: 0, boom: true },
+  // Symphony of the Legion: THE DOWNBEAT - the baton falls as a column and the legion stamps
+  ov_symphony_of_the_legion: { at: 1000, x: 50, y: 49, rgb: "185 200 255", laser: true, boom: true },
+  // Life Insurance: THE POLICY STAMPED - one bright actuarial column
+  bn4_life_insurance: { at: 900, x: 51, y: 49, rgb: "232 201 138", laser: true },
+  // Siren Song: THE SONG REACHES THE ROCKS - the call lances the water to the far shoal
+  hx4_siren_song: { at: 920, rgb: "127 224 208", laser: true, rot: -90, far: true },
+  // Forward Banners: THE BANNER PLANTED FORWARD - the pole strikes at the head of the advance
+  bn4_forward_banners: { at: 820, rgb: "255 207 107", boom: true, far: true },
+  // War Room Map: THE MAP WEIGHT - the brass weight slams the theatre flat, twice
+  bn4_war_room_map: { at: 800, x: 50, y: 50, rgb: "216 185 120", boom: true },
+  // Soggy Invaders: THE WET LANDING - the landing party arrives in two soaked shocks
+  hx4_soggy_invaders: { at: 820, x: 49, y: 53, rgb: "143 184 216", boom: true, size: 8 },
+  // Elbow Room: THE SHOVE - the crowd is barged apart at the far end of the push
+  hx4_elbow_room: { at: 780, rgb: "207 216 232", boom: true, far: true },
+  // Moths in the Banner: THE BANNER GOES TO PIECES - it splits along the moth-holes
+  hx4_moths_in_the_banner: { at: 800, x: 50, y: 47, rgb: "198 181 142", glyph: 0, size: 6.4 },
+  // Moat Digger: THE SPADE STRIKES - the cut reaches the far stake with a double bite
+  ov_moat_digger: { at: 800, rgb: "169 140 95", boom: true, far: true },
+  // Second Breakfast: THE PLATES LAND - the second service arrives all at once
+  ov_second_breakfast: { at: 780, rgb: "255 197 122", boom: true, far: true },
+  // Bridle Path: THE CANTER STOP - hooves pull up at the far gate
+  op_bridle_path: { at: 740, rgb: "217 168 106", far: true },
+  // Drawbridge In: THE BRIDGE BOOMS DOWN - the deck lands across the whole gap
+  op_drawbridge_in: { at: 760, rgb: "201 160 92", boom: true, far: true },
+  // Edge of the Map: THE MARGIN REACHED - one ring where the map runs out
+  op_edge_of_the_map: { at: 720, rgb: "168 188 212", far: true },
+  // Freight Elevator: THE CAGE LANDS - the platform sets down with a double clank
+  op_freight_elevator: { at: 760, rgb: "159 180 200", boom: true, far: true },
+  // Grand March: THE MARCH STAMP - the column halts as one, twice
+  op_grand_march: { at: 780, rgb: "255 207 122", boom: true, far: true },
+  // Harbor Walk: THE GANGPLANK STEP - one ring at the far bollard
+  op_harbor_walk: { at: 720, rgb: "127 198 216", far: true },
+  // Old Post Road: THE MILESTONE - the post rider pulls up at the far marker
+  op_old_post_road: { at: 760, rgb: "217 176 106", boom: true, far: true },
+  // Palace Gate: THE GATE SWINGS TO - it meets the far jamb with a double knock
+  op_palace_gate: { at: 760, rgb: "232 192 122", boom: true, far: true },
+  // Quickstep: THE QUICK HEEL - the lightest fastest landing in the module
+  op_quickstep: { at: 700, rgb: "255 159 107", size: 5.6, far: true },
+  // Squire's Errand: THE PARCEL DELIVERED - one ring at the far door
+  op_squires_errand: { at: 720, rgb: "203 178 127", far: true },
+  // Team Photo: THE FLASH STAMP - everyone lands their pose on the same double beat
+  op_team_photo: { at: 740, x: 50, y: 50, rgb: "255 230 168", boom: true },
+  // Waltz Left: THE TURN LANDS - a tilted little shock at the end of the figure
+  op_waltz_left: { at: 720, rgb: "226 168 208", rot: -20, far: true },
+};
+
 
 /** Board-wide wash, always inside a BoardFrame. Leans off the board centre. */
 function Wash({ tone, d = 0 }: { tone: string; d?: number }) {
@@ -199,7 +364,7 @@ function ElderWyrmScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead
+    <AimLead imp={IMP.ov_elder_wyrm}
       d={delayMs}
       frame={
         <>
@@ -254,7 +419,7 @@ function HouseOfBannersScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<><Wash tone="rgba(255,209,102,0.28)" /><Rim tone="rgba(255,244,214,0.3)" d={220} /></>}>
+    <Lead imp={IMP.bn4_house_of_banners} d={delayMs} frame={<><Wash tone="rgba(255,209,102,0.28)" /><Rim tone="rgba(255,244,214,0.3)" d={220} /></>}>
       <V c="g29-hb-post" l={45} t={32} w={10} h={26} d={80}>{mast}</V>
       <V c="g29-hb-arm" l={44} t={34} w={12} h={12} d={200} st={{ transformOrigin: "25% 50%" }}>{arm("#ffd166")}</V>
       <V c="g29-hb-arm2" l={44} t={40} w={12} h={12} d={330} st={{ transformOrigin: "25% 50%" }}>{arm("#fff4d6")}</V>
@@ -309,7 +474,7 @@ function SymphonyOfTheLegionScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<><L c="g29-veil" st={{ background: "rgba(12,12,28,0.36)" }} /><Wash tone="rgba(185,200,255,0.3)" d={140} /></>}>
+    <Lead imp={IMP.ov_symphony_of_the_legion} d={delayMs} frame={<><L c="g29-veil" st={{ background: "rgba(12,12,28,0.36)" }} /><Wash tone="rgba(185,200,255,0.3)" d={140} /></>}>
       <V c="g29-sy-staff" l={36} t={42} w={28} h={16} d={70}>{staves}</V>
       <V c="g29-sy-baton" l={40} t={32} w={16} h={20} d={200} st={{ transformOrigin: "12% 92%" }}>{baton}</V>
       {[0, 1, 2].map((i) => (
@@ -366,7 +531,7 @@ function LifeInsuranceScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(232,201,138,0.28)" />}>
+    <Lead imp={IMP.bn4_life_insurance} d={delayMs} frame={<Wash tone="rgba(232,201,138,0.28)" />}>
       <V c="g29-li-pouch" l={41} t={42} w={16} h={16} d={80} st={{ transformOrigin: "50% 80%" }}>{pouch}</V>
       <V c="g29-li-paper" l={44} t={35} w={11} h={14} d={240}>{paper}</V>
       <V c="g29-li-seal" l={46} t={42} w={7} h={7} d={430}>
@@ -421,7 +586,7 @@ function SirenSongScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead d={delayMs} frame={<><L c="g29-veil" st={{ background: "rgba(6,20,22,0.4)" }} /><Wash tone="rgba(127,224,208,0.28)" d={140} /></>}>
+    <AimLead imp={IMP.hx4_siren_song} d={delayMs} frame={<><L c="g29-veil" st={{ background: "rgba(6,20,22,0.4)" }} /><Wash tone="rgba(127,224,208,0.28)" d={140} /></>}>
       <V c="g29-sn-lantern" l={43} t={41} w={9} h={13} d={70}>{lantern}</V>
       <L c="g29-runout" l={47} t={48.8} w={26} h={2.2} d={240} st={{ borderRadius: "999px", background: "linear-gradient(90deg, #7fe0d0, rgba(127,224,208,0))", transformOrigin: "0% 50%" }} />
       <V c="g29-sn-needle" l={44} t={44} w={14} h={10} d={420} st={{ transformOrigin: "38% 50%" }}>{needle}</V>
@@ -465,7 +630,7 @@ function ForwardBannersScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead d={delayMs} frame={<Wash tone="rgba(255,207,107,0.28)" />}>
+    <AimLead imp={IMP.bn4_forward_banners} d={delayMs} frame={<Wash tone="rgba(255,207,107,0.28)" />}>
       <L c="g29-fb-halyard" l={44.4} t={34} w={0.9} h={24} d={60} st={{ background: "#fff4d6", transformOrigin: "50% 100%" }} />
       <V c="g29-fb-hoist" l={44} t={34} w={12} h={10} d={180}>{flag}</V>
       <L c="g29-fb-block" l={43} t={33} w={4} h={1.6} d={420} st={{ borderRadius: "999px", background: "#fff4d6" }} />
@@ -511,7 +676,7 @@ function WarRoomMapScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead
+    <Lead imp={IMP.bn4_war_room_map}
       d={delayMs}
       frame={
         <>
@@ -561,7 +726,7 @@ function SoggyInvadersScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<><Wash tone="rgba(143,184,216,0.28)" /><L c="g29-veil" d={220} st={{ background: "rgba(10,18,26,0.34)" }} /></>}>
+    <Lead imp={IMP.hx4_soggy_invaders} d={delayMs} frame={<><Wash tone="rgba(143,184,216,0.28)" /><L c="g29-veil" d={220} st={{ background: "rgba(10,18,26,0.34)" }} /></>}>
       <V c="g29-si-tube" l={44} t={43} w={12} h={15} d={70} st={{ transformOrigin: "50% 92%" }}>{tube}</V>
       <L c="g29-si-fuse" l={49} t={40} w={2.4} h={2.4} d={200} st={{ borderRadius: "50%", background: "#fff2dc" }} />
       <V c="g29-si-lift" l={45.5} t={36} w={9} h={12} d={380}>{rocket}</V>
@@ -607,7 +772,7 @@ function ElbowRoomScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead d={delayMs} frame={<Wash tone="rgba(207,216,232,0.26)" />}>
+    <AimLead imp={IMP.hx4_elbow_room} d={delayMs} frame={<Wash tone="rgba(207,216,232,0.26)" />}>
       <V c="g29-er-stick" l={42} t={36} w={16} h={20} d={80} st={{ transformOrigin: "50% 10%" }}>{stick}</V>
       <L c="g29-runout" l={46} t={51} w={26} h={1.6} d={260} st={{ borderRadius: "999px", background: "linear-gradient(90deg, #fff4d6, rgba(207,216,232,0))", transformOrigin: "0% 50%" }} />
       {[0, 1].map((i) => (
@@ -657,7 +822,7 @@ function MothsInTheBannerScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<><L c="g29-veil" st={{ background: "rgba(16,14,10,0.36)" }} /><Wash tone="rgba(198,181,142,0.26)" d={140} /></>}>
+    <Lead imp={IMP.hx4_moths_in_the_banner} d={delayMs} frame={<><L c="g29-veil" st={{ background: "rgba(16,14,10,0.36)" }} /><Wash tone="rgba(198,181,142,0.26)" d={140} /></>}>
       <V c="g29-mo-colours" l={41} t={38} w={18} h={18} d={90} st={{ transformOrigin: "10% 50%" }}>{colours}</V>
       {[0, 1, 2].map((i) => (
         <V key={i} c="g29-mo-moth" l={44 + i * 7} t={36 + (i % 2) * 8} w={6} h={6} d={250 + i * 110}>{moth}</V>
@@ -713,7 +878,7 @@ function MoatDiggerScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead d={delayMs} frame={<Wash tone="rgba(169,140,95,0.28)" />}>
+    <AimLead imp={IMP.ov_moat_digger} d={delayMs} frame={<Wash tone="rgba(169,140,95,0.28)" />}>
       <V c="g29-md-whistle" l={42} t={40} w={12} h={8} d={60}>{whistle}</V>
       {[0, 1].map((i) => (
         <V key={i} c="g29-md-spade" l={47 + i * 8} t={38} w={8} h={12} d={240 + i * 150} st={{ transformOrigin: "50% 10%" }}>{spade}</V>
@@ -756,7 +921,7 @@ function SecondBreakfastScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead d={delayMs} frame={<Wash tone="rgba(255,197,122,0.28)" />}>
+    <AimLead imp={IMP.ov_second_breakfast} d={delayMs} frame={<Wash tone="rgba(255,197,122,0.28)" />}>
       <V c="g29-sb-triangle" l={42} t={40} w={14} h={14} d={70}>{triangle}</V>
       <L c="g29-sb-beater" l={47} t={45} w={1.2} h={6} d={160} st={{ borderRadius: "999px", background: "#fff4d6", transformOrigin: "50% 0%" }} />
       {[0, 1].map((i) => (
@@ -808,7 +973,7 @@ function BridlePathScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead d={delayMs} frame={<Wash tone="rgba(217,168,106,0.26)" />}>
+    <AimLead imp={IMP.op_bridle_path} d={delayMs} frame={<Wash tone="rgba(217,168,106,0.26)" />}>
       <V c="g29-bp-whistle" l={42} t={40} w={10} h={13} d={60}>{hand}</V>
       <L c="g29-runout" l={47} t={49.4} w={26} h={1.6} d={220} st={{ borderRadius: "999px", background: "linear-gradient(90deg, #fff2dc, rgba(217,168,106,0))", transformOrigin: "0% 50%" }} />
       <V c="g29-bp-bridle" l={50} t={43} w={11} h={9} d={400}>{bridle}</V>
@@ -854,7 +1019,7 @@ function DrawbridgeInScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead d={delayMs} frame={<Wash tone="rgba(201,160,92,0.28)" />}>
+    <AimLead imp={IMP.op_drawbridge_in} d={delayMs} frame={<Wash tone="rgba(201,160,92,0.28)" />}>
       <V c="g29-db-trumpet" l={42} t={42} w={12} h={9} d={70}>{trumpet}</V>
       <V c="g29-db-chain" l={47} t={38} w={16} h={6} d={240}>{chain}</V>
       <L c="g29-runout" l={47} t={49.6} w={24} h={1.6} d={300} st={{ borderRadius: "999px", background: "linear-gradient(90deg, #fff2dc, rgba(201,160,92,0))", transformOrigin: "0% 50%" }} />
@@ -904,7 +1069,7 @@ function EdgeOfTheMapScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead d={delayMs} frame={<Wash tone="rgba(168,188,212,0.26)" />}>
+    <AimLead imp={IMP.op_edge_of_the_map} d={delayMs} frame={<Wash tone="rgba(168,188,212,0.26)" />}>
       <V c="g29-eo-cage" l={43} t={44} w={10} h={11} d={60} st={{ transformOrigin: "50% 90%" }}>{basket}</V>
       <V c="g29-carry" l={45} t={40} w={7} h={7} d={220}>{bird}</V>
       <L c="g29-eo-chart" l={62} t={38} w={14} h={22} d={340} st={{ background: "linear-gradient(90deg, rgba(168,188,212,0.6), transparent)", transformOrigin: "0% 50%" }} />
@@ -954,7 +1119,7 @@ function FreightElevatorScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead d={delayMs} frame={<Wash tone="rgba(159,180,200,0.26)" />}>
+    <AimLead imp={IMP.op_freight_elevator} d={delayMs} frame={<Wash tone="rgba(159,180,200,0.26)" />}>
       <L c="g29-fe-call" l={43} t={45} w={3} h={3} d={60} st={{ borderRadius: "50%", background: "#fff2dc" }} />
       <V c="g29-fe-dial" l={42} t={36} w={14} h={11} d={200} st={{ transformOrigin: "50% 68%" }}>{dial}</V>
       <V c="g29-carry" l={45} t={43} w={7} h={11} d={380}>{cage}</V>
@@ -1000,7 +1165,7 @@ function GrandMarchScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead d={delayMs} frame={<><Wash tone="rgba(255,207,122,0.28)" /><Rim tone="rgba(255,244,214,0.28)" d={240} /></>}>
+    <AimLead imp={IMP.op_grand_march} d={delayMs} frame={<><Wash tone="rgba(255,207,122,0.28)" /><Rim tone="rgba(255,244,214,0.28)" d={240} /></>}>
       <V c="g29-gm-bugle" l={42} t={43} w={12} h={8} d={70}>{bugle}</V>
       {[0, 1, 2].map((i) => (
         <V key={i} c="g29-gm-note" l={50 + i * 5} t={41} w={5} h={13} d={220 + i * 100}>{arc}</V>
@@ -1045,7 +1210,7 @@ function HarborWalkScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead d={delayMs} frame={<Wash tone="rgba(127,198,216,0.26)" />}>
+    <AimLead imp={IMP.op_harbor_walk} d={delayMs} frame={<Wash tone="rgba(127,198,216,0.26)" />}>
       <V c="g29-hw-pipe" l={42} t={41} w={12} h={11} d={60}>{pipe}</V>
       <V c="g29-hw-trill" l={47} t={41} w={18} h={8} d={180}>{trill}</V>
       <L c="g29-runout" l={47} t={50.6} w={24} h={1.4} d={340} st={{ borderRadius: "999px", background: "linear-gradient(90deg, #fff2dc, rgba(127,198,216,0))", transformOrigin: "0% 50%" }} />
@@ -1095,7 +1260,7 @@ function OldPostRoadScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead d={delayMs} frame={<Wash tone="rgba(217,176,106,0.26)" />}>
+    <AimLead imp={IMP.op_old_post_road} d={delayMs} frame={<Wash tone="rgba(217,176,106,0.26)" />}>
       <V c="g29-op-horn" l={42} t={41} w={12} h={11} d={60}>{horn}</V>
       <V c="g29-carry" l={45} t={43} w={7} h={11} d={220}>{runner}</V>
       <L c="g29-runout" l={46} t={52} w={26} h={1.4} d={300} st={{ borderRadius: "999px", background: "linear-gradient(90deg, #26190c, rgba(38,25,12,0))", transformOrigin: "0% 50%" }} />
@@ -1146,7 +1311,7 @@ function PalaceGateScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead d={delayMs} frame={<><Wash tone="rgba(232,192,122,0.28)" /><Rim tone="rgba(255,244,214,0.28)" d={240} /></>}>
+    <AimLead imp={IMP.op_palace_gate} d={delayMs} frame={<><Wash tone="rgba(232,192,122,0.28)" /><Rim tone="rgba(255,244,214,0.28)" d={240} /></>}>
       <V c="g29-pg-staff" l={43} t={38} w={7} h={16} d={70} st={{ transformOrigin: "50% 96%" }}>{staff}</V>
       {[0, 1].map((i) => (
         <L key={i} c="g29-pg-rap" l={40 - i * 3} t={48 - i * 2} w={14 + i * 6} h={7 + i * 3} d={200 + i * 110} st={{ borderRadius: "50%", border: "2px solid #fff4d6" }} />
@@ -1193,7 +1358,7 @@ function QuickstepScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead d={delayMs} frame={<Wash tone="rgba(255,159,107,0.28)" />}>
+    <AimLead imp={IMP.op_quickstep} d={delayMs} frame={<Wash tone="rgba(255,159,107,0.28)" />}>
       <V c="g29-qs-drum" l={42} t={43} w={12} h={9} d={60}>{drum}</V>
       {[0, 1].map((i) => (
         <V key={i} c="g29-qs-stick" l={43 + i * 4} t={36} w={7} h={8} d={180 + i * 90} st={{ transformOrigin: "90% 10%" }}>{stick}</V>
@@ -1248,7 +1413,7 @@ function SquiresErrandScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead d={delayMs} frame={<Wash tone="rgba(203,178,127,0.26)" />}>
+    <AimLead imp={IMP.op_squires_errand} d={delayMs} frame={<Wash tone="rgba(203,178,127,0.26)" />}>
       <V c="g29-se-tube" l={42} t={43} w={13} h={8} d={70}>{tube}</V>
       <L c="g29-se-cap" l={43} t={39} w={2.4} h={2.4} d={180} st={{ borderRadius: "50%", background: "#fff2dc" }} />
       <L c="g29-runout" l={47} t={49.4} w={26} h={1.8} d={300} st={{ borderRadius: "999px", background: "linear-gradient(90deg, #fff2dc, rgba(203,178,127,0))", transformOrigin: "0% 50%" }} />
@@ -1300,7 +1465,7 @@ function TeamPhotoScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead
+    <Lead imp={IMP.op_team_photo}
       d={delayMs}
       frame={
         <>
@@ -1364,7 +1529,7 @@ function WaltzLeftScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead d={delayMs} frame={<Wash tone="rgba(226,168,208,0.28)" />}>
+    <AimLead imp={IMP.op_waltz_left} d={delayMs} frame={<Wash tone="rgba(226,168,208,0.28)" />}>
       <V c="g29-wz-clap" l={42} t={40} w={11} h={13} d={60}>{clap}</V>
       {[0, 1, 2].map((i) => (
         <L key={i} c="g29-wz-count" l={46 + i * 5} t={53} w={2.4} h={2.4} d={180 + i * 100} st={{ borderRadius: "50%", background: "#e2a8d0" }} />

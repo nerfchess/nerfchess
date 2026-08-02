@@ -806,3 +806,14 @@
   100% { opacity: 0; transform: scale(0.86); }
 }
 .g30-fizz { animation: g30-fizz calc(0.86s * var(--fx-dur, 1)) ease-out both; }
+
+/* ---------------------------------------------------------------------------
+   Animations off: the host already fades and hides the scene wrapper, but a
+   local guard keeps the module honest if it is ever mounted on its own (the
+   dev galleries do exactly that). Matches the sibling modules.
+   ------------------------------------------------------------------------ */
+html[data-anim="off"] [class^="g30-"],
+html[data-anim="off"] [class*=" g30-"] {
+  animation: none !important;
+  opacity: 0 !important;
+}

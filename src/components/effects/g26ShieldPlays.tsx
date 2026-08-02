@@ -28,6 +28,7 @@ import "./g26ShieldPlays.css";
 import type { CSSProperties, ReactNode } from "react";
 import type { SigPlugin, SigRole } from "./sigPlugins";
 import { AimStage, BoardFrame, BoardWideStage } from "./stage";
+import { LaserStrike, PieceShatter, Shockwave, QUAKE_CLASS, impactVars } from "./impact/impact";
 
 interface SceneProps {
   lead: boolean;
@@ -114,19 +115,37 @@ function Cut({ d, children }: { d: number; children: ReactNode }) {
 }
 
 /** Cast-anchored lead: action on the cast square, `frame` over the board. */
-function Lead({ d, frame, children }: { d: number; frame?: ReactNode; children: ReactNode }) {
+function Lead({ d, frame, imp, children }: { d: number; frame?: ReactNode; imp?: ImpCue; children: ReactNode }) {
+  const inner = (
+    <>
+      {frame ? <BoardFrame>{frame}</BoardFrame> : null}
+      {children}
+      {imp ? <ImpactHit d={d} imp={imp} /> : null}
+    </>
+  );
   return (
     <span className={ROOT} style={rootStyle(d)} aria-hidden="true">
       <BoardWideStage>
-        {frame ? <BoardFrame>{frame}</BoardFrame> : null}
-        {children}
+        {imp ? (
+          <QuakeBox d={d} imp={imp}>
+            {inner}
+          </QuakeBox>
+        ) : (
+          inner
+        )}
       </BoardWideStage>
     </span>
   );
 }
 
 /** Aim-anchored lead: `frame` stays square with the board, the art rotates. */
-function AimLead({ d, frame, children }: { d: number; frame?: ReactNode; children: ReactNode }) {
+function AimLead({ d, frame, imp, children }: { d: number; frame?: ReactNode; imp?: ImpCue; children: ReactNode }) {
+  const inner = (
+    <>
+      {children}
+      {imp ? <ImpactHit d={d} imp={imp} /> : null}
+    </>
+  );
   return (
     <span className={ROOT} style={rootStyle(d)} aria-hidden="true">
       {frame ? (
@@ -134,10 +153,172 @@ function AimLead({ d, frame, children }: { d: number; frame?: ReactNode; childre
           <BoardFrame>{frame}</BoardFrame>
         </BoardWideStage>
       ) : null}
-      <AimStage>{children}</AimStage>
+      <AimStage>
+        {imp ? (
+          <QuakeBox d={d} imp={imp}>
+            {inner}
+          </QuakeBox>
+        ) : (
+          inner
+        )}
+      </AimStage>
     </span>
   );
 }
+
+/* =============================================================================
+   FLAGSHIP IMPACT LAYER - the shared violence vocabulary (impact/impact.tsx)
+   staged per card. Each lead names ONE cue in IMP: the moment its own action
+   physically LANDS. The laser leads the beat by 0.4s; the shatter halves,
+   shard spray, ground shockwave and the whole-stage quake all land ON `at`,
+   so the composite reads as one hit. `x`/`y` are % of the 14-cell stage
+   (`far` parks the hit at the aim lane's far end instead), `rot` turns the
+   whole composite so a column can strike along the lane or up from the ground,
+   and `rgb` stays inside the card's own three-colour palette. Kill switch:
+   every node rides a `g26-impx` wrapper, covered by this module's prefix
+   rule; the imp-* internals are covered by the global data-anim gate.
+   ========================================================================== */
+interface ImpCue {
+  /** ms after the lead's own delay: the impact beat. */
+  at: number;
+  /** centre of the struck cell, % of the stage (ignored when `far`). */
+  x?: number;
+  y?: number;
+  /** "r g b" tint, from the card's own palette. */
+  rgb: string;
+  /** the descending column of light. */
+  laser?: boolean;
+  /** index into IMPACT_GLYPHS: silhouette split in half on the beat. */
+  glyph?: number;
+  /** a second, later shockwave: the double boom. */
+  boom?: boolean;
+  /** static rotation of the whole composite, deg. */
+  rot?: number;
+  /** box size, % of the stage. */
+  size?: number;
+  /** park the hit at the far end of the real aim lane. */
+  far?: boolean;
+}
+
+const IMPACT_GLYPHS: ReactNode[] = [
+  <svg key="a" viewBox="0 0 10 12" className="block h-full w-full" aria-hidden="true">
+    <g style={{ fill: "rgb(var(--imp-rgb, 216 181 110))" }}><path d="M5 1 8.6 2.4V6c0 2.8-1.6 4.4-3.6 5.4C3 10.4 1.4 8.8 1.4 6V2.4z" /></g>
+  </svg>,
+  <svg key="b" viewBox="0 0 10 12" className="block h-full w-full" aria-hidden="true">
+    <g style={{ fill: "rgb(var(--imp-rgb, 216 181 110))" }}><path d="M5 1.2c2 0 3.4 1.6 3.4 3.8v3.4H1.6V5c0-2.2 1.4-3.8 3.4-3.8zM1.2 8.8h7.6v1H1.2zM4.3 10h1.4v1.2H4.3z" /></g>
+  </svg>,
+];
+
+/** The whole stage jolts on the cue's beat. Rides an INNER wrapper because the
+ * stage canvas carries the anchor-clamp transform, which must never be
+ * animated over. In-scene only: the real board crop never shakes. */
+function QuakeBox({ d, imp, children }: { d: number; imp: ImpCue; children: ReactNode }) {
+  return (
+    <span className={`g26-impx ${QUAKE_CLASS} absolute inset-0 block`} style={impactVars(undefined, (d + imp.at) / 1000)}>
+      {children}
+    </span>
+  );
+}
+
+/** The composite hit itself: laser column, split silhouette, shockwave(s). */
+function ImpactHit({ d, imp }: { d: number; imp: ImpCue }) {
+  const size = imp.size ?? 7.2;
+  const pos = imp.far
+    ? { left: `calc(50% + var(--fx-len, 3) * 7.142857% - ${(size / 2).toFixed(3)}%)`, top: `${((imp.y ?? 50) - size / 2).toFixed(3)}%` }
+    : { left: `${((imp.x ?? 50) - size / 2).toFixed(3)}%`, top: `${((imp.y ?? 50) - size / 2).toFixed(3)}%` };
+  return (
+    <span
+      className="g26-impx absolute block"
+      style={{
+        ...pos,
+        width: `${size}%`,
+        height: `${size}%`,
+        ...(imp.rot ? { transform: `rotate(${imp.rot}deg)` } : null),
+        ...impactVars(imp.rgb, (d + imp.at) / 1000),
+      }}
+    >
+      {imp.laser ? <LaserStrike /> : null}
+      {imp.glyph != null ? <PieceShatter glyph={IMPACT_GLYPHS[imp.glyph]} /> : null}
+      <Shockwave />
+      {imp.boom ? (
+        <span className="g26-impx absolute inset-0 block" style={impactVars(imp.rgb, (d + imp.at + 200) / 1000)}>
+          <Shockwave />
+        </span>
+      ) : null}
+    </span>
+  );
+}
+
+/** THE IMPACT CUE SHEET: one named moment of physical contact per card,
+ * choreographed onto that card's own climax - position, beat, tint and
+ * primitive combo all differ per card, so no two siblings land the same hit. */
+const IMP: Record<string, ImpCue> = {
+  // Age of Peace: THE PEACE SEALED - the accord lands as one column and the whole ground answers twice
+  bn4_age_of_peace: { at: 1040, x: 50, y: 48, rgb: "240 208 137", laser: true, boom: true, size: 9 },
+  // Guardian of the Line: THE FAR POST LOCKED - the guard beam slams the end of the line shut
+  bn4_guardian_of_the_line: { at: 1020, rgb: "143 166 196", laser: true, boom: true, far: true },
+  // Saint's Procession: THE RELIQUARY SET DOWN - at the procession's end, with a double toll
+  bn4_saints_procession: { at: 980, rgb: "230 196 106", laser: true, boom: true, far: true },
+  // Warding Circle: THE CIRCLE BOOMS SHUT - the ward closes as two expanding rings
+  bn4_warding_circle: { at: 960, x: 50, y: 50, rgb: "184 240 226", boom: true, size: 9.6 },
+  // Plot Armor: THE BLOW BREAKS ON THE PLOT - the incoming strike shatters against the shield
+  ov_plot_armor: { at: 1000, x: 50, y: 49, rgb: "255 185 160", laser: true, glyph: 0, boom: true },
+  // Ancestral Shield: THE HEIRLOOM HUNG - the old shield is beamed onto its hook and booms
+  bn4_ancestral_shield: { at: 920, x: 50, y: 47, rgb: "200 180 224", laser: true, boom: true },
+  // Shieldmaidens: THE WALL LOCK - every shield overlaps on one beat, twice
+  bn4_shieldmaidens: { at: 900, x: 51, y: 50, rgb: "159 214 192", boom: true, size: 8.4 },
+  // Bodyguard Detail: THE DETAIL CLOSES - boots land around the principal in a double stamp
+  bn4_bodyguard_detail: { at: 860, x: 49, y: 51, rgb: "127 147 184", boom: true },
+  // Color Guard: THE COLORS PLANTED - the standard beams in and the guard stamps
+  bn4_color_guard: { at: 880, x: 50, y: 48, rgb: "224 168 96", laser: true, boom: true },
+  // Old Guard: THE OLD STAMP - slower, heavier, twice
+  bn4_old_guard: { at: 840, x: 50, y: 52, rgb: "185 168 137", boom: true },
+  // Confetti Cannon: THE CANNON POP - the tube kicks at an angle with a double burst
+  bn4_confetti_cannon: { at: 820, x: 51, y: 46, rgb: "255 143 180", laser: true, boom: true, rot: 25 },
+  // Quilted Armor: THE PADDED THUMP - soft armor, hard landing, muffled echo
+  bn4_quilted_armor: { at: 800, x: 50, y: 50, rgb: "216 185 138", boom: true },
+  // Boundary Stones: THE STONE SET DOWN - the far marker lands and the border rings
+  bn4_boundary_stones: { at: 780, rgb: "159 176 162", boom: true, far: true },
+  // Pocket Shield: THE SNAP OPEN - one small crisp shock as it unfolds
+  bn4_pocket_shield: { at: 740, x: 52, y: 51, rgb: "134 200 224", size: 5.6 },
+  // Alley Cat: THE POUNCE LANDING - a skewed little thump off the wall
+  op_alley_cat: { at: 760, x: 48, y: 53, rgb: "240 168 96", rot: -15 },
+  // Cloister Bell: THE BELL BOOM - the stroke and its echo roll out as rings
+  op_cloister_bell: { at: 800, x: 50, y: 46, rgb: "203 185 138", boom: true, size: 8 },
+  // Debutante Ball: THE PRESENTATION STEP - the curtsy lands with a double flourish
+  op_debutante_ball: { at: 780, x: 51, y: 49, rgb: "240 184 204", boom: true },
+  // First Day Badge: THE PIN CLICK - the smallest, proudest shock in the module
+  op_first_day_badge: { at: 740, x: 50, y: 47, rgb: "143 214 168", size: 5.4 },
+  // Gallery Docent: THE POINTER TAP - one firm tap on the frame
+  op_gallery_docent: { at: 760, x: 49, y: 48, rgb: "210 160 208", size: 6 },
+  // Lady in Waiting: THE TRAIN DROPPED - the hem lands and settles twice
+  op_lady_in_waiting: { at: 780, x: 52, y: 50, rgb: "232 200 240", boom: true },
+  // Lighthouse Keeper: THE BEAM SWEPT HOME - the lamp lances the lane to the wreck-point
+  op_lighthouse_keeper: { at: 820, rgb: "127 208 232", laser: true, rot: -90, far: true },
+  // Ordination Day: THE BLESSING DESCENDS - one column onto the bowed head
+  op_ordination_day: { at: 800, x: 50, y: 46, rgb: "232 220 176", laser: true },
+  // Parade Marshal: THE HALT CALLED - the column stops on one double stamp at the far rank
+  op_parade_marshal: { at: 780, rgb: "240 212 120", boom: true, far: true },
+  // Riding Certificate: THE HOOF ON PAPER - one small officious shock
+  op_riding_certificate: { at: 740, x: 53, y: 49, rgb: "201 162 240", size: 6 },
+  // Stable Groom: THE HOOF STAMP - the shoe is set and the horse answers twice
+  op_stable_groom: { at: 760, x: 48, y: 54, rgb: "200 160 106", boom: true },
+  // Stage Armor: THE PROP CLANG - theatrical, tilted, and louder than real armor
+  op_stage_armor: { at: 780, x: 50, y: 50, rgb: "224 127 127", boom: true, rot: 10 },
+  // Tower Inspection: THE CLIPBOARD TAP - one shock at the parapet
+  op_tower_inspection: { at: 760, x: 51, y: 45, rgb: "168 184 200", size: 6 },
+  // Victory Lap: THE FINISH STAMP - the lap ends on a double beat
+  op_victory_lap: { at: 780, x: 50, y: 51, rgb: "168 224 127", boom: true },
+  // Traffic Cone: THE CONE DROPPED ON THE LANE - it lands at the far end and wobbles a boom
+  ov_traffic_cone: { at: 760, rgb: "255 154 82", boom: true, far: true },
+  // Doorstop: THE WEDGE KICKED IN - jammed under the door with two knocks
+  bn4_doorstop: { at: 720, x: 50, y: 55, rgb: "208 154 90", boom: true },
+  // Guardian Sprite: THE SPRITE ALIGHTS - the faintest ring, right on the shoulder
+  op_guardian_sprite: { at: 700, x: 52, y: 46, rgb: "156 232 208", size: 5 },
+  // Wet Paint: THE SIGN PLANTED - one apologetic little shock
+  ov_wet_paint: { at: 720, x: 49, y: 52, rgb: "127 182 240", size: 6 },
+};
+
 
 /** Board-wide wash, always inside a BoardFrame. */
 function Wash({ tone, d = 0 }: { tone: string; d?: number }) {
@@ -189,7 +370,7 @@ function AgeOfPeaceScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead
+    <Lead imp={IMP.bn4_age_of_peace}
       d={delayMs}
       frame={
         <>
@@ -246,7 +427,7 @@ function GuardianOfTheLineScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead
+    <AimLead imp={IMP.bn4_guardian_of_the_line}
       d={delayMs}
       frame={
         <>
@@ -306,7 +487,7 @@ function SaintsProcessionScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead d={delayMs} frame={<Wash tone="rgba(230,196,106,0.26)" />}>
+    <AimLead imp={IMP.bn4_saints_procession} d={delayMs} frame={<Wash tone="rgba(230,196,106,0.26)" />}>
       <L c="g26-runout" l={44} t={53} w={30} h={1.8} d={60} st={{ background: "linear-gradient(90deg, #e6c46a, rgba(230,196,106,0))", transformOrigin: "0% 50%", borderRadius: "999px" }} />
       <V c="g26-sp-canopy" l={41} t={38} w={22} h={12} d={180}>{canopy}</V>
       {[0, 1, 2].map((i) => (
@@ -356,7 +537,7 @@ function WardingCircleScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(184,240,226,0.24)" />}>
+    <Lead imp={IMP.bn4_warding_circle} d={delayMs} frame={<Wash tone="rgba(184,240,226,0.24)" />}>
       <V c="g26-wc-scribe" l={31} t={31} w={38} h={38} d={90}>
         <circle cx="12" cy="12" r="10.4" fill="none" stroke="#b8f0e2" strokeWidth="1.4" strokeDasharray="3 1.5" />
       </V>
@@ -416,7 +597,7 @@ function PlotArmorScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead
+    <Lead imp={IMP.ov_plot_armor}
       d={delayMs}
       frame={
         <>
@@ -474,7 +655,7 @@ function AncestralShieldScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(200,180,224,0.28)" />}>
+    <Lead imp={IMP.bn4_ancestral_shield} d={delayMs} frame={<Wash tone="rgba(200,180,224,0.28)" />}>
       <V c="g26-as-frame" l={40} t={33} w={20} h={26} d={90}>
         <rect x="2" y="2" width="20" height="20" rx="1" fill="rgba(34,23,51,0.55)" stroke="#c8b4e0" strokeWidth="1.4" />
         <rect x="4.4" y="4.4" width="15.2" height="15.2" rx="1" fill="none" stroke="#fff4d6" strokeWidth="0.6" />
@@ -525,7 +706,7 @@ function ShieldmaidensScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(159,214,192,0.26)" />}>
+    <Lead imp={IMP.bn4_shieldmaidens} d={delayMs} frame={<Wash tone="rgba(159,214,192,0.26)" />}>
       <V c="g26-sm-queen" l={45.5} t={44} w={9} h={12} d={100}><path d={QUEEN} fill="none" stroke="#fff4d6" strokeWidth="1.4" {...SJ} /></V>
       {SM_RING.map((a, i) => (
         <P key={a} l={33} t={33} w={34} h={34} rot={`${a}deg`}>
@@ -584,7 +765,7 @@ function BodyguardDetailScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead
+    <Lead imp={IMP.bn4_bodyguard_detail}
       d={delayMs}
       frame={
         <>
@@ -636,7 +817,7 @@ function ColorGuardScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(224,168,96,0.28)" />}>
+    <Lead imp={IMP.bn4_color_guard} d={delayMs} frame={<Wash tone="rgba(224,168,96,0.28)" />}>
       <V c="g26-cg-plant" l={38} t={34} w={12} h={20} d={120}>{standard("#e0a860")}</V>
       <V c="g26-cg-plant" l={50} t={34} w={12} h={20} d={280}>{standard("#fff4d6")}</V>
       <V c="g26-cg-sabre" l={41} t={30} w={18} h={18} d={470}><path d="M3 20L20 4M4 4l17 16" stroke="#fff4d6" strokeWidth="1.5" fill="none" {...SJ} /></V>
@@ -687,7 +868,7 @@ function OldGuardScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(185,168,137,0.26)" />}>
+    <Lead imp={IMP.bn4_old_guard} d={delayMs} frame={<Wash tone="rgba(185,168,137,0.26)" />}>
       <V c="g26-og-rack" l={36} t={36} w={28} h={22} d={80}>
         <g fill="none" stroke="#b9a889" strokeWidth="1.4" {...SJ}>
           <path d="M2 6h20M4 6v14M20 6v14" />
@@ -745,7 +926,7 @@ function ConfettiCannonScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(255,143,180,0.28)" />}>
+    <Lead imp={IMP.bn4_confetti_cannon} d={delayMs} frame={<Wash tone="rgba(255,143,180,0.28)" />}>
       <V c="g26-cc-barrel" l={36} t={44} w={14} h={12} d={100} st={{ transformOrigin: "10% 90%" }}>
         <path d="M2 18h14l6-6-2-3-14 5z" fill="#ff8fb4" stroke="#2c1424" strokeWidth="1" {...SJ} />
       </V>
@@ -792,7 +973,7 @@ function QuiltedArmorScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(216,185,138,0.24)" />}>
+    <Lead imp={IMP.bn4_quilted_armor} d={delayMs} frame={<Wash tone="rgba(216,185,138,0.24)" />}>
       <V c="g26-qa-needle" l={34} t={32} w={16} h={16} d={90}><path d="M2 22L20 4M20 4l-1.6 4.4" stroke="#fff4d6" strokeWidth="1.8" fill="none" {...SJ} /></V>
       {QA_ROWS.map((i) => (
         <V key={i} c="g26-qa-stitch" l={38} t={36 + i * 7} w={24} h={8} d={230 + i * 150} par="none" vb="0 0 48 12">
@@ -838,7 +1019,7 @@ function BoundaryStonesScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead d={delayMs} frame={<Wash tone="rgba(159,176,162,0.24)" />}>
+    <AimLead imp={IMP.bn4_boundary_stones} d={delayMs} frame={<Wash tone="rgba(159,176,162,0.24)" />}>
       <V c="g26-bs-thump" l={43} t={43} w={7} h={11} d={110}>{stone}</V>
       <V c="g26-bs-thump" l={56} t={43} w={7} h={11} d={300}>{stone}</V>
       <L c="g26-bs-turf" l={41} t={52} w={11} h={3} d={220} st={{ borderRadius: "999px", background: "rgba(35,41,31,0.65)" }} />
@@ -885,7 +1066,7 @@ function PocketShieldScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(134,200,224,0.24)" />}>
+    <Lead imp={IMP.bn4_pocket_shield} d={delayMs} frame={<Wash tone="rgba(134,200,224,0.24)" />}>
       <V c="g26-ps-pocket" l={36} t={48} w={14} h={12} d={70}><path d="M3 6h18v3l-9 4-9-4z" fill="#14293a" stroke="#86c8e0" strokeWidth="1.1" {...SJ} /></V>
       <V c="g26-ps-flick" l={41} t={44} w={9} h={12} d={200}>{leaf("#86c8e0")}</V>
       {PS_LEAVES.map((a, i) => (
@@ -939,7 +1120,7 @@ function AlleyCatScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(240,168,96,0.24)" />}>
+    <Lead imp={IMP.op_alley_cat} d={delayMs} frame={<Wash tone="rgba(240,168,96,0.24)" />}>
       <V c="g26-ac-lid" l={38} t={52} w={24} h={9} d={80}><path d="M2 16h20l-2.6-5H4.6z" fill="#f0a860" stroke="#241a12" strokeWidth="1.1" {...SJ} /></V>
       <V c="g26-ac-arch" l={41} t={40} w={18} h={14} d={260}>{cat}</V>
       <L c="g26-ac-bristle" l={40} t={38} w={20} h={18} d={380} st={{ borderRadius: "50%", background: "radial-gradient(circle, rgba(255,244,214,0.5), transparent 70%)" }} />
@@ -985,7 +1166,7 @@ function CloisterBellScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead
+    <Lead imp={IMP.op_cloister_bell}
       d={delayMs}
       frame={
         <>
@@ -1041,7 +1222,7 @@ function DebutanteBallScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(240,184,204,0.26)" />}>
+    <Lead imp={IMP.op_debutante_ball} d={delayMs} frame={<Wash tone="rgba(240,184,204,0.26)" />}>
       <V c="g26-db-queen" l={45.5} t={44} w={9} h={12} d={70}><path d={QUEEN} fill="none" stroke="#fff4d6" strokeWidth="1.4" {...SJ} /></V>
       <V c="g26-db-hand" l={44} t={50} w={12} h={14} d={200}>{glove}</V>
       {DB_RIBS.map((a, i) => (
@@ -1086,7 +1267,7 @@ function FirstDayBadgeScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(143,214,168,0.24)" />}>
+    <Lead imp={IMP.op_first_day_badge} d={delayMs} frame={<Wash tone="rgba(143,214,168,0.24)" />}>
       <L c="g26-fb-cord" l={49} t={26} w={2} h={16} d={70} st={{ borderRadius: "999px", background: "#8fd6a8", transformOrigin: "50% 0%" }} />
       <V c="g26-fb-swing" l={43} t={38} w={14} h={16} d={240} st={{ transformOrigin: "50% 4%" }}>{badge}</V>
       <L c="g26-fb-clip" l={47.6} t={37} w={4.8} h={3} d={460} st={{ borderRadius: "1px", background: "#fff4d6" }} />
@@ -1131,7 +1312,7 @@ function GalleryDocentScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(210,160,208,0.24)" />}>
+    <Lead imp={IMP.op_gallery_docent} d={delayMs} frame={<Wash tone="rgba(210,160,208,0.24)" />}>
       <V c="g26-gd-post" l={38} t={41} w={9} h={16} d={110}>{post}</V>
       <V c="g26-gd-post" l={53} t={41} w={9} h={16} d={280}>{post}</V>
       <V c="g26-gd-rope" l={42} t={44} w={16} h={8} d={460} par="none" vb="0 0 40 16">{rope}</V>
@@ -1178,7 +1359,7 @@ function LadyInWaitingScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(232,200,240,0.24)" />}>
+    <Lead imp={IMP.op_lady_in_waiting} d={delayMs} frame={<Wash tone="rgba(232,200,240,0.24)" />}>
       <V c="g26-lw-target" l={45.5} t={43} w={9} h={12} d={70}><path d={QUEEN} fill="none" stroke="#fff4d6" strokeWidth="1.4" {...SJ} /></V>
       <V c="g26-guardin" l={43} t={39} w={11} h={13} d={220}>{lady}</V>
       <V c="g26-lw-skirt" l={38} t={46} w={24} h={13} d={420} par="none" vb="0 0 40 24" st={{ transformOrigin: "50% 100%" }}>{skirt}</V>
@@ -1223,7 +1404,7 @@ function LighthouseKeeperScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead
+    <AimLead imp={IMP.op_lighthouse_keeper}
       d={delayMs}
       frame={
         <>
@@ -1274,7 +1455,7 @@ function OrdinationDayScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(232,220,176,0.26)" />}>
+    <Lead imp={IMP.op_ordination_day} d={delayMs} frame={<Wash tone="rgba(232,220,176,0.26)" />}>
       <L c="g26-shaft" l={45} t={22} w={10} h={28} d={70} st={{ background: "linear-gradient(180deg, rgba(255,244,214,0.7), transparent)", transformOrigin: "50% 0%" }} />
       <L c="g26-od-hands" l={42} t={30} w={16} h={12} d={200} st={{ background: "linear-gradient(180deg, rgba(255,244,214,0.6), transparent)" }} />
       <V c="g26-od-set" l={44} t={38} w={12} h={15} d={330}>{mitre}</V>
@@ -1318,7 +1499,7 @@ function ParadeMarshalScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead d={delayMs} frame={<Wash tone="rgba(240,212,120,0.24)" />}>
+    <AimLead imp={IMP.op_parade_marshal} d={delayMs} frame={<Wash tone="rgba(240,212,120,0.24)" />}>
       <L c="g26-pm-baton" l={44} t={44} w={14} h={2.4} d={80} st={{ borderRadius: "999px", background: "#fff4d6", transformOrigin: "0% 50%" }} />
       {PM_BARS.map((i) => (
         <V key={i} c="g26-pm-bar" l={46 + i * 9} t={45} w={9} h={6} d={260 + i * 130} par="none" vb="0 0 40 24">{barrier}</V>
@@ -1362,7 +1543,7 @@ function RidingCertificateScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(201,162,240,0.24)" />}>
+    <Lead imp={IMP.op_riding_certificate} d={delayMs} frame={<Wash tone="rgba(201,162,240,0.24)" />}>
       <V c="g26-rc-unroll" l={38} t={42} w={26} h={14} d={110} par="none" vb="0 0 40 24" st={{ transformOrigin: "0% 50%" }}>{paper}</V>
       <V c="g26-rc-strike" l={44} t={42} w={10} h={12} d={340}>{shoe}</V>
       <L c="g26-rc-rosette" l={56} t={49} w={7} h={7} d={520} st={{ borderRadius: "50%", background: "#c9a2f0" }} />
@@ -1407,7 +1588,7 @@ function StableGroomScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(200,160,106,0.24)" />}>
+    <Lead imp={IMP.op_stable_groom} d={delayMs} frame={<Wash tone="rgba(200,160,106,0.24)" />}>
       <L c="g26-sg-bolt" l={40} t={35} w={12} h={2.2} d={70} st={{ borderRadius: "1px", background: "#fff4d6" }} />
       <V c="g26-sg-knight" l={45.5} t={42} w={9} h={12} d={200}><path d={KNIGHT} fill="none" stroke="#fff4d6" strokeWidth="1.4" {...SJ} /></V>
       <V c="g26-sg-throw" l={40} t={41} w={20} h={12} d={340} par="none" vb="0 0 40 24">{blanket}</V>
@@ -1452,7 +1633,7 @@ function StageArmorScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead
+    <Lead imp={IMP.op_stage_armor}
       d={delayMs}
       frame={
         <>
@@ -1502,7 +1683,7 @@ function TowerInspectionScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead
+    <Lead imp={IMP.op_tower_inspection}
       d={delayMs}
       frame={
         <>
@@ -1552,7 +1733,7 @@ function VictoryLapScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(168,224,127,0.26)" />}>
+    <Lead imp={IMP.op_victory_lap} d={delayMs} frame={<Wash tone="rgba(168,224,127,0.26)" />}>
       <L c="g26-vl-tape" l={36} t={47} w={28} h={1.8} d={90} st={{ borderRadius: "999px", background: "#fff4d6" }} />
       <L c="g26-vl-endl" l={36} t={47} w={13} h={1.8} d={330} st={{ borderRadius: "999px", background: "#fff4d6", transformOrigin: "0% 50%" }} />
       <L c="g26-vl-endr" l={51} t={47} w={13} h={1.8} d={330} st={{ borderRadius: "999px", background: "#fff4d6", transformOrigin: "100% 50%" }} />
@@ -1600,7 +1781,7 @@ function TrafficConeScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead d={delayMs} frame={<Wash tone="rgba(255,154,82,0.26)" />}>
+    <AimLead imp={IMP.ov_traffic_cone} d={delayMs} frame={<Wash tone="rgba(255,154,82,0.26)" />}>
       {TC_CONES.map((i) => (
         <V key={i} c="g26-tc-bounce" l={45 + i * 7} t={43} w={7} h={12} d={140 + i * 170}>{cone}</V>
       ))}
@@ -1643,7 +1824,7 @@ function DoorstopScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(208,154,90,0.24)" />}>
+    <Lead imp={IMP.bn4_doorstop} d={delayMs} frame={<Wash tone="rgba(208,154,90,0.24)" />}>
       <V c="g26-ds-swing" l={38} t={38} w={16} h={20} d={90} st={{ transformOrigin: "6% 50%" }}>{door}</V>
       <V c="g26-guardin" l={53} t={50} w={9} h={7} d={330}>{wedge}</V>
       <L c="g26-ds-jolt" l={40} t={49} w={22} h={2} d={520} st={{ borderRadius: "999px", background: "#fff4d6" }} />
@@ -1686,7 +1867,7 @@ function GuardianSpriteScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(156,232,208,0.24)" />}>
+    <Lead imp={IMP.op_guardian_sprite} d={delayMs} frame={<Wash tone="rgba(156,232,208,0.24)" />}>
       <V c="g26-gs-flit" l={43} t={40} w={10} h={13} d={90}>{sprite}</V>
       <L c="g26-gs-coin" l={47} t={30} w={6} h={6} d={280} st={{ borderRadius: "50%", background: "#fff4d6" }} />
       <L c="g26-gs-land" l={46} t={50} w={8} h={2} d={520} st={{ borderRadius: "999px", background: "rgba(20,48,40,0.7)" }} />
@@ -1732,7 +1913,7 @@ function WetPaintScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(127,182,240,0.24)" />}>
+    <Lead imp={IMP.ov_wet_paint} d={delayMs} frame={<Wash tone="rgba(127,182,240,0.24)" />}>
       <L c="g26-wp-stripe" l={38} t={44} w={26} h={8} d={110} st={{ background: "linear-gradient(180deg, #7fb6f0, rgba(127,182,240,0.5))", transformOrigin: "0% 50%" }} />
       <V c="g26-wp-roller" l={37} t={40} w={12} h={11} d={110}>{roller}</V>
       <L c="g26-wp-gloss" l={38} t={45} w={26} h={2} d={430} st={{ background: "linear-gradient(90deg, transparent, #fff4d6, transparent)" }} />

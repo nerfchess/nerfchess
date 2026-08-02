@@ -29,9 +29,10 @@
 // in a hand, ~56% of the crop, so no board takeover). Every scene runs
 // tell -> strike -> settle. Class prefix `g21-`.
 
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import type { SigPlugin, SigRole } from "./sigPlugins";
 import { AimStage, BoardFrame, BoardWideStage } from "./stage";
+import { LaserStrike, PieceShatter, Shockwave, QUAKE_CLASS, impactVars } from "./impact/impact";
 import "./g21KeepPlays.css";
 
 interface SceneProps {
@@ -95,6 +96,154 @@ const farBox = (w: number, h: number, dy = 0): CSSProperties => ({
 const SJ = { strokeLinejoin: "round", strokeLinecap: "round" } as const;
 
 /* =============================================================================
+   FLAGSHIP IMPACT LAYER - the shared violence vocabulary (impact/impact.tsx)
+   staged per card. Each lead names ONE cue in IMP: the moment its own action
+   physically LANDS. The laser leads the beat by 0.4s; the shatter halves,
+   shard spray, ground shockwave and the whole-stage quake all land ON `at`,
+   so the composite reads as one hit. `x`/`y` are % of the 14-cell stage
+   (`far` parks the hit at the aim lane's far end instead), `rot` turns the
+   whole composite so a column can strike along the lane or up from the ground,
+   and `rgb` stays inside the card's own three-colour palette. Kill switch:
+   every node rides a `g21-impx` wrapper, covered by this module's prefix
+   rule; the imp-* internals are covered by the global data-anim gate.
+   ========================================================================== */
+interface ImpCue {
+  /** ms after the lead's own delay: the impact beat. */
+  at: number;
+  /** centre of the struck cell, % of the stage (ignored when `far`). */
+  x?: number;
+  y?: number;
+  /** "r g b" tint, from the card's own palette. */
+  rgb: string;
+  /** the descending column of light. */
+  laser?: boolean;
+  /** index into IMPACT_GLYPHS: silhouette split in half on the beat. */
+  glyph?: number;
+  /** a second, later shockwave: the double boom. */
+  boom?: boolean;
+  /** static rotation of the whole composite, deg. */
+  rot?: number;
+  /** box size, % of the stage. */
+  size?: number;
+  /** park the hit at the far end of the real aim lane. */
+  far?: boolean;
+}
+
+const IMPACT_GLYPHS: ReactNode[] = [
+  <svg key="a" viewBox="0 0 10 12" className="block h-full w-full" aria-hidden="true">
+    <g style={{ fill: "rgb(var(--imp-rgb, 216 181 110))" }}><path d="M2 1h6v3H2zM1 4.5h8v3H1zM1.4 8h7.2v3H1.4z" /></g>
+  </svg>,
+  <svg key="b" viewBox="0 0 10 12" className="block h-full w-full" aria-hidden="true">
+    <g style={{ fill: "rgb(var(--imp-rgb, 216 181 110))" }}><path d="M3 10.8V5h-.4V2.4H4v1h.6v-1h.8v1H6v-1h1.4V5H7v5.8z" /></g>
+  </svg>,
+];
+
+/** The whole stage jolts on the cue's beat. Rides an INNER wrapper because the
+ * stage canvas carries the anchor-clamp transform, which must never be
+ * animated over. In-scene only: the real board crop never shakes. */
+function QuakeBox({ d, imp, children }: { d: number; imp: ImpCue; children: ReactNode }) {
+  return (
+    <span className={`g21-impx ${QUAKE_CLASS} absolute inset-0 block`} style={impactVars(undefined, (d + imp.at) / 1000)}>
+      {children}
+    </span>
+  );
+}
+
+/** The composite hit itself: laser column, split silhouette, shockwave(s). */
+function ImpactHit({ d, imp }: { d: number; imp: ImpCue }) {
+  const size = imp.size ?? 7.2;
+  const pos = imp.far
+    ? { left: `calc(50% + var(--fx-len, 3) * 7.142857% - ${(size / 2).toFixed(3)}%)`, top: `${((imp.y ?? 50) - size / 2).toFixed(3)}%` }
+    : { left: `${((imp.x ?? 50) - size / 2).toFixed(3)}%`, top: `${((imp.y ?? 50) - size / 2).toFixed(3)}%` };
+  return (
+    <span
+      className="g21-impx absolute block"
+      style={{
+        ...pos,
+        width: `${size}%`,
+        height: `${size}%`,
+        ...(imp.rot ? { transform: `rotate(${imp.rot}deg)` } : null),
+        ...impactVars(imp.rgb, (d + imp.at) / 1000),
+      }}
+    >
+      {imp.laser ? <LaserStrike /> : null}
+      {imp.glyph != null ? <PieceShatter glyph={IMPACT_GLYPHS[imp.glyph]} /> : null}
+      <Shockwave />
+      {imp.boom ? (
+        <span className="g21-impx absolute inset-0 block" style={impactVars(imp.rgb, (d + imp.at + 200) / 1000)}>
+          <Shockwave />
+        </span>
+      ) : null}
+    </span>
+  );
+}
+
+/** Quake + hit in one wrapper, for scenes that stage their lead directly. */
+function ImpactRig({ d, imp, children }: { d: number; imp: ImpCue; children: ReactNode }) {
+  return (
+    <QuakeBox d={d} imp={imp}>
+      {children}
+      <ImpactHit d={d} imp={imp} />
+    </QuakeBox>
+  );
+}
+
+/** THE IMPACT CUE SHEET: one named moment of physical contact per card,
+ * choreographed onto that card's own climax - position, beat, tint and
+ * primitive combo all differ per card, so no two siblings land the same hit. */
+const IMP: Record<string, ImpCue> = {
+  // Guild Insurance: THE STICK SPLIT - the tally cracks in half on the bench and the counting house jumps
+  hx4_guild_insurance: { at: 980, x: 50, y: 50.7, rgb: "201 161 90", glyph: 0, boom: true },
+  // Gate Key: THE THRESHOLD LAMP-BLAST - the wicket's lamplight hammers the doorstep
+  bn4_gate_key: { at: 900, x: 57.9, y: 60, rgb: "255 234 184", laser: true },
+  // Cold Barracks: THE CURFEW CLAMP - the hearthstone cracks and sheds under the cover
+  hx4_cold_barracks: { at: 940, x: 50, y: 51.4, rgb: "127 143 166", glyph: 0, boom: true },
+  // Muddy Moat: THE DRAIN BELCH - the choked grate blows back twice
+  hx4_muddy_moat: { at: 880, x: 52.9, y: 57, rgb: "107 122 74", boom: true },
+  // Slow Clap: THE LAST PAIR OF HANDS - the final clap detonates at the rail's far end
+  hx4_slow_clap: { at: 930, y: 39.3, rgb: "208 162 74", boom: true, far: true },
+  // New Locks: THE OLD PLATE BREAKS - the lifted escutcheon drops and splits
+  op_new_locks: { at: 700, x: 48.6, y: 50.7, rgb: "159 176 196", glyph: 0 },
+  // Siege Wagon: THE BASKET THUMP - the bundle lands the whole shaft down with a double boom
+  op_siege_wagon: { at: 780, y: 55.7, rgb: "207 216 224", boom: true, far: true },
+  // Tower Warden: THE DRAWBAR BOOM - the bar drops into its keeper and the lodge shudders
+  op_tower_warden: { at: 780, x: 50, y: 56.4, rgb: "255 226 168", boom: true },
+  // Chariot Lessons: THE LINCHPIN DRIVEN - a thin bright column rams the pin through the hub
+  ov_chariot_lessons: { at: 680, x: 50, y: 46.4, rgb: "255 230 180", laser: true, size: 5.6 },
+  // Creaky Axles: THE DRUM JUDDER - the winch drum seizes with a ground ring
+  hx4_creaky_axles: { at: 820, x: 50, y: 53, rgb: "111 142 160", size: 6 },
+  // Second Thoughts: THE TOP TREAD STAMP - the climb ends in a double stamp on the landing
+  hx4_second_thoughts: { at: 860, x: 47, y: 44, rgb: "154 143 122", boom: true },
+  // Squeaky Wheel: THE SPIT-FIRE FLARE - the fat catches and a flame column snaps up
+  hx4_squeaky_wheel: { at: 800, x: 51.5, y: 49, rgb: "212 118 46", laser: true, size: 6 },
+  // Change of Address: THE OLD BOARD DOWN - the lifted name board cracks in two
+  op_change_of_address: { at: 840, x: 50, y: 45, rgb: "122 93 58", glyph: 0 },
+  // Driftwood Tower: THE MANTEL SET - the driftwood is set down harder than it needed
+  op_driftwood_tower: { at: 780, x: 50, y: 47, rgb: "169 160 140", size: 6 },
+  // Gilded Doorknob: THE LEAF LAID - a gold column presses the leaf onto the ring
+  op_gilded_doorknob: { at: 820, x: 51, y: 50, rgb: "224 178 60", laser: true, size: 5.4 },
+  // Home Office: THE DESK DROP - the folding desk bangs down on its chains
+  op_home_office: { at: 800, x: 47, y: 48, rgb: "143 162 184", boom: true },
+  // Keys Copied: THE VISE BITE - the jaws snap shut at a filing angle
+  op_keys_copied: { at: 840, x: 52, y: 51, rgb: "184 162 79", rot: 20 },
+  // Meet the Neighbors: THE LAST SHUTTER BANG - the far shutter slams open on the wall
+  op_meet_the_neighbors: { at: 880, y: 46, rgb: "201 138 60", boom: true, far: true },
+  // Rolling Gantry: THE RAIL STOP - the rings hit the end bracket
+  op_rolling_gantry: { at: 820, rgb: "160 90 74", far: true },
+  // Set Change: THE TRESTLE RESET - board and trestles land at the far mark as one
+  op_set_change: { at: 860, y: 52, rgb: "156 122 68", boom: true, far: true },
+  // Siege Survey: THE LADDER SET - the potence ladder thumps against the pier
+  op_siege_survey: { at: 820, x: 53, y: 44, rgb: "154 163 174", size: 6 },
+  // Tower Bridge: THE PULLEY CATCH - the basket jars against the far window
+  op_tower_bridge: { at: 840, y: 47, rgb: "207 214 221", far: true },
+  // Tower Torches: THE FLUE TAKES - the fire column stands straight up the chimney
+  op_tower_torches: { at: 800, x: 50, y: 42, rgb: "212 129 58", laser: true },
+  // Wall Sentries: THE LAST HATCH BEAM - lamplight spikes down the passage's far hole
+  op_wall_sentries: { at: 900, y: 44, rgb: "111 122 134", laser: true, far: true },
+};
+
+
+/* =============================================================================
    1. Guild Insurance (t3) — the masons' guild counting house. A hazel tally
    stick is laid on the bench, notched once per covered rook in the real victim
    order, then split along its length so both halves match: the guild keeps the
@@ -130,6 +279,7 @@ function TallySticks({ role, delayMs }: SceneProps) {
   }
   return (
     <BoardWideStage>
+      <ImpactRig d={delayMs} imp={IMP.hx4_guild_insurance}>
       <BoardFrame>
         <span className="g21-wash absolute inset-0 block" style={st({ ...d(delayMs, 60), background: "radial-gradient(circle at 50% 50%, rgba(201,161,90,0.28), transparent 68%)" })} />
       </BoardFrame>
@@ -148,7 +298,8 @@ function TallySticks({ role, delayMs }: SceneProps) {
       <span className="g21-split absolute block" style={st({ ...d(delayMs, 540), ...box(5.6, 0.4, 0, 0.4), "--sy": "140%", background: "#c9a15a" })} />
       {/* settle: hazel shavings off the bench */}
       <span className="g21-motes absolute block" style={st({ ...d(delayMs, 680), ...box(5, 2.2, 0, 0.4), borderRadius: "50%", background: "radial-gradient(circle, rgba(255,242,210,0.45), transparent 72%)" })} />
-    </BoardWideStage>
+    </ImpactRig>
+      </BoardWideStage>
   );
 }
 
@@ -189,6 +340,7 @@ function WicketDoor({ role, delayMs }: SceneProps) {
   }
   return (
     <BoardWideStage>
+      <ImpactRig d={delayMs} imp={IMP.bn4_gate_key}>
       <BoardFrame>
         <span className="g21-wash absolute inset-0 block" style={st({ ...d(delayMs, 60), background: "radial-gradient(circle at 50% 50%, rgba(185,144,47,0.26), transparent 68%)" })} />
       </BoardFrame>
@@ -207,7 +359,8 @@ function WicketDoor({ role, delayMs }: SceneProps) {
       <span className="g21-spill absolute block" style={st({ ...d(delayMs, 540), ...box(2.6, 2.6, 1.1, 1.4), background: "linear-gradient(135deg, rgba(255,234,184,0.75), transparent 72%)" })} />
       {/* settle: motes turning over in the doorway light */}
       <span className="g21-motes absolute block" style={st({ ...d(delayMs, 680), ...box(3, 2.2, 1, 1.2), borderRadius: "50%", background: "radial-gradient(circle, rgba(255,234,184,0.5), transparent 72%)" })} />
-    </BoardWideStage>
+    </ImpactRig>
+      </BoardWideStage>
   );
 }
 
@@ -246,6 +399,7 @@ function DeadHearth({ role, delayMs }: SceneProps) {
   }
   return (
     <BoardWideStage>
+      <ImpactRig d={delayMs} imp={IMP.hx4_cold_barracks}>
       <BoardFrame>
         <span className="g21-wash absolute inset-0 block" style={st({ ...d(delayMs, 60), background: "radial-gradient(circle at 50% 50%, rgba(22,32,44,0.5), rgba(127,143,166,0.1) 72%)" })} />
       </BoardFrame>
@@ -271,7 +425,8 @@ function DeadHearth({ role, delayMs }: SceneProps) {
       </svg>
       {/* settle: the room's own breath, drifting off the caster's side */}
       <span className="g21-smoke absolute block" style={st({ ...d(delayMs, 700), left: `${50 - 2.4 * CELL}%`, top: "calc(50% + var(--fx-side, 1) * -14%)", width: cells(4.8), height: cells(2.4), borderRadius: "50%", background: "radial-gradient(circle, rgba(255,236,203,0.4), transparent 74%)" })} />
-    </BoardWideStage>
+    </ImpactRig>
+      </BoardWideStage>
   );
 }
 
@@ -310,6 +465,7 @@ function SculleryDrain({ role, delayMs }: SceneProps) {
   }
   return (
     <BoardWideStage>
+      <ImpactRig d={delayMs} imp={IMP.hx4_muddy_moat}>
       <BoardFrame>
         <span className="g21-wash absolute inset-0 block" style={st({ ...d(delayMs, 60), background: "radial-gradient(circle at 50% 50%, rgba(107,122,74,0.3), transparent 66%)" })} />
       </BoardFrame>
@@ -334,7 +490,8 @@ function SculleryDrain({ role, delayMs }: SceneProps) {
       ))}
       {/* settle: the bubbles that come up after */}
       <span className="g21-motes absolute block" style={st({ ...d(delayMs, 690), ...box(4.4, 2, 0.4, 0.6), borderRadius: "50%", background: "radial-gradient(circle, rgba(244,233,196,0.45), transparent 72%)" })} />
-    </BoardWideStage>
+    </ImpactRig>
+      </BoardWideStage>
   );
 }
 
@@ -379,6 +536,7 @@ function GalleryClap({ role, delayMs }: SceneProps) {
         </BoardFrame>
       </BoardWideStage>
       <AimStage>
+      <ImpactRig d={delayMs} imp={IMP.hx4_slow_clap}>
         {/* tell: the gallery rail scribed the whole length of the hall */}
         <span className="g21-tellline absolute block" style={st({ ...d(delayMs, 100), ...lane(0.16, -0.9), background: "#fff2d0" })} />
         {/* strike: the rail and its balusters */}
@@ -399,6 +557,7 @@ function GalleryClap({ role, delayMs }: SceneProps) {
         {/* settle: somebody drops a glove over the rail */}
         <span className="g21-drip absolute block" style={st({ ...d(delayMs, 640), ...box(0.5, 0.7, 1.9, 0.4), borderRadius: "1px", background: "#d0a24a" })} />
         <span className="g21-motes absolute block" style={st({ ...d(delayMs, 700), ...box(4.6, 2, 2, 0.6), borderRadius: "50%", background: "radial-gradient(circle, rgba(255,242,208,0.4), transparent 74%)" })} />
+      </ImpactRig>
       </AimStage>
     </>
   );
@@ -440,6 +599,7 @@ function NewLockPlate({ role, delayMs }: SceneProps) {
   }
   return (
     <BoardWideStage>
+      <ImpactRig d={delayMs} imp={IMP.op_new_locks}>
       <BoardFrame>
         <span className="g21-wash absolute inset-0 block" style={st({ ...d(delayMs, 60), background: "radial-gradient(circle at 50% 50%, rgba(159,176,196,0.26), transparent 68%)" })} />
       </BoardFrame>
@@ -461,7 +621,8 @@ function NewLockPlate({ role, delayMs }: SceneProps) {
       <span className="g21-boltshoot absolute block" style={st({ ...d(delayMs, 580), ...box(2.4, 0.5, 1.4, 0.9), background: "linear-gradient(90deg, #9fb0c4, #ffeec6)", border: "1px solid #1a1f28" })} />
       {/* settle: bright filings off the new brass */}
       <span className="g21-motes absolute block" style={st({ ...d(delayMs, 680), ...box(3.6, 2, 0.4, 1.2), borderRadius: "50%", background: "radial-gradient(circle, rgba(255,238,198,0.45), transparent 74%)" })} />
-    </BoardWideStage>
+    </ImpactRig>
+      </BoardWideStage>
   );
 }
 
@@ -506,6 +667,7 @@ function LaundryChute({ role, delayMs }: SceneProps) {
         </BoardFrame>
       </BoardWideStage>
       <AimStage>
+      <ImpactRig d={delayMs} imp={IMP.op_siege_wagon}>
         {/* tell: the draught down the empty shaft */}
         <span className="g21-tellline absolute block" style={st({ ...d(delayMs, 100), ...lane(0.16), background: "#fff4d6" })} />
         {/* strike: the shaft itself, the real length of the drop */}
@@ -526,6 +688,7 @@ function LaundryChute({ role, delayMs }: SceneProps) {
         </svg>
         {/* settle: lint turning over in the shaft light */}
         <span className="g21-motes absolute block" style={st({ ...d(delayMs, 680), ...box(4.6, 2.2, 2, 0.6), borderRadius: "50%", background: "radial-gradient(circle, rgba(255,244,214,0.4), transparent 74%)" })} />
+      </ImpactRig>
       </AimStage>
     </>
   );
@@ -566,6 +729,7 @@ function JudasHatch({ role, delayMs }: SceneProps) {
   }
   return (
     <BoardWideStage>
+      <ImpactRig d={delayMs} imp={IMP.op_tower_warden}>
       <BoardFrame>
         <span className="g21-wash absolute inset-0 block" style={st({ ...d(delayMs, 60), background: "radial-gradient(circle at 50% 50%, rgba(138,106,60,0.28), transparent 68%)" })} />
       </BoardFrame>
@@ -581,7 +745,8 @@ function JudasHatch({ role, delayMs }: SceneProps) {
       <span className="g21-bardrop absolute block" style={st({ ...d(delayMs, 560), ...box(4.6, 0.55, 0, 0.9), background: "linear-gradient(180deg, #8a6a3c, #191410)", border: "1px solid #ffe2a8" })} />
       {/* settle: dust knocked out of the old boards */}
       <span className="g21-motes absolute block" style={st({ ...d(delayMs, 690), ...box(4.4, 2.2, 0, 1.4), borderRadius: "50%", background: "radial-gradient(circle, rgba(255,226,168,0.42), transparent 74%)" })} />
-    </BoardWideStage>
+    </ImpactRig>
+      </BoardWideStage>
   );
 }
 
@@ -619,6 +784,7 @@ function Wheelwright({ role, delayMs }: SceneProps) {
   }
   return (
     <BoardWideStage>
+      <ImpactRig d={delayMs} imp={IMP.ov_chariot_lessons}>
       <BoardFrame>
         <span className="g21-wash absolute inset-0 block" style={st({ ...d(delayMs, 60), background: "radial-gradient(circle at 50% 50%, rgba(168,118,60,0.28), transparent 68%)" })} />
       </BoardFrame>
@@ -640,7 +806,8 @@ function Wheelwright({ role, delayMs }: SceneProps) {
       </svg>
       {/* settle: cart grease and shavings flung off the rim */}
       <span className="g21-motes absolute block" style={st({ ...d(delayMs, 690), ...box(4.4, 2.2, 0, 1.2), borderRadius: "50%", background: "radial-gradient(circle, rgba(255,230,180,0.45), transparent 74%)" })} />
-    </BoardWideStage>
+    </ImpactRig>
+      </BoardWideStage>
   );
 }
 
@@ -680,6 +847,7 @@ function WellWinch({ role, delayMs }: SceneProps) {
   }
   return (
     <BoardWideStage>
+      <ImpactRig d={delayMs} imp={IMP.hx4_creaky_axles}>
       <BoardFrame>
         <span className="g21-wash absolute inset-0 block" style={st({ ...d(delayMs, 60), background: "radial-gradient(circle at 50% 50%, rgba(111,142,160,0.26), transparent 68%)" })} />
       </BoardFrame>
@@ -705,7 +873,8 @@ function WellWinch({ role, delayMs }: SceneProps) {
       </svg>
       {/* settle: what slops out of it goes back down the shaft */}
       <span className="g21-drip absolute block" style={st({ ...d(delayMs, 690), ...box(0.42, 0.7, 0.6, 1.6), borderRadius: "50%", background: "#ffeeca" })} />
-    </BoardWideStage>
+    </ImpactRig>
+      </BoardWideStage>
   );
 }
 
@@ -743,6 +912,7 @@ function NewelStair({ role, delayMs }: SceneProps) {
   }
   return (
     <BoardWideStage>
+      <ImpactRig d={delayMs} imp={IMP.hx4_second_thoughts}>
       <BoardFrame>
         <span className="g21-wash absolute inset-0 block" style={st({ ...d(delayMs, 60), background: "radial-gradient(circle at 50% 50%, rgba(154,143,122,0.24), transparent 70%)" })} />
       </BoardFrame>
@@ -763,7 +933,8 @@ function NewelStair({ role, delayMs }: SceneProps) {
       {/* settle: the dropped paper it was carrying */}
       <span className="g21-drip absolute block" style={st({ ...d(delayMs, 660), ...box(0.8, 0.6, 0.7, 1.4), borderRadius: "1px", background: "#ffeec8" })} />
       <span className="g21-motes absolute block" style={st({ ...d(delayMs, 700), ...box(4, 2.2, 0, 1.4), borderRadius: "50%", background: "radial-gradient(circle, rgba(255,238,200,0.4), transparent 74%)" })} />
-    </BoardWideStage>
+    </ImpactRig>
+      </BoardWideStage>
   );
 }
 
@@ -800,6 +971,7 @@ function KitchenSpit({ role, delayMs }: SceneProps) {
   }
   return (
     <BoardWideStage>
+      <ImpactRig d={delayMs} imp={IMP.hx4_squeaky_wheel}>
       <BoardFrame>
         <span className="g21-wash absolute inset-0 block" style={st({ ...d(delayMs, 60), background: "radial-gradient(circle at 50% 50%, rgba(212,118,46,0.3), transparent 66%)" })} />
       </BoardFrame>
@@ -822,7 +994,8 @@ function KitchenSpit({ role, delayMs }: SceneProps) {
       <span className="g21-flare absolute block" style={st({ ...d(delayMs, 620), ...box(2.2, 1.4, 0.3, 1.5), borderRadius: "50%", background: "radial-gradient(circle, #ffdca6, transparent 70%)" })} />
       {/* settle: kitchen smoke leaning off the caster's own side */}
       <span className="g21-smoke absolute block" style={st({ ...d(delayMs, 700), left: `${50 - 2.4 * CELL}%`, top: "calc(50% + var(--fx-side, 1) * -18%)", width: cells(4.8), height: cells(2.4), borderRadius: "50%", background: "radial-gradient(circle, rgba(255,220,166,0.45), transparent 74%)" })} />
-    </BoardWideStage>
+    </ImpactRig>
+      </BoardWideStage>
   );
 }
 
@@ -860,6 +1033,7 @@ function NameBoard({ role, delayMs }: SceneProps) {
   }
   return (
     <BoardWideStage>
+      <ImpactRig d={delayMs} imp={IMP.op_change_of_address}>
       <BoardFrame>
         <span className="g21-wash absolute inset-0 block" style={st({ ...d(delayMs, 60), background: "radial-gradient(circle at 50% 50%, rgba(122,93,58,0.26), transparent 68%)" })} />
       </BoardFrame>
@@ -874,7 +1048,8 @@ function NameBoard({ role, delayMs }: SceneProps) {
       {/* settle: a nail drops out and rolls, and the plaster dusts */}
       <span className="g21-drip absolute block" style={st({ ...d(delayMs, 640), ...box(0.3, 0.6, 1.2, 0.2), borderRadius: "1px", background: "#ffe9bd" })} />
       <span className="g21-motes absolute block" style={st({ ...d(delayMs, 700), ...box(4, 2, 0, 0.6), borderRadius: "50%", background: "radial-gradient(circle, rgba(255,233,189,0.42), transparent 74%)" })} />
-    </BoardWideStage>
+    </ImpactRig>
+      </BoardWideStage>
   );
 }
 
@@ -910,6 +1085,7 @@ function MantelPiece({ role, delayMs }: SceneProps) {
   }
   return (
     <BoardWideStage>
+      <ImpactRig d={delayMs} imp={IMP.op_driftwood_tower}>
       <BoardFrame>
         <span className="g21-wash absolute inset-0 block" style={st({ ...d(delayMs, 60), background: "radial-gradient(circle at 50% 50%, rgba(169,160,140,0.22), transparent 70%)" })} />
       </BoardFrame>
@@ -929,7 +1105,8 @@ function MantelPiece({ role, delayMs }: SceneProps) {
       {/* settle: the dust it disturbed, drifting off the caster's own side */}
       <span className="g21-motes absolute block" style={st({ ...d(delayMs, 620), left: `${50 - 2.2 * CELL}%`, top: "calc(50% + var(--fx-side, 1) * -12%)", width: cells(4.4), height: cells(2.2), borderRadius: "50%", background: "radial-gradient(circle, rgba(255,241,207,0.45), transparent 74%)" })} />
       <span className="g21-glint absolute block" style={st({ ...d(delayMs, 690), ...box(1.1, 1.1, -1.6, -0.6), borderRadius: "50%", background: "#fff1cf" })} />
-    </BoardWideStage>
+    </ImpactRig>
+      </BoardWideStage>
   );
 }
 
@@ -966,6 +1143,7 @@ function Gilding({ role, delayMs }: SceneProps) {
   }
   return (
     <BoardWideStage>
+      <ImpactRig d={delayMs} imp={IMP.op_gilded_doorknob}>
       <BoardFrame>
         <span className="g21-wash absolute inset-0 block" style={st({ ...d(delayMs, 60), background: "radial-gradient(circle at 50% 50%, rgba(224,178,60,0.28), transparent 68%)" })} />
       </BoardFrame>
@@ -989,7 +1167,8 @@ function Gilding({ role, delayMs }: SceneProps) {
           style={st({ ...d(delayMs, 650 + i * 40), ...box(0.4, 0.4, i * 1.1 - 1.1, -0.9), "--sx": `${(i - 1) * 140}%`, "--sy": "calc(var(--fx-side, 1) * -170%)", borderRadius: "1px", background: "#e0b23c" })}
         />
       ))}
-    </BoardWideStage>
+    </ImpactRig>
+      </BoardWideStage>
   );
 }
 
@@ -1027,6 +1206,7 @@ function WindowDesk({ role, delayMs }: SceneProps) {
   }
   return (
     <BoardWideStage>
+      <ImpactRig d={delayMs} imp={IMP.op_home_office}>
       <BoardFrame>
         <span className="g21-wash absolute inset-0 block" style={st({ ...d(delayMs, 60), background: "radial-gradient(circle at 50% 50%, rgba(143,162,184,0.24), transparent 70%)" })} />
       </BoardFrame>
@@ -1042,7 +1222,8 @@ function WindowDesk({ role, delayMs }: SceneProps) {
       <span className="g21-flick absolute block" style={st({ ...d(delayMs, 560), ...box(0.7, 1.3, -0.9, -0.2), borderRadius: "50%", background: "radial-gradient(circle, #ffeec6, transparent 72%)" })} />
       {/* settle: a barb off the quill, drifting off the caster's side */}
       <span className="g21-flake absolute block" style={st({ ...d(delayMs, 670), ...box(0.5, 0.5, 0.6, -0.4), "--sx": "130%", "--sy": "calc(var(--fx-side, 1) * -180%)", borderRadius: "1px", background: "#ffeec6" })} />
-    </BoardWideStage>
+    </ImpactRig>
+      </BoardWideStage>
   );
 }
 
@@ -1081,6 +1262,7 @@ function KeyFiling({ role, delayMs }: SceneProps) {
   }
   return (
     <BoardWideStage>
+      <ImpactRig d={delayMs} imp={IMP.op_keys_copied}>
       <BoardFrame>
         <span className="g21-wash absolute inset-0 block" style={st({ ...d(delayMs, 60), background: "radial-gradient(circle at 50% 50%, rgba(184,162,79,0.26), transparent 68%)" })} />
       </BoardFrame>
@@ -1106,7 +1288,8 @@ function KeyFiling({ role, delayMs }: SceneProps) {
         <circle cx="5" cy="15" r="3.2" fill="none" stroke="#fff0cc" strokeWidth="2" />
         <path d="M8.2 15h11M15 15v3.4M18 15v2.6" stroke="#fff0cc" strokeWidth="2" {...SJ} />
       </svg>
-    </BoardWideStage>
+    </ImpactRig>
+      </BoardWideStage>
   );
 }
 
@@ -1151,6 +1334,7 @@ function HallShutters({ role, delayMs }: SceneProps) {
         </BoardFrame>
       </BoardWideStage>
       <AimStage>
+      <ImpactRig d={delayMs} imp={IMP.op_meet_the_neighbors}>
         {/* tell: the string course scribed the length of the neighbours' wall */}
         <span className="g21-tellline absolute block" style={st({ ...d(delayMs, 100), ...lane(0.16, 1.2), background: "#fff2d0" })} />
         {/* strike: the wall the windows are cut into */}
@@ -1177,6 +1361,7 @@ function HallShutters({ role, delayMs }: SceneProps) {
         </svg>
         {/* settle: hearth smoke off the neighbours' roofs */}
         <span className="g21-smoke absolute block" style={st({ ...d(delayMs, 690), ...box(5, 2.4, 2, -1.6), borderRadius: "50%", background: "radial-gradient(circle, rgba(255,242,208,0.4), transparent 74%)" })} />
+      </ImpactRig>
       </AimStage>
     </>
   );
@@ -1222,6 +1407,7 @@ function BedCurtain({ role, delayMs }: SceneProps) {
         </BoardFrame>
       </BoardWideStage>
       <AimStage>
+      <ImpactRig d={delayMs} imp={IMP.op_rolling_gantry}>
         {/* tell: the rail scribed the real length of the run */}
         <span className="g21-tellline absolute block" style={st({ ...d(delayMs, 100), ...lane(0.14, -1.5), background: "#ffe6c2" })} />
         {/* strike: the rail itself */}
@@ -1240,6 +1426,7 @@ function BedCurtain({ role, delayMs }: SceneProps) {
         <span className="g21-curtain absolute block" style={st({ ...d(delayMs, 470), ...lane(2.8, 0.2), background: "repeating-linear-gradient(90deg, #a05a4a 0 6%, #6b3a30 6% 9%)" })} />
         {/* settle: the dust the fabric knocks out of the tester */}
         <span className="g21-motes absolute block" style={st({ ...d(delayMs, 680), ...box(4.6, 2.2, 2, 1.6), borderRadius: "50%", background: "radial-gradient(circle, rgba(255,230,194,0.42), transparent 74%)" })} />
+      </ImpactRig>
       </AimStage>
     </>
   );
@@ -1284,6 +1471,7 @@ function TrestleBoards({ role, delayMs }: SceneProps) {
         </BoardFrame>
       </BoardWideStage>
       <AimStage>
+      <ImpactRig d={delayMs} imp={IMP.op_set_change}>
         {/* tell: the chalk on the hall floor where the tables go back */}
         <span className="g21-tellline absolute block" style={st({ ...d(delayMs, 100), ...lane(0.14, 1.5), background: "#fff1cc" })} />
         {/* strike: the board is lifted clear, up off the caster's own side */}
@@ -1297,6 +1485,7 @@ function TrestleBoards({ role, delayMs }: SceneProps) {
         {/* settle: the rushes and crumbs it left behind */}
         <span className="g21-drip absolute block" style={st({ ...d(delayMs, 640), ...box(0.4, 0.4, 0.6, 1), borderRadius: "1px", background: "#fff1cc" })} />
         <span className="g21-motes absolute block" style={st({ ...d(delayMs, 700), ...box(4.6, 2.2, 1.6, 1.2), borderRadius: "50%", background: "radial-gradient(circle, rgba(255,241,204,0.42), transparent 74%)" })} />
+      </ImpactRig>
       </AimStage>
     </>
   );
@@ -1337,6 +1526,7 @@ function Dovecote({ role, delayMs }: SceneProps) {
   }
   return (
     <BoardWideStage>
+      <ImpactRig d={delayMs} imp={IMP.op_siege_survey}>
       <BoardFrame>
         <span className="g21-wash absolute inset-0 block" style={st({ ...d(delayMs, 60), background: "radial-gradient(circle at 50% 50%, rgba(154,163,174,0.24), transparent 70%)" })} />
       </BoardFrame>
@@ -1358,7 +1548,8 @@ function Dovecote({ role, delayMs }: SceneProps) {
       </svg>
       {/* settle: one feather, taking its time */}
       <span className="g21-flake absolute block" style={st({ ...d(delayMs, 680), ...box(0.5, 0.8, 1.9, -0.6), "--sx": "90%", "--sy": "calc(var(--fx-side, 1) * -150%)", borderRadius: "999px", background: "#ffeeca" })} />
-    </BoardWideStage>
+    </ImpactRig>
+      </BoardWideStage>
   );
 }
 
@@ -1402,6 +1593,7 @@ function ClothesLine({ role, delayMs }: SceneProps) {
         </BoardFrame>
       </BoardWideStage>
       <AimStage>
+      <ImpactRig d={delayMs} imp={IMP.op_tower_bridge}>
         {/* tell: the line is thrown across and goes taut */}
         <span className="g21-tellline absolute block" style={st({ ...d(delayMs, 100), ...lane(0.12, -0.9), background: "#fff4d6" })} />
         {/* strike: the two window openings, near sill and far sill */}
@@ -1418,6 +1610,7 @@ function ClothesLine({ role, delayMs }: SceneProps) {
         {/* settle: a peg shakes loose and drops */}
         <span className="g21-drip absolute block" style={st({ ...d(delayMs, 620), ...box(0.3, 0.7, 1.6, -0.5), borderRadius: "1px", background: "#cfd6dd" })} />
         <span className="g21-motes absolute block" style={st({ ...d(delayMs, 690), ...box(4.4, 2, 1.8, 0.8), borderRadius: "50%", background: "radial-gradient(circle, rgba(255,244,214,0.4), transparent 74%)" })} />
+      </ImpactRig>
       </AimStage>
     </>
   );
@@ -1459,6 +1652,7 @@ function ChimneyDraw({ role, delayMs }: SceneProps) {
   }
   return (
     <BoardWideStage>
+      <ImpactRig d={delayMs} imp={IMP.op_tower_torches}>
       <BoardFrame>
         <span className="g21-wash absolute inset-0 block" style={st({ ...d(delayMs, 60), background: "radial-gradient(circle at 50% 50%, rgba(212,129,58,0.28), transparent 68%)" })} />
       </BoardFrame>
@@ -1479,7 +1673,8 @@ function ChimneyDraw({ role, delayMs }: SceneProps) {
       ))}
       {/* settle: the plume leans off across whoever is standing near */}
       <span className="g21-plume absolute block" style={st({ ...d(delayMs, 660), left: `${50 - 2 * CELL}%`, top: "calc(50% + var(--fx-side, 1) * -30%)", width: cells(4.6), height: cells(2.6), borderRadius: "50%", background: "radial-gradient(circle, rgba(255,224,168,0.5), transparent 74%)" })} />
-    </BoardWideStage>
+    </ImpactRig>
+      </BoardWideStage>
   );
 }
 
@@ -1525,6 +1720,7 @@ function MurderHoles({ role, delayMs }: SceneProps) {
         </BoardFrame>
       </BoardWideStage>
       <AimStage>
+      <ImpactRig d={delayMs} imp={IMP.op_wall_sentries}>
         {/* tell: the passage ceiling line, the whole real length of it */}
         <span className="g21-tellline absolute block" style={st({ ...d(delayMs, 100), ...lane(0.16, -1.2), background: "#ffe9bb" })} />
         {/* strike: the vault over the passage */}
@@ -1548,6 +1744,7 @@ function MurderHoles({ role, delayMs }: SceneProps) {
         {/* settle: the grit that comes down out of the ceiling after */}
         <span className="g21-drip absolute block" style={st({ ...d(delayMs, 620), ...box(0.3, 0.6, 2.1, 0.4), borderRadius: "1px", background: "#ffe9bb" })} />
         <span className="g21-motes absolute block" style={st({ ...d(delayMs, 690), ...box(4.6, 2, 2, 0.6), borderRadius: "50%", background: "radial-gradient(circle, rgba(255,233,187,0.4), transparent 74%)" })} />
+      </ImpactRig>
       </AimStage>
     </>
   );
