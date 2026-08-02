@@ -1287,3 +1287,70 @@
   100% { opacity: 0; transform: scale(1.35); }
 }
 .g05-bm-catch { animation: g05-bm-catch calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1.3) both; transform-origin: 50% 50%; }
+
+/* =============================================================================
+   FLAGSHIP IMPACT WAVE: the stage jolt riding each card's impact beat (see the
+   IMPACT table in g05PawnTidePlays.tsx). Transform-only, finite, ends at rest.
+   The quake wrapper is one CELL wide, so amplitudes are % of a cell.
+   ========================================================================== */
+
+.g05-quake-s {
+  animation: g05-quake-s calc(0.55s * var(--fx-dur, 1)) linear both;
+  animation-delay: calc(var(--imp-delay, 0.4s) * var(--fx-dur, 1));
+}
+.g05-quake-h {
+  animation: g05-quake-h calc(0.68s * var(--fx-dur, 1)) linear both;
+  animation-delay: calc(var(--imp-delay, 0.4s) * var(--fx-dur, 1));
+}
+@keyframes g05-quake-s {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  18% {
+    transform: translate(-6.5%, 4.3%);
+  }
+  42% {
+    transform: translate(5.5%, -4.3%);
+  }
+  68% {
+    transform: translate(-3.3%, 2.2%);
+  }
+  86% {
+    transform: translate(1.7%, 1.0%);
+  }
+}
+@keyframes g05-quake-h {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  12% {
+    transform: translate(-13%, 8.1%);
+  }
+  28% {
+    transform: translate(11.0%, -9.1%);
+  }
+  46% {
+    transform: translate(-8.1%, -6.0%);
+  }
+  64% {
+    transform: translate(6.0%, 6.0%);
+  }
+  82% {
+    transform: translate(-3.0%, 1.9%);
+  }
+}
+
+/* Animations off: the quake never fires and the rig contributes nothing. */
+html[data-anim="off"] .g05-quake-s,
+html[data-anim="off"] .g05-quake-h {
+  animation: none !important;
+  transform: none !important;
+}
+html[data-anim="off"] .g05-imprig,
+html[data-anim="off"] .g05-imprig * {
+  animation: none !important;
+  transform: none !important;
+  opacity: 0 !important;
+}

@@ -34,6 +34,7 @@ import "./g07SupplyPlays.css";
 import type { CSSProperties, ReactNode } from "react";
 import type { SigPlugin, SigRole } from "./sigPlugins";
 import { AimStage, BoardFrame, BoardWideStage } from "./stage";
+import { LaserStrike, PieceShatter, Shockwave, impactVars } from "./impact/impact";
 
 interface SceneProps {
   lead: boolean;
@@ -1716,6 +1717,135 @@ function S(Render: SigPlugin["Render"], config: SigPlugin["config"]): SigPlugin 
   return { config, Render };
 }
 
+/* =============================================================================
+   FLAGSHIP IMPACT WAVE - the module-wide moment of real contact.
+
+   Every lead now lands one physical hit from the shared impact vocabulary
+   (impact/impact.tsx), layered OVER the card's own scene: the quartermaster's stores go up: crates and barrels blow open midair, sacks burst, and the supply drop hammers in on a light column.
+   Per card, the IMPACT spec picks the primitive combo, the glyph that is split
+   in half, the tint (the card's own core color as an r-g-b triple) and the
+   beat, which is synced to that scene's OWN strike rhythm, so no two siblings
+   land the same hit. The quake wrapper jolts the whole scene stage on the same
+   beat (in-scene only: the real board crop never shakes). Animations-off
+   coverage for all of these nodes is at the bottom of g07SupplyPlays.css.
+   ========================================================================== */
+
+interface G07Imp {
+  /** impact beat, ms after the lead's own delayMs */
+  at: number;
+  /** the card's core color as an "r g b" triple (drives --imp-rgb) */
+  rgb: string;
+  laser?: boolean;
+  shock?: boolean;
+  /** which of the module's shatter glyphs is split in half */
+  g?: number;
+  /** stage jolt on the beat: "s" soft, "h" hard */
+  q?: "s" | "h";
+  /** impact centre on the 14-cell stage, in percent (cast square = 50/50) */
+  x?: number;
+  y?: number;
+  /** composite box size, in stage percent (9 is ~1.26 cells) */
+  s?: number;
+}
+
+const IMP_TINT = "rgb(var(--imp-rgb, 216 181 110) / 0.95)";
+const IMP_EDGE = "rgba(247, 241, 227, 0.9)";
+
+/** The module's shatter victims: a planked crate, a grain sack, a banded barrel. Tinted per card via --imp-rgb. */
+const IMP_GLYPHS: ReactNode[] = [
+  <svg key="a" viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+    <rect x="4.4" y="6" width="15.2" height="13" fill={IMP_TINT} /><path d="M4.8 6.4l14.4 12.2M19.2 6.4L4.8 18.6M4.4 6h15.2M4.4 19h15.2" stroke={IMP_EDGE} strokeWidth="1.3" strokeLinecap="round" />
+  </svg>,
+  <svg key="b" viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+    <path d="M12 5.2c4.6 1 7 4.4 7 8.6 0 3.4-2.8 5.8-7 5.8s-7-2.4-7-5.8c0-4.2 2.4-7.6 7-8.6z" fill={IMP_TINT} /><path d="M9.8 4.6h4.4l-.8 2h-2.8z" fill={IMP_TINT} /><path d="M9.2 12.2c1.8 1.2 3.8 1.2 5.6 0" stroke={IMP_EDGE} strokeWidth="1.3" strokeLinecap="round" fill="none" />
+  </svg>,
+  <svg key="c" viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+    <path d="M7 4.6h10c1 2.6 1.5 5 1.5 7.4S17.9 16.8 17 19.4H7c-.9-2.6-1.4-5-1.4-7.4S6.1 7.2 7 4.6z" fill={IMP_TINT} /><path d="M5.8 8.8h12.4M5.6 15.2h12.8" stroke={IMP_EDGE} strokeWidth="1.4" strokeLinecap="round" />
+  </svg>,
+];
+
+const IMPACT: Record<string, G07Imp> = {
+  op_homestead_clause: { at: 420, rgb: "217 176 106", shock: true, g: 0, q: "s" },
+  op_leapfrog_lesson: { at: 540, rgb: "201 143 78", laser: true, shock: true, q: "s" },
+  op_market_dog: { at: 480, rgb: "210 166 60", shock: true, g: 1, q: "s" },
+  op_sandbag_hurdle: { at: 510, rgb: "207 174 92", g: 0, q: "s" },
+  op_threshold_blessing: { at: 590, rgb: "169 116 63", laser: true, g: 2, q: "s" },
+  op_trellis: { at: 465, rgb: "147 195 176", shock: true, g: 2, q: "h" },
+  ov_masterclass: { at: 510, rgb: "224 187 82", shock: true, g: 0, q: "s" },
+  ov_sock_slide: { at: 490, rgb: "176 122 82", laser: true, shock: true, q: "s" },
+  ov_tandem_bike: { at: 535, rgb: "127 169 198", shock: true, g: 1, q: "s" },
+  ov_wheelbarrow: { at: 635, rgb: "111 179 173", g: 0, q: "s" },
+  ov_whittle: { at: 430, rgb: "203 191 154", laser: true, g: 2, q: "s" },
+  bn4_muddy_boots: { at: 440, rgb: "185 140 70", shock: true, g: 2, q: "h" },
+  bn4_pawn_umbrella: { at: 580, rgb: "216 203 166", shock: true, g: 0, q: "s" },
+  bn4_shoelace_knot: { at: 550, rgb: "168 155 109", laser: true, shock: true, q: "s" },
+  hx4_cold_porridge: { at: 570, rgb: "143 154 166", shock: true, g: 1, q: "s" },
+  hx4_heavy_pockets: { at: 555, rgb: "154 127 95", g: 0, q: "s" },
+  hx4_hopscotch: { at: 485, rgb: "207 214 222", laser: true, g: 2, q: "s" },
+  hx4_polite_infantry: { at: 470, rgb: "184 137 79", shock: true, g: 2, q: "h" },
+  op_airmail: { at: 515, rgb: "168 184 200", shock: true, g: 0, q: "s" },
+  op_back_alley: { at: 585, rgb: "224 168 76", laser: true, shock: true, q: "s" },
+  op_bread_for_the_table: { at: 600, rgb: "217 154 68", shock: true, g: 1, q: "s" },
+  op_bricklayer: { at: 530, rgb: "192 161 115", g: 0, q: "s" },
+  op_bulk_postage: { at: 625, rgb: "198 106 94", laser: true, g: 2, q: "s" },
+  op_cellar_hatch: { at: 555, rgb: "140 111 74", shock: true, g: 2, q: "h" },
+  op_certified_letter: { at: 630, rgb: "142 155 124", shock: true, g: 0, q: "s" },
+  op_cloister_step: { at: 645, rgb: "184 162 208", laser: true, shock: true, q: "s" },
+  op_dead_letter_office: { at: 460, rgb: "125 135 148", shock: true, g: 1, q: "s" },
+  op_doorman: { at: 525, rgb: "207 169 63", g: 0, q: "s" },
+  op_express_courier: { at: 520, rgb: "180 95 62", laser: true, g: 2, q: "s" },
+  op_ferry_crossing: { at: 615, rgb: "111 150 168", shock: true, g: 2, q: "h" },
+};
+
+/** The impact composite: laser column, glyph split in half, ground ring. */
+function ImpactRig({ imp, delayMs }: { imp: G07Imp; delayMs: number }) {
+  const s = imp.s ?? 9;
+  return (
+    <BoardWideStage>
+      <span
+        className="g07-imprig absolute block"
+        style={{
+          left: `${(imp.x ?? 50) - s / 2}%`,
+          top: `${(imp.y ?? 50) - s / 2}%`,
+          width: `${s}%`,
+          height: `${s}%`,
+          ...impactVars(imp.rgb, (delayMs + imp.at) / 1000),
+        }}
+      >
+        {imp.laser ? <LaserStrike /> : null}
+        {imp.g != null ? <PieceShatter glyph={IMP_GLYPHS[imp.g]} /> : null}
+        {imp.shock ? <Shockwave /> : null}
+      </span>
+    </BoardWideStage>
+  );
+}
+
+/** Leads render inside a quake wrapper (the whole stage jolts on the impact
+ *  beat) with the rig mounted beside them; target/entrance cuts pass through
+ *  untouched. */
+function withImpact(Base: SigPlugin["Render"], imp: G07Imp): SigPlugin["Render"] {
+  function ImpactLead(props: { lead: boolean; role: SigRole; delayMs: number }) {
+    if (props.role !== "lead") return <Base {...props} />;
+    const scene = <Base {...props} />;
+    return (
+      <>
+        {imp.q ? (
+          <span
+            className={`g07-quake-${imp.q} pointer-events-none absolute inset-0 z-30 block`}
+            style={impactVars(imp.rgb, (props.delayMs + imp.at) / 1000)}
+          >
+            {scene}
+          </span>
+        ) : (
+          scene
+        )}
+        <ImpactRig imp={imp} delayMs={props.delayMs} />
+      </>
+    );
+  }
+  return ImpactLead;
+}
+
 export const PLAYS: Record<string, SigPlugin> = {
   op_homestead_clause: S(RationCartScene, { ordering: "file", staggerMs: 70, victims: ["p"], hasLead: true, sound: "vault", anchor: "board" }),
   op_leapfrog_lesson: S(CooperBarrelScene, { ordering: "line", staggerMs: 60, victims: ["p", "b"], hasLead: true, sound: "wall", anchor: "aim" }),
@@ -1748,3 +1878,10 @@ export const PLAYS: Record<string, SigPlugin> = {
   op_express_courier: S(RemountScene, { ordering: "line", staggerMs: 55, victims: "all", hasLead: true, sound: "blitz", anchor: "board" }),
   op_ferry_crossing: S(CapstanScene, { ordering: "line", staggerMs: 65, victims: ["p"], hasLead: true, sound: "siege", anchor: "board" }),
 };
+
+// Graft the per-card impact beat onto every lead scene (additive: the base
+// scene renders unchanged inside the quake wrapper).
+for (const [id, imp] of Object.entries(IMPACT)) {
+  const play = PLAYS[id];
+  if (play) play.Render = withImpact(play.Render, imp);
+}

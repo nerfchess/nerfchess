@@ -36,6 +36,7 @@ import "./g06GroundPlays.css";
 import type { CSSProperties, ReactNode } from "react";
 import type { SigPlugin, SigRole } from "./sigPlugins";
 import { AimStage, BoardFrame, BoardWideStage } from "./stage";
+import { LaserStrike, PieceShatter, Shockwave, impactVars } from "./impact/impact";
 
 interface SceneProps {
   lead: boolean;
@@ -1713,6 +1714,135 @@ function S(Render: SigPlugin["Render"], config: SigPlugin["config"]): SigPlugin 
   return { config, Render };
 }
 
+/* =============================================================================
+   FLAGSHIP IMPACT WAVE - the module-wide moment of real contact.
+
+   Every lead now lands one physical hit from the shared impact vocabulary
+   (impact/impact.tsx), layered OVER the card's own scene: bedrock answers back: boulders and slabs split where they stand, and the whole stage bucks on the landing.
+   Per card, the IMPACT spec picks the primitive combo, the glyph that is split
+   in half, the tint (the card's own core color as an r-g-b triple) and the
+   beat, which is synced to that scene's OWN strike rhythm, so no two siblings
+   land the same hit. The quake wrapper jolts the whole scene stage on the same
+   beat (in-scene only: the real board crop never shakes). Animations-off
+   coverage for all of these nodes is at the bottom of g06GroundPlays.css.
+   ========================================================================== */
+
+interface G06Imp {
+  /** impact beat, ms after the lead's own delayMs */
+  at: number;
+  /** the card's core color as an "r g b" triple (drives --imp-rgb) */
+  rgb: string;
+  laser?: boolean;
+  shock?: boolean;
+  /** which of the module's shatter glyphs is split in half */
+  g?: number;
+  /** stage jolt on the beat: "s" soft, "h" hard */
+  q?: "s" | "h";
+  /** impact centre on the 14-cell stage, in percent (cast square = 50/50) */
+  x?: number;
+  y?: number;
+  /** composite box size, in stage percent (9 is ~1.26 cells) */
+  s?: number;
+}
+
+const IMP_TINT = "rgb(var(--imp-rgb, 216 181 110) / 0.95)";
+const IMP_EDGE = "rgba(247, 241, 227, 0.9)";
+
+/** The module's shatter victims: a boulder, a flagstone slab, a stalagmite cluster. Tinted per card via --imp-rgb. */
+const IMP_GLYPHS: ReactNode[] = [
+  <svg key="a" viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+    <path d="M5 16.4l1.4-6.6 4.2-4 6 .8 3 4.6-1.2 6.4-5.6 2.6z" fill={IMP_TINT} /><path d="M9 8.6l2.6 3.4-1 3.6" stroke={IMP_EDGE} strokeWidth="1.4" strokeLinecap="round" fill="none" />
+  </svg>,
+  <svg key="b" viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+    <path d="M4 8.6h16v10.8H4z" fill={IMP_TINT} /><path d="M4.6 13.6h14.8M11 9.2v4M14.6 14v4.8" stroke={IMP_EDGE} strokeWidth="1.3" strokeLinecap="round" />
+  </svg>,
+  <svg key="c" viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+    <path d="M4 20L7.4 7.6 10 20zM10.4 20L13.6 4.4 17 20z" fill={IMP_TINT} /><path d="M13.6 8.4v7" stroke={IMP_EDGE} strokeWidth="1.2" strokeLinecap="round" />
+  </svg>,
+];
+
+const IMPACT: Record<string, G06Imp> = {
+  ov_growth_ring: { at: 430, rgb: "200 162 78", shock: true, g: 0, q: "h" },
+  ov_mole_tunnels: { at: 470, rgb: "122 90 58", shock: true, q: "h" },
+  bn4_cobblers_bench: { at: 550, rgb: "154 114 72", shock: true, g: 1, q: "s" },
+  bn4_coffee_break: { at: 580, rgb: "111 106 68", g: 0, q: "h" },
+  bn4_ferry_ticket: { at: 650, rgb: "106 168 196", shock: true, g: 2, q: "s" },
+  bn4_militia_call: { at: 420, rgb: "142 154 92", shock: true, g: 1, q: "h" },
+  bn4_over_the_hedge: { at: 480, rgb: "79 138 70", shock: true, g: 0, q: "h" },
+  bn4_stowaway: { at: 530, rgb: "107 122 128", shock: true, q: "h" },
+  hx4_fear_of_open_ground: { at: 590, rgb: "203 191 154", shock: true, g: 1, q: "s" },
+  ov_pillow_fort: { at: 695, rgb: "216 181 103", g: 0, q: "h" },
+  ov_sandbags: { at: 465, rgb: "179 147 102", shock: true, g: 2, q: "s" },
+  bn4_day_laborer: { at: 525, rgb: "138 107 70", shock: true, g: 1, q: "h" },
+  bn4_field_stitches: { at: 575, rgb: "127 154 82", shock: true, g: 0, q: "h" },
+  bn4_half_step_back: { at: 635, rgb: "160 134 88", shock: true, q: "h" },
+  bn4_slow_doors: { at: 640, rgb: "169 198 214", shock: true, g: 1, q: "s" },
+  bn4_spare_button: { at: 510, rgb: "169 161 150", g: 0, q: "h" },
+  bn4_vaulting_pole: { at: 570, rgb: "95 143 122", shock: true, g: 2, q: "s" },
+  hx4_bridge_toll: { at: 540, rgb: "171 138 92", shock: true, g: 1, q: "h" },
+  hx4_clumsy_heralds: { at: 680, rgb: "155 145 134", shock: true, g: 0, q: "h" },
+  hx4_no_trampling: { at: 740, rgb: "125 132 140", shock: true, q: "h" },
+  hx4_pawn_snob: { at: 475, rgb: "184 178 164", shock: true, g: 1, q: "s" },
+  hx4_vegetarian_vows: { at: 615, rgb: "185 180 92", g: 0, q: "h" },
+  hx4_wet_matches: { at: 595, rgb: "138 106 82", shock: true, g: 2, q: "s" },
+  op_back_to_barracks: { at: 725, rgb: "157 138 99", shock: true, g: 1, q: "h" },
+  op_chapel_warden: { at: 660, rgb: "111 168 160", shock: true, g: 0, q: "h" },
+  op_corduroy_road: { at: 520, rgb: "139 98 56", shock: true, q: "h" },
+  op_downtown_premium: { at: 490, rgb: "147 153 143", shock: true, g: 1, q: "s" },
+  op_frontier_waiver: { at: 640, rgb: "138 122 82", g: 0, q: "h" },
+  op_full_coverage: { at: 600, rgb: "111 156 78", shock: true, g: 2, q: "s" },
+  op_harbor_gull: { at: 705, rgb: "127 163 168", shock: true, g: 1, q: "h" },
+};
+
+/** The impact composite: laser column, glyph split in half, ground ring. */
+function ImpactRig({ imp, delayMs }: { imp: G06Imp; delayMs: number }) {
+  const s = imp.s ?? 9;
+  return (
+    <BoardWideStage>
+      <span
+        className="g06-imprig absolute block"
+        style={{
+          left: `${(imp.x ?? 50) - s / 2}%`,
+          top: `${(imp.y ?? 50) - s / 2}%`,
+          width: `${s}%`,
+          height: `${s}%`,
+          ...impactVars(imp.rgb, (delayMs + imp.at) / 1000),
+        }}
+      >
+        {imp.laser ? <LaserStrike /> : null}
+        {imp.g != null ? <PieceShatter glyph={IMP_GLYPHS[imp.g]} /> : null}
+        {imp.shock ? <Shockwave /> : null}
+      </span>
+    </BoardWideStage>
+  );
+}
+
+/** Leads render inside a quake wrapper (the whole stage jolts on the impact
+ *  beat) with the rig mounted beside them; target/entrance cuts pass through
+ *  untouched. */
+function withImpact(Base: SigPlugin["Render"], imp: G06Imp): SigPlugin["Render"] {
+  function ImpactLead(props: { lead: boolean; role: SigRole; delayMs: number }) {
+    if (props.role !== "lead") return <Base {...props} />;
+    const scene = <Base {...props} />;
+    return (
+      <>
+        {imp.q ? (
+          <span
+            className={`g06-quake-${imp.q} pointer-events-none absolute inset-0 z-30 block`}
+            style={impactVars(imp.rgb, (props.delayMs + imp.at) / 1000)}
+          >
+            {scene}
+          </span>
+        ) : (
+          scene
+        )}
+        <ImpactRig imp={imp} delayMs={props.delayMs} />
+      </>
+    );
+  }
+  return ImpactLead;
+}
+
 export const PLAYS: Record<string, SigPlugin> = {
   ov_growth_ring: S(GrowthRingScene, { ordering: "radial", staggerMs: 55, victims: "all", hasLead: true, sound: "aegis", anchor: "cast" }),
   ov_mole_tunnels: S(MoleTunnelScene, { ordering: "line", staggerMs: 70, victims: ["p"], hasLead: true, sound: "siege", anchor: "aim" }),
@@ -1745,3 +1875,10 @@ export const PLAYS: Record<string, SigPlugin> = {
   op_full_coverage: S(TurfRollScene, { ordering: "sweep", staggerMs: 55, victims: ["p"], hasLead: true, sound: "aegis", anchor: "board" }),
   op_harbor_gull: S(FallingTideScene, { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "cathedral", anchor: "cast" }),
 };
+
+// Graft the per-card impact beat onto every lead scene (additive: the base
+// scene renders unchanged inside the quake wrapper).
+for (const [id, imp] of Object.entries(IMPACT)) {
+  const play = PLAYS[id];
+  if (play) play.Render = withImpact(play.Render, imp);
+}

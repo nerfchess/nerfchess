@@ -35,6 +35,7 @@ import "./g04PatinaPlays.css";
 import type { CSSProperties, ReactNode } from "react";
 import type { SigPlugin, SigRole } from "./sigPlugins";
 import { AimStage, BoardFrame, BoardWideStage } from "./stage";
+import { LaserStrike, PieceShatter, Shockwave, impactVars } from "./impact/impact";
 
 interface SceneProps {
   lead: boolean;
@@ -1548,6 +1549,134 @@ function S(Render: SigPlugin["Render"], config: SigPlugin["config"]): SigPlugin 
   return { config, Render };
 }
 
+/* =============================================================================
+   FLAGSHIP IMPACT WAVE - the module-wide moment of real contact.
+
+   Every lead now lands one physical hit from the shared impact vocabulary
+   (impact/impact.tsx), layered OVER the card's own scene: centuries land at once: no sky-fire, just masonry and bronze CRUMBLING apart in place with a dust-shock where the weight settles.
+   Per card, the IMPACT spec picks the primitive combo, the glyph that is split
+   in half, the tint (the card's own core color as an r-g-b triple) and the
+   beat, which is synced to that scene's OWN strike rhythm, so no two siblings
+   land the same hit. The quake wrapper jolts the whole scene stage on the same
+   beat (in-scene only: the real board crop never shakes). Animations-off
+   coverage for all of these nodes is at the bottom of g04PatinaPlays.css.
+   ========================================================================== */
+
+interface G04Imp {
+  /** impact beat, ms after the lead's own delayMs */
+  at: number;
+  /** the card's core color as an "r g b" triple (drives --imp-rgb) */
+  rgb: string;
+  laser?: boolean;
+  shock?: boolean;
+  /** which of the module's shatter glyphs is split in half */
+  g?: number;
+  /** stage jolt on the beat: "s" soft, "h" hard */
+  q?: "s" | "h";
+  /** impact centre on the 14-cell stage, in percent (cast square = 50/50) */
+  x?: number;
+  y?: number;
+  /** composite box size, in stage percent (9 is ~1.26 cells) */
+  s?: number;
+}
+
+const IMP_TINT = "rgb(var(--imp-rgb, 216 181 110) / 0.95)";
+const IMP_EDGE = "rgba(247, 241, 227, 0.9)";
+
+/** The module's shatter victims: a chipped slab, a verdigris helm, a broken column drum. Tinted per card via --imp-rgb. */
+const IMP_GLYPHS: ReactNode[] = [
+  <svg key="a" viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+    <path d="M4.4 5.6h13.2l2 2.4v10.4H4.4z" fill={IMP_TINT} /><path d="M7 9.2l3 2.8M14 12l2.6 2.6" stroke={IMP_EDGE} strokeWidth="1.4" strokeLinecap="round" />
+  </svg>,
+  <svg key="b" viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+    <path d="M4.6 12.4a7.4 7.4 0 0 1 14.8 0v6.8H4.6z" fill={IMP_TINT} /><path d="M8 12.2v4M16 12.2v4" stroke={IMP_EDGE} strokeWidth="1.5" strokeLinecap="round" />
+  </svg>,
+  <svg key="c" viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+    <path d="M6 4.4h12v6.8l-3 1.6-3-1.8-3 1.8-3-1.4z" fill={IMP_TINT} /><path d="M6.8 14.2h10.4v5.4H6.8z" fill={IMP_TINT} /><path d="M9.4 6.6v3M14.6 6.6v3" stroke={IMP_EDGE} strokeWidth="1.4" strokeLinecap="round" />
+  </svg>,
+];
+
+const IMPACT: Record<string, G04Imp> = {
+  bn4_visor_down: { at: 420, rgb: "201 118 47", shock: true, g: 0, q: "s" },
+  bn4_angelus_bell: { at: 470, rgb: "111 201 168", g: 1, q: "s" },
+  bn4_barter_calm: { at: 530, rgb: "200 80 63", shock: true, g: 2, q: "s" },
+  bn4_cold_compress: { at: 570, rgb: "169 216 230", g: 0, q: "s" },
+  bn4_dowagers_patience: { at: 650, rgb: "217 168 79", shock: true, g: 1, q: "h" },
+  bn4_ear_to_the_ground: { at: 465, rgb: "169 121 63", g: 2, q: "s" },
+  bn4_hourglass_flip: { at: 500, rgb: "159 198 89", shock: true, g: 0, q: "s" },
+  bn4_knights_vigil: { at: 540, rgb: "154 167 180", g: 1, q: "s" },
+  bn4_measured_breath: { at: 580, rgb: "216 195 154", shock: true, g: 2, q: "s" },
+  bn4_pawns_lullaby: { at: 695, rgb: "224 180 92", g: 0, q: "s" },
+  bn4_saints_day: { at: 440, rgb: "122 168 224", shock: true, g: 1, q: "h" },
+  bn4_sleepy_dust: { at: 545, rgb: "240 169 60", g: 2, q: "s" },
+  bn4_slipped_collar: { at: 585, rgb: "200 168 116", shock: true, g: 0, q: "s" },
+  bn4_spring_in_the_step: { at: 625, rgb: "160 95 52", g: 1, q: "s" },
+  bn4_steady_hands: { at: 740, rgb: "142 154 134", shock: true, g: 2, q: "s" },
+  bn4_trophy_rest: { at: 430, rgb: "147 165 82", g: 0, q: "s" },
+  ov_loan_shark: { at: 480, rgb: "122 90 46", shock: true, g: 1, q: "h" },
+  bn4_castle_quiet: { at: 520, rgb: "185 138 94", g: 2, q: "s" },
+  bn4_check_valve: { at: 610, rgb: "201 169 78", shock: true, g: 0, q: "s" },
+  bn4_crowned_calm: { at: 660, rgb: "232 197 101", g: 1, q: "s" },
+  bn4_first_light: { at: 485, rgb: "111 134 184", shock: true, g: 2, q: "s" },
+  bn4_grace_note: { at: 590, rgb: "185 191 208", g: 0, q: "s" },
+  bn4_kind_omen: { at: 550, rgb: "116 194 180", shock: true, g: 1, q: "h" },
+  bn4_morning_stretch: { at: 590, rgb: "217 220 192", g: 2, q: "s" },
+  bn4_promise_of_rest: { at: 785, rgb: "183 196 106", shock: true, g: 0, q: "s" },
+  bn4_quiet_after: { at: 475, rgb: "125 138 146", g: 1, q: "s" },
+  bn4_shared_silence: { at: 525, rgb: "195 154 134", shock: true, g: 2, q: "s" },
+  bn4_small_ritual: { at: 630, rgb: "205 184 134", g: 0, q: "s" },
+  bn4_two_breaths: { at: 655, rgb: "214 195 155", shock: true, g: 1, q: "h" },
+};
+
+/** The impact composite: laser column, glyph split in half, ground ring. */
+function ImpactRig({ imp, delayMs }: { imp: G04Imp; delayMs: number }) {
+  const s = imp.s ?? 9;
+  return (
+    <BoardWideStage>
+      <span
+        className="g04-imprig absolute block"
+        style={{
+          left: `${(imp.x ?? 50) - s / 2}%`,
+          top: `${(imp.y ?? 50) - s / 2}%`,
+          width: `${s}%`,
+          height: `${s}%`,
+          ...impactVars(imp.rgb, (delayMs + imp.at) / 1000),
+        }}
+      >
+        {imp.laser ? <LaserStrike /> : null}
+        {imp.g != null ? <PieceShatter glyph={IMP_GLYPHS[imp.g]} /> : null}
+        {imp.shock ? <Shockwave /> : null}
+      </span>
+    </BoardWideStage>
+  );
+}
+
+/** Leads render inside a quake wrapper (the whole stage jolts on the impact
+ *  beat) with the rig mounted beside them; target/entrance cuts pass through
+ *  untouched. */
+function withImpact(Base: SigPlugin["Render"], imp: G04Imp): SigPlugin["Render"] {
+  function ImpactLead(props: { lead: boolean; role: SigRole; delayMs: number }) {
+    if (props.role !== "lead") return <Base {...props} />;
+    const scene = <Base {...props} />;
+    return (
+      <>
+        {imp.q ? (
+          <span
+            className={`g04-quake-${imp.q} pointer-events-none absolute inset-0 z-30 block`}
+            style={impactVars(imp.rgb, (props.delayMs + imp.at) / 1000)}
+          >
+            {scene}
+          </span>
+        ) : (
+          scene
+        )}
+        <ImpactRig imp={imp} delayMs={props.delayMs} />
+      </>
+    );
+  }
+  return ImpactLead;
+}
+
 export const PLAYS: Record<string, SigPlugin> = {
   bn4_visor_down: S(VisorDownScene, { ordering: "octagon", staggerMs: 55, victims: ["k"], hasLead: true, sound: "clockcage", anchor: "board" }),
   bn4_angelus_bell: S(AngelusBellScene, { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "clockcage", anchor: "board" }),
@@ -1579,3 +1708,10 @@ export const PLAYS: Record<string, SigPlugin> = {
   bn4_small_ritual: S(SmallRitualScene, { ordering: "octagon", staggerMs: 60, victims: ["k"], hasLead: true, sound: "clockcage", anchor: "board" }),
   bn4_two_breaths: S(TwoBreathsScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze", anchor: "board" }),
 };
+
+// Graft the per-card impact beat onto every lead scene (additive: the base
+// scene renders unchanged inside the quake wrapper).
+for (const [id, imp] of Object.entries(IMPACT)) {
+  const play = PLAYS[id];
+  if (play) play.Render = withImpact(play.Render, imp);
+}
