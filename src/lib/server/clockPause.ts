@@ -14,6 +14,11 @@
 // Durable Object's alarm honours — so the clock restarts itself and an absent
 // player faces the ordinary flag path like anyone else.
 //
+// The pause is a flag shield, not free time: when it ends (reconnect, deadline,
+// or a draft window subsuming it), the away span is retro-billed against the
+// seat's clock, floored at RECONNECT_CLOCK_FLOOR_MS so nobody returns to an
+// instant flag. Fifteen seconds away costs fifteen seconds.
+//
 // Kept as pure functions over a structural slice of the stored match so the
 // behaviour is testable without standing up a Durable Object
 // (scripts/test-clock-pause.ts).
@@ -25,6 +30,10 @@ export const PAUSE_MAX_MS = 45 * 1000;
 /** Longest one seat can be paused across a whole game, so a refresh loop
  * cannot chain grants. */
 export const PAUSE_BUDGET_MS = 90 * 1000;
+/** Retro-billing an absence never drains the clock below this, so a returning
+ * player always has a beat to move before the ordinary flag path takes over.
+ * Distinct from worker.ts's clockFxFloorMs, which floors card effects. */
+export const RECONNECT_CLOCK_FLOOR_MS = 5 * 1000;
 
 /** The fields the pause rules read. StoredMatch in worker.ts satisfies this. */
 export interface PausableMatch {
@@ -38,6 +47,10 @@ export interface PausableMatch {
   pauseUntil?: number | null;
   pausedSince?: number | null;
   pausedTotalMs?: Partial<Record<Color, number>>;
+  /** Banked clock values (ms). Optional so pre-clock test slices still work. */
+  clocks?: Record<Color, number>;
+  /** Untimed games (`!setup.timeSec`) skip clock billing entirely. */
+  setup?: { timeSec?: number | null };
 }
 
 /** How much pause this seat may still be granted, given what it has used. 0
@@ -62,13 +75,27 @@ export function pauseGrantMs(match: PausableMatch, color: Color): number {
 export function chargePauseBudget(match: PausableMatch, color: Color, now: number): void {
   if (match.pauseUntil == null) return;
   const since = match.pausedSince ?? match.disconnectedAt[color];
-  const paused = since != null ? Math.min(now, match.pauseUntil) - since : 0;
+  const paused = since != null ? Math.max(0, Math.min(now, match.pauseUntil) - since) : 0;
   match.pausedTotalMs = {
     ...match.pausedTotalMs,
-    [color]: (match.pausedTotalMs?.[color] ?? 0) + Math.max(0, paused),
+    [color]: (match.pausedTotalMs?.[color] ?? 0) + paused,
   };
+  billPausedSpan(match, color, paused);
   match.pauseUntil = null;
   match.pausedSince = null;
+}
+
+/** Retroactively charge an ended pause against the seat's actual clock. The
+ * pause is a flag shield, not free time: freezing the clock only ensured a
+ * dropped socket could not flag the player mid-move, but the wall time spent
+ * away still belongs on their clock once they are back (or once the deadline
+ * releases the pause without them). Floored so the returning player is never
+ * insta-flagged; a seat already below the floor is left where it was. */
+function billPausedSpan(match: PausableMatch, color: Color, spanMs: number): void {
+  if (spanMs <= 0 || !match.setup?.timeSec || !match.clocks) return;
+  const current = match.clocks[color];
+  if (typeof current !== "number") return;
+  match.clocks[color] = Math.max(current - spanMs, Math.min(current, RECONNECT_CLOCK_FLOOR_MS));
 }
 
 /** Drop a disconnect-pause without billing it, for paths that resume the clock
