@@ -1,7 +1,8 @@
 // Fantasy-set plugin signatures: bespoke play art for the high-fantasy batch
 // (src/engine/buffs/fantasy/*). See sigPlugins.tsx for the contract.
-// Self-contained: own SVG, own CSS (fantasyPlays.css), transform/opacity only.
-// Do NOT import from BoardEffects.tsx.
+// Self-contained: own SVG, own CSS (fantasyPlays.css), transform/opacity only,
+// plus the shared impact vocabulary (impact/impact.tsx) for the hero strikes'
+// stage quake + ground shockwave. Do NOT import from BoardEffects.tsx.
 //
 // EIGHT HERO SCENES (fully bespoke choreography):
 //   DragonsBreathScene   - the dragon rears from the caster's edge, inhales,
@@ -53,6 +54,7 @@ import "./fantasyPlays.css";
 
 import type { ComponentType, CSSProperties, ReactNode } from "react";
 import type { SigPlugin, SigRole } from "./sigPlugins";
+import { QUAKE_CLASS, Shockwave, impactVars } from "./impact/impact";
 import { AimStage, BoardFrame, BoardWideStage } from "./stage";
 
 /* =============================================================================
@@ -85,8 +87,33 @@ const d = (ms: number): CSSProperties => ({ animationDelay: `${ms}ms` });
 
 const SJ = { strokeLinejoin: "round", strokeLinecap: "round" } as const;
 
-function Stage({ children }: { children: ReactNode }) {
-  return <BoardWideStage>{children}</BoardWideStage>;
+/** The hero stage. `quakeMs` (absolute, like every delay here) jolts the whole
+ * 14-cell canvas on the strike beat via the shared impact wrapper - in-scene
+ * only, the real board crop never shakes. Quake is a wrapper class (0 animated
+ * nodes), so it costs nothing against the 16-node scene cap. */
+function Stage({ children, quakeMs }: { children: ReactNode; quakeMs?: number }) {
+  return (
+    <BoardWideStage>
+      {quakeMs != null ? (
+        <span className={`${QUAKE_CLASS} absolute inset-0 block`} style={impactVars(undefined, quakeMs / 1000)}>
+          {children}
+        </span>
+      ) : (
+        children
+      )}
+    </BoardWideStage>
+  );
+}
+
+/** The strike's ground shockwave from the shared impact vocabulary, boxed over
+ * the point of contact and tinted with the scene's own hex. */
+function Thud({ tone, atMs, left = "34%", top = "34%", size = "32%" }: { tone: string; atMs: number; left?: string; top?: string; size?: string }) {
+  const rgb = `${parseInt(tone.slice(1, 3), 16)} ${parseInt(tone.slice(3, 5), 16)} ${parseInt(tone.slice(5, 7), 16)}`;
+  return (
+    <span className="absolute block" style={{ left, top, width: size, height: size, ...impactVars(rgb, atMs / 1000) }}>
+      <Shockwave />
+    </span>
+  );
 }
 
 /** Full-board tinted wash (board-exact at any anchor via BoardFrame). */
@@ -229,7 +256,9 @@ const BREATH_EMBERS = [
 function DragonsBreathScene({ palette, delayMs }: SceneProps) {
   const [core, glow, deep] = palette;
   return (
-    <Stage>
+    // FLAGSHIP: the flame cone's contact beat jolts the whole stage and rolls
+    // a ground shockwave out of the burn (shared impact vocabulary).
+    <Stage quakeMs={delayMs + 760}>
       <Wash color={tint(deep, 0.2)} delayMs={delayMs} />
       <Rake tone={tint(core, 0.5)} delayMs={delayMs + 80} />
       {/* the dragon rears in from the CASTER's edge (--fx-side) */}
@@ -252,6 +281,7 @@ function DragonsBreathScene({ palette, delayMs }: SceneProps) {
         />
       </span>
       <Flash color={tint(glow, 0.95)} delayMs={delayMs + 760} />
+      <Thud tone={glow} atMs={delayMs + 760} left="38%" top="36%" />
       <Ring color={tint(core, 0.85)} delayMs={delayMs + 860} />
       {BREATH_EMBERS.map((e, i) => (
         <span
@@ -278,7 +308,9 @@ const DOWNDRAFTS = [
 function SummonDragonScene({ palette, delayMs }: SceneProps) {
   const [core, glow, deep] = palette;
   return (
-    <Stage>
+    // FLAGSHIP: something that big does not land lightly - the touchdown beat
+    // jolts the stage and rolls a ground shockwave out of the circle.
+    <Stage quakeMs={delayMs + 1250}>
       <Wash color={tint(deep, 0.22)} delayMs={delayMs} />
       <Rake tone={tint(core, 0.5)} delayMs={delayMs + 70} />
       {/* the circle opens where she will land */}
@@ -306,6 +338,7 @@ function SummonDragonScene({ palette, delayMs }: SceneProps) {
       {/* her eyes ignite */}
       <span className="ftp-eyelight absolute block rounded-full" style={{ left: "46.5%", top: "34%", width: "2.2%", height: "2.2%", background: glow, ...d(delayMs + 1150) }} />
       <Flash color={tint(glow, 0.9)} delayMs={delayMs + 1250} />
+      <Thud tone={glow} atMs={delayMs + 1250} left="35%" top="42%" size="30%" />
       <Ring color={tint(core, 0.85)} delayMs={delayMs + 1320} />
       <Motes color={tint(glow, 0.85)} delayMs={delayMs + 1520} />
       <Drift tone={core} delayMs={delayMs + 1750} />
@@ -376,7 +409,9 @@ const JD_FEATHERS = [
 function JudgmentDayScene({ palette, delayMs }: SceneProps) {
   const [core, glow, deep] = palette;
   return (
-    <Stage>
+    // FLAGSHIP: the pillar's slam is the verdict - the stage jolts on contact
+    // and a ground shockwave rolls off the base of the light.
+    <Stage quakeMs={delayMs + 780}>
       <Wash color={tint(deep, 0.26)} delayMs={delayMs} />
       <Rake tone={tint(glow, 0.5)} delayMs={delayMs + 80} />
       {/* the scales descend and tip */}
@@ -393,6 +428,7 @@ function JudgmentDayScene({ palette, delayMs }: SceneProps) {
         style={{ left: "44%", top: "12%", width: "12%", height: "44%", background: `linear-gradient(180deg, transparent, ${tint(glow, 0.95)} 30%, ${WARM})`, borderRadius: "999px", ...d(delayMs + 700) }}
       />
       <Flash color={WARM} delayMs={delayMs + 780} />
+      <Thud tone={glow} atMs={delayMs + 780} left="37%" top="40%" size="26%" />
       <Ring color={tint(glow, 0.9)} delayMs={delayMs + 860} />
       {/* the two nearest survivors are left as stone: crack webs radiate */}
       <span className="ftp-crack absolute block" style={{ left: "31%", top: "48%", width: "9%", height: "9%", ...d(delayMs + 1050) }}>
@@ -569,7 +605,9 @@ const SF_EMBERS = [
 function StarfallScene({ palette, delayMs }: SceneProps) {
   const [core, glow, deep] = palette;
   return (
-    <Stage>
+    // FLAGSHIP: the meteor's touchdown jolts the whole stage and rolls a
+    // crater shockwave out from under the impact (shared impact vocabulary).
+    <Stage quakeMs={delayMs + 1180}>
       <Wash color={tint(deep, 0.24)} delayMs={delayMs} />
       {/* the crosshair paints the landing square */}
       <span className="ftp-crosshair absolute block" style={{ left: "42%", top: "42%", width: "16%", height: "16%", ...d(delayMs + 120) }}>
@@ -592,6 +630,7 @@ function StarfallScene({ palette, delayMs }: SceneProps) {
         </svg>
       </span>
       <Flash color={WARM} delayMs={delayMs + 1180} />
+      <Thud tone={glow} atMs={delayMs + 1180} left="36%" top="40%" size="28%" />
       <Ring color={tint(glow, 0.9)} delayMs={delayMs + 1250} />
       <Rake tone={tint(core, 0.55)} delayMs={delayMs + 1250} />
       {/* what cooled in the crater is a tower */}
