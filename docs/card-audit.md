@@ -67,7 +67,7 @@ Flags: 269 duplicate-signature, 205 near-duplicate, 90 dominated-candidates, 0 m
 | bw3_heir_apparent | Heir Apparent | boon | 1 | passive | unstated | enemy | passive | src/engine/buffs/boons3.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | bw3_postern_gate | Postern Gate | boon | 1 | instant | unstated | self | generated | src/engine/buffs/boons3.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | deep_breath | Deep Breath | boon | 1 | activated/free/lingering | unstated | enemy | generated | src/engine/buffs/library.ts | 1 | near-duplicate(bn4_ministers_seal:0.75) | pending-review |
-| extra_glance | Extra Glance | boon | 1 | instant | permanent | enemy | generated | src/engine/buffs/library.ts | 1 | - | keep: nerf-mode only via NERF_REVEAL exclusion (buff-mode purity) |
+| extra_glance | Extra Glance | boon | 1 | instant | permanent | enemy | generated | src/engine/buffs/library.ts | 2 | - | keep: nerf-mode only via NERF_REVEAL exclusion (buff-mode purity) |
 | gm_consolation_scratcher | Consolation Scratcher | boon | 1 | activated | unstated | self | generated | src/engine/buffs/overhaul/gambling.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | holy_hell | Holy Hell | boon | 1 | passive | permanent | self | passive | src/engine/buffs/crossref.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | peek | Peek | boon | 1 | instant | unstated | enemy | generated | src/engine/buffs/library.ts | 1 | duplicate-signature(sovereign_draft,bn4_window_shopping) | keep: T1 flat reroll baseline |
@@ -1294,9 +1294,9 @@ Flags: 269 duplicate-signature, 205 near-duplicate, 90 dominated-candidates, 0 m
 | celestial_ascension | Celestial Ascension | buff | 7 | passive | unstated | self | bespoke+canvas+passive | src/engine/buffs/fantasy/transforms.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | chain_atomic | Chain Atomic | buff | 7 | passive | 3-turns | enemy | canvas+passive | src/engine/buffs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | chimpanzini_bananini | Chimpanzini Bananini | buff | 7 | passive | unstated | self | bespoke+passive | src/engine/buffs/brainrot.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| cr_chat_picks | Chat Picks | buff | 7 | activated | 5-turns | enemy | generated | src/engine/buffs/creators.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| cr_family_game_night | Family Game Night | buff | 7 | activated | 4-turns | enemy | generated | src/engine/buffs/creators.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| cr_stalling_bishop | The Stalling Bishop | buff | 7 | activated | 3-turns | enemy | generated | src/engine/buffs/creators.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| cr_chat_picks | Chat Picks: Creator vs Chat | buff | 7 | activated/lingering | 10-turns | self | generated | src/engine/buffs/creators.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| cr_family_game_night | Cramling Family Night | buff | 7 | activated/lingering | 4-turns | enemy | generated | src/engine/buffs/creators.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| cr_stalling_bishop | Rosen's Stafford Trap | buff | 7 | activated/lingering | 3-turns | enemy | generated | src/engine/buffs/creators.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | deep_freeze | Deep Freeze | buff | 7 | instant | 2-turns | enemy | bespoke+canvas | src/engine/buffs/library.ts | 1 | duplicate-signature(ww_pincer_movement) dominated-candidate(higher-tier-of-duplicate-pair) | keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool |
 | divine_legion | Divine Legion | buff | 7 | instant | unstated | self | canvas | src/engine/buffs/library.ts | 1 | near-duplicate(kings_guard:0.86) near-duplicate(bodyguard:0.86) near-duplicate(split_bishop:0.80) | keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool |
 | draft_tyranny | Draft Tyranny | buff | 7 | passive | next-turn | enemy | canvas+passive | src/engine/buffs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
@@ -1371,8 +1371,8 @@ Flags: 269 duplicate-signature, 205 near-duplicate, 90 dominated-candidates, 0 m
 | cataclysmic_meteor | Cataclysmic Meteor | buff | 8 | activated | unstated | enemy | bespoke+canvas | src/engine/buffs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | celestial_alignment | Celestial Alignment | buff | 8 | instant | 2-turns | enemy | canvas | src/engine/buffs/mystic/celestial.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | check_out_our_socials | Check Out Our Socials | buff | 8 | activated/free | next-turn | enemy | bespoke+canvas | src/engine/buffs/personal.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| cr_oh_no_my_queen | Oh No My Queen | buff | 8 | activated | 2-turns | enemy | generated | src/engine/buffs/creators.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| cr_speedrun_protocol | Speedrun Protocol | buff | 8 | passive | 6-turns | enemy | passive | src/engine/buffs/creators.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| cr_oh_no_my_queen | Gotham's THE ROOK!! | buff | 8 | activated/lingering | 2-turns | self | generated | src/engine/buffs/creators.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| cr_speedrun_protocol | Danya's Speedrun | buff | 8 | passive | 6-turns | enemy | passive | src/engine/buffs/creators.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | divine_fortress | Divine Fortress | buff | 8 | passive | 3-turns | self | bespoke+canvas+passive | src/engine/buffs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | divine_right | Divine Right | buff | 8 | activated/lingering | 5-turns | enemy | bespoke+canvas | src/engine/buffs/library.ts | 1 | near-duplicate(wa_royal_aegis:0.77) | pending-review |
 | draft_supremacy | Draft Supremacy | buff | 8 | instant | unstated | enemy | canvas | src/engine/buffs/library.ts | 1 | duplicate-signature(riddle_game,oracles_eye,wa_disrupt_ritual,gamble) dominated-candidate(higher-tier-of-duplicate-pair) | keep: T8 top of the take-both ladder (two drafts plus denial) |
