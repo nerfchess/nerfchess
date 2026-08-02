@@ -48,6 +48,7 @@ import "./g44SpacePlays.css";
 import type { CSSProperties, ReactNode } from "react";
 import type { SigPlugin, SigRole } from "./sigPlugins";
 import { AimStage, BoardFrame, BoardWideStage } from "./stage";
+import { LaserStrike, PieceShatter, Shockwave, impactVars } from "./impact/impact";
 
 interface SceneProps {
   lead: boolean;
@@ -2810,3 +2811,197 @@ export const PLAYS: Record<string, SigPlugin> = {
     Render: LoopStair,
   },
 };
+
+/* =============================================================================
+   FLAGSHIP IMPACT WAVE. Every lead now LANDS: a per-card impact beat from the
+   shared violence vocabulary (impact/impact.tsx). This is the SPACE module,
+   so the signature move is the ORBITAL STRIKE - a column of light called down
+   from far overhead onto the square the card is policing, ground ring and
+   stage jolt on the same beat; the demolition cards additionally shatter
+   their own device (a bell, a meteor, a chain link) in half. The whole scene
+   rides a cell-scale quake wrapper (g44-quakecell, g44SpacePlays.css) on the
+   shared --imp-delay beat. Additive only: the original scenes render
+   unchanged underneath.
+
+   Node cost per lead: quake 1, laser 2, shockwave 1, shatter 6 - the combos
+   below stay inside the 16-animated-node scene budget.
+   ========================================================================== */
+
+interface Imp {
+  /** the impact beat, ms after delayMs - synced to the scene's own strike */
+  at: number;
+  /** "#rrggbb" tint for the impact vocabulary (one of the card's 3 colours) */
+  tint: string;
+  /** the orbital column */
+  laser?: boolean;
+  /** ground ring on the same beat */
+  shock?: boolean;
+  /** shatter silhouette: the struck device splits in half, chips spray */
+  glyph?: ReactNode;
+  /** placement in stage percent (one cell = 7.142857; cast centre = 50) */
+  x?: number;
+  y?: number;
+  s?: number;
+  /** stage the beat on the aim vector (art points +x) instead of upright */
+  aim?: boolean;
+  /** slide the beat to the victim's distance along the vector (--fx-len) */
+  len?: boolean;
+}
+
+/** hex "#rrggbb" -> the "r g b" triple --imp-rgb wants. */
+function impRgb(hex: string): string {
+  return `${parseInt(hex.slice(1, 3), 16)} ${parseInt(hex.slice(3, 5), 16)} ${parseInt(hex.slice(5, 7), 16)}`;
+}
+
+/** Shatter silhouettes, painted in the card's own palette. */
+function impGlyph(path: string, fill: string, stroke: string, w = 1.4): ReactNode {
+  return (
+    <svg viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+      <path d={path} fill={fill} stroke={stroke} strokeWidth={w} strokeLinejoin="round" strokeLinecap="round" />
+    </svg>
+  );
+}
+const IG_BELL = "M12 3c4 0 6 3 6 7v6h2v3H4v-3h2v-6c0-4 2-7 6-7z";
+const IG_NUG = "M4 15l3-8 7-3 8 4 1 7-9 6z";
+const IG_SLAB = "M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z";
+const IG_PANE = "M7 2.6h10v18.8H7z";
+const IG_LINK = "M8.5 4h7A4.5 4.5 0 0 1 20 8.5v7a4.5 4.5 0 0 1-4.5 4.5h-7A4.5 4.5 0 0 1 4 15.5v-7A4.5 4.5 0 0 1 8.5 4z";
+
+/** The orbital composite, staged over the card's own action point. */
+function ImpactBeat({ imp, delayMs }: { imp: Imp; delayMs: number }) {
+  const s = imp.s ?? 7.2;
+  const x = imp.x ?? 50;
+  const y = imp.y ?? 50;
+  const lenShift = imp.len ? " + var(--fx-len, 3) * 7.142857%" : "";
+  const inner = (
+    <span className="g44-impactbed absolute inset-0 block">
+      <span
+        className="absolute block"
+        style={{
+          left: `calc(${x - s / 2}%${lenShift})`,
+          top: `${y - s / 2}%`,
+          width: `${s}%`,
+          height: `${s}%`,
+        }}
+      >
+        {imp.laser && <LaserStrike />}
+        {imp.glyph != null && <PieceShatter glyph={imp.glyph} />}
+        {imp.shock && <Shockwave />}
+      </span>
+    </span>
+  );
+  return imp.aim ? <AimStage>{inner}</AimStage> : <BoardWideStage>{inner}</BoardWideStage>;
+}
+
+/** Wrap a card's Render: leads gain the quake wrapper plus the impact beat. */
+function withImpact(Render: SigPlugin["Render"], imp: Imp): SigPlugin["Render"] {
+  function ImpactLead(props: { lead: boolean; role: SigRole; delayMs: number }) {
+    if (props.role !== "lead") return <Render {...props} />;
+    return (
+      <span
+        className="g44-quakecell absolute inset-0 block"
+        style={impactVars(impRgb(imp.tint), (props.delayMs + imp.at) / 1000)}
+      >
+        <Render {...props} />
+        <ImpactBeat imp={imp} delayMs={props.delayMs} />
+      </span>
+    );
+  }
+  return ImpactLead;
+}
+
+/* Per-card cue sheet: each orbital lands on ITS scene's strike beat, at ITS
+   policed square, in ITS palette - no two siblings share a beat + combo. */
+const IMPACTS: Record<string, Imp> = {
+  // the fold slams shut on the repeated square, down the vector
+  hx4_deja_vu: { at: 540, tint: "#cbb184", laser: true, shock: true, aim: true, len: true, s: 6.4 },
+  // the tape ratchet LOCKS: the no-retreat pawl strikes home
+  hx4_no_full_retreat: { at: 470, tint: "#b9c6d2", laser: true, shock: true, aim: true, s: 6 },
+  // the tea break is enforced from on high: kettle-drop column
+  hx4_tea_break: { at: 560, tint: "#8fc7bd", laser: true, shock: true, y: 52, s: 6.6 },
+  // the plumb bob hits the deck: the monarch is measured and grounded
+  hx4_winded_monarch: { at: 470, tint: "#b9a7e8", laser: true, shock: true, y: 55, s: 6 },
+  // the corner web is pinned by a strike into each anchor line
+  hx4_cobweb_corners: { at: 430, tint: "#cfd8e6", laser: true, shock: true, y: 46, s: 6.2 },
+  // the CRACKED BELL takes one more strike and splits in half
+  hx4_cracked_bell: { at: 620, tint: "#e0b45f", glyph: impGlyph(IG_BELL, "#e0b45f", "#2b2010"), shock: true, y: 50 },
+  // the lodestone slams the needle flat: magnetic down-strike
+  hx4_no_sidling: { at: 500, tint: "#7fb3e8", laser: true, shock: true, y: 50, s: 6.2 },
+  // the visor SLAMS shut: rusted iron boom at eye level
+  hx4_rusty_visor: { at: 470, tint: "#b08a5a", laser: true, shock: true, y: 48, s: 6.8 },
+  // grief lands bodily: the shadow's weight hits the square
+  hx4_stunned_grief: { at: 590, tint: "#8ea2c4", laser: true, shock: true, y: 52, s: 7 },
+  // the oar SNAPS across the gunwale: the blade shears in half
+  hx4_broken_oars: { at: 500, tint: "#7fbfd4", glyph: impGlyph(IG_PANE, "#7fbfd4", "#123240"), shock: true, y: 52 },
+  // the cordon stake is DRIVEN at the scene's corner
+  hx4_crime_scene: { at: 500, tint: "#e8c451", laser: true, shock: true, y: 54, s: 6.4 },
+  // the knot pulls through itself and BINDS: cinch-boom
+  hx4_tangled_marionettes: { at: 520, tint: "#c39ae8", laser: true, shock: true, y: 50, s: 6.6 },
+  // the tempo changes mid-stride: the new step STAMPS in
+  hx4_change_of_step: { at: 480, tint: "#dba6c8", laser: true, shock: true, y: 56, s: 6.4 },
+  // the leaden boots drop from orbit onto the crowded rank
+  hx4_leaden_boots: { at: 500, tint: "#9aa7b8", laser: true, shock: true, y: 54, s: 7.8 },
+  // the duel's counterspell lands at the mirrored wizard's feet
+  ov_wizard_duel: { at: 600, tint: "#a8d8ff", laser: true, shock: true, aim: true, len: true, s: 6.4 },
+  // the shutter GUTTERS the lantern: darkness lands like a weight
+  hx4_lantern_out: { at: 600, tint: "#f0c46a", laser: true, shock: true, y: 48, s: 6.2 },
+  // the curfew bolt thuds into the butt at the marked hour
+  hx4_crossbow_curfew: { at: 560, tint: "#d98b4a", laser: true, shock: true, y: 50, s: 5.6 },
+  // both mouths gulp at once: the twin portal slams its rim
+  ov_portal_pair: { at: 560, tint: "#7fe0d0", laser: true, shock: true, y: 50, s: 7.4 },
+  // the ghost steps land: the LAST print strikes at full reach
+  bn4_ghost_walk: { at: 600, tint: "#b9d8ff", laser: true, shock: true, aim: true, len: true, s: 5.8 },
+  // the faerie door slams open at the far hedge
+  bn4_faerie_door: { at: 520, tint: "#9ee0a6", laser: true, shock: true, aim: true, len: true, s: 6 },
+  // the hammock drops its scholar: undignified full-weight thump
+  ov_archmage_sabbatical: { at: 540, tint: "#e3c07f", laser: true, shock: true, aim: true, s: 7 },
+  // the heavenly stamp descends the pigeonhole rank and LANDS
+  ov_heavenly_bureaucracy: { at: 560, tint: "#a9b8e8", laser: true, shock: true, aim: true, s: 6.6 },
+  // the baton raps the sand table: the whole plan jolts
+  bn4_marshals_baton: { at: 600, tint: "#d8b56a", laser: true, shock: true, y: 52, s: 6.8 },
+  // the velvet rope's brass post is SLAMMED into its socket
+  hx4_velvet_rope: { at: 560, tint: "#d1607e", laser: true, shock: true, y: 54, s: 6.2 },
+  // the worldgate opens: an orbital lance grounds at the far mouth
+  bn4_worldgate: { at: 620, tint: "#8fd8ff", laser: true, shock: true, aim: true, len: true, s: 7 },
+  // the hourglass waist CHOKES: the pinch strikes shut
+  hx4_choke_point: { at: 640, tint: "#d9a15c", laser: true, shock: true, y: 50, s: 6 },
+  // the zip teeth BITE shut: interlock boom down the seam
+  hx4_wall_of_teeth: { at: 500, tint: "#cfd8e2", laser: true, shock: true, y: 50, s: 7.6 },
+  // the wrong livery is struck from the roll: herald's down-stamp
+  hx4_mismatched_livery: { at: 540, tint: "#d9546b", laser: true, shock: true, y: 50, s: 6.4 },
+  // the grapnel BITES the far parapet at full line
+  ov_grappling_hook: { at: 520, tint: "#b0b8c4", laser: true, shock: true, aim: true, len: true, s: 5.8 },
+  // the overdue tome is returned FROM ORBIT: it slams the desk and splits
+  ov_overdue_library_book: { at: 600, tint: "#cf9a63", laser: true, glyph: impGlyph(IG_SLAB, "#cf9a63", "#2a1a0e"), shock: true, aim: true, s: 6.8 },
+  // the hearth ring seats itself: ember-stone boom
+  bn4_hearth_ring: { at: 560, tint: "#f0a95a", laser: true, shock: true, y: 52, s: 6.6 },
+  // the last wagon locks the circle: axle-deep ground boom
+  bn4_wagon_circle: { at: 600, tint: "#c8a06a", laser: true, shock: true, y: 52, s: 9 },
+  // the truce horn plants its standard: parley column
+  bn4_heralds_truce: { at: 500, tint: "#86cbb4", laser: true, shock: true, y: 50, s: 6.2 },
+  // gravity flips BACK: everything lands at once, one big beat
+  ov_gravity_flip: { at: 500, tint: "#7fc9e8", laser: true, shock: true, y: 48, s: 8 },
+  // the tray avalanche hits the desk: paper-weight orbital
+  ov_paperwork_avalanche: { at: 600, tint: "#ccc0a0", laser: true, shock: true, y: 52, s: 8 },
+  // the field glasses find the square: the focused beam grounds it
+  bn4_field_glasses: { at: 620, tint: "#7fd4ff", laser: true, shock: true, y: 50, s: 5.6 },
+  // the star's entrance mark is struck into the boards
+  op_star_dressing_room: { at: 620, tint: "#e0a6c8", laser: true, shock: true, y: 52, s: 6.4 },
+  // the scout's flare comes down EXACTLY where the report said
+  bn4_scouts_report: { at: 620, tint: "#8fd8b0", laser: true, shock: true, y: 50, s: 6 },
+  // FORE: the meteor lands on the green and SHATTERS, divot and all
+  ov_meteor_golf: { at: 620, tint: "#ff9a5a", laser: true, glyph: impGlyph(IG_NUG, "#ff9a5a", "#2a1206"), shock: true, aim: true, len: true },
+  // the hobble strap cinches: the buckle slams at fetlock height
+  hx4_hobble_strap: { at: 600, tint: "#b98a5a", laser: true, shock: true, y: 55, s: 6.2 },
+  // the quartermaster's lock TURNS: the bolt drops like a girder
+  bn4_quartermasters_lock: { at: 610, tint: "#cfd4dc", laser: true, shock: true, y: 52, s: 6.6 },
+  // the gang chain is TESTED and a link gives: it snaps in half
+  hx4_chain_gang: { at: 560, tint: "#a8b0bc", glyph: impGlyph(IG_LINK, "none", "#a8b0bc", 2.6), shock: true, y: 52 },
+  // the court is called to order: the puppet gavel from on high
+  hx4_puppet_court: { at: 640, tint: "#b9a2d8", laser: true, shock: true, y: 50, s: 6.8 },
+};
+
+for (const [id, imp] of Object.entries(IMPACTS)) {
+  const play = PLAYS[id];
+  if (play) PLAYS[id] = { config: play.config, Render: withImpact(play.Render, imp) };
+}

@@ -39,6 +39,7 @@ import "./g43WaterPlays.css";
 import type { CSSProperties, ReactNode } from "react";
 import type { SigPlugin, SigRole } from "./sigPlugins";
 import { AimStage, BoardFrame, BoardWideStage } from "./stage";
+import { LaserStrike, PieceShatter, Shockwave, impactVars } from "./impact/impact";
 
 interface SceneProps {
   lead: boolean;
@@ -2073,3 +2074,201 @@ export const PLAYS: Record<string, SigPlugin> = {
   ov_lantern_festival: S(LanternFestivalScene, { ordering: "line", staggerMs: 70, victims: ["p"], hasLead: true, sound: "cathedral", anchor: "aim" }),
   ov_ancestral_audience: S(AncestralAudienceScene, { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades", anchor: "cast" }),
 };
+
+/* =============================================================================
+   FLAGSHIP IMPACT WAVE. Every lead now LANDS: a per-card impact beat from the
+   shared violence vocabulary (impact/impact.tsx). This is the WATER module,
+   so every hit is a WET CRASH: the shockwave ring is flattened into a low
+   ripple ellipse (never a dry blast ring), the laser reads as a spout or a
+   light-column into the surface, and the splash cards shatter a droplet
+   silhouette into spray. The whole scene rides a cell-scale quake wrapper
+   (g43-quakecell, g43WaterPlays.css) on the same --imp-delay beat. Additive
+   only: the original scenes render unchanged underneath.
+
+   Node cost per lead: quake 1, laser 2, ripple 1, shatter 6 - the combos
+   below stay inside the 16-animated-node scene budget.
+   ========================================================================== */
+
+interface Imp {
+  /** the impact beat, ms after delayMs - synced to the scene's own strike */
+  at: number;
+  /** "#rrggbb" tint for the impact vocabulary (one of the card's 3 colours) */
+  tint: string;
+  /** the spout: a column of light hammering the surface */
+  laser?: boolean;
+  /** the wet crash: a flattened ripple ellipse (never a dry ring) */
+  wet?: boolean;
+  /** splash silhouette: a droplet (or the card's own device) blown in half */
+  glyph?: ReactNode;
+  /** placement in stage percent (one cell = 7.142857; cast centre = 50) */
+  x?: number;
+  y?: number;
+  s?: number;
+  /** stage the beat on the aim vector (art points +x) instead of upright */
+  aim?: boolean;
+  /** slide the beat to the victim's distance along the vector (--fx-len) */
+  len?: boolean;
+}
+
+/** hex "#rrggbb" -> the "r g b" triple --imp-rgb wants. */
+function impRgb(hex: string): string {
+  return `${parseInt(hex.slice(1, 3), 16)} ${parseInt(hex.slice(3, 5), 16)} ${parseInt(hex.slice(5, 7), 16)}`;
+}
+
+/** Splash silhouettes, painted in the card's own palette. */
+function impGlyph(path: string, fill: string, stroke: string): ReactNode {
+  return (
+    <svg viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+      <path d={path} fill={fill} stroke={stroke} strokeWidth="1.4" strokeLinejoin="round" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/** The impact composite: spout + wet crash, staged on the card's surface. */
+function ImpactBeat({ imp, delayMs }: { imp: Imp; delayMs: number }) {
+  const s = imp.s ?? 7.2;
+  const x = imp.x ?? 50;
+  const y = imp.y ?? 50;
+  const lenShift = imp.len ? " + var(--fx-len, 3) * 7.142857%" : "";
+  const inner = (
+    <span className="g43-impactbed absolute inset-0 block">
+      <span
+        className="absolute block"
+        style={{
+          left: `calc(${x - s / 2}%${lenShift})`,
+          top: `${y - s / 2}%`,
+          width: `${s}%`,
+          height: `${s}%`,
+        }}
+      >
+        {imp.laser && <LaserStrike />}
+        {imp.glyph != null && <PieceShatter glyph={imp.glyph} />}
+      </span>
+      {imp.wet && (
+        <span
+          className="absolute block"
+          style={{
+            left: `calc(${x - s}%${lenShift})`,
+            top: `${y - s * 0.2}%`,
+            width: `${s * 2}%`,
+            height: `${s * 0.8}%`,
+          }}
+        >
+          <Shockwave />
+        </span>
+      )}
+    </span>
+  );
+  return imp.aim ? <AimStage>{inner}</AimStage> : <BoardWideStage>{inner}</BoardWideStage>;
+}
+
+/** Wrap a card's Render: leads gain the quake wrapper plus the impact beat. */
+function withImpact(Render: SigPlugin["Render"], imp: Imp): SigPlugin["Render"] {
+  function ImpactLead(props: { lead: boolean; role: SigRole; delayMs: number }) {
+    if (props.role !== "lead") return <Render {...props} />;
+    return (
+      <span
+        className="g43-quakecell absolute inset-0 block"
+        style={impactVars(impRgb(imp.tint), (props.delayMs + imp.at) / 1000)}
+      >
+        <Render {...props} />
+        <ImpactBeat imp={imp} delayMs={props.delayMs} />
+      </span>
+    );
+  }
+  return ImpactLead;
+}
+
+/* Per-card cue sheet: each crash lands on ITS scene's strike beat, at ITS
+   waterline, in ITS palette - no two siblings share a beat + combo. */
+const IMPACTS: Record<string, Imp> = {
+  // the ice lets go: a floe is blown in half, spray and slush
+  op_river_breakup: { at: 560, tint: "#cfe7f2", glyph: impGlyph(RB_FLOE, "#cfe7f2", "#16303f"), wet: true, y: 52 },
+  // the sip lands: the water-break droplet bursts on the tongue of the line
+  op_second_wind_sip: { at: 520, tint: "#7fc6d8", glyph: impGlyph(DROP, "#7fc6d8", "#4a3a1e"), wet: true, y: 52 },
+  // the rain check is CASHED: the first sheet of rain slams down
+  ov_rain_check: { at: 480, tint: "#9ec9e8", laser: true, wet: true, y: 50 },
+  // another seam opens: the bilge droplet blows apart at the waterline
+  hx4_leaking_boats: { at: 470, tint: "#8fb6c8", glyph: impGlyph(DROP, "#8fb6c8", "#2b2118"), wet: true, y: 55 },
+  // the rogue river takes the bank: a wide, violent wet crash
+  hx4_rogue_river: { at: 430, tint: "#6fb9d6", laser: true, wet: true, y: 54, s: 8.6 },
+  // the blessing column strikes the stoup and the water leaps
+  bn4_holy_water: { at: 470, tint: "#f0d089", laser: true, wet: true, y: 50, s: 6.4 },
+  // the jam BREAKS: the key log is snapped in half, spray everywhere
+  bn4_logjam: { at: 560, tint: "#b58a52", glyph: impGlyph(LJ_LOG, "#b58a52", "#23301f"), wet: true, y: 52 },
+  // high water slams the mark: crest boom along the gauge
+  hx4_high_water: { at: 500, tint: "#7fc8d8", laser: true, wet: true, y: 48, s: 8.8 },
+  // the watch bell hits the river: patrol splash at the crossing
+  hx4_river_watch: { at: 580, tint: "#9fb0bd", laser: true, wet: true, y: 52, s: 6.4 },
+  // THE CREST LANDS: the great flood's wall comes down full-weight
+  ov_great_flood: { at: 520, tint: "#6fc4de", laser: true, wet: true, y: 52, s: 10 },
+  // the mark is painted by force: the survey slap at the high line
+  ov_high_water_mark: { at: 520, tint: "#d8c9a6", laser: true, wet: true, y: 46, s: 6.6 },
+  // the tar front slaps down: a heavy, black-gold wet crash
+  hx4_tar_flood: { at: 520, tint: "#d8963f", laser: true, wet: true, y: 54, s: 9 },
+  // both flanks go under at once: the channel crash between them
+  hx4_flooded_flanks: { at: 480, tint: "#86c8a0", laser: true, wet: true, y: 52, s: 8 },
+  // the treacle lands THICK: a slow, wide, syrup boom
+  hx4_treacle_tide: { at: 520, tint: "#c98b30", laser: true, wet: true, y: 54, s: 8.4 },
+  // the pawn tide hits the beach: rank-wide wet crash
+  bn4_tide_of_pawns: { at: 560, tint: "#c8b48a", laser: true, wet: true, y: 54, s: 9 },
+  // a thousand ducks hit the pond: the lead decoy bursts the surface
+  ov_thousand_ducks: { at: 560, tint: "#f2c53d", glyph: impGlyph(TD_BODY, "#f2c53d", "#1d3a4a"), wet: true, y: 54 },
+  // the pace is set: the ford droplet bursts underfoot
+  op_walking_pace: { at: 520, tint: "#cbb185", glyph: impGlyph(DROP, "#cbb185", "#1f3b46"), wet: true, y: 55 },
+  // the net comes up empty and SLAMS the water flat
+  hx4_no_easy_pickings: { at: 500, tint: "#c9a86a", laser: true, wet: true, y: 52, s: 7.6 },
+  // the cast lands ON the king's square: line-strike at --fx-len
+  bn4_fisherman_king: { at: 520, tint: "#b9895a", laser: true, wet: true, aim: true, len: true, s: 6 },
+  // kinged by force: the double-stack SLAMS down the jump line
+  hx4_checkers_law: { at: 560, tint: "#cfd8de", laser: true, wet: true, aim: true, len: true, s: 6.4 },
+  // the fee chest hits the dock: coin-heavy wet boom
+  hx4_dockmasters_fee: { at: 520, tint: "#e0b64a", laser: true, wet: true, y: 54, s: 7 },
+  // the old law is read: the tablet column strikes the shallows
+  hx4_old_laws: { at: 520, tint: "#b8b0a0", laser: true, wet: true, y: 50, s: 6.8 },
+  // the order freezes mid-signal: the flag hits the water instead
+  hx4_command_paralysis: { at: 520, tint: "#e6ddc6", laser: true, wet: true, y: 52, s: 6.2 },
+  // the haven chain drops across the mouth: harbor-bar crash
+  bn4_haven_law: { at: 580, tint: "#9aa8ae", laser: true, wet: true, y: 52, s: 8.2 },
+  // the champion vaults the rail and lands in the surf, sword down
+  bn4_kings_champion: { at: 460, tint: "#e6c46a", laser: true, wet: true, y: 54, s: 7.8 },
+  // the king's wings skim and STRIKE at the escort point
+  bn4_kings_own_wings: { at: 520, tint: "#9fd2e8", laser: true, wet: true, aim: true, len: true, s: 6 },
+  // the anchor of command is dropped ON the queen: iron splash
+  hx4_burden_of_command: { at: 520, tint: "#98a6b2", glyph: impGlyph(BC_ANCHOR, "#98a6b2", "#12232e"), wet: true, y: 52 },
+  // the horn blast flattens the harbor: sound-slap on the water
+  op_harbor_horn: { at: 520, tint: "#d9a441", laser: true, wet: true, y: 50, s: 7.4 },
+  // curfew sounds: the last wake is slapped flat at the quay
+  hx4_curfew_horn: { at: 520, tint: "#c85f3a", laser: true, wet: true, y: 48, s: 6.8 },
+  // the polish bucket tips: the parade ground gets its mirror coat
+  bn4_parade_polish: { at: 520, tint: "#e2b455", laser: true, wet: true, y: 54, s: 6.4 },
+  // the recruit is dunked: the initiation droplet bursts overhead
+  bn4_green_recruit: { at: 520, tint: "#96c86a", glyph: impGlyph(DROP, "#96c86a", "#24361f"), wet: true, y: 50 },
+  // the milk churn tips off the cart: a white crash on the step
+  ov_milkmans_round: { at: 460, tint: "#b6c6cf", laser: true, wet: true, y: 54, s: 7 },
+  // the muster is silenced: the signal drum hits the wet ground
+  hx4_muster_silence: { at: 520, tint: "#a8b6a0", laser: true, wet: true, y: 52, s: 6.6 },
+  // the cornucopia UPENDS: the horn's flood hits the table
+  bn4_cornucopia: { at: 600, tint: "#cbd8dd", laser: true, wet: true, y: 52, s: 8 },
+  // the sign goes down and SO DOES SOMEONE: slapstick wet crash
+  op_wet_floor_sign: { at: 500, tint: "#7fb6d0", glyph: impGlyph(DROP, "#7fb6d0", "#223244"), wet: true, y: 56 },
+  // the secret changes hands mid-stream: the drop point splashes
+  bn4_trade_secret: { at: 540, tint: "#8fc9a8", laser: true, wet: true, y: 52, s: 6 },
+  // three balls and a deal: the pledge chest splashes into the till
+  bn4_pawnbrokers_deal: { at: 500, tint: "#d9b45a", laser: true, wet: true, y: 52, s: 6.6 },
+  // the gavel falls on the private lot: dockside boom
+  bn4_private_auction: { at: 520, tint: "#b0722f", laser: true, wet: true, y: 50, s: 7.2 },
+  // the velvet rope drops its brass end into the puddle
+  bn4_velvet_queue: { at: 560, tint: "#b2415a", laser: true, wet: true, y: 54, s: 6.2 },
+  // the dead man's boots hit the deck, heels together
+  hx4_dead_mans_boots: { at: 480, tint: "#6e7c84", laser: true, wet: true, y: 55, s: 6.8 },
+  // the lantern sets down on the water at the pawn's reach
+  ov_lantern_festival: { at: 520, tint: "#f0a24a", laser: true, wet: true, aim: true, len: true, s: 6 },
+  // the ancestors answer: the offering bowl overturns in the shallows
+  ov_ancestral_audience: { at: 470, tint: "#a9d8d0", laser: true, wet: true, y: 52, s: 6.6 },
+};
+
+for (const [id, imp] of Object.entries(IMPACTS)) {
+  const play = PLAYS[id];
+  if (play) PLAYS[id] = { config: play.config, Render: withImpact(play.Render, imp) };
+}
