@@ -29,16 +29,17 @@ export default function Loading() {
           </div>
           <div className="hall-hairline mt-2 sm:mt-4" aria-hidden />
         </div>
-        {/* Tab bar (Quick Play / Challenges / Watch / Friends). */}
+        {/* Tab bar (Play / Watch & Friends). */}
         <div className="mt-6 flex flex-wrap gap-1.5 border-b border-white/10 pb-px" aria-hidden>
-          {Array.from({ length: 4 }).map((_, i) => (
+          {Array.from({ length: 2 }).map((_, i) => (
             <div key={i} className="skeleton h-10 w-20 sm:w-28" />
           ))}
         </div>
         <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
           <div className="min-w-0 space-y-5">
-            {/* Quick Match chamber: mode doors, balanced 3x3 time-control grid,
-                one gate button. */}
+            {/* Quick Match chamber: mode doors, the three primary time-control
+                tokens (the rest fold behind "More time controls"), one gate
+                button. */}
             <div className="dgn-slab dgn-hallpanel dgn-rivets p-5">
               <div className="skeleton h-6 w-36" />
               <div className="mt-4 grid grid-cols-2 gap-2.5">
@@ -46,7 +47,7 @@ export default function Loading() {
                 <div className="skeleton h-28" />
               </div>
               <div className="mt-4 grid grid-cols-3 gap-1.5">
-                {Array.from({ length: 9 }).map((_, i) => (
+                {Array.from({ length: 3 }).map((_, i) => (
                   <div key={i} className="skeleton h-16" />
                 ))}
               </div>

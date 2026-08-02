@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Clock, Swords, X } from "lucide-react";
+import { ChevronRight, Clock, Swords, X } from "lucide-react";
 import { AccountUser, ensureAccount, fetchMe } from "@/lib/authClient";
 import { clearSnapshot, readSnapshot, writeSnapshot } from "@/lib/snapshotCache";
 import { MPConnectionState, MPSession, saveOnlineSeat } from "@/lib/multiplayer";
@@ -47,6 +47,14 @@ const QUEUE_POOL_OPTIONS: { pool: string; label: string; speed: RatingCategoryId
 
 const LAST_POOL_KEY = "dc:last-pool";
 
+// The three most-used controls (3+2 is the site default) lead the desktop
+// picker; the other six sit behind a "More time controls" reveal so the
+// chamber's default view reads as one short row. Every pool stays reachable:
+// the reveal shows the full canonical grid, the mobile sheet always shows all
+// nine, and a remembered selection outside the three keeps the grid expanded so
+// the chosen tablet is never hidden.
+const PRIMARY_POOLS = ["3+2", "5+0", "10+0"];
+
 export function QuickMatch({ active = true }: { active?: boolean } = {}) {
   const router = useRouter();
   const [user, setUser] = useState<AccountUser | null | undefined>(undefined);
@@ -62,6 +70,10 @@ export function QuickMatch({ active = true }: { active?: boolean } = {}) {
   const [connection, setConnection] = useState<MPConnectionState>("connected");
   // Mobile time-control bottom sheet.
   const [sheetOpen, setSheetOpen] = useState(false);
+  // Desktop time-control fold: false shows only PRIMARY_POOLS, true the full
+  // nine-pool grid. Seeded true when the remembered pool is outside the
+  // primary three so the selected tablet is always on screen.
+  const [showAllPools, setShowAllPools] = useState(false);
   // The mobile sticky action bar and the bottom sheet are portalled to
   // document.body: their nearest lobby ancestor carries a CSS transform (the
   // stagger-in entrance), which would otherwise trap position:fixed inside the
@@ -172,7 +184,10 @@ export function QuickMatch({ active = true }: { active?: boolean } = {}) {
     queueMicrotask(() => {
       try {
         const saved = window.localStorage.getItem(LAST_POOL_KEY);
-        if (saved && QUEUE_POOL_OPTIONS.some((o) => o.pool === saved)) setPool(saved);
+        if (saved && QUEUE_POOL_OPTIONS.some((o) => o.pool === saved)) {
+          setPool(saved);
+          if (!PRIMARY_POOLS.includes(saved)) setShowAllPools(true);
+        }
       } catch {}
     });
     return () => {
@@ -295,21 +310,56 @@ export function QuickMatch({ active = true }: { active?: boolean } = {}) {
             </div>
           </div>
 
-          {/* Step 2: time control. Desktop shows the balanced 3x3 grid of
-              engraved stone tokens inline; mobile collapses it to a summary
-              tablet that opens a bottom sheet. */}
+          {/* Step 2: time control. Desktop leads with the three most-used
+              tokens and folds the remaining six behind "More time controls"
+              (the full canonical 3x3 when open); mobile collapses everything
+              to a summary tablet that opens a bottom sheet. A remembered
+              selection outside the primary three keeps the grid expanded and
+              hides the fold toggle so the chosen tablet never disappears. */}
           <div className="mt-5">
             <EngravedLabel>Time control</EngravedLabel>
-            <div className="mt-2.5 hidden grid-cols-3 gap-2 sm:grid">
-              {QUEUE_POOL_OPTIONS.map((option) => (
-                <TimeCell
-                  key={option.pool}
-                  option={option}
-                  selected={option.pool === pool}
-                  onClick={() => pickPool(option.pool)}
-                />
-              ))}
-            </div>
+            {(() => {
+              const selectedIsExtra = !PRIMARY_POOLS.includes(pool);
+              const poolsExpanded = showAllPools || selectedIsExtra;
+              const visiblePools = poolsExpanded
+                ? QUEUE_POOL_OPTIONS
+                : QUEUE_POOL_OPTIONS.filter((o) => PRIMARY_POOLS.includes(o.pool));
+              return (
+                <>
+                  <div id="qm-pool-grid" className="mt-2.5 hidden grid-cols-3 gap-2 sm:grid">
+                    {visiblePools.map((option) => (
+                      <TimeCell
+                        key={option.pool}
+                        option={option}
+                        selected={option.pool === pool}
+                        onClick={() => pickPool(option.pool)}
+                      />
+                    ))}
+                  </div>
+                  {!selectedIsExtra && (
+                    <Button
+                      tone="ghost"
+                      size="sm"
+                      onClick={() => setShowAllPools((v) => !v)}
+                      aria-expanded={poolsExpanded}
+                      aria-controls="qm-pool-grid"
+                      className="mt-2 hidden w-full sm:inline-flex"
+                    >
+                      <ChevronRight
+                        aria-hidden
+                        size={14}
+                        strokeWidth={2.4}
+                        className={
+                          "shrink-0 transition-transform duration-150 " +
+                          (poolsExpanded ? "rotate-90" : "")
+                        }
+                      />
+                      {poolsExpanded ? "Fewer time controls" : "More time controls"}
+                    </Button>
+                  )}
+                </>
+              );
+            })()}
             {/* Mobile: a single summary tablet opens the picker sheet. */}
             <button
               type="button"
