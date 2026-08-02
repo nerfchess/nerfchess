@@ -32,6 +32,7 @@ import "./g19HorsePlays.css";
 import type { CSSProperties, ReactNode } from "react";
 import type { SigPlugin, SigRole } from "./sigPlugins";
 import { AimStage, BoardFrame, BoardWideStage } from "./stage";
+import { LaserStrike, PieceShatter, Shockwave, QUAKE_CLASS, impactVars } from "./impact/impact";
 
 interface SceneProps {
   lead: boolean;
@@ -1452,37 +1453,135 @@ function NightlightScene({ role, delayMs }: SceneProps) {
    square they were played on.
    ========================================================================== */
 
-/** Bind one bespoke scene to its config. */
-function S(Render: SigPlugin["Render"], config: SigPlugin["config"]): SigPlugin {
-  return { config, Render };
+/* =============================================================================
+   FLAGSHIP IMPACT PASS — the stable answers with HOOFQUAKES; shoes come off and split.
+
+   Layered OVER each scene's own signature from the shared impact vocabulary
+   (impact/impact.tsx): a descending laser column, the struck thing splitting
+   in half and spraying shards, a ground shockwave, and the whole stage
+   jolting on the same beat. Each PLAYS entry declares its own combination,
+   impact beat, tint, landing box and tilt below, so every card in the module
+   lands a hit its siblings do not. The quake rides an inner wrapper (the
+   stage's own transform is the anchor clamp and must not be overridden) and
+   stays inside this scene's stage — the real board crop never shakes. The
+   whole composite is transform/opacity only, one-shot, scaled by --fx-dur,
+   and dark under html[data-anim="off"] via the global animation gate.
+   ========================================================================== */
+
+/** Per-card impact spec. `at` is the impact beat in ms after the lead's
+ * stagger; the laser (when present) LEADS that beat by 0.4s per the shared
+ * impact-timing contract, so the column reads as the CAUSE of the hit. */
+interface Imp {
+  /** Impact tint: the "r g b" triple --imp-rgb expects (the card's core). */
+  rgb: string;
+  /** The impact beat, ms into the lead. */
+  at: number;
+  laser?: boolean;
+  shock?: boolean;
+  /** Shatter glyph (24x24 viewBox): the struck thing, split in half. */
+  glyph?: ReactNode;
+  /** Landing box, % of the scene canvas. Defaults to the cast square. */
+  box?: [number, number, number, number];
+  /** Static tilt of the whole composite, in degrees (angled columns). */
+  rot?: number;
 }
 
+/** A cast horseshoe: the stable's own debris. */
+const impShoe = (fill: string, edge: string): ReactNode => (
+  <>
+    <path
+      d="M6 20.4V10.6a6 6 0 0 1 12 0v9.8"
+      fill="none"
+      stroke={fill}
+      strokeWidth="3.4"
+      strokeLinecap="round"
+    />
+    <path d="M6 20.4V10.6a6 6 0 0 1 12 0v9.8" fill="none" stroke={edge} strokeWidth="1" strokeLinecap="round" />
+  </>
+);
+
+/** The composite itself, staged over the scene's canvas on the impact beat. */
+function ImpactHit({ s, delayMs }: { s: Imp; delayMs: number }) {
+  const [l, t, w, h] = s.box ?? [43, 38, 14, 14];
+  return (
+    <span className="pointer-events-none absolute inset-0 z-30 block" aria-hidden="true">
+      <BoardWideStage>
+        <span
+          className="absolute block"
+          style={{
+            left: `${l}%`,
+            top: `${t}%`,
+            width: `${w}%`,
+            height: `${h}%`,
+            rotate: s.rot ? `${s.rot}deg` : undefined,
+            ...impactVars(s.rgb, (delayMs + s.at) / 1000),
+          }}
+        >
+          {s.laser ? <LaserStrike /> : null}
+          {s.glyph ? (
+            <PieceShatter
+              glyph={
+                <svg viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+                  {s.glyph}
+                </svg>
+              }
+            />
+          ) : null}
+          {s.shock ? <Shockwave /> : null}
+        </span>
+      </BoardWideStage>
+    </span>
+  );
+}
+
+/** Bind one bespoke scene to its config, landing its per-card impact over the
+ * lead. Target and entrance cuts keep the scene's own art unchanged. */
+function S(Render: SigPlugin["Render"], config: SigPlugin["config"], imp?: Imp): SigPlugin {
+  if (!imp) return { config, Render };
+  function FlagshipHit(p: { lead: boolean; role: SigRole; delayMs: number }) {
+    if (p.role !== "lead") return <Render {...p} />;
+    return (
+      <span className="pointer-events-none absolute inset-0 block" aria-hidden="true">
+        <span
+          className={`${QUAKE_CLASS} absolute inset-0 block`}
+          style={impactVars(imp!.rgb, (p.delayMs + imp!.at) / 1000)}
+        >
+          <Render {...p} />
+        </span>
+        <ImpactHit s={imp!} delayMs={p.delayMs} />
+      </span>
+    );
+  }
+  return { config, Render: FlagshipHit };
+}
+
+
 export const PLAYS: Record<string, SigPlugin> = {
-  hx4_overslept_officers: S(OversleptOfficersScene, { ordering: "radial", staggerMs: 70, victims: ["n", "b"], hasLead: true, sound: "snooze", anchor: "board" }),
-  hx4_short_stirrups: S(ShortStirrupsScene, { ordering: "octagon", staggerMs: 60, victims: ["n"], hasLead: true, sound: "wall", anchor: "board" }),
-  op_no_horses_on_lawn: S(NoHorsesOnLawnScene, { ordering: "sweep", staggerMs: 65, victims: ["n"], hasLead: true, sound: "rampage", anchor: "cast" }),
-  op_old_counselor: S(OldCounselorScene, { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "snooze", anchor: "board" }),
-  op_stable_gate: S(StableGateScene, { ordering: "line", staggerMs: 70, victims: ["r", "n"], hasLead: true, sound: "wall", anchor: "cast" }),
-  bn4_gum_drop: S(GumDropScene, { ordering: "radial", staggerMs: 0, victims: ["n", "b", "r", "q"], hasLead: true, sound: "snooze", anchor: "cast" }),
-  bn4_knights_errand: S(KnightsErrandScene, { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "blitz", anchor: "cast" }),
-  hx4_no_mans_reach: S(NoMansReachScene, { ordering: "line", staggerMs: 60, victims: ["n"], hasLead: true, sound: "wall", anchor: "cast" }),
-  hx4_tangled_reins: S(TangledReinsScene, { ordering: "octagon", staggerMs: 55, victims: ["n"], hasLead: true, sound: "rampage", anchor: "cast" }),
-  op_camel_fair: S(CamelFairScene, { ordering: "line", staggerMs: 80, victims: ["n"], hasLead: true, sound: "coronation", anchor: "cast" }),
-  op_colts_gallop: S(ColtsGallopScene, { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "rampage", anchor: "cast" }),
-  op_dromedary_post: S(DromedaryPostScene, { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "blitz", anchor: "cast" }),
-  op_field_sketch: S(FieldSketchScene, { ordering: "sweep", staggerMs: 70, victims: ["n", "b"], hasLead: true, sound: "siege", anchor: "board" }),
-  op_giraffe_keeper: S(GiraffeKeeperScene, { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "coronation", anchor: "cast" }),
-  op_green_room: S(GreenRoomScene, { ordering: "line", staggerMs: 75, victims: ["n"], hasLead: true, sound: "snooze", anchor: "cast" }),
-  op_hired_muscle: S(HiredMuscleScene, { ordering: "line", staggerMs: 60, victims: ["n", "b"], hasLead: true, sound: "siege", anchor: "aim" }),
-  op_invitation_only: S(InvitationOnlyScene, { ordering: "line", staggerMs: 70, victims: "all", hasLead: true, sound: "wall", anchor: "cast" }),
-  op_long_jump: S(LongJumpScene, { ordering: "line", staggerMs: 60, victims: ["n"], hasLead: true, sound: "blitz", anchor: "aim" }),
-  op_parade_elephant: S(ParadeElephantScene, { ordering: "radial", staggerMs: 60, victims: ["n"], hasLead: true, sound: "coronation", anchor: "cast" }),
-  op_pole_vault: S(PoleVaultScene, { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "rampage", anchor: "cast" }),
-  op_signal_rocket: S(SignalRocketScene, { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "blitz", anchor: "cast" }),
-  op_stage_left: S(StageLeftScene, { ordering: "sweep", staggerMs: 70, victims: ["n"], hasLead: true, sound: "rampage", anchor: "cast" }),
-  op_title_deed: S(TitleDeedScene, { ordering: "radial", staggerMs: 60, victims: ["k", "r"], hasLead: true, sound: "siege", anchor: "board" }),
-  op_vaulting_horse: S(VaultingHorseScene, { ordering: "line", staggerMs: 65, victims: ["b", "n"], hasLead: true, sound: "wall", anchor: "cast" }),
-  op_viziers_errand: S(ViziersErrandScene, { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "snooze", anchor: "cast" }),
-  op_zebra_crossing: S(ZebraCrossingScene, { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "rampage", anchor: "cast" }),
-  ov_nightlight: S(NightlightScene, { ordering: "octagon", staggerMs: 55, victims: ["n"], hasLead: true, sound: "snooze", anchor: "board" }),
+  hx4_overslept_officers: S(OversleptOfficersScene, { ordering: "radial", staggerMs: 70, victims: ["n", "b"], hasLead: true, sound: "snooze", anchor: "board" }, { rgb: "216 196 138", at: 520, shock: true, box: [42, 38, 15, 12] }),
+  hx4_short_stirrups: S(ShortStirrupsScene, { ordering: "octagon", staggerMs: 60, victims: ["n"], hasLead: true, sound: "wall", anchor: "board" }, { rgb: "192 138 78", at: 560, glyph: impShoe("#c08a4e", "#2b1b0d"), shock: true, box: [43, 37, 14, 13] }),
+  op_no_horses_on_lawn: S(NoHorsesOnLawnScene, { ordering: "sweep", staggerMs: 65, victims: ["n"], hasLead: true, sound: "rampage", anchor: "cast" }, { rgb: "143 191 106", at: 480, shock: true, box: [43, 39, 14, 11] }),
+  op_old_counselor: S(OldCounselorScene, { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "snooze", anchor: "board" }, { rgb: "185 188 196", at: 440, shock: true, box: [44, 39, 12, 11] }),
+  op_stable_gate: S(StableGateScene, { ordering: "line", staggerMs: 70, victims: ["r", "n"], hasLead: true, sound: "wall", anchor: "cast" }, { rgb: "169 116 63", at: 540, glyph: impShoe("#a9743f", "#241608"), shock: true, box: [43, 37, 14, 14] }),
+  bn4_gum_drop: S(GumDropScene, { ordering: "radial", staggerMs: 0, victims: ["n", "b", "r", "q"], hasLead: true, sound: "snooze", anchor: "cast" }, { rgb: "240 168 200", at: 400, shock: true, box: [45, 39, 11, 11] }),
+  bn4_knights_errand: S(KnightsErrandScene, { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "blitz", anchor: "cast" }, { rgb: "224 201 166", at: 520, laser: true, shock: true, box: [44, 36, 12, 15] }),
+  hx4_no_mans_reach: S(NoMansReachScene, { ordering: "line", staggerMs: 60, victims: ["n"], hasLead: true, sound: "wall", anchor: "cast" }, { rgb: "111 125 150", at: 480, laser: true, box: [44, 35, 12, 16] }),
+  hx4_tangled_reins: S(TangledReinsScene, { ordering: "octagon", staggerMs: 55, victims: ["n"], hasLead: true, sound: "rampage", anchor: "cast" }, { rgb: "164 100 60", at: 460, glyph: impShoe("#a4643c", "#2e1c11"), box: [44, 38, 12, 12] }),
+  op_camel_fair: S(CamelFairScene, { ordering: "line", staggerMs: 80, victims: ["n"], hasLead: true, sound: "coronation", anchor: "cast" }, { rgb: "232 180 92", at: 460, shock: true, box: [43, 38, 14, 12] }),
+  op_colts_gallop: S(ColtsGallopScene, { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "rampage", anchor: "cast" }, { rgb: "201 128 62", at: 500, shock: true, box: [42, 39, 15, 11] }),
+  op_dromedary_post: S(DromedaryPostScene, { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "blitz", anchor: "cast" }, { rgb: "207 214 221", at: 440, laser: true, box: [44, 36, 12, 15], rot: -8 }),
+  op_field_sketch: S(FieldSketchScene, { ordering: "sweep", staggerMs: 70, victims: ["n", "b"], hasLead: true, sound: "siege", anchor: "board" }, { rgb: "220 210 194", at: 380, shock: true, box: [45, 40, 11, 10] }),
+  op_giraffe_keeper: S(GiraffeKeeperScene, { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "coronation", anchor: "cast" }, { rgb: "180 212 192", at: 500, laser: true, box: [44, 33, 12, 18] }),
+  op_green_room: S(GreenRoomScene, { ordering: "line", staggerMs: 75, victims: ["n"], hasLead: true, sound: "snooze", anchor: "cast" }, { rgb: "127 196 168", at: 420, shock: true, box: [44, 39, 12, 12] }),
+  op_hired_muscle: S(HiredMuscleScene, { ordering: "line", staggerMs: 60, victims: ["n", "b"], hasLead: true, sound: "siege", anchor: "aim" }, { rgb: "154 142 196", at: 540, laser: true, shock: true, box: [43, 36, 13, 15], rot: 10 }),
+  op_invitation_only: S(InvitationOnlyScene, { ordering: "line", staggerMs: 70, victims: "all", hasLead: true, sound: "wall", anchor: "cast" }, { rgb: "208 164 100", at: 440, glyph: impShoe("#d0a464", "#2b1d0c"), box: [44, 38, 12, 12] }),
+  op_long_jump: S(LongJumpScene, { ordering: "line", staggerMs: 60, victims: ["n"], hasLead: true, sound: "blitz", anchor: "aim" }, { rgb: "134 183 216", at: 560, laser: true, shock: true, box: [43, 37, 13, 14], rot: -14 }),
+  op_parade_elephant: S(ParadeElephantScene, { ordering: "radial", staggerMs: 60, victims: ["n"], hasLead: true, sound: "coronation", anchor: "cast" }, { rgb: "224 106 114", at: 600, glyph: impShoe("#e06a72", "#35131a"), shock: true, box: [42, 36, 15, 15] }),
+  op_pole_vault: S(PoleVaultScene, { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "rampage", anchor: "cast" }, { rgb: "201 154 106", at: 520, laser: true, box: [44, 34, 12, 17] }),
+  op_signal_rocket: S(SignalRocketScene, { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "blitz", anchor: "cast" }, { rgb: "240 192 76", at: 580, laser: true, box: [44, 32, 12, 19] }),
+  op_stage_left: S(StageLeftScene, { ordering: "sweep", staggerMs: 70, victims: ["n"], hasLead: true, sound: "rampage", anchor: "cast" }, { rgb: "184 160 216", at: 480, glyph: impShoe("#b8a0d8", "#221a33"), box: [43, 38, 13, 12] }),
+  op_title_deed: S(TitleDeedScene, { ordering: "radial", staggerMs: 60, victims: ["k", "r"], hasLead: true, sound: "siege", anchor: "board" }, { rgb: "203 176 138", at: 470, shock: true, box: [44, 39, 12, 11] }),
+  op_vaulting_horse: S(VaultingHorseScene, { ordering: "line", staggerMs: 65, victims: ["b", "n"], hasLead: true, sound: "wall", anchor: "cast" }, { rgb: "138 176 200", at: 580, glyph: impShoe("#8ab0c8", "#16232e"), shock: true, box: [43, 36, 14, 14] }),
+  op_viziers_errand: S(ViziersErrandScene, { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "snooze", anchor: "cast" }, { rgb: "212 168 108", at: 460, laser: true, box: [44, 36, 12, 14] }),
+  op_zebra_crossing: S(ZebraCrossingScene, { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "rampage", anchor: "cast" }, { rgb: "232 226 212", at: 430, shock: true, box: [43, 40, 13, 11] }),
+  ov_nightlight: S(NightlightScene, { ordering: "octagon", staggerMs: 55, victims: ["n"], hasLead: true, sound: "snooze", anchor: "board" }, { rgb: "242 208 137", at: 410, shock: true, box: [45, 39, 11, 11] }),
 };

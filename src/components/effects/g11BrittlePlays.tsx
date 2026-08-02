@@ -37,6 +37,7 @@ import "./g11BrittlePlays.css";
 import type { CSSProperties, ReactNode } from "react";
 import type { SigPlugin, SigRole } from "./sigPlugins";
 import { AimStage, BoardFrame, BoardWideStage } from "./stage";
+import { LaserStrike, PieceShatter, Shockwave, QUAKE_CLASS, impactVars } from "./impact/impact";
 
 interface SceneProps {
   lead: boolean;
@@ -1659,123 +1660,138 @@ function SnowdropScene({ role, delayMs }: SceneProps) {
 }
 
 /* =============================================================================
+   FLAGSHIP IMPACT PASS — brittle things get LASERED, SHATTERED and RUNG.
+
+   Layered OVER each scene's own signature from the shared impact vocabulary
+   (impact/impact.tsx): a descending laser column, the struck thing splitting
+   in half and spraying shards, a ground shockwave, and the whole stage
+   jolting on the same beat. Each PLAYS entry declares its own combination,
+   impact beat, tint, landing box and tilt below, so every card in the module
+   lands a hit its siblings do not. The quake rides an inner wrapper (the
+   stage's own transform is the anchor clamp and must not be overridden) and
+   stays inside this scene's stage — the real board crop never shakes. The
+   whole composite is transform/opacity only, one-shot, scaled by --fx-dur,
+   and dark under html[data-anim="off"] via the global animation gate.
+   ========================================================================== */
+
+/** Per-card impact spec. `at` is the impact beat in ms after the lead's
+ * stagger; the laser (when present) LEADS that beat by 0.4s per the shared
+ * impact-timing contract, so the column reads as the CAUSE of the hit. */
+interface Imp {
+  /** Impact tint: the "r g b" triple --imp-rgb expects (the card's core). */
+  rgb: string;
+  /** The impact beat, ms into the lead. */
+  at: number;
+  laser?: boolean;
+  shock?: boolean;
+  /** Shatter glyph (24x24 viewBox): the struck thing, split in half. */
+  glyph?: ReactNode;
+  /** Landing box, % of the scene canvas. Defaults to the cast square. */
+  box?: [number, number, number, number];
+  /** Static tilt of the whole composite, in degrees (angled columns). */
+  rot?: number;
+}
+
+/** A jagged pane shard: the module's brittle victim, ready to split. */
+const impShard = (fill: string, edge: string): ReactNode => (
+  <path
+    d="M12 2.4l6.8 5.4-2.6 8.8-8 5-4.4-10.6z"
+    fill={fill}
+    stroke={edge}
+    strokeWidth="1.2"
+    strokeLinejoin="round"
+  />
+);
+
+/** The composite itself, staged over the scene's canvas on the impact beat. */
+function ImpactHit({ s, delayMs }: { s: Imp; delayMs: number }) {
+  const [l, t, w, h] = s.box ?? [43, 38, 14, 14];
+  return (
+    <span className="pointer-events-none absolute inset-0 z-30 block" aria-hidden="true">
+      <BoardWideStage>
+        <span
+          className="absolute block"
+          style={{
+            left: `${l}%`,
+            top: `${t}%`,
+            width: `${w}%`,
+            height: `${h}%`,
+            rotate: s.rot ? `${s.rot}deg` : undefined,
+            ...impactVars(s.rgb, (delayMs + s.at) / 1000),
+          }}
+        >
+          {s.laser ? <LaserStrike /> : null}
+          {s.glyph ? (
+            <PieceShatter
+              glyph={
+                <svg viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+                  {s.glyph}
+                </svg>
+              }
+            />
+          ) : null}
+          {s.shock ? <Shockwave /> : null}
+        </span>
+      </BoardWideStage>
+    </span>
+  );
+}
+
+/** Bind one bespoke scene to its config, landing its per-card impact over the
+ * lead. Target and entrance cuts keep the scene's own art unchanged. */
+function S(Render: SigPlugin["Render"], config: SigPlugin["config"], imp?: Imp): SigPlugin {
+  if (!imp) return { config, Render };
+  function FlagshipHit(p: { lead: boolean; role: SigRole; delayMs: number }) {
+    if (p.role !== "lead") return <Render {...p} />;
+    return (
+      <span className="pointer-events-none absolute inset-0 block" aria-hidden="true">
+        <span
+          className={`${QUAKE_CLASS} absolute inset-0 block`}
+          style={impactVars(imp!.rgb, (p.delayMs + imp!.at) / 1000)}
+        >
+          <Render {...p} />
+        </span>
+        <ImpactHit s={imp!} delayMs={p.delayMs} />
+      </span>
+    );
+  }
+  return { config, Render: FlagshipHit };
+}
+
+/* =============================================================================
    The table. Keys sit at exactly two spaces of indent: the animation audit and
    check-sig-plugins.cjs parse this block as TEXT.
    ========================================================================== */
 
 export const PLAYS: Record<string, SigPlugin> = {
-  bn4_cold_snap: {
-    config: { ordering: "radial", staggerMs: 90, victims: "all", hasLead: true, sound: "massfreeze", source: "frozen", anchor: "cast" },
-    Render: ColdSnapScene,
-  },
-  hx4_bounty_posted: {
-    config: { ordering: "radial", staggerMs: 70, victims: "all", hasLead: true, sound: "petrify", source: "frozen", anchor: "cast" },
-    Render: BountyPostedScene,
-  },
-  hx4_caught_mid_stride: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", source: "frozen", anchor: "aim" },
-    Render: CaughtMidStrideScene,
-  },
-  hx4_creaking_gallows: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall", source: "frozen", anchor: "cast" },
-    Render: CreakingGallowsScene,
-  },
-  hx4_pawnbrokers_lien: {
-    config: { ordering: "file", staggerMs: 80, victims: ["p"], hasLead: true, sound: "petrify", source: "frozen", anchor: "board" },
-    Render: PawnbrokersLienScene,
-  },
-  hx4_sagging_shelves: {
-    config: { ordering: "sweep", staggerMs: 90, victims: ["n", "b"], hasLead: true, sound: "wall", source: "frozen", anchor: "board" },
-    Render: SaggingShelvesScene,
-  },
-  hx4_second_frost: {
-    config: { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "petrifiedforest", anchor: "board" },
-    Render: SecondFrostScene,
-  },
-  bn4_glass_of_water: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", anchor: "cast" },
-    Render: GlassOfWaterScene,
-  },
-  bn4_kettle_on: {
-    config: { ordering: "radial", staggerMs: 70, victims: "all", hasLead: true, sound: "wall", anchor: "board" },
-    Render: KettleOnScene,
-  },
+  bn4_cold_snap: S(ColdSnapScene, { ordering: "radial", staggerMs: 90, victims: "all", hasLead: true, sound: "massfreeze", source: "frozen", anchor: "cast" }, { rgb: "168 220 237", at: 560, glyph: impShard("#a8dced", "#2f3e42"), shock: true, box: [43, 35, 14, 16] }),
+  hx4_bounty_posted: S(BountyPostedScene, { ordering: "radial", staggerMs: 70, victims: "all", hasLead: true, sound: "petrify", source: "frozen", anchor: "cast" }, { rgb: "232 192 122", at: 640, laser: true, glyph: impShard("#e8c07a", "#2c2011"), box: [40, 36, 13, 13] }),
+  hx4_caught_mid_stride: S(CaughtMidStrideScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", source: "frozen", anchor: "aim" }, { rgb: "255 243 220", at: 520, laser: true, shock: true, box: [44, 38, 12, 12], rot: -14 }),
+  hx4_creaking_gallows: S(CreakingGallowsScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall", source: "frozen", anchor: "cast" }, { rgb: "207 214 194", at: 600, glyph: impShard("#cfd6c2", "#3a3c36"), shock: true, box: [43, 40, 13, 15] }),
+  hx4_pawnbrokers_lien: S(PawnbrokersLienScene, { ordering: "file", staggerMs: 80, victims: ["p"], hasLead: true, sound: "petrify", source: "frozen", anchor: "board" }, { rgb: "216 185 138", at: 700, laser: true, shock: true, box: [42, 38, 15, 15] }),
+  hx4_sagging_shelves: S(SaggingShelvesScene, { ordering: "sweep", staggerMs: 90, victims: ["n", "b"], hasLead: true, sound: "wall", source: "frozen", anchor: "board" }, { rgb: "150 216 196", at: 620, shock: true, box: [36, 42, 26, 10] }),
+  hx4_second_frost: S(SecondFrostScene, { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "petrifiedforest", anchor: "board" }, { rgb: "185 168 228", at: 660, laser: true, glyph: impShard("#b9a8e4", "#1e1832"), shock: true, box: [43, 39, 13, 14] }),
+  bn4_glass_of_water: S(GlassOfWaterScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", anchor: "cast" }, { rgb: "166 219 232", at: 480, shock: true, box: [44, 40, 12, 12] }),
+  bn4_kettle_on: S(KettleOnScene, { ordering: "radial", staggerMs: 70, victims: "all", hasLead: true, sound: "wall", anchor: "board" }, { rgb: "207 228 238", at: 540, glyph: impShard("#cfe4ee", "#16262e"), box: [44, 37, 12, 14] }),
   // Two NAMED enemy pawns, so the play lasers them down rather than blooming
   // on the caster's own square: see PuddleFreezeScene's <Reach>.
-  bn4_puddle_freeze: {
-    config: { ordering: "radial", staggerMs: 90, victims: ["p"], hasLead: true, sound: "massfreeze", source: "frozen", anchor: "aim" },
-    Render: PuddleFreezeScene,
-  },
-  hx4_carrion_crows: {
-    config: { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "wall", source: "frozen", anchor: "cast" },
-    Render: CarrionCrowsScene,
-  },
-  hx4_heavy_dew: {
-    config: { ordering: "sweep", staggerMs: 80, victims: "all", hasLead: true, sound: "massfreeze", source: "frozen", anchor: "board" },
-    Render: HeavyDewScene,
-  },
-  hx4_jam_on_the_row: {
-    config: { ordering: "line", staggerMs: 70, victims: "all", hasLead: true, sound: "wall", source: "frozen", anchor: "board" },
-    Render: JamOnTheRowScene,
-  },
-  hx4_the_ides: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "petrify", source: "frozen", anchor: "cast" },
-    Render: TheIdesScene,
-  },
-  hx4_winded_destrier: {
-    config: { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "petrify", source: "frozen", anchor: "aim" },
-    Render: WindedDestrierScene,
-  },
-  bn4_warm_soup: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", anchor: "cast" },
-    Render: WarmSoupScene,
-  },
-  hx4_cold_start: {
-    config: { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "wall", source: "frozen", anchor: "cast" },
-    Render: ColdStartScene,
-  },
-  hx4_frost_footprints: {
-    config: { ordering: "sweep", staggerMs: 80, victims: "all", hasLead: true, sound: "petrify", anchor: "board" },
-    Render: FrostFootprintsScene,
-  },
-  hx4_hand_cramp: {
-    config: { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "petrifiedforest", source: "frozen", anchor: "cast" },
-    Render: HandCrampScene,
-  },
-  hx4_pebble_in_the_shoe: {
-    config: { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "petrify", source: "frozen", anchor: "cast" },
-    Render: PebbleInTheShoeScene,
-  },
-  hx4_court_jester: {
-    config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", source: "frozen", anchor: "cast" },
-    Render: CourtJesterScene,
-  },
-  hx4_dunce_detail: {
-    config: { ordering: "radial", staggerMs: 0, victims: ["n", "b"], hasLead: true, sound: "petrify", source: "frozen", anchor: "cast" },
-    Render: DunceDetailScene,
-  },
-  hx4_early_frost: {
-    config: { ordering: "sweep", staggerMs: 70, victims: ["p"], hasLead: true, sound: "massfreeze", anchor: "cast" },
-    Render: EarlyFrostScene,
-  },
-  hx4_mild_sting: {
-    config: { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "petrify", source: "frozen", anchor: "cast" },
-    Render: MildStingScene,
-  },
-  hx4_sleepy_sentry: {
-    config: { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "clockice", source: "frozen", anchor: "cast" },
-    Render: SleepySentryScene,
-  },
-  hx4_thin_ice_patch: {
-    config: { ordering: "file", staggerMs: 90, victims: "all", hasLead: true, sound: "wall", anchor: "cast" },
-    Render: ThinIcePatchScene,
-  },
-  op_first_frost: {
-    config: { ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "clockice", anchor: "board" },
-    Render: FirstFrostScene,
-  },
-  op_snowdrop: {
-    config: { ordering: "file", staggerMs: 80, victims: ["p"], hasLead: true, sound: "massfreeze", anchor: "cast" },
-    Render: SnowdropScene,
-  },
+  bn4_puddle_freeze: S(PuddleFreezeScene, { ordering: "radial", staggerMs: 90, victims: ["p"], hasLead: true, sound: "massfreeze", source: "frozen", anchor: "aim" }, { rgb: "183 198 224", at: 500, laser: true, box: [43, 36, 14, 20] }),
+  hx4_carrion_crows: S(CarrionCrowsScene, { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "wall", source: "frozen", anchor: "cast" }, { rgb: "140 155 176", at: 580, glyph: impShard("#8c9bb0", "#121722"), shock: true, box: [42, 33, 15, 17] }),
+  hx4_heavy_dew: S(HeavyDewScene, { ordering: "sweep", staggerMs: 80, victims: "all", hasLead: true, sound: "massfreeze", source: "frozen", anchor: "board" }, { rgb: "255 243 218", at: 520, shock: true, box: [45, 42, 11, 11] }),
+  hx4_jam_on_the_row: S(JamOnTheRowScene, { ordering: "line", staggerMs: 70, victims: "all", hasLead: true, sound: "wall", source: "frozen", anchor: "board" }, { rgb: "224 138 160", at: 560, glyph: impShard("#e08aa0", "#33131e"), box: [43, 41, 13, 13] }),
+  hx4_the_ides: S(TheIdesScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "petrify", source: "frozen", anchor: "cast" }, { rgb: "210 180 99", at: 640, laser: true, shock: true, box: [42, 34, 15, 18] }),
+  hx4_winded_destrier: S(WindedDestrierScene, { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "petrify", source: "frozen", anchor: "aim" }, { rgb: "159 182 204", at: 590, glyph: impShard("#9fb6cc", "#2d3339"), shock: true, box: [44, 39, 12, 13], rot: 10 }),
+  bn4_warm_soup: S(WarmSoupScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", anchor: "cast" }, { rgb: "182 224 234", at: 460, glyph: impShard("#b6e0ea", "#333f42"), box: [45, 34, 10, 16] }),
+  hx4_cold_start: S(ColdStartScene, { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "wall", source: "frozen", anchor: "cast" }, { rgb: "223 228 234", at: 500, shock: true, box: [43, 38, 13, 13] }),
+  hx4_frost_footprints: S(FrostFootprintsScene, { ordering: "sweep", staggerMs: 80, victims: "all", hasLead: true, sound: "petrify", anchor: "board" }, { rgb: "195 212 226", at: 540, laser: true, box: [44, 37, 12, 15], rot: -8 }),
+  hx4_hand_cramp: S(HandCrampScene, { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "petrifiedforest", source: "frozen", anchor: "cast" }, { rgb: "216 220 234", at: 440, shock: true, box: [44, 40, 12, 12] }),
+  hx4_pebble_in_the_shoe: S(PebbleInTheShoeScene, { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "petrify", source: "frozen", anchor: "cast" }, { rgb: "200 191 166", at: 520, glyph: impShard("#c8bfa6", "#2a2618"), box: [45, 41, 11, 11] }),
+  hx4_court_jester: S(CourtJesterScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", source: "frozen", anchor: "cast" }, { rgb: "230 200 240", at: 420, shock: true, box: [43, 36, 13, 15] }),
+  hx4_dunce_detail: S(DunceDetailScene, { ordering: "radial", staggerMs: 0, victims: ["n", "b"], hasLead: true, sound: "petrify", source: "frozen", anchor: "cast" }, { rgb: "240 201 138", at: 460, laser: true, box: [44, 34, 12, 18] }),
+  hx4_early_frost: S(EarlyFrostScene, { ordering: "sweep", staggerMs: 70, victims: ["p"], hasLead: true, sound: "massfreeze", anchor: "cast" }, { rgb: "167 207 224", at: 480, glyph: impShard("#a7cfe0", "#2f3a3f"), box: [44, 38, 12, 12] }),
+  hx4_mild_sting: S(MildStingScene, { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "petrify", source: "frozen", anchor: "cast" }, { rgb: "237 200 96", at: 400, shock: true, box: [45, 40, 10, 10] }),
+  hx4_sleepy_sentry: S(SleepySentryScene, { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "clockice", source: "frozen", anchor: "cast" }, { rgb: "159 176 200", at: 440, laser: true, box: [44, 36, 12, 14] }),
+  hx4_thin_ice_patch: S(ThinIcePatchScene, { ordering: "file", staggerMs: 90, victims: "all", hasLead: true, sound: "wall", anchor: "cast" }, { rgb: "188 216 228", at: 530, shock: true, box: [41, 39, 17, 11] }),
+  op_first_frost: S(FirstFrostScene, { ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "clockice", anchor: "board" }, { rgb: "176 216 234", at: 560, laser: true, shock: true, box: [43, 35, 14, 16] }),
+  op_snowdrop: S(SnowdropScene, { ordering: "file", staggerMs: 80, victims: ["p"], hasLead: true, sound: "massfreeze", anchor: "cast" }, { rgb: "207 232 216", at: 430, shock: true, box: [44, 39, 12, 12] }),
 };
