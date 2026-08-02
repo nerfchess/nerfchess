@@ -798,7 +798,9 @@
 
 /* --- animations off (Settings) -----------------------------------------------
    Everything in this module is a transient one-shot flourish: hide the whole
-   layer outright (defensive — the caller's play layer gates it too). */
+   layer outright (defensive — the caller's play layer gates it too). The
+   FLAGSHIP impact nodes (impact.css laser / shatter / shockwave / quake) all
+   mount inside a .pnp root, so display:none here takes them dark too. */
 html[data-anim="off"] .pnp,
 html[data-anim="off"] .pnp * {
   animation: none !important;
