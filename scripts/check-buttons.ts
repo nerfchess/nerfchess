@@ -97,7 +97,6 @@ const BASELINE: string[] = [
   "src/app/mod/cards/page.tsx",
   "src/app/mod/house/page.tsx",
   "src/app/mod/page.tsx",
-  "src/app/mod/stats/page.tsx",
   "src/app/page.tsx",
   "src/app/play/page.tsx",
   "src/app/profile/edit/page.tsx",
