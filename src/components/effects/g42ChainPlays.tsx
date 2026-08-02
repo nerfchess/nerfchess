@@ -37,6 +37,7 @@ import "./g42ChainPlays.css";
 import type { CSSProperties, ReactNode } from "react";
 import type { SigPlugin, SigRole } from "./sigPlugins";
 import { AimStage, BoardFrame, BoardWideStage } from "./stage";
+import { LaserStrike, PieceShatter, Shockwave, impactVars } from "./impact/impact";
 
 interface SceneProps {
   lead: boolean;
@@ -2151,3 +2152,203 @@ export const PLAYS: Record<string, SigPlugin> = {
   ov_barn_door: S(BarnDoorScene, { ordering: "file", staggerMs: 70, victims: "all", hasLead: true, sound: "colossus", anchor: "board" }),
   ov_split_timeline: S(SplitTimelineScene, { ordering: "radial", staggerMs: 65, victims: "all", hasLead: true, sound: "cataclysm", anchor: "cast" }),
 };
+
+/* =============================================================================
+   FLAGSHIP IMPACT WAVE. Every lead now LANDS: a per-card impact beat from the
+   shared violence vocabulary (impact/impact.tsx). This is the CHAIN module,
+   so the signature move is the LINK SNAP - the binding cards shatter a
+   chain-link silhouette in half on the beat - while the storm cluster lands
+   thin bolt-columns and the fire cluster hits in ember tints. The whole scene
+   rides a cell-scale quake wrapper (g42-quakecell, g42ChainPlays.css) on the
+   same --imp-delay beat. Additive only: the original scenes render unchanged
+   underneath.
+
+   Node cost per lead: quake 1, laser 2, shockwave 1, shatter 6 - the combos
+   below stay inside the 16-animated-node scene budget.
+   ========================================================================== */
+
+interface Imp {
+  /** the impact beat, ms after delayMs - synced to the scene's own strike */
+  at: number;
+  /** "#rrggbb" tint for the impact vocabulary (one of the card's 3 colours) */
+  tint: string;
+  /** the column of light (thin `s` makes it a storm bolt) */
+  laser?: boolean;
+  /** ground ring; "wet" flattens it into a low water-crash ellipse */
+  shock?: boolean | "wet";
+  /** shatter silhouette: link, ribbon, panel - split in half on the beat */
+  glyph?: ReactNode;
+  /** placement in stage percent (one cell = 7.142857; cast centre = 50) */
+  x?: number;
+  y?: number;
+  s?: number;
+  /** stage the beat on the aim vector (art points +x) instead of upright */
+  aim?: boolean;
+  /** slide the beat to the victim's distance along the vector (--fx-len) */
+  len?: boolean;
+}
+
+/** hex "#rrggbb" -> the "r g b" triple --imp-rgb wants. */
+function impRgb(hex: string): string {
+  return `${parseInt(hex.slice(1, 3), 16)} ${parseInt(hex.slice(3, 5), 16)} ${parseInt(hex.slice(5, 7), 16)}`;
+}
+
+/** Shatter silhouettes, painted in the card's own palette. A chain link is
+ *  stroke-only, so snapping it in half reads as a broken ring. */
+function impGlyph(path: string, fill: string, stroke: string, w = 1.4): ReactNode {
+  return (
+    <svg viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+      <path d={path} fill={fill} stroke={stroke} strokeWidth={w} strokeLinejoin="round" strokeLinecap="round" />
+    </svg>
+  );
+}
+const IG_LINK = "M8.5 4h7A4.5 4.5 0 0 1 20 8.5v7a4.5 4.5 0 0 1-4.5 4.5h-7A4.5 4.5 0 0 1 4 15.5v-7A4.5 4.5 0 0 1 8.5 4z";
+const IG_PANE = "M7 2.6h10v18.8H7z";
+
+/** The impact composite, staged over the card's own action point. */
+function ImpactBeat({ imp, delayMs }: { imp: Imp; delayMs: number }) {
+  const s = imp.s ?? 7.2;
+  const x = imp.x ?? 50;
+  const y = imp.y ?? 50;
+  const lenShift = imp.len ? " + var(--fx-len, 3) * 7.142857%" : "";
+  const inner = (
+    <span className="g42-impactbed absolute inset-0 block">
+      <span
+        className="absolute block"
+        style={{
+          left: `calc(${x - s / 2}%${lenShift})`,
+          top: `${y - s / 2}%`,
+          width: `${s}%`,
+          height: `${s}%`,
+        }}
+      >
+        {imp.laser && <LaserStrike />}
+        {imp.glyph != null && <PieceShatter glyph={imp.glyph} />}
+        {imp.shock === true && <Shockwave />}
+      </span>
+      {imp.shock === "wet" && (
+        <span
+          className="absolute block"
+          style={{
+            left: `calc(${x - s}%${lenShift})`,
+            top: `${y - s * 0.2}%`,
+            width: `${s * 2}%`,
+            height: `${s * 0.8}%`,
+          }}
+        >
+          <Shockwave />
+        </span>
+      )}
+    </span>
+  );
+  return imp.aim ? <AimStage>{inner}</AimStage> : <BoardWideStage>{inner}</BoardWideStage>;
+}
+
+/** Wrap a card's Render: leads gain the quake wrapper plus the impact beat. */
+function withImpact(Render: SigPlugin["Render"], imp: Imp): SigPlugin["Render"] {
+  function ImpactLead(props: { lead: boolean; role: SigRole; delayMs: number }) {
+    if (props.role !== "lead") return <Render {...props} />;
+    return (
+      <span
+        className="g42-quakecell absolute inset-0 block"
+        style={impactVars(impRgb(imp.tint), (props.delayMs + imp.at) / 1000)}
+      >
+        <Render {...props} />
+        <ImpactBeat imp={imp} delayMs={props.delayMs} />
+      </span>
+    );
+  }
+  return ImpactLead;
+}
+
+/* Per-card cue sheet: each hit lands on ITS scene's strike beat, at ITS
+   action point, in ITS palette - no two siblings share a beat + combo. */
+const IMPACTS: Record<string, Imp> = {
+  // the report is nailed to the border post: stamp column + post boom
+  op_border_report: { at: 560, tint: "#ffc46b", laser: true, shock: true, y: 52 },
+  // the census closes: the counting bell drops its final tally
+  op_day_census: { at: 590, tint: "#cfe6ff", laser: true, shock: true, y: 48, s: 6.4 },
+  // the atlas page slaps the water line: WET crash along the bank
+  op_left_bank_atlas: { at: 480, tint: "#6fa8d8", laser: true, shock: "wet", y: 54 },
+  // the floor plan is unrolled and pinned: four-corner thump
+  op_palace_floor_plan: { at: 680, tint: "#e8d3a8", laser: true, shock: true, y: 50, s: 8 },
+  // the pep talk lands like a slap on the back: big warm boom
+  op_pep_talk: { at: 560, tint: "#ffb066", laser: true, shock: true, y: 52, s: 8.2 },
+  // the threat pin is DRIVEN through the ledger page
+  op_threat_ledger: { at: 520, tint: "#ff7a6b", laser: true, shock: true, y: 48, s: 5.6 },
+  // the ticker prints the verdict: the tape guillotine chops down
+  op_ticker_tape: { at: 660, tint: "#a8e6c0", laser: true, shock: true, y: 44, s: 6 },
+  // the glider flares and THUMPS onto the branch
+  ov_sugar_glider: { at: 520, tint: "#e8a94a", laser: true, shock: true, y: 54, s: 6.6 },
+  // the do-si-do closes: both partners stamp at the swap point
+  op_do_si_do: { at: 560, tint: "#b9d6ff", laser: true, shock: true, aim: true, len: true, s: 6 },
+  // the party hat is JAMMED on: elastic snap + confetti ring
+  bn4_party_hat: { at: 620, tint: "#ff8fd0", laser: true, shock: true, y: 46, s: 6.4 },
+  // the gryphon slams down on the knight's square, talons first
+  bn4_gryphon_rider: { at: 520, tint: "#ffd48a", laser: true, shock: true, aim: true, len: true, s: 7.4 },
+  // the marionette STRING SNAPS: the control link shatters in half
+  ov_puppeteers_gala: { at: 480, tint: "#d8b0f0", glyph: impGlyph(IG_LINK, "none", "#d8b0f0", 2.6), shock: true, aim: true, len: true, s: 6 },
+  // the last door slams down the corridor: frame boom at reach
+  bn4_hall_of_doors: { at: 620, tint: "#ffe0a0", laser: true, shock: true, aim: true, len: true, s: 6.8 },
+  // the distant strike arrives: one thin bolt column, then the count
+  op_distant_thunder: { at: 640, tint: "#8fb4e0", laser: true, shock: true, y: 48, s: 5 },
+  // the static discharges: the cling-link BURSTS in half
+  ov_static_cling: { at: 640, tint: "#9fe0ff", glyph: impGlyph(IG_LINK, "none", "#9fe0ff", 2.6), shock: true, y: 50 },
+  // the storm door is blown shut down the wind: slam at the jamb
+  op_storm_door: { at: 620, tint: "#ffb45c", laser: true, shock: true, aim: true, s: 7 },
+  // the cell breaks overhead: bolt + hail ring
+  ov_thunderstorm: { at: 700, tint: "#cfe4ff", laser: true, shock: true, y: 48, s: 6 },
+  // the rod TAKES the bolt: a needle-thin column into the finial
+  ov_lightning_rod: { at: 700, tint: "#ffcf7a", laser: true, shock: true, y: 46, s: 5.2 },
+  // the blood moon culminates: a red column and an eclipse ring
+  ov_blood_moon: { at: 600, tint: "#ff6b6b", laser: true, shock: true, y: 44, s: 6.6 },
+  // the sandstorm front hits: a wide grit-boom across the line
+  hx4_sandstorm: { at: 640, tint: "#e0c184", laser: true, shock: true, y: 52, s: 9 },
+  // the Leyden bank discharges: jar-top arc column
+  bn4_lightning_rod: { at: 580, tint: "#a0e8ff", laser: true, shock: true, y: 50, s: 5.4 },
+  // the crossing bolt grounds at the far pylon, down the span
+  bn4_stormcrossing: { at: 560, tint: "#b9f0e0", laser: true, shock: true, aim: true, len: true, s: 5.6 },
+  // Olympus returns the call: the answering bolt hits the altar
+  ov_olympus_voicemail: { at: 620, tint: "#ffd98f", laser: true, shock: true, y: 50, s: 6.8 },
+  // the stampede arrives: the herd's front hoof-boom, wide and low
+  ov_menagerie_stampede: { at: 620, tint: "#e8a05a", laser: true, shock: true, y: 56, s: 9.2 },
+  // the mop bucket slams down: WET crash on the closed floor
+  op_closed_for_cleaning: { at: 680, tint: "#8fe0d0", laser: true, shock: "wet", y: 54 },
+  // the door chain is thrown: the latch-link slams and SPLITS
+  op_do_not_disturb: { at: 680, tint: "#c8e06a", glyph: impGlyph(IG_LINK, "none", "#c8e06a", 2.6), shock: true, y: 48 },
+  // the margin stamp comes down on the disputed line
+  op_margin_notes: { at: 700, tint: "#ffd06b", laser: true, shock: true, y: 46, s: 6 },
+  // the RESERVED placard is planted: table boom
+  op_reserved_table: { at: 700, tint: "#ffd9c0", laser: true, shock: true, y: 52, s: 6.6 },
+  // the ribbon is CUT: the sash shears in half, shreds fly
+  op_ribbon_cutting: { at: 560, tint: "#ff8f9c", glyph: impGlyph(IG_PANE, "#ff8f9c", "#3a1218"), shock: true, y: 50 },
+  // the management arrives: the writ slams the front desk
+  op_the_management: { at: 540, tint: "#d8a860", laser: true, shock: true, y: 50, s: 7.6 },
+  // the kazoo fanfare peaks: a ridiculous, full-weight downbeat
+  ov_kazoo_fanfare: { at: 520, tint: "#ffd36b", laser: true, shock: true, y: 50, s: 8.4 },
+  // LEFT ON READ: the message thread snaps in half, unanswered
+  ov_left_on_read: { at: 720, tint: "#9fc8ff", glyph: impGlyph(IG_LINK, "none", "#9fc8ff", 2.6), shock: true, y: 48 },
+  // the potion hits the soil: the growth spike ERUPTS
+  ov_growth_potion: { at: 700, tint: "#a0f0c8", laser: true, shock: true, y: 54, s: 6.8 },
+  // the escape ladder DROPS its full length down the wall
+  op_fire_escape: { at: 620, tint: "#ffa860", laser: true, shock: true, aim: true, len: true, s: 6.2 },
+  // the refusal lands: the beneath-her verdict column, icy hot
+  hx4_beneath_her_dignity: { at: 640, tint: "#ffcf9f", laser: true, shock: true, y: 48, s: 6.4 },
+  // the nametag is SLAPPED on the crown: sticker boom
+  hx4_royal_nametag: { at: 680, tint: "#ff9f6b", laser: true, shock: true, y: 44, s: 6 },
+  // the slow burn reaches the powder: the fuse-end detonation
+  op_slow_burn: { at: 700, tint: "#ffb03c", laser: true, shock: true, y: 52, s: 7.8 },
+  // the drill bell hits and the hoses answer: WET crash at reach
+  ov_fire_drill: { at: 620, tint: "#8fd0ff", laser: true, shock: "wet", aim: true, len: true },
+  // the diagonal is scorched home: ember column at the far end
+  hx4_scorched_diagonal: { at: 620, tint: "#ffb867", laser: true, shock: true, y: 52, s: 7 },
+  // the barn door SLAMS across the whole file: beam-wide boom
+  ov_barn_door: { at: 640, tint: "#e08a5a", laser: true, shock: true, y: 50, s: 9 },
+  // the timeline SPLITS: the moment itself is sheared in half
+  ov_split_timeline: { at: 620, tint: "#b0e0ff", glyph: impGlyph(IG_PANE, "#b0e0ff", "#101c30"), shock: true, y: 50 },
+};
+
+for (const [id, imp] of Object.entries(IMPACTS)) {
+  const play = PLAYS[id];
+  if (play) PLAYS[id] = { config: play.config, Render: withImpact(play.Render, imp) };
+}

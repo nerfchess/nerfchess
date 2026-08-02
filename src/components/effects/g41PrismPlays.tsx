@@ -39,6 +39,7 @@ import "./g41PrismPlays.css";
 import type { CSSProperties, ReactNode } from "react";
 import type { SigPlugin, SigRole } from "./sigPlugins";
 import { AimStage, BoardFrame, BoardWideStage } from "./stage";
+import { LaserStrike, PieceShatter, Shockwave, impactVars } from "./impact/impact";
 
 interface SceneProps {
   lead: boolean;
@@ -2193,3 +2194,232 @@ export const PLAYS: Record<string, SigPlugin> = {
   hx4_tidal_wall: S(TidalWallScene, { ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "wall", anchor: "board" }),
   ov_ninth_rank: S(NinthRankScene, { ordering: "line", staggerMs: 60, victims: "all", hasLead: true, sound: "nova", anchor: "aim" }),
 };
+
+/* =============================================================================
+   FLAGSHIP IMPACT WAVE. Every lead now LANDS: a per-card impact beat from the
+   shared violence vocabulary (impact/impact.tsx). This is the PRISM module,
+   so the signature move is REFRACTION - the strike arrives as a fan of thin
+   tinted beams (each a narrow LaserStrike box in one of the card's own three
+   palette colours) splitting around the main hit, mirrors shatter in half,
+   and wet cards crash with flattened ripple rings instead of dry blast rings.
+   The whole scene rides a cell-scale quake wrapper (g41-quakecell,
+   g41PrismPlays.css) on the same --imp-delay beat. Additive only: the
+   original scenes render unchanged underneath.
+
+   Node cost per lead: quake 1 + a 2-3 beam fan (4-6) + shock 1, or laser 2 +
+   shatter 6 + shock 1 - every combo stays inside the 16-node budget.
+   ========================================================================== */
+
+interface ImpBeam {
+  /** offset from the hit point, in cells (aim stage: down the vector) */
+  dx: number;
+  /** extra ms after the main beat: the fan splits, it does not chord */
+  ms: number;
+  /** refraction tint (defaults to the card tint) */
+  tint?: string;
+}
+
+interface Imp {
+  /** the impact beat, ms after delayMs - synced to the scene's own strike */
+  at: number;
+  /** "#rrggbb" tint for the impact vocabulary (one of the card's 3 colours) */
+  tint: string;
+  /** the main column of light */
+  laser?: boolean;
+  /** ground ring; "wet" flattens it into a low water-crash ellipse */
+  shock?: boolean | "wet";
+  /** shatter silhouette: the struck thing splits in half and sprays chips */
+  glyph?: ReactNode;
+  /** the refraction fan: extra THIN beams around the hit */
+  beams?: ImpBeam[];
+  /** placement in stage percent (one cell = 7.142857; cast centre = 50) */
+  x?: number;
+  y?: number;
+  s?: number;
+  /** stage the beat on the aim vector (art points +x) instead of upright */
+  aim?: boolean;
+  /** slide the beat to the victim's distance along the vector (--fx-len) */
+  len?: boolean;
+}
+
+/** hex "#rrggbb" -> the "r g b" triple --imp-rgb wants. */
+function impRgb(hex: string): string {
+  return `${parseInt(hex.slice(1, 3), 16)} ${parseInt(hex.slice(3, 5), 16)} ${parseInt(hex.slice(5, 7), 16)}`;
+}
+
+/** Shatter silhouettes, painted in the card's own palette. */
+function impGlyph(path: string, fill: string, stroke: string): ReactNode {
+  return (
+    <svg viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+      <path d={path} fill={fill} stroke={stroke} strokeWidth="1.4" strokeLinejoin="round" strokeLinecap="round" />
+    </svg>
+  );
+}
+const IG_ORB = "M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18z";
+const IG_PANE = "M7 2.6h10v18.8H7z";
+const IG_SLAB = "M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z";
+
+/** The impact composite: main hit plus the refraction fan. */
+function ImpactBeat({ imp, delayMs }: { imp: Imp; delayMs: number }) {
+  const s = imp.s ?? 7.2;
+  const x = imp.x ?? 50;
+  const y = imp.y ?? 50;
+  const lenShift = imp.len ? " + var(--fx-len, 3) * 7.142857%" : "";
+  const inner = (
+    <span className="g41-impactbed absolute inset-0 block">
+      <span
+        className="absolute block"
+        style={{
+          left: `calc(${x - s / 2}%${lenShift})`,
+          top: `${y - s / 2}%`,
+          width: `${s}%`,
+          height: `${s}%`,
+        }}
+      >
+        {imp.laser && <LaserStrike />}
+        {imp.glyph != null && <PieceShatter glyph={imp.glyph} />}
+        {imp.shock === true && <Shockwave />}
+      </span>
+      {imp.shock === "wet" && (
+        <span
+          className="absolute block"
+          style={{
+            left: `calc(${x - s}%${lenShift})`,
+            top: `${y - s * 0.2}%`,
+            width: `${s * 2}%`,
+            height: `${s * 0.8}%`,
+          }}
+        >
+          <Shockwave />
+        </span>
+      )}
+      {imp.beams?.map((b, i) => (
+        <span
+          key={i}
+          className="absolute block"
+          style={{
+            left: `calc(${x + b.dx * 7.142857 - s * 0.2}%${lenShift})`,
+            top: `${y - s / 2}%`,
+            width: `${s * 0.4}%`,
+            height: `${s}%`,
+            ...impactVars(impRgb(b.tint ?? imp.tint), (delayMs + imp.at + b.ms) / 1000),
+          }}
+        >
+          <LaserStrike />
+        </span>
+      ))}
+    </span>
+  );
+  return imp.aim ? <AimStage>{inner}</AimStage> : <BoardWideStage>{inner}</BoardWideStage>;
+}
+
+/** Wrap a card's Render: leads gain the quake wrapper plus the impact beat. */
+function withImpact(Render: SigPlugin["Render"], imp: Imp): SigPlugin["Render"] {
+  function ImpactLead(props: { lead: boolean; role: SigRole; delayMs: number }) {
+    if (props.role !== "lead") return <Render {...props} />;
+    return (
+      <span
+        className="g41-quakecell absolute inset-0 block"
+        style={impactVars(impRgb(imp.tint), (props.delayMs + imp.at) / 1000)}
+      >
+        <Render {...props} />
+        <ImpactBeat imp={imp} delayMs={props.delayMs} />
+      </span>
+    );
+  }
+  return ImpactLead;
+}
+
+/* Per-card cue sheet: every hit lands on ITS scene's strike beat, in ITS
+   palette, with ITS refraction - no two siblings share a beat + combo. */
+const IMPACTS: Record<string, Imp> = {
+  // the tip pops up: the hint beam splits into a two-tone fan
+  ov_loading_screen_tip: { at: 520, tint: "#f0c56a", shock: true, beams: [{ dx: -0.7, ms: 0 }, { dx: 0.7, ms: 90, tint: "#fff2d2" }] },
+  // two opinions, two beams: they land a half-beat apart and disagree
+  ov_second_opinion: { at: 560, tint: "#d9b26a", shock: true, beams: [{ dx: -0.9, ms: 0 }, { dx: 0.9, ms: 140, tint: "#fff3dc" }] },
+  // the survey stakes both borders: beam left, beam right, chain boom
+  bn4_border_survey: { at: 560, tint: "#8fd6c0", shock: true, beams: [{ dx: -1.6, ms: 0 }, { dx: 1.6, ms: 110 }] },
+  // the goggles burn through: an x-ray fan splits around the wall
+  ov_wallhack_goggles: { at: 540, tint: "#b6a6f0", shock: true, beams: [{ dx: -1, ms: 0 }, { dx: 0, ms: 80, tint: "#fff2dc" }, { dx: 1, ms: 160 }] },
+  // the balloon's sounding line drops from altitude: sky column + ring
+  ov_weather_balloon: { at: 600, tint: "#9fd0f0", laser: true, shock: true, y: 42, s: 6.4 },
+  // the vulture STOOPS: dive column and carcass thump
+  hx4_circling_vultures: { at: 660, tint: "#d8b98a", laser: true, shock: true, y: 56, s: 8 },
+  // the lighthouse grounds its sweep: main beam + two refracted panes
+  bn4_lighthouse_beam: { at: 560, tint: "#ffd28c", laser: true, shock: true, beams: [{ dx: -1.2, ms: 120, tint: "#fff4d6" }, { dx: 1.2, ms: 200 }] },
+  // the gambol lands at the queen's own square, down the vector
+  bn4_queens_gambol: { at: 700, tint: "#f0a6c8", laser: true, shock: true, aim: true, len: true, s: 6.4 },
+  // the parliament rules: the verdict caw spikes down into the yard
+  ov_raven_parliament: { at: 640, tint: "#a8b8d0", laser: true, shock: true, y: 52 },
+  // the ledger balances: the audit stamp comes down like a piledriver
+  bn4_auditors_ledger: { at: 620, tint: "#e0c184", laser: true, shock: true, y: 54, s: 7.8 },
+  // the procession halts: the herald's light plants at the head
+  bn4_court_procession: { at: 720, tint: "#b7e4ee", laser: true, shock: true, y: 48, s: 6.4 },
+  // the shepherd's crook stakes the fold: staff column + fold ring
+  bn4_shepherds_watch: { at: 640, tint: "#b6f0a8", laser: true, shock: true, y: 55, s: 6.8 },
+  // the leap-day is struck into the calendar: date-stamp boom
+  bn4_kings_leap_year: { at: 780, tint: "#f5c76a", laser: true, shock: true, y: 50, s: 7 },
+  // the boots thump down at the wrong feet: heel boom
+  hx4_borrowed_boots: { at: 560, tint: "#9ab4d8", laser: true, shock: true, y: 58, s: 6.6 },
+  // the PUDDLE takes the hit: wet crash, no dry ring on standing water
+  hx4_puddle: { at: 600, tint: "#8fc9e8", laser: true, shock: "wet", y: 56 },
+  // every blade glints at once: a three-beam flinch fan
+  hx4_flinching_blades: { at: 560, tint: "#f2e07a", shock: true, beams: [{ dx: -1.3, ms: 0 }, { dx: 0.2, ms: 70, tint: "#fff4d6" }, { dx: 1.5, ms: 150 }] },
+  // the shoulder turns: a cold column drops where the greeting died
+  hx4_cold_shoulder: { at: 580, tint: "#a9c6d4", laser: true, shock: true, y: 50, s: 6.2 },
+  // the floor shifts under them: a tile is levered up and SPLIT
+  hx4_shifting_floor: { at: 620, tint: "#8ee0d6", glyph: impGlyph(IG_SLAB, "#8ee0d6", "#123028"), shock: true, y: 54 },
+  // the compass face SHATTERS: glass halves, needle spinning off
+  hx4_broken_compass: { at: 700, tint: "#e5a8f0", glyph: impGlyph(IG_ORB, "#e5a8f0", "#2a1636"), shock: true, y: 50 },
+  // the lamp columns come on and the swarm slams them: twin moth-beams
+  hx4_moth_plague: { at: 620, tint: "#ffca7a", shock: true, beams: [{ dx: -0.9, ms: 0 }, { dx: 0.9, ms: 120, tint: "#fff4d6" }] },
+  // the tally is enforced: the reclaim beam stamps the hoard
+  hx4_waste_not: { at: 640, tint: "#cfe07a", laser: true, shock: true, y: 52, s: 6.8 },
+  // the quagmire takes hold: a MUD crash, low and wet, no clean ring
+  hx4_quagmire_march: { at: 500, tint: "#8a734a", laser: true, shock: "wet", y: 56, s: 8 },
+  // the veil closes: dusty wing-beams shear down through the lattice
+  hx4_veil_of_moths: { at: 600, tint: "#b8e0f0", shock: true, beams: [{ dx: -1.1, ms: 0, tint: "#fff3dc" }, { dx: 1.1, ms: 130 }] },
+  // the sated blade is DISARMED: the fed sword snaps in half
+  hx4_sated_blades: { at: 640, tint: "#ff9a52", glyph: impGlyph(IG_PANE, "#ff9a52", "#2a1206"), shock: true, y: 50 },
+  // the supply line is severed: the cut point detonates
+  hx4_severed_lines: { at: 660, tint: "#7ce8c4", laser: true, shock: true, y: 50, s: 7.6 },
+  // the copy presses through: original beam, then the carbon beam under it
+  op_carbon_copy: { at: 560, tint: "#cfd8f0", shock: true, beams: [{ dx: -0.5, ms: 0, tint: "#fff2dc" }, { dx: 0.8, ms: 160 }] },
+  // the mirror shield returns to sender: the bounce lands at --fx-len
+  ov_mirror_shield: { at: 620, tint: "#a6e8ff", laser: true, shock: true, aim: true, len: true, s: 6.2 },
+  // manners break: the etiquette mirror SHATTERS in half
+  hx4_mirror_manners: { at: 560, tint: "#f0c8d8", glyph: impGlyph(IG_PANE, "#f0c8d8", "#2a1622"), shock: true, y: 50 },
+  // both buttons are pressed at once: twin beams, one per button
+  bn4_twin_buttons: { at: 620, tint: "#96e0ff", shock: true, beams: [{ dx: -0.8, ms: 0 }, { dx: 0.8, ms: 60, tint: "#fff4d6" }] },
+  // the hall multiplies the hit: a three-way refraction fan
+  ov_hall_of_mirrors: { at: 640, tint: "#c9b0f0", shock: true, beams: [{ dx: -1.4, ms: 0 }, { dx: 0, ms: 90, tint: "#fff3dc" }, { dx: 1.4, ms: 180 }] },
+  // the glitch doubles: two beams in two WRONG colours, a frame apart
+  ov_duplicate_glitch: { at: 540, tint: "#ff7a9c", shock: true, beams: [{ dx: -0.6, ms: 0 }, { dx: 0.6, ms: 60, tint: "#7ae0ff" }] },
+  // ironglass takes the blow and the reflection cracks instead
+  hx4_ironglass_mirror: { at: 640, tint: "#7ad8f0", glyph: impGlyph(IG_PANE, "#7ad8f0", "#16283a"), shock: true, y: 50 },
+  // the hex hall turns every pane hostile: fan plus a floor boom
+  hx4_hall_of_mirrors: { at: 680, tint: "#d8e4f0", shock: true, beams: [{ dx: -1.6, ms: 0 }, { dx: -0.2, ms: 90, tint: "#fff2dc" }, { dx: 1.3, ms: 170 }] },
+  // the third wind hits the sails: mast column + deck boom
+  bn4_third_wind: { at: 620, tint: "#ffe08a", laser: true, shock: true, y: 48, s: 7 },
+  // the tornado touches down: the funnel's ground strike, wide and violent
+  ov_tornado: { at: 520, tint: "#d9c6a0", laser: true, shock: true, y: 54, s: 9.6 },
+  // the wind-up knight's spring RELEASES: escapement boom
+  bn4_wind_up_knight: { at: 600, tint: "#e8b45c", laser: true, shock: true, y: 52, s: 6.4 },
+  // the plot aligns: the qi beam grounds itself in the garden's heart
+  ov_feng_shui_plot: { at: 560, tint: "#f0dca8", laser: true, shock: true, y: 50, s: 6.6 },
+  // the takeover lands on the target's own boardroom, down the vector
+  ov_hostile_takeover: { at: 540, tint: "#8fb8a0", laser: true, shock: true, aim: true, len: true, s: 6.6 },
+  // dead calm falls like a weight: one soft-gold column, then stillness
+  hx4_dead_calm: { at: 480, tint: "#ffcf8a", laser: true, shock: true, y: 50, s: 6 },
+  // the living board bites back: a flagstone rears up and SPLITS
+  ov_living_board: { at: 640, tint: "#f0b0e0", glyph: impGlyph(IG_SLAB, "#f0b0e0", "#241436"), shock: true, y: 54 },
+  // the tidal wall breaks: a WIDE wet crash along the rampart line
+  hx4_tidal_wall: { at: 560, tint: "#6fc8e0", laser: true, shock: "wet", y: 52, s: 9 },
+  // the ninth rank opens: twin gate-beams land at the promotion square
+  ov_ninth_rank: { at: 820, tint: "#ffd9a0", shock: true, aim: true, len: true, beams: [{ dx: -0.5, ms: 0 }, { dx: 0.5, ms: 80, tint: "#b088f0" }] },
+};
+
+for (const [id, imp] of Object.entries(IMPACTS)) {
+  const play = PLAYS[id];
+  if (play) PLAYS[id] = { config: play.config, Render: withImpact(play.Render, imp) };
+}

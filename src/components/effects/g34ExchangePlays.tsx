@@ -41,6 +41,7 @@
 import type { CSSProperties, ReactNode } from "react";
 import type { SigPlugin, SigRole } from "./sigPlugins";
 import { AimStage, BoardFrame, BoardWideStage } from "./stage";
+import { LaserStrike, PieceShatter, Shockwave, impactVars } from "./impact/impact";
 import "./g34ExchangePlays.css";
 
 interface SceneProps {
@@ -1413,3 +1414,197 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "line", staggerMs: 60, victims: ["r", "n"], hasLead: true, sound: "wheel", anchor: "aim",
   }),
 };
+
+/* =============================================================================
+   FLAGSHIP IMPACT WAVE. Every lead now LANDS: a per-card impact beat from the
+   shared violence vocabulary (impact/impact.tsx). This is the EXCHANGE module,
+   so the signature move is the DUAL SLAM - the hit lands on BOTH sides of the
+   trade, the near side first and the far side (at --fx-len down the aim
+   vector) a step later, like the two pans of a deal banging down. The whole
+   scene rides a cell-scale quake wrapper (g34-quakecell, g34ExchangePlays.css)
+   on the near beat. Additive only: the original scenes render unchanged
+   underneath.
+
+   Node cost per lead: quake 1, dual laser 4, dual shock 2 (7 total) or a
+   single-side laser/shock/shatter combo - all inside the 16-node budget.
+   ========================================================================== */
+
+interface Imp {
+  /** the impact beat, ms after delayMs - synced to the scene's own strike */
+  at: number;
+  /** "#rrggbb" tint for the impact vocabulary (one of the card's 3 colours) */
+  tint: string;
+  /** the column of light on the beat */
+  laser?: boolean;
+  /** ground ring; "wet" flattens it into a low water-crash ellipse */
+  shock?: boolean | "wet";
+  /** shatter silhouette: the traded thing splits in half and sprays chips */
+  glyph?: ReactNode;
+  /** placement in stage percent (one cell = 7.142857; cast centre = 50) */
+  x?: number;
+  y?: number;
+  s?: number;
+  /** stage the beat on the aim vector (art points +x) instead of upright */
+  aim?: boolean;
+  /** slide the (single) beat to the victim's distance (--fx-len) */
+  len?: boolean;
+  /** BOTH SIDES OF THE TRADE: "len" slams cast side then victim side down
+   *  the vector; a tuple slams two fixed x positions on the upright stage. */
+  dual?: "len" | [number, number];
+}
+
+/** hex "#rrggbb" -> the "r g b" triple --imp-rgb wants. */
+function impRgb(hex: string): string {
+  return `${parseInt(hex.slice(1, 3), 16)} ${parseInt(hex.slice(3, 5), 16)} ${parseInt(hex.slice(5, 7), 16)}`;
+}
+
+/** Shatter silhouettes, painted in the card's own palette. */
+function impGlyph(path: string, fill: string, stroke: string): ReactNode {
+  return (
+    <svg viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+      <path d={path} fill={fill} stroke={stroke} strokeWidth="1.4" strokeLinejoin="round" strokeLinecap="round" />
+    </svg>
+  );
+}
+const IG_SLAB = "M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z";
+const IG_NUG = "M4 15l3-8 7-3 8 4 1 7-9 6z";
+
+/** One side of the hit. */
+function ImpSide({
+  imp,
+  delayMs,
+  x,
+  lenShift,
+  extraMs,
+}: {
+  imp: Imp;
+  delayMs: number;
+  x: number;
+  lenShift: string;
+  extraMs: number;
+}) {
+  const s = imp.s ?? 7.2;
+  const y = imp.y ?? 50;
+  const vars = extraMs ? impactVars(undefined, (delayMs + imp.at + extraMs) / 1000) : undefined;
+  return (
+    <>
+      <span
+        className="absolute block"
+        style={{
+          left: `calc(${x - s / 2}%${lenShift})`,
+          top: `${y - s / 2}%`,
+          width: `${s}%`,
+          height: `${s}%`,
+          ...vars,
+        }}
+      >
+        {imp.laser && <LaserStrike />}
+        {imp.glyph != null && <PieceShatter glyph={imp.glyph} />}
+        {imp.shock === true && <Shockwave />}
+      </span>
+      {imp.shock === "wet" && (
+        <span
+          className="absolute block"
+          style={{
+            left: `calc(${x - s}%${lenShift})`,
+            top: `${y - s * 0.2}%`,
+            width: `${s * 2}%`,
+            height: `${s * 0.8}%`,
+            ...vars,
+          }}
+        >
+          <Shockwave />
+        </span>
+      )}
+    </>
+  );
+}
+
+/** The impact composite: single-point, or the dual both-sides slam. */
+function ImpactBeat({ imp, delayMs }: { imp: Imp; delayMs: number }) {
+  const x = imp.x ?? 50;
+  const inner = (
+    <span className="g34-impactbed absolute inset-0 block">
+      {imp.dual === "len" ? (
+        <>
+          <ImpSide imp={imp} delayMs={delayMs} x={x} lenShift="" extraMs={0} />
+          <ImpSide imp={imp} delayMs={delayMs} x={x} lenShift=" + var(--fx-len, 3) * 7.142857%" extraMs={130} />
+        </>
+      ) : Array.isArray(imp.dual) ? (
+        <>
+          <ImpSide imp={imp} delayMs={delayMs} x={imp.dual[0]} lenShift="" extraMs={0} />
+          <ImpSide imp={imp} delayMs={delayMs} x={imp.dual[1]} lenShift="" extraMs={130} />
+        </>
+      ) : (
+        <ImpSide imp={imp} delayMs={delayMs} x={x} lenShift={imp.len ? " + var(--fx-len, 3) * 7.142857%" : ""} extraMs={0} />
+      )}
+    </span>
+  );
+  return imp.aim || imp.dual === "len" ? <AimStage>{inner}</AimStage> : <BoardWideStage>{inner}</BoardWideStage>;
+}
+
+/** Wrap a card's Render: leads gain the quake wrapper plus the impact beat. */
+function withImpact(Render: SigPlugin["Render"], imp: Imp): SigPlugin["Render"] {
+  function ImpactLead(props: { lead: boolean; role: SigRole; delayMs: number }) {
+    if (props.role !== "lead") return <Render {...props} />;
+    return (
+      <span
+        className="g34-quakecell absolute inset-0 block"
+        style={impactVars(impRgb(imp.tint), (props.delayMs + imp.at) / 1000)}
+      >
+        <Render {...props} />
+        <ImpactBeat imp={imp} delayMs={props.delayMs} />
+      </span>
+    );
+  }
+  return ImpactLead;
+}
+
+/* Per-card cue sheet: each trade slams on ITS scene's strike beat, in ITS
+   palette - most cards land the dual both-sides hit; the single-object cards
+   land one heavy contact instead. No two siblings share a beat + combo. */
+const IMPACTS: Record<string, Imp> = {
+  // the revolving stage swaps: both wings of the set slam their marks
+  ov_cousin_from_out_of_town: { at: 520, tint: "#d94f4f", laser: true, shock: true, dual: "len" },
+  // the rope ferry jerks both banks: WET crashes at either mooring
+  bn4_ratlines: { at: 500, tint: "#7fc9d8", laser: true, shock: "wet", dual: "len", s: 6 },
+  // the lock equalises: water slams the near gate, then the far chamber
+  ov_player_trade: { at: 520, tint: "#6fa8d6", laser: true, shock: "wet", dual: "len", s: 6.4 },
+  // the paternoster passes: both cars thump their landings either side
+  bn4_processional: { at: 520, tint: "#c9a24a", laser: true, shock: true, dual: [42, 58], s: 6 },
+  // the panel turns: both faces of the wall boom in turn
+  ov_priest_hole: { at: 520, tint: "#d99a4e", laser: true, shock: true, dual: "len", s: 6.6 },
+  // the allemande lands: both dancers stamp the close of the figure
+  ov_bodyswap_ball: { at: 470, tint: "#e05fb0", laser: true, shock: true, dual: "len", s: 6.2 },
+  // the shell game resolves: both cups slam down on the table
+  ov_identity_crisis: { at: 500, tint: "#58c9a8", laser: true, shock: true, dual: "len", s: 6 },
+  // the stair swap: both students hit their new landings
+  op_exchange_student: { at: 480, tint: "#7ea6e8", laser: true, shock: true, dual: "len", s: 6.2 },
+  // the sliding tile SLAMS home: the displaced tile splits in half
+  bn4_side_shuffle: { at: 440, tint: "#d8a24e", glyph: impGlyph(IG_SLAB, "#d8a24e", "#241a10"), shock: true, aim: true, s: 6.4 },
+  // the escapement ticks over: one thin precise strike on the pallet
+  bn4_tiptoe: { at: 440, tint: "#b9c8d6", laser: true, shock: true, aim: true, s: 5 },
+  // the windlass bucket lands: rim boom at the wellhead
+  bn4_wheelbarrow: { at: 460, tint: "#9ab86a", laser: true, shock: true, aim: true, s: 7 },
+  // SOLD: the gavel comes down like a piledriver on the block
+  op_country_auction: { at: 480, tint: "#d3873c", laser: true, shock: true, aim: true, s: 8.6 },
+  // the certified weights bang down on BOTH pans of the scale
+  op_flea_market_find: { at: 450, tint: "#c9b26a", laser: true, shock: true, dual: "len", s: 5.8 },
+  // the sod plug is stamped in: the old turf plug is split and flung
+  op_fresh_sod: { at: 460, tint: "#6fbf5a", glyph: impGlyph(IG_NUG, "#6fbf5a", "#17240f"), shock: true, y: 52 },
+  // the thimble slams down over the pea: table boom
+  op_identical_twins: { at: 470, tint: "#cf5f4a", laser: true, shock: true, aim: true, s: 6.6 },
+  // trains pass in the loop: both platforms boom either side of the king
+  op_personal_space: { at: 500, tint: "#6fbcd0", laser: true, shock: true, dual: [42, 58], s: 5.8 },
+  // the exchequer counters slam both ends of the counting cloth
+  op_royal_barter: { at: 470, tint: "#c8a24a", laser: true, shock: true, dual: "len", s: 6 },
+  // the coat rail crashes its full length onto the hooks
+  op_rummage_sale: { at: 480, tint: "#b06fd4", laser: true, shock: true, aim: true, s: 7.6 },
+  // the turntable locks: the deck booms as the horses trade stalls
+  op_stable_swap: { at: 500, tint: "#d0733c", laser: true, shock: true, aim: true, s: 8 },
+};
+
+for (const [id, imp] of Object.entries(IMPACTS)) {
+  const play = PLAYS[id];
+  if (play) PLAYS[id] = { config: play.config, Render: withImpact(play.Render, imp) };
+}
