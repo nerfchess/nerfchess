@@ -111,7 +111,6 @@ const BASELINE: string[] = [
   "src/components/AchievementToast.tsx",
   "src/components/AdminGodPanel.tsx",
   "src/components/Board.tsx",
-  "src/components/BuffDock.tsx",
   "src/components/ChatPanel.tsx",
   "src/components/CurrentGameCard.tsx",
   "src/components/DraftOverlay.tsx",
