@@ -73,6 +73,7 @@ import { BUFF_BY_ID } from "@/engine/buffs/library";
 import { cardFaceIcon } from "@/lib/cardIcon";
 import type { SigPlugin, SigRole } from "./sigPlugins";
 import { BoardFrame, BoardWideStage } from "./stage";
+import { LaserStrike, PieceShatter, Shockwave, QUAKE_CLASS, impactVars } from "./impact/impact";
 
 /* =============================================================================
    Shared bits
@@ -99,6 +100,12 @@ function tint(hex: string, alpha: number): string {
   return `rgba(${r},${g},${b},${alpha})`;
 }
 
+/** hex "#rrggbb" -> the space-separated "r g b" triple the shared impact
+ * vocabulary tints with (--imp-rgb). */
+function rgbOf(hex: string): string {
+  return `${parseInt(hex.slice(1, 3), 16)} ${parseInt(hex.slice(3, 5), 16)} ${parseInt(hex.slice(5, 7), 16)}`;
+}
+
 const SJ = { strokeLinejoin: "round", strokeLinecap: "round" } as const;
 
 /** Warm white. Never pure #fff (house rule: whites are warm). */
@@ -119,36 +126,48 @@ const SHINE = "rgba(255,247,224,0.85)";
 function Stage({
   palette,
   delayMs,
+  quakeMs,
   children,
 }: {
   palette: Palette;
   delayMs: number;
+  /** FLAGSHIP WAVE: when the stage jolts. Defaults to the device-thump beat
+   * (+300ms into the strike phase) so every lead lands with physical contact;
+   * the shared imp-quake wrapper is in-scene only - the real board crop never
+   * shakes. The quake rides an inner wrapper because BoardWideStage's own
+   * `.fx-stage` transform is the anchor clamp and must not be overridden. */
+  quakeMs?: number;
   children: ReactNode;
 }) {
   const [p0, p1] = palette;
   return (
     <BoardWideStage>
-      <BoardFrame>
-        <span
-          className="bsp-wash absolute inset-0 block"
-          style={{
-            background: `radial-gradient(circle at 50% 48%, ${tint(p1, 0.22)} 0%, ${tint(p0, 0.1)} 46%, transparent 70%)`,
-            animationDelay: `${delayMs}ms`,
-          }}
-        />
-        <span
-          className="bsp-rail absolute block"
-          style={{
-            left: "0%",
-            top: "47%",
-            width: "100%",
-            height: "1.6%",
-            background: `linear-gradient(90deg, transparent, ${tint(p0, 0.7)}, transparent)`,
-            animationDelay: `${delayMs + 120}ms`,
-          }}
-        />
-      </BoardFrame>
-      {children}
+      <span
+        className={`${QUAKE_CLASS} absolute inset-0 block`}
+        style={impactVars(undefined, (quakeMs ?? delayMs + 300) / 1000)}
+      >
+        <BoardFrame>
+          <span
+            className="bsp-wash absolute inset-0 block"
+            style={{
+              background: `radial-gradient(circle at 50% 48%, ${tint(p1, 0.22)} 0%, ${tint(p0, 0.1)} 46%, transparent 70%)`,
+              animationDelay: `${delayMs}ms`,
+            }}
+          />
+          <span
+            className="bsp-rail absolute block"
+            style={{
+              left: "0%",
+              top: "47%",
+              width: "100%",
+              height: "1.6%",
+              background: `linear-gradient(90deg, transparent, ${tint(p0, 0.7)}, transparent)`,
+              animationDelay: `${delayMs + 120}ms`,
+            }}
+          />
+        </BoardFrame>
+        {children}
+      </span>
     </BoardWideStage>
   );
 }
@@ -495,6 +514,93 @@ const FX_SPECS: Record<FxKind, FxSpec> = {
 /** How long the anticipation beat holds before the strike phase begins. */
 const TELL_MS = 240;
 
+/* --- FLAGSHIP WAVE: the family impact beat -----------------------------------
+   Every lead now lands one moment of REAL contact from the shared impact
+   vocabulary (impact/impact.tsx): an optional laser column hammering the cast
+   square, an optional pre-clipped shatter (the family's own shard splits in
+   half and sprays chips), and an optional ground shockwave, all tinted with
+   the play's palette. Two axes keep 296 cards from reading alike:
+
+     family  each FxKind names its own combination and base beat below (a ward
+             booms, a curse is lasered down, ice cracks apart, a gaze beam
+             spikes...), so the KIND of violence matches the mechanic;
+     device  the card's own device motion shifts the beat (DEVICE_SYNC), so
+             two siblings on one template land their hit on different counts -
+             an anvil card thumps early, a swinging card connects late.
+
+   The stage quake (Stage's quakeMs, wired per template) rides the same family
+   beat so the jolt and the hit read as one contact. */
+const DEVICE_SYNC: Record<DeviceMotion, number> = { set: 0, pop: 40, rise: 80, turn: 120, swing: 160 };
+
+interface ImpSpec {
+  laser?: boolean;
+  shock?: boolean;
+  /** Shatter glyph accent (the family's own shard, split in half), or none. */
+  shatter?: HitAccent;
+  /** Base impact beat, ms after the strike phase starts. */
+  at: number;
+}
+
+const IMP_BY_FX: Record<FxKind, ImpSpec> = {
+  ward:   { shock: true, at: 300 },                       // the aegis clamp BOOMS shut
+  curse:  { laser: true, shock: true, at: 420 },          // the hex is lasered into the tile
+  chain:  { shock: true, shatter: "link", at: 360 },      // the yanked link snaps in half
+  frost:  { shatter: "frost", at: 400 },                  // the ice sheet cracks apart, no blast
+  stone:  { shock: true, shatter: "stone", at: 380 },     // the granite shell splits open
+  glint:  { laser: true, at: 300 },                       // the grant descends as a light column
+  leap:   { shock: true, at: 360 },                       // the landing thump
+  muster: { shock: true, at: 300 },                       // the pole strikes bedrock
+  edict:  { laser: true, at: 440 },                       // the edict comes down from on high
+  draw:   { shock: true, at: 380 },                       // the card slaps the table
+  gaze:   { laser: true, shock: true, at: 360 },          // the gaze spikes down where it looks
+  lock:   { shock: true, at: 420 },                       // the bolt clunks home
+  spirit: { laser: true, at: 340 },                       // the soul column
+  loot:   { shock: true, shatter: "spark", at: 340 },     // the crate cracks open
+  clock:  { shock: true, at: 400 },                       // the tick lands
+  bell:   { shock: true, at: 300 },                       // the toll ring
+  grove:  { shock: true, at: 380 },                       // roots heave the flagstones
+  prism:  { laser: true, shock: true, at: 320 },          // the light column grounds itself
+  banner: { shock: true, at: 320 },                       // the standard slams in
+  ink:    { shatter: "mote", at: 440 },                   // the blot is split mid-bloom
+};
+
+/** The impact composite itself, mounted over the emblem's landing spot. Laser
+ * 2 nodes, shatter 6, shockwave 1 - the family combos stay well inside the
+ * scene node budget. */
+function ImpactBeat({
+  kind,
+  palette,
+  device,
+  delayMs,
+}: {
+  kind: FxKind;
+  palette: Palette;
+  device?: DeviceKind;
+  delayMs: number;
+}) {
+  const [, p1, p2] = palette;
+  const im = IMP_BY_FX[kind];
+  const at = delayMs + im.at + (device ? DEVICE_SYNC[DEVICES[device].m] : 0);
+  return (
+    <span
+      className="absolute block"
+      style={{ left: "39%", top: "36%", width: "22%", height: "22%", ...impactVars(rgbOf(p1), at / 1000) }}
+    >
+      {im.laser && <LaserStrike />}
+      {im.shatter && (
+        <PieceShatter
+          glyph={
+            <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+              {shardShape(im.shatter, p1, p2)}
+            </svg>
+          }
+        />
+      )}
+      {im.shock && <Shockwave />}
+    </span>
+  );
+}
+
 /** One distinctive extra layer for each of the seven biggest families
  * (rendered inside SceneFx, so leads only). Offsets are relative to the
  * strike start; negative offsets reach back into the tell beat. */
@@ -608,7 +714,17 @@ const FX_DIRS = [
   { a: 24, d: 0 }, { a: 196, d: 60 },
 ];
 
-function SceneFx({ kind, palette, delayMs }: { kind: FxKind; palette: Palette; delayMs: number }) {
+function SceneFx({
+  kind,
+  palette,
+  device,
+  delayMs,
+}: {
+  kind: FxKind;
+  palette: Palette;
+  device?: DeviceKind;
+  delayMs: number;
+}) {
   const [p0, p1, p2] = palette;
   const s = FX_SPECS[kind];
   const deep = kind === "curse" || kind === "ink" || kind === "lock";
@@ -628,6 +744,10 @@ function SceneFx({ kind, palette, delayMs }: { kind: FxKind; palette: Palette; d
         }}
       />
       {familyLayer(kind, palette, delayMs)}
+      {/* FLAGSHIP WAVE: the family's moment of real contact (laser / shatter /
+          shockwave per IMP_BY_FX), synced to the card's own device motion and
+          to the stage quake. */}
+      <ImpactBeat kind={kind} palette={palette} device={device} delayMs={delayMs} />
       {/* The leg: every scene runs a line out along its OWN source -> target
           vector, rotated by --fx-ang and stretched by --fx-len, so an aim-
           anchored card visibly reaches the victim it names and a cast- or
@@ -762,6 +882,7 @@ function Emblem({
   style,
   fx,
   palette,
+  device,
 }: {
   bold: boolean;
   cls: string;
@@ -771,12 +892,14 @@ function Emblem({
   /** mechanic-family spectacle staged behind the emblem (with `palette`) */
   fx?: FxKind;
   palette?: Palette;
+  /** the card's own device, so the impact beat lands on ITS rhythm */
+  device?: DeviceKind;
 }) {
   const s = bold ? 27 : 24;
   const traj = (fx && TRAJ_BY_FX[fx]) || "warpin";
   return (
     <>
-      {fx && palette ? <SceneFx kind={fx} palette={palette} delayMs={delayMs} /> : null}
+      {fx && palette ? <SceneFx kind={fx} palette={palette} device={device} delayMs={delayMs} /> : null}
       {/* Outer span rides the arrival trajectory; the inner span still plays
           the template's own entrance/settle beat, so the two compose. */}
       <span
@@ -824,8 +947,8 @@ function SigilRing({ palette, Icon, bold, lead, role, device, delayMs }: Templat
     { x: 20, y: 37.6, d: 740 },
   ];
   return (
-    <Stage palette={palette} delayMs={delayMs}>
-      <Emblem bold={bold} fx="ward" palette={palette} cls="bsp-settle" delayMs={delayMs}>
+    <Stage palette={palette} delayMs={delayMs} quakeMs={delayMs + 300}>
+      <Emblem bold={bold} fx="ward" palette={palette} device={device} cls="bsp-settle" delayMs={delayMs}>
         <svg viewBox="0 0 40 40" className="block h-full w-full" aria-hidden="true">
           <circle cx="20" cy="20" r="16.4" fill={tint(p0, 0.1)} stroke={tint(p1, 0.9)} strokeWidth="1.3" />
           <circle cx="20" cy="20" r="12.6" fill="none" stroke={tint(p2, 0.6)} strokeWidth="0.6" strokeDasharray="2.4 1.7" />
@@ -864,8 +987,8 @@ function RuneStamp({ palette, Icon, bold, lead, role, device, delayMs }: Templat
     { l: 62, dx: "25%", dy: "240%", d: 820 },
   ];
   return (
-    <Stage palette={palette} delayMs={delayMs}>
-      <Emblem bold={bold} fx="curse" palette={palette} cls="bsp-stamp" delayMs={delayMs}>
+    <Stage palette={palette} delayMs={delayMs} quakeMs={delayMs + 420}>
+      <Emblem bold={bold} fx="curse" palette={palette} device={device} cls="bsp-stamp" delayMs={delayMs}>
         <span
           className="bsp-shudder absolute block"
           style={{ left: "8%", top: "8%", width: "84%", height: "84%", animationDelay: `${delayMs + 140}ms` }}
@@ -909,8 +1032,8 @@ function ChainLash({ palette, Icon, bold, lead, role, device, delayMs }: Templat
   if (role === "entrance") return <Entrance fx="chain" palette={palette} Icon={Icon} device={device} delayMs={delayMs} />;
   if (!lead) return <TargetHit palette={palette} Icon={Icon} delayMs={delayMs} accent="link" />;
   return (
-    <Stage palette={palette} delayMs={delayMs}>
-      <Emblem bold={bold} fx="chain" palette={palette} cls="bsp-drop" delayMs={delayMs}>
+    <Stage palette={palette} delayMs={delayMs} quakeMs={delayMs + 360}>
+      <Emblem bold={bold} fx="chain" palette={palette} device={device} cls="bsp-drop" delayMs={delayMs}>
         <Device kind={device} palette={palette} delayMs={delayMs + 140} l={36} t={4} s={28} />
         <span className="bsp-taut absolute block" style={{ left: "-6%", top: "40%", width: "112%", height: "18%", animationDelay: `${delayMs + 260}ms` }}>
           <svg viewBox="0 0 56 10" className="block h-full w-full" preserveAspectRatio="none" aria-hidden="true">
@@ -943,8 +1066,8 @@ function ColdSnap({ palette, Icon, bold, lead, role, device, delayMs }: Template
     { l: 82, t: 62, d: 800 },
   ];
   return (
-    <Stage palette={palette} delayMs={delayMs}>
-      <Emblem bold={bold} fx="frost" palette={palette} cls="bsp-spoke" delayMs={delayMs}>
+    <Stage palette={palette} delayMs={delayMs} quakeMs={delayMs + 400}>
+      <Emblem bold={bold} fx="frost" palette={palette} device={device} cls="bsp-spoke" delayMs={delayMs}>
         <svg viewBox="0 0 40 40" className="block h-full w-full" aria-hidden="true">
           {[0, 60, 120].map((r) => (
             <g key={r} transform={`rotate(${r} 20 20)`}>
@@ -983,8 +1106,8 @@ function StoneShell({ palette, Icon, bold, lead, role, device, delayMs }: Templa
   if (role === "entrance") return <Entrance fx="stone" palette={palette} Icon={Icon} device={device} delayMs={delayMs} />;
   if (!lead) return <TargetHit palette={palette} Icon={Icon} delayMs={delayMs} accent="stone" />;
   return (
-    <Stage palette={palette} delayMs={delayMs}>
-      <Emblem bold={bold} fx="stone" palette={palette} cls="bsp-shudder" delayMs={delayMs + 400}>
+    <Stage palette={palette} delayMs={delayMs} quakeMs={delayMs + 780}>
+      <Emblem bold={bold} fx="stone" palette={palette} device={device} cls="bsp-shudder" delayMs={delayMs + 400}>
         <Device kind={device} palette={palette} delayMs={delayMs + 140} l={32} t={22} s={36} />
         <span className="bsp-close-l absolute block" style={{ left: "8%", top: "12%", width: "42%", height: "76%", animationDelay: `${delayMs + 260}ms` }}>
           <svg viewBox="0 0 20 36" className="block h-full w-full" aria-hidden="true">
@@ -1038,8 +1161,8 @@ function GlintArc({ palette, Icon, bold, lead, role, device, delayMs }: Template
     { l: 58, t: 24, s: 12, d: 220 },
   ];
   return (
-    <Stage palette={palette} delayMs={delayMs}>
-      <Emblem bold={bold} fx="glint" palette={palette} cls="bsp-facein" delayMs={delayMs}>
+    <Stage palette={palette} delayMs={delayMs} quakeMs={delayMs + 300}>
+      <Emblem bold={bold} fx="glint" palette={palette} device={device} cls="bsp-facein" delayMs={delayMs}>
         <svg viewBox="0 0 40 40" className="block h-full w-full" aria-hidden="true">
           <path d="M3 27 C10 12 30 12 37 25" fill="none" stroke={tint(p2, 0.55)} strokeWidth="1" strokeDasharray="2.6 2" strokeLinecap="round" />
         </svg>
@@ -1073,8 +1196,8 @@ function HoofSpring({ palette, Icon, bold, lead, role, device, delayMs }: Templa
     { l: 62, dx: "100%", dy: "20%", d: 790 },
   ];
   return (
-    <Stage palette={palette} delayMs={delayMs}>
-      <Emblem bold={bold} fx="leap" palette={palette} cls="bsp-rise" delayMs={delayMs}>
+    <Stage palette={palette} delayMs={delayMs} quakeMs={delayMs + 360}>
+      <Emblem bold={bold} fx="leap" palette={palette} device={device} cls="bsp-rise" delayMs={delayMs}>
         <span className="bsp-grow absolute block" style={{ left: "30%", top: "52%", width: "40%", height: "40%", animationDelay: `${delayMs + 140}ms` }}>
           <svg viewBox="0 0 20 20" className="block h-full w-full" preserveAspectRatio="none" aria-hidden="true">
             <path d="M3 18.6 H17 M4 15.4 H16 M5 12.2 H15 M6 9 H14" fill="none" stroke={p0} strokeWidth="1.6" strokeLinecap="round" />
@@ -1115,8 +1238,8 @@ function PennantRaise({ palette, Icon, bold, lead, role, device, delayMs }: Temp
   if (role === "entrance") return <Entrance fx="muster" palette={palette} Icon={Icon} device={device} delayMs={delayMs} />;
   if (!lead) return <TargetHit palette={palette} Icon={Icon} delayMs={delayMs} accent="spark" />;
   return (
-    <Stage palette={palette} delayMs={delayMs}>
-      <Emblem bold={bold} fx="muster" palette={palette} cls="bsp-facein" delayMs={delayMs}>
+    <Stage palette={palette} delayMs={delayMs} quakeMs={delayMs + 300}>
+      <Emblem bold={bold} fx="muster" palette={palette} device={device} cls="bsp-facein" delayMs={delayMs}>
         <span className="bsp-grow absolute block" style={{ left: "24%", top: "4%", width: "7%", height: "92%", animationDelay: `${delayMs + 140}ms` }}>
           <svg viewBox="0 0 4 40" className="block h-full w-full" preserveAspectRatio="none" aria-hidden="true">
             <rect x="1.1" y="1.5" width="1.8" height="38" rx="0.9" fill={p2} />
@@ -1143,8 +1266,8 @@ function ScrollSnap({ palette, Icon, bold, lead, role, device, delayMs }: Templa
   if (role === "entrance") return <Entrance fx="edict" palette={palette} Icon={Icon} device={device} delayMs={delayMs} />;
   if (!lead) return <TargetHit palette={palette} Icon={Icon} delayMs={delayMs} accent="mote" />;
   return (
-    <Stage palette={palette} delayMs={delayMs}>
-      <Emblem bold={bold} fx="edict" palette={palette} cls="bsp-facein" delayMs={delayMs}>
+    <Stage palette={palette} delayMs={delayMs} quakeMs={delayMs + 440}>
+      <Emblem bold={bold} fx="edict" palette={palette} device={device} cls="bsp-facein" delayMs={delayMs}>
         <span className="bsp-scroll absolute block" style={{ left: "16%", top: "6%", width: "68%", height: "82%", animationDelay: `${delayMs + 140}ms` }}>
           <svg viewBox="0 0 28 34" className="block h-full w-full" preserveAspectRatio="none" aria-hidden="true">
             <rect x="1.4" y="3.4" width="25.2" height="27.4" rx="2" fill={tint(p0, 0.96)} stroke={p2} strokeWidth="0.9" />
@@ -1172,8 +1295,8 @@ function CardFlick({ palette, Icon, bold, lead, role, device, delayMs }: Templat
   if (role === "entrance") return <Entrance fx="draw" palette={palette} Icon={Icon} device={device} delayMs={delayMs} />;
   if (!lead) return <TargetHit palette={palette} Icon={Icon} delayMs={delayMs} accent="spark" />;
   return (
-    <Stage palette={palette} delayMs={delayMs}>
-      <Emblem bold={bold} fx="draw" palette={palette} cls="bsp-facein" delayMs={delayMs}>
+    <Stage palette={palette} delayMs={delayMs} quakeMs={delayMs + 380}>
+      <Emblem bold={bold} fx="draw" palette={palette} device={device} cls="bsp-facein" delayMs={delayMs}>
         <span className="bsp-breathe absolute block" style={{ left: "18%", top: "26%", width: "38%", height: "58%", animationDelay: `${delayMs + 140}ms` }}>
           <svg viewBox="0 0 16 24" className="block h-full w-full" aria-hidden="true">
             <rect x="2.4" y="2.6" width="12" height="18.6" rx="2" fill={tint(p2, 0.9)} stroke={p0} strokeWidth="0.8" transform="rotate(-7 8 12)" />
@@ -1201,8 +1324,8 @@ function EyeBlink({ palette, Icon, bold, lead, role, device, delayMs }: Template
   if (role === "entrance") return <Entrance fx="gaze" palette={palette} Icon={Icon} device={device} delayMs={delayMs} />;
   if (!lead) return <TargetHit palette={palette} Icon={Icon} delayMs={delayMs} accent="mote" />;
   return (
-    <Stage palette={palette} delayMs={delayMs}>
-      <Emblem bold={bold} fx="gaze" palette={palette} cls="bsp-blink" delayMs={delayMs} style={{ transformOrigin: "50% 50%" }}>
+    <Stage palette={palette} delayMs={delayMs} quakeMs={delayMs + 360}>
+      <Emblem bold={bold} fx="gaze" palette={palette} device={device} cls="bsp-blink" delayMs={delayMs} style={{ transformOrigin: "50% 50%" }}>
         <svg viewBox="0 0 40 24" className="block h-full w-full" preserveAspectRatio="none" aria-hidden="true">
           <path d="M2 12 C10 2.5 30 2.5 38 12 C30 21.5 10 21.5 2 12 Z" fill={tint(p2, 0.85)} stroke={p0} strokeWidth="1.1" {...SJ} />
           <circle cx="20" cy="12" r="7.6" fill={tint(p0, 0.35)} stroke={p1} strokeWidth="1.1" />
@@ -1230,8 +1353,8 @@ function KeyTurn({ palette, Icon, bold, lead, role, device, delayMs }: TemplateP
   if (role === "entrance") return <Entrance fx="lock" palette={palette} Icon={Icon} device={device} delayMs={delayMs} />;
   if (!lead) return <TargetHit palette={palette} Icon={Icon} delayMs={delayMs} accent="link" />;
   return (
-    <Stage palette={palette} delayMs={delayMs}>
-      <Emblem bold={bold} fx="lock" palette={palette} cls="bsp-drop" delayMs={delayMs}>
+    <Stage palette={palette} delayMs={delayMs} quakeMs={delayMs + 420}>
+      <Emblem bold={bold} fx="lock" palette={palette} device={device} cls="bsp-drop" delayMs={delayMs}>
         <svg viewBox="0 0 40 40" className="block h-full w-full" aria-hidden="true">
           <rect x="6" y="6" width="28" height="28" rx="4" fill={tint(p2, 0.92)} stroke={p0} strokeWidth="1.2" />
           <circle cx="20" cy="20" r="8.4" fill="none" stroke={tint(p1, 0.6)} strokeWidth="0.8" strokeDasharray="2 1.6" />
@@ -1265,8 +1388,8 @@ function LanternLift({ palette, Icon, bold, lead, role, device, delayMs }: Templ
     { l: 76, t: 58, dx: "-20%", dy: "-260%", d: 840 },
   ];
   return (
-    <Stage palette={palette} delayMs={delayMs}>
-      <Emblem bold={bold} fx="spirit" palette={palette} cls="bsp-lift" delayMs={delayMs}>
+    <Stage palette={palette} delayMs={delayMs} quakeMs={delayMs + 340}>
+      <Emblem bold={bold} fx="spirit" palette={palette} device={device} cls="bsp-lift" delayMs={delayMs}>
         <span className="bsp-breathe absolute block rounded-full" style={{ left: "22%", top: "16%", width: "56%", height: "60%", background: tint(p1, 0.3), animationDelay: `${delayMs + 140}ms` }} />
         <svg viewBox="0 0 24 34" className="absolute block h-full w-full" aria-hidden="true">
           <path d="M9 3.4 H15 M12 1 V3.4" fill="none" stroke={p2} strokeWidth="1.2" strokeLinecap="round" />
@@ -1307,8 +1430,8 @@ function SatchelDrop({ palette, Icon, bold, lead, role, device, delayMs }: Templ
   if (role === "entrance") return <Entrance fx="loot" palette={palette} Icon={Icon} device={device} delayMs={delayMs} />;
   if (!lead) return <TargetHit palette={palette} Icon={Icon} delayMs={delayMs} accent="spark" />;
   return (
-    <Stage palette={palette} delayMs={delayMs}>
-      <Emblem bold={bold} fx="loot" palette={palette} cls="bsp-plop" delayMs={delayMs}>
+    <Stage palette={palette} delayMs={delayMs} quakeMs={delayMs + 340}>
+      <Emblem bold={bold} fx="loot" palette={palette} device={device} cls="bsp-plop" delayMs={delayMs}>
         <svg viewBox="0 0 32 30" className="absolute block h-full w-full" aria-hidden="true">
           <path d="M4 12 H28 V25 a3 3 0 0 1 -3 3 H7 a3 3 0 0 1 -3 -3 Z" fill={tint(p2, 0.95)} stroke={p0} strokeWidth="1.2" {...SJ} />
           <path d="M4 12 C4 7 9 4 16 4 C23 4 28 7 28 12 L26 15 H6 Z" fill={tint(p0, 0.9)} stroke={p2} strokeWidth="1" {...SJ} />
@@ -1347,8 +1470,8 @@ function CogTick({ palette, Icon, bold, lead, role, device, delayMs }: TemplateP
   if (role === "entrance") return <Entrance fx="clock" palette={palette} Icon={Icon} device={device} delayMs={delayMs} />;
   if (!lead) return <TargetHit palette={palette} Icon={Icon} delayMs={delayMs} accent="link" />;
   return (
-    <Stage palette={palette} delayMs={delayMs}>
-      <Emblem bold={bold} fx="clock" palette={palette} cls="bsp-facein" delayMs={delayMs}>
+    <Stage palette={palette} delayMs={delayMs} quakeMs={delayMs + 400}>
+      <Emblem bold={bold} fx="clock" palette={palette} device={device} cls="bsp-facein" delayMs={delayMs}>
         <span className="bsp-turn absolute block" style={{ left: "8%", top: "12%", width: "64%", height: "64%", animationDelay: `${delayMs + 140}ms` }}>
           <svg viewBox="0 0 40 40" className="block h-full w-full" aria-hidden="true">
             <path d={cogPath(20, 20, 17)} fill={tint(p2, 0.9)} stroke={p0} strokeWidth="1.2" {...SJ} />
@@ -1376,8 +1499,8 @@ function BellToll({ palette, Icon, bold, lead, role, device, delayMs }: Template
   if (role === "entrance") return <Entrance fx="bell" palette={palette} Icon={Icon} device={device} delayMs={delayMs} />;
   if (!lead) return <TargetHit palette={palette} Icon={Icon} delayMs={delayMs} accent="mote" />;
   return (
-    <Stage palette={palette} delayMs={delayMs}>
-      <Emblem bold={bold} fx="bell" palette={palette} cls="bsp-facein" delayMs={delayMs}>
+    <Stage palette={palette} delayMs={delayMs} quakeMs={delayMs + 300}>
+      <Emblem bold={bold} fx="bell" palette={palette} device={device} cls="bsp-facein" delayMs={delayMs}>
         <span className="bsp-swing absolute block" style={{ left: "24%", top: "0%", width: "52%", height: "58%", animationDelay: `${delayMs + 140}ms` }}>
           <svg viewBox="0 0 24 28" className="block h-full w-full" aria-hidden="true">
             <path d="M11 1.6 H13 V4 H11 Z" fill={p2} />
@@ -1408,8 +1531,8 @@ function LeafSpin({ palette, Icon, bold, lead, role, device, delayMs }: Template
   if (role === "entrance") return <Entrance fx="grove" palette={palette} Icon={Icon} device={device} delayMs={delayMs} />;
   if (!lead) return <TargetHit palette={palette} Icon={Icon} delayMs={delayMs} accent="leaf" />;
   return (
-    <Stage palette={palette} delayMs={delayMs}>
-      <Emblem bold={bold} fx="grove" palette={palette} cls="bsp-facein" delayMs={delayMs}>
+    <Stage palette={palette} delayMs={delayMs} quakeMs={delayMs + 380}>
+      <Emblem bold={bold} fx="grove" palette={palette} device={device} cls="bsp-facein" delayMs={delayMs}>
         <span className="bsp-grow absolute block" style={{ left: "38%", top: "48%", width: "24%", height: "46%", animationDelay: `${delayMs + 140}ms` }}>
           <svg viewBox="0 0 10 20" className="block h-full w-full" aria-hidden="true">
             <path d="M5 19 V6" fill="none" stroke={p2} strokeWidth="1.4" strokeLinecap="round" />
@@ -1445,8 +1568,8 @@ function PrismFlash({ palette, Icon, bold, lead, role, device, delayMs }: Templa
   if (role === "entrance") return <Entrance fx="prism" palette={palette} Icon={Icon} device={device} delayMs={delayMs} />;
   if (!lead) return <TargetHit palette={palette} Icon={Icon} delayMs={delayMs} accent="spark" />;
   return (
-    <Stage palette={palette} delayMs={delayMs}>
-      <Emblem bold={bold} fx="prism" palette={palette} cls="bsp-drop" delayMs={delayMs}>
+    <Stage palette={palette} delayMs={delayMs} quakeMs={delayMs + 320}>
+      <Emblem bold={bold} fx="prism" palette={palette} device={device} cls="bsp-drop" delayMs={delayMs}>
         <span className="bsp-breathe absolute block" style={{ left: "10%", top: "26%", width: "38%", height: "48%", animationDelay: `${delayMs + 140}ms` }}>
           <svg viewBox="0 0 16 20" className="block h-full w-full" aria-hidden="true">
             <path d="M8 1.6 L15 18.4 H1 Z" fill={tint(p2, 0.55)} stroke={p0} strokeWidth="1" {...SJ} />
@@ -1484,8 +1607,8 @@ function BannerMuster({ palette, Icon, bold, lead, role, device, delayMs }: Temp
   if (role === "entrance") return <Entrance fx="banner" palette={palette} Icon={Icon} device={device} delayMs={delayMs} />;
   if (!lead) return <TargetHit palette={palette} Icon={Icon} delayMs={delayMs} accent="spark" />;
   return (
-    <Stage palette={palette} delayMs={delayMs}>
-      <Emblem bold={bold} fx="banner" palette={palette} cls="bsp-drop" delayMs={delayMs}>
+    <Stage palette={palette} delayMs={delayMs} quakeMs={delayMs + 320}>
+      <Emblem bold={bold} fx="banner" palette={palette} device={device} cls="bsp-drop" delayMs={delayMs}>
         <svg viewBox="0 0 30 40" className="absolute block h-full w-full" aria-hidden="true">
           <rect x="13.9" y="2" width="2.2" height="36" rx="1.1" fill={p2} />
           <path d="M8 2.6 H22" stroke={p2} strokeWidth="1.6" strokeLinecap="round" />
@@ -1518,8 +1641,8 @@ function InkSplash({ palette, Icon, bold, lead, role, device, delayMs }: Templat
     { l: 78, t: 16, dx: "110%", dy: "-120%", d: 780 },
   ];
   return (
-    <Stage palette={palette} delayMs={delayMs}>
-      <Emblem bold={bold} fx="ink" palette={palette} cls="bsp-blot" delayMs={delayMs}>
+    <Stage palette={palette} delayMs={delayMs} quakeMs={delayMs + 440}>
+      <Emblem bold={bold} fx="ink" palette={palette} device={device} cls="bsp-blot" delayMs={delayMs}>
         <svg viewBox="0 0 40 40" className="absolute block h-full w-full" aria-hidden="true">
           <path
             d="M20 3 C27 3 33 6 35.5 12 C38 18 36 26 30 31 C24 36 14 36.5 8.5 31.5 C3 26.5 2.5 17 6.5 11 C10 5.5 14 3 20 3 Z"
@@ -1599,6 +1722,18 @@ function HighGroundTakeover({ lead, role, delayMs }: { lead: boolean; role: SigR
   if (!lead) return <TargetHit palette={HG_PALETTE} Icon={HG_ICON} delayMs={delayMs} accent="spark" />;
   return (
     <BoardWideStage>
+      {/* FLAGSHIP "Summit Strike": the tier-7 marquee earns the full impact
+          vocabulary - a golden column lasers the summit as the last terrace
+          locks in, a ground shockwave rolls off the chosen square, and the
+          whole ziggurat jolts on the same beat (in-scene quake only). */}
+      <span className={`${QUAKE_CLASS} absolute inset-0 block`} style={impactVars(undefined, (delayMs + 880) / 1000)}>
+      <span
+        className="absolute block"
+        style={{ left: "39%", top: "33%", width: "22%", height: "22%", ...impactVars(rgbOf(HG_GOLD), (delayMs + 880) / 1000) }}
+      >
+        <LaserStrike />
+        <Shockwave />
+      </span>
       <BoardFrame>
         {/* the only board-scale layers: gold light over crimson ground, and a
             rim that closes in on the caster's own edge */}
@@ -1673,6 +1808,7 @@ function HighGroundTakeover({ lead, role, delayMs }: { lead: boolean; role: SigR
         style={{ left: "29%", top: "26%", width: "42%", height: "42%", border: `3px solid ${tint(HG_CRIMSON, 0.85)}`, animationDelay: `${delayMs + 1080}ms` }}
       />
       <Device kind="obelisk" palette={HG_PALETTE} delayMs={delayMs + 560} l={46} t={38} s={9} />
+      </span>
     </BoardWideStage>
   );
 }
