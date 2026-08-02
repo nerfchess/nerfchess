@@ -384,6 +384,15 @@
 }
 .prk-pop--hold { animation-name: prk-pop-hold; }
 
+/* --- FLAGSHIP impact vocabulary hookup ---------------------------------------
+   The shared impact primitives (impact/impact.css) fire their laser at t=0 and
+   land the rest on --imp-delay. Scenes here schedule composites inline via
+   --imp-delay, so the laser is re-timed to LEAD the beat by the vocabulary's
+   own 0.4s instead of firing at scene start. */
+.prk .imp-laser {
+  animation-delay: calc((var(--imp-delay, 0.4s) - 0.4s) * var(--fx-dur, 1));
+}
+
 html[data-anim="off"] .prk,
 html[data-anim="off"] .prk * {
   animation: none !important;

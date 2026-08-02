@@ -470,6 +470,15 @@
 }
 .mnp-stamp { animation: mnp-stamp calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.9, 0.3, 1.1) both; transform-origin: 50% 50%; }
 
+/* --- FLAGSHIP impact vocabulary hookup ---------------------------------------
+   The shared impact primitives (impact/impact.css) fire their laser at t=0 and
+   land the rest on --imp-delay. Scenes here schedule composites inline via
+   --imp-delay, so the laser is re-timed to LEAD the beat by the vocabulary's
+   own 0.4s instead of firing at scene start. */
+.mnp .imp-laser {
+  animation-delay: calc((var(--imp-delay, 0.4s) - 0.4s) * var(--fx-dur, 1));
+}
+
 /* --- animations off (Settings) -----------------------------------------------
    Everything in this module is a transient one-shot flourish: hide the whole
    layer outright (defensive — the caller's play layer gates it too). */
