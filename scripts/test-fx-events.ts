@@ -172,7 +172,7 @@ console.log("fx events");
   const game = freshGame();
   playAny(game);
   playAny(game);
-  const snap = serializeGame(game) as Record<string, unknown>;
+  const snap = serializeGame(game) as unknown as Record<string, unknown>;
   check(!("fx" in snap), "snapshots carry no fx log");
   check(!("lastNerfFilter" in snap), "snapshots carry no nerf filter report");
   check(!snap.buffs || !("fxEvents" in (snap.buffs as object)), "buff state carries no event fields");
