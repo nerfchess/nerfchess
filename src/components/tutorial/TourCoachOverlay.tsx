@@ -21,6 +21,7 @@ import {
   type CSSProperties,
   type ReactNode,
 } from "react";
+import { Button } from "@/components/ui/Button";
 
 export interface CoachStep {
   id: string;
@@ -272,22 +273,20 @@ export function TourCoachOverlay({
           </span>
           <div className="ml-auto flex items-center gap-2">
             {onBack && (
-              <button
-                type="button"
+              <Button tone="ghost"
+               
                 onClick={onBack}
-                className="btn-ghost rounded-[1px] px-3 py-1.5 font-display text-sm"
-              >
+                className="px-3 py-1.5 text-sm">
                 Back
-              </button>
+              </Button>
             )}
             {onNext ? (
-              <button
-                type="button"
+              <Button tone="leaf"
+               
                 onClick={onNext}
-                className="btn-leaf rounded-[1px] px-4 py-1.5 font-display text-sm font-semibold"
-              >
+                className="px-4 py-1.5 text-sm font-semibold">
                 {step.nextLabel ?? "Next"}
-              </button>
+              </Button>
             ) : (
               step.waitLabel && (
                 <span

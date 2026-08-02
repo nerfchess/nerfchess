@@ -14,6 +14,7 @@ import type { DraftMode } from "@/engine/buff";
 import { DungeonGateButton } from "@/components/DungeonGateButton";
 import { EngravedLabel } from "@/components/dungeon/primitives";
 import "@/components/dungeon/dungeon-lobby.css";
+import { Button } from "@/components/ui/Button";
 
 // The lobby's Quick Match panel: pick a mode (Buff recommended / Nerf), pick a
 // time control, and one primary button finds a rated game against a real
@@ -376,12 +377,11 @@ export function QuickMatch({ active = true }: { active?: boolean } = {}) {
                       <span>Searching</span>
                       <span className="font-mono text-sm tabular-nums text-parchment-200">{formatElapsed(elapsed)}</span>
                     </span>
-                    <button
+                    <Button tone="ghost"
                       onClick={cancelSearch}
-                      className="btn-ghost press min-h-[44px] px-5 py-2 font-display text-base"
-                    >
+                      className="px-5 py-2 text-base">
                       Cancel
-                    </button>
+                    </Button>
                   </div>
                 ) : (
                   <DungeonGateButton
@@ -484,9 +484,9 @@ function SearchingPanel({
             opponent ({poolLabel})
           </span>
         </span>
-        <button onClick={onCancel} className="btn-ghost press min-h-[44px] px-4 py-2 font-display text-sm">
+        <Button tone="ghost" onClick={onCancel} className="px-4 py-2 text-sm">
           Cancel
-        </button>
+        </Button>
       </div>
       <div className="mt-2.5 flex items-center gap-2 text-xs text-parchment-400" aria-live="polite">
         <span>Searching</span>

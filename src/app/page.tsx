@@ -21,6 +21,8 @@ import { useLobbySnapshot } from "@/lib/lobbyClient";
 import { AccountUser, fetchMe } from "@/lib/authClient";
 import { ActiveGame, loadActiveGame, clearActiveGame } from "@/lib/multiplayer";
 import { NewHereChip } from "@/components/NewHereChip";
+import { Button } from "@/components/ui/Button";
+import { LinkButton } from "@/components/ui/Button";
 
 export default function HomePage() {
   return (
@@ -585,9 +587,9 @@ function LiveActivity() {
           <div role="alert" className="flex flex-col items-start gap-2.5 px-3 py-5">
             <p className="text-[14px] text-parchment-300">Live activity could not load right now.</p>
             <div className="flex items-center gap-2">
-              <button type="button" onClick={loadGames} className="btn-ghost press px-3 py-1.5 text-[13px]">
+              <Button tone="ghost" onClick={loadGames} className="px-3 py-1.5 text-[13px]">
                 Retry
-              </button>
+              </Button>
               <Link href="/lobby" className="text-[13px] text-parchment-400 no-underline transition-colors hover:text-parchment-100">
                 Back to lobby
               </Link>
@@ -678,14 +680,13 @@ function CommunityProof() {
         )}
         <div className="flex flex-wrap items-center justify-center gap-3">
           {links.map(({ href, label, Icon }) => (
-            <Link
+            <LinkButton tone="ghost"
               key={href}
               href={href}
-              className="btn-ghost press flex items-center gap-2 px-4 py-2 text-[14px] no-underline"
-            >
+              className="flex px-4 py-2 text-[14px]">
               <Icon size={16} aria-hidden />
               {label}
-            </Link>
+            </LinkButton>
           ))}
         </div>
       </div>

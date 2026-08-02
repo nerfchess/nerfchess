@@ -10,6 +10,7 @@ import { MoveList } from "@/components/MoveList";
 import { boardAtPly, replayUci } from "@/lib/gameReview";
 import { CompletedGame, loadGameHistory, timeControlLabel } from "@/lib/gameHistory";
 import { TIER_LABEL } from "@/lib/tiers";
+import { LinkButton } from "@/components/ui/Button";
 
 type State =
   | { kind: "loading" }
@@ -69,9 +70,9 @@ export default function HistoryReplayPage() {
             </p>
           </>
         )}
-        <Link href="/history" className="inline-block mt-8 px-5 py-2 rounded-sm btn-leaf font-body">
+        <LinkButton tone="leaf" href="/history" className="inline-block mt-8 px-5 py-2 font-body">
           Back to history
-        </Link>
+        </LinkButton>
       </section>
     </main>
   );

@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/Button";
+import { LinkButton } from "@/components/ui/Button";
 
 // The four rule families a player can suggest. Nerfs are the secret handicaps;
 // buffs are Buff-mode draft cards; boons are Nerf-mode relief cards; hexes are
@@ -166,17 +168,15 @@ export default function SuggestRulePage() {
               ? "border border-mode-nerf/50 bg-mode-nerf/10 text-mode-nerfGlow"
               : "border border-mode-buff/50 bg-mode-buff/10 text-mode-buffGlow";
             return (
-              <button
+              <Button
                 key={rt.id}
-                type="button"
                 onClick={() => setType(rt.id)}
                 aria-pressed={selected}
-                className={`inline-flex items-center gap-2 px-4 py-2 rounded-[1px] font-display text-sm transition ${
-                  selected ? activeClass : "btn-ghost"
-                }`}
+                tone={selected ? "quiet" : "ghost"}
+                className={selected ? activeClass : ""}
               >
                 {rt.label}
-              </button>
+              </Button>
             );
           })}
         </div>
@@ -188,20 +188,19 @@ export default function SuggestRulePage() {
               Your idea is in the queue. If it makes the cut you&apos;ll see it in the Codex.
             </p>
             <div className="mt-5 flex justify-center gap-3">
-              <button
-                type="button"
+              <Button tone="ghost"
+               
                 onClick={() => {
                   setName("");
                   setDescription("");
                   setState("idle");
                 }}
-                className="btn-ghost px-5 py-2.5 font-display text-sm"
-              >
+                className="px-5 py-2.5 text-sm">
                 Suggest another
-              </button>
-              <Link href="/codex" className="btn-leaf px-5 py-2.5 font-display text-sm font-semibold inline-flex items-center">
+              </Button>
+              <LinkButton tone="leaf" href="/codex" className="px-5 py-2.5 text-sm font-semibold">
                 Back to the rules
-              </Link>
+              </LinkButton>
             </div>
           </div>
         ) : (
@@ -252,13 +251,12 @@ export default function SuggestRulePage() {
 
             {error && <div className="text-sm text-oxblood-glow">{error}</div>}
 
-            <button
+            <Button tone="cta"
               type="submit"
               disabled={state === "sending" || description.trim().length < 10}
-              className="btn-leaf btn-cta w-full px-6 py-3 font-display text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-            >
+              className="w-full px-6 py-3 text-base font-semibold disabled:opacity-50">
               {state === "sending" ? "Sending…" : `Send ${type} suggestion`}
-            </button>
+            </Button>
           </form>
         )}
       </section>

@@ -17,6 +17,32 @@
    the ember file and torch flicker are additionally removed wholesale under
    data-perf="low" so weak devices pay nothing for the dressing. */
 
+/* ---- Gate material -----------------------------------------------------
+   The gate is the biggest button in the product and it was built entirely
+   from literals, so it stayed warm granite in every theme — a gold slab
+   sitting in the middle of a magenta page under Neon, or a dark one on
+   Porcelain's paper. The torch pools and treasure light already read energy
+   tokens; what did not was the stone itself, the iron, and the engraved ink.
+
+   Those are tokens now, at exactly today's values. They live on :root, NOT on
+   .dgn-gate: a value set on the element itself would beat the one a theme
+   inherits down from html[data-theme], and the gate would stay warm granite in
+   every room no matter what the theme asked for. A flagship re-skins the gate
+   by setting these and nothing else — see docs/themes.md. */
+:root {
+  --gate-stone-hi: #3a332b;   /* the lit top course */
+  --gate-stone-mid: #2a241e;
+  --gate-stone-lo: #1d1915;   /* the shadowed foot */
+  --gate-iron: 126 108 82;    /* forged rim and the brass base lip */
+  --gate-iron-plate: 70 60 46; /* the corner angle plates */
+  --gate-rivet: 220 200 160;  /* rivet heads */
+  --gate-ink: #f2e4c2;        /* text on the gate */
+  --gate-ink-hi: #f6e7c4;     /* the engraved label */
+  --gate-ink-hover: #fdf3d8;  /* the label once the runes ignite */
+  --gate-light: 255 235 200;  /* face light, top light, grain sparks */
+
+}
+
 .dgn-gate {
   position: relative;
   overflow: hidden;
@@ -29,10 +55,10 @@
      not by the corner radius. */
   border-radius: 1px;
   border: 1px solid rgb(20 16 12);
-  color: #f2e4c2;
+  color: var(--gate-ink);
   background:
     /* Convex face light: the slab bows toward you, like a real button cap. */
-    linear-gradient(to bottom, rgba(255, 235, 200, 0.09), rgba(255, 235, 200, 0.02) 34%, transparent 55%),
+    linear-gradient(to bottom, rgb(var(--gate-light) / 0.09), rgb(var(--gate-light) / 0.02) 34%, transparent 55%),
     /* Torch pools burning at the two jambs. */
     radial-gradient(34% 78% at 0% 52%, rgb(var(--energy-ember-rgb) / 0.2), transparent 72%),
     radial-gradient(34% 78% at 100% 52%, rgb(var(--energy-ember-rgb) / 0.2), transparent 72%),
@@ -45,23 +71,23 @@
     linear-gradient(90deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)) 64% 66% / 1px 34% no-repeat,
     linear-gradient(90deg, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.35)) 78% 33% / 1px 33% no-repeat,
     /* Star pinpricks caught in the grain. */
-    radial-gradient(1px 1px at 16% 28%, rgba(255, 235, 200, 0.07), transparent 100%),
-    radial-gradient(1px 1px at 71% 74%, rgba(255, 235, 200, 0.06), transparent 100%),
-    radial-gradient(1px 1px at 88% 22%, rgba(255, 235, 200, 0.05), transparent 100%),
+    radial-gradient(1px 1px at 16% 28%, rgb(var(--gate-light) / 0.07), transparent 100%),
+    radial-gradient(1px 1px at 71% 74%, rgb(var(--gate-light) / 0.06), transparent 100%),
+    radial-gradient(1px 1px at 88% 22%, rgb(var(--gate-light) / 0.05), transparent 100%),
     /* The granite itself. */
-    linear-gradient(to bottom, #3a332b, #2a241e 55%, #1d1915);
+    linear-gradient(to bottom, var(--gate-stone-hi), var(--gate-stone-mid) 55%, var(--gate-stone-lo));
   box-shadow:
     /* Forged iron frame: a raised metal lip all around... */
-    0 0 0 1px rgba(126, 108, 82, 0.5) inset,
+    0 0 0 1px rgb(var(--gate-iron) / 0.5) inset,
     0 0 0 3px rgba(24, 20, 16, 0.9) inset,
-    0 0 0 4px rgba(94, 80, 60, 0.28) inset,
+    0 0 0 4px rgb(var(--gate-iron) / 0.28) inset,
     /* ...top light and the dark settle at the foot of the stone... */
-    0 1px 0 rgba(255, 230, 180, 0.14) inset,
+    0 1px 0 rgb(var(--gate-light) / 0.14) inset,
     0 -12px 22px -14px rgba(0, 0, 0, 0.75) inset,
     /* ...and the physical base edge the gate rests on: a taller stone lip
        with a faint brass rim so the slab clearly stands proud of the page. */
     0 4px 0 rgb(12 9 6),
-    0 4px 0 1px rgba(126, 108, 82, 0.3),
+    0 4px 0 1px rgb(var(--gate-iron) / 0.3),
     0 9px 18px -7px rgba(0, 0, 0, 0.7),
     0 0 26px -12px rgb(var(--energy-ember-rgb) / 0.5);
   transition:
@@ -80,15 +106,15 @@
   pointer-events: none;
   background:
     /* Rivet heads at all four corners. */
-    radial-gradient(2.5px 2.5px at 9px 9px, rgba(220, 200, 160, 0.6), rgba(60, 50, 40, 0.9) 60%, transparent 75%),
-    radial-gradient(2.5px 2.5px at calc(100% - 9px) 9px, rgba(220, 200, 160, 0.55), rgba(60, 50, 40, 0.9) 60%, transparent 75%),
-    radial-gradient(2.5px 2.5px at 9px calc(100% - 9px), rgba(220, 200, 160, 0.5), rgba(60, 50, 40, 0.9) 60%, transparent 75%),
-    radial-gradient(2.5px 2.5px at calc(100% - 9px) calc(100% - 9px), rgba(220, 200, 160, 0.5), rgba(60, 50, 40, 0.9) 60%, transparent 75%),
+    radial-gradient(2.5px 2.5px at 9px 9px, rgb(var(--gate-rivet) / 0.6), rgba(60, 50, 40, 0.9) 60%, transparent 75%),
+    radial-gradient(2.5px 2.5px at calc(100% - 9px) 9px, rgb(var(--gate-rivet) / 0.55), rgba(60, 50, 40, 0.9) 60%, transparent 75%),
+    radial-gradient(2.5px 2.5px at 9px calc(100% - 9px), rgb(var(--gate-rivet) / 0.5), rgba(60, 50, 40, 0.9) 60%, transparent 75%),
+    radial-gradient(2.5px 2.5px at calc(100% - 9px) calc(100% - 9px), rgb(var(--gate-rivet) / 0.5), rgba(60, 50, 40, 0.9) 60%, transparent 75%),
     /* The iron angles behind the rivets. */
-    linear-gradient(135deg, rgba(70, 60, 46, 0.85) 14px, transparent 14px) 0 0 / 26px 26px no-repeat,
-    linear-gradient(225deg, rgba(70, 60, 46, 0.8) 14px, transparent 14px) 100% 0 / 26px 26px no-repeat,
-    linear-gradient(45deg, rgba(70, 60, 46, 0.75) 14px, transparent 14px) 0 100% / 26px 26px no-repeat,
-    linear-gradient(315deg, rgba(70, 60, 46, 0.75) 14px, transparent 14px) 100% 100% / 26px 26px no-repeat;
+    linear-gradient(135deg, rgb(var(--gate-iron-plate) / 0.85) 14px, transparent 14px) 0 0 / 26px 26px no-repeat,
+    linear-gradient(225deg, rgb(var(--gate-iron-plate) / 0.8) 14px, transparent 14px) 100% 0 / 26px 26px no-repeat,
+    linear-gradient(45deg, rgb(var(--gate-iron-plate) / 0.75) 14px, transparent 14px) 0 100% / 26px 26px no-repeat,
+    linear-gradient(315deg, rgb(var(--gate-iron-plate) / 0.75) 14px, transparent 14px) 100% 100% / 26px 26px no-repeat;
 }
 
 /* Breathing torchlight across the whole gate: a slow ember sheen that swells
@@ -123,10 +149,10 @@
   display: inline-flex;
   align-items: center;
   gap: 0.55em;
-  color: #f6e7c4;
+  color: var(--gate-ink-hi);
   text-shadow:
     0 -1px 0 rgba(0, 0, 0, 0.85),
-    0 1px 0 rgba(255, 226, 158, 0.22),
+    0 1px 0 rgb(var(--gate-light) / 0.22),
     0 0 14px rgb(var(--energy-gold-rgb) / 0.24);
   transition: text-shadow 200ms ease, color 200ms ease;
 }
@@ -189,7 +215,7 @@
     0 0 0 1px rgba(160, 136, 100, 0.6) inset,
     0 0 0 3px rgba(24, 20, 16, 0.9) inset,
     0 0 0 4px rgba(122, 102, 74, 0.36) inset,
-    0 1px 0 rgba(255, 230, 180, 0.18) inset,
+    0 1px 0 rgb(var(--gate-light) / 0.18) inset,
     0 -12px 22px -14px rgba(0, 0, 0, 0.7) inset,
     0 6px 0 rgb(12 9 6),
     0 6px 0 1px rgba(160, 136, 100, 0.35),
@@ -207,10 +233,10 @@
     0 0 10px rgb(var(--energy-ember-rgb) / 0.6);
 }
 .dgn-gate:hover:not(:disabled):not([data-loading="true"]) .dgn-gate__label {
-  color: #fdf3d8;
+  color: var(--gate-ink-hover);
   text-shadow:
     0 -1px 0 rgba(0, 0, 0, 0.85),
-    0 1px 0 rgba(255, 226, 158, 0.3),
+    0 1px 0 rgb(var(--gate-light) / 0.3),
     0 0 20px rgb(var(--energy-gold-rgb) / 0.4);
 }
 
@@ -222,7 +248,7 @@
   transform: translateY(3px);
   transition-duration: 60ms;
   box-shadow:
-    0 0 0 1px rgba(126, 108, 82, 0.45) inset,
+    0 0 0 1px rgb(var(--gate-iron) / 0.45) inset,
     0 0 0 3px rgba(24, 20, 16, 0.9) inset,
     0 0 0 4px rgba(94, 80, 60, 0.24) inset,
     0 2px 4px rgba(0, 0, 0, 0.4) inset,
@@ -304,14 +330,14 @@
 }
 .dgn-gate--minor::before {
   background:
-    radial-gradient(2px 2px at 6px 6px, rgba(220, 200, 160, 0.6), rgba(60, 50, 40, 0.9) 60%, transparent 75%),
-    radial-gradient(2px 2px at calc(100% - 6px) 6px, rgba(220, 200, 160, 0.55), rgba(60, 50, 40, 0.9) 60%, transparent 75%),
-    radial-gradient(2px 2px at 6px calc(100% - 6px), rgba(220, 200, 160, 0.5), rgba(60, 50, 40, 0.9) 60%, transparent 75%),
-    radial-gradient(2px 2px at calc(100% - 6px) calc(100% - 6px), rgba(220, 200, 160, 0.5), rgba(60, 50, 40, 0.9) 60%, transparent 75%),
-    linear-gradient(135deg, rgba(70, 60, 46, 0.85) 10px, transparent 10px) 0 0 / 18px 18px no-repeat,
-    linear-gradient(225deg, rgba(70, 60, 46, 0.8) 10px, transparent 10px) 100% 0 / 18px 18px no-repeat,
-    linear-gradient(45deg, rgba(70, 60, 46, 0.75) 10px, transparent 10px) 0 100% / 18px 18px no-repeat,
-    linear-gradient(315deg, rgba(70, 60, 46, 0.75) 10px, transparent 10px) 100% 100% / 18px 18px no-repeat;
+    radial-gradient(2px 2px at 6px 6px, rgb(var(--gate-rivet) / 0.6), rgba(60, 50, 40, 0.9) 60%, transparent 75%),
+    radial-gradient(2px 2px at calc(100% - 6px) 6px, rgb(var(--gate-rivet) / 0.55), rgba(60, 50, 40, 0.9) 60%, transparent 75%),
+    radial-gradient(2px 2px at 6px calc(100% - 6px), rgb(var(--gate-rivet) / 0.5), rgba(60, 50, 40, 0.9) 60%, transparent 75%),
+    radial-gradient(2px 2px at calc(100% - 6px) calc(100% - 6px), rgb(var(--gate-rivet) / 0.5), rgba(60, 50, 40, 0.9) 60%, transparent 75%),
+    linear-gradient(135deg, rgb(var(--gate-iron-plate) / 0.85) 10px, transparent 10px) 0 0 / 18px 18px no-repeat,
+    linear-gradient(225deg, rgb(var(--gate-iron-plate) / 0.8) 10px, transparent 10px) 100% 0 / 18px 18px no-repeat,
+    linear-gradient(45deg, rgb(var(--gate-iron-plate) / 0.75) 10px, transparent 10px) 0 100% / 18px 18px no-repeat,
+    linear-gradient(315deg, rgb(var(--gate-iron-plate) / 0.75) 10px, transparent 10px) 100% 100% / 18px 18px no-repeat;
 }
 .dgn-gate--minor .dgn-gate__rune {
   font-size: 0.72em;
@@ -319,13 +345,13 @@
 }
 .dgn-gate--minor {
   box-shadow:
-    0 0 0 1px rgba(126, 108, 82, 0.5) inset,
+    0 0 0 1px rgb(var(--gate-iron) / 0.5) inset,
     0 0 0 2px rgba(24, 20, 16, 0.9) inset,
     0 0 0 3px rgba(94, 80, 60, 0.28) inset,
-    0 1px 0 rgba(255, 230, 180, 0.14) inset,
+    0 1px 0 rgb(var(--gate-light) / 0.14) inset,
     0 -8px 16px -10px rgba(0, 0, 0, 0.75) inset,
     0 3px 0 rgb(12 9 6),
-    0 3px 0 1px rgba(126, 108, 82, 0.3),
+    0 3px 0 1px rgb(var(--gate-iron) / 0.3),
     0 7px 14px -6px rgba(0, 0, 0, 0.7),
     0 0 20px -10px rgb(var(--energy-ember-rgb) / 0.4);
 }
@@ -335,7 +361,7 @@
     0 0 0 1px rgba(160, 136, 100, 0.6) inset,
     0 0 0 2px rgba(24, 20, 16, 0.9) inset,
     0 0 0 3px rgba(122, 102, 74, 0.36) inset,
-    0 1px 0 rgba(255, 230, 180, 0.18) inset,
+    0 1px 0 rgb(var(--gate-light) / 0.18) inset,
     0 -8px 16px -10px rgba(0, 0, 0, 0.7) inset,
     0 4px 0 rgb(12 9 6),
     0 4px 0 1px rgba(160, 136, 100, 0.35),
@@ -345,7 +371,7 @@
 .dgn-gate--minor:active:not(:disabled):not([data-loading="true"]) {
   transform: translateY(2px);
   box-shadow:
-    0 0 0 1px rgba(126, 108, 82, 0.45) inset,
+    0 0 0 1px rgb(var(--gate-iron) / 0.45) inset,
     0 0 0 2px rgba(24, 20, 16, 0.9) inset,
     0 0 0 3px rgba(94, 80, 60, 0.24) inset,
     0 2px 4px rgba(0, 0, 0, 0.4) inset,

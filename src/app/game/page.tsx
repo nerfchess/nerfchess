@@ -5,6 +5,7 @@ import { Board, NERF_REVEAL_SKIP, type NerfRevealInfo } from "@/components/Board
 import { BoardPlayerRow } from "@/components/BoardPlayerRow";
 import { ClockPill } from "@/components/ClockPill";
 import { RailResizeHandle, useRailWidth } from "@/components/RailResizeHandle";
+import { CommandRail, railGridClass } from "@/components/match/CommandRail";
 // The end screen is never part of first paint; loading it on demand keeps it
 // out of the page's initial bundle.
 const GameOver = dynamic(() => import("@/components/GameOver").then((m) => m.GameOver), {
@@ -87,6 +88,7 @@ import type { AIWorkerRequest, AIWorkerResponse } from "@/workers/aiWorker";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, type CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Button } from "@/components/ui/Button";
 
 function pickRandomNerf(): Nerf {
   // Random rolls respect the temporary opening cap (tiers 1-2 only).
@@ -1481,12 +1483,11 @@ function GamePage() {
             </div>
             {nerfSelected != null && (
               <div className="mt-4 text-center">
-                <button
+                <Button tone="primary"
                   onClick={() => startDraftGame(nerfDraft.myOptions[nerfSelected])}
-                  className="btn-glass btn-glass--primary px-8 py-3 font-display text-base font-semibold tracking-wide"
-                >
+                  className="px-8 py-3 text-base font-semibold tracking-wide">
                   Confirm pick
-                </button>
+                </Button>
               </div>
             )}
             {/* Nerf mode: the opponent's rule is completely hidden until the
@@ -1745,12 +1746,11 @@ function GamePage() {
         >
           Confirm
         </button>
-        <button
+        <Button tone="ghost"
           onClick={() => setConfirmMovePending(null)}
-          className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 btn-ghost text-xs font-display tracking-wide"
-        >
+          className="min-w-0 px-3 py-2 text-xs tracking-wide">
           Cancel
-        </button>
+        </Button>
       </div>
     </div>
   ) : confirmingDraw ? (
@@ -1763,30 +1763,27 @@ function GamePage() {
         >
           Offer draw
         </button>
-        <button
+        <Button tone="ghost"
           onClick={() => setConfirmingDraw(false)}
-          className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 btn-ghost text-xs font-display tracking-wide"
-        >
+          className="min-w-0 px-3 py-2 text-xs tracking-wide">
           Cancel
-        </button>
+        </Button>
       </div>
     </div>
   ) : confirmingResign ? (
     <div className="space-y-2">
       <div className="smallcaps text-[12px] text-parchment-300">Resign the game?</div>
       <div className="grid grid-cols-2 gap-2">
-        <button
+        <Button tone="danger"
           onClick={() => { onResign(); setConfirmingResign(false); }}
-          className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 btn-cursed text-xs font-display font-semibold tracking-wide"
-        >
+          className="min-w-0 px-3 py-2 text-xs font-semibold tracking-wide">
           Yes
-        </button>
-        <button
+        </Button>
+        <Button tone="ghost"
           onClick={() => setConfirmingResign(false)}
-          className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 btn-ghost text-xs font-display tracking-wide"
-        >
+          className="min-w-0 px-3 py-2 text-xs tracking-wide">
           Cancel
-        </button>
+        </Button>
       </div>
     </div>
   ) : (
@@ -1804,14 +1801,13 @@ function GamePage() {
         >
           {drawOfferStatus === "offering" ? "Offering..." : "Draw"}
         </button>
-        <button
+        <Button tone="danger"
           onClick={requestResign}
           title="Resign the game"
           aria-label="Resign the game"
-          className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 btn-cursed text-xs font-display font-semibold tracking-wide"
-        >
+          className="min-w-0 px-3 py-2 text-xs font-semibold tracking-wide">
           Resign
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -1821,8 +1817,8 @@ function GamePage() {
   // can't be reconstructed (board rewritten by a card, no stored positions).
   const clipButton =
     game.board.history.length >= 2 ? (
-      <button
-        type="button"
+      <Button tone="ghost"
+       
         onClick={openClip}
         disabled={clipPlies < 2}
         data-clip-open
@@ -1831,14 +1827,13 @@ function GamePage() {
             ? "Clip unavailable: these moves can't be replayed (the board was rewritten by a card)"
             : "Save the last moves as a short video clip"
         }
-        className="min-w-0 min-h-[44px] w-full inline-flex items-center justify-center gap-2 px-3 py-2 btn-ghost text-xs font-display tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
-      >
+        className="min-w-0 w-full px-3 py-2 text-xs tracking-wide disabled:opacity-50">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
           <polygon points="23 7 16 12 23 17 23 7" />
           <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
         </svg>
         Clip last moves
-      </button>
+      </Button>
     ) : null;
 
   const moveListFooter =
@@ -1869,12 +1864,11 @@ function GamePage() {
             {plainMode && <>plain chess · </>}
             bot on {difficulty} · {rated ? "rated" : "casual"}
           </div>
-          <button
+          <Button tone="ghost"
             onClick={toggleMute}
             aria-label={muted ? "Unmute" : "Mute"}
             title={muted ? "Sound off" : "Sound on"}
-            className="h-11 w-11 sm:h-9 sm:w-9 inline-flex items-center justify-center rounded-full btn-ghost"
-          >
+            className="h-11 w-11 sm:h-9 sm:w-9 rounded-full">
             {muted ? (
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
@@ -1888,18 +1882,17 @@ function GamePage() {
                 <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
               </svg>
             )}
-          </button>
-          <button
+          </Button>
+          <Button tone="ghost"
             onClick={() => setSettingsOpen(true)}
             aria-label="Settings"
             title="Settings"
-            className="h-11 w-11 sm:h-9 sm:w-9 inline-flex items-center justify-center rounded-full btn-ghost"
-          >
+            className="h-11 w-11 sm:h-9 sm:w-9 rounded-full">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <circle cx="12" cy="12" r="3" />
               <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
             </svg>
-          </button>
+          </Button>
         </div>
       </nav>
 
@@ -1930,105 +1923,83 @@ function GamePage() {
           // The rail column tracks the draggable --match-rail-w and a thin
           // resize-handle column sits between rail and board; the 6px gaps +
           // 4px handle keep the same 16px gutter as before.
-          className="grid min-h-0 flex-1 gap-y-2 lg:grid-cols-[var(--match-rail-w,320px)_0.25rem_auto] lg:justify-center lg:gap-x-1.5"
+          className={railGridClass(false)}
           style={{ ...railHeightStyle, ...railWidthStyle }}
         >
           {/* The command rail: one framed column (mode header, opponent, dock,
-              you) instead of floating islands; mirrors the online layout. */}
-          <aside className="rail-panel corner-cut hidden min-h-0 gap-3 overflow-hidden p-2.5 lg:grid lg:min-h-[var(--board-height)] lg:max-h-full lg:grid-rows-[auto_auto_minmax(8rem,1fr)_auto] lg:self-start">
-            <div className="seam-edge-b flex items-center justify-between gap-2 px-1 pb-2">
-              <span
-                className={
-                  "flex items-center gap-1.5 font-display text-xs font-bold uppercase tracking-[0.14em] " +
-                  (plainMode
-                    ? "text-parchment-300"
-                    : gameMode === "buff"
-                    ? "text-mode-buffGlow"
-                    : "text-mode-nerfGlow")
-                }
-              >
-                {/* A lit mode ember anchors the rail's identity at a glance. */}
-                <span
-                  aria-hidden
-                  className="h-1.5 w-1.5 shrink-0 rounded-full bg-current"
-                  style={{ boxShadow: "0 0 8px 1px currentColor" }}
-                />
-                {plainMode ? "Plain chess" : gameMode === "buff" ? "Buff mode" : "Nerf mode"}
-              </span>
-              <span className="smallcaps min-w-0 truncate text-[12px] text-parchment-400">
-                Casual · vs bot
-              </span>
-            </div>
-            <PlayerNerfCard
-              board={boardForDisplay}
-              playerColor={myColor === "w" ? "b" : "w"}
-              myColor={myColor}
-              name={`${difficulty[0].toUpperCase()}${difficulty.slice(1)} Bot`}
-              elo={BOT_ELO[difficulty]}
-              nerf={opponentNerf}
-              revealed={oppRevealed}
-              hideNerf={hideOppNerfCard}
-              ownerLabel=""
-              compact
-              action={
-                // Section games: the opponent's rule stays fully hidden until
-                // the game ends, so there is no self-peek. Plain chess has no
-                // rule to reveal at all.
-                gameMode == null && !plainMode && !oppRevealed && !uiSettings.hideOpponentReveal ? (
-                  <button
-                    onClick={() => setOppPeek(true)}
-                    className="w-full px-3 py-2 border border-white/15 bg-white/[0.03] text-parchment-200 hover:border-white/30 hover:bg-white/[0.06] transition text-xs font-semibold"
-                  >
-                    Reveal their rule
-                  </button>
-                ) : null
-              }
-            />
-            {game.buffs ? (
-              <BuffDock
-                game={game}
+              you) instead of floating islands; the same component the online
+              match uses, so the two layouts cannot drift apart again. */}
+          <CommandRail
+            mode={plainMode ? "plain" : gameMode === "buff" ? "buff" : "nerf"}
+            subtitle="Casual · vs bot"
+            opponent={
+              <PlayerNerfCard
+                board={boardForDisplay}
+                playerColor={myColor === "w" ? "b" : "w"}
                 myColor={myColor}
-                canAct={
-                  !game.result && game.board.turn === myColor && !myOffer && !isReviewingHistory
+                name={`${difficulty[0].toUpperCase()}${difficulty.slice(1)} Bot`}
+                elo={BOT_ELO[difficulty]}
+                nerf={opponentNerf}
+                revealed={oppRevealed}
+                hideNerf={hideOppNerfCard}
+                ownerLabel=""
+                compact
+                action={
+                  // Section games: the opponent's rule stays fully hidden until
+                  // the game ends, so there is no self-peek. Plain chess has no
+                  // rule to reveal at all.
+                  gameMode == null && !plainMode && !oppRevealed && !uiSettings.hideOpponentReveal ? (
+                    <Button tone="ghost" size="sm" block onClick={() => setOppPeek(true)}>
+                      Reveal their rule
+                    </Button>
+                  ) : null
                 }
-                onStartUse={(i) => {
-                  snapshotMySignature(i);
-                  buffTargeting.start(i);
-                }}
-                plays={oppLog}
               />
-            ) : (
-              <div className="hidden lg:block" />
-            )}
-            <PlayerNerfCard
-              board={boardForDisplay}
-              playerColor={myColor}
-              myColor={myColor}
-              name="You"
-              elo={playerElo}
-              nerf={myNerf}
-              hideNerf={hideMyNerfCard}
-              ownerLabel=""
-              compact
-              progress={myNerf.progress?.(myState, myCtx) ?? null}
-              boons={myHeldBoons}
-              action={
-                gameMode === "buff" || plainMode ? null : (
-                  <button
-                    onClick={() => setSharedMine((v) => !v)}
-                    className={
-                      "w-full px-3 py-2 border transition text-xs font-semibold " +
-                      (sharedMine
-                        ? "border-gold/50 bg-gold/10 text-gold-leaf"
-                        : "border-white/15 bg-white/[0.03] text-parchment-200 hover:border-white/30 hover:bg-white/[0.06]")
-                    }
-                  >
-                    {sharedMine ? "Rule shared with opponent" : "Reveal my rule to opponent"}
-                  </button>
-                )
-              }
-            />
-          </aside>
+            }
+            center={
+              game.buffs ? (
+                <BuffDock
+                  game={game}
+                  myColor={myColor}
+                  canAct={
+                    !game.result && game.board.turn === myColor && !myOffer && !isReviewingHistory
+                  }
+                  onStartUse={(i) => {
+                    snapshotMySignature(i);
+                    buffTargeting.start(i);
+                  }}
+                  plays={oppLog}
+                />
+              ) : undefined
+            }
+            self={
+              <PlayerNerfCard
+                board={boardForDisplay}
+                playerColor={myColor}
+                myColor={myColor}
+                name="You"
+                elo={playerElo}
+                nerf={myNerf}
+                hideNerf={hideMyNerfCard}
+                ownerLabel=""
+                compact
+                progress={myNerf.progress?.(myState, myCtx) ?? null}
+                boons={myHeldBoons}
+                action={
+                  gameMode === "buff" || plainMode ? null : (
+                    <Button
+                      tone={sharedMine ? "leaf" : "ghost"}
+                      size="sm"
+                      block
+                      onClick={() => setSharedMine((v) => !v)}
+                    >
+                      {sharedMine ? "Rule shared with opponent" : "Reveal my rule to opponent"}
+                    </Button>
+                  )
+                }
+              />
+            }
+          />
           <RailResizeHandle railWidth={railWidth} resizeRail={resizeRail} />
           <div className="flex min-h-0 flex-col gap-2 sm:flex-row sm:items-stretch sm:justify-start">
             <div ref={boardShellRef} className="min-h-0 min-w-0 sm:flex-none">
@@ -2359,13 +2330,12 @@ function GamePage() {
       )}
 
       {game.result && !showResult && (
-        <button
-          type="button"
+        <Button tone="leaf"
+         
           onClick={() => setShowResult(true)}
-          className="btn-leaf fixed bottom-24 right-3 z-40 px-4 py-2 font-display text-sm font-semibold shadow-xl sm:bottom-16 lg:bottom-4"
-        >
+          className="fixed bottom-24 right-3 z-40 px-4 py-2 text-sm font-semibold shadow-xl sm:bottom-16 lg:bottom-4">
           Show result
-        </button>
+        </Button>
       )}
       {game.result && showResult && (
         <GameOver

@@ -13,7 +13,19 @@ export type BoardTheme =
   | "walnut"
   | "tournament"
   | "forest"
-  | "midnight";
+  | "midnight"
+  | "obsidianBasalt"
+  | "porcelainGlaze"
+  | "neonGrid"
+  | "jadeLacquer"
+  | "auroraIce";
+
+/** What the SETTING stores, which is a superset of what a board can BE.
+ *  "auto" is deliberately not a member of BoardTheme: keeping the two types
+ *  distinct is what makes the compiler point at every place that indexes
+ *  BOARD_THEMES directly, instead of silently falling through to the ?? wood
+ *  fallback and exporting a clip with the wrong board. */
+export type BoardThemePref = BoardTheme | "auto";
 
 export type PieceTheme =
   | "classic"
@@ -33,6 +45,9 @@ export type PieceTheme =
   | "lichessMaestro"
   | "lichessPirouetti"
   | "lichessStaunty";
+
+/** As BoardThemePref, for the piece set. */
+export type PieceThemePref = PieceTheme | "auto";
 
 export type AccentColor = "auto" | "blue" | "green" | "amber" | "rose";
 export type AnimationSpeed = "off" | "fast" | "normal";
@@ -166,6 +181,11 @@ export const SITE_THEMES: Record<
     scheme: "dark" | "light";
     swatch: { bg: string; panel: string; glow: string };
     accent: AccentDef;
+    /** The board and piece set this theme wants when the player's own setting
+     *  is on "auto". Only the flagships set these: a tint is a repaint and has
+     *  no business touching the board. */
+    board?: BoardTheme;
+    piece?: PieceTheme;
   }
 > = {
   dark:     { label: "Classic",  hint: "Warm charcoal, the base palette", scheme: "dark",  swatch: { bg: "#1a1512", panel: "#241d18", glow: "#d4a017" }, accent: GOLD_ACCENT },
@@ -180,16 +200,16 @@ export const SITE_THEMES: Record<
   nebula:   { label: "Nebula",   hint: "Violet dusk",                     scheme: "dark",  swatch: { bg: "#131019", panel: "#1f1929", glow: "#d4a017" }, accent: GOLD_ACCENT },
 
   // --- Flagships: own accent, own material, own motion. ---
-  obsidian:  { label: "Obsidian",  hint: "Volcanic glass, molten ember",   scheme: "dark",  swatch: { bg: "#0b0a0c", panel: "#16131a", glow: "#ff7a2f" }, accent: EMBER_ACCENT },
-  porcelain: { label: "Porcelain", hint: "Glazed white, cobalt ink",       scheme: "light", swatch: { bg: "#eeeae2", panel: "#fbf9f5", glow: "#2a55b8" }, accent: COBALT_ACCENT },
-  neon:      { label: "Neon",      hint: "Arcade indigo, hot magenta",     scheme: "dark",  swatch: { bg: "#0a0714", panel: "#150e28", glow: "#ff45c8" }, accent: MAGENTA_ACCENT },
-  jade:      { label: "Jade",      hint: "Lacquer green, jade inlay",      scheme: "dark",  swatch: { bg: "#08110f", panel: "#0f1f1a", glow: "#2fbf9f" }, accent: JADE_ACCENT },
-  aurora:    { label: "Aurora",    hint: "Polar night, violet light",      scheme: "dark",  swatch: { bg: "#070d18", panel: "#0e172a", glow: "#9d7bff" }, accent: AURORA_ACCENT },
+  obsidian:  { label: "Obsidian",  hint: "Volcanic glass, molten ember",   scheme: "dark",  swatch: { bg: "#0b0a0c", panel: "#16131a", glow: "#ff7a2f" }, accent: EMBER_ACCENT, board: "obsidianBasalt", piece: "steel" },
+  porcelain: { label: "Porcelain", hint: "Glazed white, cobalt ink",       scheme: "light", swatch: { bg: "#eeeae2", panel: "#fbf9f5", glow: "#2a55b8" }, accent: COBALT_ACCENT, board: "porcelainGlaze", piece: "classic" },
+  neon:      { label: "Neon",      hint: "Arcade indigo, hot magenta",     scheme: "dark",  swatch: { bg: "#0a0714", panel: "#150e28", glow: "#ff45c8" }, accent: MAGENTA_ACCENT, board: "neonGrid", piece: "steel" },
+  jade:      { label: "Jade",      hint: "Lacquer green, jade inlay",      scheme: "dark",  swatch: { bg: "#08110f", panel: "#0f1f1a", glow: "#2fbf9f" }, accent: JADE_ACCENT, board: "jadeLacquer", piece: "forest" },
+  aurora:    { label: "Aurora",    hint: "Polar night, violet light",      scheme: "dark",  swatch: { bg: "#070d18", panel: "#0e172a", glow: "#9d7bff" }, accent: AURORA_ACCENT, board: "auroraIce", piece: "ivory" },
 };
 
 export interface Settings {
-  boardTheme: BoardTheme;
-  pieceTheme: PieceTheme;
+  boardTheme: BoardThemePref;
+  pieceTheme: PieceThemePref;
   volume: number; // 0..1
   moveRiskWarnings: boolean; // yellow/red move-dot warnings for self-loss / check
   autoQueen: boolean; // skip the promotion picker and always promote to queen
@@ -246,8 +266,8 @@ export const SETTINGS_CHANGED_EVENT = "nerfchess:settings-changed";
 
 const STORAGE_KEY = "dc:settings-v1";
 export const DEFAULT_SETTINGS: Settings = {
-  boardTheme: "wood",
-  pieceTheme: "classic",
+  boardTheme: "auto",
+  pieceTheme: "auto",
   volume: 0.8,
   moveRiskWarnings: true,
   autoQueen: false,
@@ -315,6 +335,16 @@ export const BOARD_THEMES: Record<BoardTheme, { light: string; dark: string; lab
   midnight:   { light: "#9fa6b2", dark: "#3a3f4b", label: "Midnight" },
   purple:     { light: "#e6dcf0", dark: "#8877b3", label: "Purple" },
   rose:       { light: "#f5e2dd", dark: "#c27f77", label: "Rose" },
+  // The four boards the flagship themes ask for on "auto". They are ordinary
+  // entries, not a parallel system, so anyone can pick Obsidian's basalt board
+  // without running the Obsidian theme. Each keeps a wide light/dark split so
+  // the pieces stay readable on it — a themed board that swallowed a piece
+  // would be a worse bug than a board that clashes.
+  obsidianBasalt:  { light: "#c9bcae", dark: "#4a3f42", label: "Basalt" },
+  porcelainGlaze:  { light: "#f7f5f0", dark: "#a8b0c4", label: "Glaze" },
+  neonGrid:        { light: "#b9a6d8", dark: "#42256b", label: "Grid" },
+  jadeLacquer:     { light: "#dfe4c8", dark: "#2f5f4c", label: "Lacquer" },
+  auroraIce:       { light: "#dbe6f5", dark: "#495a80", label: "Ice" },
 };
 
 export const PIECE_THEMES: Record<
@@ -386,12 +416,15 @@ export function loadSettings(): Settings {
     const parsed = JSON.parse(raw) as Partial<Settings>;
     return {
       boardTheme:
-        parsed.boardTheme && parsed.boardTheme in BOARD_THEMES
-          ? (parsed.boardTheme as BoardTheme)
+        // "auto" has to pass this guard explicitly: it is a legal stored value
+        // but not a key of BOARD_THEMES, so without it every auto user would be
+        // reset to the default on the next settings pull from the server.
+        parsed.boardTheme === "auto" || (parsed.boardTheme && parsed.boardTheme in BOARD_THEMES)
+          ? (parsed.boardTheme as BoardThemePref)
           : DEFAULT.boardTheme,
       pieceTheme:
-        parsed.pieceTheme && parsed.pieceTheme in PIECE_THEMES
-          ? (parsed.pieceTheme as PieceTheme)
+        parsed.pieceTheme === "auto" || (parsed.pieceTheme && parsed.pieceTheme in PIECE_THEMES)
+          ? (parsed.pieceTheme as PieceThemePref)
           : DEFAULT.pieceTheme,
       volume: typeof parsed.volume === "number" ? Math.max(0, Math.min(1, parsed.volume)) : DEFAULT.volume,
       moveRiskWarnings: bool(parsed.moveRiskWarnings, DEFAULT.moveRiskWarnings),
@@ -468,8 +501,8 @@ function writeLocalSettings(s: Settings, updatedAt: number) {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
     window.localStorage.setItem(UPDATED_AT_KEY, String(updatedAt));
   } catch {}
-  applyBoardTheme(s.boardTheme);
-  applyPieceTheme(s.pieceTheme);
+  applyBoardTheme(resolveBoardTheme(s));
+  applyPieceTheme(resolvePieceTheme(s));
   applyUiPrefs(s);
   window.dispatchEvent(new Event(SETTINGS_CHANGED_EVENT));
 }
@@ -622,6 +655,29 @@ export function fxDurationScale(): number {
 export function motionOff(): boolean {
   if (typeof document === "undefined") return true;
   return document.documentElement.dataset.anim === "off";
+}
+
+/** The site theme actually in force, with "system" already resolved. Both
+ *  resolvers below need it, and applyUiPrefs computed it inline. */
+export function effectiveSiteTheme(s: Settings): SiteTheme {
+  if (s.siteTheme !== "system") return s.siteTheme;
+  if (typeof window === "undefined") return "dark";
+  return window.matchMedia?.("(prefers-color-scheme: light)").matches ? "light" : "dark";
+}
+
+/** The board to actually draw. On "auto" a flagship supplies its own; a tint
+ *  supplies none and falls back to wood, which is what "auto" meant before any
+ *  theme had an opinion. An explicit pick always wins — a player who chose
+ *  Green gets Green in every theme. */
+export function resolveBoardTheme(s: Settings): BoardTheme {
+  if (s.boardTheme !== "auto") return s.boardTheme;
+  return SITE_THEMES[effectiveSiteTheme(s)]?.board ?? "wood";
+}
+
+/** As resolveBoardTheme, for the piece set. */
+export function resolvePieceTheme(s: Settings): PieceTheme {
+  if (s.pieceTheme !== "auto") return s.pieceTheme;
+  return SITE_THEMES[effectiveSiteTheme(s)]?.piece ?? "classic";
 }
 
 export function applyBoardTheme(theme: BoardTheme) {

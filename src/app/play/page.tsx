@@ -12,6 +12,7 @@ import {
   TUTORIAL_DONE_KEY,
   TUTORIAL_NUDGE_DISMISSED_KEY,
 } from "@/components/tutorial/tourState";
+import { Button } from "@/components/ui/Button";
 
 const TIME_STEPS_SEC = [
   30,
@@ -253,16 +254,15 @@ function PlayInner() {
             />
           </div>
 
-          <button
+          <Button tone="leaf"
             onClick={start}
-            className="press w-full py-3.5 btn-leaf font-display text-lg flex items-center justify-center gap-2"
-          >
+            className="w-full py-3.5 text-lg flex">
             Start game
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <line x1="5" y1="12" x2="19" y2="12" />
               <polyline points="12 5 19 12 12 19" />
             </svg>
-          </button>
+          </Button>
           <p className="mt-2 text-center text-[11px] text-parchment-400">
             Practice against the computer is casual and never affects your rating.
           </p>

@@ -13,6 +13,8 @@ import { DEFAULT_CATEGORY, getCategory, isRatingCategoryId } from "@/lib/ratingC
 import { isProvisionalRd } from "@/lib/ratingDisplay";
 import { countdownLabel, modeLabel } from "@/lib/tournaments";
 import type { MPLobbyGame } from "@/lib/multiplayer";
+import { Button } from "@/components/ui/Button";
+import { LinkButton } from "@/components/ui/Button";
 
 // The community hub: friends who are around, who you have just played, the
 // latest games, and the doors to clubs, tournaments, and the ladder. Every
@@ -287,9 +289,9 @@ export default function CommunityPage() {
             <p className="text-sm text-parchment-200">
               Sign in to add friends, join clubs, and track who you have played.
             </p>
-            <Link href="/login" className="btn-leaf press shrink-0 px-4 py-2 text-sm font-semibold">
+            <LinkButton tone="leaf" href="/login" className="shrink-0 px-4 py-2 text-sm font-semibold">
               Sign in
-            </Link>
+            </LinkButton>
           </div>
         )}
 
@@ -327,13 +329,12 @@ export default function CommunityPage() {
                             )}
                           </Link>
                           {game ? (
-                            <Link
+                            <LinkButton tone="ghost"
                               href={`/game/${game.id}${game.origin === "arena" ? "?src=arena" : ""}`}
-                              className="btn-ghost press inline-flex shrink-0 items-center gap-1.5 px-3 py-1.5 text-xs"
-                            >
+                              className="shrink-0 px-3 py-1.5 text-xs">
                               <Eye size={13} aria-hidden />
                               Watch
-                            </Link>
+                            </LinkButton>
                           ) : (
                             <span className="shrink-0 text-xs text-parchment-500">{presenceLabel(status)}</span>
                           )}
@@ -718,9 +719,9 @@ function InlineEmpty({
       <p className="text-sm leading-relaxed text-parchment-300">
         <span className="font-medium text-parchment-100">{title}.</span> {body}
       </p>
-      <Link href={action.href} className="btn-ghost press px-3 py-1.5 text-sm">
+      <LinkButton tone="ghost" href={action.href} className="px-3 py-1.5 text-sm">
         {action.label}
-      </Link>
+      </LinkButton>
     </div>
   );
 }
@@ -739,9 +740,9 @@ function SectionError({ onRetry }: { onRetry: () => void }) {
         This section could not load right now.
       </p>
       <div className="flex items-center gap-2">
-        <button type="button" onClick={onRetry} className="btn-ghost press px-3 py-1.5 text-sm">
+        <Button tone="ghost" onClick={onRetry} className="px-3 py-1.5 text-sm">
           Retry
-        </button>
+        </Button>
         <Link href="/lobby" className="text-sm text-parchment-400 transition-colors hover:text-gold-leaf">
           Back to lobby
         </Link>
@@ -756,9 +757,9 @@ function RailError({ onRetry }: { onRetry: () => void }) {
   return (
     <div role="alert" className="mt-2 space-y-2">
       <p className="text-sm text-parchment-400">Could not load this list.</p>
-      <button type="button" onClick={onRetry} className="btn-ghost press px-3 py-1 text-xs">
+      <Button tone="ghost" onClick={onRetry} className="px-3 py-1 text-xs">
         Retry
-      </button>
+      </Button>
     </div>
   );
 }

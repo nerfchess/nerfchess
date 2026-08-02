@@ -25,6 +25,7 @@ import {
 import { buffCollection, nerfCollection } from "@/lib/cardCollections";
 import { historyFor } from "@/data/cardHistory";
 import { CardInsights } from "@/components/codex/CardInsights";
+import { LinkButton } from "@/components/ui/Button";
 
 // Server-rendered detail page for a single card, shared by /codex/buff/[id]
 // and /codex/nerf/[id]. Everything here is plain HTML (no client component),
@@ -256,15 +257,15 @@ function CardCtas({ guideHref, guideLabel }: { guideHref: string; guideLabel: st
     <div className="pt-4">
       <div className="smallcaps text-[11px] text-parchment-400">keep exploring</div>
       <div className="mt-3 flex flex-wrap gap-3">
-        <Link href="/codex" className="rounded-sm btn-ghost px-4 py-2 font-display text-sm">
+        <LinkButton tone="ghost" href="/codex" className="px-4 py-2 text-sm">
           Browse the full codex
-        </Link>
-        <Link href={guideHref} className="rounded-sm btn-ghost px-4 py-2 font-display text-sm">
+        </LinkButton>
+        <LinkButton tone="ghost" href={guideHref} className="px-4 py-2 text-sm">
           {guideLabel}
-        </Link>
-        <Link href="/play" className="rounded-sm btn-leaf px-4 py-2 font-display text-sm">
+        </LinkButton>
+        <LinkButton tone="leaf" href="/play" className="px-4 py-2 text-sm">
           Play a game
-        </Link>
+        </LinkButton>
       </div>
     </div>
   );

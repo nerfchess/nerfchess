@@ -3,6 +3,7 @@ import Link from "next/link";
 import { GlossaryText } from "@/components/GlossaryText";
 import { KeyTerms } from "@/components/guide/KeyTerms";
 import { InfoPageLayout, InfoSection } from "@/components/InfoPageLayout";
+import { LinkButton } from "@/components/ui/Button";
 
 export const metadata: Metadata = {
   title: "Nerf Chess FAQ: how the chess variant works",
@@ -127,12 +128,12 @@ export default function FAQPage() {
       />
 
       <div className="pt-4 flex flex-wrap gap-3">
-        <Link href="/tutorial" className="px-5 py-2.5 rounded-sm btn-leaf font-display">
+        <LinkButton tone="leaf" href="/tutorial" className="px-5 py-2.5">
           How to play
-        </Link>
-        <Link href="/codex" className="px-5 py-2.5 rounded-sm btn-ghost font-display">
+        </LinkButton>
+        <LinkButton tone="ghost" href="/codex" className="px-5 py-2.5">
           Browse rules
-        </Link>
+        </LinkButton>
       </div>
     </InfoPageLayout>
   );

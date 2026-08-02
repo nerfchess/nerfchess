@@ -19,6 +19,8 @@ import {
   type AchievementCategory,
   type AchievementRarity,
 } from "@/lib/achievements";
+import { Button } from "@/components/ui/Button";
+import { LinkButton } from "@/components/ui/Button";
 
 interface AchievementView {
   id: string;
@@ -485,9 +487,9 @@ function AchievementsContent() {
               climbs. Browse the full wall below, then start your own.
             </p>
             <div className="flex shrink-0 items-center gap-3">
-              <Link href="/lobby" className="btn-leaf press whitespace-nowrap px-4 py-2 text-[13px]">
+              <LinkButton tone="leaf" href="/lobby" className="whitespace-nowrap px-4 py-2 text-[13px]">
                 Find a match
-              </Link>
+              </LinkButton>
               <Link
                 href="/login?next=/achievements"
                 className="text-[13px] text-gold-leaf hover:underline"
@@ -502,8 +504,8 @@ function AchievementsContent() {
             <p className="text-[13px] text-parchment-300">
               Your progress could not load, so the wall shows everything locked.
             </p>
-            <button
-              type="button"
+            <Button tone="ghost"
+             
               onClick={() => {
                 setState("loading");
                 setData(null);
@@ -511,10 +513,9 @@ function AchievementsContent() {
                 // possible here; a full reload is the simplest recovery.
                 window.location.reload();
               }}
-              className="btn-ghost press shrink-0 px-4 py-2 text-[13px]"
-            >
+              className="shrink-0 px-4 py-2 text-[13px]">
               Retry
-            </button>
+            </Button>
           </div>
         )}
 

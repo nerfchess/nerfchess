@@ -15,6 +15,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Plus, Trophy, Users, X } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { LinkButton } from "@/components/ui/Button";
 
 interface Club {
   id: string;
@@ -189,18 +191,17 @@ export default function TournamentsPage() {
             <p className="mt-2 text-[13px] text-parchment-300">Scheduled arenas for the Nerfchess ladder.</p>
           </div>
           <div className="flex items-center gap-2">
-            <Link href="/clubs" className="btn-ghost press px-4 py-2 font-display text-[13px]">
+            <LinkButton tone="ghost" href="/clubs" className="px-4 py-2 text-[13px]">
               Clubs
-            </Link>
-            <button
-              type="button"
+            </LinkButton>
+            <Button tone="leaf"
+             
               onClick={() => setShowCreate((v) => !v)}
               aria-expanded={showCreate}
-              className="btn-leaf press inline-flex items-center gap-1.5 px-4 py-2 font-display text-[13px] font-semibold"
-            >
+              className="px-4 py-2 text-[13px] font-semibold">
               {showCreate ? <X size={15} /> : <Plus size={15} />}
               {showCreate ? "Close" : "New tournament"}
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -211,16 +212,15 @@ export default function TournamentsPage() {
           >
             <span className="text-[13px] text-parchment">{error}</span>
             <div className="flex shrink-0 items-center gap-2">
-              <button
-                type="button"
+              <Button tone="leaf"
+               
                 onClick={reload}
-                className="btn-leaf press px-4 py-2 font-display text-[13px] font-semibold"
-              >
+                className="px-4 py-2 text-[13px] font-semibold">
                 Retry
-              </button>
-              <Link href="/lobby" className="btn-ghost press px-4 py-2 font-display text-[13px]">
+              </Button>
+              <LinkButton tone="ghost" href="/lobby" className="px-4 py-2 text-[13px]">
                 Back to lobby
-              </Link>
+              </LinkButton>
             </div>
           </div>
         )}
@@ -375,13 +375,12 @@ export default function TournamentsPage() {
                   className={INPUT_CLASS + " resize-none"}
                 />
 
-                <button
+                <Button tone="leaf"
                   type="submit"
                   disabled={busy || name.trim().length < 3}
-                  className="btn-leaf press mt-4 w-full px-4 py-2.5 font-display text-[13px] font-semibold disabled:opacity-50"
-                >
+                  className="mt-4 w-full px-4 py-2.5 text-[13px] font-semibold disabled:opacity-50">
                   {busy ? "Creating..." : "Create tournament"}
-                </button>
+                </Button>
               </>
             )}
           </form>

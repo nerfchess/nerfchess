@@ -20,6 +20,10 @@ import {
   SiteTheme,
   isFlagshipTheme,
   loadSettings,
+  resolveBoardTheme,
+  resolvePieceTheme,
+  type BoardThemePref,
+  type PieceThemePref,
   sanitizeCustomBgUrl,
   saveSettings,
   Settings,
@@ -38,6 +42,8 @@ import {
   Toggle,
 } from "@/components/settings/controls";
 import "./SettingsPanel.css";
+import { Button } from "@/components/ui/Button";
+import { LinkButton } from "@/components/ui/Button";
 
 interface Props {
   open: boolean;
@@ -591,10 +597,13 @@ function BoardThemePicker({
   value,
   onChange,
 }: {
-  value: BoardTheme;
-  onChange: (theme: BoardTheme) => void;
+  value: BoardThemePref;
+  onChange: (theme: BoardThemePref) => void;
 }) {
-  const current = BOARD_THEMES[value];
+  // "Auto" previews the board it would RESOLVE to, not a blank swatch: the
+  // player should be able to see what they are choosing.
+  const resolved = resolveBoardTheme(loadSettings());
+  const current = BOARD_THEMES[value === "auto" ? resolved : value];
   return (
     <PickerDisclosure
       prompt="Choose board theme"
@@ -609,6 +618,28 @@ function BoardThemePicker({
       }
     >
       <div className="grid grid-cols-2 gap-2">
+      <button
+        onClick={() => onChange("auto")}
+        aria-pressed={value === "auto"}
+        className={
+          "press relative col-span-2 flex min-h-[44px] items-center gap-2.5 rounded-[1px] border p-2 transition-colors " +
+          pickerCardClass(value === "auto")
+        }
+      >
+        {value === "auto" && <SelectedGem />}
+        <span aria-hidden className="grid h-7 w-7 shrink-0 grid-cols-2 grid-rows-2 overflow-hidden rounded-sm">
+          <span style={{ background: BOARD_THEMES[resolved].light }} />
+          <span style={{ background: BOARD_THEMES[resolved].dark }} />
+          <span style={{ background: BOARD_THEMES[resolved].dark }} />
+          <span style={{ background: BOARD_THEMES[resolved].light }} />
+        </span>
+        <span className="min-w-0 text-left">
+          <span className="block font-display text-[13px]">Match theme</span>
+          <span className="block text-[12px] text-parchment-400">
+            Currently {BOARD_THEMES[resolved].label}
+          </span>
+        </span>
+      </button>
       {(Object.keys(BOARD_THEMES) as BoardTheme[]).map((k) => {
         const t = BOARD_THEMES[k];
         const selected = value === k;
@@ -643,10 +674,11 @@ function PieceThemePicker({
   value,
   onChange,
 }: {
-  value: PieceTheme;
-  onChange: (theme: PieceTheme) => void;
+  value: PieceThemePref;
+  onChange: (theme: PieceThemePref) => void;
 }) {
-  const current = PIECE_THEMES[value];
+  const resolvedPiece = resolvePieceTheme(loadSettings());
+  const current = PIECE_THEMES[value === "auto" ? resolvedPiece : value];
   return (
     <PickerDisclosure
       prompt="Choose piece set"
@@ -676,6 +708,22 @@ function PieceThemePicker({
       }
     >
       <div className="grid grid-cols-2 gap-2">
+      <button
+        onClick={() => onChange("auto")}
+        aria-pressed={value === "auto"}
+        className={
+          "press relative col-span-2 flex min-h-[44px] items-center gap-2.5 rounded-[1px] border p-2 transition-colors " +
+          pickerCardClass(value === "auto")
+        }
+      >
+        {value === "auto" && <SelectedGem />}
+        <span className="min-w-0 text-left">
+          <span className="block font-display text-[13px]">Match theme</span>
+          <span className="block text-[12px] text-parchment-400">
+            Currently {PIECE_THEMES[resolvedPiece].label}
+          </span>
+        </span>
+      </button>
       {(Object.keys(PIECE_THEMES) as PieceTheme[]).map((k) => {
         const t = PIECE_THEMES[k];
         const selected = value === k;
@@ -738,12 +786,11 @@ function AccountSettings() {
           <div className="text-[13px] font-medium text-parchment-100">Profile</div>
           <p className="text-[12px] text-parchment-400">Avatar, bio, and game history</p>
         </div>
-        <Link
+        <LinkButton tone="ghost"
           href="/profile"
-          className="btn-ghost press min-h-[36px] shrink-0 rounded-[1px] px-3 py-1.5 font-display text-[13px]"
-        >
+          className="shrink-0 px-3 py-1.5 text-[13px]">
           Edit profile
-        </Link>
+        </LinkButton>
       </div>
       {[
         { label: "Change username", hint: "Not available yet" },
@@ -765,12 +812,11 @@ function AccountSettings() {
         </div>
       ))}
       <form action="/api/auth/logout" method="post">
-        <button
+        <Button tone="danger"
           type="submit"
-          className="btn-cursed press min-h-[44px] w-full rounded-[1px] px-3 py-2 font-display text-[13px] font-semibold"
-        >
+          className="w-full px-3 py-2 text-[13px] font-semibold">
           Log out
-        </button>
+        </Button>
       </form>
     </div>
   );

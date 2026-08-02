@@ -94,11 +94,13 @@ body {
   --verdigris: var(--accent-positive);
   --bruise: #8a88a8;
   --bruise-rgb: 138 136 168;
-  /* Two clean sans faces, weight (400/500/600) doing the hierarchy work.
-     Headings are Inter, body text Noto Sans (the UI font Lichess ships).
-     next/font in layout.tsx self-hosts BOTH and defines --font-display and
-     --font-body on <body>; only the mono stack lives here. No serifs. */
-  --font-mono: "Cascadia Mono", "JetBrains Mono", Consolas, monospace;
+  /* The type roles. layout.tsx self-hosts every face under a neutral --f-*
+     name on <html>; these three names are the ROLES, and a flagship theme
+     claims them below. Tints inherit the defaults: Inter headings over Noto
+     Sans body, the UI font Lichess ships, with weight doing the hierarchy. */
+  --font-display: var(--f-inter);
+  --font-body: var(--f-noto);
+  --font-mono: var(--f-mono), "Cascadia Mono", Consolas, monospace;
   --accent: var(--accent-gold);
   --accent-hi: var(--accent-gold-hi);
   --accent-rgb: var(--accent-gold-rgb);
@@ -285,13 +287,261 @@ html[data-theme="nebula"] { /* violet dusk */
        red/blue/green rather than a shade of it.
      - The BOARD. Board colours are the player's own setting (BOARD_THEMES,
        applied inline as --sq-light/--sq-dark), and a theme must not fight it.
-     - LAYOUT. No radius, spacing or type-scale changes: a theme changes the
-       light and the weight, never where the furniture sits.
+     - LAYOUT GEOMETRY. No radius or spacing changes: a theme changes the
+       light, the weight and the lettering, never where the furniture sits.
+       (Typefaces were on this list until the flagships were given their own —
+       the TYPE SCALE is still fixed, only the faces change.)
 
    applyUiPrefs also feeds each theme's accent in from SITE_THEMES while the
    accent setting is on "auto", so the two definitions must agree. Picking an
    explicit accent colour in Settings still overrides the theme, by design.
    ========================================================================= */
+
+/* --- Flagship typefaces ----------------------------------------------------
+   Each flagship claims the two type ROLES; the faces themselves are self-hosted
+   in layout.tsx under neutral --f-* names. Kept together rather than scattered
+   through the palette blocks, because the point of the set is that no two
+   pairings share a genus — that is only checkable side by side.
+
+   The type SCALE (--step-0..5) is untouched by every one of them. A theme
+   changes the lettering, not the sizes, so nothing reflows when you switch. */
+html[data-theme="obsidian"] {
+  --font-display: var(--f-bricolage);   /* chiselled, fractured glass */
+  --font-body: var(--f-inter-tight);
+}
+html[data-theme="porcelain"] {
+  --font-display: var(--f-fraunces);    /* high-contrast serif: ink on paper */
+  --font-body: var(--f-public-sans);
+}
+html[data-theme="neon"] {
+  --font-display: var(--f-chakra);      /* clipped corners, arcade-technical */
+  --font-body: var(--f-space-grotesk);
+}
+html[data-theme="jade"] {
+  --font-display: var(--f-spectral);    /* low-contrast serif, lacquer-quiet */
+  --font-body: var(--f-plex-sans);
+}
+html[data-theme="aurora"] {
+  --font-display: var(--f-syne);        /* weights widen: drifting light */
+  --font-body: var(--f-manrope);
+}
+
+/* --- Flagship materials ----------------------------------------------------
+   What each theme's controls and surfaces are MADE of, via the --btn-* and
+   --gate-* contracts. Colour already came from the accent tokens; this is the
+   part that makes a volcanic-glass button and a glazed-porcelain one different
+   objects rather than the same object in two colours.
+
+   No gradient washes. Every treatment here is an edge, an inset, a raking
+   streak or a scanline — something that says what the surface is, not just what
+   hue it is. --btn-face is the one layer painted across a filled button, and
+   three of the five deliberately leave it `none`. */
+
+/* Obsidian: volcanic glass. A hard warm specular on the top edge, a deep floor,
+   sharp rivet glints, and one raking streak across the face as if a light
+   source were grazing polished stone. Heaviest of the five. */
+html[data-theme="obsidian"] {
+  --btn-rim: rgba(0, 0, 0, 0.72);
+  --btn-top-light: rgba(255, 214, 184, 0.30);
+  --btn-floor: rgba(0, 0, 0, 0.78);
+  --btn-drop: rgba(0, 0, 0, 0.7);
+  --btn-glint-1: 0.72;
+  --btn-glint-2: 0.5;
+  --btn-face: linear-gradient(104deg, transparent 34%, rgba(255, 236, 216, 0.09) 45%, rgba(255, 236, 216, 0.02) 49%, transparent 56%);
+  --btn-ghost-fill: linear-gradient(to bottom, rgba(255, 220, 200, 0.045), rgba(0, 0, 0, 0.06)), rgba(0, 0, 0, 0.3);
+  --btn-ghost-edge: rgba(255, 160, 100, 0.16);
+  --btn-ghost-edge-hover: rgba(255, 160, 100, 0.4);
+  --btn-ghost-fill-hover: rgba(255, 190, 150, 0.08);
+  --btn-ghost-fill-active: rgba(255, 190, 150, 0.13);
+  --btn-ghost-top-light: rgba(255, 220, 200, 0.1);
+  --btn-ghost-floor: rgba(0, 0, 0, 0.6);
+  --btn-glass-pane: rgba(255, 200, 160, 0.05);
+  --btn-glass-edge: rgba(255, 170, 110, 0.22);
+  --btn-glass-pane-hover: rgba(255, 200, 160, 0.09);
+  --btn-glass-edge-hover: rgba(255, 170, 110, 0.45);
+  --btn-glass-top-light: rgba(255, 226, 200, 0.2);
+  --btn-glass-blur: 6px;
+  /* The gate is cooled basalt with the magma still in the joints. */
+  --gate-stone-hi: #2b2430;
+  --gate-stone-mid: #1d1822;
+  --gate-stone-lo: #120e17;
+  --gate-iron: 150 110 78;
+  --gate-iron-plate: 74 56 44;
+  --gate-rivet: 255 196 150;
+  --gate-ink: #f4e3d6;
+  --gate-ink-hi: #ffeeda;
+  --gate-ink-hover: #fff6e8;
+  --gate-light: 255 214 184;
+}
+
+/* Porcelain: glazed tile. A hairline edge instead of an iron rim, a bright
+   glaze highlight, almost no floor (glaze does not pool shadow), no rivet
+   glints, no face treatment and no frost. The restraint IS the material. */
+html[data-theme="porcelain"] {
+  --btn-rim: rgba(35, 33, 43, 0.24);
+  --btn-top-light: rgba(255, 255, 255, 0.9);
+  --btn-floor: rgba(35, 33, 43, 0.08);
+  --btn-drop: rgba(35, 33, 43, 0.18);
+  --btn-glint-1: 0;
+  --btn-glint-2: 0;
+  --btn-face: none;
+  --btn-ghost-fill: linear-gradient(to bottom, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.72)), #ffffff;
+  --btn-ghost-edge: rgba(42, 85, 184, 0.28);
+  --btn-ghost-edge-hover: rgba(42, 85, 184, 0.55);
+  --btn-ghost-fill-hover: rgba(42, 85, 184, 0.07);
+  --btn-ghost-fill-active: rgba(42, 85, 184, 0.12);
+  --btn-ghost-top-light: rgba(255, 255, 255, 0.95);
+  --btn-ghost-floor: rgba(35, 33, 43, 0.09);
+  --btn-glass-pane: rgba(255, 255, 255, 0.72);
+  --btn-glass-edge: rgba(35, 33, 43, 0.16);
+  --btn-glass-pane-hover: rgba(255, 255, 255, 0.9);
+  --btn-glass-edge-hover: rgba(42, 85, 184, 0.45);
+  --btn-glass-top-light: rgba(255, 255, 255, 0.95);
+  --btn-glass-blur: 0px;
+  /* The gate becomes a glazed white slab with cobalt ink, not dark granite. */
+  --gate-stone-hi: #ffffff;
+  --gate-stone-mid: #f4f1ea;
+  --gate-stone-lo: #e3ded2;
+  --gate-iron: 42 85 184;
+  --gate-iron-plate: 200 205 220;
+  --gate-rivet: 42 85 184;
+  --gate-ink: #23212b;
+  --gate-ink-hi: #1a2a52;
+  --gate-ink-hover: #2a55b8;
+  --gate-light: 42 85 184;
+}
+
+/* Neon: the edge is lit by the accent rather than by white, and a fine
+   scanline sits over the face. The only theme with a face treatment you can
+   actually see from across the room. */
+html[data-theme="neon"] {
+  --btn-rim: rgb(var(--accent-rgb) / 0.5);
+  --btn-top-light: rgba(255, 150, 224, 0.5);
+  --btn-floor: rgba(10, 7, 20, 0.82);
+  --btn-drop: rgba(20, 8, 40, 0.7);
+  --btn-glint-1: 0.9;
+  --btn-glint-2: 0.7;
+  --btn-face: repeating-linear-gradient(0deg, rgba(6, 2, 16, 0.17) 0 1px, transparent 1px 3px);
+  --btn-ghost-fill: repeating-linear-gradient(0deg, rgba(6, 2, 16, 0.16) 0 1px, transparent 1px 3px), linear-gradient(to bottom, rgba(255, 69, 200, 0.07), rgba(255, 69, 200, 0.02)), rgba(10, 7, 20, 0.5);
+  --btn-ghost-edge: rgb(var(--accent-rgb) / 0.32);
+  --btn-ghost-edge-hover: rgb(var(--accent-rgb) / 0.8);
+  --btn-ghost-fill-hover: rgb(var(--accent-rgb) / 0.14);
+  --btn-ghost-fill-active: rgb(var(--accent-rgb) / 0.22);
+  --btn-ghost-top-light: rgba(255, 150, 224, 0.22);
+  --btn-ghost-floor: rgba(6, 2, 16, 0.7);
+  --btn-glass-pane: rgba(255, 69, 200, 0.07);
+  --btn-glass-edge: rgb(var(--accent-rgb) / 0.45);
+  --btn-glass-pane-hover: rgba(255, 69, 200, 0.13);
+  --btn-glass-edge-hover: rgb(var(--accent-rgb) / 0.9);
+  --btn-glass-top-light: rgba(255, 150, 224, 0.3);
+  --btn-glass-blur: 10px;
+  /* The gate is an arcade cabinet bezel: dark indigo with magenta tubing. */
+  --gate-stone-hi: #221838;
+  --gate-stone-mid: #170f28;
+  --gate-stone-lo: #0e0819;
+  --gate-iron: 255 69 200;
+  --gate-iron-plate: 70 40 110;
+  --gate-rivet: 255 150 224;
+  --gate-ink: #f6e9ff;
+  --gate-ink-hi: #ffffff;
+  --gate-ink-hover: #ffd6f4;
+  --gate-light: 255 120 216;
+}
+
+/* Jade: lacquer. No hard edge anywhere — no rivet glints, no bright top light,
+   no face treatment. Everything is a soft deep interior, which is what lacquer
+   over wood actually looks like. The quietest of the five, on purpose. */
+html[data-theme="jade"] {
+  --btn-rim: rgba(4, 30, 24, 0.5);
+  --btn-top-light: rgba(233, 242, 236, 0.11);
+  --btn-floor: rgba(3, 18, 14, 0.55);
+  --btn-drop: rgba(3, 18, 14, 0.5);
+  --btn-glint-1: 0;
+  --btn-glint-2: 0;
+  --btn-face: none;
+  --btn-ghost-fill: linear-gradient(to bottom, rgba(233, 242, 236, 0.035), rgba(3, 18, 14, 0.05)), rgba(6, 26, 21, 0.4);
+  --btn-ghost-edge: rgba(47, 191, 159, 0.16);
+  --btn-ghost-edge-hover: rgba(47, 191, 159, 0.36);
+  --btn-ghost-fill-hover: rgba(47, 191, 159, 0.08);
+  --btn-ghost-fill-active: rgba(47, 191, 159, 0.13);
+  --btn-ghost-top-light: rgba(233, 242, 236, 0.05);
+  --btn-ghost-floor: rgba(3, 18, 14, 0.45);
+  --btn-glass-pane: rgba(47, 191, 159, 0.05);
+  --btn-glass-edge: rgba(47, 191, 159, 0.2);
+  --btn-glass-pane-hover: rgba(47, 191, 159, 0.1);
+  --btn-glass-edge-hover: rgba(47, 191, 159, 0.42);
+  --btn-glass-top-light: rgba(233, 242, 236, 0.1);
+  --btn-glass-blur: 8px;
+  /* The gate is a lacquered green panel with jade inlay, not carved granite. */
+  --gate-stone-hi: #14332a;
+  --gate-stone-mid: #0d241d;
+  --gate-stone-lo: #071812;
+  --gate-iron: 47 191 159;
+  --gate-iron-plate: 30 74 62;
+  --gate-rivet: 122 220 196;
+  --gate-ink: #e9f2ec;
+  --gate-ink-hi: #f4fbf7;
+  --gate-ink-hover: #ffffff;
+  --gate-light: 160 235 214;
+}
+
+/* Aurora: light from above, cool. A pale top light rather than a warm one, soft
+   half-strength glints, and a violet bloom under the slab instead of a black
+   drop — the shadow is lit, which is what polar light does. */
+html[data-theme="aurora"] {
+  --btn-rim: rgba(10, 16, 34, 0.62);
+  --btn-top-light: rgba(206, 224, 255, 0.3);
+  --btn-floor: rgba(7, 11, 24, 0.58);
+  --btn-drop: rgba(90, 60, 190, 0.45);
+  --btn-glint-1: 0.4;
+  --btn-glint-2: 0.28;
+  --btn-face: none;
+  --btn-ghost-fill: linear-gradient(to bottom, rgba(206, 224, 255, 0.06), rgba(157, 123, 255, 0.03)), rgba(9, 14, 30, 0.4);
+  --btn-ghost-edge: rgba(157, 123, 255, 0.22);
+  --btn-ghost-edge-hover: rgba(157, 123, 255, 0.5);
+  --btn-ghost-fill-hover: rgba(157, 123, 255, 0.1);
+  --btn-ghost-fill-active: rgba(157, 123, 255, 0.16);
+  --btn-ghost-top-light: rgba(206, 224, 255, 0.12);
+  --btn-ghost-floor: rgba(7, 11, 24, 0.5);
+  --btn-glass-pane: rgba(157, 123, 255, 0.06);
+  --btn-glass-edge: rgba(157, 123, 255, 0.26);
+  --btn-glass-pane-hover: rgba(157, 123, 255, 0.12);
+  --btn-glass-edge-hover: rgba(157, 123, 255, 0.55);
+  --btn-glass-top-light: rgba(206, 224, 255, 0.22);
+  --btn-glass-blur: 12px;
+  /* The gate is polar rock under a violet sky. */
+  --gate-stone-hi: #1b2540;
+  --gate-stone-mid: #121a30;
+  --gate-stone-lo: #0b1122;
+  --gate-iron: 157 123 255;
+  --gate-iron-plate: 52 66 106;
+  --gate-rivet: 200 214 255;
+  --gate-ink: #e8effc;
+  --gate-ink-hi: #f4f7ff;
+  --gate-ink-hover: #ffffff;
+  --gate-light: 190 210 255;
+}
+
+/* --- Flagship piece treatment ----------------------------------------------
+   The piece SET stays the player's own choice (PIECE_THEMES). What a theme
+   gets is the LIGHT falling on it: a filter on the rendered silhouette, which
+   costs no new asset and works for the inline SVG and the Lichess sets alike.
+
+   Parked under Performance mode with everything else decorative. */
+html:not([data-perf="low"]) .piece-inline,
+html:not([data-perf="low"]) .piece-asset {
+  filter: var(--piece-light, none);
+}
+/* Obsidian: a hard specular rim and a shadow that falls further. */
+html[data-theme="obsidian"] { --piece-light: drop-shadow(0 -1px 0 rgb(255 196 150 / 0.3)) drop-shadow(0 3px 5px rgb(0 0 0 / 0.62)); }
+/* Porcelain: flat ink on paper. One soft drop, no glow at all. */
+html[data-theme="porcelain"] { --piece-light: drop-shadow(0 1px 2px rgb(35 33 43 / 0.3)); }
+/* Neon: the accent blooms off the stroke, with a faint chromatic offset. */
+html[data-theme="neon"] { --piece-light: drop-shadow(0 0 5px rgb(var(--accent-rgb) / 0.55)) drop-shadow(1px 0 0 rgb(90 200 255 / 0.22)); }
+/* Jade: a soft interior shadow and no rim anywhere. */
+html[data-theme="jade"] { --piece-light: drop-shadow(0 2px 4px rgb(3 18 14 / 0.55)); }
+/* Aurora: a diffuse violet halo, low contrast. */
+html[data-theme="aurora"] { --piece-light: drop-shadow(0 0 7px rgb(157 123 255 / 0.42)) drop-shadow(0 2px 3px rgb(7 11 24 / 0.5)); }
 
 /* --- Obsidian: volcanic glass, molten ember ------------------------------- */
 /* Near-black with a violet-cool cast so the ember accent reads as heat against
@@ -1093,6 +1343,48 @@ html[data-light] .rail-panel {
 }
 .draft-in { animation: draft-in 0.44s var(--ease-signature) both; }
 
+/* --- Button material contract ----------------------------------------------
+   The colour of a button has always come from the accent tokens, so buttons
+   retint per theme for free. What was hardcoded is the MATERIAL: how hard the
+   light sits on the top edge, how deep the floor pools, whether the rivets
+   glint, whether anything is painted across the face. Those are what make a
+   volcanic-glass button and a glazed-porcelain one different objects rather
+   than the same object in two colours, so they are tokens now.
+
+   Defaults below are the values these rules already used — this contract is a
+   refactor, not a restyle. A flagship overrides what it needs and touches no
+   .tsx; see docs/themes.md. */
+:root {
+  /* Filled slabs (.btn-leaf, .btn-gold, .btn-slab). */
+  --btn-rim: rgba(0, 0, 0, 0.5);            /* outer iron rim */
+  --btn-top-light: rgba(255, 255, 255, 0.22); /* specular on the top edge */
+  --btn-floor: rgba(0, 0, 0, 0.55);         /* shadow pooling at the foot */
+  --btn-drop: rgba(0, 0, 0, 0.55);          /* the slab's own drop shadow */
+  --btn-glint-1: 0.55;                      /* corner rivet glints; 0 = none */
+  --btn-glint-2: 0.4;
+  /* Painted across the face of a filled button, under the label and over the
+     body: a scanline, a raking specular streak, a sheen. `none` is no layer at
+     all, which is what every theme gets until it asks for one. */
+  --btn-face: none;
+
+  /* Secondary (.btn-ghost) — dark iron, no energy until hovered. */
+  --btn-ghost-fill: linear-gradient(to bottom, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)), rgba(0, 0, 0, 0.12);
+  --btn-ghost-edge: var(--edge);
+  --btn-ghost-edge-hover: var(--edge-strong);
+  --btn-ghost-fill-hover: rgba(255, 255, 255, 0.08);
+  --btn-ghost-fill-active: rgba(255, 255, 255, 0.12);
+  --btn-ghost-top-light: rgba(255, 255, 255, 0.07);
+  --btn-ghost-floor: rgba(0, 0, 0, 0.35);
+
+  /* Emotional-peak commits (.btn-glass) — cosmic glass over iron. */
+  --btn-glass-pane: rgba(255, 255, 255, 0.06);
+  --btn-glass-edge: rgba(255, 255, 255, 0.18);
+  --btn-glass-pane-hover: rgba(255, 255, 255, 0.09);
+  --btn-glass-edge-hover: rgba(255, 255, 255, 0.32);
+  --btn-glass-top-light: rgba(255, 255, 255, 0.16);
+  --btn-glass-blur: 8px;                    /* 0 disables the frost entirely */
+}
+
 /* --- Buttons: the cosmic dungeon control set -------------------------------
    Level-2 primary controls read as ANCIENT SLABS WITH A COSMIC CORE: a dark
    iron rim, an accent-energy body whose light pools up from the base (the
@@ -1104,20 +1396,22 @@ html[data-light] .rail-panel {
    layers, never extra DOM. */
 .btn-leaf {
   background:
+    /* A theme's own face treatment, painted over the body. */
+    var(--btn-face),
     /* Corner glints: energy leaking at two rivet points. */
-    radial-gradient(3px 3px at 7px 7px, rgba(255, 255, 255, 0.55), transparent 70%),
-    radial-gradient(3px 3px at calc(100% - 7px) calc(100% - 7px), rgba(255, 255, 255, 0.4), transparent 70%),
+    radial-gradient(3px 3px at 7px 7px, rgba(255, 255, 255, var(--btn-glint-1)), transparent 70%),
+    radial-gradient(3px 3px at calc(100% - 7px) calc(100% - 7px), rgba(255, 255, 255, var(--btn-glint-2)), transparent 70%),
     /* The cosmic core: light pooling up from beneath the slab. */
     radial-gradient(120% 95% at 50% 118%, rgb(var(--accent-hi-rgb) / 0.55), transparent 58%),
     linear-gradient(to bottom, var(--accent-hi), var(--accent) 55%, color-mix(in srgb, var(--accent) 70%, #0a1017));
   color: var(--text-on-accent);
-  border: 1px solid rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--btn-rim);
   border-radius: 1px;
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.22) inset,
+    0 1px 0 var(--btn-top-light) inset,
     0 0 0 1px rgb(var(--accent-hi-rgb) / 0.22) inset,
-    0 -9px 16px -10px rgba(0, 0, 0, 0.55) inset,
-    0 2px 6px -2px rgba(0, 0, 0, 0.55);
+    0 -9px 16px -10px var(--btn-floor) inset,
+    0 2px 6px -2px var(--btn-drop);
   transition: background 160ms ease, filter 160ms ease, box-shadow 180ms ease, transform 120ms ease;
   font-weight: 600;
   letter-spacing: 0.005em;
@@ -1125,11 +1419,13 @@ html[data-light] .rail-panel {
 .btn-leaf:hover:not(:disabled) {
   filter: brightness(1.07);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.25) inset,
+    0 1px 0 var(--btn-top-light) inset,
     0 0 0 1px rgb(var(--accent-hi-rgb) / 0.35) inset,
-    0 -9px 16px -10px rgba(0, 0, 0, 0.5) inset,
-    0 0 22px -8px rgb(var(--accent-hi-rgb) / 0.55),
-    0 2px 6px -2px rgba(0, 0, 0, 0.55);
+    0 -9px 16px -10px var(--btn-floor) inset,
+    /* The halo is the one part of a button a theme dials hard: obsidian's
+       ember bloom and porcelain's total absence of one are the same rule. */
+    0 0 calc(22px * var(--feel-glow)) -8px rgb(var(--accent-hi-rgb) / calc(0.55 * var(--feel-glow))),
+    0 2px 6px -2px var(--btn-drop);
 }
 .btn-leaf:active:not(:disabled) {
   filter: brightness(0.94);
@@ -1181,13 +1477,14 @@ html[data-light] .rail-panel {
    carries the accent core inside the glass. */
 .btn-glass {
   background:
+    var(--btn-face),
     radial-gradient(110% 70% at 50% 115%, rgb(var(--accent-hi-rgb) / 0.08), transparent 60%),
-    rgba(255, 255, 255, 0.06);
+    var(--btn-glass-pane);
   color: var(--paper);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  border: 1px solid var(--btn-glass-edge);
   border-radius: 1px;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 1px 0 var(--btn-glass-top-light),
     inset 0 -1px 0 rgba(0, 0, 0, 0.45),
     0 10px 30px -16px rgba(0, 0, 0, 0.8);
   transition: border-color 160ms ease, box-shadow 180ms ease, transform 120ms ease, background 160ms ease;
@@ -1198,13 +1495,13 @@ html[data-light] .rail-panel {
    performance mode. */
 @media (hover: hover) and (pointer: fine) {
   html:not([data-perf="low"]) .btn-glass {
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(var(--btn-glass-blur));
+    -webkit-backdrop-filter: blur(var(--btn-glass-blur));
   }
 }
 .btn-glass:hover:not(:disabled) {
-  border-color: rgba(255, 255, 255, 0.32);
-  background: rgba(255, 255, 255, 0.09);
+  border-color: var(--btn-glass-edge-hover);
+  background: var(--btn-glass-pane-hover);
 }
 .btn-glass:active:not(:disabled) { transform: translateY(1px); }
 .btn-glass:disabled { opacity: 0.45; cursor: not-allowed; }
@@ -1227,21 +1524,19 @@ html[data-light] .rail-panel {
 /* Secondary controls: DARK IRON. A quiet forged plate with a warm hairline
    sill, no energy of its own until hovered. */
 .btn-ghost {
-  background:
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)),
-    rgba(0, 0, 0, 0.12);
+  background: var(--btn-ghost-fill);
   color: var(--paper);
-  border: 1px solid var(--edge);
+  border: 1px solid var(--btn-ghost-edge);
   border-radius: 1px;
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.07) inset,
-    0 -1px 0 rgba(0, 0, 0, 0.35) inset;
+    0 1px 0 var(--btn-ghost-top-light) inset,
+    0 -1px 0 var(--btn-ghost-floor) inset;
   transition: background 160ms ease, border-color 160ms ease, transform 120ms ease;
   font-weight: 500;
   letter-spacing: 0.005em;
 }
-.btn-ghost:hover { background: rgba(255,255,255,0.08); border-color: var(--edge-strong); }
-.btn-ghost:active { background: rgba(255,255,255,0.12); transform: translateY(0.5px); }
+.btn-ghost:hover { background: var(--btn-ghost-fill-hover); border-color: var(--btn-ghost-edge-hover); }
+.btn-ghost:active { background: var(--btn-ghost-fill-active); transform: translateY(0.5px); }
 
 /* Destructive controls: THE CURSED SLAB. Dark scorched stone with blood
    energy seeping up from a crack, a broken-frame diagonal hairline, and a
@@ -1296,9 +1591,6 @@ select:focus-visible {
   outline-offset: 2px;
 }
 html[data-anim="off"] .btn-leaf, html[data-anim="off"] .btn-ghost { transition: none; }
-
-/* Kept as an alias so any stale references stay on-brand (blue, not green). */
-.btn-lichess { }
 
 /* --- Cosmic dungeon shared components ---------------------------------------
    The reusable pieces every surface draws from, so loaders, rims, badges,
@@ -1959,67 +2251,10 @@ html[data-light] .tv-frame {
   86%, 100% { transform: translateX(452%) skewX(-18deg); }
 }
 
-/* Open Lobby CTA: the quiet secondary in the blue family. A desaturated
-   steel-blue tint of the brand azure with dark ink — present and airy, but
-   reads as subordinate to the saturated .btn-cyan primary below it. Same
-   metal-button physics as .btn-leaf. */
-.btn-sky {
-  background: #9cb6d1;
-  color: #16283a;
-  border: 1px solid rgba(0, 0, 0, 0.28);
-  border-radius: 1px;
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.35) inset,
-    0 2px 6px -2px rgba(0, 0, 0, 0.5);
-  transition: background 160ms ease, filter 160ms ease, box-shadow 180ms ease, transform 120ms ease;
-  font-weight: 600;
-  letter-spacing: 0.005em;
-}
-.btn-sky:hover { filter: brightness(1.05); }
-
-/* --- Nebula: the play surfaces go full space -------------------------------
-   Under the nebula theme the big play CTAs and the mode cards trade their
-   daylight blues for deep-space violet with a starfield speckle, matching the
-   page's dusk wash. Stars are layered radial dots — no images, no motion. */
-html[data-theme="nebula"] .btn-sky,
-html[data-theme="nebula"] .btn-cyan {
-  color: #efe9ff;
-  text-shadow: 0 1px 6px rgba(20, 10, 40, 0.8);
-}
-/* Open Lobby: deep-space BLUE. */
-html[data-theme="nebula"] .btn-sky {
-  background:
-    radial-gradient(1px 1px at 12% 30%, rgba(255, 255, 255, 0.9), transparent 55%),
-    radial-gradient(1px 1px at 78% 22%, rgba(255, 255, 255, 0.7), transparent 55%),
-    radial-gradient(1.5px 1.5px at 55% 68%, rgba(190, 214, 255, 0.8), transparent 55%),
-    radial-gradient(1px 1px at 32% 82%, rgba(255, 255, 255, 0.55), transparent 55%),
-    radial-gradient(2px 2px at 68% 40%, rgba(255, 255, 255, 0.35), transparent 60%),
-    linear-gradient(135deg, #2c4a86 0%, #223768 52%, #16224a 100%);
-  border: 1px solid rgba(140, 172, 235, 0.55);
-  box-shadow:
-    inset 0 1px 0 rgba(190, 214, 255, 0.35),
-    0 0 26px -8px rgba(111, 149, 218, 0.7),
-    0 2px 8px -2px rgba(0, 0, 0, 0.6);
-}
-/* Play Someone: LIGHT PURPLE space. */
-html[data-theme="nebula"] .btn-cyan {
-  background:
-    radial-gradient(1px 1px at 16% 28%, rgba(255, 255, 255, 0.9), transparent 55%),
-    radial-gradient(1px 1px at 74% 20%, rgba(255, 255, 255, 0.7), transparent 55%),
-    radial-gradient(1.5px 1.5px at 52% 70%, rgba(232, 218, 255, 0.85), transparent 55%),
-    radial-gradient(1px 1px at 30% 84%, rgba(255, 255, 255, 0.55), transparent 55%),
-    radial-gradient(2px 2px at 66% 42%, rgba(255, 255, 255, 0.35), transparent 60%),
-    linear-gradient(135deg, #7a5cb8 0%, #62479c 52%, #45306f 100%);
-  border: 1px solid rgba(200, 174, 245, 0.6);
-  box-shadow:
-    inset 0 1px 0 rgba(232, 218, 255, 0.4),
-    0 0 26px -8px rgba(180, 148, 226, 0.75),
-    0 2px 8px -2px rgba(0, 0, 0, 0.6);
-}
-html[data-theme="nebula"] .btn-sky:hover,
-html[data-theme="nebula"] .btn-cyan:hover {
-  filter: brightness(1.12);
-}
+/* --- Nebula: the mode cards go full space ----------------------------------
+   Under the nebula theme the mode cards trade their daylight blues for
+   deep-space violet with a starfield speckle, matching the page's dusk wash.
+   Stars are layered radial dots — no images, no motion. */
 html[data-theme="nebula"] .mode-def-card {
   background:
     radial-gradient(1px 1px at 18% 26%, rgba(255, 255, 255, 0.5), transparent 55%),
@@ -2027,53 +2262,6 @@ html[data-theme="nebula"] .mode-def-card {
     radial-gradient(1.5px 1.5px at 86% 24%, rgba(255, 255, 255, 0.35), transparent 55%),
     var(--surface-panel);
 }
-.btn-sky:active {
-  filter: brightness(0.95);
-  transform: translateY(0.5px);
-}
-
-/* Play Someone CTA: the loud primary in brand azure with white type,
-   unmistakably "go". Anchors the blue family; .btn-sky above is its quieter
-   sibling. */
-.btn-cyan {
-  background: linear-gradient(to bottom, var(--accent-buff-hi), var(--accent-buff));
-  color: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.32);
-  border-radius: 1px;
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.28) inset,
-    0 2px 6px -2px rgba(0, 0, 0, 0.5);
-  transition: background 160ms ease, filter 160ms ease, box-shadow 180ms ease, transform 120ms ease;
-  font-weight: 600;
-  letter-spacing: 0.005em;
-}
-.btn-cyan:hover { filter: brightness(1.05); }
-.btn-cyan:active {
-  filter: brightness(0.95);
-  transform: translateY(0.5px);
-}
-
-/* Welcoming mint CTA: a friendly spring green with dark ink type, softer than
-   the utility green and clearly distinct from the accent blue. Same
-   metal-button physics as .btn-leaf. */
-.btn-mint {
-  background: linear-gradient(to bottom, var(--mint-glow), var(--mint));
-  color: #10281d;
-  border: 1px solid rgba(0, 0, 0, 0.28);
-  border-radius: 1px;
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.28) inset,
-    0 2px 6px -2px rgba(0, 0, 0, 0.5);
-  transition: background 160ms ease, filter 160ms ease, box-shadow 180ms ease, transform 120ms ease;
-  font-weight: 600;
-  letter-spacing: 0.005em;
-}
-.btn-mint:hover { filter: brightness(1.05); }
-.btn-mint:active {
-  filter: brightness(0.95);
-  transform: translateY(0.5px);
-}
-
 /* The home screen's signature animation: the knight plays Geometry Dash. A
    200%-wide obstacle strip (blocks + spikes on a ground line) scrolls past on
    a 24s seamless loop while the knight holds its lane and jumps with a full
@@ -3026,8 +3214,7 @@ html[data-anim="off"] .dc-orbit-counter.spin, html[data-anim="off"] .dc-orbit-co
 html[data-anim="off"] * { transition: none !important; }
 
 @media (max-width: 640px) {
-  .btn-leaf, .btn-ghost, .btn-cyan, .btn-sky, .btn-mint,
-  .btn-glass, .btn-cta { min-height: 44px; }
+  .btn-leaf, .btn-ghost, .btn-glass, .btn-cta { min-height: 44px; }
 }
 
 ::selection { background: rgb(var(--accent-gold-rgb) / 0.4); color: var(--text-on-accent); }
@@ -3487,9 +3674,9 @@ html[data-anim="off"] .sq-invalid-shake { animation: none !important; }
   pointer-events: none;
   z-index: 4;
   background:
-    linear-gradient(135deg, transparent 8px, rgb(216 181 110 / 0.75) 9px, rgb(216 181 110 / 0.75) 10px, transparent 11px) no-repeat,
-    linear-gradient(90deg, rgb(216 181 110 / 0.5), transparent 85%) 13px 0 / 30px 1px no-repeat,
-    linear-gradient(180deg, rgb(216 181 110 / 0.5), transparent 85%) 0 13px / 1px 30px no-repeat;
+    linear-gradient(135deg, transparent 8px, rgb(var(--accent-rgb) / 0.75) 9px, rgb(var(--accent-rgb) / 0.75) 10px, transparent 11px) no-repeat,
+    linear-gradient(90deg, rgb(var(--accent-rgb) / 0.5), transparent 85%) 13px 0 / 30px 1px no-repeat,
+    linear-gradient(180deg, rgb(var(--accent-rgb) / 0.5), transparent 85%) 0 13px / 1px 30px no-repeat;
   animation: rail-filigree-glint 5.5s ease-in-out infinite;
 }
 .rail-lux::before {
@@ -3543,8 +3730,8 @@ html[data-anim="off"] .sq-invalid-shake { animation: none !important; }
   border-radius: 1px;
   pointer-events: none;
   box-shadow:
-    0 0 0 1px rgb(216 181 110 / 0.4),
-    0 0 22px -4px rgb(216 181 110 / 0.45);
+    0 0 0 1px rgb(var(--accent-rgb) / 0.4),
+    0 0 22px -4px rgb(var(--accent-rgb) / 0.45);
   animation: rail-glow-breathe 3s ease-in-out infinite;
 }
 @keyframes rail-glow-breathe {
@@ -3574,13 +3761,13 @@ html[data-anim="off"] .rail-header-sheen::before {
 @keyframes waiting-breathe {
   0%, 100% {
     box-shadow:
-      0 0 0 1px rgb(216 181 110 / 0.30),
-      0 0 18px -6px rgb(216 181 110 / 0.35);
+      0 0 0 1px rgb(var(--accent-rgb) / 0.30),
+      0 0 18px -6px rgb(var(--accent-rgb) / 0.35);
   }
   50% {
     box-shadow:
-      0 0 0 1px rgb(216 181 110 / 0.55),
-      0 0 26px -4px rgb(216 181 110 / 0.60);
+      0 0 0 1px rgb(var(--accent-rgb) / 0.55),
+      0 0 26px -4px rgb(var(--accent-rgb) / 0.60);
   }
 }
 .waiting-ping {
@@ -3613,8 +3800,11 @@ html[data-anim="off"] .waiting-ellipsis::after { opacity: 1; }
    radial-gradient speckle), a handful of 4-point brass glints that twinkle,
    and two slow diagonal shooting stars. Everything is transform/opacity only,
    no JS, no canvas. Node budget: 3 layers + 12 glints + 2 shooting = 17
-   animated nodes (10 on phones). Colors are the brass/candle family
-   (216 181 110 / 255 233 170) — gold dust, never sci-fi white.
+   animated nodes (10 on phones). The dust is the ACTIVE THEME's accent
+   (--accent-rgb) rather than a literal brass, so Neon's dust is magenta and
+   Jade's is green — it used to be gold in every theme, which read as the
+   default palette leaking through whatever the player had chosen. Warm
+   candle-white highlights stay literal: they are light, not hue.
    Fully dropped when animations are off in Settings, in perf mode, and under
    the light theme (pale dust on paper is just noise). */
 .starfield {
@@ -3649,11 +3839,11 @@ html[data-anim="off"] .waiting-ellipsis::after { opacity: 1; }
   --tile: 360px;
   animation-duration: 260s;
   background-image:
-    radial-gradient(1px 1px at 23px 41px, rgb(216 181 110 / 0.5), transparent 60%),
-    radial-gradient(1px 1px at 133px 89px, rgb(216 181 110 / 0.34), transparent 60%),
+    radial-gradient(1px 1px at 23px 41px, rgb(var(--accent-rgb) / 0.5), transparent 60%),
+    radial-gradient(1px 1px at 133px 89px, rgb(var(--accent-rgb) / 0.34), transparent 60%),
     radial-gradient(1px 1px at 279px 157px, rgb(255 233 170 / 0.4), transparent 60%),
-    radial-gradient(1px 1px at 81px 231px, rgb(216 181 110 / 0.3), transparent 60%),
-    radial-gradient(1px 1px at 317px 305px, rgb(216 181 110 / 0.44), transparent 60%),
+    radial-gradient(1px 1px at 81px 231px, rgb(var(--accent-rgb) / 0.3), transparent 60%),
+    radial-gradient(1px 1px at 317px 305px, rgb(var(--accent-rgb) / 0.44), transparent 60%),
     radial-gradient(1px 1px at 191px 337px, rgb(255 233 170 / 0.26), transparent 60%);
 }
 /* Mid layer: slightly larger sparks, a notch quicker. */
@@ -3661,10 +3851,10 @@ html[data-anim="off"] .waiting-ellipsis::after { opacity: 1; }
   --tile: 460px;
   animation-duration: 170s;
   background-image:
-    radial-gradient(1.4px 1.4px at 61px 117px, rgb(216 181 110 / 0.5), transparent 60%),
+    radial-gradient(1.4px 1.4px at 61px 117px, rgb(var(--accent-rgb) / 0.5), transparent 60%),
     radial-gradient(1.2px 1.2px at 233px 47px, rgb(255 233 170 / 0.42), transparent 60%),
-    radial-gradient(1.4px 1.4px at 397px 203px, rgb(216 181 110 / 0.38), transparent 60%),
-    radial-gradient(1.2px 1.2px at 147px 331px, rgb(216 181 110 / 0.46), transparent 60%),
+    radial-gradient(1.4px 1.4px at 397px 203px, rgb(var(--accent-rgb) / 0.38), transparent 60%),
+    radial-gradient(1.2px 1.2px at 147px 331px, rgb(var(--accent-rgb) / 0.46), transparent 60%),
     radial-gradient(1.4px 1.4px at 329px 411px, rgb(255 233 170 / 0.32), transparent 60%);
 }
 /* Near layer: the brightest, fastest dust — hidden on phones. */
@@ -3673,16 +3863,16 @@ html[data-anim="off"] .waiting-ellipsis::after { opacity: 1; }
   animation-duration: 110s;
   background-image:
     radial-gradient(1.8px 1.8px at 97px 73px, rgb(255 233 170 / 0.55), transparent 60%),
-    radial-gradient(1.6px 1.6px at 341px 181px, rgb(216 181 110 / 0.5), transparent 60%),
-    radial-gradient(1.8px 1.8px at 203px 359px, rgb(216 181 110 / 0.42), transparent 60%),
+    radial-gradient(1.6px 1.6px at 341px 181px, rgb(var(--accent-rgb) / 0.5), transparent 60%),
+    radial-gradient(1.8px 1.8px at 203px 359px, rgb(var(--accent-rgb) / 0.42), transparent 60%),
     radial-gradient(1.6px 1.6px at 471px 449px, rgb(255 233 170 / 0.38), transparent 60%),
-    radial-gradient(2px 2px at 519px 61px, rgb(216 181 110 / 0.34), transparent 60%);
+    radial-gradient(2px 2px at 519px 61px, rgb(var(--accent-rgb) / 0.34), transparent 60%);
 }
 /* 4-point glint stars: a soft candle core clipped to a star, pulsing scale and
    opacity on individually offset beats so the field never reads mechanical. */
 .star-glint {
   position: absolute;
-  background: radial-gradient(circle, rgb(255 240 190 / 0.95) 0%, rgb(216 181 110 / 0.8) 34%, rgb(216 181 110 / 0) 72%);
+  background: radial-gradient(circle, rgb(255 240 190 / 0.95) 0%, rgb(var(--accent-rgb) / 0.8) 34%, rgb(var(--accent-rgb) / 0) 72%);
   clip-path: polygon(50% 0%, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0% 50%, 40% 40%);
   animation: star-twinkle var(--glint-dur, 4.5s) ease-in-out var(--glint-delay, 0s) infinite;
 }
@@ -3698,7 +3888,7 @@ html[data-anim="off"] .waiting-ellipsis::after { opacity: 1; }
   width: 120px;
   height: 2px;
   border-radius: 999px;
-  background: linear-gradient(90deg, transparent, rgb(216 181 110 / 0.4) 45%, rgb(255 236 180 / 0.95));
+  background: linear-gradient(90deg, transparent, rgb(var(--accent-rgb) / 0.4) 45%, rgb(255 236 180 / 0.95));
   opacity: 0;
   transform: translate3d(0, 0, 0) rotate(38deg);
   animation: star-shoot 28s linear var(--shoot-delay, 5s) infinite;
@@ -3936,3 +4126,180 @@ main.recording-mode .match-board-shell {
 main.recording-mode .draft-col--rec {
   max-width: min(48rem, calc(var(--rec-w) - 1rem), 92vw) !important;
 }
+
+/* --- Flagship semantic accents ---------------------------------------------
+   Nerf, Buff and Positive used to be fixed red/blue/green in every theme, on
+   the argument that a theme recolouring them would lie about the game. That
+   rule is lifted at the owner's direction: each flagship now speaks its OWN
+   three-hue language, so a room is a room all the way down.
+
+   What replaces the old rule, because something has to: WITHIN a theme the
+   three stay mutually distinct in hue, each clears its own accent, and each
+   clears AA on that theme's panel. A player still learns three colours — they
+   just learn them per room instead of once. Mode identity is still carried by
+   position and label everywhere it matters, not by hue alone.
+
+   The ten tints are untouched and keep red/blue/green. */
+
+/* Obsidian: ash violet, cold steel, sulphur — struck against molten ember. */
+html[data-theme="obsidian"] {
+  --accent-nerf: #b45cd6;
+  --accent-nerf-hi: #c67ee0;
+  --accent-nerf-rgb: 180 92 214;
+  --accent-nerf-hi-rgb: 198 126 224;
+  --accent-nerf-deep-rgb: 92 40 118;
+  --accent-buff: #3fb8d4;
+  --accent-buff-hi: #63cce4;
+  --accent-buff-rgb: 63 184 212;
+  --accent-buff-hi-rgb: 99 204 228;
+  --accent-positive: #d4c23f;
+  --accent-positive-hi: #e2d463;
+  --accent-positive-rgb: 212 194 63;
+  --accent-positive-hi-rgb: 226 212 99;
+}
+
+/* Porcelain: three inks. Every one is dark enough to clear AA as text on
+   glaze, the way the cobalt accent is — the constraint that makes the light
+   flagship possible at all. */
+html[data-theme="porcelain"] {
+  --accent-nerf: #8a2472;
+  --accent-nerf-hi: #a32d87;
+  --accent-nerf-rgb: 138 36 114;
+  --accent-nerf-hi-rgb: 163 45 135;
+  --accent-nerf-deep-rgb: 92 22 76;
+  --accent-buff: #0f6470;
+  --accent-buff-hi: #147c8c;
+  --accent-buff-rgb: 15 100 112;
+  --accent-buff-hi-rgb: 20 124 140;
+  --accent-positive: #41661c;
+  --accent-positive-hi: #527f24;
+  --accent-positive-rgb: 65 102 28;
+  --accent-positive-hi-rgb: 82 127 36;
+}
+
+/* Neon: the arcade's own three lamps — orange tube, cyan tube, lime tube. */
+html[data-theme="neon"] {
+  --accent-nerf: #ff6a1f;
+  --accent-nerf-hi: #ff8f4f;
+  --accent-nerf-rgb: 255 106 31;
+  --accent-nerf-hi-rgb: 255 143 79;
+  --accent-nerf-deep-rgb: 150 52 10;
+  --accent-buff: #22e0ff;
+  --accent-buff-hi: #63ebff;
+  --accent-buff-rgb: 34 224 255;
+  --accent-buff-hi-rgb: 99 235 255;
+  --accent-positive: #8dff3d;
+  --accent-positive-hi: #adff70;
+  --accent-positive-rgb: 141 255 61;
+  --accent-positive-hi-rgb: 173 255 112;
+}
+
+/* Jade: plum lacquer, porcelain blue, bamboo gold — a lacquerware palette,
+   deliberately clear of the jade accent itself. */
+html[data-theme="jade"] {
+  --accent-nerf: #c66fa4;
+  --accent-nerf-hi: #d68fba;
+  --accent-nerf-rgb: 198 111 164;
+  --accent-nerf-hi-rgb: 214 143 186;
+  --accent-nerf-deep-rgb: 96 40 76;
+  --accent-buff: #6aa8d6;
+  --accent-buff-hi: #8cc0e4;
+  --accent-buff-rgb: 106 168 214;
+  --accent-buff-hi-rgb: 140 192 228;
+  --accent-positive: #c9c44a;
+  --accent-positive-hi: #dad66e;
+  --accent-positive-rgb: 201 196 74;
+  --accent-positive-hi-rgb: 218 214 110;
+}
+
+/* Aurora: the sky's own three — solar amber, ice cyan, mint. */
+html[data-theme="aurora"] {
+  --accent-nerf: #ffab3d;
+  --accent-nerf-hi: #ffc26e;
+  --accent-nerf-rgb: 255 171 61;
+  --accent-nerf-hi-rgb: 255 194 110;
+  --accent-nerf-deep-rgb: 150 96 26;
+  --accent-buff: #5ad6ff;
+  --accent-buff-hi: #85e3ff;
+  --accent-buff-rgb: 90 214 255;
+  --accent-buff-hi-rgb: 133 227 255;
+  --accent-positive: #4dea9a;
+  --accent-positive-hi: #7af0b7;
+  --accent-positive-rgb: 77 234 154;
+  --accent-positive-hi-rgb: 122 240 183;
+}
+
+/* --- Flagship button flourishes --------------------------------------------
+   The material tokens say what a button is MADE of. These say what it DOES:
+   one signature move each, on the primary only, so the loudest control in a
+   view carries the theme and everything around it stays quiet. */
+
+/* Obsidian: a specular streak rakes across the glass on hover, once. */
+html[data-theme="obsidian"] .btn-leaf { position: relative; overflow: hidden; }
+html[data-theme="obsidian"] .btn-leaf::after {
+  content: "";
+  position: absolute;
+  inset: -40% -60%;
+  pointer-events: none;
+  background: linear-gradient(104deg, transparent 44%, rgb(255 236 216 / 0.28) 50%, transparent 56%);
+  transform: translateX(-70%);
+  transition: transform 520ms var(--ease-out);
+}
+html[data-theme="obsidian"] .btn-leaf:hover:not(:disabled)::after { transform: translateX(70%); }
+
+/* Porcelain: no flourish at all. The glaze lifts a hair and its shadow
+   sharpens — the whole theme is that nothing blooms. */
+html[data-theme="porcelain"] .btn-leaf:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow:
+    0 1px 0 var(--btn-top-light) inset,
+    0 3px 8px -2px rgb(35 33 43 / 0.26);
+}
+html[data-theme="porcelain"] .btn-leaf:active:not(:disabled) { transform: translateY(0); }
+
+/* Neon: the scanline drifts and the tube edge lights up. */
+html[data-theme="neon"] .btn-leaf { position: relative; overflow: hidden; }
+html[data-theme="neon"] .btn-leaf::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent 0%, rgb(255 255 255 / 0.16) 50%, transparent 100%);
+  transform: translateY(-100%);
+  transition: transform 300ms cubic-bezier(0.2, 1.5, 0.4, 1);
+}
+html[data-theme="neon"] .btn-leaf:hover:not(:disabled)::after { transform: translateY(100%); }
+html[data-theme="neon"] .btn-leaf:hover:not(:disabled) {
+  box-shadow:
+    0 1px 0 var(--btn-top-light) inset,
+    0 0 0 1px rgb(var(--accent-hi-rgb) / 0.9) inset,
+    0 0 26px -4px rgb(var(--accent-rgb) / 0.85),
+    0 2px 6px -2px var(--btn-drop);
+}
+
+/* Jade: no edge lights and nothing sweeps. The whole slab sinks a little
+   deeper into its lacquer, slowly. */
+html[data-theme="jade"] .btn-leaf {
+  transition: background 320ms var(--ease-out), box-shadow 380ms var(--ease-out), transform 260ms var(--ease-out);
+}
+html[data-theme="jade"] .btn-leaf:hover:not(:disabled) {
+  box-shadow:
+    0 1px 0 var(--btn-top-light) inset,
+    0 -14px 26px -12px var(--btn-floor) inset,
+    0 2px 10px -4px var(--btn-drop);
+}
+
+/* Aurora: the violet under-bloom swells and the slab floats up. */
+html[data-theme="aurora"] .btn-leaf:hover:not(:disabled) {
+  transform: translateY(-1.5px);
+  box-shadow:
+    0 1px 0 var(--btn-top-light) inset,
+    0 0 0 1px rgb(var(--accent-hi-rgb) / 0.4) inset,
+    0 10px 26px -8px rgb(157 123 255 / 0.6),
+    0 2px 6px -2px var(--btn-drop);
+}
+
+/* Every flourish above is decoration: it stands down with the rest. */
+html[data-anim="off"] .btn-leaf::after,
+html[data-perf="low"] .btn-leaf::after { display: none; }
+html[data-anim="off"] .btn-leaf:hover:not(:disabled) { transform: none; }

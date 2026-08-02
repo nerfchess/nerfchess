@@ -8,6 +8,7 @@ import { Menu, X } from "lucide-react";
 import { AccountUser, fetchMe } from "@/lib/authClient";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import "./DungeonMenu.css";
+import { Button } from "@/components/ui/Button";
 
 type MobileNavItem = { href: string; label: string; className?: string };
 type MobileNavGroup = { header: string; items: MobileNavItem[] };
@@ -173,16 +174,15 @@ export function MobileNavMenu({
 
   return (
     <div className={"relative " + hideClass}>
-      <button
+      <Button tone="ghost"
         ref={triggerRef}
-        type="button"
+       
         aria-expanded={open}
         aria-label={open ? "Close menu" : "Open menu"}
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex h-11 w-11 items-center justify-center btn-ghost"
-      >
+        className="h-11 w-11">
         {open ? <X size={18} /> : <Menu size={18} />}
-      </button>
+      </Button>
       {open && panelPos &&
         createPortal(
           <>

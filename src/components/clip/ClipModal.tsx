@@ -8,10 +8,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { BoardState, Color, Move } from "@/engine/types";
 import type { GameResult } from "@/engine/game";
-import { BOARD_THEMES, PIECE_THEMES, loadSettings } from "@/lib/settings";
+import {
+  BOARD_THEMES,
+  PIECE_THEMES,
+  loadSettings,
+  resolveBoardTheme,
+  resolvePieceTheme,
+} from "@/lib/settings";
 import { buildClipTimeline } from "./clipReplay";
 import { ClipRenderer, clipTimings, type ClipRendererHandle } from "./ClipRenderer";
 import { useModalChrome } from "@/lib/useModalChrome";
+import { Button } from "@/components/ui/Button";
 
 const LENGTH_OPTIONS = [4, 6, 10] as const;
 
@@ -64,10 +71,13 @@ export function ClipModal({
   // mid-session and the modal is short-lived).
   const { colors, pieceSet } = useMemo(() => {
     const s = loadSettings();
-    const theme = BOARD_THEMES[s.boardTheme] ?? BOARD_THEMES.wood;
+    // Resolve through the same path the live board uses: on "auto" the
+    // board is the theme's, and a clip that ignored that would export a
+    // different board than the one the player just watched.
+    const theme = BOARD_THEMES[resolveBoardTheme(s)] ?? BOARD_THEMES.wood;
     return {
       colors: { light: theme.light, dark: theme.dark },
-      pieceSet: PIECE_THEMES[s.pieceTheme]?.assetSet ?? "cburnett",
+      pieceSet: PIECE_THEMES[resolvePieceTheme(s)]?.assetSet ?? "cburnett",
     };
     // Re-read when the modal reopens.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -240,17 +250,16 @@ export function ClipModal({
               Share a replay clip
             </h2>
           </div>
-          <button
-            type="button"
+          <Button tone="ghost"
+           
             onClick={onClose}
             aria-label="Close"
-            className="grid h-9 w-9 shrink-0 place-items-center btn-ghost text-parchment-300"
-          >
+            className="grid h-9 w-9 shrink-0 place-items-center text-parchment-300">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
-          </button>
+          </Button>
         </div>
         <p className="mt-1 text-xs leading-snug text-parchment-400">
           A stylized replay of the last moves: captures, spawns, and signature plays are
@@ -305,15 +314,12 @@ export function ClipModal({
             </div>
 
             <div className="mt-3 grid grid-cols-1 gap-2">
-              <button
-                type="button"
+              <Button
+                tone={recording ? "ghost" : "leaf"}
                 onClick={record}
                 disabled={recording || !ready}
                 data-clip-record
-                className={
-                  "min-h-[44px] rounded-sm px-5 py-2.5 font-display font-semibold " +
-                  (recording ? "btn-ghost opacity-80 cursor-default" : "btn-leaf")
-                }
+                className={"font-semibold " + (recording ? "opacity-80 cursor-default" : "")}
               >
                 {recording ? (
                   <span className="inline-flex items-center gap-2">
@@ -330,7 +336,7 @@ export function ClipModal({
                 ) : (
                   "Record clip"
                 )}
-              </button>
+              </Button>
             </div>
 
             {error && (
@@ -361,11 +367,10 @@ export function ClipModal({
                     Download
                   </a>
                   {canShare ? (
-                    <button
-                      type="button"
+                    <Button tone="ghost"
+                     
                       onClick={share}
-                      className="btn-ghost inline-flex min-h-[44px] items-center justify-center gap-2 rounded-sm px-4 py-2 font-display text-sm"
-                    >
+                      className="px-4 py-2 text-sm">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                         <circle cx="18" cy="5" r="3" />
                         <circle cx="6" cy="12" r="3" />
@@ -374,7 +379,7 @@ export function ClipModal({
                         <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
                       </svg>
                       {shared ? "Shared" : "Share"}
-                    </button>
+                    </Button>
                   ) : (
                     <span className="inline-flex min-h-[44px] items-center justify-center px-2 text-center text-[11px] text-parchment-400">
                       Sharing files isn&apos;t available here

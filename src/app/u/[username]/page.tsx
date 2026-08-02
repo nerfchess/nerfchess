@@ -47,6 +47,8 @@ import { isHouseEditor, isRatingEditor } from "@/lib/godPanel";
 import { fileToDataUrl } from "@/lib/imageUpload";
 import type { DraftMode } from "@/engine/buff";
 import { useModalChrome } from "@/lib/useModalChrome";
+import { Button } from "@/components/ui/Button";
+import { LinkButton } from "@/components/ui/Button";
 
 type Relationship = "self" | "none" | "friends" | "incoming" | "outgoing";
 
@@ -283,9 +285,9 @@ function ProfileContent() {
       <section className="mx-auto max-w-6xl px-5 py-8 sm:px-6">
         <h1 className="font-display text-4xl">Player not found</h1>
         <p className="mt-3 text-parchment-200">No account with that name.</p>
-        <Link href="/lobby" className="mt-6 inline-flex btn-leaf px-4 py-2 font-display text-sm font-semibold">
+        <LinkButton tone="leaf" href="/lobby" className="mt-6 px-4 py-2 text-sm font-semibold">
           Back to the lobby
-        </Link>
+        </LinkButton>
       </section>
     );
   }
@@ -298,16 +300,15 @@ function ProfileContent() {
           <p className="text-sm text-parchment-300">
             Something went wrong reaching the server. Check your connection and try again.
           </p>
-          <button
-            type="button"
+          <Button tone="ghost"
+           
             onClick={() => {
               setLoadError(false);
               setReloadTick((t) => t + 1);
             }}
-            className="btn-ghost inline-flex min-h-[44px] items-center px-5 font-display text-sm font-semibold"
-          >
+            className="px-5 text-sm font-semibold">
             Retry
-          </button>
+          </Button>
         </div>
       </section>
     );
@@ -820,12 +821,11 @@ function HeaderActions({
   if (isOwner) {
     return (
       <div className="flex shrink-0 flex-wrap items-center gap-2">
-        <Link
+        <LinkButton tone="ghost"
           href="/profile/edit"
-          className="btn-ghost inline-flex min-h-[44px] items-center px-4 font-display text-sm"
-        >
+          className="px-4 text-sm">
           Edit profile
-        </Link>
+        </LinkButton>
         <ShareButton username={user.username} />
       </div>
     );
@@ -838,26 +838,24 @@ function HeaderActions({
 
   return (
     <div className="flex shrink-0 flex-wrap items-center gap-2">
-      <button
-        type="button"
+      <Button tone="leaf"
+       
         onClick={() => router.push(`/friend?challenge=${encodeURIComponent(user.username)}`)}
-        className="btn-leaf inline-flex min-h-[44px] items-center gap-1.5 px-4 font-display text-sm font-semibold"
-      >
+        className="px-4 text-sm font-semibold">
         <Swords size={15} strokeWidth={2.3} aria-hidden />
         Challenge
-      </button>
+      </Button>
 
       {/* Friend button state machine (only for real accounts, not guests). */}
       {signedInNonGuest && rel === "none" && (
-        <button
-          type="button"
+        <Button tone="ghost"
+         
           onClick={onAddFriend}
           disabled={friendBusy}
-          className="btn-ghost inline-flex min-h-[44px] items-center gap-1.5 px-4 font-display text-sm disabled:opacity-60"
-        >
+          className="px-4 text-sm disabled:opacity-60">
           <UserPlus size={15} strokeWidth={2.2} aria-hidden />
           Add friend
-        </button>
+        </Button>
       )}
       {signedInNonGuest && rel === "outgoing" && (
         <span className="inline-flex min-h-[44px] items-center gap-1.5 rounded-sm border border-white/10 px-4 font-display text-sm text-parchment-400">
@@ -866,15 +864,14 @@ function HeaderActions({
         </span>
       )}
       {signedInNonGuest && rel === "incoming" && (
-        <button
-          type="button"
+        <Button tone="leaf"
+         
           onClick={onAcceptFriend}
           disabled={friendBusy}
-          className="btn-leaf inline-flex min-h-[44px] items-center gap-1.5 px-4 font-display text-sm font-semibold disabled:opacity-60"
-        >
+          className="px-4 text-sm font-semibold disabled:opacity-60">
           <Check size={15} strokeWidth={2.3} aria-hidden />
           Accept request
-        </button>
+        </Button>
       )}
       {signedInNonGuest && rel === "friends" && (
         <span className="inline-flex min-h-[44px] items-center gap-1.5 rounded-sm border border-verdigris-glow/40 bg-verdigris/10 px-4 font-display text-sm text-verdigris-glow">
@@ -930,14 +927,13 @@ function ShareButton({ username }: { username: string }) {
   };
 
   return (
-    <button
-      type="button"
+    <Button tone="ghost"
+     
       onClick={share}
-      className="btn-ghost inline-flex min-h-[44px] items-center gap-1.5 px-4 font-display text-sm"
-    >
+      className="px-4 text-sm">
       <Share2 size={15} strokeWidth={2.2} aria-hidden />
       {copied ? "Link copied" : "Share"}
-    </button>
+    </Button>
   );
 }
 
@@ -1227,16 +1223,15 @@ function GamesTab({
         ) : phase === "error" ? (
           <div className="plate flex flex-col items-center gap-3 p-6 text-center">
             <p className="text-sm text-parchment-300">Could not load games.</p>
-            <button
-              type="button"
+            <Button tone="ghost"
+             
               onClick={() => {
                 setPhase("loading");
                 setReloadTick((t) => t + 1);
               }}
-              className="btn-ghost inline-flex min-h-[44px] items-center px-5 font-display text-sm font-semibold"
-            >
+              className="px-5 text-sm font-semibold">
               Retry
-            </button>
+            </Button>
           </div>
         ) : games.length === 0 ? (
           <div className="plate p-6 text-center text-sm text-parchment-400">
@@ -1251,14 +1246,13 @@ function GamesTab({
             </div>
             {hasMore && (
               <div className="mt-3 text-center">
-                <button
-                  type="button"
+                <Button tone="ghost"
+                 
                   onClick={loadMore}
                   disabled={loadingMore}
-                  className="btn-ghost inline-flex min-h-[44px] items-center px-5 font-display text-sm disabled:opacity-60"
-                >
+                  className="px-5 text-sm disabled:opacity-60">
                   {loadingMore ? "Loading..." : "Load more"}
-                </button>
+                </Button>
               </div>
             )}
           </>
@@ -1641,21 +1635,19 @@ function BioSection({
             autoFocus
           />
           <div className="mt-2 flex items-center gap-2 text-sm">
-            <button
-              type="button"
+            <Button tone="ghost"
+             
               onClick={save}
               disabled={saving}
-              className="min-h-[44px] rounded-sm btn-ghost px-3 font-display text-gold-leaf"
-            >
+              className="px-3 text-gold-leaf">
               {saving ? "Saving..." : "Save"}
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button tone="ghost"
+             
               onClick={() => setEditing(false)}
-              className="min-h-[44px] rounded-sm btn-ghost px-3"
-            >
+              className="px-3">
               Cancel
-            </button>
+            </Button>
             <span className="ml-auto text-xs text-parchment-400">{draft.length}/300</span>
           </div>
         </div>
@@ -1809,14 +1801,13 @@ function RatingEditor({
           }}
           className="w-28 bg-transparent plate px-3 py-1.5 text-sm font-mono tabular-nums outline-none focus:border-gold/40"
         />
-        <button
-          type="button"
+        <Button tone="ghost"
+         
           disabled={saving || value.trim() === ""}
           onClick={() => void save()}
-          className="min-h-[44px] rounded-sm btn-ghost px-3 text-gold-leaf disabled:opacity-40"
-        >
+          className="px-3 text-gold-leaf">
           {saving ? "Saving..." : "Set all ratings"}
-        </button>
+        </Button>
       </div>
 
       {error && <p className="mt-2 text-xs text-oxblood-glow">{error}</p>}
@@ -2005,14 +1996,13 @@ function HouseBotEditor({
           maxLength={20}
           className="w-48 bg-transparent plate px-3 py-1.5 text-sm font-display font-semibold outline-none focus:border-gold/40"
         />
-        <button
-          type="button"
+        <Button tone="ghost"
+         
           disabled={saving || !dirty}
           onClick={saveName}
-          className="min-h-[44px] rounded-sm btn-ghost px-3 text-gold-leaf disabled:opacity-40"
-        >
+          className="px-3 text-gold-leaf">
           {saving ? "Saving..." : "Save"}
-        </button>
+        </Button>
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -2032,14 +2022,13 @@ function HouseBotEditor({
           }}
           className="w-28 bg-transparent plate px-3 py-1.5 text-sm font-mono tabular-nums outline-none focus:border-gold/40"
         />
-        <button
-          type="button"
+        <Button tone="ghost"
+         
           disabled={saving || ratingValue.trim() === "" || !ratingDirty}
           onClick={() => void saveRating()}
-          className="min-h-[44px] rounded-sm btn-ghost px-3 text-gold-leaf disabled:opacity-40"
-        >
+          className="px-3 text-gold-leaf">
           {saving ? "Saving..." : "Set rating"}
-        </button>
+        </Button>
         <span className="text-[11px] text-parchment-500">Both modes, engine-safe.</span>
       </div>
 
@@ -2075,42 +2064,38 @@ function HouseBotEditor({
             <div className="flex flex-wrap items-center gap-3">
               <PlayerAvatar name={username} avatar={preview} size={56} />
               <div className="flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
+                <Button tone="ghost"
+                 
                   disabled={saving}
                   onClick={confirmUpload}
-                  className="min-h-[44px] rounded-sm btn-ghost px-3 text-gold-leaf disabled:opacity-40"
-                >
+                  className="px-3 text-gold-leaf">
                   {saving ? "Saving..." : "Use this picture"}
-                </button>
-                <button
-                  type="button"
+                </Button>
+                <Button tone="ghost"
+                 
                   disabled={saving}
                   onClick={() => fileRef.current?.click()}
-                  className="min-h-[44px] rounded-sm btn-ghost px-3 disabled:opacity-40"
-                >
+                  className="px-3">
                   Choose another
-                </button>
-                <button
-                  type="button"
+                </Button>
+                <Button tone="ghost"
+                 
                   disabled={saving}
                   onClick={() => setPreview(null)}
-                  className="min-h-[44px] rounded-sm btn-ghost px-3 disabled:opacity-40"
-                >
+                  className="px-3">
                   Cancel
-                </button>
+                </Button>
               </div>
             </div>
           ) : (
             <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
+              <Button tone="ghost"
+               
                 disabled={saving || preparing}
                 onClick={() => fileRef.current?.click()}
-                className="min-h-[44px] rounded-sm btn-ghost px-3 text-gold-leaf disabled:opacity-40"
-              >
+                className="px-3 text-gold-leaf">
                 {preparing ? "Preparing..." : "Upload image..."}
-              </button>
+              </Button>
               <span className="text-[11px] text-parchment-500">
                 PNG, JPEG, WebP, or GIF. Cropped to a square; max 1 MB after compression.
               </span>
@@ -2193,13 +2178,12 @@ function ReportModal({ username, onClose }: { username: string; onClose: () => v
           <>
             <h2 className="font-display text-2xl">Report sent</h2>
             <p className="mt-2 text-sm text-parchment-200">Thanks, a moderator will take a look.</p>
-            <button
-              type="button"
+            <Button tone="ghost"
+             
               onClick={onClose}
-              className="mt-4 min-h-[44px] rounded-sm btn-ghost px-4 font-display text-sm"
-            >
+              className="mt-4 px-4 text-sm">
               Close
-            </button>
+            </Button>
           </>
         ) : (
           <>
@@ -2231,21 +2215,19 @@ function ReportModal({ username, onClose }: { username: string; onClose: () => v
             />
             {status === "error" && <p className="mt-2 text-sm text-oxblood-glow">{error}</p>}
             <div className="mt-4 flex items-center gap-2">
-              <button
-                type="button"
+              <Button tone="ghost"
+               
                 onClick={submit}
                 disabled={status === "sending" || !description.trim()}
-                className="min-h-[44px] rounded-sm btn-ghost px-4 font-display text-sm text-oxblood-glow disabled:opacity-50"
-              >
+                className="px-4 text-sm text-oxblood-glow disabled:opacity-50">
                 {status === "sending" ? "Sending..." : "Send report"}
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button tone="ghost"
+               
                 onClick={onClose}
-                className="min-h-[44px] rounded-sm btn-ghost px-4 font-display text-sm"
-              >
+                className="px-4 text-sm">
                 Cancel
-              </button>
+              </Button>
             </div>
           </>
         )}

@@ -12,6 +12,7 @@ import {
   MPStart,
 } from "@/lib/multiplayer";
 import { resolvePreferredMode, savePreferredMode } from "@/lib/modeState";
+import { Button } from "@/components/ui/Button";
 
 // The whole "Play a Friend" experience, folded into the lobby's Friends tab so
 // a player never leaves /lobby to set up a private game. `FriendGameProvider`
@@ -398,12 +399,11 @@ export function FriendGameProvider({ children }: { children: React.ReactNode }) 
               {error}
             </div>
           )}
-          <button
+          <Button tone="ghost"
             onClick={handleExit}
-            className="mt-8 px-5 py-2 rounded-sm btn-ghost font-body"
-          >
+            className="mt-8 px-5 py-2 font-body">
             Cancel
-          </button>
+          </Button>
         </section>
       </main>
     );
@@ -531,16 +531,15 @@ export function FriendGameSetup({ showFriends = true }: { showFriends?: boolean 
         )}
       </div>
 
-      <button
+      <Button tone="leaf"
         onClick={handleCreate}
-        className="w-full py-3.5 rounded-sm btn-leaf font-body text-lg"
-      >
+        className="w-full py-3.5 font-body text-lg">
         {challenging
           ? `Send ${rated ? "rated " : ""}challenge to ${challenging}`
           : rated
           ? "Create rated game"
           : "Create game"}
-      </button>
+      </Button>
 
       {!challenging && (
         <>
@@ -562,13 +561,12 @@ export function FriendGameSetup({ showFriends = true }: { showFriends?: boolean 
                 aria-label="Friend game code"
                 className="min-w-0 flex-1 bg-ink-900/60 border border-white/15 rounded-sm px-4 py-3 text-lg font-mono tracking-widest uppercase focus:outline-none focus:border-gold/60 text-parchment placeholder:text-parchment-400/40"
               />
-              <button
+              <Button tone="ghost"
                 onClick={() => joinWithCode(joinCode)}
                 disabled={!joinCode.trim()}
-                className="px-5 rounded-sm btn-ghost font-body disabled:opacity-50"
-              >
+                className="px-5 font-body disabled:opacity-50">
                 Join
-              </button>
+              </Button>
             </div>
           </div>
         </>

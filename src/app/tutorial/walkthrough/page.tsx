@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { Board } from "@/components/Board";
 import { generateMoves, makeMove } from "@/engine/board";
 import { BoardState, Color, Move, PieceType, SQ } from "@/engine/types";
+import { Button } from "@/components/ui/Button";
 
 function blankBoard(turn: Color = "w"): BoardState {
   return {
@@ -154,12 +155,11 @@ export default function TutorialWalkthroughPage() {
               <div className="plate p-5 border-verdigris-glow/50 bg-verdigris/10">
                 <div className="smallcaps text-[11px] text-verdigris-glow">well played</div>
                 <p className="mt-2 text-parchment leading-relaxed">{step.closing}</p>
-                <button
+                <Button tone="leaf"
                   onClick={nextStep}
-                  className="mt-4 w-full py-3 rounded-[1px] btn-leaf font-display"
-                >
+                  className="mt-4 w-full py-3">
                   {stepIx + 1 < STEPS.length ? "Next lesson" : "Play a real game"}
-                </button>
+                </Button>
               </div>
             )}
             {!done && (
@@ -169,12 +169,11 @@ export default function TutorialWalkthroughPage() {
                   The board only highlights moves that complete this lesson.
                   Click a piece, then its destination.
                 </p>
-                <button
+                <Button tone="ghost"
                   onClick={restart}
-                  className="mt-4 w-full py-2 rounded-[1px] btn-ghost font-display text-sm"
-                >
+                  className="mt-4 w-full py-2 text-sm">
                   Reset the position
-                </button>
+                </Button>
               </div>
             )}
           </aside>

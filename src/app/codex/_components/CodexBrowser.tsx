@@ -36,6 +36,7 @@ import {
   type CodexEntry,
   type Library,
 } from "./codexData";
+import { Button } from "@/components/ui/Button";
 
 // How many rows to add each time the reader approaches the end of the list.
 // The list defaults to this many so the DOM near page load stays small (well
@@ -493,20 +494,18 @@ export function CodexBrowser() {
         title="Filters"
         footer={
           <>
-            <button
-              type="button"
+            <Button tone="ghost"
+             
               onClick={clearAll}
-              className="flex-1 rounded-sm btn-ghost px-4 py-2.5 font-display text-[14px]"
-            >
+              className="flex-1 px-4 py-2.5 text-[14px]">
               Clear filters
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button tone="leaf"
+             
               onClick={() => setSheetOpen(false)}
-              className="flex-1 rounded-sm btn-leaf px-4 py-2.5 font-display text-[14px]"
-            >
+              className="flex-1 px-4 py-2.5 text-[14px]">
               {load === "ready" ? `Show ${shownCount} ${nounPlural}` : "Done"}
-            </button>
+            </Button>
           </>
         }
       >

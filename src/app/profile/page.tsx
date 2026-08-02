@@ -13,6 +13,7 @@ import { PlayerStatsPanel } from "@/components/PlayerStatsPanel";
 import type { PlayerStats } from "@/lib/playerStats";
 import { ModeRatingCard, type ModeRatingRow } from "@/components/ratings/ModeRatingCard";
 import { MODE_RATING_CATEGORIES } from "@/lib/ratingCategories";
+import { LinkButton } from "@/components/ui/Button";
 
 // /profile: the public profile at /u/<username> is THE profile for registered
 // players, so this route forwards them there. Guests keep a real profile shell
@@ -110,12 +111,11 @@ function GuestProfile({ account }: { account: AccountUser | null }) {
           You are playing as a guest. Sign in to keep your ratings, games, and achievements on a
           profile that follows you across devices.
         </p>
-        <Link
+        <LinkButton tone="leaf"
           href="/login?next=/profile"
-          className="btn-leaf press inline-flex min-h-[44px] shrink-0 items-center justify-center px-5 font-display text-sm font-semibold"
-        >
+          className="shrink-0 px-5 text-sm font-semibold">
           Sign in
-        </Link>
+        </LinkButton>
       </div>
 
       {/* Header: the guest identity. */}

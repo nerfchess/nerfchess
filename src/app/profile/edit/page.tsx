@@ -8,6 +8,8 @@ import { AccountUser, fetchMe } from "@/lib/authClient";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { AVATAR_PICKER_IDS, avatarIdFor, CUSTOM_AVATAR_MAX_CHARS, isCustomAvatar } from "@/lib/avatars";
 import { FLAIR_EMOJI, LAUREL_FLAIR } from "@/lib/flair";
+import { Button } from "@/components/ui/Button";
+import { LinkButton } from "@/components/ui/Button";
 
 // The formats a browser canvas can reliably decode + re-encode. Anything else
 // (HEIC, TIFF, PDF, a mislabeled file) is rejected up front with a clear
@@ -285,13 +287,11 @@ export default function EditProfilePage() {
         {/* Header: back to the player's own profile + the page title. */}
         <div className="flex items-center gap-3">
           {account && (
-            <Link
+            <LinkButton tone="ghost"
               href={`/u/${encodeURIComponent(account.username)}`}
-              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg btn-ghost text-parchment-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-leaf"
-              aria-label="Back to your profile"
-            >
+              className="h-11 w-11 shrink-0 rounded-lg text-parchment-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-leaf" aria-label="Back to your profile">
               <ArrowLeft className="h-5 w-5" strokeWidth={2} />
-            </Link>
+            </LinkButton>
           )}
           <h1 className="font-display text-3xl sm:text-4xl text-parchment-50">Edit profile</h1>
         </div>
@@ -468,14 +468,13 @@ export default function EditProfilePage() {
                   className="w-full resize-none bg-transparent text-sm text-parchment-100 outline-none focus-visible:outline-none"
                 />
                 <div className="mt-2 flex items-center gap-3 text-sm">
-                  <button
-                    type="button"
+                  <Button tone="ghost"
+                   
                     onClick={saveBio}
                     disabled={bioState === "saving" || bioDraft.trim() === (account.bio ?? "")}
-                    className="min-h-[44px] rounded-sm btn-ghost px-3 font-display text-gold-leaf focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-leaf disabled:opacity-50"
-                  >
+                    className="px-3 text-gold-leaf focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-leaf disabled:opacity-50">
                     {bioState === "saving" ? "Saving…" : "Save bio"}
-                  </button>
+                  </Button>
                   {bioState === "saved" && (
                     <span className="smallcaps text-[12px] text-verdigris-glow">Saved</span>
                   )}

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { SiteHeader } from "@/components/SiteHeader";
 import Link from "next/link";
 import { FIRST_GAME_TOUR_HREF } from "@/components/tutorial/tourState";
+import { LinkButton } from "@/components/ui/Button";
 
 export const metadata: Metadata = {
   title: "Nerf Chess tutorial: the five house rules and card types",
@@ -144,12 +145,12 @@ export default function TutorialPage() {
             tour points at everything as it happens, and you can skip it any time.
           </p>
           <div className="mt-5 flex flex-wrap gap-3">
-            <Link href={FIRST_GAME_TOUR_HREF} className="px-6 py-3 rounded-[1px] btn-leaf font-display">
+            <LinkButton tone="leaf" href={FIRST_GAME_TOUR_HREF} className="px-6 py-3">
               Play your first draft
-            </Link>
-            <Link href="/tutorial/walkthrough" className="px-6 py-3 rounded-[1px] btn-ghost font-display">
+            </LinkButton>
+            <LinkButton tone="ghost" href="/tutorial/walkthrough" className="px-6 py-3">
               Interactive lessons
-            </Link>
+            </LinkButton>
           </div>
         </div>
         <div className="mt-9 space-y-3">
@@ -191,24 +192,21 @@ export default function TutorialPage() {
           </div>
         </div>
         <div className="mt-9 flex flex-wrap gap-3">
-          <Link
+          <LinkButton tone="leaf"
             href="/tutorial/walkthrough"
-            className="px-6 py-3 rounded-[1px] btn-leaf font-display"
-          >
+            className="px-6 py-3">
             Try the interactive lessons
-          </Link>
-          <Link
+          </LinkButton>
+          <LinkButton tone="ghost"
             href="/play"
-            className="px-6 py-3 rounded-[1px] btn-ghost font-display"
-          >
+            className="px-6 py-3">
             Skip and play
-          </Link>
-          <Link
+          </LinkButton>
+          <LinkButton tone="ghost"
             href="/codex"
-            className="px-6 py-3 rounded-[1px] btn-ghost font-display"
-          >
+            className="px-6 py-3">
             Browse all rules
-          </Link>
+          </LinkButton>
         </div>
       </section>
     </main>
