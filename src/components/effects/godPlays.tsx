@@ -12,6 +12,13 @@
 //                   banner shadows, gyroscoping ring, frost fog, spark
 //                   fountain, petrify scan, board-wide clock ghost)
 //   aftermath     — afterglow + drifting ash + slow embers with hang-time
+// FLAGSHIP UPGRADE WAVE: every lead scene's stage now QUAKES on its own
+// impact beat (shared imp-quake wrapper via Stage's quakeMs - in-scene only,
+// never the real board crop), and the templates whose mechanic destroys or
+// petrifies pieces (SkyWrath, ReaperSweep, GorgonIdol, SkullStrike) play the
+// full impact composite per victim square: the piece silhouette is LASERED
+// from above, SPLITS IN HALF, sprays shards and rolls a ground shockwave
+// (impact/impact.tsx vocabulary, tinted per card).
 // Tier-scaled weight: tier-8 plays add a held rim vignette + one extra
 // shockwave over tier-7 (see T8/heavy below); the APEX set pieces letterbox.
 // Total length: tier 7 ~2.6-2.9s, tier 8 ~3.0s, apex ~3.5s — all fire-and-
@@ -106,6 +113,7 @@ import "./godPlays.css";
 import type { ComponentType, CSSProperties, ReactNode } from "react";
 import type { SigPlugin, SigRole } from "./sigPlugins";
 import { BoardFrame, BoardWideStage } from "./stage";
+import { LaserStrike, PieceShatter, Shockwave, QUAKE_CLASS, impactVars } from "./impact/impact";
 
 /* =============================================================================
    Shared bits
@@ -127,6 +135,12 @@ interface TemplateProps {
    * (the flagship beat that makes the card's mechanic legible). Exactly one
    * card per template family runs keyless as the baseline scene. */
   flourish?: string;
+}
+
+/** hex "#rrggbb" -> the space-separated "r g b" triplet the impact vocabulary
+ * (--imp-rgb) tints with. */
+function rgbOf(hex: string): string {
+  return `${parseInt(hex.slice(1, 3), 16)} ${parseInt(hex.slice(3, 5), 16)} ${parseInt(hex.slice(5, 7), 16)}`;
 }
 
 /** hex "#rrggbb" -> rgba() at the given alpha (glow fills, gradients). */
@@ -159,8 +173,19 @@ const SJ = { strokeLinejoin: "round", strokeLinecap: "round" } as const;
  * what makes anchoring safe: the shared stage carries the at-most-half-a-cell
  * clamp (`--fx-anchor-dx/dy`) that keeps a corner cast's canvas over the whole
  * board. Board-anchored cards get the same box, centred, exactly as before. */
-function Stage({ children }: { children: ReactNode }) {
-  return <BoardWideStage>{children}</BoardWideStage>;
+function Stage({ children, quakeMs }: { children: ReactNode; quakeMs?: number }) {
+  if (quakeMs == null) return <BoardWideStage>{children}</BoardWideStage>;
+  // FLAGSHIP PASS: the whole scene stage JOLTS on its own impact beat (the
+  // shared imp-quake wrapper from the impact vocabulary; in-scene only, the
+  // real board crop never shakes). quakeMs is absolute like every other delay
+  // here (delayMs + offset), converted to the seconds --imp-delay contract.
+  return (
+    <BoardWideStage>
+      <span className={`${QUAKE_CLASS} absolute inset-0 block`} style={impactVars(undefined, quakeMs / 1000)}>
+        {children}
+      </span>
+    </BoardWideStage>
+  );
 }
 
 /** RAKE — the shared directional layer, and the reason these scenes now point
@@ -628,7 +653,24 @@ const HIT_SPARKS = [
   { dx: "-160%", dy: "-120%", rot: "-160deg", d: 18 },
   { dx: "30%", dy: "190%", rot: "90deg", d: 36 },
 ];
-function TargetHit({ palette, glyph, delayMs }: { palette: Palette; glyph: ReactNode; delayMs: number }) {
+function TargetHit({
+  palette,
+  glyph,
+  delayMs,
+  impact,
+}: {
+  palette: Palette;
+  glyph: ReactNode;
+  delayMs: number;
+  /** FLAGSHIP PASS: the destructive per-square hit. Templates whose mechanic
+   * removes / petrifies / culls the piece opt in, and the square plays the
+   * full impact composite instead of the glyph pop: the piece silhouette
+   * stands on the square through the tell, a laser column hammers down onto
+   * it, and it SPLITS IN HALF - the two halves hinge apart and fall while four
+   * shards spray and a ground shockwave rolls out. Same tell / lance / spark /
+   * afterglow beats around it, so nothing the plain hit had gets quieter. */
+  impact?: boolean;
+}) {
   const [p0, p1, p2] = palette;
   return (
     <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
@@ -670,13 +712,27 @@ function TargetHit({ palette, glyph, delayMs }: { palette: Palette; glyph: React
         className="gp-flash absolute block rounded-full"
         style={{ left: "17%", top: "17%", width: "66%", height: "66%", background: tint(p1, 0.5), animationDelay: `${delayMs + 140}ms` }}
       />
-      <span className="gp-pop absolute block" style={{ left: "18%", top: "16%", width: "64%", height: "64%", animationDelay: `${delayMs + 200}ms` }}>
-        {glyph}
-      </span>
-      <span
-        className="gp-tring absolute block rounded-full"
-        style={{ left: "10%", top: "10%", width: "80%", height: "80%", border: `2px solid ${tint(p1, 0.95)}`, animationDelay: `${delayMs + 280}ms` }}
-      />
+      {impact ? (
+        /* the piece is LASERED DOWN AND SPLIT: the impact composite rides one
+           shared beat (--imp-delay), tinted with this card's glow colour */
+        <span className="absolute inset-0 block" style={impactVars(rgbOf(p1), (delayMs + 460) / 1000)}>
+          <LaserStrike />
+          <PieceShatter
+            glyph={<span className="absolute block" style={{ left: "18%", top: "16%", width: "64%", height: "64%" }}>{glyph}</span>}
+          />
+          <Shockwave />
+        </span>
+      ) : (
+        <>
+          <span className="gp-pop absolute block" style={{ left: "18%", top: "16%", width: "64%", height: "64%", animationDelay: `${delayMs + 200}ms` }}>
+            {glyph}
+          </span>
+          <span
+            className="gp-tring absolute block rounded-full"
+            style={{ left: "10%", top: "10%", width: "80%", height: "80%", border: `2px solid ${tint(p1, 0.95)}`, animationDelay: `${delayMs + 280}ms` }}
+          />
+        </>
+      )}
       {/* settle: a small ember-glow lingers on the struck square and slides
           toward whichever edge the caster is sitting at */}
       <span
@@ -766,7 +822,7 @@ function GodDescent({ palette, glyph, lead, delayMs, flourish }: TemplateProps) 
   const [p0, p1, p2] = palette;
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
-    <Stage>
+    <Stage quakeMs={delayMs + 600}>
       <Wash color={tint(p0, 0.28)} delayMs={delayMs} />
       <Tell hex={p1} delayMs={delayMs} cy={56} />
       {/* the deity's shadow is RAKED by where this landed: the god-light hangs over
@@ -1141,7 +1197,7 @@ function TitanRise({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
   const [p0, p1, p2] = palette;
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
-    <Stage>
+    <Stage quakeMs={delayMs + 680}>
       <Wash color={tint(p0, 0.26)} delayMs={delayMs} />
       <Tell hex={p1} delayMs={delayMs} cy={60} />
       {/* the titan's shadow is RAKED by where this landed: the god-light hangs over
@@ -1310,9 +1366,9 @@ function TitanRise({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
    ========================================================================== */
 function SkyWrath({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
   const [p0, p1, p2] = palette;
-  if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
+  if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} impact />;
   return (
-    <Stage>
+    <Stage quakeMs={delayMs + 700}>
       <Wash color={tint(p0, 0.25)} delayMs={delayMs} />
       <Tell hex={p2} delayMs={delayMs} cy={60} />
       {/* the storm-shadow is RAKED by where this landed: the god-light hangs over
@@ -1479,7 +1535,7 @@ function AbyssMaw({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
   const [p0, p1, p2] = palette;
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
-    <Stage>
+    <Stage quakeMs={delayMs + 780}>
       {/* gathering darkness instead of light */}
       <Wash color={tint(p2, 0.42)} delayMs={delayMs} />
       <Tell hex={p1} delayMs={delayMs} cy={46} />
@@ -1631,9 +1687,9 @@ function AbyssMaw({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
    ========================================================================== */
 function ReaperSweep({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
   const [p0, p1, p2] = palette;
-  if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
+  if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} impact />;
   return (
-    <Stage>
+    <Stage quakeMs={delayMs + 800}>
       <Wash color={tint(p0, 0.3)} delayMs={delayMs} />
       <Tell hex={p1} delayMs={delayMs} cy={58} />
       {/* the reaper's shadow is RAKED by where this landed: the god-light hangs over
@@ -1815,7 +1871,7 @@ function HostMarch({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
   const [p0, p1, p2] = palette;
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
-    <Stage>
+    <Stage quakeMs={delayMs + 880}>
       <Wash color={tint(p0, 0.25)} delayMs={delayMs} />
       <Tell hex={p1} delayMs={delayMs} cy={62} />
       {/* the host's shadow is RAKED by where this landed: the god-light hangs over
@@ -1970,7 +2026,7 @@ function CelestialRing({ palette, glyph, lead, delayMs, flourish }: TemplateProp
   const [p0, p1, p2] = palette;
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
-    <Stage>
+    <Stage quakeMs={delayMs + 820}>
       <Wash color={tint(p0, 0.25)} delayMs={delayMs} />
       <Tell hex={p1} delayMs={delayMs} cy={50} />
       {/* the ring's shadow is RAKED by where this landed: the god-light hangs over
@@ -2232,7 +2288,7 @@ function FrostTitan({ palette, glyph, lead, delayMs, flourish }: TemplateProps) 
   const [p0, p1, p2] = palette;
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
-    <Stage>
+    <Stage quakeMs={delayMs + 720}>
       <Wash color={tint(p0, 0.28)} delayMs={delayMs} />
       <Tell hex={p1} delayMs={delayMs} cy={60} />
       {/* the glacier's shadow is RAKED by where this landed: the god-light hangs over
@@ -2382,7 +2438,7 @@ function ForgeColossus({ palette, glyph, lead, delayMs, flourish }: TemplateProp
   const [p0, p1, p2] = palette;
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
-    <Stage>
+    <Stage quakeMs={delayMs + 640}>
       <Wash color={tint(p0, 0.26)} delayMs={delayMs} />
       <Tell hex={p2} delayMs={delayMs} cy={56} />
       {/* the colossus's shadow is RAKED by where this landed: the god-light hangs over
@@ -2514,9 +2570,9 @@ function ForgeColossus({ palette, glyph, lead, delayMs, flourish }: TemplateProp
    ========================================================================== */
 function GorgonIdol({ palette, glyph, lead, delayMs, flourish }: TemplateProps) {
   const [p0, p1, p2] = palette;
-  if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
+  if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} impact />;
   return (
-    <Stage>
+    <Stage quakeMs={delayMs + 860}>
       <Wash color={tint(p0, 0.26)} delayMs={delayMs} />
       <Tell hex={p1} delayMs={delayMs} cy={58} />
       {/* the idol's shadow is RAKED by where this landed: the god-light hangs over
@@ -2741,7 +2797,7 @@ function ChronoLord({ palette, glyph, lead, delayMs, flourish }: TemplateProps) 
   const [p0, p1, p2] = palette;
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
-    <Stage>
+    <Stage quakeMs={delayMs + 880}>
       <Wash color={tint(p0, 0.25)} delayMs={delayMs} />
       <Tell hex={p1} delayMs={delayMs} cy={54} />
       {/* the clock's shadow is RAKED by where this landed: the god-light hangs over
@@ -2900,9 +2956,9 @@ const PINS = [
 ];
 function SkullStrike({ palette, glyph, lead, delayMs }: TemplateProps) {
   const [p0, p1, p2] = palette;
-  if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
+  if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} impact />;
   return (
-    <Stage>
+    <Stage quakeMs={delayMs + 1820}>
       <Wash color={tint(p1, 0.4)} delayMs={delayMs} />
       <Tell hex={p0} delayMs={delayMs} cy={48} />
       {/* the lane's shadow is RAKED by where this landed: the god-light hangs over
@@ -3002,7 +3058,7 @@ function PlanetAlign({ palette, glyph, lead, delayMs }: TemplateProps) {
   const [p0, p1, p2] = palette;
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
-    <Stage>
+    <Stage quakeMs={delayMs + 1720}>
       <Wash color={tint(p0, 0.42)} delayMs={delayMs} />
       <Tell hex={p1} delayMs={delayMs} cy={44} />
       {/* the syzygy's shadow is RAKED by where this landed: the god-light hangs over
@@ -3159,7 +3215,7 @@ function TotalAtomic(props: TemplateProps) {
   return (
     <>
       <SkyWrath {...props} />
-      <Stage>
+      <Stage quakeMs={delayMs + 1000}>
         {/* tier-8 weight: the rim darkens and holds while the chain runs */}
         <Vignette delayMs={delayMs + 200} />
         {/* the fallout ramp: the whole sky greens as the chain spreads */}
@@ -3237,7 +3293,7 @@ function ChainAtomic(props: TemplateProps) {
   return (
     <>
       <SkyWrath {...props} />
-      <Stage>
+      <Stage quakeMs={delayMs + 700}>
         {/* the domino ripple: shrinking mushroom clouds skitter outward */}
         {SKITTER.map((v, i) => (
           <span
@@ -3288,7 +3344,7 @@ function EndlessNight(props: TemplateProps) {
   return (
     <>
       <ReaperSweep {...props} />
-      <Stage>
+      <Stage quakeMs={delayMs + 950}>
         {/* the sky band darkens as the sun goes down */}
         <span
           className="gp-nightfall absolute block"
@@ -3374,7 +3430,7 @@ function AbsoluteZero(props: TemplateProps) {
   return (
     <>
       <FrostTitan {...props} />
-      <Stage>
+      <Stage quakeMs={delayMs + 1240}>
         {/* the cold closes in from the rim and HOLDS — deep-freeze vignette */}
         <span
           className="gp-vignette absolute inset-0 block"
@@ -3448,7 +3504,7 @@ function SabbaticalScene(props: TemplateProps) {
   return (
     <>
       <ChronoLord {...props} />
-      <Stage>
+      <Stage quakeMs={delayMs + 620}>
         {/* TELL: the rope is slung between the posts and shivers taut before
             there is any hammock hanging off it */}
         <span
@@ -3523,7 +3579,7 @@ function BanHammerScene(props: TemplateProps) {
   return (
     <>
       <ForgeColossus {...props} />
-      <Stage>
+      <Stage quakeMs={delayMs + 700}>
         {/* TELL: the moderator lines the offender up first — a reticle snaps
             shut over the square a beat before the gavel comes down */}
         <span
@@ -3603,7 +3659,7 @@ function SaltedEarthScene(props: TemplateProps) {
   return (
     <>
       <TitanRise {...props} />
-      <Stage>
+      <Stage quakeMs={delayMs + 950}>
         {/* TELL: the urn tips and the first grains hiss along the furrow
             before the curtain of salt comes down on it */}
         <span
@@ -3675,7 +3731,7 @@ function PhoenixLineScene(props: TemplateProps) {
   return (
     <>
       <TitanRise {...props} />
-      <Stage>
+      <Stage quakeMs={delayMs + 720}>
         {/* TELL: the ash-bed under the strike glows red from beneath — the
             bird is coming up through it */}
         <span
@@ -3758,7 +3814,7 @@ function LostFortnightScene(props: TemplateProps) {
   return (
     <>
       <ChronoLord {...props} />
-      <Stage>
+      <Stage quakeMs={delayMs + 1250}>
         {/* TELL: the calendar's spine shivers on its nail — a fortnight is
             about to be torn out of it */}
         <span
@@ -3841,7 +3897,7 @@ function NobleRoutScene(props: TemplateProps) {
   return (
     <>
       <HostMarch {...props} />
-      <Stage>
+      <Stage quakeMs={delayMs + 900}>
         {/* TELL: the line wavers before it breaks — a shiver runs down the
             rank the nobles are still standing in */}
         <span
@@ -3926,7 +3982,7 @@ function TotalPlunderScene(props: TemplateProps) {
   return (
     <>
       <AbyssMaw {...props} />
-      <Stage>
+      <Stage quakeMs={delayMs + 1080}>
         {/* TELL: the hoard rings before it moves — a ring of gold light
             tightens over the buffs that are about to be lifted */}
         <span
@@ -3989,7 +4045,7 @@ function LeadenLimbsScene(props: TemplateProps) {
   return (
     <>
       <ForgeColossus {...props} />
-      <Stage>
+      <Stage quakeMs={delayMs + 800}>
         {/* TELL: three shadows darken the ranks — something very heavy is
             already overhead before anything lands */}
         {WEIGHTS.map((v, i) => (

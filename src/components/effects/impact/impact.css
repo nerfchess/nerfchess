@@ -32,6 +32,11 @@
     rgb(var(--imp-rgb, 216 181 110) / 0) 100%
   );
   animation: imp-laser calc(0.55s * var(--fx-dur, 1)) var(--ease-out, ease-out) both;
+  /* The laser LEADS the impact beat by the default 0.4s: with the default
+   * --imp-delay this resolves to 0s (unchanged behaviour), and a scene that
+   * shifts the whole composite later via --imp-delay keeps its laser leading
+   * the shatter/shockwave by the same margin instead of firing at mount. */
+  animation-delay: calc((var(--imp-delay, 0.4s) - 0.4s) * var(--fx-dur, 1));
 }
 @keyframes imp-laser {
   0% {
