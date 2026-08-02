@@ -1,0 +1,190 @@
+/* Clock raid: the out-of-board moment a card physically touches the clocks.
+ *
+ * The layer (ClockRaidLayer) measures the on-screen [data-clock-seat] pills
+ * and mounts a fixed overlay: a themed grabber reaches the victim pill, the
+ * pill shudders, and a packet of stolen digits arcs across the screen to the
+ * caster's pill, which pops. This is a sanctioned escape from the board crop
+ * (design brief: featured cards may leave the board deliberately) and the
+ * ONLY surface allowed to touch the clock chrome. Cosmetic throughout: the
+ * numbers players read always come from the authoritative clock frames.
+ *
+ * Contract: transform/opacity only, three palette colors (oxblood take, gold
+ * gain, warm-white digits), one-shot with animationend + timeout cleanup,
+ * every duration on --fx-dur, global html[data-anim] gate applies. Geometry
+ * arrives as CSS vars set from measured rects: --raid-dx/--raid-dy is the
+ * victim -> caster vector in px. */
+
+.craid-root {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 46; /* above board announcements (45), below modals (50+) */
+}
+
+/* --- The grabber: reaches the victim pill, closes, withdraws. -------------- */
+.craid-grab {
+  position: absolute;
+  width: 46px;
+  height: 46px;
+  transform: translate(-50%, -50%) scale(0.2);
+  animation: craid-grab calc(0.7s * var(--fx-dur, 1)) var(--ease-out, ease-out) both;
+}
+@keyframes craid-grab {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.2) rotate(-20deg);
+  }
+  45% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.05) rotate(0deg);
+  }
+  70% {
+    transform: translate(-50%, -50%) scale(0.92);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.7);
+  }
+}
+
+/* --- Victim pill shudder: a compressed side-to-side rattle. ---------------- */
+/* Applied to a positioned proxy OVER the pill (never to the pill itself, so
+   no app layout is ever left with a stray transform). */
+.craid-shudder {
+  position: absolute;
+  border: 2px solid rgba(224, 82, 82, 0.7);
+  border-radius: 1px;
+  animation: craid-shudder calc(0.55s * var(--fx-dur, 1)) linear both;
+}
+@keyframes craid-shudder {
+  0%,
+  100% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+  15% {
+    opacity: 1;
+    transform: translateX(-3px);
+  }
+  35% {
+    transform: translateX(3px);
+  }
+  55% {
+    transform: translateX(-2px);
+  }
+  75% {
+    opacity: 1;
+    transform: translateX(2px);
+  }
+}
+
+/* --- The stolen packet: digits arc victim -> caster. ----------------------- */
+/* Two nested elements make the arc from pure transforms: the outer runs the
+   straight line linearly, the inner lifts and falls with easing. */
+.craid-packet {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  animation: craid-run calc(0.9s * var(--fx-dur, 1)) linear both;
+  animation-delay: calc(0.4s * var(--fx-dur, 1));
+}
+@keyframes craid-run {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) translate(0, 0);
+  }
+  12% {
+    opacity: 1;
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) translate(var(--raid-dx, 0px), var(--raid-dy, 0px));
+  }
+}
+.craid-packet-lift {
+  display: block;
+  animation: craid-lift calc(0.9s * var(--fx-dur, 1)) var(--ease-io, ease-in-out) both;
+  animation-delay: calc(0.4s * var(--fx-dur, 1));
+}
+@keyframes craid-lift {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-56px);
+  }
+}
+.craid-digits {
+  display: inline-block;
+  border: 1px solid rgba(247, 241, 227, 0.5);
+  border-radius: 1px;
+  background: rgba(18, 22, 30, 0.92);
+  padding: 2px 7px;
+  font-family: var(--font-mono, monospace);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  color: rgba(247, 241, 227, 0.95);
+}
+
+/* --- Caster pill pop: the gain lands. -------------------------------------- */
+.craid-pop {
+  position: absolute;
+  border: 2px solid rgba(216, 181, 110, 0.85);
+  border-radius: 1px;
+  transform: scale(1);
+  animation: craid-pop calc(0.6s * var(--fx-dur, 1)) var(--ease-out, ease-out) both;
+  animation-delay: calc(1.15s * var(--fx-dur, 1));
+}
+@keyframes craid-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  35% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+
+/* --- Delta chips: signed seconds beside each pill. ------------------------- */
+.craid-delta {
+  position: absolute;
+  transform: translate(-50%, 0);
+  font-family: var(--font-mono, monospace);
+  font-weight: 700;
+  font-size: 13px;
+  animation: craid-delta calc(1.1s * var(--fx-dur, 1)) var(--ease-out, ease-out) both;
+}
+.craid-delta--loss {
+  color: rgb(224 82 82 / 0.95);
+}
+.craid-delta--gain {
+  color: rgb(216 181 110 / 0.95);
+  animation-delay: calc(1.05s * var(--fx-dur, 1));
+}
+@keyframes craid-delta {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 6px);
+  }
+  25% {
+    opacity: 1;
+    transform: translate(-50%, -4px);
+  }
+  80% {
+    opacity: 1;
+    transform: translate(-50%, -12px);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -18px);
+  }
+}

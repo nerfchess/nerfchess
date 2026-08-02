@@ -12,6 +12,7 @@ import { BuffDock, EnemyBuffModal, TargetingBanner, againstYouRows, useBuffTarge
 import { BoardSplashHost } from "@/components/BoardSplash";
 import { ChatPanel } from "@/components/ChatPanel";
 import { ClockPill } from "@/components/ClockPill";
+import { ClockRaidLayer } from "@/components/effects/clockraid/ClockRaidLayer";
 import { RailResizeHandle, useRailWidth } from "@/components/RailResizeHandle";
 import { CommandRail, railGridClass } from "@/components/match/CommandRail";
 import { ConnectionBanner } from "@/components/ConnectionBanner";
@@ -3016,6 +3017,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 {clockEnabled && (
                   <ClockPill
                     ms={myColor === "w" ? blackMs : whiteMs}
+                    seat={myColor === "w" ? "b" : "w"}
                     active={chargedColor === oppColor}
                     startDelayMs={clockStartDelay(oppColor)}
                     compact
@@ -3182,6 +3184,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 {clockEnabled && (
                   <ClockPill
                     ms={myColor === "w" ? whiteMs : blackMs}
+                    seat={myColor}
                     active={chargedColor === myColor}
                     startDelayMs={clockStartDelay(myColor)}
                     warnLowTime={uiSettings.lowTimeWarning}
@@ -3233,6 +3236,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                     </span>
                     <ClockPill
                       ms={myColor === "w" ? blackMs : whiteMs}
+                      seat={myColor === "w" ? "b" : "w"}
                       active={chargedColor === oppColor}
                       startDelayMs={clockStartDelay(oppColor)}
                       compact
@@ -3241,6 +3245,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   <div className="flex min-w-0 items-center gap-2">
                     <ClockPill
                       ms={myColor === "w" ? whiteMs : blackMs}
+                      seat={myColor}
                       active={chargedColor === myColor}
                       startDelayMs={clockStartDelay(myColor)}
                       draftRunning={myDraftCharging}
@@ -3311,6 +3316,10 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
       </div>
 
       <OppPlaysLog plays={oppLog} />
+      {/* Clock-raid spectacle for clock-touching cards (Time Thief and kin):
+          measures the [data-clock-seat] pills and runs the grab/carry/pop
+          out-of-board choreography. Cosmetic; clock frames stay authoritative. */}
+      <ClockRaidLayer fx={game.fx ?? null} />
 
       {/* Owner god panel: far-right, mounted only for the ilovenewjeans account,
           only when he has switched it on from /mod, and only in a live draft game

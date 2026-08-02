@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { Board, NERF_REVEAL_SKIP, type NerfRevealInfo } from "@/components/Board";
 import { BoardPlayerRow } from "@/components/BoardPlayerRow";
 import { ClockPill } from "@/components/ClockPill";
+import { ClockRaidLayer } from "@/components/effects/clockraid/ClockRaidLayer";
 import { RailResizeHandle, useRailWidth } from "@/components/RailResizeHandle";
 import { CommandRail, railGridClass } from "@/components/match/CommandRail";
 // The end screen is never part of first paint; loading it on demand keeps it
@@ -2029,6 +2030,7 @@ function GamePage() {
                 {clockEnabled && (
                   <ClockPill
                     ms={myColor === "w" ? blackMs : whiteMs}
+                    seat={myColor === "w" ? "b" : "w"}
                     active={!game.result && offerPausedAt == null && game.board.turn !== myColor}
                     compact
                   />
@@ -2149,6 +2151,7 @@ function GamePage() {
                 {clockEnabled && (
                   <ClockPill
                     ms={myColor === "w" ? whiteMs : blackMs}
+                    seat={myColor}
                     active={!game.result && offerPausedAt == null && game.board.turn === myColor}
                     warnLowTime={uiSettings.lowTimeWarning}
                     draftRunning={myDraftCharging}
@@ -2188,6 +2191,7 @@ function GamePage() {
               {clockEnabled && (
                 <ClockPill
                   ms={myColor === "w" ? blackMs : whiteMs}
+                  seat={myColor === "w" ? "b" : "w"}
                   active={!game.result && offerPausedAt == null && game.board.turn !== myColor}
                 />
               )}
@@ -2203,6 +2207,7 @@ function GamePage() {
               {clockEnabled && (
                 <ClockPill
                   ms={myColor === "w" ? whiteMs : blackMs}
+                  seat={myColor}
                   active={!game.result && offerPausedAt == null && game.board.turn === myColor}
                   warnLowTime={uiSettings.lowTimeWarning}
                   draftRunning={myDraftCharging}
@@ -2262,6 +2267,10 @@ function GamePage() {
       )}
 
       <OppPlaysLog plays={oppLog} />
+      {/* Clock-raid spectacle for clock-touching cards (Time Thief and kin):
+          measures the [data-clock-seat] pills and runs the grab/carry/pop
+          out-of-board choreography. Cosmetic; clock frames stay authoritative. */}
+      <ClockRaidLayer fx={game.fx ?? null} />
 
       {/* Shared reveal moment: both sides of the simultaneous draft round
           resolved. Non-blocking, click to dismiss, auto-dismisses after
