@@ -3,9 +3,12 @@
  * Every keyframe animates transform and/or opacity exclusively (no layout, no
  * paint of width/height/color over time). Animations are gated two ways:
  *   1. html[data-anim="off"] * { animation: none } (global rule in globals.css)
- *      already stops every keyframe when the player turns animations off.
- *   2. The prefers-reduced-motion guard below hard-stops them for the OS
- *      setting, and the components render their static fallback instead.
+ *      already stops every keyframe when the player turns animations off. The
+ *      same attribute absorbs the OS reduced-motion request when "Follow
+ *      system motion" is opted into (applyUiPrefs folds both together).
+ *   2. The data-anim guard at the bottom of this file additionally pins a
+ *      readable static end-state, and the components render their static
+ *      fallback instead.
  * Settle is the final ~30% of each animation; nothing loops (single play).
  */
 
@@ -704,21 +707,20 @@
 }
 
 /* Hard reduced-motion guard: even if a primitive is mounted without the
- * `reduced` prop, the OS setting stops every keyframe and pins a readable
- * static end-state. */
-@media (prefers-reduced-motion: reduce) {
-  .pfx-el {
-    animation: none !important;
-    opacity: 0.4 !important;
-  }
-  .pfx-fallback {
-    animation: none !important;
-    opacity: 0.4 !important;
-  }
-  .pfx-aura-piece {
-    animation: none !important;
-  }
-  .pfx-spawn-reveal .pfx-anchor {
-    animation: none !important;
-  }
+ * `reduced` prop, the app's motion gate (html[data-anim="off"], which absorbs
+ * the OS reduced-motion request when "Follow system motion" is opted into)
+ * stops every keyframe and pins a readable static end-state. */
+html[data-anim="off"] .pfx-el {
+  animation: none !important;
+  opacity: 0.4 !important;
+}
+html[data-anim="off"] .pfx-fallback {
+  animation: none !important;
+  opacity: 0.4 !important;
+}
+html[data-anim="off"] .pfx-aura-piece {
+  animation: none !important;
+}
+html[data-anim="off"] .pfx-spawn-reveal .pfx-anchor {
+  animation: none !important;
 }

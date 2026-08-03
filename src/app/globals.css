@@ -3608,9 +3608,6 @@ html[data-anim="off"] .nerf-reveal-wash, html[data-anim="off"] .nerf-reveal-stam
 }
 .clock-pulse-soft { animation: clock-pulse-soft 1.8s ease-in-out infinite; }
 html[data-anim="off"] .clock-pulse-soft { animation: none !important; }
-@media (prefers-reduced-motion: reduce) {
-  .clock-pulse-soft { animation: none !important; }
-}
 
 /* --- Refused-input feedback ---------------------------------------------------
    A rejected move or card target flashes a brief oxblood inner ring on the
@@ -3637,10 +3634,6 @@ html[data-anim="off"] .clock-pulse-soft { animation: none !important; }
 .sq-invalid-shake { animation: sq-invalid-shake 150ms ease-in-out; }
 html[data-anim="off"] .sq-invalid-ring { animation: none !important; opacity: 0.9; }
 html[data-anim="off"] .sq-invalid-shake { animation: none !important; }
-@media (prefers-reduced-motion: reduce) {
-  .sq-invalid-ring { animation: none !important; opacity: 0.9; }
-  .sq-invalid-shake { animation: none !important; }
-}
 
 /* --- Left-rail luxe (additive) -----------------------------------------------
    Opt-in dressing for the in-game command rail: richer layered plate texture,

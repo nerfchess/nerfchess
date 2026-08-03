@@ -243,10 +243,12 @@ export interface Settings {
   uiSounds: boolean; // interface blips (piece select), separate from game sounds
   highContrast: boolean;
   reducedMotion: boolean;
-  // Honor the OS "prefers-reduced-motion" flag automatically (on by default):
-  // when the system asks for calm, animations stand down exactly as if
-  // reducedMotion were on. Turning this off restores the old app-authoritative
-  // behavior for players who reduce motion system-wide but still want plays.
+  // Honor the OS "prefers-reduced-motion" flag (OFF by default): when on and
+  // the system asks for calm, animations stand down exactly as if reducedMotion
+  // were on. Card plays are gameplay information, so the default keeps them
+  // visible even on devices that ask apps to reduce motion; a one-time notice
+  // (MotionNotice) offers this switch to those players, flagged as not
+  // recommended.
   followSystemMotion: boolean;
   fpsCounter: boolean;
   customBgUrl: string; // full-page background image URL; empty string = none
@@ -299,7 +301,7 @@ export const DEFAULT_SETTINGS: Settings = {
   uiSounds: true,
   highContrast: false,
   reducedMotion: false,
-  followSystemMotion: true,
+  followSystemMotion: false,
   fpsCounter: false,
   customBgUrl: "",
   customBgDim: 0.3,
@@ -609,9 +611,9 @@ export function applyUiPrefs(s: Settings) {
   html.style.setProperty("--accent-rgb", accent.rgb);
   html.style.setProperty("--accent-hi-rgb", accent.rgbHi);
   html.style.setProperty("--accent-dim-rgb", accent.rgbDim);
-  // The OS prefers-reduced-motion flag is honored automatically (new default);
-  // the in-app toggles still work, and followSystemMotion:false restores the
-  // old app-authoritative behavior for users who want plays regardless.
+  // The OS prefers-reduced-motion flag is honored only when the user opted in
+  // (followSystemMotion, default off): card plays are gameplay information, so
+  // they stay on by default; the in-app toggles always win either way.
   const osReducedMotion =
     s.followSystemMotion && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
   html.dataset.anim = s.reducedMotion || osReducedMotion ? "off" : s.animationSpeed;
@@ -649,9 +651,9 @@ export function fxDurationScale(): number {
 
 /** True when animations are off: the user turned them off in Settings
  *  (reduced motion or animation speed "off"), or the OS asked for reduced
- *  motion and "Follow system motion" (default on) is honoring it — applyUiPrefs
- *  folds both into data-anim, so this single read stays authoritative.
- *  SSR-safe (false). */
+ *  motion and "Follow system motion" (opt-in, default off) is honoring it —
+ *  applyUiPrefs folds both into data-anim, so this single read stays
+ *  authoritative. SSR-safe (false). */
 export function motionOff(): boolean {
   if (typeof document === "undefined") return true;
   return document.documentElement.dataset.anim === "off";

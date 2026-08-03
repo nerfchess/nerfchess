@@ -575,18 +575,13 @@
 }
 
 /* --- Motion off ----------------------------------------------------------- */
-/* Animations off in Settings, and reduced motion: hold the still frame so the
- * play still reads, rather than skipping the scene entirely. */
+/* Animations off in Settings (data-anim="off", which also absorbs the OS
+ * reduced-motion request when "Follow system motion" is opted into): hold the
+ * still frame so the play still reads, rather than skipping the scene
+ * entirely. */
 html[data-anim="off"] .cpl-stage *,
 html[data-anim="off"] .cpl-stage {
   animation: none !important;
   opacity: 1;
   transform: none;
-}
-@media (prefers-reduced-motion: reduce) {
-  .cpl-stage *,
-  .cpl-stage {
-    animation-duration: 1ms !important;
-    animation-iteration-count: 1 !important;
-  }
 }

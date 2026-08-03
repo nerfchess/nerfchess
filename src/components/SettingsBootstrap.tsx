@@ -71,33 +71,44 @@ export function SettingsBootstrap() {
   );
 }
 
-const MOTION_NOTICE_KEY = "dc:motion-notice"; // "restored" | "dismissed"
+const MOTION_NOTICE_KEY = "dc:motion-notice"; // "restored" | "dismissed" (effects-off variant)
+const MOTION_ON_NOTICE_KEY = "dc:motion-on-notice"; // "kept" | "quieted" (effects-on variant)
 
-/** Tells a player WHY their card animations are missing.
+type MotionNoticeVariant = "effectsOff" | "effectsOn";
+
+/** Tells a player where their card animations stand versus the device's
+ *  reduced-motion request, once per device, in whichever direction applies.
  *
- *  "Follow system motion" defaults on, and applyUiPrefs folds the OS
- *  reduced-motion flag straight into html[data-anim="off"], which every effect
- *  layer treats as a hard kill switch. That is correct behaviour and it is what
- *  the OS asked for, but it is also indistinguishable from the game being
- *  broken: phones enable reduced motion for battery saving and accessibility
- *  defaults, so players end up on a build where no card ever animates and
- *  nothing explains it.
+ *  "Follow system motion" defaults OFF: card plays are gameplay information,
+ *  so NerfChess keeps them on even when the OS asks apps to reduce motion.
+ *  The "effectsOn" variant surfaces that choice to affected players and offers
+ *  the opt-out (stand effects down with the system), flagged as not
+ *  recommended because quiet plays are easy to miss.
  *
- *  Shown once per device, and only when the OS is the reason: a player who
- *  turned on Reduced motion themselves knows exactly why it is quiet and is
- *  never interrupted. Goes through the same UI interrupt queue as LagWatch, so
- *  it can never cover a draft. */
+ *  The "effectsOff" variant covers players who HAVE opted in (or carry the old
+ *  stored default): applyUiPrefs folds the OS flag into html[data-anim="off"],
+ *  a hard kill switch, which is indistinguishable from the game being broken —
+ *  phones enable reduced motion for battery saving and accessibility defaults,
+ *  so nothing would ever animate with nothing explaining it. This variant says
+ *  why, and offers to show the effects anyway.
+ *
+ *  Either way it only appears when the OS request is the deciding factor: a
+ *  player who turned on Reduced motion in Settings themselves knows exactly
+ *  why it is quiet and is never interrupted. Goes through the same UI
+ *  interrupt queue as LagWatch, so it can never cover a draft. */
 function MotionNotice() {
-  const [show, setShow] = useState(false);
+  const [show, setShow] = useState<MotionNoticeVariant | null>(null);
   const releaseRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
-    try {
-      if (window.localStorage.getItem(MOTION_NOTICE_KEY)) return;
-    } catch {}
     const s = loadSettings();
-    if (!s.followSystemMotion || s.reducedMotion) return;
+    if (s.reducedMotion || s.animationSpeed === "off") return;
     if (!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+    const variant: MotionNoticeVariant = s.followSystemMotion ? "effectsOff" : "effectsOn";
+    try {
+      const key = variant === "effectsOff" ? MOTION_NOTICE_KEY : MOTION_ON_NOTICE_KEY;
+      if (window.localStorage.getItem(key)) return;
+    } catch {}
     // Deliberately delayed before it even asks for a slot. The interrupt queue
     // only defers to holds that already EXIST, and this effect runs on mount,
     // which on the game route is before the opening draft has pushed its hold.
@@ -108,7 +119,7 @@ function MotionNotice() {
     const timer = window.setTimeout(() => {
       cancel = requestUiSlot(UI_PRIORITY.performance, (release) => {
         releaseRef.current = release;
-        setShow(true);
+        setShow(variant);
       });
     }, 6000);
     return () => {
@@ -120,11 +131,14 @@ function MotionNotice() {
   }, []);
 
   if (!show) return null;
-  const settle = (key: "restored" | "dismissed") => {
+  const settle = (key: "restored" | "dismissed" | "kept" | "quieted") => {
     try {
-      window.localStorage.setItem(MOTION_NOTICE_KEY, key);
+      window.localStorage.setItem(
+        show === "effectsOff" ? MOTION_NOTICE_KEY : MOTION_ON_NOTICE_KEY,
+        key,
+      );
     } catch {}
-    setShow(false);
+    setShow(null);
     releaseRef.current?.();
     releaseRef.current = null;
   };
@@ -138,31 +152,64 @@ function MotionNotice() {
       style={{ bottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
       className="fixed left-1/2 z-[95] w-[min(92vw,22rem)] -translate-x-1/2 animate-rise border border-gold/40 bg-ink-700/95 p-3 shadow-plate backdrop-blur-sm"
     >
-      <div className="font-display text-sm font-bold text-parchment-100">Card effects are off</div>
-      <p className="mt-1 text-xs leading-snug text-parchment-300">
-        Your device asks apps to reduce motion, so NerfChess is standing its card animations
-        down. That is why plays look quiet. You can show them anyway without changing anything
-        on your device.
-      </p>
-      <div className="mt-2 flex justify-end gap-2">
-        <button
-          type="button"
-          className="rounded-[1px] border border-white/15 px-2.5 py-1 text-xs text-parchment-300 hover:bg-white/5"
-          onClick={() => settle("dismissed")}
-        >
-          Keep it calm
-        </button>
-        <button
-          type="button"
-          className="rounded-[1px] border border-gold/50 bg-gold/15 px-2.5 py-1 text-xs font-semibold text-parchment-100 hover:bg-gold/25"
-          onClick={() => {
-            saveSettings({ ...loadSettings(), followSystemMotion: false });
-            settle("restored");
-          }}
-        >
-          Show effects
-        </button>
-      </div>
+      {show === "effectsOff" ? (
+        <>
+          <div className="font-display text-sm font-bold text-parchment-100">Card effects are off</div>
+          <p className="mt-1 text-xs leading-snug text-parchment-300">
+            Your device asks apps to reduce motion, and your settings honor that, so NerfChess
+            is standing its card animations down. That is why plays look quiet. You can show
+            them anyway without changing anything on your device.
+          </p>
+          <div className="mt-2 flex justify-end gap-2">
+            <button
+              type="button"
+              className="rounded-[1px] border border-white/15 px-2.5 py-1 text-xs text-parchment-300 hover:bg-white/5"
+              onClick={() => settle("dismissed")}
+            >
+              Keep it calm
+            </button>
+            <button
+              type="button"
+              className="rounded-[1px] border border-gold/50 bg-gold/15 px-2.5 py-1 text-xs font-semibold text-parchment-100 hover:bg-gold/25"
+              onClick={() => {
+                saveSettings({ ...loadSettings(), followSystemMotion: false });
+                settle("restored");
+              }}
+            >
+              Show effects
+            </button>
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="font-display text-sm font-bold text-parchment-100">Card effects are on</div>
+          <p className="mt-1 text-xs leading-snug text-parchment-300">
+            Your device asks apps to reduce motion, but NerfChess keeps its card animations on
+            by default: plays are how you see what a card just did. If you would rather NerfChess
+            follow your device, you can stand them down here. Not recommended, since quiet plays
+            are easy to miss.
+          </p>
+          <div className="mt-2 flex justify-end gap-2">
+            <button
+              type="button"
+              className="rounded-[1px] border border-white/15 px-2.5 py-1 text-xs text-parchment-300 hover:bg-white/5"
+              onClick={() => {
+                saveSettings({ ...loadSettings(), followSystemMotion: true });
+                settle("quieted");
+              }}
+            >
+              Turn them off
+            </button>
+            <button
+              type="button"
+              className="rounded-[1px] border border-gold/50 bg-gold/15 px-2.5 py-1 text-xs font-semibold text-parchment-100 hover:bg-gold/25"
+              onClick={() => settle("kept")}
+            >
+              Keep effects on
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }

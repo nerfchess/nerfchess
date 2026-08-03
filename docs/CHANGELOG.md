@@ -588,3 +588,36 @@ Verified: tsc, eslint, full battery, and all 26 Playwright e2e tests green.
 Still outstanding: clock tiers 2 to 8 (99 cards), confusing-text simplification,
 weak-card buffs, cosmetic-only cards, the UI transition-token sweep, and
 AnimatePresence on the draft's unmount paths.
+
+## 2026-08-03 09:26 EDT
+
+Card animations now default ON even when the device asks apps to reduce motion.
+
+- "Follow system motion" flips to default OFF: card plays are gameplay
+  information (they are how you see what a card just did), so the OS
+  prefers-reduced-motion flag no longer stands them down unless the player
+  opts in. The in-app Reduced motion and Animations switches keep working
+  exactly as before and always win.
+- MotionNotice grows a second variant. On a reduced-motion device with the new
+  default, a one-time notice explains that effects are on by default and offers
+  to turn them off, labelled not recommended since quiet plays are easy to
+  miss ("Turn them off" sets followSystemMotion back on). Players who already
+  opted in (or carry the old stored default) still get the original
+  "Card effects are off" notice offering to show them anyway. Same UI interrupt
+  queue as before, so neither variant can cover a draft.
+- detectReduced (lib/useReducedMotion) now treats a stamped html[data-anim] as
+  authoritative and only consults the OS media query pre-stamp, gated on the
+  followSystemMotion setting. Before this, framer-motion driven effects stood
+  down on OS reduced motion even with the setting off, the half-animated state
+  the module's own docs warn about.
+- The raw @media (prefers-reduced-motion) CSS guards in globals.css,
+  DraftOverlay.css, creatorPlays.css and passive/primitives.css re-key onto
+  html[data-anim="off"], which absorbs the OS request only when the player
+  opted in; otherwise those keyframes would stay frozen while everything else
+  played. draft-expire-pulse gains the data-anim rule it was missing.
+- Settings hints for "Follow system motion" (Interface and Accessibility) now
+  say it is off by default and that turning it on is not recommended.
+
+Verified: tsc, check-reduced-motion, check-emdash, check-rounded,
+check-buttons all green. PR OPEN (branch
+claude/card-animation-motion-settings-htkuag; number recorded on open).

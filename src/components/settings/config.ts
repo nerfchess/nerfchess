@@ -335,7 +335,7 @@ export const SECTIONS: SectionConfig[] = [
       {
         id: "followSystemMotion",
         label: "Follow system motion",
-        hint: "Stand card effects down when your device asks apps to reduce motion. Turn this off to keep the effects regardless.",
+        hint: "Stand card effects down when your device asks apps to reduce motion. Off by default so plays stay visible; turning it on is not recommended, since quiet plays are easy to miss.",
         group: "Motion",
         control: { kind: "toggle", setting: "followSystemMotion" },
       },
@@ -386,7 +386,7 @@ export const SECTIONS: SectionConfig[] = [
       {
         id: "followSystemMotionA11y",
         label: "Follow system motion",
-        hint: "Stand card effects down when your device asks apps to reduce motion. Turn this off to keep the effects regardless.",
+        hint: "Stand card effects down when your device asks apps to reduce motion. Off by default so plays stay visible; turning it on is not recommended, since quiet plays are easy to miss.",
         control: { kind: "toggle", setting: "followSystemMotion" },
       },
     ],
