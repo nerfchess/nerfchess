@@ -180,7 +180,7 @@ export const FANTASY_FEY: Buff[] = [
       name: "Changeling",
       description:
         "The cradle swap ran the other way: one enemy knight or bishop you choose was a changeling all along. The glamour breaks and it is just a pawn.",
-      tier: 5,
+      tier: 6,
       category: "hex",
       flavor: "The cradle was never empty. It was just not yours.",
     },

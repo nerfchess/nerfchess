@@ -60,7 +60,7 @@ export const FUNNY_TRADEOFFS: Buff[] = [
       name: "Borrowed Time",
       description:
         "Your queen becomes uncapturable for your next 4 moves, and then her time runs out: she is removed from the board.",
-      tier: 5,
+      tier: 4,
       category: "protection",
       requires: ["q"],
       flavor: "Every debt comes due.",
@@ -80,7 +80,7 @@ export const FUNNY_TRADEOFFS: Buff[] = [
       name: "Berserker",
       description:
         "For your next 3 turns, all your pieces except your king also move like a queen. For the 2 turns after that, all your pieces can move only one square.",
-      tier: 7,
+      tier: 8,
       category: "movement",
       flavor: "Blood first, thinking later.",
       fx: { motif: "rally", pieces: "all", self: true },
