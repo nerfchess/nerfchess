@@ -12,8 +12,8 @@
 //   Site     the switches that change how nerfchess behaves
 //
 // Everything reachable from the console lives in exactly one group, including
-// the three standalone pages (card editor, house personas, site stats) that used
-// to hide as small text links in the page header.
+// the standalone pages (card editor, house personas, the two stats scopes)
+// that used to hide as small text links in the page header.
 
 export type SectionId =
   | "dashboard"
@@ -80,7 +80,8 @@ export const NAV_GROUPS: NavGroup[] = [
     title: "Activity",
     items: [
       { kind: "section", id: "games", label: "Game archive", glyph: "♞" },
-      { kind: "link", href: "/mod/stats", label: "Site stats", glyph: "◔" },
+      { kind: "link", href: "/mod/stats/all", label: "Stats: all games", glyph: "◔" },
+      { kind: "link", href: "/mod/stats/humans", label: "Stats: humans", glyph: "◕" },
     ],
   },
   {

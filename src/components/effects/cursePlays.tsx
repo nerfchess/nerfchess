@@ -42,6 +42,7 @@ import "./cursePlays.css";
 
 import type { ComponentType, CSSProperties, ReactNode } from "react";
 import type { SigPlugin, SigRole } from "./sigPlugins";
+import { LaserStrike, PieceShatter, QUAKE_CLASS, Shockwave, impactVars } from "./impact/impact";
 import { BoardFrame, BoardWideStage } from "./stage";
 
 /* =============================================================================
@@ -76,10 +77,127 @@ const SJ = { strokeLinejoin: "round", strokeLinecap: "round" } as const;
 
 /** The oversized-clipped board-wide stage (the overlay mounts inside ONE
  * square; this canvas is ~14 squares wide, anchored on the cast square and
- * clamping itself over the board — see stage.tsx). */
-function Stage({ children }: { children: ReactNode }) {
-  return <BoardWideStage>{children}</BoardWideStage>;
+ * clamping itself over the board — see stage.tsx).
+ *
+ * FLAGSHIP WAVE: `quakeAtMs` jolts the whole in-scene stage on the working's
+ * impact beat (the shared impact vocabulary's QUAKE_CLASS — in-scene only,
+ * never the real board crop). Every template and bespoke scene passes its own
+ * strike time, so a hex now lands with weight instead of merely appearing. */
+function Stage({ children, quakeAtMs }: { children: ReactNode; quakeAtMs?: number }) {
+  return (
+    <BoardWideStage>
+      {quakeAtMs == null ? (
+        children
+      ) : (
+        <span className={`cwp-quakebox ${QUAKE_CLASS} absolute inset-0 block`} style={impactVars(undefined, quakeAtMs / 1000)}>
+          {children}
+        </span>
+      )}
+    </BoardWideStage>
+  );
 }
+
+/** hex "#rrggbb" -> "r g b" (the impact vocabulary's --imp-rgb format). */
+function rgbOf(hex: string): string {
+  return `${parseInt(hex.slice(1, 3), 16)} ${parseInt(hex.slice(3, 5), 16)} ${parseInt(hex.slice(5, 7), 16)}`;
+}
+
+/** FLAGSHIP WAVE: one composed violence cell from the shared impact
+ * vocabulary — the descending laser column, the struck piece splitting in
+ * half with shard spray, the ground shockwave — parked over the flourish's
+ * own action so the hit lands where the card's story happens. The laser leads
+ * ~0.4s ahead of the impact beat (see the .cwp-impact rule in cursePlays.css);
+ * everything else lands ON the beat, so the composite reads as one strike. */
+interface ImpactSpec {
+  l: number;
+  t: number;
+  s: number;
+  /** impact-beat offset from the scene's own delayMs, in ms */
+  at: number;
+  laser?: true;
+  /** shatter this chessman in half on the beat */
+  man?: keyof typeof CHESSMAN;
+  shock?: true;
+}
+function ImpactCell({ spec, rgb, delayMs }: { spec: ImpactSpec; rgb: string; delayMs: number }) {
+  return (
+    <span
+      className="cwp-impact absolute block"
+      style={{ left: `${spec.l}%`, top: `${spec.t}%`, width: `${spec.s}%`, height: `${spec.s}%`, ...impactVars(rgb, (delayMs + spec.at) / 1000) }}
+    >
+      {spec.laser && <LaserStrike />}
+      {spec.man && <PieceShatter glyph={<Man kind={spec.man} fill={`rgb(${rgb})`} stroke="#1c1018" />} />}
+      {spec.shock && <Shockwave />}
+    </span>
+  );
+}
+
+/** Per-card impact accents, keyed by flourish. Every template card gets its
+ * OWN composition (type, placement, beat) on top of its template signature
+ * and flourish, so no two siblings land the same hit: a laser for workings
+ * that strike from above, a shatter for workings that break a piece, a bare
+ * shockwave for workings that press or bind. Positions sit on each
+ * flourish's existing action. */
+const FLOURISH_IMPACT: Record<string, ImpactSpec> = {
+  /* HexBrand */
+  veto: { l: 33, t: 40, s: 12, at: 700, laser: true, shock: true }, // the warding bolt slaps the striker back
+  longroad: { l: 60, t: 52, s: 12, at: 1150, shock: true }, // the road's far end thumps as the knight lands
+  bloodprice: { l: 44, t: 56, s: 13, at: 680, laser: true, shock: true }, // the collector's due hammers the ledger
+  tarnish: { l: 43, t: 14, s: 14, at: 620, laser: true, man: "q", shock: true }, // the fresh queen is lasered and split
+  rations: { l: 55, t: 58, s: 12, at: 980, shock: true }, // the refused chit is struck through with a thud
+  stacked: { l: 42, t: 34, s: 16, at: 800, shock: true }, // each stacked ring compounds the ground blow
+  wrongfoot: { l: 44, t: 54, s: 13, at: 760, shock: true }, // the forced step lands off-balance, hard
+  overexert: { l: 44, t: 52, s: 14, at: 820, man: "r", shock: true }, // the overworked rook cracks clean in half
+  tollroad: { l: 51, t: 56, s: 12, at: 900, laser: true, shock: true }, // the toll stamp drops like a gate
+  bloodlust: { l: 58, t: 54, s: 14, at: 900, man: "p", shock: true }, // the compelled queen's next victim bursts
+  exile: { l: 60, t: 44, s: 12, at: 1100, laser: true }, // the far border beam marks the exile line
+  debtor: { l: 36, t: 52, s: 13, at: 820, shock: true }, // each tally lands like a dropped weight
+  coronationtax: { l: 58, t: 54, s: 12, at: 940, laser: true, shock: true }, // the tax bolt arcs to the frozen piece
+  pilgrimage: { l: 60, t: 46, s: 13, at: 780, laser: true }, // shrine light hammers down on the destination
+  bounty: { l: 44, t: 50, s: 14, at: 960, man: "r", shock: true }, // the marked hunter shatters under its own price
+  feedingfrenzy: { l: 42, t: 40, s: 16, at: 850, shock: true }, // the cinching rings slam tighter
+  /* OmenBell */
+  omen: { l: 42, t: 20, s: 13, at: 740, shock: true }, // the belfry bursts as the crows explode out
+  halfmeasure: { l: 44, t: 60, s: 12, at: 940, shock: true }, // the loud beat of the metronome lands
+  midnight: { l: 61, t: 24, s: 15, at: 1240, laser: true, shock: true }, // the midnight strike lasers the clock face
+  toil: { l: 61, t: 54, s: 13, at: 880, man: "r", shock: true }, // the overloaded rook buckles and splits
+  slowpoison: { l: 54, t: 46, s: 13, at: 1000, shock: true }, // the dose lands with a soft, awful thump
+  jammedgate: { l: 51, t: 42, s: 14, at: 900, laser: true, shock: true }, // the portcullis slams down a light-column
+  powderkeg: { l: 44, t: 50, s: 16, at: 1080, shock: true }, // the keg's preview blast rocks the ground
+  collapse: { l: 44, t: 54, s: 15, at: 780, man: "n", shock: true }, // a piece goes down with the caving floor
+  doomedvow: { l: 43, t: 42, s: 13, at: 1000, laser: true }, // the axe-light falls on the condemned
+  /* BlightGarden */
+  footprints: { l: 47, t: 62, s: 12, at: 920, shock: true }, // each print ices shut with a crack
+  creep: { l: 60, t: 44, s: 12, at: 1120, shock: true }, // the outrider tile bites into fresh ground
+  gravebloom: { l: 56, t: 52, s: 13, at: 780, laser: true }, // grave-light pillars over the rising mound
+  stormwall: { l: 55, t: 22, s: 14, at: 1120, laser: true, shock: true }, // the first lightning column strikes the crest
+  sentry: { l: 42, t: 54, s: 13, at: 1020, shock: true }, // the pacing tile stomps its beat
+  mire: { l: 44, t: 46, s: 14, at: 900, shock: true }, // the bog's heart gulps with a wet thud
+  miasma: { l: 53, t: 50, s: 13, at: 1100, man: "n", shock: true }, // the third dose splits the sickened knight
+  maw: { l: 55, t: 50, s: 14, at: 1000, man: "r", shock: true }, // the void's meal is torn in half
+  wildfire: { l: 46, t: 46, s: 14, at: 940, laser: true, shock: true }, // the fire-column jumps piece to piece
+  effigy: { l: 44, t: 40, s: 14, at: 820, laser: true }, // dread-light hammers the effigy's post
+  avalanche: { l: 50, t: 52, s: 16, at: 1060, shock: true }, // the slide slams into the sealed squares
+  /* ChainWeb */
+  twin: { l: 62, t: 58, s: 13, at: 940, shock: true }, // the sympathetic jerk cracks the far square
+  noreins: { l: 62, t: 26, s: 13, at: 960, shock: true }, // the runaway rook blows through its post
+  recoil: { l: 46, t: 60, s: 13, at: 920, man: "b", shock: true }, // the recoiling bishop splinters mid-flight
+  ransom: { l: 30, t: 62, s: 13, at: 900, laser: true, shock: true }, // the surety chains hammer down on the pawns
+  courtlock: { l: 30, t: 55, s: 14, at: 940, laser: true, shock: true }, // the padlock drops in a column of light
+  bindingoath: { l: 46, t: 58, s: 13, at: 1060, shock: true }, // the oath-knot cinches with a ground blow
+  bloodbond: { l: 62, t: 58, s: 13, at: 1080, shock: true }, // the sympathetic freeze lands on the partner
+  sharedfate: { l: 62, t: 58, s: 14, at: 1040, man: "r", shock: true }, // the bound twin shatters where it stands
+  kingsguard: { l: 56, t: 54, s: 13, at: 1000, laser: true }, // the guard-light pins the nearest piece
+  noretreat: { l: 42, t: 44, s: 13, at: 880, shock: true }, // the taut rein snaps the deserter back HARD
+  /* MidasVeil */
+  coin: { l: 60, t: 34, s: 13, at: 1100, laser: true, shock: true }, // the cursed coin lands like a meteor
+  gilded: { l: 44, t: 42, s: 14, at: 1000, shock: true }, // the gold sickness sets with a heavy pulse
+  fifthcolumn: { l: 54, t: 36, s: 13, at: 800, laser: true }, // the turncoat's new colors sear down onto it
+  handeddown: { l: 60, t: 36, s: 13, at: 1020, shock: true }, // the inherited curse lands on the next bearer
+  mutiny: { l: 34, t: 36, s: 14, at: 940, man: "n", shock: true }, // the mutineer breaks its old allegiance apart
+  sleeper: { l: 42, t: 38, s: 13, at: 1020, laser: true, shock: true }, // the wake-signal spears the sleeper cell
+  agingblade: { l: 42, t: 36, s: 14, at: 860, man: "q", shock: true }, // the queen's old self shears away in halves
+};
 
 /** Full-board curse-light wash. Inside <BoardFrame>, so it is exactly the
  * board at any anchor rather than a fixed slice of a canvas that has moved. */
@@ -364,10 +482,13 @@ function HexBrand({ palette, glyph, lead, role, delayMs, flourish, aim }: Templa
   if (role === "entrance") return <EntranceCut palette={palette} glyph={glyph} delayMs={delayMs} mark={MARK.seal(palette)} />;
   if (!lead) return <CurseHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
-    <Stage>
+    // FLAGSHIP: the whole stage jolts when the hot seal hammers down
+    <Stage quakeAtMs={delayMs + 620}>
       <Wash color={tint(p0, 0.24)} delayMs={delayMs} />
       {aim && <ChainLeg color={tint(p1, 0.9)} delayMs={delayMs + 300} />}
       <Tell color={tint(p1, 0.35)} delayMs={delayMs} />
+      {/* per-card impact accent: this flourish's own laser / shatter / blast */}
+      {flourish && FLOURISH_IMPACT[flourish] && <ImpactCell spec={FLOURISH_IMPACT[flourish]} rgb={rgbOf(p1)} delayMs={delayMs} />}
       {/* the seal, stamped down like hot wax */}
       <span className="cwp-stamp absolute block" style={{ left: "31%", top: "27%", width: "38%", height: "38%", animationDelay: `${delayMs + 160}ms` }}>
         <svg viewBox="0 0 40 40" className="block h-full w-full" aria-hidden="true">
@@ -677,10 +798,13 @@ function OmenBell({ palette, glyph, lead, role, delayMs, flourish, aim }: Templa
   if (role === "entrance") return <EntranceCut palette={palette} glyph={glyph} delayMs={delayMs} mark={MARK.bell(palette)} />;
   if (!lead) return <CurseHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
-    <Stage>
+    // FLAGSHIP: the stage rocks on the first toll of the bell
+    <Stage quakeAtMs={delayMs + 700}>
       <Wash color={tint(p0, 0.24)} delayMs={delayMs} />
       {aim && <ChainLeg color={tint(p1, 0.9)} delayMs={delayMs + 300} />}
       <Tell color={tint(p1, 0.35)} delayMs={delayMs} left={42} top={24} />
+      {/* per-card impact accent: this flourish's own laser / shatter / blast */}
+      {flourish && FLOURISH_IMPACT[flourish] && <ImpactCell spec={FLOURISH_IMPACT[flourish]} rgb={rgbOf(p1)} delayMs={delayMs} />}
       {/* the bell, descending on its phantom rope, then rocking */}
       <span className="cwp-drop absolute block" style={{ left: "38%", top: "18%", width: "24%", height: "30%", animationDelay: `${delayMs + 140}ms` }}>
         <span className="cwp-swing absolute inset-0 block" style={{ animationDelay: `${delayMs + 620}ms` }}>
@@ -889,10 +1013,13 @@ function BlightGarden({ palette, glyph, lead, role, delayMs, flourish, aim }: Te
   if (role === "entrance") return <EntranceCut palette={palette} glyph={glyph} delayMs={delayMs} mark={MARK.blight(palette)} />;
   if (!lead) return <CurseHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
-    <Stage>
+    // FLAGSHIP: the ground heaves as the rot takes root
+    <Stage quakeAtMs={delayMs + 700}>
       <Wash color={tint(p0, 0.22)} delayMs={delayMs} />
       {aim && <ChainLeg color={tint(p1, 0.9)} delayMs={delayMs + 300} />}
       <Tell color={tint(p1, 0.32)} delayMs={delayMs} left={41} top={41} />
+      {/* per-card impact accent: this flourish's own laser / shatter / blast */}
+      {flourish && FLOURISH_IMPACT[flourish] && <ImpactCell spec={FLOURISH_IMPACT[flourish]} rgb={rgbOf(p1)} delayMs={delayMs} />}
       {/* SIGNATURE: the rot spreading tile to tile */}
       {BLIGHT_TILES.map((v, i) => (
         <span key={i} className="cwp-spreadtile absolute block" style={{ left: `${v.l}%`, top: `${v.t}%`, width: `${v.s}%`, height: `${v.s * 0.72}%`, animationDelay: `${delayMs + 260 + v.d}ms` }}>
@@ -1123,10 +1250,13 @@ function ChainWeb({ palette, glyph, lead, role, delayMs, flourish, aim }: Templa
   if (!lead) return <CurseHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   const chain = (alpha: number) => `repeating-linear-gradient(90deg, ${tint(p1, alpha)} 0 7px, transparent 7px 12px)`;
   return (
-    <Stage>
+    // FLAGSHIP: the stage jolts as the shackle cinches shut
+    <Stage quakeAtMs={delayMs + 620}>
       <Wash color={tint(p0, 0.24)} delayMs={delayMs} />
       {aim && <ChainLeg color={tint(p1, 0.9)} delayMs={delayMs + 300} />}
       <Tell color={tint(p1, 0.34)} delayMs={delayMs} left={42} top={40} />
+      {/* per-card impact accent: this flourish's own laser / shatter / blast */}
+      {flourish && FLOURISH_IMPACT[flourish] && <ImpactCell spec={FLOURISH_IMPACT[flourish]} rgb={rgbOf(p1)} delayMs={delayMs} />}
       {/* SIGNATURE: the two chain lashes, whipped across with overshoot */}
       <span className="absolute block" style={{ left: "22%", top: "38%", width: "56%", height: "1.2%", rotate: "14deg" }}>
         <span className="cwp-lash absolute inset-0 block" style={{ background: chain(0.9), animationDelay: `${delayMs + 260}ms` }} />
@@ -1344,10 +1474,13 @@ function MidasVeil({ palette, glyph, lead, role, delayMs, flourish, aim }: Templ
   if (role === "entrance") return <EntranceCut palette={palette} glyph={glyph} delayMs={delayMs} mark={MARK.veil(palette)} />;
   if (!lead) return <CurseHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
-    <Stage>
+    // FLAGSHIP: the stage shivers as the gold sets across the rank
+    <Stage quakeAtMs={delayMs + 880}>
       <Wash color={tint(p0, 0.22)} delayMs={delayMs} />
       {aim && <ChainLeg color={tint(p1, 0.9)} delayMs={delayMs + 300} />}
       <Tell color={tint(p1, 0.35)} delayMs={delayMs} left={30} top={42} />
+      {/* per-card impact accent: this flourish's own laser / shatter / blast */}
+      {flourish && FLOURISH_IMPACT[flourish] && <ImpactCell spec={FLOURISH_IMPACT[flourish]} rgb={rgbOf(p1)} delayMs={delayMs} />}
       {/* the veil itself, a soft gold curtain crossing the ranks */}
       <span
         className="cwp-sweep absolute block"
@@ -1502,9 +1635,13 @@ function DeathKnellScene({ lead, role, delayMs }: SceneProps) {
   if (role === "entrance") return <EntranceCut palette={KNELL} glyph={GLYPH.hw2_death_knell} delayMs={delayMs} />;
   if (!lead) return <CurseHit palette={KNELL} glyph={GLYPH.hw2_death_knell} delayMs={delayMs} />;
   return (
-    <Stage>
+    // FLAGSHIP: the stage rocks with the first counted stroke
+    <Stage quakeAtMs={delayMs + 700}>
       <Wash color={tint(p0, 0.3)} delayMs={delayMs} />
       <Tell color={tint(p1, 0.35)} delayMs={delayMs} left={41} top={22} />
+      {/* the fourth stroke falls as a column of grave-light on the doomed
+          queen, and her ghost-preview splits in half — the knell shown true */}
+      <ImpactCell spec={{ l: 44, t: 52, s: 12, at: 1270, laser: true, man: "q", shock: true }} rgb="201 176 232" delayMs={delayMs} />
       {/* the doomed one, shivering under the bell's shadow */}
       <span className="cwp-hold absolute block" style={{ left: "46.5%", top: "56%", width: "7%", height: "10%", animationDelay: `${delayMs + 480}ms` }}>
         <Man kind="q" fill={tint(p1, 0.9)} stroke={p0} />
@@ -1569,9 +1706,12 @@ function HollowCrownScene({ lead, role, delayMs }: SceneProps) {
   if (role === "entrance") return <EntranceCut palette={HOLLOW} glyph={GLYPH.hw2_hollow_crown} delayMs={delayMs} />;
   if (!lead) return <CurseHit palette={HOLLOW} glyph={GLYPH.hw2_hollow_crown} delayMs={delayMs} />;
   return (
-    <Stage>
+    // FLAGSHIP: the hall shudders the instant the crown hollows
+    <Stage quakeAtMs={delayMs + 1040}>
       <Wash color={tint(p0, 0.3)} delayMs={delayMs} />
       <Tell color={tint(p1, 0.32)} delayMs={delayMs} left={42} top={30} />
+      {/* gold light hammers the empty seat; the blast rolls off the dais */}
+      <ImpactCell spec={{ l: 44, t: 26, s: 13, at: 1040, laser: true, shock: true }} rgb="232 176 75" delayMs={delayMs} />
       {/* the throne, shouldering up mid-board */}
       <span className="cwp-rise absolute block" style={{ left: "39%", top: "30%", width: "22%", height: "34%", animationDelay: `${delayMs + 160}ms` }}>
         <svg viewBox="0 0 22 34" className="block h-full w-full" aria-hidden="true">
@@ -1632,8 +1772,13 @@ function TideOfAshScene({ lead, role, delayMs }: SceneProps) {
   if (role === "entrance") return <EntranceCut palette={ASHTIDE} glyph={GLYPH.hw2_tide_of_ash} delayMs={delayMs} />;
   if (!lead) return <CurseHit palette={ASHTIDE} glyph={GLYPH.hw2_tide_of_ash} delayMs={delayMs} />;
   return (
-    <Stage>
+    // FLAGSHIP: the ground trembles under the rolling ash front
+    <Stage quakeAtMs={delayMs + 620}>
       <Wash color={tint(p0, 0.3)} delayMs={delayMs} />
+      {/* the front slams into the first rank: an ember blast at the wall face */}
+      <ImpactCell spec={{ l: 26, t: 42, s: 14, at: 620, shock: true }} rgb="255 157 61" delayMs={delayMs} />
+      {/* ...and the rook that waited too long is swallowed and torn apart */}
+      <ImpactCell spec={{ l: 26, t: 42, s: 12, at: 1060, man: "r" }} rgb="201 201 207" delayMs={delayMs} />
       {/* the wall itself: a towering ash front rolling in from the left edge */}
       <span
         className="cwp-tidewall absolute block"
@@ -1684,9 +1829,12 @@ function CrownOfThornsScene({ lead, role, delayMs }: SceneProps) {
   if (role === "entrance") return <EntranceCut palette={THORNS} glyph={GLYPH.hw2_crown_of_thorns} delayMs={delayMs} />;
   if (!lead) return <CurseHit palette={THORNS} glyph={GLYPH.hw2_crown_of_thorns} delayMs={delayMs} />;
   return (
-    <Stage>
+    // FLAGSHIP: the stage jolts the instant the briar catches the blade
+    <Stage quakeAtMs={delayMs + 1000}>
       <Wash color={tint(p0, 0.28)} delayMs={delayMs} />
       <Tell color={tint(p1, 0.32)} delayMs={delayMs} left={42} top={40} />
+      {/* the thorn-snap: a green ground blast where the striker is seized */}
+      <ImpactCell spec={{ l: 60, t: 42, s: 13, at: 1000, shock: true }} rgb="143 175 74" delayMs={delayMs} />
       {/* your king, the warded heart of the scene */}
       <span className="cwp-facein absolute block" style={{ left: "45%", top: "42%", width: "10%", height: "15%", animationDelay: `${delayMs + 220}ms` }}>
         <Man kind="k" fill={tint(p1, 0.95)} stroke={p0} />
@@ -1749,9 +1897,12 @@ function PauperCrownScene({ lead, role, delayMs }: SceneProps) {
   if (role === "entrance") return <EntranceCut palette={PAUPER} glyph={GLYPH.hw2_pauper_crown} delayMs={delayMs} />;
   if (!lead) return <CurseHit palette={PAUPER} glyph={GLYPH.hw2_pauper_crown} delayMs={delayMs} />;
   return (
-    <Stage>
+    // FLAGSHIP: the stage bucks when the battlements are stamped on
+    <Stage quakeAtMs={delayMs + 1120}>
       <Wash color={tint(p0, 0.3)} delayMs={delayMs} />
       <Tell color={tint(p1, 0.35)} delayMs={delayMs} left={42} top={30} />
+      {/* the deposing bolt: magenta light blasts the crown off her brow */}
+      <ImpactCell spec={{ l: 44, t: 28, s: 12, at: 620, laser: true, shock: true }} rgb="201 74 209" delayMs={delayMs} />
       {/* her majesty, center stage and about to be greatly humbled */}
       <span className="cwp-facein absolute block" style={{ left: "42%", top: "36%", width: "16%", height: "24%", animationDelay: `${delayMs + 200}ms` }}>
         <Man kind="q" fill={tint(p1, 0.95)} stroke={p2} />
@@ -1806,9 +1957,13 @@ function BeaconOfWoeScene({ lead, role, delayMs }: SceneProps) {
   if (role === "entrance") return <EntranceCut palette={BEACON} glyph={GLYPH.hw2_beacon_of_woe} delayMs={delayMs} />;
   if (!lead) return <CurseHit palette={BEACON} glyph={GLYPH.hw2_beacon_of_woe} delayMs={delayMs} />;
   return (
-    <Stage>
+    // FLAGSHIP: the hill shakes when the doom-flame catches
+    <Stage quakeAtMs={delayMs + 640}>
       <Wash color={tint(p0, 0.32)} delayMs={delayMs} />
       <Tell color={tint(p1, 0.35)} delayMs={delayMs} left={42} top={34} />
+      {/* the lighting stroke: a fire-column hammers down onto the beacon cage
+          and the ignition blast rolls off the tower top */}
+      <ImpactCell spec={{ l: 43, t: 20, s: 14, at: 640, laser: true, shock: true }} rgb="255 157 61" delayMs={delayMs} />
       {/* the watchtower, rising on the hill where everyone can see it */}
       <span className="cwp-rise absolute block" style={{ left: "42%", top: "30%", width: "16%", height: "36%", animationDelay: `${delayMs + 160}ms` }}>
         <svg viewBox="0 0 16 36" className="block h-full w-full" aria-hidden="true">
@@ -1879,9 +2034,13 @@ function EnemyWithinScene({ lead, role, delayMs }: SceneProps) {
   if (role === "entrance") return <EntranceCut palette={ENEMY_WITHIN} glyph={GLYPH.hw3_enemy_within} delayMs={delayMs} />;
   if (!lead) return <CurseHit palette={ENEMY_WITHIN} glyph={GLYPH.hw3_enemy_within} delayMs={delayMs} />;
   return (
-    <Stage>
+    // FLAGSHIP: the stage lurches as the shadow tears itself free
+    <Stage quakeAtMs={delayMs + 900}>
       <Wash color={tint(p0, 0.32)} delayMs={delayMs} />
       <Tell color={tint(p1, 0.35)} delayMs={delayMs} left={42} top={40} />
+      {/* the betrayal made physical: the rook's old body splits in half where
+          it stood, shards flying, as the turned coat walks free of it */}
+      <ImpactCell spec={{ l: 46, t: 44, s: 12, at: 900, man: "r", shock: true }} rgb="201 74 90" delayMs={delayMs} />
       <span className="cwp-hold absolute block" style={{ left: "46%", top: "44%", width: "8%", height: "13%", animationDelay: `${delayMs + 300}ms` }}>
         <Man kind="r" fill={tint(p1, 0.9)} stroke={p0} />
       </span>
@@ -1912,9 +2071,12 @@ function EclipseScene({ lead, role, delayMs }: SceneProps) {
   if (role === "entrance") return <EntranceCut palette={ECLIPSE} glyph={GLYPH.hw3_eclipse} delayMs={delayMs} />;
   if (!lead) return <CurseHit palette={ECLIPSE} glyph={GLYPH.hw3_eclipse} delayMs={delayMs} />;
   return (
-    <Stage>
+    // FLAGSHIP: totality lands with a physical thud
+    <Stage quakeAtMs={delayMs + 900}>
       <Wash color={tint(p0, 0.36)} delayMs={delayMs} />
       <Tell color={tint(p1, 0.35)} delayMs={delayMs} left={44} top={26} />
+      {/* the corona blast: the last light blows outward as the moon seats */}
+      <ImpactCell spec={{ l: 43, t: 25, s: 14, at: 900, shock: true }} rgb="255 157 61" delayMs={delayMs} />
       <span className="cwp-facein absolute block" style={{ left: "42%", top: "24%", width: "16%", height: "16%", animationDelay: `${delayMs + 240}ms` }}>
         <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
           <circle cx="10" cy="10" r="7" fill={tint(p1, 0.85)} />
@@ -1949,9 +2111,13 @@ function HydraScene({ lead, role, delayMs }: SceneProps) {
   if (role === "entrance") return <EntranceCut palette={HYDRA} glyph={GLYPH.hw3_hydra_hex} delayMs={delayMs} />;
   if (!lead) return <CurseHit palette={HYDRA} glyph={GLYPH.hw3_hydra_hex} delayMs={delayMs} />;
   return (
-    <Stage>
+    // FLAGSHIP: the stage kicks as the head is struck off
+    <Stage quakeAtMs={delayMs + 640}>
       <Wash color={tint(p0, 0.32)} delayMs={delayMs} />
       <Tell color={tint(p1, 0.34)} delayMs={delayMs} left={44} top={40} />
+      {/* the beheading stroke: a green column severs the branded head, and the
+          blast is what wakes the two heads that rise in its place */}
+      <ImpactCell spec={{ l: 45, t: 42, s: 12, at: 640, laser: true, shock: true }} rgb="127 174 74" delayMs={delayMs} />
       {/* the leg: the head is branded down the real source -> target vector */}
       <ChainLeg color="rgba(122,201,106,0.85)" delayMs={delayMs + 300} />
       <span className="cwp-settle absolute block" style={{ left: "46%", top: "44%", width: "8%", height: "10%", "--dx": "0%", "--dy": "60%", "--rot": "20deg", animationDelay: `${delayMs + 360}ms` } as CSSProperties}>
@@ -1996,9 +2162,12 @@ function PyrrhicScene({ lead, role, delayMs }: SceneProps) {
   if (role === "entrance") return <EntranceCut palette={PYRRHIC} glyph={GLYPH.hw3_pyrrhic_toll} delayMs={delayMs} />;
   if (!lead) return <CurseHit palette={PYRRHIC} glyph={GLYPH.hw3_pyrrhic_toll} delayMs={delayMs} />;
   return (
-    <Stage>
+    // FLAGSHIP: the victory bell's toll physically rocks the stage
+    <Stage quakeAtMs={delayMs + 720}>
       <Wash color={tint(p0, 0.3)} delayMs={delayMs} />
       <Tell color={tint(p1, 0.34)} delayMs={delayMs} left={44} top={30} />
+      {/* the hollow triumph: the toll's pressure blast under the bell mouth */}
+      <ImpactCell spec={{ l: 43, t: 36, s: 14, at: 720, shock: true }} rgb="201 184 154" delayMs={delayMs} />
       <span className="cwp-drop absolute block" style={{ left: "42%", top: "22%", width: "16%", height: "20%", animationDelay: `${delayMs + 200}ms` }}>
         <span className="cwp-swing absolute inset-0 block" style={{ animationDelay: `${delayMs + 620}ms` }}>
           <svg viewBox="0 0 16 20" className="block h-full w-full" aria-hidden="true">
@@ -2039,9 +2208,12 @@ function MartyrCrownScene({ lead, role, delayMs }: SceneProps) {
   if (role === "entrance") return <EntranceCut palette={MARTYR} glyph={GLYPH.hw3_martyrs_crown} delayMs={delayMs} />;
   if (!lead) return <CurseHit palette={MARTYR} glyph={GLYPH.hw3_martyrs_crown} delayMs={delayMs} />;
   return (
-    <Stage>
+    // FLAGSHIP: the stage convulses when the crown drinks the second check
+    <Stage quakeAtMs={delayMs + 1020}>
       <Wash color={tint(p0, 0.32)} delayMs={delayMs} />
       <Tell color={tint(p1, 0.32)} delayMs={delayMs} left={44} top={40} />
+      {/* the frost-lash detonation: the drunk check blasts out of the briar */}
+      <ImpactCell spec={{ l: 43, t: 40, s: 14, at: 1020, shock: true }} rgb="201 74 90" delayMs={delayMs} />
       <span className="cwp-facein absolute block" style={{ left: "45%", top: "44%", width: "10%", height: "15%", animationDelay: `${delayMs + 240}ms` }}>
         <Man kind="k" fill={tint(p1, 0.9)} stroke={p0} />
       </span>
@@ -2096,9 +2268,13 @@ function CurseEngineScene({ lead, role, delayMs }: SceneProps) {
     </svg>
   );
   return (
-    <Stage>
+    // FLAGSHIP: the machine's discharge stroke slams through the stage
+    <Stage quakeAtMs={delayMs + 960}>
       <Wash color={tint(p0, 0.34)} delayMs={delayMs} />
       <Tell color={tint(p1, 0.34)} delayMs={delayMs} left={42} top={36} />
+      {/* the cold discharge: an ice-blue column hammers the strongest piece
+          and the frost blast rings out around her */}
+      <ImpactCell spec={{ l: 57, t: 56, s: 12, at: 1000, laser: true, shock: true }} rgb="159 216 255" delayMs={delayMs} />
       <span className="cwp-grind absolute block" style={{ left: "34%", top: "34%", width: "18%", height: "18%", animationDelay: `${delayMs + 300}ms` }}>{gear(tint(p1, 0.9))}</span>
       <span className="cwp-grindrev absolute block" style={{ left: "50%", top: "44%", width: "15%", height: "15%", animationDelay: `${delayMs + 420}ms` }}>{gear(tint(p1, 0.7))}</span>
       {[0, 1, 2].map((i) => (
@@ -2130,9 +2306,13 @@ function BloodTitheScene({ lead, role, delayMs }: SceneProps) {
   if (role === "entrance") return <EntranceCut palette={BLOOD_TITHE} glyph={GLYPH.hw3_blood_tithe} delayMs={delayMs} />;
   if (!lead) return <CurseHit palette={BLOOD_TITHE} glyph={GLYPH.hw3_blood_tithe} delayMs={delayMs} />;
   return (
-    <Stage>
+    // FLAGSHIP: the tithe is EXACTED — the stage jolts as the pawn is torn away
+    <Stage quakeAtMs={delayMs + 700}>
       <Wash color={tint(p0, 0.32)} delayMs={delayMs} />
       <Tell color={tint(p1, 0.34)} delayMs={delayMs} left={42} top={34} />
+      {/* the collection stroke: gold light spears the tribute pawn's square
+          and the pawn's shell splits as its soul is dragged to the ledger */}
+      <ImpactCell spec={{ l: 57, t: 54, s: 12, at: 700, laser: true, man: "p", shock: true }} rgb="232 176 75" delayMs={delayMs} />
       <span className="cwp-facein absolute block" style={{ left: "34%", top: "40%", width: "22%", height: "16%", animationDelay: `${delayMs + 240}ms` }}>
         <svg viewBox="0 0 22 16" className="block h-full w-full" aria-hidden="true">
           <path d="M1 2.4 C5 1 9 1.4 11 3 C13 1.4 17 1 21 2.4 V13.4 C17 12 13 12.4 11 14 C9 12.4 5 12 1 13.4 Z" fill="#e8dcc0" stroke="#8a6a3a" strokeWidth="0.5" {...SJ} />
@@ -2158,9 +2338,13 @@ function InvertedCrownScene({ lead, role, delayMs }: SceneProps) {
   if (role === "entrance") return <EntranceCut palette={INVERTED} glyph={GLYPH.hw3_inverted_crown} delayMs={delayMs} />;
   if (!lead) return <CurseHit palette={INVERTED} glyph={GLYPH.hw3_inverted_crown} delayMs={delayMs} />;
   return (
-    <Stage>
+    // FLAGSHIP: the coronation goes wrong with a physical CRACK
+    <Stage quakeAtMs={delayMs + 760}>
       <Wash color={tint(p0, 0.32)} delayMs={delayMs} />
       <Tell color={tint(p1, 0.34)} delayMs={delayMs} left={44} top={30} />
+      {/* the queen-that-would-be shatters in half over the promotion square,
+          gold shards flying, leaving the tin knight's helm underneath */}
+      <ImpactCell spec={{ l: 44, t: 28, s: 12, at: 760, man: "q", shock: true }} rgb="232 176 75" delayMs={delayMs} />
       <span className="cwp-beam absolute block" style={{ left: "30%", top: "58%", width: "40%", height: "1.2%", background: tint(p1, 0.85), transformOrigin: "0% 50%", animationDelay: `${delayMs + 300}ms` }} />
       <span className="cwp-rise absolute block" style={{ left: "46%", top: "46%", width: "6.5%", height: "11%", animationDelay: `${delayMs + 440}ms` }}>
         <Man kind="p" fill={tint(p1, 0.9)} stroke={p0} />

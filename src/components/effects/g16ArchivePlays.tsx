@@ -42,6 +42,7 @@ import "./g16ArchivePlays.css";
 import type { CSSProperties, ReactNode } from "react";
 import type { SigPlugin, SigRole } from "./sigPlugins";
 import { AimStage, BoardFrame, BoardWideStage } from "./stage";
+import { LaserStrike, PieceShatter, Shockwave, QUAKE_CLASS, impactVars } from "./impact/impact";
 
 interface SceneProps {
   lead: boolean;
@@ -1420,35 +1421,127 @@ function LuckyStirrupScene({ role, delayMs }: SceneProps) {
    played on, exactly as the generated family resolved before.
    ========================================================================== */
 
-/** Bind one bespoke scene to its config. */
-function S(Render: SigPlugin["Render"], config: SigPlugin["config"]): SigPlugin {
-  return { config, Render };
+/* =============================================================================
+   FLAGSHIP IMPACT PASS — the stacks strike back: drawers slam, stamps come down, records SHATTER.
+
+   Layered OVER each scene's own signature from the shared impact vocabulary
+   (impact/impact.tsx): a descending laser column, the struck thing splitting
+   in half and spraying shards, a ground shockwave, and the whole stage
+   jolting on the same beat. Each PLAYS entry declares its own combination,
+   impact beat, tint, landing box and tilt below, so every card in the module
+   lands a hit its siblings do not. The quake rides an inner wrapper (the
+   stage's own transform is the anchor clamp and must not be overridden) and
+   stays inside this scene's stage — the real board crop never shakes. The
+   whole composite is transform/opacity only, one-shot, scaled by --fx-dur,
+   and dark under html[data-anim="off"] via the global animation gate.
+   ========================================================================== */
+
+/** Per-card impact spec. `at` is the impact beat in ms after the lead's
+ * stagger; the laser (when present) LEADS that beat by 0.4s per the shared
+ * impact-timing contract, so the column reads as the CAUSE of the hit. */
+interface Imp {
+  /** Impact tint: the "r g b" triple --imp-rgb expects (the card's core). */
+  rgb: string;
+  /** The impact beat, ms into the lead. */
+  at: number;
+  laser?: boolean;
+  shock?: boolean;
+  /** Shatter glyph (24x24 viewBox): the struck thing, split in half. */
+  glyph?: ReactNode;
+  /** Landing box, % of the scene canvas. Defaults to the cast square. */
+  box?: [number, number, number, number];
+  /** Static tilt of the whole composite, in degrees (angled columns). */
+  rot?: number;
 }
 
+/** An index card out of the drawer: the record the hit tears in half. */
+const impCard = (fill: string, edge: string): ReactNode => (
+  <>
+    <path d="M4 5.6h16v12.8H4z" fill={fill} stroke={edge} strokeWidth="1.2" />
+    <path d="M6.6 9.4h10.8M6.6 12.2h7.4M6.6 15h9" stroke={edge} strokeWidth="1" strokeLinecap="round" />
+  </>
+);
+
+/** The composite itself, staged over the scene's canvas on the impact beat. */
+function ImpactHit({ s, delayMs }: { s: Imp; delayMs: number }) {
+  const [l, t, w, h] = s.box ?? [43, 38, 14, 14];
+  return (
+    <span className="pointer-events-none absolute inset-0 z-30 block" aria-hidden="true">
+      <BoardWideStage>
+        <span
+          className="absolute block"
+          style={{
+            left: `${l}%`,
+            top: `${t}%`,
+            width: `${w}%`,
+            height: `${h}%`,
+            rotate: s.rot ? `${s.rot}deg` : undefined,
+            ...impactVars(s.rgb, (delayMs + s.at) / 1000),
+          }}
+        >
+          {s.laser ? <LaserStrike /> : null}
+          {s.glyph ? (
+            <PieceShatter
+              glyph={
+                <svg viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+                  {s.glyph}
+                </svg>
+              }
+            />
+          ) : null}
+          {s.shock ? <Shockwave /> : null}
+        </span>
+      </BoardWideStage>
+    </span>
+  );
+}
+
+/** Bind one bespoke scene to its config, landing its per-card impact over the
+ * lead. Target and entrance cuts keep the scene's own art unchanged. */
+function S(Render: SigPlugin["Render"], config: SigPlugin["config"], imp?: Imp): SigPlugin {
+  if (!imp) return { config, Render };
+  function FlagshipHit(p: { lead: boolean; role: SigRole; delayMs: number }) {
+    if (p.role !== "lead") return <Render {...p} />;
+    return (
+      <span className="pointer-events-none absolute inset-0 block" aria-hidden="true">
+        <span
+          className={`${QUAKE_CLASS} absolute inset-0 block`}
+          style={impactVars(imp!.rgb, (p.delayMs + imp!.at) / 1000)}
+        >
+          <Render {...p} />
+        </span>
+        <ImpactHit s={imp!} delayMs={p.delayMs} />
+      </span>
+    );
+  }
+  return { config, Render: FlagshipHit };
+}
+
+
 export const PLAYS: Record<string, SigPlugin> = {
-  bn4_window_shopping: S(WindowShoppingScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "vault", anchor: "board" }),
-  op_bumper_crop: S(BumperCropScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades", anchor: "board" }),
-  op_sunwise_turn: S(SunwiseTurnScene, { ordering: "radial", staggerMs: 55, victims: "all", hasLead: true, sound: "clockcage", anchor: "board" }),
-  op_widdershins: S(WiddershinsScene, { ordering: "radial", staggerMs: 55, victims: "all", hasLead: true, sound: "clockcage", anchor: "board" }),
-  ov_broom_sweep: S(BroomSweepScene, { ordering: "line", staggerMs: 70, victims: ["p"], hasLead: true, sound: "wall", anchor: "aim" }),
-  ov_free_sample: S(FreeSampleScene, { ordering: "line", staggerMs: 60, victims: "all", hasLead: true, sound: "shades", anchor: "board" }),
-  ov_loot_filter: S(LootFilterScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall", anchor: "board" }),
-  ov_molting_season: S(MoltingSeasonScene, { ordering: "radial", staggerMs: 0, victims: ["b"], hasLead: true, sound: "shades", anchor: "cast" }),
-  ov_slingshot: S(SlingshotScene, { ordering: "line", staggerMs: 60, victims: ["p"], hasLead: true, sound: "shades", anchor: "board" }),
-  bn4_watchmans_lantern: S(WatchmansLanternScene, { ordering: "line", staggerMs: 65, victims: "all", hasLead: true, sound: "cathedral", anchor: "board" }),
-  hx4_red_tape: S(RedTapeScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage", anchor: "board" }),
-  op_alarm_lantern: S(AlarmLanternScene, { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "clockcage", anchor: "cast" }),
-  op_back_to_school: S(BackToSchoolScene, { ordering: "radial", staggerMs: 0, victims: ["b"], hasLead: true, sound: "snooze", anchor: "board" }),
-  op_border_stamp: S(BorderStampScene, { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "vault", anchor: "board" }),
-  op_chaperone: S(ChaperoneScene, { ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "vault", anchor: "cast" }),
-  op_choir_wings: S(ChoirWingsScene, { ordering: "radial", staggerMs: 0, victims: ["b"], hasLead: true, sound: "cathedral", anchor: "board" }),
-  op_compost_heap: S(CompostHeapScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze", anchor: "board" }),
-  op_early_sprout: S(EarlySproutScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall", anchor: "board" }),
-  op_general_delivery: S(GeneralDeliveryScene, { ordering: "line", staggerMs: 60, victims: ["p"], hasLead: true, sound: "shades", anchor: "board" }),
-  op_hearth_blessing: S(HearthBlessingScene, { ordering: "radial", staggerMs: 55, victims: "all", hasLead: true, sound: "cathedral", anchor: "board" }),
-  op_intermission: S(IntermissionScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze", anchor: "board" }),
-  op_late_bloom: S(LateBloomScene, { ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "vault", anchor: "board" }),
-  op_layaway_plan: S(LayawayPlanScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage", anchor: "board" }),
-  op_locker_room_nickname: S(LockerNicknameScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades", anchor: "cast" }),
-  op_lucky_stirrup: S(LuckyStirrupScene, { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "snooze", anchor: "board" }),
+  bn4_window_shopping: S(WindowShoppingScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "vault", anchor: "board" }, { rgb: "216 192 138", at: 560, laser: true, shock: true, box: [43, 36, 14, 15] }),
+  op_bumper_crop: S(BumperCropScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades", anchor: "board" }, { rgb: "159 184 216", at: 540, glyph: impCard("#9fb8d8", "#1d2433"), shock: true, box: [43, 38, 14, 13] }),
+  op_sunwise_turn: S(SunwiseTurnScene, { ordering: "radial", staggerMs: 55, victims: "all", hasLead: true, sound: "clockcage", anchor: "board" }, { rgb: "210 164 94", at: 520, shock: true, box: [42, 36, 15, 15] }),
+  op_widdershins: S(WiddershinsScene, { ordering: "radial", staggerMs: 55, victims: "all", hasLead: true, sound: "clockcage", anchor: "board" }, { rgb: "143 200 216", at: 500, shock: true, box: [42, 38, 15, 14] }),
+  ov_broom_sweep: S(BroomSweepScene, { ordering: "line", staggerMs: 70, victims: ["p"], hasLead: true, sound: "wall", anchor: "aim" }, { rgb: "201 180 143", at: 480, laser: true, shock: true, box: [44, 38, 12, 13], rot: -14 }),
+  ov_free_sample: S(FreeSampleScene, { ordering: "line", staggerMs: 60, victims: "all", hasLead: true, sound: "shades", anchor: "board" }, { rgb: "184 162 216", at: 460, glyph: impCard("#b8a2d8", "#221a33"), box: [44, 38, 12, 12] }),
+  ov_loot_filter: S(LootFilterScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall", anchor: "board" }, { rgb: "168 192 160", at: 580, laser: true, glyph: impCard("#a8c0a0", "#1c2a1c"), box: [43, 36, 13, 15] }),
+  ov_molting_season: S(MoltingSeasonScene, { ordering: "radial", staggerMs: 0, victims: ["b"], hasLead: true, sound: "shades", anchor: "cast" }, { rgb: "224 207 160", at: 440, glyph: impCard("#e0cfa0", "#2b2016"), box: [44, 37, 12, 14] }),
+  ov_slingshot: S(SlingshotScene, { ordering: "line", staggerMs: 60, victims: ["p"], hasLead: true, sound: "shades", anchor: "board" }, { rgb: "240 208 137", at: 520, laser: true, shock: true, box: [44, 36, 12, 15], rot: 10 }),
+  bn4_watchmans_lantern: S(WatchmansLanternScene, { ordering: "line", staggerMs: 65, victims: "all", hasLead: true, sound: "cathedral", anchor: "board" }, { rgb: "242 198 106", at: 500, laser: true, box: [44, 34, 12, 17] }),
+  hx4_red_tape: S(RedTapeScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage", anchor: "board" }, { rgb: "224 100 90", at: 550, glyph: impCard("#e0645a", "#2a1512"), shock: true, box: [42, 37, 15, 13] }),
+  op_alarm_lantern: S(AlarmLanternScene, { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "clockcage", anchor: "cast" }, { rgb: "224 138 90", at: 460, laser: true, box: [44, 35, 12, 16] }),
+  op_back_to_school: S(BackToSchoolScene, { ordering: "radial", staggerMs: 0, victims: ["b"], hasLead: true, sound: "snooze", anchor: "board" }, { rgb: "111 143 208", at: 420, shock: true, box: [44, 39, 12, 12] }),
+  op_border_stamp: S(BorderStampScene, { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "vault", anchor: "board" }, { rgb: "216 86 78", at: 600, glyph: impCard("#d8564e", "#2b1310"), shock: true, box: [43, 37, 14, 14] }),
+  op_chaperone: S(ChaperoneScene, { ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "vault", anchor: "cast" }, { rgb: "168 176 192", at: 380, shock: true, box: [45, 39, 11, 11] }),
+  op_choir_wings: S(ChoirWingsScene, { ordering: "radial", staggerMs: 0, victims: ["b"], hasLead: true, sound: "cathedral", anchor: "board" }, { rgb: "240 205 106", at: 440, laser: true, box: [44, 34, 12, 17] }),
+  op_compost_heap: S(CompostHeapScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze", anchor: "board" }, { rgb: "143 192 136", at: 400, shock: true, box: [43, 40, 13, 11] }),
+  op_early_sprout: S(EarlySproutScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall", anchor: "board" }, { rgb: "127 208 180", at: 360, shock: true, box: [45, 40, 10, 10] }),
+  op_general_delivery: S(GeneralDeliveryScene, { ordering: "line", staggerMs: 60, victims: ["p"], hasLead: true, sound: "shades", anchor: "board" }, { rgb: "216 168 180", at: 480, glyph: impCard("#d8a8b4", "#2c1620"), box: [43, 38, 13, 12] }),
+  op_hearth_blessing: S(HearthBlessingScene, { ordering: "radial", staggerMs: 55, victims: "all", hasLead: true, sound: "cathedral", anchor: "board" }, { rgb: "240 154 74", at: 520, laser: true, box: [43, 35, 13, 16] }),
+  op_intermission: S(IntermissionScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze", anchor: "board" }, { rgb: "200 176 224", at: 440, shock: true, box: [42, 39, 15, 11] }),
+  op_late_bloom: S(LateBloomScene, { ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "vault", anchor: "board" }, { rgb: "232 192 90", at: 500, glyph: impCard("#e8c05a", "#2b220e"), box: [44, 38, 12, 12] }),
+  op_layaway_plan: S(LayawayPlanScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage", anchor: "board" }, { rgb: "143 176 216", at: 460, shock: true, box: [44, 39, 12, 11] }),
+  op_locker_room_nickname: S(LockerNicknameScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades", anchor: "cast" }, { rgb: "240 160 192", at: 420, glyph: impCard("#f0a0c0", "#2e1622"), box: [45, 37, 11, 13] }),
+  op_lucky_stirrup: S(LuckyStirrupScene, { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "snooze", anchor: "board" }, { rgb: "216 192 112", at: 480, shock: true, box: [43, 39, 13, 12] }),
 };

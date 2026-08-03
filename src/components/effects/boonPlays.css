@@ -391,5 +391,8 @@
 .bwp-whirl { animation: bwp-whirl calc(1.45s * var(--fx-dur, 1)) cubic-bezier(0.35, 0, 0.4, 1) both; }
 
 /* --- Global kill switch ----------------------------------------------------
-   Settings animations-off parks every boon play outright. */
+   Settings animations-off parks every boon play outright. The FLAGSHIP impact
+   composites (impact.css laser / shatter / shockwave) and the stage quake all
+   mount inside bwp-impact / bwp-quakebox wrappers, which match [class^="bwp-"]:
+   opacity 0 on the wrapper takes the whole imp-* subtree dark with it. */
 html[data-anim="off"] [class^="bwp-"], html[data-anim="off"] [class*=" bwp-"] { animation: none !important; opacity: 0 !important; }

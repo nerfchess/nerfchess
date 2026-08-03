@@ -35,9 +35,10 @@
 // in a hand, ~56% of the crop, so no board takeover and no oversized stage).
 // Every scene runs tell -> strike -> settle. Class prefix `g20-`.
 
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import type { SigPlugin, SigRole } from "./sigPlugins";
 import { AimStage, BoardFrame, BoardWideStage } from "./stage";
+import { LaserStrike, PieceShatter, Shockwave, QUAKE_CLASS, impactVars } from "./impact/impact";
 import "./g20RampartPlays.css";
 
 interface SceneProps {
@@ -1849,92 +1850,185 @@ function BentBolt(props: SceneProps) {
    protection cards), and every card declares its anchor.
    ========================================================================== */
 
-function S(Render: SigPlugin["Render"], config: SigPlugin["config"]): SigPlugin {
-  return { config, Render };
+/* =============================================================================
+   FLAGSHIP IMPACT PASS — masonry CRACKS: dressed stones split, walls thump the ground.
+
+   Layered OVER each scene's own signature from the shared impact vocabulary
+   (impact/impact.tsx): a descending laser column, the struck thing splitting
+   in half and spraying shards, a ground shockwave, and the whole stage
+   jolting on the same beat. Each PLAYS entry declares its own combination,
+   impact beat, tint, landing box and tilt below, so every card in the module
+   lands a hit its siblings do not. The quake rides an inner wrapper (the
+   stage's own transform is the anchor clamp and must not be overridden) and
+   stays inside this scene's stage — the real board crop never shakes. The
+   whole composite is transform/opacity only, one-shot, scaled by --fx-dur,
+   and dark under html[data-anim="off"] via the global animation gate.
+   ========================================================================== */
+
+/** Per-card impact spec. `at` is the impact beat in ms after the lead's
+ * stagger; the laser (when present) LEADS that beat by 0.4s per the shared
+ * impact-timing contract, so the column reads as the CAUSE of the hit. */
+interface Imp {
+  /** Impact tint: the "r g b" triple --imp-rgb expects (the card's core). */
+  rgb: string;
+  /** The impact beat, ms into the lead. */
+  at: number;
+  laser?: boolean;
+  shock?: boolean;
+  /** Shatter glyph (24x24 viewBox): the struck thing, split in half. */
+  glyph?: ReactNode;
+  /** Landing box, % of the scene canvas. Defaults to the cast square. */
+  box?: [number, number, number, number];
+  /** Static tilt of the whole composite, in degrees (angled columns). */
+  rot?: number;
 }
+
+/** A dressed ashlar block with its mortar lines: the masonry that gives. */
+const impStone = (fill: string, edge: string): ReactNode => (
+  <>
+    <path d="M4.4 6h15.2v12H4.4z" fill={fill} stroke={edge} strokeWidth="1.2" />
+    <path d="M4.4 12h6.4M10.8 12h8.8M12 6v6M9.4 12v6" stroke={edge} strokeWidth="1" />
+  </>
+);
+
+/** The composite itself, staged over the scene's canvas on the impact beat. */
+function ImpactHit({ s, delayMs }: { s: Imp; delayMs: number }) {
+  const [l, t, w, h] = s.box ?? [43, 38, 14, 14];
+  return (
+    <span className="pointer-events-none absolute inset-0 z-30 block" aria-hidden="true">
+      <BoardWideStage>
+        <span
+          className="absolute block"
+          style={{
+            left: `${l}%`,
+            top: `${t}%`,
+            width: `${w}%`,
+            height: `${h}%`,
+            rotate: s.rot ? `${s.rot}deg` : undefined,
+            ...impactVars(s.rgb, (delayMs + s.at) / 1000),
+          }}
+        >
+          {s.laser ? <LaserStrike /> : null}
+          {s.glyph ? (
+            <PieceShatter
+              glyph={
+                <svg viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+                  {s.glyph}
+                </svg>
+              }
+            />
+          ) : null}
+          {s.shock ? <Shockwave /> : null}
+        </span>
+      </BoardWideStage>
+    </span>
+  );
+}
+
+/** Bind one bespoke scene to its config, landing its per-card impact over the
+ * lead. Target and entrance cuts keep the scene's own art unchanged. */
+function S(Render: SigPlugin["Render"], config: SigPlugin["config"], imp?: Imp): SigPlugin {
+  if (!imp) return { config, Render };
+  function FlagshipHit(p: { lead: boolean; role: SigRole; delayMs: number }) {
+    if (p.role !== "lead") return <Render {...p} />;
+    return (
+      <span className="pointer-events-none absolute inset-0 block" aria-hidden="true">
+        <span
+          className={`${QUAKE_CLASS} absolute inset-0 block`}
+          style={impactVars(imp!.rgb, (p.delayMs + imp!.at) / 1000)}
+        >
+          <Render {...p} />
+        </span>
+        <ImpactHit s={imp!} delayMs={p.delayMs} />
+      </span>
+    );
+  }
+  return { config, Render: FlagshipHit };
+}
+
 
 export const PLAYS: Record<string, SigPlugin> = {
   // --- Tier 8: the great works ---
   bn4_dukes_patent: S(PatentDraft, {
     ordering: "line", staggerMs: 55, victims: ["r"], hasLead: true, sound: "coronation", anchor: "aim",
-  }),
+  }, { rgb: "232 197 106", at: 760, laser: true, glyph: impStone("#e8c56a", "#3a2a10"), shock: true, box: [41, 34, 16, 16] }),
   bn4_wall_of_faith: S(FaithCourse, {
     ordering: "line", staggerMs: 70, victims: "all", hasLead: true, sound: "cathedral", anchor: "board",
-  }),
+  }, { rgb: "255 217 160", at: 720, laser: true, shock: true, box: [42, 33, 15, 18] }),
   hx4_dead_march: S(DeadDrums, {
     ordering: "line", staggerMs: 65, victims: ["r", "q"], hasLead: true, sound: "shades", anchor: "board",
-  }),
+  }, { rgb: "141 147 168", at: 680, shock: true, box: [40, 37, 20, 13] }),
   hx4_the_long_siege: S(Circumvallation, {
     ordering: "line", staggerMs: 55, victims: ["p"], hasLead: true, sound: "siege", anchor: "board",
-  }),
+  }, { rgb: "176 138 82", at: 700, glyph: impStone("#b08a52", "#241a0e"), shock: true, box: [42, 36, 15, 15] }),
   ov_world_serpent: S(BoomChain, {
     ordering: "sweep", staggerMs: 50, victims: ["r", "q"], hasLead: true, sound: "cataclysm", anchor: "board",
-  }),
+  }, { rgb: "111 208 168", at: 660, laser: true, glyph: impStone("#6fd0a8", "#0e2a22"), box: [42, 35, 14, 16] }),
 
   // --- Tier 7 ---
   bn4_clay_colossus: S(ClayKiln, {
     ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "colossus", anchor: "cast",
-  }),
+  }, { rgb: "210 112 58", at: 640, glyph: impStone("#d2703a", "#2c1408"), shock: true, box: [43, 36, 14, 15] }),
   bn4_palace_walls: S(CurtainWall, {
     ordering: "file", staggerMs: 55, victims: "all", hasLead: true, sound: "wall", anchor: "board",
-  }),
+  }, { rgb: "207 214 224", at: 620, laser: true, shock: true, box: [42, 34, 15, 17] }),
 
   // --- Tier 6 ---
   bn4_castle_ditch: S(RingDitch, {
     ordering: "octagon", staggerMs: 50, victims: "all", hasLead: true, sound: "wall", anchor: "board",
-  }),
+  }, { rgb: "91 167 201", at: 580, shock: true, box: [41, 38, 17, 12] }),
   bn4_dowry: S(DowryChest, {
     ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "vault", anchor: "cast",
-  }),
+  }, { rgb: "224 180 92", at: 600, glyph: impStone("#e0b45c", "#2e2210"), shock: true, box: [43, 37, 14, 14] }),
   hx4_banquet_of_dust: S(DustBanquet, {
     ordering: "line", staggerMs: 60, victims: ["r", "q"], hasLead: true, sound: "shades", anchor: "aim",
-  }),
+  }, { rgb: "168 152 119", at: 560, shock: true, box: [42, 39, 15, 11] }),
   hx4_ivory_tower: S(IvoryTower, {
     ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "cathedral", anchor: "cast",
-  }),
+  }, { rgb: "56 48 31", at: 620, laser: true, box: [43, 32, 13, 20] }),
   hx4_moat_diggers: S(SapperPits, {
     ordering: "radial", staggerMs: 70, victims: "all", hasLead: true, sound: "siege", anchor: "cast",
-  }),
+  }, { rgb: "138 107 69", at: 540, glyph: impStone("#8a6b45", "#1d1409"), box: [43, 38, 13, 13] }),
   hx4_rusted_battlements: S(RustHinge, {
     ordering: "radial", staggerMs: 60, victims: ["r"], hasLead: true, sound: "petrify", anchor: "board",
-  }),
+  }, { rgb: "176 106 53", at: 560, glyph: impStone("#b06a35", "#2a1608"), shock: true, box: [43, 37, 14, 13] }),
 
   // --- Tier 5 ---
   hx4_wagon_ruts: S(RamCarriage, {
     ordering: "line", staggerMs: 50, victims: ["r"], hasLead: true, sound: "rampage", anchor: "board",
-  }),
+  }, { rgb: "154 114 72", at: 600, shock: true, box: [41, 38, 18, 12] }),
 
   // --- Tier 4 ---
   bn4_charm_bracelet: S(CharmClasp, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "aegis", source: "shield", anchor: "cast",
-  }),
+  }, { rgb: "226 166 184", at: 480, glyph: impStone("#e2a6b8", "#2c1a22"), box: [44, 38, 12, 12] }),
   bn4_pawn_bulwark: S(GabionLine, {
     ordering: "file", staggerMs: 50, victims: ["p"], hasLead: true, sound: "wall", source: "shield", anchor: "board",
-  }),
+  }, { rgb: "168 160 106", at: 520, shock: true, box: [41, 38, 18, 11] }),
   bn4_town_walls: S(Drawbridge, {
     ordering: "file", staggerMs: 45, victims: "all", hasLead: true, sound: "wall", anchor: "board",
-  }),
+  }, { rgb: "201 160 106", at: 580, glyph: impStone("#c9a06a", "#241a0d"), shock: true, box: [43, 36, 14, 14] }),
   hx4_feuding_towers: S(SurveyorLine, {
     ordering: "line", staggerMs: 60, victims: ["r"], hasLead: true, sound: "siege", anchor: "board",
-  }),
+  }, { rgb: "209 96 90", at: 540, laser: true, shock: true, box: [43, 35, 13, 16] }),
   hx4_wet_powder: S(WetFuse, {
     ordering: "line", staggerMs: 55, victims: ["r"], hasLead: true, sound: "bust", anchor: "aim",
-  }),
+  }, { rgb: "111 143 122", at: 500, laser: true, box: [44, 36, 12, 15], rot: -10 }),
   ov_siege_ladder: S(ScalingLadder, {
     ordering: "line", staggerMs: 50, victims: ["p"], hasLead: true, sound: "siege", anchor: "aim",
-  }),
+  }, { rgb: "255 231 189", at: 560, laser: true, shock: true, box: [44, 36, 12, 15], rot: 12 }),
 
   // --- Tier 3 ---
   bn4_causeway: S(PlankCauseway, {
     ordering: "line", staggerMs: 55, victims: "all", hasLead: true, sound: "wall", anchor: "aim",
-  }),
+  }, { rgb: "163 133 79", at: 480, shock: true, box: [43, 39, 14, 11] }),
   bn4_rampart_watch: S(LanternWatch, {
     ordering: "file", staggerMs: 55, victims: "all", hasLead: true, sound: "aegis", source: "shield", anchor: "board",
-  }),
+  }, { rgb: "255 201 120", at: 520, laser: true, box: [44, 34, 12, 17] }),
   bn4_rook_nest: S(TwigNest, {
     ordering: "radial", staggerMs: 60, victims: ["r"], hasLead: true, sound: "aegis", source: "shield", anchor: "cast",
-  }),
+  }, { rgb: "169 113 63", at: 460, glyph: impStone("#a9713f", "#241407"), box: [44, 37, 12, 13] }),
   hx4_crooked_arrow: S(BentBolt, {
     ordering: "line", staggerMs: 55, victims: ["r"], hasLead: true, sound: "siege", anchor: "board",
-  }),
+  }, { rgb: "203 176 137", at: 480, laser: true, box: [44, 36, 12, 14], rot: 18 }),
 };

@@ -44,9 +44,10 @@
 
 import "./g33DiagonalPlays.css";
 
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import type { SigPlugin, SigRole } from "./sigPlugins";
 import { AimStage, BoardFrame, BoardWideStage } from "./stage";
+import { LaserStrike, PieceShatter, Shockwave, impactVars } from "./impact/impact";
 
 interface SceneProps {
   lead: boolean;
@@ -1359,3 +1360,159 @@ export const PLAYS: Record<string, SigPlugin> = {
     Render: WindowSqueegee,
   },
 };
+
+/* =============================================================================
+   FLAGSHIP IMPACT WAVE. Every lead now LANDS: a per-card impact beat from the
+   shared violence vocabulary (impact/impact.tsx), lanced down the play's own
+   diagonal - most cards stage the hit on <AimStage> at the victim's distance
+   (--fx-len), so the strike really travels corner-to-corner on the card's own
+   vector. The whole scene rides a cell-scale quake wrapper (g33-quakecell,
+   g33DiagonalPlays.css) on the same --imp-delay beat. Additive only: the
+   original scenes render unchanged underneath.
+
+   Node cost per lead: quake wrapper 1, laser 2, shockwave 1, shatter 6 - the
+   combos below stay inside the 16-animated-node scene budget.
+   ========================================================================== */
+
+interface Imp {
+  /** the impact beat, ms after delayMs - synced to the scene's own strike */
+  at: number;
+  /** "#rrggbb" tint for the impact vocabulary (one of the card's 3 colours) */
+  tint: string;
+  /** the lance: a column of light hammering down on the beat */
+  laser?: boolean;
+  /** ground ring; "wet" flattens it into a low splash ellipse */
+  shock?: boolean | "wet";
+  /** shatter silhouette: the lanced thing splits in half and sprays chips */
+  glyph?: ReactNode;
+  /** placement in stage percent (one cell = 7.142857; cast centre = 50) */
+  x?: number;
+  y?: number;
+  s?: number;
+  /** stage the beat on the aim vector (art points +x) instead of upright */
+  aim?: boolean;
+  /** slide the beat to the victim's distance along the vector (--fx-len) */
+  len?: boolean;
+}
+
+/** hex "#rrggbb" -> the "r g b" triple --imp-rgb wants. */
+function impRgb(hex: string): string {
+  return `${parseInt(hex.slice(1, 3), 16)} ${parseInt(hex.slice(3, 5), 16)} ${parseInt(hex.slice(5, 7), 16)}`;
+}
+
+/** Shatter silhouettes, painted in the card's own palette. */
+function impGlyph(path: string, fill: string, stroke: string): ReactNode {
+  return (
+    <svg viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+      <path d={path} fill={fill} stroke={stroke} strokeWidth="1.4" strokeLinejoin="round" strokeLinecap="round" />
+    </svg>
+  );
+}
+const IG_ORB = "M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18z";
+const IG_NUG = "M4 15l3-8 7-3 8 4 1 7-9 6z";
+const IG_SLAB = "M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z";
+
+/** The impact composite, staged on the card's own diagonal. */
+function ImpactBeat({ imp, delayMs }: { imp: Imp; delayMs: number }) {
+  const s = imp.s ?? 7.2;
+  const x = imp.x ?? 50;
+  const y = imp.y ?? 50;
+  const lenShift = imp.len ? " + var(--fx-len, 3) * 7.142857%" : "";
+  const inner = (
+    <span className="g33-impactbed absolute inset-0 block">
+      <span
+        className="absolute block"
+        style={{
+          left: `calc(${x - s / 2}%${lenShift})`,
+          top: `${y - s / 2}%`,
+          width: `${s}%`,
+          height: `${s}%`,
+        }}
+      >
+        {imp.laser && <LaserStrike />}
+        {imp.glyph != null && <PieceShatter glyph={imp.glyph} />}
+        {imp.shock === true && <Shockwave />}
+      </span>
+      {imp.shock === "wet" && (
+        <span
+          className="absolute block"
+          style={{
+            left: `calc(${x - s}%${lenShift})`,
+            top: `${y - s * 0.2}%`,
+            width: `${s * 2}%`,
+            height: `${s * 0.8}%`,
+          }}
+        >
+          <Shockwave />
+        </span>
+      )}
+    </span>
+  );
+  return imp.aim ? <AimStage>{inner}</AimStage> : <BoardWideStage>{inner}</BoardWideStage>;
+}
+
+/** Wrap a card's Render: leads gain the quake wrapper plus the impact beat. */
+function withImpact(Render: SigPlugin["Render"], imp: Imp): SigPlugin["Render"] {
+  function ImpactLead(props: { lead: boolean; role: SigRole; delayMs: number }) {
+    if (props.role !== "lead") return <Render {...props} />;
+    return (
+      <span
+        className="g33-quakecell absolute inset-0 block"
+        style={impactVars(impRgb(imp.tint), (props.delayMs + imp.at) / 1000)}
+      >
+        <Render {...props} />
+        <ImpactBeat imp={imp} delayMs={props.delayMs} />
+      </span>
+    );
+  }
+  return ImpactLead;
+}
+
+/* Per-card cue sheet: each lance lands on ITS scene's strike beat, at ITS
+   reach down the diagonal, in ITS palette - no two siblings share a beat +
+   combo. Aim cards hit at --fx-len, so a long diagonal genuinely lands far. */
+const IMPACTS: Record<string, Imp> = {
+  // the choir's raised note grounds itself at the far end of the beam
+  bn4_cathedral_choir: { at: 560, tint: "#f4d488", laser: true, shock: true, aim: true, len: true },
+  // the shears BITE: the clipped rope-end is severed in half mid-lane
+  hx4_clipped_diagonals: { at: 480, tint: "#9fb4c8", glyph: impGlyph(IG_SLAB, "#9fb4c8", "#17202c"), shock: true, aim: true, s: 6 },
+  // the brace arm slams onto its posts: pin-light + joist boom down-lane
+  ov_regency_council: { at: 450, tint: "#d9b46a", laser: true, shock: true, aim: true, s: 8 },
+  // the mitre joint is knocked apart: the mitre itself splits in half
+  hx4_mitred_blinders: { at: 520, tint: "#c9a26a", glyph: impGlyph(MITRE, "#c9a26a", "#241a12"), shock: true, y: 48 },
+  // the string is yanked to its pin at the victim: thin lance + snap ring
+  ov_puppet_practice: { at: 460, tint: "#c6a2e8", laser: true, shock: true, aim: true, len: true, s: 5.4 },
+  // the pass is BLASTED through: the keystone boulder shatters
+  bn4_mountain_pass: { at: 480, tint: "#8fa6b8", laser: true, glyph: impGlyph(IG_NUG, "#8fa6b8", "#1b2430"), shock: true, aim: true },
+  // the lens CRACKS: the glass disc splits in half down the sightline
+  hx4_cracked_lens: { at: 470, tint: "#79c8e0", glyph: impGlyph(IG_ORB, "#79c8e0", "#10222c"), shock: true, aim: true, s: 6.4 },
+  // the borrowed ladder slams back against the wall: rung boom
+  hx4_borrowed_ladder: { at: 520, tint: "#cf9d5a", laser: true, shock: true, y: 54, s: 7.8 },
+  // the soot load lets go: a dark column drops, grime ring on the tiles
+  hx4_soot_fall: { at: 450, tint: "#6b6f78", laser: true, shock: true, y: 46 },
+  // the blade is CAUGHT: the glove clamps and the steel rings out
+  hx4_left_glove: { at: 520, tint: "#d8dee8", laser: true, shock: true, y: 50, s: 6.2 },
+  // the lane walls grind shut: crush-boom between the hedges
+  hx4_narrow_lane: { at: 520, tint: "#b8a17c", laser: true, shock: true, y: 52, s: 8.2 },
+  // the sweep's rods punch through at full extension, down the flue
+  op_chimney_sweep: { at: 500, tint: "#8e8577", laser: true, shock: true, aim: true, len: true, s: 6 },
+  // the arcade's last column sets: capstone boom under the cloister
+  op_quiet_cloister: { at: 560, tint: "#cbb98d", laser: true, shock: true, y: 55, s: 8 },
+  // the flipped tile slaps down: the old tile is split by the new
+  bn4_bishops_stroll: { at: 440, tint: "#e0c98f", glyph: impGlyph(IG_SLAB, "#e0c98f", "#221c2a"), shock: true, aim: true, s: 6.4 },
+  // the ratchet pawl SLAMS into its rack: one-way boom
+  hx4_one_way_cloister: { at: 500, tint: "#a9b6c4", laser: true, shock: true, y: 49, s: 6.6 },
+  // the ricochet lands off the cushion: pocket-drop at the victim
+  op_prompt_corner: { at: 520, tint: "#7fbf95", laser: true, shock: true, aim: true, len: true, s: 5.8 },
+  // the silk curtain rod slams home at the far hook
+  op_silk_curtain: { at: 540, tint: "#d78fb0", laser: true, shock: true, aim: true, len: true, s: 6.2 },
+  // the coal breaks on the chute lip: the lump shatters mid-drop
+  op_trapdoor_exit: { at: 470, tint: "#9a8f83", glyph: impGlyph(IG_NUG, "#9a8f83", "#14100c"), shock: true, aim: true, s: 6 },
+  // the squeegee hits the sill: WET crash, no dry ring on a washed pane
+  op_window_washer: { at: 500, tint: "#86c9d8", laser: true, shock: "wet", aim: true, len: true },
+};
+
+for (const [id, imp] of Object.entries(IMPACTS)) {
+  const play = PLAYS[id];
+  if (play) PLAYS[id] = { config: play.config, Render: withImpact(play.Render, imp) };
+}

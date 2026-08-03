@@ -4,7 +4,10 @@
  *   - transform and opacity ONLY. No layout, no filter, no box-shadow animation.
  *   - every scene is tell -> strike -> settle; the tell is under 300ms.
  *   - three colours per scene, warm whites (#fff4d6-ish), never pure #fff.
- *   - board-centred, so nothing clips mid-screen on a phone.
+ *   - every duration is multiplied by var(--fx-dur, 1), so the global speed
+ *     control scales these scenes with everything else.
+ *   - every animation is finite (`both` fill, no infinite loops): one-shot art
+ *     must terminate on its own.
  *   - everything here is decorative: pointer-events: none throughout, and all
  *     motion is dropped under html[data-anim="off"] and reduced motion, leaving
  *     the still frame so the play still reads.
@@ -27,6 +30,19 @@
   display: block;
 }
 
+/* Shared caption styling: the small text elements the catchphrase scenes use.
+ * Sized in cqw-free relative units so they scale with the stage. */
+.cpl-trap-caption,
+.cpl-rook-caption,
+.cpl-vs-caption,
+.cpl-run-split {
+  font-family: var(--font-display, inherit);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  user-select: none;
+}
+
 /* --- Shared beats ---------------------------------------------------------- */
 
 /* The tell: one dim-and-inhale under 300ms so the strike lands on something. */
@@ -40,7 +56,7 @@
   );
   opacity: 0;
   transform: scale(1.06);
-  animation: cpl-tell 300ms ease-out both;
+  animation: cpl-tell calc(300ms * var(--fx-dur, 1)) ease-out both;
 }
 @keyframes cpl-tell {
   0% { opacity: 0; transform: scale(1.06); }
@@ -61,7 +77,7 @@
   inset: 0;
   background: radial-gradient(circle at 50% 50%, rgb(var(--cpl-hue) / 0.2), transparent 62%);
   opacity: 0;
-  animation: cpl-settle 900ms ease-out both;
+  animation: cpl-settle calc(900ms * var(--fx-dur, 1)) ease-out both;
 }
 @keyframes cpl-settle {
   0% { opacity: 0.6; transform: translateY(0); }
@@ -85,7 +101,7 @@
   border: 2px solid rgb(var(--cpl-hue) / 0.75);
   border-radius: 999px;
   opacity: 0;
-  animation: cpl-arrive-ring 760ms ease-out both;
+  animation: cpl-arrive-ring calc(760ms * var(--fx-dur, 1)) ease-out both;
 }
 @keyframes cpl-arrive-ring {
   0% { opacity: 0; transform: scale(0.4); }
@@ -102,7 +118,7 @@
   margin-left: -28%;
   margin-top: -28%;
   opacity: 0;
-  animation: cpl-arrive 900ms cubic-bezier(0.2, 1.3, 0.35, 1) both;
+  animation: cpl-arrive calc(900ms * var(--fx-dur, 1)) cubic-bezier(0.2, 1.3, 0.35, 1) both;
 }
 @keyframes cpl-arrive {
   0% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 34%)) scale(0.62); }
@@ -111,12 +127,12 @@
   100% { opacity: 0; transform: translateY(0) scale(1.02); }
 }
 
-/* Shared star framing: the emblem sits board-centred at a readable size. */
-.cpl-bishop-star,
-.cpl-queen-star,
-.cpl-family-star,
-.cpl-speed-star,
-.cpl-chat-star {
+/* Shared star framing: the emblem sits stage-centred at a readable size. */
+.cpl-trap-star,
+.cpl-rook-star,
+.cpl-fam-star,
+.cpl-run-star,
+.cpl-vs-star {
   position: absolute;
   left: 50%;
   top: 50%;
@@ -126,136 +142,187 @@
   margin-top: -17%;
 }
 
-/* --- The Stalling Bishop (Eric Rosen) ------------------------------------- */
-/* Cold blue: it is not a threat, it is a nuisance that will not leave. */
+/* --- Rosen's Stafford Trap (Eric Rosen) ------------------------------------ */
+/* Sage green: not a threat, a present. Do not open the present.
+ * Palette: sage #bfe8c4 / warm white #fff4d6 / pine #1d3324. */
 
-.cpl-bishop-ring {
+/* The bait: tips over in agonising slow motion, lies still playing dead, then
+ * SPRINGS back upright when the trap fires. One element, three acts. */
+.cpl-trap-star {
+  transform-origin: 50% 88%;
+  opacity: 0;
+  animation: cpl-trap-bait calc(1300ms * var(--fx-dur, 1)) cubic-bezier(0.3, 0, 0.3, 1) both;
+}
+@keyframes cpl-trap-bait {
+  0% { opacity: 0; transform: rotate(0deg) scale(0.9); }
+  10% { opacity: 1; transform: rotate(0deg) scale(1); }
+  /* the slow-motion tip-over */
+  42% { opacity: 1; transform: rotate(64deg) translateY(2%); }
+  /* ...and it just lies there */
+  62% { opacity: 0.9; transform: rotate(64deg) translateY(2%); }
+  /* SPROING */
+  74% { opacity: 1; transform: rotate(-9deg) scale(1.08); }
+  84% { opacity: 1; transform: rotate(4deg) scale(1); }
+  100% { opacity: 1; transform: rotate(0deg) scale(1); }
+}
+
+/* The small resigned caption, drifting up beside the fallen bait. */
+.cpl-trap-caption {
+  position: absolute;
+  left: 58%;
+  top: 34%;
+  font-size: 9px;
+  font-style: italic;
+  color: #fff4d6;
+  opacity: 0;
+  animation: cpl-trap-ohno calc(700ms * var(--fx-dur, 1)) ease-out both;
+}
+@keyframes cpl-trap-ohno {
+  0% { opacity: 0; transform: translateY(30%); }
+  30% { opacity: 0.95; transform: translateY(0); }
+  75% { opacity: 0.85; transform: translateY(-25%); }
+  100% { opacity: 0; transform: translateY(-55%); }
+}
+
+/* The snare ring, snapping shut around whoever reached in. */
+.cpl-trap-ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 54%;
+  height: 54%;
+  margin-left: -27%;
+  margin-top: -27%;
+  border: 3px solid rgb(191 232 196 / 0.9);
+  border-radius: 999px;
+  opacity: 0;
+  transform: scale(1.9);
+  animation: cpl-trap-snap calc(480ms * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.2, 1) both;
+}
+@keyframes cpl-trap-snap {
+  0% { opacity: 0; transform: scale(1.9); }
+  70% { opacity: 1; transform: scale(0.94); }
+  100% { opacity: 0.85; transform: scale(1); }
+}
+
+/* Two rope bands whip across the capturer: wrapped, not going anywhere. */
+.cpl-trap-rope {
   position: absolute;
   left: 50%;
   top: 50%;
   width: 52%;
-  height: 52%;
-  margin-left: -26%;
-  margin-top: -26%;
-  border: 3px solid rgb(200 220 255 / 0.9);
-  border-radius: 999px;
-  opacity: 0;
-  transform: scale(1.9);
-  animation: cpl-ring-slam 520ms cubic-bezier(0.2, 0.9, 0.2, 1) both,
-    cpl-ring-breathe 2.4s ease-in-out 640ms infinite;
-}
-@keyframes cpl-ring-slam {
-  0% { opacity: 0; transform: scale(1.9); }
-  70% { opacity: 1; transform: scale(0.96); }
-  100% { opacity: 0.85; transform: scale(1); }
-}
-@keyframes cpl-ring-breathe {
-  0%, 100% { opacity: 0.7; }
-  50% { opacity: 0.95; }
-}
-
-.cpl-bishop-star {
-  opacity: 0;
-  transform: scale(0.6);
-  animation: cpl-pop 380ms cubic-bezier(0.2, 1.5, 0.4, 1) both;
-}
-@keyframes cpl-pop {
-  0% { opacity: 0; transform: scale(0.6); }
-  70% { opacity: 1; transform: scale(1.06); }
-  100% { opacity: 1; transform: scale(1); }
-}
-
-/* Two crossed bars: cannot be taken, cannot take. */
-.cpl-bishop-bar {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 46%;
   height: 4px;
-  margin-left: -23%;
+  margin-left: -26%;
   margin-top: -2px;
-  background: linear-gradient(90deg, transparent, rgb(200 220 255 / 0.95), transparent);
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, rgb(191 232 196 / 0.95), transparent);
   opacity: 0;
-  transform: scaleX(0.2) rotate(var(--cpl-r, 45deg));
-  animation: cpl-bar 420ms cubic-bezier(0.2, 0.9, 0.2, 1) both;
+  transform: scaleX(0.1) rotate(var(--cpl-r, 20deg));
+  animation: cpl-trap-rope calc(420ms * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.2, 1) both;
 }
-.cpl-bishop-bar-a { --cpl-r: 45deg; }
-.cpl-bishop-bar-b { --cpl-r: -45deg; }
-@keyframes cpl-bar {
-  0% { opacity: 0; transform: scaleX(0.2) rotate(var(--cpl-r, 45deg)); }
-  60% { opacity: 1; transform: scaleX(1.05) rotate(var(--cpl-r, 45deg)); }
-  100% { opacity: 0.9; transform: scaleX(1) rotate(var(--cpl-r, 45deg)); }
+.cpl-trap-rope-a { --cpl-r: 24deg; }
+.cpl-trap-rope-b { --cpl-r: -18deg; }
+@keyframes cpl-trap-rope {
+  0% { opacity: 0; transform: scaleX(0.1) rotate(var(--cpl-r, 20deg)); }
+  60% { opacity: 1; transform: scaleX(1.06) rotate(var(--cpl-r, 20deg)); }
+  100% { opacity: 0.9; transform: scaleX(1) rotate(var(--cpl-r, 20deg)); }
 }
 
-/* --- Oh No My Queen (GothamChess) ----------------------------------------- */
-/* Red panic into gold relief: the disaster that turns out fine. */
+/* --- Gotham's THE ROOK!! (GothamChess) ------------------------------------- */
+/* Thumbnail red into gold: the loudest possible way to move a rook.
+ * Palette: red #ff6a5e / gold #ffd76a / warm white #fff4d6. */
 
-.cpl-queen-panic {
+/* The jolt wrapper: the whole stage kicks on impact, standing in for the
+ * board-shake this module cannot reach (Board owns fx-board-shake). */
+.cpl-rook-jolt {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 50% 40%, rgb(255 120 96 / 0.34), transparent 58%);
-  opacity: 0;
-  animation: cpl-panic 420ms ease-out both;
+  animation: cpl-rook-jolt calc(360ms * var(--fx-dur, 1)) linear both;
 }
-@keyframes cpl-panic {
-  0% { opacity: 0; }
-  25% { opacity: 1; }
-  100% { opacity: 0; }
-}
-
-/* The yank: she is dragged across the stage on an arc, not teleported. */
-.cpl-queen-star {
-  opacity: 0;
-  animation: cpl-yank 560ms cubic-bezier(0.3, 0.05, 0.2, 1) both;
-}
-@keyframes cpl-yank {
-  0% { opacity: 0; transform: translate(26%, -22%) scale(1.25) rotate(16deg); }
-  30% { opacity: 1; transform: translate(14%, -6%) scale(1.1) rotate(8deg); }
-  100% { opacity: 1; transform: translate(0, 0) scale(1) rotate(0deg); }
+@keyframes cpl-rook-jolt {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-2%, calc(var(--fx-side, 1) * 1.5%)); }
+  45% { transform: translate(2%, calc(var(--fx-side, 1) * -1%)); }
+  70% { transform: translate(-1%, calc(var(--fx-side, 1) * 0.6%)); }
 }
 
-/* Shock pips fire out at the pieces that were attacking her. */
-.cpl-queen-pip {
+/* The rook: grows to twice its size, then slams FORWARD (toward the enemy
+ * side, which --fx-side keeps honest for both seats). */
+.cpl-rook-star {
+  opacity: 0;
+  animation: cpl-rook-slam calc(680ms * var(--fx-dur, 1)) cubic-bezier(0.3, 0, 0.25, 1) both;
+}
+@keyframes cpl-rook-slam {
+  0% { opacity: 0; transform: scale(0.8) translateY(0); }
+  28% { opacity: 1; transform: scale(1.4) translateY(calc(var(--fx-side, 1) * 6%)); }
+  /* fully grown, rearing back for the slam */
+  52% { opacity: 1; transform: scale(2.05) translateY(calc(var(--fx-side, 1) * 9%)); }
+  /* THE SLAM, forward */
+  74% { opacity: 1; transform: scale(1.9) translateY(calc(var(--fx-side, 1) * -26%)); }
+  100% { opacity: 1; transform: scale(1.8) translateY(calc(var(--fx-side, 1) * -22%)); }
+}
+
+/* Speed streaks trailing the slam. */
+.cpl-rook-streak {
+  position: absolute;
+  left: var(--cpl-x, 50%);
+  top: 50%;
+  width: 3px;
+  height: 34%;
+  margin-top: -17%;
+  border-radius: 2px;
+  background: linear-gradient(180deg, transparent, rgb(255 106 94 / 0.9), transparent);
+  opacity: 0;
+  animation: cpl-rook-streak calc(420ms * var(--fx-dur, 1)) ease-out both;
+}
+@keyframes cpl-rook-streak {
+  0% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 40%)) scaleY(0.5); }
+  35% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * -44%)) scaleY(1.1); }
+}
+
+/* Gold impact flash where the slam lands. */
+.cpl-rook-flash {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 10px;
-  height: 10px;
-  margin: -5px 0 0 -5px;
+  width: 70%;
+  height: 70%;
+  margin-left: -35%;
+  margin-top: -35%;
   border-radius: 999px;
-  background: rgb(255 233 176 / 0.95);
+  background: radial-gradient(circle at 50% 50%, rgb(255 215 106 / 0.5), transparent 60%);
   opacity: 0;
-  transform: rotate(var(--cpl-a, 45deg)) translateX(0);
-  animation: cpl-pip 520ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: cpl-rook-flash calc(520ms * var(--fx-dur, 1)) ease-out both;
 }
-@keyframes cpl-pip {
-  0% { opacity: 0; transform: rotate(var(--cpl-a, 45deg)) translateX(0) scale(0.4); }
-  30% { opacity: 1; }
-  100% { opacity: 0; transform: rotate(var(--cpl-a, 45deg)) translateX(230%) scale(1); }
+@keyframes cpl-rook-flash {
+  0% { opacity: 0; transform: scale(0.4) translateY(calc(var(--fx-side, 1) * -18%)); }
+  30% { opacity: 1; transform: scale(1.1) translateY(calc(var(--fx-side, 1) * -20%)); }
+  100% { opacity: 0; transform: scale(1.5) translateY(calc(var(--fx-side, 1) * -22%)); }
 }
 
-/* The clock gift, as one pip rising out of the settle. */
-.cpl-queen-tick {
+/* The caption. It is not subtle. It is not supposed to be. */
+.cpl-rook-caption {
   position: absolute;
   left: 50%;
-  top: 46%;
-  width: 22%;
-  height: 3px;
-  margin-left: -11%;
-  background: linear-gradient(90deg, transparent, rgb(255 215 106 / 0.9), transparent);
+  top: 68%;
+  font-size: 13px;
+  color: #ffd76a;
   opacity: 0;
-  animation: cpl-tick 700ms ease-out both;
+  transform: translateX(-50%) scale(0.4) rotate(-6deg);
+  animation: cpl-rook-caption calc(560ms * var(--fx-dur, 1)) cubic-bezier(0.2, 1.5, 0.4, 1) both;
 }
-@keyframes cpl-tick {
-  0% { opacity: 0; transform: translateY(0) scaleX(0.4); }
-  35% { opacity: 1; transform: translateY(-40%) scaleX(1); }
-  100% { opacity: 0; transform: translateY(-120%) scaleX(0.8); }
+@keyframes cpl-rook-caption {
+  0% { opacity: 0; transform: translateX(-50%) scale(0.4) rotate(-6deg); }
+  55% { opacity: 1; transform: translateX(-50%) scale(1.15) rotate(2deg); }
+  100% { opacity: 1; transform: translateX(-50%) scale(1) rotate(0deg); }
 }
 
-/* --- Family Game Night (Anna Cramling) ------------------------------------ */
-/* Warm lamp light, nothing hidden. */
+/* --- Cramling Family Night (Anna Cramling) --------------------------------- */
+/* Warm lamp light, tea on the table, no aggression colours anywhere.
+ * Palette: lamp amber #ffd696 / warm white #fff4d6 / oak #4a3a22. */
 
-.cpl-family-lamp {
+.cpl-fam-lamp {
   position: absolute;
   left: 50%;
   top: 50%;
@@ -263,28 +330,48 @@
   height: 84%;
   margin-left: -42%;
   margin-top: -42%;
-  background: radial-gradient(circle at 50% 50%, rgb(255 214 150 / 0.4), transparent 60%);
+  background: radial-gradient(circle at 50% 42%, rgb(255 214 150 / 0.42), transparent 62%);
   opacity: 0;
   transform: scale(0.6);
-  animation: cpl-lamp 620ms ease-out both;
+  animation: cpl-fam-lamp calc(640ms * var(--fx-dur, 1)) ease-out both;
 }
-@keyframes cpl-lamp {
+@keyframes cpl-fam-lamp {
   0% { opacity: 0; transform: scale(0.6); }
   60% { opacity: 1; transform: scale(1.04); }
   100% { opacity: 0.8; transform: scale(1); }
 }
 
-.cpl-family-star {
+/* The table: a warm strip that settles in on the caster's side of the stage,
+ * so the cards have somewhere to land. --fx-side keeps "our side" honest. */
+.cpl-fam-table {
+  position: absolute;
+  left: 12%;
+  top: 50%;
+  width: 76%;
+  height: 22%;
+  border-radius: 1px;
+  background: linear-gradient(180deg, rgb(255 214 150 / 0.28), rgb(74 58 34 / 0.55));
   opacity: 0;
-  animation: cpl-clasp 560ms cubic-bezier(0.2, 1.2, 0.3, 1) both;
+  transform: translateY(calc(var(--fx-side, 1) * 60%)) scaleX(0.5);
+  animation: cpl-fam-table calc(560ms * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.2, 1) both;
 }
-@keyframes cpl-clasp {
+@keyframes cpl-fam-table {
+  0% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 60%)) scaleX(0.5); }
+  60% { opacity: 1; transform: translateY(calc(var(--fx-side, 1) * 26%)) scaleX(1.02); }
+  100% { opacity: 0.9; transform: translateY(calc(var(--fx-side, 1) * 28%)) scaleX(1); }
+}
+
+.cpl-fam-star {
+  opacity: 0;
+  animation: cpl-fam-clasp calc(560ms * var(--fx-dur, 1)) cubic-bezier(0.2, 1.2, 0.3, 1) both;
+}
+@keyframes cpl-fam-clasp {
   0% { opacity: 0; transform: scale(1.3); }
   100% { opacity: 1; transform: scale(1); }
 }
 
-/* Both card fans flip face up: the mutual reveal. */
-.cpl-family-card {
+/* Both card fans flip face UP onto the table: the mutual reveal. */
+.cpl-fam-card {
   position: absolute;
   top: 56%;
   width: 7%;
@@ -294,149 +381,197 @@
   border: 1px solid rgb(74 58 34 / 0.7);
   opacity: 0;
   transform: rotateY(90deg) rotate(var(--cpl-r, 0deg));
-  animation: cpl-flip 460ms cubic-bezier(0.2, 0.9, 0.2, 1) both;
+  animation: cpl-fam-flip calc(460ms * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.2, 1) both;
 }
-.cpl-family-card-l { left: 22%; transform-origin: bottom center; }
-.cpl-family-card-r { right: 22%; transform-origin: bottom center; }
-@keyframes cpl-flip {
+.cpl-fam-card-l { left: 22%; transform-origin: bottom center; }
+.cpl-fam-card-r { right: 22%; transform-origin: bottom center; }
+@keyframes cpl-fam-flip {
   0% { opacity: 0; transform: rotateY(90deg) rotate(var(--cpl-r, 0deg)); }
   60% { opacity: 1; transform: rotateY(-8deg) rotate(var(--cpl-r, 0deg)); }
   100% { opacity: 0.95; transform: rotateY(0deg) rotate(var(--cpl-r, 0deg)); }
 }
 
-/* --- Speedrun Protocol (Daniel Naroditsky) -------------------------------- */
-/* Forward pressure, in orange. */
-
-/* The countdown pip: the one beat of anticipation before the rake. */
-.cpl-speed-pip {
+/* Tea steam: two soft wisps curling up off the table edge. */
+.cpl-fam-steam {
   position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 8%;
-  height: 8%;
-  margin: -4% 0 0 -4%;
+  left: var(--cpl-x, 66%);
+  top: 52%;
+  width: 4%;
+  height: 16%;
   border-radius: 999px;
-  background: rgb(255 138 52 / 0.95);
+  background: linear-gradient(180deg, transparent, rgb(255 244 214 / 0.55));
   opacity: 0;
-  animation: cpl-speed-pip 300ms ease-out both;
+  animation: cpl-fam-steam calc(900ms * var(--fx-dur, 1)) ease-out both;
 }
-@keyframes cpl-speed-pip {
-  0% { opacity: 0; transform: scale(0.3); }
-  45% { opacity: 1; transform: scale(1.15); }
-  100% { opacity: 0; transform: scale(0.5); }
+@keyframes cpl-fam-steam {
+  0% { opacity: 0; transform: translateY(10%) rotate(0deg) scaleY(0.6); }
+  35% { opacity: 0.8; transform: translateY(-14%) rotate(6deg) scaleY(1); }
+  100% { opacity: 0; transform: translateY(-42%) rotate(-8deg) scaleY(1.15); }
 }
 
-.cpl-speed-line {
+/* --- Danya's Speedrun (Daniel Naroditsky) ---------------------------------- */
+/* Speedrun green on a dark rail: the splits are ahead and staying ahead.
+ * Palette: split green #7ef29a / warm white #fff4d6 / charcoal #182420. */
+
+/* The split-timer rail, sliding in along the board edge. */
+.cpl-run-rail {
   position: absolute;
-  left: -20%;
-  top: var(--cpl-y, 50%);
-  width: 140%;
-  height: 3px;
-  background: linear-gradient(90deg, transparent, rgb(255 138 52 / 0.9) 40%, rgb(255 214 150 / 0.95) 55%, transparent);
+  left: 3%;
+  top: 12%;
+  width: 17%;
+  height: 76%;
+  border-radius: 1px;
+  background: linear-gradient(180deg, rgb(24 36 32 / 0.85), rgb(24 36 32 / 0.6));
+  border: 1px solid rgb(126 242 154 / 0.5);
   opacity: 0;
-  transform: translateX(-40%) scaleX(0.6);
-  animation: cpl-rake 460ms cubic-bezier(0.3, 0.05, 0.2, 1) both;
+  transform: translateX(-60%);
+  animation: cpl-run-rail calc(460ms * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.2, 1) both;
 }
-@keyframes cpl-rake {
-  0% { opacity: 0; transform: translateX(-40%) scaleX(0.6); }
-  35% { opacity: 1; }
-  100% { opacity: 0; transform: translateX(40%) scaleX(1); }
+@keyframes cpl-run-rail {
+  0% { opacity: 0; transform: translateX(-60%); }
+  70% { opacity: 1; transform: translateX(3%); }
+  100% { opacity: 0.95; transform: translateX(0); }
 }
 
-.cpl-speed-star {
+/* Green splits ticking on one by one: the run is ahead on every one. */
+.cpl-run-split {
+  position: absolute;
+  left: 5.5%;
+  top: var(--cpl-y, 30%);
+  font-size: 8px;
+  color: #7ef29a;
   opacity: 0;
-  animation: cpl-pin 480ms cubic-bezier(0.2, 1.4, 0.35, 1) both;
+  transform: translateX(-30%);
+  animation: cpl-run-split calc(380ms * var(--fx-dur, 1)) cubic-bezier(0.2, 1.2, 0.3, 1) both;
 }
-@keyframes cpl-pin {
+@keyframes cpl-run-split {
+  0% { opacity: 0; transform: translateX(-30%) scale(0.7); }
+  55% { opacity: 1; transform: translateX(4%) scale(1.1); }
+  100% { opacity: 0.95; transform: translateX(0) scale(1); }
+}
+
+/* The stopwatch pins in like a stamp. */
+.cpl-run-star {
+  opacity: 0;
+  animation: cpl-run-pin calc(480ms * var(--fx-dur, 1)) cubic-bezier(0.2, 1.4, 0.35, 1) both;
+}
+@keyframes cpl-run-pin {
   0% { opacity: 0; transform: scale(0.7) rotate(-14deg); }
   70% { opacity: 1; transform: scale(1.05) rotate(4deg); }
   100% { opacity: 1; transform: scale(1) rotate(0deg); }
 }
 
-/* The pressure does not stop when the strike does. */
-.cpl-speed-pulse {
+/* Two speed lines raking forward: the run never stops moving. */
+.cpl-run-line {
   position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at 50% 50%, rgb(255 138 52 / 0.16), transparent 58%);
+  left: 18%;
+  top: var(--cpl-y, 50%);
+  width: 76%;
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, rgb(126 242 154 / 0.85) 45%, rgb(255 244 214 / 0.9) 58%, transparent);
   opacity: 0;
-  animation: cpl-pulse 1.6s ease-in-out both;
+  transform: translateX(-35%) scaleX(0.6);
+  animation: cpl-run-rake calc(460ms * var(--fx-dur, 1)) cubic-bezier(0.3, 0.05, 0.2, 1) both;
 }
-@keyframes cpl-pulse {
-  0%, 100% { opacity: 0; }
-  40% { opacity: 1; }
-  70% { opacity: 0.4; }
+@keyframes cpl-run-rake {
+  0% { opacity: 0; transform: translateX(-35%) scaleX(0.6); }
+  35% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(35%) scaleX(1); }
 }
 
-/* --- Chat Picks ----------------------------------------------------------- */
-/* Cool chat blue, then a hard stamp. */
+/* --- Chat Picks: Creator vs Chat ------------------------------------------- */
+/* Cool chat blue; two options, one wheel, zero say in the matter.
+ * Palette: chat blue #8fa8e0 / warm white #fff4d6 / ink #1c2440. */
 
-/* The cursor blinks first: chat is about to say something. */
-.cpl-chat-cursor {
-  position: absolute;
-  left: 14%;
-  top: 64%;
-  width: 2.5%;
-  height: 9%;
-  border-radius: 1px;
-  background: rgb(143 168 224 / 0.95);
+.cpl-vs-star {
   opacity: 0;
-  animation: cpl-chat-cursor 340ms steps(1, end) both;
+  transform: translateY(-40%);
+  animation: cpl-vs-bubble calc(440ms * var(--fx-dur, 1)) cubic-bezier(0.2, 1.3, 0.35, 1) both;
 }
-@keyframes cpl-chat-cursor {
-  0% { opacity: 0; }
-  25% { opacity: 1; }
-  50% { opacity: 0; }
-  75% { opacity: 1; }
-  100% { opacity: 0; }
+@keyframes cpl-vs-bubble {
+  0% { opacity: 0; transform: translateY(-40%) scale(0.5); }
+  70% { opacity: 1; transform: translateY(-44%) scale(1.06); }
+  100% { opacity: 1; transform: translateY(-42%) scale(1); }
 }
 
-.cpl-chat-line {
+/* Chat scrolling past, arguing. */
+.cpl-vs-line {
   position: absolute;
   left: 12%;
-  top: var(--cpl-y, 50%);
+  top: var(--cpl-y, 70%);
   width: var(--cpl-w, 40%);
-  height: 6px;
-  border-radius: 1px;
-  background: rgb(143 168 224 / 0.85);
+  height: 5px;
+  border-radius: 2px;
+  background: rgb(143 168 224 / 0.8);
   opacity: 0;
   transform: translateY(60%);
-  animation: cpl-scroll 520ms cubic-bezier(0.2, 0.9, 0.2, 1) both;
+  animation: cpl-vs-scroll calc(520ms * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.2, 1) both;
 }
-@keyframes cpl-scroll {
+@keyframes cpl-vs-scroll {
   0% { opacity: 0; transform: translateY(60%); }
   40% { opacity: 1; transform: translateY(0); }
   100% { opacity: 0.25; transform: translateY(-30%); }
 }
 
-.cpl-chat-star {
+/* The two option cards, rising side by side. */
+.cpl-vs-opt {
+  position: absolute;
+  top: 34%;
+  width: 17%;
+  height: 26%;
+  border-radius: 1px;
+  border: 2px solid rgb(143 168 224 / 0.85);
+  background: linear-gradient(170deg, rgb(255 244 214 / 0.22), rgb(28 36 64 / 0.6));
   opacity: 0;
-  animation: cpl-seize 440ms cubic-bezier(0.2, 1.3, 0.35, 1) both;
+  transform: translateY(35%) scale(0.8);
+  animation: cpl-vs-opt calc(480ms * var(--fx-dur, 1)) cubic-bezier(0.2, 1.2, 0.3, 1) both;
 }
-@keyframes cpl-seize {
-  0% { opacity: 0; transform: scale(0.5) translateY(30%); }
-  70% { opacity: 1; transform: scale(1.08) translateY(-4%); }
-  100% { opacity: 1; transform: scale(1) translateY(0); }
+.cpl-vs-opt-a { left: 26%; }
+.cpl-vs-opt-b { right: 26%; }
+@keyframes cpl-vs-opt {
+  0% { opacity: 0; transform: translateY(35%) scale(0.8); }
+  60% { opacity: 1; transform: translateY(-4%) scale(1.04); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* One of them is chosen, and stamped over the board. */
-.cpl-chat-stamp {
+/* The picker: rattles between the two options, then slams onto the left one.
+ * (Which physical option "wins" is cosmetic; the real pick is in the status.) */
+.cpl-vs-pick {
+  position: absolute;
+  left: 24%;
+  top: 31%;
+  width: 21%;
+  height: 32%;
+  border-radius: 1px;
+  border: 3px solid rgb(255 244 214 / 0.95);
+  opacity: 0;
+  transform: translateX(160%) scale(1.4);
+  animation: cpl-vs-pick calc(620ms * var(--fx-dur, 1)) cubic-bezier(0.25, 1, 0.3, 1) both;
+}
+@keyframes cpl-vs-pick {
+  0% { opacity: 0; transform: translateX(160%) scale(1.4); }
+  25% { opacity: 1; transform: translateX(0%) scale(1.2); }
+  45% { opacity: 1; transform: translateX(160%) scale(1.1); }
+  70% { opacity: 1; transform: translateX(0%) scale(0.96); }
+  100% { opacity: 0.9; transform: translateX(0%) scale(1); }
+}
+
+.cpl-vs-caption {
   position: absolute;
   left: 50%;
-  top: 50%;
-  width: 46%;
-  height: 46%;
-  margin-left: -23%;
-  margin-top: -23%;
-  border: 4px solid rgb(143 168 224 / 0.9);
-  border-radius: 2px;
+  top: 66%;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  color: #fff4d6;
   opacity: 0;
-  transform: scale(1.8) rotate(-8deg);
-  animation: cpl-stamp 520ms cubic-bezier(0.25, 1, 0.3, 1) both;
+  transform: translateX(-50%) translateY(30%);
+  animation: cpl-vs-caption calc(520ms * var(--fx-dur, 1)) ease-out both;
 }
-@keyframes cpl-stamp {
-  0% { opacity: 0; transform: scale(1.8) rotate(-8deg); }
-  55% { opacity: 1; transform: scale(0.94) rotate(-3deg); }
-  100% { opacity: 0; transform: scale(1) rotate(-3deg); }
+@keyframes cpl-vs-caption {
+  0% { opacity: 0; transform: translateX(-50%) translateY(30%); }
+  45% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  100% { opacity: 0.85; transform: translateX(-50%) translateY(0); }
 }
 
 /* --- Motion off ----------------------------------------------------------- */

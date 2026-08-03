@@ -22,6 +22,7 @@ import * as path from "path";
 import { ALL_NERFS } from "../src/engine/nerfs/library";
 import { BUFF_BY_ID } from "../src/engine/buffs/library";
 import {
+  cueHash,
   FAMILY_VOCAB,
   PALETTE_HEX,
   primitiveCountForTier,
@@ -271,14 +272,48 @@ function detectSigil(card: SrcCard, family: PassiveFamily): string {
 // Composition builder.
 // ---------------------------------------------------------------------------
 
+// The bespoke-nerf physicality accent (docs section 3): the new primitive that
+// makes a nerf's reveal read physical, chosen from card semantics. Rule slabs
+// slam down for decrees, shackles clamp and cages rise for movement binds,
+// a fissure blooms for loss-condition rules, the ground rumbles under
+// high-tier strikes. Always drawn from the family's own vocabulary.
+function nerfAccent(family: PassiveFamily, target: PassiveTargetType, tier: number): PrimitiveKey | null {
+  if (target === "winCondition") return "crackBloom";
+  switch (family) {
+    case "decree":
+      return "slabSlam";
+    case "bind":
+      return target === "square" || target === "zone" || target === "board" ? "barCage" : "shackleDrop";
+    case "fracture":
+      return "crackBloom";
+    case "strike":
+      return tier >= 5 ? "quakeRumble" : null;
+    default:
+      return null;
+  }
+}
+
 function buildComposition(
   family: PassiveFamily,
   target: PassiveTargetType,
   tier: number,
+  cardFamily: CardFamily,
+  cardId: string,
 ): PrimitiveKey[] {
   const vocab = FAMILY_VOCAB[family];
   const comp: PrimitiveKey[] = [vocab[0]];
   const count = primitiveCountForTier(tier);
+  const h = cardFamily === "nerf" ? cueHash(`nerf:${cardId}`) : 0;
+
+  // Bespoke nerf physicality: the semantic accent joins right after the
+  // family signature so the slam/shackle/crack reads as the card's identity
+  // (nerf wave only; buffs keep their original grammar). Tier 1-2 stays a
+  // single primitive per the section-6 ladder; those cards differentiate via
+  // their cue sheet instead.
+  if (cardFamily === "nerf" && count >= 2) {
+    const accent = nerfAccent(family, target, tier);
+    if (accent && vocab.includes(accent) && !comp.includes(accent)) comp.push(accent);
+  }
 
   // Target-driven accent for file/rank effects.
   const targetPrim: PrimitiveKey | null =
@@ -292,10 +327,29 @@ function buildComposition(
     comp.push("shockRing");
   }
 
-  let vi = 1;
-  while (comp.length < count && vi < vocab.length) {
-    const p = vocab[vi++];
-    if (!comp.includes(p)) comp.push(p);
+  if (cardFamily === "nerf") {
+    // Bespoke wave, combo spread: remaining slots fill from the family vocab
+    // ROTATED by the card's cue hash, so mechanical siblings draw different
+    // companion primitives instead of all walking the vocab in the same order.
+    let vi = 0;
+    const start = h % vocab.length;
+    while (comp.length < count && vi < vocab.length) {
+      const p = vocab[(start + vi++) % vocab.length];
+      if (!comp.includes(p)) comp.push(p);
+    }
+    // Beat-order variation: half the cards lead with their accent and let the
+    // family signature answer (the slab lands, THEN the seal stamps), giving
+    // sibling reveals a different opening beat with the same vocabulary.
+    if (comp.length >= 2 && ((h >>> 3) & 1) === 1) {
+      const [a, b, ...rest] = comp;
+      return [b, a, ...rest].slice(0, 3);
+    }
+  } else {
+    let vi = 1;
+    while (comp.length < count && vi < vocab.length) {
+      const p = vocab[vi++];
+      if (!comp.includes(p)) comp.push(p);
+    }
   }
   return comp.slice(0, 3);
 }
@@ -379,7 +433,7 @@ function main(): void {
     const target = detectTarget(card, t, family);
     const palette = detectPalette(card, t, family);
     const sigil = detectSigil(card, family);
-    const base = buildComposition(family, target, card.tier);
+    const base = buildComposition(family, target, card.tier, card.cardFamily, card.id);
 
     // Candidate primitive arrays: base first, then every ordered selection from
     // the family vocab. First whose full sentence is unused wins.

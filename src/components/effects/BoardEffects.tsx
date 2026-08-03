@@ -2961,16 +2961,15 @@ export function CastSpectacle({
     <CastBanner name={name} description={description} tier={tier} color={theme.color} />
   ) : null;
   if (bespoke) {
-    // Chrome only: tier-tinted frame pulse + wash + the announcement banner.
-    // Everything center-stage belongs to the card's own art.
+    // Chrome only: tier-tinted frame pulse + the announcement banner.
+    // Everything center-stage belongs to the card's own art. The full-board
+    // category wash that used to sit under it was double-telling (the
+    // bespoke scene, the frame ring and the banner already announce the
+    // cast) with no card-specific geometry of its own, so it was removed in
+    // the useless-flash pass; the design brief (section 1) always specced
+    // this branch as banner + frame pulse only.
     return (
       <span className="fx-cast pointer-events-none absolute inset-0 z-40 block" aria-hidden="true">
-        {intensity !== "sleek" && (
-          <span
-            className="fx-cast-wash absolute inset-0 block"
-            style={{ background: `radial-gradient(circle, ${theme.soft}, transparent 74%)` }}
-          />
-        )}
         <span
           className="fx-cast-ring absolute inset-[1%] block rounded-sm"
           style={{

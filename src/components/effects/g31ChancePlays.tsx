@@ -35,6 +35,7 @@ import "./g31ChancePlays.css";
 import type { CSSProperties, ReactNode } from "react";
 import type { SigPlugin, SigRole } from "./sigPlugins";
 import { BoardWideStage, BoardFrame, AimStage } from "./stage";
+import { LaserStrike, PieceShatter, Shockwave, impactVars } from "./impact/impact";
 
 interface SceneProps {
   lead: boolean;
@@ -1693,3 +1694,159 @@ export const PLAYS: Record<string, SigPlugin> = {
     sound: "coinflip", anchor: "aim",
   }),
 };
+
+/* =============================================================================
+   FLAGSHIP IMPACT WAVE. Every lead now LANDS: a per-card impact beat from the
+   shared violence vocabulary (impact/impact.tsx) layered over the module's
+   existing signature, on the moment the card's own gamble resolves - the roll's
+   landing, the cork leaving, the hammer coming down. The whole scene rides a
+   cell-scale quake wrapper (g31-quakecell, g31ChancePlays.css) that jolts on
+   the same --imp-delay beat, so hit and shake read as one contact. Additive
+   only: the original scenes render unchanged underneath.
+
+   Node cost per lead: quake wrapper 1, laser 2, shockwave 1, shatter 6 - the
+   combos below stay inside the 16-animated-node scene budget.
+   ========================================================================== */
+
+interface Imp {
+  /** the impact beat, ms after delayMs - synced to the scene's own strike */
+  at: number;
+  /** "#rrggbb" tint for the impact vocabulary (one of the card's 3 colours) */
+  tint: string;
+  /** the descending column of light */
+  laser?: boolean;
+  /** ground ring; "wet" flattens it into a low water-crash ellipse */
+  shock?: boolean | "wet";
+  /** shatter silhouette: the struck thing splits in half and sprays chips */
+  glyph?: ReactNode;
+  /** placement in stage percent (one cell = 7.142857; cast centre = 50) */
+  x?: number;
+  y?: number;
+  s?: number;
+  /** stage the beat on the aim vector (art points +x) instead of upright */
+  aim?: boolean;
+  /** slide the beat to the victim's distance along the vector (--fx-len) */
+  len?: boolean;
+}
+
+/** hex "#rrggbb" -> the "r g b" triple --imp-rgb wants. */
+function impRgb(hex: string): string {
+  return `${parseInt(hex.slice(1, 3), 16)} ${parseInt(hex.slice(3, 5), 16)} ${parseInt(hex.slice(5, 7), 16)}`;
+}
+
+/** Shatter silhouettes, painted in the card's own palette. */
+function impGlyph(path: string, fill: string, stroke: string): ReactNode {
+  return (
+    <svg viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+      <path d={path} fill={fill} stroke={stroke} strokeWidth="1.4" strokeLinejoin="round" strokeLinecap="round" />
+    </svg>
+  );
+}
+const IG_ORB = "M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18z";
+const IG_NUG = "M4 15l3-8 7-3 8 4 1 7-9 6z";
+const IG_BONE = "M7 3c2 4 3 6 5 8 2-2 3-4 5-8l2 1c-2 5-4 8-5.6 10L13 21h-2l-.4-7C9 12 7 9 5 4z";
+const IG_DROP = "M12 3c3.4 4.6 5.6 7.4 5.6 10a5.6 5.6 0 0 1-11.2 0C6.4 10.4 8.6 7.6 12 3z";
+
+/** The impact composite, staged over the card's own action point. */
+function ImpactBeat({ imp, delayMs }: { imp: Imp; delayMs: number }) {
+  const s = imp.s ?? 7.2;
+  const x = imp.x ?? 50;
+  const y = imp.y ?? 50;
+  const lenShift = imp.len ? " + var(--fx-len, 3) * 7.142857%" : "";
+  const box: CSSProperties = {
+    left: `calc(${x - s / 2}%${lenShift})`,
+    top: `${y - s / 2}%`,
+    width: `${s}%`,
+    height: `${s}%`,
+  };
+  const inner = (
+    <span className="g31 g31-impactbed absolute inset-0 block">
+      <span className="absolute block" style={box}>
+        {imp.laser && <LaserStrike />}
+        {imp.glyph != null && <PieceShatter glyph={imp.glyph} />}
+        {imp.shock === true && <Shockwave />}
+      </span>
+      {imp.shock === "wet" && (
+        <span
+          className="absolute block"
+          style={{
+            left: `calc(${x - s}%${lenShift})`,
+            top: `${y - s * 0.2}%`,
+            width: `${s * 2}%`,
+            height: `${s * 0.8}%`,
+          }}
+        >
+          <Shockwave />
+        </span>
+      )}
+    </span>
+  );
+  return imp.aim ? <AimStage>{inner}</AimStage> : <BoardWideStage>{inner}</BoardWideStage>;
+}
+
+/** Wrap a card's Render: leads gain the quake wrapper plus the impact beat. */
+function withImpact(Render: SigPlugin["Render"], imp: Imp): SigPlugin["Render"] {
+  function ImpactLead(props: { lead: boolean; role: SigRole; delayMs: number }) {
+    if (props.role !== "lead") return <Render {...props} />;
+    return (
+      <span
+        className="g31 g31-quakecell absolute inset-0 block"
+        style={impactVars(impRgb(imp.tint), (props.delayMs + imp.at) / 1000)}
+      >
+        <Render {...props} />
+        <ImpactBeat imp={imp} delayMs={props.delayMs} />
+      </span>
+    );
+  }
+  return ImpactLead;
+}
+
+/* Per-card cue sheet: each hit lands on ITS scene's strike beat, at ITS
+   action point, in ITS palette - no two siblings share a beat + combo. */
+const IMPACTS: Record<string, Imp> = {
+  // the trunk lid slams back: light column into the open trunk, dust boom
+  bn4_costume_trunk: { at: 540, tint: C_TK.core, laser: true, shock: true, y: 56 },
+  // the cork leaves: a thin column marks its exit, blast ring off the neck
+  bn4_bottled_courage: { at: 460, tint: C_BC.core, laser: true, shock: true, y: 42, s: 5.6 },
+  // the toll coin drops in at the far bank: wet crash at --fx-len, no dry ring
+  hx4_ferrymans_coin: { at: 620, tint: C_FM.core, laser: true, shock: "wet", aim: true, len: true },
+  // the hook strikes the pond: wet crash under the lifted duck
+  bn4_rubber_duck: { at: 520, tint: C_DK.core, laser: true, shock: "wet", y: 58 },
+  // the brackets snap shut on the spinning coin: pinch flash + ring
+  bn4_lucky_coin: { at: 640, tint: C_LC.core, laser: true, shock: true, y: 51 },
+  // the chair lands legs-up: floor boom on the dust beat
+  op_chairs_on_tables: { at: 470, tint: C_CH.core, shock: true, y: 62, s: 8.4 },
+  // the ball's mist parts violently: the sphere splits in half, shards fly
+  op_crystal_ball: { at: 600, tint: C_CB.core, glyph: impGlyph(IG_ORB, C_CB.core, C_CB.deep), shock: true, y: 52 },
+  // the rod yanks down: groundwater bursts as a wet crash down the vector
+  op_dowsing_rod: { at: 560, tint: C_DR.core, glyph: impGlyph(IG_DROP, C_DR.glow, C_DR.deep), shock: "wet", aim: true },
+  // the pendulum is damped dead: the warding gaze spikes down where it stops
+  op_evil_eye_bead: { at: 700, tint: C_EB.core, laser: true, shock: true, y: 62 },
+  // the assay hammer lands: the nugget itself shatters in half
+  op_fools_gold: { at: 440, tint: C_FG.core, glyph: impGlyph(IG_NUG, C_FG.core, C_FG.deep), shock: true, y: 57 },
+  // the pluck: a sunshaft finds the clover and the turf ring thumps
+  op_four_leaf_clover: { at: 540, tint: C_CL.core, laser: true, shock: true, y: 47, s: 6.4 },
+  // the drawn slip snaps open: whisper ring detonates around the name
+  op_gossip_charm: { at: 620, tint: C_GC.core, laser: true, shock: true, y: 44, s: 6 },
+  // the last nail driven home: hammer flash + iron ring
+  op_horseshoe_nail: { at: 470, tint: C_HN.core, laser: true, shock: true, y: 52, s: 6.4 },
+  // the curtain ring slams round: booth-edge boom
+  op_private_booth: { at: 600, tint: C_PB.core, laser: true, shock: true, y: 50, s: 8.8 },
+  // the knucklebone lands: table boom where the foot stops
+  op_rabbits_foot: { at: 640, tint: C_RF.core, shock: true, y: 56, s: 8 },
+  // the dividers stab their final mark on the chart, down the course
+  op_starboard_chart: { at: 560, tint: C_SC.core, laser: true, shock: true, aim: true, len: true, s: 5.6 },
+  // the good hat lifts: a light column takes it off the peg
+  op_sunday_best: { at: 600, tint: C_SB.core, laser: true, shock: true, y: 42, s: 6 },
+  // the dregs settle into a shape: the cup's omen hits as a wet crash
+  op_tea_leaves: { at: 640, tint: C_TL.core, laser: true, shock: "wet", y: 54 },
+  // the wishbone SNAPS: the bone splits in half and sprays chips
+  op_wishbone: { at: 520, tint: C_WB.core, glyph: impGlyph(IG_BONE, C_WB.core, C_WB.deep), shock: true, y: 50 },
+  // the penny topples into the jar at the pawn's square: rim ring at --fx-len
+  ov_lucky_penny: { at: 620, tint: C_LP.core, laser: true, shock: true, aim: true, len: true, s: 6 },
+};
+
+for (const [id, imp] of Object.entries(IMPACTS)) {
+  const play = PLAYS[id];
+  if (play) PLAYS[id] = { config: play.config, Render: withImpact(play.Render, imp) };
+}

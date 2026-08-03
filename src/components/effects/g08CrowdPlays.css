@@ -1077,3 +1077,70 @@ html[data-anim="off"] [class*=" g08-"] {
   animation: none !important;
   opacity: 0 !important;
 }
+
+/* =============================================================================
+   FLAGSHIP IMPACT WAVE: the stage jolt riding each card's impact beat (see the
+   IMPACT table in g08CrowdPlays.tsx). Transform-only, finite, ends at rest.
+   The quake wrapper is one CELL wide, so amplitudes are % of a cell.
+   ========================================================================== */
+
+.g08-quake-s {
+  animation: g08-quake-s calc(0.55s * var(--fx-dur, 1)) linear both;
+  animation-delay: calc(var(--imp-delay, 0.4s) * var(--fx-dur, 1));
+}
+.g08-quake-h {
+  animation: g08-quake-h calc(0.68s * var(--fx-dur, 1)) linear both;
+  animation-delay: calc(var(--imp-delay, 0.4s) * var(--fx-dur, 1));
+}
+@keyframes g08-quake-s {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  18% {
+    transform: translate(-7.5%, 5.0%);
+  }
+  42% {
+    transform: translate(6.3%, -5.0%);
+  }
+  68% {
+    transform: translate(-3.8%, 2.6%);
+  }
+  86% {
+    transform: translate(2.0%, 1.2%);
+  }
+}
+@keyframes g08-quake-h {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  12% {
+    transform: translate(-15%, 9.3%);
+  }
+  28% {
+    transform: translate(12.8%, -10.5%);
+  }
+  46% {
+    transform: translate(-9.3%, -6.9%);
+  }
+  64% {
+    transform: translate(6.9%, 6.9%);
+  }
+  82% {
+    transform: translate(-3.5%, 2.3%);
+  }
+}
+
+/* Animations off: the quake never fires and the rig contributes nothing. */
+html[data-anim="off"] .g08-quake-s,
+html[data-anim="off"] .g08-quake-h {
+  animation: none !important;
+  transform: none !important;
+}
+html[data-anim="off"] .g08-imprig,
+html[data-anim="off"] .g08-imprig * {
+  animation: none !important;
+  transform: none !important;
+  opacity: 0 !important;
+}

@@ -16,6 +16,18 @@ import { grantGuaranteedTier9, pawnRankOk } from "./buffs/helpers";
 import { BUFF_BY_ID } from "./buffs/library";
 import { PLAYABLE_NERFS } from "./nerfs/library";
 import { DEFAULT_CADENCE, NERF_MODE_CADENCE, bankOffer, rerollOffer, rollOffer, rollOpenerOffers, rollSharedTiers } from "./draft";
+import {
+  FxEvent,
+  NerfFilterReport,
+  beginFxCycle,
+  emitClockDelta,
+  emitEffectDelta,
+  emitNerfFilterFx,
+  fxPly,
+  nerfFilterReport,
+  pushFxEvent,
+  snapshotEffects,
+} from "./fxEvents";
 import { Nerf, NerfState, GameContext, Tier } from "./nerf";
 import { RNG } from "./rng";
 import { BoardState, Color, FILE, Move, PieceType, RANK, SQ, Square, squareName } from "./types";
@@ -42,6 +54,12 @@ export interface NerfGame {
   captured: Record<Color, { p: number; n: number; b: number; r: number; q: number; k: number }>;
   /** Present only in draft-mode games: buffs, drafts, and board effects. */
   buffs?: BuffMatchState;
+  /** Transient fx-event log for the animation layer (see fxEvents.ts). Reset
+   * each apply cycle, never serialized, never read by game logic. */
+  fx?: FxEvent[];
+  /** Transient: the nerf filter's report from the most recent legalMoves call,
+   * folded into one fx event per apply cycle. Never serialized. */
+  lastNerfFilter?: NerfFilterReport | null;
 }
 
 function emptyCounts() {
@@ -735,8 +753,23 @@ export function applyTurnStart(game: NerfGame) {
   if (game.buffs?.diff) return;
   const slot = game.board.turn === "w" ? game.white : game.black;
   if (slot.nerf.onTurnStart) {
+    const before = slot.state;
     const ctx = makeContext(game, slot.color);
     slot.state = slot.nerf.onTurnStart(slot.state, ctx, slot.rng);
+    // A state change is the handicap's per-turn heartbeat (a counter ticked, a
+    // phase flipped): narrate it so the UI can pulse the nerf card. Structural
+    // compare because hooks routinely return a fresh object with equal fields.
+    if (
+      slot.state !== before &&
+      JSON.stringify(slot.state) !== JSON.stringify(before)
+    ) {
+      pushFxEvent(game, {
+        kind: "nerf-turnstart",
+        color: slot.color,
+        nerfId: slot.nerf.id,
+        ply: fxPly(game),
+      });
+    }
   }
 }
 
@@ -1067,6 +1100,9 @@ export function legalMoves(game: NerfGame): Move[] {
   // checkmate and drawn by stalemate (see resolveNoMoves), never by a king
   // walking into capture.
   if (game.buffs?.diff) {
+    // No nerfs run during a diff; drop any pre-diff report so the fx layer
+    // never narrates a stale constraint.
+    game.lastNerfFilter = null;
     const mover = game.board.turn;
     const opp: Color = mover === "w" ? "b" : "w";
     // Opponent's attack map on the pre-move board, reused for the castling test.
@@ -1134,7 +1170,14 @@ export function legalMoves(game: NerfGame): Move[] {
     // list while legal moves existed, relax it for this one turn. Every such
     // nerf still shapes play on every turn where at least one legal move
     // survives its filter, which is nearly all of them.
+    const relaxed = filtered.length === 0 && beforeNerf.length > 0;
     all = filtered.length > 0 ? filtered : beforeNerf;
+    // Report what the handicap just did, for the fx layer. Recomputed on every
+    // call with an identical result for a given position, so overwriting is
+    // harmless; playMove folds the freshest report into one event per ply.
+    game.lastNerfFilter = nerfFilterReport(me, slot.nerf.id, beforeNerf, filtered, relaxed);
+  } else {
+    game.lastNerfFilter = null;
   }
 
   if (bs) {
@@ -1436,6 +1479,8 @@ export function playMove(game: NerfGame, move: Move): NerfGame {
     game.captured[move.color][move.captured] += 1;
   }
   game.board = nextBoard;
+  // Fresh fx cycle: the log narrates exactly this ply's observable moments.
+  beginFxCycle(game);
   const bs = game.buffs;
   if (move.drop && bs) {
     // The board changed outside history-replayable makeMove: suspend the
@@ -1468,6 +1513,7 @@ export function playMove(game: NerfGame, move: Move): NerfGame {
       const api = makeBuffApi(game, color);
       for (const { inst, def } of heldBuffs(game, color)) {
         if (!def.onMovePlayed) continue;
+        const effectRefsBefore = snapshotEffects(game);
         const effectsBefore = bs.effects.length;
         const mutationsBefore = bs.mutations ?? 0;
         const clockFxBefore = bs.clockFx?.length ?? 0;
@@ -1491,6 +1537,13 @@ export function playMove(game: NerfGame, move: Move): NerfGame {
           boardSignature(game.board) !== sigBefore
         ) {
           fired.push({ color, index: bs.players[color].buffs.indexOf(inst) });
+          // Narrate the passive's fruition: the hook itself, any effect it
+          // planted (with the victim derived per effect kind), and any clock
+          // raid it requested. Derived-only; replicas replaying the same move
+          // emit the same events.
+          pushFxEvent(game, { kind: "passive-fired", color, cardId: def.id, ply: fxPly(game) });
+          emitEffectDelta(game, effectRefsBefore, def.id);
+          emitClockDelta(game, clockFxBefore, def.id);
         }
       }
     }
@@ -1513,6 +1566,7 @@ export function playMove(game: NerfGame, move: Move): NerfGame {
       }
     }
     // Tick down effects whose timer runs on the mover's turns.
+    const beforeTick = snapshotEffects(game);
     for (const e of bs.effects) {
       if (e.turns != null && effectTickColor(e) === move.color) e.turns -= 1;
     }
@@ -1522,6 +1576,8 @@ export function playMove(game: NerfGame, move: Move): NerfGame {
     // A captured or buff-removed piece leaves its freeze/walnut behind; drop
     // those orphaned markers so they never haunt an empty or enemy-held square.
     pruneOrphanedSquareEffects(game);
+    // Narrate everything that just ticked out or was pruned.
+    emitEffectDelta(game, beforeTick);
   }
   // Check loss conditions
   const result = checkLossConditions(game);
@@ -1615,6 +1671,9 @@ export function playMove(game: NerfGame, move: Move): NerfGame {
   // Apply onTurnStart for the new mover BEFORE legal-move evaluation
   applyTurnStart(game);
   resolveNoMoves(game);
+  // resolveNoMoves just ran legalMoves for the new mover, so the nerf filter's
+  // report is fresh: fold it into this cycle's narration (one event per ply).
+  if (!game.result) emitNerfFilterFx(game);
   return game;
 }
 
@@ -1689,6 +1748,10 @@ export function acquireBuff(game: NerfGame, color: Color, id: string, tier: Tier
     return;
   }
   const api = makeBuffApi(game, color);
+  // Narrates into the CALLER's fx cycle (pickDraftCard / activateBuff own the
+  // reset): a takeBoth pick acquires two cards and both must keep their events.
+  const effectRefsBefore = snapshotEffects(game);
+  const clockFxBefore = bs.clockFx?.length ?? 0;
   def.init?.(inst, api);
   ps.buffs.push(inst);
   if (def.kind === "instant") {
@@ -1696,6 +1759,8 @@ export function acquireBuff(game: NerfGame, color: Color, id: string, tier: Tier
     inst.spent = true;
     settleAfterBuff(game);
   }
+  emitEffectDelta(game, effectRefsBefore, def.id);
+  emitClockDelta(game, clockFxBefore, def.id);
 }
 
 /** Resolve the pending offer by taking the card at `cardIndex`. */
@@ -1709,6 +1774,9 @@ export function pickDraftCard(game: NerfGame, color: Color, cardIndex: number) {
   const takeAll = (ps.flags.takeBoth ?? 0) > 0;
   if (takeAll) ps.flags.takeBoth = (ps.flags.takeBoth ?? 0) - 1;
   ps.offer = null;
+  // Fresh fx cycle: a draft pick (and any instant effects it fires) narrates
+  // on its own, separate from the surrounding moves.
+  beginFxCycle(game);
   const indexes = takeAll ? offer.cards.map((_, i) => i) : [cardIndex];
   for (const i of indexes) {
     acquireBuff(game, color, offer.cards[i].id, offer.cards[i].tier);
@@ -1793,6 +1861,11 @@ export function activateBuff(
   ) {
     return false;
   }
+  // Fresh fx cycle: a use narrates on its own (its effects, its clock raid,
+  // and — via passTurnAfterBuff — anything that ticks out on the handover).
+  beginFxCycle(game);
+  const effectRefsBefore = snapshotEffects(game);
+  const clockFxBefore = bs.clockFx?.length ?? 0;
   const effectsBefore = bs.effects.length;
   def.effect?.(inst, makeBuffApi(game, color), picks);
   // A turn-consuming activation costs the activator this turn, so protective
@@ -1820,6 +1893,8 @@ export function activateBuff(
   // Any activated use can reshape the board, so the activator cannot capture
   // the king until the opponent has replied (same guard as chained moves).
   bs.chainKingGuard = color;
+  emitEffectDelta(game, effectRefsBefore, def.id);
+  emitClockDelta(game, clockFxBefore, def.id);
   settleAfterBuff(game);
   // Using a buff consumes the turn unless the card is a free action (the
   // extra-move family, which already acts within the activator's turn).
@@ -1835,12 +1910,14 @@ export function activateBuff(
  * the new mover's turn, and apply the forced-pass / no-move rules. */
 function passTurnAfterBuff(game: NerfGame, color: Color) {
   const bs = game.buffs!;
+  const beforeTick = snapshotEffects(game);
   for (const e of bs.effects) {
     if (e.turns != null && effectTickColor(e) === color) e.turns -= 1;
   }
   fireExpiredTradeOffs(game);
   bs.effects = bs.effects.filter((e) => e.turns == null || e.turns > 0);
   pruneOrphanedSquareEffects(game);
+  emitEffectDelta(game, beforeTick);
   const opp: Color = color === "w" ? "b" : "w";
   if (bs.extraMoves[color] > 0) {
     bs.extraMoves[color] -= 1;
@@ -1852,6 +1929,9 @@ function passTurnAfterBuff(game: NerfGame, color: Color) {
   game.board.epTarget = null;
   applyTurnStart(game);
   resolveNoMoves(game);
+  // Same narration playMove does after its handover: the new mover's nerf
+  // filter just ran inside resolveNoMoves, so its report is fresh.
+  if (!game.result) emitNerfFilterFx(game);
 }
 
 /** After a buff mutates the board, re-run loss checks (a removal or freeze can

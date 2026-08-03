@@ -4,7 +4,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
-import { Cpu, Eye, Swords, Users } from "lucide-react";
+import { ChevronRight, Cpu, Eye, Swords, Users } from "lucide-react";
 import { QuickMatch } from "./QuickMatch";
 import { AccountUser, ensureAccount, fetchMe } from "@/lib/authClient";
 import { fetchLobbySnapshot } from "@/lib/lobbyClient";
@@ -26,12 +26,14 @@ import { LinkButton } from "@/components/ui/Button";
 // the centerpiece — one hall, not one themed panel on a flat page. Each row
 // still wears its mode color as a plain left border. Same data, same
 // handlers, same navigation as before — only the presentation changed.
-// The four lobby tabs. Quick Play is the default: mode, clock, one button.
+// The two lobby tabs. Play is the default: quick matchmaking front and center
+// with open challenges folded behind a disclosure; Watch & Friends carries the
+// live boards with the friends flow folded the same way. The old four-tab deep
+// links (?tab=quick/challenges/watch/friends) still resolve — see the mapping
+// in LobbyInner — so nothing bookmarked breaks.
 const LOBBY_TABS = [
-  { id: "quick", label: "Quick Play" },
-  { id: "challenges", label: "Challenges" },
-  { id: "watch", label: "Watch" },
-  { id: "friends", label: "Friends" },
+  { id: "play", label: "Play" },
+  { id: "watch", label: "Watch & Friends" },
 ] as const;
 type LobbyTab = (typeof LOBBY_TABS)[number]["id"];
 
@@ -71,10 +73,16 @@ function LobbyInner() {
   const [user, setUser] = useState<AccountUser | null | undefined>(undefined);
   const [lobby, setLobby] = useState<MPLobby | null>(null);
   const [lobbyError, setLobbyError] = useState<string | null>(null);
-  const [tab, setTab] = useState<LobbyTab>("quick");
+  const [tab, setTab] = useState<LobbyTab>("play");
+  // The folded secondary sections: Open challenges inside Play, and the
+  // Play-a-friend flow inside Watch & Friends. Collapsed by default so each
+  // tab leads with exactly one primary thing; deep links and in-page shortcuts
+  // open them explicitly.
+  const [challengesOpen, setChallengesOpen] = useState(false);
+  const [friendsOpen, setFriendsOpen] = useState(false);
   // Bumped by a Retry to force an immediate re-poll of the lobby snapshot.
   const [reloadKey, setReloadKey] = useState(0);
-  // Mode filters for the Challenges and Watch tabs.
+  // Mode filters for the Challenges and Watch sections.
   const [challengeFilter, setChallengeFilter] = useState<"all" | "nerf" | "buff">("all");
   const [watchFilter, setWatchFilter] = useState<"all" | "nerf" | "buff">("all");
   const [showAllPlayers, setShowAllPlayers] = useState(false);
@@ -95,12 +103,37 @@ function LobbyInner() {
   // that WHILE ALREADY on /lobby is a same-segment App Router navigation. The
   // component re-renders without remounting, so the old effect never re-ran —
   // the URL said ?tab=friends while the UI stayed on Quick Play.
+  // Legacy values from the four-tab era map onto the two tabs AND open the
+  // right disclosure, so an old /lobby?tab=challenges or ?tab=friends link
+  // still lands the visitor on the exact content it always did.
   const wantedTab = searchParams.get("tab");
   useEffect(() => {
     queueMicrotask(() => {
-      if (wantedTab && LOBBY_TABS.some((t) => t.id === wantedTab)) setTab(wantedTab as LobbyTab);
+      if (wantedTab === "play" || wantedTab === "quick") {
+        setTab("play");
+      } else if (wantedTab === "challenges") {
+        setTab("play");
+        setChallengesOpen(true);
+      } else if (wantedTab === "watch") {
+        setTab("watch");
+      } else if (wantedTab === "friends") {
+        setTab("watch");
+        setFriendsOpen(true);
+      }
     });
   }, [wantedTab]);
+
+  // A direct challenge (?challenge=name, set by FriendGameProvider) lives in
+  // the friends flow: surface that section so the pre-addressed setup panel is
+  // on screen rather than folded away.
+  const wantedChallenge = searchParams.get("challenge");
+  useEffect(() => {
+    if (!wantedChallenge) return;
+    queueMicrotask(() => {
+      setTab("watch");
+      setFriendsOpen(true);
+    });
+  }, [wantedChallenge]);
 
   useEffect(() => {
     let cancelled = false;
@@ -330,12 +363,12 @@ function LobbyInner() {
           </div>
         )}
 
-        {/* The lobby's four sections as an underline tab row, so the page never
-            stacks them all into one long scroll. Quick Play is the default. One
+        {/* The lobby's two sections as an underline tab row, so the page never
+            stacks them all into one long scroll. Play is the default. One
             flat brass rail runs under the whole row; the active tab is marked by
             a gold underline that sits on that rail (no boxed "folder" borders,
             no double edges against the panel below). The row scrolls sideways on
-            a phone too narrow to fit all four rather than breaking into stacked
+            a phone too narrow to fit both rather than breaking into stacked
             boxes, keeping every tab the same height and baseline. */}
         <div
           role="tablist"
@@ -343,11 +376,13 @@ function LobbyInner() {
           className="dgn-tabscroll mt-6 flex items-stretch gap-4 overflow-x-auto border-b border-[color:var(--edge)] sm:gap-7"
         >
           {LOBBY_TABS.map((t) => {
+            // Play carries the waiting-challenge count (its folded section),
+            // Watch & Friends the live-board count.
             const count =
-              t.id === "challenges"
+              t.id === "play"
                 ? (lobby ? waitingCount : null)
-                : t.id === "watch"
-                  ? (lobby ? lobby.games.length : null)
+                : lobby
+                  ? lobby.games.length
                   : null;
             const selected = tab === t.id;
             return (
@@ -385,121 +420,63 @@ function LobbyInner() {
 
         <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
           <div className="space-y-5 min-w-0 stagger-in">
-            {/* Set up a private game with a specific person: pick a clock and
-                mode, create + share the code (or challenge a named friend), or
-                join with a code you were given — all without leaving /lobby.
-                The friends list lives alongside so one-tap Challenge and the
-                code flow share the tab. */}
-            {tab === "friends" && <FriendsTab />}
-
-            {tab === "challenges" && (
-            /* Open challenges: players waiting in a quick-pairing pool plus
-                friend games waiting for an opponent, each on its own flat row
-                wearing its mode color as a plain left border. */
-            <div role="tabpanel" id="lobby-panel-challenges" aria-labelledby="lobby-tab-challenges" className="dgn-slab dgn-hallpanel dgn-rivets p-5 sm:p-6">
-              <div className="flex items-center justify-between gap-3">
-                <SectionTitle tint="sun" icon={<Swords size={15} aria-hidden />}>
-                  Open challenges
-                </SectionTitle>
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setTab("friends")}
-                    className="inline-flex min-h-[44px] items-center sm:min-h-0 text-xs text-gold-leaf hover:text-gold transition-colors"
-                  >
-                    Create a friend game
-                  </button>
-                  <span className="text-xs text-parchment-400">
-                    {lobby ? `${waitingCount} waiting` : "…"}
-                  </span>
-                </div>
-              </div>
-              <ModeFilter value={challengeFilter} onChange={setChallengeFilter} label="Filter challenges by mode" />
-              {!lobby ? (
-                lobbyError ? (
-                  <LobbyRailError
-                    message="Can't reach the game server, so open challenges aren't available."
-                    onRetry={() => setReloadKey((k) => k + 1)}
-                  />
-                ) : (
-                  <SkeletonRows count={3} />
-                )
-              ) : waitingCount === 0 ? (
-                <HallEmpty
-                  title="No one is waiting right now."
-                  hint="Queue from Quick Play and your seek will appear here for others to answer."
-                />
-              ) : filteredSeeks.length + filteredChallenges.length === 0 ? (
-                <HallEmpty
-                  title={`No ${challengeFilter === "nerf" ? "Nerf" : "Buff"} challenges right now.`}
-                  hint="Switch the filter to All, or queue from Quick Play to start one."
-                />
-              ) : (
-                <ul className="mt-4 space-y-2.5 stagger-in">
-                  {filteredSeeks.map((seek) => (
-                    <SeekRow
-                      key={`${seek.mode ?? "buff"}:${seek.pool}:${seek.name}:${seek.at}`}
-                      seek={seek}
-                      isMine={!!user && user.username === seek.name}
-                      joining={joiningPool === `${seek.mode ?? "buff"}:${seek.pool}`}
-                      busy={joiningPool !== null}
-                      onJoin={() => joinSeek(seek)}
-                    />
-                  ))}
-                  {filteredChallenges.map((challenge) => (
-                    <ChallengeRow key={challenge.id} challenge={challenge} />
-                  ))}
-                </ul>
-              )}
-            </div>
-            )}
-
             {tab === "watch" && (
-            /* Watch a game that's happening right now. */
-            <div role="tabpanel" id="lobby-panel-watch" aria-labelledby="lobby-tab-watch" className="dgn-slab dgn-hallpanel dgn-rivets p-5 sm:p-6">
-              <div className="flex items-center justify-between gap-3">
-                <SectionTitle tint="coral" icon={<Eye size={15} aria-hidden />}>
-                  Live games
-                </SectionTitle>
-                <div className="flex items-center gap-3">
-                  <Link
-                    href="/tv"
-                    className="inline-flex min-h-[44px] items-center sm:min-h-0 text-xs text-gold-leaf hover:text-gold transition-colors"
-                  >
-                    Open Nerf Chess TV
-                  </Link>
-                  <span className="text-xs text-parchment-400">
-                    {lobby ? `${lobby.games.length} in play` : "…"}
-                  </span>
+            /* Watch & Friends: live boards lead; the friends flow (create +
+                share a code, one-tap Challenge, join by code) sits folded
+                beneath so the tab shows one primary thing. */
+            <div role="tabpanel" id="lobby-panel-watch" aria-labelledby="lobby-tab-watch" className="space-y-5">
+              <div className="dgn-slab dgn-hallpanel dgn-rivets p-5 sm:p-6">
+                <div className="flex items-center justify-between gap-3">
+                  <SectionTitle tint="coral" icon={<Eye size={15} aria-hidden />}>
+                    Live games
+                  </SectionTitle>
+                  <div className="flex items-center gap-3">
+                    <Link
+                      href="/tv"
+                      className="inline-flex min-h-[44px] items-center sm:min-h-0 text-xs text-gold-leaf hover:text-gold transition-colors"
+                    >
+                      Open Nerf Chess TV
+                    </Link>
+                    <span className="text-xs text-parchment-400">
+                      {lobby ? `${lobby.games.length} in play` : "…"}
+                    </span>
+                  </div>
                 </div>
-              </div>
-              <ModeFilter value={watchFilter} onChange={setWatchFilter} label="Filter live games by mode" />
-              {!lobby ? (
-                lobbyError ? (
-                  <LobbyRailError
-                    message="Can't reach the game server, so live games aren't available."
-                    onRetry={() => setReloadKey((k) => k + 1)}
+                <ModeFilter value={watchFilter} onChange={setWatchFilter} label="Filter live games by mode" />
+                {!lobby ? (
+                  lobbyError ? (
+                    <LobbyRailError
+                      message="Can't reach the game server, so live games aren't available."
+                      onRetry={() => setReloadKey((k) => k + 1)}
+                    />
+                  ) : (
+                    <SkeletonRows count={3} />
+                  )
+                ) : lobby.games.length === 0 ? (
+                  <HallEmpty
+                    title="No games in play right now."
+                    hint="Answer a challenge and the boards will light up here."
+                  />
+                ) : filteredGames.length === 0 ? (
+                  <HallEmpty
+                    title={`No ${watchFilter === "nerf" ? "Nerf" : "Buff"} games in play right now.`}
+                    hint="Switch the filter to All to see every live board."
                   />
                 ) : (
-                  <SkeletonRows count={3} />
-                )
-              ) : lobby.games.length === 0 ? (
-                <HallEmpty
-                  title="No games in play right now."
-                  hint="Answer a challenge and the boards will light up here."
-                />
-              ) : filteredGames.length === 0 ? (
-                <HallEmpty
-                  title={`No ${watchFilter === "nerf" ? "Nerf" : "Buff"} games in play right now.`}
-                  hint="Switch the filter to All to see every live board."
-                />
-              ) : (
-                <ul className="mt-4 space-y-2.5 stagger-in">
-                  {filteredGames.map((game) => (
-                    <LiveGameRow key={game.id} game={game} />
-                  ))}
-                </ul>
-              )}
+                  <ul className="mt-4 space-y-2.5 stagger-in">
+                    {filteredGames.map((game) => (
+                      <LiveGameRow key={game.id} game={game} />
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              {/* Set up a private game with a specific person: pick a clock and
+                  mode, create + share the code (or challenge a named friend), or
+                  join with a code you were given — all without leaving /lobby.
+                  Folded by default; ?tab=friends and the in-page shortcuts open
+                  it. */}
+              <FriendsSection open={friendsOpen} onToggle={() => setFriendsOpen((v) => !v)} />
             </div>
             )}
 
@@ -516,18 +493,19 @@ function LobbyInner() {
                 visible panel a stray top margin while this one is hidden. */}
             <div
               role="tabpanel"
-              id="lobby-panel-quick"
-              aria-labelledby="lobby-tab-quick"
-              hidden={tab !== "quick"}
+              id="lobby-panel-play"
+              aria-labelledby="lobby-tab-play"
+              hidden={tab !== "play"}
               className="space-y-5"
             >
               {/* The main action: get matched with a real opponent. `active`
-                  gates the portalled mobile sticky bar to the Quick Play tab. */}
-              <QuickMatch active={tab === "quick"} />
+                  gates the portalled mobile sticky bar to the Play tab. */}
+              <QuickMatch active={tab === "play"} />
               {/* The other ways to start a game, as a proper 3-card row beneath
                   the dominant Quick Match panel so matchmaking stays the
-                  headline while these stay one tap away. Each links to its
-                  existing flow (Challenges tab, Friends tab, bot practice). */}
+                  headline while these stay one tap away. Each opens its
+                  existing flow (the challenges fold, the friends fold, bot
+                  practice). */}
               <div>
                 <EngravedLabel>Other ways to play</EngravedLabel>
                 <div className="mt-2.5 grid gap-2.5 sm:grid-cols-3">
@@ -535,13 +513,19 @@ function LobbyInner() {
                     icon={<Swords size={18} aria-hidden />}
                     title="Custom game"
                     description="Set your own clock and mode, then share an open challenge."
-                    onClick={() => setTab("challenges")}
+                    onClick={() => {
+                      setTab("play");
+                      setChallengesOpen(true);
+                    }}
                   />
                   <SecondaryModeCard
                     icon={<Users size={18} aria-hidden />}
                     title="Challenge a friend"
                     description="Create a private game and send the code to someone you know."
-                    onClick={() => setTab("friends")}
+                    onClick={() => {
+                      setTab("watch");
+                      setFriendsOpen(true);
+                    }}
                   />
                   <SecondaryModeCard
                     icon={<Cpu size={18} aria-hidden />}
@@ -550,6 +534,76 @@ function LobbyInner() {
                     href="/play"
                   />
                 </div>
+              </div>
+
+              {/* Open challenges: players waiting in a quick-pairing pool plus
+                  friend games waiting for an opponent, each on its own flat row
+                  wearing its mode color as a plain left border. Folded behind
+                  its header by default (?tab=challenges opens it) so Quick
+                  Match stays the tab's one headline. */}
+              <div className="dgn-slab dgn-hallpanel dgn-rivets p-5 sm:p-6">
+                <DisclosureHeader
+                  controls="lobby-fold-challenges"
+                  open={challengesOpen}
+                  onToggle={() => setChallengesOpen((v) => !v)}
+                  tint="sun"
+                  icon={<Swords size={15} aria-hidden />}
+                  title="Open challenges"
+                  meta={lobby ? `${waitingCount} waiting` : "…"}
+                />
+                {challengesOpen && (
+                  <div id="lobby-fold-challenges">
+                    <div className="mt-1 flex items-center justify-end">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setTab("watch");
+                          setFriendsOpen(true);
+                        }}
+                        className="inline-flex min-h-[44px] items-center sm:min-h-0 text-xs text-gold-leaf hover:text-gold transition-colors"
+                      >
+                        Create a friend game
+                      </button>
+                    </div>
+                    <ModeFilter value={challengeFilter} onChange={setChallengeFilter} label="Filter challenges by mode" />
+                    {!lobby ? (
+                      lobbyError ? (
+                        <LobbyRailError
+                          message="Can't reach the game server, so open challenges aren't available."
+                          onRetry={() => setReloadKey((k) => k + 1)}
+                        />
+                      ) : (
+                        <SkeletonRows count={3} />
+                      )
+                    ) : waitingCount === 0 ? (
+                      <HallEmpty
+                        title="No one is waiting right now."
+                        hint="Queue from Quick Match and your seek will appear here for others to answer."
+                      />
+                    ) : filteredSeeks.length + filteredChallenges.length === 0 ? (
+                      <HallEmpty
+                        title={`No ${challengeFilter === "nerf" ? "Nerf" : "Buff"} challenges right now.`}
+                        hint="Switch the filter to All, or queue from Quick Match to start one."
+                      />
+                    ) : (
+                      <ul className="mt-4 space-y-2.5 stagger-in">
+                        {filteredSeeks.map((seek) => (
+                          <SeekRow
+                            key={`${seek.mode ?? "buff"}:${seek.pool}:${seek.name}:${seek.at}`}
+                            seek={seek}
+                            isMine={!!user && user.username === seek.name}
+                            joining={joiningPool === `${seek.mode ?? "buff"}:${seek.pool}`}
+                            busy={joiningPool !== null}
+                            onJoin={() => joinSeek(seek)}
+                          />
+                        ))}
+                        {filteredChallenges.map((challenge) => (
+                          <ChallengeRow key={challenge.id} challenge={challenge} />
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -793,33 +847,89 @@ const SECTION_TINTS = {
   coral: "border-coral/30 bg-coral/10 text-coral-glow",
 } as const;
 
-// The Friends tab: the one obvious place for playing with friends. The setup
+// The friends fold inside Watch & Friends: the one obvious place for playing
+// with friends, collapsed to its header until opened. When open, the setup
 // flow (clock, mode, create + share a code, join by code) sits left and the
 // friends list with its one-tap Challenge sits right on lg+; below that they
 // stack with setup first. FriendGameSetup's own inline FriendsPanel is
 // suppressed here (showFriends={false}) so the list renders exactly once.
 // On the direct-challenge flow (?challenge=name) the setup panel is already
 // about one opponent, so the list stands down — same as the old inline rule.
-function FriendsTab() {
+function FriendsSection({ open, onToggle }: { open: boolean; onToggle: () => void }) {
   const { challenging } = useFriendGame();
   return (
-    <div
-      role="tabpanel"
-      id="lobby-panel-friends"
-      aria-labelledby="lobby-tab-friends"
-      className={"min-w-0 " + (challenging ? "" : "grid gap-5 lg:grid-cols-2 lg:items-start")}
-    >
+    <div className={"min-w-0 " + (open && !challenging ? "grid gap-5 lg:grid-cols-2 lg:items-start" : "")}>
       <div className="dgn-slab dgn-hallpanel dgn-rivets p-5 sm:p-6">
-        <SectionTitle tint="mint" icon={<Users size={15} aria-hidden />}>
-          Play a friend
-        </SectionTitle>
-        <p className="mt-2 mb-5 text-xs text-parchment-400">
-          Challenge a friend directly. Share a code or pick from your list.
-        </p>
-        <FriendGameSetup showFriends={false} />
+        <DisclosureHeader
+          controls="lobby-fold-friends"
+          open={open}
+          onToggle={onToggle}
+          tint="mint"
+          icon={<Users size={15} aria-hidden />}
+          title="Play a friend"
+        />
+        {open && (
+          <div id="lobby-fold-friends">
+            <p className="mt-2 mb-5 text-xs text-parchment-400">
+              Challenge a friend directly. Share a code or pick from your list.
+            </p>
+            <FriendGameSetup showFriends={false} />
+          </div>
+        )}
       </div>
-      {!challenging && <FriendsPanel />}
+      {open && !challenging && <FriendsPanel />}
     </div>
+  );
+}
+
+// The collapsed-section header used by the lobby's folds, following the
+// DockSectionHeader pattern: the whole header is the toggle (aria-expanded,
+// chevron rotates when open), wearing the same icon-chip + title dress as
+// SectionTitle so folded and always-open sections read alike.
+function DisclosureHeader({
+  controls,
+  open,
+  onToggle,
+  tint,
+  icon,
+  title,
+  meta,
+}: {
+  controls: string;
+  open: boolean;
+  onToggle: () => void;
+  tint: keyof typeof SECTION_TINTS;
+  icon: React.ReactNode;
+  title: string;
+  meta?: string;
+}) {
+  return (
+    <button
+      type="button"
+      aria-expanded={open}
+      aria-controls={controls}
+      onClick={onToggle}
+      className="flex min-h-[44px] w-full items-center gap-2.5 text-left"
+    >
+      <ChevronRight
+        aria-hidden
+        size={15}
+        strokeWidth={2.4}
+        className={
+          "shrink-0 text-parchment-400 transition-transform duration-150 " + (open ? "rotate-90" : "")
+        }
+      />
+      <span
+        aria-hidden
+        className={`grid h-8 w-8 shrink-0 place-items-center border ${SECTION_TINTS[tint]}`}
+      >
+        {icon}
+      </span>
+      <span className="font-display text-2xl text-parchment">{title}</span>
+      {meta != null && (
+        <span className="ml-auto shrink-0 text-xs tabular-nums text-parchment-400">{meta}</span>
+      )}
+    </button>
   );
 }
 

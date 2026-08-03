@@ -25,11 +25,16 @@ export function ClockPill({
   startDelayMs = 0,
   warnLowTime = false,
   draftRunning = false,
+  seat = null,
 }: {
   ms: number;
   active: boolean;
   compact?: boolean;
   startDelayMs?: number;
+  /** Engine color of the seat this pill times, stamped as data-clock-seat so
+   * the clock-raid overlay can find and aim at the on-screen pill. Mobile and
+   * desktop copies share the seat; the overlay picks whichever is visible. */
+  seat?: "w" | "b" | null;
   // When true, this clock belongs to the local player: play a low-time warning
   // as it ticks past 10s, and an urgent tick past 5s. Fires once per crossing
   // and re-arms only if time climbs back above the threshold (increment).
@@ -113,6 +118,7 @@ export function ClockPill({
   const critical = displayMs < 10000;
   return (
     <div
+      data-clock-seat={seat ?? undefined}
       className={
         "plate flex items-center justify-center transition " +
         (compact ? "shrink-0 px-3 py-1.5 " : "p-4 ") +

@@ -28,6 +28,8 @@
     "test:clock-format": "npx -y tsx scripts/test-clock-format.ts",
     "test:passive-registry": "npx -y tsx scripts/test-passive-registry.ts",
     "test:animations": "npx -y tsx scripts/audit-animations.ts",
+    "test:fx-events": "npx -y tsx scripts/test-fx-events.ts",
+    "test:glossary-effects": "npx -y tsx scripts/check-glossary-effects.ts",
     "test:scene-complexity": "npx -y tsx scripts/audit-scene-complexity.ts",
     "test:reduced-motion": "node scripts/check-reduced-motion.cjs",
     "test:emdash": "npx -y tsx scripts/check-emdash.ts",

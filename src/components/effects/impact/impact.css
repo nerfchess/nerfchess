@@ -1,0 +1,247 @@
+/* Impact vocabulary: the shared violent primitives for flagship scenes.
+ *
+ * Scenes that want real physicality — a piece lasered from above and split in
+ * half, debris, a shockwave, the whole stage jolting — compose these instead
+ * of reinventing shatter physics per card (and re-introducing stuck-animation
+ * bugs). Everything here obeys the house contract: transform/opacity only
+ * (the shatter halves are pre-clipped by overflow wrappers, never animated
+ * clip-paths), all durations on var(--fx-dur, 1), one-shot `both` fills that
+ * end at opacity 0, node-cheap (laser 2, shatter 6, shockwave 1, quake 0 --
+ * it is a wrapper class), and dark under html[data-anim="off"] via the global
+ * gate. Tint per scene with --imp-rgb (default warm gold).
+ *
+ * Timeline contract (so composites line up): the laser fires first (~0.5s),
+ * the shatter and shockwave are delayed to its impact beat (--imp-delay,
+ * default 0.4s), the quake rides the same delay. A scene overriding
+ * --imp-delay shifts the whole impact as one.
+ */
+
+/* --- Laser: a column of light hammers down onto the target cell. ----------- */
+.imp-laser {
+  position: absolute;
+  left: 50%;
+  bottom: 50%;
+  width: 16%;
+  height: 460%;
+  transform-origin: bottom center;
+  transform: translateX(-50%) scaleY(0);
+  background: linear-gradient(
+    to top,
+    rgb(var(--imp-rgb, 216 181 110) / 0.95),
+    rgb(var(--imp-rgb, 216 181 110) / 0.4) 55%,
+    rgb(var(--imp-rgb, 216 181 110) / 0) 100%
+  );
+  animation: imp-laser calc(0.55s * var(--fx-dur, 1)) var(--ease-out, ease-out) both;
+  /* The laser LEADS the impact beat by the default 0.4s: with the default
+   * --imp-delay this resolves to 0s (unchanged behaviour), and a scene that
+   * shifts the whole composite later via --imp-delay keeps its laser leading
+   * the shatter/shockwave by the same margin instead of firing at mount. */
+  animation-delay: calc((var(--imp-delay, 0.4s) - 0.4s) * var(--fx-dur, 1));
+}
+@keyframes imp-laser {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) scaleY(0);
+  }
+  18% {
+    opacity: 1;
+    transform: translateX(-50%) scaleY(1) scaleX(0.35);
+  }
+  45% {
+    opacity: 1;
+    transform: translateX(-50%) scaleY(1) scaleX(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) scaleY(1) scaleX(0.15);
+  }
+}
+/* The ground flare where the column lands. */
+.imp-laser-flare {
+  position: absolute;
+  inset: 18%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(247, 241, 227, 0.95),
+    rgb(var(--imp-rgb, 216 181 110) / 0.5) 45%,
+    rgb(var(--imp-rgb, 216 181 110) / 0) 72%
+  );
+  transform: scale(0);
+  animation: imp-flare calc(0.5s * var(--fx-dur, 1)) var(--ease-out, ease-out) both;
+  animation-delay: calc(var(--imp-delay, 0.4s) * var(--fx-dur, 1) - 0.15s * var(--fx-dur, 1));
+}
+@keyframes imp-flare {
+  0% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.5);
+  }
+}
+
+/* --- Shatter: the struck piece splits in half and falls apart. ------------- */
+/* Two overflow-hidden half-windows sit over the cell; each carries a full-size
+   glyph layer (the scene supplies the piece silhouette or a stand-in slab as
+   the child), pre-clipped to its half. The halves hinge apart, drop, and fade.
+   Four shards spray on the impact beat. */
+.imp-half {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 50%;
+  overflow: hidden;
+}
+.imp-half--l {
+  left: 0;
+}
+.imp-half--r {
+  right: 0;
+}
+.imp-half--l > * {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 200%;
+  height: 100%;
+  animation: imp-half-l calc(0.9s * var(--fx-dur, 1)) var(--ease-io, ease-in-out) both;
+  animation-delay: calc(var(--imp-delay, 0.4s) * var(--fx-dur, 1));
+}
+.imp-half--r > * {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 200%;
+  height: 100%;
+  animation: imp-half-r calc(0.9s * var(--fx-dur, 1)) var(--ease-io, ease-in-out) both;
+  animation-delay: calc(var(--imp-delay, 0.4s) * var(--fx-dur, 1));
+}
+@keyframes imp-half-l {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) rotate(0deg);
+  }
+  35% {
+    opacity: 1;
+    transform: translate(-6%, 2%) rotate(-7deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-14%, 26%) rotate(-16deg);
+  }
+}
+@keyframes imp-half-r {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) rotate(0deg);
+  }
+  35% {
+    opacity: 1;
+    transform: translate(6%, 3%) rotate(8deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(15%, 28%) rotate(18deg);
+  }
+}
+/* Shards: four square chips thrown from the split. Direction per nth-child. */
+.imp-shard {
+  position: absolute;
+  left: 46%;
+  top: 42%;
+  width: 9%;
+  height: 9%;
+  background: rgb(var(--imp-rgb, 216 181 110) / 0.85);
+  animation: imp-shard calc(0.8s * var(--fx-dur, 1)) var(--ease-out, ease-out) both;
+  animation-delay: calc(var(--imp-delay, 0.4s) * var(--fx-dur, 1));
+}
+.imp-shard:nth-child(1) {
+  --sx: -140%;
+  --sy: -170%;
+  --sr: -160deg;
+}
+.imp-shard:nth-child(2) {
+  --sx: 160%;
+  --sy: -120%;
+  --sr: 200deg;
+}
+.imp-shard:nth-child(3) {
+  --sx: -180%;
+  --sy: 90%;
+  --sr: -240deg;
+}
+.imp-shard:nth-child(4) {
+  --sx: 130%;
+  --sy: 140%;
+  --sr: 180deg;
+}
+@keyframes imp-shard {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) rotate(0) scale(1);
+  }
+  12% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--sx, 100%), var(--sy, -100%)) rotate(var(--sr, 180deg)) scale(0.5);
+  }
+}
+
+/* --- Shockwave: one expanding ground ring from the impact point. ----------- */
+.imp-shockwave {
+  position: absolute;
+  inset: 24%;
+  border: 3px solid rgb(var(--imp-rgb, 216 181 110) / 0.8);
+  border-radius: 50%;
+  transform: scale(0.2);
+  animation: imp-shockwave calc(0.7s * var(--fx-dur, 1)) var(--ease-out, ease-out) both;
+  animation-delay: calc(var(--imp-delay, 0.4s) * var(--fx-dur, 1));
+}
+@keyframes imp-shockwave {
+  0% {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2.6);
+  }
+}
+
+/* --- Quake: the scene's own stage jolts (never the board crop itself). ----- */
+/* A wrapper class for the scene root: plugin scenes cannot reach the Board's
+   fx-board-shake, and must not — a scene owns only its stage. Finite, ends at
+   rest, no fill residue. */
+.imp-quake {
+  animation: imp-quake calc(0.6s * var(--fx-dur, 1)) linear both;
+  animation-delay: calc(var(--imp-delay, 0.4s) * var(--fx-dur, 1));
+}
+@keyframes imp-quake {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  15% {
+    transform: translate(-1.1%, 0.7%);
+  }
+  35% {
+    transform: translate(1%, -0.8%);
+  }
+  55% {
+    transform: translate(-0.7%, -0.5%);
+  }
+  75% {
+    transform: translate(0.6%, 0.6%);
+  }
+}

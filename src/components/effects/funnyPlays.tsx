@@ -15,6 +15,7 @@
 import type { CSSProperties, ReactNode } from "react";
 import type { SigPlugin, SigRole } from "./sigPlugins";
 import { BoardFrame } from "./stage";
+import { LaserStrike, PieceShatter, Shockwave, QUAKE_CLASS, impactVars } from "./impact/impact";
 import "./funnyPlays.css";
 
 /* ------------------------------------------------------------------------- */
@@ -26,11 +27,21 @@ const d = (ms: number): CSSProperties => ({ animationDelay: `${ms}ms` });
 const dv = (ms: number, vars: Record<string, string>): CSSProperties =>
   ({ animationDelay: `${ms}ms`, ...vars }) as CSSProperties;
 
-/** Square-local stage (target hits and small leads). */
-function Stage({ children, inset = "0" }: { children: ReactNode; inset?: string }) {
+/** Square-local stage (target hits and small leads).
+ *
+ * FLAGSHIP WAVE: `quakeMs` (absolute, like every delay here) makes the whole
+ * mini-stage JOLT on the skit's punchline beat via the shared imp-quake
+ * wrapper - in-scene only, the real board crop never shakes. */
+function Stage({ children, inset = "0", quakeMs }: { children: ReactNode; inset?: string; quakeMs?: number }) {
   return (
     <span className="fnp pointer-events-none absolute z-20 block" style={{ inset }} aria-hidden="true">
-      {children}
+      {quakeMs != null ? (
+        <span className={`${QUAKE_CLASS} absolute inset-0 block`} style={impactVars(undefined, quakeMs / 1000)}>
+          {children}
+        </span>
+      ) : (
+        children
+      )}
     </span>
   );
 }
@@ -41,10 +52,17 @@ function Stage({ children, inset = "0" }: { children: ReactNode; inset?: string 
  * Board.tsx already re-centres the wrapper on the board for a "board" anchor,
  * so this canvas must NOT correct itself a second time. Cast-anchored leads
  * use `Framed`. */
-function Wide({ children }: { children: ReactNode }) {
+function Wide({ children, quakeMs }: { children: ReactNode; quakeMs?: number }) {
+  // FLAGSHIP WAVE: quakeMs jolts the whole 14-cell canvas on the skit's
+  // punchline beat (shared imp-quake wrapper; in-scene only).
   return (
     <span className="fnp pointer-events-none absolute inset-0 z-30" aria-hidden="true">
-      <span className="absolute left-[-650%] top-[-650%] block h-[1400%] w-[1400%]">{children}</span>
+      <span
+        className={`absolute left-[-650%] top-[-650%] block h-[1400%] w-[1400%]${quakeMs != null ? ` ${QUAKE_CLASS}` : ""}`}
+        style={quakeMs != null ? impactVars(undefined, quakeMs / 1000) : undefined}
+      >
+        {children}
+      </span>
     </span>
   );
 }
@@ -59,13 +77,25 @@ function Wide({ children }: { children: ReactNode }) {
  * re-expanded to 175% of the frame and offset -37.5%, which reproduces the old
  * framing exactly at any anchor. The cast square then carries the play's own
  * local beats; see `Spot`. */
-function Framed({ children }: { children: ReactNode }) {
+function Framed({ children, quakeMs }: { children: ReactNode; quakeMs?: number }) {
+  // FLAGSHIP WAVE: the quake rides an INNER wrapper because `.fx-stage`'s own
+  // transform is the anchor clamp, and imp-quake's keyframed transform would
+  // override it mid-jolt (same fix godPlays/gamblingPlays use).
+  const inner = (
+    <BoardFrame>
+      <span className="absolute left-[-37.5%] top-[-37.5%] block h-[175%] w-[175%]">{children}</span>
+    </BoardFrame>
+  );
   return (
     <span className="fnp pointer-events-none absolute inset-0 z-30" aria-hidden="true">
       <span className="fx-stage absolute left-[-650%] top-[-650%] block h-[1400%] w-[1400%]">
-        <BoardFrame>
-          <span className="absolute left-[-37.5%] top-[-37.5%] block h-[175%] w-[175%]">{children}</span>
-        </BoardFrame>
+        {quakeMs != null ? (
+          <span className={`${QUAKE_CLASS} absolute inset-0 block`} style={impactVars(undefined, quakeMs / 1000)}>
+            {inner}
+          </span>
+        ) : (
+          inner
+        )}
       </span>
     </span>
   );
@@ -113,6 +143,37 @@ function Spot({
         className="fnp-spot-drift absolute block"
         style={{ left: "26%", top: "26%", width: "48%", height: "48%", borderRadius: "50%", background: `radial-gradient(circle, ${tone} 0%, transparent 66%)`, ...settle }}
       />
+    </span>
+  );
+}
+
+/** FLAGSHIP WAVE: the cast square's IMPACT composite, mounted beside `Spot`.
+ * The shared impact vocabulary at one-cell scale: an optional laser column
+ * hammers down onto the square the joke was played on, an optional prop is
+ * SPLIT IN HALF with shard spray (slapstick physics, not grimdark - the thing
+ * that shatters is the gag's own prop), and an optional ground shockwave
+ * rolls out. All of it lands on one punchline beat (`atMs`, absolute like
+ * every other delay here) and is tinted with the play's own colour; pair it
+ * with the stage `quakeMs` on the same beat so the bonk and the jolt read as
+ * ONE moment of contact. */
+function Slam({
+  rgb,
+  atMs,
+  laser = false,
+  shock = true,
+  shatter,
+}: {
+  rgb: string;
+  atMs: number;
+  laser?: boolean;
+  shock?: boolean;
+  shatter?: ReactNode;
+}) {
+  return (
+    <span className="fnp pointer-events-none absolute inset-0 z-30 block" aria-hidden="true" style={impactVars(rgb, atMs / 1000)}>
+      {laser && <LaserStrike />}
+      {shatter != null && <PieceShatter glyph={shatter} />}
+      {shock && <Shockwave />}
     </span>
   );
 }
@@ -276,6 +337,10 @@ function EmotionalSupportPawnPlay({ lead, role, delayMs }: SceneProps) {
         <g className="fnp-rise" style={d(delayMs + 880)}><Heart x={40} y={16} fill="#f2909f" /></g>
       </svg>
       </Stage>
+      {/* FLAGSHIP "Heart Thump": the pocket-dive lands with a soft pink
+          shockwave rolling off the square - the gentlest hit in the module,
+          on purpose. */}
+      <Slam rgb="242 119 143" atMs={delayMs + 700} />
       <Spot tone="#8fd0a0" glow="#fff2c9" tell={d(delayMs + 80)} hit={d(delayMs + 700)} settle={d(delayMs + 1700)} />
     </>
   );
@@ -317,7 +382,7 @@ function StreamSniperPlay({ lead, role, delayMs }: SceneProps) {
   }
   return (
     <>
-      <Stage inset="-110%">
+      <Stage inset="-110%" quakeMs={delayMs + 760}>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         {/* their stream: player cam + chat, LIVE badge blinking */}
         <g className="fnp-linger" style={d(delayMs)}>
@@ -346,6 +411,20 @@ function StreamSniperPlay({ lead, role, delayMs }: SceneProps) {
         </g>
       </svg>
       </Stage>
+      {/* FLAGSHIP "The Shot": on lock-on, the sniper round lasers straight
+          down onto the square and the streamer bust SPLITS IN HALF, shards
+          flying, ground ring, whole rig jolt - the full impact vocabulary. */}
+      <Slam
+        rgb="232 77 91"
+        atMs={delayMs + 760}
+        laser
+        shatter={
+          <svg viewBox="0 0 10 10" className="h-full w-full" aria-hidden="true">
+            <circle cx={5} cy={3.4} r={2} fill="#5b6b8c" />
+            <path d="M1.4 9.4 q0.9 -4.2 3.6 -4.2 q2.7 0 3.6 4.2 Z" fill="#5b6b8c" />
+          </svg>
+        }
+      />
       <Spot tone="#e84d5b" glow="#ffd76a" tell={d(delayMs + 90)} hit={d(delayMs + 760)} settle={d(delayMs + 1800)} />
     </>
   );
@@ -384,7 +463,7 @@ function LagSpikePlay({ lead, role, delayMs }: SceneProps) {
   }
   return (
     <>
-      <Stage inset="-100%">
+      <Stage inset="-100%" quakeMs={delayMs + 820}>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         {/* connection HUD: it stutters, drops bars, and hard-freezes */}
         <g className="fnp-jitter" style={d(delayMs)}>
@@ -410,6 +489,10 @@ function LagSpikePlay({ lead, role, delayMs }: SceneProps) {
         </g>
       </svg>
       </Stage>
+      {/* FLAGSHIP "Packet Spike": the lag spike is a literal spike - a cold
+          blue column lasers down through the HUD as the connection flatlines,
+          shock ring + stage judder on the freeze frame. */}
+      <Slam rgb="90 160 232" atMs={delayMs + 820} laser />
       <Spot tone="#5aa0e8" glow="#e8edf6" tell={d(delayMs + 100)} hit={d(delayMs + 820)} settle={d(delayMs + 1900)} />
     </>
   );
@@ -464,7 +547,7 @@ function CtrlZPlay({ lead, role, delayMs }: SceneProps) {
   }
   return (
     <>
-      <Stage inset="-100%">
+      <Stage inset="-100%" quakeMs={delayMs + 700}>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         {/* the shortcut: Ctrl, then Z, pressed in order */}
         <g className="fnp-press" style={d(delayMs)}><Keycap x={16} y={70} w={26} label="Ctrl" /></g>
@@ -487,6 +570,10 @@ function CtrlZPlay({ lead, role, delayMs }: SceneProps) {
         </g>
       </svg>
       </Stage>
+      {/* FLAGSHIP "History Snap": time snaps back into place with a cool blue
+          ground ring and a gentle stage jolt as the ghost solidifies - the
+          undo has WEIGHT now. */}
+      <Slam rgb="143 180 255" atMs={delayMs + 700} />
       <Spot tone="#8fb4ff" glow="#e6efff" tell={d(delayMs + 80)} hit={d(delayMs + 700)} settle={d(delayMs + 1750)} />
     </>
   );
@@ -549,7 +636,7 @@ function RubberChickenPlay({ lead, role, delayMs }: SceneProps) {
   }
   return (
     <>
-      <Stage inset="-85%">
+      <Stage inset="-85%" quakeMs={delayMs + 900}>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="fnp-bonk" style={d(delayMs)}>
           <g transform="translate(8 72) rotate(-10)"><Chicken s={1.05} /></g>
@@ -566,6 +653,18 @@ function RubberChickenPlay({ lead, role, delayMs }: SceneProps) {
         </g>
       </svg>
       </Stage>
+      {/* FLAGSHIP "BONK Physics": the chicken hits so hard the BONK star
+          itself splits in half and falls apart in golden chips, shock ring
+          under it, whole stage wobbling on the bonk beat. */}
+      <Slam
+        rgb="255 210 63"
+        atMs={delayMs + 900}
+        shatter={
+          <svg viewBox="0 0 10 10" className="h-full w-full" aria-hidden="true">
+            <path d="M5 0.6 L6.3 3.4 L9.4 3.6 L7 5.6 L7.9 8.8 L5 7 L2.1 8.8 L3 5.6 L0.6 3.6 L3.7 3.4 Z" fill="#ffd23f" stroke="#c9931d" strokeWidth="0.5" strokeLinejoin="round" />
+          </svg>
+        }
+      />
       <Spot tone="#ffd76a" glow="#e84d5b" tell={d(delayMs + 110)} hit={d(delayMs + 900)} settle={d(delayMs + 2000)} />
     </>
   );
@@ -596,7 +695,7 @@ function DayOnePatchPlay({ lead, role, delayMs }: SceneProps) {
   }
   return (
     <>
-      <Wide>
+      <Wide quakeMs={delayMs + 840}>
       <Wash color="rgba(70,84,116,0.2)" delayMs={delayMs} />
       <Prop left="33%" top="34%" width="34%" height="26%">
         <svg viewBox="0 0 100 74" className="h-full w-full">
@@ -627,6 +726,20 @@ function DayOnePatchPlay({ lead, role, delayMs }: SceneProps) {
       </Prop>
       <Boom color="rgba(154,165,186,0.85)" delayMs={delayMs + 1020} />
       </Wide>
+      {/* FLAGSHIP "Nerf Hammer": the patch beam lasers the fresh card on the
+          cast square and its old colourful self SPLITS IN HALF - the full
+          laser-shatter-shockwave composite, plus the updater window jolt. */}
+      <Slam
+        rgb="232 162 77"
+        atMs={delayMs + 840}
+        laser
+        shatter={
+          <svg viewBox="0 0 10 10" className="h-full w-full" aria-hidden="true">
+            <rect x={2.4} y={1} width={5.2} height={8} rx={0.9} fill="#b98cff" stroke="#6c4bb0" strokeWidth="0.5" />
+            <circle cx={5} cy={3.4} r={1.1} fill="#fff4d6" opacity={0.85} />
+          </svg>
+        }
+      />
       <Spot tone="#8fd0a0" glow="#e8a24d" tell={d(delayMs + 90)} hit={d(delayMs + 840)} settle={d(delayMs + 1900)} />
     </>
   );
@@ -657,7 +770,7 @@ function BattlePassPlay({ lead, role, delayMs }: SceneProps) {
   }
   return (
     <>
-      <Wide>
+      <Wide quakeMs={delayMs + 1200}>
       <Wash color="rgba(201,147,29,0.16)" delayMs={delayMs} />
       <Prop left="32%" top="36%" width="36%" height="22%">
         <svg viewBox="0 0 110 64" className="h-full w-full">
@@ -700,6 +813,10 @@ function BattlePassPlay({ lead, role, delayMs }: SceneProps) {
       </Prop>
       <Boom color="rgba(255,215,106,0.85)" delayMs={delayMs + 1200} />
       </Wide>
+      {/* FLAGSHIP "Tier-Up Drop": the season reward lands like loot - a gold
+          ground shockwave rolls off the square as the coins fountain and the
+          whole ticket jolts on the reward beat. */}
+      <Slam rgb="255 215 106" atMs={delayMs + 1200} />
       <Spot tone="#b98cff" glow="#ffd76a" tell={d(delayMs + 100)} hit={d(delayMs + 880)} settle={d(delayMs + 2000)} />
     </>
   );
@@ -746,7 +863,7 @@ function PopUpAdPlay({ lead, role, delayMs }: SceneProps) {
   }
   return (
     <>
-      <Framed>
+      <Framed quakeMs={delayMs + 760}>
       <Wash color="rgba(232,162,77,0.16)" delayMs={delayMs} />
       {/* second ad sneaks in behind, offset */}
       <Prop left="45%" top="42%" width="22%" height="16%">
@@ -773,6 +890,11 @@ function PopUpAdPlay({ lead, role, delayMs }: SceneProps) {
       </Prop>
       <Boom color="rgba(232,162,77,0.85)" delayMs={delayMs + 350} />
       </Framed>
+      {/* FLAGSHIP "Double Pop": each unclosable window bounces in with its own
+          ground shockwave on the cast square - two rings, two beats, and the
+          stage rattles when the second one lands on top. */}
+      <Slam rgb="232 162 77" atMs={delayMs + 350} />
+      <Slam rgb="124 92 214" atMs={delayMs + 1060} />
       <Spot tone="#e8a24d" glow="#e84d5b" tell={d(delayMs + 80)} hit={d(delayMs + 760)} settle={d(delayMs + 1850)} />
     </>
   );
@@ -811,7 +933,7 @@ function MuteButtonPlay({ lead, role, delayMs }: SceneProps) {
   }
   return (
     <>
-      <Framed>
+      <Framed quakeMs={delayMs + 880}>
       <Wash color="rgba(232,77,91,0.14)" delayMs={delayMs} />
       <Prop left="37%" top="35%" width="26%" height="24%">
         <svg viewBox="0 0 100 74" className="h-full w-full">
@@ -841,6 +963,20 @@ function MuteButtonPlay({ lead, role, delayMs }: SceneProps) {
       </Prop>
       <Boom color="rgba(232,77,91,0.85)" delayMs={delayMs + 980} />
       </Framed>
+      {/* FLAGSHIP "Silenced": the mute slash comes down like a guillotine and
+          the loudspeaker on the square is CHOPPED IN HALF - no ring, no blast,
+          just the cone falling apart in total, pointed silence. */}
+      <Slam
+        rgb="232 77 91"
+        atMs={delayMs + 880}
+        shock={false}
+        shatter={
+          <svg viewBox="0 0 10 10" className="h-full w-full" aria-hidden="true">
+            <path d="M1.4 4 h1.8 l2.6 -2.4 v6.8 l-2.6 -2.4 h-1.8 Z" fill="#39435c" />
+            <path d="M7 3.4 a2.6 2.6 0 0 1 0 3.2 M8.2 2.4 a4.2 4.2 0 0 1 0 5.2" fill="none" stroke="#5aa0e8" strokeWidth="0.7" strokeLinecap="round" />
+          </svg>
+        }
+      />
       <Spot tone="#e84d5b" glow="#c3cddd" tell={d(delayMs + 90)} hit={d(delayMs + 800)} settle={d(delayMs + 1900)} />
     </>
   );
@@ -875,7 +1011,7 @@ function SkillIssuePlay({ lead, role, delayMs }: SceneProps) {
   }
   return (
     <>
-      <Wide>
+      <Wide quakeMs={delayMs + 900}>
       <Wash color="rgba(232,162,77,0.14)" delayMs={delayMs} />
       <Prop left="35%" top="34%" width="30%" height="24%">
         <svg viewBox="0 0 100 74" className="h-full w-full">
@@ -901,6 +1037,21 @@ function SkillIssuePlay({ lead, role, delayMs }: SceneProps) {
       </Prop>
       <Boom color="rgba(232,77,91,0.8)" delayMs={delayMs + 1150} />
       </Wide>
+      {/* FLAGSHIP "Diagnosis Beam": the verdict comes down from on high - a
+          red column lasers the square and the big L plate SPLITS IN HALF under
+          it while the gauge rig jolts. Case closed. */}
+      <Slam
+        rgb="232 77 91"
+        atMs={delayMs + 900}
+        laser
+        shock={false}
+        shatter={
+          <svg viewBox="0 0 10 10" className="h-full w-full" aria-hidden="true">
+            <rect x={1.6} y={1.6} width={6.8} height={6.8} rx={1.2} fill="#39445c" stroke="#e84d5b" strokeWidth="0.6" />
+            <path d="M3.8 3.2 V7 H6.6" fill="none" stroke="#ffd76a" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        }
+      />
       <Spot tone="#e84d5b" glow="#ffd76a" tell={d(delayMs + 110)} hit={d(delayMs + 900)} settle={d(delayMs + 2050)} />
     </>
   );
@@ -937,7 +1088,7 @@ function AltF4Play({ lead, role, delayMs }: SceneProps) {
   }
   return (
     <>
-      <Wide>
+      <Wide quakeMs={delayMs + 1140}>
       <Wash color="rgba(57,68,92,0.22)" delayMs={delayMs} />
       {/* their draft client, mid-draft */}
       <Prop left="34%" top="32%" width="30%" height="24%">
@@ -972,6 +1123,20 @@ function AltF4Play({ lead, role, delayMs }: SceneProps) {
       </Prop>
       <Boom color="rgba(232,77,91,0.85)" delayMs={delayMs + 1100} />
       </Wide>
+      {/* FLAGSHIP "Force Quit": the draft window does not close, it CRASHES -
+          the little window slab on the square splits in half with debris and a
+          steel-grey shockwave as the whole desktop jolts. gg. */}
+      <Slam
+        rgb="154 165 186"
+        atMs={delayMs + 1140}
+        shatter={
+          <svg viewBox="0 0 10 10" className="h-full w-full" aria-hidden="true">
+            <rect x={1.2} y={2} width={7.6} height={6} rx={0.8} fill="#e8edf6" stroke="#39445c" strokeWidth="0.5" />
+            <rect x={1.2} y={2} width={7.6} height={1.8} rx={0.8} fill="#39445c" />
+            <rect x={7} y={2.3} width={1.4} height={1.2} rx={0.3} fill="#e84d5b" />
+          </svg>
+        }
+      />
       <Spot tone="#5aa0e8" glow="#e8edf6" tell={d(delayMs + 90)} hit={d(delayMs + 820)} settle={d(delayMs + 1900)} />
     </>
   );
@@ -1068,6 +1233,10 @@ function TouchGrassPlay({ lead, role, delayMs }: SceneProps) {
       </Prop>
       <Boom color="rgba(111,191,95,0.85)" delayMs={delayMs + 850} />
       </Wide>
+      {/* FLAGSHIP "Fresh Air": one green shockwave breathes out from the cast
+          square as the meadow takes - deliberately the softest hit here; the
+          prescription is calm, not violence. */}
+      <Slam rgb="111 191 95" atMs={delayMs + 940} />
       <Spot tone="#8fd0a0" glow="#ffd76a" tell={d(delayMs + 120)} hit={d(delayMs + 940)} settle={d(delayMs + 2100)} />
     </>
   );
@@ -1145,6 +1314,10 @@ function MainCharacterPlay({ lead, role, delayMs }: SceneProps) {
       </Prop>
       <Boom color="rgba(255,215,106,0.85)" delayMs={delayMs + 1000} />
       </Framed>
+      {/* FLAGSHIP "Follow Spot": the spotlight is a literal beam - a golden
+          column lasers down onto the star's square with a footlight ring. No
+          quake: nothing shakes the main character. */}
+      <Slam rgb="255 215 106" atMs={delayMs + 880} laser />
       <Spot tone="#ffd76a" glow="#f2909f" tell={d(delayMs + 100)} hit={d(delayMs + 880)} settle={d(delayMs + 2050)} />
     </>
   );
@@ -1190,7 +1363,7 @@ function SmurfAccountPlay({ lead, role, delayMs }: SceneProps) {
   }
   return (
     <>
-      <Framed>
+      <Framed quakeMs={delayMs + 840}>
       <Wash color="rgba(90,160,232,0.16)" delayMs={delayMs} />
       <Prop left="34%" top="33%" width="30%" height="24%">
         <svg viewBox="0 0 100 74" className="h-full w-full">
@@ -1223,6 +1396,10 @@ function SmurfAccountPlay({ lead, role, delayMs }: SceneProps) {
       </Prop>
       <Boom color="rgba(90,160,232,0.85)" delayMs={delayMs + 1200} />
       </Framed>
+      {/* FLAGSHIP "Shades Drop": the rating reveal hits like a record scratch -
+          a blue shockwave off the square and a stage jolt the instant the
+          sunglasses land. Everyone felt that. */}
+      <Slam rgb="90 160 232" atMs={delayMs + 840} />
       <Spot tone="#5aa0e8" glow="#8fd0a0" tell={d(delayMs + 90)} hit={d(delayMs + 840)} settle={d(delayMs + 1950)} />
     </>
   );
@@ -1264,7 +1441,7 @@ function PayToWinPlay({ lead, role, delayMs }: SceneProps) {
   }
   return (
     <>
-      <Framed>
+      <Framed quakeMs={delayMs + 920}>
       <Wash color="rgba(201,147,29,0.18)" delayMs={delayMs} />
       <Prop left="34%" top="32%" width="30%" height="26%">
         <svg viewBox="0 0 100 88" className="h-full w-full">
@@ -1313,6 +1490,10 @@ function PayToWinPlay({ lead, role, delayMs }: SceneProps) {
       </Prop>
       <Boom color="rgba(255,215,106,0.85)" delayMs={delayMs + 1050} />
       </Framed>
+      {/* FLAGSHIP "Money Beam": wealth descends from above - a golden column
+          lasers the cast square as the register approves, gold ring, table
+          jolt. Both cards, thanks. */}
+      <Slam rgb="255 215 106" atMs={delayMs + 920} laser />
       <Spot tone="#ffd76a" glow="#b98cff" tell={d(delayMs + 100)} hit={d(delayMs + 920)} settle={d(delayMs + 2100)} />
     </>
   );
@@ -1362,7 +1543,7 @@ function ExpansionPermitPlay({ lead, role, delayMs }: SceneProps) {
   const caution = "#ffb454";
   return (
     <>
-      <Framed>
+      <Framed quakeMs={delayMs + 860}>
       <Wash color="rgba(201,147,29,0.16)" delayMs={delayMs} />
       <Prop left="30%" top="30%" width="40%" height="34%">
         <svg viewBox="0 0 120 88" className="h-full w-full">
@@ -1410,6 +1591,19 @@ function ExpansionPermitPlay({ lead, role, delayMs }: SceneProps) {
       </Prop>
       <Boom color="rgba(255,215,106,0.85)" delayMs={delayMs + 1180} />
       </Framed>
+      {/* FLAGSHIP "Demolition Permit": construction means DEMOLITION first -
+          the caution panel on the cast square is split in half with a hard-hat
+          orange shockwave and a full site jolt as the ninth file bolts on. */}
+      <Slam
+        rgb="255 180 84"
+        atMs={delayMs + 860}
+        shatter={
+          <svg viewBox="0 0 10 10" className="h-full w-full" aria-hidden="true">
+            <rect x={1.4} y={1.8} width={7.2} height={6.4} rx={0.5} fill="#3a3128" stroke="#ffb454" strokeWidth="0.5" />
+            <path d="M1.4 3.2 h7.2 M1.4 5 h7.2 M1.4 6.8 h7.2" stroke="#ffb454" strokeWidth="0.8" opacity={0.6} />
+          </svg>
+        }
+      />
       <Spot tone="#e8a24d" glow="#8fd0a0" tell={d(delayMs + 90)} hit={d(delayMs + 860)} settle={d(delayMs + 1950)} />
     </>
   );

@@ -42,6 +42,7 @@ import "./g28MasonPlays.css";
 import type { CSSProperties, ReactNode } from "react";
 import type { SigPlugin, SigRole } from "./sigPlugins";
 import { AimStage, BoardFrame, BoardWideStage } from "./stage";
+import { LaserStrike, PieceShatter, Shockwave, QUAKE_CLASS, impactVars } from "./impact/impact";
 
 interface SceneProps {
   lead: boolean;
@@ -168,12 +169,24 @@ function Cut({ d, children }: { d: number; children: ReactNode }) {
 }
 
 /** Cast-anchored lead: the work on the cast square, `frame` over the board. */
-function Lead({ d, frame, children }: { d: number; frame?: ReactNode; children: ReactNode }) {
+function Lead({ d, frame, imp, children }: { d: number; frame?: ReactNode; imp?: ImpCue; children: ReactNode }) {
+  const inner = (
+    <>
+      {frame ? <BoardFrame>{frame}</BoardFrame> : null}
+      {children}
+      {imp ? <ImpactHit d={d} imp={imp} /> : null}
+    </>
+  );
   return (
     <span className={ROOT} style={rootStyle(d)} aria-hidden="true">
       <BoardWideStage>
-        {frame ? <BoardFrame>{frame}</BoardFrame> : null}
-        {children}
+        {imp ? (
+          <QuakeBox d={d} imp={imp}>
+            {inner}
+          </QuakeBox>
+        ) : (
+          inner
+        )}
       </BoardWideStage>
     </span>
   );
@@ -181,7 +194,13 @@ function Lead({ d, frame, children }: { d: number; frame?: ReactNode; children: 
 
 /** Aim-anchored lead: `frame` stays square with the board, the work rotates
  *  onto the real source -> target vector. */
-function AimLead({ d, frame, children }: { d: number; frame?: ReactNode; children: ReactNode }) {
+function AimLead({ d, frame, imp, children }: { d: number; frame?: ReactNode; imp?: ImpCue; children: ReactNode }) {
+  const inner = (
+    <>
+      {children}
+      {imp ? <ImpactHit d={d} imp={imp} /> : null}
+    </>
+  );
   return (
     <span className={ROOT} style={rootStyle(d)} aria-hidden="true">
       {frame ? (
@@ -189,10 +208,160 @@ function AimLead({ d, frame, children }: { d: number; frame?: ReactNode; childre
           <BoardFrame>{frame}</BoardFrame>
         </BoardWideStage>
       ) : null}
-      <AimStage>{children}</AimStage>
+      <AimStage>
+        {imp ? (
+          <QuakeBox d={d} imp={imp}>
+            {inner}
+          </QuakeBox>
+        ) : (
+          inner
+        )}
+      </AimStage>
     </span>
   );
 }
+
+/* =============================================================================
+   FLAGSHIP IMPACT LAYER - the shared violence vocabulary (impact/impact.tsx)
+   staged per card. Each lead names ONE cue in IMP: the moment its own action
+   physically LANDS. The laser leads the beat by 0.4s; the shatter halves,
+   shard spray, ground shockwave and the whole-stage quake all land ON `at`,
+   so the composite reads as one hit. `x`/`y` are % of the 14-cell stage
+   (`far` parks the hit at the aim lane's far end instead), `rot` turns the
+   whole composite so a column can strike along the lane or up from the ground,
+   and `rgb` stays inside the card's own three-colour palette. Kill switch:
+   every node rides a `g28-impx` wrapper, covered by this module's prefix
+   rule; the imp-* internals are covered by the global data-anim gate.
+   ========================================================================== */
+interface ImpCue {
+  /** ms after the lead's own delay: the impact beat. */
+  at: number;
+  /** centre of the struck cell, % of the stage (ignored when `far`). */
+  x?: number;
+  y?: number;
+  /** "r g b" tint, from the card's own palette. */
+  rgb: string;
+  /** the descending column of light. */
+  laser?: boolean;
+  /** index into IMPACT_GLYPHS: silhouette split in half on the beat. */
+  glyph?: number;
+  /** a second, later shockwave: the double boom. */
+  boom?: boolean;
+  /** static rotation of the whole composite, deg. */
+  rot?: number;
+  /** box size, % of the stage. */
+  size?: number;
+  /** park the hit at the far end of the real aim lane. */
+  far?: boolean;
+}
+
+const IMPACT_GLYPHS: ReactNode[] = [
+  <svg key="a" viewBox="0 0 10 12" className="block h-full w-full" aria-hidden="true">
+    <g style={{ fill: "rgb(var(--imp-rgb, 216 181 110))" }}><path d="M1.4 3h7.2v6.4H1.4z" /></g>
+  </svg>,
+  <svg key="b" viewBox="0 0 10 12" className="block h-full w-full" aria-hidden="true">
+    <g style={{ fill: "rgb(var(--imp-rgb, 216 181 110))" }}><path d="M3 2h4l1.6 8H1.4z" /></g>
+  </svg>,
+];
+
+/** The whole stage jolts on the cue's beat. Rides an INNER wrapper because the
+ * stage canvas carries the anchor-clamp transform, which must never be
+ * animated over. In-scene only: the real board crop never shakes. */
+function QuakeBox({ d, imp, children }: { d: number; imp: ImpCue; children: ReactNode }) {
+  return (
+    <span className={`g28-impx ${QUAKE_CLASS} absolute inset-0 block`} style={impactVars(undefined, (d + imp.at) / 1000)}>
+      {children}
+    </span>
+  );
+}
+
+/** The composite hit itself: laser column, split silhouette, shockwave(s). */
+function ImpactHit({ d, imp }: { d: number; imp: ImpCue }) {
+  const size = imp.size ?? 7.2;
+  const pos = imp.far
+    ? { left: `calc(50% + var(--fx-len, 3) * 7.142857% - ${(size / 2).toFixed(3)}%)`, top: `${((imp.y ?? 50) - size / 2).toFixed(3)}%` }
+    : { left: `${((imp.x ?? 50) - size / 2).toFixed(3)}%`, top: `${((imp.y ?? 50) - size / 2).toFixed(3)}%` };
+  return (
+    <span
+      className="g28-impx absolute block"
+      style={{
+        ...pos,
+        width: `${size}%`,
+        height: `${size}%`,
+        ...(imp.rot ? { transform: `rotate(${imp.rot}deg)` } : null),
+        ...impactVars(imp.rgb, (d + imp.at) / 1000),
+      }}
+    >
+      {imp.laser ? <LaserStrike /> : null}
+      {imp.glyph != null ? <PieceShatter glyph={IMPACT_GLYPHS[imp.glyph]} /> : null}
+      <Shockwave />
+      {imp.boom ? (
+        <span className="g28-impx absolute inset-0 block" style={impactVars(imp.rgb, (d + imp.at + 200) / 1000)}>
+          <Shockwave />
+        </span>
+      ) : null}
+    </span>
+  );
+}
+
+/** THE IMPACT CUE SHEET: one named moment of physical contact per card,
+ * choreographed onto that card's own climax - position, beat, tint and
+ * primitive combo all differ per card, so no two siblings land the same hit. */
+const IMP: Record<string, ImpCue> = {
+  // Written in Stone: THE FINAL LETTER STRUCK - the last chisel blow splits the slab face
+  bn4_written_in_stone: { at: 1040, x: 50, y: 49, rgb: "216 201 168", laser: true, glyph: 0, boom: true },
+  // Gorgon's Court: THE SLAB PARTS - the stone splits clean down the drilled line at its far end
+  hx4_gorgons_court: { at: 1020, rgb: "185 194 204", laser: true, glyph: 0, far: true },
+  // Hunter's Moon: THE CENTRE PIN - the trammel pin is driven and the template cracks free
+  hx4_hunters_moon: { at: 1000, x: 50, y: 47, rgb: "205 214 222", laser: true, glyph: 1, boom: true },
+  // No Quarter: THE MAUL'S LAST WEDGE - the split runs the whole line and bursts at its end
+  hx4_no_quarter: { at: 1040, rgb: "200 168 110", laser: true, boom: true, rot: -90, far: true },
+  // Stone Rain: THE FACE SHEDS - the hammered crust comes off in halves with a double thud
+  hx4_stone_rain: { at: 980, x: 50, y: 51, rgb: "168 161 150", glyph: 0, boom: true, size: 8.6 },
+  // Castle of Sand: THE KERF COMPLETES - the saw breaks through at the far end of the cut
+  hx4_castle_of_sand: { at: 960, rgb: "217 191 138", laser: true, boom: true, far: true },
+  // Gorgon Field: THE BANKER THUMP - the block is spun, lands wrong, and splits
+  hx4_gorgon_field: { at: 940, x: 51, y: 50, rgb: "159 169 162", glyph: 0, boom: true },
+  // Stone Garden: THE CLAW RUNS OUT - the furrow lance exits the far edge with a jolt
+  hx4_stone_garden: { at: 960, rgb: "194 179 147", laser: true, boom: true, rot: -90, far: true },
+  // Stone Orchard: THE WASTE KNOCKED OFF - the point jabs and the spoil splits away
+  hx4_stone_orchard: { at: 940, x: 49, y: 50, rgb: "176 168 148", laser: true, glyph: 0 },
+  // Traitor's Gala: THE LEWIS TAKES THE WEIGHT - the pin seats with a column and a double creak
+  hx4_traitors_gala: { at: 960, x: 50, y: 46, rgb: "182 188 196", laser: true, boom: true },
+  // Brittle Arsenal: THE BOLSTER SPLIT - one blow parts the stone at the line's end
+  hx4_brittle_arsenal: { at: 920, rgb: "203 176 137", laser: true, glyph: 0, far: true },
+  // Debt Collector: THE RAKE STRIKE - the old mortar is dragged out with interest
+  hx4_debt_collector: { at: 900, x: 52, y: 51, rgb: "205 191 164", laser: true, boom: true },
+  // The Walnut Crown: THE PROFILE STAMPED - the template slams the arris and the waste drops
+  hx4_walnut_crown: { at: 920, x: 50, y: 48, rgb: "232 197 106", glyph: 1, boom: true },
+  // Walnut Pinch: THE FLAKE NIPPED OFF - the jaws close and the arris parts
+  hx4_walnut_pinch: { at: 880, x: 51, y: 49, rgb: "174 182 191", glyph: 0, size: 6.4 },
+  // Stone Cloak: THE BLOCK BEDDED - the rubbing block lands flat, twice
+  bn4_stone_cloak: { at: 860, x: 50, y: 50, rgb: "222 211 187", boom: true, size: 8.4 },
+  // Gargoyle Perch: THE NEEDLE DROPS - the pointing needle finds its depth in one strike
+  hx4_gargoyle_perch: { at: 880, x: 49, y: 47, rgb: "179 188 198", laser: true },
+  // Hollow Fanfare: THE SOUNDING TAP - the hammer asks, and the flaw answers twice
+  hx4_hollow_fanfare: { at: 840, x: 50, y: 49, rgb: "201 192 171", boom: true },
+  // Rolling Boulder: THE DRUM ARRIVES - the dressed drum runs off its rollers into the far stop
+  ov_rolling_boulder: { at: 900, rgb: "157 150 138", boom: true, size: 8.6, far: true },
+  // Bell Jar: THE JAR SEATS - the glass rim rings the flags twice
+  hx4_bell_jar: { at: 820, x: 51, y: 51, rgb: "226 220 198", boom: true },
+  // Toad Pond: THE SLAKE BOILS OVER - the pit kicks with two hot rings
+  hx4_toad_pond: { at: 840, x: 49, y: 53, rgb: "239 230 207", boom: true, size: 8 },
+  // Borrowed Crown: THE LEAF PRESSED - one gold column presses the gilding home
+  hx4_borrowed_crown: { at: 800, x: 50, y: 48, rgb: "224 180 85", laser: true, size: 6 },
+  // Soft Shells: THE COMB BITES - the soft face combs off in two flakes
+  hx4_soft_shells: { at: 820, x: 52, y: 51, rgb: "199 184 160", glyph: 0, size: 6.6 },
+  // Gum Wrapper: THE PARCEL CINCHED - the cord snaps tight with a double knock
+  hx4_gum_wrapper: { at: 760, x: 50, y: 50, rgb: "214 184 119", boom: true },
+  // Pet Rock: THE GALLET TAPPED IN - one small proud tap, slightly askew
+  ov_pet_rock: { at: 740, x: 51, y: 52, rgb: "143 154 164", rot: 12, size: 5.6 },
+  // Dusty Boots: THE BRUSH THUMP - the broom butt knocks the bench once
+  hx4_dusty_boots: { at: 720, x: 50, y: 53, rgb: "203 191 165", size: 6 },
+  // Loose Horseshoe: THE LEAD RUN - the ladle tips and the cramp sets with two dull rings
+  hx4_loose_horseshoe: { at: 740, x: 49, y: 51, rgb: "154 161 168", boom: true },
+};
+
 
 /** Board-wide wash. Always inside a BoardFrame. */
 function Wash({ tone, d = 60 }: { tone: string; d?: number }) {
@@ -255,7 +424,7 @@ function LetterCut({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(216,201,168,0.3)" d={60} />}>
+    <Lead imp={IMP.bn4_written_in_stone} d={delayMs} frame={<Wash tone="rgba(216,201,168,0.3)" d={60} />}>
       <L c="g28-wi-rule" d={90} st={{ ...box(6.4, 0.12), background: "#fff4d6" }} />
       <L
         c="g28-lean"
@@ -320,7 +489,7 @@ function PlugFeather({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead
+    <AimLead imp={IMP.hx4_gorgons_court}
       d={delayMs}
       frame={
         <>
@@ -386,7 +555,7 @@ function TrammelArc({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(205,214,222,0.28)" d={70} />}>
+    <Lead imp={IMP.hx4_hunters_moon} d={delayMs} frame={<Wash tone="rgba(205,214,222,0.28)" d={70} />}>
       <L c="g28-hm-pin" d={90} st={{ ...box(0.5, 0.5), borderRadius: "50%", background: "#fff1cf" }} />
       <L
         c="g28-lean"
@@ -449,7 +618,7 @@ function WedgeLine({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead
+    <AimLead imp={IMP.hx4_no_quarter}
       d={delayMs}
       frame={
         <>
@@ -505,7 +674,7 @@ function BushHammer({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(168,161,150,0.3)" d={60} />}>
+    <Lead imp={IMP.hx4_stone_rain} d={delayMs} frame={<Wash tone="rgba(168,161,150,0.3)" d={60} />}>
       <L
         c="g28-lean"
         d={110}
@@ -566,7 +735,7 @@ function SandSaw({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead d={delayMs} frame={<Wash tone="rgba(217,191,138,0.3)" d={60} />}>
+    <AimLead imp={IMP.hx4_castle_of_sand} d={delayMs} frame={<Wash tone="rgba(217,191,138,0.3)" d={60} />}>
       <L c="g28-lane" d={90} st={{ ...lane(0.12), background: "#fff2d2" }} />
       <L c="g28-cs-blade" d={220} st={{ ...lane(0.24, -0.4), background: "linear-gradient(90deg, #33291a, #d9bf8a 40%, #fff2d2)" }} />
       {THREE.map((i) => (
@@ -620,7 +789,7 @@ function BankerTurn({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(159,169,162,0.3)" d={70} />}>
+    <Lead imp={IMP.hx4_gorgon_field} d={delayMs} frame={<Wash tone="rgba(159,169,162,0.3)" d={70} />}>
       <L c="g28-gf-table" d={100} st={{ ...box(4.4, 1.6, 0, 1.1), borderRadius: "50%", background: "radial-gradient(ellipse, #1f2622 40%, rgba(31,38,34,0))" }} />
       <L
         c="g28-lean"
@@ -680,7 +849,7 @@ function ClawRake({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead
+    <AimLead imp={IMP.hx4_stone_garden}
       d={delayMs}
       frame={
         <>
@@ -745,7 +914,7 @@ function PointRough({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(176,168,148,0.3)" d={60} />}>
+    <Lead imp={IMP.hx4_stone_orchard} d={delayMs} frame={<Wash tone="rgba(176,168,148,0.3)" d={60} />}>
       <L c="g28-tell" d={90} st={{ ...box(5.6, 0.14, 0, 1.5), background: "#f7edcf" }} />
       <L
         c="g28-lean"
@@ -808,7 +977,7 @@ function LewisLift({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(182,188,196,0.28)" d={70} />}>
+    <Lead imp={IMP.hx4_traitors_gala} d={delayMs} frame={<Wash tone="rgba(182,188,196,0.28)" d={70} />}>
       <L c="g28-tg-socket" d={90} st={{ ...box(1.5, 0.36, 0, -0.2), background: "#20242a" }} />
       <L
         c="g28-lean"
@@ -867,7 +1036,7 @@ function BolsterSplit({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead d={delayMs} frame={<Wash tone="rgba(203,176,137,0.3)" d={60} />}>
+    <AimLead imp={IMP.hx4_brittle_arsenal} d={delayMs} frame={<Wash tone="rgba(203,176,137,0.3)" d={60} />}>
       <L c="g28-lane" d={90} st={{ ...lane(0.12), background: "#fff1cd" }} />
       <V c="g28-ba-bolster" d={230} st={box(1.4, 3, 0, -1.6)}>
         <path d="M9 1h6v14H9z" fill="#cbb089" stroke="#2a2416" strokeWidth="1.2" />
@@ -920,7 +1089,7 @@ function JointPoint({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(205,191,164,0.3)" d={70} />}>
+    <Lead imp={IMP.hx4_debt_collector} d={delayMs} frame={<Wash tone="rgba(205,191,164,0.3)" d={70} />}>
       <L c="g28-dc-rake" d={90} st={{ ...box(4.8, 0.3, 0, -0.1), background: "linear-gradient(90deg, #302a1e, rgba(48,42,30,0))" }} />
       <L
         c="g28-lean"
@@ -981,7 +1150,7 @@ function CrownMould({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(232,197,106,0.28)" d={70} />}>
+    <Lead imp={IMP.hx4_walnut_crown} d={delayMs} frame={<Wash tone="rgba(232,197,106,0.28)" d={70} />}>
       <V c="g28-wc-temp" d={100} st={box(2.2, 2.2, -1.6, -0.6)}>
         <path d="M2 22V8a6 6 0 0 1 6-6h14v4H9a3 3 0 0 0-3 3v13z" fill="none" stroke="#fff4d6" strokeWidth="2" {...SJ} />
       </V>
@@ -1035,7 +1204,7 @@ function NipperPinch({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(174,182,191,0.28)" d={70} />}>
+    <Lead imp={IMP.hx4_walnut_pinch} d={delayMs} frame={<Wash tone="rgba(174,182,191,0.28)" d={70} />}>
       <L c="g28-tell" d={90} st={{ ...box(3.6, 0.14, 0, 0.9), background: "#f4ecd2" }} />
       <L
         c="g28-lean"
@@ -1091,7 +1260,7 @@ function RubbingStone({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(222,211,187,0.3)" d={70} />}>
+    <Lead imp={IMP.bn4_stone_cloak} d={delayMs} frame={<Wash tone="rgba(222,211,187,0.3)" d={70} />}>
       <L
         c="g28-sc-water"
         d={90}
@@ -1149,7 +1318,7 @@ function PointingMachine({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(179,188,198,0.28)" d={70} />}>
+    <Lead imp={IMP.hx4_gargoyle_perch} d={delayMs} frame={<Wash tone="rgba(179,188,198,0.28)" d={70} />}>
       <L c="g28-gp-frame" d={90} st={{ ...box(4.4, 0.24, 0, -1.9), background: "#b3bcc6" }} />
       <L
         c="g28-lean"
@@ -1209,7 +1378,7 @@ function RingTest({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(201,192,171,0.3)" d={70} />}>
+    <Lead imp={IMP.hx4_hollow_fanfare} d={delayMs} frame={<Wash tone="rgba(201,192,171,0.3)" d={70} />}>
       <L c="g28-tell" d={90} st={{ ...box(3.4, 0.14, 0, 1.3), background: "#fff2d4" }} />
       <V c="g28-hf-tap" d={220} st={box(2.2, 1.6, 0.6, -1.5)}>
         <rect x="2" y="8" width="10" height="6" fill="#2a2620" stroke="#c9c0ab" strokeWidth="1.2" />
@@ -1266,7 +1435,7 @@ function DrumRoll({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead
+    <AimLead imp={IMP.ov_rolling_boulder}
       d={delayMs}
       frame={
         <>
@@ -1332,7 +1501,7 @@ function GroutPour({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(226,220,198,0.3)" d={70} />}>
+    <Lead imp={IMP.hx4_bell_jar} d={delayMs} frame={<Wash tone="rgba(226,220,198,0.3)" d={70} />}>
       <V c="g28-bj-bell" d={110} st={box(3.6, 3.4, 0, -0.4)}>
         <path d="M4 22V13a8 8 0 0 1 16 0v9z" fill="none" stroke="#e2dcc6" strokeWidth="2" {...SJ} />
         <path d="M11 3h2v3h-2z" fill="#e2dcc6" />
@@ -1392,7 +1561,7 @@ function LimeSlake({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(239,230,207,0.3)" d={70} />}>
+    <Lead imp={IMP.hx4_toad_pond} d={delayMs} frame={<Wash tone="rgba(239,230,207,0.3)" d={70} />}>
       <L c="g28-tp-pit" d={90} st={{ ...box(4, 2, 0, 0.6), border: "2px solid #35301f", background: "rgba(53,48,31,0.55)" }} />
       <L
         c="g28-lean"
@@ -1452,7 +1621,7 @@ function LeafGild({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(224,180,85,0.28)" d={70} />}>
+    <Lead imp={IMP.hx4_borrowed_crown} d={delayMs} frame={<Wash tone="rgba(224,180,85,0.28)" d={70} />}>
       <V c="g28-bc-size" d={90} st={box(2.6, 1.6, -0.8, 0.6)}>
         <path d="M2 12h14l6-3v6l-6-3" fill="#2f2410" stroke="#e0b455" strokeWidth="1.2" {...SJ} />
       </V>
@@ -1504,7 +1673,7 @@ function ScutchComb({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(199,184,160,0.3)" d={70} />}>
+    <Lead imp={IMP.hx4_soft_shells} d={delayMs} frame={<Wash tone="rgba(199,184,160,0.3)" d={70} />}>
       <L c="g28-tell" d={90} st={{ ...box(4.2, 0.14, 0, 1.1), background: "#f9efd2" }} />
       <L
         c="g28-lean"
@@ -1561,7 +1730,7 @@ function StrawParcel({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(214,184,119,0.28)" d={70} />}>
+    <Lead imp={IMP.hx4_gum_wrapper} d={delayMs} frame={<Wash tone="rgba(214,184,119,0.28)" d={70} />}>
       {THREE.map((i) => (
         <L
           key={i}
@@ -1622,7 +1791,7 @@ function Galleting({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(143,154,164,0.28)" d={70} />}>
+    <Lead imp={IMP.ov_pet_rock} d={delayMs} frame={<Wash tone="rgba(143,154,164,0.28)" d={70} />}>
       <L c="g28-pr-mortar" d={90} st={{ ...box(4.4, 0.5, 0, 0.5), background: "linear-gradient(90deg, transparent, #f0e8ce, transparent)" }} />
       <L
         c="g28-lean"
@@ -1674,7 +1843,7 @@ function BankerSweep({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(203,191,165,0.3)" d={70} />}>
+    <Lead imp={IMP.hx4_dusty_boots} d={delayMs} frame={<Wash tone="rgba(203,191,165,0.3)" d={70} />}>
       <L c="g28-tell" d={80} st={{ ...box(4.4, 0.14, 0, 0.9), background: "#fdf1d4" }} />
       <L
         c="g28-lean"
@@ -1730,7 +1899,7 @@ function LeadCramp({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(154,161,168,0.28)" d={70} />}>
+    <Lead imp={IMP.hx4_loose_horseshoe} d={delayMs} frame={<Wash tone="rgba(154,161,168,0.28)" d={70} />}>
       <L c="g28-lh-chase" d={90} st={{ ...box(2.6, 0.4, 0, 0.2), background: "#23262b" }} />
       <L
         c="g28-lean"

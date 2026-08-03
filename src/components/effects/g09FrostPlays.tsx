@@ -43,6 +43,7 @@ import "./g09FrostPlays.css";
 import type { CSSProperties, ReactNode } from "react";
 import type { SigPlugin, SigRole } from "./sigPlugins";
 import { AimStage, BoardFrame, BoardWideStage } from "./stage";
+import { LaserStrike, PieceShatter, Shockwave, impactVars } from "./impact/impact";
 
 interface SceneProps {
   lead: boolean;
@@ -2499,6 +2500,137 @@ function S(Render: SigPlugin["Render"], config: SigPlugin["config"]): SigPlugin 
   return { config, Render };
 }
 
+/* =============================================================================
+   FLAGSHIP IMPACT WAVE - the module-wide moment of real contact.
+
+   Every lead now lands one physical hit from the shared impact vocabulary
+   (impact/impact.tsx), layered OVER the card's own scene: cold violence with no blast rings: an ice lance drops silently and the frozen thing SHEARS in half, all splinter and no boom.
+   Per card, the IMPACT spec picks the primitive combo, the glyph that is split
+   in half, the tint (the card's own core color as an r-g-b triple) and the
+   beat, which is synced to that scene's OWN strike rhythm, so no two siblings
+   land the same hit. The quake wrapper jolts the whole scene stage on the same
+   beat (in-scene only: the real board crop never shakes). Animations-off
+   coverage for all of these nodes is at the bottom of g09FrostPlays.css.
+   ========================================================================== */
+
+interface G09Imp {
+  /** impact beat, ms after the lead's own delayMs */
+  at: number;
+  /** the card's core color as an "r g b" triple (drives --imp-rgb) */
+  rgb: string;
+  laser?: boolean;
+  shock?: boolean;
+  /** which of the module's shatter glyphs is split in half */
+  g?: number;
+  /** stage jolt on the beat: "s" soft, "h" hard */
+  q?: "s" | "h";
+  /** impact centre on the 14-cell stage, in percent (cast square = 50/50) */
+  x?: number;
+  y?: number;
+  /** composite box size, in stage percent (9 is ~1.26 cells) */
+  s?: number;
+}
+
+const IMP_TINT = "rgb(var(--imp-rgb, 216 181 110) / 0.95)";
+const IMP_EDGE = "rgba(247, 241, 227, 0.9)";
+
+/** The module's shatter victims: an ice shard, a frozen pane, an icicle fall. Tinted per card via --imp-rgb. */
+const IMP_GLYPHS: ReactNode[] = [
+  <svg key="a" viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+    <path d="M12 2.6l5 7.4-5 11.4-5-11.4z" fill={IMP_TINT} /><path d="M12 5.6v12" stroke={IMP_EDGE} strokeWidth="1.3" strokeLinecap="round" />
+  </svg>,
+  <svg key="b" viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+    <rect x="4.6" y="4.6" width="14.8" height="14.8" rx="1.2" fill={IMP_TINT} /><path d="M8 8l4.2 4.4-1.4 4.8M12.2 12.4l4.6-1.6" stroke={IMP_EDGE} strokeWidth="1.4" strokeLinecap="round" fill="none" />
+  </svg>,
+  <svg key="c" viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+    <path d="M5 4.4h14v2.8H5z" fill={IMP_TINT} /><path d="M7 7.2L8.4 15 10 7.2zM11 7.2l1.2 12 1.4-12zM15 7.2l1.2 6.4 1.4-6.4z" fill={IMP_TINT} /><circle cx="12.2" cy="20.4" r="0.9" fill={IMP_EDGE} />
+  </svg>,
+];
+
+const IMPACT: Record<string, G09Imp> = {
+  bn4_long_winter: { at: 420, rgb: "143 198 232", laser: true, g: 0, q: "h", s: 12 }, // t8 hero
+  bn4_winter_garrison: { at: 465, rgb: "168 216 230", laser: true, g: 1, q: "h", s: 12 }, // t8 hero
+  bn4_frozen_moat: { at: 440, rgb: "134 200 220", g: 1 },
+  bn4_glacier_calving: { at: 470, rgb: "140 203 228", laser: true, g: 0, q: "s" },
+  hx4_blood_price: { at: 520, rgb: "184 216 238", laser: true, g: 2, q: "h", s: 12 }, // t8 hero
+  hx4_eternal_toll: { at: 510, rgb: "134 194 214", laser: true, g: 2, q: "h", s: 12 }, // t8 hero
+  hx4_kings_ransom: { at: 555, rgb: "166 207 226", laser: true, g: 0, q: "h", s: 12 }, // t8 hero
+  hx4_tribute_demand: { at: 430, rgb: "168 194 208", laser: true, g: 1, q: "s" },
+  // Hero hit tuned by hand: the ice lance drops dead-centre onto the rimed
+  // dial (staged at 50/50) and the frozen-pane glyph shears in half over it,
+  // on the third heavy tick.
+  hx4_doomsday_clock: { at: 560, rgb: "169 200 228", laser: true, g: 1, q: "h", s: 13 }, // t8 hero
+  hx4_tolling_thirds: { at: 590, rgb: "167 196 216", laser: true, g: 0, q: "h", s: 12 }, // t8 hero
+  ov_deus_ex_machina: { at: 600, rgb: "188 212 230", laser: true, g: 2, q: "h", s: 12 }, // t8 hero
+  hx4_burned_keep: { at: 645, rgb: "159 212 232", laser: true, g: 2, q: "h", s: 12 }, // t8 hero
+  hx4_oathbreakers_brand: { at: 690, rgb: "159 208 221", laser: true, g: 0, q: "h", s: 12 }, // t8 hero
+  hx4_shattered_council: { at: 525, rgb: "163 201 221", laser: true, g: 1, q: "h", s: 12 }, // t8 hero
+  hx4_frozen_reserves: { at: 550, rgb: "158 198 216", laser: true, g: 1, q: "h", s: 12 }, // t8 hero
+  hx4_hearth_frost: { at: 570, rgb: "157 200 210", laser: true, g: 0, q: "s" },
+  hx4_great_glacier: { at: 735, rgb: "142 201 224", laser: true, g: 2, q: "h", s: 12 }, // t8 hero
+  hx4_reapers_due: { at: 475, rgb: "143 192 198", laser: true, g: 2, q: "h", s: 12 }, // t8 hero
+  hx4_winter_that_stays: { at: 570, rgb: "158 210 224", laser: true, g: 0, q: "h", s: 12 }, // t8 hero
+  hx4_watchmans_whistle: { at: 565, rgb: "162 207 224", laser: true, g: 1, q: "s" },
+  hx4_wheel_of_ice: { at: 615, rgb: "147 206 222", g: 1 },
+  hx4_glass_prison: { at: 780, rgb: "182 224 239", laser: true, g: 0, q: "h", s: 12 }, // t8 hero
+  hx4_spiders_parlor: { at: 450, rgb: "176 214 228", laser: true, g: 2, q: "h", s: 12 }, // t8 hero
+  hx4_poachers_snare: { at: 660, rgb: "147 194 206", laser: true, g: 2 },
+  hx4_kraken_arms: { at: 635, rgb: "127 195 201", g: 0, q: "s" },
+  hx4_lovestruck_majesty: { at: 825, rgb: "216 176 200", laser: true, g: 1, q: "s" },
+  hx4_tempest: { at: 520, rgb: "156 196 220", laser: true, g: 1, q: "h", s: 12 }, // t8 hero
+  hx4_lead_rain: { at: 495, rgb: "159 182 200", laser: true, g: 0, q: "s" },
+  hx4_frozen_harbor: { at: 500, rgb: "143 188 212", g: 2, q: "s" },
+};
+
+/** The impact composite: laser column, glyph split in half, ground ring. */
+function ImpactRig({ imp, delayMs }: { imp: G09Imp; delayMs: number }) {
+  const s = imp.s ?? 9;
+  return (
+    <BoardWideStage>
+      <span
+        className="g09-imprig absolute block"
+        style={{
+          left: `${(imp.x ?? 50) - s / 2}%`,
+          top: `${(imp.y ?? 50) - s / 2}%`,
+          width: `${s}%`,
+          height: `${s}%`,
+          ...impactVars(imp.rgb, (delayMs + imp.at) / 1000),
+        }}
+      >
+        {imp.laser ? <LaserStrike /> : null}
+        {imp.g != null ? <PieceShatter glyph={IMP_GLYPHS[imp.g]} /> : null}
+        {imp.shock ? <Shockwave /> : null}
+      </span>
+    </BoardWideStage>
+  );
+}
+
+/** Leads render inside a quake wrapper (the whole stage jolts on the impact
+ *  beat) with the rig mounted beside them; target/entrance cuts pass through
+ *  untouched. */
+function withImpact(Base: SigPlugin["Render"], imp: G09Imp): SigPlugin["Render"] {
+  function ImpactLead(props: { lead: boolean; role: SigRole; delayMs: number }) {
+    if (props.role !== "lead") return <Base {...props} />;
+    const scene = <Base {...props} />;
+    return (
+      <>
+        {imp.q ? (
+          <span
+            className={`g09-quake-${imp.q} pointer-events-none absolute inset-0 z-30 block`}
+            style={impactVars(imp.rgb, (props.delayMs + imp.at) / 1000)}
+          >
+            {scene}
+          </span>
+        ) : (
+          scene
+        )}
+        <ImpactRig imp={imp} delayMs={props.delayMs} />
+      </>
+    );
+  }
+  return ImpactLead;
+}
+
 export const PLAYS: Record<string, SigPlugin> = {
   // --- the season arriving: washes and garrisons ---
   bn4_long_winter: S(LongWinterScene, {
@@ -2630,3 +2762,10 @@ export const PLAYS: Record<string, SigPlugin> = {
     sound: "wall", source: "frozen", anchor: "board",
   }),
 };
+
+// Graft the per-card impact beat onto every lead scene (additive: the base
+// scene renders unchanged inside the quake wrapper).
+for (const [id, imp] of Object.entries(IMPACT)) {
+  const play = PLAYS[id];
+  if (play) play.Render = withImpact(play.Render, imp);
+}

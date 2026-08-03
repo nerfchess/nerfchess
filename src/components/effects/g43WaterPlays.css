@@ -1360,3 +1360,35 @@
 /* --- Global kill switch ----------------------------------------------------
    Settings animations-off parks every g43 play outright. */
 html[data-anim="off"] [class^="g43-"], html[data-anim="off"] [class*=" g43-"] { animation: none !important; opacity: 0 !important; }
+
+/* =============================================================================
+   FLAGSHIP IMPACT WAVE: the cell-scale quake wrapper. The impact composite
+   rides a ONE-CELL wrapper (the plugin mount), so the shared imp-quake's
+   canvas-percent amplitudes would be invisible here; these keyframes restate
+   the same jolt at cell scale, on the shared --imp-delay beat. Transform
+   only, finite, ends at rest, --fx-dur scaled. Both new classes are g43-
+   prefixed, so the module kill switch above already parks them when
+   animations are off.
+   ========================================================================== */
+.g43-quakecell {
+  animation: g43-quakecell calc(0.55s * var(--fx-dur, 1)) linear both;
+  animation-delay: calc(var(--imp-delay, 0.4s) * var(--fx-dur, 1));
+}
+@keyframes g43-quakecell {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  18% {
+    transform: translate(-7%, 4.5%);
+  }
+  38% {
+    transform: translate(6%, -5%);
+  }
+  58% {
+    transform: translate(-4.5%, -3%);
+  }
+  78% {
+    transform: translate(3.5%, 3.5%);
+  }
+}

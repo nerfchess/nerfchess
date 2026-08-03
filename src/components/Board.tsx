@@ -144,6 +144,8 @@ import {
 } from "./effects/geometry";
 import { findKing } from "@/engine/board";
 import { PassiveLayer } from "./effects/passive/PassiveLayer";
+import { FruitionLayer } from "./effects/fruition/FruitionLayer";
+import type { FxEvent } from "@/engine/fxEvents";
 import { buffPassiveAuras, nerfPassiveAuras } from "./effects/passive/derive";
 import type { PassiveAuraEntry, NerfAuraInput } from "./effects/passive/derive";
 
@@ -648,6 +650,10 @@ interface Props {
    * PassiveLayer keeps auras but suppresses live spawn/pulse/exit so scrubbing
    * never fires spurious intros. */
   reviewingHistory?: boolean;
+  /** The engine's transient fx-event log for the latest apply cycle
+   * (game.fx): drives the FruitionLayer's clamp/receive/ward/expire pulses.
+   * Surfaces that replay history simply omit it. */
+  fx?: FxEvent[] | null;
 }
 
 /** Placeholder rules that must never play the reveal splash: buff mode's
@@ -2224,6 +2230,7 @@ export function Board({
   passiveNerfs,
   passiveBuffs,
   reviewingHistory,
+  fx,
   onInvalidPick,
 }: Props) {
   const pickSquareSet = useMemo(() => new Set(pickSquares ?? []), [pickSquares]);
@@ -4479,6 +4486,20 @@ export function Board({
             hookPlyKey={(fxBoard ?? board).history.length}
             buffs={passiveBuffState}
             invalid={invalidFx}
+            fxHidden={fxHiddenPref}
+          />
+        )}
+
+        {/* Fruition pulses: the engine's fx-event log made visible (a nerf
+            filter biting, a hostile effect seating on the viewer's squares, a
+            ward rising, a timer dissolving). Same one-shot band and hygiene
+            as the PassiveLayer one-shots. */}
+        {fx !== undefined && (
+          <FruitionLayer
+            fx={fx}
+            viewerColor={myColor}
+            orientation={orientation}
+            reviewing={!!reviewingHistory}
             fxHidden={fxHiddenPref}
           />
         )}

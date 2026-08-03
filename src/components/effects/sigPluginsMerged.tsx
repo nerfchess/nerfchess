@@ -41,6 +41,7 @@ export const MODULE_LOADERS: Record<string, () => Promise<{ PLAYS: Record<string
   boonPlays: () => import("./boonPlays"),
   cursePlays: () => import("./cursePlays"),
   creatorPlays: () => import("./creatorPlays"),
+  fantasyPlays: () => import("./fantasyPlays"),
   g01HourglassPlays: () => import("./g01HourglassPlays"),
   g02SchedulePlays: () => import("./g02SchedulePlays"),
   g03CelestialPlays: () => import("./g03CelestialPlays"),

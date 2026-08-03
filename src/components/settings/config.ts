@@ -48,6 +48,9 @@ export interface SectionConfig {
   id: string;
   title: string;
   icon: LucideIcon;
+  /** One short line on the drill-down home card: what lives in this section.
+   *  Written as content, not a sales pitch; keep it under ~8 words. */
+  blurb: string;
   rows: RowConfig[];
 }
 
@@ -57,6 +60,7 @@ export const SECTIONS: SectionConfig[] = [
   {
     id: "gameplay",
     title: "Gameplay",
+    blurb: "Moves, confirmations, opponent",
     icon: Gamepad2,
     rows: [
       {
@@ -127,6 +131,7 @@ export const SECTIONS: SectionConfig[] = [
   {
     id: "board",
     title: "Board & Pieces",
+    blurb: "Board and piece themes, layout",
     icon: Grid3x3,
     rows: [
       {
@@ -205,6 +210,7 @@ export const SECTIONS: SectionConfig[] = [
   {
     id: "audio",
     title: "Sound",
+    blurb: "Volume, game and interface sounds",
     icon: Volume2,
     rows: [
       {
@@ -276,6 +282,7 @@ export const SECTIONS: SectionConfig[] = [
   {
     id: "appearance",
     title: "Appearance",
+    blurb: "Site theme, background, motion",
     icon: Palette,
     rows: [
       {
@@ -337,6 +344,7 @@ export const SECTIONS: SectionConfig[] = [
   {
     id: "account",
     title: "Account",
+    blurb: "Profile and sign-in",
     icon: UserRound,
     rows: [
       {
@@ -349,6 +357,7 @@ export const SECTIONS: SectionConfig[] = [
   {
     id: "accessibility",
     title: "Accessibility",
+    blurb: "Contrast, motion, readability",
     icon: Accessibility,
     rows: [
       {
@@ -385,6 +394,7 @@ export const SECTIONS: SectionConfig[] = [
   {
     id: "advanced",
     title: "Advanced",
+    blurb: "Resets and experiments",
     icon: SlidersHorizontal,
     rows: [
       {

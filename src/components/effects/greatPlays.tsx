@@ -83,6 +83,7 @@ import "./greatPlays.css";
 import type { ComponentType, CSSProperties, ReactNode } from "react";
 import type { SigPlugin, SigRole } from "./sigPlugins";
 import { BoardFrame } from "./stage";
+import { LaserStrike, PieceShatter, Shockwave, QUAKE_CLASS, impactVars } from "./impact/impact";
 
 /* =============================================================================
    Shared bits
@@ -125,14 +126,71 @@ const SJ = { strokeLinejoin: "round", strokeLinecap: "round" } as const;
  * An ANCHORED scene adds `fx-stage`, whose transform carries the at-most
  * half-cell clamp that keeps a corner cast's 14-cell canvas over the 8-cell
  * board. A board-anchored scene must not: Board has already centred it. */
-function Stage({ anchored, children }: { anchored?: boolean; children: ReactNode }) {
+function Stage({ anchored, quakeMs, children }: { anchored?: boolean; quakeMs?: number; children: ReactNode }) {
+  // FLAGSHIP WAVE: `quakeMs` makes the whole scene stage JOLT on the play's
+  // own impact beat (the shared imp-quake wrapper from the impact vocabulary;
+  // in-scene only, the real board crop never shakes). The quake rides an
+  // INNER wrapper because the outer span's `fx-stage` transform carries the
+  // anchor clamp, and imp-quake's keyframed transform would override it
+  // mid-jolt (same fix godPlays/gamblingPlays use).
   return (
     <span className="pointer-events-none absolute inset-0 z-30" aria-hidden="true">
       <span
         className={`${anchored ? "fx-stage " : ""}absolute left-[-650%] top-[-650%] block h-[1400%] w-[1400%]`}
       >
-        {children}
+        {quakeMs != null ? (
+          <span className={`${QUAKE_CLASS} absolute inset-0 block`} style={impactVars(undefined, quakeMs / 1000)}>
+            {children}
+          </span>
+        ) : (
+          children
+        )}
       </span>
+    </span>
+  );
+}
+
+/** hex "#rrggbb" -> the space-separated "r g b" triple the impact vocabulary
+ * tints with (--imp-rgb). */
+function rgbOf(hex: string): string {
+  return `${parseInt(hex.slice(1, 3), 16)} ${parseInt(hex.slice(3, 5), 16)} ${parseInt(hex.slice(5, 7), 16)}`;
+}
+
+/** FLAGSHIP WAVE: the shared impact vocabulary at scene scale. A positioned
+ * box over the strike point carrying an optional laser column, an optional
+ * PieceShatter (the struck thing splits in half and sprays shards) and an
+ * optional ground shockwave, all tinted with the play's own colour and landing
+ * on ONE beat (`atMs`, absolute like every other delay here). The laser leads
+ * that beat by 0.4s per the impact.css timing contract, so "laser, then the
+ * piece comes apart" reads as one hit. Pair with Stage's `quakeMs` on the same
+ * beat so the stage jolt and the strike are one moment of contact. */
+function Impact({
+  rgb,
+  atMs,
+  left = 39,
+  top = 34,
+  size = 22,
+  laser = false,
+  shock = true,
+  shatter,
+}: {
+  rgb: string;
+  atMs: number;
+  left?: number;
+  top?: number;
+  size?: number;
+  laser?: boolean;
+  shock?: boolean;
+  shatter?: ReactNode;
+}) {
+  return (
+    <span
+      className="absolute block"
+      style={{ left: `${left}%`, top: `${top}%`, width: `${size}%`, height: `${size}%`, ...impactVars(rgb, atMs / 1000) }}
+    >
+      {laser && <LaserStrike />}
+      {shatter != null && <PieceShatter glyph={shatter} />}
+      {shock && <Shockwave />}
     </span>
   );
 }
@@ -786,7 +844,7 @@ function WitchCircle({ palette, glyph, lead, role, anchored, delayMs, flourish }
     );
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
-    <Stage anchored={anchored}>
+    <Stage anchored={anchored} quakeMs={delayMs + 820}>
       <Wash color={tint(p0, 0.26)} delayMs={delayMs} anchored={anchored} />
       {/* tell: stray hex-light gathers to the point the circle will claim */}
       <TellGlow delayMs={delayMs} color={tint(p1, 0.32)} left={40} top={36} w={20} h={18} />
@@ -1264,6 +1322,9 @@ function WitchCircle({ palette, glyph, lead, role, anchored, delayMs, flourish }
       <Flash delayMs={delayMs + 720} color={tint(p1, 0.6)} left={42} top={41} w={16} h={11} />
       <Sparks delayMs={delayMs + 760} fill={p1} stroke={p2} cy={46} />
       <Boom delayMs={delayMs + 820} color={tint(p1, 0.85)} />
+      {/* FLAGSHIP "Hexfall Column": a pillar of hex-light lasers down onto the
+          circle's heart and the stage jolts as the working seals shut. */}
+      <Impact rgb={rgbOf(p1)} atMs={delayMs + 820} laser left={40} top={33} size={20} />
       {/* geometry: the working REACHES: hex-light runs off the circle down the real line to the piece it is binding */}
       <Reach delayMs={delayMs + 460} color={tint(p1, 0.85)} top={48.6} thickness={1.2} />
       <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 960} anchored={anchored} />
@@ -1300,7 +1361,7 @@ function StoneGaze({ palette, glyph, lead, role, anchored, delayMs, flourish }: 
     );
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
-    <Stage anchored={anchored}>
+    <Stage anchored={anchored} quakeMs={delayMs + 780}>
       <Wash color={tint(p0, 0.26)} delayMs={delayMs} anchored={anchored} />
       {/* tell: the boards shadow over and grit shivers where the bust will breach */}
       <TellShadow delayMs={delayMs} color={tint(p2, 0.55)} left={37} top={62} w={26} h={7} />
@@ -1421,6 +1482,17 @@ function StoneGaze({ palette, glyph, lead, role, anchored, delayMs, flourish }: 
       <Flash delayMs={delayMs + 680} color={tint(p1, 0.55)} left={41} top={50} w={18} h={11} />
       <Sparks delayMs={delayMs + 720} fill={tint(p0, 0.95)} stroke={p2} cy={54} />
       <Boom delayMs={delayMs + 780} color={tint(p1, 0.85)} />
+      {/* FLAGSHIP "Statue Split": the piece the gaze lands on is already stone,
+          and it CRACKS IN HALF on the beat - the halves hinge apart and four
+          granite chips spray while the stage jolts. */}
+      <Impact
+        rgb={rgbOf(p0)}
+        atMs={delayMs + 780}
+        left={35}
+        top={39}
+        size={18}
+        shatter={<Man kind="n" fill={tint(p0, 0.95)} stroke={p2} />}
+      />
       {/* geometry: the gaze does not rake at random: it runs the real line to the piece being taken */}
       <Reach delayMs={delayMs + 520} color={tint(p1, 0.9)} top={33} thickness={2.6} minCells={2.8} />
       <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 920} anchored={anchored} />
@@ -1461,7 +1533,7 @@ function ColdFront({ palette, glyph, lead, role, anchored, delayMs, flourish }: 
     );
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
-    <Stage anchored={anchored}>
+    <Stage anchored={anchored} quakeMs={delayMs + 1000}>
       <Wash color={tint(p0, 0.26)} delayMs={delayMs} anchored={anchored} />
       {/* tell: the cold draft — a pale gleam gathers at the west wing */}
       <TellGlow delayMs={delayMs} color={tint(p1, 0.3)} left={24} top={36} w={18} h={20} />
@@ -1566,6 +1638,23 @@ function ColdFront({ palette, glyph, lead, role, anchored, delayMs, flourish }: 
       <Flash delayMs={delayMs + 900} color={tint(p1, 0.6)} left={44} top={42} w={17} h={12} />
       <Sparks delayMs={delayMs + 940} fill={p1} stroke={p2} cy={47} />
       <Boom delayMs={delayMs + 1000} color={tint(p1, 0.85)} />
+      {/* FLAGSHIP "Floe Crack": the sheet the front froze splits in half with a
+          shard spray on the boom beat (no extra ring - the cold does the
+          talking) while the stage judders. */}
+      <Impact
+        rgb={rgbOf(p0)}
+        atMs={delayMs + 1000}
+        left={37}
+        top={40}
+        size={19}
+        shock={false}
+        shatter={
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <rect x="1" y="1.6" width="8" height="6.8" rx="0.8" fill={tint(p0, 0.7)} stroke={tint(p1, 0.9)} strokeWidth="0.5" />
+            <path d="M5 1.6 V8.4 M1.6 3.4 L8.4 6.6" fill="none" stroke={tint(p1, 0.8)} strokeWidth="0.4" />
+          </svg>
+        }
+      />
       {/* geometry: the front runs the play's own line, not a fixed compass bearing */}
       <Reach delayMs={delayMs + 700} color={tint(p1, 0.8)} top={46} thickness={2.2} minCells={3} />
       <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 1140} anchored={anchored} />
@@ -1605,7 +1694,7 @@ function SiegeRoll({ palette, glyph, lead, role, anchored, delayMs, flourish }: 
     );
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
-    <Stage anchored={anchored}>
+    <Stage anchored={anchored} quakeMs={delayMs + 1080 + hold}>
       <Wash color={tint(p0, 0.24)} delayMs={delayMs} anchored={anchored} />
       {/* tell: the ground shadows under the incoming engine's track */}
       <TellShadow delayMs={delayMs} color={tint(p2, 0.55)} left={24} top={64} w={26} h={6} />
@@ -1684,6 +1773,22 @@ function SiegeRoll({ palette, glyph, lead, role, anchored, delayMs, flourish }: 
       <Flash delayMs={delayMs + 1000 + hold} color={tint(p1, 0.8)} left={60} top={37} w={18} h={13} />
       <Sparks delayMs={delayMs + 1040 + hold} fill={p1} stroke={p2} sizePct={6.5} cx={68} cy={42} />
       <Boom delayMs={delayMs + 1080 + hold} color={tint(p1, 0.85)} thickness={4} />
+      {/* FLAGSHIP "Payload Crater": the wall the payload lands on is blown in
+          half at the strike point - masonry halves hinge apart, shards fly,
+          ground ring, full stage jolt, all on the payload's beat. */}
+      <Impact
+        rgb={rgbOf(p1)}
+        atMs={delayMs + 1080 + hold}
+        left={59}
+        top={33}
+        size={19}
+        shatter={
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <rect x="1.2" y="2.4" width="7.6" height="6" rx="0.6" fill={tint(p2, 0.95)} stroke={tint(p1, 0.85)} strokeWidth="0.5" />
+            <path d="M1.2 5.4 H8.8 M5 2.4 V5.4 M3.1 5.4 V8.4 M6.9 5.4 V8.4" fill="none" stroke={tint(p1, 0.7)} strokeWidth="0.4" />
+          </svg>
+        }
+      />
       {/* geometry: the shot's line of fire, laid down the real source -> victim vector */}
       <Reach delayMs={delayMs + 640 + hold} color={tint(p1, 0.85)} top={40} thickness={1.6} minCells={3} />
       <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 1220 + hold} anchored={anchored} />
@@ -1722,7 +1827,7 @@ function WarBanner({ palette, glyph, lead, role, anchored, delayMs, flourish }: 
     );
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
-    <Stage anchored={anchored}>
+    <Stage anchored={anchored} quakeMs={delayMs + 860}>
       <Wash color={tint(p0, 0.24)} delayMs={delayMs} anchored={anchored} />
       {/* tell: the standard's shadow falls on the muster ground first */}
       <TellShadow delayMs={delayMs} color={tint(p2, 0.55)} left={39} top={66} w={22} h={6} />
@@ -1940,6 +2045,9 @@ function WarBanner({ palette, glyph, lead, role, anchored, delayMs, flourish }: 
       <Flash delayMs={delayMs + 760} color={tint(p1, 0.65)} left={42} top={44} w={16} h={12} />
       <Sparks delayMs={delayMs + 800} fill={p1} stroke={p2} cy={49} />
       <Boom delayMs={delayMs + 860} color={tint(p1, 0.85)} />
+      {/* FLAGSHIP "Standard Slam": the banner pole strikes bedrock - a tight
+          ground shockwave rips out from the plant point and the stage jolts. */}
+      <Impact rgb={rgbOf(p1)} atMs={delayMs + 860} left={40} top={38} size={20} />
       {/* geometry: the rally runs the line: the ward reaches the piece it is covering */}
       <Reach delayMs={delayMs + 560} color={tint(p1, 0.8)} top={52} thickness={1.8} />
       <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 1000} anchored={anchored} />
@@ -1975,7 +2083,7 @@ function Grove({ palette, glyph, lead, role, anchored, delayMs, flourish }: Temp
     );
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
-    <Stage anchored={anchored}>
+    <Stage anchored={anchored} quakeMs={delayMs + 800}>
       <Wash color={tint(p0, 0.24)} delayMs={delayMs} anchored={anchored} />
       {/* tell: the soil bulges and green light seeps up before the trunk breaches */}
       <TellShadow delayMs={delayMs} color={tint(p2, 0.5)} left={37} top={64} w={26} h={7} />
@@ -2141,6 +2249,22 @@ function Grove({ palette, glyph, lead, role, anchored, delayMs, flourish }: Temp
       <Flash delayMs={delayMs + 700} color={tint(p1, 0.55)} left={42} top={52} w={16} h={11} />
       <Sparks delayMs={delayMs + 740} fill={p1} stroke={p2} cy={56} />
       <Boom delayMs={delayMs + 800} color={tint(p1, 0.85)} />
+      {/* FLAGSHIP "Root Heave": the flagstone over the taproot bursts in half
+          as the trunk erupts - stone halves fall away, chips spray, the ground
+          ring rolls and the stage heaves on the same beat. */}
+      <Impact
+        rgb={rgbOf(p1)}
+        atMs={delayMs + 800}
+        left={40}
+        top={44}
+        size={18}
+        shatter={
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <rect x="1.4" y="3" width="7.2" height="5.6" rx="0.7" fill={tint(p2, 0.95)} stroke={tint(p1, 0.8)} strokeWidth="0.5" />
+            <path d="M2.4 8.6 C3.4 6.4 4.4 5.6 5 3 M6 8.6 C6.4 6.8 7 6 7.6 4.4" fill="none" stroke={tint(p1, 0.75)} strokeWidth="0.45" />
+          </svg>
+        }
+      />
       {/* geometry: a root runs the real line to whatever the grove is seizing */}
       <Reach delayMs={delayMs + 520} color={tint(p1, 0.85)} top={56} thickness={1.6} minCells={2.8} />
       <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 940} anchored={anchored} />
@@ -2350,6 +2474,10 @@ function PhantomParade({ palette, glyph, lead, role, anchored, delayMs, flourish
       <Flash delayMs={delayMs + 880} color={tint(p1, 0.5)} left={44} top={40} w={15} h={11} />
       <Sparks delayMs={delayMs + 920} fill={p1} stroke={p2} cy={45} />
       <Boom delayMs={delayMs + 980} color={tint(p1, 0.8)} />
+      {/* FLAGSHIP "Moonbeam Descent": a cold spectral column lasers down
+          through the lantern onto the road - light only, no quake: the parade
+          passes without weight, which is the point. */}
+      <Impact rgb={rgbOf(p1)} atMs={delayMs + 980} laser left={40} top={36} size={20} />
       {/* geometry: the procession's road, laid down the play's own line */}
       <Reach delayMs={delayMs + 640} color={tint(p1, 0.75)} top={44} thickness={1.4} minCells={3} />
       <GrandAccent flourish={flourish} color={tint(p1, 0.7)} delayMs={delayMs + 1120} anchored={anchored} />
@@ -2386,7 +2514,7 @@ function ClockSpire({ palette, glyph, lead, role, anchored, delayMs, flourish }:
     );
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
-    <Stage anchored={anchored}>
+    <Stage anchored={anchored} quakeMs={delayMs + 1000}>
       <Wash color={tint(p0, 0.24)} delayMs={delayMs} anchored={anchored} />
       {/* tell: the tower's shadow stretches over the square before it rises */}
       <TellShadow delayMs={delayMs} color={tint(p2, 0.55)} left={40} top={64} w={20} h={6} />
@@ -2535,6 +2663,10 @@ function ClockSpire({ palette, glyph, lead, role, anchored, delayMs, flourish }:
       <Flash delayMs={delayMs + 900} color={tint(p1, 0.6)} left={43} top={32} w={14} h={11} />
       <Sparks delayMs={delayMs + 940} fill={p1} stroke={p2} cy={38} />
       <Boom delayMs={delayMs + 1000} color={tint(p1, 0.85)} />
+      {/* FLAGSHIP "Toll Shock": the great bell's strike is a physical blow - a
+          second tight ground ring at the spire's base while the whole stage
+          jolts on the toll. */}
+      <Impact rgb={rgbOf(p1)} atMs={delayMs + 1000} left={41} top={42} size={18} />
       {/* geometry: the spire's shadow falls down the play's own line, onto the clock it is stopping */}
       <Reach delayMs={delayMs + 660} color={tint(p1, 0.85)} top={46} thickness={1.4} />
       <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 1140} anchored={anchored} />
@@ -2570,7 +2702,7 @@ function CardRite({ palette, glyph, lead, role, anchored, delayMs, flourish }: T
     );
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
-    <Stage anchored={anchored}>
+    <Stage anchored={anchored} quakeMs={delayMs + 880}>
       <Wash color={tint(p0, 0.24)} delayMs={delayMs} anchored={anchored} />
       {/* tell: the card's shadow grows on the boards as it falls */}
       <TellShadow delayMs={delayMs} color={tint(p2, 0.55)} left={40} top={44} w={20} h={22} />
@@ -2974,6 +3106,10 @@ function CardRite({ palette, glyph, lead, role, anchored, delayMs, flourish }: T
       <Flash delayMs={delayMs + 780} color={tint(p1, 0.6)} left={42} top={44} w={16} h={12} />
       <Sparks delayMs={delayMs + 820} fill={p1} stroke={p2} cy={49} />
       <Boom delayMs={delayMs + 880} color={tint(p1, 0.85)} />
+      {/* FLAGSHIP "Verdict Slap": a column of fate-light lasers down onto the
+          dealt card as it hits the table, and the table jumps - laser + quake,
+          no extra ring (the deal IS the ring). */}
+      <Impact rgb={rgbOf(p1)} atMs={delayMs + 880} laser shock={false} left={39} top={30} size={22} />
       {/* geometry: the deal reaches its mark: the rite runs the real line to the piece it names */}
       <Reach delayMs={delayMs + 560} color={tint(p1, 0.8)} top={50} thickness={1.4} />
       <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 1020} anchored={anchored} />
@@ -3013,7 +3149,7 @@ function ThiefHand({ palette, glyph, lead, role, anchored, delayMs, flourish }: 
     );
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
-    <Stage anchored={anchored}>
+    <Stage anchored={anchored} quakeMs={delayMs + 920}>
       <Wash color={tint(p2, 0.32)} delayMs={delayMs} anchored={anchored} />
       {/* tell: the prize glimmers awake while a shadow creeps in from the wing */}
       <TellGlow delayMs={delayMs} color={tint(p1, 0.35)} left={40} top={34} w={16} h={16} />
@@ -3250,6 +3386,23 @@ function ThiefHand({ palette, glyph, lead, role, anchored, delayMs, flourish }: 
       <Flash delayMs={delayMs + 820} color={tint(p1, 0.55)} left={42} top={38} w={15} h={11} />
       <Sparks delayMs={delayMs + 860} fill={p1} stroke={p0} cy={44} />
       <Boom delayMs={delayMs + 920} color={tint(p1, 0.8)} />
+      {/* FLAGSHIP "Prize Rip": the prize is torn in two as the gauntlet wrenches
+          it away - the halves hinge apart and spray glinting fragments while
+          the stage jolts (no extra ring: this hit is a THEFT, not a blast). */}
+      <Impact
+        rgb={rgbOf(p1)}
+        atMs={delayMs + 920}
+        left={38}
+        top={36}
+        size={18}
+        shock={false}
+        shatter={
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <path d="M5 1 L8.6 4 L7.2 8.6 H2.8 L1.4 4 Z" fill={tint(p1, 0.85)} stroke={tint(p0, 0.9)} strokeWidth="0.5" {...SJ} />
+            <path d="M5 1 L5 8.6 M1.4 4 H8.6" fill="none" stroke={tint(p0, 0.7)} strokeWidth="0.4" />
+          </svg>
+        }
+      />
       {/* geometry: the reach itself: the arm runs the real line out to the prize */}
       <Reach delayMs={delayMs + 560} color={tint(p1, 0.85)} top={42} thickness={1.6} minCells={3} />
       <GrandAccent flourish={flourish} color={tint(p1, 0.7)} delayMs={delayMs + 1060} anchored={anchored} />
@@ -3285,7 +3438,7 @@ function CrownForge({ palette, glyph, lead, role, anchored, delayMs, flourish }:
     );
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
-    <Stage anchored={anchored}>
+    <Stage anchored={anchored} quakeMs={delayMs + 940}>
       <Wash color={tint(p0, 0.24)} delayMs={delayMs} anchored={anchored} />
       {/* tell: forge-heat pools under the boards before the anvil breaches */}
       <TellShadow delayMs={delayMs} color={tint(p2, 0.55)} left={38} top={62} w={24} h={7} />
@@ -3573,6 +3726,21 @@ function CrownForge({ palette, glyph, lead, role, anchored, delayMs, flourish }:
         />
       ))}
       <Boom delayMs={delayMs + 940} color={tint(p1, 0.85)} thickness={4} />
+      {/* FLAGSHIP "Anvil Break": the hammer blow splits the old crown clean in
+          half on the anvil - halves fall away, sparks fly as shards, the anvil
+          ring rolls out and the forge floor jolts, all on one beat. */}
+      <Impact
+        rgb={rgbOf(p1)}
+        atMs={delayMs + 940}
+        left={39}
+        top={34}
+        size={19}
+        shatter={
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <path d="M1.6 7.8 H8.4 L9 3 L6.9 4.8 L5 2.2 L3.1 4.8 L1 3 Z" fill={tint(p1, 0.9)} stroke={tint(p2, 0.9)} strokeWidth="0.5" {...SJ} />
+          </svg>
+        }
+      />
       {/* geometry: the finished work is carried down the real line to the piece it crowns */}
       <Reach delayMs={delayMs + 620} color={tint(p1, 0.85)} top={50} thickness={1.8} />
       <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 1080} anchored={anchored} />
@@ -3609,7 +3777,7 @@ function RiftGate({ palette, glyph, lead, role, anchored, delayMs, flourish }: T
     );
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
-    <Stage anchored={anchored}>
+    <Stage anchored={anchored} quakeMs={delayMs + 900}>
       <Wash color={tint(p0, 0.24)} delayMs={delayMs} anchored={anchored} />
       {/* tell: stray aurora light converges on the two footings */}
       <TellGlow delayMs={delayMs} color={tint(p1, 0.3)} left={35} top={40} w={10} h={20} />
@@ -3777,6 +3945,10 @@ function RiftGate({ palette, glyph, lead, role, anchored, delayMs, flourish }: T
       <Flash delayMs={delayMs + 800} color={tint(p1, 0.6)} left={43} top={42} w={14} h={11} />
       <Sparks delayMs={delayMs + 840} fill={p1} stroke={p2} cy={47} />
       <Boom delayMs={delayMs + 900} color={tint(p1, 0.85)} />
+      {/* FLAGSHIP "Aurora Column": the pane's light lasers straight down
+          between the obelisks as the gate locks open, ground ring under it,
+          stage jolt on the same beat. */}
+      <Impact rgb={rgbOf(p1)} atMs={delayMs + 900} laser left={39} top={34} size={21} />
       {/* geometry: the gate opens ONTO somewhere: the current runs the play's real vector */}
       <Reach delayMs={delayMs + 580} color={tint(p1, 0.85)} top={47} thickness={2} minCells={3} />
       <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 1040} anchored={anchored} />
@@ -3816,7 +3988,7 @@ function BeastRush({ palette, glyph, lead, role, anchored, delayMs, flourish }: 
     );
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
   return (
-    <Stage anchored={anchored}>
+    <Stage anchored={anchored} quakeMs={delayMs + 900 + hold}>
       <Wash color={tint(p0, 0.24)} delayMs={delayMs} anchored={anchored} />
       {/* tell: hoofbeat rumble — the ground shadows and speed-light gathers */}
       <TellShadow delayMs={delayMs} color={tint(p2, 0.55)} left={26} top={58} w={26} h={6} />
@@ -3942,6 +4114,17 @@ function BeastRush({ palette, glyph, lead, role, anchored, delayMs, flourish }: 
       <Flash delayMs={delayMs + 820 + hold} color={tint(p1, 0.7)} left={56} top={38} w={16} h={12} />
       <Sparks delayMs={delayMs + 860 + hold} fill={p1} stroke={p2} cx={63} cy={43} />
       <Boom delayMs={delayMs + 900 + hold} color={tint(p1, 0.85)} thickness={4} />
+      {/* FLAGSHIP "Hoofquake": whatever stood at the far wing is simply run
+          THROUGH - the trampled pawn splits in half under the hooves, debris
+          sprays down the charge line and the stage bucks on the stampede beat. */}
+      <Impact
+        rgb={rgbOf(p1)}
+        atMs={delayMs + 900 + hold}
+        left={55}
+        top={34}
+        size={18}
+        shatter={<Man kind="p" fill={tint(p1, 0.95)} stroke={p2} />}
+      />
       {/* geometry: the charge line, laid down the real source -> victim vector */}
       <Reach delayMs={delayMs + 560 + hold} color={tint(p1, 0.85)} top={52} thickness={2.4} minCells={3} />
       <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 1040 + hold} anchored={anchored} />

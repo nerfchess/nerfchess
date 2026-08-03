@@ -11,6 +11,9 @@
  *   - a spawn duration over the card's tier budget
  *   - a missing reduced-motion fallback
  *   - an unknown primitive, aura, or pulse key
+ *   - a malformed spawn cue (bad beats, out-of-range scale, missing seed)
+ *   - two NERFS sharing the full reveal performance (composition AND cue):
+ *     the bespoke-wave guarantee that no nerf's reveal is a clone of a sibling
  *
  * This is the enforcement the spec promises (docs/passive-effect-language.md:3):
  * "A passive without an entry here fails the build."
@@ -106,6 +109,58 @@ for (const v of PASSIVE_VISUALS) {
   } else {
     seenSentence.set(s, id);
   }
+
+  // Spawn cue integrity (section 3.1): a seed, one beat per layer, layer 0
+  // leading at 0, later beats within 0..0.3 of the duration, scale sane.
+  const cue = v.cue;
+  if (!cue || typeof cue.seed !== "number") {
+    fail(`${id}: missing spawn cue.`);
+  } else {
+    if (!Array.isArray(cue.beats) || cue.beats.length < 1) {
+      fail(`${id}: cue has no beats.`);
+    } else {
+      if (cue.beats[0] !== 0) fail(`${id}: cue layer 0 must lead at beat 0, got ${cue.beats[0]}.`);
+      for (const b of cue.beats) {
+        if (typeof b !== "number" || b < 0 || b > 0.3) fail(`${id}: cue beat ${b} outside 0..0.3.`);
+      }
+    }
+    if (typeof cue.scale !== "number" || cue.scale < 0.85 || cue.scale > 1.2) {
+      fail(`${id}: cue scale ${cue.scale} outside 0.85..1.2.`);
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// 3. Bespoke-reveal guarantee: no two NERFS share the full reveal performance.
+//
+// The sentence above allows two cards to share primitives when their sigils
+// differ, but a sigil is a static icon, not motion. The reveal performance is
+// what the player actually SEES move: composition order, target, duration,
+// and the per-card cue sheet (seed, beats, scale, mirror). Every one of the
+// 360 nerfs must perform distinctly from every other.
+// ---------------------------------------------------------------------------
+
+const seenPerformance = new Map<string, string>();
+for (const v of PASSIVE_VISUALS) {
+  if (v.cardFamily !== "nerf") continue;
+  const c = v.cue;
+  if (!c) continue; // already failed above
+  const perf = [
+    v.family,
+    v.composition.join(","),
+    v.targetType,
+    v.spawnDurationMs,
+    c.seed,
+    c.beats.join(","),
+    c.scale,
+    c.mirror,
+  ].join("|");
+  const before = seenPerformance.get(perf);
+  if (before) {
+    fail(`Nerf reveal performance clone between '${before}' and 'nerf:${v.cardId}': ${perf}`);
+  } else {
+    seenPerformance.set(perf, `nerf:${v.cardId}`);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -121,5 +176,6 @@ if (errors.length > 0) {
 
 console.log(
   `PASS: passive registry OK. ${PASSIVE_VISUALS.length} entries ` +
-    `(${nerfCount} nerfs, ${buffCount} buffs), all sentences unique, all budgets and keys valid.`,
+    `(${nerfCount} nerfs, ${buffCount} buffs), all sentences unique, all budgets and keys valid, ` +
+    `all ${seenPerformance.size} nerf reveal performances bespoke.`,
 );

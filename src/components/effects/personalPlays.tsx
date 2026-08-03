@@ -29,6 +29,7 @@
 
 import type { CSSProperties, ReactNode } from "react";
 import type { SigPlugin, SigRole } from "./sigPlugins";
+import { LaserStrike, PieceShatter, Shockwave, QUAKE_CLASS, impactVars } from "./impact/impact";
 import { BoardFrame } from "./stage";
 import "./personalPlays.css";
 
@@ -41,11 +42,55 @@ const d = (ms: number): CSSProperties => ({ animationDelay: `${ms}ms` });
 const dv = (ms: number, vars: Record<string, string>): CSSProperties =>
   ({ animationDelay: `${ms}ms`, ...vars }) as CSSProperties;
 
-/** Square-local stage (target hits and small leads). */
-function Stage({ children, inset = "0" }: { children: ReactNode; inset?: string }) {
+/** Square-local stage (target hits and small leads).
+ *
+ * FLAGSHIP UPGRADE: `quakeMs` (absolute ms, like every other delay in this
+ * module) jolts the whole stage on that card's own impact beat via the shared
+ * imp-quake wrapper (impact.css). In-scene only: the real board never shakes.
+ * All quake/impact nodes live under the .pnp root, so the animations-off kill
+ * switch (display: none on .pnp) covers them for free. */
+function Stage({ children, inset = "0", quakeMs }: { children: ReactNode; inset?: string; quakeMs?: number }) {
   return (
     <span className="pnp pointer-events-none absolute z-20 block" style={{ inset }} aria-hidden="true">
-      {children}
+      {quakeMs != null ? (
+        <span className={`${QUAKE_CLASS} absolute inset-0 block`} style={impactVars(undefined, quakeMs / 1000)}>
+          {children}
+        </span>
+      ) : (
+        children
+      )}
+    </span>
+  );
+}
+
+/** hex "#rrggbb" -> "r g b" for the impact vocabulary's --imp-rgb channel. */
+function rgbOf(hex: string): string {
+  return `${parseInt(hex.slice(1, 3), 16)} ${parseInt(hex.slice(3, 5), 16)} ${parseInt(hex.slice(5, 7), 16)}`;
+}
+
+/** FLAGSHIP SLAM: the shared impact vocabulary (impact.css) staged at one
+ * point of a Wide/Framed canvas. The laser column LEADS the beat by 0.4s and
+ * the shatter halves, shard spray and ground shockwave land ON `atMs`, the
+ * same beat the stage quake rides, so the whole composite reads as one hit.
+ * `left`/`top` name the CENTER of the struck cell in % of the canvas. */
+function Slam({
+  atMs, left, top, rgb, laser, glyph, size = 8,
+}: { atMs: number; left: number; top: number; rgb: string; laser?: boolean; glyph?: ReactNode; size?: number }) {
+  return (
+    <span
+      className="pnp-slam absolute block"
+      style={{
+        left: `${left - size / 2}%`,
+        top: `${top - size / 2}%`,
+        width: `${size}%`,
+        height: `${size}%`,
+        ...impactVars(rgbOf(rgb), atMs / 1000),
+      }}
+      aria-hidden="true"
+    >
+      {laser && <LaserStrike />}
+      {glyph != null && <PieceShatter glyph={glyph} />}
+      <Shockwave />
     </span>
   );
 }
@@ -54,10 +99,17 @@ function Stage({ children, inset = "0" }: { children: ReactNode; inset?: string 
  * scene takes over the whole visible board (the caller's crop clips it).
  * Same geometry as the core BoardWideStage — a 1400% canvas is ~14 cells, so
  * the 8x8 board is the middle ~57% — rebuilt here to avoid the import cycle. */
-function Wide({ children }: { children: ReactNode }) {
+function Wide({ children, quakeMs }: { children: ReactNode; quakeMs?: number }) {
+  // FLAGSHIP UPGRADE: quakeMs jolts the whole 14-cell canvas on the card's own
+  // impact beat (shared imp-quake wrapper; in-scene only, never the board).
   return (
     <span className="pnp pointer-events-none absolute inset-0 z-30" aria-hidden="true">
-      <span className="absolute left-[-650%] top-[-650%] block h-[1400%] w-[1400%]">{children}</span>
+      <span
+        className={`absolute left-[-650%] top-[-650%] block h-[1400%] w-[1400%]${quakeMs != null ? ` ${QUAKE_CLASS}` : ""}`}
+        style={quakeMs != null ? impactVars(undefined, quakeMs / 1000) : undefined}
+      >
+        {children}
+      </span>
     </span>
   );
 }
@@ -73,12 +125,22 @@ function Wide({ children }: { children: ReactNode }) {
  * to 175% of the frame and offset -37.5%, which reproduces the old framing
  * exactly at any anchor. The cast square then carries the play's own local
  * beats; see `Spot`. */
-function Framed({ children }: { children: ReactNode }) {
+function Framed({ children, quakeMs }: { children: ReactNode; quakeMs?: number }) {
+  // FLAGSHIP UPGRADE: quakeMs jolts the scene on its own impact beat. The
+  // quake rides an INNER wrapper because the fx-stage canvas carries the
+  // anchor-clamp transform, which must never be animated over.
+  const inner = <span className="absolute left-[-37.5%] top-[-37.5%] block h-[175%] w-[175%]">{children}</span>;
   return (
     <span className="pnp pointer-events-none absolute inset-0 z-30" aria-hidden="true">
       <span className="fx-stage absolute left-[-650%] top-[-650%] block h-[1400%] w-[1400%]">
         <BoardFrame>
-          <span className="absolute left-[-37.5%] top-[-37.5%] block h-[175%] w-[175%]">{children}</span>
+          {quakeMs != null ? (
+            <span className={`${QUAKE_CLASS} absolute inset-0 block`} style={impactVars(undefined, quakeMs / 1000)}>
+              {inner}
+            </span>
+          ) : (
+            inner
+          )}
         </BoardFrame>
       </span>
     </span>
@@ -314,6 +376,11 @@ function AthleteScene({
   tell,
   hit,
   settle,
+  slamAt,
+  slamLeft = 50,
+  slamTop = 56,
+  slamRgb = "#ffd76a",
+  slamLaser,
 }: {
   id: string;
   lead: boolean;
@@ -325,6 +392,14 @@ function AthleteScene({
   tell?: CSSProperties;
   hit?: CSSProperties;
   settle?: CSSProperties;
+  /** FLAGSHIP SLAM: each athlete card names its OWN moment of contact (ms
+   * after delayMs) plus where/what colour it lands, so the shared scene still
+   * hits differently per card: the stage quakes and the ground shocks there. */
+  slamAt?: number;
+  slamLeft?: number;
+  slamTop?: number;
+  slamRgb?: string;
+  slamLaser?: boolean;
 }) {
   if (role === "entrance") {
     return (
@@ -351,8 +426,12 @@ function AthleteScene({
   }
   return (
     <>
-      <Framed>
+      <Framed quakeMs={slamAt != null ? delayMs + slamAt : undefined}>
       <Wash color={wash} delayMs={delayMs} />
+      {/* THE LIFT LANDS: this card's own named contact beat (see the caller):
+          ground-shock under the athlete, whole stage jolt, optional spotlight
+          column for the apex holds */}
+      {slamAt != null && <Slam atMs={delayMs + slamAt} left={slamLeft} top={slamTop} rgb={slamRgb} laser={slamLaser} />}
       {/* TELL: the chalk clap, before anyone appears */}
       <Prop left="40%" top="40%" width="10%" height="10%">
         <svg viewBox="0 0 30 30" className="h-full w-full">
@@ -446,6 +525,12 @@ function HandstandPushupPlay({ lead, role, delayMs }: SceneProps) {
       tell={d(delayMs + 90)}
       hit={d(delayMs + 780)}
       settle={d(delayMs + 1800)}
+      /* FLOOR-CRACK PRESS-OUT: the palms punch the floor at lockout and the
+         ground shocks straight down under the inverted press */
+      slamAt={780}
+      slamLeft={50}
+      slamTop={58}
+      slamRgb="#ffd76a"
     />
   );
 }
@@ -463,6 +548,12 @@ function FullPlanchePlay({ lead, role, delayMs }: SceneProps) {
       tell={d(delayMs + 110)}
       hit={d(delayMs + 900)}
       settle={d(delayMs + 2000)}
+      /* GRAVITY-SNUB SHOCKLINE: the hold locks parallel and gravity loses;
+         the shock rolls out at hand level, warm white */
+      slamAt={900}
+      slamLeft={50}
+      slamTop={52}
+      slamRgb="#e8edf6"
     />
   );
 }
@@ -480,6 +571,12 @@ function FingertipMaltesePlay({ lead, role, delayMs }: SceneProps) {
       tell={d(delayMs + 120)}
       hit={d(delayMs + 960)}
       settle={d(delayMs + 2100)}
+      /* FINGERTIP TREMOR: ten fingertips take the whole load and the strain
+         rings the floor in ice blue */
+      slamAt={960}
+      slamLeft={50}
+      slamTop={56}
+      slamRgb="#9fd0ea"
     />
   );
 }
@@ -497,6 +594,13 @@ function OneArmDreamPlay({ lead, role, delayMs }: SceneProps) {
       tell={d(delayMs + 100)}
       hit={d(delayMs + 880)}
       settle={d(delayMs + 1950)}
+      /* ONE-ARM DETONATION: the dream rep clears the bar and a gold dream
+         column hammers down over the lockout */
+      slamAt={880}
+      slamLeft={50}
+      slamTop={46}
+      slamRgb="#ffd76a"
+      slamLaser
     />
   );
 }
@@ -712,7 +816,21 @@ function MonkeytypePlay({ lead, role, delayMs }: SceneProps) {
   }
   return (
     <>
-      <Stage inset="-150%">
+      <Stage inset="-150%" quakeMs={delayMs + 1340}>
+      {/* RGB BACKLIGHT BEAM SHOW: the keyboard's per-key lighting fires three
+          full-height beam columns (red, green, blue) marching left to right
+          under the test card; the last one lands a ground shockwave on the
+          same beat the 148wpm personal best stamps and the stage quakes */}
+      {["232 77 91", "106 191 95", "79 163 209"].map((rgb, i) => (
+        <span
+          key={rgb}
+          className="pnp-slam absolute block"
+          style={{ left: `${23 + i * 23}%`, top: "34%", width: "10%", height: "12%", ...impactVars(rgb, (delayMs + 560 + i * 390) / 1000) }}
+        >
+          <LaserStrike />
+          {i === 2 && <Shockwave />}
+        </span>
+      ))}
       <svg viewBox="0 0 100 100" className="h-full w-full">
         {/* the test line: a calm dark card, monkeytype-style; the card takes a
             focus breath (two soft pulses) before the first keystroke — the tell */}
@@ -800,8 +918,23 @@ function RubiksCubePlay({ lead, role, delayMs }: SceneProps) {
   }
   return (
     <>
-      <Framed>
+      <Framed quakeMs={delayMs + 1200}>
       <Wash color="rgba(35,42,56,0.18)" delayMs={delayMs} />
+      {/* STICKER-SHRAPNEL WRENCH: the quarter-turn torque snaps a whole
+          sticker slab in half at the cube's face, shards spraying with the
+          loose stickers while the stage jolts */}
+      <Slam
+        atMs={delayMs + 1200}
+        left={50}
+        top={47}
+        rgb="#ffd23f"
+        size={9}
+        glyph={
+          <svg viewBox="0 0 40 40" className="block h-full w-full" aria-hidden="true">
+            <rect x={9} y={9} width={22} height={22} rx={4.5} fill="#ffd23f" stroke="#232a38" strokeWidth={2} />
+          </svg>
+        }
+      />
       <Prop left="31%" top="28%" width="38%" height="38%">
         <svg viewBox="0 0 100 100" className="h-full w-full">
           {/* the face: black frame, 3x3 stickers; a frantic scramble-blur
@@ -892,8 +1025,11 @@ function WhimperingAudiosPlay({ lead, role, delayMs }: SceneProps) {
   }
   return (
     <>
-      <Wide>
+      <Wide quakeMs={delayMs + 820}>
       <Wash color="rgba(242,119,143,0.16)" delayMs={delayMs} />
+      {/* SUB-BASS HALO DROP: the headphone crown touches down on a bass hit
+          you can FEEL: pink ground-shock, whole-stage shudder */}
+      <Slam atMs={delayMs + 820} left={50} top={46} rgb="#f2778f" size={9} />
       {/* TELL: a soft charm glow breathes where the halo will settle */}
       <Glow left="40%" top="37%" width="20%" height="18%" color="rgba(242,119,143,0.4)" delayMs={delayMs} />
       {/* soundwave ribbons wash the whole board, layer by layer */}
@@ -976,8 +1112,11 @@ function ILoveMakingOutPlay({ lead, role, delayMs }: SceneProps) {
   }
   return (
     <>
-      <Framed>
+      <Framed quakeMs={delayMs + 920}>
       <Wash color="rgba(232,80,110,0.14)" delayMs={delayMs} />
+      {/* KISS-QUAKE: the crowns touch and the smooch lands like a wrecking
+          ball: rose ground-shock at the point of contact, stage-wide wobble */}
+      <Slam atMs={delayMs + 920} left={50} top={42} rgb="#e8506e" size={8.5} />
       <Prop left="32%" top="28%" width="36%" height="38%">
         <svg viewBox="0 0 100 100" className="h-full w-full">
           {/* the pair: they tip toward each other and touch crowns */}
@@ -1055,10 +1194,14 @@ function HyeinPlay({ lead, role, delayMs }: SceneProps) {
   }
   return (
     <>
-      <Framed>
+      <Framed quakeMs={delayMs + 1160}>
       {/* ambient: a spring-green ellipse along her diagonal, smaller than her
           silhouette (no rectangular washes behind portraits — brief §3) */}
       <Glow left="39%" top="36%" width="22%" height="22%" color="rgba(127,214,138,0.32)" delayMs={delayMs + 300} />
+      {/* MAKNAE MEGA-STOMP: the LAST footstep is a giant's; it lands under
+          the biggest print with a spring-green ground-shock and the whole
+          board rocks with the stride */}
+      <Slam atMs={delayMs + 1160} left={65} top={33} rgb="#a8e063" size={10} />
       {/* TELL: the first two footsteps land before she's even in frame —
           someone BIG is coming — then the trail keeps growing under her */}
       {[
@@ -1147,8 +1290,12 @@ function DanielCaesarPlay({ lead, role, delayMs }: SceneProps) {
   }
   return (
     <>
-      <Wide>
+      <Wide quakeMs={delayMs + 1020}>
       <Wash color="rgba(28,44,82,0.22)" delayMs={delayMs} />
+      {/* NEEDLE-DROP HUSH THUMP: the groove catches and one deep blue
+          sub-woofer thump rolls a ground-shock through the room; even the
+          silence hits hard here */}
+      <Slam atMs={delayMs + 1020} left={50} top={44} rgb="#4a7fd6" size={9} />
       {/* silk soundwaves glide over the whole board — only AFTER the needle */}
       <Prop left="21%" top="30%" width="58%" height="40%">
         <svg viewBox="0 0 104 80" className="h-full w-full">
@@ -1240,8 +1387,24 @@ function MiddlePartPlay({ lead, role, delayMs }: SceneProps) {
   }
   return (
     <>
-      <Framed>
+      <Framed quakeMs={delayMs + 950}>
       <Wash color="rgba(255,215,106,0.12)" delayMs={delayMs} />
+      {/* GOLD-SEAM SPLIT: the comb's finishing stroke is a golden laser down
+          the part, and the mirrored pawn is split CLEAN IN HALF along it,
+          each half falling to its own side of the seam */}
+      <Slam
+        atMs={delayMs + 950}
+        left={50}
+        top={54}
+        rgb="#ffd76a"
+        laser
+        size={8.5}
+        glyph={
+          <svg viewBox="0 0 40 40" className="block h-full w-full" aria-hidden="true">
+            <Pawn x={20} y={26} s={1.3} fill="#fff2c9" stroke="#c9931d" />
+          </svg>
+        }
+      />
       {/* the part: a gold seam revealed straight down the center file */}
       <Prop left="49.4%" top="24%" width="1.2%" height="52%">
         <span className="pnp-partline absolute inset-0 block rounded-full" style={{ background: "linear-gradient(180deg, #fff2c9, #ffd76a 30%, #e8b04b)", ...d(delayMs + 150) }} />
@@ -1343,8 +1506,12 @@ function ForearmVeinsPlay({ lead, role, delayMs }: SceneProps) {
   }
   return (
     <>
-      <Wide>
+      <Wide quakeMs={delayMs + 940}>
       <Wash color="rgba(214,35,79,0.13)" delayMs={delayMs} />
+      {/* GRIP-CRUSH PUMP QUAKE: the third squeeze is the real one; the crush
+          detonates a crimson ground-shock under the fist and the whole board
+          trembles with the pump */}
+      <Slam atMs={delayMs + 940} left={50} top={47} rgb="#d6234f" size={9} />
       {/* veins of light surge straight up five files — AFTER the clench tell */}
       {[
         { left: "27%", top: "30%", dl: 480, c: "#ff8a7a" },
@@ -1422,10 +1589,14 @@ function MinjiPlay({ lead, role, delayMs }: SceneProps) {
   }
   return (
     <>
-      <Framed>
+      <Framed quakeMs={delayMs + 1340}>
       {/* ambient: a cool blue ellipse behind her, smaller than her silhouette
           (no rectangular washes behind portraits — brief §3) */}
       <Glow left="39%" top="34%" width="22%" height="24%" color="rgba(90,127,214,0.35)" delayMs={delayMs + 160} />
+      {/* SHIELD-WALL SEAM SLAM: the LOW guard pair is the heavy one; when it
+          clamps shut the seam detonates a cold blue ground-shock and the whole
+          formation jolts with the lock */}
+      <Slam atMs={delayMs + 1340} left={50} top={45} rgb="#9fc4ff" size={8.5} />
       {/* the ground shadow she rises out of */}
       <GroundShadow left="41%" top="60.8%" width="18%" delayMs={delayMs} />
       {/* the leader RISES into frame, board-dominating (~32% canvas = ~56% board) */}
@@ -1507,10 +1678,14 @@ function HanniPlay({ lead, role, delayMs }: SceneProps) {
   }
   return (
     <>
-      <Wide>
+      <Wide quakeMs={delayMs + 1000}>
       {/* ambient: a pale green ellipse behind her, smaller than her silhouette
           (no rectangular washes behind portraits — brief §3) */}
       <Glow left="39.5%" top="35%" width="21%" height="23%" color="rgba(191,230,168,0.35)" delayMs={delayMs + 160} />
+      {/* FLASH-FREEZE CHARM STRIKE: the charm lands as a frost column driven
+          into the heart of the bloom; the freeze shockwave rings out and the
+          stage shivers with the cold snap */}
+      <Slam atMs={delayMs + 1000} left={50} top={46} rgb="#bfe6a8" laser size={9} />
       {/* the ground shadow she rises out of */}
       <GroundShadow left="41.5%" top="60.4%" width="17%" delayMs={delayMs} />
       {/* signature beat: the crystal bloom GROWS arm by arm behind her, each
@@ -1583,10 +1758,14 @@ function DaniellePlay({ lead, role, delayMs }: SceneProps) {
   }
   return (
     <>
-      <Framed>
+      <Framed quakeMs={delayMs + 700}>
       {/* ambient: a warm dawn ellipse behind her, smaller than her silhouette
           (no rectangular washes behind portraits — brief §3) */}
       <Glow left="39%" top="34%" width="22%" height="24%" color="rgba(255,215,106,0.35)" delayMs={delayMs + 160} />
+      {/* LIGHTHOUSE SUNSTRIKE: the sweeping beam finds its mark and hardens
+          into a full sun-column that hammers the boards, dawn shockwave and
+          stage-jolt on the same beat */}
+      <Slam atMs={delayMs + 700} left={50} top={42} rgb="#ffd76a" laser size={9} />
       {/* the ground shadow she rises out of */}
       <GroundShadow left="41%" top="60.8%" width="18%" delayMs={delayMs} />
       {/* signature beat: ONE lighthouse beam sweeps the dawn across the board,
@@ -1663,10 +1842,25 @@ function HaerinPlay({ lead, role, delayMs }: SceneProps) {
   }
   return (
     <>
-      <Framed>
+      <Framed quakeMs={delayMs + 1150}>
       {/* ambient: a moody elliptical night pool under the hunt — radial, never
           a rectangular wash (brief §3) */}
       <Glow left="34%" top="34%" width="32%" height="30%" color="rgba(18,20,25,0.45)" delayMs={delayMs} />
+      {/* POUNCE GUILLOTINE: where the pounce lands, the caught piece is
+          simply SPLIT IN HALF between her claws: the prey's silhouette shears
+          apart, shards spray, and the landing quake rolls the whole board */}
+      <Slam
+        atMs={delayMs + 1150}
+        left={63}
+        top={37}
+        rgb="#eceff1"
+        size={9}
+        glyph={
+          <svg viewBox="0 0 40 40" className="block h-full w-full" aria-hidden="true">
+            <Pawn x={20} y={26} s={1.3} fill="#39435c" stroke="#12161f" />
+          </svg>
+        }
+      />
       {/* signature beat: she CROUCHES first (butt-wiggle coil, in the pounce
           keyframe), and the claw streaks rip open in her wake as she passes */}
       {[
@@ -1755,10 +1949,14 @@ function ILoveCamPlay({ lead, role, delayMs }: SceneProps) {
   }
   return (
     <>
-      <Framed>
+      <Framed quakeMs={delayMs + 880}>
       {/* ambient: a pink ellipse behind her, smaller than her silhouette
           (portraits are free-standing characters — brief §3) */}
       <Glow left="40%" top="34%" width="20%" height="26%" color="rgba(255,143,177,0.35)" delayMs={delayMs + 160} />
+      {/* CROSS-SWEEP DETONATION: where the rank blade meets the file blade a
+          pink love-beam column slams the crossing square, shockwave and
+          stage-jolt landing with the gold star */}
+      <Slam atMs={delayMs + 880} left={50} top={50} rgb="#ff8fb1" laser size={8.5} />
       {/* the ground shadow she rises out of */}
       <GroundShadow left="42%" top="65%" width="16%" delayMs={delayMs} />
       {/* TELL: the cross point winks before the blades fire */}
@@ -1864,8 +2062,12 @@ function ILoveChaewonPlay({ lead, role, delayMs }: SceneProps) {
   ];
   return (
     <>
-      <Framed>
+      <Framed quakeMs={delayMs + 990}>
       <Wash color="rgba(255,157,192,0.16)" delayMs={delayMs} />
+      {/* FEARLESS FORMATION LOCK-IN: the trio hits its final mark on one
+          count; the stage floor answers with a rose ground-shock and a jolt
+          timed to the first lock sparkle */}
+      <Slam atMs={delayMs + 990} left={50} top={45} rgb="#f2909f" size={8.5} />
       {/* TELL: a soft stage light warms the floor before the feather falls */}
       <Glow left="42%" top="36%" width="16%" height="14%" color="rgba(255,157,192,0.4)" delayMs={delayMs} />
       {/* the hero feather drifts down and sways, trailing grace */}
@@ -1940,11 +2142,17 @@ function ILoveChaewonPlay({ lead, role, delayMs }: SceneProps) {
 export const PLAYS: Record<string, SigPlugin> = {
   muscle_up: {
     config: { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz", anchor: "cast" },
-    Render: ({ lead, role, delayMs }) => <AthleteScene id="muscle_up" lead={lead} role={role} delayMs={delayMs} />,
+    // BAR-BEND BLOWOUT: the explosive pull tops out over the bar and the rig
+    // shocks at bar height while the whole stage quakes.
+    Render: ({ lead, role, delayMs }) =>
+      <AthleteScene id="muscle_up" lead={lead} role={role} delayMs={delayMs} slamAt={860} slamLeft={50} slamTop={40} slamRgb="#ffd76a" />,
   },
   bench_225: {
     config: { ordering: "sweep", staggerMs: 70, victims: "all", hasLead: true, sound: "colossus", anchor: "cast" },
-    Render: ({ lead, role, delayMs }) => <AthleteScene id="bench_225" lead={lead} role={role} delayMs={delayMs} />,
+    // THE 225 RACK-BREAKER: two plates a side slam back into the rack; a
+    // steel-grey column drops onto the bar and the stage takes the quake.
+    Render: ({ lead, role, delayMs }) =>
+      <AthleteScene id="bench_225" lead={lead} role={role} delayMs={delayMs} slamAt={940} slamLeft={50} slamTop={48} slamRgb="#e84d5b" slamLaser />,
   },
   // Calisthenics athletes (owner request: show a GUY actually doing the
   // skill). Configs copied from the retired core entries; the athlete SVG

@@ -17,6 +17,7 @@
 import type { CSSProperties, ReactNode } from "react";
 import type { SigPlugin, SigRole } from "./sigPlugins";
 import "./stubPlays.css";
+import { LaserStrike, PieceShatter, Shockwave, impactVars } from "./impact/impact";
 
 interface SceneProps {
   lead: boolean;
@@ -761,3 +762,113 @@ export const PLAYS: Record<string, SigPlugin> = {
   // rehab and nerf_reversal keep their richer bespoke scenes in greatPlays
   // (CardRite) and godPlays (CelestialRing); no entries here.
 };
+
+/* =============================================================================
+   FLAGSHIP IMPACT WAVE. Every stub card now LANDS: a per-card impact beat
+   from the shared violence vocabulary (impact/impact.tsx), composed in this
+   module's own one-cell frame (these scenes carry no board-scale canvas, so
+   the composite and the quake both live at cell scale). The scene rides a
+   quake wrapper (sp-quakecell, stubPlays.css) on the same --imp-delay beat.
+   Additive only: the original mini-scenes render unchanged underneath.
+
+   Node cost: quake 1, laser 2, shockwave 1, shatter 6 - every combo stays
+   inside the 16-animated-node scene budget.
+   ========================================================================== */
+
+interface Imp {
+  /** the impact beat, ms after delayMs - synced to the scene's own strike */
+  at: number;
+  /** "#rrggbb" tint for the impact vocabulary (one of the card's 3 colours) */
+  tint: string;
+  /** the column of light */
+  laser?: boolean;
+  /** ground ring on the same beat */
+  shock?: boolean;
+  /** shatter silhouette: the struck thing splits in half, chips spray */
+  glyph?: ReactNode;
+  /** placement + size, in percent of the CELL (these scenes are one cell) */
+  x?: number;
+  y?: number;
+  s?: number;
+  /** which role carries the hit: half_measure has no lead cut, so its hit
+   *  rides every per-victim target beat instead */
+  on?: SigRole;
+}
+
+/** hex "#rrggbb" -> the "r g b" triple --imp-rgb wants. */
+function impRgb(hex: string): string {
+  return `${parseInt(hex.slice(1, 3), 16)} ${parseInt(hex.slice(3, 5), 16)} ${parseInt(hex.slice(5, 7), 16)}`;
+}
+
+/** Shatter silhouettes, painted in the card's own palette. */
+function impGlyph(path: string, fill: string, stroke: string, w = 1.4): ReactNode {
+  return (
+    <svg viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+      <path d={path} fill={fill} stroke={stroke} strokeWidth={w} strokeLinejoin="round" strokeLinecap="round" />
+    </svg>
+  );
+}
+const IG_LINK = "M8.5 4h7A4.5 4.5 0 0 1 20 8.5v7a4.5 4.5 0 0 1-4.5 4.5h-7A4.5 4.5 0 0 1 4 15.5v-7A4.5 4.5 0 0 1 8.5 4z";
+
+/** The impact composite, inside the one-cell frame. */
+function ImpactBeat({ imp }: { imp: Imp }) {
+  const s = imp.s ?? 40;
+  const x = imp.x ?? 50;
+  const y = imp.y ?? 50;
+  return (
+    <span className="sp-impactbed absolute inset-0 block">
+      <span
+        className="absolute block"
+        style={{ left: `${x - s / 2}%`, top: `${y - s / 2}%`, width: `${s}%`, height: `${s}%` }}
+      >
+        {imp.laser && <LaserStrike />}
+        {imp.glyph != null && <PieceShatter glyph={imp.glyph} />}
+        {imp.shock && <Shockwave />}
+      </span>
+    </span>
+  );
+}
+
+/** Wrap a card's Render: the chosen role gains the quake + the impact beat. */
+function withImpact(Render: SigPlugin["Render"], imp: Imp): SigPlugin["Render"] {
+  const on = imp.on ?? "lead";
+  function ImpactCut(props: { lead: boolean; role: SigRole; delayMs: number }) {
+    if (props.role !== on) return <Render {...props} />;
+    return (
+      <span
+        className="sp-quakecell absolute inset-0 block"
+        style={impactVars(impRgb(imp.tint), (props.delayMs + imp.at) / 1000)}
+      >
+        <Render {...props} />
+        <ImpactBeat imp={imp} />
+      </span>
+    );
+  }
+  return ImpactCut;
+}
+
+/* Per-card cue sheet: each hit lands on ITS mini-scene's strike beat, at ITS
+   action point, in ITS palette - no two siblings share a beat + combo. */
+const IMPACTS: Record<string, Imp> = {
+  // the undo-swirl completes: the retreat step lands with a real thump
+  free_retreat: { at: 380, tint: "#7fd4c2", laser: true, shock: true, y: 56 },
+  // the tape bangs off the reel head: scanline strike + track ring
+  rewind_one: { at: 420, tint: "#8fb4ff", laser: true, shock: true, y: 46, s: 34 },
+  // the shadow tears free: the silhouette itself splits in half
+  shadow_step: { at: 440, tint: "#9aa6c9", glyph: impGlyph(PAWN, "#161a2b", "#9aa6c9"), shock: true, s: 44 },
+  // the pin SNAPS at the break point: flash column + whipcrack ring
+  pin_breaker: { at: 400, tint: "#ffb14a", laser: true, shock: true, y: 49, s: 38 },
+  // the decoy plants itself: balloon-thump and a stage-light column
+  decoy: { at: 520, tint: "#5fc9b0", laser: true, shock: true, y: 52, s: 42 },
+  // the white-hot link POPS: the chain link shatters in half
+  loosen_the_leash: { at: 480, tint: "#ffd76a", glyph: impGlyph(IG_LINK, "none", "#ffd76a", 2.6), shock: true, y: 47, s: 36 },
+  // the PAROLE seal thunks down rubber-stamp style: stamp column + ink ring
+  piece_parole: { at: 500, tint: "#7fe0a0", laser: true, shock: true, s: 46 },
+  // no lead cut on this card: the halving slice hits EVERY victim square
+  half_measure: { at: 460, tint: "#c9d2e0", laser: true, shock: true, s: 34, on: "target" },
+};
+
+for (const [id, imp] of Object.entries(IMPACTS)) {
+  const play = PLAYS[id];
+  if (play) PLAYS[id] = { config: play.config, Render: withImpact(play.Render, imp) };
+}

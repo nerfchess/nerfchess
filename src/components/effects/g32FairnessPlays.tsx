@@ -37,6 +37,7 @@ import "./g32FairnessPlays.css";
 import type { CSSProperties, ReactNode } from "react";
 import type { SigPlugin, SigRole } from "./sigPlugins";
 import { AimStage, BoardFrame, BoardWideStage } from "./stage";
+import { LaserStrike, PieceShatter, Shockwave, impactVars } from "./impact/impact";
 
 interface SceneProps {
   lead: boolean;
@@ -1720,3 +1721,147 @@ export const PLAYS: Record<string, SigPlugin> = {
     sound: "bust", anchor: "aim",
   }),
 };
+
+/* =============================================================================
+   FLAGSHIP IMPACT WAVE. Every lead now LANDS a verdict: a per-card impact
+   beat from the shared violence vocabulary (impact/impact.tsx) layered over
+   the module's existing signature, dropped the instant the card's apparatus
+   of fairness declares its outcome - the hatch drop, the fifth bell, the
+   bottom deal. The whole scene rides a cell-scale quake wrapper
+   (g32-quakecell, g32FairnessPlays.css) on the same --imp-delay beat, so the
+   verdict and the jolt read as one contact. Additive only: the original
+   scenes render unchanged underneath.
+
+   Node cost per lead: quake wrapper 1, laser 2, shockwave 1, shatter 6 - the
+   combos below stay inside the 16-animated-node scene budget.
+   ========================================================================== */
+
+interface Imp {
+  /** the impact beat, ms after delayMs - synced to the scene's own strike */
+  at: number;
+  /** "#rrggbb" tint for the impact vocabulary (one of the card's 3 colours) */
+  tint: string;
+  /** the verdict laser: a column of light hammering the outcome home */
+  laser?: boolean;
+  /** ground ring on the same beat */
+  shock?: boolean;
+  /** shatter silhouette: the judged thing splits in half and sprays chips */
+  glyph?: ReactNode;
+  /** placement in stage percent (one cell = 7.142857; cast centre = 50) */
+  x?: number;
+  y?: number;
+  s?: number;
+  /** stage the beat on the aim vector (art points +x) instead of upright */
+  aim?: boolean;
+  /** slide the beat to the victim's distance along the vector (--fx-len) */
+  len?: boolean;
+}
+
+/** hex "#rrggbb" -> the "r g b" triple --imp-rgb wants. */
+function impRgb(hex: string): string {
+  return `${parseInt(hex.slice(1, 3), 16)} ${parseInt(hex.slice(3, 5), 16)} ${parseInt(hex.slice(5, 7), 16)}`;
+}
+
+/** Shatter silhouettes, painted in the card's own palette. */
+function impGlyph(path: string, fill: string, stroke: string): ReactNode {
+  return (
+    <svg viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+      <path d={path} fill={fill} stroke={stroke} strokeWidth="1.4" strokeLinejoin="round" strokeLinecap="round" />
+    </svg>
+  );
+}
+const IG_ORB = "M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18z";
+const IG_NUG = "M4 15l3-8 7-3 8 4 1 7-9 6z";
+const IG_SLAB = "M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z";
+const IG_PANE = "M7 2.6h10v18.8H7z";
+
+/** The impact composite, staged over the card's own apparatus. */
+function ImpactBeat({ imp, delayMs }: { imp: Imp; delayMs: number }) {
+  const s = imp.s ?? 7.2;
+  const x = imp.x ?? 50;
+  const y = imp.y ?? 50;
+  const lenShift = imp.len ? " + var(--fx-len, 3) * 7.142857%" : "";
+  const box: CSSProperties = {
+    left: `calc(${x - s / 2}%${lenShift})`,
+    top: `${y - s / 2}%`,
+    width: `${s}%`,
+    height: `${s}%`,
+  };
+  const inner = (
+    <span className="g32 g32-impactbed absolute inset-0 block">
+      <span className="absolute block" style={box}>
+        {imp.laser && <LaserStrike />}
+        {imp.glyph != null && <PieceShatter glyph={imp.glyph} />}
+        {imp.shock && <Shockwave />}
+      </span>
+    </span>
+  );
+  return imp.aim ? <AimStage>{inner}</AimStage> : <BoardWideStage>{inner}</BoardWideStage>;
+}
+
+/** Wrap a card's Render: leads gain the quake wrapper plus the impact beat. */
+function withImpact(Render: SigPlugin["Render"], imp: Imp): SigPlugin["Render"] {
+  function ImpactLead(props: { lead: boolean; role: SigRole; delayMs: number }) {
+    if (props.role !== "lead") return <Render {...props} />;
+    return (
+      <span
+        className="g32-quakecell absolute inset-0 block"
+        style={impactVars(impRgb(imp.tint), (props.delayMs + imp.at) / 1000)}
+      >
+        <Render {...props} />
+        <ImpactBeat imp={imp} delayMs={props.delayMs} />
+      </span>
+    );
+  }
+  return ImpactLead;
+}
+
+/* Per-card cue sheet: each verdict lands on ITS machine's own strike beat, at
+   ITS action point, in ITS palette - no two siblings share a beat + combo. */
+const IMPACTS: Record<string, Imp> = {
+  // the raffle hatch drops: the drawn ticket is lasered onto the felt
+  ov_pandemonium_carnival: { at: 560, tint: C_RD.core, laser: true, shock: true, y: 55 },
+  // the spinner arrow stops on the bent peg: verdict column + peg ring
+  ov_the_fool: { at: 620, tint: C_SP.core, laser: true, shock: true, y: 48 },
+  // the kleroterion releases its row: a bronze token is split for inspection
+  ov_all_the_kings_men: { at: 560, tint: C_KL.core, glyph: impGlyph(IG_ORB, C_KL.core, C_KL.deep), shock: true, y: 52 },
+  // the FIFTH beat: the bell finally speaks, column + toll ring
+  ov_monks_of_the_fifth_bell: { at: 660, tint: C_MT.core, laser: true, shock: true, y: 44, s: 8 },
+  // the shuffler presses the halves flush: a card is crushed in the throat
+  ov_colossal_visitor: { at: 520, tint: C_RF.core, glyph: impGlyph(IG_PANE, C_RF.glow, C_RF.deep), shock: true, aim: true, s: 6 },
+  // the hourglass slams over: the first sand slug hits the empty bulb
+  ov_grail_quest: { at: 600, tint: C_HG.core, laser: true, shock: true, y: 54, s: 6 },
+  // the blind draw: the drawn stone is cracked open to show its colour
+  ov_emergency_patch: { at: 620, tint: C_BS.core, glyph: impGlyph(IG_NUG, C_BS.core, C_BS.deep), shock: true, y: 50 },
+  // the capsule drops through the flap and bursts on the tray
+  bn4_care_package: { at: 560, tint: C_CP.core, glyph: impGlyph(IG_ORB, C_CP.core, C_CP.deep), shock: true, y: 58, s: 6 },
+  // the die clears the last baffle and CRACKS on the landing tray
+  ov_demolition_derby: { at: 660, tint: C_DT.core, laser: true, glyph: impGlyph(IG_SLAB, C_DT.core, C_DT.deep), shock: true, y: 58 },
+  // the fan slams a ball up the tube: light column + rim ring
+  ov_flash_mob: { at: 560, tint: C_LB.core, laser: true, shock: true, y: 42, s: 6 },
+  // the cage stops and the chute delivers: verdict column at the mouth
+  hx4_will_o_wisps: { at: 600, tint: C_BC.core, laser: true, shock: true, y: 56, s: 6 },
+  // the foil pack is torn: the wrapper is ripped in half, shreds fly
+  ov_booster_pack: { at: 660, tint: C_FP.core, glyph: impGlyph(IG_PANE, C_FP.core, C_FP.deep), shock: true, y: 48 },
+  // the wax seal is broken: the urn's verdict column + crack ring
+  ov_dragon_egg: { at: 640, tint: C_SU.core, laser: true, glyph: impGlyph(IG_ORB, C_SU.core, C_SU.deep), y: 52, s: 6.6 },
+  // the ball finally lands off the last peg: pin-light + floor ring
+  ov_glass_bridge: { at: 700, tint: C_PB.core, laser: true, shock: true, y: 62, s: 5.6 },
+  // the tombola tips its winner out onto the table lip
+  ov_petting_zoo: { at: 560, tint: C_TB.core, laser: true, shock: true, y: 56, s: 8 },
+  // the bottom deal: the cheated card is speared where it lands, down-shoe
+  ov_poltergeist: { at: 480, tint: C_CS.core, laser: true, shock: true, aim: true, len: true, s: 6 },
+  // the certified weight slams the pan: beam boom + judged ring
+  op_honor_roll: { at: 620, tint: C_BL.core, laser: true, shock: true, y: 54, s: 8.4 },
+  // the loaded die settles WRONG: it is split open to show the plug
+  op_late_spring: { at: 620, tint: C_LD.core, glyph: impGlyph(IG_SLAB, C_LD.core, C_LD.deep), shock: true, y: 52 },
+  // the count comes down on the ballot box: stamp column + tally ring
+  op_roll_call: { at: 620, tint: C_BB.core, laser: true, shock: true, y: 50, s: 7.8 },
+  // the shim is found: the level's bubble verdict fires down the run
+  op_sap_run: { at: 560, tint: C_SL.core, laser: true, shock: true, aim: true, len: true, s: 6 },
+};
+
+for (const [id, imp] of Object.entries(IMPACTS)) {
+  const play = PLAYS[id];
+  if (play) PLAYS[id] = { config: play.config, Render: withImpact(play.Render, imp) };
+}

@@ -42,6 +42,7 @@ import "./g23ConjurorPlays.css";
 import type { CSSProperties, ReactNode } from "react";
 import type { SigPlugin, SigRole } from "./sigPlugins";
 import { AimStage, BoardFrame, BoardWideStage } from "./stage";
+import { LaserStrike, PieceShatter, Shockwave, QUAKE_CLASS, impactVars } from "./impact/impact";
 
 interface SceneProps {
   lead: boolean;
@@ -128,19 +129,37 @@ function Cut({ d, children }: { d: number; children: ReactNode }) {
 }
 
 /** Cast-anchored lead: apparatus on the cast square, `frame` over the board. */
-function Lead({ d, frame, children }: { d: number; frame?: ReactNode; children: ReactNode }) {
+function Lead({ d, frame, imp, children }: { d: number; frame?: ReactNode; imp?: ImpCue; children: ReactNode }) {
+  const inner = (
+    <>
+      {frame ? <BoardFrame>{frame}</BoardFrame> : null}
+      {children}
+      {imp ? <ImpactHit d={d} imp={imp} /> : null}
+    </>
+  );
   return (
     <span className={ROOT} style={rootStyle(d)} aria-hidden="true">
       <BoardWideStage>
-        {frame ? <BoardFrame>{frame}</BoardFrame> : null}
-        {children}
+        {imp ? (
+          <QuakeBox d={d} imp={imp}>
+            {inner}
+          </QuakeBox>
+        ) : (
+          inner
+        )}
       </BoardWideStage>
     </span>
   );
 }
 
 /** Aim-anchored lead: `frame` stays square with the board, the art rotates. */
-function AimLead({ d, frame, children }: { d: number; frame?: ReactNode; children: ReactNode }) {
+function AimLead({ d, frame, imp, children }: { d: number; frame?: ReactNode; imp?: ImpCue; children: ReactNode }) {
+  const inner = (
+    <>
+      {children}
+      {imp ? <ImpactHit d={d} imp={imp} /> : null}
+    </>
+  );
   return (
     <span className={ROOT} style={rootStyle(d)} aria-hidden="true">
       {frame ? (
@@ -148,10 +167,150 @@ function AimLead({ d, frame, children }: { d: number; frame?: ReactNode; childre
           <BoardFrame>{frame}</BoardFrame>
         </BoardWideStage>
       ) : null}
-      <AimStage>{children}</AimStage>
+      <AimStage>
+        {imp ? (
+          <QuakeBox d={d} imp={imp}>
+            {inner}
+          </QuakeBox>
+        ) : (
+          inner
+        )}
+      </AimStage>
     </span>
   );
 }
+
+/* =============================================================================
+   FLAGSHIP IMPACT LAYER - the shared violence vocabulary (impact/impact.tsx)
+   staged per card. Each lead names ONE cue in IMP: the moment its own action
+   physically LANDS. The laser leads the beat by 0.4s; the shatter halves,
+   shard spray, ground shockwave and the whole-stage quake all land ON `at`,
+   so the composite reads as one hit. `x`/`y` are % of the 14-cell stage
+   (`far` parks the hit at the aim lane's far end instead), `rot` turns the
+   whole composite so a column can strike along the lane or up from the ground,
+   and `rgb` stays inside the card's own three-colour palette. Kill switch:
+   every node rides a `g23-impx` wrapper, covered by this module's prefix
+   rule; the imp-* internals are covered by the global data-anim gate.
+   ========================================================================== */
+interface ImpCue {
+  /** ms after the lead's own delay: the impact beat. */
+  at: number;
+  /** centre of the struck cell, % of the stage (ignored when `far`). */
+  x?: number;
+  y?: number;
+  /** "r g b" tint, from the card's own palette. */
+  rgb: string;
+  /** the descending column of light. */
+  laser?: boolean;
+  /** index into IMPACT_GLYPHS: silhouette split in half on the beat. */
+  glyph?: number;
+  /** a second, later shockwave: the double boom. */
+  boom?: boolean;
+  /** static rotation of the whole composite, deg. */
+  rot?: number;
+  /** box size, % of the stage. */
+  size?: number;
+  /** park the hit at the far end of the real aim lane. */
+  far?: boolean;
+}
+
+const IMPACT_GLYPHS: ReactNode[] = [
+  <svg key="a" viewBox="0 0 10 12" className="block h-full w-full" aria-hidden="true">
+    <g style={{ fill: "rgb(var(--imp-rgb, 216 181 110))" }}><path d="M5 1.2c1.8 0 3 1.4 3 3.4V11H2V4.6c0-2 1.2-3.4 3-3.4z" /></g>
+  </svg>,
+  <svg key="b" viewBox="0 0 10 12" className="block h-full w-full" aria-hidden="true">
+    <g style={{ fill: "rgb(var(--imp-rgb, 216 181 110))" }}><path d="M4.4 1h1.2v1.6H4.4zM3.4 2.6h3.2v1h.8v5.2c0 1-.8 1.6-1.7 1.6H4.3c-.9 0-1.7-.6-1.7-1.6V3.6h.8z" /></g>
+  </svg>,
+];
+
+/** The whole stage jolts on the cue's beat. Rides an INNER wrapper because the
+ * stage canvas carries the anchor-clamp transform, which must never be
+ * animated over. In-scene only: the real board crop never shakes. */
+function QuakeBox({ d, imp, children }: { d: number; imp: ImpCue; children: ReactNode }) {
+  return (
+    <span className={`g23-impx ${QUAKE_CLASS} absolute inset-0 block`} style={impactVars(undefined, (d + imp.at) / 1000)}>
+      {children}
+    </span>
+  );
+}
+
+/** The composite hit itself: laser column, split silhouette, shockwave(s). */
+function ImpactHit({ d, imp }: { d: number; imp: ImpCue }) {
+  const size = imp.size ?? 7.2;
+  const pos = imp.far
+    ? { left: `calc(50% + var(--fx-len, 3) * 7.142857% - ${(size / 2).toFixed(3)}%)`, top: `${((imp.y ?? 50) - size / 2).toFixed(3)}%` }
+    : { left: `${((imp.x ?? 50) - size / 2).toFixed(3)}%`, top: `${((imp.y ?? 50) - size / 2).toFixed(3)}%` };
+  return (
+    <span
+      className="g23-impx absolute block"
+      style={{
+        ...pos,
+        width: `${size}%`,
+        height: `${size}%`,
+        ...(imp.rot ? { transform: `rotate(${imp.rot}deg)` } : null),
+        ...impactVars(imp.rgb, (d + imp.at) / 1000),
+      }}
+    >
+      {imp.laser ? <LaserStrike /> : null}
+      {imp.glyph != null ? <PieceShatter glyph={IMPACT_GLYPHS[imp.glyph]} /> : null}
+      <Shockwave />
+      {imp.boom ? (
+        <span className="g23-impx absolute inset-0 block" style={impactVars(imp.rgb, (d + imp.at + 200) / 1000)}>
+          <Shockwave />
+        </span>
+      ) : null}
+    </span>
+  );
+}
+
+/** THE IMPACT CUE SHEET: one named moment of physical contact per card,
+ * choreographed onto that card's own climax - position, beat, tint and
+ * primitive combo all differ per card, so no two siblings land the same hit. */
+const IMP: Record<string, ImpCue> = {
+  // Smoke Line: THE LINE LANCED - the summons bolts down the smoke lane and detonates at its end
+  hx4_smoke_line: { at: 880, rgb: "185 198 216", laser: true, boom: true, rot: -90, far: true },
+  // Solstice Shadow: THE SHADOW STAKED - the year's longest shadow is nailed to the square
+  hx4_solstice_shadow: { at: 900, x: 50, y: 47, rgb: "142 168 214", laser: true, boom: true },
+  // Loyal Hound: THE HOUND SLAMS DOWN - the summon beam drops it hard enough to bounce the yard
+  hx4_loyal_hound: { at: 860, x: 52, y: 52, rgb: "201 162 232", laser: true, boom: true },
+  // Wrong Map: THE X MISPLACED - the marker column stabs the wrong square at a skew
+  hx4_wrong_map: { at: 840, x: 48, y: 49, rgb: "216 181 106", laser: true, rot: 15 },
+  // Night Shift: THE RELIEF ARRIVES - the shift-change bolt runs the lane and lands at the post
+  ov_night_shift: { at: 860, rgb: "127 191 174", laser: true, rot: -90, far: true },
+  // Night Gardener: THE SPADE STAMP - the bed is firmed with two heavy strikes
+  bn4_night_gardener: { at: 800, x: 51, y: 54, rgb: "150 208 138", boom: true },
+  // Night Watch: THE BEACON LIT - the watch light drops as one column
+  bn4_night_watch: { at: 820, x: 50, y: 46, rgb: "168 182 216", laser: true },
+  // Borrowed Lantern: RETURNED BROKEN - the lantern is set down hard and splits
+  hx4_borrowed_lantern: { at: 840, x: 53, y: 48, rgb: "224 180 106", laser: true, glyph: 1 },
+  // Dim Torches: THE SNUFF AT THE END - the last torch is stamped out at the lane's end
+  hx4_dim_torches: { at: 800, rgb: "224 138 90", boom: true, far: true },
+  // Shadowed Meadow: THE MEADOW FALLS - the shade lands with a soft double concussion
+  hx4_shadowed_meadow: { at: 820, x: 47, y: 52, rgb: "127 168 140", boom: true },
+  // Shrunken Shoes: THE PINCHED STEP - a small tight stamp, then its echo
+  hx4_shrunken_shoes: { at: 780, x: 52, y: 57, rgb: "210 160 192", boom: true, size: 5.6 },
+  // Two Step: ONE-TWO - two rings on the same spot, a step apart
+  hx4_two_step: { at: 800, x: 50, y: 51, rgb: "111 184 200", boom: true },
+  // Smoke Ring: THE RING BLOWN - one wide ring, then the second rolls out of it
+  ov_smoke_ring: { at: 820, x: 50, y: 49, rgb: "159 176 192", boom: true, size: 9 },
+  // Hiccups: THE HIC - a single startled jolt
+  hx4_hiccups: { at: 760, x: 50, y: 48, rgb: "230 192 122", size: 5.6 },
+  // Pigeon Perch: THE LANDING - the perch takes the bird harder than expected
+  hx4_pigeon_perch: { at: 780, x: 53, y: 44, rgb: "184 200 224", size: 6 },
+  // Champion's Shades: THE SPOTLIGHT DROP - the shades land inside their own beam
+  op_champions_shades: { at: 800, x: 50, y: 46, rgb: "240 168 192", laser: true },
+  // Night Census: THE COUNT CLOSED - the ledger claps shut with a double ring
+  op_night_census: { at: 820, x: 49, y: 50, rgb: "127 200 176", boom: true },
+  // Night Court: THE MIDNIGHT GAVEL - one verdict column in the dark
+  op_night_court: { at: 840, x: 50, y: 47, rgb: "192 127 168", laser: true },
+  // Night Custodian: THE MOP STAMP - the bucket is set down once, firmly
+  op_night_custodian: { at: 780, x: 51, y: 53, rgb: "154 168 200", size: 6 },
+  // Wrong Game Night: THE BOX DROPPED - the wrong box hits the table twice
+  op_wrong_game_night: { at: 800, x: 48, y: 51, rgb: "224 138 112", boom: true },
+  // Polite Cough: THE COUGH RIPPLE - one small, perfectly timed shock
+  ov_polite_cough: { at: 760, x: 50, y: 49, rgb: "203 184 144", size: 5.4 },
+};
+
 
 /** House lights: a board-wide tone bloom. Always inside a BoardFrame. */
 function Wash({ tone, d = 0 }: { tone: string; d?: number }) {
@@ -208,7 +367,7 @@ function SmokeLineScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead d={delayMs} frame={<><Wash tone="rgba(185,198,216,0.28)" /><Rim tone="rgba(255,242,220,0.28)" /></>}>
+    <AimLead imp={IMP.hx4_smoke_line} d={delayMs} frame={<><Wash tone="rgba(185,198,216,0.28)" /><Rim tone="rgba(255,242,220,0.28)" /></>}>
       <V c="g23-sl-tube" l={40} t={44} w={12} h={11} d={80}>{tube}</V>
       <L c="g23-runline" l={46} t={48.4} w={28} h={2} d={180} st={{ background: "linear-gradient(90deg, #b9c6d8, rgba(185,198,216,0))", transformOrigin: "0% 50%", borderRadius: "999px" }} />
       {SL_PUFFS.map((i) => (
@@ -252,7 +411,7 @@ function SolsticeShadowScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<><Dim tone="rgba(10,12,22,0.4)" /><Wash tone="rgba(142,168,214,0.26)" d={140} /></>}>
+    <Lead imp={IMP.hx4_solstice_shadow} d={delayMs} frame={<><Dim tone="rgba(10,12,22,0.4)" /><Wash tone="rgba(142,168,214,0.26)" d={140} /></>}>
       <V c="g23-ss-pane" l={38} t={34} w={16} h={24} d={90} st={{ transformOrigin: "12% 100%" }}>{pane}</V>
       <L c="g23-ss-sheen" l={37} t={36} w={18} h={7} d={330} st={{ background: "linear-gradient(120deg, transparent, #ffeecd, transparent)" }} />
       <L c="g23-ss-hide" l={53} t={38} w={12} h={19} d={470} st={{ background: "#16192b" }} />
@@ -302,7 +461,7 @@ function LoyalHoundScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<><Wash tone="rgba(201,162,232,0.28)" /><Rim tone="rgba(255,241,216,0.24)" /></>}>
+    <Lead imp={IMP.hx4_loyal_hound} d={delayMs} frame={<><Wash tone="rgba(201,162,232,0.28)" /><Rim tone="rgba(255,241,216,0.24)" /></>}>
       <V c="g23-lh-king" l={45.5} t={41} w={9} h={12} d={70}><path d={KING} fill="none" stroke="#fff1d8" strokeWidth="1.4" {...SJ} /></V>
       <V c="g23-lh-cup" l={43} t={44} w={14} h={18} d={200}>{cup}</V>
       <L c="g23-lean" l={42} t={58} w={18} h={4} d={330} st={{ borderRadius: "999px", background: "rgba(36,22,51,0.72)" }} />
@@ -353,7 +512,7 @@ function WrongMapScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<><Wash tone="rgba(216,181,106,0.26)" /><Rim tone="rgba(255,243,217,0.26)" /></>}>
+    <Lead imp={IMP.hx4_wrong_map} d={delayMs} frame={<><Wash tone="rgba(216,181,106,0.26)" /><Rim tone="rgba(255,243,217,0.26)" /></>}>
       {WM_FAN.map((a, i) => (
         <P key={a} l={40} t={36} w={20} h={26} rot={`${a}deg`}>
           <V c="g23-wm-fan" d={100 + i * 80} st={{ transformOrigin: "50% 92%" }}>{card("#d8b56a")}</V>
@@ -404,7 +563,7 @@ function NightShiftScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead d={delayMs} frame={<><Wash tone="rgba(127,191,174,0.26)" /><Rim tone="rgba(255,242,220,0.24)" /></>}>
+    <AimLead imp={IMP.ov_night_shift} d={delayMs} frame={<><Wash tone="rgba(127,191,174,0.26)" /><Rim tone="rgba(255,242,220,0.24)" /></>}>
       <V c="g23-ns-box" l={41} t={42} w={16} h={12} d={90}>{box}</V>
       <V c="g23-ns-flap" l={42} t={51} w={14} h={6} d={280} st={{ transformOrigin: "6% 30%" }}>{flap}</V>
       <L c="g23-runline" l={46} t={48.6} w={28} h={2.2} d={380} st={{ background: "linear-gradient(90deg, #7fbfae, rgba(127,191,174,0))", transformOrigin: "0% 50%", borderRadius: "999px" }} />
@@ -448,7 +607,7 @@ function NightGardenerScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<><Wash tone="rgba(150,208,138,0.26)" /><Rim tone="rgba(255,243,214,0.22)" /></>}>
+    <Lead imp={IMP.bn4_night_gardener} d={delayMs} frame={<><Wash tone="rgba(150,208,138,0.26)" /><Rim tone="rgba(255,243,214,0.22)" /></>}>
       <V c="g23-ng-skirt" l={38} t={40} w={24} h={20} d={90}>{table}</V>
       <V c="g23-ng-shelf" l={41} t={49} w={18} h={9} d={280}>{shelf}</V>
       <V c="g23-fromside" l={50} t={45} w={9} h={11} d={420}>
@@ -497,7 +656,7 @@ function NightWatchScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<><Dim tone="rgba(10,12,22,0.36)" /><Wash tone="rgba(168,182,216,0.26)" d={130} /></>}>
+    <Lead imp={IMP.bn4_night_watch} d={delayMs} frame={<><Dim tone="rgba(10,12,22,0.36)" /><Wash tone="rgba(168,182,216,0.26)" d={130} /></>}>
       <V c="g23-nw-king" l={45.5} t={41} w={9} h={12} d={70}><path d={KING} fill="none" stroke="#fff2dc" strokeWidth="1.4" {...SJ} /></V>
       <V c="g23-nw-body" l={40} t={43} w={20} h={16} d={210}>{trunk}</V>
       <V c="g23-nw-lid" l={40} t={38} w={20} h={9} d={370} st={{ transformOrigin: "50% 100%" }}>{lid}</V>
@@ -539,7 +698,7 @@ function BorrowedLanternScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<><Dim tone="rgba(9,7,4,0.44)" /><Wash tone="rgba(224,180,106,0.24)" d={150} /></>}>
+    <Lead imp={IMP.hx4_borrowed_lantern} d={delayMs} frame={<><Dim tone="rgba(9,7,4,0.44)" /><Wash tone="rgba(224,180,106,0.24)" d={150} /></>}>
       <V c="g23-bl-cloth" l={36} t={36} w={28} h={26} d={110} st={{ transformOrigin: "0% 50%" }}>{cloth}</V>
       <L c="g23-bl-edge" l={36} t={36} w={1.6} h={26} d={260} st={{ background: "#fff4d6" }} />
       {BL_EATEN.map(([l, t], i) => (
@@ -583,7 +742,7 @@ function DimTorchesScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead d={delayMs} frame={<><Dim tone="rgba(12,7,4,0.4)" /><Wash tone="rgba(224,138,90,0.26)" d={140} /></>}>
+    <AimLead imp={IMP.hx4_dim_torches} d={delayMs} frame={<><Dim tone="rgba(12,7,4,0.4)" /><Wash tone="rgba(224,138,90,0.26)" d={140} /></>}>
       <V c="g23-dt-reel" l={42} t={43} w={12} h={13} d={90} st={{ transformOrigin: "50% 50%" }}>{reel}</V>
       <L c="g23-runline" l={48} t={48.7} w={28} h={1.4} d={250} st={{ background: "#ffeacb", transformOrigin: "0% 50%", borderRadius: "999px" }} />
       <V c="g23-dt-far" l={64} t={43} w={8} h={11} d={400}><path d={PAWN} fill="none" stroke="#e08a5a" strokeWidth="1.5" {...SJ} /></V>
@@ -627,7 +786,7 @@ function ShadowedMeadowScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<><Dim tone="rgba(8,14,10,0.42)" /><Rim tone="rgba(127,168,140,0.3)" d={180} /></>}>
+    <Lead imp={IMP.hx4_shadowed_meadow} d={delayMs} frame={<><Dim tone="rgba(8,14,10,0.42)" /><Rim tone="rgba(127,168,140,0.3)" d={180} /></>}>
       <L c="g23-sm-void" l={39} t={38} w={22} h={22} d={100} st={{ borderRadius: "50%", background: "radial-gradient(circle, #14231a 42%, transparent 74%)" }} />
       {SM_LEAVES.map((a, i) => (
         <P key={a} l={39} t={38} w={22} h={22} rot={`${a}deg`}>
@@ -672,7 +831,7 @@ function ShrunkenShoesScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<><Wash tone="rgba(210,160,192,0.26)" /><Rim tone="rgba(255,242,218,0.24)" /></>}>
+    <Lead imp={IMP.hx4_shrunken_shoes} d={delayMs} frame={<><Wash tone="rgba(210,160,192,0.26)" /><Rim tone="rgba(255,242,218,0.24)" /></>}>
       <L c="g23-runline" l={50} t={48.6} w={26} h={1.8} d={80} st={{ background: "linear-gradient(90deg, #d2a0c0, rgba(210,160,192,0))", transformOrigin: "0% 50%", borderRadius: "999px" }} />
       {SH_SEGS.map((i) => (
         <V key={i} c="g23-sh-wand" l={46} t={30 + i * 8} w={8} h={11} d={180 + i * 110} par="none" st={{ transformOrigin: "50% 100%" }}>
@@ -718,7 +877,7 @@ function TwoStepScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<><Wash tone="rgba(111,184,200,0.26)" /><Rim tone="rgba(255,242,220,0.24)" /></>}>
+    <Lead imp={IMP.hx4_two_step} d={delayMs} frame={<><Wash tone="rgba(111,184,200,0.26)" /><Rim tone="rgba(255,242,220,0.24)" /></>}>
       <L c="g23-ts-board" l={37} t={54} w={26} h={3} d={80} st={{ borderRadius: "999px", background: "#10262c" }} />
       {TS_CUPS.map(([l, t], i) => (
         <V key={i} c={i === 1 ? "g23-ts-cross" : "g23-ts-cup"} l={l} t={t} w={8} h={12} d={200 + i * 120}>
@@ -767,7 +926,7 @@ function SmokeRingScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<><Dim tone="rgba(9,12,16,0.38)" /><Wash tone="rgba(159,176,192,0.26)" d={140} /></>}>
+    <Lead imp={IMP.ov_smoke_ring} d={delayMs} frame={<><Dim tone="rgba(9,12,16,0.38)" /><Wash tone="rgba(159,176,192,0.26)" d={140} /></>}>
       {SR_PANELS.map((i) => (
         <V key={i} c="g23-sr-panel" l={39 + i * 7.5} t={38} w={8} h={22} d={120 + i * 130} st={{ transformOrigin: i === 2 ? "100% 50%" : "0% 50%" }}>
           {panel(i === 1 ? "#fff2dc" : "#9fb0c0")}
@@ -808,7 +967,7 @@ function HiccupsScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<><Wash tone="rgba(230,192,122,0.26)" /><Rim tone="rgba(255,244,214,0.22)" /></>}>
+    <Lead imp={IMP.hx4_hiccups} d={delayMs} frame={<><Wash tone="rgba(230,192,122,0.26)" /><Rim tone="rgba(255,244,214,0.22)" /></>}>
       <V c="g23-hc-hand" l={40} t={42} w={10} h={13} d={90}>{hand("#e6c07a")}</V>
       <L c="g23-hc-coin" l={44} t={45} w={3.6} h={3.6} d={250} st={{ borderRadius: "50%", background: "#fff4d6" }} />
       <V c="g23-fromside" l={50} t={40} w={10} h={13} d={400}>{hand("#fff4d6")}</V>
@@ -855,7 +1014,7 @@ function PigeonPerchScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<><Wash tone="rgba(184,200,224,0.26)" /><Rim tone="rgba(255,243,220,0.22)" /></>}>
+    <Lead imp={IMP.hx4_pigeon_perch} d={delayMs} frame={<><Wash tone="rgba(184,200,224,0.26)" /><Rim tone="rgba(255,243,220,0.22)" /></>}>
       <V c="g23-pp-king" l={45.5} t={42} w={9} h={12} d={70}><path d={KING} fill="none" stroke="#fff3dc" strokeWidth="1.4" {...SJ} /></V>
       <V c="g23-pp-cone" l={39} t={34} w={12} h={18} d={190} st={{ transformOrigin: "50% 92%" }}>{cone}</V>
       <L c="g23-pp-shake" l={39} t={40} w={12} h={7} d={340} st={{ background: "linear-gradient(90deg, transparent, #fff3dc, transparent)" }} />
@@ -898,7 +1057,7 @@ function ChampionsShadesScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<><Wash tone="rgba(240,168,192,0.26)" /><Rim tone="rgba(255,242,220,0.24)" /></>}>
+    <Lead imp={IMP.op_champions_shades} d={delayMs} frame={<><Wash tone="rgba(240,168,192,0.26)" /><Rim tone="rgba(255,242,220,0.24)" /></>}>
       <V c="g23-cs-piece" l={45.5} t={42} w={9} h={12} d={80}><path d={PAWN} fill="none" stroke="#fff2dc" strokeWidth="1.4" {...SJ} /></V>
       <V c="g23-fromside" l={38} t={38} w={11} h={14} d={220}>{palm}</V>
       <L c="g23-cs-swap" l={40} t={44} w={20} h={4} d={400} st={{ background: "linear-gradient(90deg, transparent, #fff2dc, transparent)" }} />
@@ -943,7 +1102,7 @@ function NightCensusScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<><Dim tone="rgba(6,14,12,0.36)" /><Wash tone="rgba(127,200,176,0.26)" d={130} /></>}>
+    <Lead imp={IMP.op_night_census} d={delayMs} frame={<><Dim tone="rgba(6,14,12,0.36)" /><Wash tone="rgba(127,200,176,0.26)" d={130} /></>}>
       <V c="g23-nc-riffle" l={41} t={38} w={10} h={14} d={100}>{back}</V>
       <V c="g23-nc-riffle" l={49} t={39} w={10} h={14} d={230}>{back}</V>
       <L c="g23-nc-sweep" l={38} t={40} w={26} h={5} d={380} st={{ background: "linear-gradient(90deg, transparent, #fff2dc, transparent)" }} />
@@ -988,7 +1147,7 @@ function NightCourtScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<><Wash tone="rgba(192,127,168,0.26)" /><Rim tone="rgba(255,242,220,0.24)" /></>}>
+    <Lead imp={IMP.op_night_court} d={delayMs} frame={<><Wash tone="rgba(192,127,168,0.26)" /><Rim tone="rgba(255,242,220,0.24)" /></>}>
       <V c="g23-nt-queen" l={45.5} t={42} w={9} h={12} d={70}><path d={QUEEN} fill="none" stroke="#fff2dc" strokeWidth="1.4" {...SJ} /></V>
       <V c="g23-nt-bag" l={40} t={34} w={14} h={18} d={200} st={{ transformOrigin: "50% 6%" }}>{bag}</V>
       <L c="g23-nt-lever" l={52} t={38} w={6} h={1.8} d={400} st={{ borderRadius: "999px", background: "#fff2dc" }} />
@@ -1029,7 +1188,7 @@ function NightCustodianScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<><Dim tone="rgba(8,10,18,0.36)" /><Wash tone="rgba(154,168,200,0.26)" d={130} /></>}>
+    <Lead imp={IMP.op_night_custodian} d={delayMs} frame={<><Dim tone="rgba(8,10,18,0.36)" /><Wash tone="rgba(154,168,200,0.26)" d={130} /></>}>
       <V c="g23-cd-lapel" l={40} t={36} w={20} h={24} d={100}>{lapel}</V>
       <L c="g23-cd-topit" l={45} t={41} w={10} h={2.4} d={280} st={{ borderRadius: "999px", background: "#9aa8c8" }} />
       <V c="g23-tossup" l={46} t={45} w={8} h={11} d={420}><path d={ROOK} fill="#fff2dc" stroke="#181c2a" strokeWidth="1" {...SJ} /></V>
@@ -1073,7 +1232,7 @@ function WrongGameNightScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<><Wash tone="rgba(224,138,112,0.26)" /><Rim tone="rgba(255,243,216,0.24)" /></>}>
+    <Lead imp={IMP.op_wrong_game_night} d={delayMs} frame={<><Wash tone="rgba(224,138,112,0.26)" /><Rim tone="rgba(255,243,216,0.24)" /></>}>
       <V c="g23-wg-stack" l={44} t={45} w={12} h={12} d={80}>{disc}</V>
       <V c="g23-wg-lift" l={44} t={38} w={12} h={12} d={230}>{disc}</V>
       <L c="g23-wg-turn" l={42} t={40} w={16} h={4} d={400} st={{ background: "linear-gradient(90deg, transparent, #fff3d8, transparent)" }} />
@@ -1116,7 +1275,7 @@ function PoliteCoughScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<><Wash tone="rgba(203,184,144,0.26)" /><Rim tone="rgba(255,244,214,0.22)" /></>}>
+    <Lead imp={IMP.ov_polite_cough} d={delayMs} frame={<><Wash tone="rgba(203,184,144,0.26)" /><Rim tone="rgba(255,244,214,0.22)" /></>}>
       {PC_TOSSES.map((i) => (
         <L key={i} c="g23-pc-toss" l={46 + i * 4} t={48} w={3.4} h={3.4} d={80 + i * 200} st={{ borderRadius: "50%", background: "#cbb890" }} />
       ))}

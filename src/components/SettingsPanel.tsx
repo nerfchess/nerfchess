@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { useModalChrome } from "@/lib/useModalChrome";
 import type { CSSProperties, ReactNode } from "react";
 import { usePathname } from "next/navigation";
-import { ChevronDown, X } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, X } from "lucide-react";
 import {
   ACCENT_THEMES,
   AccentColor,
@@ -55,21 +55,24 @@ interface Props {
 
 export function SettingsPanel({ open, onClose, liveGame }: Props) {
   const [settings, setSettings] = useState<Settings>(loadSettings);
-  const [activeTab, setActiveTab] = useState(SECTIONS[0].id);
+  // Drill-down navigation: the panel opens on a sparse home of category
+  // cards; picking one slides into that section's focused sub-page, with a
+  // Back control at its head. One level, never deeper.
+  const [view, setView] = useState<"home" | string>("home");
   const pathname = usePathname();
   const inLiveGame =
     liveGame ?? (pathname != null && (pathname.startsWith("/game") || pathname.startsWith("/play")));
 
   // Re-sync from storage each time the panel opens, matching the previous
   // behaviour where values were reloaded on open. Also start back on the
-  // first tab so the panel always opens in the same place. Handled on the
+  // home grid so the panel always opens in the same place. Handled on the
   // open transition during render.
   const [prevOpen, setPrevOpen] = useState(open);
   if (prevOpen !== open) {
     setPrevOpen(open);
     if (open) {
       setSettings(loadSettings());
-      setActiveTab(SECTIONS[0].id);
+      setView("home");
     }
   }
 
@@ -204,7 +207,7 @@ export function SettingsPanel({ open, onClose, liveGame }: Props) {
     control.kind === "account" ||
     control.kind === "customBg";
 
-  const activeSection = SECTIONS.find((s) => s.id === activeTab) ?? SECTIONS[0];
+  const activeSection = view === "home" ? null : SECTIONS.find((s) => s.id === view) ?? null;
 
   // Portalled to the body. This panel is rendered INSIDE <nav>, which
   // globals.css pins at z-index 30, so the whole modal was trapped in that
@@ -246,69 +249,81 @@ export function SettingsPanel({ open, onClose, liveGame }: Props) {
           </p>
         )}
 
-        {/* Body: sconce rail (left on desktop, chip row on mobile) + the
-            scrolling content pane. The pane height is fixed per viewport so
-            the slab never jumps between tabs. */}
-        <div className="flex min-h-0 flex-col sm:flex-row">
-          <div
-            role="tablist"
-            aria-label="Settings sections"
-            className="flex shrink-0 gap-1 overflow-x-auto border-b border-[color:var(--edge)] px-2 py-2 sm:w-44 sm:flex-col sm:gap-0.5 sm:overflow-x-hidden sm:overflow-y-auto sm:border-b-0 sm:border-r sm:py-2.5"
-          >
-            {SECTIONS.map((section) => {
-              const selected = section.id === activeTab;
-              return (
-                <button
-                  key={section.id}
-                  id={`settings-tab-${section.id}`}
-                  role="tab"
-                  aria-selected={selected}
-                  aria-controls="settings-tabpanel"
-                  onClick={() => setActiveTab(section.id)}
-                  className="settings-tab flex min-h-[44px] shrink-0 items-center gap-2 px-3 font-display text-[14px] sm:w-full sm:text-[13px]"
-                >
-                  <section.icon className="h-4 w-4 shrink-0" strokeWidth={2} />
-                  <span className="truncate">{section.title}</span>
-                </button>
-              );
-            })}
-          </div>
+        {/* Body: drill-down. Home is a sparse grid of category cards, few
+            words each; a card slides into its focused sub-page with a Back
+            control at its head. The pane height is fixed per viewport so the
+            slab never jumps between views. */}
+        <div className="flex min-h-0 flex-col">
+          {!activeSection && (
+            <div
+              key="home"
+              className="settings-view h-[min(32rem,60dvh)] min-w-0 flex-1 overflow-y-auto overflow-x-hidden px-4 py-3 sm:px-5"
+            >
+              <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+                {SECTIONS.map((section) => (
+                  <button
+                    key={section.id}
+                    onClick={() => setView(section.id)}
+                    className="settings-tab flex min-h-[56px] items-center gap-3 rounded-[1px] border border-[color:var(--edge)] bg-white/[0.02] px-3 py-2 text-left transition hover:border-[color:var(--edge-strong)] hover:bg-white/[0.04]"
+                  >
+                    <section.icon className="h-4 w-4 shrink-0" strokeWidth={2} />
+                    <span className="min-w-0">
+                      <span className="block truncate font-display text-[14px]">{section.title}</span>
+                      <span className="block truncate text-[11px] text-parchment-400">
+                        {section.blurb}
+                      </span>
+                    </span>
+                    <ChevronRight aria-hidden className="ml-auto h-3.5 w-3.5 shrink-0 text-parchment-500" />
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
-          {/* Active tab's rows, grouped under small eyebrow sub-headers where
-              the config declares groups. Fixed height (viewport-aware) so
-              switching tabs doesn't resize the slab; scrolls when a tab
-              outgrows it. Native selects escape no container, so nothing
-              clips. */}
-          <div
-            role="tabpanel"
-            id="settings-tabpanel"
-            aria-labelledby={`settings-tab-${activeSection.id}`}
-            className="h-[min(32rem,60dvh)] min-w-0 flex-1 overflow-y-auto overflow-x-hidden px-4 py-2 sm:px-5"
-          >
-            {activeSection.rows.map((row, i) => {
-              const prevGroup = activeSection.rows[i - 1]?.group;
-              const opensGroup = row.group != null && row.group !== prevGroup;
-              return (
-                <Fragment key={row.id}>
-                  {opensGroup && (
-                    <div className={"flex items-center gap-2.5 pb-1 " + (i === 0 ? "pt-2.5" : "pt-4")}>
-                      <span className="eyebrow">{row.group}</span>
-                      <span aria-hidden className="h-px flex-1 bg-[color:var(--edge)]" />
+          {activeSection && (
+            <div
+              key={activeSection.id}
+              className="settings-view h-[min(32rem,60dvh)] min-w-0 flex-1 overflow-y-auto overflow-x-hidden px-4 py-2 sm:px-5"
+            >
+              {/* Sub-page head: Back to the home grid + where you are. */}
+              <div className="sticky top-0 z-10 -mx-4 flex items-center gap-2 border-b border-[color:var(--edge)] bg-inherit px-4 py-1.5 sm:-mx-5 sm:px-5">
+                <button
+                  onClick={() => setView("home")}
+                  className="flex min-h-[36px] items-center gap-1 pr-2 font-display text-[13px] text-parchment-400 transition hover:text-parchment"
+                >
+                  <ChevronLeft aria-hidden className="h-4 w-4" />
+                  Back
+                </button>
+                <span className="flex items-center gap-2 font-display text-[14px] text-parchment-100">
+                  <activeSection.icon className="h-4 w-4 shrink-0" strokeWidth={2} />
+                  {activeSection.title}
+                </span>
+              </div>
+              {activeSection.rows.map((row, i) => {
+                const prevGroup = activeSection.rows[i - 1]?.group;
+                const opensGroup = row.group != null && row.group !== prevGroup;
+                return (
+                  <Fragment key={row.id}>
+                    {opensGroup && (
+                      <div className={"flex items-center gap-2.5 pb-1 " + (i === 0 ? "pt-2.5" : "pt-4")}>
+                        <span className="eyebrow">{row.group}</span>
+                        <span aria-hidden className="h-px flex-1 bg-[color:var(--edge)]" />
+                      </div>
+                    )}
+                    <div className={!opensGroup && i > 0 ? "border-t border-[color:var(--edge)]" : ""}>
+                      <SettingRow
+                        label={row.label}
+                        hint={row.hint}
+                        stacked={isStacked(row.control)}
+                        grow={row.control.kind === "slider"}
+                        control={renderControl(row.control, row.label)}
+                      />
                     </div>
-                  )}
-                  <div className={!opensGroup && i > 0 ? "border-t border-[color:var(--edge)]" : ""}>
-                    <SettingRow
-                      label={row.label}
-                      hint={row.hint}
-                      stacked={isStacked(row.control)}
-                      grow={row.control.kind === "slider"}
-                      control={renderControl(row.control, row.label)}
-                    />
-                  </div>
-                </Fragment>
-              );
-            })}
-          </div>
+                  </Fragment>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </div>,

@@ -56,6 +56,7 @@ Numbers that update (clocks, ratings, counts) always `tabular-nums`.
 - Density rule: a list row is 40-48px tall, a data table row 36-40px. Empty air is not hierarchy.
 - Max content width 1200px app, 1100px reading. The board column caps at 720px.
 - No giant empty sections. If a region can be empty, it gets a designed empty state (see 8) sized to its content, not to the viewport.
+- **Progressive disclosure (2026-08 de-crowd pass).** A view region shows ONE primary thing; everything secondary folds behind a labeled disclosure (header-with-chevron toggle, `aria-expanded`, count chip) or an overflow menu. Tab sets answer exactly one question (the dock's You/Them, the lobby's Play/Watch) — histories and rarely-used editors are disclosures, not tabs. Deep links (`?tab=`) must keep working by mapping old values onto the new tab and auto-opening the right fold. Settings is the reference two-level drill-down: a sparse home of category cards (title + one-line blurb) opening focused sub-pages with a Back control, one level, never deeper. Collapsed rows carry their state as chips (Usable, Temp, Used) so folding never hides live status.
 
 ## 5. Surfaces and geometry
 
