@@ -620,3 +620,34 @@ Card animations now default ON even when the device asks apps to reduce motion.
 
 Verified: tsc, check-reduced-motion, check-emdash, check-rounded,
 check-buttons all green. PR #463. OPEN.
+
+## 2026-08-03 09:58 EDT
+
+Animation quality pass on the three entrance systems the owner flagged as
+basic. PR #463. OPEN.
+
+- Nerf entrances: the category arrival is now a 9-layer verdict stamp
+  (warning under-glow and judicial seal tell, two-part stamp head with a
+  one-frame squash, ink shards, emboss afterglow, drips and flecks). The
+  neutral floor most nerf cards resolve to is now an edict: parchment
+  unrolls, sigil brands in with a scorch flash, wax seal punches, embers
+  settle. The board nerf-reveal gains a descending tier-tinted sweep, a
+  real slam on the stamp caption, and a staggered press cascade across
+  affected squares inside the same 2s budget.
+- Creator cards: the one shared ring-and-step-in entrance is gone; each of
+  the five cards arrives as its play in miniature (bait tips over and
+  SPROINGs out of the snare; the rook slams in behind streaks with its
+  caption; lamp blooms and cards flip for family night; the stopwatch
+  sprints in and skids with a green split; chat lines scroll and the
+  picker ring rattles before locking).
+- Passive spawns: every activation now announces itself with a tell
+  (color under-bloom plus anchor inhale), an announce ring with rising
+  motes, and a slow settle, fitted inside each visual's existing duration
+  budget; the nerf reveal press gains a pre-press shadow, a held squash,
+  and a release shockwave.
+
+All three-beat, transform/opacity only, --fx-dur scaled, standing down
+under html[data-anim="off"]. Verified: tsc, test:animations,
+test:scene-complexity (2130 scenes, 0 below floor), test:passive-registry,
+test:passive-motifs, test:nerf-visuals, check-vfx-coverage (2448/2448),
+test:emdash, test:rounded, check-reduced-motion.

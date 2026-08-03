@@ -74,29 +74,14 @@ function Stage({ children, className = "" }: { children: ReactNode; className?: 
   return <span className={`cpl-stage ${className}`}>{children}</span>;
 }
 
-/** The entrance cut: the card arriving in a hand. Same palette and the same
- * central mark as the play, at ~56% of the crop, no board takeover — the mark
- * steps in from the caster's own side (--fx-side, in @keyframes cpl-arrive)
- * and one ring opens behind it. */
-function Arrival({
-  delayMs,
-  hue,
-  children,
-}: {
-  delayMs: number;
-  hue: string;
-  children: ReactNode;
-}) {
-  return (
-    <Stage className="cpl-arrival">
-      <span className="cpl-arrive-ring" style={dv(delayMs + 40, { "--cpl-hue": hue })} />
-      <span className="cpl-arrive-mark" style={d(delayMs + 160)}>
-        {children}
-      </span>
-      <Settle delayMs={delayMs + 520} hue={hue} />
-    </Stage>
-  );
-}
+/* The entrance cut: the card arriving in a hand. Same palette and the same
+ * central mark as the play, at ~56% of the crop, no board takeover. There is
+ * deliberately NO shared Arrival component any more: each of the five scenes
+ * carries its own bespoke entrance branch that echoes its play (the bait plays
+ * dead, the rook slams in, the lamp blooms, the stopwatch skids, chat argues),
+ * because one ring-opens-mark-steps-in template made all five look identical
+ * at the exact moment the card is introduced. Only Settle is shared: every
+ * entrance still ends on the same sinking afterglow the plays end on. */
 
 /** The tell: a single dim-and-inhale beat under 300ms that every scene opens
  * with, so the strike always lands on something rather than out of nowhere. */
@@ -186,10 +171,20 @@ const MARK_CHAT = (
  * Settle: the green afterglow sinks home. */
 function StaffordTrapScene({ role, delayMs }: SceneProps) {
   if (role === "entrance") {
+    // The con in miniature: the bait tips in from the caster's own side
+    // looking perfectly innocent and lies still a beat (tell), the snare ring
+    // SNAPS shut around it with one rope whip (strike), and it springs
+    // upright with a small smug bounce while the green afterglow sinks
+    // (settle). All three acts live in the mark's own keyframes.
     return (
-      <Arrival delayMs={delayMs} hue="191 232 196">
-        <Star id="cr_stalling_bishop" mark={MARK_BAIT} />
-      </Arrival>
+      <Stage className="cpl-etrap">
+        <span className="cpl-etrap-mark" style={d(delayMs)}>
+          <Star id="cr_stalling_bishop" mark={MARK_BAIT} />
+        </span>
+        <span className="cpl-etrap-ring" style={d(delayMs + 640)} />
+        <span className="cpl-etrap-rope" style={d(delayMs + 700)} />
+        <Settle delayMs={delayMs + 940} hue="191 232 196" />
+      </Stage>
     );
   }
   return (
@@ -216,10 +211,31 @@ function StaffordTrapScene({ role, delayMs }: SceneProps) {
  * the gold impact flash decays. */
 function TheRookScene({ role, delayMs }: SceneProps) {
   if (role === "entrance") {
+    // The play's slam, hand-sized: a red charge-up glow (tell), then the rook
+    // SLAMS in from the caster's own side behind three speed streaks with a
+    // stage jolt on contact (strike), "THE ROOK!!!" stamps in small, and the
+    // gold impact flash decays into the settle.
     return (
-      <Arrival delayMs={delayMs} hue="255 106 94">
-        <Star id="cr_oh_no_my_queen" mark={MARK_ROOK} />
-      </Arrival>
+      <Stage className="cpl-erook">
+        <span className="cpl-erook-charge" style={d(delayMs)} />
+        <span className="cpl-erook-jolt" style={d(delayMs + 470)}>
+          <span className="cpl-erook-mark" style={d(delayMs + 240)}>
+            <Star id="cr_oh_no_my_queen" mark={MARK_ROOK} />
+          </span>
+        </span>
+        {[0, 1, 2].map((i) => (
+          <span
+            key={i}
+            className="cpl-erook-streak"
+            style={dv(delayMs + 280 + i * 50, { "--cpl-x": `${36 + i * 14}%` })}
+          />
+        ))}
+        <span className="cpl-erook-flash" style={d(delayMs + 500)} />
+        <span className="cpl-erook-caption" style={d(delayMs + 540)}>
+          THE ROOK!!!
+        </span>
+        <Settle delayMs={delayMs + 860} hue="255 215 106" />
+      </Stage>
     );
   }
   return (
@@ -253,10 +269,21 @@ function TheRookScene({ role, delayMs }: SceneProps) {
  * anything and nobody is fighting. No aggression colours anywhere. */
 function FamilyNightScene({ role, delayMs }: SceneProps) {
   if (role === "entrance") {
+    // Cozy and zero aggression, like the play: a lamp glow blooms down from
+    // above (tell), the hands warm in while two tiny cards flip face up
+    // beside them (strike), one wisp of tea steam curls off and the lamplight
+    // lingers into the settle.
     return (
-      <Arrival delayMs={delayMs} hue="255 214 150">
-        <Star id="cr_family_game_night" mark={MARK_HANDS} />
-      </Arrival>
+      <Stage className="cpl-efam">
+        <span className="cpl-efam-lamp" style={d(delayMs)} />
+        <span className="cpl-efam-mark" style={d(delayMs + 280)}>
+          <Star id="cr_family_game_night" mark={MARK_HANDS} />
+        </span>
+        <span className="cpl-efam-card cpl-efam-card-l" style={d(delayMs + 470)} />
+        <span className="cpl-efam-card cpl-efam-card-r" style={d(delayMs + 560)} />
+        <span className="cpl-efam-steam" style={d(delayMs + 700)} />
+        <Settle delayMs={delayMs + 920} hue="255 214 150" />
+      </Stage>
     );
   }
   return (
@@ -295,10 +322,23 @@ function FamilyNightScene({ role, delayMs }: SceneProps) {
  * pressure does not. */
 function SpeedrunScene({ role, delayMs }: SceneProps) {
   if (role === "entrance") {
+    // The run starts NOW: a two-dip countdown dim (tell), the stopwatch
+    // sprints in from the side behind two speed lines and pins with an
+    // overshoot skid (strike), one green "-0:02" split ticks in beside it,
+    // and the pace glow eases off (settle).
     return (
-      <Arrival delayMs={delayMs} hue="126 242 154">
-        <Star id="cr_speedrun_protocol" mark={MARK_TIMER} />
-      </Arrival>
+      <Stage className="cpl-erun">
+        <span className="cpl-erun-dim" style={d(delayMs)} />
+        <span className="cpl-erun-line" style={dv(delayMs + 300, { "--cpl-y": "32%" })} />
+        <span className="cpl-erun-line" style={dv(delayMs + 360, { "--cpl-y": "66%" })} />
+        <span className="cpl-erun-mark" style={d(delayMs + 260)}>
+          <Star id="cr_speedrun_protocol" mark={MARK_TIMER} />
+        </span>
+        <span className="cpl-erun-split" style={d(delayMs + 640)}>
+          -0:02
+        </span>
+        <Settle delayMs={delayMs + 880} hue="126 242 154" />
+      </Stage>
     );
   }
   return (
@@ -331,10 +371,25 @@ function SpeedrunScene({ role, delayMs }: SceneProps) {
  * who has only themselves (and chat) to blame. */
 function CreatorVsChatScene({ role, delayMs }: SceneProps) {
   if (role === "entrance") {
+    // Chat was already arguing before the card arrived: three chat lines
+    // scroll up behind (tell), the bubble pops in with an argumentative
+    // wobble (strike), the picker ring rattles left-right twice and locks
+    // onto the bubble, and the blue washes out (settle).
     return (
-      <Arrival delayMs={delayMs} hue="143 168 224">
-        <Star id="cr_chat_picks" mark={MARK_CHAT} />
-      </Arrival>
+      <Stage className="cpl-evs">
+        {[0, 1, 2].map((i) => (
+          <span
+            key={i}
+            className="cpl-evs-line"
+            style={dv(delayMs + i * 90, { "--cpl-y": `${76 - i * 10}%`, "--cpl-w": `${26 + i * 12}%` })}
+          />
+        ))}
+        <span className="cpl-evs-mark" style={d(delayMs + 300)}>
+          <Star id="cr_chat_picks" mark={MARK_CHAT} />
+        </span>
+        <span className="cpl-evs-ring" style={d(delayMs + 620)} />
+        <Settle delayMs={delayMs + 960} hue="143 168 224" />
+      </Stage>
     );
   }
   return (
