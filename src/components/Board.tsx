@@ -401,15 +401,27 @@ function NerfRevealSplash({
     >
       {/* the ink wash: the board darkens for a beat while the rule lands */}
       <div className="nerf-reveal-wash absolute inset-0" />
-      {/* hostile-aura pulse on every affected square */}
-      {squares.map((sq) => {
+      {/* directional sweep: a tinted band scans down the crop once, so the
+          wash reads as the rule DESCENDING rather than a flat fade */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="nerf-reveal-sweep absolute inset-x-0 top-0 h-[34%]" />
+      </div>
+      {/* hostile-aura press on every affected square, cascading a few frames
+          apart (capped so the last cell still finishes inside the 2s budget) */}
+      {squares.map((sq, i) => {
         if (sq < 0 || sq > 63) return null;
         const { col, row } = cellPos(sq as Square, orientation);
         return (
           <div
             key={sq}
             className="nerf-reveal-cell absolute"
-            style={{ left: `${col * 12.5}%`, top: `${row * 12.5}%`, width: "12.5%", height: "12.5%" }}
+            style={{
+              left: `${col * 12.5}%`,
+              top: `${row * 12.5}%`,
+              width: "12.5%",
+              height: "12.5%",
+              animationDelay: `${Math.min(i * 30, 150)}ms`,
+            }}
           >
             {/* R2: the tier tint becomes the card hue — pass the nerf's id so
                 two different rules read as different colors. */}

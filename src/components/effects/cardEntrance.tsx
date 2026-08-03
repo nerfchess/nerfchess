@@ -356,28 +356,108 @@ function ItemArrival({ category, icon: Icon, delayMs = 0 }: ArrivalProps) {
   );
 }
 
-// --- nerf: a rubber stamp slams the emblem down, ink bleeds ------------------
+// --- nerf: the verdict stamp: a rule is stamped ONTO you. Tell: a warning
+// under-glow blooms, a faint judicial seal ring fades in, the emblem inhales
+// and cowers. Strike: the heavy stamp head drops with a one-frame squash at
+// contact, ink splatter shards kick out, a double ink ring bleeds. Settle:
+// the head lifts away, ink drips run, the embossed emblem rises back through
+// a decaying afterglow while two loose flecks drift off. --------------------
 
 function NerfArrival({ category, icon: Icon, delayMs = 0 }: ArrivalProps) {
   const t = ARRIVAL_THEME[category];
   return (
     <span className="absolute inset-0 block">
-      <span className="ce-stamp absolute left-1/2 top-1/2 ml-[-14%] mt-[-14%] block h-[28%] w-[28%]" style={dm(delayMs, 0)}>
-        <span
-          className="absolute inset-0 flex items-center justify-center rounded-full"
-          style={{ border: `2.5px solid ${t.color}`, background: t.soft, color: t.color }}
-        >
-          <Icon className="h-[64%] w-[64%]" strokeWidth={1.8} />
-        </span>
+      {/* TELL: warning under-glow blooms beneath the mark-to-be */}
+      <span
+        className="ce-nerf-glow absolute left-1/2 top-1/2 ml-[-26%] mt-[-26%] block h-[52%] w-[52%] rounded-full"
+        style={{ background: `radial-gradient(circle, ${t.soft}, transparent 68%)`, ...dm(delayMs, 0) }}
+      />
+      {/* TELL: a faint judicial seal ring fades in and squares itself up */}
+      <span
+        className="ce-nerf-seal absolute left-1/2 top-1/2 ml-[-21%] mt-[-21%] block h-[42%] w-[42%] rounded-full"
+        style={{ border: `1.5px dashed ${t.color}99`, ...dm(delayMs, 60) }}
+      />
+      {/* the emblem rides all three beats on one timeline: it inhales and
+          cowers under the falling head, is pressed flat at contact, then
+          lifts back embossed */}
+      <span
+        className="ce-nerf-emblem absolute left-1/2 top-1/2 ml-[-13%] mt-[-13%] flex h-[26%] w-[26%] items-center justify-center"
+        style={{ color: t.color, filter: `drop-shadow(0 0 8px ${t.soft})`, ...dm(delayMs, 80) }}
+      >
+        <Icon className="h-full w-full" strokeWidth={1.8} />
       </span>
+      {/* STRIKE: the stamp head: fast fall, one-frame squash at contact,
+          then it lifts away leaving only the mark (handle + face plate) */}
+      <span className="ce-nerf-head absolute left-1/2 top-1/2 ml-[-15%] mt-[-25%] block h-[30%] w-[30%]" style={dm(delayMs, 240)}>
+        <span
+          className="absolute inset-x-[36%] top-0 block h-[40%] rounded-full"
+          style={{ background: `linear-gradient(180deg, ${t.color}, ${t.deep})` }}
+        />
+        <span
+          className="absolute inset-x-0 bottom-0 block h-[52%] rounded-[8%]"
+          style={{ background: t.deep, border: `2px solid ${t.color}88` }}
+        />
+      </span>
+      {/* STRIKE: ink splatter shards kick out from the contact point */}
+      {[
+        { dx: "-240%", dy: "-50%", rot: "-160deg" },
+        { dx: "220%", dy: "-80%", rot: "150deg" },
+        { dx: "-150%", dy: "150%", rot: "-120deg" },
+        { dx: "180%", dy: "130%", rot: "110deg" },
+      ].map((s, i) => (
+        <span
+          key={i}
+          className="ce-nerf-splat absolute left-1/2 top-1/2 ml-[-3%] mt-[-3%] block h-[6%] w-[6%]"
+          style={
+            {
+              background: i % 2 ? t.deep : t.color,
+              clipPath: "polygon(50% 0, 100% 80%, 0 80%)",
+              "--dx": s.dx,
+              "--dy": s.dy,
+              "--rot": s.rot,
+              ...dm(delayMs, 440 + i * 25),
+            } as React.CSSProperties
+          }
+        />
+      ))}
+      {/* STRIKE: double ink ring bleeds out from under the face plate */}
       <span
         className="ce-ink absolute left-1/2 top-1/2 block h-[44%] w-[44%] rounded-full"
-        style={{ border: `3px solid ${t.color}`, ...dm(delayMs, 330) }}
+        style={{ border: `3px solid ${t.color}`, ...dm(delayMs, 460) }}
       />
       <span
         className="ce-ink absolute left-1/2 top-1/2 block h-[34%] w-[34%] rounded-full"
-        style={{ border: `2px solid ${t.color}88`, ...dm(delayMs, 430) }}
+        style={{ border: `2px solid ${t.color}88`, ...dm(delayMs, 550) }}
       />
+      {/* SETTLE: a dull afterglow blooms behind the embossed mark and decays */}
+      <span
+        className="ce-nerf-after absolute left-1/2 top-1/2 ml-[-17%] mt-[-17%] block h-[34%] w-[34%] rounded-full"
+        style={{ background: `radial-gradient(circle, ${t.soft}, transparent 70%)`, ...dm(delayMs, 560) }}
+      />
+      {/* SETTLE: wet ink runs down off the fresh mark */}
+      {[-8, 7].map((off, i) => (
+        <span
+          key={i}
+          className="ce-drip absolute top-[60%] block w-[2%] rounded-b-full"
+          style={{
+            left: `${49 + off}%`,
+            height: "8%",
+            background: `linear-gradient(180deg, ${t.color}, transparent)`,
+            ...dm(delayMs, 660 + i * 130),
+          }}
+        />
+      ))}
+      {/* SETTLE: two loose flecks drift up and away */}
+      {[
+        { dx: "-70%", dy: "-130%" },
+        { dx: "80%", dy: "-110%" },
+      ].map((p, i) => (
+        <span
+          key={i}
+          className="ce-dust absolute left-[48%] top-[44%] block h-[3.5%] w-[3.5%] rounded-full"
+          style={{ background: "#fff4d6", "--dx": p.dx, "--dy": p.dy, ...dm(delayMs, 780 + i * 90) } as React.CSSProperties}
+        />
+      ))}
     </span>
   );
 }
@@ -788,26 +868,80 @@ export const MOTIF_ARRIVAL: Record<EntranceMotif, (p: MotifArrivalProps) => Reac
 
 // --- Neutral floor -----------------------------------------------------------
 // The guaranteed-last resort of the resolution (cards outside the buff
-// taxonomy: nerfs). Quiet parchment: an aperture opens, the card's sigil
-// stamps in, one ring settles. Deliberately plainer than any motif or
-// category scene, but never nothing.
+// taxonomy: nerfs), staged as an EDICT being posted. Tell: a parchment strip
+// unrolls from a rolled bar. Strike: the card's sigil is branded into it with
+// a scorch flash and a one-frame overshoot, then a wax seal punches the lower
+// corner. Settle: two wax drips run off the seal, ember flecks drift up from
+// the brand, one quiet ring closes the decree. Category-neutral by design,
+// but never nothing.
 function DefaultArrival({ icon: Icon, delayMs = 0 }: MotifArrivalProps) {
   const t = DEFAULT_ARRIVAL_THEME;
   return (
     <span className="absolute inset-0 block">
+      {/* TELL: the decree unrolls vertically from a rolled bar */}
+      <span className="ce-edict-scroll absolute left-1/2 top-[20%] ml-[-18%] block h-[58%] w-[36%]" style={dm(delayMs, 0)}>
+        <span
+          className="absolute inset-0 block rounded-[3%]"
+          style={{
+            background: `linear-gradient(180deg, ${t.deep}, ${t.soft} 16%, ${t.soft} 84%, ${t.deep})`,
+            border: `1.5px solid ${t.color}66`,
+          }}
+        />
+        <span className="absolute inset-x-[-5%] top-[-2%] block h-[4.5%] rounded-full" style={{ background: t.color }} />
+        <span className="absolute inset-x-[-5%] bottom-[-2%] block h-[4.5%] rounded-full" style={{ background: t.color }} />
+      </span>
+      {/* STRIKE: scorch flash as the brand bites the parchment */}
       <span
-        className="ce-iris absolute left-1/2 top-1/2 ml-[-22%] mt-[-22%] block h-[44%] w-[44%] rounded-full"
-        style={{ border: `2px solid ${t.color}88`, boxShadow: `inset 0 0 14px ${t.soft}`, ...dm(delayMs, 0) }}
+        className="ce-edict-flash absolute left-1/2 top-[40%] ml-[-13%] block h-[26%] w-[26%] rounded-full"
+        style={{ background: "radial-gradient(circle, rgba(255,244,214,0.85), transparent 65%)", ...dm(delayMs, 300) }}
       />
+      {/* STRIKE: the card's sigil branded in, with a one-frame overshoot */}
       <span
-        className="ce-sigil absolute left-1/2 top-1/2 ml-[-12%] mt-[-12%] flex h-[24%] w-[24%] items-center justify-center"
-        style={{ color: t.color, filter: `drop-shadow(0 0 8px ${t.soft})`, ...dm(delayMs, 260) }}
+        className="ce-edict-brand absolute left-1/2 top-[41%] ml-[-11%] flex h-[22%] w-[22%] items-center justify-center"
+        style={{ color: t.color, filter: `drop-shadow(0 0 8px ${t.soft})`, ...dm(delayMs, 320) }}
       >
         <Icon className="h-full w-full" strokeWidth={1.7} />
       </span>
+      {/* STRIKE: the wax seal punches the decree's lower corner */}
+      <span
+        className="ce-edict-seal absolute left-[57%] top-[62%] block h-[11%] w-[11%] rounded-full"
+        style={{
+          background: `radial-gradient(circle at 38% 32%, ${t.color}, ${t.deep} 78%)`,
+          border: `1.5px solid ${t.color}`,
+          ...dm(delayMs, 560),
+        }}
+      />
+      {/* SETTLE: wax drips run off the seal */}
+      {[0, 5].map((off, i) => (
+        <span
+          key={i}
+          className="ce-drip absolute top-[72%] block w-[1.6%] rounded-b-full"
+          style={{
+            left: `${60 + off}%`,
+            height: "7%",
+            background: `linear-gradient(180deg, ${t.color}, transparent)`,
+            ...dm(delayMs, 700 + i * 140),
+          }}
+        />
+      ))}
+      {/* SETTLE: ember flecks drift up off the fresh brand */}
+      {[
+        { dx: "-90%", dy: "-140%" },
+        { dx: "20%", dy: "-170%" },
+        { dx: "100%", dy: "-120%" },
+      ].map((p, i) => (
+        <span
+          key={i}
+          className="ce-dust absolute left-[48%] top-[46%] block h-[3.5%] w-[3.5%] rounded-full"
+          style={
+            { background: i % 2 ? t.color : "#ffe9c9", "--dx": p.dx, "--dy": p.dy, ...dm(delayMs, 720 + i * 80) } as React.CSSProperties
+          }
+        />
+      ))}
+      {/* SETTLE: one quiet ring closes the decree */}
       <span
         className="ce-ring absolute left-1/2 top-1/2 block h-[46%] w-[46%] rounded-full"
-        style={{ border: `2px solid ${t.color}`, ...dm(delayMs, 560) }}
+        style={{ border: `2px solid ${t.color}`, ...dm(delayMs, 860) }}
       />
     </span>
   );
