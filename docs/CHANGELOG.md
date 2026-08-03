@@ -619,5 +619,4 @@ Card animations now default ON even when the device asks apps to reduce motion.
   say it is off by default and that turning it on is not recommended.
 
 Verified: tsc, check-reduced-motion, check-emdash, check-rounded,
-check-buttons all green. PR OPEN (branch
-claude/card-animation-motion-settings-htkuag; number recorded on open).
+check-buttons all green. PR #463. OPEN.
