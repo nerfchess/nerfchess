@@ -2632,6 +2632,134 @@ function LoopStair({ role, delayMs }: SceneProps) {
   );
 }
 
+/* -----------------------------------------------------------------------------
+   44. Anti-Gravity Gala (t9) — THE ROOM LETS GO OF THE FLOOR.
+   Down is a rule of space too, and tonight it is suspended: the gala lamp is
+   lowered in, the floor's grip hums out from under the guests, and the pieces
+   simply RISE — shadows left shrinking on their squares — while one slider
+   glides clean over the head of the piece that was blocking its file and
+   carries on beyond it. Kings decline. Everything is set back down gently.
+   Palette: #b48fe8 / #ffe9c9 / #221436.
+   -------------------------------------------------------------------------- */
+function GalaWithoutGravity({ role, delayMs }: SceneProps) {
+  const lamp = (
+    <>
+      <path d="M12 2v3.4" stroke="#ffe9c9" strokeWidth="1.2" strokeLinecap="round" />
+      <path d="M6.4 9.4a5.6 5.6 0 0 1 11.2 0l-1.4 4.4H7.8z" fill="#b48fe8" stroke="#221436" strokeWidth="1.1" {...SJ} />
+      <path d="M8.6 13.8L8 17.4M12 13.8v4.4M15.4 13.8l.6 3.6" stroke="#ffe9c9" strokeWidth="1" strokeLinecap="round" />
+    </>
+  );
+  const floater = (glyph: string, fill: string) => (
+    <path d={glyph} fill={fill} stroke="#221436" strokeWidth="1.1" {...SJ} />
+  );
+  if (role === "entrance") {
+    return (
+      <Cut d={delayMs}>
+        <L c="g44-ent2" d={60} s={{ ...pct(16, 78, 68, 6), background: "linear-gradient(90deg, transparent, #221436, transparent)" }} />
+        <V c="g44-ent" d={200} s={pct(26, 10, 48, 44)}>{lamp}</V>
+        <V c="g44-ag-lift" d={430} s={pct(38, 44, 26, 34)}>{floater(ROOK, "#b48fe8")}</V>
+        <L c="g44-ent3" d={520} s={{ ...pct(30, 30, 40, 40), borderRadius: "50%", background: "radial-gradient(circle, rgba(255,233,201,0.85), transparent 70%)" }} />
+      </Cut>
+    );
+  }
+  if (role === "target") {
+    return (
+      <Cut d={delayMs}>
+        <L c="g44-ag-shadow" d={40} s={{ ...pct(28, 76, 44, 9), borderRadius: "50%", background: "#221436" }} />
+        <V c="g44-ag-lift" d={160} s={pct(30, 18, 40, 54)}>{floater(ROOK, "#b48fe8")}</V>
+        <L c="g44-hit2" d={380} s={{ ...pct(20, 30, 60, 6), background: "linear-gradient(90deg, transparent, #ffe9c9, transparent)" }} />
+      </Cut>
+    );
+  }
+  return (
+    <Lead d={delayMs} frame={<><Wash tone="rgba(180,143,232,0.26)" d={60} /><Rim tone="rgba(255,233,201,0.26)" d={150} /></>}>
+      {/* tell: the gala lamp is lowered in over the cast square */}
+      <V c="g44-ag-lamp" d={80} s={box(1.6, 1.6, 0, -2.6)}>{lamp}</V>
+      {/* the floor's grip hums out from under the room */}
+      <L c="g44-ag-hum" d={170} s={{ ...box(5.4, 2.6), borderRadius: "50%", border: "1px solid #b48fe8" }} />
+      {/* the shadows stay on the squares and SHRINK: height is leaving them */}
+      {R3.map((i) => (
+        <L key={i} c="g44-ag-shadow" d={300 + i * 90} s={{ ...box(0.9, 0.34, [-1.7, 0, 1.4][i], [0.9, 1.1, 0.7][i]), borderRadius: "50%", background: "#221436" }} />
+      ))}
+      {/* the guests rise, tallest first, drifting with the caster's lean */}
+      {R3.map((i) => (
+        <V key={i} c="g44-ag-float" d={320 + i * 90} s={box(1.15, 1.15, [-1.7, 0, 1.4][i], [0.35, 0.55, 0.15][i])}>
+          {floater([ROOK, PAWN, PAWN][i], i === 0 ? "#b48fe8" : "#ffe9c9")}
+        </V>
+      ))}
+      {/* the blocker holds its square; dignity is a kind of mass */}
+      <V c="g44-ag-blocker" d={420} s={box(1.1, 1.1, 1.5, -0.05)}>{floater(KING, "#221436")}</V>
+      {/* strike: the slider passes clean OVER its head and carries on */}
+      <V c="g44-ag-glide" d={520} s={box(1.1, 1.1, 0.4, -0.1)}>{floater(ROOK, "#ffe9c9")}</V>
+      {/* champagne bubbles: the only thing here still obeying "up" */}
+      {R4.map((i) => (
+        <L key={i} c="g44-ag-bubble" d={640 + i * 70} s={{ ...box(0.22, 0.22, [-2, -0.7, 0.9, 2][i], [1.2, 0.6, 1.3, 0.8][i]), borderRadius: "50%", border: "1px solid #ffe9c9" }} />
+      ))}
+      {/* settle: everything is set back down as gently as it left */}
+      <L c="g44-ag-setdown" d={780} s={{ ...box(4.6, 0.5, 0, 1.15), borderRadius: "999px", background: "linear-gradient(90deg, transparent, rgba(255,233,201,0.8), transparent)" }} />
+    </Lead>
+  );
+}
+
+/* -----------------------------------------------------------------------------
+   45. Let Me Play For You (t9) — THE SECOND CONTROLLER.
+   The distance between the players stops mattering: a second hand comes in
+   over the far side of the table, hovers down the real run, pinches the
+   opponent's own piece and slides it where IT likes — no capture, just the
+   deep insult of being moved by someone else. Three charges; this is one.
+   Palette: #8fb8e8 / #ffedc9 / #1a2438.
+   -------------------------------------------------------------------------- */
+function SecondController({ role, delayMs }: SceneProps) {
+  const hand = (
+    <>
+      <path d="M3 10.4h9.6l-2.2-3.2c-.6-.9.6-1.9 1.4-1.1l5 4.6c.9.8 1.4 2 1.4 3.2v3.3c0 1.6-1.3 2.9-2.9 2.9H9.4c-1 0-2-.5-2.6-1.3L3 14.6z" fill="#8fb8e8" stroke="#1a2438" strokeWidth="1.1" {...SJ} />
+      <path d="M3 9h3.2v7.2H3z" fill="#ffedc9" stroke="#1a2438" strokeWidth="1.1" {...SJ} />
+    </>
+  );
+  const piece = <path d={ROOK} fill="#1a2438" stroke="#8fb8e8" strokeWidth="1.2" {...SJ} />;
+  if (role === "entrance") {
+    return (
+      <Cut d={delayMs}>
+        <L c="g44-ent2" d={60} s={{ ...pct(10, 52, 80, 7), background: "linear-gradient(90deg, #8fb8e8, transparent)" }} />
+        <V c="g44-ent" d={200} s={pct(20, 22, 60, 52)}>{hand}</V>
+        <L c="g44-ent3" d={430} s={{ ...pct(56, 34, 26, 26), borderRadius: "50%", border: "2px solid #ffedc9" }} />
+      </Cut>
+    );
+  }
+  if (role === "target") {
+    return (
+      <Cut d={delayMs}>
+        <L c="g44-hit2" d={40} s={{ ...pct(6, 66, 88, 7), background: "#8fb8e8" }} />
+        <V c="g44-hit" d={180} s={pct(24, 18, 56, 52)}>{hand}</V>
+        <V c="g44-lp-wobble" d={420} s={pct(38, 34, 28, 44)}>{piece}</V>
+      </Cut>
+    );
+  }
+  return (
+    <AimLead d={delayMs} frame={<Wash tone="rgba(143,184,232,0.24)" d={60} />}>
+      {/* tell: the intended move is scribed down the real run first */}
+      <L c="g44-tellline" d={90} s={{ ...lane(0.12), background: "#ffedc9" }} />
+      {R4.map((i) => (
+        <L key={i} c="g44-lp-dot" d={170 + i * 45} per={24} s={{ ...at(0.2 + i * 0.2, 0.24, 0.24), borderRadius: "50%", background: "#ffedc9" }} />
+      ))}
+      {/* the hand's shadow gathers over the piece before it drops */}
+      <L c="g44-lp-hover" d={240} s={{ ...at(0, 1.6, 0.5, 0.55), borderRadius: "50%", background: "#1a2438" }} />
+      {/* the second controller's hand comes in over their side of the table */}
+      <V c="g44-lp-hand" d={320} s={at(0.1, 2.1, 2.1, -0.55)}>{hand}</V>
+      {/* strike: the pinch takes hold */}
+      <L c="g44-lp-pinch" d={470} s={{ ...at(0, 0.9, 0.9), borderRadius: "50%", border: "2px solid #ffedc9" }} />
+      {/* and the opponent's own piece is slid the REAL distance, hand and all */}
+      <V c="g44-lp-slide" d={540} s={at(0, 1.05, 1.05, -0.02)}>{piece}</V>
+      <V c="g44-lp-slide" d={540} s={at(0.1, 2.1, 2.1, -0.55)}>{hand}</V>
+      {/* the piece objects the whole way and wobbles when let go */}
+      <V c="g44-lp-wobble" d={740} s={at(1, 1.05, 1.05, -0.02)}>{piece}</V>
+      {/* settle: the hand lifts away, job done, no capture taken */}
+      <V c="g44-lp-release" d={800} s={at(1.1, 2, 2, -0.7)}>{hand}</V>
+      <L c="g44-dust" d={860} s={{ ...at(1, 2.2, 1.2, 0.3), borderRadius: "50%", background: "radial-gradient(circle, rgba(255,237,201,0.5), transparent 72%)" }} />
+    </AimLead>
+  );
+}
+
 /* =============================================================================
    Registry. Two spaces of indent at object depth 1: the animation audit and
    check-sig-plugins.cjs parse this table as TEXT.
@@ -2809,6 +2937,14 @@ export const PLAYS: Record<string, SigPlugin> = {
   hx4_puppet_court: {
     config: { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "petrify", anchor: "board" },
     Render: LoopStair,
+  },
+  ov_antigravity_gala: {
+    config: { ordering: "radial", staggerMs: 60, victims: ["b", "r", "q"], hasLead: true, sound: "gacha", source: "empower", anchor: "cast" },
+    Render: GalaWithoutGravity,
+  },
+  ov_let_me_play_for_you: {
+    config: { ordering: "line", staggerMs: 60, victims: "all", hasLead: true, sound: "blitz", anchor: "aim" },
+    Render: SecondController,
   },
 };
 
@@ -2999,6 +3135,10 @@ const IMPACTS: Record<string, Imp> = {
   hx4_chain_gang: { at: 560, tint: "#a8b0bc", glyph: impGlyph(IG_LINK, "none", "#a8b0bc", 2.6), shock: true, y: 52 },
   // the court is called to order: the puppet gavel from on high
   hx4_puppet_court: { at: 640, tint: "#b9a2d8", laser: true, shock: true, y: 50, s: 6.8 },
+  // the floor's grip is cut: the release ring booms out under the dancers
+  ov_antigravity_gala: { at: 520, tint: "#b48fe8", shock: true, y: 54, s: 7.2 },
+  // the pinch lands ON the borrowed piece, the full run away
+  ov_let_me_play_for_you: { at: 470, tint: "#8fb8e8", laser: true, shock: true, aim: true, s: 6.2 },
 };
 
 for (const [id, imp] of Object.entries(IMPACTS)) {
