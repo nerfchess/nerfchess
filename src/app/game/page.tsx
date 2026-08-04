@@ -79,7 +79,7 @@ import { nerfSummary, outcomeFor, recordCompletedGame } from "@/lib/gameHistory"
 import { applyResult, loadRatingFor, saveRatingFor } from "@/lib/rating";
 import { loadRatings } from "@/lib/ratings";
 import { SettingsPanel } from "@/components/SettingsPanel";
-import { loadSavedAiGame, restoreSavedAiGame, saveAiGame, snapshotGame } from "@/lib/gamePersistence";
+import { clearSavedAiGame, loadSavedAiGame, restoreSavedAiGame, saveAiGame, snapshotGame } from "@/lib/gamePersistence";
 import { boardAtPly, replayBoardSpan } from "@/lib/gameReview";
 import { clipPliesAvailable } from "@/components/clip/clipReplay";
 import { premoveOptionsFor, premoveSelfChecks, previewMovesFor } from "@/lib/premoves";
@@ -159,9 +159,15 @@ const DRAFT_REVEAL_EASE_MS = 450;
 const DRAFT_REVEAL_HOLD_MS = 4000;
 
 export default function GamePageWrapper() {
+  // Rematch remounts GamePage under a fresh key with the URL untouched, so
+  // bootstrapGame re-runs against the SAME configuration (mode, strength,
+  // color, clock) with every piece of game state reset. GamePage clears the
+  // saved game first so the remount deals fresh instead of restoring the
+  // finished game.
+  const [session, setSession] = useState(0);
   return (
     <Suspense fallback={<LoadingPanel />}>
-      <GamePage />
+      <GamePage key={session} onRematch={() => setSession((s) => s + 1)} />
     </Suspense>
   );
 }
@@ -183,7 +189,7 @@ function LoadingPanel() {
   );
 }
 
-function GamePage() {
+function GamePage({ onRematch }: { onRematch: () => void }) {
   const router = useRouter();
   const params = useSearchParams();
   const querySignature = params.toString();
@@ -1684,7 +1690,16 @@ function GamePage() {
 
   const cancelPremove = () => setPremoves([]);
 
-  const handleRematch = () => router.push("/play");
+  // Rematch restarts the same configuration in place: clear the finished
+  // game's save (so the remounted page deals a fresh one instead of restoring
+  // it) and let the wrapper remount this component. "New game" stays a
+  // separate door back to the /play setup screen.
+  const handleRematch = () => {
+    clearSavedAiGame();
+    onRematch();
+  };
+
+  const handleNewGame = () => router.push("/play");
 
   const onResign = () => {
     if (!game.result) {
@@ -2367,7 +2382,7 @@ function GamePage() {
           record={postRecord}
           newOpponentHref={`/lobby?tab=quick${gameMode ? `&mode=${gameMode}` : ""}`}
           onRematch={handleRematch}
-          onNewGame={handleRematch}
+          onNewGame={handleNewGame}
           onReview={() => handleHistoryPlyChange(0)}
           onClip={clipPlies >= 2 ? openClip : undefined}
           moves={game.board.history}

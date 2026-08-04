@@ -61,34 +61,6 @@ const howToJsonLd = {
   ],
 };
 
-const RULES = [
-  {
-    n: "I",
-    t: "No checkmate. No stalemate.",
-    d: "The game ends only when a king is physically captured, a nerf triggers a loss, or a player resigns.",
-  },
-  {
-    n: "II",
-    t: "The king is a real piece.",
-    d: "He can be captured like anything else. He can move into attacked squares. He can castle through, into, or out of check.",
-  },
-  {
-    n: "III",
-    t: "Nerfs are secret.",
-    d: "In Nerf mode you see yours but never your opponent's; infer it from their play. Buff mode has no nerfs at all.",
-  },
-  {
-    n: "IV",
-    t: "Illegal-by-nerf moves are pre-filtered.",
-    d: "The board only highlights moves you are actually allowed to make. Lose-condition nerfs still trigger on their own.",
-  },
-  {
-    n: "V",
-    t: "Distances are Chebyshev.",
-    d: "When a nerf talks about distance, count the larger of file-difference and rank-difference. Not Euclidean.",
-  },
-];
-
 const CARD_TYPES = [
   {
     tag: "Nerf",
@@ -128,7 +100,7 @@ export default function TutorialPage() {
         <div className="smallcaps text-[11px] text-parchment-400">how to play</div>
         <h1 className="font-display text-5xl sm:text-6xl mt-1">House rules</h1>
         <p className="mt-5 text-[16px] leading-[1.7] text-parchment-200">
-          Nerf Chess is chess, until it isn&apos;t. The five rules below are everything you need to know.
+          Nerf Chess is chess, until it isn&apos;t. Five house rules are everything you need to know.
           Everything else depends on your mode: in Nerf mode, your secret handicap and the hexes,
           boons, and items you draft; in Buff mode, the buff cards both players draft every 5 moves.
         </p>
@@ -153,16 +125,17 @@ export default function TutorialPage() {
             </LinkButton>
           </div>
         </div>
-        <div className="mt-9 space-y-3">
-          {RULES.map((r) => (
-            <div key={r.n} className="plate p-5 sm:p-6">
-              <div className="flex items-baseline gap-3">
-                <span className="font-display font-bold text-gold-leaf text-2xl tabular-nums w-8 shrink-0">{r.n}.</span>
-                <div className="font-display text-2xl text-parchment leading-tight">{r.t}</div>
-              </div>
-              <p className="mt-2 ml-11 text-[15px] leading-relaxed text-parchment-200/90">{r.d}</p>
-            </div>
-          ))}
+        {/* The five house rules live in full in the guide; one line here keeps
+            the tutorial from restating them. */}
+        <div className="mt-9 plate p-5 sm:p-6">
+          <p className="text-[15px] leading-relaxed text-parchment-200">
+            No checkmate, a capturable king, secret nerfs, pre-filtered moves, Chebyshev
+            distances: read the five house rules in the{" "}
+            <Link href="/guide/how-to-play" className="font-semibold text-gold-leaf hover:underline">
+              how-to-play guide
+            </Link>
+            .
+          </p>
         </div>
         <div className="mt-14">
           <div className="smallcaps text-[11px] text-parchment-400">the four cards</div>

@@ -49,6 +49,10 @@ const WATCH_RAIL_FOLD = 4;
 // busy night made it scroll forever); "View all N games" unfolds it.
 const WATCH_TAB_FOLD = 8;
 
+// The one shared copy string for every panel that fails to load lobby data;
+// each panel's own title already says what is missing.
+const SERVER_UNREACHABLE = "Can't reach the game server right now.";
+
 // The lobby is wrapped in FriendGameProvider so the Friends tab can host the
 // full "Play a Friend" flow (create + share code, wait for a friend, join by
 // code) without leaving /lobby. While a friend game is being created, joined,
@@ -190,7 +194,7 @@ function LobbyInner() {
       } catch {
         if (!cancelled) {
           failures++;
-          if (failures >= 2) setLobbyError("Can't reach the game server right now.");
+          if (failures >= 2) setLobbyError(SERVER_UNREACHABLE);
         }
       }
     };
@@ -451,7 +455,7 @@ function LobbyInner() {
                 {!lobby ? (
                   lobbyError ? (
                     <LobbyRailError
-                      message="Can't reach the game server, so live games aren't available."
+                      message={SERVER_UNREACHABLE}
                       onRetry={() => setReloadKey((k) => k + 1)}
                     />
                   ) : (
@@ -537,7 +541,7 @@ function LobbyInner() {
                   <SecondaryModeCard
                     icon={<Users size={18} aria-hidden />}
                     title="Challenge a friend"
-                    description="Create a private game and send the code to someone you know."
+                    description="Create a private game and share the code."
                     onClick={() => {
                       setTab("watch");
                       setFriendsOpen(true);
@@ -546,7 +550,7 @@ function LobbyInner() {
                   <SecondaryModeCard
                     icon={<Cpu size={18} aria-hidden />}
                     title="Practice vs computer"
-                    description="Warm up against the computer at your chosen difficulty."
+                    description="Pick a bot strength and go."
                     href="/play"
                   />
                 </div>
@@ -585,7 +589,7 @@ function LobbyInner() {
                     {!lobby ? (
                       lobbyError ? (
                         <LobbyRailError
-                          message="Can't reach the game server, so open challenges aren't available."
+                          message={SERVER_UNREACHABLE}
                           onRetry={() => setReloadKey((k) => k + 1)}
                         />
                       ) : (
@@ -594,12 +598,12 @@ function LobbyInner() {
                     ) : waitingCount === 0 ? (
                       <HallEmpty
                         title="No one is waiting right now."
-                        hint="Queue from Quick Match and your seek will appear here for others to answer."
+                        hint="Queue from Quick Match to post a seek here."
                       />
                     ) : filteredSeeks.length + filteredChallenges.length === 0 ? (
                       <HallEmpty
                         title={`No ${challengeFilter === "nerf" ? "Nerf" : "Buff"} challenges right now.`}
-                        hint="Switch the filter to All, or queue from Quick Match to start one."
+                        hint="Switch the filter to All."
                       />
                     ) : (
                       <ul className="mt-4 space-y-2.5 stagger-in">
@@ -637,7 +641,7 @@ function LobbyInner() {
             {!lobby ? (
               lobbyError ? (
                 <LobbyRailError
-                  message="Can't reach the game server, so we can't show who's online."
+                  message={SERVER_UNREACHABLE}
                   onRetry={() => setReloadKey((k) => k + 1)}
                 />
               ) : (
@@ -723,7 +727,7 @@ function LobbyInner() {
               {!lobby ? (
                 lobbyError ? (
                   <LobbyRailError
-                    message="Can't reach the game server, so live games aren't available."
+                    message={SERVER_UNREACHABLE}
                     onRetry={() => setReloadKey((k) => k + 1)}
                   />
                 ) : (
@@ -887,7 +891,7 @@ function FriendsSection({ open, onToggle }: { open: boolean; onToggle: () => voi
         {open && (
           <div id="lobby-fold-friends">
             <p className="mt-2 mb-5 text-xs text-parchment-400">
-              Challenge a friend directly. Share a code or pick from your list.
+              Share a code, or pick from your list.
             </p>
             <FriendGameSetup showFriends={false} />
           </div>
