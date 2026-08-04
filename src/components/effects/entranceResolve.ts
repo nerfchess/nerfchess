@@ -66,10 +66,53 @@ export const DEFAULT_ARRIVAL_THEME: ArrivalTheme = {
   deep: "#39321f",
 };
 
+/** Deterministic per-card variation for the GENERIC arrivals. The ~366 cards
+ * without hand-made art used to share their bucket's scene verbatim — eight
+ * jail cards arrived pixel-identically. The variant tuple bends one shared
+ * scene into a per-card performance the way the passive cue sheets and the
+ * opener entrances already do: pure hash of the card id, no per-card code.
+ * Consumed as a static wrapper transform + palette nudge + delay jitter, so
+ * node counts, reduced-motion behavior, and the anim gate are untouched. */
+export interface EntranceVariant {
+  seed: number;
+  /** Whole-scene tilt, -14..14 deg in 1deg steps (0 stays possible). */
+  rot: number;
+  /** Whole-scene scale, 0.92..1.08 in 0.02 steps. */
+  scale: number;
+  /** Horizontal flip: half the library arrives left-handed. */
+  mirror: boolean;
+  /** Palette nudge within the family, -12..12 deg hue in 3deg steps. */
+  hueNudge: number;
+  /** Extra onset delay, 0..128ms in 16ms steps: staggers the beats. */
+  delayJitter: number;
+}
+
+/** FNV-1a, the same tiny hash the opener entrances use. */
+function fnv1a(id: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < id.length; i++) {
+    h ^= id.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+export function entranceVariant(id: string): EntranceVariant {
+  const h = fnv1a(id);
+  return {
+    seed: h,
+    rot: ((h >>> 3) % 29) - 14,
+    scale: 0.92 + ((h >>> 7) % 9) * 0.02,
+    mirror: ((h >>> 11) & 1) === 1,
+    hueNudge: (((h >>> 13) % 9) - 4) * 3,
+    delayJitter: ((h >>> 17) % 9) * 16,
+  };
+}
+
 export type EntranceResolution =
-  | { kind: "motif"; motif: EntranceMotif; theme: ArrivalTheme }
-  | { kind: "category"; category: BuffCategory; theme: ArrivalTheme }
-  | { kind: "default"; theme: ArrivalTheme };
+  | { kind: "motif"; motif: EntranceMotif; theme: ArrivalTheme; variant: EntranceVariant | null }
+  | { kind: "category"; category: BuffCategory; theme: ArrivalTheme; variant: EntranceVariant | null }
+  | { kind: "default"; theme: ArrivalTheme; variant: EntranceVariant | null };
 
 export function isEntranceMotif(m: string): m is EntranceMotif {
   return Object.prototype.hasOwnProperty.call(MOTIF_ARRIVAL_THEME, m);
@@ -84,6 +127,7 @@ export function isArrivalCategory(c: string): c is BuffCategory {
  * a Buff, a Nerf (no category, no fx), or a future shape — and answer with
  * a renderable arrival regardless. */
 export interface EntranceCardLike {
+  id?: string;
   category?: string;
   fx?: { motif?: string } | null;
 }
@@ -92,16 +136,20 @@ export interface EntranceCardLike {
  * Motif first, category second, neutral floor last. Total by construction:
  * there is no input for which this returns null/undefined, and the coverage
  * gate (check-vfx-coverage.cjs rule 3) re-asserts that across all ~2,448
- * library cards on every run.
+ * library cards on every run. When the card carries an id, the resolution
+ * also carries its deterministic variant so the shared bucket scene renders
+ * as a per-card performance; without an id (previews, unknown cards) variant
+ * is null and the scene plays in its canonical form.
  */
 export function resolveEntrance(card: EntranceCardLike): EntranceResolution {
+  const variant = card.id ? entranceVariant(card.id) : null;
   const motif = card.fx?.motif;
   if (motif && isEntranceMotif(motif)) {
-    return { kind: "motif", motif, theme: MOTIF_ARRIVAL_THEME[motif] };
+    return { kind: "motif", motif, theme: MOTIF_ARRIVAL_THEME[motif], variant };
   }
   const category = card.category;
   if (category && isArrivalCategory(category)) {
-    return { kind: "category", category, theme: ARRIVAL_THEME[category] };
+    return { kind: "category", category, theme: ARRIVAL_THEME[category], variant };
   }
-  return { kind: "default", theme: DEFAULT_ARRIVAL_THEME };
+  return { kind: "default", theme: DEFAULT_ARRIVAL_THEME, variant };
 }
