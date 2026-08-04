@@ -777,6 +777,10 @@ export function applyTurnStart(game: NerfGame) {
 // Buff system (draft mode)
 // ---------------------------------------------------------------------------
 
+/** The ONE expiry rule for board-level effects: null turns = permanent, and a
+ * countdown keeps the effect alive while above zero. Every tick site filters
+ * through this — the rule used to be open-coded in three places, which is
+ * exactly how an expiry-rule change would have desynced them. */
 function effectActive(e: ActiveEffect): boolean {
   return e.turns == null || e.turns > 0;
 }
@@ -1572,7 +1576,7 @@ export function playMove(game: NerfGame, move: Move): NerfGame {
     }
     // Pay any trade-off timer that just reached zero before it is filtered out.
     fireExpiredTradeOffs(game);
-    bs.effects = bs.effects.filter((e) => e.turns == null || e.turns > 0);
+    bs.effects = bs.effects.filter(effectActive);
     // A captured or buff-removed piece leaves its freeze/walnut behind; drop
     // those orphaned markers so they never haunt an empty or enemy-held square.
     pruneOrphanedSquareEffects(game);
@@ -1704,7 +1708,7 @@ function resolveNoMoves(game: NerfGame) {
       if (e.turns != null && effectTickColor(e) === stuck) e.turns -= 1;
     }
     fireExpiredTradeOffs(game);
-    bs.effects = bs.effects.filter((e) => e.turns == null || e.turns > 0);
+    bs.effects = bs.effects.filter(effectActive);
     pruneOrphanedSquareEffects(game);
     game.board.turn = stuck === "w" ? "b" : "w";
     game.board.epTarget = null;
@@ -1915,7 +1919,7 @@ function passTurnAfterBuff(game: NerfGame, color: Color) {
     if (e.turns != null && effectTickColor(e) === color) e.turns -= 1;
   }
   fireExpiredTradeOffs(game);
-  bs.effects = bs.effects.filter((e) => e.turns == null || e.turns > 0);
+  bs.effects = bs.effects.filter(effectActive);
   pruneOrphanedSquareEffects(game);
   emitEffectDelta(game, beforeTick);
   const opp: Color = color === "w" ? "b" : "w";
