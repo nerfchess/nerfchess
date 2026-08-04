@@ -35,6 +35,7 @@ import {
   buildClipScene,
   clipLayout,
   loadClipPieceImages,
+  type ClipPoster,
   type ClipScene,
   type ClipVerdict,
   type PieceImageSource,
@@ -52,6 +53,7 @@ import { STYLE_DEFAULTS, surpriseStyle, type ClipStyle, type StylePreset } from 
 import {
   HOOK_PRESETS,
   TIKTOK_MODE,
+  TRACK_META,
   type ClipOptionsState,
   type PliesChoice,
 } from "./clipOptions";
@@ -116,6 +118,13 @@ export function ClipModal({
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [shared, setShared] = useState(false);
+  // GIF loop export: a secondary take of just the payoff window. Encoded on
+  // demand (never automatically) and discarded with the video take.
+  const [gif, setGif] = useState<{ url: string; blob: Blob } | null>(null);
+  const [gifBusy, setGifBusy] = useState(false);
+  const [gifProgress, setGifProgress] = useState(0);
+  const gifUrlRef = useRef<string | null>(null);
+  const gifRunRef = useRef(0);
   // Imported backing track (audio/*, decoded client-side, never uploaded).
   const [customMusic, setCustomMusic] = useState<ClipCustomMusic | null>(null);
   const musicFileRef = useRef<HTMLInputElement | null>(null);
@@ -235,7 +244,33 @@ export function ClipModal({
     if (bigCard) return `${bigCard.name.toUpperCase()} IS BROKEN`;
     return HOOK_PRESETS[0];
   }, [autoPlan, bigCard, opts.emojiLevel]);
-  const hookText = hook ?? hookSuggestion;
+
+  // Intro title templates: a non-custom template supplies the hook line (the
+  // "ruined" one auto-fills the payoff card's name) AND restyles the intro
+  // slam typography inside the scene renderer. Custom keeps free text.
+  const templateHook = useMemo(() => {
+    const card = autoPlan?.card ?? bigCard;
+    switch (opts.style.titleTemplate) {
+      case "pov": {
+        if (card) return `POV: HE DRAWS ${card.name.toUpperCase()}`;
+        if (autoPlan?.kind === "capture" && autoPlan.captured) {
+          return `POV: YOUR ${PIECE_WORD[autoPlan.captured]} IS GONE`;
+        }
+        return "POV: THE ENDGAME FINDS YOU";
+      }
+      case "neversaw":
+        return "He never saw it coming";
+      case "waitforit":
+        return "Wait for it...";
+      case "illegal":
+        return "This card is ILLEGAL";
+      case "ruined":
+        return `${card?.name ?? "This card"} just ruined his life`;
+      default:
+        return null;
+    }
+  }, [opts.style.titleTemplate, autoPlan, bigCard]);
+  const hookText = templateHook ?? hook ?? hookSuggestion;
 
   const verdict = useMemo<ClipVerdict | null>(() => {
     const coversEnd =
@@ -257,6 +292,26 @@ export function ClipModal({
     if (bigCard) return { main: bigCard.name.toUpperCase(), sub: "signature play" };
     return { main: "TO BE CONTINUED", sub: null };
   }, [result, timeline, moves.length, playerNames, bigCard]);
+
+  // Thumbnail designer spec: null keeps the classic frame-0 poster.
+  const poster = useMemo<ClipPoster | null>(
+    () =>
+      opts.posterFrac === null
+        ? null
+        : {
+            frac: opts.posterFrac,
+            text: opts.posterText.trim() || hookText,
+            ring: opts.posterRing,
+          },
+    [opts.posterFrac, opts.posterText, opts.posterRing, hookText],
+  );
+
+  // Beat grid for beat-synced cuts: built-in tracks only (imported audio has
+  // no BPM map, so the PACE toggle disables itself with a note).
+  const beatBpm =
+    opts.style.beatSync && opts.musicOn && !customMusic
+      ? TRACK_META[opts.musicTrack].bpm
+      : null;
 
   const scene = useMemo<ClipScene | null>(() => {
     if (!timeline) return null;
@@ -284,6 +339,8 @@ export function ClipModal({
       fonts,
       accent,
       payoffPly: pliesChoice === "auto" ? (autoPlan?.payoffPly ?? null) : null,
+      beatBpm,
+      poster,
     });
   }, [
     timeline,
@@ -297,6 +354,8 @@ export function ClipModal({
     accent,
     pliesChoice,
     autoPlan,
+    beatBpm,
+    poster,
   ]);
   useEffect(() => {
     sceneRef.current = scene;
@@ -329,7 +388,47 @@ export function ClipModal({
     clipUrlRef.current = null;
     setClip(null);
     setShared(false);
+    // The GIF is a take of the same config: discard it too, and supersede any
+    // GIF encode in flight (the encoder polls the run id between frames).
+    if (gifUrlRef.current) URL.revokeObjectURL(gifUrlRef.current);
+    gifUrlRef.current = null;
+    setGif(null);
+    gifRunRef.current++;
+    setGifBusy(false);
   }, []);
+
+  // GIF loop: 2-4s of the payoff window, encoded client-side by the
+  // dependency-free quantizer + LZW in clipGif.ts.
+  const exportGif = useCallback(async () => {
+    const sc = sceneRef.current;
+    if (!sc || !images || gifBusy) return;
+    const run = ++gifRunRef.current;
+    setGifBusy(true);
+    setGifProgress(0);
+    try {
+      const { encodeClipGif } = await import("./clipGif");
+      const res = await encodeClipGif(
+        sc,
+        images,
+        (f) => {
+          if (gifRunRef.current === run) setGifProgress(f);
+        },
+        () => gifRunRef.current !== run,
+      );
+      if (gifRunRef.current !== run) return;
+      const url = URL.createObjectURL(res.blob);
+      gifUrlRef.current = url;
+      setGif({ url, blob: res.blob });
+      // Surfaced for automated tests / debugging.
+      console.log(`nerfchess gif recorded: ${res.blob.size} bytes`);
+    } catch (e) {
+      if (gifRunRef.current === run && (e as Error)?.name !== "GifCancelled") {
+        setError("GIF export failed in this browser.");
+      }
+    } finally {
+      if (gifRunRef.current === run) setGifBusy(false);
+    }
+  }, [images, gifBusy]);
 
   // Piece sprites, loaded once per source (the modal mounts fresh per open,
   // so the initial null state already covers the loading readout).
@@ -360,11 +459,14 @@ export function ClipModal({
   useEffect(() => {
     const runRef = encodeRunRef;
     const monitor = monitorRef;
+    const gifRun = gifRunRef;
     return () => {
       stopRef.current?.();
       runRef.current++;
+      gifRun.current++;
       monitor.current?.stop();
       if (clipUrlRef.current) URL.revokeObjectURL(clipUrlRef.current);
+      if (gifUrlRef.current) URL.revokeObjectURL(gifUrlRef.current);
     };
   }, []);
 
@@ -801,8 +903,10 @@ export function ClipModal({
       aria-label="Clip studio: cut and save a reel of the final moves"
       data-clip-modal
       data-clip-bytes={clip?.blob.size ?? 0}
+      data-clip-gif-bytes={gif?.blob.size ?? 0}
+      data-clip-gif-type={gif?.blob.type ?? ""}
       data-clip-duration={scene?.durationMs ?? 0}
-      data-clip-style-sig={`${opts.style.grade}:${opts.style.particles}:${opts.style.transition}:${opts.style.zoom}:${opts.style.speed}:${opts.style.seed}`}
+      data-clip-style-sig={`${opts.style.grade}:${opts.style.particles}:${opts.style.transition}:${opts.style.zoom}:${opts.style.speed}:${opts.style.seed}:${opts.style.captionPack}:${opts.style.titleTemplate}:${opts.style.outro}:${opts.style.beatSync ? "beat" : "free"}:${opts.style.tensionMeter ? "tension" : "-"}:${opts.style.minimap ? "minimap" : "-"}`}
       data-clip-preset={presetId ?? "custom"}
       className="fixed inset-0 z-[60] grid place-items-center bg-[#0f0d0a]/70 px-2 py-3 backdrop-blur-sm sm:px-4 sm:py-6"
       onPointerDown={chrome.onBackdropPointerDown}
@@ -958,6 +1062,30 @@ export function ClipModal({
                   <span className="inline-flex min-h-[48px] flex-1 items-center justify-center px-4 text-center text-xs text-parchment-400">
                     {support ? support.detail : "Probing this browser's encoder"}
                   </span>
+                )}
+                {/* GIF loop: a secondary export of just the payoff window,
+                    encoded on demand by the dependency-free encoder. */}
+                {gif ? (
+                  <a
+                    href={gif.url}
+                    download="nerfchess-loop.gif"
+                    data-clip-gif-download
+                    className="btn-ghost press inline-flex min-h-[48px] items-center justify-center gap-2 px-4 font-display text-sm font-semibold"
+                  >
+                    GIF {sizeLabel(gif.blob.size)}
+                  </a>
+                ) : (
+                  <Button
+                    tone="ghost"
+                    size="lg"
+                    onClick={() => void exportGif()}
+                    disabled={gifBusy || !scene || !images}
+                    data-clip-gif
+                    title="Export a 2-4s looping GIF of the payoff"
+                    className="font-semibold"
+                  >
+                    {gifBusy ? `GIF ${Math.round(gifProgress * 100)}%` : "GIF loop"}
+                  </Button>
                 )}
               </div>
               <div className="clip-export-status">

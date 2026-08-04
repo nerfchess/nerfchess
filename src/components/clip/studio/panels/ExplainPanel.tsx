@@ -75,6 +75,16 @@ export function ExplainPanel({ studio }: { studio: Studio }) {
         disabled={locked}
         toggles={[{ label: "Action callouts", on: opts.explainCallouts, onClick: () => set("explainCallouts", !opts.explainCallouts) }]}
       />
+      {/* Viewer instruments: the eval-style tension bar beside the board and
+          the burned-in replay minimap strip in the bottom safe zone. */}
+      <ToggleRow
+        label="Meters"
+        disabled={locked}
+        toggles={[
+          { label: "Tension meter", on: s.tensionMeter, onClick: () => setStyle({ tensionMeter: !s.tensionMeter }) },
+          { label: "Replay minimap", on: s.minimap, onClick: () => setStyle({ minimap: !s.minimap }) },
+        ]}
+      />
     </div>
   );
 }

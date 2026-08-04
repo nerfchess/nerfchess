@@ -74,10 +74,43 @@ export interface ClipTimeline {
   initial: ClipPieces;
   final: ClipPieces;
   segments: ClipSegment[];
+  /** Tension heuristic per board (length = segments + 1): white-minus-black
+   *  material plus a cheap mobility proxy. No engine calls; the tension meter
+   *  smooth-lerps between these values. */
+  tension: number[];
 }
 
 function samePiece(a: Piece | null, b: Piece | null): boolean {
   return !!a && !!b && a.type === b.type && a.color === b.color;
+}
+
+/** Cheap eval-style tension for one board: weighted material (p1 n3 b3 r5 q9,
+ *  the standard PIECE_VALUE table) plus 0.1 per mobility proxy point, where
+ *  the proxy is the count of free squares adjacent to each of the side's
+ *  pieces. White minus black; positive means White is on top. Deliberately
+ *  engine-free so the meter costs nothing at build time. */
+export function boardTension(pieces: ClipPieces): number {
+  let v = 0;
+  for (let sq = 0 as Square; sq < 64; sq++) {
+    const p = pieces[sq];
+    if (!p) continue;
+    const sign = p.color === "w" ? 1 : -1;
+    if (p.type !== "k") v += sign * PIECE_VALUE[p.type];
+    const f = FILE(sq);
+    const r = RANK(sq);
+    let free = 0;
+    for (let df = -1; df <= 1; df++) {
+      for (let dr = -1; dr <= 1; dr++) {
+        if (df === 0 && dr === 0) continue;
+        const nf = f + df;
+        const nr = r + dr;
+        if (nf < 0 || nf > 7 || nr < 0 || nr > 7) continue;
+        if (!pieces[nr * 8 + nf]) free++;
+      }
+    }
+    v += sign * 0.1 * free;
+  }
+  return v;
 }
 
 function clonePieces(pieces: (Piece | null)[]): ClipPieces {
@@ -257,6 +290,7 @@ export function buildClipTimeline(opts: BuildClipOptions): ClipTimeline | null {
     initial: boards[0],
     final: boards[boards.length - 1],
     segments,
+    tension: boards.map(boardTension),
   };
 }
 

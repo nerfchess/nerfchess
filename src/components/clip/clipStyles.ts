@@ -55,6 +55,21 @@ export type TransitionId = "shimmer" | "whip" | "flash" | "spin" | "pixel" | "no
 export type ClipSpeed = 0.75 | 1 | 1.25 | 1.5;
 export type SlowmoDepth = "off" | "classic" | "ultra";
 export type WatermarkCorner = "tl" | "tr" | "bl" | "br";
+/** Caption style packs: each restyles the word-pop captions without touching
+ *  the deterministic per-word timing. */
+export type CaptionPackId = "impact" | "typewriter" | "neon" | "minimal" | "serif";
+/** Intro title templates: each restyles the hook slam's typography (and, for
+ *  the non-custom picks, auto-fills the hook line itself). */
+export type TitleTemplateId =
+  | "custom"
+  | "pov"
+  | "neversaw"
+  | "waitforit"
+  | "illegal"
+  | "ruined";
+/** End-card variants: the logo pop, a rematch taunt, the card-codex tease, or
+ *  the run's stats splat. */
+export type OutroVariantId = "logo" | "taunt" | "codex" | "stats";
 
 /** Every wave-2 knob in one object. Lives on ClipSceneOptions as `style`, so
  *  the whole thing participates in the auto re-encode dependency. */
@@ -118,6 +133,18 @@ export interface ClipStyle {
   ruleSide: RulePanelSide;
   /** How long rule panels hold relative to the read-speed estimate. */
   ruleHold: RuleHoldBias;
+  /** Caption style pack (Impact is the classic wave-1 look). */
+  captionPack: CaptionPackId;
+  /** Intro title template; "custom" keeps the free-text hook behavior. */
+  titleTemplate: TitleTemplateId;
+  /** End-card variant. */
+  outro: OutroVariantId;
+  /** Snap ply starts to the music's beat grid (built-in tracks only). */
+  beatSync: boolean;
+  /** Eval-style tension bar beside the board (material + mobility, no engine). */
+  tensionMeter: boolean;
+  /** Viewer-facing replay minimap strip in the bottom safe zone. */
+  minimap: boolean;
   /** Deterministic seed for glitch slices, pixel dissolves, confetti, and the
    *  Surprise-me shuffle. Incremented per Surprise tap. */
   seed: number;
@@ -169,6 +196,12 @@ export const STYLE_DEFAULTS: ClipStyle = {
   arrowColor: "palette",
   ruleSide: "auto",
   ruleHold: "comfy",
+  captionPack: "impact",
+  titleTemplate: "custom",
+  outro: "logo",
+  beatSync: false,
+  tensionMeter: false,
+  minimap: false,
   seed: 0,
 };
 
@@ -252,6 +285,7 @@ export const STYLE_PRESETS: StylePreset[] = [
       verdictStamps: true,
       flameTrail: false,
       scoreBug: true,
+      tensionMeter: true,
     },
     extras: { emojiLevel: "off", captionStyle: "static", musicTrack: "quiet" },
   },
@@ -353,6 +387,12 @@ export function surpriseStyle(tap: number): ClipStyle {
   s.stampRotation = pick(["off", "subtle", "subtle", "rowdy"] as const);
   s.zoomBias = rng() < 0.8 ? "action" : "center";
   s.punchTiming = rng() < 0.75 ? "impact" : "beat";
+  // Wave-4 depth knobs join the shuffle, biased toward the classic picks.
+  s.captionPack = pick(["impact", "impact", "typewriter", "neon", "minimal", "serif"] as const);
+  s.outro = pick(["logo", "logo", "taunt", "codex", "stats"] as const);
+  if (rng() < 0.35) s.beatSync = true;
+  if (rng() < 0.3) s.tensionMeter = true;
+  if (rng() < 0.3) s.minimap = true;
   s.seed = tap;
   return s;
 }

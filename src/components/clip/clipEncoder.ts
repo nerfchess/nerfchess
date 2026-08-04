@@ -14,7 +14,7 @@
 // initial bundle (the clip modal itself is already a dynamic import).
 
 import type { ClipScene } from "./clipScene";
-import { renderClipFrame } from "./clipScene";
+import { renderClipFrame, renderClipPoster } from "./clipScene";
 import { renderClipAudio, startLiveClipAudio, type ClipAudioOptions } from "./clipAudio";
 
 const FPS = 30;
@@ -189,7 +189,11 @@ export async function encodeClipOffline(
       throw new EncodeCancelled();
     }
     const tMs = Math.min((i * 1000) / FPS, scene.durationMs);
-    renderClipFrame(scene, ctx, tMs, images);
+    // Frame 0 is the export's thumbnail: when the studio designed a poster,
+    // burn it here (renderClipPoster falls back to the plain frame 0), so the
+    // saved file previews exactly what the THUMB section shows.
+    if (i === 0) renderClipPoster(scene, ctx, images);
+    else renderClipFrame(scene, ctx, tMs, images);
     // Awaiting add() respects encoder backpressure, per mediabunny's contract.
     await videoSource.add(i / FPS, 1 / FPS);
     onProgress?.((i + 1) / totalFrames);

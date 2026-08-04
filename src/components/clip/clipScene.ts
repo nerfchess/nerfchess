@@ -53,6 +53,8 @@ export interface ClipLayout {
   /** Vertical momentum bar (left of the board). */
   momentumX: number;
   momentumW: number;
+  /** Replay minimap strip top (bottom safe zone, under the caption band). */
+  minimapY: number;
 }
 
 // The TikTok frame reliably keeps a ~840x1264 centered rect clear of UI; all
@@ -63,25 +65,25 @@ const LAYOUTS: Record<ClipAspect, ClipLayout> = {
     W: 1080, H: 1920, boardX: 100, boardY: 460, board: 880, sq: 110,
     headerY: 308, matchY: null, hookY: 378, hookSize: 44,
     popY: 1398, popSize: 54, progressY: 1348, watermarkY: 1414,
-    momentumX: 72, momentumW: 16,
+    momentumX: 72, momentumW: 16, minimapY: 1430,
   },
   square: {
     W: 1080, H: 1080, boardX: 140, boardY: 176, board: 800, sq: 100,
     headerY: 84, matchY: null, hookY: 140, hookSize: 36,
     popY: 1026, popSize: 44, progressY: 988, watermarkY: 1060,
-    momentumX: 106, momentumW: 14,
+    momentumX: 106, momentumW: 14, minimapY: 1040,
   },
   classic: {
     W: 720, H: 880, boardX: 40, boardY: 116, board: 640, sq: 80,
     headerY: 52, matchY: 86, hookY: 108, hookSize: 17,
     popY: 812, popSize: 32, progressY: 834, watermarkY: 864,
-    momentumX: 14, momentumW: 12,
+    momentumX: 14, momentumW: 12, minimapY: 846,
   },
   youtube: {
     W: 1920, H: 1080, boardX: 600, boardY: 230, board: 720, sq: 90,
     headerY: 90, matchY: null, hookY: 170, hookSize: 44,
     popY: 1016, popSize: 48, progressY: 968, watermarkY: 1048,
-    momentumX: 560, momentumW: 16,
+    momentumX: 560, momentumW: 16, minimapY: 1030,
   },
 };
 
@@ -302,6 +304,19 @@ export interface ClipVerdict {
   sub: string | null;
 }
 
+/** The thumbnail designer's poster spec: which moment of the reel the export's
+ *  frame 0 shows, the overlay line burned across it, and whether the payoff
+ *  square gets an accent ring. Null keeps the classic frame-0 behavior. */
+export interface ClipPoster {
+  /** Poster time as a fraction of the reel (0..1), stable across duration
+   *  changes so the choice survives re-timing knobs. */
+  frac: number;
+  /** Overlay line (already resolved; defaults to the hook upstream). */
+  text: string;
+  /** Accent ring around the payoff square. */
+  ring: boolean;
+}
+
 export interface ClipSceneOptions {
   timeline: ClipTimeline;
   orientation: Color;
@@ -339,6 +354,13 @@ export interface ClipSceneOptions {
    *  the dramatic pre-beat + slow-motion hit. Falls back to an internal scan
    *  (last capture / card) when absent. */
   payoffPly?: number | null;
+  /** Beat grid BPM for beat-synced cuts, or null when off. Only ever set for
+   *  built-in tracks (imported audio has no BPM map). Snapping happens in the
+   *  timeline accumulator BEFORE the audio schedule derives, so audio and
+   *  video stay aligned by construction. */
+  beatBpm?: number | null;
+  /** Thumbnail designer spec, or null for the classic frame-0 poster. */
+  poster?: ClipPoster | null;
 }
 
 interface SegFx {
@@ -392,6 +414,11 @@ export interface ClipScene {
   opts: ClipSceneOptions;
   layout: ClipLayout;
   lead: number;
+  /** Stats splat numbers for the outro variant (computed at build time). */
+  outroStats: { moves: number; captures: number; swing: number };
+  /** The card the codex-tease outro shows: the payoff card, else the biggest
+   *  card in the window, else null. */
+  outroCard: ClipSigMeta | null;
   segs: SegFx[];
   payoffIndex: number;
   freezeStart: number;
@@ -482,8 +509,26 @@ export function buildClipScene(opts: ClipSceneOptions): ClipScene {
 
   const baseMove = n > 6 ? 430 : 560;
   const baseHold = n > 6 ? 210 : 300;
+
+  // Beat-synced cuts: the beat grid period in ms (the timeline runs in real
+  // wall-clock ms, and so does the scheduled music, so beats sit at k * spb).
+  // Snapping happens INSIDE this accumulator, before any audio event derives
+  // from a start time, so the schedule and the visuals move together.
+  const beatMs = opts.beatBpm && opts.beatBpm > 0 ? 60000 / opts.beatBpm : 0;
+  /** Nearest beat-grid position for `t`, when within +-40% of a beat and the
+   *  shift keeps `t` at or past `floor`; else `t` unchanged. */
+  const snapToBeat = (t: number, floor: number): number => {
+    if (beatMs <= 0) return t;
+    const nearest = Math.round(t / beatMs) * beatMs;
+    const delta = nearest - t;
+    if (Math.abs(delta) > beatMs * 0.4) return t;
+    if (nearest < floor) return t;
+    return Math.round(nearest);
+  };
+
   // Intro beat: the board slams in, the wordmark pops, the hook spring-pops.
-  const lead = warp(700);
+  // With beat sync on, the first cut (intro -> ply 1) lands on the grid too.
+  const lead = snapToBeat(warp(700), warp(420));
   let at = lead;
   const segs: SegFx[] = [];
   const audio: ClipAudioEvent[] = [];
@@ -648,6 +693,19 @@ export function buildClipScene(opts: ClipSceneOptions): ClipScene {
       easeSeed: rng(),
     });
     at += arrowW + preW + moveMs + freezeW + holdMs;
+    // Beat sync: snap the NEXT ply's start to the beat grid by stretching or
+    // trimming this segment's hold (max shift +-40% of a beat, and the hold
+    // can never go negative, so there is no dead air and no overlap). The
+    // next iteration's audio events then derive from the snapped start.
+    if (beatMs > 0 && i < n - 1) {
+      const snapped = snapToBeat(at, at - holdMs);
+      const delta = snapped - at;
+      if (delta !== 0 && holdMs + delta >= 0) {
+        holdMs += delta;
+        segs[segs.length - 1].holdMs = holdMs;
+        at = snapped;
+      }
+    }
   }
 
   const freezeMs = warp(opts.freezeStamp ? 1000 : 320);
@@ -664,10 +722,32 @@ export function buildClipScene(opts: ClipSceneOptions): ClipScene {
     !!opts.verdict &&
     /WIN|CHECKMATE/.test(opts.verdict.main);
 
+  // Outro variant fodder: the stats splat numbers and the codex-tease card.
+  let captures = 0;
+  let swing = 0;
+  {
+    let prev = material(timeline.initial);
+    for (const sf of segs) {
+      captures += sf.shards.length;
+      swing = Math.max(swing, Math.abs(sf.matAfter - prev));
+      prev = sf.matAfter;
+    }
+  }
+  let outroCard: ClipSigMeta | null = segs[payoff]?.seg.sig ?? null;
+  if (!outroCard) {
+    for (const sf of segs) {
+      if (sf.seg.sig && (!outroCard || sf.seg.sig.tier > outroCard.tier)) {
+        outroCard = sf.seg.sig;
+      }
+    }
+  }
+
   return {
     opts,
     layout,
     lead,
+    outroStats: { moves: n, captures, swing: Math.round(swing) },
+    outroCard,
     segs,
     payoffIndex: payoff,
     freezeStart,
@@ -1033,6 +1113,8 @@ export function renderClipFrame(
 
   // ---- Meters, captions, watermark ----
   if (opts.momentumBar) drawMomentum(scene, ctx, t);
+  if (style.tensionMeter) drawTension(scene, ctx, t);
+  if (style.minimap) drawMinimap(scene, ctx, t);
   if (opts.moveCounter) drawProgress(scene, ctx, doneCount, active, u);
   if (style.scoreBug) drawScoreBug(scene, ctx, t);
   drawPopCaption(scene, ctx, active, t);
@@ -2234,74 +2316,304 @@ function drawCardBadge(
   ctx.restore();
 }
 
+/** One hook word, fully styled by the active title template. */
+interface HookToken {
+  text: string;
+  font: string;
+  size: number;
+  ink: string;
+  /** Gets the off-register hot pass under the fill. */
+  hot: boolean;
+  /** Rubber-stamp stroke box around the word (the ILLEGAL treatment). */
+  box: boolean;
+  tilt: number;
+  /** Lighter stroke weight (the whisper words). */
+  whisper: boolean;
+}
+
+/** The intro hook, restyled per title template. "custom" keeps the classic
+ *  wave-1 word-pop; the templates re-cut the same seeded machinery (palette
+ *  inks, jitter, print registration) into distinct type treatments. */
 function drawHook(scene: ClipScene, ctx: CanvasRenderingContext2D, t: number): void {
   const { layout: L, opts } = scene;
   const text = opts.hookText.trim();
   if (!text) return;
+  const template = opts.style.titleTemplate;
+  if (template === "pov") {
+    drawHookPov(scene, ctx, t, text);
+    return;
+  }
+  if (template === "waitforit") {
+    drawHookWait(scene, ctx, t, text);
+    return;
+  }
+
+  const pal = scene.palette;
+  const base = L.hookSize;
+  const words = text.split(/\s+/).filter(Boolean);
+  const justAt = words.findIndex((w) => /^just$/i.test(w));
+  const nameEnd = justAt > 0 ? justAt : Math.min(2, Math.max(1, words.length - 1));
+
+  const tokens: HookToken[] = words.map((w, i) => {
+    const last = i === words.length - 1;
+    const tk: HookToken = {
+      text: w,
+      font: `800 ${Math.round(base)}px ${opts.fonts.display}`,
+      size: base,
+      ink: pal.paper,
+      hot: true,
+      box: false,
+      tilt: 0,
+      whisper: false,
+    };
+    if (template === "neversaw") {
+      if (!last) {
+        // Whisper-then-slam: the setup words murmur in small italics...
+        tk.size = base * 0.6;
+        tk.font = `italic 600 ${Math.round(tk.size)}px ${opts.fonts.body}`;
+        tk.ink = pal.dim;
+        tk.hot = false;
+        tk.whisper = true;
+      } else {
+        // ...and the last word lands like a verdict.
+        tk.size = base * 1.5;
+        tk.font = `800 ${Math.round(tk.size)}px ${opts.fonts.display}`;
+        tk.ink = pal.accent;
+      }
+    } else if (template === "illegal" && /^illegal[!.?]*$/i.test(w)) {
+      // The flagged word prints hot inside a tilted rubber-stamp frame.
+      tk.size = base * 1.25;
+      tk.font = `800 ${Math.round(tk.size)}px ${opts.fonts.display}`;
+      tk.ink = pal.hot;
+      tk.box = true;
+      tk.tilt = scene.verdictTilt * 1.6;
+    } else if (template === "ruined") {
+      if (i < nameEnd) {
+        // The card name leads, accented, each word at its own seeded tilt.
+        tk.size = base * 1.12;
+        tk.font = `800 ${Math.round(tk.size)}px ${opts.fonts.display}`;
+        tk.ink = pal.accent;
+        tk.tilt = (jit01(scene.fieldSeed, 90 + i) - 0.5) * 0.07;
+      } else {
+        tk.size = base * 0.88;
+        tk.font = `800 ${Math.round(tk.size)}px ${opts.fonts.display}`;
+        tk.hot = false;
+      }
+    }
+    return tk;
+  });
+
   ctx.save();
-  ctx.font = `800 ${L.hookSize}px ${opts.fonts.display}`;
   ctx.textAlign = "left";
   const maxW = Math.min(L.board, opts.aspect === "tiktok" ? 820 : L.board);
-  const words = text.split(/\s+/);
-  const lines: string[][] = [];
-  let line: string[] = [];
-  for (const w of words) {
-    const probe = [...line, w].join(" ");
-    if (ctx.measureText(probe).width > maxW && line.length) {
+  const widths = tokens.map((tk) => {
+    ctx.font = tk.font;
+    return ctx.measureText(tk.text).width;
+  });
+  const space = base * 0.28;
+  const lines: number[][] = [];
+  let line: number[] = [];
+  let lw = 0;
+  tokens.forEach((tk, i) => {
+    const add = widths[i] + (line.length ? space : 0);
+    if (line.length && lw + add > maxW) {
       lines.push(line);
-      line = [w];
+      line = [i];
+      lw = widths[i];
     } else {
-      line.push(w);
+      line.push(i);
+      lw += add;
     }
-  }
+  });
   if (line.length) lines.push(line);
   const shown = lines.slice(0, 2);
-  const lh = L.hookSize * 1.22;
-  const space = ctx.measureText(" ").width;
+  const lh = base * 1.22;
   // Frame 0 is the thumbnail: the whole hook stamped in full. From the next
   // frame it re-animates word by word, then floats gently forever after.
   const stamp = t < 34;
   let wordIdx = 0;
-  shown.forEach((lnWords, li) => {
+  shown.forEach((ids, li) => {
     const y = L.hookY + li * lh;
-    const widths = lnWords.map((w) => ctx.measureText(w).width);
-    const total = widths.reduce((a, b) => a + b, 0) + space * (lnWords.length - 1);
+    const total = ids.reduce((a, i) => a + widths[i], 0) + space * (ids.length - 1);
     let x = L.W / 2 - total / 2;
-    lnWords.forEach((w, wi) => {
+    ids.forEach((i) => {
+      const tk = tokens[i];
       const appear = 120 + wordIdx * 95;
       const wu = stamp ? 1 : clamp01((t - appear) / 180);
       wordIdx++;
       if (wu <= 0) {
-        x += widths[wi] + space;
+        x += widths[i] + space;
         return;
       }
       // Spring pop in, then a continuous barely-there float so the hook is
       // never a static stamp.
       const pop = stamp ? 1 : 0.6 + 0.4 * easeOutBackVar(wu, 1.2 + jit01(scene.fieldSeed, wordIdx) * 1.1);
-      const float = Math.sin(t * 0.0017 + wordIdx * 1.3) * L.hookSize * 0.045;
-      const cx = x + widths[wi] / 2;
+      const float = Math.sin(t * 0.0017 + wordIdx * 1.3) * tk.size * 0.045;
+      const cx = x + widths[i] / 2;
       ctx.save();
       ctx.globalAlpha = wu;
       ctx.translate(cx, y + float);
+      if (tk.tilt !== 0) ctx.rotate(tk.tilt);
       ctx.scale(pop, pop);
-      ctx.lineWidth = Math.max(3, L.hookSize * 0.16);
+      ctx.font = tk.font;
+      ctx.lineWidth = Math.max(3, tk.size * (tk.whisper ? 0.1 : 0.16));
       ctx.strokeStyle = "rgba(10,8,6,0.9)";
       ctx.lineJoin = "round";
-      ctx.strokeText(w, -widths[wi] / 2, 0);
-      // Print-registration misalignment: a hot pass a couple px off-axis
-      // under the paper fill, like a poster run slightly out of register.
-      const regOff = L.hookSize * 0.045;
-      const regAng = scene.verdictTilt * 30;
-      ctx.globalAlpha = wu * 0.45;
-      ctx.fillStyle = scene.palette.hot;
-      ctx.fillText(w, -widths[wi] / 2 + Math.cos(regAng) * regOff, Math.sin(regAng) * regOff);
-      ctx.globalAlpha = wu;
-      ctx.fillStyle = scene.palette.paper;
-      ctx.fillText(w, -widths[wi] / 2, 0);
+      ctx.strokeText(tk.text, -widths[i] / 2, 0);
+      if (tk.hot) {
+        // Print-registration misalignment: a hot pass a couple px off-axis
+        // under the fill, like a poster run slightly out of register.
+        const regOff = tk.size * 0.045;
+        const regAng = scene.verdictTilt * 30;
+        ctx.globalAlpha = wu * 0.45;
+        ctx.fillStyle = tk.box ? pal.accent : pal.hot;
+        ctx.fillText(tk.text, -widths[i] / 2 + Math.cos(regAng) * regOff, Math.sin(regAng) * regOff);
+        ctx.globalAlpha = wu;
+      }
+      ctx.fillStyle = tk.ink;
+      ctx.fillText(tk.text, -widths[i] / 2, 0);
+      if (tk.box) {
+        const padX = tk.size * 0.22;
+        const padY = tk.size * 0.16;
+        ctx.strokeStyle = tk.ink;
+        ctx.lineWidth = Math.max(2, tk.size * 0.07);
+        ctx.strokeRect(
+          -widths[i] / 2 - padX,
+          -tk.size * 0.8 - padY,
+          widths[i] + padX * 2,
+          tk.size * 0.98 + padY * 2,
+        );
+      }
       ctx.restore();
-      x += widths[wi] + space;
+      x += widths[i] + space;
     });
   });
+  ctx.restore();
+}
+
+/** Stacked POV block: the "POV:" tag prints small in the mono chrome voice
+ *  with an accent underline, then the scenario lines slam in beneath it. */
+function drawHookPov(
+  scene: ClipScene,
+  ctx: CanvasRenderingContext2D,
+  t: number,
+  text: string,
+): void {
+  const { layout: L, opts } = scene;
+  const pal = scene.palette;
+  const base = L.hookSize;
+  const rest = text.replace(/^POV:?\s*/i, "") || text;
+  ctx.save();
+  ctx.textAlign = "left";
+  const bigSize = Math.round(base * 1.08);
+  ctx.font = `800 ${bigSize}px ${opts.fonts.display}`;
+  const maxW = Math.min(L.board * 0.92, opts.aspect === "tiktok" ? 780 : L.board * 0.92);
+  const lines = wrapText(ctx, rest, maxW).slice(0, 2);
+  const widest = Math.max(1, ...lines.map((ln) => ctx.measureText(ln).width));
+  const x0 = L.W / 2 - widest / 2;
+  const stamp = t < 34;
+
+  const tagSize = Math.round(base * 0.58);
+  const tagU = stamp ? 1 : clamp01((t - 90) / 160);
+  if (tagU > 0) {
+    ctx.save();
+    ctx.globalAlpha = tagU;
+    ctx.font = `600 ${tagSize}px ${opts.fonts.mono}`;
+    ctx.fillStyle = pal.dim;
+    const tagY = L.hookY - base * 1.15;
+    ctx.fillText("POV:", x0, tagY);
+    ctx.fillStyle = withAlpha(pal.accent, 0.8);
+    ctx.fillRect(x0, tagY + tagSize * 0.32, ctx.measureText("POV:").width, 2);
+    ctx.restore();
+  }
+
+  ctx.font = `800 ${bigSize}px ${opts.fonts.display}`;
+  lines.forEach((ln, li) => {
+    const appear = 240 + li * 170;
+    const u = stamp ? 1 : clamp01((t - appear) / 200);
+    if (u <= 0) return;
+    const pop = stamp ? 1 : 0.7 + 0.3 * easeOutBackVar(u, 1.6 + jit01(scene.fieldSeed, 71 + li));
+    const float = Math.sin(t * 0.0015 + li * 1.7) * base * 0.04;
+    const y = L.hookY + li * base * 1.24 - base * 0.18;
+    ctx.save();
+    ctx.globalAlpha = u;
+    ctx.translate(x0, y + float);
+    ctx.scale(pop, pop);
+    ctx.lineWidth = Math.max(3, bigSize * 0.16);
+    ctx.strokeStyle = "rgba(10,8,6,0.9)";
+    ctx.lineJoin = "round";
+    ctx.strokeText(ln, 0, 0);
+    const regOff = bigSize * 0.045;
+    ctx.globalAlpha = u * 0.45;
+    ctx.fillStyle = pal.hot;
+    ctx.fillText(ln, regOff, regOff * 0.6);
+    ctx.globalAlpha = u;
+    ctx.fillStyle = li === 0 ? pal.paper : pal.accent;
+    ctx.fillText(ln, 0, 0);
+    ctx.restore();
+  });
+  ctx.restore();
+}
+
+/** "Wait for it...": wide-tracked letters print on one by one, restrained (no
+ *  bounce: the stillness sells the tease), then the trailing dots pulse in
+ *  sequence forever. */
+function drawHookWait(
+  scene: ClipScene,
+  ctx: CanvasRenderingContext2D,
+  t: number,
+  text: string,
+): void {
+  const { layout: L, opts } = scene;
+  const pal = scene.palette;
+  const core = text.replace(/\.+\s*$/, "");
+  const chars = [...core];
+  const size = Math.round(L.hookSize * 1.05);
+  ctx.save();
+  ctx.textAlign = "left";
+  ctx.font = `800 ${size}px ${opts.fonts.display}`;
+  const track = size * 0.16;
+  const widths = chars.map((c) => ctx.measureText(c).width);
+  const dotW = ctx.measureText(".").width;
+  const total =
+    widths.reduce((a, b) => a + b, 0) + track * (chars.length - 1) + (dotW + track) * 3;
+  const scaleFit = Math.min(1, (L.board * 0.96) / Math.max(1, total));
+  const stamp = t < 34;
+  let x = L.W / 2 - (total * scaleFit) / 2;
+  const y = L.hookY;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(scaleFit, scaleFit);
+  x = 0;
+  chars.forEach((c, i) => {
+    const appear = 120 + i * 55;
+    const u = stamp ? 1 : clamp01((t - appear) / 170);
+    if (u > 0 && c !== " ") {
+      const rise = (1 - easeOutCubic(u)) * size * 0.3;
+      ctx.globalAlpha = u;
+      ctx.lineWidth = Math.max(3, size * 0.14);
+      ctx.strokeStyle = "rgba(10,8,6,0.9)";
+      ctx.lineJoin = "round";
+      ctx.strokeText(c, x, rise);
+      ctx.fillStyle = pal.paper;
+      ctx.fillText(c, x, rise);
+    }
+    x += widths[i] + track;
+  });
+  // The three dots breathe in sequence, accent ink, forever.
+  for (let k = 0; k < 3; k++) {
+    const born = stamp ? 1 : clamp01((t - (120 + chars.length * 55 + k * 140)) / 170);
+    if (born <= 0) continue;
+    const pulse = 0.3 + 0.7 * clamp01(Math.sin(t * 0.004 - k * 0.9));
+    ctx.globalAlpha = born * pulse;
+    ctx.lineWidth = Math.max(3, size * 0.14);
+    ctx.strokeStyle = "rgba(10,8,6,0.9)";
+    ctx.strokeText(".", x, 0);
+    ctx.fillStyle = pal.accent;
+    ctx.fillText(".", x, 0);
+    x += dotW + track;
+  }
+  ctx.restore();
   ctx.restore();
 }
 
@@ -2343,16 +2655,31 @@ function drawPopCaption(
           ? style.captionHex
           : pal.paper;
   const hotInk = style.captionColor === "auto" ? pal.accent : baseInk;
+  // Caption style pack: same deterministic per-word timing, five distinct
+  // type treatments. `size` keeps driving the layout math; the pack only
+  // swaps the face, inks, and per-word motion.
+  const pack = style.captionPack;
+  const packFont =
+    pack === "typewriter"
+      ? `600 ${Math.round(size * 0.82)}px ${opts.fonts.mono}`
+      : pack === "minimal"
+        ? `600 ${Math.round(size * 0.72)}px ${opts.fonts.body}`
+        : pack === "serif"
+          ? `italic 700 ${Math.round(size * 1.1)}px Georgia, "Times New Roman", serif`
+          : `800 ${size}px ${opts.fonts.display}`;
   ctx.save();
   ctx.textAlign = "left";
-  ctx.font = `800 ${size}px ${opts.fonts.display}`;
+  ctx.font = packFont;
   const tokens: CaptionWord[] = cap.emoji
     ? [...cap.words, { text: cap.emoji, hot: false }]
     : cap.words;
-  const gap = size * 0.3;
+  const gap = size * (pack === "typewriter" ? 0.42 : 0.3);
   const widths = tokens.map((w) => ctx.measureText(w.text).width);
   const total = widths.reduce((a, b) => a + b, 0) + gap * (tokens.length - 1);
   let x = L.W / 2 - total / 2;
+  // Typewriter caret bookkeeping: where the next glyph would land.
+  let caretX = x;
+  let caretLive = false;
   tokens.forEach((word, i) => {
     // The segment's seeded jitter keeps caption pops out of lockstep with the
     // stamps and callouts that share its beat.
@@ -2363,31 +2690,76 @@ function drawPopCaption(
       x += widths[i] + gap;
       return;
     }
-    const s = pop ? 1 + (0.5 * intensity) * (1 - easeOutCubic(wu)) : 1;
+    // Minimal never pops; typewriter types instead of popping.
+    const springy = pop && pack !== "minimal" && pack !== "typewriter";
+    const s = springy
+      ? 1 + (0.5 * intensity) * (pack === "serif" ? 0.6 : 1) * (1 - easeOutCubic(wu))
+      : 1;
     // After the pop the word keeps living: a subtle float / wobble, and hot
-    // keywords carry a pulsing glow.
+    // keywords carry a pulsing glow. Minimal and typewriter hold still.
+    const still = pack === "minimal" || pack === "typewriter";
     const settled = wu >= 1;
-    const float = settled ? Math.sin(t * 0.005 + i * 1.1) * size * 0.05 : 0;
-    const wob = settled ? Math.sin(t * 0.003 + i * 2.1) * 0.02 : 0;
+    const float = settled && !still ? Math.sin(t * 0.005 + i * 1.1) * size * 0.05 : 0;
+    const wob = settled && !still ? Math.sin(t * 0.003 + i * 2.1) * 0.02 : 0;
     const cxw = x + widths[i] / 2;
     ctx.save();
     ctx.globalAlpha = pop ? wu : 1;
     ctx.translate(cxw, capY + float);
     ctx.rotate(wob);
     ctx.scale(s, s);
-    ctx.lineWidth = Math.max(3, size * 0.14);
-    ctx.strokeStyle = "rgba(10,8,6,0.9)";
-    ctx.lineJoin = "round";
-    ctx.strokeText(word.text, -widths[i] / 2, 0);
-    if (word.hot) {
-      ctx.shadowColor = hotInk;
-      ctx.shadowBlur = size * (0.2 + 0.12 * Math.sin(t * 0.007 + i));
+    if (pack === "typewriter") {
+      // Letter-by-letter reveal inside the word's window, mono, on a plate.
+      const shownN = Math.max(1, Math.ceil(wu * word.text.length));
+      const part = word.text.slice(0, shownN);
+      const partW = ctx.measureText(part).width;
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = "rgba(10,8,6,0.78)";
+      ctx.fillRect(-widths[i] / 2 - size * 0.12, -size * 0.78, partW + size * 0.24, size * 1.04);
+      ctx.fillStyle = word.hot ? hotInk : cap.big ? baseInk : pal.dim;
+      ctx.fillText(part, -widths[i] / 2, 0);
+      caretX = cxw - widths[i] / 2 + partW;
+      caretLive = true;
+    } else if (pack === "neon") {
+      // Glow stroke in the accent hue, a flickering tube.
+      const flick = 0.82 + 0.18 * Math.abs(Math.sin(t * 0.013 + i * 2.3));
+      ctx.globalAlpha *= flick;
+      ctx.lineJoin = "round";
+      ctx.lineWidth = Math.max(4, size * 0.18);
+      ctx.strokeStyle = "rgba(10,8,6,0.92)";
+      ctx.strokeText(word.text, -widths[i] / 2, 0);
+      ctx.shadowColor = word.hot ? hotInk : pal.accent;
+      ctx.shadowBlur = size * (0.45 + 0.15 * Math.sin(t * 0.007 + i));
+      ctx.lineWidth = Math.max(2, size * 0.06);
+      ctx.strokeStyle = word.hot ? hotInk : withAlpha(pal.accent, 0.95);
+      ctx.strokeText(word.text, -widths[i] / 2, 0);
+      ctx.fillStyle = "#f7f4ec";
+      ctx.fillText(word.text, -widths[i] / 2, 0);
+    } else if (pack === "minimal") {
+      // Small caps, no stroke, no pop: a quiet editorial label.
+      ctx.fillStyle = word.hot ? hotInk : pal.dim;
+      ctx.fillText(word.text.toUpperCase(), -widths[i] / 2, 0);
+    } else {
+      // Impact (classic) and Serif Drama share the stroked-slab machinery;
+      // serif softens the stroke and leans on the italic face for drama.
+      ctx.lineWidth = Math.max(3, size * (pack === "serif" ? 0.09 : 0.14));
+      ctx.strokeStyle = "rgba(10,8,6,0.9)";
+      ctx.lineJoin = "round";
+      ctx.strokeText(word.text, -widths[i] / 2, 0);
+      if (word.hot) {
+        ctx.shadowColor = hotInk;
+        ctx.shadowBlur = size * (0.2 + 0.12 * Math.sin(t * 0.007 + i));
+      }
+      ctx.fillStyle = word.hot ? hotInk : cap.big ? baseInk : pal.dim;
+      ctx.fillText(word.text, -widths[i] / 2, 0);
     }
-    ctx.fillStyle = word.hot ? hotInk : cap.big ? baseInk : pal.dim;
-    ctx.fillText(word.text, -widths[i] / 2, 0);
     ctx.restore();
     x += widths[i] + gap;
   });
+  // The typewriter caret blinks after the last typed glyph.
+  if (pack === "typewriter" && caretLive && Math.floor(t / 320) % 2 === 0) {
+    ctx.fillStyle = hotInk;
+    ctx.fillRect(caretX + size * 0.08, capY - size * 0.7, size * 0.4, size * 0.82);
+  }
   ctx.restore();
 }
 
@@ -2440,6 +2812,122 @@ function drawMomentum(scene: ClipScene, ctx: CanvasRenderingContext2D, t: number
   ctx.moveTo(x - 3, mid);
   ctx.lineTo(x + w + 3, mid);
   ctx.stroke();
+}
+
+/** Interpolated tension (material + mobility proxy from clipReplay) at time
+ *  t. Smooth-lerped between plies; the payoff segment eases with a heavy
+ *  overshoot so the meter visibly SPIKES on the hit. */
+function tensionAt(scene: ClipScene, t: number): number {
+  const series = scene.opts.timeline.tension ?? [];
+  if (series.length === 0) return 0;
+  let value = series[0];
+  for (let i = 0; i < scene.segs.length; i++) {
+    const sf = scene.segs[i];
+    const from = value;
+    const to = series[i + 1] ?? from;
+    if (t >= sf.start + segSpan(sf)) {
+      value = to;
+      continue;
+    }
+    if (t >= sf.start) {
+      const u = clamp01((t - sf.start - segLead(sf)) / (sf.moveMs + sf.holdMs * 0.4));
+      const ease = sf.isPayoff
+        ? easeOutBackVar(u, 2.6)
+        : Math.abs(to - from) >= 2
+          ? easeOutBack(u)
+          : easeInOutCubic(u);
+      value = from + (to - from) * ease;
+    }
+    break;
+  }
+  return value;
+}
+
+/** The eval-style tension bar: a slim vertical strip on the board's right
+ *  shoulder (mirroring the momentum bar's left post), White's share filling
+ *  from the bottom. Palette inks only; the boundary line glows accent while
+ *  the payoff lands. */
+function drawTension(scene: ClipScene, ctx: CanvasRenderingContext2D, t: number): void {
+  const { layout: L } = scene;
+  const w = L.momentumW;
+  const x = L.boardX + L.board + 12;
+  if (x + w > L.W - 2) return;
+  const top = L.boardY;
+  const h = L.board;
+  const v = tensionAt(scene, t);
+  const f = Math.max(-1, Math.min(1, (v / (Math.abs(v) + 7)) * 1.6));
+  const whiteH = h * (0.5 + 0.5 * f);
+  const pal = scene.palette;
+  ctx.save();
+  // Coal above, paper below: the classic eval-bar read.
+  ctx.fillStyle = "#242019";
+  ctx.fillRect(x, top, w, h);
+  ctx.fillStyle = pal.paper;
+  ctx.fillRect(x, top + (h - whiteH), w, whiteH);
+  // Payoff spike: the boundary blade glows accent while the hit lands.
+  let glow = 0;
+  const sf = scene.segs[scene.payoffIndex];
+  if (sf) {
+    const te = sf.start + segLead(sf) + sf.moveMs;
+    if (t >= te && t <= te + 700) glow = 1 - (t - te) / 700;
+  }
+  const by = top + (h - whiteH);
+  ctx.strokeStyle = withAlpha(pal.accent, 0.55 + 0.45 * glow);
+  if (glow > 0) {
+    ctx.shadowColor = pal.accent;
+    ctx.shadowBlur = 10 * glow;
+  }
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(x - 2, by);
+  ctx.lineTo(x + w + 2, by);
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+  // Hairline frame plus a faint midline notch, same family as the momentum
+  // bar so the two posts read as one instrument set.
+  ctx.strokeStyle = withAlpha(pal.accent, 0.7);
+  ctx.lineWidth = 1;
+  ctx.strokeRect(x + 0.5, top + 0.5, w - 1, h - 1);
+  ctx.globalAlpha = 0.5;
+  ctx.beginPath();
+  ctx.moveTo(x, top + h / 2);
+  ctx.lineTo(x + w, top + h / 2);
+  ctx.stroke();
+  ctx.restore();
+}
+
+/** Viewer-facing replay minimap: a thin strip in the bottom safe zone with a
+ *  tick per ply (card plies accented, the payoff hot), an elapsed fill, and a
+ *  progress cursor. Distinct from the studio's DOM timeline: this one is
+ *  burned into the reel so a stranger can see the shape and length of the
+ *  clip at a glance. */
+function drawMinimap(scene: ClipScene, ctx: CanvasRenderingContext2D, t: number): void {
+  const { layout: L } = scene;
+  const pal = scene.palette;
+  const x0 = L.boardX;
+  const w = L.board;
+  const y = L.minimapY;
+  const h = L.W > 900 ? 8 : 6;
+  const dur = Math.max(1, scene.durationMs);
+  const p = clamp01(t / dur);
+  ctx.save();
+  ctx.fillStyle = "rgba(255,255,255,0.10)";
+  ctx.fillRect(x0, y, w, h);
+  ctx.fillStyle = withAlpha(pal.accent, 0.4);
+  ctx.fillRect(x0, y, w * p, h);
+  for (const sf of scene.segs) {
+    const tx = Math.round(x0 + (sf.start / dur) * w);
+    const card = !!sf.seg.sig;
+    const tall = sf.isPayoff ? h + 8 : card ? h + 5 : h + 2;
+    ctx.fillStyle = sf.isPayoff ? pal.hot : card ? pal.accent : withAlpha(pal.paper, 0.6);
+    ctx.fillRect(tx, y + h - tall, sf.isPayoff ? 3 : 2, tall);
+  }
+  // Progress cursor: a paper blade with a small cap, riding the strip.
+  const cx = x0 + w * p;
+  ctx.fillStyle = pal.paper;
+  ctx.fillRect(cx - 1, y - 4, 2, h + 8);
+  ctx.fillRect(cx - 3, y - 6, 6, 3);
+  ctx.restore();
 }
 
 function drawProgress(
@@ -2537,6 +3025,224 @@ function drawVerdict(scene: ClipScene, ctx: CanvasRenderingContext2D, p01: numbe
   ctx.restore();
 }
 
+/** Shared outro chrome: the wordmark pop up top and the self-typing CTA line
+ *  in the mono chrome voice. Returns the wordmark baseline so variants can
+ *  hang their content beneath it. */
+function drawOutroChrome(
+  scene: ClipScene,
+  ctx: CanvasRenderingContext2D,
+  p: number,
+  tAbs: number,
+  markScale: number,
+): { cx: number; topY: number; markSize: number } {
+  const { layout: L, opts } = scene;
+  const cx = L.W / 2;
+  const markSize = Math.round((opts.aspect === "classic" ? 56 : 88) * markScale);
+  const topY = opts.aspect === "tiktok" ? L.H * 0.3 : L.H * 0.22;
+  const logoPop =
+    p < 0.22 ? easeOutBack(clamp01(p / 0.22)) : 1 + 0.007 * Math.sin(tAbs * 0.003);
+  ctx.save();
+  ctx.translate(cx, topY - markSize * 0.35);
+  ctx.scale(logoPop, logoPop);
+  ctx.translate(-cx, -(topY - markSize * 0.35));
+  ctx.font = `800 ${markSize}px ${opts.fonts.display}`;
+  const w1 = ctx.measureText("nerf").width;
+  const w2 = ctx.measureText("chess").width;
+  ctx.textAlign = "left";
+  ctx.fillStyle = scene.palette.paper;
+  ctx.fillText("nerf", cx - (w1 + w2) / 2, topY);
+  ctx.fillStyle = scene.palette.accent;
+  ctx.fillText("chess", cx - (w1 + w2) / 2 + w1, topY);
+  ctx.restore();
+  // The CTA line types itself on in the mono chrome voice, caret blinking.
+  const url = opts.ctaText.trim() || "nerfchess.com";
+  const typed = Math.round(clamp01((p - 0.16) / 0.4) * url.length);
+  ctx.textAlign = "center";
+  ctx.font = `500 ${Math.round(markSize * 0.28 / Math.max(0.5, markScale))}px ${opts.fonts.mono}`;
+  ctx.fillStyle = scene.palette.dim;
+  const shownUrl =
+    url.slice(0, typed) +
+    (typed < url.length && Math.floor(tAbs / 200) % 2 === 0 ? "_" : "");
+  ctx.fillText(shownUrl, cx, topY + markSize * 0.7);
+  return { cx, topY, markSize };
+}
+
+/** Rematch taunt outro: "THINK YOU CAN DO BETTER?" slammed in two lines. */
+function drawOutroTaunt(scene: ClipScene, ctx: CanvasRenderingContext2D, p01: number): void {
+  const { opts } = scene;
+  const p = clamp01(p01);
+  const tAbs = scene.endStart + p01 * scene.endMs;
+  const a = easeOutCubic(clamp01(p / 0.18));
+  const loopDim = p > 0.92 ? 1 - 0.25 * easeInOutCubic((p - 0.92) / 0.08) : 1;
+  ctx.save();
+  ctx.globalAlpha = a * loopDim;
+  const { cx, topY, markSize } = drawOutroChrome(scene, ctx, p, tAbs, 0.6);
+  const pal = scene.palette;
+  const big = Math.round((opts.aspect === "classic" ? 44 : 72) * 1.0);
+  const lines: [string, string][] = [
+    ["THINK YOU CAN", pal.paper],
+    ["DO BETTER?", pal.accent],
+  ];
+  ctx.textAlign = "center";
+  lines.forEach(([ln, ink], li) => {
+    const u = clamp01((p - 0.24 - li * 0.14) / 0.16);
+    if (u <= 0) return;
+    const slam = 1.5 - 0.5 * easeOutBack(u);
+    const y = topY + markSize * 1.6 + li * big * 1.24;
+    ctx.save();
+    ctx.globalAlpha = a * loopDim * u;
+    ctx.translate(cx, y);
+    ctx.rotate(scene.verdictTilt * (li === 1 ? 1 : -0.6));
+    ctx.scale(slam, slam);
+    ctx.font = `800 ${big}px ${opts.fonts.display}`;
+    ctx.lineWidth = Math.max(3, big * 0.15);
+    ctx.strokeStyle = "rgba(10,8,6,0.9)";
+    ctx.lineJoin = "round";
+    ctx.strokeText(ln, 0, 0);
+    const regOff = big * 0.04;
+    ctx.globalAlpha = a * loopDim * u * 0.45;
+    ctx.fillStyle = pal.hot;
+    ctx.fillText(ln, regOff, regOff * 0.6);
+    ctx.globalAlpha = a * loopDim * u;
+    ctx.fillStyle = ink;
+    ctx.fillText(ln, 0, 0);
+    ctx.restore();
+  });
+  // The challenge line under the slam, plain body voice.
+  const subU = clamp01((p - 0.55) / 0.2);
+  if (subU > 0) {
+    ctx.globalAlpha = a * loopDim * subU;
+    ctx.font = `500 ${Math.round(big * 0.3)}px ${opts.fonts.body}`;
+    ctx.fillStyle = pal.dim;
+    ctx.fillText("Free to play. No excuses.", cx, topY + markSize * 1.6 + big * 2.5);
+  }
+  ctx.restore();
+}
+
+/** Card codex tease outro: the payoff card as a mini panel plus the library
+ *  count in the mono chrome voice. */
+function drawOutroCodex(scene: ClipScene, ctx: CanvasRenderingContext2D, p01: number): void {
+  const { opts } = scene;
+  const p = clamp01(p01);
+  const tAbs = scene.endStart + p01 * scene.endMs;
+  const a = easeOutCubic(clamp01(p / 0.18));
+  const loopDim = p > 0.92 ? 1 - 0.25 * easeInOutCubic((p - 0.92) / 0.08) : 1;
+  ctx.save();
+  ctx.globalAlpha = a * loopDim;
+  const { cx, topY, markSize } = drawOutroChrome(scene, ctx, p, tAbs, 0.6);
+  const pal = scene.palette;
+  const sig = scene.outroCard;
+  const nameSize = opts.aspect === "classic" ? 26 : 40;
+  const cardU = easeOutCubic(clamp01((p - 0.22) / 0.25));
+  if (sig && cardU > 0) {
+    // A mini card plate in the rule panel's family: accent edge, tier chip in
+    // mono, the name slamming in display, hand-cut corner ticks.
+    ctx.save();
+    ctx.globalAlpha = a * loopDim * cardU;
+    ctx.font = `700 ${nameSize}px ${opts.fonts.display}`;
+    const w = Math.max(nameSize * 7, ctx.measureText(sig.name).width + nameSize * 2.4);
+    const h = nameSize * 3.1;
+    const y = topY + markSize * 1.5 + (1 - cardU) * h * 0.2;
+    const color = pal.accent;
+    ctx.translate(cx, y + h / 2);
+    ctx.rotate(scene.verdictTilt * 0.8);
+    ctx.translate(-cx, -(y + h / 2));
+    ctx.fillStyle = "rgba(16,14,11,0.93)";
+    ctx.fillRect(cx - w / 2, y, w, h);
+    ctx.strokeStyle = withAlpha(color, 0.85);
+    ctx.lineWidth = 2;
+    ctx.strokeRect(cx - w / 2, y, w, h);
+    ctx.fillStyle = color;
+    ctx.fillRect(cx - w / 2, y, 5, h);
+    ctx.strokeStyle = color;
+    for (const [sx, sy] of [[0, 0], [1, 0], [0, 1], [1, 1]] as const) {
+      const cxp = cx - w / 2 + sx * w;
+      const cyp = y + sy * h;
+      const lenA = 11 + 6 * jit01(scene.fieldSeed, 101 + sx * 3 + sy * 5);
+      const lenB = 11 + 6 * jit01(scene.fieldSeed, 113 + sx * 3 + sy * 5);
+      ctx.beginPath();
+      ctx.moveTo(cxp + (sx ? -lenA : lenA), cyp);
+      ctx.lineTo(cxp, cyp);
+      ctx.lineTo(cxp, cyp + (sy ? -lenB : lenB));
+      ctx.stroke();
+    }
+    ctx.textAlign = "center";
+    ctx.font = `600 ${Math.round(nameSize * 0.42)}px ${opts.fonts.mono}`;
+    ctx.fillStyle = tierTint(sig.tier);
+    ctx.fillText(`TIER ${ROMAN[sig.tier - 1] ?? sig.tier}`, cx, y + nameSize * 0.95);
+    ctx.font = `700 ${nameSize}px ${opts.fonts.display}`;
+    ctx.fillStyle = pal.paper;
+    ctx.fillText(sig.name, cx, y + h - nameSize * 0.75);
+    ctx.restore();
+  }
+  // The library count: numbers speak mono, always.
+  const countU = clamp01((p - 0.5) / 0.2);
+  if (countU > 0) {
+    ctx.globalAlpha = a * loopDim * countU;
+    ctx.textAlign = "center";
+    const countSize = Math.round(nameSize * 0.55);
+    ctx.font = `600 ${countSize}px ${opts.fonts.mono}`;
+    ctx.fillStyle = pal.accent;
+    const line = sig ? "1 OF 2,448 CARDS" : "2,448 CARDS";
+    const y = topY + markSize * 1.5 + nameSize * 3.1 + countSize * 2;
+    ctx.fillText(line, cx, y);
+    ctx.font = `500 ${Math.round(countSize * 0.85)}px ${opts.fonts.body}`;
+    ctx.fillStyle = pal.dim;
+    ctx.fillText("What will yours do?", cx, y + countSize * 1.6);
+  }
+  ctx.restore();
+}
+
+/** Stats splat outro: moves, captures, and the biggest material swing, each
+ *  number thudding in on its own beat, mono chrome voice for the digits. */
+function drawOutroStats(scene: ClipScene, ctx: CanvasRenderingContext2D, p01: number): void {
+  const { opts } = scene;
+  const p = clamp01(p01);
+  const tAbs = scene.endStart + p01 * scene.endMs;
+  const a = easeOutCubic(clamp01(p / 0.18));
+  const loopDim = p > 0.92 ? 1 - 0.25 * easeInOutCubic((p - 0.92) / 0.08) : 1;
+  ctx.save();
+  ctx.globalAlpha = a * loopDim;
+  const { cx, topY, markSize } = drawOutroChrome(scene, ctx, p, tAbs, 0.6);
+  const pal = scene.palette;
+  const stats = scene.outroStats;
+  const rows: [string, string][] = [
+    ["MOVES", String(stats.moves)],
+    ["CAPTURES", String(stats.captures)],
+    ["BIGGEST SWING", stats.swing > 0 ? `+${stats.swing}` : "0"],
+  ];
+  const rowH = opts.aspect === "classic" ? 52 : 84;
+  const labelSize = Math.round(rowH * 0.26);
+  const numSize = Math.round(rowH * 0.62);
+  const y0 = topY + markSize * 1.7;
+  rows.forEach(([label, value], ri) => {
+    const u = clamp01((p - 0.24 - ri * 0.12) / 0.16);
+    if (u <= 0) return;
+    const thud = 1.35 - 0.35 * easeOutBackVar(u, 1.2 + jit01(scene.fieldSeed, 130 + ri));
+    const y = y0 + ri * rowH;
+    ctx.save();
+    ctx.globalAlpha = a * loopDim * u;
+    ctx.translate(cx, y);
+    ctx.scale(thud, thud);
+    ctx.textAlign = "right";
+    ctx.font = `500 ${labelSize}px ${opts.fonts.body}`;
+    ctx.fillStyle = pal.dim;
+    ctx.fillText(label, -rowH * 0.24, 0);
+    // The digits are data: mono chrome voice, accent ink, hot for the swing.
+    ctx.textAlign = "left";
+    ctx.font = `600 ${numSize}px ${opts.fonts.mono}`;
+    ctx.fillStyle = ri === 2 ? pal.hot : pal.accent;
+    ctx.fillText(value, rowH * 0.24, numSize * 0.12);
+    ctx.restore();
+    // Hairline under each row, hand-length per the seed.
+    ctx.globalAlpha = a * loopDim * u * 0.4;
+    ctx.fillStyle = pal.dim;
+    const hw = rowH * (2.4 + jit01(scene.fieldSeed, 140 + ri) * 0.5);
+    ctx.fillRect(cx - hw / 2, y + rowH * 0.24, hw, 1);
+  });
+  ctx.restore();
+}
+
 function drawEndCard(
   scene: ClipScene,
   ctx: CanvasRenderingContext2D,
@@ -2546,6 +3252,21 @@ function drawEndCard(
 ): void {
   void images;
   const { layout: L, opts } = scene;
+  // Outro variants: the logo pop is the classic path below; the taunt, codex
+  // tease, and stats splat are their own palette-cohesive layouts.
+  const variant = opts.style.outro;
+  if (variant === "taunt") {
+    drawOutroTaunt(scene, ctx, p01);
+    return;
+  }
+  if (variant === "codex") {
+    drawOutroCodex(scene, ctx, p01);
+    return;
+  }
+  if (variant === "stats") {
+    drawOutroStats(scene, ctx, p01);
+    return;
+  }
   const p = clamp01(p01);
   const tAbs = scene.endStart + p01 * scene.endMs;
   const a = easeOutCubic(clamp01(p / 0.18));
@@ -2861,4 +3582,87 @@ function drawOverlays(scene: ClipScene, ctx: CanvasRenderingContext2D, t: number
       }
     }
   }
+}
+
+// --- Thumbnail poster --------------------------------------------------------
+
+/** Render the thumbnail designer's poster: the chosen moment of the reel
+ *  (hook suppressed so the poster line owns the frame), the overlay text
+ *  slammed across the hook band at full strength, and an optional accent ring
+ *  around the payoff square. The encoder burns this as frame 0 so the
+ *  export's thumbnail matches the studio's pick; falls back to the classic
+ *  frame 0 when no poster is configured. Deterministic like every frame. */
+export function renderClipPoster(
+  scene: ClipScene,
+  ctx: CanvasRenderingContext2D,
+  images: Map<string, HTMLImageElement> | null,
+): void {
+  const poster = scene.opts.poster;
+  if (!poster) {
+    renderClipFrame(scene, ctx, 0, images);
+    return;
+  }
+  const { layout: L, opts } = scene;
+  const t = clamp01(poster.frac) * scene.durationMs;
+  // The scene minus its hook: the poster line replaces it below.
+  const quiet: ClipScene = { ...scene, opts: { ...opts, hookText: "" } };
+  renderClipFrame(quiet, ctx, t, images);
+  const pal = scene.palette;
+
+  if (poster.ring) {
+    const sf = scene.segs[scene.payoffIndex];
+    if (sf) {
+      const f = FILE(sf.target);
+      const r = RANK(sf.target);
+      const col = opts.orientation === "w" ? f : 7 - f;
+      const row = opts.orientation === "w" ? 7 - r : r;
+      const cx = L.boardX + col * L.sq + L.sq / 2;
+      const cy = L.boardY + row * L.sq + L.sq / 2;
+      ctx.save();
+      ctx.strokeStyle = pal.accent;
+      ctx.lineWidth = Math.max(4, L.sq * 0.09);
+      ctx.shadowColor = pal.accent;
+      ctx.shadowBlur = L.sq * 0.3;
+      ctx.beginPath();
+      ctx.arc(cx, cy, L.sq * 0.62, 0, Math.PI * 2);
+      ctx.stroke();
+      // A second, hand-loose outer arc: sticker energy, not a compass draw.
+      ctx.shadowBlur = 0;
+      ctx.lineWidth = Math.max(2, L.sq * 0.045);
+      ctx.beginPath();
+      ctx.arc(cx, cy, L.sq * 0.8, scene.verdictTilt * 8 - 0.6, Math.PI * 1.3);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  const text = poster.text.trim();
+  if (!text) return;
+  // The poster line: the hook's stamped treatment at 1.3x, tilted a hair.
+  const size = Math.round(L.hookSize * 1.3);
+  ctx.save();
+  ctx.font = `800 ${size}px ${opts.fonts.display}`;
+  ctx.textAlign = "center";
+  const maxW = Math.min(L.board, opts.aspect === "tiktok" ? 820 : L.board);
+  const lines = wrapText(ctx, text, maxW).slice(0, 2);
+  const cx = L.W / 2;
+  lines.forEach((ln, li) => {
+    const y = L.hookY + li * size * 1.14;
+    ctx.save();
+    ctx.translate(cx, y);
+    ctx.rotate(scene.verdictTilt * 0.7);
+    ctx.lineWidth = Math.max(3, size * 0.16);
+    ctx.strokeStyle = "rgba(10,8,6,0.9)";
+    ctx.lineJoin = "round";
+    ctx.strokeText(ln, 0, 0);
+    const regOff = size * 0.045;
+    ctx.globalAlpha = 0.45;
+    ctx.fillStyle = pal.hot;
+    ctx.fillText(ln, regOff, regOff * 0.6);
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = pal.paper;
+    ctx.fillText(ln, 0, 0);
+    ctx.restore();
+  });
+  ctx.restore();
 }

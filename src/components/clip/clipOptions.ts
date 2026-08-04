@@ -36,6 +36,13 @@ export interface ClipOptionsState {
   endCard: boolean;
   /** End-card call-to-action line. */
   ctaText: string;
+  /** Thumbnail designer: poster time as a fraction of the reel (0..1), or
+   *  null for the classic frame-0 poster. */
+  posterFrac: number | null;
+  /** Poster overlay line; empty falls back to the hook. */
+  posterText: string;
+  /** Accent ring around the payoff square on the poster. */
+  posterRing: boolean;
   /** The style pack (camera, look, fx, pace, cuts, stamps, dials). */
   style: ClipStyle;
 }
@@ -62,6 +69,9 @@ export const TIKTOK_MODE: ClipOptionsState = {
   handle: "nerfchess.com",
   endCard: true,
   ctaText: "nerfchess.com",
+  posterFrac: null,
+  posterText: "",
+  posterRing: false,
   style: STYLE_DEFAULTS,
 };
 
@@ -155,6 +165,18 @@ export const RULE_SIDE_OPTIONS = [
 ] as const;
 export const RULE_HOLD_OPTIONS = [
   ["quick", "Quick"], ["comfy", "Comfy"], ["slow", "Slow reader"],
+] as const;
+export const CAPTION_PACK_OPTIONS = [
+  ["impact", "Impact"], ["typewriter", "Typewriter"], ["neon", "Neon"],
+  ["minimal", "Minimal"], ["serif", "Serif Drama"],
+] as const;
+export const TITLE_TEMPLATE_OPTIONS = [
+  ["custom", "Custom"], ["pov", "POV:"], ["neversaw", "Never saw it"],
+  ["waitforit", "Wait for it"], ["illegal", "ILLEGAL"], ["ruined", "Ruined his life"],
+] as const;
+export const OUTRO_OPTIONS = [
+  ["logo", "Logo pop"], ["taunt", "Rematch taunt"],
+  ["codex", "Card codex"], ["stats", "Stats splat"],
 ] as const;
 
 /** BPM + one-word mood tag per built-in track, for the AUDIO panel picker. */

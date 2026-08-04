@@ -6,12 +6,14 @@
 
 import {
   CAPTION_COLOR_OPTIONS,
+  CAPTION_PACK_OPTIONS,
   CAPTION_POS_OPTIONS,
   CAPTION_SIZE_OPTIONS,
   CAPTION_STYLES,
   EMOJI_LEVELS,
   HOOK_PRESETS,
   STAMP_ROT_OPTIONS,
+  TITLE_TEMPLATE_OPTIONS,
 } from "../../clipOptions";
 import { Chip, ChoiceRow, HexWell, Row, type Studio } from "../controls";
 
@@ -20,6 +22,15 @@ export function TextPanel({ studio }: { studio: Studio }) {
   const s = opts.style;
   return (
     <div className="clip-panel">
+      {/* Intro title templates: each restyles the hook slam's typography and
+          (except Custom) auto-fills the line, card name included. */}
+      <ChoiceRow
+        label="Template"
+        options={TITLE_TEMPLATE_OPTIONS}
+        value={s.titleTemplate}
+        onPick={(v) => setStyle({ titleTemplate: v })}
+        disabled={locked}
+      />
       <div className="clip-row">
         <span className="clip-row-label">Hook</span>
         <input
@@ -27,7 +38,11 @@ export function TextPanel({ studio }: { studio: Studio }) {
           value={hookText}
           maxLength={80}
           disabled={locked}
-          onChange={(e) => editHook(e.target.value)}
+          onChange={(e) => {
+            // Typing takes the hook back to free text.
+            if (s.titleTemplate !== "custom") setStyle({ titleTemplate: "custom" });
+            editHook(e.target.value);
+          }}
           aria-label="Hook caption"
           placeholder="Hook text burned at the top"
           className="clip-input font-display"
@@ -41,12 +56,16 @@ export function TextPanel({ studio }: { studio: Studio }) {
               key={preset}
               label={preset}
               on={hookText === preset}
-              onClick={() => editHook(preset)}
+              onClick={() => {
+                if (s.titleTemplate !== "custom") setStyle({ titleTemplate: "custom" });
+                editHook(preset);
+              }}
               disabled={locked}
             />
           ))}
       </Row>
       <ChoiceRow label="Captions" options={CAPTION_STYLES} value={opts.captionStyle} onPick={(v) => set("captionStyle", v)} disabled={locked} />
+      <ChoiceRow label="Pack" options={CAPTION_PACK_OPTIONS} value={s.captionPack} onPick={(v) => setStyle({ captionPack: v })} disabled={locked || opts.captionStyle === "off"} />
       <ChoiceRow label="Ink" options={CAPTION_COLOR_OPTIONS} value={s.captionColor} onPick={(v) => setStyle({ captionColor: v })} disabled={locked || opts.captionStyle === "off"} />
       {s.captionColor === "custom" && (
         <Row label="Hex">

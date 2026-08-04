@@ -4,7 +4,7 @@
 // (call-to-action line). The reel is an ad for the game; this tab decides how
 // loudly it says so.
 
-import { CORNER_OPTIONS } from "../../clipOptions";
+import { CORNER_OPTIONS, OUTRO_OPTIONS } from "../../clipOptions";
 import { ChoiceRow, Row, SliderRow, ToggleRow, type Studio } from "../controls";
 
 export function BrandPanel({ studio }: { studio: Studio }) {
@@ -39,6 +39,15 @@ export function BrandPanel({ studio }: { studio: Studio }) {
         label="End card"
         disabled={locked}
         toggles={[{ label: "Outro card", on: opts.endCard, onClick: () => set("endCard", !opts.endCard) }]}
+      />
+      {/* Outro variants: logo pop (classic), rematch taunt, the card codex
+          tease, or the stats splat. All palette-cohesive; digits speak mono. */}
+      <ChoiceRow
+        label="Outro"
+        options={OUTRO_OPTIONS}
+        value={s.outro}
+        onPick={(v) => setStyle({ outro: v })}
+        disabled={locked || !opts.endCard}
       />
       <Row label="CTA">
         <input

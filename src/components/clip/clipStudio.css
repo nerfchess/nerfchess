@@ -392,6 +392,13 @@ html[data-anim="off"] .clip-rec-dot { animation: none; }
 }
 .clip-grade-thumb[aria-pressed="true"] .clip-grade-name { color: var(--gold-leaf); }
 
+/* Thumbnail designer: the poster preview canvas (frame 0 of the export). */
+.clip-poster-thumb {
+  display: block;
+  width: 96px;
+  border: 1px solid rgb(var(--text-primary-rgb) / 0.18);
+}
+
 /* Audio level meter strip with a playback needle. */
 .clip-meter {
   position: relative;
