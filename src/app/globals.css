@@ -813,6 +813,9 @@ html[data-theme="aurora"]::after {
     radial-gradient(62% 40% at 22% -8%, rgb(157 123 255 / 0.22), transparent 70%),
     radial-gradient(56% 34% at 76% -12%, rgb(79 224 200 / 0.15), transparent 70%);
   animation: aurora-drift 28s ease-in-out infinite alternate;
+  /* A full-viewport fixed layer that drifts forever: promote it once instead
+     of letting the compositor re-decide every frame. */
+  will-change: transform;
 }
 @keyframes aurora-drift {
   to { transform: translate3d(-4%, 2%, 0); }
@@ -1984,6 +1987,7 @@ html[data-light] .dgn-slab {
 /* Torch sconce ambience: a warm ember pool for section corners on themed
    pages. Position with inline styles; decorative only. */
 .torch-pool {
+  will-change: transform, opacity;
   position: absolute;
   width: 220px;
   height: 220px;
@@ -1991,7 +1995,8 @@ html[data-light] .dgn-slab {
   background: radial-gradient(50% 50% at 50% 50%, rgb(var(--energy-ember-rgb) / 0.1), transparent 70%);
   animation: aura-breathe 11s ease-in-out infinite;
 }
-html[data-anim="off"] .torch-pool { animation: none; }
+html[data-anim="off"] .torch-pool {
+  will-change: transform, opacity; animation: none; }
 
 /* --- Podium celebration ------------------------------------------------------
    Dressing for the leaderboard's ceremony dais (Podium.tsx) and the profile's
@@ -2362,13 +2367,18 @@ html[data-theme="nebula"] .mode-def-card {
   height: 1px;
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.14) 18%, rgba(255, 255, 255, 0.14) 82%, transparent);
   /* The floor pulses on the beat, brightest the instant the knight lands
-     (phase-locked to gd-jump: same 3s cycle and -0.66s delay, flash at 67%). */
+     (phase-locked to gd-jump: same 3s cycle and -0.66s delay, flash at 67%).
+     The glow is baked into a static drop-shadow-free gradient and only
+     OPACITY animates: the old keyframe animated box-shadow, a full repaint
+     every frame of an infinite home-page loop. */
+  filter: drop-shadow(0 0 4px rgb(var(--accent-rgb) / 0.35));
   animation: gd-ground-pulse 3s linear -0.66s infinite;
+  will-change: opacity;
 }
 @keyframes gd-ground-pulse {
-  0%, 60% { opacity: 0.55; box-shadow: none; }
-  67% { opacity: 1; box-shadow: 0 0 7px rgb(var(--accent-rgb) / 0.45); }
-  82%, 100% { opacity: 0.55; box-shadow: none; }
+  0%, 60% { opacity: 0.45; }
+  67% { opacity: 1; }
+  82%, 100% { opacity: 0.45; }
 }
 .gd-world {
   position: absolute;
@@ -2522,9 +2532,10 @@ html[data-theme="nebula"] .mode-def-card {
 /* Wide desktop (lg+), lichess-style: the field rolls out LEFTWARD from the
    search icon instead of dropping down. Below lg the drop-under panel above is
    kept even once the inline nav appears (md), because a 17rem leftward rollout
-   at tablet widths lands on top of the "Rules"/"Leaderboard" links. Width is
-   animated (not transform) so the input never looks squashed; clamped so it
-   can't run off small screens. */
+   at tablet widths lands on top of the "Rules"/"Leaderboard" links. The
+   rollout is a clip-path reveal at the final width: the input is never
+   squashed (the old width animation promised that, at the price of running
+   layout every frame) and the reveal composites cleanly. */
 @media (min-width: 1024px) {
   .header-search-panel {
     width: min(17rem, calc(100vw - 8.5rem));
@@ -2532,8 +2543,8 @@ html[data-theme="nebula"] .mode-def-card {
   }
 }
 @keyframes search-grow {
-  from { width: 2.5rem; opacity: 0; }
-  to { width: min(17rem, calc(100vw - 8.5rem)); opacity: 1; }
+  from { clip-path: inset(0 0 0 calc(100% - 2.5rem)); opacity: 0; }
+  to { clip-path: inset(0 0 0 0); opacity: 1; }
 }
 
 /* --- Top-nav micro-interactions -------------------------------------------
@@ -3125,16 +3136,30 @@ html[data-anim="off"] .piece-treat {
    when the lock lands, then a calm persistent pall. Runs once on mount. */
 @keyframes locked-in {
   0% { opacity: 0; }
-  40% { opacity: 1; box-shadow: inset 0 0 22px 3px rgba(30, 41, 59, 0.7); }
-  100% { opacity: 1; box-shadow: inset 0 0 8px 0 rgba(30, 41, 59, 0.25); }
+  40% { opacity: 1; }
+  100% { opacity: 1; }
+}
+@keyframes locked-in-flash {
+  0% { opacity: 0; }
+  40% { opacity: 1; }
+  100% { opacity: 0; }
 }
 .sq-locked {
-  /* `both`, like every comparable rule (.sq-shield-in, .walnut-root, the fx-*
-     set in effects.css). Without a fill mode the 100% keyframe's inset shadow
-     was dropped the moment the 550ms run ended, so the "calm persistent pall"
-     the comment above promises evaporated and only a flat grey wash remained
-     for the rest of the lockdown. */
+  /* The calm persistent pall is a STATIC inset shadow; the landing clamp is a
+     one-shot flash on a pseudo layer animating opacity only. The old keyframe
+     animated box-shadow itself, and Shackled can stamp ~16 squares at once.
+     No position here: the square overlay is already absolutely positioned by
+     its utility class, which also makes it the containing block for ::after. */
+  box-shadow: inset 0 0 8px 0 rgba(30, 41, 59, 0.25);
   animation: locked-in 0.55s ease-out both;
+}
+.sq-locked::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 22px 3px rgba(30, 41, 59, 0.7);
+  animation: locked-in-flash 0.55s ease-out both;
 }
 @keyframes locked-chain-in {
   0% { opacity: 0; transform: scale(1.8) rotate(12deg); }
@@ -3826,19 +3851,31 @@ html[data-anim="off"] .rail-header-sheen::before {
    fading ellipsis — all compositor-cheap and all dropped when animations are
    off in Settings so the notice stays legible without motion. */
 .waiting-banner {
+  /* The breath used to animate box-shadow directly (a full repaint every
+     frame, for minutes at a time). The dim state now sits statically on the
+     element and the bright state on a pseudo layer whose OPACITY breathes:
+     same read, compositor-only cost. */
+  position: relative;
+  box-shadow:
+    0 0 0 1px rgb(var(--accent-rgb) / 0.30),
+    0 0 18px -6px rgb(var(--accent-rgb) / 0.35);
+}
+.waiting-banner::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow:
+    0 0 0 1px rgb(var(--accent-rgb) / 0.55),
+    0 0 26px -4px rgb(var(--accent-rgb) / 0.60);
+  opacity: 0;
   animation: waiting-breathe 2.8s ease-in-out infinite;
+  will-change: opacity;
 }
 @keyframes waiting-breathe {
-  0%, 100% {
-    box-shadow:
-      0 0 0 1px rgb(var(--accent-rgb) / 0.30),
-      0 0 18px -6px rgb(var(--accent-rgb) / 0.35);
-  }
-  50% {
-    box-shadow:
-      0 0 0 1px rgb(var(--accent-rgb) / 0.55),
-      0 0 26px -4px rgb(var(--accent-rgb) / 0.60);
-  }
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
 }
 .waiting-ping {
   animation: waiting-ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
@@ -3855,6 +3892,7 @@ html[data-anim="off"] .rail-header-sheen::before {
   0%, 100% { opacity: 0.35; }
   50% { opacity: 1; }
 }
+html[data-anim="off"] .waiting-banner::after,
 html[data-anim="off"] .waiting-banner,
 html[data-anim="off"] .waiting-ping,
 html[data-anim="off"] .waiting-ellipsis::after {
@@ -3889,6 +3927,7 @@ html[data-anim="off"] .waiting-ellipsis::after { opacity: 1; }
    element is oversized top-left by one tile so the drift never exposes a gap.
    Custom-property keyframes let all three layers share one animation. */
 .star-layer {
+  will-change: transform;
   --tile: 360px;
   position: absolute;
   top: calc(-1 * var(--tile));
@@ -3941,6 +3980,7 @@ html[data-anim="off"] .waiting-ellipsis::after { opacity: 1; }
 /* 4-point glint stars: a soft candle core clipped to a star, pulsing scale and
    opacity on individually offset beats so the field never reads mechanical. */
 .star-glint {
+  will-change: transform, opacity;
   position: absolute;
   background: radial-gradient(circle, rgb(255 240 190 / 0.95) 0%, rgb(var(--accent-rgb) / 0.8) 34%, rgb(var(--accent-rgb) / 0) 72%);
   clip-path: polygon(50% 0%, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0% 50%, 40% 40%);
@@ -3954,6 +3994,7 @@ html[data-anim="off"] .waiting-ellipsis::after { opacity: 1; }
    leading, tail trailing), alive for ~1.3s of a 28s cycle. Two in the DOM on
    staggered delays = one pass roughly every 14 seconds. */
 .star-shoot {
+  will-change: transform, opacity;
   position: absolute;
   width: 120px;
   height: 2px;
@@ -4064,6 +4105,7 @@ html[data-light] .hall-row {
    stars, motes), keep every static paint. */
 html[data-anim="off"] .star-layer,
 html[data-anim="off"] .star-glint {
+  will-change: transform, opacity;
   animation: none !important;
 }
 html[data-anim="off"] .star-shoot,
@@ -4072,6 +4114,7 @@ html[data-anim="off"] .hall-mote {
   opacity: 0 !important;
 }
 html[data-anim="off"] .star-glint {
+  will-change: transform, opacity;
   opacity: 0.5;
   transform: scale(0.8);
 }

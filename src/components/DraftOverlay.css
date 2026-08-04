@@ -105,18 +105,27 @@ html[data-anim="off"] .draft-fx:hover .draft-fx__glow {
 /* Free-window expiry: the reopened compact panel pulses oxblood a few times
    so the forced reopen (and the now-running clock) cannot be missed. */
 .draft-expire-pulse {
+  position: relative;
+}
+.draft-expire-pulse::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow:
+    0 0 0 4px rgb(190 60 48 / 0.6),
+    0 0 26px 4px rgb(190 60 48 / 0.35);
+  opacity: 0;
   animation: draft-expire-pulse 1s ease-in-out 3;
 }
 @keyframes draft-expire-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgb(190 60 48 / 0); }
-  50% {
-    box-shadow:
-      0 0 0 4px rgb(190 60 48 / 0.6),
-      0 0 26px 4px rgb(190 60 48 / 0.35);
-  }
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .draft-expire-pulse { animation: none; box-shadow: 0 0 0 3px rgb(190 60 48 / 0.55); }
+  .draft-expire-pulse { box-shadow: 0 0 0 3px rgb(190 60 48 / 0.55); }
+  .draft-expire-pulse::after { animation: none; }
 }
 
 /* Confirm with a card selected: the one primary in the region gets a steady

@@ -164,6 +164,11 @@ jobs:
       - name: Piece-treatment coverage
         run: npm run test:treatments
 
+      # Keyframes stay on compositor-friendly properties (transform/opacity);
+      # the five grandfathered box-shadow pulses may only shrink.
+      - name: Animation property discipline
+        run: npm run test:anim-props
+
       # Derived registries must match the engine tables they are generated from.
       - name: Card registry
         run: npm run test:card-registry

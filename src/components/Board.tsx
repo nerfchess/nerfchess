@@ -342,7 +342,7 @@ function PlayAnnouncement({ name, tier, outcome }: { name: string; tier: number;
     <div aria-live="polite" className="pointer-events-none absolute inset-x-0 top-[6%] z-[45] flex justify-center">
       <div
         className={
-          "extra-turns-banner mx-4 flex max-w-[min(92%,30rem)] flex-col items-center gap-1 border border-white/25 bg-ink-950/70 text-center shadow-plate backdrop-blur-[2px] " +
+          "extra-turns-banner mx-4 flex max-w-[min(92%,30rem)] flex-col items-center gap-1 border border-white/25 bg-ink-950/90 text-center shadow-plate " +
           (big ? "px-5 py-2.5" : mid ? "px-4 py-2" : "px-3 py-1.5")
         }
       >
@@ -422,7 +422,7 @@ function NerfRevealSplash({
       {/* small supporting caption: the reveal composition is the show, the
           name is a footnote (bottom edge, one compact line) */}
       <div className="absolute inset-x-0 bottom-[4%] flex justify-center">
-        <div className="nerf-reveal-stamp mx-4 flex max-w-[min(92%,22rem)] items-center gap-2 border border-white/20 bg-ink-950/80 px-3 py-1.5 shadow-plate backdrop-blur-[2px]">
+        <div className="nerf-reveal-stamp mx-4 flex max-w-[min(92%,22rem)] items-center gap-2 border border-white/20 bg-ink-950/90 px-3 py-1.5 shadow-plate">
           <span className={`font-display text-sm font-bold tracking-wide tier-${tier}`}>{name}</span>
           <span
             className={`shrink-0 rounded-[1px] border px-1 py-px font-display text-[10px] font-bold tier-bg-${tier} tier-${tier}`}
