@@ -29,6 +29,9 @@ export interface ClipSigMeta {
   tier: number;
   category: BuffCategory;
   motif: CardFx["motif"] | null;
+  /** The card's rule text, shown by the explainer rule panel so a stranger
+   *  watching the reel learns what just fired. */
+  description: string;
 }
 
 /** A piece that slides from one square to another during a segment. */
@@ -230,6 +233,7 @@ export function buildClipTimeline(opts: BuildClipOptions): ClipTimeline | null {
       tier: buff.tier,
       category: buff.category,
       motif: buff.fx?.motif ?? null,
+      description: buff.description,
     };
   };
 

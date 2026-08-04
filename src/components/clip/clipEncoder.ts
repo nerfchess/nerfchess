@@ -16,6 +16,7 @@
 import type { ClipScene } from "./clipScene";
 import { renderClipFrame } from "./clipScene";
 import { renderClipAudio, startLiveClipAudio } from "./clipAudio";
+import type { ClipMusicSelection } from "./clipMusic";
 
 const FPS = 30;
 const VIDEO_BITRATE = 10_000_000;
@@ -141,6 +142,7 @@ export async function encodeClipOffline(
   images: Map<string, HTMLImageElement>,
   support: EncodeSupport,
   withSound: boolean,
+  music: ClipMusicSelection | null,
   onProgress?: (frac: number) => void,
   cancelled?: () => boolean,
 ): Promise<EncodeResult> {
@@ -167,8 +169,11 @@ export async function encodeClipOffline(
 
   let audioSource: InstanceType<typeof mb.AudioBufferSource> | null = null;
   let audioBuffer: AudioBuffer | null = null;
-  if (withSound && t1.audio) {
-    audioBuffer = await renderClipAudio(scene.audio, scene.durationMs);
+  if ((withSound || music) && t1.audio) {
+    audioBuffer = await renderClipAudio(scene.audio, scene.durationMs, {
+      sfx: withSound,
+      music,
+    });
     if (audioBuffer) {
       audioSource = new mb.AudioBufferSource({
         codec: t1.audio,
@@ -219,11 +224,15 @@ export function recordClipRealtime(
   scene: ClipScene,
   support: EncodeSupport,
   withSound: boolean,
+  music: ClipMusicSelection | null,
 ): RealtimeRecording {
   const mimeType = support.t2MimeType!;
   const container = support.container!;
   const stream = canvas.captureStream(FPS);
-  const live = withSound ? startLiveClipAudio(scene.audio) : null;
+  const live =
+    withSound || music
+      ? startLiveClipAudio(scene.audio, scene.durationMs, { sfx: withSound, music })
+      : null;
   if (live) {
     for (const track of live.stream.getAudioTracks()) stream.addTrack(track);
   }

@@ -13,10 +13,18 @@
 // reel beats each get a voice too: a two-note sting under the intro slam,
 // filtered-noise whooshes under the between-ply edge shimmers, a rising
 // pre-beat tone into the payoff, a deeper sub-thump for the slow-motion hit,
-// and a resolve chord under the end card.
+// and a resolve chord under the end card. The explainer layer adds two more:
+// a subtle draw tick as a move arrow sketches itself, and a soft page-flip
+// whoosh as a card's rule panel slides in.
+//
+// Music rides the same two paths: when a ClipMusicSelection is provided, the
+// procedural backing track (or the player's imported audio) is scheduled into
+// the SAME context, ducked under the sfx impacts, so Tier 1 gets it mixed
+// into the rendered buffer and Tier 2 hears it live.
 
 import type { ClipAudioEvent } from "./clipScene";
 import { mulberry32 } from "./clipScene";
+import { scheduleClipMusic, type ClipMusicSelection } from "./clipMusic";
 
 const SAMPLE_RATE = 44100;
 const MASTER_GAIN = 0.85;
@@ -180,19 +188,52 @@ function scheduleEvents(
         tone(ctx, master, at + 0.14, { type: "triangle", from: 392, gain: 0.15, decay: 0.9 });
         tone(ctx, master, at + 0.2, { type: "sine", from: 523, gain: 0.1, decay: 0.85 });
         break;
+      case "tick":
+        // Subtle draw tick as a move arrow sketches on.
+        knock(ctx, noise, master, at, { freq: 5200, gain: 0.1, decay: 0.03 });
+        break;
+      case "flip": {
+        // Soft page-flip whoosh under the rule panel slide-in: a bandpassed
+        // noise sweep rising through the mids, like a card turned over.
+        const src = ctx.createBufferSource();
+        src.buffer = noise;
+        const bp = ctx.createBiquadFilter();
+        bp.type = "bandpass";
+        bp.Q.value = 1.1;
+        bp.frequency.setValueAtTime(420, at);
+        bp.frequency.exponentialRampToValueAtTime(2600, at + 0.16);
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0.0001, at);
+        g.gain.exponentialRampToValueAtTime(0.12, at + 0.03);
+        g.gain.exponentialRampToValueAtTime(0.001, at + 0.2);
+        src.connect(bp).connect(g).connect(master);
+        src.start(at);
+        src.stop(at + 0.24);
+        break;
+      }
     }
   }
 }
 
-/** Render the whole schedule offline for Tier 1 muxing. */
+export interface ClipAudioOptions {
+  /** Schedule the sfx voices (default true). */
+  sfx?: boolean;
+  /** Backing music selection, or null/undefined for none. */
+  music?: ClipMusicSelection | null;
+}
+
+/** Render the whole schedule (sfx + optional music bed) offline for Tier 1
+ *  muxing. */
 export async function renderClipAudio(
   events: ClipAudioEvent[],
   durationMs: number,
+  opts: ClipAudioOptions = {},
 ): Promise<AudioBuffer | null> {
   if (typeof OfflineAudioContext === "undefined") return null;
   const frames = Math.max(1, Math.ceil((durationMs / 1000) * SAMPLE_RATE));
   const ctx = new OfflineAudioContext(2, frames, SAMPLE_RATE);
-  scheduleEvents(ctx, ctx.destination, events, 0);
+  if (opts.sfx !== false) scheduleEvents(ctx, ctx.destination, events, 0);
+  if (opts.music) scheduleClipMusic(ctx, ctx.destination, opts.music, events, durationMs, 0);
   return ctx.startRendering();
 }
 
@@ -204,8 +245,13 @@ export interface LiveClipAudio {
   stop: () => void;
 }
 
-/** The same schedule as a live MediaStream for Tier 2 recording. */
-export function startLiveClipAudio(events: ClipAudioEvent[]): LiveClipAudio | null {
+/** The same schedule (sfx + optional music bed) as a live MediaStream for
+ *  Tier 2 recording. */
+export function startLiveClipAudio(
+  events: ClipAudioEvent[],
+  durationMs: number,
+  opts: ClipAudioOptions = {},
+): LiveClipAudio | null {
   if (typeof AudioContext === "undefined") return null;
   try {
     const ctx = new AudioContext({ sampleRate: SAMPLE_RATE });
@@ -214,7 +260,9 @@ export function startLiveClipAudio(events: ClipAudioEvent[]): LiveClipAudio | nu
       stream: dest.stream,
       start: () => {
         void ctx.resume();
-        scheduleEvents(ctx, dest, events, ctx.currentTime + 0.05);
+        const t0 = ctx.currentTime + 0.05;
+        if (opts.sfx !== false) scheduleEvents(ctx, dest, events, t0);
+        if (opts.music) scheduleClipMusic(ctx, dest, opts.music, events, durationMs, t0);
       },
       stop: () => {
         void ctx.close();

@@ -257,7 +257,11 @@ export interface ClipAudioEvent {
     /** Deeper hit for the slow-motion payoff landing. */
     | "impact"
     /** Resolve chord under the end card. */
-    | "outro";
+    | "outro"
+    /** Subtle draw tick as a move arrow sketches itself on. */
+    | "tick"
+    /** Soft page-flip whoosh under the rule panel slide-in. */
+    | "flip";
   tier?: number;
 }
 
@@ -284,6 +288,14 @@ export interface ClipSceneOptions {
   /** Watermark handle, or null when the toggle is off. */
   watermark: string | null;
   endCard: boolean;
+  /** Explainer layer: telegraph arrows ahead of each slide (plus capture
+   *  rings on the destination). */
+  explainArrows: boolean;
+  /** Explainer layer: the card rule panel that slides in on card plays and
+   *  holds long enough to read (extending that ply's timing). */
+  explainRules: boolean;
+  /** Explainer layer: "CAPTURE!" / "x2 TRADE" action callouts. */
+  explainCallouts: boolean;
   verdict: ClipVerdict | null;
   fonts: { display: string; body: string };
   accent: string;
@@ -295,10 +307,18 @@ export interface ClipSceneOptions {
 
 interface SegFx {
   start: number;
+  /** Telegraph window before the pre-beat/slide: the explainer arrow draws
+   *  itself on during this lead so the viewer sees the move coming. */
+  arrowMs: number;
   /** Dramatic pre-beat pause (darken + zoom + riser) before the slide. */
   preMs: number;
   moveMs: number;
   holdMs: number;
+  /** How long the card rule panel holds on screen (0: no panel). The
+   *  segment's hold is extended so the panel never gets cut off mid-read. */
+  ruleMs: number;
+  /** Action callout ("CAPTURE!", "x2 TRADE", payoff piece name), or null. */
+  callout: { text: string; emoji: string } | null;
   seg: ClipSegment;
   /** Focal square for punch-ins and energy scenes. */
   target: Square;
@@ -438,6 +458,41 @@ export function buildClipScene(opts: ClipSceneOptions): ClipScene {
       }
     }
 
+    // Explainer arrow: a 300ms telegraph lead in which the accent arrow draws
+    // itself from origin to destination BEFORE the piece starts sliding.
+    const arrowMs =
+      opts.explainArrows && primary && primary.from !== primary.to ? 300 : 0;
+
+    // Explainer rule panel: hold length scales with the rule text so it can
+    // actually be read (min 1.6s, cap 3s), and the ply's hold is EXTENDED so
+    // the reel never cuts a rule off mid-read. This flows through the single
+    // timeline accumulator below, so preview, offline encode, and the audio
+    // schedule all stretch identically.
+    let ruleMs = 0;
+    if (opts.explainRules && seg.sig) {
+      ruleMs = Math.min(3000, Math.max(1600, 900 + seg.sig.description.length * 11));
+      holdMs = Math.max(holdMs, ruleMs + 240 - moveMs);
+    }
+
+    // Explainer callout for notable beats, respecting the emoji knob.
+    let callout: SegFx["callout"] = null;
+    if (opts.explainCallouts) {
+      const capCount = captured.length + seg.vanishes.length;
+      let top: PieceType | null = null;
+      for (const pr of captured) {
+        if (!top || PIECE_VALUE[pr.captured!.type] >= PIECE_VALUE[top]) {
+          top = pr.captured!.type;
+        }
+      }
+      if (isPayoff && top) {
+        callout = { text: `${PIECE_WORD[top]} DOWN`, emoji: emojiFor(opts.emojiLevel, "capture") };
+      } else if (capCount >= 2) {
+        callout = { text: `x${capCount} TRADE`, emoji: emojiFor(opts.emojiLevel, "capture") };
+      } else if (capCount === 1) {
+        callout = { text: "CAPTURE!", emoji: "" };
+      }
+    }
+
     const target: Square =
       primary?.to ?? seg.spawns[0]?.sq ?? seg.vanishes[0]?.sq ?? 27;
 
@@ -452,20 +507,25 @@ export function buildClipScene(opts: ClipSceneOptions): ClipScene {
 
     // Between-ply shimmer whoosh (the payoff gets the riser instead).
     if (i > 0 && !preMs) audio.push({ t: at, kind: "shimmer" });
-    if (preMs) audio.push({ t: at, kind: "riser" });
+    if (arrowMs) audio.push({ t: at, kind: "tick" });
+    if (preMs) audio.push({ t: at + arrowMs, kind: "riser" });
+    if (ruleMs) audio.push({ t: at + arrowMs + preMs, kind: "flip" });
     if (seg.sig) {
-      audio.push({ t: at + preMs + 60, kind: "card", tier: seg.sig.tier });
+      audio.push({ t: at + arrowMs + preMs + 60, kind: "card", tier: seg.sig.tier });
     }
     audio.push({
-      t: at + preMs + moveMs,
+      t: at + arrowMs + preMs + moveMs,
       kind: isPayoff && hasCapture ? "impact" : hasCapture ? "capture" : "move",
     });
 
     segs.push({
       start: at,
+      arrowMs,
       preMs,
       moveMs,
       holdMs,
+      ruleMs,
+      callout,
       seg,
       target,
       energy,
@@ -487,7 +547,7 @@ export function buildClipScene(opts: ClipSceneOptions): ClipScene {
               : 0,
       isPayoff,
     });
-    at += preMs + moveMs + holdMs;
+    at += arrowMs + preMs + moveMs + holdMs;
   }
 
   const freezeMs = opts.freezeStamp ? 1000 : 320;
@@ -750,21 +810,23 @@ export function renderClipFrame(
   let holdU = 0; // 0..1 across the hold
   let doneCount = 0;
   for (const sf of scene.segs) {
-    if (t >= sf.start + sf.preMs + sf.moveMs + sf.holdMs) {
+    const lead = sf.arrowMs + sf.preMs;
+    if (t >= sf.start + lead + sf.moveMs + sf.holdMs) {
       doneCount++;
       continue;
     }
     if (t >= sf.start) {
       active = sf;
-      u = clamp01((t - sf.start - sf.preMs) / sf.moveMs);
-      holdU = clamp01((t - sf.start - sf.preMs - sf.moveMs) / sf.holdMs);
+      u = clamp01((t - sf.start - lead) / sf.moveMs);
+      holdU = clamp01((t - sf.start - lead - sf.moveMs) / sf.holdMs);
     }
     break;
   }
-  // Pre-beat progress: the darken + zoom window before the payoff slide.
+  // Pre-beat progress: the darken + zoom window before the payoff slide
+  // (after the arrow telegraph, when there is one).
   const preU =
-    active && active.preMs > 0 && t < active.start + active.preMs
-      ? clamp01((t - active.start) / active.preMs)
+    active && active.preMs > 0 && t < active.start + active.arrowMs + active.preMs
+      ? clamp01((t - active.start - active.arrowMs) / active.preMs)
       : 0;
 
   // ---- Board group: shake + punch transforms wrap everything on the board ----
@@ -845,12 +907,19 @@ export function renderClipFrame(
   }
   // Between-ply transition: a brief accent shimmer sweeps the board edge.
   drawEdgeShimmer(scene, ctx, t);
+  // Explainer callouts pop over the board edge (inside the shake group so
+  // they thump with the hit that spawned them).
+  if (opts.explainCallouts) drawCallouts(scene, ctx, t, sqXY);
   ctx.restore(); // board group
 
   // ---- Meters, captions, watermark ----
   if (opts.momentumBar) drawMomentum(scene, ctx, t);
   if (opts.moveCounter) drawProgress(scene, ctx, doneCount, active, u);
   drawPopCaption(scene, ctx, active, t);
+  // Explainer rule panel: slides in from the safe side, holds while the rule
+  // text is read, slides out. Drawn outside the board group so shake and
+  // punch never smear the text.
+  if (opts.explainRules) drawRulePanel(scene, ctx, t, sqXY);
   if (opts.watermark) {
     ctx.textAlign = "right";
     ctx.font = `600 ${opts.aspect === "classic" ? 14 : 24}px ${fonts.body}`;
@@ -873,7 +942,7 @@ export function renderClipFrame(
 function shakeOffset(scene: ClipScene, t: number): { x: number; y: number } {
   for (const sf of scene.segs) {
     if (sf.shakeAmp <= 0) continue;
-    const te = sf.start + sf.preMs + sf.moveMs; // impact lands with the slide
+    const te = sf.start + sf.arrowMs + sf.preMs + sf.moveMs; // impact lands with the slide
     if (t < te || t > te + 150) continue;
     const u = (t - te) / 150;
     const amp = sf.shakeAmp * (1 - u);
@@ -893,7 +962,7 @@ function applyPunch(
 ): void {
   for (const sf of scene.segs) {
     if (!sf.punch) continue;
-    const te = sf.start + sf.preMs + sf.moveMs;
+    const te = sf.start + sf.arrowMs + sf.preMs + sf.moveMs;
     if (t < te || t > te + 200) continue;
     const u = easeOutCubic((t - te) / 200);
     const s = 1 + 0.2 * (1 - u);
@@ -930,7 +999,7 @@ function drawSegment(
   const accent = opts.accent;
   const moveT = easeInOutCubic(clamp01(u));
   const primary = seg.pairs.find((p) => p.primary) ?? seg.pairs[0] ?? null;
-  const tLand = sf.start + sf.preMs + sf.moveMs;
+  const tLand = sf.start + sf.arrowMs + sf.preMs + sf.moveMs;
 
   if (primary && u >= 1) {
     const a = sqXY(primary.from);
@@ -943,9 +1012,13 @@ function drawSegment(
 
   // Energy scene UNDER the pieces (ground layer).
   if (sf.energy) {
-    const p = clamp01((t - sf.start - sf.preMs) / (sf.moveMs + sf.holdMs));
+    const p = clamp01((t - sf.start - sf.arrowMs - sf.preMs) / (sf.moveMs + sf.holdMs));
     drawEnergy(scene, ctx, sf, p, sqXY, "under");
   }
+
+  // Explainer arrow + capture ring: telegraphed under the pieces so the
+  // viewer reads where the move goes before (and while) it happens.
+  if (opts.explainArrows) drawMoveArrow(scene, ctx, sf, t, u, sqXY);
 
   for (const st of seg.statics) {
     const { x, y } = sqXY(st.sq);
@@ -1034,7 +1107,7 @@ function drawSegment(
 
   // Energy scene OVER the pieces (air layer) + the compact card badge.
   if (sf.energy) {
-    const p = clamp01((t - sf.start - sf.preMs) / (sf.moveMs + sf.holdMs));
+    const p = clamp01((t - sf.start - sf.arrowMs - sf.preMs) / (sf.moveMs + sf.holdMs));
     drawEnergy(scene, ctx, sf, p, sqXY, "over");
   }
   if (seg.sig) {
@@ -1051,7 +1124,7 @@ function drawShards(
 ): void {
   if (sf.shards.length === 0) return;
   const L = scene.layout;
-  const te = sf.start + sf.preMs + sf.moveMs * 0.72; // shatter as the mover arrives
+  const te = sf.start + sf.arrowMs + sf.preMs + sf.moveMs * 0.72; // shatter as the mover arrives
   const dur = 420;
   if (t < te || t > te + dur) return;
   const p = (t - te) / dur;
@@ -1307,6 +1380,313 @@ function sparks(
   }
 }
 
+// --- Explainer layer ---------------------------------------------------------
+
+/** Sampled arrow path in canvas coords: straight for most pieces, the L with
+ *  a rounded corner for knights. Deterministic and cheap (28 points). */
+function arrowPathPoints(
+  ax: number,
+  ay: number,
+  bx: number,
+  by: number,
+  knight: boolean,
+  cornerR: number,
+): { x: number; y: number }[] {
+  const pts: { x: number; y: number }[] = [];
+  if (!knight) {
+    for (let i = 0; i <= 27; i++) {
+      const s = i / 27;
+      pts.push({ x: ax + (bx - ax) * s, y: ay + (by - ay) * s });
+    }
+    return pts;
+  }
+  // Long leg first: matches how the eye tracks a knight hop.
+  const horizFirst = Math.abs(bx - ax) > Math.abs(by - ay);
+  const cx = horizFirst ? bx : ax;
+  const cy = horizFirst ? ay : by;
+  const len1 = Math.hypot(cx - ax, cy - ay);
+  const len2 = Math.hypot(bx - cx, by - cy);
+  const r = Math.min(cornerR, len1 * 0.5, len2 * 0.5);
+  // P1: r before the corner on leg 1; P2: r after it on leg 2.
+  const p1 = { x: cx - ((cx - ax) / len1) * r, y: cy - ((cy - ay) / len1) * r };
+  const p2 = { x: cx + ((bx - cx) / len2) * r, y: cy + ((by - cy) / len2) * r };
+  for (let i = 0; i <= 11; i++) {
+    const s = i / 11;
+    pts.push({ x: ax + (p1.x - ax) * s, y: ay + (p1.y - ay) * s });
+  }
+  for (let i = 1; i <= 6; i++) {
+    // Quadratic bezier through the corner.
+    const s = i / 6;
+    const q = (a: number, c: number, b: number) =>
+      (1 - s) * (1 - s) * a + 2 * (1 - s) * s * c + s * s * b;
+    pts.push({ x: q(p1.x, cx, p2.x), y: q(p1.y, cy, p2.y) });
+  }
+  for (let i = 1; i <= 9; i++) {
+    const s = i / 9;
+    pts.push({ x: p2.x + (bx - p2.x) * s, y: p2.y + (by - p2.y) * s });
+  }
+  return pts;
+}
+
+/** The move-direction arrow: draws itself on during the telegraph lead
+ *  (arrowhead pops as it completes), then fades as the piece slides. Capture
+ *  destinations get a pulsing ring until the impact lands. */
+function drawMoveArrow(
+  scene: ClipScene,
+  ctx: CanvasRenderingContext2D,
+  sf: SegFx,
+  t: number,
+  u: number,
+  sqXY: (sq: Square) => { x: number; y: number },
+): void {
+  const { layout: L, opts } = scene;
+  const primary = sf.seg.pairs.find((p) => p.primary) ?? sf.seg.pairs[0] ?? null;
+  if (!primary || primary.from === primary.to) return;
+  const tLand = sf.start + sf.arrowMs + sf.preMs + sf.moveMs;
+  if (t > tLand) return;
+
+  const a = sqXY(primary.from);
+  const b = sqXY(primary.to);
+  const acx = a.x + L.sq / 2;
+  const acy = a.y + L.sq / 2;
+  const bcx = b.x + L.sq / 2;
+  const bcy = b.y + L.sq / 2;
+
+  // Pulsing ring on a capture destination, alive until the mover arrives.
+  if (primary.captured) {
+    const ringIn = clamp01((t - sf.start) / 150);
+    const pulse = 0.5 + 0.5 * Math.sin(t * 0.02);
+    ctx.save();
+    ctx.globalAlpha = ringIn * (0.5 + 0.35 * pulse);
+    ctx.strokeStyle = "#e05252";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(bcx, bcy, L.sq * (0.36 + 0.05 * pulse), 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha = ringIn * 0.25 * pulse;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(bcx, bcy, L.sq * (0.46 + 0.07 * pulse), 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  if (sf.arrowMs === 0) return;
+  // Draw-on progress across the telegraph lead (plus any pre-beat), so the
+  // arrow is fully drawn ~300ms before the piece even starts to slide.
+  const drawU = easeOutCubic(clamp01((t - sf.start) / (sf.arrowMs + sf.preMs)));
+  if (drawU <= 0) return;
+  // Fade while the piece travels; gone by landing.
+  const alpha = (1 - 0.9 * clamp01(u)) * clamp01((tLand - t) / 80 + 1);
+
+  const knight = primary.before.type === "n";
+  const raw = arrowPathPoints(acx, acy, bcx, bcy, knight, L.sq * 0.4);
+  // Trim both ends so the arrow floats between the squares' centers.
+  let pathLen = 0;
+  for (let i = 1; i < raw.length; i++) {
+    pathLen += Math.hypot(raw[i].x - raw[i - 1].x, raw[i].y - raw[i - 1].y);
+  }
+  const trimFrac = Math.min(0.18, (L.sq * 0.3) / Math.max(1, pathLen));
+  const startIdx = Math.floor(trimFrac * (raw.length - 1));
+  const endIdx = raw.length - 1 - Math.ceil(trimFrac * (raw.length - 1));
+  const pts = raw.slice(startIdx, Math.max(startIdx + 2, endIdx + 1));
+  const shown = Math.max(2, Math.ceil(pts.length * drawU));
+
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.strokeStyle = opts.accent;
+  ctx.shadowColor = opts.accent;
+  ctx.shadowBlur = L.sq * 0.14;
+  ctx.lineWidth = L.sq * 0.1;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  for (let i = 1; i < shown; i++) ctx.lineTo(pts[i].x, pts[i].y);
+  ctx.stroke();
+
+  // Arrowhead pops once the shaft is nearly complete.
+  const headU = clamp01((drawU - 0.72) / 0.28);
+  if (headU > 0) {
+    const tip = pts[shown - 1];
+    const prev = pts[Math.max(0, shown - 3)];
+    const ang = Math.atan2(tip.y - prev.y, tip.x - prev.x);
+    const size = L.sq * 0.26 * easeOutBack(headU);
+    ctx.fillStyle = opts.accent;
+    ctx.beginPath();
+    ctx.moveTo(tip.x + Math.cos(ang) * size, tip.y + Math.sin(ang) * size);
+    ctx.lineTo(tip.x + Math.cos(ang + 2.5) * size, tip.y + Math.sin(ang + 2.5) * size);
+    ctx.lineTo(tip.x + Math.cos(ang - 2.5) * size, tip.y + Math.sin(ang - 2.5) * size);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+/** Tier chip tint for the rule panel: parchment for low tiers, warming up
+ *  through gold to the coronation glow at the top of the ladder. */
+function tierTint(tier: number): string {
+  if (tier >= 8) return "#ffd76a";
+  if (tier >= 6) return "#ff9a3d";
+  if (tier >= 4) return "#e6bf6a";
+  return "#c9c2b4";
+}
+
+/** Greedy word wrap against the current ctx font. */
+function wrapText(ctx: CanvasRenderingContext2D, text: string, maxW: number): string[] {
+  const words = text.split(/\s+/).filter(Boolean);
+  const lines: string[] = [];
+  let line = "";
+  for (const w of words) {
+    const probe = line ? `${line} ${w}` : w;
+    if (line && ctx.measureText(probe).width > maxW) {
+      lines.push(line);
+      line = w;
+    } else {
+      line = probe;
+    }
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
+/** The card rule pop-up: a mini card panel (name, tier chip, rule text,
+ *  category accent edge, corner ticks) that slides in from whichever side
+ *  keeps it off the action square, holds long enough to read, slides out. */
+function drawRulePanel(
+  scene: ClipScene,
+  ctx: CanvasRenderingContext2D,
+  t: number,
+  sqXY: (sq: Square) => { x: number; y: number },
+): void {
+  const { layout: L, opts } = scene;
+  for (const sf of scene.segs) {
+    if (sf.ruleMs <= 0 || !sf.seg.sig) continue;
+    const tIn = sf.start + sf.arrowMs + sf.preMs;
+    const tOut = tIn + sf.ruleMs;
+    if (t < tIn || t > tOut + 240) continue;
+    const sig = sf.seg.sig;
+    const inU = easeOutCubic(clamp01((t - tIn) / 260));
+    const outU = t > tOut ? easeInOutCubic(clamp01((t - tOut) / 240)) : 0;
+    const off = 1 - inU + outU; // 0 = parked, 1 = fully offscreen
+    if (off >= 1) continue;
+
+    // Side: away from the action square (display coords via sqXY).
+    const targetX = sqXY(sf.target).x + L.sq / 2;
+    const onLeft = targetX >= L.boardX + L.board / 2;
+    const color = sf.energy ? ENERGY_COLOR[sf.energy] : opts.accent;
+
+    const textSize = opts.aspect === "classic" ? 20 : 30;
+    const nameSize = Math.round(textSize * 1.15);
+    const tierSize = Math.round(textSize * 0.6);
+    const w = opts.aspect === "classic" ? 280 : opts.aspect === "square" ? 400 : 430;
+    const pad = Math.round(textSize * 0.7);
+    const edgeW = 5;
+
+    ctx.save();
+    ctx.font = `500 ${textSize}px ${opts.fonts.body}`;
+    const lines = wrapText(ctx, sig.description, w - pad * 2 - edgeW);
+    const lineH = Math.round(textSize * 1.3);
+    const h = pad + tierSize * 1.4 + nameSize * 1.5 + lines.length * lineH + pad;
+
+    // Text-safe margins: TikTok keeps 120 left / 940 right clear of UI.
+    const margin = opts.aspect === "tiktok" ? 120 : opts.aspect === "square" ? 60 : 24;
+    const xPark = onLeft ? margin : L.W - margin - w;
+    const x = xPark + (onLeft ? -1 : 1) * off * (w + margin + 8);
+    const y = Math.round(L.boardY + L.board / 2 - h / 2);
+
+    ctx.globalAlpha = 1 - outU * 0.3;
+    // Panel plate + category accent edge on the slide-origin side.
+    ctx.fillStyle = "rgba(16,14,11,0.93)";
+    ctx.fillRect(x, y, w, h);
+    ctx.strokeStyle = withAlpha(color, 0.85);
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x, y, w, h);
+    ctx.fillStyle = color;
+    ctx.fillRect(onLeft ? x : x + w - edgeW, y, edgeW, h);
+    // The four corner ticks, same family as the card badge and verdict.
+    ctx.strokeStyle = color;
+    for (const [sx, sy] of [[0, 0], [1, 0], [0, 1], [1, 1]] as const) {
+      const cxp = x + sx * w;
+      const cyp = y + sy * h;
+      ctx.beginPath();
+      ctx.moveTo(cxp + (sx ? -14 : 14), cyp);
+      ctx.lineTo(cxp, cyp);
+      ctx.lineTo(cxp, cyp + (sy ? -14 : 14));
+      ctx.stroke();
+    }
+
+    const tx = x + pad + (onLeft ? edgeW : 0);
+    let ty = y + pad + tierSize;
+    ctx.textAlign = "left";
+    ctx.font = `600 ${tierSize}px ${opts.fonts.body}`;
+    ctx.fillStyle = tierTint(sig.tier);
+    ctx.fillText(`TIER ${ROMAN[sig.tier - 1] ?? sig.tier}`, tx, ty);
+    ty += Math.round(nameSize * 1.25);
+    ctx.font = `700 ${nameSize}px ${opts.fonts.display}`;
+    ctx.fillStyle = "#ece7dd";
+    ctx.fillText(sig.name, tx, ty);
+    ty += Math.round(textSize * 1.1);
+    ctx.font = `500 ${textSize}px ${opts.fonts.body}`;
+    ctx.fillStyle = "#d9d2c2";
+    for (const ln of lines) {
+      ty += lineH;
+      ctx.fillText(ln, tx, ty - lineH + textSize);
+    }
+    ctx.restore();
+    return;
+  }
+}
+
+/** Action callouts: small stamped labels that pop over the board edge on
+ *  notable beats and thump away again. */
+function drawCallouts(
+  scene: ClipScene,
+  ctx: CanvasRenderingContext2D,
+  t: number,
+  sqXY: (sq: Square) => { x: number; y: number },
+): void {
+  const { layout: L, opts } = scene;
+  for (const sf of scene.segs) {
+    if (!sf.callout) continue;
+    const tLand = sf.start + sf.arrowMs + sf.preMs + sf.moveMs;
+    const dur = 950;
+    if (t < tLand || t > tLand + dur) continue;
+    const p = (t - tLand) / dur;
+    const pop = p < 0.2 ? easeOutBack(clamp01(p / 0.2)) : 1 + 0.01 * Math.sin(t * 0.02);
+    const fade = p > 0.8 ? 1 - (p - 0.8) / 0.2 : 1;
+
+    // Opposite side from the action square, straddling the board's top edge.
+    const targetX = sqXY(sf.target).x + L.sq / 2;
+    const onLeft = targetX >= L.boardX + L.board / 2;
+    const cx = L.boardX + L.board * (onLeft ? 0.24 : 0.76);
+    // Straddle the board's top edge; 9:16 has clear air above the board while
+    // the tighter layouts sit the label just inside the frame.
+    const cy =
+      L.boardY + (opts.aspect === "tiktok" ? -18 : opts.aspect === "square" ? 6 : 22);
+    const size = opts.aspect === "classic" ? 20 : 34;
+    const text = sf.callout.emoji ? `${sf.callout.text} ${sf.callout.emoji}` : sf.callout.text;
+
+    ctx.save();
+    ctx.globalAlpha = fade;
+    ctx.translate(cx, cy);
+    ctx.rotate(onLeft ? -0.045 : 0.045);
+    ctx.scale(pop, pop);
+    ctx.textAlign = "center";
+    ctx.font = `800 ${size}px ${opts.fonts.display}`;
+    ctx.lineWidth = Math.max(3, size * 0.16);
+    ctx.strokeStyle = "rgba(10,8,6,0.92)";
+    ctx.lineJoin = "round";
+    ctx.strokeText(text, 0, 0);
+    ctx.shadowColor = opts.accent;
+    ctx.shadowBlur = size * 0.25;
+    ctx.fillStyle = sf.isPayoff ? opts.accent : "#ffffff";
+    ctx.fillText(text, 0, 0);
+    ctx.restore();
+    return;
+  }
+}
+
 function drawCardBadge(
   scene: ClipScene,
   ctx: CanvasRenderingContext2D,
@@ -1444,7 +1824,7 @@ function drawPopCaption(
   const total = widths.reduce((a, b) => a + b, 0) + gap * (tokens.length - 1);
   let x = L.W / 2 - total / 2;
   tokens.forEach((word, i) => {
-    const appear = sf!.start + sf!.preMs + (pop ? i * 110 : 0);
+    const appear = sf!.start + sf!.arrowMs + sf!.preMs + (pop ? i * 110 : 0);
     const wu = clamp01((t - appear) / 160);
     if (wu <= 0) {
       x += widths[i] + gap;
@@ -1486,12 +1866,12 @@ function momentumAt(scene: ClipScene, t: number): number {
   for (const sf of scene.segs) {
     const from = value;
     const to = sf.matAfter;
-    if (t >= sf.start + sf.preMs + sf.moveMs + sf.holdMs) {
+    if (t >= sf.start + sf.arrowMs + sf.preMs + sf.moveMs + sf.holdMs) {
       value = to;
       continue;
     }
     if (t >= sf.start) {
-      const u = clamp01((t - sf.start - sf.preMs) / (sf.moveMs + sf.holdMs * 0.4));
+      const u = clamp01((t - sf.start - sf.arrowMs - sf.preMs) / (sf.moveMs + sf.holdMs * 0.4));
       const ease = Math.abs(to - from) >= 3 ? easeOutBack(u) : easeInOutCubic(u);
       value = from + (to - from) * ease;
     }
@@ -1804,7 +2184,7 @@ function drawOverlays(scene: ClipScene, ctx: CanvasRenderingContext2D, t: number
   // cyan ghost for a few frames after a hit lands.
   for (const sf of scene.segs) {
     if (sf.shards.length === 0 && !sf.isPayoff) continue;
-    const te = sf.start + sf.preMs + sf.moveMs;
+    const te = sf.start + sf.arrowMs + sf.preMs + sf.moveMs;
     if (t < te || t > te + 130) continue;
     const q = 1 - (t - te) / 130;
     const off = 3 * q;

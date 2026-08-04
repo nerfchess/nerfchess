@@ -44,6 +44,14 @@ import {
   recordClipRealtime,
   type EncodeSupport,
 } from "./clipEncoder";
+import {
+  DEFAULT_MUSIC_TRACK,
+  DEFAULT_MUSIC_VOLUME,
+  MUSIC_TRACKS,
+  type ClipCustomMusic,
+  type ClipMusicSelection,
+  type MusicTrackId,
+} from "./clipMusic";
 import { ClipRenderer, type ClipRendererHandle } from "./ClipRenderer";
 import { useModalChrome } from "@/lib/useModalChrome";
 import { Button } from "@/components/ui/Button";
@@ -83,6 +91,13 @@ interface ClipOptionsState {
   captionStyle: CaptionStyle;
   emojiLevel: EmojiLevel;
   sound: boolean;
+  musicOn: boolean;
+  musicTrack: MusicTrackId;
+  /** 0..1 music bed volume. */
+  musicVolume: number;
+  explainArrows: boolean;
+  explainRules: boolean;
+  explainCallouts: boolean;
   watermarkOn: boolean;
   handle: string;
   endCard: boolean;
@@ -100,6 +115,12 @@ const TIKTOK_MODE: ClipOptionsState = {
   captionStyle: "pop",
   emojiLevel: "tasteful",
   sound: true,
+  musicOn: true,
+  musicTrack: DEFAULT_MUSIC_TRACK,
+  musicVolume: DEFAULT_MUSIC_VOLUME,
+  explainArrows: true,
+  explainRules: true,
+  explainCallouts: true,
   watermarkOn: true,
   handle: "nerfchess.com",
   endCard: true,
@@ -180,6 +201,9 @@ export function ClipModal({
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [shared, setShared] = useState(false);
+  // Imported backing track (audio/*, decoded client-side, never uploaded).
+  const [customMusic, setCustomMusic] = useState<ClipCustomMusic | null>(null);
+  const musicFileRef = useRef<HTMLInputElement | null>(null);
   const rendererRef = useRef<ClipRendererHandle | null>(null);
   const stopRef = useRef<(() => void) | null>(null);
   const clipUrlRef = useRef<string | null>(null);
@@ -314,6 +338,9 @@ export function ClipModal({
       moveCounter: opts.moveCounter,
       watermark: opts.watermarkOn ? opts.handle.trim() || "nerfchess.com" : null,
       endCard: opts.endCard,
+      explainArrows: opts.explainArrows,
+      explainRules: opts.explainRules,
+      explainCallouts: opts.explainCallouts,
       verdict,
       fonts,
       accent,
@@ -332,6 +359,16 @@ export function ClipModal({
     pliesChoice,
     autoPlan,
   ]);
+
+  // The music selection handed to both encode tiers. Null when off; the
+  // imported track (if any) replaces the built-in one.
+  const music = useMemo<ClipMusicSelection | null>(
+    () =>
+      opts.musicOn
+        ? { track: opts.musicTrack, volume: opts.musicVolume, custom: customMusic }
+        : null,
+    [opts.musicOn, opts.musicTrack, opts.musicVolume, customMusic],
+  );
 
   const discardClip = useCallback(() => {
     if (clipUrlRef.current) URL.revokeObjectURL(clipUrlRef.current);
@@ -358,13 +395,13 @@ export function ClipModal({
     if (!open) return;
     let cancelled = false;
     const L = clipLayout(opts.aspect);
-    detectEncodeSupport(L.W, L.H, opts.sound).then((s) => {
+    detectEncodeSupport(L.W, L.H, opts.sound || opts.musicOn).then((s) => {
       if (!cancelled) setSupport(s);
     });
     return () => {
       cancelled = true;
     };
-  }, [open, opts.aspect, opts.sound]);
+  }, [open, opts.aspect, opts.sound, opts.musicOn]);
 
   useEffect(() => {
     const runRef = encodeRunRef;
@@ -406,6 +443,7 @@ export function ClipModal({
           images,
           support,
           opts.sound,
+          music,
           (f) => {
             if (encodeRunRef.current === run) setProgress(f);
           },
@@ -433,7 +471,7 @@ export function ClipModal({
       // Supersede any in-flight render; the encoder bails at the next frame.
       runRef.current++;
     };
-  }, [open, scene, images, support, clip, error, opts.sound]);
+  }, [open, scene, images, support, clip, error, opts.sound, music]);
 
   // Every option change invalidates the recorded take (frame 0 is burned into
   // the file, so even a caption edit means a re-render). The auto-encode
@@ -455,6 +493,33 @@ export function ClipModal({
     [discardClip],
   );
 
+  // Import your own backing track: decoded with the Web Audio API right here
+  // in the browser; the file is never uploaded anywhere.
+  const importMusicFile = useCallback(
+    async (file: File) => {
+      try {
+        const data = await file.arrayBuffer();
+        const ac = new AudioContext();
+        try {
+          const buffer = await ac.decodeAudioData(data);
+          setCustomMusic({ buffer, name: file.name });
+          setError(null);
+          discardClip();
+        } finally {
+          void ac.close();
+        }
+      } catch {
+        setError("Couldn't decode that audio file. Try an mp3, wav, or ogg.");
+      }
+    },
+    [discardClip],
+  );
+  const clearCustomMusic = useCallback(() => {
+    setCustomMusic(null);
+    setError(null);
+    discardClip();
+  }, [discardClip]);
+
   // Tier 2 fallback: realtime MediaRecorder over the live preview canvas,
   // behind an explicit Record / Re-record button (a realtime take needs the
   // preview restarted from the top, so it never auto-fires).
@@ -467,7 +532,7 @@ export function ClipModal({
     try {
       const canvas = rendererRef.current?.canvas;
       if (!canvas) throw new Error("no canvas");
-      const rec = recordClipRealtime(canvas, scene, support, opts.sound);
+      const rec = recordClipRealtime(canvas, scene, support, opts.sound, music);
       stopRef.current = rec.stop;
       // Restart the timeline in sync with the recorder; stop shortly after
       // the run completes so the final frame lands in the file.
@@ -805,6 +870,83 @@ export function ClipModal({
                 <GroupLabel>Sound</GroupLabel>
                 <div className="flex flex-wrap gap-1.5">
                   <Chip label="Game sound" on={opts.sound} onClick={() => set("sound", !opts.sound)} disabled={settingsLocked} />
+                </div>
+
+                <GroupLabel>Music</GroupLabel>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <Chip label="Music" on={opts.musicOn} onClick={() => set("musicOn", !opts.musicOn)} disabled={settingsLocked} />
+                  <label className="inline-flex items-center gap-1.5 text-[10px] text-parchment-400">
+                    <span className="smallcaps">Volume</span>
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      value={Math.round(opts.musicVolume * 100)}
+                      disabled={settingsLocked || !opts.musicOn}
+                      onChange={(e) => set("musicVolume", Number(e.target.value) / 100)}
+                      aria-label="Music volume"
+                      className="w-28 accent-[#d4a017] disabled:opacity-40"
+                    />
+                  </label>
+                </div>
+                {opts.musicOn && !customMusic && (
+                  <div className="mt-1.5 flex flex-wrap gap-1.5" role="group" aria-label="Backing track">
+                    {MUSIC_TRACKS.map((tr) => (
+                      <Chip
+                        key={tr.id}
+                        label={tr.label}
+                        on={opts.musicTrack === tr.id}
+                        onClick={() => set("musicTrack", tr.id)}
+                        disabled={settingsLocked}
+                      />
+                    ))}
+                  </div>
+                )}
+                {opts.musicOn && (
+                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                    <input
+                      ref={musicFileRef}
+                      type="file"
+                      accept="audio/*"
+                      className="hidden"
+                      data-clip-music-file
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        e.target.value = "";
+                        if (file) void importMusicFile(file);
+                      }}
+                    />
+                    {customMusic ? (
+                      <>
+                        <span className="max-w-[14rem] truncate text-[11px] text-gold-leaf" data-clip-music-name>
+                          {customMusic.name}
+                        </span>
+                        <Button tone="ghost" size="xs" onClick={clearCustomMusic} disabled={settingsLocked} className="text-parchment-300">
+                          Clear
+                        </Button>
+                      </>
+                    ) : (
+                      <Button
+                        tone="ghost"
+                        size="xs"
+                        onClick={() => musicFileRef.current?.click()}
+                        disabled={settingsLocked}
+                        className="text-parchment-300"
+                      >
+                        Import your own audio
+                      </Button>
+                    )}
+                    <span className="text-[10px] text-parchment-400">
+                      trimmed or looped to the reel; stays on this device
+                    </span>
+                  </div>
+                )}
+
+                <GroupLabel>Explain</GroupLabel>
+                <div className="flex flex-wrap gap-1.5">
+                  <Chip label="Arrows" on={opts.explainArrows} onClick={() => set("explainArrows", !opts.explainArrows)} disabled={settingsLocked} />
+                  <Chip label="Card rules" on={opts.explainRules} onClick={() => set("explainRules", !opts.explainRules)} disabled={settingsLocked} />
+                  <Chip label="Callouts" on={opts.explainCallouts} onClick={() => set("explainCallouts", !opts.explainCallouts)} disabled={settingsLocked} />
                 </div>
 
                 <GroupLabel>Branding</GroupLabel>
