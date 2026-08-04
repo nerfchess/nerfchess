@@ -9,10 +9,22 @@
 import type { Color, Piece, PieceType, Square } from "@/engine/types";
 import { FILE, PIECE_VALUE, RANK } from "@/engine/types";
 import type { ClipSegment, ClipSigMeta, ClipTimeline } from "./clipReplay";
+import type { ClipStyle } from "./clipStyles";
+import {
+  applyGrade,
+  paintConfetti,
+  paintFlashCut,
+  paintGlitch,
+  paintLetterbox,
+  paintParticleField,
+  paintTransitionOverBoard,
+  paintVhs,
+  transitionShift,
+} from "./clipStyles";
 
 // --- Aspect layouts ----------------------------------------------------------
 
-export type ClipAspect = "tiktok" | "square" | "classic";
+export type ClipAspect = "tiktok" | "square" | "classic" | "youtube";
 export type CaptionStyle = "pop" | "static" | "off";
 export type EmojiLevel = "off" | "tasteful" | "brainrot";
 
@@ -63,6 +75,12 @@ const LAYOUTS: Record<ClipAspect, ClipLayout> = {
     headerY: 52, matchY: 86, hookY: 108, hookSize: 17,
     popY: 812, popSize: 32, progressY: 834, watermarkY: 864,
     momentumX: 14, momentumW: 12,
+  },
+  youtube: {
+    W: 1920, H: 1080, boardX: 600, boardY: 230, board: 720, sq: 90,
+    headerY: 90, matchY: null, hookY: 170, hookSize: 44,
+    popY: 1016, popSize: 48, progressY: 968, watermarkY: 1048,
+    momentumX: 560, momentumW: 16,
   },
 };
 
@@ -279,8 +297,10 @@ export interface ClipSceneOptions {
   hookText: string;
   captionStyle: CaptionStyle;
   emojiLevel: EmojiLevel;
-  zoomPunch: boolean;
-  screenShake: boolean;
+  /** The wave-2 style pack: camera, look, fx, pace, transitions, stamps. */
+  style: ClipStyle;
+  /** End-card call-to-action line (short, editable). */
+  ctaText: string;
   speedRamp: boolean;
   freezeStamp: boolean;
   momentumBar: boolean;
@@ -313,6 +333,8 @@ interface SegFx {
   /** Dramatic pre-beat pause (darken + zoom + riser) before the slide. */
   preMs: number;
   moveMs: number;
+  /** Capture freeze-frame window right after the landing (0 when off). */
+  freezeMs: number;
   holdMs: number;
   /** How long the card rule panel holds on screen (0: no panel). The
    *  segment's hold is extended so the panel never gets cut off mid-read. */
@@ -332,22 +354,17 @@ interface SegFx {
   caption: CaptionEvent | null;
   /** White-minus-black material after this segment lands. */
   matAfter: number;
+  /** Auto move-verdict stamp from the capture-swing math, or null. */
+  stamp: "!!" | "!?" | "??" | null;
   punch: boolean;
   shakeAmp: number;
   isPayoff: boolean;
 }
 
-/** Ambient ember: drifts, flickers, and leans warm or parchment-neutral. */
-interface Ember {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  r: number;
-  a: number;
-  phase: number;
-  warm: number;
-}
+/** Lead (telegraph + pre-beat) before a segment's slide starts. */
+const segLead = (sf: SegFx) => sf.arrowMs + sf.preMs;
+/** Full wall-clock span of a segment on the shared timeline. */
+const segSpan = (sf: SegFx) => sf.arrowMs + sf.preMs + sf.moveMs + sf.freezeMs + sf.holdMs;
 
 export interface ClipScene {
   opts: ClipSceneOptions;
@@ -362,7 +379,10 @@ export interface ClipScene {
   durationMs: number;
   audio: ClipAudioEvent[];
   matStart: number;
-  drift: Ember[];
+  /** Seed for the ambient particle field + seeded FX (glitch, confetti). */
+  fieldSeed: number;
+  /** Confetti fires over the verdict freeze (win verdicts only). */
+  celebrate: boolean;
   /** Dust kicked up by the intro board slam. */
   introDust: Particle[];
 }
@@ -398,11 +418,19 @@ function intensityScale(level: EmojiLevel): number {
 }
 
 export function buildClipScene(opts: ClipSceneOptions): ClipScene {
-  const { timeline } = opts;
+  const { timeline, style } = opts;
   const layout = LAYOUTS[opts.aspect];
   const n = timeline.segments.length;
-  const rng = mulberry32(0x1badb002 ^ (timeline.startPly * 2654435761) ^ (n << 16));
+  const fieldSeed =
+    (0x1badb002 ^ Math.imul(timeline.startPly, 2654435761) ^ (n << 16) ^ Math.imul(style.seed, 0x85ebca6b)) >>> 0;
+  const rng = mulberry32(fieldSeed);
   const intensity = intensityScale(opts.emojiLevel);
+  // The ONE global time warp: every duration below passes through it, so the
+  // whole timeline (and with it the audio/music schedule, which is keyed off
+  // these same numbers) stretches identically at any speed.
+  const warp = (ms: number) => Math.round(ms / style.speed);
+  const shakeScale =
+    style.shake === "off" ? 0 : style.shake === "subtle" ? 0.6 : 1.3;
 
   // The payoff ply: the auto-director's hint when present, else the last
   // capture / card / promotion. Held in slow motion when the speed ramp is on;
@@ -428,11 +456,12 @@ export function buildClipScene(opts: ClipSceneOptions): ClipScene {
   const baseMove = n > 6 ? 430 : 560;
   const baseHold = n > 6 ? 210 : 300;
   // Intro beat: the board slams in, the wordmark pops, the hook spring-pops.
-  const lead = 700;
+  const lead = warp(700);
   let at = lead;
   const segs: SegFx[] = [];
   const audio: ClipAudioEvent[] = [];
   audio.push({ t: 40, kind: "intro" });
+  let matPrev = material(timeline.initial);
 
   for (let i = 0; i < n; i++) {
     const seg = timeline.segments[i];
@@ -448,14 +477,14 @@ export function buildClipScene(opts: ClipSceneOptions): ClipScene {
 
     let moveMs = baseMove;
     let holdMs = baseHold + (seg.sig ? Math.round(420 * tierScale) : 0);
-    if (opts.speedRamp) {
-      if (i < payoff) {
-        moveMs = Math.round(moveMs / 1.5);
-        holdMs = Math.round(holdMs / 1.5);
-      } else if (isPayoff) {
-        moveMs = Math.round(moveMs * 2);
-        holdMs = Math.round(holdMs * 1.6);
-      }
+    if (opts.speedRamp && i < payoff) {
+      moveMs = Math.round(moveMs / 1.5);
+      holdMs = Math.round(holdMs / 1.5);
+    }
+    if (isPayoff && style.slowmo !== "off") {
+      const ultra = style.slowmo === "ultra";
+      moveMs = Math.round(moveMs * (ultra ? 2.85 : 2));
+      holdMs = Math.round(holdMs * (ultra ? 2 : 1.6));
     }
 
     // Explainer arrow: a 300ms telegraph lead in which the accent arrow draws
@@ -505,26 +534,58 @@ export function buildClipScene(opts: ClipSceneOptions): ClipScene {
       shards.push({ sq: v.sq, light: v.piece.color === "w", parts: makeParticles(rng, 10) });
     }
 
+    // Capture freeze-frame: a beat of held pose right after the landing.
+    const freezeMs = style.captureFreeze && hasCapture ? 300 : 0;
+
+    // Auto move-verdict stamp from the capture-swing math: how much material
+    // the MOVER netted across this ply (captures minus what the diff says was
+    // given back). No engine eval involved.
+    const matAfter = segMaterial(seg);
+    let stamp: SegFx["stamp"] = null;
+    if (primary && (hasCapture || seg.vanishes.length > 0)) {
+      const mover = primary.before.color;
+      const gain = (matAfter - matPrev) * (mover === "w" ? 1 : -1);
+      let capturedValue = 0;
+      for (const pr of captured) capturedValue += PIECE_VALUE[pr.captured!.type];
+      for (const v of seg.vanishes) {
+        if (v.piece.color !== mover) capturedValue += PIECE_VALUE[v.piece.type];
+      }
+      if (gain >= 4) stamp = "!!";
+      else if (gain <= -2) stamp = "??";
+      else if (capturedValue >= 3) stamp = "!?";
+    }
+    matPrev = matAfter;
+
+    // Everything below runs on WARPED durations, so the audio schedule and the
+    // visual timeline stretch through the same numbers.
+    const arrowW = warp(arrowMs);
+    const preW = warp(preMs);
+    moveMs = warp(moveMs);
+    holdMs = warp(holdMs);
+    const ruleW = warp(ruleMs);
+    const freezeW = warp(freezeMs);
+
     // Between-ply shimmer whoosh (the payoff gets the riser instead).
-    if (i > 0 && !preMs) audio.push({ t: at, kind: "shimmer" });
-    if (arrowMs) audio.push({ t: at, kind: "tick" });
-    if (preMs) audio.push({ t: at + arrowMs, kind: "riser" });
-    if (ruleMs) audio.push({ t: at + arrowMs + preMs, kind: "flip" });
+    if (i > 0 && !preW) audio.push({ t: at, kind: "shimmer" });
+    if (arrowW) audio.push({ t: at, kind: "tick" });
+    if (preW) audio.push({ t: at + arrowW, kind: "riser" });
+    if (ruleW) audio.push({ t: at + arrowW + preW, kind: "flip" });
     if (seg.sig) {
-      audio.push({ t: at + arrowMs + preMs + 60, kind: "card", tier: seg.sig.tier });
+      audio.push({ t: at + arrowW + preW + 60, kind: "card", tier: seg.sig.tier });
     }
     audio.push({
-      t: at + arrowMs + preMs + moveMs,
+      t: at + arrowW + preW + moveMs,
       kind: isPayoff && hasCapture ? "impact" : hasCapture ? "capture" : "move",
     });
 
     segs.push({
       start: at,
-      arrowMs,
-      preMs,
+      arrowMs: arrowW,
+      preMs: preW,
       moveMs,
+      freezeMs: freezeW,
       holdMs,
-      ruleMs,
+      ruleMs: ruleW,
       callout,
       seg,
       target,
@@ -534,47 +595,37 @@ export function buildClipScene(opts: ClipSceneOptions): ClipScene {
       shards,
       dust: makeParticles(rng, 7),
       caption: captionFor(seg, energy, opts.emojiLevel),
-      matAfter: segMaterial(seg),
-      punch: opts.zoomPunch && (hasCapture || !!seg.sig),
-      shakeAmp: !opts.screenShake
-        ? 0
-        : energy === "shock"
-          ? 6 * intensity
-          : hasCapture
-            ? 3.5 * intensity
-            : seg.sig
-              ? 2 * intensity
-              : 0,
+      matAfter,
+      stamp,
+      punch: style.zoom !== "off" && (hasCapture || !!seg.sig || style.zoom === "extreme"),
+      shakeAmp:
+        shakeScale === 0
+          ? 0
+          : (energy === "shock"
+              ? 6 * intensity
+              : hasCapture
+                ? 3.5 * intensity
+                : seg.sig
+                  ? 2 * intensity
+                  : 0) * shakeScale,
       isPayoff,
     });
-    at += arrowMs + preMs + moveMs + holdMs;
+    at += arrowW + preW + moveMs + freezeW + holdMs;
   }
 
-  const freezeMs = opts.freezeStamp ? 1000 : 320;
+  const freezeMs = warp(opts.freezeStamp ? 1000 : 320);
   const freezeStart = at;
   if (opts.freezeStamp) audio.push({ t: freezeStart + 80, kind: "verdict" });
   at += freezeMs;
-  const endMs = opts.endCard ? 1400 : 0;
+  const endMs = opts.endCard ? warp(1400) : 0;
   const endStart = at;
   if (endMs > 0) audio.push({ t: endStart + 60, kind: "outro" });
   at += endMs;
 
-  // Ambient ember field for the decorative fill outside the safe zones: every
-  // speck drifts AND flickers, so no frame of background is ever static.
-  const drift: ClipScene["drift"] = [];
-  const driftN = opts.aspect === "classic" ? 18 : 34;
-  for (let i = 0; i < driftN; i++) {
-    drift.push({
-      x: rng() * layout.W,
-      y: rng() * layout.H,
-      vx: (rng() - 0.5) * 0.014,
-      vy: -0.007 - rng() * 0.014,
-      r: 1 + rng() * 2.4,
-      a: 0.06 + rng() * 0.14,
-      phase: rng() * Math.PI * 2,
-      warm: rng(),
-    });
-  }
+  const celebrate =
+    style.confetti &&
+    !!opts.verdict &&
+    /WIN|CHECKMATE/.test(opts.verdict.main);
 
   return {
     opts,
@@ -589,7 +640,8 @@ export function buildClipScene(opts: ClipSceneOptions): ClipScene {
     durationMs: at,
     audio,
     matStart: material(timeline.initial),
-    drift,
+    fieldSeed,
+    celebrate,
     introDust: makeParticles(rng, 18),
   };
 }
@@ -754,16 +806,9 @@ export function renderClipFrame(
   glow.addColorStop(1, "rgba(0,0,0,0)");
   ctx.fillStyle = glow;
   ctx.fillRect(0, 0, L.W, L.H);
-  // Drifting ember / spark field: position drifts, alpha flickers, warm specks
-  // read as embers against the parchment-neutral dust.
-  for (const d of scene.drift) {
-    const dx = (((d.x + d.vx * t) % L.W) + L.W) % L.W;
-    const dy = (((d.y + d.vy * t) % L.H) + L.H) % L.H;
-    ctx.globalAlpha = d.a * (0.65 + 0.35 * Math.sin(t * 0.004 + d.phase));
-    ctx.fillStyle = d.warm > 0.6 ? "#ffb35c" : "#ece7dd";
-    ctx.fillRect(dx, dy, d.r, d.r);
-  }
-  ctx.globalAlpha = 1;
+  // Ambient particle field (embers / snow / rain / sparks / matrix / bubbles):
+  // seeded, cached, every speck a closed-form function of t.
+  paintParticleField(ctx, opts.style.particles, t, L.W, L.H, scene.fieldSeed, accent);
 
   // ---- End card replaces the board chrome once it starts ----
   if (scene.endMs > 0 && t >= scene.endStart) {
@@ -804,21 +849,29 @@ export function renderClipFrame(
   drawHook(scene, ctx, t);
 
   // ---- Where are we in the timeline? ----
+  const style = opts.style;
   const inFreeze = t >= scene.freezeStart;
   let active: SegFx | null = null;
   let u = 0; // 0..1 across the slide
   let holdU = 0; // 0..1 across the hold
   let doneCount = 0;
   for (const sf of scene.segs) {
-    const lead = sf.arrowMs + sf.preMs;
-    if (t >= sf.start + lead + sf.moveMs + sf.holdMs) {
+    if (t >= sf.start + segSpan(sf)) {
       doneCount++;
       continue;
     }
     if (t >= sf.start) {
       active = sf;
-      u = clamp01((t - sf.start - lead) / sf.moveMs);
-      holdU = clamp01((t - sf.start - lead - sf.moveMs) / sf.holdMs);
+      let tl = t - sf.start - segLead(sf);
+      // Stutter cut: hold the first beat of the slide, then snap in.
+      if (style.stutter && sf.moveMs > 120) {
+        const holdIn = Math.min(100, sf.moveMs * 0.3);
+        tl = tl <= holdIn ? 0 : ((tl - holdIn) / (sf.moveMs - holdIn)) * sf.moveMs;
+      }
+      u = clamp01(tl / sf.moveMs);
+      // The capture freeze window parks u at 1 (landing pose) before holdU
+      // starts counting, so the frame visibly freezes on the hit.
+      holdU = clamp01((t - sf.start - segLead(sf) - sf.moveMs - sf.freezeMs) / sf.holdMs);
     }
     break;
   }
@@ -852,6 +905,7 @@ export function renderClipFrame(
     ctx.translate(-tx, -ty);
   }
   applyPunch(scene, ctx, t, sqXY);
+  applyCameraWork(scene, ctx, t, sqXY, bcx, bcy);
 
   // Frame + squares. The frame glow pulses gently, synced to the momentum bar.
   ctx.strokeStyle = withAlpha(
@@ -905,8 +959,27 @@ export function renderClipFrame(
       }
     }
   }
-  // Between-ply transition: a brief accent shimmer sweeps the board edge.
-  drawEdgeShimmer(scene, ctx, t);
+  // Bloom pulse on card plays: an additive radial swell over the target.
+  if (style.bloom) drawBloom(scene, ctx, t, sqXY);
+  // Flame streak behind capture slides.
+  if (style.flameTrail && active) drawFlameTrail(scene, ctx, active, u, t, sqXY);
+  // Auto move-verdict stamps ("!!" / "!?" / "??").
+  if (style.verdictStamps) drawStamps(scene, ctx, t, sqXY);
+  // Capture freeze chrome: accent ticks around the held pose.
+  if (active && active.freezeMs > 0) drawFreezeTicks(scene, ctx, active, t, sqXY);
+  // Between-ply transition, per the style: the classic edge shimmer or one of
+  // the wave-2 cuts (whip / flash / spin / pixel / none).
+  if (style.transition === "shimmer") {
+    drawEdgeShimmer(scene, ctx, t);
+  } else {
+    const tr = activeTransition(scene, t);
+    if (tr) {
+      paintTransitionOverBoard(
+        ctx, style.transition, tr.p, scene.fieldSeed ^ tr.sf.start,
+        L.boardX - 4, L.boardY - 4, L.board + 8, accent, tr.dir,
+      );
+    }
+  }
   // Explainer callouts pop over the board edge (inside the shake group so
   // they thump with the hit that spawned them).
   if (opts.explainCallouts) drawCallouts(scene, ctx, t, sqXY);
@@ -915,19 +988,13 @@ export function renderClipFrame(
   // ---- Meters, captions, watermark ----
   if (opts.momentumBar) drawMomentum(scene, ctx, t);
   if (opts.moveCounter) drawProgress(scene, ctx, doneCount, active, u);
+  if (style.scoreBug) drawScoreBug(scene, ctx, t);
   drawPopCaption(scene, ctx, active, t);
   // Explainer rule panel: slides in from the safe side, holds while the rule
   // text is read, slides out. Drawn outside the board group so shake and
   // punch never smear the text.
   if (opts.explainRules) drawRulePanel(scene, ctx, t, sqXY);
-  if (opts.watermark) {
-    ctx.textAlign = "right";
-    ctx.font = `600 ${opts.aspect === "classic" ? 14 : 24}px ${fonts.body}`;
-    ctx.fillStyle = "rgba(236,231,221,0.5)";
-    const wx = opts.aspect === "tiktok" ? 940 : L.boardX + L.board;
-    ctx.fillText(opts.watermark, wx, L.watermarkY);
-    ctx.textAlign = "left";
-  }
+  if (opts.watermark) drawWatermark(scene, ctx);
 
   // ---- Freeze + stamp finish ----
   if (inFreeze && opts.freezeStamp && opts.verdict) {
@@ -960,12 +1027,14 @@ function applyPunch(
   t: number,
   sqXY: (sq: Square) => { x: number; y: number },
 ): void {
+  const zoom = scene.opts.style.zoom;
+  const mag = zoom === "subtle" ? 0.1 : zoom === "extreme" ? 0.32 : 0.2;
   for (const sf of scene.segs) {
     if (!sf.punch) continue;
     const te = sf.start + sf.arrowMs + sf.preMs + sf.moveMs;
     if (t < te || t > te + 200) continue;
     const u = easeOutCubic((t - te) / 200);
-    const s = 1 + 0.2 * (1 - u);
+    const s = 1 + mag * (1 - u);
     const { x, y } = sqXY(sf.target);
     const cx = x + scene.layout.sq / 2;
     const cy = y + scene.layout.sq / 2;
@@ -974,6 +1043,334 @@ function applyPunch(
     ctx.translate(-cx, -cy);
     return;
   }
+}
+
+// --- Camera work (wave 2) ----------------------------------------------------
+
+/** Follow-cam focal point: eases from ply to ply toward the midpoint of the
+ *  active move. Pure function of t. */
+function followTarget(
+  scene: ClipScene,
+  t: number,
+  sqXY: (sq: Square) => { x: number; y: number },
+): { x: number; y: number } {
+  const L = scene.layout;
+  let px = L.boardX + L.board / 2;
+  let py = L.boardY + L.board / 2;
+  for (const sf of scene.segs) {
+    const primary = sf.seg.pairs.find((p) => p.primary) ?? sf.seg.pairs[0] ?? null;
+    const a = primary ? sqXY(primary.from) : sqXY(sf.target);
+    const b = primary ? sqXY(primary.to) : a;
+    const cx = (a.x + b.x) / 2 + L.sq / 2;
+    const cy = (a.y + b.y) / 2 + L.sq / 2;
+    if (t < sf.start) break;
+    if (t < sf.start + segSpan(sf)) {
+      const k = easeInOutCubic(clamp01((t - sf.start) / 380));
+      return { x: px + (cx - px) * k, y: py + (cy - py) * k };
+    }
+    px = cx;
+    py = cy;
+  }
+  return { x: px, y: py };
+}
+
+const TRANSITION_MS = 260;
+
+/** The transition window at the top of a ply (non-payoff plies only), with a
+ *  left/right direction read off the move itself. */
+function activeTransition(
+  scene: ClipScene,
+  t: number,
+): { sf: SegFx; p: number; dir: number } | null {
+  const id = scene.opts.style.transition;
+  if (id === "none" || id === "shimmer") return null;
+  for (let i = 1; i < scene.segs.length; i++) {
+    const sf = scene.segs[i];
+    if (sf.preMs > 0) continue;
+    if (t < sf.start || t > sf.start + TRANSITION_MS) continue;
+    const primary = sf.seg.pairs.find((p) => p.primary) ?? sf.seg.pairs[0] ?? null;
+    const dir = primary && FILE(primary.to) < FILE(primary.from) ? -1 : 1;
+    return { sf, p: (t - sf.start) / TRANSITION_MS, dir };
+  }
+  return null;
+}
+
+/** Follow cam, Ken Burns drift, payoff dolly, tilt sway, and the transition
+ *  snap transform, all composed inside the board group. Every term is a pure
+ *  function of t, and every zoom stays >= 1 about an interior point so the
+ *  board never reveals its own edges. */
+function applyCameraWork(
+  scene: ClipScene,
+  ctx: CanvasRenderingContext2D,
+  t: number,
+  sqXY: (sq: Square) => { x: number; y: number },
+  bcx: number,
+  bcy: number,
+): void {
+  const style = scene.opts.style;
+  const L = scene.layout;
+  if (style.followCam && t >= scene.lead && t < scene.freezeStart) {
+    const target = followTarget(scene, t, sqXY);
+    const z = 1.07;
+    ctx.translate(target.x, target.y);
+    ctx.scale(z, z);
+    ctx.translate(-target.x, -target.y);
+  }
+  if (style.driftCam !== "off") {
+    const amp = style.driftCam === "gentle" ? 0.02 : 0.042;
+    const z = 1 + amp * (0.5 + 0.5 * Math.sin(t * 0.00042 + 0.8));
+    const panX = Math.sin(t * 0.00027) * L.board * 0.008;
+    ctx.translate(bcx, bcy);
+    ctx.scale(z, z);
+    ctx.translate(-bcx + panX, -bcy);
+  }
+  if (style.payoffDolly) {
+    const sf = scene.segs[scene.payoffIndex];
+    if (sf && t >= sf.start && t <= sf.start + segSpan(sf)) {
+      const p = clamp01((t - sf.start) / segSpan(sf));
+      const z = 1 + 0.05 * easeInOutCubic(p);
+      const { x, y } = sqXY(sf.target);
+      const tx = x + L.sq / 2;
+      const ty = y + L.sq / 2;
+      ctx.translate(tx, ty);
+      ctx.scale(z, z);
+      ctx.translate(-tx, -ty);
+    }
+  }
+  if (style.tiltSway) {
+    const rot =
+      (0.55 * momentumAt(scene, t) + 0.45 * Math.sin(t * 0.0006)) *
+      (1.5 * Math.PI / 180);
+    ctx.translate(bcx, bcy);
+    ctx.rotate(rot);
+    ctx.translate(-bcx, -bcy);
+  }
+  const tr = activeTransition(scene, t);
+  if (tr) {
+    const { dx01, rot } = transitionShift(style.transition, tr.p, tr.dir);
+    if (dx01 !== 0 || rot !== 0) {
+      ctx.translate(bcx, bcy);
+      ctx.rotate(rot);
+      ctx.translate(-bcx + dx01 * L.board, -bcy);
+    }
+  }
+}
+
+// --- Wave-2 board-layer painters ---------------------------------------------
+
+/** Additive bloom swell over the target square while a card fires. */
+function drawBloom(
+  scene: ClipScene,
+  ctx: CanvasRenderingContext2D,
+  t: number,
+  sqXY: (sq: Square) => { x: number; y: number },
+): void {
+  const L = scene.layout;
+  for (const sf of scene.segs) {
+    if (!sf.seg.sig) continue;
+    const t0 = sf.start + segLead(sf);
+    const dur = Math.min(900, sf.moveMs + sf.holdMs);
+    if (t < t0 || t > t0 + dur) continue;
+    const p = (t - t0) / dur;
+    const color = sf.energy ? ENERGY_COLOR[sf.energy] : scene.opts.accent;
+    const { x, y } = sqXY(sf.target);
+    const cx = x + L.sq / 2;
+    const cy = y + L.sq / 2;
+    const R = L.sq * (1.6 + 0.9 * p) * sf.tierScale;
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    ctx.globalAlpha = Math.sin(Math.PI * p) * (0.3 + 0.08 * Math.sin(t * 0.02));
+    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, R);
+    g.addColorStop(0, withAlpha(color, 0.8));
+    g.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(cx - R, cy - R, R * 2, R * 2);
+    ctx.restore();
+    return;
+  }
+}
+
+/** Flame streak trailing a capture slide: a tapering ember-colored ribbon
+ *  sampled back along the path. Emoji-free by design. */
+function drawFlameTrail(
+  scene: ClipScene,
+  ctx: CanvasRenderingContext2D,
+  sf: SegFx,
+  u: number,
+  t: number,
+  sqXY: (sq: Square) => { x: number; y: number },
+): void {
+  if (u <= 0.02 || u >= 1) return;
+  const primary = sf.seg.pairs.find((p) => p.primary) ?? sf.seg.pairs[0] ?? null;
+  if (!primary?.captured) return;
+  const L = scene.layout;
+  const a = sqXY(primary.from);
+  const b = sqXY(primary.to);
+  const moveT = easeInOutCubic(clamp01(u));
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+  for (let g = 0; g < 7; g++) {
+    const gt = moveT - g * 0.07;
+    if (gt <= 0) break;
+    const px = a.x + (b.x - a.x) * gt + L.sq / 2;
+    const py = a.y + (b.y - a.y) * gt + L.sq / 2;
+    const flick = 0.7 + 0.3 * Math.sin(t * 0.05 + g * 1.7);
+    const r = L.sq * (0.3 - g * 0.034) * flick;
+    if (r <= 0) break;
+    ctx.globalAlpha = (0.3 - g * 0.036) * Math.sin(Math.PI * moveT);
+    const grad = ctx.createRadialGradient(px, py, 0, px, py, r);
+    grad.addColorStop(0, g < 2 ? "#ffd76a" : "#ff9a3d");
+    grad.addColorStop(1, "rgba(224,82,31,0)");
+    ctx.fillStyle = grad;
+    ctx.fillRect(px - r, py - r, r * 2, r * 2);
+  }
+  ctx.restore();
+}
+
+/** Auto move-verdict stamps: "!!" / "!?" / "??" popped beside the landing
+ *  square, derived from the capture-swing math at build time. */
+function drawStamps(
+  scene: ClipScene,
+  ctx: CanvasRenderingContext2D,
+  t: number,
+  sqXY: (sq: Square) => { x: number; y: number },
+): void {
+  const L = scene.layout;
+  for (const sf of scene.segs) {
+    if (!sf.stamp) continue;
+    const tLand = sf.start + segLead(sf) + sf.moveMs;
+    const dur = 900 + sf.freezeMs;
+    if (t < tLand || t > tLand + dur) continue;
+    const p = (t - tLand) / dur;
+    const pop = p < 0.18 ? easeOutBack(clamp01(p / 0.18)) : 1 + 0.015 * Math.sin(t * 0.02);
+    const fade = p > 0.82 ? 1 - (p - 0.82) / 0.18 : 1;
+    const { x, y } = sqXY(sf.target);
+    const size = L.sq * 0.62;
+    // Sit above-right of the square, nudged inside the board frame.
+    const cx = Math.min(L.boardX + L.board - size, Math.max(L.boardX + size, x + L.sq * 0.95));
+    const cy = Math.max(L.boardY + size * 0.8, y - L.sq * 0.05);
+    const color =
+      sf.stamp === "!!" ? scene.opts.accent : sf.stamp === "??" ? "#e05252" : "#ece7dd";
+    ctx.save();
+    ctx.globalAlpha = fade;
+    ctx.translate(cx, cy);
+    ctx.rotate(-0.07);
+    ctx.scale(pop, pop);
+    ctx.textAlign = "center";
+    ctx.font = `800 ${size}px ${scene.opts.fonts.display}`;
+    ctx.lineWidth = Math.max(3, size * 0.16);
+    ctx.strokeStyle = "rgba(10,8,6,0.92)";
+    ctx.lineJoin = "round";
+    ctx.strokeText(sf.stamp, 0, 0);
+    ctx.shadowColor = color;
+    ctx.shadowBlur = size * 0.2;
+    ctx.fillStyle = color;
+    ctx.fillText(sf.stamp, 0, 0);
+    ctx.restore();
+    return;
+  }
+}
+
+/** Accent corner ticks around the target square during a capture freeze. */
+function drawFreezeTicks(
+  scene: ClipScene,
+  ctx: CanvasRenderingContext2D,
+  sf: SegFx,
+  t: number,
+  sqXY: (sq: Square) => { x: number; y: number },
+): void {
+  const fStart = sf.start + segLead(sf) + sf.moveMs;
+  if (t < fStart || t > fStart + sf.freezeMs) return;
+  const p = (t - fStart) / sf.freezeMs;
+  const L = scene.layout;
+  const { x, y } = sqXY(sf.target);
+  const grow = easeOutCubic(clamp01(p * 3));
+  const pad = L.sq * (0.12 + 0.06 * grow);
+  const len = L.sq * 0.26;
+  ctx.save();
+  ctx.globalAlpha = 0.9 * (1 - p * 0.4);
+  ctx.strokeStyle = scene.opts.accent;
+  ctx.lineWidth = 3;
+  for (const [sx, sy] of [[0, 0], [1, 0], [0, 1], [1, 1]] as const) {
+    const cx = x - pad + sx * (L.sq + pad * 2);
+    const cy = y - pad + sy * (L.sq + pad * 2);
+    ctx.beginPath();
+    ctx.moveTo(cx + (sx ? -len : len), cy);
+    ctx.lineTo(cx, cy);
+    ctx.lineTo(cx, cy + (sy ? -len : len));
+    ctx.stroke();
+  }
+  // A one-beat white blink right at the freeze cut, well under flash limits.
+  if (p < 0.12) {
+    ctx.globalAlpha = 0.18 * (1 - p / 0.12);
+    ctx.fillStyle = "#fff7e6";
+    ctx.fillRect(L.boardX - 4, L.boardY - 4, L.board + 8, L.board + 8);
+  }
+  ctx.restore();
+}
+
+/** Captured-material score bug: a minimal chip above the board's right edge
+ *  showing who leads on material and by how much. */
+function drawScoreBug(scene: ClipScene, ctx: CanvasRenderingContext2D, t: number): void {
+  const { layout: L, opts } = scene;
+  const v = materialAt(scene, t);
+  const lead = Math.round(Math.abs(v));
+  const small = opts.aspect === "classic";
+  const h = small ? 24 : 36;
+  const w = small ? 78 : 118;
+  const x = L.boardX + L.board - w;
+  const y = L.boardY - h - (small ? 6 : 10);
+  if (y < 8) return;
+  ctx.save();
+  ctx.fillStyle = "rgba(16,14,11,0.85)";
+  ctx.fillRect(x, y, w, h);
+  ctx.strokeStyle = "rgba(255,255,255,0.18)";
+  ctx.lineWidth = 1;
+  ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
+  // Leader dot: parchment for White, coal for Black, split when even.
+  const dot = small ? 7 : 10;
+  const dx = x + (small ? 8 : 12);
+  const dy = y + h / 2 - dot / 2;
+  if (lead === 0) {
+    ctx.fillStyle = "#ece7dd";
+    ctx.fillRect(dx, dy, dot / 2, dot);
+    ctx.fillStyle = "#3a352c";
+    ctx.fillRect(dx + dot / 2, dy, dot / 2, dot);
+  } else {
+    ctx.fillStyle = v > 0 ? "#ece7dd" : "#3a352c";
+    ctx.fillRect(dx, dy, dot, dot);
+    ctx.strokeStyle = "rgba(236,231,221,0.5)";
+    ctx.strokeRect(dx + 0.5, dy + 0.5, dot - 1, dot - 1);
+  }
+  ctx.font = `700 ${small ? 13 : 20}px ${opts.fonts.body}`;
+  ctx.textAlign = "left";
+  ctx.fillStyle = "#c9c2b4";
+  ctx.fillText(lead === 0 ? "EVEN" : `+${lead}`, dx + dot + (small ? 6 : 10), y + h * 0.68);
+  ctx.restore();
+}
+
+/** Watermark, at the corner the style picked. Corners are the BOARD's corners
+ *  so every aspect's platform-safe zones stay respected. */
+function drawWatermark(scene: ClipScene, ctx: CanvasRenderingContext2D): void {
+  const { layout: L, opts } = scene;
+  if (!opts.watermark) return;
+  const corner = opts.style.watermarkCorner;
+  const leftX = opts.aspect === "tiktok" ? 120 : L.boardX;
+  let rightX = opts.aspect === "tiktok" ? 940 : L.boardX + L.board;
+  const topY = L.boardY - (opts.aspect === "classic" ? 10 : 16);
+  // The score bug owns the board's top-right shoulder; slide a "tr" watermark
+  // left of it rather than stacking the two.
+  if (corner === "tr" && opts.style.scoreBug) {
+    rightX -= opts.aspect === "classic" ? 92 : 136;
+  }
+  const x = corner === "tl" || corner === "bl" ? leftX : rightX;
+  const y = corner === "tl" || corner === "tr" ? topY : L.watermarkY;
+  ctx.save();
+  ctx.textAlign = corner === "tl" || corner === "bl" ? "left" : "right";
+  ctx.font = `600 ${opts.aspect === "classic" ? 14 : 24}px ${opts.fonts.body}`;
+  ctx.fillStyle = "rgba(236,231,221,0.5)";
+  ctx.fillText(opts.watermark, x, y);
+  ctx.restore();
 }
 
 function drawSegment(
@@ -1858,25 +2255,31 @@ function drawPopCaption(
   ctx.restore();
 }
 
-/** Signed momentum at time t, -1..1: interpolated material swing, with an
- *  overshooting lurch on segments where the value actually jumps. Shared by
- *  the momentum bar and the board-glow pulse so the two breathe together. */
-function momentumAt(scene: ClipScene, t: number): number {
+/** Interpolated white-minus-black material at time t, with an overshooting
+ *  lurch on segments where the value actually jumps. Shared by the momentum
+ *  bar, the board-glow pulse, and the score bug. */
+function materialAt(scene: ClipScene, t: number): number {
   let value = scene.matStart;
   for (const sf of scene.segs) {
     const from = value;
     const to = sf.matAfter;
-    if (t >= sf.start + sf.arrowMs + sf.preMs + sf.moveMs + sf.holdMs) {
+    if (t >= sf.start + segSpan(sf)) {
       value = to;
       continue;
     }
     if (t >= sf.start) {
-      const u = clamp01((t - sf.start - sf.arrowMs - sf.preMs) / (sf.moveMs + sf.holdMs * 0.4));
+      const u = clamp01((t - sf.start - segLead(sf)) / (sf.moveMs + sf.holdMs * 0.4));
       const ease = Math.abs(to - from) >= 3 ? easeOutBack(u) : easeInOutCubic(u);
       value = from + (to - from) * ease;
     }
     break;
   }
+  return value;
+}
+
+/** Signed momentum at time t, -1..1: the material swing squashed to a bar. */
+function momentumAt(scene: ClipScene, t: number): number {
+  const value = materialAt(scene, t);
   return Math.max(-1, Math.min(1, (value / (Math.abs(value) + 6)) * 1.6));
 }
 
@@ -2021,8 +2424,8 @@ function drawEndCard(
   ctx.fillText(wm2, cx - (w1 + w2) / 2 + w1, topY);
   ctx.restore();
 
-  // The URL types itself on, caret blinking while it goes.
-  const url = "play at nerfchess.com";
+  // The CTA line types itself on, caret blinking while it goes.
+  const url = opts.ctaText.trim() || "nerfchess.com";
   const typed = Math.round(clamp01((p - 0.16) / 0.4) * url.length);
   ctx.textAlign = "center";
   ctx.font = `600 ${Math.round(markSize * 0.3)}px ${opts.fonts.body}`;
@@ -2175,28 +2578,62 @@ function grainTiles(): HTMLCanvasElement[] | null {
   return tiles;
 }
 
-/** The always-on finishing pass: vignette, seeded film grain, and a chromatic
- *  edge kick on impact frames. Runs over EVERY frame, end card included. */
+/** The always-on finishing pass, composed strictly by config: flash-cut,
+ *  color grade, confetti, VHS, glitch bursts, chromatic split, vignette,
+ *  film grain, letterbox, and the single-frame invert flash. Runs over EVERY
+ *  frame, end card included. */
 function drawOverlays(scene: ClipScene, ctx: CanvasRenderingContext2D, t: number): void {
   const L = scene.layout;
+  const style = scene.opts.style;
 
-  // Chromatic edge on impact frames: the board frame splits into a red and a
-  // cyan ghost for a few frames after a hit lands.
-  for (const sf of scene.segs) {
-    if (sf.shards.length === 0 && !sf.isPayoff) continue;
-    const te = sf.start + sf.arrowMs + sf.preMs + sf.moveMs;
-    if (t < te || t > te + 130) continue;
-    const q = 1 - (t - te) / 130;
-    const off = 3 * q;
-    ctx.save();
-    ctx.globalAlpha = 0.35 * q;
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = "#ff5a4d";
-    ctx.strokeRect(L.boardX - 4 - off, L.boardY - 4, L.board + 8, L.board + 8);
-    ctx.strokeStyle = "#4dc8ff";
-    ctx.strokeRect(L.boardX - 4 + off, L.boardY - 4, L.board + 8, L.board + 8);
-    ctx.restore();
-    break;
+  // Flash-cut transition: a soft white kiss at the top of each ply.
+  if (style.transition === "flash") {
+    const tr = activeTransition(scene, t);
+    if (tr) paintFlashCut(ctx, tr.p, L.W, L.H);
+  }
+
+  // Color grade: precomputed blend layers over the finished frame.
+  applyGrade(ctx, style.grade, L.W, L.H, t);
+
+  // Victory confetti over the verdict freeze.
+  if (scene.celebrate && t >= scene.freezeStart) {
+    paintConfetti(ctx, L.W, L.H, t - scene.freezeStart, scene.fieldSeed);
+  }
+
+  // VHS: scanlines, tracking band, REC chrome.
+  if (style.vhs) paintVhs(ctx, L.W, L.H, t, L.boardX, L.boardY, scene.opts.fonts.body);
+
+  // Seeded glitch bursts on capture landings (self-blit, so post-grade).
+  if (style.glitch) {
+    for (const sf of scene.segs) {
+      if (sf.shards.length === 0) continue;
+      paintGlitch(ctx, L.W, L.H, t, sf.start + segLead(sf) + sf.moveMs, scene.fieldSeed);
+    }
+  }
+
+  // Chromatic split. "impacts": red/cyan board-frame ghosts for a few frames
+  // after a hit. "always": the same ghosts simmering the whole clip.
+  if (style.chromatic !== "off") {
+    let q = 0;
+    if (style.chromatic === "always") q = 0.35 + 0.15 * Math.sin(t * 0.003);
+    for (const sf of scene.segs) {
+      if (sf.shards.length === 0 && !sf.isPayoff) continue;
+      const te = sf.start + segLead(sf) + sf.moveMs;
+      if (t < te || t > te + 130) continue;
+      q = Math.max(q, 1 - (t - te) / 130);
+      break;
+    }
+    if (q > 0.02) {
+      const off = 3 * q;
+      ctx.save();
+      ctx.globalAlpha = 0.35 * q;
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = "#ff5a4d";
+      ctx.strokeRect(L.boardX - 4 - off, L.boardY - 4, L.board + 8, L.board + 8);
+      ctx.strokeStyle = "#4dc8ff";
+      ctx.strokeRect(L.boardX - 4 + off, L.boardY - 4, L.board + 8, L.board + 8);
+      ctx.restore();
+    }
   }
 
   // Vignette, breathing very slightly.
@@ -2209,17 +2646,56 @@ function drawOverlays(scene: ClipScene, ctx: CanvasRenderingContext2D, t: number
   ctx.fillStyle = vig;
   ctx.fillRect(0, 0, L.W, L.H);
 
-  // Film grain: deterministic tiles cycled at frame rate. Very subtle.
-  const tiles = grainTiles();
-  if (tiles) {
-    const tile = tiles[Math.floor(t / (1000 / 30)) % GRAIN_FRAMES];
-    const pat = ctx.createPattern(tile, "repeat");
-    if (pat) {
-      ctx.save();
-      ctx.globalAlpha = 0.5;
-      ctx.fillStyle = pat;
-      ctx.fillRect(0, 0, L.W, L.H);
-      ctx.restore();
+  // Film grain: deterministic tiles cycled at frame rate.
+  if (style.grain !== "off") {
+    const tiles = grainTiles();
+    if (tiles) {
+      const tile = tiles[Math.floor(t / (1000 / 30)) % GRAIN_FRAMES];
+      const pat = ctx.createPattern(tile, "repeat");
+      if (pat) {
+        ctx.save();
+        ctx.globalAlpha = style.grain === "gritty" ? 0.8 : 0.5;
+        ctx.fillStyle = pat;
+        ctx.fillRect(0, 0, L.W, L.H);
+        if (style.grain === "gritty") {
+          // A second, coarser pass: the same tiles at double scale.
+          ctx.globalAlpha = 0.35;
+          ctx.scale(2, 2);
+          ctx.fillRect(0, 0, L.W / 2, L.H / 2);
+        }
+        ctx.restore();
+      }
+    }
+  }
+
+  // Animated letterbox: bars slide in over the intro, squeeze on the payoff.
+  if (style.letterbox) {
+    const inU = easeOutCubic(clamp01(t / 600));
+    let extra = 0;
+    const sf = scene.segs[scene.payoffIndex];
+    if (sf && t >= sf.start) {
+      extra =
+        t <= sf.start + segSpan(sf)
+          ? easeInOutCubic(clamp01((t - sf.start) / 500))
+          : 1;
+    }
+    paintLetterbox(ctx, L.W, L.H, inU, extra);
+  }
+
+  // Single-frame invert flash on the payoff impact. Epilepsy-safe by
+  // construction: it fires once per clip (the payoff is unique), lasts ONE
+  // frame at 30fps, and can never repeat within 2 seconds.
+  if (style.invertFlash) {
+    const sf = scene.segs[scene.payoffIndex];
+    if (sf && (sf.shards.length > 0 || sf.seg.sig)) {
+      const te = sf.start + segLead(sf) + sf.moveMs;
+      if (t >= te && t < te + 1000 / 30) {
+        ctx.save();
+        ctx.globalCompositeOperation = "difference";
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, L.W, L.H);
+        ctx.restore();
+      }
     }
   }
 }

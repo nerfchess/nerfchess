@@ -52,6 +52,13 @@ import {
   type ClipMusicSelection,
   type MusicTrackId,
 } from "./clipMusic";
+import {
+  STYLE_DEFAULTS,
+  STYLE_PRESETS,
+  surpriseStyle,
+  type ClipStyle,
+  type StylePreset,
+} from "./clipStyles";
 import { ClipRenderer, type ClipRendererHandle } from "./ClipRenderer";
 import { useModalChrome } from "@/lib/useModalChrome";
 import { Button } from "@/components/ui/Button";
@@ -61,6 +68,7 @@ const LENGTH_OPTIONS: PliesChoice[] = ["auto", 4, 6, 10];
 const ASPECTS: { id: ClipAspect; label: string }[] = [
   { id: "tiktok", label: "9:16" },
   { id: "square", label: "1:1" },
+  { id: "youtube", label: "16:9" },
   { id: "classic", label: "Classic" },
 ];
 const CAPTION_STYLES: { id: CaptionStyle; label: string }[] = [
@@ -79,11 +87,46 @@ const HOOK_PRESETS = [
   "This card should be illegal",
   "Chess but with cards",
 ];
+const GRADE_OPTIONS = [
+  ["none", "None"], ["noir", "Noir"], ["vaporwave", "Vaporwave"],
+  ["cyberpunk", "Cyberpunk"], ["vintage", "Vintage"], ["emerald", "Emerald"],
+  ["infrared", "Infrared"], ["bleach", "Bleach"],
+] as const;
+const PARTICLE_OPTIONS = [
+  ["embers", "Embers"], ["snow", "Snow"], ["rain", "Rain"], ["sparks", "Sparks"],
+  ["matrix", "Matrix"], ["bubbles", "Bubbles"], ["off", "Off"],
+] as const;
+const TRANSITION_OPTIONS = [
+  ["shimmer", "Shimmer"], ["whip", "Whip-pan"], ["flash", "Flash cut"],
+  ["spin", "Spin"], ["pixel", "Pixel dissolve"], ["none", "None"],
+] as const;
+const SPEED_OPTIONS = [
+  [0.75, "0.75x"], [1, "1x"], [1.25, "1.25x"], [1.5, "1.5x"],
+] as const;
+const ZOOM_OPTIONS = [
+  ["off", "Off"], ["subtle", "Subtle"], ["punchy", "Punchy"], ["extreme", "Extreme"],
+] as const;
+const DRIFT_OPTIONS = [
+  ["off", "Off"], ["gentle", "Gentle"], ["cinematic", "Cinematic"],
+] as const;
+const SHAKE_OPTIONS = [
+  ["off", "Off"], ["subtle", "Subtle"], ["heavy", "Heavy"],
+] as const;
+const CHROMATIC_OPTIONS = [
+  ["off", "Off"], ["impacts", "Impacts"], ["always", "Always"],
+] as const;
+const GRAIN_OPTIONS = [
+  ["off", "Off"], ["fine", "Fine"], ["gritty", "Gritty"],
+] as const;
+const SLOWMO_OPTIONS = [
+  ["off", "Off"], ["classic", "Classic"], ["ultra", "Ultra"],
+] as const;
+const CORNER_OPTIONS = [
+  ["tl", "TL"], ["tr", "TR"], ["bl", "BL"], ["br", "BR"],
+] as const;
 
 interface ClipOptionsState {
   aspect: ClipAspect;
-  zoomPunch: boolean;
-  screenShake: boolean;
   speedRamp: boolean;
   freezeStamp: boolean;
   momentumBar: boolean;
@@ -101,13 +144,15 @@ interface ClipOptionsState {
   watermarkOn: boolean;
   handle: string;
   endCard: boolean;
+  /** End-card call-to-action line. */
+  ctaText: string;
+  /** The wave-2 style pack (camera, look, fx, pace, cuts, stamps). */
+  style: ClipStyle;
 }
 
 // "TikTok mode": the default preset, everything on.
 const TIKTOK_MODE: ClipOptionsState = {
   aspect: "tiktok",
-  zoomPunch: true,
-  screenShake: true,
   speedRamp: true,
   freezeStamp: true,
   momentumBar: true,
@@ -124,6 +169,8 @@ const TIKTOK_MODE: ClipOptionsState = {
   watermarkOn: true,
   handle: "nerfchess.com",
   endCard: true,
+  ctaText: "nerfchess.com",
+  style: STYLE_DEFAULTS,
 };
 
 interface Props {
@@ -174,6 +221,48 @@ function GroupLabel({ children }: { children: React.ReactNode }) {
   return <p className="smallcaps mb-1 mt-3 text-[10px] text-parchment-400">{children}</p>;
 }
 
+/** One labeled row of mutually exclusive chips. */
+function ChoiceRow<T extends string | number>({
+  label,
+  options,
+  value,
+  onPick,
+  disabled,
+}: {
+  label: string;
+  options: readonly (readonly [T, string])[];
+  value: T;
+  onPick: (v: T) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <div className="mt-1 flex flex-wrap items-center gap-1.5" role="group" aria-label={label}>
+      <span className="smallcaps w-16 shrink-0 text-[10px] text-parchment-400">{label}</span>
+      {options.map(([id, lab]) => (
+        <Chip
+          key={String(id)}
+          label={lab}
+          on={value === id}
+          onClick={() => onPick(id)}
+          disabled={disabled}
+        />
+      ))}
+    </div>
+  );
+}
+
+/** Collapsible sub-group inside the Adjust fold. */
+function SubGroup({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <details className="mt-2 border border-white/10 bg-white/[0.02]">
+      <summary className="smallcaps cursor-pointer list-none px-2.5 py-2 text-[10px] text-parchment-300 outline-none focus-visible:text-gold-leaf [&::-webkit-details-marker]:hidden">
+        {title}
+      </summary>
+      <div className="px-2.5 pb-2.5">{children}</div>
+    </details>
+  );
+}
+
 export function ClipModal({
   open,
   onClose,
@@ -188,6 +277,10 @@ export function ClipModal({
   const chrome = useModalChrome(open, onClose);
   const [pliesChoice, setPliesChoice] = useState<PliesChoice>("auto");
   const [opts, setOpts] = useState<ClipOptionsState>(TIKTOK_MODE);
+  // Which style preset the current knobs came from (null: hand-tuned), and
+  // the Surprise-me tap counter (each tap is a fresh deterministic shuffle).
+  const [presetId, setPresetId] = useState<string | null>("tiktok");
+  const [surpriseTap, setSurpriseTap] = useState(0);
   const [hook, setHook] = useState<string | null>(null); // null = auto default
   const [images, setImages] = useState<Map<string, HTMLImageElement> | null>(null);
   const [support, setSupport] = useState<EncodeSupport | null>(null);
@@ -330,8 +423,8 @@ export function ClipModal({
       hookText,
       captionStyle: opts.captionStyle,
       emojiLevel: opts.emojiLevel,
-      zoomPunch: opts.zoomPunch,
-      screenShake: opts.screenShake,
+      style: opts.style,
+      ctaText: opts.ctaText,
       speedRamp: opts.speedRamp,
       freezeStamp: opts.freezeStamp,
       momentumBar: opts.momentumBar,
@@ -493,6 +586,45 @@ export function ClipModal({
     [discardClip],
   );
 
+  // One style knob changed by hand: the preset chip lets go.
+  const setStyle = useCallback(
+    (patch: Partial<ClipStyle>) => {
+      setOpts((o) => ({ ...o, style: { ...o.style, ...patch } }));
+      setPresetId(null);
+      setError(null);
+      discardClip();
+    },
+    [discardClip],
+  );
+
+  // Preset tap: a partial override of the defaults (plus its vibe extras),
+  // keeping the current Surprise seed so seeded FX stay stable.
+  const applyPreset = useCallback(
+    (p: StylePreset) => {
+      setOpts((o) => ({
+        ...o,
+        style: { ...STYLE_DEFAULTS, ...p.style, seed: o.style.seed },
+        ...(p.extras?.emojiLevel !== undefined ? { emojiLevel: p.extras.emojiLevel } : {}),
+        ...(p.extras?.captionStyle !== undefined ? { captionStyle: p.extras.captionStyle } : {}),
+        ...(p.extras?.musicTrack !== undefined ? { musicTrack: p.extras.musicTrack } : {}),
+      }));
+      setPresetId(p.id);
+      setError(null);
+      discardClip();
+    },
+    [discardClip],
+  );
+
+  // Surprise me: deterministic per tap count. Tap N always yields combo N.
+  const surpriseMe = useCallback(() => {
+    const tap = surpriseTap + 1;
+    setSurpriseTap(tap);
+    setOpts((o) => ({ ...o, style: surpriseStyle(tap) }));
+    setPresetId("surprise");
+    setError(null);
+    discardClip();
+  }, [surpriseTap, discardClip]);
+
   // Import your own backing track: decoded with the Web Audio API right here
   // in the browser; the file is never uploaded anywhere.
   const importMusicFile = useCallback(
@@ -581,7 +713,13 @@ export function ClipModal({
 
   const durationSec = scene ? Math.round(scene.durationMs / 100) / 10 : null;
   const previewMax =
-    opts.aspect === "tiktok" ? "max-w-[15rem]" : opts.aspect === "square" ? "max-w-[20rem]" : "max-w-[22rem]";
+    opts.aspect === "tiktok"
+      ? "max-w-[15rem]"
+      : opts.aspect === "square"
+        ? "max-w-[20rem]"
+        : opts.aspect === "youtube"
+          ? "max-w-[27rem]"
+          : "max-w-[22rem]";
   const settingsLocked = recording && support?.tier === 2;
 
   return (
@@ -592,6 +730,8 @@ export function ClipModal({
       data-clip-modal
       data-clip-bytes={clip?.blob.size ?? 0}
       data-clip-duration={scene?.durationMs ?? 0}
+      data-clip-style-sig={`${opts.style.grade}:${opts.style.particles}:${opts.style.transition}:${opts.style.zoom}:${opts.style.speed}:${opts.style.seed}`}
+      data-clip-preset={presetId ?? "custom"}
       className="fixed inset-0 z-[60] grid place-items-center bg-[#0f0d0a]/70 px-4 py-6 backdrop-blur-sm"
       onPointerDown={chrome.onBackdropPointerDown}
     >
@@ -765,6 +905,25 @@ export function ClipModal({
                 </span>
               </summary>
               <div className="px-3 pb-3">
+                <GroupLabel>Style</GroupLabel>
+                <div className="flex flex-wrap gap-1.5" role="group" aria-label="Style presets">
+                  {STYLE_PRESETS.map((p) => (
+                    <Chip
+                      key={p.id}
+                      label={p.label}
+                      on={presetId === p.id}
+                      onClick={() => applyPreset(p)}
+                      disabled={settingsLocked}
+                    />
+                  ))}
+                  <Chip
+                    label="Surprise me"
+                    on={presetId === "surprise"}
+                    onClick={surpriseMe}
+                    disabled={settingsLocked}
+                  />
+                </div>
+
                 <GroupLabel>Format</GroupLabel>
                 <div className="flex flex-wrap items-center gap-1.5">
                   <div className="flex items-center gap-1" role="group" aria-label="Aspect">
@@ -803,6 +962,7 @@ export function ClipModal({
                     onClick={() => {
                       setOpts(TIKTOK_MODE);
                       setPliesChoice("auto");
+                      setPresetId("tiktok");
                       editHook(null);
                     }}
                     className="text-parchment-300"
@@ -811,15 +971,67 @@ export function ClipModal({
                   </Button>
                 </div>
 
-                <GroupLabel>Energy</GroupLabel>
-                <div className="flex flex-wrap gap-1.5">
-                  <Chip label="Zoom punch" on={opts.zoomPunch} onClick={() => set("zoomPunch", !opts.zoomPunch)} disabled={settingsLocked} />
-                  <Chip label="Shake" on={opts.screenShake} onClick={() => set("screenShake", !opts.screenShake)} disabled={settingsLocked} />
-                  <Chip label="Speed ramp" on={opts.speedRamp} onClick={() => set("speedRamp", !opts.speedRamp)} disabled={settingsLocked} />
-                  <Chip label="Verdict stamp" on={opts.freezeStamp} onClick={() => set("freezeStamp", !opts.freezeStamp)} disabled={settingsLocked} />
-                  <Chip label="Momentum bar" on={opts.momentumBar} onClick={() => set("momentumBar", !opts.momentumBar)} disabled={settingsLocked} />
-                  <Chip label="Move counter" on={opts.moveCounter} onClick={() => set("moveCounter", !opts.moveCounter)} disabled={settingsLocked} />
-                </div>
+                <SubGroup title="Camera">
+                  <ChoiceRow label="Zoom" options={ZOOM_OPTIONS} value={opts.style.zoom} onPick={(v) => setStyle({ zoom: v })} disabled={settingsLocked} />
+                  <ChoiceRow label="Drift" options={DRIFT_OPTIONS} value={opts.style.driftCam} onPick={(v) => setStyle({ driftCam: v })} disabled={settingsLocked} />
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    <Chip label="Follow cam" on={opts.style.followCam} onClick={() => setStyle({ followCam: !opts.style.followCam })} disabled={settingsLocked} />
+                    <Chip label="Payoff dolly" on={opts.style.payoffDolly} onClick={() => setStyle({ payoffDolly: !opts.style.payoffDolly })} disabled={settingsLocked} />
+                    <Chip label="Tilt sway" on={opts.style.tiltSway} onClick={() => setStyle({ tiltSway: !opts.style.tiltSway })} disabled={settingsLocked} />
+                  </div>
+                </SubGroup>
+
+                <SubGroup title="Look">
+                  <div className="flex flex-wrap gap-1.5" role="group" aria-label="Color grade">
+                    {GRADE_OPTIONS.map(([id, label]) => (
+                      <Chip key={id} label={label} on={opts.style.grade === id} onClick={() => setStyle({ grade: id })} disabled={settingsLocked} />
+                    ))}
+                  </div>
+                </SubGroup>
+
+                <SubGroup title="FX">
+                  <ChoiceRow label="Shake" options={SHAKE_OPTIONS} value={opts.style.shake} onPick={(v) => setStyle({ shake: v })} disabled={settingsLocked} />
+                  <ChoiceRow label="Chromatic" options={CHROMATIC_OPTIONS} value={opts.style.chromatic} onPick={(v) => setStyle({ chromatic: v })} disabled={settingsLocked} />
+                  <ChoiceRow label="Grain" options={GRAIN_OPTIONS} value={opts.style.grain} onPick={(v) => setStyle({ grain: v })} disabled={settingsLocked} />
+                  <ChoiceRow label="Particles" options={PARTICLE_OPTIONS} value={opts.style.particles} onPick={(v) => setStyle({ particles: v })} disabled={settingsLocked} />
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    <Chip label="Letterbox" on={opts.style.letterbox} onClick={() => setStyle({ letterbox: !opts.style.letterbox })} disabled={settingsLocked} />
+                    <Chip label="Glitch bursts" on={opts.style.glitch} onClick={() => setStyle({ glitch: !opts.style.glitch })} disabled={settingsLocked} />
+                    <Chip label="VHS" on={opts.style.vhs} onClick={() => setStyle({ vhs: !opts.style.vhs })} disabled={settingsLocked} />
+                    <Chip label="Bloom" on={opts.style.bloom} onClick={() => setStyle({ bloom: !opts.style.bloom })} disabled={settingsLocked} />
+                    <Chip label="Invert flash" on={opts.style.invertFlash} onClick={() => setStyle({ invertFlash: !opts.style.invertFlash })} disabled={settingsLocked} />
+                    <Chip label="Confetti" on={opts.style.confetti} onClick={() => setStyle({ confetti: !opts.style.confetti })} disabled={settingsLocked} />
+                  </div>
+                </SubGroup>
+
+                <SubGroup title="Pace">
+                  <ChoiceRow label="Speed" options={SPEED_OPTIONS} value={opts.style.speed} onPick={(v) => setStyle({ speed: v })} disabled={settingsLocked} />
+                  <ChoiceRow label="Slow-mo" options={SLOWMO_OPTIONS} value={opts.style.slowmo} onPick={(v) => setStyle({ slowmo: v })} disabled={settingsLocked} />
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    <Chip label="Speed ramp" on={opts.speedRamp} onClick={() => set("speedRamp", !opts.speedRamp)} disabled={settingsLocked} />
+                    <Chip label="Freeze frames" on={opts.style.captureFreeze} onClick={() => setStyle({ captureFreeze: !opts.style.captureFreeze })} disabled={settingsLocked} />
+                    <Chip label="Stutter cuts" on={opts.style.stutter} onClick={() => setStyle({ stutter: !opts.style.stutter })} disabled={settingsLocked} />
+                  </div>
+                </SubGroup>
+
+                <SubGroup title="Cuts">
+                  <div className="flex flex-wrap gap-1.5" role="group" aria-label="Ply transition">
+                    {TRANSITION_OPTIONS.map(([id, label]) => (
+                      <Chip key={id} label={label} on={opts.style.transition === id} onClick={() => setStyle({ transition: id })} disabled={settingsLocked} />
+                    ))}
+                  </div>
+                </SubGroup>
+
+                <SubGroup title="Stamps">
+                  <div className="flex flex-wrap gap-1.5">
+                    <Chip label="Move verdicts" on={opts.style.verdictStamps} onClick={() => setStyle({ verdictStamps: !opts.style.verdictStamps })} disabled={settingsLocked} />
+                    <Chip label="Flame trail" on={opts.style.flameTrail} onClick={() => setStyle({ flameTrail: !opts.style.flameTrail })} disabled={settingsLocked} />
+                    <Chip label="Score bug" on={opts.style.scoreBug} onClick={() => setStyle({ scoreBug: !opts.style.scoreBug })} disabled={settingsLocked} />
+                    <Chip label="Momentum bar" on={opts.momentumBar} onClick={() => set("momentumBar", !opts.momentumBar)} disabled={settingsLocked} />
+                    <Chip label="Move counter" on={opts.moveCounter} onClick={() => set("moveCounter", !opts.moveCounter)} disabled={settingsLocked} />
+                    <Chip label="Verdict stamp" on={opts.freezeStamp} onClick={() => set("freezeStamp", !opts.freezeStamp)} disabled={settingsLocked} />
+                  </div>
+                </SubGroup>
 
                 <GroupLabel>Captions</GroupLabel>
                 <input
@@ -961,7 +1173,28 @@ export function ClipModal({
                     aria-label="Watermark handle"
                     className="min-w-0 flex-1 border border-white/15 bg-white/[0.03] px-2.5 py-1 font-display text-xs text-parchment placeholder:text-parchment-400 focus:border-gold/60 focus:outline-none disabled:opacity-40"
                   />
+                </div>
+                {opts.watermarkOn && (
+                  <ChoiceRow
+                    label="Corner"
+                    options={CORNER_OPTIONS}
+                    value={opts.style.watermarkCorner}
+                    onPick={(v) => setStyle({ watermarkCorner: v })}
+                    disabled={settingsLocked}
+                  />
+                )}
+                <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                   <Chip label="End card" on={opts.endCard} onClick={() => set("endCard", !opts.endCard)} disabled={settingsLocked} />
+                  <input
+                    type="text"
+                    value={opts.ctaText}
+                    maxLength={40}
+                    disabled={settingsLocked || !opts.endCard}
+                    onChange={(e) => set("ctaText", e.target.value)}
+                    aria-label="End card text"
+                    placeholder="nerfchess.com"
+                    className="min-w-0 flex-1 border border-white/15 bg-white/[0.03] px-2.5 py-1 font-display text-xs text-parchment placeholder:text-parchment-400 focus:border-gold/60 focus:outline-none disabled:opacity-40"
+                  />
                 </div>
 
                 {clip && support?.tier === 2 && (
