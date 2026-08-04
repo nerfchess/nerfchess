@@ -15,7 +15,7 @@ Flags: 269 duplicate-signature, 205 near-duplicate, 90 dominated-candidates, 0 m
 | hx4_mirror_of_winter | Mirror of Winter | apex | 9 | passive | 2-turns | enemy | passive | src/engine/buffs/hexes/wave4b.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | ice_age | Ice Age | apex | 9 | activated | 3-turns | enemy | bespoke+canvas | src/engine/buffs/tier9.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | iron_legion | Iron Legion | apex | 9 | instant | unstated | self | bespoke+canvas | src/engine/buffs/tier9.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| living_god | Living God | apex | 9 | activated/lingering | 4-turns | self | bespoke+canvas | src/engine/buffs/tier9.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| living_god | Living God | apex | 9 | activated/lingering | 4-turns | self | bespoke+canvas | src/engine/buffs/tier9.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | mass_petrify | Mass Petrify | apex | 9 | activated | 2-turns | enemy | bespoke+canvas | src/engine/buffs/tier9.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | ov_antigravity_gala | Anti-Gravity Gala | apex | 9 | passive | 3-turns | enemy | passive | src/engine/buffs/overhaul/t8.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | ov_continental_drift | Continental Drift | apex | 9 | activated/lingering | 5-turns | enemy | generated | src/engine/buffs/overhaul/t8.ts | 1 | - | keep (auto: no flags, harness-executed) |
@@ -28,8 +28,8 @@ Flags: 269 duplicate-signature, 205 near-duplicate, 90 dominated-candidates, 0 m
 | reality_warp | Reality Warp | apex | 9 | activated | unstated | self | canvas | src/engine/buffs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | resurrection | Resurrection | apex | 9 | activated | unstated | enemy | bespoke+canvas | src/engine/buffs/tier9.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | second_coming | Second Coming | apex | 9 | activated | next-turn | enemy | bespoke+canvas | src/engine/buffs/tier9.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| titan_legion | Titan Legion | apex | 9 | activated/lingering | 2-turns | enemy | bespoke+canvas | src/engine/buffs/tier9.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| ascendancy | Ascendancy | apex | 10 | activated/lingering | 2-turns | enemy | bespoke+canvas | src/engine/buffs/tier9.ts | 2 | - | keep (auto: no flags, harness-executed) |
+| titan_legion | Titan Legion | apex | 9 | activated/lingering | 2-turns | enemy | bespoke+canvas | src/engine/buffs/tier9.ts | 2 | - | keep (auto: no flags, harness-executed) |
+| ascendancy | Ascendancy | apex | 10 | activated/lingering | 2-turns | enemy | bespoke+canvas | src/engine/buffs/tier9.ts | 3 | - | keep (auto: no flags, harness-executed) |
 | grand_army | Grand Army | apex | 10 | instant | unstated | self | bespoke+canvas | src/engine/buffs/tier9.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | oblivion | Oblivion | apex | 10 | activated | unstated | enemy | bespoke+canvas | src/engine/buffs/tier9.ts | 3 | - | keep (auto: no flags, harness-executed) |
 | total_war | Total War | apex | 10 | activated | unstated | enemy | bespoke+canvas | src/engine/buffs/tier9.ts | 2 | - | keep (auto: no flags, harness-executed) |
@@ -739,7 +739,7 @@ Flags: 269 duplicate-signature, 205 near-duplicate, 90 dominated-candidates, 0 m
 | pr_forced_update | Forced Update | buff | 2 | passive | 3-turns | enemy | passive | src/engine/buffs/funny/pranks.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | prep | Prep | buff | 2 | instant | one-shot | self | generated | src/engine/buffs/library.ts | 1 | - | keep: T1 three-card offer baseline |
 | quick_glance | Quick Glance | buff | 2 | instant | unstated | enemy | generated | src/engine/buffs/library.ts | 1 | duplicate-signature(suppress,wa_mind_read) | keep: reroll denial at T1 |
-| rally | Rally | buff | 2 | passive | 1-turns | self | passive | src/engine/buffs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| rally | Rally | buff | 2 | passive | 1-turns | self | passive | src/engine/buffs/library.ts | 3 | - | keep (auto: no flags, harness-executed) |
 | rank_runner | Rank Runner | buff | 2 | passive | one-shot | self | passive | src/engine/buffs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | recall | Recall | buff | 2 | activated | one-shot | self | generated | src/engine/buffs/library.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | reposition | Reposition | buff | 2 | passive | one-shot | self | passive | src/engine/buffs/library.ts | 1 | duplicate-signature(ferz_king) dominated-candidate(higher-tier-of-duplicate-pair) | pending-review |

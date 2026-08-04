@@ -12,6 +12,8 @@ import React, {
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, type LucideIcon } from "lucide-react";
 import { CardEntrance } from "./effects/cardEntrance";
+import { UseSpectacle } from "./effects/UseSpectacle";
+import { resolvePieceTreatment, type PieceTreatment } from "./effects/pieceTreatment";
 import { cardFaceIcon } from "@/lib/cardIcon";
 import {
   Piece,
@@ -1478,7 +1480,8 @@ interface SquareEnv {
   stunBySquare: Map<Square, number>;
   companionSquares: Map<Square, { art: string }>;
   amazonSquares: Set<Square>;
-  moveAsSquares: Map<Square, PieceType>;
+  moveAsSquares: Map<Square, PieceType | "a">;
+  treatmentBySquare: Map<Square, PieceTreatment>;
   showLegalMoves: boolean;
   showCoordinates: boolean;
   inspectTargets: Map<Square, boolean>;
@@ -1569,6 +1572,7 @@ const BoardSquare = React.memo(function BoardSquare({
     companionSquares,
     amazonSquares,
     moveAsSquares,
+    treatmentBySquare,
     showLegalMoves,
     showCoordinates,
     inspectTargets,
@@ -1622,6 +1626,10 @@ const BoardSquare = React.memo(function BoardSquare({
             // motif (the piece is out of action), and the buckler/heater
             // shield covers what a ward ring would say.
             const motifMark = motifBySquare.get(sq);
+            // The card-keyed piece treatment this square's mark carries (worn
+            // by the piece wrapper below; the frozen/doomed/shielded state
+            // looks outrank it).
+            const treatment = treatmentBySquare.get(sq);
             // Duelist-style bound-buff marker for this square (skipped where a
             // motif badge already stamps the piece, so the two never stack).
             const boundMark = !motifShown ? boundMarks.get(sq) : undefined;
@@ -2084,6 +2092,8 @@ const BoardSquare = React.memo(function BoardSquare({
                     key={
                       boardFx && (boardFx.kind === "morph" || boardFx.kind === "summon")
                         ? `piece-fx-${boardFx.key}`
+                        : treatment
+                        ? `piece-treat-${treatment.key}`
                         : undefined
                     }
                     className={
@@ -2091,13 +2101,19 @@ const BoardSquare = React.memo(function BoardSquare({
                       (isDragging ? "opacity-30 " : "") +
                       // The piece itself wears its live effect (owner: "a mark
                       // should actually change the piece"): frostbitten when
-                      // frozen, gilded when shielded, deathly when doomed.
+                      // frozen, gilded when shielded, deathly when doomed —
+                      // and under a running card's fx, the CARD-KEYED
+                      // treatment (rusted by one hex, moonlit by one boon).
+                      // The three state looks outrank the treatment: a frozen
+                      // piece reads frozen whoever froze it.
                       (frozenSquares.has(sq)
                         ? "piece-frozen "
                         : doomMarks.has(sq)
                         ? "piece-doomed "
                         : shieldedSquares.has(sq)
                         ? "piece-shielded "
+                        : treatment
+                        ? "piece-treat "
                         : "") +
                       (boardFx?.kind === "morph"
                         ? "fx-piece-pop"
@@ -2106,7 +2122,16 @@ const BoardSquare = React.memo(function BoardSquare({
                         : "")
                     }
                     data-anim-piece={isAnimPiece ? sq : undefined}
-                    style={{ width: "var(--piece-fit, 88%)", height: "var(--piece-fit, 88%)" }}
+                    style={{
+                      width: "var(--piece-fit, 88%)",
+                      height: "var(--piece-fit, 88%)",
+                      ...(treatment &&
+                      !frozenSquares.has(sq) &&
+                      !doomMarks.has(sq) &&
+                      !shieldedSquares.has(sq)
+                        ? ({ "--pt-filter": treatment.filter } as React.CSSProperties)
+                        : {}),
+                    }}
                   >
                     {walnutSquares.has(sq) ? (
                       <WalnutPiece type={piece.type} color={piece.color} size="100%" />
@@ -2527,6 +2552,69 @@ export function Board({
       icon: cardFaceIcon(def.id, def.category, def.icon) ?? Sparkles,
       name: def.name,
       mine: fresh.mine,
+    });
+  }, [buffs, myColor]);
+  // --- Usage beat: one shot the moment a card is USED (or cancelled) --------
+  // Diffs the public buff lists by per-card USED-instance count (spent,
+  // usedActivation, or nullified), instant/activated cards only — a passive
+  // expiring is not a "use". Fires only for instances this board previously
+  // saw LIVE, so a mid-game reload (first snapshot seeds the counts) and a
+  // card that arrives already resolved (the cast layer's job) stay silent.
+  // The cast layer tells the board what the play DID; this beat shows the
+  // card itself being consumed at its owner's edge — or, on the nullified
+  // read, being voided by the opponent.
+  const usageSeenRef = useRef<{ used: Map<string, number>; live: Map<string, number> } | null>(null);
+  const usageKeyRef = useRef(0);
+  const [usage, setUsage] = useState<{
+    key: number;
+    cardId: string;
+    category: BuffCategory;
+    tier: number;
+    icon: LucideIcon;
+    mine: boolean;
+    nullified: boolean;
+  } | null>(null);
+  useEffect(() => {
+    if (!buffs) return;
+    const used = new Map<string, number>();
+    const live = new Map<string, number>();
+    const meta = new Map<string, { tier: number; mine: boolean; nullified: boolean }>();
+    for (const color of ["w", "b"] as Color[]) {
+      for (const inst of buffs.players[color].buffs) {
+        if (!inst.id) continue;
+        const def = BUFF_BY_ID[inst.id];
+        if (!def || def.kind === "passive") continue;
+        const k = `${color}:${inst.id}`;
+        if (inst.spent || inst.nullified || inst.usedActivation) {
+          used.set(k, (used.get(k) ?? 0) + 1);
+          meta.set(k, { tier: inst.tier, mine: color === myColor, nullified: !!inst.nullified });
+        } else {
+          live.set(k, (live.get(k) ?? 0) + 1);
+        }
+      }
+    }
+    const prev = usageSeenRef.current;
+    usageSeenRef.current = { used, live };
+    if (!prev) return;
+    let fresh: { id: string; tier: number; mine: boolean; nullified: boolean } | null = null;
+    for (const [k, n] of used) {
+      if (n <= (prev.used.get(k) ?? 0)) continue;
+      if ((prev.live.get(k) ?? 0) === 0) continue; // never seen live here: not our beat
+      const m = meta.get(k);
+      if (m) fresh = { id: k.slice(2), ...m };
+    }
+    if (!fresh) return;
+    const def = BUFF_BY_ID[fresh.id];
+    if (!def) return;
+    usageKeyRef.current += 1;
+    setUsage({
+      key: usageKeyRef.current,
+      cardId: def.id,
+      category: def.category,
+      tier: fresh.tier,
+      icon: cardFaceIcon(def.id, def.category, def.icon) ?? Sparkles,
+      mine: fresh.mine,
+      nullified: fresh.nullified,
     });
   }, [buffs, myColor]);
   // --- Nerf reveal splash: one shot per newly-known rule --------------------
@@ -3144,7 +3232,7 @@ export function Board({
   // marks derive from public card state on both surfaces, so both players see
   // the same new piece.
   const moveAsSquares = useMemo(() => {
-    const m = new Map<number, PieceType>();
+    const m = new Map<number, PieceType | "a">();
     for (const mk of visual?.motifSquares ?? []) {
       if (mk.motif !== "empower" || !mk.moveAs) continue;
       const p = board.pieces[mk.sq];
@@ -3152,6 +3240,17 @@ export function Board({
     }
     return m;
   }, [visual?.motifSquares, board.pieces]);
+  // Card-keyed piece treatment per square: the look a piece WEARS while a
+  // card's fx runs on it (rusted under one hex, moonlit under one boon),
+  // derived from the same motif marks as the badges so both surfaces and
+  // both players see the same changed piece. Filter-only by design.
+  const treatmentBySquare = useMemo(() => {
+    const m = new Map<number, PieceTreatment>();
+    for (const mk of visual?.motifSquares ?? []) {
+      m.set(mk.sq, resolvePieceTreatment(mk));
+    }
+    return m;
+  }, [visual?.motifSquares]);
   const strikeSquares = useMemo(() => new Set(visual?.strikeSquares ?? []), [visual?.strikeSquares]);
   const walnutSquares = useMemo(() => new Set(visual?.walnutSquares ?? []), [visual?.walnutSquares]);
   const frozenSkins = visual?.frozenSkins ?? EMPTY_SKINS;
@@ -4344,6 +4443,7 @@ export function Board({
       companionSquares,
       amazonSquares,
       moveAsSquares,
+      treatmentBySquare,
       showLegalMoves,
       showCoordinates,
       inspectTargets,
@@ -4396,6 +4496,7 @@ export function Board({
       companionSquares,
       amazonSquares,
       moveAsSquares,
+      treatmentBySquare,
       showLegalMoves,
       showCoordinates,
       inspectTargets,
@@ -4549,6 +4650,20 @@ export function Board({
             name={BUFF_BY_ID[cast.id]!.name}
             description={BUFF_BY_ID[cast.id]?.description}
             tier={cast.tier}
+          />
+        )}
+        {/* Usage beat: a card just LEFT a hand (used, or nullified). The
+            card's sigil performs its consumption family at the owner's edge
+            while the cast layer answers on the board. */}
+        {!fxHiddenPref && !fxCalmClock && usage && (
+          <UseSpectacle
+            key={`use-${usage.key}`}
+            cardId={usage.cardId}
+            category={usage.category}
+            tier={usage.tier}
+            icon={usage.icon}
+            mine={usage.mine}
+            nullified={usage.nullified}
           />
         )}
         {/* Acquire entrance: a card just ENTERED a hand (draft pick, steal,

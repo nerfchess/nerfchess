@@ -99,6 +99,18 @@ jobs:
       - name: Glicko tests
         run: npm run test:glicko
 
+      # The board-fx scope contract: a card's marks match its mechanic's reach
+      # (plural bound squares, king exclusion, self-retire), swept across every
+      # fx card in the library. Born from the "whole army looks empowered" bug.
+      - name: Fx-zones scope tests
+        run: npm run test:fx-zones
+
+      # The rating chart's line may never double back in x (the "graphs doing
+      # circles" report): monotone-cubic control points, pinned on adversarial
+      # spacings.
+      - name: Rating chart geometry
+        run: npm run test:rating-chart
+
   # Content and registry gates. These are pure library checks (no server:build,
   # no engine replay), so they run as their own job in parallel with the engine
   # suite rather than lengthening it. Every one of these already passed locally
@@ -137,6 +149,20 @@ jobs:
       # wired voice.
       - name: Sound coverage
         run: npm run test:sound
+
+      # The usage beat: every instant/activated card resolves to a consumption
+      # performance, every tier>=9 usable card carries its hand-picked
+      # flagship, every family has CSS art, and the same-family variant
+      # collision count stays at zero (scripts/usage-variant-baseline.json).
+      - name: Usage-beat coverage
+        run: npm run test:usage
+
+      # Per-piece treatments: every fx card resolves to a card-keyed piece
+      # look, polarity is sane (a hex never blesses), and the same-family
+      # filter collision count stays at zero
+      # (scripts/treatment-variant-baseline.json).
+      - name: Piece-treatment coverage
+        run: npm run test:treatments
 
       # Derived registries must match the engine tables they are generated from.
       - name: Card registry

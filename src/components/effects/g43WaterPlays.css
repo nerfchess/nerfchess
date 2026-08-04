@@ -1357,6 +1357,76 @@
 }
 .g43-aa-ring { animation: g43-aa-ring calc(1.05s * var(--fx-dur, 1)) ease-out both; }
 
+/* --- 43. Leviathan Below — the board is only the surface ------------------- */
+
+/* The bulk slides in under the board from the CASTER's own edge and keeps
+   going: something far longer than the board passing beneath it. */
+@keyframes g43-lv-gloom {
+  0% { opacity: 0; transform: translate(-9%, calc(var(--fx-side, 1) * 22%)) scale(0.92); }
+  30% { opacity: 1; }
+  72% { opacity: 0.85; transform: translate(5%, calc(var(--fx-side, 1) * -6%)) scale(1.04); }
+  100% { opacity: 0; transform: translate(11%, calc(var(--fx-side, 1) * -14%)) scale(1.06); }
+}
+.g43-lv-gloom { animation: g43-lv-gloom calc(1.6s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.6, 0.35, 1) both; }
+
+/* A marked patch of water darkening: both players see it and can do nothing. */
+@keyframes g43-lv-mark {
+  0% { opacity: 0; transform: scale(0.3); }
+  38% { opacity: 0.95; transform: scale(1); }
+  62% { opacity: 0.7; transform: scale(0.94); }
+  82% { opacity: 0.95; transform: scale(1.06); }
+  100% { opacity: 0; transform: scale(1.1); }
+}
+.g43-lv-mark { animation: g43-lv-mark calc(1.3s * var(--fx-dur, 1)) ease-in-out both; }
+
+/* The lidless eye: opens under the cast square, fixes, and sinks away. */
+@keyframes g43-lv-eye {
+  0% { opacity: 0; transform: translateY(30%) scaleY(0.06); }
+  30% { opacity: 0.95; transform: translateY(0) scaleY(1); }
+  58% { opacity: 1; transform: translateY(-2%) scaleY(1); }
+  74% { opacity: 0.9; transform: translateY(0) scaleY(0.14); }
+  84% { transform: translateY(4%) scaleY(1); }
+  100% { opacity: 0; transform: translateY(26%) scaleY(0.5); }
+}
+.g43-lv-eye { animation: g43-lv-eye calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.3, 1) both; }
+
+/* An arm coming UP through the surface: fast out, a slow coil, dragged home. */
+@keyframes g43-lv-arm {
+  0% { opacity: 0; transform: translateY(64%) scaleY(0.1); }
+  26% { opacity: 1; transform: translateY(-4%) scaleY(1.08); }
+  40% { transform: translateY(0) scaleY(1); }
+  66% { opacity: 1; transform: translateY(2%) rotate(4deg); }
+  100% { opacity: 0; transform: translateY(74%) scaleY(0.3); }
+}
+.g43-lv-arm { animation: g43-lv-arm calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+/* The coiled tip curling round its catch before the pull. */
+@keyframes g43-lv-coil {
+  0% { opacity: 0; transform: rotate(-100deg) scale(0.3); }
+  42% { opacity: 1; transform: rotate(0deg) scale(1.06); }
+  62% { transform: rotate(10deg) scale(1); }
+  100% { opacity: 0; transform: rotate(24deg) translateY(60%) scale(0.6); }
+}
+.g43-lv-coil { animation: g43-lv-coil calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both; }
+
+/* The surface going with them: one flat, wide, violent bloom. */
+@keyframes g43-lv-burst {
+  0% { opacity: 0; transform: scale(0.2, 0.1); }
+  30% { opacity: 1; transform: scale(1.15, 1); }
+  100% { opacity: 0; transform: scale(1.7, 0.6); }
+}
+.g43-lv-burst { animation: g43-lv-burst calc(0.85s * var(--fx-dur, 1)) ease-out both; }
+
+/* Wreckage: what bobs back up is not what went down. */
+@keyframes g43-lv-wreck {
+  0% { opacity: 0; transform: translateY(70%) rotate(0deg); }
+  36% { opacity: 1; transform: translateY(-8%) rotate(-7deg); }
+  58% { transform: translateY(3%) rotate(5deg); }
+  78% { transform: translateY(-2%) rotate(-3deg); }
+  100% { opacity: 0; transform: translateY(2%) rotate(0deg); }
+}
+.g43-lv-wreck { animation: g43-lv-wreck calc(1.2s * var(--fx-dur, 1)) ease-out both; }
+
 /* --- Global kill switch ----------------------------------------------------
    Settings animations-off parks every g43 play outright. */
 html[data-anim="off"] [class^="g43-"], html[data-anim="off"] [class*=" g43-"] { animation: none !important; opacity: 0 !important; }

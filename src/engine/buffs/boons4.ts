@@ -3020,7 +3020,7 @@ const BOON_WAVE4A: Buff[] = [
     { id: "bn4_general_strike", name: "General Strike", tier: 4, category: "tempo", icon: "Megaphone",
       description: "For your opponent's next turn, only their king will move, and it cannot capture unless a capture is its only legal move: every other piece is off the job.",
       flavor: "The pawns have demands. The rooks have a drum.",
-      fx: { motif: "slow", pieces: "all" } },
+      fx: { motif: "slow", pieces: "all", king: true } },
     // The king-only identity is preserved; the granted move cannot capture: the
     // opponent's captures are filtered out for that turn (with the standard
     // never-strand fallback if a capture is their only legal move).

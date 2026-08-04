@@ -8,6 +8,7 @@ import { LiveRvPanel } from "@/components/LiveRvPanel";
 import { DungeonGateButton } from "@/components/DungeonGateButton";
 import { OpenLobbyPanel } from "@/components/OpenLobbyPanel";
 import { SiteHeader } from "@/components/SiteHeader";
+import { SocialsRow } from "@/components/SocialsRow";
 import { StarField } from "@/components/StarField";
 import { ModeBadge } from "@/components/ModeBadge";
 // NOTE: the card libraries (ALL_BUFFS / ALL_NERFS) are NOT imported statically.
@@ -110,31 +111,37 @@ export default function HomePage() {
           <LiveNowStrip />
           <ReturnToGameBanner />
 
-          {/* What the two words on the tin actually mean. Each card is a door
-              straight into the lobby with that mode preselected (?mode= wins
-              over the remembered choice); the titles carry the mode colors and
-              the cards carry mode-hue edges, at equal prominence. */}
+          {/* Two compact mode doors (playtest feedback: the old three-bullet
+              definition cards restated the pitch paragraph above and crowded
+              the hero). One clause each; ?mode= wins over the remembered
+              choice, and the full explanation lives in How it works below. */}
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Link href="/lobby?mode=buff" className="mode-def-card mode-def-card--buff plate group block p-4 no-underline">
-              <span className="font-display text-lg font-bold text-mode-buffGlow">Buff mode</span>
-              <ul className="mt-2 space-y-1 text-sm leading-snug text-parchment-300">
-                <li>Both armies play fair.</li>
-                <li>Draft powers onto your own pieces.</li>
-                <li>Stack buffs into a war machine.</li>
-              </ul>
-              <span className="mt-2.5 block text-[13px] font-medium text-mode-buffGlow/80 transition-colors group-hover:text-mode-buffGlow">
-                Play Buff →
+            <Link
+              href="/lobby?mode=buff"
+              className="mode-def-card mode-def-card--buff plate group flex items-center justify-between gap-3 p-3.5 no-underline"
+            >
+              <span className="min-w-0">
+                <span className="font-display text-[15px] font-bold text-mode-buffGlow">Buff mode</span>
+                <span className="block truncate text-[13px] leading-snug text-parchment-300">
+                  Stack powers onto your own army.
+                </span>
+              </span>
+              <span className="shrink-0 text-[13px] font-medium text-mode-buffGlow/80 transition-colors group-hover:text-mode-buffGlow">
+                Play →
               </span>
             </Link>
-            <Link href="/lobby?mode=nerf" className="mode-def-card mode-def-card--nerf plate group block p-4 no-underline">
-              <span className="font-display text-lg font-bold text-mode-nerfGlow">Nerf mode</span>
-              <ul className="mt-2 space-y-1 text-sm leading-snug text-parchment-300">
-                <li>You start with a secret handicap.</li>
-                <li>Curse your opponent with hexes.</li>
-                <li>Draft boons to dig yourself out.</li>
-              </ul>
-              <span className="mt-2.5 block text-[13px] font-medium text-mode-nerfGlow/80 transition-colors group-hover:text-mode-nerfGlow">
-                Play Nerf →
+            <Link
+              href="/lobby?mode=nerf"
+              className="mode-def-card mode-def-card--nerf plate group flex items-center justify-between gap-3 p-3.5 no-underline"
+            >
+              <span className="min-w-0">
+                <span className="font-display text-[15px] font-bold text-mode-nerfGlow">Nerf mode</span>
+                <span className="block truncate text-[13px] leading-snug text-parchment-300">
+                  Secret handicaps, hexes, and boons.
+                </span>
+              </span>
+              <span className="shrink-0 text-[13px] font-medium text-mode-nerfGlow/80 transition-colors group-hover:text-mode-nerfGlow">
+                Play →
               </span>
             </Link>
           </div>
@@ -147,9 +154,10 @@ export default function HomePage() {
       <LiveActivity />
       <CommunityProof />
 
-      {/* Socials now sit adjacent to the footer, closing out the page. */}
-      <div className="max-w-7xl mx-auto w-full px-6 pt-4">
-        <SocialsRow />
+      {/* Socials close out the page as a full follow block: playtesters kept
+          missing the old quiet chip row entirely. */}
+      <div className="max-w-7xl mx-auto w-full px-6 pt-6 pb-2">
+        <SocialsRow variant="prominent" className="" />
       </div>
       <SiteFooter />
     </main>
@@ -691,68 +699,6 @@ function CommunityProof() {
         </div>
       </div>
     </section>
-  );
-}
-
-// The socials chip row, restyled quiet: muted label, small ghost chips.
-function SocialsRow() {
-  const socials: { href: string; label: string; icon: React.ReactNode }[] = [
-    {
-      href: "https://discord.gg/a5bJYFrTx",
-      label: "Discord",
-      icon: (
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-          <path d="M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z" />
-        </svg>
-      ),
-    },
-    {
-      href: "https://www.instagram.com/officialnerfchess",
-      label: "Instagram",
-      icon: (
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-          <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
-          <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-          <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
-        </svg>
-      ),
-    },
-    {
-      href: "https://tiktok.com/@nerfchess",
-      label: "TikTok",
-      icon: (
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-          <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
-        </svg>
-      ),
-    },
-    {
-      href: "https://www.youtube.com/@OfficialNerfChess",
-      label: "YouTube",
-      icon: (
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-          <path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17" />
-          <path d="m10 15 5-3-5-3z" />
-        </svg>
-      ),
-    },
-  ];
-  return (
-    <div className="flex flex-wrap items-center justify-center gap-2">
-      <span className="mr-1 text-[12px] text-parchment-400">Socials</span>
-      {socials.map((s) => (
-        <a
-          key={s.label}
-          href={s.href}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="btn-ghost flex items-center gap-2 px-3 py-1.5 text-[13px] no-underline"
-        >
-          {s.icon}
-          {s.label}
-        </a>
-      ))}
-    </div>
   );
 }
 

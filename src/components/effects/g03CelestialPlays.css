@@ -1241,6 +1241,103 @@
 
 /* --- Global kill switch ----------------------------------------------------
    Settings animations-off parks every g03 play outright. */
+/* --- 33. Ragnarok Postponed: the doom that agreed to wait ------------------ */
+
+/* The omen light reddening the observer's own horizon. */
+@keyframes g03-dm-omen {
+  0% { opacity: 0; transform: scaleY(0.2); }
+  40% { opacity: 0.9; transform: scaleY(1); }
+  76% { opacity: 0.6; }
+  100% { opacity: 0; transform: scaleY(0.8); }
+}
+.g03-dm-omen {
+  transform-origin: 50% 100%;
+  animation: g03-dm-omen calc(1.3s * var(--fx-dur, 1)) ease-in-out both;
+}
+
+/* The doom-star falls for the middle of the world, growing as it comes —
+   and is caught DEAD at 62%, held, then quenched where it hangs. */
+@keyframes g03-dm-fall {
+  0% { opacity: 0; transform: translateY(-320%) scale(0.4); }
+  18% { opacity: 1; }
+  62% { transform: translateY(60%) scale(1.12); }
+  66% { transform: translateY(52%) scale(1.06); }
+  72% { transform: translateY(56%) scale(1.08); }
+  92% { opacity: 0.95; transform: translateY(56%) scale(1.04); }
+  100% { opacity: 0; transform: translateY(56%) scale(1); }
+}
+.g03-dm-fall { animation: g03-dm-fall calc(1.5s * var(--fx-dur, 1)) cubic-bezier(0.45, 0, 0.6, 1) both; }
+
+/* The trail stretches with the fall and is left HANGING by the halt. */
+@keyframes g03-dm-trail {
+  0% { opacity: 0; transform: translateY(-160%) scaleY(0.2); }
+  30% { opacity: 0.95; transform: translateY(0) scaleY(1); }
+  64% { opacity: 0.8; transform: translateY(24%) scaleY(1.06); }
+  100% { opacity: 0; transform: translateY(28%) scaleY(0.7); }
+}
+.g03-dm-trail {
+  transform-origin: 50% 0%;
+  animation: g03-dm-trail calc(1.35s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.5, 1) both;
+}
+
+/* The toll / the halt stamp: one hard ring where the world was spared. */
+@keyframes g03-dm-toll {
+  0% { opacity: 0; transform: scale(0.12); }
+  30% { opacity: 0.95; transform: scale(0.9); }
+  100% { opacity: 0; transform: scale(1.5); }
+}
+.g03-dm-toll { animation: g03-dm-toll calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.8, 0.3, 1) both; }
+
+@keyframes g03-dm-halt {
+  0% { opacity: 0; transform: scale(1.6); }
+  34% { opacity: 1; transform: scale(0.92); }
+  50% { transform: scale(1.02); }
+  80% { opacity: 0.9; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.04); }
+}
+.g03-dm-halt { animation: g03-dm-halt calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+/* A rune-chain going taut from its anchor to the held star. */
+@keyframes g03-dm-chain {
+  0% { opacity: 0; transform: scaleX(0.06); }
+  38% { opacity: 1; transform: scaleX(1.04); }
+  50% { transform: scaleX(0.98); }
+  60% { transform: scaleX(1); }
+  90% { opacity: 0.9; }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.g03-dm-chain { animation: g03-dm-chain calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+/* The held star breathing on its leash. */
+@keyframes g03-dm-held {
+  0% { opacity: 0; transform: scale(0.6); }
+  30% { opacity: 0.95; transform: scale(1.06); }
+  54% { opacity: 0.6; transform: scale(0.92); }
+  76% { opacity: 0.9; transform: scale(1.02); }
+  100% { opacity: 0; transform: scale(0.9); }
+}
+.g03-dm-held { animation: g03-dm-held calc(1.15s * var(--fx-dur, 1)) ease-in-out both; }
+
+/* One tally ticked onto the horizon rail: counted, not cancelled. */
+@keyframes g03-dm-tally {
+  0% { opacity: 0; transform: translateY(-40%) scaleY(0.2); }
+  40% { opacity: 1; transform: translateY(0) scaleY(1.08); }
+  56% { transform: scaleY(1); }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+.g03-dm-tally {
+  transform-origin: 50% 100%;
+  animation: g03-dm-tally calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
+/* An ember sifting down out of the caught fire, slower than any threat. */
+@keyframes g03-dm-ember {
+  0% { opacity: 0; transform: translateY(0) scale(1); }
+  26% { opacity: 0.95; }
+  100% { opacity: 0; transform: translateY(220%) scale(0.55); }
+}
+.g03-dm-ember { animation: g03-dm-ember calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.7, 0.6) both; }
+
 html[data-anim="off"] [class^="g03-"], html[data-anim="off"] [class*=" g03-"] { animation: none !important; opacity: 0 !important; }
 
 /* =============================================================================

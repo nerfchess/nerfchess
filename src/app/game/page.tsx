@@ -51,7 +51,7 @@ import { BuffDock, EnemyBuffModal, TargetingBanner, againstYouRows, useBuffTarge
 import { BoardSplashHost } from "@/components/BoardSplash";
 import { draftCardNoun, turnCost } from "@/engine/buff";
 import { draftZones } from "@/lib/draftOnline";
-import { computeFxVisual } from "@/components/effects/fxZones";
+import { computeFxVisual, fxVisualFields } from "@/components/effects/fxZones";
 import { useSignatureQueue } from "@/components/effects/useSignatureQueue";
 import { MobileBuffDrawer } from "@/components/MobileBuffDrawer";
 import { bottomChromePadClass } from "@/components/mobileChrome";
@@ -2079,10 +2079,7 @@ function GamePage() {
                           doomSquares: zone.doom,
                           lockedSquares: zone.locked,
                           barredSquares: zone.barred,
-                          kingSafeSquares: fxZone.kingSafeSquares,
-                          pawnClampSquares: fxZone.pawnClampSquares,
-                          stunSquares: fxZone.stunSquares,
-                          motifSquares: fxZone.motifs,
+                          ...fxVisualFields(fxZone),
                         }
                   }
                   lastMove={lastMoveForDisplay}

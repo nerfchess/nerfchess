@@ -940,7 +940,7 @@ export const CARD_TO_MODULE: Record<string, string> = {
   "bn4_salt_in_the_wound": "g02SchedulePlays",
   "bn4_scapegoat": "g02SchedulePlays",
   "bn4_veterans_pension": "g02SchedulePlays",
-  // g03CelestialPlays.tsx (32)
+  // g03CelestialPlays.tsx (33)
   "hx4_the_bell_tolls": "g03CelestialPlays",
   "ov_managers_challenge": "g03CelestialPlays",
   "ov_nesting_doll": "g03CelestialPlays",
@@ -973,6 +973,7 @@ export const CARD_TO_MODULE: Record<string, string> = {
   "bn4_pawns_ransom": "g03CelestialPlays",
   "bn4_rest_stop": "g03CelestialPlays",
   "bn4_sparring_rhythm": "g03CelestialPlays",
+  "ov_ragnarok_postponed": "g03CelestialPlays",
   // g04PatinaPlays.tsx (29)
   "bn4_visor_down": "g04PatinaPlays",
   "bn4_angelus_bell": "g04PatinaPlays",
@@ -1034,7 +1035,7 @@ export const CARD_TO_MODULE: Record<string, string> = {
   "ov_volcanic_vent": "g05PawnTidePlays",
   "ov_fireworks_barge": "g05PawnTidePlays",
   "ov_boomerang": "g05PawnTidePlays",
-  // g06GroundPlays.tsx (30)
+  // g06GroundPlays.tsx (31)
   "ov_growth_ring": "g06GroundPlays",
   "ov_mole_tunnels": "g06GroundPlays",
   "bn4_cobblers_bench": "g06GroundPlays",
@@ -1065,6 +1066,7 @@ export const CARD_TO_MODULE: Record<string, string> = {
   "op_frontier_waiver": "g06GroundPlays",
   "op_full_coverage": "g06GroundPlays",
   "op_harbor_gull": "g06GroundPlays",
+  "ov_continental_drift": "g06GroundPlays",
   // g07SupplyPlays.tsx (30)
   "op_homestead_clause": "g07SupplyPlays",
   "op_leapfrog_lesson": "g07SupplyPlays",
@@ -1124,7 +1126,7 @@ export const CARD_TO_MODULE: Record<string, string> = {
   "ov_growth_spurt": "g08CrowdPlays",
   "ov_pebble_toss": "g08CrowdPlays",
   "ov_tiny_trebuchet": "g08CrowdPlays",
-  // g09FrostPlays.tsx (29)
+  // g09FrostPlays.tsx (30)
   "bn4_long_winter": "g09FrostPlays",
   "bn4_winter_garrison": "g09FrostPlays",
   "bn4_frozen_moat": "g09FrostPlays",
@@ -1154,6 +1156,7 @@ export const CARD_TO_MODULE: Record<string, string> = {
   "hx4_tempest": "g09FrostPlays",
   "hx4_lead_rain": "g09FrostPlays",
   "hx4_frozen_harbor": "g09FrostPlays",
+  "hx4_mirror_of_winter": "g09FrostPlays",
   // g10ThawPlays.tsx (29)
   "bn4_winter_orders": "g10ThawPlays",
   "bn4_winter_palace": "g10ThawPlays",
@@ -1868,7 +1871,7 @@ export const CARD_TO_MODULE: Record<string, string> = {
   "hx4_scorched_diagonal": "g42ChainPlays",
   "ov_barn_door": "g42ChainPlays",
   "ov_split_timeline": "g42ChainPlays",
-  // g43WaterPlays.tsx (42)
+  // g43WaterPlays.tsx (43)
   "op_river_breakup": "g43WaterPlays",
   "op_second_wind_sip": "g43WaterPlays",
   "ov_rain_check": "g43WaterPlays",
@@ -1911,7 +1914,8 @@ export const CARD_TO_MODULE: Record<string, string> = {
   "hx4_dead_mans_boots": "g43WaterPlays",
   "ov_lantern_festival": "g43WaterPlays",
   "ov_ancestral_audience": "g43WaterPlays",
-  // g44SpacePlays.tsx (43)
+  "ov_leviathan_below": "g43WaterPlays",
+  // g44SpacePlays.tsx (45)
   "hx4_deja_vu": "g44SpacePlays",
   "hx4_no_full_retreat": "g44SpacePlays",
   "hx4_tea_break": "g44SpacePlays",
@@ -1955,6 +1959,8 @@ export const CARD_TO_MODULE: Record<string, string> = {
   "bn4_quartermasters_lock": "g44SpacePlays",
   "hx4_chain_gang": "g44SpacePlays",
   "hx4_puppet_court": "g44SpacePlays",
+  "ov_antigravity_gala": "g44SpacePlays",
+  "ov_let_me_play_for_you": "g44SpacePlays",
 };
 // </card-modules:generated>
 
@@ -2123,13 +2129,13 @@ export const PLUGIN_IDS: readonly string[] = [
   "bn4_tower_toll", "hx4_sleepwalkers", "bn4_gentlemens_agreement", "bn4_harvest_and_fallow", "bn4_heavy_price", "bn4_kings_indulgence",
   "bn4_leave_of_absence", "bn4_open_season", "bn4_retraining", "bn4_royal_household", "bn4_royal_writ", "bn4_salt_in_the_wound",
   "bn4_scapegoat", "bn4_veterans_pension",
-  // g03CelestialPlays.tsx (32)
+  // g03CelestialPlays.tsx (33)
   "hx4_the_bell_tolls", "ov_managers_challenge", "ov_nesting_doll", "bn4_bread_and_salt", "bn4_clerical_error", "bn4_coronation_rest",
   "bn4_furlough", "bn4_general_strike", "bn4_harvest_rest", "bn4_hidden_stair", "bn4_hold_the_door", "bn4_home_square",
   "bn4_listening_post", "bn4_paid_leave", "bn4_scaffold_crane", "bn4_second_skin", "bn4_seven_league_boots", "bn4_worry_beads",
   "hx4_coronation_bill", "ov_sleeping_draught", "bn4_bottom_of_the_well", "bn4_bribe_the_clerk", "bn4_dragonslayer", "bn4_forty_winks",
   "bn4_hermits_hour", "bn4_hush_money", "bn4_lone_crown", "bn4_over_the_shoulder", "bn4_over_the_wall", "bn4_pawns_ransom",
-  "bn4_rest_stop", "bn4_sparring_rhythm",
+  "bn4_rest_stop", "bn4_sparring_rhythm", "ov_ragnarok_postponed",
   // g04PatinaPlays.tsx (29)
   "bn4_visor_down", "bn4_angelus_bell", "bn4_barter_calm", "bn4_cold_compress", "bn4_dowagers_patience", "bn4_ear_to_the_ground",
   "bn4_hourglass_flip", "bn4_knights_vigil", "bn4_measured_breath", "bn4_pawns_lullaby", "bn4_saints_day", "bn4_sleepy_dust",
@@ -2142,12 +2148,13 @@ export const PLUGIN_IDS: readonly string[] = [
   "bn4_matryoshka_surprise", "ov_trojan_pawn", "ov_great_migration", "hx4_famine_year", "hx4_pawn_embargo", "hx4_famine",
   "hx4_no_doubling", "hx4_one_ladle_each", "hx4_pied_piper", "hx4_echo_of_bells", "hx4_candle_curfew", "hx4_understudy_rule",
   "ov_pied_piper", "ov_cloud_serpent", "ov_locust_swarm", "ov_volcanic_vent", "ov_fireworks_barge", "ov_boomerang",
-  // g06GroundPlays.tsx (30)
+  // g06GroundPlays.tsx (31)
   "ov_growth_ring", "ov_mole_tunnels", "bn4_cobblers_bench", "bn4_coffee_break", "bn4_ferry_ticket", "bn4_militia_call",
   "bn4_over_the_hedge", "bn4_stowaway", "hx4_fear_of_open_ground", "ov_pillow_fort", "ov_sandbags", "bn4_day_laborer",
   "bn4_field_stitches", "bn4_half_step_back", "bn4_slow_doors", "bn4_spare_button", "bn4_vaulting_pole", "hx4_bridge_toll",
   "hx4_clumsy_heralds", "hx4_no_trampling", "hx4_pawn_snob", "hx4_vegetarian_vows", "hx4_wet_matches", "op_back_to_barracks",
   "op_chapel_warden", "op_corduroy_road", "op_downtown_premium", "op_frontier_waiver", "op_full_coverage", "op_harbor_gull",
+  "ov_continental_drift",
   // g07SupplyPlays.tsx (30)
   "op_homestead_clause", "op_leapfrog_lesson", "op_market_dog", "op_sandbag_hurdle", "op_threshold_blessing", "op_trellis",
   "ov_masterclass", "ov_sock_slide", "ov_tandem_bike", "ov_wheelbarrow", "ov_whittle", "bn4_muddy_boots",
@@ -2160,12 +2167,12 @@ export const PLUGIN_IDS: readonly string[] = [
   "op_regroup_at_camp", "op_revolving_door", "op_run_for_eggs", "op_salt_from_the_coast", "op_second_thoughts", "op_servants_entrance",
   "op_sidestep_and_bow", "op_smugglers_lane", "op_soups_on", "op_spice_run", "op_tactical_withdrawal", "op_towpath",
   "ov_growth_spurt", "ov_pebble_toss", "ov_tiny_trebuchet",
-  // g09FrostPlays.tsx (29)
+  // g09FrostPlays.tsx (30)
   "bn4_long_winter", "bn4_winter_garrison", "bn4_frozen_moat", "bn4_glacier_calving", "hx4_blood_price", "hx4_eternal_toll",
   "hx4_kings_ransom", "hx4_tribute_demand", "hx4_doomsday_clock", "hx4_tolling_thirds", "ov_deus_ex_machina", "hx4_burned_keep",
   "hx4_oathbreakers_brand", "hx4_shattered_council", "hx4_frozen_reserves", "hx4_hearth_frost", "hx4_great_glacier", "hx4_reapers_due",
   "hx4_winter_that_stays", "hx4_watchmans_whistle", "hx4_wheel_of_ice", "hx4_glass_prison", "hx4_spiders_parlor", "hx4_poachers_snare",
-  "hx4_kraken_arms", "hx4_lovestruck_majesty", "hx4_tempest", "hx4_lead_rain", "hx4_frozen_harbor",
+  "hx4_kraken_arms", "hx4_lovestruck_majesty", "hx4_tempest", "hx4_lead_rain", "hx4_frozen_harbor", "hx4_mirror_of_winter",
   // g10ThawPlays.tsx (29)
   "bn4_winter_orders", "bn4_winter_palace", "hx4_avalanche_pass", "hx4_beartrap_cache", "hx4_black_lotus", "hx4_gale_warning",
   "hx4_glacier_gate", "hx4_grave_chill", "hx4_hundred_year_nap", "hx4_iron_maiden", "hx4_narcolepsy", "hx4_pillory",
@@ -2320,7 +2327,7 @@ export const PLUGIN_IDS: readonly string[] = [
   "op_closed_for_cleaning", "op_do_not_disturb", "op_margin_notes", "op_reserved_table", "op_ribbon_cutting", "op_the_management",
   "ov_kazoo_fanfare", "ov_left_on_read", "ov_growth_potion", "op_fire_escape", "hx4_beneath_her_dignity", "hx4_royal_nametag",
   "op_slow_burn", "ov_fire_drill", "hx4_scorched_diagonal", "ov_barn_door", "ov_split_timeline",
-  // g43WaterPlays.tsx (42)
+  // g43WaterPlays.tsx (43)
   "op_river_breakup", "op_second_wind_sip", "ov_rain_check", "hx4_leaking_boats", "hx4_rogue_river", "bn4_holy_water",
   "bn4_logjam", "hx4_high_water", "hx4_river_watch", "ov_great_flood", "ov_high_water_mark", "hx4_tar_flood",
   "hx4_flooded_flanks", "hx4_treacle_tide", "bn4_tide_of_pawns", "ov_thousand_ducks", "op_walking_pace", "hx4_no_easy_pickings",
@@ -2328,7 +2335,8 @@ export const PLUGIN_IDS: readonly string[] = [
   "bn4_kings_champion", "bn4_kings_own_wings", "hx4_burden_of_command", "op_harbor_horn", "hx4_curfew_horn", "bn4_parade_polish",
   "bn4_green_recruit", "ov_milkmans_round", "hx4_muster_silence", "bn4_cornucopia", "op_wet_floor_sign", "bn4_trade_secret",
   "bn4_pawnbrokers_deal", "bn4_private_auction", "bn4_velvet_queue", "hx4_dead_mans_boots", "ov_lantern_festival", "ov_ancestral_audience",
-  // g44SpacePlays.tsx (43)
+  "ov_leviathan_below",
+  // g44SpacePlays.tsx (45)
   "hx4_deja_vu", "hx4_no_full_retreat", "hx4_tea_break", "hx4_winded_monarch", "hx4_cobweb_corners", "hx4_cracked_bell",
   "hx4_no_sidling", "hx4_rusty_visor", "hx4_stunned_grief", "hx4_broken_oars", "hx4_crime_scene", "hx4_tangled_marionettes",
   "hx4_change_of_step", "hx4_leaden_boots", "ov_wizard_duel", "hx4_lantern_out", "hx4_crossbow_curfew", "ov_portal_pair",
@@ -2336,7 +2344,7 @@ export const PLUGIN_IDS: readonly string[] = [
   "bn4_worldgate", "hx4_choke_point", "hx4_wall_of_teeth", "hx4_mismatched_livery", "ov_grappling_hook", "ov_overdue_library_book",
   "bn4_hearth_ring", "bn4_wagon_circle", "bn4_heralds_truce", "ov_gravity_flip", "ov_paperwork_avalanche", "bn4_field_glasses",
   "op_star_dressing_room", "bn4_scouts_report", "ov_meteor_golf", "hx4_hobble_strap", "bn4_quartermasters_lock", "hx4_chain_gang",
-  "hx4_puppet_court",
+  "hx4_puppet_court", "ov_antigravity_gala", "ov_let_me_play_for_you",
 ];
 // </plugin-ids:generated>
 

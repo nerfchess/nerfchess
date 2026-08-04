@@ -237,3 +237,34 @@ Scenes now anchor on the cast square by default and declare `anchor: "board"`
 only when they genuinely mean the whole board. `BoardFrame` gives the layers
 that DO mean the whole board an exact box at any anchor, which is what makes
 the change safe rather than a trade.
+
+## 8. The four per-card animation types (2026-08 wave)
+
+Every card in the library now carries four per-card performances, each with
+its own total resolver and its own ratcheted coverage gate:
+
+1. **Entrance** (`entranceResolve.ts` + `cardEntrance.tsx`): bespoke scenes
+   route their own `entrance` role; the 366 generic arrivals are bent
+   per-card by the deterministic variant tuple (tilt / scale / mirror /
+   in-family hue nudge / onset jitter). Gate: `check-vfx-coverage.cjs` rules
+   3-4, `entrance-variant-baseline.json` at zero collisions.
+2. **Usage** (`usageResolve.ts` + `UseSpectacle.tsx`): the consumption beat —
+   the card itself leaving the hand, twelve families picked from a
+   per-category vocabulary, all 22 tier 9/10 usable cards hand-flagged in
+   `USAGE_FLAGSHIPS`, and the nullified read (the performance plays broken).
+   Gate: `check-usage-coverage.cjs`, `usage-variant-baseline.json` at zero.
+3. **Effect** (the play-scene system, §0-§7): 319 core signatures + the
+   plugin modules + the generated families underneath. Passive nerfs have no
+   discrete effect moment by design — their REVEAL performance (the passive
+   layer's 360/360-distinct cue sheets) IS the effect beat, so nerfs are
+   deliberately absent from the play-scene tables.
+4. **Per-piece** (`pieceTreatment.ts` + `.piece-treat`): the card-keyed look
+   an affected piece wears while the card's fx runs — sixteen filter-only
+   families split by motif polarity, fine hash knobs, tier-driven strength.
+   Gate: `check-treatment-coverage.cjs`, `treatment-variant-baseline.json`
+   at zero.
+
+The shared discipline for the resolvers: plain headless TS, deterministic
+FNV-1a hash of the card id, category/motif semantics choose the vocabulary
+and the hash only bends knobs inside it, and every gate is a ratchet that can
+only tighten.

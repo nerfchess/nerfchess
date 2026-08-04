@@ -1661,7 +1661,7 @@ const TIER2: Buff[] = [
   ),
   def(
     // The augment offers the step to every piece, king included.
-    { id: "reposition", name: "Reposition", description: "Move one piece, your king included, one square in any direction to an empty square, once. It cannot capture.", tier: 2, category: "movement", fx: { motif: "empower", pieces: "all", moveAs: "k", self: true } },
+    { id: "reposition", name: "Reposition", description: "Move one piece, your king included, one square in any direction to an empty square, once. It cannot capture.", tier: 2, category: "movement", fx: { motif: "empower", pieces: "all", moveAs: "k", self: true, king: true } },
     augment((_m, inst, api) =>
       mySquares(api.board, api.me).flatMap((sq) =>
         slideMoves(api.board, sq, ALL_DIRS, inst.id, 1).filter((m) => !m.captured),

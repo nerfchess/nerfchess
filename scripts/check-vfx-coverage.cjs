@@ -24,6 +24,14 @@
 //      dead weight, and usually a typo'd or renamed card id. Here plugins DO
 //      count: an entry is legitimate if any of the 13 modules draws that card.
 //
+//   4. ENTRANCE VARIANTS — the cards WITHOUT bespoke art (no plugin scene, no
+//      core signature, not an op_* generated arrival) share their bucket's
+//      generic scene, bent per-card by the deterministic variant tuple from
+//      entranceResolve.entranceVariant. Two cards in the same bucket landing
+//      on the SAME tuple would arrive pixel-identically — the exact sameness
+//      the variant system exists to kill. The collision count is ratcheted by
+//      scripts/entrance-variant-baseline.json: it may only shrink.
+//
 //   3. ENTRANCES — every library card, buff AND nerf, must resolve to a
 //      renderable acquire-entrance. The probe runs the REAL resolver
 //      (src/components/effects/entranceResolve.ts: motif first, category
@@ -97,7 +105,7 @@ function vfxTables() {
 }
 
 function main() {
-  const { cardVfx, extraVfx, tiers, entrances } = vfxTables();
+  const { cardVfx, extraVfx, tiers, entrances, variants } = vfxTables();
   const covered = new Set([...cardVfx, ...extraVfx]);
   const signatures = signatureIds();
   const plugins = pluginIds();
@@ -159,6 +167,43 @@ function main() {
     );
   }
 
+  // 4. Entrance-variant distinctness on the generic-arrival fallbacks.
+  const baselinePath = path.join(__dirname, "entrance-variant-baseline.json");
+  const baseline = JSON.parse(fs.readFileSync(baselinePath, "utf8"));
+  const buckets = new Map(); // bucket -> Map(tuple -> [ids])
+  let fallbackCount = 0;
+  for (const [id, res] of entries) {
+    // Bespoke art and opener arrivals are already per-card; only the shared
+    // generic scenes need the variant to tell cards apart.
+    if (!id.startsWith("nerf:") && (bespoke.has(id) || id.startsWith("op_"))) continue;
+    const tuple = (variants ?? {})[id];
+    if (!tuple) continue;
+    fallbackCount++;
+    if (!buckets.has(res)) buckets.set(res, new Map());
+    const m = buckets.get(res);
+    if (!m.has(tuple)) m.set(tuple, []);
+    m.get(tuple).push(id);
+  }
+  let collisions = 0;
+  const collided = [];
+  for (const [bucket, m] of buckets) {
+    for (const [tuple, ids] of m) {
+      if (ids.length > 1) {
+        collisions += ids.length - 1;
+        collided.push(`${bucket} [${tuple}]: ${ids.join(", ")}`);
+      }
+    }
+  }
+  if (collisions > baseline.bucketCollisions) {
+    errors.push(
+      `entrance-variant collisions grew: ${collisions} > baseline ${baseline.bucketCollisions}.` +
+        ` Cards sharing a bucket AND a variant tuple arrive identically:\n    - ` +
+        collided.slice(0, 20).join("\n    - ") +
+        `\n    Widen the tuple space in entranceResolve.entranceVariant (or hand the card bespoke art);` +
+        ` never raise the baseline.`,
+    );
+  }
+
   if (errors.length) {
     console.error("vfx-coverage check FAILED:");
     for (const e of errors) console.error("  - " + e);
@@ -177,7 +222,9 @@ function main() {
     `vfx-coverage: ${covered.size} specs cover every bespoke tier>=4 card ` +
       `(${signatures.length} core signatures + ${plugins.length} plugin ids), no orphans; ` +
       `entrances: ${entries.length}/${entries.length} library cards resolve ` +
-      `(${counts.motif} motif, ${counts.category} category, ${counts.default} neutral floor)`,
+      `(${counts.motif} motif, ${counts.category} category, ${counts.default} neutral floor); ` +
+      `variants: ${fallbackCount} generic arrivals, ${collisions} tuple collision(s) ` +
+      `(baseline ${baseline.bucketCollisions})`,
   );
 }
 

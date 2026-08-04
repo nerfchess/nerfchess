@@ -829,10 +829,34 @@ export function GenericArrival({
   delayMs?: number;
 }) {
   const def = cardId ? BUFF_BY_ID[cardId] : undefined;
-  const resolved = resolveEntrance({ category: def?.category ?? category, fx: def?.fx });
-  if (resolved.kind === "motif") return MOTIF_ARRIVAL[resolved.motif]({ icon, delayMs });
-  if (resolved.kind === "category") return <CategoryArrival category={resolved.category} icon={icon} delayMs={delayMs} />;
-  return <DefaultArrival icon={icon} delayMs={delayMs} />;
+  const resolved = resolveEntrance({ id: cardId, category: def?.category ?? category, fx: def?.fx });
+  const v = resolved.variant;
+  const jitter = v?.delayJitter ?? 0;
+  const scene =
+    resolved.kind === "motif" ? (
+      MOTIF_ARRIVAL[resolved.motif]({ icon, delayMs: delayMs + jitter })
+    ) : resolved.kind === "category" ? (
+      <CategoryArrival category={resolved.category} icon={icon} delayMs={delayMs + jitter} />
+    ) : (
+      <DefaultArrival icon={icon} delayMs={delayMs + jitter} />
+    );
+  if (!v) return scene;
+  // The per-card bend: a static whole-scene tilt / flip / scale plus a small
+  // in-family hue nudge and the delay jitter above. Static styles only — the
+  // animated layers inside are untouched, so node budgets, reduced motion,
+  // and the anim-off gate all behave exactly as before. Eight jail cards now
+  // arrive as eight recognizably different jails.
+  return (
+    <span
+      className="absolute inset-0 block"
+      style={{
+        transform: `rotate(${v.rot}deg) scaleX(${v.mirror ? -1 : 1}) scale(${v.scale})`,
+        filter: v.hueNudge !== 0 ? `hue-rotate(${v.hueNudge}deg)` : undefined,
+      }}
+    >
+      {scene}
+    </span>
+  );
 }
 
 // --- Acquire entrance ---------------------------------------------------------
@@ -963,7 +987,7 @@ export function CardEntrance({
   // palette authority for the wash / title / marquee chrome, so the whole
   // composition wears the resolved flavor's colors.
   const def = cardId ? BUFF_BY_ID[cardId] : undefined;
-  const resolved = resolveEntrance({ category: def?.category ?? category, fx: def?.fx });
+  const resolved = resolveEntrance({ id: cardId, category: def?.category ?? category, fx: def?.fx });
   const t = resolved.theme;
   const marquee = tier >= 8;
   const isOpener = !!cardId?.startsWith("op_");

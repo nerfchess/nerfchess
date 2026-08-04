@@ -40,8 +40,11 @@ export function MobileActionsMenu({ children }: { children: ReactNode }) {
             className="fixed inset-0 z-30 cursor-default"
           />
           {/* !absolute / !z-40: .plate hard-codes position:relative and
-              z-index:2 later in the cascade, so plain utilities lose. */}
-          <div className="!absolute bottom-full left-0 right-0 !z-40 mb-1 plate p-2">
+              z-index:2 later in the cascade, so plain utilities lose. The
+              `dropdown` rung gives the menu the opaque raised surface — a bare
+              plate's translucent sheen made the actions hard to read over the
+              board. */}
+          <div className="!absolute bottom-full left-0 right-0 !z-40 mb-1 plate dropdown p-2">
             {children}
           </div>
         </>
