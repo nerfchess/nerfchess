@@ -5,10 +5,10 @@
 // counts are pooled and capped per the tier ladder (max 24). Every primitive
 // has a reduced-motion static fallback: a short fade to its static sigil, shown
 // whenever the caller passes `reduced` (the lifecycle components compute this
-// from html[data-anim] and prefers-reduced-motion). The CSS in primitives.css
-// additionally hard-stops all keyframes under data-anim="off" and under
-// prefers-reduced-motion, so a primitive can never animate in a reduced
-// context even if mis-called.
+// from html[data-anim], which absorbs the OS prefers-reduced-motion request
+// when "Follow system motion" is opted into). The CSS in primitives.css
+// additionally hard-stops all keyframes under data-anim="off", so a primitive
+// can never animate in a reduced context even if mis-called.
 //
 // PRIMITIVE_MANIFEST exports every key and its fallback descriptor, consumed by
 // scripts/test-passive-registry.ts.

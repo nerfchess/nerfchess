@@ -115,9 +115,7 @@ html[data-anim="off"] .draft-fx:hover .draft-fx__glow {
       0 0 26px 4px rgb(190 60 48 / 0.35);
   }
 }
-@media (prefers-reduced-motion: reduce) {
-  .draft-expire-pulse { animation: none; box-shadow: 0 0 0 3px rgb(190 60 48 / 0.55); }
-}
+html[data-anim="off"] .draft-expire-pulse { animation: none; box-shadow: 0 0 0 3px rgb(190 60 48 / 0.55); }
 
 /* Confirm with a card selected: the one primary in the region gets a steady
    gold ready-glow so it visually outranks the quiet Reroll/Bank secondaries. */
@@ -680,9 +678,6 @@ html[data-anim="off"] .draft-timer--urgent { animation: none; }
   100% { transform: scale(1); box-shadow: 0 0 0 12px rgb(212 160 23 / 0); }
 }
 html[data-anim="off"] .draft-timer--announce { animation: none; }
-@media (prefers-reduced-motion: reduce) {
-  .draft-timer--announce { animation: none; }
-}
 
 /* Preparation chip dot: a small gold ember breathing while the chest opens
    and the cards deal. Opacity only; still (steady) under reduced motion. */
@@ -699,9 +694,6 @@ html[data-anim="off"] .draft-timer--announce { animation: none; }
   50% { opacity: 1; }
 }
 html[data-anim="off"] .draft-prep-dot { animation: none; opacity: 0.8; }
-@media (prefers-reduced-motion: reduce) {
-  .draft-prep-dot { animation: none; opacity: 0.8; }
-}
 
 /* ---------------------------------------------------------------------------
    Draft panel frame: ember-forged iron — a 1px rim that runs from hot ember
