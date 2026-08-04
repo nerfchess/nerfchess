@@ -201,6 +201,7 @@
    "animation": "bespoke+canvas",
    "location": "src/engine/buffs/tier9.ts",
    "tests": [
+    "test-fx-zones.ts",
     "lab-run-all.ts"
    ],
    "flags": [],
@@ -440,6 +441,7 @@
    "animation": "bespoke+canvas",
    "location": "src/engine/buffs/tier9.ts",
    "tests": [
+    "test-fx-zones.ts",
     "lab-run-all.ts"
    ],
    "flags": [],
@@ -459,6 +461,7 @@
    "location": "src/engine/buffs/tier9.ts",
    "tests": [
     "sim-chess-diff.ts",
+    "test-fx-zones.ts",
     "lab-run-all.ts"
    ],
    "flags": [],
@@ -13774,6 +13777,8 @@
    "animation": "passive",
    "location": "src/engine/buffs/library.ts",
    "tests": [
+    "check-treatment-coverage.cjs",
+    "test-fx-zones.ts",
     "lab-run-all.ts"
    ],
    "flags": [],
