@@ -14,8 +14,8 @@ import { sanLabels } from "@/engine/board";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
 import type { BuffCategory, CardFx } from "@/engine/buff";
 import { boardAtPly, replayBoardSpan } from "@/lib/gameReview";
-import type { BoardState, Move, Piece, Square } from "@/engine/types";
-import { FILE, RANK } from "@/engine/types";
+import type { BoardState, Move, Piece, PieceType, Square } from "@/engine/types";
+import { FILE, PIECE_VALUE, RANK } from "@/engine/types";
 
 export type ClipPieces = (Piece | null)[];
 
@@ -253,6 +253,100 @@ export function buildClipTimeline(opts: BuildClipOptions): ClipTimeline | null {
     initial: boards[0],
     final: boards[boards.length - 1],
     segments,
+  };
+}
+
+// --- Auto-director -----------------------------------------------------------
+
+/** What the auto-director decided the clip is ABOUT. */
+export type ClipPayoffKind = "card" | "capture" | "finish";
+
+export interface ClipAutoPlan {
+  /** Window length (last N plies) the director chose. */
+  plies: number;
+  /** Absolute ply index of the payoff segment, or null for a plain finish. */
+  payoffPly: number | null;
+  kind: ClipPayoffKind;
+  /** The payoff card, when the payoff is a card play. */
+  card: ClipSigMeta | null;
+  /** Highest-value piece taken in the payoff, when it is a capture swing. */
+  captured: PieceType | null;
+}
+
+/** How far back the director scans for a payoff, and the setup lead it keeps
+ *  in front of one. Both in plies. */
+const AUTO_SCAN = 14;
+const AUTO_LEAD = 3;
+const AUTO_FALLBACK = 8;
+
+/** Scan the reconstructable tail of the game for the best payoff and choose
+ *  the clip window around it: the highest-tier card play in the last ~14
+ *  plies, else the biggest capture swing, else the final 8 plies. The window
+ *  always ends at the head (the reveal is the finish), so "around" means
+ *  keeping a few plies of setup in front of the payoff. */
+export function planAutoClip(
+  opts: Omit<BuildClipOptions, "plies">,
+): ClipAutoPlan | null {
+  const probe = buildClipTimeline({ ...opts, plies: AUTO_SCAN });
+  if (!probe) return null;
+  const segs = probe.segments;
+  const head = probe.startPly + segs.length;
+
+  // Highest-tier card play; ties go to the LATER play (closer to the finish).
+  let cardIdx = -1;
+  for (let i = 0; i < segs.length; i++) {
+    const sig = segs[i].sig;
+    if (sig && (cardIdx < 0 || sig.tier >= segs[cardIdx].sig!.tier)) cardIdx = i;
+  }
+
+  // Biggest capture swing: total point value removed in one segment.
+  let capIdx = -1;
+  let capBest = 0;
+  let capPiece: PieceType | null = null;
+  for (let i = 0; i < segs.length; i++) {
+    const seg = segs[i];
+    let value = 0;
+    let top: PieceType | null = null;
+    const count = (p: Piece) => {
+      value += p.type === "k" ? 12 : PIECE_VALUE[p.type];
+      if (!top || PIECE_VALUE[p.type] >= PIECE_VALUE[top]) top = p.type;
+    };
+    for (const pr of seg.pairs) if (pr.captured) count(pr.captured);
+    for (const v of seg.vanishes) count(v.piece);
+    if (value > 0 && value >= capBest) {
+      capBest = value;
+      capIdx = i;
+      capPiece = top;
+    }
+  }
+
+  const windowFor = (idx: number) =>
+    Math.max(4, Math.min(segs.length, head - (probe.startPly + idx) + AUTO_LEAD));
+
+  if (cardIdx >= 0) {
+    return {
+      plies: windowFor(cardIdx),
+      payoffPly: segs[cardIdx].ply,
+      kind: "card",
+      card: segs[cardIdx].sig,
+      captured: null,
+    };
+  }
+  if (capIdx >= 0) {
+    return {
+      plies: windowFor(capIdx),
+      payoffPly: segs[capIdx].ply,
+      kind: "capture",
+      card: null,
+      captured: capPiece,
+    };
+  }
+  return {
+    plies: Math.min(AUTO_FALLBACK, segs.length),
+    payoffPly: null,
+    kind: "finish",
+    card: null,
+    captured: null,
   };
 }
 

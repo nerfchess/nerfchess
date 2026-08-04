@@ -9,7 +9,11 @@
 //
 // Sounds: a noise-burst knock for moves, a brighter knock plus a flash tone
 // for captures, a rising two-tone ding for card plays (pitch and shimmer scale
-// with tier), and a three-note sting under the verdict stamp.
+// with tier), and a three-note sting under the verdict stamp. The animated
+// reel beats each get a voice too: a two-note sting under the intro slam,
+// filtered-noise whooshes under the between-ply edge shimmers, a rising
+// pre-beat tone into the payoff, a deeper sub-thump for the slow-motion hit,
+// and a resolve chord under the end card.
 
 import type { ClipAudioEvent } from "./clipScene";
 import { mulberry32 } from "./clipScene";
@@ -128,6 +132,53 @@ function scheduleEvents(
         tone(ctx, master, at + 0.05, { type: "triangle", from: 294, gain: 0.22, decay: 0.55 });
         tone(ctx, master, at + 0.16, { type: "triangle", from: 392, gain: 0.26, decay: 0.75 });
         knock(ctx, noise, master, at, { freq: 320, gain: 0.4, decay: 0.3 });
+        break;
+      case "intro":
+        // Board slam: a low thud under a bright two-note wordmark sting.
+        knock(ctx, noise, master, at, { freq: 220, gain: 0.55, decay: 0.28 });
+        tone(ctx, master, at + 0.02, { type: "triangle", from: 392, gain: 0.24, decay: 0.28 });
+        tone(ctx, master, at + 0.15, { type: "triangle", from: 587, gain: 0.28, decay: 0.42 });
+        break;
+      case "shimmer":
+        // Edge-shimmer whoosh: airy filtered noise plus a rising sparkle.
+        knock(ctx, noise, master, at, { freq: 3200, gain: 0.14, decay: 0.22 });
+        tone(ctx, master, at + 0.02, {
+          type: "sine", from: 1400, to: 2600, gain: 0.05, decay: 0.2,
+        });
+        break;
+      case "riser": {
+        // Pre-beat riser: pitch and level both climb into the payoff.
+        const osc = ctx.createOscillator();
+        osc.type = "sawtooth";
+        osc.frequency.setValueAtTime(150, at);
+        osc.frequency.exponentialRampToValueAtTime(620, at + 0.3);
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0.015, at);
+        g.gain.exponentialRampToValueAtTime(0.22, at + 0.3);
+        g.gain.exponentialRampToValueAtTime(0.001, at + 0.36);
+        osc.connect(g).connect(master);
+        osc.start(at);
+        osc.stop(at + 0.4);
+        break;
+      }
+      case "impact":
+        // Slow-motion hit: everything a capture has, plus a sub-bass drop.
+        knock(ctx, noise, master, at, { freq: 2400, gain: 0.6, decay: 0.06 });
+        knock(ctx, noise, master, at + 0.004, { freq: 90, gain: 0.9, decay: 0.4 });
+        tone(ctx, master, at + 0.01, {
+          type: "sine", from: 110, to: 38, gain: 0.5, decay: 0.5,
+        });
+        tone(ctx, master, at + 0.01, {
+          type: "triangle", from: 880, to: 340, gain: 0.2, decay: 0.2,
+        });
+        break;
+      case "outro":
+        // End-card resolve chord, rolled gently.
+        tone(ctx, master, at, { type: "triangle", from: 131, gain: 0.14, decay: 1.0 });
+        tone(ctx, master, at + 0.04, { type: "triangle", from: 262, gain: 0.15, decay: 0.95 });
+        tone(ctx, master, at + 0.09, { type: "triangle", from: 330, gain: 0.14, decay: 0.9 });
+        tone(ctx, master, at + 0.14, { type: "triangle", from: 392, gain: 0.15, decay: 0.9 });
+        tone(ctx, master, at + 0.2, { type: "sine", from: 523, gain: 0.1, decay: 0.85 });
         break;
     }
   }

@@ -84,8 +84,10 @@ interface Props {
   moves?: Move[];
   // Card-use markers for the match timeline, one per played card (see above).
   cardEvents?: TimelineCardEvent[];
-  // Accepted for caller compatibility; the clip entry point lives in the game
-  // view's actions ("Clip last moves"), not on the result screen.
+  // Opens the clip modal (auto reel mode). Rendered as a prominent "Share
+  // reel" action on the result screen: the reveal is the emotional peak, so
+  // that is where the reel entry belongs. Omit it (e.g. when the last plies
+  // can't be reconstructed) and the button simply doesn't render.
   onClip?: () => void;
   playerNames?: Record<Color, string>;
   startedAt?: number;
@@ -533,6 +535,12 @@ const pgnIcon = (
     <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
   </svg>
 );
+const reelIcon = (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <polygon points="23 7 16 12 23 17 23 7" />
+    <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+  </svg>
+);
 
 export function GameOver({
   result,
@@ -550,6 +558,7 @@ export function GameOver({
   onCancelRematch,
   opponentHidden = false,
   moves,
+  onClip,
   cardEvents,
   playerNames,
   startedAt,
@@ -1049,7 +1058,23 @@ export function GameOver({
           </div>
         ) : (
           <>
-            <div className="mt-6 grid grid-cols-2 gap-2">
+            {/* The reel entry rides the emotional peak: right under the
+                verdict, before the routine actions (marketing plan Phase 0).
+                Gold, because a ready-to-post highlight of the game you just
+                lived through is a reward, not a routine action. */}
+            {onClip && (
+              <Button
+                tone="gold"
+                onClick={onClip}
+                data-share-reel
+                block
+                className="mt-6 px-5 py-2.5 font-semibold"
+              >
+                {reelIcon}
+                Share reel
+              </Button>
+            )}
+            <div className={`${onClip ? "mt-2" : "mt-6"} grid grid-cols-2 gap-2`}>
               {rematchStatus === "offered" && opponentLeft && onCancelRematch ? (
                 // The opponent is gone, so "waiting" is a dead end: offer the way
                 // out instead.
@@ -1091,7 +1116,8 @@ export function GameOver({
 
             {/* Secondary actions: Share, Analyze, the archived replay, PGN,
                 and both players' profiles (real usernames). One entry each;
-                the clip and move-review entry points live in the game view. */}
+                the move-review entry point lives in the game view, and the
+                reel entry is the gold action above. */}
             <div className="mt-2 grid grid-cols-2 gap-2">
               <Button tone="ghost"
                

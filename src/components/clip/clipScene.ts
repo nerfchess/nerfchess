@@ -185,7 +185,7 @@ interface CaptionEvent {
   big: boolean;
 }
 
-const PIECE_WORD: Record<PieceType, string> = {
+export const PIECE_WORD: Record<PieceType, string> = {
   p: "PAWN", n: "KNIGHT", b: "BISHOP", r: "ROOK", q: "QUEEN", k: "KING",
 };
 
@@ -243,7 +243,21 @@ function captionFor(
 export interface ClipAudioEvent {
   /** Milliseconds into the clip. */
   t: number;
-  kind: "move" | "capture" | "card" | "verdict";
+  kind:
+    | "move"
+    | "capture"
+    | "card"
+    | "verdict"
+    /** Two-note sting under the intro slam. */
+    | "intro"
+    /** Whoosh under the between-ply edge shimmer. */
+    | "shimmer"
+    /** Rising pre-beat tone into the payoff. */
+    | "riser"
+    /** Deeper hit for the slow-motion payoff landing. */
+    | "impact"
+    /** Resolve chord under the end card. */
+    | "outro";
   tier?: number;
 }
 
@@ -273,10 +287,16 @@ export interface ClipSceneOptions {
   verdict: ClipVerdict | null;
   fonts: { display: string; body: string };
   accent: string;
+  /** Auto-director payoff hint: absolute ply of the segment that should get
+   *  the dramatic pre-beat + slow-motion hit. Falls back to an internal scan
+   *  (last capture / card) when absent. */
+  payoffPly?: number | null;
 }
 
 interface SegFx {
   start: number;
+  /** Dramatic pre-beat pause (darken + zoom + riser) before the slide. */
+  preMs: number;
   moveMs: number;
   holdMs: number;
   seg: ClipSegment;
@@ -287,11 +307,26 @@ interface SegFx {
   particles: Particle[];
   /** Capture shard bursts, one per captured piece. */
   shards: { sq: Square; light: boolean; parts: Particle[] }[];
+  /** Small dust puff on every landing (the big shards are captures only). */
+  dust: Particle[];
   caption: CaptionEvent | null;
   /** White-minus-black material after this segment lands. */
   matAfter: number;
   punch: boolean;
   shakeAmp: number;
+  isPayoff: boolean;
+}
+
+/** Ambient ember: drifts, flickers, and leans warm or parchment-neutral. */
+interface Ember {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  r: number;
+  a: number;
+  phase: number;
+  warm: number;
 }
 
 export interface ClipScene {
@@ -299,6 +334,7 @@ export interface ClipScene {
   layout: ClipLayout;
   lead: number;
   segs: SegFx[];
+  payoffIndex: number;
   freezeStart: number;
   freezeMs: number;
   endStart: number;
@@ -306,7 +342,9 @@ export interface ClipScene {
   durationMs: number;
   audio: ClipAudioEvent[];
   matStart: number;
-  drift: { x: number; y: number; vx: number; vy: number; r: number; a: number }[];
+  drift: Ember[];
+  /** Dust kicked up by the intro board slam. */
+  introDust: Particle[];
 }
 
 function material(pieces: (Piece | null)[]): number {
@@ -346,24 +384,35 @@ export function buildClipScene(opts: ClipSceneOptions): ClipScene {
   const rng = mulberry32(0x1badb002 ^ (timeline.startPly * 2654435761) ^ (n << 16));
   const intensity = intensityScale(opts.emojiLevel);
 
-  // The payoff ply: the last capture / card / promotion, held in slow motion
-  // when the speed ramp is on; everything before it is setup at 1.5x.
+  // The payoff ply: the auto-director's hint when present, else the last
+  // capture / card / promotion. Held in slow motion when the speed ramp is on;
+  // everything before it is setup at 1.5x.
   let payoff = n - 1;
-  for (let i = n - 1; i >= 0; i--) {
-    const seg = timeline.segments[i];
-    const hasCapture = seg.pairs.some((p) => p.captured) || seg.vanishes.length > 0;
-    if (seg.sig || hasCapture) {
-      payoff = i;
-      break;
+  const hinted =
+    opts.payoffPly != null
+      ? timeline.segments.findIndex((s) => s.ply === opts.payoffPly)
+      : -1;
+  if (hinted >= 0) {
+    payoff = hinted;
+  } else {
+    for (let i = n - 1; i >= 0; i--) {
+      const seg = timeline.segments[i];
+      const hasCapture = seg.pairs.some((p) => p.captured) || seg.vanishes.length > 0;
+      if (seg.sig || hasCapture) {
+        payoff = i;
+        break;
+      }
     }
   }
 
   const baseMove = n > 6 ? 430 : 560;
   const baseHold = n > 6 ? 210 : 300;
-  const lead = 600;
+  // Intro beat: the board slams in, the wordmark pops, the hook spring-pops.
+  const lead = 700;
   let at = lead;
   const segs: SegFx[] = [];
   const audio: ClipAudioEvent[] = [];
+  audio.push({ t: 40, kind: "intro" });
 
   for (let i = 0; i < n; i++) {
     const seg = timeline.segments[i];
@@ -372,6 +421,10 @@ export function buildClipScene(opts: ClipSceneOptions): ClipScene {
     const hasCapture = captured.length > 0;
     const energy = seg.sig ? pickEnergy(seg.sig) : null;
     const tierScale = seg.sig ? Math.min(2, 0.85 + seg.sig.tier * 0.13) : 1;
+    const isPayoff = i === payoff;
+    // The payoff earns a dramatic pre-beat (darken + zoom + riser) when it has
+    // an actual hit to sell; a quiet final move gets none.
+    const preMs = isPayoff && (hasCapture || !!seg.sig || seg.vanishes.length > 0) ? 300 : 0;
 
     let moveMs = baseMove;
     let holdMs = baseHold + (seg.sig ? Math.round(420 * tierScale) : 0);
@@ -379,7 +432,7 @@ export function buildClipScene(opts: ClipSceneOptions): ClipScene {
       if (i < payoff) {
         moveMs = Math.round(moveMs / 1.5);
         holdMs = Math.round(holdMs / 1.5);
-      } else if (i === payoff) {
+      } else if (isPayoff) {
         moveMs = Math.round(moveMs * 2);
         holdMs = Math.round(holdMs * 1.6);
       }
@@ -397,13 +450,20 @@ export function buildClipScene(opts: ClipSceneOptions): ClipScene {
       shards.push({ sq: v.sq, light: v.piece.color === "w", parts: makeParticles(rng, 10) });
     }
 
+    // Between-ply shimmer whoosh (the payoff gets the riser instead).
+    if (i > 0 && !preMs) audio.push({ t: at, kind: "shimmer" });
+    if (preMs) audio.push({ t: at, kind: "riser" });
     if (seg.sig) {
-      audio.push({ t: at + 60, kind: "card", tier: seg.sig.tier });
+      audio.push({ t: at + preMs + 60, kind: "card", tier: seg.sig.tier });
     }
-    audio.push({ t: at + moveMs, kind: hasCapture ? "capture" : "move" });
+    audio.push({
+      t: at + preMs + moveMs,
+      kind: isPayoff && hasCapture ? "impact" : hasCapture ? "capture" : "move",
+    });
 
     segs.push({
       start: at,
+      preMs,
       moveMs,
       holdMs,
       seg,
@@ -412,6 +472,7 @@ export function buildClipScene(opts: ClipSceneOptions): ClipScene {
       tierScale,
       particles: energy ? makeParticles(rng, Math.round(ENERGY_PARTICLES[energy] * tierScale)) : [],
       shards,
+      dust: makeParticles(rng, 7),
       caption: captionFor(seg, energy, opts.emojiLevel),
       matAfter: segMaterial(seg),
       punch: opts.zoomPunch && (hasCapture || !!seg.sig),
@@ -424,29 +485,34 @@ export function buildClipScene(opts: ClipSceneOptions): ClipScene {
             : seg.sig
               ? 2 * intensity
               : 0,
+      isPayoff,
     });
-    at += moveMs + holdMs;
+    at += preMs + moveMs + holdMs;
   }
 
   const freezeMs = opts.freezeStamp ? 1000 : 320;
   const freezeStart = at;
   if (opts.freezeStamp) audio.push({ t: freezeStart + 80, kind: "verdict" });
   at += freezeMs;
-  const endMs = opts.endCard ? 1200 : 0;
+  const endMs = opts.endCard ? 1400 : 0;
   const endStart = at;
+  if (endMs > 0) audio.push({ t: endStart + 60, kind: "outro" });
   at += endMs;
 
-  // Ambient drift specks for the decorative fill outside the safe zones.
+  // Ambient ember field for the decorative fill outside the safe zones: every
+  // speck drifts AND flickers, so no frame of background is ever static.
   const drift: ClipScene["drift"] = [];
-  const driftN = opts.aspect === "classic" ? 14 : 26;
+  const driftN = opts.aspect === "classic" ? 18 : 34;
   for (let i = 0; i < driftN; i++) {
     drift.push({
       x: rng() * layout.W,
       y: rng() * layout.H,
-      vx: (rng() - 0.5) * 0.012,
-      vy: -0.006 - rng() * 0.012,
+      vx: (rng() - 0.5) * 0.014,
+      vy: -0.007 - rng() * 0.014,
       r: 1 + rng() * 2.4,
-      a: 0.05 + rng() * 0.12,
+      a: 0.06 + rng() * 0.14,
+      phase: rng() * Math.PI * 2,
+      warm: rng(),
     });
   }
 
@@ -455,6 +521,7 @@ export function buildClipScene(opts: ClipSceneOptions): ClipScene {
     layout,
     lead,
     segs,
+    payoffIndex: payoff,
     freezeStart,
     freezeMs,
     endStart,
@@ -463,6 +530,7 @@ export function buildClipScene(opts: ClipSceneOptions): ClipScene {
     audio,
     matStart: material(timeline.initial),
     drift,
+    introDust: makeParticles(rng, 18),
   };
 }
 
@@ -558,9 +626,18 @@ export function renderClipFrame(
     return { x: L.boardX + col * L.sq, y: L.boardY + row * L.sq };
   };
 
-  const drawPiece = (piece: Piece, x: number, y: number, alpha = 1, scale = 1, size = L.sq) => {
+  const drawPiece = (
+    piece: Piece,
+    x: number,
+    y: number,
+    alpha = 1,
+    scale = 1,
+    size = L.sq,
+    scaleY = scale,
+  ) => {
     const img = images?.get(piece.color + piece.type);
     const s = size * 0.92 * scale;
+    const sv = size * 0.92 * scaleY;
     const cx = x + size / 2;
     const cy = y + size / 2;
     ctx.save();
@@ -569,7 +646,9 @@ export function renderClipFrame(
       ctx.shadowColor = "rgba(0,0,0,0.45)";
       ctx.shadowBlur = 8;
       ctx.shadowOffsetY = 3;
-      ctx.drawImage(img, cx - s / 2, cy - s / 2, s, s);
+      // Squash draws from the ground line, not the center, so a landing piece
+      // compresses onto the square instead of floating.
+      ctx.drawImage(img, cx - s / 2, cy + size * 0.46 - sv, s, sv);
     } else {
       ctx.fillStyle = piece.color === "w" ? "#ece7dd" : "#221f1a";
       ctx.strokeStyle = piece.color === "w" ? "#221f1a" : "#ece7dd";
@@ -588,33 +667,48 @@ export function renderClipFrame(
     ctx.restore();
   };
 
-  // ---- Background: gradient, blurred board glow, particle drift ----
+  // ---- Background: breathing gradient, rotating glow, ember field ----
   const bg = ctx.createLinearGradient(0, 0, 0, L.H);
   bg.addColorStop(0, "#201c17");
   bg.addColorStop(0.5, "#181510");
   bg.addColorStop(1, "#120f0c");
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, L.W, L.H);
-  const glow = ctx.createRadialGradient(
-    L.W / 2, L.boardY + L.board / 2, L.board * 0.2,
-    L.W / 2, L.boardY + L.board / 2, L.board * 0.95,
-  );
-  glow.addColorStop(0, withAlpha(accent, 0.13));
+  const bcx = L.W / 2;
+  const bcy = L.boardY + L.board / 2;
+  // Slow-breathing accent wash so the backdrop itself is never still.
+  const breathe = ctx.createLinearGradient(0, 0, 0, L.H);
+  breathe.addColorStop(0, withAlpha(accent, 0.05 + 0.03 * Math.sin(t * 0.0011)));
+  breathe.addColorStop(0.6, "rgba(0,0,0,0)");
+  breathe.addColorStop(1, withAlpha(accent, 0.03 + 0.02 * Math.sin(t * 0.0009 + 2.1)));
+  ctx.fillStyle = breathe;
+  ctx.fillRect(0, 0, L.W, L.H);
+  // Slowly rotating glow behind the board, its brightness pulsing in sync
+  // with the momentum bar's material swing.
+  const mom = Math.abs(momentumAt(scene, t));
+  const orbitA = t * 0.0005;
+  const gx = bcx + Math.cos(orbitA) * L.board * 0.12;
+  const gy = bcy + Math.sin(orbitA) * L.board * 0.12;
+  const glow = ctx.createRadialGradient(gx, gy, L.board * 0.15, gx, gy, L.board * 0.95);
+  glow.addColorStop(0, withAlpha(accent, 0.11 + 0.05 * mom + 0.02 * Math.sin(t * 0.003)));
   glow.addColorStop(1, "rgba(0,0,0,0)");
   ctx.fillStyle = glow;
   ctx.fillRect(0, 0, L.W, L.H);
-  ctx.fillStyle = "#ece7dd";
+  // Drifting ember / spark field: position drifts, alpha flickers, warm specks
+  // read as embers against the parchment-neutral dust.
   for (const d of scene.drift) {
     const dx = (((d.x + d.vx * t) % L.W) + L.W) % L.W;
     const dy = (((d.y + d.vy * t) % L.H) + L.H) % L.H;
-    ctx.globalAlpha = d.a;
+    ctx.globalAlpha = d.a * (0.65 + 0.35 * Math.sin(t * 0.004 + d.phase));
+    ctx.fillStyle = d.warm > 0.6 ? "#ffb35c" : "#ece7dd";
     ctx.fillRect(dx, dy, d.r, d.r);
   }
   ctx.globalAlpha = 1;
 
-  // ---- End card replaces everything once it starts ----
+  // ---- End card replaces the board chrome once it starts ----
   if (scene.endMs > 0 && t >= scene.endStart) {
     drawEndCard(scene, ctx, (t - scene.endStart) / scene.endMs, images, drawPiece);
+    drawOverlays(scene, ctx, t);
     return;
   }
 
@@ -623,12 +717,20 @@ export function renderClipFrame(
   ctx.textAlign = "left";
   const markSize = opts.aspect === "classic" ? 30 : 42;
   ctx.font = `700 ${markSize}px ${fonts.display}`;
-  ctx.fillStyle = "#ece7dd";
   const markX = opts.aspect === "tiktok" ? 120 : L.boardX;
-  ctx.fillText("nerf", markX, L.headerY);
+  // Wordmark pops in with the intro sting, then keeps a barely-there breathe.
+  const markPop = t < 340 ? easeOutBack(clamp01(t / 340)) : 1 + 0.006 * Math.sin(t * 0.002);
+  ctx.save();
   const markW = ctx.measureText("nerf").width;
+  const markW2 = ctx.measureText("chess").width;
+  ctx.translate(markX + (markW + markW2) / 2, L.headerY - markSize * 0.35);
+  ctx.scale(markPop, markPop);
+  ctx.translate(-(markX + (markW + markW2) / 2), -(L.headerY - markSize * 0.35));
+  ctx.fillStyle = "#ece7dd";
+  ctx.fillText("nerf", markX, L.headerY);
   ctx.fillStyle = accent;
   ctx.fillText("chess", markX + markW, L.headerY);
+  ctx.restore();
   ctx.font = `500 ${opts.aspect === "classic" ? 17 : 26}px ${fonts.body}`;
   ctx.fillStyle = "#a7a297";
   const match = `${opts.names.w}  vs  ${opts.names.b}`;
@@ -639,7 +741,7 @@ export function renderClipFrame(
     ctx.fillText(match, opts.aspect === "tiktok" ? 940 : L.boardX + L.board, L.headerY);
     ctx.textAlign = "left";
   }
-  drawHook(scene, ctx);
+  drawHook(scene, ctx, t);
 
   // ---- Where are we in the timeline? ----
   const inFreeze = t >= scene.freezeStart;
@@ -648,26 +750,52 @@ export function renderClipFrame(
   let holdU = 0; // 0..1 across the hold
   let doneCount = 0;
   for (const sf of scene.segs) {
-    if (t >= sf.start + sf.moveMs + sf.holdMs) {
+    if (t >= sf.start + sf.preMs + sf.moveMs + sf.holdMs) {
       doneCount++;
       continue;
     }
     if (t >= sf.start) {
       active = sf;
-      u = clamp01((t - sf.start) / sf.moveMs);
-      holdU = clamp01((t - sf.start - sf.moveMs) / sf.holdMs);
+      u = clamp01((t - sf.start - sf.preMs) / sf.moveMs);
+      holdU = clamp01((t - sf.start - sf.preMs - sf.moveMs) / sf.holdMs);
     }
     break;
   }
+  // Pre-beat progress: the darken + zoom window before the payoff slide.
+  const preU =
+    active && active.preMs > 0 && t < active.start + active.preMs
+      ? clamp01((t - active.start) / active.preMs)
+      : 0;
 
   // ---- Board group: shake + punch transforms wrap everything on the board ----
   ctx.save();
   const shake = shakeOffset(scene, t);
   ctx.translate(shake.x, shake.y);
+  // Intro slam: the whole board group scales down onto the table.
+  if (t < scene.lead) {
+    const su = clamp01(t / (scene.lead * 0.55));
+    const s = 1.3 - 0.3 * easeOutCubic(su);
+    ctx.translate(bcx, bcy);
+    ctx.scale(s, s);
+    ctx.translate(-bcx, -bcy);
+  }
+  // Pre-beat zoom-in toward the payoff target.
+  if (preU > 0 && active) {
+    const { x, y } = sqXY(active.target);
+    const zc = 1 + 0.06 * easeInOutCubic(preU);
+    const tx = x + L.sq / 2;
+    const ty = y + L.sq / 2;
+    ctx.translate(tx, ty);
+    ctx.scale(zc, zc);
+    ctx.translate(-tx, -ty);
+  }
   applyPunch(scene, ctx, t, sqXY);
 
-  // Frame + squares.
-  ctx.strokeStyle = withAlpha(accent, 0.55);
+  // Frame + squares. The frame glow pulses gently, synced to the momentum bar.
+  ctx.strokeStyle = withAlpha(
+    accent,
+    Math.min(1, 0.45 + 0.15 * mom + 0.08 * Math.sin(t * 0.004)),
+  );
   ctx.lineWidth = 2;
   ctx.strokeRect(L.boardX - 4, L.boardY - 4, L.board + 8, L.board + 8);
   for (let sq = 0 as Square; sq < 64; sq++) {
@@ -698,8 +826,14 @@ export function renderClipFrame(
       }
     }
     ctx.restore();
+    drawIntroSlam(scene, ctx, t, bcx, bcy);
   } else if (active) {
     drawSegment(scene, ctx, active, u, holdU, t, sqXY, drawPiece);
+    // Pre-beat: darkness pools over the board while the riser climbs.
+    if (preU > 0) {
+      ctx.fillStyle = `rgba(8,6,12,${0.38 * easeInOutCubic(preU)})`;
+      ctx.fillRect(L.boardX - 4, L.boardY - 4, L.board + 8, L.board + 8);
+    }
   } else {
     for (let sq = 0 as Square; sq < 64; sq++) {
       const p = opts.timeline.final[sq];
@@ -709,6 +843,8 @@ export function renderClipFrame(
       }
     }
   }
+  // Between-ply transition: a brief accent shimmer sweeps the board edge.
+  drawEdgeShimmer(scene, ctx, t);
   ctx.restore(); // board group
 
   // ---- Meters, captions, watermark ----
@@ -728,6 +864,8 @@ export function renderClipFrame(
   if (inFreeze && opts.freezeStamp && opts.verdict) {
     drawVerdict(scene, ctx, (t - scene.freezeStart) / scene.freezeMs);
   }
+
+  drawOverlays(scene, ctx, t);
 }
 
 // --- Sub-renderers -----------------------------------------------------------
@@ -735,7 +873,7 @@ export function renderClipFrame(
 function shakeOffset(scene: ClipScene, t: number): { x: number; y: number } {
   for (const sf of scene.segs) {
     if (sf.shakeAmp <= 0) continue;
-    const te = sf.start + sf.moveMs; // impact lands with the slide
+    const te = sf.start + sf.preMs + sf.moveMs; // impact lands with the slide
     if (t < te || t > te + 150) continue;
     const u = (t - te) / 150;
     const amp = sf.shakeAmp * (1 - u);
@@ -755,7 +893,7 @@ function applyPunch(
 ): void {
   for (const sf of scene.segs) {
     if (!sf.punch) continue;
-    const te = sf.start + sf.moveMs;
+    const te = sf.start + sf.preMs + sf.moveMs;
     if (t < te || t > te + 200) continue;
     const u = easeOutCubic((t - te) / 200);
     const s = 1 + 0.2 * (1 - u);
@@ -777,13 +915,22 @@ function drawSegment(
   holdU: number,
   t: number,
   sqXY: (sq: Square) => { x: number; y: number },
-  drawPiece: (p: Piece, x: number, y: number, alpha?: number, scale?: number) => void,
+  drawPiece: (
+    p: Piece,
+    x: number,
+    y: number,
+    alpha?: number,
+    scale?: number,
+    size?: number,
+    scaleY?: number,
+  ) => void,
 ): void {
   const { layout: L, opts } = scene;
   const seg = sf.seg;
   const accent = opts.accent;
   const moveT = easeInOutCubic(clamp01(u));
   const primary = seg.pairs.find((p) => p.primary) ?? seg.pairs[0] ?? null;
+  const tLand = sf.start + sf.preMs + sf.moveMs;
 
   if (primary && u >= 1) {
     const a = sqXY(primary.from);
@@ -796,7 +943,7 @@ function drawSegment(
 
   // Energy scene UNDER the pieces (ground layer).
   if (sf.energy) {
-    const p = clamp01((t - sf.start) / (sf.moveMs + sf.holdMs));
+    const p = clamp01((t - sf.start - sf.preMs) / (sf.moveMs + sf.holdMs));
     drawEnergy(scene, ctx, sf, p, sqXY, "under");
   }
 
@@ -834,10 +981,52 @@ function drawSegment(
       ctx.lineTo(x + L.sq / 2, y + L.sq / 2);
       ctx.stroke();
       ctx.restore();
+      // Motion-blur trail: ghost copies sampled back along the path.
+      const piece0 = u >= 0.7 ? pair.after : pair.before;
+      for (let g = 1; g <= 3; g++) {
+        const gt = Math.max(0, moveT - g * 0.085);
+        if (gt >= moveT) continue;
+        const ga = 0.16 * (1 - g / 4) * Math.sin(Math.PI * moveT);
+        if (ga <= 0.01) continue;
+        drawPiece(
+          piece0,
+          a.x + (b.x - a.x) * gt,
+          a.y + (b.y - a.y) * gt,
+          ga,
+          1 - g * 0.04,
+        );
+      }
     }
     const piece = u >= 0.7 ? pair.after : pair.before;
     const lift = u > 0 && u < 1 ? 1 + 0.09 * Math.sin(Math.PI * moveT) : 1;
-    drawPiece(piece, x, y, 1, lift);
+    // Squash on landing: a quick vertical compression that springs back.
+    let squash = 0;
+    if (t >= tLand && t <= tLand + 160) {
+      squash = 0.16 * (1 - easeOutCubic((t - tLand) / 160));
+    }
+    drawPiece(piece, x, y, 1, lift * (1 + squash), L.sq, lift * (1 - squash));
+  }
+
+  // Impact dust puff on every landing (small, ground-hugging).
+  if (primary && t >= tLand && t <= tLand + 360) {
+    const dp = (t - tLand) / 360;
+    const { x, y } = sqXY(primary.to);
+    const cx = x + L.sq / 2;
+    const gy = y + L.sq * 0.82;
+    ctx.save();
+    for (const d of sf.dust) {
+      const pp = clamp01((dp - d.delay * 0.3) / (1 - d.delay * 0.3));
+      if (pp <= 0) continue;
+      const spread = L.sq * (0.2 + d.speed * 0.5) * easeOutCubic(pp);
+      const px = cx + Math.cos(d.ang) * spread;
+      const py = gy - Math.abs(Math.sin(d.ang)) * spread * 0.35 + pp * pp * L.sq * 0.1;
+      ctx.globalAlpha = (1 - pp) * 0.4;
+      ctx.fillStyle = d.tint > 0.5 ? "#b8ae9c" : "#8d8578";
+      ctx.beginPath();
+      ctx.arc(px, py, L.sq * 0.055 * d.size * (1 + pp * 0.8), 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
   }
 
   // Capture shard bursts replace the old red ring.
@@ -845,7 +1034,7 @@ function drawSegment(
 
   // Energy scene OVER the pieces (air layer) + the compact card badge.
   if (sf.energy) {
-    const p = clamp01((t - sf.start) / (sf.moveMs + sf.holdMs));
+    const p = clamp01((t - sf.start - sf.preMs) / (sf.moveMs + sf.holdMs));
     drawEnergy(scene, ctx, sf, p, sqXY, "over");
   }
   if (seg.sig) {
@@ -862,7 +1051,7 @@ function drawShards(
 ): void {
   if (sf.shards.length === 0) return;
   const L = scene.layout;
-  const te = sf.start + sf.moveMs * 0.72; // shatter as the mover arrives
+  const te = sf.start + sf.preMs + sf.moveMs * 0.72; // shatter as the mover arrives
   const dur = 420;
   if (t < te || t > te + dur) return;
   const p = (t - te) / dur;
@@ -1163,37 +1352,65 @@ function drawCardBadge(
   ctx.restore();
 }
 
-function drawHook(scene: ClipScene, ctx: CanvasRenderingContext2D): void {
+function drawHook(scene: ClipScene, ctx: CanvasRenderingContext2D, t: number): void {
   const { layout: L, opts } = scene;
   const text = opts.hookText.trim();
   if (!text) return;
   ctx.save();
   ctx.font = `800 ${L.hookSize}px ${opts.fonts.display}`;
-  ctx.textAlign = "center";
+  ctx.textAlign = "left";
   const maxW = Math.min(L.board, opts.aspect === "tiktok" ? 820 : L.board);
   const words = text.split(/\s+/);
-  const lines: string[] = [];
-  let line = "";
+  const lines: string[][] = [];
+  let line: string[] = [];
   for (const w of words) {
-    const probe = line ? `${line} ${w}` : w;
-    if (ctx.measureText(probe).width > maxW && line) {
+    const probe = [...line, w].join(" ");
+    if (ctx.measureText(probe).width > maxW && line.length) {
       lines.push(line);
-      line = w;
+      line = [w];
     } else {
-      line = probe;
+      line.push(w);
     }
   }
-  if (line) lines.push(line);
+  if (line.length) lines.push(line);
   const shown = lines.slice(0, 2);
   const lh = L.hookSize * 1.22;
-  shown.forEach((ln, i) => {
-    const y = L.hookY + i * lh;
-    ctx.lineWidth = Math.max(3, L.hookSize * 0.16);
-    ctx.strokeStyle = "rgba(10,8,6,0.9)";
-    ctx.lineJoin = "round";
-    ctx.strokeText(ln, L.W / 2, y);
-    ctx.fillStyle = "#ffffff";
-    ctx.fillText(ln, L.W / 2, y);
+  const space = ctx.measureText(" ").width;
+  // Frame 0 is the thumbnail: the whole hook stamped in full. From the next
+  // frame it re-animates word by word, then floats gently forever after.
+  const stamp = t < 34;
+  let wordIdx = 0;
+  shown.forEach((lnWords, li) => {
+    const y = L.hookY + li * lh;
+    const widths = lnWords.map((w) => ctx.measureText(w).width);
+    const total = widths.reduce((a, b) => a + b, 0) + space * (lnWords.length - 1);
+    let x = L.W / 2 - total / 2;
+    lnWords.forEach((w, wi) => {
+      const appear = 120 + wordIdx * 95;
+      const wu = stamp ? 1 : clamp01((t - appear) / 180);
+      wordIdx++;
+      if (wu <= 0) {
+        x += widths[wi] + space;
+        return;
+      }
+      // Spring pop in, then a continuous barely-there float so the hook is
+      // never a static stamp.
+      const pop = stamp ? 1 : 0.6 + 0.4 * easeOutBack(wu);
+      const float = Math.sin(t * 0.0017 + wordIdx * 1.3) * L.hookSize * 0.045;
+      const cx = x + widths[wi] / 2;
+      ctx.save();
+      ctx.globalAlpha = wu;
+      ctx.translate(cx, y + float);
+      ctx.scale(pop, pop);
+      ctx.lineWidth = Math.max(3, L.hookSize * 0.16);
+      ctx.strokeStyle = "rgba(10,8,6,0.9)";
+      ctx.lineJoin = "round";
+      ctx.strokeText(w, -widths[wi] / 2, 0);
+      ctx.fillStyle = "#ffffff";
+      ctx.fillText(w, -widths[wi] / 2, 0);
+      ctx.restore();
+      x += widths[wi] + space;
+    });
   });
   ctx.restore();
 }
@@ -1227,22 +1444,32 @@ function drawPopCaption(
   const total = widths.reduce((a, b) => a + b, 0) + gap * (tokens.length - 1);
   let x = L.W / 2 - total / 2;
   tokens.forEach((word, i) => {
-    const appear = sf!.start + (pop ? i * 110 : 0);
+    const appear = sf!.start + sf!.preMs + (pop ? i * 110 : 0);
     const wu = clamp01((t - appear) / 160);
     if (wu <= 0) {
       x += widths[i] + gap;
       return;
     }
     const s = pop ? 1 + (0.5 * intensity) * (1 - easeOutCubic(wu)) : 1;
+    // After the pop the word keeps living: a subtle float / wobble, and hot
+    // keywords carry a pulsing glow.
+    const settled = wu >= 1;
+    const float = settled ? Math.sin(t * 0.005 + i * 1.1) * size * 0.05 : 0;
+    const wob = settled ? Math.sin(t * 0.003 + i * 2.1) * 0.02 : 0;
     const cxw = x + widths[i] / 2;
     ctx.save();
     ctx.globalAlpha = pop ? wu : 1;
-    ctx.translate(cxw, L.popY);
+    ctx.translate(cxw, L.popY + float);
+    ctx.rotate(wob);
     ctx.scale(s, s);
     ctx.lineWidth = Math.max(3, size * 0.14);
     ctx.strokeStyle = "rgba(10,8,6,0.9)";
     ctx.lineJoin = "round";
     ctx.strokeText(word.text, -widths[i] / 2, 0);
+    if (word.hot) {
+      ctx.shadowColor = opts.accent;
+      ctx.shadowBlur = size * (0.2 + 0.12 * Math.sin(t * 0.007 + i));
+    }
     ctx.fillStyle = word.hot ? opts.accent : cap.big ? "#ffffff" : "#c9c2b4";
     ctx.fillText(word.text, -widths[i] / 2, 0);
     ctx.restore();
@@ -1251,26 +1478,31 @@ function drawPopCaption(
   ctx.restore();
 }
 
-function drawMomentum(scene: ClipScene, ctx: CanvasRenderingContext2D, t: number): void {
-  const { layout: L } = scene;
-  // Material value at t: interpolate between segment values, with an
-  // overshooting lurch on segments where the value actually jumps.
+/** Signed momentum at time t, -1..1: interpolated material swing, with an
+ *  overshooting lurch on segments where the value actually jumps. Shared by
+ *  the momentum bar and the board-glow pulse so the two breathe together. */
+function momentumAt(scene: ClipScene, t: number): number {
   let value = scene.matStart;
   for (const sf of scene.segs) {
     const from = value;
     const to = sf.matAfter;
-    if (t >= sf.start + sf.moveMs + sf.holdMs) {
+    if (t >= sf.start + sf.preMs + sf.moveMs + sf.holdMs) {
       value = to;
       continue;
     }
     if (t >= sf.start) {
-      const u = clamp01((t - sf.start) / (sf.moveMs + sf.holdMs * 0.4));
+      const u = clamp01((t - sf.start - sf.preMs) / (sf.moveMs + sf.holdMs * 0.4));
       const ease = Math.abs(to - from) >= 3 ? easeOutBack(u) : easeInOutCubic(u);
       value = from + (to - from) * ease;
     }
     break;
   }
-  const f = Math.max(-1, Math.min(1, value / (Math.abs(value) + 6) * 1.6));
+  return Math.max(-1, Math.min(1, (value / (Math.abs(value) + 6)) * 1.6));
+}
+
+function drawMomentum(scene: ClipScene, ctx: CanvasRenderingContext2D, t: number): void {
+  const { layout: L } = scene;
+  const f = momentumAt(scene, t);
   const x = L.momentumX;
   const w = L.momentumW;
   const top = L.boardY;
@@ -1331,7 +1563,10 @@ function drawVerdict(scene: ClipScene, ctx: CanvasRenderingContext2D, p01: numbe
     ctx.fillStyle = `rgba(255,250,238,${0.75 * (1 - p / 0.22)})`;
     ctx.fillRect(0, 0, L.W, L.H);
   }
-  const slam = p < 0.16 ? 1.6 - 0.6 * easeOutCubic(p / 0.16) : 1;
+  // Spring slam: overshoots below rest size then snaps back, and the settled
+  // stamp keeps a barely-visible pulse so the freeze is never a still image.
+  const slam =
+    p < 0.2 ? 1.8 - 0.8 * easeOutBack(p / 0.2) : 1 + 0.006 * Math.sin(p01 * 26);
   const cx = L.W / 2;
   const cy = L.boardY + L.board / 2;
   const mainSize = opts.aspect === "classic" ? 56 : 92;
@@ -1375,13 +1610,25 @@ function drawEndCard(
 ): void {
   void images;
   const { layout: L, opts } = scene;
-  const a = easeOutCubic(clamp01(p01 / 0.25));
+  const p = clamp01(p01);
+  const tAbs = scene.endStart + p01 * scene.endMs;
+  const a = easeOutCubic(clamp01(p / 0.18));
+  // The last frames ease down slightly so the final frame hands off to the
+  // dark frame-0 intro when the reel loops.
+  const loopDim = p > 0.92 ? 1 - 0.25 * easeInOutCubic((p - 0.92) / 0.08) : 1;
   ctx.save();
-  ctx.globalAlpha = a;
+  ctx.globalAlpha = a * loopDim;
   const cx = L.W / 2;
   const markSize = opts.aspect === "classic" ? 56 : 88;
   const topY = opts.aspect === "tiktok" ? L.H * 0.32 : L.H * 0.24;
-  ctx.textAlign = "center";
+
+  // Logo pops in with a spring, then breathes.
+  const logoPop =
+    p < 0.22 ? easeOutBack(clamp01(p / 0.22)) : 1 + 0.007 * Math.sin(tAbs * 0.003);
+  ctx.save();
+  ctx.translate(cx, topY - markSize * 0.35);
+  ctx.scale(logoPop, logoPop);
+  ctx.translate(-cx, -(topY - markSize * 0.35));
   ctx.font = `800 ${markSize}px ${opts.fonts.display}`;
   const wm1 = "nerf";
   const wm2 = "chess";
@@ -1392,17 +1639,28 @@ function drawEndCard(
   ctx.fillText(wm1, cx - (w1 + w2) / 2, topY);
   ctx.fillStyle = opts.accent;
   ctx.fillText(wm2, cx - (w1 + w2) / 2 + w1, topY);
+  ctx.restore();
+
+  // The URL types itself on, caret blinking while it goes.
+  const url = "play at nerfchess.com";
+  const typed = Math.round(clamp01((p - 0.16) / 0.4) * url.length);
   ctx.textAlign = "center";
   ctx.font = `600 ${Math.round(markSize * 0.3)}px ${opts.fonts.body}`;
   ctx.fillStyle = "#a7a297";
-  ctx.fillText("play at nerfchess.com", cx, topY + markSize * 0.66);
+  const shownUrl =
+    url.slice(0, typed) +
+    (typed < url.length && Math.floor(tAbs / 200) % 2 === 0 ? "_" : "");
+  ctx.fillText(shownUrl, cx, topY + markSize * 0.66);
 
-  // Final position, miniaturized.
+  // Final position, miniaturized, sliding up into place.
+  const slide = 1 - easeOutCubic(clamp01((p - 0.2) / 0.35));
   const mini = Math.min(L.board * 0.5, opts.aspect === "classic" ? 280 : 440);
   const msq = mini / 8;
   const mx = cx - mini / 2;
-  const my = topY + markSize * 1.1;
-  ctx.strokeStyle = withAlpha(opts.accent, 0.55);
+  const my = topY + markSize * 1.1 + slide * mini * 0.16;
+  ctx.save();
+  ctx.globalAlpha *= easeOutCubic(clamp01((p - 0.18) / 0.3));
+  ctx.strokeStyle = withAlpha(opts.accent, 0.45 + 0.12 * Math.sin(tAbs * 0.004));
   ctx.lineWidth = 2;
   ctx.strokeRect(mx - 3, my - 3, mini + 6, mini + 6);
   for (let sq = 0 as Square; sq < 64; sq++) {
@@ -1415,18 +1673,173 @@ function drawEndCard(
     ctx.fillRect(mx + col * msq, my + row * msq, msq, msq);
   }
   for (let sq = 0 as Square; sq < 64; sq++) {
-    const p = opts.timeline.final[sq];
-    if (!p) continue;
+    const pc = opts.timeline.final[sq];
+    if (!pc) continue;
     const f = FILE(sq);
     const r = RANK(sq);
     const col = opts.orientation === "w" ? f : 7 - f;
     const row = opts.orientation === "w" ? 7 - r : r;
-    drawPiece(p, mx + col * msq, my + row * msq, 1, 1, msq);
+    drawPiece(pc, mx + col * msq, my + row * msq, 1, 1, msq);
   }
+  ctx.restore();
   if (opts.watermark) {
+    ctx.globalAlpha = a * loopDim * clamp01((p - 0.45) / 0.2);
     ctx.font = `600 ${opts.aspect === "classic" ? 14 : 24}px ${opts.fonts.body}`;
     ctx.fillStyle = "rgba(236,231,221,0.5)";
     ctx.fillText(opts.watermark, cx, my + mini + (opts.aspect === "classic" ? 34 : 56));
   }
   ctx.restore();
+}
+
+// --- Always-on overlays ------------------------------------------------------
+
+/** Intro slam accents: a flash ring plus dust kicked off the board edges the
+ *  moment the board lands. Drawn inside the board group so it scales with the
+ *  slam itself. */
+function drawIntroSlam(
+  scene: ClipScene,
+  ctx: CanvasRenderingContext2D,
+  t: number,
+  bcx: number,
+  bcy: number,
+): void {
+  const L = scene.layout;
+  const tImp = scene.lead * 0.55; // the slam touches down here
+  if (t < tImp || t > tImp + 300) return;
+  const p = (t - tImp) / 300;
+  ctx.save();
+  // Flash ring expanding off the board.
+  ctx.globalAlpha = (1 - p) * 0.85;
+  ctx.strokeStyle = withAlpha(scene.opts.accent, 0.9);
+  ctx.lineWidth = 10 * (1 - p * 0.6);
+  ctx.beginPath();
+  ctx.arc(bcx, bcy, L.board * (0.3 + easeOutCubic(p) * 0.55), 0, Math.PI * 2);
+  ctx.stroke();
+  // Hot white core flash for the first frames.
+  if (p < 0.3) {
+    ctx.globalAlpha = (1 - p / 0.3) * 0.28;
+    ctx.fillStyle = "#fff7e6";
+    ctx.fillRect(L.boardX - 4, L.boardY - 4, L.board + 8, L.board + 8);
+  }
+  // Dust bursting off the bottom edge.
+  for (const d of scene.introDust) {
+    const pp = clamp01((p - d.delay * 0.3) / (1 - d.delay * 0.3));
+    if (pp <= 0) continue;
+    const px = L.boardX + d.tint * L.board;
+    const py = L.boardY + L.board + 4 - Math.abs(Math.sin(d.ang)) * L.sq * 0.9 * easeOutCubic(pp);
+    ctx.globalAlpha = (1 - pp) * 0.4;
+    ctx.fillStyle = d.size > 0.7 ? "#b8ae9c" : "#8d8578";
+    ctx.beginPath();
+    ctx.arc(px, py, L.sq * 0.06 * d.size * (1 + pp), 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+/** Between plies a brief accent shimmer sweeps across the board frame. */
+function drawEdgeShimmer(scene: ClipScene, ctx: CanvasRenderingContext2D, t: number): void {
+  const L = scene.layout;
+  for (let i = 1; i < scene.segs.length; i++) {
+    const sf = scene.segs[i];
+    if (sf.preMs > 0) continue; // the payoff gets the pre-beat instead
+    if (t < sf.start || t > sf.start + 240) continue;
+    const p = (t - sf.start) / 240;
+    const x0 = L.boardX - 4;
+    const y0 = L.boardY - 4;
+    const w = L.board + 8;
+    const bandX = x0 + (p * 1.5 - 0.25) * w;
+    const g = ctx.createLinearGradient(bandX - w * 0.18, y0, bandX + w * 0.18, y0 + w);
+    g.addColorStop(0, "rgba(0,0,0,0)");
+    g.addColorStop(0.5, withAlpha(scene.opts.accent, 0.9));
+    g.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.save();
+    ctx.globalAlpha = Math.sin(Math.PI * p) * 0.85;
+    ctx.strokeStyle = g;
+    ctx.lineWidth = 4;
+    ctx.strokeRect(x0, y0, w, w);
+    ctx.restore();
+    return;
+  }
+}
+
+// Deterministic film grain: a handful of seeded noise tiles generated once per
+// module load (fixed seeds, so every render of frame N picks the same tile and
+// the offline encode stays frame-exact with the preview), cycled per frame.
+const GRAIN_TILE = 128;
+const GRAIN_FRAMES = 4;
+let grainCache: HTMLCanvasElement[] | null = null;
+
+function grainTiles(): HTMLCanvasElement[] | null {
+  if (typeof document === "undefined") return null;
+  if (grainCache) return grainCache;
+  const tiles: HTMLCanvasElement[] = [];
+  for (let i = 0; i < GRAIN_FRAMES; i++) {
+    const c = document.createElement("canvas");
+    c.width = GRAIN_TILE;
+    c.height = GRAIN_TILE;
+    const g = c.getContext("2d");
+    if (!g) return null;
+    const img = g.createImageData(GRAIN_TILE, GRAIN_TILE);
+    const rng = mulberry32(0x9e3779b9 + i * 0x1005);
+    for (let px = 0; px < img.data.length; px += 4) {
+      const v = rng() > 0.5 ? 255 : 0;
+      img.data[px] = v;
+      img.data[px + 1] = v;
+      img.data[px + 2] = v;
+      img.data[px + 3] = rng() < 0.18 ? 24 : 0;
+    }
+    g.putImageData(img, 0, 0);
+    tiles.push(c);
+  }
+  grainCache = tiles;
+  return tiles;
+}
+
+/** The always-on finishing pass: vignette, seeded film grain, and a chromatic
+ *  edge kick on impact frames. Runs over EVERY frame, end card included. */
+function drawOverlays(scene: ClipScene, ctx: CanvasRenderingContext2D, t: number): void {
+  const L = scene.layout;
+
+  // Chromatic edge on impact frames: the board frame splits into a red and a
+  // cyan ghost for a few frames after a hit lands.
+  for (const sf of scene.segs) {
+    if (sf.shards.length === 0 && !sf.isPayoff) continue;
+    const te = sf.start + sf.preMs + sf.moveMs;
+    if (t < te || t > te + 130) continue;
+    const q = 1 - (t - te) / 130;
+    const off = 3 * q;
+    ctx.save();
+    ctx.globalAlpha = 0.35 * q;
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = "#ff5a4d";
+    ctx.strokeRect(L.boardX - 4 - off, L.boardY - 4, L.board + 8, L.board + 8);
+    ctx.strokeStyle = "#4dc8ff";
+    ctx.strokeRect(L.boardX - 4 + off, L.boardY - 4, L.board + 8, L.board + 8);
+    ctx.restore();
+    break;
+  }
+
+  // Vignette, breathing very slightly.
+  const vig = ctx.createRadialGradient(
+    L.W / 2, L.H / 2, Math.min(L.W, L.H) * 0.42,
+    L.W / 2, L.H / 2, Math.max(L.W, L.H) * 0.72,
+  );
+  vig.addColorStop(0, "rgba(0,0,0,0)");
+  vig.addColorStop(1, `rgba(8,6,4,${0.3 + 0.04 * Math.sin(t * 0.0013)})`);
+  ctx.fillStyle = vig;
+  ctx.fillRect(0, 0, L.W, L.H);
+
+  // Film grain: deterministic tiles cycled at frame rate. Very subtle.
+  const tiles = grainTiles();
+  if (tiles) {
+    const tile = tiles[Math.floor(t / (1000 / 30)) % GRAIN_FRAMES];
+    const pat = ctx.createPattern(tile, "repeat");
+    if (pat) {
+      ctx.save();
+      ctx.globalAlpha = 0.5;
+      ctx.fillStyle = pat;
+      ctx.fillRect(0, 0, L.W, L.H);
+      ctx.restore();
+    }
+  }
 }

@@ -125,13 +125,24 @@ export interface EncodeResult {
   tier: 1 | 2;
 }
 
-/** Tier 1: frame-exact offline render + mux. */
+/** Thrown (and caught by callers) when a re-render supersedes an encode. */
+export class EncodeCancelled extends Error {
+  constructor() {
+    super("encode cancelled");
+    this.name = "EncodeCancelled";
+  }
+}
+
+/** Tier 1: frame-exact offline render + mux. `cancelled` is polled between
+ *  frames so the auto-encode can be superseded by a settings change without
+ *  burning the rest of the render. */
 export async function encodeClipOffline(
   scene: ClipScene,
   images: Map<string, HTMLImageElement>,
   support: EncodeSupport,
   withSound: boolean,
   onProgress?: (frac: number) => void,
+  cancelled?: () => boolean,
 ): Promise<EncodeResult> {
   const mb = await import("mediabunny");
   const t1 = support.t1!;
@@ -171,6 +182,11 @@ export async function encodeClipOffline(
 
   const totalFrames = Math.max(1, Math.ceil((scene.durationMs / 1000) * FPS));
   for (let i = 0; i < totalFrames; i++) {
+    if (cancelled?.()) {
+      videoSource.close();
+      await output.cancel();
+      throw new EncodeCancelled();
+    }
     const tMs = Math.min((i * 1000) / FPS, scene.durationMs);
     renderClipFrame(scene, ctx, tMs, images);
     // Awaiting add() respects encoder backpressure, per mediabunny's contract.
