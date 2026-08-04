@@ -1721,9 +1721,20 @@ const BoardSquare = React.memo(function BoardSquare({
                 // Desktop hover raises the styled effect popover in place of the
                 // old browser title (only when the square explains something and
                 // no drag is in flight). Pointer-leave dismisses it; pointerdown
-                // move handling is untouched.
+                // move handling is untouched. Touch is excluded from the leave:
+                // a touch pointer "leaves" the square the instant the finger
+                // lifts, which fired right after the tap-to-inspect paths in
+                // handleSquarePointerDown opened this square's popover and
+                // flash-closed it. On touch the popover closes via the window
+                // tap-away listener instead (the next press anywhere).
                 onPointerEnter={hasEffectInfo ? () => onOpenPopover(sq) : undefined}
-                onPointerLeave={hasEffectInfo ? () => onClosePopover(sq) : undefined}
+                onPointerLeave={
+                  hasEffectInfo
+                    ? (e) => {
+                        if (e.pointerType !== "touch") onClosePopover(sq);
+                      }
+                    : undefined
+                }
               >
                 {underwater && (
                   <div className="absolute inset-0 bg-cyan-500/25 mix-blend-screen pointer-events-none" />
