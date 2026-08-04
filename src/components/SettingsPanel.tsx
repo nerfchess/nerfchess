@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useModalChrome } from "@/lib/useModalChrome";
 import type { CSSProperties, ReactNode } from "react";
@@ -18,11 +18,13 @@ import {
   PieceTheme,
   SITE_THEMES,
   SiteTheme,
+  applyUiPrefs,
   isFlagshipTheme,
   loadSettings,
   resolveBoardTheme,
   resolvePieceTheme,
   type BoardThemePref,
+  type PieceMotion,
   type PieceThemePref,
   sanitizeCustomBgUrl,
   saveSettings,
@@ -181,9 +183,9 @@ export function SettingsPanel({ open, onClose, liveGame }: Props) {
           />
         );
       case "boardTheme":
-        return <BoardThemePicker value={settings.boardTheme} onChange={(t) => update({ boardTheme: t })} />;
+        return <BoardThemePicker settings={settings} onChange={update} />;
       case "pieceTheme":
-        return <PieceThemePicker value={settings.pieceTheme} onChange={(t) => update({ pieceTheme: t })} />;
+        return <PieceThemePicker settings={settings} onChange={update} />;
       case "reset":
         return (
           <GhostButton
@@ -302,6 +304,13 @@ export function SettingsPanel({ open, onClose, liveGame }: Props) {
               {activeSection.rows.map((row, i) => {
                 const prevGroup = activeSection.rows[i - 1]?.group;
                 const opensGroup = row.group != null && row.group !== prevGroup;
+                // The theme-defaults reset lives right under the Appearance
+                // section's Theme group (site theme + accent), not in the
+                // shared config: it is a panel affordance, not a setting row.
+                const closesThemeGroup =
+                  activeSection.id === "appearance" &&
+                  row.group === "Theme" &&
+                  activeSection.rows[i + 1]?.group !== "Theme";
                 return (
                   <Fragment key={row.id}>
                     {opensGroup && (
@@ -319,9 +328,37 @@ export function SettingsPanel({ open, onClose, liveGame }: Props) {
                         control={renderControl(row.control, row.label)}
                       />
                     </div>
+                    {closesThemeGroup && (
+                      <div className="pb-2">
+                        <GhostButton
+                          label="Reset accent, board, and pieces to theme defaults"
+                          onClick={() =>
+                            update({ accentColor: "auto", boardTheme: "auto", pieceTheme: "auto" })
+                          }
+                        />
+                      </div>
+                    )}
                   </Fragment>
                 );
               })}
+              {/* Piece motion joins the section's Motion rows. Built here
+                  rather than in the shared config: it is a bespoke 4-chip
+                  picker like the theme grids, not a generic control kind. */}
+              {activeSection.id === "board" && (
+                <div className="border-t border-[color:var(--edge)]">
+                  <SettingRow
+                    label="Piece motion"
+                    hint="How pieces travel between squares"
+                    stacked
+                    control={
+                      <PieceMotionPicker
+                        value={settings.pieceMotion}
+                        onChange={(m) => update({ pieceMotion: m })}
+                      />
+                    }
+                  />
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -367,6 +404,58 @@ function SiteThemePicker({
   const flagships = all.filter((k) => isFlagshipTheme(k));
   const tints = all.filter((k) => !isFlagshipTheme(k));
 
+  // Hover-to-preview: resting on a card for a beat repaints the whole page in
+  // that theme (applyUiPrefs with the hovered id over the real settings), and
+  // leaving reverts to what is actually saved. Fine pointers only, so touch
+  // scrolling through the grid never flashes themes; keyboard focus previews
+  // too. A real selection cancels any pending revert, because saveSettings
+  // will apply the picked theme through the normal path.
+  const previewTimer = useRef<number | null>(null);
+  const previewing = useRef(false);
+
+  const clearPreviewTimer = () => {
+    if (previewTimer.current != null) {
+      window.clearTimeout(previewTimer.current);
+      previewTimer.current = null;
+    }
+  };
+  const startPreview = (k: SiteTheme) => {
+    clearPreviewTimer();
+    previewTimer.current = window.setTimeout(() => {
+      previewTimer.current = null;
+      previewing.current = true;
+      applyUiPrefs({ ...loadSettings(), siteTheme: k });
+    }, 250);
+  };
+  const revertPreview = () => {
+    clearPreviewTimer();
+    if (previewing.current) {
+      previewing.current = false;
+      applyUiPrefs(loadSettings());
+    }
+  };
+  const canHoverPreview = () =>
+    !!window.matchMedia?.("(hover: hover) and (pointer: fine)").matches;
+  // Unmount (panel closed, section left) always reverts a live preview. Only
+  // refs and module functions are touched, so the cleanup needs no deps.
+  useEffect(
+    () => () => {
+      if (previewTimer.current != null) window.clearTimeout(previewTimer.current);
+      previewTimer.current = null;
+      if (previewing.current) {
+        previewing.current = false;
+        applyUiPrefs(loadSettings());
+      }
+    },
+    [],
+  );
+
+  const select = (k: SiteTheme) => {
+    clearPreviewTimer();
+    previewing.current = false; // the real save applies it; nothing to revert
+    onChange(k);
+  };
+
   const grid = (ids: SiteTheme[]) => (
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
       {ids.map((k) => {
@@ -375,7 +464,18 @@ function SiteThemePicker({
         return (
           <button
             key={k}
-            onClick={() => onChange(k)}
+            onClick={() => select(k)}
+            onPointerEnter={() => {
+              if (canHoverPreview()) startPreview(k);
+            }}
+            onPointerLeave={revertPreview}
+            onFocus={(e) => {
+              if (e.currentTarget.matches(":focus-visible")) startPreview(k);
+            }}
+            onBlur={revertPreview}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") revertPreview();
+            }}
             aria-pressed={selected}
             className={
               "group press relative overflow-hidden rounded-[1px] border text-left transition-colors " +
@@ -607,18 +707,47 @@ function PickerDisclosure({
   );
 }
 
-/** The board-theme swatch grid — a live control that spans a full row. */
-function BoardThemePicker({
+/** A labelled native color input with the house border. Fires on every change
+ *  while the picker drags, so the bound vars repaint live. */
+function ColorField({
+  label,
   value,
   onChange,
 }: {
-  value: BoardThemePref;
-  onChange: (theme: BoardThemePref) => void;
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
 }) {
+  return (
+    <label className="flex min-h-[36px] cursor-pointer items-center justify-between gap-2 rounded-[1px] border border-[color:var(--edge)] px-2 py-1 transition-colors hover:border-[color:var(--edge-strong)]">
+      <span className="min-w-0 truncate text-[12px] text-parchment-400">{label}</span>
+      <input
+        type="color"
+        value={value}
+        aria-label={label}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-7 w-10 shrink-0 cursor-pointer border border-[color:var(--edge-strong)] bg-transparent p-0.5"
+      />
+    </label>
+  );
+}
+
+/** The board-theme swatch grid — a live control that spans a full row. */
+function BoardThemePicker({
+  settings,
+  onChange,
+}: {
+  settings: Settings;
+  onChange: (patch: Partial<Settings>) => void;
+}) {
+  const value = settings.boardTheme;
   // "Auto" previews the board it would RESOLVE to, not a blank swatch: the
   // player should be able to see what they are choosing.
   const resolved = resolveBoardTheme(loadSettings());
-  const current = BOARD_THEMES[value === "auto" ? resolved : value];
+  const current =
+    value === "custom"
+      ? { light: settings.customBoardLight, dark: settings.customBoardDark, label: "Custom" }
+      : BOARD_THEMES[value === "auto" ? resolved : value];
   return (
     <PickerDisclosure
       prompt="Choose board theme"
@@ -634,7 +763,7 @@ function BoardThemePicker({
     >
       <div className="grid grid-cols-2 gap-2">
       <button
-        onClick={() => onChange("auto")}
+        onClick={() => onChange({ boardTheme: "auto" })}
         aria-pressed={value === "auto"}
         className={
           "press relative col-span-2 flex min-h-[44px] items-center gap-2.5 rounded-[1px] border p-2 transition-colors " +
@@ -661,7 +790,7 @@ function BoardThemePicker({
         return (
           <button
             key={k}
-            onClick={() => onChange(k)}
+            onClick={() => onChange({ boardTheme: k })}
             aria-pressed={selected}
             className={
               "press relative flex min-h-[44px] items-center gap-2.5 rounded-[1px] border p-2 transition-colors " +
@@ -679,6 +808,40 @@ function BoardThemePicker({
           </button>
         );
       })}
+      <button
+        onClick={() => onChange({ boardTheme: "custom" })}
+        aria-pressed={value === "custom"}
+        className={
+          "press relative col-span-2 flex min-h-[44px] items-center gap-2.5 rounded-[1px] border p-2 transition-colors " +
+          pickerCardClass(value === "custom")
+        }
+      >
+        {value === "custom" && <SelectedGem />}
+        <span aria-hidden className="grid h-7 w-7 shrink-0 grid-cols-2 grid-rows-2 overflow-hidden rounded-sm">
+          <span style={{ background: settings.customBoardLight }} />
+          <span style={{ background: settings.customBoardDark }} />
+          <span style={{ background: settings.customBoardDark }} />
+          <span style={{ background: settings.customBoardLight }} />
+        </span>
+        <span className="min-w-0 text-left">
+          <span className="block font-display text-[13px]">Custom</span>
+          <span className="block text-[12px] text-parchment-400">Pick your own two squares</span>
+        </span>
+      </button>
+      {value === "custom" && (
+        <div className="col-span-2 grid grid-cols-2 gap-2">
+          <ColorField
+            label="Light squares"
+            value={settings.customBoardLight}
+            onChange={(v) => onChange({ customBoardLight: v })}
+          />
+          <ColorField
+            label="Dark squares"
+            value={settings.customBoardDark}
+            onChange={(v) => onChange({ customBoardDark: v })}
+          />
+        </div>
+      )}
       </div>
     </PickerDisclosure>
   );
@@ -686,14 +849,25 @@ function BoardThemePicker({
 
 /** The piece-set swatch grid — a live control that spans a full row. */
 function PieceThemePicker({
-  value,
+  settings,
   onChange,
 }: {
-  value: PieceThemePref;
-  onChange: (theme: PieceThemePref) => void;
+  settings: Settings;
+  onChange: (patch: Partial<Settings>) => void;
 }) {
+  const value = settings.pieceTheme;
   const resolvedPiece = resolvePieceTheme(loadSettings());
-  const current = PIECE_THEMES[value === "auto" ? resolvedPiece : value];
+  const current =
+    value === "custom"
+      ? {
+          label: "Custom",
+          wFill: settings.customPieceWFill,
+          wStroke: settings.customPieceWStroke,
+          bFill: settings.customPieceBFill,
+          bStroke: settings.customPieceBStroke,
+          assetSet: undefined,
+        }
+      : PIECE_THEMES[value === "auto" ? resolvedPiece : value];
   return (
     <PickerDisclosure
       prompt="Choose piece set"
@@ -724,7 +898,7 @@ function PieceThemePicker({
     >
       <div className="grid grid-cols-2 gap-2">
       <button
-        onClick={() => onChange("auto")}
+        onClick={() => onChange({ pieceTheme: "auto" })}
         aria-pressed={value === "auto"}
         className={
           "press relative col-span-2 flex min-h-[44px] items-center gap-2.5 rounded-[1px] border p-2 transition-colors " +
@@ -745,7 +919,7 @@ function PieceThemePicker({
         return (
           <button
             key={k}
-            onClick={() => onChange(k)}
+            onClick={() => onChange({ pieceTheme: k })}
             aria-pressed={selected}
             className={
               "press relative flex min-h-[44px] items-center gap-2.5 rounded-[1px] border p-2 transition-colors " +
@@ -786,8 +960,103 @@ function PieceThemePicker({
           </button>
         );
       })}
+      <button
+        onClick={() => onChange({ pieceTheme: "custom" })}
+        aria-pressed={value === "custom"}
+        className={
+          "press relative col-span-2 flex min-h-[44px] items-center gap-2.5 rounded-[1px] border p-2 transition-colors " +
+          pickerCardClass(value === "custom")
+        }
+      >
+        {value === "custom" && <SelectedGem />}
+        <span
+          aria-hidden
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-sm bg-ink-700"
+          style={
+            {
+              "--piece-w-fill": settings.customPieceWFill,
+              "--piece-w-stroke": settings.customPieceWStroke,
+              "--piece-b-fill": settings.customPieceBFill,
+              "--piece-b-stroke": settings.customPieceBStroke,
+            } as CSSProperties
+          }
+        >
+          <Piece type="n" color="w" size={16} />
+          <Piece type="n" color="b" size={16} className="-ml-1" />
+        </span>
+        <span className="min-w-0 text-left">
+          <span className="block font-display text-[13px]">Custom</span>
+          <span className="block text-[12px] text-parchment-400">Mix your own piece colors</span>
+        </span>
+      </button>
+      {value === "custom" && (
+        <div className="col-span-2 grid grid-cols-2 gap-2">
+          <ColorField
+            label="White fill"
+            value={settings.customPieceWFill}
+            onChange={(v) => onChange({ customPieceWFill: v })}
+          />
+          <ColorField
+            label="White edge"
+            value={settings.customPieceWStroke}
+            onChange={(v) => onChange({ customPieceWStroke: v })}
+          />
+          <ColorField
+            label="Black fill"
+            value={settings.customPieceBFill}
+            onChange={(v) => onChange({ customPieceBFill: v })}
+          />
+          <ColorField
+            label="Black edge"
+            value={settings.customPieceBStroke}
+            onChange={(v) => onChange({ customPieceBStroke: v })}
+          />
+        </div>
+      )}
       </div>
     </PickerDisclosure>
+  );
+}
+
+/** Piece motion: a 4-chip row. The Board side is already wired: it reads
+ *  html.dataset.pieceMotion, which applyUiPrefs sets from this setting. */
+const PIECE_MOTIONS: Array<{ id: PieceMotion; label: string; hint: string }> = [
+  { id: "glide", label: "Glide", hint: "The classic slide" },
+  { id: "hop", label: "Hop", hint: "Pieces leap with a landing squash" },
+  { id: "warp", label: "Warp", hint: "Fold out, pop in" },
+  { id: "stomp", label: "Stomp", hint: "Fast march, heavy landing" },
+];
+
+function PieceMotionPicker({
+  value,
+  onChange,
+}: {
+  value: PieceMotion;
+  onChange: (m: PieceMotion) => void;
+}) {
+  return (
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+      {PIECE_MOTIONS.map((m) => {
+        const selected = value === m.id;
+        return (
+          <button
+            key={m.id}
+            onClick={() => onChange(m.id)}
+            aria-pressed={selected}
+            className={
+              "press relative min-h-[44px] rounded-[1px] border p-2 text-left transition-colors " +
+              pickerCardClass(selected)
+            }
+          >
+            {selected && <SelectedGem />}
+            <span className="block font-display text-[13px] leading-tight text-parchment">
+              {m.label}
+            </span>
+            <span className="block text-[11px] leading-tight text-parchment-400">{m.hint}</span>
+          </button>
+        );
+      })}
+    </div>
   );
 }
 

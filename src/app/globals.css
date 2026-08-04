@@ -265,6 +265,36 @@ html[data-theme="nebula"] { /* violet dusk */
   --bg-raised: #2b2238;
   --border-subtle: #362c48;
 }
+html[data-theme="sakura"] { /* dusk pink over dark wood */
+  --bg-base: #171013;
+  --bg-panel: #251821;
+  --bg-raised: #33222d;
+  --border-subtle: #422f3b;
+}
+html[data-theme="honey"] { /* warm amber-brown */
+  --bg-base: #171208;
+  --bg-panel: #262012;
+  --bg-raised: #342c1a;
+  --border-subtle: #443a25;
+}
+html[data-theme="pine"] { /* blue-green conifer dusk */
+  --bg-base: #0d1412;
+  --bg-panel: #16221e;
+  --bg-raised: #1f2f29;
+  --border-subtle: #283b34;
+}
+html[data-theme="wine"] { /* deep plum */
+  --bg-base: #140d14;
+  --bg-panel: #221626;
+  --bg-raised: #2f2034;
+  --border-subtle: #3d2b44;
+}
+html[data-theme="storm"] { /* cold slate */
+  --bg-base: #101214;
+  --bg-panel: #1a1e22;
+  --bg-raised: #262b31;
+  --border-subtle: #313840;
+}
 
 /* ============================================================================
    FLAGSHIP THEMES
@@ -869,6 +899,63 @@ html[data-theme="light"] {
   --accent-positive-hi-rgb: 85 136 74;
   --text-on-accent: #ffffff;
 }
+
+/* Sepia and Frost: light TINTS. Like the dark tints above they own only their
+   background + border tokens; the ink text ramp, the darker light-scheme
+   accents and the board-highlight lift are copied verbatim from the light
+   theme's block above (and the html[data-light] remaps below apply to them
+   automatically, since applyUiPrefs sets data-light from scheme). */
+html[data-theme="sepia"] { /* aged paper, warm cream */
+  --bg-base: #ece4d2;
+  --bg-panel: #f6f0e2;
+  --bg-raised: #fcf8ee;
+  --border-subtle: #ddd2b8;
+  --text-primary: #2b2822;
+  --text-secondary: #5c584f;
+  --text-muted: #86816f;
+  --board-highlight-a: 0.5;
+  --accent-gold: #806310;
+  --accent-gold-hi: #96751a;
+  --accent-gold-rgb: 128 99 16;
+  --accent-gold-hi-rgb: 150 117 26;
+  --accent-gold-dim-rgb: 96 74 12;
+  --accent-nerf: #c0322f;
+  --accent-nerf-rgb: 192 50 47;
+  --accent-nerf-hi-rgb: 209 74 69;
+  --accent-buff: #2b6aa0;
+  --accent-buff-rgb: 43 106 160;
+  --accent-buff-hi-rgb: 58 127 187;
+  --accent-positive: #457539;
+  --accent-positive-rgb: 69 117 57;
+  --accent-positive-hi-rgb: 85 136 74;
+  --text-on-accent: #ffffff;
+}
+html[data-theme="frost"] { /* cool paper, blue-white */
+  --bg-base: #e3e8ee;
+  --bg-panel: #f1f4f8;
+  --bg-raised: #f9fbfd;
+  --border-subtle: #ccd4de;
+  --text-primary: #262a30;
+  --text-secondary: #545a63;
+  --text-muted: #7d8490;
+  --board-highlight-a: 0.5;
+  --accent-gold: #806310;
+  --accent-gold-hi: #96751a;
+  --accent-gold-rgb: 128 99 16;
+  --accent-gold-hi-rgb: 150 117 26;
+  --accent-gold-dim-rgb: 96 74 12;
+  --accent-nerf: #c0322f;
+  --accent-nerf-rgb: 192 50 47;
+  --accent-nerf-hi-rgb: 209 74 69;
+  --accent-buff: #2b6aa0;
+  --accent-buff-rgb: 43 106 160;
+  --accent-buff-hi-rgb: 58 127 187;
+  --accent-positive: #457539;
+  --accent-positive-rgb: 69 117 57;
+  --accent-positive-hi-rgb: 85 136 74;
+  --text-on-accent: #ffffff;
+}
+
 html[data-light] .plate {
   background: rgba(255, 255, 255, 0.55);
   border-color: rgba(0, 0, 0, 0.14);
