@@ -1657,6 +1657,107 @@ html[data-anim="off"] .rune-loader { animation: none; }
   mask-composite: exclude;
 }
 
+/* The ceremony spotlight: a soft cone of light falling from above the place
+   card, tinted to its metal. Static light under html[data-anim="off"] and
+   data-perf="low"; otherwise it breathes very slowly, like stadium lighting. */
+.podium-beam {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    62% 88% at 50% 0%,
+    rgb(var(--beam-rgb, var(--energy-gold-rgb)) / var(--beam-a, 0.14)),
+    transparent 76%
+  );
+  animation: podium-beam-breathe 7s ease-in-out infinite;
+}
+@keyframes podium-beam-breathe {
+  0%, 100% { opacity: 0.75; }
+  50% { opacity: 1; }
+}
+html[data-anim="off"] .podium-beam,
+html[data-perf="low"] .podium-beam { animation: none; opacity: 0.85; }
+.podium-mote {
+  position: absolute;
+  bottom: 18%;
+  left: var(--mx, 50%);
+  width: 3px;
+  height: 3px;
+  border-radius: 999px;
+  pointer-events: none;
+  background: rgb(var(--mote-rgb, var(--energy-gold-rgb)) / 0.85);
+  box-shadow: 0 0 6px 1px rgb(var(--mote-rgb, var(--energy-gold-rgb)) / 0.4);
+  opacity: 0;
+  animation: podium-mote-rise var(--mdur, 5.4s) linear var(--mdelay, 0s) infinite;
+}
+@keyframes podium-mote-rise {
+  0% { opacity: 0; transform: translateY(0) scale(0.7); }
+  14% { opacity: 0.65; }
+  70% { opacity: 0.3; }
+  100% { opacity: 0; transform: translateY(-68px) scale(1); }
+}
+html[data-anim="off"] .podium-mote { animation: none; opacity: 0; }
+/* The champion's sparkles: slow four-point glints near the avatar, the
+   cross-star kind that reads "camera flash" at a medal ceremony. */
+.podium-glint {
+  position: absolute;
+  top: var(--gy, 20%);
+  left: var(--gx, 50%);
+  width: 11px;
+  height: 11px;
+  pointer-events: none;
+  opacity: 0;
+  background:
+    linear-gradient(rgb(var(--energy-gold-rgb) / 0.9), rgb(var(--energy-gold-rgb) / 0.9)) 50% 0 / 1.5px 100% no-repeat,
+    linear-gradient(rgb(var(--energy-gold-rgb) / 0.9), rgb(var(--energy-gold-rgb) / 0.9)) 0 50% / 100% 1.5px no-repeat;
+  animation: podium-glint-twinkle 4.8s ease-in-out var(--gdelay, 0s) infinite;
+}
+@keyframes podium-glint-twinkle {
+  0%, 78%, 100% { opacity: 0; transform: scale(0.4) rotate(0deg); }
+  86% { opacity: 0.9; transform: scale(1) rotate(24deg); }
+  94% { opacity: 0; transform: scale(0.5) rotate(45deg); }
+}
+html[data-anim="off"] .podium-glint,
+html[data-perf="low"] .podium-glint { animation: none; opacity: 0; }
+/* The petal drift: flower petals loosed over the whole dais, swaying down
+   like the end of a victory lap. Each petal is one span, tinted per place,
+   phased apart; ambient by design (the ceremony is a state, not an event)
+   and parked entirely under html[data-anim="off"] / data-perf="low". */
+.podium-petal {
+  position: absolute;
+  top: -6%;
+  left: var(--px, 50%);
+  width: 7px;
+  height: 10px;
+  pointer-events: none;
+  border-radius: 60% 40% 55% 45% / 70% 65% 35% 30%;
+  background: rgb(var(--petal-rgb, 255 217 126) / 0.75);
+  box-shadow: inset 0 0 3px rgb(255 255 255 / 0.25);
+  opacity: 0;
+  animation: podium-petal-fall var(--pdur, 9s) linear var(--pdelay, 0s) infinite;
+}
+@keyframes podium-petal-fall {
+  0% { opacity: 0; transform: translate(0, 0) rotate(0deg); }
+  8% { opacity: 0.8; }
+  30% { transform: translate(14px, 30%) rotate(70deg); }
+  55% { transform: translate(-10px, 62%) rotate(150deg); }
+  80% { opacity: 0.6; transform: translate(10px, 88%) rotate(230deg); }
+  100% { opacity: 0; transform: translate(-4px, 108%) rotate(300deg); }
+}
+html[data-anim="off"] .podium-petal,
+html[data-perf="low"] .podium-petal { animation: none; opacity: 0; }
+/* The champion's crown, hovering just above the avatar with the sanctioned
+   ambient bob. Static (no bob) under html[data-anim="off"]. */
+.podium-crown {
+  animation: podium-crown-bob 4.2s ease-in-out infinite;
+}
+@keyframes podium-crown-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+html[data-anim="off"] .podium-crown { animation: none; }
+
 /* Rune badge: the shared chip for statuses and counts. Feed it an energy
    triple via --badge-rgb (defaults to ember). */
 .rune-badge {
@@ -1893,10 +1994,14 @@ html[data-light] .dgn-slab {
 html[data-anim="off"] .torch-pool { animation: none; }
 
 /* --- Podium celebration ------------------------------------------------------
-   The metal rim worn by the profile's honors shelf (the .energy-edge
-   masked-frame device, tinted by --rim-rgb; gold by default). The old
-   leaderboard treasure-dais that also wore it is retired — playtest feedback
-   read the podium as a tournament ceremony, not a ladder. */
+   Dressing for the leaderboard's ceremony dais (Podium.tsx) and the profile's
+   honors shelf. Each place wears a metal rim (the .energy-edge masked-frame
+   device, tinted by --rim-rgb; gold by default), stands in its own ceremony
+   spotlight (.podium-beam), and the champion adds rising motes, camera-flash
+   glints, a bobbing crown, and a petal drift across the whole dais.
+   Decoration only: transform/opacity, capped node counts at the call site,
+   and every animation parks under html[data-anim="off"] (static lighting
+   stays). Rebuilt grander by owner request after its first retirement. */
 .podium-rim-gold { position: relative; }
 .podium-rim-gold::before {
   content: "";
