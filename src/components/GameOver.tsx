@@ -336,6 +336,47 @@ function RuleReveal({ label, nerf, children }: { label: string; nerf: Nerf; chil
   );
 }
 
+// A folded summary section on the game-over panel. Playtest feedback: the end
+// screen printed every rule and drafted card in full and grew "way too large"
+// — the verdict and rating drowned. Each reference block now sits behind a
+// native <details> row that names itself and its count; one tap opens the full
+// content (which still renders complete rule text — the no-truncation rule
+// holds INSIDE the fold).
+function SummaryFold({
+  label,
+  count,
+  hint,
+  children,
+}: {
+  label: string;
+  count?: number;
+  hint?: string;
+  children: ReactNode;
+}) {
+  return (
+    <details className="group mt-5 border border-[color:var(--edge)] bg-ink-900/40 text-left">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-3 py-2.5 outline-none focus-visible:text-gold-leaf [&::-webkit-details-marker]:hidden">
+        <span className="flex min-w-0 items-baseline gap-2">
+          <span className="eyebrow">{label}</span>
+          {count != null && (
+            <span className="font-mono text-[11px] tabular-nums text-parchment-400">{count}</span>
+          )}
+        </span>
+        <span className="flex shrink-0 items-center gap-2">
+          {hint && <span className="text-xs text-parchment-400">{hint}</span>}
+          <span
+            aria-hidden
+            className="text-parchment-400 motion-safe:transition-transform group-open:rotate-90"
+          >
+            &#9656;
+          </span>
+        </span>
+      </summary>
+      <div className="px-3 pb-3">{children}</div>
+    </details>
+  );
+}
+
 // A compact horizontal strip of the game's shape: a tick every 10 plies and a
 // tier-tinted marker at every ply a card was played. Hovering (or tapping, on
 // touch) a marker names the card and the ply. With no card data it degrades to
@@ -844,7 +885,12 @@ export function GameOver({
         )}
 
         {(myNerf || opponentNerf) && (
-          <div className="mt-5 grid gap-2 sm:grid-cols-2">
+          <SummaryFold
+            label="Rules this game"
+            count={(myNerf ? 1 : 0) + (opponentNerf ? 1 : 0)}
+            hint={!spectator && opponentNerf && !oppRevealed ? "opponent's still sealed" : undefined}
+          >
+          <div className="grid gap-2 sm:grid-cols-2">
             {myNerf && (
               <RuleReveal
                 label={spectator ? `${names[myColor]} (${sideLabel(myColor)})` : "Your rule"}
@@ -877,42 +923,49 @@ export function GameOver({
                 </button>
               ))}
           </div>
+          </SummaryFold>
         )}
 
-        {/* Cards drafted: a distinct grouped summary (compact tier chips with
-            spent/nullified/active state, passives-active-first). Spectators see
-            both sides read-only; a seated player sees the opponent's cards and
-            their own with the balance-vote thumbs. */}
-        {spectator ? (
-          (ratableBuffs.length > 0 || revealedOppBuffs.length > 0) && (
-            <div className="mt-5 grid gap-2 sm:grid-cols-2">
-              <DraftedGroup
-                label={`${names[myColor]} (${sideLabel(myColor)})`}
-                buffs={ratableBuffs}
-              />
-              <DraftedGroup
-                label={`${names[oppColor]} (${sideLabel(oppColor)})`}
-                buffs={revealedOppBuffs}
-              />
-            </div>
-          )
-        ) : (
-          (ratableBuffs.length > 0 || revealedOppBuffs.length > 0) && (
-            <div className="mt-5 grid gap-2 sm:grid-cols-2">
-              {ratableBuffs.length > 0 && (
+        {/* Cards drafted: the grouped summary (compact tier chips with
+            spent/nullified/active state, passives-active-first) folds behind a
+            counted disclosure row. Spectators see both sides read-only; a
+            seated player sees the opponent's cards and their own with the
+            balance-vote thumbs — the "Rate the balance" invitation rides the
+            summary row so voting stays discoverable while folded. */}
+        {(ratableBuffs.length > 0 || revealedOppBuffs.length > 0) && (
+          <SummaryFold
+            label="Cards drafted"
+            count={ratableBuffs.length + revealedOppBuffs.length}
+            hint={!spectator && ratableBuffs.length > 0 ? "rate the balance" : undefined}
+          >
+            {spectator ? (
+              <div className="grid gap-2 sm:grid-cols-2">
                 <DraftedGroup
-                  label="Cards you drafted"
-                  hint="Rate the balance"
+                  label={`${names[myColor]} (${sideLabel(myColor)})`}
                   buffs={ratableBuffs}
-                  votable
-                  gameId={gameId}
                 />
-              )}
-              {revealedOppBuffs.length > 0 && (
-                <DraftedGroup label="Opponent's cards" buffs={revealedOppBuffs} />
-              )}
-            </div>
-          )
+                <DraftedGroup
+                  label={`${names[oppColor]} (${sideLabel(oppColor)})`}
+                  buffs={revealedOppBuffs}
+                />
+              </div>
+            ) : (
+              <div className="grid gap-2 sm:grid-cols-2">
+                {ratableBuffs.length > 0 && (
+                  <DraftedGroup
+                    label="Cards you drafted"
+                    hint="Rate the balance"
+                    buffs={ratableBuffs}
+                    votable
+                    gameId={gameId}
+                  />
+                )}
+                {revealedOppBuffs.length > 0 && (
+                  <DraftedGroup label="Opponent's cards" buffs={revealedOppBuffs} />
+                )}
+              </div>
+            )}
+          </SummaryFold>
         )}
 
         <MatchTimeline moves={moves} cardEvents={cardEvents} />
