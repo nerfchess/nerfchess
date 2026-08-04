@@ -13,6 +13,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, type LucideIcon } from "lucide-react";
 import { CardEntrance } from "./effects/cardEntrance";
 import { UseSpectacle } from "./effects/UseSpectacle";
+import { resolvePieceTreatment, type PieceTreatment } from "./effects/pieceTreatment";
 import { cardFaceIcon } from "@/lib/cardIcon";
 import {
   Piece,
@@ -1480,6 +1481,7 @@ interface SquareEnv {
   companionSquares: Map<Square, { art: string }>;
   amazonSquares: Set<Square>;
   moveAsSquares: Map<Square, PieceType | "a">;
+  treatmentBySquare: Map<Square, PieceTreatment>;
   showLegalMoves: boolean;
   showCoordinates: boolean;
   inspectTargets: Map<Square, boolean>;
@@ -1570,6 +1572,7 @@ const BoardSquare = React.memo(function BoardSquare({
     companionSquares,
     amazonSquares,
     moveAsSquares,
+    treatmentBySquare,
     showLegalMoves,
     showCoordinates,
     inspectTargets,
@@ -1623,6 +1626,10 @@ const BoardSquare = React.memo(function BoardSquare({
             // motif (the piece is out of action), and the buckler/heater
             // shield covers what a ward ring would say.
             const motifMark = motifBySquare.get(sq);
+            // The card-keyed piece treatment this square's mark carries (worn
+            // by the piece wrapper below; the frozen/doomed/shielded state
+            // looks outrank it).
+            const treatment = treatmentBySquare.get(sq);
             // Duelist-style bound-buff marker for this square (skipped where a
             // motif badge already stamps the piece, so the two never stack).
             const boundMark = !motifShown ? boundMarks.get(sq) : undefined;
@@ -2085,6 +2092,8 @@ const BoardSquare = React.memo(function BoardSquare({
                     key={
                       boardFx && (boardFx.kind === "morph" || boardFx.kind === "summon")
                         ? `piece-fx-${boardFx.key}`
+                        : treatment
+                        ? `piece-treat-${treatment.key}`
                         : undefined
                     }
                     className={
@@ -2092,13 +2101,19 @@ const BoardSquare = React.memo(function BoardSquare({
                       (isDragging ? "opacity-30 " : "") +
                       // The piece itself wears its live effect (owner: "a mark
                       // should actually change the piece"): frostbitten when
-                      // frozen, gilded when shielded, deathly when doomed.
+                      // frozen, gilded when shielded, deathly when doomed —
+                      // and under a running card's fx, the CARD-KEYED
+                      // treatment (rusted by one hex, moonlit by one boon).
+                      // The three state looks outrank the treatment: a frozen
+                      // piece reads frozen whoever froze it.
                       (frozenSquares.has(sq)
                         ? "piece-frozen "
                         : doomMarks.has(sq)
                         ? "piece-doomed "
                         : shieldedSquares.has(sq)
                         ? "piece-shielded "
+                        : treatment
+                        ? "piece-treat "
                         : "") +
                       (boardFx?.kind === "morph"
                         ? "fx-piece-pop"
@@ -2107,7 +2122,16 @@ const BoardSquare = React.memo(function BoardSquare({
                         : "")
                     }
                     data-anim-piece={isAnimPiece ? sq : undefined}
-                    style={{ width: "var(--piece-fit, 88%)", height: "var(--piece-fit, 88%)" }}
+                    style={{
+                      width: "var(--piece-fit, 88%)",
+                      height: "var(--piece-fit, 88%)",
+                      ...(treatment &&
+                      !frozenSquares.has(sq) &&
+                      !doomMarks.has(sq) &&
+                      !shieldedSquares.has(sq)
+                        ? ({ "--pt-filter": treatment.filter } as React.CSSProperties)
+                        : {}),
+                    }}
                   >
                     {walnutSquares.has(sq) ? (
                       <WalnutPiece type={piece.type} color={piece.color} size="100%" />
@@ -3216,6 +3240,17 @@ export function Board({
     }
     return m;
   }, [visual?.motifSquares, board.pieces]);
+  // Card-keyed piece treatment per square: the look a piece WEARS while a
+  // card's fx runs on it (rusted under one hex, moonlit under one boon),
+  // derived from the same motif marks as the badges so both surfaces and
+  // both players see the same changed piece. Filter-only by design.
+  const treatmentBySquare = useMemo(() => {
+    const m = new Map<number, PieceTreatment>();
+    for (const mk of visual?.motifSquares ?? []) {
+      m.set(mk.sq, resolvePieceTreatment(mk));
+    }
+    return m;
+  }, [visual?.motifSquares]);
   const strikeSquares = useMemo(() => new Set(visual?.strikeSquares ?? []), [visual?.strikeSquares]);
   const walnutSquares = useMemo(() => new Set(visual?.walnutSquares ?? []), [visual?.walnutSquares]);
   const frozenSkins = visual?.frozenSkins ?? EMPTY_SKINS;
@@ -4408,6 +4443,7 @@ export function Board({
       companionSquares,
       amazonSquares,
       moveAsSquares,
+      treatmentBySquare,
       showLegalMoves,
       showCoordinates,
       inspectTargets,
@@ -4460,6 +4496,7 @@ export function Board({
       companionSquares,
       amazonSquares,
       moveAsSquares,
+      treatmentBySquare,
       showLegalMoves,
       showCoordinates,
       inspectTargets,
