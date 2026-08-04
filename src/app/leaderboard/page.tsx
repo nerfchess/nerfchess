@@ -9,7 +9,6 @@ import { PlayerSearch } from "@/components/PlayerSearch";
 import { EmptyState } from "@/components/EmptyState";
 import { AccountUser, fetchMe } from "@/lib/authClient";
 import { CategoryTabs } from "@/components/ratings/CategoryTabs";
-import { Podium } from "@/components/ratings/Podium";
 import { DEFAULT_CATEGORY, getCategory, type RatingCategoryId } from "@/lib/ratingCategories";
 import { isProvisionalRd, PROVISIONAL_RD } from "@/lib/ratingDisplay";
 import { laurelTier } from "@/lib/laurels";
@@ -182,11 +181,6 @@ export default function LeaderboardPage() {
           />
         )}
 
-        {/* Podium for the active ladder's top three, above the full table. */}
-        {rows && rows.length > 0 && (
-          <Podium rows={rows.slice(0, 3)} category={category} isMe={isMeName} />
-        )}
-
         {rows && rows.length > 0 && (
           <>
             {/* The standings: an open list on hairline dividers (no heavy plate),
@@ -340,13 +334,21 @@ function LeaderboardRow({
           </span>
         )}
       </span>
-      <span className="text-right font-mono tabular-nums text-parchment-100">
+      {/* Provisional ratings render dimmed with the site-wide "?" marker, so a
+          two-game 2894 reads as "still settling", not as a glitched number. */}
+      <span
+        className={
+          "text-right font-mono tabular-nums " +
+          (isProvisionalRd(row.rd) ? "text-parchment-400" : "text-parchment-100")
+        }
+        title={
+          isProvisionalRd(row.rd)
+            ? `Provisional: rating deviation above ${PROVISIONAL_RD}`
+            : undefined
+        }
+      >
         {Math.round(row.rating)}
-        {isProvisionalRd(row.rd) && (
-          <span className="text-parchment-400" title={`Provisional: rating deviation above ${PROVISIONAL_RD}`}>
-            ?
-          </span>
-        )}
+        {isProvisionalRd(row.rd) && <span>?</span>}
       </span>
       <span className="hidden text-right font-mono tabular-nums text-parchment-400 sm:block">{row.games}</span>
       <span className="hidden text-right font-mono text-xs tabular-nums text-parchment-400 sm:block sm:text-sm">
