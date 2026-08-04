@@ -494,7 +494,7 @@ export const HEXES_T8: Buff[] = [
       description: "Your opponent may move each piece at most one square in any direction for their next 2 turns.",
       flavor: "Every limb turns to lead; a single shuffling step is all anyone manages.",
       // "all" is right: the filter also strips castling off the king.
-      fx: { motif: "anchor", pieces: "all" },
+      fx: { motif: "anchor", pieces: "all", king: true },
     },
     curse(2, (moves) =>
       moves.filter(
@@ -578,7 +578,7 @@ export const HEXES_T8: Buff[] = [
       name: "Peace of the Grave",
       description: "Your opponent cannot capture with any piece for their next 3 turns, and for those turns they cannot move any piece onto a square next to your king.",
       flavor: "A forced truce enforced by the dead, with a cordon drawn around the crown.",
-      fx: { motif: "muzzle", pieces: "all" },
+      fx: { motif: "muzzle", pieces: "all", king: true },
       // Retiered 8 -> 9 (apex): the full three-turn duration is unchanged.
       tier: 9, special: true,
     },
