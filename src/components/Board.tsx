@@ -1478,7 +1478,7 @@ interface SquareEnv {
   stunBySquare: Map<Square, number>;
   companionSquares: Map<Square, { art: string }>;
   amazonSquares: Set<Square>;
-  moveAsSquares: Map<Square, PieceType>;
+  moveAsSquares: Map<Square, PieceType | "a">;
   showLegalMoves: boolean;
   showCoordinates: boolean;
   inspectTargets: Map<Square, boolean>;
@@ -3144,7 +3144,7 @@ export function Board({
   // marks derive from public card state on both surfaces, so both players see
   // the same new piece.
   const moveAsSquares = useMemo(() => {
-    const m = new Map<number, PieceType>();
+    const m = new Map<number, PieceType | "a">();
     for (const mk of visual?.motifSquares ?? []) {
       if (mk.motif !== "empower" || !mk.moveAs) continue;
       const p = board.pieces[mk.sq];
