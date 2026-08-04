@@ -45,6 +45,10 @@ const ONLINE_LIST_FOLD = 8;
 // full directory lives in the Watch tab.
 const WATCH_RAIL_FOLD = 4;
 
+// The Watch tab itself also folds after a screenful (playtest feedback: a
+// busy night made it scroll forever); "View all N games" unfolds it.
+const WATCH_TAB_FOLD = 8;
+
 // The lobby is wrapped in FriendGameProvider so the Friends tab can host the
 // full "Play a Friend" flow (create + share code, wait for a friend, join by
 // code) without leaving /lobby. While a friend game is being created, joined,
@@ -86,6 +90,7 @@ function LobbyInner() {
   const [challengeFilter, setChallengeFilter] = useState<"all" | "nerf" | "buff">("all");
   const [watchFilter, setWatchFilter] = useState<"all" | "nerf" | "buff">("all");
   const [showAllPlayers, setShowAllPlayers] = useState(false);
+  const [showAllGames, setShowAllGames] = useState(false);
   // The MPSession backing an in-flight "answer this seek" join, so unmounting
   // mid-join tears it down instead of leaking it (see joinSeek below).
   const joinSessionRef = useRef<MPSession | null>(null);
@@ -463,11 +468,22 @@ function LobbyInner() {
                     hint="Switch the filter to All to see every live board."
                   />
                 ) : (
-                  <ul className="mt-4 space-y-2.5 stagger-in">
-                    {filteredGames.map((game) => (
-                      <LiveGameRow key={game.id} game={game} />
-                    ))}
-                  </ul>
+                  <>
+                    <ul className="mt-4 space-y-2.5 stagger-in">
+                      {(showAllGames ? filteredGames : filteredGames.slice(0, WATCH_TAB_FOLD)).map((game) => (
+                        <LiveGameRow key={game.id} game={game} />
+                      ))}
+                    </ul>
+                    {filteredGames.length > WATCH_TAB_FOLD && (
+                      <Button tone="ghost"
+                        onClick={() => setShowAllGames((v) => !v)}
+                        className="mt-2.5 sm:min-h-0 w-full px-3 py-2 text-xs font-medium text-parchment-300">
+                        {showAllGames
+                          ? "Show fewer"
+                          : `View all ${filteredGames.length} games`}
+                      </Button>
+                    )}
+                  </>
                 )}
               </div>
 
