@@ -848,10 +848,15 @@ export function DraftOverlay({
   }
   // Ref bookkeeping and the attention chime are side effects, so they stay in
   // an effect keyed on the same offer identity (runs on mount and each deal).
+  // The pin outlives a reroll: rerolling swaps the cards but it is the same
+  // decision context, and a player who pinned the panel open has said "stop
+  // tucking this round" — snapping shut after they asked for fresh cards was
+  // part of the "keeps on minimizing" report. Only a genuinely new offer
+  // index starts unpinned.
   useEffect(() => {
-    // A genuinely new offer (or reroll) starts unpinned so it can auto-tuck
-    // after its grace; only a manual re-open pins the CURRENT offer.
     userPinnedRef.current = false;
+  }, [offer.index]);
+  useEffect(() => {
     committedRef.current = false;
     selectedAtRef.current = 0;
     // A fresh offer demands attention: the board is blocked until it
@@ -1011,15 +1016,18 @@ export function DraftOverlay({
     return () => window.clearTimeout(id);
   }, [bankArmed]);
 
-  // Auto-tuck the minimized panel into its slim chip after a few seconds so it
-  // stops hogging the corner; any interaction (dragging, un-tucking, resolving)
-  // holds it open, and a fresh offer re-shows it via the deal effect above.
-  // Skip entirely once the user has pinned it open by re-opening the chip.
+  // Auto-tuck the minimized panel into its slim chip once it has clearly been
+  // seen, so it stops hogging the corner; any interaction (dragging,
+  // un-tucking, resolving) holds it open, and a fresh offer re-shows it via
+  // the deal effect above. Skip entirely once the user has pinned it open by
+  // re-opening the chip. Twelve seconds, not five: the old fuse tucked the
+  // panel while players were still reading their cards, which read as the
+  // draft "minimizing randomly".
   useEffect(() => {
     if (userPinnedRef.current) return;
     if (!minimized || tucked || dragging) return;
     if (chosen != null || banking || committedRef.current) return;
-    const id = window.setTimeout(() => setTucked(true), 5000);
+    const id = window.setTimeout(() => setTucked(true), 12_000);
     return () => window.clearTimeout(id);
   }, [minimized, tucked, dragging, chosen, banking]);
 

@@ -704,7 +704,16 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     if (!draftCovered) notifyGateOpen();
   }, [draftCovered, notifyGateOpen]);
   useEffect(() => {
-    const left = draftDeadline == null ? -1 : draftDeadline - Date.now();
+    // A null deadline means "no live lock-in window" — not started yet, or
+    // closed because both seats resolved (draft-state sends an explicit null
+    // then). Neither is "the window expired": treating null as already-over
+    // was the bug behind "the draft menu keeps minimizing randomly" — a start
+    // replay or a frame-early offer saw the deadline as null for a beat and
+    // the fresh draft opened straight into the minimized side panel. With no
+    // window there is no offer on screen, so the last grace state simply
+    // stops mattering; leave it be.
+    if (draftDeadline == null) return;
+    const left = draftDeadline - Date.now();
     if (left <= 0) {
       queueMicrotask(() => setDraftGraceOver(true));
       return;
@@ -713,6 +722,22 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     const id = window.setTimeout(() => setDraftGraceOver(true), left + 50);
     return () => window.clearTimeout(id);
   }, [draftDeadline]);
+  // A genuinely new offer round always opens full-screen, even when its
+  // deadline frame lands a beat behind the offer (the old stale-past deadline
+  // would otherwise keep the fresh draft minimized). The one exception is a
+  // reconnecting straggler whose window really has expired: a stale-PAST
+  // deadline for this very round keeps the side panel. Keyed on the offer
+  // alone by design — the deadline effect above owns deadline changes.
+  const draftDeadlineRef = useRef(draftDeadline);
+  useEffect(() => {
+    draftDeadlineRef.current = draftDeadline;
+  }, [draftDeadline]);
+  useEffect(() => {
+    if (liveOfferKey == null) return;
+    const dl = draftDeadlineRef.current;
+    if (dl != null && dl - Date.now() <= 0) return;
+    setDraftGraceOver(false);
+  }, [liveOfferKey]);
 
   // Auto-dismiss the full-screen "waiting for opponent" overlay: while it is
   // up, start a short timer that collapses it to the non-blocking corner pill.
