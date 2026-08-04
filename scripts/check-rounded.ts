@@ -55,6 +55,8 @@ const SHAPE_EXEMPT = [
   ".chest-lid", // deliberate organic arch on the treasure chest
   ".chest-lock__plate", // a lock plate reads as hardware, not a panel
   ".dgn-torch__flame", // a flame silhouette; the radius IS the shape
+  ".us-f-ignite", // usage-beat flame lick; the radius IS the shape
+  ".us-f-bloom", // usage-beat petal blob; organic by design
   '[class*="rounded"]', // the global enforcement rule itself
   "primitives.css", // passive VFX pips at 6-12% of the viewport
   "effects.css", // organic VFX blobs

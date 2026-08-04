@@ -12,6 +12,7 @@ import React, {
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, type LucideIcon } from "lucide-react";
 import { CardEntrance } from "./effects/cardEntrance";
+import { UseSpectacle } from "./effects/UseSpectacle";
 import { cardFaceIcon } from "@/lib/cardIcon";
 import {
   Piece,
@@ -2529,6 +2530,69 @@ export function Board({
       mine: fresh.mine,
     });
   }, [buffs, myColor]);
+  // --- Usage beat: one shot the moment a card is USED (or cancelled) --------
+  // Diffs the public buff lists by per-card USED-instance count (spent,
+  // usedActivation, or nullified), instant/activated cards only — a passive
+  // expiring is not a "use". Fires only for instances this board previously
+  // saw LIVE, so a mid-game reload (first snapshot seeds the counts) and a
+  // card that arrives already resolved (the cast layer's job) stay silent.
+  // The cast layer tells the board what the play DID; this beat shows the
+  // card itself being consumed at its owner's edge — or, on the nullified
+  // read, being voided by the opponent.
+  const usageSeenRef = useRef<{ used: Map<string, number>; live: Map<string, number> } | null>(null);
+  const usageKeyRef = useRef(0);
+  const [usage, setUsage] = useState<{
+    key: number;
+    cardId: string;
+    category: BuffCategory;
+    tier: number;
+    icon: LucideIcon;
+    mine: boolean;
+    nullified: boolean;
+  } | null>(null);
+  useEffect(() => {
+    if (!buffs) return;
+    const used = new Map<string, number>();
+    const live = new Map<string, number>();
+    const meta = new Map<string, { tier: number; mine: boolean; nullified: boolean }>();
+    for (const color of ["w", "b"] as Color[]) {
+      for (const inst of buffs.players[color].buffs) {
+        if (!inst.id) continue;
+        const def = BUFF_BY_ID[inst.id];
+        if (!def || def.kind === "passive") continue;
+        const k = `${color}:${inst.id}`;
+        if (inst.spent || inst.nullified || inst.usedActivation) {
+          used.set(k, (used.get(k) ?? 0) + 1);
+          meta.set(k, { tier: inst.tier, mine: color === myColor, nullified: !!inst.nullified });
+        } else {
+          live.set(k, (live.get(k) ?? 0) + 1);
+        }
+      }
+    }
+    const prev = usageSeenRef.current;
+    usageSeenRef.current = { used, live };
+    if (!prev) return;
+    let fresh: { id: string; tier: number; mine: boolean; nullified: boolean } | null = null;
+    for (const [k, n] of used) {
+      if (n <= (prev.used.get(k) ?? 0)) continue;
+      if ((prev.live.get(k) ?? 0) === 0) continue; // never seen live here: not our beat
+      const m = meta.get(k);
+      if (m) fresh = { id: k.slice(2), ...m };
+    }
+    if (!fresh) return;
+    const def = BUFF_BY_ID[fresh.id];
+    if (!def) return;
+    usageKeyRef.current += 1;
+    setUsage({
+      key: usageKeyRef.current,
+      cardId: def.id,
+      category: def.category,
+      tier: fresh.tier,
+      icon: cardFaceIcon(def.id, def.category, def.icon) ?? Sparkles,
+      mine: fresh.mine,
+      nullified: fresh.nullified,
+    });
+  }, [buffs, myColor]);
   // --- Nerf reveal splash: one shot per newly-known rule --------------------
   // Keys already played (color:id), so a reveal fires exactly once no matter
   // how often the host re-derives the prop array. The latest unseen entry
@@ -4549,6 +4613,20 @@ export function Board({
             name={BUFF_BY_ID[cast.id]!.name}
             description={BUFF_BY_ID[cast.id]?.description}
             tier={cast.tier}
+          />
+        )}
+        {/* Usage beat: a card just LEFT a hand (used, or nullified). The
+            card's sigil performs its consumption family at the owner's edge
+            while the cast layer answers on the board. */}
+        {!fxHiddenPref && !fxCalmClock && usage && (
+          <UseSpectacle
+            key={`use-${usage.key}`}
+            cardId={usage.cardId}
+            category={usage.category}
+            tier={usage.tier}
+            icon={usage.icon}
+            mine={usage.mine}
+            nullified={usage.nullified}
           />
         )}
         {/* Acquire entrance: a card just ENTERED a hand (draft pick, steal,
