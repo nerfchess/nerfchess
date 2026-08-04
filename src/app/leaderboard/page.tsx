@@ -9,6 +9,7 @@ import { PlayerSearch } from "@/components/PlayerSearch";
 import { EmptyState } from "@/components/EmptyState";
 import { AccountUser, fetchMe } from "@/lib/authClient";
 import { CategoryTabs } from "@/components/ratings/CategoryTabs";
+import { Podium } from "@/components/ratings/Podium";
 import { DEFAULT_CATEGORY, getCategory, type RatingCategoryId } from "@/lib/ratingCategories";
 import { isProvisionalRd, PROVISIONAL_RD } from "@/lib/ratingDisplay";
 import { laurelTier } from "@/lib/laurels";
@@ -179,6 +180,14 @@ export default function LeaderboardPage() {
             body={`Nobody has a rated ${active.label} game on the board. Play one to claim the top spot.`}
             action={{ href: "/lobby", label: `Play a rated ${active.label} game` }}
           />
+        )}
+
+        {/* The ceremony dais for the active ladder's top three, above the
+            full table. Retired once by playtest feedback, rebuilt grander by
+            owner request — the provisional read it fumbled the first time now
+            matches the table's dimmed style. */}
+        {rows && rows.length > 0 && (
+          <Podium rows={rows.slice(0, 3)} category={category} isMe={isMeName} />
         )}
 
         {rows && rows.length > 0 && (

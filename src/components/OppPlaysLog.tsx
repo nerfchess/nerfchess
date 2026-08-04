@@ -178,7 +178,7 @@ export function OppPlaysLog({ plays }: { plays: OppPlay[] }) {
             // a bullet game is a lost move. The card is inert; only the small
             // dismiss button below takes pointer events.
             className={
-              "relative rounded-[1px] border bg-ink-700/95 px-3 shadow-plate backdrop-blur-sm " +
+              "relative rounded-[1px] border bg-ink-700/95 px-3 shadow-plate " +
               (newest ? "border-gold/40 py-2.5 animate-rise" : "border-[color:var(--edge)] py-1.5 opacity-85")
             }
           >

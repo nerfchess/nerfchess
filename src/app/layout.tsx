@@ -175,11 +175,11 @@ const FONT_VARS = [
 export const metadata: Metadata = {
   metadataBase: new URL("https://nerfchess.com"),
   title: {
-    default: "Nerf Chess · chess with secret rules and power-up cards",
+    default: "Nerf Chess · chess with power-ups, a free online chess variant",
     template: "%s · Nerf Chess",
   },
   description:
-    "Nerf Chess is a free online chess variant with two modes: Nerf (every player carries a secret handicap, in the spirit of drawback chess) and Buff (draft power-up cards every 5 moves). Win by capturing the king. Play in your browser, no download.",
+    "Nerf Chess is chess with power-ups: a free online chess variant. Draft power-up cards every 5 moves in Buff mode, or carry a secret handicap and hex your opponent in Nerf mode (in the spirit of drawback chess). Win by capturing the king. Play in your browser, no download.",
   keywords: [
     "nerf chess",
     "drawback chess",
@@ -208,21 +208,22 @@ export const metadata: Metadata = {
     ],
     apple: [{ url: "/apple-icon-180.png", type: "image/png", sizes: "180x180" }],
   },
+  // No images here on purpose: the file-based src/app/opengraph-image.tsx
+  // supplies a proper 1200x630 preview site-wide, and the codex card routes
+  // each render their own per-card image. Twitter falls back to og:image.
   openGraph: {
     type: "website",
     siteName: "Nerf Chess",
     url: "https://nerfchess.com",
-    title: "Nerf Chess · chess with secret rules and power-up cards",
+    title: "Nerf Chess · chess with power-ups, a free online chess variant",
     description:
-      "A free online chess variant. Secret handicaps in Nerf mode, drafted power-up cards in Buff mode, and the game only ends when a king is captured.",
-    images: [{ url: "/icon-512.png", width: 512, height: 512 }],
+      "Chess with power-ups: a free online chess variant. Draft power-up cards every 5 moves in Buff mode, take a secret handicap in Nerf mode, and win by capturing the king.",
   },
   twitter: {
-    card: "summary",
-    title: "Nerf Chess · chess with secret rules and power-up cards",
+    card: "summary_large_image",
+    title: "Nerf Chess · chess with power-ups, a free online chess variant",
     description:
-      "A free online chess variant. Secret handicaps in Nerf mode, drafted power-up cards in Buff mode, and the game only ends when a king is captured.",
-    images: ["/icon-512.png"],
+      "Chess with power-ups: a free online chess variant. Draft power-up cards every 5 moves in Buff mode, take a secret handicap in Nerf mode, and win by capturing the king.",
   },
 };
 
@@ -309,13 +310,15 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    // data-theme matches DEFAULT_SETTINGS.siteTheme so first paint is already
-    // the default (Crimson) instead of flashing classic; SettingsBootstrap then
-    // applies whatever the user actually chose.
+    // data-theme matches DEFAULT_SETTINGS.siteTheme ("dark", the Classic
+    // palette) so first paint is already the default; SettingsBootstrap then
+    // applies whatever the user actually chose. This used to say "crimson"
+    // while the settings default was dark, which gave every fresh visitor a
+    // crimson first paint that flipped after hydration.
     // The face variables live on <html>, not <body>: --font-display and
     // --font-body are claimed per theme by html[data-theme] rules, and a value
     // set on <body> would beat them for everything inside it.
-    <html lang="en" data-theme="crimson" className={FONT_VARS}>
+    <html lang="en" data-theme="dark" className={FONT_VARS}>
       <head>
         <script
           type="application/ld+json"

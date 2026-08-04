@@ -61,7 +61,13 @@ export default function HomePage() {
               marks over the live board. Signed-in players see their mode
               rating chips here instead — the profile corner of the hero. */}
           <div className="flex items-start justify-between gap-3">
-            <span className="eyebrow">Nerf Chess</span>
+            {/* The page's H1 is the hero eyebrow, restyled to look identical to
+                the old span. The sr-only tail gives search engines the "chess
+                with power-ups" target phrase without changing the visible hero. */}
+            <h1 className="eyebrow">
+              Nerf Chess
+              <span className="sr-only">: chess with power-ups, a free online chess variant</span>
+            </h1>
             <div className="flex flex-col items-end gap-2">
               <NewHereChip />
               <HeroRatings />

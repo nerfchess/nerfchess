@@ -342,7 +342,7 @@ function PlayAnnouncement({ name, tier, outcome }: { name: string; tier: number;
     <div aria-live="polite" className="pointer-events-none absolute inset-x-0 top-[6%] z-[45] flex justify-center">
       <div
         className={
-          "extra-turns-banner mx-4 flex max-w-[min(92%,30rem)] flex-col items-center gap-1 border border-white/25 bg-ink-950/70 text-center shadow-plate backdrop-blur-[2px] " +
+          "extra-turns-banner mx-4 flex max-w-[min(92%,30rem)] flex-col items-center gap-1 border border-white/25 bg-ink-950/90 text-center shadow-plate " +
           (big ? "px-5 py-2.5" : mid ? "px-4 py-2" : "px-3 py-1.5")
         }
       >
@@ -422,7 +422,7 @@ function NerfRevealSplash({
       {/* small supporting caption: the reveal composition is the show, the
           name is a footnote (bottom edge, one compact line) */}
       <div className="absolute inset-x-0 bottom-[4%] flex justify-center">
-        <div className="nerf-reveal-stamp mx-4 flex max-w-[min(92%,22rem)] items-center gap-2 border border-white/20 bg-ink-950/80 px-3 py-1.5 shadow-plate backdrop-blur-[2px]">
+        <div className="nerf-reveal-stamp mx-4 flex max-w-[min(92%,22rem)] items-center gap-2 border border-white/20 bg-ink-950/90 px-3 py-1.5 shadow-plate">
           <span className={`font-display text-sm font-bold tracking-wide tier-${tier}`}>{name}</span>
           <span
             className={`shrink-0 rounded-[1px] border px-1 py-px font-display text-[10px] font-bold tier-bg-${tier} tier-${tier}`}
@@ -1721,9 +1721,20 @@ const BoardSquare = React.memo(function BoardSquare({
                 // Desktop hover raises the styled effect popover in place of the
                 // old browser title (only when the square explains something and
                 // no drag is in flight). Pointer-leave dismisses it; pointerdown
-                // move handling is untouched.
+                // move handling is untouched. Touch is excluded from the leave:
+                // a touch pointer "leaves" the square the instant the finger
+                // lifts, which fired right after the tap-to-inspect paths in
+                // handleSquarePointerDown opened this square's popover and
+                // flash-closed it. On touch the popover closes via the window
+                // tap-away listener instead (the next press anywhere).
                 onPointerEnter={hasEffectInfo ? () => onOpenPopover(sq) : undefined}
-                onPointerLeave={hasEffectInfo ? () => onClosePopover(sq) : undefined}
+                onPointerLeave={
+                  hasEffectInfo
+                    ? (e) => {
+                        if (e.pointerType !== "touch") onClosePopover(sq);
+                      }
+                    : undefined
+                }
               >
                 {underwater && (
                   <div className="absolute inset-0 bg-cyan-500/25 mix-blend-screen pointer-events-none" />
@@ -2945,21 +2956,90 @@ export function Board({
     const grid = boardRef.current?.querySelector("[data-board-grid]") as HTMLElement | null;
     if (!grid) return;
     const cell = grid.getBoundingClientRect().width / 8;
+    // The player's chosen movement style (Settings > Board & Pieces). "glide"
+    // is the classic chessground slide; the other styles run through WAAPI so
+    // multi-keyframe arcs never fight the inline-transition bookkeeping. All
+    // styles are transform/opacity only, all scale with the animation-speed
+    // duration, and dur === 0 (animations off) already returned above.
+    const motion = document.documentElement.dataset.pieceMotion ?? "glide";
     for (const el of Array.from(grid.querySelectorAll<HTMLElement>("[data-anim-piece]"))) {
       const sq = Number(el.dataset.animPiece) as Square;
       const anim = anims.get(sq);
       if (!anim) continue;
       const pendingCleanup = animCleanups.get(el);
       if (pendingCleanup !== undefined) window.clearTimeout(pendingCleanup);
-      el.style.transition = "none";
-      el.style.transform = `translate(${anim.dxCells * cell}px, ${anim.dyCells * cell}px)`;
+      const dx = anim.dxCells * cell;
+      const dy = anim.dyCells * cell;
       el.style.position = "relative";
       el.style.zIndex = "5";
-      el.getBoundingClientRect(); // commit the starting transform
-      // Fast-launch / decisive-stop curve (vs the old gentle `ease-out`, which
-      // coasted): the piece leaves quickly and lands crisply, so moves feel light.
-      el.style.transition = `transform ${dur}ms cubic-bezier(0.22, 1, 0.36, 1)`;
-      el.style.transform = "translate(0, 0)";
+      let totalMs = dur + 50;
+      if (motion === "hop" && typeof el.animate === "function") {
+        // The piece leaps: an arc whose height grows gently with distance,
+        // a slight stretch at the apex, and a landing squash.
+        const dist = Math.hypot(anim.dxCells, anim.dyCells);
+        const lift = cell * (0.4 + Math.min(dist, 6) * 0.08);
+        const hopMs = dur * 1.7;
+        el.style.transform = "translate(0, 0)";
+        el.animate(
+          [
+            { transform: `translate(${dx}px, ${dy}px) scale(1)` },
+            {
+              transform: `translate(${dx * 0.5}px, ${dy * 0.5 - lift}px) scale(1.06, 1.1)`,
+              offset: 0.45,
+              easing: "cubic-bezier(0.3, 0, 0.6, 1)",
+            },
+            { transform: "translate(0, 0) scale(1.08, 0.9)", offset: 0.85 },
+            { transform: "translate(0, 0) scale(1)" },
+          ],
+          { duration: hopMs, easing: "cubic-bezier(0.25, 0.6, 0.3, 1)" },
+        );
+        totalMs = hopMs + 50;
+      } else if (motion === "warp" && typeof el.animate === "function") {
+        // The piece folds out of its square and unfolds on the destination:
+        // a vanish at the origin, nothing in between, a pop on arrival.
+        const warpMs = dur * 1.5;
+        el.style.transform = "translate(0, 0)";
+        el.animate(
+          [
+            { transform: `translate(${dx}px, ${dy}px) scale(1)`, opacity: 1 },
+            { transform: `translate(${dx}px, ${dy}px) scale(0.45)`, opacity: 0, offset: 0.38 },
+            { transform: "translate(0, 0) scale(0.45)", opacity: 0, offset: 0.5 },
+            { transform: "translate(0, 0) scale(1.16)", opacity: 1, offset: 0.78 },
+            { transform: "translate(0, 0) scale(1)", opacity: 1 },
+          ],
+          { duration: warpMs, easing: "ease-out" },
+        );
+        totalMs = warpMs + 50;
+      } else if (motion === "stomp" && typeof el.animate === "function") {
+        // A hard, fast march: quicker travel than the glide and a landing
+        // stomp that plants the piece with authority.
+        const stompMs = dur * 1.25;
+        el.style.transform = "translate(0, 0)";
+        el.animate(
+          [
+            { transform: `translate(${dx}px, ${dy}px) scale(1)` },
+            {
+              transform: "translate(0, 0) scale(1)",
+              offset: 0.62,
+              easing: "cubic-bezier(0.5, 0, 0.9, 0.6)",
+            },
+            { transform: "translate(0, 0) scale(1.14, 0.84)", offset: 0.78 },
+            { transform: "translate(0, 0) scale(0.97, 1.04)", offset: 0.9 },
+            { transform: "translate(0, 0) scale(1)" },
+          ],
+          { duration: stompMs, easing: "linear" },
+        );
+        totalMs = stompMs + 50;
+      } else {
+        el.style.transition = "none";
+        el.style.transform = `translate(${dx}px, ${dy}px)`;
+        el.getBoundingClientRect(); // commit the starting transform
+        // Fast-launch / decisive-stop curve (vs the old gentle `ease-out`,
+        // which coasted): the piece leaves quickly and lands crisply, so
+        // moves feel light.
+        el.style.transition = `transform ${dur}ms cubic-bezier(0.22, 1, 0.36, 1)`;
+        el.style.transform = "translate(0, 0)";
+      }
       animCleanups.set(
         el,
         window.setTimeout(() => {
@@ -2967,7 +3047,7 @@ export function Board({
           el.style.zIndex = "";
           el.style.position = "";
           animCleanups.delete(el);
-        }, dur + 50),
+        }, totalMs),
       );
     }
   }, [board.pieces, orientation]);

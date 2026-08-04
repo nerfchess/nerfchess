@@ -496,7 +496,7 @@ export default function EditProfilePage() {
               <div className="plate divide-y divide-white/5 p-1">
                 <PrivacyToggle
                   label="Show my friends list on my profile"
-                  description="When off, only you and moderators can see who you are friends with. Your friend count stays visible."
+                  description="Off: only you and mods see your friends list. The count stays public."
                   on={friendsPublic}
                   onToggle={toggleFriends}
                   state={friendsState}
@@ -504,7 +504,7 @@ export default function EditProfilePage() {
                 />
                 <PrivacyToggle
                   label="Show my online status and last seen"
-                  description="When off, your profile hides whether you are online and when you were last active. You still appear in the live lobby while playing."
+                  description="Off: hides online and last-seen. You still show in the lobby while playing."
                   on={showOnline}
                   onToggle={toggleOnline}
                   state={onlineState}

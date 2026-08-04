@@ -265,6 +265,36 @@ html[data-theme="nebula"] { /* violet dusk */
   --bg-raised: #2b2238;
   --border-subtle: #362c48;
 }
+html[data-theme="sakura"] { /* dusk pink over dark wood */
+  --bg-base: #171013;
+  --bg-panel: #251821;
+  --bg-raised: #33222d;
+  --border-subtle: #422f3b;
+}
+html[data-theme="honey"] { /* warm amber-brown */
+  --bg-base: #171208;
+  --bg-panel: #262012;
+  --bg-raised: #342c1a;
+  --border-subtle: #443a25;
+}
+html[data-theme="pine"] { /* blue-green conifer dusk */
+  --bg-base: #0d1412;
+  --bg-panel: #16221e;
+  --bg-raised: #1f2f29;
+  --border-subtle: #283b34;
+}
+html[data-theme="wine"] { /* deep plum */
+  --bg-base: #140d14;
+  --bg-panel: #221626;
+  --bg-raised: #2f2034;
+  --border-subtle: #3d2b44;
+}
+html[data-theme="storm"] { /* cold slate */
+  --bg-base: #101214;
+  --bg-panel: #1a1e22;
+  --bg-raised: #262b31;
+  --border-subtle: #313840;
+}
 
 /* ============================================================================
    FLAGSHIP THEMES
@@ -813,6 +843,9 @@ html[data-theme="aurora"]::after {
     radial-gradient(62% 40% at 22% -8%, rgb(157 123 255 / 0.22), transparent 70%),
     radial-gradient(56% 34% at 76% -12%, rgb(79 224 200 / 0.15), transparent 70%);
   animation: aurora-drift 28s ease-in-out infinite alternate;
+  /* A full-viewport fixed layer that drifts forever: promote it once instead
+     of letting the compositor re-decide every frame. */
+  will-change: transform;
 }
 @keyframes aurora-drift {
   to { transform: translate3d(-4%, 2%, 0); }
@@ -866,6 +899,63 @@ html[data-theme="light"] {
   --accent-positive-hi-rgb: 85 136 74;
   --text-on-accent: #ffffff;
 }
+
+/* Sepia and Frost: light TINTS. Like the dark tints above they own only their
+   background + border tokens; the ink text ramp, the darker light-scheme
+   accents and the board-highlight lift are copied verbatim from the light
+   theme's block above (and the html[data-light] remaps below apply to them
+   automatically, since applyUiPrefs sets data-light from scheme). */
+html[data-theme="sepia"] { /* aged paper, warm cream */
+  --bg-base: #ece4d2;
+  --bg-panel: #f6f0e2;
+  --bg-raised: #fcf8ee;
+  --border-subtle: #ddd2b8;
+  --text-primary: #2b2822;
+  --text-secondary: #5c584f;
+  --text-muted: #86816f;
+  --board-highlight-a: 0.5;
+  --accent-gold: #806310;
+  --accent-gold-hi: #96751a;
+  --accent-gold-rgb: 128 99 16;
+  --accent-gold-hi-rgb: 150 117 26;
+  --accent-gold-dim-rgb: 96 74 12;
+  --accent-nerf: #c0322f;
+  --accent-nerf-rgb: 192 50 47;
+  --accent-nerf-hi-rgb: 209 74 69;
+  --accent-buff: #2b6aa0;
+  --accent-buff-rgb: 43 106 160;
+  --accent-buff-hi-rgb: 58 127 187;
+  --accent-positive: #457539;
+  --accent-positive-rgb: 69 117 57;
+  --accent-positive-hi-rgb: 85 136 74;
+  --text-on-accent: #ffffff;
+}
+html[data-theme="frost"] { /* cool paper, blue-white */
+  --bg-base: #e3e8ee;
+  --bg-panel: #f1f4f8;
+  --bg-raised: #f9fbfd;
+  --border-subtle: #ccd4de;
+  --text-primary: #262a30;
+  --text-secondary: #545a63;
+  --text-muted: #7d8490;
+  --board-highlight-a: 0.5;
+  --accent-gold: #806310;
+  --accent-gold-hi: #96751a;
+  --accent-gold-rgb: 128 99 16;
+  --accent-gold-hi-rgb: 150 117 26;
+  --accent-gold-dim-rgb: 96 74 12;
+  --accent-nerf: #c0322f;
+  --accent-nerf-rgb: 192 50 47;
+  --accent-nerf-hi-rgb: 209 74 69;
+  --accent-buff: #2b6aa0;
+  --accent-buff-rgb: 43 106 160;
+  --accent-buff-hi-rgb: 58 127 187;
+  --accent-positive: #457539;
+  --accent-positive-rgb: 69 117 57;
+  --accent-positive-hi-rgb: 85 136 74;
+  --text-on-accent: #ffffff;
+}
+
 html[data-light] .plate {
   background: rgba(255, 255, 255, 0.55);
   border-color: rgba(0, 0, 0, 0.14);
@@ -1657,6 +1747,107 @@ html[data-anim="off"] .rune-loader { animation: none; }
   mask-composite: exclude;
 }
 
+/* The ceremony spotlight: a soft cone of light falling from above the place
+   card, tinted to its metal. Static light under html[data-anim="off"] and
+   data-perf="low"; otherwise it breathes very slowly, like stadium lighting. */
+.podium-beam {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    62% 88% at 50% 0%,
+    rgb(var(--beam-rgb, var(--energy-gold-rgb)) / var(--beam-a, 0.14)),
+    transparent 76%
+  );
+  animation: podium-beam-breathe 7s ease-in-out infinite;
+}
+@keyframes podium-beam-breathe {
+  0%, 100% { opacity: 0.75; }
+  50% { opacity: 1; }
+}
+html[data-anim="off"] .podium-beam,
+html[data-perf="low"] .podium-beam { animation: none; opacity: 0.85; }
+.podium-mote {
+  position: absolute;
+  bottom: 18%;
+  left: var(--mx, 50%);
+  width: 3px;
+  height: 3px;
+  border-radius: 999px;
+  pointer-events: none;
+  background: rgb(var(--mote-rgb, var(--energy-gold-rgb)) / 0.85);
+  box-shadow: 0 0 6px 1px rgb(var(--mote-rgb, var(--energy-gold-rgb)) / 0.4);
+  opacity: 0;
+  animation: podium-mote-rise var(--mdur, 5.4s) linear var(--mdelay, 0s) infinite;
+}
+@keyframes podium-mote-rise {
+  0% { opacity: 0; transform: translateY(0) scale(0.7); }
+  14% { opacity: 0.65; }
+  70% { opacity: 0.3; }
+  100% { opacity: 0; transform: translateY(-68px) scale(1); }
+}
+html[data-anim="off"] .podium-mote { animation: none; opacity: 0; }
+/* The champion's sparkles: slow four-point glints near the avatar, the
+   cross-star kind that reads "camera flash" at a medal ceremony. */
+.podium-glint {
+  position: absolute;
+  top: var(--gy, 20%);
+  left: var(--gx, 50%);
+  width: 11px;
+  height: 11px;
+  pointer-events: none;
+  opacity: 0;
+  background:
+    linear-gradient(rgb(var(--energy-gold-rgb) / 0.9), rgb(var(--energy-gold-rgb) / 0.9)) 50% 0 / 1.5px 100% no-repeat,
+    linear-gradient(rgb(var(--energy-gold-rgb) / 0.9), rgb(var(--energy-gold-rgb) / 0.9)) 0 50% / 100% 1.5px no-repeat;
+  animation: podium-glint-twinkle 4.8s ease-in-out var(--gdelay, 0s) infinite;
+}
+@keyframes podium-glint-twinkle {
+  0%, 78%, 100% { opacity: 0; transform: scale(0.4) rotate(0deg); }
+  86% { opacity: 0.9; transform: scale(1) rotate(24deg); }
+  94% { opacity: 0; transform: scale(0.5) rotate(45deg); }
+}
+html[data-anim="off"] .podium-glint,
+html[data-perf="low"] .podium-glint { animation: none; opacity: 0; }
+/* The petal drift: flower petals loosed over the whole dais, swaying down
+   like the end of a victory lap. Each petal is one span, tinted per place,
+   phased apart; ambient by design (the ceremony is a state, not an event)
+   and parked entirely under html[data-anim="off"] / data-perf="low". */
+.podium-petal {
+  position: absolute;
+  top: -6%;
+  left: var(--px, 50%);
+  width: 7px;
+  height: 10px;
+  pointer-events: none;
+  border-radius: 60% 40% 55% 45% / 70% 65% 35% 30%;
+  background: rgb(var(--petal-rgb, 255 217 126) / 0.75);
+  box-shadow: inset 0 0 3px rgb(255 255 255 / 0.25);
+  opacity: 0;
+  animation: podium-petal-fall var(--pdur, 9s) linear var(--pdelay, 0s) infinite;
+}
+@keyframes podium-petal-fall {
+  0% { opacity: 0; transform: translate(0, 0) rotate(0deg); }
+  8% { opacity: 0.8; }
+  30% { transform: translate(14px, 30%) rotate(70deg); }
+  55% { transform: translate(-10px, 62%) rotate(150deg); }
+  80% { opacity: 0.6; transform: translate(10px, 88%) rotate(230deg); }
+  100% { opacity: 0; transform: translate(-4px, 108%) rotate(300deg); }
+}
+html[data-anim="off"] .podium-petal,
+html[data-perf="low"] .podium-petal { animation: none; opacity: 0; }
+/* The champion's crown, hovering just above the avatar with the sanctioned
+   ambient bob. Static (no bob) under html[data-anim="off"]. */
+.podium-crown {
+  animation: podium-crown-bob 4.2s ease-in-out infinite;
+}
+@keyframes podium-crown-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+html[data-anim="off"] .podium-crown { animation: none; }
+
 /* Rune badge: the shared chip for statuses and counts. Feed it an energy
    triple via --badge-rgb (defaults to ember). */
 .rune-badge {
@@ -1883,6 +2074,7 @@ html[data-light] .dgn-slab {
 /* Torch sconce ambience: a warm ember pool for section corners on themed
    pages. Position with inline styles; decorative only. */
 .torch-pool {
+  will-change: transform, opacity;
   position: absolute;
   width: 220px;
   height: 220px;
@@ -1890,13 +2082,18 @@ html[data-light] .dgn-slab {
   background: radial-gradient(50% 50% at 50% 50%, rgb(var(--energy-ember-rgb) / 0.1), transparent 70%);
   animation: aura-breathe 11s ease-in-out infinite;
 }
-html[data-anim="off"] .torch-pool { animation: none; }
+html[data-anim="off"] .torch-pool {
+  will-change: transform, opacity; animation: none; }
 
 /* --- Podium celebration ------------------------------------------------------
-   The metal rim worn by the profile's honors shelf (the .energy-edge
-   masked-frame device, tinted by --rim-rgb; gold by default). The old
-   leaderboard treasure-dais that also wore it is retired — playtest feedback
-   read the podium as a tournament ceremony, not a ladder. */
+   Dressing for the leaderboard's ceremony dais (Podium.tsx) and the profile's
+   honors shelf. Each place wears a metal rim (the .energy-edge masked-frame
+   device, tinted by --rim-rgb; gold by default), stands in its own ceremony
+   spotlight (.podium-beam), and the champion adds rising motes, camera-flash
+   glints, a bobbing crown, and a petal drift across the whole dais.
+   Decoration only: transform/opacity, capped node counts at the call site,
+   and every animation parks under html[data-anim="off"] (static lighting
+   stays). Rebuilt grander by owner request after its first retirement. */
 .podium-rim-gold { position: relative; }
 .podium-rim-gold::before {
   content: "";
@@ -2257,13 +2454,18 @@ html[data-theme="nebula"] .mode-def-card {
   height: 1px;
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.14) 18%, rgba(255, 255, 255, 0.14) 82%, transparent);
   /* The floor pulses on the beat, brightest the instant the knight lands
-     (phase-locked to gd-jump: same 3s cycle and -0.66s delay, flash at 67%). */
+     (phase-locked to gd-jump: same 3s cycle and -0.66s delay, flash at 67%).
+     The glow is baked into a static drop-shadow-free gradient and only
+     OPACITY animates: the old keyframe animated box-shadow, a full repaint
+     every frame of an infinite home-page loop. */
+  filter: drop-shadow(0 0 4px rgb(var(--accent-rgb) / 0.35));
   animation: gd-ground-pulse 3s linear -0.66s infinite;
+  will-change: opacity;
 }
 @keyframes gd-ground-pulse {
-  0%, 60% { opacity: 0.55; box-shadow: none; }
-  67% { opacity: 1; box-shadow: 0 0 7px rgb(var(--accent-rgb) / 0.45); }
-  82%, 100% { opacity: 0.55; box-shadow: none; }
+  0%, 60% { opacity: 0.45; }
+  67% { opacity: 1; }
+  82%, 100% { opacity: 0.45; }
 }
 .gd-world {
   position: absolute;
@@ -2417,9 +2619,10 @@ html[data-theme="nebula"] .mode-def-card {
 /* Wide desktop (lg+), lichess-style: the field rolls out LEFTWARD from the
    search icon instead of dropping down. Below lg the drop-under panel above is
    kept even once the inline nav appears (md), because a 17rem leftward rollout
-   at tablet widths lands on top of the "Rules"/"Leaderboard" links. Width is
-   animated (not transform) so the input never looks squashed; clamped so it
-   can't run off small screens. */
+   at tablet widths lands on top of the "Rules"/"Leaderboard" links. The
+   rollout is a clip-path reveal at the final width: the input is never
+   squashed (the old width animation promised that, at the price of running
+   layout every frame) and the reveal composites cleanly. */
 @media (min-width: 1024px) {
   .header-search-panel {
     width: min(17rem, calc(100vw - 8.5rem));
@@ -2427,8 +2630,8 @@ html[data-theme="nebula"] .mode-def-card {
   }
 }
 @keyframes search-grow {
-  from { width: 2.5rem; opacity: 0; }
-  to { width: min(17rem, calc(100vw - 8.5rem)); opacity: 1; }
+  from { clip-path: inset(0 0 0 calc(100% - 2.5rem)); opacity: 0; }
+  to { clip-path: inset(0 0 0 0); opacity: 1; }
 }
 
 /* --- Top-nav micro-interactions -------------------------------------------
@@ -3020,16 +3223,30 @@ html[data-anim="off"] .piece-treat {
    when the lock lands, then a calm persistent pall. Runs once on mount. */
 @keyframes locked-in {
   0% { opacity: 0; }
-  40% { opacity: 1; box-shadow: inset 0 0 22px 3px rgba(30, 41, 59, 0.7); }
-  100% { opacity: 1; box-shadow: inset 0 0 8px 0 rgba(30, 41, 59, 0.25); }
+  40% { opacity: 1; }
+  100% { opacity: 1; }
+}
+@keyframes locked-in-flash {
+  0% { opacity: 0; }
+  40% { opacity: 1; }
+  100% { opacity: 0; }
 }
 .sq-locked {
-  /* `both`, like every comparable rule (.sq-shield-in, .walnut-root, the fx-*
-     set in effects.css). Without a fill mode the 100% keyframe's inset shadow
-     was dropped the moment the 550ms run ended, so the "calm persistent pall"
-     the comment above promises evaporated and only a flat grey wash remained
-     for the rest of the lockdown. */
+  /* The calm persistent pall is a STATIC inset shadow; the landing clamp is a
+     one-shot flash on a pseudo layer animating opacity only. The old keyframe
+     animated box-shadow itself, and Shackled can stamp ~16 squares at once.
+     No position here: the square overlay is already absolutely positioned by
+     its utility class, which also makes it the containing block for ::after. */
+  box-shadow: inset 0 0 8px 0 rgba(30, 41, 59, 0.25);
   animation: locked-in 0.55s ease-out both;
+}
+.sq-locked::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 22px 3px rgba(30, 41, 59, 0.7);
+  animation: locked-in-flash 0.55s ease-out both;
 }
 @keyframes locked-chain-in {
   0% { opacity: 0; transform: scale(1.8) rotate(12deg); }
@@ -3721,19 +3938,31 @@ html[data-anim="off"] .rail-header-sheen::before {
    fading ellipsis — all compositor-cheap and all dropped when animations are
    off in Settings so the notice stays legible without motion. */
 .waiting-banner {
+  /* The breath used to animate box-shadow directly (a full repaint every
+     frame, for minutes at a time). The dim state now sits statically on the
+     element and the bright state on a pseudo layer whose OPACITY breathes:
+     same read, compositor-only cost. */
+  position: relative;
+  box-shadow:
+    0 0 0 1px rgb(var(--accent-rgb) / 0.30),
+    0 0 18px -6px rgb(var(--accent-rgb) / 0.35);
+}
+.waiting-banner::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow:
+    0 0 0 1px rgb(var(--accent-rgb) / 0.55),
+    0 0 26px -4px rgb(var(--accent-rgb) / 0.60);
+  opacity: 0;
   animation: waiting-breathe 2.8s ease-in-out infinite;
+  will-change: opacity;
 }
 @keyframes waiting-breathe {
-  0%, 100% {
-    box-shadow:
-      0 0 0 1px rgb(var(--accent-rgb) / 0.30),
-      0 0 18px -6px rgb(var(--accent-rgb) / 0.35);
-  }
-  50% {
-    box-shadow:
-      0 0 0 1px rgb(var(--accent-rgb) / 0.55),
-      0 0 26px -4px rgb(var(--accent-rgb) / 0.60);
-  }
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
 }
 .waiting-ping {
   animation: waiting-ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
@@ -3750,6 +3979,7 @@ html[data-anim="off"] .rail-header-sheen::before {
   0%, 100% { opacity: 0.35; }
   50% { opacity: 1; }
 }
+html[data-anim="off"] .waiting-banner::after,
 html[data-anim="off"] .waiting-banner,
 html[data-anim="off"] .waiting-ping,
 html[data-anim="off"] .waiting-ellipsis::after {
@@ -3784,6 +4014,7 @@ html[data-anim="off"] .waiting-ellipsis::after { opacity: 1; }
    element is oversized top-left by one tile so the drift never exposes a gap.
    Custom-property keyframes let all three layers share one animation. */
 .star-layer {
+  will-change: transform;
   --tile: 360px;
   position: absolute;
   top: calc(-1 * var(--tile));
@@ -3836,6 +4067,7 @@ html[data-anim="off"] .waiting-ellipsis::after { opacity: 1; }
 /* 4-point glint stars: a soft candle core clipped to a star, pulsing scale and
    opacity on individually offset beats so the field never reads mechanical. */
 .star-glint {
+  will-change: transform, opacity;
   position: absolute;
   background: radial-gradient(circle, rgb(255 240 190 / 0.95) 0%, rgb(var(--accent-rgb) / 0.8) 34%, rgb(var(--accent-rgb) / 0) 72%);
   clip-path: polygon(50% 0%, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0% 50%, 40% 40%);
@@ -3849,6 +4081,7 @@ html[data-anim="off"] .waiting-ellipsis::after { opacity: 1; }
    leading, tail trailing), alive for ~1.3s of a 28s cycle. Two in the DOM on
    staggered delays = one pass roughly every 14 seconds. */
 .star-shoot {
+  will-change: transform, opacity;
   position: absolute;
   width: 120px;
   height: 2px;
@@ -3959,6 +4192,7 @@ html[data-light] .hall-row {
    stars, motes), keep every static paint. */
 html[data-anim="off"] .star-layer,
 html[data-anim="off"] .star-glint {
+  will-change: transform, opacity;
   animation: none !important;
 }
 html[data-anim="off"] .star-shoot,
@@ -3967,6 +4201,7 @@ html[data-anim="off"] .hall-mote {
   opacity: 0 !important;
 }
 html[data-anim="off"] .star-glint {
+  will-change: transform, opacity;
   opacity: 0.5;
   transform: scale(0.8);
 }

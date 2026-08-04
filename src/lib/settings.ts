@@ -21,11 +21,12 @@ export type BoardTheme =
   | "auroraIce";
 
 /** What the SETTING stores, which is a superset of what a board can BE.
- *  "auto" is deliberately not a member of BoardTheme: keeping the two types
- *  distinct is what makes the compiler point at every place that indexes
+ *  "auto" and "custom" are deliberately not members of BoardTheme: keeping the
+ *  types distinct is what makes the compiler point at every place that indexes
  *  BOARD_THEMES directly, instead of silently falling through to the ?? wood
- *  fallback and exporting a clip with the wrong board. */
-export type BoardThemePref = BoardTheme | "auto";
+ *  fallback and exporting a clip with the wrong board. "custom" draws the
+ *  player's own two hexes (customBoardLight/customBoardDark). */
+export type BoardThemePref = BoardTheme | "auto" | "custom";
 
 export type PieceTheme =
   | "classic"
@@ -46,8 +47,9 @@ export type PieceTheme =
   | "lichessPirouetti"
   | "lichessStaunty";
 
-/** As BoardThemePref, for the piece set. */
-export type PieceThemePref = PieceTheme | "auto";
+/** As BoardThemePref, for the piece set: "custom" draws the inline pieces with
+ *  the player's own four hexes (customPieceWFill and friends). */
+export type PieceThemePref = PieceTheme | "auto" | "custom";
 
 export type AccentColor = "auto" | "blue" | "green" | "amber" | "rose";
 export type AnimationSpeed = "off" | "fast" | "normal";
@@ -62,6 +64,14 @@ export type SiteTheme =
   | "crimson"
   | "moss"
   | "nebula"
+  | "sakura"
+  | "honey"
+  | "pine"
+  | "wine"
+  | "storm"
+  // Light tints: paper palettes, same deal as the dark tints above.
+  | "sepia"
+  | "frost"
   // Flagships: full identities rather than tints (see FLAGSHIP_THEMES).
   | "obsidian"
   | "porcelain"
@@ -70,14 +80,19 @@ export type SiteTheme =
   | "aurora";
 export type SoundTheme = "lichess" | "classic";
 
+// How a piece travels between squares. The Board reads this straight off
+// html.dataset.pieceMotion (absent = glide), so "glide" clears the attribute.
+export type PieceMotion = "glide" | "hop" | "warp" | "stomp";
+
 // Full site themes. "dark" and "light" are the two originals; the rest are
 // dark variants expressed purely as CSS-variable override blocks in
 // globals.css keyed on html[data-theme="<id>"] (they inherit every dark-theme
 // style, so only the palette shifts — no per-component work). `swatch` feeds
 // the settings picker preview; `scheme` is the value for CSS color-scheme.
 // Each theme also names its own ACCENT (the color of primary buttons, links,
-// and "act here" chrome). It applies while the accent setting sits on "auto";
-// picking an explicit accent color (the default is "rose") overrides every theme.
+// and "act here" chrome). It applies while the accent setting sits on "auto",
+// which is the default, so every theme shows its own accent out of the box;
+// picking an explicit accent color overrides every theme.
 export interface AccentDef {
   accent: string;
   accentHi: string;
@@ -198,6 +213,13 @@ export const SITE_THEMES: Record<
   crimson:  { label: "Crimson",  hint: "Deep blood red",                  scheme: "dark",  swatch: { bg: "#150a0c", panel: "#291015", glow: "#d4a017" }, accent: GOLD_ACCENT },
   moss:     { label: "Moss",     hint: "Deep forest green",               scheme: "dark",  swatch: { bg: "#0f140e", panel: "#1a2318", glow: "#d4a017" }, accent: GOLD_ACCENT },
   nebula:   { label: "Nebula",   hint: "Violet dusk",                     scheme: "dark",  swatch: { bg: "#131019", panel: "#1f1929", glow: "#d4a017" }, accent: GOLD_ACCENT },
+  sakura:   { label: "Sakura",   hint: "Dusk pink over dark wood",        scheme: "dark",  swatch: { bg: "#171013", panel: "#251821", glow: "#d4a017" }, accent: GOLD_ACCENT },
+  honey:    { label: "Honey",    hint: "Warm amber-brown",                scheme: "dark",  swatch: { bg: "#171208", panel: "#262012", glow: "#d4a017" }, accent: GOLD_ACCENT },
+  pine:     { label: "Pine",     hint: "Blue-green conifer dusk",         scheme: "dark",  swatch: { bg: "#0d1412", panel: "#16221e", glow: "#d4a017" }, accent: GOLD_ACCENT },
+  wine:     { label: "Wine",     hint: "Deep plum cellar",                scheme: "dark",  swatch: { bg: "#140d14", panel: "#221626", glow: "#d4a017" }, accent: GOLD_ACCENT },
+  storm:    { label: "Storm",    hint: "Cold slate grey",                 scheme: "dark",  swatch: { bg: "#101214", panel: "#1a1e22", glow: "#d4a017" }, accent: GOLD_ACCENT },
+  sepia:    { label: "Sepia",    hint: "Aged paper, warm cream",          scheme: "light", swatch: { bg: "#ece4d2", panel: "#f6f0e2", glow: "#806310" }, accent: LIGHT_GOLD_ACCENT },
+  frost:    { label: "Frost",    hint: "Cool paper, blue-white",          scheme: "light", swatch: { bg: "#e3e8ee", panel: "#f1f4f8", glow: "#806310" }, accent: LIGHT_GOLD_ACCENT },
 
   // --- Flagships: own accent, own material, own motion. ---
   obsidian:  { label: "Obsidian",  hint: "Volcanic glass, molten ember",   scheme: "dark",  swatch: { bg: "#0b0a0c", panel: "#16131a", glow: "#ff7a2f" }, accent: EMBER_ACCENT, board: "obsidianBasalt", piece: "steel" },
@@ -210,6 +232,16 @@ export const SITE_THEMES: Record<
 export interface Settings {
   boardTheme: BoardThemePref;
   pieceTheme: PieceThemePref;
+  // The two square hexes drawn when boardTheme is "custom". Kept even while a
+  // named board is active so switching back to Custom restores the mix.
+  customBoardLight: string;
+  customBoardDark: string;
+  // The four inline-piece hexes drawn when pieceTheme is "custom".
+  customPieceWFill: string;
+  customPieceWStroke: string;
+  customPieceBFill: string;
+  customPieceBStroke: string;
+  pieceMotion: PieceMotion; // how pieces travel between squares
   volume: number; // 0..1
   moveRiskWarnings: boolean; // yellow/red move-dot warnings for self-loss / check
   autoQueen: boolean; // skip the promotion picker and always promote to queen
@@ -268,6 +300,13 @@ const STORAGE_KEY = "dc:settings-v1";
 export const DEFAULT_SETTINGS: Settings = {
   boardTheme: "auto",
   pieceTheme: "auto",
+  customBoardLight: "#ecd9ae",
+  customBoardDark: "#8a5a38",
+  customPieceWFill: "#f2ead8",
+  customPieceWStroke: "#3b332a",
+  customPieceBFill: "#2b2b31",
+  customPieceBStroke: "#d8c9a8",
+  pieceMotion: "glide",
   volume: 0.8,
   moveRiskWarnings: true,
   autoQueen: false,
@@ -294,7 +333,7 @@ export const DEFAULT_SETTINGS: Settings = {
   siteTheme: "dark",
   compactMode: false,
   uiScale: 1,
-  accentColor: "rose",
+  accentColor: "auto",
   animationSpeed: "normal",
   uiSounds: true,
   highContrast: false,
@@ -344,7 +383,7 @@ export const BOARD_THEMES: Record<BoardTheme, { light: string; dark: string; lab
   porcelainGlaze:  { light: "#f7f5f0", dark: "#a8b0c4", label: "Glaze" },
   neonGrid:        { light: "#b9a6d8", dark: "#42256b", label: "Grid" },
   jadeLacquer:     { light: "#dfe4c8", dark: "#2f5f4c", label: "Lacquer" },
-  auroraIce:       { light: "#dbe6f5", dark: "#495a80", label: "Ice" },
+  auroraIce:       { light: "#dbe6f5", dark: "#495a80", label: "Polar" },
 };
 
 export const PIECE_THEMES: Record<
@@ -375,6 +414,15 @@ export const PIECE_THEMES: Record<
 
 function bool(v: unknown, fallback: boolean): boolean {
   return typeof v === "boolean" ? v : fallback;
+}
+
+/** Validate a user-supplied color for the custom board/piece fields: a plain
+ *  six-digit hex (what <input type="color"> emits), nothing else, so the value
+ *  can be dropped into an inline CSS custom property without escaping. */
+export function sanitizeHexColor(v: unknown, fallback: string): string {
+  if (typeof v !== "string") return fallback;
+  const hex = v.trim().toLowerCase();
+  return /^#[0-9a-f]{6}$/.test(hex) ? hex : fallback;
 }
 
 export const CUSTOM_BG_URL_MAX = 400;
@@ -416,16 +464,34 @@ export function loadSettings(): Settings {
     const parsed = JSON.parse(raw) as Partial<Settings>;
     return {
       boardTheme:
-        // "auto" has to pass this guard explicitly: it is a legal stored value
-        // but not a key of BOARD_THEMES, so without it every auto user would be
-        // reset to the default on the next settings pull from the server.
-        parsed.boardTheme === "auto" || (parsed.boardTheme && parsed.boardTheme in BOARD_THEMES)
+        // "auto" and "custom" have to pass this guard explicitly: they are
+        // legal stored values but not keys of BOARD_THEMES, so without them
+        // every such user would be reset to the default on the next settings
+        // pull from the server.
+        parsed.boardTheme === "auto" ||
+        parsed.boardTheme === "custom" ||
+        (parsed.boardTheme && parsed.boardTheme in BOARD_THEMES)
           ? (parsed.boardTheme as BoardThemePref)
           : DEFAULT.boardTheme,
       pieceTheme:
-        parsed.pieceTheme === "auto" || (parsed.pieceTheme && parsed.pieceTheme in PIECE_THEMES)
+        parsed.pieceTheme === "auto" ||
+        parsed.pieceTheme === "custom" ||
+        (parsed.pieceTheme && parsed.pieceTheme in PIECE_THEMES)
           ? (parsed.pieceTheme as PieceThemePref)
           : DEFAULT.pieceTheme,
+      customBoardLight: sanitizeHexColor(parsed.customBoardLight, DEFAULT.customBoardLight),
+      customBoardDark: sanitizeHexColor(parsed.customBoardDark, DEFAULT.customBoardDark),
+      customPieceWFill: sanitizeHexColor(parsed.customPieceWFill, DEFAULT.customPieceWFill),
+      customPieceWStroke: sanitizeHexColor(parsed.customPieceWStroke, DEFAULT.customPieceWStroke),
+      customPieceBFill: sanitizeHexColor(parsed.customPieceBFill, DEFAULT.customPieceBFill),
+      customPieceBStroke: sanitizeHexColor(parsed.customPieceBStroke, DEFAULT.customPieceBStroke),
+      pieceMotion:
+        parsed.pieceMotion === "glide" ||
+        parsed.pieceMotion === "hop" ||
+        parsed.pieceMotion === "warp" ||
+        parsed.pieceMotion === "stomp"
+          ? parsed.pieceMotion
+          : DEFAULT.pieceMotion,
       volume: typeof parsed.volume === "number" ? Math.max(0, Math.min(1, parsed.volume)) : DEFAULT.volume,
       moveRiskWarnings: bool(parsed.moveRiskWarnings, DEFAULT.moveRiskWarnings),
       autoQueen: bool(parsed.autoQueen, DEFAULT.autoQueen),
@@ -501,8 +567,8 @@ function writeLocalSettings(s: Settings, updatedAt: number) {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
     window.localStorage.setItem(UPDATED_AT_KEY, String(updatedAt));
   } catch {}
-  applyBoardTheme(resolveBoardTheme(s));
-  applyPieceTheme(resolvePieceTheme(s));
+  applyBoardColors(s);
+  applyPieceColors(s);
   applyUiPrefs(s);
   window.dispatchEvent(new Event(SETTINGS_CHANGED_EVENT));
 }
@@ -616,6 +682,10 @@ export function applyUiPrefs(s: Settings) {
     s.followSystemMotion && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
   html.dataset.anim = s.reducedMotion || osReducedMotion ? "off" : s.animationSpeed;
   html.dataset.contrast = s.highContrast ? "high" : "normal";
+  // Piece travel style: the Board reads this attribute directly, and absent
+  // means glide, so the default keeps the DOM quiet.
+  if (s.pieceMotion !== "glide") html.dataset.pieceMotion = s.pieceMotion;
+  else delete html.dataset.pieceMotion;
   // Performance mode: gates the heaviest decorative paint in globals.css.
   if (s.perfMode) html.dataset.perf = "low";
   else delete html.dataset.perf;
@@ -667,17 +737,65 @@ export function effectiveSiteTheme(s: Settings): SiteTheme {
 
 /** The board to actually draw. On "auto" a flagship supplies its own; a tint
  *  supplies none and falls back to wood, which is what "auto" meant before any
- *  theme had an opinion. An explicit pick always wins — a player who chose
- *  Green gets Green in every theme. */
+ *  theme had an opinion. An explicit pick always wins: a player who chose
+ *  Green gets Green in every theme. "custom" has no named board, so callers
+ *  that need one (the clip exporter) get the wood fallback; the live board
+ *  colors come from boardColors(), which honors the custom hexes. */
 export function resolveBoardTheme(s: Settings): BoardTheme {
-  if (s.boardTheme !== "auto") return s.boardTheme;
-  return SITE_THEMES[effectiveSiteTheme(s)]?.board ?? "wood";
+  if (s.boardTheme === "auto") return SITE_THEMES[effectiveSiteTheme(s)]?.board ?? "wood";
+  if (s.boardTheme === "custom") return "wood";
+  return s.boardTheme;
 }
 
-/** As resolveBoardTheme, for the piece set. */
+/** As resolveBoardTheme, for the piece set ("custom" falls back to classic
+ *  for callers that need a named set; applyPieceColors honors the hexes). */
 export function resolvePieceTheme(s: Settings): PieceTheme {
-  if (s.pieceTheme !== "auto") return s.pieceTheme;
-  return SITE_THEMES[effectiveSiteTheme(s)]?.piece ?? "classic";
+  if (s.pieceTheme === "auto") return SITE_THEMES[effectiveSiteTheme(s)]?.piece ?? "classic";
+  if (s.pieceTheme === "custom") return "classic";
+  return s.pieceTheme;
+}
+
+/** The two square colors the board should actually paint, with the "custom"
+ *  pref resolved to the player's own hexes and everything else to its named
+ *  BOARD_THEMES entry. */
+export function boardColors(s: Settings): { light: string; dark: string } {
+  if (s.boardTheme === "custom") {
+    return {
+      light: sanitizeHexColor(s.customBoardLight, DEFAULT.customBoardLight),
+      dark: sanitizeHexColor(s.customBoardDark, DEFAULT.customBoardDark),
+    };
+  }
+  const t = BOARD_THEMES[resolveBoardTheme(s)] ?? BOARD_THEMES.wood;
+  return { light: t.light, dark: t.dark };
+}
+
+/** Push the board square colors for these settings into the document,
+ *  honoring the "custom" pref. The settings-aware wrapper every caller should
+ *  use; applyBoardTheme below stays for painting a specific named board. */
+export function applyBoardColors(s: Settings) {
+  if (typeof document === "undefined") return;
+  const c = boardColors(s);
+  const root = document.documentElement.style;
+  root.setProperty("--sq-light", c.light);
+  root.setProperty("--sq-dark", c.dark);
+}
+
+/** As applyBoardColors, for the piece set: "custom" means the inline-drawn
+ *  pieces with the player's own four hexes; anything else defers to
+ *  applyPieceTheme with the resolved named set. */
+export function applyPieceColors(s: Settings) {
+  if (typeof document === "undefined") return;
+  if (s.pieceTheme !== "custom") {
+    applyPieceTheme(resolvePieceTheme(s));
+    return;
+  }
+  const html = document.documentElement;
+  const root = html.style;
+  root.setProperty("--piece-w-fill", sanitizeHexColor(s.customPieceWFill, DEFAULT.customPieceWFill));
+  root.setProperty("--piece-w-stroke", sanitizeHexColor(s.customPieceWStroke, DEFAULT.customPieceWStroke));
+  root.setProperty("--piece-b-fill", sanitizeHexColor(s.customPieceBFill, DEFAULT.customPieceBFill));
+  root.setProperty("--piece-b-stroke", sanitizeHexColor(s.customPieceBStroke, DEFAULT.customPieceBStroke));
+  html.dataset.pieceSource = "inline";
 }
 
 export function applyBoardTheme(theme: BoardTheme) {

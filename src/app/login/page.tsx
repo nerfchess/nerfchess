@@ -190,7 +190,7 @@ function LoginPage() {
                 placeholder="you@example.com"
               />
               <p className="mt-1 text-[12px] text-parchment-400">
-                Lets you sign in with your email instead of your username.
+                Sign in with your email.
               </p>
             </div>
           )}

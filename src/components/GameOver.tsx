@@ -18,6 +18,7 @@ import { haptic } from "@/lib/haptics";
 import { ThumbsDown, ThumbsUp } from "lucide-react";
 
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
+import { GlossaryText } from "@/components/GlossaryText";
 import { Button } from "@/components/ui/Button";
 import { LinkButton } from "@/components/ui/Button";
 
@@ -83,8 +84,10 @@ interface Props {
   moves?: Move[];
   // Card-use markers for the match timeline, one per played card (see above).
   cardEvents?: TimelineCardEvent[];
-  // Accepted for caller compatibility; the clip entry point lives in the game
-  // view's actions ("Clip last moves"), not on the result screen.
+  // Opens the clip modal (auto reel mode). Rendered as a prominent "Share
+  // reel" action on the result screen: the reveal is the emotional peak, so
+  // that is where the reel entry belongs. Omit it (e.g. when the last plies
+  // can't be reconstructed) and the button simply doesn't render.
   onClip?: () => void;
   playerNames?: Record<Color, string>;
   startedAt?: number;
@@ -228,10 +231,14 @@ function DraftedCardRow({
       <div className="flex items-center gap-2">
         <span
           className={`shrink-0 border px-1 font-display text-[11px] font-bold leading-none tier-bg-${buff.tier} tier-${buff.tier}`}
+          // title stays as the desktop hover gloss; the aria-label carries the
+          // same meaning for screen readers (title alone is unreliable there,
+          // and never appears on touch — where the roman numeral plus the full
+          // rule text below already tell the story).
           title={`Tier ${buff.tier}: ${TIER_LABEL[buff.tier]}`}
-          aria-hidden
+          aria-label={`Tier ${buff.tier}: ${TIER_LABEL[buff.tier]}`}
         >
-          {TIER_ROMAN[buff.tier]}
+          <span aria-hidden>{TIER_ROMAN[buff.tier]}</span>
         </span>
         <span
           className={
@@ -254,7 +261,9 @@ function DraftedCardRow({
           row so the name line above keeps its full width in narrow columns. */}
       <div className="mt-0.5 flex items-start gap-2">
         <p className="min-w-0 flex-1 text-left text-xs leading-snug text-parchment-300">
-          {def.description}
+          {/* Glossary terms in the rule text get the tap/hover definition
+              popover: this end screen is where new players most need them. */}
+          <GlossaryText text={def.description} />
         </p>
         {votable && (
           <span className="shrink-0">
@@ -330,7 +339,11 @@ function RuleReveal({ label, nerf, children }: { label: string; nerf: Nerf; chil
       <div className={`mt-1 font-display text-base font-semibold leading-tight tier-${nerf.tier}`}>
         {nerf.name}
       </div>
-      <p className="mt-1 text-xs leading-snug text-parchment-200">{nerf.description}</p>
+      <p className="mt-1 text-xs leading-snug text-parchment-200">
+        {/* Glossary terms in the revealed rule get the tap/hover definition
+            popover, so the reveal explains itself to new players. */}
+        <GlossaryText text={nerf.description} />
+      </p>
       {children}
     </div>
   );
@@ -458,7 +471,7 @@ function MatchTimeline({
         {activeEvent
           ? `${activeEvent.def?.name ?? "Card"} · ply ${activeEvent.ply}`
           : events.length > 0
-          ? "Hover a marker to see the card played there."
+          ? "Hover or tap a marker to see the card played there."
           : cardEvents
           ? "No cards landed on the board in this game."
           : "Moves only: this game has no card record."}
@@ -522,6 +535,12 @@ const pgnIcon = (
     <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
   </svg>
 );
+const reelIcon = (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <polygon points="23 7 16 12 23 17 23 7" />
+    <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+  </svg>
+);
 
 export function GameOver({
   result,
@@ -539,6 +558,7 @@ export function GameOver({
   onCancelRematch,
   opponentHidden = false,
   moves,
+  onClip,
   cardEvents,
   playerNames,
   startedAt,
@@ -1038,7 +1058,23 @@ export function GameOver({
           </div>
         ) : (
           <>
-            <div className="mt-6 grid grid-cols-2 gap-2">
+            {/* The reel entry rides the emotional peak: right under the
+                verdict, before the routine actions (marketing plan Phase 0).
+                Gold, because a ready-to-post highlight of the game you just
+                lived through is a reward, not a routine action. */}
+            {onClip && (
+              <Button
+                tone="gold"
+                onClick={onClip}
+                data-share-reel
+                block
+                className="mt-6 px-5 py-2.5 font-semibold"
+              >
+                {reelIcon}
+                Share reel
+              </Button>
+            )}
+            <div className={`${onClip ? "mt-2" : "mt-6"} grid grid-cols-2 gap-2`}>
               {rematchStatus === "offered" && opponentLeft && onCancelRematch ? (
                 // The opponent is gone, so "waiting" is a dead end: offer the way
                 // out instead.
@@ -1080,7 +1116,8 @@ export function GameOver({
 
             {/* Secondary actions: Share, Analyze, the archived replay, PGN,
                 and both players' profiles (real usernames). One entry each;
-                the clip and move-review entry points live in the game view. */}
+                the move-review entry point lives in the game view, and the
+                reel entry is the gold action above. */}
             <div className="mt-2 grid grid-cols-2 gap-2">
               <Button tone="ghost"
                

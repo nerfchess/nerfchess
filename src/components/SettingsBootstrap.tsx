@@ -2,10 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
-  applyBoardTheme,
-  applyPieceTheme,
-  resolveBoardTheme,
-  resolvePieceTheme,
+  applyBoardColors,
+  applyPieceColors,
   applyUiPrefs,
   loadSettings,
   pullSettingsFromServer,
@@ -22,8 +20,8 @@ export function SettingsBootstrap() {
   useEffect(() => {
     const apply = () => {
       const s = loadSettings();
-      applyBoardTheme(resolveBoardTheme(s));
-      applyPieceTheme(resolvePieceTheme(s));
+      applyBoardColors(s);
+      applyPieceColors(s);
       applyUiPrefs(s);
       setVolume(s.volume);
       setUiSounds(s.uiSounds);

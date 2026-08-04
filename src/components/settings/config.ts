@@ -101,14 +101,12 @@ export const SECTIONS: SectionConfig[] = [
       {
         id: "confirmResign",
         label: "Confirm resign",
-        hint: "Ask before resigning a game",
         group: "Confirmations",
         control: { kind: "toggle", setting: "confirmResign" },
       },
       {
         id: "confirmDrawOffer",
         label: "Confirm draw offers",
-        hint: "Ask before sending a draw offer",
         group: "Confirmations",
         control: { kind: "toggle", setting: "confirmDrawOffer" },
       },
@@ -122,7 +120,6 @@ export const SECTIONS: SectionConfig[] = [
       {
         id: "muteChat",
         label: "Mute chat",
-        hint: "Hide in-game chat messages from opponents",
         group: "Opponent",
         control: { kind: "toggle", setting: "muteChat" },
       },
@@ -155,14 +152,12 @@ export const SECTIONS: SectionConfig[] = [
       {
         id: "largerPieces",
         label: "Larger pieces",
-        hint: "Draw pieces bigger inside their squares",
         group: "Layout",
         control: { kind: "toggle", setting: "largerPieces" },
       },
       {
         id: "flipBoard",
         label: "Flip board",
-        hint: "View the board from the opponent's side",
         group: "Layout",
         control: { kind: "toggle", setting: "flipBoard" },
       },
@@ -216,7 +211,6 @@ export const SECTIONS: SectionConfig[] = [
       {
         id: "soundEnabled",
         label: "All sounds",
-        hint: "Master switch for every game sound",
         group: "Master",
         control: { kind: "toggle", setting: "soundEnabled" },
       },
@@ -266,14 +260,14 @@ export const SECTIONS: SectionConfig[] = [
       {
         id: "uiSounds",
         label: "UI sounds",
-        hint: "Interface blips like piece selection",
+        hint: "Piece-select blips",
         group: "Interface",
         control: { kind: "toggle", setting: "uiSounds" },
       },
       {
         id: "lowTimeWarning",
         label: "Low-time warning",
-        hint: "Ticking alert when your clock runs low",
+        hint: "Ticks when your clock runs low",
         group: "Interface",
         control: { kind: "toggle", setting: "lowTimeWarning" },
       },
@@ -288,7 +282,6 @@ export const SECTIONS: SectionConfig[] = [
       {
         id: "siteTheme",
         label: "Theme",
-        hint: "Full site palettes: pick a mood",
         group: "Theme",
         control: { kind: "siteTheme" },
       },
@@ -314,7 +307,6 @@ export const SECTIONS: SectionConfig[] = [
       {
         id: "compactMode",
         label: "Compact mode",
-        hint: "Tighter interface density",
         group: "Interface",
         control: { kind: "toggle", setting: "compactMode" },
       },
@@ -328,14 +320,13 @@ export const SECTIONS: SectionConfig[] = [
       {
         id: "reducedMotion",
         label: "Reduced motion",
-        hint: "Minimize animations and transitions",
         group: "Motion",
         control: { kind: "toggle", setting: "reducedMotion" },
       },
       {
         id: "followSystemMotion",
         label: "Follow system motion",
-        hint: "Stand card effects down when your device asks apps to reduce motion. Turn this off to keep the effects regardless.",
+        hint: "Follow your device's reduce-motion setting.",
         group: "Motion",
         control: { kind: "toggle", setting: "followSystemMotion" },
       },
@@ -357,7 +348,7 @@ export const SECTIONS: SectionConfig[] = [
   {
     id: "accessibility",
     title: "Accessibility",
-    blurb: "Contrast, motion, readability",
+    blurb: "Contrast and motion",
     icon: Accessibility,
     rows: [
       {
@@ -367,18 +358,6 @@ export const SECTIONS: SectionConfig[] = [
         control: { kind: "toggle", setting: "highContrast" },
       },
       {
-        id: "largerPiecesA11y",
-        label: "Larger pieces",
-        hint: "Also available under Board & Pieces",
-        control: { kind: "toggle", setting: "largerPieces" },
-      },
-      {
-        id: "largerText",
-        label: "Larger text",
-        hint: "Scales the whole interface (same as UI scale)",
-        control: { kind: "slider", setting: "uiScale", min: 0.85, max: 1.15, step: 0.05, format: pct },
-      },
-      {
         id: "reducedMotionA11y",
         label: "Reduced motion",
         control: { kind: "toggle", setting: "reducedMotion" },
@@ -386,7 +365,7 @@ export const SECTIONS: SectionConfig[] = [
       {
         id: "followSystemMotionA11y",
         label: "Follow system motion",
-        hint: "Stand card effects down when your device asks apps to reduce motion. Turn this off to keep the effects regardless.",
+        hint: "Follow your device's reduce-motion setting.",
         control: { kind: "toggle", setting: "followSystemMotion" },
       },
     ],

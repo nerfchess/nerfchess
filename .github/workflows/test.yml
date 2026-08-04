@@ -99,6 +99,11 @@ jobs:
       - name: Glicko tests
         run: npm run test:glicko
 
+      # Swiss pairing: score groups, no-rematch preference, bye rotation,
+      # determinism under input shuffling.
+      - name: Tournament pairing tests
+        run: npm run test:tournament-pairing
+
       # The board-fx scope contract: a card's marks match its mechanic's reach
       # (plural bound squares, king exclusion, self-retire), swept across every
       # fx card in the library. Born from the "whole army looks empowered" bug.
@@ -163,6 +168,11 @@ jobs:
       # (scripts/treatment-variant-baseline.json).
       - name: Piece-treatment coverage
         run: npm run test:treatments
+
+      # Keyframes stay on compositor-friendly properties (transform/opacity);
+      # the five grandfathered box-shadow pulses may only shrink.
+      - name: Animation property discipline
+        run: npm run test:anim-props
 
       # Derived registries must match the engine tables they are generated from.
       - name: Card registry
