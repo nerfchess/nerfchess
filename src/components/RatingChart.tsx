@@ -55,30 +55,56 @@ function axisDate(t: number, spanMs: number): string {
   return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
-/** Smooth open path through the points (Catmull-Rom rendered as cubic
- * beziers, the classic dependency-free "lichess-smooth" line). Falls back to
- * a straight segment for 2 points. */
-function smoothPath(xs: number[], ys: number[]): string {
+/** Smooth open path through the points, as cubic beziers with Fritsch-Carlson
+ * monotone tangents. Unlike the Catmull-Rom line this replaced, the control
+ * points of segment i always stay inside [x(i), x(i+1)] — a burst of games
+ * followed by a long quiet gap can never fling a control point backwards and
+ * curl the line into a loop ("the rating graph is doing circles"), and the
+ * curve never overshoots a local rating peak. Falls back to a straight
+ * segment for 2 points and for zero-width (duplicate-time) gaps. */
+export function smoothPath(xs: number[], ys: number[]): string {
   const n = xs.length;
   if (n === 0) return "";
   if (n === 1) return `M${xs[0].toFixed(1)},${ys[0].toFixed(1)}`;
-  let d = `M${xs[0].toFixed(1)},${ys[0].toFixed(1)}`;
+
+  // Secants per gap, then Fritsch-Carlson tangents per point: endpoint slopes
+  // copy their secant; an interior point between opposing or flat secants gets
+  // slope 0 (a genuine local extremum stays an extremum); otherwise the
+  // weighted harmonic mean keeps the segment monotone.
+  const h: number[] = new Array(n - 1);
+  const d: number[] = new Array(n - 1);
   for (let i = 0; i < n - 1; i++) {
-    const x0 = xs[Math.max(0, i - 1)];
-    const y0 = ys[Math.max(0, i - 1)];
-    const x1 = xs[i];
-    const y1 = ys[i];
-    const x2 = xs[i + 1];
-    const y2 = ys[i + 1];
-    const x3 = xs[Math.min(n - 1, i + 2)];
-    const y3 = ys[Math.min(n - 1, i + 2)];
-    const c1x = x1 + (x2 - x0) / 6;
-    const c1y = y1 + (y2 - y0) / 6;
-    const c2x = x2 - (x3 - x1) / 6;
-    const c2y = y2 - (y3 - y1) / 6;
-    d += ` C${c1x.toFixed(1)},${c1y.toFixed(1)} ${c2x.toFixed(1)},${c2y.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}`;
+    h[i] = xs[i + 1] - xs[i];
+    d[i] = h[i] > 0 ? (ys[i + 1] - ys[i]) / h[i] : 0;
   }
-  return d;
+  const m: number[] = new Array(n);
+  m[0] = d[0];
+  m[n - 1] = d[n - 2];
+  for (let i = 1; i < n - 1; i++) {
+    if (d[i - 1] === 0 || d[i] === 0 || d[i - 1] * d[i] < 0) {
+      m[i] = 0;
+    } else {
+      const wLeft = 2 * h[i] + h[i - 1];
+      const wRight = h[i] + 2 * h[i - 1];
+      m[i] = (wLeft + wRight) / (wLeft / d[i - 1] + wRight / d[i]);
+    }
+  }
+
+  let path = `M${xs[0].toFixed(1)},${ys[0].toFixed(1)}`;
+  for (let i = 0; i < n - 1; i++) {
+    if (h[i] <= 0) {
+      // Same-instant points (batch imports, same-millisecond finishes): a
+      // vertical step, drawn straight so the curve cannot double back.
+      path += ` L${xs[i + 1].toFixed(1)},${ys[i + 1].toFixed(1)}`;
+      continue;
+    }
+    const c1x = xs[i] + h[i] / 3;
+    const c1y = ys[i] + (m[i] * h[i]) / 3;
+    const c2x = xs[i + 1] - h[i] / 3;
+    const c2y = ys[i + 1] - (m[i + 1] * h[i]) / 3;
+    path += ` C${c1x.toFixed(1)},${c1y.toFixed(1)} ${c2x.toFixed(1)},${c2y.toFixed(1)} ${xs[i + 1].toFixed(1)},${ys[i + 1].toFixed(1)}`;
+  }
+  return path;
 }
 
 interface DrawnSeries {
