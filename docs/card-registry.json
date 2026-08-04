@@ -6,15 +6,15 @@
       "nerfs": 360,
       "buffs": 2088,
       "implemented": 2448,
-      "withPassiveAnimation": 1333,
-      "withPassiveSoundCue": 1333,
-      "castVoiced": 1115,
+      "withPassiveAnimation": 1335,
+      "withPassiveSoundCue": 1335,
+      "castVoiced": 1113,
       "shortDescriptions": 36,
       "emptyDescriptions": 0
     },
     "effectCategoryCounts": {
-      "movement-phase-jump": 90,
-      "movement-upgrade": 135,
+      "movement-phase-jump": 91,
+      "movement-upgrade": 136,
       "nerf-relief": 82,
       "promotion-grant": 55,
       "mass-freeze": 98,
@@ -36,7 +36,6 @@
       "extra-move": 26,
       "randomness-gamble": 23,
       "instant-piece-spawn": 95,
-      "unclassified": 2,
       "special-rule-denial": 7,
       "move-budget-change": 35,
       "piece-downgrade-transform": 58,
@@ -77,8 +76,8 @@
     "soundByFamily": {
       "blessing": 99,
       "strike": 258,
-      "decree": 270,
-      "territory": 260,
+      "decree": 271,
+      "territory": 261,
       "bind": 216,
       "summon": 46,
       "tempo": 109,
@@ -231,11 +230,17 @@
       "implemented": true,
       "descriptionLength": 175,
       "description": "Every enemy piece currently standing in your half of the board lights up until your opponent replies, and the spotted pieces hold their fire: they cannot capture on that turn.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "territory",
+        "primitives": [
+          "zoneSweep"
+        ],
+        "sigil": "Binoculars"
+      },
+      "soundCue": "passive/territory",
+      "soundFamily": "territory",
+      "target": "zone"
     },
     {
       "id": "bn4_first_light",
@@ -1000,7 +1005,7 @@
         "family": "decree",
         "primitives": [
           "crackLines",
-          "pulseRing"
+          "slabSlam"
         ],
         "sigil": "gavel"
       },
@@ -1227,7 +1232,7 @@
       "name": "Half Step",
       "kind": "buff",
       "category": "movement",
-      "effectCategory": "unclassified",
+      "effectCategory": "movement-upgrade",
       "tier": 1,
       "mechanic": "passive",
       "implemented": true,
@@ -1379,7 +1384,7 @@
       "animation": {
         "family": "territory",
         "primitives": [
-          "pulseRing"
+          "crackBloom"
         ],
         "sigil": "map"
       },
@@ -2149,7 +2154,7 @@
         "family": "territory",
         "primitives": [
           "zoneSweep",
-          "edgeBurn"
+          "beamVertical"
         ],
         "sigil": "map"
       },
@@ -7122,7 +7127,7 @@
         "family": "territory",
         "primitives": [
           "zoneSweep",
-          "pulseRing"
+          "crackBloom"
         ],
         "sigil": "map"
       },
@@ -7305,7 +7310,7 @@
       "name": "Vault",
       "kind": "buff",
       "category": "movement",
-      "effectCategory": "unclassified",
+      "effectCategory": "movement-phase-jump",
       "tier": 1,
       "mechanic": "passive",
       "implemented": true,
@@ -8438,11 +8443,18 @@
       "implemented": true,
       "descriptionLength": 134,
       "description": "Castle even if your king or rooks have already moved. When you next castle, your king cannot be captured on your opponent's next turn.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "decree",
+        "primitives": [
+          "crackLines",
+          "pulseRing"
+        ],
+        "sigil": "gavel"
+      },
+      "soundCue": "passive/decree",
+      "soundFamily": "decree",
+      "target": "pieceClass"
     },
     {
       "id": "chill_guy",
@@ -8522,7 +8534,7 @@
       },
       "soundCue": "passive/territory",
       "soundFamily": "territory",
-      "target": "square"
+      "target": "rank"
     },
     {
       "id": "counterstep",
@@ -9057,7 +9069,7 @@
         "family": "decree",
         "primitives": [
           "drainFlow",
-          "sigilStamp"
+          "crackLines"
         ],
         "sigil": "gavel"
       },
@@ -10113,7 +10125,8 @@
       "animation": {
         "family": "territory",
         "primitives": [
-          "crackBloom"
+          "zoneSweep",
+          "edgeBurn"
         ],
         "sigil": "map"
       },
@@ -12259,7 +12272,7 @@
         "family": "decree",
         "primitives": [
           "drainFlow",
-          "quakeRumble"
+          "crackBloom"
         ],
         "sigil": "gavel"
       },
@@ -12711,7 +12724,7 @@
         "family": "territory",
         "primitives": [
           "edgeBurn",
-          "beamVertical"
+          "beamHorizontal"
         ],
         "sigil": "map"
       },
@@ -14668,8 +14681,8 @@
       "animation": {
         "family": "decree",
         "primitives": [
-          "crackLines",
-          "crackBloom"
+          "drainFlow",
+          "sigilStamp"
         ],
         "sigil": "gavel"
       },
@@ -15733,7 +15746,7 @@
         "family": "decree",
         "primitives": [
           "drainFlow",
-          "crackLines"
+          "shockRing"
         ],
         "sigil": "gavel"
       },
@@ -17458,7 +17471,7 @@
         "family": "decree",
         "primitives": [
           "shockRing",
-          "drainFlow"
+          "pulseRing"
         ],
         "sigil": "gavel"
       },
@@ -19486,7 +19499,7 @@
       "animation": {
         "family": "territory",
         "primitives": [
-          "zoneSweep"
+          "edgeBurn"
         ],
         "sigil": "map"
       },
@@ -20111,7 +20124,7 @@
       "animation": {
         "family": "territory",
         "primitives": [
-          "beamVertical"
+          "beamHorizontal"
         ],
         "sigil": "map"
       },
@@ -21538,7 +21551,7 @@
         "family": "decree",
         "primitives": [
           "drainFlow",
-          "shockRing"
+          "pulseRing"
         ],
         "sigil": "gavel"
       },
@@ -22455,8 +22468,8 @@
       "animation": {
         "family": "decree",
         "primitives": [
-          "drainFlow",
-          "crackBloom"
+          "shockRing",
+          "sigilStamp"
         ],
         "sigil": "gavel"
       },
@@ -27875,7 +27888,7 @@
         "family": "decree",
         "primitives": [
           "drainFlow",
-          "slabSlam"
+          "quakeRumble"
         ],
         "sigil": "gavel"
       },
@@ -28619,7 +28632,7 @@
         "family": "decree",
         "primitives": [
           "shockRing",
-          "sigilStamp"
+          "crackLines"
         ],
         "sigil": "gavel"
       },
@@ -28718,7 +28731,7 @@
         "family": "decree",
         "primitives": [
           "shockRing",
-          "crackLines"
+          "drainFlow"
         ],
         "sigil": "gavel"
       },
@@ -28792,8 +28805,8 @@
       "animation": {
         "family": "territory",
         "primitives": [
-          "zoneSweep",
-          "crackBloom"
+          "edgeBurn",
+          "zoneSweep"
         ],
         "sigil": "map"
       },
@@ -28817,7 +28830,7 @@
         "family": "decree",
         "primitives": [
           "shockRing",
-          "pulseRing"
+          "slabSlam"
         ],
         "sigil": "gavel"
       },
@@ -28916,7 +28929,7 @@
         "family": "decree",
         "primitives": [
           "shockRing",
-          "slabSlam"
+          "quakeRumble"
         ],
         "sigil": "gavel"
       },
@@ -28980,7 +28993,7 @@
         "family": "territory",
         "primitives": [
           "edgeBurn",
-          "zoneSweep"
+          "beamVertical"
         ],
         "sigil": "map"
       },
@@ -29028,7 +29041,7 @@
         "family": "decree",
         "primitives": [
           "shockRing",
-          "quakeRumble"
+          "crackBloom"
         ],
         "sigil": "gavel"
       },
@@ -30983,7 +30996,7 @@
         "family": "decree",
         "primitives": [
           "crackLines",
-          "slabSlam"
+          "quakeRumble"
         ],
         "sigil": "gavel"
       },
@@ -31153,7 +31166,7 @@
       "animation": {
         "family": "territory",
         "primitives": [
-          "edgeBurn"
+          "beamVertical"
         ],
         "sigil": "map"
       },
@@ -31242,7 +31255,7 @@
         "family": "decree",
         "primitives": [
           "crackLines",
-          "quakeRumble"
+          "crackBloom"
         ],
         "sigil": "gavel"
       },
@@ -31379,7 +31392,7 @@
       "animation": {
         "family": "territory",
         "primitives": [
-          "beamHorizontal"
+          "pulseRing"
         ],
         "sigil": "map"
       },
@@ -33127,7 +33140,7 @@
         "family": "decree",
         "primitives": [
           "drainFlow",
-          "pulseRing"
+          "slabSlam"
         ],
         "sigil": "gavel"
       },
@@ -38087,8 +38100,8 @@
       "animation": {
         "family": "decree",
         "primitives": [
-          "shockRing",
-          "crackBloom"
+          "pulseRing",
+          "sigilStamp"
         ],
         "sigil": "gavel"
       },
@@ -41347,7 +41360,7 @@
         "family": "territory",
         "primitives": [
           "zoneSweep",
-          "beamVertical"
+          "pulseRing"
         ],
         "sigil": "map"
       },
