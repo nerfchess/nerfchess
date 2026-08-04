@@ -132,7 +132,97 @@ function nerfWave(n: Nerf): WaveId {
 /** Hand-written balance notes, key "buff:<id>" | "nerf:<id>". Append here when
  * a card is retiered, reworked, or reworded in code, with the changelog date
  * and PR. Keep each note one sentence; the page renders them as a timeline. */
-export const CARD_HISTORY: Record<string, CardHistoryEvent[]> = {};
+export const CARD_HISTORY: Record<string, CardHistoryEvent[]> = {
+  // --- 2026-08-04 weak-card buff pass: ~30 underpowered buffs, boons and
+  // items lifted to their tier, one card at a time. No retiers, no nerfs.
+  "buff:extra_glance": [
+    { date: "2026-08-04", kind: "rework", note: "The glance now also grants a draft reroll; the reveal alone was the weakest card in tier 1." },
+  ],
+  "buff:ferz_king": [
+    { date: "2026-08-04", kind: "rework", note: "The diagonal king hop can now be used twice per game instead of once." },
+  ],
+  "buff:half_step": [
+    { date: "2026-08-04", kind: "rework", note: "Two uses instead of one, matching the rest of the tier-1 movement pairs." },
+  ],
+  "buff:vault": [
+    { date: "2026-08-04", kind: "rework", note: "The rook now vaults its pawn twice instead of once." },
+  ],
+  "buff:nudge": [
+    { date: "2026-08-04", kind: "rework", note: "The reroll surcharge is gone; a one-square pawn push is small enough to be free." },
+  ],
+  "buff:quick_glance": [
+    { date: "2026-08-04", kind: "rework", note: "When the opponent has no reroll to lose you now gain one instead, so the card can no longer do nothing." },
+  ],
+  "buff:cornerstone": [
+    { date: "2026-08-04", kind: "rework", note: "The ward now covers rooks anywhere on your back rank, not just the two starting corners." },
+  ],
+  "buff:castle_early": [
+    { date: "2026-08-04", kind: "rework", note: "The text now admits the card always restored rook rights too, and the castle it re-opens lands with one turn of king cover." },
+  ],
+  "buff:spring_pawn": [
+    { date: "2026-08-04", kind: "rework", note: "Two sideways springs instead of one; a single hop was worse than Tempo Shuffle a tier below." },
+  ],
+  "buff:vanguard": [
+    { date: "2026-08-04", kind: "rework", note: "Knighting now works from the 5th rank, where a pawn can actually stand when a tier-2 draft lands." },
+  ],
+  "buff:sidestep_king": [
+    { date: "2026-08-04", kind: "rework", note: "King safety extended from one turn to three; one turn at tier 3 lost to Decoy at tier 2." },
+  ],
+  "buff:screen": [
+    { date: "2026-08-04", kind: "rework", note: "The adjacency ward now lasts six of your turns instead of three, paying for its condition." },
+  ],
+  "buff:shielded_advance": [
+    { date: "2026-08-04", kind: "rework", note: "The enemy-half escort now lasts six of your turns instead of three." },
+  ],
+  "buff:trade_up": [
+    { date: "2026-08-04", kind: "rework", note: "The consolation pawn now arrives for each of your next two lost minor pieces, not just the first." },
+  ],
+  "buff:pin_breaker": [
+    { date: "2026-08-04", kind: "rework", note: "The escaping piece now lands warded for two turns; breaking free into a capture was no escape." },
+  ],
+  "buff:iron_bishop": [
+    { date: "2026-08-04", kind: "rework", note: "The iron now turns knights as well as pawns; pawn-proofing alone was tier-1 sized at tier 4." },
+  ],
+  "buff:walnut_shell": [
+    { date: "2026-08-04", kind: "rework", note: "With nothing frozen the shell can now be eaten for a draft reroll, so it is never a dead card." },
+  ],
+  "buff:firecracker": [
+    { date: "2026-08-04", kind: "rework", note: "The startled piece now also loses its next move; a plain one-square shove was Nudge at four times the price." },
+  ],
+  "buff:bn4_hairline_crack": [
+    { date: "2026-08-04", kind: "rework", note: "No longer strips your own shields; the survey now braces the lit piece nearest your king for a turn instead." },
+  ],
+  "buff:bn4_field_glasses": [
+    { date: "2026-08-04", kind: "rework", note: "Spotted pieces now hold their fire for one turn; the flash alone told a decent player nothing new." },
+  ],
+  "buff:bn4_scouts_report": [
+    { date: "2026-08-04", kind: "rework", note: "Your threatened pieces now dig in for one turn on top of the reveal." },
+  ],
+  "buff:bn4_war_room_map": [
+    { date: "2026-08-04", kind: "rework", note: "The map now comes with 2 draft rerolls; a bare flash was priced against Punch Card in the same band." },
+  ],
+  "buff:bn4_danger_sense": [
+    { date: "2026-08-04", kind: "rework", note: "The warning now covers the king and queen for one turn instead of only pointing at the danger." },
+  ],
+  "buff:bn4_listening_post": [
+    { date: "2026-08-04", kind: "rework", note: "A dead wire now pays 1 draft reroll; against a blocked draft the card used to resolve to nothing." },
+  ],
+  "buff:bn4_lucky_coin": [
+    { date: "2026-08-04", kind: "rework", note: "The coin no longer repossesses an unspent reroll; instead, spending one within two drafts flips it back into your hand." },
+  ],
+  "buff:bn4_augurs_flight": [
+    { date: "2026-08-04", kind: "rework", note: "The birds now shelter every piece they circle for one turn instead of only naming them." },
+  ],
+  "buff:bn4_border_survey": [
+    { date: "2026-08-04", kind: "rework", note: "The surveyed squares are now staked against enemy entry for one turn on top of the reveal." },
+  ],
+  "buff:bn4_lighthouse_beam": [
+    { date: "2026-08-04", kind: "rework", note: "The glare now freezes the enemy piece deepest into your half for one turn; a tier-5 card should touch the board." },
+  ],
+  "buff:bn4_auditors_ledger": [
+    { date: "2026-08-04", kind: "rework", note: "The audit now shields your undefended pieces for a turn and pays a reroll, pricing it beside Raven's Court." },
+  ],
+};
 
 // --- Lookup ---------------------------------------------------------------------
 
