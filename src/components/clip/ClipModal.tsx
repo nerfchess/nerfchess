@@ -1,26 +1,100 @@
 "use client";
 
-// Clip sharing modal: live canvas preview of a stylized replay of the last
-// few plies, recorded client-side to a webm via canvas.captureStream +
-// MediaRecorder. No backend involved; the result is offered as a download
-// and through the Web Share API where files are shareable.
+// Clip sharing modal, rebuilt as a TikTok-ready exporter. A deterministic
+// canvas scene (clipScene.ts) replays the last plies with energy scenes,
+// captions, and branding; encoding picks the best of three tiers
+// (clipEncoder.ts): offline WebCodecs + mediabunny MP4, realtime
+// MediaRecorder, or an honest "unsupported". No backend involved; the result
+// is offered as a download and through the Web Share API where available.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { BoardState, Color, Move } from "@/engine/types";
 import type { GameResult } from "@/engine/game";
 import {
-  BOARD_THEMES,
   PIECE_THEMES,
+  boardColors,
   loadSettings,
-  resolveBoardTheme,
   resolvePieceTheme,
+  sanitizeHexColor,
 } from "@/lib/settings";
 import { buildClipTimeline } from "./clipReplay";
-import { ClipRenderer, clipTimings, type ClipRendererHandle } from "./ClipRenderer";
+import {
+  biggestClipCard,
+  buildClipScene,
+  clipLayout,
+  loadClipPieceImages,
+  type CaptionStyle,
+  type ClipAspect,
+  type ClipScene,
+  type ClipVerdict,
+  type EmojiLevel,
+  type PieceImageSource,
+} from "./clipScene";
+import {
+  detectEncodeSupport,
+  encodeClipOffline,
+  recordClipRealtime,
+  type EncodeSupport,
+} from "./clipEncoder";
+import { ClipRenderer, type ClipRendererHandle } from "./ClipRenderer";
 import { useModalChrome } from "@/lib/useModalChrome";
 import { Button } from "@/components/ui/Button";
 
 const LENGTH_OPTIONS = [4, 6, 10] as const;
+const ASPECTS: { id: ClipAspect; label: string }[] = [
+  { id: "tiktok", label: "9:16" },
+  { id: "square", label: "1:1" },
+  { id: "classic", label: "Classic" },
+];
+const CAPTION_STYLES: { id: CaptionStyle; label: string }[] = [
+  { id: "pop", label: "Word pop" },
+  { id: "static", label: "Static" },
+  { id: "off", label: "Off" },
+];
+const EMOJI_LEVELS: { id: EmojiLevel; label: string }[] = [
+  { id: "off", label: "Off" },
+  { id: "tasteful", label: "Tasteful" },
+  { id: "brainrot", label: "Brainrot" },
+];
+const HOOK_PRESETS = [
+  "Wait for the last move",
+  "He never saw it coming",
+  "This card should be illegal",
+  "Chess but with cards",
+];
+
+interface ClipOptionsState {
+  aspect: ClipAspect;
+  zoomPunch: boolean;
+  screenShake: boolean;
+  speedRamp: boolean;
+  freezeStamp: boolean;
+  momentumBar: boolean;
+  moveCounter: boolean;
+  captionStyle: CaptionStyle;
+  emojiLevel: EmojiLevel;
+  sound: boolean;
+  watermarkOn: boolean;
+  handle: string;
+  endCard: boolean;
+}
+
+// "TikTok mode": the default preset, everything on.
+const TIKTOK_MODE: ClipOptionsState = {
+  aspect: "tiktok",
+  zoomPunch: true,
+  screenShake: true,
+  speedRamp: true,
+  freezeStamp: true,
+  momentumBar: true,
+  moveCounter: true,
+  captionStyle: "pop",
+  emojiLevel: "tasteful",
+  sound: true,
+  watermarkOn: true,
+  handle: "nerfchess.com",
+  endCard: true,
+};
 
 interface Props {
   open: boolean;
@@ -36,11 +110,38 @@ interface Props {
   result?: GameResult | null;
 }
 
-function pickMimeType(): string | undefined {
-  if (typeof MediaRecorder === "undefined") return undefined;
-  return ["video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm"].find((m) =>
-    MediaRecorder.isTypeSupported(m),
+/** Small square-dot toggle built on the sanctioned Button primitive. */
+function Chip({
+  label,
+  on,
+  onClick,
+  disabled,
+}: {
+  label: string;
+  on: boolean;
+  onClick: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <Button
+      tone="ghost"
+      size="xs"
+      onClick={onClick}
+      disabled={disabled}
+      aria-pressed={on}
+      className={on ? "text-gold-leaf" : "text-parchment-300"}
+    >
+      <span
+        aria-hidden
+        className={"h-1.5 w-1.5 shrink-0 " + (on ? "bg-gold-leaf" : "bg-white/25")}
+      />
+      {label}
+    </Button>
   );
+}
+
+function GroupLabel({ children }: { children: React.ReactNode }) {
+  return <p className="smallcaps mb-1 mt-3 text-[10px] text-parchment-400">{children}</p>;
 }
 
 export function ClipModal({
@@ -54,34 +155,73 @@ export function ClipModal({
   playerNames,
   result,
 }: Props) {
-  // Scroll lock, Escape, and the ghost-click guard on the backdrop.
   const chrome = useModalChrome(open, onClose);
   const [plies, setPlies] = useState<number>(6);
-  const [ready, setReady] = useState(false);
+  const [opts, setOpts] = useState<ClipOptionsState>(TIKTOK_MODE);
+  const [hook, setHook] = useState<string | null>(null); // null = auto default
+  const [images, setImages] = useState<Map<string, HTMLImageElement> | null>(null);
+  const [support, setSupport] = useState<EncodeSupport | null>(null);
   const [recording, setRecording] = useState(false);
-  const [clip, setClip] = useState<{ url: string; blob: Blob } | null>(null);
+  const [progress, setProgress] = useState<number | null>(null);
+  const [clip, setClip] = useState<{
+    url: string;
+    blob: Blob;
+    container: "mp4" | "webm";
+    tier: 1 | 2;
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [shared, setShared] = useState(false);
   const rendererRef = useRef<ClipRendererHandle | null>(null);
-  const recorderRef = useRef<MediaRecorder | null>(null);
+  const stopRef = useRef<(() => void) | null>(null);
   const clipUrlRef = useRef<string | null>(null);
 
-  // Board colors / piece sprites follow the player's settings so the clip
-  // looks like THEIR board. Loaded once per open (settings rarely change
-  // mid-session and the modal is short-lived).
-  const { colors, pieceSet } = useMemo(() => {
+  // Board colors and piece sprites follow the player's settings so the clip
+  // looks like THEIR board: custom board hexes come through boardColors, and
+  // inline piece themes (plus custom piece colors) rasterize the site's own
+  // SVG silhouettes rather than swapping to a lichess set.
+  const { colors, pieceSource } = useMemo(() => {
     const s = loadSettings();
-    // Resolve through the same path the live board uses: on "auto" the
-    // board is the theme's, and a clip that ignored that would export a
-    // different board than the one the player just watched.
-    const theme = BOARD_THEMES[resolveBoardTheme(s)] ?? BOARD_THEMES.wood;
-    return {
-      colors: { light: theme.light, dark: theme.dark },
-      pieceSet: PIECE_THEMES[resolvePieceTheme(s)]?.assetSet ?? "cburnett",
-    };
+    let source: PieceImageSource;
+    if (s.pieceTheme === "custom") {
+      source = {
+        kind: "inline",
+        wFill: sanitizeHexColor(s.customPieceWFill, "#f2ead8"),
+        wStroke: sanitizeHexColor(s.customPieceWStroke, "#3b332a"),
+        bFill: sanitizeHexColor(s.customPieceBFill, "#2b2b31"),
+        bStroke: sanitizeHexColor(s.customPieceBStroke, "#d8c9a8"),
+      };
+    } else {
+      const t = PIECE_THEMES[resolvePieceTheme(s)] ?? PIECE_THEMES.classic;
+      source = t.assetSet
+        ? { kind: "asset", set: t.assetSet }
+        : { kind: "inline", wFill: t.wFill, wStroke: t.wStroke, bFill: t.bFill, bStroke: t.bStroke };
+    }
+    return { colors: boardColors(s), pieceSource: source };
     // Re-read when the modal reopens.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
+
+  // Fonts and accent resolved once from the document's CSS variables.
+  const { fonts, accent } = useMemo(() => {
+    const fallback = {
+      fonts: { display: "system-ui, sans-serif", body: "system-ui, sans-serif" },
+      accent: "#d4a017", // gold literal, mirrors --accent-gold (canvas can't read CSS vars)
+    };
+    if (typeof document === "undefined") return fallback;
+    const read = (name: string) =>
+      getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    const font = (name: string, fb: string) => {
+      const v = read(name);
+      return v ? `${v}, ${fb}` : fb;
+    };
+    return {
+      fonts: {
+        display: font("--font-display", "system-ui, sans-serif"),
+        body: font("--font-body", "system-ui, sans-serif"),
+      },
+      accent: read("--accent-hi") || read("--accent") || fallback.accent,
+    };
+  }, []);
 
   const timeline = useMemo(
     () =>
@@ -91,18 +231,56 @@ export function ClipModal({
     [open, moves, snapshots, historyDiverged, plies, signatureIds],
   );
 
-  const endText = useMemo(() => {
-    if (!result || !timeline || timeline.startPly + timeline.segments.length < moves.length) {
-      return null;
+  const bigCard = useMemo(() => (timeline ? biggestClipCard(timeline) : null), [timeline]);
+
+  const hookSuggestion = bigCard ? `${bigCard.name} is broken` : HOOK_PRESETS[0];
+  const hookText = hook ?? hookSuggestion;
+
+  const verdict = useMemo<ClipVerdict | null>(() => {
+    const coversEnd =
+      !!timeline && timeline.startPly + timeline.segments.length >= moves.length;
+    if (result && coversEnd) {
+      if (result.winner === "draw") return { main: "DRAW", sub: result.reason };
+      if (result.winner === "w" || result.winner === "b") {
+        const name = playerNames[result.winner];
+        if (result.reason === "no legal moves" || result.reason === "king captured") {
+          return { main: "CHECKMATE", sub: `${name} wins` };
+        }
+        return {
+          main: name.toLowerCase() === "you" ? "YOU WIN" : `${name.toUpperCase()} WINS`,
+          sub: result.reason,
+        };
+      }
+      return { main: "GAME OVER", sub: null };
     }
-    return result.winner === "draw"
-      ? "Draw"
-      : result.winner === "w"
-      ? "White wins"
-      : result.winner === "b"
-      ? "Black wins"
-      : "Game aborted";
-  }, [result, timeline, moves.length]);
+    if (bigCard) return { main: bigCard.name.toUpperCase(), sub: "signature play" };
+    return { main: "TO BE CONTINUED", sub: null };
+  }, [result, timeline, moves.length, playerNames, bigCard]);
+
+  const scene = useMemo<ClipScene | null>(() => {
+    if (!timeline) return null;
+    return buildClipScene({
+      timeline,
+      orientation,
+      colors,
+      names: playerNames,
+      aspect: opts.aspect,
+      hookText,
+      captionStyle: opts.captionStyle,
+      emojiLevel: opts.emojiLevel,
+      zoomPunch: opts.zoomPunch,
+      screenShake: opts.screenShake,
+      speedRamp: opts.speedRamp,
+      freezeStamp: opts.freezeStamp,
+      momentumBar: opts.momentumBar,
+      moveCounter: opts.moveCounter,
+      watermark: opts.watermarkOn ? opts.handle.trim() || "nerfchess.com" : null,
+      endCard: opts.endCard,
+      verdict,
+      fonts,
+      accent,
+    });
+  }, [timeline, orientation, colors, playerNames, opts, hookText, verdict, fonts, accent]);
 
   const discardClip = useCallback(() => {
     if (clipUrlRef.current) URL.revokeObjectURL(clipUrlRef.current);
@@ -111,20 +289,35 @@ export function ClipModal({
     setShared(false);
   }, []);
 
-  // A new length invalidates the recorded take (handled in the length
-  // buttons' onClick; closing unmounts the modal entirely).
-  const selectPlies = useCallback(
-    (n: number) => {
-      setPlies(n);
-      setError(null);
-      discardClip();
-    },
-    [discardClip],
-  );
+  // Piece sprites, loaded once per source (the modal mounts fresh per open,
+  // so the initial null state already covers the loading readout).
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    loadClipPieceImages(pieceSource).then((loaded) => {
+      if (!cancelled) setImages(loaded);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, pieceSource]);
+
+  // Which encode tier this browser gets, for the readout and the record path.
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    const L = clipLayout(opts.aspect);
+    detectEncodeSupport(L.W, L.H, opts.sound).then((s) => {
+      if (!cancelled) setSupport(s);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, opts.aspect, opts.sound]);
 
   useEffect(() => {
     return () => {
-      recorderRef.current?.stop();
+      stopRef.current?.();
       if (clipUrlRef.current) URL.revokeObjectURL(clipUrlRef.current);
     };
   }, []);
@@ -141,65 +334,71 @@ export function ClipModal({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [open, onClose]);
 
-  const record = () => {
-    const handle = rendererRef.current;
-    const canvas = handle?.canvas;
-    if (!handle || !canvas || recording) return;
-    const mimeType = pickMimeType();
-    if (!mimeType || typeof canvas.captureStream !== "function") {
+  // Every option change invalidates the recorded take (frame 0 is burned into
+  // the file, so even a caption edit means a re-record).
+  const set = useCallback(
+    <K extends keyof ClipOptionsState>(key: K, value: ClipOptionsState[K]) => {
+      setOpts((o) => ({ ...o, [key]: value }));
+      setError(null);
+      discardClip();
+    },
+    [discardClip],
+  );
+  const editHook = useCallback(
+    (value: string | null) => {
+      setHook(value);
+      discardClip();
+    },
+    [discardClip],
+  );
+
+  const record = async () => {
+    if (!scene || !images || recording || !support) return;
+    if (support.tier === 3) {
       setError("Recording isn't supported in this browser.");
       return;
     }
     discardClip();
     setError(null);
+    setRecording(true);
+    setProgress(support.tier === 1 ? 0 : null);
     try {
-      const stream = canvas.captureStream(30);
-      const recorder = new MediaRecorder(stream, {
-        mimeType,
-        videoBitsPerSecond: 6_000_000,
-      });
-      const chunks: Blob[] = [];
-      recorder.ondataavailable = (e) => {
-        if (e.data.size > 0) chunks.push(e.data);
-      };
-      recorder.onstop = () => {
-        recorderRef.current = null;
-        setRecording(false);
-        for (const track of stream.getTracks()) track.stop();
-        const blob = new Blob(chunks, { type: mimeType.split(";")[0] });
-        if (blob.size === 0) {
-          setError("Recording produced no data. Try again.");
-          return;
-        }
-        const url = URL.createObjectURL(blob);
-        clipUrlRef.current = url;
-        setClip({ url, blob });
-        // Surfaced for automated tests / debugging.
-        console.log(`nerfchess clip recorded: ${blob.size} bytes`);
-      };
-      recorderRef.current = recorder;
-      setRecording(true);
-      recorder.start(250);
-      // Restart the timeline in sync with the recorder; stop shortly after
-      // the run completes so the final frame lands in the file.
-      handle.restart(() => {
-        window.setTimeout(() => {
-          if (recorderRef.current === recorder && recorder.state !== "inactive") {
-            recorder.stop();
-          }
-        }, 250);
-      });
+      let res: { blob: Blob; container: "mp4" | "webm"; tier: 1 | 2 };
+      if (support.tier === 1) {
+        res = await encodeClipOffline(scene, images, support, opts.sound, (f) =>
+          setProgress(f),
+        );
+      } else {
+        const canvas = rendererRef.current?.canvas;
+        if (!canvas) throw new Error("no canvas");
+        const rec = recordClipRealtime(canvas, scene, support, opts.sound);
+        stopRef.current = rec.stop;
+        // Restart the timeline in sync with the recorder; stop shortly after
+        // the run completes so the final frame lands in the file.
+        rendererRef.current?.restart(() => {
+          window.setTimeout(() => rec.stop(), 250);
+        });
+        res = await rec.done;
+        stopRef.current = null;
+      }
+      const url = URL.createObjectURL(res.blob);
+      clipUrlRef.current = url;
+      setClip({ url, blob: res.blob, container: res.container, tier: res.tier });
+      // Surfaced for automated tests / debugging.
+      console.log(`nerfchess clip recorded: ${res.blob.size} bytes`);
     } catch {
-      setRecording(false);
-      recorderRef.current = null;
-      setError("Recording failed to start in this browser.");
+      setError("Recording failed in this browser. Try again or switch format.");
     }
+    setRecording(false);
+    setProgress(null);
   };
 
   const clipFile = useMemo(
     () =>
       clip
-        ? new File([clip.blob], "nerfchess-clip.webm", { type: clip.blob.type || "video/webm" })
+        ? new File([clip.blob], `nerfchess-clip.${clip.container}`, {
+            type: clip.blob.type || `video/${clip.container}`,
+          })
         : null,
     [clip],
   );
@@ -222,7 +421,10 @@ export function ClipModal({
 
   if (!open) return null;
 
-  const durationSec = timeline ? Math.round(clipTimings(timeline).durationMs / 100) / 10 : null;
+  const durationSec = scene ? Math.round(scene.durationMs / 100) / 10 : null;
+  const ready = !!scene && !!images && !!support;
+  const previewMax =
+    opts.aspect === "tiktok" ? "max-w-[15rem]" : opts.aspect === "square" ? "max-w-[20rem]" : "max-w-[22rem]";
 
   return (
     <div
@@ -235,7 +437,7 @@ export function ClipModal({
       onPointerDown={chrome.onBackdropPointerDown}
     >
       <div
-        className="plate plate-raised gilt relative w-[min(94vw,30rem)] max-h-[calc(100dvh-3rem)] overflow-y-auto p-5 shadow-2xl sm:p-6"
+        className="plate plate-raised gilt relative w-[min(94vw,36rem)] max-h-[calc(100dvh-3rem)] overflow-y-auto p-5 shadow-2xl sm:p-6"
         onPointerDown={(event) => event.stopPropagation()}
       >
         <span className="card-corner tl" />
@@ -250,11 +452,12 @@ export function ClipModal({
               Share a replay clip
             </h2>
           </div>
-          <Button tone="ghost"
-           
+          <Button
+            tone="ghost"
             onClick={onClose}
             aria-label="Close"
-            className="grid h-9 w-9 shrink-0 place-items-center text-parchment-300">
+            className="grid h-9 w-9 shrink-0 place-items-center text-parchment-300"
+          >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
@@ -262,58 +465,157 @@ export function ClipModal({
           </Button>
         </div>
         <p className="mt-1 text-xs leading-snug text-parchment-400">
-          A stylized replay of the last moves: captures, spawns, and signature plays are
-          re-drawn in the clip&apos;s own look, not the full in-game effects.
+          A stylized replay of the last moves, cut for the feed: energy scenes on card
+          plays, captions, and a verdict stamp, drawn in the clip&apos;s own look.
         </p>
 
-        {timeline ? (
+        {timeline && scene ? (
           <>
             <div className="mt-4">
               <ClipRenderer
                 ref={rendererRef}
-                timeline={timeline}
-                orientation={orientation}
-                colors={colors}
-                pieceSet={pieceSet}
-                names={playerNames}
-                endText={endText}
-                onReady={() => setReady(true)}
-                className="mx-auto block w-full max-w-[24rem] border border-white/10 shadow-plate"
+                scene={scene}
+                images={images}
+                className={`mx-auto block w-full ${previewMax} border border-white/10 shadow-plate`}
               />
             </div>
 
-            <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-              <div className="flex items-center gap-1" role="group" aria-label="Clip length">
-                <span className="smallcaps mr-1 text-[10px] text-parchment-400">Last</span>
-                {LENGTH_OPTIONS.map((n) => (
-                  <button
-                    key={n}
-                    type="button"
-                    onClick={() => selectPlies(n)}
-                    disabled={recording}
-                    aria-pressed={plies === n}
-                    className={
-                      "min-h-[36px] border px-3 py-1 font-display text-xs font-semibold transition " +
-                      (plies === n
-                        ? "border-gold/60 bg-gold/15 text-gold-leaf"
-                        : "border-white/15 bg-white/[0.03] text-parchment-300 hover:border-white/30")
-                    }
-                  >
-                    {n}
-                  </button>
-                ))}
-                <span className="smallcaps ml-1 text-[10px] text-parchment-400">plies</span>
-              </div>
+            <div className="mt-2 flex items-center justify-between gap-2">
               <span className="text-[11px] text-parchment-400">
                 {timeline.segments.length < plies
-                  ? `${timeline.segments.length} replayable`
+                  ? `${timeline.segments.length} replayable plies`
                   : durationSec
-                  ? `~${durationSec}s`
-                  : ""}
+                    ? `~${durationSec}s`
+                    : ""}
+              </span>
+              <span className="text-[11px] text-parchment-400" data-clip-tier={support?.tier ?? 0}>
+                {support ? support.detail : "Checking encoder..."}
               </span>
             </div>
 
-            <div className="mt-3 grid grid-cols-1 gap-2">
+            <GroupLabel>Format</GroupLabel>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <div className="flex items-center gap-1" role="group" aria-label="Aspect">
+                {ASPECTS.map((a) => (
+                  <Chip
+                    key={a.id}
+                    label={a.label}
+                    on={opts.aspect === a.id}
+                    onClick={() => set("aspect", a.id)}
+                    disabled={recording}
+                  />
+                ))}
+              </div>
+              <span className="mx-1 h-4 w-px bg-white/15" aria-hidden />
+              <div className="flex items-center gap-1" role="group" aria-label="Clip length">
+                <span className="smallcaps text-[10px] text-parchment-400">Last</span>
+                {LENGTH_OPTIONS.map((num) => (
+                  <Chip
+                    key={num}
+                    label={String(num)}
+                    on={plies === num}
+                    onClick={() => {
+                      setPlies(num);
+                      setError(null);
+                      discardClip();
+                    }}
+                    disabled={recording}
+                  />
+                ))}
+                <span className="smallcaps text-[10px] text-parchment-400">plies</span>
+              </div>
+              <span className="mx-1 h-4 w-px bg-white/15" aria-hidden />
+              <Button
+                tone="ghost"
+                size="xs"
+                disabled={recording}
+                onClick={() => {
+                  setOpts(TIKTOK_MODE);
+                  editHook(null);
+                }}
+                className="text-parchment-300"
+              >
+                TikTok mode
+              </Button>
+            </div>
+
+            <GroupLabel>Energy</GroupLabel>
+            <div className="flex flex-wrap gap-1.5">
+              <Chip label="Zoom punch" on={opts.zoomPunch} onClick={() => set("zoomPunch", !opts.zoomPunch)} disabled={recording} />
+              <Chip label="Shake" on={opts.screenShake} onClick={() => set("screenShake", !opts.screenShake)} disabled={recording} />
+              <Chip label="Speed ramp" on={opts.speedRamp} onClick={() => set("speedRamp", !opts.speedRamp)} disabled={recording} />
+              <Chip label="Verdict stamp" on={opts.freezeStamp} onClick={() => set("freezeStamp", !opts.freezeStamp)} disabled={recording} />
+              <Chip label="Momentum bar" on={opts.momentumBar} onClick={() => set("momentumBar", !opts.momentumBar)} disabled={recording} />
+              <Chip label="Move counter" on={opts.moveCounter} onClick={() => set("moveCounter", !opts.moveCounter)} disabled={recording} />
+            </div>
+
+            <GroupLabel>Captions</GroupLabel>
+            <input
+              type="text"
+              value={hookText}
+              maxLength={80}
+              disabled={recording}
+              onChange={(e) => editHook(e.target.value)}
+              aria-label="Hook caption"
+              placeholder="Hook text burned at the top"
+              className="w-full border border-white/15 bg-white/[0.03] px-2.5 py-1.5 font-display text-sm text-parchment placeholder:text-parchment-400 focus:border-gold/60 focus:outline-none"
+            />
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              {[hookSuggestion, ...HOOK_PRESETS.filter((p) => p !== hookSuggestion)].slice(0, 5).map((preset) => (
+                <Chip
+                  key={preset}
+                  label={preset}
+                  on={hookText === preset}
+                  onClick={() => editHook(preset)}
+                  disabled={recording}
+                />
+              ))}
+            </div>
+            <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+              <span className="smallcaps text-[10px] text-parchment-400">Style</span>
+              {CAPTION_STYLES.map((cs) => (
+                <Chip
+                  key={cs.id}
+                  label={cs.label}
+                  on={opts.captionStyle === cs.id}
+                  onClick={() => set("captionStyle", cs.id)}
+                  disabled={recording}
+                />
+              ))}
+              <span className="mx-1 h-4 w-px bg-white/15" aria-hidden />
+              <span className="smallcaps text-[10px] text-parchment-400">Emoji</span>
+              {EMOJI_LEVELS.map((el) => (
+                <Chip
+                  key={el.id}
+                  label={el.label}
+                  on={opts.emojiLevel === el.id}
+                  onClick={() => set("emojiLevel", el.id)}
+                  disabled={recording}
+                />
+              ))}
+            </div>
+
+            <GroupLabel>Sound</GroupLabel>
+            <div className="flex flex-wrap gap-1.5">
+              <Chip label="Game sound" on={opts.sound} onClick={() => set("sound", !opts.sound)} disabled={recording} />
+            </div>
+
+            <GroupLabel>Branding</GroupLabel>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <Chip label="Watermark" on={opts.watermarkOn} onClick={() => set("watermarkOn", !opts.watermarkOn)} disabled={recording} />
+              <input
+                type="text"
+                value={opts.handle}
+                maxLength={40}
+                disabled={recording || !opts.watermarkOn}
+                onChange={(e) => set("handle", e.target.value)}
+                aria-label="Watermark handle"
+                className="min-w-0 flex-1 border border-white/15 bg-white/[0.03] px-2.5 py-1 font-display text-xs text-parchment placeholder:text-parchment-400 focus:border-gold/60 focus:outline-none disabled:opacity-40"
+              />
+              <Chip label="End card" on={opts.endCard} onClick={() => set("endCard", !opts.endCard)} disabled={recording} />
+            </div>
+
+            <div className="mt-4 grid grid-cols-1 gap-2">
               <Button
                 tone={recording ? "ghost" : "leaf"}
                 onClick={record}
@@ -327,10 +629,12 @@ export function ClipModal({
                       aria-hidden
                       className="h-2 w-2 animate-pulse rounded-full bg-oxblood-glow"
                     />
-                    Recording…
+                    {progress !== null
+                      ? `Rendering ${Math.round(progress * 100)}%`
+                      : "Recording..."}
                   </span>
                 ) : !ready ? (
-                  "Loading pieces…"
+                  "Loading..."
                 ) : clip ? (
                   "Re-record"
                 ) : (
@@ -349,15 +653,16 @@ export function ClipModal({
               <div className="mt-3 border border-white/10 bg-white/[0.02] p-3">
                 <div className="flex items-center justify-between gap-2">
                   <span className="smallcaps text-[10px] text-parchment-400">
-                    Clip ready · {(clip.blob.size / 1024).toFixed(0)} KB · webm
+                    Clip ready · {(clip.blob.size / 1024).toFixed(0)} KB · {clip.container} ·
+                    tier {clip.tier}
                   </span>
                 </div>
                 <div className="mt-2 grid grid-cols-2 gap-2">
                   <a
                     href={clip.url}
-                    download="nerfchess-clip.webm"
+                    download={`nerfchess-clip.${clip.container}`}
                     data-clip-download
-                    className="btn-leaf inline-flex min-h-[44px] items-center justify-center gap-2 rounded-sm px-4 py-2 font-display text-sm font-semibold"
+                    className="btn-leaf inline-flex min-h-[44px] items-center justify-center gap-2 rounded-[1px] px-4 py-2 font-display text-sm font-semibold"
                   >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -367,10 +672,7 @@ export function ClipModal({
                     Download
                   </a>
                   {canShare ? (
-                    <Button tone="ghost"
-                     
-                      onClick={share}
-                      className="px-4 py-2 text-sm">
+                    <Button tone="ghost" onClick={share} className="px-4 py-2 text-sm">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                         <circle cx="18" cy="5" r="3" />
                         <circle cx="6" cy="12" r="3" />

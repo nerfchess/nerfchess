@@ -804,3 +804,8 @@ const AMAZON_PATHS: Record<Color, string> = {
   w: amazon("w"),
   b: amazon("b"),
 };
+
+// The clip exporter rasterizes these same silhouettes onto its canvas (with
+// the CSS variables substituted for the resolved theme colors), so a recorded
+// clip shows the player's actual pieces instead of a swapped-in sprite set.
+export const PIECE_PATHS: Readonly<Record<string, string>> = PATHS;

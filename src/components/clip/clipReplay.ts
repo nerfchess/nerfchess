@@ -12,11 +12,24 @@
 
 import { sanLabels } from "@/engine/board";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
+import type { BuffCategory, CardFx } from "@/engine/buff";
 import { boardAtPly, replayBoardSpan } from "@/lib/gameReview";
 import type { BoardState, Move, Piece, Square } from "@/engine/types";
 import { FILE, RANK } from "@/engine/types";
 
 export type ClipPieces = (Piece | null)[];
+
+/** Card metadata attached to a signature-play segment: everything the energy
+ *  renderer needs to pick a scene (motif polarity + category) and scale it
+ *  (tier). Pulled from BUFF_BY_ID at build time so the canvas layer never
+ *  touches the buff library. */
+export interface ClipSigMeta {
+  id: string;
+  name: string;
+  tier: number;
+  category: BuffCategory;
+  motif: CardFx["motif"] | null;
+}
 
 /** A piece that slides from one square to another during a segment. */
 export interface ClipPair {
@@ -48,6 +61,8 @@ export interface ClipSegment {
   statics: { sq: Square; piece: Piece }[];
   /** Card name to splash as a big banner over this segment, when known. */
   sigName: string | null;
+  /** Full card metadata for the energy renderer (null when no card fired). */
+  sig: ClipSigMeta | null;
 }
 
 export interface ClipTimeline {
@@ -104,7 +119,7 @@ function diffSegment(
   ply: number,
   move: Move | null,
   label: string | null,
-  sigName: string | null,
+  sig: ClipSigMeta | null,
 ): ClipSegment {
   const departures = new Map<Square, Piece>();
   const arrivals = new Map<Square, Piece>();
@@ -164,7 +179,8 @@ function diffSegment(
     spawns: [...arrivals].map(([sq, piece]) => ({ sq, piece })),
     vanishes: [...departures].map(([sq, piece]) => ({ sq, piece })),
     statics,
-    sigName,
+    sigName: sig?.name ?? null,
+    sig,
   };
 }
 
@@ -202,10 +218,19 @@ export function buildClipTimeline(opts: BuildClipOptions): ClipTimeline | null {
   if (boards.length < 2) return null;
 
   const labels = sanLabels(moves);
-  const sigNameAt = (afterPly: number, move: Move | null): string | null => {
+  const sigAt = (afterPly: number, move: Move | null): ClipSigMeta | null => {
     const fired = signatureIds?.get(afterPly);
     const id = fired ?? move?.via ?? null;
-    return id ? BUFF_BY_ID[id]?.name ?? null : null;
+    if (!id) return null;
+    const buff = BUFF_BY_ID[id];
+    if (!buff) return null;
+    return {
+      id,
+      name: buff.name,
+      tier: buff.tier,
+      category: buff.category,
+      motif: buff.fx?.motif ?? null,
+    };
   };
 
   const segments: ClipSegment[] = [];
@@ -219,7 +244,7 @@ export function buildClipTimeline(opts: BuildClipOptions): ClipTimeline | null {
         ply,
         move,
         labels[ply] ?? null,
-        sigNameAt(ply + 1, move),
+        sigAt(ply + 1, move),
       ),
     );
   }

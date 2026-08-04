@@ -74,6 +74,7 @@
   "dependencies": {
     "framer-motion": "^11.11.17",
     "lucide-react": "^0.460.0",
+    "mediabunny": "^1.52.3",
     "next": "16.2.12",
     "postgres": "^3.4.9",
     "react": "^18.3.1",
