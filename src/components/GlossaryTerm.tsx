@@ -41,7 +41,7 @@ const EDGE_PAD = 8;
 export function GlossaryTerm({ term, definition }: { term: string; definition: string }) {
   const [open, setOpen] = useState(false);
   const [pinned, setPinned] = useState(false);
-  const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
+  const [pos, setPos] = useState<{ left: number; top: number; maxH: number } | null>(null);
   const id = useId();
   const ref = useRef<HTMLSpanElement>(null);
   const triggerRef = useRef<HTMLSpanElement>(null);
@@ -61,11 +61,22 @@ export function GlossaryTerm({ term, definition }: { term: string; definition: s
     const width = Math.min(POPOVER_W, window.innerWidth - EDGE_PAD * 2);
     // Prefer left-aligned under the term, then pull back inside the viewport.
     const left = Math.min(Math.max(EDGE_PAD, r.left), window.innerWidth - width - EDGE_PAD);
-    // Flip above the term when there is not enough room below it.
+    // The VISUAL viewport, not the layout one: on phones the on-screen
+    // keyboard shrinks visualViewport without firing a window resize, and the
+    // popover must not open underneath it.
+    const viewH = window.visualViewport?.height ?? window.innerHeight;
+    // Flip above the term when there is not enough room below it, and cap the
+    // panel so a long detail+example never overflows a small screen: at most
+    // 60% of the viewport, and never more than the room on the chosen side of
+    // the anchor (the panel scrolls internally past that).
     const h = popRef.current?.offsetHeight ?? 0;
     const below = r.bottom + 4;
-    const top = h && below + h > window.innerHeight - EDGE_PAD ? Math.max(EDGE_PAD, r.top - h - 4) : below;
-    setPos({ left, top });
+    const spaceBelow = viewH - below - EDGE_PAD;
+    const spaceAbove = r.top - 4 - EDGE_PAD;
+    const flip = h > 0 && h > spaceBelow && spaceAbove > spaceBelow;
+    const maxH = Math.max(64, Math.min(viewH * 0.6, flip ? spaceAbove : spaceBelow));
+    const top = flip ? Math.max(EDGE_PAD, r.top - 4 - Math.min(h, maxH)) : below;
+    setPos({ left, top, maxH });
   }, []);
 
   const cancelHold = useCallback(() => {
@@ -110,11 +121,18 @@ export function GlossaryTerm({ term, definition }: { term: string; definition: s
     document.addEventListener("keydown", onKey);
     window.addEventListener("scroll", place, true);
     window.addEventListener("resize", place);
+    // The phone keyboard (and pinch zoom) resizes/pans the VISUAL viewport
+    // without any window resize; re-measure on those too where supported.
+    const vv = window.visualViewport;
+    vv?.addEventListener("resize", place);
+    vv?.addEventListener("scroll", place);
     return () => {
       document.removeEventListener("pointerdown", onDown);
       document.removeEventListener("keydown", onKey);
       window.removeEventListener("scroll", place, true);
       window.removeEventListener("resize", place);
+      vv?.removeEventListener("resize", place);
+      vv?.removeEventListener("scroll", place);
     };
   }, [open, hide, place]);
 
@@ -151,6 +169,10 @@ export function GlossaryTerm({ term, definition }: { term: string; definition: s
         // to compete with the card underneath. Mouse keeps hover + click.
         onPointerDown={(e) => {
           if (e.pointerType === "mouse") return;
+          // A press on the term is the term's alone: inside the draft overlay
+          // the card underneath must not see this pointerdown and start its
+          // own press/drag while the definition is being held open.
+          e.stopPropagation();
           heldOpen.current = false;
           cancelHold();
           holdTimer.current = setTimeout(() => {
@@ -202,8 +224,12 @@ export function GlossaryTerm({ term, definition }: { term: string; definition: s
               left: pos?.left ?? -9999,
               top: pos?.top ?? -9999,
               width: Math.min(POPOVER_W, (typeof window !== "undefined" ? window.innerWidth : 400) - EDGE_PAD * 2),
+              // Capped by place() to the room on the anchor's side of the
+              // viewport (never more than 60% of it): a long detail+example
+              // scrolls inside the panel instead of overflowing a small phone.
+              maxHeight: pos?.maxH,
             }}
-            className="fixed z-[70] block rounded-[1px] border border-white/15 bg-ink-800 px-3 py-2.5 text-left text-[12px] font-body font-normal normal-case leading-snug text-parchment-100 shadow-plate"
+            className="fixed z-[70] block overflow-y-auto overscroll-contain rounded-[1px] border border-white/15 bg-ink-800 px-3 py-2.5 text-left text-[12px] font-body font-normal normal-case leading-snug text-parchment-100 shadow-plate"
           >
             {entry && (
               <span className="block font-display text-[13px] tracking-wide text-parchment">

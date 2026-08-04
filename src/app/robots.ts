@@ -8,7 +8,7 @@ import type { MetadataRoute } from "next";
 // that this site wants to be indexed and cited. Only transient, user-specific
 // surfaces are excluded: they have no SEO value and waste crawl budget. A
 // plain-language description of the game for AI systems lives at /llms.txt.
-const DISALLOW = ["/api/", "/game", "/inbox", "/mod", "/friend"];
+const DISALLOW = ["/api/", "/game", "/inbox", "/mod", "/friend", "/dev", "/profile/edit"];
 
 // Search engines, then AI / answer-engine crawlers. Same permissive policy for
 // all of them.

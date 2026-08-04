@@ -31,7 +31,7 @@ export function generateMetadata({ params }: { params: { id: string } }): Metada
     alternates: { canonical: path },
     robots: buff.implemented ? undefined : { index: false, follow: true },
     openGraph: { title: `${buff.name} · Nerf Chess`, description, url: path, type: "article" },
-    twitter: { card: "summary", title: `${buff.name} · Nerf Chess`, description },
+    twitter: { card: "summary_large_image", title: `${buff.name} · Nerf Chess`, description },
   };
 }
 
