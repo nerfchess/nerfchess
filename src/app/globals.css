@@ -1249,6 +1249,18 @@ html[data-light] .rail-panel {
   position: absolute;
   background: var(--surface-raise);
 }
+/* Native <select> popup lists: several engines paint the option menu with the
+   control's own background, so a translucent control (bg-ink-900/60 and kin)
+   makes an unreadable floating menu. Every option gets solid ink regardless of
+   the control's fill; the light theme restates it as ink-on-paper. */
+select option {
+  background-color: #221f1a;
+  color: #c2bcaf;
+}
+html[data-light] select option {
+  background-color: #ffffff;
+  color: #2b2822;
+}
 /* Explicit "one rung up" surface for modals/dialogs (GameOver, settings) so the
    emotional-peak surfaces sit above the page rather than on the same plane. */
 .plate-raised {
