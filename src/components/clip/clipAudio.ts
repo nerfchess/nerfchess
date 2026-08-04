@@ -90,20 +90,58 @@ function tone(
   osc.stop(at + opts.decay + 0.02);
 }
 
+/** The four sfx voices a viewer can mute independently in the AUDIO panel. */
+export interface ClipVoiceMutes {
+  /** Knocks, captures, and the slow-motion impact. */
+  moves: boolean;
+  /** Card dings and the rule-panel page flip. */
+  cards: boolean;
+  /** The verdict sting and the end-card resolve chord. */
+  verdict: boolean;
+  /** Intro sting, shimmer whooshes, risers, and arrow ticks. */
+  ambience: boolean;
+}
+
+export const NO_MUTES: ClipVoiceMutes = {
+  moves: false,
+  cards: false,
+  verdict: false,
+  ambience: false,
+};
+
+/** Which mute switch owns each event kind. */
+const VOICE_OF: Record<ClipAudioEvent["kind"], keyof ClipVoiceMutes> = {
+  move: "moves",
+  capture: "moves",
+  impact: "moves",
+  card: "cards",
+  flip: "cards",
+  verdict: "verdict",
+  outro: "verdict",
+  intro: "ambience",
+  shimmer: "ambience",
+  riser: "ambience",
+  tick: "ambience",
+};
+
 /** Schedule every event into `ctx` starting at context time `t0`. Shared by
- *  the offline and live paths, so both produce the same soundtrack. */
+ *  the offline and live paths, so both produce the same soundtrack. `volume`
+ *  scales the sfx master; `mutes` drops whole voices from the schedule. */
 function scheduleEvents(
   ctx: BaseAudioContext,
   dest: AudioNode,
   events: ClipAudioEvent[],
   t0: number,
+  volume = 1,
+  mutes: ClipVoiceMutes = NO_MUTES,
 ): void {
   const noise = noiseBuffer(ctx);
   const master = ctx.createGain();
-  master.gain.value = MASTER_GAIN;
+  master.gain.value = MASTER_GAIN * Math.max(0, Math.min(1, volume));
   master.connect(dest);
 
   for (const ev of events) {
+    if (mutes[VOICE_OF[ev.kind]]) continue;
     const at = t0 + ev.t / 1000;
     switch (ev.kind) {
       case "move":
@@ -218,6 +256,10 @@ function scheduleEvents(
 export interface ClipAudioOptions {
   /** Schedule the sfx voices (default true). */
   sfx?: boolean;
+  /** 0..1 sfx master level, independent of the music volume (default 1). */
+  sfxVolume?: number;
+  /** Per-voice mutes for the sfx layer. */
+  mutes?: ClipVoiceMutes;
   /** Backing music selection, or null/undefined for none. */
   music?: ClipMusicSelection | null;
 }
@@ -232,9 +274,48 @@ export async function renderClipAudio(
   if (typeof OfflineAudioContext === "undefined") return null;
   const frames = Math.max(1, Math.ceil((durationMs / 1000) * SAMPLE_RATE));
   const ctx = new OfflineAudioContext(2, frames, SAMPLE_RATE);
-  if (opts.sfx !== false) scheduleEvents(ctx, ctx.destination, events, 0);
+  if (opts.sfx !== false) {
+    scheduleEvents(ctx, ctx.destination, events, 0, opts.sfxVolume ?? 1, opts.mutes ?? NO_MUTES);
+  }
   if (opts.music) scheduleClipMusic(ctx, ctx.destination, opts.music, events, durationMs, 0);
   return ctx.startRendering();
+}
+
+// --- Preview monitor ---------------------------------------------------------
+
+/** One lazily created AudioContext for the studio's preview monitor; reused
+ *  across plays so browsers don't accumulate contexts. */
+let monitorCtx: AudioContext | null = null;
+
+/** Play the sfx schedule out loud from `fromMs`, for the studio preview's
+ *  unmuted transport. SFX only by design: the full mix (music bed, ducking)
+ *  lives in the export; the monitor is for checking hit timing. Returns a
+ *  handle whose stop() silences the run immediately. */
+export function playPreviewSfx(
+  events: ClipAudioEvent[],
+  fromMs: number,
+  opts: { volume?: number; mutes?: ClipVoiceMutes } = {},
+): { stop: () => void } | null {
+  if (typeof AudioContext === "undefined") return null;
+  try {
+    monitorCtx ??= new AudioContext();
+    const ctx = monitorCtx;
+    void ctx.resume();
+    const bus = ctx.createGain();
+    bus.connect(ctx.destination);
+    const upcoming = events
+      .filter((e) => e.t >= fromMs - 15)
+      .map((e) => ({ ...e, t: e.t - fromMs }));
+    scheduleEvents(ctx, bus, upcoming, ctx.currentTime + 0.04, opts.volume ?? 1, opts.mutes ?? NO_MUTES);
+    return {
+      stop: () => {
+        bus.gain.value = 0;
+        bus.disconnect();
+      },
+    };
+  } catch {
+    return null;
+  }
 }
 
 export interface LiveClipAudio {
@@ -261,7 +342,9 @@ export function startLiveClipAudio(
       start: () => {
         void ctx.resume();
         const t0 = ctx.currentTime + 0.05;
-        if (opts.sfx !== false) scheduleEvents(ctx, dest, events, t0);
+        if (opts.sfx !== false) {
+          scheduleEvents(ctx, dest, events, t0, opts.sfxVolume ?? 1, opts.mutes ?? NO_MUTES);
+        }
         if (opts.music) scheduleClipMusic(ctx, dest, opts.music, events, durationMs, t0);
       },
       stop: () => {

@@ -31,7 +31,18 @@ export type GradeId =
   | "vintage"
   | "emerald"
   | "infrared"
-  | "bleach";
+  | "bleach"
+  /** The custom duotone built from the two hex wells in the GRADE panel. */
+  | "duotone";
+export type CaptionColorSource = "auto" | "accent" | "white" | "custom";
+export type CaptionSizeId = "s" | "m" | "l";
+export type CaptionPosId = "low" | "mid" | "high";
+export type StampRotationId = "off" | "subtle" | "rowdy";
+export type ZoomBiasId = "action" | "center";
+export type PunchTimingId = "impact" | "beat";
+export type ArrowColorSource = "palette" | "site" | "white";
+export type RulePanelSide = "auto" | "left" | "right";
+export type RuleHoldBias = "quick" | "comfy" | "slow";
 export type ParticleFieldId =
   | "embers"
   | "snow"
@@ -73,11 +84,48 @@ export interface ClipStyle {
   flameTrail: boolean;
   scoreBug: boolean;
   watermarkCorner: WatermarkCorner;
+  /** Caption ink source: Auto samples the reel palette, Accent forces the
+   *  palette accent, White is plain paper, Custom uses captionHex. */
+  captionColor: CaptionColorSource;
+  /** Custom caption hex, used only when captionColor === "custom". */
+  captionHex: string;
+  captionSize: CaptionSizeId;
+  /** Pop-caption vertical parking inside the platform-safe band. */
+  captionPos: CaptionPosId;
+  /** How far off-axis stamps and callouts print. */
+  stampRotation: StampRotationId;
+  /** Punch-in aim: the action square, or the board center. */
+  zoomBias: ZoomBiasId;
+  /** Punch-in trigger: on the landing impact, or on the ply's opening beat. */
+  punchTiming: PunchTimingId;
+  /** 0..100 glitch burst violence. */
+  glitchAmount: number;
+  /** 0..100 bloom swell strength. */
+  bloomAmount: number;
+  /** 0..100 ambient particle field density. */
+  particleDensity: number;
+  /** 0..100 grade strength (100 = the full tint stack). */
+  gradeStrength: number;
+  /** Duotone builder shadows hex. */
+  duotoneA: string;
+  /** Duotone builder highlights hex. */
+  duotoneB: string;
+  /** 0..100 watermark ink opacity. */
+  watermarkOpacity: number;
+  /** Explainer arrow ink: reel palette accent, the site accent, or paper. */
+  arrowColor: ArrowColorSource;
+  /** Which side the card rule panel slides in from. */
+  ruleSide: RulePanelSide;
+  /** How long rule panels hold relative to the read-speed estimate. */
+  ruleHold: RuleHoldBias;
   /** Deterministic seed for glitch slices, pixel dissolves, confetti, and the
    *  Surprise-me shuffle. Incremented per Surprise tap. */
   seed: number;
 }
 
+// The default is the restraint dial's resting point: editorial and confident,
+// not maximal. Shake sits at subtle, glitch and bloom at moderate amounts;
+// Brainrot Max exists for the other end of the dial.
 export const STYLE_DEFAULTS: ClipStyle = {
   zoom: "punchy",
   followCam: false,
@@ -85,7 +133,7 @@ export const STYLE_DEFAULTS: ClipStyle = {
   payoffDolly: false,
   tiltSway: false,
   grade: "none",
-  shake: "heavy",
+  shake: "subtle",
   chromatic: "impacts",
   grain: "fine",
   letterbox: false,
@@ -104,6 +152,23 @@ export const STYLE_DEFAULTS: ClipStyle = {
   flameTrail: true,
   scoreBug: false,
   watermarkCorner: "br",
+  captionColor: "auto",
+  captionHex: "#e6b52e",
+  captionSize: "m",
+  captionPos: "low",
+  stampRotation: "subtle",
+  zoomBias: "action",
+  punchTiming: "impact",
+  glitchAmount: 55,
+  bloomAmount: 55,
+  particleDensity: 50,
+  gradeStrength: 100,
+  duotoneA: "#1c1408",
+  duotoneB: "#e6b52e",
+  watermarkOpacity: 50,
+  arrowColor: "palette",
+  ruleSide: "auto",
+  ruleHold: "comfy",
   seed: 0,
 };
 
@@ -162,6 +227,7 @@ export const STYLE_PRESETS: StylePreset[] = [
       transition: "pixel",
       particles: "sparks",
       glitch: true,
+      glitchAmount: 80,
       scoreBug: true,
       flameTrail: true,
     },
@@ -201,9 +267,12 @@ export const STYLE_PRESETS: StylePreset[] = [
       chromatic: "always",
       grain: "gritty",
       glitch: true,
+      glitchAmount: 100,
       bloom: true,
+      bloomAmount: 90,
       invertFlash: true,
       particles: "matrix",
+      particleDensity: 85,
       confetti: true,
       speed: 1.25,
       slowmo: "ultra",
@@ -211,6 +280,7 @@ export const STYLE_PRESETS: StylePreset[] = [
       stutter: true,
       transition: "whip",
       verdictStamps: true,
+      stampRotation: "rowdy",
       flameTrail: true,
       scoreBug: true,
     },
@@ -275,8 +345,91 @@ export function surpriseStyle(tap: number): ClipStyle {
   if (rng() < 0.4) s.stutter = !s.stutter;
   if (rng() < 0.4) s.captureFreeze = !s.captureFreeze;
   if (rng() < 0.3) s.tiltSway = !s.tiltSway;
+  // The dials get seeded settings too, biased toward the mid range.
+  s.glitchAmount = Math.round(35 + rng() * 60);
+  s.bloomAmount = Math.round(30 + rng() * 60);
+  s.particleDensity = Math.round(30 + rng() * 55);
+  s.gradeStrength = Math.round(65 + rng() * 35);
+  s.stampRotation = pick(["off", "subtle", "subtle", "rowdy"] as const);
+  s.zoomBias = rng() < 0.8 ? "action" : "center";
+  s.punchTiming = rng() < 0.75 ? "impact" : "beat";
   s.seed = tap;
   return s;
+}
+
+// --- Reel palettes -----------------------------------------------------------
+//
+// ONE cohesive palette per reel, derived from the grade plus the site's ink
+// language. Every overlay (captions, stamps, callouts, rule panel, end card)
+// pulls from these same four inks, so a graded reel never has each element
+// picking its own color.
+
+export interface ReelPalette {
+  /** Light foreground: the reel's paper. */
+  paper: string;
+  /** The reel's accent: highlights, arrows, ticks, hot caption words. */
+  accent: string;
+  /** Alarm ink: captures, "??" verdicts, the misprint registration pass. */
+  hot: string;
+  /** Muted secondary text. */
+  dim: string;
+}
+
+const GRADE_PALETTES: Record<Exclude<GradeId, "none" | "duotone">, ReelPalette> = {
+  noir: { paper: "#f0ede6", accent: "#d8d3c8", hot: "#c94848", dim: "#8f8b82" },
+  vaporwave: { paper: "#f9edff", accent: "#ff7ae0", hot: "#4de0ff", dim: "#b39ac6" },
+  cyberpunk: { paper: "#e8f6ff", accent: "#ff3d9e", hot: "#35dcff", dim: "#7f9aa8" },
+  vintage: { paper: "#f2e4c8", accent: "#cf9448", hot: "#a34e32", dim: "#a08c6a" },
+  emerald: { paper: "#eaf5ed", accent: "#63cf8f", hot: "#ffd76a", dim: "#7fa78c" },
+  infrared: { paper: "#ffeae4", accent: "#ff6a50", hot: "#ffd0c0", dim: "#b07f74" },
+  bleach: { paper: "#f4f1ea", accent: "#cbc0a6", hot: "#d4574a", dim: "#9a948a" },
+};
+
+/** Mix a hex toward white by `k` (0..1). Used to derive the duotone paper. */
+function towardPaper(hex: string, k: number): string {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+  if (!m) return "#ece7dd";
+  const n = parseInt(m[1], 16);
+  const ch = (v: number) => Math.round(v + (245 - v) * k);
+  const r = ch((n >> 16) & 255);
+  const g = ch((n >> 8) & 255);
+  const b = ch(n & 255);
+  return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, "0")}`;
+}
+
+/** The reel's palette for a grade. `siteAccent` anchors the ungraded reel to
+ *  the site's own accent; the duotone palette is derived from its two wells. */
+export function reelPalette(grade: GradeId, siteAccent: string, duotoneB: string): ReelPalette {
+  if (grade === "none") {
+    return { paper: "#ece7dd", accent: siteAccent, hot: "#e05252", dim: "#a7a297" };
+  }
+  if (grade === "duotone") {
+    return {
+      paper: towardPaper(duotoneB, 0.65),
+      accent: duotoneB,
+      hot: towardPaper(duotoneB, 0.2),
+      dim: towardPaper(duotoneB, 0.35),
+    };
+  }
+  return GRADE_PALETTES[grade];
+}
+
+/** Three sampled swatch colors for a grade, used by the preset chips and the
+ *  GRADE panel so styles are scannable at a glance. */
+export function gradeSwatch(
+  grade: GradeId,
+  siteAccent: string,
+  duotoneA: string,
+  duotoneB: string,
+): [string, string, string] {
+  if (grade === "duotone") return [duotoneA, duotoneB, towardPaper(duotoneB, 0.55)];
+  const p = reelPalette(grade, siteAccent, duotoneB);
+  const DEEP: Record<GradeId, string> = {
+    none: "#201c17", noir: "#101010", vaporwave: "#2a1030", cyberpunk: "#0c2f3a",
+    vintage: "#241c10", emerald: "#0a2214", infrared: "#2e0d08", bleach: "#2a261f",
+    duotone: duotoneA,
+  };
+  return [DEEP[grade], p.accent, p.paper];
 }
 
 // --- Color grades ------------------------------------------------------------
@@ -324,7 +477,7 @@ const VIGNETTE: PassSpec = {
   ],
 };
 
-const GRADES: Record<Exclude<GradeId, "none">, PassSpec[]> = {
+const GRADES: Record<Exclude<GradeId, "none" | "duotone">, PassSpec[]> = {
   noir: [
     { op: "saturation", alpha: 1, kind: "fill", color: "#7d7d7d" },
     { ...VIGNETTE, alpha: 0.85 },
@@ -518,26 +671,46 @@ function compilePass(spec: PassSpec, W: number, H: number): CompiledPass {
   return base;
 }
 
-/** Composite the grade over the finished frame. Pure function of (grade, t);
- *  the layers are cached per (grade, W, H). */
+/** The custom duotone: desaturate, tint highlights toward B, lift shadows
+ *  toward A. Cheap blend-mode composites like every built-in grade. */
+function duotonePasses(a: string, b: string): PassSpec[] {
+  return [
+    { op: "saturation", alpha: 1, kind: "fill", color: "#7d7d7d" },
+    { op: "multiply", alpha: 0.88, kind: "fill", color: b },
+    { op: "lighten", alpha: 0.8, kind: "fill", color: a },
+    { ...VIGNETTE, alpha: 0.35 },
+  ];
+}
+
+/** Composite the grade over the finished frame. Pure function of
+ *  (grade, t, strength, duotone wells); the layers are cached per config.
+ *  `strength` (0..1) scales every pass alpha, blending toward the ungraded
+ *  frame; the duotone grade compiles its passes from the two hex wells. */
 export function applyGrade(
   ctx: CanvasRenderingContext2D,
   grade: GradeId,
   W: number,
   H: number,
   t: number,
+  strength = 1,
+  duotone?: { a: string; b: string },
 ): void {
-  if (grade === "none") return;
-  const key = `${grade}:${W}x${H}`;
+  if (grade === "none" || strength <= 0.005) return;
+  const duoKey = grade === "duotone" ? `:${duotone?.a}:${duotone?.b}` : "";
+  const key = `${grade}:${W}x${H}${duoKey}`;
   let passes = gradeCache.get(key);
   if (!passes) {
-    passes = GRADES[grade].map((spec) => compilePass(spec, W, H));
+    const specs =
+      grade === "duotone"
+        ? duotonePasses(duotone?.a ?? "#1c1408", duotone?.b ?? "#e6b52e")
+        : GRADES[grade];
+    passes = specs.map((spec) => compilePass(spec, W, H));
     gradeCache.set(key, passes);
   }
   for (const p of passes) {
     ctx.save();
     ctx.globalCompositeOperation = p.op;
-    ctx.globalAlpha = p.alpha * (1 + p.flicker * Math.sin(t * 0.017));
+    ctx.globalAlpha = Math.min(1, p.alpha * strength * (1 + p.flicker * Math.sin(t * 0.017)));
     if (p.layer) {
       ctx.drawImage(p.layer, 0, 0);
     } else if (p.color) {
@@ -589,9 +762,10 @@ function specks(kind: string, W: number, H: number, seed: number, n: number): Sp
   return out;
 }
 
-/** Speck count scaled by frame area so classic stays sparse. */
+/** Speck count scaled by frame area (so classic stays sparse) and by the
+ *  density knob paintParticleField set for this pass. */
 function countFor(base: number, W: number, H: number): number {
-  return Math.max(6, Math.round(base * Math.min(1, (W * H) / 2073600)));
+  return Math.max(4, Math.round(base * densityMult * Math.min(1, (W * H) / 2073600)));
 }
 
 type FieldPainter = (
@@ -699,7 +873,13 @@ const FIELD_PAINTERS: Record<Exclude<ParticleFieldId, "off">, FieldPainter> = {
   },
 };
 
-/** Draw the ambient field for this frame (background layer, under the board). */
+/** Density multiplier applied inside countFor. Module-level (not threaded
+ *  through every painter) because the painters share countFor; set per call
+ *  by paintParticleField, and the speck cache keys on the resulting count. */
+let densityMult = 1;
+
+/** Draw the ambient field for this frame (background layer, under the board).
+ *  `density` is the 0..100 knob; 50 keeps the classic counts. */
 export function paintParticleField(
   ctx: CanvasRenderingContext2D,
   kind: ParticleFieldId,
@@ -708,9 +888,12 @@ export function paintParticleField(
   H: number,
   seed: number,
   accent: string,
+  density = 50,
 ): void {
   if (kind === "off") return;
+  densityMult = 0.25 + (Math.max(0, Math.min(100, density)) / 100) * 1.5;
   FIELD_PAINTERS[kind](ctx, t, W, H, seed, accent);
+  densityMult = 1;
 }
 
 // --- Ply transitions ---------------------------------------------------------
@@ -822,7 +1005,8 @@ export function paintLetterbox(
 
 /** Seeded slice-offset glitch burst around a capture landing. te: the landing
  *  time; active for ~110ms (3 frames at 30fps). Self-blits the current frame,
- *  so call it AFTER the grade pass. */
+ *  so call it AFTER the grade pass. `amount` is the 0..1 violence dial:
+ *  it scales the slice count, the shear distance, and the interference bars. */
 export function paintGlitch(
   ctx: CanvasRenderingContext2D,
   W: number,
@@ -830,21 +1014,23 @@ export function paintGlitch(
   t: number,
   te: number,
   seed: number,
+  amount = 0.55,
 ): void {
-  if (t < te || t > te + 110) return;
+  if (t < te || t > te + 110 || amount <= 0.01) return;
   const q = 1 - (t - te) / 110;
   const frame = Math.floor((t - te) / 33);
   const rng = mulberry32((seed ^ Math.imul(te | 0, 2654435761) ^ frame) >>> 0);
+  const slices = Math.max(2, Math.round(2 + amount * 5));
   ctx.save();
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < slices; i++) {
     const sy = Math.floor(rng() * H);
     const h = Math.floor(8 + rng() * H * 0.05);
-    const dx = Math.round((rng() - 0.5) * W * 0.07 * q);
+    const dx = Math.round((rng() - 0.5) * W * (0.03 + 0.09 * amount) * q);
     if (dx !== 0) ctx.drawImage(ctx.canvas, 0, sy, W, h, dx, sy, W, h);
   }
   // Two hot interference bars.
   ctx.globalCompositeOperation = "lighter";
-  ctx.globalAlpha = 0.12 * q;
+  ctx.globalAlpha = (0.05 + 0.13 * amount) * q;
   ctx.fillStyle = "#ff4d6a";
   ctx.fillRect(0, rng() * H, W, 2 + rng() * 3);
   ctx.fillStyle = "#4dd8ff";

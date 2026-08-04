@@ -1,0 +1,67 @@
+"use client";
+
+// TEXT: the hook line, caption behavior, and the burned-type dials. Caption
+// ink source (auto from grade / accent / white / custom hex), size, vertical
+// parking, and the stamp rotation dial.
+
+import {
+  CAPTION_COLOR_OPTIONS,
+  CAPTION_POS_OPTIONS,
+  CAPTION_SIZE_OPTIONS,
+  CAPTION_STYLES,
+  EMOJI_LEVELS,
+  HOOK_PRESETS,
+  STAMP_ROT_OPTIONS,
+} from "../../clipOptions";
+import { Chip, ChoiceRow, HexWell, Row, type Studio } from "../controls";
+
+export function TextPanel({ studio }: { studio: Studio }) {
+  const { opts, set, setStyle, locked, hookText, hookSuggestion, editHook } = studio;
+  const s = opts.style;
+  return (
+    <div className="clip-panel">
+      <div className="clip-row">
+        <span className="clip-row-label">Hook</span>
+        <input
+          type="text"
+          value={hookText}
+          maxLength={80}
+          disabled={locked}
+          onChange={(e) => editHook(e.target.value)}
+          aria-label="Hook caption"
+          placeholder="Hook text burned at the top"
+          className="clip-input font-display"
+        />
+      </div>
+      <Row label="Presets">
+        {[hookSuggestion, ...HOOK_PRESETS.filter((p) => p !== hookSuggestion)]
+          .slice(0, 4)
+          .map((preset) => (
+            <Chip
+              key={preset}
+              label={preset}
+              on={hookText === preset}
+              onClick={() => editHook(preset)}
+              disabled={locked}
+            />
+          ))}
+      </Row>
+      <ChoiceRow label="Captions" options={CAPTION_STYLES} value={opts.captionStyle} onPick={(v) => set("captionStyle", v)} disabled={locked} />
+      <ChoiceRow label="Ink" options={CAPTION_COLOR_OPTIONS} value={s.captionColor} onPick={(v) => setStyle({ captionColor: v })} disabled={locked || opts.captionStyle === "off"} />
+      {s.captionColor === "custom" && (
+        <Row label="Hex">
+          <HexWell
+            label="Caption hex"
+            value={s.captionHex}
+            onCommit={(hex) => setStyle({ captionHex: hex })}
+            disabled={locked}
+          />
+        </Row>
+      )}
+      <ChoiceRow label="Size" options={CAPTION_SIZE_OPTIONS} value={s.captionSize} onPick={(v) => setStyle({ captionSize: v })} disabled={locked || opts.captionStyle === "off"} />
+      <ChoiceRow label="Park" options={CAPTION_POS_OPTIONS} value={s.captionPos} onPick={(v) => setStyle({ captionPos: v })} disabled={locked || opts.captionStyle === "off"} />
+      <ChoiceRow label="Rotation" options={STAMP_ROT_OPTIONS} value={s.stampRotation} onPick={(v) => setStyle({ stampRotation: v })} disabled={locked} />
+      <ChoiceRow label="Emoji" options={EMOJI_LEVELS} value={opts.emojiLevel} onPick={(v) => set("emojiLevel", v)} disabled={locked} />
+    </div>
+  );
+}

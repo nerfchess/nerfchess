@@ -1,17 +1,22 @@
 "use client";
 
-// Clip sharing modal: an INSTANT reel machine. Opening it starts producing the
-// finished clip immediately with TikTok defaults - the auto-director picks the
-// best payoff window (highest-tier card in the recent plies, else the biggest
-// capture swing, else the final plies), the deterministic canvas scene
-// (clipScene.ts) starts playing the composed reel at once, and the offline
-// Tier 1 encode (clipEncoder.ts: WebCodecs + mediabunny) kicks off in the
-// background with a progress readout. When it lands, the primary UI is a big
-// Save + Share pair; every setting lives in a collapsed "Adjust" fold, and
-// changing anything discards the take and re-renders automatically
-// (debounced). Browsers without WebCodecs fall back to the realtime
-// MediaRecorder path behind an explicit Record / Re-record button; the rest is
-// an honest "unsupported". No backend involved.
+// THE STUDIO: the clip modal rebuilt as a recording panel. Three zones:
+//
+//   VIEWPORT  the preview canvas in editor chrome (REC strip, resolution
+//             readout, live mono timecode, viewfinder brackets, transport).
+//   TIMELINE  a film-strip scrubber over the whole reel: one cell per ply,
+//             capture tint, card ticks, payoff bracket, draggable playhead.
+//   DECK      the control surface: preset swatches pinned over a smallcaps
+//             tab rail (STYLE / CAM / FX / PACE / GRADE / TEXT / AUDIO /
+//             EXPLAIN / BRAND / FORMAT), dense label-left rows below.
+//
+// The instant-reel machinery is unchanged underneath: opening the modal
+// starts the offline Tier 1 encode immediately; every config change discards
+// the take and re-renders on a 450ms debounce. Transport state (play, pause,
+// scrub) lives entirely in refs and the renderer handle, so seeking and
+// pausing can NEVER trigger a re-encode. Browsers without WebCodecs get the
+// realtime Tier 2 recorder behind an explicit Record button; the rest get an
+// honest "unsupported".
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { BoardState, Color, Move } from "@/engine/types";
@@ -30,11 +35,8 @@ import {
   buildClipScene,
   clipLayout,
   loadClipPieceImages,
-  type CaptionStyle,
-  type ClipAspect,
   type ClipScene,
   type ClipVerdict,
-  type EmojiLevel,
   type PieceImageSource,
 } from "./clipScene";
 import {
@@ -44,134 +46,24 @@ import {
   recordClipRealtime,
   type EncodeSupport,
 } from "./clipEncoder";
+import { playPreviewSfx, type ClipAudioOptions } from "./clipAudio";
+import { type ClipCustomMusic, type ClipMusicSelection } from "./clipMusic";
+import { STYLE_DEFAULTS, surpriseStyle, type ClipStyle, type StylePreset } from "./clipStyles";
 import {
-  DEFAULT_MUSIC_TRACK,
-  DEFAULT_MUSIC_VOLUME,
-  MUSIC_TRACKS,
-  type ClipCustomMusic,
-  type ClipMusicSelection,
-  type MusicTrackId,
-} from "./clipMusic";
-import {
-  STYLE_DEFAULTS,
-  STYLE_PRESETS,
-  surpriseStyle,
-  type ClipStyle,
-  type StylePreset,
-} from "./clipStyles";
-import { ClipRenderer, type ClipRendererHandle } from "./ClipRenderer";
+  HOOK_PRESETS,
+  TIKTOK_MODE,
+  type ClipOptionsState,
+  type PliesChoice,
+} from "./clipOptions";
+import { type ClipRendererHandle } from "./ClipRenderer";
+import { Viewport, formatClipTime } from "./studio/Viewport";
+import { Timeline } from "./studio/Timeline";
+import { Deck } from "./studio/Deck";
+import type { Studio } from "./studio/controls";
 import { useModalChrome } from "@/lib/useModalChrome";
+import { useReducedMotion } from "@/lib/useReducedMotion";
 import { Button } from "@/components/ui/Button";
-
-type PliesChoice = "auto" | 4 | 6 | 10;
-const LENGTH_OPTIONS: PliesChoice[] = ["auto", 4, 6, 10];
-const ASPECTS: { id: ClipAspect; label: string }[] = [
-  { id: "tiktok", label: "9:16" },
-  { id: "square", label: "1:1" },
-  { id: "youtube", label: "16:9" },
-  { id: "classic", label: "Classic" },
-];
-const CAPTION_STYLES: { id: CaptionStyle; label: string }[] = [
-  { id: "pop", label: "Word pop" },
-  { id: "static", label: "Static" },
-  { id: "off", label: "Off" },
-];
-const EMOJI_LEVELS: { id: EmojiLevel; label: string }[] = [
-  { id: "off", label: "Off" },
-  { id: "tasteful", label: "Tasteful" },
-  { id: "brainrot", label: "Brainrot" },
-];
-const HOOK_PRESETS = [
-  "Wait for the last move",
-  "He never saw it coming",
-  "This card should be illegal",
-  "Chess but with cards",
-];
-const GRADE_OPTIONS = [
-  ["none", "None"], ["noir", "Noir"], ["vaporwave", "Vaporwave"],
-  ["cyberpunk", "Cyberpunk"], ["vintage", "Vintage"], ["emerald", "Emerald"],
-  ["infrared", "Infrared"], ["bleach", "Bleach"],
-] as const;
-const PARTICLE_OPTIONS = [
-  ["embers", "Embers"], ["snow", "Snow"], ["rain", "Rain"], ["sparks", "Sparks"],
-  ["matrix", "Matrix"], ["bubbles", "Bubbles"], ["off", "Off"],
-] as const;
-const TRANSITION_OPTIONS = [
-  ["shimmer", "Shimmer"], ["whip", "Whip-pan"], ["flash", "Flash cut"],
-  ["spin", "Spin"], ["pixel", "Pixel dissolve"], ["none", "None"],
-] as const;
-const SPEED_OPTIONS = [
-  [0.75, "0.75x"], [1, "1x"], [1.25, "1.25x"], [1.5, "1.5x"],
-] as const;
-const ZOOM_OPTIONS = [
-  ["off", "Off"], ["subtle", "Subtle"], ["punchy", "Punchy"], ["extreme", "Extreme"],
-] as const;
-const DRIFT_OPTIONS = [
-  ["off", "Off"], ["gentle", "Gentle"], ["cinematic", "Cinematic"],
-] as const;
-const SHAKE_OPTIONS = [
-  ["off", "Off"], ["subtle", "Subtle"], ["heavy", "Heavy"],
-] as const;
-const CHROMATIC_OPTIONS = [
-  ["off", "Off"], ["impacts", "Impacts"], ["always", "Always"],
-] as const;
-const GRAIN_OPTIONS = [
-  ["off", "Off"], ["fine", "Fine"], ["gritty", "Gritty"],
-] as const;
-const SLOWMO_OPTIONS = [
-  ["off", "Off"], ["classic", "Classic"], ["ultra", "Ultra"],
-] as const;
-const CORNER_OPTIONS = [
-  ["tl", "TL"], ["tr", "TR"], ["bl", "BL"], ["br", "BR"],
-] as const;
-
-interface ClipOptionsState {
-  aspect: ClipAspect;
-  speedRamp: boolean;
-  freezeStamp: boolean;
-  momentumBar: boolean;
-  moveCounter: boolean;
-  captionStyle: CaptionStyle;
-  emojiLevel: EmojiLevel;
-  sound: boolean;
-  musicOn: boolean;
-  musicTrack: MusicTrackId;
-  /** 0..1 music bed volume. */
-  musicVolume: number;
-  explainArrows: boolean;
-  explainRules: boolean;
-  explainCallouts: boolean;
-  watermarkOn: boolean;
-  handle: string;
-  endCard: boolean;
-  /** End-card call-to-action line. */
-  ctaText: string;
-  /** The wave-2 style pack (camera, look, fx, pace, cuts, stamps). */
-  style: ClipStyle;
-}
-
-// "TikTok mode": the default preset, everything on.
-const TIKTOK_MODE: ClipOptionsState = {
-  aspect: "tiktok",
-  speedRamp: true,
-  freezeStamp: true,
-  momentumBar: true,
-  moveCounter: true,
-  captionStyle: "pop",
-  emojiLevel: "tasteful",
-  sound: true,
-  musicOn: true,
-  musicTrack: DEFAULT_MUSIC_TRACK,
-  musicVolume: DEFAULT_MUSIC_VOLUME,
-  explainArrows: true,
-  explainRules: true,
-  explainCallouts: true,
-  watermarkOn: true,
-  handle: "nerfchess.com",
-  endCard: true,
-  ctaText: "nerfchess.com",
-  style: STYLE_DEFAULTS,
-};
+import "./clipStudio.css";
 
 interface Props {
   open: boolean;
@@ -187,80 +79,9 @@ interface Props {
   result?: GameResult | null;
 }
 
-/** Small square-dot toggle built on the sanctioned Button primitive. */
-function Chip({
-  label,
-  on,
-  onClick,
-  disabled,
-}: {
-  label: string;
-  on: boolean;
-  onClick: () => void;
-  disabled?: boolean;
-}) {
-  return (
-    <Button
-      tone="ghost"
-      size="xs"
-      onClick={onClick}
-      disabled={disabled}
-      aria-pressed={on}
-      className={on ? "text-gold-leaf" : "text-parchment-300"}
-    >
-      <span
-        aria-hidden
-        className={"h-1.5 w-1.5 shrink-0 " + (on ? "bg-gold-leaf" : "bg-white/25")}
-      />
-      {label}
-    </Button>
-  );
-}
-
-function GroupLabel({ children }: { children: React.ReactNode }) {
-  return <p className="smallcaps mb-1 mt-3 text-[10px] text-parchment-400">{children}</p>;
-}
-
-/** One labeled row of mutually exclusive chips. */
-function ChoiceRow<T extends string | number>({
-  label,
-  options,
-  value,
-  onPick,
-  disabled,
-}: {
-  label: string;
-  options: readonly (readonly [T, string])[];
-  value: T;
-  onPick: (v: T) => void;
-  disabled?: boolean;
-}) {
-  return (
-    <div className="mt-1 flex flex-wrap items-center gap-1.5" role="group" aria-label={label}>
-      <span className="smallcaps w-16 shrink-0 text-[10px] text-parchment-400">{label}</span>
-      {options.map(([id, lab]) => (
-        <Chip
-          key={String(id)}
-          label={lab}
-          on={value === id}
-          onClick={() => onPick(id)}
-          disabled={disabled}
-        />
-      ))}
-    </div>
-  );
-}
-
-/** Collapsible sub-group inside the Adjust fold. */
-function SubGroup({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <details className="mt-2 border border-white/10 bg-white/[0.02]">
-      <summary className="smallcaps cursor-pointer list-none px-2.5 py-2 text-[10px] text-parchment-300 outline-none focus-visible:text-gold-leaf [&::-webkit-details-marker]:hidden">
-        {title}
-      </summary>
-      <div className="px-2.5 pb-2.5">{children}</div>
-    </details>
-  );
+function sizeLabel(bytes: number): string {
+  if (bytes >= 1_000_000) return `${(bytes / 1_000_000).toFixed(1)} MB`;
+  return `${Math.max(1, Math.round(bytes / 1024))} KB`;
 }
 
 export function ClipModal({
@@ -275,7 +96,8 @@ export function ClipModal({
   result,
 }: Props) {
   const chrome = useModalChrome(open, onClose);
-  const [pliesChoice, setPliesChoice] = useState<PliesChoice>("auto");
+  const reduced = useReducedMotion();
+  const [pliesChoice, setPliesChoiceState] = useState<PliesChoice>("auto");
   const [opts, setOpts] = useState<ClipOptionsState>(TIKTOK_MODE);
   // Which style preset the current knobs came from (null: hand-tuned), and
   // the Surprise-me tap counter (each tap is a fresh deterministic shuffle).
@@ -304,6 +126,24 @@ export function ClipModal({
   // render is in flight (the encoder polls it between frames).
   const encodeRunRef = useRef(0);
 
+  // --- Transport state: refs + tiny UI mirrors, NEVER config state ----------
+  const [playing, setPlaying] = useState(true);
+  const playingRef = useRef(true);
+  const [loopOn, setLoopOn] = useState(true);
+  const [muted, setMuted] = useState(true);
+  const wasPlayingRef = useRef(false);
+  const monitorRef = useRef<{ stop: () => void } | null>(null);
+  const tickTargets = useRef<Record<string, HTMLElement | null>>({});
+  const sceneRef = useRef<ClipScene | null>(null);
+  const optsRef = useRef(opts);
+  const mutedRef = useRef(muted);
+  useEffect(() => {
+    optsRef.current = opts;
+  }, [opts]);
+  useEffect(() => {
+    mutedRef.current = muted;
+  }, [muted]);
+
   // Board colors and piece sprites follow the player's settings so the clip
   // looks like THEIR board: custom board hexes come through boardColors, and
   // inline piece themes (plus custom piece colors) rasterize the site's own
@@ -330,10 +170,15 @@ export function ClipModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  // Fonts and accent resolved once from the document's CSS variables.
+  // Fonts and accent resolved once from the document's CSS variables. Three
+  // voices reach the frame: display slams, body rule copy, mono chrome.
   const { fonts, accent } = useMemo(() => {
     const fallback = {
-      fonts: { display: "system-ui, sans-serif", body: "system-ui, sans-serif" },
+      fonts: {
+        display: "system-ui, sans-serif",
+        body: "system-ui, sans-serif",
+        mono: "ui-monospace, monospace",
+      },
       accent: "#d4a017", // gold literal, mirrors --accent-gold (canvas can't read CSS vars)
     };
     if (typeof document === "undefined") return fallback;
@@ -347,6 +192,7 @@ export function ClipModal({
       fonts: {
         display: font("--font-display", "system-ui, sans-serif"),
         body: font("--font-body", "system-ui, sans-serif"),
+        mono: font("--font-mono", "ui-monospace, monospace"),
       },
       accent: read("--accent-hi") || read("--accent") || fallback.accent,
     };
@@ -452,6 +298,9 @@ export function ClipModal({
     pliesChoice,
     autoPlan,
   ]);
+  useEffect(() => {
+    sceneRef.current = scene;
+  }, [scene]);
 
   // The music selection handed to both encode tiers. Null when off; the
   // imported track (if any) replaces the built-in one.
@@ -461,6 +310,18 @@ export function ClipModal({
         ? { track: opts.musicTrack, volume: opts.musicVolume, custom: customMusic }
         : null,
     [opts.musicOn, opts.musicTrack, opts.musicVolume, customMusic],
+  );
+
+  // The whole audio mix: sfx level + per-voice mutes + the music bed. One
+  // object so the encode effect keys on every audible knob.
+  const audioMix = useMemo<ClipAudioOptions>(
+    () => ({
+      sfx: opts.sound,
+      sfxVolume: opts.sfxVolume,
+      mutes: opts.voiceMutes,
+      music,
+    }),
+    [opts.sound, opts.sfxVolume, opts.voiceMutes, music],
   );
 
   const discardClip = useCallback(() => {
@@ -498,9 +359,11 @@ export function ClipModal({
 
   useEffect(() => {
     const runRef = encodeRunRef;
+    const monitor = monitorRef;
     return () => {
       stopRef.current?.();
       runRef.current++;
+      monitor.current?.stop();
       if (clipUrlRef.current) URL.revokeObjectURL(clipUrlRef.current);
     };
   }, []);
@@ -520,7 +383,8 @@ export function ClipModal({
   // INSTANT REEL: as soon as the scene, sprites, and a Tier 1 encoder are
   // ready (and after any settings change discards the old take), the offline
   // render starts by itself. Debounced so chip-mashing restarts once, and
-  // cancellable mid-render via the run id the encoder polls.
+  // cancellable mid-render via the run id the encoder polls. Transport state
+  // (pause / scrub) is deliberately absent from these deps.
   useEffect(() => {
     if (!open || !scene || !images || !support || support.tier !== 1) return;
     if (clip || error) return;
@@ -535,8 +399,7 @@ export function ClipModal({
           scene,
           images,
           support,
-          opts.sound,
-          music,
+          audioMix,
           (f) => {
             if (encodeRunRef.current === run) setProgress(f);
           },
@@ -564,7 +427,7 @@ export function ClipModal({
       // Supersede any in-flight render; the encoder bails at the next frame.
       runRef.current++;
     };
-  }, [open, scene, images, support, clip, error, opts.sound, music]);
+  }, [open, scene, images, support, clip, error, audioMix]);
 
   // Every option change invalidates the recorded take (frame 0 is burned into
   // the file, so even a caption edit means a re-render). The auto-encode
@@ -580,6 +443,14 @@ export function ClipModal({
   const editHook = useCallback(
     (value: string | null) => {
       setHook(value);
+      setError(null);
+      discardClip();
+    },
+    [discardClip],
+  );
+  const setPliesChoice = useCallback(
+    (p: PliesChoice) => {
+      setPliesChoiceState(p);
       setError(null);
       discardClip();
     },
@@ -625,6 +496,15 @@ export function ClipModal({
     discardClip();
   }, [surpriseTap, discardClip]);
 
+  const resetTikTok = useCallback(() => {
+    setOpts(TIKTOK_MODE);
+    setPliesChoiceState("auto");
+    setPresetId("tiktok");
+    setHook(null);
+    setError(null);
+    discardClip();
+  }, [discardClip]);
+
   // Import your own backing track: decoded with the Web Audio API right here
   // in the browser; the file is never uploaded anywhere.
   const importMusicFile = useCallback(
@@ -652,6 +532,174 @@ export function ClipModal({
     discardClip();
   }, [discardClip]);
 
+  // --- Preview monitor (sfx out loud while unmuted) --------------------------
+  const stopMonitor = useCallback(() => {
+    monitorRef.current?.stop();
+    monitorRef.current = null;
+  }, []);
+  const syncMonitor = useCallback(() => {
+    stopMonitor();
+    const h = rendererRef.current;
+    const sc = sceneRef.current;
+    const o = optsRef.current;
+    if (!h || !sc || mutedRef.current || !h.isPlaying() || !o.sound) return;
+    monitorRef.current = playPreviewSfx(sc.audio, h.getTime(), {
+      volume: o.sfxVolume,
+      mutes: o.voiceMutes,
+    });
+  }, [stopMonitor]);
+  useEffect(() => {
+    if (muted) stopMonitor();
+    else syncMonitor();
+  }, [muted, stopMonitor, syncMonitor]);
+  // A new scene (config change) restarts the schedule under the monitor.
+  useEffect(() => {
+    if (!mutedRef.current) syncMonitor();
+  }, [scene, syncMonitor]);
+
+  // --- Transport -------------------------------------------------------------
+  const togglePlay = useCallback(() => {
+    const h = rendererRef.current;
+    if (!h) return;
+    const p = h.toggle();
+    playingRef.current = p;
+    setPlaying(p);
+    if (p) syncMonitor();
+    else stopMonitor();
+  }, [syncMonitor, stopMonitor]);
+  const restart = useCallback(() => {
+    rendererRef.current?.restart();
+    playingRef.current = true;
+    setPlaying(true);
+    syncMonitor();
+  }, [syncMonitor]);
+  const scrubStart = useCallback(() => {
+    const h = rendererRef.current;
+    if (!h) return;
+    wasPlayingRef.current = h.isPlaying();
+    h.pause();
+    playingRef.current = false;
+    setPlaying(false);
+    stopMonitor();
+  }, [stopMonitor]);
+  const scrub = useCallback((tMs: number) => {
+    rendererRef.current?.seek(tMs);
+  }, []);
+  const scrubEnd = useCallback(() => {
+    if (!wasPlayingRef.current) return;
+    rendererRef.current?.play();
+    playingRef.current = true;
+    setPlaying(true);
+    syncMonitor();
+  }, [syncMonitor]);
+  const stepFrame = useCallback(
+    (dir: 1 | -1) => {
+      rendererRef.current?.stepFrame(dir);
+      playingRef.current = false;
+      setPlaying(false);
+      stopMonitor();
+    },
+    [stopMonitor],
+  );
+  const jumpPly = useCallback(
+    (dir: 1 | -1) => {
+      const h = rendererRef.current;
+      const sc = sceneRef.current;
+      if (!h || !sc) return;
+      const marks = [0, ...sc.segs.map((sf) => sf.start), sc.freezeStart];
+      const t = h.getTime();
+      let target = dir > 0 ? sc.durationMs : 0;
+      if (dir > 0) {
+        for (const m of marks) {
+          if (m > t + 1) {
+            target = m;
+            break;
+          }
+        }
+      } else {
+        for (let i = marks.length - 1; i >= 0; i--) {
+          if (marks[i] < t - 40) {
+            target = marks[i];
+            break;
+          }
+        }
+      }
+      h.seek(target);
+      if (h.isPlaying()) syncMonitor();
+    },
+    [syncMonitor],
+  );
+
+  // The transport tick writes straight into DOM nodes (timecode, playhead,
+  // meter needle), bypassing React so a 60fps preview costs zero renders.
+  const registerTickTarget = useCallback((key: string, el: HTMLElement | null) => {
+    tickTargets.current[key] = el;
+  }, []);
+  const onTick = useCallback((tMs: number, isPlaying: boolean) => {
+    const sc = sceneRef.current;
+    if (!sc) return;
+    const els = tickTargets.current;
+    const pct = `${((tMs / Math.max(1, sc.durationMs)) * 100).toFixed(2)}%`;
+    const stampText = formatClipTime(tMs);
+    if (els.timecode) els.timecode.textContent = stampText;
+    if (els.playhead) els.playhead.style.left = pct;
+    if (els.ptime) els.ptime.textContent = stampText;
+    if (els.needle) els.needle.style.left = pct;
+    if (els.strip) els.strip.setAttribute("aria-valuenow", String(Math.round(tMs)));
+    if (playingRef.current !== isPlaying) {
+      playingRef.current = isPlaying;
+      setPlaying(isPlaying);
+    }
+  }, []);
+  const onLoop = useCallback(() => {
+    if (!mutedRef.current) syncMonitor();
+  }, [syncMonitor]);
+  const onAutoPause = useCallback(() => {
+    stopMonitor();
+  }, [stopMonitor]);
+
+  // Desktop keyboard transport: space play/pause, arrows step a frame,
+  // [ ] jump a ply. Fine-pointer devices only, so mobile stays untouched.
+  const keysRef = useRef({ togglePlay, stepFrame, jumpPly });
+  useEffect(() => {
+    keysRef.current = { togglePlay, stepFrame, jumpPly };
+  }, [togglePlay, stepFrame, jumpPly]);
+  useEffect(() => {
+    if (!open || typeof window === "undefined") return;
+    if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+    const onKey = (e: KeyboardEvent) => {
+      const tgt = e.target as HTMLElement | null;
+      if (
+        tgt &&
+        (tgt.tagName === "INPUT" ||
+          tgt.tagName === "TEXTAREA" ||
+          tgt.tagName === "SELECT" ||
+          tgt.isContentEditable)
+      ) {
+        return;
+      }
+      if (e.key === " ") {
+        if (tgt && (tgt.tagName === "BUTTON" || tgt.tagName === "A")) return;
+        e.preventDefault();
+        keysRef.current.togglePlay();
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        keysRef.current.stepFrame(1);
+      } else if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        keysRef.current.stepFrame(-1);
+      } else if (e.key === "]") {
+        e.preventDefault();
+        keysRef.current.jumpPly(1);
+      } else if (e.key === "[") {
+        e.preventDefault();
+        keysRef.current.jumpPly(-1);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
   // Tier 2 fallback: realtime MediaRecorder over the live preview canvas,
   // behind an explicit Record / Re-record button (a realtime take needs the
   // preview restarted from the top, so it never auto-fires).
@@ -664,13 +712,15 @@ export function ClipModal({
     try {
       const canvas = rendererRef.current?.canvas;
       if (!canvas) throw new Error("no canvas");
-      const rec = recordClipRealtime(canvas, scene, support, opts.sound, music);
+      const rec = recordClipRealtime(canvas, scene, support, audioMix);
       stopRef.current = rec.stop;
       // Restart the timeline in sync with the recorder; stop shortly after
       // the run completes so the final frame lands in the file.
       rendererRef.current?.restart(() => {
         window.setTimeout(() => rec.stop(), 250);
       });
+      playingRef.current = true;
+      setPlaying(true);
       const res = await rec.done;
       stopRef.current = null;
       const url = URL.createObjectURL(res.blob);
@@ -714,29 +764,51 @@ export function ClipModal({
   const durationSec = scene ? Math.round(scene.durationMs / 100) / 10 : null;
   const previewMax =
     opts.aspect === "tiktok"
-      ? "max-w-[15rem]"
+      ? "max-w-[13rem] sm:max-w-[15rem]"
       : opts.aspect === "square"
-        ? "max-w-[20rem]"
+        ? "max-w-[18rem]"
         : opts.aspect === "youtube"
-          ? "max-w-[27rem]"
-          : "max-w-[22rem]";
+          ? "max-w-[24rem]"
+          : "max-w-[19rem]";
   const settingsLocked = recording && support?.tier === 2;
+
+  const studio: Studio = {
+    opts,
+    set,
+    setStyle,
+    locked: settingsLocked,
+    accent,
+    scene,
+    images,
+    hookText,
+    hookSuggestion,
+    editHook,
+    pliesChoice,
+    setPliesChoice,
+    resetTikTok,
+    customMusic,
+    pickMusicFile: () => musicFileRef.current?.click(),
+    clearCustomMusic,
+    musicFileRef,
+    importMusicFile: (file) => void importMusicFile(file),
+    registerTickTarget,
+  };
 
   return (
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Share a reel of the final moves"
+      aria-label="Clip studio: cut and save a reel of the final moves"
       data-clip-modal
       data-clip-bytes={clip?.blob.size ?? 0}
       data-clip-duration={scene?.durationMs ?? 0}
       data-clip-style-sig={`${opts.style.grade}:${opts.style.particles}:${opts.style.transition}:${opts.style.zoom}:${opts.style.speed}:${opts.style.seed}`}
       data-clip-preset={presetId ?? "custom"}
-      className="fixed inset-0 z-[60] grid place-items-center bg-[#0f0d0a]/70 px-4 py-6 backdrop-blur-sm"
+      className="fixed inset-0 z-[60] grid place-items-center bg-[#0f0d0a]/70 px-2 py-3 backdrop-blur-sm sm:px-4 sm:py-6"
       onPointerDown={chrome.onBackdropPointerDown}
     >
       <div
-        className="plate plate-raised gilt relative w-[min(94vw,36rem)] max-h-[calc(100dvh-3rem)] overflow-y-auto p-5 shadow-2xl sm:p-6"
+        className="plate plate-raised gilt relative w-[min(97vw,66rem)] max-h-[calc(100dvh-1.5rem)] overflow-y-auto p-3 shadow-2xl sm:p-5"
         onPointerDown={(event) => event.stopPropagation()}
       >
         <span className="card-corner tl" />
@@ -745,141 +817,78 @@ export function ClipModal({
         <span className="card-corner br" />
 
         <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="smallcaps text-[10px] text-parchment-400">Clip the finish</p>
-            <h2 className="mt-0.5 font-display text-2xl font-bold text-parchment">
-              Your reel
+          <div className="min-w-0">
+            <p className="eyebrow">Clip the finish</p>
+            <h2 className="mt-0.5 font-display text-xl font-bold text-parchment sm:text-2xl">
+              The studio
             </h2>
           </div>
-          <Button
-            tone="ghost"
-            onClick={onClose}
-            aria-label="Close"
-            className="grid h-9 w-9 shrink-0 place-items-center text-parchment-300"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </Button>
+          <div className="flex items-center gap-2">
+            <span
+              className="hidden font-mono text-[10px] uppercase tracking-[0.14em] text-parchment-400 sm:inline"
+              data-clip-tier={support?.tier ?? 0}
+            >
+              {support ? support.detail : "Probing encoder"}
+            </span>
+            <Button
+              tone="ghost"
+              onClick={onClose}
+              aria-label="Close"
+              iconOnly
+              className="shrink-0 text-parchment-300"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </Button>
+          </div>
         </div>
-        <p className="mt-1 text-xs leading-snug text-parchment-400">
-          The auto-director cut the best payoff into a ready-to-post reel: intro slam,
-          energy scenes, captions, verdict stamp. It is rendering right now.
-        </p>
 
         {timeline && scene ? (
           <>
-            <div className="mt-4">
-              <ClipRenderer
-                ref={rendererRef}
-                scene={scene}
-                images={images}
-                className={`mx-auto block w-full ${previewMax} border border-white/10 shadow-plate`}
-              />
-            </div>
-
-            <div className="mt-2 flex items-center justify-between gap-2">
-              <span className="text-[11px] text-parchment-400">
-                {pliesChoice === "auto"
-                  ? `Auto window · ${timeline.segments.length} plies · ${durationSec ?? "?"}s`
-                  : timeline.segments.length < plies
-                    ? `${timeline.segments.length} replayable plies`
-                    : durationSec
-                      ? `~${durationSec}s`
-                      : ""}
-              </span>
-              <span className="text-[11px] text-parchment-400" data-clip-tier={support?.tier ?? 0}>
-                {support ? support.detail : "Checking encoder..."}
-              </span>
-            </div>
-
-            {/* Primary strip: rendering progress, then the big Save + Share pair. */}
-            {clip ? (
-              <div className="mt-3 border border-white/10 bg-white/[0.02] p-3" data-clip-ready>
-                <span className="smallcaps text-[10px] text-parchment-400">
-                  Reel ready · {(clip.blob.size / 1024).toFixed(0)} KB · {clip.container} ·
-                  tier {clip.tier}
-                </span>
-                <div className="mt-2 grid grid-cols-2 gap-2">
-                  <a
-                    href={clip.url}
-                    download={`nerfchess-clip.${clip.container}`}
-                    data-clip-download
-                    className="btn-leaf inline-flex min-h-[52px] items-center justify-center gap-2 rounded-[1px] px-4 py-2.5 font-display text-base font-semibold"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                      <polyline points="7 10 12 15 17 10" />
-                      <line x1="12" y1="15" x2="12" y2="3" />
-                    </svg>
-                    Save
-                  </a>
-                  {canShare ? (
-                    <Button tone="primary" size="lg" onClick={share} className="font-semibold">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                        <circle cx="18" cy="5" r="3" />
-                        <circle cx="6" cy="12" r="3" />
-                        <circle cx="18" cy="19" r="3" />
-                        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-                        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-                      </svg>
-                      {shared ? "Shared" : "Share"}
-                    </Button>
-                  ) : (
-                    <span className="inline-flex min-h-[52px] items-center justify-center px-2 text-center text-[11px] text-parchment-400">
-                      Sharing files isn&apos;t available here; Save works everywhere
-                    </span>
-                  )}
-                </div>
-              </div>
-            ) : support?.tier === 1 ? (
-              <div className="mt-3 border border-white/10 bg-white/[0.02] p-3" aria-live="polite">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="inline-flex items-center gap-2 text-xs text-parchment-300">
-                    <span aria-hidden className="h-2 w-2 animate-pulse rounded-full bg-oxblood-glow" />
-                    {progress !== null
-                      ? `Rendering your reel... ${Math.round(progress * 100)}%`
-                      : images
-                        ? "Rendering your reel..."
-                        : "Loading pieces..."}
-                  </span>
-                </div>
-                <div className="mt-2 h-1.5 w-full bg-white/10">
-                  <div
-                    className="h-full bg-gold-leaf transition-[width] duration-150"
-                    style={{ width: `${Math.round((progress ?? 0) * 100)}%` }}
+            <div className="clip-studio-grid mt-3">
+              <div className="clip-studio-left">
+                <Viewport
+                  scene={scene}
+                  images={images}
+                  rendererRef={rendererRef}
+                  playing={playing}
+                  loop={loopOn}
+                  muted={muted}
+                  onTogglePlay={togglePlay}
+                  onRestart={restart}
+                  onToggleLoop={() => setLoopOn((v) => !v)}
+                  onToggleMute={() => setMuted((v) => !v)}
+                  onTick={onTick}
+                  onLoop={onLoop}
+                  onAutoPause={onAutoPause}
+                  registerTickTarget={registerTickTarget}
+                  previewMax={previewMax}
+                />
+                <div className="mt-2">
+                  <Timeline
+                    scene={scene}
+                    onScrubStart={scrubStart}
+                    onScrub={scrub}
+                    onScrubEnd={scrubEnd}
+                    registerTickTarget={registerTickTarget}
                   />
                 </div>
+                {reduced && (
+                  <p className="mt-1 font-mono text-[9px] uppercase tracking-[0.14em] text-parchment-500">
+                    Reduced motion: chrome still; transport live
+                  </p>
+                )}
               </div>
-            ) : support?.tier === 2 ? (
-              <div className="mt-3 grid grid-cols-1 gap-2">
-                <Button
-                  tone={recording ? "ghost" : "leaf"}
-                  onClick={recordRealtime}
-                  disabled={recording || !images}
-                  data-clip-record
-                  className={"font-semibold " + (recording ? "opacity-80 cursor-default" : "")}
-                >
-                  {recording ? (
-                    <span className="inline-flex items-center gap-2">
-                      <span aria-hidden className="h-2 w-2 animate-pulse rounded-full bg-oxblood-glow" />
-                      Recording...
-                    </span>
-                  ) : !images ? (
-                    "Loading..."
-                  ) : (
-                    "Record reel"
-                  )}
-                </Button>
-                <p className="text-[11px] leading-snug text-parchment-400">
-                  This browser records the preview in realtime (no offline encoder), so the
-                  reel captures live while you watch.
-                </p>
-              </div>
-            ) : support ? (
-              <p className="mt-3 text-xs text-parchment-400">{support.detail}</p>
-            ) : null}
+
+              <Deck
+                studio={studio}
+                presetId={presetId}
+                applyPreset={applyPreset}
+                surpriseMe={surpriseMe}
+              />
+            </div>
 
             {error && (
               <p role="alert" className="mt-2 text-xs text-oxblood-glow">
@@ -887,325 +896,86 @@ export function ClipModal({
               </p>
             )}
 
-            {/* Everything tweakable lives behind one fold; any change discards
-                the take and the auto-encode re-renders it. */}
-            <details className="group mt-4 border border-[color:var(--edge)] bg-ink-900/40">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-3 py-2.5 outline-none focus-visible:text-gold-leaf [&::-webkit-details-marker]:hidden">
-                <span className="eyebrow">Adjust</span>
-                <span className="flex shrink-0 items-center gap-2">
-                  <span className="text-xs text-parchment-400">
-                    changes re-render automatically
-                  </span>
-                  <span
-                    aria-hidden
-                    className="text-parchment-400 motion-safe:transition-transform group-open:rotate-90"
-                  >
-                    &#9656;
-                  </span>
-                </span>
-              </summary>
-              <div className="px-3 pb-3">
-                <GroupLabel>Style</GroupLabel>
-                <div className="flex flex-wrap gap-1.5" role="group" aria-label="Style presets">
-                  {STYLE_PRESETS.map((p) => (
-                    <Chip
-                      key={p.id}
-                      label={p.label}
-                      on={presetId === p.id}
-                      onClick={() => applyPreset(p)}
-                      disabled={settingsLocked}
-                    />
-                  ))}
-                  <Chip
-                    label="Surprise me"
-                    on={presetId === "surprise"}
-                    onClick={surpriseMe}
-                    disabled={settingsLocked}
-                  />
-                </div>
-
-                <GroupLabel>Format</GroupLabel>
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <div className="flex items-center gap-1" role="group" aria-label="Aspect">
-                    {ASPECTS.map((a) => (
-                      <Chip
-                        key={a.id}
-                        label={a.label}
-                        on={opts.aspect === a.id}
-                        onClick={() => set("aspect", a.id)}
-                        disabled={settingsLocked}
-                      />
-                    ))}
-                  </div>
-                  <span className="mx-1 h-4 w-px bg-white/15" aria-hidden />
-                  <div className="flex items-center gap-1" role="group" aria-label="Clip window">
-                    <span className="smallcaps text-[10px] text-parchment-400">Window</span>
-                    {LENGTH_OPTIONS.map((num) => (
-                      <Chip
-                        key={num}
-                        label={num === "auto" ? "Auto" : `Last ${num}`}
-                        on={pliesChoice === num}
-                        onClick={() => {
-                          setPliesChoice(num);
-                          setError(null);
-                          discardClip();
-                        }}
-                        disabled={settingsLocked}
-                      />
-                    ))}
-                  </div>
-                  <span className="mx-1 h-4 w-px bg-white/15" aria-hidden />
-                  <Button
-                    tone="ghost"
-                    size="xs"
-                    disabled={settingsLocked}
-                    onClick={() => {
-                      setOpts(TIKTOK_MODE);
-                      setPliesChoice("auto");
-                      setPresetId("tiktok");
-                      editHook(null);
-                    }}
-                    className="text-parchment-300"
-                  >
-                    TikTok mode
-                  </Button>
-                </div>
-
-                <SubGroup title="Camera">
-                  <ChoiceRow label="Zoom" options={ZOOM_OPTIONS} value={opts.style.zoom} onPick={(v) => setStyle({ zoom: v })} disabled={settingsLocked} />
-                  <ChoiceRow label="Drift" options={DRIFT_OPTIONS} value={opts.style.driftCam} onPick={(v) => setStyle({ driftCam: v })} disabled={settingsLocked} />
-                  <div className="mt-1.5 flex flex-wrap gap-1.5">
-                    <Chip label="Follow cam" on={opts.style.followCam} onClick={() => setStyle({ followCam: !opts.style.followCam })} disabled={settingsLocked} />
-                    <Chip label="Payoff dolly" on={opts.style.payoffDolly} onClick={() => setStyle({ payoffDolly: !opts.style.payoffDolly })} disabled={settingsLocked} />
-                    <Chip label="Tilt sway" on={opts.style.tiltSway} onClick={() => setStyle({ tiltSway: !opts.style.tiltSway })} disabled={settingsLocked} />
-                  </div>
-                </SubGroup>
-
-                <SubGroup title="Look">
-                  <div className="flex flex-wrap gap-1.5" role="group" aria-label="Color grade">
-                    {GRADE_OPTIONS.map(([id, label]) => (
-                      <Chip key={id} label={label} on={opts.style.grade === id} onClick={() => setStyle({ grade: id })} disabled={settingsLocked} />
-                    ))}
-                  </div>
-                </SubGroup>
-
-                <SubGroup title="FX">
-                  <ChoiceRow label="Shake" options={SHAKE_OPTIONS} value={opts.style.shake} onPick={(v) => setStyle({ shake: v })} disabled={settingsLocked} />
-                  <ChoiceRow label="Chromatic" options={CHROMATIC_OPTIONS} value={opts.style.chromatic} onPick={(v) => setStyle({ chromatic: v })} disabled={settingsLocked} />
-                  <ChoiceRow label="Grain" options={GRAIN_OPTIONS} value={opts.style.grain} onPick={(v) => setStyle({ grain: v })} disabled={settingsLocked} />
-                  <ChoiceRow label="Particles" options={PARTICLE_OPTIONS} value={opts.style.particles} onPick={(v) => setStyle({ particles: v })} disabled={settingsLocked} />
-                  <div className="mt-1.5 flex flex-wrap gap-1.5">
-                    <Chip label="Letterbox" on={opts.style.letterbox} onClick={() => setStyle({ letterbox: !opts.style.letterbox })} disabled={settingsLocked} />
-                    <Chip label="Glitch bursts" on={opts.style.glitch} onClick={() => setStyle({ glitch: !opts.style.glitch })} disabled={settingsLocked} />
-                    <Chip label="VHS" on={opts.style.vhs} onClick={() => setStyle({ vhs: !opts.style.vhs })} disabled={settingsLocked} />
-                    <Chip label="Bloom" on={opts.style.bloom} onClick={() => setStyle({ bloom: !opts.style.bloom })} disabled={settingsLocked} />
-                    <Chip label="Invert flash" on={opts.style.invertFlash} onClick={() => setStyle({ invertFlash: !opts.style.invertFlash })} disabled={settingsLocked} />
-                    <Chip label="Confetti" on={opts.style.confetti} onClick={() => setStyle({ confetti: !opts.style.confetti })} disabled={settingsLocked} />
-                  </div>
-                </SubGroup>
-
-                <SubGroup title="Pace">
-                  <ChoiceRow label="Speed" options={SPEED_OPTIONS} value={opts.style.speed} onPick={(v) => setStyle({ speed: v })} disabled={settingsLocked} />
-                  <ChoiceRow label="Slow-mo" options={SLOWMO_OPTIONS} value={opts.style.slowmo} onPick={(v) => setStyle({ slowmo: v })} disabled={settingsLocked} />
-                  <div className="mt-1.5 flex flex-wrap gap-1.5">
-                    <Chip label="Speed ramp" on={opts.speedRamp} onClick={() => set("speedRamp", !opts.speedRamp)} disabled={settingsLocked} />
-                    <Chip label="Freeze frames" on={opts.style.captureFreeze} onClick={() => setStyle({ captureFreeze: !opts.style.captureFreeze })} disabled={settingsLocked} />
-                    <Chip label="Stutter cuts" on={opts.style.stutter} onClick={() => setStyle({ stutter: !opts.style.stutter })} disabled={settingsLocked} />
-                  </div>
-                </SubGroup>
-
-                <SubGroup title="Cuts">
-                  <div className="flex flex-wrap gap-1.5" role="group" aria-label="Ply transition">
-                    {TRANSITION_OPTIONS.map(([id, label]) => (
-                      <Chip key={id} label={label} on={opts.style.transition === id} onClick={() => setStyle({ transition: id })} disabled={settingsLocked} />
-                    ))}
-                  </div>
-                </SubGroup>
-
-                <SubGroup title="Stamps">
-                  <div className="flex flex-wrap gap-1.5">
-                    <Chip label="Move verdicts" on={opts.style.verdictStamps} onClick={() => setStyle({ verdictStamps: !opts.style.verdictStamps })} disabled={settingsLocked} />
-                    <Chip label="Flame trail" on={opts.style.flameTrail} onClick={() => setStyle({ flameTrail: !opts.style.flameTrail })} disabled={settingsLocked} />
-                    <Chip label="Score bug" on={opts.style.scoreBug} onClick={() => setStyle({ scoreBug: !opts.style.scoreBug })} disabled={settingsLocked} />
-                    <Chip label="Momentum bar" on={opts.momentumBar} onClick={() => set("momentumBar", !opts.momentumBar)} disabled={settingsLocked} />
-                    <Chip label="Move counter" on={opts.moveCounter} onClick={() => set("moveCounter", !opts.moveCounter)} disabled={settingsLocked} />
-                    <Chip label="Verdict stamp" on={opts.freezeStamp} onClick={() => set("freezeStamp", !opts.freezeStamp)} disabled={settingsLocked} />
-                  </div>
-                </SubGroup>
-
-                <GroupLabel>Captions</GroupLabel>
-                <input
-                  type="text"
-                  value={hookText}
-                  maxLength={80}
-                  disabled={settingsLocked}
-                  onChange={(e) => editHook(e.target.value)}
-                  aria-label="Hook caption"
-                  placeholder="Hook text burned at the top"
-                  className="w-full border border-white/15 bg-white/[0.03] px-2.5 py-1.5 font-display text-sm text-parchment placeholder:text-parchment-400 focus:border-gold/60 focus:outline-none"
+            {/* Fixed export bar: SAVE with format + size baked into the label,
+                Share beside it, encode progress as a hairline fill. */}
+            <div className="clip-export">
+              {recording && support?.tier === 1 && (
+                <div
+                  className="clip-export-hairline"
+                  style={{ width: `${Math.round((progress ?? 0) * 100)}%` }}
+                  aria-hidden
                 />
-                <div className="mt-1.5 flex flex-wrap gap-1.5">
-                  {[hookSuggestion, ...HOOK_PRESETS.filter((p) => p !== hookSuggestion)].slice(0, 5).map((preset) => (
-                    <Chip
-                      key={preset}
-                      label={preset}
-                      on={hookText === preset}
-                      onClick={() => editHook(preset)}
-                      disabled={settingsLocked}
-                    />
-                  ))}
-                </div>
-                <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                  <span className="smallcaps text-[10px] text-parchment-400">Style</span>
-                  {CAPTION_STYLES.map((cs) => (
-                    <Chip
-                      key={cs.id}
-                      label={cs.label}
-                      on={opts.captionStyle === cs.id}
-                      onClick={() => set("captionStyle", cs.id)}
-                      disabled={settingsLocked}
-                    />
-                  ))}
-                  <span className="mx-1 h-4 w-px bg-white/15" aria-hidden />
-                  <span className="smallcaps text-[10px] text-parchment-400">Emoji</span>
-                  {EMOJI_LEVELS.map((el) => (
-                    <Chip
-                      key={el.id}
-                      label={el.label}
-                      on={opts.emojiLevel === el.id}
-                      onClick={() => set("emojiLevel", el.id)}
-                      disabled={settingsLocked}
-                    />
-                  ))}
-                </div>
-
-                <GroupLabel>Sound</GroupLabel>
-                <div className="flex flex-wrap gap-1.5">
-                  <Chip label="Game sound" on={opts.sound} onClick={() => set("sound", !opts.sound)} disabled={settingsLocked} />
-                </div>
-
-                <GroupLabel>Music</GroupLabel>
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <Chip label="Music" on={opts.musicOn} onClick={() => set("musicOn", !opts.musicOn)} disabled={settingsLocked} />
-                  <label className="inline-flex items-center gap-1.5 text-[10px] text-parchment-400">
-                    <span className="smallcaps">Volume</span>
-                    <input
-                      type="range"
-                      min={0}
-                      max={100}
-                      value={Math.round(opts.musicVolume * 100)}
-                      disabled={settingsLocked || !opts.musicOn}
-                      onChange={(e) => set("musicVolume", Number(e.target.value) / 100)}
-                      aria-label="Music volume"
-                      className="w-28 accent-[#d4a017] disabled:opacity-40"
-                    />
-                  </label>
-                </div>
-                {opts.musicOn && !customMusic && (
-                  <div className="mt-1.5 flex flex-wrap gap-1.5" role="group" aria-label="Backing track">
-                    {MUSIC_TRACKS.map((tr) => (
-                      <Chip
-                        key={tr.id}
-                        label={tr.label}
-                        on={opts.musicTrack === tr.id}
-                        onClick={() => set("musicTrack", tr.id)}
-                        disabled={settingsLocked}
-                      />
-                    ))}
-                  </div>
-                )}
-                {opts.musicOn && (
-                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                    <input
-                      ref={musicFileRef}
-                      type="file"
-                      accept="audio/*"
-                      className="hidden"
-                      data-clip-music-file
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        e.target.value = "";
-                        if (file) void importMusicFile(file);
-                      }}
-                    />
-                    {customMusic ? (
-                      <>
-                        <span className="max-w-[14rem] truncate text-[11px] text-gold-leaf" data-clip-music-name>
-                          {customMusic.name}
-                        </span>
-                        <Button tone="ghost" size="xs" onClick={clearCustomMusic} disabled={settingsLocked} className="text-parchment-300">
-                          Clear
-                        </Button>
-                      </>
-                    ) : (
-                      <Button
-                        tone="ghost"
-                        size="xs"
-                        onClick={() => musicFileRef.current?.click()}
-                        disabled={settingsLocked}
-                        className="text-parchment-300"
-                      >
-                        Import your own audio
+              )}
+              <div className="clip-export-row" aria-live="polite">
+                {clip ? (
+                  <>
+                    <a
+                      href={clip.url}
+                      download={`nerfchess-clip.${clip.container}`}
+                      data-clip-download
+                      data-clip-ready
+                      className="btn-leaf press inline-flex min-h-[48px] flex-1 items-center justify-center gap-2 rounded-[1px] px-4 py-2 font-display text-base font-semibold"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                      </svg>
+                      Save {clip.container.toUpperCase()} {sizeLabel(clip.blob.size)}
+                    </a>
+                    {canShare ? (
+                      <Button tone="primary" size="lg" onClick={share} className="font-semibold">
+                        {shared ? "Shared" : "Share"}
+                      </Button>
+                    ) : null}
+                    {clip.tier === 2 && (
+                      <Button tone="ghost" size="lg" onClick={recordRealtime} disabled={recording} data-clip-record>
+                        Re-record
                       </Button>
                     )}
-                    <span className="text-[10px] text-parchment-400">
-                      trimmed or looped to the reel; stays on this device
-                    </span>
-                  </div>
-                )}
-
-                <GroupLabel>Explain</GroupLabel>
-                <div className="flex flex-wrap gap-1.5">
-                  <Chip label="Arrows" on={opts.explainArrows} onClick={() => set("explainArrows", !opts.explainArrows)} disabled={settingsLocked} />
-                  <Chip label="Card rules" on={opts.explainRules} onClick={() => set("explainRules", !opts.explainRules)} disabled={settingsLocked} />
-                  <Chip label="Callouts" on={opts.explainCallouts} onClick={() => set("explainCallouts", !opts.explainCallouts)} disabled={settingsLocked} />
-                </div>
-
-                <GroupLabel>Branding</GroupLabel>
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <Chip label="Watermark" on={opts.watermarkOn} onClick={() => set("watermarkOn", !opts.watermarkOn)} disabled={settingsLocked} />
-                  <input
-                    type="text"
-                    value={opts.handle}
-                    maxLength={40}
-                    disabled={settingsLocked || !opts.watermarkOn}
-                    onChange={(e) => set("handle", e.target.value)}
-                    aria-label="Watermark handle"
-                    className="min-w-0 flex-1 border border-white/15 bg-white/[0.03] px-2.5 py-1 font-display text-xs text-parchment placeholder:text-parchment-400 focus:border-gold/60 focus:outline-none disabled:opacity-40"
-                  />
-                </div>
-                {opts.watermarkOn && (
-                  <ChoiceRow
-                    label="Corner"
-                    options={CORNER_OPTIONS}
-                    value={opts.style.watermarkCorner}
-                    onPick={(v) => setStyle({ watermarkCorner: v })}
-                    disabled={settingsLocked}
-                  />
-                )}
-                <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                  <Chip label="End card" on={opts.endCard} onClick={() => set("endCard", !opts.endCard)} disabled={settingsLocked} />
-                  <input
-                    type="text"
-                    value={opts.ctaText}
-                    maxLength={40}
-                    disabled={settingsLocked || !opts.endCard}
-                    onChange={(e) => set("ctaText", e.target.value)}
-                    aria-label="End card text"
-                    placeholder="nerfchess.com"
-                    className="min-w-0 flex-1 border border-white/15 bg-white/[0.03] px-2.5 py-1 font-display text-xs text-parchment placeholder:text-parchment-400 focus:border-gold/60 focus:outline-none disabled:opacity-40"
-                  />
-                </div>
-
-                {clip && support?.tier === 2 && (
-                  <div className="mt-3">
-                    <Button tone="ghost" onClick={recordRealtime} disabled={recording} data-clip-record>
-                      Re-record
-                    </Button>
-                  </div>
+                  </>
+                ) : support?.tier === 1 ? (
+                  <span className="inline-flex min-h-[48px] flex-1 items-center justify-center gap-2 border border-white/10 bg-white/[0.02] px-4 font-mono text-[11px] uppercase tracking-[0.14em] text-parchment-300">
+                    {progress !== null
+                      ? `Render ${Math.round(progress * 100)}%`
+                      : images
+                        ? "Render queued"
+                        : "Loading pieces"}
+                  </span>
+                ) : support?.tier === 2 ? (
+                  <Button
+                    tone={recording ? "ghost" : "leaf"}
+                    size="lg"
+                    onClick={recordRealtime}
+                    disabled={recording || !images}
+                    data-clip-record
+                    block
+                    className={"font-semibold " + (recording ? "opacity-80" : "")}
+                  >
+                    {recording ? "Recording live" : !images ? "Loading pieces" : "Record reel"}
+                  </Button>
+                ) : (
+                  <span className="inline-flex min-h-[48px] flex-1 items-center justify-center px-4 text-center text-xs text-parchment-400">
+                    {support ? support.detail : "Probing this browser's encoder"}
+                  </span>
                 )}
               </div>
-            </details>
+              <div className="clip-export-status">
+                <span>
+                  {pliesChoice === "auto" ? "Auto window" : `Last ${plies}`} · {timeline.segments.length}
+                  {" "}plies · {durationSec ?? "?"}s
+                </span>
+                <span>
+                  {clip
+                    ? `Tier ${clip.tier} · ${clip.container}`
+                    : canShare === false && clipFile
+                      ? "Save works everywhere"
+                      : support
+                        ? `Tier ${support.tier}`
+                        : ""}
+                </span>
+              </div>
+            </div>
           </>
         ) : (
           <div className="mt-4 border border-white/10 bg-white/[0.02] p-4 text-sm text-parchment-300">

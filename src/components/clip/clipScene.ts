@@ -9,7 +9,7 @@
 import type { Color, Piece, PieceType, Square } from "@/engine/types";
 import { FILE, PIECE_VALUE, RANK } from "@/engine/types";
 import type { ClipSegment, ClipSigMeta, ClipTimeline } from "./clipReplay";
-import type { ClipStyle } from "./clipStyles";
+import type { ClipStyle, ReelPalette } from "./clipStyles";
 import {
   applyGrade,
   paintConfetti,
@@ -19,6 +19,7 @@ import {
   paintParticleField,
   paintTransitionOverBoard,
   paintVhs,
+  reelPalette,
   transitionShift,
 } from "./clipStyles";
 
@@ -113,6 +114,19 @@ const easeOutBack = (t: number) => {
   const c1 = 1.70158;
   const c3 = c1 + 1;
   return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+};
+/** easeOutBack with a tunable overshoot, so entrances vary: some overlays
+ *  settle heavy (c1 near 1), some snap light (c1 past 2). Nothing in the
+ *  frame is allowed to move on the exact same curve as its neighbor. */
+const easeOutBackVar = (t: number, c1: number) => {
+  const c3 = c1 + 1;
+  return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+};
+/** Cheap deterministic hash for per-overlay jitter that is not worth carrying
+ *  through the scene object: pure function of (seed, k), no state. */
+const jit01 = (seed: number, k: number) => {
+  const s = Math.sin(seed * 0.0001 + k * 127.1) * 43758.5453;
+  return s - Math.floor(s);
 };
 
 /** Hex accent -> rgba with alpha (falls back to the input for non-hex). */
@@ -317,7 +331,9 @@ export interface ClipSceneOptions {
   /** Explainer layer: "CAPTURE!" / "x2 TRADE" action callouts. */
   explainCallouts: boolean;
   verdict: ClipVerdict | null;
-  fonts: { display: string; body: string };
+  /** The three in-frame type voices: display slams, body rule copy, and the
+   *  mono chrome voice (timecode, score bug, tier labels, watermark). */
+  fonts: { display: string; body: string; mono: string };
   accent: string;
   /** Auto-director payoff hint: absolute ply of the segment that should get
    *  the dramatic pre-beat + slow-motion hit. Falls back to an internal scan
@@ -359,6 +375,12 @@ interface SegFx {
   punch: boolean;
   shakeAmp: number;
   isPayoff: boolean;
+  /** Seeded 20-60ms entrance offset so overlays never land in lockstep. */
+  jitterMs: number;
+  /** Seeded -1..1 tilt for stamps/callouts (sign and magnitude both vary). */
+  tiltSeed: number;
+  /** Seeded 0..1 easing pick: how heavy this segment's overlays settle. */
+  easeSeed: number;
 }
 
 /** Lead (telegraph + pre-beat) before a segment's slide starts. */
@@ -385,6 +407,11 @@ export interface ClipScene {
   celebrate: boolean;
   /** Dust kicked up by the intro board slam. */
   introDust: Particle[];
+  /** The reel's one cohesive overlay palette, derived from the grade. */
+  palette: ReelPalette;
+  /** Seeded off-axis angle (radians) for the verdict slam's rubber-stamp
+   *  print; also seeds the print-registration offset direction. */
+  verdictTilt: number;
 }
 
 function material(pieces: (Piece | null)[]): number {
@@ -499,7 +526,12 @@ export function buildClipScene(opts: ClipSceneOptions): ClipScene {
     // schedule all stretch identically.
     let ruleMs = 0;
     if (opts.explainRules && seg.sig) {
-      ruleMs = Math.min(3000, Math.max(1600, 900 + seg.sig.description.length * 11));
+      // The rule-hold bias scales the read-speed estimate: quick for viewers
+      // who skim, slow reader stretches every panel.
+      const holdBias = style.ruleHold === "quick" ? 0.72 : style.ruleHold === "slow" ? 1.4 : 1;
+      ruleMs = Math.round(
+        Math.min(3600, Math.max(1200, (900 + seg.sig.description.length * 11) * holdBias)),
+      );
       holdMs = Math.max(holdMs, ruleMs + 240 - moveMs);
     }
 
@@ -609,6 +641,11 @@ export function buildClipScene(opts: ClipSceneOptions): ClipScene {
                   ? 2 * intensity
                   : 0) * shakeScale,
       isPayoff,
+      // Hand-tuned imperfection: every segment's overlays get their own
+      // entrance offset, tilt, and settle weight from the seeded stream.
+      jitterMs: Math.round(20 + rng() * 40),
+      tiltSeed: rng() * 2 - 1,
+      easeSeed: rng(),
     });
     at += arrowW + preW + moveMs + freezeW + holdMs;
   }
@@ -643,6 +680,9 @@ export function buildClipScene(opts: ClipSceneOptions): ClipScene {
     fieldSeed,
     celebrate,
     introDust: makeParticles(rng, 18),
+    palette: reelPalette(style.grade, opts.accent, style.duotoneB),
+    // 1 to 3 degrees, sign seeded: the verdict prints like a rubber stamp.
+    verdictTilt: ((1 + rng() * 2) * Math.PI / 180) * (rng() < 0.5 ? -1 : 1),
   };
 }
 
@@ -727,7 +767,9 @@ export function renderClipFrame(
 ): void {
   const { layout: L, opts } = scene;
   const t = Math.max(0, Math.min(tMs, scene.durationMs));
-  const accent = opts.accent;
+  // The reel palette IS the accent inside the frame: every overlay pulls from
+  // the same few inks so a graded reel reads art-directed, not assembled.
+  const accent = scene.palette.accent;
   const fonts = opts.fonts;
 
   const sqXY = (sq: Square): { x: number; y: number } => {
@@ -755,7 +797,8 @@ export function renderClipFrame(
     ctx.save();
     ctx.globalAlpha *= alpha;
     if (img) {
-      ctx.shadowColor = "rgba(0,0,0,0.45)";
+      // Warm ground shadow (never the generic 50% black drop).
+      ctx.shadowColor = "rgba(26,15,6,0.42)";
       ctx.shadowBlur = 8;
       ctx.shadowOffsetY = 3;
       // Squash draws from the ground line, not the center, so a landing piece
@@ -808,7 +851,10 @@ export function renderClipFrame(
   ctx.fillRect(0, 0, L.W, L.H);
   // Ambient particle field (embers / snow / rain / sparks / matrix / bubbles):
   // seeded, cached, every speck a closed-form function of t.
-  paintParticleField(ctx, opts.style.particles, t, L.W, L.H, scene.fieldSeed, accent);
+  paintParticleField(
+    ctx, opts.style.particles, t, L.W, L.H, scene.fieldSeed, accent,
+    opts.style.particleDensity,
+  );
 
   // ---- End card replaces the board chrome once it starts ----
   if (scene.endMs > 0 && t >= scene.endStart) {
@@ -831,13 +877,13 @@ export function renderClipFrame(
   ctx.translate(markX + (markW + markW2) / 2, L.headerY - markSize * 0.35);
   ctx.scale(markPop, markPop);
   ctx.translate(-(markX + (markW + markW2) / 2), -(L.headerY - markSize * 0.35));
-  ctx.fillStyle = "#ece7dd";
+  ctx.fillStyle = scene.palette.paper;
   ctx.fillText("nerf", markX, L.headerY);
   ctx.fillStyle = accent;
   ctx.fillText("chess", markX + markW, L.headerY);
   ctx.restore();
   ctx.font = `500 ${opts.aspect === "classic" ? 17 : 26}px ${fonts.body}`;
-  ctx.fillStyle = "#a7a297";
+  ctx.fillStyle = scene.palette.dim;
   const match = `${opts.names.w}  vs  ${opts.names.b}`;
   if (L.matchY !== null) {
     ctx.fillText(match, L.boardX, L.matchY);
@@ -1027,17 +1073,30 @@ function applyPunch(
   t: number,
   sqXY: (sq: Square) => { x: number; y: number },
 ): void {
-  const zoom = scene.opts.style.zoom;
-  const mag = zoom === "subtle" ? 0.1 : zoom === "extreme" ? 0.32 : 0.2;
+  const style = scene.opts.style;
+  const mag = style.zoom === "subtle" ? 0.1 : style.zoom === "extreme" ? 0.32 : 0.2;
   for (const sf of scene.segs) {
     if (!sf.punch) continue;
-    const te = sf.start + sf.arrowMs + sf.preMs + sf.moveMs;
+    // Punch timing: on the landing impact (default) or on the ply's opening
+    // beat, right as the slide starts.
+    const te =
+      style.punchTiming === "beat"
+        ? sf.start + sf.arrowMs + sf.preMs
+        : sf.start + sf.arrowMs + sf.preMs + sf.moveMs;
     if (t < te || t > te + 200) continue;
     const u = easeOutCubic((t - te) / 200);
     const s = 1 + mag * (1 - u);
-    const { x, y } = sqXY(sf.target);
-    const cx = x + scene.layout.sq / 2;
-    const cy = y + scene.layout.sq / 2;
+    // Zoom target bias: the action square, or the board's center.
+    let cx: number;
+    let cy: number;
+    if (style.zoomBias === "center") {
+      cx = scene.layout.boardX + scene.layout.board / 2;
+      cy = scene.layout.boardY + scene.layout.board / 2;
+    } else {
+      const { x, y } = sqXY(sf.target);
+      cx = x + scene.layout.sq / 2;
+      cy = y + scene.layout.sq / 2;
+    }
     ctx.translate(cx, cy);
     ctx.scale(s, s);
     ctx.translate(-cx, -cy);
@@ -1166,20 +1225,22 @@ function drawBloom(
   sqXY: (sq: Square) => { x: number; y: number },
 ): void {
   const L = scene.layout;
+  const amt = scene.opts.style.bloomAmount / 100;
+  if (amt <= 0.01) return;
   for (const sf of scene.segs) {
     if (!sf.seg.sig) continue;
-    const t0 = sf.start + segLead(sf);
+    const t0 = sf.start + segLead(sf) + sf.jitterMs;
     const dur = Math.min(900, sf.moveMs + sf.holdMs);
     if (t < t0 || t > t0 + dur) continue;
     const p = (t - t0) / dur;
-    const color = sf.energy ? ENERGY_COLOR[sf.energy] : scene.opts.accent;
+    const color = sf.energy ? ENERGY_COLOR[sf.energy] : scene.palette.accent;
     const { x, y } = sqXY(sf.target);
     const cx = x + L.sq / 2;
     const cy = y + L.sq / 2;
-    const R = L.sq * (1.6 + 0.9 * p) * sf.tierScale;
+    const R = L.sq * (1.2 + 0.8 * amt + 0.9 * p) * sf.tierScale;
     ctx.save();
     ctx.globalCompositeOperation = "lighter";
-    ctx.globalAlpha = Math.sin(Math.PI * p) * (0.3 + 0.08 * Math.sin(t * 0.02));
+    ctx.globalAlpha = Math.sin(Math.PI * p) * (0.12 + 0.34 * amt + 0.06 * Math.sin(t * 0.02));
     const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, R);
     g.addColorStop(0, withAlpha(color, 0.8));
     g.addColorStop(1, "rgba(0,0,0,0)");
@@ -1236,25 +1297,36 @@ function drawStamps(
   sqXY: (sq: Square) => { x: number; y: number },
 ): void {
   const L = scene.layout;
+  const rotKnob = scene.opts.style.stampRotation;
   for (const sf of scene.segs) {
     if (!sf.stamp) continue;
-    const tLand = sf.start + segLead(sf) + sf.moveMs;
+    // Seeded entrance jitter: stamps never land on the exact impact frame.
+    const tLand = sf.start + segLead(sf) + sf.moveMs + sf.jitterMs;
     const dur = 900 + sf.freezeMs;
     if (t < tLand || t > tLand + dur) continue;
     const p = (t - tLand) / dur;
-    const pop = p < 0.18 ? easeOutBack(clamp01(p / 0.18)) : 1 + 0.015 * Math.sin(t * 0.02);
+    // Settle weight varies per segment: some stamps thud in, some snap.
+    const c1 = 1.1 + sf.easeSeed * 1.2;
+    const pop = p < 0.18 ? easeOutBackVar(clamp01(p / 0.18), c1) : 1 + 0.015 * Math.sin(t * 0.02);
     const fade = p > 0.82 ? 1 - (p - 0.82) / 0.18 : 1;
     const { x, y } = sqXY(sf.target);
     const size = L.sq * 0.62;
     // Sit above-right of the square, nudged inside the board frame.
     const cx = Math.min(L.boardX + L.board - size, Math.max(L.boardX + size, x + L.sq * 0.95));
     const cy = Math.max(L.boardY + size * 0.8, y - L.sq * 0.05);
-    const color =
-      sf.stamp === "!!" ? scene.opts.accent : sf.stamp === "??" ? "#e05252" : "#ece7dd";
+    const pal = scene.palette;
+    const color = sf.stamp === "!!" ? pal.accent : sf.stamp === "??" ? pal.hot : pal.paper;
+    // Rubber-stamp rotation: Off prints square, Subtle lands at a seeded 1 to
+    // 3 degrees, Rowdy at 3 to 8. Sign follows the segment's tilt seed.
+    const rot =
+      rotKnob === "off"
+        ? 0
+        : (rotKnob === "rowdy" ? 0.05 + 0.09 * Math.abs(sf.tiltSeed) : 0.017 + 0.035 * Math.abs(sf.tiltSeed)) *
+          Math.sign(sf.tiltSeed || 1);
     ctx.save();
     ctx.globalAlpha = fade;
     ctx.translate(cx, cy);
-    ctx.rotate(-0.07);
+    ctx.rotate(rot);
     ctx.scale(pop, pop);
     ctx.textAlign = "center";
     ctx.font = `800 ${size}px ${scene.opts.fonts.display}`;
@@ -1286,18 +1358,21 @@ function drawFreezeTicks(
   const { x, y } = sqXY(sf.target);
   const grow = easeOutCubic(clamp01(p * 3));
   const pad = L.sq * (0.12 + 0.06 * grow);
-  const len = L.sq * 0.26;
   ctx.save();
   ctx.globalAlpha = 0.9 * (1 - p * 0.4);
-  ctx.strokeStyle = scene.opts.accent;
+  ctx.strokeStyle = scene.palette.accent;
   ctx.lineWidth = 3;
   for (const [sx, sy] of [[0, 0], [1, 0], [0, 1], [1, 1]] as const) {
     const cx = x - pad + sx * (L.sq + pad * 2);
     const cy = y - pad + sy * (L.sq + pad * 2);
+    // Hand-drawn tick feel: each corner's two arms differ slightly in length,
+    // seeded per corner so the variance is frame-stable.
+    const lenA = L.sq * (0.22 + 0.08 * jit01(scene.fieldSeed, sx * 7 + sy * 13 + 1));
+    const lenB = L.sq * (0.22 + 0.08 * jit01(scene.fieldSeed, sx * 7 + sy * 13 + 2));
     ctx.beginPath();
-    ctx.moveTo(cx + (sx ? -len : len), cy);
+    ctx.moveTo(cx + (sx ? -lenA : lenA), cy);
     ctx.lineTo(cx, cy);
-    ctx.lineTo(cx, cy + (sy ? -len : len));
+    ctx.lineTo(cx, cy + (sy ? -lenB : lenB));
     ctx.stroke();
   }
   // A one-beat white blink right at the freeze cut, well under flash limits.
@@ -1342,10 +1417,11 @@ function drawScoreBug(scene: ClipScene, ctx: CanvasRenderingContext2D, t: number
     ctx.strokeStyle = "rgba(236,231,221,0.5)";
     ctx.strokeRect(dx + 0.5, dy + 0.5, dot - 1, dot - 1);
   }
-  ctx.font = `700 ${small ? 13 : 20}px ${opts.fonts.body}`;
+  // Chrome voice: the score bug is data, so it speaks mono.
+  ctx.font = `600 ${small ? 12 : 18}px ${opts.fonts.mono}`;
   ctx.textAlign = "left";
-  ctx.fillStyle = "#c9c2b4";
-  ctx.fillText(lead === 0 ? "EVEN" : `+${lead}`, dx + dot + (small ? 6 : 10), y + h * 0.68);
+  ctx.fillStyle = scene.palette.dim;
+  ctx.fillText(lead === 0 ? "EVEN" : `+${lead}`, dx + dot + (small ? 6 : 10), y + h * 0.66);
   ctx.restore();
 }
 
@@ -1367,8 +1443,10 @@ function drawWatermark(scene: ClipScene, ctx: CanvasRenderingContext2D): void {
   const y = corner === "tl" || corner === "tr" ? topY : L.watermarkY;
   ctx.save();
   ctx.textAlign = corner === "tl" || corner === "bl" ? "left" : "right";
-  ctx.font = `600 ${opts.aspect === "classic" ? 14 : 24}px ${opts.fonts.body}`;
-  ctx.fillStyle = "rgba(236,231,221,0.5)";
+  // Watermark is chrome: mono voice, opacity from the BRAND dial.
+  ctx.font = `500 ${opts.aspect === "classic" ? 13 : 22}px ${opts.fonts.mono}`;
+  ctx.globalAlpha = Math.max(0.05, Math.min(1, opts.style.watermarkOpacity / 100));
+  ctx.fillStyle = scene.palette.paper;
   ctx.fillText(opts.watermark, x, y);
   ctx.restore();
 }
@@ -1393,7 +1471,7 @@ function drawSegment(
 ): void {
   const { layout: L, opts } = scene;
   const seg = sf.seg;
-  const accent = opts.accent;
+  const accent = scene.palette.accent;
   const moveT = easeInOutCubic(clamp01(u));
   const primary = seg.pairs.find((p) => p.primary) ?? seg.pairs[0] ?? null;
   const tLand = sf.start + sf.arrowMs + sf.preMs + sf.moveMs;
@@ -1849,13 +1927,22 @@ function drawMoveArrow(
   const bcx = b.x + L.sq / 2;
   const bcy = b.y + L.sq / 2;
 
+  // Arrow ink from the EXPLAIN dial: reel palette accent (default), the raw
+  // site accent, or plain paper for a chalk-line read.
+  const arrowInk =
+    opts.style.arrowColor === "site"
+      ? opts.accent
+      : opts.style.arrowColor === "white"
+        ? scene.palette.paper
+        : scene.palette.accent;
+
   // Pulsing ring on a capture destination, alive until the mover arrives.
   if (primary.captured) {
     const ringIn = clamp01((t - sf.start) / 150);
     const pulse = 0.5 + 0.5 * Math.sin(t * 0.02);
     ctx.save();
     ctx.globalAlpha = ringIn * (0.5 + 0.35 * pulse);
-    ctx.strokeStyle = "#e05252";
+    ctx.strokeStyle = scene.palette.hot;
     ctx.lineWidth = 4;
     ctx.beginPath();
     ctx.arc(bcx, bcy, L.sq * (0.36 + 0.05 * pulse), 0, Math.PI * 2);
@@ -1891,8 +1978,8 @@ function drawMoveArrow(
 
   ctx.save();
   ctx.globalAlpha = alpha;
-  ctx.strokeStyle = opts.accent;
-  ctx.shadowColor = opts.accent;
+  ctx.strokeStyle = arrowInk;
+  ctx.shadowColor = arrowInk;
   ctx.shadowBlur = L.sq * 0.14;
   ctx.lineWidth = L.sq * 0.1;
   ctx.lineCap = "round";
@@ -1909,7 +1996,7 @@ function drawMoveArrow(
     const prev = pts[Math.max(0, shown - 3)];
     const ang = Math.atan2(tip.y - prev.y, tip.x - prev.x);
     const size = L.sq * 0.26 * easeOutBack(headU);
-    ctx.fillStyle = opts.accent;
+    ctx.fillStyle = arrowInk;
     ctx.beginPath();
     ctx.moveTo(tip.x + Math.cos(ang) * size, tip.y + Math.sin(ang) * size);
     ctx.lineTo(tip.x + Math.cos(ang + 2.5) * size, tip.y + Math.sin(ang + 2.5) * size);
@@ -1968,10 +2055,15 @@ function drawRulePanel(
     const off = 1 - inU + outU; // 0 = parked, 1 = fully offscreen
     if (off >= 1) continue;
 
-    // Side: away from the action square (display coords via sqXY).
+    // Side: forced by the EXPLAIN dial, else auto (away from the action).
     const targetX = sqXY(sf.target).x + L.sq / 2;
-    const onLeft = targetX >= L.boardX + L.board / 2;
-    const color = sf.energy ? ENERGY_COLOR[sf.energy] : opts.accent;
+    const onLeft =
+      opts.style.ruleSide === "left"
+        ? true
+        : opts.style.ruleSide === "right"
+          ? false
+          : targetX >= L.boardX + L.board / 2;
+    const color = sf.energy ? ENERGY_COLOR[sf.energy] : scene.palette.accent;
 
     const textSize = opts.aspect === "classic" ? 20 : 30;
     const nameSize = Math.round(textSize * 1.15);
@@ -2001,27 +2093,32 @@ function drawRulePanel(
     ctx.strokeRect(x, y, w, h);
     ctx.fillStyle = color;
     ctx.fillRect(onLeft ? x : x + w - edgeW, y, edgeW, h);
-    // The four corner ticks, same family as the card badge and verdict.
+    // The four corner ticks, same family as the card badge and verdict, each
+    // arm with a seeded length wobble for the hand-drawn read.
     ctx.strokeStyle = color;
     for (const [sx, sy] of [[0, 0], [1, 0], [0, 1], [1, 1]] as const) {
       const cxp = x + sx * w;
       const cyp = y + sy * h;
+      const lenA = 11 + 6 * jit01(scene.fieldSeed, 31 + sx * 3 + sy * 5);
+      const lenB = 11 + 6 * jit01(scene.fieldSeed, 47 + sx * 3 + sy * 5);
       ctx.beginPath();
-      ctx.moveTo(cxp + (sx ? -14 : 14), cyp);
+      ctx.moveTo(cxp + (sx ? -lenA : lenA), cyp);
       ctx.lineTo(cxp, cyp);
-      ctx.lineTo(cxp, cyp + (sy ? -14 : 14));
+      ctx.lineTo(cxp, cyp + (sy ? -lenB : lenB));
       ctx.stroke();
     }
 
     const tx = x + pad + (onLeft ? edgeW : 0);
     let ty = y + pad + tierSize;
     ctx.textAlign = "left";
-    ctx.font = `600 ${tierSize}px ${opts.fonts.body}`;
+    // Tier chip speaks the mono chrome voice; the card name slams in display;
+    // the rule copy reads in the text voice. Three voices, one panel.
+    ctx.font = `600 ${tierSize}px ${opts.fonts.mono}`;
     ctx.fillStyle = tierTint(sig.tier);
     ctx.fillText(`TIER ${ROMAN[sig.tier - 1] ?? sig.tier}`, tx, ty);
     ty += Math.round(nameSize * 1.25);
     ctx.font = `700 ${nameSize}px ${opts.fonts.display}`;
-    ctx.fillStyle = "#ece7dd";
+    ctx.fillStyle = scene.palette.paper;
     ctx.fillText(sig.name, tx, ty);
     ty += Math.round(textSize * 1.1);
     ctx.font = `500 ${textSize}px ${opts.fonts.body}`;
@@ -2044,13 +2141,16 @@ function drawCallouts(
   sqXY: (sq: Square) => { x: number; y: number },
 ): void {
   const { layout: L, opts } = scene;
+  const rotKnob = opts.style.stampRotation;
   for (const sf of scene.segs) {
     if (!sf.callout) continue;
-    const tLand = sf.start + sf.arrowMs + sf.preMs + sf.moveMs;
+    // Offset from the stamp's jitter (1.6x) so the two never pop together.
+    const tLand = sf.start + sf.arrowMs + sf.preMs + sf.moveMs + Math.round(sf.jitterMs * 1.6);
     const dur = 950;
     if (t < tLand || t > tLand + dur) continue;
     const p = (t - tLand) / dur;
-    const pop = p < 0.2 ? easeOutBack(clamp01(p / 0.2)) : 1 + 0.01 * Math.sin(t * 0.02);
+    const c1 = 2.4 - sf.easeSeed * 1.2; // callouts settle opposite to stamps
+    const pop = p < 0.2 ? easeOutBackVar(clamp01(p / 0.2), c1) : 1 + 0.01 * Math.sin(t * 0.02);
     const fade = p > 0.8 ? 1 - (p - 0.8) / 0.2 : 1;
 
     // Opposite side from the action square, straddling the board's top edge.
@@ -2063,11 +2163,16 @@ function drawCallouts(
       L.boardY + (opts.aspect === "tiktok" ? -18 : opts.aspect === "square" ? 6 : 22);
     const size = opts.aspect === "classic" ? 20 : 34;
     const text = sf.callout.emoji ? `${sf.callout.text} ${sf.callout.emoji}` : sf.callout.text;
+    const rot =
+      rotKnob === "off"
+        ? 0
+        : (onLeft ? -1 : 1) *
+          (rotKnob === "rowdy" ? 0.05 + 0.06 * Math.abs(sf.tiltSeed) : 0.03 + 0.025 * Math.abs(sf.tiltSeed));
 
     ctx.save();
     ctx.globalAlpha = fade;
     ctx.translate(cx, cy);
-    ctx.rotate(onLeft ? -0.045 : 0.045);
+    ctx.rotate(rot);
     ctx.scale(pop, pop);
     ctx.textAlign = "center";
     ctx.font = `800 ${size}px ${opts.fonts.display}`;
@@ -2075,9 +2180,9 @@ function drawCallouts(
     ctx.strokeStyle = "rgba(10,8,6,0.92)";
     ctx.lineJoin = "round";
     ctx.strokeText(text, 0, 0);
-    ctx.shadowColor = opts.accent;
+    ctx.shadowColor = scene.palette.accent;
     ctx.shadowBlur = size * 0.25;
-    ctx.fillStyle = sf.isPayoff ? opts.accent : "#ffffff";
+    ctx.fillStyle = sf.isPayoff ? scene.palette.accent : scene.palette.paper;
     ctx.fillText(text, 0, 0);
     ctx.restore();
     return;
@@ -2098,7 +2203,7 @@ function drawCardBadge(
   const cx = L.W / 2;
   const cy = L.boardY + (opts.aspect === "classic" ? 44 : 56);
   const nameSize = opts.aspect === "classic" ? 22 : 30;
-  const color = energy ? ENERGY_COLOR[energy] : opts.accent;
+  const color = energy ? ENERGY_COLOR[energy] : scene.palette.accent;
   ctx.save();
   ctx.globalAlpha = a;
   ctx.translate(cx, cy);
@@ -2120,11 +2225,11 @@ function drawCardBadge(
     ctx.stroke();
   }
   ctx.textAlign = "center";
-  ctx.font = `600 ${Math.round(nameSize * 0.42)}px ${opts.fonts.body}`;
+  ctx.font = `600 ${Math.round(nameSize * 0.4)}px ${opts.fonts.mono}`;
   ctx.fillStyle = color;
   ctx.fillText(`TIER ${ROMAN[sig.tier - 1] ?? sig.tier}`, 0, -h / 2 + nameSize * 0.62);
   ctx.font = `700 ${nameSize}px ${opts.fonts.display}`;
-  ctx.fillStyle = "#ece7dd";
+  ctx.fillStyle = scene.palette.paper;
   ctx.fillText(sig.name, 0, h / 2 - nameSize * 0.5);
   ctx.restore();
 }
@@ -2172,7 +2277,7 @@ function drawHook(scene: ClipScene, ctx: CanvasRenderingContext2D, t: number): v
       }
       // Spring pop in, then a continuous barely-there float so the hook is
       // never a static stamp.
-      const pop = stamp ? 1 : 0.6 + 0.4 * easeOutBack(wu);
+      const pop = stamp ? 1 : 0.6 + 0.4 * easeOutBackVar(wu, 1.2 + jit01(scene.fieldSeed, wordIdx) * 1.1);
       const float = Math.sin(t * 0.0017 + wordIdx * 1.3) * L.hookSize * 0.045;
       const cx = x + widths[wi] / 2;
       ctx.save();
@@ -2183,7 +2288,15 @@ function drawHook(scene: ClipScene, ctx: CanvasRenderingContext2D, t: number): v
       ctx.strokeStyle = "rgba(10,8,6,0.9)";
       ctx.lineJoin = "round";
       ctx.strokeText(w, -widths[wi] / 2, 0);
-      ctx.fillStyle = "#ffffff";
+      // Print-registration misalignment: a hot pass a couple px off-axis
+      // under the paper fill, like a poster run slightly out of register.
+      const regOff = L.hookSize * 0.045;
+      const regAng = scene.verdictTilt * 30;
+      ctx.globalAlpha = wu * 0.45;
+      ctx.fillStyle = scene.palette.hot;
+      ctx.fillText(w, -widths[wi] / 2 + Math.cos(regAng) * regOff, Math.sin(regAng) * regOff);
+      ctx.globalAlpha = wu;
+      ctx.fillStyle = scene.palette.paper;
       ctx.fillText(w, -widths[wi] / 2, 0);
       ctx.restore();
       x += widths[wi] + space;
@@ -2207,9 +2320,29 @@ function drawPopCaption(
   }
   if (!sf?.caption) return;
   const cap = sf.caption;
+  const style = opts.style;
   const pop = opts.captionStyle === "pop";
   const intensity = intensityScale(opts.emojiLevel);
-  const size = cap.big ? L.popSize : Math.round(L.popSize * 0.62);
+  // Caption size dial: S / M / L on top of the layout's base size.
+  const sizeMult = style.captionSize === "s" ? 0.82 : style.captionSize === "l" ? 1.18 : 1;
+  const size = Math.round((cap.big ? L.popSize : L.popSize * 0.62) * sizeMult);
+  // Caption parking dial: Low sits at the layout's classic line; Mid and High
+  // climb toward the board's lower edge, always inside the text-safe band.
+  const boardBottom = L.boardY + L.board;
+  const span = Math.max(0, L.popY - boardBottom - size * 1.2);
+  const posK = style.captionPos === "high" ? 0.3 : style.captionPos === "mid" ? 0.62 : 1;
+  const capY = boardBottom + size * 1.2 + span * posK;
+  // Caption ink source: Auto rides the reel palette, the rest are forced.
+  const pal = scene.palette;
+  const baseInk =
+    style.captionColor === "accent"
+      ? pal.accent
+      : style.captionColor === "white"
+        ? "#f5f2ea"
+        : style.captionColor === "custom"
+          ? style.captionHex
+          : pal.paper;
+  const hotInk = style.captionColor === "auto" ? pal.accent : baseInk;
   ctx.save();
   ctx.textAlign = "left";
   ctx.font = `800 ${size}px ${opts.fonts.display}`;
@@ -2221,7 +2354,10 @@ function drawPopCaption(
   const total = widths.reduce((a, b) => a + b, 0) + gap * (tokens.length - 1);
   let x = L.W / 2 - total / 2;
   tokens.forEach((word, i) => {
-    const appear = sf!.start + sf!.arrowMs + sf!.preMs + (pop ? i * 110 : 0);
+    // The segment's seeded jitter keeps caption pops out of lockstep with the
+    // stamps and callouts that share its beat.
+    const appear =
+      sf!.start + sf!.arrowMs + sf!.preMs + Math.round(sf!.jitterMs * 0.5) + (pop ? i * 110 : 0);
     const wu = clamp01((t - appear) / 160);
     if (wu <= 0) {
       x += widths[i] + gap;
@@ -2236,7 +2372,7 @@ function drawPopCaption(
     const cxw = x + widths[i] / 2;
     ctx.save();
     ctx.globalAlpha = pop ? wu : 1;
-    ctx.translate(cxw, L.popY + float);
+    ctx.translate(cxw, capY + float);
     ctx.rotate(wob);
     ctx.scale(s, s);
     ctx.lineWidth = Math.max(3, size * 0.14);
@@ -2244,10 +2380,10 @@ function drawPopCaption(
     ctx.lineJoin = "round";
     ctx.strokeText(word.text, -widths[i] / 2, 0);
     if (word.hot) {
-      ctx.shadowColor = opts.accent;
+      ctx.shadowColor = hotInk;
       ctx.shadowBlur = size * (0.2 + 0.12 * Math.sin(t * 0.007 + i));
     }
-    ctx.fillStyle = word.hot ? opts.accent : cap.big ? "#ffffff" : "#c9c2b4";
+    ctx.fillStyle = word.hot ? hotInk : cap.big ? baseInk : pal.dim;
     ctx.fillText(word.text, -widths[i] / 2, 0);
     ctx.restore();
     x += widths[i] + gap;
@@ -2294,10 +2430,10 @@ function drawMomentum(scene: ClipScene, ctx: CanvasRenderingContext2D, t: number
   ctx.fillStyle = "rgba(255,255,255,0.08)";
   ctx.fillRect(x, top, w, h);
   const extent = (h / 2) * Math.abs(f);
-  ctx.fillStyle = f >= 0 ? "#ece7dd" : "#2f2b26";
+  ctx.fillStyle = f >= 0 ? scene.palette.paper : "#2f2b26";
   if (f >= 0) ctx.fillRect(x, mid - extent, w, extent);
   else ctx.fillRect(x, mid, w, extent);
-  ctx.strokeStyle = withAlpha(scene.opts.accent, 0.7);
+  ctx.strokeStyle = withAlpha(scene.palette.accent, 0.7);
   ctx.lineWidth = 1;
   ctx.strokeRect(x + 0.5, top + 0.5, w - 1, h - 1);
   ctx.beginPath();
@@ -2326,12 +2462,13 @@ function drawProgress(
     ctx.fillStyle = "rgba(255,255,255,0.10)";
     ctx.fillRect(x, y, cellW, 6);
     if (fill > 0) {
-      ctx.fillStyle = opts.accent;
+      ctx.fillStyle = scene.palette.accent;
       ctx.fillRect(x, y, cellW * clamp01(fill), 6);
     }
   }
   const current = Math.min(n, done + (active ? 1 : 0)) || (done >= n ? n : 0);
-  ctx.font = `600 ${opts.aspect === "classic" ? 12 : 20}px ${opts.fonts.body}`;
+  // Chrome voice: the move counter is a readout, so it speaks mono.
+  ctx.font = `500 ${opts.aspect === "classic" ? 11 : 18}px ${opts.fonts.mono}`;
   ctx.fillStyle = "#7f7d77";
   ctx.textAlign = "left";
   ctx.fillText(`MOVE ${Math.max(1, current)}/${n}`, L.boardX, y + (opts.aspect === "classic" ? 22 : 32));
@@ -2348,13 +2485,18 @@ function drawVerdict(scene: ClipScene, ctx: CanvasRenderingContext2D, p01: numbe
   }
   // Spring slam: overshoots below rest size then snaps back, and the settled
   // stamp keeps a barely-visible pulse so the freeze is never a still image.
+  // It also prints OFF-AXIS: a seeded 1 to 3 degree tilt that eases toward
+  // level as it settles but never fully squares up, like a rubber stamp.
   const slam =
     p < 0.2 ? 1.8 - 0.8 * easeOutBack(p / 0.2) : 1 + 0.006 * Math.sin(p01 * 26);
+  const tilt = scene.verdictTilt * (p < 0.2 ? 1.6 - 0.6 * easeOutCubic(p / 0.2) : 1);
   const cx = L.W / 2;
   const cy = L.boardY + L.board / 2;
   const mainSize = opts.aspect === "classic" ? 56 : 92;
+  const pal = scene.palette;
   ctx.save();
   ctx.translate(cx, cy);
+  ctx.rotate(tilt);
   ctx.scale(slam, slam);
   ctx.textAlign = "center";
   ctx.font = `800 ${mainSize}px ${opts.fonts.display}`;
@@ -2362,23 +2504,34 @@ function drawVerdict(scene: ClipScene, ctx: CanvasRenderingContext2D, p01: numbe
   const h = v.sub ? mainSize * 2.2 : mainSize * 1.7;
   ctx.fillStyle = "rgba(14,12,10,0.86)";
   ctx.fillRect(-w / 2, -h / 2, w, h);
-  ctx.strokeStyle = withAlpha(opts.accent, 0.9);
+  ctx.strokeStyle = withAlpha(pal.accent, 0.9);
   ctx.lineWidth = 3;
   ctx.strokeRect(-w / 2, -h / 2, w, h);
-  ctx.strokeStyle = opts.accent;
+  ctx.strokeStyle = pal.accent;
   for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]] as const) {
+    // Seeded arm-length variance keeps the frame ticks hand-cut.
+    const lenA = 18 + 9 * jit01(scene.fieldSeed, 61 + sx * 2 + sy * 3);
+    const lenB = 18 + 9 * jit01(scene.fieldSeed, 73 + sx * 2 + sy * 3);
     ctx.beginPath();
-    ctx.moveTo((sx * w) / 2 - sx * 22, (sy * h) / 2);
+    ctx.moveTo((sx * w) / 2 - sx * lenA, (sy * h) / 2);
     ctx.lineTo((sx * w) / 2, (sy * h) / 2);
-    ctx.lineTo((sx * w) / 2, (sy * h) / 2 - sy * 22);
+    ctx.lineTo((sx * w) / 2, (sy * h) / 2 - sy * lenB);
     ctx.stroke();
   }
   const isMate = v.main === "CHECKMATE";
-  ctx.fillStyle = isMate ? "#e05252" : opts.accent;
-  ctx.fillText(v.main, 0, v.sub ? -mainSize * 0.1 : mainSize * 0.32);
+  const mainInk = isMate ? pal.hot : pal.accent;
+  const mainY = v.sub ? -mainSize * 0.1 : mainSize * 0.32;
+  // Print-registration misalignment under the big verdict type.
+  const regOff = mainSize * 0.04;
+  ctx.globalAlpha = 0.5;
+  ctx.fillStyle = isMate ? pal.accent : pal.hot;
+  ctx.fillText(v.main, Math.sign(scene.verdictTilt) * regOff, mainY + regOff * 0.6);
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = mainInk;
+  ctx.fillText(v.main, 0, mainY);
   if (v.sub) {
     ctx.font = `600 ${Math.round(mainSize * 0.34)}px ${opts.fonts.body}`;
-    ctx.fillStyle = "#ece7dd";
+    ctx.fillStyle = pal.paper;
     ctx.fillText(v.sub, 0, mainSize * 0.62);
   }
   ctx.restore();
@@ -2418,18 +2571,18 @@ function drawEndCard(
   const w1 = ctx.measureText(wm1).width;
   const w2 = ctx.measureText(wm2).width;
   ctx.textAlign = "left";
-  ctx.fillStyle = "#ece7dd";
+  ctx.fillStyle = scene.palette.paper;
   ctx.fillText(wm1, cx - (w1 + w2) / 2, topY);
-  ctx.fillStyle = opts.accent;
+  ctx.fillStyle = scene.palette.accent;
   ctx.fillText(wm2, cx - (w1 + w2) / 2 + w1, topY);
   ctx.restore();
 
-  // The CTA line types itself on, caret blinking while it goes.
+  // The CTA line types itself on in the mono chrome voice, caret blinking.
   const url = opts.ctaText.trim() || "nerfchess.com";
   const typed = Math.round(clamp01((p - 0.16) / 0.4) * url.length);
   ctx.textAlign = "center";
-  ctx.font = `600 ${Math.round(markSize * 0.3)}px ${opts.fonts.body}`;
-  ctx.fillStyle = "#a7a297";
+  ctx.font = `500 ${Math.round(markSize * 0.28)}px ${opts.fonts.mono}`;
+  ctx.fillStyle = scene.palette.dim;
   const shownUrl =
     url.slice(0, typed) +
     (typed < url.length && Math.floor(tAbs / 200) % 2 === 0 ? "_" : "");
@@ -2443,7 +2596,7 @@ function drawEndCard(
   const my = topY + markSize * 1.1 + slide * mini * 0.16;
   ctx.save();
   ctx.globalAlpha *= easeOutCubic(clamp01((p - 0.18) / 0.3));
-  ctx.strokeStyle = withAlpha(opts.accent, 0.45 + 0.12 * Math.sin(tAbs * 0.004));
+  ctx.strokeStyle = withAlpha(scene.palette.accent, 0.45 + 0.12 * Math.sin(tAbs * 0.004));
   ctx.lineWidth = 2;
   ctx.strokeRect(mx - 3, my - 3, mini + 6, mini + 6);
   for (let sq = 0 as Square; sq < 64; sq++) {
@@ -2466,9 +2619,11 @@ function drawEndCard(
   }
   ctx.restore();
   if (opts.watermark) {
-    ctx.globalAlpha = a * loopDim * clamp01((p - 0.45) / 0.2);
-    ctx.font = `600 ${opts.aspect === "classic" ? 14 : 24}px ${opts.fonts.body}`;
-    ctx.fillStyle = "rgba(236,231,221,0.5)";
+    ctx.globalAlpha =
+      a * loopDim * clamp01((p - 0.45) / 0.2) *
+      Math.max(0.05, Math.min(1, opts.style.watermarkOpacity / 100));
+    ctx.font = `500 ${opts.aspect === "classic" ? 13 : 22}px ${opts.fonts.mono}`;
+    ctx.fillStyle = scene.palette.paper;
     ctx.fillText(opts.watermark, cx, my + mini + (opts.aspect === "classic" ? 34 : 56));
   }
   ctx.restore();
@@ -2493,7 +2648,7 @@ function drawIntroSlam(
   ctx.save();
   // Flash ring expanding off the board.
   ctx.globalAlpha = (1 - p) * 0.85;
-  ctx.strokeStyle = withAlpha(scene.opts.accent, 0.9);
+  ctx.strokeStyle = withAlpha(scene.palette.accent, 0.9);
   ctx.lineWidth = 10 * (1 - p * 0.6);
   ctx.beginPath();
   ctx.arc(bcx, bcy, L.board * (0.3 + easeOutCubic(p) * 0.55), 0, Math.PI * 2);
@@ -2533,7 +2688,7 @@ function drawEdgeShimmer(scene: ClipScene, ctx: CanvasRenderingContext2D, t: num
     const bandX = x0 + (p * 1.5 - 0.25) * w;
     const g = ctx.createLinearGradient(bandX - w * 0.18, y0, bandX + w * 0.18, y0 + w);
     g.addColorStop(0, "rgba(0,0,0,0)");
-    g.addColorStop(0.5, withAlpha(scene.opts.accent, 0.9));
+    g.addColorStop(0.5, withAlpha(scene.palette.accent, 0.9));
     g.addColorStop(1, "rgba(0,0,0,0)");
     ctx.save();
     ctx.globalAlpha = Math.sin(Math.PI * p) * 0.85;
@@ -2592,22 +2747,30 @@ function drawOverlays(scene: ClipScene, ctx: CanvasRenderingContext2D, t: number
     if (tr) paintFlashCut(ctx, tr.p, L.W, L.H);
   }
 
-  // Color grade: precomputed blend layers over the finished frame.
-  applyGrade(ctx, style.grade, L.W, L.H, t);
+  // Color grade: precomputed blend layers over the finished frame, scaled by
+  // the strength dial; the duotone grade compiles from its two hex wells.
+  applyGrade(ctx, style.grade, L.W, L.H, t, style.gradeStrength / 100, {
+    a: style.duotoneA,
+    b: style.duotoneB,
+  });
 
   // Victory confetti over the verdict freeze.
   if (scene.celebrate && t >= scene.freezeStart) {
     paintConfetti(ctx, L.W, L.H, t - scene.freezeStart, scene.fieldSeed);
   }
 
-  // VHS: scanlines, tracking band, REC chrome.
-  if (style.vhs) paintVhs(ctx, L.W, L.H, t, L.boardX, L.boardY, scene.opts.fonts.body);
+  // VHS: scanlines, tracking band, REC chrome (mono, like real deck chrome).
+  if (style.vhs) paintVhs(ctx, L.W, L.H, t, L.boardX, L.boardY, scene.opts.fonts.mono);
 
-  // Seeded glitch bursts on capture landings (self-blit, so post-grade).
+  // Seeded glitch bursts on capture landings (self-blit, so post-grade), the
+  // violence scaled by the FX dial.
   if (style.glitch) {
     for (const sf of scene.segs) {
       if (sf.shards.length === 0) continue;
-      paintGlitch(ctx, L.W, L.H, t, sf.start + segLead(sf) + sf.moveMs, scene.fieldSeed);
+      paintGlitch(
+        ctx, L.W, L.H, t, sf.start + segLead(sf) + sf.moveMs, scene.fieldSeed,
+        style.glitchAmount / 100,
+      );
     }
   }
 
