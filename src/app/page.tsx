@@ -111,31 +111,37 @@ export default function HomePage() {
           <LiveNowStrip />
           <ReturnToGameBanner />
 
-          {/* What the two words on the tin actually mean. Each card is a door
-              straight into the lobby with that mode preselected (?mode= wins
-              over the remembered choice); the titles carry the mode colors and
-              the cards carry mode-hue edges, at equal prominence. */}
+          {/* Two compact mode doors (playtest feedback: the old three-bullet
+              definition cards restated the pitch paragraph above and crowded
+              the hero). One clause each; ?mode= wins over the remembered
+              choice, and the full explanation lives in How it works below. */}
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Link href="/lobby?mode=buff" className="mode-def-card mode-def-card--buff plate group block p-4 no-underline">
-              <span className="font-display text-lg font-bold text-mode-buffGlow">Buff mode</span>
-              <ul className="mt-2 space-y-1 text-sm leading-snug text-parchment-300">
-                <li>Both armies play fair.</li>
-                <li>Draft powers onto your own pieces.</li>
-                <li>Stack buffs into a war machine.</li>
-              </ul>
-              <span className="mt-2.5 block text-[13px] font-medium text-mode-buffGlow/80 transition-colors group-hover:text-mode-buffGlow">
-                Play Buff →
+            <Link
+              href="/lobby?mode=buff"
+              className="mode-def-card mode-def-card--buff plate group flex items-center justify-between gap-3 p-3.5 no-underline"
+            >
+              <span className="min-w-0">
+                <span className="font-display text-[15px] font-bold text-mode-buffGlow">Buff mode</span>
+                <span className="block truncate text-[13px] leading-snug text-parchment-300">
+                  Stack powers onto your own army.
+                </span>
+              </span>
+              <span className="shrink-0 text-[13px] font-medium text-mode-buffGlow/80 transition-colors group-hover:text-mode-buffGlow">
+                Play →
               </span>
             </Link>
-            <Link href="/lobby?mode=nerf" className="mode-def-card mode-def-card--nerf plate group block p-4 no-underline">
-              <span className="font-display text-lg font-bold text-mode-nerfGlow">Nerf mode</span>
-              <ul className="mt-2 space-y-1 text-sm leading-snug text-parchment-300">
-                <li>You start with a secret handicap.</li>
-                <li>Curse your opponent with hexes.</li>
-                <li>Draft boons to dig yourself out.</li>
-              </ul>
-              <span className="mt-2.5 block text-[13px] font-medium text-mode-nerfGlow/80 transition-colors group-hover:text-mode-nerfGlow">
-                Play Nerf →
+            <Link
+              href="/lobby?mode=nerf"
+              className="mode-def-card mode-def-card--nerf plate group flex items-center justify-between gap-3 p-3.5 no-underline"
+            >
+              <span className="min-w-0">
+                <span className="font-display text-[15px] font-bold text-mode-nerfGlow">Nerf mode</span>
+                <span className="block truncate text-[13px] leading-snug text-parchment-300">
+                  Secret handicaps, hexes, and boons.
+                </span>
+              </span>
+              <span className="shrink-0 text-[13px] font-medium text-mode-nerfGlow/80 transition-colors group-hover:text-mode-nerfGlow">
+                Play →
               </span>
             </Link>
           </div>
