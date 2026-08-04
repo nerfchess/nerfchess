@@ -99,6 +99,11 @@ jobs:
       - name: Glicko tests
         run: npm run test:glicko
 
+      # Swiss pairing: score groups, no-rematch preference, bye rotation,
+      # determinism under input shuffling.
+      - name: Tournament pairing tests
+        run: npm run test:tournament-pairing
+
       # The board-fx scope contract: a card's marks match its mechanic's reach
       # (plural bound squares, king exclusion, self-retire), swept across every
       # fx card in the library. Born from the "whole army looks empowered" bug.

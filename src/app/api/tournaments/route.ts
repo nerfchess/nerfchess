@@ -24,6 +24,7 @@ export type TournamentListRow = {
   starts_at: number | null;
   max_players: number;
   created_at: number;
+  status: string;
   players: number;
   phase: TournamentPhase;
 };
@@ -36,7 +37,7 @@ export async function GET() {
     .prepare(
       `SELECT t.id, t.name, t.description, t.creator_name, t.club_id, c.name AS club_name,
               t.format, t.mode, t.rated, t.clock_time_sec, t.clock_increment_sec, t.duration_min,
-              t.starts_at, t.max_players, t.created_at,
+              t.starts_at, t.max_players, t.created_at, t.status,
               COUNT(te.user_id) AS players
        FROM tournaments t
        LEFT JOIN clubs c ON c.id = t.club_id
@@ -54,7 +55,12 @@ export async function GET() {
     .filter((row) => !/\btest(ing)?\b/i.test(row.name))
     .map((row) => ({
       ...row,
-      phase: tournamentPhase(row.starts_at, row.duration_min, now),
+      // A tournament that finished its configured rounds early carries
+      // status 'finished' before its duration window closes.
+      phase:
+        row.status === "finished"
+          ? ("finished" as TournamentPhase)
+          : tournamentPhase(row.starts_at, row.duration_min, now),
     }));
   return NextResponse.json({ tournaments });
 }
@@ -73,6 +79,7 @@ export async function POST(request: Request) {
     clockTimeSec?: unknown;
     clockIncrementSec?: unknown;
     durationMin?: unknown;
+    roundsTotal?: unknown;
     startsAt?: unknown;
     maxPlayers?: unknown;
     clubId?: unknown;
@@ -91,6 +98,9 @@ export async function POST(request: Request) {
   const clockTimeSec = clampInt(body.clockTimeSec, 0, 10800, 180);
   const clockIncrementSec = clampInt(body.clockIncrementSec, 0, 180, 0);
   const durationMin = clampInt(body.durationMin, 5, 720, 60);
+  // Configured round count; 0 = as many rounds as fit the duration window
+  // (the tournament engine stops pairing when the clock runs out either way).
+  const roundsTotal = clampInt(body.roundsTotal, 0, 15, 0);
   const maxPlayers = clampInt(body.maxPlayers, 2, 256, 16);
   const startsAt =
     typeof body.startsAt === "number" && Number.isFinite(body.startsAt) ? Math.round(body.startsAt) : null;
@@ -129,8 +139,8 @@ export async function POST(request: Request) {
         `INSERT INTO tournaments (
           id, name, description, creator_user_id, creator_name, club_id,
           format, mode, rated, clock_time_sec, clock_increment_sec, duration_min,
-          starts_at, status, max_players, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'scheduled', ?, ?)`,
+          rounds_total, starts_at, status, max_players, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'scheduled', ?, ?)`,
       )
       .bind(
         id,
@@ -145,6 +155,7 @@ export async function POST(request: Request) {
         clockTimeSec,
         clockIncrementSec,
         durationMin,
+        roundsTotal,
         startsAt,
         maxPlayers,
         now,
@@ -173,6 +184,7 @@ export async function POST(request: Request) {
     starts_at: startsAt,
     max_players: maxPlayers,
     created_at: now,
+    status: "scheduled",
     players: 1,
     phase: tournamentPhase(startsAt, durationMin, now),
   };
