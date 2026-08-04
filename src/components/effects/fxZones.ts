@@ -61,6 +61,20 @@ export interface FxVisual {
 
 const EMPTY: FxVisual = { kingSafeSquares: [], pawnClampSquares: [], stunSquares: [], motifs: [] };
 
+/** The FxVisual fields spread into a Board `visual` object. Every game surface
+ * (OnlineMatch, the bot game, archived games, the dev lab) MUST build its
+ * board visual through this one mapper: the four of them used to open-code the
+ * same four-field spread, which is exactly how a new FxVisual channel would
+ * have reached one surface and silently missed the others. */
+export function fxVisualFields(fx: FxVisual) {
+  return {
+    kingSafeSquares: fx.kingSafeSquares,
+    pawnClampSquares: fx.pawnClampSquares,
+    stunSquares: fx.stunSquares,
+    motifSquares: fx.motifs,
+  };
+}
+
 // Strongest motif first when several cards touch the same square: a piece's
 // restrictions matter more than its perks.
 const MOTIF_RANK: Record<MotifKind, number> = {

@@ -6,7 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Eye } from "lucide-react";
 import { Board, NERF_REVEAL_SKIP, type NerfRevealInfo } from "@/components/Board";
-import { computeFxVisual } from "@/components/effects/fxZones";
+import { computeFxVisual, fxVisualFields } from "@/components/effects/fxZones";
 import { stashGamblingOutcome } from "@/components/effects/gamblingOutcome";
 import { useSignatureQueue } from "@/components/effects/useSignatureQueue";
 import { BoardPlayerRow } from "@/components/BoardPlayerRow";
@@ -892,14 +892,7 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
               trapSquares: zones.traps,
               doomSquares: zones.doom,
               lockedSquares: zones.locked,
-              ...(fxZone
-                ? {
-                    kingSafeSquares: fxZone.kingSafeSquares,
-                    pawnClampSquares: fxZone.pawnClampSquares,
-                    stunSquares: fxZone.stunSquares,
-                    motifSquares: fxZone.motifs,
-                  }
-                : {}),
+              ...(fxZone ? fxVisualFields(fxZone) : {}),
             }
           : undefined
       }

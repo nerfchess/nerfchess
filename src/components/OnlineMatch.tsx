@@ -76,7 +76,7 @@ import {
   replayDraftGame,
   revealHeldBuffs,
 } from "@/lib/draftOnline";
-import { computeFxVisual } from "@/components/effects/fxZones";
+import { computeFxVisual, fxVisualFields } from "@/components/effects/fxZones";
 import { stashGamblingOutcome } from "@/components/effects/gamblingOutcome";
 import { useSignatureQueue } from "@/components/effects/useSignatureQueue";
 import { isGodPanelUser, INFINITE_REROLLS } from "@/lib/godPanel";
@@ -2093,14 +2093,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
             // now paint here too.
             lockedSquares: dZone.locked,
             barredSquares: dZone.barred,
-            ...(dFxZone
-              ? {
-                  kingSafeSquares: dFxZone.kingSafeSquares,
-                  pawnClampSquares: dFxZone.pawnClampSquares,
-                  stunSquares: dFxZone.stunSquares,
-                  motifSquares: dFxZone.motifs,
-                }
-              : {}),
+            ...(dFxZone ? fxVisualFields(dFxZone) : {}),
           }
         : {}),
     };
