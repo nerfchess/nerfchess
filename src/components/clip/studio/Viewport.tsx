@@ -6,11 +6,15 @@
 // React state), viewfinder corner brackets, and a transport row of inline
 // SVG stroke icons on the sanctioned Button primitive.
 
-import type { MutableRefObject } from "react";
+import { useCallback, useEffect, useRef, useState, type MutableRefObject } from "react";
 import { Button } from "@/components/ui/Button";
 import { ClipRenderer, type ClipRendererHandle } from "../ClipRenderer";
-import type { ClipScene } from "../clipScene";
+import { renderClipFrame, type ClipScene } from "../clipScene";
 import { ASPECT_NAME } from "../clipOptions";
+
+/** Compare preview cap: the pinned pane redraws at most this often, so a
+ *  phone never pays for two full-rate renders. The export is untouched. */
+const COMPARE_FRAME_MS = 1000 / 24;
 
 export function formatClipTime(ms: number): string {
   const clamped = Math.max(0, ms);
@@ -55,6 +59,12 @@ interface Props {
   onAutoPause: () => void;
   registerTickTarget: (key: string, el: HTMLElement | null) => void;
   previewMax: string;
+  /** A/B compare: the pinned style's scene, rendered right of a draggable
+   *  seam at the SAME t as the live preview. Null when compare is off. */
+  compareScene?: ClipScene | null;
+  pinnedName?: string | null;
+  /** Export frame rate for the chrome readout (the preview is rAF-driven). */
+  fps?: number;
 }
 
 export function Viewport({
@@ -73,8 +83,68 @@ export function Viewport({
   onAutoPause,
   registerTickTarget,
   previewMax,
+  compareScene = null,
+  pinnedName = null,
+  fps = 30,
 }: Props) {
   const { W, H } = scene.layout;
+
+  // --- A/B compare pane ------------------------------------------------------
+  // The pinned scene draws into an overlay canvas clipped at the seam, at the
+  // same t the transport tick hands the live preview. Seam drag is pure UI.
+  const [seam, setSeam] = useState(50);
+  const [seamDrag, setSeamDrag] = useState(false);
+  const stageRef = useRef<HTMLDivElement | null>(null);
+  const compareCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const compareRef = useRef<{ scene: ClipScene | null; lastWall: number; lastT: number }>({
+    scene: null,
+    lastWall: 0,
+    lastT: -1,
+  });
+  const imagesRef = useRef(images);
+  useEffect(() => {
+    compareRef.current.scene = compareScene;
+  }, [compareScene]);
+  useEffect(() => {
+    imagesRef.current = images;
+  }, [images]);
+
+  const drawCompare = useCallback((tMs: number, force = false) => {
+    const st = compareRef.current;
+    const canvas = compareCanvasRef.current;
+    if (!st.scene || !canvas) return;
+    const now = performance.now();
+    if (!force && tMs === st.lastT) return;
+    if (!force && now - st.lastWall < COMPARE_FRAME_MS) return;
+    const ctx = canvas.getContext("2d", { alpha: false });
+    if (!ctx) return;
+    st.lastWall = now;
+    st.lastT = tMs;
+    renderClipFrame(st.scene, ctx, Math.min(tMs, st.scene.durationMs), imagesRef.current);
+  }, []);
+
+  const handleTick = useCallback(
+    (tMs: number, isPlaying: boolean) => {
+      drawCompare(tMs);
+      onTick(tMs, isPlaying);
+    },
+    [drawCompare, onTick],
+  );
+
+  // A fresh pin (or scene swap) repaints the pane even while paused.
+  useEffect(() => {
+    if (!compareScene) return;
+    drawCompare(rendererRef.current?.getTime() ?? 0, true);
+  }, [compareScene, drawCompare, rendererRef]);
+
+  const seamTo = useCallback((clientX: number) => {
+    const el = stageRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const pct = ((clientX - rect.left) / Math.max(1, rect.width)) * 100;
+    setSeam(Math.max(8, Math.min(92, pct)));
+  }, []);
+
   return (
     <div className="clip-vp">
       <span className="clip-vp-corner tl" aria-hidden />
@@ -87,7 +157,7 @@ export function Viewport({
           <span className="clip-rec-dot" aria-hidden />
           <span>{ASPECT_NAME[scene.opts.aspect]}</span>
           <span className="opacity-60">
-            {W}x{H} 30
+            {W}x{H} {fps}
           </span>
         </span>
         <span className="clip-timecode" data-clip-timecode>
@@ -96,16 +166,67 @@ export function Viewport({
         </span>
       </div>
 
-      <ClipRenderer
-        ref={rendererRef}
-        scene={scene}
-        images={images}
-        loop={loop}
-        onTick={onTick}
-        onLoop={onLoop}
-        onAutoPause={onAutoPause}
-        className={`mx-auto block w-full ${previewMax} border border-white/10 shadow-plate`}
-      />
+      <div ref={stageRef} className={`clip-vp-stage relative mx-auto w-full ${previewMax}`}>
+        <ClipRenderer
+          ref={rendererRef}
+          scene={scene}
+          images={images}
+          loop={loop}
+          onTick={handleTick}
+          onLoop={onLoop}
+          onAutoPause={onAutoPause}
+          className="block w-full border border-white/10 shadow-plate"
+        />
+        {compareScene && (
+          <>
+            <canvas
+              ref={compareCanvasRef}
+              width={compareScene.layout.W}
+              height={compareScene.layout.H}
+              className="clip-compare-canvas"
+              style={{ clipPath: `inset(0 0 0 ${seam}%)` }}
+              data-clip-compare
+              aria-label="Pinned style preview"
+            />
+            <span className="clip-compare-tag left" aria-hidden>
+              CURRENT
+            </span>
+            <span className="clip-compare-tag right" aria-hidden>
+              {(pinnedName ?? "PINNED").toUpperCase()}
+            </span>
+            <div
+              className={"clip-compare-seam" + (seamDrag ? " dragging" : "")}
+              style={{ left: `${seam}%` }}
+              role="slider"
+              aria-label="Compare seam"
+              aria-valuemin={8}
+              aria-valuemax={92}
+              aria-valuenow={Math.round(seam)}
+              tabIndex={0}
+              data-clip-compare-seam
+              onPointerDown={(e) => {
+                e.preventDefault();
+                e.currentTarget.setPointerCapture(e.pointerId);
+                setSeamDrag(true);
+                seamTo(e.clientX);
+              }}
+              onPointerMove={(e) => {
+                if (seamDrag) seamTo(e.clientX);
+              }}
+              onPointerUp={() => setSeamDrag(false)}
+              onPointerCancel={() => setSeamDrag(false)}
+              onKeyDown={(e) => {
+                const dir = e.key === "ArrowLeft" ? -4 : e.key === "ArrowRight" ? 4 : 0;
+                if (!dir) return;
+                e.preventDefault();
+                setSeam((s) => Math.max(8, Math.min(92, s + dir)));
+              }}
+            >
+              <span className="clip-compare-grip" aria-hidden />
+            </div>
+          </>
+        )}
+      </div>
 
       <div className="clip-transport">
         <Button

@@ -472,6 +472,29 @@ export function gradeSwatch(
   return [DEEP[grade], p.accent, p.paper];
 }
 
+// --- Reel board themes -------------------------------------------------------
+//
+// Render-only board looks for the reel: square colors plus a frame ink,
+// applied by the scene renderer without touching the player's site settings.
+// Grades composite on top, so a Walnut board still goes Noir.
+
+export type ReelBoardThemeId = "site" | "slate" | "walnut" | "midnight" | "paper";
+
+export interface ReelBoardTheme {
+  label: string;
+  light: string;
+  dark: string;
+  /** Frame stroke ink (replaces the palette accent around the board). */
+  frame: string;
+}
+
+export const REEL_BOARD_THEMES: Record<Exclude<ReelBoardThemeId, "site">, ReelBoardTheme> = {
+  slate: { label: "Slate", light: "#a3abb5", dark: "#4e565f", frame: "#c2ccd6" },
+  walnut: { label: "Walnut", light: "#d8b688", dark: "#7c5130", frame: "#e6c893" },
+  midnight: { label: "Midnight", light: "#414a6e", dark: "#1d2440", frame: "#8b96c9" },
+  paper: { label: "Paper", light: "#f2ecdd", dark: "#c6bca2", frame: "#847b69" },
+};
+
 // --- Color grades ------------------------------------------------------------
 //
 // Each grade is a short list of composite passes: a blend-mode plus either a

@@ -28,7 +28,13 @@ import {
   resolvePieceTheme,
   sanitizeHexColor,
 } from "@/lib/settings";
-import { buildClipTimeline, planAutoClip } from "./clipReplay";
+import {
+  applyPlySkips,
+  buildClipTimeline,
+  pickWindowPayoff,
+  planAutoClip,
+  type ClipPlyMod,
+} from "./clipReplay";
 import {
   PIECE_WORD,
   biggestClipCard,
@@ -42,14 +48,33 @@ import {
 } from "./clipScene";
 import {
   EncodeCancelled,
+  QUALITY_BITRATE,
   detectEncodeSupport,
   encodeClipOffline,
   recordClipRealtime,
+  type ClipFps,
   type EncodeSupport,
 } from "./clipEncoder";
 import { playPreviewSfx, type ClipAudioOptions } from "./clipAudio";
 import { type ClipCustomMusic, type ClipMusicSelection } from "./clipMusic";
-import { STYLE_DEFAULTS, surpriseStyle, type ClipStyle, type StylePreset } from "./clipStyles";
+import {
+  REEL_BOARD_THEMES,
+  STYLE_DEFAULTS,
+  surpriseStyle,
+  type ClipStyle,
+  type StylePreset,
+} from "./clipStyles";
+import {
+  exportPresetCode,
+  importPresetCode,
+  loadSavedPresets,
+  storeSavedPresets,
+  touchSavedPreset,
+  upsertSavedPreset,
+  type SavedClipPreset,
+  type SavedPresetExtras,
+} from "./clipPresets";
+import { buildPostKit } from "./clipPost";
 import {
   HOOK_PRESETS,
   TIKTOK_MODE,
@@ -106,6 +131,15 @@ export function ClipModal({
   const [presetId, setPresetId] = useState<string | null>("tiktok");
   const [surpriseTap, setSurpriseTap] = useState(0);
   const [hook, setHook] = useState<string | null>(null); // null = auto default
+  // Saved presets (localStorage only, LRU-capped at 12). Lazy init: the
+  // modal mounts fresh per open, and loadSavedPresets is SSR-safe.
+  const [savedPresets, setSavedPresets] = useState<SavedClipPreset[]>(() => loadSavedPresets());
+  // A/B compare: the pinned style renders right of the seam at the same t.
+  const [compareOn, setCompareOn] = useState(false);
+  const [pinned, setPinned] = useState<{ name: string; style: ClipStyle } | null>(null);
+  // Post kit fold under the export bar.
+  const [postOpen, setPostOpen] = useState(false);
+  const [postCopied, setPostCopied] = useState(false);
   const [images, setImages] = useState<Map<string, HTMLImageElement> | null>(null);
   const [support, setSupport] = useState<EncodeSupport | null>(null);
   const [recording, setRecording] = useState(false);
@@ -217,17 +251,66 @@ export function ClipModal({
     [open, moves, snapshots, historyDiverged, signatureIds],
   );
 
-  const plies = pliesChoice === "auto" ? (autoPlan?.plies ?? 8) : pliesChoice;
-
-  const timeline = useMemo(
+  // How far back the window handles can reach: the longest reconstructable
+  // tail (the auto-director's own 14-ply scan depth).
+  const windowProbe = useMemo(
     () =>
       open
-        ? buildClipTimeline({ moves, snapshots, historyDiverged, plies, signatureIds })
+        ? buildClipTimeline({ moves, snapshots, historyDiverged, plies: 14, signatureIds })
         : null,
-    [open, moves, snapshots, historyDiverged, plies, signatureIds],
+    [open, moves, snapshots, historyDiverged, signatureIds],
+  );
+  const availStart = windowProbe?.startPly ?? Math.max(0, moves.length - 2);
+  const head = moves.length;
+
+  // The manual window (drag handles) beats the Last-N chips beats the
+  // director. plies counts back from the window's END, which is the head
+  // unless the manual window cut it earlier.
+  const win = opts.clipWindow;
+  const plies = win
+    ? win.end - win.start
+    : pliesChoice === "auto"
+      ? (autoPlan?.plies ?? 8)
+      : pliesChoice;
+
+  const baseTimeline = useMemo(
+    () =>
+      open
+        ? buildClipTimeline({
+            moves,
+            snapshots,
+            historyDiverged,
+            plies,
+            endPly: win?.end,
+            signatureIds,
+          })
+        : null,
+    [open, moves, snapshots, historyDiverged, plies, win, signatureIds],
   );
 
+  // Per-ply skips are hard cuts: dropped segments, jump-cut boards.
+  const timeline = useMemo(
+    () => (baseTimeline ? applyPlySkips(baseTimeline, opts.plyMods) : null),
+    [baseTimeline, opts.plyMods],
+  );
+
+  // The payoff: a manual "Set as payoff" override wins; a manual window
+  // repicks within itself with the director's priorities; otherwise the
+  // auto plan's pick (auto window) or the scene's internal scan (Last-N).
+  const payoffPly = useMemo(() => {
+    if (opts.payoffPly !== null) return opts.payoffPly;
+    if (win) return timeline ? pickWindowPayoff(timeline) : null;
+    return pliesChoice === "auto" ? (autoPlan?.payoffPly ?? null) : null;
+  }, [opts.payoffPly, win, timeline, pliesChoice, autoPlan]);
+
   const bigCard = useMemo(() => (timeline ? biggestClipCard(timeline) : null), [timeline]);
+
+  // Reel board themes recolor squares + frame in the render only.
+  const reelColors = useMemo(() => {
+    if (opts.boardTheme === "site") return colors;
+    const t = REEL_BOARD_THEMES[opts.boardTheme];
+    return { light: t.light, dark: t.dark, frame: t.frame };
+  }, [colors, opts.boardTheme]);
 
   // Hook auto-suggested from the payoff, respecting the emoji knob.
   const hookSuggestion = useMemo(() => {
@@ -272,9 +355,14 @@ export function ClipModal({
   }, [opts.style.titleTemplate, autoPlan, bigCard]);
   const hookText = templateHook ?? hook ?? hookSuggestion;
 
+  // Whether the reel's last animated ply IS the game's final ply (manual
+  // windows and skips can both cut the finish out).
+  const coversEnd =
+    !!timeline &&
+    timeline.segments.length > 0 &&
+    timeline.segments[timeline.segments.length - 1].ply >= moves.length - 1;
+
   const verdict = useMemo<ClipVerdict | null>(() => {
-    const coversEnd =
-      !!timeline && timeline.startPly + timeline.segments.length >= moves.length;
     if (result && coversEnd) {
       if (result.winner === "draw") return { main: "DRAW", sub: result.reason };
       if (result.winner === "w" || result.winner === "b") {
@@ -291,7 +379,7 @@ export function ClipModal({
     }
     if (bigCard) return { main: bigCard.name.toUpperCase(), sub: "signature play" };
     return { main: "TO BE CONTINUED", sub: null };
-  }, [result, timeline, moves.length, playerNames, bigCard]);
+  }, [result, coversEnd, playerNames, bigCard]);
 
   // Thumbnail designer spec: null keeps the classic frame-0 poster.
   const poster = useMemo<ClipPoster | null>(
@@ -318,7 +406,7 @@ export function ClipModal({
     return buildClipScene({
       timeline,
       orientation,
-      colors,
+      colors: reelColors,
       names: playerNames,
       aspect: opts.aspect,
       hookText,
@@ -338,28 +426,37 @@ export function ClipModal({
       verdict,
       fonts,
       accent,
-      payoffPly: pliesChoice === "auto" ? (autoPlan?.payoffPly ?? null) : null,
+      payoffPly,
       beatBpm,
       poster,
+      plyMods: opts.plyMods,
+      commentaryOn: opts.commentaryOn,
     });
   }, [
     timeline,
     orientation,
-    colors,
+    reelColors,
     playerNames,
     opts,
     hookText,
     verdict,
     fonts,
     accent,
-    pliesChoice,
-    autoPlan,
+    payoffPly,
     beatBpm,
     poster,
   ]);
   useEffect(() => {
     sceneRef.current = scene;
   }, [scene]);
+
+  // The pinned style's scene for A/B compare: the SAME options with only the
+  // style pack swapped, so both panes read the same t through one renderer.
+  // The export always uses the current (left) scene.
+  const pinnedScene = useMemo<ClipScene | null>(() => {
+    if (!compareOn || !pinned || !scene) return null;
+    return buildClipScene({ ...scene.opts, style: pinned.style });
+  }, [compareOn, pinned, scene]);
 
   // The music selection handed to both encode tiers. Null when off; the
   // imported track (if any) replaces the built-in one.
@@ -444,17 +541,28 @@ export function ClipModal({
   }, [open, pieceSource]);
 
   // Which encode tier this browser gets, for the readout and the encode path.
+  // Probed at the selected quality's bitrate so the answer matches the take.
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
     const L = clipLayout(opts.aspect);
-    detectEncodeSupport(L.W, L.H, opts.sound || opts.musicOn).then((s) => {
+    detectEncodeSupport(
+      L.W,
+      L.H,
+      opts.sound || opts.musicOn,
+      QUALITY_BITRATE[opts.quality],
+    ).then((s) => {
       if (!cancelled) setSupport(s);
     });
     return () => {
       cancelled = true;
     };
-  }, [open, opts.aspect, opts.sound, opts.musicOn]);
+  }, [open, opts.aspect, opts.sound, opts.musicOn, opts.quality]);
+
+  // Export settings: quality bitrate always applies; 60fps applies only when
+  // the probe said the codec takes it (else fall back to 30 with a note).
+  const bitrate = QUALITY_BITRATE[opts.quality];
+  const effFps: ClipFps = opts.fps === 60 && support?.fps60 ? 60 : 30;
 
   useEffect(() => {
     const runRef = encodeRunRef;
@@ -506,6 +614,7 @@ export function ClipModal({
             if (encodeRunRef.current === run) setProgress(f);
           },
           () => encodeRunRef.current !== run,
+          { fps: effFps, bitrate },
         );
         if (encodeRunRef.current !== run) return;
         const url = URL.createObjectURL(res.blob);
@@ -529,7 +638,7 @@ export function ClipModal({
       // Supersede any in-flight render; the encoder bails at the next frame.
       runRef.current++;
     };
-  }, [open, scene, images, support, clip, error, audioMix]);
+  }, [open, scene, images, support, clip, error, audioMix, effFps, bitrate]);
 
   // Every option change invalidates the recorded take (frame 0 is burned into
   // the file, so even a caption edit means a re-render). The auto-encode
@@ -553,11 +662,146 @@ export function ClipModal({
   const setPliesChoice = useCallback(
     (p: PliesChoice) => {
       setPliesChoiceState(p);
+      // The Last-N chips and the manual window are rivals; picking a chip
+      // hands the cut back to the counted window.
+      setOpts((o) => (o.clipWindow ? { ...o, clipWindow: null } : o));
       setError(null);
       discardClip();
     },
     [discardClip],
   );
+
+  // --- Manual clip window + per-ply curation ---------------------------------
+  const setClipWindow = useCallback(
+    (start: number, end: number) => {
+      setOpts((o) => ({ ...o, clipWindow: { start, end } }));
+      setError(null);
+      discardClip();
+    },
+    [discardClip],
+  );
+  const restoreAutoWindow = useCallback(() => {
+    setPliesChoiceState("auto");
+    setOpts((o) => ({ ...o, clipWindow: null }));
+    setError(null);
+    discardClip();
+  }, [discardClip]);
+  const setPlyMod = useCallback(
+    (ply: number, patch: Partial<ClipPlyMod>) => {
+      setOpts((o) => ({
+        ...o,
+        plyMods: { ...o.plyMods, [ply]: { ...o.plyMods[ply], ...patch } },
+      }));
+      setError(null);
+      discardClip();
+    },
+    [discardClip],
+  );
+  const togglePayoff = useCallback(
+    (ply: number) => {
+      setOpts((o) => ({ ...o, payoffPly: o.payoffPly === ply ? null : ply }));
+      setError(null);
+      discardClip();
+    },
+    [discardClip],
+  );
+
+  // --- Saved presets (localStorage only, never uploaded) ---------------------
+  const presetExtras = useCallback(
+    (o: ClipOptionsState): SavedPresetExtras => ({
+      emojiLevel: o.emojiLevel,
+      captionStyle: o.captionStyle,
+      musicTrack: o.musicTrack,
+      boardTheme: o.boardTheme,
+    }),
+    [],
+  );
+  const applySavedExtras = useCallback(
+    (o: ClipOptionsState, style: ClipStyle, extras: SavedPresetExtras): ClipOptionsState => ({
+      ...o,
+      style: { ...style },
+      ...(extras.emojiLevel !== undefined ? { emojiLevel: extras.emojiLevel } : {}),
+      ...(extras.captionStyle !== undefined ? { captionStyle: extras.captionStyle } : {}),
+      ...(extras.musicTrack !== undefined ? { musicTrack: extras.musicTrack } : {}),
+      ...(extras.boardTheme !== undefined ? { boardTheme: extras.boardTheme } : {}),
+    }),
+    [],
+  );
+  const savePreset = useCallback(
+    (name: string) => {
+      const { list, preset } = upsertSavedPreset(
+        savedPresets,
+        name,
+        opts.style,
+        presetExtras(opts),
+      );
+      setSavedPresets(list);
+      storeSavedPresets(list);
+      setPresetId(preset.id);
+    },
+    [savedPresets, opts, presetExtras],
+  );
+  const applySaved = useCallback(
+    (p: SavedClipPreset) => {
+      setOpts((o) => applySavedExtras(o, p.style, p.extras));
+      const list = touchSavedPreset(savedPresets, p.id);
+      setSavedPresets(list);
+      storeSavedPresets(list);
+      setPresetId(p.id);
+      setError(null);
+      discardClip();
+    },
+    [savedPresets, applySavedExtras, discardClip],
+  );
+  const deleteSaved = useCallback(
+    (id: string) => {
+      const list = savedPresets.filter((p) => p.id !== id);
+      setSavedPresets(list);
+      storeSavedPresets(list);
+      setPresetId((cur) => (cur === id ? null : cur));
+    },
+    [savedPresets],
+  );
+  const exportCode = useCallback(() => {
+    const active = savedPresets.find((p) => p.id === presetId);
+    return exportPresetCode(active?.name ?? "My style", opts.style, presetExtras(opts));
+  }, [savedPresets, presetId, opts, presetExtras]);
+  const importCode = useCallback(
+    (code: string): boolean => {
+      const parsed = importPresetCode(code);
+      if (!parsed) return false;
+      // An imported style lands as a saved chip AND becomes the current look.
+      const { list, preset } = upsertSavedPreset(
+        savedPresets,
+        parsed.name,
+        parsed.style,
+        parsed.extras,
+      );
+      setSavedPresets(list);
+      storeSavedPresets(list);
+      setOpts((o) => applySavedExtras(o, parsed.style, parsed.extras));
+      setPresetId(preset.id);
+      setError(null);
+      discardClip();
+      return true;
+    },
+    [savedPresets, applySavedExtras, discardClip],
+  );
+
+  // --- A/B compare -----------------------------------------------------------
+  const toggleCompare = useCallback(() => {
+    setCompareOn((v) => {
+      const next = !v;
+      // Default pin: the style as it stands when compare switches on.
+      if (next) {
+        setPinned((cur) => cur ?? { name: "Pinned", style: { ...optsRef.current.style } });
+      }
+      return next;
+    });
+  }, []);
+  const pinStyle = useCallback((name: string, style: ClipStyle) => {
+    setPinned({ name, style: { ...style } });
+  }, []);
 
   // One style knob changed by hand: the preset chip lets go.
   const setStyle = useCallback(
@@ -814,7 +1058,7 @@ export function ClipModal({
     try {
       const canvas = rendererRef.current?.canvas;
       if (!canvas) throw new Error("no canvas");
-      const rec = recordClipRealtime(canvas, scene, support, audioMix);
+      const rec = recordClipRealtime(canvas, scene, support, audioMix, bitrate);
       stopRef.current = rec.stop;
       // Restart the timeline in sync with the recorder; stop shortly after
       // the run completes so the final frame lands in the file.
@@ -861,6 +1105,41 @@ export function ClipModal({
     }
   };
 
+  // Post kit: caption + 15 hashtags, pure string assembly from scene data.
+  const postKit = useMemo(() => {
+    if (!timeline || !scene) return null;
+    return buildPostKit({
+      hookText,
+      names: playerNames,
+      result,
+      coversEnd,
+      timeline,
+      autoPlan,
+      card: scene.outroCard,
+      totalPlies: moves.length,
+    });
+  }, [timeline, scene, hookText, playerNames, result, coversEnd, autoPlan, moves.length]);
+
+  const copyPostKit = async () => {
+    if (!postKit) return;
+    const text = `${postKit.caption}\n\n${postKit.hashtags.join(" ")}`;
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand("copy");
+      } finally {
+        ta.remove();
+      }
+    }
+    setPostCopied(true);
+    window.setTimeout(() => setPostCopied(false), 1600);
+  };
+
   if (!open) return null;
 
   const durationSec = scene ? Math.round(scene.durationMs / 100) / 10 : null;
@@ -888,6 +1167,7 @@ export function ClipModal({
     pliesChoice,
     setPliesChoice,
     resetTikTok,
+    encode: support ? { tier: support.tier, fps60: support.fps60 } : null,
     customMusic,
     pickMusicFile: () => musicFileRef.current?.click(),
     clearCustomMusic,
@@ -908,6 +1188,22 @@ export function ClipModal({
       data-clip-duration={scene?.durationMs ?? 0}
       data-clip-style-sig={`${opts.style.grade}:${opts.style.particles}:${opts.style.transition}:${opts.style.zoom}:${opts.style.speed}:${opts.style.seed}:${opts.style.captionPack}:${opts.style.titleTemplate}:${opts.style.outro}:${opts.style.beatSync ? "beat" : "free"}:${opts.style.tensionMeter ? "tension" : "-"}:${opts.style.minimap ? "minimap" : "-"}`}
       data-clip-preset={presetId ?? "custom"}
+      data-clip-window={
+        timeline && timeline.segments.length > 0
+          ? `${timeline.segments[0].ply + 1}-${timeline.segments[timeline.segments.length - 1].ply + 1}`
+          : ""
+      }
+      data-clip-window-mode={win ? "manual" : pliesChoice === "auto" ? "auto" : "lastN"}
+      data-clip-mods={(() => {
+        const mods = Object.entries(opts.plyMods);
+        const count = (k: "skip" | "slow" | "punch") => mods.filter(([, m]) => m[k]).length;
+        const notes = mods.filter(([, m]) => m.note?.trim()).length;
+        return `skip:${count("skip")}|slow:${count("slow")}|punch:${count("punch")}|notes:${opts.commentaryOn ? notes : 0}|payoff:${opts.payoffPly ?? "-"}`;
+      })()}
+      data-clip-fps={effFps}
+      data-clip-quality={opts.quality}
+      data-clip-board={opts.boardTheme}
+      data-clip-compare={compareOn ? "on" : "off"}
       className="fixed inset-0 z-[60] grid place-items-center bg-[#0f0d0a]/70 px-2 py-3 backdrop-blur-sm sm:px-4 sm:py-6"
       onPointerDown={chrome.onBackdropPointerDown}
     >
@@ -969,6 +1265,9 @@ export function ClipModal({
                   onAutoPause={onAutoPause}
                   registerTickTarget={registerTickTarget}
                   previewMax={previewMax}
+                  compareScene={pinnedScene}
+                  pinnedName={pinned?.name ?? null}
+                  fps={effFps}
                 />
                 <div className="mt-2">
                   <Timeline
@@ -977,6 +1276,24 @@ export function ClipModal({
                     onScrub={scrub}
                     onScrubEnd={scrubEnd}
                     registerTickTarget={registerTickTarget}
+                    window={{
+                      availStart,
+                      head,
+                      start: baseTimeline?.startPly ?? availStart,
+                      end:
+                        (baseTimeline?.startPly ?? availStart) +
+                        (baseTimeline?.segments.length ?? 0),
+                      manual: !!win,
+                      onChange: setClipWindow,
+                      onAuto: restoreAutoWindow,
+                    }}
+                    curation={{
+                      mods: opts.plyMods,
+                      payoffPly: opts.payoffPly,
+                      onMod: setPlyMod,
+                      onTogglePayoff: togglePayoff,
+                      locked: settingsLocked,
+                    }}
                   />
                 </div>
                 {reduced && (
@@ -991,6 +1308,16 @@ export function ClipModal({
                 presetId={presetId}
                 applyPreset={applyPreset}
                 surpriseMe={surpriseMe}
+                saved={savedPresets}
+                applySaved={applySaved}
+                deleteSaved={deleteSaved}
+                savePreset={savePreset}
+                exportCode={exportCode}
+                importCode={importCode}
+                compareOn={compareOn}
+                toggleCompare={toggleCompare}
+                pinStyle={pinStyle}
+                pinnedName={pinned?.name ?? null}
               />
             </div>
 
@@ -1090,12 +1417,16 @@ export function ClipModal({
               </div>
               <div className="clip-export-status">
                 <span>
-                  {pliesChoice === "auto" ? "Auto window" : `Last ${plies}`} · {timeline.segments.length}
-                  {" "}plies · {durationSec ?? "?"}s
+                  {win
+                    ? `Cut ${win.start + 1}-${win.end}`
+                    : pliesChoice === "auto"
+                      ? "Auto window"
+                      : `Last ${plies}`}{" "}
+                  · {timeline.segments.length} plies · {durationSec ?? "?"}s
                 </span>
                 <span>
                   {clip
-                    ? `Tier ${clip.tier} · ${clip.container}`
+                    ? `Tier ${clip.tier} · ${clip.container} · ${effFps}fps`
                     : canShare === false && clipFile
                       ? "Save works everywhere"
                       : support
@@ -1103,6 +1434,46 @@ export function ClipModal({
                         : ""}
                 </span>
               </div>
+
+              {/* POST KIT: the paste-ready caption + 15 hashtags, folded under
+                  the export bar once a take exists. Pure string assembly. */}
+              {clip && postKit && (
+                <div className="clip-postkit">
+                  <Button
+                    tone="quiet"
+                    size="xs"
+                    press={false}
+                    onClick={() => setPostOpen((v) => !v)}
+                    aria-expanded={postOpen}
+                    data-clip-postkit-toggle
+                    className="clip-postkit-toggle"
+                  >
+                    <span aria-hidden>{postOpen ? "▾" : "▸"}</span> Post kit
+                  </Button>
+                  {postOpen && (
+                    <div className="clip-postkit-body" data-clip-postkit>
+                      <p className="clip-postkit-caption" data-clip-postkit-caption>
+                        {postKit.caption}
+                      </p>
+                      <p
+                        className="clip-postkit-tags"
+                        data-clip-postkit-tags={postKit.hashtags.length}
+                      >
+                        {postKit.hashtags.join(" ")}
+                      </p>
+                      <Button
+                        tone="ghost"
+                        size="xs"
+                        onClick={() => void copyPostKit()}
+                        data-clip-postkit-copy
+                        className="text-parchment-300"
+                      >
+                        {postCopied ? "Copied" : "Copy"}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </>
         ) : (

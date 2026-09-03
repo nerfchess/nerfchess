@@ -9,8 +9,17 @@
 import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/Button";
 import { renderClipPoster, type ClipPoster, type ClipScene } from "../../clipScene";
-import { ASPECTS, LENGTH_OPTIONS } from "../../clipOptions";
-import { Chip, Row, SliderRow, type Studio } from "../controls";
+import {
+  ASPECTS,
+  BOARD_THEME_OPTIONS,
+  FPS_OPTIONS,
+  LENGTH_OPTIONS,
+  QUALITY_OPTIONS,
+} from "../../clipOptions";
+import { Chip, ChoiceRow, Row, SliderRow, type Studio } from "../controls";
+
+/** Mbps readouts for the quality chips (mono voice, numbers only). */
+const QUALITY_MBPS = { compact: 6, standard: 10, high: 16 } as const;
 
 const THUMB_W = 96;
 
@@ -45,9 +54,13 @@ function PosterPreview({
 }
 
 export function FormatPanel({ studio }: { studio: Studio }) {
-  const { opts, set, locked, pliesChoice, setPliesChoice, resetTikTok, scene, images, hookText } =
-    studio;
+  const {
+    opts, set, locked, pliesChoice, setPliesChoice, resetTikTok, scene, images, hookText, encode,
+  } = studio;
   const current = ASPECTS.find((a) => a.id === opts.aspect);
+  // 60fps needs the offline encoder AND a codec that takes a 60Hz config.
+  const fpsBlocked = opts.fps === 60 && !!encode && !encode.fps60;
+  const effFps = fpsBlocked ? 30 : opts.fps;
   // Default poster moment when the designer switches on: the payoff landing.
   const payoffFrac = (() => {
     if (!scene) return 0.6;
@@ -81,9 +94,49 @@ export function FormatPanel({ studio }: { studio: Studio }) {
       <div className="clip-row">
         <span className="clip-row-label">Output</span>
         <div className="clip-row-body">
-          <span className="clip-readout">{current?.res ?? ""} 30fps</span>
+          <span className="clip-readout" data-clip-output>
+            {current?.res ?? ""} {effFps}fps {QUALITY_MBPS[opts.quality]}Mbps
+          </span>
         </div>
       </div>
+      <Row label="Quality">
+        {QUALITY_OPTIONS.map(([id, label]) => (
+          <Chip
+            key={id}
+            label={label}
+            on={opts.quality === id}
+            onClick={() => set("quality", id)}
+            disabled={locked}
+            title={`${QUALITY_MBPS[id]} Mbps video`}
+          />
+        ))}
+      </Row>
+      <Row label="Rate">
+        {FPS_OPTIONS.map(([id, label]) => (
+          <Chip
+            key={id}
+            label={label}
+            on={opts.fps === id}
+            onClick={() => set("fps", id)}
+            disabled={locked}
+            title={id === 60 ? "Double the frame samples through the same renderer" : "The classic rate"}
+          />
+        ))}
+        {fpsBlocked && (
+          <span className="clip-readout" data-clip-fps-note>
+            {encode?.tier === 2 ? "realtime records at 30" : "no 60fps encoder; using 30"}
+          </span>
+        )}
+      </Row>
+      {/* Reel-only board looks: recolors squares and frame in the render;
+          the game board is untouched, and grades composite on top. */}
+      <ChoiceRow
+        label="Board"
+        options={BOARD_THEME_OPTIONS}
+        value={opts.boardTheme}
+        onPick={(v) => set("boardTheme", v)}
+        disabled={locked}
+      />
       <Row label="Window">
         {LENGTH_OPTIONS.map((num) => (
           <Chip

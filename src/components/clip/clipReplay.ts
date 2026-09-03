@@ -224,8 +224,11 @@ export interface BuildClipOptions {
   moves: Move[];
   snapshots: ReadonlyMap<number, BoardState>;
   historyDiverged: boolean;
-  /** How many plies (counted back from the head) the clip should cover. */
+  /** How many plies (counted back from the window's end) the clip covers. */
   plies: number;
+  /** Where the window ENDS (board-state index). Defaults to the head; the
+   *  manual clip window uses this to cut a reel that stops mid-game. */
+  endPly?: number;
   /** Buff ids of signature plays, keyed by the history length at fire time
    *  (i.e. the ply AFTER the move that carried the play). */
   signatureIds?: ReadonlyMap<number, string>;
@@ -238,7 +241,7 @@ export interface BuildClipOptions {
  *  this session began). */
 export function buildClipTimeline(opts: BuildClipOptions): ClipTimeline | null {
   const { moves, snapshots, historyDiverged, signatureIds } = opts;
-  const head = moves.length;
+  const head = Math.max(0, Math.min(opts.endPly ?? moves.length, moves.length));
   const want = Math.max(1, Math.min(opts.plies, head));
   if (head < 1) return null;
 
@@ -386,6 +389,72 @@ export function planAutoClip(
     card: null,
     captured: null,
   };
+}
+
+// --- Director's-cut curation -------------------------------------------------
+
+/** Per-ply editorial overrides, keyed by absolute ply index. All deterministic
+ *  inputs to the scene build, all part of the encode dependency. */
+export interface ClipPlyMod {
+  /** Hard cut: the ply is dropped from the reel (a deliberate jump cut). */
+  skip?: boolean;
+  /** Stretch this ply's slide + hold (a local slow-motion beat). */
+  slow?: boolean;
+  /** Force a zoom punch on this ply's landing. */
+  punch?: boolean;
+  /** Creator commentary line, rendered as a lower-third bar over the board. */
+  note?: string;
+}
+
+/** Drop skipped plies from a built timeline. Each segment is a self-contained
+ *  board diff, so removal reads as a hard jump cut; the tension series keeps
+ *  its board alignment (first kept segment's pre-board, then each kept
+ *  segment's post-board). Returns the input unchanged when nothing is skipped,
+ *  or when skipping would empty the reel (the UI also guards that). */
+export function applyPlySkips(
+  timeline: ClipTimeline,
+  mods: Readonly<Record<number, ClipPlyMod>> | null | undefined,
+): ClipTimeline {
+  if (!mods) return timeline;
+  const kept: number[] = [];
+  for (let i = 0; i < timeline.segments.length; i++) {
+    if (!mods[timeline.segments[i].ply]?.skip) kept.push(i);
+  }
+  if (kept.length === timeline.segments.length || kept.length === 0) return timeline;
+  return {
+    ...timeline,
+    segments: kept.map((i) => timeline.segments[i]),
+    tension: [timeline.tension[kept[0]], ...kept.map((i) => timeline.tension[i + 1])],
+  };
+}
+
+/** Repick the payoff INSIDE a manual window, mirroring the auto-director's
+ *  priorities: the highest-tier card play (ties go later), else the biggest
+ *  capture swing (ties go later), else null (a plain finish). */
+export function pickWindowPayoff(timeline: ClipTimeline): number | null {
+  const segs = timeline.segments;
+  let cardIdx = -1;
+  for (let i = 0; i < segs.length; i++) {
+    const sig = segs[i].sig;
+    if (sig && (cardIdx < 0 || sig.tier >= segs[cardIdx].sig!.tier)) cardIdx = i;
+  }
+  if (cardIdx >= 0) return segs[cardIdx].ply;
+  let capIdx = -1;
+  let capBest = 0;
+  for (let i = 0; i < segs.length; i++) {
+    const seg = segs[i];
+    let value = 0;
+    const count = (p: Piece) => {
+      value += p.type === "k" ? 12 : PIECE_VALUE[p.type];
+    };
+    for (const pr of seg.pairs) if (pr.captured) count(pr.captured);
+    for (const v of seg.vanishes) count(v.piece);
+    if (value > 0 && value >= capBest) {
+      capBest = value;
+      capIdx = i;
+    }
+  }
+  return capIdx >= 0 ? segs[capIdx].ply : null;
 }
 
 /** How many plies (ending at the head) a clip could cover right now. Used to

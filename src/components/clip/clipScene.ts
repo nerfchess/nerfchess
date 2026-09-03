@@ -8,7 +8,7 @@
 
 import type { Color, Piece, PieceType, Square } from "@/engine/types";
 import { FILE, PIECE_VALUE, RANK } from "@/engine/types";
-import type { ClipSegment, ClipSigMeta, ClipTimeline } from "./clipReplay";
+import type { ClipPlyMod, ClipSegment, ClipSigMeta, ClipTimeline } from "./clipReplay";
 import type { ClipStyle, ReelPalette } from "./clipStyles";
 import {
   applyGrade,
@@ -320,7 +320,9 @@ export interface ClipPoster {
 export interface ClipSceneOptions {
   timeline: ClipTimeline;
   orientation: Color;
-  colors: { light: string; dark: string };
+  /** Board square inks; `frame` (reel board themes) overrides the accent
+   *  stroke around the board. Render-only: the game board is untouched. */
+  colors: { light: string; dark: string; frame?: string };
   names: { w: string; b: string };
   aspect: ClipAspect;
   hookText: string;
@@ -361,6 +363,11 @@ export interface ClipSceneOptions {
   beatBpm?: number | null;
   /** Thumbnail designer spec, or null for the classic frame-0 poster. */
   poster?: ClipPoster | null;
+  /** Per-ply curation (slow / punch / note), keyed by absolute ply. Skips are
+   *  applied upstream by applyPlySkips, before the timeline reaches here. */
+  plyMods?: Readonly<Record<number, ClipPlyMod>> | null;
+  /** Commentary master toggle: per-ply notes render only while true. */
+  commentaryOn?: boolean;
 }
 
 interface SegFx {
@@ -403,6 +410,8 @@ interface SegFx {
   tiltSeed: number;
   /** Seeded 0..1 easing pick: how heavy this segment's overlays settle. */
   easeSeed: number;
+  /** Creator commentary line for this ply (lower-third bar), or null. */
+  note: string | null;
 }
 
 /** Lead (telegraph + pre-beat) before a segment's slide starts. */
@@ -547,6 +556,10 @@ export function buildClipScene(opts: ClipSceneOptions): ClipScene {
     // an actual hit to sell; a quiet final move gets none.
     const preMs = isPayoff && (hasCapture || !!seg.sig || seg.vanishes.length > 0) ? 300 : 0;
 
+    // Per-ply curation from the timeline cell strip: a local slow beat and a
+    // forced zoom punch, both deterministic and inside the one accumulator.
+    const mod = opts.plyMods?.[seg.ply] ?? null;
+
     let moveMs = baseMove;
     let holdMs = baseHold + (seg.sig ? Math.round(420 * tierScale) : 0);
     if (opts.speedRamp && i < payoff) {
@@ -557,6 +570,10 @@ export function buildClipScene(opts: ClipSceneOptions): ClipScene {
       const ultra = style.slowmo === "ultra";
       moveMs = Math.round(moveMs * (ultra ? 2.85 : 2));
       holdMs = Math.round(holdMs * (ultra ? 2 : 1.6));
+    }
+    if (mod?.slow) {
+      moveMs = Math.round(moveMs * 1.9);
+      holdMs = Math.round(holdMs * 1.5);
     }
 
     // Explainer arrow: a 300ms telegraph lead in which the accent arrow draws
@@ -674,7 +691,9 @@ export function buildClipScene(opts: ClipSceneOptions): ClipScene {
       caption: captionFor(seg, energy, opts.emojiLevel),
       matAfter,
       stamp,
-      punch: style.zoom !== "off" && (hasCapture || !!seg.sig || style.zoom === "extreme"),
+      punch:
+        !!mod?.punch ||
+        (style.zoom !== "off" && (hasCapture || !!seg.sig || style.zoom === "extreme")),
       shakeAmp:
         shakeScale === 0
           ? 0
@@ -691,6 +710,8 @@ export function buildClipScene(opts: ClipSceneOptions): ClipScene {
       jitterMs: Math.round(20 + rng() * 40),
       tiltSeed: rng() * 2 - 1,
       easeSeed: rng(),
+      note:
+        opts.commentaryOn !== false && mod?.note?.trim() ? mod.note.trim() : null,
     });
     at += arrowW + preW + moveMs + freezeW + holdMs;
     // Beat sync: snap the NEXT ply's start to the beat grid by stretching or
@@ -1034,8 +1055,9 @@ export function renderClipFrame(
   applyCameraWork(scene, ctx, t, sqXY, bcx, bcy);
 
   // Frame + squares. The frame glow pulses gently, synced to the momentum bar.
+  // Reel board themes override the frame ink (grades still composite on top).
   ctx.strokeStyle = withAlpha(
-    accent,
+    opts.colors.frame ?? accent,
     Math.min(1, 0.45 + 0.15 * mom + 0.08 * Math.sin(t * 0.004)),
   );
   ctx.lineWidth = 2;
@@ -1118,6 +1140,9 @@ export function renderClipFrame(
   if (opts.moveCounter) drawProgress(scene, ctx, doneCount, active, u);
   if (style.scoreBug) drawScoreBug(scene, ctx, t);
   drawPopCaption(scene, ctx, active, t);
+  // Commentary track: the creator's lower-third note bars (empty notes were
+  // dropped at build time, so this is a no-op unless a ply carries one).
+  drawCommentary(scene, ctx, t);
   // Explainer rule panel: slides in from the safe side, holds while the rule
   // text is read, slides out. Drawn outside the board group so shake and
   // punch never smear the text.
@@ -2763,6 +2788,57 @@ function drawPopCaption(
   ctx.restore();
 }
 
+/** Commentary track: the creator's per-ply note as a broadcast lower-third
+ *  bar pinned inside the board's bottom-left corner, body voice on a dark
+ *  plate with an accent edge. Slides in on the ply's seeded jitter offset,
+ *  holds for the whole ply, slides out. Wraps to at most two lines. */
+function drawCommentary(scene: ClipScene, ctx: CanvasRenderingContext2D, t: number): void {
+  const { layout: L, opts } = scene;
+  for (const sf of scene.segs) {
+    if (!sf.note) continue;
+    // Seeded jitter timing: each note enters on its own offset, never in
+    // lockstep with the stamps and captions sharing the beat.
+    const tIn = sf.start + Math.round(sf.jitterMs * 1.4);
+    const tOut = sf.start + segSpan(sf);
+    if (t < tIn || t > tOut) continue;
+    const inU = easeOutCubic(clamp01((t - tIn) / 240));
+    const outU = t > tOut - 180 ? clamp01((t - (tOut - 180)) / 180) : 0;
+    const a = inU * (1 - outU);
+    if (a <= 0.01) continue;
+
+    const pal = scene.palette;
+    const size = opts.aspect === "classic" ? 17 : 26;
+    const pad = Math.round(size * 0.55);
+    const edgeW = 4;
+    const maxW = L.board * 0.86 - pad * 2 - edgeW;
+    ctx.save();
+    ctx.font = `500 ${size}px ${opts.fonts.body}`;
+    const lines = wrapText(ctx, sf.note, maxW).slice(0, 2);
+    let widest = 0;
+    for (const ln of lines) widest = Math.max(widest, ctx.measureText(ln).width);
+    const lineH = Math.round(size * 1.3);
+    const h = pad * 2 + lines.length * lineH - Math.round(size * 0.3);
+    const w = Math.min(L.board * 0.86, widest + pad * 2 + edgeW + size * 0.4);
+    // Inside the board's bottom-left corner, clear of every aspect's chrome.
+    const x = L.boardX + Math.round(L.sq * 0.16) - (1 - inU) * size * 0.8;
+    const y = L.boardY + L.board - h - Math.round(L.sq * 0.16);
+
+    ctx.globalAlpha = a * 0.92;
+    ctx.fillStyle = "rgba(12,10,8,0.84)";
+    ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = pal.accent;
+    ctx.fillRect(x, y, edgeW, h);
+    ctx.globalAlpha = a;
+    ctx.fillStyle = pal.paper;
+    ctx.textAlign = "left";
+    lines.forEach((ln, li) => {
+      ctx.fillText(ln, x + edgeW + pad, y + pad + size * 0.82 + li * lineH - size * 0.24);
+    });
+    ctx.restore();
+    return;
+  }
+}
+
 /** Interpolated white-minus-black material at time t, with an overshooting
  *  lurch on segments where the value actually jumps. Shared by the momentum
  *  bar, the board-glow pulse, and the score bug. */
@@ -3317,7 +3393,10 @@ function drawEndCard(
   const my = topY + markSize * 1.1 + slide * mini * 0.16;
   ctx.save();
   ctx.globalAlpha *= easeOutCubic(clamp01((p - 0.18) / 0.3));
-  ctx.strokeStyle = withAlpha(scene.palette.accent, 0.45 + 0.12 * Math.sin(tAbs * 0.004));
+  ctx.strokeStyle = withAlpha(
+    opts.colors.frame ?? scene.palette.accent,
+    0.45 + 0.12 * Math.sin(tAbs * 0.004),
+  );
   ctx.lineWidth = 2;
   ctx.strokeRect(mx - 3, my - 3, mini + 6, mini + 6);
   for (let sq = 0 as Square; sq < 64; sq++) {

@@ -232,6 +232,122 @@ html[data-anim="off"] .clip-rec-dot { animation: none; }
 }
 .clip-strip.scrubbing .clip-playhead-tip { opacity: 1; }
 
+/* --- WINDOW RAIL (manual clip window) -------------------------------------- */
+
+.clip-strip-mid {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.clip-winauto {
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  min-height: 0;
+  padding: 0 4px;
+}
+
+.clip-winrail {
+  position: relative;
+  height: 18px;
+  margin-bottom: 4px;
+  touch-action: none;
+  user-select: none;
+}
+.clip-winrail-track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 6px;
+  height: 6px;
+  background: rgb(var(--text-primary-rgb) / 0.07);
+  border: 1px solid rgb(var(--text-primary-rgb) / 0.12);
+}
+.clip-winrail-active {
+  position: absolute;
+  top: -1px;
+  bottom: -1px;
+  background: rgb(var(--accent-rgb) / 0.35);
+  border-top: 1px solid rgb(var(--accent-rgb) / 0.8);
+  border-bottom: 1px solid rgb(var(--accent-rgb) / 0.8);
+}
+.clip-winrail-tick {
+  position: absolute;
+  top: 1px;
+  width: 1px;
+  height: 4px;
+  background: rgb(var(--text-primary-rgb) / 0.22);
+}
+
+/* Drag handles: the visible blade is thin, the HIT AREA is 32px wide so
+   thumbs can grab it on a phone. */
+.clip-winhandle {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 32px;
+  margin-left: -16px;
+  cursor: ew-resize;
+  touch-action: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+.clip-winhandle-blade {
+  width: 8px;
+  height: 100%;
+  background: var(--gold-leaf);
+  border: 1px solid var(--bg-base);
+  pointer-events: none;
+}
+.clip-winhandle.dragging .clip-winhandle-blade,
+.clip-winhandle:focus-visible .clip-winhandle-blade {
+  background: var(--text-primary);
+}
+.clip-winhandle:focus-visible {
+  outline: 1px solid rgb(var(--accent-rgb) / 0.9);
+}
+
+/* Skipped ply: a hatched sliver, hard-cut from the reel but still visible. */
+.clip-cell--skip {
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      transparent 0 3px,
+      rgb(var(--accent-nerf-rgb) / 0.35) 3px 5px
+    );
+  opacity: 0.75;
+}
+.clip-cell--sel {
+  box-shadow: inset 0 0 0 1px var(--gold-leaf);
+}
+
+/* Inline per-ply curation strip (tap a cell to open). */
+.clip-cellstrip {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+  padding: 4px 6px;
+  border: 1px solid var(--edge);
+  background: var(--bg-panel);
+}
+.clip-cellstrip-ply {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  flex: none;
+}
+.clip-cellstrip .clip-input {
+  min-width: 8rem;
+  flex: 1;
+  font-size: 11px;
+  padding: 3px 6px;
+}
+
 /* --- DECK ------------------------------------------------------------------ */
 
 .clip-presets {
@@ -249,6 +365,58 @@ html[data-anim="off"] .clip-rec-dot { animation: none; }
   border: 1px solid rgb(var(--text-primary-rgb) / 0.25);
 }
 .clip-swatch span { flex: 1; }
+
+/* A preset chip plus its trailing micro-affordances (delete x, compare pin). */
+.clip-preset-slot {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  gap: 1px;
+}
+.clip-pin {
+  min-height: 0;
+  padding: 2px 3px;
+}
+
+/* Ownership tools row: save, share code, compare. */
+.clip-preset-tools {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding-bottom: 6px;
+}
+.clip-name-input {
+  max-width: 10rem;
+  font-size: 11px;
+  padding: 3px 6px;
+}
+.clip-tools-note {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.clip-tools-note.hot { color: var(--accent-nerf); }
+
+/* Share-code fold: copy the current style out, paste a code in. */
+.clip-share {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px 6px 8px;
+  border: 1px solid var(--edge);
+  border-bottom: 0;
+  background: var(--bg-panel);
+  margin-bottom: -1px;
+}
+.clip-share .clip-input {
+  min-width: 9rem;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 10px;
+}
 
 .clip-deck-tabs {
   display: flex;
@@ -416,6 +584,72 @@ html[data-anim="off"] .clip-rec-dot { animation: none; }
   pointer-events: none;
 }
 
+/* --- A/B COMPARE ----------------------------------------------------------- */
+
+/* The pinned pane: a second canvas over the live preview, clipped at the
+   seam. Same box, same t; the seam drag is pure UI. */
+.clip-compare-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+  border: 1px solid rgb(var(--text-primary-rgb) / 0.1);
+}
+.clip-compare-seam {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 32px;
+  margin-left: -16px;
+  cursor: ew-resize;
+  touch-action: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+.clip-compare-grip {
+  width: 2px;
+  height: 100%;
+  background: var(--gold-leaf);
+  pointer-events: none;
+  position: relative;
+}
+.clip-compare-grip::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: -4px;
+  width: 10px;
+  height: 26px;
+  margin-top: -13px;
+  background: var(--gold-leaf);
+  border: 1px solid var(--bg-base);
+}
+.clip-compare-seam.dragging .clip-compare-grip,
+.clip-compare-seam.dragging .clip-compare-grip::before,
+.clip-compare-seam:focus-visible .clip-compare-grip,
+.clip-compare-seam:focus-visible .clip-compare-grip::before {
+  background: var(--text-primary);
+}
+.clip-compare-seam:focus-visible { outline: 1px solid rgb(var(--accent-rgb) / 0.9); }
+.clip-compare-tag {
+  position: absolute;
+  top: 4px;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  padding: 2px 5px;
+  background: rgb(16 14 11 / 0.8);
+  color: var(--text-secondary);
+  pointer-events: none;
+  z-index: 1;
+}
+.clip-compare-tag.left { left: 4px; }
+.clip-compare-tag.right { right: 4px; color: var(--gold-leaf); }
+
 /* --- EXPORT BAR ------------------------------------------------------------ */
 
 .clip-export {
@@ -451,6 +685,44 @@ html[data-anim="off"] .clip-rec-dot { animation: none; }
   justify-content: space-between;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+/* --- POST KIT -------------------------------------------------------------- */
+
+.clip-postkit {
+  border-top: 1px solid rgb(var(--text-primary-rgb) / 0.08);
+  margin-top: 6px;
+  padding-top: 2px;
+}
+.clip-postkit-toggle {
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-size: 10px;
+}
+.clip-postkit-body {
+  padding: 4px 2px 8px;
+}
+.clip-postkit-caption {
+  white-space: pre-wrap;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-primary);
+  border: 1px solid rgb(var(--text-primary-rgb) / 0.12);
+  background: rgb(var(--text-primary-rgb) / 0.03);
+  padding: 6px 8px;
+  user-select: text;
+}
+.clip-postkit-tags {
+  margin-top: 6px;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 10px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  user-select: text;
+  overflow-wrap: anywhere;
+}
+.clip-postkit .clip-postkit-body > .clip-postkit-tags + * {
+  margin-top: 6px;
 }
 
 /* Text inputs shared across panels. */

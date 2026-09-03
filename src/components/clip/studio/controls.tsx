@@ -30,6 +30,8 @@ export interface Studio {
   pliesChoice: PliesChoice;
   setPliesChoice: (p: PliesChoice) => void;
   resetTikTok: () => void;
+  /** Encoder capabilities for the fps fallback note (null while probing). */
+  encode: { tier: 1 | 2 | 3; fps60: boolean } | null;
   // AUDIO panel
   customMusic: ClipCustomMusic | null;
   pickMusicFile: () => void;

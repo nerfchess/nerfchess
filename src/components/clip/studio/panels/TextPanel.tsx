@@ -81,6 +81,23 @@ export function TextPanel({ studio }: { studio: Studio }) {
       <ChoiceRow label="Park" options={CAPTION_POS_OPTIONS} value={s.captionPos} onPick={(v) => setStyle({ captionPos: v })} disabled={locked || opts.captionStyle === "off"} />
       <ChoiceRow label="Rotation" options={STAMP_ROT_OPTIONS} value={s.stampRotation} onPick={(v) => setStyle({ stampRotation: v })} disabled={locked} />
       <ChoiceRow label="Emoji" options={EMOJI_LEVELS} value={opts.emojiLevel} onPick={(v) => set("emojiLevel", v)} disabled={locked} />
+      {/* Commentary track: the creator's own voice layer. Notes are written
+          per ply from the timeline cell strip; this is the master switch. */}
+      <Row label="Notes">
+        <Chip
+          label="Commentary"
+          on={opts.commentaryOn}
+          onClick={() => set("commentaryOn", !opts.commentaryOn)}
+          disabled={locked}
+          title="Render your per-ply notes as lower-third bars"
+        />
+        <span className="clip-readout" data-clip-note-count>
+          {(() => {
+            const n = Object.values(opts.plyMods).filter((m) => m.note?.trim()).length;
+            return n === 0 ? "tap a timeline cell to add" : `${n} note${n === 1 ? "" : "s"}`;
+          })()}
+        </span>
+      </Row>
     </div>
   );
 }
