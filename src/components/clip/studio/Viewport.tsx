@@ -10,6 +10,7 @@ import { useCallback, useEffect, useRef, useState, type MutableRefObject } from 
 import { Button } from "@/components/ui/Button";
 import { ClipRenderer, type ClipRendererHandle } from "../ClipRenderer";
 import { renderClipFrame, type ClipScene } from "../clipScene";
+import type { ClipSticker } from "../clipStickers";
 import { ASPECT_NAME } from "../clipOptions";
 
 /** Compare preview cap: the pinned pane redraws at most this often, so a
@@ -65,6 +66,22 @@ interface Props {
   pinnedName?: string | null;
   /** Export frame rate for the chrome readout (the preview is rAF-driven). */
   fps?: number;
+  /** Hook drag: vertical-only reposition within the safe band. The grip
+   *  moves live; the fraction commits on release (one re-encode per drag). */
+  hookDrag?: {
+    frac: number;
+    min: number;
+    max: number;
+    onCommit: (frac: number) => void;
+    locked: boolean;
+  } | null;
+  /** Sticker drag: transparent hit areas over the canvas-rendered stickers;
+   *  board-relative fractions commit on release. */
+  stickerDrag?: {
+    list: ClipSticker[];
+    onCommit: (index: number, x: number, y: number) => void;
+    locked: boolean;
+  } | null;
 }
 
 export function Viewport({
@@ -86,6 +103,8 @@ export function Viewport({
   compareScene = null,
   pinnedName = null,
   fps = 30,
+  hookDrag = null,
+  stickerDrag = null,
 }: Props) {
   const { W, H } = scene.layout;
 
@@ -144,6 +163,35 @@ export function Viewport({
     const pct = ((clientX - rect.left) / Math.max(1, rect.width)) * 100;
     setSeam(Math.max(8, Math.min(92, pct)));
   }, []);
+
+  // --- Hook + sticker drag (live grip position, commit on release) -----------
+  const [hookLive, setHookLive] = useState<number | null>(null);
+  const [stickerLive, setStickerLive] = useState<{ i: number; x: number; y: number } | null>(
+    null,
+  );
+  const hookFracAt = useCallback(
+    (clientY: number): number => {
+      const el = stageRef.current;
+      if (!el || !hookDrag) return hookDrag?.frac ?? 0.2;
+      const rect = el.getBoundingClientRect();
+      const frac = (clientY - rect.top) / Math.max(1, rect.height);
+      return Math.max(hookDrag.min, Math.min(hookDrag.max, frac));
+    },
+    [hookDrag],
+  );
+  const stickerFracAt = useCallback(
+    (clientX: number, clientY: number) => {
+      const el = stageRef.current;
+      const L = scene.layout;
+      if (!el) return { x: 0.5, y: 0.5 };
+      const rect = el.getBoundingClientRect();
+      const px = ((clientX - rect.left) / Math.max(1, rect.width)) * L.W;
+      const py = ((clientY - rect.top) / Math.max(1, rect.height)) * L.H;
+      const cl = (v: number) => Math.max(-0.12, Math.min(1.12, v));
+      return { x: cl((px - L.boardX) / L.board), y: cl((py - L.boardY) / L.board) };
+    },
+    [scene.layout],
+  );
 
   return (
     <div className="clip-vp">
@@ -226,6 +274,103 @@ export function Viewport({
             </div>
           </>
         )}
+
+        {/* Hook drag grip: vertical-only, clamped to the text-safe band. The
+            canvas draws the hook itself; this is only the hit area. */}
+        {hookDrag && (
+          <div
+            className={"clip-hook-handle" + (hookLive !== null ? " dragging" : "")}
+            style={{ top: `${(hookLive ?? hookDrag.frac) * 100}%` }}
+            role="slider"
+            aria-label="Hook vertical position"
+            aria-orientation="vertical"
+            aria-valuemin={Math.round(hookDrag.min * 100)}
+            aria-valuemax={Math.round(hookDrag.max * 100)}
+            aria-valuenow={Math.round((hookLive ?? hookDrag.frac) * 100)}
+            tabIndex={hookDrag.locked ? -1 : 0}
+            data-clip-hook-handle
+            onPointerDown={(e) => {
+              if (hookDrag.locked) return;
+              e.preventDefault();
+              e.currentTarget.setPointerCapture(e.pointerId);
+              setHookLive(hookFracAt(e.clientY));
+            }}
+            onPointerMove={(e) => {
+              if (hookLive === null) return;
+              setHookLive(hookFracAt(e.clientY));
+            }}
+            onPointerUp={() => {
+              if (hookLive === null) return;
+              hookDrag.onCommit(Math.round(hookLive * 1000) / 1000);
+              setHookLive(null);
+            }}
+            onPointerCancel={() => setHookLive(null)}
+            onKeyDown={(e) => {
+              if (hookDrag.locked) return;
+              const dir = e.key === "ArrowUp" ? -1 : e.key === "ArrowDown" ? 1 : 0;
+              if (!dir) return;
+              e.preventDefault();
+              const next = Math.max(
+                hookDrag.min,
+                Math.min(hookDrag.max, hookDrag.frac + dir * 0.02),
+              );
+              hookDrag.onCommit(Math.round(next * 1000) / 1000);
+            }}
+          >
+            <span className="clip-hook-grip" aria-hidden>
+              HOOK
+            </span>
+          </div>
+        )}
+
+        {/* Sticker drag hit areas over the canvas-rendered stickers. */}
+        {stickerDrag &&
+          stickerDrag.list.slice(0, 5).map((st, i) => {
+            const L = scene.layout;
+            const live = stickerLive && stickerLive.i === i ? stickerLive : null;
+            const left = ((L.boardX + (live?.x ?? st.x) * L.board) / L.W) * 100;
+            const top = ((L.boardY + (live?.y ?? st.y) * L.board) / L.H) * 100;
+            return (
+              <div
+                key={i}
+                className={"clip-sticker-handle" + (live ? " dragging" : "")}
+                style={{ left: `${left}%`, top: `${top}%` }}
+                role="slider"
+                aria-label={`Move sticker ${st.id}`}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={Math.round((live?.x ?? st.x) * 100)}
+                tabIndex={stickerDrag.locked ? -1 : 0}
+                data-clip-sticker-handle={i}
+                onPointerDown={(e) => {
+                  if (stickerDrag.locked) return;
+                  e.preventDefault();
+                  e.currentTarget.setPointerCapture(e.pointerId);
+                  const p = stickerFracAt(e.clientX, e.clientY);
+                  setStickerLive({ i, x: p.x, y: p.y });
+                }}
+                onPointerMove={(e) => {
+                  if (!stickerLive || stickerLive.i !== i) return;
+                  const p = stickerFracAt(e.clientX, e.clientY);
+                  setStickerLive({ i, x: p.x, y: p.y });
+                }}
+                onPointerUp={() => {
+                  if (!stickerLive || stickerLive.i !== i) return;
+                  stickerDrag.onCommit(i, stickerLive.x, stickerLive.y);
+                  setStickerLive(null);
+                }}
+                onPointerCancel={() => setStickerLive(null)}
+                onKeyDown={(e) => {
+                  if (stickerDrag.locked) return;
+                  const dx = e.key === "ArrowLeft" ? -1 : e.key === "ArrowRight" ? 1 : 0;
+                  const dy = e.key === "ArrowUp" ? -1 : e.key === "ArrowDown" ? 1 : 0;
+                  if (!dx && !dy) return;
+                  e.preventDefault();
+                  stickerDrag.onCommit(i, st.x + dx * 0.03, st.y + dy * 0.03);
+                }}
+              />
+            );
+          })}
       </div>
 
       <div className="clip-transport">

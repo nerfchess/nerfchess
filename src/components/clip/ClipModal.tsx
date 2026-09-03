@@ -29,10 +29,15 @@ import {
   sanitizeHexColor,
 } from "@/lib/settings";
 import {
+  applyChapterMods,
   applyPlySkips,
   buildClipTimeline,
+  buildHighlightsTimeline,
+  chapterTitle,
   pickWindowPayoff,
   planAutoClip,
+  planHighlights,
+  type ClipChapterMod,
   type ClipPlyMod,
 } from "./clipReplay";
 import {
@@ -40,12 +45,16 @@ import {
   biggestClipCard,
   buildClipScene,
   clipLayout,
+  hookDragBand,
   loadClipPieceImages,
   type ClipPoster,
   type ClipScene,
+  type ClipSceneChapterIn,
   type ClipVerdict,
+  type ClipVersusCard,
   type PieceImageSource,
 } from "./clipScene";
+import { STICKER_CAP, type ClipSticker, type StickerId } from "./clipStickers";
 import {
   EncodeCancelled,
   QUALITY_BITRATE,
@@ -104,6 +113,10 @@ interface Props {
   orientation: Color;
   playerNames: Record<Color, string>;
   result?: GameResult | null;
+  /** Ratings per side (rated games only); shown on the versus intro card. */
+  ratings?: Partial<Record<Color, number>> | null;
+  /** Mode chip line for the versus intro card (BUFF / NERF). */
+  modeChip?: string | null;
 }
 
 function sizeLabel(bytes: number): string {
@@ -121,6 +134,8 @@ export function ClipModal({
   orientation,
   playerNames,
   result,
+  ratings,
+  modeChip,
 }: Props) {
   const chrome = useModalChrome(open, onClose);
   const reduced = useReducedMotion();
@@ -263,30 +278,76 @@ export function ClipModal({
   const availStart = windowProbe?.startPly ?? Math.max(0, moves.length - 2);
   const head = moves.length;
 
+  // Highlights: scan the WHOLE game for up to 3 distinct moments (>= 8 plies
+  // apart). The 8s length target trims the chapter count to 2; the reel
+  // length itself is fit by hold trims inside the scene build.
+  const highlightsPlan = useMemo(
+    () =>
+      open
+        ? planHighlights(
+            { moves, snapshots, historyDiverged, signatureIds },
+            opts.lengthTarget === 8 ? 2 : 3,
+          )
+        : null,
+    [open, moves, snapshots, historyDiverged, signatureIds, opts.lengthTarget],
+  );
+  const highlightsOn = opts.format === "highlights" && !!highlightsPlan;
+  const chapterAvailStart = highlightsPlan?.availStart ?? 0;
+  // Chapter edge drags applied over the plan, clamped to stay ordered.
+  const chapters = useMemo(
+    () =>
+      highlightsOn && highlightsPlan
+        ? applyChapterMods(
+            highlightsPlan.chapters,
+            opts.chapterMods,
+            chapterAvailStart,
+            moves.length,
+          )
+        : null,
+    [highlightsOn, highlightsPlan, opts.chapterMods, chapterAvailStart, moves.length],
+  );
+
+  // Reel length target in ms (null keeps the natural duration; highlights
+  // clamp themselves into the 8-20s band inside the scene build).
+  const targetMs = opts.lengthTarget === "auto" ? null : opts.lengthTarget * 1000;
+
   // The manual window (drag handles) beats the Last-N chips beats the
   // director. plies counts back from the window's END, which is the head
-  // unless the manual window cut it earlier.
-  const win = opts.clipWindow;
+  // unless the manual window cut it earlier. Highlights mode replaces the
+  // window entirely with its chapter windows.
+  const win = highlightsOn ? null : opts.clipWindow;
   const plies = win
     ? win.end - win.start
     : pliesChoice === "auto"
-      ? (autoPlan?.plies ?? 8)
+      ? (() => {
+          const auto = autoPlan?.plies ?? 8;
+          if (targetMs === null) return auto;
+          // Reel length target: the planner may TRIM the auto window toward
+          // the target (never stretch it, and never touch a manual cut);
+          // hold trims inside the scene build do the fine fit.
+          const chrome = 3100 + (opts.versusIntro ? 1500 : 0);
+          const fit = Math.max(4, Math.min(14, Math.round((targetMs - chrome) / 850)));
+          return Math.min(auto, fit);
+        })()
       : pliesChoice;
 
-  const baseTimeline = useMemo(
-    () =>
-      open
-        ? buildClipTimeline({
-            moves,
-            snapshots,
-            historyDiverged,
-            plies,
-            endPly: win?.end,
-            signatureIds,
-          })
-        : null,
-    [open, moves, snapshots, historyDiverged, plies, win, signatureIds],
-  );
+  const baseTimeline = useMemo(() => {
+    if (!open) return null;
+    if (chapters) {
+      return buildHighlightsTimeline(
+        { moves, snapshots, historyDiverged, signatureIds },
+        chapters,
+      );
+    }
+    return buildClipTimeline({
+      moves,
+      snapshots,
+      historyDiverged,
+      plies,
+      endPly: win?.end,
+      signatureIds,
+    });
+  }, [open, moves, snapshots, historyDiverged, plies, win, signatureIds, chapters]);
 
   // Per-ply skips are hard cuts: dropped segments, jump-cut boards.
   const timeline = useMemo(
@@ -294,14 +355,44 @@ export function ClipModal({
     [baseTimeline, opts.plyMods],
   );
 
-  // The payoff: a manual "Set as payoff" override wins; a manual window
-  // repicks within itself with the director's priorities; otherwise the
-  // auto plan's pick (auto window) or the scene's internal scan (Last-N).
+  // The payoff: a manual "Set as payoff" override wins; highlights reels use
+  // the LAST chapter's moment (the kill); a manual window repicks within
+  // itself with the director's priorities; otherwise the auto plan's pick
+  // (auto window) or the scene's internal scan (Last-N).
   const payoffPly = useMemo(() => {
     if (opts.payoffPly !== null) return opts.payoffPly;
+    if (chapters && chapters.length > 0) return chapters[chapters.length - 1].payoffPly;
     if (win) return timeline ? pickWindowPayoff(timeline) : null;
     return pliesChoice === "auto" ? (autoPlan?.payoffPly ?? null) : null;
-  }, [opts.payoffPly, win, timeline, pliesChoice, autoPlan]);
+  }, [opts.payoffPly, chapters, win, timeline, pliesChoice, autoPlan]);
+
+  // Chapter data for the scene build + the studio timeline: resolved titles
+  // (auto by role / card name, edited via the chapter chip).
+  const sceneChapters = useMemo<ClipSceneChapterIn[] | null>(() => {
+    if (!chapters) return null;
+    return chapters.map((ch) => ({
+      fromPly: ch.start,
+      toPly: ch.end - 1,
+      payoffPly: ch.payoffPly,
+      title: chapterTitle(ch, opts.chapterMods[ch.payoffPly]),
+    }));
+  }, [chapters, opts.chapterMods]);
+
+  // Versus intro card data (names fall back to YOU / THEM; ratings and the
+  // mode chip only when the host page provides them).
+  const versus = useMemo<ClipVersusCard | null>(
+    () =>
+      opts.versusIntro
+        ? {
+            w: playerNames.w?.trim() || "YOU",
+            b: playerNames.b?.trim() || "THEM",
+            wRating: ratings?.w ?? null,
+            bRating: ratings?.b ?? null,
+            chip: modeChip ?? null,
+          }
+        : null,
+    [opts.versusIntro, playerNames, ratings, modeChip],
+  );
 
   const bigCard = useMemo(() => (timeline ? biggestClipCard(timeline) : null), [timeline]);
 
@@ -431,6 +522,12 @@ export function ClipModal({
       poster,
       plyMods: opts.plyMods,
       commentaryOn: opts.commentaryOn,
+      chapters: sceneChapters,
+      versus,
+      stickers: opts.stickers,
+      hookYFrac: opts.hookYFrac,
+      hookScale: opts.hookScale,
+      targetMs,
     });
   }, [
     timeline,
@@ -445,6 +542,9 @@ export function ClipModal({
     payoffPly,
     beatBpm,
     poster,
+    sceneChapters,
+    versus,
+    targetMs,
   ]);
   useEffect(() => {
     sceneRef.current = scene;
@@ -706,6 +806,89 @@ export function ClipModal({
     [discardClip],
   );
 
+  // --- Chapters (highlights format) ------------------------------------------
+  const setChapterEdge = useCallback(
+    (payoffPly: number, which: "start" | "end", ply: number) => {
+      setOpts((o) => ({
+        ...o,
+        chapterMods: {
+          ...o.chapterMods,
+          [payoffPly]: { ...o.chapterMods[payoffPly], [which]: ply },
+        },
+      }));
+      setError(null);
+      discardClip();
+    },
+    [discardClip],
+  );
+  const setChapterTitle = useCallback(
+    (payoffPly: number, title: string) => {
+      setOpts((o) => ({
+        ...o,
+        chapterMods: {
+          ...o.chapterMods,
+          [payoffPly]: { ...o.chapterMods[payoffPly], title },
+        },
+      }));
+      setError(null);
+      discardClip();
+    },
+    [discardClip],
+  );
+
+  // --- Stickers ---------------------------------------------------------------
+  const addSticker = useCallback(
+    (id: StickerId) => {
+      setOpts((o) => {
+        if (o.stickers.length >= STICKER_CAP) return o;
+        const i = o.stickers.length;
+        // Staggered default parking (board-relative fractions) so freshly
+        // added stickers never stack; drag on the viewport to place.
+        const sticker: ClipSticker = {
+          id,
+          x: 0.12 + (i % 3) * 0.34,
+          y: i < 3 ? -0.07 : 1.04,
+          ply: null,
+        };
+        return { ...o, stickers: [...o.stickers, sticker] };
+      });
+      setError(null);
+      discardClip();
+    },
+    [discardClip],
+  );
+  const removeSticker = useCallback(
+    (index: number) => {
+      setOpts((o) => ({ ...o, stickers: o.stickers.filter((_, i) => i !== index) }));
+      setError(null);
+      discardClip();
+    },
+    [discardClip],
+  );
+  const moveSticker = useCallback(
+    (index: number, x: number, y: number) => {
+      const cl = (v: number) => Math.max(-0.12, Math.min(1.12, Math.round(v * 1000) / 1000));
+      setOpts((o) => ({
+        ...o,
+        stickers: o.stickers.map((s, i) => (i === index ? { ...s, x: cl(x), y: cl(y) } : s)),
+      }));
+      setError(null);
+      discardClip();
+    },
+    [discardClip],
+  );
+  const pinSticker = useCallback(
+    (index: number, ply: number | null) => {
+      setOpts((o) => ({
+        ...o,
+        stickers: o.stickers.map((s, i) => (i === index ? { ...s, ply } : s)),
+      }));
+      setError(null);
+      discardClip();
+    },
+    [discardClip],
+  );
+
   // --- Saved presets (localStorage only, never uploaded) ---------------------
   const presetExtras = useCallback(
     (o: ClipOptionsState): SavedPresetExtras => ({
@@ -713,6 +896,7 @@ export function ClipModal({
       captionStyle: o.captionStyle,
       musicTrack: o.musicTrack,
       boardTheme: o.boardTheme,
+      versusIntro: o.versusIntro,
     }),
     [],
   );
@@ -724,6 +908,7 @@ export function ClipModal({
       ...(extras.captionStyle !== undefined ? { captionStyle: extras.captionStyle } : {}),
       ...(extras.musicTrack !== undefined ? { musicTrack: extras.musicTrack } : {}),
       ...(extras.boardTheme !== undefined ? { boardTheme: extras.boardTheme } : {}),
+      ...(extras.versusIntro !== undefined ? { versusIntro: extras.versusIntro } : {}),
     }),
     [],
   );
@@ -824,6 +1009,7 @@ export function ClipModal({
         ...(p.extras?.emojiLevel !== undefined ? { emojiLevel: p.extras.emojiLevel } : {}),
         ...(p.extras?.captionStyle !== undefined ? { captionStyle: p.extras.captionStyle } : {}),
         ...(p.extras?.musicTrack !== undefined ? { musicTrack: p.extras.musicTrack } : {}),
+        ...(p.extras?.versusIntro !== undefined ? { versusIntro: p.extras.versusIntro } : {}),
       }));
       setPresetId(p.id);
       setError(null);
@@ -1143,6 +1329,11 @@ export function ClipModal({
   if (!open) return null;
 
   const durationSec = scene ? Math.round(scene.durationMs / 100) / 10 : null;
+  // Hook drag geometry: the viewport handle and the scene build share the
+  // same safe band, so what the grip shows is exactly what encodes.
+  const hookBand = hookDragBand(opts.aspect, opts.hookScale);
+  const aspectLayout = clipLayout(opts.aspect);
+  const defaultHookFrac = aspectLayout.hookY / aspectLayout.H;
   const previewMax =
     opts.aspect === "tiktok"
       ? "max-w-[13rem] sm:max-w-[15rem]"
@@ -1167,6 +1358,17 @@ export function ClipModal({
     pliesChoice,
     setPliesChoice,
     resetTikTok,
+    highlightsCount: highlightsPlan?.chapters.length ?? 0,
+    addSticker,
+    removeSticker,
+    pinSticker,
+    reelPlyRange:
+      timeline && timeline.segments.length > 0
+        ? {
+            first: timeline.segments[0].ply,
+            last: timeline.segments[timeline.segments.length - 1].ply,
+          }
+        : null,
     encode: support ? { tier: support.tier, fps60: support.fps60 } : null,
     customMusic,
     pickMusicFile: () => musicFileRef.current?.click(),
@@ -1186,14 +1388,26 @@ export function ClipModal({
       data-clip-gif-bytes={gif?.blob.size ?? 0}
       data-clip-gif-type={gif?.blob.type ?? ""}
       data-clip-duration={scene?.durationMs ?? 0}
-      data-clip-style-sig={`${opts.style.grade}:${opts.style.particles}:${opts.style.transition}:${opts.style.zoom}:${opts.style.speed}:${opts.style.seed}:${opts.style.captionPack}:${opts.style.titleTemplate}:${opts.style.outro}:${opts.style.beatSync ? "beat" : "free"}:${opts.style.tensionMeter ? "tension" : "-"}:${opts.style.minimap ? "minimap" : "-"}`}
+      data-clip-style-sig={`${opts.style.grade}:${opts.style.particles}:${opts.style.transition}:${opts.style.zoom}:${opts.style.speed}:${opts.style.seed}:${opts.style.captionPack}:${opts.style.titleTemplate}:${opts.style.outro}:${opts.style.beatSync ? "beat" : "free"}:${opts.style.tensionMeter ? "tension" : "-"}:${opts.style.minimap ? "minimap" : "-"}:${opts.style.sceneSet}:${opts.style.zoomCurve}`}
       data-clip-preset={presetId ?? "custom"}
+      data-clip-format={opts.format}
+      data-clip-target={String(opts.lengthTarget)}
+      data-clip-chapters={
+        sceneChapters ? `${sceneChapters.length}:${sceneChapters.map((c) => c.title).join("|")}` : ""
+      }
+      data-clip-stickers={opts.stickers
+        .map((s) => `${s.id}@${s.x.toFixed(3)},${s.y.toFixed(3)}${s.ply !== null ? `#${s.ply}` : ""}`)
+        .join(";")}
+      data-clip-hook={`${opts.hookScale}:${opts.hookYFrac !== null ? opts.hookYFrac.toFixed(3) : "auto"}`}
+      data-clip-versus={opts.versusIntro ? "on" : "off"}
       data-clip-window={
         timeline && timeline.segments.length > 0
           ? `${timeline.segments[0].ply + 1}-${timeline.segments[timeline.segments.length - 1].ply + 1}`
           : ""
       }
-      data-clip-window-mode={win ? "manual" : pliesChoice === "auto" ? "auto" : "lastN"}
+      data-clip-window-mode={
+        highlightsOn ? "chapters" : win ? "manual" : pliesChoice === "auto" ? "auto" : "lastN"
+      }
       data-clip-mods={(() => {
         const mods = Object.entries(opts.plyMods);
         const count = (k: "skip" | "slow" | "punch") => mods.filter(([, m]) => m[k]).length;
@@ -1268,6 +1482,25 @@ export function ClipModal({
                   compareScene={pinnedScene}
                   pinnedName={pinned?.name ?? null}
                   fps={effFps}
+                  hookDrag={
+                    hookText.trim()
+                      ? {
+                          frac: Math.max(
+                            hookBand.min,
+                            Math.min(hookBand.max, opts.hookYFrac ?? defaultHookFrac),
+                          ),
+                          min: hookBand.min,
+                          max: hookBand.max,
+                          onCommit: (f) => set("hookYFrac", f),
+                          locked: settingsLocked,
+                        }
+                      : null
+                  }
+                  stickerDrag={
+                    opts.stickers.length > 0
+                      ? { list: opts.stickers, onCommit: moveSticker, locked: settingsLocked }
+                      : null
+                  }
                 />
                 <div className="mt-2">
                   <Timeline
@@ -1294,6 +1527,24 @@ export function ClipModal({
                       onTogglePayoff: togglePayoff,
                       locked: settingsLocked,
                     }}
+                    chapters={
+                      chapters && sceneChapters
+                        ? {
+                            spans: chapters.map((ch, i) => ({
+                              payoffPly: ch.payoffPly,
+                              start: ch.start,
+                              end: ch.end,
+                              title: sceneChapters[i]?.title ?? "",
+                              index: i,
+                            })),
+                            availStart: chapterAvailStart,
+                            head,
+                            onEdge: setChapterEdge,
+                            onTitle: setChapterTitle,
+                            locked: settingsLocked,
+                          }
+                        : null
+                    }
                   />
                 </div>
                 {reduced && (
@@ -1417,11 +1668,13 @@ export function ClipModal({
               </div>
               <div className="clip-export-status">
                 <span>
-                  {win
-                    ? `Cut ${win.start + 1}-${win.end}`
-                    : pliesChoice === "auto"
-                      ? "Auto window"
-                      : `Last ${plies}`}{" "}
+                  {highlightsOn
+                    ? `${chapters?.length ?? 0} chapter${(chapters?.length ?? 0) === 1 ? "" : "s"}`
+                    : win
+                      ? `Cut ${win.start + 1}-${win.end}`
+                      : pliesChoice === "auto"
+                        ? "Auto window"
+                        : `Last ${plies}`}{" "}
                   · {timeline.segments.length} plies · {durationSec ?? "?"}s
                 </span>
                 <span>

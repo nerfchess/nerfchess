@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import type { ClipScene } from "../clipScene";
 import type { ClipStyle } from "../clipStyles";
 import type { ClipCustomMusic } from "../clipMusic";
+import type { StickerId } from "../clipStickers";
 import type { ClipOptionsState, PliesChoice } from "../clipOptions";
 
 /** Everything a deck panel can touch, passed as one object so the ten panels
@@ -30,6 +31,14 @@ export interface Studio {
   pliesChoice: PliesChoice;
   setPliesChoice: (p: PliesChoice) => void;
   resetTikTok: () => void;
+  /** Planned highlight chapter count (0 = highlights unavailable). */
+  highlightsCount: number;
+  // STICKER panel
+  addSticker: (id: StickerId) => void;
+  removeSticker: (index: number) => void;
+  pinSticker: (index: number, ply: number | null) => void;
+  /** First/last absolute plies of the current reel (the pin slider range). */
+  reelPlyRange: { first: number; last: number } | null;
   /** Encoder capabilities for the fps fallback note (null while probing). */
   encode: { tier: 1 | 2 | 3; fps60: boolean } | null;
   // AUDIO panel

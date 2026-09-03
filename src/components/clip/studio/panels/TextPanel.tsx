@@ -4,6 +4,7 @@
 // ink source (auto from grade / accent / white / custom hex), size, vertical
 // parking, and the stamp rotation dial.
 
+import { Button } from "@/components/ui/Button";
 import {
   CAPTION_COLOR_OPTIONS,
   CAPTION_PACK_OPTIONS,
@@ -12,6 +13,7 @@ import {
   CAPTION_STYLES,
   EMOJI_LEVELS,
   HOOK_PRESETS,
+  HOOK_SIZE_OPTIONS,
   STAMP_ROT_OPTIONS,
   TITLE_TEMPLATE_OPTIONS,
 } from "../../clipOptions";
@@ -31,6 +33,18 @@ export function TextPanel({ studio }: { studio: Studio }) {
         onPick={(v) => setStyle({ titleTemplate: v })}
         disabled={locked}
       />
+      {/* Versus intro: the pre-slam match card (names slam from opposite
+          sides, ratings when rated, mode chip). Off by default; the Grudge
+          Match preset switches it on. */}
+      <Row label="Intro">
+        <Chip
+          label="Versus card"
+          on={opts.versusIntro}
+          onClick={() => set("versusIntro", !opts.versusIntro)}
+          disabled={locked}
+          title="Open on a match card before the board slams in"
+        />
+      </Row>
       <div className="clip-row">
         <span className="clip-row-label">Hook</span>
         <input
@@ -63,6 +77,37 @@ export function TextPanel({ studio }: { studio: Studio }) {
               disabled={locked}
             />
           ))}
+      </Row>
+      {/* Hook geometry: its own type scale, and the drag-to-park position
+          (vertical, safe-zone clamped) with a reset back to the layout line. */}
+      <Row label="Hook size">
+        {HOOK_SIZE_OPTIONS.map(([id, label]) => (
+          <Chip
+            key={id}
+            label={label}
+            on={opts.hookScale === id}
+            onClick={() => set("hookScale", id)}
+            disabled={locked}
+          />
+        ))}
+        {opts.hookYFrac !== null ? (
+          <Button
+            tone="quiet"
+            size="xs"
+            press={false}
+            onClick={() => set("hookYFrac", null)}
+            disabled={locked}
+            data-clip-hook-reset
+            className="text-parchment-400"
+            title="Snap the hook back to the layout's classic line"
+          >
+            Reset position
+          </Button>
+        ) : (
+          <span className="clip-readout" data-clip-hook-note>
+            drag it in the preview
+          </span>
+        )}
       </Row>
       <ChoiceRow label="Captions" options={CAPTION_STYLES} value={opts.captionStyle} onPick={(v) => set("captionStyle", v)} disabled={locked} />
       <ChoiceRow label="Pack" options={CAPTION_PACK_OPTIONS} value={s.captionPack} onPick={(v) => setStyle({ captionPack: v })} disabled={locked || opts.captionStyle === "off"} />

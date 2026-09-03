@@ -47,6 +47,18 @@ interface Curation {
   locked: boolean;
 }
 
+/** Highlights chapters: the rail becomes per-chapter spans (each with its own
+ *  start/end handles), the strip gains group separators, and the chapter chip
+ *  row edits the micro-titles. */
+interface ChapterControl {
+  spans: { payoffPly: number; start: number; end: number; title: string; index: number }[];
+  availStart: number;
+  head: number;
+  onEdge: (payoffPly: number, which: "start" | "end", ply: number) => void;
+  onTitle: (payoffPly: number, title: string) => void;
+  locked: boolean;
+}
+
 interface Props {
   scene: ClipScene;
   onScrubStart: () => void;
@@ -55,6 +67,8 @@ interface Props {
   registerTickTarget: (key: string, el: HTMLElement | null) => void;
   window: WindowControl;
   curation: Curation;
+  /** Chapter controls in highlights mode; null keeps the single window rail. */
+  chapters?: ChapterControl | null;
 }
 
 interface Cell {
@@ -144,16 +158,34 @@ export function Timeline({
   registerTickTarget,
   window: win,
   curation,
+  chapters = null,
 }: Props) {
   const stripRef = useRef<HTMLDivElement | null>(null);
   const railRef = useRef<HTMLDivElement | null>(null);
   const [scrubbing, setScrubbing] = useState(false);
   const [dragging, setDragging] = useState<"start" | "end" | null>(null);
+  // Chapter-edge drag state: which chapter (payoffPly) + which edge.
+  const [chDragging, setChDragging] = useState<{ ply: number; which: "start" | "end" } | null>(
+    null,
+  );
+  // Chapter title being edited inline (payoffPly), via the chapter chip.
+  const [editingCh, setEditingCh] = useState<number | null>(null);
   const [selPly, setSelPly] = useState<number | null>(null);
   // Tap detection over the scrub gesture: a short, still press selects a cell.
   const tapRef = useRef<{ x: number; t: number } | null>(null);
 
   const { cells, payoff } = buildCells(scene, win, curation.mods);
+  // First strip ply of each chapter after the first: the group separators.
+  const chapterStarts = (() => {
+    if (!chapters) return new Set<number>();
+    const out = new Set<number>();
+    for (const sp of chapters.spans) {
+      if (sp.index === 0) continue;
+      const first = cells.find((c) => c.ply !== null && c.ply >= sp.start);
+      if (first && first.ply !== null) out.add(first.ply);
+    }
+    return out;
+  })();
   const liveCount = scene.segs.length;
   const firstPly = scene.segs[0]?.seg.ply ?? win.start;
   const lastPly = scene.segs[scene.segs.length - 1]?.seg.ply ?? win.end - 1;
@@ -168,14 +200,18 @@ export function Timeline({
   };
 
   // --- Window rail geometry --------------------------------------------------
-  const railSpan = Math.max(1, win.head - win.availStart);
-  const fracOf = (ply: number) => (ply - win.availStart) / railSpan;
+  // Chapters mode spans the whole reconstructable game; the single window
+  // rail spans the director's 14-ply reach.
+  const railStart = chapters ? chapters.availStart : win.availStart;
+  const railEnd = chapters ? chapters.head : win.head;
+  const railSpan = Math.max(1, railEnd - railStart);
+  const fracOf = (ply: number) => (ply - railStart) / railSpan;
   const plyAt = (clientX: number): number => {
     const el = railRef.current;
     if (!el) return win.start;
     const rect = el.getBoundingClientRect();
     const frac = Math.max(0, Math.min(1, (clientX - rect.left) / Math.max(1, rect.width)));
-    return Math.round(win.availStart + frac * railSpan);
+    return Math.round(railStart + frac * railSpan);
   };
   const dragHandleTo = (which: "start" | "end", clientX: number) => {
     const ply = plyAt(clientX);
@@ -236,6 +272,51 @@ export function Timeline({
     </div>
   );
 
+  /** A chapter-edge handle: same blade, scoped to one chapter's window. The
+   *  hard clamping (ordering, 2-6 ply span, moment inside) happens upstream
+   *  in applyChapterMods, so the drag can be optimistic here. */
+  const chHandle = (sp: NonNullable<typeof chapters>["spans"][number], which: "start" | "end") => {
+    const ply = which === "start" ? sp.start : sp.end;
+    const active = chDragging?.ply === sp.payoffPly && chDragging.which === which;
+    return (
+      <div
+        key={`ch-${sp.payoffPly}-${which}`}
+        className={"clip-winhandle clip-winhandle--ch" + (active ? " dragging" : "")}
+        style={{ left: `${fracOf(ply) * 100}%` }}
+        role="slider"
+        aria-label={`Chapter ${sp.index + 1} ${which === "start" ? "start" : "end"}`}
+        aria-valuemin={railStart}
+        aria-valuemax={railEnd}
+        aria-valuenow={ply}
+        tabIndex={chapters!.locked ? -1 : 0}
+        data-clip-chhandle={`${sp.index}-${which}`}
+        onPointerDown={(e) => {
+          if (chapters!.locked) return;
+          e.preventDefault();
+          e.stopPropagation();
+          e.currentTarget.setPointerCapture(e.pointerId);
+          setChDragging({ ply: sp.payoffPly, which });
+          chapters!.onEdge(sp.payoffPly, which, plyAt(e.clientX));
+        }}
+        onPointerMove={(e) => {
+          if (!active) return;
+          chapters!.onEdge(sp.payoffPly, which, plyAt(e.clientX));
+        }}
+        onPointerUp={() => setChDragging(null)}
+        onPointerCancel={() => setChDragging(null)}
+        onKeyDown={(e) => {
+          if (chapters!.locked) return;
+          const dir = e.key === "ArrowLeft" ? -1 : e.key === "ArrowRight" ? 1 : 0;
+          if (!dir) return;
+          e.preventDefault();
+          chapters!.onEdge(sp.payoffPly, which, ply + dir);
+        }}
+      >
+        <span className="clip-winhandle-blade" aria-hidden />
+      </div>
+    );
+  };
+
   return (
     <div className="clip-strip-wrap" data-clip-strip>
       <div className="clip-strip-scale">
@@ -262,27 +343,92 @@ export function Timeline({
         <span aria-hidden>PLY {lastPly + 1}</span>
       </div>
 
+      {/* Chapter chip row: mono "1/3" numerals + editable micro-titles. */}
+      {chapters && (
+        <div className="clip-chapterbar" data-clip-chapterbar={chapters.spans.length}>
+          {chapters.spans.map((sp) =>
+            editingCh === sp.payoffPly ? (
+              <input
+                key={`chedit-${sp.payoffPly}`}
+                type="text"
+                defaultValue={sp.title}
+                maxLength={24}
+                autoFocus
+                aria-label={`Chapter ${sp.index + 1} title`}
+                data-clip-chapter-input={sp.index}
+                className="clip-input clip-chapter-input"
+                onBlur={(e) => {
+                  chapters.onTitle(sp.payoffPly, e.target.value);
+                  setEditingCh(null);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                  else if (e.key === "Escape") setEditingCh(null);
+                }}
+              />
+            ) : (
+              <Button
+                key={`chchip-${sp.payoffPly}`}
+                tone="quiet"
+                size="xs"
+                press={false}
+                onClick={() => setEditingCh(sp.payoffPly)}
+                disabled={chapters.locked}
+                data-clip-chapter-chip={sp.index}
+                className="clip-chapter-chip"
+                title="Edit this chapter's micro-title"
+              >
+                <span className="clip-chapter-num" aria-hidden>
+                  {sp.index + 1}/{chapters.spans.length}
+                </span>
+                {sp.title}
+              </Button>
+            ),
+          )}
+        </div>
+      )}
+
       {/* Window rail: the whole reconstructable range, shaded outside the
-          window, with a pointer-captured drag handle at each end. */}
+          window (or the chapter windows), with pointer-captured drag handles
+          on every edge. */}
       <div className="clip-winrail" ref={railRef} data-clip-winrail>
         <div className="clip-winrail-track" aria-hidden>
-          <div
-            className="clip-winrail-active"
-            style={{
-              left: `${fracOf(win.start) * 100}%`,
-              width: `${(fracOf(win.end) - fracOf(win.start)) * 100}%`,
-            }}
-          />
-          {Array.from({ length: railSpan + 1 }, (_, i) => (
+          {chapters ? (
+            chapters.spans.map((sp) => (
+              <div
+                key={`chspan-${sp.payoffPly}`}
+                className="clip-winrail-active"
+                style={{
+                  left: `${fracOf(sp.start) * 100}%`,
+                  width: `${(fracOf(sp.end) - fracOf(sp.start)) * 100}%`,
+                }}
+              />
+            ))
+          ) : (
+            <div
+              className="clip-winrail-active"
+              style={{
+                left: `${fracOf(win.start) * 100}%`,
+                width: `${(fracOf(win.end) - fracOf(win.start)) * 100}%`,
+              }}
+            />
+          )}
+          {Array.from({ length: Math.min(railSpan, 60) + 1 }, (_, i) => (
             <span
               key={i}
               className="clip-winrail-tick"
-              style={{ left: `${(i / railSpan) * 100}%` }}
+              style={{ left: `${(i / Math.min(railSpan, 60)) * 100}%` }}
             />
           ))}
         </div>
-        {handle("start", win.start, "Clip window start")}
-        {handle("end", win.end, "Clip window end")}
+        {chapters ? (
+          chapters.spans.map((sp) => [chHandle(sp, "start"), chHandle(sp, "end")])
+        ) : (
+          <>
+            {handle("start", win.start, "Clip window start")}
+            {handle("end", win.end, "Clip window end")}
+          </>
+        )}
       </div>
 
       <div
@@ -348,6 +494,7 @@ export function Timeline({
                 (cell.capture ? " clip-cell--capture" : "") +
                 (cell.tier !== null ? " clip-cell--card" : "") +
                 (cell.kind === "skip" ? " clip-cell--skip" : "") +
+                (cell.ply !== null && chapterStarts.has(cell.ply) ? " clip-cell--chstart" : "") +
                 (cell.ply !== null && cell.ply === selPly ? " clip-cell--sel" : "")
               }
               style={
@@ -358,6 +505,9 @@ export function Timeline({
               data-clip-cell={cell.kind}
               data-clip-cell-t={Math.round(cell.startFrac * scene.durationMs)}
               {...(cell.ply !== null ? { "data-clip-cell-ply": cell.ply } : {})}
+              {...(cell.ply !== null && chapterStarts.has(cell.ply)
+                ? { "data-clip-chsep": "" }
+                : {})}
             >
               {cell.glyph && PIECE_PATHS[cell.glyph] ? (
                 <span className="clip-cell-glyph" aria-hidden>

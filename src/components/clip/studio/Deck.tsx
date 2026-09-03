@@ -26,13 +26,14 @@ import { FxPanel } from "./panels/FxPanel";
 import { PacePanel } from "./panels/PacePanel";
 import { GradePanel } from "./panels/GradePanel";
 import { TextPanel } from "./panels/TextPanel";
+import { StickerPanel } from "./panels/StickerPanel";
 import { AudioPanel } from "./panels/AudioPanel";
 import { ExplainPanel } from "./panels/ExplainPanel";
 import { BrandPanel } from "./panels/BrandPanel";
 import { FormatPanel } from "./panels/FormatPanel";
 
 const TABS = [
-  "STYLE", "CAM", "FX", "PACE", "GRADE", "TEXT", "AUDIO", "EXPLAIN", "BRAND", "FORMAT",
+  "STYLE", "CAM", "FX", "PACE", "GRADE", "TEXT", "STICKER", "AUDIO", "EXPLAIN", "BRAND", "FORMAT",
 ] as const;
 export type DeckTab = (typeof TABS)[number];
 
@@ -43,6 +44,7 @@ const PANELS: Record<DeckTab, (props: { studio: Studio }) => React.ReactNode> = 
   PACE: PacePanel,
   GRADE: GradePanel,
   TEXT: TextPanel,
+  STICKER: StickerPanel,
   AUDIO: AudioPanel,
   EXPLAIN: ExplainPanel,
   BRAND: BrandPanel,

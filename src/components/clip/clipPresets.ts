@@ -23,6 +23,8 @@ export interface SavedPresetExtras {
   captionStyle?: CaptionStyle;
   musicTrack?: MusicTrackId;
   boardTheme?: ReelBoardThemeId;
+  /** Versus intro match card (a modal option that belongs to the vibe). */
+  versusIntro?: boolean;
 }
 
 export interface SavedClipPreset {
@@ -61,6 +63,8 @@ const ENUM_SETS: { [K in keyof ClipStyle]?: readonly ClipStyle[K][] } = {
   captionPack: ["impact", "typewriter", "neon", "minimal", "serif"],
   titleTemplate: ["custom", "pov", "neversaw", "waitforit", "illegal", "ruined"],
   outro: ["logo", "taunt", "codex", "stats"],
+  sceneSet: ["void", "stadium", "study", "arcade"],
+  zoomCurve: ["snap", "whip", "creep", "bounce"],
 };
 
 const HEX_RE = /^#[0-9a-f]{6}$/i;
@@ -119,6 +123,7 @@ export function sanitizeExtras(raw: unknown): SavedPresetExtras {
   if (BOARD_SET.includes(src.boardTheme as ReelBoardThemeId)) {
     out.boardTheme = src.boardTheme as ReelBoardThemeId;
   }
+  if (typeof src.versusIntro === "boolean") out.versusIntro = src.versusIntro;
   return out;
 }
 

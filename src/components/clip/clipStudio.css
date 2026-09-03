@@ -739,6 +739,132 @@ html[data-anim="off"] .clip-rec-dot { animation: none; }
 .clip-input:focus { outline: none; border-color: rgb(var(--accent-rgb) / 0.6); }
 .clip-input:disabled { opacity: 0.4; }
 
+/* --- CHAPTERS (highlights format) ------------------------------------------ */
+
+/* Chapter chip row above the rail: mono numerals + editable micro-titles. */
+.clip-chapterbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding-bottom: 4px;
+}
+.clip-chapter-chip {
+  letter-spacing: 0.08em;
+  font-size: 10px;
+}
+.clip-chapter-num {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: rgb(var(--accent-rgb) / 0.95);
+  font-variant-numeric: tabular-nums;
+}
+.clip-chapter-input {
+  max-width: 9rem;
+  font-size: 11px;
+  padding: 2px 6px;
+  flex: none;
+}
+
+/* Chapter group separator on the strip: a 2px accent blade on the first cell
+   of every chapter after the first. */
+.clip-cell--chstart {
+  border-left: 2px solid rgb(var(--accent-rgb) / 0.9);
+}
+
+/* Chapter-edge handles share the window blade but print slimmer so three
+   pairs stay readable on one rail. */
+.clip-winhandle--ch { width: 24px; margin-left: -12px; }
+.clip-winhandle--ch .clip-winhandle-blade { width: 6px; }
+
+/* --- VIEWPORT DRAG OVERLAYS (hook + stickers) ------------------------------ */
+
+/* Hook grip: a full-width horizontal grab bar at the hook's parked line.
+   The canvas draws the hook itself; this is only the hit area + label. */
+.clip-hook-handle {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 26px;
+  margin-top: -13px;
+  cursor: ns-resize;
+  touch-action: none;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  z-index: 2;
+}
+.clip-hook-grip {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 8px;
+  letter-spacing: 0.16em;
+  padding: 1px 4px;
+  margin-left: 2px;
+  color: var(--text-secondary);
+  background: rgb(16 14 11 / 0.75);
+  border: 1px solid rgb(var(--text-primary-rgb) / 0.25);
+  opacity: 0;
+  pointer-events: none;
+}
+.clip-vp-stage:hover .clip-hook-grip,
+.clip-hook-handle.dragging .clip-hook-grip,
+.clip-hook-handle:focus-visible .clip-hook-grip {
+  opacity: 1;
+}
+.clip-hook-handle.dragging .clip-hook-grip,
+.clip-hook-handle:focus-visible .clip-hook-grip {
+  color: var(--gold-leaf);
+  border-color: rgb(var(--accent-rgb) / 0.8);
+}
+.clip-hook-handle:focus-visible { outline: 1px solid rgb(var(--accent-rgb) / 0.9); }
+
+/* Sticker handles: transparent hit squares centered over each rendered
+   sticker; a dashed outline appears on hover / drag. */
+.clip-sticker-handle {
+  position: absolute;
+  width: 34px;
+  height: 34px;
+  margin-left: -17px;
+  margin-top: -17px;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  z-index: 2;
+  border: 1px dashed transparent;
+}
+.clip-vp-stage:hover .clip-sticker-handle {
+  border-color: rgb(var(--text-primary-rgb) / 0.35);
+}
+.clip-sticker-handle.dragging,
+.clip-sticker-handle:focus-visible {
+  border-color: rgb(var(--accent-rgb) / 0.9);
+  cursor: grabbing;
+}
+.clip-sticker-handle:focus-visible { outline: 1px solid rgb(var(--accent-rgb) / 0.9); }
+
+/* --- STICKER PANEL ---------------------------------------------------------- */
+
+.clip-sticker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
+  gap: 4px;
+  padding-bottom: 4px;
+}
+.clip-sticker-thumb {
+  display: block;
+  width: 34px;
+  height: 34px;
+  flex: none;
+}
+.clip-sticker-cell .clip-sticker-name {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding-top: 1px;
+}
+
 /* The explain panel's hand-sketched mini diagram. */
 .clip-diagram {
   border: 1px solid rgb(var(--text-primary-rgb) / 0.1);

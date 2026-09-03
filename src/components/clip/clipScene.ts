@@ -9,7 +9,7 @@
 import type { Color, Piece, PieceType, Square } from "@/engine/types";
 import { FILE, PIECE_VALUE, RANK } from "@/engine/types";
 import type { ClipPlyMod, ClipSegment, ClipSigMeta, ClipTimeline } from "./clipReplay";
-import type { ClipStyle, ReelPalette } from "./clipStyles";
+import type { ClipStyle, ReelPalette, ZoomCurveId } from "./clipStyles";
 import {
   applyGrade,
   paintConfetti,
@@ -17,17 +17,21 @@ import {
   paintGlitch,
   paintLetterbox,
   paintParticleField,
+  paintSceneSet,
   paintTransitionOverBoard,
   paintVhs,
   reelPalette,
   transitionShift,
 } from "./clipStyles";
+import { paintSticker, type ClipSticker } from "./clipStickers";
 
 // --- Aspect layouts ----------------------------------------------------------
 
 export type ClipAspect = "tiktok" | "square" | "classic" | "youtube";
 export type CaptionStyle = "pop" | "static" | "off";
 export type EmojiLevel = "off" | "tasteful" | "brainrot";
+/** Hook type scale: its own dial, separate from the caption size. */
+export type HookSizeId = "s" | "m" | "l";
 
 export interface ClipLayout {
   W: number;
@@ -91,6 +95,26 @@ export function clipLayout(aspect: ClipAspect): ClipLayout {
   return LAYOUTS[aspect];
 }
 
+/** Hook size in px for a layout + scale dial. */
+function hookSizeFor(L: ClipLayout, scale: HookSizeId): number {
+  return Math.round(L.hookSize * (scale === "s" ? 0.8 : scale === "l" ? 1.3 : 1));
+}
+
+/** The vertical band (as fractions of the frame height) the hook may be
+ *  dragged through: below the header line, above the caption band, inside
+ *  every aspect's platform text-safe margins. Shared by the scene build and
+ *  the viewport's drag handle so the two always agree. */
+export function hookDragBand(
+  aspect: ClipAspect,
+  scale: HookSizeId = "m",
+): { min: number; max: number } {
+  const L = LAYOUTS[aspect];
+  const size = hookSizeFor(L, scale);
+  const min = (L.headerY + size * 1.1) / L.H;
+  const max = Math.max(min, (L.popY - size * 2.8) / L.H);
+  return { min, max };
+}
+
 // --- Deterministic randomness ------------------------------------------------
 
 /** Tiny seeded PRNG; the whole clip's randomness flows from one fixed seed so
@@ -112,6 +136,42 @@ const clamp01 = (t: number) => Math.max(0, Math.min(1, t));
 const easeInOutCubic = (t: number) =>
   t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
+const easeInCubic = (t: number) => t * t * t;
+
+/** Impact zoom curve windows (ms) and amount profiles (1 at the hit, 0 at
+ *  rest). Snap is the classic pop; Whip holds the zoom then releases late;
+ *  Creep pushes in gradually and eases away; Bounce wobbles as it settles.
+ *  Every profile stays >= 0 so the board never zooms below 1 and reveals its
+ *  own edges. */
+const PUNCH_CURVE_MS: Record<ZoomCurveId, number> = {
+  snap: 200,
+  whip: 340,
+  creep: 620,
+  bounce: 520,
+};
+function punchProfile(curve: ZoomCurveId, p: number): number {
+  switch (curve) {
+    case "whip":
+      // Fast in (instant, like every punch), slow out: linger then let go.
+      return 1 - easeInCubic(p);
+    case "creep":
+      // Slow push toward the hit, easing away again.
+      return Math.sin(Math.PI * Math.min(1, p * 1.05)) * 0.85;
+    case "bounce":
+      // Overshoot wobble decaying to rest.
+      return (1 - p) * (0.55 + 0.45 * Math.cos(p * Math.PI * 4));
+    default:
+      return 1 - easeOutCubic(p);
+  }
+}
+/** Arc easing for the payoff dolly and the per-chapter zoom arcs, fed by the
+ *  same curve dial through the easing variance system. */
+function arcEase(curve: ZoomCurveId, p: number): number {
+  if (curve === "creep") return easeInCubic(p);
+  if (curve === "bounce") return clamp01(easeOutBackVar(p, 1.7));
+  if (curve === "whip") return easeOutCubic(p);
+  return easeInOutCubic(p);
+}
 const easeOutBack = (t: number) => {
   const c1 = 1.70158;
   const c3 = c1 + 1;
@@ -368,6 +428,42 @@ export interface ClipSceneOptions {
   plyMods?: Readonly<Record<number, ClipPlyMod>> | null;
   /** Commentary master toggle: per-ply notes render only while true. */
   commentaryOn?: boolean;
+  /** Highlights chapters (ply ranges + micro-titles), in reel order, or null
+   *  for a single-moment reel. Each chapter gets its own zoom arc, a mono
+   *  "1/3" chapter chip, and the selected transition at its join. */
+  chapters?: readonly ClipSceneChapterIn[] | null;
+  /** Versus intro match card before the board slam, or null when off. */
+  versus?: ClipVersusCard | null;
+  /** Placed vector stickers (cap 5), board-relative fractions. */
+  stickers?: readonly ClipSticker[] | null;
+  /** Hook vertical parking (fraction of frame height), or null for the
+   *  layout's classic line. Clamped to hookDragBand. */
+  hookYFrac?: number | null;
+  /** Hook type scale. */
+  hookScale?: HookSizeId;
+  /** Reel length target in ms: the build trims (or stretches) segment holds
+   *  proportionally to fit, never the playback speed. Null keeps the natural
+   *  duration, except highlights reels which clamp into the 8-20s band. */
+  targetMs?: number | null;
+}
+
+/** One highlights chapter as handed to the scene build. */
+export interface ClipSceneChapterIn {
+  fromPly: number;
+  /** Inclusive last ply of the chapter. */
+  toPly: number;
+  payoffPly: number;
+  title: string;
+}
+
+/** Versus intro card data. Names fall back to YOU / THEM upstream. */
+export interface ClipVersusCard {
+  w: string;
+  b: string;
+  wRating: number | null;
+  bRating: number | null;
+  /** Mode chip line (BUFF / NERF), or null to hide the chip. */
+  chip: string | null;
 }
 
 interface SegFx {
@@ -448,6 +544,22 @@ export interface ClipScene {
   /** Seeded off-axis angle (radians) for the verdict slam's rubber-stamp
    *  print; also seeds the print-registration offset direction. */
   verdictTilt: number;
+  /** Versus intro card window (0 when the intro is off). The board slam runs
+   *  from versusMs to lead. */
+  versusMs: number;
+  /** Highlights chapters resolved to wall-clock spans, or null. */
+  chapters: ClipSceneChapter[] | null;
+}
+
+/** A chapter on the built timeline: chip data plus its own zoom-arc span. */
+export interface ClipSceneChapter {
+  index: number;
+  count: number;
+  title: string;
+  startMs: number;
+  endMs: number;
+  /** The chapter moment's focal square (its mini payoff). */
+  target: Square;
 }
 
 function material(pieces: (Piece | null)[]): number {
@@ -482,7 +594,16 @@ function intensityScale(level: EmojiLevel): number {
 
 export function buildClipScene(opts: ClipSceneOptions): ClipScene {
   const { timeline, style } = opts;
-  const layout = LAYOUTS[opts.aspect];
+  // Hook position + scale overrides ride the layout copy, so every hook
+  // painter (and the poster) reads the dragged parking spot transparently.
+  const baseLayout = LAYOUTS[opts.aspect];
+  const hookSize = hookSizeFor(baseLayout, opts.hookScale ?? "m");
+  const band = hookDragBand(opts.aspect, opts.hookScale ?? "m");
+  const hookY =
+    opts.hookYFrac != null
+      ? Math.round(Math.max(band.min, Math.min(band.max, opts.hookYFrac)) * baseLayout.H)
+      : baseLayout.hookY;
+  const layout: ClipLayout = { ...baseLayout, hookY, hookSize };
   const n = timeline.segments.length;
   const fieldSeed =
     (0x1badb002 ^ Math.imul(timeline.startPly, 2654435761) ^ (n << 16) ^ Math.imul(style.seed, 0x85ebca6b)) >>> 0;
@@ -535,15 +656,38 @@ export function buildClipScene(opts: ClipSceneOptions): ClipScene {
     return Math.round(nearest);
   };
 
+  // Versus intro card: an extra pre-slam window in front of the board intro.
+  const versusMs = opts.versus ? warp(1500) : 0;
   // Intro beat: the board slams in, the wordmark pops, the hook spring-pops.
   // With beat sync on, the first cut (intro -> ply 1) lands on the grid too.
-  const lead = snapToBeat(warp(700), warp(420));
-  let at = lead;
-  const segs: SegFx[] = [];
-  const audio: ClipAudioEvent[] = [];
-  audio.push({ t: 40, kind: "intro" });
-  let matPrev = material(timeline.initial);
+  const lead = snapToBeat(versusMs + warp(700), versusMs + warp(420));
 
+  // --- Timing pass -----------------------------------------------------------
+  // Every per-segment duration is derived FIRST, with no RNG draws, so the
+  // reel-length fit below can measure the natural runtime and trim holds
+  // proportionally before the seeded assembly pass consumes the rng stream.
+  interface SegPre {
+    seg: ClipSegment;
+    primary: ClipSegment["pairs"][number] | null;
+    captured: ClipSegment["pairs"];
+    hasCapture: boolean;
+    energy: EnergyKind | null;
+    tierScale: number;
+    isPayoff: boolean;
+    mod: ClipPlyMod | null;
+    arrowMs: number;
+    preMs: number;
+    moveMs: number;
+    holdMs: number;
+    ruleMs: number;
+    freezeMs: number;
+    callout: SegFx["callout"];
+    target: Square;
+    matAfter: number;
+    stamp: SegFx["stamp"];
+  }
+  const pres: SegPre[] = [];
+  let matPrev = material(timeline.initial);
   for (let i = 0; i < n; i++) {
     const seg = timeline.segments[i];
     const primary = seg.pairs.find((p) => p.primary) ?? seg.pairs[0] ?? null;
@@ -619,15 +763,6 @@ export function buildClipScene(opts: ClipSceneOptions): ClipScene {
     const target: Square =
       primary?.to ?? seg.spawns[0]?.sq ?? seg.vanishes[0]?.sq ?? 27;
 
-    const shards = captured.map((p) => ({
-      sq: p.to,
-      light: p.captured!.color === "w",
-      parts: makeParticles(rng, 14),
-    }));
-    for (const v of seg.vanishes) {
-      shards.push({ sq: v.sq, light: v.piece.color === "w", parts: makeParticles(rng, 10) });
-    }
-
     // Capture freeze-frame: a beat of held pose right after the landing.
     const freezeMs = style.captureFreeze && hasCapture ? 300 : 0;
 
@@ -650,14 +785,132 @@ export function buildClipScene(opts: ClipSceneOptions): ClipScene {
     }
     matPrev = matAfter;
 
+    pres.push({
+      seg, primary, captured, hasCapture, energy, tierScale, isPayoff, mod,
+      arrowMs, preMs, moveMs, holdMs, ruleMs, freezeMs, callout, target,
+      matAfter, stamp,
+    });
+  }
+
+  // --- Reel length fit -------------------------------------------------------
+  // The target (8s / 12s / 20s chips; highlights clamp into 8-20s) is met by
+  // trimming or stretching the segment HOLDS proportionally. Slides, leads,
+  // rule reads, and the playback speed are never touched, so the fit changes
+  // how long the reel breathes between beats, not how fast anything moves.
+  const freezeStampW = warp(opts.freezeStamp ? 1000 : 320);
+  const endW = opts.endCard ? warp(1400) : 0;
+  let fixedMs = lead + freezeStampW + endW;
+  let holdSum = 0;
+  for (const p of pres) {
+    fixedMs += warp(p.arrowMs) + warp(p.preMs) + warp(p.moveMs) + warp(p.freezeMs);
+    holdSum += warp(p.holdMs);
+  }
+  const natural = fixedMs + holdSum;
+  const isChaptered = !!opts.chapters && opts.chapters.length > 0;
+  const want =
+    opts.targetMs != null
+      ? opts.targetMs
+      : isChaptered
+        ? Math.max(8000, Math.min(20000, natural))
+        : null;
+  let holdScale = 1;
+  let ruleScale = 1;
+  if (want != null && holdSum > 0 && Math.abs(want - natural) > 120) {
+    holdScale = Math.max(0.2, Math.min(4, (want - fixedMs) / holdSum));
+    // Rule-panel floors resist hold trims (a panel is never cut off
+    // mid-slide). When the target is tighter than the floors allow, the read
+    // estimate itself compresses, stepwise, never below 45%: an explicit
+    // length target is the creator trading read time for runtime.
+    if (want < natural) {
+      for (const rs of [1, 0.85, 0.7, 0.55, 0.45]) {
+        let est = fixedMs;
+        for (const p of pres) {
+          const floor =
+            p.ruleMs > 0 ? Math.max(0, Math.round(p.ruleMs * rs) + 240 - p.moveMs) : 0;
+          est += warp(Math.max(Math.round(p.holdMs * holdScale), floor));
+        }
+        ruleScale = rs;
+        if (est <= want + 400) break;
+      }
+    }
+  }
+
+  // --- Chapter bookkeeping ---------------------------------------------------
+  const chIn = opts.chapters ?? null;
+  const chapterIdxOf = (ply: number): number => {
+    if (!chIn) return -1;
+    for (let k = 0; k < chIn.length; k++) {
+      if (ply >= chIn[k].fromPly && ply <= chIn[k].toPly) return k;
+    }
+    // A ply outside every window (skips, shrunken bridges) rides the nearest
+    // earlier chapter so the chip count never gaps.
+    for (let k = chIn.length - 1; k >= 0; k--) {
+      if (ply >= chIn[k].fromPly) return k;
+    }
+    return 0;
+  };
+  const chapterPayoffs = new Set<number>(chIn?.map((c) => c.payoffPly) ?? []);
+  const chapterSpans: { index: number; startMs: number; endMs: number; target: Square }[] = [];
+
+  // --- Assembly pass ---------------------------------------------------------
+  // The seeded stream (shards, particles, jitter) is consumed HERE, in reel
+  // order, exactly once, so any frame renders identically however often the
+  // scene rebuilds.
+  let at = lead;
+  const segs: SegFx[] = [];
+  const audio: ClipAudioEvent[] = [];
+  audio.push({ t: 40, kind: "intro" });
+  if (versusMs > 0) {
+    // Two slam hits under the staggered name entrances.
+    audio.push({ t: Math.max(60, Math.round(versusMs * 0.16)), kind: "move" });
+    audio.push({ t: Math.round(versusMs * 0.38), kind: "move" });
+  }
+  let curChapter = -1;
+
+  for (let i = 0; i < n; i++) {
+    const p = pres[i];
+    const seg = p.seg;
+    const { hasCapture, energy, tierScale, isPayoff, mod } = p;
+
+    // Chapter joins: record wall-clock spans as the accumulator crosses them.
+    if (chIn) {
+      const chIdx = chapterIdxOf(seg.ply);
+      if (chIdx !== curChapter) {
+        if (chapterSpans.length > 0) {
+          chapterSpans[chapterSpans.length - 1].endMs = at;
+        }
+        chapterSpans.push({ index: chIdx, startMs: at, endMs: at, target: p.target });
+        curChapter = chIdx;
+      }
+      if (seg.ply === chIn[chIdx]?.payoffPly) {
+        chapterSpans[chapterSpans.length - 1].target = p.target;
+      }
+    }
+
+    // The reel-length fit: holds scale proportionally, floored so a rule
+    // panel is never cut off mid-slide (the panel itself may read faster
+    // under a tight target, via ruleScale).
+    const ruleRaw = Math.round(p.ruleMs * ruleScale);
+    let holdRaw = Math.round(p.holdMs * holdScale);
+    if (ruleRaw > 0) holdRaw = Math.max(holdRaw, ruleRaw + 240 - p.moveMs);
+
+    const shards = p.captured.map((pr) => ({
+      sq: pr.to,
+      light: pr.captured!.color === "w",
+      parts: makeParticles(rng, 14),
+    }));
+    for (const v of seg.vanishes) {
+      shards.push({ sq: v.sq, light: v.piece.color === "w", parts: makeParticles(rng, 10) });
+    }
+
     // Everything below runs on WARPED durations, so the audio schedule and the
     // visual timeline stretch through the same numbers.
-    const arrowW = warp(arrowMs);
-    const preW = warp(preMs);
-    moveMs = warp(moveMs);
-    holdMs = warp(holdMs);
-    const ruleW = warp(ruleMs);
-    const freezeW = warp(freezeMs);
+    const arrowW = warp(p.arrowMs);
+    const preW = warp(p.preMs);
+    const moveMs = warp(p.moveMs);
+    let holdMs = warp(holdRaw);
+    const ruleW = warp(ruleRaw);
+    const freezeW = warp(p.freezeMs);
 
     // Between-ply shimmer whoosh (the payoff gets the riser instead).
     if (i > 0 && !preW) audio.push({ t: at, kind: "shimmer" });
@@ -680,19 +933,21 @@ export function buildClipScene(opts: ClipSceneOptions): ClipScene {
       freezeMs: freezeW,
       holdMs,
       ruleMs: ruleW,
-      callout,
+      callout: p.callout,
       seg,
-      target,
+      target: p.target,
       energy,
       tierScale,
       particles: energy ? makeParticles(rng, Math.round(ENERGY_PARTICLES[energy] * tierScale)) : [],
       shards,
       dust: makeParticles(rng, 7),
       caption: captionFor(seg, energy, opts.emojiLevel),
-      matAfter,
-      stamp,
+      matAfter: p.matAfter,
+      stamp: p.stamp,
+      // Chapter moments are mini payoffs: they always earn the punch-in.
       punch:
         !!mod?.punch ||
+        chapterPayoffs.has(seg.ply) ||
         (style.zoom !== "off" && (hasCapture || !!seg.sig || style.zoom === "extreme")),
       shakeAmp:
         shakeScale === 0
@@ -728,12 +983,15 @@ export function buildClipScene(opts: ClipSceneOptions): ClipScene {
       }
     }
   }
+  if (chapterSpans.length > 0) {
+    chapterSpans[chapterSpans.length - 1].endMs = at;
+  }
 
-  const freezeMs = warp(opts.freezeStamp ? 1000 : 320);
+  const freezeMs = freezeStampW;
   const freezeStart = at;
   if (opts.freezeStamp) audio.push({ t: freezeStart + 80, kind: "verdict" });
   at += freezeMs;
-  const endMs = opts.endCard ? warp(1400) : 0;
+  const endMs = endW;
   const endStart = at;
   if (endMs > 0) audio.push({ t: endStart + 60, kind: "outro" });
   at += endMs;
@@ -784,6 +1042,18 @@ export function buildClipScene(opts: ClipSceneOptions): ClipScene {
     palette: reelPalette(style.grade, opts.accent, style.duotoneB),
     // 1 to 3 degrees, sign seeded: the verdict prints like a rubber stamp.
     verdictTilt: ((1 + rng() * 2) * Math.PI / 180) * (rng() < 0.5 ? -1 : 1),
+    versusMs,
+    chapters:
+      chIn && chapterSpans.length > 0
+        ? chapterSpans.map((sp) => ({
+            index: sp.index,
+            count: chIn.length,
+            title: chIn[sp.index]?.title ?? "",
+            startMs: sp.startMs,
+            endMs: sp.endMs,
+            target: sp.target,
+          }))
+        : null,
   };
 }
 
@@ -956,6 +1226,17 @@ export function renderClipFrame(
     ctx, opts.style.particles, t, L.W, L.H, scene.fieldSeed, accent,
     opts.style.particleDensity,
   );
+  // Ambient scene set, ground layer (crowd silhouettes, paper, marquee).
+  paintSceneSet(
+    ctx, opts.style.sceneSet, "back", t, L.W, L.H, scene.fieldSeed, scene.palette,
+  );
+
+  // ---- Versus intro card owns the frame before the board slam ----
+  if (scene.versusMs > 0 && t < scene.versusMs) {
+    drawVersusCard(scene, ctx, t);
+    drawOverlays(scene, ctx, t);
+    return;
+  }
 
   // ---- End card replaces the board chrome once it starts ----
   if (scene.endMs > 0 && t >= scene.endStart) {
@@ -970,8 +1251,11 @@ export function renderClipFrame(
   const markSize = opts.aspect === "classic" ? 30 : 42;
   ctx.font = `700 ${markSize}px ${fonts.display}`;
   const markX = opts.aspect === "tiktok" ? 120 : L.boardX;
-  // Wordmark pops in with the intro sting, then keeps a barely-there breathe.
-  const markPop = t < 340 ? easeOutBack(clamp01(t / 340)) : 1 + 0.006 * Math.sin(t * 0.002);
+  // Wordmark pops in with the intro sting (offset past the versus card when
+  // one ran), then keeps a barely-there breathe.
+  const tIntro = t - scene.versusMs;
+  const markPop =
+    tIntro < 340 ? easeOutBack(clamp01(tIntro / 340)) : 1 + 0.006 * Math.sin(t * 0.002);
   ctx.save();
   const markW = ctx.measureText("nerf").width;
   const markW2 = ctx.measureText("chess").width;
@@ -1033,9 +1317,11 @@ export function renderClipFrame(
   ctx.save();
   const shake = shakeOffset(scene, t);
   ctx.translate(shake.x, shake.y);
-  // Intro slam: the whole board group scales down onto the table.
+  // Intro slam: the whole board group scales down onto the table (after the
+  // versus card, when one ran).
   if (t < scene.lead) {
-    const su = clamp01(t / (scene.lead * 0.55));
+    const introSpan = Math.max(1, scene.lead - scene.versusMs);
+    const su = clamp01((t - scene.versusMs) / (introSpan * 0.55));
     const s = 1.3 - 0.3 * easeOutCubic(su);
     ctx.translate(bcx, bcy);
     ctx.scale(s, s);
@@ -1148,6 +1434,10 @@ export function renderClipFrame(
   // punch never smear the text.
   if (opts.explainRules) drawRulePanel(scene, ctx, t, sqXY);
   if (opts.watermark) drawWatermark(scene, ctx);
+  // Chapter chips: the mono "1/3" plate + micro-title at each chapter start.
+  if (scene.chapters) drawChapterChips(scene, ctx, t);
+  // Sticker layer: curated vector stamps, board-relative, seeded tilts.
+  drawStickers(scene, ctx, t);
 
   // ---- Freeze + stamp finish ----
   if (inFreeze && opts.freezeStamp && opts.verdict) {
@@ -1182,6 +1472,8 @@ function applyPunch(
 ): void {
   const style = scene.opts.style;
   const mag = style.zoom === "subtle" ? 0.1 : style.zoom === "extreme" ? 0.32 : 0.2;
+  const curve = style.zoomCurve;
+  const dur = PUNCH_CURVE_MS[curve];
   for (const sf of scene.segs) {
     if (!sf.punch) continue;
     // Punch timing: on the landing impact (default) or on the ply's opening
@@ -1190,9 +1482,9 @@ function applyPunch(
       style.punchTiming === "beat"
         ? sf.start + sf.arrowMs + sf.preMs
         : sf.start + sf.arrowMs + sf.preMs + sf.moveMs;
-    if (t < te || t > te + 200) continue;
-    const u = easeOutCubic((t - te) / 200);
-    const s = 1 + mag * (1 - u);
+    if (t < te || t > te + dur) continue;
+    // Impact zoom curve: the same punch, four different releases.
+    const s = 1 + mag * punchProfile(curve, clamp01((t - te) / dur));
     // Zoom target bias: the action square, or the board's center.
     let cx: number;
     let cy: number;
@@ -1294,13 +1586,30 @@ function applyCameraWork(
     const sf = scene.segs[scene.payoffIndex];
     if (sf && t >= sf.start && t <= sf.start + segSpan(sf)) {
       const p = clamp01((t - sf.start) / segSpan(sf));
-      const z = 1 + 0.05 * easeInOutCubic(p);
+      // The payoff arc eases per the impact zoom curve dial.
+      const z = 1 + 0.05 * arcEase(style.zoomCurve, p);
       const { x, y } = sqXY(sf.target);
       const tx = x + L.sq / 2;
       const ty = y + L.sq / 2;
       ctx.translate(tx, ty);
       ctx.scale(z, z);
       ctx.translate(-tx, -ty);
+    }
+  }
+  // Highlights chapters: each chapter carries its own gentle zoom arc toward
+  // its moment, so every mini window reads composed rather than flat.
+  if (scene.chapters) {
+    for (const ch of scene.chapters) {
+      if (t < ch.startMs || t > ch.endMs) continue;
+      const p = clamp01((t - ch.startMs) / Math.max(1, ch.endMs - ch.startMs));
+      const z = 1 + 0.045 * arcEase(style.zoomCurve, p);
+      const { x, y } = sqXY(ch.target);
+      const tx = x + L.sq / 2;
+      const ty = y + L.sq / 2;
+      ctx.translate(tx, ty);
+      ctx.scale(z, z);
+      ctx.translate(-tx, -ty);
+      break;
     }
   }
   if (style.tiltSway) {
@@ -2375,6 +2684,8 @@ function drawHook(scene: ClipScene, ctx: CanvasRenderingContext2D, t: number): v
 
   const pal = scene.palette;
   const base = L.hookSize;
+  // Word entrances count from the end of the versus card, when one ran.
+  const tH = Math.max(0, t - scene.versusMs);
   const words = text.split(/\s+/).filter(Boolean);
   const justAt = words.findIndex((w) => /^just$/i.test(w));
   const nameEnd = justAt > 0 ? justAt : Math.min(2, Math.max(1, words.length - 1));
@@ -2464,7 +2775,7 @@ function drawHook(scene: ClipScene, ctx: CanvasRenderingContext2D, t: number): v
     ids.forEach((i) => {
       const tk = tokens[i];
       const appear = 120 + wordIdx * 95;
-      const wu = stamp ? 1 : clamp01((t - appear) / 180);
+      const wu = stamp ? 1 : clamp01((tH - appear) / 180);
       wordIdx++;
       if (wu <= 0) {
         x += widths[i] + space;
@@ -2527,6 +2838,7 @@ function drawHookPov(
   const { layout: L, opts } = scene;
   const pal = scene.palette;
   const base = L.hookSize;
+  const tH = Math.max(0, t - scene.versusMs);
   const rest = text.replace(/^POV:?\s*/i, "") || text;
   ctx.save();
   ctx.textAlign = "left";
@@ -2539,7 +2851,7 @@ function drawHookPov(
   const stamp = t < 34;
 
   const tagSize = Math.round(base * 0.58);
-  const tagU = stamp ? 1 : clamp01((t - 90) / 160);
+  const tagU = stamp ? 1 : clamp01((tH - 90) / 160);
   if (tagU > 0) {
     ctx.save();
     ctx.globalAlpha = tagU;
@@ -2555,7 +2867,7 @@ function drawHookPov(
   ctx.font = `800 ${bigSize}px ${opts.fonts.display}`;
   lines.forEach((ln, li) => {
     const appear = 240 + li * 170;
-    const u = stamp ? 1 : clamp01((t - appear) / 200);
+    const u = stamp ? 1 : clamp01((tH - appear) / 200);
     if (u <= 0) return;
     const pop = stamp ? 1 : 0.7 + 0.3 * easeOutBackVar(u, 1.6 + jit01(scene.fieldSeed, 71 + li));
     const float = Math.sin(t * 0.0015 + li * 1.7) * base * 0.04;
@@ -2591,6 +2903,7 @@ function drawHookWait(
 ): void {
   const { layout: L, opts } = scene;
   const pal = scene.palette;
+  const tH = Math.max(0, t - scene.versusMs);
   const core = text.replace(/\.+\s*$/, "");
   const chars = [...core];
   const size = Math.round(L.hookSize * 1.05);
@@ -2612,7 +2925,7 @@ function drawHookWait(
   x = 0;
   chars.forEach((c, i) => {
     const appear = 120 + i * 55;
-    const u = stamp ? 1 : clamp01((t - appear) / 170);
+    const u = stamp ? 1 : clamp01((tH - appear) / 170);
     if (u > 0 && c !== " ") {
       const rise = (1 - easeOutCubic(u)) * size * 0.3;
       ctx.globalAlpha = u;
@@ -2627,7 +2940,7 @@ function drawHookWait(
   });
   // The three dots breathe in sequence, accent ink, forever.
   for (let k = 0; k < 3; k++) {
-    const born = stamp ? 1 : clamp01((t - (120 + chars.length * 55 + k * 140)) / 170);
+    const born = stamp ? 1 : clamp01((tH - (120 + chars.length * 55 + k * 140)) / 170);
     if (born <= 0) continue;
     const pulse = 0.3 + 0.7 * clamp01(Math.sin(t * 0.004 - k * 0.9));
     ctx.globalAlpha = born * pulse;
@@ -3429,6 +3742,219 @@ function drawEndCard(
   ctx.restore();
 }
 
+// --- Versus intro card -------------------------------------------------------
+
+/** The pre-slam match card: both names slam in from opposite sides with
+ *  seeded tilts, VS prints center in the mono chrome voice, ratings ride
+ *  beneath when the match is rated, and the mode chip stamps last. Palette
+ *  inks only; the board slam follows at scene.versusMs. */
+function drawVersusCard(scene: ClipScene, ctx: CanvasRenderingContext2D, t: number): void {
+  const { layout: L, opts } = scene;
+  const v = opts.versus!;
+  const pal = scene.palette;
+  const p = clamp01(t / Math.max(1, scene.versusMs));
+  const cx = L.W / 2;
+  const cy = L.H * (opts.aspect === "tiktok" ? 0.44 : 0.46);
+  const nameSize = Math.round(Math.min(L.W * 0.085, L.board * 0.14));
+  const gap = nameSize * 1.9;
+
+  // Darkened stage so the names own the frame.
+  ctx.save();
+  ctx.fillStyle = `rgba(8,6,4,${0.5 * Math.sin(Math.PI * Math.min(1, p * 2))})`;
+  ctx.fillRect(0, 0, L.W, L.H);
+
+  const drawName = (
+    name: string,
+    rating: number | null,
+    y: number,
+    dir: -1 | 1,
+    inAt: number,
+    tiltK: number,
+  ) => {
+    const u = clamp01((p - inAt) / 0.14);
+    if (u <= 0) return;
+    const slide = (1 - easeOutBackVar(u, 1.4 + jit01(scene.fieldSeed, 301 + tiltK))) * L.W * 0.5 * dir;
+    const tilt = scene.verdictTilt * (dir > 0 ? 1.2 : -1) * (0.6 + 0.4 * Math.abs(Math.sin(tiltK * 3.7)));
+    const label = name.trim().toUpperCase() || (dir < 0 ? "YOU" : "THEM");
+    ctx.save();
+    ctx.globalAlpha = u;
+    ctx.translate(cx + slide, y);
+    ctx.rotate(tilt);
+    ctx.textAlign = "center";
+    // Fit long handles inside the text-safe column.
+    ctx.font = `800 ${nameSize}px ${opts.fonts.display}`;
+    const maxW = L.board * 0.92;
+    const w = ctx.measureText(label).width;
+    const fit = Math.min(1, maxW / Math.max(1, w));
+    ctx.scale(fit, fit);
+    ctx.lineWidth = Math.max(3, nameSize * 0.15);
+    ctx.strokeStyle = "rgba(10,8,6,0.92)";
+    ctx.lineJoin = "round";
+    ctx.strokeText(label, 0, 0);
+    // Print-registration hot pass under the fill, like the verdict slam.
+    const regOff = nameSize * 0.045;
+    ctx.globalAlpha = u * 0.45;
+    ctx.fillStyle = pal.hot;
+    ctx.fillText(label, dir * regOff, regOff * 0.6);
+    ctx.globalAlpha = u;
+    ctx.fillStyle = dir < 0 ? pal.paper : pal.accent;
+    ctx.fillText(label, 0, 0);
+    if (rating !== null) {
+      // Ratings are data: mono chrome voice.
+      ctx.font = `600 ${Math.round(nameSize * 0.34)}px ${opts.fonts.mono}`;
+      ctx.fillStyle = pal.dim;
+      ctx.fillText(String(Math.round(rating)), 0, nameSize * 0.72);
+    }
+    ctx.restore();
+  };
+
+  drawName(v.w, v.wRating, cy - gap, -1, 0.1, 1);
+  drawName(v.b, v.bRating, cy + gap, 1, 0.28, 2);
+
+  // The VS mark: mono chrome voice, popping between the names.
+  const vsU = clamp01((p - 0.42) / 0.12);
+  if (vsU > 0) {
+    const pop = easeOutBackVar(vsU, 2);
+    ctx.save();
+    ctx.globalAlpha = vsU;
+    ctx.translate(cx, cy + nameSize * 0.18);
+    ctx.rotate(scene.verdictTilt * 0.8);
+    ctx.scale(pop, pop);
+    ctx.textAlign = "center";
+    const vsSize = Math.round(nameSize * 0.5);
+    ctx.font = `600 ${vsSize}px ${opts.fonts.mono}`;
+    // Hairline rules flanking the mark.
+    ctx.fillStyle = withAlpha(pal.dim, 0.7);
+    ctx.fillRect(-vsSize * 2.6, -vsSize * 0.32, vsSize * 1.5, 1);
+    ctx.fillRect(vsSize * 1.1, -vsSize * 0.32, vsSize * 1.5, 1);
+    ctx.fillStyle = pal.hot;
+    ctx.fillText("VS", 0, 0);
+    ctx.restore();
+  }
+
+  // Mode chip: a small stroked plate in the corner-tick family.
+  if (v.chip) {
+    const chipU = clamp01((p - 0.58) / 0.12);
+    if (chipU > 0) {
+      const label = v.chip.toUpperCase();
+      const size = Math.round(nameSize * 0.34);
+      ctx.save();
+      ctx.globalAlpha = chipU;
+      ctx.font = `600 ${size}px ${opts.fonts.mono}`;
+      const w = ctx.measureText(label).width + size * 1.6;
+      const h = size * 2;
+      const y = cy + gap + nameSize * 1.15;
+      ctx.translate(cx, y);
+      ctx.rotate(-scene.verdictTilt * 0.6);
+      ctx.scale(easeOutBackVar(chipU, 1.5), easeOutBackVar(chipU, 1.5));
+      ctx.fillStyle = "rgba(16,14,11,0.92)";
+      ctx.fillRect(-w / 2, -h / 2, w, h);
+      ctx.strokeStyle = withAlpha(pal.accent, 0.9);
+      ctx.lineWidth = 2;
+      ctx.strokeRect(-w / 2, -h / 2, w, h);
+      ctx.textAlign = "center";
+      ctx.fillStyle = pal.accent;
+      ctx.fillText(label, 0, size * 0.36);
+      ctx.restore();
+    }
+  }
+
+  // The card eases down as the board slam takes over.
+  if (p > 0.9) {
+    ctx.globalAlpha = easeInOutCubic((p - 0.9) / 0.1) * 0.5;
+    ctx.fillStyle = "#0b0906";
+    ctx.fillRect(0, 0, L.W, L.H);
+  }
+  ctx.restore();
+}
+
+// --- Chapter chips -----------------------------------------------------------
+
+/** The mono "1/3" chapter chip + micro-title, printed inside the board's
+ *  bottom-right corner for the first beat of each chapter. */
+function drawChapterChips(scene: ClipScene, ctx: CanvasRenderingContext2D, t: number): void {
+  const { layout: L, opts } = scene;
+  const pal = scene.palette;
+  for (const ch of scene.chapters ?? []) {
+    const showMs = Math.min(1500, Math.max(700, ch.endMs - ch.startMs));
+    if (t < ch.startMs || t > ch.startMs + showMs) continue;
+    const p = (t - ch.startMs) / showMs;
+    const inU = easeOutCubic(clamp01(p / 0.14));
+    const outU = p > 0.86 ? clamp01((p - 0.86) / 0.14) : 0;
+    const a = inU * (1 - outU);
+    if (a <= 0.01) return;
+
+    const numSize = opts.aspect === "classic" ? 13 : 20;
+    const titleSize = opts.aspect === "classic" ? 17 : 26;
+    ctx.save();
+    ctx.globalAlpha = a;
+    ctx.textAlign = "right";
+    const x = L.boardX + L.board - Math.round(L.sq * 0.18);
+    const y = L.boardY + L.board - Math.round(L.sq * 0.22);
+    // Slide up a hair as it lands.
+    const rise = (1 - inU) * titleSize * 0.5;
+    // The count is data: mono chrome voice, accent ink.
+    ctx.font = `600 ${numSize}px ${opts.fonts.mono}`;
+    const numText = `${ch.index + 1}/${ch.count}`;
+    const numW = ctx.measureText(numText).width;
+    ctx.fillStyle = "rgba(12,10,8,0.82)";
+    const title = ch.title;
+    ctx.font = `700 ${titleSize}px ${opts.fonts.display}`;
+    const titleW = ctx.measureText(title).width;
+    const plateW = Math.max(numW, titleW) + titleSize * 0.9;
+    const plateH = numSize * 1.5 + titleSize * 1.5;
+    ctx.fillRect(x - plateW, y - plateH + rise, plateW + Math.round(L.sq * 0.06), plateH);
+    ctx.fillStyle = pal.accent;
+    ctx.fillRect(x - plateW, y - plateH + rise, 3, plateH);
+    ctx.font = `600 ${numSize}px ${opts.fonts.mono}`;
+    ctx.fillStyle = pal.accent;
+    ctx.fillText(numText, x - titleSize * 0.3, y - plateH + numSize * 1.15 + rise);
+    ctx.font = `700 ${titleSize}px ${opts.fonts.display}`;
+    ctx.fillStyle = pal.paper;
+    ctx.fillText(title, x - titleSize * 0.3, y - titleSize * 0.35 + rise);
+    ctx.restore();
+    return;
+  }
+}
+
+// --- Sticker layer -----------------------------------------------------------
+
+/** Placed stickers: board-relative positions, seeded tilts, palette inks.
+ *  A ply-pinned sticker slams in on its ply's seeded jitter and leaves with
+ *  the ply; an unpinned one rides the whole reel (poster included) with a
+ *  barely-there float. */
+function drawStickers(scene: ClipScene, ctx: CanvasRenderingContext2D, t: number): void {
+  const list = scene.opts.stickers;
+  if (!list || list.length === 0) return;
+  const { layout: L, opts } = scene;
+  const size = L.board * 0.16;
+  list.slice(0, 5).forEach((st, i) => {
+    let alpha = 1;
+    let pop = 1;
+    if (st.ply !== null) {
+      const sf = scene.segs.find((s) => s.seg.ply === st.ply);
+      if (!sf) return;
+      const t0 = sf.start + sf.jitterMs;
+      const t1 = sf.start + segSpan(sf);
+      if (t < t0 || t > t1) return;
+      const inU = clamp01((t - t0) / 200);
+      pop = easeOutBackVar(inU, 1.5 + jit01(scene.fieldSeed, 240 + i) * 1.2);
+      alpha = inU * (t > t1 - 150 ? clamp01((t1 - t) / 150) : 1);
+    }
+    const x = L.boardX + Math.max(-0.12, Math.min(1.12, st.x)) * L.board;
+    const y = L.boardY + Math.max(-0.12, Math.min(1.12, st.y)) * L.board;
+    const tilt = (jit01(scene.fieldSeed, 260 + i) - 0.5) * 0.3;
+    const float = st.ply === null ? Math.sin(t * 0.0012 + i * 1.9) * size * 0.02 : 0;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.translate(x, y + float);
+    ctx.rotate(tilt);
+    ctx.scale(pop, pop);
+    paintSticker(ctx, st.id, size, scene.palette, opts.fonts.display);
+    ctx.restore();
+  });
+}
+
 // --- Always-on overlays ------------------------------------------------------
 
 /** Intro slam accents: a flash ring plus dust kicked off the board edges the
@@ -3442,7 +3968,8 @@ function drawIntroSlam(
   bcy: number,
 ): void {
   const L = scene.layout;
-  const tImp = scene.lead * 0.55; // the slam touches down here
+  // The slam touches down here (past the versus card when one ran).
+  const tImp = scene.versusMs + (scene.lead - scene.versusMs) * 0.55;
   if (t < tImp || t > tImp + 300) return;
   const p = (t - tImp) / 300;
   ctx.save();
@@ -3557,6 +4084,20 @@ function drawOverlays(scene: ClipScene, ctx: CanvasRenderingContext2D, t: number
   // Victory confetti over the verdict freeze.
   if (scene.celebrate && t >= scene.freezeStart) {
     paintConfetti(ctx, L.W, L.H, t - scene.freezeStart, scene.fieldSeed);
+  }
+
+  // Ambient scene set, chrome layer: CRT corners, crowd camera flashes. The
+  // stadium's flash twinkles key off how recently a hit landed.
+  if (style.sceneSet !== "void") {
+    let impactQ = 0;
+    for (const sf of scene.segs) {
+      if (sf.shards.length === 0 && !sf.isPayoff) continue;
+      const te = sf.start + segLead(sf) + sf.moveMs;
+      if (t >= te && t <= te + 600) impactQ = Math.max(impactQ, 1 - (t - te) / 600);
+    }
+    paintSceneSet(
+      ctx, style.sceneSet, "front", t, L.W, L.H, scene.fieldSeed, scene.palette, impactQ,
+    );
   }
 
   // VHS: scanlines, tracking band, REC chrome (mono, like real deck chrome).

@@ -12,9 +12,11 @@ import { renderClipPoster, type ClipPoster, type ClipScene } from "../../clipSce
 import {
   ASPECTS,
   BOARD_THEME_OPTIONS,
+  FORMAT_OPTIONS,
   FPS_OPTIONS,
   LENGTH_OPTIONS,
   QUALITY_OPTIONS,
+  TARGET_OPTIONS,
 } from "../../clipOptions";
 import { Chip, ChoiceRow, Row, SliderRow, type Studio } from "../controls";
 
@@ -56,7 +58,9 @@ function PosterPreview({
 export function FormatPanel({ studio }: { studio: Studio }) {
   const {
     opts, set, locked, pliesChoice, setPliesChoice, resetTikTok, scene, images, hookText, encode,
+    highlightsCount,
   } = studio;
+  const highlightsOn = opts.format === "highlights" && highlightsCount > 0;
   const current = ASPECTS.find((a) => a.id === opts.aspect);
   // 60fps needs the offline encoder AND a codec that takes a 60Hz config.
   const fpsBlocked = opts.fps === 60 && !!encode && !encode.fps60;
@@ -137,14 +141,55 @@ export function FormatPanel({ studio }: { studio: Studio }) {
         onPick={(v) => set("boardTheme", v)}
         disabled={locked}
       />
+      {/* Reel format: one continuous moment, or stitched highlight chapters
+          (top card plays + biggest swings, 8+ plies apart). */}
+      <Row label="Format">
+        {FORMAT_OPTIONS.map(([id, label]) => (
+          <Chip
+            key={id}
+            label={id === "highlights" && highlightsCount > 0 ? `${label} (${highlightsCount})` : label}
+            on={opts.format === id}
+            onClick={() => set("format", id)}
+            disabled={locked || (id === "highlights" && highlightsCount === 0)}
+            title={
+              id === "highlights"
+                ? highlightsCount === 0
+                  ? "No distinct moments to chapter in this game"
+                  : "Stitch up to 3 highlight moments into one reel"
+                : "One continuous window (classic)"
+            }
+          />
+        ))}
+      </Row>
+      {/* Reel length target: fit by trimming holds, never by playback speed
+          (that stays a PACE choice). */}
+      <Row label="Target">
+        {TARGET_OPTIONS.map(([id, label]) => (
+          <Chip
+            key={String(id)}
+            label={label}
+            on={opts.lengthTarget === id}
+            onClick={() => set("lengthTarget", id)}
+            disabled={locked}
+            title={
+              id === "auto"
+                ? "Natural duration (highlights still fit 8-20s)"
+                : `Fit the reel to about ${id}s by trimming holds`
+            }
+          />
+        ))}
+      </Row>
       <Row label="Window">
         {LENGTH_OPTIONS.map((num) => (
           <Chip
             key={String(num)}
             label={num === "auto" ? "Auto" : `Last ${num}`}
-            on={pliesChoice === num}
+            on={!highlightsOn && pliesChoice === num}
             onClick={() => setPliesChoice(num)}
-            disabled={locked}
+            disabled={locked || highlightsOn}
+            title={
+              highlightsOn ? "Highlights mode cuts its own chapter windows" : undefined
+            }
           />
         ))}
       </Row>
