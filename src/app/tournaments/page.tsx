@@ -38,7 +38,7 @@ const CLOCK_PRESETS: { label: string; t: number; i: number }[] = [
 const DURATION_PRESETS = [20, 30, 45, 60, 90, 120];
 
 const INPUT_CLASS =
-  "mt-1 w-full border border-white/15 bg-ink-900/60 px-3 py-2 text-[13px] text-parchment";
+  "mt-1 w-full border border-[color:var(--edge)] bg-[color:var(--bg-base)] px-3 py-2 text-[13px] text-parchment";
 const LABEL_CLASS = "block text-[12px] font-medium text-parchment-400";
 
 function ModeTag({ mode }: { mode: string }) {
@@ -291,8 +291,8 @@ export default function TournamentsPage() {
                       className={
                         "min-h-[44px] sm:min-h-0 border px-2.5 py-1 font-mono text-xs transition-colors " +
                         (clockIdx === i
-                          ? "border-gold/60 bg-gold/15 text-gold-leaf"
-                          : "border-white/15 text-parchment-300 hover:border-white/30")
+                          ? "border-[color:var(--edge-strong)] bg-[color:var(--bg-raised)] text-gold-leaf"
+                          : "border-[color:var(--edge)] text-parchment-300 hover:border-[color:var(--edge-strong)]")
                       }
                     >
                       {preset.label}
@@ -414,16 +414,16 @@ export default function TournamentsPage() {
         <div className="mt-6 min-w-0 space-y-4">
           {loading ? (
             <div className="plate overflow-hidden">
-              <div className="border-b border-white/10 px-5 py-3 text-[12px] font-medium text-parchment-400">
+              <div className="border-b border-[color:var(--edge)] px-5 py-3 text-[12px] font-medium text-parchment-400">
                 Loading events
               </div>
-              <ul className="divide-y divide-white/5" aria-hidden>
+              <ul className="divide-y divide-[color:var(--edge)]" aria-hidden>
                 {Array.from({ length: 3 }).map((_, i) => (
                   <li key={i} className="flex items-center gap-4 px-5 py-4">
-                    <div className="h-11 w-14 shrink-0 bg-white/[0.06] animate-pulse" />
+                    <div className="h-11 w-14 shrink-0 bg-[color:var(--bg-raised)] animate-pulse" />
                     <div className="min-w-0 flex-1">
                       <div className="h-3.5 w-44 bg-white/[0.07] animate-pulse" />
-                      <div className="mt-2 h-3 w-32 bg-white/[0.05] animate-pulse" />
+                      <div className="mt-2 h-3 w-32 bg-[color:var(--bg-raised)] animate-pulse" />
                     </div>
                   </li>
                 ))}
@@ -467,7 +467,7 @@ function Section({
   if (muted && tournaments.length === 0) return null;
   return (
     <div className="plate overflow-hidden">
-      <div className="flex items-center justify-between gap-2 border-b border-white/10 px-5 py-3">
+      <div className="flex items-center justify-between gap-2 border-b border-[color:var(--edge)] px-5 py-3">
         <span className="flex items-center gap-2 text-[12px] font-medium text-parchment-300">
           {accent && (
             <span
@@ -487,7 +487,7 @@ function Section({
           <p className="mt-2 text-[13px] text-parchment-400">{emptyText}</p>
         </div>
       ) : (
-        <ul className="divide-y divide-white/5">
+        <ul className="divide-y divide-[color:var(--edge)]">
           {tournaments.map((t) => (
             <TournamentRow key={t.id} t={t} now={now} />
           ))}
@@ -521,11 +521,11 @@ function TournamentRow({ t, now }: { t: TournamentListRow; now: number }) {
     <li>
       <Link
         href={`/tournaments/${encodeURIComponent(t.id)}`}
-        className="flex items-center gap-4 px-5 py-4 transition-colors hover:bg-white/5"
+        className="flex items-center gap-4 px-5 py-4 transition-colors hover:bg-[color:var(--bg-raised)]"
       >
         <span
           aria-hidden
-          className="grid h-11 w-14 shrink-0 place-items-center border border-white/10 bg-ink-900/60 font-mono text-sm text-parchment-100"
+          className="grid h-11 w-14 shrink-0 place-items-center border border-[color:var(--edge)] bg-[color:var(--bg-base)] font-mono text-sm text-parchment-100"
         >
           {clockLabel(t.clock_time_sec, t.clock_increment_sec)}
         </span>
@@ -534,7 +534,7 @@ function TournamentRow({ t, now }: { t: TournamentListRow; now: number }) {
             <span className="truncate font-display text-lg text-parchment-50">{t.name}</span>
             <ModeTag mode={t.mode} />
             {t.rated ? (
-              <span className="shrink-0 border border-gold/40 px-1.5 py-0.5 text-[12px] font-medium text-gold-leaf">Rated</span>
+              <span className="shrink-0 border border-[color:var(--edge-strong)] px-1.5 py-0.5 text-[12px] font-medium text-gold-leaf">Rated</span>
             ) : null}
           </div>
           <div className="mt-0.5 text-[12px] font-medium text-parchment-400">

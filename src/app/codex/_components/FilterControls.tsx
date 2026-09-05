@@ -45,7 +45,7 @@ function FilterSelect({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="max-w-full rounded-sm border border-[color:var(--edge)] bg-ink-900/70 px-3 py-1.5 text-[12px] font-body text-parchment focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--accent)]"
+        className="max-w-full rounded-none border border-[color:var(--edge)] bg-[color:var(--bg-base)] px-3 py-1.5 text-[12px] font-body text-parchment focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--accent)]"
       >
         {children}
       </select>

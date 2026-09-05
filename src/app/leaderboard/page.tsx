@@ -296,7 +296,7 @@ function LeaderboardRow({
 
   const rowClass =
     "grid grid-cols-[2.25rem_1fr_4.5rem] items-center border-b border-[color:var(--edge)] px-3 py-2.5 text-sm transition-colors hover:bg-[var(--surface-hover)] sm:grid-cols-[3rem_1fr_6rem_5rem_7rem] sm:px-4 min-h-[44px]" +
-    (mine ? " bg-gold/10" : "");
+    (mine ? " bg-[color:var(--bg-raised)]" : "");
 
   // The rank numeral: the top ten wear it in a small gem chip — gold for the
   // podium, ember for 4-10 — everyone else a plain tabular figure.
@@ -337,7 +337,7 @@ function LeaderboardRow({
         )}
         {row.guest && <MetaChip>Guest</MetaChip>}
         {mine && (
-          <span className="shrink-0 border border-gold/45 px-1.5 py-0.5 text-xs uppercase tracking-[0.06em] text-gold-leaf">
+          <span className="shrink-0 border border-[color:var(--edge-strong)] px-1.5 py-0.5 text-xs uppercase tracking-[0.06em] text-gold-leaf">
             You
           </span>
         )}

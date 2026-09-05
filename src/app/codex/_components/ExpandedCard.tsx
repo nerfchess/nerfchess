@@ -36,7 +36,7 @@ export function ExpandedCard({
   const affected = affectedLine(entry.kind, entry.card);
 
   return (
-    <div className="plate-raised rounded-sm border border-[color:var(--edge-strong)] p-3">
+    <div className="plate-raised rounded-none border border-[color:var(--edge-strong)] p-3">
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <LinkButton tone="ghost"
           href={path}

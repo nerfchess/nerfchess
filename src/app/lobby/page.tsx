@@ -392,7 +392,7 @@ function LobbyInner() {
                   "-mb-px flex min-h-[44px] shrink-0 items-center gap-2 whitespace-nowrap border-b-2 px-1 pb-2.5 pt-1 font-display text-sm font-semibold transition-colors sm:text-base " +
                   (selected
                     ? "border-[color:var(--accent)] text-gold-leaf"
-                    : "border-transparent text-parchment-300 hover:border-white/25 hover:text-parchment-50")
+                    : "border-transparent text-parchment-300 hover:border-[color:var(--edge-strong)] hover:text-parchment-50")
                 }
               >
                 {t.label}
@@ -401,8 +401,8 @@ function LobbyInner() {
                     className={
                       "border px-1.5 py-px font-mono text-xs tabular-nums transition-colors " +
                       (selected
-                        ? "border-gold/40 bg-gold/15 text-gold-leaf"
-                        : "border-[color:var(--edge)] bg-white/[0.06] text-parchment-300")
+                        ? "border-[color:var(--edge-strong)] bg-[color:var(--bg-raised)] text-gold-leaf"
+                        : "border-[color:var(--edge)] bg-[color:var(--bg-raised)] text-parchment-300")
                     }
                   >
                     {count}
@@ -656,7 +656,7 @@ function LobbyInner() {
                   {visiblePlayers.map((p) => (
                     <li
                       key={p.name}
-                      className="-mx-2 flex items-center justify-between gap-2 px-2 py-1 text-sm transition-colors hover:bg-white/[0.04]"
+                      className="-mx-2 flex items-center justify-between gap-2 px-2 py-1 text-sm transition-colors hover:bg-[color:var(--bg-raised)]"
                     >
                       <Link
                         href={`/u/${encodeURIComponent(p.name)}`}
@@ -759,7 +759,7 @@ function LobbyInner() {
 // One live-pulse chip in the header: a status dot beside a readable count.
 function HallStat({ dotClass, children }: { dotClass: string; children: React.ReactNode }) {
   return (
-    <span className="flex items-center gap-2 border border-[color:var(--edge)] bg-white/[0.04] px-3 py-1.5 text-xs tabular-nums text-parchment-300">
+    <span className="flex items-center gap-2 border border-[color:var(--edge)] bg-[color:var(--bg-zebra)] px-3 py-1.5 text-xs tabular-nums text-parchment-300">
       <span aria-hidden className={`h-1.5 w-1.5 shrink-0 ${dotClass}`} />
       {children}
     </span>
@@ -794,7 +794,7 @@ function StatusPill({
     <span
       role="status"
       aria-live="polite"
-      className="flex items-center gap-2 border border-[color:var(--edge)] bg-white/[0.04] px-3 py-1.5 text-xs font-medium tabular-nums text-parchment-200"
+      className="flex items-center gap-2 border border-[color:var(--edge)] bg-[color:var(--bg-zebra)] px-3 py-1.5 text-xs font-medium tabular-nums text-parchment-200"
     >
       <span aria-hidden className={`h-1.5 w-1.5 shrink-0 rounded-full ${dot}`} />
       {label}
@@ -812,7 +812,7 @@ function StatusPill({
 // only, never the whole panel, so the page stays quiet.
 const SECTION_TINTS = {
   mint: "border-mint/30 bg-mint/10 text-mint-glow",
-  sun: "border-sun/30 bg-sun/10 text-sun-glow",
+  sun: "border-sun/30 bg-sun/10 text-brag",
   coral: "border-coral/30 bg-coral/10 text-coral-glow",
 } as const;
 
@@ -1061,7 +1061,7 @@ function LobbyRailError({ message, onRetry }: { message: string; onRetry: () => 
 // Empty state: a quiet flat brass checkerboard with star motes drifting off it.
 function HallEmpty({ title, hint }: { title: string; hint: string }) {
   return (
-    <div className="mt-4 flex items-center gap-4 border border-dashed border-[color:var(--edge)] bg-white/[0.015] p-4">
+    <div className="mt-4 flex items-center gap-4 border border-dashed border-[color:var(--edge)] bg-[color:var(--bg-zebra)] p-4">
       <div className="hall-empty-board" aria-hidden>
         <span className="hall-mote" style={{ left: "28%", bottom: "18%" }} />
         <span
@@ -1084,7 +1084,7 @@ function HallEmpty({ title, hint }: { title: string; hint: string }) {
 function StatusBadge({ status }: { status: "online" | "searching" | "playing" }) {
   const styles: Record<string, string> = {
     online: "border-verdigris/40 bg-verdigris/10 text-verdigris-glow",
-    searching: "border-gold/40 bg-gold/10 text-gold-leaf",
+    searching: "border-[color:var(--edge-strong)] bg-[color:var(--bg-raised)] text-gold-leaf",
     playing: "border-bruise/40 bg-bruise/10 text-bruise-glow",
   };
   const labels: Record<string, string> = {
@@ -1159,7 +1159,7 @@ function SeekRow({
         </div>
       </div>
       {isMine ? (
-        <span className="shrink-0 border border-gold/40 bg-gold/10 px-3 py-1.5 text-xs font-medium text-gold-leaf">
+        <span className="shrink-0 border border-[color:var(--edge-strong)] bg-[color:var(--bg-raised)] px-3 py-1.5 text-xs font-medium text-gold-leaf">
           Your seek
         </span>
       ) : (

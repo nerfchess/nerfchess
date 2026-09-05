@@ -492,7 +492,7 @@ function BuildVersionLabel() {
   const version = process.env.NEXT_PUBLIC_BUILD_VERSION ?? "";
   if (!isModerator || !version) return null;
   return (
-    <span className="font-mono text-[10px] opacity-70" title="Deployed version">
+    <span className="font-mono text-[11px] opacity-70" title="Deployed version">
       {version}
     </span>
   );

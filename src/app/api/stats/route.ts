@@ -81,7 +81,12 @@ export async function GET() {
        SELECT white_nerf_id AS nerf, CASE WHEN winner = 'w' THEN 1 ELSE 0 END AS won FROM games${where}
        UNION ALL
        SELECT black_nerf_id AS nerf, CASE WHEN winner = 'b' THEN 1 ELSE 0 END AS won FROM games${where}
-     ) sub GROUP BY nerf ORDER BY dealt DESC LIMIT 12`,
+     ) sub
+     -- 'none' is the Buff-mode sentinel (UNRESTRICTED_NERF in engine/game.ts):
+     -- every Buff seat writes it, so without this it tops the table with a
+     -- meaningless 50%. It is not a rule and never counts as one.
+     WHERE nerf IS NOT NULL AND nerf <> 'none'
+     GROUP BY nerf ORDER BY dealt DESC LIMIT 12`,
     );
   const nerfs = await topNerfs("");
   const humanNerfs = await topNerfs(` WHERE ${HUMAN_GAME}`);

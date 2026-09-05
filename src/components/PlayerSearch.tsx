@@ -283,7 +283,7 @@ export function PlayerSearch({ className = "", autoFocus = false }: { className?
     return (
       <>
         <span className="flex min-w-0 flex-1 items-center gap-2.5">
-          <PlayerAvatar name={item.username} avatar={item.avatar} size={28} className="rounded-sm" />
+          <PlayerAvatar name={item.username} avatar={item.avatar} size={28} className="rounded-none" />
           <span className="flex min-w-0 flex-col gap-0.5">
             <span className="flex min-w-0 items-center gap-1.5">
               <span className="min-w-0 truncate font-medium text-parchment-100">{item.username}</span>
@@ -294,7 +294,7 @@ export function PlayerSearch({ className = "", autoFocus = false }: { className?
               )}
               {top && <LaurelBadge rank={top.rank} title={placementTitle(top)} size={12} className="shrink-0" />}
               {isFriend && (
-                <span className="shrink-0 rounded-sm border border-gold/40 px-1.5 py-0.5 text-[12px] leading-none text-gold-leaf">
+                <span className="shrink-0 rounded-none border border-[color:var(--edge-strong)] px-1.5 py-0.5 text-[12px] leading-none text-gold-leaf">
                   Friend
                 </span>
               )}
@@ -372,7 +372,7 @@ export function PlayerSearch({ className = "", autoFocus = false }: { className?
           id={listId}
           role="listbox"
           aria-label="Search results"
-          className="absolute inset-x-0 top-full z-30 mt-1 plate dropdown divide-y divide-white/5 overflow-hidden shadow-2xl"
+          className="absolute inset-x-0 top-full z-30 mt-1 plate dropdown divide-y divide-[color:var(--edge)] overflow-hidden shadow-2xl"
         >
           {hits.map((hit, i) => (
             <button
@@ -390,7 +390,7 @@ export function PlayerSearch({ className = "", autoFocus = false }: { className?
               }}
               className={
                 "flex w-full min-h-[44px] items-center gap-2 px-4 py-2 text-left text-sm transition-colors " +
-                (i === active ? "bg-white/[0.06]" : "hover:bg-white/[0.05]")
+                (i === active ? "bg-[color:var(--bg-raised)]" : "hover:bg-[color:var(--bg-raised)]")
               }
             >
               {rowContent(hit)}
@@ -422,7 +422,7 @@ export function PlayerSearch({ className = "", autoFocus = false }: { className?
           className="absolute inset-x-0 top-full z-30 mt-1 plate dropdown overflow-hidden shadow-2xl"
         >
           <p className="px-4 pt-2 pb-1">Recent</p>
-          <div className="divide-y divide-white/5">
+          <div className="divide-y divide-[color:var(--edge)]">
             {recent.map((item, i) => (
               <div key={item.username} className="relative flex items-center">
                 <button
@@ -437,7 +437,7 @@ export function PlayerSearch({ className = "", autoFocus = false }: { className?
                   }}
                   className={
                     "flex w-full min-h-[44px] items-center gap-2 py-2 pl-4 pr-12 text-left text-sm transition-colors " +
-                    (i === active ? "bg-white/[0.06]" : "hover:bg-white/[0.05]")
+                    (i === active ? "bg-[color:var(--bg-raised)]" : "hover:bg-[color:var(--bg-raised)]")
                   }
                 >
                   {rowContent(item)}
@@ -446,7 +446,7 @@ export function PlayerSearch({ className = "", autoFocus = false }: { className?
                   type="button"
                   aria-label={`Remove ${item.username} from recent searches`}
                   onClick={() => removeRecent(item.username)}
-                  className="absolute right-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-sm text-parchment-500 transition-colors hover:bg-white/[0.06] hover:text-parchment-200"
+                  className="absolute right-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-none text-parchment-500 transition-colors hover:bg-[color:var(--bg-raised)] hover:text-parchment-200"
                 >
                   <svg viewBox="0 0 20 20" width={14} height={14} aria-hidden fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round">
                     <path d="M5 5l10 10M15 5L5 15" />

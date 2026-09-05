@@ -144,7 +144,7 @@ export default function SuggestRulePage() {
         <Link href="/" className="font-display text-2xl tracking-tight">
           nerf<span className="text-gold-leaf">chess</span>
         </Link>
-        <Link href="/codex" className="px-3 py-1.5 rounded-[1px] text-sm font-display hover:bg-white/5 text-parchment">
+        <Link href="/codex" className="px-3 py-1.5 rounded-none text-sm font-display hover:bg-[color:var(--bg-raised)] text-parchment">
           ← All the rules
         </Link>
       </nav>
@@ -212,7 +212,7 @@ export default function SuggestRulePage() {
                 value={name}
                 onChange={(e) => setName(e.target.value.slice(0, 80))}
                 placeholder={cfg.namePlaceholder}
-                className="bg-ink-900/60 border border-white/15 rounded-[1px] px-4 py-2 text-base font-display w-full focus:outline-none focus:border-gold/60 text-parchment placeholder:text-parchment-400/40"
+                className="bg-[color:var(--bg-base)] border border-[color:var(--edge)] rounded-none px-4 py-2 text-base font-display w-full focus:outline-none focus:border-[color:var(--edge-strong)] text-parchment placeholder:text-parchment-400/40"
               />
             </div>
 
@@ -227,9 +227,9 @@ export default function SuggestRulePage() {
                 required
                 rows={5}
                 placeholder={cfg.descPlaceholder}
-                className="bg-ink-900/60 border border-white/15 rounded-2xl px-4 py-3 text-sm w-full focus:outline-none focus:border-gold/60 text-parchment placeholder:text-parchment-400/40 resize-y"
+                className="bg-[color:var(--bg-base)] border border-[color:var(--edge)] rounded-2xl px-4 py-3 text-sm w-full focus:outline-none focus:border-[color:var(--edge-strong)] text-parchment placeholder:text-parchment-400/40 resize-y"
               />
-              <div className="mt-1 text-right font-mono text-[10px] text-parchment-400/60">
+              <div className="mt-1 text-right font-mono text-[11px] text-parchment-400/60">
                 {description.length}/1000
               </div>
             </div>
@@ -243,7 +243,7 @@ export default function SuggestRulePage() {
                 value={contact}
                 onChange={(e) => setContact(e.target.value.slice(0, 120))}
                 placeholder="username, email, discord…"
-                className="bg-ink-900/60 border border-white/15 rounded-[1px] px-4 py-2 text-sm w-full focus:outline-none focus:border-gold/60 text-parchment placeholder:text-parchment-400/40"
+                className="bg-[color:var(--bg-base)] border border-[color:var(--edge)] rounded-none px-4 py-2 text-sm w-full focus:outline-none focus:border-[color:var(--edge-strong)] text-parchment placeholder:text-parchment-400/40"
               />
             </div>
 

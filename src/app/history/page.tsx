@@ -86,10 +86,10 @@ export default function HistoryPage() {
               type="button"
               onClick={() => setFilter(f.id)}
               className={
-                "press min-h-[44px] sm:min-h-0 px-4 py-2 border font-display text-[13px] transition " +
+                "min-h-[44px] sm:min-h-0 px-4 py-2 border font-display text-[13px] transition " +
                 (filter === f.id
-                  ? "bg-gold/20 border-gold text-gold-leaf"
-                  : "border-white/15 text-parchment-200 hover:border-white/30 hover:bg-white/5")
+                  ? "bg-[color:var(--bg-raised)] border-gold text-gold-leaf"
+                  : "border-[color:var(--edge)] text-parchment-200 hover:border-[color:var(--edge-strong)] hover:bg-[color:var(--bg-raised)]")
               }
             >
               {f.label}
@@ -146,11 +146,11 @@ function GameRow({ game, onSelect }: { game: CompletedGame; onSelect: () => void
       ? `/game/${game.serverGameId}`
       : null;
   return (
-    <div className={`plate w-full flex items-stretch border-l-2 transition-colors duration-150 hover:bg-white/[0.04] ${style.edge}`}>
+    <div className={`plate w-full flex items-stretch border-l-2 transition-colors duration-150 hover:bg-[color:var(--bg-raised)] ${style.edge}`}>
       <button
         type="button"
         onClick={onSelect}
-        className="min-w-0 flex-1 p-3 sm:p-4 flex items-center gap-3 sm:gap-4 text-left active:bg-white/[0.06]"
+        className="min-w-0 flex-1 p-3 sm:p-4 flex items-center gap-3 sm:gap-4 text-left active:bg-[color:var(--bg-raised)]"
       >
       <span
         className={`shrink-0 grid h-10 w-10 place-items-center border font-display text-sm font-bold ${style.badge}`}
@@ -166,7 +166,7 @@ function GameRow({ game, onSelect }: { game: CompletedGame; onSelect: () => void
           <span className="truncate font-display text-base text-parchment-50">
             {game.opponent}
           </span>
-          <span className="border border-white/15 px-1.5 py-0.5 text-[11px] text-parchment-400">
+          <span className="border border-[color:var(--edge)] px-1.5 py-0.5 text-[11px] text-parchment-400">
             {VENUE_LABEL[game.mode]}
           </span>
           <span className="text-[11px] text-parchment-400">
@@ -201,7 +201,7 @@ function GameRow({ game, onSelect }: { game: CompletedGame; onSelect: () => void
         <Link
           href={replayHref}
           title="Step through this game move by move"
-          className="shrink-0 grid place-items-center border-l border-white/10 px-3 text-[11px] text-parchment-400 hover:text-gold-leaf transition-colors"
+          className="shrink-0 grid place-items-center border-l border-[color:var(--edge)] px-3 text-[11px] text-parchment-400 hover:text-gold-leaf transition-colors"
         >
           Replay
         </Link>

@@ -407,7 +407,7 @@ function SearchingPanel({
         <span className="font-mono text-sm tabular-nums text-parchment-200">{formatElapsed(elapsed)}</span>
       </div>
       {reconnecting && (
-        <div className="mt-2 flex items-center gap-2 text-xs text-sun-glow" role="status" aria-live="polite">
+        <div className="mt-2 flex items-center gap-2 text-xs text-brag" role="status" aria-live="polite">
           <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-sun-glow" />
           Reconnecting to the game server. Your place in the queue is held.
         </div>

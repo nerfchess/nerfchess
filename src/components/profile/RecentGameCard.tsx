@@ -60,7 +60,7 @@ export function RecentGameCard({ game, viewer }: { game: RecentGameRow; viewer: 
       <Link
         href={`/game/${game.id}`}
         aria-label={`View replay of the game vs ${opponent}`}
-        className="absolute inset-0 z-0 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/60"
+        className="absolute inset-0 z-0 rounded-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--edge-strong)]"
       />
 
       <div className="relative z-10 flex items-center justify-between gap-2 pointer-events-none">
@@ -99,12 +99,12 @@ export function RecentGameCard({ game, viewer }: { game: RecentGameRow; viewer: 
         {delta != null && (
           <span
             className={
-              "inline-flex items-center rounded-sm border px-1.5 py-px font-mono text-xs tabular-nums " +
+              "inline-flex items-center rounded-none border px-1.5 py-px font-mono text-xs tabular-nums " +
               (delta > 0
-                ? "border-gold/40 bg-gold/10 text-gold-leaf"
+                ? "border-[color:var(--edge-strong)] bg-[color:var(--bg-raised)] text-gold-leaf"
                 : delta < 0
                   ? "border-oxblood-glow/40 bg-oxblood/10 text-oxblood-glow"
-                  : "border-white/15 bg-white/[0.03] text-parchment-400")
+                  : "border-[color:var(--edge)] bg-[color:var(--bg-zebra)] text-parchment-400")
             }
           >
             {delta > 0 ? "+" : ""}

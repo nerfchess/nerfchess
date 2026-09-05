@@ -2,42 +2,28 @@
 
 // The moderation console's control vocabulary. Every section builds from these
 // so a "resolve", a "ban" and a "reset tier" read the same way wherever they
-// appear, instead of each tab inventing its own `px-3 py-1 rounded-sm` variant.
+// appear. The controls are the site's own: metal buttons, the blue primary,
+// the red danger, a round thumb switch, a segmented metal control. Nothing
+// here paints its own material.
 //
-// Three button tones, and only three, because a moderator making a decision
-// should be able to tell what a control does from its colour alone:
-//   default  quiet iron  — navigation and reversible actions (Dismiss, Unmute)
-//   primary  gold        — the action that clears the item (Resolve, Apply)
-//   danger   blood       — the action that takes something away (Ban, Flag)
-// `quiet` is the fourth, non-button tone: inline text actions inside a row.
+//   default  metal      navigation and reversible actions (Dismiss, Unmute)
+//   primary  blue       the action that clears the item (Resolve, Apply)
+//   danger   red        the action that takes something away (Ban, Flag)
+//   quiet    text       inline text actions inside a row
 
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { Button, LinkButton, type ButtonSize as CoreSize } from "@/components/ui/Button";
 
 export type ButtonTone = "default" | "primary" | "danger" | "quiet";
 export type ButtonSize = "sm" | "md";
 
-const TONE: Record<ButtonTone, string> = {
-  default: "btn-ghost text-parchment-100",
-  primary: "border border-gold/50 bg-gold-leaf/10 text-gold-leaf hover:bg-gold-leaf/20",
-  danger: "btn-cursed",
-  quiet:
-    "border border-transparent text-parchment-300 hover:text-parchment-50 hover:border-white/15",
-};
+const SIZE: Record<ButtonSize, CoreSize> = { sm: "sm", md: "md" };
 
-// Touch first: every control clears a 36/40px tap target on a phone and only
-// tightens once there is a pointer, so nothing here is a coin-flip to hit.
-const SIZE: Record<ButtonSize, string> = {
-  sm: "min-h-[36px] px-3 py-1.5 text-[12px] sm:min-h-0 sm:px-2.5 sm:py-1",
-  md: "min-h-[40px] px-4 py-2 text-sm sm:min-h-0 sm:py-1.5",
-};
-
-function buttonClass(tone: ButtonTone, size: ButtonSize, extra?: string): string {
+function quietClass(size: ButtonSize, extra?: string): string {
   return [
-    "press inline-flex items-center justify-center gap-1.5 rounded-[1px] font-display transition",
-    "disabled:cursor-not-allowed disabled:opacity-40",
-    TONE[tone],
-    SIZE[size],
+    "inline-flex items-center justify-center gap-1.5 text-parchment-300 transition-colors hover:text-parchment-50 disabled:cursor-not-allowed disabled:opacity-40",
+    size === "sm" ? "min-h-[36px] px-2 text-[12px]" : "min-h-[40px] px-3 text-sm",
     extra ?? "",
   ].join(" ");
 }
@@ -54,10 +40,17 @@ export function ModButton({
   className?: string;
   children: ReactNode;
 } & Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "className" | "children">) {
+  if (tone === "quiet") {
+    return (
+      <button type="button" className={quietClass(size, className)} {...rest}>
+        {children}
+      </button>
+    );
+  }
   return (
-    <button type="button" className={buttonClass(tone, size, className)} {...rest}>
+    <Button tone={tone} size={SIZE[size]} className={className} {...rest}>
       {children}
-    </button>
+    </Button>
   );
 }
 
@@ -75,16 +68,22 @@ export function ModLinkButton({
   className?: string;
   children: ReactNode;
 }) {
+  if (tone === "quiet") {
+    return (
+      <Link href={href} className={quietClass(size, className) + " no-underline"}>
+        {children}
+      </Link>
+    );
+  }
   return (
-    <Link href={href} className={buttonClass(tone, size, className)}>
+    <LinkButton href={href} tone={tone} size={SIZE[size]} className={className}>
       {children}
-    </Link>
+    </LinkButton>
   );
 }
 
-/** A real switch, not another button that says "On": the knob position carries
- *  the state even when colour is unavailable, and the label under it says what
- *  is being switched. Used by every site control. */
+/** A real switch: the round thumb carries the state even without colour, and
+ *  the word beside it says what it is. Used by every site control. */
 export function ModToggle({
   on,
   busy,
@@ -100,59 +99,27 @@ export function ModToggle({
 }) {
   const unknown = on === null;
   return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={on === true}
-      aria-label={label}
-      disabled={unknown || busy || disabled}
-      onClick={onToggle}
-      title={unknown ? "Loading…" : on ? `${label} is on. Click to turn off.` : `${label} is off. Click to turn on.`}
-      className={
-        "press inline-flex shrink-0 items-center gap-2.5 rounded-[1px] border px-2.5 py-1.5 transition disabled:opacity-60 " +
-        (unknown
-          ? "border-white/15"
-          : on
-            ? "border-verdigris/50 bg-verdigris/10"
-            : "border-white/15 bg-black/20")
-      }
-    >
-      <span
-        aria-hidden
-        className={
-          "relative h-4 w-8 rounded-full border transition-colors " +
-          (unknown
-            ? "border-white/20 bg-white/10"
-            : on
-              ? "border-verdigris/60 bg-verdigris/40"
-              : "border-white/20 bg-black/40")
-        }
+    <span className="inline-flex items-center gap-2.5">
+      <button
+        type="button"
+        role="switch"
+        aria-checked={on === true}
+        aria-label={label}
+        disabled={unknown || busy || disabled}
+        onClick={onToggle}
+        title={unknown ? "Loading…" : on ? `${label} is on. Click to turn off.` : `${label} is off. Click to turn on.`}
+        className="settings-toggle"
       >
-        <span
-          className={
-            "absolute top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full transition-all " +
-            (unknown
-              ? "left-1/2 -translate-x-1/2 bg-parchment-400"
-              : on
-                ? "left-[calc(100%-0.875rem)] bg-verdigris-glow animate-flicker"
-                : "left-[0.1875rem] bg-parchment-400")
-          }
-        />
-      </span>
-      <span
-        className={
-          "font-display text-xs font-semibold " +
-          (unknown ? "text-parchment-400" : on ? "text-verdigris-glow" : "text-parchment-300")
-        }
-      >
+        <span aria-hidden className="settings-toggle__thumb" />
+      </button>
+      <span className={"text-[12px] " + (unknown ? "text-parchment-400" : on ? "text-parchment-100" : "text-parchment-400")}>
         {unknown ? "…" : busy ? "Saving…" : on ? "On" : "Off"}
       </span>
-    </button>
+    </span>
   );
 }
 
-/** Mutually exclusive choice, styled as one connected control rather than a row
- *  of loose buttons — so it reads as "pick one of these" at a glance. */
+/** Mutually exclusive choice as one connected metal control. */
 export function SegmentedControl<T extends string>({
   value,
   options,
@@ -167,15 +134,7 @@ export function SegmentedControl<T extends string>({
   className?: string;
 }) {
   return (
-    <div
-      role="group"
-      // Full width on a phone so the segments are thumb-sized, shrink-wrapped
-      // once there is room for it to sit beside something else.
-      className={
-        "flex w-full rounded-[1px] border border-white/15 p-0.5 sm:inline-flex sm:w-auto " +
-        (className ?? "")
-      }
-    >
+    <div role="group" className={"flex w-full sm:inline-flex sm:w-auto " + (className ?? "")}>
       {options.map((opt) => {
         const active = opt.value === value;
         return (
@@ -185,14 +144,14 @@ export function SegmentedControl<T extends string>({
             aria-pressed={active}
             onClick={() => onChange(opt.value)}
             className={
-              "press flex-1 rounded-[1px] text-center font-display transition sm:flex-none " +
-              SIZE[size] +
+              "flex-1 border border-[color:var(--edge)] text-center transition-colors [&+&]:border-l-0 sm:flex-none " +
+              (size === "sm" ? "min-h-[36px] px-3 text-[12px]" : "min-h-[40px] px-4 text-sm") +
               " " +
               (active
                 ? opt.tone === "danger"
-                  ? "bg-oxblood/25 text-oxblood-glow"
-                  : "bg-gold-leaf/15 text-gold-leaf"
-                : "text-parchment-300 hover:text-parchment-100")
+                  ? "bg-oxblood text-white"
+                  : "bg-[color:var(--bg-raised)] text-parchment-50"
+                : "bg-[color:var(--bg-panel)] text-parchment-400 hover:text-parchment-100")
             }
           >
             {opt.label}
@@ -203,9 +162,7 @@ export function SegmentedControl<T extends string>({
   );
 }
 
-/** Scope narrowing above a list (Open / All, Members / Guests). Deliberately
- *  lighter than SegmentedControl: it filters what you see, it does not choose
- *  what an action will do. */
+/** Scope narrowing above a list (Open / All, Members / Guests). */
 export function FilterChip({
   active,
   onClick,
@@ -221,10 +178,10 @@ export function FilterChip({
       onClick={onClick}
       aria-pressed={active}
       className={
-        "press rounded-[1px] border px-3 py-1 text-sm transition " +
+        "min-h-[32px] border px-3 text-[13px] transition-colors " +
         (active
-          ? "border-gold/50 bg-gold-leaf/10 text-gold-leaf"
-          : "border-white/15 text-parchment-300 hover:text-parchment-100")
+          ? "border-[color:var(--edge)] bg-[color:var(--bg-raised)] text-parchment-50"
+          : "border-transparent text-parchment-400 hover:text-parchment-100")
       }
     >
       {children}
@@ -238,8 +195,8 @@ export function CountBadge({ n, tone = "warn" }: { n: number; tone?: "warn" | "n
   return (
     <span
       className={
-        "ml-auto shrink-0 rounded-[1px] px-1.5 py-px font-mono text-[10px] tabular-nums " +
-        (tone === "warn" ? "bg-oxblood-glow/20 text-oxblood-glow" : "bg-white/10 text-parchment-300")
+        "ml-auto shrink-0 px-1.5 py-px font-mono text-[11px] tabular-nums " +
+        (tone === "warn" ? "bg-oxblood text-white" : "bg-[color:var(--bg-raised)] text-parchment-200")
       }
     >
       {n > 99 ? "99+" : n}
@@ -256,19 +213,15 @@ export function Pill({
 }) {
   const style =
     tone === "warn"
-      ? "bg-oxblood-glow/20 text-oxblood-glow border-transparent"
+      ? "text-oxblood-glow"
       : tone === "mute"
-        ? "bg-bruise-glow/20 text-bruise-glow border-transparent"
+        ? "text-parchment-400"
         : tone === "good"
-          ? "bg-verdigris/15 text-verdigris-glow border-transparent"
+          ? "text-verdigris-glow"
           : tone === "gold"
-            ? "border-gold/40 text-gold-leaf"
-            : "border-white/15 text-parchment-300";
-  return (
-    <span className={`shrink-0 rounded-[1px] border px-2 py-0.5 text-[10px] ${style}`}>
-      {children}
-    </span>
-  );
+            ? "text-brag"
+            : "text-parchment-300";
+  return <span className={`shrink-0 text-[11px] uppercase tracking-[0.05em] ${style}`}>{children}</span>;
 }
 
 export type StatItem = {
@@ -279,60 +232,38 @@ export type StatItem = {
 };
 
 function valueTone(tone?: "warn" | "good"): string {
-  return tone === "warn"
-    ? "text-oxblood-glow"
-    : tone === "good"
-      ? "text-verdigris-glow"
-      : "text-parchment-50";
+  return tone === "warn" ? "text-oxblood-glow" : tone === "good" ? "text-verdigris-glow" : "text-parchment-50";
 }
 
-/** One number with its label. `tone` is for the numbers a moderator should
- *  react to, never for decoration. */
+/** One number with its label: a dense tile, Lichess's stat register. */
 export function StatCard({ label, value, sub, tone }: StatItem) {
   return (
-    <div className="plate p-4">
-      <div className="text-[11px] text-parchment-400">{label}</div>
-      <div className={"mt-1 font-display text-2xl tabular-nums " + valueTone(tone)}>{value}</div>
+    <div className="px-3.5 py-3">
+      <div className={"font-display text-[22px] leading-none tabular-nums " + valueTone(tone)}>{value}</div>
+      <div className="mt-1 text-[11px] uppercase tracking-[0.05em] text-parchment-400">{label}</div>
       {sub && <div className="mt-0.5 text-[11px] leading-snug text-parchment-400">{sub}</div>}
     </div>
   );
 }
 
-/** A block of numbers, laid out for the screen it is on.
- *
- *  On a phone a grid of stat cards is the wrong shape: two columns of boxes wide
- *  enough for "HUMAN GAMES, 15 MIN" to wrap three times, turning eight numbers
- *  into four screens of scrolling. So phones get a single plate with one line per
- *  number — label left, value right — which reads down the page like a table and
- *  fits the whole block in one glance. The card grid returns as soon as there is
- *  width to make it look deliberate. */
+/** A strip of numbers in one box, split by hairlines. Phones stack them as
+ *  label-left / value-right rows so eight numbers fit in one glance. */
 export function StatGrid({ items, cols = 4 }: { items: StatItem[]; cols?: 3 | 4 | 5 }) {
-  const grid =
-    cols === 5
-      ? "sm:grid-cols-3 lg:grid-cols-5"
-      : cols === 3
-        ? "sm:grid-cols-3"
-        : "sm:grid-cols-2 lg:grid-cols-4";
+  const grid = cols === 5 ? "sm:grid-cols-3 lg:grid-cols-5" : cols === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2 lg:grid-cols-4";
   return (
     <>
-      <div className="plate divide-y divide-white/5 sm:hidden">
+      <div className="plate divide-y divide-[color:var(--edge)] sm:hidden">
         {items.map((it) => (
           <div key={it.label} className="flex items-center justify-between gap-3 px-3.5 py-2.5">
-            <span className="min-w-0 text-[11px] leading-tight text-parchment-400">
-              {it.label}
-            </span>
+            <span className="min-w-0 text-[12px] leading-tight text-parchment-400">{it.label}</span>
             <span className="shrink-0 text-right">
-              <span className={"font-display text-lg tabular-nums " + valueTone(it.tone)}>
-                {it.value}
-              </span>
-              {it.sub && (
-                <span className="block text-[10px] leading-tight text-parchment-400">{it.sub}</span>
-              )}
+              <span className={"font-display text-lg tabular-nums " + valueTone(it.tone)}>{it.value}</span>
+              {it.sub && <span className="block text-[11px] leading-tight text-parchment-400">{it.sub}</span>}
             </span>
           </div>
         ))}
       </div>
-      <div className={`hidden gap-3 sm:grid ${grid}`}>
+      <div className={`plate hidden divide-x divide-[color:var(--edge)] sm:grid ${grid}`}>
         {items.map((it) => (
           <StatCard key={it.label} {...it} />
         ))}
@@ -341,12 +272,7 @@ export function StatGrid({ items, cols = 4 }: { items: StatItem[]; cols?: 3 | 4 
   );
 }
 
-/** Heading for a block inside a section, with optional right-aligned controls.
- *
- *  `actionsInline` puts the control on the title's own row and drops the blurb
- *  beneath both. Use it for a switch that belongs to the thing being named — on
- *  a phone the default layout wraps a lone toggle under a paragraph of prose,
- *  which reads as a stray button rather than as this section's switch. */
+/** Heading for a block inside a section, with optional right-aligned controls. */
 export function SectionHead({
   title,
   blurb,
@@ -358,10 +284,8 @@ export function SectionHead({
   actions?: ReactNode;
   actionsInline?: boolean;
 }) {
-  const heading = <h2 className="font-display text-lg text-parchment-100">{title}</h2>;
-  const prose = blurb && (
-    <p className="mt-1 max-w-2xl text-[12px] leading-snug text-parchment-400">{blurb}</p>
-  );
+  const heading = <h2 className="text-[13px] uppercase tracking-[0.05em] text-parchment-300">{title}</h2>;
+  const prose = blurb && <p className="mt-1 max-w-2xl text-[12px] leading-snug text-parchment-400">{blurb}</p>;
 
   if (actionsInline) {
     return (
@@ -386,10 +310,20 @@ export function SectionHead({
   );
 }
 
-export function Empty({ children }: { children: ReactNode }) {
+/** A horizontal proportion bar: the whole width is 100%, `at` marks a
+ *  reference (the fair 50%, a tier average). Text carries the number too. */
+export function RateBar({ pct, at, tone }: { pct: number; at?: number; tone?: "warn" | "good" }) {
+  const fill = tone === "warn" ? "bg-oxblood" : tone === "good" ? "bg-verdigris" : "bg-parchment-400";
   return (
-    <div className="plate px-4 py-8 text-center text-sm text-parchment-400">{children}</div>
+    <span className="relative block h-2 w-full bg-[color:var(--bg-raised)]" aria-hidden>
+      <span className={"absolute inset-y-0 left-0 " + fill} style={{ width: `${Math.max(0, Math.min(100, pct))}%` }} />
+      {at != null && <span className="absolute inset-y-[-2px] w-px bg-parchment-100" style={{ left: `${at}%` }} />}
+    </span>
   );
+}
+
+export function Empty({ children }: { children: ReactNode }) {
+  return <div className="plate px-4 py-8 text-center text-sm text-parchment-400">{children}</div>;
 }
 
 export function Loading({ what }: { what: string }) {
@@ -406,10 +340,8 @@ export function when(ts: number): string {
   return new Date(ts).toLocaleString();
 }
 
-/** The list-row timestamp. `toLocaleString()` spends 22 characters on
- *  "7/31/2026, 9:13:12 AM" — on a phone that is a whole line for a detail
- *  nobody reads to the second. This keeps the day and the minute; the full
- *  value stays available as a title attribute wherever it is used. */
+/** The list-row timestamp: the day and the minute; the full value stays in a
+ *  title attribute wherever it is used. */
 export function whenShort(ts: number): string {
   const d = new Date(ts);
   const day = d.toLocaleDateString(undefined, { day: "numeric", month: "short" });
@@ -424,8 +356,6 @@ export function untilLabel(ts: number | null): string {
   return ts > Date.now() + FOREVER_MS ? "permanently" : `until ${when(ts)}`;
 }
 
-/** Expiry for a badge sitting next to a username, where the year and the
- *  seconds are noise: "until 1 Aug, 10:36". */
 export function untilShort(ts: number | null): string {
   if (!ts || ts <= Date.now()) return "";
   return ts > Date.now() + FOREVER_MS ? "permanently" : `until ${whenShort(ts)}`;
@@ -445,10 +375,7 @@ export function pct(part: number, whole: number): string {
   return `${Math.round((part / whole) * 100)}%`;
 }
 
-export async function postJson(
-  path: string,
-  body: unknown,
-): Promise<{ ok: boolean; error?: string }> {
+export async function postJson(path: string, body: unknown): Promise<{ ok: boolean; error?: string }> {
   const res = await fetch(path, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

@@ -9,7 +9,7 @@ export default function Error({ reset }: { error: Error & { digest?: string }; r
   return (
     <main className="min-h-screen flex items-center justify-center px-6">
       <div className="plate w-full max-w-sm p-6 text-center">
-        <div className="text-[10px] text-parchment-400">Well, that broke</div>
+        <div className="text-[11px] text-parchment-400">Well, that broke</div>
         <h1 className="font-display text-2xl text-parchment mt-1">Something went wrong</h1>
         <p className="mt-2 text-sm text-parchment-300">
           The page hit an unexpected error. Your game state is saved locally.
@@ -22,7 +22,7 @@ export default function Error({ reset }: { error: Error & { digest?: string }; r
           </LinkButton>
           <button
             onClick={reset}
-            className="inline-flex min-h-[44px] items-center justify-center px-3 py-2 border border-gold/40 bg-gold/10 text-gold-leaf hover:bg-gold/20 transition text-xs font-display font-semibold tracking-wide sm:min-h-0"
+            className="inline-flex min-h-[44px] items-center justify-center px-3 py-2 border border-[color:var(--edge-strong)] bg-[color:var(--bg-raised)] text-gold-leaf hover:bg-[color:var(--bg-raised)] transition text-xs font-display font-semibold tracking-wide sm:min-h-0"
           >
             Reload
           </button>

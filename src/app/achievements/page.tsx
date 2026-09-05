@@ -58,7 +58,7 @@ function ProgressBar({ value, max, color }: { value: number; max: number; color?
   const pct = max > 0 ? Math.min(100, Math.round((value / max) * 100)) : 0;
   return (
     <div
-      className="h-1.5 w-full overflow-hidden rounded-[1px]"
+      className="h-1.5 w-full overflow-hidden rounded-none"
       style={{ background: "var(--edge)" }}
       role="progressbar"
       aria-valuenow={value}
@@ -66,7 +66,7 @@ function ProgressBar({ value, max, color }: { value: number; max: number; color?
       aria-valuemax={max}
     >
       <div
-        className="h-full rounded-[1px] transition-[width] duration-300"
+        className="h-full rounded-none transition-[width] duration-300"
         style={{ width: `${pct}%`, background: color ?? "var(--sun-glow)" }}
       />
     </div>
@@ -79,7 +79,7 @@ function RaritySegmentedBar({ wall, total }: { wall: AchievementView[]; total: n
   const earned = wall.filter((a) => a.unlocked).length;
   return (
     <div
-      className="flex h-1.5 w-full overflow-hidden rounded-[1px]"
+      className="flex h-1.5 w-full overflow-hidden rounded-none"
       style={{ background: "var(--edge)" }}
       role="progressbar"
       aria-valuenow={earned}
@@ -120,9 +120,9 @@ function RarityFilterRow({
         aria-pressed={filter === "all"}
         onClick={() => onChange("all")}
         className={
-          "press inline-flex min-h-[32px] items-center rounded-[1px] border px-2.5 text-[12px] transition-colors " +
+          "inline-flex min-h-[32px] items-center rounded-none border px-2.5 text-[12px] transition-colors " +
           (filter === "all"
-            ? "border-[color:var(--edge-strong)] bg-white/[0.06] text-parchment-100"
+            ? "border-[color:var(--edge-strong)] bg-[color:var(--bg-raised)] text-parchment-100"
             : "border-[color:var(--edge)] text-parchment-400 hover:border-[color:var(--edge-strong)] hover:text-parchment-200")
         }
       >
@@ -139,7 +139,7 @@ function RarityFilterRow({
             type="button"
             aria-pressed={on}
             onClick={() => onChange(on ? "all" : r)}
-            className="press inline-flex min-h-[32px] items-center gap-1.5 rounded-[1px] border px-2.5 text-[12px] transition-colors"
+            className="inline-flex min-h-[32px] items-center gap-1.5 rounded-none border px-2.5 text-[12px] transition-colors"
             style={
               on
                 ? { borderColor: theme.border, background: theme.softBg, color: theme.color }
@@ -248,7 +248,7 @@ function AchievementCard({ a }: { a: AchievementView }) {
             {a.name}
           </div>
           <span
-            className="mt-1 inline-block rounded-[1px] border px-1.5 py-0.5 text-[12px] leading-none"
+            className="mt-1 inline-block rounded-none border px-1.5 py-0.5 text-[12px] leading-none"
             style={{
               color: theme.color,
               borderColor: theme.border,
@@ -320,7 +320,7 @@ function CategorySection({
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-controls={panelId}
-        className="press flex w-full items-center justify-between gap-3 border-b py-2 text-left"
+        className="flex w-full items-center justify-between gap-3 border-b py-2 text-left"
         style={{ borderColor: "var(--edge)" }}
       >
         <div className="min-w-0">
@@ -333,7 +333,7 @@ function CategorySection({
         </div>
         <div className="flex shrink-0 items-center gap-2.5">
           <span className="font-mono text-[13px] tabular-nums">
-            <span className={earned > 0 ? "text-sun-glow" : "text-parchment-300"}>{earned}</span>
+            <span className={earned > 0 ? "text-brag" : "text-parchment-300"}>{earned}</span>
             <span className="text-parchment-500">/{items.length}</span>
           </span>
           <ChevronDown
@@ -464,7 +464,7 @@ function AchievementsContent() {
             </div>
             <div className="shrink-0 text-right">
               <div className="flex items-center justify-end gap-2 font-mono text-2xl tabular-nums text-parchment-50">
-                <Trophy className="h-5 w-5 text-sun-glow" strokeWidth={2} />
+                <Trophy className="h-5 w-5 text-brag" strokeWidth={2} />
                 {state === "ready" ? earnedCount : 0}
                 <span className="text-base text-parchment-400">/{total}</span>
               </div>
@@ -580,7 +580,7 @@ function UnlockPopupToggle() {
         }}
         aria-pressed={!off}
         className={
-          "press min-h-[36px] rounded-[1px] border px-3 py-1 text-[12px] transition-colors " +
+          "min-h-[36px] rounded-none border px-3 py-1 text-[12px] transition-colors " +
           (off
             ? "border-[color:var(--edge)] text-parchment-400 hover:border-[color:var(--edge-strong)]"
             : "border-verdigris-glow/50 bg-verdigris/10 text-verdigris-glow")

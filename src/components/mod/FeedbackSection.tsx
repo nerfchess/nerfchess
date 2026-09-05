@@ -244,7 +244,7 @@ function FeedbackTable({
         </FilterChip>
         {tiers.length > 0 && (
           <>
-            <span className="ml-2 text-[10px] text-parchment-400">Tier</span>
+            <span className="ml-2 text-[11px] text-parchment-400">Tier</span>
             <FilterChip active={tier === "all"} onClick={() => setTier("all")}>
               Any
             </FilterChip>
@@ -260,7 +260,7 @@ function FeedbackTable({
       {/* Sorting on a phone, where there are no column headers to click. The
           four that matter; the desktop table keeps all six. */}
       <div className="flex flex-wrap items-center gap-2 sm:hidden">
-        <span className="text-[10px] text-parchment-400">Sort</span>
+        <span className="text-[11px] text-parchment-400">Sort</span>
         {(
           [
             ["score", "Score"],
@@ -285,7 +285,7 @@ function FeedbackTable({
       {/* Phones get one row per card instead of a seven-column table: name and
           verdict on top, the vote counts underneath. Sorting still applies, so
           the chips and the desktop headers agree on what you are looking at. */}
-      <ul className="plate divide-y divide-white/5 sm:hidden">
+      <ul className="plate divide-y divide-[color:var(--edge)] sm:hidden">
         {sorted.map((row) => {
           const v = verdict(row);
           return (
@@ -319,7 +319,7 @@ function FeedbackTable({
       <div className="plate hidden overflow-x-auto sm:block">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-[9px] text-parchment-400">
+            <tr className="text-[11px] text-parchment-400">
               <Header align="left" active={sort === "name"} onClick={() => toggle("name")}>
                 {label}
                 {arrow("name")}
@@ -342,7 +342,7 @@ function FeedbackTable({
               </Header>
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/5">
+          <tbody className="divide-y divide-[color:var(--edge)]">
             {sorted.map((row) => {
               const v = verdict(row);
               return (
@@ -386,7 +386,7 @@ function FeedbackTable({
       {recent.length > 0 && (
         <div>
           <h3 className="text-xs text-parchment-400">Recent votes</h3>
-          <ul className="plate mt-2 divide-y divide-white/5 text-sm">
+          <ul className="plate mt-2 divide-y divide-[color:var(--edge)] text-sm">
             {recent.map((v, i) => (
               <li key={i} className="flex items-center justify-between gap-3 px-4 py-2">
                 <span className="min-w-0 truncate text-parchment-100">
@@ -424,7 +424,7 @@ function Header({
       <button
         type="button"
         onClick={onClick}
-        className={`transition hover:text-parchment-100 ${active ? "text-gold-leaf" : ""}`}
+        className={`transition hover:text-parchment-100 ${active ? "text-parchment-50" : ""}`}
       >
         {children}
       </button>

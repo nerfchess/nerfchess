@@ -78,7 +78,7 @@ function Entry({ entry }: { entry: GlossaryEntry }) {
     return (
       <div
         id={entry.slug}
-        className="scroll-mt-24 rounded-[1px] border border-white/10 bg-white/[0.02] px-4 py-3"
+        className="scroll-mt-24 rounded-none border border-[color:var(--edge)] bg-[color:var(--bg-zebra)] px-4 py-3"
       >
         {heading}
       </div>
@@ -87,7 +87,7 @@ function Entry({ entry }: { entry: GlossaryEntry }) {
   return (
     <details
       id={entry.slug}
-      className="group scroll-mt-24 rounded-[1px] border border-white/10 bg-white/[0.02] open:bg-white/[0.04]"
+      className="group scroll-mt-24 rounded-none border border-[color:var(--edge)] bg-[color:var(--bg-zebra)] open:bg-[color:var(--bg-zebra)]"
     >
       <summary className="cursor-pointer list-none px-4 py-3 outline-none focus-visible:text-coral [&::-webkit-details-marker]:hidden">
         <span className="flex items-baseline justify-between gap-3">
@@ -130,7 +130,7 @@ export default function GlossaryPage() {
           <a
             key={group}
             href={`#${groupSlug(group)}`}
-            className="rounded-[1px] border border-white/10 bg-white/[0.03] px-3 py-1 font-display text-sm text-parchment-200 hover:border-coral/60 hover:text-coral motion-safe:transition-colors"
+            className="rounded-none border border-[color:var(--edge)] bg-[color:var(--bg-zebra)] px-3 py-1 font-display text-sm text-parchment-200 hover:border-coral/60 hover:text-coral motion-safe:transition-colors"
           >
             {group}
           </a>

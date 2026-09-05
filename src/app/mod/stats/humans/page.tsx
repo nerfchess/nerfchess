@@ -16,7 +16,7 @@ export default function HumanStatsPage() {
       title="Site statistics: humans only"
       subtitle="Human vs human games only: no house bots, no casual bot games."
     >
-      <div className="mt-5 flex flex-wrap gap-2">
+      <div className="mt-3 flex flex-wrap gap-2">
         <ModLinkButton href="/mod/stats" size="sm" tone="quiet">
           ← Stats home
         </ModLinkButton>
@@ -47,7 +47,7 @@ function HumanStats() {
 
   return (
     <>
-      <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="plate mt-5 grid grid-cols-2 divide-x divide-y divide-[color:var(--edge)] sm:grid-cols-3 lg:grid-cols-5 lg:divide-y-0">
         <StatCard label="Games" value={h.games.total} />
         <StatCard label="Games today" value={h.games.today} />
         <StatCard label="Rated games" value={h.games.rated} />

@@ -50,7 +50,7 @@ export function PlayerAvatar({
       alt={`${name}'s avatar`}
       loading="lazy"
       decoding="async"
-      className={"shrink-0 overflow-hidden rounded-md border border-white/20 object-cover " + className}
+      className={"shrink-0 overflow-hidden rounded-none border border-[color:var(--edge-strong)] object-cover " + className}
       style={{ width: size, height: size }}
     />
   ) : (
@@ -103,7 +103,7 @@ function PresetAvatar({
   const starSize = Math.max(5, Math.round(size * 0.2));
   return (
     <div
-      className={"relative grid shrink-0 place-items-center overflow-hidden rounded-md border border-white/20 " + className}
+      className={"relative grid shrink-0 place-items-center overflow-hidden rounded-none border border-[color:var(--edge-strong)] " + className}
       style={{ width: size, height: size, background: spec.bg }}
       aria-hidden="true"
     >

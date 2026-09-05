@@ -130,7 +130,7 @@ function GuestProfile({ account }: { account: AccountUser | null }) {
             </span>
           </>
         ) : (
-          <span className="grid h-14 w-14 shrink-0 place-items-center rounded-full border border-gold/40 bg-gold/10 font-display text-2xl text-gold-leaf sm:h-[72px] sm:w-[72px]">
+          <span className="grid h-14 w-14 shrink-0 place-items-center rounded-full border border-[color:var(--edge-strong)] bg-[color:var(--bg-raised)] font-display text-2xl text-gold-leaf sm:h-[72px] sm:w-[72px]">
             Y
           </span>
         )}
@@ -140,7 +140,7 @@ function GuestProfile({ account }: { account: AccountUser | null }) {
               {account ? account.username : "You"}
             </h1>
             <span
-              className="rounded-[1px] px-2 py-0.5 text-[12px] font-medium leading-none text-parchment-400"
+              className="rounded-none px-2 py-0.5 text-[12px] font-medium leading-none text-parchment-400"
               style={{ border: "1px solid var(--edge-strong)" }}
             >
               Guest
@@ -176,11 +176,11 @@ function GuestProfile({ account }: { account: AccountUser | null }) {
           {/* Achievements strip, linking to the full wall. */}
           <Link
             href="/achievements"
-            className="flex flex-wrap items-center justify-between gap-3 border-y py-3 transition hover:bg-white/[0.02]"
+            className="flex flex-wrap items-center justify-between gap-3 border-y py-3 transition hover:bg-[color:var(--bg-raised)]"
             style={{ borderColor: "var(--edge)" }}
           >
             <span className="flex items-center gap-2 font-display text-parchment-100">
-              <Trophy className="h-4 w-4 text-sun-glow" strokeWidth={2} aria-hidden /> Achievements
+              <Trophy className="h-4 w-4 text-brag" strokeWidth={2} aria-hidden /> Achievements
               {achievements && (
                 <span className="font-mono text-sm tabular-nums text-parchment-300">
                   {achievements.unlockedCount}
@@ -231,25 +231,25 @@ function GuestProfileSkeleton() {
   return (
     <section className="mx-auto max-w-6xl px-5 py-8 sm:px-6">
       <div className="plate p-4">
-        <div className="skeleton h-5 w-2/3 rounded-[2px]" style={{ borderRadius: 2 }} />
+        <div className="skeleton h-5 w-2/3 rounded-none" style={{ borderRadius: 2 }} />
       </div>
       <div className="mt-6 flex items-center gap-4">
         <div className="skeleton h-[72px] w-[72px] shrink-0 rounded-full" style={{ borderRadius: "50%" }} />
         <div className="min-w-0">
-          <div className="skeleton h-9 w-48 max-w-full rounded-[2px]" style={{ borderRadius: 2 }} />
-          <div className="skeleton mt-2 h-4 w-40 rounded-[2px]" style={{ borderRadius: 2 }} />
+          <div className="skeleton h-9 w-48 max-w-full rounded-none" style={{ borderRadius: 2 }} />
+          <div className="skeleton mt-2 h-4 w-40 rounded-none" style={{ borderRadius: 2 }} />
         </div>
       </div>
       <div className="mt-6 grid gap-3 sm:grid-cols-2">
         {[0, 1].map((i) => (
           <div key={i} className="plate p-4">
-            <div className="skeleton h-4 w-16 rounded-[2px]" style={{ borderRadius: 2 }} />
-            <div className="skeleton mt-3 h-7 w-20 rounded-[2px]" style={{ borderRadius: 2 }} />
+            <div className="skeleton h-4 w-16 rounded-none" style={{ borderRadius: 2 }} />
+            <div className="skeleton mt-3 h-7 w-20 rounded-none" style={{ borderRadius: 2 }} />
           </div>
         ))}
       </div>
       <div className="plate mt-4 p-4">
-        <div className="skeleton h-24 w-full rounded-[2px]" style={{ borderRadius: 2 }} />
+        <div className="skeleton h-24 w-full rounded-none" style={{ borderRadius: 2 }} />
       </div>
     </section>
   );

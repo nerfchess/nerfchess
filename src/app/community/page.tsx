@@ -263,7 +263,7 @@ export default function CommunityPage() {
           <span
             role="status"
             aria-live="polite"
-            className="flex items-center gap-2 border border-[color:var(--edge)] bg-white/[0.03] px-3 py-1.5 text-xs text-parchment-300"
+            className="flex items-center gap-2 border border-[color:var(--edge)] bg-[color:var(--bg-zebra)] px-3 py-1.5 text-xs text-parchment-300"
           >
             <span
               aria-hidden
@@ -512,7 +512,7 @@ export default function CommunityPage() {
 
 const SECTION_TINTS = {
   mint: "border-mint/30 bg-mint/10 text-mint-glow",
-  sun: "border-sun/30 bg-sun/10 text-sun-glow",
+  sun: "border-sun/30 bg-sun/10 text-brag",
   coral: "border-coral/30 bg-coral/10 text-coral-glow",
 } as const;
 

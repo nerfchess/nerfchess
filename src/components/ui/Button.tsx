@@ -106,7 +106,7 @@ function shapeClass({
   className,
 }: Shape): string {
   return [
-    "inline-flex items-center rounded-[2px] font-display transition",
+    "inline-flex items-center rounded-none font-display transition",
     align === "start" ? "justify-start text-left" : "justify-center",
     "disabled:cursor-not-allowed disabled:opacity-40",
     press ? "press" : "",

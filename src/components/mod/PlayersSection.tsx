@@ -137,7 +137,7 @@ export function PlayersSection({
             setSelected(null);
           }}
           placeholder="Search players…"
-          className="plate w-full bg-transparent px-4 py-2.5 text-sm outline-none focus:border-gold/40 sm:max-w-sm sm:py-2"
+          className="plate w-full bg-transparent px-4 py-2.5 text-sm outline-none focus:border-[color:var(--edge-strong)] sm:max-w-sm sm:py-2"
         />
         <div className="flex items-center gap-2">
           <FilterChip active={filter === "all"} onClick={() => setFilter("all")}>
@@ -153,20 +153,20 @@ export function PlayersSection({
       </div>
 
       {!query.trim() && (
-        <p className="text-[10px] text-parchment-400">Recent players</p>
+        <p className="text-[11px] text-parchment-400">Recent players</p>
       )}
 
       {users.length === 0 ? (
         <Empty>{query.trim() ? "No players match that search." : "No players yet."}</Empty>
       ) : (
-        <div className="plate divide-y divide-white/5">
+        <div className="plate divide-y divide-[color:var(--edge)]">
           {users.map((u) => (
             <button
               key={u.id}
               type="button"
               onClick={() => setSelected(u)}
-              className={`flex min-h-[52px] w-full flex-wrap items-center gap-x-2 gap-y-1 px-4 py-3 text-left transition hover:bg-white/[0.03] ${
-                selected?.id === u.id ? "bg-white/[0.04]" : ""
+              className={`flex min-h-[52px] w-full flex-wrap items-center gap-x-2 gap-y-1 px-4 py-3 text-left transition hover:bg-[color:var(--bg-raised)] ${
+                selected?.id === u.id ? "bg-[color:var(--bg-zebra)]" : ""
               }`}
             >
               <span className="font-display font-semibold">{u.username}</span>
@@ -192,7 +192,7 @@ export function PlayersSection({
           <div className="flex flex-wrap items-center gap-2">
             <Link
               href={`/u/${selected.username}`}
-              className="font-display text-xl text-gold-leaf hover:underline"
+              className="font-display text-xl text-parchment-50 hover:underline"
             >
               {selected.username}
             </Link>
@@ -206,7 +206,7 @@ export function PlayersSection({
           </div>
 
           {/* --- the escalation ladder --- */}
-          <div className="border-t border-white/10 pt-4">
+          <div className="border-t border-[color:var(--edge)] pt-4">
             <SectionHead
               title="Sanction"
               blurb="Warn leaves a paper trail. Mute shadow-mutes chat from their next connection. Ban ends their sessions immediately."
@@ -240,7 +240,7 @@ export function PlayersSection({
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 placeholder="Note for the audit log"
-                className="plate w-full bg-transparent px-3 py-2 text-sm outline-none focus:border-gold/40 sm:min-w-[180px] sm:flex-1 sm:py-1.5"
+                className="plate w-full bg-transparent px-3 py-2 text-sm outline-none focus:border-[color:var(--edge-strong)] sm:min-w-[180px] sm:flex-1 sm:py-1.5"
               />
               <ModButton
                 tone={sanction === "ban" ? "danger" : sanction === "mute" ? "primary" : "default"}
@@ -256,7 +256,7 @@ export function PlayersSection({
           </div>
 
           {/* --- everything that is not an escalation --- */}
-          <div className="border-t border-white/10 pt-4">
+          <div className="border-t border-[color:var(--edge)] pt-4">
             <SectionHead title="Account" blurb="Reversals, username flags, and role changes." />
             <div className="mt-3 flex flex-wrap gap-2">
               {isMuted && (
@@ -306,7 +306,7 @@ export function PlayersSection({
 
           {message && <p className="text-sm text-parchment-200">{message}</p>}
 
-          <div className="grid gap-4 border-t border-white/10 pt-4 text-sm sm:grid-cols-2">
+          <div className="grid gap-4 border-t border-[color:var(--edge)] pt-4 text-sm sm:grid-cols-2">
             <div>
               <h3 className="text-xs text-parchment-400">Mod history</h3>
               {history.length === 0 ? (
@@ -315,7 +315,7 @@ export function PlayersSection({
                 <ul className="mt-2 space-y-1.5">
                   {history.map((h, i) => (
                     <li key={i} className="text-parchment-200">
-                      <span className="text-gold-leaf">{h.action}</span> by {h.mod_name} ·{" "}
+                      <span className="text-parchment-50">{h.action}</span> by {h.mod_name} ·{" "}
                       <span title={when(h.created_at)}>{whenShort(h.created_at)}</span>
                       {h.note && <span className="text-parchment-400">: {h.note}</span>}
                     </li>

@@ -243,7 +243,7 @@ export function HeaderSettingsMenu({
         title="Quick settings"
         aria-haspopup="dialog"
         aria-expanded={open}
-        className="nav-icon-btn relative grid h-11 w-11 place-items-center text-parchment-300 hover:bg-white/5 hover:text-parchment-50 sm:h-10 sm:w-10"
+        className="nav-icon-btn relative grid h-11 w-11 place-items-center text-parchment-300 hover:bg-[color:var(--bg-raised)] hover:text-parchment-50 sm:h-10 sm:w-10"
         onClick={() => {
           const next = !open;
           // Re-read on the way open so a value changed elsewhere is current.

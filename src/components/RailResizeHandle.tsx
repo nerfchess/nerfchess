@@ -98,7 +98,7 @@ export function RailResizeHandle({
       <span aria-hidden className="absolute inset-y-0 -left-1.5 -right-1.5" />
       <span
         aria-hidden
-        className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-gold/15 transition-colors group-hover:bg-gold/60 group-focus-visible:bg-gold/60"
+        className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-[color:var(--bg-raised)] transition-colors group-hover:bg-gold/60 group-focus-visible:bg-gold/60"
       />
     </div>
   );

@@ -194,7 +194,7 @@ export function SettingsPanel({ open, onClose, liveGame }: Props) {
   // top of the settings pane, intercepting clicks meant for it.
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto overscroll-contain bg-black/70 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto overscroll-contain bg-black/70 p-4"
       onPointerDown={chrome.onBackdropPointerDown}
     >
       <div
@@ -331,8 +331,8 @@ function SelectedGem() {
  *  selected, a firmer edge on hover otherwise. */
 const pickerCardClass = (selected: boolean) =>
   selected
-    ? "border-gold/80 bg-gold/10 shadow-[0_0_16px_-8px_rgb(var(--accent-hi-rgb)/0.55)]"
-    : "border-[color:var(--edge)] hover:border-[color:var(--edge-strong)] hover:bg-white/[0.03]";
+    ? "border-[color:var(--edge-strong)] bg-[color:var(--bg-raised)] shadow-[0_0_16px_-8px_rgb(var(--accent-hi-rgb)/0.55)]"
+    : "border-[color:var(--edge)] hover:border-[color:var(--edge-strong)] hover:bg-[color:var(--bg-raised)]";
 
 /** Site theme picker: three cards, dark / light / system. Each shows the page
  *  background, a panel chip and the accent, so the choice previews at a glance
@@ -420,7 +420,7 @@ function SiteThemePicker({
             }}
             aria-pressed={selected}
             className={
-              "group press relative overflow-hidden rounded-[1px] border text-left transition-colors " +
+              "group press relative overflow-hidden rounded-none border text-left transition-colors " +
               pickerCardClass(selected)
             }
           >
@@ -432,7 +432,7 @@ function SiteThemePicker({
               aria-hidden
             >
               <span
-                className="absolute left-2 top-2 h-5 w-9 rounded-[2px] border border-white/10"
+                className="absolute left-2 top-2 h-5 w-9 rounded-none border border-[color:var(--edge)]"
                 style={{ background: t.swatch.panel }}
               />
               <span
@@ -508,7 +508,7 @@ function CustomBackgroundControl({
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap items-center gap-2">
-        <label className="btn-ghost press relative min-h-[36px] cursor-pointer rounded-[1px] px-3 py-1.5 font-display text-[13px]">
+        <label className="btn-ghost press relative min-h-[36px] cursor-pointer rounded-none px-3 py-1.5 font-display text-[13px]">
           {uploading ? "Reading…" : data ? "Replace image" : "Upload image"}
           <input
             type="file"
@@ -526,7 +526,7 @@ function CustomBackgroundControl({
           <>
             <span
               aria-hidden
-              className="h-8 w-12 shrink-0 rounded-[2px] border border-[color:var(--edge-strong)] bg-cover bg-center"
+              className="h-8 w-12 shrink-0 rounded-none border border-[color:var(--edge-strong)] bg-cover bg-center"
               style={{ backgroundImage: `url("${data}")` }}
             />
             <GhostButton label="Remove" onClick={() => onApply({ customBgData: "" })} />
@@ -553,7 +553,7 @@ function CustomBackgroundControl({
               apply();
             }
           }}
-          className="input-rune min-h-[36px] w-full min-w-0 flex-1 basis-40 rounded-[1px] px-3 py-1.5 text-[13px]"
+          className="input-rune min-h-[36px] w-full min-w-0 flex-1 basis-40 rounded-none px-3 py-1.5 text-[13px]"
         />
         <GhostButton label="Apply" onClick={apply} />
         {url && (
@@ -609,7 +609,7 @@ function PickerDisclosure({
         type="button"
         aria-expanded={expanded}
         onClick={() => setExpanded((v) => !v)}
-        className="press flex min-h-[44px] w-full items-center gap-2.5 rounded-[1px] border border-[color:var(--edge)] p-2 text-left transition-colors hover:border-[color:var(--edge-strong)] hover:bg-white/[0.03]"
+        className="flex min-h-[44px] w-full items-center gap-2.5 rounded-none border border-[color:var(--edge)] p-2 text-left transition-colors hover:border-[color:var(--edge-strong)] hover:bg-[color:var(--bg-raised)]"
       >
         {swatch}
         <span className="min-w-0 flex-1">
@@ -645,7 +645,7 @@ function BoardThemePicker({
       prompt="Choose board theme"
       selectedName={current.label}
       swatch={
-        <span aria-hidden className="grid h-7 w-7 shrink-0 grid-cols-2 grid-rows-2 overflow-hidden rounded-sm">
+        <span aria-hidden className="grid h-7 w-7 shrink-0 grid-cols-2 grid-rows-2 overflow-hidden rounded-none">
           <span style={{ background: current.light }} />
           <span style={{ background: current.dark }} />
           <span style={{ background: current.dark }} />
@@ -663,12 +663,12 @@ function BoardThemePicker({
               onClick={() => onChange({ boardTheme: k })}
               aria-pressed={selected}
               className={
-                "press relative flex min-h-[44px] items-center gap-2.5 rounded-[1px] border p-2 transition-colors " +
+                "relative flex min-h-[44px] items-center gap-2.5 rounded-none border p-2 transition-colors " +
                 pickerCardClass(selected)
               }
             >
               {selected && <SelectedGem />}
-              <span className="grid h-7 w-7 shrink-0 grid-cols-2 grid-rows-2 overflow-hidden rounded-sm">
+              <span className="grid h-7 w-7 shrink-0 grid-cols-2 grid-rows-2 overflow-hidden rounded-none">
                 <span style={{ background: t.light }} />
                 <span style={{ background: t.dark }} />
                 <span style={{ background: t.dark }} />
@@ -696,7 +696,7 @@ function PiecePairSwatch({
   return (
     <span
       aria-hidden
-      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-sm bg-ink-700"
+      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-none bg-ink-700"
       style={
         {
           "--piece-w-fill": look.wFill,
@@ -756,7 +756,7 @@ function PieceThemePicker({
               onClick={() => onChange({ pieceTheme: k })}
               aria-pressed={selected}
               className={
-                "press relative flex min-h-[44px] items-center gap-2.5 rounded-[1px] border p-2 transition-colors " +
+                "relative flex min-h-[44px] items-center gap-2.5 rounded-none border p-2 transition-colors " +
                 pickerCardClass(selected)
               }
             >
@@ -806,7 +806,7 @@ function PieceColorPicker({
               onClick={() => onChange({ pieceColor: k })}
               aria-pressed={selected}
               className={
-                "press relative flex min-h-[44px] items-center gap-2.5 rounded-[1px] border p-2 transition-colors " +
+                "relative flex min-h-[44px] items-center gap-2.5 rounded-none border p-2 transition-colors " +
                 pickerCardClass(selected)
               }
             >
@@ -826,7 +826,7 @@ function PieceColorPicker({
 function AccountSettings() {
   return (
     <div className="space-y-2">
-      <div className="flex min-h-[44px] items-center justify-between gap-3 rounded-[1px] border border-[color:var(--edge)] bg-white/[0.02] p-2.5">
+      <div className="flex min-h-[44px] items-center justify-between gap-3 rounded-none border border-[color:var(--edge)] bg-[color:var(--bg-zebra)] p-2.5">
         <div className="min-w-0">
           <div className="text-[13px] font-medium text-parchment-100">Profile</div>
           <p className="text-[12px] text-parchment-400">Avatar, bio, and game history</p>
@@ -845,7 +845,7 @@ function AccountSettings() {
       ].map((item) => (
         <div
           key={item.label}
-          className="flex min-h-[44px] items-center justify-between gap-3 rounded-[1px] border border-[color:var(--edge)] bg-white/[0.01] p-2.5 opacity-70"
+          className="flex min-h-[44px] items-center justify-between gap-3 rounded-none border border-[color:var(--edge)] bg-transparent p-2.5 opacity-70"
         >
           <div className="text-[13px] font-medium text-parchment-300">{item.label}</div>
           <span

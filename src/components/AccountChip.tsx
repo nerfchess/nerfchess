@@ -26,7 +26,7 @@ export function AccountChip() {
     return (
       <Link
         href="/login"
-        className="px-3 py-1.5 rounded-[1px] text-sm font-display border border-gold/40 text-gold-leaf hover:bg-gold/10 transition"
+        className="px-3 py-1.5 rounded-none text-sm font-display border border-[color:var(--edge-strong)] text-gold-leaf hover:bg-[color:var(--bg-raised)] transition"
       >
         Sign in
       </Link>
@@ -43,7 +43,7 @@ export function AccountChip() {
       <Link
         href="/login?upgrade=1"
         title="Sign in or register to keep this name and rating"
-        className="inline-flex min-h-[40px] max-w-full items-center gap-2 px-2 py-1 pr-3 rounded-[1px] text-sm font-display border border-gold/40 text-parchment hover:bg-gold/10 hover:border-gold/60 hover:text-gold-leaf transition"
+        className="inline-flex min-h-[40px] max-w-full items-center gap-2 px-2 py-1 pr-3 rounded-none text-sm font-display border border-[color:var(--edge-strong)] text-parchment hover:bg-[color:var(--bg-raised)] hover:border-[color:var(--edge-strong)] hover:text-gold-leaf transition"
       >
         <PlayerAvatar name={user.username} avatar={user.avatar} size={22} className="rounded-full" />
         <span className="max-w-[9rem] truncate">
@@ -57,7 +57,7 @@ export function AccountChip() {
   return (
     <Link
       href={`/u/${user.username}`}
-      className="inline-flex items-center gap-2 px-2 py-1 pr-3 rounded-[1px] text-sm font-display border border-white/15 text-parchment hover:border-gold/50 hover:text-gold-leaf transition"
+      className="inline-flex items-center gap-2 px-2 py-1 pr-3 rounded-none text-sm font-display border border-[color:var(--edge)] text-parchment hover:border-[color:var(--edge-strong)] hover:text-gold-leaf transition"
       title="Your profile"
     >
       <PlayerAvatar name={user.username} avatar={user.avatar} size={22} className="rounded-full" />

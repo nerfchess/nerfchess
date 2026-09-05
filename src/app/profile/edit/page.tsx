@@ -289,7 +289,7 @@ export default function EditProfilePage() {
           {account && (
             <LinkButton tone="ghost"
               href={`/u/${encodeURIComponent(account.username)}`}
-              className="h-11 w-11 shrink-0 rounded-lg text-parchment-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-leaf" aria-label="Back to your profile">
+              className="h-11 w-11 shrink-0 rounded-none text-parchment-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]" aria-label="Back to your profile">
               <ArrowLeft className="h-5 w-5" strokeWidth={2} />
             </LinkButton>
           )}
@@ -316,9 +316,9 @@ export default function EditProfilePage() {
                 <div className="flex flex-wrap gap-2">
                   <label
                     className={
-                      "grid h-[46px] w-[46px] cursor-pointer place-items-center rounded-lg p-0.5 text-center transition " +
+                      "grid h-[46px] w-[46px] cursor-pointer place-items-center rounded-none p-0.5 text-center transition " +
                       (isCustomAvatar(account.avatar)
-                        ? "ring-2 ring-gold-leaf"
+                        ? "ring-2 ring-[color:var(--accent)]"
                         : "ring-1 ring-white/10 hover:ring-white/40")
                     }
                     title="Upload your own picture"
@@ -358,9 +358,9 @@ export default function EditProfilePage() {
                         aria-label={`Avatar ${id.replace("_", " ")}`}
                         aria-pressed={selected}
                         className={
-                          "rounded-lg p-0.5 transition " +
+                          "rounded-none p-0.5 transition " +
                           (selected
-                            ? "ring-2 ring-gold-leaf"
+                            ? "ring-2 ring-[color:var(--accent)]"
                             : "ring-1 ring-white/10 hover:ring-white/40")
                         }
                       >
@@ -392,8 +392,8 @@ export default function EditProfilePage() {
                     aria-label="No flair"
                     aria-pressed={!account.flair}
                     className={
-                      "grid h-[46px] w-[46px] place-items-center rounded-lg text-xs text-parchment-300 transition " +
-                      (!account.flair ? "ring-2 ring-gold-leaf" : "ring-1 ring-white/10 hover:ring-white/40")
+                      "grid h-[46px] w-[46px] place-items-center rounded-none text-xs text-parchment-300 transition " +
+                      (!account.flair ? "ring-2 ring-[color:var(--accent)]" : "ring-1 ring-white/10 hover:ring-white/40")
                     }
                   >
                     none
@@ -409,8 +409,8 @@ export default function EditProfilePage() {
                         aria-label={`Flair ${emoji}`}
                         aria-pressed={selected}
                         className={
-                          "grid h-[46px] w-[46px] place-items-center rounded-lg text-2xl transition " +
-                          (selected ? "ring-2 ring-gold-leaf" : "ring-1 ring-white/10 hover:ring-white/40")
+                          "grid h-[46px] w-[46px] place-items-center rounded-none text-2xl transition " +
+                          (selected ? "ring-2 ring-[color:var(--accent)]" : "ring-1 ring-white/10 hover:ring-white/40")
                         }
                       >
                         {emoji}
@@ -420,7 +420,7 @@ export default function EditProfilePage() {
                 </div>
                 {/* The earned one: claimable only while the account holds a top-10
                     leaderboard spot (the server re-checks the rank on every claim). */}
-                <div className="mt-4 flex items-center gap-3 border-t border-white/5 pt-4">
+                <div className="mt-4 flex items-center gap-3 border-t border-[color:var(--edge)] pt-4">
                   <button
                     type="button"
                     onClick={() => pickFlair(LAUREL_FLAIR)}
@@ -428,10 +428,10 @@ export default function EditProfilePage() {
                     aria-label="Laurelled flair (top-10 exclusive)"
                     aria-pressed={account.flair === LAUREL_FLAIR}
                     className={
-                      "grid h-[46px] w-[46px] shrink-0 place-items-center rounded-lg text-2xl transition " +
+                      "grid h-[46px] w-[46px] shrink-0 place-items-center rounded-none text-2xl transition " +
                       (account.flair === LAUREL_FLAIR
-                        ? "ring-2 ring-gold-leaf"
-                        : "ring-1 ring-gold/30 hover:ring-gold/60")
+                        ? "ring-2 ring-[color:var(--accent)]"
+                        : "ring-1 ring-gold/30 hover:ring-[color:var(--edge-strong)]")
                     }
                   >
                     {LAUREL_FLAIR}
@@ -472,7 +472,7 @@ export default function EditProfilePage() {
                    
                     onClick={saveBio}
                     disabled={bioState === "saving" || bioDraft.trim() === (account.bio ?? "")}
-                    className="px-3 text-gold-leaf focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-leaf disabled:opacity-50">
+                    className="px-3 text-gold-leaf focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] disabled:opacity-50">
                     {bioState === "saving" ? "Saving…" : "Save bio"}
                   </Button>
                   {bioState === "saved" && (
@@ -493,7 +493,7 @@ export default function EditProfilePage() {
               <div className="rule-ornament mb-4">
                 <span className="font-display">Privacy</span>
               </div>
-              <div className="plate divide-y divide-white/5 p-1">
+              <div className="plate divide-y divide-[color:var(--edge)] p-1">
                 <PrivacyToggle
                   label="Show my friends list on my profile"
                   description="Off: only you and mods see your friends list. The count stays public."
@@ -560,10 +560,10 @@ function PrivacyToggle({
         disabled={loading || state === "saving"}
         onClick={onToggle}
         className={
-          "relative grid h-11 min-h-[44px] w-[72px] shrink-0 grid-cols-2 items-center rounded-[1px] border px-1 transition disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-leaf motion-reduce:transition-none " +
+          "relative grid h-11 min-h-[44px] w-[72px] shrink-0 grid-cols-2 items-center rounded-none border px-1 transition disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] motion-reduce:transition-none " +
           (on
-            ? "border-gold/40 bg-gold/15"
-            : "border-white/10 bg-white/5")
+            ? "border-[color:var(--edge-strong)] bg-[color:var(--bg-raised)]"
+            : "border-[color:var(--edge)] bg-[color:var(--bg-raised)]")
         }
       >
         {/* The label reads regardless of color; the knob just reinforces it. */}

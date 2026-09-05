@@ -64,7 +64,7 @@ export function Podium({
               className={
                 "plate plate-hover flex h-full flex-col items-center px-2 text-center sm:px-4 " +
                 (champion ? "py-5 sm:py-6" : "py-4 sm:py-5") +
-                (mine ? " border-gold/60" : "")
+                (mine ? " border-[color:var(--edge-strong)]" : "")
               }
               style={{ borderTopColor: medal.metal, borderTopWidth: 3 }}
             >

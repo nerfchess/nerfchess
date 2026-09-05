@@ -113,8 +113,8 @@ function ClubIconPicker({
             aria-pressed={iconName === e}
             className={`grid h-10 w-full cursor-pointer place-items-center border transition-colors ${
               iconName === e
-                ? "border-gold/70 bg-gold/15 text-gold-leaf"
-                : "border-white/10 bg-ink-900/40 text-parchment-200 hover:border-white/25 hover:bg-white/5"
+                ? "border-gold/70 bg-[color:var(--bg-raised)] text-gold-leaf"
+                : "border-[color:var(--edge)] bg-[color:var(--bg-base)] text-parchment-200 hover:border-[color:var(--edge-strong)] hover:bg-[color:var(--bg-raised)]"
             }`}
           >
             {renderClubIconGlyph(e, 18)}
@@ -140,7 +140,7 @@ function ClubIconPicker({
       </div>
 
       {/* Custom image upload: an alternative to the curated emblem grid. */}
-      <div className="mt-4 border-t border-white/10 pt-4">
+      <div className="mt-4 border-t border-[color:var(--edge)] pt-4">
         <div className="flex flex-wrap items-center gap-3">
           <input
             ref={fileRef}
@@ -381,18 +381,18 @@ export default function ClubPage() {
               <div className="flex flex-col gap-4">
                 {/* Members, sorted by rating, doubles as the club leaderboard. */}
                 <div className="plate overflow-hidden">
-                  <div className="flex items-center justify-between gap-2 border-b border-white/10 px-5 py-3">
+                  <div className="flex items-center justify-between gap-2 border-b border-[color:var(--edge)] px-5 py-3">
                     <span className="text-[11px] text-parchment-400">Leaderboard</span>
                     <span className="text-[11px] text-parchment-500">
                       {data.members.length} member{data.members.length === 1 ? "" : "s"}
                     </span>
                   </div>
-                  <ul className="max-h-96 divide-y divide-white/5 overflow-y-auto">
+                  <ul className="max-h-96 divide-y divide-[color:var(--edge)] overflow-y-auto">
                     {data.members.map((m, i) => (
                       <li key={m.user_id}>
                         <Link
                           href={`/u/${encodeURIComponent(m.username)}`}
-                          className="flex items-center gap-2.5 px-5 py-2 transition-colors hover:bg-white/5"
+                          className="flex items-center gap-2.5 px-5 py-2 transition-colors hover:bg-[color:var(--bg-raised)]"
                         >
                           <span className="w-4 shrink-0 font-mono text-[12px] text-parchment-500">{i + 1}</span>
                           <PlayerAvatar name={m.username} avatar={m.avatar} size={22} />
@@ -413,13 +413,13 @@ export default function ClubPage() {
 
                 {/* Club events */}
                 <div className="plate overflow-hidden">
-                  <div className="border-b border-white/10 px-5 py-3 text-[11px] text-parchment-400">
+                  <div className="border-b border-[color:var(--edge)] px-5 py-3 text-[11px] text-parchment-400">
                     Events
                   </div>
                   {data.tournaments.length === 0 ? (
                     <p className="px-5 py-4 text-sm text-parchment-400">No events yet.</p>
                   ) : (
-                    <ul className="divide-y divide-white/5">
+                    <ul className="divide-y divide-[color:var(--edge)]">
                       {data.tournaments.map((t) => (
                         <li key={t.id} className="px-5 py-2.5">
                           <div className="truncate text-sm text-parchment-100">{t.name}</div>
@@ -436,18 +436,18 @@ export default function ClubPage() {
 
               {/* Message board */}
               <div className="plate flex h-fit flex-col overflow-hidden">
-                <div className="border-b border-white/10 px-5 py-3 text-[11px] text-parchment-400">
+                <div className="border-b border-[color:var(--edge)] px-5 py-3 text-[11px] text-parchment-400">
                   Club board
                 </div>
                 {isMember ? (
-                  <form onSubmit={submitPost} className="border-b border-white/10 px-5 py-4">
+                  <form onSubmit={submitPost} className="border-b border-[color:var(--edge)] px-5 py-4">
                     <textarea
                       value={postText}
                       onChange={(e) => setPostText(e.target.value)}
                       maxLength={500}
                       rows={2}
                       placeholder={`Message the members of ${club.name}…`}
-                      className="w-full resize-none border border-white/15 bg-ink-900/60 px-3 py-2 text-sm text-parchment focus:border-gold/60 focus:outline-none"
+                      className="w-full resize-none border border-[color:var(--edge)] bg-[color:var(--bg-base)] px-3 py-2 text-sm text-parchment focus:border-[color:var(--edge-strong)] focus:outline-none"
                     />
                     <div className="mt-2 flex items-center justify-between gap-2">
                       {postError ? (
@@ -464,14 +464,14 @@ export default function ClubPage() {
                     </div>
                   </form>
                 ) : (
-                  <p className="border-b border-white/10 px-5 py-3 text-sm text-parchment-400">
+                  <p className="border-b border-[color:var(--edge)] px-5 py-3 text-sm text-parchment-400">
                     {me ? "Join the club to post on its board." : "Sign in and join to post."}
                   </p>
                 )}
                 {data.posts.length === 0 ? (
                   <p className="px-5 py-6 text-sm text-parchment-400">Nothing posted yet.</p>
                 ) : (
-                  <ul className="divide-y divide-white/5">
+                  <ul className="divide-y divide-[color:var(--edge)]">
                     {data.posts.map((p) => (
                       <li key={p.id} className="group px-5 py-3">
                         <div className="flex items-center gap-2">

@@ -54,7 +54,7 @@ export function FilterSheet({
             type="button"
             onClick={onClose}
             aria-label="Close filters"
-            className="grid h-10 w-10 place-items-center rounded-sm text-parchment-300 hover:bg-white/5 hover:text-parchment-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--accent)]"
+            className="grid h-10 w-10 place-items-center rounded-none text-parchment-300 hover:bg-[color:var(--bg-raised)] hover:text-parchment-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--accent)]"
           >
             <X size={18} />
           </button>

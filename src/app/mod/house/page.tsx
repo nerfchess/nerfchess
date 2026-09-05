@@ -11,6 +11,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { AccountUser, fetchMe } from "@/lib/authClient";
+import { ModShell } from "@/components/mod/ModShell";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { fileToDataUrl } from "@/lib/imageUpload";
 import { Button } from "@/components/ui/Button";
@@ -43,29 +44,17 @@ export default function ModHousePage() {
   const isMod = me && (me.role === "mod" || me.role === "admin");
 
   return (
-    <main className="min-h-screen">
-      <nav className="flex items-center justify-between px-5 sm:px-10 py-6">
-        <Link href="/" className="font-display text-2xl tracking-tight">
-          nerf<span className="text-gold-leaf">chess</span>
-        </Link>
-        <div className="flex items-center gap-3 text-sm font-medium">
-          <Link href="/mod" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Moderation</Link>
-          <Link href="/lobby" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Play</Link>
-        </div>
-      </nav>
-
-      <section className="max-w-4xl mx-auto px-6 py-8">
+    <ModShell title="House bots" isAdmin={me?.role === "admin"}>
+      <>
         {me === undefined ? (
           <div className="text-parchment-300">Loading…</div>
         ) : !isMod ? (
           <>
-            <h1 className="page-title">House bots</h1>
-            <p className="mt-3 text-parchment-200">This page is for moderators.</p>
+                        <p className="mt-3 text-parchment-200">This page is for moderators.</p>
           </>
         ) : (
           <>
-            <h1 className="page-title">House bots</h1>
-            <p className="mt-3 max-w-2xl text-sm text-parchment-300">
+                        <p className="mt-3 max-w-2xl text-sm text-parchment-300">
               The engine-driven roster that keeps the lobby warm. Rename a persona,
               pick a different avatar, or set a profile bio; names pass the same
               checks a player registration does. Changes go live without a deploy.
@@ -75,7 +64,7 @@ export default function ModHousePage() {
             ) : !data ? (
               <p className="mt-6 text-parchment-300">Loading…</p>
             ) : (
-              <div className="mt-6 plate divide-y divide-white/5">
+              <div className="mt-6 plate divide-y divide-[color:var(--edge)]">
                 {data.personas.map((p) => (
                   // Keyed on the server-side username too: a save (any row's)
                   // that changes it remounts the row, so the name input resets
@@ -92,8 +81,8 @@ export default function ModHousePage() {
             )}
           </>
         )}
-      </section>
-    </main>
+      </>
+    </ModShell>
   );
 }
 
@@ -186,7 +175,7 @@ function PersonaRow({
             onKeyDown={(e) => {
               if (e.key === "Enter" && dirty) saveEdits();
             }}
-            className="w-44 bg-transparent plate px-3 py-1.5 text-sm font-display font-semibold outline-none focus:border-gold/40"
+            className="w-44 bg-transparent plate px-3 py-1.5 text-sm font-display font-semibold outline-none focus:border-[color:var(--edge-strong)]"
             maxLength={20}
             aria-label={`Username for ${persona.defaults.username}`}
           />
@@ -195,7 +184,7 @@ function PersonaRow({
         )}
         {edited && (
           <span
-            className="text-[10px] px-2 py-0.5 rounded-[1px] border border-gold/40 text-gold-leaf"
+            className="text-[11px] px-2 py-0.5 rounded-none border border-[color:var(--edge-strong)] text-parchment-50"
             title={`Default: ${persona.defaults.username}`}
           >
             edited
@@ -210,7 +199,7 @@ function PersonaRow({
              
               disabled={saving || !dirty}
               onClick={saveEdits}
-              className="px-3 py-1 text-gold-leaf">
+              className="px-3 py-1 text-parchment-50">
               {saving ? "Saving…" : "Save"}
             </Button>
             <Button tone="ghost"
@@ -234,7 +223,7 @@ function PersonaRow({
             }}
             placeholder="Profile bio (optional)"
             maxLength={300}
-            className="w-full bg-transparent plate px-3 py-1.5 text-sm outline-none focus:border-gold/40"
+            className="w-full bg-transparent plate px-3 py-1.5 text-sm outline-none focus:border-[color:var(--edge-strong)]"
             aria-label={`Bio for ${persona.defaults.username}`}
           />
         </div>
@@ -254,7 +243,7 @@ function PersonaRow({
              
               disabled={saving}
               onClick={() => fileRef.current?.click()}
-              className="px-3 py-1 text-gold-leaf">
+              className="px-3 py-1 text-parchment-50">
               Upload image…
             </Button>
             <span className="text-[11px] text-parchment-500">PNG, JPEG, or WebP. Max 1 MB, 1024px.</span>
@@ -268,10 +257,10 @@ function PersonaRow({
               onClick={() => post({ avatar: id })}
               title={id}
               className={
-                "press rounded-md border p-0.5 transition " +
+                "rounded-none border p-0.5 transition " +
                 (id === persona.effective.avatar
-                  ? "border-gold/60"
-                  : "border-transparent hover:border-white/25")
+                  ? "border-[color:var(--edge-strong)]"
+                  : "border-transparent hover:border-[color:var(--edge-strong)]")
               }
             >
               <PlayerAvatar name={persona.effective.username} avatar={id} size={28} />

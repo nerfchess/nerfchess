@@ -183,7 +183,7 @@ export function HeroTv() {
               "flex items-center gap-1.5 border px-2 py-1 text-[11px] " +
               (!over
                 ? "border-verdigris-glow/40 bg-verdigris/10 text-verdigris-glow"
-                : "border-[color:var(--edge)] bg-white/[0.03] text-parchment-300")
+                : "border-[color:var(--edge)] bg-[color:var(--bg-zebra)] text-parchment-300")
             }
           >
             {!over ? <span className="dot-live h-2 w-2 bg-verdigris-glow" /> : null}
@@ -202,7 +202,7 @@ export function HeroTv() {
             </span>
           ) : null}
           {timeControl ? (
-            <span className="hidden border border-[color:var(--edge)] bg-white/[0.03] px-2 py-1 font-mono text-[11px] tabular-nums text-parchment-300 sm:inline">
+            <span className="hidden border border-[color:var(--edge)] bg-[color:var(--bg-zebra)] px-2 py-1 font-mono text-[11px] tabular-nums text-parchment-300 sm:inline">
               {timeControl}
             </span>
           ) : null}

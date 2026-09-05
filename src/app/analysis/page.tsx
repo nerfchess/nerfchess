@@ -204,7 +204,7 @@ function AnalysisInner() {
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="mx-auto flex w-full max-w-[640px] gap-3">
           {/* Eval bar */}
-          <div className="relative hidden w-6 shrink-0 overflow-hidden border border-white/10 bg-[#1a1917] sm:block">
+          <div className="relative hidden w-6 shrink-0 overflow-hidden border border-[color:var(--edge)] bg-[#1a1917] sm:block">
             <div
               className="absolute inset-x-0 bottom-0 bg-parchment-100 transition-[height] duration-300"
               style={{ height: `${engineOn && analysis ? evalPercent(cpWhite) : 50}%` }}
@@ -264,7 +264,7 @@ function AnalysisInner() {
                 size="sm"
                 onClick={() => setEngineOn((v) => !v)}
                 className={
-                  "ml-auto " + (engineOn ? "bg-white/10 text-gold-leaf" : "text-parchment-300")
+                  "ml-auto " + (engineOn ? "bg-[color:var(--bg-raised)] text-gold-leaf" : "text-parchment-300")
                 }
                 title="Toggle engine"
               >
@@ -313,8 +313,8 @@ function AnalysisInner() {
                       <button
                         onClick={() => setViewPly(i + 1)}
                         className={
-                          "mr-2 px-1 transition-colors hover:bg-white/10 " +
-                          (viewPly === i + 1 ? "bg-white/10 text-gold-leaf" : "text-parchment-100")
+                          "mr-2 px-1 transition-colors hover:bg-[color:var(--bg-raised)] " +
+                          (viewPly === i + 1 ? "bg-[color:var(--bg-raised)] text-gold-leaf" : "text-parchment-100")
                         }
                       >
                         {san}
@@ -332,7 +332,7 @@ function AnalysisInner() {
               readOnly
               value={fen}
               onFocus={(e) => e.currentTarget.select()}
-              className="mt-1.5 w-full border border-white/10 bg-black/20 px-2 py-1.5 font-mono text-[12px] text-parchment-300"
+              className="mt-1.5 w-full border border-[color:var(--edge)] bg-[color:var(--bg-base)] px-2 py-1.5 font-mono text-[12px] text-parchment-300"
             />
             <div className="mt-2 flex gap-2">
               <input
@@ -344,8 +344,8 @@ function AnalysisInner() {
                 onKeyDown={(e) => e.key === "Enter" && loadFen()}
                 placeholder="Paste a FEN to set up a position"
                 className={
-                  "min-w-0 flex-1 border bg-black/20 px-2 py-1.5 font-mono text-[12px] text-parchment-100 " +
-                  (fenError ? "border-oxblood-glow" : "border-white/10")
+                  "min-w-0 flex-1 border bg-[color:var(--bg-base)] px-2 py-1.5 font-mono text-[12px] text-parchment-100 " +
+                  (fenError ? "border-oxblood-glow" : "border-[color:var(--edge)]")
                 }
               />
               <Button tone="ghost" onClick={loadFen} className="shrink-0 px-3 py-1.5 text-sm">

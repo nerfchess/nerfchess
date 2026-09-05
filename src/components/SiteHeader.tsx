@@ -345,7 +345,7 @@ export function SiteHeader({ active }: { active?: string }) {
             aria-label="Search players"
             title="Search players"
             aria-expanded={menu === "search"}
-            className={iconButton + (menu === "search" ? " bg-white/5 text-parchment-50" : "")}
+            className={iconButton + (menu === "search" ? " bg-[color:var(--bg-raised)] text-parchment-50" : "")}
             onClick={() => toggle("search")}
           >
             <Search size={20} strokeWidth={1.6} />
@@ -377,13 +377,13 @@ export function SiteHeader({ active }: { active?: string }) {
             </button>
             {menu === "challenges" && (
               <div className="absolute right-0 top-full z-40 mt-2 w-80 max-w-[calc(100vw-1.5rem)] site-nav-pop shadow-xl">
-                <div className="border-b border-white/10 px-4 py-2.5 text-[11px] text-parchment-400">
+                <div className="border-b border-[color:var(--edge)] px-4 py-2.5 text-[11px] text-parchment-400">
                   Challenges
                 </div>
                 {challenges.length === 0 ? (
                   <p className="px-4 py-4 text-sm text-parchment-400">No incoming challenges right now.</p>
                 ) : (
-                  <ul className="divide-y divide-white/5">
+                  <ul className="divide-y divide-[color:var(--edge)]">
                     {challenges.map((challenge) => (
                       <li key={challenge.id} className="flex items-center justify-between gap-2 px-4 py-2.5">
                         <div className="min-w-0">
@@ -432,7 +432,7 @@ export function SiteHeader({ active }: { active?: string }) {
             </button>
             {menu === "bell" && (
               <div className="absolute right-0 top-full z-40 mt-2 w-80 max-w-[calc(100vw-1.5rem)] site-nav-pop shadow-xl">
-                <div className="flex items-center justify-between border-b border-white/10 px-4 py-2.5">
+                <div className="flex items-center justify-between border-b border-[color:var(--edge)] px-4 py-2.5">
                   <span className="text-[11px] text-parchment-400">Notifications</span>
                   {unread > 0 && (
                     <button onClick={markAllRead} className="text-xs text-parchment-400 hover:text-parchment-100">
@@ -443,7 +443,7 @@ export function SiteHeader({ active }: { active?: string }) {
                 {notifications.length === 0 ? (
                   <p className="px-4 py-4 text-sm text-parchment-400">Nothing here yet.</p>
                 ) : (
-                  <ul className="max-h-96 divide-y divide-white/5 overflow-y-auto">
+                  <ul className="max-h-96 divide-y divide-[color:var(--edge)] overflow-y-auto">
                     {notifications.map((n) => (
                       <li key={n.id}>
                         {/* A div (not a button) so the actor's profile link
@@ -462,7 +462,7 @@ export function SiteHeader({ active }: { active?: string }) {
                             }
                           }}
                           className={
-                            "block w-full cursor-pointer px-4 py-2.5 text-left transition-colors hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-gold/60 " +
+                            "block w-full cursor-pointer px-4 py-2.5 text-left transition-colors hover:bg-[color:var(--bg-raised)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--edge-strong)] " +
                             (n.read ? "opacity-60" : "")
                           }
                         >
@@ -560,7 +560,7 @@ export function SiteHeader({ active }: { active?: string }) {
                         router.push("/login");
                       }}
                     />
-                    <div className="my-1 border-t border-white/10" />
+                    <div className="my-1 border-t border-[color:var(--edge)]" />
                   </>
                 )}
                 <MenuItem
@@ -622,7 +622,7 @@ export function SiteHeader({ active }: { active?: string }) {
                     doors; a real account signs out normally. */}
                 {!user.isGuest && (
                   <>
-                    <div className="my-1 border-t border-white/10" />
+                    <div className="my-1 border-t border-[color:var(--edge)]" />
                     <MenuItem icon={<LogOut size={16} strokeWidth={1.6} />} label="Sign out" onClick={handleSignOut} />
                   </>
                 )}
@@ -700,7 +700,7 @@ function RenameBanner({ onRenamed }: { onRenamed: (name: string) => void }) {
   return (
     <div
       role="alert"
-      className="absolute inset-x-0 top-full z-30 border-y border-oxblood-glow/50 bg-ink-950/95 px-4 py-2.5"
+      className="absolute inset-x-0 top-full z-30 border-y border-oxblood-glow/50 bg-[color:var(--bg-base)] px-4 py-2.5"
     >
       <form onSubmit={submit} className="mx-auto flex max-w-3xl flex-wrap items-center gap-2 text-sm">
         <span className="min-w-0 flex-1 text-parchment-200">

@@ -786,7 +786,7 @@ function HeaderActions({
         </Button>
       )}
       {signedInNonGuest && rel === "outgoing" && (
-        <span className="inline-flex min-h-[44px] items-center gap-1.5 rounded-sm border border-white/10 px-4 font-display text-sm text-parchment-400">
+        <span className="inline-flex min-h-[44px] items-center gap-1.5 rounded-none border border-[color:var(--edge)] px-4 font-display text-sm text-parchment-400">
           <Check size={15} strokeWidth={2.2} aria-hidden />
           Request sent
         </span>
@@ -802,7 +802,7 @@ function HeaderActions({
         </Button>
       )}
       {signedInNonGuest && rel === "friends" && (
-        <span className="inline-flex min-h-[44px] items-center gap-1.5 rounded-sm border border-verdigris-glow/40 bg-verdigris/10 px-4 font-display text-sm text-verdigris-glow">
+        <span className="inline-flex min-h-[44px] items-center gap-1.5 rounded-none border border-verdigris-glow/40 bg-verdigris/10 px-4 font-display text-sm text-verdigris-glow">
           <UserCheck size={15} strokeWidth={2.2} aria-hidden />
           Friends
         </span>
@@ -936,7 +936,7 @@ function OverflowMenu({
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={`More actions for ${username}`}
-        className="grid h-11 w-11 place-items-center rounded-sm border border-white/10 text-parchment-400 transition hover:border-white/25 hover:text-parchment-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-leaf"
+        className="grid h-11 w-11 place-items-center rounded-none border border-[color:var(--edge)] text-parchment-400 transition hover:border-[color:var(--edge-strong)] hover:text-parchment-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]"
       >
         <MoreHorizontal size={18} strokeWidth={2.2} aria-hidden />
       </button>
@@ -950,7 +950,7 @@ function OverflowMenu({
             type="button"
             role="menuitem"
             onClick={() => void share()}
-            className="flex min-h-[44px] w-full items-center gap-2 rounded px-3 text-left font-display text-[13px] text-parchment-200 transition hover:bg-white/[0.05]"
+            className="flex min-h-[44px] w-full items-center gap-2 rounded px-3 text-left font-display text-[13px] text-parchment-200 transition hover:bg-[color:var(--bg-raised)]"
           >
             <Share2 size={15} strokeWidth={2.2} aria-hidden />
             {copied ? "Link copied" : "Share"}
@@ -958,7 +958,7 @@ function OverflowMenu({
           <Link
             role="menuitem"
             href={`/inbox/${encodeURIComponent(username)}`}
-            className="flex min-h-[44px] items-center gap-2 rounded px-3 font-display text-[13px] text-parchment-200 transition hover:bg-white/[0.05]"
+            className="flex min-h-[44px] items-center gap-2 rounded px-3 font-display text-[13px] text-parchment-200 transition hover:bg-[color:var(--bg-raised)]"
           >
             <MessageSquare size={15} strokeWidth={2.2} aria-hidden />
             Message
@@ -1176,7 +1176,7 @@ function GamesTab({
               {[0, 1, 2, 3, 4].map((i) => (
                 <div
                   key={i}
-                  className="h-10 animate-pulse rounded bg-white/[0.04] motion-reduce:animate-none"
+                  className="h-10 animate-pulse rounded bg-[color:var(--bg-zebra)] motion-reduce:animate-none"
                 />
               ))}
             </div>
@@ -1254,10 +1254,10 @@ function ChipGroup({
             aria-pressed={on}
             onClick={() => onChange(o.value)}
             className={
-              "inline-flex min-h-[44px] items-center rounded-sm border px-3 text-[13px] font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-leaf sm:min-h-0 sm:py-1.5 " +
+              "inline-flex min-h-[44px] items-center rounded-none border px-3 text-[13px] font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] sm:min-h-0 sm:py-1.5 " +
               (on
-                ? "border-gold/40 bg-gold/15 text-gold-leaf"
-                : "border-white/10 text-parchment-400 hover:border-white/25 hover:text-parchment-200")
+                ? "border-[color:var(--edge-strong)] bg-[color:var(--bg-raised)] text-gold-leaf"
+                : "border-[color:var(--edge)] text-parchment-400 hover:border-[color:var(--edge-strong)] hover:text-parchment-200")
             }
           >
             {o.label}
@@ -1289,11 +1289,11 @@ function GameHistoryRow({ game, viewer }: { game: RecentGameRow; viewer: string 
   const delta = before != null && after != null ? Math.round(after) - Math.round(before) : null;
 
   return (
-    <div className="relative border-b border-white/5 last:border-b-0 transition hover:bg-white/[0.03]">
+    <div className="relative border-b border-[color:var(--edge)] last:border-b-0 transition hover:bg-[color:var(--bg-raised)]">
       <Link
         href={`/game/${game.id}`}
         aria-label={`View replay of the ${outcome.toLowerCase()} game vs ${opponent}`}
-        className="absolute inset-0 z-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-gold/60"
+        className="absolute inset-0 z-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--edge-strong)]"
       />
       <div className="pointer-events-none relative z-10 flex flex-col gap-2 px-3 py-3 sm:flex-row sm:items-center sm:gap-3">
         <span className={`shrink-0 font-display text-sm font-semibold sm:w-14 ${tone}`}>{outcome}</span>
@@ -1321,12 +1321,12 @@ function GameHistoryRow({ game, viewer }: { game: RecentGameRow; viewer: string 
           {delta != null && (
             <span
               className={
-                "inline-flex items-center rounded-sm border px-1.5 py-px font-mono text-[11px] tabular-nums " +
+                "inline-flex items-center rounded-none border px-1.5 py-px font-mono text-[11px] tabular-nums " +
                 (delta > 0
-                  ? "border-gold/40 bg-gold/10 text-gold-leaf"
+                  ? "border-[color:var(--edge-strong)] bg-[color:var(--bg-raised)] text-gold-leaf"
                   : delta < 0
                     ? "border-oxblood-glow/40 bg-oxblood/10 text-oxblood-glow"
-                    : "border-white/15 bg-white/[0.03] text-parchment-400")
+                    : "border-[color:var(--edge)] bg-[color:var(--bg-zebra)] text-parchment-400")
               }
             >
               {delta > 0 ? "+" : ""}
@@ -1420,7 +1420,7 @@ function AchievementsStrip({ username }: { username: string }) {
               (expanded ? "rotate-90" : "")
             }
           />
-          <Trophy className="h-4 w-4 text-sun-glow" strokeWidth={2} /> Achievements
+          <Trophy className="h-4 w-4 text-brag" strokeWidth={2} /> Achievements
           {data && (
             <span className="font-mono text-sm tabular-nums text-parchment-300">
               {data.unlockedCount}
@@ -1502,7 +1502,7 @@ function AchievementsStrip({ username }: { username: string }) {
               <div className="mt-3">
                 <Link
                   href={`/achievements?u=${encodeURIComponent(username)}`}
-                  className="text-[12px] text-gold-leaf transition-colors hover:text-sun-glow"
+                  className="text-[12px] text-gold-leaf transition-colors hover:text-brag"
                 >
                   Open the achievements wall
                 </Link>
@@ -1521,27 +1521,27 @@ function ProfileSkeleton() {
       <div className="flex items-center gap-4">
         <div className="skeleton h-[72px] w-[72px] shrink-0 rounded-full" style={{ borderRadius: "50%" }} />
         <div className="min-w-0">
-          <div className="skeleton h-9 w-48 max-w-full rounded-[2px]" style={{ borderRadius: 2 }} />
-          <div className="skeleton mt-2 h-4 w-40 rounded-[2px]" style={{ borderRadius: 2 }} />
+          <div className="skeleton h-9 w-48 max-w-full rounded-none" style={{ borderRadius: 2 }} />
+          <div className="skeleton mt-2 h-4 w-40 rounded-none" style={{ borderRadius: 2 }} />
         </div>
       </div>
       <div className="mt-6 grid gap-3 sm:grid-cols-2">
         {[0, 1].map((i) => (
           <div key={i} className="plate p-4">
-            <div className="skeleton h-4 w-16 rounded-[2px]" style={{ borderRadius: 2 }} />
-            <div className="skeleton mt-3 h-7 w-20 rounded-[2px]" style={{ borderRadius: 2 }} />
-            <div className="skeleton mt-3 h-3 w-32 rounded-[2px]" style={{ borderRadius: 2 }} />
+            <div className="skeleton h-4 w-16 rounded-none" style={{ borderRadius: 2 }} />
+            <div className="skeleton mt-3 h-7 w-20 rounded-none" style={{ borderRadius: 2 }} />
+            <div className="skeleton mt-3 h-3 w-32 rounded-none" style={{ borderRadius: 2 }} />
           </div>
         ))}
       </div>
       <div className="plate mt-4 p-4">
-        <div className="skeleton h-24 w-full rounded-[2px]" style={{ borderRadius: 2 }} />
+        <div className="skeleton h-24 w-full rounded-none" style={{ borderRadius: 2 }} />
       </div>
       <div className="plate mt-8 p-5">
-        <div className="skeleton h-5 w-28 rounded-[2px]" style={{ borderRadius: 2 }} />
+        <div className="skeleton h-5 w-28 rounded-none" style={{ borderRadius: 2 }} />
         <div className="mt-4 space-y-2.5">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="skeleton h-9 rounded-[2px]" style={{ borderRadius: 2 }} />
+            <div key={i} className="skeleton h-9 rounded-none" style={{ borderRadius: 2 }} />
           ))}
         </div>
       </div>
@@ -1708,7 +1708,7 @@ function EditorFold({
             (open ? "rotate-90" : "")
           }
         />
-        <span className="rounded-[1px] border border-gold/40 px-2 py-0.5 text-[12px] text-gold-leaf">
+        <span className="rounded-none border border-[color:var(--edge-strong)] px-2 py-0.5 text-[12px] text-gold-leaf">
           {label}
         </span>
         {!open && <span className="text-xs text-parchment-400">Show tools</span>}
@@ -1795,7 +1795,7 @@ function RatingEditor({
   return (
     <div className="mt-5 plate border border-gold/25 p-4">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="rounded-[1px] border border-gold/40 px-2 py-0.5 text-[12px] text-gold-leaf">
+        <span className="rounded-none border border-[color:var(--edge-strong)] px-2 py-0.5 text-[12px] text-gold-leaf">
           Rating editor
         </span>
         <span className="text-xs text-parchment-400">
@@ -1818,7 +1818,7 @@ function RatingEditor({
           onKeyDown={(e) => {
             if (e.key === "Enter") void save();
           }}
-          className="w-28 bg-transparent plate px-3 py-1.5 text-sm font-mono tabular-nums outline-none focus:border-gold/40"
+          className="w-28 bg-transparent plate px-3 py-1.5 text-sm font-mono tabular-nums outline-none focus:border-[color:var(--edge-strong)]"
         />
         <Button tone="ghost"
          
@@ -1993,7 +1993,7 @@ function HouseBotEditor({
   return (
     <div className="mt-5 plate border border-gold/25 p-4">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="rounded-[1px] border border-gold/40 px-2 py-0.5 text-[12px] text-gold-leaf">
+        <span className="rounded-none border border-[color:var(--edge-strong)] px-2 py-0.5 text-[12px] text-gold-leaf">
           House bot
         </span>
         <span className="text-xs text-parchment-400">
@@ -2013,7 +2013,7 @@ function HouseBotEditor({
             if (e.key === "Enter" && dirty) saveName();
           }}
           maxLength={20}
-          className="w-48 bg-transparent plate px-3 py-1.5 text-sm font-display font-semibold outline-none focus:border-gold/40"
+          className="w-48 bg-transparent plate px-3 py-1.5 text-sm font-display font-semibold outline-none focus:border-[color:var(--edge-strong)]"
         />
         <Button tone="ghost"
          
@@ -2039,7 +2039,7 @@ function HouseBotEditor({
           onKeyDown={(e) => {
             if (e.key === "Enter" && ratingDirty) void saveRating();
           }}
-          className="w-28 bg-transparent plate px-3 py-1.5 text-sm font-mono tabular-nums outline-none focus:border-gold/40"
+          className="w-28 bg-transparent plate px-3 py-1.5 text-sm font-mono tabular-nums outline-none focus:border-[color:var(--edge-strong)]"
         />
         <Button tone="ghost"
          
@@ -2057,7 +2057,7 @@ function HouseBotEditor({
           type="button"
           onClick={() => setPicking((v) => !v)}
           title="Change picture"
-          className="press shrink-0"
+          className="shrink-0"
         >
           <PlayerAvatar name={username} avatar={avatar} size={40} />
         </button>
@@ -2130,8 +2130,8 @@ function HouseBotEditor({
                   onClick={() => pickAvatar(id)}
                   title={id}
                   className={
-                    "press rounded-md border p-0.5 transition " +
-                    (id === avatar ? "border-gold/60" : "border-transparent hover:border-white/25")
+                    "rounded-none border p-0.5 transition " +
+                    (id === avatar ? "border-[color:var(--edge-strong)]" : "border-transparent hover:border-[color:var(--edge-strong)]")
                   }
                 >
                   <PlayerAvatar name={username} avatar={id} size={28} />
@@ -2230,7 +2230,7 @@ function ReportModal({ username, onClose }: { username: string; onClose: () => v
               onChange={(e) => setDescription(e.target.value.slice(0, 1000))}
               rows={4}
               placeholder="What happened? Include game links or examples."
-              className="mt-4 w-full plate resize-none bg-transparent p-3 text-sm text-parchment-100 outline-none focus:border-gold/40"
+              className="mt-4 w-full plate resize-none bg-transparent p-3 text-sm text-parchment-100 outline-none focus:border-[color:var(--edge-strong)]"
             />
             {status === "error" && <p className="mt-2 text-sm text-oxblood-glow">{error}</p>}
             <div className="mt-4 flex items-center gap-2">

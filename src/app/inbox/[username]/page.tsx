@@ -204,8 +204,8 @@ export default function ThreadPage() {
                         className={
                           "max-w-[80%] border px-3 py-2 text-sm leading-snug " +
                           (m.fromMe
-                            ? "border-gold/30 bg-gold/10 text-parchment-50"
-                            : "border-white/10 bg-white/[0.04] text-parchment-100")
+                            ? "border-[color:var(--edge-strong)] bg-[color:var(--bg-raised)] text-parchment-50"
+                            : "border-[color:var(--edge)] bg-[color:var(--bg-zebra)] text-parchment-100")
                         }
                       >
                         <div className="whitespace-pre-wrap break-words">{m.text}</div>
@@ -233,7 +233,7 @@ export default function ThreadPage() {
                 placeholder={`Message ${thread?.peer.username ?? username}`}
                 maxLength={1000}
                 aria-label={`Message ${thread?.peer.username ?? username}`}
-                className="min-h-[44px] min-w-0 flex-1 rounded-sm border border-white/15 bg-ink-900/60 px-4 py-3 text-[13px] text-parchment placeholder:text-parchment-400/50"
+                className="min-h-[44px] min-w-0 flex-1 rounded-none border border-[color:var(--edge)] bg-[color:var(--bg-base)] px-4 py-3 text-[13px] text-parchment placeholder:text-parchment-400/50"
               />
               <Button tone="leaf"
                 onClick={send}
