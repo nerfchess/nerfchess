@@ -729,7 +729,7 @@ const T3: Buff[] = [
   // vs: The Long Road Home (a piece must retreat to its OWN back rank). This is
   // the mirror: the marked piece is EXILED and must press into YOUR half, which
   // is dangerous obedience; standing in your half lifts it, else it crumbles.
-  H3(
+  H4(
     {
       id: "hw3_exiles_mark",
       name: "Exile's Mark",
@@ -1077,7 +1077,7 @@ const T4: Buff[] = [
   // vs: Beacon of Woe (freeze fuse on YOUR piece) and Death Knell (remove one
   // marked piece). This plants a fused BOMB on an empty square that detonates a
   // small blast of REMOVAL; clear the neighborhood before the count runs out.
-  H4(
+  H6(
     {
       id: "hw3_time_bomb",
       name: "Powder Keg",
@@ -1311,7 +1311,7 @@ const T5: Buff[] = [
   // vs: wa_dominate_minor "Dominate" (instant seizure, no cure). This is a
   // TELEGRAPHED sleeper: a marked minor defects only on a 4-turn fuse, and the
   // victim can root it out by capturing or trading it before it turns.
-  H5(
+  H6(
     {
       id: "hw3_defectors_mark",
       name: "Sleeper Cell",
@@ -1895,7 +1895,7 @@ const T6: Buff[] = [
   // vs: Death Knell (cure = the doomed piece CAPTURES). This doom's cure is the
   // KING coming to the rescue: the marked piece dies unless the king stands
   // beside it in time. A contract that drags the king into the open.
-  H6(
+  H7(
     {
       id: "hw3_doomed_vow",
       name: "Doomed Vow",

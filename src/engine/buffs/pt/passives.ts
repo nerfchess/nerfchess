@@ -103,7 +103,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
       name: "Rust",
       description:
         "Idle enemy pieces seize up: any enemy piece (never a king) that has stood still for 2 of your opponent's turns rusts solid and may only move if the move is a capture, until it finally moves.",
-      tier: 5,
+      tier: 6,
       category: "hex",
       flavor: "Rome was not oxidized in a day.",
       fx: { motif: "jail" },

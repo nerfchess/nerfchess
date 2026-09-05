@@ -762,7 +762,7 @@ export const PT_CURSE_CARDS: Buff[] = [
       name: "Sea Monkeys",
       description:
         "Just add water: four tiny pawns hatch on random empty squares in your half and grow into real pawns.",
-      tier: 3,
+      tier: 4,
       category: "pieces",
       flavor: "The instructions promised a castle.",
     },

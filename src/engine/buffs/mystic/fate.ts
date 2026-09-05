@@ -41,7 +41,7 @@ export const MYSTIC_FATE: Buff[] = [
       name: "Threads of Fate",
       description:
         "The loom repays every cut thread: for your opponent's next 3 captures, you weave an extra move into your reply.",
-      tier: 6,
+      tier: 7,
       category: "tempo",
       flavor: "The Fates do not take requests. You did not ask.",
       fx: { motif: "rally", pieces: "all", self: true },

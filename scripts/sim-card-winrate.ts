@@ -53,6 +53,7 @@
 // 20 pairs is not the same claim as one measured on 20.
 
 import { BUFF_BY_ID, ALL_BUFFS } from "../src/engine/buffs/library";
+import { ALL_NERFS } from "../src/engine/nerfs/library";
 import { pickHouseMove, type HouseSkill } from "../src/lib/server/bots";
 import {
   UNRESTRICTED_NERF,
@@ -74,6 +75,10 @@ const flag = (name: string, dflt: string): string => {
 };
 const GAMES = Number(flag("games", "20"));
 const ONLY = flag("only", "");
+/** `--category nerf` measures one mechanical family. Used for the targeted
+ *  re-runs that fix a blind spot for a specific population without paying for
+ *  a whole sweep. */
+const CATEGORY = flag("category", "");
 /** Ply cap. 240 rather than the old 120, because the cap was silently eating
  *  the sample: at 90 plies a card whose games run long (Warp Legion) voided 7
  *  of 8 pairs, and the pairs that survived were the ones that happened to end
@@ -106,7 +111,21 @@ const SKILL: HouseSkill = 1350;
 /** The card Black holds in both arms, so cards that target an opponent's card
  *  have something to target. A tier-1 information card measured at exactly
  *  +0.0, chosen to perturb the baseline as little as possible. */
-const OPPONENT_CARD = "extra_glance";
+const OPPONENT_CARD = flag("opp-card", "cornerstone");
+
+/**
+ * Play with a REAL nerf on both seats.
+ *
+ * The default is UNRESTRICTED_NERF -- no nerf at all -- which turned out to be
+ * the single largest blind spot in the whole harness. This is a game called
+ * NerfChess, and 127 cards say "suspend your nerf"; with no nerf to suspend,
+ * 108 of them (85%) measured as doing literally nothing. That is not a fact
+ * about those cards, it is a fact about the setup.
+ *
+ * Both seats get the SAME nerf so the pairing is untouched: the only
+ * difference between the two arms is still White's card.
+ */
+const NERF_ID = flag("nerf", "");
 
 /** Cards between partial saves. Small enough that a kill costs minutes, large
  *  enough that the write is not the bottleneck. */
@@ -276,7 +295,8 @@ interface GameRun {
  * makes the delta attributable to the card rather than to the seed.
  */
 function playGame(seed: number, cardId: string | null, tier: Tier): GameRun {
-  const game: NerfGame = newGame(UNRESTRICTED_NERF, UNRESTRICTED_NERF, seed);
+  const nerf = NERF_ID ? (ALL_NERFS.find((n) => n.id === NERF_ID) ?? UNRESTRICTED_NERF) : UNRESTRICTED_NERF;
+  const game: NerfGame = newGame(nerf, nerf, seed);
   enableDraftMode(game, seed);
   // Black holds a card too, in BOTH arms of every pair.
   //
@@ -448,7 +468,12 @@ function measure(id: string): Row | null {
 }
 
 function main(): void {
-  const all = ALL_BUFFS.filter((b) => b.implemented && (!ONLY || b.id.includes(ONLY)));
+  const all = ALL_BUFFS.filter(
+    (b) =>
+      b.implemented &&
+      (!ONLY || b.id.includes(ONLY)) &&
+      (!CATEGORY || (b as { category?: string }).category === CATEGORY),
+  );
   // Stride rather than block, so every shard sees a mix of tiers and families
   // and a shard that finishes early is not systematically the cheap half.
   const pool = SHARD ? all.filter((_, i) => i % SHARD_N === SHARD_I) : all;

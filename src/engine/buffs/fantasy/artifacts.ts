@@ -121,7 +121,7 @@ export const FANTASY_ARTIFACTS: Buff[] = [
       name: "Orb of Dominion",
       description:
         "Choose one enemy rook or queen; after your opponent's next move you take control of it for the rest of the game, once. While you still hold the dominated piece, the enemy queen cannot capture. Kings cannot be taken.",
-      tier: 7,
+      tier: 8,
       category: "pieces",
       flavor: "Its light pours in through the eyes.",
     },

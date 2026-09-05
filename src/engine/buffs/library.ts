@@ -1747,7 +1747,7 @@ const TIER2: Buff[] = [
     }),
   ),
   def(
-    { id: "counterstep", name: "Counterstep", description: "After your opponent's next capture, you take two moves in reply, once. You cannot capture the king on the bonus move: your opponent replies first.", tier: 2, category: "tempo", fx: { motif: "rally", pieces: "all", self: true } },
+    { id: "counterstep", name: "Counterstep", description: "After your opponent's next capture, you take two moves in reply, once. You cannot capture the king on the bonus move: your opponent replies first.", tier: 3, category: "tempo", fx: { motif: "rally", pieces: "all", self: true } },
     {
       kind: "passive",
       onMovePlayed: (inst, move, api) => {
@@ -4904,7 +4904,7 @@ const TIER7: Buff[] = [
     })(),
   ),
   def(
-    { id: "abyss", name: "Abyss", description: "Two squares you pick open an abyss for the game: any enemy piece except a king that enters is swallowed. The defender keeps one bridge, the void nearest the enemy king, which never swallows.", tier: 5, category: "attack" },
+    { id: "abyss", name: "Abyss", description: "Two squares you pick open an abyss for the game: any enemy piece except a king that enters is swallowed. The defender keeps one bridge, the void nearest the enemy king, which never swallows.", tier: 6, category: "attack" },
     {
       kind: "activated",
       spendOnUse: false,

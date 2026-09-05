@@ -1577,7 +1577,7 @@ export const WILD_WARFARE: Buff[] = [
       id: "ww_claymore_line",
       name: "Claymore Line",
       description: "Mark two empty squares: the first enemy piece to step onto either one, a king aside, is destroyed along with every enemy piece on the squares around it. The mines stay armed for the game.",
-      tier: 4,
+      tier: 5,
       category: "protection",
       flavor: "Front toward enemy.",
       fx: { motif: "blindfold" },

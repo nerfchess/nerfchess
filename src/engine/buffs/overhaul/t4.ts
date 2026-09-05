@@ -295,7 +295,7 @@ export const OVERHAUL_T4: Buff[] = [
       name: "Royal Food Taster",
       description:
         "Place a Taster pawn on an empty square next to your queen. The next time your queen is captured, the Taster dies in her place and your queen returns on the Taster's square.",
-      tier: 5,
+      tier: 6,
       category: "protection",
       icon: "Utensils",
       flavor: "A slow-motion leap, then a posthumous medal.",
