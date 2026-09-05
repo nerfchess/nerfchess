@@ -110,6 +110,30 @@ check(tier("second_army") <= tier("bodyguard"), "two pocket pawns are not dearer
   check(g.board.turn === "w", "the warp did not spend White's turn");
 }
 
+{
+  // A free action that grants no follow-up move must not arm the chained-move
+  // king guard: the activator's regular move this turn may still take the
+  // king. 1. e4 f5 2. Qh5+ a6?? leaves the e8 king en prise (this variant
+  // never forces the reply); after warping the e4 pawn home, Qxe8 must still
+  // be on offer.
+  let g = freshGame(8);
+  g = play(g, "e2e4");
+  g = play(g, "f7f5");
+  g = play(g, "d1h5");
+  g = play(g, "a7a6");
+  const e8 = SQ(4, 7);
+  const kingTake = (game: NerfGame) => legalMoves(game).some((m) => m.to === e8 && m.captured === "k");
+  check(kingTake(g), "precondition: Qxe8 (king capture) is legal before the warp");
+  acquireBuff(g, "w", "warp_home", 2);
+  const idx = g.buffs!.players.w.buffs.findIndex((b) => b.id === "warp_home");
+  const e4 = SQ(4, 3);
+  const e2 = SQ(4, 1);
+  check(activateBuff(g, "w", idx, [{ square: e4 }, { square: e2 }]) === true, "the e4 pawn warps home");
+  check(g.board.turn === "w", "White still has the move after the warp");
+  check(g.buffs!.chainKingGuard !== "w", "the warp did not arm the chained-move king guard");
+  check(kingTake(g), "Qxe8 (king capture) is still legal after the warp");
+}
+
 // --- 3. hard_reset fallback ------------------------------------------------------
 
 {

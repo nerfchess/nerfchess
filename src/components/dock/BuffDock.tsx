@@ -23,7 +23,7 @@
 
 import { draftCardNoun } from "@/engine/buff";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
-import { NerfGame } from "@/engine/game";
+import { NerfGame, buffNextTarget } from "@/engine/game";
 import { Color } from "@/engine/types";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 import { useDockHotkeys, useDockView } from "@/lib/dockView";
@@ -56,8 +56,9 @@ interface Props {
 export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards, plays }: Props) {
   const finePointer = useFinePointer();
   const reduceMotion = useReducedMotion();
-  // Per-card expand/collapse, remembered for the whole game. Keyed by owner +
-  // index, both stable (used cards are marked spent, never removed).
+  // Per-row expand/collapse, remembered for the whole game. Keyed by the
+  // row's group key (owner + card + spent/nullified state, see groupRows),
+  // which does not change while a countdown ticks.
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const toggle = (key: string) => setExpanded((prev) => ({ ...prev, [key]: !(prev[key] ?? false) }));
   // Whose hand is on screen. One question, one control: the old dock's three
@@ -100,34 +101,39 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
 
   // Fold duplicates: the same card id in the same state renders as ONE row
   // wearing a "×N" count chip instead of N identical plates. The
-  // representative keeps the first copy's index, so Use fires that copy.
-  const groupRows = <T extends { inst: (typeof mine)[number]; i: number }>(entries: T[]) => {
-    const seen = new Map<string, T & { count: number }>();
-    const out: (T & { count: number })[] = [];
+  // representative keeps the first copy's index, so Use fires that copy, and
+  // its status line stands for the group. The live status is deliberately NOT
+  // part of the key: when one copy's countdown ticked the group split and the
+  // expanded row's key changed, collapsing it under the player.
+  const groupRows = <T extends { inst: (typeof mine)[number]; i: number }>(
+    entries: T[],
+    owner: "mine" | "opp",
+  ) => {
+    const seen = new Map<string, T & { count: number; key: string }>();
+    const out: (T & { count: number; key: string })[] = [];
     for (const e of entries) {
-      const def = BUFF_BY_ID[e.inst.id];
       const k = [
+        owner,
         e.inst.id,
         e.inst.tier,
         e.inst.spent ? 1 : 0,
         e.inst.nullified ? 1 : 0,
         e.inst.usedActivation ? 1 : 0,
-        def?.status?.(e.inst) ?? "",
-      ].join("|");
+      ].join("-");
       const g = seen.get(k);
       if (g) g.count += 1;
       else {
-        const fresh = { ...e, count: 1 };
+        const fresh = { ...e, count: 1, key: k };
         seen.set(k, fresh);
         out.push(fresh);
       }
     }
     return out;
   };
-  const mineLiveRows = groupRows(mineLive);
-  const mineDeadRows = groupRows(mineDead);
-  const theirsLiveRows = groupRows(theirsLive);
-  const theirsDeadRows = groupRows(theirsDead);
+  const mineLiveRows = groupRows(mineLive, "mine");
+  const mineDeadRows = groupRows(mineDead, "mine");
+  const theirsLiveRows = groupRows(theirsLive, "opp");
+  const theirsDeadRows = groupRows(theirsDead, "opp");
 
   const usableCount = mineLive.filter(
     ({ inst }) => BUFF_BY_ID[inst.id]?.kind === "activated",
@@ -147,8 +153,8 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
         </p>
       );
     }
-    const row = (r: { inst: (typeof mine)[number]; i: number; count: number }) => {
-      const key = `${owner}-${r.i}`;
+    const row = (r: { inst: (typeof mine)[number]; i: number; count: number; key: string }) => {
+      const key = r.key;
       return (
         <DockRow
           key={key}
@@ -159,6 +165,7 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
           open={expanded[key] ?? false}
           onToggle={() => toggle(key)}
           usable={owner === "mine" && canAct}
+          hasTarget={owner === "mine" && !!buffNextTarget(game, myColor, r.i, [])}
           onStartUse={onStartUse}
           finePointer={finePointer}
           reduceMotion={reduceMotion}

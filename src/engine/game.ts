@@ -1873,6 +1873,7 @@ export function activateBuff(
   const effectsBefore = bs.effects.length;
   // Snapshot before the effect: see passTurnAfterBuff.
   const skipsBeforeEffect = bs.skips[color === "w" ? "b" : "w"];
+  const extraMovesBefore = bs.extraMoves[color];
   def.effect?.(inst, makeBuffApi(game, color), picks);
   // A turn-consuming activation costs the activator this turn, so protective
   // timers it just created must not also burn a tick on the opponent's
@@ -1898,7 +1899,12 @@ export function activateBuff(
   inst.usedActivation = true;
   // Any activated use can reshape the board, so the activator cannot capture
   // the king until the opponent has replied (same guard as chained moves).
-  bs.chainKingGuard = color;
+  // A free action that granted no follow-up move (Warp Home) is the
+  // exception: the activator's regular move this turn is still their own,
+  // and barring a king capture from it would silently void a won position.
+  // Turn-consuming activations keep the guard either way (the opponent's
+  // reply clears it before the activator moves again, so it is harmless).
+  if (!def.freeAction || bs.extraMoves[color] > extraMovesBefore) bs.chainKingGuard = color;
   emitEffectDelta(game, effectRefsBefore, def.id);
   emitClockDelta(game, clockFxBefore, def.id);
   settleAfterBuff(game);

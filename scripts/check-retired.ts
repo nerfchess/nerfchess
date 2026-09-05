@@ -10,8 +10,9 @@ import { join } from "node:path";
 import { RETIRED, RETIRED_IDS } from "../src/engine/retired";
 import { ALL_BUFFS, BUFF_POOL_BY_TIER } from "../src/engine/buffs/library";
 import { ALL_NERFS, openingNerfPool } from "../src/engine/nerfs/library";
-import { openerPool } from "../src/engine/draft";
+import { NERF_REVEAL, openerPool } from "../src/engine/draft";
 import { isRetired } from "../src/engine/retired";
+import { Buff, isBoon } from "../src/engine/buff";
 
 const ROOT = join(__dirname, "..");
 const known = new Set([...ALL_BUFFS.map((b) => b.id), ...ALL_NERFS.map((n) => n.id)]);
@@ -45,6 +46,32 @@ for (const tier of Object.keys(BUFF_POOL_BY_TIER)) {
   for (const b of BUFF_POOL_BY_TIER[Number(tier)] ?? []) if (!isRetired(b.id)) active += 1;
 }
 if (active < 800) problems.push(`only ${active} active pool cards left; too aggressive`);
+
+// Per-tier, per-mode draftable floor. Mirrors the static part of the pool rule
+// in draft.ts rollCards (inMode): openers only come from the opening pick,
+// apex / special cards only from the dedicated grants; Buff mode deals
+// anything that is not a nerf, hex or nerf-reveal card, Nerf mode deals boons,
+// hexes and items. Retirements must leave every tier enough cards in each
+// mode that a roll (which also excludes held and just-offered cards) never
+// runs dry.
+const DRAFTABLE_FLOOR = 12;
+const draftableIn = (mode: "buff" | "nerf") => (b: Buff) => {
+  if (isRetired(b.id) || b.opener || b.special || b.tier === 9 || b.tier === 10) return false;
+  return mode === "buff"
+    ? b.category !== "nerf" && b.category !== "hex" && !NERF_REVEAL.has(b.id)
+    : isBoon(b) || b.category === "hex" || b.category === "item";
+};
+const floorRows: string[] = [];
+for (let tier = 1; tier <= 8; tier++) {
+  const pool = BUFF_POOL_BY_TIER[tier] ?? [];
+  const buff = pool.filter(draftableIn("buff")).length;
+  const nerf = pool.filter(draftableIn("nerf")).length;
+  floorRows.push(`  tier ${tier}: buff-mode ${String(buff).padStart(3)}  nerf-mode ${String(nerf).padStart(3)}`);
+  if (buff < DRAFTABLE_FLOOR) problems.push(`tier ${tier} has only ${buff} draftable Buff-mode cards (floor ${DRAFTABLE_FLOOR})`);
+  if (nerf < DRAFTABLE_FLOOR) problems.push(`tier ${tier} has only ${nerf} draftable Nerf-mode cards (floor ${DRAFTABLE_FLOOR})`);
+}
+console.log(`[check-retired] draftable cards per tier (floor ${DRAFTABLE_FLOOR} per mode):`);
+for (const row of floorRows) console.log(row);
 
 if (problems.length) {
   console.error(`[check-retired] ${problems.length} problem(s):`);

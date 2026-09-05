@@ -533,9 +533,10 @@ export function DraftOverlay({
   // sticks after an accidental tap.
   const [bankArmed, setBankArmed] = useState(false);
   // The minimized panel is the persistent "resolve your draft" reminder. It
-  // must not sit on the board forever: after a few seconds it tucks into a slim
-  // chip (still one click from the cards), and a fresh offer / reroll pops it
-  // back so an unresolved draft keeps re-announcing itself.
+  // never tucks itself away; the player can tuck it into a slim chip (still
+  // one click from the cards) with the header control, and a fresh offer /
+  // reroll / window expiry pops it back so an unresolved draft keeps
+  // re-announcing itself.
   const [tucked, setTucked] = useState(false);
   // Pack opening: each offer arrives as a sealed treasure chest that opens
   // before the cards deal. Tap to open immediately; it auto-opens after a
@@ -744,13 +745,6 @@ export function DraftOverlay({
     return () => window.clearTimeout(id);
   }, [justExpired]);
 
-  // Once the player MANUALLY re-opens the tucked chip we keep this offer's panel
-  // open. Without it, re-opening re-armed the auto-tuck and the panel minimized
-  // itself again 5s later, so every open snapped shut on the player ("keeps on
-  // minimizing"). Reset per offer by the deal effect below, so a genuinely new
-  // offer still auto-tucks after its grace.
-  const userPinnedRef = useRef(false);
-
   // A reroll keeps the same offer index but swaps the cards, so key the deal
   // on both: bumping `rerolled` replays the deal (and chime) for fresh cards.
   const dealKey = `${offer.index}:${offer.rerolled ?? 0}`;
@@ -780,14 +774,6 @@ export function DraftOverlay({
   }
   // Ref bookkeeping and the attention chime are side effects, so they stay in
   // an effect keyed on the same offer identity (runs on mount and each deal).
-  // The pin outlives a reroll: rerolling swaps the cards but it is the same
-  // decision context, and a player who pinned the panel open has said "stop
-  // tucking this round" — snapping shut after they asked for fresh cards was
-  // part of the "keeps on minimizing" report. Only a genuinely new offer
-  // index starts unpinned.
-  useEffect(() => {
-    userPinnedRef.current = false;
-  }, [offer.index]);
   useEffect(() => {
     committedRef.current = false;
     selectedAtRef.current = 0;
@@ -951,7 +937,8 @@ export function DraftOverlay({
   // The compact panel never tucks itself away: once the draft has stepped
   // into the corner it stays there, cards visible, until the player resolves
   // it. (The old auto-tuck fuse was the "draft minimized randomly" complaint.)
-  // The slim chip below is only reachable by an explicit user action.
+  // The slim chip is reached only through the Tuck control in the panel
+  // header; clicking the chip brings the cards back.
 
   const confirmCard = (i: number) => {
     if (chosen != null || banking || committedRef.current) return;
@@ -1157,9 +1144,9 @@ export function DraftOverlay({
         </div>
       );
     }
-    // Tucked: the panel has stepped aside to a slim chip so it does not sit on
-    // the board forever. It stays one tap from the cards (click re-opens) and a
-    // new offer / reroll re-shows it automatically (deal effect clears tucked).
+    // Tucked (by the header control): the panel has stepped aside to a slim
+    // chip. It stays one tap from the cards (click re-opens) and a new offer /
+    // reroll re-shows it automatically (deal effect clears tucked).
     if (tucked && !settled) {
       return (
         <div
@@ -1169,12 +1156,7 @@ export function DraftOverlay({
         >
           <button
             type="button"
-            onClick={() => {
-              // Manual re-open pins this offer open so the auto-tuck effect
-              // stops re-minimizing it out from under the player.
-              userPinnedRef.current = true;
-              setTucked(false);
-            }}
+            onClick={() => setTucked(false)}
             aria-label={
               timed
                 ? `Resolve your ${noun} draft. Your game clock is running.`
@@ -1259,6 +1241,22 @@ export function DraftOverlay({
               >
                 {timed ? "On your clock" : "Draft pending"}
               </span>
+              {/* Tuck: step the panel aside into the slim "Resolve draft"
+                  chip. The only way the chip is reached; the panel never
+                  tucks on its own. Pointer events stop here so a tap on it
+                  does not start a header drag. */}
+              <Button
+                tone="ghost"
+                size="xs"
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={() => setTucked(true)}
+                aria-label="Tuck the draft panel into a chip"
+                title="Tuck into a chip; click the chip to bring the cards back"
+                className="gap-1 px-2 text-[13px] max-sm:min-h-[44px]"
+              >
+                <EyeIcon off />
+                Tuck
+              </Button>
             </span>
           </div>
           {/* Why the draft moved: the decision countdown ended, so it

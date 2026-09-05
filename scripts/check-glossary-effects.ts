@@ -15,7 +15,13 @@ import {
 
 let failures = 0;
 function checkMap(name: string, map: Record<string, string>) {
-  for (const [key, slug] of Object.entries(map)) {
+  const entries = Object.entries(map);
+  if (!entries.length) {
+    failures++;
+    console.error(`  FAIL ${name} has no entries at all (glossary map/import broke)`);
+    return;
+  }
+  for (const [key, slug] of entries) {
     const entry = entryForSlug(slug);
     if (!entry) {
       failures++;

@@ -965,13 +965,17 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
 
     const uci = moveToUCI(move);
     const ply = snapshot.board.history.length;
-    setAwaitingPremoveAck(true, { uci, ply });
-    if (!session.sendMove(uci, ply)) {
-      setAwaitingPremoveAck(false);
+    const sent = session.sendMove(uci, ply);
+    if (!sent) {
       clearPremoves();
       setError("Disconnected from the game server.");
       return;
     }
+    // "held": the move is buffered until the socket is back. No ack timer
+    // (nothing is in flight yet) and no optimistic state; the reconnecting
+    // banner already explains the wait, and the disconnected handler drops
+    // the held copy if the connection is lost again.
+    if (sent === "sent") setAwaitingPremoveAck(true, { uci, ply });
     playMoveSound(move, snapshot.board);
   }
 
@@ -1003,6 +1007,11 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         // free for move/action failures rather than duplicating it here.
         setPendingLocalMove(null);
         setAwaitingPremoveAck(false);
+        // The optimistic move just rolled back, so a copy held for the
+        // reconnect must not play on our behalf later; and the premove queue
+        // is cleared so it cannot double-send once the socket is back.
+        session.dropHeldMove();
+        clearPremoves();
       } else if (e.type === "reconnecting") {
         // Handled by the ConnectionBanner; nothing to surface in the rail.
       } else if (e.type === "start") {
@@ -1426,7 +1435,11 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           playChallenge();
         }
       } else if (e.type === "rematch-cancelled") {
-        setRematchStatus("none");
+        // Only clear the status when the withdrawn offer is the one it shows:
+        // our own offer withdrawn from another tab, or the opponent taking
+        // back the incoming one. The opponent cancelling a stale offer of
+        // theirs must not erase an offer we still have standing.
+        setRematchStatus((s) => (e.color === myColor || s === "incoming" ? "none" : s));
       } else if (e.type === "rematched") {
         // Take the new seat and load the fresh game with a clean slate.
         saveOnlineSeat(e.id, { color: e.color, token: e.token });
@@ -1882,11 +1895,20 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     setAwaitingPremoveAck(false);
     const uci = moveToUCI(lm);
     const ply = game.board.history.length;
-    if (!session.sendMove(uci, ply)) {
+    const sent = session.sendMove(uci, ply);
+    if (!sent) {
       setPendingLocalMove(null);
       setError("Disconnected from the game server.");
       return;
     }
+    // "held": the socket is down and the move is buffered until the seat is
+    // reclaimed. Show nothing optimistic for it: the board stays on the last
+    // confirmed position, the ConnectionBanner covers the wait, and the move
+    // arrives as a normal server frame once flushed (or is dropped by the
+    // disconnected handler if the link fails again). That keeps the display
+    // honest: a piece never sits on a square the server has not confirmed
+    // while the link that would confirm it is down.
+    if (sent === "held") return;
     setPendingLocalMove({ uci, ply, move: lm });
     playMoveSound(lm, game.board);
   };

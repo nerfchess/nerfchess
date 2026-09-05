@@ -35,8 +35,11 @@ export function evaluateMoveRisk(game: NerfGame, move: Move): MoveRisk {
   return null;
 }
 
-export function moveRiskKey(m: Pick<Move, "from" | "to" | "promotion">): string {
-  return `${m.from}-${m.to}-${m.promotion ?? ""}`;
+// Castling and pocket drops share from/to with ordinary moves (a king step
+// onto the rook's square under a castling buff, a drop whose `from` equals
+// `to`), so the key carries both fields or two different moves collide.
+export function moveRiskKey(m: Pick<Move, "from" | "to" | "promotion" | "castle" | "drop">): string {
+  return `${m.from}-${m.to}-${m.promotion ?? ""}-${m.castle ?? ""}-${m.drop ?? ""}`;
 }
 
 export function computeMoveRisks(game: NerfGame, moves: Move[]): Map<string, MoveRisk> {

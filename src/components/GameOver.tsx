@@ -748,11 +748,17 @@ export function GameOver({
   };
 
   // Deep link into the analysis board with the whole game replayed, when the
-  // analysis route (which reads ?moves=<uci csv>) can take it.
+  // analysis route (which reads ?moves=<uci csv>) can take it. A draft game
+  // is never offered: cards move, summon, and remove pieces outside the move
+  // list, so a plain UCI replay would stop early or diverge from what was
+  // actually played. The draft mode chip, the held cards, and the card
+  // timeline are the signals this panel already has for that.
+  const cardGame =
+    mode === "buff" || !!myBuffs?.length || !!opponentBuffs?.length || !!cardEvents?.length;
   const analysisHref = useMemo(() => {
-    if (!moves || moves.length === 0) return null;
+    if (cardGame || !moves || moves.length === 0) return null;
     return `/analysis?moves=${moves.map(moveToUCI).join(",")}`;
-  }, [moves]);
+  }, [cardGame, moves]);
 
   // Every seat links to its profile; house accounts have real profile pages.
   const linkedProfiles = useMemo(() => (profiles ?? []).filter((p) => p.href), [profiles]);

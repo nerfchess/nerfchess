@@ -377,92 +377,101 @@ function readSiteTheme(v: unknown): SiteTheme {
   return LEGACY_SITE_THEMES[v] ?? DEFAULT.siteTheme;
 }
 
+/** Validate an arbitrary settings blob (stored locally or fetched from the
+ *  account) into a full Settings object. Unknown or malformed keys fall back
+ *  to their defaults individually; a blob that is not an object at all yields
+ *  null so callers can refuse it without touching storage. */
+export function normalizeSettings(input: unknown): Settings | null {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return null;
+  const parsed = input as Partial<Settings>;
+  return {
+    // "auto" and "custom" were legal stored values before the board and piece
+    // pickers were simplified; both now fall through to the default.
+    boardTheme:
+      parsed.boardTheme && parsed.boardTheme in BOARD_THEMES
+        ? (parsed.boardTheme as BoardThemePref)
+        : DEFAULT.boardTheme,
+    // A pre-split id like "ivory" was the inline design in that colour:
+    // it lands as classic + that colour rather than resetting the player.
+    pieceTheme:
+      parsed.pieceTheme && parsed.pieceTheme in PIECE_THEMES
+        ? (parsed.pieceTheme as PieceThemePref)
+        : parsed.pieceTheme && parsed.pieceTheme in LEGACY_PIECE_COLOR_THEMES
+          ? "classic"
+          : DEFAULT.pieceTheme,
+    pieceColor:
+      parsed.pieceColor && parsed.pieceColor in PIECE_COLORS
+        ? (parsed.pieceColor as PieceColor)
+        : parsed.pieceTheme && parsed.pieceTheme in LEGACY_PIECE_COLOR_THEMES
+          ? LEGACY_PIECE_COLOR_THEMES[parsed.pieceTheme]
+          : DEFAULT.pieceColor,
+    volume: typeof parsed.volume === "number" ? Math.max(0, Math.min(1, parsed.volume)) : DEFAULT.volume,
+    moveRiskWarnings: bool(parsed.moveRiskWarnings, DEFAULT.moveRiskWarnings),
+    autoQueen: bool(parsed.autoQueen, DEFAULT.autoQueen),
+    hideOpponentReveal: bool(parsed.hideOpponentReveal, DEFAULT.hideOpponentReveal),
+    muteChat: bool(parsed.muteChat, DEFAULT.muteChat),
+    confirmResign: bool(parsed.confirmResign, DEFAULT.confirmResign),
+    showCoordinates: bool(parsed.showCoordinates, DEFAULT.showCoordinates),
+    highlightLastMove: bool(parsed.highlightLastMove, DEFAULT.highlightLastMove),
+    showLegalMoves: bool(parsed.showLegalMoves, DEFAULT.showLegalMoves),
+    premovesEnabled: bool(parsed.premovesEnabled, DEFAULT.premovesEnabled),
+    lowTimeWarning: bool(parsed.lowTimeWarning, DEFAULT.lowTimeWarning),
+    clockTenths:
+      parsed.clockTenths === "never" || parsed.clockTenths === "low" || parsed.clockTenths === "always"
+        ? parsed.clockTenths
+        : DEFAULT.clockTenths,
+    showCaptured: bool(parsed.showCaptured, DEFAULT.showCaptured),
+    showRatings: bool(parsed.showRatings, DEFAULT.showRatings),
+    confirmMove: bool(parsed.confirmMove, DEFAULT.confirmMove),
+    confirmDrawOffer: bool(parsed.confirmDrawOffer, DEFAULT.confirmDrawOffer),
+    flipBoard: bool(parsed.flipBoard, DEFAULT.flipBoard),
+    checkHighlight: bool(parsed.checkHighlight, DEFAULT.checkHighlight),
+    boardSize:
+      typeof parsed.boardSize === "number"
+        ? Math.max(0.8, Math.min(1.1, parsed.boardSize))
+        : DEFAULT.boardSize,
+    largerPieces: bool(parsed.largerPieces, DEFAULT.largerPieces),
+    moveSound: bool(parsed.moveSound, DEFAULT.moveSound),
+    captureSound: bool(parsed.captureSound, DEFAULT.captureSound),
+    checkSound: bool(parsed.checkSound, DEFAULT.checkSound),
+    gameEndSound: bool(parsed.gameEndSound, DEFAULT.gameEndSound),
+    soundEnabled: bool(parsed.soundEnabled, DEFAULT.soundEnabled),
+    soundTheme:
+      parsed.soundTheme === "lichess" || parsed.soundTheme === "classic"
+        ? parsed.soundTheme
+        : DEFAULT.soundTheme,
+    // A theme id from an old build maps onto its replacement rather than
+    // resetting the user to the default (see LEGACY_SITE_THEMES).
+    siteTheme: readSiteTheme(parsed.siteTheme),
+    zenMode: bool(parsed.zenMode, DEFAULT.zenMode),
+    animationSpeed:
+      parsed.animationSpeed === "off" || parsed.animationSpeed === "fast" || parsed.animationSpeed === "normal"
+        ? parsed.animationSpeed
+        : DEFAULT.animationSpeed,
+    pieceAnimMs:
+      typeof parsed.pieceAnimMs === "number" && Number.isFinite(parsed.pieceAnimMs)
+        ? Math.max(0, Math.min(PIECE_ANIM_MAX_MS, Math.round(parsed.pieceAnimMs)))
+        : DEFAULT.pieceAnimMs,
+    uiSounds: bool(parsed.uiSounds, DEFAULT.uiSounds),
+    reducedMotion: bool(parsed.reducedMotion, DEFAULT.reducedMotion),
+    followSystemMotion: bool(parsed.followSystemMotion, DEFAULT.followSystemMotion),
+    customBgUrl: sanitizeCustomBgUrl(parsed.customBgUrl),
+    customBgDim: clampDim(parsed.customBgDim, DEFAULT.customBgDim),
+    customBgData: sanitizeCustomBgData(parsed.customBgData),
+    fxDuration:
+      typeof parsed.fxDuration === "number" && Number.isFinite(parsed.fxDuration)
+        ? Math.max(0.5, Math.min(2, parsed.fxDuration))
+        : DEFAULT.fxDuration,
+    effects3d: bool(parsed.effects3d, DEFAULT.effects3d),
+  };
+}
+
 export function loadSettings(): Settings {
   if (typeof window === "undefined") return { ...DEFAULT };
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return { ...DEFAULT };
-    const parsed = JSON.parse(raw) as Partial<Settings>;
-    return {
-      // "auto" and "custom" were legal stored values before the board and piece
-      // pickers were simplified; both now fall through to the default.
-      boardTheme:
-        parsed.boardTheme && parsed.boardTheme in BOARD_THEMES
-          ? (parsed.boardTheme as BoardThemePref)
-          : DEFAULT.boardTheme,
-      // A pre-split id like "ivory" was the inline design in that colour:
-      // it lands as classic + that colour rather than resetting the player.
-      pieceTheme:
-        parsed.pieceTheme && parsed.pieceTheme in PIECE_THEMES
-          ? (parsed.pieceTheme as PieceThemePref)
-          : parsed.pieceTheme && parsed.pieceTheme in LEGACY_PIECE_COLOR_THEMES
-            ? "classic"
-            : DEFAULT.pieceTheme,
-      pieceColor:
-        parsed.pieceColor && parsed.pieceColor in PIECE_COLORS
-          ? (parsed.pieceColor as PieceColor)
-          : parsed.pieceTheme && parsed.pieceTheme in LEGACY_PIECE_COLOR_THEMES
-            ? LEGACY_PIECE_COLOR_THEMES[parsed.pieceTheme]
-            : DEFAULT.pieceColor,
-      volume: typeof parsed.volume === "number" ? Math.max(0, Math.min(1, parsed.volume)) : DEFAULT.volume,
-      moveRiskWarnings: bool(parsed.moveRiskWarnings, DEFAULT.moveRiskWarnings),
-      autoQueen: bool(parsed.autoQueen, DEFAULT.autoQueen),
-      hideOpponentReveal: bool(parsed.hideOpponentReveal, DEFAULT.hideOpponentReveal),
-      muteChat: bool(parsed.muteChat, DEFAULT.muteChat),
-      confirmResign: bool(parsed.confirmResign, DEFAULT.confirmResign),
-      showCoordinates: bool(parsed.showCoordinates, DEFAULT.showCoordinates),
-      highlightLastMove: bool(parsed.highlightLastMove, DEFAULT.highlightLastMove),
-      showLegalMoves: bool(parsed.showLegalMoves, DEFAULT.showLegalMoves),
-      premovesEnabled: bool(parsed.premovesEnabled, DEFAULT.premovesEnabled),
-      lowTimeWarning: bool(parsed.lowTimeWarning, DEFAULT.lowTimeWarning),
-      clockTenths:
-        parsed.clockTenths === "never" || parsed.clockTenths === "low" || parsed.clockTenths === "always"
-          ? parsed.clockTenths
-          : DEFAULT.clockTenths,
-      showCaptured: bool(parsed.showCaptured, DEFAULT.showCaptured),
-      showRatings: bool(parsed.showRatings, DEFAULT.showRatings),
-      confirmMove: bool(parsed.confirmMove, DEFAULT.confirmMove),
-      confirmDrawOffer: bool(parsed.confirmDrawOffer, DEFAULT.confirmDrawOffer),
-      flipBoard: bool(parsed.flipBoard, DEFAULT.flipBoard),
-      checkHighlight: bool(parsed.checkHighlight, DEFAULT.checkHighlight),
-      boardSize:
-        typeof parsed.boardSize === "number"
-          ? Math.max(0.8, Math.min(1.1, parsed.boardSize))
-          : DEFAULT.boardSize,
-      largerPieces: bool(parsed.largerPieces, DEFAULT.largerPieces),
-      moveSound: bool(parsed.moveSound, DEFAULT.moveSound),
-      captureSound: bool(parsed.captureSound, DEFAULT.captureSound),
-      checkSound: bool(parsed.checkSound, DEFAULT.checkSound),
-      gameEndSound: bool(parsed.gameEndSound, DEFAULT.gameEndSound),
-      soundEnabled: bool(parsed.soundEnabled, DEFAULT.soundEnabled),
-      soundTheme:
-        parsed.soundTheme === "lichess" || parsed.soundTheme === "classic"
-          ? parsed.soundTheme
-          : DEFAULT.soundTheme,
-      // A theme id from an old build maps onto its replacement rather than
-      // resetting the user to the default (see LEGACY_SITE_THEMES).
-      siteTheme: readSiteTheme(parsed.siteTheme),
-      zenMode: bool(parsed.zenMode, DEFAULT.zenMode),
-      animationSpeed:
-        parsed.animationSpeed === "off" || parsed.animationSpeed === "fast" || parsed.animationSpeed === "normal"
-          ? parsed.animationSpeed
-          : DEFAULT.animationSpeed,
-      pieceAnimMs:
-        typeof parsed.pieceAnimMs === "number" && Number.isFinite(parsed.pieceAnimMs)
-          ? Math.max(0, Math.min(PIECE_ANIM_MAX_MS, Math.round(parsed.pieceAnimMs)))
-          : DEFAULT.pieceAnimMs,
-      uiSounds: bool(parsed.uiSounds, DEFAULT.uiSounds),
-      reducedMotion: bool(parsed.reducedMotion, DEFAULT.reducedMotion),
-      followSystemMotion: bool(parsed.followSystemMotion, DEFAULT.followSystemMotion),
-      customBgUrl: sanitizeCustomBgUrl(parsed.customBgUrl),
-      customBgDim: clampDim(parsed.customBgDim, DEFAULT.customBgDim),
-      customBgData: sanitizeCustomBgData(parsed.customBgData),
-      fxDuration:
-        typeof parsed.fxDuration === "number" && Number.isFinite(parsed.fxDuration)
-          ? Math.max(0.5, Math.min(2, parsed.fxDuration))
-          : DEFAULT.fxDuration,
-      effects3d: bool(parsed.effects3d, DEFAULT.effects3d),
-    };
+    return normalizeSettings(JSON.parse(raw)) ?? { ...DEFAULT };
   } catch {}
   return { ...DEFAULT };
 }
@@ -470,8 +479,14 @@ export function loadSettings(): Settings {
 const UPDATED_AT_KEY = "dc:settings-updated-at";
 
 function writeLocalSettings(s: Settings, updatedAt: number) {
+  // The timestamp only advances once the settings themselves are stored: a
+  // stamp without the blob would make a later pull skip the account copy.
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+  } catch {
+    return;
+  }
+  try {
     window.localStorage.setItem(UPDATED_AT_KEY, String(updatedAt));
   } catch {}
   applyBoardColors(s);
@@ -514,9 +529,23 @@ function schedulePushToServer() {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ settings, updatedAt }),
-    }).catch(() => {
-      // Signed out or offline: local settings still apply.
-    });
+    })
+      .then(async (res) => {
+        if (!res.ok) return;
+        const data = (await res.json()) as { ok?: boolean; updatedAt?: unknown };
+        // The server stamps the row with its own clock. Adopt that stamp so
+        // the next pull does not read our own write back as "newer" (or, with
+        // this device's clock behind, miss it). A rejected push (a newer copy
+        // already stored) leaves the local stamp alone so the pull adopts it.
+        if (data.ok && typeof data.updatedAt === "number" && data.updatedAt > localUpdatedAt()) {
+          try {
+            window.localStorage.setItem(UPDATED_AT_KEY, String(data.updatedAt));
+          } catch {}
+        }
+      })
+      .catch(() => {
+        // Signed out or offline: local settings still apply.
+      });
   }, 800);
 }
 
@@ -527,16 +556,17 @@ export async function pullSettingsFromServer(): Promise<boolean> {
   try {
     const res = await fetch("/api/users/settings");
     if (!res.ok) return false;
-    const data = (await res.json()) as { settings: Partial<Settings> | null; updatedAt: number | null };
+    const data = (await res.json()) as { settings: unknown; updatedAt: number | null };
     if (!data.settings || !data.updatedAt) return false;
     if (data.updatedAt <= localUpdatedAt()) return false;
+    // Validate the account copy BEFORE anything reaches storage: a malformed
+    // blob is refused outright rather than overwriting this device's settings
+    // with defaults under the server's newer stamp.
+    const merged = normalizeSettings(data.settings);
+    if (!merged) return false;
     // The server copy never carries the device-local uploaded background
     // (stripped on push); keep this device's upload across the adoption.
     const localBg = loadSettings().customBgData;
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data.settings));
-    } catch {}
-    const merged = loadSettings(); // re-validate through the normal parser
     if (!merged.customBgData && localBg) merged.customBgData = localBg;
     writeLocalSettings(merged, data.updatedAt);
     return true;

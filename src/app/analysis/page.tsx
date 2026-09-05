@@ -76,6 +76,9 @@ function AnalysisInner() {
   const [analysis, setAnalysis] = useState<BoardAnalysis | null>(null);
   const [fenInput, setFenInput] = useState("");
   const [fenError, setFenError] = useState(false);
+  // Ply count at which a ?moves= deep link stopped replaying (a move the
+  // plain board could not reproduce), or null when the whole line loaded.
+  const [truncatedAt, setTruncatedAt] = useState<number | null>(null);
   const analysisTimer = useRef<number | null>(null);
 
   // Deep links: ?fen= loads a position, ?moves= replays a UCI list.
@@ -99,14 +102,19 @@ function AnalysisInner() {
       if (uciList) {
         let b = initialBoard();
         const parsed: Move[] = [];
+        let stopped = false;
         for (const uci of uciList.split(/[,\s]+/).filter(Boolean)) {
           const m = generateMoves(b).find((x) => moveToUCI(x) === uci);
-          if (!m) break;
+          if (!m) {
+            stopped = true;
+            break;
+          }
           parsed.push(m);
           b = makeMove(b, m);
         }
         setMoves(parsed);
         setViewPly(parsed.length);
+        setTruncatedAt(stopped ? parsed.length : null);
       }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -194,6 +202,7 @@ function AnalysisInner() {
     setMoves([]);
     setViewPly(0);
     setAnalysis(null);
+    setTruncatedAt(null);
   };
 
   const reset = () => {
@@ -203,6 +212,7 @@ function AnalysisInner() {
     setViewPly(0);
     setFenInput("");
     setFenError(false);
+    setTruncatedAt(null);
   };
 
   const downloadPgn = () => {
@@ -315,6 +325,12 @@ function AnalysisInner() {
 
           <div className="plate min-h-[120px] p-4">
             <div className="text-[11px] tracking-[0.14em] text-parchment-400">Moves</div>
+            {truncatedAt != null && (
+              <p role="status" className="mt-2 text-[13px] leading-snug text-oxblood-glow">
+                Line truncated at move {Math.floor(truncatedAt / 2) + 1}: this game used cards the
+                analysis board cannot replay.
+              </p>
+            )}
             {moves.length === 0 ? (
               <p className="mt-2 text-sm text-parchment-400">
                 Play moves for either side, or load a FEN below.

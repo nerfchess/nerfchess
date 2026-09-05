@@ -25,6 +25,7 @@ export function DockRow({
   open,
   onToggle,
   usable,
+  hasTarget,
   onStartUse,
   finePointer,
   reduceMotion,
@@ -38,6 +39,10 @@ export function DockRow({
   onToggle: () => void;
   /** Mine only: this activated card can fire right now. */
   usable?: boolean;
+  /** Mine only: activating this card asks for a board target. A drag onto
+   *  the board only makes sense then; a zero-target card fires the instant
+   *  it is armed, so its drag start is refused and the click path plays it. */
+  hasTarget?: boolean;
   onStartUse?: (index: number) => void;
   finePointer?: boolean;
   reduceMotion?: boolean;
@@ -184,8 +189,21 @@ export function DockRow({
           <Button
             tone="leaf"
             size="xs"
+            // Second input path (additive): drag the usable card onto a
+            // highlighted board square to pick it. Native HTML5 drag is
+            // separate from the board's pointer-drag, so the click flow is
+            // untouched. Drag-to-board is a desktop affordance: on touch
+            // browsers a draggable element swallows taps (held as a
+            // potential drag), which blocked this button on mobile.
             draggable={finePointer}
             onDragStart={(e) => {
+              // Arming a zero-target card activates it on the spot, so a
+              // drag that merely began would already have played it. Refuse
+              // the drag and let the click handle it.
+              if (!hasTarget) {
+                e.preventDefault();
+                return;
+              }
               e.dataTransfer.setData("application/x-nerf-card", String(index));
               e.dataTransfer.effectAllowed = "move";
               onStartUse?.(index);
@@ -216,43 +234,19 @@ export function DockRow({
           )}
           {/* Full description, always readable without hovering. */}
           <p className="text-[12px] leading-snug text-parchment-300">{def.description}</p>
-          {activatable &&
-            (canUse ? (
-              <Button
-                tone="leaf"
-                size="xs"
-                // Second input path (additive): drag the usable card onto a
-                // highlighted board square to pick it. Native HTML5 drag is
-                // separate from the board's pointer-drag, so the click flow is
-                // untouched. Drag-to-board is a desktop affordance: on touch
-                // browsers a draggable element swallows taps (held as a
-                // potential drag), which blocked this button on mobile.
-                draggable={finePointer}
-                onDragStart={(e) => {
-                  e.dataTransfer.setData("application/x-nerf-card", String(index));
-                  e.dataTransfer.effectAllowed = "move";
-                  onStartUse?.(index);
-                }}
-                onClick={() => onStartUse?.(index)}
-                // Thumb-sized below sm (44px is the touch floor); compact on
-                // desktop where the pointer is precise. btn-leaf, not the
-                // frosted btn-glass: this Use control rests in the dock for the
-                // whole game, and resting glass is reserved for the draft
-                // lock-in peak only (design system §5).
-                className="mt-1.5 touch-manipulation px-2.5 py-1 text-[13px] font-semibold tracking-wide max-sm:min-h-[44px] max-sm:w-full max-sm:px-4 max-sm:text-[14px] sm:cursor-grab sm:active:cursor-grabbing"
-              >
-                Use
-              </Button>
-            ) : (
-              <button
-                type="button"
-                disabled
-                title="Your turn only"
-                className="mt-1.5 cursor-not-allowed rounded-[1px] border border-[color:var(--edge)] bg-white/[0.03] px-2.5 py-1 font-display text-[13px] tracking-wide text-parchment-400 max-sm:min-h-[44px] max-sm:w-full max-sm:px-4 max-sm:text-[14px]"
-              >
-                Use
-              </button>
-            ))}
+          {/* A usable row already carries its Use button in the header, so
+              the body only explains why an activatable card cannot fire yet.
+              Thumb-sized below sm (44px is the touch floor). */}
+          {activatable && !canUse && (
+            <button
+              type="button"
+              disabled
+              title="Your turn only"
+              className="mt-1.5 cursor-not-allowed rounded-[1px] border border-[color:var(--edge)] bg-white/[0.03] px-2.5 py-1 font-display text-[13px] tracking-wide text-parchment-400 max-sm:min-h-[44px] max-sm:w-full max-sm:px-4 max-sm:text-[14px]"
+            >
+              Use
+            </button>
+          )}
         </div>
       )}
     </motion.div>
