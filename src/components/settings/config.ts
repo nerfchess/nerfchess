@@ -201,6 +201,13 @@ export const SECTIONS: SectionConfig[] = [
         },
       },
       {
+        id: "effects3d",
+        label: "3D board effects",
+        hint: "Lasers, pillars and shatters drawn on the board with WebGL. Steps down for the session if frames drop",
+        group: "Effects",
+        control: { kind: "toggle", setting: "effects3d" },
+      },
+      {
         id: "fxDuration",
         label: "Card effect duration",
         hint: "How long card-use animations play, from snappy to lingering",

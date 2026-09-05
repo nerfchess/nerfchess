@@ -182,6 +182,9 @@ export interface Settings {
   // the server sync so the settings blob stays small). Wins over customBgUrl.
   customBgData: string;
   fxDuration: number; // 0.5..2, multiplies how long card/FX animations last
+  /** WebGL board effects (lasers, pillars, shatters). Default on; the layer
+   *  turns itself down for the session on slow frames. */
+  effects3d: boolean;
 }
 
 export const SETTINGS_CHANGED_EVENT = "nerfchess:settings-changed";
@@ -225,6 +228,7 @@ export const DEFAULT_SETTINGS: Settings = {
   customBgDim: 0.3,
   customBgData: "",
   fxDuration: 1,
+  effects3d: true,
 };
 const DEFAULT = DEFAULT_SETTINGS;
 
@@ -409,6 +413,7 @@ export function loadSettings(): Settings {
         typeof parsed.fxDuration === "number" && Number.isFinite(parsed.fxDuration)
           ? Math.max(0.5, Math.min(2, parsed.fxDuration))
           : DEFAULT.fxDuration,
+      effects3d: bool(parsed.effects3d, DEFAULT.effects3d),
     };
   } catch {}
   return { ...DEFAULT };

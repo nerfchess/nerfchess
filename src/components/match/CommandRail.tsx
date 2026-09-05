@@ -74,6 +74,7 @@ export interface CommandRailProps {
   footer?: ReactNode;
 }
 
+// The seat whose clock is running gets a hairline in the accent, nothing more.
 function GlowWrap({ charged, children }: { charged?: boolean; children: ReactNode }) {
   return (
     <div className={"rail-glow-wrap" + (charged ? " rail-glow-wrap--active" : "")}>{children}</div>
@@ -103,21 +104,8 @@ export function CommandRail({
         (collapsed ? "" : "lg:grid")
       }
     >
-      <div className="relative flex items-center justify-between gap-2 px-1 pb-2">
-        <span
-          className={
-            "flex items-center gap-1.5 font-display text-xs font-bold uppercase tracking-[0.14em] " +
-            MODE_INK[mode]
-          }
-        >
-          {/* A lit mode ember anchors the rail's identity at a glance. */}
-          <span
-            aria-hidden
-            className="h-1.5 w-1.5 shrink-0 rounded-full bg-current"
-            style={{ boxShadow: "0 0 8px 1px currentColor" }}
-          />
-          {MODE_LABEL[mode]}
-        </span>
+      <div className="relative flex items-center justify-between gap-2 border-b border-[color:var(--edge)] px-1 pb-2">
+        <span className={"text-[12px] uppercase tracking-[0.06em] " + MODE_INK[mode]}>{MODE_LABEL[mode]}</span>
         {subtitle && (
           <span className="min-w-0 truncate text-[12px] text-parchment-400">
             {subtitle}
@@ -131,7 +119,9 @@ export function CommandRail({
             onClick={onToggleCollapse}
             aria-label="Collapse side panel"
             title="Collapse side panel for a bigger board"
-            className="grid h-7 w-7 shrink-0 place-items-center text-parchment-300 hover:text-parchment-100">
+            size="xs"
+            iconOnly
+            className="shrink-0 text-parchment-300 hover:text-parchment-100">
             <svg
               width="13"
               height="13"
@@ -148,8 +138,6 @@ export function CommandRail({
             </svg>
           </Button>
         )}
-        {/* A gold gleam that occasionally travels the header hairline. */}
-        <span aria-hidden className="rail-header-sheen" />
       </div>
 
       <GlowWrap charged={opponentCharged}>{opponent}</GlowWrap>

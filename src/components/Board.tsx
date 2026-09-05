@@ -129,6 +129,7 @@ import { VfxLayer } from "./effects/vfx/VfxLayer";
 import { vfxPlay } from "./effects/vfx/vfxBus";
 import type { VfxPlay, VfxPoint } from "./effects/vfx/types";
 import { resolveCardVfx } from "./effects/vfxSpecs";
+import { Board3DLayer } from "./effects/board3d/Board3DLayer";
 import { resolveVfxSource } from "./effects/vfxSource";
 import type { SigPlaySlot } from "./effects/useSignatureQueue";
 import {
@@ -4548,6 +4549,9 @@ export function Board({
             card plays, drawn over the squares but under floating UI. The
             engine sleeps whenever nothing is animating. */}
         <VfxLayer onShake={vfxShake} />
+        {/* WebGL layer one step above the particles: lasers along a rank,
+            pillars, shatters. Loads three.js lazily and only when allowed. */}
+        <Board3DLayer />
         <div
           data-board-grid
           // touch-action must block the browser's own PAN gestures — without

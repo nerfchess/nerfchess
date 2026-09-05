@@ -33,6 +33,7 @@ import { BoardFrame } from "./stage";
 import { takeGamblingOutcome } from "./gamblingOutcome";
 import { LaserStrike, PieceShatter, Shockwave, QUAKE_CLASS, impactVars } from "./impact/impact";
 import "./gamblingPlays.css";
+import { Coin3D, Die3D } from "./gambling3d";
 
 /* ------------------------------------------------------------------------- */
 /* Outcome plumbing                                                           */
@@ -667,14 +668,7 @@ function HeadsOrTailsPlay({ lead, role, delayMs }: PlayProps) {
           {/* the thumb that launched it */}
           <path d="M36 84 q3 -5 8 -4" stroke={CREAM} strokeWidth={2} fill="none" strokeLinecap="round" />
         </g>
-        {/* toss, tumble, land on the true face */}
-        <g className="gsp-toss" style={d(delayMs + 120)}>
-          <g className="gsp-tumble" style={d(delayMs + 120)} transform="translate(50 62)">
-            <circle r={10} fill={GOLD} stroke={GOLD_EDGE} strokeWidth={1.5} />
-            <circle r={7.4} fill="none" stroke={GOLD_EDGE} strokeWidth={0.6} strokeDasharray="1.8 1.4" />
-            <text x={0} y={3.8} fontSize={10} fontWeight={800} fill="#8a5a10" textAnchor="middle">{face}</text>
-          </g>
-        </g>
+        {/* The toss itself is the 3D coin layered over this svg (below). */}
         {result === "heads" && (
           <>
             <g className="gsp-flash" style={d(delayMs + 1500)}><circle cx={50} cy={62} r={13} fill="#ffef9f" opacity={0.6} /></g>
@@ -693,6 +687,14 @@ function HeadsOrTailsPlay({ lead, role, delayMs }: PlayProps) {
           </>
         )}
       </svg>
+      {/* A real coin: two faces on a hinge, arcs up, spins, lands on the
+          face the engine rolled. Sits where the old flat disc did (50, 62). */}
+      <Coin3D
+        face={result === "heads" ? "heads" : result === "tails" ? "tails" : null}
+        delayMs={delayMs + 120}
+        size={40}
+        style={{ left: "calc(50% - 20px)", top: "calc(62% - 20px)" }}
+      />
       </Framed>
       <Slam rgb="127 160 224" atMs={delayMs + 950} laser={false} />
       <Slam rgb="255 215 106" atMs={delayMs + 1250} laser={false} />
@@ -1011,13 +1013,7 @@ function LoadedDicePlay({ lead, role, delayMs }: PlayProps) {
             </g>
           )}
         </g>
-        {/* the dice clatter across the felt and settle on the true faces */}
-        <g className="gsp-dice" style={d(delayMs + (rerolled ? 550 : 250))}>
-          <g transform="translate(41 52) scale(1.35)"><Die v={a} /></g>
-        </g>
-        <g className="gsp-dice" style={d(delayMs + (rerolled ? 700 : 400))}>
-          <g transform="translate(59 54) scale(1.35)"><Die v={b} /></g>
-        </g>
+        {/* the dice are real cubes (Die3D below); the felt keeps their spots */}
         {/* total badge */}
         <g className="gsp-pop" style={d(delayMs + 1750)}>
           <rect x={40} y={62} width={20} height={9} rx={2.2} fill={INK} stroke={win ? GREEN : GREY} strokeWidth={1} />
@@ -1041,6 +1037,9 @@ function LoadedDicePlay({ lead, role, delayMs }: PlayProps) {
           color={total == null ? GREY : boxcars ? GOLD : win ? GREEN : GREY}
         />
       </svg>
+      {/* Two cubes tumble in from the left and settle on the rolled faces. */}
+      <Die3D value={a} delayMs={delayMs + (rerolled ? 550 : 250)} size={30} style={{ left: "calc(41% - 15px)", top: "calc(52% - 15px)" }} />
+      <Die3D value={b} delayMs={delayMs + (rerolled ? 700 : 400)} size={30} style={{ left: "calc(59% - 15px)", top: "calc(54% - 15px)" }} />
       </Framed>
       <Slam rgb="224 75 99" atMs={delayMs + 980} laser={false} />
       <Slam rgb="224 75 99" atMs={delayMs + 1130} laser={false} />

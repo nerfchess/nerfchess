@@ -10,6 +10,8 @@ import { useFxHidden } from "@/lib/fxToggle";
 import { motionOff } from "@/lib/settings";
 import { createVfxEngine } from "./engine";
 import { onVfx } from "./vfxBus";
+import { board3dActive } from "@/lib/board3d";
+import { deriveDepth } from "../board3d/deriveDepth";
 
 export function VfxLayer({ onShake }: { onShake?: () => void } = {}) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -42,6 +44,16 @@ export function VfxLayer({ onShake }: { onShake?: () => void } = {}) {
     const unsubscribe = onVfx((spec) => {
       if (hiddenRef.current) return; // fx toggle: drop plays while hidden
       if (motionOff()) return; // animations off in Settings: drop all plays
+      // When the 3D layer is drawing this play's travel (a laser along the
+      // rank, say), keep only the impacts and aftermath here so the two
+      // layers never draw the same beam twice.
+      if (board3dActive()) {
+        const depth = deriveDepth(spec);
+        if (depth && depth.fallback === "canvas") {
+          engine.play({ ...spec, travel: "none" });
+          return;
+        }
+      }
       engine.play(spec);
     });
 

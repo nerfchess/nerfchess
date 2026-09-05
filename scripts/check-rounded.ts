@@ -66,6 +66,7 @@ const SHAPE_EXEMPT = [
   ".us-f-ignite", // usage-beat flame lick; the radius IS the shape
   ".us-f-bloom", // usage-beat petal blob; organic by design
   ".podium-petal", // a falling flower petal; the radius IS the shape
+  ".g3d-die__face", // a die is a rounded cube; the radius IS the shape
   '[class*="rounded"]', // the global enforcement rule itself
   "primitives.css", // passive VFX pips at 6-12% of the viewport
   "effects.css", // organic VFX blobs
