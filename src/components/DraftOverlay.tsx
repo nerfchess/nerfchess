@@ -1017,20 +1017,10 @@ export function DraftOverlay({
     return () => window.clearTimeout(id);
   }, [bankArmed]);
 
-  // Auto-tuck the minimized panel into its slim chip once it has clearly been
-  // seen, so it stops hogging the corner; any interaction (dragging,
-  // un-tucking, resolving) holds it open, and a fresh offer re-shows it via
-  // the deal effect above. Skip entirely once the user has pinned it open by
-  // re-opening the chip. Twelve seconds, not five: the old fuse tucked the
-  // panel while players were still reading their cards, which read as the
-  // draft "minimizing randomly".
-  useEffect(() => {
-    if (userPinnedRef.current) return;
-    if (!minimized || tucked || dragging) return;
-    if (chosen != null || banking || committedRef.current) return;
-    const id = window.setTimeout(() => setTucked(true), 12_000);
-    return () => window.clearTimeout(id);
-  }, [minimized, tucked, dragging, chosen, banking]);
+  // The compact panel never tucks itself away: once the draft has stepped
+  // into the corner it stays there, cards visible, until the player resolves
+  // it. (The old auto-tuck fuse was the "draft minimized randomly" complaint.)
+  // The slim chip below is only reachable by an explicit user action.
 
   const confirmCard = (i: number) => {
     if (chosen != null || banking || committedRef.current) return;

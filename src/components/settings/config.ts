@@ -25,6 +25,7 @@ export type Control =
   | { kind: "toggle"; setting: BoolKey }
   | { kind: "slider"; setting: NumKey; min: number; max: number; step: number; format?: (v: number) => string }
   | { kind: "animationSpeed"; options: Array<{ value: AnimationSpeed; label: string }> }
+  | { kind: "pieceAnimMs" }
   | { kind: "siteTheme" }
   | { kind: "soundTheme"; options: Array<{ value: SoundTheme; label: string }> }
   | { kind: "customBg" }
@@ -199,6 +200,13 @@ export const SECTIONS: SectionConfig[] = [
             { value: "normal", label: "Normal" },
           ],
         },
+      },
+      {
+        id: "pieceAnimMs",
+        label: "Piece glide",
+        hint: "How long a piece takes to slide between squares. 0 teleports",
+        group: "Motion",
+        control: { kind: "pieceAnimMs" },
       },
       {
         id: "effects3d",

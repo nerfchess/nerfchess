@@ -53,7 +53,7 @@ import { BUFF_BY_ID } from "@/engine/buffs/library";
 import { cloneBoard, findKing, isInCheck, makeMove, moveFromUCI, moveToUCI, positionKey } from "@/engine/board";
 import { activeRuleIds, fnv1a } from "@/engine/desync";
 import { draftCardNoun, turnCost } from "@/engine/buff";
-import { computeMoveRisks } from "@/engine/moveSafety";
+import { useDeferredMoveRisks } from "@/lib/useDeferredMoveRisks";
 import { loadSettings } from "@/lib/settings";
 import type { GameContext, Nerf } from "@/engine/nerf";
 import { IMPLEMENTED_BY_ID, openingNerfPool } from "@/engine/nerfs/library";
@@ -974,8 +974,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     playMoveSound(move, snapshot.board);
   }
 
-  // Server events. The server is authoritative: local moves are not applied
-  // until the websocket sends back an accepted move.
+  // Server events. The server is authoritative: a local move is shown
+  // optimistically (pendingLocalBoard) and confirmed, or rolled back, when the
+  // websocket answers.
   useEffect(() => {
     const off = session.on((e) => {
       if (e.type === "error") {
@@ -1442,12 +1443,12 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     () => (game && !game.result ? previewMovesFor(game, oppColor) : []),
     [game, oppColor],
   );
-  const moveRisks = useMemo(
-    () =>
-      uiSettings.moveRiskWarnings && game && game.board.turn === myColor
-        ? computeMoveRisks(game, moves)
-        : undefined,
-    [game, moves, myColor, uiSettings.moveRiskWarnings]
+  // Computed off the render path (idle callback) so the frame that lands the
+  // opponent's move never pays for 30 to 80 makeMove calls before it paints.
+  const moveRisks = useDeferredMoveRisks(
+    game,
+    moves,
+    uiSettings.moveRiskWarnings && !!game && game.board.turn === myColor,
   );
 
   useEffect(() => {
@@ -2135,18 +2136,23 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // variant, so a checked king stays red on the opponent's turn too. Buff-aware
   // on the live position (amazon-style empowered attacks count), plain test
   // while reviewing history.
+  //
+  // The optimistic board (my move, not yet acknowledged) is what gets tested
+  // when it exists, so the enemy king turns red the instant my piece lands
+  // rather than one round trip later.
   const checkSquares = useMemo(() => {
     if (!game || !uiSettings.checkHighlight) return EMPTY_SQUARES;
-    const checked = reviewBoard ?? game.board;
+    const checked = reviewBoard ?? pendingLocalBoard ?? game.board;
+    const liveGame = pendingLocalBoard && !reviewBoard ? { ...game, board: pendingLocalBoard } : game;
     const out: Square[] = [];
     for (const color of ["w", "b"] as const) {
-      const attacked = reviewBoard ? isInCheck(checked, color) : gameInCheck(game, color);
+      const attacked = reviewBoard ? isInCheck(checked, color) : gameInCheck(liveGame, color);
       if (!attacked) continue;
       const k = findKing(checked, color);
       if (k != null) out.push(k);
     }
     return out.length ? out : EMPTY_SQUARES;
-  }, [game, uiSettings.checkHighlight, reviewBoard]);
+  }, [game, uiSettings.checkHighlight, reviewBoard, pendingLocalBoard]);
 
   const onClaimWin = () => {
     if (!game || game.result) return;
@@ -3569,12 +3575,11 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           // server-side is there to take over for them.
           autoResolveOnExpire={false}
           onCardsReady={draftSeq.reportCardsReady}
-          // Never auto-minimize. The free window ending used to collapse the
-          // full draft into the side panel, which read as "the draft menu
-          // minimized for no reason"; the clock warning inside the overlay
-          // already says whose time is running. Only the player's own Hide
-          // moves the draft out of the way.
-          minimized={false}
+          // When the free window ends the draft steps aside into the corner
+          // panel: the board is playable again, the clock is charging, and the
+          // compact panel stays put (no auto-tuck, no auto-pick) until the
+          // player resolves it.
+          minimized={draftGraceOver}
           cardNoun={draftCardNoun(start.mode)}
           oppLockedIn={oppLockedIn && !oppDrafting}
           oppBanked={oppBanked}

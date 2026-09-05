@@ -55,11 +55,12 @@ const LEGACY_PIECE_COLOR_THEMES: Record<string, PieceColor> = {
 };
 
 export type AnimationSpeed = "off" | "fast" | "normal";
-export type SiteTheme = "dark" | "light" | "system";
+export type SiteTheme = "midnight" | "dark" | "light" | "system";
 export type SoundTheme = "lichess" | "classic";
 
-// The three site themes. Lichess ships a dark and a light palette and nothing
-// else; "system" simply follows the device and resolves to one of the two.
+// The site themes. Midnight (the default) is a navy take on Lichess's dark
+// ladder; dark is Lichess's own warm-grey palette; light is paper. "system"
+// follows the device and resolves to midnight or light.
 // `swatch` feeds the settings picker preview, `scheme` is the value for CSS
 // color-scheme, and `accent` is the one accent both palettes are built on
 // (Lichess blue), fed into the document by applyUiPrefs.
@@ -82,6 +83,16 @@ const BLUE_ACCENT: AccentDef = {
 
 // The light palette wants a slightly deeper blue so links clear WCAG AA on
 // white; mirrors the html[data-theme="light"] block in globals.css.
+// Midnight sits on navy, so the accent lifts a notch to keep clearing AA on
+// the darker, bluer panels; mirrors html[data-theme="midnight"] in globals.css.
+const BLUE_ACCENT_MIDNIGHT: AccentDef = {
+  accent: "#4c9ff0",
+  accentHi: "#6db2f5",
+  rgb: "76 159 240",
+  rgbHi: "109 178 245",
+  rgbDim: "51 118 186",
+};
+
 const BLUE_ACCENT_LIGHT: AccentDef = {
   accent: "#1b78d0",
   accentHi: "#3692e7",
@@ -100,9 +111,10 @@ export const SITE_THEMES: Record<
     accent: AccentDef;
   }
 > = {
-  dark:   { label: "Dark",   hint: "The default palette",  scheme: "dark",  swatch: { bg: "#161512", panel: "#262421", glow: "#3692e7" }, accent: BLUE_ACCENT },
-  light:  { label: "Light",  hint: "Paper and ink",        scheme: "light", swatch: { bg: "#edebe9", panel: "#ffffff", glow: "#1b78d0" }, accent: BLUE_ACCENT_LIGHT },
-  system: { label: "System", hint: "Follow your device",   scheme: "dark",  swatch: { bg: "#161512", panel: "#edebe9", glow: "#3692e7" }, accent: BLUE_ACCENT },
+  midnight: { label: "Midnight", hint: "Navy and steel, the default", scheme: "dark",  swatch: { bg: "#0f141c", panel: "#1a2130", glow: "#4c9ff0" }, accent: BLUE_ACCENT_MIDNIGHT },
+  dark:     { label: "Dark",     hint: "Lichess's warm grey",        scheme: "dark",  swatch: { bg: "#161512", panel: "#262421", glow: "#3692e7" }, accent: BLUE_ACCENT },
+  light:    { label: "Light",    hint: "Paper and ink",              scheme: "light", swatch: { bg: "#edebe9", panel: "#ffffff", glow: "#1b78d0" }, accent: BLUE_ACCENT_LIGHT },
+  system:   { label: "System",   hint: "Follow your device",         scheme: "dark",  swatch: { bg: "#0f141c", panel: "#edebe9", glow: "#4c9ff0" }, accent: BLUE_ACCENT_MIDNIGHT },
 };
 
 /** Site-theme ids that existed before the palette collapse, mapped onto the
@@ -114,7 +126,6 @@ const LEGACY_SITE_THEMES: Record<string, SiteTheme> = {
   sepia: "light",
   frost: "light",
   porcelain: "light",
-  midnight: "dark",
   void: "dark",
   abyss: "dark",
   ember: "dark",
@@ -167,6 +178,11 @@ export interface Settings {
   zenMode: boolean;
   lowTimeWarning: boolean; // ticking alert when the clock runs low
   animationSpeed: AnimationSpeed;
+  // How long a piece takes to glide between squares, in milliseconds. 0 is a
+  // teleport. Lichess's ladder is none / fast / normal / slow; we expose the
+  // number itself so a player can pick the exact feel. Reduced motion and
+  // animationSpeed "off" still force 0.
+  pieceAnimMs: number;
   uiSounds: boolean; // interface blips (piece select), separate from game sounds
   reducedMotion: boolean;
   // Honor the OS "prefers-reduced-motion" flag (OFF by default): when on and
@@ -188,6 +204,18 @@ export interface Settings {
 }
 
 export const SETTINGS_CHANGED_EVENT = "nerfchess:settings-changed";
+
+/** Upper bound for the piece glide. Lichess's "slow" is about 500ms; anything
+ *  past that stacks on network lag and reads as sluggish. */
+export const PIECE_ANIM_MAX_MS = 400;
+/** The presets the settings picker offers, Lichess's ladder in milliseconds. */
+export const PIECE_ANIM_PRESETS: Array<{ value: number; label: string }> = [
+  { value: 0, label: "Off" },
+  { value: 60, label: "60 ms" },
+  { value: 100, label: "100 ms" },
+  { value: 150, label: "150 ms" },
+  { value: 250, label: "250 ms" },
+];
 
 const STORAGE_KEY = "dc:settings-v1";
 export const DEFAULT_SETTINGS: Settings = {
@@ -218,9 +246,10 @@ export const DEFAULT_SETTINGS: Settings = {
   gameEndSound: true,
   soundEnabled: true,
   soundTheme: "lichess",
-  siteTheme: "dark",
+  siteTheme: "midnight",
   zenMode: false,
   animationSpeed: "normal",
+  pieceAnimMs: 100,
   uiSounds: true,
   reducedMotion: false,
   followSystemMotion: false,
@@ -403,6 +432,10 @@ export function loadSettings(): Settings {
         parsed.animationSpeed === "off" || parsed.animationSpeed === "fast" || parsed.animationSpeed === "normal"
           ? parsed.animationSpeed
           : DEFAULT.animationSpeed,
+      pieceAnimMs:
+        typeof parsed.pieceAnimMs === "number" && Number.isFinite(parsed.pieceAnimMs)
+          ? Math.max(0, Math.min(PIECE_ANIM_MAX_MS, Math.round(parsed.pieceAnimMs)))
+          : DEFAULT.pieceAnimMs,
       uiSounds: bool(parsed.uiSounds, DEFAULT.uiSounds),
       reducedMotion: bool(parsed.reducedMotion, DEFAULT.reducedMotion),
       followSystemMotion: bool(parsed.followSystemMotion, DEFAULT.followSystemMotion),
@@ -508,7 +541,7 @@ export function applyUiPrefs(s: Settings) {
     s.siteTheme === "system"
       ? window.matchMedia?.("(prefers-color-scheme: light)").matches
         ? "light"
-        : "dark"
+        : "midnight"
       : s.siteTheme;
   // color-scheme only accepts light/dark; every named theme maps to one.
   const scheme = SITE_THEMES[html.dataset.theme as SiteTheme]?.scheme ?? "dark";
@@ -518,7 +551,7 @@ export function applyUiPrefs(s: Settings) {
   // and a new one costs no CSS.
   if (scheme === "light") html.dataset.light = "on";
   else delete html.dataset.light;
-  const accent = (SITE_THEMES[html.dataset.theme as SiteTheme] ?? SITE_THEMES.dark).accent;
+  const accent = (SITE_THEMES[html.dataset.theme as SiteTheme] ?? SITE_THEMES.midnight).accent;
   html.style.setProperty("--accent", accent.accent);
   html.style.setProperty("--accent-hi", accent.accentHi);
   html.style.setProperty("--gold", accent.accent);
@@ -532,6 +565,11 @@ export function applyUiPrefs(s: Settings) {
   const osReducedMotion =
     s.followSystemMotion && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
   html.dataset.anim = s.reducedMotion || osReducedMotion ? "off" : s.animationSpeed;
+  // The piece glide, read imperatively by the board when it starts a slide.
+  html.style.setProperty(
+    "--piece-anim-ms",
+    String(s.reducedMotion || osReducedMotion || s.animationSpeed === "off" ? 0 : s.pieceAnimMs),
+  );
   // Zen mode: one flag on <html> that zen.css hangs every hide rule off, so a
   // page never has to know whether zen is on.
   if (s.zenMode) html.dataset.zen = "on";
@@ -578,8 +616,8 @@ export function motionOff(): boolean {
  *  resolvers below need it, and applyUiPrefs computed it inline. */
 export function effectiveSiteTheme(s: Settings): SiteTheme {
   if (s.siteTheme !== "system") return s.siteTheme;
-  if (typeof window === "undefined") return "dark";
-  return window.matchMedia?.("(prefers-color-scheme: light)").matches ? "light" : "dark";
+  if (typeof window === "undefined") return "midnight";
+  return window.matchMedia?.("(prefers-color-scheme: light)").matches ? "light" : "midnight";
 }
 
 /** The board to actually draw. Board and piece prefs are plain named sets

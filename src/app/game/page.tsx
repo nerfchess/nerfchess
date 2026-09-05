@@ -70,7 +70,7 @@ import { NerfCard } from "@/components/NerfCard";
 import { makeSeed } from "@/engine/rng";
 import { BoardState, Color, Move, Square } from "@/engine/types";
 import { cloneBoard, findKing, isInCheck, makeMove, moveToUCI } from "@/engine/board";
-import { computeMoveRisks } from "@/engine/moveSafety";
+import { useDeferredMoveRisks } from "@/lib/useDeferredMoveRisks";
 import { SETTINGS_CHANGED_EVENT, loadSettings } from "@/lib/settings";
 import { CompactSiteHeader } from "@/components/SiteHeader";
 import { useZenHotkey } from "@/lib/useZenMode";
@@ -716,6 +716,12 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
         setOfferPausedAt(null);
         setOfferDeadline(null);
       });
+    } else if (offer && offerPausedAt != null && offerOnClockIndex === offer.index) {
+      // The free window ran out with the offer still open: the draft steps
+      // into the corner panel and the clock resumes. The paused span is still
+      // free; only the thinking from here on is charged.
+      turnStartedAtRef.current += Date.now() - Math.max(offerPausedAt, turnStartedAtRef.current);
+      queueMicrotask(() => setOfferPausedAt(null));
     }
   }, [game, myColor, offerPausedAt, offerOnClockIndex]);
 
@@ -819,12 +825,12 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
     () => (game && !game.result ? previewMovesFor(game, myColor === "w" ? "b" : "w") : []),
     [game, myColor],
   );
-  const moveRisks = useMemo(
-    () =>
-      uiSettings.moveRiskWarnings && game && game.board.turn === myColor
-        ? computeMoveRisks(game, moves)
-        : undefined,
-    [game, moves, myColor, uiSettings.moveRiskWarnings]
+  // Computed off the render path (idle callback) so the frame that lands the
+  // opponent's move never pays for 30 to 80 makeMove calls before it paints.
+  const moveRisks = useDeferredMoveRisks(
+    game,
+    moves,
+    uiSettings.moveRiskWarnings && !!game && game.board.turn === myColor,
   );
 
   useEffect(() => {
@@ -2303,13 +2309,13 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
           bankedBonus={!!myOffer.banked}
           deadline={offerDeadline}
           onCardsReady={draftSeq.reportCardsReady}
-          // Deterministic timeout recovery: never park a bot-game draft in a
-          // "resolve me later" pending panel. When the decision window ends the
-          // overlay auto-confirms the selected card, or picks one of the offered
-          // cards at random (never Skip & Bank). onPick then clears the offer,
-          // and the pause-resume effect shifts the turn start forward so the
-          // pick still cost no clock time. minimized is therefore always off.
-          minimized={false}
+          // Same rule as online: when the decision window ends the draft
+          // shrinks into the corner panel and the player's clock runs, but
+          // nothing is ever picked for them. The compact panel stays until
+          // they choose.
+          autoResolveOnExpire={false}
+          onExpire={() => setOfferOnClockIndex(myOffer.index)}
+          minimized={liveOfferOnClock}
           cardNoun={draftCardNoun(game.buffs?.mode)}
           onPick={(i) => {
             const before = game.buffs?.players[myColor].buffs.length ?? 0;
