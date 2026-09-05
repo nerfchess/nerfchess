@@ -3477,7 +3477,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
       )}
       {showWaitingOverlay &&
         (draftGraceOver || waitingMinimized ? (
-          <div className="pointer-events-none fixed inset-x-0 top-3 z-40 flex justify-center px-4 sm:top-4">
+          <div className="pointer-events-none fixed inset-x-0 bottom-[calc(5.75rem+env(safe-area-inset-bottom))] z-40 flex justify-center px-4 sm:bottom-auto sm:top-4">
             <motion.div
               initial={{ opacity: 0, y: -12 }}
               animate={{ opacity: 1, y: 0 }}

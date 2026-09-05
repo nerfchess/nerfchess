@@ -43,6 +43,8 @@
     "test:card-similarity": "npx -y tsx scripts/audit-card-similarity.ts",
     "test:retired": "npx -y tsx scripts/check-retired.ts",
     "test:board3d": "node scripts/check-board3d-gates.cjs",
+    "gen:glyphs": "node scripts/gen-card-glyphs.mjs",
+    "test:glyphs": "node scripts/gen-card-glyphs.mjs --check",
     "gen:retirements": "npx -y tsx scripts/propose-retirements.ts --write",
     "test:passive-motifs": "npx -y tsx scripts/audit-passive-motifs.ts",
     "test:nerf-categories": "npx -y tsx scripts/test-nerf-categories.ts",
