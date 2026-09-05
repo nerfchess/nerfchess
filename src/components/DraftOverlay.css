@@ -1937,14 +1937,8 @@ html[data-anim="off"] .dpv * {
 }
 
 /* --- Draft chamber material ------------------------------------------------
-   The draft is the loudest moment in the product and it was built entirely
-   from warm literals — umber stone, orange torchlight, an ember rim — so the
-   chamber looked identical whichever theme you were in. Under Neon the page
-   went indigo, the rail went magenta, and then the draft opened a gold-lit
-   dungeon on top of it.
-
-   These are the chamber's material, defaulted to exactly today's values (the
-   ten tints are unchanged), and claimed per flagship below. */
+   The chamber's material, in one set of values for the whole site: stone,
+   edge, torch, ember, and the light catching the top edge. */
 :root {
   --chamber-stone-hi: #241c12;
   --chamber-stone-mid: #1b1510;
@@ -1955,74 +1949,13 @@ html[data-anim="off"] .dpv * {
   --chamber-light: 255 178 96;   /* the top edge catching the light */
 }
 
-/* Obsidian: the chamber IS the theme — volcanic glass with magma in the
-   joints. The one flagship whose default look was already close. */
-html[data-theme="obsidian"] {
-  --chamber-stone-hi: #241a26;
-  --chamber-stone-mid: #191220;
-  --chamber-stone-lo: #120d18;
-  --chamber-edge: 150 110 78;
-  --chamber-torch: 255 122 47;
-  --chamber-ember: 224 74 30;
-  --chamber-light: 255 196 150;
-}
-
-/* Porcelain: a lit gallery, not a crypt. The stone goes to glazed white and
-   the "torchlight" becomes cool daylight from the foot, because an orange
-   glow on paper reads as a stain rather than as light. */
-html[data-theme="porcelain"] {
-  --chamber-stone-hi: #ffffff;
-  --chamber-stone-mid: #f6f3ed;
-  --chamber-stone-lo: #e8e3d8;
-  --chamber-edge: 42 85 184;
-  --chamber-torch: 120 160 235;
-  --chamber-ember: 42 85 184;
-  --chamber-light: 255 255 255;
-}
-
-/* Neon: an arcade cabinet. Indigo housing, magenta tubing at the foot, cyan
-   bleed at the crown. */
-html[data-theme="neon"] {
-  --chamber-stone-hi: #241a3c;
-  --chamber-stone-mid: #18102c;
-  --chamber-stone-lo: #0f0820;
-  --chamber-edge: 255 69 200;
-  --chamber-torch: 255 69 200;
-  --chamber-ember: 150 60 255;
-  --chamber-light: 255 150 224;
-}
-
-/* Jade: a lacquer room. No torch at all — the light is a wide, even sheen,
-   which is the whole point of the theme. */
-html[data-theme="jade"] {
-  --chamber-stone-hi: #15352b;
-  --chamber-stone-mid: #0e261e;
-  --chamber-stone-lo: #071a14;
-  --chamber-edge: 47 191 159;
-  --chamber-torch: 90 214 187;
-  --chamber-ember: 34 150 124;
-  --chamber-light: 160 235 214;
-}
-
-/* Aurora: polar rock under a violet sky. The glow comes from ABOVE here
-   rather than pooling at the foot, so the crown reads lit. */
-html[data-theme="aurora"] {
-  --chamber-stone-hi: #1c2745;
-  --chamber-stone-mid: #131b34;
-  --chamber-stone-lo: #0a1022;
-  --chamber-edge: 157 123 255;
-  --chamber-torch: 157 123 255;
-  --chamber-ember: 110 150 235;
-  --chamber-light: 200 214 255;
-}
-
 /* --- Light-scheme chamber --------------------------------------------------
-   Porcelain turns the chamber into a lit white gallery, and every text and
-   torch treatment in this file was written for dark stone: cream lettering
+   The light theme turns the chamber into a lit white gallery, and every text
+   and torch treatment in this file was written for dark stone: cream lettering
    with a black shadow and a warm bloom, which on paper is white on white.
 
-   Keyed to html[data-light] rather than to porcelain, so a second light
-   flagship costs nothing — the same rule the palette blocks already follow. */
+   Keyed to html[data-light] rather than to a theme id, the same rule the
+   palette blocks already follow. */
 html[data-light] .dgn-title {
   color: var(--text-primary);
   /* No bloom. On paper the letterform IS the contrast; a glow only smears it. */

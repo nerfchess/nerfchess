@@ -13,20 +13,13 @@ export type BoardTheme =
   | "walnut"
   | "tournament"
   | "forest"
-  | "midnight"
-  | "obsidianBasalt"
-  | "porcelainGlaze"
-  | "neonGrid"
-  | "jadeLacquer"
-  | "auroraIce";
+  | "midnight";
 
-/** What the SETTING stores, which is a superset of what a board can BE.
- *  "auto" and "custom" are deliberately not members of BoardTheme: keeping the
- *  types distinct is what makes the compiler point at every place that indexes
- *  BOARD_THEMES directly, instead of silently falling through to the ?? wood
- *  fallback and exporting a clip with the wrong board. "custom" draws the
- *  player's own two hexes (customBoardLight/customBoardDark). */
-export type BoardThemePref = BoardTheme | "auto" | "custom";
+/** What the SETTING stores. Board and piece prefs used to carry "auto" and
+ *  "custom" on top of the named sets; both are gone now (one default theme, no
+ *  flagships to resolve to, no hex pickers), so the pref IS the named set. The
+ *  alias stays so call sites read the same. */
+export type BoardThemePref = BoardTheme;
 
 export type PieceTheme =
   | "classic"
@@ -47,52 +40,18 @@ export type PieceTheme =
   | "lichessPirouetti"
   | "lichessStaunty";
 
-/** As BoardThemePref, for the piece set: "custom" draws the inline pieces with
- *  the player's own four hexes (customPieceWFill and friends). */
-export type PieceThemePref = PieceTheme | "auto" | "custom";
+/** As BoardThemePref, for the piece set. */
+export type PieceThemePref = PieceTheme;
 
-export type AccentColor = "auto" | "blue" | "green" | "amber" | "rose";
 export type AnimationSpeed = "off" | "fast" | "normal";
-export type SiteTheme =
-  | "dark"
-  | "light"
-  | "system"
-  | "midnight"
-  | "void"
-  | "abyss"
-  | "ember"
-  | "crimson"
-  | "moss"
-  | "nebula"
-  | "sakura"
-  | "honey"
-  | "pine"
-  | "wine"
-  | "storm"
-  // Light tints: paper palettes, same deal as the dark tints above.
-  | "sepia"
-  | "frost"
-  // Flagships: full identities rather than tints (see FLAGSHIP_THEMES).
-  | "obsidian"
-  | "porcelain"
-  | "neon"
-  | "jade"
-  | "aurora";
+export type SiteTheme = "dark" | "light" | "system";
 export type SoundTheme = "lichess" | "classic";
 
-// How a piece travels between squares. The Board reads this straight off
-// html.dataset.pieceMotion (absent = glide), so "glide" clears the attribute.
-export type PieceMotion = "glide" | "hop" | "warp" | "stomp";
-
-// Full site themes. "dark" and "light" are the two originals; the rest are
-// dark variants expressed purely as CSS-variable override blocks in
-// globals.css keyed on html[data-theme="<id>"] (they inherit every dark-theme
-// style, so only the palette shifts — no per-component work). `swatch` feeds
-// the settings picker preview; `scheme` is the value for CSS color-scheme.
-// Each theme also names its own ACCENT (the color of primary buttons, links,
-// and "act here" chrome). It applies while the accent setting sits on "auto",
-// which is the default, so every theme shows its own accent out of the box;
-// picking an explicit accent color overrides every theme.
+// The three site themes. Lichess ships a dark and a light palette and nothing
+// else; "system" simply follows the device and resolves to one of the two.
+// `swatch` feeds the settings picker preview, `scheme` is the value for CSS
+// color-scheme, and `accent` is the one accent both palettes are built on
+// (Lichess blue), fed into the document by applyUiPrefs.
 export interface AccentDef {
   accent: string;
   accentHi: string;
@@ -101,92 +60,24 @@ export interface AccentDef {
   rgbDim: string;
 }
 
-// The one shared accent: gold. Every dark theme uses it (accents stay identical
-// across themes so the game reads consistently); mirrors --accent-gold in
-// globals.css. The Nerf-red / Buff-blue / positive-green accents are fixed in
-// CSS and never vary by theme, so they need no entry here.
-const GOLD_ACCENT: AccentDef = {
-  accent: "#d4a017",
-  accentHi: "#e6b52e",
-  rgb: "212 160 23",
-  rgbHi: "230 181 46",
-  rgbDim: "168 126 18",
+// Lichess blue: links, primary buttons, focus rings. One accent, everywhere.
+const BLUE_ACCENT: AccentDef = {
+  accent: "#3692e7",
+  accentHi: "#4a9fee",
+  rgb: "54 146 231",
+  rgbHi: "74 159 238",
+  rgbDim: "42 111 176",
 };
 
-// Light theme needs a DARKER gold so gold text/links clear WCAG AA on the light
-// background (the bright gold above is only ~1.9:1 there). Mirrors the light
-// override block in globals.css; paired with --text-on-accent:#fff so gold
-// button fills stay legible with white type.
-const LIGHT_GOLD_ACCENT: AccentDef = {
-  accent: "#806310",
-  accentHi: "#96751a",
-  rgb: "128 99 16",
-  rgbHi: "150 117 26",
-  rgbDim: "96 74 12",
+// The light palette wants a slightly deeper blue so links clear WCAG AA on
+// white; mirrors the html[data-theme="light"] block in globals.css.
+const BLUE_ACCENT_LIGHT: AccentDef = {
+  accent: "#1b78d0",
+  accentHi: "#3692e7",
+  rgb: "27 120 208",
+  rgbHi: "54 146 231",
+  rgbDim: "20 92 160",
 };
-
-// --- Flagship accents -------------------------------------------------------
-// The tinted themes above all share gold, because a tint is only a background
-// change and the game must read the same in all of them. A FLAGSHIP is the
-// other kind of theme: it owns its own primary accent, its own material, and
-// its own motion, so it reads as a different room rather than a filter.
-//
-// What a flagship must NOT touch: the three SEMANTIC accents. Nerf red, Buff
-// blue and positive green carry meaning — mode identity, danger, a win — and a
-// theme that recolours them would be lying about the game. So every flagship
-// hue below is deliberately clear of that red/blue/green, and the board stays
-// on whatever board theme the player picked.
-const EMBER_ACCENT: AccentDef = {
-  accent: "#ff7a2f",
-  accentHi: "#ff9a5c",
-  rgb: "255 122 47",
-  rgbHi: "255 154 92",
-  rgbDim: "200 90 28",
-};
-// Cobalt for the paper flagship. Both steps are dark enough to clear WCAG AA
-// as text on porcelain (6.3:1 and 4.9:1), the way LIGHT_GOLD_ACCENT does.
-const COBALT_ACCENT: AccentDef = {
-  accent: "#2a55b8",
-  accentHi: "#3466d6",
-  rgb: "42 85 184",
-  rgbHi: "52 102 214",
-  rgbDim: "30 64 144",
-};
-const MAGENTA_ACCENT: AccentDef = {
-  accent: "#ff45c8",
-  accentHi: "#ff78d8",
-  rgb: "255 69 200",
-  rgbHi: "255 120 216",
-  rgbDim: "216 30 163",
-};
-const JADE_ACCENT: AccentDef = {
-  accent: "#2fbf9f",
-  accentHi: "#5ad6bb",
-  rgb: "47 191 159",
-  rgbHi: "90 214 187",
-  rgbDim: "34 150 124",
-};
-const AURORA_ACCENT: AccentDef = {
-  accent: "#9d7bff",
-  accentHi: "#b79dff",
-  rgb: "157 123 255",
-  rgbHi: "183 157 255",
-  rgbDim: "122 90 224",
-};
-
-/** The five flagship ids, in picker order. Everything else in SITE_THEMES is a
- *  tint of the base palette. */
-export const FLAGSHIP_THEMES: SiteTheme[] = [
-  "obsidian",
-  "porcelain",
-  "neon",
-  "jade",
-  "aurora",
-];
-
-export function isFlagshipTheme(theme: SiteTheme): boolean {
-  return FLAGSHIP_THEMES.includes(theme);
-}
 
 export const SITE_THEMES: Record<
   SiteTheme,
@@ -196,52 +87,43 @@ export const SITE_THEMES: Record<
     scheme: "dark" | "light";
     swatch: { bg: string; panel: string; glow: string };
     accent: AccentDef;
-    /** The board and piece set this theme wants when the player's own setting
-     *  is on "auto". Only the flagships set these: a tint is a repaint and has
-     *  no business touching the board. */
-    board?: BoardTheme;
-    piece?: PieceTheme;
   }
 > = {
-  dark:     { label: "Classic",  hint: "Warm charcoal, the base palette", scheme: "dark",  swatch: { bg: "#1a1512", panel: "#241d18", glow: "#d4a017" }, accent: GOLD_ACCENT },
-  light:    { label: "Light",    hint: "Paper and ink",                   scheme: "light", swatch: { bg: "#e9e6de", panel: "#f4f1ea", glow: "#806310" }, accent: LIGHT_GOLD_ACCENT },
-  system:   { label: "System",   hint: "Follow your device",              scheme: "dark",  swatch: { bg: "#1a1512", panel: "#e9e6de", glow: "#d4a017" }, accent: GOLD_ACCENT },
-  midnight: { label: "Midnight", hint: "Blue-grey steel",                 scheme: "dark",  swatch: { bg: "#101318", panel: "#1a1f27", glow: "#d4a017" }, accent: GOLD_ACCENT },
-  void:     { label: "Void",     hint: "Crushed near-black, OLED-friendly", scheme: "dark", swatch: { bg: "#0d0b0a", panel: "#141210", glow: "#d4a017" }, accent: GOLD_ACCENT },
-  abyss:    { label: "Abyss",    hint: "Deep-sea teal",                   scheme: "dark",  swatch: { bg: "#0c1517", panel: "#152327", glow: "#d4a017" }, accent: GOLD_ACCENT },
-  ember:    { label: "Ember",    hint: "Smoldering red-brown",            scheme: "dark",  swatch: { bg: "#170f0e", panel: "#261815", glow: "#d4a017" }, accent: GOLD_ACCENT },
-  crimson:  { label: "Crimson",  hint: "Deep blood red",                  scheme: "dark",  swatch: { bg: "#150a0c", panel: "#291015", glow: "#d4a017" }, accent: GOLD_ACCENT },
-  moss:     { label: "Moss",     hint: "Deep forest green",               scheme: "dark",  swatch: { bg: "#0f140e", panel: "#1a2318", glow: "#d4a017" }, accent: GOLD_ACCENT },
-  nebula:   { label: "Nebula",   hint: "Violet dusk",                     scheme: "dark",  swatch: { bg: "#131019", panel: "#1f1929", glow: "#d4a017" }, accent: GOLD_ACCENT },
-  sakura:   { label: "Sakura",   hint: "Dusk pink over dark wood",        scheme: "dark",  swatch: { bg: "#171013", panel: "#251821", glow: "#d4a017" }, accent: GOLD_ACCENT },
-  honey:    { label: "Honey",    hint: "Warm amber-brown",                scheme: "dark",  swatch: { bg: "#171208", panel: "#262012", glow: "#d4a017" }, accent: GOLD_ACCENT },
-  pine:     { label: "Pine",     hint: "Blue-green conifer dusk",         scheme: "dark",  swatch: { bg: "#0d1412", panel: "#16221e", glow: "#d4a017" }, accent: GOLD_ACCENT },
-  wine:     { label: "Wine",     hint: "Deep plum cellar",                scheme: "dark",  swatch: { bg: "#140d14", panel: "#221626", glow: "#d4a017" }, accent: GOLD_ACCENT },
-  storm:    { label: "Storm",    hint: "Cold slate grey",                 scheme: "dark",  swatch: { bg: "#101214", panel: "#1a1e22", glow: "#d4a017" }, accent: GOLD_ACCENT },
-  sepia:    { label: "Sepia",    hint: "Aged paper, warm cream",          scheme: "light", swatch: { bg: "#ece4d2", panel: "#f6f0e2", glow: "#806310" }, accent: LIGHT_GOLD_ACCENT },
-  frost:    { label: "Frost",    hint: "Cool paper, blue-white",          scheme: "light", swatch: { bg: "#e3e8ee", panel: "#f1f4f8", glow: "#806310" }, accent: LIGHT_GOLD_ACCENT },
+  dark:   { label: "Dark",   hint: "The default palette",  scheme: "dark",  swatch: { bg: "#161512", panel: "#262421", glow: "#3692e7" }, accent: BLUE_ACCENT },
+  light:  { label: "Light",  hint: "Paper and ink",        scheme: "light", swatch: { bg: "#edebe9", panel: "#ffffff", glow: "#1b78d0" }, accent: BLUE_ACCENT_LIGHT },
+  system: { label: "System", hint: "Follow your device",   scheme: "dark",  swatch: { bg: "#161512", panel: "#edebe9", glow: "#3692e7" }, accent: BLUE_ACCENT },
+};
 
-  // --- Flagships: own accent, own material, own motion. ---
-  obsidian:  { label: "Obsidian",  hint: "Volcanic glass, molten ember",   scheme: "dark",  swatch: { bg: "#0b0a0c", panel: "#16131a", glow: "#ff7a2f" }, accent: EMBER_ACCENT, board: "obsidianBasalt", piece: "steel" },
-  porcelain: { label: "Porcelain", hint: "Glazed white, cobalt ink",       scheme: "light", swatch: { bg: "#eeeae2", panel: "#fbf9f5", glow: "#2a55b8" }, accent: COBALT_ACCENT, board: "porcelainGlaze", piece: "classic" },
-  neon:      { label: "Neon",      hint: "Arcade indigo, hot magenta",     scheme: "dark",  swatch: { bg: "#0a0714", panel: "#150e28", glow: "#ff45c8" }, accent: MAGENTA_ACCENT, board: "neonGrid", piece: "steel" },
-  jade:      { label: "Jade",      hint: "Lacquer green, jade inlay",      scheme: "dark",  swatch: { bg: "#08110f", panel: "#0f1f1a", glow: "#2fbf9f" }, accent: JADE_ACCENT, board: "jadeLacquer", piece: "forest" },
-  aurora:    { label: "Aurora",    hint: "Polar night, violet light",      scheme: "dark",  swatch: { bg: "#070d18", panel: "#0e172a", glow: "#9d7bff" }, accent: AURORA_ACCENT, board: "auroraIce", piece: "ivory" },
+/** Site-theme ids that existed before the palette collapse, mapped onto the
+ *  theme that replaces them. A stored value from an old build must still load:
+ *  without this every one of those users would trip the SITE_THEMES guard in
+ *  loadSettings and be silently reset. Light-scheme ids land on "light", the
+ *  rest on "dark". */
+const LEGACY_SITE_THEMES: Record<string, SiteTheme> = {
+  sepia: "light",
+  frost: "light",
+  porcelain: "light",
+  midnight: "dark",
+  void: "dark",
+  abyss: "dark",
+  ember: "dark",
+  crimson: "dark",
+  moss: "dark",
+  nebula: "dark",
+  sakura: "dark",
+  honey: "dark",
+  pine: "dark",
+  wine: "dark",
+  storm: "dark",
+  obsidian: "dark",
+  neon: "dark",
+  jade: "dark",
+  aurora: "dark",
 };
 
 export interface Settings {
   boardTheme: BoardThemePref;
   pieceTheme: PieceThemePref;
-  // The two square hexes drawn when boardTheme is "custom". Kept even while a
-  // named board is active so switching back to Custom restores the mix.
-  customBoardLight: string;
-  customBoardDark: string;
-  // The four inline-piece hexes drawn when pieceTheme is "custom".
-  customPieceWFill: string;
-  customPieceWStroke: string;
-  customPieceBFill: string;
-  customPieceBStroke: string;
-  pieceMotion: PieceMotion; // how pieces travel between squares
   volume: number; // 0..1
   moveRiskWarnings: boolean; // yellow/red move-dot warnings for self-loss / check
   autoQueen: boolean; // skip the promotion picker and always promote to queen
@@ -267,46 +149,30 @@ export interface Settings {
   soundEnabled: boolean; // master switch for all game audio
   soundTheme: SoundTheme; // lichess sample set, or the classic synth clicks
   siteTheme: SiteTheme; // dark, light, or follow the OS
-  compactMode: boolean; // tighter interface density
   lowTimeWarning: boolean; // ticking alert when the clock runs low
-  uiScale: number; // 0.85..1.15, multiplies the root font size
-  accentColor: AccentColor;
   animationSpeed: AnimationSpeed;
   uiSounds: boolean; // interface blips (piece select), separate from game sounds
-  highContrast: boolean;
   reducedMotion: boolean;
   // Honor the OS "prefers-reduced-motion" flag automatically (on by default):
   // when the system asks for calm, animations stand down exactly as if
   // reducedMotion were on. Turning this off restores the old app-authoritative
   // behavior for players who reduce motion system-wide but still want plays.
   followSystemMotion: boolean;
-  fpsCounter: boolean;
   customBgUrl: string; // full-page background image URL; empty string = none
   customBgDim: number; // 0..0.6 dark overlay over the custom background
   // Uploaded full-page background as a data URL (device-local: stripped from
   // the server sync so the settings blob stays small). Wins over customBgUrl.
   customBgData: string;
   fxDuration: number; // 0.5..2, multiplies how long card/FX animations last
-  // Performance mode: drops the most paint-costly decorative layers (backdrop
-  // blurs, the full-screen paper-grain blend, fixed-attachment backgrounds)
-  // for smooth play on low-end devices. Auto-enabled once on weak hardware,
-  // then user-overridable. Functional visuals (board, pieces, effects) stay.
-  perfMode: boolean;
 }
 
 export const SETTINGS_CHANGED_EVENT = "nerfchess:settings-changed";
 
 const STORAGE_KEY = "dc:settings-v1";
 export const DEFAULT_SETTINGS: Settings = {
-  boardTheme: "auto",
-  pieceTheme: "auto",
-  customBoardLight: "#ecd9ae",
-  customBoardDark: "#8a5a38",
-  customPieceWFill: "#f2ead8",
-  customPieceWStroke: "#3b332a",
-  customPieceBFill: "#2b2b31",
-  customPieceBStroke: "#d8c9a8",
-  pieceMotion: "glide",
+  // Lichess defaults: the brown board and the cburnett piece set.
+  boardTheme: "brown",
+  pieceTheme: "lichessCburnett",
   volume: 0.8,
   moveRiskWarnings: true,
   autoQueen: false,
@@ -331,37 +197,20 @@ export const DEFAULT_SETTINGS: Settings = {
   soundEnabled: true,
   soundTheme: "lichess",
   siteTheme: "dark",
-  compactMode: false,
-  uiScale: 1,
-  accentColor: "auto",
   animationSpeed: "normal",
   uiSounds: true,
-  highContrast: false,
   reducedMotion: false,
   followSystemMotion: true,
-  fpsCounter: false,
   customBgUrl: "",
   customBgDim: 0.3,
   customBgData: "",
   fxDuration: 1,
-  perfMode: false,
 };
 const DEFAULT = DEFAULT_SETTINGS;
 
-export const ACCENT_THEMES: Record<
-  Exclude<AccentColor, "auto">,
-  { label: string; accent: string; accentHi: string; rgb: string; rgbHi: string; rgbDim: string }
-> = {
-  blue:  { label: "Blue",  accent: "#3692e7", accentHi: "#4a9fee", rgb: "54 146 231",  rgbHi: "74 159 238",  rgbDim: "42 111 176" },
-  green: { label: "Green", accent: "#629924", accentHi: "#7bb52f", rgb: "98 153 36",   rgbHi: "123 181 47",  rgbDim: "74 116 27" },
-  amber: { label: "Amber", accent: "#d8b56e", accentHi: "#e6bf6a", rgb: "216 181 110", rgbHi: "230 191 106", rgbDim: "168 138 79" },
-  rose:  { label: "Rose",  accent: "#c66860", accentHi: "#dc7a72", rgb: "198 104 96",  rgbHi: "220 122 114", rgbDim: "150 76 70" },
-};
-
 export const BOARD_THEMES: Record<BoardTheme, { light: string; dark: string; label: string }> = {
-  // The default board: parchment light / walnut dark, matching --board-light /
-  // --board-dark in globals.css so the board reads as part of the warm site
-  // palette (never the old blue-grey squares).
+  // Brown is the default, the same two squares Lichess ships. The rest are the
+  // usual named alternatives.
   wood:       { light: "#ecd9ae", dark: "#8a5a38", label: "Wood" },
   brown:      { light: "#f0d9b5", dark: "#b58863", label: "Brown" },
   walnut:     { light: "#e0c39a", dark: "#7a5230", label: "Walnut" },
@@ -374,16 +223,6 @@ export const BOARD_THEMES: Record<BoardTheme, { light: string; dark: string; lab
   midnight:   { light: "#9fa6b2", dark: "#3a3f4b", label: "Midnight" },
   purple:     { light: "#e6dcf0", dark: "#8877b3", label: "Purple" },
   rose:       { light: "#f5e2dd", dark: "#c27f77", label: "Rose" },
-  // The four boards the flagship themes ask for on "auto". They are ordinary
-  // entries, not a parallel system, so anyone can pick Obsidian's basalt board
-  // without running the Obsidian theme. Each keeps a wide light/dark split so
-  // the pieces stay readable on it — a themed board that swallowed a piece
-  // would be a worse bug than a board that clashes.
-  obsidianBasalt:  { light: "#c9bcae", dark: "#4a3f42", label: "Basalt" },
-  porcelainGlaze:  { light: "#f7f5f0", dark: "#a8b0c4", label: "Glaze" },
-  neonGrid:        { light: "#b9a6d8", dark: "#42256b", label: "Grid" },
-  jadeLacquer:     { light: "#dfe4c8", dark: "#2f5f4c", label: "Lacquer" },
-  auroraIce:       { light: "#dbe6f5", dark: "#495a80", label: "Polar" },
 };
 
 export const PIECE_THEMES: Record<
@@ -414,15 +253,6 @@ export const PIECE_THEMES: Record<
 
 function bool(v: unknown, fallback: boolean): boolean {
   return typeof v === "boolean" ? v : fallback;
-}
-
-/** Validate a user-supplied color for the custom board/piece fields: a plain
- *  six-digit hex (what <input type="color"> emits), nothing else, so the value
- *  can be dropped into an inline CSS custom property without escaping. */
-export function sanitizeHexColor(v: unknown, fallback: string): string {
-  if (typeof v !== "string") return fallback;
-  const hex = v.trim().toLowerCase();
-  return /^#[0-9a-f]{6}$/.test(hex) ? hex : fallback;
 }
 
 export const CUSTOM_BG_URL_MAX = 400;
@@ -456,6 +286,14 @@ export function sanitizeCustomBgData(v: unknown): string {
   return v;
 }
 
+/** Read a stored site-theme id, translating anything from before the palette
+ *  collapse onto the theme that replaced it. */
+function readSiteTheme(v: unknown): SiteTheme {
+  if (typeof v !== "string") return DEFAULT.siteTheme;
+  if (v in SITE_THEMES) return v as SiteTheme;
+  return LEGACY_SITE_THEMES[v] ?? DEFAULT.siteTheme;
+}
+
 export function loadSettings(): Settings {
   if (typeof window === "undefined") return { ...DEFAULT };
   try {
@@ -463,35 +301,16 @@ export function loadSettings(): Settings {
     if (!raw) return { ...DEFAULT };
     const parsed = JSON.parse(raw) as Partial<Settings>;
     return {
+      // "auto" and "custom" were legal stored values before the board and piece
+      // pickers were simplified; both now fall through to the default.
       boardTheme:
-        // "auto" and "custom" have to pass this guard explicitly: they are
-        // legal stored values but not keys of BOARD_THEMES, so without them
-        // every such user would be reset to the default on the next settings
-        // pull from the server.
-        parsed.boardTheme === "auto" ||
-        parsed.boardTheme === "custom" ||
-        (parsed.boardTheme && parsed.boardTheme in BOARD_THEMES)
+        parsed.boardTheme && parsed.boardTheme in BOARD_THEMES
           ? (parsed.boardTheme as BoardThemePref)
           : DEFAULT.boardTheme,
       pieceTheme:
-        parsed.pieceTheme === "auto" ||
-        parsed.pieceTheme === "custom" ||
-        (parsed.pieceTheme && parsed.pieceTheme in PIECE_THEMES)
+        parsed.pieceTheme && parsed.pieceTheme in PIECE_THEMES
           ? (parsed.pieceTheme as PieceThemePref)
           : DEFAULT.pieceTheme,
-      customBoardLight: sanitizeHexColor(parsed.customBoardLight, DEFAULT.customBoardLight),
-      customBoardDark: sanitizeHexColor(parsed.customBoardDark, DEFAULT.customBoardDark),
-      customPieceWFill: sanitizeHexColor(parsed.customPieceWFill, DEFAULT.customPieceWFill),
-      customPieceWStroke: sanitizeHexColor(parsed.customPieceWStroke, DEFAULT.customPieceWStroke),
-      customPieceBFill: sanitizeHexColor(parsed.customPieceBFill, DEFAULT.customPieceBFill),
-      customPieceBStroke: sanitizeHexColor(parsed.customPieceBStroke, DEFAULT.customPieceBStroke),
-      pieceMotion:
-        parsed.pieceMotion === "glide" ||
-        parsed.pieceMotion === "hop" ||
-        parsed.pieceMotion === "warp" ||
-        parsed.pieceMotion === "stomp"
-          ? parsed.pieceMotion
-          : DEFAULT.pieceMotion,
       volume: typeof parsed.volume === "number" ? Math.max(0, Math.min(1, parsed.volume)) : DEFAULT.volume,
       moveRiskWarnings: bool(parsed.moveRiskWarnings, DEFAULT.moveRiskWarnings),
       autoQueen: bool(parsed.autoQueen, DEFAULT.autoQueen),
@@ -521,28 +340,16 @@ export function loadSettings(): Settings {
         parsed.soundTheme === "lichess" || parsed.soundTheme === "classic"
           ? parsed.soundTheme
           : DEFAULT.soundTheme,
-      siteTheme:
-        parsed.siteTheme && parsed.siteTheme in SITE_THEMES
-          ? (parsed.siteTheme as SiteTheme)
-          : DEFAULT.siteTheme,
-      compactMode: bool(parsed.compactMode, DEFAULT.compactMode),
-      uiScale:
-        typeof parsed.uiScale === "number"
-          ? Math.max(0.85, Math.min(1.15, parsed.uiScale))
-          : DEFAULT.uiScale,
-      accentColor:
-        parsed.accentColor === "auto" || (parsed.accentColor && parsed.accentColor in ACCENT_THEMES)
-          ? (parsed.accentColor as AccentColor)
-          : DEFAULT.accentColor,
+      // A theme id from an old build maps onto its replacement rather than
+      // resetting the user to the default (see LEGACY_SITE_THEMES).
+      siteTheme: readSiteTheme(parsed.siteTheme),
       animationSpeed:
         parsed.animationSpeed === "off" || parsed.animationSpeed === "fast" || parsed.animationSpeed === "normal"
           ? parsed.animationSpeed
           : DEFAULT.animationSpeed,
       uiSounds: bool(parsed.uiSounds, DEFAULT.uiSounds),
-      highContrast: bool(parsed.highContrast, DEFAULT.highContrast),
       reducedMotion: bool(parsed.reducedMotion, DEFAULT.reducedMotion),
       followSystemMotion: bool(parsed.followSystemMotion, DEFAULT.followSystemMotion),
-      fpsCounter: bool(parsed.fpsCounter, DEFAULT.fpsCounter),
       customBgUrl: sanitizeCustomBgUrl(parsed.customBgUrl),
       customBgDim: clampDim(parsed.customBgDim, DEFAULT.customBgDim),
       customBgData: sanitizeCustomBgData(parsed.customBgData),
@@ -550,11 +357,6 @@ export function loadSettings(): Settings {
         typeof parsed.fxDuration === "number" && Number.isFinite(parsed.fxDuration)
           ? Math.max(0.5, Math.min(2, parsed.fxDuration))
           : DEFAULT.fxDuration,
-      // No hardware sniff: animations and full visuals run everywhere by
-      // default. When a device actually struggles, the runtime lag watcher
-      // (LagWatch in SettingsBootstrap) offers performance mode instead of
-      // silently degrading anything.
-      perfMode: bool(parsed.perfMode, DEFAULT.perfMode),
     };
   } catch {}
   return { ...DEFAULT };
@@ -638,15 +440,11 @@ export async function pullSettingsFromServer(): Promise<boolean> {
   }
 }
 
-/** Push the interface-wide preferences (scale, accent, motion, contrast) into
- *  the document so every page picks them up. */
+/** Push the interface-wide preferences (theme, accent, motion, background)
+ *  into the document so every page picks them up. */
 export function applyUiPrefs(s: Settings) {
   if (typeof document === "undefined") return;
   const html = document.documentElement;
-  // Compact mode tightens the whole interface by shrinking the rem base a
-  // notch; it stacks with the UI scale preference.
-  const scale = s.uiScale * (s.compactMode ? 0.92 : 1);
-  html.style.fontSize = scale === 1 ? "" : `${16 * scale}px`;
   html.style.setProperty("--board-cap", `${Math.round(720 * s.boardSize)}px`);
   html.style.setProperty("--piece-fit", s.largerPieces ? "97%" : "88%");
   html.dataset.theme =
@@ -663,11 +461,7 @@ export function applyUiPrefs(s: Settings) {
   // and a new one costs no CSS.
   if (scheme === "light") html.dataset.light = "on";
   else delete html.dataset.light;
-  const theme = SITE_THEMES[html.dataset.theme as SiteTheme] ?? SITE_THEMES.dark;
-  const accent =
-    s.accentColor === "auto"
-      ? theme.accent
-      : (ACCENT_THEMES[s.accentColor as Exclude<AccentColor, "auto">] ?? theme.accent);
+  const accent = (SITE_THEMES[html.dataset.theme as SiteTheme] ?? SITE_THEMES.dark).accent;
   html.style.setProperty("--accent", accent.accent);
   html.style.setProperty("--accent-hi", accent.accentHi);
   html.style.setProperty("--gold", accent.accent);
@@ -681,14 +475,6 @@ export function applyUiPrefs(s: Settings) {
   const osReducedMotion =
     s.followSystemMotion && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
   html.dataset.anim = s.reducedMotion || osReducedMotion ? "off" : s.animationSpeed;
-  html.dataset.contrast = s.highContrast ? "high" : "normal";
-  // Piece travel style: the Board reads this attribute directly, and absent
-  // means glide, so the default keeps the DOM quiet.
-  if (s.pieceMotion !== "glide") html.dataset.pieceMotion = s.pieceMotion;
-  else delete html.dataset.pieceMotion;
-  // Performance mode: gates the heaviest decorative paint in globals.css.
-  if (s.perfMode) html.dataset.perf = "low";
-  else delete html.dataset.perf;
   // FX duration multiplier: CSS-driven card/board animations read this var
   // (calc(<base> * var(--fx-dur, 1))); the canvas VFX engine reads the same
   // setting through its play specs.
@@ -735,37 +521,21 @@ export function effectiveSiteTheme(s: Settings): SiteTheme {
   return window.matchMedia?.("(prefers-color-scheme: light)").matches ? "light" : "dark";
 }
 
-/** The board to actually draw. On "auto" a flagship supplies its own; a tint
- *  supplies none and falls back to wood, which is what "auto" meant before any
- *  theme had an opinion. An explicit pick always wins: a player who chose
- *  Green gets Green in every theme. "custom" has no named board, so callers
- *  that need one (the clip exporter) get the wood fallback; the live board
- *  colors come from boardColors(), which honors the custom hexes. */
+/** The board to actually draw. Board and piece prefs are plain named sets
+ *  now, so both resolvers are the identity; they stay so call sites (the clip
+ *  exporter, the settings pickers) read the same as before. */
 export function resolveBoardTheme(s: Settings): BoardTheme {
-  if (s.boardTheme === "auto") return SITE_THEMES[effectiveSiteTheme(s)]?.board ?? "wood";
-  if (s.boardTheme === "custom") return "wood";
   return s.boardTheme;
 }
 
-/** As resolveBoardTheme, for the piece set ("custom" falls back to classic
- *  for callers that need a named set; applyPieceColors honors the hexes). */
+/** As resolveBoardTheme, for the piece set. */
 export function resolvePieceTheme(s: Settings): PieceTheme {
-  if (s.pieceTheme === "auto") return SITE_THEMES[effectiveSiteTheme(s)]?.piece ?? "classic";
-  if (s.pieceTheme === "custom") return "classic";
   return s.pieceTheme;
 }
 
-/** The two square colors the board should actually paint, with the "custom"
- *  pref resolved to the player's own hexes and everything else to its named
- *  BOARD_THEMES entry. */
+/** The two square colors the board should actually paint. */
 export function boardColors(s: Settings): { light: string; dark: string } {
-  if (s.boardTheme === "custom") {
-    return {
-      light: sanitizeHexColor(s.customBoardLight, DEFAULT.customBoardLight),
-      dark: sanitizeHexColor(s.customBoardDark, DEFAULT.customBoardDark),
-    };
-  }
-  const t = BOARD_THEMES[resolveBoardTheme(s)] ?? BOARD_THEMES.wood;
+  const t = BOARD_THEMES[resolveBoardTheme(s)] ?? BOARD_THEMES.brown;
   return { light: t.light, dark: t.dark };
 }
 
@@ -780,34 +550,22 @@ export function applyBoardColors(s: Settings) {
   root.setProperty("--sq-dark", c.dark);
 }
 
-/** As applyBoardColors, for the piece set: "custom" means the inline-drawn
- *  pieces with the player's own four hexes; anything else defers to
- *  applyPieceTheme with the resolved named set. */
+/** As applyBoardColors, for the piece set. */
 export function applyPieceColors(s: Settings) {
   if (typeof document === "undefined") return;
-  if (s.pieceTheme !== "custom") {
-    applyPieceTheme(resolvePieceTheme(s));
-    return;
-  }
-  const html = document.documentElement;
-  const root = html.style;
-  root.setProperty("--piece-w-fill", sanitizeHexColor(s.customPieceWFill, DEFAULT.customPieceWFill));
-  root.setProperty("--piece-w-stroke", sanitizeHexColor(s.customPieceWStroke, DEFAULT.customPieceWStroke));
-  root.setProperty("--piece-b-fill", sanitizeHexColor(s.customPieceBFill, DEFAULT.customPieceBFill));
-  root.setProperty("--piece-b-stroke", sanitizeHexColor(s.customPieceBStroke, DEFAULT.customPieceBStroke));
-  html.dataset.pieceSource = "inline";
+  applyPieceTheme(resolvePieceTheme(s));
 }
 
 export function applyBoardTheme(theme: BoardTheme) {
   if (typeof document === "undefined") return;
-  const t = BOARD_THEMES[theme] ?? BOARD_THEMES.wood;
+  const t = BOARD_THEMES[theme] ?? BOARD_THEMES.brown;
   document.documentElement.style.setProperty("--sq-light", t.light);
   document.documentElement.style.setProperty("--sq-dark", t.dark);
 }
 
 export function applyPieceTheme(theme: PieceTheme) {
   if (typeof document === "undefined") return;
-  const t = PIECE_THEMES[theme] ?? PIECE_THEMES.classic;
+  const t = PIECE_THEMES[theme] ?? PIECE_THEMES.lichessCburnett;
   const html = document.documentElement;
   const root = document.documentElement.style;
   root.setProperty("--piece-w-fill", t.wFill);

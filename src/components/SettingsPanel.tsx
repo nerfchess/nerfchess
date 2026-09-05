@@ -7,8 +7,6 @@ import type { CSSProperties, ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { ChevronDown, ChevronLeft, ChevronRight, X } from "lucide-react";
 import {
-  ACCENT_THEMES,
-  AccentColor,
   BOARD_THEMES,
   BoardTheme,
   CUSTOM_BG_DATA_MAX,
@@ -19,13 +17,7 @@ import {
   SITE_THEMES,
   SiteTheme,
   applyUiPrefs,
-  isFlagshipTheme,
   loadSettings,
-  resolveBoardTheme,
-  resolvePieceTheme,
-  type BoardThemePref,
-  type PieceMotion,
-  type PieceThemePref,
   sanitizeCustomBgUrl,
   saveSettings,
   Settings,
@@ -40,7 +32,6 @@ import {
   GhostButton,
   Select,
   Slider,
-  Swatches,
   Toggle,
 } from "@/components/settings/controls";
 import "./SettingsPanel.css";
@@ -152,27 +143,6 @@ export function SettingsPanel({ open, onClose, liveGame }: Props) {
         );
       case "account":
         return <AccountSettings />;
-      case "accentColor":
-        return (
-          <Swatches
-            colors={[
-              {
-                // "Auto" follows whichever theme is active (its swatch shows
-                // the current theme's own accent).
-                id: "auto",
-                color: (SITE_THEMES[settings.siteTheme] ?? SITE_THEMES.dark).accent.accent,
-                label: "Theme",
-              },
-              ...(Object.keys(ACCENT_THEMES) as Exclude<AccentColor, "auto">[]).map((id) => ({
-                id: id as string,
-                color: ACCENT_THEMES[id].accent,
-                label: ACCENT_THEMES[id].label,
-              })),
-            ]}
-            selected={settings.accentColor}
-            onSelect={(id) => update({ accentColor: id as AccentColor })}
-          />
-        );
       case "customBg":
         return (
           <CustomBackgroundControl
@@ -304,13 +274,6 @@ export function SettingsPanel({ open, onClose, liveGame }: Props) {
               {activeSection.rows.map((row, i) => {
                 const prevGroup = activeSection.rows[i - 1]?.group;
                 const opensGroup = row.group != null && row.group !== prevGroup;
-                // The theme-defaults reset lives right under the Appearance
-                // section's Theme group (site theme + accent), not in the
-                // shared config: it is a panel affordance, not a setting row.
-                const closesThemeGroup =
-                  activeSection.id === "appearance" &&
-                  row.group === "Theme" &&
-                  activeSection.rows[i + 1]?.group !== "Theme";
                 return (
                   <Fragment key={row.id}>
                     {opensGroup && (
@@ -328,37 +291,9 @@ export function SettingsPanel({ open, onClose, liveGame }: Props) {
                         control={renderControl(row.control, row.label)}
                       />
                     </div>
-                    {closesThemeGroup && (
-                      <div className="pb-2">
-                        <GhostButton
-                          label="Reset accent, board, and pieces to theme defaults"
-                          onClick={() =>
-                            update({ accentColor: "auto", boardTheme: "auto", pieceTheme: "auto" })
-                          }
-                        />
-                      </div>
-                    )}
                   </Fragment>
                 );
               })}
-              {/* Piece motion joins the section's Motion rows. Built here
-                  rather than in the shared config: it is a bespoke 4-chip
-                  picker like the theme grids, not a generic control kind. */}
-              {activeSection.id === "board" && (
-                <div className="border-t border-[color:var(--edge)]">
-                  <SettingRow
-                    label="Piece motion"
-                    hint="How pieces travel between squares"
-                    stacked
-                    control={
-                      <PieceMotionPicker
-                        value={settings.pieceMotion}
-                        onChange={(m) => update({ pieceMotion: m })}
-                      />
-                    }
-                  />
-                </div>
-              )}
             </div>
           )}
         </div>
@@ -385,14 +320,9 @@ const pickerCardClass = (selected: boolean) =>
     ? "border-gold/80 bg-gold/10 shadow-[0_0_16px_-8px_rgb(var(--accent-hi-rgb)/0.55)]"
     : "border-[color:var(--edge)] hover:border-[color:var(--edge-strong)] hover:bg-white/[0.03]";
 
-/** Full-site theme picker: a swatch card per theme showing the page background,
- *  a floating panel chip, and the theme's glow color — so each mood previews at
- *  a glance before it's applied. */
-// Themes come in two kinds and the picker says so, because they promise
-// different things. A flagship changes the accent, the material and the motion;
-// a tint only shifts the background. Fifteen identical tiles in one grid would
-// hide that, and a player picking "Neon" expecting a repaint would be surprised
-// by how much moves.
+/** Site theme picker: three cards, dark / light / system. Each shows the page
+ *  background, a panel chip and the accent, so the choice previews at a glance
+ *  before it is applied. */
 function SiteThemePicker({
   value,
   onChange,
@@ -400,9 +330,7 @@ function SiteThemePicker({
   value: SiteTheme;
   onChange: (theme: SiteTheme) => void;
 }) {
-  const all = Object.keys(SITE_THEMES) as SiteTheme[];
-  const flagships = all.filter((k) => isFlagshipTheme(k));
-  const tints = all.filter((k) => !isFlagshipTheme(k));
+  const ids = Object.keys(SITE_THEMES) as SiteTheme[];
 
   // Hover-to-preview: resting on a card for a beat repaints the whole page in
   // that theme (applyUiPrefs with the hovered id over the real settings), and
@@ -456,8 +384,8 @@ function SiteThemePicker({
     onChange(k);
   };
 
-  const grid = (ids: SiteTheme[]) => (
-    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+  return (
+    <div className="grid grid-cols-3 gap-2">
       {ids.map((k) => {
         const t = SITE_THEMES[k];
         const selected = value === k;
@@ -483,7 +411,7 @@ function SiteThemePicker({
             }
           >
             {selected && <SelectedGem />}
-            {/* Miniature page: background wash, a panel chip, a glow dot. */}
+            {/* Miniature page: background wash, a panel chip, an accent dot. */}
             <span
               className="relative block h-12 w-full"
               style={{ background: t.swatch.bg }}
@@ -495,7 +423,7 @@ function SiteThemePicker({
               />
               <span
                 className="absolute bottom-2 right-2 h-2 w-2 rounded-full"
-                style={{ background: t.swatch.glow, boxShadow: `0 0 8px 1px ${t.swatch.glow}` }}
+                style={{ background: t.swatch.glow }}
               />
             </span>
             <span className="block px-2 py-1.5">
@@ -507,25 +435,6 @@ function SiteThemePicker({
           </button>
         );
       })}
-    </div>
-  );
-
-  return (
-    <div className="space-y-4">
-      <div>
-        <div className="smallcaps text-[10px] text-parchment-400">Flagship</div>
-        <p className="mb-2 mt-0.5 text-[12px] leading-snug text-parchment-500">
-          Its own accent, surface and motion, down to the draft chests.
-        </p>
-        {grid(flagships)}
-      </div>
-      <div>
-        <div className="smallcaps text-[10px] text-parchment-400">Tints</div>
-        <p className="mb-2 mt-0.5 text-[12px] leading-snug text-parchment-500">
-          The base palette in a different shade.
-        </p>
-        {grid(tints)}
-      </div>
     </div>
   );
 }
@@ -707,32 +616,7 @@ function PickerDisclosure({
   );
 }
 
-/** A labelled native color input with the house border. Fires on every change
- *  while the picker drags, so the bound vars repaint live. */
-function ColorField({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  return (
-    <label className="flex min-h-[36px] cursor-pointer items-center justify-between gap-2 rounded-[1px] border border-[color:var(--edge)] px-2 py-1 transition-colors hover:border-[color:var(--edge-strong)]">
-      <span className="min-w-0 truncate text-[12px] text-parchment-400">{label}</span>
-      <input
-        type="color"
-        value={value}
-        aria-label={label}
-        onChange={(e) => onChange(e.target.value)}
-        className="h-7 w-10 shrink-0 cursor-pointer border border-[color:var(--edge-strong)] bg-transparent p-0.5"
-      />
-    </label>
-  );
-}
-
-/** The board-theme swatch grid — a live control that spans a full row. */
+/** The board-theme swatch grid, a live control that spans a full row. */
 function BoardThemePicker({
   settings,
   onChange,
@@ -741,13 +625,7 @@ function BoardThemePicker({
   onChange: (patch: Partial<Settings>) => void;
 }) {
   const value = settings.boardTheme;
-  // "Auto" previews the board it would RESOLVE to, not a blank swatch: the
-  // player should be able to see what they are choosing.
-  const resolved = resolveBoardTheme(loadSettings());
-  const current =
-    value === "custom"
-      ? { light: settings.customBoardLight, dark: settings.customBoardDark, label: "Custom" }
-      : BOARD_THEMES[value === "auto" ? resolved : value];
+  const current = BOARD_THEMES[value] ?? BOARD_THEMES.brown;
   return (
     <PickerDisclosure
       prompt="Choose board theme"
@@ -762,92 +640,36 @@ function BoardThemePicker({
       }
     >
       <div className="grid grid-cols-2 gap-2">
-      <button
-        onClick={() => onChange({ boardTheme: "auto" })}
-        aria-pressed={value === "auto"}
-        className={
-          "press relative col-span-2 flex min-h-[44px] items-center gap-2.5 rounded-[1px] border p-2 transition-colors " +
-          pickerCardClass(value === "auto")
-        }
-      >
-        {value === "auto" && <SelectedGem />}
-        <span aria-hidden className="grid h-7 w-7 shrink-0 grid-cols-2 grid-rows-2 overflow-hidden rounded-sm">
-          <span style={{ background: BOARD_THEMES[resolved].light }} />
-          <span style={{ background: BOARD_THEMES[resolved].dark }} />
-          <span style={{ background: BOARD_THEMES[resolved].dark }} />
-          <span style={{ background: BOARD_THEMES[resolved].light }} />
-        </span>
-        <span className="min-w-0 text-left">
-          <span className="block font-display text-[13px]">Match theme</span>
-          <span className="block text-[12px] text-parchment-400">
-            Currently {BOARD_THEMES[resolved].label}
-          </span>
-        </span>
-      </button>
-      {(Object.keys(BOARD_THEMES) as BoardTheme[]).map((k) => {
-        const t = BOARD_THEMES[k];
-        const selected = value === k;
-        return (
-          <button
-            key={k}
-            onClick={() => onChange({ boardTheme: k })}
-            aria-pressed={selected}
-            className={
-              "press relative flex min-h-[44px] items-center gap-2.5 rounded-[1px] border p-2 transition-colors " +
-              pickerCardClass(selected)
-            }
-          >
-            {selected && <SelectedGem />}
-            <span className="grid h-7 w-7 shrink-0 grid-cols-2 grid-rows-2 overflow-hidden rounded-sm">
-              <span style={{ background: t.light }} />
-              <span style={{ background: t.dark }} />
-              <span style={{ background: t.dark }} />
-              <span style={{ background: t.light }} />
-            </span>
-            <span className="font-display text-[13px] text-parchment">{t.label}</span>
-          </button>
-        );
-      })}
-      <button
-        onClick={() => onChange({ boardTheme: "custom" })}
-        aria-pressed={value === "custom"}
-        className={
-          "press relative col-span-2 flex min-h-[44px] items-center gap-2.5 rounded-[1px] border p-2 transition-colors " +
-          pickerCardClass(value === "custom")
-        }
-      >
-        {value === "custom" && <SelectedGem />}
-        <span aria-hidden className="grid h-7 w-7 shrink-0 grid-cols-2 grid-rows-2 overflow-hidden rounded-sm">
-          <span style={{ background: settings.customBoardLight }} />
-          <span style={{ background: settings.customBoardDark }} />
-          <span style={{ background: settings.customBoardDark }} />
-          <span style={{ background: settings.customBoardLight }} />
-        </span>
-        <span className="min-w-0 text-left">
-          <span className="block font-display text-[13px]">Custom</span>
-          <span className="block text-[12px] text-parchment-400">Pick your own two squares</span>
-        </span>
-      </button>
-      {value === "custom" && (
-        <div className="col-span-2 grid grid-cols-2 gap-2">
-          <ColorField
-            label="Light squares"
-            value={settings.customBoardLight}
-            onChange={(v) => onChange({ customBoardLight: v })}
-          />
-          <ColorField
-            label="Dark squares"
-            value={settings.customBoardDark}
-            onChange={(v) => onChange({ customBoardDark: v })}
-          />
-        </div>
-      )}
+        {(Object.keys(BOARD_THEMES) as BoardTheme[]).map((k) => {
+          const t = BOARD_THEMES[k];
+          const selected = value === k;
+          return (
+            <button
+              key={k}
+              onClick={() => onChange({ boardTheme: k })}
+              aria-pressed={selected}
+              className={
+                "press relative flex min-h-[44px] items-center gap-2.5 rounded-[1px] border p-2 transition-colors " +
+                pickerCardClass(selected)
+              }
+            >
+              {selected && <SelectedGem />}
+              <span className="grid h-7 w-7 shrink-0 grid-cols-2 grid-rows-2 overflow-hidden rounded-sm">
+                <span style={{ background: t.light }} />
+                <span style={{ background: t.dark }} />
+                <span style={{ background: t.dark }} />
+                <span style={{ background: t.light }} />
+              </span>
+              <span className="font-display text-[13px] text-parchment">{t.label}</span>
+            </button>
+          );
+        })}
       </div>
     </PickerDisclosure>
   );
 }
 
-/** The piece-set swatch grid — a live control that spans a full row. */
+/** The piece-set swatch grid, a live control that spans a full row. */
 function PieceThemePicker({
   settings,
   onChange,
@@ -856,18 +678,7 @@ function PieceThemePicker({
   onChange: (patch: Partial<Settings>) => void;
 }) {
   const value = settings.pieceTheme;
-  const resolvedPiece = resolvePieceTheme(loadSettings());
-  const current =
-    value === "custom"
-      ? {
-          label: "Custom",
-          wFill: settings.customPieceWFill,
-          wStroke: settings.customPieceWStroke,
-          bFill: settings.customPieceBFill,
-          bStroke: settings.customPieceBStroke,
-          assetSet: undefined,
-        }
-      : PIECE_THEMES[value === "auto" ? resolvedPiece : value];
+  const current = PIECE_THEMES[value] ?? PIECE_THEMES.lichessCburnett;
   return (
     <PickerDisclosure
       prompt="Choose piece set"
@@ -897,166 +708,55 @@ function PieceThemePicker({
       }
     >
       <div className="grid grid-cols-2 gap-2">
-      <button
-        onClick={() => onChange({ pieceTheme: "auto" })}
-        aria-pressed={value === "auto"}
-        className={
-          "press relative col-span-2 flex min-h-[44px] items-center gap-2.5 rounded-[1px] border p-2 transition-colors " +
-          pickerCardClass(value === "auto")
-        }
-      >
-        {value === "auto" && <SelectedGem />}
-        <span className="min-w-0 text-left">
-          <span className="block font-display text-[13px]">Match theme</span>
-          <span className="block text-[12px] text-parchment-400">
-            Currently {PIECE_THEMES[resolvedPiece].label}
-          </span>
-        </span>
-      </button>
-      {(Object.keys(PIECE_THEMES) as PieceTheme[]).map((k) => {
-        const t = PIECE_THEMES[k];
-        const selected = value === k;
-        return (
-          <button
-            key={k}
-            onClick={() => onChange({ pieceTheme: k })}
-            aria-pressed={selected}
-            className={
-              "press relative flex min-h-[44px] items-center gap-2.5 rounded-[1px] border p-2 transition-colors " +
-              pickerCardClass(selected)
-            }
-          >
-            {selected && <SelectedGem />}
-            <span
-              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-sm bg-ink-700"
-              style={
-                {
-                  "--piece-w-fill": t.wFill,
-                  "--piece-w-stroke": t.wStroke,
-                  "--piece-b-fill": t.bFill,
-                  "--piece-b-stroke": t.bStroke,
-                } as CSSProperties
+        {(Object.keys(PIECE_THEMES) as PieceTheme[]).map((k) => {
+          const t = PIECE_THEMES[k];
+          const selected = value === k;
+          return (
+            <button
+              key={k}
+              onClick={() => onChange({ pieceTheme: k })}
+              aria-pressed={selected}
+              className={
+                "press relative flex min-h-[44px] items-center gap-2.5 rounded-[1px] border p-2 transition-colors " +
+                pickerCardClass(selected)
               }
             >
-              {t.assetSet ? (
-                <>
-                  <span
-                    className="h-4 w-4 bg-contain bg-center bg-no-repeat"
-                    style={{ backgroundImage: `url("/piece/lichess/${t.assetSet}/wN.svg")` }}
-                  />
-                  <span
-                    className="-ml-1 h-4 w-4 bg-contain bg-center bg-no-repeat"
-                    style={{ backgroundImage: `url("/piece/lichess/${t.assetSet}/bN.svg")` }}
-                  />
-                </>
-              ) : (
-                <>
-                  <Piece type="n" color="w" size={16} />
-                  <Piece type="n" color="b" size={16} className="-ml-1" />
-                </>
-              )}
-            </span>
-            <span className="font-display text-[13px] text-parchment">{t.label}</span>
-          </button>
-        );
-      })}
-      <button
-        onClick={() => onChange({ pieceTheme: "custom" })}
-        aria-pressed={value === "custom"}
-        className={
-          "press relative col-span-2 flex min-h-[44px] items-center gap-2.5 rounded-[1px] border p-2 transition-colors " +
-          pickerCardClass(value === "custom")
-        }
-      >
-        {value === "custom" && <SelectedGem />}
-        <span
-          aria-hidden
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-sm bg-ink-700"
-          style={
-            {
-              "--piece-w-fill": settings.customPieceWFill,
-              "--piece-w-stroke": settings.customPieceWStroke,
-              "--piece-b-fill": settings.customPieceBFill,
-              "--piece-b-stroke": settings.customPieceBStroke,
-            } as CSSProperties
-          }
-        >
-          <Piece type="n" color="w" size={16} />
-          <Piece type="n" color="b" size={16} className="-ml-1" />
-        </span>
-        <span className="min-w-0 text-left">
-          <span className="block font-display text-[13px]">Custom</span>
-          <span className="block text-[12px] text-parchment-400">Mix your own piece colors</span>
-        </span>
-      </button>
-      {value === "custom" && (
-        <div className="col-span-2 grid grid-cols-2 gap-2">
-          <ColorField
-            label="White fill"
-            value={settings.customPieceWFill}
-            onChange={(v) => onChange({ customPieceWFill: v })}
-          />
-          <ColorField
-            label="White edge"
-            value={settings.customPieceWStroke}
-            onChange={(v) => onChange({ customPieceWStroke: v })}
-          />
-          <ColorField
-            label="Black fill"
-            value={settings.customPieceBFill}
-            onChange={(v) => onChange({ customPieceBFill: v })}
-          />
-          <ColorField
-            label="Black edge"
-            value={settings.customPieceBStroke}
-            onChange={(v) => onChange({ customPieceBStroke: v })}
-          />
-        </div>
-      )}
+              {selected && <SelectedGem />}
+              <span
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-sm bg-ink-700"
+                style={
+                  {
+                    "--piece-w-fill": t.wFill,
+                    "--piece-w-stroke": t.wStroke,
+                    "--piece-b-fill": t.bFill,
+                    "--piece-b-stroke": t.bStroke,
+                  } as CSSProperties
+                }
+              >
+                {t.assetSet ? (
+                  <>
+                    <span
+                      className="h-4 w-4 bg-contain bg-center bg-no-repeat"
+                      style={{ backgroundImage: `url("/piece/lichess/${t.assetSet}/wN.svg")` }}
+                    />
+                    <span
+                      className="-ml-1 h-4 w-4 bg-contain bg-center bg-no-repeat"
+                      style={{ backgroundImage: `url("/piece/lichess/${t.assetSet}/bN.svg")` }}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <Piece type="n" color="w" size={16} />
+                    <Piece type="n" color="b" size={16} className="-ml-1" />
+                  </>
+                )}
+              </span>
+              <span className="font-display text-[13px] text-parchment">{t.label}</span>
+            </button>
+          );
+        })}
       </div>
     </PickerDisclosure>
-  );
-}
-
-/** Piece motion: a 4-chip row. The Board side is already wired: it reads
- *  html.dataset.pieceMotion, which applyUiPrefs sets from this setting. */
-const PIECE_MOTIONS: Array<{ id: PieceMotion; label: string; hint: string }> = [
-  { id: "glide", label: "Glide", hint: "The classic slide" },
-  { id: "hop", label: "Hop", hint: "Pieces leap with a landing squash" },
-  { id: "warp", label: "Warp", hint: "Fold out, pop in" },
-  { id: "stomp", label: "Stomp", hint: "Fast march, heavy landing" },
-];
-
-function PieceMotionPicker({
-  value,
-  onChange,
-}: {
-  value: PieceMotion;
-  onChange: (m: PieceMotion) => void;
-}) {
-  return (
-    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-      {PIECE_MOTIONS.map((m) => {
-        const selected = value === m.id;
-        return (
-          <button
-            key={m.id}
-            onClick={() => onChange(m.id)}
-            aria-pressed={selected}
-            className={
-              "press relative min-h-[44px] rounded-[1px] border p-2 text-left transition-colors " +
-              pickerCardClass(selected)
-            }
-          >
-            {selected && <SelectedGem />}
-            <span className="block font-display text-[13px] leading-tight text-parchment">
-              {m.label}
-            </span>
-            <span className="block text-[11px] leading-tight text-parchment-400">{m.hint}</span>
-          </button>
-        );
-      })}
-    </div>
   );
 }
 

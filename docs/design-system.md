@@ -4,9 +4,9 @@ The single visual and interaction contract for every route. Written during the 2
 
 ## 1. Identity pillars (keep, never dilute)
 
-- Dark nebula atmosphere: warm near-black ink surfaces with a faint top-warm, bottom-cool wash. Never flat gray, never pure black outside the "void" theme.
-- Parchment text: the warm off-white ramp (`--paper`, `parchment-*`). Never neutral gray text on warm surfaces.
-- Gold highlights: gold is the color of reward, rank, and emphasis (tier brass, achievements, podium, "featured"). The configurable `--accent` (default rose) owns "act here".
+- Flat neutral dark surfaces, Lichess's: `#161512` page, `#262421` box, `#302e2c` raised, `#404040` borders. No page wash, no grain, no atmosphere layer. The light palette is the same ladder in reverse (`#edebe9` / `#ffffff` / `#f7f6f5` / `#d9d9d9`).
+- Neutral grey text: `#bababa` body, `#cccccc` headings, `#8c8c8c` secondary, `#707070` muted, via `--paper` and `parchment-*`.
+- One accent, Lichess blue `#3692e7` (hover `#4a9fee`), on white. It owns "act here": links, primary buttons, focus, selection. There is no accent-colour setting.
 - Mode duality as structure: Buff sky blue vs Nerf terracotta coral meeting at the seam. Every surface that is mode-specific carries its mode hue; nothing else may use those hues.
 - Chess-piece artwork and the competitive-fantasy voice: pieces, sigils, and card tiers are the decoration. No stock illustration, no emoji as UI.
 - Dramatic game effects that never cost readability: the board stays legible through every animation.
@@ -15,30 +15,30 @@ The single visual and interaction contract for every route. Written during the 2
 
 | Role | Token | Use |
 |---|---|---|
-| Page | `ink-900` + html::before wash | The only page background |
+| Page | `ink-900` (`--bg-base`) | The only page background. Flat, no wash |
 | Panel | `--surface-panel` (`.plate`) | Cards, rails, lists |
 | Raised | `--surface-raise` (`.plate-raised`) | Menus, modals, hovered rows |
 | Edge | `--edge` / `--edge-strong` | All hairlines. Never `white/10` alpha borders in new code |
 | Body text | `parchment` 100-300 | Content |
 | Muted text | `parchment-400` | Labels, captions. Floor: never below `parchment-500` |
-| Act | `--accent` (`gold` token) | Primary buttons, links, focus, selected |
-| Highlight | `gold.leaf` at brass hue, `--sun` | Rank, reward, featured, celebration |
-| Positive | `--pos` (buff sky) | Success, rating up, "Live" |
-| Danger | `oxblood` | Errors, resign, destructive |
+| Act | `--accent` (`gold` token, Lichess blue) | Primary buttons, links, focus, selected |
+| Highlight | `--sun` (muted brass) | Rank, reward, featured, celebration |
+| Positive | `--pos` (`#629924`) | Success, rating up, "Live" |
+| Danger | `oxblood` / `--accent-danger` (`#c0413b`) | Errors, resign, destructive |
 | Buff identity | `mode.buff` / `buffGlow` | Buff-mode surfaces, chips, seams only |
 | Nerf identity | `mode.nerf` / `nerfGlow` | Nerf-mode surfaces, chips, seams only |
 | Tiers | `.tier-1..10` + `.tier-bg-*` | Card tiers everywhere, no exceptions |
 
 Rules:
-- No new colors. If a design wants a color not in this table, the design is wrong. Board and piece palettes are the one exception: they are the player's setting, and the five flagship themes each add one of each (`BOARD_THEMES`), selected while the setting is on `auto`.
+- No new colors. If a design wants a color not in this table, the design is wrong. Board and piece palettes are the one exception: they are the player's setting (`BOARD_THEMES` / `PIECE_THEMES`, defaulting to Lichess's brown board and cburnett pieces).
 - Mode hues never mean success/failure. Positive/danger never brand a mode.
 - One accent-colored primary action per view region. Everything else is quiet.
 
 ## 3. Typography
 
-Faces are **roles, not fixed families**: `--font-display` for headings and numbers that matter, `--font-body` for content, `--font-mono` (JetBrains Mono, self-hosted) for ids, clocks, and coordinates. Tints resolve to Inter over Noto Sans; each of the five flagship themes claims its own pairing (see `docs/themes.md`). Never name a family directly in a component — use the role.
+Faces are **roles, not fixed families**: `--font-display` for headings and numbers that matter, `--font-body` for content, `--font-mono` (JetBrains Mono, self-hosted) for ids, clocks, and coordinates. Both text roles resolve to Noto Sans, the face Lichess ships, so weight does the hierarchy. Never name a family directly in a component; use the role.
 
-Scale: the fluid ramp `--step-0..5` only. No ad-hoc `text-4xl` in new code. **The scale is theme-invariant** — a theme swaps faces, never sizes, so nothing reflows when you switch.
+Scale: the fluid ramp `--step-0..5` only, on a 14px base. No ad-hoc `text-4xl` in new code. The ramp is tight on purpose: the largest step lands near 2.1rem and a page heading around 1.6rem, which is how Lichess sets type.
 
 Hierarchy is weight + size + color, in that order. Never letter-spacing alone.
 
@@ -60,10 +60,10 @@ Numbers that update (clocks, ratings, counts) always `tabular-nums`.
 
 ## 5. Surfaces and geometry
 
-- Crisp 1px corners everywhere (existing global rule). True circles only for avatars and status dots.
+- Lichess geometry: **7px** on a box or panel, **3px** on a button, enforced by the global rules in `globals.css` (`[class*="rounded"]` and a `button, .btn, [role="button"]` override). True circles only for avatars and status dots. `npm run test:rounded` guards it.
 - Elevation by lightness (panel -> raise), shadow only via `shadow-plate` for floating layers. No glassmorphism: `backdrop-blur` is banned outside the two existing board splash moments.
 - `.plate` is the only card. Variants: `.plate-raised`, `.plate-hover`, `.plate-warm`, `.rail-panel`, `.corner-cut`. New surface styles are not invented per page.
-- Dungeon material set (2026-07 full-dungeon pass): `.dgn-slab` (carved stone, for monumental surfaces: modals, podium, chamber panels — never every card), `.dgn-rivets` (iron corner rivets, composable), `.rune-divider` (ornament rule), `.torch-pool` (ambient corner ember). The draft chamber's `dgn-*` vocabulary and `DungeonMenu.css` slabs are the reference implementations; new themed surfaces reuse these instead of inventing parallel treatments.
+- Material set: `.dgn-slab` (for monumental surfaces: modals, podium, chamber panels, never every card), `.dgn-rivets` (composable corner rivets), `.rune-divider` (ornament rule), `.torch-pool` (ambient corner glow). New themed surfaces reuse these instead of inventing parallel treatments.
 - Glow is an event, not a state: `shadow-leaf/nerf/buff` fire on hover, selection, or celebration, never as a resting style. Constant glow is banned. Exception: the faint resting seam/ember accents baked into the dungeon material classes above (they are material, not state).
 
 ## 6. Motion
@@ -81,7 +81,7 @@ Rules:
 
 - Buttons: use **`<Button>` / `<LinkButton>`** from `src/components/ui/Button.tsx`. Tones: `leaf` primary (one per region), `ghost` secondary, `quiet` tertiary inline action, `danger` destructive (Resign/Delete/Leave/Decline/Remove), `gold` for reward/prestige, `glass`/`primary` for emotional-peak commits, `cta` hero, `slab` caller-tinted. `loading` gives the busy state; `.press` is on by default. Min touch target 44x44 mobile, 36px desktop.
 
-  The component emits the material class and geometry **only, never a colour** — colour and material come from the theme's `--btn-*` contract in `globals.css`, which is what lets one `<Button tone="leaf">` be volcanic glass in Obsidian and a glazed tile in Porcelain. A hand-rolled button is invisible to that contract and will keep the old theme's look in all five. `npm run test:buttons` reports the remaining bespoke call sites.
+  The component emits the material class and geometry **only, never a colour**: colour and material come from the `--btn-*` contract in `globals.css`, authored once. A hand-rolled button is invisible to that contract. `npm run test:buttons` reports the remaining bespoke call sites.
 - Tabs: underline style (current), 13px+ label, active = parchment-50 + accent underline, inactive = parchment-300. Same component on every route.
 - Chips/badges: 12px, `.tier-bg-*` for tiers, mode chips for Buff/Nerf, `LIVE` badge = pos dot + label.
 - Lists and tables: row hover `--surface-hover`, dividers `--edge`, never zebra. Rank/rating right-aligned tabular.

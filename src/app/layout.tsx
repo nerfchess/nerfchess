@@ -1,19 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import {
-  Bricolage_Grotesque,
-  Chakra_Petch,
-  Fraunces,
-  IBM_Plex_Sans,
-  Inter,
-  Inter_Tight,
-  JetBrains_Mono,
-  Manrope,
-  Noto_Sans,
-  Public_Sans,
-  Space_Grotesk,
-  Spectral,
-  Syne,
-} from "next/font/google";
+import { JetBrains_Mono, Noto_Sans } from "next/font/google";
 import { AchievementToast } from "@/components/AchievementToast";
 import { SettingsBootstrap } from "@/components/SettingsBootstrap";
 import "./globals.css";
@@ -21,35 +7,20 @@ import "./globals.css";
 // ---------------------------------------------------------------------------
 // Typefaces.
 //
-// Every face gets its OWN variable (--f-*) rather than being wired straight to
-// --font-display / --font-body. That indirection is load-bearing: next/font
-// puts its variables on the element carrying the class, which is <body>, and a
-// value set on <body> beats one set on <html> for everything inside it. While
-// Inter WAS --font-display, no html[data-theme] rule could override the display
-// face — the override would resolve, then lose to body. With the faces parked
-// on neutral names, --font-display and --font-body live only in :root and a
-// theme block can claim them in plain CSS, with no JS involved at all.
+// Lichess sets the whole interface in Noto Sans, and so do we: one face for
+// headings and body alike, with weight doing the hierarchy. JetBrains Mono
+// carries the tabular chrome (clocks, ratings, ids, board coordinates).
 //
-// Bundle cost is close to nothing at runtime. A browser downloads a webfont
-// only when rendered text actually resolves to it, so a visitor loads the two
-// faces their theme uses, not thirteen. What DOES download unconditionally is
-// a <link rel="preload">, which next/font emits per face — hence preload:false
-// on every flagship face and true (the default) only on the three defaults.
+// Each face still gets its OWN variable (--f-*) rather than being wired
+// straight to --font-display / --font-body. The roles live in :root in
+// globals.css, so a component asks for a role and never for a face.
 // ---------------------------------------------------------------------------
 
-// The defaults, used by every tint. Noto Sans is the UI font Lichess ships;
-// Inter replaced a render-blocking external Google Fonts stylesheet.
 const notoSans = Noto_Sans({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   display: "swap",
   variable: "--f-noto",
-});
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-  variable: "--f-inter",
 });
 
 // Clocks, ratings, ids and board coordinates. --font-mono used to be a system
@@ -64,113 +35,8 @@ const jetbrainsMono = JetBrains_Mono({
   variable: "--f-mono",
 });
 
-// --- Flagship pairings ------------------------------------------------------
-// One display + one body face each, no two sharing a genus, so the five never
-// read as one family with the weight changed. See docs/themes.md.
-
-// Obsidian — volcanic glass. Bricolage's chiselled terminals and width axis
-// read as fractured glass rather than as another neutral grotesque.
-const bricolage = Bricolage_Grotesque({
-  subsets: ["latin"],
-  weight: ["400", "600", "800"],
-  display: "swap",
-  preload: false,
-  variable: "--f-bricolage",
-});
-const interTight = Inter_Tight({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-  preload: false,
-  variable: "--f-inter-tight",
-});
-
-// Porcelain — glazed white, cobalt ink. Fraunces carries optical-size and
-// "wonk" axes; high-contrast ink on paper is what earns the light scheme.
-const fraunces = Fraunces({
-  subsets: ["latin"],
-  weight: ["400", "600", "700"],
-  display: "swap",
-  preload: false,
-  variable: "--f-fraunces",
-});
-const publicSans = Public_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-  preload: false,
-  variable: "--f-public-sans",
-});
-
-// Neon — arcade indigo. Chakra Petch is technical with clipped corners, which
-// sidesteps the Orbitron cliché every neon brief reaches for.
-const chakraPetch = Chakra_Petch({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-  preload: false,
-  variable: "--f-chakra",
-});
-const spaceGrotesk = Space_Grotesk({
-  subsets: ["latin"],
-  weight: ["400", "500", "700"],
-  display: "swap",
-  preload: false,
-  variable: "--f-space-grotesk",
-});
-
-// Jade — lacquer green. Spectral is a low-contrast serif with generous
-// counters: lacquerware quiet, not decorative.
-const spectral = Spectral({
-  subsets: ["latin"],
-  weight: ["400", "600", "700"],
-  display: "swap",
-  preload: false,
-  variable: "--f-spectral",
-});
-const plexSans = IBM_Plex_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  display: "swap",
-  preload: false,
-  variable: "--f-plex-sans",
-});
-
-// Aurora — polar night, violet light. Syne's weights WIDEN rather than just
-// thicken, which reads as drifting light. The deliberate risk of the five.
-const syne = Syne({
-  subsets: ["latin"],
-  weight: ["400", "600", "800"],
-  display: "swap",
-  preload: false,
-  variable: "--f-syne",
-});
-const manrope = Manrope({
-  subsets: ["latin"],
-  weight: ["400", "500", "700"],
-  display: "swap",
-  preload: false,
-  variable: "--f-manrope",
-});
-
 /** Every face variable, for the <html> class list. */
-const FONT_VARS = [
-  notoSans,
-  inter,
-  jetbrainsMono,
-  bricolage,
-  interTight,
-  fraunces,
-  publicSans,
-  chakraPetch,
-  spaceGrotesk,
-  spectral,
-  plexSans,
-  syne,
-  manrope,
-]
-  .map((f) => f.variable)
-  .join(" ");
+const FONT_VARS = [notoSans, jetbrainsMono].map((f) => f.variable).join(" ");
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://nerfchess.com"),
@@ -310,14 +176,12 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    // data-theme matches DEFAULT_SETTINGS.siteTheme ("dark", the Classic
-    // palette) so first paint is already the default; SettingsBootstrap then
-    // applies whatever the user actually chose. This used to say "crimson"
-    // while the settings default was dark, which gave every fresh visitor a
-    // crimson first paint that flipped after hydration.
+    // data-theme matches DEFAULT_SETTINGS.siteTheme ("dark") so first paint is
+    // already the default; SettingsBootstrap then applies whatever the user
+    // actually chose.
     // The face variables live on <html>, not <body>: --font-display and
-    // --font-body are claimed per theme by html[data-theme] rules, and a value
-    // set on <body> would beat them for everything inside it.
+    // --font-body are roles resolved in :root, and a value set on <body> would
+    // beat them for everything inside it.
     <html lang="en" data-theme="dark" className={FONT_VARS}>
       <head>
         <script

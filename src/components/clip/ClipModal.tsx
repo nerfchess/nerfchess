@@ -26,7 +26,6 @@ import {
   boardColors,
   loadSettings,
   resolvePieceTheme,
-  sanitizeHexColor,
 } from "@/lib/settings";
 import { buildClipTimeline, planAutoClip } from "./clipReplay";
 import {
@@ -154,26 +153,14 @@ export function ClipModal({
   }, [muted]);
 
   // Board colors and piece sprites follow the player's settings so the clip
-  // looks like THEIR board: custom board hexes come through boardColors, and
-  // inline piece themes (plus custom piece colors) rasterize the site's own
-  // SVG silhouettes rather than swapping to a lichess set.
+  // looks like THEIR board. Inline piece themes rasterize the site's own SVG
+  // silhouettes rather than swapping to a lichess set.
   const { colors, pieceSource } = useMemo(() => {
     const s = loadSettings();
-    let source: PieceImageSource;
-    if (s.pieceTheme === "custom") {
-      source = {
-        kind: "inline",
-        wFill: sanitizeHexColor(s.customPieceWFill, "#f2ead8"),
-        wStroke: sanitizeHexColor(s.customPieceWStroke, "#3b332a"),
-        bFill: sanitizeHexColor(s.customPieceBFill, "#2b2b31"),
-        bStroke: sanitizeHexColor(s.customPieceBStroke, "#d8c9a8"),
-      };
-    } else {
-      const t = PIECE_THEMES[resolvePieceTheme(s)] ?? PIECE_THEMES.classic;
-      source = t.assetSet
-        ? { kind: "asset", set: t.assetSet }
-        : { kind: "inline", wFill: t.wFill, wStroke: t.wStroke, bFill: t.bFill, bStroke: t.bStroke };
-    }
+    const t = PIECE_THEMES[resolvePieceTheme(s)] ?? PIECE_THEMES.lichessCburnett;
+    const source: PieceImageSource = t.assetSet
+      ? { kind: "asset", set: t.assetSet }
+      : { kind: "inline", wFill: t.wFill, wStroke: t.wStroke, bFill: t.bFill, bStroke: t.bStroke };
     return { colors: boardColors(s), pieceSource: source };
     // Re-read when the modal reopens.
     // eslint-disable-next-line react-hooks/exhaustive-deps

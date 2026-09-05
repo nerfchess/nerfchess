@@ -195,18 +195,6 @@ html[data-light] .settings-tab[aria-selected="true"] {
     inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
-/* --- Accent swatch hit area -----------------------------------------------------
-   The color dots stay compact (24px) but each carries an invisible 44px pad. */
-.settings-swatch { position: relative; }
-.settings-swatch::after {
-  content: "";
-  position: absolute;
-  /* Full 44px vertically; horizontally capped so neighbouring gems (8px gap)
-     keep distinct targets. */
-  inset: -10px -4px;
-  border-radius: 999px;
-}
-
 /* --- Drill-down view slide -------------------------------------------------------
    Home grid and each sub-page enter with a short horizontal settle: transform
    and opacity only, one shot on mount (the view remounts on navigation). */
