@@ -64,7 +64,9 @@ const SIZE: Record<ButtonSize, string> = {
   xs: "min-h-[36px] gap-1 px-2 py-1 text-[12px] sm:min-h-0",
   sm: "min-h-[44px] gap-1.5 px-3 py-1.5 text-[13px] sm:min-h-[36px] sm:py-1",
   md: "min-h-[44px] gap-2 px-4 py-2 text-sm sm:min-h-[36px] sm:py-1.5",
-  lg: "min-h-[48px] gap-2 px-6 py-2.5 text-base",
+  // `lg` is Lichess's lobby button: 52px tall, 16px label, a roomy gap so a
+  // leading icon reads as part of the label rather than a decoration.
+  lg: "min-h-[52px] gap-3 px-5 py-3 text-[16px]",
 };
 
 /** Square, so an icon-only control is a target rather than a sliver. */
@@ -84,6 +86,9 @@ interface Shape {
   iconOnly?: boolean;
   /** `.press` physics. On by default; every button in the product presses. */
   press?: boolean;
+  /** Label alignment. Lichess's lobby buttons lead with an icon and set the
+   *  label flush left; "start" gives that. Centered otherwise. */
+  align?: "center" | "start";
   className?: string;
 }
 
@@ -93,10 +98,12 @@ function shapeClass({
   block,
   iconOnly,
   press = true,
+  align = "center",
   className,
 }: Shape): string {
   return [
-    "inline-flex items-center justify-center rounded-[3px] font-display transition",
+    "inline-flex items-center rounded-[3px] font-display transition",
+    align === "start" ? "justify-start text-left" : "justify-center",
     "disabled:cursor-not-allowed disabled:opacity-40",
     press ? "press" : "",
     TONE[tone],
@@ -127,6 +134,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
     block,
     iconOnly,
     press,
+    align,
     className,
     loading,
     disabled,
@@ -148,6 +156,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
         block,
         iconOnly,
         press,
+        align,
         className: [loading ? "btn-busy" : "", className ?? ""].filter(Boolean).join(" "),
       })}
       disabled={disabled || loading}
@@ -176,6 +185,7 @@ export function LinkButton({
   block,
   iconOnly,
   press,
+  align,
   className,
   children,
   ...rest
@@ -183,7 +193,7 @@ export function LinkButton({
   return (
     <Link
       href={href}
-      className={shapeClass({ tone, size, block, iconOnly, press, className }) + " no-underline"}
+      className={shapeClass({ tone, size, block, iconOnly, press, align, className }) + " no-underline"}
       {...rest}
     >
       {children}

@@ -42,8 +42,10 @@ function clockLabel(timeSec: number, incrementSec: number): string {
 // Live-game list ordering: one fixed default, most watched first (ties broken
 // by the stronger board). The first game is the featured board (unless the
 // viewer pinned one).
-// How many live games the rail shows before folding behind "Show all".
-const TV_LIST_FOLD = 12;
+// How many live games the rail shows before folding behind "Show all". Eight
+// rows sit about level with the featured board; the list scrolls inside its
+// box past that instead of running the page on down.
+const TV_LIST_FOLD = 8;
 
 function orderLiveGames(games: MPLobbyGame[]): MPLobbyGame[] {
   const best = (g: MPLobbyGame) =>
@@ -546,11 +548,19 @@ function TvView() {
                   </div>
                 )
               ) : liveGames.length === 0 ? (
-                <p className="px-3 py-4 text-[13px] text-parchment-400">
-                  Nothing live in this channel right now.
-                </p>
+                <div className="px-3 py-4 text-[13px] text-parchment-400">
+                  <p>Nothing live in this channel right now.</p>
+                  {/* A filtered channel can be empty while the other pool is
+                      busy; say so, so "no live games" never reads as "the site
+                      is dead" when it is only the filter. */}
+                  {modeFilter && (lobby?.games.length ?? 0) > 0 && (
+                    <Link href="/tv" className="mt-1 inline-block text-gold-leaf hover:underline">
+                      {lobby!.games.length} live in all channels →
+                    </Link>
+                  )}
+                </div>
               ) : (
-                <ul className="divide-y divide-[color:var(--edge)]">
+                <ul className="max-h-[34rem] divide-y divide-[color:var(--edge)] overflow-y-auto">
                   {(showAllGames ? liveGames : liveGames.slice(0, TV_LIST_FOLD)).map((g: MPLobbyGame) => {
                     const selected = g.id === shownId;
                     return (

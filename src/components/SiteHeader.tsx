@@ -281,8 +281,10 @@ export function SiteHeader({ active }: { active?: string }) {
   const iconButton =
     "nav-icon-btn relative grid h-11 w-11 sm:h-10 sm:w-10 place-items-center text-parchment-300 hover:bg-white/5 hover:text-parchment-50";
 
+  // A touch taller than Lichess's 48px and nudged one pixel off the top edge,
+  // so the search field and icon cluster never hug the viewport.
   return (
-    <nav className="site-nav flex min-h-[48px] items-center justify-between gap-3 px-3 sm:px-4">
+    <nav className="site-nav mt-px flex min-h-[52px] items-center justify-between gap-3 px-3 sm:px-4">
       <div className="flex min-w-0 items-center gap-1 sm:gap-2">
         {/* Mobile hamburger, left of the wordmark: opens every destination on
             phones and tablets, where the inline nav below is hidden. */}
@@ -369,7 +371,7 @@ export function SiteHeader({ active }: { active?: string }) {
             // nav links (which appear at md and would sit under a leftward
             // rollout at tablet widths). Wide desktop (lg+): the lichess-style
             // field that rolls out to the LEFT of the search icon.
-            <div className="header-search-panel fixed inset-x-3 top-[3.25rem] z-40 [&_input]:bg-ink-800 [&_input]:shadow-2xl sm:top-[3.25rem] lg:absolute lg:inset-x-auto lg:right-full lg:top-1/2 lg:mr-1 lg:-translate-y-1/2">
+            <div className="header-search-panel fixed inset-x-3 top-[3.5rem] z-40 [&_input]:bg-ink-800 [&_input]:shadow-2xl sm:top-[3.5rem] lg:absolute lg:inset-x-auto lg:right-full lg:top-1/2 lg:mr-1 lg:-translate-y-1/2">
               <PlayerSearch autoFocus />
             </div>
           )}

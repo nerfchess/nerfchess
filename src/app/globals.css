@@ -35,14 +35,15 @@ body {
   --board-highlight: 155 199 0; /* last move / selected square */
   --board-highlight-a: 0.4; /* highlight opacity (Light lifts this for contrast) */
 
-  /* Text: Lichess's ramp. #bababa body, #8c8c8c secondary, #707070 muted, and
-     #ccc for headings (--text-heading). */
-  --text-primary: #bababa;
-  --text-heading: #cccccc;
-  --text-secondary: #8c8c8c;
-  --text-muted: #707070;
-  --text-primary-rgb: 186 186 186;
-  --text-secondary-rgb: 140 140 140;
+  /* Text: Lichess's ramp, lifted one notch for contrast (Lichess sits at
+     #bababa body / #8c8c8c secondary / #707070 muted / #ccc headings; the
+     light theme drops the same notch the other way). */
+  --text-primary: #c6c6c6;
+  --text-heading: #dedede;
+  --text-secondary: #979797;
+  --text-muted: #7a7a7a;
+  --text-primary-rgb: 198 198 198;
+  --text-secondary-rgb: 151 151 151;
 
   /* Accents — the four semantic colors.
      Accent blue = links / primary buttons / focus / "act here".
@@ -74,6 +75,16 @@ body {
   /* Foreground for text/icons sitting ON an accent fill. White on Lichess
      blue, which is what Lichess itself uses on a primary button. */
   --text-on-accent: #ffffff;
+
+  /* The metal button (Lichess's default button): a gradient one rung above the
+     page, lighter on hover. Dark values here; light restates them below. */
+  --btn-metal-top: #3c3936;
+  --btn-metal-bottom: #2e2c29;
+  --btn-metal-top-hover: #4a4643;
+  --btn-metal-bottom-hover: #383532;
+  --btn-metal-text-hover: #ffffff;
+  --btn-metal-text-shadow: 0 1px 0 rgba(0, 0, 0, 0.6);
+  --btn-metal-edge: transparent;
 
   /* -------------------------------------------------------------------------
      LEGACY ALIASES — every name below resolves to a token above. Components
@@ -226,12 +237,12 @@ html[data-theme="light"] {
   --bg-panel: #ffffff;
   --bg-raised: #f7f6f5;
   --border-subtle: #d9d9d9;
-  --text-primary: #4d4d4d;
-  --text-heading: #333333;
-  --text-secondary: #787878;
-  --text-muted: #999999;
-  --text-primary-rgb: 77 77 77;
-  --text-secondary-rgb: 120 120 120;
+  --text-primary: #3d3d3d;
+  --text-heading: #232323;
+  --text-secondary: #666666;
+  --text-muted: #8a8a8a;
+  --text-primary-rgb: 61 61 61;
+  --text-secondary-rgb: 102 102 102;
   --board-highlight-a: 0.5;
   /* A step deeper than the dark accent so links clear WCAG AA on white. */
   --accent-gold: #1b78d0;
@@ -251,6 +262,13 @@ html[data-theme="light"] {
   --accent-positive-rgb: 76 122 28;
   --accent-positive-hi-rgb: 98 153 36;
   --text-on-accent: #ffffff;
+  --btn-metal-top: #ffffff;
+  --btn-metal-bottom: #ededed;
+  --btn-metal-top-hover: #ffffff;
+  --btn-metal-bottom-hover: #f7f7f7;
+  --btn-metal-text-hover: #1b78d0;
+  --btn-metal-text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+  --btn-metal-edge: #d4d4d4;
 }
 
 /* Paper-scheme treatments (plate fills, the ink text ramp, border alphas) hang
@@ -297,6 +315,10 @@ button,
 [role="button"],
 button[class*="rounded"]:not([class*="rounded-full"]),
 [role="button"][class*="rounded"]:not([class*="rounded-full"]) { border-radius: 3px !important; }
+/* A thumb switch is a pill with a round knob, the one button that is not a
+   box. Opted into by class, since a few labelled toggles are still boxes. */
+button.settings-toggle,
+button.pill-switch { border-radius: 999px !important; }
 
 body {
   font-family: var(--font-body), system-ui, sans-serif;
@@ -622,16 +644,23 @@ html[data-light] select option {
 
 .btn-ghost,
 .btn-glass {
-  background: var(--bg-raised);
-  color: var(--text-primary);
-  border: 1px solid var(--border-subtle);
-  font-weight: 500;
-  transition: background-color 120ms ease, border-color 120ms ease;
+  /* Lichess's "metal" button: a soft top-to-bottom gradient one rung above
+     the page, no hairline, heading-weight text with a faint drop shadow so
+     the label sits in the surface rather than on it. */
+  background-image: linear-gradient(to bottom, var(--btn-metal-top), var(--btn-metal-bottom));
+  background-color: var(--btn-metal-bottom);
+  color: var(--text-heading);
+  border: 1px solid var(--btn-metal-edge);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
+  text-shadow: var(--btn-metal-text-shadow);
+  font-weight: 600;
+  transition: background-color 120ms ease, background-image 120ms ease, color 120ms ease;
 }
 .btn-ghost:hover:not(:disabled),
 .btn-glass:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--bg-raised) 88%, #fff);
-  border-color: var(--edge-strong);
+  background-image: linear-gradient(to bottom, var(--btn-metal-top-hover), var(--btn-metal-bottom-hover));
+  background-color: var(--btn-metal-bottom-hover);
+  color: var(--btn-metal-text-hover);
 }
 .btn-ghost:disabled,
 .btn-glass:disabled { color: var(--text-muted); cursor: not-allowed; }
@@ -723,106 +752,6 @@ html[data-anim="off"] .rune-loader { animation: none; }
   mask-composite: exclude;
 }
 
-/* The ceremony spotlight: a soft cone of light falling from above the place
-   card, tinted to its metal. Static light under html[data-anim="off"];
-   otherwise it breathes very slowly, like stadium lighting. */
-.podium-beam {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background: radial-gradient(
-    62% 88% at 50% 0%,
-    rgb(var(--beam-rgb, var(--energy-gold-rgb)) / var(--beam-a, 0.14)),
-    transparent 76%
-  );
-  animation: podium-beam-breathe 7s ease-in-out infinite;
-}
-@keyframes podium-beam-breathe {
-  0%, 100% { opacity: 0.75; }
-  50% { opacity: 1; }
-}
-html[data-anim="off"] .podium-beam { animation: none; opacity: 0.85; }
-.podium-mote {
-  position: absolute;
-  bottom: 18%;
-  left: var(--mx, 50%);
-  width: 3px;
-  height: 3px;
-  border-radius: 999px;
-  pointer-events: none;
-  background: rgb(var(--mote-rgb, var(--energy-gold-rgb)) / 0.85);
-  box-shadow: 0 0 6px 1px rgb(var(--mote-rgb, var(--energy-gold-rgb)) / 0.4);
-  opacity: 0;
-  animation: podium-mote-rise var(--mdur, 5.4s) linear var(--mdelay, 0s) infinite;
-}
-@keyframes podium-mote-rise {
-  0% { opacity: 0; transform: translateY(0) scale(0.7); }
-  14% { opacity: 0.65; }
-  70% { opacity: 0.3; }
-  100% { opacity: 0; transform: translateY(-68px) scale(1); }
-}
-html[data-anim="off"] .podium-mote { animation: none; opacity: 0; }
-/* The champion's sparkles: slow four-point glints near the avatar, the
-   cross-star kind that reads "camera flash" at a medal ceremony. */
-.podium-glint {
-  position: absolute;
-  top: var(--gy, 20%);
-  left: var(--gx, 50%);
-  width: 11px;
-  height: 11px;
-  pointer-events: none;
-  opacity: 0;
-  background:
-    linear-gradient(rgb(var(--energy-gold-rgb) / 0.9), rgb(var(--energy-gold-rgb) / 0.9)) 50% 0 / 1.5px 100% no-repeat,
-    linear-gradient(rgb(var(--energy-gold-rgb) / 0.9), rgb(var(--energy-gold-rgb) / 0.9)) 0 50% / 100% 1.5px no-repeat;
-  animation: podium-glint-twinkle 4.8s ease-in-out var(--gdelay, 0s) infinite;
-}
-@keyframes podium-glint-twinkle {
-  0%, 78%, 100% { opacity: 0; transform: scale(0.4) rotate(0deg); }
-  86% { opacity: 0.9; transform: scale(1) rotate(24deg); }
-  94% { opacity: 0; transform: scale(0.5) rotate(45deg); }
-}
-html[data-anim="off"] .podium-glint { animation: none; opacity: 0; }
-
-/* The petal drift: flower petals loosed over the whole dais, swaying down
-   like the end of a victory lap. Each petal is one span, tinted per place,
-   phased apart; ambient by design (the ceremony is a state, not an event)
-   and parked entirely under html[data-anim="off"]. */
-.podium-petal {
-  position: absolute;
-  top: -6%;
-  left: var(--px, 50%);
-  width: 7px;
-  height: 10px;
-  pointer-events: none;
-  border-radius: 60% 40% 55% 45% / 70% 65% 35% 30%;
-  background: rgb(var(--petal-rgb, 255 217 126) / 0.75);
-  box-shadow: inset 0 0 3px rgb(255 255 255 / 0.25);
-  opacity: 0;
-  animation: podium-petal-fall var(--pdur, 9s) linear var(--pdelay, 0s) infinite;
-}
-@keyframes podium-petal-fall {
-  0% { opacity: 0; transform: translate(0, 0) rotate(0deg); }
-  8% { opacity: 0.8; }
-  30% { transform: translate(14px, 30%) rotate(70deg); }
-  55% { transform: translate(-10px, 62%) rotate(150deg); }
-  80% { opacity: 0.6; transform: translate(10px, 88%) rotate(230deg); }
-  100% { opacity: 0; transform: translate(-4px, 108%) rotate(300deg); }
-}
-html[data-anim="off"] .podium-petal { animation: none; opacity: 0; }
-
-/* The champion's crown, hovering just above the avatar with the sanctioned
-   ambient bob. Static (no bob) under html[data-anim="off"]. */
-.podium-crown {
-  animation: podium-crown-bob 4.2s ease-in-out infinite;
-}
-@keyframes podium-crown-bob {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-3px); }
-}
-html[data-anim="off"] .podium-crown { animation: none; }
-
 /* Rune badge: the shared chip for statuses and counts. Feed it an energy
    triple via --badge-rgb (defaults to ember). */
 .rune-badge {
@@ -873,15 +802,9 @@ html[data-anim="off"] .podium-crown { animation: none; }
   filter: saturate(0.7) brightness(0.9);
 }
 
-/* --- Podium celebration ------------------------------------------------------
-   Dressing for the leaderboard's ceremony dais (Podium.tsx) and the profile's
-   honors shelf. Each place wears a metal rim (the .energy-edge masked-frame
-   device, tinted by --rim-rgb; gold by default), stands in its own ceremony
-   spotlight (.podium-beam), and the champion adds rising motes, camera-flash
-   glints, a bobbing crown, and a petal drift across the whole dais.
-   Decoration only: transform/opacity, capped node counts at the call site,
-   and every animation parks under html[data-anim="off"] (static lighting
-   stays). Rebuilt grander by owner request after its first retirement. */
+/* Podium rim: a masked metal frame (tinted by --rim-rgb, gold by default).
+   Still worn by the profile's honors shelf; the leaderboard podium itself is
+   now three plain plates. */
 .podium-rim-gold { position: relative; }
 .podium-rim-gold::before {
   content: "";

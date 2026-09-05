@@ -315,7 +315,7 @@ export function CodexBrowser() {
     <main className="min-h-screen pb-20">
       <SiteHeader active="/codex" />
 
-      <section className="mx-auto max-w-6xl px-6 pt-4">
+      <section className="mx-auto max-w-7xl px-6 pt-4">
         <div className="text-[11px] text-parchment-400">the library</div>
         <h1 className="mt-1 font-display text-4xl sm:text-5xl">Codex</h1>
         <p className="mt-2 text-[15px] text-parchment-300">

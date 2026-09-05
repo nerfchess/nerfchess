@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Sparkles, Trophy, Tv, Users, type LucideIcon } from "lucide-react";
+import { Cpu, Sparkles, Trophy, Tv, User, Users, type LucideIcon } from "lucide-react";
 import { HeroTv } from "@/components/HeroTv";
 import { LiveRvPanel } from "@/components/LiveRvPanel";
 import { OpenLobbyPanel } from "@/components/OpenLobbyPanel";
@@ -56,25 +56,20 @@ export default function HomePage() {
             <NewHereChip />
           </div>
 
-          {/* The one-breath pitch: what the two words on the tin actually
-              change. Concrete, not marketing air. */}
-          <p className="mt-2 text-[14px] leading-snug text-parchment-300">
-            Every five moves you draft a card. In{" "}
-            <span className="font-semibold text-mode-buffGlow">Buff</span> mode you stack powers
-            onto your own army; in <span className="font-semibold text-mode-nerfGlow">Nerf</span>{" "}
-            mode you start with a secret handicap and curse your opponent. Capture the king to win.
-          </p>
-
-          {/* Three stacked ways in. Create a game is the one primary: it opens
-              the lobby's quick pairing, where Buff and 3+2 are preselected. */}
-          <div className="mt-4 flex flex-col gap-2">
-            <LinkButton tone="primary" href="/lobby" block size="lg">
+          {/* Three ways in, Lichess's lobby buttons: metal, icon-led, label
+              flush left, full width. Create a game opens the lobby's quick
+              pairing, where Buff and 3+2 are preselected. */}
+          <div className="mt-3 flex flex-col gap-2">
+            <LinkButton tone="default" href="/lobby" block size="lg" align="start">
+              <Users size={22} strokeWidth={1.8} aria-hidden className="shrink-0 text-parchment-300" />
               Create a game
             </LinkButton>
-            <LinkButton tone="default" href="/play" block size="lg">
+            <LinkButton tone="default" href="/play" block size="lg" align="start">
+              <Cpu size={22} strokeWidth={1.8} aria-hidden className="shrink-0 text-parchment-300" />
               Play with the computer
             </LinkButton>
-            <LinkButton tone="default" href="/lobby?tab=friends" block size="lg">
+            <LinkButton tone="default" href="/lobby?tab=friends" block size="lg" align="start">
+              <User size={22} strokeWidth={1.8} aria-hidden className="shrink-0 text-parchment-300" />
               Play with a friend
             </LinkButton>
           </div>
@@ -115,6 +110,15 @@ export default function HomePage() {
               </span>
             </Link>
           </div>
+
+          {/* The one-breath pitch closes the column: what the two words on the
+              tin actually change. Concrete, not marketing air. */}
+          <p className="mt-4 text-[13px] leading-snug text-parchment-300">
+            Every five moves you draft a card. In{" "}
+            <span className="font-semibold text-mode-buffGlow">Buff</span> mode you stack powers
+            onto your own army; in <span className="font-semibold text-mode-nerfGlow">Nerf</span>{" "}
+            mode you start with a secret handicap and curse your opponent. Capture the king to win.
+          </p>
         </div>
       </section>
 

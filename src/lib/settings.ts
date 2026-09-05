@@ -21,14 +21,11 @@ export type BoardTheme =
  *  alias stays so call sites read the same. */
 export type BoardThemePref = BoardTheme;
 
+/** The piece DESIGN: the site's own inline set, or one of the Lichess SVG
+ *  sets. Colour is a separate pref (PieceColor) and applies to the inline
+ *  design only, since the Lichess sets are fixed-colour artwork. */
 export type PieceTheme =
   | "classic"
-  | "ivory"
-  | "steel"
-  | "rosewood"
-  | "forest"
-  | "ocean"
-  | "gold"
   | "lichessCburnett"
   | "lichessMerida"
   | "lichessAlpha"
@@ -42,6 +39,20 @@ export type PieceTheme =
 
 /** As BoardThemePref, for the piece set. */
 export type PieceThemePref = PieceTheme;
+
+/** The piece COLOUR scheme, painted onto the inline design. */
+export type PieceColor = "classic" | "ivory" | "steel" | "rosewood" | "forest" | "ocean" | "gold";
+
+/** Stored piece-set ids from before colour was split out of the design
+ *  picker: each was the inline design in one colour. */
+const LEGACY_PIECE_COLOR_THEMES: Record<string, PieceColor> = {
+  ivory: "ivory",
+  steel: "steel",
+  rosewood: "rosewood",
+  forest: "forest",
+  ocean: "ocean",
+  gold: "gold",
+};
 
 export type AnimationSpeed = "off" | "fast" | "normal";
 export type SiteTheme = "dark" | "light" | "system";
@@ -124,6 +135,7 @@ const LEGACY_SITE_THEMES: Record<string, SiteTheme> = {
 export interface Settings {
   boardTheme: BoardThemePref;
   pieceTheme: PieceThemePref;
+  pieceColor: PieceColor; // painted onto the inline design only
   volume: number; // 0..1
   moveRiskWarnings: boolean; // yellow/red move-dot warnings for self-loss / check
   autoQueen: boolean; // skip the promotion picker and always promote to queen
@@ -179,6 +191,7 @@ export const DEFAULT_SETTINGS: Settings = {
   // Lichess defaults: the brown board and the cburnett piece set.
   boardTheme: "brown",
   pieceTheme: "lichessCburnett",
+  pieceColor: "classic",
   volume: 0.8,
   moveRiskWarnings: true,
   autoQueen: false,
@@ -232,31 +245,52 @@ export const BOARD_THEMES: Record<BoardTheme, { light: string; dark: string; lab
   rose:       { light: "#f5e2dd", dark: "#c27f77", label: "Rose" },
 };
 
-export const PIECE_THEMES: Record<
-  PieceTheme,
-  { label: string; wFill: string; wStroke: string; bFill: string; bStroke: string; assetSet?: string }
-> = {
+export interface PieceFills {
+  wFill: string;
+  wStroke: string;
+  bFill: string;
+  bStroke: string;
+}
+
+export const PIECE_COLORS: Record<PieceColor, PieceFills & { label: string }> = {
   // Classic ships warm ivory whites and charcoal blacks with a warm edge, so
-  // the default set sits inside the dungeon palette instead of clinical
+  // the default colour sits inside the palette instead of clinical
   // black-and-white (2026-07 piece pass).
-  classic:           { label: "Classic",             wFill: "#f2ead8", wStroke: "#3b332a", bFill: "#2b2b31", bStroke: "#d8c9a8" },
-  ivory:             { label: "Ivory",               wFill: "#f0e8d5", wStroke: "#3a2f22", bFill: "#26201a", bStroke: "#f0e8d5" },
-  steel:             { label: "Steel",               wFill: "#e8edf2", wStroke: "#2a3340", bFill: "#2b3440", bStroke: "#e8edf2" },
-  rosewood:          { label: "Rosewood",            wFill: "#f3e6e4", wStroke: "#5a2b2b", bFill: "#4a2222", bStroke: "#f3e6e4" },
-  forest:            { label: "Forest",              wFill: "#eef1e6", wStroke: "#24331f", bFill: "#22301c", bStroke: "#eef1e6" },
-  ocean:             { label: "Ocean",               wFill: "#e6f1f5", wStroke: "#123243", bFill: "#123243", bStroke: "#e6f1f5" },
-  gold:              { label: "Gold",                wFill: "#f4ead0", wStroke: "#6b4e15", bFill: "#3a2c0e", bStroke: "#e9c877" },
-  lichessCburnett:   { label: "Lichess Cburnett",    wFill: "#f5f5f5", wStroke: "#1a1a22", bFill: "#1a1a22", bStroke: "#f5f5f5", assetSet: "cburnett" },
-  lichessMerida:     { label: "Lichess Merida",      wFill: "#f5f5f5", wStroke: "#1a1a22", bFill: "#1a1a22", bStroke: "#f5f5f5", assetSet: "merida" },
-  lichessAlpha:      { label: "Lichess Alpha",       wFill: "#f5f5f5", wStroke: "#1a1a22", bFill: "#1a1a22", bStroke: "#f5f5f5", assetSet: "alpha" },
-  lichessCalifornia: { label: "Lichess California",  wFill: "#f5f5f5", wStroke: "#1a1a22", bFill: "#1a1a22", bStroke: "#f5f5f5", assetSet: "california" },
-  lichessCardinal:   { label: "Lichess Cardinal",    wFill: "#f5f5f5", wStroke: "#1a1a22", bFill: "#1a1a22", bStroke: "#f5f5f5", assetSet: "cardinal" },
-  lichessChess7:     { label: "Lichess Chess7",      wFill: "#f5f5f5", wStroke: "#1a1a22", bFill: "#1a1a22", bStroke: "#f5f5f5", assetSet: "chess7" },
-  lichessKosal:      { label: "Lichess Kosal",       wFill: "#f5f5f5", wStroke: "#1a1a22", bFill: "#1a1a22", bStroke: "#f5f5f5", assetSet: "kosal" },
-  lichessMaestro:    { label: "Lichess Maestro",     wFill: "#f5f5f5", wStroke: "#1a1a22", bFill: "#1a1a22", bStroke: "#f5f5f5", assetSet: "maestro" },
-  lichessPirouetti:  { label: "Lichess Pirouetti",   wFill: "#f5f5f5", wStroke: "#1a1a22", bFill: "#1a1a22", bStroke: "#f5f5f5", assetSet: "pirouetti" },
-  lichessStaunty:    { label: "Lichess Staunty",     wFill: "#f5f5f5", wStroke: "#1a1a22", bFill: "#1a1a22", bStroke: "#f5f5f5", assetSet: "staunty" },
+  classic:  { label: "Classic",  wFill: "#f2ead8", wStroke: "#3b332a", bFill: "#2b2b31", bStroke: "#d8c9a8" },
+  ivory:    { label: "Ivory",    wFill: "#f0e8d5", wStroke: "#3a2f22", bFill: "#26201a", bStroke: "#f0e8d5" },
+  steel:    { label: "Steel",    wFill: "#e8edf2", wStroke: "#2a3340", bFill: "#2b3440", bStroke: "#e8edf2" },
+  rosewood: { label: "Rosewood", wFill: "#f3e6e4", wStroke: "#5a2b2b", bFill: "#4a2222", bStroke: "#f3e6e4" },
+  forest:   { label: "Forest",   wFill: "#eef1e6", wStroke: "#24331f", bFill: "#22301c", bStroke: "#eef1e6" },
+  ocean:    { label: "Ocean",    wFill: "#e6f1f5", wStroke: "#123243", bFill: "#123243", bStroke: "#e6f1f5" },
+  gold:     { label: "Gold",     wFill: "#f4ead0", wStroke: "#6b4e15", bFill: "#3a2c0e", bStroke: "#e9c877" },
 };
+
+/** The piece designs. `assetSet` names a Lichess SVG set under
+ *  /public/piece/lichess; the inline design has none and is painted with the
+ *  PieceColor fills. The fills carried here are the Lichess sets' own
+ *  black-and-white, used only for previews. */
+export const PIECE_THEMES: Record<PieceTheme, PieceFills & { label: string; assetSet?: string }> = {
+  classic:           { label: "Nerf Chess",  wFill: PIECE_COLORS.classic.wFill, wStroke: PIECE_COLORS.classic.wStroke, bFill: PIECE_COLORS.classic.bFill, bStroke: PIECE_COLORS.classic.bStroke },
+  lichessCburnett:   { label: "Cburnett",    wFill: "#f5f5f5", wStroke: "#1a1a22", bFill: "#1a1a22", bStroke: "#f5f5f5", assetSet: "cburnett" },
+  lichessMerida:     { label: "Merida",      wFill: "#f5f5f5", wStroke: "#1a1a22", bFill: "#1a1a22", bStroke: "#f5f5f5", assetSet: "merida" },
+  lichessAlpha:      { label: "Alpha",       wFill: "#f5f5f5", wStroke: "#1a1a22", bFill: "#1a1a22", bStroke: "#f5f5f5", assetSet: "alpha" },
+  lichessCalifornia: { label: "California",  wFill: "#f5f5f5", wStroke: "#1a1a22", bFill: "#1a1a22", bStroke: "#f5f5f5", assetSet: "california" },
+  lichessCardinal:   { label: "Cardinal",    wFill: "#f5f5f5", wStroke: "#1a1a22", bFill: "#1a1a22", bStroke: "#f5f5f5", assetSet: "cardinal" },
+  lichessChess7:     { label: "Chess7",      wFill: "#f5f5f5", wStroke: "#1a1a22", bFill: "#1a1a22", bStroke: "#f5f5f5", assetSet: "chess7" },
+  lichessKosal:      { label: "Kosal",       wFill: "#f5f5f5", wStroke: "#1a1a22", bFill: "#1a1a22", bStroke: "#f5f5f5", assetSet: "kosal" },
+  lichessMaestro:    { label: "Maestro",     wFill: "#f5f5f5", wStroke: "#1a1a22", bFill: "#1a1a22", bStroke: "#f5f5f5", assetSet: "maestro" },
+  lichessPirouetti:  { label: "Pirouetti",   wFill: "#f5f5f5", wStroke: "#1a1a22", bFill: "#1a1a22", bStroke: "#f5f5f5", assetSet: "pirouetti" },
+  lichessStaunty:    { label: "Staunty",     wFill: "#f5f5f5", wStroke: "#1a1a22", bFill: "#1a1a22", bStroke: "#f5f5f5", assetSet: "staunty" },
+};
+
+/** What the board actually paints for a design + colour pair: the Lichess
+ *  sets are fixed artwork, the inline design takes the chosen colour. */
+export function pieceLook(theme: PieceTheme, color: PieceColor): PieceFills & { assetSet?: string } {
+  const design = PIECE_THEMES[theme] ?? PIECE_THEMES.lichessCburnett;
+  if (design.assetSet) return design;
+  const fills = PIECE_COLORS[color] ?? PIECE_COLORS.classic;
+  return { wFill: fills.wFill, wStroke: fills.wStroke, bFill: fills.bFill, bStroke: fills.bStroke };
+}
 
 function bool(v: unknown, fallback: boolean): boolean {
   return typeof v === "boolean" ? v : fallback;
@@ -314,10 +348,20 @@ export function loadSettings(): Settings {
         parsed.boardTheme && parsed.boardTheme in BOARD_THEMES
           ? (parsed.boardTheme as BoardThemePref)
           : DEFAULT.boardTheme,
+      // A pre-split id like "ivory" was the inline design in that colour:
+      // it lands as classic + that colour rather than resetting the player.
       pieceTheme:
         parsed.pieceTheme && parsed.pieceTheme in PIECE_THEMES
           ? (parsed.pieceTheme as PieceThemePref)
-          : DEFAULT.pieceTheme,
+          : parsed.pieceTheme && parsed.pieceTheme in LEGACY_PIECE_COLOR_THEMES
+            ? "classic"
+            : DEFAULT.pieceTheme,
+      pieceColor:
+        parsed.pieceColor && parsed.pieceColor in PIECE_COLORS
+          ? (parsed.pieceColor as PieceColor)
+          : parsed.pieceTheme && parsed.pieceTheme in LEGACY_PIECE_COLOR_THEMES
+            ? LEGACY_PIECE_COLOR_THEMES[parsed.pieceTheme]
+            : DEFAULT.pieceColor,
       volume: typeof parsed.volume === "number" ? Math.max(0, Math.min(1, parsed.volume)) : DEFAULT.volume,
       moveRiskWarnings: bool(parsed.moveRiskWarnings, DEFAULT.moveRiskWarnings),
       autoQueen: bool(parsed.autoQueen, DEFAULT.autoQueen),
@@ -565,7 +609,7 @@ export function applyBoardColors(s: Settings) {
 /** As applyBoardColors, for the piece set. */
 export function applyPieceColors(s: Settings) {
   if (typeof document === "undefined") return;
-  applyPieceTheme(resolvePieceTheme(s));
+  applyPieceTheme(resolvePieceTheme(s), s.pieceColor);
 }
 
 export function applyBoardTheme(theme: BoardTheme) {
@@ -575,9 +619,9 @@ export function applyBoardTheme(theme: BoardTheme) {
   document.documentElement.style.setProperty("--sq-dark", t.dark);
 }
 
-export function applyPieceTheme(theme: PieceTheme) {
+export function applyPieceTheme(theme: PieceTheme, color: PieceColor = "classic") {
   if (typeof document === "undefined") return;
-  const t = PIECE_THEMES[theme] ?? PIECE_THEMES.lichessCburnett;
+  const t = pieceLook(theme, color);
   const html = document.documentElement;
   const root = document.documentElement.style;
   root.setProperty("--piece-w-fill", t.wFill);

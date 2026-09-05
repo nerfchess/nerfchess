@@ -36,13 +36,13 @@ export default {
         // is Lichess's body text, #ccc its headings, #8c8c8c its secondary and
         // #707070 its muted.
         parchment: {
-          DEFAULT: "#bababa",
-          50: "#dddddd",
-          100: "#cccccc",
-          200: "#bababa",
-          300: "#a0a0a0",
-          400: "#8c8c8c",
-          500: "#707070",
+          DEFAULT: "#c6c6c6",
+          50: "#e8e8e8",
+          100: "#dedede",
+          200: "#c6c6c6",
+          300: "#ababab",
+          400: "#979797",
+          500: "#7a7a7a",
         },
         // gold = the accent (links / primary). Historical name, Lichess blue:
         // the rgb triples are set on :root and pushed by applyUiPrefs.

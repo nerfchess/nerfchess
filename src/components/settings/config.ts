@@ -30,6 +30,7 @@ export type Control =
   | { kind: "customBg" }
   | { kind: "boardTheme" }
   | { kind: "pieceTheme" }
+  | { kind: "pieceColor" }
   | { kind: "account" }
   | { kind: "reset" };
 
@@ -138,9 +139,16 @@ export const SECTIONS: SectionConfig[] = [
       },
       {
         id: "pieceTheme",
-        label: "Piece set",
+        label: "Piece design",
         group: "Themes",
         control: { kind: "pieceTheme" },
+      },
+      {
+        id: "pieceColor",
+        label: "Piece colour",
+        hint: "Paints the Nerf Chess design; the Lichess sets keep their own colours",
+        group: "Themes",
+        control: { kind: "pieceColor" },
       },
       {
         id: "boardSize",

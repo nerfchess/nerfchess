@@ -19,7 +19,9 @@ import {
   BOARD_THEMES,
   BoardTheme,
   PIECE_THEMES,
+  PieceColor,
   PieceTheme,
+  pieceLook,
   SETTINGS_CHANGED_EVENT,
   SITE_THEMES,
   SiteTheme,
@@ -43,8 +45,8 @@ const THEME_ORDER: SiteTheme[] = ["dark", "light", "system"];
 /** The white knight from a piece set, the same preview the Preferences piece
  *  picker shows: an asset set draws its own wN.svg, an inline set draws the
  *  shared <Piece> with that set's fills pushed in as variables. */
-function KnightPreview({ theme, size = 20 }: { theme: PieceTheme; size?: number }) {
-  const t = PIECE_THEMES[theme];
+function KnightPreview({ theme, color, size = 20 }: { theme: PieceTheme; color: PieceColor; size?: number }) {
+  const t = pieceLook(theme, color);
   return (
     <span
       aria-hidden
@@ -103,9 +105,8 @@ function MiniToggle({
       aria-checked={checked}
       aria-label={label}
       onClick={() => onChange(!checked)}
-      className="relative inline-flex h-6 w-11 shrink-0 items-center transition-colors"
+      className="pill-switch relative inline-flex h-6 w-11 shrink-0 items-center transition-colors"
       style={{
-        borderRadius: "3px",
         background: checked ? "var(--accent)" : "var(--bg-raised)",
         boxShadow: "inset 0 0 0 1px var(--border-subtle)",
       }}
@@ -264,7 +265,11 @@ export function HeaderSettingsMenu({
         >
           <BackgroundSection value={settings.siteTheme} onPick={(t) => update({ siteTheme: t })} />
           <BoardSection value={settings.boardTheme} onPick={(b) => update({ boardTheme: b })} />
-          <PieceSection value={settings.pieceTheme} onPick={(p) => update({ pieceTheme: p })} />
+          <PieceSection
+            value={settings.pieceTheme}
+            color={settings.pieceColor}
+            onPick={(p) => update({ pieceTheme: p })}
+          />
 
           <div>
             <SectionLabel>Board size</SectionLabel>
@@ -405,7 +410,15 @@ function BoardSection({ value, onPick }: { value: BoardTheme; onPick: (b: BoardT
   );
 }
 
-function PieceSection({ value, onPick }: { value: PieceTheme; onPick: (p: PieceTheme) => void }) {
+function PieceSection({
+  value,
+  color,
+  onPick,
+}: {
+  value: PieceTheme;
+  color: PieceColor;
+  onPick: (p: PieceTheme) => void;
+}) {
   return (
     <div>
       <SectionLabel>Pieces</SectionLabel>
@@ -427,7 +440,7 @@ function PieceSection({ value, onPick }: { value: PieceTheme; onPick: (p: PieceT
                 className="grid h-7 w-7 place-items-center"
                 style={{ ...tileStyle(selected), background: "var(--bg-raised)" }}
               >
-                <KnightPreview theme={id} />
+                <KnightPreview theme={id} color={color} />
               </span>
             </button>
           );

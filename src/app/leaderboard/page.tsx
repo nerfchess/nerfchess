@@ -123,7 +123,7 @@ export default function LeaderboardPage() {
     <main className="min-h-screen pb-16">
       <SiteHeader active="/leaderboard" />
 
-      <section className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
+      <section className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
         <span>Ranked ladder</span>
         <h1 className="mt-1 font-display text-4xl text-parchment-50 sm:text-5xl">Leaderboard</h1>
 
@@ -195,7 +195,7 @@ export default function LeaderboardPage() {
             {/* The standings: an open list on hairline dividers (no heavy plate),
                 so rank, name, and rating carry the hierarchy on their own. */}
             <div className="mt-6 overflow-hidden border-y border-[color:var(--edge)]">
-              <div className="grid grid-cols-[2.25rem_1fr_4.5rem] items-center border-b border-[color:var(--edge)] px-3 py-3 text-xs text-parchment-400 sm:grid-cols-[3rem_1fr_5rem_4rem_6rem] sm:px-4">
+              <div className="grid grid-cols-[2.25rem_1fr_4.5rem] items-center border-b border-[color:var(--edge)] px-3 py-3 text-xs text-parchment-400 sm:grid-cols-[3rem_1fr_6rem_5rem_7rem] sm:px-4">
                 <span className="text-[11px]">#</span>
                 <span className="text-[11px]">Player</span>
                 <span className="text-right text-[11px]">{active.label}</span>
@@ -296,7 +296,7 @@ function LeaderboardRow({
   const honored = rank <= 100;
 
   const rowClass =
-    "grid grid-cols-[2.25rem_1fr_4.5rem] items-center border-b border-[color:var(--edge)] px-3 py-2.5 text-sm transition-colors hover:bg-[var(--surface-hover)] sm:grid-cols-[3rem_1fr_5rem_4rem_6rem] sm:px-4 min-h-[44px]" +
+    "grid grid-cols-[2.25rem_1fr_4.5rem] items-center border-b border-[color:var(--edge)] px-3 py-2.5 text-sm transition-colors hover:bg-[var(--surface-hover)] sm:grid-cols-[3rem_1fr_6rem_5rem_7rem] sm:px-4 min-h-[44px]" +
     (mine ? " bg-gold/10" : "");
 
   // The rank numeral: the top ten wear it in a small gem chip — gold for the
