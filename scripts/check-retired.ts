@@ -10,6 +10,7 @@ import { join } from "node:path";
 import { RETIRED, RETIRED_IDS } from "../src/engine/retired";
 import { ALL_BUFFS, BUFF_POOL_BY_TIER } from "../src/engine/buffs/library";
 import { ALL_NERFS, openingNerfPool } from "../src/engine/nerfs/library";
+import { openerPool } from "../src/engine/draft";
 import { isRetired } from "../src/engine/retired";
 
 const ROOT = join(__dirname, "..");
@@ -37,6 +38,8 @@ for (const m of body.matchAll(/^\s{2}([a-z0-9_]+):\s*\{/gm)) {
 // poolAtTier, which we cannot call without match state, so assert on the
 // filter it applies: the opening nerf pool is the directly callable one.
 for (const n of openingNerfPool()) if (isRetired(n.id)) problems.push(`retired nerf in opening pool: ${n.id}`);
+// The Buff-mode opening pack is dealt from its own pool (draft.ts openerPool).
+for (const b of openerPool()) if (isRetired(b.id)) problems.push(`retired opener in opening pack: ${b.id}`);
 let active = 0;
 for (const tier of Object.keys(BUFF_POOL_BY_TIER)) {
   for (const b of BUFF_POOL_BY_TIER[Number(tier)] ?? []) if (!isRetired(b.id)) active += 1;

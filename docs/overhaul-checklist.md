@@ -124,3 +124,7 @@ Every active card was read category by category and judged by hand, not by the s
 ### Balance (2026-09-05)
 - Paired-game win-rate sweep (`scripts/sim-card-winrate.ts --games 16 --only gm_`) run on the gambling set: every card fired, none resolved at that sample (standard error around 12 points), so no tier moved on that evidence. A full-library sweep needs hours of a quiet machine and was not run in the sandbox.
 - Tier corrections came from the hand read instead (42 retiers above), and the retirement rules keep dominated and duplicate cards out of the pools. Gambling payout text is asserted against the odds constants by the existing guards (`test:balance-fixes`, `test:card-audit`).
+
+### Animation soak (2026-09-05)
+- `/dev/plays` driven by Playwright: every scene on every tier page fired (988 plays, tiers 1 to 10), no page or console errors. Frame timing under headless software GL is not representative; the lab harness (`npm run test:lab`) covers every card's engine path with zero failures.
+- Bug found on the way: the Buff-mode opening pack (`openerPool`) ignored retirements and could still deal a retired opener. Fixed, and `npm run test:retired` now asserts the opener pool too.

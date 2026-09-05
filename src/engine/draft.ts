@@ -530,7 +530,7 @@ export function rollOffer(
 
 /** The opener pool: implemented opener-flagged cards. */
 export function openerPool(): Buff[] {
-  return Object.values(BUFF_BY_ID).filter((b) => b.implemented && b.opener === true);
+  return Object.values(BUFF_BY_ID).filter((b) => b.implemented && b.opener === true && !isRetired(b.id));
 }
 
 /** Deal both players' opening offers (buff mode). Call once right after
