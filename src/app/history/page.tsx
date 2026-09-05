@@ -77,7 +77,7 @@ export default function HistoryPage() {
       <SiteHeader active="/history" />
 
       <section className="max-w-3xl mx-auto px-5 sm:px-6 py-6 sm:py-8">
-        <h1 className="font-display text-4xl sm:text-5xl">Game history</h1>
+        <h1 className="page-title">Game history</h1>
 
         <div className="mt-6 flex flex-wrap gap-2">
           {FILTERS.map((f) => (

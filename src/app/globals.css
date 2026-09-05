@@ -23,10 +23,17 @@ body {
      ========================================================================= */
 
   /* Backgrounds. The Lichess dark ladder: page, box, raised/hover, border. */
-  --bg-base: #161512;
-  --bg-panel: #262421;
-  --bg-raised: #302e2c;
-  --border-subtle: #404040;
+  --site-hue: 37deg;
+  --bg-base: hsl(var(--site-hue) 10% 8%);     /* page   (Lichess --c-bg-page) */
+  --bg-panel: hsl(var(--site-hue) 7% 14%);    /* box    (--c-bg) */
+  --bg-raised: hsl(var(--site-hue) 7% 22%);   /* low    (--c-bg-low) */
+  --bg-zebra: hsl(var(--site-hue) 5% 19%);    /* zebra  (--c-bg-zebra) */
+  --border-subtle: hsl(0 0% 25%);             /* --c-border */
+  --border-light: hsl(0 0% 40%);              /* --c-border-light */
+  /* Geometry. Lichess ships a roundness option; we run it square (boxes 0,
+     buttons 2px). One token flip brings Lichess's default 7px back. */
+  --ui-roundness: 0px;
+  --btn-roundness: 2px;
 
   /* Board — Lichess brown, with a last-move/selection highlight stored as an
      rgb triple so it can be laid down at 40% opacity. */
@@ -76,15 +83,20 @@ body {
      blue, which is what Lichess itself uses on a primary button. */
   --text-on-accent: #ffffff;
 
-  /* The metal button (Lichess's default button): a gradient one rung above the
-     page, lighter on hover. Dark values here; light restates them below. */
-  --btn-metal-top: #3c3936;
-  --btn-metal-bottom: #2e2c29;
-  --btn-metal-top-hover: #4a4643;
-  --btn-metal-bottom-hover: #383532;
-  --btn-metal-text-hover: #ffffff;
-  --btn-metal-text-shadow: 0 1px 0 rgba(0, 0, 0, 0.6);
-  --btn-metal-edge: transparent;
+  /* Lichess's metal (--c-metal-*): the default button and the raised chip. */
+  --c-metal-top: hsl(var(--site-hue) 7% 22%);
+  --c-metal-bottom: hsl(var(--site-hue) 5% 19%);
+  --c-metal-top-hover: hsl(var(--site-hue) 7% 25%);
+  --c-metal-bottom-hover: hsl(var(--site-hue) 5% 22%);
+  --c-body-gradient: hsl(var(--site-hue) 12% 16%);
+  --c-metal-text-shadow: 0.5px 0.5px 0 rgba(0, 0, 0, 0.8);
+  /* Lichess's two warm highlights: brag (brass, for DONATE / dates / ranks)
+     and accent (orange, for the rare hot emphasis). Neither is a link colour. */
+  --brag: hsl(var(--site-hue) 74% 43%);
+  --brag-hi: hsl(var(--site-hue) 80% 55%);
+  --brag-rgb: 191 129 29;
+  --c-accent-warm: hsl(22 100% 42%);
+  --c-accent-warm-rgb: 214 79 0;
 
   /* -------------------------------------------------------------------------
      LEGACY ALIASES — every name below resolves to a token above. Components
@@ -233,10 +245,12 @@ html[data-anim="fast"] *::after {
 
    The dark palette IS the :root block above. Only light overrides. */
 html[data-theme="light"] {
-  --bg-base: #edebe9;
-  --bg-panel: #ffffff;
-  --bg-raised: #f7f6f5;
-  --border-subtle: #d9d9d9;
+  --bg-base: hsl(var(--site-hue) 10% 92%);
+  --bg-panel: hsl(0 0% 100%);
+  --bg-raised: hsl(0 0% 89%);
+  --bg-zebra: hsl(var(--site-hue) 12% 96.5%);
+  --border-subtle: hsl(0 0% 85%);
+  --border-light: hsl(0 0% 80%);
   --text-primary: #3d3d3d;
   --text-heading: #232323;
   --text-secondary: #666666;
@@ -262,13 +276,15 @@ html[data-theme="light"] {
   --accent-positive-rgb: 76 122 28;
   --accent-positive-hi-rgb: 98 153 36;
   --text-on-accent: #ffffff;
-  --btn-metal-top: #ffffff;
-  --btn-metal-bottom: #ededed;
-  --btn-metal-top-hover: #ffffff;
-  --btn-metal-bottom-hover: #f7f7f7;
-  --btn-metal-text-hover: #1b78d0;
-  --btn-metal-text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
-  --btn-metal-edge: #d4d4d4;
+  --c-metal-top: hsl(0 0% 96%);
+  --c-metal-bottom: hsl(0 0% 93%);
+  --c-metal-top-hover: hsl(0 0% 98%);
+  --c-metal-bottom-hover: hsl(0 0% 95%);
+  --c-body-gradient: hsl(var(--site-hue) 12% 84%);
+  --c-metal-text-shadow: none;
+  --brag: hsl(var(--site-hue) 74% 48%);
+  --brag-hi: hsl(var(--site-hue) 74% 40%);
+  --brag-rgb: 204 137 31;
 }
 
 /* Paper-scheme treatments (plate fills, the ink text ramp, border alphas) hang
@@ -306,15 +322,16 @@ body {
   min-height: 100dvh;
 }
 
-/* Geometry, Lichess's: 7px on a box, 3px on a button. The global override
+/* Geometry, Lichess's structure run square: --ui-roundness on a box,
+   --btn-roundness on a button. The global override
    reaches every `rounded-*` utility in the codebase at once; true circles
    (rounded-full: status dots, avatars) stay exempt. */
-[class*="rounded"]:not([class*="rounded-full"]) { border-radius: 7px !important; }
+[class*="rounded"]:not([class*="rounded-full"]) { border-radius: var(--ui-roundness) !important; }
 button,
 .btn,
 [role="button"],
 button[class*="rounded"]:not([class*="rounded-full"]),
-[role="button"][class*="rounded"]:not([class*="rounded-full"]) { border-radius: 3px !important; }
+[role="button"][class*="rounded"]:not([class*="rounded-full"]) { border-radius: var(--btn-roundness) !important; }
 /* A thumb switch is a pill with a round knob, the one button that is not a
    box. Opted into by class, since a few labelled toggles are still boxes. */
 button.settings-toggle,
@@ -349,6 +366,17 @@ body {
   line-height: 0.88;
   padding: 0.05em 0.14em 0 0;
   color: var(--gold-leaf);
+}
+
+/* Page title, Lichess's size: 1.6rem, regular weight, heading colour. Every
+   route's h1 wears this; there is no display slam anywhere on the site. */
+.page-title {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-size: 1.6rem;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0;
+  color: var(--text-heading);
 }
 
 /* --- Fluid display scale utilities ---
@@ -461,7 +489,7 @@ body {
 .plate {
   background: var(--bg-panel);
   border: 1px solid var(--border-subtle);
-  border-radius: 7px;
+  border-radius: var(--ui-roundness);
 }
 /* Positioning defaults live in a zero-specificity :where() so any positioning
    utility on the same element (fixed, absolute, sticky, z-30...) wins. This
@@ -497,7 +525,7 @@ html[data-anim="off"] .tv-tuning-ring { animation: none; }
 .rail-panel {
   background: var(--bg-panel);
   border: 1px solid var(--border-subtle);
-  border-radius: 7px;
+  border-radius: var(--ui-roundness);
 }
 
 /* A plate used as a floating menu is absolutely positioned (many dropdowns
@@ -619,17 +647,21 @@ html[data-light] select option {
 .btn-glass--primary {
   background: var(--accent);
   color: var(--text-on-accent);
-  border: 1px solid var(--accent);
-  font-weight: 600;
-  transition: background-color 120ms ease, border-color 120ms ease;
+  border: 0;
+  font-weight: 500;
+  text-shadow: 0.5px 0.5px 0 rgba(0, 0, 0, 0.3);
+  box-shadow:
+    inset 0 1px 3px -2px rgba(255, 255, 255, 0.5),
+    inset 0 -4px 6px -3px rgba(0, 0, 0, 0.35),
+    0 1px 3px 0 rgba(0, 0, 0, 0.2);
+  transition: filter 150ms ease, box-shadow 150ms ease;
 }
 .btn-leaf:hover:not(:disabled),
 .btn-cta:hover:not(:disabled),
 .btn-gold:hover:not(:disabled),
 .btn-slab:hover:not(:disabled),
 .btn-glass--primary:hover:not(:disabled) {
-  background: var(--accent-hi);
-  border-color: var(--accent-hi);
+  filter: brightness(1.15);
 }
 .btn-leaf:disabled,
 .btn-cta:disabled,
@@ -647,20 +679,34 @@ html[data-light] select option {
   /* Lichess's "metal" button: a soft top-to-bottom gradient one rung above
      the page, no hairline, heading-weight text with a faint drop shadow so
      the label sits in the surface rather than on it. */
-  background-image: linear-gradient(to bottom, var(--btn-metal-top), var(--btn-metal-bottom));
-  background-color: var(--btn-metal-bottom);
-  color: var(--text-heading);
-  border: 1px solid var(--btn-metal-edge);
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
-  text-shadow: var(--btn-metal-text-shadow);
-  font-weight: 600;
-  transition: background-color 120ms ease, background-image 120ms ease, color 120ms ease;
+  background-image: linear-gradient(to bottom, var(--c-metal-top), var(--c-metal-bottom));
+  background-color: var(--c-metal-bottom);
+  color: var(--text-primary);
+  border: 0;
+  box-shadow:
+    inset 0 1px 3px -2px hsl(0 0% 45%),
+    inset 0 -4px 6px -3px color-mix(in srgb, var(--c-body-gradient) 80%, transparent),
+    0 1px 3px 0 rgba(0, 0, 0, 0.2);
+  text-shadow: var(--c-metal-text-shadow);
+  font-weight: 500;
+  transition: background-color 150ms ease, color 150ms ease, box-shadow 150ms ease;
 }
 .btn-ghost:hover:not(:disabled),
 .btn-glass:hover:not(:disabled) {
-  background-image: linear-gradient(to bottom, var(--btn-metal-top-hover), var(--btn-metal-bottom-hover));
-  background-color: var(--btn-metal-bottom-hover);
-  color: var(--btn-metal-text-hover);
+  background-image: linear-gradient(to bottom, var(--c-metal-top-hover), var(--c-metal-bottom-hover));
+  background-color: var(--c-metal-bottom-hover);
+  color: var(--text-heading);
+  box-shadow:
+    inset 0 1px 3px -2px var(--border-light),
+    inset 0 -5px 8px -3px color-mix(in srgb, var(--c-body-gradient) 80%, transparent),
+    0 2px 4px 0 rgba(0, 0, 0, 0.2);
+}
+html[data-light] .btn-ghost,
+html[data-light] .btn-glass {
+  box-shadow:
+    inset 0 3px 3px -2px rgba(255, 255, 255, 0.4),
+    inset 0 -4px 6px -3px color-mix(in srgb, var(--c-body-gradient) 80%, transparent),
+    0 1px 3px 0 rgba(0, 0, 0, 0.18);
 }
 .btn-ghost:disabled,
 .btn-glass:disabled { color: var(--text-muted); cursor: not-allowed; }
@@ -668,13 +714,17 @@ html[data-light] select option {
 .btn-cursed {
   background: var(--accent-danger);
   color: #ffffff;
-  border: 1px solid var(--accent-danger);
-  font-weight: 600;
-  transition: background-color 120ms ease, border-color 120ms ease;
+  border: 0;
+  font-weight: 500;
+  text-shadow: 0.5px 0.5px 0 rgba(0, 0, 0, 0.3);
+  box-shadow:
+    inset 0 1px 3px -2px rgba(255, 255, 255, 0.4),
+    inset 0 -4px 6px -3px rgba(0, 0, 0, 0.35),
+    0 1px 3px 0 rgba(0, 0, 0, 0.2);
+  transition: filter 150ms ease;
 }
 .btn-cursed:hover:not(:disabled) {
-  background: var(--accent-nerf);
-  border-color: var(--accent-nerf);
+  filter: brightness(1.12);
 }
 .btn-cursed:disabled {
   background: var(--surface-raise);
@@ -904,17 +954,8 @@ html[data-anim="off"] .victory-burst { display: none; }
 /* Relic icon housing: header/utility icon buttons sit in a square-edged rune
    frame that warms on hover, matching the site's crisp 1px geometry. */
 .nav-icon-btn {
-  border-radius: 1px;
-  border: 1px solid transparent;
-  transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease, transform 130ms ease, box-shadow 180ms ease;
-}
-.nav-icon-btn:hover {
-  transform: translateY(-0.5px);
-  border-color: rgb(var(--energy-ember-rgb) / 0.4);
-  box-shadow: 0 0 14px -8px rgb(var(--energy-ember-rgb) / 0.6);
-}
-.nav-icon-btn:active {
-  transform: translateY(0.5px) scale(0.95);
+  border-radius: var(--btn-roundness);
+  transition: color 150ms ease, background-color 150ms ease;
 }
 
 /* Soft depth behind the hero: two barely-there radial washes (accent + a
@@ -1998,14 +2039,13 @@ nav, header { position: relative; z-index: 30; }
      the nav) then anchors to the nav instead of the viewport — the broken
      "preferences way too high" bug. The nav scrolls with the page anyway, so
      blur bought nothing and cost paint time on low-end devices. */
-  background: var(--surface-panel);
-  background: color-mix(in srgb, var(--surface-panel) 88%, transparent);
+  background: var(--bg-base);
 }
 
 /* Accessibility */
 :focus-visible {
-  outline: 1.5px solid rgb(var(--accent-gold-rgb) / 0.85);
-  outline-offset: 3px;
+  outline: 2px solid rgb(var(--accent-gold-rgb) / 0.85);
+  outline-offset: 2px;
   /* No border-radius override here: it rounded every focused element's corners
      to 2px on click, fighting the 1px-corner design (and making square cards
      look rounded when tapped). The outline follows each element's own radius,

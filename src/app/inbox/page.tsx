@@ -53,7 +53,7 @@ export default function InboxPage() {
     <main className="min-h-screen">
       <SiteHeader />
       <section className="max-w-2xl mx-auto px-5 sm:px-6 py-8">
-        <h1 className="font-display text-3xl sm:text-4xl">Inbox</h1>
+        <h1 className="page-title">Inbox</h1>
 
         {user === null && (
           <p className="mt-4 text-parchment-300">

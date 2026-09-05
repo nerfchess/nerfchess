@@ -115,7 +115,7 @@ export default function ModPage() {
           <div className="text-parchment-300">Loading…</div>
         ) : !isMod ? (
           <>
-            <h1 className="font-display text-4xl">Moderation</h1>
+            <h1 className="page-title">Moderation</h1>
             <p className="mt-3 text-parchment-200">
               This page is for moderators.{" "}
               {!me && (
@@ -130,7 +130,7 @@ export default function ModPage() {
             {/* One line on a phone: the title and who you are signed in as
                 share a row rather than eating two. */}
             <div className="flex items-center justify-between gap-3">
-              <h1 className="font-display text-2xl sm:text-4xl">Moderation</h1>
+              <h1 className="page-title">Moderation</h1>
               <span className="flex items-center gap-2">
                 <span className="hidden text-xs text-parchment-400 sm:inline">
                   {me.username}

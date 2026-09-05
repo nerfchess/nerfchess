@@ -37,7 +37,8 @@ import { useZenMode } from "@/lib/useZenMode";
 const PANEL_STYLE: CSSProperties = {
   background: "var(--bg-panel)",
   border: "1px solid var(--border-subtle)",
-  borderRadius: "7px",
+  borderRadius: "var(--ui-roundness)",
+  boxShadow: "0 14px 28px rgba(0,0,0,0.15), 0 10px 10px rgba(0,0,0,0.12)",
 };
 
 const THEME_ORDER: SiteTheme[] = ["dark", "light", "system"];

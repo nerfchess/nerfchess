@@ -136,7 +136,7 @@ function GuestProfile({ account }: { account: AccountUser | null }) {
         )}
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <h1 className="min-w-0 break-words font-display text-3xl sm:text-4xl">
+            <h1 className="min-w-0 break-words page-title">
               {account ? account.username : "You"}
             </h1>
             <span

@@ -49,6 +49,9 @@ const ALLOWED_VALUES = new Set([
   "inherit",
   "initial",
   "unset",
+  // The two geometry tokens (boxes 0, buttons 2px; see globals.css).
+  "var(--ui-roundness)",
+  "var(--btn-roundness)",
 ]);
 
 // Selectors whose radius IS the shape rather than a corner treatment: organic

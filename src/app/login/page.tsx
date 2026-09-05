@@ -122,7 +122,7 @@ function LoginPage() {
           not a logo-only stub. */}
       <SiteHeader />
       <section className="max-w-md mx-auto px-6 py-8">
-        <h1 className="font-display text-3xl sm:text-4xl">
+        <h1 className="page-title">
           {tab === "login" ? "Welcome back" : "Create your account"}
         </h1>
         {upgrading && (

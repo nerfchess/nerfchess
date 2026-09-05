@@ -97,8 +97,7 @@ export default function TutorialPage() {
       />
       <SiteHeader />
       <section className="max-w-3xl mx-auto px-6 pt-4">
-        <div className="text-[11px] text-parchment-400">how to play</div>
-        <h1 className="font-display text-5xl sm:text-6xl mt-1">House rules</h1>
+        <h1 className="page-title mt-1">House rules</h1>
         <p className="mt-5 text-[16px] leading-[1.7] text-parchment-200">
           Nerf Chess is chess, until it isn&apos;t. Five house rules are everything you need to know.
           Everything else depends on your mode: in Nerf mode, your secret handicap and the hexes,
@@ -138,7 +137,6 @@ export default function TutorialPage() {
           </p>
         </div>
         <div className="mt-14">
-          <div className="text-[11px] text-parchment-400">the four cards</div>
           <h2 className="font-display text-3xl sm:text-4xl mt-1">Nerf, buff, hex, boon</h2>
           <p className="mt-4 text-[15px] leading-[1.7] text-parchment-200">
             Every card in the game is one of these four. The trick is who each one lands on: a nerf and

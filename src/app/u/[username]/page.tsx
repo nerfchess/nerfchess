@@ -284,7 +284,7 @@ function ProfileContent() {
   if (missing) {
     return (
       <section className="mx-auto max-w-6xl px-5 py-8 sm:px-6">
-        <h1 className="font-display text-4xl">Player not found</h1>
+        <h1 className="page-title">Player not found</h1>
         <p className="mt-3 text-parchment-200">No account with that name.</p>
         <LinkButton tone="leaf" href="/lobby" className="mt-6 px-4 py-2 text-sm font-semibold">
           Back to the lobby
@@ -726,7 +726,7 @@ function ProfileHeader({
 
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <h1 className="min-w-0 break-words font-display text-3xl sm:text-4xl">
+            <h1 className="min-w-0 break-words page-title">
               {user.username}
               {liveGameId && (
                 <span

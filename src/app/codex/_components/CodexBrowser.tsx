@@ -316,8 +316,7 @@ export function CodexBrowser() {
       <SiteHeader active="/codex" />
 
       <section className="mx-auto max-w-7xl px-6 pt-4">
-        <div className="text-[11px] text-parchment-400">the library</div>
-        <h1 className="mt-1 font-display text-4xl sm:text-5xl">Codex</h1>
+        <h1 className="page-title">Codex</h1>
         <p className="mt-2 text-[15px] text-parchment-300">
           {load === "ready"
             ? `Browse every card and rule. ${totalCount} ${nounPlural} in this tab: search by name or effect, then open a row for the full card.`

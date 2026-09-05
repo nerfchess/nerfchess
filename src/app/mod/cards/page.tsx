@@ -214,7 +214,7 @@ export default function ModCardsPage() {
           <div className="text-parchment-300">Loading…</div>
         ) : !isMod ? (
           <>
-            <h1 className="font-display text-4xl">Card editor</h1>
+            <h1 className="page-title">Card editor</h1>
             <p className="mt-3 text-parchment-200">
               This page is for moderators.{" "}
               {!me && (
@@ -224,7 +224,7 @@ export default function ModCardsPage() {
           </>
         ) : (
           <>
-            <h1 className="font-display text-4xl">Card editor</h1>
+            <h1 className="page-title">Card editor</h1>
 
             <div className="mt-6 flex flex-wrap items-center gap-2">
               <input

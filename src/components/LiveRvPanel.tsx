@@ -36,7 +36,7 @@ export function LiveRvPanel({ className = "" }: { className?: string }) {
         </div>
       ) : games.length === 0 ? (
         <p className="mt-2 text-[13px] text-parchment-400">
-          No games running right now. Start one below and the dungeon wakes up.
+          No games running right now. Start one below.
         </p>
       ) : (
         <ul className="mt-2 divide-y divide-white/5">

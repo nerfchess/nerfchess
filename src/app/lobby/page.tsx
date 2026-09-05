@@ -512,36 +512,38 @@ function LobbyInner() {
                   headline while these stay one tap away. Each opens its
                   existing flow (the challenges fold, the friends fold, bot
                   practice). */}
-              <div>
-                <h2 className="font-display text-[15px] font-bold text-parchment-50">
-                  Other ways to play
-                </h2>
-                <div className="mt-2.5 grid gap-2.5 sm:grid-cols-3">
-                  <SecondaryModeCard
-                    icon={<Swords size={18} aria-hidden />}
-                    title="Custom game"
-                    description="Set your own clock and mode, then share an open challenge."
-                    onClick={() => {
-                      setTab("play");
-                      setChallengesOpen(true);
-                    }}
-                  />
-                  <SecondaryModeCard
-                    icon={<Users size={18} aria-hidden />}
-                    title="Challenge a friend"
-                    description="Create a private game and share the code."
-                    onClick={() => {
-                      setTab("watch");
-                      setFriendsOpen(true);
-                    }}
-                  />
-                  <SecondaryModeCard
-                    icon={<Cpu size={18} aria-hidden />}
-                    title="Practice vs computer"
-                    description="Pick a bot strength and go."
-                    href="/play"
-                  />
-                </div>
+              {/* The other ways in, as Lichess's lobby buttons: three metal
+                  rows, icon left, label flush left. Each opens its existing
+                  flow (the challenges fold, the friends fold, bot practice). */}
+              <div className="grid gap-2 sm:grid-cols-3">
+                <Button
+                  tone="default"
+                  size="lg"
+                  align="start"
+                  onClick={() => {
+                    setTab("play");
+                    setChallengesOpen(true);
+                  }}
+                >
+                  <Swords size={22} strokeWidth={1.6} aria-hidden className="shrink-0 text-parchment-300" />
+                  Custom game
+                </Button>
+                <Button
+                  tone="default"
+                  size="lg"
+                  align="start"
+                  onClick={() => {
+                    setTab("watch");
+                    setFriendsOpen(true);
+                  }}
+                >
+                  <Users size={22} strokeWidth={1.6} aria-hidden className="shrink-0 text-parchment-300" />
+                  Challenge a friend
+                </Button>
+                <LinkButton tone="default" size="lg" align="start" href="/play">
+                  <Cpu size={22} strokeWidth={1.6} aria-hidden className="shrink-0 text-parchment-300" />
+                  Play against computer
+                </LinkButton>
               </div>
 
               {/* Open challenges: players waiting in a quick-pairing pool plus
@@ -803,46 +805,6 @@ function StatusPill({
 // One secondary play-mode card: a full-height, fully clickable tile (min 44px)
 // with an icon, a title, and a one-line description. Renders as a link when it
 // points at a route, or a button when it switches lobby tabs.
-function SecondaryModeCard({
-  icon,
-  title,
-  description,
-  href,
-  onClick,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  href?: string;
-  onClick?: () => void;
-}) {
-  const inner = (
-    <>
-      <span
-        aria-hidden
-        className="grid h-9 w-9 shrink-0 place-items-center border border-[color:var(--edge)] bg-black/25 text-parchment-200 transition-colors group-hover:border-gold/40 group-hover:text-gold-leaf"
-      >
-        {icon}
-      </span>
-      <span className="min-w-0">
-        <span className="block font-display text-[15px] font-semibold text-parchment-100">{title}</span>
-        <span className="mt-0.5 block text-xs leading-snug text-parchment-400">{description}</span>
-      </span>
-    </>
-  );
-  // Plain box, same as every other box on the page.
-  const className =
-    "plate plate-hover press group flex min-h-[44px] items-start gap-3 p-3 text-left no-underline";
-  return href ? (
-    <Link href={href} className={className}>
-      {inner}
-    </Link>
-  ) : (
-    <button type="button" onClick={onClick} className={className}>
-      {inner}
-    </button>
-  );
-}
 
 // Each lobby section wears a small color identity: an icon chip beside the
 // title (mint for friends, sun for open challenges, coral for live games; the

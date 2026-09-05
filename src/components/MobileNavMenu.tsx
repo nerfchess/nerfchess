@@ -203,7 +203,7 @@ export function MobileNavMenu({
                 right: panelPos.right,
                 background: "var(--bg-panel)",
                 border: "1px solid var(--border-subtle)",
-                borderRadius: "7px",
+                borderRadius: "var(--ui-roundness)",
               }}
               data-testid="mobile-nav-panel"
               className="!fixed !z-[61] max-h-[calc(100dvh-4.5rem)] w-60 max-w-[calc(100vw-1.5rem)] overflow-y-auto overscroll-contain py-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] shadow-xl"

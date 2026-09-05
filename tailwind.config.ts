@@ -46,6 +46,12 @@ export default {
         },
         // gold = the accent (links / primary). Historical name, Lichess blue:
         // the rgb triples are set on :root and pushed by applyUiPrefs.
+        // brag = Lichess's brass highlight (DONATE, dates, ranks, medals).
+        // Decorative emphasis only; links and primary actions stay blue.
+        brag: {
+          DEFAULT: "rgb(var(--brag-rgb) / <alpha-value>)",
+          hi: "var(--brag-hi)",
+        },
         gold: {
           DEFAULT: "rgb(var(--accent-rgb) / <alpha-value>)",
           leaf: "rgb(var(--accent-hi-rgb) / <alpha-value>)",

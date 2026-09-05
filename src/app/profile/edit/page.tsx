@@ -293,7 +293,7 @@ export default function EditProfilePage() {
               <ArrowLeft className="h-5 w-5" strokeWidth={2} />
             </LinkButton>
           )}
-          <h1 className="font-display text-3xl sm:text-4xl text-parchment-50">Edit profile</h1>
+          <h1 className="page-title">Edit profile</h1>
         </div>
 
         {account === undefined ? (

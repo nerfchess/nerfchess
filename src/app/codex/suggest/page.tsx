@@ -150,8 +150,7 @@ export default function SuggestRulePage() {
       </nav>
 
       <section className="max-w-2xl mx-auto px-6">
-        <div className="text-[11px] text-parchment-400">workshop</div>
-        <h1 className="font-display text-5xl mt-1">Suggest a rule</h1>
+        <h1 className="page-title">Suggest a rule</h1>
         <p className="mt-3 text-parchment-200">
           Describe your idea. It goes straight to the nerfchess team, and the best ones get built.
         </p>

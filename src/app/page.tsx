@@ -19,7 +19,6 @@ import { TIER_ROMAN } from "@/lib/tiers";
 import { useLobbySnapshot } from "@/lib/lobbyClient";
 import { AccountUser, fetchMe } from "@/lib/authClient";
 import { ActiveGame, loadActiveGame, clearActiveGame } from "@/lib/multiplayer";
-import { NewHereChip } from "@/components/NewHereChip";
 import { Button } from "@/components/ui/Button";
 import { LinkButton } from "@/components/ui/Button";
 
@@ -51,9 +50,6 @@ export default function HomePage() {
               <span className="sr-only">: chess with power-ups, a free online chess variant</span>
             </h1>
             <HeroRatings />
-          </div>
-          <div className="mt-2">
-            <NewHereChip />
           </div>
 
           {/* Three ways in, Lichess's lobby buttons: metal, icon-led, label

@@ -308,7 +308,7 @@ export default function ClubPage() {
               <div className="flex min-w-0 items-center gap-4">
                 <ClubIcon icon={club.icon} name={club.name} size={64} />
                 <div className="min-w-0">
-                <h1 className="truncate font-display text-4xl text-parchment-50 sm:text-5xl">{club.name}</h1>
+                <h1 className="truncate page-title">{club.name}</h1>
                 <p className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-parchment-400">
                   <span className="flex items-center gap-1.5">
                     <Crown size={13} className="text-gold-leaf" />

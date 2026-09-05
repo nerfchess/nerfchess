@@ -124,7 +124,7 @@ function PlayInner() {
       <section className="max-w-2xl mx-auto px-6 py-5">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="font-display text-4xl">Play the computer</h1>
+            <h1 className="page-title">Play the computer</h1>
             <p className="mt-1.5 text-[13px] text-parchment-300">
               Buff, Nerf, or plain chess. Casual, never rated.
             </p>

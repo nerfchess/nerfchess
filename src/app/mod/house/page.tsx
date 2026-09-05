@@ -59,12 +59,12 @@ export default function ModHousePage() {
           <div className="text-parchment-300">Loading…</div>
         ) : !isMod ? (
           <>
-            <h1 className="font-display text-4xl">House bots</h1>
+            <h1 className="page-title">House bots</h1>
             <p className="mt-3 text-parchment-200">This page is for moderators.</p>
           </>
         ) : (
           <>
-            <h1 className="font-display text-4xl">House bots</h1>
+            <h1 className="page-title">House bots</h1>
             <p className="mt-3 max-w-2xl text-sm text-parchment-300">
               The engine-driven roster that keeps the lobby warm. Rename a persona,
               pick a different avatar, or set a profile bio; names pass the same

@@ -1454,7 +1454,7 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
         <main className="min-h-screen flex items-center justify-center px-4 py-8">
           <div className="w-full max-w-2xl">
             <div className="text-[12px] text-parchment-400 text-center">Nerf draft</div>
-            <h1 className="font-display text-4xl text-parchment text-center mt-1">
+            <h1 className="page-title text-parchment text-center mt-1">
               Choose your handicap
             </h1>
             <p className="mt-2 text-sm text-parchment-300 text-center">

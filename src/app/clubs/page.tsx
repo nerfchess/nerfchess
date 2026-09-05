@@ -120,7 +120,7 @@ export default function ClubsPage() {
       <section className="mx-auto max-w-4xl px-5 pt-6 sm:px-6 sm:pt-8">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="font-display text-4xl sm:text-5xl text-parchment-50">Clubs</h1>
+            <h1 className="page-title">Clubs</h1>
             <p className="mt-2 text-[13px] text-parchment-300">Player groups for organizing games and events.</p>
           </div>
           <div className="flex items-center gap-2">

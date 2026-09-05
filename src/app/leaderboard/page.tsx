@@ -124,8 +124,7 @@ export default function LeaderboardPage() {
       <SiteHeader active="/leaderboard" />
 
       <section className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
-        <span>Ranked ladder</span>
-        <h1 className="mt-1 font-display text-4xl text-parchment-50 sm:text-5xl">Leaderboard</h1>
+        <h1 className="page-title">Leaderboard</h1>
 
         {/* Ladder switch: the only two boards, Nerf and Buff. */}
         <CategoryTabs value={category} onChange={setCategory} className="mt-5" />
