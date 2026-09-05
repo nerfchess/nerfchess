@@ -72,6 +72,7 @@ interface ProfileUser {
   showOnline: boolean;
   friendsVisibility: "public" | "private";
   friendCount: number;
+  clubs?: { slug: string; name: string }[];
 }
 
 interface CategoryRatingRow {
@@ -503,6 +504,7 @@ function ProfileContent() {
                 showPresence={showPresence}
                 stats={stats}
                 friendCount={user.friendCount}
+                clubs={user.clubs ?? []}
                 role={user.role}
               />
               {liveGameId && (
@@ -686,6 +688,11 @@ function ProfileHeader({
           )}
         </h1>
         {user.bio && <BioText bio={user.bio} />}
+        {!user.bio && isOwner && (
+          <Link href="/profile/edit" className="mt-1 inline-block text-[13px] text-[color:var(--accent)] no-underline hover:underline">
+            Add a bio
+          </Link>
+        )}
       </div>
       {placements.length > 0 && (
         <Link href="/leaderboard" title={placementTitle(placements[0])} className="shrink-0 no-underline">

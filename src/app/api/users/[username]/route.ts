@@ -83,6 +83,16 @@ export async function GET(request: Request, props: { params: Promise<{ username:
     .first<{ n: number }>();
   const friendCount = friendCountRow?.n ?? 0;
 
+  // Clubs the player belongs to (name + slug), for the profile's info box.
+  const clubRows = await db
+    .prepare(
+      `SELECT c.slug, c.name FROM club_members m JOIN clubs c ON c.id = m.club_id
+       WHERE m.user_id = ? ORDER BY m.joined_at ASC LIMIT 12`,
+    )
+    .bind(user.id)
+    .all<{ slug: string; name: string }>();
+  const clubs = clubRows.results;
+
   // relationship: null when signed out, else the viewer's tie to this profile.
   let relationship: Relationship | null = null;
   if (viewer) {
@@ -219,6 +229,7 @@ export async function GET(request: Request, props: { params: Promise<{ username:
       showOnline,
       friendsVisibility,
       friendCount,
+      clubs,
     },
     relationship,
     mutualFriends,
