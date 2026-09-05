@@ -1116,22 +1116,16 @@ html[data-piece-source="lichess"] .piece-asset {
    opponent's king red when you check"). Works for EITHER side's king; the
    pulse is dropped when animations are off in Settings but the red stays. */
 .sq-check {
+  /* Lichess's check burst, exact stops. */
   background-image: radial-gradient(
     ellipse at center,
-    rgba(255, 60, 50, 0.85) 0%,
-    rgba(230, 40, 30, 0.45) 42%,
-    rgba(180, 0, 0, 0) 72%
+    rgba(255, 0, 0, 1) 0%,
+    rgba(231, 0, 0, 1) 25%,
+    rgba(169, 0, 0, 0) 89%,
+    rgba(158, 0, 0, 0) 100%
   );
 }
-.sq-check::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 5;
-  box-shadow: inset 0 0 0 3px rgba(255, 56, 44, 0.9), inset 0 0 18px rgba(220, 30, 20, 0.55);
-  animation: sq-check-pulse 0.9s ease-in-out infinite;
-}
+/* No pulsing ring: Lichess shows the burst alone. */
 @keyframes sq-check-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.35; }
@@ -1419,60 +1413,40 @@ html[data-anim="off"] .piece-treat {
    at full strength; the square wash is the token at its themed opacity
    (--board-highlight-a, 40% dark / 50% light). One token drives both the
    last-move tint and the selected-square ring so they always read as a pair. */
-.sq-sel {
-  box-shadow:
-    inset 0 0 0 4px rgb(var(--board-highlight) / 0.95),
-    inset 0 0 0 9999px rgb(var(--board-highlight) / calc(var(--board-highlight-a) * 0.45));
-}
-.sq-last {
-  box-shadow: inset 0 0 0 9999px rgb(var(--board-highlight) / var(--board-highlight-a));
-}
-.sq-sel.sq-last {
-  box-shadow:
-    inset 0 0 0 4px rgb(var(--board-highlight) / 0.95),
-    inset 0 0 0 9999px rgb(var(--board-highlight) / calc(var(--board-highlight-a) * 0.55));
-}
-/* Drag-over a valid target: thicker, brighter ring */
-.sq-hover {
-  box-shadow:
-    inset 0 0 0 5px rgb(var(--board-highlight) / 1),
-    inset 0 0 0 9999px rgb(var(--board-highlight) / calc(var(--board-highlight-a) * 0.45));
-}
+/* Lichess's board highlights, copied value for value (lila board.scss):
+   selected  rgba(20,85,30,.5)   last move  rgba(155,199,0,.41)
+   drag-over rgba(20,85,30,.3)   check      the red radial burst */
+/* Painted as an inset shadow so the tint blends OVER the square colour the
+   way Lichess's overlay squares do, instead of replacing it. */
+.sq-sel { box-shadow: inset 0 0 0 9999px rgba(20, 85, 30, 0.5); }
+.sq-last { box-shadow: inset 0 0 0 9999px rgba(155, 199, 0, 0.41); }
+.sq-sel.sq-last { box-shadow: inset 0 0 0 9999px rgba(20, 85, 30, 0.5); }
+.sq-hover { box-shadow: inset 0 0 0 9999px rgba(20, 85, 30, 0.3); }
 .sq-rmb-mark {
   box-shadow: inset 0 0 0 4px currentColor;
   background: color-mix(in srgb, currentColor 24%, transparent);
 }
 
 /* Move-target dot */
+/* Lichess move-dest: a filled dot of a fifth of the square; a capture is the
+   hollow ring around the piece (the "oc" square). */
 .dot-target {
-  width: 26%;
-  height: 26%;
-  border-radius: 9999px;
-  background: rgba(20, 14, 8, 0.32);
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(rgba(20, 85, 30, 0.5) 19%, rgba(0, 0, 0, 0) 20%);
 }
 .dot-capture {
   position: absolute;
-  inset: 6%;
-  border-radius: 9999px;
-  border: 4px solid rgb(var(--accent-nerf-rgb) / 0.7);
+  inset: 0;
+  background: radial-gradient(transparent 0%, transparent 79%, rgba(20, 85, 0, 0.3) 80%);
 }
 
 /* Risk-tinted move indicators: yellow warns of a self-inflicted nerf loss,
    red warns the move leaves/moves you into check. */
-.dot-target-yellow {
-  background: rgba(214, 178, 55, 0.75);
-  box-shadow: 0 0 0 2px rgba(214, 178, 55, 0.35);
-}
-.dot-target-red {
-  background: rgba(199, 56, 48, 0.78);
-  box-shadow: 0 0 0 2px rgba(199, 56, 48, 0.4);
-}
-.dot-capture-yellow {
-  border-color: rgba(214, 178, 55, 0.9);
-}
-.dot-capture-red {
-  border-color: rgba(199, 56, 48, 0.95);
-}
+.dot-target-yellow { background: radial-gradient(rgba(214, 178, 55, 0.75) 19%, rgba(0, 0, 0, 0) 20%); }
+.dot-target-red { background: radial-gradient(rgba(199, 56, 48, 0.78) 19%, rgba(0, 0, 0, 0) 20%); }
+.dot-capture-yellow { background: radial-gradient(transparent 0%, transparent 79%, rgba(214, 178, 55, 0.5) 80%); }
+.dot-capture-red { background: radial-gradient(transparent 0%, transparent 79%, rgba(199, 56, 48, 0.55) 80%); }
 
 /* Opponent-piece inspection preview: slate, deliberately distinct from your
    own gold-ink move hints so the two can never be confused. */

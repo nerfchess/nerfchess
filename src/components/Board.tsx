@@ -3989,15 +3989,32 @@ export function Board({
     let pendingY = 0;
     let pending = false;
 
+    // The drag-over ring is toggled straight on the square element. It used
+    // to go through React state (setHoverSq), which re-rendered the whole
+    // board every time the pointer crossed a square edge: on a 5000-line
+    // component that is a visible hitch mid-drag, the "30 ton piece" feel.
+    // Chessground does the same thing: DOM only while the pointer is down.
+    const grid = boardRef.current?.querySelector("[data-board-grid]") as HTMLElement | null;
+    let hoverEl: HTMLElement | null = null;
+    const paintHover = (sq: Square | null) => {
+      if (hoverEl) {
+        hoverEl.classList.remove("sq-hover");
+        hoverEl = null;
+      }
+      if (sq == null || sq === drag.from || !targetsRef.current[sq] || !grid) return;
+      const name = "abcdefgh"[FILE(sq)] + (RANK(sq) + 1);
+      const el = grid.querySelector(`[aria-label="square ${name}"]`) as HTMLElement | null;
+      if (el) {
+        el.classList.add("sq-hover");
+        hoverEl = el;
+      }
+    };
     const flush = () => {
       pending = false;
-      if (ghostRef.current) {
-        ghostRef.current.style.transform = `translate3d(${pendingX - drag.cell / 2}px, ${pendingY - drag.cell / 2}px, 0)`;
-      }
       const sq = squareAtClient(pendingX, pendingY);
       if (sq !== lastHoverRef.current) {
         lastHoverRef.current = sq;
-        setHoverSq(sq);
+        paintHover(sq);
       }
     };
 
@@ -4005,6 +4022,11 @@ export function Board({
       if (e.pointerId !== drag.pointerId) return;
       pendingX = e.clientX;
       pendingY = e.clientY;
+      // The ghost follows the pointer in the event itself, not a frame later:
+      // one transform write is cheaper than the rAF round trip it replaces.
+      if (ghostRef.current) {
+        ghostRef.current.style.transform = `translate3d(${pendingX - drag.cell / 2}px, ${pendingY - drag.cell / 2}px, 0)`;
+      }
       if (!pending) {
         pending = true;
         rafId = requestAnimationFrame(flush);
@@ -4029,6 +4051,7 @@ export function Board({
         setSelected(null);
       }
       pressRef.current = null;
+      paintHover(null);
       setDrag(null);
       setHoverSq(null);
       lastHoverRef.current = null;
@@ -4040,6 +4063,7 @@ export function Board({
       // that corrupts the next interaction.
       pressRef.current = null;
       dropSkipRef.current = null;
+      paintHover(null);
       setDrag(null);
       setHoverSq(null);
       lastHoverRef.current = null;
@@ -4057,6 +4081,7 @@ export function Board({
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => {
       cancelAnimationFrame(rafId);
+      paintHover(null);
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
       window.removeEventListener("pointercancel", onCancel);

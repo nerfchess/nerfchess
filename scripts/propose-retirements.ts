@@ -186,6 +186,13 @@ for (const r of audit) {
   }
 }
 
+// Merge targets must be live. A hand entry can name a target that a later
+// rule (or a later hand entry) retires; drop the pointer rather than send the
+// codex to a retired card.
+for (const [, r] of retired) {
+  if (r.mergedInto && retired.has(r.mergedInto)) r.mergedInto = undefined;
+}
+
 // 5. Complexity.
 for (const r of audit) {
   if (r.effect.length > 220 && !pluginPlays.has(r.id)) retire(r.id, "too-complex");

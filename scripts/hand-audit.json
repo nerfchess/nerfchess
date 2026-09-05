@@ -1121,6 +1121,204 @@
     },
     "wn_quarantine_zone": {
       "why": "random-block rule"
+    },
+    "bn4_pinch_of_sand": {
+      "why": "a clock tweak is not a card"
+    },
+    "bw3_first_blood": {
+      "why": "draft picks are public now; peeking is moot"
+    },
+    "gm_claw_machine": {
+      "why": "draft picks are public now; peeking is moot"
+    },
+    "op_crystal_ball": {
+      "why": "draft picks are public now; peeking is moot"
+    },
+    "op_early_bird": {
+      "why": "a clock tweak is not a card"
+    },
+    "op_first_frost": {
+      "why": "a clock tweak is not a card"
+    },
+    "op_four_leaf_clover": {
+      "why": "draft picks are public now; peeking is moot"
+    },
+    "op_halo_moon": {
+      "why": "a clock tweak is not a card"
+    },
+    "op_hoofbeat_log": {
+      "why": "a clock tweak is not a card"
+    },
+    "op_housewarming_gift": {
+      "why": "a clock tweak is not a card"
+    },
+    "op_meet_kevin": {
+      "why": "does nothing on the board"
+    },
+    "op_opening_chord": {
+      "why": "a clock tweak is not a card"
+    },
+    "op_plush_pony": {
+      "why": "does nothing on the board"
+    },
+    "op_price_check": {
+      "why": "draft picks are public now; peeking is moot"
+    },
+    "op_red_sky_morning": {
+      "why": "a clock tweak is not a card"
+    },
+    "op_second_wind_sip": {
+      "why": "a clock tweak is not a card"
+    },
+    "op_stoppage_time": {
+      "why": "a clock tweak is not a card"
+    },
+    "op_sunday_best": {
+      "why": "does nothing on the board"
+    },
+    "op_the_management": {
+      "why": "does nothing on the board"
+    },
+    "ov_kazoo_fanfare": {
+      "why": "does nothing on the board"
+    },
+    "ov_polite_cough": {
+      "why": "a clock tweak is not a card"
+    },
+    "ov_prank_call": {
+      "why": "a clock tweak is not a card"
+    },
+    "ov_rain_check": {
+      "why": "draft picks are public now; peeking is moot"
+    },
+    "peek": {
+      "why": "draft picks are public now; peeking is moot"
+    },
+    "battle_pass": {
+      "why": "a clock tweak is not a card"
+    },
+    "bn4_ear_to_the_ground": {
+      "why": "draft picks are public now; peeking is moot"
+    },
+    "bn4_egg_timer": {
+      "why": "a clock tweak is not a card"
+    },
+    "bn4_hourglass_flip": {
+      "why": "a clock tweak is not a card"
+    },
+    "bn4_sleepy_dust": {
+      "why": "only marks squares; no rule changes"
+    },
+    "buzzer_beater": {
+      "why": "a clock tweak is not a card"
+    },
+    "computer_virus": {
+      "why": "a clock tweak is not a card"
+    },
+    "deadline": {
+      "why": "a clock tweak is not a card"
+    },
+    "lirili_larila": {
+      "why": "a clock tweak is not a card"
+    },
+    "op_sunwise_turn": {
+      "why": "draft picks are public now; peeking is moot"
+    },
+    "ov_alt_account": {
+      "why": "a clock tweak is not a card"
+    },
+    "ov_left_on_read": {
+      "why": "does nothing on the board"
+    },
+    "ov_raven_parliament": {
+      "why": "only marks squares; no rule changes"
+    },
+    "ov_rubber_stamp": {
+      "why": "a clock tweak is not a card"
+    },
+    "ov_rules_lawyer": {
+      "why": "a clock tweak is not a card"
+    },
+    "ov_speedrun_timer": {
+      "why": "a clock tweak is not a card"
+    },
+    "ov_sponsored_segment": {
+      "why": "a clock tweak is not a card"
+    },
+    "pr_bsod": {
+      "why": "a clock tweak is not a card"
+    },
+    "alt_f4": {
+      "why": "a clock tweak is not a card"
+    },
+    "bw3_deep_position": {
+      "why": "a clock tweak is not a card"
+    },
+    "lag_spike": {
+      "why": "a clock tweak is not a card"
+    },
+    "ov_compound_interest": {
+      "why": "a clock tweak is not a card"
+    },
+    "ov_gold_rush": {
+      "why": "a clock tweak is not a card"
+    },
+    "ov_royal_wedding": {
+      "why": "a clock tweak is not a card"
+    },
+    "overtime_whistle": {
+      "why": "a clock tweak is not a card"
+    },
+    "pr_donation_alert": {
+      "why": "a clock tweak is not a card"
+    },
+    "pr_phishing": {
+      "why": "draft picks are public now; peeking is moot"
+    },
+    "time_thief": {
+      "why": "a clock tweak is not a card"
+    },
+    "bw2_highwaymans_toll": {
+      "why": "a clock tweak is not a card"
+    },
+    "ov_rage_bait": {
+      "why": "a clock tweak is not a card"
+    },
+    "ov_stack_overflow": {
+      "why": "a clock tweak is not a card"
+    },
+    "ov_vampire_court": {
+      "why": "a clock tweak is not a card"
+    },
+    "bn4_stolen_hour": {
+      "why": "a clock tweak is not a card"
+    },
+    "ov_algorithm_boost": {
+      "why": "a clock tweak is not a card"
+    },
+    "ov_fourth_wall_crew": {
+      "why": "a clock tweak is not a card"
+    },
+    "ov_speedhack": {
+      "why": "a clock tweak is not a card"
+    },
+    "overtime_pay": {
+      "why": "a clock tweak is not a card"
+    },
+    "ww_paratroopers": {
+      "why": "only marks squares; no rule changes"
+    },
+    "bn4_all_seeing_spire": {
+      "why": "draft picks are public now; peeking is moot"
+    },
+    "death_arcana": {
+      "why": "only marks squares; no rule changes"
+    },
+    "ov_standing_ovation": {
+      "why": "a clock tweak is not a card"
+    },
+    "ov_wish_fish": {
+      "why": "a clock tweak is not a card"
     }
   },
   "retier": {
