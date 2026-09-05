@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 
+import { loadSettings } from "@/lib/settings";
+
 /**
  * Whether motion should be suppressed right now.
  *
@@ -40,10 +42,17 @@ export function useReducedMotion(force?: boolean): boolean {
   return force ?? detected;
 }
 
-/** Reduced motion is any of: the in-app switch, or the OS preference. */
+/** Reduced motion is any of: the in-app switch, or the OS preference when the
+ *  user opted into honoring it (Settings → "Follow system motion", default
+ *  off — card plays are gameplay information, so they run by default even on
+ *  devices that ask apps to reduce motion). Once applyUiPrefs has stamped
+ *  html[data-anim] it already folded all of that in, so the attribute alone is
+ *  authoritative; the settings read below only covers the pre-stamp window. */
 export function detectReduced(): boolean {
   if (typeof window === "undefined") return false;
   const anim = document.documentElement.getAttribute("data-anim");
-  if (anim === "off") return true;
-  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (anim) return anim === "off";
+  const s = loadSettings();
+  if (s.reducedMotion || s.animationSpeed === "off") return true;
+  return s.followSystemMotion && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }

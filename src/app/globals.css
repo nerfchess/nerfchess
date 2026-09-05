@@ -2402,11 +2402,16 @@ html[data-anim="off"] .extra-turns-banner {
    Everything opacity/transform-only and ending at opacity 0 (the mount waits
    invisibly to be replaced, the one-shot convention). --tier-rgb is set by
    the mount so the wash tint matches the rule's tier. */
+/* The wash descends: it enters slightly high and oversized (scale keeps the
+   crop covered while it moves), sweeps down into place, holds, and lifts out.
+   Durations here stay plain 2s on purpose: the mount's JS unmount timer is a
+   fixed 2100ms, so these must not stretch with --fx-dur. */
 @keyframes nerf-reveal-wash {
-  0% { opacity: 0; }
-  12% { opacity: 1; }
-  72% { opacity: 0.75; }
-  100% { opacity: 0; }
+  0% { opacity: 0; transform: translateY(-5%) scale(1.14); }
+  14% { opacity: 1; }
+  34% { transform: translateY(0) scale(1.06); }
+  72% { opacity: 0.75; transform: translateY(0) scale(1.06); }
+  100% { opacity: 0; transform: translateY(1%) scale(1.06); }
 }
 .nerf-reveal-wash {
   background:
@@ -2414,29 +2419,59 @@ html[data-anim="off"] .extra-turns-banner {
     linear-gradient(180deg, rgba(9, 10, 14, 0.55), rgba(9, 10, 14, 0.32) 45%, rgba(9, 10, 14, 0.55));
   animation: nerf-reveal-wash 2s ease-out both;
 }
-/* The caption is a supporting label: it slips in AFTER the reveal
-   composition has landed (≈30% in) and stays quiet — no big stamp scale. */
+/* Directional sweep: a tinted band scans DOWN the crop once ("the rule
+   descends"), gone before the halfway hold. Clipped by its overflow-hidden
+   wrapper in Board.tsx. */
+@keyframes nerf-reveal-sweep {
+  0% { opacity: 0; transform: translateY(-110%); }
+  8% { opacity: 0.9; }
+  46% { opacity: 0.7; transform: translateY(300%); }
+  56%, 100% { opacity: 0; transform: translateY(320%); }
+}
+.nerf-reveal-sweep {
+  background: linear-gradient(
+    180deg,
+    transparent,
+    rgb(var(--tier-rgb, 181 70 65) / 0.2) 55%,
+    rgba(255, 244, 214, 0.08) 78%,
+    transparent
+  );
+  animation: nerf-reveal-sweep 2s cubic-bezier(0.3, 0.6, 0.4, 1) both;
+}
+/* The caption slams: it drops in from slightly above AFTER the composition
+   has landed, overshoots one frame past its seat, takes a tiny settle
+   bounce, holds legible, and dips out. Still a supporting label: the drop is
+   short so the text never reads as the main effect. */
 @keyframes nerf-reveal-stamp {
-  0% { opacity: 0; transform: translateY(6px); }
-  28% { opacity: 0; transform: translateY(6px); }
-  38% { opacity: 1; transform: translateY(0); }
-  82% { opacity: 1; transform: translateY(0); }
-  100% { opacity: 0; transform: translateY(2px); }
+  0%, 24% { opacity: 0; transform: translateY(-18px) scale(1.05); }
+  34% { opacity: 1; transform: translateY(2px) scale(0.97); }
+  42% { transform: translateY(-1px) scale(1.01); }
+  50% { transform: translateY(0) scale(1); }
+  82% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(2px) scale(0.99); }
 }
 .nerf-reveal-stamp {
   border-radius: 1px;
   animation: nerf-reveal-stamp 2s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
+/* Affected squares: each aura is PRESSED onto its square (oversized in, a
+   quick press past rest, release), then double-pulses and fades. Board.tsx
+   staggers the cells a few frames apart, so the press cascades across the
+   affected squares instead of blinking on all at once. */
 @keyframes nerf-reveal-cell {
-  0% { opacity: 0; }
-  16% { opacity: 1; }
-  38% { opacity: 0.5; }
-  58% { opacity: 1; }
-  78% { opacity: 0.55; }
-  100% { opacity: 0; }
+  0% { opacity: 0; transform: scale(1.3); }
+  10% { opacity: 1; transform: scale(0.9); }
+  20% { transform: scale(1.05); }
+  30% { transform: scale(1); opacity: 0.6; }
+  50% { opacity: 1; }
+  74% { opacity: 0.55; }
+  100% { opacity: 0; transform: scale(1); }
 }
 .nerf-reveal-cell { animation: nerf-reveal-cell 2s ease-in-out both; }
-html[data-anim="off"] .nerf-reveal-wash, html[data-anim="off"] .nerf-reveal-stamp, html[data-anim="off"] .nerf-reveal-cell {
+html[data-anim="off"] .nerf-reveal-wash,
+html[data-anim="off"] .nerf-reveal-sweep,
+html[data-anim="off"] .nerf-reveal-stamp,
+html[data-anim="off"] .nerf-reveal-cell {
   animation: none !important;
   opacity: 0 !important;
 }
@@ -2451,9 +2486,6 @@ html[data-anim="off"] .nerf-reveal-wash, html[data-anim="off"] .nerf-reveal-stam
 }
 .clock-pulse-soft { animation: clock-pulse-soft 1.8s ease-in-out infinite; }
 html[data-anim="off"] .clock-pulse-soft { animation: none !important; }
-@media (prefers-reduced-motion: reduce) {
-  .clock-pulse-soft { animation: none !important; }
-}
 
 /* --- Refused-input feedback ---------------------------------------------------
    A rejected move or card target flashes a brief oxblood inner ring on the
@@ -2480,10 +2512,6 @@ html[data-anim="off"] .clock-pulse-soft { animation: none !important; }
 .sq-invalid-shake { animation: sq-invalid-shake 150ms ease-in-out; }
 html[data-anim="off"] .sq-invalid-ring { animation: none !important; opacity: 0.9; }
 html[data-anim="off"] .sq-invalid-shake { animation: none !important; }
-@media (prefers-reduced-motion: reduce) {
-  .sq-invalid-ring { animation: none !important; opacity: 0.9; }
-  .sq-invalid-shake { animation: none !important; }
-}
 
 /* --- Left-rail extras -------------------------------------------------------
    The rail is the same flat box as everything else. The two class names below

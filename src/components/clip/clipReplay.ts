@@ -224,8 +224,11 @@ export interface BuildClipOptions {
   moves: Move[];
   snapshots: ReadonlyMap<number, BoardState>;
   historyDiverged: boolean;
-  /** How many plies (counted back from the head) the clip should cover. */
+  /** How many plies (counted back from the window's end) the clip covers. */
   plies: number;
+  /** Where the window ENDS (board-state index). Defaults to the head; the
+   *  manual clip window uses this to cut a reel that stops mid-game. */
+  endPly?: number;
   /** Buff ids of signature plays, keyed by the history length at fire time
    *  (i.e. the ply AFTER the move that carried the play). */
   signatureIds?: ReadonlyMap<number, string>;
@@ -238,7 +241,7 @@ export interface BuildClipOptions {
  *  this session began). */
 export function buildClipTimeline(opts: BuildClipOptions): ClipTimeline | null {
   const { moves, snapshots, historyDiverged, signatureIds } = opts;
-  const head = moves.length;
+  const head = Math.max(0, Math.min(opts.endPly ?? moves.length, moves.length));
   const want = Math.max(1, Math.min(opts.plies, head));
   if (head < 1) return null;
 
@@ -386,6 +389,258 @@ export function planAutoClip(
     card: null,
     captured: null,
   };
+}
+
+// --- Highlights: the multi-moment reel ---------------------------------------
+
+/** Chapter narrative roles, in chronological order across the reel. */
+export type ClipChapterRole = "trap" | "turn" | "kill";
+
+/** One planned chapter: a mini window (2-4 plies) around a highlight moment.
+ *  `start`/`end` are board-state indices (start < end, payoff inside). */
+export interface ClipChapterPlan {
+  /** Absolute ply of the chapter's moment (its mini payoff). */
+  payoffPly: number;
+  start: number;
+  end: number;
+  role: ClipChapterRole;
+  /** The moment's card, when the moment is a card play. */
+  card: ClipSigMeta | null;
+}
+
+export interface ClipHighlightsPlan {
+  chapters: ClipChapterPlan[];
+  /** Earliest reconstructable ply (the chapter handles' left wall). */
+  availStart: number;
+}
+
+/** Per-chapter editorial overrides, keyed by the chapter's payoff ply. */
+export interface ClipChapterMod {
+  start?: number;
+  end?: number;
+  /** Custom chapter micro-title (empty falls back to the auto title). */
+  title?: string;
+}
+
+/** Minimum distance between two chapter moments, in plies. */
+const CHAPTER_GAP = 8;
+/** Chapter window span limits, in plies. */
+const CHAPTER_MIN = 2;
+const CHAPTER_MAX = 4;
+/** How far a chapter's edge may be dragged out to, in plies. */
+export const CHAPTER_DRAG_MAX = 6;
+
+/** Score one segment as a highlight moment: card plays outrank captures
+ *  (tier-weighted), captures score by total point value removed. */
+function momentScore(seg: ClipSegment): number {
+  let cap = 0;
+  const count = (p: Piece) => {
+    cap += p.type === "k" ? 12 : PIECE_VALUE[p.type];
+  };
+  for (const pr of seg.pairs) if (pr.captured) count(pr.captured);
+  for (const v of seg.vanishes) count(v.piece);
+  return (seg.sig ? 40 + seg.sig.tier * 8 : 0) + cap * 3;
+}
+
+/** Scan the WHOLE reconstructable game for up to `maxChapters` distinct
+ *  highlight moments (top-tier card plays and the biggest capture swings,
+ *  separated by at least 8 plies) and cut a 2-4 ply mini window around each.
+ *  Falls back to a single finish chapter when the game has no scored moment.
+ *  Returns null when nothing at all can be reconstructed. */
+export function planHighlights(
+  opts: Omit<BuildClipOptions, "plies">,
+  maxChapters = 3,
+): ClipHighlightsPlan | null {
+  const probe = buildClipTimeline({ ...opts, plies: opts.moves.length });
+  if (!probe || probe.segments.length === 0) return null;
+  const head = probe.startPly + probe.segments.length;
+  const scored = probe.segments.map((seg) => ({
+    ply: seg.ply,
+    card: seg.sig,
+    score: momentScore(seg),
+  }));
+  const cap = Math.max(1, Math.min(3, maxChapters));
+  const picks: typeof scored = [];
+  // Best score first; ties go to the LATER moment (closer to the finish).
+  for (const s of [...scored].sort((a, b) => b.score - a.score || b.ply - a.ply)) {
+    if (s.score <= 0) continue;
+    if (picks.some((p) => Math.abs(p.ply - s.ply) < CHAPTER_GAP)) continue;
+    picks.push(s);
+    if (picks.length >= cap) break;
+  }
+  if (picks.length === 0) picks.push(scored[scored.length - 1]);
+  picks.sort((a, b) => a.ply - b.ply);
+
+  const chapters: ClipChapterPlan[] = picks.map((p, i) => {
+    // Two plies of setup in front of the moment, one beat after it; the last
+    // chapter runs to the head when the moment sits at the finish.
+    let start = Math.max(probe.startPly, p.ply - 2);
+    let end = Math.min(head, p.ply + 2);
+    if (end - start > CHAPTER_MAX) start = end - CHAPTER_MAX;
+    if (end - start < CHAPTER_MIN) {
+      end = Math.min(head, start + CHAPTER_MIN);
+      start = Math.max(probe.startPly, end - CHAPTER_MIN);
+    }
+    const role: ClipChapterRole =
+      picks.length === 1 || i === picks.length - 1
+        ? "kill"
+        : i === 0
+          ? "trap"
+          : "turn";
+    return { payoffPly: p.ply, start, end, role, card: p.card };
+  });
+  // Windows never overlap by construction (moments sit >= 8 plies apart and a
+  // window spans at most 4), but clamp defensively after edge clamping above.
+  for (let i = 1; i < chapters.length; i++) {
+    if (chapters[i].start < chapters[i - 1].end) {
+      chapters[i].start = chapters[i - 1].end;
+      chapters[i].end = Math.max(chapters[i].end, chapters[i].start + CHAPTER_MIN);
+    }
+  }
+  return { chapters, availStart: probe.startPly };
+}
+
+/** The auto micro-title for a chapter: the card name when the moment is a
+ *  card play, else the role title. Mods (edited titles) win. */
+export function chapterTitle(ch: ClipChapterPlan, mod?: ClipChapterMod | null): string {
+  const custom = mod?.title?.trim();
+  if (custom) return custom.toUpperCase();
+  if (ch.card) return ch.card.name.toUpperCase();
+  return ch.role === "trap" ? "THE TRAP" : ch.role === "turn" ? "THE TURN" : "THE KILL";
+}
+
+/** Apply per-chapter edge drags to the planned chapters, clamped so chapters
+ *  stay ordered, non-overlapping, 2-6 plies wide, with the moment inside. */
+export function applyChapterMods(
+  chapters: ClipChapterPlan[],
+  mods: Readonly<Record<number, ClipChapterMod>> | null | undefined,
+  availStart: number,
+  head: number,
+): ClipChapterPlan[] {
+  const out: ClipChapterPlan[] = [];
+  for (let i = 0; i < chapters.length; i++) {
+    const ch = chapters[i];
+    const mod = mods?.[ch.payoffPly];
+    const prevEnd = i > 0 ? out[i - 1].end : availStart;
+    const next = chapters[i + 1];
+    const nextWall = next
+      ? Math.min(mods?.[next.payoffPly]?.start ?? next.start, next.payoffPly)
+      : head;
+    let start = mod?.start ?? ch.start;
+    let end = mod?.end ?? ch.end;
+    start = Math.max(prevEnd, Math.min(start, ch.payoffPly));
+    end = Math.min(Math.max(nextWall, start + CHAPTER_MIN), Math.max(end, ch.payoffPly + 1));
+    end = Math.min(end, head);
+    if (end - start < CHAPTER_MIN) {
+      end = Math.min(head, start + CHAPTER_MIN);
+      start = Math.max(prevEnd, end - CHAPTER_MIN);
+    }
+    if (end - start > CHAPTER_DRAG_MAX) {
+      if (mod?.start !== undefined && mod?.end === undefined) end = start + CHAPTER_DRAG_MAX;
+      else start = end - CHAPTER_DRAG_MAX;
+    }
+    out.push({ ...ch, start, end });
+  }
+  return out;
+}
+
+/** Stitch the chapters into ONE timeline: each chapter's segments are
+ *  self-contained board diffs, so the joins read as jump cuts (exactly like
+ *  applyPlySkips). The tension series keeps its board alignment: the first
+ *  chapter's pre-board, then every kept segment's post-board. */
+export function buildHighlightsTimeline(
+  opts: Omit<BuildClipOptions, "plies">,
+  chapters: ClipChapterPlan[],
+): ClipTimeline | null {
+  const parts: ClipTimeline[] = [];
+  for (const ch of chapters) {
+    const tl = buildClipTimeline({
+      ...opts,
+      plies: ch.end - ch.start,
+      endPly: ch.end,
+    });
+    if (tl && tl.segments.length > 0) parts.push(tl);
+  }
+  if (parts.length === 0) return null;
+  const segments: ClipSegment[] = [];
+  const tension: number[] = [parts[0].tension[0]];
+  for (const part of parts) {
+    segments.push(...part.segments);
+    tension.push(...part.tension.slice(1));
+  }
+  return {
+    startPly: parts[0].startPly,
+    initial: parts[0].initial,
+    final: parts[parts.length - 1].final,
+    segments,
+    tension,
+  };
+}
+
+// --- Director's-cut curation -------------------------------------------------
+
+/** Per-ply editorial overrides, keyed by absolute ply index. All deterministic
+ *  inputs to the scene build, all part of the encode dependency. */
+export interface ClipPlyMod {
+  /** Hard cut: the ply is dropped from the reel (a deliberate jump cut). */
+  skip?: boolean;
+  /** Stretch this ply's slide + hold (a local slow-motion beat). */
+  slow?: boolean;
+  /** Force a zoom punch on this ply's landing. */
+  punch?: boolean;
+  /** Creator commentary line, rendered as a lower-third bar over the board. */
+  note?: string;
+}
+
+/** Drop skipped plies from a built timeline. Each segment is a self-contained
+ *  board diff, so removal reads as a hard jump cut; the tension series keeps
+ *  its board alignment (first kept segment's pre-board, then each kept
+ *  segment's post-board). Returns the input unchanged when nothing is skipped,
+ *  or when skipping would empty the reel (the UI also guards that). */
+export function applyPlySkips(
+  timeline: ClipTimeline,
+  mods: Readonly<Record<number, ClipPlyMod>> | null | undefined,
+): ClipTimeline {
+  if (!mods) return timeline;
+  const kept: number[] = [];
+  for (let i = 0; i < timeline.segments.length; i++) {
+    if (!mods[timeline.segments[i].ply]?.skip) kept.push(i);
+  }
+  if (kept.length === timeline.segments.length || kept.length === 0) return timeline;
+  return {
+    ...timeline,
+    segments: kept.map((i) => timeline.segments[i]),
+    tension: [timeline.tension[kept[0]], ...kept.map((i) => timeline.tension[i + 1])],
+  };
+}
+
+/** Repick the payoff INSIDE a manual window, mirroring the auto-director's
+ *  priorities: the highest-tier card play (ties go later), else the biggest
+ *  capture swing (ties go later), else null (a plain finish). */
+export function pickWindowPayoff(timeline: ClipTimeline): number | null {
+  const segs = timeline.segments;
+  let cardIdx = -1;
+  for (let i = 0; i < segs.length; i++) {
+    const sig = segs[i].sig;
+    if (sig && (cardIdx < 0 || sig.tier >= segs[cardIdx].sig!.tier)) cardIdx = i;
+  }
+  if (cardIdx >= 0) return segs[cardIdx].ply;
+  let capIdx = -1;
+  let capBest = 0;
+  for (let i = 0; i < segs.length; i++) {
+    const seg = segs[i];
+    let value = 0;
+    const count = (p: Piece) => {
+      value += p.type === "k" ? 12 : PIECE_VALUE[p.type];
+    };
+    for (const pr of seg.pairs) if (pr.captured) count(pr.captured);
+    for (const v of seg.vanishes) count(v.piece);
+    if (value > 0 && value >= capBest) {
+      capBest = value;
+      capIdx = i;
+    }
+  }
+  return capIdx >= 0 ? segs[capIdx].ply : null;
 }
 
 /** How many plies (ending at the head) a clip could cover right now. Used to

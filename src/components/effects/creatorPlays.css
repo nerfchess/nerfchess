@@ -35,7 +35,9 @@
 .cpl-trap-caption,
 .cpl-rook-caption,
 .cpl-vs-caption,
-.cpl-run-split {
+.cpl-run-split,
+.cpl-erook-caption,
+.cpl-erun-split {
   font-family: var(--font-display, inherit);
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -84,32 +86,19 @@
   100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 9%)); }
 }
 
-/* --- The entrance cut ------------------------------------------------------
+/* --- The entrance cuts -----------------------------------------------------
  * The card arriving in a hand: the same central mark as the play at ~56% of
- * the crop, stepping in from the caster's side, with one ring opening behind
- * it. No board takeover and no per-card rules — the palette rides --cpl-hue
- * exactly as the shared tell and settle do. */
+ * the crop, no board takeover. Bespoke per card, on purpose: the one shared
+ * ring-and-step-in arrival made all five cards look identical at the very
+ * moment they are introduced. Each entrance below is that card's play in
+ * miniature, and every one still ends on the shared sinking settle. */
 
-.cpl-arrive-ring {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 62%;
-  height: 62%;
-  margin-left: -31%;
-  margin-top: -31%;
-  border: 2px solid rgb(var(--cpl-hue) / 0.75);
-  border-radius: 999px;
-  opacity: 0;
-  animation: cpl-arrive-ring calc(760ms * var(--fx-dur, 1)) ease-out both;
-}
-@keyframes cpl-arrive-ring {
-  0% { opacity: 0; transform: scale(0.4); }
-  40% { opacity: 0.7; transform: scale(1); }
-  100% { opacity: 0; transform: scale(1.35); }
-}
-
-.cpl-arrive-mark {
+/* Shared framing only: the mark's box, at the brief's ~56% of the crop. */
+.cpl-etrap-mark,
+.cpl-erook-mark,
+.cpl-efam-mark,
+.cpl-erun-mark,
+.cpl-evs-mark {
   position: absolute;
   left: 50%;
   top: 50%;
@@ -117,14 +106,369 @@
   height: 56%;
   margin-left: -28%;
   margin-top: -28%;
-  opacity: 0;
-  animation: cpl-arrive calc(900ms * var(--fx-dur, 1)) cubic-bezier(0.2, 1.3, 0.35, 1) both;
 }
-@keyframes cpl-arrive {
-  0% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 34%)) scale(0.62); }
-  52% { opacity: 1; transform: translateY(-3%) scale(1.06); }
-  78% { opacity: 1; transform: translateY(0) scale(1); }
-  100% { opacity: 0; transform: translateY(0) scale(1.02); }
+
+/* Stafford Trap entrance: the con, hand-sized. The bait tips in from the
+ * caster's own side looking innocent (tell), tips over and lies very still,
+ * then the snare fires and it SPRINGS back upright, smug (strike). All three
+ * acts in one element's keyframes, pivoting near its base. */
+.cpl-etrap-mark {
+  transform-origin: 50% 86%;
+  opacity: 0;
+  animation: cpl-etrap-bait calc(1150ms * var(--fx-dur, 1)) cubic-bezier(0.3, 0, 0.3, 1) both;
+}
+@keyframes cpl-etrap-bait {
+  0% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 30%)) rotate(0deg) scale(0.85); }
+  16% { opacity: 1; transform: translateY(0) rotate(0deg) scale(1); }
+  /* the innocent little tip-over */
+  36% { opacity: 1; transform: translateY(1%) rotate(52deg) scale(1); }
+  /* ...and it just lies there. nothing suspicious about a free knight */
+  54% { opacity: 0.92; transform: translateY(1%) rotate(52deg) scale(1); }
+  /* the snare fires: SPROING */
+  66% { opacity: 1; transform: translateY(0) rotate(-10deg) scale(1.1); }
+  78% { opacity: 1; transform: translateY(0) rotate(5deg) scale(0.98); }
+  100% { opacity: 1; transform: translateY(0) rotate(0deg) scale(1); }
+}
+
+/* The snare ring snapping shut around the bait, timed to the spring. */
+.cpl-etrap-ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 64%;
+  height: 64%;
+  margin-left: -32%;
+  margin-top: -32%;
+  border: 3px solid rgb(191 232 196 / 0.9);
+  border-radius: 999px;
+  opacity: 0;
+  transform: scale(1.8);
+  animation: cpl-etrap-snap calc(340ms * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.2, 1) both;
+}
+@keyframes cpl-etrap-snap {
+  0% { opacity: 0; transform: scale(1.8); }
+  65% { opacity: 1; transform: scale(0.92); }
+  100% { opacity: 0.8; transform: scale(1); }
+}
+
+/* One rope band whipping taut across the snare. */
+.cpl-etrap-rope {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 58%;
+  height: 4px;
+  margin-left: -29%;
+  margin-top: -2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, rgb(191 232 196 / 0.95), transparent);
+  opacity: 0;
+  transform: scaleX(0.1) rotate(-16deg);
+  animation: cpl-etrap-whip calc(380ms * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.2, 1) both;
+}
+@keyframes cpl-etrap-whip {
+  0% { opacity: 0; transform: scaleX(0.1) rotate(-16deg); }
+  55% { opacity: 1; transform: scaleX(1.08) rotate(-16deg); }
+  100% { opacity: 0; transform: scaleX(1) rotate(-16deg); }
+}
+
+/* THE ROOK entrance: the slam, hand-sized. Red charge-up (tell), the rook
+ * slams in from the caster's own side behind three streaks with a stage jolt
+ * on contact (strike), gold flash and small stamp caption decay (settle). */
+.cpl-erook-charge {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, rgb(255 106 94 / 0.42), transparent 58%);
+  opacity: 0;
+  transform: scale(0.5);
+  animation: cpl-erook-charge calc(300ms * var(--fx-dur, 1)) ease-in both;
+}
+@keyframes cpl-erook-charge {
+  0% { opacity: 0; transform: scale(0.5); }
+  /* the inhale: gathering itself, squeezing inward */
+  70% { opacity: 1; transform: scale(0.95); }
+  100% { opacity: 0.75; transform: scale(0.9); }
+}
+
+/* Contact jolt: the whole entrance crop kicks when the rook lands. */
+.cpl-erook-jolt {
+  position: absolute;
+  inset: 0;
+  animation: cpl-erook-jolt calc(300ms * var(--fx-dur, 1)) linear both;
+}
+@keyframes cpl-erook-jolt {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(-2%, calc(var(--fx-side, 1) * 1.4%)); }
+  55% { transform: translate(1.6%, calc(var(--fx-side, 1) * -1%)); }
+  80% { transform: translate(-0.8%, calc(var(--fx-side, 1) * 0.5%)); }
+}
+
+/* The rook itself, arriving from the caster's own side of the screen. */
+.cpl-erook-mark {
+  opacity: 0;
+  animation: cpl-erook-slam calc(440ms * var(--fx-dur, 1)) cubic-bezier(0.25, 0, 0.2, 1) both;
+}
+@keyframes cpl-erook-slam {
+  0% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 72%)) scale(0.7); }
+  60% { opacity: 1; transform: translateY(calc(var(--fx-side, 1) * -6%)) scale(1.12); }
+  80% { opacity: 1; transform: translateY(calc(var(--fx-side, 1) * 2%)) scale(0.98); }
+  100% { opacity: 1; transform: translateY(0) scale(1.04); }
+}
+
+/* Speed streaks trailing the slam in from the caster's side. */
+.cpl-erook-streak {
+  position: absolute;
+  left: var(--cpl-x, 50%);
+  top: 50%;
+  width: 3px;
+  height: 40%;
+  margin-top: -20%;
+  border-radius: 2px;
+  background: linear-gradient(180deg, transparent, rgb(255 106 94 / 0.9), transparent);
+  opacity: 0;
+  animation: cpl-erook-streak calc(360ms * var(--fx-dur, 1)) ease-out both;
+}
+@keyframes cpl-erook-streak {
+  0% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 46%)) scaleY(0.5); }
+  35% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * -34%)) scaleY(1.1); }
+}
+
+/* Gold contact flash. */
+.cpl-erook-flash {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 80%;
+  height: 80%;
+  margin-left: -40%;
+  margin-top: -40%;
+  border-radius: 999px;
+  background: radial-gradient(circle at 50% 50%, rgb(255 215 106 / 0.55), transparent 60%);
+  opacity: 0;
+  animation: cpl-erook-flash calc(480ms * var(--fx-dur, 1)) ease-out both;
+}
+@keyframes cpl-erook-flash {
+  0% { opacity: 0; transform: scale(0.4); }
+  25% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.4); }
+}
+
+/* The caption, stamp-sized for a hand crop but still not subtle. */
+.cpl-erook-caption {
+  position: absolute;
+  left: 50%;
+  top: 74%;
+  font-size: 10px;
+  color: #ffd76a;
+  opacity: 0;
+  transform: translateX(-50%) scale(0.4) rotate(-6deg);
+  animation: cpl-erook-stamp calc(480ms * var(--fx-dur, 1)) cubic-bezier(0.2, 1.5, 0.4, 1) both;
+}
+@keyframes cpl-erook-stamp {
+  0% { opacity: 0; transform: translateX(-50%) scale(0.4) rotate(-6deg); }
+  55% { opacity: 1; transform: translateX(-50%) scale(1.12) rotate(2deg); }
+  100% { opacity: 0.95; transform: translateX(-50%) scale(1) rotate(0deg); }
+}
+
+/* Family Night entrance: cozy, zero aggression. A lamp glow blooms down from
+ * above (tell), the hands warm in while two tiny cards flip face up beside
+ * them (strike), one tea-steam wisp curls off and the light lingers. */
+.cpl-efam-lamp {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 90%;
+  height: 70%;
+  margin-left: -45%;
+  background: radial-gradient(ellipse at 50% 0%, rgb(255 214 150 / 0.5), transparent 70%);
+  opacity: 0;
+  transform: scaleY(0.4);
+  transform-origin: 50% 0%;
+  animation: cpl-efam-lamp calc(520ms * var(--fx-dur, 1)) ease-out both;
+}
+@keyframes cpl-efam-lamp {
+  0% { opacity: 0; transform: scaleY(0.4); }
+  60% { opacity: 1; transform: scaleY(1.02); }
+  100% { opacity: 0.85; transform: scaleY(1); }
+}
+
+/* The hands warm in gently: no pop, no bounce, a settling-into-the-chair. */
+.cpl-efam-mark {
+  opacity: 0;
+  animation: cpl-efam-warm calc(620ms * var(--fx-dur, 1)) cubic-bezier(0.25, 0.8, 0.3, 1) both;
+}
+@keyframes cpl-efam-warm {
+  0% { opacity: 0; transform: scale(1.16) translateY(calc(var(--fx-side, 1) * 6%)); }
+  70% { opacity: 1; transform: scale(0.99) translateY(0); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* Two tiny cards flipping face up beside the hands: the mutual reveal. */
+.cpl-efam-card {
+  position: absolute;
+  top: 60%;
+  width: 9%;
+  height: 16%;
+  border-radius: 2px;
+  background: linear-gradient(160deg, #fff4d6, #d9c4a0);
+  border: 1px solid rgb(74 58 34 / 0.7);
+  opacity: 0;
+  transform: rotateY(90deg) rotate(var(--cpl-r, 0deg));
+  transform-origin: bottom center;
+  animation: cpl-efam-flip calc(440ms * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.2, 1) both;
+}
+.cpl-efam-card-l { left: 16%; --cpl-r: -8deg; }
+.cpl-efam-card-r { right: 16%; --cpl-r: 8deg; }
+@keyframes cpl-efam-flip {
+  0% { opacity: 0; transform: rotateY(90deg) rotate(var(--cpl-r, 0deg)); }
+  60% { opacity: 1; transform: rotateY(-8deg) rotate(var(--cpl-r, 0deg)); }
+  100% { opacity: 0.95; transform: rotateY(0deg) rotate(var(--cpl-r, 0deg)); }
+}
+
+/* One wisp of tea steam, curling up and away. */
+.cpl-efam-steam {
+  position: absolute;
+  left: 68%;
+  top: 44%;
+  width: 5%;
+  height: 20%;
+  border-radius: 999px;
+  background: linear-gradient(180deg, transparent, rgb(255 244 214 / 0.55));
+  opacity: 0;
+  animation: cpl-efam-curl calc(820ms * var(--fx-dur, 1)) ease-out both;
+}
+@keyframes cpl-efam-curl {
+  0% { opacity: 0; transform: translateY(10%) rotate(0deg) scaleY(0.6); }
+  35% { opacity: 0.75; transform: translateY(-14%) rotate(6deg) scaleY(1); }
+  100% { opacity: 0; transform: translateY(-42%) rotate(-8deg) scaleY(1.15); }
+}
+
+/* Speedrun entrance: the run starts NOW. A two-dip countdown dim (tell), the
+ * stopwatch sprints in from the side behind two speed lines and pins with an
+ * overshoot skid (strike), one green split ticks in, pace glow eases off. */
+.cpl-erun-dim {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, rgb(24 36 32 / 0), rgb(24 36 32 / 0.6) 78%);
+  opacity: 0;
+  animation: cpl-erun-count calc(280ms * var(--fx-dur, 1)) linear both;
+}
+/* Two dips: the last two ticks of a countdown, then go. */
+@keyframes cpl-erun-count {
+  0% { opacity: 0; }
+  20% { opacity: 0.9; }
+  45% { opacity: 0.35; }
+  70% { opacity: 0.9; }
+  100% { opacity: 0; }
+}
+
+/* The stopwatch sprints in and pins with an overshoot skid. */
+.cpl-erun-mark {
+  opacity: 0;
+  animation: cpl-erun-sprint calc(420ms * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.25, 1) both;
+}
+@keyframes cpl-erun-sprint {
+  0% { opacity: 0; transform: translateX(-85%) rotate(-10deg) scale(0.9); }
+  55% { opacity: 1; transform: translateX(9%) rotate(6deg) scale(1.04); }
+  78% { opacity: 1; transform: translateX(-3%) rotate(-2deg) scale(1); }
+  100% { opacity: 1; transform: translateX(0) rotate(0deg) scale(1); }
+}
+
+/* Two speed lines raking the direction it came from. */
+.cpl-erun-line {
+  position: absolute;
+  left: 8%;
+  top: var(--cpl-y, 50%);
+  width: 70%;
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, rgb(126 242 154 / 0.85) 50%, rgb(255 244 214 / 0.9) 62%, transparent);
+  opacity: 0;
+  transform: translateX(-40%) scaleX(0.5);
+  animation: cpl-erun-rake calc(400ms * var(--fx-dur, 1)) cubic-bezier(0.3, 0.05, 0.2, 1) both;
+}
+@keyframes cpl-erun-rake {
+  0% { opacity: 0; transform: translateX(-40%) scaleX(0.5); }
+  35% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(32%) scaleX(1); }
+}
+
+/* The one split that matters: still ahead. */
+.cpl-erun-split {
+  position: absolute;
+  left: 72%;
+  top: 36%;
+  font-size: 9px;
+  color: #7ef29a;
+  opacity: 0;
+  animation: cpl-erun-tick calc(360ms * var(--fx-dur, 1)) cubic-bezier(0.2, 1.2, 0.3, 1) both;
+}
+@keyframes cpl-erun-tick {
+  0% { opacity: 0; transform: translateY(20%) scale(0.7); }
+  55% { opacity: 1; transform: translateY(-4%) scale(1.12); }
+  100% { opacity: 0.95; transform: translateY(0) scale(1); }
+}
+
+/* Chat Picks entrance: chat was arguing before the card even landed. Three
+ * chat lines scroll up behind (tell), the bubble pops in with an
+ * argumentative wobble (strike), the picker ring rattles left-right twice
+ * and locks onto the bubble, blue washes out (settle). */
+.cpl-evs-line {
+  position: absolute;
+  left: 14%;
+  top: var(--cpl-y, 70%);
+  width: var(--cpl-w, 36%);
+  height: 4px;
+  border-radius: 2px;
+  background: rgb(143 168 224 / 0.75);
+  opacity: 0;
+  transform: translateY(80%);
+  animation: cpl-evs-scroll calc(560ms * var(--fx-dur, 1)) ease-out both;
+}
+@keyframes cpl-evs-scroll {
+  0% { opacity: 0; transform: translateY(80%); }
+  35% { opacity: 0.9; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-60%); }
+}
+
+/* The bubble pops in mid-argument, wobbling about its tail. */
+.cpl-evs-mark {
+  transform-origin: 50% 80%;
+  opacity: 0;
+  animation: cpl-evs-pop calc(520ms * var(--fx-dur, 1)) cubic-bezier(0.2, 1.4, 0.35, 1) both;
+}
+@keyframes cpl-evs-pop {
+  0% { opacity: 0; transform: scale(0.4) rotate(-8deg); }
+  45% { opacity: 1; transform: scale(1.14) rotate(6deg); }
+  65% { opacity: 1; transform: scale(0.96) rotate(-4deg); }
+  82% { opacity: 1; transform: scale(1.03) rotate(2deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+
+/* The picker ring: rattles left, right, left, then locks on the bubble with
+ * a squeeze. Chat has decided which card you just drew. */
+.cpl-evs-ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 66%;
+  height: 66%;
+  margin-left: -33%;
+  margin-top: -33%;
+  border-radius: 1px;
+  border: 3px solid rgb(255 244 214 / 0.9);
+  opacity: 0;
+  transform: translateX(-30%) scale(1.2);
+  animation: cpl-evs-lock calc(520ms * var(--fx-dur, 1)) cubic-bezier(0.25, 1, 0.3, 1) both;
+}
+@keyframes cpl-evs-lock {
+  0% { opacity: 0; transform: translateX(-30%) scale(1.2); }
+  22% { opacity: 1; transform: translateX(26%) scale(1.14); }
+  44% { opacity: 1; transform: translateX(-22%) scale(1.08); }
+  62% { opacity: 1; transform: translateX(18%) scale(1.04); }
+  82% { opacity: 1; transform: translateX(0) scale(0.94); }
+  100% { opacity: 0.9; transform: translateX(0) scale(1); }
 }
 
 /* Shared star framing: the emblem sits stage-centred at a readable size. */
@@ -575,18 +919,13 @@
 }
 
 /* --- Motion off ----------------------------------------------------------- */
-/* Animations off in Settings, and reduced motion: hold the still frame so the
- * play still reads, rather than skipping the scene entirely. */
+/* Animations off in Settings (data-anim="off", which also absorbs the OS
+ * reduced-motion request when "Follow system motion" is opted into): hold the
+ * still frame so the play still reads, rather than skipping the scene
+ * entirely. */
 html[data-anim="off"] .cpl-stage *,
 html[data-anim="off"] .cpl-stage {
   animation: none !important;
   opacity: 1;
   transform: none;
-}
-@media (prefers-reduced-motion: reduce) {
-  .cpl-stage *,
-  .cpl-stage {
-    animation-duration: 1ms !important;
-    animation-iteration-count: 1 !important;
-  }
 }

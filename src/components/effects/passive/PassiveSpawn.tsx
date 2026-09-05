@@ -105,7 +105,23 @@ export function PassiveSpawn({
   // StrictMode-safe play/dedupe logic and onDone timing above are untouched.
   const isReveal = String(activationPly) === "reveal";
   const rootClass = isReveal && !isReduced ? "pfx-spawn pfx-spawn-reveal" : "pfx-spawn";
-  const durVar = { ["--pfx-d"]: `${duration}ms` } as React.CSSProperties & Record<string, string>;
+  const durVar = { ["--pfx-d"]: `${duration}ms`, ["--pfx-c"]: hex } as React.CSSProperties & Record<string, string>;
+
+  // Spawn chrome (tell / strike / settle, docs section 7.1): four presentational
+  // nodes per anchor that choreograph the composition's arrival in the visual's
+  // own hue. A soft under-bloom tells and then decays out slower than it came,
+  // one crisp announce ring expands as the composition lands, and two mote
+  // flecks rise off the landing. CSS-only and inside the spawn duration budget,
+  // so play/dedupe/onDone timing above are untouched. Under reduced motion the
+  // spawn is already the 160ms fade + static sigil; chrome renders nothing.
+  const chrome = isReduced ? null : (
+    <>
+      <span className="pfx-chrome pfx-chrome-bloom" />
+      <span className="pfx-chrome pfx-chrome-ring" />
+      <span className="pfx-chrome pfx-chrome-mote pfx-chrome-mote-a" />
+      <span className="pfx-chrome pfx-chrome-mote pfx-chrome-mote-b" />
+    </>
+  );
 
   return (
     <div className={rootClass} data-card={cardId} aria-hidden>
@@ -125,6 +141,7 @@ export function PassiveSpawn({
                   ...durVar,
                 }}
               >
+                {chrome}
                 <CompositionLayers
                   composition={visual.composition}
                   color={hex}
@@ -138,6 +155,7 @@ export function PassiveSpawn({
           })
         : (
           <span className="pfx-anchor pfx-anchor-board" style={{ position: "absolute", inset: 0, ...durVar }}>
+            {chrome}
             <CompositionLayers
               composition={visual.composition}
               color={hex}

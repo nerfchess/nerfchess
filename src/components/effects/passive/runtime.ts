@@ -36,8 +36,10 @@ export function resetPassiveActivations(): void {
 //
 // One implementation for the whole app, in @/lib/useReducedMotion: any of an
 // explicit `force` from the caller, the in-app animations-off switch
-// (html[data-anim="off"]), or the OS prefers-reduced-motion setting (docs
-// section 10). Re-exported here so the passive components' imports are
+// (html[data-anim="off"]), or the OS prefers-reduced-motion setting when the
+// player opted into honoring it (Settings "Follow system motion", default off
+// so card plays stay visible; docs section 10). Re-exported here so the
+// passive components' imports are
 // unchanged. The components render their static fallback whenever it is true;
 // the CSS also hard-stops keyframes independently.
 // ---------------------------------------------------------------------------
