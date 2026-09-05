@@ -36,6 +36,7 @@ const GameOver = dynamic(() => import("@/components/GameOver").then((m) => m.Gam
 import { MobileActionsMenu } from "@/components/MobileActionsMenu";
 import { MobileNavMenu } from "@/components/MobileNavMenu";
 import { MobileBuffDrawer } from "@/components/MobileBuffDrawer";
+import { cardFaceIcon } from "@/lib/cardIcon";
 import { bottomChromePadClass } from "@/components/mobileChrome";
 import { MobileMoveDrawer } from "@/components/MobileMoveDrawer";
 import { FxToggleButton } from "@/components/FxToggleButton";
@@ -3403,6 +3404,24 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 }).length
           }
           autoCloseWhen={!!buffTargeting.targeting}
+          preview={
+            <>
+              {game.buffs.players[myColor].buffs.slice(0, 6).map((inst, i) => {
+                const def = BUFF_BY_ID[inst.id];
+                if (!def) return null;
+                const Icon = cardFaceIcon(def.id, def.category, def.icon);
+                return (
+                  <span
+                    key={`${inst.id}-${i}`}
+                    title={def.name}
+                    className={`grid h-6 w-6 shrink-0 place-items-center border tier-bg-${def.tier} tier-${def.tier} ${inst.spent ? "opacity-40" : ""}`}
+                  >
+                    {Icon ? <Icon size={13} strokeWidth={1.8} /> : null}
+                  </span>
+                );
+              })}
+            </>
+          }
         >
           <BuffDock
             game={game}
