@@ -15,7 +15,7 @@ export const UPDATES: UpdateEntry[] = [
   {
     date: "2026-09-05",
     title: "A tighter card pool",
-    summary: "582 cards that duplicated, dominated or out-talked another card have left the draft pools. They still replay, and the codex shows them under a filter.",
+    summary: "469 cards that duplicated, dominated or out-talked another card have left the draft pools. They still replay, and the codex shows them under a filter.",
     anchor: "a-tighter-card-pool",
   },
   {

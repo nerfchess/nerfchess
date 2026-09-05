@@ -72,6 +72,12 @@ const bespokeVfx = new Set([
   ...keysOf("src/components/effects/vfxExtra.ts", "export const EXTRA_CARD_VFX"),
 ]);
 const flagships = keysOf("src/components/effects/usageResolve.ts", "export const USAGE_FLAGSHIPS");
+// Cards with a hand-built plug-in play (gambling, casino, god, funny...): the
+// animation work is the reason they exist, so length and category caps skip
+// them (a true duplicate still retires).
+const pluginPlays = new Set(
+  [...readFileSync(join(ROOT, "src/components/effects/sigPlugins.tsx"), "utf8").matchAll(/^\s{2}"([a-z0-9_]+)":\s*"[A-Za-z]+Plays"/gm)].map((m) => m[1]),
+);
 
 // Cards the tutorial and guides talk about by id.
 const guideText = ["src/app/tutorial", "src/app/guide", "src/components/tutorial"]
@@ -153,7 +159,7 @@ for (const r of audit) {
 
 // 5. Complexity.
 for (const r of audit) {
-  if (r.effect.length > 220) retire(r.id, "too-complex");
+  if (r.effect.length > 220 && !pluginPlays.has(r.id)) retire(r.id, "too-complex");
 }
 
 // 6. Category caps.
@@ -169,7 +175,7 @@ for (const c of registry) {
 for (const rows of buckets.values()) {
   if (rows.length <= CAP) continue;
   const shed = [...rows]
-    .filter((c) => !protectedIds.has(c.id))
+    .filter((c) => !protectedIds.has(c.id) && !pluginPlays.has(c.id))
     .sort((a, b) => b.descriptionLength - a.descriptionLength || b.tier - a.tier);
   for (const c of shed.slice(0, rows.length - CAP)) retire(c.id, "category-cap");
 }
