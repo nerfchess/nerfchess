@@ -285,6 +285,13 @@ export const SECTIONS: SectionConfig[] = [
         control: { kind: "siteTheme" },
       },
       {
+        id: "zenMode",
+        label: "Zen mode",
+        hint: "During a game, hide everything but the board, clocks and moves. Press z to toggle.",
+        group: "Theme",
+        control: { kind: "toggle", setting: "zenMode" },
+      },
+      {
         id: "customBg",
         label: "Custom background",
         hint: "Upload an image or paste an http(s) URL, with an adjustable dim",

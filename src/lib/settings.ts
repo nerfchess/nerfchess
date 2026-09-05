@@ -149,6 +149,10 @@ export interface Settings {
   soundEnabled: boolean; // master switch for all game audio
   soundTheme: SoundTheme; // lichess sample set, or the classic synth clicks
   siteTheme: SiteTheme; // dark, light, or follow the OS
+  // Lichess zen mode: during a game, hide everything that is not the board,
+  // the clocks and the move list. Toggled from the header quick-settings menu
+  // or the `z` key on a game page; applyUiPrefs stamps html[data-zen="on"].
+  zenMode: boolean;
   lowTimeWarning: boolean; // ticking alert when the clock runs low
   animationSpeed: AnimationSpeed;
   uiSounds: boolean; // interface blips (piece select), separate from game sounds
@@ -197,6 +201,7 @@ export const DEFAULT_SETTINGS: Settings = {
   soundEnabled: true,
   soundTheme: "lichess",
   siteTheme: "dark",
+  zenMode: false,
   animationSpeed: "normal",
   uiSounds: true,
   reducedMotion: false,
@@ -343,6 +348,7 @@ export function loadSettings(): Settings {
       // A theme id from an old build maps onto its replacement rather than
       // resetting the user to the default (see LEGACY_SITE_THEMES).
       siteTheme: readSiteTheme(parsed.siteTheme),
+      zenMode: bool(parsed.zenMode, DEFAULT.zenMode),
       animationSpeed:
         parsed.animationSpeed === "off" || parsed.animationSpeed === "fast" || parsed.animationSpeed === "normal"
           ? parsed.animationSpeed
@@ -475,6 +481,10 @@ export function applyUiPrefs(s: Settings) {
   const osReducedMotion =
     s.followSystemMotion && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
   html.dataset.anim = s.reducedMotion || osReducedMotion ? "off" : s.animationSpeed;
+  // Zen mode: one flag on <html> that zen.css hangs every hide rule off, so a
+  // page never has to know whether zen is on.
+  if (s.zenMode) html.dataset.zen = "on";
+  else delete html.dataset.zen;
   // FX duration multiplier: CSS-driven card/board animations read this var
   // (calc(<base> * var(--fx-dur, 1))); the canvas VFX engine reads the same
   // setting through its play specs.

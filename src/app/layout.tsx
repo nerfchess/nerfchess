@@ -3,6 +3,7 @@ import { JetBrains_Mono, Noto_Sans } from "next/font/google";
 import { AchievementToast } from "@/components/AchievementToast";
 import { SettingsBootstrap } from "@/components/SettingsBootstrap";
 import "./globals.css";
+import "./zen.css";
 
 // ---------------------------------------------------------------------------
 // Typefaces.
