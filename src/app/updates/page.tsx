@@ -19,6 +19,14 @@ export default function UpdatesPage() {
     >
       <BreadcrumbJsonLd title="Updates" path="/updates" />
 
+      <InfoSection title="New look">
+        <p>
+          The whole site now sits on flat warm greys with square corners, metal buttons and a
+          60px top bar, laid out the way Lichess lays out a page. Boxes are boxes, links are
+          blue, dates and ranks are brass, and nothing glows.
+        </p>
+      </InfoSection>
+
       <InfoSection title="Hundreds of new cards">
         <p>
           The card pool grew a lot. There are now well over six hundred buff cards and more than

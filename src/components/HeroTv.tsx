@@ -80,10 +80,7 @@ export function HeroTv() {
     return (
       <div className="w-full max-w-[600px] mx-auto">
         <div className="flex items-center justify-between gap-2 pb-2">
-          <span className="flex items-center gap-2 border border-[color:var(--edge)] bg-white/[0.03] px-2.5 py-1 text-[11px] text-parchment-300">
-            <span className="h-2 w-2 shrink-0 rounded-full bg-parchment-500" />
-            Live games appear here
-          </span>
+          <span className="text-[12px] text-parchment-400">Live games appear here</span>
           <Link
             href="/tv"
             className="text-[12px] text-parchment-400 no-underline transition hover:text-gold-leaf"
