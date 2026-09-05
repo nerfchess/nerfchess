@@ -30,12 +30,13 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { PlayerStatsPanel } from "@/components/PlayerStatsPanel";
 import type { PlayerStats } from "@/lib/playerStats";
 import type { RatingPoint } from "@/components/RatingChart";
-import { ModeRatingCard } from "@/components/ratings/ModeRatingCard";
 import {
   RatingHistoryPanel,
-  recentRatingDelta,
   type HistoryPoint,
 } from "@/components/ratings/RatingHistoryPanel";
+import { RatingRail } from "@/components/profile/RatingRail";
+import { ProfileInfoBox } from "@/components/profile/ProfileInfoBox";
+import { ActivityFeed } from "@/components/profile/ActivityFeed";
 import { type RecentGameRow } from "@/components/profile/RecentGameCard";
 import { FriendsModule } from "@/components/profile/FriendsModule";
 import { relativeTime } from "@/components/profile/relativeTime";
@@ -368,22 +369,7 @@ function ProfileContent() {
   // it describes the SAME game; a mismatched entry means one side is stale.
   const liveLobbyEntry = presence.game && presence.game.id === liveGameId ? presence.game : null;
 
-  return (
-    <section className="mx-auto max-w-6xl px-5 py-8 sm:px-6">
-      {/* ---- Header (spec 2.2) ---------------------------------------------- */}
-      <ProfileHeader
-        user={user}
-        liveGameId={liveGameId}
-        isOwner={isOwner}
-        me={me}
-        rel={rel}
-        friendBusy={friendBusy}
-        placements={placements}
-        presenceMode={presence.game?.mode ?? null}
-        presenceState={headerPresenceState}
-        showPresence={showPresence}
-        ratings={profile.ratings}
-        onAddFriend={async () => {
+  const addFriend = async () => {
           setFriendBusy(true);
           setRel("outgoing");
           try {
@@ -398,8 +384,8 @@ function ProfileContent() {
           } finally {
             setFriendBusy(false);
           }
-        }}
-        onAcceptFriend={async () => {
+  };
+  const acceptFriend = async () => {
           setFriendBusy(true);
           const prev = rel;
           setRel("friends");
@@ -415,8 +401,8 @@ function ProfileContent() {
           } finally {
             setFriendBusy(false);
           }
-        }}
-        onRemoveFriend={async () => {
+  };
+  const removeFriend = async () => {
           setFriendBusy(true);
           const prev = rel;
           setRel("none");
@@ -432,9 +418,130 @@ function ProfileContent() {
           } finally {
             setFriendBusy(false);
           }
-        }}
-        onReport={() => setReporting(true)}
-      />
+  };
+
+  const totalGames = user.games;
+  const gamesLabel = `${totalGames.toLocaleString()} ${totalGames === 1 ? "Game" : "Games"}`;
+
+  return (
+    <section className="mx-auto w-full max-w-[1300px] px-3 pt-4 sm:px-5 lg:grid lg:grid-cols-[230px_minmax(0,1fr)] lg:gap-4">
+      {/* Left rail: one row per rated mode, Lichess's perf list. */}
+      <aside className="order-2 mt-4 lg:order-1 lg:mt-0">
+        <RatingRail ratings={profile.ratings} history={ratingHistory} placements={placements} />
+      </aside>
+
+      <div className="order-1 min-w-0 lg:order-2">
+        <div className="plate">
+      <ProfileHeader
+            user={user}
+            liveGameId={liveGameId}
+            isOwner={isOwner}
+            me={me}
+            rel={rel}
+            friendBusy={friendBusy}
+            placements={placements}
+            presenceMode={presence.game?.mode ?? null}
+            presenceState={headerPresenceState}
+            showPresence={showPresence}
+            ratings={profile.ratings}
+            onAddFriend={addFriend}
+            onAcceptFriend={acceptFriend}
+            onRemoveFriend={removeFriend}
+            onReport={() => setReporting(true)}
+          />
+
+          {/* The action bar. */}
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-[color:var(--edge)] px-4 py-3 sm:px-5">
+            <dl className="flex flex-wrap items-center gap-x-6 gap-y-2 text-center">
+              <StatCell value={totalGames} label={totalGames === 1 ? "Game" : "Games"} />
+              <StatCell value={user.wins} label="Wins" />
+              <StatCell value={user.losses} label="Losses" />
+              <StatCell value={user.draws} label="Draws" />
+            </dl>
+            <div className="ml-auto">
+              <HeaderActions
+                user={user}
+                isOwner={isOwner}
+                me={me}
+                rel={rel}
+                friendBusy={friendBusy}
+                onAddFriend={addFriend}
+                onAcceptFriend={acceptFriend}
+                onRemoveFriend={removeFriend}
+                onReport={() => setReporting(true)}
+              />
+            </div>
+          </div>
+
+          {/* Chart on the left, the facts on the right. */}
+          <div className="grid border-t border-[color:var(--edge)] lg:grid-cols-[minmax(0,1fr)_300px]">
+            <div className="min-w-0 p-3 sm:p-4">
+              {ratingHistory.length > 0 ? (
+                <RatingHistoryPanel key={user.username} points={ratingHistory} currentRatings={currentRatings} />
+              ) : (
+                <p className="px-1 py-6 text-[13px] text-parchment-400">
+                  {isOwner ? "Play a rated game and your rating history appears here." : "No rated games yet."}
+                </p>
+              )}
+            </div>
+            <div className="border-t border-[color:var(--edge)] p-4 lg:border-l lg:border-t-0 sm:p-5">
+              <ProfileInfoBox
+                createdAt={user.createdAt}
+                lastSeenAt={user.lastSeenAt}
+                online={headerPresenceState !== "offline"}
+                showPresence={showPresence}
+                stats={stats}
+                friendCount={user.friendCount}
+                role={user.role}
+              />
+              {liveGameId && (
+                <Link
+                  href={`/game/${encodeURIComponent(liveGameId)}`}
+                  className="mt-4 flex items-center gap-2 text-[13px] no-underline"
+                >
+                  <span aria-hidden className="h-2 w-2 shrink-0 rounded-full bg-[rgb(var(--pos-rgb))]" />
+                  <span className="text-parchment-100">Playing right now</span>
+                  {liveGameMode && <ModeBadge mode={liveGameMode} compact />}
+                  <span className="ml-auto text-gold-leaf">Watch</span>
+                </Link>
+              )}
+            </div>
+          </div>
+
+          {/* Box tabs, Lichess's: two equal halves on a hairline. */}
+          <div
+            role="tablist"
+            aria-label="Profile sections"
+            className="grid grid-cols-2 border-t border-[color:var(--edge)]"
+          >
+            <TabButton id="activity" label="Activity" active={tab === "activity"} onSelect={() => setTab("activity")} />
+            <TabButton id="games" label={gamesLabel} active={tab === "games"} onSelect={() => setTab("games")} />
+          </div>
+
+          <div role="tabpanel" id="panel-activity" aria-labelledby="tab-activity" hidden={tab !== "activity"}>
+            <ActivityFeed username={user.username} active={tab === "activity"} />
+            <div className="border-t border-[color:var(--edge)] px-4 py-4 sm:px-5">
+              <AchievementsStrip username={user.username} />
+            </div>
+            {stats && (
+              <div className="border-t border-[color:var(--edge)] px-4 py-4 sm:px-5">
+                <h2 className="text-[13px] uppercase tracking-[0.05em] text-parchment-400">Statistics</h2>
+                <div className="mt-3">
+                  <PlayerStatsPanel stats={stats} peakRating={peakRating} />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div role="tabpanel" id="panel-games" aria-labelledby="tab-games" hidden={tab !== "games"} className="px-2 pb-2 sm:px-4">
+            <GamesTab
+              username={user.username}
+              user={user}
+              playingNow={presence.state === "in-game"}
+              active={tab === "games"}
+            />
+          </div>
+        </div>
 
       {/* House-bot inline editor (house editor only); everyone else sees the
           read-only bio rendered inside the header component. Folded behind a
@@ -489,129 +596,24 @@ function ProfileContent() {
         </EditorFold>
       )}
 
-      {/* ---- Rating cards (spec 2.4) --------------------------------------- */}
-      <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {MODE_RATING_CATEGORIES.map((c) => {
-          const placement = placements.find((p) => p.category === c.id);
-          return (
-            <ModeRatingCard
-              key={c.id}
-              category={c}
-              row={profile.ratings?.[c.id] ?? null}
-              recentDelta={recentRatingDelta(ratingHistory, c.id, 7)}
-              rank={placement?.rank ?? null}
-            />
-          );
-        })}
-      </div>
 
-      {/* ---- Game module: a single quiet line. The big recent-game bar is
-           gone (owner request); a live game reads as one pulsing symbol plus a
-           Watch link, and the empty state survives only for brand-new accounts. */}
-      <div className="mt-4">
-        {liveGameId ? (
-          <Link
-            href={`/game/${encodeURIComponent(liveGameId)}`}
-            className="plate plate-hover flex min-h-[44px] items-center gap-2.5 px-3 py-2 no-underline"
-            title="Watch the live game"
-          >
-            <span aria-hidden className="relative flex h-2.5 w-2.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[rgb(var(--pos-rgb))] opacity-60" />
-              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[rgb(var(--pos-rgb))]" />
-            </span>
-            <span className="min-w-0 truncate text-[13px] font-display font-semibold text-parchment-100">
-              Playing now
-            </span>
-            {liveGameMode && <ModeBadge mode={liveGameMode} />}
-            <span className="ml-auto shrink-0 text-[13px] text-gold-leaf">Watch</span>
-          </Link>
-        ) : newestGame !== null ? null : (
-          <EmptyState
-            icon={Gamepad2}
-            title={isOwner ? "You have not played online yet" : "No games yet"}
-            body={
-              isOwner
-                ? "Play a rated game to start a rating, fill in this profile, and show up on the leaderboard."
-                : "This player has not finished an online game yet. Check back after their first match."
-            }
-            action={isOwner ? { href: "/lobby", label: "Find a match" } : undefined}
-          />
-        )}
-      </div>
-
-      {/* ---- Main column + Friends (spec 2.6 / 2.7) ------------------------- */}
-      <div className="mt-8 xl:grid xl:grid-cols-[minmax(0,1fr)_20rem] xl:gap-6">
-        <div className="min-w-0">
-          {/* Tabs. Sticky to the top on mobile so switching sections stays in
-              reach while scrolling a long history; the solid page ink keeps
-              rows from bleeding through (no blur, per the design system). */}
-          <div
-            role="tablist"
-            aria-label="Profile sections"
-            className="sticky top-0 z-20 -mx-5 flex items-center gap-1 border-b bg-ink-900 px-5 sm:static sm:mx-0 sm:bg-transparent sm:px-0"
-            style={{ borderColor: "var(--edge)" }}
-          >
-            <TabButton id="activity" label="Activity" active={tab === "activity"} onSelect={() => setTab("activity")} />
-            <TabButton id="games" label="Games" active={tab === "games"} onSelect={() => setTab("games")} />
-          </div>
-
-          <div
-            role="tabpanel"
-            id="panel-activity"
-            aria-labelledby="tab-activity"
-            hidden={tab !== "activity"}
-            className="pt-4"
-          >
-            {placements.length > 0 && <CurrentStandings placements={placements} />}
-            <AchievementsStrip username={user.username} />
-            {stats && (
-              <div className="mt-10">
-                <div>Record</div>
-                <h2 className="mt-1 font-display text-2xl">Statistics</h2>
-                <div className="mt-3">
-                  <PlayerStatsPanel stats={stats} peakRating={peakRating} />
-                </div>
-              </div>
-            )}
-            {ratingHistory.length > 0 && (
-              <div className="mt-10">
-                <div>Form</div>
-                <h2 className="mt-1 font-display text-2xl">Rating history</h2>
-                <div className="mt-3">
-                  <RatingHistoryPanel
-                    key={user.username}
-                    points={ratingHistory}
-                    currentRatings={currentRatings}
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div
-            role="tabpanel"
-            id="panel-games"
-            aria-labelledby="tab-games"
-            hidden={tab !== "games"}
-            className="pt-4"
-          >
-            <GamesTab
-              username={user.username}
-              user={user}
-              playingNow={presence.state === "in-game"}
-              active={tab === "games"}
-            />
-          </div>
-        </div>
-
-        {/* Friends: a right column on xl, stacked full-width below it. */}
-        <aside className="mt-8 xl:mt-0">
+        <div className="mt-4">
           <FriendsModule username={user.username} isOwner={isOwner} />
-        </aside>
+        </div>
       </div>
 
       {reporting && <ReportModal username={user.username} onClose={() => setReporting(false)} />}
     </section>
+  );
+}
+
+// One number over one word, the stats strip under the profile header.
+function StatCell({ value, label }: { value: number; label: string }) {
+  return (
+    <div>
+      <dd className="text-[15px] font-semibold tabular-nums text-parchment-50">{value.toLocaleString()}</dd>
+      <dt className="text-[12px] text-parchment-400">{label}</dt>
+    </div>
   );
 }
 
@@ -621,18 +623,9 @@ function ProfileHeader({
   user,
   liveGameId,
   isOwner,
-  me,
-  rel,
-  friendBusy,
   placements,
-  presenceMode,
   presenceState,
   showPresence,
-  ratings,
-  onAddFriend,
-  onAcceptFriend,
-  onRemoveFriend,
-  onReport,
 }: {
   user: ProfileUser;
   liveGameId: string | null;
@@ -650,152 +643,52 @@ function ProfileHeader({
   onRemoveFriend: () => void;
   onReport: () => void;
 }) {
-  // Strongest current rating (best of the mode buckets) for the inline chip.
-  const best = useMemo(() => {
-    let top: { c: (typeof MODE_RATING_CATEGORIES)[number]; r: CategoryRatingRow } | null = null;
-    for (const c of MODE_RATING_CATEGORIES) {
-      const r = ratings?.[c.id];
-      if (r && (!top || r.rating > top.r.rating)) top = { c, r };
-    }
-    return top;
-  }, [ratings]);
-
-  // Recognition dressing, driven by the best current board rank: any podium
-  // (top-3) placement earns the avatar a subtle gold ring, and a reigning #1
-  // a tiny crown floating above it. Derived from the live standings — drop
-  // off the podium and it simply stops rendering.
-  const bestRank = placements[0]?.rank ?? null;
-  const podiumHolder = bestRank != null && bestRank <= 3;
-  const reigning = bestRank === 1;
-
-  const crown = reigning ? (
-    <span
-      title="Reigning #1"
-      role="img"
-      aria-label="Reigning #1"
-      className="absolute -top-2.5 left-1/2 -translate-x-1/2"
-    >
-      {/* The LaurelBadge crown, alone: static and small on purpose. */}
-      <svg viewBox="6.5 1 11 7" width={14} height={9} fill="var(--sun-glow)" aria-hidden="true">
-        <path d="M8.2 7.4 7.4 2.9 9.9 4.5 12 1.6l2.1 2.9 2.5-1.6-.8 4.5C14.6 6.9 13.3 6.6 12 6.6c-1.3 0-2.6.3-3.8.8z" />
-      </svg>
-    </span>
-  ) : null;
-
-  const ring = podiumHolder ? "ring-2 ring-sun/45" : "";
-  const avatar = (
-    <>
-      <span className="relative inline-block sm:hidden">
-        <PlayerAvatar name={user.username} avatar={user.avatar} size={56} className={ring} />
-        {crown}
-      </span>
-      <span className="relative hidden sm:block">
-        <PlayerAvatar name={user.username} avatar={user.avatar} size={72} className={ring} />
-        {crown}
-      </span>
-    </>
-  );
-
+  // Lichess's header line: presence dot, name, flair, then the trophy on the
+  // far right for a top-ten placement. No watermark, no rings, no crowns.
+  const online = showPresence && presenceState !== "offline";
+  const avatar = <PlayerAvatar name={user.username} avatar={user.avatar} size={48} />;
   return (
-    <div className="relative flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-      {/* Signature flavor: a large, very faint knight watermark behind the
-          identity block. Decorative only; hidden on small screens. */}
-      <span
-        aria-hidden
-        className="pointer-events-none absolute -top-12 right-6 hidden select-none font-display text-[11rem] leading-none md:block"
-        style={{ color: "var(--paper)", opacity: 0.03 }}
-      >
-        &#9822;
-      </span>
-      <div className="flex min-w-0 items-start gap-4">
-        {isOwner ? (
-          <Link
-            href="/profile/edit"
-            title="Edit your profile picture"
-            aria-label="Edit your profile picture"
-            className="group relative shrink-0 self-start rounded-md ring-1 ring-transparent transition hover:ring-gold/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-leaf"
-          >
-            {avatar}
-            <span className="absolute inset-x-0 bottom-0 hidden bg-black/70 py-0.5 text-center text-[12px] leading-none text-parchment-100 group-hover:block">
-              Edit
+    <div className="flex items-start gap-4 px-4 pb-4 pt-5 sm:px-5">
+      {isOwner ? (
+        <Link
+          href="/profile/edit"
+          title="Edit your profile picture"
+          aria-label="Edit your profile picture"
+          className="group relative shrink-0 self-start no-underline"
+        >
+          {avatar}
+        </Link>
+      ) : (
+        <div className="shrink-0 self-start">{avatar}</div>
+      )}
+      <div className="min-w-0 flex-1">
+        <h1 className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1 font-display text-[26px] font-normal leading-tight text-parchment-50">
+          {showPresence && (
+            <span
+              aria-label={online ? "Online" : "Offline"}
+              title={online ? "Online" : "Offline"}
+              className={"inline-block h-3 w-3 shrink-0 rounded-full " + (online ? "bg-[rgb(var(--pos-rgb))]" : "bg-parchment-500")}
+            />
+          )}
+          <span className="min-w-0 break-words">{user.username}</span>
+          {user.flair && (
+            <span className="text-[22px]" aria-hidden="true">
+              {user.flair}
             </span>
-          </Link>
-        ) : (
-          <div className="shrink-0 self-start">{avatar}</div>
-        )}
-
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <h1 className="min-w-0 break-words page-title">
-              {user.username}
-              {liveGameId && (
-                <span
-                  aria-label="In a live game"
-                  title="In a live game"
-                  className="relative ml-2 inline-flex h-3 w-3 align-middle"
-                >
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[rgb(var(--pos-rgb))] opacity-60" />
-                  <span className="relative inline-flex h-3 w-3 rounded-full bg-[rgb(var(--pos-rgb))]" />
-                </span>
-              )}
-              {user.flair && (
-                <span className="ml-2 align-middle text-2xl" aria-hidden="true">
-                  {user.flair}
-                </span>
-              )}
-              {placements.length > 0 && (
-                // A touch larger for a podium holder, matching the avatar ring.
-                <LaurelBadge
-                  rank={placements[0].rank}
-                  title={placementTitle(placements[0])}
-                  size={podiumHolder ? 28 : 24}
-                  className="ml-2"
-                />
-              )}
-            </h1>
-            {user.role !== "user" && (
-              <span className="rounded-[1px] border border-gold/40 px-2 py-0.5 text-[12px] font-medium leading-none text-gold-leaf">
-                {user.role === "admin" ? "Admin" : "Moderator"}
-              </span>
-            )}
-            {best && (
-              <span className="inline-flex items-center gap-1.5">
-                <best.c.icon className="h-3 w-3" style={{ color: best.c.accent }} strokeWidth={2.2} aria-hidden />
-                <span className="font-mono text-xs tabular-nums text-parchment-100">{Math.round(best.r.rating)}</span>
-                <span className="text-[12px] text-parchment-400">{best.c.label}</span>
-              </span>
-            )}
-          </div>
-
-          {/* One quiet meta line: presence, join date, friend count. */}
-          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-parchment-400">
-            {showPresence && (
-              <PresenceBadge state={presenceState} mode={presenceMode} lastSeenAt={user.lastSeenAt} />
-            )}
-            <span>Member since {new Date(user.createdAt).toLocaleDateString()}</span>
-            <span aria-hidden className="text-parchment-600">&middot;</span>
-            <span>
-              {user.friendCount} {user.friendCount === 1 ? "friend" : "friends"}
-            </span>
-          </div>
-
-          {user.bio && <BioText bio={user.bio} />}
-
-        </div>
+          )}
+          {liveGameId && (
+            <Link href={`/game/${encodeURIComponent(liveGameId)}`} className="text-[13px] text-gold-leaf no-underline hover:underline">
+              playing now
+            </Link>
+          )}
+        </h1>
+        {user.bio && <BioText bio={user.bio} />}
       </div>
-
-      {/* Actions */}
-      <HeaderActions
-        user={user}
-        isOwner={isOwner}
-        me={me}
-        rel={rel}
-        friendBusy={friendBusy}
-        onAddFriend={onAddFriend}
-        onAcceptFriend={onAcceptFriend}
-        onRemoveFriend={onRemoveFriend}
-        onReport={onReport}
-      />
+      {placements.length > 0 && (
+        <Link href="/leaderboard" title={placementTitle(placements[0])} className="shrink-0 no-underline">
+          <LaurelBadge rank={placements[0].rank} title={placementTitle(placements[0])} size={36} />
+        </Link>
+      )}
     </div>
   );
 }
@@ -807,10 +700,10 @@ function BioText({ bio }: { bio: string }) {
   const [expanded, setExpanded] = useState(false);
   const long = bio.length > 220 || bio.split("\n").length > 3;
   return (
-    <div className="mt-3 max-w-prose">
+    <div className="mt-1.5 max-w-prose">
       <p
         className={
-          "whitespace-pre-wrap text-sm text-parchment-200 " +
+          "whitespace-pre-wrap text-[13px] text-parchment-300 " +
           (long && !expanded ? "line-clamp-3" : "")
         }
       >
@@ -1125,10 +1018,10 @@ function TabButton({
       aria-controls={`panel-${id}`}
       onClick={onSelect}
       className={
-        "relative -mb-px min-h-[44px] px-4 font-display text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-leaf " +
+        "min-h-[44px] px-4 text-[14px] transition-colors " +
         (active
-          ? "border-b-2 border-gold text-parchment-50"
-          : "border-b-2 border-transparent text-parchment-400 hover:text-parchment-200")
+          ? "bg-[color:var(--bg-panel)] text-parchment-50"
+          : "bg-[color:var(--bg-base)] text-parchment-300 hover:text-parchment-100")
       }
     >
       {label}
@@ -1509,13 +1402,13 @@ function AchievementsStrip({ username }: { username: string }) {
   }, [username]);
 
   return (
-    <div className="mt-6 border-y" style={{ borderColor: "var(--edge)" }}>
+    <div>
       <button
         type="button"
         aria-expanded={expanded}
         aria-controls="achievements-fold"
         onClick={() => setExpanded((v) => !v)}
-        className="flex min-h-[44px] w-full flex-wrap items-center justify-between gap-3 py-3 text-left transition hover:bg-white/[0.02]"
+        className="flex min-h-[40px] w-full flex-wrap items-center justify-between gap-3 py-1 text-left"
       >
         <span className="flex items-center gap-2 font-display text-parchment-100">
           <ChevronRight
@@ -1621,73 +1514,6 @@ function AchievementsStrip({ username }: { username: string }) {
     </div>
   );
 }
-
-// The honors shelf: a carved trophy strip for every leaderboard the player
-// currently places top 10 on. Each placement is a medallion — laurel, rank,
-// board — scaled by rank: podium placements (top 3) read as gold slabs with a
-// crown glyph and the gold rim, 4-10 as quieter brass. Everything derives
-// from the live standings (useTopPlacements); nothing here is stored, so
-// dropping out of the top 10 simply stops the medallion rendering.
-function CurrentStandings({ placements }: { placements: LaurelPlacement[] }) {
-  return (
-    <section aria-label="Leaderboard honors" className="mt-2">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <span className="flex items-center gap-2 font-display text-parchment-100">
-          <LaurelBadge rank={placements[0].rank} size={16} title="Current top-10 honors" />
-          Leaderboard honors
-        </span>
-        <Link
-          href="/leaderboard"
-          className="text-[12px] text-gold-leaf transition-colors hover:text-sun-glow"
-        >
-          Leaderboard
-        </Link>
-      </div>
-      <div className="mt-3 flex flex-wrap items-stretch gap-2">
-        {placements.map((p) => {
-          const podium = p.rank <= 3;
-          return (
-            <Link
-              key={p.category}
-              href="/leaderboard"
-              title={placementTitle(p)}
-              className={
-                "flex items-center gap-2.5 border px-3 py-2 no-underline " +
-                (podium
-                  ? "podium-rim-gold border-transparent bg-sun/[0.07]"
-                  : "bg-white/[0.03]")
-              }
-              style={
-                podium
-                  ? { boxShadow: "0 0 20px -8px rgb(var(--energy-gold-rgb) / 0.45)" }
-                  : { borderColor: "rgba(224, 178, 86, 0.35)" } // brass, matching the 4-10 laurel
-              }
-            >
-              <LaurelBadge rank={p.rank} size={podium ? 22 : 18} />
-              <span className="flex min-w-0 flex-col">
-                <span className="flex items-center gap-1.5">
-                  <span
-                    className={
-                      "font-mono text-sm tabular-nums " +
-                      (podium ? "text-sun-glow" : "text-parchment-100")
-                    }
-                  >
-                    #{p.rank}
-                  </span>
-                  <span className="text-[12px] text-parchment-400">· {p.label}</span>
-                  {podium && <Crown size={12} className="shrink-0 text-sun-glow" aria-hidden />}
-                </span>
-                <span className="text-[12px] text-parchment-400">Current standing</span>
-              </span>
-            </Link>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
-
-// ---- Skeleton ---------------------------------------------------------------
 
 function ProfileSkeleton() {
   return (
