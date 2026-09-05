@@ -899,7 +899,7 @@ export function ClipModal({
       onPointerDown={chrome.onBackdropPointerDown}
     >
       <div
-        className="plate plate-raised gilt relative w-[min(97vw,66rem)] max-h-[calc(100dvh-1.5rem)] overflow-y-auto p-3 shadow-2xl sm:p-5"
+        className="plate plate-raised relative w-[min(97vw,66rem)] max-h-[calc(100dvh-1.5rem)] overflow-y-auto p-3 shadow-2xl sm:p-5"
         onPointerDown={(event) => event.stopPropagation()}
       >
         <span className="card-corner tl" />
@@ -909,7 +909,7 @@ export function ClipModal({
 
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="eyebrow">Clip the finish</p>
+            <p>Clip the finish</p>
             <h2 className="mt-0.5 font-display text-xl font-bold text-parchment sm:text-2xl">
               The studio
             </h2>

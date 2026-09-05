@@ -14,7 +14,7 @@ export function KeyTerms({ slugs, title = "key terms" }: { slugs: string[]; titl
   if (entries.length === 0) return null;
   return (
     <div>
-      <div className="smallcaps text-[11px] text-parchment-400">{title}</div>
+      <div className="text-[11px] text-parchment-400">{title}</div>
       <div className="mt-2 flex flex-wrap gap-2">
         {entries.map((e) => (
           <Link

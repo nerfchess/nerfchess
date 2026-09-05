@@ -5,11 +5,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Sparkles, Trophy, Tv, Users, type LucideIcon } from "lucide-react";
 import { HeroTv } from "@/components/HeroTv";
 import { LiveRvPanel } from "@/components/LiveRvPanel";
-import { DungeonGateButton } from "@/components/DungeonGateButton";
 import { OpenLobbyPanel } from "@/components/OpenLobbyPanel";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SocialsRow } from "@/components/SocialsRow";
-import { StarField } from "@/components/StarField";
 import { ModeBadge } from "@/components/ModeBadge";
 // NOTE: the card libraries (ALL_BUFFS / ALL_NERFS) are NOT imported statically.
 // They transitively pull the entire card engine (~12k lines) into the home
@@ -28,43 +26,27 @@ import { LinkButton } from "@/components/ui/Button";
 export default function HomePage() {
   return (
     <main className="min-h-screen flex flex-col">
-      <StarField />
       <SiteHeader />
 
-      {/* Hero: the live featured board on the left, the action column on the
-          right. The board sells the product; the copy explains it in one
-          breath; Open Lobby is the single primary way in.
-          Mobile order (owner request): the live TV board leads the page, with
-          the Open lobby CTA immediately below it — everything else follows. */}
-      <section className="relative w-full max-w-7xl mx-auto px-5 sm:px-6 pt-3 pb-10 sm:pt-7 grid lg:grid-cols-[minmax(0,1fr)_430px] gap-10 lg:gap-12 items-center">
-        {/* Torchlight pooling at the hero's far corners: the landing page
-            opens inside the dungeon, not in front of it. Decorative only. */}
-        <span aria-hidden className="torch-pool hidden lg:block" style={{ top: "-40px", left: "-90px" }} />
-        <span aria-hidden className="torch-pool hidden lg:block" style={{ bottom: "-60px", right: "-80px" }} />
-        <div className="order-1 animate-rise">
+      {/* Hero: the live featured board on the left, a compact action column
+          on the right. Three stacked ways in, then the live counts. On mobile
+          the board leads and the lobby entry follows directly under it. */}
+      <section className="w-full max-w-7xl mx-auto px-5 sm:px-6 pt-3 pb-8 sm:pt-6 grid lg:grid-cols-[minmax(0,1fr)_340px] gap-6 lg:gap-8 items-start">
+        <div className="order-1">
           <HeroTv />
-          {/* Mobile stack (owner order, 2026-07): board, then the LOBBY entry
-              directly below it, then the live-games panel. The lobby is the
-              page's one primary action and must outrank spectating. Desktop
-              keeps its action column beside the board, so both panels hide
-              at lg. */}
+          {/* Mobile stack: board, then the LOBBY entry directly below it, then
+              the live-games panel. Desktop keeps its action column beside the
+              board, so both panels hide at lg. */}
           <OpenLobbyPanel className="mt-2.5 lg:hidden" />
           <LiveRvPanel className="mt-3 lg:hidden" />
         </div>
 
-        {/* The action column is kept short on purpose: it should never run
-            taller than the board beside it. */}
-        <div className="order-2 stagger-in">
-          {/* Eyebrow row, with a quiet onboarding door parked in the upper
-              right. It drops brand-new players straight into the built-in
-              guided tutorial: a real game against the easiest bot with coach
-              marks over the live board. Signed-in players see their mode
-              rating chips here instead — the profile corner of the hero. */}
+        {/* The action column: one box, three buttons, the counts underneath. */}
+        <div className="order-2">
           <div className="flex items-start justify-between gap-3">
-            {/* The page's H1 is the hero eyebrow, restyled to look identical to
-                the old span. The sr-only tail gives search engines the "chess
+            {/* The page's H1. The sr-only tail gives search engines the "chess
                 with power-ups" target phrase without changing the visible hero. */}
-            <h1 className="eyebrow">
+            <h1 className="font-display text-[15px] font-bold text-parchment-50">
               Nerf Chess
               <span className="sr-only">: chess with power-ups, a free online chess variant</span>
             </h1>
@@ -76,85 +58,66 @@ export default function HomePage() {
 
           {/* The one-breath pitch: what the two words on the tin actually
               change. Concrete, not marketing air. */}
-          <p className="mt-3 text-[15px] leading-snug text-parchment-300">
+          <p className="mt-2 text-[14px] leading-snug text-parchment-300">
             Every five moves you draft a card. In{" "}
             <span className="font-semibold text-mode-buffGlow">Buff</span> mode you stack powers
             onto your own army; in <span className="font-semibold text-mode-nerfGlow">Nerf</span>{" "}
             mode you start with a secret handicap and curse your opponent. Capture the king to win.
           </p>
 
-          {/* ONE dominant action: the dungeon gate itself. It enters the
-              lobby's Quick Play tab, where Buff and 3+2 are already selected,
-              so the next click is the matchmaking button. */}
-          <DungeonGateButton
-            href="/lobby"
-            className="mt-5 hidden w-full items-center justify-center px-6 py-7 font-display text-4xl font-bold tracking-wide no-underline sm:text-5xl lg:flex"
-          >
-            Open Lobby
-          </DungeonGateButton>
-
-          {/* Two quieter ways in, one step below the big button. No mode
-              decision here: Buff is the site-wide default, and every setup
-              page lets you switch. No third "play online" clone; Open lobby
-              already is that. */}
-          <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <DungeonGateButton
-              href="/lobby?tab=friends"
-              variant="minor"
-              className="flex items-center justify-center gap-2 px-4 py-3 font-display text-[15px] font-semibold no-underline"
-            >
-              Play a friend
-            </DungeonGateButton>
-            <DungeonGateButton
-              href="/play"
-              variant="minor"
-              className="flex items-center justify-center gap-2 px-4 py-3 font-display text-[15px] font-semibold no-underline"
-            >
-              Play a bot
-            </DungeonGateButton>
+          {/* Three stacked ways in. Create a game is the one primary: it opens
+              the lobby's quick pairing, where Buff and 3+2 are preselected. */}
+          <div className="mt-4 flex flex-col gap-2">
+            <LinkButton tone="primary" href="/lobby" block size="lg">
+              Create a game
+            </LinkButton>
+            <LinkButton tone="default" href="/play" block size="lg">
+              Play with the computer
+            </LinkButton>
+            <LinkButton tone="default" href="/lobby?tab=friends" block size="lg">
+              Play with a friend
+            </LinkButton>
           </div>
 
           <LiveNowStrip />
           <ReturnToGameBanner />
 
-          {/* Two compact mode doors (playtest feedback: the old three-bullet
-              definition cards restated the pitch paragraph above and crowded
-              the hero). One clause each; ?mode= wins over the remembered
-              choice, and the full explanation lives in How it works below. */}
-          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {/* Two compact mode doors. One clause each; ?mode= wins over the
+              remembered choice, and the full explanation lives in How it works
+              below. */}
+          <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
             <Link
               href="/lobby?mode=buff"
-              className="mode-def-card mode-def-card--buff plate group flex items-center justify-between gap-3 p-3.5 no-underline"
+              className="plate plate-hover group flex items-center justify-between gap-3 p-3 no-underline"
             >
               <span className="min-w-0">
-                <span className="font-display text-[15px] font-bold text-mode-buffGlow">Buff mode</span>
-                <span className="block truncate text-[13px] leading-snug text-parchment-300">
+                <span className="font-display text-[14px] font-bold text-mode-buffGlow">Buff mode</span>
+                <span className="block truncate text-[12px] leading-snug text-parchment-300">
                   Stack powers onto your own army.
                 </span>
               </span>
-              <span className="shrink-0 text-[13px] font-medium text-mode-buffGlow/80 transition-colors group-hover:text-mode-buffGlow">
-                Play →
+              <span className="shrink-0 text-[12px] font-medium text-mode-buffGlow/80 transition-colors group-hover:text-mode-buffGlow">
+                Play
               </span>
             </Link>
             <Link
               href="/lobby?mode=nerf"
-              className="mode-def-card mode-def-card--nerf plate group flex items-center justify-between gap-3 p-3.5 no-underline"
+              className="plate plate-hover group flex items-center justify-between gap-3 p-3 no-underline"
             >
               <span className="min-w-0">
-                <span className="font-display text-[15px] font-bold text-mode-nerfGlow">Nerf mode</span>
-                <span className="block truncate text-[13px] leading-snug text-parchment-300">
+                <span className="font-display text-[14px] font-bold text-mode-nerfGlow">Nerf mode</span>
+                <span className="block truncate text-[12px] leading-snug text-parchment-300">
                   Secret handicaps, hexes, and boons.
                 </span>
               </span>
-              <span className="shrink-0 text-[13px] font-medium text-mode-nerfGlow/80 transition-colors group-hover:text-mode-nerfGlow">
-                Play →
+              <span className="shrink-0 text-[12px] font-medium text-mode-nerfGlow/80 transition-colors group-hover:text-mode-nerfGlow">
+                Play
               </span>
             </Link>
           </div>
         </div>
       </section>
 
-      <SeamDivider />
       <HowItWorks />
       <FeaturedCards />
       <LiveActivity />
@@ -163,7 +126,7 @@ export default function HomePage() {
       {/* Socials close out the page as a full follow block: playtesters kept
           missing the old quiet chip row entirely. */}
       <div className="max-w-7xl mx-auto w-full px-6 pt-6 pb-2">
-        <SocialsRow variant="prominent" className="" />
+        <SocialsRow variant="prominent" />
       </div>
       <SiteFooter />
     </main>
@@ -182,7 +145,7 @@ function LiveNowStrip() {
   return (
     <Link
       href="/lobby"
-      className="mt-3 flex items-center justify-center gap-2 text-[13px] text-parchment-300 no-underline transition-colors hover:text-parchment-100"
+      className="mt-3 flex items-center gap-2 text-[13px] text-parchment-300 no-underline transition-colors hover:text-parchment-100"
     >
       <span className="dot-live h-2 w-2 shrink-0 bg-verdigris" />
       <span>
@@ -292,29 +255,14 @@ function ReturnToGameBanner() {
   return (
     <Link
       href={`/game/${active.id}`}
-      className="plate group mt-4 flex items-center justify-between gap-3 border border-gold/40 bg-gold/10 p-3 px-4 no-underline transition-colors hover:border-gold/70"
+      className="plate group mt-3 flex items-center justify-between gap-3 border-gold/50 p-3 px-4 no-underline transition-colors hover:border-gold"
     >
       <span className="flex items-center gap-2 text-sm text-parchment-100">
-        <span className="w-2 h-2 bg-gold-leaf animate-flicker" />
+        <span className="h-2 w-2 shrink-0 bg-gold-leaf" />
         You have a game in progress.
       </span>
-      <span className="flex shrink-0 items-center gap-1.5 font-display text-xs font-semibold tracking-wide text-gold-leaf">
-        Rejoin
-        <span aria-hidden className="motion-safe:transition-transform motion-safe:duration-200 group-hover:translate-x-0.5">
-          &rarr;
-        </span>
-      </span>
+      <span className="shrink-0 font-display text-xs font-semibold text-gold-leaf">Rejoin</span>
     </Link>
-  );
-}
-
-// The signature mode seam as a section rule: warm Nerf meeting cool Buff at a
-// single flat bead. It carries the two-mode identity down the whole page.
-function SeamDivider() {
-  return (
-    <div className="w-full max-w-7xl mx-auto px-5 sm:px-6" aria-hidden>
-      <hr className="mode-seam" />
-    </div>
   );
 }
 
@@ -365,19 +313,18 @@ function HowItWorks() {
   ];
   return (
     <section className="w-full max-w-7xl mx-auto px-5 sm:px-6 pt-10 sm:pt-12 pb-6">
-      <header className="mb-5">
-        <span className="kicker eyebrow">The rules of the dungeon</span>
-        <h2 className="display-3 mt-1.5 text-parchment-50">How it works</h2>
+      <header className="mb-4">
+        <h2 className="font-display text-xl font-bold text-parchment-50">How it works</h2>
       </header>
-      <div className="stagger-in grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-3">
         {steps.map((step) => {
-          // The payoff step carries the most weight: it gets the accent gilt
-          // edge so the three cards read as a sequence, not three clones.
+          // The payoff step carries the most weight: its number chip takes the
+          // accent so the three boxes read as a sequence, not three clones.
           const emphasized = step.n === "3";
           return (
             <div
               key={step.n}
-              className={`plate dgn-rivets relative flex flex-col overflow-hidden p-5 sm:p-6 ${emphasized ? "gilt" : ""}`}
+              className="plate flex flex-col p-4 sm:p-5"
             >
               {/* One aligned header row per card: number chip, title, icon.
                   The row reserves a fixed two-line height and centers its
@@ -389,8 +336,8 @@ function HowItWorks() {
                 <span
                   className={`grid h-9 w-9 shrink-0 place-items-center border font-display text-base font-bold ${
                     emphasized
-                      ? "border-gold/70 bg-gold/15 text-gold-leaf"
-                      : "border-gold/40 bg-gold/10 text-gold-leaf"
+                      ? "border-transparent bg-gold text-[color:var(--text-on-accent)]"
+                      : "border-gold/40 text-gold-leaf"
                   }`}
                 >
                   {step.n}
@@ -492,12 +439,11 @@ function FeaturedCards() {
   return (
     <section className="w-full max-w-7xl mx-auto px-5 sm:px-6 pt-8 pb-6">
       <header className="mb-5 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <span className="kicker eyebrow">The vault</span>
-          <h2 className="display-3 mt-1.5 text-parchment-50">Draft from hundreds of cards</h2>
-        </div>
+        <h2 className="font-display text-xl font-bold text-parchment-50">
+          Draft from hundreds of cards
+        </h2>
         <Link href="/codex" className="text-[13px] text-gold-leaf no-underline transition-colors hover:text-parchment-50">
-          Browse the codex →
+          Browse the codex
         </Link>
       </header>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
@@ -506,7 +452,7 @@ function FeaturedCards() {
               <Link
                 key={`${c.kind}-${c.id}`}
                 href={c.href}
-                className="plate hover-lift group flex flex-col gap-2.5 p-3 no-underline transition-colors hover:border-gold/40"
+                className="plate plate-hover group flex flex-col gap-2.5 p-3 no-underline"
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className={`grid h-9 w-9 shrink-0 place-items-center border tier-bg-${c.tier} tier-${c.tier}`}>
@@ -591,9 +537,9 @@ function LiveActivity() {
   return (
     <section className="w-full max-w-7xl mx-auto px-5 sm:px-6 pt-8 pb-6">
       <header className="mb-5 flex flex-wrap items-end justify-between gap-3">
-        <h2 className="display-3 text-parchment-50">Live activity</h2>
+        <h2 className="font-display text-xl font-bold text-parchment-50">Live activity</h2>
         <Link href="/community" className="text-[13px] text-gold-leaf no-underline transition-colors hover:text-parchment-50">
-          More in the community →
+          More in the community
         </Link>
       </header>
       <div className="plate divide-y divide-[color:var(--edge)] p-1">

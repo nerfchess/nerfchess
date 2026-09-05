@@ -4,62 +4,56 @@
 //
 // Buttons carried their material in a global .btn-* class and their geometry in
 // a Tailwind string copy-pasted at every call-site, which meant the shape of a
-// button was a convention rather than a thing. Two costs: `min-h-[44px]
-// rounded-sm px-4 py-2 font-display text-sm inline-flex items-center
-// justify-center gap-2` appeared verbatim hundreds of times, and 156 buttons
-// skipped the material classes entirely and hand-rolled a border and a fill.
+// button was a convention rather than a thing.
 //
-// That second group is why this exists now rather than as a tidy-up. Each
-// flagship theme owns its own button material, authored once against .btn-*
-// (see the material contract in globals.css). A button that hand-rolls
-// `border border-white/15 bg-white/[0.03]` is invisible to that and keeps the
-// old theme's look in all five rooms.
+// Both halves now live here. The material is gone: a button is a flat box in
+// one of three roles.
 //
-// This component emits ONLY the material class and geometry utilities. It never
-// emits a colour — every colour comes from the theme's own tokens, which is
-// what lets one <Button tone="leaf"> be volcanic glass in Obsidian and a glazed
-// tile in Porcelain with no branch here.
+//   primary  solid accent fill, white label. One per view region.
+//   default  raised surface with a hairline border. Everything else.
+//   danger   the same shape carrying red. Resign, delete, leave, decline.
 //
-// The tone set is docs/design-system.md §7 and is closed. A new visual variant
-// is a new token value in the material contract, not a new tone.
+// The older tone names (leaf, cta, gold, glass, slab, ghost, quiet) are kept as
+// aliases onto those three so no call-site had to be rewritten. They no longer
+// select different materials, only the role they always meant.
 
 import Link from "next/link";
 import { forwardRef } from "react";
 import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from "react";
 
+/** The three roles, plus the legacy names that map onto them. */
 export type ButtonTone =
-  /** Secondary. The workhorse: dark iron, no energy until hovered. */
-  | "ghost"
-  /** Primary. One per view region — the accent slab with a lit core. */
-  | "leaf"
-  /** Hero primary. `leaf` with depth: sits on a base edge and lifts on hover. */
-  | "cta"
-  /** Emotional-peak commit (draft confirm, lock-in). Glass over iron. */
-  | "glass"
-  /** The same commit when it is THE action: accent core inside the glass. */
   | "primary"
-  /** Destructive: Resign, Delete, Leave, Decline, Remove. */
+  | "default"
   | "danger"
-  /** Reward and prestige: claim, rank reveal. Never a routine action. */
+  /** @deprecated alias of "primary" */
+  | "leaf"
+  /** @deprecated alias of "primary" */
+  | "cta"
+  /** @deprecated alias of "primary" */
   | "gold"
-  /** Caller-supplied energy via --slab-rgb. */
+  /** @deprecated alias of "default" */
+  | "ghost"
+  /** @deprecated alias of "default" */
+  | "glass"
+  /** @deprecated alias of "default" */
   | "slab"
-  /** Inline text action inside a row. Not a slab — no fill, no rim. */
+  /** @deprecated alias of "default" */
   | "quiet";
 
 export type ButtonSize = "xs" | "sm" | "md" | "lg";
 
 const TONE: Record<ButtonTone, string> = {
-  ghost: "btn-ghost",
+  primary: "btn-leaf",
   leaf: "btn-leaf",
-  cta: "btn-leaf btn-cta",
-  glass: "btn-glass",
-  primary: "btn-glass btn-glass--primary",
+  cta: "btn-leaf",
+  gold: "btn-leaf",
+  default: "btn-ghost",
+  ghost: "btn-ghost",
+  glass: "btn-ghost",
+  slab: "btn-ghost",
+  quiet: "btn-ghost",
   danger: "btn-cursed",
-  gold: "btn-gold",
-  slab: "btn-slab",
-  quiet:
-    "border border-transparent text-parchment-300 hover:border-white/15 hover:text-parchment-50",
 };
 
 // Touch first: every size clears a 44px tap target on a phone (the hit-area
@@ -94,7 +88,7 @@ interface Shape {
 }
 
 function shapeClass({
-  tone = "ghost",
+  tone = "default",
   size = "md",
   block,
   iconOnly,
@@ -102,7 +96,7 @@ function shapeClass({
   className,
 }: Shape): string {
   return [
-    "inline-flex items-center justify-center rounded-[1px] font-display transition",
+    "inline-flex items-center justify-center rounded-[3px] font-display transition",
     "disabled:cursor-not-allowed disabled:opacity-40",
     press ? "press" : "",
     TONE[tone],

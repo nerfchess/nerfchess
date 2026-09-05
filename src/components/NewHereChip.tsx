@@ -63,7 +63,7 @@ export function NewHereChip() {
         href={FIRST_GAME_TOUR_HREF}
         className="inline-flex items-center gap-1.5 border border-gold/40 bg-gold/10 px-2.5 py-1 text-[11px] text-gold-leaf no-underline transition-colors hover:bg-gold/20"
       >
-        <span className="smallcaps">New here?</span>
+        <span>New here?</span>
         <span className="hidden sm:inline">Learn the game in 3 minutes</span>
         <span aria-hidden>→</span>
       </Link>

@@ -144,7 +144,7 @@ function PrevNextNav({
         <Link href={prev.path} className={cell}>
           <ChevronLeft size={16} aria-hidden className="shrink-0 text-parchment-400" />
           <span className="min-w-0">
-            <span className="block smallcaps text-[10px] text-parchment-400">Previous {noun}</span>
+            <span className="block text-[10px] text-parchment-400">Previous {noun}</span>
             <span className="block truncate font-display text-[14px] text-parchment-100">{prev.name}</span>
           </span>
         </Link>
@@ -154,7 +154,7 @@ function PrevNextNav({
       {next ? (
         <Link href={next.path} className={cell + " justify-end text-right sm:col-start-2"}>
           <span className="min-w-0">
-            <span className="block smallcaps text-[10px] text-parchment-400">Next {noun}</span>
+            <span className="block text-[10px] text-parchment-400">Next {noun}</span>
             <span className="block truncate font-display text-[14px] text-parchment-100">{next.name}</span>
           </span>
           <ChevronRight size={16} aria-hidden className="shrink-0 text-parchment-400" />
@@ -166,7 +166,7 @@ function PrevNextNav({
 
 function TypeBadge({ type }: { type: CardType }) {
   return (
-    <span className="inline-flex items-center rounded-sm border border-white/15 px-2 py-0.5 text-[11px] smallcaps text-parchment-300">
+    <span className="inline-flex items-center rounded-sm border border-white/15 px-2 py-0.5 text-[11px] text-parchment-300">
       {type}
     </span>
   );
@@ -176,7 +176,7 @@ function TypeBadge({ type }: { type: CardType }) {
 function GlanceRow({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-4">
-      <dt className="smallcaps text-[11px] text-parchment-400 sm:w-32 sm:shrink-0 sm:pt-0.5">{label}</dt>
+      <dt className="text-[11px] text-parchment-400 sm:w-32 sm:shrink-0 sm:pt-0.5">{label}</dt>
       <dd className="text-[15px] text-parchment-100">{children}</dd>
     </div>
   );
@@ -236,7 +236,7 @@ function HistoryTimeline({ kind, card }: { kind: "buff" | "nerf"; card: Buff | N
       <ol className="space-y-3">
         {events.map((e, i) => (
           <li key={i} className="flex flex-col gap-0.5 sm:flex-row sm:gap-4">
-            <span className="smallcaps text-[11px] text-parchment-400 sm:w-32 sm:shrink-0 sm:pt-0.5">
+            <span className="text-[11px] text-parchment-400 sm:w-32 sm:shrink-0 sm:pt-0.5">
               {formatHistoryDate(e.date)}
             </span>
             <span className="text-[15px] text-parchment-100">
@@ -323,7 +323,7 @@ export function BuffDetail({ buff, extra }: { buff: Buff; extra?: ReactNode }) {
         <p>As a {cat.label.toLowerCase()} card, it {cat.blurb}</p>
         {buff.tip && (
           <p>
-            <span className="smallcaps text-parchment-400">Tip</span>{" "}
+            <span className="text-parchment-400">Tip</span>{" "}
             <GlossaryText text={buff.tip} />
           </p>
         )}
@@ -383,7 +383,7 @@ export function NerfDetail({ nerf, extra }: { nerf: Nerf; extra?: ReactNode }) {
         </p>
         {nerf.tip && (
           <p>
-            <span className="smallcaps text-parchment-400">Tip</span>{" "}
+            <span className="text-parchment-400">Tip</span>{" "}
             <GlossaryText text={nerf.tip} />
           </p>
         )}

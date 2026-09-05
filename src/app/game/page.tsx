@@ -71,6 +71,7 @@ import { BoardState, Color, Move, Square } from "@/engine/types";
 import { cloneBoard, findKing, isInCheck, makeMove, moveToUCI } from "@/engine/board";
 import { computeMoveRisks } from "@/engine/moveSafety";
 import { loadSettings } from "@/lib/settings";
+import { useZenHotkey } from "@/lib/useZenMode";
 import { ensureAccount } from "@/lib/authClient";
 import type { QueuedPremove } from "@/components/Board";
 import { buildCustomNerf, CustomNerf } from "@/engine/nerfs/custom";
@@ -181,7 +182,7 @@ function LoadingPanel() {
           <span className="w-2 h-2 rounded-full bg-verdigris-glow animate-bob" style={{ animationDelay: "0.15s" }} />
           <span className="w-2 h-2 rounded-full bg-bruise-glow animate-bob" style={{ animationDelay: "0.3s" }} />
         </div>
-        <div className="font-display text-xl text-parchment animate-flicker">
+        <div className="font-display text-xl text-parchment">
           Dealing the cards
         </div>
       </div>
@@ -190,6 +191,8 @@ function LoadingPanel() {
 }
 
 function GamePage({ onRematch }: { onRematch: () => void }) {
+  // Zen mode: `z` hides everything but the board, clocks and move list.
+  useZenHotkey();
   const router = useRouter();
   const params = useSearchParams();
   const querySignature = params.toString();
@@ -1449,7 +1452,7 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
       return (
         <main className="min-h-screen flex items-center justify-center px-4 py-8">
           <div className="w-full max-w-2xl">
-            <div className="smallcaps text-[12px] text-parchment-400 text-center">Nerf draft</div>
+            <div className="text-[12px] text-parchment-400 text-center">Nerf draft</div>
             <h1 className="font-display text-4xl text-parchment text-center mt-1">
               Choose your handicap
             </h1>
@@ -1478,7 +1481,7 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
                   className={
                     "mx-auto block w-full max-w-md sm:max-w-none text-left transition touch-manipulation [@media(hover:hover)]:hover:-translate-y-1" +
                     (nerfSelected === i
-                      ? " -translate-y-1 ring-2 ring-gold shadow-leaf"
+                      ? " -translate-y-1 ring-2 ring-gold"
                       : nerfSelected != null
                       ? " opacity-60"
                       : "")
@@ -1505,7 +1508,7 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
               </p>
             ) : (
               <div className="mt-5 plate p-3 text-center">
-                <span className="smallcaps text-[12px] text-parchment-400">
+                <span className="text-[12px] text-parchment-400">
                   Your opponent is choosing between
                 </span>
                 <div className="mt-1 text-sm text-parchment-200 font-display">
@@ -1754,7 +1757,7 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
 
   const historyActions = game.result ? null : confirmMovePending ? (
     <div className="space-y-2">
-      <div className="smallcaps text-[12px] text-parchment-300">Play this move?</div>
+      <div className="text-[12px] text-parchment-300">Play this move?</div>
       <div className="grid grid-cols-2 gap-2">
         <button
           onClick={confirmHeldMove}
@@ -1771,7 +1774,7 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
     </div>
   ) : confirmingDraw ? (
     <div className="space-y-2">
-      <div className="smallcaps text-[12px] text-parchment-300">Offer a draw?</div>
+      <div className="text-[12px] text-parchment-300">Offer a draw?</div>
       <div className="grid grid-cols-2 gap-2">
         <button
           onClick={onOfferDraw}
@@ -1788,7 +1791,7 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
     </div>
   ) : confirmingResign ? (
     <div className="space-y-2">
-      <div className="smallcaps text-[12px] text-parchment-300">Resign the game?</div>
+      <div className="text-[12px] text-parchment-300">Resign the game?</div>
       <div className="grid grid-cols-2 gap-2">
         <Button tone="danger"
           onClick={() => { onResign(); setConfirmingResign(false); }}
@@ -1805,7 +1808,7 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
   ) : (
     <div className="space-y-2">
       {drawOfferStatus === "declined" && (
-        <div className="smallcaps text-[12px] text-parchment-300">Draw declined.</div>
+        <div className="text-[12px] text-parchment-300">Draw declined.</div>
       )}
       <div className="grid grid-cols-2 gap-2">
         <button
@@ -1867,7 +1870,7 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
           nerf<span className="text-gold-leaf">chess</span>
         </Link>
         <div className="flex items-center gap-4">
-          <div className="smallcaps text-[12px] text-parchment-400 hidden sm:block">
+          <div className="text-[12px] text-parchment-400 hidden sm:block">
             playing {myColor === "w" ? "White" : "Black"} ·{" "}
             {gameMode && (
               <>
@@ -2225,7 +2228,7 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
                   draftRunning={myDraftCharging}
                 />
               )}
-              <div className="flex justify-end pt-1">
+              <div className="zen-hide flex justify-end pt-1">
                 <FxToggleButton />
               </div>
             </div>

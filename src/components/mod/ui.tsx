@@ -265,7 +265,7 @@ export function Pill({
             ? "border-gold/40 text-gold-leaf"
             : "border-white/15 text-parchment-300";
   return (
-    <span className={`smallcaps shrink-0 rounded-[1px] border px-2 py-0.5 text-[10px] ${style}`}>
+    <span className={`shrink-0 rounded-[1px] border px-2 py-0.5 text-[10px] ${style}`}>
       {children}
     </span>
   );
@@ -291,7 +291,7 @@ function valueTone(tone?: "warn" | "good"): string {
 export function StatCard({ label, value, sub, tone }: StatItem) {
   return (
     <div className="plate p-4">
-      <div className="smallcaps text-[11px] text-parchment-400">{label}</div>
+      <div className="text-[11px] text-parchment-400">{label}</div>
       <div className={"mt-1 font-display text-2xl tabular-nums " + valueTone(tone)}>{value}</div>
       {sub && <div className="mt-0.5 text-[11px] leading-snug text-parchment-400">{sub}</div>}
     </div>
@@ -318,7 +318,7 @@ export function StatGrid({ items, cols = 4 }: { items: StatItem[]; cols?: 3 | 4 
       <div className="plate divide-y divide-white/5 sm:hidden">
         {items.map((it) => (
           <div key={it.label} className="flex items-center justify-between gap-3 px-3.5 py-2.5">
-            <span className="smallcaps min-w-0 text-[11px] leading-tight text-parchment-400">
+            <span className="min-w-0 text-[11px] leading-tight text-parchment-400">
               {it.label}
             </span>
             <span className="shrink-0 text-right">

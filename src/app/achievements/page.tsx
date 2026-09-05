@@ -457,7 +457,7 @@ function AchievementsContent() {
         <header>
           <div className="flex items-end justify-between gap-4">
             <div className="min-w-0">
-              <div className="eyebrow">Trophy wall</div>
+              <div>Trophy wall</div>
               <h1 className="mt-1 font-display text-[26px] leading-none sm:text-[32px]">
                 {viewingOther && data ? `${data.username}'s achievements` : "Achievements"}
               </h1>

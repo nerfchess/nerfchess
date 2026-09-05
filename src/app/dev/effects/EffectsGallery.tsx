@@ -139,7 +139,7 @@ function AuraCompareRow() {
   const metrics: BoardMetrics = { squarePx, originX: 0, originY: 0, orientation: "white" };
   return (
     <section className="plate" data-testid="aura-compare" style={{ padding: 14, marginBottom: 18 }}>
-      <div className="eyebrow" style={{ marginBottom: 8 }}>
+      <div style={{ marginBottom: 8 }}>
         Aura comparison
       </div>
       <div style={{ display: "flex", gap: 20, alignItems: "flex-start", flexWrap: "wrap" }}>

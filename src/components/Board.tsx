@@ -429,7 +429,7 @@ function NerfRevealSplash({
           >
             {TIER_ROMAN[tier as 1]}
           </span>
-          <span className="smallcaps text-[10px] font-semibold tracking-wider text-parchment-300">
+          <span className="text-[10px] font-semibold tracking-wider text-parchment-300">
             {mine ? "your rule" : "their rule"}
           </span>
         </div>
@@ -4927,7 +4927,7 @@ export function Board({
           >
             <div
               onPointerDown={(e) => e.stopPropagation()}
-              className="plate gilt flex flex-col items-center gap-2 p-3 sm:p-4"
+              className="plate flex flex-col items-center gap-2 p-3 sm:p-4"
             >
               <div className="flex gap-2">
                 {promotionMove.map((m) => (

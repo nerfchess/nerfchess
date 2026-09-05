@@ -1269,7 +1269,7 @@ export function DraftOverlay({
               </span>
               <span
                 className={
-                  "smallcaps block text-[11px] " +
+                  "block text-[11px] " +
                   (timed ? "text-oxblood-glow" : "text-parchment-400")
                 }
               >
@@ -1320,7 +1320,7 @@ export function DraftOverlay({
           >
             <span className="flex min-w-0 items-center gap-1.5">
               <GripIcon className="text-parchment-500" />
-              <span className="smallcaps truncate text-[12px] text-parchment-400">
+              <span className="truncate text-[12px] text-parchment-400">
                 {draftLabel}
               </span>
             </span>
@@ -1332,7 +1332,7 @@ export function DraftOverlay({
               )}
               <span
                 className={
-                  "smallcaps text-[12px] " + (timed ? "text-oxblood-glow" : "text-parchment-400")
+                  "text-[12px] " + (timed ? "text-oxblood-glow" : "text-parchment-400")
                 }
               >
                 {timed ? "On your clock" : "Draft pending"}
@@ -1628,35 +1628,7 @@ export function DraftOverlay({
             </span>
           </div>
         )}
-        {/* Unclipped wrapper: hosts the wall torches straddling the slab's top
-            corners. They must sit OUTSIDE the frame, whose corner-cut
-            clip-path would behead anything poking past its bounds. */}
         <div className="relative min-w-0 w-full">
-          {/* fxCalm as well as reduceMotion. Each torch is six elements running
-              five infinite animations, and they were gated on reduced motion
-              ONLY, so they kept burning after useAmbientAutoCalm had measured
-              the device as too slow to afford the ambience, and when the player
-              chose Calm by hand. That was a hole in the ambient perf pass. */}
-          {!reduceMotion && !fxCalm && (
-            <>
-              <span aria-hidden className="dgn-torch dgn-torch--l">
-                <i className="dgn-torch__halo" />
-                <i className="dgn-torch__bracket" />
-                <i className="dgn-torch__flame" />
-                <i className="dgn-torch__flame dgn-torch__flame--inner" />
-                <i className="dgn-torch__spark" />
-                <i className="dgn-torch__spark dgn-torch__spark--b" />
-              </span>
-              <span aria-hidden className="dgn-torch dgn-torch--r">
-                <i className="dgn-torch__halo" />
-                <i className="dgn-torch__bracket" />
-                <i className="dgn-torch__flame" />
-                <i className="dgn-torch__flame dgn-torch__flame--inner" />
-                <i className="dgn-torch__spark" />
-                <i className="dgn-torch__spark dgn-torch__spark--b" />
-              </span>
-            </>
-          )}
         <motion.div
           initial={{ opacity: 0, y: 16, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -1664,20 +1636,16 @@ export function DraftOverlay({
           // inside is a choreographed game effect with its own budget.
           transition={{ duration: 0.28, ease: "easeOut" }}
           className={
-            "draft-frame corner-cut min-w-0 w-full" +
+            "draft-frame min-w-0 w-full" +
             // A mythic-grade pull rattles the whole panel as the chest opens
             // (stood down when the FX dial disables shake).
             (packStage === "open" && maxTier >= 9 && !reduceMotion && fxShake ? " draft-shake" : "")
           }
         >
-          {/* Iron braces bolted over the frame's two square corners (the
-              chamfered corner-cut owns the other two). */}
-          <span aria-hidden className="dgn-brace dgn-brace--tr"><i /></span>
-          <span aria-hidden className="dgn-brace dgn-brace--bl"><i /></span>
           <div className="plate plate-raised draft-panel max-h-[78dvh] w-full overflow-y-auto overflow-x-hidden p-5 sm:p-8">
         <div className="flex items-center justify-between gap-4">
           <div className="flex min-w-0 items-center gap-3">
-            <span className="smallcaps dgn-label truncate text-[12px] text-parchment-400">
+            <span className="truncate text-[12px] text-parchment-400">
               {draftLabel}
             </span>
             {/* The decision countdown, inline with the label it belongs to. */}
@@ -1726,7 +1694,7 @@ export function DraftOverlay({
             </button>
           </div>
         </div>
-        <h2 className="dgn-title font-display text-3xl mt-1">
+        <h2 className="font-display text-3xl mt-1">
           {takeBoth
             ? "Take your cards"
             : noun === "hex"
@@ -2244,7 +2212,7 @@ export interface DraftRevealSide {
 function RevealColumn({ label, side }: { label: string; side: DraftRevealSide }) {
   return (
     <span className="flex min-w-0 flex-1 flex-col gap-1">
-      <span className="smallcaps text-[12px] text-parchment-400">{label}</span>
+      <span className="text-[12px] text-parchment-400">{label}</span>
       {side.banked ? (
         <span className="inline-flex w-fit items-center rounded-[1px] border border-[color:var(--edge-strong)] bg-white/[0.05] px-1.5 py-px font-display text-[12px] font-semibold tracking-wide text-parchment-200">
           Banked
@@ -2315,7 +2283,7 @@ export function DraftRevealBanner({
         transition={{ duration: 0.3, ease: "easeOut" }}
         className="plate plate-raised pointer-events-auto w-full max-w-[min(94vw,32rem)] border-gold/40 p-3 text-left shadow-plate"
       >
-        <span className="smallcaps block text-[12px] text-parchment-400">Draft resolved</span>
+        <span className="block text-[12px] text-parchment-400">Draft resolved</span>
         <span className="mt-1.5 flex items-stretch gap-3">
           {/* My card slides in from the left, theirs from the right, meeting
               in the middle (a single container fade under reduced motion). */}

@@ -381,7 +381,7 @@ export function FriendGameProvider({ children }: { children: React.ReactNode }) 
         <StarField />
         <SiteHeader active="/lobby" />
         <section className="max-w-xl mx-auto px-6 py-12 text-center">
-          <div className="smallcaps text-[11px] text-parchment-400">
+          <div className="text-[11px] text-parchment-400">
             {challenging ? `Challenge sent to ${challenging}` : "Share this code"}
           </div>
           <div className="mt-3 font-mono text-5xl tracking-[0.2em] text-gold-leaf">{code}</div>
@@ -390,7 +390,7 @@ export function FriendGameProvider({ children }: { children: React.ReactNode }) 
               ? `${challenging} has been notified.`
               : "Send this code to your friend."}
           </p>
-          <div className="mt-8 flex items-center justify-center gap-2 smallcaps text-[11px] text-parchment-400">
+          <div className="mt-8 flex items-center justify-center gap-2 text-[11px] text-parchment-400">
             <span className="w-1.5 h-1.5 rounded-full bg-verdigris animate-flicker" />
             Waiting for opponent…
           </div>
@@ -415,7 +415,7 @@ export function FriendGameProvider({ children }: { children: React.ReactNode }) 
         <StarField />
         <SiteHeader active="/lobby" />
         <section className="max-w-xl mx-auto px-6 py-12 text-center">
-          <div className="smallcaps text-[11px] text-parchment-400">Connecting…</div>
+          <div className="text-[11px] text-parchment-400">Connecting…</div>
           <div className="mt-3 font-mono text-4xl tracking-[0.2em] text-gold-leaf">{joinCode || code}</div>
           {error && (
             <div className="mt-6 plate p-3 px-4 border-oxblood-glow/60 bg-oxblood/15 text-parchment">
@@ -507,7 +507,7 @@ export function FriendGameSetup({ showFriends = true }: { showFriends?: boolean 
       </div>
 
       <div>
-        <div className="smallcaps text-[11px] text-parchment-400 mb-2">Mode</div>
+        <div className="text-[11px] text-parchment-400 mb-2">Mode</div>
         <div className="grid grid-cols-2 gap-2">
           <ModeChoice mode="buff" selected={gameMode === "buff"} onClick={() => pickGameMode("buff")} />
           <ModeChoice mode="nerf" selected={gameMode === "nerf"} onClick={() => pickGameMode("nerf")} />
@@ -515,7 +515,7 @@ export function FriendGameSetup({ showFriends = true }: { showFriends?: boolean 
       </div>
 
       <div>
-        <div className="smallcaps text-[11px] text-parchment-400 mb-2">Stakes</div>
+        <div className="text-[11px] text-parchment-400 mb-2">Stakes</div>
         <div className="grid grid-cols-2 gap-2">
           <StakeButton selected={!rated} onClick={() => setRated(false)}>
             Casual
@@ -548,7 +548,7 @@ export function FriendGameSetup({ showFriends = true }: { showFriends?: boolean 
           </div>
 
           <div>
-            <div className="smallcaps text-[11px] text-parchment-400 mb-2">Join with a code</div>
+            <div className="text-[11px] text-parchment-400 mb-2">Join with a code</div>
             <div className="flex gap-2">
               <input
                 value={joinCode}
@@ -694,7 +694,7 @@ function TimeSlider({
   return (
     <div className={disabled ? "opacity-50" : ""}>
       <div className="flex items-center justify-between mb-2">
-        <div className="smallcaps text-[11px] text-parchment-400">{label}</div>
+        <div className="text-[11px] text-parchment-400">{label}</div>
         <div className="font-mono text-sm text-gold-leaf tabular-nums">{display}</div>
       </div>
       <input

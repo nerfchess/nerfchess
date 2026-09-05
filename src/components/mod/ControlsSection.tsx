@@ -111,7 +111,7 @@ function HouseBotsControl() {
           clears them from the lobby entirely. */}
       <div className={"border-t border-white/10 pt-3 " + (enabled === false ? "opacity-50" : "")}>
         <div className="flex items-baseline justify-between gap-3">
-          <label htmlFor="house-games" className="smallcaps text-[11px] text-parchment-400">
+          <label htmlFor="house-games" className="text-[11px] text-parchment-400">
             Filler games running
           </label>
           <span className="shrink-0 font-mono text-sm tabular-nums text-gold-leaf">
@@ -256,7 +256,7 @@ function HouseStrengthEditor({
   return (
     <div className={"border-t border-white/10 pt-3 " + (disabled ? "opacity-50" : "")}>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="smallcaps text-[11px] text-parchment-400">Strength by tier</span>
+        <span className="text-[11px] text-parchment-400">Strength by tier</span>
         <div className="flex flex-wrap gap-1.5">
           <ModButton
             size="sm"
@@ -303,7 +303,7 @@ function HouseStrengthEditor({
               <div className="mt-2 grid grid-cols-3 gap-2">
                 {STRENGTH_FIELDS.map((f) => (
                   <label key={f.key} className="block">
-                    <span className="smallcaps block text-[10px] text-parchment-400">{f.label}</span>
+                    <span className="block text-[10px] text-parchment-400">{f.label}</span>
                     <StrengthInput
                       tier={t}
                       field={f}
@@ -324,7 +324,7 @@ function HouseStrengthEditor({
         <table className="w-full min-w-[420px] border-collapse text-[11px]">
           <thead>
             <tr className="text-parchment-400">
-              <th className="smallcaps py-1 pr-2 text-left font-normal">Tier</th>
+              <th className="py-1 pr-2 text-left font-normal">Tier</th>
               {STRENGTH_FIELDS.map((f) => (
                 <th key={f.key} className="px-1 py-1 text-right font-normal">
                   {f.label}

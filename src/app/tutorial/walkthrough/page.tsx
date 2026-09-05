@@ -132,7 +132,7 @@ export default function TutorialWalkthroughPage() {
       </nav>
 
       <section className="max-w-6xl mx-auto px-4 sm:px-6">
-        <div className="smallcaps text-[11px] text-parchment-400">
+        <div className="text-[11px] text-parchment-400">
           interactive walkthrough - step {stepIx + 1} of {STEPS.length}
         </div>
         <h1 className="font-display text-3xl sm:text-5xl mt-1">{step.title}</h1>
@@ -153,7 +153,7 @@ export default function TutorialWalkthroughPage() {
           <aside className="space-y-3">
             {done && (
               <div className="plate p-5 border-verdigris-glow/50 bg-verdigris/10">
-                <div className="smallcaps text-[11px] text-verdigris-glow">well played</div>
+                <div className="text-[11px] text-verdigris-glow">well played</div>
                 <p className="mt-2 text-parchment leading-relaxed">{step.closing}</p>
                 <Button tone="leaf"
                   onClick={nextStep}
@@ -164,7 +164,7 @@ export default function TutorialWalkthroughPage() {
             )}
             {!done && (
               <div className="plate p-5">
-                <div className="smallcaps text-[11px] text-parchment-400">hint</div>
+                <div className="text-[11px] text-parchment-400">hint</div>
                 <p className="mt-2 text-parchment-200/95 text-sm leading-relaxed">
                   The board only highlights moves that complete this lesson.
                   Click a piece, then its destination.

@@ -195,16 +195,12 @@ export function SettingsPanel({ open, onClose, liveGame }: Props) {
         role="dialog"
         aria-modal="true"
         aria-label="Settings"
-        className="plate plate-raised dgn-slab settings-slab relative flex max-h-[88dvh] w-full max-w-[40rem] flex-col overflow-hidden"
+        className="plate plate-raised relative flex max-h-[88dvh] w-full max-w-[46rem] flex-col overflow-hidden"
         onPointerDown={(e) => e.stopPropagation()}
       >
-        {/* Iron rivets in the slab corners, as an overlay so the carved-stone
-            background layers underneath survive. Decorative only. */}
-        <div aria-hidden className="dgn-rivets pointer-events-none absolute inset-0 z-10" />
-
-        {/* Header: chiselled crown with an ember seam under it. */}
-        <div className="settings-crown flex shrink-0 items-center justify-between border-b border-[color:var(--edge)] py-2.5 pl-5 pr-2.5">
-          <h2 className="settings-title font-display text-xl font-semibold">Settings</h2>
+        {/* Header. */}
+        <div className="flex shrink-0 items-center justify-between border-b border-[color:var(--edge)] py-2.5 pl-5 pr-2.5">
+          <h2 className="font-display text-[15px] font-bold text-parchment-50">Settings</h2>
           <button
             onClick={onClose}
             className="nav-icon-btn relative z-20 grid min-h-[44px] min-w-[44px] place-items-center text-parchment-400 hover:text-parchment"
@@ -221,81 +217,93 @@ export function SettingsPanel({ open, onClose, liveGame }: Props) {
           </p>
         )}
 
-        {/* Body: drill-down. Home is a sparse grid of category cards, few
-            words each; a card slides into its focused sub-page with a Back
-            control at its head. The pane height is fixed per viewport so the
-            slab never jumps between views. */}
-        <div className="flex min-h-0 flex-col">
-          {!activeSection && (
-            <div
-              key="home"
-              className="settings-view h-[min(32rem,60dvh)] min-w-0 flex-1 overflow-y-auto overflow-x-hidden px-4 py-3 sm:px-5"
-            >
-              <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
-                {SECTIONS.map((section) => (
+        {/* Body: a left column of section links and a right column of plain
+            rows on desktop; one column on a phone, where the section list is
+            the first view and a Back control returns to it. */}
+        <div className="flex min-h-0 flex-1 flex-col sm:flex-row">
+          {/* Section links. Always on screen from sm up; on a phone this is
+              the whole view until a section is chosen. */}
+          <nav
+            aria-label="Settings sections"
+            className={
+              "shrink-0 overflow-y-auto border-[color:var(--edge)] p-2 sm:block sm:w-[13rem] sm:border-r " +
+              (activeSection ? "hidden" : "block h-[min(32rem,60dvh)] sm:h-[min(32rem,60dvh)]")
+            }
+          >
+            <ul className="flex flex-col gap-0.5">
+              {SECTIONS.map((section) => (
+                <li key={section.id}>
                   <button
-                    key={section.id}
                     onClick={() => setView(section.id)}
-                    className="settings-tab flex min-h-[56px] items-center gap-3 rounded-[1px] border border-[color:var(--edge)] bg-white/[0.02] px-3 py-2 text-left transition hover:border-[color:var(--edge-strong)] hover:bg-white/[0.04]"
+                    aria-current={activeSection?.id === section.id || undefined}
+                    className="settings-tab flex min-h-[44px] w-full items-center gap-2.5 px-2.5 py-2 text-left text-[13px]"
                   >
                     <section.icon className="h-4 w-4 shrink-0" strokeWidth={2} />
-                    <span className="min-w-0">
-                      <span className="block truncate font-display text-[14px]">{section.title}</span>
-                      <span className="block truncate text-[11px] text-parchment-400">
-                        {section.blurb}
-                      </span>
-                    </span>
-                    <ChevronRight aria-hidden className="ml-auto h-3.5 w-3.5 shrink-0 text-parchment-500" />
+                    <span className="min-w-0 flex-1 truncate">{section.title}</span>
+                    <ChevronRight
+                      aria-hidden
+                      className="h-3.5 w-3.5 shrink-0 text-parchment-500 sm:hidden"
+                    />
                   </button>
-                ))}
-              </div>
-            </div>
-          )}
+                </li>
+              ))}
+            </ul>
+          </nav>
 
-          {activeSection && (
-            <div
-              key={activeSection.id}
-              className="settings-view h-[min(32rem,60dvh)] min-w-0 flex-1 overflow-y-auto overflow-x-hidden px-4 py-2 sm:px-5"
-            >
-              {/* Sub-page head: Back to the home grid + where you are. */}
-              <div className="sticky top-0 z-10 -mx-4 flex items-center gap-2 border-b border-[color:var(--edge)] bg-inherit px-4 py-1.5 sm:-mx-5 sm:px-5">
-                <button
-                  onClick={() => setView("home")}
-                  className="flex min-h-[36px] items-center gap-1 pr-2 font-display text-[13px] text-parchment-400 transition hover:text-parchment"
-                >
-                  <ChevronLeft aria-hidden className="h-4 w-4" />
-                  Back
-                </button>
-                <span className="flex items-center gap-2 font-display text-[14px] text-parchment-100">
-                  <activeSection.icon className="h-4 w-4 shrink-0" strokeWidth={2} />
-                  {activeSection.title}
-                </span>
-              </div>
-              {activeSection.rows.map((row, i) => {
-                const prevGroup = activeSection.rows[i - 1]?.group;
-                const opensGroup = row.group != null && row.group !== prevGroup;
-                return (
-                  <Fragment key={row.id}>
-                    {opensGroup && (
-                      <div className={"flex items-center gap-2.5 pb-1 " + (i === 0 ? "pt-2.5" : "pt-4")}>
-                        <span className="eyebrow">{row.group}</span>
-                        <span aria-hidden className="h-px flex-1 bg-[color:var(--edge)]" />
+          {/* Content. Plain rows: label left, control right. */}
+          <div
+            className={
+              "min-w-0 flex-1 overflow-y-auto overflow-x-hidden px-4 py-2 sm:block sm:h-[min(32rem,60dvh)] sm:px-5 " +
+              (activeSection ? "block h-[min(32rem,60dvh)]" : "hidden")
+            }
+          >
+            {activeSection ? (
+              <>
+                {/* Sub-page head. The Back control is the phone's way out of a
+                    section; from sm up the section list is already on screen. */}
+                <div className="sticky top-0 z-10 -mx-4 flex items-center gap-2 border-b border-[color:var(--edge)] bg-inherit px-4 py-1.5 sm:-mx-5 sm:px-5">
+                  <button
+                    onClick={() => setView("home")}
+                    className="flex min-h-[36px] items-center gap-1 pr-2 text-[13px] text-parchment-400 transition hover:text-parchment sm:hidden"
+                  >
+                    <ChevronLeft aria-hidden className="h-4 w-4" />
+                    Back
+                  </button>
+                  <span className="flex items-center gap-2 font-display text-[14px] font-semibold text-parchment-100">
+                    <activeSection.icon className="h-4 w-4 shrink-0" strokeWidth={2} />
+                    {activeSection.title}
+                  </span>
+                </div>
+                {activeSection.rows.map((row, i) => {
+                  const prevGroup = activeSection.rows[i - 1]?.group;
+                  const opensGroup = row.group != null && row.group !== prevGroup;
+                  return (
+                    <Fragment key={row.id}>
+                      {opensGroup && (
+                        <div className={"flex items-center gap-2.5 pb-1 " + (i === 0 ? "pt-2.5" : "pt-4")}>
+                          <span className="text-[12px] font-semibold text-parchment-300">{row.group}</span>
+                          <span aria-hidden className="h-px flex-1 bg-[color:var(--edge)]" />
+                        </div>
+                      )}
+                      <div className={!opensGroup && i > 0 ? "border-t border-[color:var(--edge)]" : ""}>
+                        <SettingRow
+                          label={row.label}
+                          hint={row.hint}
+                          stacked={isStacked(row.control)}
+                          grow={row.control.kind === "slider"}
+                          control={renderControl(row.control, row.label)}
+                        />
                       </div>
-                    )}
-                    <div className={!opensGroup && i > 0 ? "border-t border-[color:var(--edge)]" : ""}>
-                      <SettingRow
-                        label={row.label}
-                        hint={row.hint}
-                        stacked={isStacked(row.control)}
-                        grow={row.control.kind === "slider"}
-                        control={renderControl(row.control, row.label)}
-                      />
-                    </div>
-                  </Fragment>
-                );
-              })}
-            </div>
-          )}
+                    </Fragment>
+                  );
+                })}
+              </>
+            ) : (
+              <p className="hidden pt-6 text-[13px] text-parchment-400 sm:block">
+                Pick a section on the left.
+              </p>
+            )}
+          </div>
         </div>
       </div>
     </div>,

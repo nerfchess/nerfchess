@@ -91,7 +91,7 @@ export function DockSectionHeader({
       >
         <Icon size={11} strokeWidth={2.4} />
       </span>
-      <span className={"smallcaps min-w-0 truncate text-[12px] " + (a ? a.label : "text-parchment-400")}>
+      <span className={"min-w-0 truncate text-[12px] " + (a ? a.label : "text-parchment-400")}>
         {label}
       </span>
       <span className="ml-auto shrink-0 rounded-[1px] border border-[color:var(--edge)] bg-white/[0.05] px-1.5 py-px font-mono text-[12px] tabular-nums text-parchment-300">
@@ -119,11 +119,11 @@ export function DockSectionHeader({
  * stays quiet but crisp. */
 export function UsedBadge({ nullified }: { nullified: boolean }) {
   return nullified ? (
-    <span className="smallcaps shrink-0 rounded-[1px] border border-oxblood-glow/50 bg-oxblood/15 px-1 py-px text-[12px] font-semibold text-oxblood-glow">
+    <span className="shrink-0 rounded-[1px] border border-oxblood-glow/50 bg-oxblood/15 px-1 py-px text-[12px] font-semibold text-oxblood-glow">
       Nullified
     </span>
   ) : (
-    <span className="smallcaps shrink-0 rounded-[1px] border border-parchment-500/50 bg-white/[0.06] px-1 py-px text-[12px] font-semibold text-parchment-200">
+    <span className="shrink-0 rounded-[1px] border border-parchment-500/50 bg-white/[0.06] px-1 py-px text-[12px] font-semibold text-parchment-200">
       Used
     </span>
   );
@@ -134,7 +134,7 @@ export function PassiveChip() {
   return (
     <span
       title="Passive: always in effect"
-      className="smallcaps shrink-0 rounded-[1px] border border-gold/40 bg-gold/10 px-1 py-px text-[11px] font-semibold text-gold-leaf/90"
+      className="shrink-0 rounded-[1px] border border-gold/40 bg-gold/10 px-1 py-px text-[11px] font-semibold text-gold-leaf/90"
     >
       Passive
     </span>
@@ -152,7 +152,7 @@ export function StatusChip({ status }: { status: string }) {
       title={pliesTitle(status) ?? status}
       // Shrinkable (not shrink-0): a long status must squeeze itself, never
       // the card name sitting in the same row.
-      className="smallcaps inline-flex min-w-0 max-w-[8rem] shrink items-center gap-1 rounded-[1px] border border-gold/40 bg-gold/10 px-1 py-px text-[11px] font-semibold text-gold-leaf/90"
+      className="inline-flex min-w-0 max-w-[8rem] shrink items-center gap-1 rounded-[1px] border border-gold/40 bg-gold/10 px-1 py-px text-[11px] font-semibold text-gold-leaf/90"
     >
       {m && <Clock aria-hidden size={9} strokeWidth={2.4} className="shrink-0" />}
       <span className="min-w-0 truncate">{text}</span>
@@ -166,7 +166,7 @@ export function StatusChip({ status }: { status: string }) {
 export function UsedDivider() {
   return (
     <div className="flex items-center gap-2 pt-1">
-      <span className="smallcaps text-[12px] font-semibold text-parchment-500">Used</span>
+      <span className="text-[12px] font-semibold text-parchment-500">Used</span>
       <span aria-hidden className="divider-gilt" />
     </div>
   );

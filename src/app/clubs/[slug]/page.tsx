@@ -382,8 +382,8 @@ export default function ClubPage() {
                 {/* Members, sorted by rating, doubles as the club leaderboard. */}
                 <div className="plate overflow-hidden">
                   <div className="flex items-center justify-between gap-2 border-b border-white/10 px-5 py-3">
-                    <span className="smallcaps text-[11px] text-parchment-400">Leaderboard</span>
-                    <span className="smallcaps text-[11px] text-parchment-500">
+                    <span className="text-[11px] text-parchment-400">Leaderboard</span>
+                    <span className="text-[11px] text-parchment-500">
                       {data.members.length} member{data.members.length === 1 ? "" : "s"}
                     </span>
                   </div>
@@ -413,7 +413,7 @@ export default function ClubPage() {
 
                 {/* Club events */}
                 <div className="plate overflow-hidden">
-                  <div className="border-b border-white/10 px-5 py-3 smallcaps text-[11px] text-parchment-400">
+                  <div className="border-b border-white/10 px-5 py-3 text-[11px] text-parchment-400">
                     Events
                   </div>
                   {data.tournaments.length === 0 ? (
@@ -423,7 +423,7 @@ export default function ClubPage() {
                       {data.tournaments.map((t) => (
                         <li key={t.id} className="px-5 py-2.5">
                           <div className="truncate text-sm text-parchment-100">{t.name}</div>
-                          <div className="mt-0.5 smallcaps text-[11px] text-parchment-400">
+                          <div className="mt-0.5 text-[11px] text-parchment-400">
                             {t.status} · {t.players}/{t.max_players} players
                             {t.starts_at ? ` · ${new Date(t.starts_at).toLocaleString()}` : ""}
                           </div>
@@ -436,7 +436,7 @@ export default function ClubPage() {
 
               {/* Message board */}
               <div className="plate flex h-fit flex-col overflow-hidden">
-                <div className="border-b border-white/10 px-5 py-3 smallcaps text-[11px] text-parchment-400">
+                <div className="border-b border-white/10 px-5 py-3 text-[11px] text-parchment-400">
                   Club board
                 </div>
                 {isMember ? (
