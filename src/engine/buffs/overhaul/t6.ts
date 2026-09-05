@@ -220,7 +220,7 @@ export const OVERHAUL_T6: Buff[] = [
       name: "Midas Gauntlet",
       description:
         "Your next 3 captures each gain you 10 seconds, and the capturing piece is gilded for the trophy cabinet.",
-      tier: 4,
+      tier: 2,
       category: "tempo",
       icon: "HandCoins",
       flavor: "Everything he takes turns to gold. Mostly the clock.",
@@ -549,7 +549,7 @@ export const OVERHAUL_T6: Buff[] = [
       name: "Regency Council",
       description:
         "For 4 of your turns, while your queen is off the board your rooks and bishops may also step one square in any direction.",
-      tier: 6,
+      tier: 4,
       category: "movement",
       icon: "Scale",
       flavor: "In the queen's absence, the council votes to move diagonally.",
@@ -799,7 +799,7 @@ export const OVERHAUL_T6: Buff[] = [
       id: "ov_season_pass",
       name: "Season Pass",
       description: "Swipe the gold card: gain 3 draft rerolls.",
-      tier: 6,
+      tier: 4,
       category: "draft",
       icon: "Ticket",
       flavor: "Tier 6 of the battle pass is just more battle pass.",
@@ -855,7 +855,7 @@ export const OVERHAUL_T6: Buff[] = [
       name: "Plot Armor",
       description:
         "Choose one of your pieces (king excluded): it cannot be captured during your opponent's next 6 turns. The script insists.",
-      tier: 7,
+      tier: 4,
       category: "protection",
       icon: "ScrollText",
       flavor: "Sorry, this character is contracted for two more acts.",
@@ -885,7 +885,7 @@ export const OVERHAUL_T6: Buff[] = [
       name: "Feng Shui Plot",
       description:
         "Claim a 2x2 plot for 6 of your turns: your pieces standing inside it may also step one square in any direction, but that step cannot capture.",
-      tier: 6,
+      tier: 3,
       category: "movement",
       icon: "Home",
       flavor: "Excellent chi. Terrible neighbours.",
@@ -942,7 +942,7 @@ export const OVERHAUL_T6: Buff[] = [
       id: "ov_private_gallery",
       name: "Private Gallery",
       description: "Your next draft offers 3 cards, and you pocket 10 seconds at the door.",
-      tier: 4,
+      tier: 2,
       category: "draft",
       icon: "Image",
       flavor: "The velvet rope is load-bearing.",
@@ -1093,7 +1093,7 @@ export const OVERHAUL_T6: Buff[] = [
       name: "Paperwork Avalanche",
       description:
         "For your opponent's next 2 turns, any enemy piece that captures is buried in forms and cannot move on their following turn.",
-      tier: 6,
+      tier: 4,
       category: "protection",
       icon: "FileStack",
       flavor: "Please fill out the capture in triplicate.",

@@ -150,7 +150,7 @@ export const OVERHAUL_T3: Buff[] = [
       name: "Milkman's Round",
       description:
         "Spawn a pawn on an empty square of your second rank now, and reserve a second square: in 3 of your turns another pawn is delivered there (or to any free second-rank square if yours got taken).",
-      tier: 3,
+      tier: 4,
       category: "pieces",
       icon: "Milk",
       flavor: "Rain, shine, or double check, the bottles arrive.",
@@ -842,7 +842,7 @@ export const OVERHAUL_T3: Buff[] = [
       name: "Growth Ring",
       description:
         "Bless one square and its neighbors: for your opponent's next 4 turns, your pieces standing in that area cannot be captured by enemy pawns.",
-      tier: 4,
+      tier: 2,
       category: "protection",
       icon: "TreePine",
       flavor: "The moss remembers. The pawns cannot get through the moss.",

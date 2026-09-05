@@ -241,7 +241,7 @@ const GYM: Buff[] = [
       name: "Muscle Up",
       description:
         "Explosive pull-up: take one of your pieces except the king and hurl it straight up its own file to any empty square, phasing past your own pieces but stopping short of the first enemy in its lane. Once.",
-      tier: 4,
+      tier: 2,
       category: "movement",
       icon: "ArrowUpFromLine",
       flavor: "Chin over the bar, pawn over the field.",
@@ -324,7 +324,7 @@ const GYM: Buff[] = [
       name: "One Arm Muscle Up Is My Dream",
       description:
         "One chosen piece reaches for the bar: once, it may slide diagonally like a bishop, one long arm across the board. That reach is a single grasp, taking it spends it, and so does the first of your turns where the reach is available but you move without using it.",
-      tier: 5,
+      tier: 3,
       category: "movement",
       icon: "MoveUpRight",
       flavor: "Someday the second arm. Today, this reach.",
@@ -695,7 +695,7 @@ const FOCUS: Buff[] = [
       name: "Rubik's Cube",
       description:
         "Scramble the cube: choose up to 3 twists, each swapping the spots of two of your own pieces standing within 2 squares of each other. Kings never twist. The twists only resolve after your opponent's next move.",
-      tier: 5,
+      tier: 3,
       category: "movement",
       icon: "Box",
       flavor: "Nobody solves it, they just peel the stickers off.",
@@ -791,7 +791,7 @@ const FOCUS: Buff[] = [
       name: "Geometry Dash",
       description:
         "One of your pieces hits the beat: it dashes straight forward, phasing over your own pieces and smashing up to 2 enemies in its lane before landing. Never kings.",
-      tier: 7,
+      tier: 5,
       category: "attack",
       icon: "Triangle",
       flavor: "Jump. Jump. Do not miss the beat.",
@@ -893,7 +893,7 @@ const FOCUS: Buff[] = [
       id: "bee_swarm_simulator",
       name: "Bee Swarm Simulator",
       description:
-        "Release the hive: choose 3 empty squares on the two center ranks, and after your opponent's next move a buzzing swarm of 3 bee pawns lands there, harassing both armies from no-mans-land.",
+        "Choose 3 empty squares on the two centre ranks. After your opponent's next move, one of your pawns appears on each square still empty.",
       tier: 5,
       category: "pieces",
       icon: "Bug",
@@ -1763,7 +1763,7 @@ const NAMED: Buff[] = [
       name: "RGB Keyboard",
       description:
         "Light up every key. For the game your knights add a 1-square step any direction, your bishops slide 2 straight, and your rooks slide 2 diagonally, but these added moves cannot capture.",
-      tier: 4,
+      tier: 6,
       category: "movement",
       icon: "Keyboard",
       flavor: "Red, green, blue, and the whole squad glows.",
@@ -1881,7 +1881,7 @@ const NAMED: Buff[] = [
       name: "Check Out Our Socials",
       description:
         "Go live to the squad. Freeze up to 3 enemy pieces except the king for their next turn, then take one bonus move.",
-      tier: 8,
+      tier: 6,
       category: "tempo",
       icon: "Megaphone",
       flavor: "Like, subscribe, and stop moving.",

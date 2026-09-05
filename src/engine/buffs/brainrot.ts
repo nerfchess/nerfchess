@@ -453,7 +453,7 @@ export const BRAINROT: Buff[] = [
       // Balance pass: no longer a permanent amazon on every knight. Each knight
       // just adds a short diagonal glide (two squares, capturing), so it keeps
       // its leap plus a little bishop reach, and never the rook lines.
-      tier: 7,
+      tier: 5,
       category: "movement",
       requires: ["n"],
       flavor: "Peel, then unpeel the whole board.",
@@ -533,7 +533,7 @@ export const BRAINROT: Buff[] = [
       name: "Ballerina Cappuccina",
       description:
         "The coffee-cup ballerina leads a formation twirl: choose one of your pieces (not the king) to step one square, then up to two allies that stood beside it may each step one square too. No captures, just choreography.",
-      tier: 5,
+      tier: 3,
       category: "tempo",
       flavor: "Plié, rond de jambe, checkmate threat.",
     },
@@ -598,7 +598,7 @@ export const BRAINROT: Buff[] = [
       name: "La Vaca Saturno Saturnita",
       description:
         "The ringed cow swings into orbit: place a new knight on any empty square along the board's outer rim. While it settles it cannot be captured for your opponent's next 2 turns, but this orbit shelter burns out early once the new knight has captured twice.",
-      tier: 7,
+      tier: 5,
       category: "pieces",
       flavor: "Moo. (Heard from three planets away.)",
     },
@@ -665,7 +665,7 @@ export const BRAINROT: Buff[] = [
       name: "Frigo Camelo",
       description:
         "The fridge-camel opens both doors: two of your pieces (never the king) are refrigerated: they cannot be captured for your opponent's next 2 turns, but each is frozen solid for 1 of your turns while it defrosts.",
-      tier: 6,
+      tier: 3,
       category: "protection",
       flavor: "Crisp. Chilled. Slightly humming.",
     },
@@ -801,8 +801,8 @@ export const BRAINROT: Buff[] = [
       icon: "Cuboid",
       name: "Moai Head",
       description:
-        "A stone moai drops onto an empty square of your choice (it captures nothing) and just... stands there: for the next 4 turns of each side, NO piece from either side may move onto that square. Then it crumbles. It offers no further comment. 🗿",
-      tier: 4,
+        "Drop a moai on an empty square. For the next 4 turns of each side no piece may move onto it; then it crumbles.",
+      tier: 2,
       category: "protection",
       flavor: "🗿",
     },
@@ -839,7 +839,7 @@ export const BRAINROT: Buff[] = [
       icon: "Toilet",
       name: "Skibidi Flush",
       description:
-        "The porcelain vortex opens: up to 3 chosen enemy pieces (never the king) are flushed back to their home squares (or, if home is taken, to the nearest empty square toward home). Nothing is captured; everything is humiliated.",
+        "Up to 3 enemy pieces (never the king) are sent back to their home squares, or the nearest empty square toward home.",
       tier: 4,
       category: "tempo",
       flavor: "Skibidi dop dop dop yes yes.",

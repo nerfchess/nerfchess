@@ -698,7 +698,7 @@ export const WILD_ELEMENTAL: Buff[] = [
       name: "Flame Lance",
       description:
         "One of your rooks breathes a lance of flame straight up its own file, without moving: the first enemy piece in the jet, if it is not a king, burns away. Friendly pieces block the flame, once.",
-      tier: 6,
+      tier: 4,
       category: "attack",
       requires: ["r"],
       flavor: "A straight line of ash.",
@@ -1208,7 +1208,7 @@ export const WILD_ELEMENTAL: Buff[] = [
       name: "Stoneskin",
       description:
         "Choose up to four of your pieces: they cannot be captured for your opponent's next 2 turns, and every enemy piece standing next to one of them is locked in place for its next turn.",
-      tier: 8,
+      tier: 5,
       category: "protection",
       flavor: "Skin like slate, and the ground grips whoever leans on it.",
       fx: { motif: "ward", pieces: "all", self: true },
@@ -1250,7 +1250,7 @@ export const WILD_ELEMENTAL: Buff[] = [
       name: "Mountain Range",
       description:
         "Three peaks heave up out of the board: pick three empty squares; your opponent's pieces can never move onto them, for the rest of the game.",
-      tier: 7,
+      tier: 5,
       category: "protection",
       flavor: "You do not go over a mountain.",
       fx: { motif: "blindfold" },
@@ -1505,7 +1505,7 @@ export const WILD_ELEMENTAL: Buff[] = [
       name: "Undertow",
       description:
         "A current sweeps one of your pieces to any empty square, then drags the nearest enemy piece one square toward where it lands.",
-      tier: 5,
+      tier: 4,
       category: "movement",
       flavor: "It takes you somewhere better and pulls them off their feet.",
     },
@@ -1933,7 +1933,7 @@ export const WILD_ELEMENTAL: Buff[] = [
       name: "Verdant Shield",
       description:
         "A canopy of bark: all of your pawns cannot be captured for your opponent's next turn. Any enemy pawn directly in front of one of your pawns is rooted and cannot move for 1 turn.",
-      tier: 4,
+      tier: 2,
       category: "protection",
       requires: ["p"],
       flavor: "Wrapped in living wood, and the roots reach out.",

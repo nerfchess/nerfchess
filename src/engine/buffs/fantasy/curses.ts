@@ -179,7 +179,7 @@ export const FANTASY_CURSES: Buff[] = [
       name: "Chains of Binding",
       description: "A spectral chain shackles the enemy's rooks to each other. It settles after your opponent's next move, then while both live neither rook may end a move more than 3 squares from the other, for the 5 of their turns after.",
       tip: "A lone rook drags its broken chain and moves freely, so trading one off ends it.",
-      tier: 5,
+      tier: 3,
       category: "hex",
       flavor: "The clank of iron, wherever the other tower goes.",
       fx: { motif: "anchor", pieces: ["r"] },

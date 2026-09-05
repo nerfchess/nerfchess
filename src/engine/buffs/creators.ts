@@ -173,7 +173,7 @@ export const CREATOR_CARDS: Buff[] = [
       description:
         "Mark one of your knights or bishops as bait. If an enemy piece takes it within their next 3 turns, that piece is trapped in place for 2 of their turns and you gain 20 seconds. If nobody bites, the bait cannot be captured for 2 turns.",
       tip: "Their king can never be trapped, so a king taking the bait only pays you the time. Hang the bait somewhere tempting.",
-      tier: 7,
+      tier: 4,
       category: "protection",
       requires: ["n", "b"],
       icon: "Church",
@@ -267,7 +267,7 @@ export const CREATOR_CARDS: Buff[] = [
       description:
         "Pick one of your rooks. For your next 2 turns it moves like a queen, and every capture it makes gains you 10 seconds.",
       tip: "Open a diagonal for it before you play this: two turns go fast, and a boxed-in rook is still a boxed-in rook.",
-      tier: 8,
+      tier: 5,
       category: "movement",
       requires: ["r"],
       icon: "Crown",

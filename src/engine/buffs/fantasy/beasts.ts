@@ -91,7 +91,7 @@ export const FANTASY_BEASTS: Buff[] = [
       name: "Dragon's Breath",
       description:
         "One rook captures every enemy piece in a straight line in a single move, once. Loosing the breath spends the card even if the line is empty and nothing burns.",
-      tier: 5,
+      tier: 7,
       category: "attack",
       requires: ["r"],
       flavor: "Everything in the corridor turns to ash.",
@@ -201,7 +201,7 @@ export const FANTASY_BEASTS: Buff[] = [
       name: "Serpent Brood",
       description:
         "Venomous stone serpents coil around the enemy clergy: every one of your opponent's bishops turns to a walnut for 4 of their turns, and the venom lingers so no enemy bishop may capture for the rest of the game.",
-      tier: 4,
+      tier: 6,
       category: "hex",
       flavor: "Marble scales, and not a single blink.",
       fx: { motif: "muzzle", pieces: ["b"] },

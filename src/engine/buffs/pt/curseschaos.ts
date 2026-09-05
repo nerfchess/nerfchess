@@ -722,7 +722,7 @@ export const PT_CURSE_CARDS: Buff[] = [
       name: "Necromancer",
       description:
         "Raise your strongest fallen piece as a spectre on an empty square in your half. It fights for you, then crumbles to dust after 5 of your turns. If nothing of yours has been captured, nothing rises.",
-      tier: 7,
+      tier: 5,
       category: "pieces",
       flavor: "The grave was more of a suggestion.",
     },

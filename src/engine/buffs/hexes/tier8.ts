@@ -84,7 +84,7 @@ export const HEXES_T8: Buff[] = [
       fx: { motif: "jail", pieces: ["q", "r"] },
       // Retiered 8 -> 6: a narrow queen-and-rooks petrify does not fill an
       // Unhinged slot without a second board impact.
-      tier: 6,
+      tier: 4,
     },
     walnutAll(["q", "r"], 2),
   ),
@@ -487,9 +487,10 @@ export const HEXES_T8: Buff[] = [
   ),
 
   // --- timed filter: every piece hobbled to one square for 3 turns ---------
-  H(
+  hex(
     {
       id: "leaden_limbs",
+      tier: 7,
       name: "Leaden Limbs",
       description: "Your opponent may move each piece at most one square in any direction for their next 2 turns.",
       flavor: "Every limb turns to lead; a single shuffling step is all anyone manages.",

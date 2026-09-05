@@ -46,7 +46,7 @@ export const MYSTIC_CELESTIAL: Buff[] = [
       name: "Comet Shard",
       description:
         "A shard of a passing comet crashes onto the board as a bishop: place it on any empty square in your half. It lands still glowing, and its light also shields up to three other pieces you choose: those four cannot be captured for your opponent's next turn.",
-      tier: 4,
+      tier: 5,
       category: "pieces",
       flavor: "Wishes granted while supplies last.",
     },
@@ -129,7 +129,7 @@ export const MYSTIC_CELESTIAL: Buff[] = [
       name: "Starlight Ward",
       description:
         "Starlight pools around the crown: your pieces standing on the squares beside your king cannot be captured for your opponent's next 3 turns.",
-      tier: 6,
+      tier: 3,
       category: "protection",
       flavor: "Light that left its star a thousand years ago, arriving exactly on time.",
       fx: { motif: "ward", pieces: ["k"], self: true },

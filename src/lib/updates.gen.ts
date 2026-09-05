@@ -7,6 +7,22 @@ import type { GeneratedUpdate } from "./updates";
 export const GENERATED_UPDATES: GeneratedUpdate[] = [
   {
     date: "2026-09-05",
+    title: "Redesign follow-up: defaults, premoves, dock, profile, search, balance pass",
+    summary: "The default look is Lichess dark with the midnight board, premoves behave like Lichess, the dock has hotkeys and inline Use, the profile and search pages are fixed, and every card in play was re-priced against its own family.",
+    anchor: "u-20260905-1505",
+    bullets: [
+      "The site theme default goes back to Lichess dark; the board default is the dark grey-blue midnight set. The navy Midnight site theme stays as an option.",
+      "The vault's rings and caps burn in the exact tier colour of the best card inside, the caption carries the tier numeral, and tier 9/10 cards get their own deal-glow rows (they fell back to brass...",
+      "Premoves are Lichess-exact: one slot, a new premove replaces it, and any click or refused drop that is not a premove cancels it.",
+      "The dock flips between You and Them with y / t, and a collapsed row keeps its Use button.",
+      "Profile games tab: stat tiles, one labelled filter row, 48px grid rows; clubs are plain accent links.",
+      "Hero TV frame is token-only, so no black halo on light and no doubled edge on dark.",
+      "Friends list shows 12 with Show all, presence computed once, an overflow menu on narrow rails.",
+      "Codex lists only cards in play and no longer says Showing N of M; the show-retired toggle is gone.",
+    ],
+  },
+  {
+    date: "2026-09-05",
     title: "UI redesign and bug sweep",
     summary: "New Midnight site theme (navy take on the Lichess ladder, cooler text ramp, accent lifted to #4c9ff0) and it is the default. Dark, Light and System stay; System resolves to Midnight or Light.",
     anchor: "u-20260905-1325",

@@ -55,7 +55,7 @@ export const OVERHAUL_T7: Buff[] = [
       name: "Mod Powers",
       description:
         "Mute up to 3 enemy pieces (king excluded): they cannot move on your opponent's next turn.",
-      tier: 7,
+      tier: 5,
       category: "tempo",
       icon: "Gavel",
       flavor: "Reason: no reason. Duration: one turn. Appeals: denied.",
@@ -135,7 +135,7 @@ export const OVERHAUL_T7: Buff[] = [
       name: "Write the Patch Notes",
       description:
         "Spend your turn: plant a new pawn on an empty square of your second rank, and your next draft is dealt exactly one tier higher.",
-      tier: 7,
+      tier: 4,
       category: "draft",
       icon: "PenLine",
       flavor: "Removed: everything you dislike. Buffed: you, specifically.",
@@ -232,7 +232,7 @@ export const OVERHAUL_T7: Buff[] = [
       name: "Time Heist",
       description:
         "Your opponent skips their next turn. 6 of your turns later the timeline collects: they take one extra move.",
-      tier: 8,
+      tier: 4,
       category: "tempo",
       icon: "Hourglass",
       flavor: "Every stolen minute charges interest.",
@@ -320,7 +320,7 @@ export const OVERHAUL_T7: Buff[] = [
       name: "Prophecy Engine",
       description:
         "Point at an enemy piece: for your opponent's next 6 turns, every move they make with that piece type gains you 6 seconds. If they never move one, the engine pays 40 seconds when the prophecy closes.",
-      tier: 5,
+      tier: 3,
       category: "info",
       icon: "Orbit",
       flavor: "The gears do not predict the future. They invoice it.",
@@ -424,7 +424,7 @@ export const OVERHAUL_T7: Buff[] = [
       name: "Olympus Voicemail",
       description:
         "For your next 2 turns, after each of your moves a bolt stuns the enemy piece that moved most recently (kings excluded) for 1 turn.",
-      tier: 7,
+      tier: 2,
       category: "attack",
       icon: "CloudLightning",
       flavor: "You have reached Zeus. Leave a target after the thunder.",
@@ -555,7 +555,7 @@ export const OVERHAUL_T7: Buff[] = [
       name: "World Serpent",
       description:
         "For 4 of your turns the serpent bites its tail: your rooks' and queen's horizontal moves wrap around the board edge.",
-      tier: 8,
+      tier: 5,
       category: "movement",
       icon: "Infinity",
       flavor: "The board was never flat. You just moved like it was.",
@@ -602,7 +602,7 @@ export const OVERHAUL_T7: Buff[] = [
       name: "Insider Trading",
       description:
         "See the cards of your opponent's next draft, and pocket 10 seconds for the tip.",
-      tier: 5,
+      tier: 3,
       category: "info",
       icon: "TrendingUp",
       flavor: "Allegedly. The briefcase was allegedly open.",
@@ -696,7 +696,7 @@ export const OVERHAUL_T7: Buff[] = [
       name: "Promotion Jubilee",
       description:
         "For 5 of your turns, the first of your pawns to step or capture onto the seventh rank may promote there, but only to a rook, bishop, or knight. That one early promotion ends the jubilee.",
-      tier: 7,
+      tier: 5,
       category: "pieces",
       icon: "PartyPopper",
       flavor: "One rank early, and nobody checked the bunting budget.",
@@ -782,7 +782,7 @@ export const OVERHAUL_T7: Buff[] = [
       name: "Deja Vu",
       description:
         "You take one extra move right away, and the enemy piece that moved last (king excluded) is stuck in the loop and cannot move on your opponent's next turn.",
-      tier: 8,
+      tier: 5,
       category: "tempo",
       icon: "RotateCcw",
       flavor: "Haven't we... no. Surely not. Haven't we...",
@@ -904,7 +904,7 @@ export const OVERHAUL_T7: Buff[] = [
       name: "Chess Boxing",
       description:
         "The kings put the gloves on: a 50/50 bout. The winner's player immediately gains one extra move.",
-      tier: 7,
+      tier: 1,
       category: "tempo",
       icon: "Hand",
       flavor: "Round two is still chess. Technically.",
@@ -1040,7 +1040,7 @@ export const OVERHAUL_T7: Buff[] = [
       name: "Ancestral Audience",
       description:
         "Revive your highest-value captured piece onto an empty square in your half. In fairness before the ancestors, your opponent's best captured pawn or minor returns to a random empty square in their half.",
-      tier: 6,
+      tier: 4,
       category: "pieces",
       icon: "DoorOpen",
       flavor: "The spirits grant two doors, and dignity demands both open.",
@@ -1095,7 +1095,7 @@ export const OVERHAUL_T7: Buff[] = [
       id: "ov_cartographers_vault",
       name: "Cartographer's Vault",
       description: "Your next 2 drafts each offer 3 cards.",
-      tier: 8,
+      tier: 4,
       category: "draft",
       icon: "Map",
       flavor: "Every shelf is a coastline nobody has drafted yet.",

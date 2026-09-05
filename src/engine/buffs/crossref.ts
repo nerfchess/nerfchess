@@ -155,7 +155,7 @@ export const CROSSREF_CARDS: Buff[] = [
       id: "royal_handicap",
       name: "Royal Handicap",
       description: "Nerf the crown itself: for your opponent's next 4 turns the patch removes diagonal movement from their king, save one diagonal escape step the king may still take once.",
-      tier: 5,
+      tier: 2,
       flavor: "Please look forward to the royal rework in a future season.",
       fx: { motif: "anchor", pieces: ["k"] },
     },
@@ -515,7 +515,7 @@ export const CROSSREF_CARDS: Buff[] = [
       id: "sahur",
       name: "Bobrito Bandito",
       description: "Bonk one enemy piece with the log: the swing lands after your opponent's next move, stunning that piece so it cannot move for its next 2 turns. Kings are too stubborn to bonk.",
-      tier: 5,
+      tier: 2,
       flavor: "The beaver bandit collects his toll, one bonk at a time.",
     },
     {

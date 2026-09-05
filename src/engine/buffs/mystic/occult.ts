@@ -188,7 +188,7 @@ export const MYSTIC_OCCULT: Buff[] = [
       name: "Ley Line",
       description:
         "You wake the old current sleeping under the board: choose one of your pieces and an empty square on its own file. After your opponent's next move, it rides the current there.",
-      tier: 3,
+      tier: 2,
       category: "movement",
       flavor: "The land remembers its own roads.",
     },
@@ -282,7 +282,7 @@ export const MYSTIC_OCCULT: Buff[] = [
       name: "Mirror of Souls",
       description:
         "You hold the glass between two reflections: name one of your pieces and an enemy piece of the same kind. After your opponent's next move, they trade places. Kings cast no reflection.",
-      tier: 7,
+      tier: 4,
       category: "movement",
       flavor: "The glass gives everything back except loyalty.",
     },

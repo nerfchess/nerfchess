@@ -1318,7 +1318,7 @@ const BOON_WAVE4A: Buff[] = [
     },
   ),
   card(
-    { id: "bn4_vaulting_pole", name: "Vaulting Pole", tier: 2, category: "movement", icon: "Wand",
+    { id: "bn4_vaulting_pole", name: "Vaulting Pole", tier: 1, category: "movement", icon: "Wand",
       description: "Once, after your opponent's next move, one of your pawns may vault straight over a piece directly ahead of it, landing on the empty square beyond (never onto the final rank).",
       flavor: "Regulation height. Unregulated courage.", requires: ["p"],
       fx: { motif: "empower", pieces: ["p"], self: true } },
@@ -1432,7 +1432,7 @@ const BOON_WAVE4A: Buff[] = [
   // --- pieces (5) ---
 
   card(
-    { id: "bn4_stowaway", name: "Stowaway", tier: 3, category: "pieces", icon: "Package",
+    { id: "bn4_stowaway", name: "Stowaway", tier: 1, category: "pieces", icon: "Package",
       description: "After your next 5 turns, a pawn is discovered aboard and joins your pocket, ready to drop on a later turn.",
       flavor: "Been in the flour barrel since move two.", fx: { motif: "rally", pieces: "all", self: true } },
     {
@@ -1453,7 +1453,7 @@ const BOON_WAVE4A: Buff[] = [
     },
   ),
   card(
-    { id: "bn4_militia_call", name: "Militia Call", tier: 3, category: "pieces", icon: "Megaphone",
+    { id: "bn4_militia_call", name: "Militia Call", tier: 2, category: "pieces", icon: "Megaphone",
       description: "Place a new pawn on an empty square on your second rank.",
       flavor: "Bring your own pitchfork. Helmet provided." },
     activated(
@@ -1530,7 +1530,7 @@ const BOON_WAVE4A: Buff[] = [
     shieldOne(3, "Choose the piece to quilt"),
   ),
   card(
-    { id: "bn4_hearth_ring", name: "Hearth Ring", tier: 3, category: "protection", icon: "Flame",
+    { id: "bn4_hearth_ring", name: "Hearth Ring", tier: 2, category: "protection", icon: "Flame",
       description: "Every one of your pieces standing beside your king cannot be captured for your opponent's next 2 turns.",
       flavor: "Nobody fights well with cold hands.",
       fx: { motif: "ward", pieces: "all", self: true } },
@@ -1745,7 +1745,7 @@ const BOON_WAVE4A: Buff[] = [
   // --- item (2) ---
 
   card(
-    { id: "bn4_warm_soup", name: "Warm Soup", tier: 2, category: "item", icon: "Soup",
+    { id: "bn4_warm_soup", name: "Warm Soup", tier: 1, category: "item", icon: "Soup",
       description: "Thaw one of your pieces that is frozen or stuck: it can move again on your next turn.",
       flavor: "Cures frostbite, glue, webs and most opinions." },
     activated(
@@ -2055,7 +2055,7 @@ const BOON_WAVE4A: Buff[] = [
     ),
   ),
   card(
-    { id: "bn4_leapfrog", name: "Leapfrog", tier: 4, category: "movement", icon: "Squirrel",
+    { id: "bn4_leapfrog", name: "Leapfrog", tier: 1, category: "movement", icon: "Squirrel",
       description: "Once, one of your pawns may hop diagonally forward over an adjacent piece, landing on the empty square beyond (never onto the final rank).",
       flavor: "A dignified military maneuver, honest.", requires: ["p"],
       fx: { motif: "empower", pieces: ["p"], self: true } },
@@ -2141,13 +2141,13 @@ const BOON_WAVE4A: Buff[] = [
     instant((_inst, api) => grantInventory(api, "p", 2)),
   ),
   card(
-    { id: "bn4_florists_trick", name: "Florist's Trick", tier: 4, category: "pieces", icon: "Flower",
+    { id: "bn4_florists_trick", name: "Florist's Trick", tier: 3, category: "pieces", icon: "Flower",
       description: "Return one of your captured pawns to an empty square on your fourth rank, already halfway down the road.",
       flavor: "Cut stems root faster than anyone admits." },
     reviveOne(["p"], (api) => (sq) => RANK(sq) === ownRank(api.me, 3)),
   ),
   card(
-    { id: "bn4_night_gardener", name: "Night Gardener", tier: 2, category: "pieces", icon: "Leaf",
+    { id: "bn4_night_gardener", name: "Night Gardener", tier: 3, category: "pieces", icon: "Leaf",
       description: "The next 2 of your pawns that are captured each return at once to the empty square nearest your home rank.",
       flavor: "What is buried in the evening is up by morning.", requires: ["p"], fx: { motif: "ward", pieces: ["p"], self: true } },
     {
@@ -2192,7 +2192,7 @@ const BOON_WAVE4A: Buff[] = [
     ),
   ),
   card(
-    { id: "bn4_matryoshka_surprise", name: "Matryoshka Surprise", tier: 4, category: "pieces", icon: "Egg",
+    { id: "bn4_matryoshka_surprise", name: "Matryoshka Surprise", tier: 2, category: "pieces", icon: "Egg",
       description: "Paint one of your pawns as a nesting doll. When it is captured, two smaller pawns pop out into your pocket, ready to drop on later turns.",
       flavor: "There is always one more inside. That is the law of dolls.", requires: ["p"] },
     {
@@ -2319,7 +2319,7 @@ const BOON_WAVE4A: Buff[] = [
     ),
   ),
   card(
-    { id: "bn4_beetle_shell", name: "Beetle Shell", tier: 4, category: "protection", icon: "Bug",
+    { id: "bn4_beetle_shell", name: "Beetle Shell", tier: 3, category: "protection", icon: "Bug",
       description: "Your knights and bishops cannot be captured on your opponent's next turn.",
       flavor: "Chitin: nature's answer to tactics." },
     shieldZone(
@@ -2486,13 +2486,13 @@ const BOON_WAVE4A: Buff[] = [
   // --- item (2) ---
 
   card(
-    { id: "bn4_kettle_on", name: "Kettle On", tier: 3, category: "item", icon: "CupSoda",
+    { id: "bn4_kettle_on", name: "Kettle On", tier: 2, category: "item", icon: "CupSoda",
       description: "Put the kettle on: every one of your frozen or stuck pieces thaws at once.",
       flavor: "Steam solves what strategy cannot." },
     activatedSimple((_inst, api) => thawMine(api)),
   ),
   card(
-    { id: "bn4_party_hat", name: "Party Hat", tier: 3, category: "item", icon: "PartyPopper",
+    { id: "bn4_party_hat", name: "Party Hat", tier: 2, category: "item", icon: "PartyPopper",
       description: "Put a party hat on any piece on the board, forever (purely decorative). If it is one of yours, it cannot be captured for your opponent's next 2 turns: nobody ruins a party.",
       flavor: "Mandatory fun has entered the square." },
     activated(
@@ -2791,7 +2791,7 @@ const BOON_WAVE4A: Buff[] = [
     ),
   ),
   card(
-    { id: "bn4_seven_league_boots", name: "Seven League Boots", tier: 4, category: "movement", icon: "Footprints",
+    { id: "bn4_seven_league_boots", name: "Seven League Boots", tier: 1, category: "movement", icon: "Footprints",
       description: "Once, one of your pawns may stride up to three squares straight forward across empty squares (never onto the final rank). In exchange, your next draft is skipped.",
       flavor: "Sized for giants. Laced for optimists.", requires: ["p"],
       fx: { motif: "empower", pieces: ["p"], self: true } },
@@ -2832,7 +2832,7 @@ const BOON_WAVE4A: Buff[] = [
   // --- pieces (5) ---
 
   card(
-    { id: "bn4_letters_home", name: "Letters Home", tier: 5, category: "pieces", icon: "Mail",
+    { id: "bn4_letters_home", name: "Letters Home", tier: 3, category: "pieces", icon: "Mail",
       description: "After your next 4 turns, the letters arrive: two pawns join your pocket, ready to drop on later turns.",
       flavor: "P.S. We are coming to help. P.P.S. Both of us." },
     {
@@ -2879,7 +2879,7 @@ const BOON_WAVE4A: Buff[] = [
     ),
   ),
   card(
-    { id: "bn4_small_consolation", name: "Small Consolation", tier: 5, category: "pieces", icon: "Gift",
+    { id: "bn4_small_consolation", name: "Small Consolation", tier: 2, category: "pieces", icon: "Gift",
       description: "The next 2 times your opponent captures one of your rooks or queens, a pawn joins your pocket.",
       flavor: "It is not a rook. It is trying its best.", fx: { motif: "ward", pieces: ["r", "q"], self: true } },
     {
@@ -2996,7 +2996,7 @@ const BOON_WAVE4A: Buff[] = [
     shieldZone((api) => mySquares(api.board, api.me, "q"), 3),
   ),
   card(
-    { id: "bn4_town_walls", name: "Town Walls", tier: 4, category: "protection", icon: "Castle",
+    { id: "bn4_town_walls", name: "Town Walls", tier: 3, category: "protection", icon: "Castle",
       description: "No enemy piece may move onto your second rank for 2 turns.",
       flavor: "Built in a day, oddly enough." },
     instant((_inst, api) => {
@@ -3032,7 +3032,7 @@ const BOON_WAVE4A: Buff[] = [
     instant((_inst, api) => api.adjustClock({ addSelfSec: 30 })),
   ),
   card(
-    { id: "bn4_flash_frost", name: "Flash Frost", tier: 5, category: "tempo", icon: "Snowflake",
+    { id: "bn4_flash_frost", name: "Flash Frost", tier: 3, category: "tempo", icon: "Snowflake",
       description: "One enemy piece of your choice (their king excepted) is frozen solid for your opponent's next 2 turns.",
       flavor: "Personal winter, express delivery." },
     activated(
@@ -3191,7 +3191,7 @@ const BOON_WAVE4A: Buff[] = [
   // --- item (2) ---
 
   card(
-    { id: "bn4_care_package", name: "Care Package", tier: 4, category: "item", icon: "Package",
+    { id: "bn4_care_package", name: "Care Package", tier: 3, category: "item", icon: "Package",
       description: "Open the parcel: at random, either a pawn (half the time), a knight (a quarter), or a bishop (a quarter) joins your pocket, ready to drop on a later turn.",
       flavor: "No return address. Smells faintly of oats." },
     activatedSimple((_inst, api) => {
@@ -3200,7 +3200,7 @@ const BOON_WAVE4A: Buff[] = [
     }),
   ),
   card(
-    { id: "bn4_confetti_cannon", name: "Confetti Cannon", tier: 4, category: "item", icon: "PartyPopper",
+    { id: "bn4_confetti_cannon", name: "Confetti Cannon", tier: 2, category: "item", icon: "PartyPopper",
       description: "One of your pieces (your king excepted) puts on sunglasses for the rest of the game (purely decorative) and struts uncapturable through your opponent's next 2 turns.",
       flavor: "Morale is a weapon system." },
     activated(

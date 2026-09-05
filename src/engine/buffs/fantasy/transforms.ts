@@ -61,7 +61,7 @@ export const FANTASY_TRANSFORMS: Buff[] = [
       name: "Dragon Form",
       description:
         "One of your rooks unfurls a pair of dragon wings for a single flight: choose a rook; until it next moves it may also slide diagonally like a queen, but the first move it makes, diagonal or straight, folds the wings and spends the charge.",
-      tier: 5,
+      tier: 4,
       category: "movement",
       requires: ["r"],
       flavor: "The tower learns to fly.",

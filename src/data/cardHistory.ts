@@ -133,6 +133,1012 @@ function nerfWave(n: Nerf): WaveId {
  * a card is retiered, reworked, or reworded in code, with the changelog date
  * and PR. Keep each note one sentence; the page renders them as a timeline. */
 export const CARD_HISTORY: Record<string, CardHistoryEvent[]> = {
+  // --- 2026-09-05 full balance pass, lens batch: every active card checked
+  // against its family for dominance ladders, twins priced apart, permanent
+  // upgrades under temporary anchors, riderless one-shot defence, and text
+  // that did not match the effect. Tiers live in scripts/hand-audit.json.
+  "buff:bn4_militia_call": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 3 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:emotional_support_pawn": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 3 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_stowaway": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 3 to Tier 1 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:supply_drop": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 3 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_letters_home": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_small_consolation": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_matryoshka_surprise": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:ov_trojan_pawn": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:wa_conjure_scout": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:legendary_forge": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_florists_trick": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_night_gardener": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 2 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_second_spring": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 6 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_endless_militia": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bw3_last_muster": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_winter_garrison": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_clay_colossus": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 6 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:smurf_account": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:pay_to_win": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:wc_double_trouble": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:la_vaca_saturno_saturnita": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:necromancer": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:ov_ancestral_audience": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bw2_prisoner_exchange": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:resurrect": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bw2_spoils_of_war": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 6 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bw2_deathless_oath": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_life_insurance": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:mind_dominion": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:mind_control": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:mind_empire": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bw3_pretender": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 7 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:blood_pact": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:wc_deal_with_the_devil": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_ascension_small": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 6 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bw2_alchemists_trade": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:queen_storm": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 7 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_house_of_banners": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_changeling_child": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bw3_mummers_dance": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_retraining": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bw3_ironwrights_bargain": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:ov_promotion_jubilee": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:loyal_pawn": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 1 to Tier 6 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bw3_heir_apparent": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 1 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:comet_shard": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:gm_hardship_jackpot": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:gm_seven_cases": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:ov_milkmans_round": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 3 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:warp_field": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bw3_turn_the_tide": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:rgb_keyboard": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 6 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:ov_templar_vows": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bw3_second_face": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_gryphon_rider": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:chimpanzini_bananini": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_falconers_glove": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:ww_dragoons": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:wa_arcane_conduit": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bw2_cornered_king": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_crowned_strider": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_kings_leap_year": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_kings_own_wings": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_queens_gambol": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_pathfinders": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:wa_camel_rider": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_dancing_master": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 6 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:amazon_army": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 7 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:onslaught": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 6 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:overclock_major": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:ov_regency_council": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:ov_feng_shui_plot": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:ov_gravity_flip": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:ov_world_serpent": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_court_procession": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_stormcrossing": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 6 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bw3_tunnelers": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:dragon_form": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:excalibur": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:onearmmuscleupismydream": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:age_of_heroes": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 7 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:cr_oh_no_my_queen": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:wc_berserk_pawn": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:godslayer_knight": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 8 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:wc_yeet": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:fey_step": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bw3_rally_royal": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:muscle_up": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:ley_line": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 3 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:we_undertow": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:warp_storm": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_worldgate": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 6 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_marshals_baton": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 6 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bw2_bolt_hole": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bw3_kings_sanctuary": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 6 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:mirror_of_souls": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:warp_sovereign": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:rubiks_cube": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bw3_castle_in_the_storm": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_seven_league_boots": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 1 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_leapfrog": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 1 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_vaulting_pole": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 2 to Tier 1 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bw3_home_guard": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 3 to Tier 7 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:ww_shieldbearers": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 6 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:decoy": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 2 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_hearth_ring": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 3 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_bottled_courage": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:starlight_ward": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bulwark": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 3 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bubble_wrap": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 3 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:fortress": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:shieldmaiden": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:main_character": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:ov_plot_armor": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_kings_champion": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:ww_high_ground": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:we_verdant_shield": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:ov_growth_ring": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:ironclad": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:iron_wall": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bw2_eternal_keep": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_winter_palace": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_beetle_shell": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_griffins_brood": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_shieldmaidens": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:absolute_aegis": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 7 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_saints_procession": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 6 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:gossamer_veil": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:frigo_camelo": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:we_stoneskin": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_heralds_truce": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_warding_circle": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_wall_of_faith": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:we_mountain_range": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:moai_head": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_town_walls": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:sundering": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 6 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:ov_paperwork_avalanche": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:duelist": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_sting_of_the_wasp": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:cr_stalling_bishop": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:wa_quicken": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_kettle_on": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 3 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_warm_soup": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 2 to Tier 1 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:time_rewind": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:wa_stolen_hours": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 3 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:gm_heads_or_tails": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 1 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:wc_juggling_act": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:blitzkrieg": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 6 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:endless_turn": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 6 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:check_out_our_socials": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 6 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:ov_deja_vu": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_lightning_rod": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_triumphal_arch": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:ov_chess_boxing": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 1 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:ov_time_heist": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:snap_freeze": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 3 to Tier 1 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_flash_frost": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:wa_chrono_siphon": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 2 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:wa_arrest_time": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:wa_time_stop": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:wc_slip_on_ice": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 3 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:ov_mod_powers": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_glacier_calving": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_frozen_moat": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:landlord": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:wc_tar_pit": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:wa_stone_pawns": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 1 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:wc_quicksand_patch": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 1 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:ov_midas_gauntlet": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:ballerina_cappuccina": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:ov_monks_of_the_fifth_bell": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:ov_managers_challenge": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 1 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:purge": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bw3_martyrdom": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bw2_blood_duel": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bw3_kingsguard_duel": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:chain_lightning": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 6 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:ww_armored_breakthrough": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 6 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:dragons_breath": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 7 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:queens_rampage": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 7 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:ww_spearhead": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:ww_bayonet_charge": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:we_flame_lance": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:geometry_dash": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:giants_maul": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 6 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:wa_void_rift": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 3 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:wc_haunted_house": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:void_realm": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:atomic_captures": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 8 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:total_atomic": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 7 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:purge_realm": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 6 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:ban_hammer": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 7 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:ov_wizard_duel": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:gm_river_card": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 3 to Tier 1 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:ov_olympus_voicemail": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:siege_rook": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_confetti_cannon": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_party_hat": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 3 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_crown_of_masks": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_wind_up_knight": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_genie_lamp": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_cornucopia": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 6 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:gm_wheel_of_the_cosmos": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_care_package": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:trampoline": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 3 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:ov_insider_trading": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:ov_checkmate_rehearsal": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 1 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:ov_wallhack_goggles": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:ov_weather_balloon": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:ov_prophecy_engine": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:op_sampler_platter": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 1 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:ov_private_gallery": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:ov_cartographers_vault": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bw2_blood_price": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:bn4_harvest_and_fallow": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:all_in": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:ov_season_pass": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:ov_patch_notes": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:gm_double_down_draft": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:ov_dev_console": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_plush_cavalry": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 1 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_caught_mid_stride": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 1 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_rusted_battlements": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_overslept_officers": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 2 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_widows_veil": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_banquet_of_dust": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_ash_veil": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_no_doubling": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_crown_of_lead": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:burned_dispatches": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:empty_handed": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:dead_letter": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_iron_portcullis": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_pebble_in_the_shoe": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 2 to Tier 1 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:sahur": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_hundred_year_nap": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_kraken_arms": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_lead_rain": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_stone_rain": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_reapers_due": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 6 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_narcolepsy": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_kings_ransom": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hw3_kings_guard": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_silken_net": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_thunderhead": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_haunted_gallery": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_frozen_harbor": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_hearth_frost": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_frozen_reserves": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 6 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_no_quarter": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_dead_march": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 6 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_burden_of_command": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_burned_keep": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_wall_of_teeth": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_velvet_rope": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_severed_lines": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_iron_ring": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_sealed_meridian": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 6 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_tidal_wall": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:leaden_limbs": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 7 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_mitred_blinders": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_castle_of_sand": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:crown_and_castle": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_brittle_arsenal": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_stone_garden": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_rusted_crown": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:queen_of_stone": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_gilded_cage": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_clay_hooves": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_honey_spill": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:statue_garden": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 6 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:serpent_brood": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 6 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:stone_curse": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_gorgons_court": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 6 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_gargoyle_perch": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:salted_earth": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_famine_year": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:iron_furrow": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_frost_heave": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_cold_reception": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_moat_diggers": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_beartrap_cache": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_river_watch": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_paddock_fence": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_grooms_leash": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_wagon_ruts": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:seized_axles": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 2 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_hollow_fanfare": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_hunters_moon": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 6 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_tribute_demand": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_ashen_bread": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_spiders_parlor": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 6 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hw2_crown_of_thorns": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 7 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_poachers_snare": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_undertow": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_gale_warning": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hw3_hydra_hex": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:royal_handicap": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hw3_no_retreat": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 1 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_cobweb_corners": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 3 to Tier 1 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_will_o_wisps": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 3 to Tier 1 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_drawn_curtain": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_reined_back": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_moth_eaten_gloves": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_the_quarrel": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_wet_powder": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:ironbound_rook": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:chains_of_binding": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:wc_shy_pieces": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 3 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_skittish_mounts": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:gm_rigged_raffle": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_toad_pond": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_leaking_boats": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 3 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:hx4_borrowed_ladder": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 3 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+  ],
+  "buff:chess_diff": [
+    { date: "2026-09-05", kind: "reword", note: "Text rewritten to say plainly what the effect does; the rule itself did not change." },
+  ],
+  "buff:moai_head": [
+    { date: "2026-09-05", kind: "reword", note: "Text rewritten to say plainly what the effect does; the rule itself did not change." },
+  ],
+  "buff:skibidi_flush": [
+    { date: "2026-09-05", kind: "reword", note: "Text rewritten to say plainly what the effect does; the rule itself did not change." },
+  ],
+  "buff:bw2_shadow_reserve": [
+    { date: "2026-09-05", kind: "reword", note: "Text rewritten to say plainly what the effect does; the rule itself did not change." },
+  ],
+  "buff:hw2_pauper_crown": [
+    { date: "2026-09-05", kind: "reword", note: "Text rewritten to say plainly what the effect does; the rule itself did not change." },
+  ],
+  "buff:bw3_the_homecoming": [
+    { date: "2026-09-05", kind: "reword", note: "Text rewritten to say plainly what the effect does; the rule itself did not change." },
+  ],
+  "buff:grand_conjunction": [
+    { date: "2026-09-05", kind: "reword", note: "Text rewritten to say plainly what the effect does; the rule itself did not change." },
+  ],
+  "buff:divine_reckoning": [
+    { date: "2026-09-05", kind: "reword", note: "Text rewritten to say plainly what the effect does; the rule itself did not change." },
+  ],
+  "buff:bw2_alchemists_trade": [
+    { date: "2026-09-05", kind: "reword", note: "Text rewritten to say plainly what the effect does; the rule itself did not change." },
+  ],
+  "buff:loyal_pawn": [
+    { date: "2026-09-05", kind: "reword", note: "Text rewritten to say plainly what the effect does; the rule itself did not change." },
+  ],
+  "buff:bee_swarm_simulator": [
+    { date: "2026-09-05", kind: "reword", note: "Text rewritten to say plainly what the effect does; the rule itself did not change." },
+  ],
+  "buff:warp_field": [
+    { date: "2026-09-05", kind: "reword", note: "Text rewritten to say plainly what the effect does; the rule itself did not change." },
+  ],
+  "buff:wa_stone_pawns": [
+    { date: "2026-09-05", kind: "reword", note: "Text rewritten to say plainly what the effect does; the rule itself did not change." },
+  ],
+  "buff:wc_quicksand_patch": [
+    { date: "2026-09-05", kind: "reword", note: "Text rewritten to say plainly what the effect does; the rule itself did not change." },
+  ],
+  "buff:nerf_this": [
+    { date: "2026-09-05", kind: "disabled", note: "Retired: its condition (an opponent with two queens) never fires in a normal game." },
+  ],
+  "buff:bn4_midas_charter": [
+    { date: "2026-09-05", kind: "disabled", note: "Retired: the boost window closed before any draft could land in it, so the card was a pure two-draft loss." },
+  ],
+  "buff:checkmate_immunity": [
+    { date: "2026-09-05", kind: "disabled", note: "Retired: the ward was spent by the very move that gave check, so it never protected anything." },
+  ],
+  "buff:clone_army": [
+    { date: "2026-09-05", kind: "disabled", note: "Retired into Second Army: the same two pocket pawns." },
+  ],
+  "buff:rook_chancellor": [
+    { date: "2026-09-05", kind: "disabled", note: "Stays retired into Bishop to Archbishop, now that the bishop is priced at Tier 4 too." },
+  ],
   // --- 2026-09-05 full balance pass, structural batch: dominance ladders,
   // twins priced apart, permanent upgrades under the temporary anchors, and
   // one-shot defensive cards with no rider. Win-rate sizing follows.

@@ -271,7 +271,7 @@ const SHOP_PERKS: Array<OpenerMeta & { what: string; apply: (api: BuffApi) => vo
   { id: "carbon_copy", name: "Carbon Copy", flavor: "Press hard, third sheet is theirs.", icon: "Copy", what: "You will see the cards in your opponent's next draft offer.", apply: (api) => { api.mine.flags.seeOppCards = true; } },
   { id: "price_check", name: "Price Check", flavor: "A crackly intercom announces exactly one number.", icon: "Tag", what: "You will learn the tier of your opponent's next draft offer.", apply: (api) => { api.mine.flags.seeOppTier = true; } },
   { id: "special_order", name: "Special Order", flavor: "It arrives in a plain box marked TIER TWO.", icon: "ClipboardList", what: "Your next draft is dealt from tier 2.", apply: (api) => { api.mine.flags.forceTier = 2; } },
-  { id: "sampler_platter", name: "Sampler Platter", flavor: "Three little toothpicks, one decision.", icon: "UtensilsCrossed", what: "Your next draft offers three cards instead of two.", apply: (api) => { api.mine.flags.prepThree = true; } },
+  { id: "sampler_platter", name: "Sampler Platter", tier: 2, flavor: "Three little toothpicks, one decision.", icon: "UtensilsCrossed", what: "Your next draft offers three cards instead of two.", apply: (api) => { api.mine.flags.prepThree = true; } },
   { id: "layaway_plan", name: "Layaway Plan", tier: 3, flavor: "Pay nothing now, collect a nicer shelf later.", icon: "PiggyBank", what: "Your next draft offer rolls one tier higher.", apply: (api) => { api.mine.flags.bankBonus = 1; } },
 ];
 
