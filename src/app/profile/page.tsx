@@ -220,7 +220,7 @@ function GuestProfile({ account }: { account: AccountUser | null }) {
 
         {/* Friends rail: FriendsPanel handles guest / signed-out states itself. */}
         <aside className="mt-8 xl:mt-0">
-          <FriendsPanel />
+          <FriendsPanel bounded />
         </aside>
       </div>
     </section>
