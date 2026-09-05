@@ -1124,6 +1124,7 @@ export const EFFECT_CATEGORY_OVERRIDES: Record<string, EffectCategoryId> = {
   // matches "name. description" (same as nerfCategories) because names carry
   // real signal for terse rules text ("Resurrect", "Eternal Freeze",
   // "Pinned Down"), and that is worth a dozen corrections here.
+  "nerf:crippled_clergy": "self-movement-restriction", // "shuffles ... a single diagonal step" is a range cap on your own bishops.
   "buff:withered_hands": "capture-denial", // "Withered" is not a downgrade; nobody may capture.
   "buff:bn4_muddy_boots": "piece-class-lockdown", // "Muddy" is flavour; their pawns cannot advance.
   "buff:hx4_muddy_moat": "zone-denial", // Ditto: the d and e files are shut, no hazard square.

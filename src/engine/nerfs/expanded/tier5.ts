@@ -24,7 +24,7 @@ const other = (c: Color): Color => (c === "w" ? "b" : "w");
 
 export const NERFS_T5: Nerf[] = [
   nerf(
-    { id: "defanged_queen", name: "Defanged Queen", description: "Your queen can't capture and can't give check.", flavor: "All crown, no claws.", icon: "crown", tier: 6 },
+    { id: "defanged_queen", name: "Defanged Queen", description: "Your queen can't capture and can't give check.", flavor: "All crown, no claws.", icon: "crown", tier: 7 },
     {
       filterMoves: (moves, _state, ctx) => {
         const opp = other(ctx.me);
@@ -37,7 +37,7 @@ export const NERFS_T5: Nerf[] = [
     },
   ),
   nerf(
-    { id: "stunted_rooks", name: "Stunted Rooks", description: "From your fourth move on, your rooks can only move one square at a time.", flavor: "The towers shuffle inch by inch.", icon: "castle", tier: 6 },
+    { id: "stunted_rooks", name: "Stunted Rooks", description: "From your fourth move on, your rooks can only move one square at a time.", flavor: "The towers shuffle inch by inch.", icon: "castle", tier: 5 },
     {
       // Activation delayed until move 4 (moveNumber >= 3): the first three moves
       // are unrestricted so the opening cannot be soft-locked.
@@ -48,7 +48,7 @@ export const NERFS_T5: Nerf[] = [
     },
   ),
   nerf(
-    { id: "myopic_bishops", name: "Myopic Bishops", description: "From your fourth move on, your bishops can't move more than two squares.", flavor: "They can't see past the next tile.", icon: "church", tier: 6 },
+    { id: "myopic_bishops", name: "Myopic Bishops", description: "From your fourth move on, your bishops can't move more than two squares.", flavor: "They can't see past the next tile.", icon: "church", tier: 5 },
     {
       // Activation delayed until move 4 (moveNumber >= 3): the first three moves
       // are unrestricted so the opening cannot be soft-locked.
@@ -59,7 +59,7 @@ export const NERFS_T5: Nerf[] = [
     },
   ),
   nerf(
-    { id: "hobbled_knights", name: "Hobbled Knights", description: "Your knights can't advance toward the enemy side; their rank may never increase.", flavor: "The horses only ever fall back.", icon: "move", tier: 6 },
+    { id: "hobbled_knights", name: "Hobbled Knights", description: "Your knights can't advance toward the enemy side; their rank may never increase.", flavor: "The horses only ever fall back.", icon: "move", tier: 5 },
     {
       filterMoves: (moves, _state, ctx) =>
         moves.filter(
@@ -83,7 +83,7 @@ export const NERFS_T5: Nerf[] = [
     },
   ),
   nerf(
-    { id: "no_mans_land", name: "No Man's Land", description: "You can't move any piece onto a square your opponent currently attacks, except once per game you may step onto an attacked square.", flavor: "Every guarded square is a minefield.", icon: "ban", tier: 6 },
+    { id: "no_mans_land", name: "No Man's Land", description: "You can't move any piece onto a square your opponent currently attacks, except once per game you may step onto an attacked square.", flavor: "Every guarded square is a minefield.", icon: "ban", tier: 7 },
     {
       // Once-per-game exemption: you may make a single move onto an attacked
       // square. Whether the attacked squares depend on the live position (not on
@@ -110,13 +110,13 @@ export const NERFS_T5: Nerf[] = [
     },
   ),
   nerf(
-    { id: "pawns_do_the_dirty_work", name: "Pawns Do the Dirty Work", description: "Only your pawns may capture; none of your other pieces can capture.", flavor: "The officers keep their hands clean.", icon: "swords", tier: 6 },
+    { id: "pawns_do_the_dirty_work", name: "Pawns Do the Dirty Work", description: "Only your pawns may capture; none of your other pieces can capture.", flavor: "The officers keep their hands clean.", icon: "swords", tier: 8 },
     {
       filterMoves: filter((m) => !(m.captured && m.piece !== "p")),
     },
   ),
   nerf(
-    { id: "no_retreat_ever", name: "No Retreat Ever", description: "Every move you make must advance toward the enemy; no piece may move backward or even hold its rank, except one non-advancing move is allowed once per game.", flavor: "Only ever forward, never a step wasted.", icon: "move", tier: 6 },
+    { id: "no_retreat_ever", name: "No Retreat Ever", description: "Every move you make must advance toward the enemy; no piece may move backward or even hold its rank, except one non-advancing move is allowed once per game.", flavor: "Only ever forward, never a step wasted.", icon: "move", tier: 8 },
     {
       // Distinct from forward_march (allows level and sideways moves) and
       // onward_only (delayed, allows level moves): here every move must strictly
@@ -153,7 +153,7 @@ export const NERFS_T5: Nerf[] = [
     },
   ),
   nerf(
-    { id: "restless_crown", name: "Restless Crown", description: "Your king may move only six times all game. One compliance token excuses a single extra king move; you lose only on his eighth move.", flavor: "A wandering king loses his kingdom.", icon: "crown", tier: 6 },
+    { id: "restless_crown", name: "Restless Crown", description: "Your king may move only six times all game. One compliance token excuses a single extra king move; you lose only on his eighth move.", flavor: "A wandering king loses his kingdom.", icon: "crown", tier: 5 },
     {
       // The loss condition stays a king-move limit. One compliance token excuses
       // the seventh king move, so the loss only fires past seven.

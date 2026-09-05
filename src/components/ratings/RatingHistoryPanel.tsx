@@ -83,7 +83,22 @@ export function RatingHistoryPanel({ points, currentRatings, className = "" }: R
   const [visibleModes, setVisibleModes] = useState<Set<RatingCategoryId>>(
     () => new Set(ACTIVE_RATING_CATEGORIES.map((c) => c.id)),
   );
-  const [rangeKey, setRangeKey] = useState<string>("3m");
+  // Default range: the shortest window that still holds two real games for
+  // some mode, so a dormant account opens on its history instead of an empty
+  // "No rated games in this period" plate (the old fixed 3M did exactly that).
+  const [rangeKey, setRangeKey] = useState<string>(() => {
+    const now = Date.now();
+    for (const r of RANGES) {
+      if (r.days == null) return r.key;
+      const days = r.days === "ytd" ? ytdDays() : r.days;
+      const cutoff = now - days * DAY;
+      const ok = ACTIVE_RATING_CATEGORIES.some(
+        (c) => points.filter((p) => (p.category ?? null) === c.id && p.at >= cutoff).length >= 2,
+      );
+      if (ok) return r.key;
+    }
+    return "all";
+  });
   const rawDays = RANGES.find((r) => r.key === rangeKey)?.days ?? null;
   const rangeDays = rawDays === "ytd" ? ytdDays() : rawDays;
 

@@ -162,19 +162,59 @@ function ExtremeCard({
 export function PlayerStatsPanel({
   stats,
   peakRating,
+  compact = false,
 }: {
   stats: PlayerStats;
   /** Highest maintained rating across the player's live mode buckets
    *  (max of user_ratings.peak), when the caller has it. Guards the
    *  "Highest rating" card against the games-scan undercounting. */
   peakRating?: number | null;
+  /** Rail layout: one narrow column of label/value rows, no tables. Used in
+   *  the profile's left rail, Lichess's place for a player's numbers. */
+  compact?: boolean;
 }) {
   const decided = stats.wins + stats.draws + stats.losses;
 
   if (stats.totalGames === 0) {
     return (
-      <div className="plate p-5 text-sm text-parchment-300">
+      <div className={compact ? "text-[12px] text-parchment-400" : "plate p-5 text-sm text-parchment-300"}>
         No online games recorded yet. Win your first game and the numbers start here.
+      </div>
+    );
+  }
+
+  if (compact) {
+    const row = (label: string, value: string, tone?: "win" | "loss", detail?: string) => (
+      <div key={label} className="flex items-baseline justify-between gap-2 py-1.5">
+        <span className="text-[12px] text-parchment-400">{label}</span>
+        <span className="text-right">
+          <span
+            className={
+              "font-mono text-[13px] tabular-nums " +
+              (tone === "win" ? "text-verdigris-glow" : tone === "loss" ? "text-oxblood-glow" : "text-parchment-50")
+            }
+          >
+            {value}
+          </span>
+          {detail && <span className="ml-1.5 font-mono text-[11px] tabular-nums text-parchment-400">{detail}</span>}
+        </span>
+      </div>
+    );
+    const peak = Math.max(stats.highest?.rating ?? 0, peakRating ?? 0);
+    return (
+      <div className="divide-y divide-[color:var(--edge)]">
+        {row("Games", String(stats.totalGames))}
+        {row("Rated", String(stats.ratedGames), undefined, percent(stats.ratedGames, stats.totalGames))}
+        {row("Wins", String(stats.wins), "win", percent(stats.wins, decided))}
+        {row("Draws", String(stats.draws), undefined, percent(stats.draws, decided))}
+        {row("Losses", String(stats.losses), "loss", percent(stats.losses, decided))}
+        {row("Time played", formatDuration(stats.timePlayedMs))}
+        {row("Losses on time", String(stats.timeoutLosses))}
+        {row("Average opponent", stats.avgOpponentRating != null ? String(stats.avgOpponentRating) : "-")}
+        {peak > 0 && row("Highest rating", String(Math.round(peak)))}
+        {stats.lowest && row("Lowest rating", String(Math.round(stats.lowest.rating)))}
+        {row("Best win streak", String(stats.winStreak.longest.length), "win")}
+        {row("Worst loss streak", String(stats.lossStreak.longest.length), "loss")}
       </div>
     );
   }

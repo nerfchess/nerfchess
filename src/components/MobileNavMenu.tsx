@@ -211,7 +211,7 @@ export function MobileNavMenu({
             <Link
               href={user ? `/u/${encodeURIComponent(user.username)}` : "/login"}
               onClick={() => setOpen(false)}
-              className="flex min-h-[44px] items-center gap-2.5 px-4 py-2.5 font-display text-sm text-gold-leaf hover:bg-[color:var(--bg-raised)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--edge-strong)]"
+              className="flex min-h-[44px] items-center gap-2.5 px-4 py-2.5 font-display text-sm text-gold-leaf hover:bg-[color:var(--bg-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--edge-strong)]"
             >
               {user ? (
                 <>
@@ -241,7 +241,7 @@ export function MobileNavMenu({
                       aria-current={activeItem ? "page" : undefined}
                       style={{ ["--i" as string]: group.offset + ii }}
                       className={
-                        "flex min-h-[44px] items-center border-l-2 py-2.5 pr-4 text-sm font-medium hover:bg-[color:var(--bg-raised)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--edge-strong)] " +
+                        "flex min-h-[44px] items-center border-l-2 py-2.5 pr-4 text-sm font-medium hover:bg-[color:var(--bg-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--edge-strong)] " +
                         (activeItem ? "border-gold-leaf bg-[color:var(--bg-raised)] pl-[calc(1rem-2px)] font-semibold " : "border-transparent pl-[calc(1rem-2px)] ") +
                         (activeItem ? "text-gold-leaf" : item.className ?? "text-parchment-100")
                       }

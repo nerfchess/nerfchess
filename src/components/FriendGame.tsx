@@ -468,8 +468,11 @@ export function FriendGameSetup({ showFriends = true }: { showFriends?: boolean 
     joinWithCode,
   } = useFriendGame();
   const [joinCode, setJoinCode] = useState("");
+  const presetActive = (b: number, i: number) => baseSec === b && incrementSec === i;
+  const onPreset = presetActive(baseSec, incrementSec) && TIME_PRESETS.some((t) => presetActive(t.base, t.inc));
 
   return (
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)] lg:items-start">
     <div className="space-y-5">
       {challenging && (
         <p className="text-parchment-200">
@@ -484,27 +487,60 @@ export function FriendGameSetup({ showFriends = true }: { showFriends?: boolean 
         </div>
       )}
 
-      <div className="space-y-4">
-        <TimeSlider
-          label="Time per Side"
-          value={baseSec}
-          values={[0, ...TIME_STEPS_SEC]}
-          display={baseSec === 0 ? "Unlimited" : formatTimeControl(baseSec)}
-          formatEdgeLabel={formatTimeControl}
-          onChange={setBaseSec}
-        />
-        <TimeSlider
-          label="Increment (Seconds)"
-          value={incrementSec}
-          values={range(0, 30, 1)}
-          display={String(incrementSec)}
-          disabled={baseSec === 0}
-          onChange={setIncrementSec}
-        />
+      {/* Time control: the same nine tiles as quick pairing, edge to edge,
+          with the sliders folded under "Custom" for anything else. */}
+      <div>
+        <div className="mb-2 text-[12px] text-parchment-400">Time control</div>
+        <div className="grid grid-cols-3 gap-2">
+          {TIME_PRESETS.map((t) => {
+            const on = presetActive(t.base, t.inc);
+            return (
+              <Button
+                key={t.label}
+                tone="default"
+                aria-pressed={on}
+                onClick={() => {
+                  setBaseSec(t.base);
+                  setIncrementSec(t.inc);
+                }}
+                className={
+                  "!min-h-[52px] flex-col !gap-0.5 !px-1 !py-2" +
+                  (on ? " !border-2 !border-solid !border-[color:var(--accent)] text-[color:var(--accent)]" : "")
+                }
+              >
+                <span className="font-mono text-base leading-none tabular-nums">{t.label}</span>
+                <span className={"text-[11px] " + (on ? "opacity-90" : "text-parchment-400")}>{t.speed}</span>
+              </Button>
+            );
+          })}
+        </div>
+        <details className="mt-3" open={!onPreset}>
+          <summary className="cursor-pointer select-none text-[12px] text-parchment-400 hover:text-parchment-200">
+            Custom time
+          </summary>
+          <div className="mt-3 space-y-4">
+            <TimeSlider
+              label="Time per Side"
+              value={baseSec}
+              values={[0, ...TIME_STEPS_SEC]}
+              display={baseSec === 0 ? "Unlimited" : formatTimeControl(baseSec)}
+              formatEdgeLabel={formatTimeControl}
+              onChange={setBaseSec}
+            />
+            <TimeSlider
+              label="Increment (Seconds)"
+              value={incrementSec}
+              values={range(0, 30, 1)}
+              display={String(incrementSec)}
+              disabled={baseSec === 0}
+              onChange={setIncrementSec}
+            />
+          </div>
+        </details>
       </div>
 
       <div>
-        <div className="text-[11px] text-parchment-400 mb-2">Mode</div>
+        <div className="text-[12px] text-parchment-400 mb-2">Mode</div>
         <div className="grid grid-cols-2 gap-2">
           <ModeChoice mode="buff" selected={gameMode === "buff"} onClick={() => pickGameMode("buff")} />
           <ModeChoice mode="nerf" selected={gameMode === "nerf"} onClick={() => pickGameMode("nerf")} />
@@ -512,7 +548,7 @@ export function FriendGameSetup({ showFriends = true }: { showFriends?: boolean 
       </div>
 
       <div>
-        <div className="text-[11px] text-parchment-400 mb-2">Stakes</div>
+        <div className="text-[12px] text-parchment-400 mb-2">Stakes</div>
         <div className="grid grid-cols-2 gap-2">
           <StakeButton selected={!rated} onClick={() => setRated(false)}>
             Casual
@@ -538,14 +574,13 @@ export function FriendGameSetup({ showFriends = true }: { showFriends?: boolean 
           : "Create game"}
       </Button>
 
+    </div>
+    {/* Right column: join a code, then your friends. */}
+    <div className="space-y-5">
       {!challenging && (
         <>
-          <div className="rule-ornament">
-            <span>or</span>
-          </div>
-
           <div>
-            <div className="text-[11px] text-parchment-400 mb-2">Join with a code</div>
+            <div className="text-[12px] text-parchment-400 mb-2">Join with a code</div>
             <div className="flex gap-2">
               <input
                 value={joinCode}
@@ -575,8 +610,22 @@ export function FriendGameSetup({ showFriends = true }: { showFriends?: boolean 
           the panel itself (showFriends={false}). */}
       {!challenging && showFriends && <FriendsPanel />}
     </div>
+    </div>
   );
 }
+
+// The quick-pairing pools, so a friend game starts from the same nine tiles.
+const TIME_PRESETS: { label: string; base: number; inc: number; speed: string }[] = [
+  { label: "1+0", base: 60, inc: 0, speed: "Bullet" },
+  { label: "2+1", base: 120, inc: 1, speed: "Bullet" },
+  { label: "3+0", base: 180, inc: 0, speed: "Blitz" },
+  { label: "3+2", base: 180, inc: 2, speed: "Blitz" },
+  { label: "5+0", base: 300, inc: 0, speed: "Blitz" },
+  { label: "5+3", base: 300, inc: 3, speed: "Blitz" },
+  { label: "10+0", base: 600, inc: 0, speed: "Rapid" },
+  { label: "10+5", base: 600, inc: 5, speed: "Rapid" },
+  { label: "15+10", base: 900, inc: 10, speed: "Rapid" },
+];
 
 // The two modes, told apart by color: each button always wears its mode
 // identity (rose for Nerf, sky for Buff), deepening with a ring and a check
@@ -644,10 +693,10 @@ function StakeButton({
     <button
       onClick={onClick}
       className={
-        "press px-3 py-2 border transition text-xs font-display font-semibold tracking-wide " +
+        "min-h-[44px] px-3 py-2 border transition-colors duration-150 text-[14px] font-medium " +
         (selected
-          ? "border-gold/60 bg-gold/10 text-gold-leaf shadow-[0_0_14px_-8px_rgb(var(--accent-hi-rgb)/0.5)]"
-          : "border-[color:var(--edge)] bg-black/10 text-parchment-200 hover:border-[color:var(--edge-strong)] hover:bg-white/[0.06]")
+          ? "border-2 border-[color:var(--accent)] bg-[color:var(--bg-raised)] text-[color:var(--accent)]"
+          : "border-[color:var(--edge)] bg-[color:var(--bg-raised)] text-parchment-200 hover:border-[color:var(--edge-strong)] hover:text-parchment-50")
       }
     >
       {children}

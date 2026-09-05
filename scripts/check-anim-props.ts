@@ -90,7 +90,7 @@ if (offenders.length) {
   failed = true;
   console.error(
     `[check-anim-props] ${offenders.length} keyframe(s) animate paint/layout properties (transform/opacity only; see docs/animation-design-brief.md):\n\n  - ${offenders.join("\n  - ")}\n\n` +
-      "  Convert to an opacity cross-fade over pre-baked layers (see .waiting-banner\n" +
+      "  Convert to an opacity cross-fade over pre-baked layers (see .corner-notice\n" +
       "  or .sq-locked in globals.css for the pattern). Never add to BASELINE.",
   );
 }

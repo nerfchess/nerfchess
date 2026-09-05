@@ -3474,7 +3474,12 @@ export class GameServer extends DurableObject<Env> {
     // get the legacy merged rules.
     const mode: DraftMode | undefined =
       draft && (requested.mode === "nerf" || requested.mode === "buff") ? requested.mode : undefined;
-    const picksVisible = draft && requested.picksVisible === true;
+    // Draft picks are public in every draft game: both seats see each other's
+    // offers and picks as they happen (owner call: "the opponent's draft
+    // should not be hidden"). The flag stays on the match record because the
+    // masking machinery keys off it, but it can no longer be turned off.
+    const picksVisible = draft;
+    void requested.picksVisible;
     // "Surprise / Stacked draft" preset: the joining friend drafts strong,
     // high-tier cards. Casual only, and only meaningful in a draft game.
     const stacked = draft && requested.stacked === true;

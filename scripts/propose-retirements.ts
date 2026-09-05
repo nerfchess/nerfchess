@@ -117,7 +117,13 @@ const retire = (id: string, reason: Reason, mergedInto?: string) => {
 // these win over every protection except a merge target's.
 const hand = JSON.parse(readFileSync(join(ROOT, "scripts/hand-audit.json"), "utf8")) as {
   retire: Record<string, { why: string; mergedInto?: string }>;
+  keep?: Record<string, string>;
 };
+// Hand-kept cards are protected AND stay out of the twin machinery below: a
+// text-signature twin of a hand-designed card is a coincidence of wording, so
+// it must neither retire the newcomer nor let the newcomer displace the twin.
+const handKeep = new Set(Object.keys(hand.keep ?? {}));
+for (const id of handKeep) protectedIds.add(id);
 for (const [id, h] of Object.entries(hand.retire)) {
   if (!byId.has(id)) {
     console.error(`[propose-retirements] hand-audit id not in library: ${id}`);
@@ -133,7 +139,8 @@ for (const r of audit) {
   if (!bySig.has(r.signature)) bySig.set(r.signature, []);
   bySig.get(r.signature)!.push(r);
 }
-for (const group of bySig.values()) {
+for (const rawGroup of bySig.values()) {
+  const group = rawGroup.filter((r) => !handKeep.has(r.id));
   if (group.length < 2) continue;
   const sorted = [...group].sort((a, b) => a.tier - b.tier || (bespokeVfx.has(b.id) ? 1 : 0) - (bespokeVfx.has(a.id) ? 1 : 0));
   const keep = new Set<string>([sorted[0].id]);
@@ -150,8 +157,8 @@ for (const group of bySig.values()) {
 
 // 3. Dominated.
 for (const r of audit) {
-  if (r.flags.some((f) => f.startsWith("dominated"))) {
-    const twin = audit.find((x) => x.id !== r.id && x.signature === r.signature && !retired.has(x.id));
+  if (r.flags.some((f) => f.startsWith("dominated")) && !handKeep.has(r.id)) {
+    const twin = audit.find((x) => x.id !== r.id && x.signature === r.signature && !retired.has(x.id) && !handKeep.has(x.id));
     retire(r.id, "dominated", twin?.id);
   }
 }
@@ -163,6 +170,7 @@ for (const r of audit) {
     if (!m) continue;
     const other = byId.get(m[1]);
     if (!other || Number(m[2]) < 0.78) continue;
+    if (handKeep.has(r.id) || handKeep.has(other.id)) continue;
     if (retired.has(r.id) || retired.has(other.id)) continue;
     // Retire the higher tier; on a tie, the one without bespoke VFX; then the
     // longer description.
@@ -176,6 +184,13 @@ for (const r of audit) {
     const winner = loser.id === r.id ? other : r;
     retire(loser.id, "near-duplicate", winner.id);
   }
+}
+
+// Merge targets must be live. A hand entry can name a target that a later
+// rule (or a later hand entry) retires; drop the pointer rather than send the
+// codex to a retired card.
+for (const [, r] of retired) {
+  if (r.mergedInto && retired.has(r.mergedInto)) r.mergedInto = undefined;
 }
 
 // 5. Complexity.

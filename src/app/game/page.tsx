@@ -1481,9 +1481,9 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
                   type="button"
                   onClick={() => (nerfSelected === i ? startDraftGame(n) : setNerfSelected(i))}
                   className={
-                    "mx-auto block w-full max-w-md sm:max-w-none text-left transition touch-manipulation [@media(hover:hover)]:hover:-translate-y-1" +
+                    "mx-auto block w-full max-w-md sm:max-w-none text-left transition-[box-shadow,opacity] duration-200 touch-manipulation" +
                     (nerfSelected === i
-                      ? " -translate-y-1 ring-2 ring-gold"
+                      ? " ring-2 ring-gold"
                       : nerfSelected != null
                       ? " opacity-60"
                       : "")
@@ -2067,6 +2067,13 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
                   lastMove={lastMoveForDisplay}
                   nerfReveals={nerfReveals}
                   passiveNerfs={passiveNerfs}
+                  // Both props: `passiveBuffs` paints the held-card marks,
+                  // `buffs` is what tells the board which cards can FIRE here.
+                  // Without it the bot game never fetched the play-art modules
+                  // and never fired the acquire or use beats, so every card
+                  // fell back to a faint generated ring ("I used Vanguard and
+                  // nothing happened").
+                  buffs={isReviewingHistory ? null : game.buffs}
                   passiveBuffs={isReviewingHistory ? null : game.buffs}
                   reviewingHistory={isReviewingHistory}
                   // The engine's per-cycle fx narration (nerf bites, victim

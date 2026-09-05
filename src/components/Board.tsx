@@ -2346,25 +2346,47 @@ export function Board({
   // split per module, so this is what decides which modules get fetched. It is
   // a stable string so the effect re-runs when a hand really changes (a draft
   // pick, a steal) and not on every unrelated render.
-  const inPlayIds = useMemo(() => {
-    if (!buffs) return "";
+  // Per-instance fingerprint of both hands (id, spent, used, nullified),
+  // computed every render for the same reason as inPlayIds below: the acquire
+  // and use beats diff the hands, and a surface that mutates the match state
+  // in place never changes the `buffs` identity, so effects keyed on it never
+  // re-ran and neither beat ever fired in bot games.
+  let handsKey = "";
+  if (buffs) {
+    const parts: string[] = [];
+    for (const color of ["w", "b"] as const) {
+      for (const inst of buffs.players[color].buffs) {
+        parts.push(`${color}${inst.id}${inst.spent ? "s" : ""}${inst.usedActivation ? "u" : ""}${inst.nullified ? "n" : ""}`);
+      }
+    }
+    handsKey = parts.join("|");
+  }
+  // Computed every render, NOT memoised on `buffs`: local surfaces (the bot
+  // game, the lab) mutate the match state in place and hand the board the
+  // same object, so a memo keyed on identity never saw a new card arrive and
+  // the module for a freshly drafted card was never fetched. The walk is a
+  // couple of dozen ids at most; the effect below keys on the string.
+  let inPlayIds = "";
+  if (buffs) {
     const ids = new Set<string>();
     for (const color of ["w", "b"] as const) {
       for (const inst of buffs.players[color].buffs) ids.add(inst.id);
     }
-    return [...ids].sort().join(",");
-  }, [buffs]);
+    inPlayIds = [...ids].sort().join(",");
+  }
   useEffect(() => {
     if (!canPlayCards) return;
-    const warm = () => prefetchSignatureVisuals(inPlayIds ? inPlayIds.split(",") : undefined);
-    const idle = (
-      window as Window & { requestIdleCallback?: (cb: () => void) => number }
-    ).requestIdleCallback;
-    if (!idle) {
-      const t = window.setTimeout(warm, 0);
-      return () => window.clearTimeout(t);
-    }
-    idle(warm);
+    // A plain timeout, not requestIdleCallback. The idle callback had no
+    // timeout, and a board with any continuous animation (the WebGL layer, a
+    // breathing chest, a running clock) never reports an idle period, so the
+    // plugin art modules were never fetched: every card fell back to the
+    // generated burst and low-tier plays looked like nothing happened. A
+    // short timeout still keeps the fetch off the mount frame.
+    const t = window.setTimeout(
+      () => prefetchSignatureVisuals(inPlayIds ? inPlayIds.split(",") : undefined),
+      120,
+    );
+    return () => window.clearTimeout(t);
   }, [canPlayCards, inPlayIds]);
   // Canvas VFX plays staged during render (the diff/zone claims happen in the
   // render pass) and flushed to the bus after commit, so render stays pure.
@@ -2565,7 +2587,8 @@ export function Board({
       name: def.name,
       mine: fresh.mine,
     });
-  }, [buffs, myColor]);
+    // handsKey is the real trigger (see its definition); buffs is read inside.
+  }, [buffs, handsKey, myColor]);
   // --- Usage beat: one shot the moment a card is USED (or cancelled) --------
   // Diffs the public buff lists by per-card USED-instance count (spent,
   // usedActivation, or nullified), instant/activated cards only — a passive
@@ -2628,7 +2651,7 @@ export function Board({
       mine: fresh.mine,
       nullified: fresh.nullified,
     });
-  }, [buffs, myColor]);
+  }, [buffs, handsKey, myColor]);
   // --- Nerf reveal splash: one shot per newly-known rule --------------------
   // Keys already played (color:id), so a reveal fires exactly once no matter
   // how often the host re-derives the prop array. The latest unseen entry
@@ -3966,15 +3989,32 @@ export function Board({
     let pendingY = 0;
     let pending = false;
 
+    // The drag-over ring is toggled straight on the square element. It used
+    // to go through React state (setHoverSq), which re-rendered the whole
+    // board every time the pointer crossed a square edge: on a 5000-line
+    // component that is a visible hitch mid-drag, the "30 ton piece" feel.
+    // Chessground does the same thing: DOM only while the pointer is down.
+    const grid = boardRef.current?.querySelector("[data-board-grid]") as HTMLElement | null;
+    let hoverEl: HTMLElement | null = null;
+    const paintHover = (sq: Square | null) => {
+      if (hoverEl) {
+        hoverEl.classList.remove("sq-hover");
+        hoverEl = null;
+      }
+      if (sq == null || sq === drag.from || !targetsRef.current[sq] || !grid) return;
+      const name = "abcdefgh"[FILE(sq)] + (RANK(sq) + 1);
+      const el = grid.querySelector(`[aria-label="square ${name}"]`) as HTMLElement | null;
+      if (el) {
+        el.classList.add("sq-hover");
+        hoverEl = el;
+      }
+    };
     const flush = () => {
       pending = false;
-      if (ghostRef.current) {
-        ghostRef.current.style.transform = `translate3d(${pendingX - drag.cell / 2}px, ${pendingY - drag.cell / 2}px, 0)`;
-      }
       const sq = squareAtClient(pendingX, pendingY);
       if (sq !== lastHoverRef.current) {
         lastHoverRef.current = sq;
-        setHoverSq(sq);
+        paintHover(sq);
       }
     };
 
@@ -3982,6 +4022,11 @@ export function Board({
       if (e.pointerId !== drag.pointerId) return;
       pendingX = e.clientX;
       pendingY = e.clientY;
+      // The ghost follows the pointer in the event itself, not a frame later:
+      // one transform write is cheaper than the rAF round trip it replaces.
+      if (ghostRef.current) {
+        ghostRef.current.style.transform = `translate3d(${pendingX - drag.cell / 2}px, ${pendingY - drag.cell / 2}px, 0)`;
+      }
       if (!pending) {
         pending = true;
         rafId = requestAnimationFrame(flush);
@@ -4006,6 +4051,7 @@ export function Board({
         setSelected(null);
       }
       pressRef.current = null;
+      paintHover(null);
       setDrag(null);
       setHoverSq(null);
       lastHoverRef.current = null;
@@ -4017,6 +4063,7 @@ export function Board({
       // that corrupts the next interaction.
       pressRef.current = null;
       dropSkipRef.current = null;
+      paintHover(null);
       setDrag(null);
       setHoverSq(null);
       lastHoverRef.current = null;
@@ -4034,6 +4081,7 @@ export function Board({
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => {
       cancelAnimationFrame(rafId);
+      paintHover(null);
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
       window.removeEventListener("pointercancel", onCancel);
@@ -4770,6 +4818,18 @@ export function Board({
           cast.key !== castLeadSuppressKeyRef.current &&
           (() => {
             const cfg = resolveSignature(cast.id);
+            if (process.env.NODE_ENV !== "production" && typeof window !== "undefined") {
+              // Dev probe for the play pipeline: what the diff-less lead saw.
+              const w = window as unknown as { __ncFx?: unknown[] };
+              (w.__ncFx ??= []).push({
+                key: cast.key,
+                id: cast.id,
+                cfg: cfg ? { gen: isGenConfig(cfg), hasLead: cfg.hasLead, source: (cfg as { source?: string }).source ?? null, anchor: anchorOf(cfg) } : null,
+                zoneClaimed: cast.key === zoneLeadClaimKeyRef.current,
+                suppressed: false,
+                sq: cast.sq ?? null,
+              });
+            }
             if (!cfg || !cfg.hasLead) return null;
             // Lead art (BoardWideStage & friends) is calibrated for a ONE-CELL
             // parent: its 1400% canvas equals ~14 cells, blanketing the 8x8

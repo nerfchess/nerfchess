@@ -17,6 +17,7 @@ import { RailResizeHandle, useRailWidth } from "@/components/RailResizeHandle";
 import { CommandRail, railGridClass } from "@/components/match/CommandRail";
 import { ConnectionBanner } from "@/components/ConnectionBanner";
 import { DraftNotice } from "@/components/DraftNotice";
+import { WaitingCornerNotice } from "@/components/draft/WaitingCornerNotice";
 import { GodPanelNotice, type GodPanelNoticeItem } from "@/components/GodPanelNotice";
 import {
   DraftOverlay,
@@ -565,6 +566,17 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // skip (lastSkip.atPly changes), announcing WHY the draft round passed the
   // player by, then auto-dismisses. Distinct from the passive waiting card.
   const [skipToast, setSkipToast] = useState<null | { reason: "blocked" | "dry" }>(null);
+  // Short answers to the offers you make: "Draw declined", "Takeback declined".
+  // The controls panel already says it in small print, but a reply to your
+  // offer deserves to land where you are looking, so it also rides the same
+  // top toast slot as the draft-skip notice for a few seconds.
+  const [replyToast, setReplyToast] = useState<string | null>(null);
+  const replyToastTimer = useRef<number | null>(null);
+  const showReplyToast = (text: string) => {
+    setReplyToast(text);
+    if (replyToastTimer.current != null) window.clearTimeout(replyToastTimer.current);
+    replyToastTimer.current = window.setTimeout(() => setReplyToast(null), 4500);
+  };
   const seenSkipPlyRef = useRef<number | null>(null);
   useEffect(() => {
     const skip = game?.buffs?.players[myColor]?.lastSkip;
@@ -1220,6 +1232,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
       } else if (e.type === "draw-declined") {
         setDrawOfferBy(null);
         setDrawOfferStatus(e.color === myColor ? "idle" : "declined");
+        if (e.color !== myColor) showReplyToast("Draw declined");
         if (e.color !== myColor) {
           later(() => setDrawOfferStatus("idle"), 2500);
         }
@@ -1230,6 +1243,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
       } else if (e.type === "takeback-declined") {
         setTakebackOfferBy(null);
         setTakebackStatus(e.color === myColor ? "idle" : "declined");
+        if (e.color !== myColor) showReplyToast("Takeback declined");
         if (e.color !== myColor) {
           later(() => setTakebackStatus("idle"), 2500);
         }
@@ -2327,9 +2341,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                     type="button"
                     onClick={() => (nerfSelected === i ? sendPick(i) : setNerfSelected(i))}
                     className={
-                      "mx-auto block w-full max-w-md sm:max-w-none text-left transition touch-manipulation [@media(hover:hover)]:hover:-translate-y-1" +
+                      "mx-auto block w-full max-w-md sm:max-w-none text-left transition-[box-shadow,opacity] duration-200 touch-manipulation" +
                       (nerfSelected === i
-                        ? " -translate-y-1 ring-2 ring-gold"
+                        ? " ring-2 ring-gold"
                         : nerfSelected != null
                         ? " opacity-60"
                         : "")
@@ -3457,6 +3471,19 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           round passes this player by (blocked by an opponent card or a dry
           pool), so a missing draft is never confusing. Static-friendly: the
           entrance is a short fade/slide and the body is plain text. */}
+      {replyToast && !game.result && (
+        <div className="pointer-events-none fixed inset-x-0 top-14 z-[46] flex justify-center px-4">
+          <motion.div
+            initial={{ opacity: 0, y: -16 }}
+            animate={{ opacity: 1, y: 0 }}
+            role="status"
+            aria-live="assertive"
+            className="plate flex max-w-[92vw] items-center gap-3 px-4 py-2.5 shadow-plate"
+          >
+            <span className="font-display text-sm font-semibold text-parchment-100">{replyToast}</span>
+          </motion.div>
+        </div>
+      )}
       {skipToast && !game.result && (
         <div className="pointer-events-none fixed inset-x-0 top-14 z-[46] flex justify-center px-4">
           <motion.div
@@ -3475,143 +3502,25 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           </motion.div>
         </div>
       )}
-      {showWaitingOverlay &&
-        (draftGraceOver || waitingMinimized ? (
-          <div className="pointer-events-none fixed inset-x-0 bottom-[calc(5.75rem+env(safe-area-inset-bottom))] z-40 flex justify-center px-4 sm:bottom-auto sm:top-4">
-            <motion.div
-              initial={{ opacity: 0, y: -12 }}
-              animate={{ opacity: 1, y: 0 }}
-              role="status"
-              aria-live="polite"
-              className="waiting-banner plate pointer-events-none flex max-w-[92vw] items-center gap-2.5 border-gold/40 px-4 py-2 shadow-plate"
-            >
-              {/* Pulsing dot: a live "ping" ripple plus the shared flicker, both
-                  dropped when animations are off in Settings (see globals.css). */}
-              <span className="relative flex h-2 w-2 shrink-0" aria-hidden>
-                <span className="waiting-ping absolute inline-flex h-full w-full rounded-full bg-gold/60" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-gold animate-flicker" />
-              </span>
-              <span className="font-display text-xs text-parchment-200 sm:text-sm">
-                {genuinelySkipped ? "Your draft was skipped. " : ""}
-                Waiting for{" "}
-                <span className="text-gold">{oppName}</span>{" "}
-                to finish drafting
-                <span className="waiting-ellipsis" aria-hidden />{" "}
-                <span className="text-parchment-300">(you&rsquo;re not stuck)</span>
-                {/* Only claim "on their clock" once the free window has truly
-                    expired; before then both clocks are still paused. */}
-                <span className="ml-2 text-[12px] text-parchment-400">
-                  {draftGraceOver ? "on their clock now" : "clocks paused"}
-                </span>
-              </span>
-              {/* Their offer is public: one click enlarges it to full cards.
-                  pointer-events-auto re-enables just this control inside the
-                  otherwise click-through banner. */}
-              {bsTheirs?.offer && (
-                <button
-                  type="button"
-                  onClick={() => setOppDraftEnlarged(true)}
-                  className="pointer-events-auto shrink-0 touch-manipulation rounded-[1px] border border-[color:var(--edge)] bg-white/[0.03] px-2.5 py-1 font-display text-[12px] font-semibold tracking-wide text-parchment-200 transition hover:border-gold/50 hover:text-gold-leaf"
-                  title="See the cards your opponent is choosing between"
-                >
-                  View their cards
-                </button>
-              )}
-            </motion.div>
-          </div>
-        ) : (
-          /* The pick is done, so this waiting card must never cover the board:
-             it sits as a compact panel at the bottom edge, no dark backdrop,
-             with the whole board visible above it.
-             It also must not cover the DRAWER BARS. It renders after them and
-             shared their z-40, so DOM order won them: on a phone the card
-             blanketed "Moves & chat" and "Buffs", and tapping either one just
-             dismissed the card instead. Sitting above the bars (and one layer
-             below them) keeps both reachable on the first tap. */
-          <div
-            className={
-              "pointer-events-none fixed inset-x-0 z-30 flex justify-center px-4 sm:bottom-6 " +
-              (isDraft && game.buffs
-                ? "bottom-[calc(5.5rem+env(safe-area-inset-bottom)+0.5rem)]"
-                : "bottom-[calc(2.75rem+env(safe-area-inset-bottom)+0.5rem)]")
-            }
-          >
-            <motion.div
-              initial={{ opacity: 0, y: 12, scale: 0.98 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              onClick={() => setWaitingMinimized(true)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " " || e.key === "Escape") setWaitingMinimized(true);
-              }}
-              title="Dismiss"
-              className="waiting-banner plate pointer-events-auto w-full max-w-xs cursor-pointer border-gold/30 p-4 text-center shadow-plate"
-            >
-              <div className="text-[12px] text-parchment-400">
-                {genuinelySkipped
-                  ? "Draft skipped"
-                  : draftCardNoun(start.mode) === "hex"
-                  ? "Hex draft"
-                  : "Buff draft"}
-              </div>
-              <h2 className="font-display text-xl text-parchment mt-0.5">
-                {genuinelySkipped ? "Your draft was skipped" : `Waiting for ${oppName}`}
-              </h2>
-              {genuinelySkipped && (
-                <p className="mt-1 text-[12px] leading-snug text-parchment-300">
-                  {skipReason === "dry"
-                    ? "The card pool ran dry this round, so there was nothing to deal you."
-                    : "A card your opponent played blocked your draft this round."}
-                </p>
-              )}
-              {/* The skipped player still sees what the round produced: the
-                  opponent's newest card, face up (draft games are public). */}
-              {genuinelySkipped && oppLockedIn && !oppBanked && oppNewestCard && (
-                <p className="mt-1.5 text-[12px] leading-snug text-parchment-200">
-                  {oppName} took{" "}
-                  <span className={`font-display font-semibold tier-${oppNewestCard.tier}`}>
-                    {oppNewestCard.name}
-                  </span>
-                  .
-                </p>
-              )}
-              <div role="status" aria-live="polite" className="mt-2 flex items-center justify-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-gold animate-flicker" aria-hidden />
-                <span className="font-display text-sm text-parchment-200">
-                  {oppLockedIn
-                    ? oppBanked
-                      ? "Opponent banked their draft."
-                      : "Opponent locked in."
-                    : `Opponent is still choosing a ${draftCardNoun(start.mode)}…`}
-                </span>
-              </div>
-              {draftDeadline != null && (
-                <LockInCountdown deadline={draftDeadline} className="mt-3" />
-              )}
-              {/* Their offer is public data (same source as the mini panel in
-                  your own draft): enlarge it to full cards to study what they
-                  are thinking about. stopPropagation so the card's own
-                  tap-to-minimize does not swallow the click. */}
-              {bsTheirs?.offer && !oppLockedIn && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setOppDraftEnlarged(true);
-                  }}
-                  className="mt-3 w-full touch-manipulation rounded-[1px] border border-[color:var(--edge)] bg-white/[0.03] px-3 py-2 font-display text-[13px] font-semibold tracking-wide text-parchment-200 transition hover:border-gold/50 hover:text-gold-leaf"
-                  title="See the cards your opponent is choosing between"
-                >
-                  View their cards
-                </button>
-              )}
-              <p className="mt-2 text-[12px] leading-snug text-parchment-400">
-                Both clocks stay paused until the pick window runs out. Tap to minimize (a banner stays up).
-              </p>
-            </motion.div>
-          </div>
-        ))}
+      {showWaitingOverlay && (
+        <WaitingCornerNotice
+          oppName={oppName}
+          noun={draftCardNoun(start.mode)}
+          compact={draftGraceOver || waitingMinimized}
+          skipped={genuinelySkipped}
+          skipReason={skipReason}
+          oppLockedIn={oppLockedIn}
+          oppBanked={oppBanked}
+          oppNewestCardName={oppNewestCard?.name ?? null}
+          oppNewestCardTier={oppNewestCard?.tier ?? null}
+          onClock={draftGraceOver}
+          deadline={draftDeadline}
+          canViewTheirs={!!bsTheirs?.offer}
+          onViewTheirs={() => setOppDraftEnlarged(true)}
+          onDismiss={() => setWaitingMinimized(true)}
+          liftForDrawer={!!(isDraft && game.buffs)}
+        />
+      )}
 
       {/* Enlarged, read-only look at the opponent's open offer while you wait:
           full-size cards instead of the tiny summary, so you can plan around
@@ -3660,7 +3569,12 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           // server-side is there to take over for them.
           autoResolveOnExpire={false}
           onCardsReady={draftSeq.reportCardsReady}
-          minimized={draftGraceOver}
+          // Never auto-minimize. The free window ending used to collapse the
+          // full draft into the side panel, which read as "the draft menu
+          // minimized for no reason"; the clock warning inside the overlay
+          // already says whose time is running. Only the player's own Hide
+          // moves the draft out of the way.
+          minimized={false}
           cardNoun={draftCardNoun(start.mode)}
           oppLockedIn={oppLockedIn && !oppDrafting}
           oppBanked={oppBanked}

@@ -18,6 +18,7 @@ import {
 } from "./shared";
 
 const N = tierNerf(7);
+const N8 = tierNerf(8);
 
 const other = (c: Color): Color => (c === "w" ? "b" : "w");
 
@@ -68,7 +69,7 @@ export const NERFS_T7: Nerf[] = [
       description: "You can't make any diagonal move: your bishops are stuck, your queen moves only like a rook, and your pawns can't capture.",
       flavor: "Straight lines only.",
       icon: "flag",
-      tier: 6,
+      tier: 8,
     },
     {
       filterMoves: filter((m) => {
@@ -109,7 +110,7 @@ export const NERFS_T7: Nerf[] = [
       description: "Your queen cannot move until you castle or reach your 12th move, whichever comes first.",
       flavor: "She keeps to her chambers until the king is safe behind his walls.",
       icon: "crown",
-      tier: 5,
+      tier: 4,
     },
     {
       // Distinct from stay_at_home_mom and caged_queen (both spatial queen
@@ -166,7 +167,7 @@ export const NERFS_T7: Nerf[] = [
       description: "Your rooks glide any distance sideways along a rank, but can only inch one square at a time up or down a file.",
       flavor: "The towers roll broadside, and only creep when they climb.",
       icon: "castle",
-      tier: 4,
+      tier: 5,
     },
     {
       // Distinct from sidewinder (rank-only, no vertical movement at all):
@@ -187,7 +188,7 @@ export const NERFS_T7: Nerf[] = [
       description: "Your knights can only move by capturing, except that every third turn a knight with no capture may make one quiet move.",
       flavor: "The horses hunt or stand still.",
       icon: "sword",
-      tier: 6,
+      tier: 5,
     },
     {
       // Knights are capture-only, but on every third owner turn (moves 3, 6, 9,
@@ -218,7 +219,7 @@ export const NERFS_T7: Nerf[] = [
       },
     },
   ),
-  N(
+  N8(
     {
       id: "war_footing",
       name: "War Footing",

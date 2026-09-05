@@ -18,6 +18,7 @@ import {
 } from "./shared";
 
 const N = tierNerf(6);
+const N7 = tierNerf(7);
 
 const other = (c: Color): Color => (c === "w" ? "b" : "w");
 
@@ -26,7 +27,7 @@ const inCenter16 = (sq: Square) =>
   FILE(sq) >= 2 && FILE(sq) <= 5 && RANK(sq) >= 2 && RANK(sq) <= 5;
 
 export const NERFS_T6: Nerf[] = [
-  N(
+  N7(
     { id: "iron_curtain", name: "Iron Curtain", description: "You can't move any piece onto the central 16 squares (files c through f, ranks 3 through 6). Card-granted drops and teleports onto those squares are blocked the same way.", flavor: "The heart of the board is forbidden ground.", icon: "ban" },
     {
       // The nerf filter runs after buffs add their moves, so a card-granted
@@ -51,7 +52,7 @@ export const NERFS_T6: Nerf[] = [
       },
     },
   ),
-  N(
+  N7(
     { id: "no_hanging_pieces", name: "No Hanging Pieces", description: "You can't make a move that leaves any of your pieces attacked by the enemy and undefended. Card-granted drops and teleports must obey this too.", flavor: "Never leave a soldier exposed.", icon: "shield-alert" },
     {
       // The nerf filter runs after buffs add their moves, so a card-granted
@@ -104,7 +105,7 @@ export const NERFS_T6: Nerf[] = [
     },
   ),
   nerf(
-    { id: "anchored_rooks", name: "Anchored Rooks", tier: 5, description: "Your rooks may leave your back rank, but once a rook has left it, that rook can never return to it.", flavor: "The towers roll out once, and never roll home.", icon: "castle" },
+    { id: "anchored_rooks", name: "Anchored Rooks", tier: 3, description: "Your rooks may leave your back rank, but once a rook has left it, that rook can never return to it.", flavor: "The towers roll out once, and never roll home.", icon: "castle" },
     {
       // A rook already off the back rank may not step back onto it. Since a
       // departed rook can never return, each rook effectively leaves once.
@@ -124,14 +125,14 @@ export const NERFS_T6: Nerf[] = [
     },
   ),
   nerf(
-    { id: "short_leash_knights", name: "Short Leash Knights", tier: 5, description: "Your knights may never move beyond your own first three ranks.", flavor: "The horses are tethered to the stable.", icon: "move" },
+    { id: "short_leash_knights", name: "Short Leash Knights", tier: 4, description: "Your knights may never move beyond your own first three ranks.", flavor: "The horses are tethered to the stable.", icon: "move" },
     {
       filterMoves: (moves, _state, ctx) =>
         moves.filter((m) => !(m.piece === "n" && relRank(ctx.me, m.to) > 3)),
     },
   ),
   nerf(
-    { id: "toothless_pawns", name: "Toothless Pawns", tier: 5, description: "Your pawns can never capture and can never move two squares.", flavor: "Foot soldiers who only trudge forward.", icon: "flag" },
+    { id: "toothless_pawns", name: "Toothless Pawns", tier: 6, description: "Your pawns can never capture and can never move two squares.", flavor: "Foot soldiers who only trudge forward.", icon: "flag" },
     {
       filterMoves: filter((m) => !(m.piece === "p" && (!!m.captured || m.isDoublePawn))),
     },

@@ -9,7 +9,7 @@
 // no chart library — with the site's dark purple/gold plate styling; series
 // colors come from the mode identity accents, not Lichess's palette.
 
-import { useId, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 
 export interface RatingPoint {
   at: number;
@@ -24,7 +24,11 @@ export interface RatingSeries {
   points: RatingPoint[];
 }
 
-const W = 600;
+// The viewBox width follows the rendered width (measured below), so axis text
+// and stroke widths stay at real pixel sizes on a phone instead of scaling
+// down with a fixed 600-unit box. The height is fixed; wide screens get a
+// taller plot.
+const W_MIN = 320;
 const H = 190;
 // Left pad is tight: like Lichess, the y labels sit mirrored inside the right
 // edge rather than in a left gutter, so the line gets the full width. Bottom
@@ -39,6 +43,24 @@ const RANGES: { key: RangeKey; label: string; ms: number }[] = [
   { key: "3m", label: "3M", ms: 90 * DAY },
   { key: "all", label: "All", ms: Infinity },
 ];
+
+/** Dense histories collapse to one point per calendar day per series (the
+ * last rating that day), Lichess's own resolution. Under the threshold the
+ * per-game points draw as-is, so a young account keeps every game visible. */
+function bucketByDay(points: RatingPoint[], threshold = 240): RatingPoint[] {
+  if (points.length <= threshold) return points;
+  const out: RatingPoint[] = [];
+  let lastDay = NaN;
+  for (const p of points) {
+    const day = Math.floor(p.at / DAY);
+    if (day === lastDay) out[out.length - 1] = p;
+    else {
+      out.push(p);
+      lastDay = day;
+    }
+  }
+  return out;
+}
 
 /** Points within `ms` of the newest point across ALL series (Lichess anchors
  * ranges to the latest game, so a dormant account still shows a full window). */
@@ -140,6 +162,18 @@ export function RatingChart({
   bare?: boolean;
 }) {
   const svgRef = useRef<SVGSVGElement>(null);
+  const hostRef = useRef<HTMLDivElement>(null);
+  const [W, setW] = useState(600);
+  useEffect(() => {
+    const el = hostRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver((entries) => {
+      const w = Math.round(entries[0]?.contentRect.width ?? 0);
+      if (w > 0) setW(Math.max(W_MIN, w));
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   const [hoverT, setHoverT] = useState<number | null>(null);
   const [range, setRange] = useState<RangeKey>("all");
   const [hidden, setHidden] = useState<Set<string>>(new Set());
@@ -157,8 +191,11 @@ export function RatingChart({
     const cutoff = Date.now() - rangeDays! * DAY;
     return series.map((s) => ({ ...s, points: s.points.filter((p) => p.at >= cutoff) }));
   }, [series, controlledRange, rangeDays]);
+  // Day resolution once a span is dense (see bucketByDay). Done after the
+  // range filter so a short window still shows individual games.
+  const bucketed = useMemo(() => scoped.map((s) => ({ ...s, points: bucketByDay(s.points) })), [scoped]);
 
-  const withData = useMemo(() => scoped.filter((s) => s.points.length > 0), [scoped]);
+  const withData = useMemo(() => bucketed.filter((s) => s.points.length > 0), [bucketed]);
   const visible = useMemo(
     () => withData.filter((s) => !hidden.has(s.id) || withData.every((x) => hidden.has(x.id))),
     [withData, hidden],
@@ -241,7 +278,7 @@ export function RatingChart({
     // deduped when the span is so short that ticks would share a date label.
     const xTicks: { x: number; label: string }[] = [];
     if (spanT > 0) {
-      const n = 4;
+      const n = W < 480 ? 3 : W < 900 ? 4 : 6;
       let last = "";
       for (let i = 0; i <= n; i++) {
         const t = t0 + (spanT * i) / n;
@@ -264,7 +301,7 @@ export function RatingChart({
       min: Math.min(...all.map((p) => p.rating)),
       max: Math.max(...all.map((p) => p.rating)),
     };
-  }, [visible, newest, rangeMs]);
+  }, [visible, newest, rangeMs, W]);
 
   const onMove = (e: React.PointerEvent<SVGSVGElement>) => {
     const rect = svgRef.current?.getBoundingClientRect();
@@ -372,14 +409,16 @@ export function RatingChart({
         </div>
       </div>
       )}
-      <div className={bare ? "relative" : "relative mt-2"}>
+      <div ref={hostRef} className={bare ? "relative" : "relative mt-2"}>
         {!drawn ? (
           <div className="p-4 text-sm text-parchment-400">Not enough rated games yet</div>
         ) : (
           <svg
             ref={svgRef}
             viewBox={`0 0 ${W} ${H}`}
-            className="block h-auto w-full touch-none"
+            className="block w-full touch-none"
+            style={{ height: H }}
+            preserveAspectRatio="none"
             onPointerMove={onMove}
             onPointerLeave={() => setHoverT(null)}
             role="img"
@@ -412,7 +451,7 @@ export function RatingChart({
                   x={t.x}
                   y={H - 8}
                   textAnchor={i === 0 ? "start" : i === drawn.xTicks.length - 1 ? "end" : "middle"}
-                  fontSize={10}
+                  fontSize={11}
                   fill="var(--paper-dim)"
                 >
                   {t.label}
@@ -433,7 +472,7 @@ export function RatingChart({
                   strokeWidth={1}
                   vectorEffect="non-scaling-stroke"
                 />
-                <text x={W - PAD.right} y={t.y - 4} textAnchor="end" fontSize={10} fill="var(--paper-dim)">
+                <text x={W - PAD.right} y={t.y - 4} textAnchor="end" fontSize={11} fill="var(--paper-dim)">
                   {t.label}
                 </text>
               </g>

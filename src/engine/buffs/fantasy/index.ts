@@ -18,6 +18,7 @@ import { FANTASY_TRANSFORMS } from "./transforms";
 import { FANTASY_SUMMONS } from "./summons";
 import { FANTASY_FEY } from "./fey";
 import { FANTASY_LEGENDS } from "./legends";
+import { FANTASY_MYTHIC } from "./mythic";
 
 export const FANTASY_CARDS: Buff[] = [
   ...FANTASY_BEASTS,
@@ -30,4 +31,5 @@ export const FANTASY_CARDS: Buff[] = [
   ...FANTASY_SUMMONS,
   ...FANTASY_FEY,
   ...FANTASY_LEGENDS,
+  ...FANTASY_MYTHIC,
 ];

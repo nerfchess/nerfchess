@@ -27,6 +27,7 @@ body {
   --bg-base: hsl(var(--site-hue) 10% 8%);     /* page   (Lichess --c-bg-page) */
   --bg-panel: hsl(var(--site-hue) 7% 14%);    /* box    (--c-bg) */
   --bg-raised: hsl(var(--site-hue) 7% 22%);   /* low    (--c-bg-low) */
+  --bg-hover: hsl(var(--site-hue) 7% 27%);    /* a menu row under the pointer: one rung above raised */
   --bg-zebra: hsl(var(--site-hue) 5% 19%);    /* zebra  (--c-bg-zebra) */
   --border-subtle: hsl(0 0% 25%);             /* --c-border */
   --border-light: hsl(0 0% 40%);              /* --c-border-light */
@@ -248,6 +249,7 @@ html[data-theme="light"] {
   --bg-base: hsl(var(--site-hue) 10% 92%);
   --bg-panel: hsl(0 0% 100%);
   --bg-raised: hsl(0 0% 89%);
+  --bg-hover: hsl(0 0% 94%);
   --bg-zebra: hsl(var(--site-hue) 12% 96.5%);
   --border-subtle: hsl(0 0% 85%);
   --border-light: hsl(0 0% 80%);
@@ -558,13 +560,9 @@ html[data-light] select option {
    square (no rounding, no heavy blur) while reading a touch more premium.
    Hovering lifts the tint into a tier-colored glow ring. */
 .draft-face {
-  background-image:
-    linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0) 42%),
-    radial-gradient(135% 100% at 50% -8%, rgb(var(--tier-rgb, 216 181 110) / 0.14), transparent 62%);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.10),
-    inset 0 0 42px -20px rgb(var(--tier-rgb, 216 181 110) / 0.60);
-  transition: box-shadow 200ms ease, transform 160ms ease, border-color 160ms ease;
+  /* Flat face: the tier shows in the edge ring and the numeral, not a wash. */
+  box-shadow: inset 0 0 0 1px rgb(var(--tier-rgb, 216 181 110) / 0.35);
+  transition: box-shadow 220ms var(--ease-out), border-color 220ms var(--ease-out);
 }
 .draft-face:hover {
   box-shadow:
@@ -577,7 +575,6 @@ html[data-light] select option {
 /* Dock rows: a whisper of the same treatment (hairline top highlight + faint
    top-lit sheen) so the buff dock reads as part of the same card family. */
 .dock-card {
-  background-image: linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0) 60%);
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
 }
 
@@ -851,9 +848,7 @@ html[data-anim="off"] .victory-burst { display: none; }
 /* Rune input: the shared text-field treatment. A carved recess in the stone
    with an energy sill that wakes on focus. */
 .input-rune {
-  background:
-    linear-gradient(180deg, rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.08)),
-    var(--surface-panel);
+  background: var(--surface-panel);
   color: var(--paper);
   border: 1px solid var(--edge);
   border-radius: 1px;
@@ -1121,22 +1116,16 @@ html[data-piece-source="lichess"] .piece-asset {
    opponent's king red when you check"). Works for EITHER side's king; the
    pulse is dropped when animations are off in Settings but the red stays. */
 .sq-check {
+  /* Lichess's check burst, exact stops. */
   background-image: radial-gradient(
     ellipse at center,
-    rgba(255, 60, 50, 0.85) 0%,
-    rgba(230, 40, 30, 0.45) 42%,
-    rgba(180, 0, 0, 0) 72%
+    rgba(255, 0, 0, 1) 0%,
+    rgba(231, 0, 0, 1) 25%,
+    rgba(169, 0, 0, 0) 89%,
+    rgba(158, 0, 0, 0) 100%
   );
 }
-.sq-check::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 5;
-  box-shadow: inset 0 0 0 3px rgba(255, 56, 44, 0.9), inset 0 0 18px rgba(220, 30, 20, 0.55);
-  animation: sq-check-pulse 0.9s ease-in-out infinite;
-}
+/* No pulsing ring: Lichess shows the burst alone. */
 @keyframes sq-check-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.35; }
@@ -1154,10 +1143,8 @@ html[data-anim="off"] .sq-check::after {
    lit from the top edge — the "glass shiny" look. */
 .glass-chip {
   border-radius: 1px;
-  background: linear-gradient(165deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.03) 45%, rgba(12, 18, 26, 0.25)),
-    rgba(14, 20, 30, 0.62);
-  backdrop-filter: blur(12px) saturate(1.3);
-  -webkit-backdrop-filter: blur(12px) saturate(1.3);
+  /* Flat, opaque chrome: no frosted glass, no gradient sheen. */
+  background: var(--bg-raised);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.22),
     inset 0 -1px 0 rgba(0, 0, 0, 0.35),
@@ -1426,60 +1413,40 @@ html[data-anim="off"] .piece-treat {
    at full strength; the square wash is the token at its themed opacity
    (--board-highlight-a, 40% dark / 50% light). One token drives both the
    last-move tint and the selected-square ring so they always read as a pair. */
-.sq-sel {
-  box-shadow:
-    inset 0 0 0 4px rgb(var(--board-highlight) / 0.95),
-    inset 0 0 0 9999px rgb(var(--board-highlight) / calc(var(--board-highlight-a) * 0.45));
-}
-.sq-last {
-  box-shadow: inset 0 0 0 9999px rgb(var(--board-highlight) / var(--board-highlight-a));
-}
-.sq-sel.sq-last {
-  box-shadow:
-    inset 0 0 0 4px rgb(var(--board-highlight) / 0.95),
-    inset 0 0 0 9999px rgb(var(--board-highlight) / calc(var(--board-highlight-a) * 0.55));
-}
-/* Drag-over a valid target: thicker, brighter ring */
-.sq-hover {
-  box-shadow:
-    inset 0 0 0 5px rgb(var(--board-highlight) / 1),
-    inset 0 0 0 9999px rgb(var(--board-highlight) / calc(var(--board-highlight-a) * 0.45));
-}
+/* Lichess's board highlights, copied value for value (lila board.scss):
+   selected  rgba(20,85,30,.5)   last move  rgba(155,199,0,.41)
+   drag-over rgba(20,85,30,.3)   check      the red radial burst */
+/* Painted as an inset shadow so the tint blends OVER the square colour the
+   way Lichess's overlay squares do, instead of replacing it. */
+.sq-sel { box-shadow: inset 0 0 0 9999px rgba(20, 85, 30, 0.5); }
+.sq-last { box-shadow: inset 0 0 0 9999px rgba(155, 199, 0, 0.41); }
+.sq-sel.sq-last { box-shadow: inset 0 0 0 9999px rgba(20, 85, 30, 0.5); }
+.sq-hover { box-shadow: inset 0 0 0 9999px rgba(20, 85, 30, 0.3); }
 .sq-rmb-mark {
   box-shadow: inset 0 0 0 4px currentColor;
   background: color-mix(in srgb, currentColor 24%, transparent);
 }
 
 /* Move-target dot */
+/* Lichess move-dest: a filled dot of a fifth of the square; a capture is the
+   hollow ring around the piece (the "oc" square). */
 .dot-target {
-  width: 26%;
-  height: 26%;
-  border-radius: 9999px;
-  background: rgba(20, 14, 8, 0.32);
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(rgba(20, 85, 30, 0.5) 19%, rgba(0, 0, 0, 0) 20%);
 }
 .dot-capture {
   position: absolute;
-  inset: 6%;
-  border-radius: 9999px;
-  border: 4px solid rgb(var(--accent-nerf-rgb) / 0.7);
+  inset: 0;
+  background: radial-gradient(transparent 0%, transparent 79%, rgba(20, 85, 0, 0.3) 80%);
 }
 
 /* Risk-tinted move indicators: yellow warns of a self-inflicted nerf loss,
    red warns the move leaves/moves you into check. */
-.dot-target-yellow {
-  background: rgba(214, 178, 55, 0.75);
-  box-shadow: 0 0 0 2px rgba(214, 178, 55, 0.35);
-}
-.dot-target-red {
-  background: rgba(199, 56, 48, 0.78);
-  box-shadow: 0 0 0 2px rgba(199, 56, 48, 0.4);
-}
-.dot-capture-yellow {
-  border-color: rgba(214, 178, 55, 0.9);
-}
-.dot-capture-red {
-  border-color: rgba(199, 56, 48, 0.95);
-}
+.dot-target-yellow { background: radial-gradient(rgba(214, 178, 55, 0.75) 19%, rgba(0, 0, 0, 0) 20%); }
+.dot-target-red { background: radial-gradient(rgba(199, 56, 48, 0.78) 19%, rgba(0, 0, 0, 0) 20%); }
+.dot-capture-yellow { background: radial-gradient(transparent 0%, transparent 79%, rgba(214, 178, 55, 0.5) 80%); }
+.dot-capture-red { background: radial-gradient(transparent 0%, transparent 79%, rgba(199, 56, 48, 0.55) 80%); }
 
 /* Opponent-piece inspection preview: slate, deliberately distinct from your
    own gold-ink move hints so the two can never be confused. */
@@ -1798,23 +1765,25 @@ html[data-anim="off"] * { transition: none !important; }
 .card-juicy {
   border-radius: 1px;
   cursor: pointer;
+  /* No transform on hover: a translateY lift fought the framer entrance
+     transforms on the same element and snapped when the pointer crossed the
+     moving edge. The pop is the ring and the shadow, both on one easing. */
   transition:
-    transform 160ms var(--ease-spring),
-    box-shadow 200ms var(--ease-out),
-    border-color 160ms var(--ease-out);
+    box-shadow 220ms var(--ease-out),
+    border-color 220ms var(--ease-out),
+    transform 120ms var(--ease-out);
 }
 @media (hover: hover) {
   .card-juicy:hover {
     /* Border-first pop: a solid tier-colored outline and a hard dark drop.
-       Lift without bloom; the color sits on the edge, not in the air. */
-    transform: translateY(-3px);
+       The color sits on the edge, not in the air. */
     box-shadow:
       0 0 0 2px rgb(var(--tier-rgb, var(--accent-hi-rgb)) / 0.9),
       0 14px 28px -14px rgba(0, 0, 0, 0.85);
   }
 }
 .card-juicy:active {
-  transform: translateY(-1px) scale(0.985);
+  transform: scale(0.99);
 }
 html[data-anim="off"] .card-juicy, html[data-anim="off"] .card-juicy:hover, html[data-anim="off"] .card-juicy:active {
   transition: none;
@@ -1824,10 +1793,7 @@ html[data-anim="off"] .card-juicy, html[data-anim="off"] .card-juicy:hover, html
 /* Seam gradient text/border helpers: the two mode colors as one warm-to-cool
    sweep, for headings, rings, and section accents that should feel alive. */
 .grad-seam-text {
-  background: linear-gradient(90deg, var(--coral-glow), rgb(var(--seam-cool-rgb)));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--text-heading);
 }
 
 /* Decorative corners — subtle brass tick marks for editorial framing */
@@ -1845,8 +1811,6 @@ html[data-anim="off"] .card-juicy, html[data-anim="off"] .card-juicy:hover, html
 
 /* Replace the old colorful sigil ring with a soft static brass aura */
 .sigil {
-  background:
-    radial-gradient(circle at 50% 50%, rgb(var(--accent-gold-rgb) / 0.06), transparent 62%);
   border-radius: 9999px;
 }
 
@@ -2173,25 +2137,22 @@ html[data-anim="off"] .sq-invalid-shake { animation: none !important; }
    the box-shadow, a live "ping" ripple behind the status dot, and a gently
    fading ellipsis — all compositor-cheap and all dropped when animations are
    off in Settings so the notice stays legible without motion. */
-.waiting-banner {
+.corner-notice {
   /* The breath used to animate box-shadow directly (a full repaint every
      frame, for minutes at a time). The dim state now sits statically on the
      element and the bright state on a pseudo layer whose OPACITY breathes:
-     same read, compositor-only cost. */
+     same read, compositor-only cost. Flat box, a one pixel brass edge that
+     breathes; no glow spread. */
   position: relative;
-  box-shadow:
-    0 0 0 1px rgb(var(--accent-rgb) / 0.30),
-    0 0 18px -6px rgb(var(--accent-rgb) / 0.35);
+  box-shadow: 0 0 0 1px rgb(var(--accent-rgb) / 0.25), 0 2px 6px rgb(0 0 0 / 0.25);
 }
-.waiting-banner::after {
+.corner-notice::after {
   content: "";
   position: absolute;
   inset: 0;
   border-radius: inherit;
   pointer-events: none;
-  box-shadow:
-    0 0 0 1px rgb(var(--accent-rgb) / 0.55),
-    0 0 26px -4px rgb(var(--accent-rgb) / 0.60);
+  box-shadow: 0 0 0 1px rgb(var(--accent-rgb) / 0.55);
   opacity: 0;
   animation: waiting-breathe 2.8s ease-in-out infinite;
   will-change: opacity;
@@ -2215,8 +2176,8 @@ html[data-anim="off"] .sq-invalid-shake { animation: none !important; }
   0%, 100% { opacity: 0.35; }
   50% { opacity: 1; }
 }
-html[data-anim="off"] .waiting-banner::after,
-html[data-anim="off"] .waiting-banner,
+html[data-anim="off"] .corner-notice::after,
+html[data-anim="off"] .corner-notice,
 html[data-anim="off"] .waiting-ping,
 html[data-anim="off"] .waiting-ellipsis::after {
   animation: none;
@@ -2350,26 +2311,32 @@ html[data-light] .starfield {
    Hover only firms the borders — no lift, no glow. */
 .hall-row {
   --row-rgb: 216 181 110; /* brass default (draft / legacy entries) */
-  /* Rows are a raised warm-stone step over the panel — the same lamplit
-     granite as the dungeon tokens, not a neutral white-alpha ink that reads
-     unthemed beside them. Only the mode's left bar carries color at rest;
-     the full edge lights on hover (interactive feedback). */
-  background:
-    linear-gradient(180deg, rgba(255, 235, 200, 0.04), transparent 50%, rgba(0, 0, 0, 0.1)),
-    linear-gradient(180deg, #2e2517, var(--stone-hi));
-  border: 1px solid rgb(122 96 58 / 0.22);
+  /* A flat raised row; only the mode's left bar carries colour at rest and
+     the full edge lights on hover. */
+  background: var(--bg-raised);
+  border: 1px solid var(--border-subtle);
   border-left: 2px solid rgb(var(--row-rgb) / 0.6);
   box-shadow: inset 0 1px 0 rgba(255, 230, 180, 0.06);
-  transition:
-    border-color var(--dur-2) var(--ease-out),
-    filter var(--dur-2) var(--ease-out);
+  /* Hover lightens with an opacity layer, not filter: brightness() repaints
+     the whole row (text included) every frame and stuttered on long lists. */
+  position: relative;
+  transition: border-color var(--dur-2) var(--ease-out);
+}
+.hall-row::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: rgba(255, 240, 210, 0.05);
+  opacity: 0;
+  transition: opacity var(--dur-2) var(--ease-out);
 }
 @media (hover: hover) {
   .hall-row:hover {
-    filter: brightness(1.06);
     border-color: rgb(var(--row-rgb) / 0.4);
     border-left-color: rgb(var(--row-rgb) / 0.95);
   }
+  .hall-row:hover::after { opacity: 1; }
 }
 .hall-row--nerf { --row-rgb: var(--seam-warm-rgb); }
 .hall-row--buff { --row-rgb: var(--seam-cool-rgb); }

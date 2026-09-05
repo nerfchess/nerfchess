@@ -1,24 +1,24 @@
 {
  "summary": {
-  "total": 2448,
+  "total": 2480,
   "byKind": {
-   "buff": 970,
-   "hex": 543,
-   "boon": 418,
+   "buff": 978,
+   "hex": 551,
+   "boon": 426,
    "item": 129,
    "apex": 28,
-   "nerf": 360
+   "nerf": 368
   },
   "flagged": {
-   "duplicateSignature": 262,
-   "nearDuplicate": 204,
-   "dominatedCandidates": 89,
+   "duplicateSignature": 267,
+   "nearDuplicate": 209,
+   "dominatedCandidates": 92,
    "misleading": 0,
    "broken": 0,
    "untested": 0,
    "noAnimation": 0
   },
-  "reviewed": 2390
+  "reviewed": 2414
  },
  "rows": [
   {
@@ -1194,6 +1194,24 @@
    "action": "keep: nerf-mode only via NERF_REVEAL exclusion (buff-mode purity)"
   },
   {
+   "id": "fm_boon_lanternlight",
+   "name": "Lanternlight",
+   "kind": "boon",
+   "tier": 1,
+   "effect": "For your next 2 turns your king may move two squares in a straight line, as long as the first square is empty.",
+   "trigger": "passive",
+   "duration": "2-turns",
+   "targets": "self",
+   "signature": "movement|passive|init+aug+onMove|2-turns|self|king,move,n:2,square",
+   "animation": "canvas+passive",
+   "location": "src/engine/buffs/fantasy/mythic.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "gm_consolation_scratcher",
    "name": "Consolation Scratcher",
    "kind": "boon",
@@ -1512,7 +1530,7 @@
     "lab-run-all.ts"
    ],
    "flags": [
-    "duplicate-signature(bn4_florists_trick)"
+    "duplicate-signature(bn4_florists_trick,fm_boon_lifebloom)"
    ],
    "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
   },
@@ -2091,6 +2109,24 @@
     "near-duplicate(bn4_velvet_queue:0.88)"
    ],
    "action": "keep: T2 rung of the forced-tier ladder"
+  },
+  {
+   "id": "fm_boon_hearthbread",
+   "name": "Hearthbread",
+   "kind": "boon",
+   "tier": 2,
+   "effect": "Choose an empty square on your first two ranks. A new pawn appears there.",
+   "trigger": "activated",
+   "duration": "unstated",
+   "targets": "self",
+   "signature": "pieces|activated|effect+targets|unstated|self|pawn,rank,square",
+   "animation": "canvas",
+   "location": "src/engine/buffs/fantasy/mythic.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
   },
   {
    "id": "held_breath",
@@ -3322,6 +3358,24 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "fm_boon_dewdrop",
+   "name": "Dewdrop",
+   "kind": "boon",
+   "tier": 3,
+   "effect": "Your most advanced pawn cannot be captured for the rest of the game.",
+   "trigger": "instant",
+   "duration": "permanent",
+   "targets": "self",
+   "signature": "protection|instant|effect|permanent|self|advance,capture,pawn",
+   "animation": "canvas",
+   "location": "src/engine/buffs/fantasy/mythic.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "north_star",
    "name": "North Star",
    "kind": "boon",
@@ -3646,8 +3700,7 @@
     "lab-run-all.ts"
    ],
    "flags": [
-    "duplicate-signature(bn4_field_stitches)",
-    "dominated-candidate(higher-tier-of-duplicate-pair)"
+    "duplicate-signature(bn4_field_stitches,fm_boon_lifebloom)"
    ],
    "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
   },
@@ -4443,6 +4496,26 @@
     "near-duplicate(extra_move_repeat:0.79)"
    ],
    "action": "keep: extra-move ladder T4 (2 moves)"
+  },
+  {
+   "id": "fm_boon_oathstone",
+   "name": "Oathstone",
+   "kind": "boon",
+   "tier": 4,
+   "effect": "None of your pawns can be captured for your opponent's next 2 turns.",
+   "trigger": "instant",
+   "duration": "2-turns",
+   "targets": "enemy",
+   "signature": "protection|instant|effect|2-turns|enemy|capture,n:2,pawn",
+   "animation": "canvas",
+   "location": "src/engine/buffs/fantasy/mythic.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [
+    "near-duplicate(bn4_shepherds_watch:1.00)"
+   ],
+   "action": "pending-review"
   },
   {
    "id": "fortress_realm",
@@ -5542,6 +5615,26 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "fm_boon_windrider",
+   "name": "Windrider",
+   "kind": "boon",
+   "tier": 5,
+   "effect": "For your next 2 turns each of your bishops may also leap like a knight.",
+   "trigger": "passive",
+   "duration": "2-turns",
+   "targets": "self",
+   "signature": "movement|passive|init+aug+onMove|2-turns|self|bishop,knight,leap,n:2",
+   "animation": "canvas+passive",
+   "location": "src/engine/buffs/fantasy/mythic.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [
+    "near-duplicate(fm_dragonblood:0.75)"
+   ],
+   "action": "pending-review"
+  },
+  {
    "id": "iron_reign",
    "name": "Iron Reign",
    "kind": "boon",
@@ -6255,7 +6348,9 @@
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [],
+   "flags": [
+    "near-duplicate(fm_boon_oathstone:1.00)"
+   ],
    "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
   },
   {
@@ -6517,6 +6612,27 @@
    ],
    "flags": [],
    "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "fm_boon_lifebloom",
+   "name": "Lifebloom",
+   "kind": "boon",
+   "tier": 6,
+   "effect": "One of your captured pawns returns to the board on an empty square of your second rank.",
+   "trigger": "activated",
+   "duration": "unstated",
+   "targets": "self",
+   "signature": "pieces|activated|effect+targets|unstated|self|capture,pawn,rank,return,square",
+   "animation": "canvas",
+   "location": "src/engine/buffs/fantasy/mythic.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [
+    "duplicate-signature(bn4_field_stitches,bn4_florists_trick)",
+    "dominated-candidate(higher-tier-of-duplicate-pair)"
+   ],
+   "action": "pending-review"
   },
   {
    "id": "long_leash",
@@ -7525,6 +7641,24 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "fm_boon_royal_road",
+   "name": "Royal Road",
+   "kind": "boon",
+   "tier": 7,
+   "effect": "Your king steps to any empty square on your back rank.",
+   "trigger": "activated",
+   "duration": "unstated",
+   "targets": "self",
+   "signature": "movement|activated|effect+targets|unstated|self|king,rank,square",
+   "animation": "canvas",
+   "location": "src/engine/buffs/fantasy/mythic.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "full_pardon",
    "name": "Full Pardon",
    "kind": "boon",
@@ -8425,6 +8559,24 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "fm_boon_worldheart",
+   "name": "Worldheart",
+   "kind": "boon",
+   "tier": 8,
+   "effect": "Take two extra moves right now. Your army cannot be captured until your next turn begins.",
+   "trigger": "activated/free",
+   "duration": "next-turn",
+   "targets": "self",
+   "signature": "tempo|activated|effect|next-turn|self|capture,extra,move",
+   "animation": "canvas",
+   "location": "src/engine/buffs/fantasy/mythic.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "transcendence",
    "name": "Transcendence",
    "kind": "boon",
@@ -8513,6 +8665,24 @@
    ],
    "flags": [],
    "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+  },
+  {
+   "id": "fm_glowmoss_ward",
+   "name": "Glowmoss Ward",
+   "kind": "buff",
+   "tier": 1,
+   "effect": "Soft light grows over your king's square and the eight squares around it: pieces standing there cannot be captured for your opponent's next 2 turns.",
+   "trigger": "instant",
+   "duration": "2-turns",
+   "targets": "enemy",
+   "signature": "protection|instant|effect|2-turns|enemy|capture,king,n:2,square",
+   "animation": "canvas",
+   "location": "src/engine/buffs/fantasy/mythic.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
   },
   {
    "id": "ghost_pawn",
@@ -11895,6 +12065,26 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "fm_moonlit_stride",
+   "name": "Moonlit Stride",
+   "kind": "buff",
+   "tier": 2,
+   "effect": "For your next 3 turns each of your knights may also step one square straight up, down or sideways.",
+   "trigger": "passive",
+   "duration": "3-turns",
+   "targets": "self",
+   "signature": "movement|passive|init+aug+onMove|3-turns|self|knight,n:3,square",
+   "animation": "canvas+passive",
+   "location": "src/engine/buffs/fantasy/mythic.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [
+    "duplicate-signature(pixie_dust,ov_knight_court)"
+   ],
+   "action": "pending-review"
+  },
+  {
    "id": "free_retreat",
    "name": "Free Retreat",
    "kind": "buff",
@@ -14288,6 +14478,24 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "fm_wyrmscale_mail",
+   "name": "Wyrmscale Mail",
+   "kind": "buff",
+   "tier": 3,
+   "effect": "Choose one of your pieces other than the king. It cannot be captured for your opponent's next 4 turns.",
+   "trigger": "activated",
+   "duration": "4-turns",
+   "targets": "enemy",
+   "signature": "protection|activated|effect+targets|4-turns|enemy|capture,king,n:4",
+   "animation": "canvas",
+   "location": "src/engine/buffs/fantasy/mythic.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "fork_guard",
    "name": "Fork Guard",
    "kind": "buff",
@@ -14924,7 +15132,8 @@
     "lab-run-all.ts"
    ],
    "flags": [
-    "duplicate-signature(pixie_dust)"
+    "duplicate-signature(pixie_dust,fm_moonlit_stride)",
+    "dominated-candidate(higher-tier-of-duplicate-pair)"
    ],
    "action": "pending-review"
   },
@@ -15196,7 +15405,8 @@
     "lab-run-all.ts"
    ],
    "flags": [
-    "duplicate-signature(ov_knight_court)"
+    "duplicate-signature(fm_moonlit_stride,ov_knight_court)",
+    "dominated-candidate(higher-tier-of-duplicate-pair)"
    ],
    "action": "pending-review"
   },
@@ -16667,6 +16877,24 @@
    "signature": "protection|passive|filter+onMove|permanent|enemy|capture,pawn,rank,shield",
    "animation": "bespoke+canvas+passive",
    "location": "src/engine/buffs/pt/passives.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "fm_stormcaller",
+   "name": "Stormcaller",
+   "kind": "buff",
+   "tier": 4,
+   "effect": "For your next 2 turns your rooks may also move diagonally and your bishops may also move straight, each as far as a queen would.",
+   "trigger": "passive",
+   "duration": "2-turns",
+   "targets": "self",
+   "signature": "movement|passive|init+aug+onMove|2-turns|self|bishop,move,n:2,queen,rook",
+   "animation": "canvas+passive",
+   "location": "src/engine/buffs/fantasy/mythic.ts",
    "tests": [
     "lab-run-all.ts"
    ],
@@ -19401,6 +19629,24 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "fm_phoenix_feather",
+   "name": "Phoenix Feather",
+   "kind": "buff",
+   "tier": 5,
+   "effect": "One of your captured knights, bishops or rooks returns to the board on an empty square in your half. Knights first, then bishops, then rooks.",
+   "trigger": "activated",
+   "duration": "unstated",
+   "targets": "self",
+   "signature": "pieces|activated|effect+targets|unstated|self|bishop,capture,knight,return,rook,square",
+   "animation": "canvas",
+   "location": "src/engine/buffs/fantasy/mythic.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "fur_elise",
    "name": "Fur Elise",
    "kind": "buff",
@@ -20281,7 +20527,7 @@
    "duration": "unstated",
    "targets": "self",
    "signature": "tempo|instant|effect|unstated|self|clock,n:105,seconds,time",
-   "animation": "bespoke",
+   "animation": "bespoke+canvas",
    "location": "src/engine/buffs/pt/timefaustian.ts",
    "tests": [
     "lab-run-all.ts"
@@ -21760,6 +22006,26 @@
    "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
   },
   {
+   "id": "fm_dragonblood",
+   "name": "Dragonblood",
+   "kind": "buff",
+   "tier": 6,
+   "effect": "For your next 4 turns your queen may also leap like a knight.",
+   "trigger": "passive",
+   "duration": "4-turns",
+   "targets": "self",
+   "signature": "movement|passive|init+aug+onMove|4-turns|self|knight,leap,n:4,queen",
+   "animation": "canvas+passive",
+   "location": "src/engine/buffs/fantasy/mythic.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [
+    "near-duplicate(fm_boon_windrider:0.75)"
+   ],
+   "action": "pending-review"
+  },
+  {
    "id": "frigo_camelo",
    "name": "Frigo Camelo",
    "kind": "buff",
@@ -22985,7 +23251,7 @@
    "duration": "2-turns",
    "targets": "enemy",
    "signature": "tempo|instant|effect|2-turns|enemy|capture,king,move,n:2,skip",
-   "animation": "bespoke",
+   "animation": "bespoke+canvas",
    "location": "src/engine/buffs/library.ts",
    "tests": [
     "test-draft-fairness.ts",
@@ -23987,6 +24253,24 @@
    "signature": "attack|activated|effect+targets|3-turns|enemy|freeze,move,n:3,square",
    "animation": "generated",
    "location": "src/engine/buffs/personal.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "fm_sunforge",
+   "name": "Sunforge",
+   "kind": "buff",
+   "tier": 7,
+   "effect": "Choose one of your pawns on your 5th rank or beyond. It becomes a knight where it stands.",
+   "trigger": "activated",
+   "duration": "unstated",
+   "targets": "self",
+   "signature": "pieces|activated|effect+targets|unstated|self|become,knight,pawn,rank",
+   "animation": "canvas",
+   "location": "src/engine/buffs/fantasy/mythic.ts",
    "tests": [
     "lab-run-all.ts"
    ],
@@ -25477,6 +25761,24 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "fm_eclipse_crown",
+   "name": "Eclipse Crown",
+   "kind": "buff",
+   "tier": 8,
+   "effect": "Your opponent's next turn is skipped, and none of your pieces can be captured until your following turn begins.",
+   "trigger": "instant",
+   "duration": "next-turn",
+   "targets": "enemy",
+   "signature": "tempo|instant|effect|next-turn|enemy|capture,skip",
+   "animation": "canvas",
+   "location": "src/engine/buffs/fantasy/mythic.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "gm_the_last_bet",
    "name": "The Last Bet",
    "kind": "buff",
@@ -26362,6 +26664,27 @@
    ],
    "flags": [],
    "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "fm_hex_thistledown",
+   "name": "Thistledown",
+   "kind": "hex",
+   "tier": 1,
+   "effect": "Burrs tangle the enemy cavalry: for their next 2 turns, enemy knights may move but may not take anything.",
+   "trigger": "passive",
+   "duration": "2-turns",
+   "targets": "enemy",
+   "signature": "hex|passive|init+filter+onMove|2-turns|enemy|knight,move,n:2",
+   "animation": "canvas+passive",
+   "location": "src/engine/buffs/fantasy/mythic.ts",
+   "tests": [
+    "lab-run-all.ts",
+    "test-hexes.cjs"
+   ],
+   "flags": [
+    "duplicate-signature(spooked_steeds)"
+   ],
+   "action": "pending-review"
   },
   {
    "id": "foggy_glasses",
@@ -27302,6 +27625,27 @@
    ],
    "flags": [],
    "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "fm_hex_fogbank",
+   "name": "Fogbank",
+   "kind": "hex",
+   "tier": 2,
+   "effect": "Your opponent's bishops cannot move more than 2 squares for their next 2 turns.",
+   "trigger": "passive",
+   "duration": "2-turns",
+   "targets": "enemy",
+   "signature": "hex|passive|init+filter+onMove|2-turns|enemy|bishop,move,n:2,n:2,square",
+   "animation": "canvas+passive",
+   "location": "src/engine/buffs/fantasy/mythic.ts",
+   "tests": [
+    "lab-run-all.ts",
+    "test-hexes.cjs"
+   ],
+   "flags": [
+    "near-duplicate(blinkered_bishops:0.75)"
+   ],
+   "action": "pending-review"
   },
   {
    "id": "hw2_blood_price",
@@ -28593,7 +28937,8 @@
    ],
    "flags": [
     "near-duplicate(spooked_steeds:0.80)",
-    "near-duplicate(hx4_left_glove:0.80)"
+    "near-duplicate(hx4_left_glove:0.80)",
+    "near-duplicate(fm_hex_fogbank:0.75)"
    ],
    "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
   },
@@ -28630,6 +28975,25 @@
    "signature": "hex|activated|effect+targets+filter+onMove|3-turns|enemy|king,move,n:3,square",
    "animation": "generated",
    "location": "src/engine/buffs/crossref.ts",
+   "tests": [
+    "lab-run-all.ts",
+    "test-hexes.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "fm_hex_brambleroot",
+   "name": "Brambleroot",
+   "kind": "hex",
+   "tier": 3,
+   "effect": "Your opponent's rooks cannot move sideways along a rank for their next 3 turns.",
+   "trigger": "passive",
+   "duration": "3-turns",
+   "targets": "enemy",
+   "signature": "hex|passive|init+filter+onMove|3-turns|enemy|move,n:3,rank,rook",
+   "animation": "canvas+passive",
+   "location": "src/engine/buffs/fantasy/mythic.ts",
    "tests": [
     "lab-run-all.ts",
     "test-hexes.cjs"
@@ -29940,6 +30304,25 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "fm_hex_sirens_call",
+   "name": "Siren's Call",
+   "kind": "hex",
+   "tier": 4,
+   "effect": "Choose an enemy knight, bishop, rook or queen. It stands entranced and cannot move for your opponent's next 3 turns.",
+   "trigger": "activated",
+   "duration": "3-turns",
+   "targets": "enemy",
+   "signature": "hex|activated|effect+targets|3-turns|enemy|bishop,knight,move,n:3,queen,rook",
+   "animation": "canvas",
+   "location": "src/engine/buffs/fantasy/mythic.ts",
+   "tests": [
+    "lab-run-all.ts",
+    "test-hexes.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "frozen_furrows",
    "name": "Frozen Furrows",
    "kind": "hex",
@@ -30904,7 +31287,7 @@
     "test-hexes.cjs"
    ],
    "flags": [
-    "duplicate-signature(hx4_great_waltz)"
+    "duplicate-signature(hx4_great_waltz,fm_hex_kings_moat)"
    ],
    "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
   },
@@ -31467,9 +31850,11 @@
     "test-hexes.cjs"
    ],
    "flags": [
+    "duplicate-signature(fm_hex_thistledown)",
     "near-duplicate(crossed_wires:0.80)",
     "near-duplicate(blinkered_bishops:0.80)",
-    "near-duplicate(bn4_tangled_reins:0.80)"
+    "near-duplicate(bn4_tangled_reins:0.80)",
+    "dominated-candidate(higher-tier-of-duplicate-pair)"
    ],
    "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
   },
@@ -31667,6 +32052,25 @@
    ],
    "flags": [],
    "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+  },
+  {
+   "id": "fm_hex_gorgon_gaze",
+   "name": "Gorgon Gaze",
+   "kind": "hex",
+   "tier": 5,
+   "effect": "Every enemy knight and bishop turns to stone for your opponent's next 2 turns.",
+   "trigger": "instant",
+   "duration": "2-turns",
+   "targets": "enemy",
+   "signature": "hex|instant|effect|2-turns|enemy|bishop,knight,n:2",
+   "animation": "canvas",
+   "location": "src/engine/buffs/fantasy/mythic.ts",
+   "tests": [
+    "lab-run-all.ts",
+    "test-hexes.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
   },
   {
    "id": "frost_wall",
@@ -33365,6 +33769,25 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "fm_hex_iron_maiden",
+   "name": "Iron Maiden",
+   "kind": "hex",
+   "tier": 6,
+   "effect": "Choose an enemy piece other than the king. It is locked in place for your opponent's next 4 turns.",
+   "trigger": "activated",
+   "duration": "4-turns",
+   "targets": "enemy",
+   "signature": "hex|activated|effect+targets|4-turns|enemy|king,n:4,place",
+   "animation": "canvas",
+   "location": "src/engine/buffs/fantasy/mythic.ts",
+   "tests": [
+    "lab-run-all.ts",
+    "test-hexes.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "grounded_command",
    "name": "Grounded Command",
    "kind": "hex",
@@ -34782,6 +35205,27 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "fm_hex_kings_moat",
+   "name": "King's Moat",
+   "kind": "hex",
+   "tier": 7,
+   "effect": "For your opponent's next 3 turns none of their pieces may move onto a square next to your king.",
+   "trigger": "passive",
+   "duration": "3-turns",
+   "targets": "enemy",
+   "signature": "hex|passive|init+filter+onMove|3-turns|enemy|king,move,n:3,square",
+   "animation": "canvas+passive",
+   "location": "src/engine/buffs/fantasy/mythic.ts",
+   "tests": [
+    "lab-run-all.ts",
+    "test-hexes.cjs"
+   ],
+   "flags": [
+    "duplicate-signature(hx4_prowlers_bell,hx4_great_waltz)"
+   ],
+   "action": "pending-review"
+  },
+  {
    "id": "frozen_solid",
    "name": "Frozen Solid",
    "kind": "hex",
@@ -35900,6 +36344,25 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "fm_hex_winter_court",
+   "name": "Winter Court",
+   "kind": "hex",
+   "tier": 8,
+   "effect": "Every enemy piece other than the king standing in your half of the board is frozen for your opponent's next 3 turns.",
+   "trigger": "instant",
+   "duration": "3-turns",
+   "targets": "enemy",
+   "signature": "hex|instant|effect|3-turns|enemy|king,n:3",
+   "animation": "canvas",
+   "location": "src/engine/buffs/fantasy/mythic.ts",
+   "tests": [
+    "lab-run-all.ts",
+    "test-hexes.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "hw2_crown_of_thorns",
    "name": "Crown of Thorns",
    "kind": "hex",
@@ -36264,7 +36727,7 @@
     "test-hexes.cjs"
    ],
    "flags": [
-    "duplicate-signature(hx4_prowlers_bell)",
+    "duplicate-signature(hx4_prowlers_bell,fm_hex_kings_moat)",
     "dominated-candidate(higher-tier-of-duplicate-pair)"
    ],
    "action": "pending-review"
@@ -39405,6 +39868,45 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "fn_pixie_curse",
+   "name": "Pixie Curse",
+   "kind": "nerf",
+   "tier": 1,
+   "effect": "Your knights cannot move onto an edge square of the board, unless that is your only legal move.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|knight,move,square",
+   "animation": "passive",
+   "location": "src/engine/nerfs/fantasy.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "lucky",
+   "name": "Lucky",
+   "kind": "nerf",
+   "tier": 1,
+   "effect": "You have no nerf. A rare gift from the gods of chess.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|",
+   "animation": "passive",
+   "location": "src/engine/nerfs/implemented.ts",
+   "tests": [
+    "sim-hexes-items.ts",
+    "test-nerf-categories.ts",
+    "validate-tv-snapshots.cjs",
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "nw2_gentle_shepherds",
    "name": "Gentle Shepherds",
    "kind": "nerf",
@@ -39549,24 +40051,6 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "cess",
-   "name": "Cess",
-   "kind": "nerf",
-   "tier": 2,
-   "effect": "You can't move to the h-file.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|file,file:h,move",
-   "animation": "passive",
-   "location": "src/engine/nerfs/implemented.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
    "id": "columnar_rooks",
    "name": "Columnar Rooks",
    "kind": "nerf",
@@ -39585,25 +40069,6 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "crossing_the_rubicon",
-   "name": "Crossing the Rubicon",
-   "kind": "nerf",
-   "tier": 2,
-   "effect": "Once a piece crosses to the opponent's half, it can't return.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|one-shot|return",
-   "animation": "passive",
-   "location": "src/engine/nerfs/library.ts",
-   "tests": [
-    "test-nerf-categories.ts",
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
    "id": "flat_footed",
    "name": "Flat Footed",
    "kind": "nerf",
@@ -39615,6 +40080,24 @@
    "signature": "nerf|unstated|advance,pawn,square",
    "animation": "passive",
    "location": "src/engine/nerfs/expanded/tier1.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "fn_gnomes_bargain",
+   "name": "Gnome's Bargain",
+   "kind": "nerf",
+   "tier": 2,
+   "effect": "From your fourth move on, you cannot capture with the same type of piece that made your previous capture.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|capture,move",
+   "animation": "passive",
+   "location": "src/engine/nerfs/fantasy.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -39730,27 +40213,6 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "lucky",
-   "name": "Lucky",
-   "kind": "nerf",
-   "tier": 2,
-   "effect": "You have no nerf. A rare gift from the gods of chess.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|",
-   "animation": "passive",
-   "location": "src/engine/nerfs/implemented.ts",
-   "tests": [
-    "sim-hexes-items.ts",
-    "test-nerf-categories.ts",
-    "validate-tv-snapshots.cjs",
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
    "id": "merciful_queen",
    "name": "Merciful Queen",
    "kind": "nerf",
@@ -39760,24 +40222,6 @@
    "duration": "match",
    "targets": "self",
    "signature": "nerf|unstated|capture,check,king,pawn,queen",
-   "animation": "passive",
-   "location": "src/engine/nerfs/expanded/tier2.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "monastic_vows",
-   "name": "Monastic Vows",
-   "kind": "nerf",
-   "tier": 2,
-   "effect": "Your bishops can't capture, except capturing a piece that has your king in check is always legal.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|bishop,capture,check,king",
    "animation": "passive",
    "location": "src/engine/nerfs/expanded/tier2.ts",
    "tests": [
@@ -39815,24 +40259,6 @@
    "duration": "match",
    "targets": "self",
    "signature": "nerf|unstated|capture,pawn",
-   "animation": "passive",
-   "location": "src/engine/nerfs/expanded/tier1.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "no_stone_cutting",
-   "name": "No Stone Cutting",
-   "kind": "nerf",
-   "tier": 2,
-   "effect": "You can't capture bishops.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|bishop,capture",
    "animation": "passive",
    "location": "src/engine/nerfs/expanded/tier1.ts",
    "tests": [
@@ -39950,17 +40376,17 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "right_handed",
-   "name": "Right Handed",
+   "id": "rook_buddies",
+   "name": "Rook Buddies",
    "kind": "nerf",
    "tier": 2,
-   "effect": "You can't move to the a-file, except once per game.",
+   "effect": "Your rooks can't move while any piece sits between them on your home rank; clear the back rank between them first.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|one-shot|file,file:a,move",
+   "signature": "nerf|unstated|move,rank,rook",
    "animation": "passive",
-   "location": "src/engine/nerfs/expanded/tier1.ts",
+   "location": "src/engine/nerfs/library.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -40004,24 +40430,6 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "separation_church_state",
-   "name": "Separation of Church and State",
-   "kind": "nerf",
-   "tier": 2,
-   "effect": "Can't move bishops next to a king and can't move king next to a bishop.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|bishop,king,move",
-   "animation": "passive",
-   "location": "src/engine/nerfs/library.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
    "id": "soft_paws",
    "name": "Soft Paws",
    "kind": "nerf",
@@ -40033,24 +40441,6 @@
    "signature": "nerf|one-shot|capture,knight,pawn",
    "animation": "passive",
    "location": "src/engine/nerfs/expanded/tier1.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "vegan",
-   "name": "Vegan",
-   "kind": "nerf",
-   "tier": 2,
-   "effect": "You can't capture knights, unless the knight is the piece checking your king.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|capture,check,king,knight",
-   "animation": "passive",
-   "location": "src/engine/nerfs/implemented.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -40085,6 +40475,24 @@
    "duration": "match",
    "targets": "self",
    "signature": "nerf|unstated|capture,check,king,pawn,queen",
+   "animation": "passive",
+   "location": "src/engine/nerfs/wild.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "wn_knight_toll",
+   "name": "Knight Toll",
+   "kind": "nerf",
+   "tier": 2,
+   "effect": "You can't capture with a knight if a knight of yours captured on your previous turn.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|capture,knight",
    "animation": "passive",
    "location": "src/engine/nerfs/wild.ts",
    "tests": [
@@ -40166,17 +40574,38 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "advancing_faith",
-   "name": "Advancing Faith",
+   "id": "anchored_rooks",
+   "name": "Anchored Rooks",
    "kind": "nerf",
    "tier": 3,
-   "effect": "Your bishops must gain ground on every move: each bishop move has to advance toward the enemy, never staying level and never falling back, except a bishop move that gets your king out of check is always allowed.",
+   "effect": "Your rooks may leave your back rank, but once a rook has left it, that rook can never return to it.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|advance,bishop,check,king,move",
+   "signature": "nerf|one-shot|rank,return,rook",
    "animation": "passive",
-   "location": "src/engine/nerfs/expanded/tier2.ts",
+   "location": "src/engine/buffs/hexes/tier3.ts",
+   "tests": [
+    "test-nerf-categories.ts",
+    "lab-run-all.ts",
+    "test-hexes.cjs",
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+  },
+  {
+   "id": "artillery",
+   "name": "Artillery",
+   "kind": "nerf",
+   "tier": 3,
+   "effect": "Rooks must capture at distance ≥ 4.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|capture,n:4,rook",
+   "animation": "passive",
+   "location": "src/engine/nerfs/extras.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -40240,17 +40669,17 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "clergy",
-   "name": "Clergy",
+   "id": "cess",
+   "name": "Cess",
    "kind": "nerf",
    "tier": 3,
-   "effect": "Your bishops can't move backward toward your own side; each bishop move must stay level or advance toward the enemy.",
+   "effect": "You can't move to the h-file.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|advance,bishop,move",
+   "signature": "nerf|unstated|file,file:h,move",
    "animation": "passive",
-   "location": "src/engine/nerfs/extras.ts",
+   "location": "src/engine/nerfs/implemented.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -40269,42 +40698,6 @@
    "signature": "nerf|next-turn|move,random,reveal,square",
    "animation": "passive",
    "location": "src/engine/nerfs/library.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "conscientious_objectors",
-   "name": "Conscientious Objectors",
-   "kind": "nerf",
-   "tier": 3,
-   "effect": "Your pawns can't capture, unless the target is the piece checking your king.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|capture,check,king,pawn",
-   "animation": "passive",
-   "location": "src/engine/nerfs/implemented.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "court_martial",
-   "name": "Court Martial",
-   "kind": "nerf",
-   "tier": 3,
-   "effect": "A piece that's attacked at turn start can't capture.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|capture",
-   "animation": "passive",
-   "location": "src/engine/nerfs/extras.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -40366,17 +40759,17 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "femme_fatale",
-   "name": "Femme Fatale",
+   "id": "famine",
+   "name": "Famine",
    "kind": "nerf",
    "tier": 3,
-   "effect": "You can only capture the enemy king with your queen.",
+   "effect": "After move 15, you can't capture pawns.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|capture,king,queen",
+   "signature": "nerf|unstated|capture,move,n:15,pawn",
    "animation": "passive",
-   "location": "src/engine/nerfs/library.ts",
+   "location": "src/engine/nerfs/extras.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -40384,17 +40777,17 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "greedy",
-   "name": "Greedy",
+   "id": "fn_selkie_skin",
+   "name": "Selkie Skin",
    "kind": "nerf",
    "tier": 3,
-   "effect": "You can't capture a lesser piece when a higher-value capture is on the table. You may still play a quiet move.",
+   "effect": "Your rooks cannot move more than 3 squares along a file. Moves along a rank are free.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|capture,move",
+   "signature": "nerf|unstated|file,move,n:3,rank,rook,square",
    "animation": "passive",
-   "location": "src/engine/nerfs/implemented.ts",
+   "location": "src/engine/nerfs/fantasy.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -40420,17 +40813,17 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "leading_the_charge",
-   "name": "Leading the Charge",
+   "id": "kingfisher",
+   "name": "Kingfisher",
    "kind": "nerf",
    "tier": 3,
-   "effect": "As long as you have a knight, non-knights can't be ahead of your most advanced knight.",
+   "effect": "Starting after your third move, when your king can capture it must dive for the richest prize: it has to take the most valuable enemy piece within its reach.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|advance,knight",
+   "signature": "nerf|unstated|capture,king,move",
    "animation": "passive",
-   "location": "src/engine/nerfs/library.ts",
+   "location": "src/engine/nerfs/extras.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -40449,6 +40842,42 @@
    "signature": "nerf|unstated|capture,check,king",
    "animation": "passive",
    "location": "src/engine/nerfs/expanded/tier3.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "no_retreat",
+   "name": "No Retreat",
+   "kind": "nerf",
+   "tier": 3,
+   "effect": "Your king can't step backward toward your own back rank.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|king,rank",
+   "animation": "passive",
+   "location": "src/engine/nerfs/expanded/tier3.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "no_stone_cutting",
+   "name": "No Stone Cutting",
+   "kind": "nerf",
+   "tier": 3,
+   "effect": "You can't capture bishops.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|bishop,capture",
+   "animation": "passive",
+   "location": "src/engine/nerfs/expanded/tier1.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -40546,6 +40975,24 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "prince_charming",
+   "name": "Prince Charming",
+   "kind": "nerf",
+   "tier": 3,
+   "effect": "If your queen is attacked, must move a knight if possible.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|knight,move,queen",
+   "animation": "passive",
+   "location": "src/engine/nerfs/library.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "professional_courtesy",
    "name": "Professional Courtesy",
    "kind": "nerf",
@@ -40600,17 +41047,17 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "queen_disguise",
-   "name": "Queen Disguise",
+   "id": "pull_of_the_center",
+   "name": "Pull of the Center",
    "kind": "nerf",
    "tier": 3,
-   "effect": "Your queen is secretly either a rook or a bishop. Once you move it like one, you can't move it like the other.",
+   "effect": "Your pawns can only capture toward the center files.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|one-shot|bishop,move,queen,rook",
+   "signature": "nerf|unstated|capture,file,pawn",
    "animation": "passive",
-   "location": "src/engine/nerfs/library.ts",
+   "location": "src/engine/nerfs/expanded/tier3.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -40618,35 +41065,17 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "queen_fatigue",
-   "name": "Queen Fatigue",
+   "id": "right_handed",
+   "name": "Right Handed",
    "kind": "nerf",
    "tier": 3,
-   "effect": "You lose if you move your queen more than 12 times. The count is only checked after your sixth move.",
+   "effect": "You can't move to the a-file, except once per game.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|check,move,n:12,queen,time",
+   "signature": "nerf|one-shot|file,file:a,move",
    "animation": "passive",
-   "location": "src/engine/nerfs/expanded/tier2.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "rook_buddies",
-   "name": "Rook Buddies",
-   "kind": "nerf",
-   "tier": 3,
-   "effect": "Your rooks can't move while any piece sits between them on your home rank; clear the back rank between them first.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|move,rank,rook",
-   "animation": "passive",
-   "location": "src/engine/nerfs/library.ts",
+   "location": "src/engine/nerfs/expanded/tier1.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -40690,35 +41119,17 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "scouting_ahead",
-   "name": "Scouting Ahead",
+   "id": "separation_church_state",
+   "name": "Separation of Church and State",
    "kind": "nerf",
    "tier": 3,
-   "effect": "As long as you have a pawn, non-pawns can't go ahead of your most advanced pawn.",
+   "effect": "Can't move bishops next to a king and can't move king next to a bishop.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|advance,pawn",
+   "signature": "nerf|unstated|bishop,king,move",
    "animation": "passive",
    "location": "src/engine/nerfs/library.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "shadow_queen",
-   "name": "Shadow Queen",
-   "kind": "nerf",
-   "tier": 3,
-   "effect": "Your queen can only move to dark squares.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|move,queen,square",
-   "animation": "passive",
-   "location": "src/engine/nerfs/implemented.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -40762,15 +41173,15 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "stir_crazy",
-   "name": "Stir Crazy",
+   "id": "snipers",
+   "name": "Snipers",
    "kind": "nerf",
    "tier": 3,
-   "effect": "If you haven't moved your king for 4 turns, you must on the 5th.",
+   "effect": "Bishops can only capture from distance ≥ 4.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|4-turns|king,move,n:4",
+   "signature": "nerf|unstated|bishop,capture,n:4",
    "animation": "passive",
    "location": "src/engine/nerfs/library.ts",
    "tests": [
@@ -40780,17 +41191,17 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "trophy_wife",
-   "name": "Trophy Wife",
+   "id": "switchback",
+   "name": "Switchback",
    "kind": "nerf",
    "tier": 3,
-   "effect": "Your queen can't capture, unless the target is the piece checking your king.",
+   "effect": "You can't move in the exact same direction (same file and rank step) twice in a row.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|capture,check,king,queen",
+   "signature": "nerf|unstated|file,move,rank",
    "animation": "passive",
-   "location": "src/engine/nerfs/implemented.ts",
+   "location": "src/engine/nerfs/extras.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -40798,71 +41209,17 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "truant",
-   "name": "Truant",
+   "id": "vegan",
+   "name": "Vegan",
    "kind": "nerf",
    "tier": 3,
-   "effect": "You can't move the same piece twice in a row.",
+   "effect": "You can't capture knights, unless the knight is the piece checking your king.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|move",
+   "signature": "nerf|unstated|capture,check,king,knight",
    "animation": "passive",
    "location": "src/engine/nerfs/implemented.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "true_gentleman",
-   "name": "True Gentleman",
-   "kind": "nerf",
-   "tier": 3,
-   "effect": "You can't capture queens.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|capture,queen",
-   "animation": "passive",
-   "location": "src/engine/nerfs/implemented.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "whites_of_their_eyes",
-   "name": "Whites of Their Eyes",
-   "kind": "nerf",
-   "tier": 3,
-   "effect": "You can only capture within 2 squares (king-steps) of the capturing piece.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|capture,king,n:2,square",
-   "animation": "passive",
-   "location": "src/engine/nerfs/implemented.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "wn_knight_toll",
-   "name": "Knight Toll",
-   "kind": "nerf",
-   "tier": 3,
-   "effect": "You can't capture with a knight if a knight of yours captured on your previous turn.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|capture,knight",
-   "animation": "passive",
-   "location": "src/engine/nerfs/wild.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -40906,17 +41263,17 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "artillery",
-   "name": "Artillery",
+   "id": "advancing_faith",
+   "name": "Advancing Faith",
    "kind": "nerf",
    "tier": 4,
-   "effect": "Rooks must capture at distance ≥ 4.",
+   "effect": "Your bishops must gain ground on every move: each bishop move has to advance toward the enemy, never staying level and never falling back, except a bishop move that gets your king out of check is always allowed.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|capture,n:4,rook",
+   "signature": "nerf|unstated|advance,bishop,check,king,move",
    "animation": "passive",
-   "location": "src/engine/nerfs/extras.ts",
+   "location": "src/engine/nerfs/expanded/tier2.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -40942,15 +41299,51 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "broadside_rooks",
-   "name": "Broadside Rooks",
+   "id": "bishop_tunnel_vision",
+   "name": "Bishop Tunnel Vision",
    "kind": "nerf",
    "tier": 4,
-   "effect": "Your rooks glide any distance sideways along a rank, but can only inch one square at a time up or down a file.",
+   "effect": "Your bishops can't move more than three squares in a single move, unless the move gives check.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|file,rank,rook,square,time",
+   "signature": "nerf|unstated|bishop,check,move,square",
+   "animation": "passive",
+   "location": "src/engine/nerfs/expanded/tier4.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "clergy",
+   "name": "Clergy",
+   "kind": "nerf",
+   "tier": 4,
+   "effect": "Your bishops can't move backward toward your own side; each bishop move must stay level or advance toward the enemy.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|advance,bishop,move",
+   "animation": "passive",
+   "location": "src/engine/nerfs/extras.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "cloistered_queen",
+   "name": "Cloistered Queen",
+   "kind": "nerf",
+   "tier": 4,
+   "effect": "Your queen cannot move until you castle or reach your 12th move, whichever comes first.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|castle,move,queen",
    "animation": "passive",
    "location": "src/engine/nerfs/expanded/tier7.ts",
    "tests": [
@@ -40960,17 +41353,17 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "carnivore_bishops",
-   "name": "Carnivore Bishops",
+   "id": "conscientious_objectors",
+   "name": "Conscientious Objectors",
    "kind": "nerf",
    "tier": 4,
-   "effect": "Starting on your fourth move, your bishops can only move when they capture.",
+   "effect": "Your pawns can't capture, unless the target is the piece checking your king.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|bishop,capture,move",
+   "signature": "nerf|unstated|capture,check,king,pawn",
    "animation": "passive",
-   "location": "src/engine/nerfs/expanded/tier3.ts",
+   "location": "src/engine/nerfs/implemented.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -40978,53 +41371,17 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "cheerleaders",
-   "name": "Cheerleaders",
+   "id": "court_martial",
+   "name": "Court Martial",
    "kind": "nerf",
    "tier": 4,
-   "effect": "Non-pawns can only capture if adjacent to one of your pawns.",
+   "effect": "A piece that's attacked at turn start can't capture.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|adjacent,capture,pawn",
+   "signature": "nerf|unstated|capture",
    "animation": "passive",
-   "location": "src/engine/nerfs/library.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "chivalry",
-   "name": "Chivalry",
-   "kind": "nerf",
-   "tier": 4,
-   "effect": "Can only capture heavies (rooks, queens) with a knight. This activates only after your move 3.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|capture,knight,move,n:3,queen,rook",
-   "animation": "passive",
-   "location": "src/engine/nerfs/library.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "control_center",
-   "name": "Control Center",
-   "kind": "nerf",
-   "tier": 4,
-   "effect": "Non-capturing moves must go to files c, d, e, or f, unless the piece already starts on those files, in which case it may leave normally.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|file,move",
-   "animation": "passive",
-   "location": "src/engine/nerfs/library.ts",
+   "location": "src/engine/nerfs/extras.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -41050,17 +41407,36 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "crippled_clergy",
-   "name": "Crippled Clergy",
+   "id": "crossing_the_rubicon",
+   "name": "Crossing the Rubicon",
    "kind": "nerf",
    "tier": 4,
-   "effect": "Your bishops can only move one square at a time.",
+   "effect": "Once a piece crosses to the opponent's half, it can't return.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|bishop,move,square,time",
+   "signature": "nerf|one-shot|return",
    "animation": "passive",
-   "location": "src/engine/nerfs/expanded/tier8.ts",
+   "location": "src/engine/nerfs/library.ts",
+   "tests": [
+    "test-nerf-categories.ts",
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "crusade",
+   "name": "Crusade",
+   "kind": "nerf",
+   "tier": 4,
+   "effect": "For 4 moves starting on a random move (announced a turn early), if at least three of your moves reach a specific random square, you must move to it.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|move,n:4,random,square",
+   "animation": "passive",
+   "location": "src/engine/nerfs/library.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -41086,42 +41462,6 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "entrenched",
-   "name": "Entrenched",
-   "kind": "nerf",
-   "tier": 4,
-   "effect": "Rooks can't move more than 2 squares.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|move,n:2,rook,square",
-   "animation": "passive",
-   "location": "src/engine/nerfs/library.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "famine",
-   "name": "Famine",
-   "kind": "nerf",
-   "tier": 4,
-   "effect": "After move 15, you can't capture pawns.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|capture,move,n:15,pawn",
-   "animation": "passive",
-   "location": "src/engine/nerfs/extras.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
    "id": "far_sighted",
    "name": "Far Sighted",
    "kind": "nerf",
@@ -41140,17 +41480,35 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "gambler",
-   "name": "Gambler",
+   "id": "fn_trolls_toll",
+   "name": "Troll's Toll",
    "kind": "nerf",
    "tier": 4,
-   "effect": "Can't move a specific piece type, re-randomized each turn and revealed one turn early. The ban is dropped whenever it would leave you fewer than three legal moves.",
+   "effect": "After you capture a pawn, your next move must be a pawn move, if you have one.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|move,random,reveal",
+   "signature": "nerf|next-turn|capture,move,pawn",
    "animation": "passive",
-   "location": "src/engine/nerfs/library.ts",
+   "location": "src/engine/nerfs/fantasy.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "frozen_cavalry",
+   "name": "Frozen Cavalry",
+   "kind": "nerf",
+   "tier": 4,
+   "effect": "From your 18th move on, you can't move your knights, except for a single once-per-game knight move.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|one-shot|knight,move",
+   "animation": "passive",
+   "location": "src/engine/nerfs/expanded/tier4.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -41176,17 +41534,17 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "half_a_queen",
-   "name": "Half a Queen",
+   "id": "greedy",
+   "name": "Greedy",
    "kind": "nerf",
    "tier": 4,
-   "effect": "Your queen can only move like a rook, never diagonally, except one diagonal move is allowed once per game.",
+   "effect": "You can't capture a lesser piece when a higher-value capture is on the table. You may still play a quiet move.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|one-shot|move,queen,rook",
+   "signature": "nerf|unstated|capture,move",
    "animation": "passive",
-   "location": "src/engine/nerfs/expanded/tier3.ts",
+   "location": "src/engine/nerfs/implemented.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -41206,26 +41564,6 @@
    "animation": "passive",
    "location": "src/engine/nerfs/library.ts",
    "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "heavy_boots",
-   "name": "Heavy Boots",
-   "kind": "nerf",
-   "tier": 4,
-   "effect": "All non-pawn moves are distance ≤ 3.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|move,n:3,pawn",
-   "animation": "passive",
-   "location": "src/engine/buffs/library.ts",
-   "tests": [
-    "lab-run-all.ts",
-    "test-hexes.cjs",
     "test-nerfs.cjs"
    ],
    "flags": [],
@@ -41286,24 +41624,6 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "kingfisher",
-   "name": "Kingfisher",
-   "kind": "nerf",
-   "tier": 4,
-   "effect": "Starting after your third move, when your king can capture it must dive for the richest prize: it has to take the most valuable enemy piece within its reach.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|capture,king,move",
-   "animation": "passive",
-   "location": "src/engine/nerfs/extras.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
    "id": "knight_parade",
    "name": "Knight Parade",
    "kind": "nerf",
@@ -41341,17 +41661,17 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "moving_day",
-   "name": "Moving Day",
+   "id": "monastic_vows",
+   "name": "Monastic Vows",
    "kind": "nerf",
    "tier": 4,
-   "effect": "After turn 20, no piece may be on your home row.",
+   "effect": "Your bishops can't capture, except capturing a piece that has your king in check is always legal.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|n:20",
+   "signature": "nerf|unstated|bishop,capture,check,king",
    "animation": "passive",
-   "location": "src/engine/nerfs/library.ts",
+   "location": "src/engine/nerfs/expanded/tier2.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -41359,17 +41679,17 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "no_retreat",
-   "name": "No Retreat",
+   "id": "no_retreat_rooks",
+   "name": "No Retreat Rooks",
    "kind": "nerf",
    "tier": 4,
-   "effect": "Your king can't step backward toward your own back rank.",
+   "effect": "From your 10th move on, your rooks can't move toward your own back rank, except for a single once-per-game move.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|king,rank",
+   "signature": "nerf|one-shot|move,rank,rook",
    "animation": "passive",
-   "location": "src/engine/nerfs/expanded/tier3.ts",
+   "location": "src/engine/nerfs/expanded/tier4.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -41406,42 +41726,6 @@
    "signature": "nerf|unstated|capture,move",
    "animation": "passive",
    "location": "src/engine/nerfs/library.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "one_bite_at_a_time",
-   "name": "One Bite at a Time",
-   "kind": "nerf",
-   "tier": 4,
-   "effect": "After a capture, you can't capture again for two of your turns, except your chosen pawn (on a random file, shown from the start) may still capture.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|capture,file,pawn,random",
-   "animation": "passive",
-   "location": "src/engine/nerfs/expanded/tier3.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "out_of_breath",
-   "name": "Out of Breath",
-   "kind": "nerf",
-   "tier": 4,
-   "effect": "You can only move your king once the entire game.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|one-shot|king,move",
-   "animation": "passive",
-   "location": "src/engine/nerfs/implemented.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -41503,42 +41787,6 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "prince_charming",
-   "name": "Prince Charming",
-   "kind": "nerf",
-   "tier": 4,
-   "effect": "If your queen is attacked, must move a knight if possible.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|knight,move,queen",
-   "animation": "passive",
-   "location": "src/engine/nerfs/library.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "pull_of_the_center",
-   "name": "Pull of the Center",
-   "kind": "nerf",
-   "tier": 4,
-   "effect": "Your pawns can only capture toward the center files.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|capture,file,pawn",
-   "animation": "passive",
-   "location": "src/engine/nerfs/expanded/tier3.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
    "id": "punching_down",
    "name": "Punching Down",
    "kind": "nerf",
@@ -41550,6 +41798,78 @@
    "signature": "nerf|unstated|capture",
    "animation": "passive",
    "location": "src/engine/nerfs/implemented.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "quarantine",
+   "name": "Quarantine",
+   "kind": "nerf",
+   "tier": 4,
+   "effect": "You can't move a piece into your own first two ranks from outside them (pieces already on those ranks may still move within them). Separately, while your king is in check, only your king may move.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|check,king,move,rank",
+   "animation": "passive",
+   "location": "src/engine/nerfs/extras.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "queen_disguise",
+   "name": "Queen Disguise",
+   "kind": "nerf",
+   "tier": 4,
+   "effect": "Your queen is secretly either a rook or a bishop. Once you move it like one, you can't move it like the other.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|one-shot|bishop,move,queen,rook",
+   "animation": "passive",
+   "location": "src/engine/nerfs/library.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "queen_fatigue",
+   "name": "Queen Fatigue",
+   "kind": "nerf",
+   "tier": 4,
+   "effect": "You lose if you move your queen more than 12 times. The count is only checked after your sixth move.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|check,move,n:12,queen,time",
+   "animation": "passive",
+   "location": "src/engine/nerfs/expanded/tier2.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "queen_grounded",
+   "name": "Queen Grounded",
+   "kind": "nerf",
+   "tier": 4,
+   "effect": "From your 12th move on, your queen can't move into the opponent's half of the board, except for a single once-per-game move.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|one-shot|move,queen",
+   "animation": "passive",
+   "location": "src/engine/nerfs/expanded/tier4.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -41584,6 +41904,24 @@
    "duration": "match",
    "targets": "self",
    "signature": "nerf|unstated|capture",
+   "animation": "passive",
+   "location": "src/engine/nerfs/library.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "royal_berth",
+   "name": "Royal Berth",
+   "kind": "nerf",
+   "tier": 4,
+   "effect": "Can't place a piece adjacent to your king.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|adjacent,king,place",
    "animation": "passive",
    "location": "src/engine/nerfs/library.ts",
    "tests": [
@@ -41629,17 +41967,35 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "shapeshifter",
-   "name": "Shapeshifter",
+   "id": "secret_garden",
+   "name": "Secret Garden",
    "kind": "nerf",
    "tier": 4,
-   "effect": "For your first 3 moves the queen moves normally. From then on she is a bishop; capturing a non-pawn turns her into a copy of that piece, and capturing a knight freezes her.",
+   "effect": "Two random garden zones (each a 3-file-wide, 3-rank-deep block in front of one of your pawns, shown as marked squares) are off limits for the whole game: you can't move any piece onto those squares.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|bishop,freeze,knight,move,n:3,pawn,queen",
+   "signature": "nerf|unstated|block,file,move,n:3,n:3,pawn,random,rank,square",
    "animation": "passive",
-   "location": "src/engine/nerfs/library.ts",
+   "location": "src/engine/nerfs/implemented.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "shadow_queen",
+   "name": "Shadow Queen",
+   "kind": "nerf",
+   "tier": 4,
+   "effect": "Your queen can only move to dark squares.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|move,queen,square",
+   "animation": "passive",
+   "location": "src/engine/nerfs/implemented.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -41658,6 +42014,24 @@
    "signature": "nerf|next-turn|adjacent,capture,move,square",
    "animation": "passive",
    "location": "src/engine/nerfs/library.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "short_leash_knights",
+   "name": "Short Leash Knights",
+   "kind": "nerf",
+   "tier": 4,
+   "effect": "Your knights may never move beyond your own first three ranks.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|knight,move,rank",
+   "animation": "passive",
+   "location": "src/engine/nerfs/expanded/tier6.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -41719,60 +42093,6 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "snipers",
-   "name": "Snipers",
-   "kind": "nerf",
-   "tier": 4,
-   "effect": "Bishops can only capture from distance ≥ 4.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|bishop,capture,n:4",
-   "animation": "passive",
-   "location": "src/engine/nerfs/library.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "social_distancing",
-   "name": "Social Distancing",
-   "kind": "nerf",
-   "tier": 4,
-   "effect": "Can't make non-capturing moves to squares adjacent to opponent pieces. The forbidden ring around enemy pieces is shown on the board.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|adjacent,move,square",
-   "animation": "passive",
-   "location": "src/engine/nerfs/library.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "solar_flare",
-   "name": "Solar Flare",
-   "kind": "nerf",
-   "tier": 4,
-   "effect": "The flare burns for 3 of your turns, then sleeps for 2, over and over. While it burns you can only capture on light squares. The dark squares are shown whenever it is up.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|3-turns|capture,n:2,n:3,sleep,square",
-   "animation": "passive",
-   "location": "src/engine/nerfs/extras.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
    "id": "spice_of_life",
    "name": "Spice of Life",
    "kind": "nerf",
@@ -41784,6 +42104,24 @@
    "signature": "nerf|unstated|move",
    "animation": "passive",
    "location": "src/engine/nerfs/implemented.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "stir_crazy",
+   "name": "Stir Crazy",
+   "kind": "nerf",
+   "tier": 4,
+   "effect": "If you haven't moved your king for 4 turns, you must on the 5th.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|4-turns|king,move,n:4",
+   "animation": "passive",
+   "location": "src/engine/nerfs/library.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -41827,17 +42165,17 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "three_check",
-   "name": "Three Check",
+   "id": "tidy_desk",
+   "name": "Tidy Desk",
    "kind": "nerf",
    "tier": 4,
-   "effect": "If you have been checked three times total, you lose.",
+   "effect": "By move 25, you must have at least one piece on every rank of your half but one; you may leave a single rank of your choosing open.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|check,time",
+   "signature": "nerf|unstated|move,n:25,rank",
    "animation": "passive",
-   "location": "src/engine/nerfs/implemented.ts",
+   "location": "src/engine/nerfs/extras.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -41899,6 +42237,42 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "truant",
+   "name": "Truant",
+   "kind": "nerf",
+   "tier": 4,
+   "effect": "You can't move the same piece twice in a row.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|move",
+   "animation": "passive",
+   "location": "src/engine/nerfs/implemented.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "true_gentleman",
+   "name": "True Gentleman",
+   "kind": "nerf",
+   "tier": 4,
+   "effect": "You can't capture queens.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|capture,queen",
+   "animation": "passive",
+   "location": "src/engine/nerfs/implemented.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "vampiric",
    "name": "Vampiric",
    "kind": "nerf",
@@ -41935,24 +42309,6 @@
    ],
    "flags": [],
    "action": "keep: diagonal-only constraint at T4, different geometry"
-  },
-  {
-   "id": "warlord",
-   "name": "Warlord",
-   "kind": "nerf",
-   "tier": 4,
-   "effect": "From turn 12 onward, your king can't be on your first two ranks. From turn 11, while your king is still on those ranks, you are warned one move early.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|king,move,n:11,n:12,rank",
-   "animation": "passive",
-   "location": "src/engine/nerfs/library.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
   },
   {
    "id": "winds_of_fate",
@@ -42153,24 +42509,6 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "wn_weigh_station",
-   "name": "Weigh Station",
-   "kind": "nerf",
-   "tier": 4,
-   "effect": "Your rooks and queen can't cross into the enemy half (relative ranks 5 to 8).",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|n:5,n:8,queen,rank,rook",
-   "animation": "passive",
-   "location": "src/engine/nerfs/wild.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
    "id": "alternator",
    "name": "Alternator",
    "kind": "nerf",
@@ -42187,27 +42525,6 @@
    ],
    "flags": [],
    "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "anchored_rooks",
-   "name": "Anchored Rooks",
-   "kind": "nerf",
-   "tier": 5,
-   "effect": "Your rooks may leave your back rank, but once a rook has left it, that rook can never return to it.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|one-shot|rank,return,rook",
-   "animation": "passive",
-   "location": "src/engine/buffs/hexes/tier3.ts",
-   "tests": [
-    "test-nerf-categories.ts",
-    "lab-run-all.ts",
-    "test-hexes.cjs",
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
   },
   {
    "id": "armory",
@@ -42246,15 +42563,15 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "bishop_fan_club",
-   "name": "Bishop Fan Club",
+   "id": "boxing_with_shadow",
+   "name": "Boxing with Shadow",
    "kind": "nerf",
    "tier": 5,
-   "effect": "Must promote to bishops. King and queen can only move diagonally.",
+   "effect": "From your move 4 on, when opponent moves, if you can move to the square they vacated, you must.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|bishop,king,move,promote,queen",
+   "signature": "nerf|unstated|move,n:4,square",
    "animation": "passive",
    "location": "src/engine/nerfs/library.ts",
    "tests": [
@@ -42264,35 +42581,17 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "bishop_tunnel_vision",
-   "name": "Bishop Tunnel Vision",
+   "id": "broadside_rooks",
+   "name": "Broadside Rooks",
    "kind": "nerf",
    "tier": 5,
-   "effect": "Your bishops can't move more than three squares in a single move, unless the move gives check.",
+   "effect": "Your rooks glide any distance sideways along a rank, but can only inch one square at a time up or down a file.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|bishop,check,move,square",
+   "signature": "nerf|unstated|file,rank,rook,square,time",
    "animation": "passive",
-   "location": "src/engine/nerfs/expanded/tier4.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "burning_bridges",
-   "name": "Burning Bridges",
-   "kind": "nerf",
-   "tier": 5,
-   "effect": "Your bishops, rooks, and queen can't travel over a square they have already passed over earlier in the game.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|bishop,queen,rook,square",
-   "animation": "passive",
-   "location": "src/engine/nerfs/extras.ts",
+   "location": "src/engine/nerfs/expanded/tier7.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -42318,6 +42617,24 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "carnivore_bishops",
+   "name": "Carnivore Bishops",
+   "kind": "nerf",
+   "tier": 5,
+   "effect": "Starting on your fourth move, your bishops can only move when they capture.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|bishop,capture,move",
+   "animation": "passive",
+   "location": "src/engine/nerfs/expanded/tier3.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "castle_curfew",
    "name": "Castle Curfew",
    "kind": "nerf",
@@ -42336,35 +42653,17 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "champing_at_the_bit",
-   "name": "Champing at the Bit",
+   "id": "chivalry",
+   "name": "Chivalry",
    "kind": "nerf",
    "tier": 5,
-   "effect": "All pawn moves must be distance 2.",
+   "effect": "Can only capture heavies (rooks, queens) with a knight. This activates only after your move 3.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|move,n:2,pawn",
+   "signature": "nerf|unstated|capture,knight,move,n:3,queen,rook",
    "animation": "passive",
-   "location": "src/engine/nerfs/implemented.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "cloistered_queen",
-   "name": "Cloistered Queen",
-   "kind": "nerf",
-   "tier": 5,
-   "effect": "Your queen cannot move until you castle or reach your 12th move, whichever comes first.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|castle,move,queen",
-   "animation": "passive",
-   "location": "src/engine/nerfs/expanded/tier7.ts",
+   "location": "src/engine/nerfs/library.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -42390,15 +42689,15 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "colorblind",
-   "name": "Colorblind",
+   "id": "control_center",
+   "name": "Control Center",
    "kind": "nerf",
    "tier": 5,
-   "effect": "Can't move to one random color of squares, re-randomized each turn and revealed one turn early. The restriction is dropped whenever it would leave you fewer than three legal moves.",
+   "effect": "Non-capturing moves must go to files c, d, e, or f, unless the piece already starts on those files, in which case it may leave normally.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|move,random,reveal,square",
+   "signature": "nerf|unstated|file,move",
    "animation": "passive",
    "location": "src/engine/nerfs/library.ts",
    "tests": [
@@ -42444,17 +42743,17 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "crusade",
-   "name": "Crusade",
+   "id": "crippled_clergy",
+   "name": "Crippled Clergy",
    "kind": "nerf",
    "tier": 5,
-   "effect": "For 4 moves starting on a random move (announced a turn early), if at least three of your moves reach a specific random square, you must move to it.",
+   "effect": "Each bishop of yours shuffles: every bishop move covers a single diagonal step.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|move,n:4,random,square",
+   "signature": "nerf|unstated|bishop,move",
    "animation": "passive",
-   "location": "src/engine/nerfs/library.ts",
+   "location": "src/engine/nerfs/expanded/tier8.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -42462,33 +42761,15 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "doctor_octopus",
-   "name": "Doctor Octopus",
+   "id": "entrenched",
+   "name": "Entrenched",
    "kind": "nerf",
    "tier": 5,
-   "effect": "Can only capture non-king pieces 8 times total.",
+   "effect": "Rooks can't move more than 2 squares.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|capture,king,n:8,time",
-   "animation": "passive",
-   "location": "src/engine/nerfs/library.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "eat_your_vegetables",
-   "name": "Eat Your Vegetables",
-   "kind": "nerf",
-   "tier": 5,
-   "effect": "Can't capture non-pawns until opponent has ≤ 4 pawns remaining.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|capture,n:4,pawn",
+   "signature": "nerf|unstated|move,n:2,rook,square",
    "animation": "passive",
    "location": "src/engine/nerfs/library.ts",
    "tests": [
@@ -42535,17 +42816,53 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "frozen_cavalry",
-   "name": "Frozen Cavalry",
+   "id": "femme_fatale",
+   "name": "Femme Fatale",
    "kind": "nerf",
    "tier": 5,
-   "effect": "From your 18th move on, you can't move your knights, except for a single once-per-game knight move.",
+   "effect": "You can only capture the enemy king with your queen.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|one-shot|knight,move",
+   "signature": "nerf|unstated|capture,king,queen",
    "animation": "passive",
-   "location": "src/engine/nerfs/expanded/tier4.ts",
+   "location": "src/engine/nerfs/library.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "fn_banshee_bond",
+   "name": "Banshee Bond",
+   "kind": "nerf",
+   "tier": 5,
+   "effect": "Your queen may only move to a square next to one of your other pieces. If she has no such move, she stays put.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|move,queen,square",
+   "animation": "passive",
+   "location": "src/engine/nerfs/fantasy.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "gambler",
+   "name": "Gambler",
+   "kind": "nerf",
+   "tier": 5,
+   "effect": "Can't move a specific piece type, re-randomized each turn and revealed one turn early. The ban is dropped whenever it would leave you fewer than three legal moves.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|move,random,reveal",
+   "animation": "passive",
+   "location": "src/engine/nerfs/library.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -42571,17 +42888,55 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "hobbled_queen",
-   "name": "Hobbled Queen",
+   "id": "half_a_queen",
+   "name": "Half a Queen",
    "kind": "nerf",
    "tier": 5,
-   "effect": "Your queen can only move one square at a time, like a second king.",
+   "effect": "Your queen can only move like a rook, never diagonally, except one diagonal move is allowed once per game.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|king,move,queen,square,time",
+   "signature": "nerf|one-shot|move,queen,rook",
    "animation": "passive",
-   "location": "src/engine/nerfs/expanded/tier8.ts",
+   "location": "src/engine/nerfs/expanded/tier3.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "heavy_boots",
+   "name": "Heavy Boots",
+   "kind": "nerf",
+   "tier": 5,
+   "effect": "All non-pawn moves are distance ≤ 3.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|move,n:3,pawn",
+   "animation": "passive",
+   "location": "src/engine/buffs/library.ts",
+   "tests": [
+    "lab-run-all.ts",
+    "test-hexes.cjs",
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "hobbled_knights",
+   "name": "Hobbled Knights",
+   "kind": "nerf",
+   "tier": 5,
+   "effect": "Your knights can't advance toward the enemy side; their rank may never increase.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|advance,knight,rank",
+   "animation": "passive",
+   "location": "src/engine/nerfs/expanded/tier5.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -42618,42 +42973,6 @@
    "signature": "nerf|unstated|move,queen",
    "animation": "passive",
    "location": "src/engine/nerfs/extras.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "hopscotch",
-   "name": "Hopscotch",
-   "kind": "nerf",
-   "tier": 5,
-   "effect": "Must alternate light/dark destination squares. The required destination color is shown each turn.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|square",
-   "animation": "passive",
-   "location": "src/engine/nerfs/library.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "horse_eats_first",
-   "name": "Horse Eats First",
-   "kind": "nerf",
-   "tier": 5,
-   "effect": "As long as you have a knight, you can only capture with knights. This activates only after your move 3.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|capture,knight,move,n:3",
-   "animation": "passive",
-   "location": "src/engine/nerfs/library.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -42715,15 +43034,15 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "left_for_dead",
-   "name": "Left for Dead",
+   "id": "leading_the_charge",
+   "name": "Leading the Charge",
    "kind": "nerf",
    "tier": 5,
-   "effect": "Can only capture leftward (file decreasing).",
+   "effect": "As long as you have a knight, non-knights can't be ahead of your most advanced knight.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|capture,file",
+   "signature": "nerf|unstated|advance,knight",
    "animation": "passive",
    "location": "src/engine/nerfs/library.ts",
    "tests": [
@@ -42787,17 +43106,71 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "no_retreat_rooks",
-   "name": "No Retreat Rooks",
+   "id": "moving_day",
+   "name": "Moving Day",
    "kind": "nerf",
    "tier": 5,
-   "effect": "From your 10th move on, your rooks can't move toward your own back rank, except for a single once-per-game move.",
+   "effect": "After turn 20, no piece may be on your home row.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|one-shot|move,rank,rook",
+   "signature": "nerf|unstated|n:20",
    "animation": "passive",
-   "location": "src/engine/nerfs/expanded/tier4.ts",
+   "location": "src/engine/nerfs/library.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "myopic_bishops",
+   "name": "Myopic Bishops",
+   "kind": "nerf",
+   "tier": 5,
+   "effect": "From your fourth move on, your bishops can't move more than two squares.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|bishop,move,square",
+   "animation": "passive",
+   "location": "src/engine/nerfs/expanded/tier5.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "one_bite_at_a_time",
+   "name": "One Bite at a Time",
+   "kind": "nerf",
+   "tier": 5,
+   "effect": "After a capture, you can't capture again for two of your turns, except your chosen pawn (on a random file, shown from the start) may still capture.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|capture,file,pawn,random",
+   "animation": "passive",
+   "location": "src/engine/nerfs/expanded/tier3.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "out_of_breath",
+   "name": "Out of Breath",
+   "kind": "nerf",
+   "tier": 5,
+   "effect": "You can only move your king once the entire game.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|one-shot|king,move",
+   "animation": "passive",
+   "location": "src/engine/nerfs/implemented.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -42877,17 +43250,17 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "quarantine",
-   "name": "Quarantine",
+   "id": "predatory_knights",
+   "name": "Predatory Knights",
    "kind": "nerf",
    "tier": 5,
-   "effect": "You can't move a piece into your own first two ranks from outside them (pieces already on those ranks may still move within them). Separately, while your king is in check, only your king may move.",
+   "effect": "Your knights can only move by capturing, except that every third turn a knight with no capture may make one quiet move.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|check,king,move,rank",
+   "signature": "nerf|unstated|capture,knight,move",
    "animation": "passive",
-   "location": "src/engine/nerfs/extras.ts",
+   "location": "src/engine/nerfs/expanded/tier7.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -42895,36 +43268,19 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "queen_grounded",
-   "name": "Queen Grounded",
+   "id": "restless_crown",
+   "name": "Restless Crown",
    "kind": "nerf",
    "tier": 5,
-   "effect": "From your 12th move on, your queen can't move into the opponent's half of the board, except for a single once-per-game move.",
+   "effect": "Your king may move only six times all game. One compliance token excuses a single extra king move; you lose only on his eighth move.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|one-shot|move,queen",
+   "signature": "nerf|unstated|extra,king,move,time",
    "animation": "passive",
-   "location": "src/engine/nerfs/expanded/tier4.ts",
+   "location": "src/engine/nerfs/expanded/tier5.ts",
    "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "respectful",
-   "name": "Respectful",
-   "kind": "nerf",
-   "tier": 5,
-   "effect": "You can't end your turn giving check. Once per game, if every legal move would give check, you may give check that one time.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|one-shot|check,move,time",
-   "animation": "passive",
-   "location": "src/engine/nerfs/implemented.ts",
-   "tests": [
+    "test-nerf-categories.ts",
     "test-nerfs.cjs"
    ],
    "flags": [],
@@ -42967,24 +43323,6 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "rook_fan_club",
-   "name": "Rook Fan Club",
-   "kind": "nerf",
-   "tier": 5,
-   "effect": "Must promote to rooks. King/queen can't move diagonally.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|king,move,promote,queen,rook",
-   "animation": "passive",
-   "location": "src/engine/nerfs/library.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
    "id": "rook_on_seventh",
    "name": "Rook on the Seventh",
    "kind": "nerf",
@@ -42998,24 +43336,6 @@
    "location": "src/engine/nerfs/library.ts",
    "tests": [
     "test-nerf-categories.ts",
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "rooks_charge",
-   "name": "Rooks Charge",
-   "kind": "nerf",
-   "tier": 5,
-   "effect": "Your rooks can only move straight forward toward the enemy, never sideways or backward. If that leaves you with no legal move, you may move your king instead.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|king,move,rook",
-   "animation": "passive",
-   "location": "src/engine/nerfs/expanded/tier4.ts",
-   "tests": [
     "test-nerfs.cjs"
    ],
    "flags": [],
@@ -43040,17 +43360,17 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "secret_garden",
-   "name": "Secret Garden",
+   "id": "scouting_ahead",
+   "name": "Scouting Ahead",
    "kind": "nerf",
    "tier": 5,
-   "effect": "Two random garden zones (each a 3-file-wide, 3-rank-deep block in front of one of your pawns, shown as marked squares) are off limits for the whole game: you can't move any piece onto those squares.",
+   "effect": "As long as you have a pawn, non-pawns can't go ahead of your most advanced pawn.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|block,file,move,n:3,n:3,pawn,random,rank,square",
+   "signature": "nerf|unstated|advance,pawn",
    "animation": "passive",
-   "location": "src/engine/nerfs/implemented.ts",
+   "location": "src/engine/nerfs/library.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -43058,17 +43378,17 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "short_leash_knights",
-   "name": "Short Leash Knights",
+   "id": "shapeshifter",
+   "name": "Shapeshifter",
    "kind": "nerf",
    "tier": 5,
-   "effect": "Your knights may never move beyond your own first three ranks.",
+   "effect": "For your first 3 moves the queen moves normally. From then on she is a bishop; capturing a non-pawn turns her into a copy of that piece, and capturing a knight freezes her.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|knight,move,rank",
+   "signature": "nerf|unstated|bishop,freeze,knight,move,n:3,pawn,queen",
    "animation": "passive",
-   "location": "src/engine/nerfs/expanded/tier6.ts",
+   "location": "src/engine/nerfs/library.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -43076,17 +43396,17 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "simp",
-   "name": "Simp",
+   "id": "solar_flare",
+   "name": "Solar Flare",
    "kind": "nerf",
    "tier": 5,
-   "effect": "You lose if you have no queen.",
+   "effect": "The flare burns for 3 of your turns, then sleeps for 2, over and over. While it burns you can only capture on light squares. The dark squares are shown whenever it is up.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|queen",
+   "signature": "nerf|3-turns|capture,n:2,n:3,sleep,square",
    "animation": "passive",
-   "location": "src/engine/nerfs/implemented.ts",
+   "location": "src/engine/nerfs/extras.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -43094,19 +43414,18 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "stay_at_home_mom",
-   "name": "Stay-at-Home Mom",
+   "id": "stunted_rooks",
+   "name": "Stunted Rooks",
    "kind": "nerf",
    "tier": 5,
-   "effect": "Your queen can only move within your two home ranks.",
+   "effect": "From your fourth move on, your rooks can only move one square at a time.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|move,queen,rank",
+   "signature": "nerf|unstated|move,rook,square,time",
    "animation": "passive",
-   "location": "src/engine/nerfs/implemented.ts",
+   "location": "src/engine/nerfs/expanded/tier5.ts",
    "tests": [
-    "test-nerf-categories.ts",
     "test-nerfs.cjs"
    ],
    "flags": [],
@@ -43122,24 +43441,6 @@
    "duration": "match",
    "targets": "self",
    "signature": "nerf|unstated|move",
-   "animation": "passive",
-   "location": "src/engine/nerfs/extras.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "switchback",
-   "name": "Switchback",
-   "kind": "nerf",
-   "tier": 5,
-   "effect": "You can't move in the exact same direction (same file and rank step) twice in a row.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|file,move,rank",
    "animation": "passive",
    "location": "src/engine/nerfs/extras.ts",
    "tests": [
@@ -43185,17 +43486,17 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "tidy_desk",
-   "name": "Tidy Desk",
+   "id": "three_check",
+   "name": "Three Check",
    "kind": "nerf",
    "tier": 5,
-   "effect": "By move 25, you must have at least one piece on every rank of your half but one; you may leave a single rank of your choosing open.",
+   "effect": "If you have been checked three times total, you lose.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|move,n:25,rank",
+   "signature": "nerf|unstated|check,time",
    "animation": "passive",
-   "location": "src/engine/nerfs/extras.ts",
+   "location": "src/engine/nerfs/implemented.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -43221,55 +43522,18 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "toothless_pawns",
-   "name": "Toothless Pawns",
+   "id": "trophy_wife",
+   "name": "Trophy Wife",
    "kind": "nerf",
    "tier": 5,
-   "effect": "Your pawns can never capture and can never move two squares.",
+   "effect": "Your queen can't capture, unless the target is the piece checking your king.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|capture,move,pawn,square",
+   "signature": "nerf|unstated|capture,check,king,queen",
    "animation": "passive",
-   "location": "src/engine/nerfs/expanded/tier6.ts",
+   "location": "src/engine/nerfs/implemented.ts",
    "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "triple_play",
-   "name": "Triple Play",
-   "kind": "nerf",
-   "tier": 5,
-   "effect": "Can only capture the enemy king while you have 3 of a set piece type, shown from the start. The restriction is dropped whenever it would leave you fewer than three legal moves.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|capture,king,move,n:3",
-   "animation": "passive",
-   "location": "src/engine/nerfs/library.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "turn_other_cheek",
-   "name": "Turn the Other Cheek",
-   "kind": "nerf",
-   "tier": 5,
-   "effect": "Can't recapture.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|recaptur",
-   "animation": "passive",
-   "location": "src/engine/nerfs/library.ts",
-   "tests": [
-    "test-nerf-categories.ts",
     "test-nerfs.cjs"
    ],
    "flags": [],
@@ -43294,17 +43558,35 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "windup_toys",
-   "name": "Windup Toys",
+   "id": "warlord",
+   "name": "Warlord",
    "kind": "nerf",
    "tier": 5,
-   "effect": "After move 12, can't move knights or bishops.",
+   "effect": "From turn 12 onward, your king can't be on your first two ranks. From turn 11, while your king is still on those ranks, you are warned one move early.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|bishop,knight,move,n:12",
+   "signature": "nerf|unstated|king,move,n:11,n:12,rank",
    "animation": "passive",
    "location": "src/engine/nerfs/library.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "whites_of_their_eyes",
+   "name": "Whites of Their Eyes",
+   "kind": "nerf",
+   "tier": 5,
+   "effect": "You can only capture within 2 squares (king-steps) of the capturing piece.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|capture,king,n:2,square",
+   "animation": "passive",
+   "location": "src/engine/nerfs/implemented.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -43339,24 +43621,6 @@
    "duration": "match",
    "targets": "self",
    "signature": "nerf|unstated|move,queen",
-   "animation": "passive",
-   "location": "src/engine/nerfs/wild.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "wn_gravity",
-   "name": "Gravity",
-   "kind": "nerf",
-   "tier": 5,
-   "effect": "None of your pieces may move more than two ranks ahead of your own king, unless the piece already starts more than two ranks ahead (a piece inside the region may move freely).",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|king,move,rank",
    "animation": "passive",
    "location": "src/engine/nerfs/wild.ts",
    "tests": [
@@ -43420,6 +43684,24 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "bishop_fan_club",
+   "name": "Bishop Fan Club",
+   "kind": "nerf",
+   "tier": 6,
+   "effect": "Must promote to bishops. King and queen can only move diagonally.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|bishop,king,move,promote,queen",
+   "animation": "passive",
+   "location": "src/engine/nerfs/library.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "blood_quota",
    "name": "Blood Quota",
    "kind": "nerf",
@@ -43456,24 +43738,6 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "boxing_with_shadow",
-   "name": "Boxing with Shadow",
-   "kind": "nerf",
-   "tier": 6,
-   "effect": "From your move 4 on, when opponent moves, if you can move to the square they vacated, you must.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|move,n:4,square",
-   "animation": "passive",
-   "location": "src/engine/nerfs/library.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
    "id": "bridge_over_troubled_water",
    "name": "Bridge Over Troubled Water",
    "kind": "nerf",
@@ -43485,6 +43749,24 @@
    "signature": "nerf|unstated|file,move,n:4",
    "animation": "passive",
    "location": "src/engine/nerfs/library.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "burning_bridges",
+   "name": "Burning Bridges",
+   "kind": "nerf",
+   "tier": 6,
+   "effect": "Your bishops, rooks, and queen can't travel over a square they have already passed over earlier in the game.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|bishop,queen,rook,square",
+   "animation": "passive",
+   "location": "src/engine/nerfs/extras.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -43528,17 +43810,17 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "constriction",
-   "name": "Constriction",
+   "id": "cheerleaders",
+   "name": "Cheerleaders",
    "kind": "nerf",
    "tier": 6,
-   "effect": "Every 6 of your turns, the playable board loses a rank from the back, up to 3 ranks. This restriction cannot be overridden by card effects.",
+   "effect": "Non-pawns can only capture if adjacent to one of your pawns.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|6-turns|n:3,n:6,rank",
+   "signature": "nerf|unstated|adjacent,capture,pawn",
    "animation": "passive",
-   "location": "src/engine/nerfs/extras.ts",
+   "location": "src/engine/nerfs/library.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -43546,17 +43828,35 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "counting_sheep",
-   "name": "Counting Sheep",
+   "id": "colorblind",
+   "name": "Colorblind",
    "kind": "nerf",
    "tier": 6,
-   "effect": "Once you've moved a piece type 5 times, you can't move it again.",
+   "effect": "Can't move to one random color of squares, re-randomized each turn and revealed one turn early. The restriction is dropped whenever it would leave you fewer than three legal moves.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|one-shot|move,n:5,time",
+   "signature": "nerf|unstated|move,random,reveal,square",
    "animation": "passive",
-   "location": "src/engine/nerfs/extras.ts",
+   "location": "src/engine/nerfs/library.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "cowardly",
+   "name": "Cowardly",
+   "kind": "nerf",
+   "tier": 6,
+   "effect": "When the opponent captures, you must move backward. The first time you fail to retreat you get a one turn warning; fail to retreat a second time and you lose.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|capture,move,time",
+   "animation": "passive",
+   "location": "src/engine/nerfs/implemented.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -43575,24 +43875,6 @@
    "signature": "nerf|unstated|capture,move",
    "animation": "passive",
    "location": "src/engine/nerfs/library.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "defanged_queen",
-   "name": "Defanged Queen",
-   "kind": "nerf",
-   "tier": 6,
-   "effect": "Your queen can't capture and can't give check.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|capture,check,queen",
-   "animation": "passive",
-   "location": "src/engine/nerfs/expanded/tier5.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -43619,54 +43901,17 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "domino",
-   "name": "Domino",
+   "id": "doctor_octopus",
+   "name": "Doctor Octopus",
    "kind": "nerf",
    "tier": 6,
-   "effect": "Each move must end adjacent to your previous move's destination. Spawned and teleported pieces obey this immediately.",
+   "effect": "Can only capture non-king pieces 8 times total.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|one-shot|adjacent,move,spawn,teleport",
-   "animation": "passive",
-   "location": "src/engine/nerfs/extras.ts",
-   "tests": [
-    "test-nerf-categories.ts",
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "drag",
-   "name": "Drag",
-   "kind": "nerf",
-   "tier": 6,
-   "effect": "Your queen is now royal: if it is captured, you lose.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|one-shot|capture,queen",
+   "signature": "nerf|unstated|capture,king,n:8,time",
    "animation": "passive",
    "location": "src/engine/nerfs/library.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "echo_chamber",
-   "name": "Echo Chamber",
-   "kind": "nerf",
-   "tier": 6,
-   "effect": "Starting on move 4, you must move to the same rank as your last move's destination.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|move,n:4,rank",
-   "animation": "passive",
-   "location": "src/engine/nerfs/extras.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -43687,24 +43932,6 @@
    "location": "src/engine/nerfs/library.ts",
    "tests": [
     "test-nerf-categories.ts",
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "eye_for_an_eye",
-   "name": "Eye for an Eye",
-   "kind": "nerf",
-   "tier": 6,
-   "effect": "If opponent captures, you must capture next turn or lose.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|next-turn|capture",
-   "animation": "passive",
-   "location": "src/engine/nerfs/library.ts",
-   "tests": [
     "test-nerfs.cjs"
    ],
    "flags": [],
@@ -43765,17 +43992,17 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "fog_of_war",
-   "name": "Fog of War",
+   "id": "fn_wyrm_hoard",
+   "name": "Wyrm Hoard",
    "kind": "nerf",
    "tier": 6,
-   "effect": "Enemy pieces are hidden by fog. An enemy piece is marked (its square lit) only if it is checking your king or stands within two squares of one of your pieces; everything else stays hidden.",
+   "effect": "You cannot capture a piece worth more than the piece you capture it with. Capturing the king is always allowed.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|check,king,square",
+   "signature": "nerf|unstated|capture,king",
    "animation": "passive",
-   "location": "src/engine/nerfs/implemented.ts",
+   "location": "src/engine/nerfs/fantasy.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -43828,6 +44055,24 @@
    "duration": "match",
    "targets": "self",
    "signature": "nerf|unstated|move,square",
+   "animation": "passive",
+   "location": "src/engine/nerfs/library.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "glorious_battle",
+   "name": "Glorious Battle",
+   "kind": "nerf",
+   "tier": 6,
+   "effect": "On a midgame move drawn at random, the battle begins: for 3 consecutive moves you must capture, or lose.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|capture,draw,move,n:3,random",
    "animation": "passive",
    "location": "src/engine/nerfs/library.ts",
    "tests": [
@@ -43928,17 +44173,17 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "hobbled_knights",
-   "name": "Hobbled Knights",
+   "id": "hobbled_queen",
+   "name": "Hobbled Queen",
    "kind": "nerf",
    "tier": 6,
-   "effect": "Your knights can't advance toward the enemy side; their rank may never increase.",
+   "effect": "Your queen can only move one square at a time, like a second king.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|advance,knight,rank",
+   "signature": "nerf|unstated|king,move,queen,square,time",
    "animation": "passive",
-   "location": "src/engine/nerfs/expanded/tier5.ts",
+   "location": "src/engine/nerfs/expanded/tier8.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -43946,15 +44191,33 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "homeland_security",
-   "name": "Homeland Security",
+   "id": "hopscotch",
+   "name": "Hopscotch",
    "kind": "nerf",
    "tier": 6,
-   "effect": "If opponent enters your two home ranks, you lose.",
+   "effect": "Must alternate light/dark destination squares. The required destination color is shown each turn.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|rank",
+   "signature": "nerf|unstated|square",
+   "animation": "passive",
+   "location": "src/engine/nerfs/library.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "horse_eats_first",
+   "name": "Horse Eats First",
+   "kind": "nerf",
+   "tier": 6,
+   "effect": "As long as you have a knight, you can only capture with knights. This activates only after your move 3.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|capture,knight,move,n:3",
    "animation": "passive",
    "location": "src/engine/nerfs/library.ts",
    "tests": [
@@ -44018,24 +44281,6 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "iron_curtain",
-   "name": "Iron Curtain",
-   "kind": "nerf",
-   "tier": 6,
-   "effect": "You can't move any piece onto the central 16 squares (files c through f, ranks 3 through 6). Card-granted drops and teleports onto those squares are blocked the same way.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|block,file,move,n:16,n:3,n:6,rank,square,teleport",
-   "animation": "passive",
-   "location": "src/engine/nerfs/expanded/tier6.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
    "id": "jumpy",
    "name": "Jumpy",
    "kind": "nerf",
@@ -44091,15 +44336,15 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "leaps_and_bounds",
-   "name": "Leaps and Bounds",
+   "id": "left_for_dead",
+   "name": "Left for Dead",
    "kind": "nerf",
    "tier": 6,
-   "effect": "Every move must be a leap: a piece can't move to a square adjacent to the square it's leaving. A move granted by another card must also be a leap.",
+   "effect": "Can only capture leftward (file decreasing).",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|adjacent,leap,move,square",
+   "signature": "nerf|unstated|capture,file",
    "animation": "passive",
    "location": "src/engine/nerfs/library.ts",
    "tests": [
@@ -44118,24 +44363,6 @@
    "duration": "match",
    "targets": "self",
    "signature": "nerf|unstated|file,king,move",
-   "animation": "passive",
-   "location": "src/engine/nerfs/library.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "leveling_up",
-   "name": "Leveling Up",
-   "kind": "nerf",
-   "tier": 6,
-   "effect": "Can't capture a piece type until you've captured its predecessor. A move granted by another card can't make a barred capture legal.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|barred,capture,move",
    "animation": "passive",
    "location": "src/engine/nerfs/library.ts",
    "tests": [
@@ -44235,24 +44462,6 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "myopic_bishops",
-   "name": "Myopic Bishops",
-   "kind": "nerf",
-   "tier": 6,
-   "effect": "From your fourth move on, your bishops can't move more than two squares.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|bishop,move,square",
-   "animation": "passive",
-   "location": "src/engine/nerfs/expanded/tier5.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
    "id": "no_clean_trades",
    "name": "No Clean Trades",
    "kind": "nerf",
@@ -44264,99 +44473,6 @@
    "signature": "nerf|one-shot|capture,recaptur,square",
    "animation": "passive",
    "location": "src/engine/nerfs/expanded/tier6.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "no_hanging_pieces",
-   "name": "No Hanging Pieces",
-   "kind": "nerf",
-   "tier": 6,
-   "effect": "You can't make a move that leaves any of your pieces attacked by the enemy and undefended. Card-granted drops and teleports must obey this too.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|move,teleport",
-   "animation": "passive",
-   "location": "src/engine/nerfs/expanded/tier6.ts",
-   "tests": [
-    "test-nerf-categories.ts",
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "no_mans_land",
-   "name": "No Man's Land",
-   "kind": "nerf",
-   "tier": 6,
-   "effect": "You can't move any piece onto a square your opponent currently attacks, except once per game you may step onto an attacked square.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|one-shot|move,square",
-   "animation": "passive",
-   "location": "src/engine/buffs/hexes/tier2.ts",
-   "tests": [
-    "lab-run-all.ts",
-    "test-hexes.cjs",
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
-  },
-  {
-   "id": "no_retreat_ever",
-   "name": "No Retreat Ever",
-   "kind": "nerf",
-   "tier": 6,
-   "effect": "Every move you make must advance toward the enemy; no piece may move backward or even hold its rank, except one non-advancing move is allowed once per game.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|one-shot|advance,move,rank",
-   "animation": "passive",
-   "location": "src/engine/nerfs/expanded/tier5.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "noble_steed",
-   "name": "Noble Steed",
-   "kind": "nerf",
-   "tier": 6,
-   "effect": "Non-knight pieces can only move if adjacent to one of your knights.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|adjacent,knight,move",
-   "animation": "passive",
-   "location": "src/engine/nerfs/library.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "nurturer",
-   "name": "Nurturer",
-   "kind": "nerf",
-   "tier": 6,
-   "effect": "Can't capture the enemy king until you've promoted a pawn. No card effect can make that capture legal any sooner.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|capture,king,pawn,promote",
-   "animation": "passive",
-   "location": "src/engine/nerfs/implemented.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -44401,61 +44517,6 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "pawn_storm",
-   "name": "Pawn Storm",
-   "kind": "nerf",
-   "tier": 6,
-   "effect": "If your last move wasn't a pawn move, you must move a pawn (if possible).",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|move,pawn",
-   "animation": "passive",
-   "location": "src/engine/buffs/library.ts",
-   "tests": [
-    "lab-run-all.ts",
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "pawns_do_the_dirty_work",
-   "name": "Pawns Do the Dirty Work",
-   "kind": "nerf",
-   "tier": 6,
-   "effect": "Only your pawns may capture; none of your other pieces can capture.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|capture,pawn",
-   "animation": "passive",
-   "location": "src/engine/nerfs/expanded/tier5.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "predatory_knights",
-   "name": "Predatory Knights",
-   "kind": "nerf",
-   "tier": 6,
-   "effect": "Your knights can only move by capturing, except that every third turn a knight with no capture may make one quiet move.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|capture,knight,move",
-   "animation": "passive",
-   "location": "src/engine/nerfs/expanded/tier7.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
    "id": "reconnaissance",
    "name": "Reconnaissance",
    "kind": "nerf",
@@ -44492,25 +44553,6 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "restless_crown",
-   "name": "Restless Crown",
-   "kind": "nerf",
-   "tier": 6,
-   "effect": "Your king may move only six times all game. One compliance token excuses a single extra king move; you lose only on his eighth move.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|extra,king,move,time",
-   "animation": "passive",
-   "location": "src/engine/nerfs/expanded/tier5.ts",
-   "tests": [
-    "test-nerf-categories.ts",
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
    "id": "rhythm_master",
    "name": "Rhythm Master",
    "kind": "nerf",
@@ -44529,17 +44571,17 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "rising_water",
-   "name": "Rising Water",
+   "id": "rook_fan_club",
+   "name": "Rook Fan Club",
    "kind": "nerf",
    "tier": 6,
-   "effect": "Every 10 of your turns, water rises one rank from your back rank. You can't move underwater pieces or to underwater squares.",
+   "effect": "Must promote to rooks. King/queen can't move diagonally.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|10-turns|move,n:10,rank,square",
+   "signature": "nerf|unstated|king,move,promote,queen,rook",
    "animation": "passive",
-   "location": "src/engine/nerfs/implemented.ts",
+   "location": "src/engine/nerfs/library.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -44547,17 +44589,17 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "royal_berth",
-   "name": "Royal Berth",
+   "id": "rooks_charge",
+   "name": "Rooks Charge",
    "kind": "nerf",
    "tier": 6,
-   "effect": "Can't place a piece adjacent to your king.",
+   "effect": "Your rooks can only move straight forward toward the enemy, never sideways or backward. If that leaves you with no legal move, you may move your king instead.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|adjacent,king,place",
+   "signature": "nerf|unstated|king,move,rook",
    "animation": "passive",
-   "location": "src/engine/nerfs/library.ts",
+   "location": "src/engine/nerfs/expanded/tier4.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -44657,19 +44699,36 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "slowpoke",
-   "name": "Slowpoke",
+   "id": "simp",
+   "name": "Simp",
    "kind": "nerf",
    "tier": 6,
-   "effect": "All your moves must be distance exactly 1. On every fifth turn, a single knight leap is allowed instead.",
+   "effect": "You lose if you have no queen.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|knight,leap,move,n:1",
-   "animation": "passive+bespoke",
-   "location": "src/engine/buffs/pt/curseschaos.ts",
+   "signature": "nerf|unstated|queen",
+   "animation": "passive",
+   "location": "src/engine/nerfs/implemented.ts",
    "tests": [
-    "lab-run-all.ts",
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "social_distancing",
+   "name": "Social Distancing",
+   "kind": "nerf",
+   "tier": 6,
+   "effect": "Can't make non-capturing moves to squares adjacent to opponent pieces. The forbidden ring around enemy pieces is shown on the board.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|adjacent,move,square",
+   "animation": "passive",
+   "location": "src/engine/nerfs/library.ts",
+   "tests": [
     "test-nerfs.cjs"
    ],
    "flags": [],
@@ -44685,24 +44744,6 @@
    "duration": "match",
    "targets": "self",
    "signature": "nerf|unstated|adjacent,castle,move,pawn",
-   "animation": "passive",
-   "location": "src/engine/nerfs/library.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "stand_your_ground",
-   "name": "Stand Your Ground",
-   "kind": "nerf",
-   "tier": 6,
-   "effect": "Pieces can only capture if attacked.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|capture",
    "animation": "passive",
    "location": "src/engine/nerfs/library.ts",
    "tests": [
@@ -44730,37 +44771,19 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "straight_and_narrow",
-   "name": "Straight and Narrow",
+   "id": "stay_at_home_mom",
+   "name": "Stay-at-Home Mom",
    "kind": "nerf",
    "tier": 6,
-   "effect": "You can't make any diagonal move: your bishops are stuck, your queen moves only like a rook, and your pawns can't capture.",
+   "effect": "Your queen can only move within your two home ranks.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|bishop,capture,move,pawn,queen,rook",
+   "signature": "nerf|unstated|move,queen,rank",
    "animation": "passive",
-   "location": "src/engine/nerfs/expanded/tier7.ts",
+   "location": "src/engine/nerfs/implemented.ts",
    "tests": [
     "test-nerf-categories.ts",
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "stunted_rooks",
-   "name": "Stunted Rooks",
-   "kind": "nerf",
-   "tier": 6,
-   "effect": "From your fourth move on, your rooks can only move one square at a time.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|move,rook,square,time",
-   "animation": "passive",
-   "location": "src/engine/nerfs/expanded/tier5.ts",
-   "tests": [
     "test-nerfs.cjs"
    ],
    "flags": [],
@@ -44804,35 +44827,17 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "torchlight",
-   "name": "Torchlight",
+   "id": "toothless_pawns",
+   "name": "Toothless Pawns",
    "kind": "nerf",
    "tier": 6,
-   "effect": "Non-pawns can only move if start or end square is adjacent to one of your pawns.",
+   "effect": "Your pawns can never capture and can never move two squares.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|adjacent,move,pawn,square",
+   "signature": "nerf|unstated|capture,move,pawn,square",
    "animation": "passive",
-   "location": "src/engine/nerfs/library.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "tower_defense",
-   "name": "Tower Defense",
-   "kind": "nerf",
-   "tier": 6,
-   "effect": "Can't move rooks. If you lose all rooks, you lose.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|move,rook",
-   "animation": "passive",
-   "location": "src/engine/nerfs/library.ts",
+   "location": "src/engine/nerfs/expanded/tier6.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -44858,6 +44863,24 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "triple_play",
+   "name": "Triple Play",
+   "kind": "nerf",
+   "tier": 6,
+   "effect": "Can only capture the enemy king while you have 3 of a set piece type, shown from the start. The restriction is dropped whenever it would leave you fewer than three legal moves.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|capture,king,move,n:3",
+   "animation": "passive",
+   "location": "src/engine/nerfs/library.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "true_love",
    "name": "True Love",
    "kind": "nerf",
@@ -44876,18 +44899,19 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "unlucky",
-   "name": "Unlucky",
+   "id": "turn_other_cheek",
+   "name": "Turn the Other Cheek",
    "kind": "nerf",
    "tier": 6,
-   "effect": "20 random squares are unusable each turn, re-randomized and shown on the board. The restriction never leaves you fewer than three legal moves.",
+   "effect": "Can't recapture.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|move,n:20,random,square",
+   "signature": "nerf|unstated|recaptur",
    "animation": "passive",
    "location": "src/engine/nerfs/library.ts",
    "tests": [
+    "test-nerf-categories.ts",
     "test-nerfs.cjs"
    ],
    "flags": [],
@@ -44903,24 +44927,6 @@
    "duration": "match",
    "targets": "self",
    "signature": "nerf|unstated|king,move,queen",
-   "animation": "passive",
-   "location": "src/engine/nerfs/library.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "unspooling",
-   "name": "Unspooling",
-   "kind": "nerf",
-   "tier": 6,
-   "effect": "Total move distance budget = 100. When you run out, you lose.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|move,n:100",
    "animation": "passive",
    "location": "src/engine/nerfs/library.ts",
    "tests": [
@@ -44948,6 +44954,24 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "windup_toys",
+   "name": "Windup Toys",
+   "kind": "nerf",
+   "tier": 6,
+   "effect": "After move 12, can't move knights or bishops.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|bishop,knight,move,n:12",
+   "animation": "passive",
+   "location": "src/engine/nerfs/library.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "wn_bodyguard",
    "name": "Bodyguard",
    "kind": "nerf",
@@ -44957,42 +44981,6 @@
    "duration": "match",
    "targets": "self",
    "signature": "nerf|unstated|adjacent,king,move",
-   "animation": "passive",
-   "location": "src/engine/nerfs/wild.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "wn_bottom_feeder",
-   "name": "Bottom Feeder",
-   "kind": "nerf",
-   "tier": 6,
-   "effect": "You can only capture pawns. You can't capture any other piece, except the enemy king to win.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|capture,king,pawn",
-   "animation": "passive",
-   "location": "src/engine/nerfs/wild.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "wn_daisy_chain",
-   "name": "Daisy Chain",
-   "kind": "nerf",
-   "tier": 6,
-   "effect": "From your 4th move on, the piece you move must start its move adjacent to the square your last move ended on (if any such move exists).",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|adjacent,move,square",
    "animation": "passive",
    "location": "src/engine/nerfs/wild.ts",
    "tests": [
@@ -45076,15 +45064,15 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "wn_kings_leash",
-   "name": "King's Leash",
+   "id": "wn_gravity",
+   "name": "Gravity",
    "kind": "nerf",
    "tier": 6,
-   "effect": "You can't move any piece to a square more than 3 king-steps from your own king. If no compliant move exists, only your king may move.",
+   "effect": "None of your pieces may move more than two ranks ahead of your own king, unless the piece already starts more than two ranks ahead (a piece inside the region may move freely).",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|king,move,n:3,square",
+   "signature": "nerf|unstated|king,move,rank",
    "animation": "passive",
    "location": "src/engine/nerfs/wild.ts",
    "tests": [
@@ -45112,15 +45100,15 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "wn_regicide_clock",
-   "name": "Regicide Clock",
+   "id": "wn_weigh_station",
+   "name": "Weigh Station",
    "kind": "nerf",
    "tier": 6,
-   "effect": "You must give check at least once every 6 of your turns, or you lose.",
+   "effect": "Your rooks and queen can't cross into the enemy half (relative ranks 5 to 8).",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|6-turns|check,n:6",
+   "signature": "nerf|unstated|n:5,n:8,queen,rank,rook",
    "animation": "passive",
    "location": "src/engine/nerfs/wild.ts",
    "tests": [
@@ -45166,35 +45154,17 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "always_check_it_might_be_mate",
-   "name": "Always Check, It Might Be Mate",
+   "id": "champing_at_the_bit",
+   "name": "Champing at the Bit",
    "kind": "nerf",
    "tier": 7,
-   "effect": "If you are checked, you lose. A temporary shield or suspension can't spare you: the check is read straight from the board.",
+   "effect": "All pawn moves must be distance 2.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|check,shield",
+   "signature": "nerf|unstated|move,n:2,pawn",
    "animation": "passive",
-   "location": "src/engine/nerfs/library.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "boastful",
-   "name": "Boastful",
-   "kind": "nerf",
-   "tier": 7,
-   "effect": "You lose if you end one of your turns with fewer pieces than your opponent.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|",
-   "animation": "passive",
-   "location": "src/engine/nerfs/library.ts",
+   "location": "src/engine/nerfs/implemented.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -45221,17 +45191,17 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "cowardly",
-   "name": "Cowardly",
+   "id": "constriction",
+   "name": "Constriction",
    "kind": "nerf",
    "tier": 7,
-   "effect": "When the opponent captures, you must move backward. The first time you fail to retreat you get a one turn warning; fail to retreat a second time and you lose.",
+   "effect": "Every 6 of your turns, the playable board loses a rank from the back, up to 3 ranks. This restriction cannot be overridden by card effects.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|capture,move,time",
+   "signature": "nerf|6-turns|n:3,n:6,rank",
    "animation": "passive",
-   "location": "src/engine/nerfs/implemented.ts",
+   "location": "src/engine/nerfs/extras.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -45258,6 +45228,97 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "defanged_queen",
+   "name": "Defanged Queen",
+   "kind": "nerf",
+   "tier": 7,
+   "effect": "Your queen can't capture and can't give check.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|capture,check,queen",
+   "animation": "passive",
+   "location": "src/engine/nerfs/expanded/tier5.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "domino",
+   "name": "Domino",
+   "kind": "nerf",
+   "tier": 7,
+   "effect": "Each move must end adjacent to your previous move's destination. Spawned and teleported pieces obey this immediately.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|one-shot|adjacent,move,spawn,teleport",
+   "animation": "passive",
+   "location": "src/engine/nerfs/extras.ts",
+   "tests": [
+    "test-nerf-categories.ts",
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "drag",
+   "name": "Drag",
+   "kind": "nerf",
+   "tier": 7,
+   "effect": "Your queen is now royal: if it is captured, you lose.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|one-shot|capture,queen",
+   "animation": "passive",
+   "location": "src/engine/nerfs/library.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "echo_chamber",
+   "name": "Echo Chamber",
+   "kind": "nerf",
+   "tier": 7,
+   "effect": "Starting on move 4, you must move to the same rank as your last move's destination.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|move,n:4,rank",
+   "animation": "passive",
+   "location": "src/engine/nerfs/extras.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "eye_for_an_eye",
+   "name": "Eye for an Eye",
+   "kind": "nerf",
+   "tier": 7,
+   "effect": "If opponent captures, you must capture next turn or lose.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|next-turn|capture",
+   "animation": "passive",
+   "location": "src/engine/nerfs/library.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "fischer_random_endgame",
    "name": "Fischer Random Endgame",
    "kind": "nerf",
@@ -45276,17 +45337,17 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "fog_of_war_old",
-   "name": "Fog of War (extended)",
+   "id": "fn_lich_pact",
+   "name": "Lich Pact",
    "kind": "nerf",
    "tier": 7,
-   "effect": "Hide opponent pieces entirely, starting on your move 4. The opening is shown in the clear so it cannot be soft-locked.",
+   "effect": "From your sixth move on, you lose if 6 of your turns pass in a row without one of your pieces ending its move in the enemy half of the board.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|move,n:4",
+   "signature": "nerf|6-turns|move,n:6",
    "animation": "passive",
-   "location": "src/engine/nerfs/library.ts",
+   "location": "src/engine/nerfs/fantasy.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -45294,17 +45355,17 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "glorious_battle",
-   "name": "Glorious Battle",
+   "id": "iron_curtain",
+   "name": "Iron Curtain",
    "kind": "nerf",
    "tier": 7,
-   "effect": "On a midgame move drawn at random, the battle begins: for 3 consecutive moves you must capture, or lose.",
+   "effect": "You can't move any piece onto the central 16 squares (files c through f, ranks 3 through 6). Card-granted drops and teleports onto those squares are blocked the same way.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|capture,draw,move,n:3,random",
+   "signature": "nerf|unstated|block,file,move,n:16,n:3,n:6,rank,square,teleport",
    "animation": "passive",
-   "location": "src/engine/nerfs/library.ts",
+   "location": "src/engine/nerfs/expanded/tier6.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -45323,6 +45384,99 @@
    "signature": "nerf|unstated|adjacent,king",
    "animation": "passive",
    "location": "src/engine/nerfs/implemented.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "leaps_and_bounds",
+   "name": "Leaps and Bounds",
+   "kind": "nerf",
+   "tier": 7,
+   "effect": "Every move must be a leap: a piece can't move to a square adjacent to the square it's leaving. A move granted by another card must also be a leap.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|adjacent,leap,move,square",
+   "animation": "passive",
+   "location": "src/engine/nerfs/library.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "leveling_up",
+   "name": "Leveling Up",
+   "kind": "nerf",
+   "tier": 7,
+   "effect": "Can't capture a piece type until you've captured its predecessor. A move granted by another card can't make a barred capture legal.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|barred,capture,move",
+   "animation": "passive",
+   "location": "src/engine/nerfs/library.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "no_hanging_pieces",
+   "name": "No Hanging Pieces",
+   "kind": "nerf",
+   "tier": 7,
+   "effect": "You can't make a move that leaves any of your pieces attacked by the enemy and undefended. Card-granted drops and teleports must obey this too.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|move,teleport",
+   "animation": "passive",
+   "location": "src/engine/nerfs/expanded/tier6.ts",
+   "tests": [
+    "test-nerf-categories.ts",
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "no_mans_land",
+   "name": "No Man's Land",
+   "kind": "nerf",
+   "tier": 7,
+   "effect": "You can't move any piece onto a square your opponent currently attacks, except once per game you may step onto an attacked square.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|one-shot|move,square",
+   "animation": "passive",
+   "location": "src/engine/buffs/hexes/tier2.ts",
+   "tests": [
+    "lab-run-all.ts",
+    "test-hexes.cjs",
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+  },
+  {
+   "id": "noble_steed",
+   "name": "Noble Steed",
+   "kind": "nerf",
+   "tier": 7,
+   "effect": "Non-knight pieces can only move if adjacent to one of your knights.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|adjacent,knight,move",
+   "animation": "passive",
+   "location": "src/engine/nerfs/library.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -45439,6 +45593,25 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "pawn_storm",
+   "name": "Pawn Storm",
+   "kind": "nerf",
+   "tier": 7,
+   "effect": "If your last move wasn't a pawn move, you must move a pawn (if possible).",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|move,pawn",
+   "animation": "passive",
+   "location": "src/engine/buffs/library.ts",
+   "tests": [
+    "lab-run-all.ts",
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "pilgrimage",
    "name": "Pilgrimage",
    "kind": "nerf",
@@ -45475,24 +45648,6 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "reflective",
-   "name": "Reflective",
-   "kind": "nerf",
-   "tier": 7,
-   "effect": "From your move 4 on, non-pawns must move to squares whose mirror across the center is occupied. The first three moves are free so the opening cannot be soft-locked.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|move,n:4,pawn,square",
-   "animation": "passive",
-   "location": "src/engine/nerfs/library.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
    "id": "relentless_hunter",
    "name": "Relentless Hunter",
    "kind": "nerf",
@@ -45504,6 +45659,114 @@
    "signature": "nerf|unstated|check,move",
    "animation": "passive",
    "location": "src/engine/nerfs/expanded/tier7.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "rising_water",
+   "name": "Rising Water",
+   "kind": "nerf",
+   "tier": 7,
+   "effect": "Every 10 of your turns, water rises one rank from your back rank. You can't move underwater pieces or to underwater squares.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|10-turns|move,n:10,rank,square",
+   "animation": "passive",
+   "location": "src/engine/nerfs/implemented.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "stand_your_ground",
+   "name": "Stand Your Ground",
+   "kind": "nerf",
+   "tier": 7,
+   "effect": "Pieces can only capture if attacked.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|capture",
+   "animation": "passive",
+   "location": "src/engine/nerfs/library.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "torchlight",
+   "name": "Torchlight",
+   "kind": "nerf",
+   "tier": 7,
+   "effect": "Non-pawns can only move if start or end square is adjacent to one of your pawns.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|adjacent,move,pawn,square",
+   "animation": "passive",
+   "location": "src/engine/nerfs/library.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "tower_defense",
+   "name": "Tower Defense",
+   "kind": "nerf",
+   "tier": 7,
+   "effect": "Can't move rooks. If you lose all rooks, you lose.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|move,rook",
+   "animation": "passive",
+   "location": "src/engine/nerfs/library.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "unlucky",
+   "name": "Unlucky",
+   "kind": "nerf",
+   "tier": 7,
+   "effect": "20 random squares are unusable each turn, re-randomized and shown on the board. The restriction never leaves you fewer than three legal moves.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|move,n:20,random,square",
+   "animation": "passive",
+   "location": "src/engine/nerfs/library.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "unspooling",
+   "name": "Unspooling",
+   "kind": "nerf",
+   "tier": 7,
+   "effect": "Total move distance budget = 100. When you run out, you lose.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|move,n:100",
+   "animation": "passive",
+   "location": "src/engine/nerfs/library.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -45530,17 +45793,17 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "war_footing",
-   "name": "War Footing",
+   "id": "wn_daisy_chain",
+   "name": "Daisy Chain",
    "kind": "nerf",
    "tier": 7,
-   "effect": "You lose if you make more than 12 non-capturing moves all game.",
+   "effect": "From your 4th move on, the piece you move must start its move adjacent to the square your last move ended on (if any such move exists).",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|move,n:12",
+   "signature": "nerf|unstated|adjacent,move,square",
    "animation": "passive",
-   "location": "src/engine/nerfs/expanded/tier7.ts",
+   "location": "src/engine/nerfs/wild.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -45548,15 +45811,15 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "wn_kingpin",
-   "name": "Kingpin",
+   "id": "wn_kings_leash",
+   "name": "King's Leash",
    "kind": "nerf",
    "tier": 7,
-   "effect": "Only your king may capture. No other piece can make a capture. If no compliant move exists, only your king may move.",
+   "effect": "You can't move any piece to a square more than 3 king-steps from your own king. If no compliant move exists, only your king may move.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|capture,king,move",
+   "signature": "nerf|unstated|king,move,n:3,square",
    "animation": "passive",
    "location": "src/engine/nerfs/wild.ts",
    "tests": [
@@ -45584,17 +45847,53 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "wn_royal_meridian",
-   "name": "Royal Meridian",
+   "id": "wn_regicide_clock",
+   "name": "Regicide Clock",
    "kind": "nerf",
    "tier": 7,
-   "effect": "Every piece you move must land on your king's file or your king's rank. If no compliant move exists, only your king may move.",
+   "effect": "You must give check at least once every 6 of your turns, or you lose.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|file,king,move,rank",
+   "signature": "nerf|6-turns|check,n:6",
    "animation": "passive",
    "location": "src/engine/nerfs/wild.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "always_check_it_might_be_mate",
+   "name": "Always Check, It Might Be Mate",
+   "kind": "nerf",
+   "tier": 8,
+   "effect": "If you are checked, you lose. A temporary shield or suspension can't spare you: the check is read straight from the board.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|check,shield",
+   "animation": "passive",
+   "location": "src/engine/nerfs/library.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "boastful",
+   "name": "Boastful",
+   "kind": "nerf",
+   "tier": 8,
+   "effect": "You lose if you end one of your turns with fewer pieces than your opponent.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|",
+   "animation": "passive",
+   "location": "src/engine/nerfs/library.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -45620,6 +45919,24 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "counting_sheep",
+   "name": "Counting Sheep",
+   "kind": "nerf",
+   "tier": 8,
+   "effect": "Once you've moved a piece type 5 times, you can't move it again.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|one-shot|move,n:5,time",
+   "animation": "passive",
+   "location": "src/engine/nerfs/extras.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "death_wish",
    "name": "Death Wish",
    "kind": "nerf",
@@ -45629,6 +45946,78 @@
    "duration": "match",
    "targets": "self",
    "signature": "nerf|unstated|capture,king,move,square",
+   "animation": "passive",
+   "location": "src/engine/nerfs/library.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "eat_your_vegetables",
+   "name": "Eat Your Vegetables",
+   "kind": "nerf",
+   "tier": 8,
+   "effect": "Can't capture non-pawns until opponent has ≤ 4 pawns remaining.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|capture,n:4,pawn",
+   "animation": "passive",
+   "location": "src/engine/nerfs/library.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "fn_titans_yoke",
+   "name": "Titan's Yoke",
+   "kind": "nerf",
+   "tier": 8,
+   "effect": "On every second turn of yours, you must move your king if it has a legal move.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|king,move",
+   "animation": "passive",
+   "location": "src/engine/nerfs/fantasy.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "fog_of_war",
+   "name": "Fog of War",
+   "kind": "nerf",
+   "tier": 8,
+   "effect": "Enemy pieces are hidden by fog. An enemy piece is marked (its square lit) only if it is checking your king or stands within two squares of one of your pieces; everything else stays hidden.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|check,king,square",
+   "animation": "passive",
+   "location": "src/engine/nerfs/implemented.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "fog_of_war_old",
+   "name": "Fog of War (extended)",
+   "kind": "nerf",
+   "tier": 8,
+   "effect": "Hide opponent pieces entirely, starting on your move 4. The opening is shown in the clear so it cannot be soft-locked.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|move,n:4",
    "animation": "passive",
    "location": "src/engine/nerfs/library.ts",
    "tests": [
@@ -45692,6 +46081,24 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "homeland_security",
+   "name": "Homeland Security",
+   "kind": "nerf",
+   "tier": 8,
+   "effect": "If opponent enters your two home ranks, you lose.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|rank",
+   "animation": "passive",
+   "location": "src/engine/nerfs/library.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "neat_freak",
    "name": "Neat Freak",
    "kind": "nerf",
@@ -45703,6 +46110,42 @@
    "signature": "nerf|one-shot|file,move,n:8,pawn,rank",
    "animation": "passive",
    "location": "src/engine/nerfs/extras.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "no_retreat_ever",
+   "name": "No Retreat Ever",
+   "kind": "nerf",
+   "tier": 8,
+   "effect": "Every move you make must advance toward the enemy; no piece may move backward or even hold its rank, except one non-advancing move is allowed once per game.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|one-shot|advance,move,rank",
+   "animation": "passive",
+   "location": "src/engine/nerfs/expanded/tier5.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "nurturer",
+   "name": "Nurturer",
+   "kind": "nerf",
+   "tier": 8,
+   "effect": "Can't capture the enemy king until you've promoted a pawn. No card effect can make that capture legal any sooner.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|capture,king,pawn,promote",
+   "animation": "passive",
+   "location": "src/engine/nerfs/implemented.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -45783,6 +46226,60 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "pawns_do_the_dirty_work",
+   "name": "Pawns Do the Dirty Work",
+   "kind": "nerf",
+   "tier": 8,
+   "effect": "Only your pawns may capture; none of your other pieces can capture.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|capture,pawn",
+   "animation": "passive",
+   "location": "src/engine/nerfs/expanded/tier5.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "reflective",
+   "name": "Reflective",
+   "kind": "nerf",
+   "tier": 8,
+   "effect": "From your move 4 on, non-pawns must move to squares whose mirror across the center is occupied. The first three moves are free so the opening cannot be soft-locked.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|move,n:4,pawn,square",
+   "animation": "passive",
+   "location": "src/engine/nerfs/library.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "respectful",
+   "name": "Respectful",
+   "kind": "nerf",
+   "tier": 8,
+   "effect": "You can't end your turn giving check. Once per game, if every legal move would give check, you may give check that one time.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|one-shot|check,move,time",
+   "animation": "passive",
+   "location": "src/engine/nerfs/implemented.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "serf_labor",
    "name": "Serf Labor",
    "kind": "nerf",
@@ -45795,6 +46292,44 @@
    "animation": "passive",
    "location": "src/engine/nerfs/expanded/tier8.ts",
    "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "slowpoke",
+   "name": "Slowpoke",
+   "kind": "nerf",
+   "tier": 8,
+   "effect": "All your moves must be distance exactly 1. On every fifth turn, a single knight leap is allowed instead.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|knight,leap,move,n:1",
+   "animation": "passive+bespoke",
+   "location": "src/engine/buffs/pt/curseschaos.ts",
+   "tests": [
+    "lab-run-all.ts",
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "straight_and_narrow",
+   "name": "Straight and Narrow",
+   "kind": "nerf",
+   "tier": 8,
+   "effect": "You can't make any diagonal move: your bishops are stuck, your queen moves only like a rook, and your pawns can't capture.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|bishop,capture,move,pawn,queen,rook",
+   "animation": "passive",
+   "location": "src/engine/nerfs/expanded/tier7.ts",
+   "tests": [
+    "test-nerf-categories.ts",
     "test-nerfs.cjs"
    ],
    "flags": [],
@@ -45831,6 +46366,42 @@
    "signature": "nerf|unstated|file,knight,leap,move,rank",
    "animation": "passive",
    "location": "src/engine/nerfs/extras.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "war_footing",
+   "name": "War Footing",
+   "kind": "nerf",
+   "tier": 8,
+   "effect": "You lose if you make more than 12 non-capturing moves all game.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|move,n:12",
+   "animation": "passive",
+   "location": "src/engine/nerfs/expanded/tier7.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "wn_bottom_feeder",
+   "name": "Bottom Feeder",
+   "kind": "nerf",
+   "tier": 8,
+   "effect": "You can only capture pawns. You can't capture any other piece, except the enemy king to win.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|capture,king,pawn",
+   "animation": "passive",
+   "location": "src/engine/nerfs/wild.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -45892,6 +46463,24 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "wn_kingpin",
+   "name": "Kingpin",
+   "kind": "nerf",
+   "tier": 8,
+   "effect": "Only your king may capture. No other piece can make a capture. If no compliant move exists, only your king may move.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|capture,king,move",
+   "animation": "passive",
+   "location": "src/engine/nerfs/wild.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "wn_perfect_defense",
    "name": "Perfect Defense",
    "kind": "nerf",
@@ -45901,6 +46490,24 @@
    "duration": "match",
    "targets": "self",
    "signature": "nerf|unstated|king,move,square",
+   "animation": "passive",
+   "location": "src/engine/nerfs/wild.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "wn_royal_meridian",
+   "name": "Royal Meridian",
+   "kind": "nerf",
+   "tier": 8,
+   "effect": "Every piece you move must land on your king's file or your king's rank. If no compliant move exists, only your king may move.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|file,king,move,rank",
    "animation": "passive",
    "location": "src/engine/nerfs/wild.ts",
    "tests": [

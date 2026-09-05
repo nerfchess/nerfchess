@@ -1083,6 +1083,111 @@ html[data-anim="off"] li > .dock-card.dock-pocket-flash {
   animation: none !important;
 }
 
+/* --- Dock card lifecycle ----------------------------------------------------
+   Three beats, three classes, all transform/opacity on their own layers:
+     .dock-arrive       the row lands (slide + settle) and a tier band sweeps it
+     .dock-used-burst   the card fired: a quick press and a ring that blooms
+     .dock-live         the card is in effect right now: edge breath + live dot
+   Every one is dropped under data-anim=off; the live dot stays as a static
+   mark so the state still reads without motion. */
+@keyframes dock-arrive {
+  0%   { transform: translateX(-16px) scale(0.98); opacity: 0; }
+  60%  { transform: translateX(2px) scale(1.005); opacity: 1; }
+  100% { transform: translateX(0) scale(1); opacity: 1; }
+}
+.dock-arrive { animation: dock-arrive 0.5s var(--ease-signature, cubic-bezier(0.16, 1, 0.3, 1)) both; }
+.dock-arrive-sheen {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  border: 0 !important;
+  background: transparent !important;
+}
+.dock-arrive-sheen::before {
+  content: "";
+  position: absolute;
+  inset: -20% -60%;
+  background: linear-gradient(
+    105deg,
+    transparent 38%,
+    rgb(var(--tier-rgb, 216 181 110) / 0.22) 48%,
+    rgb(255 240 200 / 0.28) 51%,
+    rgb(var(--tier-rgb, 216 181 110) / 0.18) 54%,
+    transparent 64%
+  );
+  transform: translateX(-60%);
+  animation: dock-arrive-sheen 0.9s 0.15s cubic-bezier(0.55, 0, 0.35, 1) both;
+}
+@keyframes dock-arrive-sheen {
+  0%   { transform: translateX(-60%); opacity: 1; }
+  100% { transform: translateX(60%); opacity: 0; }
+}
+
+@keyframes dock-used-burst {
+  0%   { transform: scale(1); }
+  25%  { transform: scale(0.985); }
+  60%  { transform: scale(1.012); }
+  100% { transform: scale(1); }
+}
+.dock-used-burst { animation: dock-used-burst 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.dock-used-ring {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow:
+    inset 0 0 0 2px rgb(var(--tier-rgb, 216 181 110) / 0.9),
+    inset 0 0 18px -4px rgb(var(--tier-rgb, 216 181 110) / 0.7);
+  animation: dock-used-ring 0.85s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes dock-used-ring {
+  0%   { opacity: 0; transform: scale(0.96); }
+  20%  { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.03); }
+}
+
+.dock-live .dock-tier-edge {
+  animation: dock-live-breathe 2.4s ease-in-out infinite;
+}
+@keyframes dock-live-breathe {
+  0%, 100% { opacity: 0.55; }
+  50%      { opacity: 1; }
+}
+.dock-live-dot {
+  position: relative;
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  border: 0 !important;
+  background: rgb(var(--tier-rgb, 216 181 110)) !important;
+}
+.dock-live-dot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: rgb(var(--tier-rgb, 216 181 110));
+  animation: dock-live-ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+@keyframes dock-live-ping {
+  0%        { transform: scale(1); opacity: 0.7; }
+  75%, 100% { transform: scale(2.6); opacity: 0; }
+}
+html[data-anim="off"] .dock-arrive,
+html[data-anim="off"] .dock-arrive-sheen::before,
+html[data-anim="off"] .dock-used-burst,
+html[data-anim="off"] .dock-used-ring,
+html[data-anim="off"] .dock-live .dock-tier-edge,
+html[data-anim="off"] .dock-live-dot::after {
+  animation: none !important;
+}
+html[data-anim="off"] .dock-arrive-sheen::before,
+html[data-anim="off"] .dock-used-ring,
+html[data-anim="off"] .dock-live-dot::after { opacity: 0; }
+
 /* The flame: a teardrop blob (border-radius trick) guttering by scale/skew.
    transform-origin at the base so it dances like a real tongue of fire. */
 

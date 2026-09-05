@@ -1109,6 +1109,280 @@ function AscendScene({ palette, glyph, variant, delayMs }: SceneProps) {
    Glyphs (viewBox 0 0 10 10)
    ========================================================================== */
 
+
+/* =============================================================================
+   Mythic ladder scenes (src/engine/buffs/fantasy/mythic.ts): three templates,
+   one per card kind, each bent by a per-card variant.
+   ========================================================================== */
+
+/* --- Runeforge: a power is hammered onto your own army --------------------- */
+const FORGE_SPARKS = [
+  { l: 46, t: 38, dx: "-120%", dy: "-160%", d: 0 },
+  { l: 52, t: 40, dx: "140%", dy: "-120%", d: 60 },
+  { l: 49, t: 36, dx: "20%", dy: "-200%", d: 120 },
+  { l: 55, t: 44, dx: "180%", dy: "-40%", d: 180 },
+];
+function RuneforgeScene({ palette, glyph, variant, delayMs }: SceneProps) {
+  const [core, glow, deep] = palette;
+  return (
+    <Stage quakeMs={delayMs + 980}>
+      <Wash color={tint(deep, 0.24)} delayMs={delayMs} />
+      <Rake tone={tint(core, 0.4)} delayMs={delayMs + 40} />
+      {/* the anvil ring heats up under the work */}
+      <span
+        className="ftp-anvilring absolute block rounded-full"
+        style={{ left: "33%", top: "50%", width: "34%", height: "14%", border: `2px solid ${tint(core, 0.85)}`, boxShadow: `inset 0 0 0 1px ${tint(glow, 0.35)}`, ...d(delayMs + 120) }}
+      />
+      {/* three hammer blows: the rune jumps on each strike */}
+      <span className="ftp-hammer absolute block" style={{ left: "40%", top: "28%", width: "20%", height: "24%", ...d(delayMs + 380) }}>
+        <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">{glyph}</svg>
+      </span>
+      {[0, 300, 600].map((t, i) => (
+        <Flash key={i} color={tint(glow, 0.7)} delayMs={delayMs + 440 + t} />
+      ))}
+      {FORGE_SPARKS.map((v, i) => (
+        <span
+          key={i}
+          className="ftp-spark absolute block rounded-full"
+          style={{ left: `${v.l}%`, top: `${v.t}%`, width: "2.4%", height: "2.4%", background: tint(glow, 0.95), "--dx": v.dx, "--dy": v.dy, ...d(delayMs + 460 + v.d) } as CSSProperties}
+        />
+      ))}
+      {variant === "storm" && (
+        <span
+          className="ftp-bolt absolute block"
+          style={{ left: "48%", top: "6%", width: "4%", height: "40%", background: `linear-gradient(180deg, ${tint(glow, 0.95)}, ${tint(core, 0.6)}, transparent)`, ...d(delayMs + 700) }}
+        />
+      )}
+      {variant === "eclipse" && (
+        <span
+          className="ftp-eclipse absolute block rounded-full"
+          style={{ left: "38%", top: "22%", width: "24%", height: "24%", background: deep, boxShadow: `0 0 0 3px ${tint(glow, 0.9)}, 0 0 28px 6px ${tint(core, 0.55)}`, ...d(delayMs + 760) }}
+        />
+      )}
+      {variant === "phoenix" && (
+        <span
+          className="ftp-wisp absolute block rounded-full"
+          style={{ left: "47%", top: "44%", width: "6%", height: "16%", background: `linear-gradient(180deg, ${tint(glow, 0.95)}, ${tint(core, 0.7)}, transparent)`, ...d(delayMs + 820) }}
+        />
+      )}
+      {variant === "moss" && (
+        <span
+          className="ftp-dome absolute block rounded-full"
+          style={{ left: "30%", top: "30%", width: "40%", height: "40%", border: `2px solid ${tint(glow, 0.7)}`, background: `radial-gradient(closest-side, ${tint(core, 0.18)}, transparent)`, ...d(delayMs + 760) }}
+        />
+      )}
+      {variant === "moon" && (
+        <span
+          className="ftp-halo absolute block rounded-full"
+          style={{ left: "58%", top: "14%", width: "14%", height: "14%", background: `radial-gradient(circle at 40% 40%, ${glow}, ${tint(core, 0.6)})`, boxShadow: `0 0 16px 4px ${tint(glow, 0.4)}`, ...d(delayMs + 700) }}
+        />
+      )}
+      {variant === "scale" &&
+        [0, 1, 2].map((i) => (
+          <span
+            key={i}
+            className="ftp-relic absolute block"
+            style={{ left: `${40 + i * 7}%`, top: `${58 - (i % 2) * 4}%`, width: "6%", height: "8%", background: `linear-gradient(180deg, ${tint(glow, 0.9)}, ${tint(core, 0.6)})`, borderRadius: "0 0 50% 50%", ...d(delayMs + 720 + i * 90) }}
+          />
+        ))}
+      {variant === "blood" &&
+        [0, 1].map((i) => (
+          <span
+            key={i}
+            className="ftp-drip absolute block"
+            style={{ left: `${45 + i * 8}%`, top: "50%", width: "2.2%", height: "9%", borderRadius: "999px", background: `linear-gradient(180deg, ${tint(core, 0.95)}, ${tint(glow, 0.6)}, transparent)`, ...d(delayMs + 780 + i * 140) }}
+          />
+        ))}
+      {variant === "sun" && (
+        <span
+          className="ftp-ray absolute block"
+          style={{ left: "20%", top: "20%", width: "60%", height: "40%", background: `conic-gradient(from 200deg at 50% 100%, transparent 0 38%, ${tint(glow, 0.35)} 42%, transparent 46%, ${tint(glow, 0.3)} 52%, transparent 56%, ${tint(glow, 0.35)} 60%, transparent 64%)`, ...d(delayMs + 800) }}
+        />
+      )}
+      <Ring color={tint(core, 0.85)} delayMs={delayMs + 1000} />
+      <Motes color={tint(glow, 0.8)} delayMs={delayMs + 1200} />
+      <Drift tone={core} delayMs={delayMs + 1550} />
+    </Stage>
+  );
+}
+
+/* --- Hexweave: threads draw in from the corners and knot on the victim ------ */
+const WEAVE_THREADS = [
+  { l: 6, t: 8, ang: 38 },
+  { l: 94, t: 8, ang: 142 },
+  { l: 6, t: 92, ang: -38 },
+  { l: 94, t: 92, ang: -142 },
+];
+function HexweaveScene({ palette, glyph, variant, delayMs }: SceneProps) {
+  const [core, glow, deep] = palette;
+  return (
+    <Stage>
+      <Wash color={tint(deep, 0.3)} delayMs={delayMs} />
+      {/* the omen: the ground darkens toward the victim before a thread moves */}
+      <Rake tone={tint(core, 0.4)} delayMs={delayMs + 40} />
+      {WEAVE_THREADS.map((v, i) => (
+        <span
+          key={i}
+          className="ftp-thread absolute block"
+          style={{ left: `${v.l}%`, top: `${v.t}%`, width: "48%", height: "1.2%", background: `linear-gradient(90deg, transparent, ${tint(core, 0.9)} 30%, ${tint(glow, 0.95)})`, transformOrigin: "0 50%", "--ang": `${v.ang}deg`, ...d(delayMs + 120 + i * 90) } as CSSProperties}
+        />
+      ))}
+      {/* the knot pulls tight around the glyph */}
+      <span className="ftp-knot absolute block" style={{ left: "41%", top: "37%", width: "18%", height: "22%", ...d(delayMs + 640) }}>
+        <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">{glyph}</svg>
+      </span>
+      <span
+        className="ftp-chain absolute block"
+        style={{ left: "31%", top: "47%", width: "38%", height: "2.6%", background: `repeating-linear-gradient(90deg, ${tint(core, 0.95)} 0 9%, transparent 9% 15%)`, borderRadius: "999px", ...d(delayMs + 760) }}
+      />
+      <Flash color={tint(glow, 0.75)} delayMs={delayMs + 820} />
+      {variant === "frost" &&
+        [0, 1, 2].map((i) => (
+          <span
+            key={i}
+            className="ftp-shard absolute block"
+            style={{ left: `${44 + i * 5}%`, top: `${40 + (i % 2) * 8}%`, width: "2.4%", height: "9%", background: `linear-gradient(180deg, ${tint(glow, 0.95)}, ${tint(core, 0.5)})`, ...d(delayMs + 900 + i * 70) }}
+          />
+        ))}
+      {variant === "moat" && (
+        <span
+          className="ftp-ripple absolute block rounded-full"
+          style={{ left: "28%", top: "44%", width: "44%", height: "18%", border: `2px solid ${tint(glow, 0.8)}`, ...d(delayMs + 900) }}
+        />
+      )}
+      {variant === "gaze" && (
+        <span className="ftp-eye absolute block" style={{ left: "43%", top: "24%", width: "14%", height: "9%", ...d(delayMs + 880) }}>
+          <svg viewBox="0 0 14 9" className="block h-full w-full" aria-hidden="true">
+            <path d="M0.8 4.5 Q7 -1 13.2 4.5 Q7 10 0.8 4.5 Z" fill={tint(deep, 0.9)} stroke={glow} strokeWidth="0.6" />
+            <circle cx="7" cy="4.5" r="2" fill={core} />
+          </svg>
+        </span>
+      )}
+      {variant === "stone" && (
+        <span
+          className="ftp-stonedust absolute block rounded-full"
+          style={{ left: "40%", top: "52%", width: "20%", height: "7%", background: `radial-gradient(closest-side, ${tint(core, 0.6)}, transparent)`, ...d(delayMs + 960) }}
+        />
+      )}
+      {variant === "burr" &&
+        [0, 1, 2, 3].map((i) => (
+          <span
+            key={i}
+            className="ftp-spark absolute block rounded-full"
+            style={{ left: `${46 + (i % 2) * 8}%`, top: `${40 + Math.floor(i / 2) * 10}%`, width: "2%", height: "2%", background: tint(glow, 0.95), "--dx": i % 2 ? "120%" : "-120%", "--dy": i < 2 ? "-110%" : "90%", ...d(delayMs + 900 + i * 50) } as CSSProperties}
+          />
+        ))}
+      {variant === "fog" && (
+        <span
+          className="ftp-mist absolute block"
+          style={{ left: "22%", top: "50%", width: "56%", height: "12%", borderRadius: "999px", background: `linear-gradient(90deg, transparent, ${tint(core, 0.55)}, transparent)`, ...d(delayMs + 880) }}
+        />
+      )}
+      {variant === "thorn" &&
+        [0, 1, 2].map((i) => (
+          <span
+            key={i}
+            className="ftp-clawup absolute block"
+            style={{ left: `${40 + i * 8}%`, top: "50%", width: "2%", height: "12%", background: `linear-gradient(0deg, ${tint(core, 0.95)}, ${tint(glow, 0.7)})`, borderRadius: "999px 999px 0 0", ...d(delayMs + 860 + i * 80) }}
+          />
+        ))}
+      {variant === "song" &&
+        [0, 1, 2].map((i) => (
+          <span
+            key={i}
+            className="ftp-ripple absolute block rounded-full"
+            style={{ left: `${44 - i * 6}%`, top: `${46 - i * 4}%`, width: `${12 + i * 12}%`, height: `${8 + i * 8}%`, border: `1.5px solid ${tint(glow, 0.7 - i * 0.15)}`, ...d(delayMs + 860 + i * 140) }}
+          />
+        ))}
+      <Ring color={tint(core, 0.8)} delayMs={delayMs + 960} />
+      <Drift tone={core} delayMs={delayMs + 1500} />
+    </Stage>
+  );
+}
+
+/* --- Blessing: a small grace, given quietly --------------------------------- */
+const BLESS_PETALS = [
+  { l: 44, t: 44, dx: "-90%", dy: "-110%", d: 0 },
+  { l: 54, t: 46, dx: "110%", dy: "-90%", d: 100 },
+  { l: 49, t: 40, dx: "10%", dy: "-150%", d: 200 },
+];
+function BlessingScene({ palette, glyph, variant, delayMs }: SceneProps) {
+  const [core, glow, deep] = palette;
+  return (
+    <Stage>
+      <Wash color={tint(deep, 0.16)} delayMs={delayMs} />
+      <span
+        className="ftp-featherfall absolute block rounded-full"
+        style={{ left: "47%", top: "10%", width: "5%", height: "12%", background: `linear-gradient(180deg, ${tint(glow, 0.95)}, ${tint(core, 0.6)})`, ...d(delayMs + 120) }}
+      />
+      <span
+        className="ftp-halo absolute block rounded-full"
+        style={{ left: "38%", top: "34%", width: "24%", height: "24%", border: `2px solid ${tint(glow, 0.8)}`, boxShadow: `0 0 18px 2px ${tint(core, 0.35)}`, ...d(delayMs + 460) }}
+      />
+      <span className="ftp-summon absolute block" style={{ left: "41%", top: "36%", width: "18%", height: "22%", ...d(delayMs + 520) }}>
+        <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">{glyph}</svg>
+      </span>
+      {BLESS_PETALS.map((v, i) => (
+        <span
+          key={i}
+          className="ftp-petal absolute block rounded-full"
+          style={{ left: `${v.l}%`, top: `${v.t}%`, width: "3%", height: "4%", background: tint(glow, 0.9), "--dx": v.dx, "--dy": v.dy, ...d(delayMs + 780 + v.d) } as CSSProperties}
+        />
+      ))}
+      {variant === "bread" && (
+        <span
+          className="ftp-stonedust absolute block rounded-full"
+          style={{ left: "42%", top: "54%", width: "16%", height: "6%", background: `radial-gradient(closest-side, ${tint(core, 0.55)}, transparent)`, ...d(delayMs + 860) }}
+        />
+      )}
+      {variant === "road" && (
+        <span
+          className="ftp-legrun absolute block"
+          style={{ left: "22%", top: "56%", width: "56%", height: "1.4%", background: `linear-gradient(90deg, transparent, ${tint(glow, 0.9)}, transparent)`, ...d(delayMs + 880) }}
+        />
+      )}
+      {variant === "heart" && <Ring color={tint(glow, 0.9)} delayMs={delayMs + 1080} />}
+      {variant === "lantern" && (
+        <span
+          className="ftp-gleam absolute block rounded-full"
+          style={{ left: "44%", top: "40%", width: "12%", height: "12%", background: `radial-gradient(circle, ${tint(glow, 0.95)}, ${tint(core, 0.4)} 60%, transparent)`, ...d(delayMs + 820) }}
+        />
+      )}
+      {variant === "drop" && (
+        <span
+          className="ftp-ripple absolute block rounded-full"
+          style={{ left: "36%", top: "56%", width: "28%", height: "10%", border: `1.5px solid ${tint(glow, 0.8)}`, ...d(delayMs + 900) }}
+        />
+      )}
+      {variant === "oath" && (
+        <span
+          className="ftp-relic absolute block"
+          style={{ left: "44%", top: "56%", width: "12%", height: "10%", background: `linear-gradient(180deg, ${tint(glow, 0.8)}, ${tint(core, 0.6)})`, clipPath: "polygon(10% 100%, 20% 20%, 50% 0, 80% 20%, 90% 100%)", ...d(delayMs + 880) }}
+        />
+      )}
+      {variant === "wind" &&
+        [0, 1].map((i) => (
+          <span
+            key={i}
+            className="ftp-gust absolute block rounded-full"
+            style={{ left: "30%", top: `${42 + i * 10}%`, width: "40%", height: "4%", background: `linear-gradient(90deg, transparent, ${tint(glow, 0.7)}, transparent)`, ...d(delayMs + 840 + i * 120) }}
+          />
+        ))}
+      {variant === "bloom" &&
+        [0, 1, 2].map((i) => (
+          <span
+            key={i}
+            className="ftp-soil absolute block rounded-full"
+            style={{ left: `${43 + i * 5}%`, top: "56%", width: "3%", height: "3%", background: tint(core, 0.85), ...d(delayMs + 860 + i * 90) }}
+          />
+        ))}
+      <Ring color={tint(core, 0.75)} delayMs={delayMs + 940} />
+      <Motes color={tint(glow, 0.75)} delayMs={delayMs + 1150} />
+      <Drift tone={core} delayMs={delayMs + 1500} />
+    </Stage>
+  );
+}
+
 function Gl({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
@@ -1440,6 +1714,160 @@ const GLYPH: Record<string, ReactNode> = {
       <path d="M5 1.8 L7.8 6.6 H2.2 Z M5 8.2 L2.2 3.4 H7.8 Z" fill="none" stroke="#e3d0ff" strokeWidth="0.4" {...SJ} />
     </Gl>
   ),
+
+  /* --- mythic ladder ------------------------------------------------------- */
+  fm_glowmoss_ward: (
+    <Gl>
+      <path d="M5 1.2 L8.4 2.8 V5.4 Q8.4 8 5 9.2 Q1.6 8 1.6 5.4 V2.8 Z" fill="#1c4a2c" stroke="#a8e07f" strokeWidth="0.5" {...SJ} />
+      <circle cx="5" cy="5" r="1.4" fill="#d6ffb0" />
+    </Gl>
+  ),
+  fm_moonlit_stride: (
+    <Gl>
+      <path d="M6.4 1.4 A3.8 3.8 0 1 0 8.6 6.6 A3 3 0 0 1 6.4 1.4 Z" fill="#cdd6ff" stroke="#8faadc" strokeWidth="0.4" {...SJ} />
+      <path d="M2 8.4 L3.4 6.2 L4.4 7.6 L5.8 5.4" fill="none" stroke="#fff4d6" strokeWidth="0.55" {...SJ} />
+    </Gl>
+  ),
+  fm_wyrmscale_mail: (
+    <Gl>
+      <path d="M5 1 L8.2 2.6 V5.6 Q8.2 8.2 5 9.2 Q1.8 8.2 1.8 5.6 V2.6 Z" fill="#2a3a22" stroke="#7fae5a" strokeWidth="0.45" {...SJ} />
+      <path d="M3 3.6 Q5 5 7 3.6 M3 5.4 Q5 6.8 7 5.4 M3.6 7 Q5 8 6.4 7" fill="none" stroke="#a8e07f" strokeWidth="0.45" {...SJ} />
+    </Gl>
+  ),
+  fm_stormcaller: (
+    <Gl>
+      <path d="M2 4.6 Q2 2.4 4.2 2.6 Q5 0.8 7 1.6 Q9 2 8.6 4.2 Q9.4 5.6 7.8 6 H3 Q1.6 5.8 2 4.6 Z" fill="#3a3f5e" stroke="#8faadc" strokeWidth="0.4" {...SJ} />
+      <path d="M5.6 6 L4.4 8 H5.6 L4.6 9.6" fill="none" stroke="#ffd76a" strokeWidth="0.6" {...SJ} />
+    </Gl>
+  ),
+  fm_phoenix_feather: (
+    <Gl>
+      <path d="M7.8 1.4 Q3 2.2 2.2 8.6 Q6.8 7.6 7.8 1.4 Z" fill="#e6432c" stroke="#ffd76a" strokeWidth="0.4" {...SJ} />
+      <path d="M2.4 8.4 L6.6 2.6" stroke="#ffd76a" strokeWidth="0.4" strokeLinecap="round" />
+    </Gl>
+  ),
+  fm_dragonblood: (
+    <Gl>
+      <path d="M5 1 Q7.6 4 7.6 6.2 A2.6 2.6 0 1 1 2.4 6.2 Q2.4 4 5 1 Z" fill="#a31d1d" stroke="#ff8a3d" strokeWidth="0.45" {...SJ} />
+      <circle cx="5" cy="6.4" r="0.9" fill="#ffd76a" />
+    </Gl>
+  ),
+  fm_sunforge: (
+    <Gl>
+      <circle cx="5" cy="5" r="2.2" fill="#ffd76a" stroke="#ff9d3d" strokeWidth="0.4" />
+      <path d="M5 0.8 V2 M5 8 V9.2 M0.8 5 H2 M8 5 H9.2 M2 2 L2.9 2.9 M8 2 L7.1 2.9 M2 8 L2.9 7.1 M8 8 L7.1 7.1" stroke="#ff9d3d" strokeWidth="0.5" strokeLinecap="round" />
+    </Gl>
+  ),
+  fm_eclipse_crown: (
+    <Gl>
+      <circle cx="5" cy="5" r="3.2" fill="#ffd76a" />
+      <circle cx="5.8" cy="4.6" r="3" fill="#141322" />
+      <path d="M2.4 8.6 L3.2 6.6 L4.4 7.8 L5.4 6 L6.4 7.8 L7.6 6.6 L8.2 8.6 Z" fill="#ffd76a" stroke="#fff4d6" strokeWidth="0.3" {...SJ} />
+    </Gl>
+  ),
+  fm_hex_thistledown: (
+    <Gl>
+      <path d="M5 8.8 V4.6" stroke="#4a5c2f" strokeWidth="0.6" strokeLinecap="round" />
+      <circle cx="5" cy="3.4" r="1.9" fill="#8f5fbf" stroke="#c9a2ff" strokeWidth="0.4" />
+      <path d="M5 1 V1.6 M3.2 1.8 L3.6 2.3 M6.8 1.8 L6.4 2.3 M2.6 3.4 H3.2 M6.8 3.4 H7.4" stroke="#c9a2ff" strokeWidth="0.45" strokeLinecap="round" />
+    </Gl>
+  ),
+  fm_hex_fogbank: (
+    <Gl>
+      <path d="M1.4 4.2 Q2.6 2.4 4.6 3.4 Q6 1.6 7.8 3 Q9.2 4 8.4 5.6 H1.8 Q0.8 5 1.4 4.2 Z" fill="#8a94a8" stroke="#d9d2c0" strokeWidth="0.4" {...SJ} />
+      <path d="M2 7.2 H8 M3 8.6 H7" stroke="#d9d2c0" strokeWidth="0.5" strokeLinecap="round" />
+    </Gl>
+  ),
+  fm_hex_brambleroot: (
+    <Gl>
+      <path d="M1.4 8 Q3 6.4 5 7 Q7 7.6 8.6 6" fill="none" stroke="#4a5c2f" strokeWidth="0.6" {...SJ} />
+      <path d="M2.8 7.2 L2.4 5.6 M4.6 6.9 L4.9 5.2 M6.6 7.4 L7 5.8" stroke="#7fae5a" strokeWidth="0.45" strokeLinecap="round" />
+      <path d="M5 1.6 V4.4 M3.4 2.2 L6.6 3.8 M6.6 2.2 L3.4 3.8" stroke="#8a7a63" strokeWidth="0.4" strokeLinecap="round" />
+    </Gl>
+  ),
+  fm_hex_sirens_call: (
+    <Gl>
+      <path d="M1.4 6.4 Q3 5 4.6 6.4 Q6.2 7.8 7.8 6.4 Q9 5.4 8.6 4.4" fill="none" stroke="#5fc9b0" strokeWidth="0.6" {...SJ} />
+      <path d="M5.2 1.4 Q6.8 2.6 6 4.6 Q5.2 6 3.8 5.2 Q3 4 4 2.8 Z" fill="#1c3a5e" stroke="#8fe8ff" strokeWidth="0.4" {...SJ} />
+    </Gl>
+  ),
+  fm_hex_gorgon_gaze: (
+    <Gl>
+      <path d="M1 5 Q5 0.6 9 5 Q5 9.4 1 5 Z" fill="#26262c" stroke="#7fae5a" strokeWidth="0.45" {...SJ} />
+      <circle cx="5" cy="5" r="1.6" fill="#a8e07f" />
+      <circle cx="5" cy="5" r="0.6" fill="#141322" />
+    </Gl>
+  ),
+  fm_hex_iron_maiden: (
+    <Gl>
+      <path d="M3 1.6 H7 V8.6 H3 Z" fill="#3a3a40" stroke="#c9cdd6" strokeWidth="0.4" {...SJ} />
+      <path d="M5 1.6 V8.6 M3 4 H7 M3 6.2 H7" stroke="#c9cdd6" strokeWidth="0.35" />
+      <circle cx="5" cy="3" r="0.5" fill="#e05252" />
+    </Gl>
+  ),
+  fm_hex_kings_moat: (
+    <Gl>
+      <path d="M3.4 3.6 L3.4 1.6 L4.2 2.4 L5 1.4 L5.8 2.4 L6.6 1.6 V3.6 Z" fill="#8faadc" stroke="#cdd6ff" strokeWidth="0.35" {...SJ} />
+      <path d="M1 6.2 Q2 5.2 3 6.2 Q4 7.2 5 6.2 Q6 5.2 7 6.2 Q8 7.2 9 6.2 M1 8 Q2 7 3 8 Q4 9 5 8 Q6 7 7 8 Q8 9 9 8" fill="none" stroke="#3a5f8a" strokeWidth="0.55" {...SJ} />
+    </Gl>
+  ),
+  fm_hex_winter_court: (
+    <Gl>
+      <path d="M5 1 V9 M1.6 3 L8.4 7 M8.4 3 L1.6 7" stroke="#9fd8ff" strokeWidth="0.6" strokeLinecap="round" />
+      <path d="M5 2.4 L4.2 3.4 M5 2.4 L5.8 3.4 M5 7.6 L4.2 6.6 M5 7.6 L5.8 6.6" stroke="#e8f8ff" strokeWidth="0.4" strokeLinecap="round" />
+    </Gl>
+  ),
+  fm_boon_lanternlight: (
+    <Gl>
+      <path d="M3.4 3 H6.6 V7.4 Q5 8.6 3.4 7.4 Z" fill="#3a2c14" stroke="#ffd76a" strokeWidth="0.45" {...SJ} />
+      <path d="M5 1.2 V3 M4.2 1.2 H5.8" stroke="#ffd76a" strokeWidth="0.45" strokeLinecap="round" />
+      <circle cx="5" cy="5.4" r="1.1" fill="#fff4d6" />
+    </Gl>
+  ),
+  fm_boon_hearthbread: (
+    <Gl>
+      <path d="M1.4 6.2 Q1.4 3.4 5 3.4 Q8.6 3.4 8.6 6.2 Q8.6 7.6 7 7.6 H3 Q1.4 7.6 1.4 6.2 Z" fill="#c98a4c" stroke="#ffe9b0" strokeWidth="0.4" {...SJ} />
+      <path d="M3.4 5.4 L4 6.4 M5 5 L5.6 6.2 M6.6 5.4 L7.2 6.4" stroke="#ffe9b0" strokeWidth="0.4" strokeLinecap="round" />
+    </Gl>
+  ),
+  fm_boon_dewdrop: (
+    <Gl>
+      <path d="M5 1.2 Q8 4.8 8 6.4 A3 3 0 1 1 2 6.4 Q2 4.8 5 1.2 Z" fill="#5fc9b0" stroke="#dff7ff" strokeWidth="0.4" {...SJ} />
+      <circle cx="4" cy="6" r="0.7" fill="#ffffff" fillOpacity="0.8" />
+    </Gl>
+  ),
+  fm_boon_oathstone: (
+    <Gl>
+      <path d="M2 8.4 L2.8 3 L5 1.4 L7.2 3 L8 8.4 Z" fill="#5c5348" stroke="#d9d2c0" strokeWidth="0.45" {...SJ} />
+      <path d="M4 5.2 L5 6.4 L6.4 3.8" fill="none" stroke="#ffd76a" strokeWidth="0.6" {...SJ} />
+    </Gl>
+  ),
+  fm_boon_windrider: (
+    <Gl>
+      <path d="M1.2 4 Q3.6 2.2 6 4 Q7.8 5.2 8.8 3.6" fill="none" stroke="#9fd8ff" strokeWidth="0.6" {...SJ} />
+      <path d="M1.6 6.6 Q4 4.8 6.4 6.6 Q8 7.6 8.8 6.2" fill="none" stroke="#dff7ff" strokeWidth="0.5" {...SJ} />
+      <circle cx="7.6" cy="2.2" r="0.8" fill="#fff4d6" />
+    </Gl>
+  ),
+  fm_boon_lifebloom: (
+    <Gl>
+      <path d="M5 9 V4.6" stroke="#4a5c2f" strokeWidth="0.55" strokeLinecap="round" />
+      <path d="M5 4.6 Q3.4 4.6 3 6.2 Q4.6 6.4 5 4.6 Q6.6 4.6 7 6.2 Q5.4 6.4 5 4.6 Z" fill="#7fae5a" />
+      <circle cx="5" cy="3" r="1.6" fill="#ff9dd6" stroke="#fff4d6" strokeWidth="0.35" />
+    </Gl>
+  ),
+  fm_boon_royal_road: (
+    <Gl>
+      <path d="M1 8.6 L4 1.6 H6 L9 8.6 Z" fill="#3a2c14" stroke="#ffd76a" strokeWidth="0.4" {...SJ} />
+      <path d="M5 3.4 V4.4 M5 5.6 V6.6 M5 7.6 V8.4" stroke="#ffd76a" strokeWidth="0.5" strokeLinecap="round" />
+    </Gl>
+  ),
+  fm_boon_worldheart: (
+    <Gl>
+      <path d="M5 8.6 Q1.2 5.8 1.8 3.4 Q2.6 1.4 5 2.8 Q7.4 1.4 8.2 3.4 Q8.8 5.8 5 8.6 Z" fill="#c9312b" stroke="#ffd76a" strokeWidth="0.45" {...SJ} />
+      <path d="M3 5.2 H4 L4.6 4.2 L5.4 6.2 L6 5.2 H7" fill="none" stroke="#fff4d6" strokeWidth="0.45" {...SJ} />
+    </Gl>
+  ),
 };
 
 /* =============================================================================
@@ -1635,4 +2063,82 @@ export const PLAYS: Record<string, SigPlugin> = {
   celestial_ascension: F(AscendScene, ["#8faadc", "#cdd6ff", "#222c44"], GLYPH.celestial_ascension, {
     ordering: "sweep", staggerMs: 80, victims: ["b"], hasLead: true, sound: "colossus", source: "empower", anchor: "board",
   }),
+
+  /* --- mythic ladder: buffs (runeforge) ---------------------------------------- */
+  fm_glowmoss_ward: F(RuneforgeScene, ["#7fae5a", "#d6ffb0", "#1c4a2c"], GLYPH.fm_glowmoss_ward, {
+    ordering: "radial", staggerMs: 40, victims: "all", hasLead: true, sound: "aegis", source: "shield", anchor: "cast",
+  }, "moss"),
+  fm_moonlit_stride: F(RuneforgeScene, ["#8faadc", "#cdd6ff", "#222c44"], GLYPH.fm_moonlit_stride, {
+    ordering: "radial", staggerMs: 60, victims: ["n"], hasLead: true, sound: "coronation", source: "empower", anchor: "cast",
+  }, "moon"),
+  fm_wyrmscale_mail: F(RuneforgeScene, ["#7fae5a", "#a8e07f", "#2a3a22"], GLYPH.fm_wyrmscale_mail, {
+    ordering: "radial", staggerMs: 0, victims: ["p", "n", "b", "r", "q"], hasLead: true, sound: "aegis", source: "shield", anchor: "cast",
+  }, "scale"),
+  fm_stormcaller: F(RuneforgeScene, ["#8faadc", "#ffd76a", "#3a3f5e"], GLYPH.fm_stormcaller, {
+    ordering: "sweep", staggerMs: 70, victims: ["r", "b"], hasLead: true, sound: "lightning", source: "empower", anchor: "cast",
+  }, "storm"),
+  fm_phoenix_feather: F(RuneforgeScene, ["#e6432c", "#ffd76a", "#2b1218"], GLYPH.fm_phoenix_feather, {
+    ordering: "radial", staggerMs: 0, victims: ["n", "b", "r"], hasLead: true, sound: "wall", source: "summon", anchor: "cast",
+  }, "phoenix"),
+  fm_dragonblood: F(RuneforgeScene, ["#a31d1d", "#ff8a3d", "#2b1218"], GLYPH.fm_dragonblood, {
+    ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "colossus", source: "empower", anchor: "cast",
+  }, "blood"),
+  fm_sunforge: F(RuneforgeScene, ["#ffd76a", "#fff4d6", "#3a2c14"], GLYPH.fm_sunforge, {
+    ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "coronation", source: "empower", anchor: "cast",
+  }, "sun"),
+  fm_eclipse_crown: F(RuneforgeScene, ["#ffd76a", "#fff4d6", "#141322"], GLYPH.fm_eclipse_crown, {
+    ordering: "radial", staggerMs: 30, victims: "all", hasLead: true, sound: "snooze", source: "stun", anchor: "board",
+  }, "eclipse"),
+
+  /* --- mythic ladder: hexes (hexweave) ----------------------------------------- */
+  fm_hex_thistledown: F(HexweaveScene, ["#8f5fbf", "#c9a2ff", "#1e1430"], GLYPH.fm_hex_thistledown, {
+    ordering: "radial", staggerMs: 60, victims: ["n"], hasLead: true, sound: "siege", anchor: "board",
+  }, "burr"),
+  fm_hex_fogbank: F(HexweaveScene, ["#8a94a8", "#d9d2c0", "#22262e"], GLYPH.fm_hex_fogbank, {
+    ordering: "radial", staggerMs: 60, victims: ["b"], hasLead: true, sound: "shades", anchor: "board",
+  }, "fog"),
+  fm_hex_brambleroot: F(HexweaveScene, ["#4a5c2f", "#a8e07f", "#1c2418"], GLYPH.fm_hex_brambleroot, {
+    ordering: "radial", staggerMs: 60, victims: ["r"], hasLead: true, sound: "wall", anchor: "cast",
+  }, "thorn"),
+  fm_hex_sirens_call: F(HexweaveScene, ["#5fc9b0", "#8fe8ff", "#1c3a5e"], GLYPH.fm_hex_sirens_call, {
+    ordering: "radial", staggerMs: 0, victims: ["n", "b", "r", "q"], hasLead: true, sound: "petrify", source: "walnut", anchor: "cast",
+  }, "song"),
+  fm_hex_gorgon_gaze: F(HexweaveScene, ["#7fae5a", "#a8e07f", "#26262c"], GLYPH.fm_hex_gorgon_gaze, {
+    ordering: "sweep", staggerMs: 90, victims: ["n", "b"], hasLead: true, sound: "petrifiedforest", source: "walnut", anchor: "board",
+  }, "gaze"),
+  fm_hex_iron_maiden: F(HexweaveScene, ["#c9cdd6", "#e05252", "#3a3a40"], GLYPH.fm_hex_iron_maiden, {
+    ordering: "radial", staggerMs: 0, victims: ["p", "n", "b", "r", "q"], hasLead: true, sound: "clockcage", source: "frozen", anchor: "cast",
+  }, "stone"),
+  fm_hex_kings_moat: F(HexweaveScene, ["#3a5f8a", "#8faadc", "#0e1a2a"], GLYPH.fm_hex_kings_moat, {
+    ordering: "radial", staggerMs: 40, victims: "all", hasLead: true, sound: "wall", source: "blindfold", anchor: "board",
+  }, "moat"),
+  fm_hex_winter_court: F(HexweaveScene, ["#9fd8ff", "#e8f8ff", "#1c3a5e"], GLYPH.fm_hex_winter_court, {
+    ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "massfreeze", source: "frozen", anchor: "board",
+  }, "frost"),
+
+  /* --- mythic ladder: boons (blessing) ----------------------------------------- */
+  fm_boon_lanternlight: F(BlessingScene, ["#ffd76a", "#fff4d6", "#3a2c14"], GLYPH.fm_boon_lanternlight, {
+    ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "cathedral", source: "empower", anchor: "cast",
+  }, "lantern"),
+  fm_boon_hearthbread: F(BlessingScene, ["#c98a4c", "#ffe9b0", "#3e2f1c"], GLYPH.fm_boon_hearthbread, {
+    ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "wall", source: "summon", anchor: "cast",
+  }, "bread"),
+  fm_boon_dewdrop: F(BlessingScene, ["#5fc9b0", "#dff7ff", "#1c3a3a"], GLYPH.fm_boon_dewdrop, {
+    ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "aegis", source: "shield", anchor: "cast",
+  }, "drop"),
+  fm_boon_oathstone: F(BlessingScene, ["#d9d2c0", "#ffd76a", "#3a3026"], GLYPH.fm_boon_oathstone, {
+    ordering: "sweep", staggerMs: 60, victims: ["p"], hasLead: true, sound: "aegis", source: "shield", anchor: "board",
+  }, "oath"),
+  fm_boon_windrider: F(BlessingScene, ["#9fd8ff", "#fff4d6", "#1c3a5e"], GLYPH.fm_boon_windrider, {
+    ordering: "radial", staggerMs: 60, victims: ["b"], hasLead: true, sound: "coronation", source: "empower", anchor: "cast",
+  }, "wind"),
+  fm_boon_lifebloom: F(BlessingScene, ["#7fae5a", "#ff9dd6", "#1c2418"], GLYPH.fm_boon_lifebloom, {
+    ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "wall", source: "summon", anchor: "cast",
+  }, "bloom"),
+  fm_boon_royal_road: F(BlessingScene, ["#ffd76a", "#fff2c9", "#3a2c14"], GLYPH.fm_boon_royal_road, {
+    ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "cathedral", source: "empower", anchor: "cast",
+  }, "road"),
+  fm_boon_worldheart: F(BlessingScene, ["#c9312b", "#ffd76a", "#2b1218"], GLYPH.fm_boon_worldheart, {
+    ordering: "radial", staggerMs: 30, victims: "all", hasLead: true, sound: "crownrain", source: "rally", anchor: "cast",
+  }, "heart"),
 };

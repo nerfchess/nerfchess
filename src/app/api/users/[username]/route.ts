@@ -83,6 +83,16 @@ export async function GET(request: Request, props: { params: Promise<{ username:
     .first<{ n: number }>();
   const friendCount = friendCountRow?.n ?? 0;
 
+  // Clubs the player belongs to (name + slug), for the profile's info box.
+  const clubRows = await db
+    .prepare(
+      `SELECT c.slug, c.name FROM club_members m JOIN clubs c ON c.id = m.club_id
+       WHERE m.user_id = ? ORDER BY m.joined_at ASC LIMIT 12`,
+    )
+    .bind(user.id)
+    .all<{ slug: string; name: string }>();
+  const clubs = clubRows.results;
+
   // relationship: null when signed out, else the viewer's tie to this profile.
   let relationship: Relationship | null = null;
   if (viewer) {
@@ -175,6 +185,9 @@ export async function GET(request: Request, props: { params: Promise<{ username:
   // existed fall back to the time control. Take the NEWEST 300 rows (then
   // restore chronological order in JS): the old ASC LIMIT froze the chart on
   // a prolific player's oldest 300 games and never showed current history.
+  // The cap is generous (a heavy player's newest 300 games covered six weeks,
+  // so "All" was a lie); the chart buckets dense spans by day, so the payload
+  // stays small on screen even when the archive is long.
   const ratingHistoryDesc = await pgAll<{
     at: number;
     category: string | null;
@@ -186,7 +199,7 @@ export async function GET(request: Request, props: { params: Promise<{ username:
             CASE WHEN white_user_id = ? THEN white_rating_after ELSE black_rating_after END AS rating
      FROM games
      WHERE (white_user_id = ? OR black_user_id = ?) AND rated = 1
-     ORDER BY completed_at DESC LIMIT 300`,
+     ORDER BY completed_at DESC LIMIT 4000`,
     [user.id, user.id, user.id],
   );
   const ratingHistory = ratingHistoryDesc.reverse();
@@ -216,6 +229,7 @@ export async function GET(request: Request, props: { params: Promise<{ username:
       showOnline,
       friendsVisibility,
       friendCount,
+      clubs,
     },
     relationship,
     mutualFriends,

@@ -283,7 +283,7 @@ function DraftPrepChip({ label }: { label: string }) {
  * the effects settle, and the decision timer starts later still. */
 export function DraftResolvingChip() {
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-14 z-40 flex justify-center px-3">
+    <div className="pointer-events-none fixed inset-x-0 bottom-[calc(5.75rem+env(safe-area-inset-bottom))] z-40 flex justify-center px-3 sm:inset-x-auto sm:bottom-6 sm:left-4 sm:justify-start">
       <div
         role="status"
         aria-live="polite"
@@ -2211,7 +2211,7 @@ export function DraftRevealBanner({
     return () => window.clearTimeout(t);
   }, [onDismiss]);
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-14 z-40 flex justify-center px-3">
+    <div className="pointer-events-none fixed inset-x-0 bottom-[calc(5.75rem+env(safe-area-inset-bottom))] z-40 flex justify-center px-3 sm:inset-x-auto sm:bottom-6 sm:left-4 sm:justify-start">
       <motion.button
         type="button"
         onClick={onDismiss}

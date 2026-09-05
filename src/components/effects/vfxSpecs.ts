@@ -1011,6 +1011,38 @@ export const CARD_VFX: Record<string, CardVfx> = {
   // [BeastRush] Bobrito Bandito.
   sahur: { travel: "bolt", impact: "shock", aftermath: "none", palette: ["#8a6a3a", "#c94a3a", "#4a3a22"], source: "caster" },
 
+
+  // ---- Mythic ladder (fantasy/mythic.ts): one buff, hex and boon per tier ----
+  // Runeforge buffs: sparks and a hot ring; the 3D layer adds a pillar of
+  // forge-light from tier 4 and a board-wide ring on the tier 8 eclipse.
+  fm_glowmoss_ward: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#7fae5a", "#d6ffb0", "#1c4a2c"], source: "caster" },
+  fm_moonlit_stride: { travel: "none", impact: "sparkle", aftermath: "none", palette: ["#8faadc", "#cdd6ff", "#222c44"], source: "lead" },
+  fm_wyrmscale_mail: { travel: "arc", impact: "sparkle", aftermath: "sparkle", palette: ["#7fae5a", "#a8e07f", "#2a3a22"], source: "caster" },
+  fm_stormcaller: { travel: "bolt", impact: "shock", aftermath: "sparkle", palette: ["#8faadc", "#ffd76a", "#3a3f5e"], source: "sky", chain: true, depth: { primitive: "pillar", height: 0.09, fallback: "canvas" } },
+  fm_phoenix_feather: { travel: "arc", impact: "embers", aftermath: "scorch", palette: ["#e6432c", "#ffd76a", "#2b1218"], source: "sky", depth: { primitive: "pillar", height: 0.12, fallback: "canvas" } },
+  fm_dragonblood: { travel: "wave", impact: "embers", aftermath: "smolder", palette: ["#a31d1d", "#ff8a3d", "#2b1218"], source: "lead", depth: { primitive: "ringWave", fallback: "none", durationMs: 1400 } },
+  fm_sunforge: { travel: "beam", impact: "burst", aftermath: "sparkle", palette: ["#ffd76a", "#fff4d6", "#ff9d3d"], source: "sky", shake: true, depth: { primitive: "pillar", height: 0.16, fallback: "canvas" } },
+  fm_eclipse_crown: { travel: "wave", impact: "shock", aftermath: "smolder", palette: ["#141322", "#ffd76a", "#fff4d6"], source: "center", shake: true, depth: { primitive: "ringWave", fallback: "none", durationMs: 2000 } },
+  // Hexweave hexes: threads knot on the victim; petrify and freeze get 3D
+  // shards, the moat a ring, the winter court a shattering frost.
+  fm_hex_thistledown: { travel: "arc", impact: "smoke", aftermath: "none", palette: ["#8f5fbf", "#c9a2ff", "#1e1430"], source: "caster" },
+  fm_hex_fogbank: { travel: "wave", impact: "smoke", aftermath: "none", palette: ["#8a94a8", "#d9d2c0", "#22262e"], source: "caster" },
+  fm_hex_brambleroot: { travel: "chain", impact: "debris", aftermath: "none", palette: ["#4a5c2f", "#a8e07f", "#1c2418"], source: "caster", chain: true },
+  fm_hex_sirens_call: { travel: "arc", impact: "shatter", aftermath: "frost", palette: ["#5fc9b0", "#8fe8ff", "#1c3a5e"], source: "caster", depth: { primitive: "pillar", height: 0.08, fallback: "canvas" } },
+  fm_hex_gorgon_gaze: { travel: "beam", impact: "shatter", aftermath: "smolder", palette: ["#7fae5a", "#a8e07f", "#26262c"], source: "caster", chain: true, depth: { primitive: "shatter", fallback: "canvas" } },
+  fm_hex_iron_maiden: { travel: "rain", impact: "debris", aftermath: "frost", palette: ["#c9cdd6", "#e05252", "#3a3a40"], source: "sky", depth: { primitive: "pillar", height: 0.13, fallback: "canvas" } },
+  fm_hex_kings_moat: { travel: "wave", impact: "shock", aftermath: "frost", palette: ["#3a5f8a", "#8faadc", "#0e1a2a"], source: "caster", shake: true, depth: { primitive: "ringWave", fallback: "none", durationMs: 1600 } },
+  fm_hex_winter_court: { travel: "wave", impact: "shatter", aftermath: "frost", palette: ["#9fd8ff", "#e8f8ff", "#1c3a5e"], source: "center", shake: true, depth: { primitive: "shatter", fallback: "none" } },
+  // Blessing boons: quiet grace; a soft pillar from tier 4, a ring at 8.
+  fm_boon_lanternlight: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#ffd76a", "#fff4d6", "#3a2c14"], source: "caster" },
+  fm_boon_hearthbread: { travel: "arc", impact: "smoke", aftermath: "none", palette: ["#c98a4c", "#ffe9b0", "#3e2f1c"], source: "caster" },
+  fm_boon_dewdrop: { travel: "rain", impact: "sparkle", aftermath: "sparkle", palette: ["#5fc9b0", "#dff7ff", "#1c3a3a"], source: "sky" },
+  fm_boon_oathstone: { travel: "none", impact: "shock", aftermath: "sparkle", palette: ["#d9d2c0", "#ffd76a", "#3a3026"], source: "lead", depth: { primitive: "pillar", height: 0.07, fallback: "canvas" } },
+  fm_boon_windrider: { travel: "wave", impact: "sparkle", aftermath: "none", palette: ["#9fd8ff", "#fff4d6", "#1c3a5e"], source: "lead", depth: { primitive: "ringWave", fallback: "none", durationMs: 1200 } },
+  fm_boon_lifebloom: { travel: "arc", impact: "sparkle", aftermath: "sparkle", palette: ["#7fae5a", "#ff9dd6", "#1c2418"], source: "sky", depth: { primitive: "pillar", height: 0.1, fallback: "canvas" } },
+  fm_boon_royal_road: { travel: "beam", impact: "sparkle", aftermath: "sparkle", palette: ["#ffd76a", "#fff2c9", "#3a2c14"], source: "mover", depth: { primitive: "pillar", height: 0.09, fallback: "canvas" } },
+  fm_boon_worldheart: { travel: "wave", impact: "burst", aftermath: "sparkle", palette: ["#c9312b", "#ffd76a", "#2b1218"], source: "center", shake: true, depth: { primitive: "ringWave", fallback: "none", durationMs: 1800 } },
+
   // ---- Tier 4 basic-band plugin cards (basicPlays.tsx) ----
   // Palette matches each card's basicPlays template; restrained specs, no
   // shake anywhere below tier 7.

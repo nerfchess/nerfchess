@@ -1,5 +1,5 @@
 {
-  "_comment": "Hand decisions over the active pool (2026-09 read-through, category by category). `retire` entries leave the draft pools with reason `hand` (definitions stay, archived games replay); `retier` entries rewrite the card's tier in its definition via scripts/apply-retiers.mjs. Reasons are short so the codex banner can show them.",
+  "_comment": "Hand decisions over the active pool (2026-09 read-through, category by category). `retire` entries leave the draft pools with reason `hand` (definitions stay, archived games replay); `retier` entries rewrite the card's tier in its definition via scripts/apply-retiers.mjs. Reasons are short so the codex banner can show them. `keep` entries are hand-kept: never retired, and they neither displace nor merge with a text-signature twin.",
   "retire": {
     "closed_book": {
       "why": "unclear trigger, near-instant loss"
@@ -1121,6 +1121,204 @@
     },
     "wn_quarantine_zone": {
       "why": "random-block rule"
+    },
+    "bn4_pinch_of_sand": {
+      "why": "a clock tweak is not a card"
+    },
+    "bw3_first_blood": {
+      "why": "draft picks are public now; peeking is moot"
+    },
+    "gm_claw_machine": {
+      "why": "draft picks are public now; peeking is moot"
+    },
+    "op_crystal_ball": {
+      "why": "draft picks are public now; peeking is moot"
+    },
+    "op_early_bird": {
+      "why": "a clock tweak is not a card"
+    },
+    "op_first_frost": {
+      "why": "a clock tweak is not a card"
+    },
+    "op_four_leaf_clover": {
+      "why": "draft picks are public now; peeking is moot"
+    },
+    "op_halo_moon": {
+      "why": "a clock tweak is not a card"
+    },
+    "op_hoofbeat_log": {
+      "why": "a clock tweak is not a card"
+    },
+    "op_housewarming_gift": {
+      "why": "a clock tweak is not a card"
+    },
+    "op_meet_kevin": {
+      "why": "does nothing on the board"
+    },
+    "op_opening_chord": {
+      "why": "a clock tweak is not a card"
+    },
+    "op_plush_pony": {
+      "why": "does nothing on the board"
+    },
+    "op_price_check": {
+      "why": "draft picks are public now; peeking is moot"
+    },
+    "op_red_sky_morning": {
+      "why": "a clock tweak is not a card"
+    },
+    "op_second_wind_sip": {
+      "why": "a clock tweak is not a card"
+    },
+    "op_stoppage_time": {
+      "why": "a clock tweak is not a card"
+    },
+    "op_sunday_best": {
+      "why": "does nothing on the board"
+    },
+    "op_the_management": {
+      "why": "does nothing on the board"
+    },
+    "ov_kazoo_fanfare": {
+      "why": "does nothing on the board"
+    },
+    "ov_polite_cough": {
+      "why": "a clock tweak is not a card"
+    },
+    "ov_prank_call": {
+      "why": "a clock tweak is not a card"
+    },
+    "ov_rain_check": {
+      "why": "draft picks are public now; peeking is moot"
+    },
+    "peek": {
+      "why": "draft picks are public now; peeking is moot"
+    },
+    "battle_pass": {
+      "why": "a clock tweak is not a card"
+    },
+    "bn4_ear_to_the_ground": {
+      "why": "draft picks are public now; peeking is moot"
+    },
+    "bn4_egg_timer": {
+      "why": "a clock tweak is not a card"
+    },
+    "bn4_hourglass_flip": {
+      "why": "a clock tweak is not a card"
+    },
+    "bn4_sleepy_dust": {
+      "why": "only marks squares; no rule changes"
+    },
+    "buzzer_beater": {
+      "why": "a clock tweak is not a card"
+    },
+    "computer_virus": {
+      "why": "a clock tweak is not a card"
+    },
+    "deadline": {
+      "why": "a clock tweak is not a card"
+    },
+    "lirili_larila": {
+      "why": "a clock tweak is not a card"
+    },
+    "op_sunwise_turn": {
+      "why": "draft picks are public now; peeking is moot"
+    },
+    "ov_alt_account": {
+      "why": "a clock tweak is not a card"
+    },
+    "ov_left_on_read": {
+      "why": "does nothing on the board"
+    },
+    "ov_raven_parliament": {
+      "why": "only marks squares; no rule changes"
+    },
+    "ov_rubber_stamp": {
+      "why": "a clock tweak is not a card"
+    },
+    "ov_rules_lawyer": {
+      "why": "a clock tweak is not a card"
+    },
+    "ov_speedrun_timer": {
+      "why": "a clock tweak is not a card"
+    },
+    "ov_sponsored_segment": {
+      "why": "a clock tweak is not a card"
+    },
+    "pr_bsod": {
+      "why": "a clock tweak is not a card"
+    },
+    "alt_f4": {
+      "why": "a clock tweak is not a card"
+    },
+    "bw3_deep_position": {
+      "why": "a clock tweak is not a card"
+    },
+    "lag_spike": {
+      "why": "a clock tweak is not a card"
+    },
+    "ov_compound_interest": {
+      "why": "a clock tweak is not a card"
+    },
+    "ov_gold_rush": {
+      "why": "a clock tweak is not a card"
+    },
+    "ov_royal_wedding": {
+      "why": "a clock tweak is not a card"
+    },
+    "overtime_whistle": {
+      "why": "a clock tweak is not a card"
+    },
+    "pr_donation_alert": {
+      "why": "a clock tweak is not a card"
+    },
+    "pr_phishing": {
+      "why": "draft picks are public now; peeking is moot"
+    },
+    "time_thief": {
+      "why": "a clock tweak is not a card"
+    },
+    "bw2_highwaymans_toll": {
+      "why": "a clock tweak is not a card"
+    },
+    "ov_rage_bait": {
+      "why": "a clock tweak is not a card"
+    },
+    "ov_stack_overflow": {
+      "why": "a clock tweak is not a card"
+    },
+    "ov_vampire_court": {
+      "why": "a clock tweak is not a card"
+    },
+    "bn4_stolen_hour": {
+      "why": "a clock tweak is not a card"
+    },
+    "ov_algorithm_boost": {
+      "why": "a clock tweak is not a card"
+    },
+    "ov_fourth_wall_crew": {
+      "why": "a clock tweak is not a card"
+    },
+    "ov_speedhack": {
+      "why": "a clock tweak is not a card"
+    },
+    "overtime_pay": {
+      "why": "a clock tweak is not a card"
+    },
+    "ww_paratroopers": {
+      "why": "only marks squares; no rule changes"
+    },
+    "bn4_all_seeing_spire": {
+      "why": "draft picks are public now; peeking is moot"
+    },
+    "death_arcana": {
+      "why": "only marks squares; no rule changes"
+    },
+    "ov_standing_ovation": {
+      "why": "a clock tweak is not a card"
+    },
+    "ov_wish_fish": {
+      "why": "a clock tweak is not a card"
     }
   },
   "retier": {
@@ -1165,6 +1363,172 @@
     "hx4_choke_point": 4,
     "time_skip": 6,
     "hx4_falling_rubble": 3,
-    "hx4_pawn_embargo": 4
+    "hx4_pawn_embargo": 4,
+    "lucky": 1,
+    "monastic_vows": 4,
+    "no_stone_cutting": 3,
+    "vegan": 3,
+    "cess": 3,
+    "right_handed": 3,
+    "crossing_the_rubicon": 4,
+    "separation_church_state": 3,
+    "femme_fatale": 5,
+    "true_gentleman": 4,
+    "shadow_queen": 4,
+    "queen_fatigue": 4,
+    "trophy_wife": 5,
+    "conscientious_objectors": 4,
+    "truant": 4,
+    "whites_of_their_eyes": 5,
+    "court_martial": 4,
+    "greedy": 4,
+    "scouting_ahead": 5,
+    "leading_the_charge": 5,
+    "rook_buddies": 2,
+    "stir_crazy": 4,
+    "advancing_faith": 4,
+    "clergy": 4,
+    "wn_knight_toll": 2,
+    "queen_disguise": 4,
+    "artillery": 3,
+    "snipers": 3,
+    "famine": 3,
+    "no_retreat": 3,
+    "prince_charming": 3,
+    "three_check": 5,
+    "out_of_breath": 5,
+    "entrenched": 5,
+    "crippled_clergy": 5,
+    "half_a_queen": 5,
+    "carnivore_bishops": 5,
+    "wn_weigh_station": 6,
+    "moving_day": 5,
+    "warlord": 5,
+    "cheerleaders": 6,
+    "chivalry": 5,
+    "control_center": 5,
+    "gambler": 5,
+    "kingfisher": 3,
+    "one_bite_at_a_time": 5,
+    "shapeshifter": 5,
+    "social_distancing": 6,
+    "solar_flare": 5,
+    "pull_of_the_center": 3,
+    "broadside_rooks": 5,
+    "doctor_octopus": 6,
+    "simp": 6,
+    "champing_at_the_bit": 7,
+    "toothless_pawns": 6,
+    "hobbled_queen": 6,
+    "left_for_dead": 6,
+    "bishop_tunnel_vision": 4,
+    "no_retreat_rooks": 4,
+    "queen_grounded": 4,
+    "frozen_cavalry": 4,
+    "switchback": 3,
+    "turn_other_cheek": 6,
+    "cloistered_queen": 4,
+    "colorblind": 6,
+    "crusade": 4,
+    "eat_your_vegetables": 8,
+    "hopscotch": 6,
+    "horse_eats_first": 6,
+    "quarantine": 4,
+    "respectful": 8,
+    "rook_fan_club": 6,
+    "bishop_fan_club": 6,
+    "rooks_charge": 6,
+    "secret_garden": 4,
+    "short_leash_knights": 4,
+    "stay_at_home_mom": 6,
+    "tidy_desk": 4,
+    "triple_play": 6,
+    "windup_toys": 6,
+    "wn_gravity": 6,
+    "burning_bridges": 6,
+    "defanged_queen": 7,
+    "straight_and_narrow": 8,
+    "pawns_do_the_dirty_work": 8,
+    "fog_of_war": 8,
+    "noble_steed": 7,
+    "torchlight": 7,
+    "iron_curtain": 7,
+    "no_hanging_pieces": 7,
+    "unlucky": 7,
+    "unspooling": 7,
+    "tower_defense": 7,
+    "nurturer": 8,
+    "leveling_up": 7,
+    "counting_sheep": 8,
+    "stand_your_ground": 7,
+    "drag": 7,
+    "homeland_security": 8,
+    "eye_for_an_eye": 7,
+    "hobbled_knights": 5,
+    "myopic_bishops": 5,
+    "stunted_rooks": 5,
+    "royal_berth": 4,
+    "boxing_with_shadow": 5,
+    "echo_chamber": 7,
+    "domino": 7,
+    "wn_bottom_feeder": 8,
+    "wn_kings_leash": 7,
+    "wn_regicide_clock": 7,
+    "predatory_knights": 5,
+    "rising_water": 7,
+    "constriction": 7,
+    "restless_crown": 5,
+    "wn_daisy_chain": 7,
+    "no_retreat_ever": 8,
+    "leaps_and_bounds": 7,
+    "boastful": 8,
+    "always_check_it_might_be_mate": 8,
+    "war_footing": 8,
+    "wn_kingpin": 8,
+    "glorious_battle": 6,
+    "cowardly": 6,
+    "reflective": 8,
+    "wn_royal_meridian": 8,
+    "fog_of_war_old": 8,
+    "nerf:heavy_boots": 5,
+    "nerf:anchored_rooks": 3,
+    "nerf:slowpoke": 8,
+    "nerf:no_mans_land": 7,
+    "nerf:pawn_storm": 7
+  },
+  "_comment_nerf_retiers": "2026-09 nerf severity pass: tiers follow how much of a game the nerf takes away, not how clever it sounds. Nerfs that ban a capture type or a few squares sit at 2-4; ones that remove a piece's core movement or a whole class of captures sit at 5-7; ones that make winning nearly impossible (no checks, no captures, hidden board, lose conditions the opponent can force) sit at 8.",
+  "keep": {
+    "fm_glowmoss_ward": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fm_moonlit_stride": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fm_wyrmscale_mail": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fm_stormcaller": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fm_phoenix_feather": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fm_dragonblood": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fm_sunforge": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fm_eclipse_crown": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fm_hex_thistledown": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fm_hex_fogbank": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fm_hex_brambleroot": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fm_hex_sirens_call": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fm_hex_gorgon_gaze": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fm_hex_iron_maiden": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fm_hex_kings_moat": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fm_hex_winter_court": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fm_boon_lanternlight": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fm_boon_hearthbread": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fm_boon_dewdrop": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fm_boon_oathstone": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fm_boon_windrider": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fm_boon_lifebloom": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fm_boon_royal_road": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fm_boon_worldheart": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fn_pixie_curse": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fn_gnomes_bargain": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fn_selkie_skin": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fn_trolls_toll": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fn_banshee_bond": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fn_wyrm_hoard": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fn_lich_pact": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fn_titans_yoke": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental"
   }
 }

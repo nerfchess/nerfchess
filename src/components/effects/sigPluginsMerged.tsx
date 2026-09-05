@@ -101,10 +101,22 @@ function publish(plays: Record<string, SigPlugin>): void {
   }
   generation++;
   for (const l of listeners) l();
+  if (process.env.NODE_ENV !== "production" && typeof window !== "undefined") {
+    // Dev probe: which modules have landed and how many plays are resolvable.
+    (window as unknown as { __ncSig?: unknown }).__ncSig = {
+      modules: [...loads.keys()],
+      plays: Object.keys(MERGED).length,
+      generation,
+    };
+  }
 }
 
 /** Load one module by name. Safe and cheap to call repeatedly. */
 export function loadPluginModule(name: string): Promise<void> {
+  if (process.env.NODE_ENV !== "production" && typeof window !== "undefined") {
+    const w = window as unknown as { __ncSigReq?: string[] };
+    (w.__ncSigReq ??= []).push(name);
+  }
   const existing = loads.get(name);
   if (existing) return existing;
   const loader = MODULE_LOADERS[name];

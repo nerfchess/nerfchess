@@ -99,7 +99,7 @@ export function BuffCard({ buff, tier, status, spent, nullified, onClick, compac
         (glow && !dead ? "ring-1 ring-gold/40 " : "") +
         (onClick && !dead
           ? compact
-            ? "cursor-pointer hover:border-gold/60 hover:-translate-y-0.5"
+            ? "cursor-pointer transition-colors duration-200 hover:border-gold/60"
             : // Pickable full-size cards are candy: pop on hover, squash on
               // press, tier-colored ring (all from .card-juicy, 14px corners).
               "card-juicy"

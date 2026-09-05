@@ -2589,6 +2589,10 @@ export function whenSignatureVisualsReady(timeoutMs = 500): Promise<void> {
  * (no longer swallowed silently) and releases any waiters so they fall back to
  * the generated burst rather than hanging. */
 export function prefetchSignatureVisuals(cardIds?: Iterable<string>): void {
+  if (process.env.NODE_ENV !== "production" && typeof window !== "undefined") {
+    const w = window as unknown as { __ncPrefetch?: unknown[] };
+    (w.__ncPrefetch ??= []).push(cardIds ? [...cardIds] : null);
+  }
   // The plugin art is split per module. Warm exactly the ones holding cards
   // that can appear this game rather than the whole library: Board knows both
   // hands, and at full coverage the library is ~9.6MB of source.
@@ -2659,7 +2663,11 @@ export function SignatureOverlay(props: SignatureVisualProps) {
 export type CastIntensity = "sleek" | "grand" | "epic" | "marquee" | "apex";
 
 export function castIntensity(tier: number): CastIntensity {
-  return tier >= 9 ? "apex" : tier >= 8 ? "marquee" : tier >= 7 ? "epic" : tier >= 5 ? "grand" : "sleek";
+  // The floor is "grand": the old "sleek" band (a hairline ring, a thin sweep
+  // and two glints) was so quiet that players reported low-tier plays as
+  // doing nothing at all. Every card now gets the category wash, the ring and
+  // its icon's arrival choreography; tiers 7+ escalate from there.
+  return tier >= 9 ? "apex" : tier >= 8 ? "marquee" : tier >= 7 ? "epic" : "grand";
 }
 
 /** True when the animation gate is closed (Settings anim-off, which also
@@ -2821,17 +2829,20 @@ function CastEscalation({
 }
 
 /** Per-category theme: a saturated accent and a soft wash of the same hue. */
+// `soft` is the wash alpha. It sat at ~0.14 and the whole cast read as a
+// faint tint players did not notice; 0.34 is a visible flash that still
+// leaves every piece legible under it.
 export const CAST_THEME: Record<BuffCategory, { color: string; soft: string }> = {
-  movement: { color: "#67e8f9", soft: "rgba(103,232,249,0.14)" },
-  pieces: { color: "#e6bf6a", soft: "rgba(230,191,106,0.14)" },
-  tempo: { color: "#f4c430", soft: "rgba(244,196,48,0.13)" },
-  protection: { color: "#7eb59a", soft: "rgba(126,181,154,0.15)" },
-  attack: { color: "#e05252", soft: "rgba(224,82,82,0.14)" },
-  info: { color: "#8ba9c4", soft: "rgba(139,169,196,0.14)" },
-  draft: { color: "#e07ab8", soft: "rgba(224,122,184,0.13)" },
-  nerf: { color: "#5eead4", soft: "rgba(94,234,212,0.14)" },
-  hex: { color: "#a877d8", soft: "rgba(168,119,216,0.15)" },
-  item: { color: "#a3d160", soft: "rgba(163,209,96,0.14)" },
+  movement: { color: "#67e8f9", soft: "rgba(103,232,249,0.34)" },
+  pieces: { color: "#e6bf6a", soft: "rgba(230,191,106,0.34)" },
+  tempo: { color: "#f4c430", soft: "rgba(244,196,48,0.34)" },
+  protection: { color: "#7eb59a", soft: "rgba(126,181,154,0.34)" },
+  attack: { color: "#e05252", soft: "rgba(224,82,82,0.34)" },
+  info: { color: "#8ba9c4", soft: "rgba(139,169,196,0.34)" },
+  draft: { color: "#e07ab8", soft: "rgba(224,122,184,0.34)" },
+  nerf: { color: "#5eead4", soft: "rgba(94,234,212,0.34)" },
+  hex: { color: "#a877d8", soft: "rgba(168,119,216,0.34)" },
+  item: { color: "#a3d160", soft: "rgba(163,209,96,0.34)" },
 };
 
 const CAST_SPARKS = [
@@ -2986,15 +2997,28 @@ export function CastSpectacle({
     // cast) with no card-specific geometry of its own, so it was removed in
     // the useless-flash pass; the design brief (section 1) always specced
     // this branch as banner + frame pulse only.
+    // Bespoke still gets a board-wide read under its own scene: the category
+    // wash and a shock ring say "a card just went off" at any size of screen,
+    // while the card's art keeps centre stage. No face icon is stamped here.
     return (
       <span className="fx-cast pointer-events-none absolute inset-0 z-40 block" aria-hidden="true">
         <span
+          className="fx-cast-wash absolute inset-0 block"
+          style={{ background: `radial-gradient(circle, ${theme.soft}, transparent 70%)` }}
+        />
+        <span
           className="fx-cast-ring absolute inset-[1%] block rounded-sm"
           style={{
-            border: `${intensity === "marquee" || intensity === "apex" ? 2.5 : 1.5}px solid ${theme.color}`,
-            boxShadow: `inset 0 0 ${intensity === "marquee" || intensity === "apex" ? 34 : 18}px ${theme.soft}`,
+            border: `${intensity === "marquee" || intensity === "apex" ? 2.5 : 2}px solid ${theme.color}`,
+            boxShadow: `inset 0 0 ${intensity === "marquee" || intensity === "apex" ? 34 : 26}px ${theme.soft}`,
           }}
         />
+        {tier < 6 && (
+          <span
+            className="fx-cast-shock absolute left-1/2 top-1/2 ml-[-21%] mt-[-21%] block h-[42%] w-[42%] rounded-full"
+            style={{ border: `2.5px solid ${theme.color}`, animationDelay: "120ms" }}
+          />
+        )}
         <CastEscalation tier={tier} color={theme.color} soft={theme.soft} />
         {banner}
       </span>
@@ -3061,6 +3085,12 @@ export function CastSpectacle({
           className="fx-cast-ring absolute inset-[1%] block rounded-sm"
           style={{ border: `2px solid ${theme.color}`, boxShadow: `inset 0 0 26px ${theme.soft}` }}
         />
+        {tier < 6 && (
+          <span
+            className="fx-cast-shock absolute left-1/2 top-1/2 ml-[-21%] mt-[-21%] block h-[42%] w-[42%] rounded-full"
+            style={{ border: `2.5px solid ${theme.color}`, animationDelay: "120ms" }}
+          />
+        )}
         <CastEscalation tier={tier} color={theme.color} soft={theme.soft} />
         {/* the card's icon ARRIVES in its category's choreography (comet /
             curse circle / clock sweep / crate drop...) instead of being

@@ -12,7 +12,6 @@ import { readSnapshot, writeSnapshot } from "@/lib/snapshotCache";
 import { MPLobby, MPLobbyChallenge, MPLobbyGame, MPLobbySeek, MPSession, saveOnlineSeat } from "@/lib/multiplayer";
 import { ModeBadge } from "@/components/ModeBadge";
 import { FriendGameProvider, FriendGameSetup, useFriendGame } from "@/components/FriendGame";
-import { FriendsPanel } from "@/components/FriendsPanel";
 import { categoryForTimeControl, getCategory } from "@/lib/ratingCategories";
 import { Button } from "@/components/ui/Button";
 import { LinkButton } from "@/components/ui/Button";
@@ -523,6 +522,13 @@ function LobbyInner() {
                   onClick={() => {
                     setTab("play");
                     setChallengesOpen(true);
+                    // The fold opens below the fold line on most screens, so
+                    // without this the button looked like it did nothing.
+                    window.setTimeout(() => {
+                      document
+                        .getElementById("lobby-fold-challenges")
+                        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }, 60);
                   }}
                 >
                   <Swords size={22} strokeWidth={1.6} aria-hidden className="shrink-0 text-parchment-300" />
@@ -827,7 +833,7 @@ const SECTION_TINTS = {
 function FriendsSection({ open, onToggle }: { open: boolean; onToggle: () => void }) {
   const { challenging } = useFriendGame();
   return (
-    <div className={"min-w-0 " + (open && !challenging ? "grid gap-5 lg:grid-cols-2 lg:items-start" : "")}>
+    <div className="min-w-0">
       <div className="plate p-5 sm:p-6">
         <DisclosureHeader
           controls="lobby-fold-friends"
@@ -839,14 +845,13 @@ function FriendsSection({ open, onToggle }: { open: boolean; onToggle: () => voi
         />
         {open && (
           <div id="lobby-fold-friends">
-            <p className="mt-2 mb-5 text-xs text-parchment-400">
-              Share a code, or pick from your list.
+            <p className="mt-2 mb-5 text-[13px] text-parchment-400">
+              {challenging ? "Set the terms and send the challenge." : "Pick the terms and share the code, or challenge someone from your list."}
             </p>
-            <FriendGameSetup showFriends={false} />
+            <FriendGameSetup />
           </div>
         )}
       </div>
-      {open && !challenging && <FriendsPanel />}
     </div>
   );
 }

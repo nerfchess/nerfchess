@@ -337,8 +337,10 @@ function TimeSlider({
 function Group({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <div className="text-[11px] text-parchment-400 mb-2">{label}</div>
-      <div className="flex flex-wrap gap-2">{children}</div>
+      <div className="mb-2 text-[12px] text-parchment-400">{label}</div>
+      {/* Options fill the row edge to edge (Lichess's setup dialog), never a
+          cluster of small pills floating in the left of a wide card. */}
+      <div className="grid grid-flow-col auto-cols-fr gap-2">{children}</div>
     </div>
   );
 }
@@ -353,10 +355,10 @@ function Pill({
       onClick={onClick}
       aria-pressed={selected}
       className={
-        "press inline-flex min-h-[44px] items-center justify-center border px-4 py-2 font-display text-[13px] transition " +
+        "inline-flex min-h-[44px] w-full items-center justify-center border px-3 py-2 font-display text-[14px] font-medium transition-colors duration-150 " +
         (selected
-          ? "bg-gold/20 border-gold text-gold-leaf"
-          : "border-white/15 text-parchment-200 hover:border-white/30 hover:bg-white/5")
+          ? "border-gold bg-gold/20 text-gold-leaf"
+          : "border-[color:var(--edge)] bg-[color:var(--bg-raised)] text-parchment-200 hover:border-[color:var(--edge-strong)] hover:text-parchment-50")
       }
     >
       {children}

@@ -432,13 +432,18 @@ function TimeCell({
   const category = getCategory(option.speed);
   return (
     <Button
-      tone={selected ? "primary" : "default"}
+      tone="default"
       onClick={onClick}
       aria-pressed={selected}
-      className="!min-h-[56px] flex-col !gap-0.5 !px-1 !py-2"
+      // Selected reads as a lit tile with a blue edge, not a second primary
+      // button: the one blue fill on this panel is the Find-a-game button.
+      className={
+        "!min-h-[56px] flex-col !gap-0.5 !px-1 !py-2" +
+        (selected ? " !border-2 !border-solid !border-[color:var(--accent)] text-[color:var(--accent)]" : "")
+      }
     >
       <span className="font-mono text-lg leading-none tabular-nums">{option.label}</span>
-      <span className={"text-[11px] " + (selected ? "opacity-80" : "text-parchment-400")}>
+      <span className={"text-[11px] " + (selected ? "opacity-90" : "text-parchment-400")}>
         {category.label}
       </span>
     </Button>

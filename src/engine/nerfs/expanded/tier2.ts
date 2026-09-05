@@ -17,6 +17,7 @@ import {
 } from "./shared";
 
 const N = tierNerf(2);
+const N4 = tierNerf(4);
 
 export const NERFS_T2: Nerf[] = [
   nerf(
@@ -49,7 +50,7 @@ export const NERFS_T2: Nerf[] = [
       },
     },
   ),
-  N(
+  N4(
     { id: "monastic_vows", name: "Monastic Vows", description: "Your bishops can't capture, except capturing a piece that has your king in check is always legal.", flavor: "The clergy have sworn off bloodshed.", icon: "church" },
     {
       filterMoves: (moves, _state, ctx) => {
@@ -126,7 +127,7 @@ export const NERFS_T2: Nerf[] = [
     },
   ),
   nerf(
-    { id: "advancing_faith", name: "Advancing Faith", description: "Your bishops must gain ground on every move: each bishop move has to advance toward the enemy, never staying level and never falling back, except a bishop move that gets your king out of check is always allowed.", flavor: "The faithful only ever press onward.", icon: "move-up", tier: 3 },
+    { id: "advancing_faith", name: "Advancing Faith", description: "Your bishops must gain ground on every move: each bishop move has to advance toward the enemy, never staying level and never falling back, except a bishop move that gets your king out of check is always allowed.", flavor: "The faithful only ever press onward.", icon: "move-up", tier: 4 },
     {
       // Distinct from clergy (allows level bishop moves) and one_way_bishops
       // (allows backward captures): advancing_faith requires every bishop move
@@ -185,7 +186,7 @@ export const NERFS_T2: Nerf[] = [
     },
   ),
   nerf(
-    { id: "queen_fatigue", name: "Queen Fatigue", description: "You lose if you move your queen more than 12 times. The count is only checked after your sixth move.", flavor: "Even a queen tires of the march.", icon: "timer", tier: 3 },
+    { id: "queen_fatigue", name: "Queen Fatigue", description: "You lose if you move your queen more than 12 times. The count is only checked after your sixth move.", flavor: "Even a queen tires of the march.", icon: "timer", tier: 4 },
     {
       init: () => ({ moves: 0 }),
       onTurnStart: (_state, ctx) => ({
