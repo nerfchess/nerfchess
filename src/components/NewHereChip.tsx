@@ -58,10 +58,10 @@ export function NewHereChip() {
   if (state !== "shown") return null;
 
   return (
-    <div className="flex shrink-0 items-center gap-1">
+    <div className="flex w-full items-center gap-1">
       <Link
         href={FIRST_GAME_TOUR_HREF}
-        className="inline-flex items-center gap-1.5 border border-gold/40 bg-gold/10 px-2.5 py-1 text-[11px] text-gold-leaf no-underline transition-colors hover:bg-gold/20"
+        className="inline-flex min-w-0 flex-1 items-center gap-1.5 whitespace-nowrap border border-gold/40 bg-gold/10 px-2.5 py-1.5 text-[12px] text-gold-leaf no-underline transition-colors hover:bg-gold/20"
       >
         <span>New here?</span>
         <span className="hidden sm:inline">Learn the game in 3 minutes</span>

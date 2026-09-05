@@ -50,10 +50,10 @@ export default function HomePage() {
               Nerf Chess
               <span className="sr-only">: chess with power-ups, a free online chess variant</span>
             </h1>
-            <div className="flex flex-col items-end gap-2">
-              <NewHereChip />
-              <HeroRatings />
-            </div>
+            <HeroRatings />
+          </div>
+          <div className="mt-2">
+            <NewHereChip />
           </div>
 
           {/* The one-breath pitch: what the two words on the tin actually
