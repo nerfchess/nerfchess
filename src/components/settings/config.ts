@@ -27,7 +27,6 @@ export type Control =
   | { kind: "animationSpeed"; options: Array<{ value: AnimationSpeed; label: string }> }
   | { kind: "siteTheme" }
   | { kind: "soundTheme"; options: Array<{ value: SoundTheme; label: string }> }
-  | { kind: "accentColor" }
   | { kind: "customBg" }
   | { kind: "boardTheme" }
   | { kind: "pieceTheme" }
@@ -286,10 +285,11 @@ export const SECTIONS: SectionConfig[] = [
         control: { kind: "siteTheme" },
       },
       {
-        id: "accentColor",
-        label: "Accent color",
+        id: "zenMode",
+        label: "Zen mode",
+        hint: "During a game, hide everything but the board, clocks and moves. Press z to toggle.",
         group: "Theme",
-        control: { kind: "accentColor" },
+        control: { kind: "toggle", setting: "zenMode" },
       },
       {
         id: "customBg",
@@ -297,25 +297,6 @@ export const SECTIONS: SectionConfig[] = [
         hint: "Upload an image or paste an http(s) URL, with an adjustable dim",
         group: "Background",
         control: { kind: "customBg" },
-      },
-      {
-        id: "uiScale",
-        label: "UI scale",
-        group: "Interface",
-        control: { kind: "slider", setting: "uiScale", min: 0.85, max: 1.15, step: 0.05, format: pct },
-      },
-      {
-        id: "compactMode",
-        label: "Compact mode",
-        group: "Interface",
-        control: { kind: "toggle", setting: "compactMode" },
-      },
-      {
-        id: "perfMode",
-        label: "Performance mode",
-        hint: "Drops heavy blur/grain effects for smoother play on low-end devices",
-        group: "Interface",
-        control: { kind: "toggle", setting: "perfMode" },
       },
       {
         id: "reducedMotion",
@@ -326,7 +307,7 @@ export const SECTIONS: SectionConfig[] = [
       {
         id: "followSystemMotion",
         label: "Follow system motion",
-        hint: "Follow your device's reduce-motion setting.",
+        hint: "Follow your device's reduce-motion setting. Off by default so card plays stay visible; turning it on is not recommended.",
         group: "Motion",
         control: { kind: "toggle", setting: "followSystemMotion" },
       },
@@ -348,15 +329,9 @@ export const SECTIONS: SectionConfig[] = [
   {
     id: "accessibility",
     title: "Accessibility",
-    blurb: "Contrast and motion",
+    blurb: "Motion",
     icon: Accessibility,
     rows: [
-      {
-        id: "highContrast",
-        label: "High contrast",
-        hint: "Brighter text and firmer borders",
-        control: { kind: "toggle", setting: "highContrast" },
-      },
       {
         id: "reducedMotionA11y",
         label: "Reduced motion",
@@ -365,7 +340,7 @@ export const SECTIONS: SectionConfig[] = [
       {
         id: "followSystemMotionA11y",
         label: "Follow system motion",
-        hint: "Follow your device's reduce-motion setting.",
+        hint: "Follow your device's reduce-motion setting. Off by default so card plays stay visible; turning it on is not recommended.",
         control: { kind: "toggle", setting: "followSystemMotion" },
       },
     ],
@@ -373,14 +348,9 @@ export const SECTIONS: SectionConfig[] = [
   {
     id: "advanced",
     title: "Advanced",
-    blurb: "Resets and experiments",
+    blurb: "Resets",
     icon: SlidersHorizontal,
     rows: [
-      {
-        id: "fpsCounter",
-        label: "FPS counter",
-        control: { kind: "toggle", setting: "fpsCounter" },
-      },
       {
         id: "resetSettings",
         label: "Reset settings",

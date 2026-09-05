@@ -421,7 +421,7 @@ export function PlayerSearch({ className = "", autoFocus = false }: { className?
           aria-label="Recent searches"
           className="absolute inset-x-0 top-full z-30 mt-1 plate dropdown overflow-hidden shadow-2xl"
         >
-          <p className="eyebrow px-4 pt-2 pb-1">Recent</p>
+          <p className="px-4 pt-2 pb-1">Recent</p>
           <div className="divide-y divide-white/5">
             {recent.map((item, i) => (
               <div key={item.username} className="relative flex items-center">

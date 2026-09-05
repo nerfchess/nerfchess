@@ -210,7 +210,7 @@ export function DashboardSection({
 
             <div className="mt-3 hidden overflow-x-auto sm:block">
               <table className="w-full min-w-[34rem] text-left text-[13px]">
-                <thead className="smallcaps text-[11px] text-parchment-400">
+                <thead className="text-[11px] text-parchment-400">
                   <tr>
                     <th className="py-1.5 pr-3">Tier</th>
                     <th className="py-1.5 pr-3">Games</th>
@@ -270,7 +270,7 @@ export function DashboardSection({
               ] as const
             ).map(([label, rows]) => (
               <div key={label}>
-                <div className="smallcaps text-[11px] text-parchment-400">{label}</div>
+                <div className="text-[11px] text-parchment-400">{label}</div>
                 <ul className="mt-1.5 space-y-1">
                   {rows.map((r) => (
                     <li key={r.id} className="flex items-baseline justify-between gap-3 text-[13px]">

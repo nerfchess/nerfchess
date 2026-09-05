@@ -150,7 +150,7 @@ export default function SuggestRulePage() {
       </nav>
 
       <section className="max-w-2xl mx-auto px-6">
-        <div className="smallcaps text-[11px] text-parchment-400">workshop</div>
+        <div className="text-[11px] text-parchment-400">workshop</div>
         <h1 className="font-display text-5xl mt-1">Suggest a rule</h1>
         <p className="mt-3 text-parchment-200">
           Describe your idea. It goes straight to the nerfchess team, and the best ones get built.
@@ -181,7 +181,7 @@ export default function SuggestRulePage() {
         <p className="mt-2 text-[13px] text-parchment-400">{cfg.intro}</p>
 
         {state === "sent" ? (
-          <div className="mt-7 plate gilt p-6 text-center">
+          <div className="mt-7 plate p-6 text-center">
             <div className="font-display text-2xl text-gold-leaf">Sent. Thank you!</div>
             <p className="mt-2 text-sm text-parchment-200">
               Your idea is in the queue. If it makes the cut you&apos;ll see it in the Codex.
@@ -205,7 +205,7 @@ export default function SuggestRulePage() {
         ) : (
           <form onSubmit={submit} className="mt-7 plate p-5 sm:p-6 space-y-5">
             <div>
-              <label className="smallcaps text-[11px] text-parchment-400 mb-1 block" htmlFor="rule-name">
+              <label className="text-[11px] text-parchment-400 mb-1 block" htmlFor="rule-name">
                 {cfg.nameLabel} <span className="opacity-60">(optional)</span>
               </label>
               <input
@@ -218,7 +218,7 @@ export default function SuggestRulePage() {
             </div>
 
             <div>
-              <label className="smallcaps text-[11px] text-parchment-400 mb-1 block" htmlFor="rule-desc">
+              <label className="text-[11px] text-parchment-400 mb-1 block" htmlFor="rule-desc">
                 {cfg.descLabel}
               </label>
               <textarea
@@ -236,7 +236,7 @@ export default function SuggestRulePage() {
             </div>
 
             <div>
-              <label className="smallcaps text-[11px] text-parchment-400 mb-1 block" htmlFor="rule-contact">
+              <label className="text-[11px] text-parchment-400 mb-1 block" htmlFor="rule-contact">
                 How to credit / reach you <span className="opacity-60">(optional)</span>
               </label>
               <input

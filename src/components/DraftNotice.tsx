@@ -112,7 +112,7 @@ export function DraftNotice({
           <div
             key={n.key}
             className={
-              "glass-chip animate-rise max-w-[min(20rem,calc(100vw-1.5rem))] border border-gold/40 px-4 py-2 " +
+              "glass-chip max-w-[min(20rem,calc(100vw-1.5rem))] border border-gold/40 px-4 py-2 " +
               "transition-opacity duration-300 " +
               (n.leaving ? "opacity-0" : "opacity-100")
             }

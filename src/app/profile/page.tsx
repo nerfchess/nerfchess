@@ -194,7 +194,7 @@ function GuestProfile({ account }: { account: AccountUser | null }) {
           {/* Statistics: PlayerStatsPanel carries its own content-sized empty
               state for a zero-game account. */}
           <div className="mt-10">
-            <div className="eyebrow">Record</div>
+            <div>Record</div>
             <h2 className="mt-1 font-display text-2xl">Statistics</h2>
             <div className="mt-3">
               {stats ? (

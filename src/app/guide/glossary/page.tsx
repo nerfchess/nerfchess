@@ -47,7 +47,7 @@ function RelatedTerms({ entry }: { entry: GlossaryEntry }) {
   if (related.length === 0) return null;
   return (
     <p className="text-sm text-parchment-300">
-      <span className="smallcaps text-[11px] text-parchment-400">related&nbsp;&nbsp;</span>
+      <span className="text-[11px] text-parchment-400">related&nbsp;&nbsp;</span>
       {related.map((r, i) => (
         <Fragment key={r.slug}>
           {i > 0 && ", "}

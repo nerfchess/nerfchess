@@ -195,7 +195,7 @@ function OwnerFriends() {
         {/* Incoming requests answer first: they are the only time-sensitive item. */}
         {incoming.length > 0 && (
           <div className="space-y-2">
-            <div className="smallcaps text-[12px] text-gold-leaf">
+            <div className="text-[12px] text-gold-leaf">
               Requests ({incoming.length})
             </div>
             {incoming.map((f) => (
@@ -277,7 +277,7 @@ function OwnerFriends() {
               type="button"
               onClick={() => setShowOutgoing((v) => !v)}
               aria-expanded={showOutgoing}
-              className="flex min-h-[44px] w-full items-center gap-2 text-left smallcaps text-[12px] text-parchment-500 transition hover:text-parchment-300"
+              className="flex min-h-[44px] w-full items-center gap-2 text-left text-[12px] text-parchment-500 transition hover:text-parchment-300"
             >
               <ChevronDown
                 size={14}
@@ -569,7 +569,7 @@ function Identity({
             <span className="shrink-0 font-mono text-[12px] tabular-nums text-parchment-400">{f.rating}</span>
           )}
           {tag && (
-            <span className="shrink-0 rounded-[1px] border border-verdigris-glow/40 bg-verdigris/10 px-1.5 py-px smallcaps text-[12px] text-verdigris-glow">
+            <span className="shrink-0 rounded-[1px] border border-verdigris-glow/40 bg-verdigris/10 px-1.5 py-px text-[12px] text-verdigris-glow">
               {tag}
             </span>
           )}

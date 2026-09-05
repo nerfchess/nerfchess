@@ -1,0 +1,39 @@
+/* The site header, shaped like Lichess's.
+   ---------------------------------------------------------------------------
+   Lichess's top bar is not a panel floating over the page: it is the page
+   background with one hairline under it, about 48px tall, holding the site
+   name, plain-text nav links and a cluster of icon controls. This file states
+   that, and it replaces the header's old dependency on DungeonMenu.css.
+
+   `nav.site-nav` rather than `.site-nav` so it outranks the generic rule in
+   globals.css without an !important; zen.css outranks this in turn. */
+
+nav.site-nav {
+  position: relative;
+  background: var(--bg-base);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+/* A nav link: plain text, no chrome until hovered. */
+.site-nav-link {
+  position: relative;
+  font-size: 14px;
+  line-height: 1.2;
+  color: var(--text-primary);
+  transition: color 0.12s ease, background-color 0.12s ease;
+}
+.site-nav-link:hover {
+  color: var(--text-heading);
+  background: var(--bg-raised);
+}
+.site-nav-link[data-active="true"] {
+  color: var(--accent);
+}
+
+/* The hover dropdown under a nav link, and the header's own popovers: the same
+   plain box the quick-settings menu uses. */
+.site-nav-pop {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: 7px;
+}

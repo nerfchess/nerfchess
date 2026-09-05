@@ -367,7 +367,7 @@ export const WILD_ARCANE: Buff[] = [
       name: "Twin Blink",
       description:
         "Two knots in the world come undone at once: choose one of your pieces and one enemy piece (kings aside); each blinks away to a random empty square.",
-      tier: 4,
+      tier: 3,
       category: "movement",
       flavor: "Nobody lands where they meant to.",
     },

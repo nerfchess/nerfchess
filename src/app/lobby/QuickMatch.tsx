@@ -4,16 +4,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { ChevronRight, Clock, Swords, X } from "lucide-react";
 import { AccountUser, ensureAccount, fetchMe } from "@/lib/authClient";
 import { clearSnapshot, readSnapshot, writeSnapshot } from "@/lib/snapshotCache";
 import { MPConnectionState, MPSession, saveOnlineSeat } from "@/lib/multiplayer";
 import { getCategory, type RatingCategoryId } from "@/lib/ratingCategories";
 import { useSharedMode } from "@/lib/modeState";
 import type { DraftMode } from "@/engine/buff";
-import { DungeonGateButton } from "@/components/DungeonGateButton";
-import { EngravedLabel } from "@/components/dungeon/primitives";
-import "@/components/dungeon/dungeon-lobby.css";
 import { Button } from "@/components/ui/Button";
 
 // The lobby's Quick Match panel: pick a mode (Buff recommended / Nerf), pick a
@@ -22,8 +18,9 @@ import { Button } from "@/components/ui/Button";
 // and it stays mounted across lobby tab switches so an in-flight search (and
 // its Cancel button) survives leaving and returning to Quick Play. This is a
 // lobby-local reimplementation of the shared QueueButton, redesigned to the
-// route contract: one accent .btn-leaf primary action, a balanced 3x3
-// time-control grid, and a mobile sticky action bar with a bottom-sheet picker.
+// route contract: a segmented mode control, a flat grid of time-control tiles
+// (the big time in the middle, the speed name beneath), one primary action, and
+// a mobile sticky action bar carrying that same action.
 //
 // Buff is preselected (it starts from normal chess, the easiest first game);
 // the mode preference is shared site-wide (lib/modeState): an explicit ?mode=
@@ -47,14 +44,6 @@ const QUEUE_POOL_OPTIONS: { pool: string; label: string; speed: RatingCategoryId
 
 const LAST_POOL_KEY = "dc:last-pool";
 
-// The three most-used controls (3+2 is the site default) lead the desktop
-// picker; the other six sit behind a "More time controls" reveal so the
-// chamber's default view reads as one short row. Every pool stays reachable:
-// the reveal shows the full canonical grid, the mobile sheet always shows all
-// nine, and a remembered selection outside the three keeps the grid expanded so
-// the chosen tablet is never hidden.
-const PRIMARY_POOLS = ["3+2", "5+0", "10+0"];
-
 export function QuickMatch({ active = true }: { active?: boolean } = {}) {
   const router = useRouter();
   const [user, setUser] = useState<AccountUser | null | undefined>(undefined);
@@ -68,16 +57,8 @@ export function QuickMatch({ active = true }: { active?: boolean } = {}) {
   // Coarse socket health while searching, so a mid-queue drop shows a calm
   // "Reconnecting" note instead of silently stalling (system state 4).
   const [connection, setConnection] = useState<MPConnectionState>("connected");
-  // Mobile time-control bottom sheet.
-  const [sheetOpen, setSheetOpen] = useState(false);
-  // Desktop time-control fold: false shows only PRIMARY_POOLS, true the full
-  // nine-pool grid. Seeded true when the remembered pool is outside the
-  // primary three so the selected tablet is always on screen.
-  const [showAllPools, setShowAllPools] = useState(false);
-  // The mobile sticky action bar and the bottom sheet are portalled to
-  // document.body: their nearest lobby ancestor carries a CSS transform (the
-  // stagger-in entrance), which would otherwise trap position:fixed inside the
-  // column instead of pinning it to the viewport. Portalling requires the DOM,
+  // The mobile sticky action bar is portalled to document.body so it pins to
+  // the viewport rather than to the lobby column. Portalling requires the DOM,
   // so it only runs after mount.
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
@@ -186,7 +167,6 @@ export function QuickMatch({ active = true }: { active?: boolean } = {}) {
         const saved = window.localStorage.getItem(LAST_POOL_KEY);
         if (saved && QUEUE_POOL_OPTIONS.some((o) => o.pool === saved)) {
           setPool(saved);
-          if (!PRIMARY_POOLS.includes(saved)) setShowAllPools(true);
         }
       } catch {}
     });
@@ -251,25 +231,30 @@ export function QuickMatch({ active = true }: { active?: boolean } = {}) {
   };
 
   const selected = QUEUE_POOL_OPTIONS.find((o) => o.pool === pool) ?? QUEUE_POOL_OPTIONS[3];
-  const selectedCategory = getCategory(selected.speed);
   const ratingFor = (m: DraftMode) => modeRatings[m] ?? (user ? Math.round(user.rating) : null);
   const modeLabel = mode === "nerf" ? "Nerf" : "Buff";
   const findLabel = `Find a ${selected.label} ${modeLabel} game`;
 
   return (
-    <div className="dgn-chamber p-4 sm:p-6">
-      <div className="flex items-center gap-2.5">
-        <span
-          aria-hidden
-          className="grid h-9 w-9 shrink-0 place-items-center rounded-[2px] border border-[rgb(122_96_58_/_0.6)] bg-[rgb(var(--energy-ember-rgb)/0.12)] text-[rgb(var(--energy-ember-rgb))] shadow-[inset_0_1px_0_rgba(255,230,180,0.15)]"
-        >
-          <Swords size={16} />
-        </span>
-        <div>
-          <div className="font-display text-2xl leading-none text-parchment-50">Quick match</div>
-          <EngravedLabel className="mt-1.5" torch={false}>
-            The matchmaking chamber
-          </EngravedLabel>
+    <div className="plate p-3 sm:p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="font-display text-[15px] font-bold text-parchment-50">Quick pairing</h2>
+        {/* The mode selector: a two-option segmented control. The long
+            descriptions ride on aria-label so the control stays one line while
+            the accessible names still say what each mode does. */}
+        <div role="group" aria-label="Game mode" className="flex items-stretch gap-1">
+          <ModeSegment
+            mode="buff"
+            rating={ratingFor("buff")}
+            selected={mode === "buff"}
+            onClick={() => pickMode("buff")}
+          />
+          <ModeSegment
+            mode="nerf"
+            rating={ratingFor("nerf")}
+            selected={mode === "nerf"}
+            onClick={() => pickMode("nerf")}
+          />
         </div>
       </div>
 
@@ -288,107 +273,34 @@ export function QuickMatch({ active = true }: { active?: boolean } = {}) {
         </div>
       ) : (
         <>
-          {/* Step 1: mode. Two dungeon doors, each wearing its mode hue on a
-              carved jamb and igniting when chosen (no floating checkbox). Buff
-              leads and is preselected. Choosing a door does not queue; the gate
-              does. */}
-          <div className="mt-5">
-            <EngravedLabel>Choose your gate</EngravedLabel>
-            <div className="mt-2.5 grid grid-cols-2 gap-2.5">
-              <ModeCard
-                mode="buff"
-                rating={ratingFor("buff")}
-                selected={mode === "buff"}
-                onClick={() => pickMode("buff")}
+          {/* The time controls, one flat tile each: the time in the middle, the
+              speed name beneath. Same nine pools as QUEUE_POOLS in worker.ts. */}
+          <div id="qm-pool-grid" className="mt-3 grid grid-cols-3 gap-1.5">
+            {QUEUE_POOL_OPTIONS.map((option) => (
+              <TimeCell
+                key={option.pool}
+                option={option}
+                selected={option.pool === pool}
+                onClick={() => pickPool(option.pool)}
               />
-              <ModeCard
-                mode="nerf"
-                rating={ratingFor("nerf")}
-                selected={mode === "nerf"}
-                onClick={() => pickMode("nerf")}
-              />
-            </div>
+            ))}
           </div>
 
-          {/* Step 2: time control. Desktop leads with the three most-used
-              tokens and folds the remaining six behind "More time controls"
-              (the full canonical 3x3 when open); mobile collapses everything
-              to a summary tablet that opens a bottom sheet. A remembered
-              selection outside the primary three keeps the grid expanded and
-              hides the fold toggle so the chosen tablet never disappears. */}
-          <div className="mt-5">
-            <EngravedLabel>Time control</EngravedLabel>
-            {(() => {
-              const selectedIsExtra = !PRIMARY_POOLS.includes(pool);
-              const poolsExpanded = showAllPools || selectedIsExtra;
-              const visiblePools = poolsExpanded
-                ? QUEUE_POOL_OPTIONS
-                : QUEUE_POOL_OPTIONS.filter((o) => PRIMARY_POOLS.includes(o.pool));
-              return (
-                <>
-                  <div id="qm-pool-grid" className="mt-2.5 hidden grid-cols-3 gap-2 sm:grid">
-                    {visiblePools.map((option) => (
-                      <TimeCell
-                        key={option.pool}
-                        option={option}
-                        selected={option.pool === pool}
-                        onClick={() => pickPool(option.pool)}
-                      />
-                    ))}
-                  </div>
-                  {!selectedIsExtra && (
-                    <Button
-                      tone="ghost"
-                      size="sm"
-                      onClick={() => setShowAllPools((v) => !v)}
-                      aria-expanded={poolsExpanded}
-                      aria-controls="qm-pool-grid"
-                      className="mt-2 hidden w-full sm:inline-flex"
-                    >
-                      <ChevronRight
-                        aria-hidden
-                        size={14}
-                        strokeWidth={2.4}
-                        className={
-                          "shrink-0 transition-transform duration-150 " +
-                          (poolsExpanded ? "rotate-90" : "")
-                        }
-                      />
-                      {poolsExpanded ? "Fewer time controls" : "More time controls"}
-                    </Button>
-                  )}
-                </>
-              );
-            })()}
-            {/* Mobile: a single summary tablet opens the picker sheet. */}
-            <button
-              type="button"
-              onClick={() => setSheetOpen(true)}
-              data-selected="true"
-              className="dgn-token mt-2.5 flex min-h-[48px] w-full items-center justify-between px-3.5 py-2.5 sm:hidden"
-            >
-              <span className="flex items-center gap-2">
-                <Clock size={16} aria-hidden style={{ color: selectedCategory.accent }} />
-                <span className="font-mono text-base tabular-nums text-parchment-50">{selected.label}</span>
-                <span className="text-sm text-parchment-300">{selectedCategory.label}</span>
-              </span>
-              <span className="text-xs font-medium uppercase tracking-wider text-gold-leaf">Change</span>
-            </button>
-          </div>
-
-          {/* The one primary action, forged as the same dungeon gate as the
-              homepage CTA. Desktop renders it full width in the chamber; on
+          {/* The one primary action. Desktop renders it under the grid; on
               mobile it moves to the sticky bottom rail so it is always
               reachable. */}
-          <DungeonGateButton
+          <Button
+            tone="primary"
+            size="lg"
+            block
             onClick={startSearch}
-            className="dgn-gate--block press mt-5 hidden px-8 py-4 font-display text-lg font-semibold sm:flex"
+            className="mt-3 hidden sm:inline-flex"
           >
             {findLabel}
-          </DungeonGateButton>
+          </Button>
 
           {user !== undefined && (!user || user.isGuest) && (
-            <p className="mt-3 text-center text-[13px] text-parchment-300 sm:text-sm">
+            <p className="mt-2.5 text-[13px] text-parchment-300">
               Playing as a guest.{" "}
               <Link href="/login?next=/lobby" className="font-semibold text-gold-leaf hover:underline">
                 Sign in
@@ -405,84 +317,38 @@ export function QuickMatch({ active = true }: { active?: boolean } = {}) {
         </div>
       )}
 
-      {/* The mobile sticky action bar and bottom sheet are portalled to the
-          document body (see `mounted` above) and only while this tab is active,
-          so they escape the column's transform and pin to the viewport. */}
+      {/* The mobile sticky action bar is portalled to the document body (see
+          `mounted` above) and only while this tab is active, so it pins to the
+          viewport rather than to this column. Hidden while the panel's own
+          searching UI is on screen, so only one Cancel shows at a time. */}
       {mounted &&
         active &&
         createPortal(
-          <>
-            {/* --- Mobile sticky action bar (safe-area aware). Hidden while
-                the panel's own searching UI is on screen, so only one Cancel
-                shows at a time. --- */}
-            {showBar && (
-              <div
-                ref={barRef}
-                className="dgn-ctabar fixed inset-x-0 bottom-0 z-40 px-4 pt-3 pb-[max(env(safe-area-inset-bottom),0.75rem)] sm:hidden"
-              >
-                {state === "searching" ? (
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="flex items-center gap-2 text-sm text-parchment-100">
-                      <span aria-hidden className="h-2.5 w-2.5 shrink-0 rounded-full bg-[rgb(var(--energy-ember-rgb))] animate-flicker" />
-                      <span>Searching</span>
-                      <span className="font-mono text-sm tabular-nums text-parchment-200">{formatElapsed(elapsed)}</span>
+          showBar ? (
+            <div
+              ref={barRef}
+              className="fixed inset-x-0 bottom-0 z-40 border-t border-[color:var(--edge)] bg-[color:var(--bg-panel)] px-4 pt-3 pb-[max(env(safe-area-inset-bottom),0.75rem)] sm:hidden"
+            >
+              {state === "searching" ? (
+                <div className="flex items-center justify-between gap-3">
+                  <span className="flex items-center gap-2 text-sm text-parchment-100">
+                    <span aria-hidden className="h-2.5 w-2.5 shrink-0 rounded-full bg-verdigris" />
+                    <span>Searching</span>
+                    <span className="font-mono text-sm tabular-nums text-parchment-200">
+                      {formatElapsed(elapsed)}
                     </span>
-                    <Button tone="ghost"
-                      onClick={cancelSearch}
-                      className="px-5 py-2 text-base">
-                      Cancel
-                    </Button>
-                  </div>
-                ) : (
-                  <DungeonGateButton
-                    onClick={startSearch}
-                    className="dgn-gate--block press flex min-h-[52px] px-6 py-3 font-display text-lg font-semibold"
-                  >
-                    {findLabel}
-                  </DungeonGateButton>
-                )}
-              </div>
-            )}
-
-            {/* --- Mobile time-control bottom sheet --- */}
-            {sheetOpen && (
-              <div className="fixed inset-0 z-50 sm:hidden" role="dialog" aria-modal="true" aria-label="Choose a time control">
-                <button
-                  type="button"
-                  aria-label="Close time control picker"
-                  onClick={() => setSheetOpen(false)}
-                  className="absolute inset-0 bg-black/60"
-                />
-                <div className="dgn-ctabar absolute inset-x-0 bottom-0 p-4 pb-[max(env(safe-area-inset-bottom),1rem)]">
-                  <div aria-hidden className="mx-auto mb-3 h-1 w-9 rounded-[1px] bg-[rgb(var(--energy-ember-rgb)/0.5)]" />
-                  <div className="mb-3 flex items-center justify-between">
-                    <EngravedLabel as="h3" className="text-[13px]">Time control</EngravedLabel>
-                    <button
-                      type="button"
-                      onClick={() => setSheetOpen(false)}
-                      aria-label="Close"
-                      className="grid h-11 w-11 place-items-center text-parchment-300 hover:text-parchment-50"
-                    >
-                      <X size={20} />
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    {QUEUE_POOL_OPTIONS.map((option) => (
-                      <TimeCell
-                        key={option.pool}
-                        option={option}
-                        selected={option.pool === pool}
-                        onClick={() => {
-                          pickPool(option.pool);
-                          setSheetOpen(false);
-                        }}
-                      />
-                    ))}
-                  </div>
+                  </span>
+                  <Button tone="default" onClick={cancelSearch}>
+                    Cancel
+                  </Button>
                 </div>
-              </div>
-            )}
-          </>,
+              ) : (
+                <Button tone="primary" size="lg" block onClick={startSearch}>
+                  {findLabel}
+                </Button>
+              )}
+            </div>
+          ) : null,
           document.body,
         )}
     </div>
@@ -519,13 +385,11 @@ function SearchingPanel({
   return (
     <div
       ref={rootRef}
-      className="dgn-token mt-5 p-4"
-      data-selected="true"
-      style={{ "--energy-gold-rgb": "98 153 36" } as React.CSSProperties}
+      className="plate mt-3 border-[color:var(--accent)] p-3"
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <span className="flex items-center gap-2.5 text-sm text-parchment-100">
-          <span aria-hidden className="h-2.5 w-2.5 shrink-0 rounded-full bg-verdigris animate-flicker" />
+          <span aria-hidden className="h-2.5 w-2.5 shrink-0 rounded-full bg-verdigris" />
           <span>
             Finding a{" "}
             <span className={mode === "nerf" ? "text-mode-nerfGlow" : "text-mode-buffGlow"}>
@@ -534,17 +398,17 @@ function SearchingPanel({
             opponent ({poolLabel})
           </span>
         </span>
-        <Button tone="ghost" onClick={onCancel} className="px-4 py-2 text-sm">
+        <Button tone="default" size="sm" onClick={onCancel}>
           Cancel
         </Button>
       </div>
-      <div className="mt-2.5 flex items-center gap-2 text-xs text-parchment-400" aria-live="polite">
+      <div className="mt-2 flex items-center gap-2 text-xs text-parchment-400" aria-live="polite">
         <span>Searching</span>
         <span className="font-mono text-sm tabular-nums text-parchment-200">{formatElapsed(elapsed)}</span>
       </div>
       {reconnecting && (
         <div className="mt-2 flex items-center gap-2 text-xs text-sun-glow" role="status" aria-live="polite">
-          <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-sun-glow motion-safe:animate-pulse" />
+          <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-sun-glow" />
           Reconnecting to the game server. Your place in the queue is held.
         </div>
       )}
@@ -552,9 +416,10 @@ function SearchingPanel({
   );
 }
 
-// One time-control cell: speed glyph, clock, and category label. Accessible
-// name resolves to "3+2 blitz" (label + category), which the mode-defaults e2e
-// spec relies on.
+// One time-control tile: the big time in the middle, the speed name beneath.
+// The shared <Button> primitive carries the material, so a selected tile is the
+// accent fill and an unselected one the default box. Accessible name resolves
+// to "3+2 blitz" (label + category), which the mode-defaults e2e spec relies on.
 function TimeCell({
   option,
   selected,
@@ -565,30 +430,26 @@ function TimeCell({
   onClick: () => void;
 }) {
   const category = getCategory(option.speed);
-  const Icon = category.icon;
   return (
-    <button
-      type="button"
+    <Button
+      tone={selected ? "primary" : "default"}
       onClick={onClick}
       aria-pressed={selected}
-      data-selected={selected || undefined}
-      className="dgn-token press flex min-h-[48px] flex-col items-center justify-center gap-0.5 px-1 py-2"
+      className="!min-h-[56px] flex-col !gap-0.5 !px-1 !py-2"
     >
-      <Icon size={15} style={{ color: category.accent }} aria-hidden />
-      <span className="font-mono text-base tabular-nums">{option.label}</span>
-      <span className="text-xs text-parchment-400">{category.label}</span>
-    </button>
+      <span className="font-mono text-lg leading-none tabular-nums">{option.label}</span>
+      <span className={"text-[11px] " + (selected ? "opacity-80" : "text-parchment-400")}>
+        {category.label}
+      </span>
+    </Button>
   );
 }
 
-// One of the two mode cards: equal height, its mode hue on the jamb, and the
-// rating it stakes (a "?" when unknown, per the player-identity rule for
-// provisional/unrated). Selection is carried entirely by the door's border +
-// fill states (dungeon-lobby.css) — no corner checkbox and no "Recommended"
-// badge to fight the selected card for attention. Keeps the accessible names
-// the mode-defaults e2e spec matches (buff: "…Start with normal chess…";
-// nerf: "Start with a secret handicap…").
-function ModeCard({
+// One half of the mode selector. The description rides on aria-label so the
+// accessible names the mode-defaults e2e spec matches survive the compaction
+// (buff: "...Start with normal chess..."; nerf: "Start with a secret
+// handicap...").
+function ModeSegment({
   mode,
   rating,
   selected,
@@ -600,32 +461,24 @@ function ModeCard({
   onClick: () => void;
 }) {
   const isNerf = mode === "nerf";
-  const title = isNerf ? "text-mode-nerfGlow" : "text-mode-buffGlow";
+  const label = isNerf ? "Nerf" : "Buff";
+  const description = isNerf
+    ? "Nerf. Start with a secret handicap. Draft curses for your opponent."
+    : "Buff. Start with normal chess. Draft powers for your own army.";
   return (
-    <button
-      type="button"
+    <Button
+      tone={selected ? "primary" : "default"}
+      size="sm"
       onClick={onClick}
       aria-pressed={selected}
-      data-selected={selected || undefined}
-      className={
-        "dgn-door press p-3.5 text-left sm:p-4 " + (isNerf ? "dgn-door--nerf" : "dgn-door--buff")
-      }
+      aria-label={description}
+      title={description}
+      className="font-semibold"
     >
-      <span className={"font-display text-2xl font-semibold leading-none sm:text-3xl " + title}>
-        {isNerf ? "Nerf" : "Buff"}
+      {label}
+      <span className="font-mono text-[12px] font-normal tabular-nums opacity-80">
+        {rating ?? "?"}
       </span>
-      <p className="mt-2 text-[13px] leading-snug text-parchment-300">
-        {isNerf
-          ? "Start with a secret handicap. Draft curses for your opponent."
-          : "Start with normal chess. Draft powers for your own army."}
-      </p>
-      {/* The rating this door stakes. flex-wrap: on the narrowest phones the
-          number drops to its own line instead of clipping against the door's
-          overflow:hidden. */}
-      <div className="mt-auto flex flex-wrap items-baseline gap-x-2 gap-y-0.5 border-t border-white/[0.06] pt-2.5">
-        <span className="text-xs text-parchment-400">Your {isNerf ? "Nerf" : "Buff"} rating</span>
-        <span className={"font-mono text-base leading-none tabular-nums " + title}>{rating ?? "?"}</span>
-      </div>
-    </button>
+    </Button>
   );
 }

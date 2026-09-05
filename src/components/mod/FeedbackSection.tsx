@@ -244,7 +244,7 @@ function FeedbackTable({
         </FilterChip>
         {tiers.length > 0 && (
           <>
-            <span className="smallcaps ml-2 text-[10px] text-parchment-400">Tier</span>
+            <span className="ml-2 text-[10px] text-parchment-400">Tier</span>
             <FilterChip active={tier === "all"} onClick={() => setTier("all")}>
               Any
             </FilterChip>
@@ -260,7 +260,7 @@ function FeedbackTable({
       {/* Sorting on a phone, where there are no column headers to click. The
           four that matter; the desktop table keeps all six. */}
       <div className="flex flex-wrap items-center gap-2 sm:hidden">
-        <span className="smallcaps text-[10px] text-parchment-400">Sort</span>
+        <span className="text-[10px] text-parchment-400">Sort</span>
         {(
           [
             ["score", "Score"],
@@ -319,7 +319,7 @@ function FeedbackTable({
       <div className="plate hidden overflow-x-auto sm:block">
         <table className="w-full text-sm">
           <thead>
-            <tr className="smallcaps text-[9px] text-parchment-400">
+            <tr className="text-[9px] text-parchment-400">
               <Header align="left" active={sort === "name"} onClick={() => toggle("name")}>
                 {label}
                 {arrow("name")}
@@ -385,7 +385,7 @@ function FeedbackTable({
 
       {recent.length > 0 && (
         <div>
-          <h3 className="smallcaps text-xs text-parchment-400">Recent votes</h3>
+          <h3 className="text-xs text-parchment-400">Recent votes</h3>
           <ul className="plate mt-2 divide-y divide-white/5 text-sm">
             {recent.map((v, i) => (
               <li key={i} className="flex items-center justify-between gap-3 px-4 py-2">
@@ -424,7 +424,7 @@ function Header({
       <button
         type="button"
         onClick={onClick}
-        className={`smallcaps transition hover:text-parchment-100 ${active ? "text-gold-leaf" : ""}`}
+        className={`transition hover:text-parchment-100 ${active ? "text-gold-leaf" : ""}`}
       >
         {children}
       </button>

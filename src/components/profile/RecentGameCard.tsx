@@ -64,8 +64,8 @@ export function RecentGameCard({ game, viewer }: { game: RecentGameRow; viewer: 
       />
 
       <div className="relative z-10 flex items-center justify-between gap-2 pointer-events-none">
-        <span className="smallcaps text-[12px] text-parchment-400">Recent game</span>
-        <span className="flex items-center gap-2 smallcaps text-[12px] text-parchment-400">
+        <span className="text-[12px] text-parchment-400">Recent game</span>
+        <span className="flex items-center gap-2 text-[12px] text-parchment-400">
           <span>{game.rated ? "Rated" : "Casual"}</span>
           <span aria-hidden>·</span>
           <span className="font-mono">{clockLabel(game.time_sec, game.increment_sec)}</span>

@@ -588,3 +588,66 @@ Verified: tsc, eslint, full battery, and all 26 Playwright e2e tests green.
 Still outstanding: clock tiers 2 to 8 (99 cards), confusing-text simplification,
 weak-card buffs, cosmetic-only cards, the UI transition-token sweep, and
 AnimatePresence on the draft's unmount paths.
+
+## 2026-08-03 09:26 EDT
+
+Card animations now default ON even when the device asks apps to reduce motion.
+
+- "Follow system motion" flips to default OFF: card plays are gameplay
+  information (they are how you see what a card just did), so the OS
+  prefers-reduced-motion flag no longer stands them down unless the player
+  opts in. The in-app Reduced motion and Animations switches keep working
+  exactly as before and always win.
+- MotionNotice grows a second variant. On a reduced-motion device with the new
+  default, a one-time notice explains that effects are on by default and offers
+  to turn them off, labelled not recommended since quiet plays are easy to
+  miss ("Turn them off" sets followSystemMotion back on). Players who already
+  opted in (or carry the old stored default) still get the original
+  "Card effects are off" notice offering to show them anyway. Same UI interrupt
+  queue as before, so neither variant can cover a draft.
+- detectReduced (lib/useReducedMotion) now treats a stamped html[data-anim] as
+  authoritative and only consults the OS media query pre-stamp, gated on the
+  followSystemMotion setting. Before this, framer-motion driven effects stood
+  down on OS reduced motion even with the setting off, the half-animated state
+  the module's own docs warn about.
+- The raw @media (prefers-reduced-motion) CSS guards in globals.css,
+  DraftOverlay.css, creatorPlays.css and passive/primitives.css re-key onto
+  html[data-anim="off"], which absorbs the OS request only when the player
+  opted in; otherwise those keyframes would stay frozen while everything else
+  played. draft-expire-pulse gains the data-anim rule it was missing.
+- Settings hints for "Follow system motion" (Interface and Accessibility) now
+  say it is off by default and that turning it on is not recommended.
+
+Verified: tsc, check-reduced-motion, check-emdash, check-rounded,
+check-buttons all green. PR #463. OPEN.
+
+## 2026-08-03 09:58 EDT
+
+Animation quality pass on the three entrance systems the owner flagged as
+basic. PR #463. OPEN.
+
+- Nerf entrances: the category arrival is now a 9-layer verdict stamp
+  (warning under-glow and judicial seal tell, two-part stamp head with a
+  one-frame squash, ink shards, emboss afterglow, drips and flecks). The
+  neutral floor most nerf cards resolve to is now an edict: parchment
+  unrolls, sigil brands in with a scorch flash, wax seal punches, embers
+  settle. The board nerf-reveal gains a descending tier-tinted sweep, a
+  real slam on the stamp caption, and a staggered press cascade across
+  affected squares inside the same 2s budget.
+- Creator cards: the one shared ring-and-step-in entrance is gone; each of
+  the five cards arrives as its play in miniature (bait tips over and
+  SPROINGs out of the snare; the rook slams in behind streaks with its
+  caption; lamp blooms and cards flip for family night; the stopwatch
+  sprints in and skids with a green split; chat lines scroll and the
+  picker ring rattles before locking).
+- Passive spawns: every activation now announces itself with a tell
+  (color under-bloom plus anchor inhale), an announce ring with rising
+  motes, and a slow settle, fitted inside each visual's existing duration
+  budget; the nerf reveal press gains a pre-press shadow, a held squash,
+  and a release shockwave.
+
+All three-beat, transform/opacity only, --fx-dur scaled, standing down
+under html[data-anim="off"]. Verified: tsc, test:animations,
+test:scene-complexity (2130 scenes, 0 below floor), test:passive-registry,
+test:passive-motifs, test:nerf-visuals, check-vfx-coverage (2448/2448),
+test:emdash, test:rounded, check-reduced-motion.

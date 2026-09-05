@@ -74,7 +74,7 @@ export function SocialsRow({
   if (variant === "prominent") {
     return (
       <div className={`text-center ${className}`}>
-        <span className="smallcaps block text-[12px] tracking-widest text-parchment-400">
+        <span className="block text-[12px] tracking-widest text-parchment-400">
           Follow the game
         </span>
         <div className="mt-3 flex flex-wrap items-center justify-center gap-3">
@@ -98,7 +98,7 @@ export function SocialsRow({
   }
   return (
     <div className={`flex flex-wrap items-center justify-center gap-3 ${className}`}>
-      <span className="smallcaps mr-1 text-[11px] text-parchment-400">{label}</span>
+      <span className="mr-1 text-[11px] text-parchment-400">{label}</span>
       {SOCIALS.map((s) => (
         <a
           key={s.label}

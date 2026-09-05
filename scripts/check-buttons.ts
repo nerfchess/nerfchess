@@ -110,7 +110,6 @@ const BASELINE: string[] = [
   "src/components/AchievementToast.tsx",
   "src/components/AdminGodPanel.tsx",
   "src/components/Board.tsx",
-  "src/components/ChatPanel.tsx",
   "src/components/CurrentGameCard.tsx",
   // The dock split (BuffDock.tsx -> components/dock/) carried the monolith's
   // remaining bespoke affordances with it: row/chip toggles, the segmented

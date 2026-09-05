@@ -20,31 +20,32 @@ export default {
         mono: ["var(--font-mono)", "ui-monospace", "monospace"],
       },
       colors: {
-        // ink = warm near-black surfaces, tuned to Lichess's default dark theme
+        // ink = the Lichess dark surface ladder. The names are historical; the
+        // values are Lichess's: 900 is the page, 800 the box/panel, 700 the
+        // raised/hover step, 500 the border.
         ink: {
-          950: "#12100e",
-          900: "#191713", // page background
-          800: "#221f1a",
-          700: "#2b2823", // panels / cards
-          600: "#363229",
-          500: "#453f36",
-          400: "#746e62",
+          950: "#0f0e0c",
+          900: "#161512", // page background
+          800: "#262421", // panels / boxes
+          700: "#302e2c", // raised / hover
+          600: "#3a3836",
+          500: "#404040", // borders
+          400: "#8c8c8c", // secondary text on a dark ground
         },
-        // parchment = WARM light grays (foreground text). Red sits a touch above
-        // blue at every step so type shares the temperature of the warm-ink
-        // surfaces instead of reading as cold neutral gray on top of them (the
-        // classic warm-bg / cool-text tell). Kept subtle to stay Lichess-quiet.
+        // parchment = the Lichess text ramp (foreground). Neutral greys: #bababa
+        // is Lichess's body text, #ccc its headings, #8c8c8c its secondary and
+        // #707070 its muted.
         parchment: {
-          DEFAULT: "#c2bcaf",
-          50: "#ece7dd",
-          100: "#e0dcd2",
-          200: "#cac6bd",
-          300: "#a7a297",
-          400: "#999790",
-          500: "#6d6b65",
+          DEFAULT: "#bababa",
+          50: "#dddddd",
+          100: "#cccccc",
+          200: "#bababa",
+          300: "#a0a0a0",
+          400: "#8c8c8c",
+          500: "#707070",
         },
-        // gold = the configurable accent (links / primary); the rgb triples are
-        // set on :root and swapped by the accent-color setting.
+        // gold = the accent (links / primary). Historical name, Lichess blue:
+        // the rgb triples are set on :root and pushed by applyUiPrefs.
         gold: {
           DEFAULT: "rgb(var(--accent-rgb) / <alpha-value>)",
           leaf: "rgb(var(--accent-hi-rgb) / <alpha-value>)",
@@ -63,23 +64,29 @@ export default {
           DEFAULT: "rgb(var(--accent-positive-rgb) / <alpha-value>)",
           glow: "rgb(var(--accent-positive-hi-rgb) / <alpha-value>)",
         },
-        // bruise = dusty slate violet (secondary accent)
+        // bruise = a neutral secondary grey. Still referenced by the board's
+        // risk-dot ladder and a dozen chips, so the name stays; the violet does
+        // not. Mirrors --bruise in globals.css.
         bruise: {
-          DEFAULT: "#8a88a8",
-          glow: "#a7a5c4",
+          DEFAULT: "#8c8c8c",
+          glow: "#a0a0a0",
         },
-        // The fun kit: playful accents beside the core blue (see globals.css).
+        // coral / mint / sun: three semantic chip colours still used across the
+        // codex, the dock and the leaderboard. Retoned onto the Lichess palette
+        // (Nerf red, Lichess green, a muted brass) rather than removed, because
+        // dropping the names would silently blank those classes. Mirrors the
+        // matching tokens in globals.css.
         coral: {
-          DEFAULT: "#ef8a5f",
-          glow: "#ffab84",
+          DEFAULT: "#d85a48",
+          glow: "#e5745f",
         },
         mint: {
-          DEFAULT: "#58c39a",
-          glow: "#7ddcb7",
+          DEFAULT: "#629924",
+          glow: "#7bb52f",
         },
         sun: {
-          DEFAULT: "#eec25e",
-          glow: "#ffd97e",
+          DEFAULT: "#c9a227",
+          glow: "#dcb84a",
         },
         // mode identities: Nerf mode is red, Buff mode is blue — the same two
         // semantic accent tokens used for curses/danger (red) and powers/boons

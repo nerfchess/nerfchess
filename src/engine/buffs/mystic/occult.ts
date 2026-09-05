@@ -282,7 +282,7 @@ export const MYSTIC_OCCULT: Buff[] = [
       name: "Mirror of Souls",
       description:
         "You hold the glass between two reflections: name one of your pieces and an enemy piece of the same kind. After your opponent's next move, they trade places. Kings cast no reflection.",
-      tier: 6,
+      tier: 7,
       category: "movement",
       flavor: "The glass gives everything back except loyalty.",
     },

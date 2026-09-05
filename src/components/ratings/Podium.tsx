@@ -337,7 +337,7 @@ export function Podium({
   return (
     <section
       aria-label="Podium: top three"
-      className="dgn-slab dgn-rivets relative mt-6 overflow-hidden px-3 pb-0 pt-5 sm:px-6"
+      className="relative mt-6 overflow-hidden px-3 pb-0 pt-5 sm:px-6"
       style={{ borderColor: accent.border }}
     >
       {/* The gold underglow pool beneath the dais: treasure light rising from
@@ -373,7 +373,7 @@ export function Podium({
 
       <div className="relative flex items-center justify-center gap-2 pb-2 pt-2">
         <span className={"h-px w-8 " + accent.rule} aria-hidden="true" />
-        <span className={"smallcaps text-[11px] " + accent.text}>Podium</span>
+        <span className={"text-[11px] " + accent.text}>Podium</span>
         <span className={"h-px w-8 " + accent.rule} aria-hidden="true" />
       </div>
 
@@ -455,7 +455,7 @@ export function Podium({
               {/* Each step's own word, in its metal: unique recognition per
                   placement, like the announcer's call at a medal ceremony. */}
               <span
-                className="smallcaps mb-2 mt-1 text-[10px] tracking-widest"
+                className="mb-2 mt-1 text-[10px] tracking-widest"
                 style={{ color: medal.metal }}
               >
                 {medal.epithet}
@@ -529,7 +529,7 @@ export function Podium({
                 {Math.round(row.rating)}
                 {provisional && <span>?</span>}
               </span>
-              <span className="smallcaps whitespace-nowrap text-[11px] text-parchment-400">
+              <span className="whitespace-nowrap text-[11px] text-parchment-400">
                 {row.games} {row.games === 1 ? "game" : "games"}
               </span>
               {/* The ceremony bouquets on the front edge of the riser — the

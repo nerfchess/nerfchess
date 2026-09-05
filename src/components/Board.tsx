@@ -403,15 +403,27 @@ function NerfRevealSplash({
     >
       {/* the ink wash: the board darkens for a beat while the rule lands */}
       <div className="nerf-reveal-wash absolute inset-0" />
-      {/* hostile-aura pulse on every affected square */}
-      {squares.map((sq) => {
+      {/* directional sweep: a tinted band scans down the crop once, so the
+          wash reads as the rule DESCENDING rather than a flat fade */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="nerf-reveal-sweep absolute inset-x-0 top-0 h-[34%]" />
+      </div>
+      {/* hostile-aura press on every affected square, cascading a few frames
+          apart (capped so the last cell still finishes inside the 2s budget) */}
+      {squares.map((sq, i) => {
         if (sq < 0 || sq > 63) return null;
         const { col, row } = cellPos(sq as Square, orientation);
         return (
           <div
             key={sq}
             className="nerf-reveal-cell absolute"
-            style={{ left: `${col * 12.5}%`, top: `${row * 12.5}%`, width: "12.5%", height: "12.5%" }}
+            style={{
+              left: `${col * 12.5}%`,
+              top: `${row * 12.5}%`,
+              width: "12.5%",
+              height: "12.5%",
+              animationDelay: `${Math.min(i * 30, 150)}ms`,
+            }}
           >
             {/* R2: the tier tint becomes the card hue — pass the nerf's id so
                 two different rules read as different colors. */}
@@ -429,7 +441,7 @@ function NerfRevealSplash({
           >
             {TIER_ROMAN[tier as 1]}
           </span>
-          <span className="smallcaps text-[10px] font-semibold tracking-wider text-parchment-300">
+          <span className="text-[10px] font-semibold tracking-wider text-parchment-300">
             {mine ? "your rule" : "their rule"}
           </span>
         </div>
@@ -2956,12 +2968,9 @@ export function Board({
     const grid = boardRef.current?.querySelector("[data-board-grid]") as HTMLElement | null;
     if (!grid) return;
     const cell = grid.getBoundingClientRect().width / 8;
-    // The player's chosen movement style (Settings > Board & Pieces). "glide"
-    // is the classic chessground slide; the other styles run through WAAPI so
-    // multi-keyframe arcs never fight the inline-transition bookkeeping. All
-    // styles are transform/opacity only, all scale with the animation-speed
-    // duration, and dur === 0 (animations off) already returned above.
-    const motion = document.documentElement.dataset.pieceMotion ?? "glide";
+    // Pieces glide: the classic chessground slide, transform-only, scaled by
+    // the animation-speed duration (dur === 0, animations off, already
+    // returned above).
     for (const el of Array.from(grid.querySelectorAll<HTMLElement>("[data-anim-piece]"))) {
       const sq = Number(el.dataset.animPiece) as Square;
       const anim = anims.get(sq);
@@ -2972,74 +2981,15 @@ export function Board({
       const dy = anim.dyCells * cell;
       el.style.position = "relative";
       el.style.zIndex = "5";
-      let totalMs = dur + 50;
-      if (motion === "hop" && typeof el.animate === "function") {
-        // The piece leaps: an arc whose height grows gently with distance,
-        // a slight stretch at the apex, and a landing squash.
-        const dist = Math.hypot(anim.dxCells, anim.dyCells);
-        const lift = cell * (0.4 + Math.min(dist, 6) * 0.08);
-        const hopMs = dur * 1.7;
-        el.style.transform = "translate(0, 0)";
-        el.animate(
-          [
-            { transform: `translate(${dx}px, ${dy}px) scale(1)` },
-            {
-              transform: `translate(${dx * 0.5}px, ${dy * 0.5 - lift}px) scale(1.06, 1.1)`,
-              offset: 0.45,
-              easing: "cubic-bezier(0.3, 0, 0.6, 1)",
-            },
-            { transform: "translate(0, 0) scale(1.08, 0.9)", offset: 0.85 },
-            { transform: "translate(0, 0) scale(1)" },
-          ],
-          { duration: hopMs, easing: "cubic-bezier(0.25, 0.6, 0.3, 1)" },
-        );
-        totalMs = hopMs + 50;
-      } else if (motion === "warp" && typeof el.animate === "function") {
-        // The piece folds out of its square and unfolds on the destination:
-        // a vanish at the origin, nothing in between, a pop on arrival.
-        const warpMs = dur * 1.5;
-        el.style.transform = "translate(0, 0)";
-        el.animate(
-          [
-            { transform: `translate(${dx}px, ${dy}px) scale(1)`, opacity: 1 },
-            { transform: `translate(${dx}px, ${dy}px) scale(0.45)`, opacity: 0, offset: 0.38 },
-            { transform: "translate(0, 0) scale(0.45)", opacity: 0, offset: 0.5 },
-            { transform: "translate(0, 0) scale(1.16)", opacity: 1, offset: 0.78 },
-            { transform: "translate(0, 0) scale(1)", opacity: 1 },
-          ],
-          { duration: warpMs, easing: "ease-out" },
-        );
-        totalMs = warpMs + 50;
-      } else if (motion === "stomp" && typeof el.animate === "function") {
-        // A hard, fast march: quicker travel than the glide and a landing
-        // stomp that plants the piece with authority.
-        const stompMs = dur * 1.25;
-        el.style.transform = "translate(0, 0)";
-        el.animate(
-          [
-            { transform: `translate(${dx}px, ${dy}px) scale(1)` },
-            {
-              transform: "translate(0, 0) scale(1)",
-              offset: 0.62,
-              easing: "cubic-bezier(0.5, 0, 0.9, 0.6)",
-            },
-            { transform: "translate(0, 0) scale(1.14, 0.84)", offset: 0.78 },
-            { transform: "translate(0, 0) scale(0.97, 1.04)", offset: 0.9 },
-            { transform: "translate(0, 0) scale(1)" },
-          ],
-          { duration: stompMs, easing: "linear" },
-        );
-        totalMs = stompMs + 50;
-      } else {
-        el.style.transition = "none";
-        el.style.transform = `translate(${dx}px, ${dy}px)`;
-        el.getBoundingClientRect(); // commit the starting transform
-        // Fast-launch / decisive-stop curve (vs the old gentle `ease-out`,
-        // which coasted): the piece leaves quickly and lands crisply, so
-        // moves feel light.
-        el.style.transition = `transform ${dur}ms cubic-bezier(0.22, 1, 0.36, 1)`;
-        el.style.transform = "translate(0, 0)";
-      }
+      const totalMs = dur + 50;
+      el.style.transition = "none";
+      el.style.transform = `translate(${dx}px, ${dy}px)`;
+      el.getBoundingClientRect(); // commit the starting transform
+      // Fast-launch / decisive-stop curve (vs the old gentle `ease-out`,
+      // which coasted): the piece leaves quickly and lands crisply, so
+      // moves feel light.
+      el.style.transition = `transform ${dur}ms cubic-bezier(0.22, 1, 0.36, 1)`;
+      el.style.transform = "translate(0, 0)";
       animCleanups.set(
         el,
         window.setTimeout(() => {
@@ -4989,7 +4939,7 @@ export function Board({
           >
             <div
               onPointerDown={(e) => e.stopPropagation()}
-              className="plate gilt flex flex-col items-center gap-2 p-3 sm:p-4"
+              className="plate flex flex-col items-center gap-2 p-3 sm:p-4"
             >
               <div className="flex gap-2">
                 {promotionMove.map((m) => (

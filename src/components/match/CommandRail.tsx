@@ -96,14 +96,14 @@ export function CommandRail({
   return (
     <aside
       className={
-        "rail-panel corner-cut hidden min-h-0 gap-2 overflow-y-auto p-2.5 " +
+        "rail-panel hidden min-h-0 gap-2 overflow-y-auto p-2.5 " +
         "lg:min-h-[var(--board-height)] lg:max-h-full " +
         "lg:grid-rows-[auto_auto_minmax(8rem,1fr)_auto] lg:self-start " +
         (lux ? "rail-lux " : "") +
         (collapsed ? "" : "lg:grid")
       }
     >
-      <div className="seam-edge-b relative flex items-center justify-between gap-2 px-1 pb-2">
+      <div className="relative flex items-center justify-between gap-2 px-1 pb-2">
         <span
           className={
             "flex items-center gap-1.5 font-display text-xs font-bold uppercase tracking-[0.14em] " +
@@ -119,7 +119,7 @@ export function CommandRail({
           {MODE_LABEL[mode]}
         </span>
         {subtitle && (
-          <span className="smallcaps min-w-0 truncate text-[12px] text-parchment-400">
+          <span className="min-w-0 truncate text-[12px] text-parchment-400">
             {subtitle}
           </span>
         )}

@@ -136,7 +136,7 @@ export const FUNNY_CHAOS: Buff[] = [
       icon: "Bomb",
       name: "Minefield",
       description: "Seed three mines on empty squares. The first enemy piece, never a king, to step on each mine is destroyed, and the blast removes every enemy piece except kings on the 8 squares around it. Shielded pieces resist the blast.",
-      tier: 5,
+      tier: 6,
       category: "attack",
       flavor: "Click... uh oh.",
     },

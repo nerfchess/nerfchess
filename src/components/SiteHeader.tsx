@@ -4,8 +4,9 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Bell, History, LogIn, LogOut, Mail, Search, Settings, Shield, Swords, Trophy, User, UserPlus } from "lucide-react";
-import "./DungeonMenu.css";
+import "./SiteHeader.css";
 import { Logo } from "@/components/Logo";
+import { HeaderSettingsMenu, ZenExitButton } from "@/components/HeaderSettingsMenu";
 import { MobileNavMenu } from "@/components/MobileNavMenu";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { PlayerLink, isLinkablePlayerName } from "@/components/PlayerLink";
@@ -281,13 +282,13 @@ export function SiteHeader({ active }: { active?: string }) {
     "nav-icon-btn relative grid h-11 w-11 sm:h-10 sm:w-10 place-items-center text-parchment-300 hover:bg-white/5 hover:text-parchment-50";
 
   return (
-    <nav className="site-nav seam-edge-b flex items-center justify-between gap-3 px-5 sm:px-10 py-5 sm:py-6">
-      <div className="flex min-w-0 items-center gap-2 sm:gap-5">
+    <nav className="site-nav flex min-h-[48px] items-center justify-between gap-3 px-3 sm:px-4">
+      <div className="flex min-w-0 items-center gap-1 sm:gap-2">
         {/* Mobile hamburger, left of the wordmark: opens every destination on
             phones and tablets, where the inline nav below is hidden. */}
         <MobileNavMenu align="left" hideAt="md" />
         <Logo />
-        <div className="hidden items-center gap-1 text-base font-body font-medium md:flex">
+        <div className="hidden items-center font-body font-medium md:flex">
           {NAV_LINKS.map((link) =>
             link.menu ? (
               // Lichess-style: the label is still a link, and hovering it (or
@@ -295,30 +296,29 @@ export function SiteHeader({ active }: { active?: string }) {
               <div key={link.href} className="group relative">
                 <Link
                   href={link.href}
-                  className={
-                    "nav-item block px-3 py-1.5 group-hover:bg-white/5 " +
-                    (activeSection === link.href ? "text-gold-leaf" : "text-parchment-100")
-                  }
+                  data-active={activeSection === link.href}
+                  className="site-nav-link block px-3 py-3.5"
                 >
                   {link.label}
                   {/* Active page underline: a flat accent bar. */}
                   {activeSection === link.href && (
                     <span
                       aria-hidden
-                      className="absolute inset-x-3 bottom-[0.26rem] h-[2px] bg-gold-leaf"
+                      className="absolute inset-x-3 bottom-0 h-[2px]"
+                      style={{ background: "var(--accent)" }}
                     />
                   )}
                 </Link>
                 {/* No opacity fade: the menu pops in fully solid so the labels
                     never read as half-transparent text mid-transition. */}
                 <div className="invisible absolute left-0 top-full z-40 w-56 group-focus-within:visible group-hover:visible">
-                  <div className="plate dropdown dgn-menu py-1 shadow-2xl">
+                  <div className="site-nav-pop py-1 shadow-xl">
                     {link.menu.map((item) => (
                       <Link
                         key={item.href}
                         href={item.href}
                         className={
-                          "block px-4 py-2.5 text-[15px] transition-colors hover:bg-white/5 " +
+                          "block px-4 py-2.5 text-[14px] transition-colors hover:bg-white/5 " +
                           (item.className ?? "text-parchment-100 hover:text-parchment-50")
                         }
                       >
@@ -332,16 +332,15 @@ export function SiteHeader({ active }: { active?: string }) {
               <Link
                 key={link.href}
                 href={link.href}
-                className={
-                  "nav-item px-3 py-1.5 hover:bg-white/5 " +
-                  (activeSection === link.href ? "text-gold-leaf" : "text-parchment-100")
-                }
+                data-active={activeSection === link.href}
+                className="site-nav-link relative block px-3 py-3.5"
               >
                 {link.label}
                 {activeSection === link.href && (
                   <span
                     aria-hidden
-                    className="absolute inset-x-3 bottom-[0.26rem] h-[2px] bg-gold-leaf"
+                    className="absolute inset-x-3 bottom-0 h-[2px]"
+                    style={{ background: "var(--accent)" }}
                   />
                 )}
               </Link>
@@ -370,7 +369,7 @@ export function SiteHeader({ active }: { active?: string }) {
             // nav links (which appear at md and would sit under a leftward
             // rollout at tablet widths). Wide desktop (lg+): the lichess-style
             // field that rolls out to the LEFT of the search icon.
-            <div className="header-search-panel fixed inset-x-3 top-[4.75rem] z-40 [&_input]:bg-ink-800 [&_input]:shadow-2xl sm:top-[5rem] lg:absolute lg:inset-x-auto lg:right-full lg:top-1/2 lg:mr-1 lg:-translate-y-1/2">
+            <div className="header-search-panel fixed inset-x-3 top-[3.25rem] z-40 [&_input]:bg-ink-800 [&_input]:shadow-2xl sm:top-[3.25rem] lg:absolute lg:inset-x-auto lg:right-full lg:top-1/2 lg:mr-1 lg:-translate-y-1/2">
               <PlayerSearch autoFocus />
             </div>
           )}
@@ -390,8 +389,8 @@ export function SiteHeader({ active }: { active?: string }) {
               <Badge n={challenges.length} />
             </button>
             {menu === "challenges" && (
-              <div className="absolute right-0 top-full z-40 mt-3 w-80 max-w-[calc(100vw-1.5rem)] plate dropdown dgn-menu shadow-2xl">
-                <div className="border-b border-white/10 px-4 py-2.5 smallcaps text-[11px] text-parchment-400">
+              <div className="absolute right-0 top-full z-40 mt-2 w-80 max-w-[calc(100vw-1.5rem)] site-nav-pop shadow-xl">
+                <div className="border-b border-white/10 px-4 py-2.5 text-[11px] text-parchment-400">
                   Challenges
                 </div>
                 {challenges.length === 0 ? (
@@ -405,7 +404,7 @@ export function SiteHeader({ active }: { active?: string }) {
                             name={challenge.from}
                             className="text-sm text-parchment-100 hover:text-gold-leaf"
                           />
-                          <div className="smallcaps text-[11px] text-parchment-400">
+                          <div className="text-[11px] text-parchment-400">
                             {challenge.rated ? "Rated" : "Casual"} · {clockLabel(challenge.timeSec, challenge.incrementSec)} · {timeAgo(challenge.at)}
                           </div>
                         </div>
@@ -445,9 +444,9 @@ export function SiteHeader({ active }: { active?: string }) {
               <Badge n={unread} />
             </button>
             {menu === "bell" && (
-              <div className="absolute right-0 top-full z-40 mt-3 w-80 max-w-[calc(100vw-1.5rem)] plate dropdown dgn-menu shadow-2xl">
+              <div className="absolute right-0 top-full z-40 mt-2 w-80 max-w-[calc(100vw-1.5rem)] site-nav-pop shadow-xl">
                 <div className="flex items-center justify-between border-b border-white/10 px-4 py-2.5">
-                  <span className="smallcaps text-[11px] text-parchment-400">Notifications</span>
+                  <span className="text-[11px] text-parchment-400">Notifications</span>
                   {unread > 0 && (
                     <button onClick={markAllRead} className="text-xs text-parchment-400 hover:text-parchment-100">
                       Mark all read
@@ -483,7 +482,7 @@ export function SiteHeader({ active }: { active?: string }) {
                           <div className="text-sm leading-snug text-parchment-100">
                             <NotificationText text={n.text} actorName={n.actorName} />
                           </div>
-                          <div className="mt-0.5 smallcaps text-[11px] text-parchment-400">{timeAgo(n.at)}</div>
+                          <div className="mt-0.5 text-[11px] text-parchment-400">{timeAgo(n.at)}</div>
                         </div>
                       </li>
                     ))}
@@ -495,6 +494,10 @@ export function SiteHeader({ active }: { active?: string }) {
             )}
           </>
         )}
+
+        {/* Quick settings (the lichess "dasher"): background, board, pieces,
+            board size, sound and zen mode, applied live. */}
+        <HeaderSettingsMenu onOpen={() => setMenu(null)} onOpenPreferences={() => setSettingsOpen(true)} />
 
         {/* Account */}
         {user === undefined ? (
@@ -523,7 +526,7 @@ export function SiteHeader({ active }: { active?: string }) {
                     header reads as signed-out, never as a registered account. */}
                 <span className="hidden items-center gap-1.5 sm:inline-flex">
                   {user.isGuest && (
-                    <span className="smallcaps text-[11px] text-parchment-400">Guest</span>
+                    <span className="text-[11px] text-parchment-400">Guest</span>
                   )}
                   <span className={user.isGuest ? "text-parchment-200" : undefined}>{user.username}</span>
                 </span>
@@ -545,7 +548,7 @@ export function SiteHeader({ active }: { active?: string }) {
               )}
             </div>
             {menu === "profile" && (
-              <div className="absolute right-0 top-full z-40 mt-3 w-56 plate dropdown dgn-menu py-1 shadow-2xl">
+              <div className="absolute right-0 top-full z-40 mt-2 w-56 site-nav-pop py-1 shadow-xl">
                 {user.isGuest && (
                   <>
                     <div className="px-4 pb-1 pt-2 text-[11px] leading-snug text-parchment-400">
@@ -640,6 +643,7 @@ export function SiteHeader({ active }: { active?: string }) {
         )}
       </div>
 
+      <ZenExitButton />
       <SettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} />
       {user?.nameFlagged && <RenameBanner onRenamed={(name) => setUser({ ...user, username: name, nameFlagged: false })} />}
     </nav>
@@ -653,8 +657,9 @@ export function SiteHeader({ active }: { active?: string }) {
 // line. Plain links only, no confirm traps: nothing here can drop a live game
 // by accident, and everything the full header reaches is still reachable.
 export function CompactSiteHeader({ status }: { status?: React.ReactNode }) {
+  const [settingsOpen, setSettingsOpen] = useState(false);
   return (
-    <nav className="site-nav seam-edge-b flex items-center gap-3 px-4 sm:px-6 py-3">
+    <nav className="site-nav flex min-h-[48px] items-center gap-3 px-3 sm:px-4">
       <MobileNavMenu align="left" hideAt="none" />
       <Logo />
       {status && (
@@ -662,6 +667,13 @@ export function CompactSiteHeader({ status }: { status?: React.ReactNode }) {
           {status}
         </div>
       )}
+      {/* Same quick settings the full header carries, so a player never has to
+          leave the game to change the board, the sound or zen mode. */}
+      <div className={status ? "shrink-0" : "ml-auto shrink-0"}>
+        <HeaderSettingsMenu onOpenPreferences={() => setSettingsOpen(true)} />
+      </div>
+      <ZenExitButton />
+      <SettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </nav>
   );
 }
