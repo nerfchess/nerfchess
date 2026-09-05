@@ -91,10 +91,17 @@ const guideText = ["src/app/tutorial", "src/app/guide", "src/components/tutorial
   .join("\n");
 const guideIds = new Set(guideText.split("\n").filter((w) => byId.has(w)));
 
+// Cards the server names by id (the house bots' filler exclusion list).
+const serverIds = new Set(
+  [...readFileSync(join(ROOT, "src/lib/server/bots.ts"), "utf8").matchAll(/FILLER_EXCLUDED_CARD_IDS[^=]*=\s*\[([^\]]*)\]/g)]
+    .flatMap((m) => [...m[1].matchAll(/"([a-z0-9_]+)"/g)].map((x) => x[1])),
+);
+
 const protectedIds = new Set<string>();
 for (const r of audit) {
   if (r.tier >= 9) protectedIds.add(r.id);
   if (flagships.has(r.id)) protectedIds.add(r.id);
+  if (serverIds.has(r.id)) protectedIds.add(r.id);
   if (guideIds.has(r.id)) protectedIds.add(r.id);
 }
 
