@@ -26,7 +26,6 @@ import {
   boardColors,
   loadSettings,
   resolvePieceTheme,
-  sanitizeHexColor,
 } from "@/lib/settings";
 import {
   applyChapterMods,
@@ -203,26 +202,14 @@ export function ClipModal({
   }, [muted]);
 
   // Board colors and piece sprites follow the player's settings so the clip
-  // looks like THEIR board: custom board hexes come through boardColors, and
-  // inline piece themes (plus custom piece colors) rasterize the site's own
-  // SVG silhouettes rather than swapping to a lichess set.
+  // looks like THEIR board. Inline piece themes rasterize the site's own SVG
+  // silhouettes rather than swapping to a lichess set.
   const { colors, pieceSource } = useMemo(() => {
     const s = loadSettings();
-    let source: PieceImageSource;
-    if (s.pieceTheme === "custom") {
-      source = {
-        kind: "inline",
-        wFill: sanitizeHexColor(s.customPieceWFill, "#f2ead8"),
-        wStroke: sanitizeHexColor(s.customPieceWStroke, "#3b332a"),
-        bFill: sanitizeHexColor(s.customPieceBFill, "#2b2b31"),
-        bStroke: sanitizeHexColor(s.customPieceBStroke, "#d8c9a8"),
-      };
-    } else {
-      const t = PIECE_THEMES[resolvePieceTheme(s)] ?? PIECE_THEMES.classic;
-      source = t.assetSet
-        ? { kind: "asset", set: t.assetSet }
-        : { kind: "inline", wFill: t.wFill, wStroke: t.wStroke, bFill: t.bFill, bStroke: t.bStroke };
-    }
+    const t = PIECE_THEMES[resolvePieceTheme(s)] ?? PIECE_THEMES.lichessCburnett;
+    const source: PieceImageSource = t.assetSet
+      ? { kind: "asset", set: t.assetSet }
+      : { kind: "inline", wFill: t.wFill, wStroke: t.wStroke, bFill: t.bFill, bStroke: t.bStroke };
     return { colors: boardColors(s), pieceSource: source };
     // Re-read when the modal reopens.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1422,7 +1409,7 @@ export function ClipModal({
       onPointerDown={chrome.onBackdropPointerDown}
     >
       <div
-        className="plate plate-raised gilt relative w-[min(97vw,66rem)] max-h-[calc(100dvh-1.5rem)] overflow-y-auto p-3 shadow-2xl sm:p-5"
+        className="plate plate-raised relative w-[min(97vw,66rem)] max-h-[calc(100dvh-1.5rem)] overflow-y-auto p-3 shadow-2xl sm:p-5"
         onPointerDown={(event) => event.stopPropagation()}
       >
         <span className="card-corner tl" />
@@ -1432,7 +1419,7 @@ export function ClipModal({
 
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="eyebrow">Clip the finish</p>
+            <p>Clip the finish</p>
             <h2 className="mt-0.5 font-display text-xl font-bold text-parchment sm:text-2xl">
               The studio
             </h2>

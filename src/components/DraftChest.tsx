@@ -140,9 +140,9 @@ export function DraftChest({ tier, count, label, stage, onOpen, mini, calm, stil
       </span>
 
       <span className="chest-caption">
-        <span className="smallcaps chest-caption__band">{BAND_NAME[band]}</span>
-        <span className="smallcaps chest-caption__label">{label}</span>
-        {stage === "sealed" && <span className="smallcaps chest-caption__hint">Tap to open</span>}
+        <span className="chest-caption__band">{BAND_NAME[band]}</span>
+        <span className="chest-caption__label">{label}</span>
+        {stage === "sealed" && <span className="chest-caption__hint">Tap to open</span>}
       </span>
     </button>
   );

@@ -38,7 +38,7 @@ Flags: 262 duplicate-signature, 204 near-duplicate, 88 dominated-candidates, 0 m
 | bn4_check_valve | Check Valve | boon | 1 | passive | unstated | enemy | passive | src/engine/buffs/boons4.ts | 1 | near-duplicate(bn4_small_ritual:0.83) near-duplicate(bn4_sparring_rhythm:0.89) | pending-review |
 | bn4_crowned_calm | Crowned Calm | boon | 1 | passive | 4-turns | self | passive | src/engine/buffs/boons4.ts | 1 | near-duplicate(bn4_coronation_rest:1.00) | keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing) |
 | bn4_doorstop | Doorstop | boon | 1 | activated | 3-turns | enemy | generated | src/engine/buffs/boons4.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| bn4_field_glasses | Field Glasses | boon | 1 | passive | unstated | enemy | generated | src/engine/buffs/boons4.ts | 1 | - | keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing) |
+| bn4_field_glasses | Field Glasses | boon | 1 | passive | unstated | enemy | passive | src/engine/buffs/boons4.ts | 1 | - | keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing) |
 | bn4_first_light | First Light | boon | 1 | passive | next-turn | self | passive | src/engine/buffs/boons4.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | bn4_garden_fence | Garden Fence | boon | 1 | passive | 2-turns | enemy | passive | src/engine/buffs/boons4.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | bn4_grace_note | Grace Note | boon | 1 | activated/free | next-turn | enemy | generated | src/engine/buffs/boons4.ts | 1 | near-duplicate(bn4_measured_breath:0.81) | pending-review |
@@ -630,7 +630,7 @@ Flags: 262 duplicate-signature, 204 near-duplicate, 88 dominated-candidates, 0 m
 | bishop_archbishop | Bishop to Archbishop | buff | 2 | activated/lingering | unstated | unstated | generated | src/engine/buffs/library.ts | 1 | near-duplicate(rook_chancellor:0.80) | keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed |
 | buzzer_beater | Buzzer Beater | buff | 2 | instant | unstated | enemy | bespoke+canvas | src/engine/buffs/funny/clock.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | cannon | Cannon | buff | 2 | activated/lingering | unstated | enemy | generated | src/engine/buffs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| castle_early | Castle Early | buff | 2 | passive | next-turn | enemy | generated | src/engine/buffs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| castle_early | Castle Early | buff | 2 | passive | next-turn | enemy | passive | src/engine/buffs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | computer_virus | Computer Virus | buff | 2 | passive | 5-turns | enemy | bespoke+canvas+passive | src/engine/buffs/funny/clock.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | cornerstone | Cornerstone | buff | 2 | passive | unstated | self | passive | src/engine/buffs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | counterstep | Counterstep | buff | 2 | passive | one-shot | enemy | passive | src/engine/buffs/library.ts | 1 | near-duplicate(extra_move:0.79) | keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed |

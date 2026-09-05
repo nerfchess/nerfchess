@@ -188,7 +188,7 @@ export function QueueButton({
     modeRatings[mode] ?? (user ? Math.round(user.rating) : null);
 
   return (
-    <div className="plate gilt p-5 sm:p-6">
+    <div className="plate p-5 sm:p-6">
       <div className="flex items-center gap-2.5">
         <span
           aria-hidden
@@ -223,7 +223,7 @@ export function QueueButton({
           {/* Elapsed time so the queue never reads as a dead "Connecting…":
               the counter ticking is proof the search is live. */}
           <div
-            className="mt-2.5 flex items-center gap-2 smallcaps text-[11px] text-parchment-400"
+            className="mt-2.5 flex items-center gap-2 text-[11px] text-parchment-400"
             aria-live="polite"
           >
             <span>Searching</span>
@@ -261,7 +261,7 @@ export function QueueButton({
           )}
 
           <div className="mt-4">
-            <div className="eyebrow">Time control</div>
+            <div>Time control</div>
             <div className="mt-1.5 grid grid-cols-3 gap-1.5 min-[380px]:grid-cols-5">
               {QUEUE_POOL_OPTIONS.map((option) => {
                 const category = getCategory(option.speed);
@@ -377,7 +377,7 @@ function ModeCard({
       onClick={onClick}
       aria-pressed={selected}
       className={
-        "plate corner-cut relative p-3.5 sm:p-5 text-left border transition-all duration-200 touch-manipulation " +
+        "plate relative p-3.5 sm:p-5 text-left border transition-all duration-200 touch-manipulation " +
         identity.card +
         (dimmed ? " opacity-55 saturate-[0.85]" : "")
       }
@@ -400,7 +400,7 @@ function ModeCard({
           {mode === "nerf" ? "Nerf" : "Buff"}
         </div>
         {mode === "buff" && (
-          <span className="smallcaps border border-gold/40 bg-gold/10 px-1.5 py-0.5 text-[8px] text-gold-leaf">
+          <span className="border border-gold/40 bg-gold/10 px-1.5 py-0.5 text-[8px] text-gold-leaf">
             Recommended
           </span>
         )}
@@ -411,7 +411,7 @@ function ModeCard({
           : "Start with normal chess. Draft powers for your own army."}
       </p>
       <div className="mt-2 flex items-center gap-2">
-        <span className="smallcaps text-[9px] text-parchment-400">
+        <span className="text-[9px] text-parchment-400">
           Your {mode === "nerf" ? "Nerf" : "Buff"} rating
         </span>
         <span className={"font-mono text-base tabular-nums " + identity.title}>

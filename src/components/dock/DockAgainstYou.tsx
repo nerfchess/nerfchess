@@ -43,7 +43,7 @@ function AgainstChip({ row }: { row: AgainstRow }) {
         aria-expanded={open}
         data-against-chip={row.key}
         className={
-          "dock-pocket-flash smallcaps inline-flex max-w-full items-center gap-1 rounded-[1px] border px-1.5 py-0.5 text-[12px] font-semibold " +
+          "dock-pocket-flash inline-flex max-w-full items-center gap-1 rounded-[1px] border px-1.5 py-0.5 text-[12px] font-semibold " +
           (t
             ? `tier-bg-${t} tier-${t}`
             : "border-oxblood-glow/40 bg-oxblood/10 text-oxblood-glow")
@@ -68,7 +68,7 @@ function AgainstChip({ row }: { row: AgainstRow }) {
             </span>
             <span
               title={pliesTitle(row.left)}
-              className="smallcaps shrink-0 text-[11px] font-semibold text-parchment-300"
+              className="shrink-0 text-[11px] font-semibold text-parchment-300"
             >
               {row.left}
             </span>
@@ -101,7 +101,7 @@ export function DockAgainstYou({ rows }: { rows: AgainstRow[] }) {
         >
           <ShieldAlert size={10} strokeWidth={2.4} />
         </span>
-        <span className="smallcaps text-[12px] text-oxblood-glow">Against you</span>
+        <span className="text-[12px] text-oxblood-glow">Against you</span>
         <span className="ml-auto shrink-0 rounded-[1px] border border-[color:var(--edge)] bg-white/[0.05] px-1.5 py-px font-mono text-[12px] tabular-nums text-parchment-300">
           {rows.length}
         </span>

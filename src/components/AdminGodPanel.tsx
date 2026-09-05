@@ -234,8 +234,8 @@ export function AdminGodPanel({
   return (
     <aside className="fixed right-0 top-0 z-30 hidden h-dvh w-[248px] flex-col border-l border-white/10 bg-ink-950 xl:flex">
       <div className="flex items-center gap-2 border-b border-white/10 px-3 py-2">
-        <span className="smallcaps text-[11px] font-semibold text-coral-glow">god panel</span>
-        <span className="smallcaps ml-auto text-[9px] text-parchment-400" title={`${TOTAL_CARDS} cards total`}>
+        <span className="text-[11px] font-semibold text-coral-glow">god panel</span>
+        <span className="ml-auto text-[9px] text-parchment-400" title={`${TOTAL_CARDS} cards total`}>
           {shownCount}
         </span>
         <button
@@ -421,8 +421,8 @@ export function AdminGodPanel({
         {groups.map((g) => (
           <div key={g.label} className="mb-2">
             <div className="sticky top-0 z-10 flex items-baseline gap-2 bg-ink-950 px-1 py-1">
-              <span className="smallcaps text-[9px] font-semibold text-sun-glow">{g.label}</span>
-              <span className="smallcaps text-[9px] text-parchment-500">{g.cards.length}</span>
+              <span className="text-[9px] font-semibold text-sun-glow">{g.label}</span>
+              <span className="text-[9px] text-parchment-500">{g.cards.length}</span>
             </div>
             <div className="space-y-1">
               {g.cards.map((c) =>

@@ -154,7 +154,7 @@ export function AchievementToast() {
       <button
         type="button"
         onClick={dismiss}
-        className="plate animate-rise block w-full border p-3 text-left shadow-plate"
+        className="plate block w-full border p-3 text-left shadow-plate"
         style={{ borderColor: theme.border }}
         title="Dismiss"
       >
@@ -166,7 +166,7 @@ export function AchievementToast() {
             <Trophy size={17} strokeWidth={2} />
           </span>
           <span className="min-w-0">
-            <span className="smallcaps block text-[11px] text-parchment-400">
+            <span className="block text-[11px] text-parchment-400">
               Achievement unlocked · {current.rarity}
             </span>
             <span className="block truncate font-display text-sm font-bold" style={{ color: theme.color }}>
@@ -183,7 +183,7 @@ export function AchievementToast() {
       <div className="mt-1 flex justify-end gap-3">
         <Link
           href="/achievements"
-          className="smallcaps inline-flex min-h-[32px] items-center px-1 text-[12px] text-parchment-300 transition-colors hover:text-parchment-100"
+          className="inline-flex min-h-[32px] items-center px-1 text-[12px] text-parchment-300 transition-colors hover:text-parchment-100"
         >
           View all
         </Link>
@@ -195,7 +195,7 @@ export function AchievementToast() {
             setQueue([]);
             dismiss();
           }}
-          className="smallcaps inline-flex min-h-[32px] items-center px-1 text-[12px] text-parchment-300 underline decoration-dotted underline-offset-2 transition-colors hover:text-parchment-100"
+          className="inline-flex min-h-[32px] items-center px-1 text-[12px] text-parchment-300 underline decoration-dotted underline-offset-2 transition-colors hover:text-parchment-100"
         >
           Disable these popups
         </button>

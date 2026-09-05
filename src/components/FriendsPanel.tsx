@@ -132,7 +132,7 @@ export function FriendsPanel() {
     // Initial load. A network/5xx failure gets a retry; otherwise a themed
     // skeleton that mirrors the roster rows (no blank panel, no spinner text).
     return (
-      <div className="plate dgn-rivets p-4">
+      <div className="plate p-4">
         <div className="flex items-center justify-between gap-3">
           <h2 className="font-display text-lg text-parchment">Friends</h2>
         </div>
@@ -166,7 +166,7 @@ export function FriendsPanel() {
   }
   if (!signedIn) {
     return (
-      <div className="plate dgn-rivets p-4">
+      <div className="plate p-4">
         <h2 className="font-display text-lg text-parchment">Friends</h2>
         <p className="mt-1 text-sm text-parchment-300">
           <Link href="/login" className="text-gold-leaf hover:underline">
@@ -199,7 +199,7 @@ export function FriendsPanel() {
   const visible = query ? sorted.filter((f) => f.username.toLowerCase().includes(query)) : sorted;
 
   return (
-    <div className="plate dgn-rivets p-4">
+    <div className="plate p-4">
       <div className="flex items-center justify-between gap-3">
         <h2 className="font-display text-lg text-parchment">Friends</h2>
         {friends.length > 0 && (
@@ -220,7 +220,7 @@ export function FriendsPanel() {
           everything else, because they are the most actionable thing here. */}
       {incoming.length > 0 && (
         <div className="mt-4 space-y-2 rounded-sm border border-gold/40 bg-gold/[0.07] p-2.5">
-          <div className="eyebrow text-gold-leaf">Requests ({incoming.length})</div>
+          <div className="text-gold-leaf">Requests ({incoming.length})</div>
           {incoming.map((f) => (
             <div key={f.id} className="flex items-center gap-3">
               <Identity f={f} lobby={lobby} />
@@ -278,7 +278,7 @@ export function FriendsPanel() {
         </p>
       )}
 
-      <div className="rune-divider my-4" aria-hidden />
+      <div className="my-4" aria-hidden />
 
       {/* Accepted friends, presence-sorted, each with a one-tap action. */}
       {empty ? (
@@ -316,7 +316,7 @@ export function FriendsPanel() {
       {/* Outgoing pending, quietly at the foot. */}
       {outgoing.length > 0 && (
         <div className="mt-4 space-y-1.5 border-t pt-3" style={{ borderColor: "var(--edge)" }}>
-          <div className="eyebrow">Pending</div>
+          <div>Pending</div>
           {outgoing.map((f) => (
             <div key={f.id} className="flex items-center gap-3 text-sm text-parchment-400">
               <PlayerAvatar name={f.username} avatar={f.avatar} size={24} />

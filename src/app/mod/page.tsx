@@ -132,7 +132,7 @@ export default function ModPage() {
             <div className="flex items-center justify-between gap-3">
               <h1 className="font-display text-2xl sm:text-4xl">Moderation</h1>
               <span className="flex items-center gap-2">
-                <span className="smallcaps hidden text-xs text-parchment-400 sm:inline">
+                <span className="hidden text-xs text-parchment-400 sm:inline">
                   {me.username}
                 </span>
                 <Pill tone="gold">{me.role}</Pill>
@@ -151,7 +151,7 @@ export default function ModPage() {
               <div className="min-w-0 flex-1">
                 {/* Phones read the section name off the picker above, so this
                     heading is desktop-only rather than a repeat. */}
-                <h2 className="smallcaps hidden border-b border-white/10 pb-2 text-xs text-parchment-400 lg:block">
+                <h2 className="hidden border-b border-white/10 pb-2 text-xs text-parchment-400 lg:block">
                   {SECTION_TITLE[section]}
                 </h2>
                 <div className="mt-4 lg:mt-5">
@@ -244,7 +244,7 @@ function ModNav({
         <div className="sticky top-6 space-y-5">
           {groups.map((group) => (
             <div key={group.title}>
-              <div className="smallcaps px-2 text-[10px] text-parchment-500">{group.title}</div>
+              <div className="px-2 text-[10px] text-parchment-500">{group.title}</div>
               <ul className="mt-1 space-y-px">
                 {group.items.map((item) => (
                   <li key={item.kind === "section" ? item.id : item.href}>
@@ -308,7 +308,7 @@ function ModNav({
             <div className="plate mt-1 max-h-[78vh] overflow-y-auto p-1.5">
               {groups.map((group) => (
                 <div key={group.title} className="px-1 py-0.5">
-                  <div className="smallcaps px-1.5 text-[10px] text-parchment-500">
+                  <div className="px-1.5 text-[10px] text-parchment-500">
                     {group.title}
                   </div>
                   <ul className="mt-0.5 space-y-px">

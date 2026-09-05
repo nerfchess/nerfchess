@@ -268,7 +268,7 @@ export default function ModCardsPage() {
             <div className="mt-4 plate p-0 overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-left smallcaps text-[10px] text-parchment-400 border-b border-white/10">
+                  <tr className="text-left text-[10px] text-parchment-400 border-b border-white/10">
                     <th className="px-3 py-2 font-normal">Card</th>
                     <th className="px-3 py-2 font-normal">Kind</th>
                     <th className="px-3 py-2 font-normal">Tier</th>
@@ -363,12 +363,12 @@ function FragmentRow({
             {effectiveName}
           </span>
           {overridden && (
-            <span className="ml-2 smallcaps text-[9px] px-1.5 py-0.5 border border-gold/50 text-gold-leaf rounded-[1px]">
+            <span className="ml-2 text-[9px] px-1.5 py-0.5 border border-gold/50 text-gold-leaf rounded-[1px]">
               override
             </span>
           )}
           {!card.implemented && (
-            <span className="ml-2 smallcaps text-[9px] text-parchment-400">stub</span>
+            <span className="ml-2 text-[9px] text-parchment-400">stub</span>
           )}
           <div className="text-[11px] text-parchment-400">{card.id}</div>
         </td>
@@ -407,7 +407,7 @@ function FragmentRow({
           <td colSpan={5} className="px-3 py-3">
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="flex flex-col gap-1">
-                <span className="smallcaps text-[10px] text-parchment-400">Name</span>
+                <span className="text-[10px] text-parchment-400">Name</span>
                 <input
                   value={draft.name}
                   onChange={(e) => patch({ name: e.target.value })}
@@ -416,7 +416,7 @@ function FragmentRow({
                 />
               </label>
               <label className="flex flex-col gap-1">
-                <span className="smallcaps text-[10px] text-parchment-400">Tier (blank = code tier {card.tier})</span>
+                <span className="text-[10px] text-parchment-400">Tier (blank = code tier {card.tier})</span>
                 <select
                   value={draft.tier}
                   onChange={(e) => patch({ tier: e.target.value })}
@@ -429,7 +429,7 @@ function FragmentRow({
                 </select>
               </label>
               <label className="flex flex-col gap-1 sm:col-span-2">
-                <span className="smallcaps text-[10px] text-parchment-400">Description</span>
+                <span className="text-[10px] text-parchment-400">Description</span>
                 <textarea
                   value={draft.description}
                   onChange={(e) => patch({ description: e.target.value })}
@@ -439,7 +439,7 @@ function FragmentRow({
                 />
               </label>
               <label className="flex flex-col gap-1 sm:col-span-2">
-                <span className="smallcaps text-[10px] text-parchment-400">Flavor</span>
+                <span className="text-[10px] text-parchment-400">Flavor</span>
                 <textarea
                   value={draft.flavor}
                   onChange={(e) => patch({ flavor: e.target.value })}

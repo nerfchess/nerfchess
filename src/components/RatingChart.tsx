@@ -309,7 +309,7 @@ export function RatingChart({
       {!bare && (
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-3">
-          <h3 className="smallcaps text-[10px] text-parchment-400">Rating history</h3>
+          <h3 className="text-[10px] text-parchment-400">Rating history</h3>
           {/* Per-mode legend chips double as series toggles. Suppressed when
               the caller supplies its own mode chips (hideLegend). */}
           {!hideLegend &&

@@ -9,7 +9,7 @@ import { formatWinRate, type CategoryStats } from "@/lib/ratings";
 function Cell({ label, value, accent }: { label: string; value: string; accent?: string }) {
   return (
     <div className="rounded-lg border border-white/8 bg-white/[0.02] px-3 py-3">
-      <div className="smallcaps text-[9.5px] text-parchment-400">{label}</div>
+      <div className="text-[9.5px] text-parchment-400">{label}</div>
       <div
         className="mt-1 font-display text-xl tabular-nums leading-none text-parchment"
         style={accent ? { color: accent } : undefined}

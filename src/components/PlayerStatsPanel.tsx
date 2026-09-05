@@ -79,7 +79,7 @@ function StreakCard({
   const accent = tone === "win" ? "text-verdigris-glow" : "text-oxblood-glow";
   return (
     <div className="plate p-4">
-      <div className="smallcaps text-[10px] text-parchment-400">{title}</div>
+      <div className="text-[10px] text-parchment-400">{title}</div>
       {longest.length === 0 ? (
         <div className="mt-2 text-sm text-parchment-400">None yet</div>
       ) : (
@@ -127,7 +127,7 @@ function ExtremeCard({
     if (floorValue != null) {
       return (
         <div className="plate p-4">
-          <div className="smallcaps text-[10px] text-parchment-400">{title}</div>
+          <div className="text-[10px] text-parchment-400">{title}</div>
           <div className={`mt-1 font-mono text-2xl tabular-nums ${valueClass}`}>
             {Math.round(floorValue)}
           </div>
@@ -136,7 +136,7 @@ function ExtremeCard({
     }
     return (
       <div className="plate p-4">
-        <div className="smallcaps text-[10px] text-parchment-400">{title}</div>
+        <div className="text-[10px] text-parchment-400">{title}</div>
         <div className="mt-2 text-sm text-parchment-400">No rated games yet</div>
       </div>
     );
@@ -148,7 +148,7 @@ function ExtremeCard({
       title="View the game"
       className="plate block p-4 no-underline transition-colors hover:border-gold/40"
     >
-      <div className="smallcaps text-[10px] text-parchment-400">{title}</div>
+      <div className="text-[10px] text-parchment-400">{title}</div>
       <div className={`mt-1 font-mono text-2xl tabular-nums ${valueClass}`}>{Math.round(shown)}</div>
       <div className="mt-0.5 text-xs text-parchment-400">
         {shown > point.rating
@@ -244,7 +244,7 @@ export function PlayerStatsPanel({
       {/* Strongest opponents beaten in rated play. */}
       {stats.bestWins.length > 0 && (
         <div className="plate p-4 sm:p-5">
-          <div className="smallcaps text-[10px] text-parchment-400">Best rated victories</div>
+          <div className="text-[10px] text-parchment-400">Best rated victories</div>
           <ul className="mt-2 divide-y divide-white/5">
             {stats.bestWins.map((win) => (
               <li key={win.id} className="flex items-center justify-between gap-3 py-2">
@@ -269,10 +269,10 @@ export function PlayerStatsPanel({
       {/* The opponents faced the most, with the record against each. */}
       {stats.headToHead.length > 0 && (
         <div className="plate p-4 sm:p-5 overflow-x-auto">
-          <div className="smallcaps text-[10px] text-parchment-400">Head to head</div>
+          <div className="text-[10px] text-parchment-400">Head to head</div>
           <table className="mt-2 w-full text-sm">
             <thead>
-              <tr className="smallcaps text-[9px] text-parchment-400">
+              <tr className="text-[9px] text-parchment-400">
                 <th className="py-1.5 text-left font-normal">Opponent</th>
                 <th className="py-1.5 text-right font-normal">Games</th>
                 <th className="py-1.5 text-right font-normal">W / L / D</th>
@@ -308,7 +308,7 @@ export function PlayerStatsPanel({
 
       {/* How long this player's games run. */}
       <div className="plate p-4 sm:p-5">
-        <div className="smallcaps text-[10px] text-parchment-400">Game length</div>
+        <div className="text-[10px] text-parchment-400">Game length</div>
         <div className="mt-1 divide-y divide-white/5">
           <StatRow
             label="Average moves"
@@ -329,7 +329,7 @@ export function PlayerStatsPanel({
       {stats.sessions.recent.length > 0 && (
         <div className="plate p-4 sm:p-5">
           <div className="flex items-baseline justify-between gap-3">
-            <div className="smallcaps text-[10px] text-parchment-400">Recent sessions</div>
+            <div className="text-[10px] text-parchment-400">Recent sessions</div>
             <span className="text-[10px] text-parchment-400">
               longest {stats.sessions.longestGames} game{stats.sessions.longestGames === 1 ? "" : "s"} ·{" "}
               {stats.sessions.avgGames} per session
@@ -360,10 +360,10 @@ export function PlayerStatsPanel({
 
       {/* Per-mode record: Nerf and Buff, the only two rated buckets. */}
       <div className="plate p-4 sm:p-5 overflow-x-auto">
-        <div className="smallcaps text-[10px] text-parchment-400">By mode</div>
+        <div className="text-[10px] text-parchment-400">By mode</div>
         <table className="mt-2 w-full text-sm">
           <thead>
-            <tr className="smallcaps text-[9px] text-parchment-400">
+            <tr className="text-[9px] text-parchment-400">
               <th className="py-1.5 text-left font-normal">Mode</th>
               <th className="py-1.5 text-right font-normal">Games</th>
               <th className="py-1.5 text-right font-normal">Wins</th>

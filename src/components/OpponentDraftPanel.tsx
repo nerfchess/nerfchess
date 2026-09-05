@@ -86,7 +86,7 @@ function MiniCard({ id, tier }: { id: string; tier: number }) {
           {roman}
         </span>
       </span>
-      {cat ? <span className="smallcaps text-[10px] leading-none text-parchment-400">{cat}</span> : null}
+      {cat ? <span className="text-[10px] leading-none text-parchment-400">{cat}</span> : null}
       <span
         className={
           "text-[11px] leading-snug text-parchment-300 " + (open ? "" : "line-clamp-2")
@@ -122,7 +122,7 @@ function Frame({ label, children }: { label: string; children: React.ReactNode }
           distinct from your own cards above. */}
       <div className="mb-1.5 flex items-center gap-1.5">
         <span aria-hidden className="h-2.5 w-0.5 rounded-full bg-oxblood-glow/70" />
-        <span className="smallcaps text-[11px] tracking-wide text-parchment-400">{label}</span>
+        <span className="text-[11px] tracking-wide text-parchment-400">{label}</span>
       </div>
       <div className="flex flex-wrap items-start justify-center gap-1.5">{children}</div>
     </div>

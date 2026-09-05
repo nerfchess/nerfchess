@@ -513,7 +513,7 @@ function TvView() {
             {/* Live game list */}
             <div className="plate">
               <div className="flex items-center justify-between border-b border-[color:var(--edge)] px-3 py-2.5">
-                <span className="eyebrow text-parchment-400">Live games</span>
+                <span className="text-parchment-400">Live games</span>
                 {liveGames.length > 0 && (
                   <span className="font-mono text-[12px] tabular-nums text-parchment-400">
                     {liveGames.length}

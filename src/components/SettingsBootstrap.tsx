@@ -15,8 +15,6 @@ import { fxLevel, setFxLevel } from "@/lib/fxToggle";
 import { requestUiSlot, UI_PRIORITY } from "@/lib/uiInterrupts";
 
 export function SettingsBootstrap() {
-  const [fps, setFps] = useState(false);
-
   useEffect(() => {
     const apply = () => {
       const s = loadSettings();
@@ -34,7 +32,6 @@ export function SettingsBootstrap() {
         theme: s.soundTheme,
       });
       if (s.soundEnabled && s.soundTheme === "lichess") preloadSounds();
-      setFps(s.fpsCounter);
     };
     apply();
     // Signed-in accounts sync settings across devices: adopt the server copy
@@ -58,11 +55,6 @@ export function SettingsBootstrap() {
 
   return (
     <>
-      {/* The fps readout is a developer diagnostic: it only ever renders in
-          dev builds, so the little "60 fps" chip can never float over real
-          UI (the lobby's sticky action bar sits in the same corner) in
-          production. The Settings > Advanced toggle still gates it in dev. */}
-      {fps && process.env.NODE_ENV === "development" && <FpsMeter />}
       <LagWatch />
       <MotionNotice />
     </>
@@ -134,7 +126,7 @@ function MotionNotice() {
       // 12px this notice started inside the home-bar zone and put its buttons
       // right where the swipe lives.
       style={{ bottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
-      className="fixed left-1/2 z-[95] w-[min(92vw,22rem)] -translate-x-1/2 animate-rise border border-gold/40 bg-ink-700/95 p-3 shadow-plate backdrop-blur-sm"
+      className="fixed left-1/2 z-[95] w-[min(92vw,22rem)] -translate-x-1/2 border border-gold/40 bg-ink-700/95 p-3 shadow-plate backdrop-blur-sm"
     >
       <div className="font-display text-sm font-bold text-parchment-100">Card effects are off</div>
       <p className="mt-1 text-xs leading-snug text-parchment-300">
@@ -198,7 +190,7 @@ function LagWatch() {
     } catch {}
     const s = loadSettings();
     // Nothing left to offer when the user already runs a reduced setup.
-    if (s.perfMode || s.reducedMotion || s.animationSpeed !== "normal") return;
+    if (s.reducedMotion || s.animationSpeed !== "normal") return;
 
     let raf = 0;
     let cancelSlot: (() => void) | null = null;
@@ -266,13 +258,13 @@ function LagWatch() {
       // 12px this notice started inside the home-bar zone and put its buttons
       // right where the swipe lives.
       style={{ bottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
-      className="fixed left-1/2 z-[95] w-[min(92vw,22rem)] -translate-x-1/2 animate-rise border border-gold/40 bg-ink-700/95 p-3 shadow-plate backdrop-blur-sm"
+      className="fixed left-1/2 z-[95] w-[min(92vw,22rem)] -translate-x-1/2 border border-gold/40 bg-ink-700/95 p-3 shadow-plate backdrop-blur-sm"
     >
       <div className="font-display text-sm font-bold text-parchment-100">Animations running slow?</div>
       <p className="mt-1 text-xs leading-snug text-parchment-300">
-        This device looks like it&apos;s struggling to keep up. Smooth it out turns on
-        performance mode, sets move animations to fast, and eases the effects dial down to
-        Calm. Nothing is hidden, and you can change all three anytime in Settings.
+        This device looks like it&apos;s struggling to keep up. Smooth it out sets move
+        animations to fast and eases the effects dial down to Calm. Nothing is hidden, and
+        you can change both anytime in Settings.
       </p>
       <div className="mt-2 flex justify-end gap-2">
         <button
@@ -286,14 +278,12 @@ function LagWatch() {
           type="button"
           className="rounded-[1px] border border-gold/50 bg-gold/15 px-2.5 py-1 text-xs font-semibold text-parchment-100 hover:bg-gold/25"
           onClick={() => {
-            saveSettings({ ...loadSettings(), perfMode: true, animationSpeed: "fast" });
-            // perfMode gates decorative page paint, and animationSpeed only
-            // clamps transition durations. Neither touches the card-effect
-            // load, which is what actually costs frames during a play, so the
-            // old remedy changed almost nothing on a struggling device. The FX
-            // dial is the real particle budget: pull it down to Calm, and only
-            // downward so a player who deliberately chose Epic is not reset
-            // past where they already were.
+            saveSettings({ ...loadSettings(), animationSpeed: "fast" });
+            // animationSpeed only clamps transition durations, which does not
+            // touch the card-effect load that actually costs frames during a
+            // play. The FX dial is the real particle budget: pull it down to
+            // Calm, and only downward so a player who deliberately chose Epic
+            // is not reset past where they already were.
             if (fxLevel() > 1) setFxLevel(1);
             settle("applied");
           }}
@@ -301,39 +291,6 @@ function LagWatch() {
           Smooth it out
         </button>
       </div>
-    </div>
-  );
-}
-
-/** Tiny frames-per-second readout, pinned to a corner (Settings > Advanced). */
-function FpsMeter() {
-  const [fps, setFps] = useState(0);
-  const frames = useRef(0);
-  const last = useRef(0);
-
-  useEffect(() => {
-    let raf = 0;
-    last.current = performance.now();
-    const tick = (now: number) => {
-      frames.current++;
-      const elapsed = now - last.current;
-      if (elapsed >= 500) {
-        setFps(Math.round((frames.current * 1000) / elapsed));
-        frames.current = 0;
-        last.current = now;
-      }
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, []);
-
-  return (
-    <div
-      className="pointer-events-none fixed left-2 z-[90] rounded-[1px] border border-white/15 bg-ink-900/80 px-1.5 py-0.5 font-mono text-[10px] tabular-nums text-parchment-300 opacity-70"
-      style={{ bottom: "calc(0.5rem + env(safe-area-inset-bottom))" }}
-    >
-      {fps} fps
     </div>
   );
 }

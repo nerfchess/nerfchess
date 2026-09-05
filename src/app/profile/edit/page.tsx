@@ -476,7 +476,7 @@ export default function EditProfilePage() {
                     {bioState === "saving" ? "Saving…" : "Save bio"}
                   </Button>
                   {bioState === "saved" && (
-                    <span className="smallcaps text-[12px] text-verdigris-glow">Saved</span>
+                    <span className="text-[12px] text-verdigris-glow">Saved</span>
                   )}
                   {bioState === "error" && bioError && (
                     <span className="text-xs text-oxblood-glow">{bioError}</span>
@@ -544,7 +544,7 @@ function PrivacyToggle({
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <span className="text-sm text-parchment-100">{label}</span>
           {state === "saved" && (
-            <span className="smallcaps text-[12px] text-verdigris-glow">Saved</span>
+            <span className="text-[12px] text-verdigris-glow">Saved</span>
           )}
           {state === "error" && error && (
             <span className="text-xs text-oxblood-glow">{error}</span>
@@ -569,7 +569,7 @@ function PrivacyToggle({
         {/* The label reads regardless of color; the knob just reinforces it. */}
         <span
           className={
-            "z-10 text-center smallcaps text-[12px] transition-colors " +
+            "z-10 text-center text-[12px] transition-colors " +
             (on ? "text-gold-leaf" : "text-transparent")
           }
         >
@@ -577,7 +577,7 @@ function PrivacyToggle({
         </span>
         <span
           className={
-            "z-10 text-center smallcaps text-[12px] transition-colors " +
+            "z-10 text-center text-[12px] transition-colors " +
             (on ? "text-transparent" : "text-parchment-400")
           }
         >
