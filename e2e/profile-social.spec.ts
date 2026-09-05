@@ -101,7 +101,7 @@ test("header search: typing opens the dropdown, empty state shows, Escape closes
   // A query with no matches still opens the dropdown, showing the distinct
   // "no players" empty state (result rows may legitimately be empty locally).
   await input.fill("zzqxzz");
-  await expect(page.getByText(/No players match/i)).toBeVisible();
+  await expect(page.getByText(/No player named/i)).toBeVisible();
 
   // Escape closes the dropdown.
   await input.press("Escape");
