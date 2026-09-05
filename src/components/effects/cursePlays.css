@@ -38,14 +38,14 @@
   45% { opacity: 0.75; }
   100% { opacity: 0; transform: scale(0.45); }
 }
-.cwp-tellglow { animation: cwp-tellglow calc(0.3s * var(--fx-dur, 1)) ease-in both; }
+.cwp-tellglow { animation: cwp-tellglow calc(0.3s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 1, 0.45) both; }
 
 @keyframes cwp-tellray {
   0% { opacity: 0; transform: translate(var(--dx, 40%), var(--dy, 40%)) scaleX(1); }
   40% { opacity: 0.9; }
   100% { opacity: 0; transform: translate(0, 0) scaleX(0.3); }
 }
-.cwp-tellray { animation: cwp-tellray calc(0.3s * var(--fx-dur, 1)) ease-in both; }
+.cwp-tellray { animation: cwp-tellray calc(0.3s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 1, 0.45) both; }
 
 /* --- Build-up -------------------------------------------------------------- */
 
@@ -56,7 +56,7 @@
   70% { opacity: 0.4; }
   100% { opacity: 0; }
 }
-.cwp-wash { animation: cwp-wash calc(1.05s * var(--fx-dur, 1)) ease-out both; }
+.cwp-wash { animation: cwp-wash calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- Entities --------------------------------------------------------------- */
 
@@ -105,7 +105,7 @@
   90% { opacity: 0.9; transform: rotate(0.5deg); }
   100% { opacity: 0; transform: rotate(0deg); }
 }
-.cwp-swing { animation: cwp-swing calc(1.15s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 50% 4%; }
+.cwp-swing { animation: cwp-swing calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; transform-origin: 50% 4%; }
 
 /* SIGNATURE (OmenBell): a toll ripple washing outward from the bell mouth. */
 @keyframes cwp-ring {
@@ -113,7 +113,7 @@
   22% { opacity: 0.9; }
   100% { opacity: 0; transform: scale(1.55); }
 }
-.cwp-ring { animation: cwp-ring calc(0.65s * var(--fx-dur, 1)) ease-out both; }
+.cwp-ring { animation: cwp-ring calc(0.65s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* SIGNATURE (HexBrand): the scorch ring searing outward from the seal. */
 @keyframes cwp-scorch {
@@ -121,7 +121,7 @@
   30% { opacity: 1; }
   100% { opacity: 0; transform: scale(1.35); }
 }
-.cwp-scorch { animation: cwp-scorch calc(0.7s * var(--fx-dur, 1)) ease-out both; }
+.cwp-scorch { animation: cwp-scorch calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* Glyph / figure pop with a soft overshoot. */
 /* The per-square hit, leaning in from the caster's own edge so a curse reads
@@ -142,7 +142,7 @@
   85% { opacity: 0.9; }
   100% { opacity: 0; transform: scale(1); }
 }
-.cwp-facein { animation: cwp-facein calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+.cwp-facein { animation: cwp-facein calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* A beam / chain / thread drawn from its left edge. */
 /* It reaches as far as the play does: --fx-len is the source -> target
@@ -174,7 +174,7 @@
   78% { opacity: 0.7; }
   100% { opacity: 0; transform: scale(1.02); }
 }
-.cwp-spreadtile { animation: cwp-spreadtile calc(1s * var(--fx-dur, 1)) ease-out both; }
+.cwp-spreadtile { animation: cwp-spreadtile calc(1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* A weed / thorn / vine sprouting from the ground line. */
 @keyframes cwp-sprout {
@@ -194,7 +194,7 @@
   75% { opacity: 0.65; }
   100% { opacity: 0; }
 }
-.cwp-gild { animation: cwp-gild calc(0.9s * var(--fx-dur, 1)) ease-in-out both; }
+.cwp-gild { animation: cwp-gild calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 /* Flung spark / shard / coin (vars --dx / --dy / --rot). */
 @keyframes cwp-spark {
@@ -202,7 +202,7 @@
   18% { opacity: 1; }
   100% { opacity: 0; transform: translate(var(--dx, 100%), var(--dy, -80%)) scale(1) rotate(var(--rot, 120deg)); }
 }
-.cwp-spark { animation: cwp-spark calc(0.75s * var(--fx-dur, 1)) ease-out both; }
+.cwp-spark { animation: cwp-spark calc(0.75s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* Settle fleck drifting down (vars --dx / --dy / --rot). */
 /* The settle sifts OUTWARD from the board centre as well as down: on a corner
@@ -220,7 +220,7 @@
       rotate(var(--rot, 90deg));
   }
 }
-.cwp-settle { animation: cwp-settle calc(0.85s * var(--fx-dur, 1)) ease-in both; }
+.cwp-settle { animation: cwp-settle calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 1, 0.45) both; }
 
 /* --- The aim chain (anchor: "aim" cards only) -------------------------------
    Authored pointing RIGHT inside <AimStage>, which turns it onto the real
@@ -251,7 +251,7 @@
   30% { opacity: 0.9; }
   100% { opacity: 0; transform: translate(var(--dx, 20%), -160%) scale(1); }
 }
-.cwp-cinder { animation: cwp-cinder calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+.cwp-cinder { animation: cwp-cinder calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* A veil / storm band sweeping sideways (var --tx = end offset). */
 @keyframes cwp-sweep {
@@ -260,7 +260,7 @@
   80% { opacity: 0.6; }
   100% { opacity: 0; transform: translateX(var(--tx, 40%)); }
 }
-.cwp-sweep { animation: cwp-sweep calc(1.05s * var(--fx-dur, 1)) ease-in-out both; }
+.cwp-sweep { animation: cwp-sweep calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 /* BESPOKE (TideOfAash): the ash wall rolling in from the board edge. */
 @keyframes cwp-tidewall {
@@ -293,7 +293,7 @@
   88% { opacity: 0.9; transform: translate(var(--dx, 100%), var(--dy, 0%)); }
   100% { opacity: 0; transform: translate(var(--dx, 100%), var(--dy, 0%)); }
 }
-.cwp-tug { animation: cwp-tug calc(1.05s * var(--fx-dur, 1)) ease-in-out both; }
+.cwp-tug { animation: cwp-tug calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 /* A held figure pressed in place, shivering faintly under the curse. */
 @keyframes cwp-hold {
@@ -305,7 +305,7 @@
   90% { opacity: 0.85; transform: translate(0, 0); }
   100% { opacity: 0; transform: translate(0, 0); }
 }
-.cwp-hold { animation: cwp-hold calc(0.95s * var(--fx-dur, 1)) ease-in-out both; }
+.cwp-hold { animation: cwp-hold calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 /* BESPOKE (HollowCrown): a courtier bowing low and holding the bow. */
 @keyframes cwp-bow {
@@ -315,7 +315,7 @@
   85% { opacity: 0.85; transform: rotate(14deg); }
   100% { opacity: 0; transform: rotate(12deg); }
 }
-.cwp-bow { animation: cwp-bow calc(1s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 50% 96%; }
+.cwp-bow { animation: cwp-bow calc(1s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; transform-origin: 50% 96%; }
 
 /* BESPOKE (PauperCrown): the crown lifting off the brow and away. */
 @keyframes cwp-lift {
@@ -323,7 +323,7 @@
   22% { opacity: 1; transform: translateY(-6%); }
   100% { opacity: 0; transform: translateY(-120%) rotate(-14deg); }
 }
-.cwp-lift { animation: cwp-lift calc(0.9s * var(--fx-dur, 1)) ease-in both; }
+.cwp-lift { animation: cwp-lift calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 1, 0.45) both; }
 
 /* BESPOKE (TideOfAsh): a pawn scrambling ahead of the wall in little hops. */
 @keyframes cwp-flee {
@@ -348,7 +348,7 @@
   80% { opacity: 0.95; transform: scale(1.05); }
   100% { opacity: 0; transform: scale(1); }
 }
-.cwp-flame { animation: cwp-flame calc(1s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 50% 90%; }
+.cwp-flame { animation: cwp-flame calc(1s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; transform-origin: 50% 90%; }
 
 /* Bright pin-glint. */
 @keyframes cwp-glint {
@@ -356,7 +356,7 @@
   40% { opacity: 1; transform: scale(1.1) rotate(18deg); }
   100% { opacity: 0; transform: scale(0.4) rotate(30deg); }
 }
-.cwp-glint { animation: cwp-glint calc(0.55s * var(--fx-dur, 1)) ease-out both; }
+.cwp-glint { animation: cwp-glint calc(0.55s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* BESPOKE (WitchingHour / DeathKnell): a clock hand sweeping to the hour. */
 @keyframes cwp-hand {
@@ -378,7 +378,7 @@
   70% { transform: translate(0.5%, 0); }
   100% { opacity: 0; transform: translate(0, 0); }
 }
-.cwp-crack { animation: cwp-crack calc(0.7s * var(--fx-dur, 1)) ease-out both; }
+.cwp-crack { animation: cwp-crack calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* WAVE 3 — identity crossfade for turncoat / aging curses: the old coat gives
    way to the new (both tracks still end dark). */
@@ -389,7 +389,7 @@
   64% { opacity: 0; transform: scale(1.06); }
   100% { opacity: 0; }
 }
-.cwp-swapout { animation: cwp-swapout calc(1.05s * var(--fx-dur, 1)) ease-out both; }
+.cwp-swapout { animation: cwp-swapout calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 @keyframes cwp-swapin {
   0% { opacity: 0; transform: scale(0.8); }
   52% { opacity: 0; transform: scale(0.8); }
@@ -398,7 +398,7 @@
   90% { opacity: 0.9; }
   100% { opacity: 0; transform: scale(1); }
 }
-.cwp-swapin { animation: cwp-swapin calc(1.05s * var(--fx-dur, 1)) ease-out both; }
+.cwp-swapin { animation: cwp-swapin calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- Target-square hit (non-lead renders) ---------------------------------- */
 
@@ -407,14 +407,14 @@
   35% { opacity: 0.85; transform: scale(1); }
   100% { opacity: 0; transform: scale(1.1); }
 }
-.cwp-tflash { animation: cwp-tflash calc(0.45s * var(--fx-dur, 1)) ease-out both; }
+.cwp-tflash { animation: cwp-tflash calc(0.45s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes cwp-tring {
   0% { opacity: 0; transform: scale(0.3); }
   30% { opacity: 1; }
   100% { opacity: 0; transform: scale(1.25); }
 }
-.cwp-tring { animation: cwp-tring calc(0.55s * var(--fx-dur, 1)) ease-out both; }
+.cwp-tring { animation: cwp-tring calc(0.55s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* WAVE 3 — The Curse Engine's iron gears grinding up the winding. */
 @keyframes cwp-grind {
@@ -440,7 +440,7 @@
   84% { opacity: 0.85; transform: translateY(10%) scale(0.92) rotate(4deg); }
   100% { opacity: 0; transform: translateY(14%) scale(0.9) rotate(5deg); }
 }
-.cwp-wilt { animation: cwp-wilt calc(1.15s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 50% 0%; }
+.cwp-wilt { animation: cwp-wilt calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; transform-origin: 50% 0%; }
 
 /* --- FLAGSHIP impact vocabulary hookup ---------------------------------------
    The shared impact primitives (impact.css) fire their laser at t=0 and land

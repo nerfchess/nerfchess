@@ -33,14 +33,14 @@
   68% { opacity: 0.44; }
   100% { opacity: 0; }
 }
-.g23-wash { animation: g23-wash calc(1.6s * var(--fx-dur, 1)) ease-out both; }
+.g23-wash { animation: g23-wash calc(1.6s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g23-rim {
   0% { opacity: 0; transform: scale(0.94); }
   38% { opacity: 1; transform: scale(1); }
   100% { opacity: 0; transform: scale(1.03); }
 }
-.g23-rim { animation: g23-rim calc(1s * var(--fx-dur, 1)) ease-out both; }
+.g23-rim { animation: g23-rim calc(1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* House lights down: the flat dim a stage trick is set under. */
 @keyframes g23-veil {
@@ -49,7 +49,7 @@
   74% { opacity: 0.82; }
   100% { opacity: 0; }
 }
-.g23-veil { animation: g23-veil calc(1.5s * var(--fx-dur, 1)) ease-out both; }
+.g23-veil { animation: g23-veil calc(1.5s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- Geometry-driven tracks ----------------------------------------------- */
 
@@ -60,7 +60,7 @@
   82% { opacity: 0.6; transform: translate(calc(var(--fx-ox, 0) * 2.8%), calc(var(--fx-oy, 0) * 1.7%)) scaleX(1); }
   100% { opacity: 0; transform: translate(calc(var(--fx-ox, 0) * 2.8%), calc(var(--fx-oy, 0) * 1.7%)) scaleX(1); }
 }
-.g23-lean { animation: g23-lean calc(1s * var(--fx-dur, 1)) ease-out both; }
+.g23-lean { animation: g23-lean calc(1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* A line that runs the length of the play's own leg. The 0.55 floor keeps the
    run visible on a cast lead, where there is no travel to measure. */
@@ -108,7 +108,7 @@
   62% { transform: scale(1); }
   100% { opacity: 0; transform: scale(1.08); }
 }
-.g23-hit2 { animation: g23-hit2 calc(0.7s * var(--fx-dur, 1)) ease-out both; }
+.g23-hit2 { animation: g23-hit2 calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* The reveal arrives from the caster's side of the table. */
 @keyframes g23-hitside {
@@ -154,7 +154,7 @@
   38% { opacity: 1; transform: translateY(0) scale(1); }
   100% { opacity: 0; transform: translateY(-30%) scale(0.94); }
 }
-.g23-ent-mote { animation: g23-ent-mote calc(1.05s * var(--fx-dur, 1)) ease-out both; }
+.g23-ent-mote { animation: g23-ent-mote calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- Shared seasoning ------------------------------------------------------ */
 
@@ -170,7 +170,7 @@
   42% { opacity: 1; transform: scale(1.5); }
   100% { opacity: 0; transform: scale(0.5); }
 }
-.g23-glint { animation: g23-glint calc(0.5s * var(--fx-dur, 1)) ease-out both; }
+.g23-glint { animation: g23-glint calc(0.5s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- 1. Smoke Line — the puff that covers the switch ----------------------- */
 
@@ -216,7 +216,7 @@
   40% { opacity: 1; }
   100% { opacity: 0; transform: translate(120%, 180%); }
 }
-.g23-ss-sheen { animation: g23-ss-sheen calc(0.8s * var(--fx-dur, 1)) ease-in-out both; }
+.g23-ss-sheen { animation: g23-ss-sheen calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 @keyframes g23-ss-hide {
   0% { opacity: 0; transform: scaleX(0.06); }
@@ -233,7 +233,7 @@
   62% { transform: scale(1) rotate(0deg); }
   100% { opacity: 0; transform: scale(1.06) rotate(0deg); }
 }
-.g23-ss-mark { animation: g23-ss-mark calc(0.85s * var(--fx-dur, 1)) ease-out both; }
+.g23-ss-mark { animation: g23-ss-mark calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- 3. Loyal Hound — the final load under the cup ------------------------- */
 
@@ -243,7 +243,7 @@
   84% { opacity: 1; }
   100% { opacity: 0; transform: scale(1.02); }
 }
-.g23-lh-king { animation: g23-lh-king calc(1.35s * var(--fx-dur, 1)) ease-out both; }
+.g23-lh-king { animation: g23-lh-king calc(1.35s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g23-lh-cup {
   0% { opacity: 0; transform: translateY(-120%) scale(1.1); }
@@ -271,7 +271,7 @@
   88% { opacity: 1; transform: rotate(-4deg); }
   100% { opacity: 0; transform: rotate(0deg); }
 }
-.g23-lh-tail { animation: g23-lh-tail calc(0.9s * var(--fx-dur, 1)) ease-in-out both; }
+.g23-lh-tail { animation: g23-lh-tail calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 /* --- 4. Wrong Map — the force out of a fan --------------------------------- */
 
@@ -335,7 +335,7 @@
   70% { opacity: 0.6; transform: scale(1.02); }
   100% { opacity: 0; transform: scale(1.02); }
 }
-.g23-ns-sleep { animation: g23-ns-sleep calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+.g23-ns-sleep { animation: g23-ns-sleep calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- 6. Night Gardener — the servante behind the skirt --------------------- */
 
@@ -345,7 +345,7 @@
   80% { opacity: 0.9; }
   100% { opacity: 0; transform: translateY(0) scale(1); }
 }
-.g23-ng-skirt { animation: g23-ng-skirt calc(1.2s * var(--fx-dur, 1)) ease-out both; }
+.g23-ng-skirt { animation: g23-ng-skirt calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g23-ng-shelf {
   0% { opacity: 0; transform: translateX(-46%) scaleX(0.3); }
@@ -381,7 +381,7 @@
   84% { opacity: 1; }
   100% { opacity: 0; transform: scale(1.02); }
 }
-.g23-nw-king { animation: g23-nw-king calc(1.4s * var(--fx-dur, 1)) ease-out both; }
+.g23-nw-king { animation: g23-nw-king calc(1.4s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g23-nw-body {
   0% { opacity: 0; transform: translateY(-56%) scale(0.86); }
@@ -416,7 +416,7 @@
   44% { opacity: 1; }
   100% { opacity: 0; transform: translateX(110%); }
 }
-.g23-nw-swap { animation: g23-nw-swap calc(0.75s * var(--fx-dur, 1)) ease-in-out both; }
+.g23-nw-swap { animation: g23-nw-swap calc(0.75s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 /* --- 8. Borrowed Lantern — the black-art cloth ----------------------------- */
 
@@ -469,7 +469,7 @@
   74% { opacity: 0.5; transform: scale(1); }
   100% { opacity: 0; transform: scale(1); }
 }
-.g23-dt-far { animation: g23-dt-far calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+.g23-dt-far { animation: g23-dt-far calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g23-dt-yank {
   0% { opacity: 0; transform: translateX(0) scale(1); }
@@ -484,7 +484,7 @@
   40% { opacity: 1; transform: scaleX(1.1); }
   100% { opacity: 0; transform: scaleX(0.4); }
 }
-.g23-dt-snap { animation: g23-dt-snap calc(0.5s * var(--fx-dur, 1)) ease-out both; }
+.g23-dt-snap { animation: g23-dt-snap calc(0.5s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- 10. Shadowed Meadow — the star trap in the stage floor ---------------- */
 
@@ -495,7 +495,7 @@
   86% { opacity: 0.9; }
   100% { opacity: 0; transform: scale(1.1); }
 }
-.g23-sm-void { animation: g23-sm-void calc(1.15s * var(--fx-dur, 1)) ease-out both; }
+.g23-sm-void { animation: g23-sm-void calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g23-sm-trap {
   0% { opacity: 0; transform: rotate(0deg) scale(0.9); }
@@ -550,7 +550,7 @@
   84% { opacity: 0.85; }
   100% { opacity: 0; transform: scaleX(1); }
 }
-.g23-ts-board { animation: g23-ts-board calc(1.25s * var(--fx-dur, 1)) ease-out both; }
+.g23-ts-board { animation: g23-ts-board calc(1.25s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g23-ts-cup {
   0% { opacity: 0; transform: translate(0, -34%) scale(0.8); }
@@ -578,7 +578,7 @@
   62% { transform: scale(1); }
   100% { opacity: 0; transform: scale(0.5); }
 }
-.g23-ts-pea { animation: g23-ts-pea calc(0.65s * var(--fx-dur, 1)) ease-out both; }
+.g23-ts-pea { animation: g23-ts-pea calc(0.65s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- 13. Smoke Ring — the cabinet's rear panel ----------------------------- */
 
@@ -606,7 +606,7 @@
   60% { transform: scale(1); }
   100% { opacity: 0; transform: scale(1.12); }
 }
-.g23-sr-empty { animation: g23-sr-empty calc(0.8s * var(--fx-dur, 1)) ease-out both; }
+.g23-sr-empty { animation: g23-sr-empty calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- 14. Hiccups — the French drop ----------------------------------------- */
 
@@ -626,7 +626,7 @@
   74% { opacity: 0.3; transform: scale(0.9); }
   100% { opacity: 0; transform: scale(0.8); }
 }
-.g23-hc-coin { animation: g23-hc-coin calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+.g23-hc-coin { animation: g23-hc-coin calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g23-hc-open {
   0% { opacity: 0; transform: translateX(-30%) rotate(-20deg) scale(0.9); }
@@ -652,7 +652,7 @@
   84% { opacity: 1; }
   100% { opacity: 0; transform: scale(1.02); }
 }
-.g23-pp-king { animation: g23-pp-king calc(1.35s * var(--fx-dur, 1)) ease-out both; }
+.g23-pp-king { animation: g23-pp-king calc(1.35s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g23-pp-cone {
   0% { opacity: 0; transform: rotate(-44deg) scale(0.6); }
@@ -668,7 +668,7 @@
   46% { opacity: 1; }
   100% { opacity: 0; transform: translateX(90%); }
 }
-.g23-pp-shake { animation: g23-pp-shake calc(0.6s * var(--fx-dur, 1)) ease-in-out both; }
+.g23-pp-shake { animation: g23-pp-shake calc(0.6s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 @keyframes g23-pp-bird {
   0% { opacity: 0; transform: translate(-30%, 40%) scale(0.4) rotate(-16deg); }
@@ -695,7 +695,7 @@
   82% { opacity: 1; }
   100% { opacity: 0; transform: scale(1.02); }
 }
-.g23-cs-piece { animation: g23-cs-piece calc(1.3s * var(--fx-dur, 1)) ease-out both; }
+.g23-cs-piece { animation: g23-cs-piece calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g23-cs-palm {
   0% { opacity: 0; transform: translateX(-70%) rotate(-18deg) scale(0.86); }
@@ -711,7 +711,7 @@
   42% { opacity: 1; transform: translateX(0) scaleX(1); }
   100% { opacity: 0; transform: translateX(100%) scaleX(0.6); }
 }
-.g23-cs-swap { animation: g23-cs-swap calc(0.55s * var(--fx-dur, 1)) ease-in-out both; }
+.g23-cs-swap { animation: g23-cs-swap calc(0.55s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 @keyframes g23-cs-shades {
   0% { opacity: 0; transform: translateY(-120%) rotate(-12deg); }
@@ -739,7 +739,7 @@
   46% { opacity: 1; }
   100% { opacity: 0; transform: translateX(110%); }
 }
-.g23-nc-sweep { animation: g23-nc-sweep calc(0.7s * var(--fx-dur, 1)) ease-in-out both; }
+.g23-nc-sweep { animation: g23-nc-sweep calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 @keyframes g23-nc-mark {
   0% { opacity: 0; transform: scale(0.2); }
@@ -766,7 +766,7 @@
   84% { opacity: 1; }
   100% { opacity: 0; transform: scale(1.02); }
 }
-.g23-nt-queen { animation: g23-nt-queen calc(1.35s * var(--fx-dur, 1)) ease-out both; }
+.g23-nt-queen { animation: g23-nt-queen calc(1.35s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g23-nt-bag {
   0% { opacity: 0; transform: rotate(-30deg) scale(0.84); }
@@ -776,7 +776,7 @@
   88% { opacity: 1; transform: rotate(0deg) scale(1); }
   100% { opacity: 0; transform: rotate(0deg) scale(1); }
 }
-.g23-nt-bag { animation: g23-nt-bag calc(1.2s * var(--fx-dur, 1)) ease-in-out both; }
+.g23-nt-bag { animation: g23-nt-bag calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 @keyframes g23-nt-lever {
   0% { opacity: 0; transform: translateX(-60%) scaleX(0.3); }
@@ -811,7 +811,7 @@
   80% { opacity: 0.92; }
   100% { opacity: 0; transform: translateY(0) scale(1); }
 }
-.g23-cd-lapel { animation: g23-cd-lapel calc(1.2s * var(--fx-dur, 1)) ease-out both; }
+.g23-cd-lapel { animation: g23-cd-lapel calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g23-cd-topit {
   0% { opacity: 0; transform: scaleX(0.1) scaleY(0.3); }
@@ -828,7 +828,7 @@
   68% { opacity: 0.4; transform: scale(1.1); }
   100% { opacity: 0; transform: scale(1.18); }
 }
-.g23-cd-gone { animation: g23-cd-gone calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+.g23-cd-gone { animation: g23-cd-gone calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- 20. Wrong Game Night — the double lift -------------------------------- */
 
@@ -838,7 +838,7 @@
   84% { opacity: 0.9; }
   100% { opacity: 0; transform: scale(1); }
 }
-.g23-wg-stack { animation: g23-wg-stack calc(1.2s * var(--fx-dur, 1)) ease-out both; }
+.g23-wg-stack { animation: g23-wg-stack calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g23-wg-lift {
   0% { opacity: 0; transform: translateY(46%) scale(0.8); }
@@ -854,7 +854,7 @@
   46% { opacity: 1; transform: translateX(0) scaleY(1); }
   100% { opacity: 0; transform: translateX(110%) scaleY(0.4); }
 }
-.g23-wg-turn { animation: g23-wg-turn calc(0.6s * var(--fx-dur, 1)) ease-in-out both; }
+.g23-wg-turn { animation: g23-wg-turn calc(0.6s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 @keyframes g23-wg-disc {
   0% { opacity: 0; transform: translateY(-40%) scaleX(0.1); }

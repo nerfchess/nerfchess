@@ -39,7 +39,7 @@
 
 .g01-wash {
   opacity: 0;
-  animation: g01-wash calc(1.5s * var(--fx-dur, 1)) ease-out both;
+  animation: g01-wash calc(1.5s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 @keyframes g01-wash {
   0% { opacity: 0; transform: scale(1.04); }
@@ -49,7 +49,7 @@
 
 .g01-rim {
   opacity: 0;
-  animation: g01-rim calc(1.2s * var(--fx-dur, 1)) ease-out both;
+  animation: g01-rim calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 @keyframes g01-rim {
   0% { opacity: 0; transform: scale(0.94); }
@@ -60,7 +60,7 @@
 .g01-band {
   opacity: 0;
   transform: scaleY(0.2);
-  animation: g01-band calc(1.15s * var(--fx-dur, 1)) ease-out both;
+  animation: g01-band calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 @keyframes g01-band {
   0% { opacity: 0; transform: scaleY(0.2); }
@@ -72,7 +72,7 @@
    at the bottom of the screen and -1 when at the top. */
 .g01-drift {
   opacity: 0;
-  animation: g01-drift calc(1.15s * var(--fx-dur, 1)) ease-out both;
+  animation: g01-drift calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 @keyframes g01-drift {
   0% { opacity: 0; transform: translate(0, 0) scale(0.5); }
@@ -113,7 +113,7 @@
 /* A one-off ring of light. Seasoning, never the meal. */
 .g01-flash {
   opacity: 0;
-  animation: g01-flash calc(0.72s * var(--fx-dur, 1)) ease-out both;
+  animation: g01-flash calc(0.72s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 @keyframes g01-flash {
   0% { opacity: 0; transform: scale(0.7); }
@@ -139,7 +139,7 @@
 .g01-lean {
   opacity: 0;
   transform: scaleX(0.2);
-  animation: g01-lean calc(0.95s * var(--fx-dur, 1)) ease-out both;
+  animation: g01-lean calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 @keyframes g01-lean {
   0% { opacity: 0; transform: translateY(0) scaleX(0.2); }
@@ -173,7 +173,7 @@
 
 .g01-hit2 {
   opacity: 0;
-  animation: g01-hit2 calc(0.62s * var(--fx-dur, 1)) ease-out both;
+  animation: g01-hit2 calc(0.62s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 @keyframes g01-hit2 {
   0% { opacity: 0; transform: translateY(18%) scale(0.8); }
@@ -193,7 +193,7 @@
 
 .g01-arrive-soft {
   opacity: 0;
-  animation: g01-arrive-soft calc(0.78s * var(--fx-dur, 1)) ease-out both;
+  animation: g01-arrive-soft calc(0.78s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 @keyframes g01-arrive-soft {
   0% { opacity: 0; transform: scale(0.72); }
@@ -236,7 +236,7 @@
 .g01-cj-fuse {
   transform-origin: 0% 50%;
   opacity: 0;
-  animation: g01-cj-fuse calc(0.6s * var(--fx-dur, 1)) ease-out both;
+  animation: g01-cj-fuse calc(0.6s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 @keyframes g01-cj-fuse {
   0% { opacity: 0; transform: scaleX(0.06); }
@@ -338,7 +338,7 @@
 
 .g01-hl-level {
   opacity: 0;
-  animation: g01-hl-level calc(0.94s * var(--fx-dur, 1)) ease-out both;
+  animation: g01-hl-level calc(0.94s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 @keyframes g01-hl-level {
   0% { opacity: 0; transform: translateY(90%) scaleX(0.4); }
@@ -479,7 +479,7 @@
 
 .g01-pd-crow {
   opacity: 0;
-  animation: g01-pd-crow calc(0.85s * var(--fx-dur, 1)) ease-out both;
+  animation: g01-pd-crow calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 @keyframes g01-pd-crow {
   0% { opacity: 0; transform: scale(0.5); }
@@ -587,7 +587,7 @@
 .g01-sm-notch {
   opacity: 0;
   transform-origin: 50% 100%;
-  animation: g01-sm-notch calc(0.86s * var(--fx-dur, 1)) ease-out both;
+  animation: g01-sm-notch calc(0.86s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 @keyframes g01-sm-notch {
   0% { opacity: 0; transform: scaleY(0.1); }
@@ -603,7 +603,7 @@
 .g01-ut-flame-a {
   opacity: 0;
   transform-origin: 50% 100%;
-  animation: g01-ut-flame-a calc(1.05s * var(--fx-dur, 1)) ease-out both;
+  animation: g01-ut-flame-a calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 @keyframes g01-ut-flame-a {
   0% { opacity: 0; transform: scaleY(0.2) scaleX(0.6); }
@@ -616,7 +616,7 @@
 .g01-ut-flame-b {
   opacity: 0;
   transform-origin: 50% 100%;
-  animation: g01-ut-flame-b calc(1.05s * var(--fx-dur, 1)) ease-out both;
+  animation: g01-ut-flame-b calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 @keyframes g01-ut-flame-b {
   0% { opacity: 0; transform: scaleY(0.2) scaleX(0.6); }
@@ -726,7 +726,7 @@
 .g01-lt-wave {
   opacity: 0;
   transform-origin: 0% 50%;
-  animation: g01-lt-wave calc(0.94s * var(--fx-dur, 1)) ease-out both;
+  animation: g01-lt-wave calc(0.94s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 @keyframes g01-lt-wave {
   0% { opacity: 0; transform: scale(0.3); }
@@ -796,7 +796,7 @@
 
 .g01-ts-mute {
   opacity: 0;
-  animation: g01-ts-mute calc(0.98s * var(--fx-dur, 1)) ease-out both;
+  animation: g01-ts-mute calc(0.98s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 @keyframes g01-ts-mute {
   0% { opacity: 0; transform: scale(0.35) scaleY(1); }
@@ -971,7 +971,7 @@
 .g01-hm-phase {
   opacity: 0;
   transform-origin: 50% 50%;
-  animation: g01-hm-phase calc(1s * var(--fx-dur, 1)) ease-out both;
+  animation: g01-hm-phase calc(1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 @keyframes g01-hm-phase {
   0% { opacity: 0; transform: scaleY(0.1); }

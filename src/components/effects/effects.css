@@ -36,7 +36,7 @@
   100% { opacity: 1; transform: scale(1); }
 }
 .fx-chain-connector {
-  animation: fx-chain-connect 0.3s var(--ease-out, ease-out) both;
+  animation: fx-chain-connect 0.3s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
 }
 
 /* --- 2. Shield bearer (shield / king_safe) --------------------------------
@@ -62,7 +62,7 @@
   100% { opacity: 1; transform: none; }
 }
 .fx-stake {
-  animation: fx-stake-thunk 0.26s var(--ease-out, ease-out) both;
+  animation: fx-stake-thunk 0.26s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
   transform-origin: 50% 100%;
 }
 @keyframes fx-rope-in {
@@ -70,7 +70,7 @@
   100% { opacity: 1; }
 }
 .fx-rope {
-  animation: fx-rope-in 0.35s ease-out 0.32s both;
+  animation: fx-rope-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) 0.32s both;
 }
 
 /* --- 4. Pawn clamp (no_pawn_advance) ---------------------------------------
@@ -84,7 +84,7 @@
   100% { opacity: 1; transform: none; }
 }
 .fx-fence {
-  animation: fx-fence-in 0.32s var(--ease-out, ease-out) both;
+  animation: fx-fence-in 0.32s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
 }
 
 /* --- 5. Skip / stun (pending turn skips) ------------------------------------
@@ -97,7 +97,7 @@
   100% { opacity: 0; transform: translateY(-60%) scale(1.04); }
 }
 .fx-stun {
-  animation: fx-stun-rise 1.6s ease-out both;
+  animation: fx-stun-rise 1.6s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 @keyframes fx-stun-spin {
   100% { transform: rotate(360deg); }
@@ -113,7 +113,7 @@
   100% { opacity: 0; transform: translate(24%, -55%) scale(1.15); }
 }
 .fx-stun-z {
-  animation: fx-stun-z 1.3s ease-out both;
+  animation: fx-stun-z 1.3s cubic-bezier(0.16, 1, 0.3, 1) both;
   transform-box: fill-box;
   transform-origin: center;
 }
@@ -150,7 +150,7 @@
   100% { opacity: 0; transform: none; }
 }
 .fx-bonk-jolt {
-  animation: fx-bonk-jolt 0.72s ease-out both;
+  animation: fx-bonk-jolt 0.72s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 @keyframes fx-bonk-star {
   0% { opacity: 0; transform: translate(0, 0) scale(0.3) rotate(0deg); }
@@ -158,7 +158,7 @@
   100% { opacity: 0; transform: translate(var(--dx, 0), var(--dy, 0)) scale(1) rotate(var(--rot, 0deg)); }
 }
 .fx-bonk-star {
-  animation: fx-bonk-star 0.5s var(--ease-out, ease-out) both;
+  animation: fx-bonk-star 0.5s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
 }
 @keyframes fx-bonk-lines {
   0% { opacity: 0; transform: scale(0.35); }
@@ -166,7 +166,7 @@
   100% { opacity: 0; transform: scale(1.3); }
 }
 .fx-bonk-lines {
-  animation: fx-bonk-lines 0.4s ease-out both;
+  animation: fx-bonk-lines 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 /* Injured: dizzy stars circle the piece head with a gentle wobble. */
 @keyframes fx-injured-spin {
@@ -182,7 +182,7 @@
   50% { transform: translateY(-3%) rotate(2.5deg); }
 }
 .fx-injured {
-  animation: fx-injured-bob 1.6s ease-in-out infinite;
+  animation: fx-injured-bob 1.6s cubic-bezier(0.65, 0, 0.35, 1) infinite;
 }
 /* Optional drunken tilt for the injured piece itself (mounted by the board on
    the piece wrapper); a slow lean side to side. */
@@ -191,7 +191,7 @@
   50% { transform: rotate(4deg); }
 }
 .fx-injured-tilt {
-  animation: fx-injured-tilt 1.4s ease-in-out infinite;
+  animation: fx-injured-tilt 1.4s cubic-bezier(0.65, 0, 0.35, 1) infinite;
   transform-origin: 50% 90%;
 }
 
@@ -206,7 +206,7 @@
   100% { opacity: 0; transform: translate(var(--dx, 0px), var(--dy, 0px)) scale(1) rotate(var(--rot, 0deg)); }
 }
 .fx-shard {
-  animation: fx-shard-fly 0.7s var(--ease-out, ease-out) both;
+  animation: fx-shard-fly 0.7s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
 }
 @keyframes fx-crown-flash {
   0% { opacity: 0; transform: translateY(20%) scale(0.45); }
@@ -223,7 +223,7 @@
   100% { opacity: 0; transform: scale(1.25); }
 }
 .fx-glow {
-  animation: fx-glow-pulse 0.9s ease-out both;
+  animation: fx-glow-pulse 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 /* The arriving piece itself: hidden for a beat while the shards burst, then
    pops in with a wobble (morph) or drops in through the dust (summon).
@@ -242,7 +242,7 @@
   100% { opacity: 1; transform: none; }
 }
 .fx-piece-drop {
-  animation: fx-piece-drop-in 0.4s var(--ease-out, ease-out) 0.08s both;
+  animation: fx-piece-drop-in 0.4s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) 0.08s both;
 }
 
 /* --- 7. Summon (piece appearing on an empty square) -------------------------
@@ -252,14 +252,14 @@
   100% { opacity: 0; transform: scale(1.18); }
 }
 .fx-poof-ring {
-  animation: fx-poof-ring 0.55s ease-out both;
+  animation: fx-poof-ring 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 @keyframes fx-poof-dot {
   0% { opacity: 0.9; transform: translate(0, 0) scale(1); }
   100% { opacity: 0; transform: translate(var(--dx, 0px), var(--dy, 0px)) scale(0.4); }
 }
 .fx-poof-dot {
-  animation: fx-poof-dot 0.6s ease-out both;
+  animation: fx-poof-dot 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 /* --- 8. Detonation (attack-card removals) -----------------------------------
@@ -271,7 +271,7 @@
   100% { opacity: 0; transform: scale(1.9); }
 }
 .fx-det-ring {
-  animation: fx-det-ring 0.55s ease-out both;
+  animation: fx-det-ring 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 @keyframes fx-scorch-fade {
   0% { opacity: 0; transform: scale(0.6); }
@@ -280,7 +280,7 @@
   100% { opacity: 0; transform: scale(1); }
 }
 .fx-scorch {
-  animation: fx-scorch-fade 1.6s ease-out both;
+  animation: fx-scorch-fade 1.6s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 /* --- 9. Card-fx motifs (CardFx constraint and empowerment badges) -----------
@@ -307,7 +307,7 @@
   100% { opacity: 1; transform: none; }
 }
 .fx-blindfold {
-  animation: fx-blindfold-wrap 0.4s var(--ease-out, ease-out) both;
+  animation: fx-blindfold-wrap 0.4s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
   transform-origin: 50% 50%;
 }
 @keyframes fx-bestow-rise {
@@ -326,7 +326,7 @@
   100% { opacity: 1; transform: scale(1); }
 }
 .fx-ward {
-  animation: fx-ward-set 0.4s var(--ease-out, ease-out) both;
+  animation: fx-ward-set 0.4s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
   transform-origin: 50% 100%;
 }
 @keyframes fx-rally-wave {
@@ -337,7 +337,7 @@
   100% { opacity: 0; transform: translateY(-26%) scale(1) rotate(0deg); }
 }
 .fx-rally {
-  animation: fx-rally-wave 1.8s ease-out both;
+  animation: fx-rally-wave 1.8s cubic-bezier(0.16, 1, 0.3, 1) both;
   transform-origin: 30% 100%;
 }
 @keyframes fx-chip-in {
@@ -345,7 +345,7 @@
   100% { opacity: 1; transform: scale(1); }
 }
 .fx-motif-chip {
-  animation: fx-chip-in 0.25s var(--ease-out, ease-out) 0.35s both;
+  animation: fx-chip-in 0.25s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) 0.35s both;
 }
 /* The rally banner's chip fades out with its banner: it inherits the banner
    wrapper's one-shot opacity, so it needs no delay of its own. */
@@ -366,14 +366,14 @@
   16% { opacity: 1; transform: scale(1.15); }
   100% { opacity: 0; transform: scale(1.55); }
 }
-.fx-sig-flash { animation: fx-sig-flash 0.5s ease-out both; }
+.fx-sig-flash { animation: fx-sig-flash 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* An expanding ring (nova detonation lip). */
 @keyframes fx-sig-ring {
   0% { opacity: 0.95; transform: scale(0.2); }
   100% { opacity: 0; transform: scale(1.9); }
 }
-.fx-sig-ring { animation: fx-sig-ring 0.6s ease-out both; }
+.fx-sig-ring { animation: fx-sig-ring 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* Nova lead: a big shockwave ring that rolls out of the pop. Bolder throw. */
 @keyframes fx-sig-shock {
@@ -381,7 +381,7 @@
   18% { opacity: 1; transform: scale(0.55); }
   100% { opacity: 0; transform: scale(2.5); }
 }
-.fx-sig-shock { animation: fx-sig-shock 0.75s ease-out both; }
+.fx-sig-shock { animation: fx-sig-shock 0.75s cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* Rising ash / dust puff. */
 @keyframes fx-sig-ash {
@@ -389,7 +389,7 @@
   30% { opacity: 0.85; transform: translateY(0) scale(1); }
   100% { opacity: 0; transform: translateY(-30%) scale(1.15); }
 }
-.fx-sig-ash { animation: fx-sig-ash 0.7s ease-out both; }
+.fx-sig-ash { animation: fx-sig-ash 0.7s cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* Cataclysm: a trapdoor hole opens, its two flaps swing down. */
 @keyframes fx-sig-hole {
@@ -397,21 +397,21 @@
   40% { opacity: 1; transform: scale(1); }
   100% { opacity: 0; transform: scale(1); }
 }
-.fx-sig-hole { animation: fx-sig-hole 0.6s ease-out both; }
+.fx-sig-hole { animation: fx-sig-hole 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
 @keyframes fx-sig-flap-l {
   0% { opacity: 0; transform: rotate(0deg); }
   25% { opacity: 1; transform: rotate(0deg); }
   60% { opacity: 1; transform: rotate(-82deg); }
   100% { opacity: 0; transform: rotate(-82deg); }
 }
-.fx-sig-flap-l { animation: fx-sig-flap-l 0.55s var(--ease-out, ease-out) both; }
+.fx-sig-flap-l { animation: fx-sig-flap-l 0.55s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both; }
 @keyframes fx-sig-flap-r {
   0% { opacity: 0; transform: rotate(0deg); }
   25% { opacity: 1; transform: rotate(0deg); }
   60% { opacity: 1; transform: rotate(82deg); }
   100% { opacity: 0; transform: rotate(82deg); }
 }
-.fx-sig-flap-r { animation: fx-sig-flap-r 0.55s var(--ease-out, ease-out) both; }
+.fx-sig-flap-r { animation: fx-sig-flap-r 0.55s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both; }
 
 /* Extinction: a stone shard cracks and drops into the fossil pile. */
 @keyframes fx-sig-crumble {
@@ -419,7 +419,7 @@
   25% { opacity: 1; transform: translateY(0) rotate(0deg); }
   100% { opacity: 0; transform: translateY(40%) rotate(24deg); }
 }
-.fx-sig-crumble { animation: fx-sig-crumble 0.6s ease-in both; }
+.fx-sig-crumble { animation: fx-sig-crumble 0.6s cubic-bezier(0.55, 0, 1, 0.45) both; }
 
 /* Lightning: reticle converges, the bolt cracks down, scorch flashes. */
 @keyframes fx-sig-reticle {
@@ -427,7 +427,7 @@
   50% { opacity: 0.9; transform: scale(1) rotate(0deg); }
   100% { opacity: 0; transform: scale(0.9) rotate(0deg); }
 }
-.fx-sig-reticle { animation: fx-sig-reticle 0.5s ease-out both; }
+.fx-sig-reticle { animation: fx-sig-reticle 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
 @keyframes fx-sig-bolt {
   0% { opacity: 0; transform: translateY(-20%) scaleY(0.6); }
   12% { opacity: 1; transform: translateY(0) scaleY(1); }
@@ -442,7 +442,7 @@
   70% { opacity: 0.8; transform: scale(1); }
   100% { opacity: 0; transform: scale(1.05); }
 }
-.fx-sig-scorch { animation: fx-sig-scorch 0.7s ease-out both; }
+.fx-sig-scorch { animation: fx-sig-scorch 0.7s cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* Atomic: soot ring expands and lingers a beat. */
 @keyframes fx-sig-soot {
@@ -450,7 +450,7 @@
   30% { opacity: 0.9; transform: scale(1); }
   100% { opacity: 0; transform: scale(1.1); }
 }
-.fx-sig-soot { animation: fx-sig-soot 0.6s ease-out both; }
+.fx-sig-soot { animation: fx-sig-soot 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- Firestorm pieces (DetonationBurst / AtomicBurst) ------------------------
    A fireball that swells as it climbs off the square, the hot column under a
@@ -462,7 +462,7 @@
   60% { opacity: 0.92; transform: translateY(-10%) scale(1.12); }
   100% { opacity: 0; transform: translateY(-30%) scale(1.35); }
 }
-.fx-fireball { animation: fx-fireball calc(0.9s * var(--fx-dur, 1)) var(--ease-out, ease-out) both; border-radius: 999px; }
+.fx-fireball { animation: fx-fireball calc(0.9s * var(--fx-dur, 1)) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both; border-radius: 999px; }
 @keyframes fx-fire-stem {
   0% { opacity: 0; transform: scaleY(0.1); }
   25% { opacity: 0.95; transform: scaleY(0.7); }
@@ -470,7 +470,7 @@
   100% { opacity: 0; transform: scaleY(1.06); }
 }
 .fx-fire-stem {
-  animation: fx-fire-stem calc(0.85s * var(--fx-dur, 1)) var(--ease-out, ease-out) both;
+  animation: fx-fire-stem calc(0.85s * var(--fx-dur, 1)) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
   transform-origin: 50% 100%;
   border-radius: 40% 40% 20% 20%;
   filter: blur(0.5px);
@@ -480,7 +480,7 @@
   18% { opacity: 1; }
   100% { opacity: 0; transform: translate(var(--dx, 0), var(--dy, -180%)) rotate(var(--rot, 0deg)) scale(1.2); }
 }
-.fx-flame-lick { animation: fx-flame-lick calc(0.75s * var(--fx-dur, 1)) var(--ease-out, ease-out) both; }
+.fx-flame-lick { animation: fx-flame-lick calc(0.75s * var(--fx-dur, 1)) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both; }
 
 /* Rampage: the struck piece spins off with a burst of stars. */
 @keyframes fx-sig-spin {
@@ -488,13 +488,13 @@
   25% { opacity: 1; transform: scale(1) rotate(90deg); }
   100% { opacity: 0; transform: scale(0.7) rotate(320deg); }
 }
-.fx-sig-spin { animation: fx-sig-spin 0.5s ease-out both; }
+.fx-sig-spin { animation: fx-sig-spin 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
 @keyframes fx-sig-star {
   0% { opacity: 0; transform: translate(0, 0) scale(0.3) rotate(0deg); }
   22% { opacity: 1; }
   100% { opacity: 0; transform: translate(var(--dx, 0), var(--dy, 0)) scale(1) rotate(var(--rot, 0deg)); }
 }
-.fx-sig-star { animation: fx-sig-star 0.5s var(--ease-out, ease-out) both; }
+.fx-sig-star { animation: fx-sig-star 0.5s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both; }
 
 /* Siege: the cannon muzzle flashes; each victim flattens into a splat. */
 @keyframes fx-sig-muzzle {
@@ -502,13 +502,13 @@
   30% { opacity: 1; transform: scaleX(1.05); }
   100% { opacity: 0; transform: scaleX(1.1); }
 }
-.fx-sig-muzzle { animation: fx-sig-muzzle 0.4s ease-out both; transform-origin: 0% 50%; }
+.fx-sig-muzzle { animation: fx-sig-muzzle 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 0% 50%; }
 @keyframes fx-sig-splat {
   0% { opacity: 0; transform: scaleY(1.3) scaleX(0.6); }
   35% { opacity: 1; transform: scaleY(0.5) scaleX(1.15); }
   100% { opacity: 0; transform: scaleY(0.4) scaleX(1.2); }
 }
-.fx-sig-splat { animation: fx-sig-splat 0.5s ease-out both; transform-origin: 50% 100%; }
+.fx-sig-splat { animation: fx-sig-splat 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 100%; }
 
 /* --- 10b. Batch 2 signature spectacles --------------------------------------
    Effect-data-sourced one-shots (coronations, freezes, petrifies, time locks,
@@ -524,7 +524,7 @@
   30% { opacity: 0.9; transform: translateY(0) scaleY(1); }
   100% { opacity: 0; transform: translateY(0) scaleY(1); }
 }
-.fx-sig-shaft { animation: fx-sig-shaft 0.7s ease-out both; transform-origin: 50% 0%; }
+.fx-sig-shaft { animation: fx-sig-shaft 0.7s cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 0%; }
 @keyframes fx-sig-crown {
   0% { opacity: 0; transform: translateY(-150%) scale(0.7); }
   45% { opacity: 1; transform: translateY(0) scale(1); }
@@ -540,7 +540,7 @@
   70% { opacity: 1; transform: translateY(60%) rotate(6deg); }
   100% { opacity: 0; transform: translateY(120%) rotate(10deg); }
 }
-.fx-sig-crownfall { animation: fx-sig-crownfall 0.85s ease-in both; }
+.fx-sig-crownfall { animation: fx-sig-crownfall 0.85s cubic-bezier(0.55, 0, 1, 0.45) both; }
 
 /* Colossus / Titan: a stone shell grows over the piece. */
 @keyframes fx-sig-grow {
@@ -550,7 +550,7 @@
   76% { transform: scale(1.04); }
   100% { opacity: 0; transform: scale(1); }
 }
-.fx-sig-grow { animation: fx-sig-grow 0.85s var(--ease-out, ease-out) both; transform-origin: 50% 100%; }
+.fx-sig-grow { animation: fx-sig-grow 0.85s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both; transform-origin: 50% 100%; }
 
 /* Time Skip: the SNOOZE button slams down and squashes, then a Z drifts up. */
 @keyframes fx-sig-snooze {
@@ -567,7 +567,7 @@
   30% { opacity: 1; }
   100% { opacity: 0; transform: translate(30%, -55%) scale(1.15); }
 }
-.fx-sig-zzz { animation: fx-sig-zzz 1.1s ease-out both; }
+.fx-sig-zzz { animation: fx-sig-zzz 1.1s cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* Time Prison: iron clock-hand bars drop into a cage. */
 @keyframes fx-sig-cage {
@@ -576,7 +576,7 @@
   80% { opacity: 1; }
   100% { opacity: 0; transform: translateY(0) scaleY(1); }
 }
-.fx-sig-cage { animation: fx-sig-cage 0.9s var(--ease-out, ease-out) both; transform-origin: 50% 0%; }
+.fx-sig-cage { animation: fx-sig-cage 0.9s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both; transform-origin: 50% 0%; }
 
 /* Time Freeze: the clock is entombed in an ice block. */
 @keyframes fx-sig-ice {
@@ -586,7 +586,7 @@
   82% { opacity: 1; }
   100% { opacity: 0; transform: scale(1); }
 }
-.fx-sig-ice { animation: fx-sig-ice 0.95s var(--ease-out, ease-out) both; transform-origin: 50% 50%; }
+.fx-sig-ice { animation: fx-sig-ice 0.95s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both; transform-origin: 50% 50%; }
 
 /* Blitzkrieg: forked-lightning after-images strobe across. */
 @keyframes fx-sig-afterimage {
@@ -604,7 +604,7 @@
   70% { opacity: 0.7; }
   100% { opacity: 0; transform: scaleX(1); }
 }
-.fx-sig-frost { animation: fx-sig-frost 0.7s var(--ease-out, ease-out) both; transform-origin: 0% 50%; }
+.fx-sig-frost { animation: fx-sig-frost 0.7s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both; transform-origin: 0% 50%; }
 
 /* Petrify: a stone / bark wave rises foot-to-head over the piece. */
 @keyframes fx-sig-petrify {
@@ -613,7 +613,7 @@
   75% { opacity: 0.85; }
   100% { opacity: 0; transform: scaleY(1); }
 }
-.fx-sig-petrify { animation: fx-sig-petrify 0.8s var(--ease-out, ease-out) both; transform-origin: 50% 100%; }
+.fx-sig-petrify { animation: fx-sig-petrify 0.8s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both; transform-origin: 50% 100%; }
 
 /* Divine Fortress: a cathedral dome descends over the square. */
 @keyframes fx-sig-dome {
@@ -622,7 +622,7 @@
   78% { opacity: 0.85; }
   100% { opacity: 0; transform: translateY(0) scale(1); }
 }
-.fx-sig-dome { animation: fx-sig-dome 0.9s var(--ease-out, ease-out) both; transform-origin: 50% 100%; }
+.fx-sig-dome { animation: fx-sig-dome 0.9s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both; transform-origin: 50% 100%; }
 
 /* Immortal King: the king rises again wreathed in a translucent shade. */
 @keyframes fx-sig-shade {
@@ -630,7 +630,7 @@
   40% { opacity: 0.85; transform: translateY(0) scale(1); }
   100% { opacity: 0; transform: translateY(-14%) scale(1.02); }
 }
-.fx-sig-shade { animation: fx-sig-shade 0.95s ease-out both; transform-origin: 50% 100%; }
+.fx-sig-shade { animation: fx-sig-shade 0.95s cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 100%; }
 
 /* Wall build: bricks rise from the ground and lock into place. */
 @keyframes fx-sig-brick {
@@ -668,7 +668,7 @@
   55% { transform: scale(0.98) rotate(60deg); }
   100% { opacity: 0; transform: scale(1.05) rotate(150deg); }
 }
-.fx-sig-gaze { animation: fx-sig-gaze 0.85s ease-out both; transform-box: fill-box; transform-origin: center; }
+.fx-sig-gaze { animation: fx-sig-gaze 0.85s cubic-bezier(0.16, 1, 0.3, 1) both; transform-box: fill-box; transform-origin: center; }
 
 /* Streak: a meteor / dive that rips in from a corner and vanishes past centre. */
 @keyframes fx-sig-streak {
@@ -676,7 +676,7 @@
   36% { opacity: 1; transform: translate(0, 0) scale(1); }
   100% { opacity: 0; transform: translate(24%, 24%) scale(1.05); }
 }
-.fx-sig-streak { animation: fx-sig-streak 0.5s var(--ease-out, ease-out) both; }
+.fx-sig-streak { animation: fx-sig-streak 0.5s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both; }
 
 /* Wings: two halves unfurl outward from the piece, then ease back and fade. */
 @keyframes fx-sig-wing-l {
@@ -711,7 +711,7 @@
   60% { transform: scale(1) rotate(200deg); }
   100% { opacity: 0; transform: scale(1.02) rotate(340deg); }
 }
-.fx-sig-swirl { animation: fx-sig-swirl 0.95s ease-out both; transform-box: fill-box; transform-origin: center; }
+.fx-sig-swirl { animation: fx-sig-swirl 0.95s cubic-bezier(0.16, 1, 0.3, 1) both; transform-box: fill-box; transform-origin: center; }
 
 /* Arc: a great blade sweeps across the square on a pivot, then lifts away. */
 @keyframes fx-sig-arc {
@@ -720,7 +720,7 @@
   62% { opacity: 1; transform: rotate(30deg) scale(1); }
   100% { opacity: 0; transform: rotate(66deg) scale(1.02); }
 }
-.fx-sig-arc { animation: fx-sig-arc 0.6s var(--ease-out, ease-out) both; transform-box: fill-box; transform-origin: 50% 100%; }
+.fx-sig-arc { animation: fx-sig-arc 0.6s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both; transform-box: fill-box; transform-origin: 50% 100%; }
 
 /* --- 10d. Batch 4 signature spectacles --------------------------------------
    The WILD set + Computer Virus. All of these compose the Batch 1-3 classes
@@ -757,7 +757,7 @@
   100% { opacity: 0; transform: rotate(-320deg); }
 }
 .fx-sig-rewind {
-  animation: fx-sig-rewind 0.9s ease-out both;
+  animation: fx-sig-rewind 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
   transform-box: fill-box;
   transform-origin: center;
 }
@@ -769,7 +769,7 @@
   20% { opacity: 1; }
   100% { opacity: 0; transform: translate(0, 0) scale(0.2) rotate(var(--rot, 0deg)); }
 }
-.fx-sig-implode { animation: fx-sig-implode 0.6s ease-in both; }
+.fx-sig-implode { animation: fx-sig-implode 0.6s cubic-bezier(0.55, 0, 1, 0.45) both; }
 
 /* --- 10f. Marquee DRAGON + WIZARD spectacles (top-tier signatures) ----------
    Two board-wide marquee signatures for the highest-tier cards, wired like Nova.
@@ -787,7 +787,7 @@
   80% { opacity: 1; transform: translateX(48%) translateY(2%) scale(1) rotate(5deg); }
   100% { opacity: 0; transform: translateX(70%) translateY(6%) scale(0.9) rotate(7deg); }
 }
-.fx-sig-dragon-fly { animation: fx-sig-dragon-fly 1.15s ease-in-out both; }
+.fx-sig-dragon-fly { animation: fx-sig-dragon-fly 1.15s cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 /* Wingbeat: the dragon's wing flaps a few times as it flies. */
 @keyframes fx-sig-wingbeat {
@@ -795,7 +795,7 @@
   50% { transform: rotate(20deg) scaleY(1.06); }
 }
 .fx-sig-wingbeat {
-  animation: fx-sig-wingbeat 0.32s ease-in-out 3 both;
+  animation: fx-sig-wingbeat 0.32s cubic-bezier(0.65, 0, 0.35, 1) 3 both;
   transform-box: fill-box;
   transform-origin: 42% 78%;
 }
@@ -807,7 +807,7 @@
   70% { opacity: 0.9; transform: scaleX(1) scaleY(1); }
   100% { opacity: 0; transform: scaleX(1.1) scaleY(0.9); }
 }
-.fx-sig-firebreath { animation: fx-sig-firebreath 0.55s ease-out both; transform-origin: 0% 50%; }
+.fx-sig-firebreath { animation: fx-sig-firebreath 0.55s cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 0% 50%; }
 
 /* (fx-sig-wizard-rise retired: the archmage scenes moved to plugin art and
    nothing mounted the class any more — removed in the useless-flash pass.) */
@@ -841,7 +841,7 @@
   82% { opacity: 1; transform: scale(1.02); }
   100% { opacity: 0; transform: scale(1.08); }
 }
-.fx-sig-maw { animation: fx-sig-maw 0.9s ease-out both; transform-box: fill-box; transform-origin: center; }
+.fx-sig-maw { animation: fx-sig-maw 0.9s cubic-bezier(0.16, 1, 0.3, 1) both; transform-box: fill-box; transform-origin: center; }
 
 /* Whirlpool: concentric water spins and spirals inward to a point. */
 @keyframes fx-sig-whirl {
@@ -850,7 +850,7 @@
   62% { transform: scale(0.7) rotate(360deg); }
   100% { opacity: 0; transform: scale(0.3) rotate(520deg); }
 }
-.fx-sig-whirl { animation: fx-sig-whirl 0.95s ease-in both; transform-box: fill-box; transform-origin: center; }
+.fx-sig-whirl { animation: fx-sig-whirl 0.95s cubic-bezier(0.55, 0, 1, 0.45) both; transform-box: fill-box; transform-origin: center; }
 
 /* Flood: a wave washes across the square left to right and drains off. */
 @keyframes fx-sig-wave {
@@ -859,7 +859,7 @@
   56% { opacity: 0.9; transform: translateX(12%) scaleY(0.94); }
   100% { opacity: 0; transform: translateX(62%) scaleY(1); }
 }
-.fx-sig-wave { animation: fx-sig-wave 0.85s var(--ease-out, ease-out) both; transform-origin: 50% 100%; }
+.fx-sig-wave { animation: fx-sig-wave 0.85s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both; transform-origin: 50% 100%; }
 
 /* Frozen moat: an ice ring locks in around the king with a shivered settle. */
 @keyframes fx-sig-moat {
@@ -869,7 +869,7 @@
   80% { opacity: 1; transform: scale(1.02); }
   100% { opacity: 0; transform: scale(1); }
 }
-.fx-sig-moat { animation: fx-sig-moat 0.95s var(--ease-out, ease-out) both; transform-box: fill-box; transform-origin: center; }
+.fx-sig-moat { animation: fx-sig-moat 0.95s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both; transform-box: fill-box; transform-origin: center; }
 
 /* Meteor storm: a colossal meteor streaks in from a corner and slams past. */
 @keyframes fx-sig-meteor {
@@ -879,7 +879,7 @@
   80% { opacity: 1; transform: translate(30%, 30%) scale(1) rotate(3deg); }
   100% { opacity: 0; transform: translate(66%, 66%) scale(0.9) rotate(5deg); }
 }
-.fx-sig-meteor { animation: fx-sig-meteor 1.05s ease-in both; }
+.fx-sig-meteor { animation: fx-sig-meteor 1.05s cubic-bezier(0.55, 0, 1, 0.45) both; }
 
 /* Phoenix: the firebird heaves up out of the board, hovers, then settles. */
 @keyframes fx-sig-phoenix {
@@ -925,7 +925,7 @@
   80% { opacity: 1; transform: none; }
   100% { opacity: 0; transform: none; }
 }
-.fx-sig-quake { animation: fx-sig-quake 0.9s var(--ease-out, ease-out) both; transform-origin: 50% 100%; }
+.fx-sig-quake { animation: fx-sig-quake 0.9s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both; transform-origin: 50% 100%; }
 
 /* --- 11. Bound-buff marker + effect popover ---------------------------------
    The Duelist-style corner sigil pops in once on mount (a piece just gained a
@@ -947,7 +947,7 @@
   100% { opacity: 1; transform: none; }
 }
 .fx-effect-popover-anim {
-  animation: fx-popover-in 0.14s ease-out both;
+  animation: fx-popover-in 0.14s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 /* --- 10i. Batch 9 thematic character-matched signatures ---------------------
@@ -980,7 +980,7 @@
   100% { opacity: 0; transform: translateX(64%) scaleX(0.94); }
 }
 .fx-sig-dart {
-  animation: fx-sig-dart 0.62s var(--ease-out, ease-out) both;
+  animation: fx-sig-dart 0.62s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
 }
 
 /* --- 10j. Batch 10 signatures (board-wide virus + gambling wheels + brainrot
@@ -1029,7 +1029,7 @@
   0%, 74% { opacity: 1; }
   100% { opacity: 0; }
 }
-.fx-sig-wheelfade { animation: fx-sig-wheelfade calc(2.1s * var(--fx-dur, 1)) ease-out both; }
+.fx-sig-wheelfade { animation: fx-sig-wheelfade calc(2.1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 /* The pointer flicks off the pegs, the kicks shrinking as the wheel slows. */
 @keyframes fx-sig-tick {
   0% { transform: rotate(0deg); }
@@ -1042,7 +1042,7 @@
   100% { transform: rotate(0deg); }
 }
 .fx-sig-tick {
-  animation: fx-sig-tick 1.2s ease-out both;
+  animation: fx-sig-tick 1.2s cubic-bezier(0.16, 1, 0.3, 1) both;
   transform-box: fill-box;
   transform-origin: 50% 22%;
 }
@@ -1071,7 +1071,7 @@
   82% { opacity: 1; transform: translateY(0) scaleY(1); }
   100% { opacity: 0; transform: translateY(0) scaleY(1); }
 }
-.fx-sig-coinflip { animation: fx-sig-coinflip 1s ease-out both; transform-origin: 50% 100%; }
+.fx-sig-coinflip { animation: fx-sig-coinflip 1s cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 100%; }
 
 /* Boxing Glove: the glove springs out on its arm, overshoots the punch, then
    retracts. transform-origin at the arm root. */
@@ -1095,17 +1095,17 @@
   55% { transform: translateY(0) scaleY(0.83) scaleX(1.09); }
   74% { transform: translateY(-6%) scaleY(1.02) scaleX(0.99); }
 }
-.fx-sig-hop { animation: fx-sig-hop 0.36s ease-in-out 3 both; transform-origin: 50% 100%; }
+.fx-sig-hop { animation: fx-sig-hop 0.36s cubic-bezier(0.65, 0, 0.35, 1) 3 both; transform-origin: 50% 100%; }
 @keyframes fx-sig-wiggle {
   0%, 100% { transform: rotate(-8deg); }
   50% { transform: rotate(8deg); }
 }
-.fx-sig-wiggle { animation: fx-sig-wiggle 0.4s ease-in-out 3 both; transform-origin: 50% 92%; }
+.fx-sig-wiggle { animation: fx-sig-wiggle 0.4s cubic-bezier(0.65, 0, 0.35, 1) 3 both; transform-origin: 50% 92%; }
 @keyframes fx-sig-chomp {
   0%, 100% { transform: scaleY(1); }
   50% { transform: scaleY(0.78); }
 }
-.fx-sig-chomp { animation: fx-sig-chomp 0.26s ease-in-out 4 both; transform-box: fill-box; transform-origin: 50% 40%; }
+.fx-sig-chomp { animation: fx-sig-chomp 0.26s cubic-bezier(0.65, 0, 0.35, 1) 4 both; transform-box: fill-box; transform-origin: 50% 40%; }
 
 /* --- Board-wide brainrot takeovers ------------------------------------------
    The Italian-brainrot lead flourishes escape their square: painted inside an
@@ -1124,7 +1124,7 @@
   70% { opacity: 0.55; transform: scale(1); }
   100% { opacity: 0; transform: scale(1.02); }
 }
-.fx-sig-bwash { animation: fx-sig-bwash 1.15s var(--ease-out, ease-out) both; transform-origin: 50% 50%; }
+.fx-sig-bwash { animation: fx-sig-bwash 1.15s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both; transform-origin: 50% 50%; }
 
 /* The wash POOL: the same tint, deepest over the square the card was played on
    and thinning outward. The wash above says "the whole board just changed"; the
@@ -1138,7 +1138,7 @@
   64% { opacity: 0.7; transform: scale(1.04); }
   100% { opacity: 0; transform: scale(1.12); }
 }
-.fx-sig-bpool { animation: fx-sig-bpool 1.3s var(--ease-out, ease-out) both; transform-origin: 50% 50%; }
+.fx-sig-bpool { animation: fx-sig-bpool 1.3s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both; transform-origin: 50% 50%; }
 
 /* The ground shadow a colossal board-wide motif drops on the boards. Grounds
    the figure instead of letting it float, and slides with --fx-side so the
@@ -1150,7 +1150,7 @@
   72% { opacity: 0.6; transform: scaleX(1.06) scaleY(0.94); }
   100% { opacity: 0; transform: scaleX(1.12) scaleY(0.9); }
 }
-.fx-sig-bshade { animation: fx-sig-bshade 1.25s var(--ease-out, ease-out) both; transform-origin: 50% 50%; }
+.fx-sig-bshade { animation: fx-sig-bshade 1.25s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both; transform-origin: 50% 50%; }
 
 /* --- The entrance role --------------------------------------------------------
    The card arriving in a hand, staged once for all of core (see EntranceCut in
@@ -1162,7 +1162,7 @@
   40% { opacity: 1; transform: scaleX(1); }
   100% { opacity: 0; transform: scaleX(1.12); }
 }
-.fx-sig-entglow { animation: fx-sig-entglow calc(0.62s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.fx-sig-entglow { animation: fx-sig-entglow calc(0.62s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 @keyframes fx-sig-entrise {
   0% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 22%)) scale(0.68); }
@@ -1178,7 +1178,7 @@
   45% { opacity: 0.95; transform: scale(1); }
   100% { opacity: 0; transform: scale(0.92); }
 }
-.fx-sig-entseal { animation: fx-sig-entseal calc(0.7s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.fx-sig-entseal { animation: fx-sig-entseal calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 @keyframes fx-sig-entmote {
   0% { opacity: 0; transform: translate(0, 0) scale(0.4); }
@@ -1200,7 +1200,7 @@
   38% { opacity: 0.9; transform: scale(1.06); }
   100% { opacity: 0; transform: scale(0.66); }
 }
-.fx-sig-tellring { animation: fx-sig-tellring 0.42s var(--ease-out, ease-out) both; transform-origin: 50% 50%; }
+.fx-sig-tellring { animation: fx-sig-tellring 0.42s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both; transform-origin: 50% 50%; }
 
 /* The SETTLE, part one: the afterglow left in the square, sinking away. */
 @keyframes fx-sig-settleglow {
@@ -1208,7 +1208,7 @@
   28% { opacity: 0.72; transform: scale(1); }
   100% { opacity: 0; transform: scale(1.32); }
 }
-.fx-sig-settleglow { animation: fx-sig-settleglow 0.9s var(--ease-out, ease-out) both; transform-origin: 50% 50%; }
+.fx-sig-settleglow { animation: fx-sig-settleglow 0.9s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both; transform-origin: 50% 50%; }
 
 /* The SETTLE, part two: motes drifting off the square. --dy is driven by
    --fx-side at the call site so the drift always carries AWAY from whoever
@@ -1502,7 +1502,7 @@ html[data-anim="off"] .fx-board-shake {
   60% { opacity: 0.9; transform: scale(1); }
   100% { opacity: 0; transform: scale(1.04); }
 }
-.fx-sig-slash { animation: fx-sig-slash 0.62s var(--ease-out, ease-out) both; transform-origin: 50% 50%; }
+.fx-sig-slash { animation: fx-sig-slash 0.62s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both; transform-origin: 50% 50%; }
 
 /* CRT scanline flicker while the corruption runs (virus takeover). */
 @keyframes fx-cast-scanlines {
@@ -1569,7 +1569,7 @@ html[data-anim="off"] .fx-one-shot {
   70% { opacity: 0.55; }
   100% { opacity: 0; transform: scale(1); }
 }
-.fx-cast-ring { animation: fx-cast-ring calc(0.85s * var(--fx-dur, 1)) var(--ease-out, ease-out) both; transform-origin: 50% 50%; }
+.fx-cast-ring { animation: fx-cast-ring calc(0.85s * var(--fx-dur, 1)) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both; transform-origin: 50% 50%; }
 
 /* The sleek diagonal shine: a thin bar sweeping corner to corner. */
 @keyframes fx-cast-sweep {
@@ -1578,14 +1578,14 @@ html[data-anim="off"] .fx-one-shot {
   88% { opacity: 1; }
   100% { opacity: 0; transform: translateX(1400%) rotate(var(--tilt, 14deg)); }
 }
-.fx-cast-sweep { animation: fx-cast-sweep calc(0.7s * var(--fx-dur, 1)) var(--ease-out, ease-out) both; }
+.fx-cast-sweep { animation: fx-cast-sweep calc(0.7s * var(--fx-dur, 1)) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both; }
 @keyframes fx-cast-sweep-rev {
   0% { opacity: 0; transform: translateX(0) rotate(var(--tilt, -14deg)); }
   12% { opacity: 1; }
   88% { opacity: 1; }
   100% { opacity: 0; transform: translateX(-1400%) rotate(var(--tilt, -14deg)); }
 }
-.fx-cast-sweep-rev { animation: fx-cast-sweep-rev calc(0.7s * var(--fx-dur, 1)) var(--ease-out, ease-out) both; }
+.fx-cast-sweep-rev { animation: fx-cast-sweep-rev calc(0.7s * var(--fx-dur, 1)) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both; }
 
 /* Counter-orbiting glints (sleek): two motes circle the board center in
    opposite directions while the cast plays, fading with it. */
@@ -1595,14 +1595,14 @@ html[data-anim="off"] .fx-one-shot {
   80% { opacity: 0.8; }
   100% { opacity: 0; transform: translate(-50%, -50%) rotate(300deg); }
 }
-.fx-cast-orbit { animation: fx-cast-orbit calc(0.9s * var(--fx-dur, 1)) var(--ease-out, ease-out) both; }
+.fx-cast-orbit { animation: fx-cast-orbit calc(0.9s * var(--fx-dur, 1)) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both; }
 @keyframes fx-cast-orbit-rev {
   0% { opacity: 0; transform: translate(-50%, -50%) rotate(0deg); }
   18% { opacity: 1; }
   80% { opacity: 0.8; }
   100% { opacity: 0; transform: translate(-50%, -50%) rotate(-260deg); }
 }
-.fx-cast-orbit-rev { animation: fx-cast-orbit-rev calc(0.9s * var(--fx-dur, 1)) var(--ease-out, ease-out) both; }
+.fx-cast-orbit-rev { animation: fx-cast-orbit-rev calc(0.9s * var(--fx-dur, 1)) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both; }
 
 /* The card announcement banner: settles in fast, holds long enough to read
    the name + one rule line, lifts away. */
@@ -1612,7 +1612,7 @@ html[data-anim="off"] .fx-one-shot {
   82% { opacity: 1; }
   100% { opacity: 0; transform: translateY(-8px) scale(0.99); }
 }
-.fx-cast-banner { animation: fx-cast-banner calc(2.4s * var(--fx-dur, 1)) var(--ease-out, ease-out) both; }
+.fx-cast-banner { animation: fx-cast-banner calc(2.4s * var(--fx-dur, 1)) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both; }
 
 /* The small emblem pop (sleek): rises a touch as it blinks in and out. */
 @keyframes fx-cast-emblem {
@@ -1621,7 +1621,7 @@ html[data-anim="off"] .fx-one-shot {
   75% { opacity: 0.85; }
   100% { opacity: 0; transform: translateY(-25%) scale(1.02); }
 }
-.fx-cast-emblem { animation: fx-cast-emblem calc(0.8s * var(--fx-dur, 1)) var(--ease-out, ease-out) both; }
+.fx-cast-emblem { animation: fx-cast-emblem calc(0.8s * var(--fx-dur, 1)) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both; }
 
 /* The radial category wash (grand): blooms and settles. */
 @keyframes fx-cast-wash {
@@ -1629,7 +1629,7 @@ html[data-anim="off"] .fx-one-shot {
   30% { opacity: 1; transform: scale(1); }
   100% { opacity: 0; transform: scale(1.06); }
 }
-.fx-cast-wash { animation: fx-cast-wash calc(1s * var(--fx-dur, 1)) var(--ease-out, ease-out) both; transform-origin: 50% 50%; }
+.fx-cast-wash { animation: fx-cast-wash calc(1s * var(--fx-dur, 1)) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both; transform-origin: 50% 50%; }
 
 /* A shockwave ring off the emblem slam. */
 @keyframes fx-cast-shock {
@@ -1650,7 +1650,7 @@ html[data-anim="off"] .fx-one-shot {
   78% { opacity: 1; }
   100% { opacity: 0; }
 }
-.fx-cast-dim { animation: fx-cast-dim calc(1.5s * var(--fx-dur, 1)) ease-in-out both; }
+.fx-cast-dim { animation: fx-cast-dim calc(1.5s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 /* --- Tier-scaled cast escalation (flagship overhaul, part 2) -----------------
    Additive chrome per tier rung (CastEscalation in BoardEffects.tsx): the
@@ -1669,7 +1669,7 @@ html[data-anim="off"] .fx-one-shot {
   62% { opacity: 0.9; }
   100% { opacity: 0; }
 }
-.fx-cast-edgepulse { animation: fx-cast-edgepulse calc(1.1s * var(--fx-dur, 1)) ease-in-out both; }
+.fx-cast-edgepulse { animation: fx-cast-edgepulse calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 /* Tier 7+: the deeper vignette (epic). Darker than the wash, lighter than the
    marquee dim (board legibility: edge maximum ~0.42, center transparent). */
@@ -1679,7 +1679,7 @@ html[data-anim="off"] .fx-one-shot {
   76% { opacity: 1; }
   100% { opacity: 0; }
 }
-.fx-cast-vignette { animation: fx-cast-vignette calc(1.4s * var(--fx-dur, 1)) ease-in-out both; }
+.fx-cast-vignette { animation: fx-cast-vignette calc(1.4s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 /* Tier 9-10: the letterbox moment — the bars slide over the crop for the
    climax (~1s held), then release. transform-origin set inline per bar. */
@@ -1698,7 +1698,7 @@ html[data-anim="off"] .fx-one-shot {
   70% { opacity: 0.7; transform: scale(1.01); }
   100% { opacity: 0; transform: scale(1.03); }
 }
-.fx-veil-vig { animation: fx-veil-vig calc(2.2s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 50% 50%; }
+.fx-veil-vig { animation: fx-veil-vig calc(2.2s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; transform-origin: 50% 50%; }
 
 /* ...and its motes rising up the viewport flanks (vh units so the climb reads
    at page scale, not element scale). */
@@ -1707,7 +1707,7 @@ html[data-anim="off"] .fx-one-shot {
   14% { opacity: 0.9; transform: translateY(-6vh) scale(1); }
   100% { opacity: 0; transform: translateY(-44vh) scale(0.8); }
 }
-.fx-veil-mote { animation: fx-veil-mote calc(2.2s * var(--fx-dur, 1)) ease-out both; }
+.fx-veil-mote { animation: fx-veil-mote calc(2.2s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* Twin light beams raking across the darkened board (marquee). */
 @keyframes fx-cast-beam {
@@ -1716,14 +1716,14 @@ html[data-anim="off"] .fx-one-shot {
   85% { opacity: 1; }
   100% { opacity: 0; transform: translateX(900%) rotate(var(--tilt, 16deg)); }
 }
-.fx-cast-beam { animation: fx-cast-beam calc(1.3s * var(--fx-dur, 1)) var(--ease-out, ease-out) both; }
+.fx-cast-beam { animation: fx-cast-beam calc(1.3s * var(--fx-dur, 1)) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both; }
 @keyframes fx-cast-beam-back {
   0% { opacity: 0; transform: translateX(0) rotate(var(--tilt, -16deg)); }
   15% { opacity: 1; }
   85% { opacity: 1; }
   100% { opacity: 0; transform: translateX(-900%) rotate(var(--tilt, -16deg)); }
 }
-.fx-cast-beam-back { animation: fx-cast-beam-back calc(1.3s * var(--fx-dur, 1)) var(--ease-out, ease-out) both; }
+.fx-cast-beam-back { animation: fx-cast-beam-back calc(1.3s * var(--fx-dur, 1)) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both; }
 
 /* --- Board shake: the whole crop jolts for a marquee cast --------------------
    Transform-only, small amplitude, quick decay: reads as a thump, not motion
@@ -1742,7 +1742,7 @@ html[data-anim="off"] .fx-one-shot {
   84% { transform: translate(0.12%, -0.12%) rotate(0.05deg); }
   100% { transform: translate(0, 0) rotate(0deg); }
 }
-.fx-board-shake { animation: fx-board-shake 0.55s var(--ease-out, ease-out) both; }
+.fx-board-shake { animation: fx-board-shake 0.55s var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both; }
 
 /* --- 10k. Batch 15 marquee upgrades ------------------------------------------
    Targeted upgrades for the marquee visuals in sigVisuals.tsx: the jackpot
@@ -1780,7 +1780,7 @@ html[data-anim="off"] .fx-one-shot {
   80% { opacity: 0.85; }
   100% { opacity: 0; transform: scale(1); }
 }
-.fx-sig-wedgeglow { animation: fx-sig-wedgeglow calc(0.85s * var(--fx-dur, 1)) ease-out both; transform-box: fill-box; transform-origin: center; }
+.fx-sig-wedgeglow { animation: fx-sig-wedgeglow calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-box: fill-box; transform-origin: center; }
 
 /* Jackpot: a coin flung from the hub — arcs up on its --dx spread, then rains
    down TOWARD the board's bottom edge. */
@@ -1790,7 +1790,7 @@ html[data-anim="off"] .fx-one-shot {
   32% { transform: translate(calc(var(--dx, 0%) * 0.6), -170%) scale(1) rotate(calc(var(--rot, 200deg) * 0.4)); }
   100% { opacity: 0; transform: translate(var(--dx, 0%), 660%) scale(0.9) rotate(var(--rot, 200deg)); }
 }
-.fx-sig-coinpay { animation: fx-sig-coinpay calc(1.1s * var(--fx-dur, 1)) ease-in both; }
+.fx-sig-coinpay { animation: fx-sig-coinpay calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 1, 0.45) both; }
 
 /* Total War: a war-drum shock rim pulsing IN (the inward twin of fx-sig-boom):
    the air tightens over the board before the fist falls. */
@@ -1799,7 +1799,7 @@ html[data-anim="off"] .fx-one-shot {
   35% { opacity: 1; }
   100% { opacity: 0; transform: scale(0.68); }
 }
-.fx-sig-rimin { animation: fx-sig-rimin calc(0.25s * var(--fx-dur, 1)) ease-in both; transform-origin: 50% 50%; }
+.fx-sig-rimin { animation: fx-sig-rimin calc(0.25s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 1, 0.45) both; transform-origin: 50% 50%; }
 
 /* A torn banner scrap (or feather-ember, or heart petal) fluttering down,
    swaying side to side as it falls. */
@@ -1811,7 +1811,7 @@ html[data-anim="off"] .fx-one-shot {
   80% { transform: translate(-18%, 330%) rotate(-16deg); }
   100% { opacity: 0; transform: translate(10%, 460%) rotate(8deg); }
 }
-.fx-sig-scrapfall { animation: fx-sig-scrapfall calc(1.4s * var(--fx-dur, 1)) ease-in both; }
+.fx-sig-scrapfall { animation: fx-sig-scrapfall calc(1.4s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 1, 0.45) both; }
 
 /* Computer Virus: a glitchy terminal cursor blinks in, stuttering sideways. */
 @keyframes fx-sig-cursor {
@@ -1873,13 +1873,13 @@ html[data-anim="off"] .fx-one-shot {
   90% { opacity: 1; }
   100% { opacity: 0; transform: translateX(0); }
 }
-.fx-sig-maskslide { animation: fx-sig-maskslide calc(2s * var(--fx-dur, 1)) var(--ease-out, ease-out) both; overflow: hidden; }
+.fx-sig-maskslide { animation: fx-sig-maskslide calc(2s * var(--fx-dur, 1)) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both; overflow: hidden; }
 @keyframes fx-sig-maskslide-inner {
   0% { transform: translateX(101%); }
   45% { transform: translateX(0); }
   100% { transform: translateX(0); }
 }
-.fx-sig-maskslide-inner { animation: fx-sig-maskslide-inner calc(2s * var(--fx-dur, 1)) var(--ease-out, ease-out) both; }
+.fx-sig-maskslide-inner { animation: fx-sig-maskslide-inner calc(2s * var(--fx-dur, 1)) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both; }
 
 /* Mandate: the quill walks the signature line, bobbing with each loop, then
    lifts away with a flourish. */
@@ -1895,7 +1895,7 @@ html[data-anim="off"] .fx-one-shot {
   90% { opacity: 1; transform: translate(130%, -40%) rotate(10deg); }
   100% { opacity: 0; transform: translate(150%, -80%) rotate(16deg); }
 }
-.fx-sig-quill { animation: fx-sig-quill calc(1.1s * var(--fx-dur, 1)) ease-in-out both; }
+.fx-sig-quill { animation: fx-sig-quill calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 /* Mandate: the wax seal stamps down with a squash-and-set, holds, fades. */
 @keyframes fx-sig-sealstamp {
@@ -1916,7 +1916,7 @@ html[data-anim="off"] .fx-one-shot {
   60% { transform: translate(calc(var(--dx, 0%) * -1), 8%) rotate(var(--rot, 200deg)) scale(1); }
   100% { opacity: 0; transform: translate(0, -18%) rotate(calc(var(--rot, 200deg) + 120deg)) scale(1.02); }
 }
-.fx-sig-barkspiral { animation: fx-sig-barkspiral calc(0.6s * var(--fx-dur, 1)) var(--ease-out, ease-out) both; }
+.fx-sig-barkspiral { animation: fx-sig-barkspiral calc(0.6s * var(--fx-dur, 1)) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both; }
 
 /* Kintsugi walnut: the burl shell halves clamp shut from the sides with an
    overshoot, hold sealed, then fade to the persistent WalnutPiece. */
@@ -1948,7 +1948,7 @@ html[data-anim="off"] .fx-one-shot {
   54% { opacity: 1; transform: scale(1.02); }
   100% { opacity: 0; transform: scale(1); }
 }
-.fx-sig-seamflash { animation: fx-sig-seamflash calc(0.7s * var(--fx-dur, 1)) ease-out both; }
+.fx-sig-seamflash { animation: fx-sig-seamflash calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* Tier-8 tells: one great pendulum / bell / scale swing from a top pivot. */
 @keyframes fx-sig-pendulum {
@@ -1959,7 +1959,7 @@ html[data-anim="off"] .fx-one-shot {
   84% { opacity: 1; transform: rotate(6deg); }
   100% { opacity: 0; transform: rotate(0deg); }
 }
-.fx-sig-pendulum { animation: fx-sig-pendulum calc(1.1s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 50% 0%; }
+.fx-sig-pendulum { animation: fx-sig-pendulum calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; transform-origin: 50% 0%; }
 
 /* Tier-8 settles: a mote / snow-glint / ash fleck drifting slowly DOWN
    (fx-sig-ash rises; this is its falling twin). */
@@ -1968,7 +1968,7 @@ html[data-anim="off"] .fx-one-shot {
   16% { opacity: 0.9; }
   100% { opacity: 0; transform: translate(var(--dx, 10%), 240%) rotate(var(--rot, 90deg)); }
 }
-.fx-sig-driftmote { animation: fx-sig-driftmote calc(1.2s * var(--fx-dur, 1)) ease-in both; }
+.fx-sig-driftmote { animation: fx-sig-driftmote calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 1, 0.45) both; }
 
 /* --- Batch 16: core signature split -----------------------------------------
    The 33 core visuals that several cards were sharing are split so every card
@@ -1994,7 +1994,7 @@ html[data-anim="off"] .fx-one-shot {
     transform: translate(calc(var(--fx-side, 1) * 26%), calc(var(--fx-side, 1) * -240%)) scale(0.9);
   }
 }
-.fx-sig-lean { animation: fx-sig-lean calc(0.95s * var(--fx-dur, 1)) ease-out both; }
+.fx-sig-lean { animation: fx-sig-lean calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* Directional 2 — travel down the play's OWN attack vector. The unit vector
    arrives precomputed (--fx-aim-x/y) because CSS trig is not available
@@ -2022,7 +2022,7 @@ html[data-anim="off"] .fx-one-shot {
   100% { opacity: 0; transform: rotate(calc(var(--fx-ang, 0) * 1deg)) scaleX(1); }
 }
 .fx-sig-aimswing {
-  animation: fx-sig-aimswing calc(0.72s * var(--fx-dur, 1)) ease-out both;
+  animation: fx-sig-aimswing calc(0.72s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both;
   transform-origin: 0% 50%;
 }
 
@@ -2033,7 +2033,7 @@ html[data-anim="off"] .fx-one-shot {
   34% { opacity: 1; transform: translateX(0) scale(1); }
   100% { opacity: 0; transform: translateX(calc(var(--fx-index, 0) * 14%)) scale(1.06); }
 }
-.fx-sig-ordertick { animation: fx-sig-ordertick calc(0.85s * var(--fx-dur, 1)) ease-out both; }
+.fx-sig-ordertick { animation: fx-sig-ordertick calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* Directional 5 — a layer pulled from the cast square back toward the board
    centre. --fx-ox/--fx-oy are the cast square's offset from that centre in
@@ -2047,7 +2047,7 @@ html[data-anim="off"] .fx-one-shot {
     transform: translate(calc(var(--fx-ox, 0) * -100%), calc(var(--fx-oy, 0) * -100%)) scale(0.9);
   }
 }
-.fx-sig-homeward { animation: fx-sig-homeward calc(1s * var(--fx-dur, 1)) ease-in-out both; }
+.fx-sig-homeward { animation: fx-sig-homeward calc(1s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 /* Verb — something HEAVY lands: a fast drop, a squash, one rebound, a set. */
 @keyframes fx-sig-slam {
@@ -2096,7 +2096,7 @@ html[data-anim="off"] .fx-one-shot {
   84% { opacity: 1; transform: scale(1.16); }
   100% { opacity: 0; transform: scale(1.34); }
 }
-.fx-sig-swell { animation: fx-sig-swell calc(0.9s * var(--fx-dur, 1)) ease-in-out both; }
+.fx-sig-swell { animation: fx-sig-swell calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 /* Verb — a MARCH: a stepped advance, so a rank of figures reads as boots and
    not as a glide. */
@@ -2117,7 +2117,7 @@ html[data-anim="off"] .fx-one-shot {
   100% { opacity: 0; transform: rotate(0deg); }
 }
 .fx-sig-tiltwob {
-  animation: fx-sig-tiltwob calc(0.95s * var(--fx-dur, 1)) ease-in-out both;
+  animation: fx-sig-tiltwob calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both;
   transform-origin: 50% 100%;
 }
 
@@ -2142,7 +2142,7 @@ html[data-anim="off"] .fx-one-shot {
   100% { opacity: 0; transform: scaleX(0.7); }
 }
 .fx-sig-tether {
-  animation: fx-sig-tether calc(0.82s * var(--fx-dur, 1)) ease-in-out both;
+  animation: fx-sig-tether calc(0.82s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both;
   transform-origin: 0% 50%;
 }
 
@@ -2153,4 +2153,4 @@ html[data-anim="off"] .fx-one-shot {
   58% { opacity: 0.6; transform: translateY(-26%) scaleY(0.9); }
   100% { opacity: 0; transform: translateY(-46%) scaleY(1.1); }
 }
-.fx-sig-shimmer { animation: fx-sig-shimmer calc(1.05s * var(--fx-dur, 1)) ease-out both; }
+.fx-sig-shimmer { animation: fx-sig-shimmer calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }

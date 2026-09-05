@@ -54,7 +54,7 @@
   border: 2px solid var(--pfx-c);
   border-radius: 999px;
   opacity: 0.4;
-  animation: pfx-fade-in var(--pfx-d, 160ms) ease-out both;
+  animation: pfx-fade-in var(--pfx-d, 160ms) cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @keyframes pfx-fade-in {
@@ -100,7 +100,7 @@
   background: linear-gradient(var(--pfx-c), transparent);
   transform-origin: bottom center;
   opacity: 0;
-  animation: pfx-crack var(--pfx-d) ease-out both;
+  animation: pfx-crack var(--pfx-d) cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 @keyframes pfx-crack {
   0% { opacity: 0; }
@@ -132,7 +132,7 @@
   border-radius: 40%;
   opacity: 0;
   transform: translate(-50%, -50%) scale(0.4);
-  animation: pfx-chain var(--pfx-d) ease-out both;
+  animation: pfx-chain var(--pfx-d) cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 @keyframes pfx-chain {
   0% { opacity: 0; transform: translate(-50%, -50%) scale(0.4); }
@@ -164,7 +164,7 @@
   transform: none;
   background: linear-gradient(90deg, transparent, var(--pfx-c), transparent);
   opacity: 0;
-  animation: pfx-sweep var(--pfx-d) ease-in-out both;
+  animation: pfx-sweep var(--pfx-d) cubic-bezier(0.65, 0, 0.35, 1) both;
 }
 @keyframes pfx-sweep {
   0% { opacity: 0; transform: translateX(-100%); }
@@ -182,7 +182,7 @@
   transform-origin: left center;
   background: linear-gradient(90deg, var(--pfx-c), transparent);
   opacity: 0.8;
-  animation: pfx-edgeburn var(--pfx-d) ease-out both;
+  animation: pfx-edgeburn var(--pfx-d) cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 @keyframes pfx-edgeburn {
   0% { transform: translateY(-50%) scaleX(0); opacity: 0.9; }
@@ -198,7 +198,7 @@
   transform: translateX(-100%);
   background: linear-gradient(90deg, transparent, var(--pfx-c));
   opacity: 0;
-  animation: pfx-fog var(--pfx-d) ease-out both;
+  animation: pfx-fog var(--pfx-d) cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 @keyframes pfx-fog {
   0% { opacity: 0; transform: translateX(-100%); }
@@ -215,7 +215,7 @@
   transform-origin: top center;
   background: linear-gradient(var(--pfx-c), transparent);
   opacity: 0.7;
-  animation: pfx-beam-v var(--pfx-d) ease-out both;
+  animation: pfx-beam-v var(--pfx-d) cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 @keyframes pfx-beam-v {
   0% { transform: translateX(-50%) scaleY(0); opacity: 0.85; }
@@ -232,7 +232,7 @@
   transform-origin: left center;
   background: linear-gradient(90deg, var(--pfx-c), transparent);
   opacity: 0.7;
-  animation: pfx-beam-h var(--pfx-d) ease-out both;
+  animation: pfx-beam-h var(--pfx-d) cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 @keyframes pfx-beam-h {
   0% { transform: translateY(-50%) scaleX(0); opacity: 0.85; }
@@ -260,7 +260,7 @@
   border: 2px solid var(--pfx-c);
   border-radius: 999px;
   opacity: 0;
-  animation: pfx-shock var(--pfx-d) ease-out both;
+  animation: pfx-shock var(--pfx-d) cubic-bezier(0.16, 1, 0.3, 1) both;
   animation-delay: calc(var(--pfx-beat, 0ms) + var(--pfx-d) * 0.4);
 }
 
@@ -271,7 +271,7 @@
   background: radial-gradient(circle, var(--pfx-c), transparent 70%);
   border-radius: 999px;
   opacity: 0;
-  animation: pfx-rise var(--pfx-d) ease-out both;
+  animation: pfx-rise var(--pfx-d) cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 @keyframes pfx-rise {
   0% { opacity: 0; transform: translate(-50%, -10%) scale(0.6); }
@@ -286,7 +286,7 @@
   border: 2px solid var(--pfx-c);
   border-radius: 999px;
   opacity: 0;
-  animation: pfx-moon var(--pfx-d) ease-out both;
+  animation: pfx-moon var(--pfx-d) cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 @keyframes pfx-moon {
   0% { opacity: 0; transform: translate(-50%, -50%) scale(0.7); }
@@ -317,7 +317,7 @@
   border: 2px solid var(--pfx-c);
   border-radius: 6%;
   opacity: 0;
-  animation: pfx-card var(--pfx-d) ease-out both;
+  animation: pfx-card var(--pfx-d) cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 @keyframes pfx-card {
   0% { opacity: 0; transform: translate(-50%, -30%) rotate(-2deg) scale(0.9); }
@@ -366,7 +366,7 @@
   border-radius: 999px;
   opacity: 0;
   transform: translate(-50%, -50%) rotate(var(--pfx-orbit-offset, 0deg)) translateX(120%);
-  animation: pfx-orbit var(--pfx-d) ease-out both;
+  animation: pfx-orbit var(--pfx-d) cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 @keyframes pfx-orbit {
   0% { opacity: 0; }
@@ -395,7 +395,7 @@
   transform-origin: bottom center;
   background: linear-gradient(transparent, var(--pfx-c));
   opacity: 0;
-  animation: pfx-drain var(--pfx-d) ease-in both;
+  animation: pfx-drain var(--pfx-d) cubic-bezier(0.55, 0, 1, 0.45) both;
 }
 @keyframes pfx-drain {
   0% { opacity: 0; }
@@ -410,7 +410,7 @@
   border: 2px solid var(--pfx-c);
   border-radius: 999px;
   opacity: 0;
-  animation: pfx-pulse var(--pfx-d) ease-out both;
+  animation: pfx-pulse var(--pfx-d) cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 @keyframes pfx-pulse {
   0% { opacity: 0.85; transform: translate(-50%, -50%) scale(0.6); }
@@ -443,7 +443,7 @@
   background: linear-gradient(90deg, transparent, var(--pfx-c), transparent);
   opacity: 0;
   transform: translate(-50%, -50%) scaleX(0.2);
-  animation: pfx-slab-dust var(--pfx-d) ease-out both;
+  animation: pfx-slab-dust var(--pfx-d) cubic-bezier(0.16, 1, 0.3, 1) both;
   animation-delay: calc(var(--pfx-beat, 0ms) + var(--pfx-d) * 0.34);
 }
 @keyframes pfx-slab-dust {
@@ -458,7 +458,7 @@
   height: 3.5%;
   background: linear-gradient(90deg, transparent, var(--pfx-c), transparent);
   opacity: 0;
-  animation: pfx-quake var(--pfx-d) ease-out both;
+  animation: pfx-quake var(--pfx-d) cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 @keyframes pfx-quake {
   0% { opacity: 0; transform: translate(-50%, -50%); }
@@ -571,7 +571,7 @@
   transform-origin: bottom center;
   background: linear-gradient(var(--pfx-c), transparent);
   opacity: 0;
-  animation: pfx-bloomcrack var(--pfx-d) ease-out both;
+  animation: pfx-bloomcrack var(--pfx-d) cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 @keyframes pfx-bloomcrack {
   0% { opacity: 0; }
@@ -597,7 +597,7 @@
   will-change: transform, opacity;
 }
 .pfx-spawn:not(.pfx-spawn-reveal) .pfx-anchor {
-  animation: pfx-anchor-inhale min(250ms, calc(var(--pfx-d, 850ms) * 0.25)) ease-in-out both;
+  animation: pfx-anchor-inhale min(250ms, calc(var(--pfx-d, 850ms) * 0.25)) cubic-bezier(0.65, 0, 0.35, 1) both;
 }
 @keyframes pfx-anchor-inhale {
   0% { transform: scale(1); }
@@ -612,7 +612,7 @@
   background: radial-gradient(circle, var(--pfx-c), transparent 70%);
   border-radius: 999px;
   opacity: 0;
-  animation: pfx-chrome-bloom var(--pfx-d) ease-out both;
+  animation: pfx-chrome-bloom var(--pfx-d) cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 @keyframes pfx-chrome-bloom {
   0% { opacity: 0; transform: translate(-50%, -50%) scale(0.7); }
@@ -642,7 +642,7 @@
   background: var(--pfx-c);
   border-radius: 999px;
   opacity: 0;
-  animation: pfx-chrome-mote calc(var(--pfx-d) * 0.55) ease-out both;
+  animation: pfx-chrome-mote calc(var(--pfx-d) * 0.55) cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 .pfx-chrome-mote-a {
   left: 36%;
@@ -693,7 +693,7 @@
   border-radius: 999px;
   opacity: 0;
   pointer-events: none;
-  animation: pfx-reveal-dim var(--pfx-d, 850ms) ease-out both;
+  animation: pfx-reveal-dim var(--pfx-d, 850ms) cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 @keyframes pfx-reveal-dim {
   0% { opacity: 0; }
@@ -749,7 +749,7 @@
   background: radial-gradient(circle, transparent 45%, var(--pfx-c) 100%);
   box-shadow: 0 0 8px 1px var(--pfx-c);
   opacity: 0.55;
-  animation: pfx-breathe 4s ease-in-out infinite;
+  animation: pfx-breathe 4s cubic-bezier(0.65, 0, 0.35, 1) infinite;
 }
 .pfx-aura-square {
   display: block;
@@ -835,7 +835,7 @@
   border: 2px solid var(--pfx-c);
   border-radius: 999px;
   opacity: 0.4;
-  animation: pfx-exit-fade var(--pfx-d, 300ms) ease-in both;
+  animation: pfx-exit-fade var(--pfx-d, 300ms) cubic-bezier(0.55, 0, 1, 0.45) both;
 }
 @keyframes pfx-exit-fade {
   0% { opacity: 0.4; transform: translate(-50%, -50%) scale(1); }

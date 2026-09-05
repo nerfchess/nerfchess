@@ -24,7 +24,7 @@
 .us-halo {
   background: radial-gradient(circle at 50% 55%, var(--us-soft), transparent 68%);
   opacity: 0;
-  animation: us-halo calc(1.5s * var(--fx-dur, 1)) ease-out var(--us-delay, 0ms) both;
+  animation: us-halo calc(1.5s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) var(--us-delay, 0ms) both;
 }
 @keyframes us-halo {
   0% { opacity: 0; transform: scale(0.7); }
@@ -51,7 +51,7 @@
   margin-top: -23%;
   color: var(--us-color);
   opacity: 0;
-  animation: us-sigil calc(1.35s * var(--fx-dur, 1)) ease-out var(--us-delay, 0ms) both;
+  animation: us-sigil calc(1.35s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) var(--us-delay, 0ms) both;
 }
 @keyframes us-sigil {
   0% { opacity: 0; transform: translateY(14%) scale(0.7); }
@@ -70,7 +70,7 @@
   height: 14%; width: 9%; margin-left: -4.5%; margin-top: -7%;
   background: radial-gradient(circle, #fff4d6, var(--us-color) 60%, transparent 75%);
   border-radius: 999px;
-  animation: us-burst-core calc(0.9s * var(--fx-dur, 1)) ease-out calc(var(--us-delay, 0ms) + 260ms) both;
+  animation: us-burst-core calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) calc(var(--us-delay, 0ms) + 260ms) both;
 }
 @keyframes us-burst-core {
   0% { opacity: 0; transform: scale(0.3); }
@@ -92,7 +92,7 @@
   background: var(--us-color); border-radius: 999px;
   box-shadow: 5em 0 0 var(--us-color), -5em 0.6em 0 var(--us-deep), 2.4em -2em 0 var(--us-color), -2.6em -1.8em 0 var(--us-deep);
   font-size: 4px;
-  animation: us-burst-sparks calc(0.9s * var(--fx-dur, 1)) ease-out calc(var(--us-delay, 0ms) + 340ms) both;
+  animation: us-burst-sparks calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) calc(var(--us-delay, 0ms) + 340ms) both;
 }
 @keyframes us-burst-sparks {
   0% { opacity: 0; transform: scale(0.4) rotate(0deg); }
@@ -105,7 +105,7 @@
   height: 44%; width: 13%; margin-left: -13.5%; margin-top: -22%;
   background: linear-gradient(160deg, var(--us-soft), transparent 80%);
   border-left: 2px solid var(--us-color);
-  animation: us-shatter-left calc(1s * var(--fx-dur, 1)) ease-in calc(var(--us-delay, 0ms) + 300ms) both;
+  animation: us-shatter-left calc(1s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 1, 0.45) calc(var(--us-delay, 0ms) + 300ms) both;
 }
 @keyframes us-shatter-left {
   0% { opacity: 0; transform: translate(0, 0) rotate(0deg); }
@@ -116,7 +116,7 @@
   height: 44%; width: 13%; margin-left: 0.5%; margin-top: -22%;
   background: linear-gradient(-160deg, var(--us-soft), transparent 80%);
   border-right: 2px solid var(--us-color);
-  animation: us-shatter-right calc(1s * var(--fx-dur, 1)) ease-in calc(var(--us-delay, 0ms) + 300ms) both;
+  animation: us-shatter-right calc(1s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 1, 0.45) calc(var(--us-delay, 0ms) + 300ms) both;
 }
 @keyframes us-shatter-right {
   0% { opacity: 0; transform: translate(0, 0) rotate(0deg); }
@@ -129,7 +129,7 @@
   clip-path: polygon(50% 0, 100% 100%, 0 100%);
   box-shadow: 3.5em 1em 0 var(--us-deep), -3em 1.6em 0 var(--us-color), 1em 2.6em 0 var(--us-deep);
   font-size: 4px;
-  animation: us-shatter-shards calc(0.95s * var(--fx-dur, 1)) ease-in calc(var(--us-delay, 0ms) + 360ms) both;
+  animation: us-shatter-shards calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 1, 0.45) calc(var(--us-delay, 0ms) + 360ms) both;
 }
 @keyframes us-shatter-shards {
   0% { opacity: 0; transform: translateY(0) rotate(0deg); }
@@ -142,7 +142,7 @@
   height: 34%; width: 22%; margin-left: -11%; margin-top: -24%;
   background: radial-gradient(60% 100% at 50% 100%, var(--us-color), transparent 72%);
   border-radius: 50% 50% 20% 20%;
-  animation: us-ignite-flame calc(1.05s * var(--fx-dur, 1)) ease-out calc(var(--us-delay, 0ms) + 240ms) both;
+  animation: us-ignite-flame calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) calc(var(--us-delay, 0ms) + 240ms) both;
 }
 @keyframes us-ignite-flame {
   0% { opacity: 0; transform: translateY(30%) scaleY(0.3); }
@@ -155,7 +155,7 @@
   background: var(--us-color); border-radius: 999px;
   box-shadow: 2.6em -1em 0 var(--us-deep), -2.2em -2.2em 0 var(--us-color), 0.6em -3.4em 0 var(--us-deep);
   font-size: 4px;
-  animation: us-ignite-embers calc(1.1s * var(--fx-dur, 1)) ease-out calc(var(--us-delay, 0ms) + 380ms) both;
+  animation: us-ignite-embers calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) calc(var(--us-delay, 0ms) + 380ms) both;
 }
 @keyframes us-ignite-embers {
   0% { opacity: 0; transform: translateY(20%) scale(0.6); }
@@ -165,7 +165,7 @@
 .us-f-ignite .us-fc {
   height: 46%; width: 30%; margin-left: -15%; margin-top: -23%;
   background: linear-gradient(0deg, var(--us-deep), transparent 65%);
-  animation: us-ignite-char calc(0.9s * var(--fx-dur, 1)) ease-in calc(var(--us-delay, 0ms) + 500ms) both;
+  animation: us-ignite-char calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 1, 0.45) calc(var(--us-delay, 0ms) + 500ms) both;
 }
 @keyframes us-ignite-char {
   0% { opacity: 0; transform: scaleY(0); }
@@ -177,7 +177,7 @@
 .us-f-unravel .us-fa {
   height: 2px; width: 34%; margin-left: -17%; margin-top: -12%;
   background: linear-gradient(90deg, transparent, var(--us-color), transparent);
-  animation: us-unravel-thread-a calc(1.05s * var(--fx-dur, 1)) ease-in-out calc(var(--us-delay, 0ms) + 260ms) both;
+  animation: us-unravel-thread-a calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) calc(var(--us-delay, 0ms) + 260ms) both;
 }
 @keyframes us-unravel-thread-a {
   0% { opacity: 0; transform: translateY(0) rotate(0deg) scaleX(0.3); }
@@ -187,7 +187,7 @@
 .us-f-unravel .us-fb {
   height: 2px; width: 34%; margin-left: -17%; margin-top: 2%;
   background: linear-gradient(90deg, transparent, var(--us-color), transparent);
-  animation: us-unravel-thread-b calc(1.05s * var(--fx-dur, 1)) ease-in-out calc(var(--us-delay, 0ms) + 330ms) both;
+  animation: us-unravel-thread-b calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) calc(var(--us-delay, 0ms) + 330ms) both;
 }
 @keyframes us-unravel-thread-b {
   0% { opacity: 0; transform: translateY(0) rotate(0deg) scaleX(0.3); }
@@ -197,7 +197,7 @@
 .us-f-unravel .us-fc {
   height: 26%; width: 17%; margin-left: -8.5%; margin-top: -13%;
   border: 2px dashed var(--us-color); border-radius: 999px;
-  animation: us-unravel-coil calc(1.15s * var(--fx-dur, 1)) ease-in calc(var(--us-delay, 0ms) + 300ms) both;
+  animation: us-unravel-coil calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 1, 0.45) calc(var(--us-delay, 0ms) + 300ms) both;
 }
 @keyframes us-unravel-coil {
   0% { opacity: 0; transform: rotate(0deg) scale(1); }
@@ -220,7 +220,7 @@
 .us-f-stamp .us-fb {
   height: 40%; width: 25%; margin-left: -12.5%; margin-top: -20%;
   background: var(--us-soft);
-  animation: us-stamp-imprint calc(0.95s * var(--fx-dur, 1)) ease-out calc(var(--us-delay, 0ms) + 560ms) both;
+  animation: us-stamp-imprint calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) calc(var(--us-delay, 0ms) + 560ms) both;
 }
 @keyframes us-stamp-imprint {
   0% { opacity: 0; transform: scale(0.8); }
@@ -230,7 +230,7 @@
 .us-f-stamp .us-fc {
   height: 3%; width: 44%; margin-left: -22%; margin-top: 14%;
   background: linear-gradient(90deg, transparent, var(--us-deep), transparent);
-  animation: us-stamp-dust calc(0.8s * var(--fx-dur, 1)) ease-out calc(var(--us-delay, 0ms) + 580ms) both;
+  animation: us-stamp-dust calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) calc(var(--us-delay, 0ms) + 580ms) both;
 }
 @keyframes us-stamp-dust {
   0% { opacity: 0; transform: scaleX(0.2); }
@@ -243,7 +243,7 @@
   height: 44%; width: 4%; margin-left: -2%; margin-top: -10%;
   background: linear-gradient(180deg, var(--us-color), transparent);
   border-radius: 999px;
-  animation: us-drain-flow calc(1.05s * var(--fx-dur, 1)) ease-in calc(var(--us-delay, 0ms) + 280ms) both;
+  animation: us-drain-flow calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 1, 0.45) calc(var(--us-delay, 0ms) + 280ms) both;
 }
 @keyframes us-drain-flow {
   0% { opacity: 0; transform: translateY(-30%) scaleY(0.2); }
@@ -253,7 +253,7 @@
 .us-f-drain .us-fb {
   height: 24%; width: 15%; margin-left: -7.5%; margin-top: 6%;
   border: 2px solid var(--us-deep); border-radius: 999px;
-  animation: us-drain-pool calc(1.1s * var(--fx-dur, 1)) ease-out calc(var(--us-delay, 0ms) + 460ms) both;
+  animation: us-drain-pool calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) calc(var(--us-delay, 0ms) + 460ms) both;
 }
 @keyframes us-drain-pool {
   0% { opacity: 0; transform: scale(0.3) scaleY(0.4); }
@@ -265,7 +265,7 @@
   background: var(--us-color); border-radius: 999px;
   box-shadow: 1.8em 1em 0 var(--us-deep), -1.8em 0.6em 0 var(--us-color);
   font-size: 4px;
-  animation: us-drain-motes calc(0.95s * var(--fx-dur, 1)) ease-in calc(var(--us-delay, 0ms) + 320ms) both;
+  animation: us-drain-motes calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 1, 0.45) calc(var(--us-delay, 0ms) + 320ms) both;
 }
 @keyframes us-drain-motes {
   0% { opacity: 0; transform: translateY(0) scale(1); }
@@ -280,9 +280,9 @@
   height: 30%; width: 19%; margin-left: -9.5%; margin-top: -15%;
   border: 2px solid var(--us-color); border-radius: 999px;
 }
-.us-f-ripple .us-fa { animation: us-ripple-ring calc(1s * var(--fx-dur, 1)) ease-out calc(var(--us-delay, 0ms) + 260ms) both; }
-.us-f-ripple .us-fb { animation: us-ripple-ring calc(1s * var(--fx-dur, 1)) ease-out calc(var(--us-delay, 0ms) + 430ms) both; }
-.us-f-ripple .us-fc { animation: us-ripple-ring calc(1s * var(--fx-dur, 1)) ease-out calc(var(--us-delay, 0ms) + 600ms) both; }
+.us-f-ripple .us-fa { animation: us-ripple-ring calc(1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) calc(var(--us-delay, 0ms) + 260ms) both; }
+.us-f-ripple .us-fb { animation: us-ripple-ring calc(1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) calc(var(--us-delay, 0ms) + 430ms) both; }
+.us-f-ripple .us-fc { animation: us-ripple-ring calc(1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) calc(var(--us-delay, 0ms) + 600ms) both; }
 @keyframes us-ripple-ring {
   0% { opacity: 0; transform: scale(0.25) scaleY(0.55); }
   22% { opacity: 1; }
@@ -294,7 +294,7 @@
   height: 26%; width: 16%; margin-left: -8%; margin-top: -13%;
   background: radial-gradient(circle, #fff4d6 0%, var(--us-color) 45%, transparent 70%);
   border-radius: 999px;
-  animation: us-bloom-core calc(1.1s * var(--fx-dur, 1)) ease-out calc(var(--us-delay, 0ms) + 240ms) both;
+  animation: us-bloom-core calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) calc(var(--us-delay, 0ms) + 240ms) both;
 }
 @keyframes us-bloom-core {
   0% { opacity: 0; transform: scale(0.2); }
@@ -317,7 +317,7 @@
   background: var(--us-color); border-radius: 999px;
   box-shadow: 2.2em -1.4em 0 var(--us-deep), -2.4em -1em 0 var(--us-color), 0.4em -2.8em 0 var(--us-deep);
   font-size: 4px;
-  animation: us-bloom-pollen calc(1.15s * var(--fx-dur, 1)) ease-out calc(var(--us-delay, 0ms) + 420ms) both;
+  animation: us-bloom-pollen calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) calc(var(--us-delay, 0ms) + 420ms) both;
 }
 @keyframes us-bloom-pollen {
   0% { opacity: 0; transform: translateY(10%) scale(0.5); }
@@ -340,7 +340,7 @@
   height: 10%; width: 6.4%; margin-left: -3.2%; margin-top: -5%;
   background: var(--us-deep); border-radius: 999px;
   box-shadow: 0 0 16px var(--us-soft);
-  animation: us-collapse-void calc(1s * var(--fx-dur, 1)) ease-in calc(var(--us-delay, 0ms) + 460ms) both;
+  animation: us-collapse-void calc(1s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 1, 0.45) calc(var(--us-delay, 0ms) + 460ms) both;
 }
 @keyframes us-collapse-void {
   0% { opacity: 0; transform: scale(0.4); }
@@ -350,7 +350,7 @@
 .us-f-collapse .us-fc {
   height: 2px; width: 40%; margin-left: -20%; margin-top: -1px;
   background: linear-gradient(90deg, transparent, var(--us-color), transparent);
-  animation: us-collapse-slit calc(0.7s * var(--fx-dur, 1)) ease-out calc(var(--us-delay, 0ms) + 620ms) both;
+  animation: us-collapse-slit calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) calc(var(--us-delay, 0ms) + 620ms) both;
 }
 @keyframes us-collapse-slit {
   0% { opacity: 0; transform: scaleX(0); }
@@ -375,7 +375,7 @@
   background: var(--us-color);
   box-shadow: 4em 0 0 var(--us-color), 2em 0.6em 0 var(--us-deep);
   font-size: 4px;
-  animation: us-surge-lines calc(0.8s * var(--fx-dur, 1)) ease-out calc(var(--us-delay, 0ms) + 340ms) both;
+  animation: us-surge-lines calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) calc(var(--us-delay, 0ms) + 340ms) both;
 }
 @keyframes us-surge-lines {
   0% { opacity: 0; transform: translateY(40%) scaleY(0.3); }
@@ -386,7 +386,7 @@
   height: 20%; width: 13%; margin-left: -6.5%; margin-top: -28%;
   border-top: 3px solid var(--us-color);
   border-radius: 999px 999px 0 0;
-  animation: us-surge-crest calc(0.75s * var(--fx-dur, 1)) ease-out calc(var(--us-delay, 0ms) + 480ms) both;
+  animation: us-surge-crest calc(0.75s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) calc(var(--us-delay, 0ms) + 480ms) both;
 }
 @keyframes us-surge-crest {
   0% { opacity: 0; transform: translateY(60%) scaleX(0.4); }
@@ -420,7 +420,7 @@
 .us-f-seal .us-fc {
   height: 48%; width: 30%; margin-left: -15%; margin-top: -24%;
   background: radial-gradient(circle, transparent 55%, var(--us-soft) 75%, transparent 90%);
-  animation: us-seal-set calc(0.9s * var(--fx-dur, 1)) ease-out calc(var(--us-delay, 0ms) + 560ms) both;
+  animation: us-seal-set calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) calc(var(--us-delay, 0ms) + 560ms) both;
 }
 @keyframes us-seal-set {
   0% { opacity: 0; transform: scale(0.7); }
@@ -432,7 +432,7 @@
 .us-f-scatter .us-fa {
   height: 12%; width: 8%; margin-left: -10%; margin-top: -8%;
   background: var(--us-soft); border: 1.5px solid var(--us-color);
-  animation: us-scatter-a calc(0.95s * var(--fx-dur, 1)) ease-out calc(var(--us-delay, 0ms) + 280ms) both;
+  animation: us-scatter-a calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) calc(var(--us-delay, 0ms) + 280ms) both;
 }
 @keyframes us-scatter-a {
   0% { opacity: 0; transform: translate(0, 0) rotate(0deg); }
@@ -442,7 +442,7 @@
 .us-f-scatter .us-fb {
   height: 12%; width: 8%; margin-left: 2%; margin-top: -8%;
   background: var(--us-soft); border: 1.5px solid var(--us-color);
-  animation: us-scatter-b calc(0.95s * var(--fx-dur, 1)) ease-out calc(var(--us-delay, 0ms) + 330ms) both;
+  animation: us-scatter-b calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) calc(var(--us-delay, 0ms) + 330ms) both;
 }
 @keyframes us-scatter-b {
   0% { opacity: 0; transform: translate(0, 0) rotate(0deg); }
@@ -452,7 +452,7 @@
 .us-f-scatter .us-fc {
   height: 12%; width: 8%; margin-left: -4%; margin-top: 0%;
   background: var(--us-soft); border: 1.5px solid var(--us-color);
-  animation: us-scatter-c calc(0.95s * var(--fx-dur, 1)) ease-out calc(var(--us-delay, 0ms) + 380ms) both;
+  animation: us-scatter-c calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) calc(var(--us-delay, 0ms) + 380ms) both;
 }
 @keyframes us-scatter-c {
   0% { opacity: 0; transform: translate(0, 0) rotate(0deg); }
@@ -480,7 +480,7 @@
   margin-left: -27%;
   margin-top: -43%;
   border: 1px solid var(--us-color);
-  animation: us-echo calc(1.1s * var(--fx-dur, 1)) ease-out calc(var(--us-delay, 0ms) + 420ms) both;
+  animation: us-echo calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) calc(var(--us-delay, 0ms) + 420ms) both;
   border-radius: 999px;
 }
 @keyframes us-echo {

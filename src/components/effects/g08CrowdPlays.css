@@ -44,7 +44,7 @@
   50% { opacity: 0.85; transform: scale(1, 1) translateX(calc(var(--fx-ox, 0) * 0.6%)); }
   100% { opacity: 0; transform: scale(1.1, 1) translateX(calc(var(--fx-ox, 0) * 0.9%)); }
 }
-.g08-tell { animation: g08-tell calc(0.3s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 100%; }
+.g08-tell { animation: g08-tell calc(0.3s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 100%; }
 
 /* A hairline of attention drawn along the stretch of line the play touches,
    arriving from the caster's own side. */
@@ -66,7 +66,7 @@
   66% { opacity: 0.45; }
   100% { opacity: 0; }
 }
-.g08-wash { animation: g08-wash calc(1.5s * var(--fx-dur, 1)) ease-out both; }
+.g08-wash { animation: g08-wash calc(1.5s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* ---------------------------------------------------------------------------
    3. Shared vocabulary: settles
@@ -77,7 +77,7 @@
   40% { opacity: 0.85; transform: scale(1, 1); }
   100% { opacity: 0; transform: scale(1.24, 1.1); }
 }
-.g08-dust { animation: g08-dust calc(0.86s * var(--fx-dur, 1)) ease-out both; }
+.g08-dust { animation: g08-dust calc(0.86s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* Motes hanging in the air and sliding away from the middle of the board. */
 @keyframes g08-motes {
@@ -85,7 +85,7 @@
   38% { opacity: 0.8; transform: translate(calc(var(--fx-ox, 0) * 1.4%), calc(var(--fx-oy, 0) * 1%)) scale(1); }
   100% { opacity: 0; transform: translate(calc(var(--fx-ox, 0) * 2.4%), calc(var(--fx-oy, 0) * 1.8%)) scale(1.2); }
 }
-.g08-motes { animation: g08-motes calc(1s * var(--fx-dur, 1)) ease-out both; }
+.g08-motes { animation: g08-motes calc(1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* What the crowd kicked loose, blowing off the caster's own side. */
 @keyframes g08-drift {
@@ -93,7 +93,7 @@
   36% { opacity: 0.85; transform: translateY(0) scaleX(1); }
   100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * -32%)) scaleX(1.18); }
 }
-.g08-drift { animation: g08-drift calc(1s * var(--fx-dur, 1)) ease-out both; }
+.g08-drift { animation: g08-drift calc(1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g08-ripple {
   0% { opacity: 0; transform: scale(0.24); }
@@ -116,7 +116,7 @@
   44% { opacity: 1; transform: scaleX(1) translateY(0); }
   100% { opacity: 0; transform: scaleX(1.1) translateY(0); }
 }
-.g08-hitmark { animation: g08-hitmark calc(0.42s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.g08-hitmark { animation: g08-hitmark calc(0.42s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 /* A body turning round: squashed through the turn, over-rotating further the
    later in the order it happens. */
@@ -187,7 +187,7 @@
   76% { opacity: 1; transform: scaleX(calc(1.1 + var(--fx-index, 0) * 0.03)); }
   100% { opacity: 0; transform: scaleX(calc(1.16 + var(--fx-index, 0) * 0.03)); }
 }
-.g08-hitpart { animation: g08-hitpart calc(0.6s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 100%; }
+.g08-hitpart { animation: g08-hitpart calc(0.6s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 100%; }
 
 @keyframes g08-hitbow {
   0% { opacity: 0; transform: rotate(0deg) translateY(calc(var(--fx-side, 1) * -18%)); }
@@ -278,7 +278,7 @@
   40% { opacity: 1; transform: scaleX(1); }
   100% { opacity: 0; transform: scaleX(1); }
 }
-.g08-ent2 { animation: g08-ent2 calc(0.8s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.g08-ent2 { animation: g08-ent2 calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 @keyframes g08-ent3 {
   0% { opacity: 0; transform: scale(0.4) rotate(8deg); }
@@ -325,7 +325,7 @@
   72% { opacity: 0.7; transform: scale(1); }
   100% { opacity: 0; transform: scale(1.06); }
 }
-.g08-look-print { animation: g08-look-print calc(0.8s * var(--fx-dur, 1)) ease-out both; }
+.g08-look-print { animation: g08-look-print calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* Every head snaps round to look at what is behind them. */
 @keyframes g08-look-head {
@@ -341,7 +341,7 @@
   46% { opacity: 1; transform: scaleX(1); }
   100% { opacity: 0; transform: scaleX(1); }
 }
-.g08-look-line { animation: g08-look-line calc(0.7s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.g08-look-line { animation: g08-look-line calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 /* ---------------------------------------------------------------------------
    8. Card 3 — Gallery Row: the ovation
@@ -371,7 +371,7 @@
   78% { transform: scaleX(1) scaleY(1.05); }
   100% { opacity: 0; transform: scaleX(1) scaleY(1); }
 }
-.g08-gal-clap { animation: g08-gal-clap calc(0.82s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.g08-gal-clap { animation: g08-gal-clap calc(0.82s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 /* ---------------------------------------------------------------------------
    9. Card 4 — Goat Track: the dust front
@@ -400,7 +400,7 @@
   36% { opacity: 1; transform: translateY(calc(var(--fx-side, 1) * -14%)) scaleX(1); }
   100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * -34%)) scaleX(1.1); }
 }
-.g08-goat-stone { animation: g08-goat-stone calc(0.8s * var(--fx-dur, 1)) ease-out both; transform-origin: 0 50%; }
+.g08-goat-stone { animation: g08-goat-stone calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 0 50%; }
 
 /* ---------------------------------------------------------------------------
    10. Card 5 — Harbor Pilot: arms linked
@@ -439,7 +439,7 @@
   40% { opacity: 1; transform: scaleY(1); }
   100% { opacity: 0; transform: scaleY(1); }
 }
-.g08-lamp-fig { animation: g08-lamp-fig calc(0.82s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 100%; }
+.g08-lamp-fig { animation: g08-lamp-fig calc(0.82s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 100%; }
 
 /* One flame lit from the one before it. */
 @keyframes g08-lamp-flame {
@@ -457,7 +457,7 @@
   40% { opacity: 0.95; transform: scaleX(1) rotate(calc(var(--fx-ox, 0) * -0.6deg)); }
   100% { opacity: 0; transform: scaleX(1.1) rotate(calc(var(--fx-ox, 0) * 0.8deg)); }
 }
-.g08-lamp-beam { animation: g08-lamp-beam calc(0.9s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.g08-lamp-beam { animation: g08-lamp-beam calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 /* ---------------------------------------------------------------------------
    12. Card 7 — Harborside Rider: the gap closes
@@ -541,7 +541,7 @@
   40% { opacity: 1; transform: translateY(0) rotate(-14deg); }
   100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 40%)) rotate(16deg); }
 }
-.g08-flock-feather { animation: g08-flock-feather calc(0.92s * var(--fx-dur, 1)) ease-in-out both; }
+.g08-flock-feather { animation: g08-flock-feather calc(0.92s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 /* ---------------------------------------------------------------------------
    15. Card 10 — Parade Route: the wave
@@ -552,7 +552,7 @@
   36% { opacity: 1; transform: scaleY(1); }
   100% { opacity: 0; transform: scaleY(1); }
 }
-.g08-wave-fig { animation: g08-wave-fig calc(0.86s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 100%; }
+.g08-wave-fig { animation: g08-wave-fig calc(0.86s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 100%; }
 
 /* Arms into the air, on the caster's side of the line, one after another. */
 @keyframes g08-wave-arm {
@@ -649,7 +649,7 @@
   76% { transform: scaleY(0.97) scaleX(1.05); }
   100% { opacity: 0; transform: scaleY(0.97) scaleX(1.05); }
 }
-.g08-tool-fig { animation: g08-tool-fig calc(0.84s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 100%; }
+.g08-tool-fig { animation: g08-tool-fig calc(0.84s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 100%; }
 
 @keyframes g08-tool-arm {
   0% { opacity: 0; transform: scaleX(0.08); }
@@ -667,7 +667,7 @@
   36% { opacity: 1; transform: scale(1); }
   100% { opacity: 0; transform: scale(1.05); }
 }
-.g08-rev-drum { animation: g08-rev-drum calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+.g08-rev-drum { animation: g08-rev-drum calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* A quarter-turn per body, four bodies, and a coast to a stop. */
 @keyframes g08-rev-vane {
@@ -743,7 +743,7 @@
   44% { opacity: 1; transform: scaleY(1); }
   100% { opacity: 0; transform: scaleY(1.1); }
 }
-.g08-salt-crust { animation: g08-salt-crust calc(0.82s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 100%; }
+.g08-salt-crust { animation: g08-salt-crust calc(0.82s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 100%; }
 
 /* ---------------------------------------------------------------------------
    22. Card 17 — Second Thoughts: the line rocks back
@@ -773,7 +773,7 @@
   76% { opacity: 0.5; transform: scale(1); }
   100% { opacity: 0; transform: scale(0.8); }
 }
-.g08-2nd-track { animation: g08-2nd-track calc(0.8s * var(--fx-dur, 1)) ease-out both; }
+.g08-2nd-track { animation: g08-2nd-track calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* ---------------------------------------------------------------------------
    23. Card 18 — Servants' Entrance: the crowd parts
@@ -864,7 +864,7 @@
   44% { opacity: 0.95; transform: scaleX(1); }
   100% { opacity: 0; transform: scaleX(1); }
 }
-.g08-hush-lane { animation: g08-hush-lane calc(0.9s * var(--fx-dur, 1)) ease-out both; transform-origin: 0 50%; }
+.g08-hush-lane { animation: g08-hush-lane calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 0 50%; }
 
 /* ---------------------------------------------------------------------------
    26. Card 21 — Soup's On: the bell and the turn
@@ -908,7 +908,7 @@
   80% { transform: scale(1, 1.1); }
   100% { opacity: 0; transform: scale(0.9, 1); }
 }
-.g08-chant-mouth { animation: g08-chant-mouth calc(0.7s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 50% 50%; }
+.g08-chant-mouth { animation: g08-chant-mouth calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; transform-origin: 50% 50%; }
 
 /* Ragged, then on the beat: the last shudder lines them all up. */
 @keyframes g08-chant-hand {

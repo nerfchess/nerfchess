@@ -40,7 +40,7 @@
   68% { opacity: 0.5; transform: scale(1); }
   100% { opacity: 0; transform: scale(1.02); }
 }
-.g05-field { animation: g05-field calc(1.7s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.g05-field { animation: g05-field calc(1.7s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 @keyframes g05-furrow {
   0% { opacity: 0; transform: scaleX(0.1); }
@@ -56,14 +56,14 @@
   70% { opacity: 0.7; transform: scale(1); }
   100% { opacity: 0; transform: scale(0.99); }
 }
-.g05-fence { animation: g05-fence calc(1.5s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.g05-fence { animation: g05-fence calc(1.5s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 @keyframes g05-chaff {
   0% { opacity: 0; transform: translate(0, 0) scale(0.4); }
   22% { opacity: 0.95; transform: translate(0, 0) scale(1); }
   100% { opacity: 0; transform: translate(40%, calc(var(--fx-side, 1) * -520%)) scale(0.6); }
 }
-.g05-chaff { animation: g05-chaff calc(1.5s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.g05-chaff { animation: g05-chaff calc(1.5s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 @keyframes g05-tell {
   0% { opacity: 0; transform: scale(0.7); }
@@ -72,7 +72,7 @@
   70% { opacity: 0.7; transform: scale(1); }
   100% { opacity: 0; transform: scale(1.02); }
 }
-.g05-tell { animation: g05-tell calc(1.1s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.g05-tell { animation: g05-tell calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 @keyframes g05-hit {
   0% { opacity: 0; transform: scale(0.5) translateY(12%); }
@@ -88,7 +88,7 @@
   34% { opacity: 0.95; transform: scale(1.05); }
   100% { opacity: 0; transform: scale(1.3); }
 }
-.g05-hit2 { animation: g05-hit2 calc(0.95s * var(--fx-dur, 1)) ease-out both; }
+.g05-hit2 { animation: g05-hit2 calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g05-arrive {
   0% { opacity: 0; transform: scale(0.55) rotate(-8deg); }
@@ -104,7 +104,7 @@
   38% { opacity: 0.9; transform: scale(1.04); }
   100% { opacity: 0; transform: scale(1.16); }
 }
-.g05-arrive-soft { animation: g05-arrive-soft calc(1s * var(--fx-dur, 1)) ease-out both; }
+.g05-arrive-soft { animation: g05-arrive-soft calc(1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* =============================================================================
    1. Endless Militia - the muster roll, the hands out of the ground, the three
@@ -166,7 +166,7 @@
   76% { transform: rotate(2deg); }
   100% { opacity: 0; transform: rotate(0deg); }
 }
-.g05-mg-lamp { animation: g05-mg-lamp calc(1.5s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 0%; }
+.g05-mg-lamp { animation: g05-mg-lamp calc(1.5s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 0%; }
 
 @keyframes g05-mg-out {
   0% { opacity: 0; transform: translateY(0) scale(0.55); }
@@ -202,7 +202,7 @@
   24% { opacity: 1; transform: translate(0, 0) rotate(20deg); }
   100% { opacity: 0; transform: translate(60%, calc(var(--g05-adv, -1) * 340%)) rotate(190deg); }
 }
-.g05-fy-husk { animation: g05-fy-husk calc(1.5s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.g05-fy-husk { animation: g05-fy-husk calc(1.5s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 /* =============================================================================
    4. Pawn Embargo - posts thumped in, the chain drawn taut across the board,
@@ -256,7 +256,7 @@
   70% { opacity: 0.65; transform: scaleY(1) scaleX(1.05); }
   100% { opacity: 0; transform: scaleY(1) scaleX(0.8); }
 }
-.g05-rp-beam { animation: g05-rp-beam calc(1.7s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 0%; }
+.g05-rp-beam { animation: g05-rp-beam calc(1.7s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 0%; }
 
 @keyframes g05-rp-lift {
   0% { opacity: 0; transform: translate(0, 0) scale(0.8); }
@@ -317,7 +317,7 @@
   36% { opacity: 1; transform: scale(1.2) rotate(8deg); }
   100% { opacity: 0; transform: scale(0.7) rotate(40deg); }
 }
-.g05-cc-crest { animation: g05-cc-crest calc(1.05s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.g05-cc-crest { animation: g05-cc-crest calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 /* =============================================================================
    7. Drawbridge Crew - the hands go up in a ripple, the plank travels forward
@@ -377,7 +377,7 @@
   40% { opacity: 1; transform: translateX(0) scaleX(1); }
   100% { opacity: 0; transform: translateX(80%) scaleX(0.5); }
 }
-.g05-fs-glint { animation: g05-fs-glint calc(1.1s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.g05-fs-glint { animation: g05-fs-glint calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 @keyframes g05-fs-brace {
   0% { opacity: 0; transform: scaleX(0.5) translateY(24%); }
@@ -431,7 +431,7 @@
   32% { opacity: 0.9; transform: scale(1.1); }
   100% { opacity: 0; transform: scale(1.5) translateY(20%); }
 }
-.g05-gm-dust { animation: g05-gm-dust calc(1s * var(--fx-dur, 1)) ease-out both; }
+.g05-gm-dust { animation: g05-gm-dust calc(1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* =============================================================================
    10. Famine - the spade line, the trench opening, the rank dropping in, the
@@ -490,14 +490,14 @@
   74% { transform: rotate(-2deg); }
   100% { opacity: 0; transform: rotate(0deg) scale(0.98); }
 }
-.g05-pp-pipe { animation: g05-pp-pipe calc(1.7s * var(--fx-dur, 1)) ease-out both; transform-origin: 20% 80%; }
+.g05-pp-pipe { animation: g05-pp-pipe calc(1.7s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 20% 80%; }
 
 @keyframes g05-pp-note {
   0% { opacity: 0; transform: translate(0, 0) scale(0.4) rotate(-12deg); }
   30% { opacity: 1; transform: translate(20%, calc(var(--g05-adv, -1) * 30%)) scale(1) rotate(4deg); }
   100% { opacity: 0; transform: translate(70%, calc(var(--g05-adv, -1) * 190%)) scale(0.8) rotate(18deg); }
 }
-.g05-pp-note { animation: g05-pp-note calc(1.5s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.g05-pp-note { animation: g05-pp-note calc(1.5s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 @keyframes g05-pp-turn {
   0% { opacity: 0; transform: rotate(0deg) scale(0.7); }
@@ -513,7 +513,7 @@
   36% { opacity: 0.9; transform: scale(1) rotate(60deg); }
   100% { opacity: 0; transform: scale(1.3) rotate(160deg); }
 }
-.g05-pp-thread { animation: g05-pp-thread calc(1.4s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.g05-pp-thread { animation: g05-pp-thread calc(1.4s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 /* =============================================================================
    12. Cloud Serpent - the body pours in along the aim vector (its run is the
@@ -550,7 +550,7 @@
   40% { opacity: 0.75; transform: translateX(0) scaleX(1); }
   100% { opacity: 0; transform: translateX(30%) scaleX(1.1); }
 }
-.g05-cs-mist { animation: g05-cs-mist calc(1.4s * var(--fx-dur, 1)) ease-out both; transform-origin: 0% 50%; }
+.g05-cs-mist { animation: g05-cs-mist calc(1.4s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 0% 50%; }
 
 /* =============================================================================
    13. Locust Swarm - the mass pours along the rank, individuals break out of
@@ -571,7 +571,7 @@
   32% { opacity: 1; transform: translate(0, -14%) rotate(8deg) scale(1); }
   100% { opacity: 0; transform: translate(90%, 24%) rotate(-22deg) scale(0.8); }
 }
-.g05-ls-bug { animation: g05-ls-bug calc(1.3s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.g05-ls-bug { animation: g05-ls-bug calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 @keyframes g05-ls-stub {
   0% { opacity: 0; transform: scaleY(2.2); }
@@ -587,7 +587,7 @@
   36% { opacity: 0.9; transform: scaleX(1); }
   100% { opacity: 0; transform: scaleX(1) scaleY(0.4); }
 }
-.g05-ls-strip { animation: g05-ls-strip calc(1.2s * var(--fx-dur, 1)) ease-out both; transform-origin: 0% 50%; }
+.g05-ls-strip { animation: g05-ls-strip calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 0% 50%; }
 
 /* =============================================================================
    14. Volcanic Vent - the fissure runs, the cone pushes up, the plume, the
@@ -631,7 +631,7 @@
   28% { opacity: 0.95; transform: translate(0, -40%) scale(1); }
   100% { opacity: 0; transform: translate(24%, calc(var(--g05-adv, -1) * -200%)) scale(0.7); }
 }
-.g05-vv-ash { animation: g05-vv-ash calc(1.4s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.g05-vv-ash { animation: g05-vv-ash calc(1.4s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 /* =============================================================================
    15. Field Hospital - the tent flap, the stretcher carried in from behind the
@@ -679,7 +679,7 @@
   78% { transform: rotate(2deg); }
   100% { opacity: 0; transform: rotate(0deg); }
 }
-.g05-fh-lamp { animation: g05-fh-lamp calc(1.3s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 0%; }
+.g05-fh-lamp { animation: g05-fh-lamp calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 0%; }
 
 /* =============================================================================
    16. Letters Home - the satchel flap, the letters flying, one unfolding, two
@@ -736,7 +736,7 @@
   72% { transform: translateX(calc(var(--g05-home, 1) * 30%)) rotate(4deg); }
   100% { opacity: 0; transform: translateX(calc(var(--g05-home, 1) * 44%)); }
 }
-.g05-sc-sift { animation: g05-sc-sift calc(1.35s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.g05-sc-sift { animation: g05-sc-sift calc(1.35s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 @keyframes g05-sc-lift {
   0% { opacity: 0; transform: translateY(46%) scale(0.5); }
@@ -767,7 +767,7 @@
   72% { transform: rotate(8deg); }
   100% { opacity: 0; transform: rotate(0deg); }
 }
-.g05-ct-tail { animation: g05-ct-tail calc(1.5s * var(--fx-dur, 1)) ease-out both; transform-origin: 20% 100%; }
+.g05-ct-tail { animation: g05-ct-tail calc(1.5s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 20% 100%; }
 
 @keyframes g05-ct-blink {
   0% { opacity: 0; transform: scaleY(0.1); }
@@ -776,7 +776,7 @@
   64% { transform: scaleY(1); }
   100% { opacity: 0; transform: scaleY(0.9); }
 }
-.g05-ct-blink { animation: g05-ct-blink calc(1.2s * var(--fx-dur, 1)) ease-out both; }
+.g05-ct-blink { animation: g05-ct-blink calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g05-ct-curl {
   0% { opacity: 0; transform: scaleY(0.2) scaleX(0.7); }
@@ -791,7 +791,7 @@
   38% { opacity: 0.9; transform: scale(1); }
   100% { opacity: 0; transform: scale(1.5); }
 }
-.g05-ct-hush { animation: g05-ct-hush calc(1.1s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.g05-ct-hush { animation: g05-ct-hush calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 /* =============================================================================
    19. Echo of Bells - the bell swings, the tolls roll out over the board, the
@@ -806,7 +806,7 @@
   82% { transform: rotate(-4deg); }
   100% { opacity: 0; transform: rotate(0deg); }
 }
-.g05-eb-bell { animation: g05-eb-bell calc(1.8s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 4%; }
+.g05-eb-bell { animation: g05-eb-bell calc(1.8s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 4%; }
 
 @keyframes g05-eb-toll {
   0% { opacity: 0; transform: scale(0.14); }
@@ -829,7 +829,7 @@
   40% { opacity: 1; transform: translateY(0) scaleX(1); }
   100% { opacity: 0; transform: translateY(calc(var(--g05-adv, -1) * 120%)) scaleX(0.9); }
 }
-.g05-eb-pass { animation: g05-eb-pass calc(1.3s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.g05-eb-pass { animation: g05-eb-pass calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 /* =============================================================================
    20. No Doubling - the file is scratched down the board, the stake driven in,
@@ -842,7 +842,7 @@
   76% { opacity: 0.6; }
   100% { opacity: 0; transform: scaleY(1); }
 }
-.g05-nd-file { animation: g05-nd-file calc(1.6s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.g05-nd-file { animation: g05-nd-file calc(1.6s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 @keyframes g05-nd-stake {
   0% { opacity: 0; transform: translateY(calc(var(--g05-adv, -1) * 90%)) scaleY(0.6); }
@@ -921,7 +921,7 @@
   50% { transform: rotate(-6deg) scale(1); }
   100% { opacity: 0; transform: rotate(0deg) scale(0.9); }
 }
-.g05-tp-coil { animation: g05-tp-coil calc(1.3s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.g05-tp-coil { animation: g05-tp-coil calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 @keyframes g05-tp-hook {
   0% { opacity: 0; transform: scaleX(0.04); }
@@ -952,7 +952,7 @@
   40% { opacity: 0.9; transform: scaleX(1); }
   100% { opacity: 0; transform: scaleX(1) scaleY(0.3); }
 }
-.g05-tp-drag { animation: g05-tp-drag calc(1.15s * var(--fx-dur, 1)) ease-out both; transform-origin: 100% 50%; }
+.g05-tp-drag { animation: g05-tp-drag calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 100% 50%; }
 
 /* =============================================================================
    23. Trojan Pawn - the seam, the hatch swinging open, two leaping out either
@@ -1053,7 +1053,7 @@
   54% { transform: scaleX(1); }
   100% { opacity: 0; transform: scaleX(1); }
 }
-.g05-lf-hands { animation: g05-lf-hands calc(1.1s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.g05-lf-hands { animation: g05-lf-hands calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 @keyframes g05-lf-vault {
   0% { opacity: 0; transform: translate(-80%, 20%) rotate(-12deg) scale(0.85); }
@@ -1068,7 +1068,7 @@
   34% { opacity: 0.9; transform: scale(1.1); }
   100% { opacity: 0; transform: scale(1.6) translateY(-10%); }
 }
-.g05-lf-land { animation: g05-lf-land calc(1.1s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.g05-lf-land { animation: g05-lf-land calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 @keyframes g05-lf-up {
   0% { opacity: 0; transform: scaleY(0.6); }
@@ -1088,7 +1088,7 @@
   40% { opacity: 1; transform: scaleX(1) rotate(0deg); }
   100% { opacity: 0; transform: scaleX(1) scaleY(0.3); }
 }
-.g05-ms-paint { animation: g05-ms-paint calc(1.05s * var(--fx-dur, 1)) ease-out both; transform-origin: 0% 50%; }
+.g05-ms-paint { animation: g05-ms-paint calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 0% 50%; }
 
 @keyframes g05-ms-split {
   0% { opacity: 0; transform: translateY(24%) scale(0.9); }
@@ -1113,7 +1113,7 @@
   70% { transform: scaleX(1.03); }
   100% { opacity: 0; transform: scaleX(1); }
 }
-.g05-ms-wobble { animation: g05-ms-wobble calc(1.2s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.g05-ms-wobble { animation: g05-ms-wobble calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 /* =============================================================================
    27. Candle Curfew - the flame gutters, the snuffer comes down, the board
@@ -1128,7 +1128,7 @@
   70% { transform: scaleY(0.6) scaleX(0.8); }
   100% { opacity: 0; transform: scaleY(0.1) scaleX(0.6); }
 }
-.g05-cf-flame { animation: g05-cf-flame calc(1.4s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 100%; }
+.g05-cf-flame { animation: g05-cf-flame calc(1.4s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 100%; }
 
 @keyframes g05-cf-snuff {
   0% { opacity: 0; transform: translateY(-140%) scale(0.9); }
@@ -1144,7 +1144,7 @@
   76% { opacity: 0.5; }
   100% { opacity: 0; }
 }
-.g05-cf-dark { animation: g05-cf-dark calc(1.5s * var(--fx-dur, 1)) ease-out both; }
+.g05-cf-dark { animation: g05-cf-dark calc(1.5s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g05-cf-bolt {
   0% { opacity: 0; transform: translateY(0) rotate(0deg) scale(0.9); }
@@ -1199,7 +1199,7 @@
   56% { transform: rotate(-4deg); }
   100% { opacity: 0; transform: rotate(0deg) scale(0.96); }
 }
-.g05-ol-flip { animation: g05-ol-flip calc(1.2s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 100%; }
+.g05-ol-flip { animation: g05-ol-flip calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 100%; }
 
 /* =============================================================================
    29. Understudy Rule - the call-board flips, the plumed helm is handed down
@@ -1237,7 +1237,7 @@
   40% { opacity: 0.95; transform: translateX(0) scale(1); }
   100% { opacity: 0; transform: translateX(0) scale(1.2); }
 }
-.g05-ur-spot { animation: g05-ur-spot calc(1.25s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.g05-ur-spot { animation: g05-ur-spot calc(1.25s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 @keyframes g05-ur-curtain {
   0% { opacity: 0; transform: translateX(-100%) scaleX(0.6); }

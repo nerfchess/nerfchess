@@ -637,3 +637,9 @@ html[data-anim="off"] .chest-shell--opening .chest-scene { animation: none; }
 }
 .chest-shell--still .chest-wedge,
 html[data-anim="off"] .chest-wedge { animation: none; }
+/* The side faces settle away with the body once the lid is up, so nothing is
+   left standing when the cards deal. */
+.chest-shell--opening .chest-side {
+  animation: chest-body-settle 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.42s both;
+}
+html[data-anim="off"] .chest-shell--opening .chest-side { animation: none; opacity: 0; }

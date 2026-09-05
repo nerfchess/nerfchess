@@ -2,9 +2,11 @@
 // hand-tuned CARD_VFX entries. Pure: reads the play, returns a Vfx3D or
 // undefined. An explicit `depth` on the play always wins (null opts out).
 //
-//   tier >= 4, travel "beam", 2+ targets on one rank / file / diagonal -> laser
+//   tier >= 4 beam (tier >= 6 bolt/chain), 2+ targets on one line     -> laser
+//   tier >= 5 beam with one target and a source                        -> short laser
 //   impact "shatter", tier >= 5                                        -> shatter
-//   impact "shock",   tier >= 6                                        -> ringWave
+//   impact "shock" tier >= 6, or travel "wave" tier >= 7               -> ringWave
+//   travel "rain" tier >= 7, <= 6 targets                              -> pillar
 //   aftermath "frost" | "scorch", tier >= 6, <= 4 targets              -> pillar
 
 import type { Vfx3D, VfxPlay, VfxPoint } from "../vfx/types";
@@ -38,7 +40,10 @@ export function deriveDepth(play: VfxPlay): Vfx3D | undefined {
   if (ps.length === 0) return undefined;
   const tier = play.tier;
 
-  if (tier >= 4 && play.travel === "beam" && ps.length >= 2) {
+  // Beams from tier 4, bolts and chains from tier 6: anything that already
+  // travels in a straight line gets the laser when its victims share a line.
+  const lineTravel = play.travel === "beam" ? tier >= 4 : (play.travel === "bolt" || play.travel === "chain") && tier >= 6;
+  if (lineTravel && ps.length >= 2) {
     if (sameRank(ps)) {
       const y = ps[0].y;
       return { primitive: "laserRank", line: { from: { x: 0, y }, to: { x: 1, y } }, fallback: "canvas" };
@@ -62,11 +67,21 @@ export function deriveDepth(play: VfxPlay): Vfx3D | undefined {
       };
     }
   }
+  // A single-target beam at tier 5+ still fires as a short laser from its
+  // source to the victim (the 2D layer keeps its impact).
+  if (tier >= 5 && play.travel === "beam" && ps.length === 1 && play.source) {
+    const d = Math.hypot(ps[0].x - play.source.x, ps[0].y - play.source.y);
+    if (d > SQ * 1.5) return { primitive: "laserDiag", line: { from: play.source, to: ps[0] }, fallback: "canvas" };
+  }
   if (play.impact === "shatter" && tier >= 5) {
     return { primitive: "shatter", squares: ps.slice(0, 8), fallback: "none" };
   }
-  if (play.impact === "shock" && tier >= 6) {
+  if ((play.impact === "shock" && tier >= 6) || (play.travel === "wave" && tier >= 7)) {
     return { primitive: "ringWave", squares: [play.source ?? ps[0]], fallback: "none" };
+  }
+  // Sky-fall at tier 7+: a column of light stands on each square the rain hits.
+  if (play.travel === "rain" && tier >= 7 && ps.length <= 6) {
+    return { primitive: "pillar", squares: ps, height: SQ * 0.8, fallback: "none" };
   }
   if ((play.aftermath === "frost" || play.aftermath === "scorch") && tier >= 6 && ps.length <= 4) {
     return { primitive: "pillar", squares: ps, height: SQ * 0.6, fallback: "none" };

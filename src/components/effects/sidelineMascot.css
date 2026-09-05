@@ -13,7 +13,7 @@
   60% { transform: translateY(1.5%) rotate(0.8deg); }
 }
 .slm-bob {
-  animation: slm-idle-bob 3.2s ease-in-out infinite;
+  animation: slm-idle-bob 3.2s cubic-bezier(0.65, 0, 0.35, 1) infinite;
   transform-origin: 50% 100%;
 }
 
@@ -34,7 +34,7 @@
   96%, 100% { transform: translateX(var(--slm-home)) translateY(0) scaleX(1); }
 }
 .slm-walk {
-  animation: slm-waddle 24s ease-in-out infinite;
+  animation: slm-waddle 24s cubic-bezier(0.65, 0, 0.35, 1) infinite;
 }
 /* My pet idles near the left corner and wanders right; the opponent's mirrors
    from the right so the two never share a lane visually. The peek lifts the
@@ -78,7 +78,7 @@
   100% { transform: translateY(0) scale(1, 1) rotate(0deg); }
 }
 .slm-sad {
-  animation: slm-sad-slump 1.8s ease-in-out both;
+  animation: slm-sad-slump 1.8s cubic-bezier(0.65, 0, 0.35, 1) both;
   transform-origin: 50% 100%;
 }
 

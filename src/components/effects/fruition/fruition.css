@@ -21,7 +21,7 @@
   width: 34%;
   background: linear-gradient(90deg, rgba(224, 82, 82, 0.9), rgba(224, 82, 82, 0.35));
   transform: translateY(-50%) scaleX(0);
-  animation: frx-clamp calc(0.9s * var(--fx-dur, 1)) var(--ease-out, ease-out) both;
+  animation: frx-clamp calc(0.9s * var(--fx-dur, 1)) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
 }
 .frx-clamp-bar--l {
   left: 4%;
@@ -56,7 +56,7 @@
   border: 1.5px solid rgba(224, 82, 82, 0.55);
   border-radius: 1px;
   transform: scale(1.25);
-  animation: frx-clamp-ring calc(0.9s * var(--fx-dur, 1)) var(--ease-out, ease-out) both;
+  animation: frx-clamp-ring calc(0.9s * var(--fx-dur, 1)) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
 }
 @keyframes frx-clamp-ring {
   0% {
@@ -86,7 +86,7 @@
   inset: 10%;
   border: 2px solid rgba(224, 82, 82, 0.75);
   border-radius: 1px;
-  animation: frx-receive calc(1.1s * var(--fx-dur, 1)) var(--ease-out, ease-out) both;
+  animation: frx-receive calc(1.1s * var(--fx-dur, 1)) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
 }
 @keyframes frx-receive {
   0% {
@@ -115,7 +115,7 @@
   border-radius: 50%;
   background: radial-gradient(circle, rgba(247, 241, 227, 0.8), rgba(247, 241, 227, 0) 70%);
   transform: scale(0);
-  animation: frx-receive-tick calc(0.55s * var(--fx-dur, 1)) var(--ease-out, ease-out) both;
+  animation: frx-receive-tick calc(0.55s * var(--fx-dur, 1)) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
   animation-delay: calc(0.34s * var(--fx-dur, 1));
 }
 @keyframes frx-receive-tick {
@@ -140,7 +140,7 @@
   inset: 10%;
   border: 1.5px solid rgba(216, 181, 110, 0.8);
   border-radius: 1px;
-  animation: frx-ward calc(1.1s * var(--fx-dur, 1)) var(--ease-out, ease-out) both;
+  animation: frx-ward calc(1.1s * var(--fx-dur, 1)) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
 }
 @keyframes frx-ward {
   0% {
@@ -169,7 +169,7 @@
   border-radius: 50%;
   background: radial-gradient(circle, rgba(247, 241, 227, 0.9), rgba(247, 241, 227, 0) 70%);
   transform: translateX(-50%) scale(0);
-  animation: frx-receive-tick calc(0.5s * var(--fx-dur, 1)) var(--ease-out, ease-out) both;
+  animation: frx-receive-tick calc(0.5s * var(--fx-dur, 1)) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
   animation-delay: calc(0.4s * var(--fx-dur, 1));
 }
 
@@ -180,7 +180,7 @@
   inset: 12%;
   border: 1.5px solid rgba(247, 241, 227, 0.6);
   border-radius: 1px;
-  animation: frx-expire calc(0.9s * var(--fx-dur, 1)) var(--ease-out, ease-out) both;
+  animation: frx-expire calc(0.9s * var(--fx-dur, 1)) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
 }
 @keyframes frx-expire {
   0% {
@@ -204,7 +204,7 @@
    opacity 0 and stays there; the element is inert once done. */
 .nerf-heartbeat {
   border: 1.5px solid rgb(var(--tier-rgb, 216 181 110) / 0.7);
-  animation: nerf-heartbeat calc(0.9s * var(--fx-dur, 1)) var(--ease-out, ease-out) both;
+  animation: nerf-heartbeat calc(0.9s * var(--fx-dur, 1)) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
 }
 @keyframes nerf-heartbeat {
   0% {
@@ -229,7 +229,7 @@
   inset: 0;
   border: 3px solid rgba(224, 82, 82, 0.0);
   box-shadow: inset 0 0 34px rgba(224, 82, 82, 0.0);
-  animation: frx-frame calc(1.2s * var(--fx-dur, 1)) var(--ease-io, ease-in-out) both;
+  animation: frx-frame calc(1.2s * var(--fx-dur, 1)) var(--ease-io, cubic-bezier(0.65, 0, 0.35, 1)) both;
 }
 .frx-frame--release {
   animation-name: frx-frame-release;

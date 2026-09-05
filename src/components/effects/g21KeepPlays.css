@@ -36,7 +36,7 @@
   55% { opacity: 0.75; transform: scale(1, 1); }
   100% { opacity: 0; transform: scale(1.12, 1.02); }
 }
-.g21-tell { animation: g21-tell calc(0.3s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 100%; }
+.g21-tell { animation: g21-tell calc(0.3s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 100%; }
 
 /* A rail, a line or a ceiling scribed from the cast square down the vector.
    Authored pointing RIGHT; <AimStage> puts it on the real line. */
@@ -57,7 +57,7 @@
   68% { opacity: 0.4; }
   100% { opacity: 0; }
 }
-.g21-wash { animation: g21-wash calc(1.35s * var(--fx-dur, 1)) ease-out both; }
+.g21-wash { animation: g21-wash calc(1.35s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* ---------------------------------------------------------------------------
    3. Travel along the line (--fx-len)
@@ -145,7 +145,7 @@
   30% { opacity: 0.7; }
   100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * -24%)) scale(1.5); }
 }
-.g21-motes { animation: g21-motes calc(1.1s * var(--fx-dur, 1)) ease-out both; }
+.g21-motes { animation: g21-motes calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* Smoke and breath: slower, and it leans harder. */
 @keyframes g21-smoke {
@@ -153,7 +153,7 @@
   34% { opacity: 0.75; transform: translate(3%, calc(var(--fx-side, 1) * -14%)) scale(1, 1); }
   100% { opacity: 0; transform: translate(10%, calc(var(--fx-side, 1) * -44%)) scale(1.5, 1.35); }
 }
-.g21-smoke { animation: g21-smoke calc(1.25s * var(--fx-dur, 1)) ease-out both; }
+.g21-smoke { animation: g21-smoke calc(1.25s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* Something small that lets go and falls: a nail, a peg, a glove, a crumb. */
 @keyframes g21-drip {
@@ -176,7 +176,7 @@
   45% { opacity: 1; transform: scale(1.15) rotate(0deg); }
   100% { opacity: 0; transform: scale(0.55) rotate(10deg); }
 }
-.g21-glint { animation: g21-glint calc(0.5s * var(--fx-dur, 1)) ease-out both; }
+.g21-glint { animation: g21-glint calc(0.5s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* A candle or a fed fire taking hold: it wanders before it settles. */
 @keyframes g21-flick {
@@ -187,7 +187,7 @@
   76% { transform: scale(0.98, 1) translateX(-1%); }
   100% { opacity: 0; transform: scale(1.02, 1.08); }
 }
-.g21-flick { animation: g21-flick calc(1s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 50% 100%; }
+.g21-flick { animation: g21-flick calc(1s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; transform-origin: 50% 100%; }
 
 /* ---------------------------------------------------------------------------
    6. Entrance cut (the card arriving in hand, ~56% of the crop)
@@ -216,7 +216,7 @@
   58% { transform: scale(1); }
   100% { opacity: 0; transform: translateY(-12%) scale(0.92); }
 }
-.g21-ent3 { animation: g21-ent3 calc(0.78s * var(--fx-dur, 1)) ease-out both; }
+.g21-ent3 { animation: g21-ent3 calc(0.78s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* ---------------------------------------------------------------------------
    7. Target cut (one square, fast)
@@ -236,7 +236,7 @@
   40% { opacity: 0.9; transform: translateX(0) scaleX(1); }
   100% { opacity: 0; transform: translateX(30%) scaleX(0.7); }
 }
-.g21-hit2 { animation: g21-hit2 calc(0.46s * var(--fx-dur, 1)) ease-out both; }
+.g21-hit2 { animation: g21-hit2 calc(0.46s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* ===========================================================================
    PER-CARD SIGNATURE MOTIONS
@@ -295,7 +295,7 @@
   68% { opacity: 0.45; transform: scaleY(0.5); }
   100% { opacity: 0; transform: scaleY(0.2); }
 }
-.g21-emberdie { animation: g21-emberdie calc(0.95s * var(--fx-dur, 1)) ease-in both; transform-origin: 50% 100%; }
+.g21-emberdie { animation: g21-emberdie calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 1, 0.45) both; transform-origin: 50% 100%; }
 
 @keyframes g21-curfew {
   0% { opacity: 0; transform: translateY(-84%) scale(1.06); }
@@ -332,7 +332,7 @@
   84% { transform: translateX(0.6%); }
   100% { opacity: 0; transform: translateX(0); }
 }
-.g21-grate { animation: g21-grate calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+.g21-grate { animation: g21-grate calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g21-slop {
   0% { opacity: 0; transform: scale(0.2, 0.3); }
@@ -340,7 +340,7 @@
   70% { transform: scale(1.08, 0.96); }
   100% { opacity: 0; transform: scale(1.18, 1.04); }
 }
-.g21-slop { animation: g21-slop calc(1.05s * var(--fx-dur, 1)) ease-out both; }
+.g21-slop { animation: g21-slop calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g21-float {
   0% { opacity: 0; transform: translate(0, 0) rotate(0deg); }
@@ -396,7 +396,7 @@
   62% { opacity: 0.85; transform: scale(1.02); }
   100% { opacity: 0; transform: scale(1.3); }
 }
-.g21-knock { animation: g21-knock calc(0.3s * var(--fx-dur, 1)) ease-out both; }
+.g21-knock { animation: g21-knock calc(0.3s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g21-hatch {
   0% { opacity: 0; transform: translateX(0) scaleX(1); }
@@ -414,7 +414,7 @@
   62% { opacity: 0.9; transform: scale(0.98); }
   100% { opacity: 0; transform: scale(1.12); }
 }
-.g21-lamplight { animation: g21-lamplight calc(0.7s * var(--fx-dur, 1)) ease-out both; }
+.g21-lamplight { animation: g21-lamplight calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* The drawbar dropping into its keeper, on the caster's own side. */
 @keyframes g21-bardrop {
@@ -518,7 +518,7 @@
   44% { opacity: 0.5; transform: scale(0.9, 0.94); }
   100% { opacity: 0; transform: scale(1.4, 1.5); }
 }
-.g21-flare { animation: g21-flare calc(0.7s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 100%; }
+.g21-flare { animation: g21-flare calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 100%; }
 
 /* --- 13. Change of Address: the name board comes down, another goes up --- */
 @keyframes g21-boardswing {
@@ -564,7 +564,7 @@
   80% { transform: skewX(2deg); }
   100% { opacity: 0; transform: skewX(0deg); }
 }
-.g21-web { animation: g21-web calc(1.05s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 100% 0%; }
+.g21-web { animation: g21-web calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; transform-origin: 100% 0%; }
 
 /* --- 15. Gilded Doorknob: the leaf floats down and is burnished in ------- */
 @keyframes g21-leaf {
@@ -648,7 +648,7 @@
   86% { transform: rotate(-6deg); }
   100% { opacity: 0; transform: rotate(0deg); }
 }
-.g21-wave { animation: g21-wave calc(0.9s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 50% 100%; }
+.g21-wave { animation: g21-wave calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; transform-origin: 50% 100%; }
 
 /* --- 19. Rolling Gantry: rings along the rail, hanging dragged after ----- */
 @keyframes g21-ringslide {
@@ -746,7 +746,7 @@
   36% { opacity: 0.8; transform: translate(6%, calc(var(--fx-side, 1) * -10%)) scale(1, 1) skewX(-8deg); }
   100% { opacity: 0; transform: translate(24%, calc(var(--fx-side, 1) * -40%)) scale(1.6, 1.3) skewX(-16deg); }
 }
-.g21-plume { animation: g21-plume calc(1.25s * var(--fx-dur, 1)) ease-out both; }
+.g21-plume { animation: g21-plume calc(1.25s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- 24. Wall Sentries: the ceiling hatches open, then drop shut --------- */
 @keyframes g21-mhole {
@@ -765,7 +765,7 @@
   66% { opacity: 0.9; transform: scale(1); }
   100% { opacity: 0; transform: scale(0.4) translateY(-20%); }
 }
-.g21-eye { animation: g21-eye calc(0.72s * var(--fx-dur, 1)) ease-out both; }
+.g21-eye { animation: g21-eye calc(0.72s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* ---------------------------------------------------------------------------
    Animations off: the host already fades and hides the scene wrapper, but a
