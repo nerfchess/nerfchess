@@ -17,7 +17,8 @@ nav.site-nav {
 /* A nav link: plain text, no chrome until hovered. */
 .site-nav-link {
   position: relative;
-  font-size: 13px;
+  font-size: 15px;
+  font-weight: 500;
   line-height: 1.2;
   letter-spacing: 0.05em;
   text-transform: uppercase;

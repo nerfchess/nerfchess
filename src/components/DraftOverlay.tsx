@@ -19,6 +19,7 @@ import { DraftChest } from "./DraftChest";
 import { OpponentDraftPanel } from "./OpponentDraftPanel";
 import "./DraftOverlay.css";
 import { Button } from "@/components/ui/Button";
+import { GlossaryText } from "@/components/GlossaryText";
 
 interface Props {
   offer: BuffOffer;
@@ -2169,7 +2170,7 @@ function RevealColumn({ label, side }: { label: string; side: DraftRevealSide })
                 </span>
                 {/* What the card does: shown only for a revealed pick, so a
                     masked draft (below) never leaks its effect. */}
-                <span className="block text-[12px] leading-snug text-parchment-300">{def.description}</span>
+                <span className="block text-[12px] leading-snug text-parchment-300"><GlossaryText text={def.description} /></span>
               </span>
             );
           }

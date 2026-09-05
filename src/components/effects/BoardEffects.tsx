@@ -23,6 +23,7 @@ import {
 import type { BuffCategory, CardFx } from "@/engine/buff";
 import { CategoryArrival } from "./cardEntrance";
 import { cardFaceIcon } from "@/lib/cardIcon";
+import { MOTIF_STATUS, statusColor } from "@/lib/boardStatus";
 import { fxLevel } from "@/lib/fxToggle";
 import type { PieceType } from "@/engine/types";
 import "./effects.css";
@@ -1138,7 +1139,10 @@ export const MotifBadge = React.memo(function MotifBadge({
   /** Board-allocated corner for the corner-anchored badges (default tr). */
   corner?: BadgeCorner;
 }) {
-  const color = TIER_COLOR[tier] ?? TIER_COLOR[3];
+  // The badge wears its STATUS colour (lib/boardStatus), so a jail always
+  // reads as "can't move" and a muzzle as "can't capture" whatever the card's
+  // tier; the tier still feeds the popover.
+  const color = statusColor(MOTIF_STATUS[motif] ?? "restricted") ?? TIER_COLOR[tier] ?? TIER_COLOR[3];
   const accent = name ? nameHash(name) : null;
   const accentAngle = accent != null ? accent % 360 : null;
   const faceIcon = cardId ? cardFaceIcon(cardId, category, cardIcon) : undefined;

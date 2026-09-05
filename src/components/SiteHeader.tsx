@@ -299,7 +299,7 @@ export function SiteHeader({ active }: { active?: string }) {
                 <Link
                   href={link.href}
                   data-active={activeSection === link.href}
-                  className="site-nav-link block px-3 py-[1.4rem]"
+                  className="site-nav-link block px-3.5 py-[1.3rem]"
                 >
                   {link.label}
                 </Link>
@@ -327,7 +327,7 @@ export function SiteHeader({ active }: { active?: string }) {
                 key={link.href}
                 href={link.href}
                 data-active={activeSection === link.href}
-                className="site-nav-link relative block px-3 py-[1.4rem]"
+                className="site-nav-link relative block px-3.5 py-[1.3rem]"
               >
                 {link.label}
               </Link>
@@ -348,7 +348,7 @@ export function SiteHeader({ active }: { active?: string }) {
             className={iconButton + (menu === "search" ? " bg-[color:var(--bg-raised)] text-parchment-50" : "")}
             onClick={() => toggle("search")}
           >
-            <Search size={20} strokeWidth={1.6} />
+            <Search size={22} strokeWidth={1.6} />
           </button>
           {menu === "search" && (
             // Below lg: a full-width dropdown UNDER the bar (fixed inset-x/top),
@@ -372,7 +372,7 @@ export function SiteHeader({ active }: { active?: string }) {
               className={iconButton}
               onClick={() => toggle("challenges")}
             >
-              <Swords size={20} strokeWidth={1.6} />
+              <Swords size={22} strokeWidth={1.6} />
               <Badge n={challenges.length} />
             </button>
             {menu === "challenges" && (
@@ -426,7 +426,7 @@ export function SiteHeader({ active }: { active?: string }) {
               className={iconButton + (unread > 0 ? " relic-unread" : "")}
               onClick={() => toggle("bell")}
             >
-              <Bell size={20} strokeWidth={1.6} />
+              <Bell size={22} strokeWidth={1.6} />
               {unread > 0 && <span aria-hidden className="relic-orbit" />}
               <Badge n={unread} />
             </button>

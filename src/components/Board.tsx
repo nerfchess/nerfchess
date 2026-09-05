@@ -123,6 +123,8 @@ if (process.env.NODE_ENV !== "production") {
 import { EdgeAura, EmpowerShine, NerfAura, tierRgb } from "./effects/EmpowerAura";
 import type { MotifMark } from "./effects/fxZones";
 import { EffectPopover, type EffectPopoverContent } from "./EffectPopover";
+import { StatusChip, StatusFrame } from "./board/StatusGlyph";
+import { statusHeadline, type BoardStatus } from "@/lib/boardStatus";
 import { FX_LEVELS, useFxHidden, useFxLevel } from "@/lib/fxToggle";
 import { fxDurationScale, motionOff } from "@/lib/settings";
 import { VfxLayer } from "./effects/vfx/VfxLayer";
@@ -289,6 +291,17 @@ const FREEZE_SKINS: Record<string, { tint: string; glyph: FreezeGlyphKind; label
   // Rendered with the full BearTrapMark jaws under the piece (see the frozen
   // block in the square loop), not just the corner glyph.
   beartrap: { tint: "bg-zinc-500/25", glyph: "chain", label: "Trapped: jaws locked around it" },
+};
+// Card-fx motif -> board status class for the hover headline.
+const MOTIF_STATUS_KIND: Record<string, BoardStatus> = {
+  jail: "frozen",
+  anchor: "restricted",
+  muzzle: "muzzled",
+  blindfold: "blind",
+  slow: "slowed",
+  empower: "empowered",
+  ward: "shielded",
+  rally: "empowered",
 };
 function freezeSkinOf(skin: string | undefined) {
   return FREEZE_SKINS[skin ?? "ice"] ?? FREEZE_SKINS.ice;
@@ -526,37 +539,6 @@ const TRAP_HOVER_BODY: Record<string, string> = {
   landlord: "An enemy piece (never a king) ending its move here owes rent: stuck for a turn.",
   beartrap: "The first enemy piece (never a king) to step here is snapped up for 4 turns.",
 };
-
-/** Tiny corner marker for a frozen square, chosen by the skin's glyph kind.
- * Strokes only (no gradients/glow/emoji), sized to sit unobtrusively. */
-function FreezeGlyph({ kind }: { kind: FreezeGlyphKind }) {
-  if (kind === "frost") return <SnowflakeGlyph />;
-  const common = { width: 13, height: 13, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, "aria-hidden": true };
-  if (kind === "drip")
-    return (
-      <svg {...common}><path d="M12 3c3 4 5 7 5 10a5 5 0 0 1-10 0c0-3 2-6 5-10Z" /></svg>
-    );
-  if (kind === "stars")
-    return (
-      <svg {...common}><path d="M12 3l1.3 3.2L16.5 7l-2.6 2 1 3.3L12 10.6 9.1 12.3l1-3.3L7.5 7l3.2-.8L12 3Z" /><circle cx="18" cy="17" r="1" /><circle cx="6" cy="16" r="1" /></svg>
-    );
-  if (kind === "zzz")
-    return (
-      <svg {...common}><path d="M6 8h5l-5 6h5" /><path d="M14 5h4l-4 4h4" /></svg>
-    );
-  if (kind === "web")
-    return (
-      <svg {...common}><path d="M12 3v18M3 12h18M6 6l12 12M18 6L6 18" /></svg>
-    );
-  if (kind === "chain")
-    return (
-      <svg {...common}><rect x="4" y="9" width="7" height="6" rx="3" /><rect x="13" y="9" width="7" height="6" rx="3" /></svg>
-    );
-  // cracks
-  return (
-    <svg {...common}><path d="M12 3l-2 6 3 3-2 4 2 5M12 9l4-2M11 15l-4 2" /></svg>
-  );
-}
 
 export interface QueuedPremove {
   from: Square;
@@ -1754,7 +1736,7 @@ const BoardSquare = React.memo(function BoardSquare({
                 )}
                 {banned && (
                   <>
-                    <div className="absolute inset-0 bg-red-900/45 pointer-events-none" />
+                    <StatusFrame status="barred" />
                     {/* Glowing aura: the nerf is ACTING here, not just tinting.
                         Decorative, so it stands down when effects are hidden or
                         the clock is calming FX (the red tint is the functional
@@ -1764,19 +1746,22 @@ const BoardSquare = React.memo(function BoardSquare({
                 )}
                 {wardSquares.has(sq) && (
                   <>
-                    <div className="absolute inset-0 bg-verdigris/20 pointer-events-none" />
+                    <StatusFrame status="warded" />
                     <BarrierStakes tone="ward" />
                   </>
                 )}
-                {barredSquares.has(sq) && <BarrierStakes tone="hostile" />}
+                {barredSquares.has(sq) && (
+                  <>
+                    {!banned && <StatusFrame status="barred" />}
+                    <BarrierStakes tone="hostile" />
+                  </>
+                )}
                 {frozenSquares.has(sq) && (
                   /* Immobilized: the MECHANIC is always the same (the piece
                      cannot move), but the skin picks the tint + corner marker so
                      glue, stun, sleep, web... never look like plain ice. */
                   <>
-                    <div
-                      className={`absolute inset-0 pointer-events-none sq-freeze ${freezeSkinOf(frozenSkins[sq]).tint}`}
-                    />
+                    <StatusFrame status="frozen" />
                     {frozenSkins[sq] === "beartrap" && (
                       /* Bear Trap: the whole steel-jaw marker clamps around
                          the held piece (which renders above it). */
@@ -1786,11 +1771,11 @@ const BoardSquare = React.memo(function BoardSquare({
                         </div>
                       </div>
                     )}
-                    <span
-                      className={`absolute ${CORNER_INSET_POS[flakeCorner]} z-10 leading-none pointer-events-none drop-shadow sq-freeze-flake`}
-                    >
-                      <FreezeGlyph kind={freezeSkinOf(frozenSkins[sq]).glyph} />
-                    </span>
+                    <StatusChip
+                      status="frozen"
+                      turns={piece ? effectTurns[sq] : null}
+                      className={`sq-status-chip--${flakeCorner}`}
+                    />
                   </>
                 )}
                 {walnutSquares.has(sq) && (
@@ -1798,7 +1783,7 @@ const BoardSquare = React.memo(function BoardSquare({
                      shell (WalnutPiece) while carved root-claws clamp in from
                      the square's corners and hold it fast for the duration. */
                   <>
-                    <div className="absolute inset-0 bg-amber-700/20 pointer-events-none sq-walnut" />
+                    {!frozenSquares.has(sq) && <StatusFrame status="frozen" />}
                     <RootClaws />
                   </>
                 )}
@@ -1815,9 +1800,9 @@ const BoardSquare = React.memo(function BoardSquare({
                 {doomMarks.has(sq) && piece && (
                   /* Doomed piece (Death Arcana style): the countdown to its
                      death rides the square, skull-tagged. */
-                  <CountdownChip n={doomMarks.get(sq)!} doom corner={countdownCorner} />
+                  <StatusChip status="doomed" turns={doomMarks.get(sq)!} className={`sq-status-chip--${countdownCorner}`} />
                 )}
-                {!doomMarks.has(sq) && piece && effectTurns[sq] != null && (
+                {!doomMarks.has(sq) && !frozenSquares.has(sq) && piece && effectTurns[sq] != null && (
                   /* Any other timed piece effect (freeze, walnut, shield,
                      ward...): the remaining turns ride the corner. */
                   <CountdownChip n={effectTurns[sq]!} corner={countdownCorner} />
@@ -1846,7 +1831,7 @@ const BoardSquare = React.memo(function BoardSquare({
                   /* Shackled by a king-only or no-pawn-advance hex: a grey
                      pall (one soft pulse on mount), then either the chain
                      jail (piece lockdowns) or the pawn fence below. */
-                  <div className="absolute inset-0 bg-slate-800/35 pointer-events-none sq-locked" />
+                  <StatusFrame status="restricted" />
                 )}
                 {jailed && (
                   /* Chain jail: links clamp down across the piece and hook
@@ -1860,7 +1845,10 @@ const BoardSquare = React.memo(function BoardSquare({
                 {pawnClampSquares.has(sq) && piece && (
                   /* Pawn clamp: a low fence hairline boards up the forward
                      edge; the path ahead is closed. */
-                  <PawnFence edge={fenceEdge} />
+                  <>
+                    {!lockedSquares.has(sq) && <StatusFrame status="restricted" />}
+                    <PawnFence edge={fenceEdge} />
+                  </>
                 )}
                 {!fxHiddenPref && motifShown && motifMark && isEmpowerMotif(motifMark.motif) && (
                   /* Empowered-piece shine: a soft breathing halo under a piece
@@ -1938,7 +1926,7 @@ const BoardSquare = React.memo(function BoardSquare({
                 )}
                 {piece && (shieldedSquares.has(sq) || kingSafeSquares.has(sq)) && (
                   <>
-                    <div className="absolute inset-0 pointer-events-none ring-2 ring-inset ring-verdigris-glow/80 shadow-[inset_0_0_18px_-4px_rgba(123,181,47,0.6)] sq-shield-in" />
+                    <StatusFrame status="shielded" />
                     {/* Shield bearer: a heater shield leans against the
                         king's square-front; other pieces get a buckler. */}
                     <ShieldMark
@@ -4229,6 +4217,8 @@ export function Board({
     body: string;
     status: string | null;
     tone: "buff" | "hex" | "neutral";
+    /** The board-status class (lib/boardStatus) this effect belongs to. */
+    kind?: BoardStatus;
   };
   const zoneEffectsFor = (sq: Square): ZoneEffectEntry[] => {
     const out: ZoneEffectEntry[] = [];
@@ -4237,6 +4227,7 @@ export function Board({
       out.push({
         title: "Walnut",
         tone: "hex",
+        kind: "frozen",
         status,
         body: "A squirrel buried this piece under a heavy nut, so it can only shuffle one square at a time until the shell cracks.",
       });
@@ -4251,6 +4242,7 @@ export function Board({
       out.push({
         title,
         tone: "hex",
+        kind: "frozen",
         status,
         body: detail
           ? `${detail.charAt(0).toUpperCase()}${detail.slice(1)}: this piece cannot move while it holds.`
@@ -4261,6 +4253,7 @@ export function Board({
       out.push({
         title: "Pawn halted",
         tone: "hex",
+        kind: "restricted",
         status,
         body: "A hex has fenced this pawn's path; it cannot advance.",
       });
@@ -4268,6 +4261,7 @@ export function Board({
       out.push({
         title: "Shackled",
         tone: "hex",
+        kind: "restricted",
         status,
         body: "A hex has chained this piece in place.",
       });
@@ -4275,6 +4269,7 @@ export function Board({
       out.push({
         title: "Shielded",
         tone: "buff",
+        kind: "shielded",
         status,
         body: "This piece cannot be captured while the shield holds - and while it cannot be captured, it may not capture the king itself (you must expose a piece to win). Kings are never shielded.",
       });
@@ -4282,6 +4277,7 @@ export function Board({
       out.push({
         title: "Royal guard",
         tone: "buff",
+        kind: "shielded",
         status,
         body: "This king cannot be captured while the ward holds.",
       });
@@ -4289,6 +4285,7 @@ export function Board({
       out.push({
         title: "Warded",
         tone: "buff",
+        kind: "warded",
         status,
         body: "Your opponent cannot move a piece onto this square.",
       });
@@ -4296,6 +4293,7 @@ export function Board({
       out.push({
         title: "Banana peel",
         tone: "neutral",
+        kind: "trap",
         status: null,
         body: "The next enemy piece to step here slips and skids off course.",
       });
@@ -4304,6 +4302,7 @@ export function Board({
       out.push({
         title: t.name,
         tone: "neutral",
+        kind: "trap",
         status: null,
         body: TRAP_HOVER_BODY[t.kind] ?? "A placed trap waits on this square.",
       });
@@ -4313,6 +4312,7 @@ export function Board({
       out.push({
         title: "Doomed",
         tone: "hex",
+        kind: "doomed",
         status: null,
         body: `This piece dies in ${n} of its owner's turns unless it is captured first.`,
       });
@@ -4330,6 +4330,7 @@ export function Board({
         out.push({
           title: motifMark.name,
           tone: isEmpowerMotif(motifMark.motif) ? "buff" : "hex",
+          kind: MOTIF_STATUS_KIND[motifMark.motif],
           status:
             motifMark.turns != null
               ? `${motifMark.turns} turn${motifMark.turns === 1 ? "" : "s"} left`
@@ -4364,11 +4365,14 @@ export function Board({
     // stacked square loses nothing, but the header is now the effect's own
     // name instead of the old generic "Active effect" shared by everything.
     const primary = effects[0];
+    const turnsMatch = primary.status ? /(\d+) turn/.exec(primary.status) : null;
     return {
       title: primary.title,
       body: effects.map((e) => e.body).join(" "),
       status: primary.status,
       tone: primary.tone,
+      plain: primary.kind ? statusHeadline(primary.kind, turnsMatch ? Number(turnsMatch[1]) : null) : undefined,
+      kind: primary.kind,
     };
   };
 

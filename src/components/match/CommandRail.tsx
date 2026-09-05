@@ -22,6 +22,7 @@
 // owning it here would split one calculation across two files.
 
 import type { ReactNode } from "react";
+import { BoardKeyDetails } from "@/components/board/BoardKey";
 import { Button } from "@/components/ui/Button";
 
 /** Which game this rail is fronting. `plain` is the bot game's no-cards mode;
@@ -149,6 +150,7 @@ export function CommandRail({
       <div className="space-y-2">
         <GlowWrap charged={selfCharged}>{self}</GlowWrap>
         {footer}
+        <BoardKeyDetails />
       </div>
     </aside>
   );

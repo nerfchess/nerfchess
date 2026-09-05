@@ -22,6 +22,22 @@ import { START_FEN, boardToFen, fenToBoard } from "@/lib/fen";
 import { gameToPGN } from "@/lib/pgn";
 import { Button } from "@/components/ui/Button";
 
+// One square per status class for the ?statusdemo=1 preview (0 = a1, 63 = h8).
+const STATUS_DEMO_VISUAL = {
+  frozenSquares: [1],
+  effectTurns: { 1: 3, 6: 2, 9: 1 } as Record<number, number | null>,
+  lockedSquares: [2],
+  pawnClampSquares: [9],
+  shieldedSquares: [3],
+  kingSafeSquares: [4],
+  wardSquares: [27],
+  barredSquares: [28],
+  bannedSquares: [36],
+  doomSquares: [{ sq: 6, turns: 2 }],
+  walnutSquares: [57],
+  trapSquares: [{ sq: 35, kind: "mine", name: "Mine" }],
+};
+
 // Lichess-style analysis board: move pieces for both sides, navigate the
 // line, and read the engine's eval bar and best move. Accepts ?fen=... or
 // ?moves=e2e4,e7e5,... so other pages can deep-link a position.
@@ -48,6 +64,9 @@ function evalLabel(cpWhite: number): string {
 
 function AnalysisInner() {
   const params = useSearchParams();
+  // Dev preview of the board status language (lib/boardStatus): ?statusdemo=1
+  // paints one square per status class on the start position.
+  const statusDemo = process.env.NODE_ENV !== "production" && params.get("statusdemo") === "1";
   const [startBoard, setStartBoard] = useState<BoardState>(() => initialBoard());
   const [customStart, setCustomStart] = useState(false);
   const [moves, setMoves] = useState<Move[]>([]);
@@ -230,9 +249,11 @@ function AnalysisInner() {
               myColor={board.turn}
               lastMove={lastMove}
               visual={
-                engineOn && analysis?.move
-                  ? { highlightSquares: [analysis.move.from, analysis.move.to] }
-                  : undefined
+                statusDemo
+                  ? STATUS_DEMO_VISUAL
+                  : engineOn && analysis?.move
+                    ? { highlightSquares: [analysis.move.from, analysis.move.to] }
+                    : undefined
               }
             />
             <div className="mt-3 flex flex-wrap items-center gap-1.5">

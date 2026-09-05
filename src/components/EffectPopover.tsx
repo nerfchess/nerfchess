@@ -11,6 +11,8 @@
 
 import React from "react";
 import { Color, FILE, RANK } from "@/engine/types";
+import { BOARD_STATUS, type BoardStatus } from "@/lib/boardStatus";
+import { StatusGlyph } from "@/components/board/StatusGlyph";
 
 // Mirror of globals.css's .tier-N palette (same values BoardEffects uses for
 // SVG strokes), so the card can tint its accent per card tier.
@@ -40,6 +42,10 @@ export interface EffectPopoverContent {
   /** buff = a boon on this side, hex = a curse, neutral = a plain zone effect.
    * Drives the small kicker label and a fallback accent when no tier. */
   tone?: "buff" | "hex" | "neutral";
+  /** Plain headline from the board-status vocabulary ("Can't move · 2 turns left"). */
+  plain?: string;
+  /** The board-status class: tints the card and draws its glyph. */
+  kind?: BoardStatus;
 }
 
 const TONE_LABEL: Record<NonNullable<EffectPopoverContent["tone"]>, string> = {
@@ -95,7 +101,9 @@ export function EffectPopover({
 
   const tone = content.tone ?? "neutral";
   const accent =
-    (content.tier != null ? TIER_ACCENT[content.tier] : undefined) ?? TONE_ACCENT[tone];
+    (content.kind ? BOARD_STATUS[content.kind].color : undefined) ??
+    (content.tier != null ? TIER_ACCENT[content.tier] : undefined) ??
+    TONE_ACCENT[tone];
 
   return (
     <div
@@ -112,6 +120,16 @@ export function EffectPopover({
           boxShadow: "0 6px 20px -6px rgba(0,0,0,0.7)",
         }}
       >
+        {content.plain && (
+          <div className="mb-1 flex items-center gap-1.5 text-[12px] font-semibold" style={{ color: accent }}>
+            {content.kind && (
+              <span className="inline-grid h-4 w-4 place-items-center" style={{ background: accent, color: "#14120f" }}>
+                <StatusGlyph status={content.kind} size={11} />
+              </span>
+            )}
+            {content.plain}
+          </div>
+        )}
         <div className="flex items-baseline justify-between gap-2">
           <span className="font-display text-sm font-semibold leading-tight" style={{ color: accent }}>
             {content.title}
