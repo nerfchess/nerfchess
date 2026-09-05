@@ -77,6 +77,10 @@ const flag = (name: string, dflt: string): string => {
 const GAMES = Number(flag("games", "20"));
 const ONLY = flag("only", "");
 const INCLUDE_RETIRED = process.argv.includes("--include-retired");
+// --ids=a,b,c restricts the sweep to an explicit list (a targeted re-measure
+// after a balance batch), where --only is a single substring.
+const IDS_ARG = process.argv.find((a) => a.startsWith("--ids="))?.slice(6) ?? "";
+const IDS = IDS_ARG ? new Set(IDS_ARG.split(",").map((x) => x.trim()).filter(Boolean)) : null;
 /** `--category nerf` measures one mechanical family. Used for the targeted
  *  re-runs that fix a blind spot for a specific population without paying for
  *  a whole sweep. */
@@ -477,6 +481,7 @@ function main(): void {
     (b) =>
       b.implemented &&
       (INCLUDE_RETIRED || !isRetired(b.id)) &&
+      (!IDS || IDS.has(b.id)) &&
       (!ONLY || b.id.includes(ONLY)) &&
       (!CATEGORY || (b as { category?: string }).category === CATEGORY),
   );
