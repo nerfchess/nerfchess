@@ -708,6 +708,7 @@ export function LabHarness() {
                   visual={visualResult.visual}
                   lastMove={game.board.history[game.board.history.length - 1] ?? null}
                   disabled={!!game.result}
+                  buffs={game.buffs}
                   passiveBuffs={game.buffs}
                   signatureCard={sig}
                   showCoordinates

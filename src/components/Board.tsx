@@ -2346,25 +2346,47 @@ export function Board({
   // split per module, so this is what decides which modules get fetched. It is
   // a stable string so the effect re-runs when a hand really changes (a draft
   // pick, a steal) and not on every unrelated render.
-  const inPlayIds = useMemo(() => {
-    if (!buffs) return "";
+  // Per-instance fingerprint of both hands (id, spent, used, nullified),
+  // computed every render for the same reason as inPlayIds below: the acquire
+  // and use beats diff the hands, and a surface that mutates the match state
+  // in place never changes the `buffs` identity, so effects keyed on it never
+  // re-ran and neither beat ever fired in bot games.
+  let handsKey = "";
+  if (buffs) {
+    const parts: string[] = [];
+    for (const color of ["w", "b"] as const) {
+      for (const inst of buffs.players[color].buffs) {
+        parts.push(`${color}${inst.id}${inst.spent ? "s" : ""}${inst.usedActivation ? "u" : ""}${inst.nullified ? "n" : ""}`);
+      }
+    }
+    handsKey = parts.join("|");
+  }
+  // Computed every render, NOT memoised on `buffs`: local surfaces (the bot
+  // game, the lab) mutate the match state in place and hand the board the
+  // same object, so a memo keyed on identity never saw a new card arrive and
+  // the module for a freshly drafted card was never fetched. The walk is a
+  // couple of dozen ids at most; the effect below keys on the string.
+  let inPlayIds = "";
+  if (buffs) {
     const ids = new Set<string>();
     for (const color of ["w", "b"] as const) {
       for (const inst of buffs.players[color].buffs) ids.add(inst.id);
     }
-    return [...ids].sort().join(",");
-  }, [buffs]);
+    inPlayIds = [...ids].sort().join(",");
+  }
   useEffect(() => {
     if (!canPlayCards) return;
-    const warm = () => prefetchSignatureVisuals(inPlayIds ? inPlayIds.split(",") : undefined);
-    const idle = (
-      window as Window & { requestIdleCallback?: (cb: () => void) => number }
-    ).requestIdleCallback;
-    if (!idle) {
-      const t = window.setTimeout(warm, 0);
-      return () => window.clearTimeout(t);
-    }
-    idle(warm);
+    // A plain timeout, not requestIdleCallback. The idle callback had no
+    // timeout, and a board with any continuous animation (the WebGL layer, a
+    // breathing chest, a running clock) never reports an idle period, so the
+    // plugin art modules were never fetched: every card fell back to the
+    // generated burst and low-tier plays looked like nothing happened. A
+    // short timeout still keeps the fetch off the mount frame.
+    const t = window.setTimeout(
+      () => prefetchSignatureVisuals(inPlayIds ? inPlayIds.split(",") : undefined),
+      120,
+    );
+    return () => window.clearTimeout(t);
   }, [canPlayCards, inPlayIds]);
   // Canvas VFX plays staged during render (the diff/zone claims happen in the
   // render pass) and flushed to the bus after commit, so render stays pure.
@@ -2565,7 +2587,8 @@ export function Board({
       name: def.name,
       mine: fresh.mine,
     });
-  }, [buffs, myColor]);
+    // handsKey is the real trigger (see its definition); buffs is read inside.
+  }, [buffs, handsKey, myColor]);
   // --- Usage beat: one shot the moment a card is USED (or cancelled) --------
   // Diffs the public buff lists by per-card USED-instance count (spent,
   // usedActivation, or nullified), instant/activated cards only — a passive
@@ -2628,7 +2651,7 @@ export function Board({
       mine: fresh.mine,
       nullified: fresh.nullified,
     });
-  }, [buffs, myColor]);
+  }, [buffs, handsKey, myColor]);
   // --- Nerf reveal splash: one shot per newly-known rule --------------------
   // Keys already played (color:id), so a reveal fires exactly once no matter
   // how often the host re-derives the prop array. The latest unseen entry
@@ -4770,6 +4793,18 @@ export function Board({
           cast.key !== castLeadSuppressKeyRef.current &&
           (() => {
             const cfg = resolveSignature(cast.id);
+            if (process.env.NODE_ENV !== "production" && typeof window !== "undefined") {
+              // Dev probe for the play pipeline: what the diff-less lead saw.
+              const w = window as unknown as { __ncFx?: unknown[] };
+              (w.__ncFx ??= []).push({
+                key: cast.key,
+                id: cast.id,
+                cfg: cfg ? { gen: isGenConfig(cfg), hasLead: cfg.hasLead, source: (cfg as { source?: string }).source ?? null, anchor: anchorOf(cfg) } : null,
+                zoneClaimed: cast.key === zoneLeadClaimKeyRef.current,
+                suppressed: false,
+                sq: cast.sq ?? null,
+              });
+            }
             if (!cfg || !cfg.hasLead) return null;
             // Lead art (BoardWideStage & friends) is calibrated for a ONE-CELL
             // parent: its 1400% canvas equals ~14 cells, blanketing the 8x8

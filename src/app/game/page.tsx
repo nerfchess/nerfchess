@@ -2067,6 +2067,13 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
                   lastMove={lastMoveForDisplay}
                   nerfReveals={nerfReveals}
                   passiveNerfs={passiveNerfs}
+                  // Both props: `passiveBuffs` paints the held-card marks,
+                  // `buffs` is what tells the board which cards can FIRE here.
+                  // Without it the bot game never fetched the play-art modules
+                  // and never fired the acquire or use beats, so every card
+                  // fell back to a faint generated ring ("I used Vanguard and
+                  // nothing happened").
+                  buffs={isReviewingHistory ? null : game.buffs}
                   passiveBuffs={isReviewingHistory ? null : game.buffs}
                   reviewingHistory={isReviewingHistory}
                   // The engine's per-cycle fx narration (nerf bites, victim
