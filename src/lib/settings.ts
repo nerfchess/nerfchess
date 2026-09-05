@@ -371,10 +371,15 @@ export function sanitizeCustomBgData(v: unknown): string {
 
 /** Read a stored site-theme id, translating anything from before the palette
  *  collapse onto the theme that replaced it. */
+/** Own-key test for the lookup tables: `in` walks the prototype chain, so a
+ *  stored "toString" or "constructor" would pass and un-style the board. */
+const own = (map: object, key: unknown): key is string =>
+  typeof key === "string" && Object.prototype.hasOwnProperty.call(map, key);
+
 function readSiteTheme(v: unknown): SiteTheme {
   if (typeof v !== "string") return DEFAULT.siteTheme;
-  if (v in SITE_THEMES) return v as SiteTheme;
-  return LEGACY_SITE_THEMES[v] ?? DEFAULT.siteTheme;
+  if (own(SITE_THEMES, v)) return v as SiteTheme;
+  return own(LEGACY_SITE_THEMES, v) ? LEGACY_SITE_THEMES[v] : DEFAULT.siteTheme;
 }
 
 /** Validate an arbitrary settings blob (stored locally or fetched from the
@@ -388,21 +393,21 @@ export function normalizeSettings(input: unknown): Settings | null {
     // "auto" and "custom" were legal stored values before the board and piece
     // pickers were simplified; both now fall through to the default.
     boardTheme:
-      parsed.boardTheme && parsed.boardTheme in BOARD_THEMES
+      own(BOARD_THEMES, parsed.boardTheme)
         ? (parsed.boardTheme as BoardThemePref)
         : DEFAULT.boardTheme,
     // A pre-split id like "ivory" was the inline design in that colour:
     // it lands as classic + that colour rather than resetting the player.
     pieceTheme:
-      parsed.pieceTheme && parsed.pieceTheme in PIECE_THEMES
+      own(PIECE_THEMES, parsed.pieceTheme)
         ? (parsed.pieceTheme as PieceThemePref)
-        : parsed.pieceTheme && parsed.pieceTheme in LEGACY_PIECE_COLOR_THEMES
+        : own(LEGACY_PIECE_COLOR_THEMES, parsed.pieceTheme)
           ? "classic"
           : DEFAULT.pieceTheme,
     pieceColor:
-      parsed.pieceColor && parsed.pieceColor in PIECE_COLORS
+      own(PIECE_COLORS, parsed.pieceColor)
         ? (parsed.pieceColor as PieceColor)
-        : parsed.pieceTheme && parsed.pieceTheme in LEGACY_PIECE_COLOR_THEMES
+        : own(LEGACY_PIECE_COLOR_THEMES, parsed.pieceTheme)
           ? LEGACY_PIECE_COLOR_THEMES[parsed.pieceTheme]
           : DEFAULT.pieceColor,
     volume: typeof parsed.volume === "number" ? Math.max(0, Math.min(1, parsed.volume)) : DEFAULT.volume,

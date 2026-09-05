@@ -36,7 +36,8 @@ import { LinkButton } from "@/components/ui/Button";
 function clockLabel(timeSec: number, incrementSec: number): string {
   if (timeSec <= 0) return "No clock";
   if (timeSec < 60) return `${timeSec}s+${incrementSec}`;
-  return `${Math.round(timeSec / 60)}+${incrementSec}`;
+  const minutes = timeSec % 60 === 0 ? String(timeSec / 60) : (timeSec / 60).toFixed(1);
+  return `${minutes}+${incrementSec}`;
 }
 
 // Live-game list ordering: one fixed default, most watched first (ties broken

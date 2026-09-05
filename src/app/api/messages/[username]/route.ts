@@ -41,9 +41,16 @@ export async function GET(request: Request, props: { params: Promise<{ username:
     .bind(peer.id, user.id)
     .run();
   // Reading the thread also clears its bell entry.
+  // Matched on the actor's id: actor_name is frozen at send time, so a
+  // renamed sender would otherwise leave the bell lit forever. Legacy rows
+  // without an actor id still match on the name.
   await db
-    .prepare(`UPDATE notifications SET read = 1 WHERE user_id = ? AND type = 'message' AND actor_name = ? AND read = 0`)
-    .bind(user.id, peer.username)
+    .prepare(
+      `UPDATE notifications SET read = 1
+       WHERE user_id = ? AND type = 'message' AND read = 0
+         AND (actor_user_id = ? OR (actor_user_id IS NULL AND actor_name = ?))`,
+    )
+    .bind(user.id, peer.id, peer.username)
     .run();
 
   return NextResponse.json({

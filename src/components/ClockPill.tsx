@@ -54,10 +54,21 @@ export function ClockPill({
 
   // Snap the display back to the authoritative clock values whenever they
   // change (adjust during render), leaving the effect to run the tick loop.
+  // `base` is the figure the tick loop counts down from. When only `active`
+  // flips (a draft pause and its resume, same banked ms) the display freezes
+  // where it stood and resumes from there: snapping to the banked value would
+  // hand back the seconds already spent this turn, which the game clock still
+  // charges, so the pill would read ahead of the real flag.
+  const [base, setBase] = useState(ms);
   const [prevSync, setPrevSync] = useState({ ms, active, startDelayMs });
-  if (prevSync.ms !== ms || prevSync.active !== active || prevSync.startDelayMs !== startDelayMs) {
+  if (prevSync.ms !== ms || prevSync.startDelayMs !== startDelayMs) {
     setPrevSync({ ms, active, startDelayMs });
+    setBase(ms);
     setDisplayMs(ms);
+    setGraceMs(active ? startDelayMs : 0);
+  } else if (prevSync.active !== active) {
+    setPrevSync({ ms, active, startDelayMs });
+    setBase(displayMs);
     setGraceMs(active ? startDelayMs : 0);
   }
 
@@ -71,7 +82,7 @@ export function ClockPill({
     const update = () => {
       const now = performance.now();
       const elapsed = Math.max(0, now - startedAt - startDelayMs);
-      const remaining = Math.max(0, ms - elapsed);
+      const remaining = Math.max(0, base - elapsed);
       const grace = Math.max(0, startDelayMs - (now - startedAt));
       setDisplayMs(remaining);
       setGraceMs(grace);
@@ -100,7 +111,7 @@ export function ClockPill({
       // frame) — so keying on it meant a player thinking from 60s down to 2s
       // kept the 250ms cadence the whole way, and the sub-10s tenths display
       // advanced in visible 0.25s jumps.
-      const remaining = Math.max(0, ms - Math.max(0, performance.now() - startedAt - startDelayMs));
+      const remaining = Math.max(0, base - Math.max(0, performance.now() - startedAt - startDelayMs));
       timer = window.setTimeout(tick, remaining < 10000 ? 100 : 250);
     };
 
@@ -109,7 +120,7 @@ export function ClockPill({
       window.cancelAnimationFrame(raf);
       window.clearTimeout(timer);
     };
-  }, [active, ms, startDelayMs, warnLowTime]);
+  }, [active, base, startDelayMs, warnLowTime]);
 
   // Urgency ramp: under 30s the running clock breathes a subtle pulse (gold),
   // under 10s it pulses stronger and tints oxblood. Border stays 2px across

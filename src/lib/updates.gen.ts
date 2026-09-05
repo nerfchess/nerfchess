@@ -7,6 +7,25 @@ import type { GeneratedUpdate } from "./updates";
 export const GENERATED_UPDATES: GeneratedUpdate[] = [
   {
     date: "2026-09-05",
+    title: "Round four: bot game, analysis, inbox, clubs and tournament fixes",
+    summary: "Another sweep over the pages the earlier passes skipped.",
+    anchor: "u-20260905-2010",
+    bullets: [
+      "With premoves off, the board no longer shows premove dots during the bot's think, and the clock pill freezes at its live value across a draft pause instead of jumping back to the banked time (it...",
+      "The board's low-time effects now watch the live clock, waking exactly when the active side crosses the 15s line, rather than the banked figure that only moved after the pressure was over.",
+      "The end screen no longer re-hides an opponent rule a reveal card already showed you all game.",
+      "Arrow-key move review stays off while the result panel, buff targeting or a front-and-center draft owns the board, matching the wheel navigation.",
+      "The analysis board's eval, bar and best-move squares only render for the position they were searched from, so a move no longer flips the eval sign for a frame or highlights a piece that is not there.",
+      "Message bell entries are matched by the sender's id, so a renamed sender's notification clears when you read the thread and does not multiply.",
+      "Joining checks the stored finished status (an arena that played all its rounds early) and, for club events, club membership, the same rule creation already enforced.",
+      "A refused create on the tournaments page no longer blanks the directory behind the form.",
+      "Club pages show the true member count for clubs past the 200-row leaderboard and derive each event's phase from its schedule instead of printing a stale stored status.",
+      "Sub-minute and half-minute clocks (30s+0, 1.5+0) are labelled correctly in open challenges, live games, the watch rail and TV, instead of rounding to 1+0 and 2+0.",
+      "Quick pairing shows \"?\" for a mode you have not played rather than the frozen legacy rating.",
+    ],
+  },
+  {
+    date: "2026-09-05",
     title: "Round three: worker, engine and match-flow bug fixes",
     summary: "A second sweep over the areas the first two passes skipped: the game server's clock and rematch paths, the engine's chained-move guard and notation, and the match page's reconnect and draft flows.",
     anchor: "u-20260905-1924",

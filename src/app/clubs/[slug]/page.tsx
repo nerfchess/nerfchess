@@ -11,6 +11,7 @@ import { AccountUser, fetchMe } from "@/lib/authClient";
 import { CLUB_ICON_COLORS, CLUB_ICON_NAMES, encodeClubIcon, isUploadedClubIcon, parseClubIcon } from "@/lib/clubIcons";
 import { fileToDataUrl } from "@/lib/imageUpload";
 import type { ClubMemberRow, ClubPostRow, ClubTournamentRow } from "@/app/api/clubs/[slug]/route";
+import { tournamentPhase } from "@/lib/tournaments";
 import { Button } from "@/components/ui/Button";
 import { LinkButton } from "@/components/ui/Button";
 
@@ -29,6 +30,7 @@ type ClubDetail = {
     created_at: number;
   };
   members: ClubMemberRow[];
+  memberCount: number;
   posts: ClubPostRow[];
   tournaments: ClubTournamentRow[];
   myRole: string | null;
@@ -327,7 +329,7 @@ export default function ClubPage() {
                     </Link>
                   </span>
                   <span className="flex items-center gap-1.5">
-                    <Users size={13} /> {data.members.length} member{data.members.length === 1 ? "" : "s"}
+                    <Users size={13} /> {data.memberCount} member{data.memberCount === 1 ? "" : "s"}
                   </span>
                   <span className="flex items-center gap-1.5">
                     <CalendarDays size={13} /> since {new Date(club.created_at).toLocaleDateString()}
@@ -394,7 +396,7 @@ export default function ClubPage() {
                   <div className="flex items-center justify-between gap-2 border-b border-[color:var(--edge)] px-5 py-3">
                     <span className="text-[11px] text-parchment-400">Leaderboard</span>
                     <span className="text-[11px] text-parchment-500">
-                      {data.members.length} member{data.members.length === 1 ? "" : "s"}
+                      {data.memberCount} member{data.memberCount === 1 ? "" : "s"}
                     </span>
                   </div>
                   <ul className="max-h-96 divide-y divide-[color:var(--edge)] overflow-y-auto">
@@ -434,7 +436,8 @@ export default function ClubPage() {
                         <li key={t.id} className="px-5 py-2.5">
                           <div className="truncate text-sm text-parchment-100">{t.name}</div>
                           <div className="mt-0.5 text-[11px] text-parchment-400">
-                            {t.status} · {t.players}/{t.max_players} players
+                            {t.status === "finished" ? "finished" : tournamentPhase(t.starts_at, t.duration_min)} ·{" "}
+                            {t.players}/{t.max_players} players
                             {t.starts_at ? ` · ${new Date(t.starts_at).toLocaleString()}` : ""}
                           </div>
                         </li>

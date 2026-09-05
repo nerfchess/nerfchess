@@ -1834,21 +1834,27 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // rendering; kept above every early return to stay a valid hook, so the
   // block condition is recomputed here from source state (mirrors the render
   // derivation below of myOffer / genuinelySkipped / showWaitingOverlay).
-  useEffect(() => {
-    if (!game) return;
+  // The same flag gates the move list's arrow keys.
+  const historyNavBlocked = (() => {
+    if (!game) return true;
     const mine = isDraft ? game.buffs?.players[myColor] : undefined;
     const offer = mine?.offer ?? null;
     const skipped =
       !offer && !draftSubmitted && !myDraftResolved && (mine?.flags.blockedDrafts ?? 0) > 0;
     const waiting =
       isDraft && !game.result && oppDrafting && (draftSubmitted || myDraftResolved || skipped);
+    return (
+      settingsOpen ||
+      (!!game.result && showResult) ||
+      !!buffTargeting.targeting ||
+      (isDraft && !!offer && !draftSubmitted && !draftGraceOver && !game.result) ||
+      waiting
+    );
+  })();
+  useEffect(() => {
+    if (!game) return;
     wheelNavRef.current = {
-      blocked:
-        settingsOpen ||
-        (!!game.result && showResult) ||
-        !!buffTargeting.targeting ||
-        (isDraft && !!offer && !draftSubmitted && !draftGraceOver && !game.result) ||
-        waiting,
+      blocked: historyNavBlocked,
       ply: historyPly,
       min: reviewFloor,
       max: game.board.history.length,
@@ -3391,6 +3397,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 moves={game.board.history}
                 currentPly={currentHistoryPly}
                 onPlyChange={handleHistoryPlyChange}
+                navBlocked={historyNavBlocked}
                 minPly={reviewFloor}
                 compact
                 showHeader={false}

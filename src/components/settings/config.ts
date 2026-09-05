@@ -171,6 +171,12 @@ export const SECTIONS: SectionConfig[] = [
         control: { kind: "toggle", setting: "flipBoard" },
       },
       {
+        id: "showCoordinates",
+        label: "Show coordinates",
+        group: "Layout",
+        control: { kind: "toggle", setting: "showCoordinates" },
+      },
+      {
         id: "showCaptured",
         label: "Material difference",
         hint: "Captured pieces and the point lead beside each player",
@@ -183,12 +189,6 @@ export const SECTIONS: SectionConfig[] = [
         hint: "Ratings beside player names in a game",
         group: "Board",
         control: { kind: "toggle", setting: "showRatings" },
-      },
-      {
-        id: "showCoordinates",
-        label: "Show coordinates",
-        group: "Layout",
-        control: { kind: "toggle", setting: "showCoordinates" },
       },
       {
         id: "highlightLastMove",
@@ -224,18 +224,18 @@ export const SECTIONS: SectionConfig[] = [
         control: { kind: "pieceAnimMs" },
       },
       {
-        id: "effects3d",
-        label: "3D board effects",
-        hint: "Lasers, pillars and shatters drawn on the board with WebGL. Steps down for the session if frames drop",
-        group: "Effects",
-        control: { kind: "toggle", setting: "effects3d" },
-      },
-      {
         id: "fxDuration",
         label: "Card effect duration",
         hint: "How long card-use animations play, from snappy to lingering",
         group: "Motion",
         control: { kind: "slider", setting: "fxDuration", min: 0.5, max: 2, step: 0.1, format: pct },
+      },
+      {
+        id: "effects3d",
+        label: "3D board effects",
+        hint: "Lasers, pillars and shatters drawn on the board with WebGL. Steps down for the session if frames drop",
+        group: "Effects",
+        control: { kind: "toggle", setting: "effects3d" },
       },
     ],
   },

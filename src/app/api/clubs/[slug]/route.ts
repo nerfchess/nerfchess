@@ -30,6 +30,7 @@ export type ClubTournamentRow = {
   name: string;
   status: string;
   starts_at: number | null;
+  duration_min: number;
   players: number;
   max_players: number;
 };
@@ -55,7 +56,7 @@ export async function GET(request: Request, props: { params: Promise<{ slug: str
     }>();
   if (!club) return NextResponse.json({ error: "Club not found." }, { status: 404 });
 
-  const [members, posts, tournaments] = await Promise.all([
+  const [members, posts, tournaments, count] = await Promise.all([
     // Member rating = the best of the player's LIVE mode buckets (the shared
     // display rule in lib/server/ratingSql.ts), never the frozen legacy
     // users.rating column, so the club list agrees with the leaderboard,
@@ -83,7 +84,7 @@ export async function GET(request: Request, props: { params: Promise<{ slug: str
       .all<ClubPostRow>(),
     db
       .prepare(
-        `SELECT t.id, t.name, t.status, t.starts_at, t.max_players,
+        `SELECT t.id, t.name, t.status, t.starts_at, t.duration_min, t.max_players,
                 COUNT(te.user_id) AS players
          FROM tournaments t
          LEFT JOIN tournament_entries te ON te.tournament_id = t.id
@@ -94,6 +95,12 @@ export async function GET(request: Request, props: { params: Promise<{ slug: str
       )
       .bind(club.id)
       .all<ClubTournamentRow>(),
+    // The leaderboard list is capped at 200 rows; the count is the real one,
+    // so the header agrees with the /clubs directory for big clubs.
+    db
+      .prepare("SELECT COUNT(*) AS n FROM club_members WHERE club_id = ?")
+      .bind(club.id)
+      .first<{ n: number }>(),
   ]);
 
   const user = await userForSession(db, sessionTokenFromCookieHeader(request.headers.get("cookie")));
@@ -109,6 +116,7 @@ export async function GET(request: Request, props: { params: Promise<{ slug: str
   return NextResponse.json({
     club,
     members: members.results,
+    memberCount: Number(count?.n ?? members.results.length),
     posts: posts.results,
     tournaments: tournaments.results,
     myRole,

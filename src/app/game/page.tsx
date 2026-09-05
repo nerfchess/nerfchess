@@ -1138,6 +1138,24 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
     turnStartedAtRef.current = Date.now();
   }, [game?.board.history.length]);
 
+  // Time pressure for the board FX. The banked whiteMs/blackMs only move when
+  // a turn ends, so reading them would light the FX only after the pressure
+  // is over; the live figure comes from remainingClock, and the view does not
+  // repaint per tick, so one timer wakes up at the moment the active side
+  // crosses the 15s line (or at once when already past it).
+  const [timePressure, setTimePressure] = useState(false);
+  useEffect(() => {
+    if (!clockEnabled || !game || game.result || offerPausedAt != null) {
+      const id = window.setTimeout(() => setTimePressure(false), 0);
+      return () => window.clearTimeout(id);
+    }
+    const under = () => remainingClock("w") < 15_000 || remainingClock("b") < 15_000;
+    const remaining = remainingClock(game.board.turn);
+    const delay = remaining <= 15_000 ? 0 : remaining - 15_000 + 20;
+    const id = window.setTimeout(() => setTimePressure(under()), delay);
+    return () => window.clearTimeout(id);
+  }, [clockEnabled, game, offerPausedAt, remainingClock]);
+
   // Timeout: schedule one wake-up for the active side instead of repainting the
   // whole game view every clock tick. ClockPill handles the visual countdown.
   useEffect(() => {
@@ -1438,15 +1456,23 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
   // offer only blocks while its panel is front-and-center (once the free
   // lock-in window expires it minimizes and navigation returns). Written from
   // an effect (not during render) so the ref never drives rendering.
+  // History navigation (wheel and arrow keys) is blocked while something owns
+  // the board: the result panel, buff targeting, or a draft offer that is
+  // still front-and-center (once its free window expires it minimizes and
+  // navigation returns).
+  const historyNavBlocked = (() => {
+    if (!game) return true;
+    const offer = game.buffs?.players[myColor]?.offer ?? null;
+    return (
+      (!!game.result && showResult) ||
+      !!buffTargeting.targeting ||
+      (!!offer && offerOnClockIndex !== offer.index)
+    );
+  })();
   useEffect(() => {
     if (!game) return;
-    const mine = game.buffs?.players[myColor];
-    const offer = mine?.offer ?? null;
     wheelNavRef.current = {
-      blocked:
-        (!!game.result && showResult) ||
-        !!buffTargeting.targeting ||
-        (!!offer && offerOnClockIndex !== offer.index),
+      blocked: historyNavBlocked,
       ply: historyPly,
       min: reviewFloor,
       max: game.board.history.length,
@@ -2030,7 +2056,9 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
                       ? []
                       : game.board.turn === myColor && !premovePending
                       ? moves
-                      : premoveOptions
+                      : premoveMode
+                        ? premoveOptions
+                        : []
                   }
                   orientation={orientation}
                   onMove={handleMove}
@@ -2040,9 +2068,7 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
                   opponentMoves={
                     isReviewingHistory || buffTargeting.targeting ? [] : oppPreviewMoves
                   }
-                  fxTimePressure={
-                    clockEnabled && !game.result && (whiteMs < 15_000 || blackMs < 15_000)
-                  }
+                  fxTimePressure={clockEnabled && !game.result && timePressure}
                   visual={
                     isReviewingHistory
                       ? undefined
@@ -2214,6 +2240,7 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
                 moves={game.board.history}
                 currentPly={currentHistoryPly}
                 onPlyChange={handleHistoryPlyChange}
+                navBlocked={historyNavBlocked}
                 minPly={reviewFloor}
                 compact
                 showHeader={false}
@@ -2390,7 +2417,7 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
           myColor={myColor}
           myNerf={gameMode === "buff" || plainMode ? undefined : myNerf}
           opponentNerf={gameMode === "buff" || plainMode ? undefined : opponentNerf}
-          opponentHidden={uiSettings.hideOpponentReveal && !oppPeek}
+          opponentHidden={uiSettings.hideOpponentReveal && !oppPeek && !bsMine?.oppNerfRevealed}
           ratingChange={ratingChange}
           mode={gameMode}
           record={postRecord}

@@ -59,9 +59,11 @@ export async function notifyMessage(db: D1Database, from: SessionUser, toUserId:
   const existing = await db
     .prepare(
       `SELECT id FROM notifications
-       WHERE user_id = ? AND type = 'message' AND actor_name = ? AND read = 0 LIMIT 1`,
+       WHERE user_id = ? AND type = 'message' AND read = 0
+         AND (actor_user_id = ? OR (actor_user_id IS NULL AND actor_name = ?))
+       LIMIT 1`,
     )
-    .bind(toUserId, from.username)
+    .bind(toUserId, from.id, from.username)
     .first<{ id: string }>();
   if (existing) return;
   await createNotification(db, {
