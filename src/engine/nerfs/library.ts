@@ -1,4 +1,5 @@
 import { Nerf, Tier } from "../nerf";
+import { isRetired } from "../retired";
 import { ALL_IMPLEMENTED, IMPLEMENTED_BY_ID } from "./implemented";
 
 // Stub nerfs: cataloged for the Codex but not yet wired into the engine.
@@ -208,6 +209,7 @@ export function openingNerfPool(): Nerf[] {
   return PLAYABLE_NERFS.filter(
     (nerf) =>
       nerf.id !== "lucky" &&
+      !isRetired(nerf.id) &&
       nerf.tier >= MIN_OPENING_NERF_TIER &&
       nerf.tier <= MAX_OPENING_NERF_TIER,
   );

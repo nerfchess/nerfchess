@@ -1,6 +1,7 @@
 "use client";
 
 import { SiteHeader } from "@/components/SiteHeader";
+import { isRetired } from "@/engine/retired";
 import { EmptyState } from "@/components/EmptyState";
 import { isBoon } from "@/engine/buff";
 import type { Buff } from "@/engine/buff";
@@ -75,6 +76,7 @@ function filterBuffs(source: Buff[], filters: CodexFilters, behaviour: Behaviour
   const list = source.filter(
     (b) =>
       (filters.tier === null || b.tier === filters.tier) &&
+      (filters.showRetired || !isRetired(b.id)) &&
       (filters.categories.length === 0 || filters.categories.includes(b.category)) &&
       (filters.collection === null || buffCollection(b) === filters.collection) &&
       (behaviour === "all" || b.kind === behaviour) &&

@@ -25,6 +25,8 @@ import {
 import { buffCollection, nerfCollection } from "@/lib/cardCollections";
 import { historyFor } from "@/data/cardHistory";
 import { CardInsights } from "@/components/codex/CardInsights";
+import { retirementOf } from "@/engine/retired";
+import { BUFF_BY_ID } from "@/lib/cardCodex";
 
 // Server-rendered detail page for a single card, shared by /codex/buff/[id]
 // and /codex/nerf/[id]. Everything here is plain HTML (no client component),
@@ -182,6 +184,39 @@ function GlanceRow({ label, children }: { label: string; children: ReactNode }) 
   );
 }
 
+// A retired card stays readable (old games and links keep working) but says
+// so, and points at the active card that covers the same ground.
+function RetiredNote({ id }: { id: string }) {
+  const r = retirementOf(id);
+  if (!r) return null;
+  const targetBuff: Buff | undefined = r.mergedInto ? BUFF_BY_ID[r.mergedInto] : undefined;
+  const targetNerf: Nerf | undefined = r.mergedInto && !targetBuff ? ALL_NERFS.find((n) => n.id === r.mergedInto) : undefined;
+  const target = targetBuff ?? targetNerf;
+  const targetPath = targetBuff ? cardPath(targetBuff) : targetNerf ? `/codex/nerf/${targetNerf.id}` : null;
+  const why: Record<string, string> = {
+    duplicate: "it did the same thing as another card",
+    dominated: "a cheaper card did the same thing",
+    "near-duplicate": "it was too close to another card",
+    "too-complex": "its rule ran too long to read at the board",
+    "category-cap": "its category had more variations than the game needed",
+  };
+  return (
+    <div className="plate border-l-2 border-l-brag p-4 text-[14px] text-parchment-200">
+      <strong className="text-parchment-50">Retired.</strong> This card is no longer dealt: {why[r.reason] ?? "it was retired"}.
+      {target && targetPath && (
+        <>
+          {" "}
+          See{" "}
+          <Link href={targetPath} className="text-gold-leaf hover:underline">
+            {target.name}
+          </Link>{" "}
+          instead.
+        </>
+      )}
+    </div>
+  );
+}
+
 function NotDraftedNote() {
   return (
     <p className="mb-4 rounded-none border border-sun/30 bg-sun/5 px-4 py-2 text-sm text-parchment-200">
@@ -300,6 +335,7 @@ export function BuffDetail({ buff, extra }: { buff: Buff; extra?: ReactNode }) {
     >
       <CardBreadcrumbJsonLd section={section} name={buff.name} path={path} />
       {!buff.implemented && <NotDraftedNote />}
+      <RetiredNote id={buff.id} />
 
       <InfoSection title="At a glance">
         <dl className="space-y-3">
@@ -354,6 +390,7 @@ export function NerfDetail({ nerf, extra }: { nerf: Nerf; extra?: ReactNode }) {
     >
       <CardBreadcrumbJsonLd section="Nerfs" name={nerf.name} path={path} />
       {!nerf.implemented && <NotDraftedNote />}
+      <RetiredNote id={nerf.id} />
 
       <InfoSection title="At a glance">
         <dl className="space-y-3">

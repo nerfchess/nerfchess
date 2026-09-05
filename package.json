@@ -41,6 +41,8 @@
     "test:card-categories": "npx -y tsx scripts/gen-card-categories.ts --check",
     "report:winrate": "npx -y tsx scripts/report-card-winrate.ts",
     "test:card-similarity": "npx -y tsx scripts/audit-card-similarity.ts",
+    "test:retired": "npx -y tsx scripts/check-retired.ts",
+    "gen:retirements": "npx -y tsx scripts/propose-retirements.ts --write",
     "test:passive-motifs": "npx -y tsx scripts/audit-passive-motifs.ts",
     "test:nerf-categories": "npx -y tsx scripts/test-nerf-categories.ts",
     "test:draft-fairness": "npx -y tsx scripts/test-draft-fairness.ts",

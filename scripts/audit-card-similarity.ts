@@ -33,6 +33,7 @@
 // distinct.
 
 import fs from "node:fs";
+import { RETIRED_IDS } from "../src/engine/retired";
 import path from "node:path";
 
 const ROOT = path.join(__dirname, "..");
@@ -127,7 +128,8 @@ function jaccard(a: Set<string>, b: Set<string>): number {
 }
 
 function main(): void {
-  const cards = readCards();
+  // Retired cards left the pools; near-duplicates among them no longer count.
+  const cards = readCards().filter((c) => !RETIRED_IDS.has(c.id));
   const groups = new Map<string, Card[]>();
   for (const c of cards) {
     const k = `${c.cat}|t${c.tier}|${c.family}`;

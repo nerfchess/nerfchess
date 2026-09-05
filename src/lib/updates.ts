@@ -14,6 +14,12 @@ export interface UpdateEntry {
 export const UPDATES: UpdateEntry[] = [
   {
     date: "2026-09-05",
+    title: "A tighter card pool",
+    summary: "582 cards that duplicated, dominated or out-talked another card have left the draft pools. They still replay, and the codex shows them under a filter.",
+    anchor: "a-tighter-card-pool",
+  },
+  {
+    date: "2026-09-05",
     title: "New look",
     summary: "Flat warm greys, square corners, metal buttons, and a 60px top bar, the way Lichess lays out a page.",
     anchor: "new-look",

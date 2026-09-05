@@ -7,6 +7,7 @@
 // /api/mod/cards; like /mod, this page just hides itself from non-mods.
 
 import type { Buff } from "@/engine/buff";
+import { isRetired } from "@/engine/retired";
 import type { Nerf } from "@/engine/nerf";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -368,7 +369,17 @@ function FragmentRow({
             <span className="ml-1 text-[11px] text-parchment-400">(code {card.tier})</span>
           )}
         </td>
-        <td className="px-3 py-2 text-parchment-300">{enabled ? "Yes" : "No"}</td>
+        <td className="px-3 py-2 text-parchment-300">
+          {isRetired(card.id) ? (
+            <span className="text-brag" title="Retired in code (src/engine/retired.ts); an override cannot re-enable it">
+              Retired
+            </span>
+          ) : enabled ? (
+            "Yes"
+          ) : (
+            "No"
+          )}
+        </td>
         <td className="px-3 py-2 text-right whitespace-nowrap">
           {isEditing ? (
             <Button tone="ghost" onClick={onCancel} className="px-3 py-1 text-xs" disabled={busy}>
