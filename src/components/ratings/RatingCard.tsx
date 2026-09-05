@@ -39,7 +39,7 @@ export function RatingCard({
         <Icon className={large ? "h-5 w-5" : "h-4 w-4"} style={{ color: c.accent }} strokeWidth={2.2} />
       </span>
       <div className="min-w-0">
-        <div className="smallcaps text-[10px] text-parchment-400">{c.label}</div>
+        <div className="text-[10px] text-parchment-400">{c.label}</div>
         <div
           className={
             "font-display tabular-nums leading-tight text-parchment " + (large ? "text-3xl" : "text-xl")

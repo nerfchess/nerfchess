@@ -1015,19 +1015,27 @@ export const BOON_WAVE4B: Buff[] = [
   // --- info (2) ---
 
   card(
+    // Balance buff 2026-08-04: a pure flash at tier 4, and of your OWN hanging
+    // pieces at that; news you could do nothing with. The omen now protects
+    // what it names for one turn.
     { id: "bn4_augurs_flight", name: "Augur's Flight", tier: 4, category: "info", icon: "Bird",
-      description: "Every one of your pieces that is both under enemy attack and undefended by your own side lights up until your opponent replies.",
+      description: "Every one of your pieces that is both under enemy attack and undefended by your own side lights up until your opponent replies, and the birds shelter each one: they cannot be captured on that turn.",
       flavor: "The birds circle only where the ground is soft." },
     instant((_inst, api) => {
       const soft = undefendedPieces(api.board, api.me).filter(
         (sq) => attackersOf(api.board, api.opp, sq).length > 0,
       );
       flashSquares(api, soft);
+      if (soft.length) {
+        addEffect(api, { kind: "shield", owner: api.me, squares: soft, turns: 1 });
+      }
     }),
   ),
   card(
+    // Balance buff 2026-08-04: a pure flash at tier 4. The survey now files a
+    // claim: the ground it marks is staked against entry for one turn.
     { id: "bn4_border_survey", name: "Border Survey", tier: 4, category: "info", icon: "MapPin",
-      description: "Every square in your half currently reachable by an enemy attack lights up until your opponent replies.",
+      description: "Every square in your half currently reachable by an enemy attack lights up until your opponent replies, and the surveyed ground is staked: your opponent cannot move onto a lit square on their next turn.",
       flavor: "The surveyors bill by the incursion." },
     instant((_inst, api) => {
       const hot: Square[] = [];
@@ -1036,6 +1044,9 @@ export const BOON_WAVE4B: Buff[] = [
         if (attackersOf(api.board, api.opp, sq).length > 0) hot.push(sq);
       }
       flashSquares(api, hot);
+      if (hot.length) {
+        addEffect(api, { kind: "barred", squares: hot, against: api.opp, turns: 1 });
+      }
     }),
   ),
 
@@ -1774,8 +1785,10 @@ export const BOON_WAVE4B: Buff[] = [
     }),
   ),
   card(
+    // Balance buff 2026-08-04: a pure flash at tier 5, the highest-priced
+    // no-op in the pool. The glare now pins the boldest intruder in place.
     { id: "bn4_lighthouse_beam", name: "Lighthouse Beam", tier: 5, category: "info", icon: "Lightbulb",
-      description: "Every enemy piece standing in your half, and every enemy piece currently attacking a square in your half, lights up until your opponent replies.",
+      description: "Every enemy piece standing in your half, and every enemy piece currently attacking a square in your half, lights up until your opponent replies. The intruder deepest into your half is caught in the glare, frozen for 1 of its owner's turns (kings excepted).",
       flavor: "The beam does not judge. The keeper does." },
     instant((_inst, api) => {
       const hot: Square[] = [];
@@ -1789,6 +1802,17 @@ export const BOON_WAVE4B: Buff[] = [
         }
       }
       flashSquares(api, hot);
+      // Deepest intruder: the non-king enemy piece in my half closest to my
+      // home rank (lowest relative rank; lowest square index breaks ties).
+      const intruders = mySquares(api.board, api.opp).filter(
+        (sq) => inHalf(api.me, sq) && api.board.pieces[sq]!.type !== "k",
+      );
+      if (intruders.length === 0) return;
+      let deepest = intruders[0];
+      for (const sq of intruders) {
+        if (relRank(api.me, sq) < relRank(api.me, deepest)) deepest = sq;
+      }
+      addEffect(api, { kind: "freeze", sq: deepest, owner: api.opp, turns: 1, skin: "shock" });
     }),
   ),
 
@@ -2489,14 +2513,19 @@ export const BOON_WAVE4B: Buff[] = [
     }),
   ),
   card(
+    // Balance buff 2026-08-04: a pure flash at tier 6 while its shelf-mate
+    // Raven's Court paid a full peek plus two rerolls. The audit now settles
+    // its findings: your exposed pieces are covered for a turn, plus a fee.
     { id: "bn4_auditors_ledger", name: "Auditor's Ledger", tier: 6, category: "info", icon: "BookOpen",
-      description: "Every undefended piece on the board, yours and your opponent's alike, lights up until your opponent replies.",
+      description: "Every undefended piece on the board, yours and your opponent's alike, lights up until your opponent replies. Yours are underwritten: they cannot be captured on that turn. Gain 1 draft reroll.",
       flavor: "The ledger flatters nobody. That is its entire charm." },
     instant((_inst, api) => {
-      flashSquares(api, [
-        ...undefendedPieces(api.board, api.me),
-        ...undefendedPieces(api.board, api.opp),
-      ]);
+      const mine = undefendedPieces(api.board, api.me);
+      flashSquares(api, [...mine, ...undefendedPieces(api.board, api.opp)]);
+      if (mine.length) {
+        addEffect(api, { kind: "shield", owner: api.me, squares: mine, turns: 1 });
+      }
+      api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
     }),
   ),
 

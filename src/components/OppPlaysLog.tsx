@@ -178,8 +178,8 @@ export function OppPlaysLog({ plays }: { plays: OppPlay[] }) {
             // a bullet game is a lost move. The card is inert; only the small
             // dismiss button below takes pointer events.
             className={
-              "relative rounded-[1px] border bg-ink-700/95 px-3 shadow-plate backdrop-blur-sm " +
-              (newest ? "border-gold/40 py-2.5 animate-rise" : "border-[color:var(--edge)] py-1.5 opacity-85")
+              "relative rounded-[1px] border bg-ink-700/95 px-3 shadow-plate " +
+              (newest ? "border-gold/40 py-2.5" : "border-[color:var(--edge)] py-1.5 opacity-85")
             }
           >
             <button
@@ -212,7 +212,7 @@ export function OppPlaysLog({ plays }: { plays: OppPlay[] }) {
             </div>
             {newest && (
               <>
-                <div className="smallcaps mt-0.5 text-[12px] text-parchment-400">{p.label}</div>
+                <div className="mt-0.5 text-[12px] text-parchment-400">{p.label}</div>
                 <p className="mt-1 text-xs leading-snug text-parchment-300">{def.description}</p>
               </>
             )}
@@ -266,7 +266,7 @@ export function OppPlaysDockSection({ plays }: { plays: OppPlay[] }) {
           className={"shrink-0 text-parchment-400 transition-transform duration-150 " + (open ? "rotate-90" : "")}
         />
         <History aria-hidden size={12} strokeWidth={2.2} className="shrink-0 text-parchment-400" />
-        <span className="smallcaps min-w-0 truncate text-[12px] text-parchment-400">Opponent played</span>
+        <span className="min-w-0 truncate text-[12px] text-parchment-400">Opponent played</span>
         <span className="ml-auto shrink-0 rounded-[1px] border border-[color:var(--edge)] bg-white/[0.05] px-1.5 py-px font-mono text-[12px] tabular-nums text-parchment-300">
           {landed.length}
         </span>
@@ -304,7 +304,7 @@ export function OppPlaysDockSection({ plays }: { plays: OppPlay[] }) {
                 </span>
                 {expanded && (
                   <>
-                    <span className="smallcaps mt-0.5 block text-[12px] text-parchment-400">{p.label}</span>
+                    <span className="mt-0.5 block text-[12px] text-parchment-400">{p.label}</span>
                     <span className="mt-0.5 block text-[12px] leading-snug text-parchment-300">
                       {def.description}
                     </span>

@@ -2490,6 +2490,149 @@ function GlacierCalvingScene({ role, delayMs }: SceneProps) {
 }
 
 /* =============================================================================
+   30. Mirror of Winter (t9) — THE SYMPATHETIC GLASS. A tall cheval mirror is
+   stood on the board and breathes frost across its own face. Tell: the glass
+   fogs, and one soldier steps up to it. Strike: the glass flashes — and it is
+   not HIS reflection that pays: every other figure of his kind across the
+   board glazes over where it stands, each one catching the cold in the real
+   victim order. When one soldier shivers, the regiment catches cold. Settle:
+   frost ferns creep out of the frame's feet and the glass exhales.
+   ========================================================================== */
+
+const C_MW = { core: "#b9dcef", glow: "#fff1dd", deep: "#16283c" };
+const MW_ECHOES = [
+  { x: 26, y: 40 },
+  { x: 68, y: 34 },
+  { x: 77, y: 58 },
+];
+
+function MirrorOfWinterScene({ role, delayMs }: SceneProps) {
+  const mirror = (
+    <svg viewBox="0 0 40 64" className="block h-full w-full">
+      <path d="M8 4h24v46H8z" fill={C_MW.deep} stroke={C_MW.core} strokeWidth="3" strokeLinejoin="round" />
+      <path d="M12 8h16v38H12z" fill={C_MW.core} opacity="0.55" />
+      <path d="M14 42L26 12" stroke={C_MW.glow} strokeWidth="2.4" strokeLinecap="round" />
+      <path d="M8 50l-4 10M32 50l4 10" stroke={C_MW.core} strokeWidth="3" strokeLinecap="round" />
+    </svg>
+  );
+  if (role === "target")
+    return (
+      <Sq>
+        <g className="g09-hit" style={dm(delayMs, 0)}>
+          <path d="M10 6h20v28H10z" fill="none" stroke={C_MW.core} strokeWidth="2.4" strokeLinejoin="round" />
+          <path d={FIG} fill={C_MW.core} opacity="0.85" transform="scale(0.62) translate(12.5 14)" />
+        </g>
+        <g className="g09-hit2" style={dm(delayMs, 170)}>
+          <path d="M12 30L20 10l8 20M14 20h12" fill="none" stroke={C_MW.glow} strokeWidth="2" strokeLinecap="round" />
+        </g>
+      </Sq>
+    );
+  if (role === "entrance")
+    return (
+      <Sq>
+        <g className="g09-arrive" style={dm(delayMs, 0)}>
+          <path d="M11 4h18v30H11z" fill={C_MW.deep} stroke={C_MW.core} strokeWidth="2.4" strokeLinejoin="round" />
+          <path d="M15 30L25 10" stroke={C_MW.glow} strokeWidth="2" strokeLinecap="round" />
+        </g>
+        <g className="g09-arrive2" style={dm(delayMs, 160)}>
+          <path d={FIG} fill={C_MW.core} transform="scale(0.5) translate(20 22)" />
+          <path d={FIG} fill={C_MW.glow} opacity="0.6" transform="scale(-0.5 0.5) translate(-60 22)" />
+        </g>
+        <g className="g09-arrive-soft" style={dm(delayMs, 400)}>
+          <path d="M8 36q6-4 12 0t12 0" fill="none" stroke={C_MW.core} strokeWidth="2" strokeLinecap="round" />
+        </g>
+      </Sq>
+    );
+  return (
+    <BoardWideStage>
+      <Wash cls="g09-wash" tint="rgba(185,220,239,0.28)" base={delayMs} off={0} />
+      {/* the cold arrives as a sill of light laid across the whole board */}
+      <Band cls="g09-mw-sill" color={C_MW.core} y={52} h={1.6} base={delayMs} off={100} />
+      {/* the glass is stood on the cast square and breathes its own frost */}
+      <P cls="g09-mw-frame" x={50} y={46} w={9} h={15} style={dm(delayMs, 60)}>
+        {mirror}
+      </P>
+      <P
+        cls="g09-mw-breath"
+        x={50}
+        y={44}
+        w={7}
+        h={9}
+        style={{ ...dm(delayMs, 220), background: `radial-gradient(ellipse at 50% 50%, ${C_MW.glow}, transparent 70%)` }}
+      />
+      {/* one soldier steps up to see himself */}
+      <P cls="g09-mw-fig" x={44} y={50} w={5.4} h={5.4} style={dv(delayMs, 300, { "--g09-side": "var(--fx-side, 1)" })}>
+        <svg viewBox="0 0 40 40" className="block h-full w-full">
+          <path d={FIG} fill={C_MW.deep} stroke={C_MW.core} strokeWidth="2" />
+          <path d={FIG_BASE} fill={C_MW.deep} />
+        </svg>
+      </P>
+      {/* strike: the glass flashes white-cold */}
+      <P
+        cls="g09-mw-flash"
+        x={50}
+        y={44.5}
+        w={8}
+        h={12}
+        style={{ ...dm(delayMs, 480), background: `linear-gradient(120deg, transparent 30%, ${C_MW.glow} 50%, transparent 70%)` }}
+      />
+      {/* and the OTHER figures of his kind pay for it, in victim order */}
+      {MW_ECHOES.map((e, i) => (
+        <BoardFrame key={i}>
+          <span
+            className="g09-mw-echo absolute block"
+            style={
+              {
+                left: `${e.x - 3.5}%`,
+                top: `${e.y - 4.5}%`,
+                width: "7%",
+                height: "9%",
+                animationDelay: `calc(${delayMs + i * 120 + 560}ms + var(--fx-index, 0) * 40ms)`,
+                "--g09-side": "var(--fx-side, 1)",
+              } as CSSProperties
+            }
+          >
+            <svg viewBox="0 0 40 40" className="block h-full w-full">
+              <path d={FIG} fill={C_MW.core} stroke={C_MW.deep} strokeWidth="1.6" opacity="0.9" />
+            </svg>
+          </span>
+        </BoardFrame>
+      ))}
+      {/* each one takes its own rime ring as the cold sets */}
+      {MW_ECHOES.map((e, i) => (
+        <BoardFrame key={`r${i}`}>
+          <span
+            className="g09-mw-rime absolute block"
+            style={{
+              left: `${e.x - 5}%`,
+              top: `${e.y - 3}%`,
+              width: "10%",
+              height: "8%",
+              borderRadius: "50%",
+              border: `2px solid ${C_MW.glow}`,
+              animationDelay: `${delayMs + i * 120 + 700}ms`,
+            }}
+          />
+        </BoardFrame>
+      ))}
+      {/* settle: frost ferns creep out of the frame's feet */}
+      <P cls="g09-mw-fern" x={50} y={54} w={16} h={4} style={dm(delayMs, 820)}>
+        <svg viewBox="0 0 120 24" className="block h-full w-full">
+          <path
+            d="M60 4v16M60 12l-14 6M60 12l14 6M60 8l-8-4M60 8l8-4M46 18l-30 2M74 18l30 2"
+            fill="none"
+            stroke={C_MW.glow}
+            strokeWidth="2.4"
+            strokeLinecap="round"
+          />
+        </svg>
+      </P>
+      <Motes cls="g09-mote" color={C_MW.core} base={delayMs} off={900} />
+    </BoardWideStage>
+  );
+}
+
+/* =============================================================================
    Registry — scene + config per card id. Every `sound` is an existing
    SigSoundKey, every `source` an existing SigZone, and every entry declares an
    anchor. Most of these cards decorate pieces that stay on the board, so they
@@ -2580,6 +2723,9 @@ const IMPACT: Record<string, G09Imp> = {
   hx4_tempest: { at: 520, rgb: "156 196 220", laser: true, g: 1, q: "h", s: 12 }, // t8 hero
   hx4_lead_rain: { at: 495, rgb: "159 182 200", laser: true, g: 0, q: "s" },
   hx4_frozen_harbor: { at: 500, rgb: "143 188 212", g: 2, q: "s" },
+  // t9 hero: the ice lance drops onto the glass on its flash beat and the
+  // frozen pane shears in half where the reflection stood
+  hx4_mirror_of_winter: { at: 480, rgb: "185 220 239", laser: true, g: 1, q: "h", s: 12 },
 };
 
 /** The impact composite: laser column, glyph split in half, ground ring. */
@@ -2760,6 +2906,12 @@ export const PLAYS: Record<string, SigPlugin> = {
   hx4_frozen_harbor: S(FrozenHarborScene, {
     ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true,
     sound: "wall", source: "frozen", anchor: "board",
+  }),
+
+  // --- sympathy: the whole regiment catches what one soldier caught ---
+  hx4_mirror_of_winter: S(MirrorOfWinterScene, {
+    ordering: "radial", staggerMs: 55, victims: "all", hasLead: true,
+    sound: "massfreeze", source: "slow", anchor: "board",
   }),
 };
 

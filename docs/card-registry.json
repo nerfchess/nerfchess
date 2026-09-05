@@ -6,43 +6,43 @@
       "nerfs": 360,
       "buffs": 2088,
       "implemented": 2448,
-      "withPassiveAnimation": 1333,
-      "withPassiveSoundCue": 1333,
-      "castVoiced": 1115,
+      "withPassiveAnimation": 1335,
+      "withPassiveSoundCue": 1335,
+      "castVoiced": 1113,
       "shortDescriptions": 36,
       "emptyDescriptions": 0
     },
     "effectCategoryCounts": {
-      "movement-phase-jump": 90,
-      "movement-upgrade": 135,
+      "movement-phase-jump": 91,
+      "movement-upgrade": 136,
       "nerf-relief": 82,
       "promotion-grant": 55,
       "mass-freeze": 98,
-      "info-reveal": 65,
-      "capture-denial": 121,
-      "single-piece-freeze": 139,
-      "single-piece-shield": 117,
+      "capture-denial": 122,
+      "single-piece-freeze": 141,
+      "single-piece-shield": 120,
       "capture-punishment": 11,
-      "draft-advantage": 91,
+      "draft-advantage": 92,
       "piece-class-lockdown": 38,
       "mass-shield": 12,
       "clock-gain-self": 41,
       "self-movement-restriction": 106,
       "enemy-movement-restriction": 98,
       "forced-sacrifice": 19,
+      "info-reveal": 58,
       "piece-swap": 31,
       "special-rule-grant": 17,
       "piece-upgrade-transform": 11,
       "extra-move": 26,
       "randomness-gamble": 23,
       "instant-piece-spawn": 95,
-      "delayed-contract": 44,
       "special-rule-denial": 7,
       "move-budget-change": 35,
       "piece-downgrade-transform": 58,
       "direction-geometry-lock": 23,
       "zone-denial": 103,
       "terrain-hazard": 37,
+      "delayed-contract": 42,
       "piece-nudge-reposition": 53,
       "capture-permission": 31,
       "target-marking": 8,
@@ -76,8 +76,8 @@
     "soundByFamily": {
       "blessing": 99,
       "strike": 258,
-      "decree": 270,
-      "territory": 260,
+      "decree": 271,
+      "territory": 261,
       "bind": 216,
       "summon": 46,
       "tempo": 109,
@@ -224,17 +224,23 @@
       "name": "Field Glasses",
       "kind": "buff",
       "category": "info",
-      "effectCategory": "info-reveal",
+      "effectCategory": "capture-denial",
       "tier": 1,
-      "mechanic": "instant",
+      "mechanic": "passive",
       "implemented": true,
-      "descriptionLength": 101,
-      "description": "Every enemy piece currently standing in your half of the board lights up until your opponent replies.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
+      "descriptionLength": 175,
+      "description": "Every enemy piece currently standing in your half of the board lights up until your opponent replies, and the spotted pieces hold their fire: they cannot capture on that turn.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "territory",
+        "primitives": [
+          "zoneSweep"
+        ],
+        "sigil": "Binoculars"
+      },
+      "soundCue": "passive/territory",
+      "soundFamily": "territory",
+      "target": "zone"
     },
     {
       "id": "bn4_first_light",
@@ -325,8 +331,8 @@
       "tier": 1,
       "mechanic": "instant",
       "implemented": true,
-      "descriptionLength": 172,
-      "description": "Every one of your pieces that no other piece of yours defends lights up until your opponent replies, and any temporary shield covering one of those pieces is stripped away.",
+      "descriptionLength": 203,
+      "description": "Every one of your pieces that no other piece of yours defends lights up until your opponent replies, and the loose stone nearest your king is mortared: it cannot be captured on your opponent's next turn.",
       "soundSource": "cast-voice",
       "animation": null,
       "soundCue": null,
@@ -388,8 +394,8 @@
       "tier": 1,
       "mechanic": "passive",
       "implemented": true,
-      "descriptionLength": 95,
-      "description": "Gain 1 draft reroll. If you do not spend it within your next two draft offers, it is reclaimed.",
+      "descriptionLength": 122,
+      "description": "Gain 1 draft reroll. Spend a reroll within your next two draft offers and the coin lands heads: you gain that reroll back.",
       "soundSource": "passive-cue",
       "animation": {
         "family": "blessing",
@@ -999,7 +1005,7 @@
         "family": "decree",
         "primitives": [
           "crackLines",
-          "pulseRing"
+          "slabSlam"
         ],
         "sigil": "gavel"
       },
@@ -1033,8 +1039,8 @@
       "tier": 1,
       "mechanic": "instant",
       "implemented": true,
-      "descriptionLength": 50,
-      "description": "See your opponent's nerf for the rest of the game.",
+      "descriptionLength": 75,
+      "description": "See your opponent's nerf for the rest of the game, and gain 1 draft reroll.",
       "soundSource": "cast-voice",
       "animation": null,
       "soundCue": null,
@@ -1050,8 +1056,8 @@
       "tier": 1,
       "mechanic": "passive",
       "implemented": true,
-      "descriptionLength": 95,
-      "description": "Your king may move two squares diagonally to an empty square, once per game. It cannot capture.",
+      "descriptionLength": 96,
+      "description": "Your king may move two squares diagonally to an empty square, twice per game. It cannot capture.",
       "soundSource": "passive-cue",
       "animation": {
         "family": "decree",
@@ -1226,12 +1232,12 @@
       "name": "Half Step",
       "kind": "buff",
       "category": "movement",
-      "effectCategory": "delayed-contract",
+      "effectCategory": "movement-upgrade",
       "tier": 1,
       "mechanic": "passive",
       "implemented": true,
-      "descriptionLength": 58,
-      "description": "One pawn moves diagonally forward without capturing, once.",
+      "descriptionLength": 59,
+      "description": "One pawn moves diagonally forward without capturing, twice.",
       "soundSource": "passive-cue",
       "animation": {
         "family": "strike",
@@ -1378,7 +1384,7 @@
       "animation": {
         "family": "territory",
         "primitives": [
-          "pulseRing"
+          "crackBloom"
         ],
         "sigil": "map"
       },
@@ -2148,7 +2154,7 @@
         "family": "territory",
         "primitives": [
           "zoneSweep",
-          "edgeBurn"
+          "beamVertical"
         ],
         "sigil": "map"
       },
@@ -2189,8 +2195,8 @@
       "tier": 1,
       "mechanic": "activated",
       "implemented": true,
-      "descriptionLength": 107,
-      "description": "Push one enemy pawn back one square if empty behind, once. Using it spends your next unused reroll, if any.",
+      "descriptionLength": 58,
+      "description": "Push one enemy pawn back one square if empty behind, once.",
       "soundSource": "cast-voice",
       "animation": null,
       "soundCue": null,
@@ -7121,7 +7127,7 @@
         "family": "territory",
         "primitives": [
           "zoneSweep",
-          "pulseRing"
+          "crackBloom"
         ],
         "sigil": "map"
       },
@@ -7304,12 +7310,12 @@
       "name": "Vault",
       "kind": "buff",
       "category": "movement",
-      "effectCategory": "delayed-contract",
+      "effectCategory": "movement-phase-jump",
       "tier": 1,
       "mechanic": "passive",
       "implemented": true,
-      "descriptionLength": 50,
-      "description": "One rook jumps its own pawn to the far side, once.",
+      "descriptionLength": 51,
+      "description": "One rook jumps its own pawn to the far side, twice.",
       "soundSource": "passive-cue",
       "animation": {
         "family": "blessing",
@@ -7332,8 +7338,8 @@
       "tier": 1,
       "mechanic": "activated",
       "implemented": true,
-      "descriptionLength": 69,
-      "description": "Crack it open: free one of your pieces from any freeze or walnut hex.",
+      "descriptionLength": 144,
+      "description": "Crack it open: free one of your pieces from any freeze or walnut hex. If none of your pieces is stuck, eat the nut instead: gain 1 draft reroll.",
       "soundSource": "cast-voice",
       "animation": null,
       "soundCue": null,
@@ -8433,15 +8439,22 @@
       "category": "movement",
       "effectCategory": "special-rule-grant",
       "tier": 2,
-      "mechanic": "instant",
+      "mechanic": "passive",
       "implemented": true,
-      "descriptionLength": 48,
-      "description": "Castle even if your king has already moved once.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
+      "descriptionLength": 134,
+      "description": "Castle even if your king or rooks have already moved. When you next castle, your king cannot be captured on your opponent's next turn.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "decree",
+        "primitives": [
+          "crackLines",
+          "pulseRing"
+        ],
+        "sigil": "gavel"
+      },
+      "soundCue": "passive/decree",
+      "soundFamily": "decree",
+      "target": "pieceClass"
     },
     {
       "id": "chill_guy",
@@ -8509,8 +8522,8 @@
       "tier": 2,
       "mechanic": "passive",
       "implemented": true,
-      "descriptionLength": 62,
-      "description": "Your rooks cannot be captured while on their starting squares.",
+      "descriptionLength": 79,
+      "description": "Your rooks cannot be captured while they stand on your back rank, for the game.",
       "soundSource": "passive-cue",
       "animation": {
         "family": "territory",
@@ -8521,7 +8534,7 @@
       },
       "soundCue": "passive/territory",
       "soundFamily": "territory",
-      "target": "square"
+      "target": "rank"
     },
     {
       "id": "counterstep",
@@ -9056,7 +9069,7 @@
         "family": "decree",
         "primitives": [
           "drainFlow",
-          "sigilStamp"
+          "crackLines"
         ],
         "sigil": "gavel"
       },
@@ -10112,7 +10125,8 @@
       "animation": {
         "family": "territory",
         "primitives": [
-          "crackBloom"
+          "zoneSweep",
+          "edgeBurn"
         ],
         "sigil": "map"
       },
@@ -12153,8 +12167,8 @@
       "tier": 2,
       "mechanic": "instant",
       "implemented": true,
-      "descriptionLength": 61,
-      "description": "Your opponent loses one draft reroll, if they still hold one.",
+      "descriptionLength": 86,
+      "description": "Your opponent loses one draft reroll. If they have none to lose, you gain one instead.",
       "soundSource": "cast-voice",
       "animation": null,
       "soundCue": null,
@@ -12258,7 +12272,7 @@
         "family": "decree",
         "primitives": [
           "drainFlow",
-          "quakeRumble"
+          "crackBloom"
         ],
         "sigil": "gavel"
       },
@@ -12472,8 +12486,8 @@
       "tier": 2,
       "mechanic": "passive",
       "implemented": true,
-      "descriptionLength": 69,
-      "description": "Your pawns can spring one square sideways onto an empty square, once.",
+      "descriptionLength": 70,
+      "description": "Your pawns can spring one square sideways onto an empty square, twice.",
       "soundSource": "passive-cue",
       "animation": {
         "family": "blessing",
@@ -12596,7 +12610,7 @@
       "mechanic": "activated",
       "implemented": true,
       "descriptionLength": 63,
-      "description": "One pawn on your 6th rank or beyond promotes to a knight, once.",
+      "description": "One pawn on your 5th rank or beyond promotes to a knight, once.",
       "soundSource": "cast-voice",
       "animation": null,
       "soundCue": null,
@@ -12710,7 +12724,7 @@
         "family": "territory",
         "primitives": [
           "edgeBurn",
-          "beamVertical"
+          "beamHorizontal"
         ],
         "sigil": "map"
       },
@@ -13057,8 +13071,8 @@
       "tier": 3,
       "mechanic": "instant",
       "implemented": true,
-      "descriptionLength": 100,
-      "description": "Every enemy piece currently aiming at your king or your queen lights up until your opponent replies.",
+      "descriptionLength": 161,
+      "description": "Every enemy piece currently aiming at your king or your queen lights up until your opponent replies, and both crowns brace: neither can be captured on that turn.",
       "soundSource": "cast-voice",
       "animation": null,
       "soundCue": null,
@@ -13592,12 +13606,12 @@
       "name": "Scout's Report",
       "kind": "buff",
       "category": "info",
-      "effectCategory": "info-reveal",
+      "effectCategory": "single-piece-shield",
       "tier": 3,
       "mechanic": "instant",
       "implemented": true,
-      "descriptionLength": 95,
-      "description": "Every enemy piece currently aiming at any of your pieces lights up until your opponent replies.",
+      "descriptionLength": 168,
+      "description": "Every enemy piece currently aiming at any of your pieces lights up until your opponent replies, and your threatened pieces dig in: they cannot be captured on that turn.",
       "soundSource": "cast-voice",
       "animation": null,
       "soundCue": null,
@@ -13726,8 +13740,8 @@
       "tier": 3,
       "mechanic": "instant",
       "implemented": true,
-      "descriptionLength": 90,
-      "description": "Every enemy piece that no other enemy piece defends lights up until your opponent replies.",
+      "descriptionLength": 133,
+      "description": "Every enemy piece that no other enemy piece defends lights up until your opponent replies, and the planners hand you 2 draft rerolls.",
       "soundSource": "cast-voice",
       "animation": null,
       "soundCue": null,
@@ -14667,8 +14681,8 @@
       "animation": {
         "family": "decree",
         "primitives": [
-          "crackLines",
-          "crackBloom"
+          "drainFlow",
+          "sigilStamp"
         ],
         "sigil": "gavel"
       },
@@ -15732,7 +15746,7 @@
         "family": "decree",
         "primitives": [
           "drainFlow",
-          "crackLines"
+          "shockRing"
         ],
         "sigil": "gavel"
       },
@@ -16427,8 +16441,8 @@
       "tier": 3,
       "mechanic": "activated",
       "implemented": true,
-      "descriptionLength": 135,
-      "description": "One of your pieces breaks free with a knight's leap to an empty square, once. Using it spends the card even if the leap cannot resolve.",
+      "descriptionLength": 191,
+      "description": "One of your pieces breaks free with a knight's leap to an empty square and cannot be captured for your opponent's next 2 turns, once. Using it spends the card even if the leap cannot resolve.",
       "soundSource": "cast-voice",
       "animation": null,
       "soundCue": null,
@@ -16716,7 +16730,7 @@
       "mechanic": "activated",
       "implemented": true,
       "descriptionLength": 110,
-      "description": "Choose one bishop. While it stands on a square next to your king it cannot be captured, for your next 3 turns.",
+      "description": "Choose one bishop. While it stands on a square next to your king it cannot be captured, for your next 6 turns.",
       "soundSource": "cast-voice",
       "animation": null,
       "soundCue": null,
@@ -16801,7 +16815,7 @@
       "mechanic": "activated",
       "implemented": true,
       "descriptionLength": 96,
-      "description": "Choose one pawn. While it stands in the enemy half it cannot be captured, for your next 3 turns.",
+      "description": "Choose one pawn. While it stands in the enemy half it cannot be captured, for your next 6 turns.",
       "soundSource": "cast-voice",
       "animation": null,
       "soundCue": null,
@@ -16817,8 +16831,8 @@
       "tier": 3,
       "mechanic": "instant",
       "implemented": true,
-      "descriptionLength": 40,
-      "description": "Your king cannot be captured for 1 turn.",
+      "descriptionLength": 62,
+      "description": "Your king cannot be captured for your opponent's next 3 turns.",
       "soundSource": "cast-voice",
       "animation": null,
       "soundCue": null,
@@ -17076,8 +17090,8 @@
       "tier": 3,
       "mechanic": "passive",
       "implemented": true,
-      "descriptionLength": 70,
-      "description": "The next time you lose a minor piece, a new pawn appears in your half.",
+      "descriptionLength": 73,
+      "description": "The next 2 times you lose a minor piece, a new pawn appears in your half.",
       "soundSource": "passive-cue",
       "animation": {
         "family": "summon",
@@ -17457,7 +17471,7 @@
         "family": "decree",
         "primitives": [
           "shockRing",
-          "drainFlow"
+          "pulseRing"
         ],
         "sigil": "gavel"
       },
@@ -18165,12 +18179,12 @@
       "name": "Augur's Flight",
       "kind": "buff",
       "category": "info",
-      "effectCategory": "info-reveal",
+      "effectCategory": "single-piece-shield",
       "tier": 4,
       "mechanic": "instant",
       "implemented": true,
-      "descriptionLength": 127,
-      "description": "Every one of your pieces that is both under enemy attack and undefended by your own side lights up until your opponent replies.",
+      "descriptionLength": 197,
+      "description": "Every one of your pieces that is both under enemy attack and undefended by your own side lights up until your opponent replies, and the birds shelter each one: they cannot be captured on that turn.",
       "soundSource": "cast-voice",
       "animation": null,
       "soundCue": null,
@@ -18199,12 +18213,12 @@
       "name": "Border Survey",
       "kind": "buff",
       "category": "info",
-      "effectCategory": "info-reveal",
+      "effectCategory": "single-piece-freeze",
       "tier": 4,
       "mechanic": "instant",
       "implemented": true,
-      "descriptionLength": 103,
-      "description": "Every square in your half currently reachable by an enemy attack lights up until your opponent replies.",
+      "descriptionLength": 202,
+      "description": "Every square in your half currently reachable by an enemy attack lights up until your opponent replies, and the surveyed ground is staked: your opponent cannot move onto a lit square on their next turn.",
       "soundSource": "cast-voice",
       "animation": null,
       "soundCue": null,
@@ -18561,12 +18575,12 @@
       "name": "Listening Post",
       "kind": "buff",
       "category": "info",
-      "effectCategory": "info-reveal",
+      "effectCategory": "draft-advantage",
       "tier": 4,
       "mechanic": "instant",
       "implemented": true,
-      "descriptionLength": 121,
-      "description": "See both the cards and the tier of your opponent's next draft offer. If that draft is already skipped, you learn nothing.",
+      "descriptionLength": 149,
+      "description": "See both the cards and the tier of your opponent's next draft offer. If that draft is already skipped, the wire is dead: gain 1 draft reroll instead.",
       "soundSource": "cast-voice",
       "animation": null,
       "soundCue": null,
@@ -19485,7 +19499,7 @@
       "animation": {
         "family": "territory",
         "primitives": [
-          "zoneSweep"
+          "edgeBurn"
         ],
         "sigil": "map"
       },
@@ -19628,8 +19642,8 @@
       "tier": 4,
       "mechanic": "activated",
       "implemented": true,
-      "descriptionLength": 84,
-      "description": "Startle one enemy piece (not the king): it retreats one square toward its home rank.",
+      "descriptionLength": 136,
+      "description": "Startle one enemy piece (not the king): it retreats one square toward its home rank and is too rattled to move on its owner's next turn.",
       "soundSource": "cast-voice",
       "animation": null,
       "soundCue": null,
@@ -20110,7 +20124,7 @@
       "animation": {
         "family": "territory",
         "primitives": [
-          "beamVertical"
+          "beamHorizontal"
         ],
         "sigil": "map"
       },
@@ -21305,8 +21319,8 @@
       "tier": 4,
       "mechanic": "activated",
       "implemented": true,
-      "descriptionLength": 53,
-      "description": "One bishop cannot be captured by pawns, for the game.",
+      "descriptionLength": 70,
+      "description": "One bishop cannot be captured by enemy pawns or knights, for the game.",
       "soundSource": "cast-voice",
       "animation": null,
       "soundCue": null,
@@ -21537,7 +21551,7 @@
         "family": "decree",
         "primitives": [
           "drainFlow",
-          "shockRing"
+          "pulseRing"
         ],
         "sigil": "gavel"
       },
@@ -22454,8 +22468,8 @@
       "animation": {
         "family": "decree",
         "primitives": [
-          "drainFlow",
-          "crackBloom"
+          "shockRing",
+          "sigilStamp"
         ],
         "sigil": "gavel"
       },
@@ -24419,12 +24433,12 @@
       "name": "Lighthouse Beam",
       "kind": "buff",
       "category": "info",
-      "effectCategory": "info-reveal",
+      "effectCategory": "single-piece-freeze",
       "tier": 5,
       "mechanic": "instant",
       "implemented": true,
-      "descriptionLength": 144,
-      "description": "Every enemy piece standing in your half, and every enemy piece currently attacking a square in your half, lights up until your opponent replies.",
+      "descriptionLength": 256,
+      "description": "Every enemy piece standing in your half, and every enemy piece currently attacking a square in your half, lights up until your opponent replies. The intruder deepest into your half is caught in the glare, frozen for 1 of its owner's turns (kings excepted).",
       "soundSource": "cast-voice",
       "animation": null,
       "soundCue": null,
@@ -27874,7 +27888,7 @@
         "family": "decree",
         "primitives": [
           "drainFlow",
-          "slabSlam"
+          "quakeRumble"
         ],
         "sigil": "gavel"
       },
@@ -28618,7 +28632,7 @@
         "family": "decree",
         "primitives": [
           "shockRing",
-          "sigilStamp"
+          "crackLines"
         ],
         "sigil": "gavel"
       },
@@ -28717,7 +28731,7 @@
         "family": "decree",
         "primitives": [
           "shockRing",
-          "crackLines"
+          "drainFlow"
         ],
         "sigil": "gavel"
       },
@@ -28791,8 +28805,8 @@
       "animation": {
         "family": "territory",
         "primitives": [
-          "zoneSweep",
-          "crackBloom"
+          "edgeBurn",
+          "zoneSweep"
         ],
         "sigil": "map"
       },
@@ -28816,7 +28830,7 @@
         "family": "decree",
         "primitives": [
           "shockRing",
-          "pulseRing"
+          "slabSlam"
         ],
         "sigil": "gavel"
       },
@@ -28915,7 +28929,7 @@
         "family": "decree",
         "primitives": [
           "shockRing",
-          "slabSlam"
+          "quakeRumble"
         ],
         "sigil": "gavel"
       },
@@ -28979,7 +28993,7 @@
         "family": "territory",
         "primitives": [
           "edgeBurn",
-          "zoneSweep"
+          "beamVertical"
         ],
         "sigil": "map"
       },
@@ -29027,7 +29041,7 @@
         "family": "decree",
         "primitives": [
           "shockRing",
-          "quakeRumble"
+          "crackBloom"
         ],
         "sigil": "gavel"
       },
@@ -29574,12 +29588,12 @@
       "name": "Auditor's Ledger",
       "kind": "buff",
       "category": "info",
-      "effectCategory": "info-reveal",
+      "effectCategory": "single-piece-shield",
       "tier": 6,
       "mechanic": "instant",
       "implemented": true,
-      "descriptionLength": 108,
-      "description": "Every undefended piece on the board, yours and your opponent's alike, lights up until your opponent replies.",
+      "descriptionLength": 191,
+      "description": "Every undefended piece on the board, yours and your opponent's alike, lights up until your opponent replies. Yours are underwritten: they cannot be captured on that turn. Gain 1 draft reroll.",
       "soundSource": "cast-voice",
       "animation": null,
       "soundCue": null,
@@ -30982,7 +30996,7 @@
         "family": "decree",
         "primitives": [
           "crackLines",
-          "slabSlam"
+          "quakeRumble"
         ],
         "sigil": "gavel"
       },
@@ -31152,7 +31166,7 @@
       "animation": {
         "family": "territory",
         "primitives": [
-          "edgeBurn"
+          "beamVertical"
         ],
         "sigil": "map"
       },
@@ -31241,7 +31255,7 @@
         "family": "decree",
         "primitives": [
           "crackLines",
-          "quakeRumble"
+          "crackBloom"
         ],
         "sigil": "gavel"
       },
@@ -31378,7 +31392,7 @@
       "animation": {
         "family": "territory",
         "primitives": [
-          "beamHorizontal"
+          "pulseRing"
         ],
         "sigil": "map"
       },
@@ -33126,7 +33140,7 @@
         "family": "decree",
         "primitives": [
           "drainFlow",
-          "pulseRing"
+          "slabSlam"
         ],
         "sigil": "gavel"
       },
@@ -38086,8 +38100,8 @@
       "animation": {
         "family": "decree",
         "primitives": [
-          "shockRing",
-          "crackBloom"
+          "pulseRing",
+          "sigilStamp"
         ],
         "sigil": "gavel"
       },
@@ -41346,7 +41360,7 @@
         "family": "territory",
         "primitives": [
           "zoneSweep",
-          "beamVertical"
+          "pulseRing"
         ],
         "sigil": "map"
       },

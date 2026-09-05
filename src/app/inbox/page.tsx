@@ -90,7 +90,7 @@ export default function InboxPage() {
                 className="mt-6"
                 icon={MailPlus}
                 title="No conversations yet"
-                body="Messages you send and receive land here. Find a player above, open their profile, and say hello."
+                body="Find a player above and say hello."
                 action={{ href: "/community", label: "Browse players" }}
               />
             ) : (

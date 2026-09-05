@@ -1178,6 +1178,90 @@
 }
 .g09-gc-swell { animation: g09-gc-swell calc(0.9s * var(--fx-dur, 1)) ease-out both; }
 
+/* --- 30. Mirror of Winter: the sympathetic glass --------------------------- */
+
+/* The cold sill of light laid across the board before anything is asked. */
+@keyframes g09-mw-sill {
+  0% { opacity: 0; transform: scaleX(0.04); }
+  42% { opacity: 0.85; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.g09-mw-sill {
+  transform-origin: 50% 50%;
+  animation: g09-mw-sill calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.25, 0.85, 0.3, 1) both;
+}
+
+/* The cheval glass is stood upright, checks its own balance, and holds. */
+@keyframes g09-mw-frame {
+  0% { opacity: 0; transform: translateY(16%) rotate(-7deg) scale(0.92); }
+  30% { opacity: 1; transform: translateY(0) rotate(2deg) scale(1); }
+  46% { transform: rotate(-1deg); }
+  60% { transform: rotate(0deg); }
+  90% { opacity: 1; }
+  100% { opacity: 0; transform: scale(0.98); }
+}
+.g09-mw-frame {
+  transform-origin: 50% 96%;
+  animation: g09-mw-frame calc(1.6s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.3, 1) both;
+}
+
+/* The glass breathes its own frost: a slow fog blooming on the face. */
+@keyframes g09-mw-breath {
+  0% { opacity: 0; transform: scale(0.4, 0.2); }
+  46% { opacity: 0.85; transform: scale(1, 1); }
+  70% { opacity: 0.6; transform: scale(1.05, 1.05); }
+  100% { opacity: 0; transform: scale(1.1, 1.1); }
+}
+.g09-mw-breath { animation: g09-mw-breath calc(0.95s * var(--fx-dur, 1)) ease-in-out both; }
+
+/* One soldier steps up from the caster's side of the glass. */
+@keyframes g09-mw-fig {
+  0% { opacity: 0; transform: translate(calc(var(--g09-side, 1) * 30%), calc(var(--g09-side, 1) * 24%)); }
+  40% { opacity: 1; transform: translate(0, 0); }
+  56% { transform: translateY(-4%); }
+  70% { transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(2%); }
+}
+.g09-mw-fig { animation: g09-mw-fig calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.3, 1) both; }
+
+/* Strike: the pane flashes white-cold, one hard diagonal sweep. */
+@keyframes g09-mw-flash {
+  0% { opacity: 0; transform: translateX(-60%) skewX(-12deg); }
+  36% { opacity: 1; transform: translateX(0) skewX(-12deg); }
+  100% { opacity: 0; transform: translateX(60%) skewX(-12deg); }
+}
+.g09-mw-flash { animation: g09-mw-flash calc(0.55s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+/* A distant twin glazing over where it stands: a shiver, then stillness. */
+@keyframes g09-mw-echo {
+  0% { opacity: 0; transform: translateY(6%) scale(0.94); }
+  24% { opacity: 1; transform: translate(calc(var(--g09-side, 1) * -2%), 0) scale(1); }
+  38% { transform: translate(calc(var(--g09-side, 1) * 2%), 0); }
+  50% { transform: translate(0, 0); }
+  88% { opacity: 0.95; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.98); }
+}
+.g09-mw-echo { animation: g09-mw-echo calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.8, 0.3, 1) both; }
+
+/* The rime ring setting around a frozen twin. */
+@keyframes g09-mw-rime {
+  0% { opacity: 0; transform: scale(0.3); }
+  38% { opacity: 0.95; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.35); }
+}
+.g09-mw-rime { animation: g09-mw-rime calc(0.8s * var(--fx-dur, 1)) ease-out both; }
+
+/* Settle: frost ferns unfurl from the mirror's feet. */
+@keyframes g09-mw-fern {
+  0% { opacity: 0; transform: scale(0.2, 0.4); }
+  44% { opacity: 0.9; transform: scale(1, 1); }
+  100% { opacity: 0; transform: scale(1.15, 1); }
+}
+.g09-mw-fern {
+  transform-origin: 50% 0%;
+  animation: g09-mw-fern calc(1.05s * var(--fx-dur, 1)) ease-out both;
+}
+
 /* --- Kill switch ------------------------------------------------------------
    Settings animation toggle: park every g09-* element outright. */
 html[data-anim="off"] [class^="g09-"],

@@ -113,40 +113,6 @@ export function Select<T extends string>({
   );
 }
 
-/** Row of accent color swatches; the selected gem gets the accent ring and a
- *  faint glow. Each dot carries an invisible 44px hit pad (CSS ::after). */
-export function Swatches({
-  colors,
-  selected,
-  onSelect,
-}: {
-  colors: Array<{ id: string; color: string; label: string }>;
-  selected: string;
-  onSelect: (id: string) => void;
-}) {
-  return (
-    <div className="flex items-center gap-2">
-      {colors.map((c) => (
-        <button
-          key={c.id}
-          type="button"
-          title={c.label}
-          aria-label={c.label}
-          aria-pressed={selected === c.id}
-          onClick={() => onSelect(c.id)}
-          className={
-            "settings-swatch h-6 w-6 shrink-0 rounded-full border transition " +
-            (selected === c.id
-              ? "border-gold ring-1 ring-gold/70 shadow-[0_0_10px_-2px_rgb(var(--accent-hi-rgb)/0.6)]"
-              : "border-[color:var(--edge-strong)] hover:border-parchment-400/70")
-          }
-          style={{ background: c.color }}
-        />
-      ))}
-    </div>
-  );
-}
-
 /** Small secondary action button (e.g. Reset, Apply, Remove). */
 export function GhostButton({ label, onClick }: { label: string; onClick?: () => void }) {
   return (

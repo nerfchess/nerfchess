@@ -32,8 +32,7 @@ const TYPE_CONFIG: Record<
 > = {
   nerf: {
     warm: true,
-    intro:
-      "Got an idea for a new secret rule? Describe it and it goes straight to the nerfchess team. The best ones get built.",
+    intro: "A new secret rule.",
     nameLabel: "Nerf name",
     namePlaceholder: "e.g. Pawn Pacifist",
     descLabel: "The nerf",
@@ -42,8 +41,7 @@ const TYPE_CONFIG: Record<
   },
   buff: {
     warm: false,
-    intro:
-      "Got an idea for a new draft card? Describe it and it goes straight to the nerfchess team. The best ones get built.",
+    intro: "A new draft card.",
     nameLabel: "Buff name",
     namePlaceholder: "e.g. Second Wind",
     descLabel: "The buff",
@@ -52,8 +50,7 @@ const TYPE_CONFIG: Record<
   },
   boon: {
     warm: false,
-    intro:
-      "Got an idea for a relief card offered mid-game in Nerf mode? Describe it and it goes straight to the nerfchess team. The best ones get built.",
+    intro: "A relief card offered mid-game in Nerf mode.",
     nameLabel: "Boon name",
     namePlaceholder: "e.g. Second Wind",
     descLabel: "The boon",
@@ -62,8 +59,7 @@ const TYPE_CONFIG: Record<
   },
   hex: {
     warm: true,
-    intro:
-      "Got an idea for a curse to cast on your opponent in Nerf mode? Describe it and it goes straight to the nerfchess team. The best ones get built.",
+    intro: "A curse to cast on your opponent in Nerf mode.",
     nameLabel: "Hex name",
     namePlaceholder: "e.g. Walnut Queen",
     descLabel: "The hex",
@@ -154,9 +150,11 @@ export default function SuggestRulePage() {
       </nav>
 
       <section className="max-w-2xl mx-auto px-6">
-        <div className="smallcaps text-[11px] text-parchment-400">workshop</div>
+        <div className="text-[11px] text-parchment-400">workshop</div>
         <h1 className="font-display text-5xl mt-1">Suggest a rule</h1>
-        <p className="mt-3 text-parchment-200">{cfg.intro}</p>
+        <p className="mt-3 text-parchment-200">
+          Describe your idea. It goes straight to the nerfchess team, and the best ones get built.
+        </p>
 
         {/* Type selector: nerf and hex ideas wear the warm nerf identity, buff
             and boon ideas the blue. */}
@@ -180,9 +178,10 @@ export default function SuggestRulePage() {
             );
           })}
         </div>
+        <p className="mt-2 text-[13px] text-parchment-400">{cfg.intro}</p>
 
         {state === "sent" ? (
-          <div className="mt-7 plate gilt p-6 text-center">
+          <div className="mt-7 plate p-6 text-center">
             <div className="font-display text-2xl text-gold-leaf">Sent. Thank you!</div>
             <p className="mt-2 text-sm text-parchment-200">
               Your idea is in the queue. If it makes the cut you&apos;ll see it in the Codex.
@@ -206,7 +205,7 @@ export default function SuggestRulePage() {
         ) : (
           <form onSubmit={submit} className="mt-7 plate p-5 sm:p-6 space-y-5">
             <div>
-              <label className="smallcaps text-[11px] text-parchment-400 mb-1 block" htmlFor="rule-name">
+              <label className="text-[11px] text-parchment-400 mb-1 block" htmlFor="rule-name">
                 {cfg.nameLabel} <span className="opacity-60">(optional)</span>
               </label>
               <input
@@ -219,7 +218,7 @@ export default function SuggestRulePage() {
             </div>
 
             <div>
-              <label className="smallcaps text-[11px] text-parchment-400 mb-1 block" htmlFor="rule-desc">
+              <label className="text-[11px] text-parchment-400 mb-1 block" htmlFor="rule-desc">
                 {cfg.descLabel}
               </label>
               <textarea
@@ -237,7 +236,7 @@ export default function SuggestRulePage() {
             </div>
 
             <div>
-              <label className="smallcaps text-[11px] text-parchment-400 mb-1 block" htmlFor="rule-contact">
+              <label className="text-[11px] text-parchment-400 mb-1 block" htmlFor="rule-contact">
                 How to credit / reach you <span className="opacity-60">(optional)</span>
               </label>
               <input

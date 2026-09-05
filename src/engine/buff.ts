@@ -510,14 +510,23 @@ export interface CardFx {
    * rally     — tempo / extra-action boons on the army
    */
   motif: "jail" | "muzzle" | "anchor" | "blindfold" | "slow" | "empower" | "ward" | "rally";
-  /** Piece types the card touches; "all" = the whole army (kings included
-   * only when the mechanic truly touches the king). Omit for effects that
-   * are not piece-scoped (draft locks etc.); those show no board motif. */
+  /** Piece types the card touches; "all" = the whole army. Kings are EXCLUDED
+   * from "all" unless `king: true` opts them in — most army-wide cards
+   * ("...other than the king") never touch the king, and a mismarked king is
+   * the most alarming false signal a board can send. Omit for effects that
+   * are not piece-scoped (draft locks etc.); those show no board motif.
+   *
+   * A card whose mechanic tracks a CHOSEN SUBSET of squares (state.sqs, or
+   * the single state.sq of helpers.bindPiece) is narrowed to those squares by
+   * the fx layer; `pieces` then only describes which types were choosable. */
   pieces?: PieceType[] | "all";
-  /** empower only: the piece type whose movement was granted. The badge on
-   * the empowered piece draws THIS silhouette (a rook that moves like a king
-   * wears a small king mark; an amazon-style knight wears a crown-knight). */
-  moveAs?: PieceType;
+  /** empower only: the movement that was granted. The badge on the empowered
+   * piece draws THIS silhouette (a rook that moves like a king wears a small
+   * king mark). "a" = amazon (queen + knight-leap), the fused sprite. */
+  moveAs?: PieceType | "a";
+  /** With pieces:"all": also mark the king. Reserved for mechanics that truly
+   * touch the king; defaults to false. */
+  king?: boolean;
   /** The fx lands on the card OWNER's pieces (grants/wards), not the
    * opponent's. Defaults to false: constraint motifs target the cursed side. */
   self?: boolean;

@@ -76,7 +76,7 @@ import {
   replayDraftGame,
   revealHeldBuffs,
 } from "@/lib/draftOnline";
-import { computeFxVisual } from "@/components/effects/fxZones";
+import { computeFxVisual, fxVisualFields } from "@/components/effects/fxZones";
 import { stashGamblingOutcome } from "@/components/effects/gamblingOutcome";
 import { useSignatureQueue } from "@/components/effects/useSignatureQueue";
 import { isGodPanelUser, INFINITE_REROLLS } from "@/lib/godPanel";
@@ -230,7 +230,7 @@ function RatingStakes({ stakes }: { stakes: { win: number; draw: number; loss: n
   const fmt = (n: number) => (n >= 0 ? `+${n}` : `${n}`);
   return (
     <div className="plate flex items-center justify-between gap-2 p-2 px-3">
-      <span className="smallcaps text-[12px] text-parchment-400">Rating at stake</span>
+      <span className="text-[12px] text-parchment-400">Rating at stake</span>
       <span className="font-mono text-[12px] tabular-nums">
         <span className="text-verdigris">W {fmt(stakes.win)}</span>
         <span className="text-parchment-400"> · D {fmt(stakes.draw)} · </span>
@@ -704,7 +704,16 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     if (!draftCovered) notifyGateOpen();
   }, [draftCovered, notifyGateOpen]);
   useEffect(() => {
-    const left = draftDeadline == null ? -1 : draftDeadline - Date.now();
+    // A null deadline means "no live lock-in window" — not started yet, or
+    // closed because both seats resolved (draft-state sends an explicit null
+    // then). Neither is "the window expired": treating null as already-over
+    // was the bug behind "the draft menu keeps minimizing randomly" — a start
+    // replay or a frame-early offer saw the deadline as null for a beat and
+    // the fresh draft opened straight into the minimized side panel. With no
+    // window there is no offer on screen, so the last grace state simply
+    // stops mattering; leave it be.
+    if (draftDeadline == null) return;
+    const left = draftDeadline - Date.now();
     if (left <= 0) {
       queueMicrotask(() => setDraftGraceOver(true));
       return;
@@ -713,6 +722,22 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     const id = window.setTimeout(() => setDraftGraceOver(true), left + 50);
     return () => window.clearTimeout(id);
   }, [draftDeadline]);
+  // A genuinely new offer round always opens full-screen, even when its
+  // deadline frame lands a beat behind the offer (the old stale-past deadline
+  // would otherwise keep the fresh draft minimized). The one exception is a
+  // reconnecting straggler whose window really has expired: a stale-PAST
+  // deadline for this very round keeps the side panel. Keyed on the offer
+  // alone by design — the deadline effect above owns deadline changes.
+  const draftDeadlineRef = useRef(draftDeadline);
+  useEffect(() => {
+    draftDeadlineRef.current = draftDeadline;
+  }, [draftDeadline]);
+  useEffect(() => {
+    if (liveOfferKey == null) return;
+    const dl = draftDeadlineRef.current;
+    if (dl != null && dl - Date.now() <= 0) return;
+    setDraftGraceOver(false);
+  }, [liveOfferKey]);
 
   // Auto-dismiss the full-screen "waiting for opponent" overlay: while it is
   // up, start a short timer that collapses it to the non-blocking corner pill.
@@ -2068,14 +2093,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
             // now paint here too.
             lockedSquares: dZone.locked,
             barredSquares: dZone.barred,
-            ...(dFxZone
-              ? {
-                  kingSafeSquares: dFxZone.kingSafeSquares,
-                  pawnClampSquares: dFxZone.pawnClampSquares,
-                  stunSquares: dFxZone.stunSquares,
-                  motifSquares: dFxZone.motifs,
-                }
-              : {}),
+            ...(dFxZone ? fxVisualFields(dFxZone) : {}),
           }
         : {}),
     };
@@ -2254,7 +2272,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
       <main className="min-h-dvh flex items-center justify-center px-4 py-8">
         <ConnectionBanner session={session} />
         <div className="w-full max-w-2xl">
-          <div className="smallcaps text-[12px] text-parchment-400 text-center">Nerf draft</div>
+          <div className="text-[12px] text-parchment-400 text-center">Nerf draft</div>
           <h1 className="font-display text-4xl text-parchment text-center mt-1">
             Choose your handicap
           </h1>
@@ -2310,7 +2328,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                     className={
                       "mx-auto block w-full max-w-md sm:max-w-none text-left transition touch-manipulation [@media(hover:hover)]:hover:-translate-y-1" +
                       (nerfSelected === i
-                        ? " -translate-y-1 ring-2 ring-gold shadow-leaf"
+                        ? " -translate-y-1 ring-2 ring-gold"
                         : nerfSelected != null
                         ? " opacity-60"
                         : "")
@@ -2339,7 +2357,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               reveals when the game ends, so their options never show. */}
           {!isNerfMode && (
             <div className="mt-5 plate p-3 text-center">
-              <span className="smallcaps text-[12px] text-parchment-400">
+              <span className="text-[12px] text-parchment-400">
                 Your opponent is choosing between
               </span>
               <div className="mt-1 text-sm text-parchment-200 font-display">
@@ -2571,7 +2589,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     </div>
   ) : myRevealState === "confirm" ? (
     <div className="plate space-y-2 p-2 px-3">
-      <div className="smallcaps text-[12px] text-parchment-300">
+      <div className="text-[12px] text-parchment-300">
         Show your secret rule to your opponent? This can&apos;t be undone.
       </div>
       <div className="grid grid-cols-2 gap-2">
@@ -2601,7 +2619,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
 
   const historyActions = game.result ? null : confirmMovePending ? (
     <div className="space-y-2">
-      <div className="smallcaps text-[12px] text-parchment-300">Play this move?</div>
+      <div className="text-[12px] text-parchment-300">Play this move?</div>
       <div className="grid grid-cols-2 gap-2">
         <button
           onClick={confirmHeldMove}
@@ -2618,7 +2636,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     </div>
   ) : confirmingDraw ? (
     <div className="space-y-2">
-      <div className="smallcaps text-[12px] text-parchment-300">Offer a draw?</div>
+      <div className="text-[12px] text-parchment-300">Offer a draw?</div>
       <div className="grid grid-cols-2 gap-2">
         <button
           onClick={onOfferDraw}
@@ -2635,7 +2653,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     </div>
   ) : confirmingResign ? (
     <div className="space-y-2">
-      <div className="smallcaps text-[12px] text-parchment-300">Resign the game?</div>
+      <div className="text-[12px] text-parchment-300">Resign the game?</div>
       <div className="grid grid-cols-2 gap-2">
         <Button tone="danger"
           onClick={() => {
@@ -2654,7 +2672,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     </div>
   ) : claimReady ? (
     <div className="space-y-2">
-      <div className="smallcaps text-[12px] text-parchment-300">
+      <div className="text-[12px] text-parchment-300">
         Your opponent seems to have abandoned the game.
       </div>
       {error && <div className="text-xs text-oxblood-glow leading-snug">{error}</div>}
@@ -2674,7 +2692,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     </div>
   ) : opponentGone && !game?.result ? (
     <div className="space-y-2" role="status" aria-live="polite">
-      <div className="smallcaps text-[12px] text-parchment-300">
+      <div className="text-[12px] text-parchment-300">
         Opponent disconnected.{" "}
         {claimInSeconds > 0
           ? `You can claim the win in ${claimInSeconds}s.`
@@ -2684,7 +2702,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     </div>
   ) : takebackOfferBy && takebackOfferBy !== myColor ? (
     <div className="space-y-2">
-      <div className="smallcaps text-[12px] text-parchment-300">Opponent asks for a takeback.</div>
+      <div className="text-[12px] text-parchment-300">Opponent asks for a takeback.</div>
       {error && <div className="text-xs text-oxblood-glow leading-snug">{error}</div>}
       <div className="grid grid-cols-2 gap-2">
         <button
@@ -2702,7 +2720,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     </div>
   ) : drawOfferBy && drawOfferBy !== myColor ? (
     <div className="space-y-2">
-      <div className="smallcaps text-[12px] text-parchment-300">Opponent offered a draw.</div>
+      <div className="text-[12px] text-parchment-300">Opponent offered a draw.</div>
       {error && <div className="text-xs text-oxblood-glow leading-snug">{error}</div>}
       <div className="grid grid-cols-2 gap-2">
         <button
@@ -2726,10 +2744,10 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   ) : (
     <div className="space-y-2">
       {drawOfferStatus === "declined" && (
-        <div className="smallcaps text-[12px] text-parchment-300">Draw declined.</div>
+        <div className="text-[12px] text-parchment-300">Draw declined.</div>
       )}
       {takebackStatus === "declined" && (
-        <div className="smallcaps text-[12px] text-parchment-300">Takeback declined.</div>
+        <div className="text-[12px] text-parchment-300">Takeback declined.</div>
       )}
       {error && <div className="text-xs text-oxblood-glow leading-snug">{error}</div>}
       <div className={"grid gap-2 " + (takebackAvailable ? "grid-cols-3" : "grid-cols-2")}>
@@ -2783,9 +2801,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           aria-live="polite"
           // Owns the top-16 lane; OppPlaysLog sits below it at z-[39] so the
           // two can never render on top of each other.
-          className="fixed right-3 top-16 z-40 w-[min(80vw,20rem)] animate-rise border border-gold/40 bg-ink-700/95 p-3 shadow-plate backdrop-blur-sm"
+          className="fixed right-3 top-16 z-40 w-[min(80vw,20rem)] border border-gold/40 bg-ink-700/95 p-3 shadow-plate backdrop-blur-sm"
         >
-          <div className="smallcaps text-[10px] text-parchment-400">
+          <div className="text-[10px] text-parchment-400">
             {abortNotice.level === "timeout" ? "New games paused" : "Abort warning"}
           </div>
           <p className="mt-1 text-xs leading-snug text-parchment-300">
@@ -2812,7 +2830,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           </Link>
         </div>
         <div className="flex items-center gap-4">
-          <div className="smallcaps hidden text-[12px] text-parchment-400 sm:block">
+          <div className="hidden text-[12px] text-parchment-400 sm:block">
             playing {myColor === "w" ? "White" : "Black"} ·{" "}
             {isDraft && (
               <>
@@ -3463,7 +3481,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 <span className="text-parchment-300">(you&rsquo;re not stuck)</span>
                 {/* Only claim "on their clock" once the free window has truly
                     expired; before then both clocks are still paused. */}
-                <span className="smallcaps ml-2 text-[12px] text-parchment-400">
+                <span className="ml-2 text-[12px] text-parchment-400">
                   {draftGraceOver ? "on their clock now" : "clocks paused"}
                 </span>
               </span>
@@ -3511,7 +3529,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               title="Dismiss"
               className="waiting-banner plate pointer-events-auto w-full max-w-xs cursor-pointer border-gold/30 p-4 text-center shadow-plate"
             >
-              <div className="smallcaps text-[12px] text-parchment-400">
+              <div className="text-[12px] text-parchment-400">
                 {genuinelySkipped
                   ? "Draft skipped"
                   : draftCardNoun(start.mode) === "hex"

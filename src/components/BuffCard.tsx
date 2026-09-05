@@ -96,7 +96,7 @@ export function BuffCard({ buff, tier, status, spent, nullified, onClick, compac
         // rows and bottoms align). Compact rows keep their natural height.
         (compact ? "p-3 " : "flex h-full flex-col p-4 ") +
         (dead ? "opacity-45 " : "") +
-        (glow && !dead ? "ring-1 ring-gold/40 shadow-leaf " : "") +
+        (glow && !dead ? "ring-1 ring-gold/40 " : "") +
         (onClick && !dead
           ? compact
             ? "cursor-pointer hover:border-gold/60 hover:-translate-y-0.5"
@@ -140,7 +140,7 @@ export function BuffCard({ buff, tier, status, spent, nullified, onClick, compac
             {buff.name}
           </div>
           <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
-            <span className="inline-flex items-center gap-1 smallcaps text-[10px] text-parchment-400">
+            <span className="inline-flex items-center gap-1 text-[10px] text-parchment-400">
               {/* Chip icon: parchment tone at rest; card hover tints it in the
                   tier color via --tier-rgb (set by the root's tier-bg class). */}
               {createElement(catIcon, {
@@ -182,7 +182,7 @@ export function BuffCard({ buff, tier, status, spent, nullified, onClick, compac
           else. */}
       {!compact && buff.tip && (
         <p className="mt-2 text-[10.5px] leading-snug text-parchment-400">
-          <span className="smallcaps text-parchment-300">Tip</span>{" "}
+          <span className="text-parchment-300">Tip</span>{" "}
           <GlossaryText text={buff.tip} />
         </p>
       )}
@@ -215,13 +215,13 @@ export function BuffCard({ buff, tier, status, spent, nullified, onClick, compac
         </p>
       )}
       {status && !dead && (
-        <div className="mt-1.5 smallcaps text-[10px] text-gold/80">{status}</div>
+        <div className="mt-1.5 text-[10px] text-gold/80">{status}</div>
       )}
       {nullified && (
-        <div className="mt-1.5 smallcaps text-[10px] text-oxblood-glow">Nullified</div>
+        <div className="mt-1.5 text-[10px] text-oxblood-glow">Nullified</div>
       )}
       {spent && !nullified && (
-        <div className="mt-1.5 smallcaps text-[10px] text-parchment-400">Used</div>
+        <div className="mt-1.5 text-[10px] text-parchment-400">Used</div>
       )}
     </div>
   );

@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { clearSavedAiGame } from "@/lib/gamePersistence";
-import { loadRating } from "@/lib/rating";
 import { SiteHeader } from "@/components/SiteHeader";
 import { useSharedMode } from "@/lib/modeState";
 import {
@@ -23,8 +22,19 @@ const TIME_STEPS_SEC = [
   150,
   180,
   ...range(5 * 60, 10 * 60, 60),
+  15 * 60, // the 15+10 preset's base falls between the coarser ranges
   ...range(12 * 60, 30 * 60, 2 * 60),
   ...range(35 * 60, 2 * 60 * 60, 5 * 60),
+].sort((a, b) => a - b);
+
+// One-tap time controls: a preset sets both sliders (base + increment); the
+// sliders stay for fine-tuning.
+const TIME_PRESETS: { label: string; baseSec: number; incrementSec: number }[] = [
+  { label: "1+0", baseSec: 60, incrementSec: 0 },
+  { label: "3+2", baseSec: 3 * 60, incrementSec: 2 },
+  { label: "5+0", baseSec: 5 * 60, incrementSec: 0 },
+  { label: "10+0", baseSec: 10 * 60, incrementSec: 0 },
+  { label: "15+10", baseSec: 15 * 60, incrementSec: 10 },
 ];
 
 // Rough Elo of each bot level, mirroring BOT_ELO in the game view so the
@@ -61,18 +71,13 @@ function PlayInner() {
   // deliberate bot-only override of the shared mode, never a page mode.
   const [plainBot, setPlainBot] = useState(false);
   const botMode: "nerf" | "buff" | "plain" = plainBot ? "plain" : gameMode;
-  const [rating, setRating] = useState<number | null>(null);
-  const [games, setGames] = useState<number>(0);
   // "New here? Take the tour" chip: shown only to players who have neither
   // finished (or skipped) the first-game tour nor dismissed the chip itself.
   const [tourNudge, setTourNudge] = useState(false);
   useEffect(() => {
-    // loadRating() reads localStorage (client-only); defer the paint off the
-    // synchronous effect body so it doesn't cascade a render inline.
+    // localStorage is client-only; defer the paint off the synchronous effect
+    // body so it doesn't cascade a render inline.
     queueMicrotask(() => {
-      const r = loadRating();
-      setRating(Math.round(r.rating));
-      setGames(r.games);
       try {
         if (
           window.localStorage.getItem(TUTORIAL_DONE_KEY) == null &&
@@ -121,20 +126,9 @@ function PlayInner() {
           <div>
             <h1 className="font-display text-4xl">Play the computer</h1>
             <p className="mt-1.5 text-[13px] text-parchment-300">
-              Practice against a bot at your own pace. Buff, Nerf, or plain chess.
+              Buff, Nerf, or plain chess. Casual, never rated.
             </p>
           </div>
-          {rating != null && (
-            <Link
-              href="/leaderboard"
-              className="hidden sm:flex shrink-0 items-center gap-2 border border-gold/30 bg-gold/5 px-3 py-1.5 transition hover:border-gold/50"
-            >
-              <span className="smallcaps text-[11px] text-parchment-400">Rating</span>
-              <span className="font-mono text-sm text-parchment-100 tabular-nums">{rating}</span>
-              <span className="font-mono text-[12px] text-parchment-400">·</span>
-              <span className="font-mono text-[12px] text-parchment-400 tabular-nums">{games} {games === 1 ? "game" : "games"}</span>
-            </Link>
-          )}
         </div>
 
         {tourNudge && (
@@ -193,7 +187,7 @@ function PlayInner() {
           <span className="min-w-0 flex-1">
             <span className="block font-display text-lg font-semibold text-parchment-50">Play online</span>
             <span className="block text-[13px] leading-snug text-parchment-300">
-              Find a real opponent in the lobby. Everything below is practice against the computer.
+              Find a real opponent in the lobby.
             </span>
           </span>
           <span
@@ -236,6 +230,20 @@ function PlayInner() {
           </Group>
 
           <div className="space-y-4">
+            <Group label="Time control">
+              {TIME_PRESETS.map((p) => (
+                <Pill
+                  key={p.label}
+                  selected={baseSec === p.baseSec && incrementSec === p.incrementSec}
+                  onClick={() => {
+                    setBaseSec(p.baseSec);
+                    setIncrementSec(p.incrementSec);
+                  }}
+                >
+                  {p.label}
+                </Pill>
+              ))}
+            </Group>
             <TimeSlider
               label="Time per Side"
               value={baseSec}
@@ -263,9 +271,6 @@ function PlayInner() {
               <polyline points="12 5 19 12 12 19" />
             </svg>
           </Button>
-          <p className="mt-2 text-center text-[11px] text-parchment-400">
-            Practice against the computer is casual and never affects your rating.
-          </p>
         </div>
       </section>
     </main>
@@ -308,7 +313,7 @@ function TimeSlider({
   return (
     <div className={disabled ? "opacity-50" : ""}>
       <div className="flex items-center justify-between mb-2">
-        <div className="smallcaps text-[11px] text-parchment-400">{label}</div>
+        <div className="text-[11px] text-parchment-400">{label}</div>
         <div className="font-mono text-sm text-gold-leaf tabular-nums">{display}</div>
       </div>
       <input
@@ -332,7 +337,7 @@ function TimeSlider({
 function Group({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <div className="smallcaps text-[11px] text-parchment-400 mb-2">{label}</div>
+      <div className="text-[11px] text-parchment-400 mb-2">{label}</div>
       <div className="flex flex-wrap gap-2">{children}</div>
     </div>
   );
@@ -350,7 +355,7 @@ function Pill({
       className={
         "press inline-flex min-h-[44px] items-center justify-center border px-4 py-2 font-display text-[13px] transition " +
         (selected
-          ? "bg-gold/20 border-gold text-gold-leaf shadow-leaf"
+          ? "bg-gold/20 border-gold text-gold-leaf"
           : "border-white/15 text-parchment-200 hover:border-white/30 hover:bg-white/5")
       }
     >

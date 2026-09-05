@@ -2018,6 +2018,72 @@ function AncestralAudienceScene({ role, delayMs }: SceneProps) {
   );
 }
 
+/* --- 43. Leviathan Below (t9) — THE BOARD IS ONLY THE SURFACE ---------------
+   The one card where the water is deeper than the game: a vast bulk slides
+   under the whole board and the light goes with it, three marked patches
+   darken in the real victim order, one lidless eye opens under the cast
+   square — and on the strike the arms come UP, coil, and take the surface
+   with them. Settle: wreckage planks, foam, bubbles that took too long to
+   arrive. Palette: #4fa8c8 / #fff0d2 / #0a1c26. */
+const LV_ARM = "M11 21.6c-.6-6.4-.2-10.4 1.4-13.6 1.2-2.4 3.2-3.6 5-3.2 1.4.3 2.2 1.6 1.8 2.8-.4 1.1-1.8 1.4-2.6.8 1-.1 1.5-1 1-1.6-.7-.8-2.2-.3-3 1.2-1.4 2.6-1.6 6.6-.8 13.4z";
+const LV_EYE = "M4 12c2.6-3.6 5.4-5.4 8-5.4s5.4 1.8 8 5.4c-2.6 3.6-5.4 5.4-8 5.4S6.6 15.6 4 12z";
+
+function LeviathanBelowScene({ role, delayMs }: SceneProps) {
+  const arm = (f: string, s: string) => <path d={LV_ARM} fill={f} stroke={s} strokeWidth="0.9" {...SJ} />;
+  const eye = (
+    <g {...SJ}>
+      <path d={LV_EYE} fill="#0a1c26" stroke="#4fa8c8" strokeWidth="1.1" />
+      <circle cx="12" cy="12" r="2.6" fill="#fff0d2" />
+      <circle cx="12" cy="12" r="1" fill="#0a1c26" />
+    </g>
+  );
+  if (role === "entrance") return (
+    <Cut d={delayMs}>
+      <V c="g43-ent-rise" l={12} t={26} w={40} h={40} d={40}>{eye}</V>
+      <V c="g43-lv-arm" l={44} t={16} w={44} h={70} d={250} st={{ transformOrigin: "50% 100%" }}>{arm("#4fa8c8", "#0a1c26")}</V>
+      <L c="g43-ent-pop" l={30} t={78} w={40} h={5} d={440} st={{ borderRadius: "999px", background: "#0a1c26" }} />
+    </Cut>
+  );
+  if (role === "target") return (
+    <Cut d={delayMs}>
+      <L c="g43-hitwave" l={8} t={64} w={84} h={5} d={0} st={{ borderRadius: "999px", background: "#0a1c26" }} />
+      <V c="g43-hitside" l={24} t={8} w={52} h={78} d={140} st={{ transformOrigin: "50% 100%" }}>{arm("#4fa8c8", "#0a1c26")}</V>
+      <L c="g43-hit2" l={40} t={30} w={20} h={20} d={280} st={{ borderRadius: "50%", background: "rgba(255,240,210,0.8)" }} />
+    </Cut>
+  );
+  return (
+    <Lead d={delayMs} frame={
+      <>
+        <Wash tone="rgba(10,28,38,0.4)" />
+        <Tide tone="rgba(79,168,200,0.4)" d={200} />
+        {/* the bulk: a shadow far too big for the board slides under it,
+            entering from the CASTER's own edge (--fx-side, never "the bottom") */}
+        <L c="g43-lv-gloom" l={-12} t={18} w={124} h={64} d={0} st={{ borderRadius: "50%", background: "radial-gradient(ellipse at 50% 50%, rgba(10,28,38,0.85), transparent 68%)" }} />
+        {/* the three marked patches darken in the REAL victim order */}
+        {[0, 1, 2].map((i) => (
+          <L key={i} c="g43-lv-mark" l={16 + i * 26} t={30 + (i % 2) * 24} w={13} h={11} d={120} st={{ borderRadius: "50%", background: "radial-gradient(ellipse, rgba(10,28,38,0.9), rgba(79,168,200,0.25) 60%, transparent 74%)", animationDelay: "calc(var(--g43-d, 0ms) + 120ms * var(--fx-dur, 1) + var(--fx-index, 0) * 110ms)" }} />
+        ))}
+      </>
+    }>
+      <V c="g43-lv-eye" l={44.5} t={45} w={11} h={8} d={260}>{eye}</V>
+      {[0, 1, 2].map((i) => (
+        <V key={i} c="g43-lv-arm" l={[41, 46.5, 52][i]} t={[40, 36, 41][i]} w={7.5} h={13} d={430 + i * 80} st={{ transformOrigin: "50% 100%", scale: i === 1 ? "-1 1" : undefined }}>{arm(i === 1 ? "#fff0d2" : "#4fa8c8", "#0a1c26")}</V>
+      ))}
+      <V c="g43-lv-coil" l={45.6} t={31} w={9} h={9} d={560}>
+        <path d="M12 20c-4.4 0-7.6-3-7.6-7 0-3.6 2.8-6.4 6.2-6.4 2.8 0 5 2.2 5 4.8 0 2.2-1.8 3.9-3.9 3.9-1.7 0-3-1.3-3-2.9" fill="none" stroke="#fff0d2" strokeWidth="1.8" {...SJ} />
+      </V>
+      <L c="g43-lv-burst" l={44} t={42} w={12} h={7} d={560} st={{ borderRadius: "50%", background: "radial-gradient(ellipse, rgba(255,240,210,0.9), transparent 70%)" }} />
+      <L c="g43-foam" l={43} t={49} w={14} h={5} d={660} st={{ borderRadius: "50%", background: "rgba(255,240,210,0.5)" }} />
+      {[0, 1].map((i) => (
+        <L key={i} c="g43-lv-wreck" l={44 + i * 7} t={50} w={4.6} h={1.3} d={740 + i * 90} st={{ borderRadius: "1px", background: i ? "#4fa8c8" : "#fff0d2", rotate: i ? "-14deg" : "9deg" }} />
+      ))}
+      {[0, 1, 2].map((i) => (
+        <L key={i} c="g43-motes" l={44 + i * 4.4} t={52} w={1.2} h={1.2} d={820} st={{ borderRadius: "50%", background: "#4fa8c8" }} />
+      ))}
+    </Lead>
+  );
+}
+
 /* =============================================================================
    Registry. Every entry declares an anchor; every `sound` is an existing
    SigSoundKey. `source` is deliberately omitted throughout: these cards carry
@@ -2073,6 +2139,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   hx4_dead_mans_boots: S(DeadMansBootsScene, { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "shades", anchor: "cast" }),
   ov_lantern_festival: S(LanternFestivalScene, { ordering: "line", staggerMs: 70, victims: ["p"], hasLead: true, sound: "cathedral", anchor: "aim" }),
   ov_ancestral_audience: S(AncestralAudienceScene, { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades", anchor: "cast" }),
+  ov_leviathan_below: S(LeviathanBelowScene, { ordering: "radial", staggerMs: 70, victims: "all", hasLead: true, sound: "cataclysm", anchor: "cast" }),
 };
 
 /* =============================================================================
@@ -2266,6 +2333,8 @@ const IMPACTS: Record<string, Imp> = {
   ov_lantern_festival: { at: 520, tint: "#f0a24a", laser: true, wet: true, aim: true, len: true, s: 6 },
   // the ancestors answer: the offering bowl overturns in the shallows
   ov_ancestral_audience: { at: 470, tint: "#a9d8d0", laser: true, wet: true, y: 52, s: 6.6 },
+  // the surface is TAKEN: the lead arm blows the waterline apart full-weight
+  ov_leviathan_below: { at: 560, tint: "#4fa8c8", glyph: impGlyph(LV_ARM, "#4fa8c8", "#0a1c26"), wet: true, y: 46, s: 9 },
 };
 
 for (const [id, imp] of Object.entries(IMPACTS)) {

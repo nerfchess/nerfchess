@@ -5,10 +5,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Sparkles, Trophy, Tv, Users, type LucideIcon } from "lucide-react";
 import { HeroTv } from "@/components/HeroTv";
 import { LiveRvPanel } from "@/components/LiveRvPanel";
-import { DungeonGateButton } from "@/components/DungeonGateButton";
 import { OpenLobbyPanel } from "@/components/OpenLobbyPanel";
 import { SiteHeader } from "@/components/SiteHeader";
-import { StarField } from "@/components/StarField";
+import { SocialsRow } from "@/components/SocialsRow";
 import { ModeBadge } from "@/components/ModeBadge";
 // NOTE: the card libraries (ALL_BUFFS / ALL_NERFS) are NOT imported statically.
 // They transitively pull the entire card engine (~12k lines) into the home
@@ -27,129 +26,107 @@ import { LinkButton } from "@/components/ui/Button";
 export default function HomePage() {
   return (
     <main className="min-h-screen flex flex-col">
-      <StarField />
       <SiteHeader />
 
-      {/* Hero: the live featured board on the left, the action column on the
-          right. The board sells the product; the copy explains it in one
-          breath; Open Lobby is the single primary way in.
-          Mobile order (owner request): the live TV board leads the page, with
-          the Open lobby CTA immediately below it — everything else follows. */}
-      <section className="relative w-full max-w-7xl mx-auto px-5 sm:px-6 pt-3 pb-10 sm:pt-7 grid lg:grid-cols-[minmax(0,1fr)_430px] gap-10 lg:gap-12 items-center">
-        {/* Torchlight pooling at the hero's far corners: the landing page
-            opens inside the dungeon, not in front of it. Decorative only. */}
-        <span aria-hidden className="torch-pool hidden lg:block" style={{ top: "-40px", left: "-90px" }} />
-        <span aria-hidden className="torch-pool hidden lg:block" style={{ bottom: "-60px", right: "-80px" }} />
-        <div className="order-1 animate-rise">
+      {/* Hero: the live featured board on the left, a compact action column
+          on the right. Three stacked ways in, then the live counts. On mobile
+          the board leads and the lobby entry follows directly under it. */}
+      <section className="w-full max-w-7xl mx-auto px-5 sm:px-6 pt-3 pb-8 sm:pt-6 grid lg:grid-cols-[minmax(0,1fr)_340px] gap-6 lg:gap-8 items-start">
+        <div className="order-1">
           <HeroTv />
-          {/* Mobile stack (owner order, 2026-07): board, then the LOBBY entry
-              directly below it, then the live-games panel. The lobby is the
-              page's one primary action and must outrank spectating. Desktop
-              keeps its action column beside the board, so both panels hide
-              at lg. */}
+          {/* Mobile stack: board, then the LOBBY entry directly below it, then
+              the live-games panel. Desktop keeps its action column beside the
+              board, so both panels hide at lg. */}
           <OpenLobbyPanel className="mt-2.5 lg:hidden" />
           <LiveRvPanel className="mt-3 lg:hidden" />
         </div>
 
-        {/* The action column is kept short on purpose: it should never run
-            taller than the board beside it. */}
-        <div className="order-2 stagger-in">
-          {/* Eyebrow row, with a quiet onboarding door parked in the upper
-              right. It drops brand-new players straight into the built-in
-              guided tutorial: a real game against the easiest bot with coach
-              marks over the live board. Signed-in players see their mode
-              rating chips here instead — the profile corner of the hero. */}
+        {/* The action column: one box, three buttons, the counts underneath. */}
+        <div className="order-2">
           <div className="flex items-start justify-between gap-3">
-            <span className="eyebrow">Nerf Chess</span>
-            <div className="flex flex-col items-end gap-2">
-              <NewHereChip />
-              <HeroRatings />
-            </div>
+            {/* The page's H1. The sr-only tail gives search engines the "chess
+                with power-ups" target phrase without changing the visible hero. */}
+            <h1 className="font-display text-[15px] font-bold text-parchment-50">
+              Nerf Chess
+              <span className="sr-only">: chess with power-ups, a free online chess variant</span>
+            </h1>
+            <HeroRatings />
+          </div>
+          <div className="mt-2">
+            <NewHereChip />
           </div>
 
           {/* The one-breath pitch: what the two words on the tin actually
               change. Concrete, not marketing air. */}
-          <p className="mt-3 text-[15px] leading-snug text-parchment-300">
+          <p className="mt-2 text-[14px] leading-snug text-parchment-300">
             Every five moves you draft a card. In{" "}
             <span className="font-semibold text-mode-buffGlow">Buff</span> mode you stack powers
             onto your own army; in <span className="font-semibold text-mode-nerfGlow">Nerf</span>{" "}
             mode you start with a secret handicap and curse your opponent. Capture the king to win.
           </p>
 
-          {/* ONE dominant action: the dungeon gate itself. It enters the
-              lobby's Quick Play tab, where Buff and 3+2 are already selected,
-              so the next click is the matchmaking button. */}
-          <DungeonGateButton
-            href="/lobby"
-            className="mt-5 hidden w-full items-center justify-center px-6 py-7 font-display text-4xl font-bold tracking-wide no-underline sm:text-5xl lg:flex"
-          >
-            Open Lobby
-          </DungeonGateButton>
-
-          {/* Two quieter ways in, one step below the big button. No mode
-              decision here: Buff is the site-wide default, and every setup
-              page lets you switch. No third "play online" clone; Open lobby
-              already is that. */}
-          <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <DungeonGateButton
-              href="/lobby?tab=friends"
-              variant="minor"
-              className="flex items-center justify-center gap-2 px-4 py-3 font-display text-[15px] font-semibold no-underline"
-            >
-              Play a friend
-            </DungeonGateButton>
-            <DungeonGateButton
-              href="/play"
-              variant="minor"
-              className="flex items-center justify-center gap-2 px-4 py-3 font-display text-[15px] font-semibold no-underline"
-            >
-              Play a bot
-            </DungeonGateButton>
+          {/* Three stacked ways in. Create a game is the one primary: it opens
+              the lobby's quick pairing, where Buff and 3+2 are preselected. */}
+          <div className="mt-4 flex flex-col gap-2">
+            <LinkButton tone="primary" href="/lobby" block size="lg">
+              Create a game
+            </LinkButton>
+            <LinkButton tone="default" href="/play" block size="lg">
+              Play with the computer
+            </LinkButton>
+            <LinkButton tone="default" href="/lobby?tab=friends" block size="lg">
+              Play with a friend
+            </LinkButton>
           </div>
 
           <LiveNowStrip />
           <ReturnToGameBanner />
 
-          {/* What the two words on the tin actually mean. Each card is a door
-              straight into the lobby with that mode preselected (?mode= wins
-              over the remembered choice); the titles carry the mode colors and
-              the cards carry mode-hue edges, at equal prominence. */}
-          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Link href="/lobby?mode=buff" className="mode-def-card mode-def-card--buff plate group block p-4 no-underline">
-              <span className="font-display text-lg font-bold text-mode-buffGlow">Buff mode</span>
-              <ul className="mt-2 space-y-1 text-sm leading-snug text-parchment-300">
-                <li>Both armies play fair.</li>
-                <li>Draft powers onto your own pieces.</li>
-                <li>Stack buffs into a war machine.</li>
-              </ul>
-              <span className="mt-2.5 block text-[13px] font-medium text-mode-buffGlow/80 transition-colors group-hover:text-mode-buffGlow">
-                Play Buff →
+          {/* Two compact mode doors. One clause each; ?mode= wins over the
+              remembered choice, and the full explanation lives in How it works
+              below. */}
+          <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <Link
+              href="/lobby?mode=buff"
+              className="plate plate-hover group flex items-center justify-between gap-3 p-3 no-underline"
+            >
+              <span className="min-w-0">
+                <span className="font-display text-[14px] font-bold text-mode-buffGlow">Buff mode</span>
+                <span className="block truncate text-[12px] leading-snug text-parchment-300">
+                  Stack powers onto your own army.
+                </span>
+              </span>
+              <span className="shrink-0 text-[12px] font-medium text-mode-buffGlow/80 transition-colors group-hover:text-mode-buffGlow">
+                Play
               </span>
             </Link>
-            <Link href="/lobby?mode=nerf" className="mode-def-card mode-def-card--nerf plate group block p-4 no-underline">
-              <span className="font-display text-lg font-bold text-mode-nerfGlow">Nerf mode</span>
-              <ul className="mt-2 space-y-1 text-sm leading-snug text-parchment-300">
-                <li>You start with a secret handicap.</li>
-                <li>Curse your opponent with hexes.</li>
-                <li>Draft boons to dig yourself out.</li>
-              </ul>
-              <span className="mt-2.5 block text-[13px] font-medium text-mode-nerfGlow/80 transition-colors group-hover:text-mode-nerfGlow">
-                Play Nerf →
+            <Link
+              href="/lobby?mode=nerf"
+              className="plate plate-hover group flex items-center justify-between gap-3 p-3 no-underline"
+            >
+              <span className="min-w-0">
+                <span className="font-display text-[14px] font-bold text-mode-nerfGlow">Nerf mode</span>
+                <span className="block truncate text-[12px] leading-snug text-parchment-300">
+                  Secret handicaps, hexes, and boons.
+                </span>
+              </span>
+              <span className="shrink-0 text-[12px] font-medium text-mode-nerfGlow/80 transition-colors group-hover:text-mode-nerfGlow">
+                Play
               </span>
             </Link>
           </div>
         </div>
       </section>
 
-      <SeamDivider />
       <HowItWorks />
       <FeaturedCards />
       <LiveActivity />
       <CommunityProof />
 
-      {/* Socials now sit adjacent to the footer, closing out the page. */}
-      <div className="max-w-7xl mx-auto w-full px-6 pt-4">
-        <SocialsRow />
+      {/* Socials close out the page as a full follow block: playtesters kept
+          missing the old quiet chip row entirely. */}
+      <div className="max-w-7xl mx-auto w-full px-6 pt-6 pb-2">
+        <SocialsRow variant="prominent" />
       </div>
       <SiteFooter />
     </main>
@@ -168,7 +145,7 @@ function LiveNowStrip() {
   return (
     <Link
       href="/lobby"
-      className="mt-3 flex items-center justify-center gap-2 text-[13px] text-parchment-300 no-underline transition-colors hover:text-parchment-100"
+      className="mt-3 flex items-center gap-2 text-[13px] text-parchment-300 no-underline transition-colors hover:text-parchment-100"
     >
       <span className="dot-live h-2 w-2 shrink-0 bg-verdigris" />
       <span>
@@ -278,29 +255,14 @@ function ReturnToGameBanner() {
   return (
     <Link
       href={`/game/${active.id}`}
-      className="plate group mt-4 flex items-center justify-between gap-3 border border-gold/40 bg-gold/10 p-3 px-4 no-underline transition-colors hover:border-gold/70"
+      className="plate group mt-3 flex items-center justify-between gap-3 border-gold/50 p-3 px-4 no-underline transition-colors hover:border-gold"
     >
       <span className="flex items-center gap-2 text-sm text-parchment-100">
-        <span className="w-2 h-2 bg-gold-leaf animate-flicker" />
+        <span className="h-2 w-2 shrink-0 bg-gold-leaf" />
         You have a game in progress.
       </span>
-      <span className="flex shrink-0 items-center gap-1.5 font-display text-xs font-semibold tracking-wide text-gold-leaf">
-        Rejoin
-        <span aria-hidden className="motion-safe:transition-transform motion-safe:duration-200 group-hover:translate-x-0.5">
-          &rarr;
-        </span>
-      </span>
+      <span className="shrink-0 font-display text-xs font-semibold text-gold-leaf">Rejoin</span>
     </Link>
-  );
-}
-
-// The signature mode seam as a section rule: warm Nerf meeting cool Buff at a
-// single flat bead. It carries the two-mode identity down the whole page.
-function SeamDivider() {
-  return (
-    <div className="w-full max-w-7xl mx-auto px-5 sm:px-6" aria-hidden>
-      <hr className="mode-seam" />
-    </div>
   );
 }
 
@@ -351,19 +313,18 @@ function HowItWorks() {
   ];
   return (
     <section className="w-full max-w-7xl mx-auto px-5 sm:px-6 pt-10 sm:pt-12 pb-6">
-      <header className="mb-5">
-        <span className="kicker eyebrow">The rules of the dungeon</span>
-        <h2 className="display-3 mt-1.5 text-parchment-50">How it works</h2>
+      <header className="mb-4">
+        <h2 className="font-display text-xl font-bold text-parchment-50">How it works</h2>
       </header>
-      <div className="stagger-in grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-3">
         {steps.map((step) => {
-          // The payoff step carries the most weight: it gets the accent gilt
-          // edge so the three cards read as a sequence, not three clones.
+          // The payoff step carries the most weight: its number chip takes the
+          // accent so the three boxes read as a sequence, not three clones.
           const emphasized = step.n === "3";
           return (
             <div
               key={step.n}
-              className={`plate dgn-rivets relative flex flex-col overflow-hidden p-5 sm:p-6 ${emphasized ? "gilt" : ""}`}
+              className="plate flex flex-col p-4 sm:p-5"
             >
               {/* One aligned header row per card: number chip, title, icon.
                   The row reserves a fixed two-line height and centers its
@@ -375,8 +336,8 @@ function HowItWorks() {
                 <span
                   className={`grid h-9 w-9 shrink-0 place-items-center border font-display text-base font-bold ${
                     emphasized
-                      ? "border-gold/70 bg-gold/15 text-gold-leaf"
-                      : "border-gold/40 bg-gold/10 text-gold-leaf"
+                      ? "border-transparent bg-gold text-[color:var(--text-on-accent)]"
+                      : "border-gold/40 text-gold-leaf"
                   }`}
                 >
                   {step.n}
@@ -478,12 +439,11 @@ function FeaturedCards() {
   return (
     <section className="w-full max-w-7xl mx-auto px-5 sm:px-6 pt-8 pb-6">
       <header className="mb-5 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <span className="kicker eyebrow">The vault</span>
-          <h2 className="display-3 mt-1.5 text-parchment-50">Draft from hundreds of cards</h2>
-        </div>
+        <h2 className="font-display text-xl font-bold text-parchment-50">
+          Draft from hundreds of cards
+        </h2>
         <Link href="/codex" className="text-[13px] text-gold-leaf no-underline transition-colors hover:text-parchment-50">
-          Browse the codex →
+          Browse the codex
         </Link>
       </header>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
@@ -492,7 +452,7 @@ function FeaturedCards() {
               <Link
                 key={`${c.kind}-${c.id}`}
                 href={c.href}
-                className="plate hover-lift group flex flex-col gap-2.5 p-3 no-underline transition-colors hover:border-gold/40"
+                className="plate plate-hover group flex flex-col gap-2.5 p-3 no-underline"
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className={`grid h-9 w-9 shrink-0 place-items-center border tier-bg-${c.tier} tier-${c.tier}`}>
@@ -577,9 +537,9 @@ function LiveActivity() {
   return (
     <section className="w-full max-w-7xl mx-auto px-5 sm:px-6 pt-8 pb-6">
       <header className="mb-5 flex flex-wrap items-end justify-between gap-3">
-        <h2 className="display-3 text-parchment-50">Live activity</h2>
+        <h2 className="font-display text-xl font-bold text-parchment-50">Live activity</h2>
         <Link href="/community" className="text-[13px] text-gold-leaf no-underline transition-colors hover:text-parchment-50">
-          More in the community →
+          More in the community
         </Link>
       </header>
       <div className="plate divide-y divide-[color:var(--edge)] p-1">
@@ -691,68 +651,6 @@ function CommunityProof() {
         </div>
       </div>
     </section>
-  );
-}
-
-// The socials chip row, restyled quiet: muted label, small ghost chips.
-function SocialsRow() {
-  const socials: { href: string; label: string; icon: React.ReactNode }[] = [
-    {
-      href: "https://discord.gg/a5bJYFrTx",
-      label: "Discord",
-      icon: (
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-          <path d="M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z" />
-        </svg>
-      ),
-    },
-    {
-      href: "https://www.instagram.com/officialnerfchess",
-      label: "Instagram",
-      icon: (
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-          <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
-          <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-          <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
-        </svg>
-      ),
-    },
-    {
-      href: "https://tiktok.com/@nerfchess",
-      label: "TikTok",
-      icon: (
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-          <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
-        </svg>
-      ),
-    },
-    {
-      href: "https://www.youtube.com/@OfficialNerfChess",
-      label: "YouTube",
-      icon: (
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-          <path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17" />
-          <path d="m10 15 5-3-5-3z" />
-        </svg>
-      ),
-    },
-  ];
-  return (
-    <div className="flex flex-wrap items-center justify-center gap-2">
-      <span className="mr-1 text-[12px] text-parchment-400">Socials</span>
-      {socials.map((s) => (
-        <a
-          key={s.label}
-          href={s.href}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="btn-ghost flex items-center gap-2 px-3 py-1.5 text-[13px] no-underline"
-        >
-          {s.icon}
-          {s.label}
-        </a>
-      ))}
-    </div>
   );
 }
 

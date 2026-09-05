@@ -1,13 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CalendarDays, Crown, Flame, LogIn, LogOut, Timer, Trophy, Users } from "lucide-react";
+import { CalendarDays, Crown, Flame, LogIn, LogOut, Swords, Timer, Trophy, Users } from "lucide-react";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { SiteHeader } from "@/components/SiteHeader";
 import { AccountUser, fetchMe } from "@/lib/authClient";
-import type { StandingRow, TournamentDetail } from "@/app/api/tournaments/[id]/route";
+import { saveOnlineSeat } from "@/lib/multiplayer";
+import type {
+  MyTournamentGame,
+  StandingRow,
+  TournamentDetail,
+  TournamentRoundGame,
+} from "@/app/api/tournaments/[id]/route";
 import {
   clockLabel,
   countdownLabel,
@@ -23,12 +29,15 @@ type DetailResponse = {
   tournament: TournamentDetail;
   standings: StandingRow[];
   entered: boolean;
+  rounds: TournamentRoundGame[];
+  myGame: MyTournamentGame | null;
 };
 
 const MEDALS = ["#d8b56e", "#c7c5c1", "#c79468"]; // gold, silver, bronze
 
 export default function TournamentDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const router = useRouter();
   const [data, setData] = useState<DetailResponse | null>(null);
   const [me, setMe] = useState<AccountUser | null | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
@@ -62,11 +71,38 @@ export default function TournamentDetailPage() {
 
   const t = data?.tournament;
   // Recompute the phase against the live clock so the page transitions on its
-  // own, rather than trusting the snapshot the server returned.
+  // own, rather than trusting the snapshot the server returned. A tournament
+  // that played out its configured rounds finishes early, so the stored
+  // status wins over the clock.
   const phase = useMemo(
-    () => (t ? tournamentPhase(t.starts_at, t.duration_min, now) : "upcoming"),
+    () =>
+      t
+        ? t.status === "finished"
+          ? "finished"
+          : tournamentPhase(t.starts_at, t.duration_min, now)
+        : "upcoming",
     [t, now],
   );
+
+  // While the event is live (or about to start), poll the detail API. The
+  // tournament engine advances lazily on read, so this poll IS the round
+  // driver: it collects finished results, pairs the next round, and delivers
+  // this player's seat when their game is ready.
+  useEffect(() => {
+    if (phase === "finished") return;
+    const poll = window.setInterval(() => {
+      load().catch(() => {});
+    }, 10_000);
+    return () => window.clearInterval(poll);
+  }, [load, phase]);
+
+  // Claim my seat (the token the server handed only to me) and go play.
+  const playMyGame = useCallback(() => {
+    const g = data?.myGame;
+    if (!g) return;
+    saveOnlineSeat(g.gameId, { color: g.color, token: g.token });
+    router.push(`/game/${encodeURIComponent(g.gameId)}`);
+  }, [data?.myGame, router]);
 
   const entry = async (action: "join" | "withdraw") => {
     setBusy(true);
@@ -116,7 +152,7 @@ export default function TournamentDetailPage() {
             {/* Header */}
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="min-w-0">
-                <div className="flex items-center gap-2 smallcaps text-[11px] text-parchment-400">
+                <div className="flex items-center gap-2 text-[11px] text-parchment-400">
                   <Trophy size={13} className="text-gold-leaf" />
                   <Link href="/tournaments" className="hover:text-gold-leaf">
                     Tournaments
@@ -128,12 +164,12 @@ export default function TournamentDetailPage() {
                   <span className="border border-white/15 px-2 py-0.5 font-mono text-xs text-parchment-200">
                     {clockLabel(t.clock_time_sec, t.clock_increment_sec)}
                   </span>
-                  <span className="border border-white/15 px-2 py-0.5 smallcaps text-[11px] text-parchment-300">
+                  <span className="border border-white/15 px-2 py-0.5 text-[11px] text-parchment-300">
                     {formatLabel(t.format)}
                   </span>
                   <span
                     className={
-                      "border px-2 py-0.5 smallcaps text-[11px] " +
+                      "border px-2 py-0.5 text-[11px] " +
                       (t.rated ? "border-gold/40 text-gold-leaf" : "border-white/15 text-parchment-400")
                     }
                   >
@@ -142,7 +178,7 @@ export default function TournamentDetailPage() {
                   {t.club_name && t.club_id && (
                     <Link
                       href={`/clubs`}
-                      className="border border-white/15 px-2 py-0.5 smallcaps text-[11px] text-parchment-300 hover:text-gold-leaf"
+                      className="border border-white/15 px-2 py-0.5 text-[11px] text-parchment-300 hover:text-gold-leaf"
                     >
                       {t.club_name}
                     </Link>
@@ -153,7 +189,7 @@ export default function TournamentDetailPage() {
               {/* Join / withdraw */}
               <div className="flex flex-col items-end gap-1">
                 {me === undefined ? null : phase === "finished" ? (
-                  <span className="smallcaps text-[11px] text-parchment-500">Event over</span>
+                  <span className="text-[11px] text-parchment-500">Event over</span>
                 ) : !me ? (
                   <LinkButton tone="leaf"
                     href={`/login?next=/tournaments/${encodeURIComponent(id)}`}
@@ -176,7 +212,7 @@ export default function TournamentDetailPage() {
                   </Button>
                 )}
                 {entered && phase !== "finished" && (
-                  <span className="smallcaps text-[11px] text-verdigris-glow">You are in</span>
+                  <span className="text-[11px] text-verdigris-glow">You are in</span>
                 )}
               </div>
             </div>
@@ -190,6 +226,24 @@ export default function TournamentDetailPage() {
             {/* Countdown / status banner */}
             <Countdown t={t} phase={phase} now={now} />
 
+            {/* My pending game: the seat token travels only to its owner. */}
+            {data?.myGame && phase === "ongoing" && (
+              <div className="mt-4 plate flex flex-wrap items-center justify-between gap-3 border-verdigris/40 px-5 py-4">
+                <div className="flex items-center gap-3">
+                  <Swords size={20} className="shrink-0 text-verdigris-glow" aria-hidden />
+                  <div>
+                    <div className="text-[11px] text-parchment-400">Round {data.myGame.round}</div>
+                    <div className="text-sm text-parchment-100">
+                      Your game is ready. You play {data.myGame.color === "w" ? "white" : "black"}.
+                    </div>
+                  </div>
+                </div>
+                <Button tone="cta" onClick={playMyGame} className="px-6 py-2.5 text-sm font-semibold">
+                  Play your game
+                </Button>
+              </div>
+            )}
+
             {t.description && <p className="mt-4 max-w-3xl text-parchment-300">{t.description}</p>}
 
             <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
@@ -197,10 +251,14 @@ export default function TournamentDetailPage() {
               <div className="min-w-0 space-y-4">
                 {podium.length > 0 && <Podium podium={podium} />}
 
+                {(data?.rounds.length ?? 0) > 0 && (
+                  <Rounds rounds={data!.rounds} currentRound={t.current_round} phase={phase} meId={me?.id ?? null} />
+                )}
+
                 <div className="plate overflow-hidden">
                   <div className="flex items-center justify-between gap-2 border-b border-white/10 px-5 py-3">
-                    <span className="smallcaps text-[11px] text-parchment-400">Standings</span>
-                    <span className="flex items-center gap-1.5 smallcaps text-[11px] text-parchment-500">
+                    <span className="text-[11px] text-parchment-400">Standings</span>
+                    <span className="flex items-center gap-1.5 text-[11px] text-parchment-500">
                       <Users size={12} /> {standings.length}/{t.max_players}
                     </span>
                   </div>
@@ -212,7 +270,7 @@ export default function TournamentDetailPage() {
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead>
-                          <tr className="border-b border-white/10 text-left smallcaps text-[11px] text-parchment-500">
+                          <tr className="border-b border-white/10 text-left text-[11px] text-parchment-500">
                             <th scope="col" className="px-3 py-2 text-right font-medium">
                               #
                             </th>
@@ -268,7 +326,8 @@ export default function TournamentDetailPage() {
                     </div>
                   )}
                   <p className="border-t border-white/10 px-5 py-2.5 text-[11px] text-parchment-500">
-                    Standings seed by rating until pairing begins. Live pairing and scoring arrive in a later update.
+                    Swiss pairing by score, then rating. Win 1 point, draw 0.5, bye 1. Rounds pair
+                    automatically while the event runs.
                   </p>
                 </div>
               </div>
@@ -276,7 +335,7 @@ export default function TournamentDetailPage() {
               {/* Info sidebar */}
               <aside className="space-y-4">
                 <div className="plate overflow-hidden">
-                  <div className="border-b border-white/10 px-5 py-3 smallcaps text-[11px] text-parchment-400">
+                  <div className="border-b border-white/10 px-5 py-3 text-[11px] text-parchment-400">
                     Details
                   </div>
                   <dl className="divide-y divide-white/5">
@@ -294,7 +353,7 @@ export default function TournamentDetailPage() {
                 </div>
 
                 <div className="plate px-5 py-4">
-                  <div className="smallcaps text-[11px] text-parchment-400">Host</div>
+                  <div className="text-[11px] text-parchment-400">Host</div>
                   <Link
                     href={`/u/${encodeURIComponent(t.creator_name)}`}
                     className="mt-1.5 flex items-center gap-1.5 text-sm text-parchment-100 hover:text-gold-leaf"
@@ -341,7 +400,7 @@ function Countdown({ t, phase, now }: { t: TournamentDetail; phase: string; now:
     <div className="mt-5 plate flex items-center gap-4 px-5 py-4">
       <Timer size={22} className="shrink-0 text-parchment-400" aria-hidden />
       <div>
-        <div className="smallcaps text-[11px] text-parchment-400">{kicker}</div>
+        <div className="text-[11px] text-parchment-400">{kicker}</div>
         <div className={"font-display text-2xl tabular-nums sm:text-3xl " + tone} aria-live="polite">
           {big}
         </div>
@@ -356,7 +415,7 @@ function Podium({ podium }: { podium: StandingRow[] }) {
   const rankOf = (s: StandingRow) => podium.indexOf(s);
   return (
     <div className="plate px-5 py-6">
-      <div className="mb-4 flex items-center gap-2 smallcaps text-[11px] text-parchment-400">
+      <div className="mb-4 flex items-center gap-2 text-[11px] text-parchment-400">
         <Trophy size={13} className="text-gold-leaf" /> Podium
       </div>
       <div className="flex items-end justify-center gap-4 sm:gap-8">
@@ -384,10 +443,103 @@ function Podium({ podium }: { podium: StandingRow[] }) {
   );
 }
 
+// Per-round pairings: players, live-game links, results. Rows come from the
+// detail API newest round first; each round renders as its own block inside
+// one plate so the current round leads.
+function Rounds({
+  rounds,
+  currentRound,
+  phase,
+  meId,
+}: {
+  rounds: TournamentRoundGame[];
+  currentRound: number;
+  phase: string;
+  meId: string | null;
+}) {
+  const byRound = useMemo(() => {
+    const grouped = new Map<number, TournamentRoundGame[]>();
+    for (const g of rounds) {
+      const list = grouped.get(g.round) ?? [];
+      list.push(g);
+      grouped.set(g.round, list);
+    }
+    return [...grouped.entries()].sort((a, b) => b[0] - a[0]);
+  }, [rounds]);
+
+  return (
+    <div className="plate overflow-hidden">
+      <div className="flex items-center justify-between gap-2 border-b border-white/10 px-5 py-3">
+        <span className="flex items-center gap-1.5 text-[11px] text-parchment-400">
+          <Swords size={12} /> Pairings
+        </span>
+        <span className="text-[11px] text-parchment-500">
+          Round {currentRound}
+          {phase === "ongoing" ? " in progress" : ""}
+        </span>
+      </div>
+      {byRound.map(([round, games]) => (
+        <div key={round}>
+          <div className="border-b border-white/10 bg-white/[0.02] px-5 py-2 text-[11px] text-parchment-500">
+            Round {round}
+          </div>
+          <ul className="divide-y divide-white/5">
+            {games.map((g) => {
+              const mine = meId != null && (g.white_user_id === meId || g.black_user_id === meId);
+              return (
+                <li
+                  key={`${round}-${g.board}`}
+                  className={"flex items-center gap-3 px-5 py-2.5 " + (mine ? "bg-gold/10" : "")}
+                >
+                  {g.black_user_id == null ? (
+                    <span className="min-w-0 flex-1 truncate text-sm text-parchment-300">
+                      {g.white_username} has a bye
+                    </span>
+                  ) : (
+                    <span className="min-w-0 flex-1 truncate text-sm text-parchment-100">
+                      {g.white_username}
+                      <span className="px-1.5 text-parchment-500">vs</span>
+                      {g.black_username}
+                    </span>
+                  )}
+                  <ResultBadge result={g.result} />
+                  {g.game_id && (
+                    <LinkButton tone="quiet" size="xs" href={`/game/${encodeURIComponent(g.game_id)}`}>
+                      {g.result == null ? "Watch" : "Replay"}
+                    </LinkButton>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ResultBadge({ result }: { result: string | null }) {
+  const [label, cls] =
+    result == null
+      ? ["In play", "border-verdigris/40 text-verdigris-glow"]
+      : result === "w"
+        ? ["1-0", "border-white/15 text-parchment-100"]
+        : result === "b"
+          ? ["0-1", "border-white/15 text-parchment-100"]
+          : result === "draw"
+            ? ["1/2-1/2", "border-white/15 text-parchment-300"]
+            : result === "bye"
+              ? ["+1", "border-gold/40 text-gold-leaf"]
+              : ["Void", "border-white/15 text-parchment-500"];
+  return (
+    <span className={"shrink-0 border px-1.5 py-0.5 font-mono text-[11px] " + cls}>{label}</span>
+  );
+}
+
 function InfoRow({ label, value, mono = false }: { label: string; value: string; mono?: boolean }) {
   return (
     <div className="flex items-center justify-between gap-3 px-5 py-2.5">
-      <dt className="smallcaps text-[11px] text-parchment-500">{label}</dt>
+      <dt className="text-[11px] text-parchment-500">{label}</dt>
       <dd className={"text-sm text-parchment-100 " + (mono ? "font-mono" : "")}>{value}</dd>
     </div>
   );
@@ -395,5 +547,5 @@ function InfoRow({ label, value, mono = false }: { label: string; value: string;
 
 function ModeTag({ mode }: { mode: string }) {
   const cls = mode === "buff" ? "border-mode-buff/40 text-mode-buffGlow" : "border-mode-nerf/40 text-mode-nerfGlow";
-  return <span className={"border px-2 py-0.5 smallcaps text-[11px] " + cls}>{modeLabel(mode)}</span>;
+  return <span className={"border px-2 py-0.5 text-[11px] " + cls}>{modeLabel(mode)}</span>;
 }

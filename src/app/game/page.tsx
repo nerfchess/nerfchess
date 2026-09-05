@@ -51,7 +51,7 @@ import { BuffDock, EnemyBuffModal, TargetingBanner, againstYouRows, useBuffTarge
 import { BoardSplashHost } from "@/components/BoardSplash";
 import { draftCardNoun, turnCost } from "@/engine/buff";
 import { draftZones } from "@/lib/draftOnline";
-import { computeFxVisual } from "@/components/effects/fxZones";
+import { computeFxVisual, fxVisualFields } from "@/components/effects/fxZones";
 import { useSignatureQueue } from "@/components/effects/useSignatureQueue";
 import { MobileBuffDrawer } from "@/components/MobileBuffDrawer";
 import { bottomChromePadClass } from "@/components/mobileChrome";
@@ -70,16 +70,17 @@ import { makeSeed } from "@/engine/rng";
 import { BoardState, Color, Move, Square } from "@/engine/types";
 import { cloneBoard, findKing, isInCheck, makeMove, moveToUCI } from "@/engine/board";
 import { computeMoveRisks } from "@/engine/moveSafety";
-import { loadSettings } from "@/lib/settings";
+import { SETTINGS_CHANGED_EVENT, loadSettings } from "@/lib/settings";
+import { CompactSiteHeader } from "@/components/SiteHeader";
+import { useZenHotkey } from "@/lib/useZenMode";
 import { ensureAccount } from "@/lib/authClient";
 import type { QueuedPremove } from "@/components/Board";
 import { buildCustomNerf, CustomNerf } from "@/engine/nerfs/custom";
-import { isMuted, playCapture, playCheck, playNerf, playMove as playMoveSfx, setMuted } from "@/lib/sounds";
+import { playCapture, playCheck, playNerf, playMove as playMoveSfx } from "@/lib/sounds";
 import { nerfSummary, outcomeFor, recordCompletedGame } from "@/lib/gameHistory";
 import { applyResult, loadRatingFor, saveRatingFor } from "@/lib/rating";
 import { loadRatings } from "@/lib/ratings";
-import { SettingsPanel } from "@/components/SettingsPanel";
-import { loadSavedAiGame, restoreSavedAiGame, saveAiGame, snapshotGame } from "@/lib/gamePersistence";
+import { clearSavedAiGame, loadSavedAiGame, restoreSavedAiGame, saveAiGame, snapshotGame } from "@/lib/gamePersistence";
 import { boardAtPly, replayBoardSpan } from "@/lib/gameReview";
 import { clipPliesAvailable } from "@/components/clip/clipReplay";
 import { premoveOptionsFor, premoveSelfChecks, previewMovesFor } from "@/lib/premoves";
@@ -159,9 +160,15 @@ const DRAFT_REVEAL_EASE_MS = 450;
 const DRAFT_REVEAL_HOLD_MS = 4000;
 
 export default function GamePageWrapper() {
+  // Rematch remounts GamePage under a fresh key with the URL untouched, so
+  // bootstrapGame re-runs against the SAME configuration (mode, strength,
+  // color, clock) with every piece of game state reset. GamePage clears the
+  // saved game first so the remount deals fresh instead of restoring the
+  // finished game.
+  const [session, setSession] = useState(0);
   return (
     <Suspense fallback={<LoadingPanel />}>
-      <GamePage />
+      <GamePage key={session} onRematch={() => setSession((s) => s + 1)} />
     </Suspense>
   );
 }
@@ -175,7 +182,7 @@ function LoadingPanel() {
           <span className="w-2 h-2 rounded-full bg-verdigris-glow animate-bob" style={{ animationDelay: "0.15s" }} />
           <span className="w-2 h-2 rounded-full bg-bruise-glow animate-bob" style={{ animationDelay: "0.3s" }} />
         </div>
-        <div className="font-display text-xl text-parchment animate-flicker">
+        <div className="font-display text-xl text-parchment">
           Dealing the cards
         </div>
       </div>
@@ -183,7 +190,9 @@ function LoadingPanel() {
   );
 }
 
-function GamePage() {
+function GamePage({ onRematch }: { onRematch: () => void }) {
+  // Zen mode: `z` hides everything but the board, clocks and move list.
+  useZenHotkey();
   const router = useRouter();
   const params = useSearchParams();
   const querySignature = params.toString();
@@ -244,7 +253,6 @@ function GamePage() {
   // of the deliberation costs the player's own time.
   const [offerOnClockIndex, setOfferOnClockIndex] = useState<number | null>(null);
   const [, force] = useState(0);
-  const [muted, setMutedState] = useState(false);
   const [premoves, setPremoves] = useState<QueuedPremove[]>([]);
   const [confirmingResign, setConfirmingResign] = useState(false);
   const [confirmingDraw, setConfirmingDraw] = useState(false);
@@ -254,8 +262,12 @@ function GamePage() {
   const [drawOfferStatus, setDrawOfferStatus] = useState<"idle" | "offering" | "declined">("idle");
   const [whiteMs, setWhiteMs] = useState(initialTimeMs);
   const [blackMs, setBlackMs] = useState(initialTimeMs);
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const [uiSettings, setUiSettings] = useState(() => loadSettings());
+  useEffect(() => {
+    const sync = () => setUiSettings(loadSettings());
+    window.addEventListener(SETTINGS_CHANGED_EVENT, sync);
+    return () => window.removeEventListener(SETTINGS_CHANGED_EVENT, sync);
+  }, []);
   const [historyPly, setHistoryPly] = useState<number | null>(null);
   const [boardHeight, setBoardHeight] = useState<number | null>(null);
   const [playerElo, setPlayerElo] = useState<number | null>(null);
@@ -399,7 +411,6 @@ function GamePage() {
 
   useEffect(() => {
     queueMicrotask(() => {
-      setMutedState(isMuted());
       setPlayerElo(loadRatingFor(ratingCategory).rating);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1427,7 +1438,6 @@ function GamePage() {
     const offer = mine?.offer ?? null;
     wheelNavRef.current = {
       blocked:
-        settingsOpen ||
         (!!game.result && showResult) ||
         !!buffTargeting.targeting ||
         (!!offer && offerOnClockIndex !== offer.index),
@@ -1443,7 +1453,7 @@ function GamePage() {
       return (
         <main className="min-h-screen flex items-center justify-center px-4 py-8">
           <div className="w-full max-w-2xl">
-            <div className="smallcaps text-[12px] text-parchment-400 text-center">Nerf draft</div>
+            <div className="text-[12px] text-parchment-400 text-center">Nerf draft</div>
             <h1 className="font-display text-4xl text-parchment text-center mt-1">
               Choose your handicap
             </h1>
@@ -1472,7 +1482,7 @@ function GamePage() {
                   className={
                     "mx-auto block w-full max-w-md sm:max-w-none text-left transition touch-manipulation [@media(hover:hover)]:hover:-translate-y-1" +
                     (nerfSelected === i
-                      ? " -translate-y-1 ring-2 ring-gold shadow-leaf"
+                      ? " -translate-y-1 ring-2 ring-gold"
                       : nerfSelected != null
                       ? " opacity-60"
                       : "")
@@ -1499,7 +1509,7 @@ function GamePage() {
               </p>
             ) : (
               <div className="mt-5 plate p-3 text-center">
-                <span className="smallcaps text-[12px] text-parchment-400">
+                <span className="text-[12px] text-parchment-400">
                   Your opponent is choosing between
                 </span>
                 <div className="mt-1 text-sm text-parchment-200 font-display">
@@ -1684,7 +1694,16 @@ function GamePage() {
 
   const cancelPremove = () => setPremoves([]);
 
-  const handleRematch = () => router.push("/play");
+  // Rematch restarts the same configuration in place: clear the finished
+  // game's save (so the remounted page deals a fresh one instead of restoring
+  // it) and let the wrapper remount this component. "New game" stays a
+  // separate door back to the /play setup screen.
+  const handleRematch = () => {
+    clearSavedAiGame();
+    onRematch();
+  };
+
+  const handleNewGame = () => router.push("/play");
 
   const onResign = () => {
     if (!game.result) {
@@ -1731,15 +1750,9 @@ function GamePage() {
     }, 800);
   };
 
-  const toggleMute = () => {
-    const next = !muted;
-    setMuted(next);
-    setMutedState(next);
-  };
-
   const historyActions = game.result ? null : confirmMovePending ? (
     <div className="space-y-2">
-      <div className="smallcaps text-[12px] text-parchment-300">Play this move?</div>
+      <div className="text-[12px] text-parchment-300">Play this move?</div>
       <div className="grid grid-cols-2 gap-2">
         <button
           onClick={confirmHeldMove}
@@ -1756,7 +1769,7 @@ function GamePage() {
     </div>
   ) : confirmingDraw ? (
     <div className="space-y-2">
-      <div className="smallcaps text-[12px] text-parchment-300">Offer a draw?</div>
+      <div className="text-[12px] text-parchment-300">Offer a draw?</div>
       <div className="grid grid-cols-2 gap-2">
         <button
           onClick={onOfferDraw}
@@ -1773,7 +1786,7 @@ function GamePage() {
     </div>
   ) : confirmingResign ? (
     <div className="space-y-2">
-      <div className="smallcaps text-[12px] text-parchment-300">Resign the game?</div>
+      <div className="text-[12px] text-parchment-300">Resign the game?</div>
       <div className="grid grid-cols-2 gap-2">
         <Button tone="danger"
           onClick={() => { onResign(); setConfirmingResign(false); }}
@@ -1790,7 +1803,7 @@ function GamePage() {
   ) : (
     <div className="space-y-2">
       {drawOfferStatus === "declined" && (
-        <div className="smallcaps text-[12px] text-parchment-300">Draw declined.</div>
+        <div className="text-[12px] text-parchment-300">Draw declined.</div>
       )}
       <div className="grid grid-cols-2 gap-2">
         <button
@@ -1847,12 +1860,9 @@ function GamePage() {
 
   return (
     <main className="flex h-dvh min-h-0 flex-col overflow-hidden">
-      <nav className="sticky top-0 z-20 flex w-full shrink-0 items-center justify-between px-5 py-3">
-        <Link href="/" className="font-display text-2xl tracking-tight">
-          nerf<span className="text-gold-leaf">chess</span>
-        </Link>
-        <div className="flex items-center gap-4">
-          <div className="smallcaps text-[12px] text-parchment-400 hidden sm:block">
+      <CompactSiteHeader
+        status={
+          <span className="zen-hide hidden sm:inline">
             playing {myColor === "w" ? "White" : "Black"} ·{" "}
             {gameMode && (
               <>
@@ -1864,38 +1874,9 @@ function GamePage() {
             )}
             {plainMode && <>plain chess · </>}
             bot on {difficulty} · {rated ? "rated" : "casual"}
-          </div>
-          <Button tone="ghost"
-            onClick={toggleMute}
-            aria-label={muted ? "Unmute" : "Mute"}
-            title={muted ? "Sound off" : "Sound on"}
-            className="h-11 w-11 sm:h-9 sm:w-9 rounded-full">
-            {muted ? (
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                <line x1="22" y1="9" x2="16" y2="15" />
-                <line x1="16" y1="9" x2="22" y2="15" />
-              </svg>
-            ) : (
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-                <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
-              </svg>
-            )}
-          </Button>
-          <Button tone="ghost"
-            onClick={() => setSettingsOpen(true)}
-            aria-label="Settings"
-            title="Settings"
-            className="h-11 w-11 sm:h-9 sm:w-9 rounded-full">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <circle cx="12" cy="12" r="3" />
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-            </svg>
-          </Button>
-        </div>
-      </nav>
+          </span>
+        }
+      />
 
       <div
         className={
@@ -2079,10 +2060,7 @@ function GamePage() {
                           doomSquares: zone.doom,
                           lockedSquares: zone.locked,
                           barredSquares: zone.barred,
-                          kingSafeSquares: fxZone.kingSafeSquares,
-                          pawnClampSquares: fxZone.pawnClampSquares,
-                          stunSquares: fxZone.stunSquares,
-                          motifSquares: fxZone.motifs,
+                          ...fxVisualFields(fxZone),
                         }
                   }
                   lastMove={lastMoveForDisplay}
@@ -2213,7 +2191,7 @@ function GamePage() {
                   draftRunning={myDraftCharging}
                 />
               )}
-              <div className="flex justify-end pt-1">
+              <div className="zen-hide flex justify-end pt-1">
                 <FxToggleButton />
               </div>
             </div>
@@ -2370,7 +2348,7 @@ function GamePage() {
           record={postRecord}
           newOpponentHref={`/lobby?tab=quick${gameMode ? `&mode=${gameMode}` : ""}`}
           onRematch={handleRematch}
-          onNewGame={handleRematch}
+          onNewGame={handleNewGame}
           onReview={() => handleHistoryPlyChange(0)}
           onClip={clipPlies >= 2 ? openClip : undefined}
           moves={game.board.history}
@@ -2399,13 +2377,6 @@ function GamePage() {
           result={game.result ?? null}
         />
       )}
-      <SettingsPanel
-        open={settingsOpen}
-        onClose={() => {
-          setSettingsOpen(false);
-          setUiSettings(loadSettings());
-        }}
-      />
     </main>
   );
 }

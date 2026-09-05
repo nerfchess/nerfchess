@@ -166,10 +166,10 @@ function GameRow({ game, onSelect }: { game: CompletedGame; onSelect: () => void
           <span className="truncate font-display text-base text-parchment-50">
             {game.opponent}
           </span>
-          <span className="border border-white/15 px-1.5 py-0.5 smallcaps text-[11px] text-parchment-400">
+          <span className="border border-white/15 px-1.5 py-0.5 text-[11px] text-parchment-400">
             {VENUE_LABEL[game.mode]}
           </span>
-          <span className="smallcaps text-[11px] text-parchment-400">
+          <span className="text-[11px] text-parchment-400">
             {game.rated ? "rated" : "casual"}
           </span>
         </span>
@@ -181,7 +181,7 @@ function GameRow({ game, onSelect }: { game: CompletedGame; onSelect: () => void
         <span className="block font-mono text-sm text-parchment-100 tabular-nums">
           {timeControlLabel(game.baseSec, game.incSec)}
         </span>
-        <span className="smallcaps block text-[11px] text-parchment-400">
+        <span className="block text-[11px] text-parchment-400">
           {speedLabel(game.baseSec)}
         </span>
       </span>
@@ -201,7 +201,7 @@ function GameRow({ game, onSelect }: { game: CompletedGame; onSelect: () => void
         <Link
           href={replayHref}
           title="Step through this game move by move"
-          className="smallcaps shrink-0 grid place-items-center border-l border-white/10 px-3 text-[11px] text-parchment-400 hover:text-gold-leaf transition-colors"
+          className="shrink-0 grid place-items-center border-l border-white/10 px-3 text-[11px] text-parchment-400 hover:text-gold-leaf transition-colors"
         >
           Replay
         </Link>
@@ -226,12 +226,12 @@ function GameSummary({ game, onClose }: { game: CompletedGame; onClose: () => vo
       onPointerDown={chrome.onBackdropPointerDown}
     >
       <div
-        className="plate gilt w-[min(92vw,26rem)] p-6 sm:p-7"
+        className="plate w-[min(92vw,26rem)] p-6 sm:p-7"
         onPointerDown={(event) => event.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="smallcaps text-[11px] text-parchment-400">Game summary</p>
+            <p className="text-[11px] text-parchment-400">Game summary</p>
             <h2 className={`mt-1 font-display text-3xl font-bold ${style.text}`}>
               {style.label}
             </h2>
@@ -292,7 +292,7 @@ function GameSummary({ game, onClose }: { game: CompletedGame; onClose: () => vo
 function SummaryRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-baseline justify-between gap-4">
-      <dt className="smallcaps shrink-0 text-[11px] text-parchment-400">{label}</dt>
+      <dt className="shrink-0 text-[11px] text-parchment-400">{label}</dt>
       <dd className="text-right text-parchment-100">{value}</dd>
     </div>
   );
@@ -308,8 +308,8 @@ function RuleLine({
   return (
     <div className={`border p-3 tier-bg-${nerf.tier}`}>
       <div className="flex items-center justify-between gap-2">
-        <span className="smallcaps text-[11px] text-parchment-400">{label}</span>
-        <span className={`smallcaps text-[11px] tier-${nerf.tier}`}>
+        <span className="text-[11px] text-parchment-400">{label}</span>
+        <span className={`text-[11px] tier-${nerf.tier}`}>
           {TIER_LABEL[nerf.tier] ?? ""}
         </span>
       </div>

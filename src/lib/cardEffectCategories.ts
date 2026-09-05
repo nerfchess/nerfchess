@@ -1131,6 +1131,10 @@ export const EFFECT_CATEGORY_OVERRIDES: Record<string, EffectCategoryId> = {
   "buff:bn4_promotion_paperwork": "single-piece-shield", // Triggers ON promotion, grants immunity.
   "buff:bn4_flag_on_their_wall": "nerf-relief", // "Flag" is not a reveal; it suspends your nerf.
   "buff:quick_glance": "draft-denial", // "Glance" is not a reveal; it burns their reroll.
+  // The 2026-08 balance pass reworded these two from "once" to "twice" and the
+  // rewrites slipped out of the movement matchers' verb windows.
+  "buff:half_step": "movement-upgrade", // A pawn gains the diagonal non-capture step.
+  "buff:vault": "movement-phase-jump", // The rook jumps its own pawn: leaping over a blocker.
   "buff:royal_summons": "forced-move", // A summons, not a summon: they must move their king.
   "buff:hx4_summons_to_court": "enemy-movement-restriction", // Same word, same trap.
   "buff:pawn_push": "movement-upgrade", // "Push" is not a shove; it grants a late double-step.

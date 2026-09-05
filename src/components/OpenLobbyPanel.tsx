@@ -1,13 +1,13 @@
 "use client";
 
 // Open Lobby: the mobile home stack's way in, kept directly under Live RV.
-// The primary Open Lobby slab leads; beneath it, open seeks and challenges
+// The primary Open Lobby button leads; beneath it, open seeks and challenges
 // from the shared lobby snapshot show who is waiting right now (host, mode,
 // time control, rated flag), each row deep-linking into the lobby to answer.
 // Empty state keeps the next actions obvious instead of going quiet.
 
 import Link from "next/link";
-import { DungeonGateButton } from "@/components/DungeonGateButton";
+import { LinkButton } from "@/components/ui/Button";
 import { useLobbySnapshot } from "@/lib/lobbyClient";
 import { ModeBadge } from "@/components/ModeBadge";
 
@@ -48,11 +48,9 @@ export function OpenLobbyPanel({ className = "" }: { className?: string }) {
   const online = lobby ? lobby.players.length + lobby.anonymous : null;
 
   return (
-    <section className={"plate energy-edge p-3 " + className} aria-label="Open lobby">
+    <section className={"plate p-3 " + className} aria-label="Open lobby">
       <div className="flex items-center justify-between gap-2">
-        <span className="rune-badge" style={{ ["--badge-rgb" as string]: "244 196 48" }}>
-          Open Lobby
-        </span>
+        <span className="font-display text-[13px] font-bold text-parchment-50">Open lobby</span>
         {online !== null && (
           <span className="text-[12px] text-parchment-400">
             <span className="font-display font-bold tabular-nums text-parchment-100">{online}</span>{" "}
@@ -60,12 +58,9 @@ export function OpenLobbyPanel({ className = "" }: { className?: string }) {
           </span>
         )}
       </div>
-      <DungeonGateButton
-        href="/lobby"
-        className="mt-2.5 flex w-full items-center justify-center px-5 py-4 font-display text-2xl font-bold no-underline"
-      >
+      <LinkButton tone="primary" size="lg" block href="/lobby" className="mt-2.5">
         Enter the lobby
-      </DungeonGateButton>
+      </LinkButton>
       {rows === null ? (
         <div className="mt-2 space-y-1.5" aria-hidden>
           <div className="skeleton h-8 w-full" />
@@ -98,7 +93,7 @@ export function OpenLobbyPanel({ className = "" }: { className?: string }) {
                     {Math.round(r.timeSec / 60)}+{r.incrementSec}
                   </span>
                   <span>{r.rated ? "Rated" : "Casual"}</span>
-                  <span className="font-display text-[12px] font-semibold text-gold-leaf">Join &rarr;</span>
+                  <span className="font-display text-[12px] font-semibold text-gold-leaf">Join</span>
                 </span>
               </Link>
             </li>
@@ -106,20 +101,12 @@ export function OpenLobbyPanel({ className = "" }: { className?: string }) {
         </ul>
       )}
       <div className="mt-2 grid grid-cols-2 gap-2">
-        <DungeonGateButton
-          href="/lobby?tab=friends"
-          variant="minor"
-          className="flex items-center justify-center px-3 py-2.5 font-display text-[13px] font-semibold no-underline"
-        >
+        <LinkButton tone="default" size="sm" block href="/lobby?tab=friends">
           Play a friend
-        </DungeonGateButton>
-        <DungeonGateButton
-          href="/play"
-          variant="minor"
-          className="flex items-center justify-center px-3 py-2.5 font-display text-[13px] font-semibold no-underline"
-        >
+        </LinkButton>
+        <LinkButton tone="default" size="sm" block href="/play">
           Play a bot
-        </DungeonGateButton>
+        </LinkButton>
       </div>
     </section>
   );

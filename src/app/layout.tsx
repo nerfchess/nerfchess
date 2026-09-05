@@ -1,55 +1,27 @@
 import type { Metadata, Viewport } from "next";
-import {
-  Bricolage_Grotesque,
-  Chakra_Petch,
-  Fraunces,
-  IBM_Plex_Sans,
-  Inter,
-  Inter_Tight,
-  JetBrains_Mono,
-  Manrope,
-  Noto_Sans,
-  Public_Sans,
-  Space_Grotesk,
-  Spectral,
-  Syne,
-} from "next/font/google";
+import { JetBrains_Mono, Noto_Sans } from "next/font/google";
 import { AchievementToast } from "@/components/AchievementToast";
 import { SettingsBootstrap } from "@/components/SettingsBootstrap";
 import "./globals.css";
+import "./zen.css";
 
 // ---------------------------------------------------------------------------
 // Typefaces.
 //
-// Every face gets its OWN variable (--f-*) rather than being wired straight to
-// --font-display / --font-body. That indirection is load-bearing: next/font
-// puts its variables on the element carrying the class, which is <body>, and a
-// value set on <body> beats one set on <html> for everything inside it. While
-// Inter WAS --font-display, no html[data-theme] rule could override the display
-// face — the override would resolve, then lose to body. With the faces parked
-// on neutral names, --font-display and --font-body live only in :root and a
-// theme block can claim them in plain CSS, with no JS involved at all.
+// Lichess sets the whole interface in Noto Sans, and so do we: one face for
+// headings and body alike, with weight doing the hierarchy. JetBrains Mono
+// carries the tabular chrome (clocks, ratings, ids, board coordinates).
 //
-// Bundle cost is close to nothing at runtime. A browser downloads a webfont
-// only when rendered text actually resolves to it, so a visitor loads the two
-// faces their theme uses, not thirteen. What DOES download unconditionally is
-// a <link rel="preload">, which next/font emits per face — hence preload:false
-// on every flagship face and true (the default) only on the three defaults.
+// Each face still gets its OWN variable (--f-*) rather than being wired
+// straight to --font-display / --font-body. The roles live in :root in
+// globals.css, so a component asks for a role and never for a face.
 // ---------------------------------------------------------------------------
 
-// The defaults, used by every tint. Noto Sans is the UI font Lichess ships;
-// Inter replaced a render-blocking external Google Fonts stylesheet.
 const notoSans = Noto_Sans({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   display: "swap",
   variable: "--f-noto",
-});
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-  variable: "--f-inter",
 });
 
 // Clocks, ratings, ids and board coordinates. --font-mono used to be a system
@@ -64,122 +36,17 @@ const jetbrainsMono = JetBrains_Mono({
   variable: "--f-mono",
 });
 
-// --- Flagship pairings ------------------------------------------------------
-// One display + one body face each, no two sharing a genus, so the five never
-// read as one family with the weight changed. See docs/themes.md.
-
-// Obsidian — volcanic glass. Bricolage's chiselled terminals and width axis
-// read as fractured glass rather than as another neutral grotesque.
-const bricolage = Bricolage_Grotesque({
-  subsets: ["latin"],
-  weight: ["400", "600", "800"],
-  display: "swap",
-  preload: false,
-  variable: "--f-bricolage",
-});
-const interTight = Inter_Tight({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-  preload: false,
-  variable: "--f-inter-tight",
-});
-
-// Porcelain — glazed white, cobalt ink. Fraunces carries optical-size and
-// "wonk" axes; high-contrast ink on paper is what earns the light scheme.
-const fraunces = Fraunces({
-  subsets: ["latin"],
-  weight: ["400", "600", "700"],
-  display: "swap",
-  preload: false,
-  variable: "--f-fraunces",
-});
-const publicSans = Public_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-  preload: false,
-  variable: "--f-public-sans",
-});
-
-// Neon — arcade indigo. Chakra Petch is technical with clipped corners, which
-// sidesteps the Orbitron cliché every neon brief reaches for.
-const chakraPetch = Chakra_Petch({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-  preload: false,
-  variable: "--f-chakra",
-});
-const spaceGrotesk = Space_Grotesk({
-  subsets: ["latin"],
-  weight: ["400", "500", "700"],
-  display: "swap",
-  preload: false,
-  variable: "--f-space-grotesk",
-});
-
-// Jade — lacquer green. Spectral is a low-contrast serif with generous
-// counters: lacquerware quiet, not decorative.
-const spectral = Spectral({
-  subsets: ["latin"],
-  weight: ["400", "600", "700"],
-  display: "swap",
-  preload: false,
-  variable: "--f-spectral",
-});
-const plexSans = IBM_Plex_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  display: "swap",
-  preload: false,
-  variable: "--f-plex-sans",
-});
-
-// Aurora — polar night, violet light. Syne's weights WIDEN rather than just
-// thicken, which reads as drifting light. The deliberate risk of the five.
-const syne = Syne({
-  subsets: ["latin"],
-  weight: ["400", "600", "800"],
-  display: "swap",
-  preload: false,
-  variable: "--f-syne",
-});
-const manrope = Manrope({
-  subsets: ["latin"],
-  weight: ["400", "500", "700"],
-  display: "swap",
-  preload: false,
-  variable: "--f-manrope",
-});
-
 /** Every face variable, for the <html> class list. */
-const FONT_VARS = [
-  notoSans,
-  inter,
-  jetbrainsMono,
-  bricolage,
-  interTight,
-  fraunces,
-  publicSans,
-  chakraPetch,
-  spaceGrotesk,
-  spectral,
-  plexSans,
-  syne,
-  manrope,
-]
-  .map((f) => f.variable)
-  .join(" ");
+const FONT_VARS = [notoSans, jetbrainsMono].map((f) => f.variable).join(" ");
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://nerfchess.com"),
   title: {
-    default: "Nerf Chess · chess with secret rules and power-up cards",
+    default: "Nerf Chess · chess with power-ups, a free online chess variant",
     template: "%s · Nerf Chess",
   },
   description:
-    "Nerf Chess is a free online chess variant with two modes: Nerf (every player carries a secret handicap, in the spirit of drawback chess) and Buff (draft power-up cards every 5 moves). Win by capturing the king. Play in your browser, no download.",
+    "Nerf Chess is chess with power-ups: a free online chess variant. Draft power-up cards every 5 moves in Buff mode, or carry a secret handicap and hex your opponent in Nerf mode (in the spirit of drawback chess). Win by capturing the king. Play in your browser, no download.",
   keywords: [
     "nerf chess",
     "drawback chess",
@@ -208,21 +75,22 @@ export const metadata: Metadata = {
     ],
     apple: [{ url: "/apple-icon-180.png", type: "image/png", sizes: "180x180" }],
   },
+  // No images here on purpose: the file-based src/app/opengraph-image.tsx
+  // supplies a proper 1200x630 preview site-wide, and the codex card routes
+  // each render their own per-card image. Twitter falls back to og:image.
   openGraph: {
     type: "website",
     siteName: "Nerf Chess",
     url: "https://nerfchess.com",
-    title: "Nerf Chess · chess with secret rules and power-up cards",
+    title: "Nerf Chess · chess with power-ups, a free online chess variant",
     description:
-      "A free online chess variant. Secret handicaps in Nerf mode, drafted power-up cards in Buff mode, and the game only ends when a king is captured.",
-    images: [{ url: "/icon-512.png", width: 512, height: 512 }],
+      "Chess with power-ups: a free online chess variant. Draft power-up cards every 5 moves in Buff mode, take a secret handicap in Nerf mode, and win by capturing the king.",
   },
   twitter: {
-    card: "summary",
-    title: "Nerf Chess · chess with secret rules and power-up cards",
+    card: "summary_large_image",
+    title: "Nerf Chess · chess with power-ups, a free online chess variant",
     description:
-      "A free online chess variant. Secret handicaps in Nerf mode, drafted power-up cards in Buff mode, and the game only ends when a king is captured.",
-    images: ["/icon-512.png"],
+      "Chess with power-ups: a free online chess variant. Draft power-up cards every 5 moves in Buff mode, take a secret handicap in Nerf mode, and win by capturing the king.",
   },
 };
 
@@ -309,13 +177,13 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    // data-theme matches DEFAULT_SETTINGS.siteTheme so first paint is already
-    // the default (Crimson) instead of flashing classic; SettingsBootstrap then
-    // applies whatever the user actually chose.
+    // data-theme matches DEFAULT_SETTINGS.siteTheme ("dark") so first paint is
+    // already the default; SettingsBootstrap then applies whatever the user
+    // actually chose.
     // The face variables live on <html>, not <body>: --font-display and
-    // --font-body are claimed per theme by html[data-theme] rules, and a value
-    // set on <body> would beat them for everything inside it.
-    <html lang="en" data-theme="crimson" className={FONT_VARS}>
+    // --font-body are roles resolved in :root, and a value set on <body> would
+    // beat them for everything inside it.
+    <html lang="en" data-theme="dark" className={FONT_VARS}>
       <head>
         <script
           type="application/ld+json"

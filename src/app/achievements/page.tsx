@@ -383,6 +383,9 @@ function AchievementsContent() {
   const [data, setData] = useState<AchievementsResponse | null>(null);
   const [state, setState] = useState<"loading" | "ready" | "signin" | "error">("loading");
   const [filter, setFilter] = useState<RarityFilter>("all");
+  // Bumped by Retry to re-run the fetch effect (same recovery pattern as the
+  // homepage's LiveActivity, without a full page reload).
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -415,7 +418,7 @@ function AchievementsContent() {
     return () => {
       cancelled = true;
     };
-  }, [requested]);
+  }, [requested, reloadKey]);
 
   // The wall always renders the whole catalog in catalog order; signed-in data
   // overlays progress and unlocks by id.
@@ -454,7 +457,7 @@ function AchievementsContent() {
         <header>
           <div className="flex items-end justify-between gap-4">
             <div className="min-w-0">
-              <div className="eyebrow">Trophy wall</div>
+              <div>Trophy wall</div>
               <h1 className="mt-1 font-display text-[26px] leading-none sm:text-[32px]">
                 {viewingOther && data ? `${data.username}'s achievements` : "Achievements"}
               </h1>
@@ -483,8 +486,7 @@ function AchievementsContent() {
         {state === "signin" && (
           <div className="mt-5 plate flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-[13px] text-parchment-300">
-              Every game you play unlocks milestones: wins, comebacks, king captures, and rating
-              climbs. Browse the full wall below, then start your own.
+              Wins, comebacks, king captures, rating climbs. Browse the wall, then start your own.
             </p>
             <div className="flex shrink-0 items-center gap-3">
               <LinkButton tone="leaf" href="/lobby" className="whitespace-nowrap px-4 py-2 text-[13px]">
@@ -509,9 +511,7 @@ function AchievementsContent() {
               onClick={() => {
                 setState("loading");
                 setData(null);
-                // Re-run the fetch effect by nudging the requested key is not
-                // possible here; a full reload is the simplest recovery.
-                window.location.reload();
+                setReloadKey((k) => k + 1);
               }}
               className="shrink-0 px-4 py-2 text-[13px]">
               Retry

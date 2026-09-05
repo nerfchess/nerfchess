@@ -194,7 +194,7 @@ export function PlayerNerfCard({
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-1.5">
                 {ownerLabel && (
-                  <span className="smallcaps text-[10px] text-parchment-400">{ownerLabel}</span>
+                  <span className="text-[10px] text-parchment-400">{ownerLabel}</span>
                 )}
                 <TurnCostBadge cost={NERF_TURN_COST} />
               </div>
@@ -226,7 +226,7 @@ export function PlayerNerfCard({
           {progress && progress.max > 0 && (
             <div className="mt-3">
               <div className="mb-1 flex items-center justify-between">
-                <span className="smallcaps text-[10px] text-parchment-400">Progress</span>
+                <span className="text-[10px] text-parchment-400">Progress</span>
                 <span className="font-mono text-[10px] text-parchment-300">{progress.label}</span>
               </div>
               <div className="h-1.5 overflow-hidden bg-white/5">
@@ -250,7 +250,7 @@ export function PlayerNerfCard({
               ?
             </div>
             <div className="min-w-0">
-              <div className="smallcaps text-[10px] text-parchment-400">{ownerLabel}</div>
+              <div className="text-[10px] text-parchment-400">{ownerLabel}</div>
               <div className="font-display text-xl text-parchment/85">Hidden rule</div>
             </div>
           </div>
@@ -262,7 +262,7 @@ export function PlayerNerfCard({
 
       {boons && boons.length > 0 && (
         <div className={(compact ? "mt-2.5" : "mt-4") + " border-t border-white/10 pt-2"}>
-          <div className="smallcaps text-[10px] text-parchment-400">Your cards</div>
+          <div className="text-[10px] text-parchment-400">Your cards</div>
           {/* Cap + scroll the held-cards list so a full late-game hand never grows
               this card tall enough to squeeze the interactive card dock (with its
               Use buttons) out of the rail. */}
@@ -276,7 +276,7 @@ export function PlayerNerfCard({
                 </span>
                 <TurnCostBadge cost={b.cost} short className="self-center" />
                 {b.status && (
-                  <span className="smallcaps min-w-0 flex-1 truncate text-[8px] text-gold/80">
+                  <span className="min-w-0 flex-1 truncate text-[8px] text-gold/80">
                     {b.status}
                   </span>
                 )}

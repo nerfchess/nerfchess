@@ -54,7 +54,7 @@ export function TurnCostBadge({
     <span
       title={TITLE[cost]}
       className={
-        "smallcaps inline-flex shrink-0 items-center rounded-sm border px-1 py-px text-[8px] font-semibold leading-none " +
+        "inline-flex shrink-0 items-center rounded-sm border px-1 py-px text-[8px] font-semibold leading-none " +
         TONE[cost] +
         (className ? " " + className : "")
       }

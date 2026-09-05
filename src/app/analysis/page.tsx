@@ -293,7 +293,7 @@ function AnalysisInner() {
           </div>
 
           <div className="plate min-h-[120px] p-4">
-            <div className="smallcaps text-[11px] tracking-[0.14em] text-parchment-400">Moves</div>
+            <div className="text-[11px] tracking-[0.14em] text-parchment-400">Moves</div>
             {moves.length === 0 ? (
               <p className="mt-2 text-sm text-parchment-400">
                 Play moves for either side, or load a FEN below.
@@ -327,7 +327,7 @@ function AnalysisInner() {
           </div>
 
           <div className="plate p-4">
-            <div className="smallcaps text-[11px] tracking-[0.14em] text-parchment-400">FEN</div>
+            <div className="text-[11px] tracking-[0.14em] text-parchment-400">FEN</div>
             <input
               readOnly
               value={fen}

@@ -105,17 +105,26 @@ html[data-anim="off"] .draft-fx:hover .draft-fx__glow {
 /* Free-window expiry: the reopened compact panel pulses oxblood a few times
    so the forced reopen (and the now-running clock) cannot be missed. */
 .draft-expire-pulse {
+  position: relative;
+}
+.draft-expire-pulse::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow:
+    0 0 0 4px rgb(190 60 48 / 0.6),
+    0 0 26px 4px rgb(190 60 48 / 0.35);
+  opacity: 0;
   animation: draft-expire-pulse 1s ease-in-out 3;
 }
 @keyframes draft-expire-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgb(190 60 48 / 0); }
-  50% {
-    box-shadow:
-      0 0 0 4px rgb(190 60 48 / 0.6),
-      0 0 26px 4px rgb(190 60 48 / 0.35);
-  }
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
 }
 html[data-anim="off"] .draft-expire-pulse { animation: none; box-shadow: 0 0 0 3px rgb(190 60 48 / 0.55); }
+html[data-anim="off"] .draft-expire-pulse::after { animation: none; }
 
 /* Confirm with a card selected: the one primary in the region gets a steady
    gold ready-glow so it visually outranks the quiet Reroll/Bank secondaries. */
@@ -169,9 +178,9 @@ html[data-anim="off"] .draft-expire-pulse { animation: none; box-shadow: 0 0 0 3
      is blocking the cards"). */
   pointer-events: none;
   border-radius: 1px;
-  border: 1px solid rgb(var(--chamber-torch) / 0.32);
+  border: 1px solid rgb(255 138 52 / 0.32);
   background:
-    radial-gradient(90% 70% at 50% 110%, rgb(var(--chamber-ember) / 0.1), transparent 60%),
+    radial-gradient(90% 70% at 50% 110%, rgb(224 92 40 / 0.1), transparent 60%),
     #16110b;
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.55);
 }
@@ -179,7 +188,7 @@ html[data-anim="off"] .draft-expire-pulse { animation: none; box-shadow: 0 0 0 3
   content: "";
   position: absolute;
   inset: 6px;
-  border: 1px solid rgb(var(--chamber-torch) / 0.16);
+  border: 1px solid rgb(255 138 52 / 0.16);
 }
 .draft-card-back__numeral {
   font-size: 46px;
@@ -422,12 +431,7 @@ html[data-anim="off"] .draft-pull__mote {
 html[data-anim="off"] .draft-holo,
 html[data-anim="off"] .draft-shake,
 html[data-anim="off"] .confetti-bit,
-html[data-anim="off"] .draft-mythic-aura,
-html[data-anim="off"] .dgn-torch,
-html[data-anim="off"] .dgn-torch__halo,
-html[data-anim="off"] .dgn-torch__flame,
-html[data-anim="off"] .dgn-torch__flame--inner,
-html[data-anim="off"] .dgn-torch__spark {
+html[data-anim="off"] .draft-mythic-aura {
   animation: none !important;
 }
 html[data-anim="off"] .draft-card-front {
@@ -696,43 +700,6 @@ html[data-anim="off"] .draft-timer--announce { animation: none; }
 html[data-anim="off"] .draft-prep-dot { animation: none; opacity: 0.8; }
 
 /* ---------------------------------------------------------------------------
-   Draft panel frame: ember-forged iron — a 1px rim that runs from hot ember
-   orange through cold iron gray and back, like a band of metal fresh off the
-   forge. Painted with a masked overlay (only the outer 1px survives), which
-   stays correct over the plate's background in both themes. The frame also
-   wears the chamfered corner-cut (globals), so the rim vanishes along the cut
-   corners and the plate's inset hairline carries the edge there. */
-.draft-frame {
-  position: relative;
-  border-radius: 1px;
-}
-.draft-frame::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  border-radius: inherit;
-  padding: 1px;
-  pointer-events: none;
-  background: linear-gradient(
-    120deg,
-    rgb(var(--chamber-torch) / 0.6),
-    rgb(168 119 216 / 0.35) 34%,
-    rgb(255 190 110 / 0.4) 52%,
-    rgb(34 211 238 / 0.3) 70%,
-    rgb(var(--chamber-ember) / 0.55)
-  );
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  mask-composite: exclude;
-}
-/* The scrolling plate inside the frame: hard 1px corners to match. */
-.draft-panel {
-  border-radius: 1px;
-}
-
-/* ---------------------------------------------------------------------------
    Dock pocket flash: the "Latest" slot in the buff dock blinks briefly when a
    fresh card lands in the pocket. Remounting the slot (React key on the card
    counts) replays it. Opacity/box-shadow only, one shot, and fully dropped
@@ -886,277 +853,17 @@ html[data-anim="off"] .draft-fx[data-tier="8"] .draft-fx__sheen::before {
   opacity: 0;
 }
 
-/* ---------------------------------------------------------------------------
-   Dungeon draft panel (owner request: "revamp the drafting UI into a dungeon
-   theme"). The plate becomes a hewn stone slab lit by torchfire: a warm dark
-   umber base with faint block-joint courses, a firelight bloom breathing up
-   from the foot, and heavy chiselled edges. The frame carries a slow warm
-   torchlight sweep gliding across the stone. Everything animated is
-   transform/opacity on the compositor and dropped when animations are off. */
-.draft-panel {
-  /* NO backdrop-filter here on purpose: the panel sits inside a clip-path
-     (corner-cut) under a transformed ancestor (framer entrance, mythic
-     shake), and Chromium visibly drops/cuts backdrop blur in that
-     combination. The scrim behind the overlay already dims the board, and
-     at ~0.95 alpha the slab needs no blur of its own. Layers, top to
-     bottom: torch bloom at the foot, cold dark at the crown, faint stone
-     block courses (two offset repeating gradients), then the umber base. */
-  background:
-    radial-gradient(120% 60% at 50% 106%, rgb(var(--chamber-torch) / 0.09), transparent 58%),
-    radial-gradient(140% 50% at 50% -8%, rgba(0, 0, 0, 0.34), transparent 60%),
-    repeating-linear-gradient(0deg, transparent 0 64px, rgba(0, 0, 0, 0.16) 64px 65px),
-    repeating-linear-gradient(90deg, transparent 0 118px, rgba(0, 0, 0, 0.09) 118px 119px),
-    linear-gradient(165deg, var(--chamber-stone-hi), var(--chamber-stone-mid) 44%, var(--chamber-stone-lo) 100%) !important;
-  border-color: rgb(var(--chamber-edge) / 0.5) !important;
-  box-shadow:
-    inset 0 1px 0 rgb(var(--chamber-light) / 0.16),
-    inset 0 0 0 1px rgba(0, 0, 0, 0.55),
-    inset 0 -14px 30px -18px rgb(var(--chamber-ember) / 0.22),
-    0 28px 70px -28px rgba(0, 0, 0, 0.9);
-}
-.draft-frame {
-  position: relative;
-}
-/* The torchlight shine crosses on the COMPOSITOR: a fixed warm gradient band
-   moved by transform inside an overflow-hidden layer (background-position
-   animation repainted the whole panel every frame, which chugged phones). */
-.draft-frame::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  pointer-events: none;
-  border-radius: inherit;
-  overflow: hidden;
-  /* The band itself lives on an oversized gradient translated across. */
-  background: linear-gradient(
-    115deg,
-    transparent 40%,
-    rgb(255 190 110 / 0.1) 47%,
-    rgb(var(--chamber-torch) / 0.03) 52%,
-    transparent 60%
-  );
-  transform: translateX(-70%);
-  will-change: transform;
-  animation: draft-glass-shine 6s ease-in-out infinite;
-}
-@keyframes draft-glass-shine {
-  0% { transform: translateX(-70%); }
-  45% { transform: translateX(70%); }
-  100% { transform: translateX(70%); }
-}
-html[data-anim="off"] .draft-frame::after {
-  animation: none;
-  opacity: 0;
-}
-
 /* ===========================================================================
-   Luxe pass (additive): ambient stage, pack-tear pyrotechnics, rarity-scaled
-   reveals, pick-dissolve motes, and the double-ring timer. Same laws as the
-   rest of this file: transform/opacity-only animation, deterministic vars set
-   inline by the component, everything decorative is pointer-events-none and
-   dropped when animations are off in Settings.
-   =========================================================================== */
+   Luxe pass (additive): pack-tear pyrotechnics, rarity-scaled reveals,
+   pick-dissolve motes, and the double-ring timer. Same laws as the rest of
+   this file: transform/opacity-only animation, deterministic vars set inline
+   by the component, everything decorative is pointer-events-none and dropped
+   when animations are off in Settings.
 
-/* --- Ambient stage behind the draft ------------------------------------- */
-/* Fixed to the viewport (the overlay root scrolls; the stage must not), so it
-   sits under the panel at z-index 0 while the positioned draft-frame paints
-   over it in DOM order. */
-.draft-stage {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  overflow: hidden;
-  pointer-events: none;
-}
-/* Dungeon vignette: torchlight pooling up from the crypt floor, cold void
-   dark pressing in from the corners and ceiling. Static, but it CLOSES IN
-   once as the chamber opens (a 0.7s scale-down breath), selling "the walls
-   seal around you" without delaying the cards. Kept light enough that the
-   board still reads behind the 20% scrim. */
-.draft-stage__vignette {
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(120% 70% at 50% 108%, rgb(var(--chamber-torch) / 0.1), transparent 55%),
-    radial-gradient(90% 60% at 8% 100%, rgb(var(--chamber-ember) / 0.08), transparent 55%),
-    radial-gradient(90% 60% at 92% 100%, rgb(var(--chamber-ember) / 0.08), transparent 55%),
-    radial-gradient(120% 80% at 50% 0%, rgba(0, 0, 0, 0.3), transparent 55%),
-    radial-gradient(85% 65% at 50% 46%, transparent 55%, rgba(0, 0, 0, 0.26) 100%);
-  animation: dgn-chamber-in 0.7s var(--ease-out, ease-out) both;
-}
-@keyframes dgn-chamber-in {
-  from { opacity: 0; transform: scale(1.12); }
-  to { opacity: 1; transform: scale(1); }
-}
-/* The void beyond the chamber: two layers of pin-prick stars showing through
-   the broken ceiling. Tiled radial gradients (one paint each), drifting so
-   slowly they read as parallax depth, not motion. */
-.draft-stage__stars {
-  position: absolute;
-  /* No drift (see below) means the layer no longer needs the -12% bleed the
-     translate used to hide, so it covers exactly the viewport: same starfield,
-     ~35% less pixel area to paint. */
-  inset: 0;
-  background-image:
-    radial-gradient(1px 1px at 22px 34px, rgb(214 224 255 / 0.7), transparent 100%),
-    radial-gradient(1px 1px at 118px 92px, rgb(190 205 255 / 0.5), transparent 100%),
-    radial-gradient(1.5px 1.5px at 74px 150px, rgb(255 240 214 / 0.6), transparent 100%),
-    radial-gradient(1px 1px at 166px 42px, rgb(168 200 255 / 0.45), transparent 100%);
-  background-size: 190px 190px;
-  opacity: 0.5;
-  /* The two star layers were the single largest paint cost of the ambient
-     stage (a tiled radial-gradient over a full-viewport element, x2). The old
-     drift moved them 2% over 90-140s — imperceptible within any draft's
-     lifetime ("parallax depth, not motion"), yet it kept both giant gradient
-     layers churning on the compositor every frame. Painting them once and
-     holding them on their own static layer (translateZ promotion, no keyframe)
-     keeps the exact look while dropping that per-frame churn. */
-  transform: translateZ(0);
-}
-.draft-stage__stars--far {
-  background-size: 120px 120px;
-  opacity: 0.3;
-}
-/* Nebula: two vast soft energy clouds (void purple, abyssal teal) breathing
-   behind the chamber. Oversized radial blobs moved by transform only. */
-/* Both nebulae on ONE layer. They used to be two independently-drifting
-   elements at opposite corners; the counter-drift was not readable through a
-   scrim at 10% alpha, and it cost a second full-viewport composited layer on
-   the heaviest screen in the product. Two positioned gradients on one node
-   read the same and composite once. */
-.draft-stage__nebula {
-  position: absolute;
-  inset: -20%;
-  background:
-    radial-gradient(38% 34% at 18% 16%, rgb(168 119 216 / 0.1), rgb(168 119 216 / 0.03) 55%, transparent 75%),
-    radial-gradient(36% 32% at 84% 86%, rgb(34 211 238 / 0.08), rgb(34 211 238 / 0.02) 55%, transparent 75%);
-  will-change: transform, opacity;
-  animation: dgn-nebula-drift 34s ease-in-out infinite alternate;
-}
-@keyframes dgn-nebula-drift {
-  from { transform: translate3d(-3%, 2%, 0) scale(1); opacity: 0.8; }
-  to { transform: translate3d(4%, -3%, 0) scale(1.08); opacity: 1; }
-}
-/* Torchlight aurora: one broad band of warm firelight gliding diagonally
-   behind the cards, as if a flame were guttering somewhere off-stage. An
-   oversized fixed gradient moved by transform on the compositor (never
-   background-position), slow enough to read as atmosphere. */
-.draft-stage__aurora {
-  position: absolute;
-  inset: -45%;
-  background: linear-gradient(
-    100deg,
-    transparent 34%,
-    rgb(var(--mood-rgb, var(--chamber-torch)) / 0.05) 44%,
-    rgb(255 200 120 / 0.1) 50%,
-    rgb(var(--mood-rgb, var(--chamber-ember)) / 0.05) 56%,
-    transparent 66%
-  );
-  transform: translateX(-22%);
-  will-change: transform;
-  animation: stage-aurora 13s ease-in-out infinite alternate;
-}
-@keyframes stage-aurora {
-  from { transform: translateX(-22%); }
-  to { transform: translateX(22%); }
-}
-/* The two torch glows: big soft fire-colored blooms low on each side of the
-   viewport, guttering on an irregular beat (opacity/scale only) so the whole
-   chamber breathes like an open flame lives in it. */
-.draft-stage__torch {
-  position: absolute;
-  bottom: -12%;
-  width: 56vmax;
-  height: 56vmax;
-  border-radius: 999px;
-  background: radial-gradient(
-    circle,
-    rgb(var(--mood-rgb, 255 154 60) / 0.16),
-    rgb(var(--mood-rgb, var(--chamber-ember)) / 0.08) 42%,
-    transparent 68%
-  );
-  will-change: transform, opacity;
-  animation: dgn-gutter 3.4s ease-in-out infinite;
-  transition: background 600ms ease;
-}
-/* The chamber answers the offer: once the pack is open, the strongest card's
-   category re-tints the torch light and aurora. Attack cards burn blood red,
-   hexes go void purple, protection cools to teal, tempo turns astral blue;
-   everything else keeps the ember default. Data only becomes visible when the
-   cards are already face-up, so nothing about a sealed offer leaks. */
-.draft-stage[data-mood="blood"] { --mood-rgb: 224 82 82; }
-.draft-stage[data-mood="void"] { --mood-rgb: 168 119 216; }
-.draft-stage[data-mood="teal"] { --mood-rgb: 34 211 238; }
-.draft-stage[data-mood="astral"] { --mood-rgb: 91 155 212; }
-.draft-stage__torch--l { left: -18vmax; }
-.draft-stage__torch--r { right: -18vmax; animation-delay: -1.7s; animation-duration: 2.9s; }
-@keyframes dgn-gutter {
-  0%, 100% { opacity: 0.75; transform: scale(1); }
-  18% { opacity: 1; transform: scale(1.05); }
-  34% { opacity: 0.7; transform: scale(0.98); }
-  52% { opacity: 0.95; transform: scale(1.03); }
-  71% { opacity: 0.8; transform: scale(1); }
-  86% { opacity: 1; transform: scale(1.06); }
-}
-/* Crypt fog: two soft haze bands crawling in opposite directions along the
-   floor. Oversized gradients moved by transform only. */
-/* Both fog banks on ONE layer, for the same reason as the nebulae: they sat
-   4% and 6% off the same edge, so the parallax between them was never visible
-   and the second node was pure compositing cost. */
-.draft-stage__fog {
-  position: absolute;
-  left: -60%;
-  right: -60%;
-  bottom: -4%;
-  height: 44%;
-  background:
-    radial-gradient(60% 74% at 50% 100%, rgb(120 108 96 / 0.1), rgb(90 80 70 / 0.05) 55%, transparent 80%),
-    radial-gradient(52% 46% at 50% 76%, rgb(120 108 96 / 0.07), transparent 80%);
-  will-change: transform;
-  animation: dgn-fog-drift 26s ease-in-out infinite alternate;
-}
-@keyframes dgn-fog-drift {
-  from { transform: translateX(-9%); }
-  to { transform: translateX(9%); }
-}
-/* Ember motes: hot sparks rising off unseen coals, each with its own column,
-   drift, tempo and phase (vars inline). Negative delays start the field
-   mid-flight so the crypt is never empty on open. */
-.draft-stage__mote {
-  position: absolute;
-  left: var(--mx, 50%);
-  bottom: -2%;
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  background: rgb(var(--chamber-light) / 0.9);
-  box-shadow: 0 0 6px 1px rgb(var(--chamber-torch) / 0.55);
-  opacity: 0;
-  will-change: transform, opacity;
-  animation: stage-mote var(--mdur, 14s) linear var(--mdelay, 0s) infinite;
-}
-@keyframes stage-mote {
-  0% { opacity: 0; transform: translate3d(0, 0, 0) scale(var(--mscale, 1)); }
-  10% { opacity: 0.55; }
-  78% { opacity: 0.4; }
-  100% { opacity: 0; transform: translate3d(var(--mdrift, 0vw), -104vh, 0) scale(var(--mscale, 1)); }
-}
-html[data-anim="off"] .draft-stage__aurora,
-html[data-anim="off"] .draft-stage__torch,
-html[data-anim="off"] .draft-stage__fog,
-html[data-anim="off"] .draft-stage__nebula,
-html[data-anim="off"] .draft-stage__mote {
-  animation: none !important;
-  opacity: 0;
-}
-html[data-anim="off"] .draft-stage__vignette {
-  animation: none !important;
-}
-html[data-anim="off"] .draft-stage__stars {
-  animation: none !important;
-  opacity: 0.3;
-}
+   The ambient stage that used to sit behind the cards (vignette, starfield,
+   nebula, torches, fog, aurora, ember motes) is gone: the draft is a plain
+   modal now, a flat dim over the board plus the site box.
+   =========================================================================== */
 
 /* --- Rarity-scaled reveals ------------------------------------------------ */
 /* Tier 6+ card: a tier-colored ring blooms once off the face the instant its
@@ -1259,8 +966,8 @@ html[data-anim="off"] .pick-dissolve > i {
   filter: blur(3px);
   opacity: 0.45;
 }
-/* An ember hairline rim around the chip (masked 1px gradient, matching the
-   draft-frame treatment) so the clock reads as forge-work, not chrome. */
+/* A warm hairline rim around the countdown chip (masked 1px gradient), so the
+   clock reads as its own object without needing a glow. */
 .draft-timer--lux {
   position: relative;
 }
@@ -1273,9 +980,9 @@ html[data-anim="off"] .pick-dissolve > i {
   pointer-events: none;
   background: linear-gradient(
     120deg,
-    rgb(var(--chamber-torch) / 0.55),
+    rgb(255 138 52 / 0.55),
     rgb(122 110 96 / 0.25) 45%,
-    rgb(var(--chamber-ember) / 0.45)
+    rgb(224 92 40 / 0.45)
   );
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
@@ -1376,196 +1083,12 @@ html[data-anim="off"] li > .dock-card.dock-pocket-flash {
   animation: none !important;
 }
 
-/* ===========================================================================
-   DUNGEON PASS (additive): the draft chamber. Wall torches flanking the slab,
-   iron corner braces with rivets, a slow-turning rune circle behind the sealed
-   pack, and the carved ember title. Same laws as the rest of this file:
-   transform/opacity-only animation, deterministic vars set inline, everything
-   decorative is pointer-events-none and dropped when animations are off.
-   =========================================================================== */
-
-/* --- Wall torches ---------------------------------------------------------- */
-/* Two sconces straddling the slab's top corners. They live on the UNCLIPPED
-   wrapper around the frame (the frame itself wears the corner-cut clip-path,
-   which would behead them), so the flames rise free above the stone. Each is
-   an iron bracket, a layered flame (outer tongue + hot inner core, both
-   guttering on separate irregular beats), a soft halo breathing behind it,
-   and two ember sparks climbing off the tip. Hidden on narrow phones where
-   they would crowd the cards. */
-.dgn-torch {
-  position: absolute;
-  top: -34px;
-  width: 34px;
-  height: 58px;
-  z-index: 4;
-  pointer-events: none;
-  animation: dgn-torch-in 0.5s ease-out 0.2s both;
-}
-.dgn-torch--l { left: -8px; }
-.dgn-torch--r { right: -8px; }
-@keyframes dgn-torch-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-@media (max-width: 640px) {
-  .dgn-torch { display: none; }
-}
-.dgn-torch__bracket {
-  position: absolute;
-  left: 50%;
-  bottom: 0;
-  width: 10px;
-  height: 22px;
-  margin-left: -5px;
-  background: linear-gradient(180deg, #574b3d, #3a332a 70%, #2b251e);
-  border: 1px solid rgba(0, 0, 0, 0.6);
-  box-shadow:
-    inset 0 1px 0 rgb(var(--chamber-light) / 0.25),
-    0 4px 10px -4px rgba(0, 0, 0, 0.8);
-  clip-path: polygon(15% 0, 85% 0, 100% 100%, 0 100%);
-}
-.dgn-torch__halo {
-  position: absolute;
-  left: 50%;
-  top: 2px;
-  width: 74px;
-  height: 74px;
-  margin-left: -37px;
-  border-radius: 999px;
-  background: radial-gradient(circle, rgb(255 176 92 / 0.4), rgb(var(--chamber-ember) / 0.14) 45%, transparent 70%);
-  animation: dgn-halo 2.6s ease-in-out infinite;
-}
-@keyframes dgn-halo {
-  0%, 100% { opacity: 0.7; transform: scale(1); }
-  22% { opacity: 1; transform: scale(1.1); }
-  41% { opacity: 0.65; transform: scale(0.96); }
-  63% { opacity: 0.95; transform: scale(1.06); }
-  82% { opacity: 0.75; transform: scale(1); }
-}
 /* The flame: a teardrop blob (border-radius trick) guttering by scale/skew.
    transform-origin at the base so it dances like a real tongue of fire. */
-.dgn-torch__flame {
-  position: absolute;
-  left: 50%;
-  bottom: 18px;
-  width: 16px;
-  height: 26px;
-  margin-left: -8px;
-  border-radius: 50% 50% 50% 50% / 62% 62% 38% 38%;
-  background: radial-gradient(60% 55% at 50% 78%, #ffdf9e 0%, #ffab4e 45%, #e05c28 78%, rgb(var(--chamber-ember) / 0) 100%);
-  transform-origin: 50% 100%;
-  animation: dgn-flame 0.9s ease-in-out infinite;
-}
-.dgn-torch__flame--inner {
-  width: 8px;
-  height: 14px;
-  margin-left: -4px;
-  bottom: 19px;
-  background: radial-gradient(60% 55% at 50% 75%, #fff3d0 0%, #ffd76a 60%, rgb(255 171 78 / 0) 100%);
-  animation: dgn-flame-inner 0.7s ease-in-out infinite;
-}
-.dgn-torch--r .dgn-torch__flame { animation-delay: -0.45s; }
-.dgn-torch--r .dgn-torch__flame--inner { animation-delay: -0.3s; }
-@keyframes dgn-flame {
-  0%, 100% { transform: scaleY(1) skewX(0deg); }
-  25% { transform: scaleY(1.14) skewX(-4deg); }
-  50% { transform: scaleY(0.92) skewX(3deg); }
-  75% { transform: scaleY(1.08) skewX(-2deg); }
-}
-@keyframes dgn-flame-inner {
-  0%, 100% { transform: scaleY(1) skewX(0deg); opacity: 0.95; }
-  30% { transform: scaleY(0.85) skewX(3deg); opacity: 0.8; }
-  60% { transform: scaleY(1.15) skewX(-3deg); opacity: 1; }
-}
+
 /* Sparks: two hot pixels shed off the flame tip, climbing and dying. */
-.dgn-torch__spark {
-  position: absolute;
-  left: 50%;
-  bottom: 40px;
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  background: rgb(255 200 120 / 0.95);
-  box-shadow: 0 0 5px 1px rgb(var(--chamber-torch) / 0.6);
-  opacity: 0;
-  animation: dgn-spark 2.1s ease-out infinite;
-}
-.dgn-torch__spark--b { animation-delay: -1.1s; animation-duration: 2.7s; }
-@keyframes dgn-spark {
-  0% { opacity: 0; transform: translate(0, 0) scale(1); }
-  12% { opacity: 1; }
-  100% { opacity: 0; transform: translate(7px, -46px) scale(0.5); }
-}
-
-/* --- Iron corner braces ---------------------------------------------------- */
-/* L-shaped iron plates bolted over the slab's corners, each with a rivet dot.
-   Structure, not glow: they read as the metal holding the stone shut. */
-.dgn-brace {
-  position: absolute;
-  width: 22px;
-  height: 22px;
-  z-index: 4;
-  pointer-events: none;
-  --brace-metal: linear-gradient(135deg, #6a5f50, #443c31 60%, #322c24);
-}
-.dgn-brace::before,
-.dgn-brace::after {
-  content: "";
-  position: absolute;
-  background: var(--brace-metal);
-  box-shadow:
-    inset 0 1px 0 rgb(var(--chamber-light) / 0.28),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.6);
-}
-/* The two arms of the L. */
-.dgn-brace::before { width: 22px; height: 5px; }
-.dgn-brace::after { width: 5px; height: 22px; }
-/* The rivet: a hot-edged dot at the corner. */
-.dgn-brace i {
-  position: absolute;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #8a7a64, #574b3d 55%, #2b251e);
-  box-shadow: 0 0 4px 0 rgb(var(--chamber-torch) / 0.35), inset 0 0 0 1px rgba(0, 0, 0, 0.5);
-}
-/* Only the frame's two SQUARE corners take braces (top-right, bottom-left);
-   the chamfered corner-cut owns the other two, and a brace across a 45-degree
-   cut would itself get beheaded by the clip-path. */
-.dgn-brace--tl { top: 0; left: 0; }
-.dgn-brace--tl::before { top: 0; left: 0; }
-.dgn-brace--tl::after { top: 0; left: 0; }
-.dgn-brace--tl i { top: 2px; left: 2px; }
-.dgn-brace--tr { top: 0; right: 0; }
-.dgn-brace--tr::before { top: 0; right: 0; }
-.dgn-brace--tr::after { top: 0; right: 0; }
-.dgn-brace--tr i { top: 2px; right: 2px; }
-.dgn-brace--bl { bottom: 0; left: 0; }
-.dgn-brace--bl::before { bottom: 0; left: 0; }
-.dgn-brace--bl::after { bottom: 0; left: 0; }
-.dgn-brace--bl i { bottom: 2px; left: 2px; }
-.dgn-brace--br { bottom: 0; right: 0; }
-.dgn-brace--br::before { bottom: 0; right: 0; }
-.dgn-brace--br::after { bottom: 0; right: 0; }
-.dgn-brace--br i { bottom: 2px; right: 2px; }
-
-/* --- Carved ember title ---------------------------------------------------- */
-/* The "Choose a ..." heading reads as letters chiselled into the slab with
-   embers still glowing in the cuts: a hard dark under-edge plus a warm bloom. */
-.dgn-title {
-  color: #ecdfc8;
-  text-shadow:
-    0 1px 0 rgba(0, 0, 0, 0.9),
-    0 0 18px rgb(var(--chamber-torch) / 0.35),
-    0 0 42px rgb(var(--chamber-ember) / 0.2);
-}
-/* The smallcaps chamber label above it takes a quiet ember tint. */
-.dgn-label {
-  color: rgb(var(--chamber-light) / 0.75) !important;
-}
 
 /* --- Anim-off gating for the dungeon pass ---------------------------------- */
-html[data-anim="off"] .dgn-torch__spark { opacity: 0; }
 
 /* ============================================================================
    Draft animation preview (.dpv) — owned by DraftPreview.tsx.
@@ -1917,111 +1440,4 @@ html[data-anim="off"] .dpv * {
     transparent 78%
   );
   animation-iteration-count: 5;
-}
-
-/* --- Draft chamber material ------------------------------------------------
-   The draft is the loudest moment in the product and it was built entirely
-   from warm literals — umber stone, orange torchlight, an ember rim — so the
-   chamber looked identical whichever theme you were in. Under Neon the page
-   went indigo, the rail went magenta, and then the draft opened a gold-lit
-   dungeon on top of it.
-
-   These are the chamber's material, defaulted to exactly today's values (the
-   ten tints are unchanged), and claimed per flagship below. */
-:root {
-  --chamber-stone-hi: #241c12;
-  --chamber-stone-mid: #1b1510;
-  --chamber-stone-lo: #171209;
-  --chamber-edge: 122 96 58;
-  --chamber-torch: 255 138 52;   /* the pool at the foot of the slab */
-  --chamber-ember: 224 92 40;    /* the sconces and the deeper glow */
-  --chamber-light: 255 178 96;   /* the top edge catching the light */
-}
-
-/* Obsidian: the chamber IS the theme — volcanic glass with magma in the
-   joints. The one flagship whose default look was already close. */
-html[data-theme="obsidian"] {
-  --chamber-stone-hi: #241a26;
-  --chamber-stone-mid: #191220;
-  --chamber-stone-lo: #120d18;
-  --chamber-edge: 150 110 78;
-  --chamber-torch: 255 122 47;
-  --chamber-ember: 224 74 30;
-  --chamber-light: 255 196 150;
-}
-
-/* Porcelain: a lit gallery, not a crypt. The stone goes to glazed white and
-   the "torchlight" becomes cool daylight from the foot, because an orange
-   glow on paper reads as a stain rather than as light. */
-html[data-theme="porcelain"] {
-  --chamber-stone-hi: #ffffff;
-  --chamber-stone-mid: #f6f3ed;
-  --chamber-stone-lo: #e8e3d8;
-  --chamber-edge: 42 85 184;
-  --chamber-torch: 120 160 235;
-  --chamber-ember: 42 85 184;
-  --chamber-light: 255 255 255;
-}
-
-/* Neon: an arcade cabinet. Indigo housing, magenta tubing at the foot, cyan
-   bleed at the crown. */
-html[data-theme="neon"] {
-  --chamber-stone-hi: #241a3c;
-  --chamber-stone-mid: #18102c;
-  --chamber-stone-lo: #0f0820;
-  --chamber-edge: 255 69 200;
-  --chamber-torch: 255 69 200;
-  --chamber-ember: 150 60 255;
-  --chamber-light: 255 150 224;
-}
-
-/* Jade: a lacquer room. No torch at all — the light is a wide, even sheen,
-   which is the whole point of the theme. */
-html[data-theme="jade"] {
-  --chamber-stone-hi: #15352b;
-  --chamber-stone-mid: #0e261e;
-  --chamber-stone-lo: #071a14;
-  --chamber-edge: 47 191 159;
-  --chamber-torch: 90 214 187;
-  --chamber-ember: 34 150 124;
-  --chamber-light: 160 235 214;
-}
-
-/* Aurora: polar rock under a violet sky. The glow comes from ABOVE here
-   rather than pooling at the foot, so the crown reads lit. */
-html[data-theme="aurora"] {
-  --chamber-stone-hi: #1c2745;
-  --chamber-stone-mid: #131b34;
-  --chamber-stone-lo: #0a1022;
-  --chamber-edge: 157 123 255;
-  --chamber-torch: 157 123 255;
-  --chamber-ember: 110 150 235;
-  --chamber-light: 200 214 255;
-}
-
-/* --- Light-scheme chamber --------------------------------------------------
-   Porcelain turns the chamber into a lit white gallery, and every text and
-   torch treatment in this file was written for dark stone: cream lettering
-   with a black shadow and a warm bloom, which on paper is white on white.
-
-   Keyed to html[data-light] rather than to porcelain, so a second light
-   flagship costs nothing — the same rule the palette blocks already follow. */
-html[data-light] .dgn-title {
-  color: var(--text-primary);
-  /* No bloom. On paper the letterform IS the contrast; a glow only smears it. */
-  text-shadow: 0 1px 0 rgb(255 255 255 / 0.7);
-}
-html[data-light] .dgn-label {
-  color: rgb(var(--chamber-edge) / 0.9) !important;
-}
-/* The wall sconces are the one thing that cannot survive the translation: a
-   burning torch on a white gallery wall reads as a rendering bug, not as
-   light. A lit room does not need them. */
-html[data-light] .dgn-torch {
-  display: none;
-}
-/* Cards deal onto paper, so their frame needs a real edge rather than relying
-   on being lighter than the wall behind them. */
-html[data-light] .draft-panel {
-  border-color: rgb(var(--chamber-edge) / 0.35) !important;
 }

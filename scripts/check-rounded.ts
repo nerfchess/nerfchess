@@ -1,14 +1,15 @@
 // Static check: no rounded corners on rectangular surfaces.
 //
-// The house rule (docs/design-system.md §5, docs/ui-research.md) is crisp 1px
-// corners everywhere, with true circles reserved for avatars and status dots.
+// The house rule (docs/design-system.md §5) is Lichess's geometry: 7px on a
+// box, 3px on a button, and true circles reserved for avatars and status dots.
 // globals.css already enforces most of it:
 //
-//   [class*="rounded"]:not([class*="rounded-full"]) { border-radius: 1px !important; }
+//   [class*="rounded"]:not([class*="rounded-full"]) { border-radius: 7px !important; }
+//   button, .btn, [role="button"] { border-radius: 3px !important; }
 //
-// which means the ~190 `rounded-sm/md/lg` classes in the codebase render square
-// today. They are a readability smell, not a visual bug, and this check ignores
-// them deliberately.
+// which means the ~190 `rounded-sm/md/lg` classes in the codebase all resolve
+// to one of those two radii. They are a readability smell, not a visual bug,
+// and this check ignores them deliberately.
 //
 // What that rule CANNOT reach is where the real violations live, and both are
 // checked here:
@@ -32,12 +33,16 @@ import { join, relative } from "node:path";
 const ROOT = join(__dirname, "..");
 const LIST = process.argv.includes("--list");
 
-/** Radius values that are square, circular, or a capsule on a true dot. */
+/** Radius values on the house scale (box 7px, button 3px), plus circular and
+ *  capsule-on-a-true-dot. 1px and 2px predate the Lichess pass and are still
+ *  allowed: they are squarer than the rule, never rounder. */
 const ALLOWED_VALUES = new Set([
   "0",
   "0px",
   "1px",
   "2px",
+  "3px",
+  "7px",
   "50%",
   "999px",
   "9999px",
@@ -55,6 +60,9 @@ const SHAPE_EXEMPT = [
   ".chest-lid", // deliberate organic arch on the treasure chest
   ".chest-lock__plate", // a lock plate reads as hardware, not a panel
   ".dgn-torch__flame", // a flame silhouette; the radius IS the shape
+  ".us-f-ignite", // usage-beat flame lick; the radius IS the shape
+  ".us-f-bloom", // usage-beat petal blob; organic by design
+  ".podium-petal", // a falling flower petal; the radius IS the shape
   '[class*="rounded"]', // the global enforcement rule itself
   "primitives.css", // passive VFX pips at 6-12% of the viewport
   "effects.css", // organic VFX blobs
@@ -134,7 +142,7 @@ console.log(`[check-rounded] ${findings.length} violation(s):\n`);
 for (const f of LIST ? findings : findings.slice(0, 40)) console.log("  " + f);
 if (!LIST && findings.length > 40) console.log(`  ... and ${findings.length - 40} more (--list)`);
 console.log(
-  "\nThe house rule is crisp 1px corners on every rectangular surface " +
+  "\nThe house rule is 7px corners on a box and 3px on a button " +
     "(docs/design-system.md). True circles (avatars, status dots) use rounded-full " +
     "WITHOUT padding. If a radius is genuinely the shape (an organic VFX blob, the " +
     "chest arch), add it to SHAPE_EXEMPT in this script with a reason.",

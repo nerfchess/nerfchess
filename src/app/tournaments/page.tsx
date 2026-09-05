@@ -63,6 +63,8 @@ export default function TournamentsPage() {
   const [rated, setRated] = useState(false);
   const [clockIdx, setClockIdx] = useState(2);
   const [durationMin, setDurationMin] = useState(60);
+  // 0 = as many rounds as fit the duration; the engine stops either way.
+  const [roundsTotal, setRoundsTotal] = useState(0);
   const [clubId, setClubId] = useState("");
   const [startsAt, setStartsAt] = useState("");
   const [maxPlayers, setMaxPlayers] = useState(16);
@@ -128,7 +130,10 @@ export default function TournamentsPage() {
     const finished: TournamentListRow[] = [];
     for (const t of tournaments) {
       const endsAt = t.starts_at == null ? null : t.starts_at + t.duration_min * 60_000;
-      if (t.starts_at != null && now >= t.starts_at && endsAt != null && now < endsAt) ongoing.push(t);
+      // The engine finishes an event early once its configured rounds are
+      // played, so the stored status wins over the clock.
+      if (t.status === "finished") finished.push(t);
+      else if (t.starts_at != null && now >= t.starts_at && endsAt != null && now < endsAt) ongoing.push(t);
       else if (endsAt != null && now >= endsAt) finished.push(t);
       else upcoming.push(t);
     }
@@ -165,6 +170,7 @@ export default function TournamentsPage() {
           clockTimeSec: preset.t,
           clockIncrementSec: preset.i,
           durationMin,
+          roundsTotal,
           clubId: clubId || null,
           startsAt: starts != null && Number.isFinite(starts) ? starts : null,
           maxPlayers,
@@ -294,7 +300,7 @@ export default function TournamentsPage() {
                   ))}
                 </div>
 
-                <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
                     <label className={LABEL_CLASS} htmlFor="t-duration">
                       Duration
@@ -308,6 +314,24 @@ export default function TournamentsPage() {
                       {DURATION_PRESETS.map((min) => (
                         <option key={min} value={min}>
                           {durationLabel(min)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className={LABEL_CLASS} htmlFor="t-rounds">
+                      Rounds
+                    </label>
+                    <select
+                      id="t-rounds"
+                      value={roundsTotal}
+                      onChange={(e) => setRoundsTotal(Number(e.target.value))}
+                      className={INPUT_CLASS}
+                    >
+                      <option value={0}>As many as fit</option>
+                      {[3, 4, 5, 6, 7, 8, 9].map((n) => (
+                        <option key={n} value={n}>
+                          {n} rounds
                         </option>
                       ))}
                     </select>
@@ -477,7 +501,10 @@ function TournamentRow({ t, now }: { t: TournamentListRow; now: number }) {
   const endsAt = t.starts_at == null ? null : t.starts_at + t.duration_min * 60_000;
   let when: string;
   let whenClass = "text-parchment-400";
-  if (t.starts_at == null) {
+  if (t.status === "finished") {
+    when = "Finished";
+    whenClass = "text-parchment-500";
+  } else if (t.starts_at == null) {
     when = "Start TBA";
   } else if (now < t.starts_at) {
     when = `in ${countdownLabel(t.starts_at - now)}`;

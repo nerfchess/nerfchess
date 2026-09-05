@@ -13,19 +13,14 @@ import { MPLobby, MPLobbyChallenge, MPLobbyGame, MPLobbySeek, MPSession, saveOnl
 import { ModeBadge } from "@/components/ModeBadge";
 import { FriendGameProvider, FriendGameSetup, useFriendGame } from "@/components/FriendGame";
 import { FriendsPanel } from "@/components/FriendsPanel";
-import { StarField } from "@/components/StarField";
 import { categoryForTimeControl, getCategory } from "@/lib/ratingCategories";
-import { EngravedLabel } from "@/components/dungeon/primitives";
-import "@/components/dungeon/dungeon-lobby.css";
 import { Button } from "@/components/ui/Button";
 import { LinkButton } from "@/components/ui/Button";
 
-// The lobby: the central place to find a game, dressed edge to edge in the
-// dungeon material set (dungeon-lobby.css): a torchlit wash over the shared
-// StarField, warm carved-stone slabs and rows, and the matchmaking chamber as
-// the centerpiece — one hall, not one themed panel on a flat page. Each row
-// still wears its mode color as a plain left border. Same data, same
-// handlers, same navigation as before — only the presentation changed.
+// The lobby: the central place to find a game. Flat boxes on a flat page, a
+// tab row across the top, and quick pairing as the first thing in the Play
+// tab. Each row still wears its mode color as a plain left border. Same data,
+// same handlers, same navigation as before; only the presentation changed.
 // The two lobby tabs. Play is the default: quick matchmaking front and center
 // with open challenges folded behind a disclosure; Watch & Friends carries the
 // live boards with the friends flow folded the same way. The old four-tab deep
@@ -44,6 +39,14 @@ const ONLINE_LIST_FOLD = 8;
 // The right-rail "Games to watch" panel shows a handful of live boards; the
 // full directory lives in the Watch tab.
 const WATCH_RAIL_FOLD = 4;
+
+// The Watch tab itself also folds after a screenful (playtest feedback: a
+// busy night made it scroll forever); "View all N games" unfolds it.
+const WATCH_TAB_FOLD = 8;
+
+// The one shared copy string for every panel that fails to load lobby data;
+// each panel's own title already says what is missing.
+const SERVER_UNREACHABLE = "Can't reach the game server right now.";
 
 // The lobby is wrapped in FriendGameProvider so the Friends tab can host the
 // full "Play a Friend" flow (create + share code, wait for a friend, join by
@@ -86,6 +89,7 @@ function LobbyInner() {
   const [challengeFilter, setChallengeFilter] = useState<"all" | "nerf" | "buff">("all");
   const [watchFilter, setWatchFilter] = useState<"all" | "nerf" | "buff">("all");
   const [showAllPlayers, setShowAllPlayers] = useState(false);
+  const [showAllGames, setShowAllGames] = useState(false);
   // The MPSession backing an in-flight "answer this seek" join, so unmounting
   // mid-join tears it down instead of leaking it (see joinSeek below).
   const joinSessionRef = useRef<MPSession | null>(null);
@@ -185,7 +189,7 @@ function LobbyInner() {
       } catch {
         if (!cancelled) {
           failures++;
-          if (failures >= 2) setLobbyError("Can't reach the game server right now.");
+          if (failures >= 2) setLobbyError(SERVER_UNREACHABLE);
         }
       }
     };
@@ -327,23 +331,15 @@ function LobbyInner() {
     // while the bar is shown, so content is never covered and no static guess
     // is needed here.
     <main className="min-h-screen pb-16">
-      <StarField />
-      {/* Fixed warm wash over the star field so the whole viewport reads as
-          one torchlit hall (dungeon-lobby.css), not one themed chamber on a
-          flat black page. */}
-      <div className="dgn-hall-ambience" aria-hidden />
       <SiteHeader active="/lobby" />
 
       <section className="max-w-7xl mx-auto px-5 sm:px-6">
-        {/* Masthead over a torchlit brass hairline. On a phone it collapses to
-            one compact row — a small engraved title beside the live status pill
-            — so matchmaking content starts high on the page instead of below a
-            full-height headline. Desktop keeps the monumental masthead and the
-            two quiet traffic counters. */}
-        <header className="relative mt-2 sm:mt-4">
-          <EngravedLabel className="hidden sm:inline-flex">Find a game</EngravedLabel>
-          <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 sm:mt-1 sm:items-end">
-            <h1 className="masthead text-2xl sm:text-6xl text-parchment-50">The Lobby</h1>
+        {/* One compact header row: the page name beside the live status pill
+            and the two traffic counters, so matchmaking content starts high on
+            the page instead of below a full-height headline. */}
+        <header className="mt-3 sm:mt-4">
+          <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+            <h1 className="font-display text-xl font-bold text-parchment-50 sm:text-2xl">Lobby</h1>
             <div className="flex flex-wrap items-center gap-2 pb-0.5">
               <StatusPill lobby={!!lobby} error={!!lobbyError} onlineCount={onlineCount} />
               {lobby && (
@@ -354,7 +350,6 @@ function LobbyInner() {
               )}
             </div>
           </div>
-          <div className="hall-hairline mt-2 sm:mt-4" aria-hidden />
         </header>
 
         {lobbyError && (
@@ -373,7 +368,7 @@ function LobbyInner() {
         <div
           role="tablist"
           aria-label="Lobby sections"
-          className="dgn-tabscroll mt-6 flex items-stretch gap-4 overflow-x-auto border-b border-[color:var(--edge)] sm:gap-7"
+          className="mt-4 flex items-stretch gap-4 overflow-x-auto border-b border-[color:var(--edge)] sm:gap-6"
         >
           {LOBBY_TABS.map((t) => {
             // Play carries the waiting-challenge count (its folded section),
@@ -396,7 +391,7 @@ function LobbyInner() {
                 className={
                   "-mb-px flex min-h-[44px] shrink-0 items-center gap-2 whitespace-nowrap border-b-2 px-1 pb-2.5 pt-1 font-display text-sm font-semibold transition-colors sm:text-base " +
                   (selected
-                    ? "dgn-tab-active text-gold-leaf"
+                    ? "border-[color:var(--accent)] text-gold-leaf"
                     : "border-transparent text-parchment-300 hover:border-white/25 hover:text-parchment-50")
                 }
               >
@@ -419,13 +414,13 @@ function LobbyInner() {
         </div>
 
         <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
-          <div className="space-y-5 min-w-0 stagger-in">
+          <div className="space-y-5 min-w-0">
             {tab === "watch" && (
             /* Watch & Friends: live boards lead; the friends flow (create +
                 share a code, one-tap Challenge, join by code) sits folded
                 beneath so the tab shows one primary thing. */
             <div role="tabpanel" id="lobby-panel-watch" aria-labelledby="lobby-tab-watch" className="space-y-5">
-              <div className="dgn-slab dgn-hallpanel dgn-rivets p-5 sm:p-6">
+              <div className="plate p-5 sm:p-6">
                 <div className="flex items-center justify-between gap-3">
                   <SectionTitle tint="coral" icon={<Eye size={15} aria-hidden />}>
                     Live games
@@ -446,7 +441,7 @@ function LobbyInner() {
                 {!lobby ? (
                   lobbyError ? (
                     <LobbyRailError
-                      message="Can't reach the game server, so live games aren't available."
+                      message={SERVER_UNREACHABLE}
                       onRetry={() => setReloadKey((k) => k + 1)}
                     />
                   ) : (
@@ -463,11 +458,22 @@ function LobbyInner() {
                     hint="Switch the filter to All to see every live board."
                   />
                 ) : (
-                  <ul className="mt-4 space-y-2.5 stagger-in">
-                    {filteredGames.map((game) => (
-                      <LiveGameRow key={game.id} game={game} />
-                    ))}
-                  </ul>
+                  <>
+                    <ul className="mt-3 space-y-1.5">
+                      {(showAllGames ? filteredGames : filteredGames.slice(0, WATCH_TAB_FOLD)).map((game) => (
+                        <LiveGameRow key={game.id} game={game} />
+                      ))}
+                    </ul>
+                    {filteredGames.length > WATCH_TAB_FOLD && (
+                      <Button tone="ghost"
+                        onClick={() => setShowAllGames((v) => !v)}
+                        className="mt-2.5 sm:min-h-0 w-full px-3 py-2 text-xs font-medium text-parchment-300">
+                        {showAllGames
+                          ? "Show fewer"
+                          : `View all ${filteredGames.length} games`}
+                      </Button>
+                    )}
+                  </>
                 )}
               </div>
 
@@ -507,7 +513,9 @@ function LobbyInner() {
                   existing flow (the challenges fold, the friends fold, bot
                   practice). */}
               <div>
-                <EngravedLabel>Other ways to play</EngravedLabel>
+                <h2 className="font-display text-[15px] font-bold text-parchment-50">
+                  Other ways to play
+                </h2>
                 <div className="mt-2.5 grid gap-2.5 sm:grid-cols-3">
                   <SecondaryModeCard
                     icon={<Swords size={18} aria-hidden />}
@@ -521,7 +529,7 @@ function LobbyInner() {
                   <SecondaryModeCard
                     icon={<Users size={18} aria-hidden />}
                     title="Challenge a friend"
-                    description="Create a private game and send the code to someone you know."
+                    description="Create a private game and share the code."
                     onClick={() => {
                       setTab("watch");
                       setFriendsOpen(true);
@@ -530,7 +538,7 @@ function LobbyInner() {
                   <SecondaryModeCard
                     icon={<Cpu size={18} aria-hidden />}
                     title="Practice vs computer"
-                    description="Warm up against the computer at your chosen difficulty."
+                    description="Pick a bot strength and go."
                     href="/play"
                   />
                 </div>
@@ -541,7 +549,7 @@ function LobbyInner() {
                   wearing its mode color as a plain left border. Folded behind
                   its header by default (?tab=challenges opens it) so Quick
                   Match stays the tab's one headline. */}
-              <div className="dgn-slab dgn-hallpanel dgn-rivets p-5 sm:p-6">
+              <div className="plate p-5 sm:p-6">
                 <DisclosureHeader
                   controls="lobby-fold-challenges"
                   open={challengesOpen}
@@ -569,7 +577,7 @@ function LobbyInner() {
                     {!lobby ? (
                       lobbyError ? (
                         <LobbyRailError
-                          message="Can't reach the game server, so open challenges aren't available."
+                          message={SERVER_UNREACHABLE}
                           onRetry={() => setReloadKey((k) => k + 1)}
                         />
                       ) : (
@@ -578,15 +586,15 @@ function LobbyInner() {
                     ) : waitingCount === 0 ? (
                       <HallEmpty
                         title="No one is waiting right now."
-                        hint="Queue from Quick Match and your seek will appear here for others to answer."
+                        hint="Queue from Quick Match to post a seek here."
                       />
                     ) : filteredSeeks.length + filteredChallenges.length === 0 ? (
                       <HallEmpty
                         title={`No ${challengeFilter === "nerf" ? "Nerf" : "Buff"} challenges right now.`}
-                        hint="Switch the filter to All, or queue from Quick Match to start one."
+                        hint="Switch the filter to All."
                       />
                     ) : (
-                      <ul className="mt-4 space-y-2.5 stagger-in">
+                      <ul className="mt-3 space-y-1.5">
                         {filteredSeeks.map((seek) => (
                           <SeekRow
                             key={`${seek.mode ?? "buff"}:${seek.pool}:${seek.name}:${seek.at}`}
@@ -611,9 +619,9 @@ function LobbyInner() {
           {/* Who's here right now, plus boards to watch: a stack of rail panels
               that ride along on desktop scroll. */}
           <aside className="h-fit space-y-5 lg:sticky lg:top-6">
-            <div className="dgn-slab dgn-hallpanel dgn-rivets p-5">
+            <div className="plate p-5">
             <div className="flex items-center justify-between gap-3">
-              <div className="sec-title font-display text-xl text-parchment">Online now</div>
+              <div className="font-display text-[15px] font-bold text-parchment-50">Online now</div>
               {lobby && onlineCount != null && (
                 <span className="font-mono text-xs tabular-nums text-parchment-400">{onlineCount}</span>
               )}
@@ -621,7 +629,7 @@ function LobbyInner() {
             {!lobby ? (
               lobbyError ? (
                 <LobbyRailError
-                  message="Can't reach the game server, so we can't show who's online."
+                  message={SERVER_UNREACHABLE}
                   onRetry={() => setReloadKey((k) => k + 1)}
                 />
               ) : (
@@ -697,9 +705,9 @@ function LobbyInner() {
                 into the spectator route. The data source (lobby.games) always
                 exists in the payload, so this panel renders with a designed
                 empty state rather than disappearing. */}
-            <div className="dgn-slab dgn-hallpanel dgn-rivets p-5">
+            <div className="plate p-5">
               <div className="flex items-center justify-between gap-3">
-                <div className="sec-title font-display text-xl text-parchment">Games to watch</div>
+                <div className="font-display text-[15px] font-bold text-parchment-50">Games to watch</div>
                 {lobby && (
                   <span className="font-mono text-xs tabular-nums text-parchment-400">{lobby.games.length}</span>
                 )}
@@ -707,7 +715,7 @@ function LobbyInner() {
               {!lobby ? (
                 lobbyError ? (
                   <LobbyRailError
-                    message="Can't reach the game server, so live games aren't available."
+                    message={SERVER_UNREACHABLE}
                     onRetry={() => setReloadKey((k) => k + 1)}
                   />
                 ) : (
@@ -777,7 +785,7 @@ function StatusPill({
     dot = "bg-parchment-400 motion-safe:animate-pulse";
     label = "Connecting…";
   } else {
-    dot = "bg-verdigris animate-flicker";
+    dot = "bg-verdigris";
     label = `Live · ${onlineCount} player${onlineCount === 1 ? "" : "s"}`;
   }
   return (
@@ -822,10 +830,9 @@ function SecondaryModeCard({
       </span>
     </>
   );
-  // The same carved stone tablet as the time-control tokens, so the whole
-  // Quick Play column speaks one material (never the flat .plate next to the
-  // chamber's granite).
-  const className = "dgn-token press group flex min-h-[44px] items-start gap-3 p-3.5 text-left";
+  // Plain box, same as every other box on the page.
+  const className =
+    "plate plate-hover press group flex min-h-[44px] items-start gap-3 p-3 text-left no-underline";
   return href ? (
     <Link href={href} className={className}>
       {inner}
@@ -859,7 +866,7 @@ function FriendsSection({ open, onToggle }: { open: boolean; onToggle: () => voi
   const { challenging } = useFriendGame();
   return (
     <div className={"min-w-0 " + (open && !challenging ? "grid gap-5 lg:grid-cols-2 lg:items-start" : "")}>
-      <div className="dgn-slab dgn-hallpanel dgn-rivets p-5 sm:p-6">
+      <div className="plate p-5 sm:p-6">
         <DisclosureHeader
           controls="lobby-fold-friends"
           open={open}
@@ -871,7 +878,7 @@ function FriendsSection({ open, onToggle }: { open: boolean; onToggle: () => voi
         {open && (
           <div id="lobby-fold-friends">
             <p className="mt-2 mb-5 text-xs text-parchment-400">
-              Challenge a friend directly. Share a code or pick from your list.
+              Share a code, or pick from your list.
             </p>
             <FriendGameSetup showFriends={false} />
           </div>
@@ -925,7 +932,7 @@ function DisclosureHeader({
       >
         {icon}
       </span>
-      <span className="font-display text-2xl text-parchment">{title}</span>
+      <span className="font-display text-[15px] font-bold text-parchment-50">{title}</span>
       {meta != null && (
         <span className="ml-auto shrink-0 text-xs tabular-nums text-parchment-400">{meta}</span>
       )}
@@ -950,7 +957,7 @@ function SectionTitle({
       >
         {icon}
       </span>
-      <div className="font-display text-2xl text-parchment">{children}</div>
+      <div className="font-display text-[15px] font-bold text-parchment-50">{children}</div>
     </div>
   );
 }
@@ -965,24 +972,30 @@ function ModeFilter({
   onChange: (value: "all" | "nerf" | "buff") => void;
   label: string;
 }) {
-  // Each segment lights in its own hue when pressed: All in vault gold (the
-  // CSS default), Buff blue, Nerf red — sourced from the mode tokens so the
-  // filter reads the same colors as the mode everywhere else. Fed via --seg-rgb.
   const options = [
-    { id: "all", label: "All", rgb: null },
-    { id: "buff", label: "Buff", rgb: "var(--accent-buff-rgb)" },
-    { id: "nerf", label: "Nerf", rgb: "var(--accent-nerf-rgb)" },
+    { id: "all", label: "All" },
+    { id: "buff", label: "Buff" },
+    { id: "nerf", label: "Nerf" },
   ] as const;
   return (
-    <div role="group" aria-label={label} className="dgn-seg mt-3">
-      {options.map((o) => (
+    <div
+      role="group"
+      aria-label={label}
+      className="mt-3 inline-flex items-stretch overflow-hidden rounded-[3px] border border-[color:var(--edge)]"
+    >
+      {options.map((o, i) => (
         <button
           key={o.id}
           type="button"
           aria-pressed={value === o.id}
           onClick={() => onChange(o.id)}
-          style={o.rgb ? ({ "--seg-rgb": o.rgb } as React.CSSProperties) : undefined}
-          className="dgn-seg__opt min-h-[44px] px-4 py-1 text-xs font-medium sm:min-h-[34px]"
+          className={
+            "min-h-[44px] px-4 py-1 text-xs font-medium transition-colors sm:min-h-[34px] " +
+            (i > 0 ? "border-l border-[color:var(--edge)] " : "") +
+            (value === o.id
+              ? "bg-[color:var(--accent)] text-[color:var(--text-on-accent)]"
+              : "text-parchment-300 hover:text-parchment-50")
+          }
         >
           {o.label}
         </button>
@@ -1039,7 +1052,7 @@ function TimeControlGlyph({
 // stays up.
 function SkeletonRows({ count }: { count: number }) {
   return (
-    <ul className="mt-4 space-y-2.5" aria-hidden>
+    <ul className="mt-3 space-y-1.5" aria-hidden>
       {Array.from({ length: count }).map((_, i) => (
         <li key={i} className="hall-row flex items-center justify-between gap-3 p-3 sm:px-4">
           <div className="min-w-0 flex-1 space-y-2">

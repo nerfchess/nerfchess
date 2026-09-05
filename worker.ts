@@ -1652,6 +1652,16 @@ export class GameServer extends DurableObject<Env> {
       return Response.json(found ?? { gameId: null });
     }
 
+    if (url.pathname === "/tournament/create-game" && request.method === "POST") {
+      // Internal endpoint for the tournament engine (see
+      // src/lib/server/tournamentEngine.ts): create a match with both seats
+      // pre-assigned to named accounts. Like /live-game this path is
+      // reachable ONLY through the server-side DO stub — the public worker
+      // fetch routes just the socket path, /healthz, and /arena/* here — so
+      // it needs no bearer token.
+      return this.createTournamentGame(request);
+    }
+
     if (url.pathname.startsWith("/arena/")) return this.handleArena(request, url);
 
     if (url.pathname !== socketPath) return new Response("Not found", { status: 404 });
@@ -4366,6 +4376,107 @@ export class GameServer extends DurableObject<Env> {
     const theirColor: Color = meWhite ? "b" : "w";
     send(ws, "paired", { id, color: myColor, token: match.tokens[myColor], pool: poolName, mode });
     send(opponentWs, "paired", { id, color: theirColor, token: match.tokens[theirColor], pool: poolName, mode });
+  }
+
+  // ---------------- tournaments ----------------
+  //
+  // Contained section: the ONLY tournament-specific code in this DO. The
+  // tournament engine (src/lib/server/tournamentEngine.ts, driven lazily by
+  // GET /api/tournaments/[id]) POSTs here once per paired board to create a
+  // real match between two named accounts. The match is shaped exactly like a
+  // queue match (createQueueMatch above) — autoStart with both seats
+  // pre-assigned — except the rated flag follows the tournament's setting and
+  // colors are chosen by the pairing, not a coin flip. Neither player is
+  // connected when this runs: both receive their seat token through the
+  // tournament detail API instead of a `paired` frame, save it with
+  // saveOnlineSeat, and the game starts when both arrive at /game/{id}
+  // (the same reconnect + autoStart path queue games use).
+  private async createTournamentGame(request: Request): Promise<Response> {
+    let body: {
+      whiteId?: unknown;
+      whiteName?: unknown;
+      blackId?: unknown;
+      blackName?: unknown;
+      timeSec?: unknown;
+      incrementSec?: unknown;
+      mode?: unknown;
+      rated?: unknown;
+    };
+    try {
+      body = (await request.json()) as typeof body;
+    } catch {
+      return Response.json({ error: "bad_json" }, { status: 400 });
+    }
+    const whiteId = typeof body.whiteId === "string" ? body.whiteId : "";
+    const whiteName = typeof body.whiteName === "string" ? body.whiteName.slice(0, 30) : "";
+    const blackId = typeof body.blackId === "string" ? body.blackId : "";
+    const blackName = typeof body.blackName === "string" ? body.blackName.slice(0, 30) : "";
+    const timeSec = Number.isInteger(body.timeSec) ? Number(body.timeSec) : 180;
+    const incrementSec = Number.isInteger(body.incrementSec) ? Number(body.incrementSec) : 0;
+    const mode: DraftMode = body.mode === "buff" ? "buff" : "nerf";
+    const rated = body.rated === true;
+    if (!whiteId || !blackId || !whiteName || !blackName || whiteId === blackId) {
+      return Response.json({ error: "bad_players" }, { status: 400 });
+    }
+    if (timeSec < 0 || timeSec > 7200 || incrementSec < 0 || incrementSec > 180) {
+      return Response.json({ error: "invalid_clock" }, { status: 400 });
+    }
+
+    // Seat ratings from the same per-mode bucket a queue game would stake
+    // (refreshed again on attach, like every match). A D1 hiccup degrades to
+    // the default seed rather than failing the round.
+    const db = await this.db();
+    const seatOf = async (userId: string, name: string): Promise<SeatUser> => {
+      const row = db ? await this.seatCategoryRating(db, userId, mode) : null;
+      return {
+        id: userId,
+        name,
+        rating: row?.rating ?? GLICKO_DEFAULT.rating,
+        rd: row?.rd ?? GLICKO_DEFAULT.rd,
+        vol: row?.vol ?? GLICKO_DEFAULT.vol,
+        avatar: row?.avatar ?? null,
+      };
+    };
+    const [whiteUser, blackUser] = await Promise.all([seatOf(whiteId, whiteName), seatOf(blackId, blackName)]);
+
+    const id = await this.newCode(8);
+    const cardSnap = await this.cardOverridesSnapshot();
+    const cardOverrides = this.draftPoolStamp(cardSnap);
+    const match: StoredMatch = {
+      id,
+      setup: {
+        ...(mode === "buff"
+          ? { whiteNerfId: UNRESTRICTED_NERF.id, blackNerfId: UNRESTRICTED_NERF.id }
+          : pickNerfIds(cardSnap.nerfOff)),
+        seed: makeSeed(),
+        timeSec,
+        incrementSec,
+      },
+      tokens: { w: newToken(), b: newToken() },
+      disconnectedAt: {},
+      opponentGoneNotified: {},
+      moves: [],
+      result: null,
+      clocks: { w: timeSec * 1000, b: timeSec * 1000 },
+      runningSince: null,
+      drawOfferBy: null,
+      createdAt: Date.now(),
+      startedAt: null,
+      completedAt: null,
+      replayVersion: REPLAY_VERSION,
+      ...(rated ? { rated: true } : {}),
+      autoStart: true,
+      users: { w: whiteUser, b: blackUser },
+      draft: true,
+      mode,
+      picksVisible: false,
+      cadence: mode === "nerf" ? NERF_MODE_CADENCE : DEFAULT_CADENCE,
+      draftSeed: makeSeed(),
+      ...(cardOverrides ? { cardOverrides } : {}),
+      draftActions: [],
+    };
+    await this.saveMatch(match);
+    return Response.json({ id, whiteToken: match.tokens.w, blackToken: match.tokens.b });
   }
 
   private async queueLeave(ws: WebSocket, notify: boolean) {

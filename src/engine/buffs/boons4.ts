@@ -910,21 +910,26 @@ const BOON_WAVE4A: Buff[] = [
   // --- info (2) ---
 
   card(
+    // Balance buff 2026-08-04: the old version PUNISHED you for playing it,
+    // stripping your own shields off every lit piece; a boon should never cost
+    // more than it gives. The survey now patches the worst gap it finds.
     { id: "bn4_hairline_crack", name: "Hairline Crack", tier: 1, category: "info", icon: "SearchCheck",
-      description: "Every one of your pieces that no other piece of yours defends lights up until your opponent replies, and any temporary shield covering one of those pieces is stripped away.",
+      description: "Every one of your pieces that no other piece of yours defends lights up until your opponent replies, and the loose stone nearest your king is mortared: it cannot be captured on your opponent's next turn.",
       flavor: "Know where you are thin before someone else does." },
     instant((_inst, api) => {
       const marked = undefendedPieces(api.board, api.me);
       flashSquares(api, marked);
-      const set = new Set(marked);
-      for (const e of api.bs.effects) {
-        if (e.kind === "shield" && e.owner === api.me && e.turns != null) {
-          e.squares =
-            e.squares == null
-              ? mySquares(api.board, api.me).filter((sq) => !set.has(sq))
-              : e.squares.filter((sq) => !set.has(sq));
-        }
-      }
+      const ks = kingSquare(api.board, api.me);
+      if (ks == null) return;
+      // Nearest lit piece to the king (the king itself is the keep, not a
+      // loose stone); Chebyshev distance, lowest square index breaking ties.
+      const stones = marked.filter((sq) => sq !== ks);
+      if (stones.length === 0) return;
+      const dist = (sq: Square) =>
+        Math.max(Math.abs(FILE(sq) - FILE(ks)), Math.abs(RANK(sq) - RANK(ks)));
+      let brace = stones[0];
+      for (const sq of stones) if (dist(sq) < dist(brace)) brace = sq;
+      addEffect(api, { kind: "shield", owner: api.me, squares: [brace], turns: 1 });
     }),
   ),
   card(
@@ -941,8 +946,12 @@ const BOON_WAVE4A: Buff[] = [
   // --- draft (2) ---
 
   card(
+    // Balance buff 2026-08-04: a reroll that could be repossessed was worse
+    // than Watchman's Lantern's plain one in the same tier. The coin now
+    // rewards spending instead of punishing holding: use a reroll within the
+    // window and it flips back into your hand.
     { id: "bn4_lucky_coin", name: "Lucky Coin", tier: 1, category: "draft", icon: "Coins",
-      description: "Gain 1 draft reroll. If you do not spend it within your next two draft offers, it is reclaimed.",
+      description: "Gain 1 draft reroll. Spend a reroll within your next two draft offers and the coin lands heads: you gain that reroll back.",
       flavor: "Heads you reroll, tails you reroll." },
     {
       kind: "passive",
@@ -954,16 +963,17 @@ const BOON_WAVE4A: Buff[] = [
       onMovePlayed: (inst, _move, api) => {
         if (inst.spent) return;
         if ((api.mine.rerollsLeft ?? 0) < (inst.state.baseline as number)) {
-          // A reroll was spent: the coin is cashed in, nothing to reclaim.
+          // A reroll was spent inside the window: heads, it comes back.
+          api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
           inst.spent = true;
           return;
         }
         if (api.mine.draftsTaken - (inst.state.draftsAtGrant as number) >= 2) {
-          if ((api.mine.rerollsLeft ?? 0) > 0) api.mine.rerollsLeft -= 1;
+          // Window closed unspent: tails, the granted reroll simply stays.
           inst.spent = true;
         }
       },
-      status: (inst) => (inst.spent ? null : "reroll expires in two drafts"),
+      status: (inst) => (inst.spent ? null : "heads if you spend a reroll within two drafts"),
     },
   ),
   card(
@@ -1669,12 +1679,32 @@ const BOON_WAVE4A: Buff[] = [
   // --- info (2) ---
 
   card(
+    // Balance buff 2026-08-04: the pure flash showed a competent player what
+    // the board already shows. Being spotted now costs the intruders their
+    // teeth for one turn.
     { id: "bn4_field_glasses", name: "Field Glasses", tier: 1, category: "info", icon: "Binoculars",
-      description: "Every enemy piece currently standing in your half of the board lights up until your opponent replies.",
+      description: "Every enemy piece currently standing in your half of the board lights up until your opponent replies, and the spotted pieces hold their fire: they cannot capture on that turn.",
       flavor: "Count them twice. They multiply when unobserved." },
-    instant((_inst, api) =>
-      flashSquares(api, mySquares(api.board, api.opp).filter((sq) => inHalf(api.me, sq))),
-    ),
+    {
+      kind: "passive",
+      init: (inst, api) => {
+        const spotted = mySquares(api.board, api.opp).filter((sq) => inHalf(api.me, sq));
+        flashSquares(api, spotted);
+        inst.state.sqs = spotted;
+        inst.state.turns = 1;
+      },
+      filterOpponentMoves: (moves, inst) => {
+        if (turnsLeft(inst) <= 0) return moves;
+        const sqs = (inst.state.sqs as Square[] | undefined) ?? [];
+        if (!sqs.length) return moves;
+        // Spotted pieces may still move, just not capture. Never strand the
+        // opponent with zero moves (the timedOppFilter safety-net idiom).
+        const filtered = moves.filter((m) => !(m.captured && sqs.includes(m.from)));
+        return filtered.length > 0 ? filtered : moves;
+      },
+      onMovePlayed: (inst, move, api) => tickTurns(inst, move, api.opp),
+      status: (inst) => (turnsLeft(inst) > 0 ? "the spotted pieces hold their fire" : null),
+    },
   ),
   card(
     { id: "bn4_ear_to_the_ground", name: "Ear to the Ground", tier: 2, category: "info", icon: "Ear",
@@ -2375,17 +2405,26 @@ const BOON_WAVE4A: Buff[] = [
   // --- info (2) ---
 
   card(
+    // Balance buff 2026-08-04: a pure flash at tier 3 was the weakest card in
+    // its band. The report is now acted on: everything it names as threatened
+    // digs in for one turn.
     { id: "bn4_scouts_report", name: "Scout's Report", tier: 3, category: "info", icon: "Map",
-      description: "Every enemy piece currently aiming at any of your pieces lights up until your opponent replies.",
+      description: "Every enemy piece currently aiming at any of your pieces lights up until your opponent replies, and your threatened pieces dig in: they cannot be captured on that turn.",
       flavor: "Bad news, thoroughly footnoted." },
     instant((_inst, api) => {
       const hot: Square[] = [];
+      const threatened: Square[] = [];
       for (const mineSq of mySquares(api.board, api.me)) {
-        for (const a of attackersOf(api.board, api.opp, mineSq)) {
+        const aiming = attackersOf(api.board, api.opp, mineSq);
+        if (aiming.length > 0) threatened.push(mineSq);
+        for (const a of aiming) {
           if (!hot.includes(a)) hot.push(a);
         }
       }
       flashSquares(api, hot);
+      if (threatened.length) {
+        addEffect(api, { kind: "shield", owner: api.me, squares: threatened, turns: 1 });
+      }
     }),
   ),
   card(
@@ -3020,7 +3059,7 @@ const BOON_WAVE4A: Buff[] = [
     { id: "bn4_general_strike", name: "General Strike", tier: 4, category: "tempo", icon: "Megaphone",
       description: "For your opponent's next turn, only their king will move, and it cannot capture unless a capture is its only legal move: every other piece is off the job.",
       flavor: "The pawns have demands. The rooks have a drum.",
-      fx: { motif: "slow", pieces: "all" } },
+      fx: { motif: "slow", pieces: "all", king: true } },
     // The king-only identity is preserved; the granted move cannot capture: the
     // opponent's captures are filtered out for that turn (with the standard
     // never-strand fallback if a capture is their only legal move).
@@ -3052,28 +3091,43 @@ const BOON_WAVE4A: Buff[] = [
   // --- info (3) ---
 
   card(
+    // Balance buff 2026-08-04: a pure flash at tier 3, priced against Punch
+    // Card's two flat rerolls in the same band. The map now comes with the
+    // planning session attached.
     { id: "bn4_war_room_map", name: "War Room Map", tier: 3, category: "info", icon: "Map",
-      description: "Every enemy piece that no other enemy piece defends lights up until your opponent replies.",
+      description: "Every enemy piece that no other enemy piece defends lights up until your opponent replies, and the planners hand you 2 draft rerolls.",
       flavor: "The pins are red. The mood is optimistic." },
-    instant((_inst, api) => flashSquares(api, undefendedPieces(api.board, api.opp))),
+    instant((_inst, api) => {
+      flashSquares(api, undefendedPieces(api.board, api.opp));
+      api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 2;
+    }),
   ),
   card(
+    // Balance buff 2026-08-04: against a blocked draft the card resolved to
+    // literally nothing, the only card in the wave that could. The dead branch
+    // now pays a consolation reroll.
     { id: "bn4_listening_post", name: "Listening Post", tier: 4, category: "info", icon: "RadioTower",
-      description: "See both the cards and the tier of your opponent's next draft offer. If that draft is already skipped, you learn nothing.",
+      description: "See both the cards and the tier of your opponent's next draft offer. If that draft is already skipped, the wire is dead: gain 1 draft reroll instead.",
       flavor: "The wire crackles. The news is specific." },
     instant((_inst, api) => {
       // Never combine the peek with a skipped enemy draft: if the opponent's
       // next draft is already blocked there is no offer to read, so neither the
-      // cards nor the tier are revealed (the over_the_shoulder idiom).
+      // cards nor the tier are revealed (the over_the_shoulder idiom); the
+      // holder pockets a reroll for the dead wire instead.
       if ((api.theirs.flags.blockedDrafts ?? 0) === 0) {
         api.mine.flags.seeOppCards = true;
         api.mine.flags.seeOppTier = true;
+      } else {
+        api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
       }
     }),
   ),
   card(
+    // Balance buff 2026-08-04: a pure flash at tier 3. A sense of danger you
+    // cannot act on is a headache, so the warning now buys the royals one
+    // turn of cover.
     { id: "bn4_danger_sense", name: "Danger Sense", tier: 3, category: "info", icon: "AlertTriangle",
-      description: "Every enemy piece currently aiming at your king or your queen lights up until your opponent replies.",
+      description: "Every enemy piece currently aiming at your king or your queen lights up until your opponent replies, and both crowns brace: neither can be captured on that turn.",
       flavor: "The hair on the back of the castle stands up." },
     instant((_inst, api) => {
       const hot: Square[] = [];
@@ -3087,6 +3141,11 @@ const BOON_WAVE4A: Buff[] = [
         }
       }
       flashSquares(api, hot);
+      addEffect(api, { kind: "king_safe", owner: api.me, turns: 1 });
+      const queens = mySquares(api.board, api.me, "q");
+      if (queens.length) {
+        addEffect(api, { kind: "shield", owner: api.me, squares: queens, turns: 1 });
+      }
     }),
   ),
 

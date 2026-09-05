@@ -288,6 +288,28 @@ export const SCHEMA_STATEMENTS: string[] = [
     PRIMARY KEY (tournament_id, user_id)
   )`,
   `CREATE INDEX IF NOT EXISTS idx_tournament_entries_user ON tournament_entries(user_id, joined_at DESC)`,
+  // One row per tournament board per round, plus one row per bye (game_id
+  // NULL, result 'bye'). Written by the lazy tournament engine
+  // (src/lib/server/tournamentEngine.ts). Seat tokens let entrants claim
+  // their seats from the tournament page and are never exposed publicly.
+  // Mirrors migrations/0040_tournament_engine.sql.
+  `CREATE TABLE IF NOT EXISTS tournament_games (
+    tournament_id TEXT NOT NULL REFERENCES tournaments(id),
+    round INTEGER NOT NULL,
+    board INTEGER NOT NULL,
+    game_id TEXT,
+    white_user_id TEXT NOT NULL,
+    white_username TEXT NOT NULL,
+    black_user_id TEXT,
+    black_username TEXT,
+    white_token TEXT,
+    black_token TEXT,
+    result TEXT,
+    created_at INTEGER NOT NULL,
+    resolved_at INTEGER,
+    PRIMARY KEY (tournament_id, round, board)
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_tournament_games_game ON tournament_games(game_id)`,
   // Failed sign-in counters for brute-force throttling (see lib/server/auth.ts).
   // Keys are "u:<username_lower>" or "ip:<client ip>".
   `CREATE TABLE IF NOT EXISTS login_attempts (
@@ -655,6 +677,15 @@ const ADDITIVE_COLUMNS: string[] = [
   // that instant passes. Mirrors migrations/0038_abort_tracking.sql.
   `ALTER TABLE users ADD COLUMN recent_aborts TEXT NOT NULL DEFAULT ''`,
   `ALTER TABLE users ADD COLUMN abort_timeout_until INTEGER`,
+  // Tournament engine v1 (see src/lib/server/tournamentEngine.ts).
+  // rounds_total: configured round count, 0 = as many as fit the duration.
+  // current_round: 0 until the first round is paired. round_started_at feeds
+  // the round deadline; finished_at is stamped when the engine completes the
+  // event. Mirrors migrations/0040_tournament_engine.sql.
+  `ALTER TABLE tournaments ADD COLUMN rounds_total INTEGER NOT NULL DEFAULT 0`,
+  `ALTER TABLE tournaments ADD COLUMN current_round INTEGER NOT NULL DEFAULT 0`,
+  `ALTER TABLE tournaments ADD COLUMN round_started_at INTEGER`,
+  `ALTER TABLE tournaments ADD COLUMN finished_at INTEGER`,
 ];
 
 // The additive pass is versioned by list length (the list is append-only) and

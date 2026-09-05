@@ -190,7 +190,7 @@ function LoginPage() {
                 placeholder="you@example.com"
               />
               <p className="mt-1 text-[12px] text-parchment-400">
-                Lets you sign in with your email instead of your username.
+                Sign in with your email.
               </p>
             </div>
           )}
@@ -225,7 +225,7 @@ function LoginPage() {
 
           <div className="flex items-center gap-3">
             <div className="h-px flex-1 bg-white/10" />
-            <span className="text-[12px] smallcaps text-parchment-400">or</span>
+            <span className="text-[12px] text-parchment-400">or</span>
             <div className="h-px flex-1 bg-white/10" />
           </div>
           <a

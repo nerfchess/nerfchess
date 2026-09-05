@@ -118,14 +118,14 @@ export function CurrentGameCard({
   return (
     <div className="mt-6 plate p-4" data-testid="current-game-card">
       <div className="flex items-center justify-between gap-2 pb-2">
-        <span className="flex items-center gap-2 smallcaps text-[10px] text-verdigris-glow">
+        <span className="flex items-center gap-2 text-[10px] text-verdigris-glow">
           <span className="h-2 w-2 rounded-full bg-verdigris-glow animate-flicker" />
           {over ? "Just finished" : "Playing right now"}
           {modeLabel && <span className={modeColor}>· {modeLabel}</span>}
         </span>
         <Link
           href={`/game/${gameId}`}
-          className="smallcaps text-[10px] text-parchment-300 no-underline transition hover:text-gold-leaf"
+          className="text-[10px] text-parchment-300 no-underline transition hover:text-gold-leaf"
         >
           {showBoard ? "Watch →" : "Open →"}
         </Link>
@@ -158,7 +158,7 @@ export function CurrentGameCard({
                 : "Tuning in…"}
             </span>
           </span>
-          <span className="shrink-0 smallcaps text-[10px] text-gold-leaf">Watch →</span>
+          <span className="shrink-0 text-[10px] text-gold-leaf">Watch →</span>
         </Link>
       )}
     </div>

@@ -8,7 +8,7 @@
 
 import { CARD_VFX } from "../src/components/effects/vfxSpecs";
 import { EXTRA_CARD_VFX } from "../src/components/effects/vfxExtra";
-import { resolveEntrance } from "../src/components/effects/entranceResolve";
+import { entranceVariant, resolveEntrance } from "../src/components/effects/entranceResolve";
 import { BUFF_BY_ID } from "../src/engine/buffs/library";
 import { ALL_NERFS } from "../src/engine/nerfs/library";
 
@@ -23,14 +23,24 @@ for (const [id, def] of Object.entries(BUFF_BY_ID)) {
 // out of the resolver would surface here as a missing/empty entry and fail
 // rule 3 in the checker.
 const entrances: Record<string, string> = {};
+// The per-card variant tuple each generic arrival is bent by (rule 4 in the
+// checker asserts distinctness within each fallback bucket). Encoded compactly
+// so the JSON line stays small; computed from the SAME id the renderer hashes.
+const variants: Record<string, string> = {};
+const tuple = (id: string) => {
+  const v = entranceVariant(id);
+  return `${v.rot}|${v.scale.toFixed(2)}|${v.mirror ? 1 : 0}|${v.hueNudge}|${v.delayJitter}`;
+};
 for (const [id, def] of Object.entries(BUFF_BY_ID)) {
-  const r = resolveEntrance(def);
+  const r = resolveEntrance({ ...def, id });
   entrances[id] = r ? (r.kind === "motif" ? `motif:${r.motif}` : r.kind === "category" ? `category:${r.category}` : "default") : "";
+  variants[id] = tuple(id);
 }
 for (const nerf of ALL_NERFS) {
   const r = resolveEntrance(nerf as { category?: string });
   entrances[`nerf:${nerf.id}`] =
     r ? (r.kind === "motif" ? `motif:${r.motif}` : r.kind === "category" ? `category:${r.category}` : "default") : "";
+  variants[`nerf:${nerf.id}`] = tuple(nerf.id);
 }
 
 process.stdout.write(
@@ -39,5 +49,6 @@ process.stdout.write(
     extraVfx: Object.keys(EXTRA_CARD_VFX),
     tiers,
     entrances,
+    variants,
   }) + "\n",
 );

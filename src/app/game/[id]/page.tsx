@@ -6,7 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Eye } from "lucide-react";
 import { Board, NERF_REVEAL_SKIP, type NerfRevealInfo } from "@/components/Board";
-import { computeFxVisual } from "@/components/effects/fxZones";
+import { computeFxVisual, fxVisualFields } from "@/components/effects/fxZones";
 import { stashGamblingOutcome } from "@/components/effects/gamblingOutcome";
 import { useSignatureQueue } from "@/components/effects/useSignatureQueue";
 import { BoardPlayerRow } from "@/components/BoardPlayerRow";
@@ -27,6 +27,7 @@ const GameOver = dynamic(() => import("@/components/GameOver").then((m) => m.Gam
 import { MoveList } from "@/components/MoveList";
 import { OnlineMatch } from "@/components/OnlineMatch";
 import { CompactSiteHeader } from "@/components/SiteHeader";
+import { useZenHotkey } from "@/lib/useZenMode";
 import { moveFromUCI, moveToUCI } from "@/engine/board";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
 import { NerfGame, legalMoves } from "@/engine/game";
@@ -126,6 +127,9 @@ const REDIRECT_SECONDS = 6;
 // Lichess-style game URL: the player who owns a seat token plays here; anyone
 // else watches live, or gets the stored replay once the game has been archived.
 export default function OnlineGamePage() {
+  // Zen mode: `z` hides the social chrome (spectator list, chat, share extras)
+  // and leaves the board, the clocks and the move list.
+  useZenHotkey();
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const gameId = String(params.id ?? "").toUpperCase();
@@ -398,7 +402,7 @@ export default function OnlineGamePage() {
         <SiteNav />
         <div className="mx-auto w-full max-w-[1200px] px-3 pb-10 sm:px-6">
           <div className="mb-2 flex items-center justify-between gap-3">
-            <div className="smallcaps text-[12px] text-parchment-400">
+            <div className="text-[12px] text-parchment-400">
               {mode.kind === "waiting" ? "Waiting for your opponent…" : "Connecting…"}
             </div>
             <div className="font-mono text-[12px] tracking-[0.2em] text-gold-leaf">{gameId}</div>
@@ -503,7 +507,7 @@ export default function OnlineGamePage() {
 // exact footprint the real Board will fill.
 function BoardSkeleton() {
   return (
-    <div className="relative aspect-square w-full overflow-hidden border border-black/50 shadow-[0_24px_70px_-30px_rgba(0,0,0,0.85)]">
+    <div className="relative aspect-square w-full overflow-hidden border border-[color:var(--edge)]">
       <div className="grid h-full w-full grid-cols-8 grid-rows-8" aria-hidden>
         {Array.from({ length: 64 }).map((_, i) => {
           const isLight = (Math.floor(i / 8) + (i % 8)) % 2 === 0;
@@ -892,14 +896,7 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
               trapSquares: zones.traps,
               doomSquares: zones.doom,
               lockedSquares: zones.locked,
-              ...(fxZone
-                ? {
-                    kingSafeSquares: fxZone.kingSafeSquares,
-                    pawnClampSquares: fxZone.pawnClampSquares,
-                    stunSquares: fxZone.stunSquares,
-                    motifSquares: fxZone.motifs,
-                  }
-                : {}),
+              ...(fxZone ? fxVisualFields(fxZone) : {}),
             }
           : undefined
       }
@@ -1073,7 +1070,7 @@ function SpectatorBuffsPanel({ game, players }: { game: NerfGame; players: MPPla
   };
   return (
     <div className="plate max-h-72 space-y-2 overflow-y-auto p-3">
-      <div className="eyebrow text-parchment-400">Drafted buffs</div>
+      <div className="text-parchment-400">Drafted buffs</div>
       <div className="flex gap-1">
         {tabButton("w")}
         {tabButton("b")}
@@ -1089,7 +1086,7 @@ function WatchersPanel({ count, names }: { count: number; names: string[] }) {
   return (
     <div className="plate p-3">
       <div className="flex items-center justify-between">
-        <span className="eyebrow text-parchment-400">Spectators</span>
+        <span className="text-parchment-400">Spectators</span>
         <span className="font-mono text-[13px] tabular-nums text-parchment-100">{count}</span>
       </div>
       {(names.length > 0 || anonymous > 0) && (
@@ -1166,7 +1163,7 @@ function SpectatorChat({
   return (
     <div className="plate flex h-56 flex-col p-2">
       <div className="flex shrink-0 items-center justify-between px-1 pb-1.5">
-        <span className="eyebrow text-parchment-400">Spectator chat</span>
+        <span className="text-parchment-400">Spectator chat</span>
         <button
           type="button"
           onClick={() => setHidden((v) => !v)}
@@ -1520,7 +1517,7 @@ function GameShell({
   const stateBadge =
     headerState === "live" ? (
       <span className="inline-flex items-center gap-1.5 rounded-[1px] border border-[rgb(var(--pos-rgb)/0.4)] bg-[rgb(var(--pos-rgb)/0.12)] px-2 py-0.5 text-[12px] font-semibold text-[rgb(var(--pos-rgb))]">
-        <span className="h-1.5 w-1.5 rounded-full bg-[rgb(var(--pos-rgb))] animate-flicker" aria-hidden />
+        <span className="h-1.5 w-1.5 rounded-full bg-[rgb(var(--pos-rgb))]" aria-hidden />
         Live
       </span>
     ) : headerState === "final" ? (
@@ -1546,7 +1543,7 @@ function GameShell({
         {/* Featured-game header pattern, shared with TV: identity units, state
             badge, mode chip, time control, watcher count, then the descriptive
             status detail. */}
-        <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[12px] text-parchment-400">
+        <div className="zen-hide mb-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[12px] text-parchment-400">
           <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
             <HeaderIdentity seat={players.w} />
             <span className="text-parchment-500">vs</span>
@@ -1633,7 +1630,9 @@ function GameShell({
             {moveListNote && (
               <p className="mt-1.5 text-[12px] leading-snug text-parchment-400">{moveListNote}</p>
             )}
-            {rail}
+            {/* Spectator list, spectator chat and the drafted-buff panel are
+                social chrome, not the game: zen hides the lot. */}
+            <div className="zen-hide">{rail}</div>
           </div>
         </div>
       </div>

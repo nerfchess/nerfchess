@@ -390,7 +390,7 @@ export const TIER9: Buff[] = [
         "One piece gains amazon movement and explosive captures for your next 4 turns. Its captures blow up the surrounding ring but do not chain.",
       category: "movement",
       flavor: "Worship is optional. Survival is not.",
-      fx: { motif: "empower", pieces: ["p", "n", "b", "r", "q"], moveAs: "q", self: true },
+      fx: { motif: "empower", pieces: ["p", "n", "b", "r", "q"], moveAs: "a", self: true },
     },
     bindPiece("Choose your living god", bindCandidates(), {
       turns: 4,
@@ -601,7 +601,7 @@ export const TIER9: Buff[] = [
         "Choose three of your pieces; each moves as an amazon (a queen that also leaps like a knight) for your next 2 turns, and the first chosen piece cannot be captured for your opponent's next turn.",
       category: "movement",
       flavor: "Monuments that march.",
-      fx: { motif: "empower", pieces: ["p", "n", "b", "r", "q"], moveAs: "q", self: true },
+      fx: { motif: "empower", pieces: ["p", "n", "b", "r", "q"], moveAs: "a", self: true },
     },
     {
       kind: "activated",
@@ -808,7 +808,7 @@ export const TIER10: Buff[] = [
         "Choose up to four of your pieces other than the king; each moves and captures as an amazon (a queen that also leaps like a knight) for your next 2 turns, and your king cannot be captured for your opponent's next turn.",
       category: "movement",
       flavor: "Ascend, all of you.",
-      fx: { motif: "empower", pieces: "all", moveAs: "q", self: true },
+      fx: { motif: "empower", pieces: "all", moveAs: "a", self: true },
     },
     {
       kind: "activated",
@@ -854,6 +854,13 @@ export const TIER10: Buff[] = [
             })
             .filter((s): s is Square => s != null);
           inst.state.sqs = next;
+          // Every ascendant piece is gone: the card is over, exactly like
+          // Titan Legion. Without this the countdown kept the card "running"
+          // with an empty roster and its board fx lingered on nothing.
+          if (!next.length) {
+            inst.spent = true;
+            return;
+          }
         }
         if (inst.state.turns != null) tickTurns(inst, move, api.me);
       },
