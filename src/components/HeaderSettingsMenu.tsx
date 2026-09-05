@@ -41,7 +41,7 @@ const PANEL_STYLE: CSSProperties = {
   boxShadow: "0 14px 28px rgba(0,0,0,0.15), 0 10px 10px rgba(0,0,0,0.12)",
 };
 
-const THEME_ORDER: SiteTheme[] = ["midnight", "dark", "light", "system"];
+const THEME_ORDER: SiteTheme[] = ["dark", "midnight", "light", "system"];
 
 /** The white knight from a piece set, the same preview the Preferences piece
  *  picker shows: an asset set draws its own wN.svg, an inline set draws the

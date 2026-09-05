@@ -19,8 +19,18 @@ interface Hit {
   buff_rating: number | null;
 }
 
-// The two live mode-bucket rating subqueries, shared by the primary and typo
-// SELECTs. NULL when the player has never played that mode rated.
+// House personas carry an 'hp_' user id (lib/server/bots.ts). They are not
+// players anyone messages or friends, and there are hundreds of them with deep
+// game counts, so left in they swamp every substring query. Same LIKE pattern
+// the leaderboard and top-ten use to tell them apart.
+const HOUSE_ID_MATCH = "hp\\_%";
+
+// Rows returned to the client. The box shows a short list, so a dozen is
+// plenty while still leaving room for the typo pass below.
+const RESULT_LIMIT = 12;
+
+// The two live mode-bucket rating subqueries, shared by every SELECT below.
+// NULL when the player has never played that mode rated.
 const MODE_RATING_COLUMNS = `
   (SELECT r.rating FROM user_ratings r WHERE r.user_id = u.id AND r.category = 'nerf') AS nerf_rating,
   (SELECT r.rating FROM user_ratings r WHERE r.user_id = u.id AND r.category = 'buff') AS buff_rating`;
@@ -58,11 +68,15 @@ function withinEditDistanceOne(a: string, b: string): boolean {
   return true;
 }
 
-// Player search for the search box. Matches by prefix or substring (prefix
-// ranked ahead of a mid-string match), with an exact username always first;
-// when that yields fewer than five hits a bounded typo pass (edit distance 1
-// over candidates sharing the first letter and near-equal length) fills in.
-// Banned accounts are excluded (same rule as the leaderboard). Limit 10.
+// Player search for the search box. Ranked BEFORE any row window is applied:
+// prefix matches (exact first) come from their own query, ordered by games,
+// then substring matches fill in behind them. Ranking after a single windowed
+// substring query was the old bug: with hundreds of busy accounts whose names
+// merely contain the letters, the 50-row window filled up before the prefix
+// match the searcher actually typed could get in. When the direct search is
+// thin a bounded typo pass (edit distance 1 over candidates sharing the first
+// letter and near-equal length) fills in. Banned accounts and house personas
+// are excluded (same rule as the leaderboard). Returns up to RESULT_LIMIT.
 export async function GET(request: Request) {
   const q = (new URL(request.url).searchParams.get("q") ?? "").trim().toLowerCase();
   if (q.length < 2 || q.length > 20) return NextResponse.json({ players: [] });
@@ -72,60 +86,73 @@ export async function GET(request: Request) {
   const db = await getDb();
   // Displayed rating = the best of the player's LIVE mode buckets (nerf/buff),
   // the same source the leaderboard and profiles read (lib/server/ratingSql.ts);
-  // the legacy users.rating column is frozen. Substring LIKE covers prefix and
-  // exact matches too; ranking happens in-route below.
-  const primary = await db
-    .prepare(
-      `SELECT u.username, u.username_lower,
+  // the legacy users.rating column is frozen.
+  const select = `SELECT u.username, u.username_lower,
               ${bestLiveRatingSql("u")} AS rating,
               u.games, u.avatar, u.flair,${MODE_RATING_COLUMNS}
-       FROM users u
+       FROM users u`;
+  const eligible = `AND (u.banned_until IS NULL OR u.banned_until <= ?)
+         AND u.id NOT LIKE ? ESCAPE '\\'`;
+
+  // Tier 1: names that START with the query, busiest first. Tier 2: names that
+  // merely contain it. Each tier is windowed on its own, so a flood of
+  // substring matches can never crowd out a prefix match.
+  const [prefix, substring] = await Promise.all([
+    db
+      .prepare(
+        `${select}
+       WHERE u.username_lower LIKE ? ESCAPE '\\' ${eligible}
+       ORDER BY u.games DESC, rating DESC LIMIT 20`,
+      )
+      .bind(`${escaped}%`, now, HOUSE_ID_MATCH)
+      .all<Hit>(),
+    db
+      .prepare(
+        `${select}
        WHERE u.username_lower LIKE ? ESCAPE '\\'
-         AND (u.banned_until IS NULL OR u.banned_until <= ?)
-       ORDER BY u.games DESC, rating DESC LIMIT 50`,
-    )
-    .bind(`%${escaped}%`, now)
-    .all<Hit>();
+         AND u.username_lower NOT LIKE ? ESCAPE '\\' ${eligible}
+       ORDER BY u.games DESC, rating DESC LIMIT 30`,
+      )
+      .bind(`%${escaped}%`, `${escaped}%`, now, HOUSE_ID_MATCH)
+      .all<Hit>(),
+  ]);
 
-  // Rank: exact match, then prefix matches, then remaining substring matches;
-  // rows already arrive games/rating-ordered, so the tiers stay stable within.
-  const rankOf = (name: string): number => {
-    if (name === q) return 0;
-    if (name.startsWith(q)) return 1;
-    return 2;
-  };
-  const ranked = [...primary.results].sort((a, b) => rankOf(a.username_lower) - rankOf(b.username_lower));
-
-  const seen = new Set(ranked.map((r) => r.username_lower));
-  const hits = ranked.slice(0, 10);
+  // Union in code: exact match, then the prefix tier, then the substring tier;
+  // rows arrive games/rating-ordered within each tier, so the order holds.
+  const seen = new Set<string>();
+  const candidates: Hit[] = [];
+  for (const row of [...prefix.results, ...substring.results]) {
+    if (seen.has(row.username_lower)) continue;
+    seen.add(row.username_lower);
+    candidates.push(row);
+  }
+  const exactAt = candidates.findIndex((r) => r.username_lower === q);
+  if (exactAt > 0) candidates.unshift(...candidates.splice(exactAt, 1));
 
   // Typo pass: only when the direct search is thin. Pull a bounded candidate
-  // set (same first letter, length within one) and keep those an edit away.
-  if (hits.length < 5) {
+  // set (same first letter, length within one) and keep those an edit away,
+  // skipping anything the direct tiers already found.
+  if (candidates.length < 5) {
     const firstChar = q[0].replace(/[\\%_]/g, (ch) => `\\${ch}`);
-    const candidates = await db
+    const near = await db
       .prepare(
-        `SELECT u.username, u.username_lower,
-                ${bestLiveRatingSql("u")} AS rating,
-                u.games, u.avatar, u.flair,${MODE_RATING_COLUMNS}
-         FROM users u
+        `${select}
          WHERE u.username_lower LIKE ? ESCAPE '\\'
-           AND ABS(LENGTH(u.username_lower) - ?) <= 1
-           AND (u.banned_until IS NULL OR u.banned_until <= ?)
+           AND ABS(LENGTH(u.username_lower) - ?) <= 1 ${eligible}
          ORDER BY u.games DESC, rating DESC LIMIT 200`,
       )
-      .bind(`${firstChar}%`, q.length, now)
+      .bind(`${firstChar}%`, q.length, now, HOUSE_ID_MATCH)
       .all<Hit>();
-    for (const row of candidates.results) {
-      if (hits.length >= 10) break;
+    for (const row of near.results) {
+      if (candidates.length >= RESULT_LIMIT) break;
       if (seen.has(row.username_lower)) continue;
       if (!withinEditDistanceOne(row.username_lower, q)) continue;
       seen.add(row.username_lower);
-      hits.push(row);
+      candidates.push(row);
     }
   }
 
-  const players = hits.map((h) => ({
+  const players = candidates.slice(0, RESULT_LIMIT).map((h) => ({
     username: h.username,
     rating: h.rating,
     games: h.games,

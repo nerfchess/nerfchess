@@ -68,7 +68,7 @@ export const SECTIONS: SectionConfig[] = [
       {
         id: "premovesEnabled",
         label: "Premoves",
-        hint: "Queue your next move during the opponent's turn",
+        hint: "Set your next move during the opponent's turn. Clicking anywhere else cancels it",
         group: "Moves",
         control: { kind: "toggle", setting: "premovesEnabled" },
       },

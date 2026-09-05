@@ -127,15 +127,17 @@ export function DockRow({
       {/* Idle foil shimmer on high-tier holdings (tier 6+), the dock's quiet
           echo of the draft cards' holo finish. */}
       {!dead && inst.tier >= 6 && <span aria-hidden className="dock-shimmer" />}
-      {/* Collapsed header: one line, click to toggle. The Use button and
-          description live in the detail body, so a button never nests inside
-          this toggle button. */}
+      {/* Collapsed header: one line, click to toggle. A usable card also gets
+          its Use button right here as a SIBLING of the toggle (never nested,
+          a button inside a button is invalid), so a collapsed row can be
+          played without expanding it first. */}
+      <div className="flex items-stretch">
       <button
         type="button"
         onClick={onToggle}
         aria-expanded={open}
         title={open ? undefined : def.description}
-        className={"flex w-full items-center gap-1.5 px-2 py-1.5 text-left " + (canUse ? "pl-3" : "")}
+        className={"flex min-w-0 flex-1 items-center gap-1.5 px-2 py-1.5 text-left " + (canUse ? "pl-3" : "")}
       >
         <ChevronRight
           aria-hidden
@@ -170,11 +172,6 @@ export function DockRow({
         {inEffect && <span aria-hidden className={`dock-live-dot tier-bg-${inst.tier}`} title="In effect" />}
         {!open && status && <StatusChip status={status} />}
         <TurnCostBadge cost={turnCost(def)} short />
-        {canUse && (
-          <span className="shrink-0 rounded-[1px] border border-verdigris-glow/50 bg-verdigris/15 px-1 py-px text-[12px] font-semibold text-verdigris-glow">
-            Usable
-          </span>
-        )}
         {dead && <UsedBadge nullified={!!inst.nullified} />}
         <span
           className={`shrink-0 rounded-[1px] border px-1.5 py-px font-display text-[12px] font-bold tier-bg-${inst.tier} tier-${inst.tier}`}
@@ -182,6 +179,29 @@ export function DockRow({
           {TIER_ROMAN[inst.tier]}
         </span>
       </button>
+      {canUse && (
+        <div className="flex shrink-0 items-center pr-2">
+          <Button
+            tone="leaf"
+            size="xs"
+            draggable={finePointer}
+            onDragStart={(e) => {
+              e.dataTransfer.setData("application/x-nerf-card", String(index));
+              e.dataTransfer.effectAllowed = "move";
+              onStartUse?.(index);
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onStartUse?.(index);
+            }}
+            title={def.description}
+            className="touch-manipulation px-2.5 py-1 text-[12px] font-semibold tracking-wide max-sm:min-h-[36px] sm:cursor-grab sm:active:cursor-grabbing"
+          >
+            Use
+          </Button>
+        </div>
+      )}
+      </div>
       {open && (
         <div className="px-2 pb-1.5">
           {count > 1 && (

@@ -1144,7 +1144,7 @@ export const OVERHAUL_T8: Buff[] = [
       name: "Dev Console",
       description:
         "Open the console once and run the whole macro: spawn a pawn on a chosen empty square in your half, add 20 seconds to your clock, and dump your opponent's next draft offer to your screen.",
-      tier: 6,
+      tier: 4,
       category: "draft",
       icon: "Terminal",
       flavor: "sudo win. Command not found. The pawn worked though.",
@@ -1206,7 +1206,7 @@ export const OVERHAUL_T8: Buff[] = [
       name: "Monks of the Fifth Bell",
       description:
         "Permanent: every fifth of your turns the bell tolls and one random pawn of yours takes a free step forward.",
-      tier: 7,
+      tier: 2,
       category: "tempo",
       icon: "Church",
       flavor: "They keep no clock. They ARE the clock.",

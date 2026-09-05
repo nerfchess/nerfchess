@@ -72,7 +72,13 @@ export function HeroBoard({ board, lastMove }: HeroBoardProps = {}) {
   }, [board, lastMove]);
 
   return (
-    <div className="w-full max-w-[560px] mx-auto aspect-square border border-black/50 shadow-[0_24px_70px_-30px_rgba(0,0,0,0.85)]">
+    // The edge is a 1px outline mixed from the board's own dark square, so it
+    // reads on every site theme (no black halo on light, no doubled border
+    // inside the .tv-frame gutter on dark).
+    <div
+      className="hero-board w-full max-w-[560px] mx-auto aspect-square"
+      style={{ outline: "1px solid color-mix(in srgb, var(--sq-dark) 60%, black)" }}
+    >
       <div className="grid grid-cols-8 grid-rows-8 w-full h-full" aria-hidden>
         {cells.map((cell, i) => {
           const row = Math.floor(i / 8);

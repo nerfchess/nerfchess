@@ -547,7 +547,7 @@ export const BOON_WAVE4B: Buff[] = [
   // --- movement (5) ---
 
   card(
-    { id: "bn4_falconers_glove", name: "Falconer's Glove", tier: 5, category: "movement", icon: "Bird",
+    { id: "bn4_falconers_glove", name: "Falconer's Glove", tier: 3, category: "movement", icon: "Bird",
       description: "Choose one of your knights: for the rest of the game it may also step one square in any direction (capturing allowed). Each time it takes that step, it cannot move again on your next turn.",
       flavor: "It comes back to the fist. Usually with something.", requires: ["n"],
       fx: { motif: "empower", pieces: ["n"], moveAs: "k", self: true } },
@@ -675,7 +675,7 @@ export const BOON_WAVE4B: Buff[] = [
     },
   ),
   card(
-    { id: "bn4_pathfinders", name: "Pathfinders", tier: 5, category: "movement", icon: "Compass",
+    { id: "bn4_pathfinders", name: "Pathfinders", tier: 3, category: "movement", icon: "Compass",
       description: "For your next 3 turns, your knights may also make a long leap to an empty square: three squares one way and one square the other. The leap cannot capture.",
       flavor: "The map said no road. The horses said watch this.", requires: ["n"],
       fx: { motif: "empower", pieces: ["n"], moveAs: "n", self: true } },
@@ -691,7 +691,7 @@ export const BOON_WAVE4B: Buff[] = [
     }),
   ),
   card(
-    { id: "bn4_queens_gambol", name: "Queen's Gambol", tier: 5, category: "movement", icon: "Sparkle",
+    { id: "bn4_queens_gambol", name: "Queen's Gambol", tier: 3, category: "movement", icon: "Sparkle",
       description: "Once, your queen may leap like a knight (capturing allowed). Her landing square is revealed and stays marked until your opponent replies.",
       flavor: "She learned it watching. She learns everything watching.", requires: ["q"],
       fx: { motif: "empower", pieces: ["q"], moveAs: "n", self: true } },
@@ -738,7 +738,7 @@ export const BOON_WAVE4B: Buff[] = [
     reviveOne(["r"], (api) => (sq) => RANK(sq) === ownRank(api.me, 0)),
   ),
   card(
-    { id: "bn4_retraining", name: "Retraining", tier: 5, category: "pieces", icon: "RefreshCw",
+    { id: "bn4_retraining", name: "Retraining", tier: 3, category: "pieces", icon: "RefreshCw",
       description: "One of your knights becomes a bishop, or one of your bishops becomes a knight, where it stands. Your next draft is then skipped.",
       flavor: "Six weeks of night classes and a new walk." },
     activated(
@@ -801,7 +801,7 @@ export const BOON_WAVE4B: Buff[] = [
     ),
   ),
   card(
-    { id: "bn4_life_insurance", name: "Life Insurance", tier: 6, category: "pieces", icon: "FileHeart",
+    { id: "bn4_life_insurance", name: "Life Insurance", tier: 5, category: "pieces", icon: "FileHeart",
       description: "Choose one of your pieces (your king excepted). When it is captured, a piece of the same kind pays out into your pocket, ready to drop on a later turn.",
       flavor: "Premiums waived. Payout guaranteed. Grief optional." },
     {
@@ -878,7 +878,7 @@ export const BOON_WAVE4B: Buff[] = [
     ),
   ),
   card(
-    { id: "bn4_shepherds_watch", name: "Shepherd's Watch", tier: 6, category: "protection", icon: "Moon",
+    { id: "bn4_shepherds_watch", name: "Shepherd's Watch", tier: 5, category: "protection", icon: "Moon",
       description: "None of your pawns can be captured for your opponent's next 3 turns.",
       flavor: "Count them all you like. None go missing tonight.", requires: ["p"],
       fx: { motif: "ward", pieces: ["p"], self: true } },
@@ -901,7 +901,7 @@ export const BOON_WAVE4B: Buff[] = [
     }),
   ),
   card(
-    { id: "bn4_heralds_truce", name: "Herald's Truce", tier: 5, category: "protection", icon: "Scroll",
+    { id: "bn4_heralds_truce", name: "Herald's Truce", tier: 2, category: "protection", icon: "Scroll",
       description: "Choose one of your pieces (your king excepted): for your opponent's next turn it cannot be captured and your king cannot be taken.",
       flavor: "One trumpet note buys one quiet morning." },
     {
@@ -1053,7 +1053,7 @@ export const BOON_WAVE4B: Buff[] = [
   // --- draft (2) ---
 
   card(
-    { id: "bn4_harvest_and_fallow", name: "Harvest and Fallow", tier: 5, category: "draft", icon: "Wheat",
+    { id: "bn4_harvest_and_fallow", name: "Harvest and Fallow", tier: 3, category: "draft", icon: "Wheat",
       description: "You keep both cards of your next draft offer. The draft after it is skipped while the field rests.",
       flavor: "Reap twice, sow nothing, repeat never." },
     instant((_inst, api) => {
@@ -1285,7 +1285,7 @@ export const BOON_WAVE4B: Buff[] = [
   // --- movement (5) ---
 
   card(
-    { id: "bn4_gryphon_rider", name: "Gryphon Rider", tier: 6, category: "movement", icon: "Feather",
+    { id: "bn4_gryphon_rider", name: "Gryphon Rider", tier: 3, category: "movement", icon: "Feather",
       description: "Choose one of your knights: for your opponent's next 4 turns it may also glide up to two squares diagonally (capturing allowed). The gift ends early the moment your king crosses the midline.",
       flavor: "Half horse, half hawk, all appetite.", requires: ["n"],
       fx: { motif: "empower", pieces: ["n"], moveAs: "b", self: true } },
@@ -1370,7 +1370,7 @@ export const BOON_WAVE4B: Buff[] = [
     ),
   ),
   card(
-    { id: "bn4_crowned_strider", name: "Crowned Strider", tier: 6, category: "movement", icon: "Footprints",
+    { id: "bn4_crowned_strider", name: "Crowned Strider", tier: 2, category: "movement", icon: "Footprints",
       description: "For your next 4 turns, your king may move two squares in a straight line, if both squares are empty.",
       flavor: "A king's pace is whatever the king says it is.",
       fx: { motif: "empower", pieces: ["k"], self: true } },
@@ -1423,7 +1423,7 @@ export const BOON_WAVE4B: Buff[] = [
     },
   ),
   card(
-    { id: "bn4_court_procession", name: "Court Procession", tier: 6, category: "movement", icon: "Gem",
+    { id: "bn4_court_procession", name: "Court Procession", tier: 5, category: "movement", icon: "Gem",
       description: "For your next 3 turns, your queen may slide straight through your own pieces (never capturing them) to squares beyond. Each such move reveals her landing square until your opponent replies.",
       flavor: "The court parts. The court always parts.", requires: ["q"],
       fx: { motif: "empower", pieces: ["q"], moveAs: "q", self: true } },
@@ -1493,7 +1493,7 @@ export const BOON_WAVE4B: Buff[] = [
     }),
   ),
   card(
-    { id: "bn4_changeling_child", name: "Changeling Child", tier: 7, category: "pieces", icon: "Baby",
+    { id: "bn4_changeling_child", name: "Changeling Child", tier: 3, category: "pieces", icon: "Baby",
       description: "Choose one of your pawns standing beside one of your knights or bishops: it grows into that same kind of piece where it stands.",
       flavor: "Raised by the cavalry. It shows.", requires: ["p"] },
     activated(
@@ -1629,7 +1629,7 @@ export const BOON_WAVE4B: Buff[] = [
     },
   ),
   card(
-    { id: "bn4_shieldmaidens", name: "Shieldmaidens", tier: 6, category: "protection", icon: "Swords",
+    { id: "bn4_shieldmaidens", name: "Shieldmaidens", tier: 4, category: "protection", icon: "Swords",
       description: "Every one of your pieces standing beside your queen cannot be captured for your opponent's next 3 turns. The protection ends the moment one of those pieces makes a capture.",
       flavor: "Her circle holds. Ask anyone who tested it.", requires: ["q"],
       fx: { motif: "ward", pieces: "all", self: true } },
@@ -1666,7 +1666,7 @@ export const BOON_WAVE4B: Buff[] = [
     },
   ),
   card(
-    { id: "bn4_winter_palace", name: "Winter Palace", tier: 6, category: "protection", icon: "Snowflake",
+    { id: "bn4_winter_palace", name: "Winter Palace", tier: 4, category: "protection", icon: "Snowflake",
       description: "Your king cannot be captured for your opponent's next 3 turns, and up to four pieces of your choice on your home rank cannot be captured on their next turn.",
       flavor: "Cold rooms, colder welcome for visitors." },
     {
@@ -1737,7 +1737,7 @@ export const BOON_WAVE4B: Buff[] = [
     },
   ),
   card(
-    { id: "bn4_glacier_calving", name: "Glacier Calving", tier: 6, category: "tempo", icon: "MountainSnow",
+    { id: "bn4_glacier_calving", name: "Glacier Calving", tier: 4, category: "tempo", icon: "MountainSnow",
       description: "Up to three enemy pieces of your choice (their king excepted) are frozen for your opponent's next turn. Your next draft is then skipped.",
       flavor: "The ice decides when. The ice decided now." },
     activated(
@@ -1840,7 +1840,7 @@ export const BOON_WAVE4B: Buff[] = [
   // --- item (2) ---
 
   card(
-    { id: "bn4_wind_up_knight", name: "Wind-Up Knight", tier: 6, category: "item", icon: "Cog",
+    { id: "bn4_wind_up_knight", name: "Wind-Up Knight", tier: 3, category: "item", icon: "Cog",
       description: "Place a clockwork knight on an empty square on your home rank. It fights like the real thing, then winds down and leaves the board after 6 of your turns.",
       flavor: "Fully articulated. Batteries never included." },
     activated(
@@ -1857,7 +1857,7 @@ export const BOON_WAVE4B: Buff[] = [
     ),
   ),
   card(
-    { id: "bn4_bottled_courage", name: "Bottled Courage", tier: 6, category: "item", icon: "FlaskConical",
+    { id: "bn4_bottled_courage", name: "Bottled Courage", tier: 2, category: "item", icon: "FlaskConical",
       description: "Uncork it: your king cannot be captured for your opponent's next 2 turns, and every piece of yours standing beside him cannot be captured for those 2 turns either.",
       flavor: "Label says courage. Chemically, it is mostly stubbornness." },
     activatedSimple((_inst, api) => {
@@ -2016,7 +2016,7 @@ export const BOON_WAVE4B: Buff[] = [
   // --- movement (5) ---
 
   card(
-    { id: "bn4_stormcrossing", name: "Stormcrossing", tier: 7, category: "movement", icon: "CloudLightning",
+    { id: "bn4_stormcrossing", name: "Stormcrossing", tier: 6, category: "movement", icon: "CloudLightning",
       description: "For your next 3 turns, your bishops, rooks and queen may slide straight through your own pieces (never capturing them) to squares beyond. A piece that crosses this way cannot move again on your next turn.",
       flavor: "When the sky opens, the army stops being in its own way.",
       fx: { motif: "empower", pieces: ["b", "r", "q"], self: true } },
@@ -2047,7 +2047,7 @@ export const BOON_WAVE4B: Buff[] = [
     })),
   ),
   card(
-    { id: "bn4_kings_leap_year", name: "King's Leap Year", tier: 7, category: "movement", icon: "Rabbit",
+    { id: "bn4_kings_leap_year", name: "King's Leap Year", tier: 4, category: "movement", icon: "Rabbit",
       description: "For your next 3 turns, your king may leap like a knight (capturing allowed). Each leap's landing square is revealed and stays marked until your opponent replies.",
       flavor: "Once every so often, the calendar lets him.",
       fx: { motif: "empower", pieces: ["k"], moveAs: "n", self: true } },
@@ -2078,7 +2078,7 @@ export const BOON_WAVE4B: Buff[] = [
     },
   ),
   card(
-    { id: "bn4_marshals_baton", name: "Marshal's Baton", tier: 7, category: "movement", icon: "Wand",
+    { id: "bn4_marshals_baton", name: "Marshal's Baton", tier: 6, category: "movement", icon: "Wand",
       description: "Redraw the whole line: move up to 3 of your pieces (your king excepted) to empty squares anywhere on the board. The first piece you move cannot be captured on your opponent's next turn.",
       flavor: "One sweep of the baton and the map apologizes." },
     ((base) => ({
@@ -2130,7 +2130,7 @@ export const BOON_WAVE4B: Buff[] = [
     ),
   ),
   card(
-    { id: "bn4_dancing_master", name: "Dancing Master", tier: 7, category: "movement", icon: "Music",
+    { id: "bn4_dancing_master", name: "Dancing Master", tier: 6, category: "movement", icon: "Music",
       description: "For your next 2 turns, your knights may also move like bishops and your bishops may also leap like knights.",
       flavor: "Switch partners on the count of two.", requires: ["n", "b"],
       fx: { motif: "empower", pieces: ["n", "b"], self: true } },
@@ -2184,7 +2184,7 @@ export const BOON_WAVE4B: Buff[] = [
     }),
   ),
   card(
-    { id: "bn4_clay_colossus", name: "Clay Colossus", tier: 7, category: "pieces", icon: "Landmark",
+    { id: "bn4_clay_colossus", name: "Clay Colossus", tier: 6, category: "pieces", icon: "Landmark",
       description: "Raise a rook of fired clay on an empty square on your home rank. It serves like the real thing, then crumbles after 8 of your turns.",
       flavor: "The kiln asked no questions. The wall asks fewer." },
     activated(
@@ -2201,7 +2201,7 @@ export const BOON_WAVE4B: Buff[] = [
     ),
   ),
   card(
-    { id: "bn4_house_of_banners", name: "House of Banners", tier: 7, category: "pieces", icon: "Flag",
+    { id: "bn4_house_of_banners", name: "House of Banners", tier: 5, category: "pieces", icon: "Flag",
       description: "Choose up to two of your pawns that have reached the fifth rank or beyond. After your opponent's next move, each chosen pawn still standing is knighted where it stands.",
       flavor: "Two fields, two banners, one very loud herald.", requires: ["p"] },
     {
@@ -2238,7 +2238,7 @@ export const BOON_WAVE4B: Buff[] = [
     },
   ),
   card(
-    { id: "bn4_second_spring", name: "Second Spring", tier: 7, category: "pieces", icon: "Sprout",
+    { id: "bn4_second_spring", name: "Second Spring", tier: 6, category: "pieces", icon: "Sprout",
       description: "Every one of your captured pawns returns at once, each to the empty square nearest your home rank. Your next draft is then skipped.",
       flavor: "The field remembered every seed.", },
     instant((_inst, api) => {
@@ -2309,7 +2309,7 @@ export const BOON_WAVE4B: Buff[] = [
   // --- protection (5) ---
 
   card(
-    { id: "bn4_sting_of_the_wasp", name: "Sting of the Wasp", tier: 7, category: "protection", icon: "Bug",
+    { id: "bn4_sting_of_the_wasp", name: "Sting of the Wasp", tier: 4, category: "protection", icon: "Bug",
       description: "Choose one of your pieces (your king excepted); its square is marked until your opponent replies. When it is captured, the piece that took it is removed too (enemy kings survive the sting).",
       flavor: "One sting. Worth it. Every wasp agrees." },
     {
@@ -2370,7 +2370,7 @@ export const BOON_WAVE4B: Buff[] = [
     }),
   ),
   card(
-    { id: "bn4_griffins_brood", name: "Griffin's Brood", tier: 7, category: "protection", icon: "Egg",
+    { id: "bn4_griffins_brood", name: "Griffin's Brood", tier: 5, category: "protection", icon: "Egg",
       description: "Your knights and bishops cannot be captured for your opponent's next 3 turns.",
       flavor: "Touch the nest. See what hatches.",
       fx: { motif: "ward", pieces: ["n", "b"], self: true } },
@@ -2384,7 +2384,7 @@ export const BOON_WAVE4B: Buff[] = [
     ),
   ),
   card(
-    { id: "bn4_saints_procession", name: "Saint's Procession", tier: 7, category: "protection", icon: "Sparkles",
+    { id: "bn4_saints_procession", name: "Saint's Procession", tier: 6, category: "protection", icon: "Sparkles",
       description: "For your opponent's next 2 turns, none of your pieces can be captured and your king cannot be taken. The blessing ends the moment one of your pieces makes a capture.",
       flavor: "The relics pass. Every blade waits its turn to kneel.", fx: { motif: "ward", pieces: "all", self: true } },
     {
@@ -2411,7 +2411,7 @@ export const BOON_WAVE4B: Buff[] = [
     },
   ),
   card(
-    { id: "bn4_warding_circle", name: "Warding Circle", tier: 7, category: "protection", icon: "CircleDashed",
+    { id: "bn4_warding_circle", name: "Warding Circle", tier: 4, category: "protection", icon: "CircleDashed",
       description: "Chalk 4 empty squares of your choice: no enemy piece may move onto them for your opponent's next 4 turns. Capturing onto a chalked square clears that mark.",
       flavor: "The chalk is cheap. The geometry is not." },
     activated(
@@ -2469,7 +2469,7 @@ export const BOON_WAVE4B: Buff[] = [
     instant((_inst, api) => api.adjustClock({ stealFlatSec: 30, stealCapSec: 30 })),
   ),
   card(
-    { id: "bn4_frozen_moat", name: "Frozen Moat", tier: 7, category: "tempo", icon: "Snowflake",
+    { id: "bn4_frozen_moat", name: "Frozen Moat", tier: 5, category: "tempo", icon: "Snowflake",
       description: "Every enemy piece standing in your half of the board (their king excepted) is frozen for your opponent's next turn.",
       flavor: "The invaders are welcome to stay. Indefinitely. Rigidly." },
     instant((_inst, api) => {
@@ -2481,7 +2481,7 @@ export const BOON_WAVE4B: Buff[] = [
     }),
   ),
   card(
-    { id: "bn4_lightning_rod", name: "Lightning Rod", tier: 7, category: "tempo", icon: "Zap",
+    { id: "bn4_lightning_rod", name: "Lightning Rod", tier: 4, category: "tempo", icon: "Zap",
       description: "The next time your opponent puts your king in check, you immediately gain an extra move. You cannot capture the king on a bonus move: your opponent replies first.",
       flavor: "Every strike grounds itself through you, and you keep the charge.", fx: { motif: "rally", pieces: "all", self: true } },
     {
@@ -2516,7 +2516,7 @@ export const BOON_WAVE4B: Buff[] = [
     // Balance buff 2026-08-04: a pure flash at tier 6 while its shelf-mate
     // Raven's Court paid a full peek plus two rerolls. The audit now settles
     // its findings: your exposed pieces are covered for a turn, plus a fee.
-    { id: "bn4_auditors_ledger", name: "Auditor's Ledger", tier: 6, category: "info", icon: "BookOpen",
+    { id: "bn4_auditors_ledger", name: "Auditor's Ledger", tier: 3, category: "info", icon: "BookOpen",
       description: "Every undefended piece on the board, yours and your opponent's alike, lights up until your opponent replies. Yours are underwritten: they cannot be captured on that turn. Gain 1 draft reroll.",
       flavor: "The ledger flatters nobody. That is its entire charm." },
     instant((_inst, api) => {
@@ -2552,7 +2552,7 @@ export const BOON_WAVE4B: Buff[] = [
   // --- item (2) ---
 
   card(
-    { id: "bn4_genie_lamp", name: "Genie Lamp", tier: 7, category: "item", icon: "Lamp",
+    { id: "bn4_genie_lamp", name: "Genie Lamp", tier: 4, category: "item", icon: "Lamp",
       description: "Rub the lamp for one random gift, equal odds each: a knight, a bishop or a rook into your pocket, 3 draft rerolls, or 30 seconds on your clock.",
       flavor: "No wish list. The genie has already decided." },
     activatedSimple((_inst, api) => {
@@ -2827,7 +2827,7 @@ export const BOON_WAVE4B: Buff[] = [
   // --- movement (5) ---
 
   card(
-    { id: "bn4_kings_own_wings", name: "The King's Own Wings", tier: 8, category: "movement", icon: "Feather",
+    { id: "bn4_kings_own_wings", name: "The King's Own Wings", tier: 4, category: "movement", icon: "Feather",
       description: "For your opponent's next 4 turns, your king may leap like a knight (capturing allowed). The moment he captures, the wings fold and the power ends.",
       flavor: "Thrones are for sitting. Skies are for kings.",
       fx: { motif: "empower", pieces: ["k"], moveAs: "n", self: true } },
@@ -2864,7 +2864,7 @@ export const BOON_WAVE4B: Buff[] = [
     },
   ),
   card(
-    { id: "bn4_worldgate", name: "Worldgate", tier: 8, category: "movement", icon: "Orbit",
+    { id: "bn4_worldgate", name: "Worldgate", tier: 6, category: "movement", icon: "Orbit",
       description: "Open the great door: move up to 3 of your pieces (your king excepted) to empty squares anywhere on the board, all at once.",
       flavor: "Distance is a rumor." },
     relocateMany(3, (api) => emptySquares(api.board)),
@@ -3034,7 +3034,7 @@ export const BOON_WAVE4B: Buff[] = [
     placePieces(["n"], (api) => (sq) => RANK(sq) === ownRank(api.me, 0)),
   ),
   card(
-    { id: "bn4_winter_garrison", name: "Winter Garrison", tier: 8, category: "pieces", icon: "Tent",
+    { id: "bn4_winter_garrison", name: "Winter Garrison", tier: 5, category: "pieces", icon: "Tent",
       description: "Place three new pawns on empty squares on your second through fourth ranks. Only the first pawn you place cannot be captured on your opponent's next turn.",
       flavor: "Three tents, one stove, zero complaints worth writing down." },
     activated(
@@ -3067,7 +3067,7 @@ export const BOON_WAVE4B: Buff[] = [
     ),
   ),
   card(
-    { id: "bn4_endless_militia", name: "Endless Militia", tier: 8, category: "pieces", icon: "Users",
+    { id: "bn4_endless_militia", name: "Endless Militia", tier: 4, category: "pieces", icon: "Users",
       description: "For the rest of the game, the first three of your pawns that are captured each return at once to the empty square nearest your home rank (while there is room for it). Later captured pawns stay captured.",
       flavor: "The village signs up faster than the war can spend them.", requires: ["p"] },
     {
@@ -3090,7 +3090,7 @@ export const BOON_WAVE4B: Buff[] = [
     },
   ),
   card(
-    { id: "bn4_ascension_small", name: "Ascension of the Small", tier: 8, category: "pieces", icon: "Sparkles",
+    { id: "bn4_ascension_small", name: "Ascension of the Small", tier: 6, category: "pieces", icon: "Sparkles",
       description: "Choose one of your knights or bishops. After your opponent's next move, it ascends: it becomes a queen where it stands.",
       flavor: "Nobody saw it coming. It saw everything coming. That is why." },
     {
@@ -3247,7 +3247,7 @@ export const BOON_WAVE4B: Buff[] = [
     },
   ),
   card(
-    { id: "bn4_wall_of_faith", name: "Wall of Faith", tier: 8, category: "protection", icon: "BrickWall",
+    { id: "bn4_wall_of_faith", name: "Wall of Faith", tier: 5, category: "protection", icon: "BrickWall",
       description: "Consecrate 6 empty squares of your choice, no two of them touching: no enemy piece may move onto them for your opponent's next 3 turns.",
       flavor: "Stone believes nothing. This wall is not stone." },
     activated(
@@ -3280,7 +3280,7 @@ export const BOON_WAVE4B: Buff[] = [
     ),
   ),
   card(
-    { id: "bn4_kings_champion", name: "The King's Champion", tier: 8, category: "protection", icon: "Swords",
+    { id: "bn4_kings_champion", name: "The King's Champion", tier: 4, category: "protection", icon: "Swords",
       description: "Name one of your pieces (your king excepted) champion: it cannot be captured for your opponent's next 2 turns, and for the rest of the game it may also step one square in any direction (capturing allowed).",
       flavor: "The title comes with a sword, a salary, and functional immortality." },
     bindPiece("Name your champion", bindCandidates(), {
@@ -3333,7 +3333,7 @@ export const BOON_WAVE4B: Buff[] = [
     ),
   ),
   card(
-    { id: "bn4_triumphal_arch", name: "Triumphal Arch", tier: 8, category: "tempo", icon: "Landmark",
+    { id: "bn4_triumphal_arch", name: "Triumphal Arch", tier: 5, category: "tempo", icon: "Landmark",
       description: "Your next capture grants you an immediate extra move. You cannot capture the king on that bonus move: your opponent replies first. Each of the two captures after that grants you 1 draft reroll instead.",
       flavor: "March through, wheel around, march through again.", fx: { motif: "rally", pieces: "all", self: true } },
     {
@@ -3423,7 +3423,7 @@ export const BOON_WAVE4B: Buff[] = [
   // --- item (2) ---
 
   card(
-    { id: "bn4_cornucopia", name: "Cornucopia", tier: 8, category: "item", icon: "Apple",
+    { id: "bn4_cornucopia", name: "Cornucopia", tier: 6, category: "item", icon: "Apple",
       description: "The horn tips over: two pawns join your pocket, a knight or a bishop (at random, even odds) joins them, and you gain 1 draft reroll.",
       flavor: "It never runs out. It does judge your appetite." },
     activatedSimple((_inst, api) => {
@@ -3433,7 +3433,7 @@ export const BOON_WAVE4B: Buff[] = [
     }),
   ),
   card(
-    { id: "bn4_crown_of_masks", name: "Crown of Masks", tier: 8, category: "item", icon: "VenetianMask",
+    { id: "bn4_crown_of_masks", name: "Crown of Masks", tier: 4, category: "item", icon: "VenetianMask",
       description: "The grand carnival: every one of your pieces (your king excepted) is dressed from the trunk, forever (purely decorative), and none of your pieces can be captured on your opponent's next turn.",
       flavor: "An army nobody recognizes is an army nobody expected." },
     activatedSimple((_inst, api) => {

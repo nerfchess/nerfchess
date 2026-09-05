@@ -189,9 +189,10 @@ export const HEXES_T7: Buff[] = [
   ),
 
   // --- petrify all: the entire minor line (knights and bishops) 3 turns ---
-  H(
+  hex(
     {
       id: "statue_garden",
+      tier: 6,
       name: "Statue Garden",
       description: "Your opponent's knights and bishops turn to walnuts for 3 of their turns, shuffling one square at a time. The first one struck petrifies only after your opponent's next move, and escapes if they move it away.",
       tip: "That one grace move is the whole defence: move the first piece the gaze touches.",
@@ -429,9 +430,10 @@ export const HEXES_T7: Buff[] = [
   // Retuned off the old permanent lock: the pawns can never advance FOR FOUR
   // TURNS (they may still capture diagonally), then the salt lifts and pawns
   // march normally again. The old bar on their own 4th rank is dropped.
-  H(
+  hex(
     {
       id: "salted_earth",
+      tier: 4,
       name: "Salted Earth",
       description: "For your opponent's next 4 turns their pawns cannot advance; they may still capture diagonally. After that the salt lifts and their pawns advance normally again.",
       flavor: "Salt in the furrows: nothing marches forward until the season turns.",

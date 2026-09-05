@@ -1,13 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Check, Eye, Swords, UserPlus, X } from "lucide-react";
+import { Check, Eye, MoreHorizontal, Swords, UserPlus, X } from "lucide-react";
 import { PlayerAvatar } from "./PlayerAvatar";
 import { PlayerLink } from "./PlayerLink";
 import { PresenceBadge } from "./PresenceBadge";
-import { derivePresence, useLobbyFeed, type PresenceState } from "@/lib/presence";
-import type { MPLobby } from "@/lib/multiplayer";
+import { derivePresence, useLobbyFeed, type Presence, type PresenceState } from "@/lib/presence";
 import { Button } from "@/components/ui/Button";
 import { LinkButton } from "@/components/ui/Button";
 
@@ -50,7 +49,27 @@ const PRESENCE_RANK: Record<PresenceState, number> = {
 // The name filter only appears once the list is long enough to need it.
 const FILTER_THRESHOLD = 6;
 
-export function FriendsPanel() {
+// How many rows each list shows before it folds behind a "Show all N" toggle
+// (same pattern as profile/FriendsModule). Filtering always scans the whole
+// roster; only the unfiltered view is paged.
+const PAGE_SIZE = 12;
+
+// Below this panel width (px) the row's Remove button folds into an overflow
+// menu so the name column keeps room; above it the X stays inline.
+const NARROW_PX = 320;
+
+const OFFLINE: Presence = { state: "offline" };
+
+// Applies the page window to a list and reports what a toggle should say.
+function page<T>(items: T[], expanded: boolean): { shown: T[]; hidden: number } {
+  const shown = expanded ? items : items.slice(0, PAGE_SIZE);
+  return { shown, hidden: items.length - shown.length };
+}
+
+// `bounded` caps the roster's height and scrolls inside it, for rails (the
+// profile page) where a 150-friend list would otherwise push the page down.
+// The lobby's Friends tab lays the panel out unbounded.
+export function FriendsPanel({ bounded = false }: { bounded?: boolean } = {}) {
   const [data, setData] = useState<FriendsData | null>(null);
   // undefined = still checking, false = signed out, true = signed in.
   const [signedIn, setSignedIn] = useState<boolean | undefined>(undefined);
@@ -62,7 +81,39 @@ export function FriendsPanel() {
   const [filter, setFilter] = useState("");
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+  const [expanded, setExpanded] = useState(false);
+  const [expandedIncoming, setExpandedIncoming] = useState(false);
+  const [expandedOutgoing, setExpandedOutgoing] = useState(false);
   const lobby = useLobbyFeed();
+
+  // Panel width, for folding the row's Remove button into an overflow menu on
+  // a narrow rail. The root element differs between the loading, signed-out
+  // and loaded branches, so a callback ref (state) re-arms the observer when
+  // the loaded panel mounts rather than a plain ref that only reads once.
+  const [panelEl, setPanelEl] = useState<HTMLDivElement | null>(null);
+  const [narrow, setNarrow] = useState(false);
+  useLayoutEffect(() => {
+    if (!panelEl) return;
+    const measure = () => setNarrow(panelEl.clientWidth < NARROW_PX);
+    measure();
+    if (typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(measure);
+    ro.observe(panelEl);
+    return () => ro.disconnect();
+  }, [panelEl]);
+
+  // Live presence for every name in the panel, derived once per lobby snapshot
+  // rather than inside the sort comparator and again per row (which cost
+  // O(n log n + n) lobby scans for a large roster on every poll).
+  const presenceOf = useMemo(() => {
+    const map = new Map<string, Presence>();
+    if (!data) return map;
+    for (const f of [...data.friends, ...data.incoming, ...data.outgoing]) {
+      map.set(f.username, derivePresence(lobby, f.username));
+    }
+    return map;
+  }, [data, lobby]);
+  const presenceFor = (f: Friend): Presence => presenceOf.get(f.username) ?? OFFLINE;
 
   // Resolves true when the roster loaded (or the user is signed out), false
   // when the request failed; callers refreshing after an action use that to
@@ -196,20 +247,24 @@ export function FriendsPanel() {
   // Reachable friends first (in-game > searching > online > offline), then
   // alphabetical so the order is stable between presence polls.
   const sorted = [...friends].sort((a, b) => {
-    const ra = PRESENCE_RANK[derivePresence(lobby, a.username).state];
-    const rb = PRESENCE_RANK[derivePresence(lobby, b.username).state];
+    const ra = PRESENCE_RANK[presenceFor(a).state];
+    const rb = PRESENCE_RANK[presenceFor(b).state];
     return ra !== rb ? ra - rb : a.username.localeCompare(b.username);
   });
-  const onlineCount = friends.filter((f) => derivePresence(lobby, f.username).state !== "offline").length;
+  const onlineCount = friends.filter((f) => presenceFor(f).state !== "offline").length;
 
   // Client-side name filter, only offered once the list outgrows a glance.
   // Below the threshold the input is hidden and any stale query is ignored.
   const showFilter = friends.length > FILTER_THRESHOLD;
   const query = showFilter ? filter.trim().toLowerCase() : "";
-  const visible = query ? sorted.filter((f) => f.username.toLowerCase().includes(query)) : sorted;
+  const matched = query ? sorted.filter((f) => f.username.toLowerCase().includes(query)) : sorted;
+  // A search always shows every match; only the unfiltered roster is paged.
+  const { shown: visible, hidden: hiddenFriends } = page(matched, expanded || query.length > 0);
+  const { shown: visibleIncoming, hidden: hiddenIncoming } = page(incoming, expandedIncoming);
+  const { shown: visibleOutgoing, hidden: hiddenOutgoing } = page(outgoing, expandedOutgoing);
 
   return (
-    <div className="plate p-4">
+    <div ref={setPanelEl} className="plate p-4">
       <div className="flex items-center justify-between gap-3">
         <h2 className="font-display text-lg text-parchment">Friends</h2>
         {friends.length > 0 && (
@@ -231,9 +286,9 @@ export function FriendsPanel() {
       {incoming.length > 0 && (
         <div className="mt-4 space-y-2 rounded-none border border-[color:var(--edge-strong)] bg-gold/[0.07] p-2.5">
           <div className="text-gold-leaf">Requests ({incoming.length})</div>
-          {incoming.map((f) => (
+          {visibleIncoming.map((f) => (
             <div key={f.id} className="flex items-center gap-3">
-              <Identity f={f} lobby={lobby} />
+              <Identity f={f} presence={presenceFor(f)} />
               <div className="ml-auto flex shrink-0 items-center gap-1.5">
                 <button
                   onClick={() => void act("accept", f.username)}
@@ -254,6 +309,12 @@ export function FriendsPanel() {
               </div>
             </div>
           ))}
+          <ShowAllToggle
+            total={incoming.length}
+            hidden={hiddenIncoming}
+            expanded={expandedIncoming}
+            onToggle={() => setExpandedIncoming((v) => !v)}
+          />
         </div>
       )}
 
@@ -302,7 +363,7 @@ export function FriendsPanel() {
         </div>
       ) : (
         friends.length > 0 && (
-          <div className="space-y-2">
+          <div className={"space-y-2" + (bounded ? " max-h-[60vh] overflow-y-auto" : "")}>
             {showFilter && (
               <input
                 value={filter}
@@ -316,9 +377,22 @@ export function FriendsPanel() {
               <p className="py-2 text-[13px] text-parchment-400">No friends match “{filter.trim()}”.</p>
             ) : (
               visible.map((f) => (
-                <FriendRow key={f.id} f={f} lobby={lobby} busy={busy} onRemove={() => void act("remove", f.username)} />
+                <FriendRow
+                  key={f.id}
+                  f={f}
+                  presence={presenceFor(f)}
+                  narrow={narrow}
+                  busy={busy}
+                  onRemove={() => void act("remove", f.username)}
+                />
               ))
             )}
+            <ShowAllToggle
+              total={matched.length}
+              hidden={hiddenFriends}
+              expanded={expanded}
+              onToggle={() => setExpanded((v) => !v)}
+            />
           </div>
         )
       )}
@@ -327,7 +401,7 @@ export function FriendsPanel() {
       {outgoing.length > 0 && (
         <div className="mt-4 space-y-1.5 border-t pt-3" style={{ borderColor: "var(--edge)" }}>
           <div>Pending</div>
-          {outgoing.map((f) => (
+          {visibleOutgoing.map((f) => (
             <div key={f.id} className="flex items-center gap-3 text-sm text-parchment-400">
               <PlayerAvatar name={f.username} avatar={f.avatar} size={24} />
               <PlayerLink name={f.username} className="min-w-0 flex-1 hover:text-parchment-100" />
@@ -342,9 +416,37 @@ export function FriendsPanel() {
               </button>
             </div>
           ))}
+          <ShowAllToggle
+            total={outgoing.length}
+            hidden={hiddenOutgoing}
+            expanded={expandedOutgoing}
+            onToggle={() => setExpandedOutgoing((v) => !v)}
+          />
         </div>
       )}
     </div>
+  );
+}
+
+// "Show all N" under a paged list, flipping to "Show fewer" once open. Renders
+// nothing while the list fits in one page, so short rosters never see it.
+function ShowAllToggle({
+  total,
+  hidden,
+  expanded,
+  onToggle,
+}: {
+  total: number;
+  hidden: number;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
+  if (hidden === 0 && !expanded) return null;
+  if (total <= PAGE_SIZE) return null;
+  return (
+    <Button tone="ghost" onClick={onToggle} aria-expanded={expanded} className="mt-1 w-full px-3 text-[13px]">
+      {expanded ? "Show fewer" : `Show all ${total}`}
+    </Button>
   );
 }
 
@@ -354,31 +456,40 @@ export function FriendsPanel() {
 // hairline — pointer devices only, so touch never gets a sticky hover.
 function FriendRow({
   f,
-  lobby,
+  presence,
+  narrow,
   busy,
   onRemove,
 }: {
   f: Friend;
-  lobby: MPLobby | null;
+  presence: Presence;
+  // Panel narrower than NARROW_PX: Remove folds into an overflow menu.
+  narrow: boolean;
   busy: boolean;
   onRemove: () => void;
 }) {
-  const presence = derivePresence(lobby, f.username);
+  // Labels compress to icon-only below sm so actions never wrap; the
+  // aria-labels keep them readable. A narrow panel (a 280px profile rail on a
+  // wide screen is still narrow) is icon-only regardless of viewport, tightens
+  // the gaps and avatar, and moves Remove into the overflow menu, so the
+  // 6rem name column always fits: 28 + 8 + 96 + 8 + 44 + 4 + 44 = 232px.
+  const label = narrow ? "hidden" : "hidden sm:inline";
   return (
     <div
-      className="flex items-center gap-3 rounded-none border border-[color:var(--edge)] bg-[color:var(--bg-zebra)] p-2 transition-[background-color,border-color] duration-200 [@media(hover:hover)]:hover:border-[color:rgb(var(--energy-ember-rgb)/0.45)] [@media(hover:hover)]:hover:bg-[color:var(--surface-hover)]"
+      className={
+        "flex items-center rounded-none border border-[color:var(--edge)] bg-[color:var(--bg-zebra)] p-2 transition-[background-color,border-color] duration-200 [@media(hover:hover)]:hover:border-[color:rgb(var(--energy-ember-rgb)/0.45)] [@media(hover:hover)]:hover:bg-[color:var(--surface-hover)] " +
+        (narrow ? "gap-2" : "gap-3")
+      }
     >
-      <Identity f={f} lobby={lobby} />
-      <div className="ml-auto flex shrink-0 items-center gap-1.5">
-        {/* Labels compress to icon-only below sm so actions never wrap; the
-            aria-labels keep them readable. */}
+      <Identity f={f} presence={presence} compact={narrow} />
+      <div className={"ml-auto flex shrink-0 items-center " + (narrow ? "gap-1" : "gap-1.5")}>
         {presence.state === "in-game" && presence.gameId && (
           <LinkButton tone="ghost"
             href={`/game/${encodeURIComponent(presence.gameId)}`}
             aria-label={`Watch ${f.username}'s game`}
             className="min-w-[44px] px-3 text-[13px]">
             <Eye size={14} strokeWidth={2.2} aria-hidden />
-            <span className="hidden sm:inline">Watch</span>
+            <span className={label}>Watch</span>
           </LinkButton>
         )}
         {presence.state !== "in-game" && (
@@ -387,29 +498,116 @@ function FriendRow({
             aria-label={`Challenge ${f.username}`}
             className="min-w-[44px] px-3 text-[13px] font-semibold">
             <Swords size={14} strokeWidth={2.3} aria-hidden />
-            <span className="hidden sm:inline">Challenge</span>
+            <span className={label}>Challenge</span>
           </LinkButton>
         )}
-        <button
-          onClick={onRemove}
-          disabled={busy}
-          aria-label={`Remove ${f.username}`}
-          className="grid h-11 w-11 shrink-0 place-items-center rounded-none text-parchment-500 transition hover:text-oxblood-glow disabled:opacity-40"
-        >
-          <X size={16} strokeWidth={2.2} aria-hidden />
-        </button>
+        {narrow ? (
+          <RowMenu username={f.username} busy={busy} onRemove={onRemove} />
+        ) : (
+          <button
+            onClick={onRemove}
+            disabled={busy}
+            aria-label={`Remove ${f.username}`}
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-none text-parchment-500 transition hover:text-oxblood-glow disabled:opacity-40"
+          >
+            <X size={16} strokeWidth={2.2} aria-hidden />
+          </button>
+        )}
       </div>
     </div>
   );
 }
 
-// Avatar + clickable name + rating + presence badge.
-function Identity({ f, lobby }: { f: Friend; lobby: MPLobby | null }) {
-  const p = derivePresence(lobby, f.username);
+// Overflow ("...") menu holding the row actions that do not fit inline on a
+// narrow panel. Closes on outside pointerdown or Escape (focus returns to the
+// trigger), same as the profile page's actions menu.
+function RowMenu({ username, busy, onRemove }: { username: string; busy: boolean; onRemove: () => void }) {
+  const [open, setOpen] = useState(false);
+  // Opens upward when the trigger sits near the bottom of its scroll box (the
+  // bounded rail clips overflow) or the viewport, so the last rows' menus are
+  // reachable instead of cut off.
+  const [flip, setFlip] = useState(false);
+  const wrapRef = useRef<HTMLDivElement | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  useLayoutEffect(() => {
+    if (!open || !triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+    let limit = window.innerHeight;
+    for (let el = triggerRef.current.parentElement; el; el = el.parentElement) {
+      const oy = getComputedStyle(el).overflowY;
+      if (oy === "auto" || oy === "scroll") {
+        limit = Math.min(limit, el.getBoundingClientRect().bottom);
+        break;
+      }
+    }
+    setFlip(limit - rect.bottom < 64);
+  }, [open]);
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: PointerEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setOpen(false);
+        triggerRef.current?.focus();
+      }
+    };
+    document.addEventListener("pointerdown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
   return (
-    <div className="flex min-w-0 flex-1 items-center gap-3">
-      <PlayerAvatar name={f.username} avatar={f.avatar} size={34} />
-      <div className="min-w-0 flex-1">
+    <div ref={wrapRef} className="relative shrink-0">
+      <button
+        ref={triggerRef}
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={`More actions for ${username}`}
+        className="grid h-11 w-11 place-items-center rounded-none text-parchment-500 transition hover:text-parchment-200 disabled:opacity-40"
+      >
+        <MoreHorizontal size={16} strokeWidth={2.2} aria-hidden />
+      </button>
+      {open && (
+        <div
+          role="menu"
+          aria-label={`Actions for ${username}`}
+          className={"absolute right-0 z-40 w-44 plate dropdown p-1 shadow-2xl " + (flip ? "bottom-full mb-1" : "top-full mt-1")}
+        >
+          <Button
+            tone="danger"
+            size="sm"
+            block
+            align="start"
+            role="menuitem"
+            disabled={busy}
+            onClick={() => {
+              setOpen(false);
+              onRemove();
+            }}
+          >
+            <X size={15} strokeWidth={2.2} aria-hidden />
+            Remove friend
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Avatar + clickable name + rating + presence badge. The name column keeps a
+// 6rem floor so the action cluster can never crush it to an ellipsis.
+function Identity({ f, presence, compact = false }: { f: Friend; presence: Presence; compact?: boolean }) {
+  const p = presence;
+  return (
+    <div className={"flex min-w-0 flex-1 items-center " + (compact ? "gap-2" : "gap-3")}>
+      <PlayerAvatar name={f.username} avatar={f.avatar} size={compact ? 28 : 34} />
+      <div className="min-w-[6rem] flex-1">
         <div className="flex min-w-0 items-baseline gap-1.5">
           <PlayerLink
             name={f.username}

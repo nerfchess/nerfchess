@@ -206,7 +206,7 @@ export const BOON_WAVE3: Buff[] = [
       name: "Heir Apparent",
       description:
         "The line of succession is settled in advance: the first time your opponent captures one of your knights or bishops, your pawn nearest your home rank is knighted into that same kind of piece where it stands.",
-      tier: 1,
+      tier: 3,
       category: "pieces",
       icon: "Baby",
       flavor: "The squire had been polishing that armor for years.",
@@ -281,7 +281,7 @@ export const BOON_WAVE3: Buff[] = [
       name: "Home Guard",
       description:
         "The threshold is warded for good: no enemy piece may ever move onto your first rank. Your back rank stays yours, and no enemy pawn can promote on it.",
-      tier: 3,
+      tier: 7,
       category: "protection",
       icon: "Fence",
       flavor: "They may take the field. They will not take the hall.",
@@ -767,7 +767,7 @@ export const BOON_WAVE3: Buff[] = [
       name: "Ironwright's Bargain",
       description:
         "The forge takes iron and gives iron back heavier: one of your knights or bishops is reforged into a rook, and in payment one of your pawns is thrown into the fire and lost. Your next draft is skipped while the forge cools.",
-      tier: 5,
+      tier: 3,
       category: "pieces",
       icon: "Hammer",
       flavor: "Steel is only rearranged suffering.",
@@ -819,7 +819,7 @@ export const BOON_WAVE3: Buff[] = [
       name: "Tunnelers",
       description:
         "It digs its own lines: choose one of your rooks, and for the rest of the game it may slide straight through your own pieces to any empty square beyond. The tunneling slide can never capture, friend or foe.",
-      tier: 5,
+      tier: 3,
       category: "movement",
       icon: "Pickaxe",
       flavor: "The wall is not a problem. The wall is a suggestion.",
@@ -1014,7 +1014,7 @@ export const BOON_WAVE3: Buff[] = [
       name: "Second Face",
       description:
         "It learns a second way to move: choose one of your bishops, and for your opponent's next 4 turns it may also leap like a knight, keeping all of its bishop moves as well. The second face falls away early if your opponent spends a draft reroll.",
-      tier: 6,
+      tier: 3,
       category: "movement",
       icon: "Drama",
       flavor: "Priest on the light squares, cavalry everywhere else.",
@@ -1082,7 +1082,7 @@ export const BOON_WAVE3: Buff[] = [
       name: "Rally to the King",
       description:
         "Call the nearest blade home: teleport any one of your pieces (your king aside) to an empty square directly adjacent to your king.",
-      tier: 5,
+      tier: 2,
       category: "movement",
       icon: "Castle",
       flavor: "Form up. Backs to the throne.",
@@ -1172,7 +1172,7 @@ export const BOON_WAVE3: Buff[] = [
       name: "Castle in the Storm",
       description: "Choose one of your rooks on your king's rank with an empty path to the king and castle toward it at once, king two squares over, rook to the square it passed, even if your king or that rook has already moved. That rook cannot move again on your next turn.",
       tip: "It ignores spent castling rights entirely, so a king caught in the centre can still tuck away.",
-      tier: 6,
+      tier: 3,
       category: "movement",
       icon: "Castle",
       flavor: "The masons work fastest when the arrows are already flying.",
@@ -1234,7 +1234,7 @@ export const BOON_WAVE3: Buff[] = [
       name: "Last Muster",
       description:
         "Call up whoever is left in the village: place up to 3 pawns on empty squares in your half. They hold the line, then disband four of your turns later, vanishing from the board.",
-      tier: 7,
+      tier: 4,
       category: "pieces",
       icon: "Users",
       flavor: "Farmhands with pitchforks. For four turns, heroes.",
@@ -1357,7 +1357,7 @@ export const BOON_WAVE3: Buff[] = [
       name: "Mummers' Dance",
       description: "Every one of your knights becomes a bishop and every one of your bishops becomes a knight, all at once, where they stand. Your material is unchanged, only re-tasked. None of the re-tasked minors can be captured on your opponent's next turn.",
       tip: "Useful when your knights are stuck on open diagonals, or your bishops on a closed board.",
-      tier: 8,
+      tier: 4,
       category: "pieces",
       icon: "VenetianMask",
       flavor: "Nobody left the dance as who they arrived.",
@@ -1498,7 +1498,7 @@ export const BOON_WAVE3: Buff[] = [
       name: "Kingsguard Duel",
       description:
         "Honor demands the guards settle it: remove one enemy piece standing beside your opponent's king, and in payment remove one of your own pieces standing beside your king. Both monarchs are left a little more exposed.",
-      tier: 7,
+      tier: 5,
       category: "attack",
       icon: "Swords",
       flavor: "The kings watched. Neither offered to take a turn.",
@@ -1552,7 +1552,7 @@ export const BOON_WAVE3: Buff[] = [
       name: "King's Sanctuary",
       description:
         "Spirit the king home to the quietest corner: your king is moved to the empty square on your home rank that sits furthest from any enemy piece.",
-      tier: 7,
+      tier: 6,
       category: "movement",
       icon: "Church",
       flavor: "Sometimes the bravest move is all the way to the back.",
@@ -1592,7 +1592,7 @@ export const BOON_WAVE3: Buff[] = [
       name: "Martyrdom",
       description:
         "One of yours falls so one of theirs must: destroy one of your own knights or bishops, then remove one of your opponent's knights or bishops from the board. Every loss here is real.",
-      tier: 7,
+      tier: 3,
       category: "attack",
       icon: "Cross",
       flavor: "A trade the accountants hate and the generals love.",
@@ -1710,7 +1710,7 @@ export const BOON_WAVE3: Buff[] = [
       id: "bw3_the_homecoming",
       name: "The Homecoming",
       description:
-        "The veterans are called back to the colors: your best captured major (a queen, or else a rook) and your best captured minor (a bishop, or else a knight) both return to empty squares nearest your home rank. The muster costs you your next 2 drafts.",
+        "Your best captured major and best captured minor return to the empty squares nearest your home rank. Your next 2 drafts are skipped.",
       tier: 7,
       category: "pieces",
       icon: "Tent",
@@ -1752,7 +1752,7 @@ export const BOON_WAVE3: Buff[] = [
       name: "Turn the Tide",
       description:
         "The whole line surges as one: every one of your pawns that can advance takes one non-capturing step forward at once, into the empty square directly ahead. Pawns whose square ahead is occupied, or that would reach the final rank, hold their ground.",
-      tier: 8,
+      tier: 5,
       category: "movement",
       icon: "Waves",
       flavor: "One heartbeat. The whole front moves. The board tilts.",
@@ -1788,7 +1788,7 @@ export const BOON_WAVE3: Buff[] = [
       name: "Pretender to the Throne",
       description:
         "Crown a claimant waiting in the wings: a brand new queen joins your pocket, ready to be dropped onto an empty square on a later turn (that drop spends the turn). The court is not cheap - your next 2 drafts are skipped.",
-      tier: 8,
+      tier: 7,
       category: "pieces",
       icon: "Crown",
       flavor: "Bloodline unverified. Firepower absolutely verified.",

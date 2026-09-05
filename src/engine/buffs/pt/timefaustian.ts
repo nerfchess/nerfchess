@@ -134,7 +134,7 @@ export const PT_TIME_CARDS: Buff[] = [
       name: "All In",
       description:
         "Push everything to the center. Your next draft offer is skipped. The offer after that shows three cards, and you take all three.",
-      tier: 6,
+      tier: 4,
       category: "draft",
       flavor: "Three sevens or nothing.",
     },

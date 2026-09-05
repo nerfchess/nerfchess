@@ -38,7 +38,7 @@ export const FUNNY_META: Buff[] = [
       name: "Emotional Support Pawn",
       description:
         "A small round friend refuses to leave your side: place a new pawn on an empty square right beside your king.",
-      tier: 3,
+      tier: 2,
       category: "pieces",
       flavor: "It cannot play chess. It believes in you SO much.",
     },
@@ -345,7 +345,7 @@ export const FUNNY_META: Buff[] = [
       name: "Main Character",
       description:
         "One of your pieces gets plot armor: it cannot be captured for your opponent's next 4 turns, but the armor drops the instant it makes a capture.",
-      tier: 5,
+      tier: 3,
       category: "protection",
       flavor: "The sequel is already greenlit. It cannot die here.",
       fx: { motif: "ward", pieces: "all", self: true },
@@ -402,7 +402,7 @@ export const FUNNY_META: Buff[] = [
       name: "Smurf Account",
       description:
         "A suspiciously strong new player joins your side mid-game: choose an empty square in your half, and a fresh rook drops in there right after your opponent's next move, so it cannot capture before they reply.",
-      tier: 6,
+      tier: 5,
       category: "pieces",
       flavor: "Total games played: 3. Accuracy: 99 percent.",
     },
@@ -451,7 +451,7 @@ export const FUNNY_META: Buff[] = [
       name: "Pay to Win",
       description:
         "Money buys more of whatever is working: choose one of your knights, bishops, or rooks, and a store-bought copy of it joins your pocket, ready to drop onto an empty square on a later turn. The bill comes due at the shop: you skip your next draft.",
-      tier: 6,
+      tier: 5,
       category: "pieces",
       requires: ["n", "b", "r"],
       flavor: "It is not gambling if you always win.",
@@ -487,7 +487,7 @@ export const FUNNY_META: Buff[] = [
       name: "Ban Hammer",
       description:
         "Moderator privileges activated: point at one enemy knight, bishop, or rook, and up to two enemy pieces of that type are permanently banned from the board.",
-      tier: 8,
+      tier: 7,
       category: "attack",
       flavor: "Reason: no reason given. Appeals: closed.",
     },

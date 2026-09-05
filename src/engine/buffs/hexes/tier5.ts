@@ -32,9 +32,10 @@ export const HEXES_T5: Buff[] = [
   // --- draft denial: block one draft and nullify the next -------------------
   // Moved up from tier 4: a plain single draft skip already prices at tier 4
   // (Dead Letter), so the skip-plus-nullify combo sits one clean tier above it.
-  H(
+  hex(
     {
       id: "burned_dispatches",
+      tier: 3,
       name: "Burned Dispatches",
       description: "Your opponent's next draft is skipped outright, and in return they gain one draft reroll for a later offer.",
       flavor: "Two orders lost: one to the fire, one to the smudge.",
@@ -170,9 +171,10 @@ export const HEXES_T5: Buff[] = [
   ),
 
   // --- petrify one targeted piece (any non-king, long) --------------------
-  H(
+  hex(
     {
       id: "stone_curse",
+      tier: 3,
       name: "Stone Curse",
       description: "Target one enemy piece, not a king. It gets one unaffected move; then it turns to a walnut for 4 of their turns, able only to shuffle one square at a time.",
       flavor: "Chosen, cursed, and set in stone.",
@@ -281,7 +283,7 @@ export const HEXES_T5: Buff[] = [
       name: "Iron Furrow",
       description: "The field is sown with iron spikes: your opponent's pawns cannot advance for their next 4 turns, and any enemy pawn that captures during that time is caught on the spikes, unable to move for 2 of their turns.",
       flavor: "The harvest bites back.",
-      tier: 6,
+      tier: 5,
       // Board already paints no_pawn_advance; fx carried for consistency.
       fx: { motif: "anchor", pieces: ["p"] },
     },

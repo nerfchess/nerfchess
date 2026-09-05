@@ -296,7 +296,7 @@ export const OVERHAUL_T1: Buff[] = [
       id: "ov_pet_rock",
       name: "Pet Rock",
       description: "One of your pawns cannot be captured during your opponent's next turn. The rock is watching.",
-      tier: 2,
+      tier: 1,
       category: "protection",
       icon: "Gem",
       flavor: "Loyal. Vigilant. Geological.",

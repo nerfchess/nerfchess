@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { UPDATES } from "@/lib/updates";
+import { UPDATES, formatUpdateDate } from "@/lib/updates";
 import { SiteHeader } from "@/components/SiteHeader";
 import { BreadcrumbJsonLd } from "../guide/shared";
 
@@ -14,6 +14,7 @@ export const metadata: Metadata = {
 // Full write-ups keyed by the timeline anchor (src/lib/updates.ts carries the
 // date, title and one-line summary). Each entry is one card on the wall; the
 // card opens to its paragraphs, so the page reads as a wall, not an essay.
+// Entries generated from the changelog carry their bullet points instead.
 const BODY: Record<string, React.ReactNode> = {
   "a-tighter-card-pool": (
     <>
@@ -21,8 +22,8 @@ const BODY: Record<string, React.ReactNode> = {
         The pool had grown to about 2,450 cards, and hundreds of them were the same idea with a
         different name, a strictly worse rung of another card, or a rule too long to read at the
         board. Those are now retired: they no longer come up in a draft, old games that used them
-        still replay exactly, and the codex keeps their pages behind a &quot;Show retired&quot;
-        filter with a pointer to the card that covers the same ground.
+        still replay exactly, and each keeps its codex page (reachable by its link) with a pointer
+        to the card that covers the same ground.
       </p>
     </>
   ),
@@ -63,18 +64,12 @@ const BODY: Record<string, React.ReactNode> = {
   ),
   "lobby-and-matches": (
     <p>
-      House players are matched against each other so the lobby stays alive, you can see who is
-      spectating your game, and a handful of match bugs were fixed, including a rare case where a
-      house opponent could concede for no reason. New here? Start with{" "}
+      You can see who is spectating your game, and a handful of match bugs were fixed. New here?
+      Start with{" "}
       <Link href="/guide/how-to-play" className="underline">how to play</Link>.
     </p>
   ),
 };
-
-function fmtDate(iso: string): string {
-  const d = new Date(iso + "T00:00:00Z");
-  return d.toLocaleDateString("en-CA", { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" });
-}
 
 export default function UpdatesPage() {
   return (
@@ -92,16 +87,23 @@ export default function UpdatesPage() {
         {UPDATES.map((u) => (
           <li key={u.anchor} id={u.anchor} className="plate flex flex-col p-4">
             <time dateTime={u.date} className="text-[12px] uppercase tracking-[0.05em] text-brag">
-              {fmtDate(u.date)}
+              {formatUpdateDate(u.date)}
             </time>
             <h2 className="mt-1 text-[16px] font-semibold text-parchment-50">{u.title}</h2>
             <p className="mt-1.5 text-[13px] leading-snug text-parchment-300">{u.summary}</p>
-            {BODY[u.anchor] && (
+            {(BODY[u.anchor] || (u.bullets && u.bullets.length > 0)) && (
               <details className="mt-3 text-[13px] leading-relaxed text-parchment-200 [&_p+p]:mt-2">
                 <summary className="cursor-pointer select-none text-[13px] text-[color:var(--accent)] hover:underline">
                   Read more
                 </summary>
-                <div className="mt-2">{BODY[u.anchor]}</div>
+                {BODY[u.anchor] && <div className="mt-2">{BODY[u.anchor]}</div>}
+                {u.bullets && u.bullets.length > 0 && (
+                  <ul className="mt-2 list-disc space-y-1 pl-4">
+                    {u.bullets.map((b) => (
+                      <li key={b}>{b}</li>
+                    ))}
+                  </ul>
+                )}
               </details>
             )}
           </li>

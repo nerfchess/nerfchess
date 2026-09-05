@@ -1,9 +1,8 @@
-// Pure filtering + sorting for the Codex. No React, no DOM — just data in,
-// data out — so it stays trivially testable and reusable, and the page
+// Pure filtering + sorting for the Codex. No React, no DOM, just data in and
+// data out, so it stays trivially testable and reusable, and the page
 // component only worries about presentation and URL state.
 
 import type { Nerf } from "@/engine/nerf";
-import { isRetired } from "@/engine/retired";
 import { CATEGORY_IDS, categoriesOf, getCategoryLabel } from "@/lib/nerfCategories";
 import { COLLECTION_IDS, nerfCollection } from "@/lib/cardCollections";
 
@@ -25,8 +24,6 @@ export interface CodexFilters {
   categories: string[]; // category ids; a nerf must match ALL selected (AND)
   collection: string | null; // thematic set (Fantasy, Wild, Funny...) or null for all
   playableOnly: boolean;
-  /** Retired cards (src/engine/retired.ts) are hidden unless this is on. */
-  showRetired: boolean;
   sort: SortId;
 }
 
@@ -36,7 +33,6 @@ export const EMPTY_FILTERS: CodexFilters = {
   categories: [],
   collection: null,
   playableOnly: false,
-  showRetired: false,
   // Hardest first by default (owner request): the spectacular top-tier cards
   // greet the browser, A-Z remains one click away.
   sort: "brutal",
@@ -63,7 +59,6 @@ export function filtersToQueryString(f: CodexFilters): string {
   if (f.categories.length > 0) p.set("category", f.categories.join(","));
   if (f.collection) p.set("collection", f.collection);
   if (f.playableOnly) p.set("playable", "1");
-  if (f.showRetired) p.set("retired", "1");
   if (f.sort !== EMPTY_FILTERS.sort) p.set("sort", f.sort);
   return p.toString();
 }
@@ -83,7 +78,6 @@ export function filtersFromQueryString(qs: string): CodexFilters {
     tier: tierIdx > 0 ? tierIdx : null,
     categories: cats,
     collection: collection && COLLECTION_IDS.includes(collection) ? collection : null,
-    showRetired: p.get("retired") === "1",
     playableOnly: p.get("playable") === "1",
     sort: sort && SORT_IDS.includes(sort) ? sort : EMPTY_FILTERS.sort,
   };
@@ -122,7 +116,6 @@ export function filterAndSortNerfs(nerfs: Nerf[], f: CodexFilters): Nerf[] {
     if (f.tier !== null && n.tier !== f.tier) return false;
     if (f.collection && nerfCollection(n) !== f.collection) return false;
     if (f.playableOnly && !n.implemented) return false;
-    if (!f.showRetired && isRetired(n.id)) return false;
     if (f.categories.length > 0) {
       const cats = categoriesOf(n.id);
       if (!f.categories.every((c) => cats.includes(c))) return false;

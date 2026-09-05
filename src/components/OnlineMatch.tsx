@@ -901,9 +901,11 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
 
   const clearPremoves = () => setPremoveQueue([]);
 
+  // One premove at a time, Lichess-style: a new premove replaces the old one
+  // (the queue type stays an array so the board props and the ack path are
+  // unchanged, but its length is never above one).
   const enqueuePremove = (move: Move) => {
     setPremoveQueue([
-      ...premovesRef.current,
       { from: move.from, to: move.to, promotion: move.promotion, capture: !!move.captured },
     ]);
   };

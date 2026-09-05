@@ -444,7 +444,7 @@ export const WILD_ARCANE: Buff[] = [
       name: "Camel Rider",
       description:
         "Each of your knights on the board right now gains one longer 3-by-1 camel leap, usable once. Knights that arrive later gain none.",
-      tier: 4,
+      tier: 2,
       category: "movement",
       requires: ["n"],
       flavor: "A whole troop crossing the sand.",
@@ -497,7 +497,7 @@ export const WILD_ARCANE: Buff[] = [
       name: "Arcane Conduit",
       description:
         "One of your rooks may also move up to two squares diagonally, but never to capture, for the rest of the game.",
-      tier: 4,
+      tier: 3,
       category: "movement",
       requires: ["r"],
       flavor: "Power leaks out at the corners.",
@@ -515,7 +515,7 @@ export const WILD_ARCANE: Buff[] = [
       name: "Conjured Scout",
       description:
         "Conjure a knight on an empty square on your back rank. It fights for 2 of your turns, then fades.",
-      tier: 4,
+      tier: 2,
       category: "pieces",
       flavor: "Borrowed from somewhere quieter.",
     },
@@ -781,7 +781,7 @@ export const WILD_ARCANE: Buff[] = [
       name: "Time Stop",
       description:
         "Stop one piece in time, yours or theirs (never a king): for 2 of its owner's turns it cannot move, and for the first of those turns it cannot be captured. It is simply not here right now.",
-      tier: 4,
+      tier: 3,
       category: "tempo",
       flavor: "For it, the clock simply stopped.",
       fx: { motif: "jail" },
@@ -815,7 +815,7 @@ export const WILD_ARCANE: Buff[] = [
       name: "Arrest the Hour",
       description:
         "Freeze one enemy rook or queen for 3 of their turns.",
-      tier: 6,
+      tier: 3,
       category: "tempo",
       flavor: "The heavy hand of the clock, stayed.",
       fx: { motif: "jail", pieces: ["r", "q"] },
@@ -903,8 +903,8 @@ export const WILD_ARCANE: Buff[] = [
       id: "wa_stone_pawns",
       name: "Stone the Pawns",
       description:
-        "After your opponent replies, every one of their pawns turns to stone for their next 3 turns: each may only shuffle one square at a time and cannot break into a full stride.",
-      tier: 4,
+        "For their next 3 turns your opponent's pawns cannot make two-square advances.",
+      tier: 1,
       category: "tempo",
       flavor: "The whole front row, set in grey, for a good long while.",
       fx: { motif: "jail", pieces: ["p"] },
@@ -936,7 +936,7 @@ export const WILD_ARCANE: Buff[] = [
       id: "wa_quicken",
       name: "Quicken",
       description: "Time reasserts itself around your army: every freeze, stasis, and walnut afflicting YOUR pieces is dispelled on the spot.",
-      tier: 5,
+      tier: 2,
       category: "protection",
       flavor: "Two heartbeats in one, and both of them yours.",
     },
@@ -952,7 +952,7 @@ export const WILD_ARCANE: Buff[] = [
       name: "Stolen Hours",
       description:
         "Steal 20 seconds from your opponent's clock and take one extra move this turn. You cannot capture the king on the bonus move.",
-      tier: 3,
+      tier: 5,
       category: "tempo",
       flavor: "Turn their spent minutes into one more of your moves.",
       fx: { motif: "rally", self: true },
@@ -1036,7 +1036,7 @@ export const WILD_ARCANE: Buff[] = [
       name: "Chrono Siphon",
       description:
         "Steal up to 20 seconds from your opponent's clock and freeze one enemy piece for its next 2 turns.",
-      tier: 2,
+      tier: 3,
       category: "tempo",
       flavor: "Draw the time off a single piece, slowly, like heat.",
       fx: { motif: "jail" },
@@ -1183,7 +1183,7 @@ export const WILD_ARCANE: Buff[] = [
       name: "Void Rift",
       description:
         "Tear a permanent rift on an empty square: any enemy piece that steps onto it (never a king) is pulled out of the game, and any enemy piece that ends its move on a square next to the rift is frozen for its next turn.",
-      tier: 3,
+      tier: 4,
       category: "attack",
       flavor: "It does not close on its own, and it pulls at whatever passes.",
     },

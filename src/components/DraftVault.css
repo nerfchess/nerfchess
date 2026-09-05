@@ -145,7 +145,10 @@
   margin-top: -37%;
   transform: translateY(24%) rotateX(74deg) rotate(0deg);
   border-radius: 50%;
-  border: 2px solid rgb(var(--vault-band) / 0.55);
+  /* The rings burn in the exact tier colour of the best card inside, so the
+     vault reads the same hue as the card that comes out of it; only the
+     prism's metal edges keep the material colour. */
+  border: 2px solid rgb(var(--vault-rgb) / 0.6);
   box-shadow:
     0 0 14px rgb(var(--vault-rgb) / calc(0.5 * var(--vault-lit))),
     inset 0 0 18px rgb(var(--vault-rgb) / calc(0.3 * var(--vault-lit)));
@@ -153,7 +156,7 @@
   background:
     repeating-conic-gradient(
       from 0deg,
-      rgb(var(--vault-band) / 0.55) 0deg 3deg,
+      rgb(var(--vault-rgb) / 0.6) 0deg 3deg,
       transparent 3deg 15deg
     );
   -webkit-mask: radial-gradient(circle, transparent 66%, #000 67%, #000 78%, transparent 79%);
@@ -290,9 +293,9 @@ html[data-anim="off"] .vault-face::after,
   margin-top: calc(var(--v-a) * -1);
   clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
   background:
-    radial-gradient(circle at 50% 50%, rgb(var(--vault-rgb) / calc(0.5 * var(--vault-lit))) 0, transparent 60%),
+    radial-gradient(circle at 50% 50%, rgb(var(--vault-rgb) / calc(0.7 * var(--vault-lit))) 0, transparent 60%),
     linear-gradient(90deg, var(--vault-hi), var(--vault-mid) 60%, var(--vault-deep));
-  box-shadow: inset 0 0 0 1px rgb(var(--vault-band) / 0.55);
+  box-shadow: inset 0 0 0 1px rgb(var(--vault-rgb) / 0.55);
 }
 .vault-cap--top { transform: rotateX(90deg) translateZ(calc(var(--v-fh) / 2)); }
 .vault-cap--bottom { transform: rotateX(-90deg) translateZ(calc(var(--v-fh) / 2)); }

@@ -1670,12 +1670,8 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
     if (myOffer) return;
     if (game.board.turn !== myColor) {
       if (!uiSettings.premovesEnabled) return;
-      // append to the premove queue; chained premoves are evaluated against
-      // the virtual board derived from any prior queued moves
-      setPremoves((q) => [
-        ...q,
-        { from: m.from, to: m.to, promotion: m.promotion, capture: !!m.captured },
-      ]);
+      // One premove at a time, Lichess-style: a new one replaces the old.
+      setPremoves([{ from: m.from, to: m.to, promotion: m.promotion, capture: !!m.captured }]);
       return;
     }
     if (uiSettings.confirmMove) {

@@ -30,7 +30,7 @@ The single visual and interaction contract for every route. Written during the 2
 | Tiers | `.tier-1..10` + `.tier-bg-*` | Card tiers everywhere, no exceptions |
 
 Rules:
-- No new colors. If a design wants a color not in this table, the design is wrong. Board and piece palettes are the one exception: they are the player's setting (`BOARD_THEMES` / `PIECE_THEMES`, defaulting to Lichess's brown board and cburnett pieces).
+- No new colors. If a design wants a color not in this table, the design is wrong. Board and piece palettes are the one exception: they are the player's setting (`BOARD_THEMES` / `PIECE_THEMES`, defaulting to the dark grey-blue `midnight` board and cburnett pieces).
 - Mode hues never mean success/failure. Positive/danger never brand a mode.
 - One accent-colored primary action per view region. Everything else is quiet.
 

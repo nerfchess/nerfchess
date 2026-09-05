@@ -241,7 +241,7 @@ export const FANTASY_DIVINE: Buff[] = [
       icon: "Gavel",
       name: "Divine Reckoning",
       description:
-        "The verdict is exile: choose one enemy piece except the king. If one of its own starting squares is free it is sent back there (nearest the a-file first). It may make one last legal move to flee, then it is frozen for 2 of their turns.",
+        "Choose an enemy piece, not the king. It is sent to a free starting square of its kind if any, may make one last move, then freezes for 2 of their turns.",
       tier: 5,
       category: "hex",
       flavor: "Every courtier is called to account, and sent to their room.",

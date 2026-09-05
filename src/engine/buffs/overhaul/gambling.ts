@@ -131,7 +131,7 @@ export const OVERHAUL_GAMBLING: Buff[] = [
       name: "Heads or Tails",
       description:
         "Call the coin or take the sure thing. Gamble: flip two coins at 50% each, heads on either wins an extra move right now (75% overall), both tails and nothing. Or skip the flip to reveal the tier of your opponent's next draft offer and gain one reroll.",
-      tier: 1,
+      tier: 3,
       category: "tempo",
       icon: "CircleDollarSign",
       flavor: "Best out of one.",
@@ -451,7 +451,7 @@ export const OVERHAUL_GAMBLING: Buff[] = [
       name: "River Card",
       description:
         "You and your opponent are each dealt a hidden card, ace low king high. Higher card wins: the winner steals a random enemy pawn, which walks across and defects. A tie splits the pot and nothing happens.",
-      tier: 3,
+      tier: 1,
       category: "attack",
       icon: "Diamond",
       flavor: "The river forgives nothing.",
@@ -611,7 +611,7 @@ export const OVERHAUL_GAMBLING: Buff[] = [
       name: "Double Down Draft",
       description:
         "Push your chips in, half and half: 50% you take BOTH cards of your next draft, 50% your next draft is skipped entirely while the dealer smiles.",
-      tier: 6,
+      tier: 2,
       category: "draft",
       icon: "Copy",
       flavor: "The dealer knocks twice. So does your heart.",
@@ -857,7 +857,7 @@ export const OVERHAUL_GAMBLING: Buff[] = [
       name: "Seven Cases",
       description:
         "Seven cases, one opens at random: two hold pawns, one a knight, one a bishop, one a rook, one a full intelligence packet (a reroll plus your opponent's next offer revealed), and one holds absolutely nothing.",
-      tier: 6,
+      tier: 3,
       category: "pieces",
       icon: "BriefcaseBusiness",
       flavor: "The banker is not on the phone. The banker is the phone.",
@@ -1029,7 +1029,7 @@ export const OVERHAUL_GAMBLING: Buff[] = [
       name: "Wheel of the Cosmos",
       description: "Twelve equal segments, spun once. Eight are kind: revive a captured minor, march every pawn, a three card draft, stun two enemy pieces, promote a random pawn to knight, two rerolls, thaw your army, or summon a knight. Four are cruel, up to a defecting pawn.",
       tip: "Two thirds kind, one third cruel: a good spin when you can afford a bad one.",
-      tier: 8,
+      tier: 4,
       category: "item",
       icon: "Orbit",
       flavor: "The universe is a wheel. The wheel is rigged fairly.",
@@ -1210,7 +1210,7 @@ export const OVERHAUL_GAMBLING: Buff[] = [
       name: "Rigged Raffle",
       description:
         "Enter your opponent in a raffle they never asked to join: their next move passes untouched, then for their following 3 turns, 1 chance in 3 after each of their moves that the piece they just moved is glued in place for a turn.",
-      tier: 5,
+      tier: 2,
       category: "hex",
       icon: "Ticket",
       flavor: "Everyone is a winner. Of glue.",
@@ -1280,7 +1280,7 @@ export const OVERHAUL_GAMBLING: Buff[] = [
       name: "Hardship Jackpot",
       description:
         "The misery meter pays out: 60% a pawn appears on your second rank, 25% one of your frozen or stuck pieces is thawed, 15% the jackpot doubles: a pawn AND a thaw.",
-      tier: 4,
+      tier: 2,
       category: "pieces",
       boon: true,
       icon: "PiggyBank",

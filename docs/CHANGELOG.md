@@ -715,3 +715,29 @@ leaked seek timers.
 Verified: tsc, eslint, check battery (emdash, rounded, buttons, reduced-motion,
 animations, anim-props, board3d, sound, treatments, usage, clock-format).
 
+## 2026-09-05 15:05 EDT
+
+Redesign follow-up: defaults, premoves, dock, profile, search, balance pass
+
+The default look is Lichess dark with the midnight board, premoves behave like Lichess, the dock has hotkeys and inline Use, the profile and search pages are fixed, and every card in play was re-priced against its own family. PR #482. OPEN. Bundle work in PR #483. OPEN.
+
+Defaults:
+- The site theme default goes back to Lichess dark; the board default is the dark grey-blue midnight set. The navy Midnight site theme stays as an option.
+
+Draft and moves:
+- The vault's rings and caps burn in the exact tier colour of the best card inside, the caption carries the tier numeral, and tier 9/10 cards get their own deal-glow rows (they fell back to brass before).
+- Premoves are Lichess-exact: one slot, a new premove replaces it, and any click or refused drop that is not a premove cancels it.
+- The dock flips between You and Them with y / t (shared across every mounted dock), and a collapsed row keeps its Use button.
+
+Pages:
+- Profile games tab: stat tiles, one labelled filter row, 48px grid rows; clubs are plain accent links.
+- Hero TV frame is token-only, so no black halo on light and no doubled edge on dark.
+- Friends list shows 12 with Show all, presence computed once, an overflow menu on narrow rails.
+- Find a player: the search route ranked prefix matches only after a 50-row window that house accounts filled, so real players never appeared; it now ranks first, excludes house accounts, and the dropdown reopens on focus and retype.
+- Codex lists only cards in play and no longer says Showing N of M; the show-retired toggle is gone.
+- The Updates wall is generated from this changelog (`npm run gen:updates`, guarded by `test:updates`), with hand-written entries kept on top.
+
+Balance, full pass: 334 tier moves through hand-audit.json, three reworks (Warp Home free action, Hard Reset freeze fallback, Lifebloom to rank 4 under a shield), 14 text rewrites, five retirements; ladder invariants pinned in `test:balance-pass`. Details in docs/overhaul-checklist.md.
+
+Bundle (PR #483): the 1,539-icon lucide map loads on demand behind the category ring fallback; combo tags moved to a leaf module. Match routes drop from 1,539 statically reachable icons to 159.
+

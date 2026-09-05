@@ -155,7 +155,7 @@ export const CROSSREF_CARDS: Buff[] = [
       id: "royal_handicap",
       name: "Royal Handicap",
       description: "Nerf the crown itself: for your opponent's next 4 turns the patch removes diagonal movement from their king, save one diagonal escape step the king may still take once.",
-      tier: 5,
+      tier: 2,
       flavor: "Please look forward to the royal rework in a future season.",
       fx: { motif: "anchor", pieces: ["k"] },
     },
@@ -206,7 +206,7 @@ export const CROSSREF_CARDS: Buff[] = [
     {
       id: "hard_reset",
       name: "Hard Reset",
-      description: "Turn it off and on again: your opponent's most advanced pawn is sent back to its starting square, if that square is free. Ties reboot the pawn nearest the a-file.",
+      description: "Your opponent's most advanced pawn reboots to its starting square. If that square is taken, the pawn freezes for 1 turn instead.",
       tier: 3,
       flavor: "Have you tried turning it off and on again?",
     },
@@ -221,6 +221,11 @@ export const CROSSREF_CARDS: Buff[] = [
       if (home !== best && !api.board.pieces[home]) {
         api.relocate(best, home);
         addEffect(api, { kind: "strike", squares: [home], owner: api.me, turns: 1 });
+      } else {
+        // Home taken (or the pawn never left): never a dead card. The pawn
+        // hangs for a turn instead, the walnut_shell "always does something"
+        // precedent.
+        addEffect(api, { kind: "freeze", sq: best, owner: api.opp, turns: 1, skin: "stun" });
       }
     }),
   ),
@@ -510,7 +515,7 @@ export const CROSSREF_CARDS: Buff[] = [
       id: "sahur",
       name: "Bobrito Bandito",
       description: "Bonk one enemy piece with the log: the swing lands after your opponent's next move, stunning that piece so it cannot move for its next 2 turns. Kings are too stubborn to bonk.",
-      tier: 5,
+      tier: 2,
       flavor: "The beaver bandit collects his toll, one bonk at a time.",
     },
     {

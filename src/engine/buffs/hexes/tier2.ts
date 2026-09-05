@@ -104,8 +104,8 @@ export const HEXES_T2: Buff[] = [
       ),
     ),
   ),
-  H(
-    { id: "seized_axles", name: "Seized Axles", description: "Your opponent's rooks cannot move sideways for their next 4 turns: they may only slide up and down their own file.", flavor: "The wheels only roll one way now.", fx: { motif: "anchor", pieces: ["r"] } },
+  hex(
+    { id: "seized_axles", tier: 3, name: "Seized Axles", description: "Your opponent's rooks cannot move sideways for their next 4 turns: they may only slide up and down their own file.", flavor: "The wheels only roll one way now.", fx: { motif: "anchor", pieces: ["r"] } },
     curse(4, (moves) => moves.filter((m) => m.piece !== "r" || FILE(m.from) === FILE(m.to))),
   ),
   hex(

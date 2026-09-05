@@ -76,7 +76,6 @@ function filterBuffs(source: Buff[], filters: CodexFilters, behaviour: Behaviour
   const list = source.filter(
     (b) =>
       (filters.tier === null || b.tier === filters.tier) &&
-      (filters.showRetired || !isRetired(b.id)) &&
       (filters.categories.length === 0 || filters.categories.includes(b.category)) &&
       (filters.collection === null || buffCollection(b) === filters.collection) &&
       (behaviour === "all" || b.kind === behaviour) &&
@@ -109,15 +108,18 @@ export function CodexBrowser() {
   const sentinelRef = useRef<HTMLLIElement>(null);
 
   // Pull the ~26k-line card engine in its own async chunk, then derive the four
-  // browsable families. Re-runs when the reader retries after an error.
+  // browsable families. Retired cards (src/engine/retired.ts) are dropped here,
+  // before any count or filter sees them: the codex lists what is in play, and
+  // a retired card's page stays reachable only by its direct link. Re-runs when
+  // the reader retries after an error.
   useEffect(() => {
     let cancelled = false;
     Promise.all([import("@/engine/nerfs/library"), import("@/engine/buffs/library")])
       .then(([nerfs, buffs]) => {
         if (cancelled) return;
-        const all = buffs.ALL_BUFFS;
+        const all = buffs.ALL_BUFFS.filter((b) => !isRetired(b.id));
         setEngine({
-          nerfs: nerfs.ALL_NERFS,
+          nerfs: nerfs.ALL_NERFS.filter((n) => !isRetired(n.id)),
           buffs: all.filter((b) => !isHexCard(b) && !isBoonCard(b)),
           hexes: all.filter(isHexCard),
           boons: all.filter(isBoonCard),
@@ -253,6 +255,7 @@ export function CodexBrowser() {
   }, []);
 
   const nounPlural = LIBRARY_NOUN_PLURAL[tab];
+  // In-play cards only: retired ones never reach currentSource.
   const totalCount = currentSource.length;
   const shownCount = entries.length;
   const active = hasActiveFilters(filters) || behaviour !== "all";
@@ -375,14 +378,24 @@ export function CodexBrowser() {
             )}
           </label>
 
-          {/* Desktop: inline filter chip row. Mobile: one trigger button that
-              opens the bottom sheet. */}
-          <div className="mt-3 hidden sm:block">{filterControls("inline")}</div>
+          {/* Desktop: inline filter chip row, with the match count beside it
+              only while a filter or search is narrowing the list. Mobile: one
+              trigger button that opens the bottom sheet. */}
+          <div className="mt-3 hidden items-end gap-4 sm:flex">
+            {filterControls("inline")}
+            {load === "ready" && active && (
+              <span className="pb-1.5 text-[12px] text-parchment-400" role="status" aria-live="polite">
+                {shownCount} {nounPlural}
+              </span>
+            )}
+          </div>
 
-          <div className="mt-3 flex items-center justify-between gap-3">
+          <div className="mt-3 flex items-center justify-between gap-3 sm:hidden">
             <p className="text-[12px] text-parchment-400" role="status" aria-live="polite">
               {load === "ready"
-                ? `Showing ${shownCount} of ${totalCount} ${nounPlural}`
+                ? active
+                  ? `${shownCount} ${nounPlural}`
+                  : ""
                 : load === "error"
                   ? "Could not load the library"
                   : `Loading the ${nounPlural}`}

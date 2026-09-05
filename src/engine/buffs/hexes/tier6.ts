@@ -190,9 +190,10 @@ export const HEXES_T6: Buff[] = [
   // laid on her NEXT step, so your opponent must choose between never moving
   // the queen (a self-imposed freeze) or spending her and losing her for 4
   // turns wherever she lands.
-  H(
+  hex(
     {
       id: "queen_of_stone",
+      tier: 4,
       name: "Queen of Stone",
       description: "The curse waits in her shoes: the next time your opponent moves their queen, she turns to a walnut for 3 of their turns the moment she lands.",
       flavor: "Her majesty may hold court forever, so long as she never rises from the throne.",
@@ -400,9 +401,10 @@ export const HEXES_T6: Buff[] = [
   // Not a doubled Dead Letter (T4's clean single draft block): one draft is
   // blocked AND every draft reroll they are still holding is snatched out of
   // their hand and added to yours.
-  H(
+  hex(
     {
       id: "empty_handed",
+      tier: 4,
       name: "Empty Handed",
       description: "Your opponent's next draft is blocked and skipped.",
       flavor: "The deck is pulled away just as their hand reaches for it.",

@@ -166,7 +166,7 @@ export const FANTASY_ELEMENTS: Buff[] = [
       name: "Chain Lightning",
       description:
         "One bishop captures up to three enemy pieces down a diagonal and lands beyond them; the bolt then jumps on to freeze the next enemy piece further along that diagonal for 2 of their turns, once.",
-      tier: 4,
+      tier: 6,
       category: "attack",
       requires: ["b"],
       flavor: "It leaps from soul to soul.",
