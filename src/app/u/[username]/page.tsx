@@ -435,7 +435,7 @@ function ProfileContent() {
           <div className="mt-4 border-t border-[color:var(--edge)] px-3 pt-4 lg:border-t-0 lg:pt-2">
             <h2 className="text-[12px] uppercase tracking-[0.06em] text-parchment-400">Statistics</h2>
             <div className="mt-2">
-              <PlayerStatsPanel stats={stats} peakRating={peakRating} />
+              <PlayerStatsPanel stats={stats} peakRating={peakRating} compact />
             </div>
           </div>
         )}
