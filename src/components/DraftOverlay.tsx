@@ -1308,7 +1308,10 @@ export function DraftOverlay({
                     tier={card.tier}
                     compact
                     glow={selected === i}
-                    onClick={!settled ? () => chooseMinimized(i, Date.now()) : undefined}
+                    // performance.now() shares the event-timeStamp clock the full overlay
+                    // records selections with, so the double-click guard measures real
+                    // elapsed time here too (Date.now() is an epoch and never blocked).
+                    onClick={!settled ? () => chooseMinimized(i, performance.now()) : undefined}
                   />
                 </div>
               );

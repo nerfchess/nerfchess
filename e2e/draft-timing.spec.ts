@@ -106,7 +106,9 @@ test.describe("draft decision timing (reduced motion)", () => {
     await expect(decisionTimer(page)).toBeVisible({ timeout: 10_000 });
 
     // Tentatively select the first card, then walk away — never press Confirm.
-    await page.locator(".draft-deal-grid button").first().click();
+    // Aim at the card's name, not its centre: the centre is the description,
+    // where a glossary term button would swallow the tap.
+    await page.locator(".draft-deal-grid button").first().click({ position: { x: 24, y: 16 } });
 
     // The window runs out. Nothing is picked for the player: the full overlay
     // steps aside into the compact corner panel, the cards stay one tap away,
@@ -123,8 +125,13 @@ test.describe("draft decision timing (reduced motion)", () => {
     await page.waitForTimeout(13_000);
     const compact = page.locator("[data-draft-compact-cards]");
     await expect(compact).toBeVisible();
-    await compact.locator("button").first().click();
-    await page.getByRole("button", { name: /^confirm/i }).click();
+    // The card tentatively selected before the window ran out is still the
+    // selection: one more tap on it confirms (the double-click guard only
+    // covers the first 400ms after selecting), and the panel resolves. If the
+    // selection did not survive, the tap selects and Confirm finishes it.
+    await compact.locator("button").first().click({ position: { x: 24, y: 16 } });
+    const confirm = page.getByRole("button", { name: /^Confirm / });
+    if (await confirm.isVisible().catch(() => false)) await confirm.click();
     await expect(compact).toHaveCount(0, { timeout: 10_000 });
   });
 });

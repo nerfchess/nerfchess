@@ -7,6 +7,26 @@ import type { GeneratedUpdate } from "./updates";
 export const GENERATED_UPDATES: GeneratedUpdate[] = [
   {
     date: "2026-09-05",
+    title: "Round three: worker, engine and match-flow bug fixes",
+    summary: "A second sweep over the areas the first two passes skipped: the game server's clock and rematch paths, the engine's chained-move guard and notation, and the match page's reconnect and draft flows.",
+    anchor: "u-20260905-1924",
+    bullets: [
+      "A disconnect pause taken during a move or a draft deadline is billed again: both resume paths now check the live pause before restarting the clock, the same way draft actions did.",
+      "Rematch requests claim the slot before any database await, so a double tap makes one rematch game and a cancel during the await is not lost; the cancel frame carries the canceller's colour so only...",
+      "Aborting a game re-reads the match after the abort-history await, so a game that ended in between is not aborted twice.",
+      "A resync clears the in-flight connect handle, so a reconnect no longer waits out the full eight-second fail timer.",
+      "A move buffered during a disconnect is dropped along with any premove when the board rolls back, and sending now reports sent, held or failed so the optimistic board is only kept on sent.",
+      "A free action that grants no extra move (Warp Home) no longer arms the chained-move king guard, so the activator's own king capture stays legal.",
+      "Move numbers no longer double-increment on two consecutive Black moves.",
+      "Move-risk lookups key on castle and drop as well as from/to, so a castling move and a king step to the same square no longer share a risk badge.",
+      "Settings pulled from the server are validated before they touch local storage, and pushes adopt the server's timestamp so a change no longer reverts on reload when the clocks disagree.",
+      "The minimized draft panel has a Tuck control; its double-tap guard now measures real elapsed time. The phone move strip rests at the left edge when reviewing from the start of the line.",
+      "Dock rows show one Use button, dragging a card with no target no longer fires it, and an expanded row stays open while a copy's countdown ticks.",
+      "Analyze is hidden for card games (the analysis board would silently truncate them) and the analysis page says when a line stops early. Tournament pages clear a stale error on a successful load.",
+    ],
+  },
+  {
+    date: "2026-09-05",
     title: "Redesign follow-up: defaults, premoves, dock, profile, search, balance pass",
     summary: "The default look is Lichess dark with the midnight board, premoves behave like Lichess, the dock has hotkeys and inline Use, the profile and search pages are fixed, and every card in play was re-priced against its own family.",
     anchor: "u-20260905-1505",
