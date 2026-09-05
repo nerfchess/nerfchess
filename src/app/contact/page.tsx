@@ -25,7 +25,7 @@ export default function ContactPage() {
             href="https://discord.gg/a5bJYFrTx"
             target="_blank"
             rel="noopener noreferrer"
-            className="px-5 py-2.5 rounded-sm btn-leaf font-display"
+            className="px-5 py-2.5 rounded-none btn-leaf font-display"
           >
             Join the Discord
           </a>
@@ -33,7 +33,7 @@ export default function ContactPage() {
             href="https://www.instagram.com/officialnerfchess"
             target="_blank"
             rel="noopener noreferrer"
-            className="px-5 py-2.5 rounded-sm btn-ghost font-display"
+            className="px-5 py-2.5 rounded-none btn-ghost font-display"
           >
             @officialnerfchess on Instagram
           </a>
@@ -41,7 +41,7 @@ export default function ContactPage() {
             href="https://tiktok.com/@nerfchess"
             target="_blank"
             rel="noopener noreferrer"
-            className="px-5 py-2.5 rounded-sm btn-ghost font-display"
+            className="px-5 py-2.5 rounded-none btn-ghost font-display"
           >
             @nerfchess on TikTok
           </a>
@@ -49,7 +49,7 @@ export default function ContactPage() {
             href="https://www.youtube.com/@OfficialNerfChess"
             target="_blank"
             rel="noopener noreferrer"
-            className="px-5 py-2.5 rounded-sm btn-ghost font-display"
+            className="px-5 py-2.5 rounded-none btn-ghost font-display"
           >
             @OfficialNerfChess on YouTube
           </a>

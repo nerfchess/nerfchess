@@ -488,7 +488,7 @@ export const BOON_WAVE4B: Buff[] = [
     }),
   ),
   card(
-    { id: "bn4_salt_in_the_wound", name: "Salt in the Wound", tier: 5, category: "nerf", icon: "CloudLightning",
+    { id: "bn4_salt_in_the_wound", name: "Salt in the Wound", tier: 7, category: "nerf", icon: "CloudLightning",
       description: "Suspend your nerf for your next 12 turns. When it returns, take 20 seconds from your opponent's clock.",
       flavor: "Their parade, your permission slip." },
     {
@@ -885,7 +885,7 @@ export const BOON_WAVE4B: Buff[] = [
     shieldZone((api) => mySquares(api.board, api.me, "p"), 3),
   ),
   card(
-    { id: "bn4_keep_gate", name: "Keep Gate", tier: 5, category: "protection", icon: "Landmark",
+    { id: "bn4_keep_gate", name: "Keep Gate", tier: 3, category: "protection", icon: "Landmark",
       description: "The three squares directly ahead of your king are barred to enemy pieces for 4 turns.",
       flavor: "Oak, iron, and a very rude porter." },
     instant((_inst, api) => {
@@ -1088,7 +1088,7 @@ export const BOON_WAVE4B: Buff[] = [
     }),
   ),
   card(
-    { id: "bn4_royal_incognito", name: "Royal Incognito", tier: 5, category: "item", icon: "Glasses",
+    { id: "bn4_royal_incognito", name: "Royal Incognito", tier: 3, category: "item", icon: "Glasses",
       description: "Your king puts on sunglasses for the rest of the game (purely decorative) and cannot be captured for your opponent's next 2 turns. Nobody recognizes him. Everybody recognizes him.",
       flavor: "Just a regular citizen, out for a stroll, worth the entire game." },
     instant((_inst, api) => {
@@ -1484,7 +1484,7 @@ export const BOON_WAVE4B: Buff[] = [
     }),
   ),
   card(
-    { id: "bn4_pocket_cavalry", name: "Pocket Cavalry", tier: 7, category: "pieces", icon: "Backpack",
+    { id: "bn4_pocket_cavalry", name: "Pocket Cavalry", tier: 5, category: "pieces", icon: "Backpack",
       description: "A knight and a pawn join your pocket, ready to be dropped onto empty squares on later turns (each drop spends that turn).",
       flavor: "A very small army in a very large coat." },
     instant((_inst, api) => {
@@ -2153,7 +2153,7 @@ export const BOON_WAVE4B: Buff[] = [
   // --- pieces (6) ---
 
   card(
-    { id: "bn4_cathedral_choir", name: "Cathedral Choir", tier: 7, category: "pieces", icon: "Church",
+    { id: "bn4_cathedral_choir", name: "Cathedral Choir", tier: 4, category: "pieces", icon: "Church",
       description: "Place a new bishop on any empty square in your half.",
       flavor: "One more voice and the roof lifts." },
     placePieces(["b"], myHalf),
@@ -2565,7 +2565,7 @@ export const BOON_WAVE4B: Buff[] = [
     }),
   ),
   card(
-    { id: "bn4_costume_trunk", name: "Costume Trunk", tier: 7, category: "item", icon: "Luggage",
+    { id: "bn4_costume_trunk", name: "Costume Trunk", tier: 4, category: "item", icon: "Luggage",
       description: "Dress up to three of your pieces (your king excepted) from the trunk, forever (purely decorative). Costumed pieces cannot be captured on your opponent's next turn: nobody hits an actor mid-scene.",
       flavor: "The moths took the tragedy costumes. Comedy it is." },
     activated(
@@ -2919,7 +2919,7 @@ export const BOON_WAVE4B: Buff[] = [
     },
   ),
   card(
-    { id: "bn4_dukes_patent", name: "The Duke's Patent", tier: 8, category: "movement", icon: "Stamp",
+    { id: "bn4_dukes_patent", name: "The Duke's Patent", tier: 5, category: "movement", icon: "Stamp",
       description: "For your opponent's next 4 turns, your rooks may also step one square diagonally (capturing allowed). The moment one of your rooks captures, the patent lapses and the power ends.",
       flavor: "A single signature, and every tower learns to lean.", requires: ["r"],
       fx: { motif: "empower", pieces: ["r"], moveAs: "b", self: true } },
@@ -3217,7 +3217,7 @@ export const BOON_WAVE4B: Buff[] = [
     },
   ),
   card(
-    { id: "bn4_guardian_of_the_line", name: "Guardian of the Line", tier: 8, category: "protection", icon: "ShieldCheck",
+    { id: "bn4_guardian_of_the_line", name: "Guardian of the Line", tier: 6, category: "protection", icon: "ShieldCheck",
       description: "Beginning after your opponent's next move, your queen cannot be captured while she stands beside your king, for the rest of the game.",
       flavor: "Two crowns, one shadow between them, no way through it.", requires: ["q"],
       fx: { motif: "ward", pieces: ["q"], self: true } },

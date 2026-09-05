@@ -1,0 +1,132 @@
+/* 3D coin and die for the gambling plays (gambling3d.tsx).
+   Every keyframe animates transform/opacity only; durations scale with
+   --fx-dur and the whole thing parks under html[data-anim="off"]. */
+
+.g3d-coin,
+.g3d-die {
+  position: absolute;
+  display: block;
+  perspective: 700px;
+  pointer-events: none;
+  animation: g3d-fade 200ms linear var(--g3d-delay, 0ms) both;
+}
+@keyframes g3d-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* --- coin ----------------------------------------------------------------- */
+.g3d-coin__body {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  animation: g3d-coin-flip calc(1.5s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.1, 0.25, 1) var(--g3d-delay, 0ms) both;
+}
+.g3d-coin__face {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font: 800 calc(0.5 * 1em) var(--font-display), system-ui, sans-serif;
+  font-size: 45%;
+  color: #8a5a10;
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.55), transparent 45%),
+    #f2c14e;
+  box-shadow: inset 0 0 0 2px #c9952a, inset 0 0 0 4px #f6d27a;
+  backface-visibility: hidden;
+}
+.g3d-coin__face--back {
+  transform: rotateX(180deg);
+}
+/* A thin rim so the coin has a visible edge at 90deg. */
+.g3d-coin__rim {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  transform: rotateX(90deg) scaleY(0.12);
+  background: #b8862a;
+}
+.g3d-coin__shadow {
+  position: absolute;
+  left: 15%;
+  right: 15%;
+  bottom: -18%;
+  height: 16%;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.45);
+  filter: blur(2px);
+  animation: g3d-coin-shadow calc(1.5s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.1, 0.25, 1) var(--g3d-delay, 0ms) both;
+}
+/* Opacity lives on the wrapper (g3d-fade): Chrome flattens a preserve-3d
+   element while an opacity animation runs on it, so the body animates
+   transform only. */
+@keyframes g3d-coin-flip {
+  0% { transform: translateY(20%) rotateX(0deg); }
+  48% { transform: translateY(-160%) rotateX(calc(var(--g3d-spins, 1080deg) * 0.55)); }
+  100% { transform: translateY(0) rotateX(var(--g3d-spins, 1080deg)); }
+}
+@keyframes g3d-coin-shadow {
+  0% { transform: scale(1); opacity: 0; }
+  8% { opacity: 0.8; }
+  48% { transform: scale(0.45); opacity: 0.25; }
+  100% { transform: scale(1); opacity: 0.8; }
+}
+
+/* --- die ------------------------------------------------------------------ */
+.g3d-die__cube {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  animation: g3d-die-tumble calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.22, 0.9, 0.3, 1) var(--g3d-delay, 0ms) both;
+}
+.g3d-die__face {
+  position: absolute;
+  inset: 0;
+  border-radius: 12%;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18), inset 0 0 6px rgba(0, 0, 0, 0.12);
+  backface-visibility: hidden;
+}
+.g3d-die__face i {
+  position: absolute;
+  width: 18%;
+  height: 18%;
+  border-radius: 50%;
+  background: #1f1a14;
+  transform: translate(-50%, -50%);
+}
+.g3d-die__shadow {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: -22%;
+  height: 22%;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.45);
+  filter: blur(2px);
+  animation: g3d-die-shadow calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.22, 0.9, 0.3, 1) var(--g3d-delay, 0ms) both;
+}
+@keyframes g3d-die-tumble {
+  0% { transform: translate(-220%, -90%) rotateX(-540deg) rotateY(-360deg); }
+  40% { transform: translate(-90%, -140%) rotateX(-260deg) rotateY(-160deg); }
+  65% { transform: translate(-25%, -20%) rotateX(-90deg) rotateY(-40deg); }
+  82% { transform: translate(4%, -30%) rotateX(-20deg) rotateY(6deg); }
+  100% { transform: translate(0, 0) var(--g3d-final, rotateX(0deg) rotateY(0deg)); }
+}
+@keyframes g3d-die-shadow {
+  0% { transform: translateX(-220%) scale(0.4); opacity: 0; }
+  40% { transform: translateX(-90%) scale(0.5); opacity: 0.3; }
+  100% { transform: translateX(0) scale(1); opacity: 0.8; }
+}
+
+html[data-anim="off"] .g3d-coin,
+html[data-anim="off"] .g3d-die,
+html[data-anim="off"] .g3d-coin__body,
+html[data-anim="off"] .g3d-coin__shadow,
+html[data-anim="off"] .g3d-die__cube,
+html[data-anim="off"] .g3d-die__shadow {
+  animation: none;
+}
+html[data-anim="off"] .g3d-coin__body { transform: rotateX(var(--g3d-spins, 0deg)); }
+html[data-anim="off"] .g3d-die__cube { transform: var(--g3d-final, none); }

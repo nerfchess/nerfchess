@@ -490,7 +490,7 @@ export function RatingChart({
         {/* not .plate: it forces position:relative, which would knock out `absolute` */}
         {hover && drawn && (
           <div
-            className="pointer-events-none absolute -top-1 flex -translate-x-1/2 items-center gap-2 border border-ink-500 bg-ink-900/90 px-2 py-1 text-xs whitespace-nowrap shadow-plate backdrop-blur-sm motion-safe:transition-opacity"
+            className="pointer-events-none absolute -top-1 flex -translate-x-1/2 items-center gap-2 border border-ink-500 bg-ink-900 px-2 py-1 text-xs whitespace-nowrap shadow-plate motion-safe:transition-opacity"
             style={{ left: `${(hover.x / W) * 100}%` }}
           >
             {hover.rows.map(({ series: s, i }) => (

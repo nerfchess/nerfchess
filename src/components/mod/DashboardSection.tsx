@@ -16,7 +16,7 @@
 
 import type { Overview } from "./types";
 import type { SectionId } from "./nav";
-import { Empty, ModButton, Pill, SectionHead, StatGrid, fmtDuration, pct } from "./ui";
+import { Empty, ModButton, Pill, RateBar, SectionHead, StatGrid, fmtDuration, pct } from "./ui";
 
 /** How far a tier's score sits from a fair 50%, and whether that is worth
  *  flagging. A small sample says nothing, so it is never flagged. */
@@ -186,7 +186,7 @@ export function DashboardSection({
             {/* Phones: one block per tier. The "Reading" column is the whole
                 point of this section, and in a table at 390px it is exactly the
                 column that falls off the right edge. */}
-            <ul className="plate mt-3 divide-y divide-white/5 sm:hidden">
+            <ul className="plate mt-3 divide-y divide-[color:var(--edge)] sm:hidden">
               {house.tiers.map((t) => {
                 const v = tierVerdict(t.scorePct, t.played);
                 return (
@@ -223,7 +223,7 @@ export function DashboardSection({
                   {house.tiers.map((t) => {
                     const verdict = tierVerdict(t.scorePct, t.played);
                     return (
-                      <tr key={t.skill} className="border-t border-white/5">
+                      <tr key={t.skill} className="border-t border-[color:var(--edge)]">
                         <td className="py-1.5 pr-3 font-mono tabular-nums">{t.skill}</td>
                         <td className="py-1.5 pr-3 tabular-nums">{t.played}</td>
                         <td className="py-1.5 pr-3 tabular-nums text-parchment-300">
@@ -271,13 +271,18 @@ export function DashboardSection({
             ).map(([label, rows]) => (
               <div key={label}>
                 <div className="text-[11px] text-parchment-400">{label}</div>
-                <ul className="mt-1.5 space-y-1">
+                <ul className="plate mt-1.5 divide-y divide-[color:var(--edge)]">
                   {rows.map((r) => (
-                    <li key={r.id} className="flex items-baseline justify-between gap-3 text-[13px]">
-                      <code className="truncate text-parchment-200">{r.id}</code>
-                      <span className="shrink-0 tabular-nums text-parchment-300">
-                        {r.winPct}% · {r.picks}
-                      </span>
+                    <li key={r.id} className="px-3 py-2 text-[13px]">
+                      <div className="flex items-baseline justify-between gap-3">
+                        <code className="truncate text-parchment-100">{r.id}</code>
+                        <span className="shrink-0 tabular-nums text-parchment-300">
+                          {r.winPct}% · {r.picks} picks
+                        </span>
+                      </div>
+                      <div className="mt-1.5">
+                        <RateBar pct={r.winPct} at={50} tone={r.winPct > 58 ? "warn" : r.winPct < 42 ? "good" : undefined} />
+                      </div>
                     </li>
                   ))}
                 </ul>

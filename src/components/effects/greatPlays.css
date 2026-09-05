@@ -33,7 +33,7 @@
   45% { opacity: 0.8; }
   100% { opacity: 0; transform: scale(0.5); }
 }
-.grp-tellglow { animation: grp-tellglow calc(0.3s * var(--fx-dur, 1)) ease-in both; }
+.grp-tellglow { animation: grp-tellglow calc(0.3s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 1, 0.45) both; }
 
 /* Ground shadow pooling under a mass about to rise or land. */
 @keyframes grp-tellshadow {
@@ -41,7 +41,7 @@
   55% { opacity: 0.55; transform: scale(1, 1); }
   100% { opacity: 0; transform: scale(1.08, 1); }
 }
-.grp-tellshadow { animation: grp-tellshadow calc(0.3s * var(--fx-dur, 1)) ease-out both; }
+.grp-tellshadow { animation: grp-tellshadow calc(0.3s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* A thin streak drawn inward to the gather point (vars --dx / --dy). */
 @keyframes grp-tellray {
@@ -49,7 +49,7 @@
   40% { opacity: 0.9; }
   100% { opacity: 0; transform: translate(0, 0) scaleX(0.35); }
 }
-.grp-tellray { animation: grp-tellray calc(0.3s * var(--fx-dur, 1)) ease-in both; }
+.grp-tellray { animation: grp-tellray calc(0.3s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 1, 0.45) both; }
 
 /* --- Build-up ------------------------------------------------------------ */
 
@@ -60,7 +60,7 @@
   72% { opacity: 0.45; }
   100% { opacity: 0; }
 }
-.grp-wash { animation: grp-wash calc(1s * var(--fx-dur, 1)) ease-out both; }
+.grp-wash { animation: grp-wash calc(1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- Entities ------------------------------------------------------------- */
 
@@ -100,7 +100,7 @@
   82% { opacity: 0.95; transform: translateX(34%); }
   100% { opacity: 0; transform: translateX(46%); }
 }
-.grp-sweep { animation: grp-sweep calc(1.2s * var(--fx-dur, 1)) ease-in-out both; }
+.grp-sweep { animation: grp-sweep calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
 .grp-sweep-fast { animation: grp-sweep calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.3, 0, 0.6, 1) both; }
 
 /* Roll in from the board edge and STOP (siege engine, thief's reach). */
@@ -131,7 +131,7 @@
   55% { opacity: 1; transform: translate(calc(var(--dx, 40%) * 0.55), var(--dy, -160%)) rotate(160deg); }
   100% { opacity: 0; transform: translate(var(--dx, 40%), 6%) rotate(300deg); }
 }
-.grp-arcshot { animation: grp-arcshot calc(0.7s * var(--fx-dur, 1)) ease-in both; }
+.grp-arcshot { animation: grp-arcshot calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 1, 0.45) both; }
 
 /* The catapult arm / forge hammer striking (pivot set by the parent). */
 @keyframes grp-swing {
@@ -153,7 +153,7 @@
   88% { opacity: 0.9; transform: rotate(4deg); }
   100% { opacity: 0; transform: rotate(0deg); }
 }
-.grp-pendulum { animation: grp-pendulum calc(1.15s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 50% 0%; }
+.grp-pendulum { animation: grp-pendulum calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; transform-origin: 50% 0%; }
 
 /* Time Stop: the pendulum swings once and seizes DEAD mid-arc, hangs there
    for a stolen-breath hold, then fades still frozen. */
@@ -175,7 +175,7 @@
   85% { opacity: 0.9; }
   100% { opacity: 0; transform: rotate(-660deg); }
 }
-.grp-spinback { animation: grp-spinback calc(0.95s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 50% 50%; }
+.grp-spinback { animation: grp-spinback calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; transform-origin: 50% 50%; }
 
 /* THE GEOMETRY BEAT. The rail of the play's own light, drawn out of the cast
    square along the real source -> target vector. Only the SCALE is keyframed:
@@ -201,7 +201,7 @@
   70% { opacity: 0.6; }
   100% { opacity: 0; transform: scaleX(1); }
 }
-.grp-beam { animation: grp-beam calc(0.7s * var(--fx-dur, 1)) ease-out both; }
+.grp-beam { animation: grp-beam calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* The portal pane stretching open between the gate posts. */
 @keyframes grp-pane {
@@ -231,7 +231,7 @@
   84% { opacity: 0.9; transform: scale(1.02); }
   100% { opacity: 0; transform: scale(0.9); }
 }
-.grp-candle { animation: grp-candle calc(0.8s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 100%; }
+.grp-candle { animation: grp-candle calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 100%; }
 
 /* --- Bespoke flourish gestures (marquee cards) -------------------------------- */
 
@@ -242,7 +242,7 @@
   78% { opacity: 1; }
   100% { opacity: 0; transform: scale(0.98); }
 }
-.grp-hold { animation: grp-hold calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+.grp-hold { animation: grp-hold calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* Caught by the gaze: a jitter of resistance, then rigid, then gone. */
 @keyframes grp-shiver {
@@ -255,7 +255,7 @@
   88% { opacity: 1; transform: rotate(0deg); }
   100% { opacity: 0; transform: rotate(0deg); }
 }
-.grp-shiver { animation: grp-shiver calc(0.85s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 50% 90%; }
+.grp-shiver { animation: grp-shiver calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; transform-origin: 50% 90%; }
 
 /* The flip reveal: a face swings up from edge-on after the held beat. */
 @keyframes grp-flip {
@@ -275,7 +275,7 @@
   72% { transform: rotate(58deg); }
   100% { opacity: 0; transform: rotate(60deg) translateY(6%); }
 }
-.grp-topple { animation: grp-topple calc(0.7s * var(--fx-dur, 1)) ease-in both; }
+.grp-topple { animation: grp-topple calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 1, 0.45) both; }
 
 /* Severed halves springing apart along the cut. */
 @keyframes grp-split-l {
@@ -283,13 +283,13 @@
   16% { opacity: 1; }
   100% { opacity: 0; transform: translate(-26%, 10%) rotate(-13deg); }
 }
-.grp-split-l { animation: grp-split-l calc(0.7s * var(--fx-dur, 1)) ease-out both; }
+.grp-split-l { animation: grp-split-l calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 @keyframes grp-split-r {
   0% { opacity: 0; transform: none; }
   16% { opacity: 1; }
   100% { opacity: 0; transform: translate(26%, 10%) rotate(13deg); }
 }
-.grp-split-r { animation: grp-split-r calc(0.7s * var(--fx-dur, 1)) ease-out both; }
+.grp-split-r { animation: grp-split-r calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* Mirror swap: a reflection crossing THROUGH the pane, dimming at the glass
    (vars --dx: full crossing distance). */
@@ -300,7 +300,7 @@
   80% { opacity: 0.95; transform: translateX(var(--dx, 100%)) scale(1); }
   100% { opacity: 0; transform: translateX(var(--dx, 100%)) scale(1); }
 }
-.grp-cross { animation: grp-cross calc(0.9s * var(--fx-dur, 1)) ease-in-out both; }
+.grp-cross { animation: grp-cross calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 /* The lightning bolt hammering down: a strobe, not a glide. */
 @keyframes grp-bolt {
@@ -310,7 +310,7 @@
   46% { opacity: 1; }
   100% { opacity: 0; transform: scaleY(1); }
 }
-.grp-bolt { animation: grp-bolt calc(0.45s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 0%; }
+.grp-bolt { animation: grp-bolt calc(0.45s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 0%; }
 
 /* The comic BONK: hard squash, rebound stretch, wobble out. */
 @keyframes grp-bonk {
@@ -322,7 +322,7 @@
   80% { transform: scale(1); }
   100% { opacity: 0; transform: scale(1); }
 }
-.grp-bonk { animation: grp-bonk calc(0.6s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 100%; }
+.grp-bonk { animation: grp-bonk calc(0.6s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 100%; }
 
 /* The ascending crown: a slow climb on rising light. */
 @keyframes grp-riseslow {
@@ -331,7 +331,7 @@
   70% { opacity: 1; transform: translateY(-34%) scale(1.05); }
   100% { opacity: 0; transform: translateY(-46%) scale(1.08); }
 }
-.grp-riseslow { animation: grp-riseslow calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+.grp-riseslow { animation: grp-riseslow calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* A rising light ray (origin at its base). */
 @keyframes grp-ray {
@@ -339,7 +339,7 @@
   35% { opacity: 0.85; transform: scaleY(1); }
   100% { opacity: 0; transform: scaleY(1.06); }
 }
-.grp-ray { animation: grp-ray calc(0.7s * var(--fx-dur, 1)) ease-out both; }
+.grp-ray { animation: grp-ray calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- Bespoke flourish gestures (per-card batch: every shared-template card) --- */
 
@@ -355,7 +355,7 @@
   84% { transform: translateY(66%) rotate(72deg); }
   100% { opacity: 0; transform: translateY(66%) rotate(72deg); }
 }
-.grp-slip { animation: grp-slip calc(0.9s * var(--fx-dur, 1)) ease-in both; transform-origin: 35% 88%; }
+.grp-slip { animation: grp-slip calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 1, 0.45) both; transform-origin: 35% 88%; }
 
 /* Marionette yank: hangs slack, then jerked up in two hard stitches. */
 @keyframes grp-yank {
@@ -368,7 +368,7 @@
   88% { opacity: 0.95; transform: translate(3%, -38%) rotate(3deg); }
   100% { opacity: 0; transform: translate(4%, -39%) rotate(4deg); }
 }
-.grp-yank { animation: grp-yank calc(1s * var(--fx-dur, 1)) ease-in-out both; }
+.grp-yank { animation: grp-yank calc(1s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 /* Darts for freedom, hits the chain's end, snapped back to heel. */
 @keyframes grp-snapback {
@@ -390,7 +390,7 @@
   40% { transform: translateY(5%) scaleY(0.94); }
   100% { opacity: 0; transform: translateY(36%) scaleY(0.55); }
 }
-.grp-sink { animation: grp-sink calc(0.95s * var(--fx-dur, 1)) ease-in both; transform-origin: 50% 100%; }
+.grp-sink { animation: grp-sink calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 1, 0.45) both; transform-origin: 50% 100%; }
 
 /* One hard collective shove toward the far rank, then held. */
 @keyframes grp-shove {
@@ -402,7 +402,7 @@
   88% { opacity: 0.95; transform: translateY(-28%); }
   100% { opacity: 0; transform: translateY(-28%); }
 }
-.grp-shove { animation: grp-shove calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+.grp-shove { animation: grp-shove calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* Dragged in jerky, resisting steps toward the summons (vars --dx / --dy). */
 @keyframes grp-tug {
@@ -415,7 +415,7 @@
   90% { opacity: 0.95; transform: translate(var(--dx, 40%), var(--dy, 0%)); }
   100% { opacity: 0; transform: translate(var(--dx, 40%), var(--dy, 0%)); }
 }
-.grp-tug { animation: grp-tug calc(1s * var(--fx-dur, 1)) ease-in-out both; }
+.grp-tug { animation: grp-tug calc(1s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 /* --- Climax ----------------------------------------------------------------- */
 
@@ -425,7 +425,7 @@
   20% { opacity: 1; transform: scale(1.1); }
   100% { opacity: 0; transform: scale(1.55); }
 }
-.grp-flash { animation: grp-flash calc(0.5s * var(--fx-dur, 1)) ease-out both; }
+.grp-flash { animation: grp-flash calc(0.5s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* THE shockwave ring (one per play in this band). */
 @keyframes grp-boom {
@@ -433,7 +433,7 @@
   18% { opacity: 1; transform: scale(0.55); }
   100% { opacity: 0; transform: scale(2.4); }
 }
-.grp-boom { animation: grp-boom calc(0.85s * var(--fx-dur, 1)) ease-out both; }
+.grp-boom { animation: grp-boom calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* A spark shard flying outward (vars --dx / --dy / --rot). */
 @keyframes grp-spark {
@@ -441,7 +441,7 @@
   22% { opacity: 1; }
   100% { opacity: 0; transform: translate(var(--dx, 0%), var(--dy, 0%)) scale(1) rotate(var(--rot, 0deg)); }
 }
-.grp-spark { animation: grp-spark calc(0.55s * var(--fx-dur, 1)) ease-out both; }
+.grp-spark { animation: grp-spark calc(0.55s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* A petal / mote drifting down and away (vars --dx / --dy). */
 @keyframes grp-drift {
@@ -449,7 +449,7 @@
   24% { opacity: 1; }
   100% { opacity: 0; transform: translate(var(--dx, 10%), var(--dy, 160%)) rotate(var(--rot, 120deg)); }
 }
-.grp-drift { animation: grp-drift calc(0.9s * var(--fx-dur, 1)) ease-in both; }
+.grp-drift { animation: grp-drift calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 1, 0.45) both; }
 
 /* --- Aftermath ---------------------------------------------------------------- */
 
@@ -459,7 +459,7 @@
   40% { opacity: 1; transform: scale(1) rotate(22deg); }
   100% { opacity: 0; transform: scale(0.5) rotate(45deg); }
 }
-.grp-glint { animation: grp-glint calc(0.55s * var(--fx-dur, 1)) ease-out both; }
+.grp-glint { animation: grp-glint calc(0.55s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* The settle afterglow: soft light left where the strike landed, holding a
    beat before it decays (flagship pass: ~0.3s longer tail). */
@@ -469,7 +469,7 @@
   62% { opacity: 0.35; transform: scale(1.08); }
   100% { opacity: 0; transform: scale(1.2); }
 }
-.grp-afterglow { animation: grp-afterglow calc(1.05s * var(--fx-dur, 1)) ease-out both; }
+.grp-afterglow { animation: grp-afterglow calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* A settle mote decaying away — dust sinks, embers climb (sign of --dy). */
 @keyframes grp-settle {
@@ -477,7 +477,7 @@
   22% { opacity: 0.9; }
   100% { opacity: 0; transform: translate(var(--dx, 20%), var(--dy, 140%)) scale(1) rotate(var(--rot, 90deg)); }
 }
-.grp-settle { animation: grp-settle calc(1.05s * var(--fx-dur, 1)) ease-in both; }
+.grp-settle { animation: grp-settle calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 1, 0.45) both; }
 
 /* === FLAGSHIP ESCALATION BAND (tier-6 accents + signature beats) =============
    Same discipline as everything above: transform/opacity only, one-shot
@@ -492,7 +492,7 @@
   64% { opacity: 0.55; }
   100% { opacity: 0; transform: scale(1.02); }
 }
-.grp-edgeglow { animation: grp-edgeglow calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+.grp-edgeglow { animation: grp-edgeglow calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* A spark / chunk thrown UP with hang-time: fast climb, a stall at apex,
    then the drop (vars --dx / --dy set the apex). */
@@ -530,7 +530,7 @@
   16% { opacity: 0.95; }
   100% { opacity: 0; transform: scale(1.8); }
 }
-.grp-tring { animation: grp-tring calc(0.5s * var(--fx-dur, 1)) ease-out both; }
+.grp-tring { animation: grp-tring calc(0.5s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- Animations off (Settings) -----------------------------------------------
    Mirror effects.css / godPlays.css: the plays are pure flourish; the

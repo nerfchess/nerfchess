@@ -1389,7 +1389,7 @@ export const WILD_ELEMENTAL: Buff[] = [
       name: "Ball Lightning",
       description:
         "Your next 2 captures each also destroy the enemy pieces (never a king) on the two squares immediately left and right of the captured square.",
-      tier: 4,
+      tier: 5,
       category: "attack",
       flavor: "It rolls sideways.",
       fx: { motif: "empower", pieces: "all", self: true },

@@ -258,15 +258,12 @@ export default function CommunityPage() {
 
       <section className="mx-auto max-w-5xl px-5 py-6 sm:px-6 sm:py-8">
         <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <span>The hall</span>
-            <h1 className="mt-1 font-display text-4xl sm:text-5xl">Community</h1>
-          </div>
+          <h1 className="page-title">Community</h1>
           {/* One status pill, same border-chip treatment the lobby uses. */}
           <span
             role="status"
             aria-live="polite"
-            className="flex items-center gap-2 border border-[color:var(--edge)] bg-white/[0.03] px-3 py-1.5 text-xs text-parchment-300"
+            className="flex items-center gap-2 border border-[color:var(--edge)] bg-[color:var(--bg-zebra)] px-3 py-1.5 text-xs text-parchment-300"
           >
             <span
               aria-hidden
@@ -515,7 +512,7 @@ export default function CommunityPage() {
 
 const SECTION_TINTS = {
   mint: "border-mint/30 bg-mint/10 text-mint-glow",
-  sun: "border-sun/30 bg-sun/10 text-sun-glow",
+  sun: "border-sun/30 bg-sun/10 text-brag",
   coral: "border-coral/30 bg-coral/10 text-coral-glow",
 } as const;
 

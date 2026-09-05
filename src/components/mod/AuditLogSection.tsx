@@ -76,14 +76,14 @@ export function AuditLogSection() {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Filter by name or note…"
-          className="plate w-full bg-transparent px-3 py-2 text-sm outline-none focus:border-gold/40 sm:ml-auto sm:max-w-xs sm:py-1.5"
+          className="plate w-full bg-transparent px-3 py-2 text-sm outline-none focus:border-[color:var(--edge-strong)] sm:ml-auto sm:max-w-xs sm:py-1.5"
         />
       </div>
 
       {rows.length === 0 ? (
         <Empty>Nothing matches that filter.</Empty>
       ) : (
-        <div className="plate divide-y divide-white/5">
+        <div className="plate divide-y divide-[color:var(--edge)]">
           {rows.map((entry, i) => (
             <div key={i} className="flex flex-wrap items-baseline gap-x-2 gap-y-1 px-4 py-3 text-sm">
               <span className="font-display font-semibold">{entry.mod_name}</span>

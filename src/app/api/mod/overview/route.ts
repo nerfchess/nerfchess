@@ -188,15 +188,17 @@ export async function GET(request: Request) {
     }));
 
   // --- Card balance: pick and win rate, the top of each end ----------------
-  // Doubles as the balance dataset docs/improvement-roadmap.md asks for.
+  // Doubles as the balance dataset docs/improvement-roadmap.md asks for. The
+  // Buff-mode sentinel id 'none' (UNRESTRICTED_NERF) is excluded: it is not a
+  // card, and it used to sit at the top of the table with a 50% "win rate".
   const cardRows = await pgAll<{ card: string; picks: number; wins: number }>(
     `SELECT card, COUNT(*)::float8 AS picks, SUM(won)::float8 AS wins
      FROM (
        SELECT white_nerf_id AS card, CASE WHEN winner = 'w' THEN 1 ELSE 0 END AS won
-       FROM games WHERE completed_at >= ? AND white_nerf_id IS NOT NULL AND ${HUMAN_GAME_SQL}
+       FROM games WHERE completed_at >= ? AND white_nerf_id IS NOT NULL AND white_nerf_id <> 'none' AND ${HUMAN_GAME_SQL}
        UNION ALL
        SELECT black_nerf_id AS card, CASE WHEN winner = 'b' THEN 1 ELSE 0 END AS won
-       FROM games WHERE completed_at >= ? AND black_nerf_id IS NOT NULL AND ${HUMAN_GAME_SQL}
+       FROM games WHERE completed_at >= ? AND black_nerf_id IS NOT NULL AND black_nerf_id <> 'none' AND ${HUMAN_GAME_SQL}
      ) picks
      GROUP BY card`,
     [monthStart, monthStart],

@@ -20,6 +20,7 @@
 // bias but never flakes on seeded noise (the seeds are fixed).
 
 import { newBuffMatchState } from "../src/engine/buff";
+import { isRetired } from "../src/engine/retired";
 import type { DraftMode } from "../src/engine/buff";
 import { rollOffer, rerollOffer, rollOpenerOffers, openerPool, COMBO_TAGS, NERF_REVEAL } from "../src/engine/draft";
 import { ALL_BUFFS, BUFF_BY_ID } from "../src/engine/buffs/library";
@@ -44,6 +45,8 @@ function check(ok: boolean, label: string) {
 // Mirror of draft.ts inMode eligibility for a fresh player (no held cards, no
 // combo tags, nerf active, no board threaded so requires-guard is skipped).
 function eligible(mode: DraftMode, b: Buff): boolean {
+  // Retired cards left every pool (src/engine/retired.ts).
+  if (isRetired(b.id)) return false;
   if (b.special || b.tier === 9 || b.tier === 10) return false;
   if (b.opener) return false; // openers are dealt only by the opening pick
   if (!b.implemented) return false;

@@ -158,19 +158,19 @@ export default function TournamentDetailPage() {
                     Tournaments
                   </Link>
                 </div>
-                <h1 className="mt-1 break-words font-display text-3xl text-parchment-50 sm:text-5xl">{t.name}</h1>
+                <h1 className="mt-1 break-words page-title">{t.name}</h1>
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   <ModeTag mode={t.mode} />
-                  <span className="border border-white/15 px-2 py-0.5 font-mono text-xs text-parchment-200">
+                  <span className="border border-[color:var(--edge)] px-2 py-0.5 font-mono text-xs text-parchment-200">
                     {clockLabel(t.clock_time_sec, t.clock_increment_sec)}
                   </span>
-                  <span className="border border-white/15 px-2 py-0.5 text-[11px] text-parchment-300">
+                  <span className="border border-[color:var(--edge)] px-2 py-0.5 text-[11px] text-parchment-300">
                     {formatLabel(t.format)}
                   </span>
                   <span
                     className={
                       "border px-2 py-0.5 text-[11px] " +
-                      (t.rated ? "border-gold/40 text-gold-leaf" : "border-white/15 text-parchment-400")
+                      (t.rated ? "border-[color:var(--edge-strong)] text-gold-leaf" : "border-[color:var(--edge)] text-parchment-400")
                     }
                   >
                     {t.rated ? "Rated" : "Casual"}
@@ -178,7 +178,7 @@ export default function TournamentDetailPage() {
                   {t.club_name && t.club_id && (
                     <Link
                       href={`/clubs`}
-                      className="border border-white/15 px-2 py-0.5 text-[11px] text-parchment-300 hover:text-gold-leaf"
+                      className="border border-[color:var(--edge)] px-2 py-0.5 text-[11px] text-parchment-300 hover:text-gold-leaf"
                     >
                       {t.club_name}
                     </Link>
@@ -256,7 +256,7 @@ export default function TournamentDetailPage() {
                 )}
 
                 <div className="plate overflow-hidden">
-                  <div className="flex items-center justify-between gap-2 border-b border-white/10 px-5 py-3">
+                  <div className="flex items-center justify-between gap-2 border-b border-[color:var(--edge)] px-5 py-3">
                     <span className="text-[11px] text-parchment-400">Standings</span>
                     <span className="flex items-center gap-1.5 text-[11px] text-parchment-500">
                       <Users size={12} /> {standings.length}/{t.max_players}
@@ -270,7 +270,7 @@ export default function TournamentDetailPage() {
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead>
-                          <tr className="border-b border-white/10 text-left text-[11px] text-parchment-500">
+                          <tr className="border-b border-[color:var(--edge)] text-left text-[11px] text-parchment-500">
                             <th scope="col" className="px-3 py-2 text-right font-medium">
                               #
                             </th>
@@ -288,12 +288,12 @@ export default function TournamentDetailPage() {
                             </th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-white/5">
+                        <tbody className="divide-y divide-[color:var(--edge)]">
                           {standings.map((s, i) => {
                             const isMe = me?.id === s.user_id;
                             const isCreator = s.user_id === t.creator_user_id;
                             return (
-                              <tr key={s.user_id} className={isMe ? "bg-gold/10" : "transition-colors hover:bg-white/5"}>
+                              <tr key={s.user_id} className={isMe ? "bg-[color:var(--bg-raised)]" : "transition-colors hover:bg-[color:var(--bg-raised)]"}>
                                 <td className="px-3 py-2 text-right font-mono text-xs text-parchment-500">{i + 1}</td>
                                 <td className="px-2 py-2">
                                   <div className="flex items-center gap-2.5">
@@ -325,7 +325,7 @@ export default function TournamentDetailPage() {
                       </table>
                     </div>
                   )}
-                  <p className="border-t border-white/10 px-5 py-2.5 text-[11px] text-parchment-500">
+                  <p className="border-t border-[color:var(--edge)] px-5 py-2.5 text-[11px] text-parchment-500">
                     Swiss pairing by score, then rating. Win 1 point, draw 0.5, bye 1. Rounds pair
                     automatically while the event runs.
                   </p>
@@ -335,10 +335,10 @@ export default function TournamentDetailPage() {
               {/* Info sidebar */}
               <aside className="space-y-4">
                 <div className="plate overflow-hidden">
-                  <div className="border-b border-white/10 px-5 py-3 text-[11px] text-parchment-400">
+                  <div className="border-b border-[color:var(--edge)] px-5 py-3 text-[11px] text-parchment-400">
                     Details
                   </div>
-                  <dl className="divide-y divide-white/5">
+                  <dl className="divide-y divide-[color:var(--edge)]">
                     <InfoRow label="Time control" value={clockLabel(t.clock_time_sec, t.clock_increment_sec)} mono />
                     <InfoRow label="Mode" value={modeLabel(t.mode)} />
                     <InfoRow label="Rated" value={t.rated ? "Yes" : "Casual"} />
@@ -469,7 +469,7 @@ function Rounds({
 
   return (
     <div className="plate overflow-hidden">
-      <div className="flex items-center justify-between gap-2 border-b border-white/10 px-5 py-3">
+      <div className="flex items-center justify-between gap-2 border-b border-[color:var(--edge)] px-5 py-3">
         <span className="flex items-center gap-1.5 text-[11px] text-parchment-400">
           <Swords size={12} /> Pairings
         </span>
@@ -480,16 +480,16 @@ function Rounds({
       </div>
       {byRound.map(([round, games]) => (
         <div key={round}>
-          <div className="border-b border-white/10 bg-white/[0.02] px-5 py-2 text-[11px] text-parchment-500">
+          <div className="border-b border-[color:var(--edge)] bg-[color:var(--bg-zebra)] px-5 py-2 text-[11px] text-parchment-500">
             Round {round}
           </div>
-          <ul className="divide-y divide-white/5">
+          <ul className="divide-y divide-[color:var(--edge)]">
             {games.map((g) => {
               const mine = meId != null && (g.white_user_id === meId || g.black_user_id === meId);
               return (
                 <li
                   key={`${round}-${g.board}`}
-                  className={"flex items-center gap-3 px-5 py-2.5 " + (mine ? "bg-gold/10" : "")}
+                  className={"flex items-center gap-3 px-5 py-2.5 " + (mine ? "bg-[color:var(--bg-raised)]" : "")}
                 >
                   {g.black_user_id == null ? (
                     <span className="min-w-0 flex-1 truncate text-sm text-parchment-300">
@@ -523,14 +523,14 @@ function ResultBadge({ result }: { result: string | null }) {
     result == null
       ? ["In play", "border-verdigris/40 text-verdigris-glow"]
       : result === "w"
-        ? ["1-0", "border-white/15 text-parchment-100"]
+        ? ["1-0", "border-[color:var(--edge)] text-parchment-100"]
         : result === "b"
-          ? ["0-1", "border-white/15 text-parchment-100"]
+          ? ["0-1", "border-[color:var(--edge)] text-parchment-100"]
           : result === "draw"
-            ? ["1/2-1/2", "border-white/15 text-parchment-300"]
+            ? ["1/2-1/2", "border-[color:var(--edge)] text-parchment-300"]
             : result === "bye"
-              ? ["+1", "border-gold/40 text-gold-leaf"]
-              : ["Void", "border-white/15 text-parchment-500"];
+              ? ["+1", "border-[color:var(--edge-strong)] text-gold-leaf"]
+              : ["Void", "border-[color:var(--edge)] text-parchment-500"];
   return (
     <span className={"shrink-0 border px-1.5 py-0.5 font-mono text-[11px] " + cls}>{label}</span>
   );

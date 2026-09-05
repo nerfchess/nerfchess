@@ -38,14 +38,14 @@
   26% { opacity: 0.95; transform: scale(1.12); }
   100% { opacity: 0; transform: scale(1.35); }
 }
-.prk-spot-hit { animation: prk-spot-hit calc(0.6s * var(--fx-dur, 1)) ease-out both; }
+.prk-spot-hit { animation: prk-spot-hit calc(0.6s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes prk-spot-drift {
   0% { opacity: 0; transform: translateY(0) scale(0.6); }
   30% { opacity: 0.7; transform: translateY(calc(var(--fx-side, 1) * 8%)) scale(1); }
   100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 34%)) scale(1.5); }
 }
-.prk-spot-drift { animation: prk-spot-drift calc(1.25s * var(--fx-dur, 1)) ease-out both; }
+.prk-spot-drift { animation: prk-spot-drift calc(1.25s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* Chain Letter's forwarded envelope. --prk-run is how far out this link of the
    chain lands and --fx-len scales it by the play's actual spread in cells, so
@@ -76,7 +76,7 @@
   40% { opacity: 0.7; transform: scale(1); }
   100% { opacity: 0; transform: scale(1.34); }
 }
-.prk-arrive-ring { animation: prk-arrive-ring calc(0.78s * var(--fx-dur, 1)) ease-out both; }
+.prk-arrive-ring { animation: prk-arrive-ring calc(0.78s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes prk-arrive {
   0% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 32%)) scale(0.62); }
@@ -94,7 +94,7 @@
   70% { opacity: 0.5; transform: scale(1); }
   100% { opacity: 0; transform: scale(1.02); }
 }
-.prk-wash { animation: prk-wash calc(1.3s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.prk-wash { animation: prk-wash calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 @keyframes prk-boom {
   0% { opacity: 0; transform: scale(0.05); }
@@ -120,7 +120,7 @@
   25% { opacity: 1; transform: translateY(0) scale(1); }
   100% { opacity: 0; transform: translateY(-120%) scale(1.05); }
 }
-.prk-rise { animation: prk-rise calc(1.05s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.prk-rise { animation: prk-rise calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 @keyframes prk-linger {
   0% { opacity: 0; }
@@ -128,7 +128,7 @@
   84% { opacity: 1; }
   100% { opacity: 0; }
 }
-.prk-linger { animation: prk-linger calc(2.4s * var(--fx-dur, 1)) ease-out both; }
+.prk-linger { animation: prk-linger calc(2.4s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes prk-star {
   0% { opacity: 0; transform: scale(0.1) rotate(0deg); }
@@ -136,7 +136,7 @@
   55% { transform: scale(0.95) rotate(24deg); }
   100% { opacity: 0; transform: scale(1.3) rotate(32deg); }
 }
-.prk-star { animation: prk-star calc(0.75s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.prk-star { animation: prk-star calc(0.75s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 /* Window / modal bounce-in from above. */
 @keyframes prk-window {
@@ -164,7 +164,7 @@
   88% { opacity: 1; }
   100% { opacity: 0; transform: translateY(140%); }
 }
-.prk-scan { animation: prk-scan calc(1.2s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 50% 50%; }
+.prk-scan { animation: prk-scan calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; transform-origin: 50% 50%; }
 
 /* Slow gear / spinner rotation. */
 @keyframes prk-spin {
@@ -200,7 +200,7 @@
   86% { opacity: 1; transform: translateX(0); }
   100% { opacity: 0; transform: translateX(0); }
 }
-.prk-glitch { animation: prk-glitch calc(2.6s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.prk-glitch { animation: prk-glitch calc(2.6s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 /* Envelope / prop drop from above with a squash. */
 @keyframes prk-drop {
@@ -284,7 +284,7 @@
   30% { opacity: 0.85; transform: translate(var(--prk-x, 0), var(--prk-y, -30%)) scale(1); }
   100% { opacity: 0; transform: translate(calc(var(--prk-x, 0) * 1.8), calc(var(--prk-y, -30%) * 1.7)) scale(1.5); }
 }
-.prk-puff { animation: prk-puff calc(0.85s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.prk-puff { animation: prk-puff calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 
 /* --- escalation beats (one per pr_* card) ------------------------------------ */
@@ -296,7 +296,7 @@
   80% { opacity: 1; transform: translateY(0); }
   100% { opacity: 0; transform: translateY(0); }
 }
-.prk-tick { animation: prk-tick calc(0.45s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.prk-tick { animation: prk-tick calc(0.45s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 /* ...and the one that STALLS at 99%: pops in, then blinks anxiously. */
 @keyframes prk-stall {
@@ -310,7 +310,7 @@
   84% { opacity: 1; transform: scale(1); }
   100% { opacity: 0; transform: scale(1); }
 }
-.prk-stall { animation: prk-stall calc(1.5s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.prk-stall { animation: prk-stall calc(1.5s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 /* Progress fill that sprints most of the way and then STALLS just short. */
 @keyframes prk-fill-stall {
@@ -362,7 +362,7 @@
   60% { opacity: 0; transform: scale(0.7); }
   100% { opacity: 0; transform: scale(0.7); }
 }
-.prk-swap-out { animation: prk-swap-out calc(1.6s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.prk-swap-out { animation: prk-swap-out calc(1.6s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 /* ...and in, with a squashy pop. */
 @keyframes prk-swap-in {
   0% { opacity: 0; transform: scale(1.6); }

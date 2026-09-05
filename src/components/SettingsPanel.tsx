@@ -12,8 +12,11 @@ import {
   CUSTOM_BG_DATA_MAX,
   CUSTOM_BG_URL_MAX,
   DEFAULT_SETTINGS,
+  PIECE_COLORS,
   PIECE_THEMES,
+  PieceColor,
   PieceTheme,
+  pieceLook,
   SITE_THEMES,
   SiteTheme,
   applyUiPrefs,
@@ -156,6 +159,8 @@ export function SettingsPanel({ open, onClose, liveGame }: Props) {
         return <BoardThemePicker settings={settings} onChange={update} />;
       case "pieceTheme":
         return <PieceThemePicker settings={settings} onChange={update} />;
+      case "pieceColor":
+        return <PieceColorPicker settings={settings} onChange={update} />;
       case "reset":
         return (
           <GhostButton
@@ -175,6 +180,7 @@ export function SettingsPanel({ open, onClose, liveGame }: Props) {
   const isStacked = (control: Control) =>
     control.kind === "boardTheme" ||
     control.kind === "pieceTheme" ||
+    control.kind === "pieceColor" ||
     control.kind === "siteTheme" ||
     control.kind === "account" ||
     control.kind === "customBg";
@@ -188,7 +194,7 @@ export function SettingsPanel({ open, onClose, liveGame }: Props) {
   // top of the settings pane, intercepting clicks meant for it.
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto overscroll-contain bg-black/70 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto overscroll-contain bg-black/70 p-4"
       onPointerDown={chrome.onBackdropPointerDown}
     >
       <div
@@ -325,8 +331,8 @@ function SelectedGem() {
  *  selected, a firmer edge on hover otherwise. */
 const pickerCardClass = (selected: boolean) =>
   selected
-    ? "border-gold/80 bg-gold/10 shadow-[0_0_16px_-8px_rgb(var(--accent-hi-rgb)/0.55)]"
-    : "border-[color:var(--edge)] hover:border-[color:var(--edge-strong)] hover:bg-white/[0.03]";
+    ? "border-[color:var(--edge-strong)] bg-[color:var(--bg-raised)] shadow-[0_0_16px_-8px_rgb(var(--accent-hi-rgb)/0.55)]"
+    : "border-[color:var(--edge)] hover:border-[color:var(--edge-strong)] hover:bg-[color:var(--bg-raised)]";
 
 /** Site theme picker: three cards, dark / light / system. Each shows the page
  *  background, a panel chip and the accent, so the choice previews at a glance
@@ -414,7 +420,7 @@ function SiteThemePicker({
             }}
             aria-pressed={selected}
             className={
-              "group press relative overflow-hidden rounded-[1px] border text-left transition-colors " +
+              "group press relative overflow-hidden rounded-none border text-left transition-colors " +
               pickerCardClass(selected)
             }
           >
@@ -426,7 +432,7 @@ function SiteThemePicker({
               aria-hidden
             >
               <span
-                className="absolute left-2 top-2 h-5 w-9 rounded-[2px] border border-white/10"
+                className="absolute left-2 top-2 h-5 w-9 rounded-none border border-[color:var(--edge)]"
                 style={{ background: t.swatch.panel }}
               />
               <span
@@ -502,7 +508,7 @@ function CustomBackgroundControl({
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap items-center gap-2">
-        <label className="btn-ghost press relative min-h-[36px] cursor-pointer rounded-[1px] px-3 py-1.5 font-display text-[13px]">
+        <label className="btn-ghost press relative min-h-[36px] cursor-pointer rounded-none px-3 py-1.5 font-display text-[13px]">
           {uploading ? "Reading…" : data ? "Replace image" : "Upload image"}
           <input
             type="file"
@@ -520,7 +526,7 @@ function CustomBackgroundControl({
           <>
             <span
               aria-hidden
-              className="h-8 w-12 shrink-0 rounded-[2px] border border-[color:var(--edge-strong)] bg-cover bg-center"
+              className="h-8 w-12 shrink-0 rounded-none border border-[color:var(--edge-strong)] bg-cover bg-center"
               style={{ backgroundImage: `url("${data}")` }}
             />
             <GhostButton label="Remove" onClick={() => onApply({ customBgData: "" })} />
@@ -547,7 +553,7 @@ function CustomBackgroundControl({
               apply();
             }
           }}
-          className="input-rune min-h-[36px] w-full min-w-0 flex-1 basis-40 rounded-[1px] px-3 py-1.5 text-[13px]"
+          className="input-rune min-h-[36px] w-full min-w-0 flex-1 basis-40 rounded-none px-3 py-1.5 text-[13px]"
         />
         <GhostButton label="Apply" onClick={apply} />
         {url && (
@@ -603,7 +609,7 @@ function PickerDisclosure({
         type="button"
         aria-expanded={expanded}
         onClick={() => setExpanded((v) => !v)}
-        className="press flex min-h-[44px] w-full items-center gap-2.5 rounded-[1px] border border-[color:var(--edge)] p-2 text-left transition-colors hover:border-[color:var(--edge-strong)] hover:bg-white/[0.03]"
+        className="flex min-h-[44px] w-full items-center gap-2.5 rounded-none border border-[color:var(--edge)] p-2 text-left transition-colors hover:border-[color:var(--edge-strong)] hover:bg-[color:var(--bg-raised)]"
       >
         {swatch}
         <span className="min-w-0 flex-1">
@@ -639,7 +645,7 @@ function BoardThemePicker({
       prompt="Choose board theme"
       selectedName={current.label}
       swatch={
-        <span aria-hidden className="grid h-7 w-7 shrink-0 grid-cols-2 grid-rows-2 overflow-hidden rounded-sm">
+        <span aria-hidden className="grid h-7 w-7 shrink-0 grid-cols-2 grid-rows-2 overflow-hidden rounded-none">
           <span style={{ background: current.light }} />
           <span style={{ background: current.dark }} />
           <span style={{ background: current.dark }} />
@@ -657,12 +663,12 @@ function BoardThemePicker({
               onClick={() => onChange({ boardTheme: k })}
               aria-pressed={selected}
               className={
-                "press relative flex min-h-[44px] items-center gap-2.5 rounded-[1px] border p-2 transition-colors " +
+                "relative flex min-h-[44px] items-center gap-2.5 rounded-none border p-2 transition-colors " +
                 pickerCardClass(selected)
               }
             >
               {selected && <SelectedGem />}
-              <span className="grid h-7 w-7 shrink-0 grid-cols-2 grid-rows-2 overflow-hidden rounded-sm">
+              <span className="grid h-7 w-7 shrink-0 grid-cols-2 grid-rows-2 overflow-hidden rounded-none">
                 <span style={{ background: t.light }} />
                 <span style={{ background: t.dark }} />
                 <span style={{ background: t.dark }} />
@@ -677,7 +683,54 @@ function BoardThemePicker({
   );
 }
 
-/** The piece-set swatch grid, a live control that spans a full row. */
+/** A knight pair in a set of fills: the shared preview swatch for the design
+ *  and colour pickers. Asset sets draw their own SVG, the inline design draws
+ *  <Piece> with the fills pushed in as variables. */
+function PiecePairSwatch({
+  look,
+  both = true,
+}: {
+  look: { wFill: string; wStroke: string; bFill: string; bStroke: string; assetSet?: string };
+  both?: boolean;
+}) {
+  return (
+    <span
+      aria-hidden
+      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-none bg-ink-700"
+      style={
+        {
+          "--piece-w-fill": look.wFill,
+          "--piece-w-stroke": look.wStroke,
+          "--piece-b-fill": look.bFill,
+          "--piece-b-stroke": look.bStroke,
+        } as CSSProperties
+      }
+    >
+      {look.assetSet ? (
+        <>
+          <span
+            className="h-4 w-4 bg-contain bg-center bg-no-repeat"
+            style={{ backgroundImage: `url("/piece/lichess/${look.assetSet}/wN.svg")` }}
+          />
+          {both && (
+            <span
+              className="-ml-1 h-4 w-4 bg-contain bg-center bg-no-repeat"
+              style={{ backgroundImage: `url("/piece/lichess/${look.assetSet}/bN.svg")` }}
+            />
+          )}
+        </>
+      ) : (
+        <>
+          <Piece type="n" color="w" size={16} />
+          {both && <Piece type="n" color="b" size={16} className="-ml-1" />}
+        </>
+      )}
+    </span>
+  );
+}
+
+/** The piece DESIGN grid: the site's own set plus the Lichess sets. Colour is
+ *  the separate picker below. */
 function PieceThemePicker({
   settings,
   onChange,
@@ -689,31 +742,9 @@ function PieceThemePicker({
   const current = PIECE_THEMES[value] ?? PIECE_THEMES.lichessCburnett;
   return (
     <PickerDisclosure
-      prompt="Choose piece set"
+      prompt="Choose piece design"
       selectedName={current.label}
-      swatch={
-        <span
-          aria-hidden
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-sm bg-ink-700"
-          style={
-            {
-              "--piece-w-fill": current.wFill,
-              "--piece-w-stroke": current.wStroke,
-              "--piece-b-fill": current.bFill,
-              "--piece-b-stroke": current.bStroke,
-            } as CSSProperties
-          }
-        >
-          {current.assetSet ? (
-            <span
-              className="h-4 w-4 bg-contain bg-center bg-no-repeat"
-              style={{ backgroundImage: `url("/piece/lichess/${current.assetSet}/wN.svg")` }}
-            />
-          ) : (
-            <Piece type="n" color="w" size={16} />
-          )}
-        </span>
-      }
+      swatch={<PiecePairSwatch look={pieceLook(value, settings.pieceColor)} both={false} />}
     >
       <div className="grid grid-cols-2 gap-2">
         {(Object.keys(PIECE_THEMES) as PieceTheme[]).map((k) => {
@@ -725,40 +756,62 @@ function PieceThemePicker({
               onClick={() => onChange({ pieceTheme: k })}
               aria-pressed={selected}
               className={
-                "press relative flex min-h-[44px] items-center gap-2.5 rounded-[1px] border p-2 transition-colors " +
+                "relative flex min-h-[44px] items-center gap-2.5 rounded-none border p-2 transition-colors " +
                 pickerCardClass(selected)
               }
             >
               {selected && <SelectedGem />}
-              <span
-                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-sm bg-ink-700"
-                style={
-                  {
-                    "--piece-w-fill": t.wFill,
-                    "--piece-w-stroke": t.wStroke,
-                    "--piece-b-fill": t.bFill,
-                    "--piece-b-stroke": t.bStroke,
-                  } as CSSProperties
-                }
-              >
-                {t.assetSet ? (
-                  <>
-                    <span
-                      className="h-4 w-4 bg-contain bg-center bg-no-repeat"
-                      style={{ backgroundImage: `url("/piece/lichess/${t.assetSet}/wN.svg")` }}
-                    />
-                    <span
-                      className="-ml-1 h-4 w-4 bg-contain bg-center bg-no-repeat"
-                      style={{ backgroundImage: `url("/piece/lichess/${t.assetSet}/bN.svg")` }}
-                    />
-                  </>
-                ) : (
-                  <>
-                    <Piece type="n" color="w" size={16} />
-                    <Piece type="n" color="b" size={16} className="-ml-1" />
-                  </>
-                )}
-              </span>
+              <PiecePairSwatch look={pieceLook(k, settings.pieceColor)} />
+              <span className="font-display text-[13px] text-parchment">{t.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </PickerDisclosure>
+  );
+}
+
+/** The piece COLOUR grid. It paints the inline design; a Lichess set is fixed
+ *  artwork, so while one is chosen the grid still shows the colours (they are
+ *  kept) but says plainly that they are not in effect. */
+function PieceColorPicker({
+  settings,
+  onChange,
+}: {
+  settings: Settings;
+  onChange: (patch: Partial<Settings>) => void;
+}) {
+  const value = settings.pieceColor;
+  const current = PIECE_COLORS[value] ?? PIECE_COLORS.classic;
+  const design = PIECE_THEMES[settings.pieceTheme] ?? PIECE_THEMES.lichessCburnett;
+  const inert = !!design.assetSet;
+  return (
+    <PickerDisclosure
+      prompt={inert ? `Not used by the ${design.label} set` : "Choose piece colour"}
+      selectedName={current.label}
+      swatch={<PiecePairSwatch look={current} />}
+    >
+      {inert && (
+        <p className="mb-2 text-[12px] leading-snug text-parchment-400">
+          The {design.label} set has its own colours. Pick the Nerf Chess design above to use these.
+        </p>
+      )}
+      <div className={"grid grid-cols-2 gap-2 " + (inert ? "opacity-60" : "")}>
+        {(Object.keys(PIECE_COLORS) as PieceColor[]).map((k) => {
+          const t = PIECE_COLORS[k];
+          const selected = value === k;
+          return (
+            <button
+              key={k}
+              onClick={() => onChange({ pieceColor: k })}
+              aria-pressed={selected}
+              className={
+                "relative flex min-h-[44px] items-center gap-2.5 rounded-none border p-2 transition-colors " +
+                pickerCardClass(selected)
+              }
+            >
+              {selected && <SelectedGem />}
+              <PiecePairSwatch look={t} />
               <span className="font-display text-[13px] text-parchment">{t.label}</span>
             </button>
           );
@@ -773,7 +826,7 @@ function PieceThemePicker({
 function AccountSettings() {
   return (
     <div className="space-y-2">
-      <div className="flex min-h-[44px] items-center justify-between gap-3 rounded-[1px] border border-[color:var(--edge)] bg-white/[0.02] p-2.5">
+      <div className="flex min-h-[44px] items-center justify-between gap-3 rounded-none border border-[color:var(--edge)] bg-[color:var(--bg-zebra)] p-2.5">
         <div className="min-w-0">
           <div className="text-[13px] font-medium text-parchment-100">Profile</div>
           <p className="text-[12px] text-parchment-400">Avatar, bio, and game history</p>
@@ -792,7 +845,7 @@ function AccountSettings() {
       ].map((item) => (
         <div
           key={item.label}
-          className="flex min-h-[44px] items-center justify-between gap-3 rounded-[1px] border border-[color:var(--edge)] bg-white/[0.01] p-2.5 opacity-70"
+          className="flex min-h-[44px] items-center justify-between gap-3 rounded-none border border-[color:var(--edge)] bg-transparent p-2.5 opacity-70"
         >
           <div className="text-[13px] font-medium text-parchment-300">{item.label}</div>
           <span

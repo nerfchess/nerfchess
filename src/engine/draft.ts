@@ -1,6 +1,7 @@
 import { Buff, BuffMatchState, BuffOffer, PlayerBuffState, isBoon } from "./buff";
 import { BUFF_BY_ID, BUFF_POOL_BY_TIER } from "./buffs/library";
 import { APEX_MYTHIC_CHANCE, TIER9, TIER10 } from "./buffs/tier9";
+import { isRetired } from "./retired";
 import { Tier } from "./nerf";
 import { RNG } from "./rng";
 import { BoardState, Color, PieceType } from "./types";
@@ -171,12 +172,14 @@ function overriddenTier(b: Buff): Tier {
  * leave every pool and a tier-overridden card moves to its new tier's pool.
  * With no snapshot installed this is exactly BUFF_POOL_BY_TIER[tier]. */
 function poolAtTier(tier: number): Buff[] {
-  const base = BUFF_POOL_BY_TIER[tier] ?? [];
+  // Retired cards (src/engine/retired.ts) leave every pool for good; they are
+  // still defined so archived games keep replaying.
+  const base = (BUFF_POOL_BY_TIER[tier] ?? []).filter((b) => !isRetired(b.id));
   const o = poolOverrides;
   if (!o) return base;
   const pool = base.filter((b) => !o.off.has(b.id) && overriddenTier(b) === tier);
   for (const [id, t] of o.tier) {
-    if (t !== tier || o.off.has(id)) continue;
+    if (t !== tier || o.off.has(id) || isRetired(id)) continue;
     const b = BUFF_BY_ID[id];
     if (b && b.implemented && b.tier !== tier) pool.push(b);
   }
@@ -527,7 +530,7 @@ export function rollOffer(
 
 /** The opener pool: implemented opener-flagged cards. */
 export function openerPool(): Buff[] {
-  return Object.values(BUFF_BY_ID).filter((b) => b.implemented && b.opener === true);
+  return Object.values(BUFF_BY_ID).filter((b) => b.implemented && b.opener === true && !isRetired(b.id));
 }
 
 /** Deal both players' opening offers (buff mode). Call once right after

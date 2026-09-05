@@ -19,6 +19,7 @@ import { DraftChest } from "./DraftChest";
 import { OpponentDraftPanel } from "./OpponentDraftPanel";
 import "./DraftOverlay.css";
 import { Button } from "@/components/ui/Button";
+import { GlossaryText } from "@/components/GlossaryText";
 
 interface Props {
   offer: BuffOffer;
@@ -2169,7 +2170,7 @@ function RevealColumn({ label, side }: { label: string; side: DraftRevealSide })
                 </span>
                 {/* What the card does: shown only for a revealed pick, so a
                     masked draft (below) never leaks its effect. */}
-                <span className="block text-[12px] leading-snug text-parchment-300">{def.description}</span>
+                <span className="hidden text-[12px] leading-snug text-parchment-300 sm:block"><GlossaryText text={def.description} /></span>
               </span>
             );
           }
@@ -2203,6 +2204,12 @@ export function DraftRevealBanner({
   onDismiss: () => void;
 }) {
   const reduceMotion = useReducedMotion();
+  // The banner explains itself in a glance; it leaves on its own after a few
+  // seconds so it never sits over the board on a phone.
+  useEffect(() => {
+    const t = window.setTimeout(onDismiss, 7000);
+    return () => window.clearTimeout(t);
+  }, [onDismiss]);
   return (
     <div className="pointer-events-none fixed inset-x-0 top-14 z-40 flex justify-center px-3">
       <motion.button

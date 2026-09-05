@@ -45,14 +45,14 @@
   26% { opacity: 0.95; transform: scale(1.14); }
   100% { opacity: 0; transform: scale(1.4); }
 }
-.fnp-spot-hit { animation: fnp-spot-hit calc(0.64s * var(--fx-dur, 1)) ease-out both; }
+.fnp-spot-hit { animation: fnp-spot-hit calc(0.64s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes fnp-spot-drift {
   0% { opacity: 0; transform: translateY(0) scale(0.6); }
   30% { opacity: 0.72; transform: translateY(calc(var(--fx-side, 1) * 8%)) scale(1); }
   100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 34%)) scale(1.5); }
 }
-.fnp-spot-drift { animation: fnp-spot-drift calc(1.35s * var(--fx-dur, 1)) ease-out both; }
+.fnp-spot-drift { animation: fnp-spot-drift calc(1.35s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- the entrance cut ------------------------------------------------------- */
 @keyframes fnp-arrive-ring {
@@ -60,7 +60,7 @@
   40% { opacity: 0.68; transform: scale(1); }
   100% { opacity: 0; transform: scale(1.34); }
 }
-.fnp-arrive-ring { animation: fnp-arrive-ring calc(0.8s * var(--fx-dur, 1)) ease-out both; }
+.fnp-arrive-ring { animation: fnp-arrive-ring calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes fnp-arrive {
   0% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 32%)) scale(0.62); }
@@ -76,7 +76,7 @@
   70% { opacity: 0.55; transform: scale(1); }
   100% { opacity: 0; transform: scale(1.02); }
 }
-.fnp-wash { animation: fnp-wash calc(1.2s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.fnp-wash { animation: fnp-wash calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 /* Closing shockwave ring. */
 @keyframes fnp-boom {
@@ -105,7 +105,7 @@
   25% { opacity: 1; transform: translateY(0) scale(1); }
   100% { opacity: 0; transform: translateY(-120%) scale(1.05); }
 }
-.fnp-rise { animation: fnp-rise calc(1s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.fnp-rise { animation: fnp-rise calc(1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 /* Cartoon bounce-in for windows / props, then a late fade. */
 @keyframes fnp-bounce-in {
@@ -147,7 +147,7 @@
   55% { transform: scale(0.95) rotate(24deg); }
   100% { opacity: 0; transform: scale(1.3) rotate(32deg); }
 }
-.fnp-star { animation: fnp-star calc(0.7s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.fnp-star { animation: fnp-star calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 /* Little dust puff after a slam. */
 @keyframes fnp-puff {
@@ -155,7 +155,7 @@
   30% { opacity: 0.85; transform: translate(var(--fnp-x, 0), var(--fnp-y, -30%)) scale(1); }
   100% { opacity: 0; transform: translate(calc(var(--fnp-x, 0) * 1.8), calc(var(--fnp-y, -30%) * 1.7)) scale(1.5); }
 }
-.fnp-puff { animation: fnp-puff calc(0.8s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.fnp-puff { animation: fnp-puff calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 /* Late fade-out for props that should linger, then leave. */
 @keyframes fnp-linger {
@@ -164,7 +164,7 @@
   84% { opacity: 1; }
   100% { opacity: 0; }
 }
-.fnp-linger { animation: fnp-linger calc(1.8s * var(--fx-dur, 1)) ease-out both; }
+.fnp-linger { animation: fnp-linger calc(1.8s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- keyboard / window skits (Alt+F4, Ctrl+Z, pop-ups, patches) ------------- */
 
@@ -199,7 +199,7 @@
   60% { transform: translateX(9%) rotate(4deg); }
   75% { transform: translateX(0) rotate(0); }
 }
-.fnp-deny { animation: fnp-deny calc(0.7s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 50% 50%; }
+.fnp-deny { animation: fnp-deny calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; transform-origin: 50% 50%; }
 
 /* Progress bar fill (scaleX from the left). */
 @keyframes fnp-fill {
@@ -216,7 +216,7 @@
   60% { opacity: 0; transform: scale(0.7); }
   100% { opacity: 0; transform: scale(0.7); }
 }
-.fnp-swap-out { animation: fnp-swap-out calc(1.6s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.fnp-swap-out { animation: fnp-swap-out calc(1.6s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 @keyframes fnp-swap-in {
   0% { opacity: 0; transform: scale(1.6); }
   55% { opacity: 0; transform: scale(1.6); }
@@ -299,7 +299,7 @@
   85% { opacity: 1; transform: translateY(0) scale(1); }
   100% { opacity: 0; transform: translateY(0) scale(1); }
 }
-.fnp-ghost-in { animation: fnp-ghost-in calc(1.1s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 100%; }
+.fnp-ghost-in { animation: fnp-ghost-in calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 100%; }
 
 /* --- bonk / slapstick --------------------------------------------------------- */
 
@@ -338,7 +338,7 @@
   75% { opacity: 0.9; transform: scale(1.25); }
   100% { opacity: 0; transform: scale(0.4); }
 }
-.fnp-wave-off { animation: fnp-wave-off calc(0.9s * var(--fx-dur, 1)) ease-in both; transform-origin: 0% 50%; }
+.fnp-wave-off { animation: fnp-wave-off calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 1, 0.45) both; transform-origin: 0% 50%; }
 
 /* Speaker sags, defeated. */
 @keyframes fnp-sag {
@@ -349,7 +349,7 @@
   90% { opacity: 1; transform: rotate(-8deg) translateY(3%); }
   100% { opacity: 0; transform: rotate(-8deg) translateY(3%); }
 }
-.fnp-sag { animation: fnp-sag calc(1.5s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 80%; }
+.fnp-sag { animation: fnp-sag calc(1.5s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 80%; }
 
 /* --- nature (touch grass) ------------------------------------------------------ */
 
@@ -371,7 +371,7 @@
   85% { opacity: 1; transform: translateY(0) rotate(26deg); }
   100% { opacity: 0; transform: translateY(0) rotate(30deg); }
 }
-.fnp-sunrise { animation: fnp-sunrise calc(1.5s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.fnp-sunrise { animation: fnp-sunrise calc(1.5s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 /* Butterfly flits across in a lazy sine. */
 @keyframes fnp-flit {
@@ -382,7 +382,7 @@
   85% { opacity: 1; transform: translate(90%, -10%) rotate(-6deg); }
   100% { opacity: 0; transform: translate(130%, 0%) rotate(0deg); }
 }
-.fnp-flit { animation: fnp-flit calc(1.6s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 50% 50%; }
+.fnp-flit { animation: fnp-flit calc(1.6s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; transform-origin: 50% 50%; }
 
 /* --- showbiz (main character) --------------------------------------------------- */
 
@@ -520,7 +520,7 @@
   60% { opacity: 1; transform: scale(1.35); }
   100% { opacity: 1; transform: scale(1); }
 }
-.fnp-bolt-pop { animation: fnp-bolt-pop calc(0.5s * var(--fx-dur, 1)) ease-out both; }
+.fnp-bolt-pop { animation: fnp-bolt-pop calc(0.5s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* The freshly opened wrap seams pulse on both edges. */
 @keyframes fnp-seam-glow {
@@ -529,7 +529,7 @@
   60% { opacity: 0.35; }
   100% { opacity: 0; }
 }
-.fnp-seam-glow { animation: fnp-seam-glow calc(1s * var(--fx-dur, 1)) ease-in-out both; }
+.fnp-seam-glow { animation: fnp-seam-glow calc(1s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 /* The rook glides right and dissolves at the right seam. */
 @keyframes fnp-rook-exit {
@@ -538,7 +538,7 @@
   70% { opacity: 1; transform: translateX(46%); }
   100% { opacity: 0; transform: translateX(64%) scale(0.9); }
 }
-.fnp-rook-exit { animation: fnp-rook-exit calc(0.9s * var(--fx-dur, 1)) ease-in both; transform-origin: 50% 50%; }
+.fnp-rook-exit { animation: fnp-rook-exit calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 1, 0.45) both; transform-origin: 50% 50%; }
 
 /* ...and re-materialises gliding in from the left seam. */
 @keyframes fnp-rook-enter {
@@ -558,7 +558,7 @@
   85% { opacity: 1; transform: translate(10px, 40px); }
   100% { opacity: 0; transform: translate(10px, 40px); }
 }
-.fnp-wrap-dot { animation: fnp-wrap-dot calc(0.9s * var(--fx-dur, 1)) ease-in-out both; }
+.fnp-wrap-dot { animation: fnp-wrap-dot calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 /* The APPROVED stamp thunks in. */
 @keyframes fnp-permit-thunk {
@@ -581,7 +581,7 @@
   82% { opacity: 1; transform: translate(-10%, 100%) rotate(12deg); }
   100% { opacity: 0; transform: translate(2%, 130%) rotate(0deg); }
 }
-.fnp-feather { animation: fnp-feather calc(1.5s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 50% 20%; }
+.fnp-feather { animation: fnp-feather calc(1.5s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; transform-origin: 50% 20%; }
 
 /* --- animations off (Settings) -----------------------------------------------
    Everything in this module is a transient one-shot flourish: hide the whole

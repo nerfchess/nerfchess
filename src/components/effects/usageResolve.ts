@@ -92,6 +92,7 @@ export const USAGE_FLAGSHIPS: Record<string, { family: UsageFamily; epithet: str
   ice_age: { family: "seal", epithet: "the world stills" },
   resurrection: { family: "bloom", epithet: "one returns" },
   second_coming: { family: "bloom", epithet: "the promised return" },
+  ilovewhimperingaudios: { family: "drain", epithet: "the fight leaves them" },
   iron_legion: { family: "stamp", epithet: "the foundries answer" },
   living_god: { family: "ignite", epithet: "worship is optional" },
   blackout: { family: "collapse", epithet: "the lights go out" },

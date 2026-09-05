@@ -43,6 +43,8 @@
 // wire from a newer server build); library cards never reach them.
 
 import type { LucideIcon } from "lucide-react";
+import { categoryGlyph } from "@/components/icons/cardGlyphs";
+import { CARD_GLYPH_CATEGORY, CURATED_ICON_IDS, GLYPH_CATEGORIES } from "./cardGlyphMap.gen";
 import {
   AlarmClock,
   Anchor,
@@ -321,6 +323,13 @@ export function cardFaceIcon(
   category: BuffCategory,
   icon?: string,
 ): LucideIcon | undefined {
+  // The category glyph set (components/icons/cardGlyphs): every card wears the
+  // mark of what it does, except the hand-picked tier 7+ faces, which keep
+  // their name-matched lucide icon.
+  if (!CURATED_ICON_IDS.has(id) && Object.hasOwn(CARD_GLYPH_CATEGORY, id)) {
+    const glyph = categoryGlyph(GLYPH_CATEGORIES[CARD_GLYPH_CATEGORY[id]]);
+    if (glyph) return glyph;
+  }
   const raw = Object.hasOwn(CARD_ICON_NAMES, id) ? CARD_ICON_NAMES[id] : undefined;
   // Overflow variants ("Name#2"): resolve the base component; the visual
   // variant is exposed separately via cardFaceVariant.

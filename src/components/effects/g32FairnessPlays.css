@@ -39,7 +39,7 @@
   70% { opacity: 0.5; transform: scale(1); }
   100% { opacity: 0; transform: scale(1.03); }
 }
-.g32-hall { animation: g32-hall calc(1.7s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.g32-hall { animation: g32-hall calc(1.7s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 /* The cordon round the board, leaning very slightly toward the cast square. */
 @keyframes g32-cordon {
@@ -48,7 +48,7 @@
   66% { opacity: 0.42; transform: translateX(0) scale(0.996); }
   100% { opacity: 0; transform: translateX(0) scale(1.01); }
 }
-.g32-cordon { animation: g32-cordon calc(1.6s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.g32-cordon { animation: g32-cordon calc(1.6s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 /* A ruled line across the whole board: a counter, a rank, a waterline. */
 @keyframes g32-rule {
@@ -57,7 +57,7 @@
   72% { opacity: 0.55; transform: scaleY(1); }
   100% { opacity: 0; transform: scaleY(0.8); }
 }
-.g32-rule { animation: g32-rule calc(1.6s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.g32-rule { animation: g32-rule calc(1.6s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 /* Settle chaff: torn stubs and dust, always drifting AWAY from the caster. */
 @keyframes g32-fall {
@@ -65,7 +65,7 @@
   24% { opacity: 0.8; transform: translateY(calc(var(--fx-side, 1) * -26%)) rotate(40deg) scale(1); }
   100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * -240%)) rotate(200deg) scale(1.1); }
 }
-.g32-fall { animation: g32-fall calc(1.3s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.g32-fall { animation: g32-fall calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 /* The tell: one short weight-taking squash before anything happens. */
 @keyframes g32-tell {
@@ -73,7 +73,7 @@
   42% { opacity: 0.9; transform: scale(1.1, 0.84); }
   100% { opacity: 0; transform: scale(1, 1); }
 }
-.g32-tell { animation: g32-tell calc(0.3s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.g32-tell { animation: g32-tell calc(0.3s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 /* The per-square hit: leans in from the caster's end of the board. */
 @keyframes g32-hit {
@@ -92,7 +92,7 @@
   34% { opacity: 0.95; transform: scale(1.05); }
   100% { opacity: 0; transform: scale(1.32); }
 }
-.g32-hit2 { animation: g32-hit2 calc(0.9s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.g32-hit2 { animation: g32-hit2 calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 /* Entrance cut: the card arriving in hand. Lands, holds, then eases away. */
 @keyframes g32-arrive {
@@ -111,7 +111,7 @@
   80% { opacity: 0.6; transform: scale(1); }
   100% { opacity: 0; transform: scale(1.08); }
 }
-.g32-arrive-soft { animation: g32-arrive-soft calc(1s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.g32-arrive-soft { animation: g32-arrive-soft calc(1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 /* =============================================================================
    1. Pandemonium Carnival - the raffle drum
@@ -154,7 +154,7 @@
   62% { opacity: 1; transform: translate(40%, calc(var(--fx-side, 1) * -70%)) rotate(24deg) scale(1); }
   100% { opacity: 0; transform: translate(80%, calc(var(--fx-side, 1) * -210%)) rotate(56deg) scale(0.94); }
 }
-.g32-rd-ticket { animation: g32-rd-ticket calc(1.3s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.g32-rd-ticket { animation: g32-rd-ticket calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 @keyframes g32-rd-bell {
   0% { opacity: 0; transform: rotate(-28deg) scale(0.7); }
@@ -308,7 +308,7 @@
   52% { transform: scale(0.9); }
   100% { opacity: 0; transform: scale(1); }
 }
-.g32-mt-tick { animation: g32-mt-tick calc(0.75s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.g32-mt-tick { animation: g32-mt-tick calc(0.75s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 @keyframes g32-mt-bell {
   0% { opacity: 0; transform: rotate(-22deg) scale(0.7); }
@@ -411,7 +411,7 @@
   78% { opacity: 0.75; transform: scaleY(1); }
   100% { opacity: 0; transform: scaleY(0.3); }
 }
-.g32-hg-stream { animation: g32-hg-stream calc(1.25s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 0%; }
+.g32-hg-stream { animation: g32-hg-stream calc(1.25s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 0%; }
 
 @keyframes g32-hg-pile {
   0% { opacity: 0; transform: scaleY(0.05) scaleX(0.4); }
@@ -419,7 +419,7 @@
   80% { opacity: 0.9; transform: scaleY(1) scaleX(1); }
   100% { opacity: 0; transform: scaleY(1) scaleX(1.04); }
 }
-.g32-hg-pile { animation: g32-hg-pile calc(1.2s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 100%; }
+.g32-hg-pile { animation: g32-hg-pile calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 100%; }
 
 @keyframes g32-hg-cup {
   0% { opacity: 0; transform: translateY(70%) scale(0.6); }
@@ -462,7 +462,7 @@
   78% { opacity: 0.8; transform: translate(-14%, 10%) scale(1); }
   100% { opacity: 0; transform: translate(0, 26%) scale(0.9); }
 }
-.g32-bs-stone { animation: g32-bs-stone calc(1.15s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 50% 50%; }
+.g32-bs-stone { animation: g32-bs-stone calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; transform-origin: 50% 50%; }
 
 /* One stone comes up out of the neck, toward whoever reached in. */
 @keyframes g32-bs-draw {
@@ -480,7 +480,7 @@
   32% { opacity: 0.85; transform: scale(1); }
   100% { opacity: 0; transform: scale(1.75); }
 }
-.g32-bs-show { animation: g32-bs-show calc(1.05s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.g32-bs-show { animation: g32-bs-show calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 /* =============================================================================
    8. Care Package - the capsule machine
@@ -503,7 +503,7 @@
   72% { transform: translate(-10%, 30%) scale(1); }
   100% { opacity: 0; transform: translate(6%, 70%) scale(0.9); }
 }
-.g32-cp-load { animation: g32-cp-load calc(1.25s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 50% 50%; }
+.g32-cp-load { animation: g32-cp-load calc(1.25s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; transform-origin: 50% 50%; }
 
 /* Wound by the hand nearest the caster, so it turns their way. */
 @keyframes g32-cp-crank {
@@ -625,7 +625,7 @@
   84% { opacity: 1; transform: translate(calc(var(--g32-mx, 100%) * 0.1), calc(var(--g32-my, -100%) * -0.3)) scale(1); }
   100% { opacity: 0; transform: translate(0, 0) scale(0.85); }
 }
-.g32-lb-ball { animation: g32-lb-ball calc(1.35s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 50% 50%; }
+.g32-lb-ball { animation: g32-lb-ball calc(1.35s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; transform-origin: 50% 50%; }
 
 @keyframes g32-lb-tube {
   0% { opacity: 0; transform: scaleY(0.05); }
@@ -667,7 +667,7 @@
   74% { transform: translate(-30%, 50%) scale(1); }
   100% { opacity: 0; transform: translate(10%, 20%) scale(0.85); }
 }
-.g32-bc-ball { animation: g32-bc-ball calc(1.3s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 50% 50%; }
+.g32-bc-ball { animation: g32-bc-ball calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; transform-origin: 50% 50%; }
 
 @keyframes g32-bc-chute {
   0% { opacity: 0; transform: rotate(-40deg) scaleX(0.3); }
@@ -736,7 +736,7 @@
   30% { opacity: 1; transform: translate(30%, calc(var(--fx-side, 1) * -30%)) rotate(20deg) scale(1); }
   100% { opacity: 0; transform: translate(120%, calc(var(--fx-side, 1) * -170%)) rotate(78deg) scale(0.9); }
 }
-.g32-fp-slip { animation: g32-fp-slip calc(1.15s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.g32-fp-slip { animation: g32-fp-slip calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 /* =============================================================================
    13. Dragon Egg - the sealed urn
@@ -786,7 +786,7 @@
   62% { opacity: 0.6; transform: scale(0.96); }
   100% { opacity: 0; transform: scale(1.2); }
 }
-.g32-su-glow { animation: g32-su-glow calc(1.15s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.g32-su-glow { animation: g32-su-glow calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 /* =============================================================================
    14. Glass Bridge - the peg board
@@ -862,7 +862,7 @@
   72% { transform: scaleX(1) skewX(calc(var(--fx-side, 1) * 3deg)); }
   100% { opacity: 0; transform: scaleX(1) skewX(0deg); }
 }
-.g32-tb-skirt { animation: g32-tb-skirt calc(1.3s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 50% 0%; }
+.g32-tb-skirt { animation: g32-tb-skirt calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; transform-origin: 50% 0%; }
 
 @keyframes g32-tb-arm {
   0% { opacity: 0; transform: translateY(-90%) scaleY(0.6); }
@@ -890,7 +890,7 @@
   84% { opacity: 0.6; transform: scaleX(1); }
   100% { opacity: 0; transform: scaleX(1.08); }
 }
-.g32-tb-line { animation: g32-tb-line calc(1.05s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.g32-tb-line { animation: g32-tb-line calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 /* =============================================================================
    16. Poltergeist - the bottom deal (AimStage; run scaled by --fx-len)
@@ -912,7 +912,7 @@
   58% { transform: translateY(-8%) scale(1); }
   100% { opacity: 0; transform: translateY(30%) scale(0.9); }
 }
-.g32-cs-finger { animation: g32-cs-finger calc(1.05s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.g32-cs-finger { animation: g32-cs-finger calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 /* The card that comes out of the bottom, all the way down the lane. */
 @keyframes g32-cs-under {
@@ -937,7 +937,7 @@
   34% { opacity: 0.85; transform: scaleX(1); }
   100% { opacity: 0; transform: scaleX(1.25); }
 }
-.g32-cs-skid { animation: g32-cs-skid calc(1s * var(--fx-dur, 1)) ease-out both; transform-origin: 0% 50%; }
+.g32-cs-skid { animation: g32-cs-skid calc(1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 0% 50%; }
 
 /* =============================================================================
    17. Honor Roll - the certified weight
@@ -1036,7 +1036,7 @@
   74% { opacity: 0.7; transform: translateX(calc(var(--fx-side, 1) * 18%)) scaleX(1); }
   100% { opacity: 0; transform: translateX(calc(var(--fx-side, 1) * 60%)) scaleX(1); }
 }
-.g32-ld-floor { animation: g32-ld-floor calc(1.1s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.g32-ld-floor { animation: g32-ld-floor calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 /* =============================================================================
    19. Roll Call - the ballot box
@@ -1131,7 +1131,7 @@
   34% { opacity: 1; transform: translateY(0) scale(1); }
   100% { opacity: 0; transform: translateY(60%) scale(0.85); }
 }
-.g32-sl-drip { animation: g32-sl-drip calc(0.95s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.g32-sl-drip { animation: g32-sl-drip calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 /* =============================================================================
    FLAGSHIP IMPACT WAVE: the cell-scale quake wrapper. The impact composite

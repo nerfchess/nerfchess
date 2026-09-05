@@ -12,7 +12,7 @@
  * host uses to build a VfxPlay (it supplies tier + resolved board points).
  */
 
-import type { VfxTravel, VfxImpact, VfxAftermath } from "./vfx/types";
+import type { VfxTravel, VfxImpact, VfxAftermath, Vfx3D } from "./vfx/types";
 // Category lookup for the tier 1-3 floor (bespoke low-tier cards carry no gen
 // family). The buff library is a pure engine module — no import back into any
 // component — so this static import cannot form a cycle; the BoardEffects
@@ -46,6 +46,9 @@ export interface CardVfx {
    * this (the tier 5-6 "great" band tops out at travel + impact + one
    * shockwave in its overlay art). */
   shake?: boolean;
+  /** Hand-tuned 3D treatment for the WebGL board layer (effects/board3d).
+   * Omitted = derived from travel/impact by deriveDepth; null opts out. */
+  depth?: Vfx3D | null;
 }
 
 // --- Bespoke specs, one per tier>=4 SIGNATURES card ---------------------------
@@ -62,34 +65,34 @@ export const CARD_VFX: Record<string, CardVfx> = {
   // scales particle density by tier, so tier 9/10 already draws the densest
   // impacts the engine can produce.
   // Whole army becomes amazons: a royal surge rolls out from the middle of your host.
-  ascendancy: { travel: "wave", impact: "burst", aftermath: "sparkle", palette: ["#b98cff", "#ffd76a", "#ffffff"], source: "center", shake: true },
+  ascendancy: { travel: "wave", impact: "burst", aftermath: "sparkle", palette: ["#b98cff", "#ffd76a", "#ffffff"], source: "center", shake: true , depth: { primitive: "ringWave", fallback: "none", durationMs: 1800 } },
   // A fresh army thunders down out of the sky onto your half.
-  grand_army: { travel: "rain", impact: "debris", aftermath: "sparkle", palette: ["#d8dee9", "#ffd76a", "#8a94a8"], source: "sky", shake: true },
+  grand_army: { travel: "rain", impact: "debris", aftermath: "sparkle", palette: ["#d8dee9", "#ffd76a", "#8a94a8"], source: "sky", shake: true , depth: { primitive: "pillar", height: 0.11, fallback: "none" } },
   // A wave of unmaking rolls out from your king and erases the enemy army.
-  oblivion: { travel: "wave", impact: "burst", aftermath: "smolder", palette: ["#7b3fbf", "#1a1030", "#e3d0ff"], source: "caster", shake: true },
+  oblivion: { travel: "wave", impact: "burst", aftermath: "smolder", palette: ["#7b3fbf", "#1a1030", "#e3d0ff"], source: "caster", shake: true , depth: { primitive: "shatter", fallback: "none" } },
   // Firebombs rain across the enemy lines while your relief force lands.
-  total_war: { travel: "rain", impact: "debris", aftermath: "scorch", palette: ["#e6432c", "#ff9d3d", "#3a1c12"], source: "sky", shake: true },
+  total_war: { travel: "rain", impact: "debris", aftermath: "scorch", palette: ["#e6432c", "#ff9d3d", "#3a1c12"], source: "sky", shake: true , depth: { primitive: "shatter", fallback: "none" } },
 
   // ---- Tier 9 ----
   // The lights go out: darkness pours down over the whole enemy board. Eerie — and now
   // the dark HANGS there (apex aftermath: nothing in this band ends quietly).
-  blackout: { travel: "wave", impact: "shock", aftermath: "smolder", palette: ["#141322", "#3a3766", "#0a0a12"], source: "sky", shake: true },
+  blackout: { travel: "wave", impact: "shock", aftermath: "smolder", palette: ["#141322", "#3a3766", "#0a0a12"], source: "sky", shake: true , depth: { primitive: "ringWave", fallback: "none", durationMs: 2000 } },
   // Quiet holy coronation on your own king.
   divine_right: { travel: "bolt", impact: "burst", aftermath: "sparkle", palette: ["#ffd76a", "#fff7de", "#b98cff"], source: "sky", shake: true },
   // A glacial front sweeps the whole board and locks the enemy solid.
-  ice_age: { travel: "wave", impact: "shatter", aftermath: "frost", palette: ["#9fd8ff", "#e8f8ff", "#3f7fb5"], source: "center", shake: true },
+  ice_age: { travel: "wave", impact: "shatter", aftermath: "frost", palette: ["#9fd8ff", "#e8f8ff", "#3f7fb5"], source: "center", shake: true , depth: { primitive: "pillar", height: 0.12, fallback: "none" } },
   // Heavy reinforcements slam down into your half.
   iron_legion: { travel: "rain", impact: "debris", aftermath: "sparkle", palette: ["#aab6c8", "#e3e9f2", "#ffd76a"], source: "sky", shake: true },
   // A god descends: a golden shaft splits the sky and slams into the chosen
   // piece's square, divine light everywhere (owner: "effects should be way
   // cooler" — this is the apex empowerment, it thumps).
-  living_god: { travel: "bolt", impact: "burst", aftermath: "sparkle", palette: ["#ffd76a", "#fff7de", "#ffffff"], source: "sky", shake: true },
+  living_god: { travel: "bolt", impact: "burst", aftermath: "sparkle", palette: ["#ffd76a", "#fff7de", "#ffffff"], source: "sky", shake: true , depth: { primitive: "pillar", height: 0.14, fallback: "none" } },
   // A stone-grey wave rolls over the enemy court and hardens it.
   mass_petrify: { travel: "wave", impact: "debris", aftermath: "smolder", palette: ["#8d8d94", "#c9c9cf", "#4c4c53"], source: "center", shake: true },
   // Your queen streaks across the board to the enemy king; frost locks the court behind her.
-  regicide: { travel: "bolt", impact: "shock", aftermath: "frost", palette: ["#d6234f", "#ffd76a", "#bfe6ff"], source: "mover", shake: true },
+  regicide: { travel: "bolt", impact: "shock", aftermath: "frost", palette: ["#d6234f", "#ffd76a", "#bfe6ff"], source: "mover", shake: true , depth: { primitive: "laserFile", fallback: "canvas" } },
   // Every fallen piece climbs back out of the ground in a field of grave-light.
-  resurrection: { travel: "none", impact: "burst", aftermath: "sparkle", palette: ["#d8ffe9", "#ffd76a", "#7fd8a8"], source: "lead", shake: true },
+  resurrection: { travel: "none", impact: "burst", aftermath: "sparkle", palette: ["#d8ffe9", "#ffd76a", "#7fd8a8"], source: "lead", shake: true , depth: { primitive: "pillar", height: 0.1, fallback: "none" } },
   // A radiant queen descends and a ward settles over your whole host.
   second_coming: { travel: "bolt", impact: "burst", aftermath: "sparkle", palette: ["#fff2c9", "#ffd76a", "#ffffff"], source: "sky", shake: true },
 
@@ -101,49 +104,49 @@ export const CARD_VFX: Record<string, CardVfx> = {
   // A payload whistles down and levels a 5x5 zone.
   bombardiro_croc: { travel: "rain", impact: "debris", aftermath: "scorch", palette: ["#7c8a4a", "#ff9d3d", "#3a3526"], source: "sky", shake: true },
   // A meteor flattens a 3x3 area.
-  cataclysmic_meteor: { travel: "rain", impact: "debris", aftermath: "smolder", palette: ["#ff7a29", "#e6432c", "#3a1c12"], source: "sky", shake: true },
+  cataclysmic_meteor: { travel: "rain", impact: "debris", aftermath: "smolder", palette: ["#ff7a29", "#e6432c", "#3a1c12"], source: "sky", shake: true , depth: { primitive: "shatter", fallback: "none" } },
   // Going live to the squad: a broadcast wave washes out and the frozen
   // targets keep a phone-screen glow.
   check_out_our_socials: { travel: "wave", impact: "sparkle", aftermath: "sparkle", palette: ["#5aa0e8", "#f2778f", "#fff1f6"], source: "caster", shake: true },
   // A cathedral ward blooms out from your king over your whole half.
-  divine_fortress: { travel: "wave", impact: "shock", aftermath: "sparkle", palette: ["#ffd76a", "#e8fff7", "#5fc9b0"], source: "caster", shake: true },
+  divine_fortress: { travel: "wave", impact: "shock", aftermath: "sparkle", palette: ["#ffd76a", "#e8fff7", "#5fc9b0"], source: "caster", shake: true , depth: { primitive: "ringWave", fallback: "none" } },
   // The enemy court is flash-frozen into statues.
-  eternal_freeze: { travel: "wave", impact: "shatter", aftermath: "frost", palette: ["#bfe6ff", "#ffffff", "#5a8fc0"], source: "center", shake: true },
+  eternal_freeze: { travel: "wave", impact: "shatter", aftermath: "frost", palette: ["#bfe6ff", "#ffffff", "#5a8fc0"], source: "center", shake: true , depth: { primitive: "pillar", height: 0.1, fallback: "none" } },
   // Every enemy minor and pawn is wiped away in one ashen sweep.
-  extinction: { travel: "wave", impact: "burst", aftermath: "smolder", palette: ["#9a8f8a", "#e6432c", "#2b2320"], source: "center", shake: true },
+  extinction: { travel: "wave", impact: "burst", aftermath: "smolder", palette: ["#9a8f8a", "#e6432c", "#2b2320"], source: "center", shake: true , depth: { primitive: "shatter", fallback: "none" } },
   // Phoenix fire re-forms your queen, rooks, and a minor where they land.
-  full_resurrection: { travel: "none", impact: "embers", aftermath: "sparkle", palette: ["#ff9d3d", "#ffd76a", "#e6432c"], source: "lead", shake: true },
+  full_resurrection: { travel: "none", impact: "embers", aftermath: "sparkle", palette: ["#ff9d3d", "#ffd76a", "#e6432c"], source: "lead", shake: true , depth: { primitive: "pillar", height: 0.1, fallback: "none" } },
   // Pocket refills to full strength: a quiet arcane restock at your king.
-  grand_reset: { travel: "none", impact: "burst", aftermath: "sparkle", palette: ["#ffd76a", "#6fe3ff", "#ffffff"], source: "caster", shake: true },
+  grand_reset: { travel: "none", impact: "burst", aftermath: "sparkle", palette: ["#ffd76a", "#6fe3ff", "#ffffff"], source: "caster", shake: true , depth: { primitive: "pillar", height: 0.08, fallback: "none" } },
   // Three bolts of wrath split the sky and smite named pieces.
-  heavens_wrath: { travel: "bolt", impact: "burst", aftermath: "scorch", palette: ["#ffffff", "#ffd76a", "#7fb5ff"], source: "sky", shake: true },
+  heavens_wrath: { travel: "bolt", impact: "burst", aftermath: "scorch", palette: ["#ffffff", "#ffd76a", "#7fb5ff"], source: "sky", shake: true , depth: { primitive: "pillar", height: 0.16, fallback: "none", durationMs: 1400 } },
   // The shield closes over your own half: a warm rose ward, glitter that stays.
   i_love_my_gf: { travel: "wave", impact: "shock", aftermath: "sparkle", palette: ["#e8506e", "#ffb3c1", "#fff0f4"], source: "caster", shake: true },
   // Everything comes down at once and only the two kings are left standing.
   // The wreckage keeps burning: the heaviest aftermath in the vocabulary.
-  ihatemyex: { travel: "wave", impact: "debris", aftermath: "smolder", palette: ["#d6234f", "#2b2320", "#ff7a29"], source: "center", shake: true },
+  ihatemyex: { travel: "wave", impact: "debris", aftermath: "smolder", palette: ["#d6234f", "#2b2320", "#ff7a29"], source: "center", shake: true , depth: { primitive: "ringWave", fallback: "none", durationMs: 2200 } },
   // A permanent shade settles over your king. Quiet and absolute.
   immortal_king: { travel: "none", impact: "shock", aftermath: "sparkle", palette: ["#ffd76a", "#2c3e6b", "#dfe8ff"], source: "caster", shake: true },
   // The basilisk's gaze lances out and turns its victim to stone.
-  medusa_stare: { travel: "beam", impact: "debris", aftermath: "smolder", palette: ["#7fae5a", "#8d8d94", "#2f3a26"], source: "caster", shake: true },
+  medusa_stare: { travel: "beam", impact: "debris", aftermath: "smolder", palette: ["#7fae5a", "#8d8d94", "#2f3a26"], source: "caster", shake: true , depth: { primitive: "pillar", height: 0.1, fallback: "none" } },
   // Grey petrification creeps across the enemy minors.
-  petrified_forest: { travel: "wave", impact: "debris", aftermath: "smolder", palette: ["#8d8d94", "#7fae5a", "#4c4c53"], source: "center", shake: true },
+  petrified_forest: { travel: "wave", impact: "debris", aftermath: "smolder", palette: ["#8d8d94", "#7fae5a", "#4c4c53"], source: "center", shake: true , depth: { primitive: "pillar", height: 0.1, fallback: "none" } },
   // Every fallen piece bursts back to life in a rush of phoenix embers.
-  phoenix_rebirth: { travel: "none", impact: "embers", aftermath: "sparkle", palette: ["#ff7a29", "#ffd76a", "#d6234f"], source: "lead", shake: true },
+  phoenix_rebirth: { travel: "none", impact: "embers", aftermath: "sparkle", palette: ["#ff7a29", "#ffd76a", "#d6234f"], source: "lead", shake: true , depth: { primitive: "pillar", height: 0.1, fallback: "none" } },
   // Your queen detonates the whole enemy board around their royals.
-  queens_apocalypse: { travel: "wave", impact: "burst", aftermath: "scorch", palette: ["#d6234f", "#ff9d3d", "#1c0f18"], source: "mover", shake: true },
+  queens_apocalypse: { travel: "wave", impact: "burst", aftermath: "scorch", palette: ["#d6234f", "#ff9d3d", "#1c0f18"], source: "mover", shake: true , depth: { primitive: "laserDiag", fallback: "canvas" } },
   // A cage of stopped time slams shut over the enemy side.
-  time_prison: { travel: "none", impact: "shock", aftermath: "none", palette: ["#ffd76a", "#6fe3ff", "#3a3766"], source: "center", shake: true },
+  time_prison: { travel: "none", impact: "shock", aftermath: "none", palette: ["#ffd76a", "#6fe3ff", "#3a3766"], source: "center", shake: true , depth: { primitive: "ringWave", fallback: "none" } },
   // Three pieces are quietly forged into unkillable titans.
-  titan_legion: { travel: "none", impact: "shock", aftermath: "sparkle", palette: ["#d8a85a", "#ffd76a", "#8a94a8"], source: "lead", shake: true },
+  titan_legion: { travel: "none", impact: "shock", aftermath: "sparkle", palette: ["#d8a85a", "#ffd76a", "#8a94a8"], source: "lead", shake: true , depth: { primitive: "pillar", height: 0.12, fallback: "none" } },
   // Three annihilating darts leap from your king to the doomed pieces.
-  total_annihilation: { travel: "arc", impact: "burst", aftermath: "smolder", palette: ["#8f2bbf", "#e6432c", "#2a1030"], source: "caster", shake: true },
+  total_annihilation: { travel: "arc", impact: "burst", aftermath: "smolder", palette: ["#8f2bbf", "#e6432c", "#2a1030"], source: "caster", shake: true , depth: { primitive: "shatter", fallback: "none" } },
   // Three squares tear open into hungry voids. A trap, not a bang.
-  void_realm: { travel: "none", impact: "shock", aftermath: "smolder", palette: ["#5b2b8f", "#12081f", "#b98cff"], source: "lead", shake: true },
+  void_realm: { travel: "none", impact: "shock", aftermath: "smolder", palette: ["#5b2b8f", "#12081f", "#b98cff"], source: "lead", shake: true , depth: { primitive: "pillar", height: 0.09, fallback: "none" } },
   // Stone skin ripples over your army; a protection, so no thump.
   we_stoneskin: { travel: "wave", impact: "shock", aftermath: "none", palette: ["#b0a68f", "#d9d2c0", "#6e6552"], source: "center", shake: true },
   // The world grinds to a halt: a dead-grey stillness locks the enemy army.
-  world_end: { travel: "wave", impact: "shatter", aftermath: "frost", palette: ["#c9cdd6", "#8a94a8", "#eef1f7"], source: "center", shake: true },
+  world_end: { travel: "wave", impact: "shatter", aftermath: "frost", palette: ["#c9cdd6", "#8a94a8", "#eef1f7"], source: "center", shake: true , depth: { primitive: "ringWave", fallback: "none", durationMs: 2000 } },
 
   // ---- Tier 7 ----
   // Two squares yawn open into the abyss. Trap placement, quiet dread.
@@ -151,15 +154,15 @@ export const CARD_VFX: Record<string, CardVfx> = {
   // (moved to tier 6 by the info-card rework — shake dropped, board thumps are a tier 7+ privilege)
   aegis: { travel: "none", impact: "shock", aftermath: "sparkle", palette: ["#5fc9b0", "#ffd76a", "#e8fff7"], source: "caster" },
   // The ancient ward rolls out from your king over everything you own.
-  aegis_of_ages: { travel: "wave", impact: "shock", aftermath: "sparkle", palette: ["#c9a84c", "#5fc9b0", "#fff7de"], source: "caster", shake: true },
+  aegis_of_ages: { travel: "wave", impact: "shock", aftermath: "sparkle", palette: ["#c9a84c", "#5fc9b0", "#fff7de"], source: "caster", shake: true , depth: { primitive: "ringWave", fallback: "none" } },
   // The queen is crowned an Amazon on her own square.
   amazon: { travel: "none", impact: "burst", aftermath: "sparkle", palette: ["#b98cff", "#ffd76a", "#ffffff"], source: "lead", shake: true },
   // Two annihilating darts from your king unmake their targets.
-  annihilation: { travel: "arc", impact: "burst", aftermath: "smolder", palette: ["#8f2bbf", "#d6234f", "#2a1030"], source: "caster", shake: true },
+  annihilation: { travel: "arc", impact: "burst", aftermath: "smolder", palette: ["#8f2bbf", "#d6234f", "#2a1030"], source: "caster", shake: true , depth: { primitive: "shatter", fallback: "none" } },
   // A pawn ascends in a gout of blood-light while its sibling bursts.
   blood_pact: { travel: "none", impact: "burst", aftermath: "smolder", palette: ["#a3122e", "#ff5c5c", "#1c0f12"], source: "lead", shake: true },
   // A tornado tears across the board and scrambles every pawn.
-  chaos_theory: { travel: "wave", impact: "debris", aftermath: "none", palette: ["#8a94a8", "#5fc9b0", "#d8dee9"], source: "center", shake: true },
+  chaos_theory: { travel: "wave", impact: "debris", aftermath: "none", palette: ["#8a94a8", "#5fc9b0", "#d8dee9"], source: "center", shake: true , depth: { primitive: "ringWave", fallback: "none", durationMs: 1800 } },
   // A creeping cold-plague enchantment drifts from your king. No immediate hit.
   contagion: { travel: "arc", impact: "shock", aftermath: "frost", palette: ["#7fd8d8", "#9fae5a", "#dff7f7"], source: "caster", shake: true },
   // Glacial cold radiates outward and locks the whole enemy army.
@@ -167,7 +170,7 @@ export const CARD_VFX: Record<string, CardVfx> = {
   eternal_reign: { travel: "none", impact: "burst", aftermath: "sparkle", palette: ["#ffd76a", "#ffffff", "#c9a84c"], source: "caster", shake: true },
   // On the beat: the piece dashes its lane and smashes through what stands in
   // it. Neon rhythm-game colors, hard landing, no residue left behind.
-  geometry_dash: { travel: "beam", impact: "shatter", aftermath: "none", palette: ["#3fdf6f", "#4fe3ff", "#ffffff"], source: "mover", shake: true },
+  geometry_dash: { travel: "beam", impact: "shatter", aftermath: "none", palette: ["#3fdf6f", "#4fe3ff", "#ffffff"], source: "mover", shake: true , depth: { primitive: "laserFile", fallback: "canvas" } },
   // One knight is consecrated as a godslayer on its square.
   godslayer_knight: { travel: "none", impact: "burst", aftermath: "sparkle", palette: ["#8f6bff", "#dfe3ff", "#ffd76a"], source: "lead", shake: true },
   // Queen and minor rise together in soft grave-light.
@@ -182,7 +185,7 @@ export const CARD_VFX: Record<string, CardVfx> = {
   // A warband musters into your pocket beside your king.
   kings_legion: { travel: "none", impact: "shock", aftermath: "none", palette: ["#c94a3a", "#ffd76a", "#8a94a8"], source: "caster", shake: true },
   // A meteor slams the crossing square; rank and file go up with it.
-  meteor: { travel: "rain", impact: "debris", aftermath: "smolder", palette: ["#ff7a29", "#e6432c", "#2b1a12"], source: "sky", shake: true },
+  meteor: { travel: "rain", impact: "debris", aftermath: "smolder", palette: ["#ff7a29", "#e6432c", "#2b1a12"], source: "sky", shake: true , depth: { primitive: "shatter", fallback: "none" } },
   // A spectre claws up out of the square in grave-green smoke.
   necromancer: { travel: "none", impact: "shock", aftermath: "smolder", palette: ["#5fae7f", "#1a2a1e", "#c9ffd8"], source: "lead", shake: true },
   // Three moves in a row: an aggressive tempo crack at your king.
@@ -192,21 +195,21 @@ export const CARD_VFX: Record<string, CardVfx> = {
   // The clock overheats: hot cyan sparks at your king.
   overclocked: { travel: "none", impact: "shock", aftermath: "none", palette: ["#6fe3ff", "#ffcf4d", "#ffffff"], source: "caster", shake: true },
   // Three pawns transmute to gold queens where they stand.
-  philosophers_stone: { travel: "none", impact: "burst", aftermath: "sparkle", palette: ["#ffd76a", "#fff7de", "#c9a84c"], source: "lead", shake: true },
+  philosophers_stone: { travel: "none", impact: "burst", aftermath: "sparkle", palette: ["#ffd76a", "#fff7de", "#c9a84c"], source: "lead", shake: true , depth: { primitive: "pillar", height: 0.1, fallback: "none" } },
   // A purging sweep scours one half of the board.
-  purge_realm: { travel: "wave", impact: "burst", aftermath: "smolder", palette: ["#b98cff", "#ffffff", "#3b1a5e"], source: "center", shake: true },
+  purge_realm: { travel: "wave", impact: "burst", aftermath: "smolder", palette: ["#b98cff", "#ffffff", "#3b1a5e"], source: "center", shake: true , depth: { primitive: "shatter", fallback: "none" } },
   // The queen physically sweeps the line, smashing everything on it.
-  queens_rampage: { travel: "beam", impact: "debris", aftermath: "none", palette: ["#d6234f", "#ffd76a", "#3a0e1a"], source: "mover", shake: true },
+  queens_rampage: { travel: "beam", impact: "debris", aftermath: "none", palette: ["#d6234f", "#ffd76a", "#3a0e1a"], source: "mover", shake: true , depth: { primitive: "laserRank", fallback: "canvas" } },
   // The ground gives way under the whole pawn line.
-  ruin: { travel: "wave", impact: "debris", aftermath: "smolder", palette: ["#8a7a63", "#ff9d3d", "#3a3026"], source: "center", shake: true },
+  ruin: { travel: "wave", impact: "debris", aftermath: "smolder", palette: ["#8a7a63", "#ff9d3d", "#3a3026"], source: "center", shake: true , depth: { primitive: "shatter", fallback: "none" } },
   // The queen reaps a diagonal; souls stream off as pawns rise behind her.
-  soul_harvest: { travel: "beam", impact: "burst", aftermath: "sparkle", palette: ["#5fae7f", "#1a1420", "#c9ffd8"], source: "mover", shake: true },
+  soul_harvest: { travel: "beam", impact: "burst", aftermath: "sparkle", palette: ["#5fae7f", "#1a1420", "#c9ffd8"], source: "mover", shake: true , depth: { primitive: "laserDiag", fallback: "canvas" } },
   // A dragon queen and her hatchling settle into your pocket on hot embers.
-  summon_dragon: { travel: "none", impact: "embers", aftermath: "sparkle", palette: ["#d6234f", "#ffd76a", "#ff9d3d"], source: "caster", shake: true },
+  summon_dragon: { travel: "none", impact: "embers", aftermath: "sparkle", palette: ["#d6234f", "#ffd76a", "#ff9d3d"], source: "caster", shake: true , depth: { primitive: "ringWave", fallback: "none" } },
   // A chalk circle flares at your king and a warband steps through.
-  summoning_circle: { travel: "none", impact: "burst", aftermath: "sparkle", palette: ["#8f6bff", "#6fe3ff", "#e3d0ff"], source: "caster", shake: true },
+  summoning_circle: { travel: "none", impact: "burst", aftermath: "sparkle", palette: ["#8f6bff", "#6fe3ff", "#e3d0ff"], source: "caster", shake: true , depth: { primitive: "ringWave", fallback: "none" } },
   // Time skips, then ice takes the whole enemy army.
-  time_freeze: { travel: "wave", impact: "shatter", aftermath: "frost", palette: ["#6fe3ff", "#ffffff", "#3f7fb5"], source: "center", shake: true },
+  time_freeze: { travel: "wave", impact: "shatter", aftermath: "frost", palette: ["#6fe3ff", "#ffffff", "#3f7fb5"], source: "center", shake: true , depth: { primitive: "ringWave", fallback: "none" } },
   // One piece is quietly forged into a titan.
   titan: { travel: "none", impact: "shock", aftermath: "sparkle", palette: ["#d8a85a", "#8a94a8", "#ffd76a"], source: "lead", shake: true },
   // Crowns rain down on all your knights.
@@ -216,11 +219,13 @@ export const CARD_VFX: Record<string, CardVfx> = {
   // Boulders drop out of the sky and bury the enemy heavies.
   we_landslide: { travel: "rain", impact: "debris", aftermath: "smolder", palette: ["#8a7a63", "#5c5348", "#d9d2c0"], source: "sky", shake: true },
   // A blizzard howls down over the enemy army.
-  we_whiteout: { travel: "rain", impact: "shatter", aftermath: "frost", palette: ["#ffffff", "#bfe6ff", "#8fb8d8"], source: "sky", shake: true },
+  we_whiteout: { travel: "rain", impact: "shatter", aftermath: "frost", palette: ["#ffffff", "#bfe6ff", "#8fb8d8"], source: "sky", shake: true , depth: { primitive: "pillar", height: 0.08, fallback: "none" } },
   // Trenches dug, heads down: an earthen ward around your king.
   ww_dug_in_defense: { travel: "none", impact: "debris", aftermath: "none", palette: ["#7c8a4a", "#b0a68f", "#d9d2c0"], source: "caster", shake: true },
 
   // ---- Tier 6 ----
+  // The clock stops for them: a cold flash over their last-moved piece.
+  time_skip: { travel: "none", impact: "shock", aftermath: "frost", palette: ["#8fe8ff", "#ffffff", "#302818"], source: "lead" },
   all_in: { travel: "none", impact: "sparkle", aftermath: "none", palette: ["#ffd76a", "#e6432c", "#1c7a4a"], source: "caster" },
   // Four dead pawns claw into your pocket on grave smoke.
   army_of_the_dead: { travel: "none", impact: "smoke", aftermath: "smolder", palette: ["#5fae7f", "#2a2a30", "#c9ffd8"], source: "caster" },
@@ -329,6 +334,8 @@ export const CARD_VFX: Record<string, CardVfx> = {
   ww_mercenary_queen: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#ffd76a", "#c94a3a", "#fff2c9"], source: "lead" },
 
   // ---- Tier 5 ----
+  // Time and a half: a gold burst on your own king as the clock fills.
+  overtime_pay: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#ffd76a", "#fff7de", "#c9a84c"], source: "caster" },
   // One piece is unmade; frost locks its orthogonal neighbours.
   annihilate: { travel: "arc", impact: "burst", aftermath: "frost", palette: ["#8f2bbf", "#bfe6ff", "#e3d0ff"], source: "caster" },
   // A pawn ascends into godhood on the spot.

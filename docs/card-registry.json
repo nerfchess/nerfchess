@@ -32,7 +32,6 @@
       "info-reveal": 58,
       "piece-swap": 31,
       "special-rule-grant": 17,
-      "piece-upgrade-transform": 11,
       "extra-move": 26,
       "randomness-gamble": 23,
       "instant-piece-spawn": 95,
@@ -55,6 +54,7 @@
       "piece-revival": 41,
       "teleport-relocate": 49,
       "freeze-cleanse": 12,
+      "piece-upgrade-transform": 11,
       "card-tutor-gain": 6,
       "forced-move": 75,
       "piece-mind-control": 19,
@@ -64,8 +64,8 @@
       "multi-piece-freeze": 6,
       "mass-removal": 48,
       "extra-turn-theft": 5,
-      "turn-skip-enemy": 17,
       "instant-piece-removal": 9,
+      "turn-skip-enemy": 17,
       "mass-army-spawn": 16,
       "promotion-denial": 2,
       "zone-buff": 2,
@@ -861,23 +861,6 @@
       "implemented": true,
       "descriptionLength": 197,
       "description": "An old side door swings open in the keep wall: your right to castle on both sides is restored, even if your king or rooks have already moved. Castling, as ever, can never be used to make a capture.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
-    },
-    {
-      "id": "camel_knight",
-      "name": "Camel Knight",
-      "kind": "buff",
-      "category": "movement",
-      "effectCategory": "piece-upgrade-transform",
-      "tier": 1,
-      "mechanic": "activated",
-      "implemented": true,
-      "descriptionLength": 58,
-      "description": "One knight also moves as a camel (3-1 leap), for the game.",
       "soundSource": "cast-voice",
       "animation": null,
       "soundCue": null,
@@ -4285,23 +4268,6 @@
       "target": "rank"
     },
     {
-      "id": "op_layaway_plan",
-      "name": "Layaway Plan",
-      "kind": "buff",
-      "category": "item",
-      "effectCategory": "draft-advantage",
-      "tier": 1,
-      "mechanic": "instant",
-      "implemented": true,
-      "descriptionLength": 44,
-      "description": "Your next draft offer rolls one tier higher.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
-    },
-    {
       "id": "op_left_bank_atlas",
       "name": "Left Bank Atlas",
       "kind": "buff",
@@ -6745,6 +6711,23 @@
       "target": null
     },
     {
+      "id": "ov_prank_call",
+      "name": "Prank Call",
+      "kind": "buff",
+      "category": "tempo",
+      "effectCategory": "clock-drain-enemy",
+      "tier": 1,
+      "mechanic": "instant",
+      "implemented": true,
+      "descriptionLength": 73,
+      "description": "Ring ring: your opponent takes a very important call and loses 5 seconds.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
       "id": "ov_rain_check",
       "name": "Rain Check",
       "kind": "buff",
@@ -7369,40 +7352,6 @@
       "soundCue": "passive/territory",
       "soundFamily": "territory",
       "target": "zone"
-    },
-    {
-      "id": "wazir_bishop",
-      "name": "Wazir Bishop",
-      "kind": "buff",
-      "category": "movement",
-      "effectCategory": "movement-upgrade",
-      "tier": 1,
-      "mechanic": "activated",
-      "implemented": true,
-      "descriptionLength": 87,
-      "description": "Choose one bishop; for the game it may also step one square horizontally or vertically.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
-    },
-    {
-      "id": "wazir_rook",
-      "name": "Wazir Rook",
-      "kind": "buff",
-      "category": "movement",
-      "effectCategory": "movement-upgrade",
-      "tier": 1,
-      "mechanic": "activated",
-      "implemented": true,
-      "descriptionLength": 69,
-      "description": "Choose one rook; for the game it may also step one square diagonally.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
     },
     {
       "id": "we_thunder_step",
@@ -8416,6 +8365,23 @@
       "target": "clock"
     },
     {
+      "id": "camel_knight",
+      "name": "Camel Knight",
+      "kind": "buff",
+      "category": "movement",
+      "effectCategory": "piece-upgrade-transform",
+      "tier": 2,
+      "mechanic": "activated",
+      "implemented": true,
+      "descriptionLength": 58,
+      "description": "One knight also moves as a camel (3-1 leap), for the game.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
       "id": "cannon",
       "name": "Cannon",
       "kind": "buff",
@@ -9263,6 +9229,29 @@
       "target": "pieceClass"
     },
     {
+      "id": "hx4_famine",
+      "name": "Famine",
+      "kind": "buff",
+      "category": "hex",
+      "effectCategory": "capture-denial",
+      "tier": 2,
+      "mechanic": "passive",
+      "implemented": true,
+      "descriptionLength": 95,
+      "description": "For your opponent's next 2 turns, they cannot capture any of your pawns. The granary is warded.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "strike",
+        "primitives": [
+          "shockRing"
+        ],
+        "sigil": "Wheat"
+      },
+      "soundCue": "passive/strike",
+      "soundFamily": "strike",
+      "target": "pieceClass"
+    },
+    {
       "id": "hx4_flinching_blades",
       "name": "Flinching Blades",
       "kind": "buff",
@@ -9307,6 +9296,23 @@
       "soundCue": "passive/veil",
       "soundFamily": "veil",
       "target": "square"
+    },
+    {
+      "id": "hx4_glacier_gate",
+      "name": "Glacier Gate",
+      "kind": "buff",
+      "category": "hex",
+      "effectCategory": "terrain-hazard",
+      "tier": 2,
+      "mechanic": "instant",
+      "implemented": true,
+      "descriptionLength": 120,
+      "description": "A wall of ice fills the four center squares: your opponent's pieces cannot stop on d4, e4, d5 or e5 for their next turn.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
     },
     {
       "id": "hx4_gnat_cloud",
@@ -11639,21 +11645,28 @@
       "target": null
     },
     {
-      "id": "ov_prank_call",
-      "name": "Prank Call",
+      "id": "ov_raven_parliament",
+      "name": "Raven Parliament",
       "kind": "buff",
-      "category": "tempo",
-      "effectCategory": "clock-drain-enemy",
+      "category": "info",
+      "effectCategory": "target-marking",
       "tier": 2,
-      "mechanic": "instant",
+      "mechanic": "passive",
       "implemented": true,
-      "descriptionLength": 73,
-      "description": "Ring ring: your opponent takes a very important call and loses 5 seconds.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
+      "descriptionLength": 102,
+      "description": "For 5 of your turns, at the start of each: every undefended enemy piece is marked by a perching raven.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "veil",
+        "primitives": [
+          "fogRoll",
+          "drainFlow"
+        ],
+        "sigil": "Feather"
+      },
+      "soundCue": "passive/veil",
+      "soundFamily": "veil",
+      "target": "pieceClass"
     },
     {
       "id": "ov_rubber_stamp",
@@ -11953,23 +11966,6 @@
       "target": null
     },
     {
-      "id": "overtime_pay",
-      "name": "Overtime Pay",
-      "kind": "buff",
-      "category": "tempo",
-      "effectCategory": "clock-gain-self",
-      "tier": 2,
-      "mechanic": "instant",
-      "implemented": true,
-      "descriptionLength": 139,
-      "description": "You clock in and cash out on the spot: 105 seconds go straight onto your own clock the moment you play this. Time and a half, paid in full.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
-    },
-    {
       "id": "pawn_push",
       "name": "Pawn Push",
       "kind": "buff",
@@ -12256,23 +12252,6 @@
       "soundCue": "passive/decree",
       "soundFamily": "decree",
       "target": "pieceClass"
-    },
-    {
-      "id": "rook_chancellor",
-      "name": "Rook to Chancellor",
-      "kind": "buff",
-      "category": "movement",
-      "effectCategory": "piece-upgrade-transform",
-      "tier": 2,
-      "mechanic": "activated",
-      "implemented": true,
-      "descriptionLength": 48,
-      "description": "One rook also moves like a knight, for the game.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
     },
     {
       "id": "safe_passage",
@@ -12802,23 +12781,6 @@
       "target": null
     },
     {
-      "id": "amazon_knight",
-      "name": "Amazon Knight",
-      "kind": "buff",
-      "category": "movement",
-      "effectCategory": "promotion-grant",
-      "tier": 3,
-      "mechanic": "activated",
-      "implemented": true,
-      "descriptionLength": 51,
-      "description": "One knight becomes a knight plus queen for 2 turns.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
-    },
-    {
       "id": "anchored_rooks",
       "name": "Anchored Rooks",
       "kind": "buff",
@@ -13262,6 +13224,23 @@
       "target": "pieceClass"
     },
     {
+      "id": "bn4_keep_gate",
+      "name": "Keep Gate",
+      "kind": "buff",
+      "category": "protection",
+      "effectCategory": "self-movement-restriction",
+      "tier": 3,
+      "mechanic": "instant",
+      "implemented": true,
+      "descriptionLength": 85,
+      "description": "The three squares directly ahead of your king are barred to enemy pieces for 4 turns.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
       "id": "bn4_kettle_on",
       "name": "Kettle On",
       "kind": "buff",
@@ -13572,6 +13551,23 @@
       "implemented": true,
       "descriptionLength": 63,
       "description": "Your rooks cannot be captured for your opponent's next 2 turns.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
+      "id": "bn4_royal_incognito",
+      "name": "Royal Incognito",
+      "kind": "buff",
+      "category": "item",
+      "effectCategory": "single-piece-shield",
+      "tier": 3,
+      "mechanic": "instant",
+      "implemented": true,
+      "descriptionLength": 179,
+      "description": "Your king puts on sunglasses for the rest of the game (purely decorative) and cannot be captured for your opponent's next 2 turns. Nobody recognizes him. Everybody recognizes him.",
       "soundSource": "cast-voice",
       "animation": null,
       "soundCue": null,
@@ -14609,23 +14605,6 @@
       "target": null
     },
     {
-      "id": "guard_rotation",
-      "name": "Guard Rotation",
-      "kind": "buff",
-      "category": "movement",
-      "effectCategory": "piece-swap",
-      "tier": 3,
-      "mechanic": "activated",
-      "implemented": true,
-      "descriptionLength": 55,
-      "description": "Swap your king with a rook anywhere on the board, once.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
-    },
-    {
       "id": "hard_reset",
       "name": "Hard Reset",
       "kind": "buff",
@@ -15014,6 +14993,48 @@
       "soundCue": "passive/bind",
       "soundFamily": "bind",
       "target": "piece"
+    },
+    {
+      "id": "hx4_donkey_ears",
+      "name": "Donkey Ears",
+      "kind": "buff",
+      "category": "hex",
+      "effectCategory": "capture-denial",
+      "tier": 3,
+      "mechanic": "passive",
+      "implemented": true,
+      "descriptionLength": 167,
+      "description": "Their king sprouts magnificent donkey ears (the dunce cap, worn for 6 of their turns), and the shame stings: for their next 2 turns their king cannot capture anything.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "strike",
+        "primitives": [
+          "bolt",
+          "shockRing",
+          "edgeBurn"
+        ],
+        "sigil": "Crown"
+      },
+      "soundCue": "passive/strike",
+      "soundFamily": "strike",
+      "target": "piece"
+    },
+    {
+      "id": "hx4_falling_rubble",
+      "name": "Falling Rubble",
+      "kind": "buff",
+      "category": "hex",
+      "effectCategory": "zone-denial",
+      "tier": 3,
+      "mechanic": "activated",
+      "implemented": true,
+      "descriptionLength": 128,
+      "description": "Collapse a 2x2 block of squares you choose: your opponent's pieces cannot stop on any of those 4 squares for their next 2 turns.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
     },
     {
       "id": "hx4_fear_of_open_ground",
@@ -15427,6 +15448,30 @@
       "target": "pieceClass"
     },
     {
+      "id": "hx4_tar_flood",
+      "name": "Tar Flood",
+      "kind": "buff",
+      "category": "hex",
+      "effectCategory": "terrain-hazard",
+      "tier": 3,
+      "mechanic": "passive",
+      "implemented": true,
+      "descriptionLength": 180,
+      "description": "Tar floods your opponent's third rank: for their next 2 turns, none of their pieces may stop anywhere on it. The first piece the tar would stop may cross once, then it binds fully.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "territory",
+        "primitives": [
+          "zoneSweep",
+          "beamHorizontal"
+        ],
+        "sigil": "Layers"
+      },
+      "soundCue": "passive/territory",
+      "soundFamily": "territory",
+      "target": "rank"
+    },
+    {
       "id": "hx4_the_ides",
       "name": "The Ides",
       "kind": "buff",
@@ -15823,6 +15868,23 @@
       "implemented": true,
       "descriptionLength": 82,
       "description": "The fixed star steadies your hand: your next draft is fated to offer tier 4 cards.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
+      "id": "op_layaway_plan",
+      "name": "Layaway Plan",
+      "kind": "buff",
+      "category": "item",
+      "effectCategory": "draft-advantage",
+      "tier": 3,
+      "mechanic": "instant",
+      "implemented": true,
+      "descriptionLength": 44,
+      "description": "Your next draft offer rolls one tier higher.",
       "soundSource": "cast-voice",
       "animation": null,
       "soundCue": null,
@@ -16547,30 +16609,6 @@
       "target": null
     },
     {
-      "id": "queens_echo",
-      "name": "Queen's Echo",
-      "kind": "buff",
-      "category": "movement",
-      "effectCategory": "movement-upgrade",
-      "tier": 3,
-      "mechanic": "passive",
-      "implemented": true,
-      "descriptionLength": 50,
-      "description": "Your rooks move like queens for your next 2 turns.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "decree",
-        "primitives": [
-          "drainFlow",
-          "quakeRumble"
-        ],
-        "sigil": "gavel"
-      },
-      "soundCue": "passive/decree",
-      "soundFamily": "decree",
-      "target": "piece"
-    },
-    {
       "id": "raise_dead",
       "name": "Raise Dead",
       "kind": "buff",
@@ -17014,23 +17052,6 @@
       "target": null
     },
     {
-      "id": "time_skip",
-      "name": "Time Skip",
-      "kind": "buff",
-      "category": "tempo",
-      "effectCategory": "turn-skip-enemy",
-      "tier": 3,
-      "mechanic": "instant",
-      "implemented": true,
-      "descriptionLength": 176,
-      "description": "Your opponent skips their next turn, and the piece they last moved is frozen for their next 2 turns. You cannot capture the king on the bonus move: your opponent replies first.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
-    },
-    {
       "id": "time_thief",
       "name": "Time Thief",
       "kind": "buff",
@@ -17262,23 +17283,6 @@
       "target": null
     },
     {
-      "id": "wa_high_roll",
-      "name": "High Roll",
-      "kind": "buff",
-      "category": "draft",
-      "effectCategory": "draft-advantage",
-      "tier": 3,
-      "mechanic": "instant",
-      "implemented": true,
-      "descriptionLength": 46,
-      "description": "Force your next draft offer to roll at tier 5.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
-    },
-    {
       "id": "wa_omniscience",
       "name": "Omniscience",
       "kind": "buff",
@@ -17485,6 +17489,40 @@
       "soundCue": "passive/bind",
       "soundFamily": "bind",
       "target": "pieceClass"
+    },
+    {
+      "id": "wazir_bishop",
+      "name": "Wazir Bishop",
+      "kind": "buff",
+      "category": "movement",
+      "effectCategory": "movement-upgrade",
+      "tier": 3,
+      "mechanic": "activated",
+      "implemented": true,
+      "descriptionLength": 87,
+      "description": "Choose one bishop; for the game it may also step one square horizontally or vertically.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
+      "id": "wazir_rook",
+      "name": "Wazir Rook",
+      "kind": "buff",
+      "category": "movement",
+      "effectCategory": "movement-upgrade",
+      "tier": 3,
+      "mechanic": "activated",
+      "implemented": true,
+      "descriptionLength": 69,
+      "description": "Choose one rook; for the game it may also step one square diagonally.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
     },
     {
       "id": "wc_backseat_driver",
@@ -18250,6 +18288,23 @@
       "target": null
     },
     {
+      "id": "bn4_cathedral_choir",
+      "name": "Cathedral Choir",
+      "kind": "buff",
+      "category": "pieces",
+      "effectCategory": "instant-piece-spawn",
+      "tier": 4,
+      "mechanic": "activated",
+      "implemented": true,
+      "descriptionLength": 52,
+      "description": "Place a new bishop on any empty square in your half.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
       "id": "bn4_charm_bracelet",
       "name": "Charm Bracelet",
       "kind": "buff",
@@ -18340,6 +18395,23 @@
       "soundCue": "passive/decree",
       "soundFamily": "decree",
       "target": "pieceClass"
+    },
+    {
+      "id": "bn4_costume_trunk",
+      "name": "Costume Trunk",
+      "kind": "buff",
+      "category": "item",
+      "effectCategory": "single-piece-shield",
+      "tier": 4,
+      "mechanic": "activated",
+      "implemented": true,
+      "descriptionLength": 195,
+      "description": "Dress up to three of your pieces (your king excepted) from the trunk, forever (purely decorative). Costumed pieces cannot be captured on your opponent's next turn: nobody hits an actor mid-scene.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
     },
     {
       "id": "bn4_florists_trick",
@@ -18957,30 +19029,6 @@
       "target": null
     },
     {
-      "id": "boneca_ambalabu",
-      "name": "Boneca Ambalabu",
-      "kind": "buff",
-      "category": "hex",
-      "effectCategory": "piece-nudge-reposition",
-      "tier": 4,
-      "mechanic": "passive",
-      "implemented": true,
-      "descriptionLength": 129,
-      "description": "The tire-frog drags your opponent down: for their next 4 turns none of their pieces may move more than 1 square in a single move.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "bind",
-        "primitives": [
-          "chainLink",
-          "weightDrop"
-        ],
-        "sigil": "LifeBuoy"
-      },
-      "soundCue": "passive/bind",
-      "soundFamily": "bind",
-      "target": "pieceClass"
-    },
-    {
       "id": "borrowed_time",
       "name": "Borrowed Time",
       "kind": "buff",
@@ -19353,23 +19401,6 @@
       "target": null
     },
     {
-      "id": "collapse",
-      "name": "Collapse",
-      "kind": "buff",
-      "category": "attack",
-      "effectCategory": "piece-nudge-reposition",
-      "tier": 4,
-      "mechanic": "instant",
-      "implemented": true,
-      "descriptionLength": 102,
-      "description": "Pull every enemy piece except the king one square toward their back rank across the whole board, once.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
-    },
-    {
       "id": "comet_shard",
       "name": "Comet Shard",
       "kind": "buff",
@@ -19709,6 +19740,23 @@
       "target": null
     },
     {
+      "id": "fortress_realm",
+      "name": "Fortress Realm",
+      "kind": "buff",
+      "category": "protection",
+      "effectCategory": "single-piece-shield",
+      "tier": 4,
+      "mechanic": "activated",
+      "implemented": true,
+      "descriptionLength": 157,
+      "description": "Pick a 3x3 zone: up to three of your pieces there, your king aside, cannot be captured for your opponent's next turn, then the zone becomes ordinary terrain.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
       "id": "frozen_furrows",
       "name": "Frozen Furrows",
       "kind": "buff",
@@ -19754,6 +19802,23 @@
       "soundCue": "passive/strike",
       "soundFamily": "strike",
       "target": "piece"
+    },
+    {
+      "id": "glacial_flanks",
+      "name": "Glacial Flanks",
+      "kind": "buff",
+      "category": "hex",
+      "effectCategory": "single-piece-freeze",
+      "tier": 4,
+      "mechanic": "instant",
+      "implemented": true,
+      "descriptionLength": 64,
+      "description": "Freeze your opponent's knights and bishops for 1 of their turns.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
     },
     {
       "id": "gm_crash_game",
@@ -19887,6 +19952,23 @@
       "soundCue": "passive/bind",
       "soundFamily": "bind",
       "target": "piece"
+    },
+    {
+      "id": "guard_rotation",
+      "name": "Guard Rotation",
+      "kind": "buff",
+      "category": "movement",
+      "effectCategory": "piece-swap",
+      "tier": 4,
+      "mechanic": "activated",
+      "implemented": true,
+      "descriptionLength": 55,
+      "description": "Swap your king with a rook anywhere on the board, once.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
     },
     {
       "id": "half_measure",
@@ -20427,6 +20509,31 @@
       "target": "pieceClass"
     },
     {
+      "id": "hx4_choke_point",
+      "name": "Choke Point",
+      "kind": "buff",
+      "category": "hex",
+      "effectCategory": "terrain-hazard",
+      "tier": 4,
+      "mechanic": "passive",
+      "implemented": true,
+      "descriptionLength": 157,
+      "description": "Caltrops blanket the central 4x4 (c3 to f6): your opponent's pieces may not stop anywhere in it for their next turn. Their king picks its way through freely.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "decree",
+        "primitives": [
+          "sigilStamp",
+          "crackLines",
+          "drainFlow"
+        ],
+        "sigil": "Hexagon"
+      },
+      "soundCue": "passive/decree",
+      "soundFamily": "decree",
+      "target": "pieceClass"
+    },
+    {
       "id": "hx4_circling_vultures",
       "name": "Circling Vultures",
       "kind": "buff",
@@ -20739,6 +20846,31 @@
       "target": "square"
     },
     {
+      "id": "hx4_lovestruck_majesty",
+      "name": "Lovestruck Majesty",
+      "kind": "buff",
+      "category": "hex",
+      "effectCategory": "single-piece-freeze",
+      "tier": 4,
+      "mechanic": "passive",
+      "implemented": true,
+      "descriptionLength": 157,
+      "description": "Your opponent's queen falls head over heels: she may make one move, then is frozen, swooning, for 2 of their turns. Any other queens they have swoon at once.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "bind",
+        "primitives": [
+          "chainLink",
+          "weightDrop",
+          "gateSlam"
+        ],
+        "sigil": "Heart"
+      },
+      "soundCue": "passive/bind",
+      "soundFamily": "bind",
+      "target": "piece"
+    },
+    {
       "id": "hx4_moth_eaten_gloves",
       "name": "Moth Eaten Gloves",
       "kind": "buff",
@@ -20828,6 +20960,31 @@
       "target": "pieceClass"
     },
     {
+      "id": "hx4_oathbreakers_brand",
+      "name": "Oathbreaker's Brand",
+      "kind": "buff",
+      "category": "hex",
+      "effectCategory": "single-piece-freeze",
+      "tier": 4,
+      "mechanic": "passive",
+      "implemented": true,
+      "descriptionLength": 192,
+      "description": "A brand hangs over their castle gate for their next 6 turns: if your opponent castles in that window, the castling rook is frozen for 3 of their turns and their king wears the dunce cap for 8.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "bind",
+        "primitives": [
+          "chainLink",
+          "weightDrop",
+          "gateSlam"
+        ],
+        "sigil": "FileWarning"
+      },
+      "soundCue": "passive/bind",
+      "soundFamily": "bind",
+      "target": "pieceClass"
+    },
+    {
       "id": "hx4_one_ladle_each",
       "name": "One Ladle Each",
       "kind": "buff",
@@ -20850,6 +21007,31 @@
       "soundCue": "passive/bind",
       "soundFamily": "bind",
       "target": "piece"
+    },
+    {
+      "id": "hx4_pawn_embargo",
+      "name": "Pawn Embargo",
+      "kind": "buff",
+      "category": "hex",
+      "effectCategory": "zone-denial",
+      "tier": 4,
+      "mechanic": "passive",
+      "implemented": true,
+      "descriptionLength": 211,
+      "description": "For your opponent's next 6 turns, their pawns may not enter or move within your half of the board. The first pawn the border would stop may cross once, then it binds fully. The infantry is stopped at the border.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "territory",
+        "primitives": [
+          "zoneSweep",
+          "edgeBurn",
+          "beamVertical"
+        ],
+        "sigil": "FileX2"
+      },
+      "soundCue": "passive/territory",
+      "soundFamily": "territory",
+      "target": "zone"
     },
     {
       "id": "hx4_pawnbrokers_lien",
@@ -21205,6 +21387,23 @@
       "target": null
     },
     {
+      "id": "hx4_traitors_gala",
+      "name": "Traitor's Gala",
+      "kind": "buff",
+      "category": "hex",
+      "effectCategory": "piece-downgrade-transform",
+      "tier": 4,
+      "mechanic": "instant",
+      "implemented": true,
+      "descriptionLength": 123,
+      "description": "Two of your opponent's knights or bishops, chosen at random, drink the wrong toast and become walnuts for 1 of their turns.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
       "id": "hx4_understudy_rule",
       "name": "Understudy Rule",
       "kind": "buff",
@@ -21408,30 +21607,6 @@
       "soundCue": null,
       "soundFamily": null,
       "target": null
-    },
-    {
-      "id": "mass_freeze",
-      "name": "Mass Freeze",
-      "kind": "buff",
-      "category": "tempo",
-      "effectCategory": "mass-freeze",
-      "tier": 4,
-      "mechanic": "passive",
-      "implemented": true,
-      "descriptionLength": 86,
-      "description": "After your opponent replies, freeze every enemy piece except the king for 1 full turn.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "bind",
-        "primitives": [
-          "pulseRing",
-          "sigilStamp"
-        ],
-        "sigil": "link"
-      },
-      "soundCue": "passive/bind",
-      "soundFamily": "bind",
-      "target": "pieceClass"
     },
     {
       "id": "mass_recall",
@@ -22396,16 +22571,16 @@
       "target": "pieceClass"
     },
     {
-      "id": "roulette",
-      "name": "Roulette",
+      "id": "rook_chancellor",
+      "name": "Rook to Chancellor",
       "kind": "buff",
-      "category": "attack",
-      "effectCategory": "mass-removal",
+      "category": "movement",
+      "effectCategory": "piece-upgrade-transform",
       "tier": 4,
-      "mechanic": "instant",
+      "mechanic": "activated",
       "implemented": true,
-      "descriptionLength": 101,
-      "description": "Spin the wheel three times: three random enemy pieces other than the king are removed from the board.",
+      "descriptionLength": 48,
+      "description": "One rook also moves like a knight, for the game.",
       "soundSource": "cast-voice",
       "animation": null,
       "soundCue": null,
@@ -23132,6 +23307,23 @@
       "target": null
     },
     {
+      "id": "wa_high_roll",
+      "name": "High Roll",
+      "kind": "buff",
+      "category": "draft",
+      "effectCategory": "draft-advantage",
+      "tier": 4,
+      "mechanic": "instant",
+      "implemented": true,
+      "descriptionLength": 46,
+      "description": "Force your next draft offer to roll at tier 5.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
       "id": "wa_mind_read",
       "name": "Mind Read",
       "kind": "buff",
@@ -23560,30 +23752,6 @@
       },
       "soundCue": "passive/fracture",
       "soundFamily": "fracture",
-      "target": "pieceClass"
-    },
-    {
-      "id": "we_ball_lightning",
-      "name": "Ball Lightning",
-      "kind": "buff",
-      "category": "attack",
-      "effectCategory": "conditional-piece-removal",
-      "tier": 4,
-      "mechanic": "passive",
-      "implemented": true,
-      "descriptionLength": 140,
-      "description": "Your next 2 captures each also destroy the enemy pieces (never a king) on the two squares immediately left and right of the captured square.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "strike",
-        "primitives": [
-          "drainFlow",
-          "edgeBurn"
-        ],
-        "sigil": "zap"
-      },
-      "soundCue": "passive/strike",
-      "soundFamily": "strike",
       "target": "pieceClass"
     },
     {
@@ -24126,6 +24294,31 @@
       "target": null
     },
     {
+      "id": "bn4_dukes_patent",
+      "name": "The Duke's Patent",
+      "kind": "buff",
+      "category": "movement",
+      "effectCategory": "movement-upgrade",
+      "tier": 5,
+      "mechanic": "passive",
+      "implemented": true,
+      "descriptionLength": 178,
+      "description": "For your opponent's next 4 turns, your rooks may also step one square diagonally (capturing allowed). The moment one of your rooks captures, the patent lapses and the power ends.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "strike",
+        "primitives": [
+          "bolt",
+          "shockRing",
+          "edgeBurn"
+        ],
+        "sigil": "Stamp"
+      },
+      "soundCue": "passive/strike",
+      "soundFamily": "strike",
+      "target": "piece"
+    },
+    {
       "id": "bn4_faerie_door",
       "name": "Faerie Door",
       "kind": "buff",
@@ -24320,23 +24513,6 @@
       "target": null
     },
     {
-      "id": "bn4_keep_gate",
-      "name": "Keep Gate",
-      "kind": "buff",
-      "category": "protection",
-      "effectCategory": "self-movement-restriction",
-      "tier": 5,
-      "mechanic": "instant",
-      "implemented": true,
-      "descriptionLength": 85,
-      "description": "The three squares directly ahead of your king are barred to enemy pieces for 4 turns.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
-    },
-    {
       "id": "bn4_kings_indulgence",
       "name": "King's Indulgence",
       "kind": "buff",
@@ -24501,6 +24677,23 @@
       "target": "piece"
     },
     {
+      "id": "bn4_pocket_cavalry",
+      "name": "Pocket Cavalry",
+      "kind": "buff",
+      "category": "pieces",
+      "effectCategory": "mass-army-spawn",
+      "tier": 5,
+      "mechanic": "instant",
+      "implemented": true,
+      "descriptionLength": 121,
+      "description": "A knight and a pawn join your pocket, ready to be dropped onto empty squares on later turns (each drop spends that turn).",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
       "id": "bn4_prison_break",
       "name": "Prison Break",
       "kind": "buff",
@@ -24634,23 +24827,6 @@
       "target": "piece"
     },
     {
-      "id": "bn4_royal_incognito",
-      "name": "Royal Incognito",
-      "kind": "buff",
-      "category": "item",
-      "effectCategory": "single-piece-shield",
-      "tier": 5,
-      "mechanic": "instant",
-      "implemented": true,
-      "descriptionLength": 179,
-      "description": "Your king puts on sunglasses for the rest of the game (purely decorative) and cannot be captured for your opponent's next 2 turns. Nobody recognizes him. Everybody recognizes him.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
-    },
-    {
       "id": "bn4_royal_writ",
       "name": "Royal Writ",
       "kind": "buff",
@@ -24666,30 +24842,6 @@
       "soundCue": null,
       "soundFamily": null,
       "target": null
-    },
-    {
-      "id": "bn4_salt_in_the_wound",
-      "name": "Salt in the Wound",
-      "kind": "buff",
-      "category": "nerf",
-      "effectCategory": "nerf-relief",
-      "tier": 5,
-      "mechanic": "passive",
-      "implemented": true,
-      "descriptionLength": 102,
-      "description": "Suspend your nerf for your next 12 turns. When it returns, take 20 seconds from your opponent's clock.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "tempo",
-        "primitives": [
-          "tickPips",
-          "orbitSpark"
-        ],
-        "sigil": "CloudLightning"
-      },
-      "soundCue": "passive/tempo",
-      "soundFamily": "tempo",
-      "target": "clock"
     },
     {
       "id": "bn4_scapegoat",
@@ -25760,6 +25912,31 @@
       "soundCue": "passive/territory",
       "soundFamily": "territory",
       "target": "rank"
+    },
+    {
+      "id": "horn_of_summoning",
+      "name": "Horn of Summoning",
+      "kind": "buff",
+      "category": "movement",
+      "effectCategory": "movement-upgrade",
+      "tier": 5,
+      "mechanic": "passive",
+      "implemented": true,
+      "descriptionLength": 111,
+      "description": "One long note wakes the stone itself: for the rest of the game, your rooks may also step one square diagonally.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "summon",
+        "primitives": [
+          "dropImpact",
+          "shockRing",
+          "riseGlow"
+        ],
+        "sigil": "Music"
+      },
+      "soundCue": "passive/summon",
+      "soundFamily": "summon",
+      "target": "square"
     },
     {
       "id": "hw2_creeping_blight",
@@ -26901,6 +27078,23 @@
       "target": "piece"
     },
     {
+      "id": "ilovechaewon",
+      "name": "I Love Chaewon",
+      "kind": "buff",
+      "category": "movement",
+      "effectCategory": "teleport-relocate",
+      "tier": 5,
+      "mechanic": "activated",
+      "implemented": true,
+      "descriptionLength": 132,
+      "description": "Fearless choreography: gracefully reposition up to 3 of your pieces, gliding each to any empty square in your own half of the board.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
       "id": "iron_reign",
       "name": "Iron Reign",
       "kind": "buff",
@@ -27573,30 +27767,6 @@
       "target": null
     },
     {
-      "id": "ov_raven_parliament",
-      "name": "Raven Parliament",
-      "kind": "buff",
-      "category": "info",
-      "effectCategory": "target-marking",
-      "tier": 5,
-      "mechanic": "passive",
-      "implemented": true,
-      "descriptionLength": 102,
-      "description": "For 5 of your turns, at the start of each: every undefended enemy piece is marked by a perching raven.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "veil",
-        "primitives": [
-          "fogRoll",
-          "drainFlow"
-        ],
-        "sigil": "Feather"
-      },
-      "soundCue": "passive/veil",
-      "soundFamily": "veil",
-      "target": "pieceClass"
-    },
-    {
       "id": "ov_rolling_boulder",
       "name": "Rolling Boulder",
       "kind": "buff",
@@ -27778,6 +27948,23 @@
       "target": "pieceClass"
     },
     {
+      "id": "overtime_pay",
+      "name": "Overtime Pay",
+      "kind": "buff",
+      "category": "tempo",
+      "effectCategory": "clock-gain-self",
+      "tier": 5,
+      "mechanic": "instant",
+      "implemented": true,
+      "descriptionLength": 139,
+      "description": "You clock in and cash out on the spot: 105 seconds go straight onto your own clock the moment you play this. Time and a half, paid in full.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
       "id": "palsied_hands",
       "name": "Palsied Hands",
       "kind": "buff",
@@ -27886,6 +28073,30 @@
       "soundCue": "passive/tempo",
       "soundFamily": "tempo",
       "target": "pieceClass"
+    },
+    {
+      "id": "queens_echo",
+      "name": "Queen's Echo",
+      "kind": "buff",
+      "category": "movement",
+      "effectCategory": "movement-upgrade",
+      "tier": 5,
+      "mechanic": "passive",
+      "implemented": true,
+      "descriptionLength": 50,
+      "description": "Your rooks move like queens for your next 2 turns.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "decree",
+        "primitives": [
+          "drainFlow",
+          "quakeRumble"
+        ],
+        "sigil": "gavel"
+      },
+      "soundCue": "passive/decree",
+      "soundFamily": "decree",
+      "target": "piece"
     },
     {
       "id": "queens_handicap",
@@ -28339,23 +28550,6 @@
       "soundCue": "passive/bind",
       "soundFamily": "bind",
       "target": "piece"
-    },
-    {
-      "id": "twin_queens",
-      "name": "Twin Queens",
-      "kind": "buff",
-      "category": "pieces",
-      "effectCategory": "promotion-grant",
-      "tier": 5,
-      "mechanic": "activated",
-      "implemented": true,
-      "descriptionLength": 126,
-      "description": "Promote two pawns to queens instantly if both are on your 5th rank or beyond. Using it spends your next unused reroll, if any.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
     },
     {
       "id": "uniqlo_warrior",
@@ -28835,6 +29029,30 @@
       "target": "rank"
     },
     {
+      "id": "we_ball_lightning",
+      "name": "Ball Lightning",
+      "kind": "buff",
+      "category": "attack",
+      "effectCategory": "conditional-piece-removal",
+      "tier": 5,
+      "mechanic": "passive",
+      "implemented": true,
+      "descriptionLength": 140,
+      "description": "Your next 2 captures each also destroy the enemy pieces (never a king) on the two squares immediately left and right of the captured square.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "strike",
+        "primitives": [
+          "drainFlow",
+          "edgeBurn"
+        ],
+        "sigil": "zap"
+      },
+      "soundCue": "passive/strike",
+      "soundFamily": "strike",
+      "target": "pieceClass"
+    },
+    {
       "id": "we_firestorm",
       "name": "Firestorm",
       "kind": "buff",
@@ -29270,6 +29488,23 @@
       "target": null
     },
     {
+      "id": "amazon_knight",
+      "name": "Amazon Knight",
+      "kind": "buff",
+      "category": "movement",
+      "effectCategory": "promotion-grant",
+      "tier": 6,
+      "mechanic": "activated",
+      "implemented": true,
+      "descriptionLength": 51,
+      "description": "One knight becomes a knight plus queen for 2 turns.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
       "id": "annihilate",
       "name": "Annihilate",
       "kind": "buff",
@@ -29671,6 +29906,31 @@
       "soundCue": null,
       "soundFamily": null,
       "target": null
+    },
+    {
+      "id": "bn4_guardian_of_the_line",
+      "name": "Guardian of the Line",
+      "kind": "buff",
+      "category": "protection",
+      "effectCategory": "single-piece-shield",
+      "tier": 6,
+      "mechanic": "passive",
+      "implemented": true,
+      "descriptionLength": 133,
+      "description": "Beginning after your opponent's next move, your queen cannot be captured while she stands beside your king, for the rest of the game.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "decree",
+        "primitives": [
+          "sigilStamp",
+          "crackLines",
+          "drainFlow"
+        ],
+        "sigil": "ShieldCheck"
+      },
+      "soundCue": "passive/decree",
+      "soundFamily": "decree",
+      "target": "piece"
     },
     {
       "id": "bn4_guards_change",
@@ -30355,6 +30615,23 @@
       "target": null
     },
     {
+      "id": "collapse",
+      "name": "Collapse",
+      "kind": "buff",
+      "category": "attack",
+      "effectCategory": "piece-nudge-reposition",
+      "tier": 6,
+      "mechanic": "instant",
+      "implemented": true,
+      "descriptionLength": 102,
+      "description": "Pull every enemy piece except the king one square toward their back rank across the whole board, once.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
       "id": "colossus",
       "name": "Colossus",
       "kind": "buff",
@@ -30684,23 +30961,6 @@
       "implemented": true,
       "descriptionLength": 73,
       "description": "Send up to five of your pieces back to their original home squares, once.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
-    },
-    {
-      "id": "glacial_flanks",
-      "name": "Glacial Flanks",
-      "kind": "buff",
-      "category": "hex",
-      "effectCategory": "single-piece-freeze",
-      "tier": 6,
-      "mechanic": "instant",
-      "implemented": true,
-      "descriptionLength": 64,
-      "description": "Freeze your opponent's knights and bishops for 1 of their turns.",
       "soundSource": "cast-voice",
       "animation": null,
       "soundCue": null,
@@ -31537,29 +31797,6 @@
       "target": "pieceClass"
     },
     {
-      "id": "hx4_famine",
-      "name": "Famine",
-      "kind": "buff",
-      "category": "hex",
-      "effectCategory": "capture-denial",
-      "tier": 6,
-      "mechanic": "passive",
-      "implemented": true,
-      "descriptionLength": 95,
-      "description": "For your opponent's next 2 turns, they cannot capture any of your pawns. The granary is warded.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "strike",
-        "primitives": [
-          "shockRing"
-        ],
-        "sigil": "Wheat"
-      },
-      "soundCue": "passive/strike",
-      "soundFamily": "strike",
-      "target": "pieceClass"
-    },
-    {
       "id": "hx4_gale_warning",
       "name": "Gale Warning",
       "kind": "buff",
@@ -31606,23 +31843,6 @@
       "soundCue": "passive/territory",
       "soundFamily": "territory",
       "target": "rank"
-    },
-    {
-      "id": "hx4_glacier_gate",
-      "name": "Glacier Gate",
-      "kind": "buff",
-      "category": "hex",
-      "effectCategory": "terrain-hazard",
-      "tier": 6,
-      "mechanic": "instant",
-      "implemented": true,
-      "descriptionLength": 120,
-      "description": "A wall of ice fills the four center squares: your opponent's pieces cannot stop on d4, e4, d5 or e5 for their next turn.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
     },
     {
       "id": "hx4_grave_chill",
@@ -32023,30 +32243,6 @@
       "soundCue": "passive/territory",
       "soundFamily": "territory",
       "target": "zone"
-    },
-    {
-      "id": "hx4_tar_flood",
-      "name": "Tar Flood",
-      "kind": "buff",
-      "category": "hex",
-      "effectCategory": "terrain-hazard",
-      "tier": 6,
-      "mechanic": "passive",
-      "implemented": true,
-      "descriptionLength": 180,
-      "description": "Tar floods your opponent's third rank: for their next 2 turns, none of their pieces may stop anywhere on it. The first piece the tar would stop may cross once, then it binds fully.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "territory",
-        "primitives": [
-          "zoneSweep",
-          "beamHorizontal"
-        ],
-        "sigil": "Layers"
-      },
-      "soundCue": "passive/territory",
-      "soundFamily": "territory",
-      "target": "rank"
     },
     {
       "id": "hx4_thunderhead",
@@ -33502,6 +33698,23 @@
       "target": null
     },
     {
+      "id": "time_skip",
+      "name": "Time Skip",
+      "kind": "buff",
+      "category": "tempo",
+      "effectCategory": "turn-skip-enemy",
+      "tier": 6,
+      "mechanic": "instant",
+      "implemented": true,
+      "descriptionLength": 176,
+      "description": "Your opponent skips their next turn, and the piece they last moved is frozen for their next 2 turns. You cannot capture the king on the bonus move: your opponent replies first.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
       "id": "time_stop_short",
       "name": "Time Stop (Short)",
       "kind": "buff",
@@ -34289,23 +34502,6 @@
       "target": null
     },
     {
-      "id": "bn4_cathedral_choir",
-      "name": "Cathedral Choir",
-      "kind": "buff",
-      "category": "pieces",
-      "effectCategory": "instant-piece-spawn",
-      "tier": 7,
-      "mechanic": "activated",
-      "implemented": true,
-      "descriptionLength": 52,
-      "description": "Place a new bishop on any empty square in your half.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
-    },
-    {
       "id": "bn4_champions_rest",
       "name": "Champion's Rest",
       "kind": "buff",
@@ -34358,23 +34554,6 @@
       "implemented": true,
       "descriptionLength": 132,
       "description": "Raise a rook of fired clay on an empty square on your home rank. It serves like the real thing, then crumbles after 8 of your turns.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
-    },
-    {
-      "id": "bn4_costume_trunk",
-      "name": "Costume Trunk",
-      "kind": "buff",
-      "category": "item",
-      "effectCategory": "single-piece-shield",
-      "tier": 7,
-      "mechanic": "activated",
-      "implemented": true,
-      "descriptionLength": 195,
-      "description": "Dress up to three of your pieces (your king excepted) from the trunk, forever (purely decorative). Costumed pieces cannot be captured on your opponent's next turn: nobody hits an actor mid-scene.",
       "soundSource": "cast-voice",
       "animation": null,
       "soundCue": null,
@@ -34829,23 +35008,6 @@
       "target": null
     },
     {
-      "id": "bn4_pocket_cavalry",
-      "name": "Pocket Cavalry",
-      "kind": "buff",
-      "category": "pieces",
-      "effectCategory": "mass-army-spawn",
-      "tier": 7,
-      "mechanic": "instant",
-      "implemented": true,
-      "descriptionLength": 121,
-      "description": "A knight and a pawn join your pocket, ready to be dropped onto empty squares on later turns (each drop spends that turn).",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
-    },
-    {
       "id": "bn4_promotion_charter",
       "name": "Promotion Charter",
       "kind": "buff",
@@ -34894,6 +35056,30 @@
       "soundCue": "passive/decree",
       "soundFamily": "decree",
       "target": "pieceClass"
+    },
+    {
+      "id": "bn4_salt_in_the_wound",
+      "name": "Salt in the Wound",
+      "kind": "buff",
+      "category": "nerf",
+      "effectCategory": "nerf-relief",
+      "tier": 7,
+      "mechanic": "passive",
+      "implemented": true,
+      "descriptionLength": 102,
+      "description": "Suspend your nerf for your next 12 turns. When it returns, take 20 seconds from your opponent's clock.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "tempo",
+        "primitives": [
+          "tickPips",
+          "orbitSpark"
+        ],
+        "sigil": "CloudLightning"
+      },
+      "soundCue": "passive/tempo",
+      "soundFamily": "tempo",
+      "target": "clock"
     },
     {
       "id": "bn4_second_spring",
@@ -35701,23 +35887,6 @@
       "target": null
     },
     {
-      "id": "fortress_realm",
-      "name": "Fortress Realm",
-      "kind": "buff",
-      "category": "protection",
-      "effectCategory": "single-piece-shield",
-      "tier": 7,
-      "mechanic": "activated",
-      "implemented": true,
-      "descriptionLength": 157,
-      "description": "Pick a 3x3 zone: up to three of your pieces there, your king aside, cannot be captured for your opponent's next turn, then the zone becomes ordinary terrain.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
-    },
-    {
       "id": "frozen_solid",
       "name": "Frozen Solid",
       "kind": "buff",
@@ -35993,31 +36162,6 @@
       "soundCue": "passive/bind",
       "soundFamily": "bind",
       "target": "pieceClass"
-    },
-    {
-      "id": "horn_of_summoning",
-      "name": "Horn of Summoning",
-      "kind": "buff",
-      "category": "movement",
-      "effectCategory": "movement-upgrade",
-      "tier": 7,
-      "mechanic": "passive",
-      "implemented": true,
-      "descriptionLength": 111,
-      "description": "One long note wakes the stone itself: for the rest of the game, your rooks may also step one square diagonally.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "summon",
-        "primitives": [
-          "dropImpact",
-          "shockRing",
-          "riseGlow"
-        ],
-        "sigil": "Music"
-      },
-      "soundCue": "passive/summon",
-      "soundFamily": "summon",
-      "target": "square"
     },
     {
       "id": "hw2_hollow_crown",
@@ -36317,31 +36461,6 @@
       "target": "piece"
     },
     {
-      "id": "hx4_donkey_ears",
-      "name": "Donkey Ears",
-      "kind": "buff",
-      "category": "hex",
-      "effectCategory": "capture-denial",
-      "tier": 7,
-      "mechanic": "passive",
-      "implemented": true,
-      "descriptionLength": 167,
-      "description": "Their king sprouts magnificent donkey ears (the dunce cap, worn for 6 of their turns), and the shame stings: for their next 2 turns their king cannot capture anything.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "strike",
-        "primitives": [
-          "bolt",
-          "shockRing",
-          "edgeBurn"
-        ],
-        "sigil": "Crown"
-      },
-      "soundCue": "passive/strike",
-      "soundFamily": "strike",
-      "target": "piece"
-    },
-    {
       "id": "hx4_eclipse",
       "name": "Eclipse",
       "kind": "buff",
@@ -36352,23 +36471,6 @@
       "implemented": true,
       "descriptionLength": 84,
       "description": "The sun goes out over their camp: their pawns cannot advance for their next 3 turns.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
-    },
-    {
-      "id": "hx4_falling_rubble",
-      "name": "Falling Rubble",
-      "kind": "buff",
-      "category": "hex",
-      "effectCategory": "zone-denial",
-      "tier": 7,
-      "mechanic": "activated",
-      "implemented": true,
-      "descriptionLength": 128,
-      "description": "Collapse a 2x2 block of squares you choose: your opponent's pieces cannot stop on any of those 4 squares for their next 2 turns.",
       "soundSource": "cast-voice",
       "animation": null,
       "soundCue": null,
@@ -36594,31 +36696,6 @@
       "target": null
     },
     {
-      "id": "hx4_lovestruck_majesty",
-      "name": "Lovestruck Majesty",
-      "kind": "buff",
-      "category": "hex",
-      "effectCategory": "single-piece-freeze",
-      "tier": 7,
-      "mechanic": "passive",
-      "implemented": true,
-      "descriptionLength": 157,
-      "description": "Your opponent's queen falls head over heels: she may make one move, then is frozen, swooning, for 2 of their turns. Any other queens they have swoon at once.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "bind",
-        "primitives": [
-          "chainLink",
-          "weightDrop",
-          "gateSlam"
-        ],
-        "sigil": "Heart"
-      },
-      "soundCue": "passive/bind",
-      "soundFamily": "bind",
-      "target": "piece"
-    },
-    {
       "id": "hx4_muster_silence",
       "name": "Muster of Silence",
       "kind": "buff",
@@ -36787,23 +36864,6 @@
       "target": null
     },
     {
-      "id": "hx4_traitors_gala",
-      "name": "Traitor's Gala",
-      "kind": "buff",
-      "category": "hex",
-      "effectCategory": "piece-downgrade-transform",
-      "tier": 7,
-      "mechanic": "instant",
-      "implemented": true,
-      "descriptionLength": 123,
-      "description": "Two of your opponent's knights or bishops, chosen at random, drink the wrong toast and become walnuts for 1 of their turns.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
-    },
-    {
       "id": "hx4_treacle_tide",
       "name": "Treacle Tide",
       "kind": "buff",
@@ -36963,23 +37023,6 @@
       "target": null
     },
     {
-      "id": "ilovechaewon",
-      "name": "I Love Chaewon",
-      "kind": "buff",
-      "category": "movement",
-      "effectCategory": "teleport-relocate",
-      "tier": 7,
-      "mechanic": "activated",
-      "implemented": true,
-      "descriptionLength": 132,
-      "description": "Fearless choreography: gracefully reposition up to 3 of your pieces, gliding each to any empty square in your own half of the board.",
-      "soundSource": "cast-voice",
-      "animation": null,
-      "soundCue": null,
-      "soundFamily": null,
-      "target": null
-    },
-    {
       "id": "ilovemysister",
       "name": "I Love My Sister",
       "kind": "buff",
@@ -37088,6 +37131,30 @@
       "soundCue": "passive/tempo",
       "soundFamily": "tempo",
       "target": "piece"
+    },
+    {
+      "id": "mass_freeze",
+      "name": "Mass Freeze",
+      "kind": "buff",
+      "category": "tempo",
+      "effectCategory": "mass-freeze",
+      "tier": 7,
+      "mechanic": "passive",
+      "implemented": true,
+      "descriptionLength": 86,
+      "description": "After your opponent replies, freeze every enemy piece except the king for 1 full turn.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "bind",
+        "primitives": [
+          "pulseRing",
+          "sigilStamp"
+        ],
+        "sigil": "link"
+      },
+      "soundCue": "passive/bind",
+      "soundFamily": "bind",
+      "target": "pieceClass"
     },
     {
       "id": "meteor",
@@ -37557,6 +37624,23 @@
       "target": null
     },
     {
+      "id": "roulette",
+      "name": "Roulette",
+      "kind": "buff",
+      "category": "attack",
+      "effectCategory": "mass-removal",
+      "tier": 7,
+      "mechanic": "instant",
+      "implemented": true,
+      "descriptionLength": 101,
+      "description": "Spin the wheel three times: three random enemy pieces other than the king are removed from the board.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
       "id": "ruin",
       "name": "Ruin",
       "kind": "buff",
@@ -37848,6 +37932,23 @@
       "soundCue": "passive/decree",
       "soundFamily": "decree",
       "target": "piece"
+    },
+    {
+      "id": "twin_queens",
+      "name": "Twin Queens",
+      "kind": "buff",
+      "category": "pieces",
+      "effectCategory": "promotion-grant",
+      "tier": 7,
+      "mechanic": "activated",
+      "implemented": true,
+      "descriptionLength": 126,
+      "description": "Promote two pawns to queens instantly if both are on your 5th rank or beyond. Using it spends your next unused reroll, if any.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
     },
     {
       "id": "unshackled_wrath",
@@ -38506,31 +38607,6 @@
       "target": null
     },
     {
-      "id": "bn4_dukes_patent",
-      "name": "The Duke's Patent",
-      "kind": "buff",
-      "category": "movement",
-      "effectCategory": "movement-upgrade",
-      "tier": 8,
-      "mechanic": "passive",
-      "implemented": true,
-      "descriptionLength": 178,
-      "description": "For your opponent's next 4 turns, your rooks may also step one square diagonally (capturing allowed). The moment one of your rooks captures, the patent lapses and the power ends.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "strike",
-        "primitives": [
-          "bolt",
-          "shockRing",
-          "edgeBurn"
-        ],
-        "sigil": "Stamp"
-      },
-      "soundCue": "passive/strike",
-      "soundFamily": "strike",
-      "target": "piece"
-    },
-    {
       "id": "bn4_endless_militia",
       "name": "Endless Militia",
       "kind": "buff",
@@ -38613,31 +38689,6 @@
       "soundCue": null,
       "soundFamily": null,
       "target": null
-    },
-    {
-      "id": "bn4_guardian_of_the_line",
-      "name": "Guardian of the Line",
-      "kind": "buff",
-      "category": "protection",
-      "effectCategory": "single-piece-shield",
-      "tier": 8,
-      "mechanic": "passive",
-      "implemented": true,
-      "descriptionLength": 133,
-      "description": "Beginning after your opponent's next move, your queen cannot be captured while she stands beside your king, for the rest of the game.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "decree",
-        "primitives": [
-          "sigilStamp",
-          "crackLines",
-          "drainFlow"
-        ],
-        "sigil": "ShieldCheck"
-      },
-      "soundCue": "passive/decree",
-      "soundFamily": "decree",
-      "target": "piece"
     },
     {
       "id": "bn4_hall_of_doors",
@@ -39192,6 +39243,30 @@
       "soundCue": null,
       "soundFamily": null,
       "target": null
+    },
+    {
+      "id": "boneca_ambalabu",
+      "name": "Boneca Ambalabu",
+      "kind": "buff",
+      "category": "hex",
+      "effectCategory": "piece-nudge-reposition",
+      "tier": 8,
+      "mechanic": "passive",
+      "implemented": true,
+      "descriptionLength": 129,
+      "description": "The tire-frog drags your opponent down: for their next 4 turns none of their pieces may move more than 1 square in a single move.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "bind",
+        "primitives": [
+          "chainLink",
+          "weightDrop"
+        ],
+        "sigil": "LifeBuoy"
+      },
+      "soundCue": "passive/bind",
+      "soundFamily": "bind",
+      "target": "pieceClass"
     },
     {
       "id": "buff_plunder",
@@ -39832,31 +39907,6 @@
       "target": "pieceClass"
     },
     {
-      "id": "hx4_choke_point",
-      "name": "Choke Point",
-      "kind": "buff",
-      "category": "hex",
-      "effectCategory": "terrain-hazard",
-      "tier": 8,
-      "mechanic": "passive",
-      "implemented": true,
-      "descriptionLength": 157,
-      "description": "Caltrops blanket the central 4x4 (c3 to f6): your opponent's pieces may not stop anywhere in it for their next turn. Their king picks its way through freely.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "decree",
-        "primitives": [
-          "sigilStamp",
-          "crackLines",
-          "drainFlow"
-        ],
-        "sigil": "Hexagon"
-      },
-      "soundCue": "passive/decree",
-      "soundFamily": "decree",
-      "target": "pieceClass"
-    },
-    {
       "id": "hx4_crown_of_lead",
       "name": "Crown of Lead",
       "kind": "buff",
@@ -40241,56 +40291,6 @@
       "soundCue": null,
       "soundFamily": null,
       "target": null
-    },
-    {
-      "id": "hx4_oathbreakers_brand",
-      "name": "Oathbreaker's Brand",
-      "kind": "buff",
-      "category": "hex",
-      "effectCategory": "single-piece-freeze",
-      "tier": 8,
-      "mechanic": "passive",
-      "implemented": true,
-      "descriptionLength": 192,
-      "description": "A brand hangs over their castle gate for their next 6 turns: if your opponent castles in that window, the castling rook is frozen for 3 of their turns and their king wears the dunce cap for 8.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "bind",
-        "primitives": [
-          "chainLink",
-          "weightDrop",
-          "gateSlam"
-        ],
-        "sigil": "FileWarning"
-      },
-      "soundCue": "passive/bind",
-      "soundFamily": "bind",
-      "target": "pieceClass"
-    },
-    {
-      "id": "hx4_pawn_embargo",
-      "name": "Pawn Embargo",
-      "kind": "buff",
-      "category": "hex",
-      "effectCategory": "zone-denial",
-      "tier": 8,
-      "mechanic": "passive",
-      "implemented": true,
-      "descriptionLength": 211,
-      "description": "For your opponent's next 6 turns, their pawns may not enter or move within your half of the board. The first pawn the border would stop may cross once, then it binds fully. The infantry is stopped at the border.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "territory",
-        "primitives": [
-          "zoneSweep",
-          "edgeBurn",
-          "beamVertical"
-        ],
-        "sigil": "FileX2"
-      },
-      "soundCue": "passive/territory",
-      "soundFamily": "territory",
-      "target": "zone"
     },
     {
       "id": "hx4_puppet_court",
@@ -46531,30 +46531,6 @@
       "target": "piece"
     },
     {
-      "id": "ivory_tower",
-      "name": "Ivory Tower",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "alt-win-loss-condition",
-      "tier": 5,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 56,
-      "description": "You lose if any opponent piece is adjacent to your king.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "decree",
-        "primitives": [
-          "crackBloom",
-          "sigilStamp"
-        ],
-        "sigil": "tower-control"
-      },
-      "soundCue": "passive/decree",
-      "soundFamily": "decree",
-      "target": "winCondition"
-    },
-    {
       "id": "ladies_first",
       "name": "Ladies First",
       "kind": "nerf",
@@ -49989,6 +49965,30 @@
       "soundCue": "passive/strike",
       "soundFamily": "strike",
       "target": "piece"
+    },
+    {
+      "id": "ivory_tower",
+      "name": "Ivory Tower",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "alt-win-loss-condition",
+      "tier": 7,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 56,
+      "description": "You lose if any opponent piece is adjacent to your king.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "decree",
+        "primitives": [
+          "crackBloom",
+          "sigilStamp"
+        ],
+        "sigil": "tower-control"
+      },
+      "soundCue": "passive/decree",
+      "soundFamily": "decree",
+      "target": "winCondition"
     },
     {
       "id": "nw2_chameleon",

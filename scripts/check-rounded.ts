@@ -49,6 +49,9 @@ const ALLOWED_VALUES = new Set([
   "inherit",
   "initial",
   "unset",
+  // The two geometry tokens (boxes 0, buttons 2px; see globals.css).
+  "var(--ui-roundness)",
+  "var(--btn-roundness)",
 ]);
 
 // Selectors whose radius IS the shape rather than a corner treatment: organic
@@ -63,6 +66,8 @@ const SHAPE_EXEMPT = [
   ".us-f-ignite", // usage-beat flame lick; the radius IS the shape
   ".us-f-bloom", // usage-beat petal blob; organic by design
   ".podium-petal", // a falling flower petal; the radius IS the shape
+  ".g3d-die__face", // a die is a rounded cube; the radius IS the shape
+  ".nerf-enter__seal-half", // half of a round wax seal; the radius IS the shape
   '[class*="rounded"]', // the global enforcement rule itself
   "primitives.css", // passive VFX pips at 6-12% of the viewport
   "effects.css", // organic VFX blobs

@@ -41,7 +41,7 @@
   55% { opacity: 0.72; transform: scale(1, 1); }
   100% { opacity: 0; transform: scale(1.12, 1); }
 }
-.g33-tell { animation: g33-tell calc(0.3s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 100%; }
+.g33-tell { animation: g33-tell calc(0.3s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 100%; }
 
 /* The sight line itself, scribed from the cast square down the real vector. */
 @keyframes g33-tellline {
@@ -61,7 +61,7 @@
   68% { opacity: 0.42; }
   100% { opacity: 0; }
 }
-.g33-wash { animation: g33-wash calc(1.35s * var(--fx-dur, 1)) ease-out both; }
+.g33-wash { animation: g33-wash calc(1.35s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* ---------------------------------------------------------------------------
    3. Settles (dust, motes, grit, drips, one glint)
@@ -73,7 +73,7 @@
   30% { opacity: 0.72; }
   100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * -26%)) scale(1.5); }
 }
-.g33-dust { animation: g33-dust calc(1.1s * var(--fx-dur, 1)) ease-out both; }
+.g33-dust { animation: g33-dust calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* Motes turning over in a shaft of light: slower, and they hang. */
 @keyframes g33-motes {
@@ -82,7 +82,7 @@
   62% { opacity: 0.5; transform: translate(3%, calc(var(--fx-side, 1) * -12%)) scale(1.16); }
   100% { opacity: 0; transform: translate(-2%, calc(var(--fx-side, 1) * -30%)) scale(1.44); }
 }
-.g33-motes { animation: g33-motes calc(1.25s * var(--fx-dur, 1)) ease-out both; }
+.g33-motes { animation: g33-motes calc(1.25s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* Chips flung clear of the work (--sx / --sy per mote). */
 @keyframes g33-grit {
@@ -106,7 +106,7 @@
   45% { opacity: 1; transform: scale(1.14) rotate(0deg); }
   100% { opacity: 0; transform: scale(0.55) rotate(12deg); }
 }
-.g33-glint { animation: g33-glint calc(0.5s * var(--fx-dur, 1)) ease-out both; }
+.g33-glint { animation: g33-glint calc(0.5s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* Something rising into place on the square it was granted. */
 @keyframes g33-raise {
@@ -147,7 +147,7 @@
   58% { transform: scale(1); }
   100% { opacity: 0; transform: translateY(-14%) scale(0.92); }
 }
-.g33-ent3 { animation: g33-ent3 calc(0.78s * var(--fx-dur, 1)) ease-out both; }
+.g33-ent3 { animation: g33-ent3 calc(0.78s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* ---------------------------------------------------------------------------
    5. Target cut (one square, fast)
@@ -168,7 +168,7 @@
   40% { opacity: 0.9; transform: translateX(0) scaleX(1); }
   100% { opacity: 0; transform: translateX(34%) scaleX(0.7); }
 }
-.g33-hit2 { animation: g33-hit2 calc(0.46s * var(--fx-dur, 1)) ease-out both; }
+.g33-hit2 { animation: g33-hit2 calc(0.46s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* ===========================================================================
    PER-CARD SIGNATURE MOTIONS
@@ -297,7 +297,7 @@
   70% { transform: scaleX(1.2); }
   100% { opacity: 0; transform: scaleX(1); }
 }
-.g33-mitre-squeeze { animation: g33-mitre-squeeze calc(0.7s * var(--fx-dur, 1)) ease-out both; }
+.g33-mitre-squeeze { animation: g33-mitre-squeeze calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- 5. Puppet Practice: the control bar and its strings ----------------- */
 
@@ -308,7 +308,7 @@
   76% { transform: rotate(2deg); }
   100% { opacity: 0; transform: rotate(0deg); }
 }
-.g33-pup-bar { animation: g33-pup-bar calc(0.95s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 0% 50%; }
+.g33-pup-bar { animation: g33-pup-bar calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; transform-origin: 0% 50%; }
 
 @keyframes g33-pup-string {
   0% { opacity: 0; transform: scaleY(0.1) skewX(0deg); }
@@ -317,7 +317,7 @@
   84% { transform: skewX(0deg); }
   100% { opacity: 0; transform: scaleY(0.86); }
 }
-.g33-pup-string { animation: g33-pup-string calc(0.8s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 50% 0%; }
+.g33-pup-string { animation: g33-pup-string calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; transform-origin: 50% 0%; }
 
 /* The borrowed piece is WALKED the real length of the line. The body is
    2 cells wide, so one cell of travel is 50% of its own box. */
@@ -495,7 +495,7 @@
   78% { transform: rotate(4deg); }
   100% { opacity: 0; transform: rotate(0deg); }
 }
-.g33-lane-lamp { animation: g33-lane-lamp calc(0.9s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 50% 0%; }
+.g33-lane-lamp { animation: g33-lane-lamp calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; transform-origin: 50% 0%; }
 
 /* --- 12. Chimney Sweep: the flue, the rods, the brush -------------------- */
 
@@ -641,7 +641,7 @@
   60% { transform: scale(1, 1); }
   100% { opacity: 0; transform: scale(1.3, 1.24); }
 }
-.g33-cush-mark { animation: g33-cush-mark calc(0.6s * var(--fx-dur, 1)) ease-out both; }
+.g33-cush-mark { animation: g33-cush-mark calc(0.6s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- 17. Silk Curtain: the rail, the rings, the parting ------------------ */
 
@@ -708,7 +708,7 @@
   62% { opacity: 0.7; transform: scaleX(1) scaleY(1.04); }
   100% { opacity: 0; transform: scaleX(1) scaleY(1); }
 }
-.g33-suds { animation: g33-suds calc(1.1s * var(--fx-dur, 1)) ease-out both; transform-origin: 0% 50%; }
+.g33-suds { animation: g33-suds calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 0% 50%; }
 
 @keyframes g33-cradle {
   0% { opacity: 0; transform: scaleX(0.04) rotate(-4deg); }

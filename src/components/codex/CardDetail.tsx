@@ -25,6 +25,8 @@ import {
 import { buffCollection, nerfCollection } from "@/lib/cardCollections";
 import { historyFor } from "@/data/cardHistory";
 import { CardInsights } from "@/components/codex/CardInsights";
+import { retirementOf } from "@/engine/retired";
+import { BUFF_BY_ID } from "@/lib/cardCodex";
 
 // Server-rendered detail page for a single card, shared by /codex/buff/[id]
 // and /codex/nerf/[id]. Everything here is plain HTML (no client component),
@@ -137,14 +139,14 @@ function PrevNextNav({
 }) {
   if (!prev && !next) return null;
   const cell =
-    "flex min-w-0 items-center gap-2 rounded-sm border border-white/10 px-3 py-2.5 transition hover:border-gold/40 hover:bg-white/5";
+    "flex min-w-0 items-center gap-2 rounded-none border border-[color:var(--edge)] px-3 py-2.5 transition hover:border-[color:var(--edge-strong)] hover:bg-[color:var(--bg-raised)]";
   return (
     <nav aria-label={`Browse ${noun} cards`} className="grid grid-cols-1 gap-2 pt-2 sm:grid-cols-2">
       {prev ? (
         <Link href={prev.path} className={cell}>
           <ChevronLeft size={16} aria-hidden className="shrink-0 text-parchment-400" />
           <span className="min-w-0">
-            <span className="block text-[10px] text-parchment-400">Previous {noun}</span>
+            <span className="block text-[11px] text-parchment-400">Previous {noun}</span>
             <span className="block truncate font-display text-[14px] text-parchment-100">{prev.name}</span>
           </span>
         </Link>
@@ -154,7 +156,7 @@ function PrevNextNav({
       {next ? (
         <Link href={next.path} className={cell + " justify-end text-right sm:col-start-2"}>
           <span className="min-w-0">
-            <span className="block text-[10px] text-parchment-400">Next {noun}</span>
+            <span className="block text-[11px] text-parchment-400">Next {noun}</span>
             <span className="block truncate font-display text-[14px] text-parchment-100">{next.name}</span>
           </span>
           <ChevronRight size={16} aria-hidden className="shrink-0 text-parchment-400" />
@@ -166,7 +168,7 @@ function PrevNextNav({
 
 function TypeBadge({ type }: { type: CardType }) {
   return (
-    <span className="inline-flex items-center rounded-sm border border-white/15 px-2 py-0.5 text-[11px] text-parchment-300">
+    <span className="inline-flex items-center rounded-none border border-[color:var(--edge)] px-2 py-0.5 text-[11px] text-parchment-300">
       {type}
     </span>
   );
@@ -182,9 +184,43 @@ function GlanceRow({ label, children }: { label: string; children: ReactNode }) 
   );
 }
 
+// A retired card stays readable (old games and links keep working) but says
+// so, and points at the active card that covers the same ground.
+function RetiredNote({ id }: { id: string }) {
+  const r = retirementOf(id);
+  if (!r) return null;
+  const targetBuff: Buff | undefined = r.mergedInto ? BUFF_BY_ID[r.mergedInto] : undefined;
+  const targetNerf: Nerf | undefined = r.mergedInto && !targetBuff ? ALL_NERFS.find((n) => n.id === r.mergedInto) : undefined;
+  const target = targetBuff ?? targetNerf;
+  const targetPath = targetBuff ? cardPath(targetBuff) : targetNerf ? `/codex/nerf/${targetNerf.id}` : null;
+  const why: Record<string, string> = {
+    duplicate: "it did the same thing as another card",
+    dominated: "a cheaper card did the same thing",
+    "near-duplicate": "it was too close to another card",
+    "too-complex": "its rule ran too long to read at the board",
+    hand: "it was cut in the hand audit for being unclear, a twin of another card, or wrong for its tier",
+    "category-cap": "its category had more variations than the game needed",
+  };
+  return (
+    <div className="plate border-l-2 border-l-brag p-4 text-[14px] text-parchment-200">
+      <strong className="text-parchment-50">Retired.</strong> This card is no longer dealt: {why[r.reason] ?? "it was retired"}.
+      {target && targetPath && (
+        <>
+          {" "}
+          See{" "}
+          <Link href={targetPath} className="text-gold-leaf hover:underline">
+            {target.name}
+          </Link>{" "}
+          instead.
+        </>
+      )}
+    </div>
+  );
+}
+
 function NotDraftedNote() {
   return (
-    <p className="mb-4 rounded-sm border border-sun/30 bg-sun/5 px-4 py-2 text-sm text-parchment-200">
+    <p className="mb-4 rounded-none border border-sun/30 bg-sun/5 px-4 py-2 text-sm text-parchment-200">
       This card is written but not yet appearing in drafts. Its wording and tier may still change.
     </p>
   );
@@ -259,13 +295,13 @@ function RelatedGrid({ title, cards }: { title: string; cards: RelatedCard[] }) 
           <Link
             key={c.id}
             href={c.path}
-            className="flex items-center justify-between gap-3 rounded-sm border border-white/10 px-3 py-2 transition hover:border-gold/40 hover:bg-white/5"
+            className="flex items-center justify-between gap-3 rounded-none border border-[color:var(--edge)] px-3 py-2 transition hover:border-[color:var(--edge-strong)] hover:bg-[color:var(--bg-raised)]"
           >
             <span className="font-display text-parchment-100">{c.name}</span>
             {/* 12px tier chip carrying the tier's own color (tier-bg + tier),
                 the shared tier-chip pattern, not a colorless 10px smallcap. */}
             <span
-              className={`shrink-0 rounded-[1px] border px-1.5 py-px font-display text-[12px] font-bold tier-bg-${c.tier} tier-${c.tier}`}
+              className={`shrink-0 rounded-none border px-1.5 py-px font-display text-[12px] font-bold tier-bg-${c.tier} tier-${c.tier}`}
             >
               {tierName(c.tier)}
             </span>
@@ -300,6 +336,7 @@ export function BuffDetail({ buff, extra }: { buff: Buff; extra?: ReactNode }) {
     >
       <CardBreadcrumbJsonLd section={section} name={buff.name} path={path} />
       {!buff.implemented && <NotDraftedNote />}
+      <RetiredNote id={buff.id} />
 
       <InfoSection title="At a glance">
         <dl className="space-y-3">
@@ -327,7 +364,7 @@ export function BuffDetail({ buff, extra }: { buff: Buff; extra?: ReactNode }) {
             <GlossaryText text={buff.tip} />
           </p>
         )}
-        {buff.flavor && <p className="border-l border-gold/40 pl-4 italic text-parchment-300">&ldquo;{buff.flavor}&rdquo;</p>}
+        {buff.flavor && <p className="border-l border-[color:var(--edge-strong)] pl-4 italic text-parchment-300">&ldquo;{buff.flavor}&rdquo;</p>}
       </InfoSection>
 
       <HistoryTimeline kind="buff" card={buff} />
@@ -354,6 +391,7 @@ export function NerfDetail({ nerf, extra }: { nerf: Nerf; extra?: ReactNode }) {
     >
       <CardBreadcrumbJsonLd section="Nerfs" name={nerf.name} path={path} />
       {!nerf.implemented && <NotDraftedNote />}
+      <RetiredNote id={nerf.id} />
 
       <InfoSection title="At a glance">
         <dl className="space-y-3">
@@ -387,7 +425,7 @@ export function NerfDetail({ nerf, extra }: { nerf: Nerf; extra?: ReactNode }) {
             <GlossaryText text={nerf.tip} />
           </p>
         )}
-        {nerf.flavor && <p className="border-l border-gold/40 pl-4 italic text-parchment-300">&ldquo;{nerf.flavor}&rdquo;</p>}
+        {nerf.flavor && <p className="border-l border-[color:var(--edge-strong)] pl-4 italic text-parchment-300">&ldquo;{nerf.flavor}&rdquo;</p>}
       </InfoSection>
 
       <HistoryTimeline kind="nerf" card={nerf} />

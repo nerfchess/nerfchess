@@ -40,7 +40,7 @@ export function EmptyState({
     >
       <span
         aria-hidden
-        className="grid h-12 w-12 place-items-center bg-white/[0.02] text-parchment-400"
+        className="grid h-12 w-12 place-items-center bg-[color:var(--bg-zebra)] text-parchment-400"
         style={{ border: "1px solid var(--edge)" }}
       >
         {Icon ? <Icon size={22} strokeWidth={1.6} /> : <span className="text-[26px] leading-none">{glyph}</span>}

@@ -44,7 +44,7 @@
   30% { opacity: 0.75; transform: translateY(calc(var(--pnp-lean, 0%) * 0.25)) scale(1); }
   100% { opacity: 0; transform: translateY(var(--pnp-lean, 0%)) scale(1.45); }
 }
-.pnp-chalkdrift { animation: pnp-chalkdrift calc(1.5s * var(--fx-dur, 1)) ease-out both; }
+.pnp-chalkdrift { animation: pnp-chalkdrift calc(1.5s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes pnp-spot-tell {
   0% { opacity: 0; transform: scale(1.6); }
@@ -58,14 +58,14 @@
   26% { opacity: 0.95; transform: scale(1.14); }
   100% { opacity: 0; transform: scale(1.4); }
 }
-.pnp-spot-hit { animation: pnp-spot-hit calc(0.66s * var(--fx-dur, 1)) ease-out both; }
+.pnp-spot-hit { animation: pnp-spot-hit calc(0.66s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes pnp-spot-drift {
   0% { opacity: 0; transform: translateY(0) scale(0.6); }
   30% { opacity: 0.72; transform: translateY(calc(var(--fx-side, 1) * 8%)) scale(1); }
   100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 34%)) scale(1.5); }
 }
-.pnp-spot-drift { animation: pnp-spot-drift calc(1.4s * var(--fx-dur, 1)) ease-out both; }
+.pnp-spot-drift { animation: pnp-spot-drift calc(1.4s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- the entrance cut -------------------------------------------------------
  * A free-standing character rising in over a soft ground shadow, never a photo
@@ -75,7 +75,7 @@
   40% { opacity: 0.65; transform: scale(1); }
   100% { opacity: 0; transform: scale(1.34); }
 }
-.pnp-arrive-ring { animation: pnp-arrive-ring calc(0.82s * var(--fx-dur, 1)) ease-out both; }
+.pnp-arrive-ring { animation: pnp-arrive-ring calc(0.82s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes pnp-arrive {
   0% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 34%)) scale(0.6); }
@@ -91,7 +91,7 @@
   70% { opacity: 0.55; transform: scale(1); }
   100% { opacity: 0; transform: scale(1.02); }
 }
-.pnp-wash { animation: pnp-wash calc(1.4s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.pnp-wash { animation: pnp-wash calc(1.4s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 /* Elliptical ambient light: the sanctioned portrait backlight (radial
    gradient span, smaller than the figure's silhouette). */
@@ -101,7 +101,7 @@
   70% { opacity: 0.55; transform: scale(1.05); }
   100% { opacity: 0; transform: scale(1.1); }
 }
-.pnp-glow { animation: pnp-glow calc(1.8s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.pnp-glow { animation: pnp-glow calc(1.8s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 /* The soft ground-shadow ellipse a rising character stands over: spreads as
    the figure lands, breathes once, fades with the scene. */
@@ -113,7 +113,7 @@
   80% { opacity: 0.7; transform: scale(1, 1); }
   100% { opacity: 0; transform: scale(1.05, 1); }
 }
-.pnp-groundshadow { animation: pnp-groundshadow calc(1.9s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.pnp-groundshadow { animation: pnp-groundshadow calc(1.9s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 /* Character entrance: RISE from the ground shadow (never a block fade) — a
    lift from below with a soft overshoot settle, hold, and away. */
@@ -135,7 +135,7 @@
   60% { opacity: 0.12; transform: translate(calc(var(--pnp-x, -10%) * 0.5), calc(var(--pnp-y, 0%) * 0.5)) scale(1); }
   100% { opacity: 0; transform: translate(0, 0) scale(1); }
 }
-.pnp-ghost { animation: pnp-ghost calc(0.7s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.pnp-ghost { animation: pnp-ghost calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 /* Closing shockwave ring. */
 @keyframes pnp-ring {
@@ -152,7 +152,7 @@
   84% { opacity: 1; }
   100% { opacity: 0; }
 }
-.pnp-linger { animation: pnp-linger calc(1.6s * var(--fx-dur, 1)) ease-out both; }
+.pnp-linger { animation: pnp-linger calc(1.6s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 .pnp-linger--slow { animation-duration: calc(2.2s * var(--fx-dur, 1)); }
 
 /* Chunky pop: overshoot in, hold, fade away. */
@@ -172,7 +172,7 @@
   25% { opacity: 1; transform: translateY(0) scale(1); }
   100% { opacity: 0; transform: translateY(-120%) scale(1.05); }
 }
-.pnp-rise { animation: pnp-rise calc(1s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.pnp-rise { animation: pnp-rise calc(1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 /* Starburst blink. */
 @keyframes pnp-star {
@@ -181,7 +181,7 @@
   55% { transform: scale(0.95) rotate(24deg); }
   100% { opacity: 0; transform: scale(1.3) rotate(32deg); }
 }
-.pnp-star { animation: pnp-star calc(0.7s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.pnp-star { animation: pnp-star calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 /* Drifting puff (chalk clouds): --pnp-x / --pnp-y set the drift vector. */
 @keyframes pnp-puff {
@@ -189,7 +189,7 @@
   30% { opacity: 0.9; transform: translate(var(--pnp-x, 0%), var(--pnp-y, -30%)) scale(1); }
   100% { opacity: 0; transform: translate(calc(var(--pnp-x, 0%) * 1.9), calc(var(--pnp-y, -30%) * 1.8)) scale(1.6); }
 }
-.pnp-puff { animation: pnp-puff calc(0.85s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.pnp-puff { animation: pnp-puff calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 /* A loose speck (chalk grain, gold dust) drifting back down — the settle. */
 @keyframes pnp-speck {
@@ -197,7 +197,7 @@
   22% { opacity: 0.9; }
   100% { opacity: 0; transform: translateY(160%) rotate(24deg); }
 }
-.pnp-speck { animation: pnp-speck calc(0.9s * var(--fx-dur, 1)) ease-in both; transform-origin: 50% 50%; }
+.pnp-speck { animation: pnp-speck calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 1, 0.45) both; transform-origin: 50% 50%; }
 
 /* --- Muscle Up: the explosive bar pull -------------------------------------- */
 
@@ -224,7 +224,7 @@
   75% { transform: translateY(0.9px); }
   100% { transform: translateY(0); }
 }
-.pnp-barflex { animation: pnp-barflex calc(0.7s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 50% 50%; }
+.pnp-barflex { animation: pnp-barflex calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; transform-origin: 50% 50%; }
 
 /* Vertical speed zips left behind by the rise. */
 @keyframes pnp-zip {
@@ -232,7 +232,7 @@
   30% { opacity: 0.9; transform: translateY(20%) scaleY(1); }
   100% { opacity: 0; transform: translateY(65%) scaleY(0.5); }
 }
-.pnp-zip { animation: pnp-zip calc(0.6s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 0%; }
+.pnp-zip { animation: pnp-zip calc(0.6s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 0%; }
 
 /* --- 225 Bench: the barbell press ------------------------------------------- */
 
@@ -261,7 +261,7 @@
   72% { transform: translateX(0.5px); }
   100% { transform: translateX(0); }
 }
-.pnp-rattle { animation: pnp-rattle calc(0.5s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 50% 50%; }
+.pnp-rattle { animation: pnp-rattle calc(0.5s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; transform-origin: 50% 50%; }
 
 /* Plates wobble on the drive (a tiny independent rock). */
 @keyframes pnp-plate-wobble {
@@ -270,7 +270,7 @@
   70% { transform: rotate(4deg); }
   84%, 100% { transform: rotate(0deg); }
 }
-.pnp-plate-wobble { animation: pnp-plate-wobble calc(1.7s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 50% 50%; }
+.pnp-plate-wobble { animation: pnp-plate-wobble calc(1.7s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; transform-origin: 50% 50%; }
 
 /* Shoved ranks: chevron rows knocked back (upward) by the press. */
 @keyframes pnp-shove {
@@ -292,7 +292,7 @@
   65% { transform: scale(1.008); }
   85%, 100% { transform: scale(1); }
 }
-.pnp-focus { animation: pnp-focus calc(0.45s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 50% 50%; }
+.pnp-focus { animation: pnp-focus calc(0.45s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; transform-origin: 50% 50%; }
 
 /* A word snaps from untyped to typed (instant step at its start frame). */
 @keyframes pnp-type {
@@ -332,7 +332,7 @@
   78% { opacity: 1; transform: translateY(0); }
   100% { opacity: 0; transform: translateY(-15%); }
 }
-.pnp-flash { animation: pnp-flash calc(0.42s * var(--fx-dur, 1)) ease-out both; }
+.pnp-flash { animation: pnp-flash calc(0.42s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* The final count sticks, then leaves with the scene. */
 @keyframes pnp-flash-hold {
@@ -342,7 +342,7 @@
   84% { opacity: 1; }
   100% { opacity: 0; }
 }
-.pnp-flash-hold { animation: pnp-flash-hold calc(0.8s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.pnp-flash-hold { animation: pnp-flash-hold calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 /* Target keycap press: down, click, up. */
 @keyframes pnp-keypress {
@@ -369,7 +369,7 @@
   84% { transform: rotate(-1deg); }
   100% { transform: rotate(0deg); }
 }
-.pnp-scramble { animation: pnp-scramble calc(0.6s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 50% 50%; }
+.pnp-scramble { animation: pnp-scramble calc(0.6s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; transform-origin: 50% 50%; }
 
 /* The whole face wrenches a quarter turn with a snappy detent (holds still
    long enough for the scramble tell to finish first). */
@@ -423,7 +423,7 @@
   80% { opacity: 0.85; }
   100% { opacity: 0; transform: translateX(9%); }
 }
-.pnp-ribbon { animation: pnp-ribbon calc(1.9s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 50% 50%; }
+.pnp-ribbon { animation: pnp-ribbon calc(1.9s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; transform-origin: 50% 50%; }
 
 /* One full charmed orbit of hearts around the halo. */
 @keyframes pnp-orbit {
@@ -442,7 +442,7 @@
   72% { opacity: 0.8; transform: scale(1.02); }
   100% { opacity: 0; transform: scale(1.2); }
 }
-.pnp-halopulse { animation: pnp-halopulse calc(2.2s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 50% 50%; }
+.pnp-halopulse { animation: pnp-halopulse calc(2.2s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; transform-origin: 50% 50%; }
 
 /* --- I Love Making Out: the lean-in ------------------------------------------ */
 
@@ -515,7 +515,7 @@
   78% { opacity: 0.8; }
   100% { opacity: 0; transform: translateX(7%); }
 }
-.pnp-smoothwave { animation: pnp-smoothwave calc(1.9s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 50% 50%; }
+.pnp-smoothwave { animation: pnp-smoothwave calc(1.9s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; transform-origin: 50% 50%; }
 
 /* Mute badges drifting gently down like closing eyelids. */
 @keyframes pnp-driftdown {
@@ -524,7 +524,7 @@
   80% { opacity: 0.9; }
   100% { opacity: 0; transform: translateY(120%) rotate(var(--pnp-r, -10deg)); }
 }
-.pnp-driftdown { animation: pnp-driftdown calc(1.7s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 50% 50%; }
+.pnp-driftdown { animation: pnp-driftdown calc(1.7s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; transform-origin: 50% 50%; }
 
 /* The record turns, slow and steady. */
 @keyframes pnp-spin {
@@ -577,7 +577,7 @@
   25% { opacity: 0.8; transform: translateX(calc(var(--pnp-x, 40%) * 0.4)) scaleX(1); }
   100% { opacity: 0; transform: translateX(var(--pnp-x, 40%)) scaleX(1.1); }
 }
-.pnp-shimmer { animation: pnp-shimmer calc(1.2s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.pnp-shimmer { animation: pnp-shimmer calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 /* --- Forearm Veins: the surge up the files -------------------------------------- */
 
@@ -640,7 +640,7 @@
   54% { opacity: 0.95; transform: scaleY(1); }
   100% { opacity: 0; transform: scaleY(1); }
 }
-.pnp-seamflash { animation: pnp-seamflash calc(0.55s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.pnp-seamflash { animation: pnp-seamflash calc(0.55s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 /* Hanni's bloom: ONE crystal arm shooting out from the core (each arm gets
    its own stagger, so the bloom grows arm by arm behind her). Root pivot. */
@@ -664,7 +664,7 @@
   78% { transform: translate(50%, -190%) rotate(9deg); }
   100% { opacity: 0; transform: translate(-10%, -240%) rotate(0deg); }
 }
-.pnp-fig8 { animation: pnp-fig8 calc(1.9s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 50% 50%; }
+.pnp-fig8 { animation: pnp-fig8 calc(1.9s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; transform-origin: 50% 50%; }
 
 /* Danielle's lighthouse: ONE dawn beam sweeps the board, pivoting at its
    base behind her crown, left horizon to right. */
@@ -674,7 +674,7 @@
   82% { opacity: 0.9; transform: rotate(52deg); }
   100% { opacity: 0; transform: rotate(56deg); }
 }
-.pnp-lighthouse { animation: pnp-lighthouse calc(1.5s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 50% 100%; }
+.pnp-lighthouse { animation: pnp-lighthouse calc(1.5s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; transform-origin: 50% 100%; }
 
 /* A dawn ray: unrolls downward from its far end, glows, and fades. */
 @keyframes pnp-ray {
@@ -683,7 +683,7 @@
   74% { opacity: 0.7; transform: scaleY(1); }
   100% { opacity: 0; transform: scaleY(1.04); }
 }
-.pnp-ray { animation: pnp-ray calc(1.7s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 100%; }
+.pnp-ray { animation: pnp-ray calc(1.7s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 100%; }
 
 /* Haerin's pounce: she steps in low, CROUCHES with a butt-wiggle coil (the
    tell), then launches clean across the board, nose down into the landing.
@@ -760,7 +760,7 @@
   70% { opacity: 0.3; transform: scaleX(1); }
   100% { opacity: 0; transform: scaleX(0.9); }
 }
-.pnp-cw-ribbon { animation: pnp-cw-ribbon calc(1.4s * var(--fx-dur, 1)) ease-out both; transform-origin: 100% 50%; }
+.pnp-cw-ribbon { animation: pnp-cw-ribbon calc(1.4s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 100% 50%; }
 
 /* Formation sparkles shimmer into place. */
 @keyframes pnp-cw-lock {
@@ -778,7 +778,7 @@
   20% { opacity: 1; }
   100% { opacity: 0; transform: translate(var(--px), var(--py)) rotate(var(--pr)) scale(1); }
 }
-.pnp-cw-petal { animation: pnp-cw-petal calc(1.5s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.pnp-cw-petal { animation: pnp-cw-petal calc(1.5s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 /* Square-local: a feather settles and a spark winks. */
 @keyframes pnp-cw-settle {
@@ -794,7 +794,7 @@
   50% { opacity: 1; transform: scale(1.3); }
   100% { opacity: 0; transform: scale(0.8); }
 }
-.pnp-cw-spark { animation: pnp-cw-spark calc(0.8s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.pnp-cw-spark { animation: pnp-cw-spark calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 /* --- animations off (Settings) -----------------------------------------------
    Everything in this module is a transient one-shot flourish: hide the whole

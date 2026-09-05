@@ -7,10 +7,12 @@
 // /api/mod/cards; like /mod, this page just hides itself from non-mods.
 
 import type { Buff } from "@/engine/buff";
+import { isRetired } from "@/engine/retired";
 import type { Nerf } from "@/engine/nerf";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { AccountUser, fetchMe } from "@/lib/authClient";
+import { ModShell } from "@/components/mod/ModShell";
 import { Button } from "@/components/ui/Button";
 
 type Kind = "buff" | "nerf";
@@ -198,40 +200,28 @@ export default function ModCardsPage() {
   };
 
   return (
-    <main className="min-h-screen">
-      <nav className="flex items-center justify-between px-5 sm:px-10 py-6">
-        <Link href="/" className="font-display text-2xl tracking-tight">
-          nerf<span className="text-gold-leaf">chess</span>
-        </Link>
-        <div className="flex items-center gap-3 text-sm font-medium">
-          <Link href="/mod" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Moderation</Link>
-          <Link href="/codex" className="px-3 py-1.5 hover:bg-white/5 text-parchment-100">Codex</Link>
-        </div>
-      </nav>
-
-      <section className="max-w-5xl mx-auto px-6 py-8">
+    <ModShell title="Card editor" isAdmin={me?.role === "admin"}>
+      <>
         {me === undefined ? (
           <div className="text-parchment-300">Loading…</div>
         ) : !isMod ? (
           <>
-            <h1 className="font-display text-4xl">Card editor</h1>
-            <p className="mt-3 text-parchment-200">
+                        <p className="mt-3 text-parchment-200">
               This page is for moderators.{" "}
               {!me && (
-                <Link href="/login" className="text-gold-leaf hover:underline">Sign in</Link>
+                <Link href="/login" className="text-parchment-50 hover:underline">Sign in</Link>
               )}
             </p>
           </>
         ) : (
           <>
-            <h1 className="font-display text-4xl">Card editor</h1>
-
+            
             <div className="mt-6 flex flex-wrap items-center gap-2">
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search by id or name"
-                className="w-64 max-w-full bg-ink-900/70 border border-white/15 rounded-[1px] px-3 py-1.5 text-sm text-parchment placeholder:text-parchment-400/60 focus:outline-none focus:border-gold/60"
+                className="w-64 max-w-full bg-[color:var(--bg-base)] border border-[color:var(--edge)] rounded-none px-3 py-1.5 text-sm text-parchment placeholder:text-parchment-400/60 focus:outline-none focus:border-[color:var(--edge-strong)]"
               />
               {(["all", "buff", "nerf"] as const).map((k) => (
                 <Button
@@ -242,7 +232,7 @@ export default function ModCardsPage() {
                   size="sm"
                   className={
                     "capitalize " +
-                    (kind === k ? "border-gold/60 bg-gold/10 text-gold-leaf" : "")
+                    (kind === k ? "border-[color:var(--edge-strong)] bg-[color:var(--bg-raised)] text-parchment-50" : "")
                   }
                 >
                   {k === "all" ? "All" : `${k}s`}
@@ -268,7 +258,7 @@ export default function ModCardsPage() {
             <div className="mt-4 plate p-0 overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-left text-[10px] text-parchment-400 border-b border-white/10">
+                  <tr className="text-left text-[11px] text-parchment-400 border-b border-[color:var(--edge)]">
                     <th className="px-3 py-2 font-normal">Card</th>
                     <th className="px-3 py-2 font-normal">Kind</th>
                     <th className="px-3 py-2 font-normal">Tier</th>
@@ -312,7 +302,7 @@ export default function ModCardsPage() {
                 <p className="px-3 py-6 text-center text-parchment-400">No cards match.</p>
               )}
               {rows.length > LIST_CAP && (
-                <p className="px-3 py-3 text-xs text-parchment-400 border-t border-white/10">
+                <p className="px-3 py-3 text-xs text-parchment-400 border-t border-[color:var(--edge)]">
                   Showing {LIST_CAP} of {rows.length} cards. Refine the search to see the rest.
                 </p>
               )}
@@ -320,8 +310,8 @@ export default function ModCardsPage() {
             )}
           </>
         )}
-      </section>
-    </main>
+      </>
+    </ModShell>
   );
 }
 
@@ -357,18 +347,18 @@ function FragmentRow({
   const patch = (p: Partial<Draft>) => draft && setDraft({ ...draft, ...p });
   return (
     <>
-      <tr className="border-b border-white/5 align-top">
+      <tr className="border-b border-[color:var(--edge)] align-top">
         <td className="px-3 py-2">
           <span className={enabled ? "text-parchment-100" : "text-parchment-400 line-through"}>
             {effectiveName}
           </span>
           {overridden && (
-            <span className="ml-2 text-[9px] px-1.5 py-0.5 border border-gold/50 text-gold-leaf rounded-[1px]">
+            <span className="ml-2 text-[11px] px-1.5 py-0.5 border border-[color:var(--edge-strong)] text-parchment-50 rounded-none">
               override
             </span>
           )}
           {!card.implemented && (
-            <span className="ml-2 text-[9px] text-parchment-400">stub</span>
+            <span className="ml-2 text-[11px] text-parchment-400">stub</span>
           )}
           <div className="text-[11px] text-parchment-400">{card.id}</div>
         </td>
@@ -376,10 +366,20 @@ function FragmentRow({
         <td className="px-3 py-2 text-parchment-300">
           {effectiveTier}
           {effectiveTier !== card.tier && (
-            <span className="ml-1 text-[10px] text-parchment-400">(code {card.tier})</span>
+            <span className="ml-1 text-[11px] text-parchment-400">(code {card.tier})</span>
           )}
         </td>
-        <td className="px-3 py-2 text-parchment-300">{enabled ? "Yes" : "No"}</td>
+        <td className="px-3 py-2 text-parchment-300">
+          {isRetired(card.id) ? (
+            <span className="text-brag" title="Retired in code (src/engine/retired.ts); an override cannot re-enable it">
+              Retired
+            </span>
+          ) : enabled ? (
+            "Yes"
+          ) : (
+            "No"
+          )}
+        </td>
         <td className="px-3 py-2 text-right whitespace-nowrap">
           {isEditing ? (
             <Button tone="ghost" onClick={onCancel} className="px-3 py-1 text-xs" disabled={busy}>
@@ -403,24 +403,24 @@ function FragmentRow({
         </td>
       </tr>
       {isEditing && draft && (
-        <tr className="border-b border-white/5 bg-white/[0.02]">
+        <tr className="border-b border-[color:var(--edge)] bg-[color:var(--bg-zebra)]">
           <td colSpan={5} className="px-3 py-3">
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="flex flex-col gap-1">
-                <span className="text-[10px] text-parchment-400">Name</span>
+                <span className="text-[11px] text-parchment-400">Name</span>
                 <input
                   value={draft.name}
                   onChange={(e) => patch({ name: e.target.value })}
                   placeholder={card.name}
-                  className="bg-ink-900/70 border border-white/15 rounded-[1px] px-3 py-1.5 text-sm text-parchment placeholder:text-parchment-400/60 focus:outline-none focus:border-gold/60"
+                  className="bg-[color:var(--bg-base)] border border-[color:var(--edge)] rounded-none px-3 py-1.5 text-sm text-parchment placeholder:text-parchment-400/60 focus:outline-none focus:border-[color:var(--edge-strong)]"
                 />
               </label>
               <label className="flex flex-col gap-1">
-                <span className="text-[10px] text-parchment-400">Tier (blank = code tier {card.tier})</span>
+                <span className="text-[11px] text-parchment-400">Tier (blank = code tier {card.tier})</span>
                 <select
                   value={draft.tier}
                   onChange={(e) => patch({ tier: e.target.value })}
-                  className="bg-ink-900/70 border border-white/15 rounded-[1px] px-3 py-1.5 text-sm text-parchment focus:outline-none focus:border-gold/60"
+                  className="bg-[color:var(--bg-base)] border border-[color:var(--edge)] rounded-none px-3 py-1.5 text-sm text-parchment focus:outline-none focus:border-[color:var(--edge-strong)]"
                 >
                   <option value="" className="bg-ink-900 text-parchment">Code ({card.tier})</option>
                   {[1, 2, 3, 4, 5, 6, 7, 8].map((t) => (
@@ -429,23 +429,23 @@ function FragmentRow({
                 </select>
               </label>
               <label className="flex flex-col gap-1 sm:col-span-2">
-                <span className="text-[10px] text-parchment-400">Description</span>
+                <span className="text-[11px] text-parchment-400">Description</span>
                 <textarea
                   value={draft.description}
                   onChange={(e) => patch({ description: e.target.value })}
                   placeholder={card.description}
                   rows={2}
-                  className="bg-ink-900/70 border border-white/15 rounded-[1px] px-3 py-1.5 text-sm text-parchment placeholder:text-parchment-400/60 focus:outline-none focus:border-gold/60"
+                  className="bg-[color:var(--bg-base)] border border-[color:var(--edge)] rounded-none px-3 py-1.5 text-sm text-parchment placeholder:text-parchment-400/60 focus:outline-none focus:border-[color:var(--edge-strong)]"
                 />
               </label>
               <label className="flex flex-col gap-1 sm:col-span-2">
-                <span className="text-[10px] text-parchment-400">Flavor</span>
+                <span className="text-[11px] text-parchment-400">Flavor</span>
                 <textarea
                   value={draft.flavor}
                   onChange={(e) => patch({ flavor: e.target.value })}
                   placeholder={card.flavor ?? "No flavor text in code"}
                   rows={1}
-                  className="bg-ink-900/70 border border-white/15 rounded-[1px] px-3 py-1.5 text-sm text-parchment placeholder:text-parchment-400/60 focus:outline-none focus:border-gold/60"
+                  className="bg-[color:var(--bg-base)] border border-[color:var(--edge)] rounded-none px-3 py-1.5 text-sm text-parchment placeholder:text-parchment-400/60 focus:outline-none focus:border-[color:var(--edge-strong)]"
                 />
               </label>
               <label className="flex items-center gap-2 text-sm text-parchment-200">

@@ -34,11 +34,10 @@ export function InfoPageLayout({
 
       <section className="mx-auto max-w-[1100px] px-6 pt-4 sm:px-8">
         {breadcrumb && <div className="mb-3">{breadcrumb}</div>}
-        <div>{eyebrow}</div>
         {/* Fluid display ramp instead of ad-hoc sizes; the prose column below
             stays narrower than the card grid so long lines remain readable. */}
-        <h1 className="display-1 mt-2">{title}</h1>
-        <p className="mt-5 max-w-3xl text-[16px] leading-[1.7] text-parchment-200">{intro}</p>
+        <h1 className="page-title">{title}</h1>
+        <p className="mt-3 max-w-3xl text-[15px] leading-[1.6] text-parchment-300">{intro}</p>
         <div className="mt-9 space-y-4">
           {children}
           {extra}
@@ -50,16 +49,23 @@ export function InfoPageLayout({
   );
 }
 
+export function slugify(title: string): string {
+  return title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+}
+
 export function InfoSection({
   title,
+  id,
   children,
 }: {
   title: string;
+  /** Anchor id; defaults to a slug of the title. */
+  id?: string;
   children: ReactNode;
 }) {
   return (
-    <section className="plate p-6 sm:p-7">
-      <h2 className="display-3 text-parchment">{title}</h2>
+    <section id={id ?? slugify(title)} className="plate scroll-mt-20 p-6 sm:p-7">
+      <h2 className="font-display text-[1.25rem] font-medium text-parchment-50">{title}</h2>
       <div className="mt-3 max-w-3xl space-y-3 text-[15px] leading-relaxed text-parchment-200/90">
         {children}
       </div>

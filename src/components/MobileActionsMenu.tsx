@@ -23,7 +23,7 @@ export function MobileActionsMenu({ children }: { children: ReactNode }) {
         onClick={() => setOpen((v) => !v)}
         // min-h-[44px], like every other primary control: this is the ONLY route to
         // Draw / Resign / Takeback on a phone, and it was a 36px target.
-        className="flex min-h-[44px] w-full items-center justify-center gap-1.5 plate text-[14px] sm:text-[13px] font-display font-semibold tracking-wide text-parchment-200 transition-colors active:bg-white/[0.06]"
+        className="flex min-h-[44px] w-full items-center justify-center gap-1.5 plate text-[14px] sm:text-[13px] font-display font-semibold tracking-wide text-parchment-200 transition-colors active:bg-[color:var(--bg-raised)]"
       >
         Game actions
         <span className="text-parchment-400" aria-hidden>

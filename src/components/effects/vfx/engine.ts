@@ -122,6 +122,16 @@ interface Timer {
 /* tuning                                                              */
 
 const MAX_PARTICLES = 600;
+
+let lowEndProbe: boolean | null = null;
+function lowEndDevice(): boolean {
+  if (lowEndProbe !== null) return lowEndProbe;
+  if (typeof navigator === "undefined") return (lowEndProbe = false);
+  const nav = navigator as Navigator & { deviceMemory?: number };
+  const mem = typeof nav.deviceMemory === "number" ? nav.deviceMemory : 8;
+  const cores = typeof nav.hardwareConcurrency === "number" ? nav.hardwareConcurrency : 8;
+  return (lowEndProbe = mem < 4 || cores <= 2);
+}
 const AFTERMATH_MS = 700;
 
 /* ------------------------------------------------------------------ */
@@ -257,10 +267,10 @@ export function createVfxEngine(
   // (FX_LEVELS[level].vfx): Off never reaches the engine (and play() also
   // early-returns on 0), Calm 180, Normal 400, Epic 500, Max the full 600.
   function capForIntensity(intensity: number): number {
-    if (intensity <= 0.6) return 180;
-    if (intensity <= 1) return 400;
-    if (intensity <= 1.25) return 500;
-    return MAX_PARTICLES;
+    const full = intensity <= 0.6 ? 180 : intensity <= 1 ? 400 : intensity <= 1.25 ? 500 : MAX_PARTICLES;
+    // Low-end devices (little memory or few cores) run half the budget at
+    // every dial level: the play still reads, it just carries fewer sparks.
+    return lowEndDevice() ? Math.round(full / 2) : full;
   }
 
   function impactCount(tier: number): number {

@@ -109,12 +109,12 @@ function HouseBotsControl() {
           human-vs-bot pickups still work). Lowering it lets the extra games drain
           out over a few minutes. Commits on release. Turning the bots off (above)
           clears them from the lobby entirely. */}
-      <div className={"border-t border-white/10 pt-3 " + (enabled === false ? "opacity-50" : "")}>
+      <div className={"border-t border-[color:var(--edge)] pt-3 " + (enabled === false ? "opacity-50" : "")}>
         <div className="flex items-baseline justify-between gap-3">
           <label htmlFor="house-games" className="text-[11px] text-parchment-400">
             Filler games running
           </label>
-          <span className="shrink-0 font-mono text-sm tabular-nums text-gold-leaf">
+          <span className="shrink-0 font-mono text-sm tabular-nums text-parchment-50">
             {games ?? "…"}
             <span className="text-parchment-500"> / {bounds.max}</span>
           </span>
@@ -206,8 +206,8 @@ function StrengthInput({
         if (e.key === "Enter") (e.target as HTMLInputElement).blur();
       }}
       className={
-        "rounded border bg-black/20 px-1 py-1 text-right font-mono tabular-nums outline-none focus:border-gold-leaf/60 sm:py-0.5 " +
-        (isOver ? "border-gold-leaf/50 text-gold-leaf" : "border-white/10 text-parchment-300") +
+        "rounded border bg-[color:var(--bg-base)] px-1 py-1 text-right font-mono tabular-nums outline-none focus:border-gold-leaf/60 sm:py-0.5 " +
+        (isOver ? "border-gold-leaf/50 text-parchment-50" : "border-[color:var(--edge)] text-parchment-300") +
         " " +
         (className ?? "")
       }
@@ -254,7 +254,7 @@ function HouseStrengthEditor({
   const anyOverride = skillTiers.some((t) => t.overrides && Object.keys(t.overrides).length > 0);
 
   return (
-    <div className={"border-t border-white/10 pt-3 " + (disabled ? "opacity-50" : "")}>
+    <div className={"border-t border-[color:var(--edge)] pt-3 " + (disabled ? "opacity-50" : "")}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="text-[11px] text-parchment-400">Strength by tier</span>
         <div className="flex flex-wrap gap-1.5">
@@ -282,11 +282,11 @@ function HouseStrengthEditor({
           const over = t.overrides ?? {};
           const touched = Object.keys(over).length > 0;
           return (
-            <div key={t.skill} className="rounded-[1px] border border-white/10 bg-black/20 p-2.5">
+            <div key={t.skill} className="rounded-none border border-[color:var(--edge)] bg-[color:var(--bg-base)] p-2.5">
               <div className="flex items-center justify-between">
                 <span
                   className={
-                    "font-display text-sm " + (touched ? "text-gold-leaf" : "text-parchment-200")
+                    "font-display text-sm " + (touched ? "text-parchment-50" : "text-parchment-200")
                   }
                 >
                   Tier {t.skill}
@@ -303,7 +303,7 @@ function HouseStrengthEditor({
               <div className="mt-2 grid grid-cols-3 gap-2">
                 {STRENGTH_FIELDS.map((f) => (
                   <label key={f.key} className="block">
-                    <span className="block text-[10px] text-parchment-400">{f.label}</span>
+                    <span className="block text-[11px] text-parchment-400">{f.label}</span>
                     <StrengthInput
                       tier={t}
                       field={f}
@@ -338,8 +338,8 @@ function HouseStrengthEditor({
               const over = t.overrides ?? {};
               const touched = Object.keys(over).length > 0;
               return (
-                <tr key={t.skill} className="border-t border-white/5">
-                  <td className={"py-1 pr-2 " + (touched ? "text-gold-leaf" : "text-parchment-200")}>
+                <tr key={t.skill} className="border-t border-[color:var(--edge)]">
+                  <td className={"py-1 pr-2 " + (touched ? "text-parchment-50" : "text-parchment-200")}>
                     {t.skill}
                   </td>
                   {STRENGTH_FIELDS.map((f) => (
@@ -360,7 +360,7 @@ function HouseStrengthEditor({
                       disabled={saving || !touched}
                       onClick={() => resetTier(t.skill)}
                       title="Reset this tier to baked default"
-                      className="press px-1 text-parchment-400 disabled:opacity-25"
+                      className="px-1 text-parchment-400 disabled:opacity-25"
                     >
                       ↺
                     </button>
@@ -371,9 +371,9 @@ function HouseStrengthEditor({
           </tbody>
         </table>
       </div>
-      <p className="mt-2 text-[10px] leading-snug text-parchment-500">
+      <p className="mt-2 text-[11px] leading-snug text-parchment-500">
         Move-quality weakening (topK / temp / noise), not just time. Changes reach live games within
-        ~15s. Ratings drift is expected after a strength change. Gold = overridden.
+        ~15s. Ratings drift is expected after a strength change. Highlighted values are overridden.
       </p>
     </div>
   );

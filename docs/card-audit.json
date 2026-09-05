@@ -12,7 +12,7 @@
   "flagged": {
    "duplicateSignature": 262,
    "nearDuplicate": 204,
-   "dominatedCandidates": 88,
+   "dominatedCandidates": 89,
    "misleading": 0,
    "broken": 0,
    "untested": 0,
@@ -2587,6 +2587,24 @@
    "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
   },
   {
+   "id": "bn4_keep_gate",
+   "name": "Keep Gate",
+   "kind": "boon",
+   "tier": 3,
+   "effect": "The three squares directly ahead of your king are barred to enemy pieces for 4 turns.",
+   "trigger": "instant",
+   "duration": "4-turns",
+   "targets": "enemy",
+   "signature": "protection|instant|effect|4-turns|enemy|barred,king,n:4,square",
+   "animation": "generated",
+   "location": "src/engine/buffs/boons4b.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+  },
+  {
    "id": "bn4_lone_crown",
    "name": "Lone Crown",
    "kind": "boon",
@@ -3515,6 +3533,24 @@
    "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
   },
   {
+   "id": "bn4_cathedral_choir",
+   "name": "Cathedral Choir",
+   "kind": "boon",
+   "tier": 4,
+   "effect": "Place a new bishop on any empty square in your half.",
+   "trigger": "activated",
+   "duration": "unstated",
+   "targets": "self",
+   "signature": "pieces|activated|effect+targets|unstated|self|bishop,place,square",
+   "animation": "generated",
+   "location": "src/engine/buffs/boons4b.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "bn4_charm_bracelet",
    "name": "Charm Bracelet",
    "kind": "boon",
@@ -4409,6 +4445,24 @@
    "action": "keep: extra-move ladder T4 (2 moves)"
   },
   {
+   "id": "fortress_realm",
+   "name": "Fortress Realm",
+   "kind": "boon",
+   "tier": 4,
+   "effect": "Pick a 3x3 zone: up to three of your pieces there, your king aside, cannot be captured for your opponent's next turn, then the zone becomes ordinary terrain.",
+   "trigger": "activated",
+   "duration": "next-turn",
+   "targets": "enemy",
+   "signature": "protection|activated|effect+targets|next-turn|enemy|become,capture,king",
+   "animation": "canvas",
+   "location": "src/engine/buffs/library.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "gm_hardship_jackpot",
    "name": "Hardship Jackpot",
    "kind": "boon",
@@ -4620,6 +4674,24 @@
    "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
   },
   {
+   "id": "bn4_dukes_patent",
+   "name": "The Duke's Patent",
+   "kind": "boon",
+   "tier": 5,
+   "effect": "For your opponent's next 4 turns, your rooks may also step one square diagonally (capturing allowed). The moment one of your rooks captures, the patent lapses and the power ends.",
+   "trigger": "passive",
+   "duration": "4-turns",
+   "targets": "enemy",
+   "signature": "movement|passive|init+aug+onMove|4-turns|enemy|capture,n:4,rook,square",
+   "animation": "passive",
+   "location": "src/engine/buffs/boons4b.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+  },
+  {
    "id": "bn4_faerie_door",
    "name": "Faerie Door",
    "kind": "boon",
@@ -4812,24 +4884,6 @@
    "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
   },
   {
-   "id": "bn4_keep_gate",
-   "name": "Keep Gate",
-   "kind": "boon",
-   "tier": 5,
-   "effect": "The three squares directly ahead of your king are barred to enemy pieces for 4 turns.",
-   "trigger": "instant",
-   "duration": "4-turns",
-   "targets": "enemy",
-   "signature": "protection|instant|effect|4-turns|enemy|barred,king,n:4,square",
-   "animation": "generated",
-   "location": "src/engine/buffs/boons4b.ts",
-   "tests": [
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
-  },
-  {
    "id": "bn4_kings_indulgence",
    "name": "King's Indulgence",
    "kind": "boon",
@@ -4984,6 +5038,26 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "bn4_pocket_cavalry",
+   "name": "Pocket Cavalry",
+   "kind": "boon",
+   "tier": 5,
+   "effect": "A knight and a pawn join your pocket, ready to be dropped onto empty squares on later turns (each drop spends that turn).",
+   "trigger": "instant",
+   "duration": "unstated",
+   "targets": "self",
+   "signature": "pieces|instant|effect|unstated|self|knight,pawn,square",
+   "animation": "generated",
+   "location": "src/engine/buffs/boons4b.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [
+    "near-duplicate(bn4_menagerie_gates:0.78)"
+   ],
+   "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+  },
+  {
    "id": "bn4_prison_break",
    "name": "Prison Break",
    "kind": "boon",
@@ -5134,24 +5208,6 @@
     "near-duplicate(bn4_royal_we:0.92)"
    ],
    "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
-  },
-  {
-   "id": "bn4_salt_in_the_wound",
-   "name": "Salt in the Wound",
-   "kind": "boon",
-   "tier": 5,
-   "effect": "Suspend your nerf for your next 12 turns. When it returns, take 20 seconds from your opponent's clock.",
-   "trigger": "passive",
-   "duration": "12-turns",
-   "targets": "enemy",
-   "signature": "nerf|passive|init+onMove|12-turns|enemy|clock,n:12,n:20,return,seconds",
-   "animation": "passive",
-   "location": "src/engine/buffs/boons4b.ts",
-   "tests": [
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
   },
   {
    "id": "bn4_scapegoat",
@@ -5843,6 +5899,24 @@
    "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
   },
   {
+   "id": "bn4_guardian_of_the_line",
+   "name": "Guardian of the Line",
+   "kind": "boon",
+   "tier": 6,
+   "effect": "Beginning after your opponent's next move, your queen cannot be captured while she stands beside your king, for the rest of the game.",
+   "trigger": "passive",
+   "duration": "permanent",
+   "targets": "enemy",
+   "signature": "protection|passive|filter+onMove|permanent|enemy|capture,king,move,queen",
+   "animation": "passive",
+   "location": "src/engine/buffs/boons4b.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "bn4_guards_change",
    "name": "Changing of the Guard",
    "kind": "boon",
@@ -6527,24 +6601,6 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "bn4_cathedral_choir",
-   "name": "Cathedral Choir",
-   "kind": "boon",
-   "tier": 7,
-   "effect": "Place a new bishop on any empty square in your half.",
-   "trigger": "activated",
-   "duration": "unstated",
-   "targets": "self",
-   "signature": "pieces|activated|effect+targets|unstated|self|bishop,place,square",
-   "animation": "generated",
-   "location": "src/engine/buffs/boons4b.ts",
-   "tests": [
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
    "id": "bn4_champions_rest",
    "name": "Champion's Rest",
    "kind": "boon",
@@ -7016,26 +7072,6 @@
    "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
   },
   {
-   "id": "bn4_pocket_cavalry",
-   "name": "Pocket Cavalry",
-   "kind": "boon",
-   "tier": 7,
-   "effect": "A knight and a pawn join your pocket, ready to be dropped onto empty squares on later turns (each drop spends that turn).",
-   "trigger": "instant",
-   "duration": "unstated",
-   "targets": "self",
-   "signature": "pieces|instant|effect|unstated|self|knight,pawn,square",
-   "animation": "generated",
-   "location": "src/engine/buffs/boons4b.ts",
-   "tests": [
-    "lab-run-all.ts"
-   ],
-   "flags": [
-    "near-duplicate(bn4_menagerie_gates:0.78)"
-   ],
-   "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
-  },
-  {
    "id": "bn4_promotion_charter",
    "name": "Promotion Charter",
    "kind": "boon",
@@ -7070,6 +7106,24 @@
    ],
    "flags": [],
    "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+  },
+  {
+   "id": "bn4_salt_in_the_wound",
+   "name": "Salt in the Wound",
+   "kind": "boon",
+   "tier": 7,
+   "effect": "Suspend your nerf for your next 12 turns. When it returns, take 20 seconds from your opponent's clock.",
+   "trigger": "passive",
+   "duration": "12-turns",
+   "targets": "enemy",
+   "signature": "nerf|passive|init+onMove|12-turns|enemy|clock,n:12,n:20,return,seconds",
+   "animation": "passive",
+   "location": "src/engine/buffs/boons4b.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
   },
   {
    "id": "bn4_second_spring",
@@ -7471,24 +7525,6 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "fortress_realm",
-   "name": "Fortress Realm",
-   "kind": "boon",
-   "tier": 7,
-   "effect": "Pick a 3x3 zone: up to three of your pieces there, your king aside, cannot be captured for your opponent's next turn, then the zone becomes ordinary terrain.",
-   "trigger": "activated",
-   "duration": "next-turn",
-   "targets": "enemy",
-   "signature": "protection|activated|effect+targets|next-turn|enemy|become,capture,king",
-   "animation": "canvas",
-   "location": "src/engine/buffs/library.ts",
-   "tests": [
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
    "id": "full_pardon",
    "name": "Full Pardon",
    "kind": "boon",
@@ -7685,24 +7721,6 @@
    "action": "pending-review"
   },
   {
-   "id": "bn4_dukes_patent",
-   "name": "The Duke's Patent",
-   "kind": "boon",
-   "tier": 8,
-   "effect": "For your opponent's next 4 turns, your rooks may also step one square diagonally (capturing allowed). The moment one of your rooks captures, the patent lapses and the power ends.",
-   "trigger": "passive",
-   "duration": "4-turns",
-   "targets": "enemy",
-   "signature": "movement|passive|init+aug+onMove|4-turns|enemy|capture,n:4,rook,square",
-   "animation": "passive",
-   "location": "src/engine/buffs/boons4b.ts",
-   "tests": [
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
-  },
-  {
    "id": "bn4_endless_militia",
    "name": "Endless Militia",
    "kind": "boon",
@@ -7779,24 +7797,6 @@
     "dominated-candidate(higher-tier-of-duplicate-pair)"
    ],
    "action": "pending-review"
-  },
-  {
-   "id": "bn4_guardian_of_the_line",
-   "name": "Guardian of the Line",
-   "kind": "boon",
-   "tier": 8,
-   "effect": "Beginning after your opponent's next move, your queen cannot be captured while she stands beside your king, for the rest of the game.",
-   "trigger": "passive",
-   "duration": "permanent",
-   "targets": "enemy",
-   "signature": "protection|passive|filter+onMove|permanent|enemy|capture,king,move,queen",
-   "animation": "passive",
-   "location": "src/engine/buffs/boons4b.ts",
-   "tests": [
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
   },
   {
    "id": "bn4_hall_of_doors",
@@ -8453,24 +8453,6 @@
    "targets": "unstated",
    "signature": "movement|passive|init+aug+onMove|unstated|unstated|bishop,jump",
    "animation": "passive",
-   "location": "src/engine/buffs/library.ts",
-   "tests": [
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "camel_knight",
-   "name": "Camel Knight",
-   "kind": "buff",
-   "tier": 1,
-   "effect": "One knight also moves as a camel (3-1 leap), for the game.",
-   "trigger": "activated/lingering",
-   "duration": "unstated",
-   "targets": "unstated",
-   "signature": "movement|activated|effect+targets+aug+onMove|unstated|unstated|knight,leap,move,n:1,n:3",
-   "animation": "generated",
    "location": "src/engine/buffs/library.ts",
    "tests": [
     "lab-run-all.ts"
@@ -11262,6 +11244,24 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "ov_prank_call",
+   "name": "Prank Call",
+   "kind": "buff",
+   "tier": 1,
+   "effect": "Ring ring: your opponent takes a very important call and loses 5 seconds.",
+   "trigger": "instant",
+   "duration": "unstated",
+   "targets": "enemy",
+   "signature": "tempo|instant|effect|unstated|enemy|n:5,seconds",
+   "animation": "generated",
+   "location": "src/engine/buffs/overhaul/t4.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "ov_rain_check",
    "name": "Rain Check",
    "kind": "buff",
@@ -11586,42 +11586,6 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "wazir_bishop",
-   "name": "Wazir Bishop",
-   "kind": "buff",
-   "tier": 1,
-   "effect": "Choose one bishop; for the game it may also step one square horizontally or vertically.",
-   "trigger": "activated/lingering",
-   "duration": "unstated",
-   "targets": "board",
-   "signature": "movement|activated|effect+targets+aug+onMove|unstated|board|bishop,square",
-   "animation": "generated",
-   "location": "src/engine/buffs/library.ts",
-   "tests": [
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "wazir_rook",
-   "name": "Wazir Rook",
-   "kind": "buff",
-   "tier": 1,
-   "effect": "Choose one rook; for the game it may also step one square diagonally.",
-   "trigger": "activated/lingering",
-   "duration": "unstated",
-   "targets": "board",
-   "signature": "movement|activated|effect+targets+aug+onMove|unstated|board|rook,square",
-   "animation": "generated",
-   "location": "src/engine/buffs/library.ts",
-   "tests": [
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
    "id": "we_thunder_step",
    "name": "Thunder Step",
    "kind": "buff",
@@ -11743,6 +11707,24 @@
    "signature": "tempo|instant|effect|unstated|enemy|clock,n:20,seconds,steal",
    "animation": "bespoke+canvas",
    "location": "src/engine/buffs/funny/clock.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "camel_knight",
+   "name": "Camel Knight",
+   "kind": "buff",
+   "tier": 2,
+   "effect": "One knight also moves as a camel (3-1 leap), for the game.",
+   "trigger": "activated/lingering",
+   "duration": "unstated",
+   "targets": "unstated",
+   "signature": "movement|activated|effect+targets+aug+onMove|unstated|unstated|knight,leap,move,n:1,n:3",
+   "animation": "generated",
+   "location": "src/engine/buffs/library.ts",
    "tests": [
     "lab-run-all.ts"
    ],
@@ -13302,17 +13284,17 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "ov_prank_call",
-   "name": "Prank Call",
+   "id": "ov_raven_parliament",
+   "name": "Raven Parliament",
    "kind": "buff",
    "tier": 2,
-   "effect": "Ring ring: your opponent takes a very important call and loses 5 seconds.",
-   "trigger": "instant",
-   "duration": "unstated",
+   "effect": "For 5 of your turns, at the start of each: every undefended enemy piece is marked by a perching raven.",
+   "trigger": "passive",
+   "duration": "5-turns",
    "targets": "enemy",
-   "signature": "tempo|instant|effect|unstated|enemy|n:5,seconds",
-   "animation": "generated",
-   "location": "src/engine/buffs/overhaul/t4.ts",
+   "signature": "info|passive|init+onMove|5-turns|enemy|n:5",
+   "animation": "passive",
+   "location": "src/engine/buffs/overhaul/t5.ts",
    "tests": [
     "lab-run-all.ts"
    ],
@@ -13590,24 +13572,6 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "overtime_pay",
-   "name": "Overtime Pay",
-   "kind": "buff",
-   "tier": 2,
-   "effect": "You clock in and cash out on the spot: 105 seconds go straight onto your own clock the moment you play this. Time and a half, paid in full.",
-   "trigger": "instant",
-   "duration": "unstated",
-   "targets": "self",
-   "signature": "tempo|instant|effect|unstated|self|clock,n:105,seconds,time",
-   "animation": "bespoke",
-   "location": "src/engine/buffs/pt/timefaustian.ts",
-   "tests": [
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
    "id": "pawn_push",
    "name": "Pawn Push",
    "kind": "buff",
@@ -13828,26 +13792,6 @@
    ],
    "flags": [],
    "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "rook_chancellor",
-   "name": "Rook to Chancellor",
-   "kind": "buff",
-   "tier": 2,
-   "effect": "One rook also moves like a knight, for the game.",
-   "trigger": "activated/lingering",
-   "duration": "unstated",
-   "targets": "unstated",
-   "signature": "movement|activated|effect+targets+aug+onMove|unstated|unstated|knight,move,rook",
-   "animation": "generated",
-   "location": "src/engine/buffs/library.ts",
-   "tests": [
-    "lab-run-all.ts"
-   ],
-   "flags": [
-    "near-duplicate(bishop_archbishop:0.80)"
-   ],
-   "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
   },
   {
    "id": "sidestep",
@@ -14101,24 +14045,6 @@
    ],
    "flags": [],
    "action": "keep: clock-hit ladder T5"
-  },
-  {
-   "id": "amazon_knight",
-   "name": "Amazon Knight",
-   "kind": "buff",
-   "tier": 3,
-   "effect": "One knight becomes a knight plus queen for 2 turns.",
-   "trigger": "activated/lingering",
-   "duration": "2-turns",
-   "targets": "unstated",
-   "signature": "movement|activated|effect+targets+aug+onMove|2-turns|unstated|become,knight,n:2,queen",
-   "animation": "bespoke+canvas",
-   "location": "src/engine/buffs/library.ts",
-   "tests": [
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
   },
   {
    "id": "blink_army",
@@ -14517,24 +14443,6 @@
    "duration": "one-shot",
    "targets": "unstated",
    "signature": "movement|activated|effect+targets+aug+onMove|one-shot|unstated|capture,file,king,move,rank,square",
-   "animation": "generated",
-   "location": "src/engine/buffs/library.ts",
-   "tests": [
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "guard_rotation",
-   "name": "Guard Rotation",
-   "kind": "buff",
-   "tier": 3,
-   "effect": "Swap your king with a rook anywhere on the board, once.",
-   "trigger": "activated",
-   "duration": "one-shot",
-   "targets": "self",
-   "signature": "movement|activated|effect+targets|one-shot|self|king,rook,swap",
    "animation": "generated",
    "location": "src/engine/buffs/library.ts",
    "tests": [
@@ -15347,24 +15255,6 @@
    "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
   },
   {
-   "id": "queens_echo",
-   "name": "Queen's Echo",
-   "kind": "buff",
-   "tier": 3,
-   "effect": "Your rooks move like queens for your next 2 turns.",
-   "trigger": "passive",
-   "duration": "2-turns",
-   "targets": "self",
-   "signature": "movement|passive|init+aug+onMove|2-turns|self|move,n:2,queen,rook",
-   "animation": "passive",
-   "location": "src/engine/buffs/library.ts",
-   "tests": [
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
    "id": "raise_dead",
    "name": "Raise Dead",
    "kind": "buff",
@@ -15660,25 +15550,6 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "time_skip",
-   "name": "Time Skip",
-   "kind": "buff",
-   "tier": 3,
-   "effect": "Your opponent skips their next turn, and the piece they last moved is frozen for their next 2 turns. You cannot capture the king on the bonus move: your opponent replies first.",
-   "trigger": "instant",
-   "duration": "2-turns",
-   "targets": "enemy",
-   "signature": "tempo|instant|effect|2-turns|enemy|capture,king,move,n:2,skip",
-   "animation": "bespoke",
-   "location": "src/engine/buffs/library.ts",
-   "tests": [
-    "test-draft-fairness.ts",
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
    "id": "time_thief",
    "name": "Time Thief",
    "kind": "buff",
@@ -15826,24 +15697,6 @@
    ],
    "flags": [],
    "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "wa_high_roll",
-   "name": "High Roll",
-   "kind": "buff",
-   "tier": 3,
-   "effect": "Force your next draft offer to roll at tier 5.",
-   "trigger": "instant",
-   "duration": "unstated",
-   "targets": "self",
-   "signature": "draft|instant|effect|unstated|self|draft,n:5",
-   "animation": "bespoke+canvas",
-   "location": "src/engine/buffs/wild/arcane.ts",
-   "tests": [
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep: T4 rung of the forced-tier ladder (2->3->4->5->6 across T1->T5 with ov_window_shopping at the bottom)"
   },
   {
    "id": "wa_spectral_minors",
@@ -16003,6 +15856,42 @@
    "targets": "unstated",
    "signature": "movement|passive|init+aug+onMove|one-shot|unstated|capture,move,square",
    "animation": "passive",
+   "location": "src/engine/buffs/library.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "wazir_bishop",
+   "name": "Wazir Bishop",
+   "kind": "buff",
+   "tier": 3,
+   "effect": "Choose one bishop; for the game it may also step one square horizontally or vertically.",
+   "trigger": "activated/lingering",
+   "duration": "unstated",
+   "targets": "board",
+   "signature": "movement|activated|effect+targets+aug+onMove|unstated|board|bishop,square",
+   "animation": "generated",
+   "location": "src/engine/buffs/library.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "wazir_rook",
+   "name": "Wazir Rook",
+   "kind": "buff",
+   "tier": 3,
+   "effect": "Choose one rook; for the game it may also step one square diagonally.",
+   "trigger": "activated/lingering",
+   "duration": "unstated",
+   "targets": "board",
+   "signature": "movement|activated|effect+targets+aug+onMove|unstated|board|rook,square",
+   "animation": "generated",
    "location": "src/engine/buffs/library.ts",
    "tests": [
     "lab-run-all.ts"
@@ -16635,24 +16524,6 @@
    "action": "keep: nullify axis at T4"
   },
   {
-   "id": "collapse",
-   "name": "Collapse",
-   "kind": "buff",
-   "tier": 4,
-   "effect": "Pull every enemy piece except the king one square toward their back rank across the whole board, once.",
-   "trigger": "instant",
-   "duration": "one-shot",
-   "targets": "enemy",
-   "signature": "attack|instant|effect|one-shot|enemy|king,pull,rank,square",
-   "animation": "canvas",
-   "location": "src/engine/buffs/library.ts",
-   "tests": [
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
    "id": "comet_shard",
    "name": "Comet Shard",
    "kind": "buff",
@@ -16911,6 +16782,24 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "guard_rotation",
+   "name": "Guard Rotation",
+   "kind": "buff",
+   "tier": 4,
+   "effect": "Swap your king with a rook anywhere on the board, once.",
+   "trigger": "activated",
+   "duration": "one-shot",
+   "targets": "self",
+   "signature": "movement|activated|effect+targets|one-shot|self|king,rook,swap",
+   "animation": "generated",
+   "location": "src/engine/buffs/library.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "hallowed_return",
    "name": "Hallowed Return",
    "kind": "buff",
@@ -17074,24 +16963,6 @@
     "duplicate-signature(bn4_veterans_return)"
    ],
    "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
-  },
-  {
-   "id": "mass_freeze",
-   "name": "Mass Freeze",
-   "kind": "buff",
-   "tier": 4,
-   "effect": "After your opponent replies, freeze every enemy piece except the king for 1 full turn.",
-   "trigger": "passive",
-   "duration": "unstated",
-   "targets": "enemy",
-   "signature": "tempo|passive|init+onMove|unstated|enemy|freeze,king,n:1",
-   "animation": "bespoke+canvas+passive",
-   "location": "src/engine/buffs/library.ts",
-   "tests": [
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
   },
   {
    "id": "mass_recall",
@@ -17838,22 +17709,24 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "roulette",
-   "name": "Roulette",
+   "id": "rook_chancellor",
+   "name": "Rook to Chancellor",
    "kind": "buff",
    "tier": 4,
-   "effect": "Spin the wheel three times: three random enemy pieces other than the king are removed from the board.",
-   "trigger": "instant",
+   "effect": "One rook also moves like a knight, for the game.",
+   "trigger": "activated/lingering",
    "duration": "unstated",
-   "targets": "enemy",
-   "signature": "attack|instant|effect|unstated|enemy|king,random,remove,time",
-   "animation": "bespoke+canvas",
-   "location": "src/engine/buffs/funny/chaos.ts",
+   "targets": "unstated",
+   "signature": "movement|activated|effect+targets+aug+onMove|unstated|unstated|knight,move,rook",
+   "animation": "generated",
+   "location": "src/engine/buffs/library.ts",
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
+   "flags": [
+    "near-duplicate(bishop_archbishop:0.80)"
+   ],
+   "action": "keep: reviewed near-duplicate cluster; per-file or per-piece mirror family, or distinct mechanic confirmed"
   },
   {
    "id": "royal_decree",
@@ -18319,6 +18192,24 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "wa_high_roll",
+   "name": "High Roll",
+   "kind": "buff",
+   "tier": 4,
+   "effect": "Force your next draft offer to roll at tier 5.",
+   "trigger": "instant",
+   "duration": "unstated",
+   "targets": "self",
+   "signature": "draft|instant|effect|unstated|self|draft,n:5",
+   "animation": "bespoke+canvas",
+   "location": "src/engine/buffs/wild/arcane.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep: T4 rung of the forced-tier ladder (2->3->4->5->6 across T1->T5 with ov_window_shopping at the bottom)"
+  },
+  {
    "id": "wa_mind_read",
    "name": "Mind Read",
    "kind": "buff",
@@ -18737,24 +18628,6 @@
    "location": "src/engine/buffs/wild/elemental.ts",
    "tests": [
     "test-desync.cjs",
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "we_ball_lightning",
-   "name": "Ball Lightning",
-   "kind": "buff",
-   "tier": 4,
-   "effect": "Your next 2 captures each also destroy the enemy pieces (never a king) on the two squares immediately left and right of the captured square.",
-   "trigger": "passive",
-   "duration": "one-shot",
-   "targets": "enemy",
-   "signature": "attack|passive|init+onMove|one-shot|enemy|capture,destroy,king,n:2,square",
-   "animation": "passive",
-   "location": "src/engine/buffs/wild/elemental.ts",
-   "tests": [
     "lab-run-all.ts"
    ],
    "flags": [],
@@ -19677,6 +19550,24 @@
    "action": "keep: three cards plus bank improvement at T4; Algorithm Boost differentiated with a reroll"
   },
   {
+   "id": "horn_of_summoning",
+   "name": "Horn of Summoning",
+   "kind": "buff",
+   "tier": 5,
+   "effect": "One long note wakes the stone itself: for the rest of the game, your rooks may also step one square diagonally.",
+   "trigger": "passive",
+   "duration": "permanent",
+   "targets": "self",
+   "signature": "movement|passive|aug|permanent|self|rook,square",
+   "animation": "bespoke+canvas+passive",
+   "location": "src/engine/buffs/fantasy/artifacts.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
+  },
+  {
    "id": "hyein",
    "name": "Hyein",
    "kind": "buff",
@@ -19690,6 +19581,24 @@
    "location": "src/engine/buffs/personal.ts",
    "tests": [
     "test-companions.cjs",
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "ilovechaewon",
+   "name": "I Love Chaewon",
+   "kind": "buff",
+   "tier": 5,
+   "effect": "Fearless choreography: gracefully reposition up to 3 of your pieces, gliding each to any empty square in your own half of the board.",
+   "trigger": "activated",
+   "duration": "unstated",
+   "targets": "self",
+   "signature": "movement|activated|effect+targets|unstated|self|n:3,square",
+   "animation": "generated",
+   "location": "src/engine/buffs/personal.ts",
+   "tests": [
     "lab-run-all.ts"
    ],
    "flags": [],
@@ -20201,24 +20110,6 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "ov_raven_parliament",
-   "name": "Raven Parliament",
-   "kind": "buff",
-   "tier": 5,
-   "effect": "For 5 of your turns, at the start of each: every undefended enemy piece is marked by a perching raven.",
-   "trigger": "passive",
-   "duration": "5-turns",
-   "targets": "enemy",
-   "signature": "info|passive|init+onMove|5-turns|enemy|n:5",
-   "animation": "passive",
-   "location": "src/engine/buffs/overhaul/t5.ts",
-   "tests": [
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
    "id": "ov_rolling_boulder",
    "name": "Rolling Boulder",
    "kind": "buff",
@@ -20381,6 +20272,24 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "overtime_pay",
+   "name": "Overtime Pay",
+   "kind": "buff",
+   "tier": 5,
+   "effect": "You clock in and cash out on the spot: 105 seconds go straight onto your own clock the moment you play this. Time and a half, paid in full.",
+   "trigger": "instant",
+   "duration": "unstated",
+   "targets": "self",
+   "signature": "tempo|instant|effect|unstated|self|clock,n:105,seconds,time",
+   "animation": "bespoke",
+   "location": "src/engine/buffs/pt/timefaustian.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "phase_army",
    "name": "Phase Army",
    "kind": "buff",
@@ -20410,6 +20319,24 @@
    "signature": "pieces|activated|effect+targets+onMove|4-turns|self|knight,n:4,place,square",
    "animation": "generated",
    "location": "src/engine/buffs/funny/meta.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "queens_echo",
+   "name": "Queen's Echo",
+   "kind": "buff",
+   "tier": 5,
+   "effect": "Your rooks move like queens for your next 2 turns.",
+   "trigger": "passive",
+   "duration": "2-turns",
+   "targets": "self",
+   "signature": "movement|passive|init+aug+onMove|2-turns|self|move,n:2,queen,rook",
+   "animation": "passive",
+   "location": "src/engine/buffs/library.ts",
    "tests": [
     "lab-run-all.ts"
    ],
@@ -20695,24 +20622,6 @@
    ],
    "flags": [],
    "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "twin_queens",
-   "name": "Twin Queens",
-   "kind": "buff",
-   "tier": 5,
-   "effect": "Promote two pawns to queens instantly if both are on your 5th rank or beyond. Using it spends your next unused reroll, if any.",
-   "trigger": "activated",
-   "duration": "unstated",
-   "targets": "self",
-   "signature": "pieces|activated|effect+targets|unstated|self|pawn,promote,queen,rank,reroll",
-   "animation": "canvas",
-   "location": "src/engine/buffs/library.ts",
-   "tests": [
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
   },
   {
    "id": "uniqlo_warrior",
@@ -21056,6 +20965,24 @@
    "signature": "protection|passive|init+onMove|3-turns|enemy|bishop,capture,draft,n:3,reroll,square",
    "animation": "bespoke+canvas+passive",
    "location": "src/engine/buffs/wild/chaos.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "we_ball_lightning",
+   "name": "Ball Lightning",
+   "kind": "buff",
+   "tier": 5,
+   "effect": "Your next 2 captures each also destroy the enemy pieces (never a king) on the two squares immediately left and right of the captured square.",
+   "trigger": "passive",
+   "duration": "one-shot",
+   "targets": "enemy",
+   "signature": "attack|passive|init+onMove|one-shot|enemy|capture,destroy,king,n:2,square",
+   "animation": "passive",
+   "location": "src/engine/buffs/wild/elemental.ts",
    "tests": [
     "lab-run-all.ts"
    ],
@@ -21445,6 +21372,24 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "amazon_knight",
+   "name": "Amazon Knight",
+   "kind": "buff",
+   "tier": 6,
+   "effect": "One knight becomes a knight plus queen for 2 turns.",
+   "trigger": "activated/lingering",
+   "duration": "2-turns",
+   "targets": "unstated",
+   "signature": "movement|activated|effect+targets+aug+onMove|2-turns|unstated|become,knight,n:2,queen",
+   "animation": "bespoke+canvas",
+   "location": "src/engine/buffs/library.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "annihilate",
    "name": "Annihilate",
    "kind": "buff",
@@ -21584,6 +21529,24 @@
    "signature": "pieces|instant|effect|one-shot|enemy|pawn,random,square",
    "animation": "bespoke+canvas",
    "location": "src/engine/buffs/pt/curseschaos.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "collapse",
+   "name": "Collapse",
+   "kind": "buff",
+   "tier": 6,
+   "effect": "Pull every enemy piece except the king one square toward their back rank across the whole board, once.",
+   "trigger": "instant",
+   "duration": "one-shot",
+   "targets": "enemy",
+   "signature": "attack|instant|effect|one-shot|enemy|king,pull,rank,square",
+   "animation": "canvas",
+   "location": "src/engine/buffs/library.ts",
    "tests": [
     "lab-run-all.ts"
    ],
@@ -23013,6 +22976,25 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "time_skip",
+   "name": "Time Skip",
+   "kind": "buff",
+   "tier": 6,
+   "effect": "Your opponent skips their next turn, and the piece they last moved is frozen for their next 2 turns. You cannot capture the king on the bonus move: your opponent replies first.",
+   "trigger": "instant",
+   "duration": "2-turns",
+   "targets": "enemy",
+   "signature": "tempo|instant|effect|2-turns|enemy|capture,king,move,n:2,skip",
+   "animation": "bespoke",
+   "location": "src/engine/buffs/library.ts",
+   "tests": [
+    "test-draft-fairness.ts",
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "time_stop_short",
    "name": "Time Stop (Short)",
    "kind": "buff",
@@ -24178,24 +24160,6 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "horn_of_summoning",
-   "name": "Horn of Summoning",
-   "kind": "buff",
-   "tier": 7,
-   "effect": "One long note wakes the stone itself: for the rest of the game, your rooks may also step one square diagonally.",
-   "trigger": "passive",
-   "duration": "permanent",
-   "targets": "self",
-   "signature": "movement|passive|aug|permanent|self|rook,square",
-   "animation": "bespoke+canvas+passive",
-   "location": "src/engine/buffs/fantasy/artifacts.ts",
-   "tests": [
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool"
-  },
-  {
    "id": "i_love_cam",
    "name": "I Love Cami",
    "kind": "buff",
@@ -24209,24 +24173,6 @@
    "location": "src/engine/buffs/personal.ts",
    "tests": [
     "test-companions.cjs",
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "ilovechaewon",
-   "name": "I Love Chaewon",
-   "kind": "buff",
-   "tier": 7,
-   "effect": "Fearless choreography: gracefully reposition up to 3 of your pieces, gliding each to any empty square in your own half of the board.",
-   "trigger": "activated",
-   "duration": "unstated",
-   "targets": "self",
-   "signature": "movement|activated|effect+targets|unstated|self|n:3,square",
-   "animation": "generated",
-   "location": "src/engine/buffs/personal.ts",
-   "tests": [
     "lab-run-all.ts"
    ],
    "flags": [],
@@ -24334,6 +24280,24 @@
    "signature": "tempo|passive|onMove|unstated|enemy|king,knight,move,square",
    "animation": "bespoke+canvas+passive",
    "location": "src/engine/buffs/pt/passives.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "mass_freeze",
+   "name": "Mass Freeze",
+   "kind": "buff",
+   "tier": 7,
+   "effect": "After your opponent replies, freeze every enemy piece except the king for 1 full turn.",
+   "trigger": "passive",
+   "duration": "unstated",
+   "targets": "enemy",
+   "signature": "tempo|passive|init+onMove|unstated|enemy|freeze,king,n:1",
+   "animation": "bespoke+canvas+passive",
+   "location": "src/engine/buffs/library.ts",
    "tests": [
     "lab-run-all.ts"
    ],
@@ -24740,6 +24704,24 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "roulette",
+   "name": "Roulette",
+   "kind": "buff",
+   "tier": 7,
+   "effect": "Spin the wheel three times: three random enemy pieces other than the king are removed from the board.",
+   "trigger": "instant",
+   "duration": "unstated",
+   "targets": "enemy",
+   "signature": "attack|instant|effect|unstated|enemy|king,random,remove,time",
+   "animation": "bespoke+canvas",
+   "location": "src/engine/buffs/funny/chaos.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "ruin",
    "name": "Ruin",
    "kind": "buff",
@@ -24868,6 +24850,24 @@
    ],
    "flags": [],
    "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "twin_queens",
+   "name": "Twin Queens",
+   "kind": "buff",
+   "tier": 7,
+   "effect": "Promote two pawns to queens instantly if both are on your 5th rank or beyond. Using it spends your next unused reroll, if any.",
+   "trigger": "activated",
+   "duration": "unstated",
+   "targets": "self",
+   "signature": "pieces|activated|effect+targets|unstated|self|pawn,promote,queen,rank,reroll",
+   "animation": "canvas",
+   "location": "src/engine/buffs/library.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
   },
   {
    "id": "wa_dominate_major",
@@ -27654,6 +27654,25 @@
    "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
   },
   {
+   "id": "hx4_famine",
+   "name": "Famine",
+   "kind": "hex",
+   "tier": 2,
+   "effect": "For your opponent's next 2 turns, they cannot capture any of your pawns. The granary is warded.",
+   "trigger": "passive",
+   "duration": "2-turns",
+   "targets": "enemy",
+   "signature": "hex|passive|init+filter+onMove|2-turns|enemy|capture,n:2,pawn",
+   "animation": "passive",
+   "location": "src/engine/buffs/hexes/wave4b.ts",
+   "tests": [
+    "lab-run-all.ts",
+    "test-hexes.cjs"
+   ],
+   "flags": [],
+   "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+  },
+  {
    "id": "hx4_flinching_blades",
    "name": "Flinching Blades",
    "kind": "hex",
@@ -27684,6 +27703,25 @@
    "signature": "hex|passive|init+onMove|2-turns|enemy|move,n:2,square",
    "animation": "passive",
    "location": "src/engine/buffs/hexes/wave4.ts",
+   "tests": [
+    "lab-run-all.ts",
+    "test-hexes.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "hx4_glacier_gate",
+   "name": "Glacier Gate",
+   "kind": "hex",
+   "tier": 2,
+   "effect": "A wall of ice fills the four center squares: your opponent's pieces cannot stop on d4, e4, d5 or e5 for their next turn.",
+   "trigger": "instant",
+   "duration": "next-turn",
+   "targets": "enemy",
+   "signature": "hex|instant|effect|next-turn|enemy|square,wall",
+   "animation": "generated",
+   "location": "src/engine/buffs/hexes/wave4b.ts",
    "tests": [
     "lab-run-all.ts",
     "test-hexes.cjs"
@@ -29026,6 +29064,44 @@
    "action": "REDESIGNED: odd distances, 4 turns; even distances duplicated Gremlins"
   },
   {
+   "id": "hx4_donkey_ears",
+   "name": "Donkey Ears",
+   "kind": "hex",
+   "tier": 3,
+   "effect": "Their king sprouts magnificent donkey ears (the dunce cap, worn for 6 of their turns), and the shame stings: for their next 2 turns their king cannot capture anything.",
+   "trigger": "passive",
+   "duration": "6-turns",
+   "targets": "enemy",
+   "signature": "hex|passive|init+filter+onMove|6-turns|enemy|capture,king,n:2,n:6",
+   "animation": "passive",
+   "location": "src/engine/buffs/hexes/wave4b.ts",
+   "tests": [
+    "lab-run-all.ts",
+    "test-hexes.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "hx4_falling_rubble",
+   "name": "Falling Rubble",
+   "kind": "hex",
+   "tier": 3,
+   "effect": "Collapse a 2x2 block of squares you choose: your opponent's pieces cannot stop on any of those 4 squares for their next 2 turns.",
+   "trigger": "activated",
+   "duration": "2-turns",
+   "targets": "enemy",
+   "signature": "hex|activated|effect+targets|2-turns|enemy|block,n:2,n:4,square",
+   "animation": "generated",
+   "location": "src/engine/buffs/hexes/wave4b.ts",
+   "tests": [
+    "lab-run-all.ts",
+    "test-hexes.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "hx4_fear_of_open_ground",
    "name": "Fear of Open Ground",
    "kind": "hex",
@@ -29375,6 +29451,26 @@
    ],
    "flags": [],
    "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "hx4_tar_flood",
+   "name": "Tar Flood",
+   "kind": "hex",
+   "tier": 3,
+   "effect": "Tar floods your opponent's third rank: for their next 2 turns, none of their pieces may stop anywhere on it. The first piece the tar would stop may cross once, then it binds fully.",
+   "trigger": "passive",
+   "duration": "2-turns",
+   "targets": "enemy",
+   "signature": "hex|passive|init+filter+onMove|2-turns|enemy|n:2,rank",
+   "animation": "passive",
+   "location": "src/engine/buffs/hexes/wave4b.ts",
+   "tests": [
+    "test-card-impact.ts",
+    "lab-run-all.ts",
+    "test-hexes.cjs"
+   ],
+   "flags": [],
+   "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
   },
   {
    "id": "hx4_the_ides",
@@ -29746,25 +29842,6 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "boneca_ambalabu",
-   "name": "Boneca Ambalabu",
-   "kind": "hex",
-   "tier": 4,
-   "effect": "The tire-frog drags your opponent down: for their next 4 turns none of their pieces may move more than 1 square in a single move.",
-   "trigger": "passive",
-   "duration": "4-turns",
-   "targets": "enemy",
-   "signature": "hex|passive|init+filter+onMove|4-turns|enemy|move,n:1,n:4,square",
-   "animation": "bespoke+canvas+passive",
-   "location": "src/engine/buffs/brainrot.ts",
-   "tests": [
-    "lab-run-all.ts",
-    "test-hexes.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
    "id": "cryostasis",
    "name": "Cryostasis",
    "kind": "hex",
@@ -29874,6 +29951,25 @@
    "signature": "hex|passive|init+filter+onMove|5-turns|enemy|freeze,move,n:5,rook",
    "animation": "canvas+passive",
    "location": "src/engine/buffs/hexes/tier4.ts",
+   "tests": [
+    "lab-run-all.ts",
+    "test-hexes.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "glacial_flanks",
+   "name": "Glacial Flanks",
+   "kind": "hex",
+   "tier": 4,
+   "effect": "Freeze your opponent's knights and bishops for 1 of their turns.",
+   "trigger": "instant",
+   "duration": "1-turns",
+   "targets": "enemy",
+   "signature": "hex|instant|effect|1-turns|enemy|bishop,freeze,knight,n:1",
+   "animation": "canvas",
+   "location": "src/engine/buffs/hexes/tier6.ts",
    "tests": [
     "lab-run-all.ts",
     "test-hexes.cjs"
@@ -30346,6 +30442,25 @@
    "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
   },
   {
+   "id": "hx4_choke_point",
+   "name": "Choke Point",
+   "kind": "hex",
+   "tier": 4,
+   "effect": "Caltrops blanket the central 4x4 (c3 to f6): your opponent's pieces may not stop anywhere in it for their next turn. Their king picks its way through freely.",
+   "trigger": "passive",
+   "duration": "next-turn",
+   "targets": "enemy",
+   "signature": "hex|passive|init+filter+onMove|next-turn|enemy|king",
+   "animation": "passive",
+   "location": "src/engine/buffs/hexes/wave4b.ts",
+   "tests": [
+    "lab-run-all.ts",
+    "test-hexes.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "hx4_circling_vultures",
    "name": "Circling Vultures",
    "kind": "hex",
@@ -30597,6 +30712,25 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "hx4_lovestruck_majesty",
+   "name": "Lovestruck Majesty",
+   "kind": "hex",
+   "tier": 4,
+   "effect": "Your opponent's queen falls head over heels: she may make one move, then is frozen, swooning, for 2 of their turns. Any other queens they have swoon at once.",
+   "trigger": "passive",
+   "duration": "2-turns",
+   "targets": "enemy",
+   "signature": "hex|passive|init+onMove|2-turns|enemy|move,n:2,queen",
+   "animation": "passive",
+   "location": "src/engine/buffs/hexes/wave4b.ts",
+   "tests": [
+    "lab-run-all.ts",
+    "test-hexes.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "hx4_moth_eaten_gloves",
    "name": "Moth Eaten Gloves",
    "kind": "hex",
@@ -30675,6 +30809,25 @@
    "action": "REBALANCED: 4 turns; Daniel Caesar (full capture ban, 3 turns, same tier) no longer strictly dominates"
   },
   {
+   "id": "hx4_oathbreakers_brand",
+   "name": "Oathbreaker's Brand",
+   "kind": "hex",
+   "tier": 4,
+   "effect": "A brand hangs over their castle gate for their next 6 turns: if your opponent castles in that window, the castling rook is frozen for 3 of their turns and their king wears the dunce cap for 8.",
+   "trigger": "passive",
+   "duration": "6-turns",
+   "targets": "enemy",
+   "signature": "hex|passive|init+onMove|6-turns|enemy|castle,king,n:3,n:6,n:8,rook",
+   "animation": "passive",
+   "location": "src/engine/buffs/hexes/wave4b.ts",
+   "tests": [
+    "lab-run-all.ts",
+    "test-hexes.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "hx4_one_ladle_each",
    "name": "One Ladle Each",
    "kind": "hex",
@@ -30695,6 +30848,25 @@
     "dominated-candidate(higher-tier-of-duplicate-pair)"
    ],
    "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+  },
+  {
+   "id": "hx4_pawn_embargo",
+   "name": "Pawn Embargo",
+   "kind": "hex",
+   "tier": 4,
+   "effect": "For your opponent's next 6 turns, their pawns may not enter or move within your half of the board. The first pawn the border would stop may cross once, then it binds fully. The infantry is stopped at the border.",
+   "trigger": "passive",
+   "duration": "6-turns",
+   "targets": "enemy",
+   "signature": "hex|passive|init+filter+onMove|6-turns|enemy|move,n:6,pawn",
+   "animation": "passive",
+   "location": "src/engine/buffs/hexes/wave4b.ts",
+   "tests": [
+    "lab-run-all.ts",
+    "test-hexes.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
   },
   {
    "id": "hx4_pawnbrokers_lien",
@@ -30984,6 +31156,25 @@
    "signature": "hex|activated|effect+targets+onMove|6-turns|enemy|become,king,n:1,n:6,square",
    "animation": "generated",
    "location": "src/engine/buffs/hexes/wave4.ts",
+   "tests": [
+    "lab-run-all.ts",
+    "test-hexes.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "hx4_traitors_gala",
+   "name": "Traitor's Gala",
+   "kind": "hex",
+   "tier": 4,
+   "effect": "Two of your opponent's knights or bishops, chosen at random, drink the wrong toast and become walnuts for 1 of their turns.",
+   "trigger": "instant",
+   "duration": "1-turns",
+   "targets": "enemy",
+   "signature": "hex|instant|effect|1-turns|enemy|become,bishop,knight,n:1,random",
+   "animation": "generated",
+   "location": "src/engine/buffs/hexes/wave4b.ts",
    "tests": [
     "lab-run-all.ts",
     "test-hexes.cjs"
@@ -33174,25 +33365,6 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "glacial_flanks",
-   "name": "Glacial Flanks",
-   "kind": "hex",
-   "tier": 6,
-   "effect": "Freeze your opponent's knights and bishops for 1 of their turns.",
-   "trigger": "instant",
-   "duration": "1-turns",
-   "targets": "enemy",
-   "signature": "hex|instant|effect|1-turns|enemy|bishop,freeze,knight,n:1",
-   "animation": "canvas",
-   "location": "src/engine/buffs/hexes/tier6.ts",
-   "tests": [
-    "lab-run-all.ts",
-    "test-hexes.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
    "id": "grounded_command",
    "name": "Grounded Command",
    "kind": "hex",
@@ -33675,25 +33847,6 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "hx4_famine",
-   "name": "Famine",
-   "kind": "hex",
-   "tier": 6,
-   "effect": "For your opponent's next 2 turns, they cannot capture any of your pawns. The granary is warded.",
-   "trigger": "passive",
-   "duration": "2-turns",
-   "targets": "enemy",
-   "signature": "hex|passive|init+filter+onMove|2-turns|enemy|capture,n:2,pawn",
-   "animation": "passive",
-   "location": "src/engine/buffs/hexes/wave4b.ts",
-   "tests": [
-    "lab-run-all.ts",
-    "test-hexes.cjs"
-   ],
-   "flags": [],
-   "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
-  },
-  {
    "id": "hx4_gale_warning",
    "name": "Gale Warning",
    "kind": "hex",
@@ -33723,25 +33876,6 @@
    "targets": "enemy",
    "signature": "hex|passive|init+filter+onMove|3-turns|enemy|move,n:3,queen,rank,square",
    "animation": "passive",
-   "location": "src/engine/buffs/hexes/wave4b.ts",
-   "tests": [
-    "lab-run-all.ts",
-    "test-hexes.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "hx4_glacier_gate",
-   "name": "Glacier Gate",
-   "kind": "hex",
-   "tier": 6,
-   "effect": "A wall of ice fills the four center squares: your opponent's pieces cannot stop on d4, e4, d5 or e5 for their next turn.",
-   "trigger": "instant",
-   "duration": "next-turn",
-   "targets": "enemy",
-   "signature": "hex|instant|effect|next-turn|enemy|square,wall",
-   "animation": "generated",
    "location": "src/engine/buffs/hexes/wave4b.ts",
    "tests": [
     "lab-run-all.ts",
@@ -34123,26 +34257,6 @@
     "duplicate-signature(hw3_bloodlust,withered_hands,hx4_waste_not)"
    ],
    "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
-  },
-  {
-   "id": "hx4_tar_flood",
-   "name": "Tar Flood",
-   "kind": "hex",
-   "tier": 6,
-   "effect": "Tar floods your opponent's third rank: for their next 2 turns, none of their pieces may stop anywhere on it. The first piece the tar would stop may cross once, then it binds fully.",
-   "trigger": "passive",
-   "duration": "2-turns",
-   "targets": "enemy",
-   "signature": "hex|passive|init+filter+onMove|2-turns|enemy|n:2,rank",
-   "animation": "passive",
-   "location": "src/engine/buffs/hexes/wave4b.ts",
-   "tests": [
-    "test-card-impact.ts",
-    "lab-run-all.ts",
-    "test-hexes.cjs"
-   ],
-   "flags": [],
-   "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
   },
   {
    "id": "hx4_thunderhead",
@@ -35005,25 +35119,6 @@
    "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
   },
   {
-   "id": "hx4_donkey_ears",
-   "name": "Donkey Ears",
-   "kind": "hex",
-   "tier": 7,
-   "effect": "Their king sprouts magnificent donkey ears (the dunce cap, worn for 6 of their turns), and the shame stings: for their next 2 turns their king cannot capture anything.",
-   "trigger": "passive",
-   "duration": "6-turns",
-   "targets": "enemy",
-   "signature": "hex|passive|init+filter+onMove|6-turns|enemy|capture,king,n:2,n:6",
-   "animation": "passive",
-   "location": "src/engine/buffs/hexes/wave4b.ts",
-   "tests": [
-    "lab-run-all.ts",
-    "test-hexes.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
    "id": "hx4_eclipse",
    "name": "Eclipse",
    "kind": "hex",
@@ -35033,25 +35128,6 @@
    "duration": "3-turns",
    "targets": "enemy",
    "signature": "hex|instant|effect|3-turns|enemy|advance,n:3,pawn",
-   "animation": "generated",
-   "location": "src/engine/buffs/hexes/wave4b.ts",
-   "tests": [
-    "lab-run-all.ts",
-    "test-hexes.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "hx4_falling_rubble",
-   "name": "Falling Rubble",
-   "kind": "hex",
-   "tier": 7,
-   "effect": "Collapse a 2x2 block of squares you choose: your opponent's pieces cannot stop on any of those 4 squares for their next 2 turns.",
-   "trigger": "activated",
-   "duration": "2-turns",
-   "targets": "enemy",
-   "signature": "hex|activated|effect+targets|2-turns|enemy|block,n:2,n:4,square",
    "animation": "generated",
    "location": "src/engine/buffs/hexes/wave4b.ts",
    "tests": [
@@ -35258,25 +35334,6 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "hx4_lovestruck_majesty",
-   "name": "Lovestruck Majesty",
-   "kind": "hex",
-   "tier": 7,
-   "effect": "Your opponent's queen falls head over heels: she may make one move, then is frozen, swooning, for 2 of their turns. Any other queens they have swoon at once.",
-   "trigger": "passive",
-   "duration": "2-turns",
-   "targets": "enemy",
-   "signature": "hex|passive|init+onMove|2-turns|enemy|move,n:2,queen",
-   "animation": "passive",
-   "location": "src/engine/buffs/hexes/wave4b.ts",
-   "tests": [
-    "lab-run-all.ts",
-    "test-hexes.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
    "id": "hx4_muster_silence",
    "name": "Muster of Silence",
    "kind": "hex",
@@ -35422,25 +35479,6 @@
    "duration": "2-turns",
    "targets": "enemy",
    "signature": "hex|instant|effect|2-turns|enemy|king,n:2,rank,square,wall",
-   "animation": "generated",
-   "location": "src/engine/buffs/hexes/wave4b.ts",
-   "tests": [
-    "lab-run-all.ts",
-    "test-hexes.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "hx4_traitors_gala",
-   "name": "Traitor's Gala",
-   "kind": "hex",
-   "tier": 7,
-   "effect": "Two of your opponent's knights or bishops, chosen at random, drink the wrong toast and become walnuts for 1 of their turns.",
-   "trigger": "instant",
-   "duration": "1-turns",
-   "targets": "enemy",
-   "signature": "hex|instant|effect|1-turns|enemy|become,bishop,knight,n:1,random",
    "animation": "generated",
    "location": "src/engine/buffs/hexes/wave4b.ts",
    "tests": [
@@ -35824,6 +35862,25 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "boneca_ambalabu",
+   "name": "Boneca Ambalabu",
+   "kind": "hex",
+   "tier": 8,
+   "effect": "The tire-frog drags your opponent down: for their next 4 turns none of their pieces may move more than 1 square in a single move.",
+   "trigger": "passive",
+   "duration": "4-turns",
+   "targets": "enemy",
+   "signature": "hex|passive|init+filter+onMove|4-turns|enemy|move,n:1,n:4,square",
+   "animation": "bespoke+canvas+passive",
+   "location": "src/engine/buffs/brainrot.ts",
+   "tests": [
+    "lab-run-all.ts",
+    "test-hexes.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "endless_night",
    "name": "Endless Night",
    "kind": "hex",
@@ -35966,25 +36023,6 @@
    "duration": "1-turns",
    "targets": "enemy",
    "signature": "hex|passive|init+filter+onMove|1-turns|enemy|capture,castle,n:1,rook,time",
-   "animation": "passive",
-   "location": "src/engine/buffs/hexes/wave4b.ts",
-   "tests": [
-    "lab-run-all.ts",
-    "test-hexes.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "hx4_choke_point",
-   "name": "Choke Point",
-   "kind": "hex",
-   "tier": 8,
-   "effect": "Caltrops blanket the central 4x4 (c3 to f6): your opponent's pieces may not stop anywhere in it for their next turn. Their king picks its way through freely.",
-   "trigger": "passive",
-   "duration": "next-turn",
-   "targets": "enemy",
-   "signature": "hex|passive|init+filter+onMove|next-turn|enemy|king",
    "animation": "passive",
    "location": "src/engine/buffs/hexes/wave4b.ts",
    "tests": [
@@ -36337,44 +36375,6 @@
    "targets": "enemy",
    "signature": "hex|instant|effect|1-turns|enemy|become,n:1",
    "animation": "generated",
-   "location": "src/engine/buffs/hexes/wave4b.ts",
-   "tests": [
-    "lab-run-all.ts",
-    "test-hexes.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "hx4_oathbreakers_brand",
-   "name": "Oathbreaker's Brand",
-   "kind": "hex",
-   "tier": 8,
-   "effect": "A brand hangs over their castle gate for their next 6 turns: if your opponent castles in that window, the castling rook is frozen for 3 of their turns and their king wears the dunce cap for 8.",
-   "trigger": "passive",
-   "duration": "6-turns",
-   "targets": "enemy",
-   "signature": "hex|passive|init+onMove|6-turns|enemy|castle,king,n:3,n:6,n:8,rook",
-   "animation": "passive",
-   "location": "src/engine/buffs/hexes/wave4b.ts",
-   "tests": [
-    "lab-run-all.ts",
-    "test-hexes.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "hx4_pawn_embargo",
-   "name": "Pawn Embargo",
-   "kind": "hex",
-   "tier": 8,
-   "effect": "For your opponent's next 6 turns, their pawns may not enter or move within your half of the board. The first pawn the border would stop may cross once, then it binds fully. The infantry is stopped at the border.",
-   "trigger": "passive",
-   "duration": "6-turns",
-   "targets": "enemy",
-   "signature": "hex|passive|init+filter+onMove|6-turns|enemy|move,n:6,pawn",
-   "animation": "passive",
    "location": "src/engine/buffs/hexes/wave4b.ts",
    "tests": [
     "lab-run-all.ts",
@@ -37690,27 +37690,6 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "op_layaway_plan",
-   "name": "Layaway Plan",
-   "kind": "item",
-   "tier": 1,
-   "effect": "Your next draft offer rolls one tier higher.",
-   "trigger": "instant",
-   "duration": "unstated",
-   "targets": "self",
-   "signature": "item|instant|effect|unstated|self|draft",
-   "animation": "generated",
-   "location": "UNKNOWN",
-   "tests": [
-    "lab-run-all.ts"
-   ],
-   "flags": [
-    "duplicate-signature(op_sampler_platter)",
-    "near-duplicate(bn4_deck_of_kings:1.00)"
-   ],
-   "action": "keep: guaranteed tier-up; the coin variant now carries a reroll rider"
-  },
-  {
    "id": "op_left_bank_atlas",
    "name": "Left Bank Atlas",
    "kind": "item",
@@ -38880,6 +38859,24 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "bn4_royal_incognito",
+   "name": "Royal Incognito",
+   "kind": "item",
+   "tier": 3,
+   "effect": "Your king puts on sunglasses for the rest of the game (purely decorative) and cannot be captured for your opponent's next 2 turns. Nobody recognizes him. Everybody recognizes him.",
+   "trigger": "instant",
+   "duration": "permanent",
+   "targets": "enemy",
+   "signature": "item|instant|effect|permanent|enemy|capture,king,n:2",
+   "animation": "generated",
+   "location": "src/engine/buffs/boons4b.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "boxing_glove",
    "name": "Boxing Glove",
    "kind": "item",
@@ -38950,6 +38947,28 @@
    ],
    "flags": [],
    "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "op_layaway_plan",
+   "name": "Layaway Plan",
+   "kind": "item",
+   "tier": 3,
+   "effect": "Your next draft offer rolls one tier higher.",
+   "trigger": "instant",
+   "duration": "unstated",
+   "targets": "self",
+   "signature": "item|instant|effect|unstated|self|draft",
+   "animation": "generated",
+   "location": "UNKNOWN",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [
+    "duplicate-signature(op_sampler_platter)",
+    "near-duplicate(bn4_deck_of_kings:1.00)",
+    "dominated-candidate(higher-tier-of-duplicate-pair)"
+   ],
+   "action": "keep: guaranteed tier-up; the coin variant now carries a reroll rider"
   },
   {
    "id": "ov_counterfeit_crown",
@@ -39078,6 +39097,24 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "bn4_costume_trunk",
+   "name": "Costume Trunk",
+   "kind": "item",
+   "tier": 4,
+   "effect": "Dress up to three of your pieces (your king excepted) from the trunk, forever (purely decorative). Costumed pieces cannot be captured on your opponent's next turn: nobody hits an actor mid-scene.",
+   "trigger": "activated",
+   "duration": "next-turn",
+   "targets": "enemy",
+   "signature": "item|activated|effect+targets|next-turn|enemy|capture,king",
+   "animation": "generated",
+   "location": "src/engine/buffs/boons4b.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "coffee",
    "name": "Coffee",
    "kind": "item",
@@ -39123,24 +39160,6 @@
    "duration": "next-turn",
    "targets": "enemy",
    "signature": "item|activated|effect|next-turn|enemy|capture",
-   "animation": "generated",
-   "location": "src/engine/buffs/boons4b.ts",
-   "tests": [
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "bn4_royal_incognito",
-   "name": "Royal Incognito",
-   "kind": "item",
-   "tier": 5,
-   "effect": "Your king puts on sunglasses for the rest of the game (purely decorative) and cannot be captured for your opponent's next 2 turns. Nobody recognizes him. Everybody recognizes him.",
-   "trigger": "instant",
-   "duration": "permanent",
-   "targets": "enemy",
-   "signature": "item|instant|effect|permanent|enemy|capture,king,n:2",
    "animation": "generated",
    "location": "src/engine/buffs/boons4b.ts",
    "tests": [
@@ -39217,24 +39236,6 @@
    "signature": "item|instant|effect|unstated|self|clock,draft,king,n:2,n:30,pawn,reroll,seconds",
    "animation": "generated",
    "location": "src/engine/buffs/overhaul/t6.ts",
-   "tests": [
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "bn4_costume_trunk",
-   "name": "Costume Trunk",
-   "kind": "item",
-   "tier": 7,
-   "effect": "Dress up to three of your pieces (your king excepted) from the trunk, forever (purely decorative). Costumed pieces cannot be captured on your opponent's next turn: nobody hits an actor mid-scene.",
-   "trigger": "activated",
-   "duration": "next-turn",
-   "targets": "enemy",
-   "signature": "item|activated|effect+targets|next-turn|enemy|capture,king",
-   "animation": "generated",
-   "location": "src/engine/buffs/boons4b.ts",
    "tests": [
     "lab-run-all.ts"
    ],
@@ -42696,24 +42697,6 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "ivory_tower",
-   "name": "Ivory Tower",
-   "kind": "nerf",
-   "tier": 5,
-   "effect": "You lose if any opponent piece is adjacent to your king.",
-   "trigger": "passive-rule",
-   "duration": "match",
-   "targets": "self",
-   "signature": "nerf|unstated|adjacent,king",
-   "animation": "passive",
-   "location": "src/engine/nerfs/implemented.ts",
-   "tests": [
-    "test-nerfs.cjs"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
    "id": "ladies_first",
    "name": "Ladies First",
    "kind": "nerf",
@@ -45322,6 +45305,24 @@
    "signature": "nerf|unstated|capture,draw,move,n:3,random",
    "animation": "passive",
    "location": "src/engine/nerfs/library.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "ivory_tower",
+   "name": "Ivory Tower",
+   "kind": "nerf",
+   "tier": 7,
+   "effect": "You lose if any opponent piece is adjacent to your king.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|adjacent,king",
+   "animation": "passive",
+   "location": "src/engine/nerfs/implemented.ts",
    "tests": [
     "test-nerfs.cjs"
    ],

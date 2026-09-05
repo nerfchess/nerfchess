@@ -99,7 +99,9 @@ export function PlayerNerfCard({
       className={
         "relative plate overflow-hidden border " +
         (compact ? "p-3 " : "p-4 ") +
-        (revealed && !hideNerf ? `tier-bg-${nerf.tier}` : "border-white/10 bg-ink-900/45")
+        // Lichess's game side is flat: the seat card stays on the plain
+        // panel surface and the nerf's tier shows in its name, not a wash.
+        "border-[color:var(--edge)]"
       }
     >
       {/* One breath per heartbeat tick; keyed so each tick replays from zero. */}
@@ -119,8 +121,8 @@ export function PlayerNerfCard({
               "grid shrink-0 place-items-center rounded-md border font-display text-xs font-semibold " +
               (compact ? "h-8 w-8 " : "h-9 w-9 ") +
               (isMe
-                ? "border-gold/60 bg-gold/20 text-gold-leaf"
-                : "border-bruise/60 bg-bruise/20 text-bruise-glow")
+                ? "border-[color:var(--edge-strong)] bg-[color:var(--bg-raised)] text-parchment-50"
+                : "border-[color:var(--edge)] bg-[color:var(--bg-raised)] text-parchment-300")
             }
             aria-hidden="true"
           >

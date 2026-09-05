@@ -78,6 +78,7 @@ const NOT_PRODUCT = [
 // slab would be a regression). They come off this list as their surface is
 // touched, not in one sweep.
 const BASELINE: string[] = [
+  "src/components/mod/ModShell.tsx",
   "src/app/achievements/page.tsx",
   "src/app/analysis/page.tsx",
   "src/app/clubs/[slug]/page.tsx",
@@ -94,10 +95,7 @@ const BASELINE: string[] = [
   "src/app/inbox/page.tsx",
   "src/app/lobby/page.tsx",
   "src/app/login/page.tsx",
-  "src/app/mod/cards/page.tsx",
   "src/app/mod/house/page.tsx",
-  "src/app/mod/page.tsx",
-  "src/app/page.tsx",
   "src/app/play/page.tsx",
   "src/app/profile/edit/page.tsx",
   "src/app/profile/page.tsx",
@@ -122,14 +120,11 @@ const BASELINE: string[] = [
   "src/components/DraftOverlay.tsx",
   "src/components/FriendGame.tsx",
   "src/components/GameOver.tsx",
-  "src/components/LiveRvPanel.tsx",
   "src/components/MobileBuffDrawer.tsx",
   "src/components/MobileMoveDrawer.tsx",
   "src/components/MobileNavMenu.tsx",
   "src/components/MoveList.tsx",
-  "src/components/NewHereChip.tsx",
   "src/components/OnlineMatch.tsx",
-  "src/components/OpenLobbyPanel.tsx",
   "src/components/OppPlaysLog.tsx",
   "src/components/OpponentDraftPanel.tsx",
   "src/components/OpponentDraftViewer.tsx",

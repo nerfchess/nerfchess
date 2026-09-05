@@ -150,12 +150,12 @@ export function FriendsPanel() {
           <div className="mt-4 space-y-2" aria-hidden>
             {[0, 1, 2, 3].map((i) => (
               <div key={i} className="flex items-center gap-3">
-                <div className="h-9 w-9 shrink-0 animate-pulse rounded-full bg-white/10 motion-reduce:animate-none" />
+                <div className="h-9 w-9 shrink-0 animate-pulse rounded-full bg-[color:var(--bg-raised)] motion-reduce:animate-none" />
                 <div className="min-w-0 flex-1 space-y-1.5">
-                  <div className="h-3.5 w-1/3 animate-pulse rounded bg-white/10 motion-reduce:animate-none" />
+                  <div className="h-3.5 w-1/3 animate-pulse rounded bg-[color:var(--bg-raised)] motion-reduce:animate-none" />
                   <div className="h-2.5 w-1/4 animate-pulse rounded bg-white/[0.07] motion-reduce:animate-none" />
                 </div>
-                <div className="ml-auto h-8 w-16 shrink-0 animate-pulse rounded-sm bg-white/10 motion-reduce:animate-none" />
+                <div className="ml-auto h-8 w-16 shrink-0 animate-pulse rounded-none bg-[color:var(--bg-raised)] motion-reduce:animate-none" />
               </div>
             ))}
             <span className="sr-only">Loading friends</span>
@@ -219,7 +219,7 @@ export function FriendsPanel() {
       {/* Incoming requests answer first: a raised accent-edged strip above
           everything else, because they are the most actionable thing here. */}
       {incoming.length > 0 && (
-        <div className="mt-4 space-y-2 rounded-sm border border-gold/40 bg-gold/[0.07] p-2.5">
+        <div className="mt-4 space-y-2 rounded-none border border-[color:var(--edge-strong)] bg-gold/[0.07] p-2.5">
           <div className="text-gold-leaf">Requests ({incoming.length})</div>
           {incoming.map((f) => (
             <div key={f.id} className="flex items-center gap-3">
@@ -229,7 +229,7 @@ export function FriendsPanel() {
                   onClick={() => void act("accept", f.username)}
                   disabled={busy}
                   aria-label={`Accept ${f.username}`}
-                  className="press grid h-11 w-11 place-items-center rounded-sm border border-verdigris-glow/50 bg-verdigris/20 text-verdigris-glow transition hover:bg-verdigris/30 disabled:opacity-40"
+                  className="grid h-11 w-11 place-items-center rounded-none border border-verdigris-glow/50 bg-verdigris/20 text-verdigris-glow transition hover:bg-verdigris/30 disabled:opacity-40"
                 >
                   <Check size={16} strokeWidth={2.4} aria-hidden />
                 </button>
@@ -237,7 +237,7 @@ export function FriendsPanel() {
                   onClick={() => void act("decline", f.username)}
                   disabled={busy}
                   aria-label={`Decline ${f.username}`}
-                  className="press grid h-11 w-11 place-items-center rounded-sm border border-[color:var(--edge)] text-parchment-400 transition hover:border-oxblood-glow/50 hover:text-oxblood-glow disabled:opacity-40"
+                  className="grid h-11 w-11 place-items-center rounded-none border border-[color:var(--edge)] text-parchment-400 transition hover:border-oxblood-glow/50 hover:text-oxblood-glow disabled:opacity-40"
                 >
                   <X size={16} strokeWidth={2.4} aria-hidden />
                 </button>
@@ -326,7 +326,7 @@ export function FriendsPanel() {
                 onClick={() => void act("decline", f.username)}
                 disabled={busy}
                 aria-label={`Cancel request to ${f.username}`}
-                className="grid h-11 w-11 shrink-0 place-items-center rounded-sm text-parchment-500 transition hover:text-oxblood-glow disabled:opacity-40"
+                className="grid h-11 w-11 shrink-0 place-items-center rounded-none text-parchment-500 transition hover:text-oxblood-glow disabled:opacity-40"
               >
                 <X size={16} strokeWidth={2.2} aria-hidden />
               </button>
@@ -356,7 +356,7 @@ function FriendRow({
   const presence = derivePresence(lobby, f.username);
   return (
     <div
-      className="flex items-center gap-3 rounded-sm border border-[color:var(--edge)] bg-white/[0.02] p-2 transition-[background-color,border-color] duration-200 [@media(hover:hover)]:hover:border-[color:rgb(var(--energy-ember-rgb)/0.45)] [@media(hover:hover)]:hover:bg-[color:var(--surface-hover)]"
+      className="flex items-center gap-3 rounded-none border border-[color:var(--edge)] bg-[color:var(--bg-zebra)] p-2 transition-[background-color,border-color] duration-200 [@media(hover:hover)]:hover:border-[color:rgb(var(--energy-ember-rgb)/0.45)] [@media(hover:hover)]:hover:bg-[color:var(--surface-hover)]"
     >
       <Identity f={f} lobby={lobby} />
       <div className="ml-auto flex shrink-0 items-center gap-1.5">
@@ -384,7 +384,7 @@ function FriendRow({
           onClick={onRemove}
           disabled={busy}
           aria-label={`Remove ${f.username}`}
-          className="grid h-11 w-11 shrink-0 place-items-center rounded-sm text-parchment-500 transition hover:text-oxblood-glow disabled:opacity-40"
+          className="grid h-11 w-11 shrink-0 place-items-center rounded-none text-parchment-500 transition hover:text-oxblood-glow disabled:opacity-40"
         >
           <X size={16} strokeWidth={2.2} aria-hidden />
         </button>

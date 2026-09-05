@@ -15,7 +15,7 @@ export default function AllStatsPage() {
       title="Site statistics: all games"
       subtitle="Every online game played on nerfchess, bots included."
     >
-      <div className="mt-5 flex flex-wrap gap-2">
+      <div className="mt-3 flex flex-wrap gap-2">
         <ModLinkButton href="/mod/stats" size="sm" tone="quiet">
           ← Stats home
         </ModLinkButton>
@@ -44,7 +44,7 @@ function AllStats() {
 
   return (
     <>
-      <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="plate mt-5 grid grid-cols-2 divide-x divide-y divide-[color:var(--edge)] sm:grid-cols-3 lg:grid-cols-5 lg:divide-y-0">
         <StatCard label="Games played" value={stats.games.total + (stats.games.vsBots ?? 0)} />
         <StatCard label="Games vs bots" value={stats.games.vsBots ?? 0} />
         <StatCard label="Games today" value={stats.games.today} />

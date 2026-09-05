@@ -1079,7 +1079,7 @@ export const OVERHAUL_T5: Buff[] = [
       name: "Raven Parliament",
       description:
         "For 5 of your turns, at the start of each: every undefended enemy piece is marked by a perching raven.",
-      tier: 5,
+      tier: 2,
       category: "info",
       icon: "Feather",
       flavor: "They confer, they caw, they name names.",

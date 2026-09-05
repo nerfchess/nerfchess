@@ -1,0 +1,1170 @@
+{
+  "_comment": "Hand decisions over the active pool (2026-09 read-through, category by category). `retire` entries leave the draft pools with reason `hand` (definitions stay, archived games replay); `retier` entries rewrite the card's tier in its definition via scripts/apply-retiers.mjs. Reasons are short so the codex banner can show them.",
+  "retire": {
+    "closed_book": {
+      "why": "unclear trigger, near-instant loss"
+    },
+    "thinning_ranks": {
+      "why": "compliance-token wording"
+    },
+    "war_of_attrition": {
+      "why": "two-stage rule, too long"
+    },
+    "helicopter_parent": {
+      "why": "warn-then-lose, too long"
+    },
+    "restless_crown": {
+      "why": "same shape as Blood Quota",
+      "mergedInto": "blood_quota"
+    },
+    "wn_equalizer": {
+      "why": "opponent controls the loss"
+    },
+    "abstinence": {
+      "why": "obscure condition"
+    },
+    "cowardly": {
+      "why": "warn-then-lose, too long"
+    },
+    "nw2_doomsday_clock": {
+      "why": "two conditions",
+      "mergedInto": "siege"
+    },
+    "solar_flare": {
+      "why": "burn/sleep cycle too complex"
+    },
+    "triple_play": {
+      "why": "confusing"
+    },
+    "theocracy": {
+      "why": "odd/even bookkeeping"
+    },
+    "hx4_royal_nametag": {
+      "why": "Butterfingers with a costume",
+      "mergedInto": "butterfingers"
+    },
+    "hw2_witchs_veto": {
+      "why": "too long"
+    },
+    "hx4_polite_infantry": {
+      "why": "directional capture ban reads badly"
+    },
+    "hx4_dim_torches": {
+      "why": "distance-from-king rule reads badly"
+    },
+    "hw3_binding_oath": {
+      "why": "too long"
+    },
+    "just_passing_through": {
+      "why": "same shape as Sacred File",
+      "mergedInto": "sacred_file"
+    },
+    "hw2_war_rations": {
+      "why": "too long"
+    },
+    "one_bite_at_a_time": {
+      "why": "too long"
+    },
+    "hw2_cursed_coin": {
+      "why": "too long"
+    },
+    "hw3_wildfire": {
+      "why": "spreading rule too complex"
+    },
+    "curse_of_frailty": {
+      "why": "dominates Cast a Nerf at the same tier",
+      "mergedInto": "withered_hands"
+    },
+    "hw2_gilded_rot": {
+      "why": "too long"
+    },
+    "leveling_up": {
+      "why": "predecessor rule confusing"
+    },
+    "op_bulk_postage": {
+      "why": "file-specific twin of Airmail",
+      "mergedInto": "op_airmail"
+    },
+    "op_certified_letter": {
+      "why": "file-specific twin of Airmail",
+      "mergedInto": "op_airmail"
+    },
+    "op_express_courier": {
+      "why": "file-specific twin of Airmail",
+      "mergedInto": "op_airmail"
+    },
+    "op_first_class_stamp": {
+      "why": "file-specific twin of Airmail",
+      "mergedInto": "op_airmail"
+    },
+    "op_general_delivery": {
+      "why": "file-specific twin of Airmail",
+      "mergedInto": "op_airmail"
+    },
+    "op_golden_aria": {
+      "why": "cosmetic flash only"
+    },
+    "overrun": {
+      "why": "one turn at tier 5 vs two turns at tier 3",
+      "mergedInto": "double_step_army"
+    },
+    "forearm_veins": {
+      "why": "twin of Field Fortification",
+      "mergedInto": "ww_field_fortification"
+    },
+    "cr_family_game_night": {
+      "why": "three rules in one"
+    },
+    "pr_forced_update": {
+      "why": "weaker Computer Virus",
+      "mergedInto": "computer_virus"
+    },
+    "op_barometer_falling": {
+      "why": "flash plus 3 seconds",
+      "mergedInto": "op_first_frost"
+    },
+    "op_distant_thunder": {
+      "why": "flash plus 3 seconds",
+      "mergedInto": "op_first_frost"
+    },
+    "op_four_winds": {
+      "why": "flash plus 3 seconds",
+      "mergedInto": "op_first_frost"
+    },
+    "op_grandfathers_watch": {
+      "why": "coin flip for 4 seconds"
+    },
+    "op_morning_constitutional": {
+      "why": "cosmetic mark"
+    },
+    "op_incident_report": {
+      "why": "cosmetic mark"
+    },
+    "op_coachs_whistle": {
+      "why": "cosmetic flash",
+      "mergedInto": "op_gate_ledger"
+    },
+    "op_house_lights_up": {
+      "why": "cosmetic flash",
+      "mergedInto": "op_gate_ledger"
+    },
+    "atomic_reaction": {
+      "why": "same as Ball Lightning",
+      "mergedInto": "we_ball_lightning"
+    },
+    "atomic_captures_small": {
+      "why": "same as Ball Lightning",
+      "mergedInto": "we_ball_lightning"
+    },
+    "grand_retreat": {
+      "why": "same as Full Rewind",
+      "mergedInto": "full_rewind"
+    },
+    "hx4_mismatched_livery": {
+      "why": "cosmetic, too long"
+    },
+    "op_home_office": {
+      "why": "reroll with a costume",
+      "mergedInto": "op_store_credit"
+    },
+    "op_keys_copied": {
+      "why": "reroll variant",
+      "mergedInto": "op_store_credit"
+    },
+    "op_lucky_stirrup": {
+      "why": "reroll variant",
+      "mergedInto": "op_store_credit"
+    },
+    "op_prophecy_fulfilled": {
+      "why": "reroll variant",
+      "mergedInto": "op_store_credit"
+    },
+    "op_widdershins": {
+      "why": "reroll variant",
+      "mergedInto": "op_store_credit"
+    },
+    "bn4_paper_crown": {
+      "why": "reroll variant",
+      "mergedInto": "op_store_credit"
+    },
+    "ov_coupon": {
+      "why": "reroll variant",
+      "mergedInto": "op_store_credit"
+    },
+    "op_bridle_path": {
+      "why": "conditional pawn move, too long"
+    },
+    "op_ferry_crossing": {
+      "why": "too long"
+    },
+    "op_star_dressing_room": {
+      "why": "too long"
+    },
+    "op_compost_heap": {
+      "why": "delayed Layaway Plan",
+      "mergedInto": "op_layaway_plan"
+    },
+    "bn4_trade_secret": {
+      "why": "North Star with an expiry",
+      "mergedInto": "north_star"
+    },
+    "ov_tasting_flight": {
+      "why": "Prep at a higher tier",
+      "mergedInto": "prep"
+    },
+    "ov_upper_shelf": {
+      "why": "Layaway Plan with an expiry",
+      "mergedInto": "op_layaway_plan"
+    },
+    "bn4_patrons_favor": {
+      "why": "Draft Tyranny with a cost",
+      "mergedInto": "draft_tyranny"
+    },
+    "cr_chat_picks": {
+      "why": "random penalties, too long"
+    },
+    "sealed_archive": {
+      "why": "same as Empty Handed",
+      "mergedInto": "empty_handed"
+    },
+    "poisoned_counsel": {
+      "why": "same as Dead Letter",
+      "mergedInto": "hx4_dead_letter"
+    },
+    "hexed_satchel": {
+      "why": "Dead Letter with a gift",
+      "mergedInto": "hx4_dead_letter"
+    },
+    "hw3_toll_road": {
+      "why": "too long"
+    },
+    "hx4_slow_clap": {
+      "why": "castling-conditional, weak"
+    },
+    "hx4_elbow_room": {
+      "why": "reads badly"
+    },
+    "hx4_crooked_arrow": {
+      "why": "odd/even twin of Gremlins",
+      "mergedInto": "gremlins"
+    },
+    "hx4_echo_of_bells": {
+      "why": "every-second-turn bookkeeping"
+    },
+    "hw3_avalanche": {
+      "why": "two-phase rule"
+    },
+    "ov_the_tutorial": {
+      "why": "too long"
+    },
+    "hw2_tide_of_ash": {
+      "why": "too long"
+    },
+    "wc_chaos_reigns": {
+      "why": "weaker Coffee",
+      "mergedInto": "coffee"
+    },
+    "unseelie_bargain": {
+      "why": "worse White Monster at a higher tier",
+      "mergedInto": "white_monster"
+    },
+    "tempo_theft": {
+      "why": "same as Extra Move",
+      "mergedInto": "extra_move"
+    },
+    "comfort_zone": {
+      "why": "random-square rule"
+    },
+    "crusade": {
+      "why": "random-square rule"
+    },
+    "tidy_desk": {
+      "why": "confusing"
+    },
+    "absolution": {
+      "why": "confusing"
+    },
+    "inching_forward": {
+      "why": "confusing"
+    },
+    "relay_race": {
+      "why": "same as Daisy Chain",
+      "mergedInto": "wn_daisy_chain"
+    },
+    "reflective": {
+      "why": "mirror rule obscure"
+    },
+    "ov_grand_illusionist": {
+      "why": "too long"
+    },
+    "op_border_report": {
+      "why": "flash only"
+    },
+    "op_day_census": {
+      "why": "flash only"
+    },
+    "op_field_sketch": {
+      "why": "flash only"
+    },
+    "op_fresh_footprints": {
+      "why": "flash only"
+    },
+    "op_left_bank_atlas": {
+      "why": "flash only"
+    },
+    "op_portrait_of_a_lady": {
+      "why": "flash only"
+    },
+    "op_hearth_blessing": {
+      "why": "flash only"
+    },
+    "op_gilded_doorknob": {
+      "why": "cosmetic plus reroll",
+      "mergedInto": "op_store_credit"
+    },
+    "op_late_bloom": {
+      "why": "cosmetic plus reroll",
+      "mergedInto": "op_store_credit"
+    },
+    "op_regina_dossier": {
+      "why": "cosmetic plus reroll",
+      "mergedInto": "op_store_credit"
+    },
+    "op_border_stamp": {
+      "why": "cosmetic plus reroll",
+      "mergedInto": "op_store_credit"
+    },
+    "op_meet_the_neighbors": {
+      "why": "cosmetic plus reroll",
+      "mergedInto": "op_store_credit"
+    },
+    "op_dowsing_rod": {
+      "why": "coin flip twin",
+      "mergedInto": "op_crystal_ball"
+    },
+    "op_horseshoe_nail": {
+      "why": "coin flip twin",
+      "mergedInto": "op_four_leaf_clover"
+    },
+    "op_wishbone": {
+      "why": "coin flip twin",
+      "mergedInto": "op_crystal_ball"
+    },
+    "op_carbon_copy": {
+      "why": "same as Peek",
+      "mergedInto": "peek"
+    },
+    "op_early_sprout": {
+      "why": "delayed Price Check",
+      "mergedInto": "op_price_check"
+    },
+    "op_opposition_research": {
+      "why": "conditional Price Check",
+      "mergedInto": "op_price_check"
+    },
+    "third_eye": {
+      "why": "same as Extra Glance",
+      "mergedInto": "extra_glance"
+    },
+    "ov_focus_group": {
+      "why": "Peek at tier 3",
+      "mergedInto": "peek"
+    },
+    "ww_counter_battery": {
+      "why": "narrower Purge",
+      "mergedInto": "purge"
+    },
+    "bn4_green_recruit": {
+      "why": "weaker Militia Call",
+      "mergedInto": "bn4_militia_call"
+    },
+    "bn4_summer_levy": {
+      "why": "weaker Summon Knight at a higher tier",
+      "mergedInto": "summon_knight"
+    },
+    "bn4_masons_lodge": {
+      "why": "Starfall with a cost",
+      "mergedInto": "starfall"
+    },
+    "iron_reign": {
+      "why": "same as Night Watch",
+      "mergedInto": "bn4_night_watch"
+    },
+    "bw3_last_stand": {
+      "why": "same as Saint's Procession",
+      "mergedInto": "bn4_saints_procession"
+    },
+    "allergies": {
+      "why": "random sneeze"
+    },
+    "hw2_tolling_bell": {
+      "why": "every-second-turn bookkeeping"
+    },
+    "hw2_compounding_misery": {
+      "why": "counts other curses"
+    },
+    "hw2_witching_hour": {
+      "why": "two-phase rule"
+    },
+    "hw2_queens_ransom": {
+      "why": "too long"
+    },
+    "hw3_collapsing_floor": {
+      "why": "delayed two-phase rule"
+    },
+    "hw2_beacon_of_woe": {
+      "why": "too long"
+    },
+    "hw2_bound_court": {
+      "why": "too long"
+    },
+    "hw3_feeding_frenzy": {
+      "why": "counts other curses"
+    },
+    "hw3_pyrrhic_toll": {
+      "why": "same as Tribute Demand",
+      "mergedInto": "hx4_tribute_demand"
+    },
+    "hx4_great_glacier": {
+      "why": "same as Whiteout",
+      "mergedInto": "we_whiteout"
+    },
+    "slowpoke": {
+      "why": "harms only its holder"
+    },
+    "hx4_the_long_night": {
+      "why": "same as Leaden Limbs",
+      "mergedInto": "leaden_limbs"
+    },
+    "op_colts_gallop": {
+      "why": "knight leap twin",
+      "mergedInto": "we_updraft"
+    },
+    "op_dromedary_post": {
+      "why": "knight leap twin",
+      "mergedInto": "we_updraft"
+    },
+    "ov_warmup_stretch": {
+      "why": "same as Updraft",
+      "mergedInto": "we_updraft"
+    },
+    "op_crane_swing": {
+      "why": "phase twin",
+      "mergedInto": "op_window_washer"
+    },
+    "op_painters_lift": {
+      "why": "phase twin",
+      "mergedInto": "op_window_washer"
+    },
+    "hx4_buttoned_scabbard": {
+      "why": "same as Royal Restraint",
+      "mergedInto": "royal_restraint"
+    },
+    "hx4_deja_vu": {
+      "why": "escape clause, too long"
+    },
+    "hx4_mirror_manners": {
+      "why": "escape clause, too long"
+    },
+    "hx4_no_full_retreat": {
+      "why": "escape clause, too long"
+    },
+    "hx4_no_sidling": {
+      "why": "escape clause, too long"
+    },
+    "hx4_cracked_lens": {
+      "why": "escape clause, too long"
+    },
+    "hx4_curfew_horn": {
+      "why": "same as Invitation Only",
+      "mergedInto": "op_invitation_only"
+    },
+    "dryad_grove": {
+      "why": "weaker Mountain Pass at a higher tier",
+      "mergedInto": "bn4_mountain_pass"
+    },
+    "we_riverflow": {
+      "why": "weaker Night Shift",
+      "mergedInto": "ov_night_shift"
+    },
+    "god_king": {
+      "why": "same as Command Tent",
+      "mergedInto": "ww_command_tent"
+    },
+    "op_cellar_hatch": {
+      "why": "Half Step for four files",
+      "mergedInto": "half_step"
+    },
+    "op_drawbridge_in": {
+      "why": "Half Step once",
+      "mergedInto": "half_step"
+    },
+    "op_harborside_h": {
+      "why": "sideways step twin",
+      "mergedInto": "spring_pawn"
+    },
+    "ov_sock_slide": {
+      "why": "sideways step twin",
+      "mergedInto": "spring_pawn"
+    },
+    "op_homesick_private": {
+      "why": "backstep twin",
+      "mergedInto": "quiet_march"
+    },
+    "op_sidestep_and_bow": {
+      "why": "backstep twin",
+      "mergedInto": "quiet_march"
+    },
+    "op_prompt_corner": {
+      "why": "back-rank hop, no purpose"
+    },
+    "op_green_room": {
+      "why": "back-rank hop, no purpose"
+    },
+    "bn4_royal_stroll": {
+      "why": "same as Tiptoe",
+      "mergedInto": "bn4_tiptoe"
+    },
+    "wa_ghostwalk_bishop": {
+      "why": "weaker Wazir Bishop",
+      "mergedInto": "wazir_bishop"
+    },
+    "bn4_gate_key": {
+      "why": "Rook Slide once",
+      "mergedInto": "rook_slide"
+    },
+    "we_thunder_step": {
+      "why": "Rook Slide variant",
+      "mergedInto": "rook_slide"
+    },
+    "wc_kangaroo_hop": {
+      "why": "same as Knight's Errand",
+      "mergedInto": "bn4_knights_errand"
+    },
+    "banner_of_war": {
+      "why": "same as Overclock",
+      "mergedInto": "overclock"
+    },
+    "ov_knight_court": {
+      "why": "Overclock without diagonals",
+      "mergedInto": "overclock"
+    },
+    "bn4_dressage": {
+      "why": "Overclock variant",
+      "mergedInto": "overclock"
+    },
+    "day_one_patch": {
+      "why": "two turns of Berolina Pawns",
+      "mergedInto": "berolina_pawns"
+    },
+    "army_reversal": {
+      "why": "weaker Moonwalk at a higher tier",
+      "mergedInto": "wc_moonwalk"
+    },
+    "ilovemakingout": {
+      "why": "blend rule confusing"
+    },
+    "bw2_standard_bearer": {
+      "why": "too long"
+    },
+    "ascendant_knight": {
+      "why": "same as Amazon Knight",
+      "mergedInto": "amazon_knight"
+    },
+    "hw2_twinned_torment": {
+      "why": "too long"
+    },
+    "bn4_out_on_bail": {
+      "why": "Tithe of Time with a cost",
+      "mergedInto": "bn4_tithe_of_time"
+    },
+    "bn4_angelus_bell": {
+      "why": "too long"
+    },
+    "underdogs_grit": {
+      "why": "lagging relief reads badly"
+    },
+    "half_measure": {
+      "why": "vague duration"
+    },
+    "op_back_to_school": {
+      "why": "cosmetic only"
+    },
+    "op_champions_shades": {
+      "why": "cosmetic only"
+    },
+    "op_driftwood_tower": {
+      "why": "cosmetic only"
+    },
+    "op_follow_spot": {
+      "why": "cosmetic only"
+    },
+    "op_fools_gold": {
+      "why": "cosmetic only"
+    },
+    "op_gossip_charm": {
+      "why": "cosmetic only"
+    },
+    "op_nesting_doll": {
+      "why": "cosmetic only"
+    },
+    "op_night_court": {
+      "why": "cosmetic only"
+    },
+    "op_penny_slots": {
+      "why": "cosmetic only"
+    },
+    "op_pep_talk": {
+      "why": "cosmetic only"
+    },
+    "op_ribbon_cutting": {
+      "why": "cosmetic only"
+    },
+    "op_roll_call": {
+      "why": "cosmetic only"
+    },
+    "op_team_photo": {
+      "why": "cosmetic only"
+    },
+    "op_ticker_tape": {
+      "why": "cosmetic only"
+    },
+    "op_wrong_game_night": {
+      "why": "cosmetic only"
+    },
+    "ov_counterfeit_crown": {
+      "why": "cosmetic only"
+    },
+    "hx4_eclipse": {
+      "why": "Coffee Break at tier 7",
+      "mergedInto": "bn4_coffee_break"
+    },
+    "hw2_gathering_storm": {
+      "why": "escalating phases, too long"
+    },
+    "hx4_walnut_pinch": {
+      "why": "weaker Medusa's Stare",
+      "mergedInto": "medusas_stare"
+    },
+    "hx4_walnut_crown": {
+      "why": "same as Medusa's Stare",
+      "mergedInto": "medusas_stare"
+    },
+    "hx4_stone_orchard": {
+      "why": "narrower Stone Garden",
+      "mergedInto": "hx4_stone_garden"
+    },
+    "hex_of_stone": {
+      "why": "same as Statue Garden",
+      "mergedInto": "statue_garden"
+    },
+    "hw3_slow_poison": {
+      "why": "too long"
+    },
+    "hw3_aging_blade": {
+      "why": "too long"
+    },
+    "hw2_weight_of_toil": {
+      "why": "third-move bookkeeping"
+    },
+    "stone_riders": {
+      "why": "too long"
+    },
+    "hx4_borrowed_crown": {
+      "why": "too long"
+    },
+    "hw3_fifth_column": {
+      "why": "too long"
+    },
+    "wc_body_double": {
+      "why": "same as Dominate",
+      "mergedInto": "wa_dominate_minor"
+    },
+    "hw3_defectors_mark": {
+      "why": "too long"
+    },
+    "hw3_enemy_within": {
+      "why": "too long"
+    },
+    "op_cloister_step": {
+      "why": "pawn step twin",
+      "mergedInto": "op_fetch_the_flour"
+    },
+    "op_first_robin": {
+      "why": "random pawn step",
+      "mergedInto": "op_fetch_the_flour"
+    },
+    "op_salt_from_the_coast": {
+      "why": "pawn step twin",
+      "mergedInto": "op_fetch_the_flour"
+    },
+    "op_sap_run": {
+      "why": "random pawn step",
+      "mergedInto": "op_fetch_the_flour"
+    },
+    "bn4_forward_banners": {
+      "why": "weaker Split March",
+      "mergedInto": "split_march"
+    },
+    "ov_great_migration": {
+      "why": "same as Muster the Ranks",
+      "mergedInto": "ww_muster_the_ranks"
+    },
+    "we_landslide": {
+      "why": "same as Collapse",
+      "mergedInto": "collapse"
+    },
+    "bn4_dowry": {
+      "why": "weaker Resurrect Major",
+      "mergedInto": "resurrect_major"
+    },
+    "grand_resurrection": {
+      "why": "weaker Resurrect Queen",
+      "mergedInto": "resurrect_queen"
+    },
+    "bn4_return_of_the_queen": {
+      "why": "weaker Resurrect Queen",
+      "mergedInto": "resurrect_queen"
+    },
+    "op_country_auction": {
+      "why": "opening swap, no purpose"
+    },
+    "op_flea_market_find": {
+      "why": "opening swap, no purpose"
+    },
+    "op_identical_twins": {
+      "why": "does nothing by its own text"
+    },
+    "wa_swap_flanks": {
+      "why": "same as Piece Swap",
+      "mergedInto": "piece_swap"
+    },
+    "ov_player_trade": {
+      "why": "same as Piece Swap",
+      "mergedInto": "piece_swap"
+    },
+    "bn4_ratlines": {
+      "why": "weaker Guard Rotation",
+      "mergedInto": "guard_rotation"
+    },
+    "hx4_coronation_bill": {
+      "why": "promotion tax twin",
+      "mergedInto": "hx4_hollow_fanfare"
+    },
+    "hw3_coronation_tax": {
+      "why": "promotion tax twin",
+      "mergedInto": "hx4_hollow_fanfare"
+    },
+    "hx4_iron_quota": {
+      "why": "promotion tax twin",
+      "mergedInto": "hw3_inverted_crown"
+    },
+    "ov_velcro_gloves": {
+      "why": "confusing"
+    },
+    "hw2_gravebloom": {
+      "why": "too long"
+    },
+    "hx4_debt_collector": {
+      "why": "too long"
+    },
+    "blinded_by_sun": {
+      "why": "random-square rule"
+    },
+    "crenellations": {
+      "why": "random-colour rule"
+    },
+    "unlucky": {
+      "why": "random-square rule"
+    },
+    "eye_of_sauron": {
+      "why": "confusing"
+    },
+    "bn4_quiet_after": {
+      "why": "king-step rider",
+      "mergedInto": "bn4_hollow_crown"
+    },
+    "bn4_two_breaths": {
+      "why": "king-step rider",
+      "mergedInto": "reprieve"
+    },
+    "bn4_saints_day": {
+      "why": "king-step rider",
+      "mergedInto": "bn4_third_wind"
+    },
+    "hunters_relief": {
+      "why": "king-step rider",
+      "mergedInto": "bn4_hush_money"
+    },
+    "adrenaline": {
+      "why": "king-step rider",
+      "mergedInto": "bn4_escape_artist"
+    },
+    "hw3_roaming_void": {
+      "why": "too long"
+    },
+    "hw3_shared_fate": {
+      "why": "too long"
+    },
+    "fog_of_war_old": {
+      "why": "old Fog of War",
+      "mergedInto": "fog_of_war"
+    },
+    "bunker": {
+      "why": "Keep Gate with a cost",
+      "mergedInto": "bn4_keep_gate"
+    },
+    "bn4_visor_down": {
+      "why": "Keep Gate with a cost",
+      "mergedInto": "bn4_keep_gate"
+    },
+    "hw2_cold_footprints": {
+      "why": "too long"
+    },
+    "hw3_overexertion": {
+      "why": "too long"
+    },
+    "hx4_court_jester": {
+      "why": "random target, too long"
+    },
+    "hx4_dunce_detail": {
+      "why": "random target, too long"
+    },
+    "hx4_plumed_helmets": {
+      "why": "cosmetic plus one turn",
+      "mergedInto": "hx4_moths_in_the_banner"
+    },
+    "hx4_the_ides": {
+      "why": "count-the-turns rule"
+    },
+    "hw3_bloodbond": {
+      "why": "too long"
+    },
+    "hw3_jammed_castle": {
+      "why": "too long"
+    },
+    "hx4_stunned_grief": {
+      "why": "too long"
+    },
+    "ov_emote_wheel": {
+      "why": "too long"
+    },
+    "hw3_debtors_mark": {
+      "why": "debt bookkeeping"
+    },
+    "hw3_miasma": {
+      "why": "too long"
+    },
+    "hw3_pilgrimage": {
+      "why": "too long"
+    },
+    "hx4_moth_plague": {
+      "why": "random target, too long"
+    },
+    "frozen_furrows": {
+      "why": "too long"
+    },
+    "hw3_bounty_mark": {
+      "why": "too long"
+    },
+    "hx4_silk_cocoon": {
+      "why": "narrower Flash Frost",
+      "mergedInto": "bn4_flash_frost"
+    },
+    "hx4_glass_prison": {
+      "why": "same as Arrest the Hour",
+      "mergedInto": "wa_arrest_time"
+    },
+    "hx4_iron_maiden": {
+      "why": "weaker Arrest the Hour",
+      "mergedInto": "wa_arrest_time"
+    },
+    "we_rooted": {
+      "why": "weaker Lunar Eclipse",
+      "mergedInto": "lunar_eclipse"
+    },
+    "hx4_pillory": {
+      "why": "too long"
+    },
+    "hw3_eclipse": {
+      "why": "delayed two-phase rule"
+    },
+    "op_alley_cat": {
+      "why": "file-specific shield"
+    },
+    "op_cloister_bell": {
+      "why": "file-specific shield"
+    },
+    "op_gallery_docent": {
+      "why": "file-specific shield"
+    },
+    "op_garden_scarecrow": {
+      "why": "file-specific shield"
+    },
+    "op_lighthouse_keeper": {
+      "why": "file-specific shield"
+    },
+    "op_parade_marshal": {
+      "why": "file-specific shield"
+    },
+    "op_evil_eye_bead": {
+      "why": "coin flip for a shield",
+      "mergedInto": "op_parasol_bearer"
+    },
+    "op_guardian_sprite": {
+      "why": "coin flip for a shield",
+      "mergedInto": "ov_pet_rock"
+    },
+    "op_harbor_pilot": {
+      "why": "Pet Rock for four files",
+      "mergedInto": "ov_pet_rock"
+    },
+    "op_night_custodian": {
+      "why": "one-turn rook shield",
+      "mergedInto": "op_parasol_bearer"
+    },
+    "op_debutante_ball": {
+      "why": "delayed Lady in Waiting",
+      "mergedInto": "op_lady_in_waiting"
+    },
+    "op_first_day_badge": {
+      "why": "conditional shield twin",
+      "mergedInto": "op_stage_armor"
+    },
+    "op_riding_certificate": {
+      "why": "conditional shield twin",
+      "mergedInto": "op_stage_armor"
+    },
+    "op_tower_inspection": {
+      "why": "conditional shield twin",
+      "mergedInto": "op_tower_warden"
+    },
+    "op_ordination_day": {
+      "why": "conditional shield twin",
+      "mergedInto": "op_stage_armor"
+    },
+    "op_trellis": {
+      "why": "conditional shield twin",
+      "mergedInto": "op_exchange_student"
+    },
+    "op_ladys_escort": {
+      "why": "mark only"
+    },
+    "op_pigeon_post": {
+      "why": "mark only"
+    },
+    "op_ripe_for_picking": {
+      "why": "mark only"
+    },
+    "bn4_parade_polish": {
+      "why": "Pocket Shield with a costume",
+      "mergedInto": "bn4_pocket_shield"
+    },
+    "bn4_rubber_duck": {
+      "why": "Pocket Shield with a costume",
+      "mergedInto": "bn4_pocket_shield"
+    },
+    "hold_the_bridge": {
+      "why": "same as Shieldmaiden",
+      "mergedInto": "shieldmaiden"
+    },
+    "op_crown_indemnity": {
+      "why": "en passant immunity twin",
+      "mergedInto": "op_full_coverage"
+    },
+    "op_downtown_premium": {
+      "why": "en passant immunity twin",
+      "mergedInto": "op_full_coverage"
+    },
+    "op_harborside_rider": {
+      "why": "en passant immunity twin",
+      "mergedInto": "op_full_coverage"
+    },
+    "holy_hell": {
+      "why": "en passant immunity twin",
+      "mergedInto": "op_full_coverage"
+    },
+    "op_title_deed": {
+      "why": "delayed Postern Gate",
+      "mergedInto": "bw3_postern_gate"
+    },
+    "op_threshold_blessing": {
+      "why": "too long"
+    },
+    "op_garden_gate": {
+      "why": "too long"
+    },
+    "op_alarm_lantern": {
+      "why": "mark plus reroll",
+      "mergedInto": "op_store_credit"
+    },
+    "op_chaperone": {
+      "why": "mark plus reroll",
+      "mergedInto": "op_store_credit"
+    },
+    "ov_group_photo": {
+      "why": "mark only"
+    },
+    "bn4_hidden_stair": {
+      "why": "king teleport with a cost"
+    },
+    "bn4_scaffold_crane": {
+      "why": "Warp Rook with a cost",
+      "mergedInto": "wa_far_step"
+    },
+    "bn4_ghost_walk": {
+      "why": "narrower Far Step",
+      "mergedInto": "wa_far_step"
+    },
+    "warp_rook": {
+      "why": "narrower Far Step",
+      "mergedInto": "wa_far_step"
+    },
+    "rift_walker": {
+      "why": "same as Far Step",
+      "mergedInto": "wa_far_step"
+    },
+    "bn4_royal_barge": {
+      "why": "narrower Far Step at a higher tier",
+      "mergedInto": "wa_far_step"
+    },
+    "grand_recall": {
+      "why": "narrower Far Step",
+      "mergedInto": "wa_far_step"
+    },
+    "bn4_over_the_hedge": {
+      "why": "same as Trampoline",
+      "mergedInto": "trampoline"
+    },
+    "op_curfew_patrol": {
+      "why": "mark plus reroll",
+      "mergedInto": "op_tripwire_bell"
+    },
+    "op_harbor_horn": {
+      "why": "mark plus reroll",
+      "mergedInto": "op_tripwire_bell"
+    },
+    "op_postern_watch": {
+      "why": "mark plus reroll",
+      "mergedInto": "op_tripwire_bell"
+    },
+    "op_town_square_sentry": {
+      "why": "mark plus reroll",
+      "mergedInto": "op_tripwire_bell"
+    },
+    "op_wall_sentries": {
+      "why": "mark plus reroll",
+      "mergedInto": "op_tripwire_bell"
+    },
+    "ov_squeaky_shoes": {
+      "why": "mark plus reroll",
+      "mergedInto": "op_tripwire_bell"
+    },
+    "nerf_hammer": {
+      "why": "weaker Eternal Statue",
+      "mergedInto": "eternal_statue"
+    },
+    "hx4_last_toll": {
+      "why": "same as Lost Days",
+      "mergedInto": "lost_days"
+    },
+    "op_chairs_on_tables": {
+      "why": "same as Wet Paint",
+      "mergedInto": "ov_wet_paint"
+    },
+    "op_reserved_table": {
+      "why": "same as Wet Paint",
+      "mergedInto": "ov_wet_paint"
+    },
+    "bn4_thorn_hedge": {
+      "why": "same as Watchtower",
+      "mergedInto": "watchtower"
+    },
+    "ov_barn_door": {
+      "why": "narrower Moat Digger",
+      "mergedInto": "ov_moat_digger"
+    },
+    "cess": {
+      "why": "mirror of Right Handed",
+      "mergedInto": "right_handed"
+    },
+    "hx4_censors_ink": {
+      "why": "too long"
+    },
+    "hx4_feuding_towers": {
+      "why": "too long"
+    },
+    "hx4_rogue_river": {
+      "why": "random file"
+    },
+    "great_divide": {
+      "why": "weaker Great Wall at a higher tier",
+      "mergedInto": "great_wall"
+    },
+    "hx4_avalanche_pass": {
+      "why": "weaker Sealed Avenues",
+      "mergedInto": "sealed_avenues"
+    },
+    "wc_broken_elevator": {
+      "why": "weaker Frost Wall",
+      "mergedInto": "frost_wall"
+    },
+    "hx4_no_homecoming": {
+      "why": "same as Fissure Field",
+      "mergedInto": "fissure_field"
+    },
+    "colorblind": {
+      "why": "random-colour rule"
+    },
+    "burning_bridges": {
+      "why": "path bookkeeping"
+    },
+    "wn_quarantine_zone": {
+      "why": "random-block rule"
+    }
+  },
+  "retier": {
+    "ivory_tower": 7,
+    "hx4_famine": 2,
+    "hx4_donkey_ears": 3,
+    "ov_prank_call": 1,
+    "overtime_pay": 5,
+    "we_ball_lightning": 5,
+    "wa_high_roll": 4,
+    "op_layaway_plan": 3,
+    "bn4_cathedral_choir": 4,
+    "bn4_pocket_cavalry": 5,
+    "mass_freeze": 7,
+    "roulette": 7,
+    "wazir_bishop": 3,
+    "wazir_rook": 3,
+    "horn_of_summoning": 5,
+    "bn4_dukes_patent": 5,
+    "queens_echo": 5,
+    "amazon_knight": 6,
+    "bn4_salt_in_the_wound": 7,
+    "hx4_traitors_gala": 4,
+    "collapse": 6,
+    "boneca_ambalabu": 8,
+    "guard_rotation": 4,
+    "rook_chancellor": 4,
+    "camel_knight": 2,
+    "twin_queens": 7,
+    "bn4_keep_gate": 3,
+    "glacial_flanks": 4,
+    "hx4_lovestruck_majesty": 4,
+    "hx4_oathbreakers_brand": 4,
+    "bn4_royal_incognito": 3,
+    "fortress_realm": 4,
+    "bn4_costume_trunk": 4,
+    "bn4_guardian_of_the_line": 6,
+    "ov_raven_parliament": 2,
+    "ilovechaewon": 5,
+    "hx4_glacier_gate": 2,
+    "hx4_tar_flood": 3,
+    "hx4_choke_point": 4,
+    "time_skip": 6,
+    "hx4_falling_rubble": 3,
+    "hx4_pawn_embargo": 4
+  }
+}

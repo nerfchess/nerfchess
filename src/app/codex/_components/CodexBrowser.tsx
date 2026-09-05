@@ -1,6 +1,7 @@
 "use client";
 
 import { SiteHeader } from "@/components/SiteHeader";
+import { isRetired } from "@/engine/retired";
 import { EmptyState } from "@/components/EmptyState";
 import { isBoon } from "@/engine/buff";
 import type { Buff } from "@/engine/buff";
@@ -75,6 +76,7 @@ function filterBuffs(source: Buff[], filters: CodexFilters, behaviour: Behaviour
   const list = source.filter(
     (b) =>
       (filters.tier === null || b.tier === filters.tier) &&
+      (filters.showRetired || !isRetired(b.id)) &&
       (filters.categories.length === 0 || filters.categories.includes(b.category)) &&
       (filters.collection === null || buffCollection(b) === filters.collection) &&
       (behaviour === "all" || b.kind === behaviour) &&
@@ -315,9 +317,8 @@ export function CodexBrowser() {
     <main className="min-h-screen pb-20">
       <SiteHeader active="/codex" />
 
-      <section className="mx-auto max-w-6xl px-6 pt-4">
-        <div className="text-[11px] text-parchment-400">the library</div>
-        <h1 className="mt-1 font-display text-4xl sm:text-5xl">Codex</h1>
+      <section className="mx-auto max-w-7xl px-6 pt-4">
+        <h1 className="page-title">Codex</h1>
         <p className="mt-2 text-[15px] text-parchment-300">
           {load === "ready"
             ? `Browse every card and rule. ${totalCount} ${nounPlural} in this tab: search by name or effect, then open a row for the full card.`
@@ -325,10 +326,10 @@ export function CodexBrowser() {
         </p>
 
         {/* Sticky compact header: tabs, search, and the filter chip row (or, on
-            phones, the bottom-sheet trigger). No backdrop-blur (banned): a
+            phones, the bottom-sheet trigger). No (banned): a
             near-opaque ink surface keeps the content beneath from bleeding
             through. */}
-        <div className="sticky top-0 z-30 -mx-6 mt-4 border-b border-[color:var(--edge)] bg-ink-950/95 px-6 pb-3 pt-3">
+        <div className="sticky top-0 z-30 -mx-6 mt-4 border-b border-[color:var(--edge)] bg-[color:var(--bg-base)] px-6 pb-3 pt-3">
           <div role="tablist" aria-label="Card families" className="flex flex-wrap gap-1 border-b border-[color:var(--edge)]">
             {LIBRARY_TABS.map((t) => {
               const selected = tab === t;
@@ -358,14 +359,14 @@ export function CodexBrowser() {
               value={filters.search}
               onChange={(e) => patch({ search: e.target.value })}
               placeholder={`Search ${nounPlural} by name or effect`}
-              className="w-full rounded-sm border border-[color:var(--edge)] bg-ink-900/70 py-2.5 pl-9 pr-9 text-[14px] font-body text-parchment placeholder:text-parchment-400/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--accent)]"
+              className="w-full rounded-none border border-[color:var(--edge)] bg-[color:var(--bg-base)] py-2.5 pl-9 pr-9 text-[14px] font-body text-parchment placeholder:text-parchment-400/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--accent)]"
             />
             {filters.search && (
               <button
                 type="button"
                 onClick={() => patch({ search: "" })}
                 aria-label="Clear search"
-                className="absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-sm text-parchment-400 hover:text-parchment-100"
+                className="absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-none text-parchment-400 hover:text-parchment-100"
               >
                 <span aria-hidden className="text-[16px]">
                   &times;
@@ -389,12 +390,12 @@ export function CodexBrowser() {
             <button
               type="button"
               onClick={() => setSheetOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-sm border border-[color:var(--edge)] px-3 py-1.5 text-[13px] text-parchment-200 hover:bg-white/5 sm:hidden"
+              className="inline-flex items-center gap-1.5 rounded-none border border-[color:var(--edge)] px-3 py-1.5 text-[13px] text-parchment-200 hover:bg-[color:var(--bg-raised)] sm:hidden"
             >
               <SlidersHorizontal size={14} aria-hidden />
               Filters
               {active && (
-                <span className="grid h-4 min-w-4 place-items-center rounded-[1px] bg-[color:var(--accent)] px-1 text-[11px] font-bold text-ink-950">
+                <span className="grid h-4 min-w-4 place-items-center rounded-none bg-[color:var(--accent)] px-1 text-[11px] font-bold text-ink-950">
                   {activeChips.length}
                 </span>
               )}
@@ -411,7 +412,7 @@ export function CodexBrowser() {
                   type="button"
                   onClick={chip.clear}
                   aria-label={`Remove filter: ${chip.label}`}
-                  className="inline-flex items-center gap-1 rounded-[1px] border border-[color:var(--accent)]/40 bg-[rgb(var(--accent-rgb)/0.1)] px-2 py-1 text-[12px] text-parchment-100 transition-colors hover:border-[color:var(--accent)] hover:bg-[rgb(var(--accent-rgb)/0.18)]"
+                  className="inline-flex items-center gap-1 rounded-none border border-[color:var(--accent)]/40 bg-[rgb(var(--accent-rgb)/0.1)] px-2 py-1 text-[12px] text-parchment-100 transition-colors hover:border-[color:var(--accent)] hover:bg-[rgb(var(--accent-rgb)/0.18)]"
                 >
                   {chip.label}
                   <X size={12} aria-hidden className="text-parchment-300" />
@@ -521,11 +522,11 @@ function SkeletonRows() {
       {Array.from({ length: 12 }).map((_, i) => (
         <li
           key={i}
-          className="flex min-h-[44px] items-center gap-2.5 rounded-sm border border-[color:var(--edge)] px-2.5 py-2"
+          className="flex min-h-[44px] items-center gap-2.5 rounded-none border border-[color:var(--edge)] px-2.5 py-2"
         >
-          <span className="skeleton h-7 w-7 shrink-0 rounded-sm" />
-          <span className="skeleton h-4 w-1/3 rounded-sm" />
-          <span className="skeleton ml-auto h-4 w-1/4 rounded-sm" />
+          <span className="skeleton h-7 w-7 shrink-0 rounded-none" />
+          <span className="skeleton h-4 w-1/3 rounded-none" />
+          <span className="skeleton ml-auto h-4 w-1/4 rounded-none" />
         </li>
       ))}
     </ul>

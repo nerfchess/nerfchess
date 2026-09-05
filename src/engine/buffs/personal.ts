@@ -1681,7 +1681,7 @@ export const NEWJEANS_CARDS: Buff[] = [
       name: "I Love Chaewon",
       description:
         "Fearless choreography: gracefully reposition up to 3 of your pieces, gliding each to any empty square in your own half of the board.",
-      tier: 7,
+      tier: 5,
       category: "movement",
       icon: "Feather",
       flavor: "Every step placed on purpose. The whole formation dances into place.",

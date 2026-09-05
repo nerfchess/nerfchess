@@ -60,21 +60,21 @@ export function CodexRow({
   return (
     <div
       style={rowStyle}
-      className={`group flex min-h-[44px] items-center gap-2.5 rounded-sm border px-2.5 py-2 transition ${
+      className={`group flex min-h-[44px] items-center gap-2.5 rounded-none border px-2.5 py-2 transition ${
         expanded
-          ? "border-[color:var(--edge-strong)] bg-white/[0.04]"
-          : "border-[color:var(--edge)] bg-white/[0.015] hover:bg-[color:var(--surface-hover)]"
+          ? "border-[color:var(--edge-strong)] bg-[color:var(--bg-zebra)]"
+          : "border-[color:var(--edge)] bg-[color:var(--bg-zebra)] hover:bg-[color:var(--surface-hover)]"
       }`}
     >
       <Link
         href={path}
         onClick={onRowClick}
         aria-expanded={expanded}
-        className="flex min-w-0 flex-1 items-center gap-2.5 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--accent)]"
+        className="flex min-w-0 flex-1 items-center gap-2.5 rounded-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--accent)]"
       >
         <span
           aria-hidden
-          className={`grid h-7 w-7 shrink-0 place-items-center rounded-sm border tier-bg-${tier} tier-${tier}`}
+          className={`grid h-7 w-7 shrink-0 place-items-center rounded-none border tier-bg-${tier} tier-${tier}`}
         >
           {createElement(Icon, { size: 15, strokeWidth: 1.8 })}
         </span>
@@ -84,7 +84,7 @@ export function CodexRow({
             {card.name}
           </span>
           <span
-            className={`shrink-0 rounded-[1px] border px-1.5 py-px font-display text-[12px] font-bold tier-bg-${tier} tier-${tier}`}
+            className={`shrink-0 rounded-none border px-1.5 py-px font-display text-[12px] font-bold tier-bg-${tier} tier-${tier}`}
             title={`Tier ${TIER_ROMAN[tier]} of ${tierTotal}: ${TIER_LABEL[tier]}`}
           >
             {TIER_ROMAN[tier]}
@@ -99,7 +99,7 @@ export function CodexRow({
         type="button"
         onClick={onCopy}
         aria-label={`Copy link to ${card.name}`}
-        className="hidden h-8 shrink-0 items-center gap-1 rounded-sm px-2 text-[12px] text-parchment-400 hover:bg-white/5 hover:text-parchment-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--accent)] sm:inline-flex"
+        className="hidden h-8 shrink-0 items-center gap-1 rounded-none px-2 text-[12px] text-parchment-400 hover:bg-[color:var(--bg-raised)] hover:text-parchment-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--accent)] sm:inline-flex"
       >
         <Link2 size={14} aria-hidden />
         {copied ? "Copied" : "Copy"}

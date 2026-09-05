@@ -9,6 +9,7 @@
 // a card appears.
 
 import { ALL_BUFFS } from "@/engine/buffs/library";
+import { isRetired } from "@/engine/retired";
 import { ALL_NERFS } from "@/engine/nerfs/library";
 import { isBoon, turnCost, type Buff, type TurnCost } from "@/engine/buff";
 import type { Nerf, Tier } from "@/engine/nerf";
@@ -153,7 +154,7 @@ export interface RelatedCard {
  * then nearest tier, then name. Powers the cross-links that give every card
  * page outbound depth and keep the set from reading as thin, isolated pages. */
 export function relatedBuffs(b: Buff, limit = 6): RelatedCard[] {
-  return ALL_BUFFS.filter((x) => x.implemented && x.id !== b.id && x.category === b.category)
+  return ALL_BUFFS.filter((x) => x.implemented && !isRetired(x.id) && x.id !== b.id && x.category === b.category)
     .sort(
       (x, y) =>
         Math.abs(x.tier - b.tier) - Math.abs(y.tier - b.tier) || x.name.localeCompare(y.name),
@@ -166,12 +167,12 @@ export function relatedBuffs(b: Buff, limit = 6): RelatedCard[] {
  * nearest tier first; falls back to nearest tier when it has no category. */
 export function relatedNerfs(n: Nerf, limit = 6): RelatedCard[] {
   const cats = new Set(categoriesOf(n.id));
-  const scored = ALL_NERFS.filter((x) => x.implemented && x.id !== n.id).map((x) => {
+  const scored = ALL_NERFS.filter((x) => x.implemented && !isRetired(x.id) && x.id !== n.id).map((x) => {
     const shared = categoriesOf(x.id).some((c) => cats.has(c));
     return { x, shared };
   });
   const shareCats = scored.filter((s) => s.shared).map((s) => s.x);
-  const pool = shareCats.length >= limit ? shareCats : ALL_NERFS.filter((x) => x.implemented && x.id !== n.id);
+  const pool = shareCats.length >= limit ? shareCats : ALL_NERFS.filter((x) => x.implemented && !isRetired(x.id) && x.id !== n.id);
   return pool
     .sort((x, y) => Math.abs(x.tier - n.tier) - Math.abs(y.tier - n.tier) || x.name.localeCompare(y.name))
     .slice(0, limit)

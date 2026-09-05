@@ -35,14 +35,14 @@
   66% { opacity: 0.42; }
   100% { opacity: 0; }
 }
-.g14-wash { animation: g14-wash calc(1.6s * var(--fx-dur, 1)) ease-out both; }
+.g14-wash { animation: g14-wash calc(1.6s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g14-rim {
   0% { opacity: 0; transform: scale(0.95); }
   36% { opacity: 1; transform: scale(1); }
   100% { opacity: 0; transform: scale(1.03); }
 }
-.g14-rim { animation: g14-rim calc(1s * var(--fx-dur, 1)) ease-out both; }
+.g14-rim { animation: g14-rim calc(1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g14-veil {
   0% { opacity: 0; }
@@ -50,7 +50,7 @@
   70% { opacity: 0.78; }
   100% { opacity: 0; }
 }
-.g14-veil { animation: g14-veil calc(1.5s * var(--fx-dur, 1)) ease-out both; }
+.g14-veil { animation: g14-veil calc(1.5s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- Geometry-driven tracks ----------------------------------------------- */
 
@@ -62,7 +62,7 @@
   72% { opacity: 0.6; transform: translate(calc(var(--fx-ox, 0) * 2.6%), calc(-18% + var(--fx-oy, 0) * 1%)) scaleY(1.22); }
   100% { opacity: 0; transform: translate(calc(var(--fx-ox, 0) * 3.4%), calc(-30% + var(--fx-oy, 0) * 1.4%)) scaleY(1.4); }
 }
-.g14-lean { animation: g14-lean calc(1.25s * var(--fx-dur, 1)) ease-out both; }
+.g14-lean { animation: g14-lean calc(1.25s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* Swarf and hot flecks, thrown outward from the board centre. */
 @keyframes g14-spark {
@@ -107,7 +107,7 @@
   60% { transform: scale(1); }
   100% { opacity: 0; transform: scale(1.1); }
 }
-.g14-hit2 { animation: g14-hit2 calc(0.7s * var(--fx-dur, 1)) ease-out both; }
+.g14-hit2 { animation: g14-hit2 calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* The hit arrives from the caster's own side of the board. */
 @keyframes g14-hitside {
@@ -176,14 +176,14 @@
   60% { transform: scale(1); }
   100% { opacity: 0; transform: scale(0.7); }
 }
-.g14-glint { animation: g14-glint calc(0.65s * var(--fx-dur, 1)) ease-out both; }
+.g14-glint { animation: g14-glint calc(0.65s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g14-puff {
   0% { opacity: 0; transform: scale(0.2); }
   30% { opacity: 0.95; transform: scale(1); }
   100% { opacity: 0; transform: scale(1.8) translateY(-18%); }
 }
-.g14-puff { animation: g14-puff calc(1s * var(--fx-dur, 1)) ease-out both; }
+.g14-puff { animation: g14-puff calc(1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* The shock through the frame when something finally goes. */
 @keyframes g14-jolt {
@@ -368,7 +368,7 @@
   78% { opacity: 0.62; }
   100% { opacity: 0; transform: scale(0.98); }
 }
-.g14-ga-dull { animation: g14-ga-dull calc(1.2s * var(--fx-dur, 1)) ease-out both; }
+.g14-ga-dull { animation: g14-ga-dull calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g14-ga-crack {
   0% { opacity: 0; transform: scaleX(0.02); }
@@ -430,7 +430,7 @@
   48% { opacity: 1; transform: scale(1.15); }
   100% { opacity: 0; transform: scale(0.5); }
 }
-.g14-hm-blow { animation: g14-hm-blow calc(0.7s * var(--fx-dur, 1)) ease-out both; }
+.g14-hm-blow { animation: g14-hm-blow calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g14-hm-halo {
   0% { opacity: 0; transform: scale(0.4); }
@@ -438,7 +438,7 @@
   70% { opacity: 0.5; transform: scale(1.3); }
   100% { opacity: 0; transform: scale(1.6); }
 }
-.g14-hm-halo { animation: g14-hm-halo calc(1.1s * var(--fx-dur, 1)) ease-out both; }
+.g14-hm-halo { animation: g14-hm-halo calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- 9. Hoofbeat Log: the chain jumps a tooth ----------------------------- */
 
@@ -503,7 +503,7 @@
   56% { opacity: 0.4; transform: scale(1.4); }
   100% { opacity: 0; transform: scale(2.1); }
 }
-.g14-hl-arc { animation: g14-hl-arc calc(0.8s * var(--fx-dur, 1)) ease-out both; }
+.g14-hl-arc { animation: g14-hl-arc calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- 11. Housewarming Gift: the relief valve chatters --------------------- */
 
@@ -575,7 +575,7 @@
   70% { opacity: 0.6; transform: scaleY(1.5) scaleX(1.2) translateY(-16%); }
   100% { opacity: 0; transform: scaleY(1.9) scaleX(1.4) translateY(-32%); }
 }
-.g14-ir-smoke { animation: g14-ir-smoke calc(1.35s * var(--fx-dur, 1)) ease-out both; }
+.g14-ir-smoke { animation: g14-ir-smoke calc(1.35s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- 13. King's Road Watch: the stripped tooth ---------------------------- */
 
@@ -652,7 +652,7 @@
   84% { opacity: 1; transform: scale(1.18, 0.88); }
   100% { opacity: 0; transform: scale(1.2, 0.88); }
 }
-.g14-mc-oval { animation: g14-mc-oval calc(1.2s * var(--fx-dur, 1)) ease-out both; }
+.g14-mc-oval { animation: g14-mc-oval calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g14-mc-knock {
   0% { opacity: 0; transform: translate(0, -22%); }
@@ -737,7 +737,7 @@
   70% { opacity: 0.95; transform: scaleY(1); }
   100% { opacity: 0; transform: scaleY(1.1); }
 }
-.g14-pl-soot { animation: g14-pl-soot calc(1.25s * var(--fx-dur, 1)) ease-out both; }
+.g14-pl-soot { animation: g14-pl-soot calc(1.25s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- 18. Postern Watch: the cable parts ---------------------------------- */
 
@@ -782,7 +782,7 @@
   72% { opacity: 1; transform: scale(1.05); }
   100% { opacity: 0; transform: scale(1.08); }
 }
-.g14-rs-heat { animation: g14-rs-heat calc(1.3s * var(--fx-dur, 1)) ease-out both; }
+.g14-rs-heat { animation: g14-rs-heat calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g14-rs-short {
   0% { opacity: 0; transform: scaleX(0.04); }
@@ -801,7 +801,7 @@
   70% { opacity: 0.6; transform: scaleY(1.4) translateY(-18%); }
   100% { opacity: 0; transform: scaleY(1.8) translateY(-34%); }
 }
-.g14-rs-reek { animation: g14-rs-reek calc(1.3s * var(--fx-dur, 1)) ease-out both; }
+.g14-rs-reek { animation: g14-rs-reek calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- 20. Ripe for Picking: the flywheel loses its key --------------------- */
 
@@ -956,7 +956,7 @@
   74% { opacity: 0.9; transform: scale(1.4); }
   100% { opacity: 0; transform: scale(1.7); }
 }
-.g14-nt-arc { animation: g14-nt-arc calc(0.95s * var(--fx-dur, 1)) ease-out both; }
+.g14-nt-arc { animation: g14-nt-arc calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g14-nt-weld {
   0% { opacity: 0; transform: scaleX(0.1) scaleY(0.4); }

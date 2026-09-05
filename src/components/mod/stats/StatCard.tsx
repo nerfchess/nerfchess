@@ -1,7 +1,7 @@
 "use client";
 
-// The stats pages' number tile: one figure with its label, on the standard
-// plate. Moved out of /mod/stats when that page split into per-scope subpages.
+// The stats pages' number tile, the console's dense register: figure first,
+// uppercase label under it. Place several inside one `.plate` grid.
 
 export function StatCard({
   label,
@@ -13,12 +13,12 @@ export function StatCard({
   suffix?: string;
 }) {
   return (
-    <div className="plate p-4">
-      <div className="font-mono text-2xl text-parchment-50 tabular-nums">
+    <div className="px-3.5 py-3">
+      <div className="font-display text-[22px] leading-none tabular-nums text-parchment-50">
         {value.toLocaleString()}
         {suffix && <span className="text-sm text-parchment-400">{suffix}</span>}
       </div>
-      <div className="mt-1 text-[10px] text-parchment-400">{label}</div>
+      <div className="mt-1 text-[11px] uppercase tracking-[0.05em] text-parchment-400">{label}</div>
     </div>
   );
 }

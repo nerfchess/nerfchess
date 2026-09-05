@@ -77,9 +77,9 @@ function eventText(e: OverrideEvent): string {
 
 function StatTile({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
-    <div className="rounded-sm border border-white/10 px-3 py-2">
+    <div className="rounded-none border border-[color:var(--edge)] px-3 py-2">
       <div className="font-mono text-xl text-parchment-50 tabular-nums">{value}</div>
-      <div className="mt-0.5 text-[10px] text-parchment-400">{label}</div>
+      <div className="mt-0.5 text-[11px] text-parchment-400">{label}</div>
       {sub && <div className="mt-0.5 text-[11px] text-parchment-400">{sub}</div>}
     </div>
   );
@@ -142,7 +142,7 @@ export function CardInsights({
           <span className="flex items-center gap-2.5">
             <span className="display-3 text-parchment">In play</span>
             {noteChip && (
-              <span className="rounded-sm border border-sun/30 bg-sun/5 px-1.5 py-px text-[11px] text-parchment-200">
+              <span className="rounded-none border border-sun/30 bg-sun/5 px-1.5 py-px text-[11px] text-parchment-200">
                 {noteChip}
               </span>
             )}
@@ -157,12 +157,12 @@ export function CardInsights({
       </summary>
       <div className="space-y-3 px-6 pb-6 text-[15px] leading-relaxed text-parchment-200/90 sm:px-7 sm:pb-7">
         {!effective.enabled && (
-          <p className="rounded-sm border border-sun/30 bg-sun/5 px-4 py-2 text-sm text-parchment-200">
+          <p className="rounded-none border border-sun/30 bg-sun/5 px-4 py-2 text-sm text-parchment-200">
             Currently disabled by the moderators: it is not being dealt.
           </p>
         )}
         {effective.enabled && effective.tier !== codeTier && (
-          <p className="rounded-sm border border-sun/30 bg-sun/5 px-4 py-2 text-sm text-parchment-200">
+          <p className="rounded-none border border-sun/30 bg-sun/5 px-4 py-2 text-sm text-parchment-200">
             Currently dealt at Tier {effective.tier} (moved by the moderators).
           </p>
         )}

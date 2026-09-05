@@ -23,10 +23,17 @@ body {
      ========================================================================= */
 
   /* Backgrounds. The Lichess dark ladder: page, box, raised/hover, border. */
-  --bg-base: #161512;
-  --bg-panel: #262421;
-  --bg-raised: #302e2c;
-  --border-subtle: #404040;
+  --site-hue: 37deg;
+  --bg-base: hsl(var(--site-hue) 10% 8%);     /* page   (Lichess --c-bg-page) */
+  --bg-panel: hsl(var(--site-hue) 7% 14%);    /* box    (--c-bg) */
+  --bg-raised: hsl(var(--site-hue) 7% 22%);   /* low    (--c-bg-low) */
+  --bg-zebra: hsl(var(--site-hue) 5% 19%);    /* zebra  (--c-bg-zebra) */
+  --border-subtle: hsl(0 0% 25%);             /* --c-border */
+  --border-light: hsl(0 0% 40%);              /* --c-border-light */
+  /* Geometry. Lichess ships a roundness option; we run it square (boxes 0,
+     buttons 2px). One token flip brings Lichess's default 7px back. */
+  --ui-roundness: 0px;
+  --btn-roundness: 2px;
 
   /* Board — Lichess brown, with a last-move/selection highlight stored as an
      rgb triple so it can be laid down at 40% opacity. */
@@ -35,14 +42,15 @@ body {
   --board-highlight: 155 199 0; /* last move / selected square */
   --board-highlight-a: 0.4; /* highlight opacity (Light lifts this for contrast) */
 
-  /* Text: Lichess's ramp. #bababa body, #8c8c8c secondary, #707070 muted, and
-     #ccc for headings (--text-heading). */
-  --text-primary: #bababa;
-  --text-heading: #cccccc;
-  --text-secondary: #8c8c8c;
-  --text-muted: #707070;
-  --text-primary-rgb: 186 186 186;
-  --text-secondary-rgb: 140 140 140;
+  /* Text: Lichess's ramp, lifted one notch for contrast (Lichess sits at
+     #bababa body / #8c8c8c secondary / #707070 muted / #ccc headings; the
+     light theme drops the same notch the other way). */
+  --text-primary: #c6c6c6;
+  --text-heading: #dedede;
+  --text-secondary: #979797;
+  --text-muted: #7a7a7a;
+  --text-primary-rgb: 198 198 198;
+  --text-secondary-rgb: 151 151 151;
 
   /* Accents — the four semantic colors.
      Accent blue = links / primary buttons / focus / "act here".
@@ -74,6 +82,21 @@ body {
   /* Foreground for text/icons sitting ON an accent fill. White on Lichess
      blue, which is what Lichess itself uses on a primary button. */
   --text-on-accent: #ffffff;
+
+  /* Lichess's metal (--c-metal-*): the default button and the raised chip. */
+  --c-metal-top: hsl(var(--site-hue) 7% 22%);
+  --c-metal-bottom: hsl(var(--site-hue) 5% 19%);
+  --c-metal-top-hover: hsl(var(--site-hue) 7% 25%);
+  --c-metal-bottom-hover: hsl(var(--site-hue) 5% 22%);
+  --c-body-gradient: hsl(var(--site-hue) 12% 16%);
+  --c-metal-text-shadow: 0.5px 0.5px 0 rgba(0, 0, 0, 0.8);
+  /* Lichess's two warm highlights: brag (brass, for DONATE / dates / ranks)
+     and accent (orange, for the rare hot emphasis). Neither is a link colour. */
+  --brag: hsl(var(--site-hue) 74% 43%);
+  --brag-hi: hsl(var(--site-hue) 80% 55%);
+  --brag-rgb: 191 129 29;
+  --c-accent-warm: hsl(22 100% 42%);
+  --c-accent-warm-rgb: 214 79 0;
 
   /* -------------------------------------------------------------------------
      LEGACY ALIASES — every name below resolves to a token above. Components
@@ -222,16 +245,18 @@ html[data-anim="fast"] *::after {
 
    The dark palette IS the :root block above. Only light overrides. */
 html[data-theme="light"] {
-  --bg-base: #edebe9;
-  --bg-panel: #ffffff;
-  --bg-raised: #f7f6f5;
-  --border-subtle: #d9d9d9;
-  --text-primary: #4d4d4d;
-  --text-heading: #333333;
-  --text-secondary: #787878;
-  --text-muted: #999999;
-  --text-primary-rgb: 77 77 77;
-  --text-secondary-rgb: 120 120 120;
+  --bg-base: hsl(var(--site-hue) 10% 92%);
+  --bg-panel: hsl(0 0% 100%);
+  --bg-raised: hsl(0 0% 89%);
+  --bg-zebra: hsl(var(--site-hue) 12% 96.5%);
+  --border-subtle: hsl(0 0% 85%);
+  --border-light: hsl(0 0% 80%);
+  --text-primary: #3d3d3d;
+  --text-heading: #232323;
+  --text-secondary: #666666;
+  --text-muted: #8a8a8a;
+  --text-primary-rgb: 61 61 61;
+  --text-secondary-rgb: 102 102 102;
   --board-highlight-a: 0.5;
   /* A step deeper than the dark accent so links clear WCAG AA on white. */
   --accent-gold: #1b78d0;
@@ -251,6 +276,15 @@ html[data-theme="light"] {
   --accent-positive-rgb: 76 122 28;
   --accent-positive-hi-rgb: 98 153 36;
   --text-on-accent: #ffffff;
+  --c-metal-top: hsl(0 0% 96%);
+  --c-metal-bottom: hsl(0 0% 93%);
+  --c-metal-top-hover: hsl(0 0% 98%);
+  --c-metal-bottom-hover: hsl(0 0% 95%);
+  --c-body-gradient: hsl(var(--site-hue) 12% 84%);
+  --c-metal-text-shadow: none;
+  --brag: hsl(var(--site-hue) 74% 48%);
+  --brag-hi: hsl(var(--site-hue) 74% 40%);
+  --brag-rgb: 204 137 31;
 }
 
 /* Paper-scheme treatments (plate fills, the ink text ramp, border alphas) hang
@@ -288,15 +322,20 @@ body {
   min-height: 100dvh;
 }
 
-/* Geometry, Lichess's: 7px on a box, 3px on a button. The global override
+/* Geometry, Lichess's structure run square: --ui-roundness on a box,
+   --btn-roundness on a button. The global override
    reaches every `rounded-*` utility in the codebase at once; true circles
    (rounded-full: status dots, avatars) stay exempt. */
-[class*="rounded"]:not([class*="rounded-full"]) { border-radius: 7px !important; }
+[class*="rounded"]:not([class*="rounded-full"]) { border-radius: var(--ui-roundness) !important; }
 button,
 .btn,
 [role="button"],
 button[class*="rounded"]:not([class*="rounded-full"]),
-[role="button"][class*="rounded"]:not([class*="rounded-full"]) { border-radius: 3px !important; }
+[role="button"][class*="rounded"]:not([class*="rounded-full"]) { border-radius: var(--btn-roundness) !important; }
+/* A thumb switch is a pill with a round knob, the one button that is not a
+   box. Opted into by class, since a few labelled toggles are still boxes. */
+button.settings-toggle,
+button.pill-switch { border-radius: 999px !important; }
 
 body {
   font-family: var(--font-body), system-ui, sans-serif;
@@ -319,14 +358,16 @@ body {
   letter-spacing: 0.22em;
   text-transform: uppercase;
 }
-.dropcap::first-letter {
+
+/* Page title, Lichess's size: 1.6rem, regular weight, heading colour. Every
+   route's h1 wears this; there is no display slam anywhere on the site. */
+.page-title {
   font-family: var(--font-display), system-ui, sans-serif;
-  font-weight: 600;
-  float: left;
-  font-size: 3.4em;
-  line-height: 0.88;
-  padding: 0.05em 0.14em 0 0;
-  color: var(--gold-leaf);
+  font-size: 1.6rem;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0;
+  color: var(--text-heading);
 }
 
 /* --- Fluid display scale utilities ---
@@ -356,19 +397,6 @@ body {
 .lead {
   font-size: var(--step-1);
   line-height: 1.5;
-}
-
-.coord-index {
-  font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  color: var(--accent-hi);
-}
-
-/* Shared landing rhythm: one cadence for every marketing band. */
-.section-rhythm {
-  padding-block: var(--rhythm-section);
 }
 
 /* --- Shared interaction + figure utilities ---------------------------------
@@ -439,7 +467,7 @@ body {
 .plate {
   background: var(--bg-panel);
   border: 1px solid var(--border-subtle);
-  border-radius: 7px;
+  border-radius: var(--ui-roundness);
 }
 /* Positioning defaults live in a zero-specificity :where() so any positioning
    utility on the same element (fixed, absolute, sticky, z-30...) wins. This
@@ -452,30 +480,11 @@ body {
   z-index: 2;
 }
 
-/* TV tuning-in spinner: one quiet accent ring orbiting the radio glyph. */
-.tv-tuning-ring {
-  position: absolute;
-  top: -14px;
-  left: 50%;
-  width: 56px;
-  height: 56px;
-  margin-left: -28px;
-  border-radius: 999px;
-  border: 2px solid transparent;
-  border-top-color: rgb(var(--accent-rgb) / 0.8);
-  border-right-color: rgb(var(--accent-rgb) / 0.25);
-  animation: tv-tuning-spin 1s linear infinite;
-}
-@keyframes tv-tuning-spin {
-  to { transform: rotate(360deg); }
-}
-html[data-anim="off"] .tv-tuning-ring { animation: none; }
-
 /* The in-game command rail: the same box as everything else. */
 .rail-panel {
   background: var(--bg-panel);
   border: 1px solid var(--border-subtle);
-  border-radius: 7px;
+  border-radius: var(--ui-roundness);
 }
 
 /* A plate used as a floating menu is absolutely positioned (many dropdowns
@@ -597,17 +606,21 @@ html[data-light] select option {
 .btn-glass--primary {
   background: var(--accent);
   color: var(--text-on-accent);
-  border: 1px solid var(--accent);
-  font-weight: 600;
-  transition: background-color 120ms ease, border-color 120ms ease;
+  border: 0;
+  font-weight: 500;
+  text-shadow: 0.5px 0.5px 0 rgba(0, 0, 0, 0.3);
+  box-shadow:
+    inset 0 1px 3px -2px rgba(255, 255, 255, 0.5),
+    inset 0 -4px 6px -3px rgba(0, 0, 0, 0.35),
+    0 1px 3px 0 rgba(0, 0, 0, 0.2);
+  transition: filter 150ms ease, box-shadow 150ms ease;
 }
 .btn-leaf:hover:not(:disabled),
 .btn-cta:hover:not(:disabled),
 .btn-gold:hover:not(:disabled),
 .btn-slab:hover:not(:disabled),
 .btn-glass--primary:hover:not(:disabled) {
-  background: var(--accent-hi);
-  border-color: var(--accent-hi);
+  filter: brightness(1.15);
 }
 .btn-leaf:disabled,
 .btn-cta:disabled,
@@ -622,16 +635,37 @@ html[data-light] select option {
 
 .btn-ghost,
 .btn-glass {
-  background: var(--bg-raised);
+  /* Lichess's "metal" button: a soft top-to-bottom gradient one rung above
+     the page, no hairline, heading-weight text with a faint drop shadow so
+     the label sits in the surface rather than on it. */
+  background-image: linear-gradient(to bottom, var(--c-metal-top), var(--c-metal-bottom));
+  background-color: var(--c-metal-bottom);
   color: var(--text-primary);
-  border: 1px solid var(--border-subtle);
+  border: 0;
+  box-shadow:
+    inset 0 1px 3px -2px hsl(0 0% 45%),
+    inset 0 -4px 6px -3px color-mix(in srgb, var(--c-body-gradient) 80%, transparent),
+    0 1px 3px 0 rgba(0, 0, 0, 0.2);
+  text-shadow: var(--c-metal-text-shadow);
   font-weight: 500;
-  transition: background-color 120ms ease, border-color 120ms ease;
+  transition: background-color 150ms ease, color 150ms ease, box-shadow 150ms ease;
 }
 .btn-ghost:hover:not(:disabled),
 .btn-glass:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--bg-raised) 88%, #fff);
-  border-color: var(--edge-strong);
+  background-image: linear-gradient(to bottom, var(--c-metal-top-hover), var(--c-metal-bottom-hover));
+  background-color: var(--c-metal-bottom-hover);
+  color: var(--text-heading);
+  box-shadow:
+    inset 0 1px 3px -2px var(--border-light),
+    inset 0 -5px 8px -3px color-mix(in srgb, var(--c-body-gradient) 80%, transparent),
+    0 2px 4px 0 rgba(0, 0, 0, 0.2);
+}
+html[data-light] .btn-ghost,
+html[data-light] .btn-glass {
+  box-shadow:
+    inset 0 3px 3px -2px rgba(255, 255, 255, 0.4),
+    inset 0 -4px 6px -3px color-mix(in srgb, var(--c-body-gradient) 80%, transparent),
+    0 1px 3px 0 rgba(0, 0, 0, 0.18);
 }
 .btn-ghost:disabled,
 .btn-glass:disabled { color: var(--text-muted); cursor: not-allowed; }
@@ -639,13 +673,17 @@ html[data-light] select option {
 .btn-cursed {
   background: var(--accent-danger);
   color: #ffffff;
-  border: 1px solid var(--accent-danger);
-  font-weight: 600;
-  transition: background-color 120ms ease, border-color 120ms ease;
+  border: 0;
+  font-weight: 500;
+  text-shadow: 0.5px 0.5px 0 rgba(0, 0, 0, 0.3);
+  box-shadow:
+    inset 0 1px 3px -2px rgba(255, 255, 255, 0.4),
+    inset 0 -4px 6px -3px rgba(0, 0, 0, 0.35),
+    0 1px 3px 0 rgba(0, 0, 0, 0.2);
+  transition: filter 150ms ease;
 }
 .btn-cursed:hover:not(:disabled) {
-  background: var(--accent-nerf);
-  border-color: var(--accent-nerf);
+  filter: brightness(1.12);
 }
 .btn-cursed:disabled {
   background: var(--surface-raise);
@@ -702,126 +740,6 @@ html[data-anim="off"] .rune-loader { animation: none; }
    teal, the site's signature "powered frame". Needs position:relative on the
    host (it is a pseudo-element overlay). */
 .energy-edge { position: relative; }
-.energy-edge::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  border-radius: inherit;
-  padding: 1px;
-  pointer-events: none;
-  background: linear-gradient(
-    135deg,
-    rgb(var(--energy-ember-rgb) / 0.55),
-    rgb(var(--energy-void-rgb) / 0.35) 45%,
-    rgb(var(--energy-teal-rgb) / 0.4) 70%,
-    rgb(var(--energy-ember-rgb) / 0.45)
-  );
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  mask-composite: exclude;
-}
-
-/* The ceremony spotlight: a soft cone of light falling from above the place
-   card, tinted to its metal. Static light under html[data-anim="off"];
-   otherwise it breathes very slowly, like stadium lighting. */
-.podium-beam {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background: radial-gradient(
-    62% 88% at 50% 0%,
-    rgb(var(--beam-rgb, var(--energy-gold-rgb)) / var(--beam-a, 0.14)),
-    transparent 76%
-  );
-  animation: podium-beam-breathe 7s ease-in-out infinite;
-}
-@keyframes podium-beam-breathe {
-  0%, 100% { opacity: 0.75; }
-  50% { opacity: 1; }
-}
-html[data-anim="off"] .podium-beam { animation: none; opacity: 0.85; }
-.podium-mote {
-  position: absolute;
-  bottom: 18%;
-  left: var(--mx, 50%);
-  width: 3px;
-  height: 3px;
-  border-radius: 999px;
-  pointer-events: none;
-  background: rgb(var(--mote-rgb, var(--energy-gold-rgb)) / 0.85);
-  box-shadow: 0 0 6px 1px rgb(var(--mote-rgb, var(--energy-gold-rgb)) / 0.4);
-  opacity: 0;
-  animation: podium-mote-rise var(--mdur, 5.4s) linear var(--mdelay, 0s) infinite;
-}
-@keyframes podium-mote-rise {
-  0% { opacity: 0; transform: translateY(0) scale(0.7); }
-  14% { opacity: 0.65; }
-  70% { opacity: 0.3; }
-  100% { opacity: 0; transform: translateY(-68px) scale(1); }
-}
-html[data-anim="off"] .podium-mote { animation: none; opacity: 0; }
-/* The champion's sparkles: slow four-point glints near the avatar, the
-   cross-star kind that reads "camera flash" at a medal ceremony. */
-.podium-glint {
-  position: absolute;
-  top: var(--gy, 20%);
-  left: var(--gx, 50%);
-  width: 11px;
-  height: 11px;
-  pointer-events: none;
-  opacity: 0;
-  background:
-    linear-gradient(rgb(var(--energy-gold-rgb) / 0.9), rgb(var(--energy-gold-rgb) / 0.9)) 50% 0 / 1.5px 100% no-repeat,
-    linear-gradient(rgb(var(--energy-gold-rgb) / 0.9), rgb(var(--energy-gold-rgb) / 0.9)) 0 50% / 100% 1.5px no-repeat;
-  animation: podium-glint-twinkle 4.8s ease-in-out var(--gdelay, 0s) infinite;
-}
-@keyframes podium-glint-twinkle {
-  0%, 78%, 100% { opacity: 0; transform: scale(0.4) rotate(0deg); }
-  86% { opacity: 0.9; transform: scale(1) rotate(24deg); }
-  94% { opacity: 0; transform: scale(0.5) rotate(45deg); }
-}
-html[data-anim="off"] .podium-glint { animation: none; opacity: 0; }
-
-/* The petal drift: flower petals loosed over the whole dais, swaying down
-   like the end of a victory lap. Each petal is one span, tinted per place,
-   phased apart; ambient by design (the ceremony is a state, not an event)
-   and parked entirely under html[data-anim="off"]. */
-.podium-petal {
-  position: absolute;
-  top: -6%;
-  left: var(--px, 50%);
-  width: 7px;
-  height: 10px;
-  pointer-events: none;
-  border-radius: 60% 40% 55% 45% / 70% 65% 35% 30%;
-  background: rgb(var(--petal-rgb, 255 217 126) / 0.75);
-  box-shadow: inset 0 0 3px rgb(255 255 255 / 0.25);
-  opacity: 0;
-  animation: podium-petal-fall var(--pdur, 9s) linear var(--pdelay, 0s) infinite;
-}
-@keyframes podium-petal-fall {
-  0% { opacity: 0; transform: translate(0, 0) rotate(0deg); }
-  8% { opacity: 0.8; }
-  30% { transform: translate(14px, 30%) rotate(70deg); }
-  55% { transform: translate(-10px, 62%) rotate(150deg); }
-  80% { opacity: 0.6; transform: translate(10px, 88%) rotate(230deg); }
-  100% { opacity: 0; transform: translate(-4px, 108%) rotate(300deg); }
-}
-html[data-anim="off"] .podium-petal { animation: none; opacity: 0; }
-
-/* The champion's crown, hovering just above the avatar with the sanctioned
-   ambient bob. Static (no bob) under html[data-anim="off"]. */
-.podium-crown {
-  animation: podium-crown-bob 4.2s ease-in-out infinite;
-}
-@keyframes podium-crown-bob {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-3px); }
-}
-html[data-anim="off"] .podium-crown { animation: none; }
 
 /* Rune badge: the shared chip for statuses and counts. Feed it an energy
    triple via --badge-rgb (defaults to ember). */
@@ -873,36 +791,10 @@ html[data-anim="off"] .podium-crown { animation: none; }
   filter: saturate(0.7) brightness(0.9);
 }
 
-/* --- Podium celebration ------------------------------------------------------
-   Dressing for the leaderboard's ceremony dais (Podium.tsx) and the profile's
-   honors shelf. Each place wears a metal rim (the .energy-edge masked-frame
-   device, tinted by --rim-rgb; gold by default), stands in its own ceremony
-   spotlight (.podium-beam), and the champion adds rising motes, camera-flash
-   glints, a bobbing crown, and a petal drift across the whole dais.
-   Decoration only: transform/opacity, capped node counts at the call site,
-   and every animation parks under html[data-anim="off"] (static lighting
-   stays). Rebuilt grander by owner request after its first retirement. */
+/* Podium rim: a masked metal frame (tinted by --rim-rgb, gold by default).
+   Still worn by the profile's honors shelf; the leaderboard podium itself is
+   now three plain plates. */
 .podium-rim-gold { position: relative; }
-.podium-rim-gold::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  border-radius: inherit;
-  padding: 1px;
-  pointer-events: none;
-  background: linear-gradient(
-    135deg,
-    rgb(var(--rim-rgb, var(--energy-gold-rgb)) / 0.65),
-    rgb(var(--rim-rgb, var(--energy-gold-rgb)) / 0.22) 45%,
-    rgb(var(--rim-rgb, var(--energy-gold-rgb)) / 0.4) 70%,
-    rgb(var(--rim-rgb, var(--energy-gold-rgb)) / 0.55)
-  );
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  mask-composite: exclude;
-}
 
 /* Victory burst: the Level-3 celebration behind the game-over panel. One
    energy ring blooms outward while a handful of sparks in the four energy
@@ -981,31 +873,8 @@ html[data-anim="off"] .victory-burst { display: none; }
 /* Relic icon housing: header/utility icon buttons sit in a square-edged rune
    frame that warms on hover, matching the site's crisp 1px geometry. */
 .nav-icon-btn {
-  border-radius: 1px;
-  border: 1px solid transparent;
-  transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease, transform 130ms ease, box-shadow 180ms ease;
-}
-.nav-icon-btn:hover {
-  transform: translateY(-0.5px);
-  border-color: rgb(var(--energy-ember-rgb) / 0.4);
-  box-shadow: 0 0 14px -8px rgb(var(--energy-ember-rgb) / 0.6);
-}
-.nav-icon-btn:active {
-  transform: translateY(0.5px) scale(0.95);
-}
-
-/* Soft depth behind the hero: two barely-there radial washes (accent + a
-   whisper of Nerf terracotta) that lift the board and headline off the flat
-   ink. Sits behind the section's own content (negative z within the main
-   stacking context) and never intercepts pointers. */
-.hero-aura {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background:
-    radial-gradient(46% 52% at 24% 28%, rgb(var(--accent-rgb) / 0.1), transparent 72%),
-    radial-gradient(38% 48% at 84% 74%, rgb(var(--seam-warm-rgb) / 0.06), transparent 70%);
+  border-radius: var(--btn-roundness);
+  transition: color 150ms ease, background-color 150ms ease;
 }
 
 /* A very slow opacity pulse gives the ambient washes a sense of life without
@@ -1017,74 +886,14 @@ html[data-anim="off"] .victory-burst { display: none; }
   50% { opacity: 1; }
 }
 
-/* --- Home hero: the TV panel -------------------------------------------------
-   The top played board is the star of the landing page. It sits on a raised
-   frosted-glass panel: translucent, top-lit, blurred, with a hairline edge.
-   No colored gradients; the board's own warmth does the talking. */
+/* The hero board: a plain box like every other box on the page. */
 .tv-frame {
   position: relative;
   display: block;
-  padding: 8px;
-  /* The hero board sits in a carved stone sill with the site's ember-void-teal
-     energy rim (::before below): the main page's clearest statement of the
-     cosmic dungeon material system. No backdrop-filter: a live blur over the
-     fixed page gradient re-samples on every repaint and is a top scroll-jank
-     source; the frost is baked into a near-opaque base layer instead. */
-  background:
-    radial-gradient(120% 55% at 50% 108%, rgb(var(--energy-ember-rgb) / 0.07), transparent 60%),
-    linear-gradient(165deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02) 45%, rgba(8, 8, 12, 0.3)),
-    #1d1812;
-  border: 1px solid rgb(122 96 58 / 0.5);
-  box-shadow:
-    inset 0 1px 0 rgb(255 178 96 / 0.14),
-    inset 0 0 0 1px rgba(0, 0, 0, 0.5),
-    0 30px 80px -32px rgba(0, 0, 0, 0.9);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(10px) saturate(1.15);
-  transition: box-shadow var(--dur-2) var(--ease-out), transform var(--dur-2) var(--ease-out),
-    border-color var(--dur-2) var(--ease-out);
-}
-/* The energy rim: the site's signature ember-void-teal 1px band around the
-   hero board. Masked overlay, no extra DOM; the light theme's frame override
-   below hides it (a pale sill needs no glowing rim). */
-.tv-frame::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  border-radius: inherit;
-  padding: 1px;
-  pointer-events: none;
-  background: linear-gradient(
-    135deg,
-    rgb(var(--energy-ember-rgb) / 0.55),
-    rgb(var(--energy-void-rgb) / 0.35) 45%,
-    rgb(var(--energy-teal-rgb) / 0.4) 70%,
-    rgb(var(--energy-ember-rgb) / 0.45)
-  );
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  mask-composite: exclude;
-}
-html[data-light] .tv-frame::before { display: none; }
-@media (hover: hover) {
-  .tv-frame:hover {
-    transform: translateY(-2px);
-    border-color: rgb(var(--energy-ember-rgb) / 0.45);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.18),
-      0 0 40px -14px rgb(var(--energy-ember-rgb) / 0.4),
-      0 38px 96px -32px rgba(0, 0, 0, 0.95);
-  }
-}
-html[data-light] .tv-frame {
-  background: rgba(255, 255, 255, 0.9);
-  border-color: rgba(43, 40, 34, 0.18);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.85),
-    0 30px 80px -40px rgba(43, 40, 34, 0.55);
+  padding: 0;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--ui-roundness);
 }
 
 /* Live dot with an expanding echo, so "LIVE" is impossible to miss. The echo
@@ -1166,87 +975,8 @@ html[data-light] .tv-frame {
   0% { transform: translateX(0); }
   100% { transform: translateX(-26px); }
 }
-.knight-track::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 7px;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.14) 18%, rgba(255, 255, 255, 0.14) 82%, transparent);
-  /* The floor pulses on the beat, brightest the instant the knight lands
-     (phase-locked to gd-jump: same 3s cycle and -0.66s delay, flash at 67%).
-     The glow is baked into a static drop-shadow-free gradient and only
-     OPACITY animates: the old keyframe animated box-shadow, a full repaint
-     every frame of an infinite home-page loop. */
-  filter: drop-shadow(0 0 4px rgb(var(--accent-rgb) / 0.35));
-  animation: gd-ground-pulse 3s linear -0.66s infinite;
-  will-change: opacity;
-}
-@keyframes gd-ground-pulse {
-  0%, 60% { opacity: 0.45; }
-  67% { opacity: 1; }
-  82%, 100% { opacity: 0.45; }
-}
-.gd-world {
-  position: absolute;
-  inset: 0;
-  width: 200%;
-  animation: gd-scroll 24s linear infinite;
-  /* Compositor-only scroll: the strip animates as one GPU layer. */
-  will-change: transform;
-}
-@keyframes gd-scroll {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
-.gd-obstacle {
-  position: absolute;
-  bottom: 8px;
-  display: flex;
-  align-items: flex-end;
-  gap: 2px;
-}
-.gd-spike {
-  display: block;
-  width: 9px;
-  height: 10px;
-  background: rgb(var(--accent-rgb) / 0.75);
-  clip-path: polygon(50% 0, 100% 100%, 0 100%);
-}
-.gd-block {
-  display: block;
-  width: 9px;
-  height: 9px;
-  background: rgb(var(--accent-dim-rgb) / 0.7);
-  box-shadow: inset 0 0 0 1px rgb(var(--accent-hi-rgb) / 0.5);
-}
 /* Structure variants: a two-high tower, a wide low platform, a runt spike. */
 .gd-block--tall { height: 17px; }
-.gd-platform {
-  display: block;
-  width: 24px;
-  height: 6px;
-  background: rgb(var(--accent-dim-rgb) / 0.7);
-  box-shadow: inset 0 0 0 1px rgb(var(--accent-hi-rgb) / 0.5);
-}
-.gd-spike--small { width: 7px; height: 7px; }
-.gd-stack {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-.gd-knight {
-  position: absolute;
-  bottom: 6px;
-  left: 18%;
-  font-size: 21px;
-  line-height: 1;
-  /* The knight-cube reads as a lit neon avatar: accent-tinted with a soft
-     glow, so the jump pops against the darker course. */
-  color: rgb(var(--accent-hi-rgb) / 0.92);
-  filter: drop-shadow(0 0 5px rgb(var(--accent-rgb) / 0.5));
-}
 /* One 3s beat: grounded, then a 1s jump with a full 360 flip. Obstacles cross
    the knight's lane at t = 3n + 0.84s (strip spacing 12.5% / scroll speed
    4.167% per second, lane at 18%), so the -0.66s delay puts the jump's apex
@@ -1259,31 +989,6 @@ html[data-light] .tv-frame {
   0%, 33% { transform: translateY(0) rotate(0deg); }
   50% { transform: translateY(-20px) rotate(180deg); }
   67%, 100% { transform: translateY(0) rotate(360deg); }
-}
-
-/* Nerf / Buff definition cards on the home lobby panel: each carries its mode
-   color as an rgb triple so one hover rule lights the pair correctly. */
-.mode-def-card {
-  --def-rgb: var(--accent-rgb);
-  /* Each card wears its mode at rest — a flat tinted fill and a colored
-     hairline border, no gradients — so the pair reads as two territories
-     before any hover. */
-  border-color: rgb(var(--def-rgb) / 0.35);
-  background: rgb(var(--def-rgb) / 0.08);
-  transition: transform var(--dur-2) var(--ease-out),
-    border-color var(--dur-2) var(--ease-out),
-    box-shadow var(--dur-2) var(--ease-out);
-}
-.mode-def-card--nerf { --def-rgb: var(--seam-warm-rgb); }
-.mode-def-card--buff { --def-rgb: var(--seam-cool-rgb); }
-@media (hover: hover) {
-  .mode-def-card:hover {
-    transform: translateY(-2px);
-    border-color: rgb(var(--def-rgb) / 0.7);
-    box-shadow:
-      0 0 26px -10px rgb(var(--def-rgb) / 0.5),
-      0 12px 28px -18px rgba(0, 0, 0, 0.8);
-  }
 }
 
 /* --- Board splash: big board-wide event announcement -------------------------
@@ -1365,31 +1070,6 @@ html[data-light] .tv-frame {
 .nav-item {
   position: relative;
   transition: color 160ms ease, background-color 160ms ease, transform 120ms ease;
-}
-.nav-item::after {
-  content: "";
-  position: absolute;
-  left: 0.75rem;
-  right: 0.75rem;
-  bottom: 0.26rem;
-  height: 1.5px;
-  background: rgb(var(--accent-hi-rgb));
-  transform: scaleX(0);
-  transform-origin: center;
-  opacity: 0;
-  transition: transform 190ms var(--ease-out), opacity 190ms ease;
-}
-.nav-item:hover::after,
-.nav-item:focus-visible::after {
-  transform: scaleX(1);
-  opacity: 0.9;
-}
-.nav-item[data-active="true"]::after {
-  transform: scaleX(1);
-  opacity: 0.5;
-}
-.nav-item:active {
-  transform: translateY(0.5px);
 }
 /* .nav-icon-btn: relic housing treatment lives with the cosmic dungeon
    shared components (see the buttons section above). */
@@ -1769,10 +1449,6 @@ html[data-anim="off"] .piece-treat {
   box-shadow: inset 0 0 0 4px currentColor;
   background: color-mix(in srgb, currentColor 24%, transparent);
 }
-.sq-rmb-mark-1 { color: rgb(var(--accent-gold-rgb) / 0.95); }
-.sq-rmb-mark-2 { color: rgb(var(--accent-positive-rgb) / 0.95); }
-.sq-rmb-mark-3 { color: rgb(var(--bruise-rgb) / 0.95); }
-.sq-rmb-mark-4 { color: rgb(var(--accent-nerf-rgb) / 0.95); }
 
 /* Move-target dot */
 .dot-target {
@@ -1838,7 +1514,6 @@ html[data-anim="off"] .piece-treat {
   0% { opacity: 0; transform: translateY(20px) scale(0.96); }
   100% { opacity: 1; transform: translateY(0) scale(1); }
 }
-.animate-reveal { animation: nerf-reveal 0.55s var(--ease-out); }
 
 /* Lightning Strike: a one-shot flash on each struck square. The effect record
    lives until the opponent replies, but the overlay animates to transparent
@@ -1969,11 +1644,6 @@ html[data-anim="off"] .piece-treat {
   box-shadow: inset 0 0 22px 3px rgba(30, 41, 59, 0.7);
   animation: locked-in-flash 0.55s ease-out both;
 }
-@keyframes locked-chain-in {
-  0% { opacity: 0; transform: scale(1.8) rotate(12deg); }
-  100% { opacity: 0.85; transform: scale(1) rotate(0deg); }
-}
-.sq-locked-chain { animation: locked-chain-in 0.45s ease-out; }
 
 /* Shield / sanctuary: one soft pulse when the protection appears. */
 @keyframes shield-in {
@@ -2075,14 +1745,13 @@ nav, header { position: relative; z-index: 30; }
      the nav) then anchors to the nav instead of the viewport — the broken
      "preferences way too high" bug. The nav scrolls with the page anyway, so
      blur bought nothing and cost paint time on low-end devices. */
-  background: var(--surface-panel);
-  background: color-mix(in srgb, var(--surface-panel) 88%, transparent);
+  background: var(--bg-base);
 }
 
 /* Accessibility */
 :focus-visible {
-  outline: 1.5px solid rgb(var(--accent-gold-rgb) / 0.85);
-  outline-offset: 3px;
+  outline: 2px solid rgb(var(--accent-gold-rgb) / 0.85);
+  outline-offset: 2px;
   /* No border-radius override here: it rounded every focused element's corners
      to 2px on click, fighting the 1px-corner design (and making square cards
      look rounded when tapped). The outline follows each element's own radius,
@@ -2109,10 +1778,6 @@ html[data-anim="off"] .empower-mote { animation: none !important; }
    animations-off shows their settled end state instead of hiding them. */
 html[data-anim="off"] .walnut-root { animation: none !important; transform: none; opacity: 1; }
 html[data-anim="off"] .sq-walnut::after { animation: none !important; opacity: 0 !important; }
-html[data-anim="off"] .dc-orbit-ring.spin, html[data-anim="off"] .dc-orbit-ring.spin-r,
-html[data-anim="off"] .dc-orbit-counter.spin, html[data-anim="off"] .dc-orbit-counter.spin-r {
-  animation: none !important;
-}
 html[data-anim="off"] * { transition: none !important; }
 
 @media (max-width: 640px) {
@@ -2164,18 +1829,6 @@ html[data-anim="off"] .card-juicy, html[data-anim="off"] .card-juicy:hover, html
   background-clip: text;
   color: transparent;
 }
-.grad-seam-ring {
-  position: relative;
-  border-radius: 1px;
-}
-.grad-seam-ring::before {
-  content: "";
-  position: absolute;
-  inset: -1.5px;
-  z-index: -1;
-  border-radius: inherit;
-  background: linear-gradient(120deg, rgb(var(--seam-warm-rgb) / 0.75), rgb(var(--seam-cool-rgb) / 0.75));
-}
 
 /* Decorative corners — subtle brass tick marks for editorial framing */
 .card-corner {
@@ -2196,8 +1849,6 @@ html[data-anim="off"] .card-juicy, html[data-anim="off"] .card-juicy:hover, html
     radial-gradient(circle at 50% 50%, rgb(var(--accent-gold-rgb) / 0.06), transparent 62%);
   border-radius: 9999px;
 }
-
-.parchment-noise::before { content: none !important; }
 
 /* The hero "TV" panel blurs the LIVE animating board behind it, a backdrop
    filter re-run every frame. Animations-off swaps it for a plain translucent
@@ -2251,11 +1902,6 @@ html[data-light] .border-white\/5 { border-color: rgba(43, 40, 34, 0.08); }
 html[data-light] .border-white\/10 { border-color: rgba(43, 40, 34, 0.12); }
 html[data-light] .border-white\/12 { border-color: rgba(43, 40, 34, 0.14); }
 html[data-light] .border-white\/15 { border-color: rgba(43, 40, 34, 0.16); }
-html[data-light] .divide-white\/5 > :not([hidden]) ~ :not([hidden]),
-html[data-light] .divide-white\/10 > :not([hidden]) ~ :not([hidden]),
-html[data-light] .divide-white\/\[0\.06\] > :not([hidden]) ~ :not([hidden]) {
-  border-color: rgba(43, 40, 34, 0.1);
-}
 
 /* White-tint raises and hovers read as ink tints on paper. */
 html[data-light] .bg-white\/5,
@@ -2484,8 +2130,6 @@ html[data-anim="off"] .nerf-reveal-cell {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.78; }
 }
-.clock-pulse-soft { animation: clock-pulse-soft 1.8s ease-in-out infinite; }
-html[data-anim="off"] .clock-pulse-soft { animation: none !important; }
 
 /* --- Refused-input feedback ---------------------------------------------------
    A rejected move or card target flashes a brief oxblood inner ring on the
@@ -2518,7 +2162,6 @@ html[data-anim="off"] .sq-invalid-shake { animation: none !important; }
    survive because CommandRail still spells them; they now carry a plain
    accent border on the active player's card and nothing else. */
 .rail-lux { position: relative; }
-.rail-header-sheen { display: none; }
 .rail-glow-wrap { position: relative; }
 .rail-glow-wrap--active {
   box-shadow: 0 0 0 1px var(--accent);
@@ -2777,11 +2420,6 @@ html[data-anim="off"] .hall-mote {
   animation: none !important;
   opacity: 0 !important;
 }
-html[data-anim="off"] .star-glint {
-  will-change: transform, opacity;
-  opacity: 0.5;
-  transform: scale(0.8);
-}
 
 /* ============================================================
    Recording mode — owner-only 9:16 vertical layout for capturing
@@ -2907,3 +2545,141 @@ main.recording-mode .draft-col--rec {
 /* Hover lifts are decoration: they stand down with the rest. */
 html[data-anim="off"] .btn-leaf::after { display: none; }
 html[data-anim="off"] .btn-leaf:hover:not(:disabled) { transform: none; }
+
+/* --- Board status language (lib/boardStatus, board/StatusGlyph) ---------------
+   One frame + one chip per affected square, coloured by status class, so every
+   mark on the board is read the same way. Transform/opacity keyframes only. */
+.sq-status-frame {
+  position: absolute;
+  inset: 0;
+  box-shadow: inset 0 0 0 2px var(--st);
+  background: color-mix(in srgb, var(--st) 16%, transparent);
+  animation: sq-status-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.sq-status-frame--soft {
+  box-shadow: inset 0 0 0 1px var(--st);
+  background: color-mix(in srgb, var(--st) 10%, transparent);
+}
+.sq-status-chip {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  height: 24%;
+  min-width: 24%;
+  padding: 0 4%;
+  color: #14120f;
+  background: var(--st);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  font: 800 10px/1 var(--font-mono), ui-monospace, monospace;
+  animation: sq-status-chip-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.sq-status-chip svg { width: auto; height: 62%; flex: none; }
+.sq-status-chip__n { font-size: 9px; line-height: 1; }
+.sq-status-chip--tl { left: 2%; top: 2%; }
+.sq-status-chip--tr { right: 2%; top: 2%; }
+.sq-status-chip--bl { left: 2%; bottom: 2%; }
+.sq-status-chip--br { right: 2%; bottom: 2%; }
+@keyframes sq-status-in {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes sq-status-chip-in {
+  0% { opacity: 0; transform: scale(0.4); }
+  60% { transform: scale(1.12); }
+  100% { opacity: 1; transform: scale(1); }
+}
+html[data-anim="off"] .sq-status-frame,
+html[data-anim="off"] .sq-status-chip { animation: none; }
+
+/* The key: a compact legend of the status classes on the board right now. */
+.board-key {
+  display: grid;
+  gap: 4px 10px;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.board-key__row { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.board-key__swatch {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  flex: none;
+  color: #14120f;
+  background: var(--st);
+}
+.board-key__label { color: var(--text-body); white-space: nowrap; }
+
+/* --- Nerf card entrance (NerfCard) ------------------------------------------
+   The card unfolds toward the reader on a top hinge while a wax seal stamps
+   it and cracks in two; the name, ornament and rule text then land one after
+   another. Transform/opacity only; parks under data-anim="off". */
+.nerf-enter {
+  position: relative;
+  perspective: 1100px;
+}
+.nerf-enter__card {
+  transform-origin: 50% 0%;
+  animation: nerf-enter-unfold 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes nerf-enter-unfold {
+  0% { opacity: 0; transform: rotateX(-78deg) translateY(-6px); }
+  45% { opacity: 1; }
+  70% { transform: rotateX(6deg) translateY(0); }
+  100% { opacity: 1; transform: rotateX(0deg) translateY(0); }
+}
+.nerf-enter__line {
+  animation: nerf-enter-line 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.nerf-enter__line:nth-of-type(1) { animation-delay: 0.32s; }
+.nerf-enter__line:nth-of-type(2) { animation-delay: 0.42s; }
+.nerf-enter__line:nth-of-type(3) { animation-delay: 0.5s; }
+@keyframes nerf-enter-line {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.nerf-enter__seal {
+  position: absolute;
+  left: 50%;
+  top: -14px;
+  z-index: 5;
+  width: 34px;
+  height: 34px;
+  margin-left: -17px;
+  pointer-events: none;
+  animation: nerf-enter-seal 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.nerf-enter__seal-half {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  background:
+    radial-gradient(circle at 40% 35%, rgba(255, 255, 255, 0.28), transparent 45%),
+    rgb(var(--tier-rgb, 181 70 65));
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.25), 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+.nerf-enter__seal-half--l { left: 0; border-radius: 17px 0 0 17px; transform-origin: 100% 60%; animation: nerf-enter-crack-l 0.55s cubic-bezier(0.55, 0, 1, 0.45) 0.7s both; }
+.nerf-enter__seal-half--r { right: 0; border-radius: 0 17px 17px 0; transform-origin: 0% 60%; animation: nerf-enter-crack-r 0.55s cubic-bezier(0.55, 0, 1, 0.45) 0.7s both; }
+@keyframes nerf-enter-seal {
+  0% { opacity: 0; transform: scale(2.2); }
+  40% { opacity: 1; transform: scale(0.92); }
+  55% { transform: scale(1.04); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes nerf-enter-crack-l {
+  0% { opacity: 1; transform: translate(0, 0) rotate(0deg); }
+  100% { opacity: 0; transform: translate(-10px, 14px) rotate(-28deg); }
+}
+@keyframes nerf-enter-crack-r {
+  0% { opacity: 1; transform: translate(0, 0) rotate(0deg); }
+  100% { opacity: 0; transform: translate(10px, 14px) rotate(28deg); }
+}
+html[data-anim="off"] .nerf-enter__card,
+html[data-anim="off"] .nerf-enter__line,
+html[data-anim="off"] .nerf-enter__seal,
+html[data-anim="off"] .nerf-enter__seal-half { animation: none; }
+html[data-anim="off"] .nerf-enter__seal { opacity: 0; }

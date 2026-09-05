@@ -462,7 +462,7 @@ export default function OnlineGamePage() {
       <main className="min-h-screen">
         <SiteNav />
         <section className="max-w-xl mx-auto px-6 py-16 text-center">
-          <h1 className="font-display text-4xl">That game has wrapped up</h1>
+          <h1 className="page-title">That game has wrapped up</h1>
           <p className="mt-3 text-parchment-200">
             It&apos;s no longer live and we couldn&apos;t find a saved copy: the
             match likely just finished, or the broadcast ended. Taking you back
@@ -488,7 +488,7 @@ export default function OnlineGamePage() {
     <main className="min-h-screen">
       <SiteNav />
       <section className="max-w-xl mx-auto px-6 py-16 text-center">
-        <h1 className="font-display text-4xl">Something interrupted the game</h1>
+        <h1 className="page-title">Something interrupted the game</h1>
         <p className="mt-3 text-parchment-200">
           {mode.kind === "error"
             ? mode.message

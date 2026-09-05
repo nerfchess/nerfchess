@@ -19,6 +19,25 @@ export default function UpdatesPage() {
     >
       <BreadcrumbJsonLd title="Updates" path="/updates" />
 
+      <InfoSection title="A tighter card pool">
+        <p>
+          The pool had grown to about 2,450 cards, and hundreds of them were the same idea with a
+          different name, a strictly worse rung of another card, or a rule too long to read at the
+          board. 582 of those are now retired: they no longer come up in a draft, old games that used
+          them still replay exactly, and the codex keeps their pages behind a &quot;Show retired&quot;
+          filter with a pointer to the card that covers the same ground. The full list is in the
+          repository under docs/card-retirements.md.
+        </p>
+      </InfoSection>
+
+      <InfoSection title="New look">
+        <p>
+          The whole site now sits on flat warm greys with square corners, metal buttons and a
+          60px top bar, laid out the way Lichess lays out a page. Boxes are boxes, links are
+          blue, dates and ranks are brass, and nothing glows.
+        </p>
+      </InfoSection>
+
       <InfoSection title="Hundreds of new cards">
         <p>
           The card pool grew a lot. There are now well over six hundred buff cards and more than

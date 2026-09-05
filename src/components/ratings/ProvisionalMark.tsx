@@ -6,7 +6,7 @@ export function ProvisionalMark({ className = "" }: { className?: string }) {
   return (
     <span
       className={
-        "inline-flex h-[13px] w-[13px] shrink-0 items-center justify-center border border-parchment-400/40 bg-white/[0.04] align-middle text-[9px] font-bold leading-none text-parchment-400 " +
+        "inline-flex h-[13px] w-[13px] shrink-0 items-center justify-center border border-parchment-400/40 bg-[color:var(--bg-zebra)] align-middle text-[11px] font-bold leading-none text-parchment-400 " +
         className
       }
       title="Provisional rating: still settling after a few more rated games"

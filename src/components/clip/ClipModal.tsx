@@ -22,7 +22,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { BoardState, Color, Move } from "@/engine/types";
 import type { GameResult } from "@/engine/game";
 import {
-  PIECE_THEMES,
+  pieceLook,
   boardColors,
   loadSettings,
   resolvePieceTheme,
@@ -206,7 +206,7 @@ export function ClipModal({
   // silhouettes rather than swapping to a lichess set.
   const { colors, pieceSource } = useMemo(() => {
     const s = loadSettings();
-    const t = PIECE_THEMES[resolvePieceTheme(s)] ?? PIECE_THEMES.lichessCburnett;
+    const t = pieceLook(resolvePieceTheme(s), s.pieceColor);
     const source: PieceImageSource = t.assetSet
       ? { kind: "asset", set: t.assetSet }
       : { kind: "inline", wFill: t.wFill, wStroke: t.wStroke, bFill: t.bFill, bStroke: t.bStroke };
@@ -1405,7 +1405,7 @@ export function ClipModal({
       data-clip-quality={opts.quality}
       data-clip-board={opts.boardTheme}
       data-clip-compare={compareOn ? "on" : "off"}
-      className="fixed inset-0 z-[60] grid place-items-center bg-[#0f0d0a]/70 px-2 py-3 backdrop-blur-sm sm:px-4 sm:py-6"
+      className="fixed inset-0 z-[60] grid place-items-center bg-[#0f0d0a]/80 px-2 py-3 sm:px-4 sm:py-6"
       onPointerDown={chrome.onBackdropPointerDown}
     >
       <div

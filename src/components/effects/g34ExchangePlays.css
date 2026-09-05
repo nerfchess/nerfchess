@@ -42,7 +42,7 @@
   64% { opacity: 0.44; }
   100% { opacity: 0; }
 }
-.g34-wash { animation: g34-wash calc(1.3s * var(--fx-dur, 1)) ease-out both; }
+.g34-wash { animation: g34-wash calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* The board itself taking a breath as the two halves trade. */
 @keyframes g34-swell {
@@ -51,7 +51,7 @@
   70% { opacity: 0.5; transform: scale(0.996); }
   100% { opacity: 0; transform: scale(1.01); }
 }
-.g34-swell { animation: g34-swell calc(1.15s * var(--fx-dur, 1)) ease-in-out both; }
+.g34-swell { animation: g34-swell calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 /* ---------------------------------------------------------------------------
    2. Tells (<=300ms of anticipation, before anything moves)
@@ -75,7 +75,7 @@
   50% { opacity: 0.9; transform: scale(1.08); }
   100% { opacity: 0; transform: scale(0.92); }
 }
-.g34-tellpair { animation: g34-tellpair calc(0.29s * var(--fx-dur, 1)) ease-out both; }
+.g34-tellpair { animation: g34-tellpair calc(0.29s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* Mass squatting before it is moved: the inhale. */
 @keyframes g34-tellsquat {
@@ -84,7 +84,7 @@
   100% { opacity: 0; transform: scale(1, 1); }
 }
 .g34-tellsquat {
-  animation: g34-tellsquat calc(0.3s * var(--fx-dur, 1)) ease-out both;
+  animation: g34-tellsquat calc(0.3s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both;
   transform-origin: 50% 100%;
 }
 
@@ -103,7 +103,7 @@
   100% { opacity: 0; transform: scale(1.16, 1); }
 }
 .g34-tellshade {
-  animation: g34-tellshade calc(0.3s * var(--fx-dur, 1)) ease-out both;
+  animation: g34-tellshade calc(0.3s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both;
   transform-origin: 50% 100%;
 }
 
@@ -278,7 +278,7 @@
   40% { opacity: 0.9; transform: scaleY(1.15) scaleX(1); }
   100% { opacity: 0; transform: scaleY(0.5) scaleX(1); }
 }
-.g34-seam { animation: g34-seam calc(0.5s * var(--fx-dur, 1)) ease-out both; }
+.g34-seam { animation: g34-seam calc(0.5s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* Two arrowheads crossing nose to nose at the midpoint. */
 @keyframes g34-cross {
@@ -286,7 +286,7 @@
   46% { opacity: 1; transform: rotate(0deg) scale(1.1); }
   100% { opacity: 0; transform: rotate(0deg) scale(0.85); }
 }
-.g34-cross { animation: g34-cross calc(0.46s * var(--fx-dur, 1)) ease-out both; }
+.g34-cross { animation: g34-cross calc(0.46s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* ---------------------------------------------------------------------------
    5. Per-mechanism motions. One card's own machinery each.
@@ -448,7 +448,7 @@
   82% { opacity: 0.75; transform: scale(1, 1); }
   100% { opacity: 0; transform: scale(0.99, 0.96); }
 }
-.g34-shell { animation: g34-shell calc(1.05s * var(--fx-dur, 1)) ease-in-out both; }
+.g34-shell { animation: g34-shell calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 /* An escapement pallet rocking: one tooth let go as the other is caught. */
 @keyframes g34-pallet {
@@ -490,7 +490,7 @@
   74% { opacity: 0.7; transform: scale(1); }
   100% { opacity: 0; transform: scale(0.82); }
 }
-.g34-gap { animation: g34-gap calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+.g34-gap { animation: g34-gap calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* A row of courses / rungs / stalls arriving in the real victim order. */
 @keyframes g34-rung {
@@ -522,7 +522,7 @@
   100% { opacity: 0; transform: rotate(34deg) scaleX(1); }
 }
 .g34-rake {
-  animation: g34-rake calc(1.1s * var(--fx-dur, 1)) ease-in-out both;
+  animation: g34-rake calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both;
   transform-origin: 50% 0%;
 }
 
@@ -544,14 +544,14 @@
   34% { opacity: 0.8; transform: translate(2%, calc(var(--fx-side, 1) * -8%)) scale(1); }
   100% { opacity: 0; transform: translate(6%, calc(var(--fx-side, 1) * -26%)) scale(1.16); }
 }
-.g34-motes { animation: g34-motes calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+.g34-motes { animation: g34-motes calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g34-dust {
   0% { opacity: 0; transform: scale(0.4, 0.6); }
   40% { opacity: 0.72; transform: scale(1, 1); }
   100% { opacity: 0; transform: scale(1.4, 1.1); }
 }
-.g34-dust { animation: g34-dust calc(0.8s * var(--fx-dur, 1)) ease-out both; }
+.g34-dust { animation: g34-dust calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g34-ripple {
   0% { opacity: 0; transform: scale(0.24); }
@@ -572,7 +572,7 @@
   40% { opacity: 0.95; transform: rotate(24deg) scale(1.1); }
   100% { opacity: 0; transform: rotate(46deg) scale(0.6); }
 }
-.g34-glint { animation: g34-glint calc(0.62s * var(--fx-dur, 1)) ease-out both; }
+.g34-glint { animation: g34-glint calc(0.62s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* ---------------------------------------------------------------------------
    7. The one-crop cuts: entrance (card arriving in a hand) and target (the
@@ -614,7 +614,7 @@
   74% { opacity: 0.8; transform: rotate(10deg) scale(1); }
   100% { opacity: 0; transform: rotate(18deg) scale(0.9); }
 }
-.g34-ent-turn { animation: g34-ent-turn calc(0.82s * var(--fx-dur, 1)) ease-out both; }
+.g34-ent-turn { animation: g34-ent-turn calc(0.82s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g34-hit {
   0% { opacity: 0; transform: scale(0.44) rotate(-8deg); }
@@ -647,7 +647,7 @@
   40% { opacity: 0.7; transform: scale(1); }
   100% { opacity: 0; transform: scale(1.34); }
 }
-.g34-hit-fade { animation: g34-hit-fade calc(0.6s * var(--fx-dur, 1)) ease-out both; }
+.g34-hit-fade { animation: g34-hit-fade calc(0.6s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* =============================================================================
    FLAGSHIP IMPACT WAVE: the cell-scale quake wrapper. The impact composite

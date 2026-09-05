@@ -97,17 +97,17 @@ export function SocialsRow({
     );
   }
   return (
-    <div className={`flex flex-wrap items-center justify-center gap-3 ${className}`}>
-      <span className="mr-1 text-[11px] text-parchment-400">{label}</span>
+    <div className={`flex flex-wrap items-center gap-x-3 gap-y-1 ${className}`}>
+      {label && <span className="mr-1 text-[12px] text-parchment-400">{label}</span>}
       {SOCIALS.map((s) => (
         <a
           key={s.label}
           href={s.href}
           target="_blank"
           rel="noopener noreferrer"
-          className="btn-ghost flex items-center gap-2.5 px-5 py-2.5 text-base no-underline"
+          className="flex items-center gap-1.5 text-[12px] text-parchment-400 no-underline transition-colors hover:text-parchment-100"
         >
-          {s.icon(19)}
+          {s.icon(14)}
           {s.label}
         </a>
       ))}

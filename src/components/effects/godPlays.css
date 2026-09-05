@@ -21,7 +21,7 @@
   74% { opacity: 0.5; }
   100% { opacity: 0; }
 }
-.gp-wash { animation: gp-wash 1.1s ease-out both; }
+.gp-wash { animation: gp-wash 1.1s cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* A god-ray shaft breaking from the top of the sky (fanned by the parent). */
 @keyframes gp-ray {
@@ -30,7 +30,7 @@
   70% { opacity: 0.55; }
   100% { opacity: 0; transform: translateY(0) scaleY(1); }
 }
-.gp-ray { animation: gp-ray 0.95s ease-out both; transform-origin: 50% 0%; }
+.gp-ray { animation: gp-ray 0.95s cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 0%; }
 
 /* A frost / shadow pane wiping across the board, left to right. */
 @keyframes gp-pane {
@@ -39,7 +39,7 @@
   72% { opacity: 0.55; }
   100% { opacity: 0; transform: scaleX(1); }
 }
-.gp-pane { animation: gp-pane 0.8s ease-out both; transform-origin: 0% 50%; }
+.gp-pane { animation: gp-pane 0.8s cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 0% 50%; }
 
 /* --- Manifestation (the colossal entity) ---------------------------------- */
 
@@ -70,7 +70,7 @@
   82% { opacity: 0.95; transform: translateX(30%) rotate(2deg); }
   100% { opacity: 0; transform: translateX(42%) rotate(3deg); }
 }
-.gp-stride { animation: gp-stride 1.2s ease-in-out both; }
+.gp-stride { animation: gp-stride 1.2s cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 /* The war-host marching across the board width. */
 @keyframes gp-march {
@@ -120,7 +120,7 @@
   62% { opacity: 1; transform: rotate(38deg); }
   100% { opacity: 0; transform: rotate(70deg); }
 }
-.gp-scythe { animation: gp-scythe 0.75s ease-out both; transform-origin: 50% 0%; }
+.gp-scythe { animation: gp-scythe 0.75s cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 0%; }
 
 /* A jagged bolt cracking down out of the cloud bank (choppy strobe). */
 @keyframes gp-bolt {
@@ -138,7 +138,7 @@
   18% { opacity: 1; }
   100% { opacity: 0; transform: rotate(300deg); }
 }
-.gp-handsweep { animation: gp-handsweep 1s ease-in-out both; transform-origin: 50% 100%; }
+.gp-handsweep { animation: gp-handsweep 1s cubic-bezier(0.65, 0, 0.35, 1) both; transform-origin: 50% 100%; }
 
 /* --- Climax ---------------------------------------------------------------- */
 
@@ -148,7 +148,7 @@
   18% { opacity: 1; transform: scale(1.12); }
   100% { opacity: 0; transform: scale(1.6); }
 }
-.gp-flash { animation: gp-flash 0.5s ease-out both; }
+.gp-flash { animation: gp-flash 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* Divine shockwave ring that sweeps past the board edges. */
 @keyframes gp-boom {
@@ -156,7 +156,7 @@
   16% { opacity: 1; transform: scale(0.5); }
   100% { opacity: 0; transform: scale(2.6); }
 }
-.gp-boom { animation: gp-boom 0.8s ease-out both; }
+.gp-boom { animation: gp-boom 0.8s cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* Petrifying gaze ring: a slower, gripping roll-out from the idol's eyes. */
 @keyframes gp-gaze {
@@ -164,7 +164,7 @@
   22% { opacity: 0.95; transform: scale(0.6); }
   100% { opacity: 0; transform: scale(1.9); }
 }
-.gp-gaze { animation: gp-gaze 0.9s ease-out both; }
+.gp-gaze { animation: gp-gaze 0.9s cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* A spark shard flying outward (vars --dx / --dy / --rot from inline style). */
 @keyframes gp-spark {
@@ -172,7 +172,7 @@
   20% { opacity: 1; }
   100% { opacity: 0; transform: translate(var(--dx, 0%), var(--dy, 0%)) scale(1) rotate(var(--rot, 0deg)); }
 }
-.gp-spark { animation: gp-spark 0.55s ease-out both; }
+.gp-spark { animation: gp-spark 0.55s cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* A rubble shard lobbed on an arc: out and up, then back down past the rim. */
 @keyframes gp-lob {
@@ -181,7 +181,7 @@
   55% { opacity: 1; transform: translate(calc(var(--dx, 0%) * 0.7), var(--dy, -40%)) rotate(var(--rot, 120deg)); }
   100% { opacity: 0; transform: translate(var(--dx, 0%), 24%) rotate(calc(var(--rot, 120deg) * 1.6)); }
 }
-.gp-lob { animation: gp-lob 0.8s ease-out both; }
+.gp-lob { animation: gp-lob 0.8s cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* A mote pulled inward to the maw (vars --dx / --dy are the START offset). */
 @keyframes gp-mote {
@@ -189,7 +189,7 @@
   22% { opacity: 1; }
   100% { opacity: 0; transform: translate(0, 0) scale(0.15); }
 }
-.gp-mote { animation: gp-mote 0.65s ease-in both; }
+.gp-mote { animation: gp-mote 0.65s cubic-bezier(0.55, 0, 1, 0.45) both; }
 
 /* --- Aftermath ------------------------------------------------------------- */
 
@@ -199,7 +199,7 @@
   38% { opacity: 1; transform: scale(1) rotate(24deg); }
   100% { opacity: 0; transform: scale(0.5) rotate(45deg); }
 }
-.gp-glint { animation: gp-glint 0.6s ease-out both; }
+.gp-glint { animation: gp-glint 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- Per-square target hits (non-lead renders) ------------------------------ */
 
@@ -218,7 +218,7 @@
   15% { opacity: 0.95; }
   100% { opacity: 0; transform: scale(1.9); }
 }
-.gp-tring { animation: gp-tring 0.55s ease-out both; }
+.gp-tring { animation: gp-tring 0.55s cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* === APEX BAND (tier 9/10) — RIDICULOUS set-piece keyframes =================
    Owner: "make the tier 9 and 10 animations absolutely RIDICULOUS ... a rage
@@ -236,7 +236,7 @@
   82% { opacity: 0.85; transform: scaleY(1); }
   100% { opacity: 0; transform: scaleY(0.4); }
 }
-.gp-bar { animation: gp-bar 2.8s ease-out both; }
+.gp-bar { animation: gp-bar 2.8s cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* THE FIST: winds up above the board, SLAMS down, rebounds once, grinds
    free and withdraws. */
@@ -262,7 +262,7 @@
   88% { opacity: 0.9; transform: translate(var(--dx, 0%), 0%) rotate(calc(var(--rot, 20deg) * 1.7)); }
   100% { opacity: 0; transform: translate(var(--dx, 0%), 0%) rotate(calc(var(--rot, 20deg) * 1.7)); }
 }
-.gp-rattle { animation: gp-rattle 1.1s ease-out both; }
+.gp-rattle { animation: gp-rattle 1.1s cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* Impact cracks: flash in hard, hold while the dust settles, fade. */
 @keyframes gp-crack {
@@ -272,7 +272,7 @@
   74% { opacity: 0.85; }
   100% { opacity: 0; transform: scale(1.02); }
 }
-.gp-crack { animation: gp-crack 1.3s ease-out both; }
+.gp-crack { animation: gp-crack 1.3s cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* The rage-quit grip: a hand shoots in from off-crop (--from) and clamps
    the board's rim with a squeeze. */
@@ -326,7 +326,7 @@
   70% { opacity: 0.9; }
   100% { opacity: 0; transform: scale(1.04); }
 }
-.gp-seal { animation: gp-seal 1.5s ease-out both; }
+.gp-seal { animation: gp-seal 1.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* The master lever thrown to OFF (pivot set inline at its base). */
 @keyframes gp-lever {
@@ -360,7 +360,7 @@
   84% { opacity: 0.6; transform: rotate(0.5deg); }
   100% { opacity: 0; transform: rotate(0deg); }
 }
-.gp-spotlight { animation: gp-spotlight 1.7s ease-in-out both; transform-origin: 50% 0%; }
+.gp-spotlight { animation: gp-spotlight 1.7s cubic-bezier(0.65, 0, 0.35, 1) both; transform-origin: 50% 0%; }
 
 /* Cartoon eyes blinking in the dark (also the gorgon's great eye opening). */
 @keyframes gp-eyes {
@@ -373,7 +373,7 @@
   82% { opacity: 0.95; transform: scaleY(1); }
   100% { opacity: 0; transform: scaleY(1); }
 }
-.gp-eyes { animation: gp-eyes 1.2s ease-in-out both; }
+.gp-eyes { animation: gp-eyes 1.2s cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 /* The glacier: grinds in from one side, ploughs the crop, exits opposite. */
 @keyframes gp-glide {
@@ -461,7 +461,7 @@
   84% { opacity: 0.95; transform: translate(24%, 0) rotate(-2deg); }
   100% { opacity: 0; transform: translate(30%, -8%) rotate(4deg); }
 }
-.gp-quill { animation: gp-quill 1.7s ease-in-out both; }
+.gp-quill { animation: gp-quill 1.7s cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 /* The bowling skull: rolls the full width of the crop. (The skull is now
    writ truly colossal — ~56% of the visible board — so it starts further
@@ -502,7 +502,7 @@
   62% { opacity: 0.5; }
   100% { opacity: 0; }
 }
-.gp-dim { animation: gp-dim calc(0.8s * var(--fx-dur, 1)) ease-in-out both; }
+.gp-dim { animation: gp-dim calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 /* The rumble line: a ground seam shivers with what's coming. */
 @keyframes gp-rumble {
@@ -514,7 +514,7 @@
   68% { opacity: 0.7; transform: translate(0.5%, -5%) scaleX(1); }
   100% { opacity: 0; transform: translate(0, 0) scaleX(1); }
 }
-.gp-rumble { animation: gp-rumble calc(0.62s * var(--fx-dur, 1)) ease-in-out both; }
+.gp-rumble { animation: gp-rumble calc(0.62s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 /* Loose energy converging on the point where the event is about to land
    (vars --dx / --dy are the START offset; absorbed on arrival). */
@@ -523,7 +523,7 @@
   22% { opacity: 1; }
   100% { opacity: 0; transform: translate(0, 0) scale(1); }
 }
-.gp-gather { animation: gp-gather calc(0.5s * var(--fx-dur, 1)) ease-in both; }
+.gp-gather { animation: gp-gather calc(0.5s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 1, 0.45) both; }
 
 /* Per-square tell: a focus ring converges onto the target square, wound
    tighter the deeper into the victim order this square falls (--gp-wind is set
@@ -533,7 +533,7 @@
   30% { opacity: 0.95; }
   100% { opacity: 0; transform: scale(0.55) rotate(var(--gp-wind, 45deg)); }
 }
-.gp-focus { animation: gp-focus calc(0.32s * var(--fx-dur, 1)) ease-in both; }
+.gp-focus { animation: gp-focus calc(0.32s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 1, 0.45) both; }
 
 /* --- Directional (the geometry contract, §0 of the design brief) ----------- */
 
@@ -548,7 +548,7 @@
   62% { opacity: 0.7; transform: translate(var(--gp-lean, 0%), var(--gp-tip, 0%)) scaleX(1.12); }
   100% { opacity: 0; transform: translate(calc(var(--gp-lean, 0%) * 1.4), calc(var(--gp-tip, 0%) * 1.4)) scaleX(1.2); }
 }
-.gp-rake { animation: gp-rake calc(1.25s * var(--fx-dur, 1)) ease-out both; }
+.gp-rake { animation: gp-rake calc(1.25s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* LANCE — the strike arriving down this square's own leg. Length comes from
    --fx-len and the heading from --fx-ang (both applied inline), so a sweep
@@ -569,7 +569,7 @@
   40% { opacity: 0.9; transform: scaleX(1); }
   100% { opacity: 0; transform: scaleX(1.1); }
 }
-.gp-entglow { animation: gp-entglow calc(0.62s * var(--fx-dur, 1)) ease-out both; }
+.gp-entglow { animation: gp-entglow calc(0.62s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* The halo ring opens around it. */
 @keyframes gp-entring {
@@ -595,7 +595,7 @@
   40% { opacity: 0.8; transform: scale(1); }
   100% { opacity: 0; transform: scale(0.86); }
 }
-.gp-entseal { animation: gp-entseal calc(0.7s * var(--fx-dur, 1)) ease-out both; }
+.gp-entseal { animation: gp-entseal calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- Settle ------------------------------------------------------------------ */
 
@@ -612,7 +612,7 @@
   82% { opacity: 0.3; transform: translateY(calc(var(--gp-drift, 0%) * 0.85)) scale(1.1); }
   100% { opacity: 0; transform: translateY(var(--gp-drift, 0%)) scale(1.2); }
 }
-.gp-afterglow { animation: gp-afterglow calc(1.7s * var(--fx-dur, 1)) ease-out both; }
+.gp-afterglow { animation: gp-afterglow calc(1.7s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* An ash fleck drifting down past the afterglow (var --dx gives the sway). */
 @keyframes gp-ash {
@@ -621,7 +621,7 @@
   60% { opacity: 0.7; transform: translate(calc(var(--dx, 0%) * 0.6), 170%) rotate(140deg); }
   100% { opacity: 0; transform: translate(var(--dx, 0%), 340%) rotate(230deg); }
 }
-.gp-ash { animation: gp-ash calc(1.7s * var(--fx-dur, 1)) ease-in both; }
+.gp-ash { animation: gp-ash calc(1.7s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 1, 0.45) both; }
 
 /* A slow-rising ember with hang-time: climbs, stalls mid-air, winks out.
    Layered into every Settle so the aftermath breathes ~0.7s longer. */
@@ -632,7 +632,7 @@
   62% { opacity: 0.85; transform: translate(calc(var(--dx, 0%) * 0.8), -165%) scale(0.9); }
   100% { opacity: 0; transform: translate(var(--dx, 0%), -240%) scale(0.5); }
 }
-.gp-emberhang { animation: gp-emberhang calc(1.6s * var(--fx-dur, 1)) ease-out both; }
+.gp-emberhang { animation: gp-emberhang calc(1.6s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- Atomic (total_atomic / chain_atomic) ------------------------------------- */
 
@@ -642,7 +642,7 @@
   28% { opacity: 1; transform: scale(1); }
   100% { opacity: 0; transform: scale(1.35); }
 }
-.gp-radglow { animation: gp-radglow calc(0.7s * var(--fx-dur, 1)) ease-out both; }
+.gp-radglow { animation: gp-radglow calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* The fallout wash: the whole sky greens as the chain spreads, then clears. */
 @keyframes gp-radwash {
@@ -651,7 +651,7 @@
   72% { opacity: 0.55; }
   100% { opacity: 0; }
 }
-.gp-radwash { animation: gp-radwash calc(1.5s * var(--fx-dur, 1)) ease-in-out both; }
+.gp-radwash { animation: gp-radwash calc(1.5s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 /* The final mushroom cloud: billows up off the strike, hangs, dissipates. */
 @keyframes gp-shroom {
@@ -673,7 +673,7 @@
   92% { opacity: 1; transform: rotate(-1deg); }
   100% { opacity: 0; transform: rotate(0deg); }
 }
-.gp-smug { animation: gp-smug calc(2s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 50% 92%; }
+.gp-smug { animation: gp-smug calc(2s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; transform-origin: 50% 92%; }
 
 /* A domino shroomlet: pops up with a squash, tips once, sinks away. */
 @keyframes gp-shroomlet {
@@ -693,7 +693,7 @@
   20% { opacity: 0.95; }
   100% { opacity: 0; transform: translate(var(--dx, 0%), -280%) scale(0.5); }
 }
-.gp-updrift { animation: gp-updrift calc(1.1s * var(--fx-dur, 1)) ease-out both; }
+.gp-updrift { animation: gp-updrift calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- Nightfall (endless_night) -------------------------------------------------- */
 
@@ -704,7 +704,7 @@
   84% { opacity: 0.85; }
   100% { opacity: 0; }
 }
-.gp-nightfall { animation: gp-nightfall calc(2.4s * var(--fx-dur, 1)) ease-in-out both; }
+.gp-nightfall { animation: gp-nightfall calc(2.4s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 /* The warm disc sinks below the field and is gone. */
 @keyframes gp-sunset {
@@ -713,7 +713,7 @@
   70% { opacity: 0.9; transform: translateY(150%) scale(1.06, 0.94); }
   100% { opacity: 0; transform: translateY(230%) scale(1.1, 0.7); }
 }
-.gp-sunset { animation: gp-sunset calc(1.1s * var(--fx-dur, 1)) ease-in both; }
+.gp-sunset { animation: gp-sunset calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 1, 0.45) both; }
 
 /* A dozing silhouette fading up out of the dark, holding, releasing. */
 @keyframes gp-snooze {
@@ -722,7 +722,7 @@
   84% { opacity: 0.95; }
   100% { opacity: 0; transform: translateY(0); }
 }
-.gp-snooze { animation: gp-snooze calc(1.7s * var(--fx-dur, 1)) ease-out both; }
+.gp-snooze { animation: gp-snooze calc(1.7s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* The nightcap: drops on, settles with a tiny bounce, stays for the night. */
 @keyframes gp-capdrop {
@@ -742,7 +742,7 @@
   60% { opacity: 0.8; transform: translate(-4%, -110%) scale(1) rotate(-5deg); }
   100% { opacity: 0; transform: translate(6%, -190%) scale(1.08) rotate(6deg); }
 }
-.gp-zrise { animation: gp-zrise calc(1.2s * var(--fx-dur, 1)) ease-out both; }
+.gp-zrise { animation: gp-zrise calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- Deep freeze (absolute_zero) -------------------------------------------------- */
 
@@ -764,7 +764,7 @@
   86% { opacity: 0.5; transform: translate(5%, -3%) scale(1.04); }
   100% { opacity: 0; transform: translate(5%, -3%) scale(1.04); }
 }
-.gp-breath { animation: gp-breath calc(0.85s * var(--fx-dur, 1)) ease-out both; }
+.gp-breath { animation: gp-breath calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* A frozen shard tinkling down (var --dx gives the scatter). Also the salt. */
 @keyframes gp-tinkle {
@@ -772,7 +772,7 @@
   18% { opacity: 1; }
   100% { opacity: 0; transform: translate(var(--dx, 0%), 320%) rotate(170deg); }
 }
-.gp-tinkle { animation: gp-tinkle calc(0.8s * var(--fx-dur, 1)) ease-in both; }
+.gp-tinkle { animation: gp-tinkle calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 1, 0.45) both; }
 
 /* --- Card-fiction layers ------------------------------------------------------------ */
 
@@ -785,7 +785,7 @@
   86% { opacity: 0.95; transform: rotate(3deg); }
   100% { opacity: 0; transform: rotate(0deg); }
 }
-.gp-sway { animation: gp-sway calc(1.7s * var(--fx-dur, 1)) ease-in-out both; }
+.gp-sway { animation: gp-sway calc(1.7s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 /* A sprout wilting at the stem (salted_earth). Pivot set inline at the base. */
 @keyframes gp-wilt {
@@ -794,7 +794,7 @@
   70% { opacity: 0.9; transform: rotate(38deg) scaleY(0.92); }
   100% { opacity: 0; transform: rotate(46deg) scaleY(0.88); }
 }
-.gp-wilt { animation: gp-wilt calc(1s * var(--fx-dur, 1)) ease-in both; }
+.gp-wilt { animation: gp-wilt calc(1s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 1, 0.45) both; }
 
 /* A torn calendar page fluttering away (vars give the end pose). */
 @keyframes gp-flutter {
@@ -804,7 +804,7 @@
   74% { opacity: 0.85; transform: translate(calc(var(--dx, 0%) * 0.8), calc(var(--dy, 0%) * 0.8 - 8%)) rotate(calc(var(--rot, 60deg) * 0.85)); }
   100% { opacity: 0; transform: translate(var(--dx, 0%), var(--dy, 0%)) rotate(var(--rot, 60deg)); }
 }
-.gp-flutter { animation: gp-flutter calc(1.3s * var(--fx-dur, 1)) ease-in-out both; }
+.gp-flutter { animation: gp-flutter calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 /* A noble breaking for its own edge of the board, bobbing as it runs. */
 @keyframes gp-flee {
@@ -846,7 +846,7 @@
   70% { opacity: 0.75; }
   100% { opacity: 0; }
 }
-.gp-vignette { animation: gp-vignette calc(2.2s * var(--fx-dur, 1)) ease-in-out both; }
+.gp-vignette { animation: gp-vignette calc(2.2s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 /* The incoming entity's shadow sweeping across the board during the tell
    (also HostMarch's banner shadows passing over the ranks). */
@@ -856,7 +856,7 @@
   78% { opacity: 0.7; transform: translateX(42%) skewX(-8deg); }
   100% { opacity: 0; transform: translateX(58%) skewX(-8deg); }
 }
-.gp-shadowpass { animation: gp-shadowpass calc(0.7s * var(--fx-dur, 1)) ease-in-out both; }
+.gp-shadowpass { animation: gp-shadowpass calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 /* TitanRise debris: chunks LIFT off the split ground, hang a beat weightless,
    then slam back down past the rim (var --dx gives the drift). */
@@ -893,7 +893,7 @@
   74% { opacity: 0.8; transform: scaleX(0.96); }
   100% { opacity: 0; transform: scaleX(0.2); }
 }
-.gp-tear { animation: gp-tear calc(1.5s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 50% 50%; }
+.gp-tear { animation: gp-tear calc(1.5s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; transform-origin: 50% 50%; }
 
 /* CelestialRing: the ring gyroscopes in 3D — tips edge-on, precesses, and
    LOCKS flat over the board before the alignment pulse. */
@@ -915,7 +915,7 @@
   70% { opacity: 0.55; transform: translateX(28%) scale(1.06); }
   100% { opacity: 0; transform: translateX(48%) scale(1.12); }
 }
-.gp-fog { animation: gp-fog calc(1.5s * var(--fx-dur, 1)) ease-in-out both; }
+.gp-fog { animation: gp-fog calc(1.5s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 /* ForgeColossus: an anvil spark fired UP the fountain — fast climb, a beat of
    hang-time at apex, then the fall (vars --dx / --dy set the apex). */
@@ -946,7 +946,7 @@
   74% { opacity: 0.45; }
   100% { opacity: 0; transform: scale(1.03) rotate(2deg); }
 }
-.gp-clockghost { animation: gp-clockghost calc(1.6s * var(--fx-dur, 1)) ease-in-out both; }
+.gp-clockghost { animation: gp-clockghost calc(1.6s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 /* --- Animations off (Settings) ---------------------------------------------
    Mirror effects.css: the plays are pure flourish; the persistent state is the

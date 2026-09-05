@@ -42,8 +42,10 @@ function clockLabel(timeSec: number, incrementSec: number): string {
 // Live-game list ordering: one fixed default, most watched first (ties broken
 // by the stronger board). The first game is the featured board (unless the
 // viewer pinned one).
-// How many live games the rail shows before folding behind "Show all".
-const TV_LIST_FOLD = 12;
+// How many live games the rail shows before folding behind "Show all". Eight
+// rows sit about level with the featured board; the list scrolls inside its
+// box past that instead of running the page on down.
+const TV_LIST_FOLD = 8;
 
 function orderLiveGames(games: MPLobbyGame[]): MPLobbyGame[] {
   const best = (g: MPLobbyGame) =>
@@ -107,7 +109,7 @@ function TvBoardSkeleton({ status }: { status: string }) {
         })}
       </div>
       <div className="skeleton absolute inset-0" aria-hidden />
-      <div className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-2 bg-ink-900/70 px-3 py-2">
+      <div className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-2 bg-[color:var(--bg-base)] px-3 py-2">
         <Radio size={14} className="animate-flicker text-gold-leaf" aria-hidden />
         <p role="status" aria-live="polite" className="text-[12px] text-parchment-200">
           {status}
@@ -254,20 +256,20 @@ function TvView() {
   if (fullscreen && !hasBoard) setFullscreen(false);
 
   const liveBadge = (
-    <span className="inline-flex items-center gap-1.5 rounded-[1px] border border-[rgb(var(--pos-rgb)/0.4)] bg-[rgb(var(--pos-rgb)/0.12)] px-2 py-0.5 text-[12px] font-semibold text-[rgb(var(--pos-rgb))]">
+    <span className="inline-flex items-center gap-1.5 rounded-none border border-[rgb(var(--pos-rgb)/0.4)] bg-[rgb(var(--pos-rgb)/0.12)] px-2 py-0.5 text-[12px] font-semibold text-[rgb(var(--pos-rgb))]">
       <span className="h-1.5 w-1.5 rounded-full bg-[rgb(var(--pos-rgb))] animate-flicker" aria-hidden />
       Live
     </span>
   );
   const finalBadge = (
-    <span className="inline-flex items-center rounded-[1px] border border-[color:var(--edge-strong)] bg-white/[0.04] px-2 py-0.5 text-[12px] font-semibold uppercase tracking-[0.08em] text-parchment-300">
+    <span className="inline-flex items-center rounded-none border border-[color:var(--edge-strong)] bg-[color:var(--bg-zebra)] px-2 py-0.5 text-[12px] font-semibold uppercase tracking-[0.08em] text-parchment-300">
       Final
     </span>
   );
   // The rerun marker: the LIVE badge's shape in the ember tint, so an archived
   // replay can never be mistaken for a running game.
   const replayBadge = (
-    <span className="inline-flex items-center gap-1.5 rounded-[1px] border border-[rgb(var(--energy-ember-rgb)/0.4)] bg-[rgb(var(--energy-ember-rgb)/0.12)] px-2 py-0.5 text-[12px] font-semibold uppercase tracking-[0.08em] text-[rgb(var(--energy-ember-rgb))]">
+    <span className="inline-flex items-center gap-1.5 rounded-none border border-[rgb(var(--energy-ember-rgb)/0.4)] bg-[rgb(var(--energy-ember-rgb)/0.12)] px-2 py-0.5 text-[12px] font-semibold uppercase tracking-[0.08em] text-[rgb(var(--energy-ember-rgb))]">
       <span className="h-1.5 w-1.5 rounded-full bg-[rgb(var(--energy-ember-rgb))]" aria-hidden />
       Replay
     </span>
@@ -304,7 +306,7 @@ function TvView() {
               "h-2.5 w-2.5 shrink-0 rounded-full " +
               (color === "w"
                 ? "border border-black/40 bg-[#e8e6e1]"
-                : "border border-white/30 bg-[#1a1a22]")
+                : "border border-[color:var(--edge-strong)] bg-[#1a1a22]")
             }
             aria-hidden
           />
@@ -334,7 +336,7 @@ function TvView() {
           type="button"
           onClick={() => setFullscreen(true)}
           aria-label="Watch fullscreen"
-          className="press absolute right-2 top-2 grid h-9 w-9 place-items-center rounded-sm border border-[color:var(--edge-strong)] bg-ink-900/70 text-parchment-200 transition-colors hover:border-gold/50 hover:text-gold-leaf"
+          className="absolute right-2 top-2 grid h-9 w-9 place-items-center rounded-none border border-[color:var(--edge-strong)] bg-[color:var(--bg-base)] text-parchment-200 transition-colors hover:border-[color:var(--edge-strong)] hover:text-gold-leaf"
         >
           <Maximize2 size={16} aria-hidden />
         </button>
@@ -357,7 +359,7 @@ function TvView() {
     boardRegion = (
       <div role="alert" className="grid aspect-square w-full place-items-center plate p-6">
         <div className="flex max-w-sm flex-col items-center text-center">
-          <div className="grid h-16 w-16 place-items-center rounded-full border border-[color:var(--edge-strong)] bg-white/[0.03]">
+          <div className="grid h-16 w-16 place-items-center rounded-full border border-[color:var(--edge-strong)] bg-[color:var(--bg-zebra)]">
             <Radio size={40} className="text-parchment-400" aria-hidden />
           </div>
           <p className="mt-4 text-[15px] font-display font-semibold text-parchment-100">
@@ -366,7 +368,7 @@ function TvView() {
           <button
             type="button"
             onClick={reloadLobby}
-            className="press mt-5 inline-flex min-h-[44px] items-center rounded-sm border border-[color:var(--edge)] bg-white/[0.03] px-4 py-2 font-display text-[13px] font-medium text-parchment-200 transition-colors hover:bg-white/[0.07] hover:text-parchment-100 sm:min-h-[36px]"
+            className="mt-5 inline-flex min-h-[44px] items-center rounded-none border border-[color:var(--edge)] bg-[color:var(--bg-zebra)] px-4 py-2 font-display text-[13px] font-medium text-parchment-200 transition-colors hover:bg-[color:var(--bg-raised)] hover:text-parchment-100 sm:min-h-[36px]"
           >
             Retry
           </button>
@@ -377,7 +379,7 @@ function TvView() {
     boardRegion = (
       <div className="grid aspect-square w-full place-items-center plate p-6">
         <div className="flex max-w-sm flex-col items-center text-center">
-          <div className="grid h-16 w-16 place-items-center rounded-full border border-[color:var(--edge-strong)] bg-white/[0.03]">
+          <div className="grid h-16 w-16 place-items-center rounded-full border border-[color:var(--edge-strong)] bg-[color:var(--bg-zebra)]">
             <Piece type="n" color="w" size={44} />
           </div>
           <p className="mt-4 text-[15px] font-display font-semibold text-parchment-100">
@@ -436,7 +438,7 @@ function TvView() {
                     onClick={() => stepGame(-1)}
                     disabled={!canNavigate}
                     aria-label="Previous live game"
-                    className="press grid h-9 w-9 place-items-center rounded-sm border border-[color:var(--edge)] text-parchment-200 transition-colors hover:border-gold/50 hover:text-gold-leaf disabled:opacity-35 disabled:hover:border-[color:var(--edge)] disabled:hover:text-parchment-200"
+                    className="grid h-9 w-9 place-items-center rounded-none border border-[color:var(--edge)] text-parchment-200 transition-colors hover:border-[color:var(--edge-strong)] hover:text-gold-leaf disabled:opacity-35 disabled:hover:border-[color:var(--edge)] disabled:hover:text-parchment-200"
                   >
                     <ChevronLeft size={18} aria-hidden />
                   </button>
@@ -445,7 +447,7 @@ function TvView() {
                     onClick={() => stepGame(1)}
                     disabled={!canNavigate}
                     aria-label="Next live game"
-                    className="press grid h-9 w-9 place-items-center rounded-sm border border-[color:var(--edge)] text-parchment-200 transition-colors hover:border-gold/50 hover:text-gold-leaf disabled:opacity-35 disabled:hover:border-[color:var(--edge)] disabled:hover:text-parchment-200"
+                    className="grid h-9 w-9 place-items-center rounded-none border border-[color:var(--edge)] text-parchment-200 transition-colors hover:border-[color:var(--edge-strong)] hover:text-gold-leaf disabled:opacity-35 disabled:hover:border-[color:var(--edge)] disabled:hover:text-parchment-200"
                   >
                     <ChevronRight size={18} aria-hidden />
                   </button>
@@ -491,7 +493,7 @@ function TvView() {
             <div
               role="group"
               aria-label="TV channel"
-              className="flex items-stretch gap-1 rounded-sm border border-[color:var(--edge)] bg-ink-900/40 p-1"
+              className="flex items-stretch gap-1 rounded-none border border-[color:var(--edge)] bg-[color:var(--bg-base)] p-1"
             >
               {channels.map((channel) => (
                 <Link
@@ -499,10 +501,10 @@ function TvView() {
                   href={channel.href}
                   aria-current={channel.active ? "page" : undefined}
                   className={
-                    "flex-1 rounded-[2px] px-3 py-1.5 text-center font-display text-[13px] font-semibold transition-colors " +
+                    "flex-1 rounded-none px-3 py-1.5 text-center font-display text-[13px] font-semibold transition-colors " +
                     (channel.active
                       ? "bg-[rgb(var(--accent-rgb)/0.16)] text-gold-leaf"
-                      : "text-parchment-400 hover:bg-white/[0.05] hover:text-parchment-100")
+                      : "text-parchment-400 hover:bg-[color:var(--bg-raised)] hover:text-parchment-100")
                   }
                 >
                   {channel.label}
@@ -531,7 +533,7 @@ function TvView() {
                     <button
                       type="button"
                       onClick={reloadLobby}
-                      className="rounded-sm border border-[color:var(--edge)] bg-white/[0.03] px-3 py-1.5 text-[12px] font-medium text-parchment-200 transition-colors hover:bg-white/[0.07] hover:text-parchment-100"
+                      className="rounded-none border border-[color:var(--edge)] bg-[color:var(--bg-zebra)] px-3 py-1.5 text-[12px] font-medium text-parchment-200 transition-colors hover:bg-[color:var(--bg-raised)] hover:text-parchment-100"
                     >
                       Retry
                     </button>
@@ -546,11 +548,19 @@ function TvView() {
                   </div>
                 )
               ) : liveGames.length === 0 ? (
-                <p className="px-3 py-4 text-[13px] text-parchment-400">
-                  Nothing live in this channel right now.
-                </p>
+                <div className="px-3 py-4 text-[13px] text-parchment-400">
+                  <p>Nothing live in this channel right now.</p>
+                  {/* A filtered channel can be empty while the other pool is
+                      busy; say so, so "no live games" never reads as "the site
+                      is dead" when it is only the filter. */}
+                  {modeFilter && (lobby?.games.length ?? 0) > 0 && (
+                    <Link href="/tv" className="mt-1 inline-block text-gold-leaf hover:underline">
+                      {lobby!.games.length} live in all channels →
+                    </Link>
+                  )}
+                </div>
               ) : (
-                <ul className="divide-y divide-[color:var(--edge)]">
+                <ul className="max-h-[34rem] divide-y divide-[color:var(--edge)] overflow-y-auto">
                   {(showAllGames ? liveGames : liveGames.slice(0, TV_LIST_FOLD)).map((g: MPLobbyGame) => {
                     const selected = g.id === shownId;
                     return (
@@ -617,14 +627,14 @@ function TvView() {
       </section>
 
       {/* Fullscreen overlay: the board scaled to the viewport. Escape or the
-          button exits. A CSS fixed overlay (no backdrop-blur, per the system). */}
+          button exits. A CSS fixed overlay (no, per the system). */}
       {fullscreen && hasBoard && (
         <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto overscroll-contain bg-ink-900/95 p-4">
           <button
             type="button"
             onClick={() => setFullscreen(false)}
             aria-label="Exit fullscreen"
-            className="press absolute right-4 top-4 grid h-11 w-11 place-items-center rounded-sm border border-[color:var(--edge-strong)] bg-ink-900/70 text-parchment-100 transition-colors hover:border-gold/50 hover:text-gold-leaf"
+            className="absolute right-4 top-4 grid h-11 w-11 place-items-center rounded-none border border-[color:var(--edge-strong)] bg-[color:var(--bg-base)] text-parchment-100 transition-colors hover:border-[color:var(--edge-strong)] hover:text-gold-leaf"
           >
             <X size={20} aria-hidden />
           </button>

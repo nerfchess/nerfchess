@@ -54,6 +54,7 @@ import { draftZones } from "@/lib/draftOnline";
 import { computeFxVisual, fxVisualFields } from "@/components/effects/fxZones";
 import { useSignatureQueue } from "@/components/effects/useSignatureQueue";
 import { MobileBuffDrawer } from "@/components/MobileBuffDrawer";
+import { cardFaceIcon } from "@/lib/cardIcon";
 import { bottomChromePadClass } from "@/components/mobileChrome";
 import { DraftNotice } from "@/components/DraftNotice";
 import {
@@ -1454,7 +1455,7 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
         <main className="min-h-screen flex items-center justify-center px-4 py-8">
           <div className="w-full max-w-2xl">
             <div className="text-[12px] text-parchment-400 text-center">Nerf draft</div>
-            <h1 className="font-display text-4xl text-parchment text-center mt-1">
+            <h1 className="page-title text-parchment text-center mt-1">
               Choose your handicap
             </h1>
             <p className="mt-2 text-sm text-parchment-300 text-center">
@@ -2220,6 +2221,24 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
                 }).length
           }
           autoCloseWhen={!!buffTargeting.targeting}
+          preview={
+            <>
+              {game.buffs.players[myColor].buffs.slice(0, 6).map((inst, i) => {
+                const def = BUFF_BY_ID[inst.id];
+                if (!def) return null;
+                const Icon = cardFaceIcon(def.id, def.category, def.icon);
+                return (
+                  <span
+                    key={`${inst.id}-${i}`}
+                    title={def.name}
+                    className={`grid h-6 w-6 shrink-0 place-items-center border tier-bg-${def.tier} tier-${def.tier} ${inst.spent ? "opacity-40" : ""}`}
+                  >
+                    {Icon ? <Icon size={13} strokeWidth={1.8} /> : null}
+                  </span>
+                );
+              })}
+            </>
+          }
         >
           <BuffDock
             game={game}

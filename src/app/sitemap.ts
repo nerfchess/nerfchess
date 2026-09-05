@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { ALL_BUFFS } from "@/engine/buffs/library";
 import { ALL_NERFS } from "@/engine/nerfs/library";
 import { cardPath } from "@/lib/cardCodex";
+import { isRetired } from "@/engine/retired";
 
 const BASE = "https://nerfchess.com";
 
@@ -27,8 +28,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const cardEntries: MetadataRoute.Sitemap = [
     // cardPath sends hexes and boons to their family namespaces; plain buffs
     // and items stay at /codex/buff. Only canonical paths are listed.
-    ...ALL_BUFFS.filter((b) => b.implemented).map((b) => entry(cardPath(b), 0.4, "monthly")),
-    ...ALL_NERFS.filter((n) => n.implemented).map((n) => entry(`/codex/nerf/${n.id}`, 0.4, "monthly")),
+    ...ALL_BUFFS.filter((b) => b.implemented && !isRetired(b.id)).map((b) => entry(cardPath(b), 0.4, "monthly")),
+    ...ALL_NERFS.filter((n) => n.implemented && !isRetired(n.id)).map((n) => entry(`/codex/nerf/${n.id}`, 0.4, "monthly")),
   ];
 
   return [

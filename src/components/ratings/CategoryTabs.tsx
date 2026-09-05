@@ -38,7 +38,7 @@ export function CategoryTabs({
               "-mb-px flex shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 px-1 pb-2.5 pt-1 text-[13px] font-medium transition-colors duration-150 " +
               (selected
                 ? "border-[color:var(--accent)] text-parchment-50"
-                : "border-transparent text-parchment-300 hover:border-white/25 hover:text-parchment-100")
+                : "border-transparent text-parchment-300 hover:border-[color:var(--edge-strong)] hover:text-parchment-100")
             }
           >
             <Icon

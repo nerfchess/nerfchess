@@ -57,7 +57,7 @@ export default async function BuffCardPage(props: { params: Promise<{ id: string
             <img
               src={`/newjeans/${buff.id}.svg`}
               alt={`${buff.name} portrait`}
-              className="h-auto w-full rounded-sm"
+              className="h-auto w-full rounded-none"
               draggable={false}
             />
           </div>

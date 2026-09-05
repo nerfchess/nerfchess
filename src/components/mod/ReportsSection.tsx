@@ -65,7 +65,7 @@ export function ReportsSection({ onHandled }: { onHandled?: () => void }) {
               <div className="flex flex-wrap items-center gap-2 text-sm">
                 <Link
                   href={`/u/${r.reported_name}`}
-                  className="font-display font-semibold text-gold-leaf hover:underline"
+                  className="font-display font-semibold text-parchment-50 hover:underline"
                 >
                   {r.reported_name}
                 </Link>

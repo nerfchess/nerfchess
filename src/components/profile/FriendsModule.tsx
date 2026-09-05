@@ -201,7 +201,7 @@ function OwnerFriends() {
             {incoming.map((f) => (
               <div
                 key={f.id}
-                className="flex items-center gap-3 rounded border border-gold/30 bg-gold/[0.06] p-2.5"
+                className="flex items-center gap-3 rounded border border-[color:var(--edge-strong)] bg-gold/[0.06] p-2.5"
               >
                 <Identity f={f} lobby={lobby} />
                 <div className="ml-auto flex shrink-0 items-center gap-2">
@@ -240,7 +240,7 @@ function OwnerFriends() {
               onChange={(e) => setFilter(e.target.value)}
               placeholder="Filter friends"
               aria-label="Filter friends by name"
-              className="min-h-[44px] w-full rounded border border-white/15 bg-ink-900/60 pl-9 pr-3 text-sm text-parchment placeholder:text-parchment-500 focus:border-gold/60 focus:outline-none"
+              className="min-h-[44px] w-full rounded border border-[color:var(--edge)] bg-[color:var(--bg-base)] pl-9 pr-3 text-sm text-parchment placeholder:text-parchment-500 focus:border-[color:var(--edge-strong)] focus:outline-none"
             />
           </div>
         )}
@@ -262,7 +262,7 @@ function OwnerFriends() {
             <button
               type="button"
               onClick={() => setExpanded(true)}
-              className="press mt-1 w-full min-h-[36px] border px-3 py-1.5 text-[13px] font-medium text-parchment-300 transition-colors hover:text-parchment-100"
+              className="mt-1 w-full min-h-[36px] border px-3 py-1.5 text-[13px] font-medium text-parchment-300 transition-colors hover:text-parchment-100"
               style={{ borderColor: "var(--edge)" }}
             >
               Show all {matched.length}
@@ -272,7 +272,7 @@ function OwnerFriends() {
 
         {/* Outgoing requests: collapsed by default, cancel from within. */}
         {outgoing.length > 0 && (
-          <div className="border-t border-white/10 pt-3">
+          <div className="border-t border-[color:var(--edge)] pt-3">
             <button
               type="button"
               onClick={() => setShowOutgoing((v) => !v)}
@@ -329,7 +329,7 @@ function FriendRow({
 }) {
   const presence = derivePresence(lobby, f.username);
   return (
-    <div className="flex items-center gap-3 rounded border border-white/10 bg-white/[0.02] p-2.5">
+    <div className="flex items-center gap-3 rounded border border-[color:var(--edge)] bg-[color:var(--bg-zebra)] p-2.5">
       <Identity f={f} lobby={lobby} presence={presence} />
       <div className="ml-auto flex shrink-0 items-center gap-1.5">
         {presence.state === "in-game" && presence.gameId && (
@@ -397,7 +397,7 @@ function RowMenu({ username, busy, onRemove }: { username: string; busy: boolean
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={`More actions for ${username}`}
-        className="grid h-11 w-11 place-items-center rounded border border-white/10 text-parchment-400 transition hover:border-white/25 hover:text-parchment-200"
+        className="grid h-11 w-11 place-items-center rounded border border-[color:var(--edge)] text-parchment-400 transition hover:border-[color:var(--edge-strong)] hover:text-parchment-200"
       >
         <MoreVertical size={16} strokeWidth={2.2} aria-hidden />
       </button>
@@ -523,7 +523,7 @@ function PublicFriends({ username }: { username: string }) {
           return (
             <div
               key={f.username}
-              className="flex items-center gap-3 rounded border border-white/10 bg-white/[0.02] p-2.5"
+              className="flex items-center gap-3 rounded border border-[color:var(--edge)] bg-[color:var(--bg-zebra)] p-2.5"
             >
               <Identity f={f} lobby={lobby} presence={presence} tag={f.mutual ? "Mutual" : undefined} />
               {presence.state === "in-game" && presence.gameId && (
@@ -569,7 +569,7 @@ function Identity({
             <span className="shrink-0 font-mono text-[12px] tabular-nums text-parchment-400">{f.rating}</span>
           )}
           {tag && (
-            <span className="shrink-0 rounded-[1px] border border-verdigris-glow/40 bg-verdigris/10 px-1.5 py-px text-[12px] text-verdigris-glow">
+            <span className="shrink-0 rounded-none border border-verdigris-glow/40 bg-verdigris/10 px-1.5 py-px text-[12px] text-verdigris-glow">
               {tag}
             </span>
           )}
@@ -597,10 +597,10 @@ function SkeletonRows() {
   return (
     <div className="space-y-2" aria-hidden>
       {[0, 1, 2, 3].map((i) => (
-        <div key={i} className="flex items-center gap-3 rounded border border-white/10 bg-white/[0.02] p-2.5">
-          <div className="h-[34px] w-[34px] shrink-0 animate-pulse rounded-md bg-white/10 motion-reduce:animate-none" />
+        <div key={i} className="flex items-center gap-3 rounded border border-[color:var(--edge)] bg-[color:var(--bg-zebra)] p-2.5">
+          <div className="h-[34px] w-[34px] shrink-0 animate-pulse rounded-none bg-[color:var(--bg-raised)] motion-reduce:animate-none" />
           <div className="min-w-0 flex-1 space-y-1.5">
-            <div className="h-3.5 w-1/3 animate-pulse rounded bg-white/10 motion-reduce:animate-none" />
+            <div className="h-3.5 w-1/3 animate-pulse rounded bg-[color:var(--bg-raised)] motion-reduce:animate-none" />
             <div className="h-2.5 w-1/4 animate-pulse rounded bg-white/[0.07] motion-reduce:animate-none" />
           </div>
         </div>

@@ -218,9 +218,10 @@ export const HEXES_T6: Buff[] = [
   ),
 
   // --- freeze every minor piece (knights and bishops) ---------------------
-  H(
+  hex(
     {
       id: "glacial_flanks",
+      tier: 4,
       name: "Glacial Flanks",
       description: "Freeze your opponent's knights and bishops for 1 of their turns.",
       flavor: "Both wings of the army seize in the cold.",

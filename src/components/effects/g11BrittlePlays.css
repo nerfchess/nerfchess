@@ -40,14 +40,14 @@
   66% { opacity: 0.44; }
   100% { opacity: 0; }
 }
-.g11-wash { animation: g11-wash calc(1.6s * var(--fx-dur, 1)) ease-out both; }
+.g11-wash { animation: g11-wash calc(1.6s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g11-rim {
   0% { opacity: 0; transform: scale(0.95); }
   40% { opacity: 1; transform: scale(1); }
   100% { opacity: 0; transform: scale(1.02); }
 }
-.g11-rim { animation: g11-rim calc(1.05s * var(--fx-dur, 1)) ease-out both; }
+.g11-rim { animation: g11-rim calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- Geometry-driven tracks ----------------------------------------------- */
 
@@ -59,7 +59,7 @@
   80% { opacity: 0.58; transform: translate(calc(var(--fx-ox, 0) * 2.6%), calc(var(--fx-oy, 0) * 1.6%)) scaleX(1); }
   100% { opacity: 0; transform: translate(calc(var(--fx-ox, 0) * 2.6%), calc(var(--fx-oy, 0) * 1.6%)) scaleX(1); }
 }
-.g11-lean { animation: g11-lean calc(1s * var(--fx-dur, 1)) ease-out both; }
+.g11-lean { animation: g11-lean calc(1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* A crack (or a smear) that runs the length of the play's own leg. The 0.5
    floor keeps the run visible on a cast lead, where there is no travel. */
@@ -89,7 +89,7 @@
   40% { opacity: 0.95; transform: translateX(0) rotate(calc(var(--fx-ox, 0) * -2deg)); }
   100% { opacity: 0; transform: translateX(70%) rotate(calc(var(--fx-ox, 0) * -2deg)); }
 }
-.g11-tiltin { animation: g11-tiltin calc(0.85s * var(--fx-dur, 1)) ease-in-out both; }
+.g11-tiltin { animation: g11-tiltin calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 /* --- Per-square target cut ------------------------------------------------ */
 
@@ -108,7 +108,7 @@
   60% { transform: scale(1); }
   100% { opacity: 0; transform: scale(1.08); }
 }
-.g11-hit2 { animation: g11-hit2 calc(0.7s * var(--fx-dur, 1)) ease-out both; }
+.g11-hit2 { animation: g11-hit2 calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* The hit's arrival leans in from the caster's side of the board. */
 @keyframes g11-hitside {
@@ -127,7 +127,7 @@
   30% { opacity: 1; transform: translateY(-26%) scale(1); }
   100% { opacity: 0; transform: translateY(-150%) scale(0.6); }
 }
-.g11-mote { animation: g11-mote calc(1.15s * var(--fx-dur, 1)) ease-out both; }
+.g11-mote { animation: g11-mote calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g11-dust {
   0% { opacity: 0; transform: translateY(-20%) scale(0.6); }
@@ -142,7 +142,7 @@
   56% { transform: scale(1); }
   100% { opacity: 0; transform: scale(1.2); }
 }
-.g11-glint { animation: g11-glint calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+.g11-glint { animation: g11-glint calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g11-shard {
   0% { opacity: 0; transform: translate(0, 0) rotate(0deg) scale(0.5); }
@@ -186,7 +186,7 @@
   40% { opacity: 0.9; transform: scale(1) rotate(calc(var(--fx-ox, 0) * -3deg)); }
   100% { opacity: 0; transform: scale(1.14) rotate(calc(var(--fx-ox, 0) * -3deg)); }
 }
-.g11-ent-tilt { animation: g11-ent-tilt calc(1s * var(--fx-dur, 1)) ease-out both; }
+.g11-ent-tilt { animation: g11-ent-tilt calc(1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* =============================================================================
    1. Cold Snap — the wine glass ringing itself apart
@@ -274,7 +274,7 @@
   84% { opacity: 0.7; }
   100% { opacity: 0; transform: scale(1.01); }
 }
-.g11-cm-sheet { animation: g11-cm-sheet calc(1.35s * var(--fx-dur, 1)) ease-out both; }
+.g11-cm-sheet { animation: g11-cm-sheet calc(1.35s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g11-cm-chip {
   0% { opacity: 0; transform: scale(2.2) translateY(-40%); }
@@ -355,7 +355,7 @@
   76% { opacity: 0.8; transform: scale(1); }
   100% { opacity: 0; transform: scale(1); }
 }
-.g11-pl-piece { animation: g11-pl-piece calc(1.3s * var(--fx-dur, 1)) ease-out both; }
+.g11-pl-piece { animation: g11-pl-piece calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g11-pl-case {
   0% { opacity: 0; transform: translateY(-90%) scale(1.06); }
@@ -392,7 +392,7 @@
   80% { opacity: 0.7; transform: scale(1); }
   100% { opacity: 0; transform: scale(1.02); }
 }
-.g11-pl-opal { animation: g11-pl-opal calc(0.95s * var(--fx-dur, 1)) ease-out both; }
+.g11-pl-opal { animation: g11-pl-opal calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* =============================================================================
    6. Sagging Shelves — the glass shelf bows, then stars
@@ -662,7 +662,7 @@
   40% { opacity: 0.9; transform: translateX(0) scaleY(1); }
   100% { opacity: 0; transform: translateX(30%) scaleY(0.8); }
 }
-.g11-hd-taut { animation: g11-hd-taut calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+.g11-hd-taut { animation: g11-hd-taut calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* =============================================================================
    13. Jam on the Row — the preserve jar goes over
@@ -701,7 +701,7 @@
   44% { opacity: 0.95; transform: translateX(0); }
   100% { opacity: 0; transform: translateX(60%); }
 }
-.g11-jr-set { animation: g11-jr-set calc(0.85s * var(--fx-dur, 1)) ease-in-out both; }
+.g11-jr-set { animation: g11-jr-set calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 /* =============================================================================
    14. The Ides — the bell cracks on its own note
@@ -893,7 +893,7 @@
   86% { opacity: 0.7; }
   100% { opacity: 0; transform: scale(1); }
 }
-.g11-ff-sheet { animation: g11-ff-sheet calc(1.35s * var(--fx-dur, 1)) ease-out both; }
+.g11-ff-sheet { animation: g11-ff-sheet calc(1.35s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* The wheel travelling, dry and even. */
 @keyframes g11-ff-wheel {
@@ -930,7 +930,7 @@
   70% { opacity: 0.8; transform: scale(1); }
   100% { opacity: 0; transform: scale(1); }
 }
-.g11-hc-rook { animation: g11-hc-rook calc(1.3s * var(--fx-dur, 1)) ease-out both; }
+.g11-hc-rook { animation: g11-hc-rook calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g11-hc-block {
   0% { opacity: 0; transform: translateY(-12%) scale(0.88); }
@@ -986,7 +986,7 @@
   30% { opacity: 1; transform: scaleX(1); }
   100% { opacity: 0; transform: scaleX(1.5); }
 }
-.g11-pb-tick { animation: g11-pb-tick calc(0.55s * var(--fx-dur, 1)) ease-out both; }
+.g11-pb-tick { animation: g11-pb-tick calc(0.55s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* The cone of glass popping clean out from underneath. */
 @keyframes g11-pb-spall {
@@ -1057,7 +1057,7 @@
   72% { opacity: 0.78; transform: scale(1); }
   100% { opacity: 0; transform: scale(1); }
 }
-.g11-dd-piece { animation: g11-dd-piece calc(1.3s * var(--fx-dur, 1)) ease-out both; }
+.g11-dd-piece { animation: g11-dd-piece calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g11-dd-cone {
   0% { opacity: 0; transform: translateY(-110%) scale(1.1); }
@@ -1187,7 +1187,7 @@
   62% { opacity: 0.7; transform: translateY(0) scale(1); }
   100% { opacity: 0; transform: translateY(0) scale(1); }
 }
-.g11-sy-post { animation: g11-sy-post calc(1.2s * var(--fx-dur, 1)) ease-out both; }
+.g11-sy-post { animation: g11-sy-post calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* Clouding from the edge inward: slow, and then it is simply over. */
 @keyframes g11-sy-fog {
@@ -1248,7 +1248,7 @@
   76% { opacity: 0.82; transform: scale(1); }
   100% { opacity: 0; transform: scale(1); }
 }
-.g11-om-king { animation: g11-om-king calc(1.3s * var(--fx-dur, 1)) ease-out both; }
+.g11-om-king { animation: g11-om-king calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g11-om-pane {
   0% { opacity: 0; transform: scale(0.8) rotate(-6deg); }

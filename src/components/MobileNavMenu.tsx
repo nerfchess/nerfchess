@@ -203,7 +203,7 @@ export function MobileNavMenu({
                 right: panelPos.right,
                 background: "var(--bg-panel)",
                 border: "1px solid var(--border-subtle)",
-                borderRadius: "7px",
+                borderRadius: "var(--ui-roundness)",
               }}
               data-testid="mobile-nav-panel"
               className="!fixed !z-[61] max-h-[calc(100dvh-4.5rem)] w-60 max-w-[calc(100vw-1.5rem)] overflow-y-auto overscroll-contain py-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] shadow-xl"
@@ -211,7 +211,7 @@ export function MobileNavMenu({
             <Link
               href={user ? `/u/${encodeURIComponent(user.username)}` : "/login"}
               onClick={() => setOpen(false)}
-              className="flex min-h-[44px] items-center gap-2.5 px-4 py-2.5 font-display text-sm text-gold-leaf hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-gold/60"
+              className="flex min-h-[44px] items-center gap-2.5 px-4 py-2.5 font-display text-sm text-gold-leaf hover:bg-[color:var(--bg-raised)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--edge-strong)]"
             >
               {user ? (
                 <>
@@ -229,7 +229,7 @@ export function MobileNavMenu({
             </Link>
             {groups.map((group) => (
               <div key={group.header}>
-                <div className="mx-3 mb-1 mt-2 h-px bg-white/10" />
+                <div className="mx-3 mb-1 mt-2 h-px bg-[color:var(--bg-raised)]" />
                 <div className="px-4 pb-1 pt-0.5 text-[11px] text-parchment-400">{group.header}</div>
                 {group.items.map((item, ii) => {
                   const activeItem = itemActive(item.href, pathname);
@@ -241,8 +241,8 @@ export function MobileNavMenu({
                       aria-current={activeItem ? "page" : undefined}
                       style={{ ["--i" as string]: group.offset + ii }}
                       className={
-                        "flex min-h-[44px] items-center border-l-2 py-2.5 pr-4 text-sm font-medium hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-gold/60 " +
-                        (activeItem ? "border-gold-leaf bg-white/5 pl-[calc(1rem-2px)] font-semibold " : "border-transparent pl-[calc(1rem-2px)] ") +
+                        "flex min-h-[44px] items-center border-l-2 py-2.5 pr-4 text-sm font-medium hover:bg-[color:var(--bg-raised)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--edge-strong)] " +
+                        (activeItem ? "border-gold-leaf bg-[color:var(--bg-raised)] pl-[calc(1rem-2px)] font-semibold " : "border-transparent pl-[calc(1rem-2px)] ") +
                         (activeItem ? "text-gold-leaf" : item.className ?? "text-parchment-100")
                       }
                     >

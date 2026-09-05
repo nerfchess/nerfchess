@@ -7,6 +7,61 @@ import { vfxPlay } from "./vfxBus";
 import type { VfxPlay } from "./types";
 
 const DEMOS: Record<string, () => VfxPlay> = {
+  // 3D layer: a laser sweeping the whole 8th rank (derived from a tier-7 beam
+  // whose targets share a rank), a pillar rising on two squares, a shatter,
+  // and a ring wave. With the 3D layer off these fall back to 2D.
+  laser: () => ({
+    tier: 7,
+    palette: ["#ff6a3d", "#ffd2a8", "#7a1d00"],
+    source: { x: 0.06, y: 0.06 },
+    targets: [
+      { p: { x: 0.19, y: 0.06 } },
+      { p: { x: 0.44, y: 0.06 }, delayMs: 80 },
+      { p: { x: 0.81, y: 0.06 }, delayMs: 160 },
+    ],
+    travel: "beam",
+    impact: "embers",
+    aftermath: "scorch",
+    shake: true,
+  }),
+  laserMid: () => ({
+    tier: 7,
+    palette: ["#ff6a3d", "#ffd2a8", "#7a1d00"],
+    source: { x: 0.06, y: 0.56 },
+    targets: [
+      { p: { x: 0.19, y: 0.56 } },
+      { p: { x: 0.44, y: 0.56 }, delayMs: 80 },
+      { p: { x: 0.81, y: 0.56 }, delayMs: 160 },
+    ],
+    travel: "beam",
+    impact: "embers",
+    aftermath: "scorch",
+  }),
+  pillar: () => ({
+    tier: 7,
+    palette: ["#8fd8f8", "#eaf9ff"],
+    targets: [{ p: { x: 0.31, y: 0.44 } }, { p: { x: 0.56, y: 0.56 }, delayMs: 120 }],
+    travel: "none",
+    impact: "burst",
+    aftermath: "frost",
+  }),
+  shatter3d: () => ({
+    tier: 6,
+    palette: ["#f6f2ff", "#b18cff"],
+    targets: [{ p: { x: 0.56, y: 0.44 } }],
+    travel: "none",
+    impact: "shatter",
+    aftermath: "none",
+  }),
+  ring: () => ({
+    tier: 8,
+    palette: ["#ffe9a3", "#ff9d2e"],
+    source: { x: 0.5, y: 0.5 },
+    targets: [{ p: { x: 0.5, y: 0.5 } }],
+    travel: "none",
+    impact: "shock",
+    aftermath: "sparkle",
+  }),
   // sustained fire beam scorching a forward square
   fire: () => ({
     tier: 6,

@@ -36,7 +36,7 @@
   55% { opacity: 0.7; transform: scale(1, 1); }
   100% { opacity: 0; transform: scale(1.14, 1); }
 }
-.g20-tell { animation: g20-tell calc(0.3s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 100%; }
+.g20-tell { animation: g20-tell calc(0.3s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 100%; }
 
 /* The engineer's chalk line, scribed from the cast square down the vector.
    Authored pointing RIGHT; <AimStage> puts it on the real attack line. */
@@ -57,7 +57,7 @@
   68% { opacity: 0.42; }
   100% { opacity: 0; }
 }
-.g20-wash { animation: g20-wash calc(1.35s * var(--fx-dur, 1)) ease-out both; }
+.g20-wash { animation: g20-wash calc(1.35s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* The board's own edge, taking the shock of the works. */
 @keyframes g20-edge {
@@ -65,7 +65,7 @@
   35% { opacity: 0.85; transform: scale(1); }
   100% { opacity: 0; transform: scale(0.995); }
 }
-.g20-edge { animation: g20-edge calc(0.95s * var(--fx-dur, 1)) ease-out both; }
+.g20-edge { animation: g20-edge calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* ---------------------------------------------------------------------------
    3. Travel along the line (--fx-len)
@@ -97,7 +97,7 @@
   20% { opacity: 0.9; }
   100% { opacity: 0; transform: rotate(24deg); }
 }
-.g20-sweep { animation: g20-sweep calc(1.05s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 0% 50%; }
+.g20-sweep { animation: g20-sweep calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; transform-origin: 0% 50%; }
 
 /* ---------------------------------------------------------------------------
    4. Placement (a course laid, a stake driven, a deck dropped)
@@ -180,7 +180,7 @@
   30% { opacity: 0.72; }
   100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * -26%)) scale(1.55); }
 }
-.g20-dust { animation: g20-dust calc(1.1s * var(--fx-dur, 1)) ease-out both; }
+.g20-dust { animation: g20-dust calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* Spoil and chips flung clear of the cut (--sx / --sy per mote). */
 @keyframes g20-grit {
@@ -203,7 +203,7 @@
   45% { opacity: 1; transform: scale(1.15) rotate(0deg); }
   100% { opacity: 0; transform: scale(0.55) rotate(12deg); }
 }
-.g20-glint { animation: g20-glint calc(0.5s * var(--fx-dur, 1)) ease-out both; }
+.g20-glint { animation: g20-glint calc(0.5s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* The one ring per scene the brief allows. */
 @keyframes g20-ring {
@@ -223,7 +223,7 @@
   82% { transform: translateX(0.4%); }
   100% { opacity: 0; transform: translateX(0); }
 }
-.g20-shudder { animation: g20-shudder calc(0.55s * var(--fx-dur, 1)) ease-out both; }
+.g20-shudder { animation: g20-shudder calc(0.55s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* Damp powder: it wants to catch and never quite does. */
 @keyframes g20-fizz {
@@ -253,7 +253,7 @@
   50% { opacity: 0.9; transform: translateY(0) scale(1, 1); }
   100% { opacity: 0; transform: translateY(0) scale(1.06, 0.94); }
 }
-.g20-spoil { animation: g20-spoil calc(0.8s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 100%; }
+.g20-spoil { animation: g20-spoil calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 100%; }
 
 /* ---------------------------------------------------------------------------
    6. Entrance cut (the card arriving in hand, ~56% of the crop)
@@ -285,7 +285,7 @@
   58% { transform: scale(1); }
   100% { opacity: 0; transform: translateY(-14%) scale(0.92); }
 }
-.g20-ent3 { animation: g20-ent3 calc(0.78s * var(--fx-dur, 1)) ease-out both; }
+.g20-ent3 { animation: g20-ent3 calc(0.78s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* ---------------------------------------------------------------------------
    7. Target cut (one square, fast)
@@ -305,7 +305,7 @@
   40% { opacity: 0.9; transform: translateX(0) scaleX(1); }
   100% { opacity: 0; transform: translateX(34%) scaleX(0.7); }
 }
-.g20-hit2 { animation: g20-hit2 calc(0.46s * var(--fx-dur, 1)) ease-out both; }
+.g20-hit2 { animation: g20-hit2 calc(0.46s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* ===========================================================================
    PER-CARD SIGNATURE MOTIONS
@@ -347,7 +347,7 @@
   48% { opacity: 1; transform: scaleY(1.05); }
   100% { opacity: 0; transform: scaleY(1); }
 }
-.g20-faith-arch { animation: g20-faith-arch calc(0.72s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 100%; }
+.g20-faith-arch { animation: g20-faith-arch calc(0.72s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 100%; }
 
 /* --- 3. Dead March: muffled drums down the file --------------------------- */
 @keyframes g20-drum-head {
@@ -358,7 +358,7 @@
   72% { transform: scale(1.08, 0.94); }
   100% { opacity: 0; transform: scale(1); }
 }
-.g20-drum-head { animation: g20-drum-head calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+.g20-drum-head { animation: g20-drum-head calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g20-drum-stick {
   0% { opacity: 0; transform: rotate(-52deg); }
@@ -376,7 +376,7 @@
   68% { transform: scaleX(1) skewY(-2deg); }
   100% { opacity: 0; transform: scaleX(1) skewY(0deg); }
 }
-.g20-crepe { animation: g20-crepe calc(1.05s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 0% 0%; }
+.g20-crepe { animation: g20-crepe calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; transform-origin: 0% 0%; }
 
 /* --- 4. The Long Siege: circumvallation, trench then palisade ------------- */
 @keyframes g20-trench {
@@ -439,7 +439,7 @@
   72% { transform: scale(1); }
   100% { opacity: 0; transform: scale(1.05); }
 }
-.g20-craze { animation: g20-craze calc(0.8s * var(--fx-dur, 1)) ease-out both; }
+.g20-craze { animation: g20-craze calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- 7. Palace Walls: a curtain wall along the caster's own second rank --- */
 @keyframes g20-wall-band {
@@ -475,7 +475,7 @@
   78% { transform: scale(0.99); }
   100% { opacity: 0; transform: scale(1.01); }
 }
-.g20-water { animation: g20-water calc(1s * var(--fx-dur, 1)) ease-out both; }
+.g20-water { animation: g20-water calc(1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- 9. Dowry: the chest carried in on poles ----------------------------- */
 @keyframes g20-pole {
@@ -509,7 +509,7 @@
   66% { transform: scale(1, 1); }
   100% { opacity: 0; transform: scale(1, 1); }
 }
-.g20-platter { animation: g20-platter calc(0.5s * var(--fx-dur, 1)) ease-out both; }
+.g20-platter { animation: g20-platter calc(0.5s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- 11. Ivory Tower: the ramp only ever falls homeward ------------------ */
 @keyframes g20-ivory {
@@ -565,7 +565,7 @@
   70% { opacity: 0.95; transform: scale(1.02); }
   100% { opacity: 0; transform: scale(1.1); }
 }
-.g20-rustbloom { animation: g20-rustbloom calc(1.05s * var(--fx-dur, 1)) ease-out both; }
+.g20-rustbloom { animation: g20-rustbloom calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- 14. Wagon Ruts: the ram carriage runs the file ---------------------- */
 @keyframes g20-ram-head {
@@ -702,7 +702,7 @@
   80% { transform: scaleY(1); }
   100% { opacity: 0; transform: scaleY(1); }
 }
-.g20-marsh { animation: g20-marsh calc(1s * var(--fx-dur, 1)) ease-in-out both; }
+.g20-marsh { animation: g20-marsh calc(1s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 /* --- 22. Rampart Watch: the lantern walks the wall ---------------------- */
 @keyframes g20-lantern {
@@ -712,7 +712,7 @@
   78% { transform: translateX(30%) rotate(4deg); }
   100% { opacity: 0; transform: translateX(38%) rotate(0deg); }
 }
-.g20-lantern { animation: g20-lantern calc(1.05s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 50% 0%; }
+.g20-lantern { animation: g20-lantern calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; transform-origin: 50% 0%; }
 
 @keyframes g20-walk {
   0% { opacity: 0; transform: scaleX(0.06); }

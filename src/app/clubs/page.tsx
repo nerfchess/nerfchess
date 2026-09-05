@@ -120,7 +120,7 @@ export default function ClubsPage() {
       <section className="mx-auto max-w-4xl px-5 pt-6 sm:px-6 sm:pt-8">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="font-display text-4xl sm:text-5xl text-parchment-50">Clubs</h1>
+            <h1 className="page-title">Clubs</h1>
             <p className="mt-2 text-[13px] text-parchment-300">Player groups for organizing games and events.</p>
           </div>
           <div className="flex items-center gap-2">
@@ -168,7 +168,7 @@ export default function ClubsPage() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     maxLength={60}
-                    className="mt-1 w-full border border-white/15 bg-ink-900/60 px-3 py-2 text-[13px] text-parchment"
+                    className="mt-1 w-full border border-[color:var(--edge)] bg-[color:var(--bg-base)] px-3 py-2 text-[13px] text-parchment"
                   />
                 </div>
                 <div className="sm:row-span-2">
@@ -181,7 +181,7 @@ export default function ClubsPage() {
                     onChange={(e) => setDescription(e.target.value)}
                     maxLength={240}
                     rows={4}
-                    className="mt-1 w-full resize-none border border-white/15 bg-ink-900/60 px-3 py-2 text-[13px] text-parchment"
+                    className="mt-1 w-full resize-none border border-[color:var(--edge)] bg-[color:var(--bg-base)] px-3 py-2 text-[13px] text-parchment"
                   />
                 </div>
                 <Button tone="leaf"
@@ -222,10 +222,10 @@ export default function ClubsPage() {
               to the top the way lichess surfaces "Your teams". */}
           {yourClubs.length > 0 && (
             <div className="plate overflow-hidden">
-              <div className="border-b border-white/10 px-5 py-3 text-[12px] font-medium text-parchment-400">
+              <div className="border-b border-[color:var(--edge)] px-5 py-3 text-[12px] font-medium text-parchment-400">
                 Your clubs
               </div>
-              <ul className="divide-y divide-white/5">
+              <ul className="divide-y divide-[color:var(--edge)]">
                 {yourClubs.map((club) => (
                   <ClubRow key={club.id} club={club} />
                 ))}
@@ -234,17 +234,17 @@ export default function ClubsPage() {
           )}
 
           <div className="plate overflow-hidden">
-            <div className="border-b border-white/10 px-5 py-3 text-[12px] font-medium text-parchment-400">
+            <div className="border-b border-[color:var(--edge)] px-5 py-3 text-[12px] font-medium text-parchment-400">
               {query ? `${filtered.length} match${filtered.length === 1 ? "" : "es"}` : "All clubs"}
             </div>
             {loading ? (
-              <ul className="divide-y divide-white/5" aria-hidden>
+              <ul className="divide-y divide-[color:var(--edge)]" aria-hidden>
                 {Array.from({ length: 4 }).map((_, i) => (
                   <li key={i} className="flex items-center gap-4 px-5 py-4">
-                    <div className="h-11 w-11 shrink-0 bg-white/[0.06] animate-pulse" />
+                    <div className="h-11 w-11 shrink-0 bg-[color:var(--bg-raised)] animate-pulse" />
                     <div className="min-w-0 flex-1">
                       <div className="h-3.5 w-40 bg-white/[0.07] animate-pulse" />
-                      <div className="mt-2 h-3 w-56 max-w-full bg-white/[0.05] animate-pulse" />
+                      <div className="mt-2 h-3 w-56 max-w-full bg-[color:var(--bg-raised)] animate-pulse" />
                     </div>
                   </li>
                 ))}
@@ -280,7 +280,7 @@ export default function ClubsPage() {
                 )}
               </div>
             ) : (
-              <ul className="divide-y divide-white/5">
+              <ul className="divide-y divide-[color:var(--edge)]">
                 {filtered.map((club) => (
                   <ClubRow key={club.id} club={club} />
                 ))}
@@ -301,7 +301,7 @@ function ClubRow({ club }: { club: Club }) {
     <li>
       <Link
         href={`/clubs/${encodeURIComponent(club.slug)}`}
-        className="group flex cursor-pointer items-center gap-4 px-5 py-4 transition-colors hover:bg-white/5"
+        className="group flex cursor-pointer items-center gap-4 px-5 py-4 transition-colors hover:bg-[color:var(--bg-raised)]"
       >
         <ClubIcon icon={club.icon} name={club.name} size={44} />
         <div className="min-w-0 flex-1">
@@ -310,7 +310,7 @@ function ClubRow({ club }: { club: Club }) {
               {club.name}
             </span>
             {!!club.joined && (
-              <span className="shrink-0 border border-gold/40 px-1.5 py-0.5 text-[12px] font-medium text-gold-leaf">
+              <span className="shrink-0 border border-[color:var(--edge-strong)] px-1.5 py-0.5 text-[12px] font-medium text-gold-leaf">
                 Joined
               </span>
             )}

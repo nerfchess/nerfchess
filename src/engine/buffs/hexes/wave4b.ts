@@ -38,6 +38,11 @@ import {
   inBoard,
 } from "./shared";
 
+// Lower rungs exist here for hand-audit retiers (scripts/hand-audit.json)
+// that moved a card down without moving it between files.
+const H2 = tierHexes(2);
+const H3 = tierHexes(3);
+const H4 = tierHexes(4);
 const H5 = tierHexes(5);
 const H6 = tierHexes(6);
 const H7 = tierHexes(7);
@@ -292,7 +297,7 @@ export function drawRandom(api: BuffApi, pool: Square[], n: number): Square[] {
 
 const T5: Buff[] = [
   hex(
-    { id: "hx4_glacier_gate", name: "Glacier Gate", description: "A wall of ice fills the four center squares: your opponent's pieces cannot stop on d4, e4, d5 or e5 for their next turn.", flavor: "The crossroads froze overnight.", icon: "Snowflake", fx: { motif: "blindfold" }, tier: 6 },
+    { id: "hx4_glacier_gate", name: "Glacier Gate", description: "A wall of ice fills the four center squares: your opponent's pieces cannot stop on d4, e4, d5 or e5 for their next turn.", flavor: "The crossroads froze overnight.", icon: "Snowflake", fx: { motif: "blindfold" }, tier: 2 },
     instant((_inst, api) => barNow(api, CENTER4, 1)),
   ),
   H5(
@@ -791,7 +796,7 @@ const T6: Buff[] = [
     { id: "hx4_hall_of_mirrors", name: "Hall of Mirrors", description: "For your opponent's next 3 turns, every piece must land on a square of the same color it started from. Knights, whose every leap changes color, cannot move at all. Their king is exempt.", flavor: "Step only where your reflection already stands.", icon: "Copy", fx: { motif: "anchor", pieces: "all" } },
     curse(3, (moves) => moves.filter((m) => m.piece === "k" || sqShade(m.from) === sqShade(m.to))),
   ),
-  H6(
+  H2(
     { id: "hx4_famine", name: "Famine", description: "For your opponent's next 2 turns, they cannot capture any of your pawns. The granary is warded.", flavor: "An army marches on its stomach, then stops.", icon: "Wheat", fx: { motif: "muzzle", pieces: "all" } },
     curse(2, (moves, api) => {
       return moves.filter((m) => {
@@ -851,7 +856,7 @@ const T6: Buff[] = [
         inst.state.sq == null ? "activate to enchant a piece" : `${turnsLeft(inst)} of their turns left`,
     },
   ),
-  H6(
+  H3(
     { id: "hx4_tar_flood", name: "Tar Flood", description: "Tar floods your opponent's third rank: for their next 2 turns, none of their pieces may stop anywhere on it. The first piece the tar would stop may cross once, then it binds fully.", flavor: "Development is postponed indefinitely.", icon: "Layers", fx: { motif: "blindfold", pieces: "all" } },
     escapeCurse(2, (moves, api) => moves.filter((m) => relRank(api.opp, m.to) !== 3)),
   ),
@@ -1139,7 +1144,7 @@ const T6: Buff[] = [
     },
   ),
   hex(
-    { id: "hx4_donkey_ears", name: "Donkey Ears", description: "Their king sprouts magnificent donkey ears (the dunce cap, worn for 6 of their turns), and the shame stings: for their next 2 turns their king cannot capture anything.", flavor: "The portrait painters are thrilled.", icon: "Crown", fx: { motif: "muzzle" }, tier: 7 },
+    { id: "hx4_donkey_ears", name: "Donkey Ears", description: "Their king sprouts magnificent donkey ears (the dunce cap, worn for 6 of their turns), and the shame stings: for their next 2 turns their king cannot capture anything.", flavor: "The portrait painters are thrilled.", icon: "Crown", fx: { motif: "muzzle" }, tier: 3 },
     {
       kind: "passive",
       init: (inst, api) => {
@@ -1411,7 +1416,7 @@ const T7: Buff[] = [
       }
     }),
   ),
-  H7(
+  H4(
     { id: "hx4_lovestruck_majesty", name: "Lovestruck Majesty", description: "Your opponent's queen falls head over heels: she may make one move, then is frozen, swooning, for 2 of their turns. Any other queens they have swoon at once.", flavor: "She has written four sonnets already.", icon: "Heart", fx: { motif: "jail", pieces: ["q"] } },
     {
       kind: "passive",
@@ -1453,7 +1458,7 @@ const T7: Buff[] = [
       return moves.filter((m) => m.piece === "k" || cheb(m.to, k) > 1);
     }),
   ),
-  H7(
+  H3(
     { id: "hx4_falling_rubble", name: "Falling Rubble", description: "Collapse a 2x2 block of squares you choose: your opponent's pieces cannot stop on any of those 4 squares for their next 2 turns.", flavor: "The masonry has opinions about trespassers.", icon: "Blocks", fx: { motif: "blindfold" } },
     activated(
       (_inst, _api, picks) =>
@@ -1612,7 +1617,7 @@ const T7: Buff[] = [
     }),
   ),
   hex(
-    { id: "hx4_oathbreakers_brand", name: "Oathbreaker's Brand", description: "A brand hangs over their castle gate for their next 6 turns: if your opponent castles in that window, the castling rook is frozen for 3 of their turns and their king wears the dunce cap for 8.", flavor: "The oath was witnessed. The penalty was notarized.", icon: "FileWarning", fx: { motif: "slow", pieces: ["r", "k"] }, tier: 8 },
+    { id: "hx4_oathbreakers_brand", name: "Oathbreaker's Brand", description: "A brand hangs over their castle gate for their next 6 turns: if your opponent castles in that window, the castling rook is frozen for 3 of their turns and their king wears the dunce cap for 8.", flavor: "The oath was witnessed. The penalty was notarized.", icon: "FileWarning", fx: { motif: "slow", pieces: ["r", "k"] }, tier: 4 },
     onTheirMove(6, (move, api) => {
       if (!move.castle) return;
       const rank = RANK(move.to);
@@ -1689,7 +1694,7 @@ const T7: Buff[] = [
         inst.state.armed ? `${turnsLeft(inst)} of their turns left` : "the treacle spreads after their next move",
     },
   ),
-  H7(
+  H4(
     { id: "hx4_traitors_gala", name: "Traitor's Gala", description: "Two of your opponent's knights or bishops, chosen at random, drink the wrong toast and become walnuts for 1 of their turns.", flavor: "The wine list was curated by the enemy.", icon: "Wine", fx: { motif: "anchor", pieces: ["n", "b"] } },
     instant((_inst, api) => {
       const pool = mySquares(api.board, api.opp).filter((sq) => {
@@ -1753,7 +1758,7 @@ const T7: Buff[] = [
     ),
   ),
   hex(
-    { id: "hx4_choke_point", name: "Choke Point", description: "Caltrops blanket the central 4x4 (c3 to f6): your opponent's pieces may not stop anywhere in it for their next turn. Their king picks its way through freely.", flavor: "The middle of the map is mostly spikes now.", icon: "Hexagon", fx: { motif: "blindfold", pieces: "all" }, tier: 8 },
+    { id: "hx4_choke_point", name: "Choke Point", description: "Caltrops blanket the central 4x4 (c3 to f6): your opponent's pieces may not stop anywhere in it for their next turn. Their king picks its way through freely.", flavor: "The middle of the map is mostly spikes now.", icon: "Hexagon", fx: { motif: "blindfold", pieces: "all" }, tier: 4 },
     curse(1, (moves) =>
       moves.filter((m) => {
         if (m.piece === "k") return true;
@@ -2289,7 +2294,7 @@ const T8: Buff[] = [
       }
     }),
   ),
-  H8(
+  H4(
     { id: "hx4_pawn_embargo", name: "Pawn Embargo", description: "For your opponent's next 6 turns, their pawns may not enter or move within your half of the board. The first pawn the border would stop may cross once, then it binds fully. The infantry is stopped at the border.", flavor: "Papers, please. Denied.", icon: "FileX2", fx: { motif: "anchor", pieces: ["p"] } },
     escapeCurse(6, (moves, api) => moves.filter((m) => m.piece !== "p" || relRank(api.opp, m.to) <= 4)),
   ),

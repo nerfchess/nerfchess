@@ -28,7 +28,7 @@
   66% { opacity: 0.42; }
   100% { opacity: 0; transform: scale(0.98); }
 }
-.g09-wash { animation: g09-wash calc(1.2s * var(--fx-dur, 1)) ease-out both; }
+.g09-wash { animation: g09-wash calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* Settle motes: they drift AWAY from the caster and thin out. */
 @keyframes g09-mote {
@@ -36,7 +36,7 @@
   28% { opacity: 0.9; transform: translate(0, -50%) scale(1); }
   100% { opacity: 0; transform: translate(calc(var(--fx-side, 1) * -150%), -330%) scale(0.45); }
 }
-.g09-mote { animation: g09-mote calc(1.05s * var(--fx-dur, 1)) ease-out both; }
+.g09-mote { animation: g09-mote calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* Per-victim hit: the object lands on the square. */
 @keyframes g09-hit {
@@ -52,7 +52,7 @@
   100% { opacity: 0; transform: translateY(-12%) scale(1.06); }
 }
 .g09-hit { animation: g09-hit calc(0.72s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.7, 0.2, 1) both; }
-.g09-hit2 { animation: g09-hit2 calc(0.66s * var(--fx-dur, 1)) ease-out both; }
+.g09-hit2 { animation: g09-hit2 calc(0.66s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* In-hand arrival: the same object, no board takeover, its own short beat. */
 @keyframes g09-arrive {
@@ -73,8 +73,8 @@
   100% { opacity: 0; transform: scale(1.3); }
 }
 .g09-arrive { animation: g09-arrive calc(0.86s * var(--fx-dur, 1)) cubic-bezier(0.28, 0.8, 0.2, 1) both; }
-.g09-arrive2 { animation: g09-arrive2 calc(0.78s * var(--fx-dur, 1)) ease-out both; }
-.g09-arrive-soft { animation: g09-arrive-soft calc(0.7s * var(--fx-dur, 1)) ease-out both; }
+.g09-arrive2 { animation: g09-arrive2 calc(0.78s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
+.g09-arrive-soft { animation: g09-arrive-soft calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* SVG groups transform about the viewBox centre, not the SVG origin. */
 .g09-hit,
@@ -93,14 +93,14 @@
   30% { opacity: 1; transform: translateY(0) scale(1); }
   100% { opacity: 0; transform: translateY(52%) scale(0.82); }
 }
-.g09-lw-sun { animation: g09-lw-sun calc(1.25s * var(--fx-dur, 1)) ease-in both; }
+.g09-lw-sun { animation: g09-lw-sun calc(1.25s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 1, 0.45) both; }
 
 @keyframes g09-lw-horizon {
   0% { opacity: 0; transform: scaleX(0.05); }
   40% { opacity: 1; transform: scaleX(1); }
   100% { opacity: 0; transform: scaleX(1); }
 }
-.g09-lw-horizon { animation: g09-lw-horizon calc(1.05s * var(--fx-dur, 1)) ease-out both; }
+.g09-lw-horizon { animation: g09-lw-horizon calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g09-lw-blanket {
   0% { opacity: 0; transform: translateY(calc(var(--g09-side, 1) * -108%)); }
@@ -115,7 +115,7 @@
   20% { opacity: 0.95; transform: translate(-30%, 30%) scale(1); }
   100% { opacity: 0; transform: translate(40%, 260%) scale(0.7); }
 }
-.g09-lw-flake { animation: g09-lw-flake calc(1.15s * var(--fx-dur, 1)) ease-in both; }
+.g09-lw-flake { animation: g09-lw-flake calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 1, 0.45) both; }
 
 /* --- 2. Winter Garrison ---------------------------------------------------- */
 
@@ -124,7 +124,7 @@
   40% { opacity: 0.85; transform: scaleX(1.1); }
   100% { opacity: 0; transform: scaleX(0.9); }
 }
-.g09-wg-shadow { animation: g09-wg-shadow calc(0.6s * var(--fx-dur, 1)) ease-out both; }
+.g09-wg-shadow { animation: g09-wg-shadow calc(0.6s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g09-wg-post {
   0% { opacity: 0; transform: translateY(calc(var(--g09-side, 1) * 96%)) scaleY(0.55); }
@@ -151,7 +151,7 @@
   40% { opacity: 0.95; transform: scale(1.05); }
   100% { opacity: 0; transform: scale(1.55); }
 }
-.g09-wg-ward { animation: g09-wg-ward calc(0.8s * var(--fx-dur, 1)) ease-out both; }
+.g09-wg-ward { animation: g09-wg-ward calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- 3. Blood Price -------------------------------------------------------- */
 
@@ -198,7 +198,7 @@
   36% { opacity: 1; transform: translateY(0) scale(1); }
   100% { opacity: 0; transform: scale(1); }
 }
-.g09-bk-gate { animation: g09-bk-gate calc(1.3s * var(--fx-dur, 1)) ease-out both; }
+.g09-bk-gate { animation: g09-bk-gate calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g09-bk-steam {
   0% { opacity: 0; transform: translateY(30%) scaleY(0.3); }
@@ -207,7 +207,7 @@
 }
 .g09-bk-steam {
   transform-origin: 50% 100%;
-  animation: g09-bk-steam calc(0.95s * var(--fx-dur, 1)) ease-out both;
+  animation: g09-bk-steam calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @keyframes g09-bk-curtain {
@@ -225,7 +225,7 @@
   38% { opacity: 1; transform: scaleX(1) scaleY(1); }
   100% { opacity: 0; transform: scaleX(1.05) scaleY(0.6); }
 }
-.g09-bk-seam { animation: g09-bk-seam calc(0.6s * var(--fx-dur, 1)) ease-out both; }
+.g09-bk-seam { animation: g09-bk-seam calc(0.6s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- 5. Doomsday Clock ----------------------------------------------------- */
 
@@ -294,7 +294,7 @@
   46% { opacity: 0.85; transform: scaleY(1) scaleX(1); }
   100% { opacity: 0; transform: scaleY(1) scaleX(1); }
 }
-.g09-et-sleeve { animation: g09-et-sleeve calc(0.95s * var(--fx-dur, 1)) ease-out both; }
+.g09-et-sleeve { animation: g09-et-sleeve calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g09-et-icicle {
   0% { opacity: 0; transform: scaleY(0.05); }
@@ -314,7 +314,7 @@
   34% { opacity: 1; transform: translateY(0); }
   100% { opacity: 0; transform: translateY(0); }
 }
-.g09-fr-rack { animation: g09-fr-rack calc(1.3s * var(--fx-dur, 1)) ease-out both; }
+.g09-fr-rack { animation: g09-fr-rack calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g09-fr-climb {
   0% { opacity: 0; transform: scaleY(0.04) translateY(calc(var(--g09-side, 1) * 4%)); }
@@ -353,7 +353,7 @@
   38% { opacity: 0.9; transform: scale(1); }
   100% { opacity: 0; transform: scale(0.94); }
 }
-.g09-gp-shadow { animation: g09-gp-shadow calc(1.2s * var(--fx-dur, 1)) ease-out both; }
+.g09-gp-shadow { animation: g09-gp-shadow calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g09-gp-block {
   0% { opacity: 0; transform: translateY(calc(var(--g09-side, 1) * -170%)) scaleY(1.15); }
@@ -373,14 +373,14 @@
   70% { opacity: 0.55; }
   100% { opacity: 0; transform: scale(0.98); }
 }
-.g09-gp-piece { animation: g09-gp-piece calc(1s * var(--fx-dur, 1)) ease-out both; }
+.g09-gp-piece { animation: g09-gp-piece calc(1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g09-gp-facet {
   0% { opacity: 0; transform: translateX(-220%) skewX(-14deg); }
   40% { opacity: 0.9; }
   100% { opacity: 0; transform: translateX(240%) skewX(-14deg); }
 }
-.g09-gp-facet { animation: g09-gp-facet calc(0.75s * var(--fx-dur, 1)) ease-in-out both; }
+.g09-gp-facet { animation: g09-gp-facet calc(0.75s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 /* --- 9. The Great Glacier -------------------------------------------------- */
 
@@ -391,7 +391,7 @@
   62% { transform: scaleX(1) translateY(1%); }
   100% { opacity: 0; transform: scaleX(1) translateY(0); }
 }
-.g09-gg-rumble { animation: g09-gg-rumble calc(0.75s * var(--fx-dur, 1)) ease-out both; }
+.g09-gg-rumble { animation: g09-gg-rumble calc(0.75s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g09-gg-front {
   0% { opacity: 0; transform: translateX(-60%) scaleY(0.9); }
@@ -409,7 +409,7 @@
 }
 .g09-gg-scour {
   transform-origin: 0% 50%;
-  animation: g09-gg-scour calc(0.9s * var(--fx-dur, 1)) ease-out both;
+  animation: g09-gg-scour calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @keyframes g09-gg-berg {
@@ -437,7 +437,7 @@
 }
 .g09-kr-breath {
   transform-origin: 50% 0%;
-  animation: g09-kr-breath calc(1.05s * var(--fx-dur, 1)) ease-out both;
+  animation: g09-kr-breath calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @keyframes g09-kr-coin {
@@ -464,7 +464,7 @@
   34% { opacity: 1; transform: translateY(0) scale(1); }
   100% { opacity: 0; transform: scale(1); }
 }
-.g09-ob-gate { animation: g09-ob-gate calc(1.3s * var(--fx-dur, 1)) ease-out both; }
+.g09-ob-gate { animation: g09-ob-gate calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g09-ob-iron {
   0% { opacity: 0; transform: rotate(calc(var(--g09-side, 1) * -62deg)); }
@@ -495,7 +495,7 @@
 }
 .g09-ob-hiss {
   transform-origin: 50% 100%;
-  animation: g09-ob-hiss calc(0.85s * var(--fx-dur, 1)) ease-out both;
+  animation: g09-ob-hiss calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 /* --- 12. Reaper's Due ------------------------------------------------------ */
@@ -507,7 +507,7 @@
 }
 .g09-rd-arc {
   transform-origin: 0% 50%;
-  animation: g09-rd-arc calc(0.7s * var(--fx-dur, 1)) ease-out both;
+  animation: g09-rd-arc calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @keyframes g09-rd-blade {
@@ -581,7 +581,7 @@
   40% { opacity: 0.9; transform: scaleX(1); }
   100% { opacity: 0; transform: scaleX(1); }
 }
-.g09-sp-thread { animation: g09-sp-thread calc(0.8s * var(--fx-dur, 1)) ease-out both; }
+.g09-sp-thread { animation: g09-sp-thread calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g09-sp-web {
   0% { opacity: 0; transform: scale(0.06) rotate(-24deg); }
@@ -605,7 +605,7 @@
   36% { opacity: 1; transform: scaleX(1) scaleY(1); }
   100% { opacity: 0; transform: scaleX(1) scaleY(0.5); }
 }
-.g09-sp-taut { animation: g09-sp-taut calc(0.65s * var(--fx-dur, 1)) ease-out both; }
+.g09-sp-taut { animation: g09-sp-taut calc(0.65s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- 15. Tempest ----------------------------------------------------------- */
 
@@ -614,7 +614,7 @@
   30% { opacity: 0.85; }
   100% { opacity: 0; transform: translateX(calc(var(--g09-side, 1) * 128%)); }
 }
-.g09-tp-gust { animation: g09-tp-gust calc(1.3s * var(--fx-dur, 1)) ease-in-out both; }
+.g09-tp-gust { animation: g09-tp-gust calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 @keyframes g09-tp-slab {
   0% { opacity: 0; transform: translateY(-210%) rotate(-30deg) scale(0.8); }
@@ -638,7 +638,7 @@
   60% { opacity: 0.85; transform: scale(1); }
   100% { opacity: 0; transform: scale(1.45); }
 }
-.g09-tp-bridge { animation: g09-tp-bridge calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+.g09-tp-bridge { animation: g09-tp-bridge calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- 16. The Tolling Thirds ------------------------------------------------ */
 
@@ -677,7 +677,7 @@
   30% { opacity: 0.9; transform: scale(0.9); }
   100% { opacity: 0; transform: scale(1.7); }
 }
-.g09-tt-ring { animation: g09-tt-ring calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+.g09-tt-ring { animation: g09-tt-ring calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- 17. The Winter That Stays --------------------------------------------- */
 
@@ -688,7 +688,7 @@
 }
 .g09-ws-track {
   transform-origin: 0% 50%;
-  animation: g09-ws-track calc(0.8s * var(--fx-dur, 1)) ease-out both;
+  animation: g09-ws-track calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @keyframes g09-ws-print {
@@ -715,7 +715,7 @@
   40% { opacity: 0.9; transform: scale(1); }
   100% { opacity: 0; transform: scale(1.3); }
 }
-.g09-ws-crust { animation: g09-ws-crust calc(0.85s * var(--fx-dur, 1)) ease-out both; }
+.g09-ws-crust { animation: g09-ws-crust calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- 18. Deus Ex Machina --------------------------------------------------- */
 
@@ -742,7 +742,7 @@
   28% { opacity: 1; transform: scale(0.85); }
   100% { opacity: 0; transform: scale(1.75); }
 }
-.g09-dx-snap { animation: g09-dx-snap calc(0.8s * var(--fx-dur, 1)) ease-out both; }
+.g09-dx-snap { animation: g09-dx-snap calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g09-dx-shed {
   0% { opacity: 0; transform: translateY(0) rotate(0deg) scaleY(1); }
@@ -758,7 +758,7 @@
   32% { opacity: 0.95; transform: translateY(calc(var(--g09-side, 1) * 6%)) scaleY(1); }
   100% { opacity: 0; transform: translateY(calc(var(--g09-side, 1) * 6%)) scaleY(1); }
 }
-.g09-fm-water { animation: g09-fm-water calc(1.3s * var(--fx-dur, 1)) ease-out both; }
+.g09-fm-water { animation: g09-fm-water calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g09-fm-skin {
   0% { opacity: 0; transform: scale(0.06); }
@@ -781,7 +781,7 @@
   40% { opacity: 0.9; transform: scale(1); }
   100% { opacity: 0; transform: scale(1.12); }
 }
-.g09-fm-rim { animation: g09-fm-rim calc(0.85s * var(--fx-dur, 1)) ease-out both; }
+.g09-fm-rim { animation: g09-fm-rim calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- 20. Frozen Harbor ----------------------------------------------------- */
 
@@ -829,7 +829,7 @@
   34% { opacity: 1; transform: translateY(0) scale(1); }
   100% { opacity: 0; transform: scale(1); }
 }
-.g09-hf-grate { animation: g09-hf-grate calc(1.3s * var(--fx-dur, 1)) ease-out both; }
+.g09-hf-grate { animation: g09-hf-grate calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g09-hf-ember {
   0% { opacity: 0; transform: scale(0.7); }
@@ -838,7 +838,7 @@
   56% { opacity: 0.2; transform: scale(0.8); }
   100% { opacity: 0; transform: scale(0.6); }
 }
-.g09-hf-ember { animation: g09-hf-ember calc(1.05s * var(--fx-dur, 1)) ease-out both; }
+.g09-hf-ember { animation: g09-hf-ember calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g09-hf-flower {
   0% { opacity: 0; transform: scale(0.05) rotate(-40deg); }
@@ -866,7 +866,7 @@
   38% { opacity: 0.9; transform: scaleX(1.1); }
   100% { opacity: 0; transform: scaleX(1); }
 }
-.g09-ka-breach { animation: g09-ka-breach calc(0.7s * var(--fx-dur, 1)) ease-out both; }
+.g09-ka-breach { animation: g09-ka-breach calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g09-ka-arm {
   0% { opacity: 0; transform: translateY(calc(var(--g09-side, 1) * 118%)) rotate(-14deg) scaleY(0.6); }
@@ -921,14 +921,14 @@
   32% { opacity: 1; transform: scale(1); }
   100% { opacity: 0; transform: scale(1.8); }
 }
-.g09-lr-splash { animation: g09-lr-splash calc(0.75s * var(--fx-dur, 1)) ease-out both; }
+.g09-lr-splash { animation: g09-lr-splash calc(0.75s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g09-lr-glaze {
   0% { opacity: 0; transform: scale(0.4); }
   40% { opacity: 0.9; transform: scale(1); }
   100% { opacity: 0; transform: scale(1.16); }
 }
-.g09-lr-glaze { animation: g09-lr-glaze calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+.g09-lr-glaze { animation: g09-lr-glaze calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- 24. Lovestruck Majesty ------------------------------------------------ */
 
@@ -946,7 +946,7 @@
   36% { opacity: 0.9; transform: scale(1) translateY(0); }
   100% { opacity: 0; transform: scale(1.5) translateY(calc(var(--g09-side, 1) * -18%)); }
 }
-.g09-lm-breath { animation: g09-lm-breath calc(1s * var(--fx-dur, 1)) ease-out both; }
+.g09-lm-breath { animation: g09-lm-breath calc(1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g09-lm-heart {
   0% { opacity: 0; transform: scale(0.1); }
@@ -979,7 +979,7 @@
   56% { transform: scale(0.9); }
   100% { opacity: 0; transform: scale(0.94); }
 }
-.g09-ps-snow { animation: g09-ps-snow calc(1.15s * var(--fx-dur, 1)) ease-out both; }
+.g09-ps-snow { animation: g09-ps-snow calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g09-ps-jawl {
   0% { opacity: 0; transform: translateY(calc(var(--g09-side, 1) * -60%)) rotate(-26deg); }
@@ -1025,7 +1025,7 @@
   34% { opacity: 1; transform: translateY(0) scale(1); }
   100% { opacity: 0; transform: scale(1); }
 }
-.g09-td-hand { animation: g09-td-hand calc(1.3s * var(--fx-dur, 1)) ease-out both; }
+.g09-td-hand { animation: g09-td-hand calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g09-td-coin {
   0% { opacity: 0; transform: translateY(calc(var(--g09-side, 1) * -220%)) rotate(-40deg) scale(0.7); }
@@ -1112,7 +1112,7 @@
 }
 .g09-wi-track {
   transform-origin: 50% 0%;
-  animation: g09-wi-track calc(1.25s * var(--fx-dur, 1)) ease-out both;
+  animation: g09-wi-track calc(1.25s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @keyframes g09-wi-rim {
@@ -1152,7 +1152,7 @@
   62% { transform: translateX(0); }
   100% { opacity: 0; transform: translateX(0); }
 }
-.g09-gc-shelf { animation: g09-gc-shelf calc(1.25s * var(--fx-dur, 1)) ease-out both; }
+.g09-gc-shelf { animation: g09-gc-shelf calc(1.25s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g09-gc-chunk {
   0% { opacity: 0; transform: translate(0, -40%) rotate(0deg) scale(0.9); }
@@ -1168,7 +1168,7 @@
 }
 .g09-gc-spray {
   transform-origin: 50% 100%;
-  animation: g09-gc-spray calc(0.85s * var(--fx-dur, 1)) ease-out both;
+  animation: g09-gc-spray calc(0.85s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @keyframes g09-gc-swell {
@@ -1176,7 +1176,7 @@
   40% { opacity: 0.9; transform: scaleX(1) translateY(0); }
   100% { opacity: 0; transform: scaleX(1) translateY(60%); }
 }
-.g09-gc-swell { animation: g09-gc-swell calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+.g09-gc-swell { animation: g09-gc-swell calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- 30. Mirror of Winter: the sympathetic glass --------------------------- */
 
@@ -1212,7 +1212,7 @@
   70% { opacity: 0.6; transform: scale(1.05, 1.05); }
   100% { opacity: 0; transform: scale(1.1, 1.1); }
 }
-.g09-mw-breath { animation: g09-mw-breath calc(0.95s * var(--fx-dur, 1)) ease-in-out both; }
+.g09-mw-breath { animation: g09-mw-breath calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 /* One soldier steps up from the caster's side of the glass. */
 @keyframes g09-mw-fig {
@@ -1249,7 +1249,7 @@
   38% { opacity: 0.95; transform: scale(1); }
   100% { opacity: 0; transform: scale(1.35); }
 }
-.g09-mw-rime { animation: g09-mw-rime calc(0.8s * var(--fx-dur, 1)) ease-out both; }
+.g09-mw-rime { animation: g09-mw-rime calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* Settle: frost ferns unfurl from the mirror's feet. */
 @keyframes g09-mw-fern {
@@ -1259,7 +1259,7 @@
 }
 .g09-mw-fern {
   transform-origin: 50% 0%;
-  animation: g09-mw-fern calc(1.05s * var(--fx-dur, 1)) ease-out both;
+  animation: g09-mw-fern calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 /* --- Kill switch ------------------------------------------------------------

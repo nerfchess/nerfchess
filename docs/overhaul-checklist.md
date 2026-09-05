@@ -93,3 +93,38 @@ Keep: tier curve + jitter + top-tier slip gate (tier progression), banking (+1, 
 - New buff modules live in `src/engine/buffs/overhaul/` (t1.ts .. t8.ts, gambling.ts); new hexes in `hexes/wave4.ts`; new boons in `boons4.ts`.
 - Gambling RNG: all rolls via `api.rng` (deterministic, replay-safe); outcome stored in `inst.state` for animation honesty; odds stated in descriptions match code constants.
 - Sound: new per-card cues synthesized in sounds.ts (`playCardCue(id)` layered voices); gambling gets bespoke voices (slots, wheel, dice, chips, crash).
+
+## 2026-09 flagship: Lichess-exact UI, mod panel, retirement, 3D effects
+
+Branch `claude/lichess-button-redesign-9nt1it`, PR #479. Every phase pushed separately.
+
+### Sweep results
+- Playwright walk of 43 routes at 360/768/1024/1280/1920, dark and light (430 loads): 0 horizontal overflows, exactly one h1 per page, no console errors except the Google sign-in script blocked by the sandbox proxy on /login (external).
+- Mod panel click-through of every rail section, /mod/cards, /mod/house, /mod/stats/all and /mod/stats/humans with all non-destructive buttons pressed: no page errors, no 4xx/5xx from the mod APIs.
+- Chest gallery (/dev/chest) and the isolated coin/die props verified frame by frame.
+
+### Bugs found and fixed on the way
+- Mod win-rate tables counted the Buff-mode `none` sentinel as the most common nerf (`api/stats`, `api/mod/overview`).
+- Pages without their own `alternates` inherited the root canonical "/" (profiles, suggest, tutorial pages, every private surface). Each now carries a self-canonical; private ones are noindex.
+- CSS-3D coin and die rendered flat: Chrome flattens `preserve-3d` while an opacity animation runs on the same element. Fade moved to the wrapper.
+- Chest side faces stayed standing after the body settled away on open; they now settle with it.
+- The retirement pass had retired 151 hand-animated plug-in cards (Heads or Tails among them) under the description-length rule, plus `chess_diff`, which the house bots name by id. Both classes are protected now.
+- `ilovewhimperingaudios` (tier 9) had no USAGE_FLAGSHIPS entry; the usage guard was red on master.
+- Tutorial page carried an eyebrow label over an oversized h2; both normalised.
+
+### Guards
+All `npm run test:*` suites green at the head (house-sim included). `test:e2e` requires the worker backend and was not run in the sandbox.
+
+### Hand audit (2026-09-05)
+Every active card was read category by category and judged by hand, not by the script's rules alone. Decisions live in `scripts/hand-audit.json`; `npm run gen:retirements` applies the cuts (reason `hand`) and `npm run gen:retiers` rewrites tiers in the definitions (`npm run test:hand-audit` guards them).
+- 317 cards cut (170 of them pointing at the card that covers their ground). The main groups: file-specific opener twins (one pawn on one file may do X), cosmetic no-ops (22 down to 6), "mark plus reroll" variants, coin-flip twins, "escape clause" hexes whose first-move exemption doubled their length, two-phase and every-second-turn curses, random-square nerfs, and straight duplicates at a higher tier.
+- 42 cards retiered where the tier contradicted the effect: Mass Freeze and Roulette up to 7, Overtime Pay (105 seconds at tier 2) up to 5, Amazon Knight up to 6, Twin Queens up to 7, Time Skip up to 6; weak tier 7 and 8 hexes (Donkey Ears, Glacier Gate, Choke Point, Falling Rubble, Pawn Embargo, Traitor's Gala, Lovestruck Majesty) down to 2 to 4.
+- Pool after the pass: 743 retired, 1,437 active, 235 opening nerfs. Similarity baseline down from 50 pairs to 14.
+
+### Balance (2026-09-05)
+- Paired-game win-rate sweep (`scripts/sim-card-winrate.ts --games 16 --only gm_`) run on the gambling set: every card fired, none resolved at that sample (standard error around 12 points), so no tier moved on that evidence. A full-library sweep needs hours of a quiet machine and was not run in the sandbox.
+- Tier corrections came from the hand read instead (42 retiers above), and the retirement rules keep dominated and duplicate cards out of the pools. Gambling payout text is asserted against the odds constants by the existing guards (`test:balance-fixes`, `test:card-audit`).
+
+### Animation soak (2026-09-05)
+- `/dev/plays` driven by Playwright: every scene on every tier page fired (988 plays, tiers 1 to 10), no page or console errors. Frame timing under headless software GL is not representative; the lab harness (`npm run test:lab`) covers every card's engine path with zero failures.
+- Bug found on the way: the Buff-mode opening pack (`openerPool`) ignored retirements and could still deal a retired opener. Fixed, and `npm run test:retired` now asserts the opener pool too.

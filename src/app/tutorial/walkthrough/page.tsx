@@ -135,7 +135,7 @@ export default function TutorialWalkthroughPage() {
         <div className="text-[11px] text-parchment-400">
           interactive walkthrough - step {stepIx + 1} of {STEPS.length}
         </div>
-        <h1 className="font-display text-3xl sm:text-5xl mt-1">{step.title}</h1>
+        <h1 className="page-title">{step.title}</h1>
         <p className="mt-3 max-w-2xl text-parchment-200/95 leading-relaxed">{step.intro}</p>
         <div className="mt-4 plate p-3 px-4 inline-block border-gold/50 bg-gold/10">
           <span className="font-display text-[15px] text-gold-leaf">{step.goalText}</span>

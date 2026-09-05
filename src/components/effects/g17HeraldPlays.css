@@ -41,14 +41,14 @@
   68% { opacity: 0.44; transform: translateX(calc(var(--fx-ox, 0) * -1.2%)); }
   100% { opacity: 0; transform: translateX(calc(var(--fx-ox, 0) * -1.4%)); }
 }
-.g17-wash { animation: g17-wash calc(1.6s * var(--fx-dur, 1)) ease-out both; }
+.g17-wash { animation: g17-wash calc(1.6s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g17-rim {
   0% { opacity: 0; transform: scale(0.94); }
   38% { opacity: 1; transform: scale(1); }
   100% { opacity: 0; transform: scale(1.03); }
 }
-.g17-rim { animation: g17-rim calc(1s * var(--fx-dur, 1)) ease-out both; }
+.g17-rim { animation: g17-rim calc(1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g17-veil {
   0% { opacity: 0; }
@@ -56,7 +56,7 @@
   72% { opacity: 0.78; }
   100% { opacity: 0; }
 }
-.g17-veil { animation: g17-veil calc(1.5s * var(--fx-dur, 1)) ease-out both; }
+.g17-veil { animation: g17-veil calc(1.5s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- Geometry-driven tracks ----------------------------------------------- */
 
@@ -140,7 +140,7 @@
   82% { opacity: 0.6; transform: translate(calc(var(--fx-ox, 0) * 2.6%), calc(var(--fx-oy, 0) * 1.6%)) scaleX(1); }
   100% { opacity: 0; transform: translate(calc(var(--fx-ox, 0) * 2.6%), calc(var(--fx-oy, 0) * 1.6%)) scaleX(1); }
 }
-.g17-leanshadow { animation: g17-leanshadow calc(1s * var(--fx-dur, 1)) ease-out both; }
+.g17-leanshadow { animation: g17-leanshadow calc(1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- Per-square target cut ------------------------------------------------ */
 
@@ -159,7 +159,7 @@
   62% { transform: scale(1); }
   100% { opacity: 0; transform: scale(1.08); }
 }
-.g17-hit2 { animation: g17-hit2 calc(0.7s * var(--fx-dur, 1)) ease-out both; }
+.g17-hit2 { animation: g17-hit2 calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* The word reaches a later square from FURTHER BACK: --fx-index is this
    square's place in the victim order, so the sixth name called visibly travels
@@ -235,14 +235,14 @@
   42% { opacity: 1; transform: scale(1.5); }
   100% { opacity: 0; transform: scale(0.5); }
 }
-.g17-glint { animation: g17-glint calc(0.5s * var(--fx-dur, 1)) ease-out both; }
+.g17-glint { animation: g17-glint calc(0.5s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g17-mote {
   0% { opacity: 0; transform: translateY(18%) scale(0.5); }
   40% { opacity: 1; transform: translateY(0) scale(1); }
   100% { opacity: 0; transform: translateY(-42%) scale(0.72); }
 }
-.g17-mote { animation: g17-mote calc(1.05s * var(--fx-dur, 1)) ease-out both; }
+.g17-mote { animation: g17-mote calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- 1. Market Lane — the measure called at the market cross ---------------- */
 
@@ -293,7 +293,7 @@
   54% { transform: scaleX(1); }
   100% { opacity: 0; transform: scaleX(1) translateY(-24%); }
 }
-.g17-mk-oyez { animation: g17-mk-oyez calc(0.72s * var(--fx-dur, 1)) ease-out both; }
+.g17-mk-oyez { animation: g17-mk-oyez calc(0.72s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g17-mk-name {
   0% { opacity: 0; transform: translateY(52%) scale(0.7); }
@@ -385,7 +385,7 @@
   58% { transform: scaleX(1); }
   100% { opacity: 0; transform: scaleX(1) translateX(24%); }
 }
-.g17-ra-call { animation: g17-ra-call calc(0.7s * var(--fx-dur, 1)) ease-out both; }
+.g17-ra-call { animation: g17-ra-call calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- 6. Plush Pony — read from horseback, and the horse turns --------------- */
 
@@ -404,7 +404,7 @@
   46% { transform: scaleX(1) scaleY(1); }
   100% { opacity: 0; transform: scaleX(1.3) scaleY(0.7); }
 }
-.g17-pp-dust { animation: g17-pp-dust calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+.g17-pp-dust { animation: g17-pp-dust calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g17-pp-scroll {
   0% { opacity: 0; transform: scaleX(0.08) rotate(-6deg); }
@@ -647,7 +647,7 @@
   58% { transform: scaleX(1); }
   100% { opacity: 0; transform: scaleX(1.5) translateX(18%); }
 }
-.g17-hb-breath { animation: g17-hb-breath calc(0.75s * var(--fx-dur, 1)) ease-out both; }
+.g17-hb-breath { animation: g17-hb-breath calc(0.75s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- 14. Store Credit — the chit passed hand to hand ------------------------ */
 
@@ -708,7 +708,7 @@
   58% { transform: scaleX(1.7) scaleY(1); }
   100% { opacity: 0; transform: scaleX(2.4) scaleY(0.9); }
 }
-.g17-hn-blast { animation: g17-hn-blast calc(0.95s * var(--fx-dur, 1)) ease-out both; }
+.g17-hn-blast { animation: g17-hn-blast calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g17-hn-shut {
   0% { opacity: 0; transform: scaleY(0.05); }
@@ -790,7 +790,7 @@
   86% { opacity: 1; }
   100% { opacity: 0; transform: scale(1.04); }
 }
-.g17-ul-empty { animation: g17-ul-empty calc(1s * var(--fx-dur, 1)) ease-out both; }
+.g17-ul-empty { animation: g17-ul-empty calc(1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- 19. Coupon — largesse thrown to the crowd ------------------------------ */
 
@@ -916,7 +916,7 @@
   58% { transform: scale(1); }
   100% { opacity: 0; transform: scale(1.24); }
 }
-.g17-sq-pool { animation: g17-sq-pool calc(1.05s * var(--fx-dur, 1)) ease-out both; }
+.g17-sq-pool { animation: g17-sq-pool calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g17-sq-print {
   0% { opacity: 0; transform: scale(0.5) rotate(-14deg); }
@@ -975,7 +975,7 @@
   58% { transform: scaleX(1); }
   100% { opacity: 0; transform: scaleX(1.6) translateX(16%); }
 }
-.g17-wn-cry { animation: g17-wn-cry calc(0.75s * var(--fx-dur, 1)) ease-out both; }
+.g17-wn-cry { animation: g17-wn-cry calc(0.75s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g17-wn-tray {
   0% { opacity: 0; transform: translateY(48%) scale(0.78) rotate(-6deg); }

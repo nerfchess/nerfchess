@@ -25,21 +25,21 @@ export function RatingCard({
   const inner = (
     <div
       className={
-        "group relative flex items-center gap-3 rounded-lg border border-white/10 bg-white/[0.02] transition-colors " +
-        (href ? "hover:border-white/20 hover:bg-white/[0.04] " : "") +
+        "group relative flex items-center gap-3 rounded-none border border-[color:var(--edge)] bg-[color:var(--bg-zebra)] transition-colors " +
+        (href ? "hover:border-[color:var(--edge-strong)] hover:bg-[color:var(--bg-raised)] " : "") +
         (large ? "p-4" : "p-3")
       }
     >
       <span
         className={
-          "grid shrink-0 place-items-center rounded-md " + (large ? "h-11 w-11" : "h-9 w-9")
+          "grid shrink-0 place-items-center rounded-none " + (large ? "h-11 w-11" : "h-9 w-9")
         }
         style={{ background: c.accent + "1f", boxShadow: `inset 0 0 0 1px ${c.accent}55` }}
       >
         <Icon className={large ? "h-5 w-5" : "h-4 w-4"} style={{ color: c.accent }} strokeWidth={2.2} />
       </span>
       <div className="min-w-0">
-        <div className="text-[10px] text-parchment-400">{c.label}</div>
+        <div className="text-[11px] text-parchment-400">{c.label}</div>
         <div
           className={
             "font-display tabular-nums leading-tight text-parchment " + (large ? "text-3xl" : "text-xl")

@@ -15,6 +15,7 @@ export function MobileBuffDrawer({
   usable,
   autoCloseWhen,
   label = "Buffs",
+  preview,
   children,
 }: {
   /** Cards you currently hold (spent ones included — they stay on record). */
@@ -25,6 +26,9 @@ export function MobileBuffDrawer({
   autoCloseWhen?: boolean;
   /** Drawer title ("Buffs", or "Boons" in nerf mode). */
   label?: string;
+  /** A row of the held cards' faces, shown in the closed bar so the hand is
+   *  readable without opening the drawer. */
+  preview?: ReactNode;
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
@@ -87,6 +91,7 @@ export function MobileBuffDrawer({
               </span>
             )}
           </span>
+          {preview && !open && <span className="flex min-w-0 flex-1 items-center justify-center gap-1 px-2">{preview}</span>}
           <span className="flex items-center gap-2 font-mono text-xs tabular-nums text-parchment-100">
             {held === 0 ? "None yet" : `${held} held`}
             <span className="text-parchment-400" aria-hidden>

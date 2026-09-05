@@ -10,17 +10,18 @@ export function LogoMark({ size = 34, className = "" }: { size?: number; classNa
 export function Logo({
   href = "/",
   className = "",
-  size = 44,
+  size = 34,
 }: {
   href?: string;
   className?: string;
   size?: number;
 }) {
   return (
-    <Link href={href} className={`group inline-flex items-center gap-3 ${className}`}>
-      <LogoMark size={size} className="shrink-0 transition-transform duration-200 group-hover:-rotate-6" />
-      <span className="hidden sm:inline font-display text-2xl sm:text-3xl tracking-tight font-bold leading-none">
-        nerf<span className="text-gold-leaf">chess</span>
+    <Link href={href} className={`inline-flex items-center gap-2 no-underline ${className}`}>
+      <LogoMark size={size} className="shrink-0" />
+      {/* Lichess's wordmark: one weight, one colour, 24px, no accent split. */}
+      <span className="font-display text-[22px] font-medium leading-none tracking-tight text-parchment-100 sm:text-[24px]">
+        nerfchess
       </span>
     </Link>
   );

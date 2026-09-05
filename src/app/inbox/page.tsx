@@ -53,7 +53,7 @@ export default function InboxPage() {
     <main className="min-h-screen">
       <SiteHeader />
       <section className="max-w-2xl mx-auto px-5 sm:px-6 py-8">
-        <h1 className="font-display text-3xl sm:text-4xl">Inbox</h1>
+        <h1 className="page-title">Inbox</h1>
 
         {user === null && (
           <p className="mt-4 text-parchment-300">
@@ -74,13 +74,13 @@ export default function InboxPage() {
             </div>
 
             {!conversations ? (
-              <ul className="mt-6 plate divide-y divide-white/5" aria-hidden>
+              <ul className="mt-6 plate divide-y divide-[color:var(--edge)]" aria-hidden>
                 {Array.from({ length: 5 }).map((_, i) => (
                   <li key={i} className="flex items-center gap-3 px-4 py-3">
-                    <div className="h-9 w-9 shrink-0 bg-white/[0.06] animate-pulse" />
+                    <div className="h-9 w-9 shrink-0 bg-[color:var(--bg-raised)] animate-pulse" />
                     <div className="min-w-0 flex-1">
                       <div className="h-3 w-28 bg-white/[0.07] animate-pulse" />
-                      <div className="mt-2 h-2.5 w-44 max-w-full bg-white/[0.05] animate-pulse" />
+                      <div className="mt-2 h-2.5 w-44 max-w-full bg-[color:var(--bg-raised)] animate-pulse" />
                     </div>
                   </li>
                 ))}
@@ -94,12 +94,12 @@ export default function InboxPage() {
                 action={{ href: "/community", label: "Browse players" }}
               />
             ) : (
-              <ul className="mt-6 plate divide-y divide-white/5">
+              <ul className="mt-6 plate divide-y divide-[color:var(--edge)]">
                 {conversations.map((c) => (
                   <li key={c.username}>
                     <Link
                       href={`/inbox/${encodeURIComponent(c.username)}`}
-                      className="flex min-h-[44px] items-center gap-3 px-4 py-3 transition-colors hover:bg-white/[0.04]"
+                      className="flex min-h-[44px] items-center gap-3 px-4 py-3 transition-colors hover:bg-[color:var(--bg-raised)]"
                     >
                       <PlayerAvatar name={c.username} avatar={c.avatar} size={36} />
                       <div className="min-w-0 flex-1">
@@ -115,7 +115,7 @@ export default function InboxPage() {
                         </div>
                       </div>
                       {c.unread > 0 && (
-                        <span className="grid min-w-[18px] shrink-0 place-items-center rounded-[1px] bg-oxblood-glow px-1.5 font-mono text-[11px] leading-[18px] text-white">
+                        <span className="grid min-w-[18px] shrink-0 place-items-center rounded-none bg-oxblood-glow px-1.5 font-mono text-[11px] leading-[18px] text-white">
                           {c.unread}
                         </span>
                       )}

@@ -115,6 +115,23 @@ const organizationJsonLd = {
       logo: "https://nerfchess.com/icon-512.png",
     },
     {
+      "@type": "VideoGame",
+      "@id": "https://nerfchess.com/#game",
+      name: "Nerf Chess",
+      url: "https://nerfchess.com",
+      description:
+        "A free online chess variant: draft power-up cards every five moves in Buff mode, or carry a secret handicap and hex your opponent in Nerf mode. Win by capturing the king.",
+      genre: ["Chess variant", "Strategy", "Board game"],
+      gamePlatform: "Web browser",
+      applicationCategory: "Game",
+      operatingSystem: "Any",
+      playMode: ["MultiPlayer", "SinglePlayer"],
+      numberOfPlayers: { "@type": "QuantitativeValue", minValue: 1, maxValue: 2 },
+      isAccessibleForFree: true,
+      offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+      publisher: { "@id": "https://nerfchess.com/#org" },
+    },
+    {
       "@type": "WebSite",
       "@id": "https://nerfchess.com/#website",
       name: "Nerf Chess",

@@ -392,7 +392,7 @@ function LobbyInner() {
                   "-mb-px flex min-h-[44px] shrink-0 items-center gap-2 whitespace-nowrap border-b-2 px-1 pb-2.5 pt-1 font-display text-sm font-semibold transition-colors sm:text-base " +
                   (selected
                     ? "border-[color:var(--accent)] text-gold-leaf"
-                    : "border-transparent text-parchment-300 hover:border-white/25 hover:text-parchment-50")
+                    : "border-transparent text-parchment-300 hover:border-[color:var(--edge-strong)] hover:text-parchment-50")
                 }
               >
                 {t.label}
@@ -401,8 +401,8 @@ function LobbyInner() {
                     className={
                       "border px-1.5 py-px font-mono text-xs tabular-nums transition-colors " +
                       (selected
-                        ? "border-gold/40 bg-gold/15 text-gold-leaf"
-                        : "border-[color:var(--edge)] bg-white/[0.06] text-parchment-300")
+                        ? "border-[color:var(--edge-strong)] bg-[color:var(--bg-raised)] text-gold-leaf"
+                        : "border-[color:var(--edge)] bg-[color:var(--bg-raised)] text-parchment-300")
                     }
                   >
                     {count}
@@ -512,36 +512,38 @@ function LobbyInner() {
                   headline while these stay one tap away. Each opens its
                   existing flow (the challenges fold, the friends fold, bot
                   practice). */}
-              <div>
-                <h2 className="font-display text-[15px] font-bold text-parchment-50">
-                  Other ways to play
-                </h2>
-                <div className="mt-2.5 grid gap-2.5 sm:grid-cols-3">
-                  <SecondaryModeCard
-                    icon={<Swords size={18} aria-hidden />}
-                    title="Custom game"
-                    description="Set your own clock and mode, then share an open challenge."
-                    onClick={() => {
-                      setTab("play");
-                      setChallengesOpen(true);
-                    }}
-                  />
-                  <SecondaryModeCard
-                    icon={<Users size={18} aria-hidden />}
-                    title="Challenge a friend"
-                    description="Create a private game and share the code."
-                    onClick={() => {
-                      setTab("watch");
-                      setFriendsOpen(true);
-                    }}
-                  />
-                  <SecondaryModeCard
-                    icon={<Cpu size={18} aria-hidden />}
-                    title="Practice vs computer"
-                    description="Pick a bot strength and go."
-                    href="/play"
-                  />
-                </div>
+              {/* The other ways in, as Lichess's lobby buttons: three metal
+                  rows, icon left, label flush left. Each opens its existing
+                  flow (the challenges fold, the friends fold, bot practice). */}
+              <div className="grid gap-2 sm:grid-cols-3">
+                <Button
+                  tone="default"
+                  size="lg"
+                  align="start"
+                  onClick={() => {
+                    setTab("play");
+                    setChallengesOpen(true);
+                  }}
+                >
+                  <Swords size={22} strokeWidth={1.6} aria-hidden className="shrink-0 text-parchment-300" />
+                  Custom game
+                </Button>
+                <Button
+                  tone="default"
+                  size="lg"
+                  align="start"
+                  onClick={() => {
+                    setTab("watch");
+                    setFriendsOpen(true);
+                  }}
+                >
+                  <Users size={22} strokeWidth={1.6} aria-hidden className="shrink-0 text-parchment-300" />
+                  Challenge a friend
+                </Button>
+                <LinkButton tone="default" size="lg" align="start" href="/play">
+                  <Cpu size={22} strokeWidth={1.6} aria-hidden className="shrink-0 text-parchment-300" />
+                  Play against computer
+                </LinkButton>
               </div>
 
               {/* Open challenges: players waiting in a quick-pairing pool plus
@@ -654,7 +656,7 @@ function LobbyInner() {
                   {visiblePlayers.map((p) => (
                     <li
                       key={p.name}
-                      className="-mx-2 flex items-center justify-between gap-2 px-2 py-1 text-sm transition-colors hover:bg-white/[0.04]"
+                      className="-mx-2 flex items-center justify-between gap-2 px-2 py-1 text-sm transition-colors hover:bg-[color:var(--bg-raised)]"
                     >
                       <Link
                         href={`/u/${encodeURIComponent(p.name)}`}
@@ -757,7 +759,7 @@ function LobbyInner() {
 // One live-pulse chip in the header: a status dot beside a readable count.
 function HallStat({ dotClass, children }: { dotClass: string; children: React.ReactNode }) {
   return (
-    <span className="flex items-center gap-2 border border-[color:var(--edge)] bg-white/[0.04] px-3 py-1.5 text-xs tabular-nums text-parchment-300">
+    <span className="flex items-center gap-2 border border-[color:var(--edge)] bg-[color:var(--bg-zebra)] px-3 py-1.5 text-xs tabular-nums text-parchment-300">
       <span aria-hidden className={`h-1.5 w-1.5 shrink-0 ${dotClass}`} />
       {children}
     </span>
@@ -792,7 +794,7 @@ function StatusPill({
     <span
       role="status"
       aria-live="polite"
-      className="flex items-center gap-2 border border-[color:var(--edge)] bg-white/[0.04] px-3 py-1.5 text-xs font-medium tabular-nums text-parchment-200"
+      className="flex items-center gap-2 border border-[color:var(--edge)] bg-[color:var(--bg-zebra)] px-3 py-1.5 text-xs font-medium tabular-nums text-parchment-200"
     >
       <span aria-hidden className={`h-1.5 w-1.5 shrink-0 rounded-full ${dot}`} />
       {label}
@@ -803,46 +805,6 @@ function StatusPill({
 // One secondary play-mode card: a full-height, fully clickable tile (min 44px)
 // with an icon, a title, and a one-line description. Renders as a link when it
 // points at a route, or a button when it switches lobby tabs.
-function SecondaryModeCard({
-  icon,
-  title,
-  description,
-  href,
-  onClick,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  href?: string;
-  onClick?: () => void;
-}) {
-  const inner = (
-    <>
-      <span
-        aria-hidden
-        className="grid h-9 w-9 shrink-0 place-items-center border border-[color:var(--edge)] bg-black/25 text-parchment-200 transition-colors group-hover:border-gold/40 group-hover:text-gold-leaf"
-      >
-        {icon}
-      </span>
-      <span className="min-w-0">
-        <span className="block font-display text-[15px] font-semibold text-parchment-100">{title}</span>
-        <span className="mt-0.5 block text-xs leading-snug text-parchment-400">{description}</span>
-      </span>
-    </>
-  );
-  // Plain box, same as every other box on the page.
-  const className =
-    "plate plate-hover press group flex min-h-[44px] items-start gap-3 p-3 text-left no-underline";
-  return href ? (
-    <Link href={href} className={className}>
-      {inner}
-    </Link>
-  ) : (
-    <button type="button" onClick={onClick} className={className}>
-      {inner}
-    </button>
-  );
-}
 
 // Each lobby section wears a small color identity: an icon chip beside the
 // title (mint for friends, sun for open challenges, coral for live games; the
@@ -850,7 +812,7 @@ function SecondaryModeCard({
 // only, never the whole panel, so the page stays quiet.
 const SECTION_TINTS = {
   mint: "border-mint/30 bg-mint/10 text-mint-glow",
-  sun: "border-sun/30 bg-sun/10 text-sun-glow",
+  sun: "border-sun/30 bg-sun/10 text-brag",
   coral: "border-coral/30 bg-coral/10 text-coral-glow",
 } as const;
 
@@ -1099,7 +1061,7 @@ function LobbyRailError({ message, onRetry }: { message: string; onRetry: () => 
 // Empty state: a quiet flat brass checkerboard with star motes drifting off it.
 function HallEmpty({ title, hint }: { title: string; hint: string }) {
   return (
-    <div className="mt-4 flex items-center gap-4 border border-dashed border-[color:var(--edge)] bg-white/[0.015] p-4">
+    <div className="mt-4 flex items-center gap-4 border border-dashed border-[color:var(--edge)] bg-[color:var(--bg-zebra)] p-4">
       <div className="hall-empty-board" aria-hidden>
         <span className="hall-mote" style={{ left: "28%", bottom: "18%" }} />
         <span
@@ -1122,7 +1084,7 @@ function HallEmpty({ title, hint }: { title: string; hint: string }) {
 function StatusBadge({ status }: { status: "online" | "searching" | "playing" }) {
   const styles: Record<string, string> = {
     online: "border-verdigris/40 bg-verdigris/10 text-verdigris-glow",
-    searching: "border-gold/40 bg-gold/10 text-gold-leaf",
+    searching: "border-[color:var(--edge-strong)] bg-[color:var(--bg-raised)] text-gold-leaf",
     playing: "border-bruise/40 bg-bruise/10 text-bruise-glow",
   };
   const labels: Record<string, string> = {
@@ -1197,7 +1159,7 @@ function SeekRow({
         </div>
       </div>
       {isMine ? (
-        <span className="shrink-0 border border-gold/40 bg-gold/10 px-3 py-1.5 text-xs font-medium text-gold-leaf">
+        <span className="shrink-0 border border-[color:var(--edge-strong)] bg-[color:var(--bg-raised)] px-3 py-1.5 text-xs font-medium text-gold-leaf">
           Your seek
         </span>
       ) : (

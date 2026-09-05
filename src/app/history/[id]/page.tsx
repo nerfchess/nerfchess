@@ -48,7 +48,7 @@ export default function HistoryReplayPage() {
     <main className="min-h-screen">
       <nav className="flex items-center justify-between px-5 sm:px-10 py-6 sm:py-7">
         <Logo />
-        <Link href="/history" className="px-3 py-1.5 text-sm hover:bg-white/5 text-parchment-100">
+        <Link href="/history" className="px-3 py-1.5 text-sm hover:bg-[color:var(--bg-raised)] text-parchment-100">
           Back to history
         </Link>
       </nav>
@@ -92,7 +92,7 @@ function Replay({ game }: { game: CompletedGame }) {
     <main className="min-h-screen">
       <nav className="flex items-center justify-between px-5 sm:px-10 py-5">
         <Logo />
-        <Link href="/history" className="px-3 py-1.5 text-sm hover:bg-white/5 text-parchment-100">
+        <Link href="/history" className="px-3 py-1.5 text-sm hover:bg-[color:var(--bg-raised)] text-parchment-100">
           Back to history
         </Link>
       </nav>

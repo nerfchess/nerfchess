@@ -122,7 +122,7 @@ function LoginPage() {
           not a logo-only stub. */}
       <SiteHeader />
       <section className="max-w-md mx-auto px-6 py-8">
-        <h1 className="font-display text-3xl sm:text-4xl">
+        <h1 className="page-title">
           {tab === "login" ? "Welcome back" : "Create your account"}
         </h1>
         {upgrading && (
@@ -141,7 +141,7 @@ function LoginPage() {
               }}
               className={
                 "py-2 text-sm font-display font-semibold tracking-wide transition " +
-                (tab === t ? "bg-gold/15 text-gold-leaf" : "text-parchment-300 hover:bg-white/5")
+                (tab === t ? "bg-[color:var(--bg-raised)] text-gold-leaf" : "text-parchment-300 hover:bg-[color:var(--bg-raised)]")
               }
             >
               {t === "login" ? "Sign in" : "Register"}
@@ -165,7 +165,7 @@ function LoginPage() {
               onChange={(e) => setUsername(e.target.value)}
               autoComplete="username"
               maxLength={tab === "login" ? 254 : 20}
-              className="w-full bg-ink-900/60 border border-white/15 px-4 py-3 focus:border-gold/60 text-parchment placeholder:text-parchment-400/40"
+              className="w-full bg-[color:var(--bg-base)] border border-[color:var(--edge)] px-4 py-3 focus:border-[color:var(--edge-strong)] text-parchment placeholder:text-parchment-400/40"
               placeholder="knight_rider"
             />
             {tab === "register" && (
@@ -186,7 +186,7 @@ function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="email"
                 maxLength={254}
-                className="w-full bg-ink-900/60 border border-white/15 px-4 py-3 focus:border-gold/60 text-parchment placeholder:text-parchment-400/40"
+                className="w-full bg-[color:var(--bg-base)] border border-[color:var(--edge)] px-4 py-3 focus:border-[color:var(--edge-strong)] text-parchment placeholder:text-parchment-400/40"
                 placeholder="you@example.com"
               />
               <p className="mt-1 text-[12px] text-parchment-400">
@@ -204,7 +204,7 @@ function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete={tab === "login" ? "current-password" : "new-password"}
-              className="w-full bg-ink-900/60 border border-white/15 px-4 py-3 focus:border-gold/60 text-parchment"
+              className="w-full bg-[color:var(--bg-base)] border border-[color:var(--edge)] px-4 py-3 focus:border-[color:var(--edge-strong)] text-parchment"
               placeholder={tab === "register" ? "at least 8 characters" : ""}
             />
           </div>
@@ -224,13 +224,13 @@ function LoginPage() {
           </Button>
 
           <div className="flex items-center gap-3">
-            <div className="h-px flex-1 bg-white/10" />
+            <div className="h-px flex-1 bg-[color:var(--bg-raised)]" />
             <span className="text-[12px] text-parchment-400">or</span>
-            <div className="h-px flex-1 bg-white/10" />
+            <div className="h-px flex-1 bg-[color:var(--bg-raised)]" />
           </div>
           <a
             href={`/api/auth/google?next=${encodeURIComponent(next)}`}
-            className="press w-full flex items-center justify-center gap-3 py-3 border border-white/15 bg-ink-900/60 hover:bg-white/5 transition text-parchment font-display text-[15px]"
+            className="w-full flex items-center justify-center gap-3 py-3 border border-[color:var(--edge)] bg-[color:var(--bg-base)] hover:bg-[color:var(--bg-raised)] transition text-parchment font-display text-[15px]"
           >
             <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
               <path fill="#EA4335" d="M24 9.5c3.54 0 6.7 1.22 9.19 3.6l6.86-6.86C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.2C12.44 13.72 17.74 9.5 24 9.5z" />

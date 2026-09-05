@@ -43,7 +43,7 @@
   66% { opacity: 0.44; }
   100% { opacity: 0; }
 }
-.g28-wash { animation: g28-wash calc(1.5s * var(--fx-dur, 1)) ease-out both; }
+.g28-wash { animation: g28-wash calc(1.5s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* Quarry grit hanging over the board, drifting away from the caster. */
 @keyframes g28-grit {
@@ -52,7 +52,7 @@
   76% { opacity: 0.5; transform: translateY(calc(var(--fx-side, 1) * -2.4%)); }
   100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * -3.6%)); }
 }
-.g28-grit { animation: g28-grit calc(1.5s * var(--fx-dur, 1)) ease-out both; }
+.g28-grit { animation: g28-grit calc(1.5s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* ---------------------------------------------------------------------------
    Geometry tracks.
@@ -95,7 +95,7 @@
   80% { opacity: 0.6; transform: translate(calc(var(--fx-ox, 0) * 2.8%), calc(var(--fx-oy, 0) * 1.8%)) scaleX(1.04); }
   100% { opacity: 0; transform: translate(calc(var(--fx-ox, 0) * 2.8%), calc(var(--fx-oy, 0) * 1.8%)) scaleX(1.04); }
 }
-.g28-lean { animation: g28-lean calc(1s * var(--fx-dur, 1)) ease-out both; }
+.g28-lean { animation: g28-lean calc(1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* Work swung clear over the CASTER's own side of the screen. */
 @keyframes g28-side {
@@ -112,7 +112,7 @@
   36% { opacity: 0.7; transform: translateY(calc(var(--fx-side, 1) * -4%)) scale(1); }
   100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * -13%)) scale(1.3); }
 }
-.g28-drift { animation: g28-drift calc(1.1s * var(--fx-dur, 1)) ease-out both; }
+.g28-drift { animation: g28-drift calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* ---------------------------------------------------------------------------
    Generic tells and strikes.
@@ -156,7 +156,7 @@
   44% { opacity: 0.9; transform: scaleX(1); }
   100% { opacity: 0; transform: scaleX(1.08); }
 }
-.g28-ent2 { animation: g28-ent2 calc(0.6s * var(--fx-dur, 1)) ease-out both; }
+.g28-ent2 { animation: g28-ent2 calc(0.6s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g28-ent3 {
   0% { opacity: 0; transform: translateY(-24%) rotate(-10deg); }
@@ -183,14 +183,14 @@
   36% { opacity: 1; transform: scaleX(1); }
   100% { opacity: 0; transform: scaleX(1.1); }
 }
-.g28-hit2 { animation: g28-hit2 calc(0.46s * var(--fx-dur, 1)) ease-out both; }
+.g28-hit2 { animation: g28-hit2 calc(0.46s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g28-hit3 {
   0% { opacity: 0; transform: scale(0.4); }
   38% { opacity: 0.75; transform: scale(1); }
   100% { opacity: 0; transform: scale(1.4); }
 }
-.g28-hit3 { animation: g28-hit3 calc(0.6s * var(--fx-dur, 1)) ease-out both; }
+.g28-hit3 { animation: g28-hit3 calc(0.6s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* ---------------------------------------------------------------------------
    1. Written in Stone — incised lettering.
@@ -217,7 +217,7 @@
   38% { opacity: 0.85; transform: scale(1, 1); }
   100% { opacity: 0; transform: scale(1.5, 0.7) translateY(-14%); }
 }
-.g28-wi-flour { animation: g28-wi-flour calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+.g28-wi-flour { animation: g28-wi-flour calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* ---------------------------------------------------------------------------
    2. Gorgon's Court — plug and feathers.
@@ -274,7 +274,7 @@
   44% { opacity: 1; transform: scale(1); }
   100% { opacity: 0; transform: scale(1.02); }
 }
-.g28-hm-arc { animation: g28-hm-arc calc(0.66s * var(--fx-dur, 1)) ease-out both; }
+.g28-hm-arc { animation: g28-hm-arc calc(0.66s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g28-hm-moon {
   0% { opacity: 0; transform: scale(0.4) rotate(-24deg); }
@@ -324,7 +324,7 @@
   34% { opacity: 0.9; transform: scale(1, 1); }
   100% { opacity: 0; transform: scale(1.7, 0.7) translateY(-16%); }
 }
-.g28-sr-spall { animation: g28-sr-spall calc(0.88s * var(--fx-dur, 1)) ease-out both; }
+.g28-sr-spall { animation: g28-sr-spall calc(0.88s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* ---------------------------------------------------------------------------
    6. Castle of Sand — the sand-slurry frame saw.
@@ -338,7 +338,7 @@
   86% { transform: translateX(calc(var(--fx-len, 3) * 3%)) scaleX(1); }
   100% { opacity: 0; transform: translateX(0) scaleX(1); }
 }
-.g28-cs-blade { animation: g28-cs-blade calc(0.95s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 0% 50%; }
+.g28-cs-blade { animation: g28-cs-blade calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; transform-origin: 0% 50%; }
 
 @keyframes g28-cs-slurry {
   0% { opacity: 0; transform: scaleY(0.05); }
@@ -352,7 +352,7 @@
   44% { opacity: 1; transform: scaleY(1); }
   100% { opacity: 0; transform: scaleY(1.4); }
 }
-.g28-cs-kerf { animation: g28-cs-kerf calc(0.74s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 0%; }
+.g28-cs-kerf { animation: g28-cs-kerf calc(0.74s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 0%; }
 
 /* ---------------------------------------------------------------------------
    7. Gorgon Field — the banker turntable.
@@ -379,7 +379,7 @@
   46% { opacity: 0.9; transform: scaleY(1); }
   100% { opacity: 0; transform: scaleY(1.1); }
 }
-.g28-gf-face { animation: g28-gf-face calc(0.5s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 100%; }
+.g28-gf-face { animation: g28-gf-face calc(0.5s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 100%; }
 
 /* ---------------------------------------------------------------------------
    8. Stone Garden — the claw chisel.
@@ -398,7 +398,7 @@
   40% { opacity: 0.9; transform: translateY(0) scale(1) rotate(-8deg); }
   100% { opacity: 0; transform: translateY(-28%) scale(1.3) rotate(-22deg); }
 }
-.g28-sg-curl { animation: g28-sg-curl calc(0.86s * var(--fx-dur, 1)) ease-out both; }
+.g28-sg-curl { animation: g28-sg-curl calc(0.86s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* ---------------------------------------------------------------------------
    9. Stone Orchard — the point chisel roughing out.
@@ -429,7 +429,7 @@
   34% { opacity: 0.9; transform: scale(1, 1); }
   100% { opacity: 0; transform: scale(1.6, 0.7) translateY(-22%); }
 }
-.g28-so-chip { animation: g28-so-chip calc(0.8s * var(--fx-dur, 1)) ease-out both; }
+.g28-so-chip { animation: g28-so-chip calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* ---------------------------------------------------------------------------
    10. Traitor's Gala — the lewis pin.
@@ -488,7 +488,7 @@
   34% { opacity: 1; transform: scaleX(1) scaleY(1); }
   100% { opacity: 0; transform: scaleX(1) scaleY(2.6); }
 }
-.g28-ba-line { animation: g28-ba-line calc(0.66s * var(--fx-dur, 1)) ease-out both; transform-origin: 0% 50%; }
+.g28-ba-line { animation: g28-ba-line calc(0.66s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 0% 50%; }
 
 /* ---------------------------------------------------------------------------
    12. Debt Collector — pointing the joint.
@@ -575,7 +575,7 @@
   50% { opacity: 0.9; transform: scale(1, 1); }
   100% { opacity: 0; transform: scale(1.2, 1); }
 }
-.g28-sc-water { animation: g28-sc-water calc(0.3s * var(--fx-dur, 1)) ease-out both; }
+.g28-sc-water { animation: g28-sc-water calc(0.3s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g28-sc-rub {
   0% { opacity: 0; transform: translateX(calc(var(--fx-side, 1) * -40%)); }
@@ -585,14 +585,14 @@
   86% { transform: translateX(calc(var(--fx-side, 1) * 22%)); }
   100% { opacity: 0; transform: translateX(0); }
 }
-.g28-sc-rub { animation: g28-sc-rub calc(1s * var(--fx-dur, 1)) ease-in-out both; }
+.g28-sc-rub { animation: g28-sc-rub calc(1s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 @keyframes g28-sc-sheen {
   0% { opacity: 0; transform: translateX(-64%) skewX(-14deg); }
   40% { opacity: 1; }
   100% { opacity: 0; transform: translateX(64%) skewX(-14deg); }
 }
-.g28-sc-sheen { animation: g28-sc-sheen calc(0.8s * var(--fx-dur, 1)) ease-in-out both; }
+.g28-sc-sheen { animation: g28-sc-sheen calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 /* ---------------------------------------------------------------------------
    16. Gargoyle Perch — the pointing machine.
@@ -642,7 +642,7 @@
   70% { opacity: 0.28; transform: scale(1.1, 0.5); }
   100% { opacity: 0; transform: scale(1.2, 0.18); }
 }
-.g28-hf-ring { animation: g28-hf-ring calc(0.82s * var(--fx-dur, 1)) ease-out both; }
+.g28-hf-ring { animation: g28-hf-ring calc(0.82s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g28-hf-flaw {
   0% { opacity: 0; transform: scaleY(0.08) rotate(-6deg); }
@@ -650,7 +650,7 @@
   70% { opacity: 0.7; }
   100% { opacity: 0; transform: scaleY(1.2) rotate(-6deg); }
 }
-.g28-hf-flaw { animation: g28-hf-flaw calc(0.76s * var(--fx-dur, 1)) ease-out both; }
+.g28-hf-flaw { animation: g28-hf-flaw calc(0.76s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* ---------------------------------------------------------------------------
    18. Rolling Boulder — the dressed drum on rollers.
@@ -718,14 +718,14 @@
   62% { transform: scale(0.9) translateY(-6%); }
   100% { opacity: 0; transform: scale(1.2) translateY(-24%); }
 }
-.g28-tp-boil { animation: g28-tp-boil calc(0.68s * var(--fx-dur, 1)) ease-out both; }
+.g28-tp-boil { animation: g28-tp-boil calc(0.68s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g28-tp-steam {
   0% { opacity: 0; transform: translateY(24%) scale(0.5, 0.3); }
   40% { opacity: 0.85; transform: translateY(0) scale(1, 1); }
   100% { opacity: 0; transform: translateY(-30%) scale(1.3, 1.4); }
 }
-.g28-tp-steam { animation: g28-tp-steam calc(0.94s * var(--fx-dur, 1)) ease-out both; }
+.g28-tp-steam { animation: g28-tp-steam calc(0.94s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* ---------------------------------------------------------------------------
    21. Borrowed Crown — gilding the cut.
@@ -751,7 +751,7 @@
   40% { opacity: 1; }
   100% { opacity: 0; transform: translateX(58%) skewX(-12deg); }
 }
-.g28-bc-burnish { animation: g28-bc-burnish calc(0.7s * var(--fx-dur, 1)) ease-in-out both; }
+.g28-bc-burnish { animation: g28-bc-burnish calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 /* ---------------------------------------------------------------------------
    22. Soft Shells — the scutch comb.
@@ -783,7 +783,7 @@
   50% { opacity: 1; transform: scaleX(1) rotate(0deg); }
   100% { opacity: 0; transform: scaleX(1) rotate(1deg); }
 }
-.g28-gw-straw { animation: g28-gw-straw calc(0.3s * var(--fx-dur, 1)) ease-out both; }
+.g28-gw-straw { animation: g28-gw-straw calc(0.3s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g28-gw-wrap {
   0% { opacity: 0; transform: scale(1.28) rotate(-8deg); }
@@ -811,7 +811,7 @@
   50% { opacity: 1; transform: scaleX(1) scaleY(1); }
   100% { opacity: 0; transform: scaleX(1) scaleY(1); }
 }
-.g28-pr-mortar { animation: g28-pr-mortar calc(0.3s * var(--fx-dur, 1)) ease-out both; }
+.g28-pr-mortar { animation: g28-pr-mortar calc(0.3s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g28-pr-gallet {
   0% { opacity: 0; transform: translateY(-60%) rotate(-30deg) scale(0.7); }
@@ -841,14 +841,14 @@
   84% { transform: translateX(calc(var(--fx-side, 1) * -12%)) rotate(0deg); }
   100% { opacity: 0; transform: translateX(calc(var(--fx-side, 1) * 18%)) rotate(calc(var(--fx-side, 1) * 4deg)); }
 }
-.g28-db-brush { animation: g28-db-brush calc(0.94s * var(--fx-dur, 1)) ease-in-out both; }
+.g28-db-brush { animation: g28-db-brush calc(0.94s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 @keyframes g28-db-cloud {
   0% { opacity: 0; transform: scale(0.3, 0.4); }
   38% { opacity: 0.9; transform: scale(1, 1); }
   100% { opacity: 0; transform: scale(1.7, 0.8) translateY(-12%); }
 }
-.g28-db-cloud { animation: g28-db-cloud calc(0.86s * var(--fx-dur, 1)) ease-out both; }
+.g28-db-cloud { animation: g28-db-cloud calc(0.86s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* ---------------------------------------------------------------------------
    26. Loose Horseshoe — running a cramp in lead.

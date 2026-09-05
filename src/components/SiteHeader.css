@@ -17,23 +17,27 @@ nav.site-nav {
 /* A nav link: plain text, no chrome until hovered. */
 .site-nav-link {
   position: relative;
-  font-size: 14px;
+  font-size: 15px;
+  font-weight: 500;
   line-height: 1.2;
-  color: var(--text-primary);
-  transition: color 0.12s ease, background-color 0.12s ease;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  transition: color 0.15s ease, background-color 0.15s ease;
 }
 .site-nav-link:hover {
   color: var(--text-heading);
-  background: var(--bg-raised);
+  background: var(--bg-panel);
 }
 .site-nav-link[data-active="true"] {
-  color: var(--accent);
+  color: var(--text-heading);
 }
 
 /* The hover dropdown under a nav link, and the header's own popovers: the same
    plain box the quick-settings menu uses. */
 .site-nav-pop {
-  background: var(--bg-panel);
+  background: var(--bg-raised);
   border: 1px solid var(--border-subtle);
-  border-radius: 7px;
+  border-radius: var(--ui-roundness);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.15), 0 10px 10px rgba(0, 0, 0, 0.12);
 }

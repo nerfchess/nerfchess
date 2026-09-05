@@ -30,6 +30,7 @@ export type Control =
   | { kind: "customBg" }
   | { kind: "boardTheme" }
   | { kind: "pieceTheme" }
+  | { kind: "pieceColor" }
   | { kind: "account" }
   | { kind: "reset" };
 
@@ -138,9 +139,16 @@ export const SECTIONS: SectionConfig[] = [
       },
       {
         id: "pieceTheme",
-        label: "Piece set",
+        label: "Piece design",
         group: "Themes",
         control: { kind: "pieceTheme" },
+      },
+      {
+        id: "pieceColor",
+        label: "Piece colour",
+        hint: "Paints the Nerf Chess design; the Lichess sets keep their own colours",
+        group: "Themes",
+        control: { kind: "pieceColor" },
       },
       {
         id: "boardSize",
@@ -191,6 +199,13 @@ export const SECTIONS: SectionConfig[] = [
             { value: "normal", label: "Normal" },
           ],
         },
+      },
+      {
+        id: "effects3d",
+        label: "3D board effects",
+        hint: "Lasers, pillars and shatters drawn on the board with WebGL. Steps down for the session if frames drop",
+        group: "Effects",
+        control: { kind: "toggle", setting: "effects3d" },
       },
       {
         id: "fxDuration",

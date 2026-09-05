@@ -229,7 +229,7 @@ export function GlossaryTerm({ term, definition }: { term: string; definition: s
               // scrolls inside the panel instead of overflowing a small phone.
               maxHeight: pos?.maxH,
             }}
-            className="fixed z-[70] block overflow-y-auto overscroll-contain rounded-[1px] border border-white/15 bg-ink-800 px-3 py-2.5 text-left text-[12px] font-body font-normal normal-case leading-snug text-parchment-100 shadow-plate"
+            className="fixed z-[70] block overflow-y-auto overscroll-contain rounded-none border border-[color:var(--edge)] bg-ink-800 px-3 py-2.5 text-left text-[12px] font-body font-normal normal-case leading-snug text-parchment-100 shadow-plate"
           >
             {entry && (
               <span className="block font-display text-[13px] tracking-wide text-parchment">

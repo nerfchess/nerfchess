@@ -4,6 +4,23 @@ export type VfxPoint = { x: number; y: number };
 export type VfxTravel = "bolt" | "arc" | "beam" | "wave" | "rain" | "chain" | "none";
 export type VfxImpact = "burst" | "shatter" | "embers" | "smoke" | "debris" | "sparkle" | "shock";
 export type VfxAftermath = "scorch" | "frost" | "sparkle" | "smolder" | "none";
+/** A 3D primitive drawn by the WebGL board layer (effects/board3d). Coordinates
+ *  are the same board fractions as the 2D spec. `fallback: "canvas"` means the
+ *  2D engine keeps drawing its travel when the 3D layer is off; when the 3D
+ *  layer is on it draws the travel and the 2D engine keeps only impacts. */
+export type Vfx3DPrimitive = "laserRank" | "laserFile" | "laserDiag" | "pillar" | "shatter" | "ringWave";
+export interface Vfx3D {
+  primitive: Vfx3DPrimitive;
+  /** For the three lasers: the line to sweep, from -> to in board fractions. */
+  line?: { from: VfxPoint; to: VfxPoint };
+  /** For pillar / shatter / ringWave: the squares (centres) it touches. */
+  squares?: VfxPoint[];
+  /** Height in board widths (a square is 0.125). */
+  height?: number;
+  durationMs?: number;
+  fallback: "canvas" | "none";
+}
+
 export interface VfxPlay {
   tier: number;                       // drives intensity + cinematic staging (7+ = full ~2s sequence)
   palette: string[];                  // 2-4 css colors, primary first
@@ -20,4 +37,7 @@ export interface VfxPlay {
   squareSize?: number;                // fraction of board width one square occupies (default 1/8)
   intensity?: number;                 // particle-count multiplier from the effects dial (default 1, clamped 0.3-2)
   durationScale?: number;             // stretches/squeezes every lifetime + stagger (Settings > card effect duration; default 1, clamped 0.5-2)
+  /** Explicit 3D treatment. Omitted = derived from travel/impact (deriveDepth);
+   *  null = opt out of the 3D layer for this play. */
+  depth?: Vfx3D | null;
 }

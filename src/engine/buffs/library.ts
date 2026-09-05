@@ -679,7 +679,7 @@ const TIER1: Buff[] = [
     permanentAugment((moves, inst, api) => doubleStepGen(moves, inst, api).filter((m) => !m.captured)),
   ),
   def(
-    { id: "wazir_rook", requires: ["r"], name: "Wazir Rook", description: "Choose one rook; for the game it may also step one square diagonally.", tier: 1, category: "movement", fx: { motif: "empower", pieces: ["r"], moveAs: "k", self: true } },
+    { id: "wazir_rook", requires: ["r"], name: "Wazir Rook", description: "Choose one rook; for the game it may also step one square diagonally.", tier: 3, category: "movement", fx: { motif: "empower", pieces: ["r"], moveAs: "k", self: true } },
     pieceBound("r", "Choose the rook", (board, sq, via) => slideMoves(board, sq, DIAG_DIRS, via, 1)),
   ),
   def(
@@ -1350,7 +1350,7 @@ const TIER2: Buff[] = [
     }),
   ),
   def(
-    { id: "camel_knight", requires: ["n"], name: "Camel Knight", description: "One knight also moves as a camel (3-1 leap), for the game.", tier: 1, category: "movement", fx: { motif: "empower", pieces: ["n"], moveAs: "n", self: true } },
+    { id: "camel_knight", requires: ["n"], name: "Camel Knight", description: "One knight also moves as a camel (3-1 leap), for the game.", tier: 2, category: "movement", fx: { motif: "empower", pieces: ["n"], moveAs: "n", self: true } },
     pieceBound("n", "Choose the knight", (board, sq, via) => leapMoves(board, sq, CAMEL_LEAPS, via)),
   ),
   def(
@@ -1582,7 +1582,7 @@ const TIER2: Buff[] = [
     ),
   ),
   def(
-    { id: "wazir_bishop", requires: ["b"], name: "Wazir Bishop", description: "Choose one bishop; for the game it may also step one square horizontally or vertically.", tier: 1, category: "movement", fx: { motif: "empower", pieces: ["b"], moveAs: "k", self: true } },
+    { id: "wazir_bishop", requires: ["b"], name: "Wazir Bishop", description: "Choose one bishop; for the game it may also step one square horizontally or vertically.", tier: 3, category: "movement", fx: { motif: "empower", pieces: ["b"], moveAs: "k", self: true } },
     pieceBound("b", "Choose the bishop", (board, sq, via) => slideMoves(board, sq, ORTHO_DIRS, via, 1)),
   ),
   def(
@@ -1869,7 +1869,7 @@ const TIER3: Buff[] = [
     pieceBound("b", "Choose the bishop", (board, sq, via) => leapMoves(board, sq, KNIGHT_LEAPS, via)),
   ),
   def(
-    { id: "rook_chancellor", requires: ["r"], name: "Rook to Chancellor", description: "One rook also moves like a knight, for the game.", tier: 2, category: "movement", fx: { motif: "empower", pieces: ["r"], moveAs: "n", self: true } },
+    { id: "rook_chancellor", requires: ["r"], name: "Rook to Chancellor", description: "One rook also moves like a knight, for the game.", tier: 4, category: "movement", fx: { motif: "empower", pieces: ["r"], moveAs: "n", self: true } },
     pieceBound("r", "Choose the rook", (board, sq, via) => leapMoves(board, sq, KNIGHT_LEAPS, via)),
   ),
   def(
@@ -1913,13 +1913,13 @@ const TIER3: Buff[] = [
     placePieces(["n"], anyHalfZone),
   ),
   def(
-    { id: "queens_echo", requires: ["r"], name: "Queen's Echo", description: "Your rooks move like queens for your next 2 turns.", tier: 3, category: "movement", fx: { motif: "empower", pieces: ["r"], moveAs: "q", self: true } },
+    { id: "queens_echo", requires: ["r"], name: "Queen's Echo", description: "Your rooks move like queens for your next 2 turns.", tier: 5, category: "movement", fx: { motif: "empower", pieces: ["r"], moveAs: "q", self: true } },
     timedAugment(2, (_m, inst, api) =>
       mySquares(api.board, api.me, "r").flatMap((sq) => slideMoves(api.board, sq, DIAG_DIRS, inst.id)),
     ),
   ),
   def(
-    { id: "time_skip", name: "Time Skip", description: "Your opponent skips their next turn, and the piece they last moved is frozen for their next 2 turns. You cannot capture the king on the bonus move: your opponent replies first.", tier: 3, category: "tempo", fx: { motif: "slow", pieces: "all" } },
+    { id: "time_skip", name: "Time Skip", description: "Your opponent skips their next turn, and the piece they last moved is frozen for their next 2 turns. You cannot capture the king on the bonus move: your opponent replies first.", tier: 6, category: "tempo", fx: { motif: "slow", pieces: "all" } },
     instant((_inst, api) => {
       api.bs.skips[api.opp] += 1;
       // Snap-freeze the piece the opponent last moved (it now sits on that
@@ -2254,7 +2254,7 @@ const TIER3: Buff[] = [
     advancePawns(4),
   ),
   def(
-    { id: "guard_rotation", requires: ["r"], name: "Guard Rotation", description: "Swap your king with a rook anywhere on the board, once.", tier: 3, category: "movement" },
+    { id: "guard_rotation", requires: ["r"], name: "Guard Rotation", description: "Swap your king with a rook anywhere on the board, once.", tier: 4, category: "movement" },
     activated(
       (_inst, api, picks) =>
         picks.length > 0
@@ -2665,7 +2665,7 @@ const TIER4: Buff[] = [
     },
   ),
   def(
-    { id: "amazon_knight", requires: ["n"], name: "Amazon Knight", description: "One knight becomes a knight plus queen for 2 turns.", tier: 3, category: "movement", fx: { motif: "empower", pieces: ["n"], moveAs: "q", self: true } },
+    { id: "amazon_knight", requires: ["n"], name: "Amazon Knight", description: "One knight becomes a knight plus queen for 2 turns.", tier: 6, category: "movement", fx: { motif: "empower", pieces: ["n"], moveAs: "q", self: true } },
     bindPiece("Choose the knight", bindCandidates(["n"]), {
       turns: 2,
       gen: (board, sq, via) => slideMoves(board, sq, ALL_DIRS, via),
@@ -3233,7 +3233,7 @@ const TIER5: Buff[] = [
     ),
   ),
   def(
-    { id: "twin_queens", requires: ["p"], name: "Twin Queens", description: "Promote two pawns to queens instantly if both are on your 5th rank or beyond. Using it spends your next unused reroll, if any.", tier: 5, category: "pieces" },
+    { id: "twin_queens", requires: ["p"], name: "Twin Queens", description: "Promote two pawns to queens instantly if both are on your 5th rank or beyond. Using it spends your next unused reroll, if any.", tier: 7, category: "pieces" },
     consumeRerollOnUse(promotePawns(2, 5, "q")),
   ),
   def(
@@ -3494,7 +3494,7 @@ const TIER5: Buff[] = [
     consumeRerollOnUse(promotePawns(2, 4, "n")),
   ),
   def(
-    { id: "collapse", name: "Collapse", description: "Pull every enemy piece except the king one square toward their back rank across the whole board, once.", tier: 4, category: "attack" },
+    { id: "collapse", name: "Collapse", description: "Pull every enemy piece except the king one square toward their back rank across the whole board, once.", tier: 6, category: "attack" },
     instant((_inst, api) => {
       const back = -fwdOf(api.opp);
       // Every non-king enemy piece is pulled one square toward its own back
@@ -4166,7 +4166,7 @@ const TIER6: Buff[] = [
     // board. Applied on the caster's move following that reply so the 1-turn
     // freeze survives (a freeze added on the opponent's own move would be
     // ticked away by that same move before it could bind them).
-    { id: "mass_freeze", name: "Mass Freeze", description: "After your opponent replies, freeze every enemy piece except the king for 1 full turn.", tier: 4, category: "tempo", fx: { motif: "jail", pieces: ["p", "n", "b", "r", "q"] } },
+    { id: "mass_freeze", name: "Mass Freeze", description: "After your opponent replies, freeze every enemy piece except the king for 1 full turn.", tier: 7, category: "tempo", fx: { motif: "jail", pieces: ["p", "n", "b", "r", "q"] } },
     {
       kind: "passive",
       init: (inst) => {
@@ -4596,7 +4596,7 @@ const TIER7: Buff[] = [
     }),
   ),
   def(
-    { id: "fortress_realm", name: "Fortress Realm", description: "Pick a 3x3 zone: up to three of your pieces there, your king aside, cannot be captured for your opponent's next turn, then the zone becomes ordinary terrain.", tier: 7, category: "protection", boon: true },
+    { id: "fortress_realm", name: "Fortress Realm", description: "Pick a 3x3 zone: up to three of your pieces there, your king aside, cannot be captured for your opponent's next turn, then the zone becomes ordinary terrain.", tier: 4, category: "protection", boon: true },
     // Owner tweak: the zone now shields at most three of your pieces (king aside)
     // for a single opponent turn, then expires. Shield squares track the pieces
     // standing on them, so only the chosen pieces are protected, not the tiles.

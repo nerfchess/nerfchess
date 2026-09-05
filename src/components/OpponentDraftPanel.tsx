@@ -16,6 +16,7 @@ import { createElement, useState } from "react";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
 import { cardFaceIcon } from "@/lib/cardIcon";
 import { TIER_ROMAN } from "@/lib/tiers";
+import { GlossaryText } from "@/components/GlossaryText";
 
 export interface OpponentDraftState {
   offer: { cards: { id: string; tier: number }[] } | null;
@@ -92,7 +93,7 @@ function MiniCard({ id, tier }: { id: string; tier: number }) {
           "text-[11px] leading-snug text-parchment-300 " + (open ? "" : "line-clamp-2")
         }
       >
-        {def.description}
+        <GlossaryText text={def.description} />
       </span>
     </button>
   );

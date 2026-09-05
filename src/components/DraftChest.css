@@ -576,3 +576,70 @@ html[data-anim="off"] .chest-shell .chest-lid::after { animation: none; }
    below carry the material, the tier tint carries the rarity, and nothing is
    re-skinned per theme. */
 html[data-anim="off"] .chest-shell--opening .chest-scene { animation: none; }
+
+
+/* --- Depth: side faces, the lid's underside, and the light wedge ------------
+   The scene already runs under perspective + preserve-3d; these three add the
+   geometry that makes the chest a box instead of a front. Transform/opacity
+   only, like everything else here. */
+.chest-side {
+  position: absolute;
+  top: 45%;
+  bottom: 2%;
+  width: 14%;
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.15)),
+    var(--chest-wood-deep);
+  border: 1px solid rgb(var(--chest-band) / 0.35);
+  z-index: 2;
+}
+.chest-side--l {
+  left: 6%;
+  transform-origin: 0 50%;
+  transform: rotateY(62deg);
+}
+.chest-side--r {
+  right: 6%;
+  transform-origin: 100% 50%;
+  transform: rotateY(-62deg);
+}
+.chest-lid__inner {
+  position: absolute;
+  inset: 0;
+  transform: rotateX(180deg) translateZ(1px);
+  backface-visibility: hidden;
+  background:
+    radial-gradient(60% 70% at 50% 100%, rgb(var(--chest-rgb) / 0.55), transparent 70%),
+    var(--chest-wood-deep);
+}
+/* A cone of light that fans out of the open chest, scaling up from the seam. */
+.chest-wedge {
+  position: absolute;
+  left: 50%;
+  bottom: 52%;
+  width: 60%;
+  height: 120%;
+  margin-left: -30%;
+  transform-origin: 50% 100%;
+  transform: scale(0);
+  opacity: 0;
+  pointer-events: none;
+  background: conic-gradient(from 160deg at 50% 100%, transparent 0deg, rgb(var(--chest-rgb) / 0.35) 20deg, rgb(var(--chest-rgb) / 0.08) 40deg, transparent 40deg);
+  z-index: 1;
+}
+.chest-shell--opening .chest-wedge {
+  animation: chest-wedge-open 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) 0.3s both;
+}
+@keyframes chest-wedge-open {
+  0% { transform: scale(0); opacity: 0; }
+  40% { opacity: 1; }
+  100% { transform: scale(1.15); opacity: 0.85; }
+}
+.chest-shell--still .chest-wedge,
+html[data-anim="off"] .chest-wedge { animation: none; }
+/* The side faces settle away with the body once the lid is up, so nothing is
+   left standing when the cards deal. */
+.chest-shell--opening .chest-side {
+  animation: chest-body-settle 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.42s both;
+}
+html[data-anim="off"] .chest-shell--opening .chest-side { animation: none; opacity: 0; }

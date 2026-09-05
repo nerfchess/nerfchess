@@ -102,7 +102,7 @@ export const FANTASY_ARTIFACTS: Buff[] = [
       name: "Horn of Summoning",
       description:
         "One long note wakes the stone itself: for the rest of the game, your rooks may also step one square diagonally.",
-      tier: 7,
+      tier: 5,
       category: "movement",
       requires: ["r"],
       flavor: "One long note, and the towers themselves answer.",

@@ -5,7 +5,7 @@
 export default function Loading() {
   return (
     <main className="min-h-screen pb-16">
-      <div className="flex items-center justify-between border-b border-white/5 px-5 py-3 sm:px-6">
+      <div className="flex items-center justify-between border-b border-[color:var(--edge)] px-5 py-3 sm:px-6">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/logo.svg" alt="Loading" width={26} height={26} className="animate-pulse" />
         <div className="skeleton h-8 w-28" />
@@ -22,7 +22,7 @@ export default function Loading() {
           </div>
         </div>
         {/* Tab bar (Play / Watch & Friends). */}
-        <div className="mt-4 flex flex-wrap gap-1.5 border-b border-white/10 pb-px" aria-hidden>
+        <div className="mt-4 flex flex-wrap gap-1.5 border-b border-[color:var(--edge)] pb-px" aria-hidden>
           {Array.from({ length: 2 }).map((_, i) => (
             <div key={i} className="skeleton h-10 w-20 sm:w-28" />
           ))}

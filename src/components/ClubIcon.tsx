@@ -45,7 +45,7 @@ export function ClubIcon({
         src={icon}
         alt=""
         aria-hidden
-        className={`shrink-0 select-none border border-white/10 object-cover ${className}`}
+        className={`shrink-0 select-none border border-[color:var(--edge)] object-cover ${className}`}
         style={{ width: size, height: size }}
       />
     );
@@ -65,7 +65,7 @@ export function ClubIcon({
     <span
       aria-hidden
       className={`grid shrink-0 select-none place-items-center border leading-none ${
-        Icon ? "" : "border-white/10 bg-ink-900/60 font-display text-parchment-200"
+        Icon ? "" : "border-[color:var(--edge)] bg-[color:var(--bg-base)] font-display text-parchment-200"
       } ${className}`}
       style={style}
     >

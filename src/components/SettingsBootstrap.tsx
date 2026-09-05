@@ -140,7 +140,7 @@ function MotionNotice() {
       // 12px this notice started inside the home-bar zone and put its buttons
       // right where the swipe lives.
       style={{ bottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
-      className="fixed left-1/2 z-[95] w-[min(92vw,22rem)] -translate-x-1/2 border border-gold/40 bg-ink-700/95 p-3 shadow-plate backdrop-blur-sm"
+      className="fixed left-1/2 z-[95] w-[min(92vw,22rem)] -translate-x-1/2 border border-gold/40 bg-ink-700/95 p-3 shadow-plate"
     >
       {show === "effectsOff" ? (
         <>
@@ -305,7 +305,7 @@ function LagWatch() {
       // 12px this notice started inside the home-bar zone and put its buttons
       // right where the swipe lives.
       style={{ bottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
-      className="fixed left-1/2 z-[95] w-[min(92vw,22rem)] -translate-x-1/2 border border-gold/40 bg-ink-700/95 p-3 shadow-plate backdrop-blur-sm"
+      className="fixed left-1/2 z-[95] w-[min(92vw,22rem)] -translate-x-1/2 border border-gold/40 bg-ink-700/95 p-3 shadow-plate"
     >
       <div className="font-display text-sm font-bold text-parchment-100">Animations running slow?</div>
       <p className="mt-1 text-xs leading-snug text-parchment-300">

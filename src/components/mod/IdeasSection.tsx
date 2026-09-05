@@ -63,7 +63,7 @@ export function IdeasSection() {
             <div key={s.id} className="plate p-4">
               <div className="flex flex-wrap items-center gap-2 text-sm">
                 <ModeBadge mode={s.kind === "buff" ? "buff" : "nerf"} />
-                <span className="font-display font-semibold text-gold-leaf">{s.name}</span>
+                <span className="font-display font-semibold text-parchment-50">{s.name}</span>
                 {s.kind === "buff" && (
                   <Pill>{s.pool === "boon" ? "Nerf-mode boon" : "Buff mode card"}</Pill>
                 )}

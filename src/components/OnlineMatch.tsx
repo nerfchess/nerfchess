@@ -36,6 +36,7 @@ const GameOver = dynamic(() => import("@/components/GameOver").then((m) => m.Gam
 import { MobileActionsMenu } from "@/components/MobileActionsMenu";
 import { MobileNavMenu } from "@/components/MobileNavMenu";
 import { MobileBuffDrawer } from "@/components/MobileBuffDrawer";
+import { cardFaceIcon } from "@/lib/cardIcon";
 import { bottomChromePadClass } from "@/components/mobileChrome";
 import { MobileMoveDrawer } from "@/components/MobileMoveDrawer";
 import { FxToggleButton } from "@/components/FxToggleButton";
@@ -2801,7 +2802,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           aria-live="polite"
           // Owns the top-16 lane; OppPlaysLog sits below it at z-[39] so the
           // two can never render on top of each other.
-          className="fixed right-3 top-16 z-40 w-[min(80vw,20rem)] border border-gold/40 bg-ink-700/95 p-3 shadow-plate backdrop-blur-sm"
+          className="fixed right-3 top-16 z-40 w-[min(80vw,20rem)] border border-gold/40 bg-ink-700/95 p-3 shadow-plate"
         >
           <div className="text-[10px] text-parchment-400">
             {abortNotice.level === "timeout" ? "New games paused" : "Abort warning"}
@@ -3403,6 +3404,24 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 }).length
           }
           autoCloseWhen={!!buffTargeting.targeting}
+          preview={
+            <>
+              {game.buffs.players[myColor].buffs.slice(0, 6).map((inst, i) => {
+                const def = BUFF_BY_ID[inst.id];
+                if (!def) return null;
+                const Icon = cardFaceIcon(def.id, def.category, def.icon);
+                return (
+                  <span
+                    key={`${inst.id}-${i}`}
+                    title={def.name}
+                    className={`grid h-6 w-6 shrink-0 place-items-center border tier-bg-${def.tier} tier-${def.tier} ${inst.spent ? "opacity-40" : ""}`}
+                  >
+                    {Icon ? <Icon size={13} strokeWidth={1.8} /> : null}
+                  </span>
+                );
+              })}
+            </>
+          }
         >
           <BuffDock
             game={game}
@@ -3458,7 +3477,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
       )}
       {showWaitingOverlay &&
         (draftGraceOver || waitingMinimized ? (
-          <div className="pointer-events-none fixed inset-x-0 top-3 z-40 flex justify-center px-4 sm:top-4">
+          <div className="pointer-events-none fixed inset-x-0 bottom-[calc(5.75rem+env(safe-area-inset-bottom))] z-40 flex justify-center px-4 sm:bottom-auto sm:top-4">
             <motion.div
               initial={{ opacity: 0, y: -12 }}
               animate={{ opacity: 1, y: 0 }}

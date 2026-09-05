@@ -279,16 +279,18 @@ export function SiteHeader({ active }: { active?: string }) {
   };
 
   const iconButton =
-    "nav-icon-btn relative grid h-11 w-11 sm:h-10 sm:w-10 place-items-center text-parchment-300 hover:bg-white/5 hover:text-parchment-50";
+    "nav-icon-btn relative grid h-11 w-11 place-items-center text-parchment-400 hover:bg-[color:var(--bg-panel)] hover:text-parchment-50";
 
+  // Lichess's tall header: 60px, the wordmark and nav left, the icon cluster
+  // right, one hairline underneath.
   return (
-    <nav className="site-nav flex min-h-[48px] items-center justify-between gap-3 px-3 sm:px-4">
+    <nav className="site-nav flex min-h-[60px] items-center justify-between gap-3 px-3 sm:px-5">
       <div className="flex min-w-0 items-center gap-1 sm:gap-2">
         {/* Mobile hamburger, left of the wordmark: opens every destination on
             phones and tablets, where the inline nav below is hidden. */}
         <MobileNavMenu align="left" hideAt="md" />
         <Logo />
-        <div className="hidden items-center font-body font-medium md:flex">
+        <div className="ml-2 hidden items-center font-body md:flex">
           {NAV_LINKS.map((link) =>
             link.menu ? (
               // Lichess-style: the label is still a link, and hovering it (or
@@ -297,17 +299,9 @@ export function SiteHeader({ active }: { active?: string }) {
                 <Link
                   href={link.href}
                   data-active={activeSection === link.href}
-                  className="site-nav-link block px-3 py-3.5"
+                  className="site-nav-link block px-3.5 py-[1.3rem]"
                 >
                   {link.label}
-                  {/* Active page underline: a flat accent bar. */}
-                  {activeSection === link.href && (
-                    <span
-                      aria-hidden
-                      className="absolute inset-x-3 bottom-0 h-[2px]"
-                      style={{ background: "var(--accent)" }}
-                    />
-                  )}
                 </Link>
                 {/* No opacity fade: the menu pops in fully solid so the labels
                     never read as half-transparent text mid-transition. */}
@@ -318,8 +312,8 @@ export function SiteHeader({ active }: { active?: string }) {
                         key={item.href}
                         href={item.href}
                         className={
-                          "block px-4 py-2.5 text-[14px] transition-colors hover:bg-white/5 " +
-                          (item.className ?? "text-parchment-100 hover:text-parchment-50")
+                          "block px-4 py-2 text-[14px] transition-colors hover:bg-[color:var(--bg-panel)] " +
+                          (item.className ?? "text-parchment-200 hover:text-parchment-50")
                         }
                       >
                         {item.label}
@@ -333,16 +327,9 @@ export function SiteHeader({ active }: { active?: string }) {
                 key={link.href}
                 href={link.href}
                 data-active={activeSection === link.href}
-                className="site-nav-link relative block px-3 py-3.5"
+                className="site-nav-link relative block px-3.5 py-[1.3rem]"
               >
                 {link.label}
-                {activeSection === link.href && (
-                  <span
-                    aria-hidden
-                    className="absolute inset-x-3 bottom-0 h-[2px]"
-                    style={{ background: "var(--accent)" }}
-                  />
-                )}
               </Link>
             )
           )}
@@ -358,10 +345,10 @@ export function SiteHeader({ active }: { active?: string }) {
             aria-label="Search players"
             title="Search players"
             aria-expanded={menu === "search"}
-            className={iconButton + (menu === "search" ? " bg-white/5 text-parchment-50" : "")}
+            className={iconButton + (menu === "search" ? " bg-[color:var(--bg-raised)] text-parchment-50" : "")}
             onClick={() => toggle("search")}
           >
-            <Search size={18} />
+            <Search size={22} strokeWidth={1.6} />
           </button>
           {menu === "search" && (
             // Below lg: a full-width dropdown UNDER the bar (fixed inset-x/top),
@@ -369,7 +356,7 @@ export function SiteHeader({ active }: { active?: string }) {
             // nav links (which appear at md and would sit under a leftward
             // rollout at tablet widths). Wide desktop (lg+): the lichess-style
             // field that rolls out to the LEFT of the search icon.
-            <div className="header-search-panel fixed inset-x-3 top-[3.25rem] z-40 [&_input]:bg-ink-800 [&_input]:shadow-2xl sm:top-[3.25rem] lg:absolute lg:inset-x-auto lg:right-full lg:top-1/2 lg:mr-1 lg:-translate-y-1/2">
+            <div className="header-search-panel fixed inset-x-3 top-[3.9rem] z-40 [&_input]:bg-ink-800 [&_input]:shadow-2xl sm:top-[3.9rem] lg:absolute lg:inset-x-auto lg:right-full lg:top-1/2 lg:mr-1 lg:-translate-y-1/2">
               <PlayerSearch autoFocus />
             </div>
           )}
@@ -385,18 +372,18 @@ export function SiteHeader({ active }: { active?: string }) {
               className={iconButton}
               onClick={() => toggle("challenges")}
             >
-              <Swords size={17} />
+              <Swords size={22} strokeWidth={1.6} />
               <Badge n={challenges.length} />
             </button>
             {menu === "challenges" && (
               <div className="absolute right-0 top-full z-40 mt-2 w-80 max-w-[calc(100vw-1.5rem)] site-nav-pop shadow-xl">
-                <div className="border-b border-white/10 px-4 py-2.5 text-[11px] text-parchment-400">
+                <div className="border-b border-[color:var(--edge)] px-4 py-2.5 text-[11px] text-parchment-400">
                   Challenges
                 </div>
                 {challenges.length === 0 ? (
                   <p className="px-4 py-4 text-sm text-parchment-400">No incoming challenges right now.</p>
                 ) : (
-                  <ul className="divide-y divide-white/5">
+                  <ul className="divide-y divide-[color:var(--edge)]">
                     {challenges.map((challenge) => (
                       <li key={challenge.id} className="flex items-center justify-between gap-2 px-4 py-2.5">
                         <div className="min-w-0">
@@ -439,13 +426,13 @@ export function SiteHeader({ active }: { active?: string }) {
               className={iconButton + (unread > 0 ? " relic-unread" : "")}
               onClick={() => toggle("bell")}
             >
-              <Bell size={17} />
+              <Bell size={22} strokeWidth={1.6} />
               {unread > 0 && <span aria-hidden className="relic-orbit" />}
               <Badge n={unread} />
             </button>
             {menu === "bell" && (
               <div className="absolute right-0 top-full z-40 mt-2 w-80 max-w-[calc(100vw-1.5rem)] site-nav-pop shadow-xl">
-                <div className="flex items-center justify-between border-b border-white/10 px-4 py-2.5">
+                <div className="flex items-center justify-between border-b border-[color:var(--edge)] px-4 py-2.5">
                   <span className="text-[11px] text-parchment-400">Notifications</span>
                   {unread > 0 && (
                     <button onClick={markAllRead} className="text-xs text-parchment-400 hover:text-parchment-100">
@@ -456,7 +443,7 @@ export function SiteHeader({ active }: { active?: string }) {
                 {notifications.length === 0 ? (
                   <p className="px-4 py-4 text-sm text-parchment-400">Nothing here yet.</p>
                 ) : (
-                  <ul className="max-h-96 divide-y divide-white/5 overflow-y-auto">
+                  <ul className="max-h-96 divide-y divide-[color:var(--edge)] overflow-y-auto">
                     {notifications.map((n) => (
                       <li key={n.id}>
                         {/* A div (not a button) so the actor's profile link
@@ -475,7 +462,7 @@ export function SiteHeader({ active }: { active?: string }) {
                             }
                           }}
                           className={
-                            "block w-full cursor-pointer px-4 py-2.5 text-left transition-colors hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-gold/60 " +
+                            "block w-full cursor-pointer px-4 py-2.5 text-left transition-colors hover:bg-[color:var(--bg-raised)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--edge-strong)] " +
                             (n.read ? "opacity-60" : "")
                           }
                         >
@@ -503,11 +490,12 @@ export function SiteHeader({ active }: { active?: string }) {
         {user === undefined ? (
           <span className="h-9 w-24" />
         ) : !user ? (
-          <LinkButton tone="ghost"
+          <Link
             href="/login"
-            className="ml-1 px-3 py-2 text-sm text-gold-leaf">
+            className="ml-1 px-3 py-2 text-[13px] uppercase tracking-[0.05em] text-parchment-300 no-underline transition-colors hover:text-parchment-50"
+          >
             Sign in
-          </LinkButton>
+          </Link>
         ) : (
           <>
             <div className="ml-1 flex items-center gap-1">
@@ -516,7 +504,7 @@ export function SiteHeader({ active }: { active?: string }) {
                 onClick={() => toggle("profile")}
                 aria-label={user.isGuest ? "Guest account menu" : "Account menu"}
                 title={user.isGuest ? "Guest account menu" : "Account menu"}
-                className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-2 px-2 py-1.5 font-display text-sm text-parchment transition-colors hover:bg-white/5"
+                className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-2 px-2 py-1.5 text-[14px] text-parchment-200 transition-colors hover:bg-[color:var(--bg-panel)] hover:text-parchment-50"
                 aria-haspopup="menu"
                 aria-expanded={menu === "profile"}
               >
@@ -539,11 +527,12 @@ export function SiteHeader({ active }: { active?: string }) {
               {user.isGuest && (
                 <>
                   <span aria-hidden className="hidden text-parchment-500 sm:inline">·</span>
-                  <LinkButton tone="ghost"
+                  <Link
                     href="/login"
-                    className="hidden px-2.5 py-1.5 text-sm text-gold-leaf sm:inline-flex">
+                    className="hidden px-2 py-1.5 text-[13px] uppercase tracking-[0.05em] text-gold-leaf no-underline transition-colors hover:text-parchment-50 sm:inline-flex"
+                  >
                     Sign in
-                  </LinkButton>
+                  </Link>
                 </>
               )}
             </div>
@@ -556,7 +545,7 @@ export function SiteHeader({ active }: { active?: string }) {
                       device.
                     </div>
                     <MenuItem
-                      icon={<UserPlus size={14} />}
+                      icon={<UserPlus size={16} strokeWidth={1.6} />}
                       label="Create account"
                       onClick={() => {
                         setMenu(null);
@@ -564,18 +553,18 @@ export function SiteHeader({ active }: { active?: string }) {
                       }}
                     />
                     <MenuItem
-                      icon={<LogIn size={14} />}
+                      icon={<LogIn size={16} strokeWidth={1.6} />}
                       label="Sign in"
                       onClick={() => {
                         setMenu(null);
                         router.push("/login");
                       }}
                     />
-                    <div className="my-1 border-t border-white/10" />
+                    <div className="my-1 border-t border-[color:var(--edge)]" />
                   </>
                 )}
                 <MenuItem
-                  icon={<User size={14} />}
+                  icon={<User size={16} strokeWidth={1.6} />}
                   label="Profile"
                   onClick={() => {
                     setMenu(null);
@@ -583,7 +572,7 @@ export function SiteHeader({ active }: { active?: string }) {
                   }}
                 />
                 <MenuItem
-                  icon={<History size={14} />}
+                  icon={<History size={16} strokeWidth={1.6} />}
                   label="Game history"
                   onClick={() => {
                     setMenu(null);
@@ -591,7 +580,7 @@ export function SiteHeader({ active }: { active?: string }) {
                   }}
                 />
                 <MenuItem
-                  icon={<Trophy size={14} />}
+                  icon={<Trophy size={16} strokeWidth={1.6} />}
                   label="Achievements"
                   onClick={() => {
                     setMenu(null);
@@ -602,7 +591,7 @@ export function SiteHeader({ active }: { active?: string }) {
                     worth opening, so the row is hidden for them. */}
                 {!user.isGuest && (
                   <MenuItem
-                    icon={<Mail size={14} />}
+                    icon={<Mail size={16} strokeWidth={1.6} />}
                     label="Inbox"
                     onClick={() => {
                       setMenu(null);
@@ -611,7 +600,7 @@ export function SiteHeader({ active }: { active?: string }) {
                   />
                 )}
                 <MenuItem
-                  icon={<Settings size={14} />}
+                  icon={<Settings size={16} strokeWidth={1.6} />}
                   label="Preferences"
                   onClick={() => {
                     setMenu(null);
@@ -620,7 +609,7 @@ export function SiteHeader({ active }: { active?: string }) {
                 />
                 {(user.role === "mod" || user.role === "admin") && (
                   <MenuItem
-                    icon={<Shield size={14} />}
+                    icon={<Shield size={16} strokeWidth={1.6} />}
                     label="Moderation"
                     onClick={() => {
                       setMenu(null);
@@ -633,8 +622,8 @@ export function SiteHeader({ active }: { active?: string }) {
                     doors; a real account signs out normally. */}
                 {!user.isGuest && (
                   <>
-                    <div className="my-1 border-t border-white/10" />
-                    <MenuItem icon={<LogOut size={14} />} label="Sign out" onClick={handleSignOut} />
+                    <div className="my-1 border-t border-[color:var(--edge)]" />
+                    <MenuItem icon={<LogOut size={16} strokeWidth={1.6} />} label="Sign out" onClick={handleSignOut} />
                   </>
                 )}
               </div>
@@ -659,7 +648,7 @@ export function SiteHeader({ active }: { active?: string }) {
 export function CompactSiteHeader({ status }: { status?: React.ReactNode }) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   return (
-    <nav className="site-nav flex min-h-[48px] items-center gap-3 px-3 sm:px-4">
+    <nav className="site-nav flex min-h-[60px] items-center gap-3 px-3 sm:px-5">
       <MobileNavMenu align="left" hideAt="none" />
       <Logo />
       {status && (
@@ -711,7 +700,7 @@ function RenameBanner({ onRenamed }: { onRenamed: (name: string) => void }) {
   return (
     <div
       role="alert"
-      className="absolute inset-x-0 top-full z-30 border-y border-oxblood-glow/50 bg-ink-950/95 px-4 py-2.5"
+      className="absolute inset-x-0 top-full z-30 border-y border-oxblood-glow/50 bg-[color:var(--bg-base)] px-4 py-2.5"
     >
       <form onSubmit={submit} className="mx-auto flex max-w-3xl flex-wrap items-center gap-2 text-sm">
         <span className="min-w-0 flex-1 text-parchment-200">
@@ -761,7 +750,7 @@ function MenuItem({ icon, label, onClick }: { icon: React.ReactNode; label: stri
     <button
       type="button"
       onClick={onClick}
-      className="flex min-h-[44px] w-full items-center gap-2.5 px-4 py-2 text-left text-sm text-parchment-100 transition-colors hover:bg-white/5 hover:text-parchment-50"
+      className="flex min-h-[40px] w-full items-center gap-2.5 px-4 py-2 text-left text-[14px] text-parchment-200 transition-colors hover:bg-[color:var(--bg-panel)] hover:text-parchment-50"
     >
       <span className="text-parchment-400">{icon}</span>
       {label}

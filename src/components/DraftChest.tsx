@@ -90,12 +90,19 @@ export function DraftChest({ tier, count, label, stage, onOpen, mini, calm, stil
         <i className="chest-shaft" />
         <i className="chest-burst" />
 
+        {/* The box has depth: two side faces rotated out of the front plane,
+            and the lid carries an inner face so the swing shows its underside. */}
+        <i className="chest-side chest-side--l" />
+        <i className="chest-side chest-side--r" />
+        <i className="chest-wedge" />
+
         {/* Lid: arched plank slab hinged at its back edge. */}
         <i className="chest-lid">
           <b className="chest-lid__planks" />
           <b className="chest-lid__strap chest-lid__strap--l" />
           <b className="chest-lid__strap chest-lid__strap--r" />
           <b className="chest-lid__rim" />
+          <b className="chest-lid__inner" />
         </i>
 
         {/* Seam light: leaks while sealed on gilded+, floods on open. */}

@@ -47,7 +47,7 @@ export const FUNNY_CHAOS: Buff[] = [
       icon: "Dices",
       name: "Roulette",
       description: "Spin the wheel three times: three random enemy pieces other than the king are removed from the board.",
-      tier: 4,
+      tier: 7,
       category: "attack",
       flavor: "Round and round she goes. Thrice.",
     },

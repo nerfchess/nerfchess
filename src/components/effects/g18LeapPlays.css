@@ -68,7 +68,7 @@
   66% { opacity: 0.44; }
   100% { opacity: 0; }
 }
-.g18-wash { animation: g18-wash calc(1.35s * var(--fx-dur, 1)) ease-out both; }
+.g18-wash { animation: g18-wash calc(1.35s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* A line across the WHOLE board (the safety net, the weir step), drawn on
    from the caster's own end so it never reads as "the bottom of the board". */
@@ -138,7 +138,7 @@
   30% { opacity: 0.7; }
   100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * -26%)) scale(1.5); }
 }
-.g18-dust { animation: g18-dust calc(1.1s * var(--fx-dur, 1)) ease-out both; }
+.g18-dust { animation: g18-dust calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* Lighter stuff: chalk, down, barbs, lint. Same lean, slower, smaller. */
 @keyframes g18-motes {
@@ -146,7 +146,7 @@
   36% { opacity: 0.78; transform: scale(1); }
   100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * -16%)) scale(1.28); }
 }
-.g18-motes { animation: g18-motes calc(0.98s * var(--fx-dur, 1)) ease-out both; }
+.g18-motes { animation: g18-motes calc(0.98s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* The one ring per scene the brief allows. */
 @keyframes g18-ring {
@@ -186,7 +186,7 @@
   60% { transform: scale(1); }
   100% { opacity: 0; transform: translateY(-12%) scale(0.92); }
 }
-.g18-ent3 { animation: g18-ent3 calc(0.8s * var(--fx-dur, 1)) ease-out both; }
+.g18-ent3 { animation: g18-ent3 calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* ---------------------------------------------------------------------------
    6. Target cut (one square, fast)
@@ -206,7 +206,7 @@
   40% { opacity: 0.92; transform: translateX(0) scaleX(1); }
   100% { opacity: 0; transform: translateX(36%) scaleX(0.7); }
 }
-.g18-hit2 { animation: g18-hit2 calc(0.46s * var(--fx-dur, 1)) ease-out both; }
+.g18-hit2 { animation: g18-hit2 calc(0.46s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* ===========================================================================
    PER-CARD SIGNATURE MOTIONS
@@ -266,14 +266,14 @@
   74% { transform: rotate(3deg) scale(0.92); }
   100% { opacity: 0; transform: rotate(-16deg) scale(0.7) translateY(24%); }
 }
-.g18-grf-shell { animation: g18-grf-shell calc(0.66s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 50% 100%; }
+.g18-grf-shell { animation: g18-grf-shell calc(0.66s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; transform-origin: 50% 100%; }
 
 @keyframes g18-grf-down {
   0% { opacity: 0; transform: translate(0, 0) scale(0.5) rotate(0deg); }
   34% { opacity: 0.7; }
   100% { opacity: 0; transform: translate(8%, calc(var(--fx-side, 1) * -22%)) scale(1.4) rotate(24deg); }
 }
-.g18-grf-down { animation: g18-grf-down calc(1.15s * var(--fx-dur, 1)) ease-out both; }
+.g18-grf-down { animation: g18-grf-down calc(1.15s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- 4. Pocket Cavalry: the bars, the catch, the chalk ------------------- */
 @keyframes g18-pkt-bar {
@@ -283,7 +283,7 @@
   82% { transform: rotate(6deg); }
   100% { opacity: 0; transform: rotate(0deg); }
 }
-.g18-pkt-bar { animation: g18-pkt-bar calc(0.9s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 50% -220%; }
+.g18-pkt-bar { animation: g18-pkt-bar calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; transform-origin: 50% -220%; }
 
 @keyframes g18-pkt-catch {
   0% { opacity: 0; transform: translateX(34%) scale(0.7); }
@@ -299,7 +299,7 @@
   26% { opacity: 0.85; transform: scale(1.05); }
   100% { opacity: 0; transform: scale(1.6) translateY(-14%); }
 }
-.g18-pkt-chalk { animation: g18-pkt-chalk calc(0.82s * var(--fx-dur, 1)) ease-out both; }
+.g18-pkt-chalk { animation: g18-pkt-chalk calc(0.82s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- 5. Summer Levy: the field goes up ----------------------------------- */
 @keyframes g18-lvy-hop {
@@ -325,7 +325,7 @@
   40% { opacity: 0.9; transform: translateY(0) scaleX(1); }
   100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * -20%)) scaleX(1.2); }
 }
-.g18-lvy-husk { animation: g18-lvy-husk calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+.g18-lvy-husk { animation: g18-lvy-husk calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- 6. Plush Cavalry: no muscle in it at all ---------------------------- */
 @keyframes g18-plu-flop {
@@ -352,7 +352,7 @@
   30% { opacity: 0.9; transform: scale(1.06); }
   100% { opacity: 0; transform: scale(1.75) translateY(-18%); }
 }
-.g18-plu-stuff { animation: g18-plu-stuff calc(0.86s * var(--fx-dur, 1)) ease-out both; }
+.g18-plu-stuff { animation: g18-plu-stuff calc(0.86s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- 7. Falconer's Glove: hood off, bate out, back to the fist ------------ */
 @keyframes g18-fal-hood {
@@ -439,7 +439,7 @@
   84% { transform: skewX(-2deg); }
   100% { opacity: 0; transform: translateY(6%) scaleY(1.08); }
 }
-.g18-ash-veil { animation: g18-ash-veil calc(1.05s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 50% 0%; }
+.g18-ash-veil { animation: g18-ash-veil calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; transform-origin: 50% 0%; }
 
 @keyframes g18-ash-gone {
   0% { opacity: 0; transform: scale(0.9); }
@@ -536,7 +536,7 @@
   70% { transform: scaleY(0.9); }
   100% { opacity: 0; transform: scaleX(1.06) scaleY(1); }
 }
-.g18-pdk-water { animation: g18-pdk-water calc(0.8s * var(--fx-dur, 1)) ease-out both; }
+.g18-pdk-water { animation: g18-pdk-water calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g18-pdk-lock {
   0% { opacity: 0; transform: scaleX(0.1) scaleY(2.4); }
@@ -629,7 +629,7 @@
   68% { opacity: 0.9; transform: scaleX(1.04); }
   100% { opacity: 0; transform: scaleX(1); }
 }
-.g18-rnd-ward { animation: g18-rnd-ward calc(0.68s * var(--fx-dur, 1)) ease-out both; transform-origin: 0% 50%; }
+.g18-rnd-ward { animation: g18-rnd-ward calc(0.68s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 0% 50%; }
 
 @keyframes g18-rnd-back {
   0% { opacity: 0; transform: translateX(24%) scale(0.7) rotate(0deg); }
@@ -647,7 +647,7 @@
   70% { opacity: 1; transform: scaleY(1); }
   100% { opacity: 0; transform: scaleY(0.6); }
 }
-.g18-skt-eyes { animation: g18-skt-eyes calc(0.58s * var(--fx-dur, 1)) ease-in-out both; }
+.g18-skt-eyes { animation: g18-skt-eyes calc(0.58s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 @keyframes g18-skt-claw {
   0% { opacity: 0; transform: scale(0.4) rotate(-18deg); }
@@ -715,7 +715,7 @@
   84% { transform: translateX(1%) rotate(0.8deg); }
   100% { opacity: 0; transform: translateX(0) rotate(0deg); }
 }
-.g18-tmp-bar { animation: g18-tmp-bar calc(0.84s * var(--fx-dur, 1)) ease-out both; }
+.g18-tmp-bar { animation: g18-tmp-bar calc(0.84s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- 22. Dressage: the capriole and the ribbon --------------------------- */
 @keyframes g18-drs-capriole {
@@ -736,7 +736,7 @@
   82% { transform: rotate(2deg); }
   100% { opacity: 0; transform: rotate(0deg) scaleX(1); }
 }
-.g18-drs-ribbon { animation: g18-drs-ribbon calc(0.74s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 0% 50%; }
+.g18-drs-ribbon { animation: g18-drs-ribbon calc(0.74s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; transform-origin: 0% 50%; }
 
 /* --- 23. Know Your Place: the bar, the refusal, the one that slips -------- */
 @keyframes g18-kyp-bar {
@@ -754,7 +754,7 @@
   66% { opacity: 0.9; transform: scaleY(1.3); }
   100% { opacity: 0; transform: scaleY(0.8); }
 }
-.g18-kyp-deny { animation: g18-kyp-deny calc(0.62s * var(--fx-dur, 1)) ease-out both; }
+.g18-kyp-deny { animation: g18-kyp-deny calc(0.62s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g18-kyp-slip {
   0% { opacity: 0; transform: translateX(-40%) scale(0.5); }
@@ -779,7 +779,7 @@
   66% { opacity: 0.6; transform: scaleX(1.3) scaleY(0.9); }
   100% { opacity: 0; transform: scaleX(1.5) scaleY(0.8); }
 }
-.g18-plm-stall { animation: g18-plm-stall calc(0.86s * var(--fx-dur, 1)) ease-out both; }
+.g18-plm-stall { animation: g18-plm-stall calc(0.86s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g18-plm-drift {
   0% { opacity: 0; transform: translateY(-40%) rotate(-10deg); }
@@ -788,7 +788,7 @@
   80% { transform: translateY(14%) rotate(4deg); }
   100% { opacity: 0; transform: translateY(26%) rotate(-2deg); }
 }
-.g18-plm-drift { animation: g18-plm-drift calc(1.1s * var(--fx-dur, 1)) ease-in-out both; }
+.g18-plm-drift { animation: g18-plm-drift calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 /* --- 25. Frog Prince: the crown comes off, the pad dips ------------------- */
 @keyframes g18-frg-crown {

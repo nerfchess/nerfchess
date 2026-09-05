@@ -41,7 +41,7 @@
   55% { opacity: 0.78; transform: scale(1, 1); }
   100% { opacity: 0; transform: scale(1.16, 1.04); }
 }
-.g30-tell { animation: g30-tell calc(0.34s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 100%; }
+.g30-tell { animation: g30-tell calc(0.34s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 100%; }
 
 /* A line scribed from the cast square down the real vector, authored pointing
    RIGHT and aimed by <AimStage>. Its WIDTH is already --fx-len cells. */
@@ -58,7 +58,7 @@
   50% { opacity: 0.85; }
   100% { opacity: 0; transform: scale(1.06) rotate(6deg); }
 }
-.g30-tellring { animation: g30-tellring calc(0.36s * var(--fx-dur, 1)) ease-out both; }
+.g30-tellring { animation: g30-tellring calc(0.36s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* ---------------------------------------------------------------------------
    2. Board-scale atmosphere (always inside <BoardFrame>)
@@ -70,14 +70,14 @@
   66% { opacity: 0.44; }
   100% { opacity: 0; }
 }
-.g30-wash { animation: g30-wash calc(1.4s * var(--fx-dur, 1)) ease-out both; }
+.g30-wash { animation: g30-wash calc(1.4s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g30-rim {
   0% { opacity: 0; transform: scale(1.03); }
   36% { opacity: 0.9; transform: scale(1); }
   100% { opacity: 0; transform: scale(0.994); }
 }
-.g30-rim { animation: g30-rim calc(1s * var(--fx-dur, 1)) ease-out both; }
+.g30-rim { animation: g30-rim calc(1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* ---------------------------------------------------------------------------
    3. Travel along the real line (--fx-len)
@@ -111,7 +111,7 @@
   38% { opacity: 0.95; transform: scaleX(1); }
   100% { opacity: 0; transform: scaleX(1.08); }
 }
-.g30-hit2 { animation: g30-hit2 calc(0.44s * var(--fx-dur, 1)) ease-out both; }
+.g30-hit2 { animation: g30-hit2 calc(0.44s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* The hit that leans in off the real attack vector. */
 @keyframes g30-hitside {
@@ -135,7 +135,7 @@
   44% { opacity: 0.95; transform: scaleX(1); }
   100% { opacity: 0; transform: scaleX(1.04); }
 }
-.g30-ent2 { animation: g30-ent2 calc(0.6s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 50%; }
+.g30-ent2 { animation: g30-ent2 calc(0.6s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 50%; }
 
 @keyframes g30-ent3 {
   0% { opacity: 0; transform: scale(0.4); }
@@ -143,7 +143,7 @@
   66% { transform: scale(1); }
   100% { opacity: 0; transform: scale(1.16); }
 }
-.g30-ent3 { animation: g30-ent3 calc(0.66s * var(--fx-dur, 1)) ease-out both; }
+.g30-ent3 { animation: g30-ent3 calc(0.66s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* ---------------------------------------------------------------------------
    5. Settles, leaning away from the caster (--fx-side)
@@ -154,14 +154,14 @@
   38% { opacity: 0.95; transform: translate(0, calc(var(--fx-side, 1) * -26%)) scale(1); }
   100% { opacity: 0; transform: translate(0, calc(var(--fx-side, 1) * -140%)) scale(0.66); }
 }
-.g30-mote { animation: g30-mote calc(1.05s * var(--fx-dur, 1)) ease-out both; }
+.g30-mote { animation: g30-mote calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g30-sift {
   0% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * -26%)) scale(0.55); }
   42% { opacity: 0.88; transform: translateY(0) scale(1); }
   100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 96%)) scale(1.12); }
 }
-.g30-sift { animation: g30-sift calc(0.95s * var(--fx-dur, 1)) ease-in both; }
+.g30-sift { animation: g30-sift calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 1, 0.45) both; }
 
 /* ---------------------------------------------------------------------------
    6. Card 1 — the eight-sided lens
@@ -191,7 +191,7 @@
   70% { transform: scale(1.04); }
   100% { opacity: 0; transform: scale(1.1); }
 }
-.g30-lamp { animation: g30-lamp calc(0.86s * var(--fx-dur, 1)) ease-out both; }
+.g30-lamp { animation: g30-lamp calc(0.86s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* ---------------------------------------------------------------------------
    7. Card 2 — the eight blades
@@ -212,7 +212,7 @@
   74% { transform: scaleX(1) scaleY(1); }
   100% { opacity: 0; transform: scaleX(1) scaleY(1.5); }
 }
-.g30-wake { animation: g30-wake calc(1s * var(--fx-dur, 1)) ease-out both; transform-origin: 0% 50%; }
+.g30-wake { animation: g30-wake calc(1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 0% 50%; }
 
 /* ---------------------------------------------------------------------------
    8. Card 3 — the gilded cage
@@ -270,7 +270,7 @@
   32% { opacity: 1; }
   100% { opacity: 0; transform: scale(1.16); }
 }
-.g30-seam { animation: g30-seam calc(0.52s * var(--fx-dur, 1)) ease-out both; }
+.g30-seam { animation: g30-seam calc(0.52s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g30-cap {
   0% { opacity: 0; transform: translateY(-110%) scale(0.9); }
@@ -290,7 +290,7 @@
   70% { opacity: 0.5; }
   100% { opacity: 0; }
 }
-.g30-quarter { animation: g30-quarter calc(1.25s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 100%; }
+.g30-quarter { animation: g30-quarter calc(1.25s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 100%; }
 
 @keyframes g30-jet {
   0% { opacity: 0; transform: scaleX(0.06) scaleY(0.5); }
@@ -305,7 +305,7 @@
   44% { opacity: 1; transform: scale(1.06) rotate(6deg); }
   100% { opacity: 0; transform: scale(0.92) rotate(20deg); }
 }
-.g30-funnel { animation: g30-funnel calc(0.95s * var(--fx-dur, 1)) ease-out both; }
+.g30-funnel { animation: g30-funnel calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g30-post {
   0% { opacity: 0; transform: rotate(0deg) translateY(-20%); }
@@ -324,7 +324,7 @@
   70% { opacity: 0.55; transform: scale(1); }
   100% { opacity: 0; transform: scale(0.97); }
 }
-.g30-dim { animation: g30-dim calc(0.8s * var(--fx-dur, 1)) ease-out both; }
+.g30-dim { animation: g30-dim calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g30-lace {
   0% { opacity: 0; transform: scaleX(0.1) scaleY(0.4) rotate(-8deg); }
@@ -339,7 +339,7 @@
   44% { opacity: 0.9; transform: scale(1); }
   100% { opacity: 0; transform: scale(0.94); }
 }
-.g30-hem { animation: g30-hem calc(0.72s * var(--fx-dur, 1)) ease-out both; }
+.g30-hem { animation: g30-hem calc(0.72s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g30-bead {
   0% { opacity: 0; transform: translateY(-40%) scale(0.5); }
@@ -375,7 +375,7 @@
   40% { opacity: 1; transform: scale(1); }
   100% { opacity: 0; transform: translate(calc(var(--fx-side, 1) * -8%), calc(var(--fx-side, 1) * 60%)) scale(0.6); }
 }
-.g30-dew { animation: g30-dew calc(0.88s * var(--fx-dur, 1)) ease-in both; }
+.g30-dew { animation: g30-dew calc(0.88s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 1, 0.45) both; }
 
 /* ---------------------------------------------------------------------------
    13. Card 8 — the compass rose
@@ -406,7 +406,7 @@
   72% { transform: scale(1); }
   100% { opacity: 0; transform: scale(1.24); }
 }
-.g30-pin { animation: g30-pin calc(0.72s * var(--fx-dur, 1)) ease-out both; }
+.g30-pin { animation: g30-pin calc(0.72s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* ---------------------------------------------------------------------------
    14. Card 9 — the processional wheel
@@ -433,7 +433,7 @@
   40% { opacity: 0.95; transform: scale(1.02); }
   100% { opacity: 0; transform: scale(1.1); }
 }
-.g30-felloe { animation: g30-felloe calc(0.78s * var(--fx-dur, 1)) ease-out both; }
+.g30-felloe { animation: g30-felloe calc(0.78s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* ---------------------------------------------------------------------------
    15. Card 10 — the dandelion clock
@@ -445,7 +445,7 @@
   70% { transform: rotate(5deg); }
   100% { opacity: 0; transform: rotate(1deg); }
 }
-.g30-stem { animation: g30-stem calc(0.6s * var(--fx-dur, 1)) ease-out both; }
+.g30-stem { animation: g30-stem calc(0.6s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g30-seed {
   0% { opacity: 0; transform: translateX(-10%) rotate(-14deg) scale(0.5); }
@@ -460,14 +460,14 @@
   60% { transform: scale(1); }
   100% { opacity: 0; transform: scale(0.9); }
 }
-.g30-head { animation: g30-head calc(0.86s * var(--fx-dur, 1)) ease-out both; }
+.g30-head { animation: g30-head calc(0.86s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g30-whisper {
   0% { opacity: 0; transform: scale(0.5); }
   34% { opacity: 0.8; }
   100% { opacity: 0; transform: scale(1.2); }
 }
-.g30-whisper { animation: g30-whisper calc(0.9s * var(--fx-dur, 1)) ease-out both; }
+.g30-whisper { animation: g30-whisper calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* ---------------------------------------------------------------------------
    16. Card 11 — quicksilver
@@ -492,7 +492,7 @@
   36% { opacity: 1; transform: scale(1); }
   100% { opacity: 0; transform: translate(24%, calc(var(--fx-side, 1) * -90%)) scale(0.5); }
 }
-.g30-split { animation: g30-split calc(0.76s * var(--fx-dur, 1)) ease-out both; }
+.g30-split { animation: g30-split calc(0.76s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* ---------------------------------------------------------------------------
    17. Card 12 — the hearth that calls her back
@@ -513,7 +513,7 @@
   74% { transform: scale(1.04); }
   100% { opacity: 0; transform: scale(0.98); }
 }
-.g30-hearth { animation: g30-hearth calc(0.88s * var(--fx-dur, 1)) ease-out both; transform-origin: 50% 100%; }
+.g30-hearth { animation: g30-hearth calc(0.88s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 100%; }
 
 /* ---------------------------------------------------------------------------
    18. Card 13 — the leaky quiver
@@ -542,7 +542,7 @@
   44% { opacity: 1; transform: scaleX(1) rotate(0deg); }
   100% { opacity: 0; transform: scaleX(1) rotate(10deg); }
 }
-.g30-spill { animation: g30-spill calc(0.66s * var(--fx-dur, 1)) ease-out both; transform-origin: 0% 50%; }
+.g30-spill { animation: g30-spill calc(0.66s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 0% 50%; }
 
 /* ---------------------------------------------------------------------------
    19. Card 14 — the slippery scepter
@@ -553,7 +553,7 @@
   46% { opacity: 0.9; transform: scale(0.86); }
   100% { opacity: 0; transform: scale(1.3); }
 }
-.g30-grip { animation: g30-grip calc(0.4s * var(--fx-dur, 1)) ease-out both; }
+.g30-grip { animation: g30-grip calc(0.4s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g30-tumble {
   0% { opacity: 0; transform: translate(-14%, 18%) rotate(0deg) scale(0.8); }
@@ -568,7 +568,7 @@
   30% { opacity: 1; transform: scaleX(1); }
   100% { opacity: 0; transform: scaleX(1.3); }
 }
-.g30-glintfan { animation: g30-glintfan calc(0.46s * var(--fx-dur, 1)) ease-out both; }
+.g30-glintfan { animation: g30-glintfan calc(0.46s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g30-clatter {
   0% { opacity: 0; transform: scaleX(0.2) translateY(-30%); }
@@ -589,7 +589,7 @@
   72% { opacity: 0.5; }
   100% { opacity: 0; }
 }
-.g30-fileband { animation: g30-fileband calc(1.2s * var(--fx-dur, 1)) ease-out both; transform-origin: 0% 50%; }
+.g30-fileband { animation: g30-fileband calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 0% 50%; }
 
 @keyframes g30-rope {
   0% { opacity: 0; transform: scaleY(0.1); }
@@ -614,14 +614,14 @@
   36% { opacity: 1; transform: scaleX(1) rotate(0deg); }
   100% { opacity: 0; transform: scaleX(1.2) rotate(6deg); }
 }
-.g30-louvre { animation: g30-louvre calc(0.58s * var(--fx-dur, 1)) ease-out both; }
+.g30-louvre { animation: g30-louvre calc(0.58s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g30-toll {
   0% { opacity: 0; transform: scale(0.4); }
   30% { opacity: 0.85; }
   100% { opacity: 0; transform: scale(1.32); }
 }
-.g30-toll { animation: g30-toll calc(1.05s * var(--fx-dur, 1)) ease-out both; }
+.g30-toll { animation: g30-toll calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* ---------------------------------------------------------------------------
    21. Card 16 — the crane jib
@@ -662,7 +662,7 @@
   50% { opacity: 1; transform: scaleX(1) rotate(0deg); }
   100% { opacity: 0; transform: scaleX(0.9) rotate(-6deg); }
 }
-.g30-blade { animation: g30-blade calc(0.5s * var(--fx-dur, 1)) ease-out both; }
+.g30-blade { animation: g30-blade calc(0.5s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 @keyframes g30-cone {
   0% { opacity: 0; transform: scaleY(0.2) rotate(-8deg); }
@@ -686,7 +686,7 @@
   44% { opacity: 0.9; transform: scale(1); }
   100% { opacity: 0; transform: scale(1.08); }
 }
-.g30-gobo { animation: g30-gobo calc(0.6s * var(--fx-dur, 1)) ease-out both; }
+.g30-gobo { animation: g30-gobo calc(0.6s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* ---------------------------------------------------------------------------
    23. Card 18 — the painter's cradle
@@ -704,7 +704,7 @@
   34% { opacity: 1; transform: scaleX(1); }
   100% { opacity: 0; transform: scaleX(1.24); }
 }
-.g30-flick { animation: g30-flick calc(0.54s * var(--fx-dur, 1)) ease-out both; }
+.g30-flick { animation: g30-flick calc(0.54s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* ---------------------------------------------------------------------------
    24. Card 19 — the parasol
@@ -753,7 +753,7 @@
   40% { opacity: 1; transform: scaleX(1) scaleY(1.6); }
   100% { opacity: 0; transform: scaleX(1.1) scaleY(0.6); }
 }
-.g30-pan { animation: g30-pan calc(0.42s * var(--fx-dur, 1)) ease-out both; }
+.g30-pan { animation: g30-pan calc(0.42s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* The star flare: one bearing per line she threatens, all at once. */
 @keyframes g30-flare {
@@ -768,7 +768,7 @@
   40% { opacity: 0.85; transform: scale(1); }
   100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * -80%)) scale(1.3); }
 }
-.g30-smoke { animation: g30-smoke calc(1.05s * var(--fx-dur, 1)) ease-out both; }
+.g30-smoke { animation: g30-smoke calc(1.05s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* ---------------------------------------------------------------------------
    26. Card 21 — the holiday shades
@@ -805,7 +805,7 @@
   36% { opacity: 0.8; transform: scale(1.02); }
   100% { opacity: 0; transform: scale(0.86); }
 }
-.g30-fizz { animation: g30-fizz calc(0.86s * var(--fx-dur, 1)) ease-out both; }
+.g30-fizz { animation: g30-fizz calc(0.86s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* ---------------------------------------------------------------------------
    Animations off: the host already fades and hides the scene wrapper, but a

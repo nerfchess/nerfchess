@@ -23,12 +23,20 @@ const DAY = 86_400_000;
 export type HistoryPoint = RatingPoint & { category?: string | null };
 
 // Range chips. `days = null` means "All" (no trailing-window filter).
-const RANGES: { key: string; label: string; days: number | null }[] = [
-  { key: "7d", label: "7d", days: 7 },
-  { key: "30d", label: "30d", days: 30 },
-  { key: "90d", label: "90d", days: 90 },
-  { key: "all", label: "All", days: null },
+// Lichess's ranges. YTD is computed at render from the calendar.
+const RANGES: { key: string; label: string; days: number | null | "ytd" }[] = [
+  { key: "1m", label: "1M", days: 30 },
+  { key: "3m", label: "3M", days: 90 },
+  { key: "6m", label: "6M", days: 180 },
+  { key: "ytd", label: "YTD", days: "ytd" },
+  { key: "all", label: "ALL", days: null },
 ];
+
+function ytdDays(): number {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), 0, 1).getTime();
+  return Math.max(1, Math.ceil((now.getTime() - start) / DAY));
+}
 
 /** Rating change over the trailing `days` window for one mode. Pure — safe for
  *  the rating cards and any list rendering. Returns:
@@ -75,8 +83,9 @@ export function RatingHistoryPanel({ points, currentRatings, className = "" }: R
   const [visibleModes, setVisibleModes] = useState<Set<RatingCategoryId>>(
     () => new Set(ACTIVE_RATING_CATEGORIES.map((c) => c.id)),
   );
-  const [rangeKey, setRangeKey] = useState<string>("all");
-  const rangeDays = RANGES.find((r) => r.key === rangeKey)?.days ?? null;
+  const [rangeKey, setRangeKey] = useState<string>("3m");
+  const rawDays = RANGES.find((r) => r.key === rangeKey)?.days ?? null;
+  const rangeDays = rawDays === "ytd" ? ytdDays() : rawDays;
 
   const toggleMode = (id: RatingCategoryId) =>
     setVisibleModes((prev) => {
@@ -128,37 +137,10 @@ export function RatingHistoryPanel({ points, currentRatings, className = "" }: R
   }, [points, visibleModes, rangeDays]);
 
   return (
-    <div className={"plate p-3 " + className}>
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        {/* Mode chips: toggle a mode's line on/off. Each carries its label, so
-            the accent color is never the only signal. */}
-        <div className="flex items-center gap-1" role="group" aria-label="Rating modes">
-          {ACTIVE_RATING_CATEGORIES.map((c) => {
-            const Icon = c.icon;
-            const on = visibleModes.has(c.id);
-            return (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => toggleMode(c.id)}
-                aria-pressed={on}
-                className={
-                  "inline-flex min-h-[44px] items-center gap-1.5 rounded-sm px-2 py-1 text-[12px] font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/60 sm:min-h-0 " +
-                  (on
-                    ? "text-parchment-100"
-                    : "text-parchment-500 opacity-60 hover:opacity-90")
-                }
-                style={on ? { background: c.accent + "1f", boxShadow: `inset 0 0 0 1px ${c.accent}55` } : undefined}
-              >
-                <Icon className="h-3.5 w-3.5" style={{ color: on ? c.accent : undefined }} strokeWidth={2.2} aria-hidden />
-                {c.label}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Range chips: trailing window over the plotted history. */}
-        <div className="flex overflow-hidden rounded-sm border border-white/10" role="group" aria-label="Time range">
+    <div className={className}>
+      <div className="flex flex-wrap items-center justify-between gap-2 px-1">
+        {/* Range tabs, Lichess's segmented metal control. */}
+        <div className="flex" role="group" aria-label="Time range">
           {RANGES.map((r) => {
             const on = r.key === rangeKey;
             return (
@@ -168,13 +150,31 @@ export function RatingHistoryPanel({ points, currentRatings, className = "" }: R
                 onClick={() => setRangeKey(r.key)}
                 aria-pressed={on}
                 className={
-                  "min-h-[44px] px-2.5 py-1 text-[12px] font-medium tabular-nums transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-gold/60 sm:min-h-0 " +
+                  "min-h-[32px] border border-[color:var(--edge)] px-2.5 text-[12px] font-medium tabular-nums transition-colors first:border-r-0 last:border-l-0 " +
                   (on
-                    ? "bg-gold/15 text-gold-leaf"
-                    : "text-parchment-400 hover:bg-white/[0.04] hover:text-parchment-200")
+                    ? "bg-[color:var(--bg-raised)] text-parchment-50"
+                    : "bg-[color:var(--bg-panel)] text-parchment-400 hover:text-parchment-100")
                 }
               >
                 {r.label}
+              </button>
+            );
+          })}
+        </div>
+        {/* Legend: the mode lines, click to hide one (never the last). */}
+        <div className="flex items-center gap-3" role="group" aria-label="Rating modes">
+          {ACTIVE_RATING_CATEGORIES.map((c) => {
+            const on = visibleModes.has(c.id);
+            return (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => toggleMode(c.id)}
+                aria-pressed={on}
+                className={"inline-flex items-center gap-1.5 text-[12px] " + (on ? "text-parchment-200" : "text-parchment-500 line-through")}
+              >
+                <span aria-hidden className="h-2 w-5" style={{ background: c.accent, opacity: on ? 1 : 0.35 }} />
+                {c.label}
               </button>
             );
           })}

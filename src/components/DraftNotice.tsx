@@ -4,6 +4,7 @@ import type { Buff, BuffInstance } from "@/engine/buff";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
 import { cardFaceIcon } from "@/lib/cardIcon";
 import { useEffect, useRef, useState } from "react";
+import { GlossaryText } from "@/components/GlossaryText";
 
 interface Notice {
   key: number;
@@ -126,7 +127,7 @@ export function DraftNotice({
               {n.text}
             </div>
             {n.detail && (
-              <p className="mt-0.5 text-[11px] font-normal leading-snug text-parchment-300">{n.detail}</p>
+              <p className="mt-0.5 text-[11px] font-normal leading-snug text-parchment-300"><GlossaryText text={n.detail} /></p>
             )}
           </div>
         );
