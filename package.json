@@ -44,6 +44,8 @@
     "test:retired": "npx -y tsx scripts/check-retired.ts",
     "test:board3d": "node scripts/check-board3d-gates.cjs",
     "gen:glyphs": "node scripts/gen-card-glyphs.mjs",
+    "gen:retiers": "node scripts/apply-retiers.mjs",
+    "test:hand-audit": "node scripts/apply-retiers.mjs --check",
     "test:glyphs": "node scripts/gen-card-glyphs.mjs --check",
     "gen:retirements": "npx -y tsx scripts/propose-retirements.ts --write",
     "test:passive-motifs": "npx -y tsx scripts/audit-passive-motifs.ts",

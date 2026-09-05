@@ -221,6 +221,8 @@ export const CARD_VFX: Record<string, CardVfx> = {
   ww_dug_in_defense: { travel: "none", impact: "debris", aftermath: "none", palette: ["#7c8a4a", "#b0a68f", "#d9d2c0"], source: "caster", shake: true },
 
   // ---- Tier 6 ----
+  // The clock stops for them: a cold flash over their last-moved piece.
+  time_skip: { travel: "none", impact: "shock", aftermath: "frost", palette: ["#8fe8ff", "#ffffff", "#302818"], source: "lead" },
   all_in: { travel: "none", impact: "sparkle", aftermath: "none", palette: ["#ffd76a", "#e6432c", "#1c7a4a"], source: "caster" },
   // Four dead pawns claw into your pocket on grave smoke.
   army_of_the_dead: { travel: "none", impact: "smoke", aftermath: "smolder", palette: ["#5fae7f", "#2a2a30", "#c9ffd8"], source: "caster" },
@@ -329,6 +331,8 @@ export const CARD_VFX: Record<string, CardVfx> = {
   ww_mercenary_queen: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#ffd76a", "#c94a3a", "#fff2c9"], source: "lead" },
 
   // ---- Tier 5 ----
+  // Time and a half: a gold burst on your own king as the clock fills.
+  overtime_pay: { travel: "none", impact: "sparkle", aftermath: "sparkle", palette: ["#ffd76a", "#fff7de", "#c9a84c"], source: "caster" },
   // One piece is unmade; frost locks its orthogonal neighbours.
   annihilate: { travel: "arc", impact: "burst", aftermath: "frost", palette: ["#8f2bbf", "#bfe6ff", "#e3d0ff"], source: "caster" },
   // A pawn ascends into godhood on the spot.

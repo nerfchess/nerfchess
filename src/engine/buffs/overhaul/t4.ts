@@ -914,7 +914,7 @@ export const OVERHAUL_T4: Buff[] = [
       id: "ov_prank_call",
       name: "Prank Call",
       description: "Ring ring: your opponent takes a very important call and loses 5 seconds.",
-      tier: 2,
+      tier: 1,
       category: "tempo",
       icon: "Phone",
       flavor: "Caller ID says: Your Rook.",

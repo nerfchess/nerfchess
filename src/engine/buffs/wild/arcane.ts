@@ -1520,7 +1520,7 @@ export const WILD_ARCANE: Buff[] = [
       icon: "Dice6",
       name: "High Roll",
       description: "Force your next draft offer to roll at tier 5.",
-      tier: 3,
+      tier: 4,
       category: "draft",
       flavor: "Load the dice, then roll them.",
     },

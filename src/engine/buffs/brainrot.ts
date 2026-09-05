@@ -473,7 +473,7 @@ export const BRAINROT: Buff[] = [
       name: "Boneca Ambalabu",
       description:
         "The tire-frog drags your opponent down: for their next 4 turns none of their pieces may move more than 1 square in a single move.",
-      tier: 4,
+      tier: 8,
       category: "hex",
       flavor: "Heavy is the tread that bears the frog.",
       fx: { motif: "anchor", pieces: "all" },

@@ -1,0 +1,128 @@
+{
+ "games": 16,
+ "skill": 1350,
+ "plyCap": 240,
+ "codeHash": "2d287b1112d26d47",
+ "rows": [
+  {
+   "id": "gm_penny_slots",
+   "name": "Penny Slots",
+   "tier": 1,
+   "category": "item",
+   "kind": "activated",
+   "delta": -3.125,
+   "pairs": 16,
+   "voided": 0,
+   "firedPairs": 16,
+   "stderr": 12.473931149935586
+  },
+  {
+   "id": "gm_heads_or_tails",
+   "name": "Heads or Tails",
+   "tier": 1,
+   "category": "tempo",
+   "kind": "activated",
+   "delta": 0,
+   "pairs": 16,
+   "voided": 0,
+   "firedPairs": 16,
+   "stderr": 0
+  },
+  {
+   "id": "gm_claw_machine",
+   "name": "Claw Machine",
+   "tier": 1,
+   "category": "item",
+   "kind": "activated",
+   "delta": -3.125,
+   "pairs": 16,
+   "voided": 0,
+   "firedPairs": 16,
+   "stderr": 12.473931149935586
+  },
+  {
+   "id": "gm_raffle_ticket",
+   "name": "Raffle Ticket",
+   "tier": 1,
+   "category": "tempo",
+   "kind": "passive",
+   "delta": 7.142857142857142,
+   "pairs": 14,
+   "voided": 2,
+   "firedPairs": 16,
+   "stderr": 10.293952744612742
+  },
+  {
+   "id": "gm_card_counting",
+   "name": "Card Counting",
+   "tier": 2,
+   "category": "item",
+   "kind": "activated",
+   "delta": -3.125,
+   "pairs": 16,
+   "voided": 0,
+   "firedPairs": 16,
+   "stderr": 12.473931149935586
+  },
+  {
+   "id": "gm_loaded_dice",
+   "name": "Loaded Dice",
+   "tier": 1,
+   "category": "movement",
+   "kind": "activated",
+   "delta": -20,
+   "pairs": 15,
+   "voided": 1,
+   "firedPairs": 16,
+   "stderr": 12.724180205607032
+  },
+  {
+   "id": "gm_lootbox",
+   "name": "Lootbox",
+   "tier": 3,
+   "category": "item",
+   "kind": "activated",
+   "delta": -3.125,
+   "pairs": 16,
+   "voided": 0,
+   "firedPairs": 16,
+   "stderr": 12.473931149935586
+  },
+  {
+   "id": "gm_three_card_monte",
+   "name": "Three-Card Monte",
+   "tier": 2,
+   "category": "draft",
+   "kind": "activated",
+   "delta": -3.125,
+   "pairs": 16,
+   "voided": 0,
+   "firedPairs": 16,
+   "stderr": 12.473931149935586
+  },
+  {
+   "id": "gm_underdog_parlay",
+   "name": "Underdog Parlay",
+   "tier": 3,
+   "category": "attack",
+   "kind": "passive",
+   "delta": 0,
+   "pairs": 16,
+   "voided": 0,
+   "firedPairs": 16,
+   "stderr": 0
+  },
+  {
+   "id": "gm_river_card",
+   "name": "River Card",
+   "tier": 3,
+   "category": "attack",
+   "kind": "activated",
+   "delta": 15.625,
+   "pairs": 16,
+   "voided": 0,
+   "firedPairs": 16,
+   "stderr": 13.477411658029892
+  }
+ ]
+}

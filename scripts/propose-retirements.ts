@@ -30,7 +30,7 @@ import { join } from "node:path";
 const ROOT = join(__dirname, "..");
 const WRITE = process.argv.includes("--write");
 
-type Reason = "duplicate" | "dominated" | "near-duplicate" | "too-complex" | "category-cap";
+type Reason = "hand" | "duplicate" | "dominated" | "near-duplicate" | "too-complex" | "category-cap";
 
 interface AuditRow {
   id: string;
@@ -112,6 +112,20 @@ const retire = (id: string, reason: Reason, mergedInto?: string) => {
   retired.set(id, { reason, mergedInto });
   if (mergedInto) protectedIds.add(mergedInto);
 };
+
+// 1b. Hand decisions (scripts/hand-audit.json): read through card by card;
+// these win over every protection except a merge target's.
+const hand = JSON.parse(readFileSync(join(ROOT, "scripts/hand-audit.json"), "utf8")) as {
+  retire: Record<string, { why: string; mergedInto?: string }>;
+};
+for (const [id, h] of Object.entries(hand.retire)) {
+  if (!byId.has(id)) {
+    console.error(`[propose-retirements] hand-audit id not in library: ${id}`);
+    continue;
+  }
+  protectedIds.delete(id);
+  retire(id, "hand", h.mergedInto);
+}
 
 // 2. Duplicate signatures.
 const bySig = new Map<string, AuditRow[]>();
@@ -216,7 +230,7 @@ if (WRITE) {
 // but it leaves every draft pool (src/engine/draft.ts, nerfs/library.ts) and
 // hides from the codex, the sitemap and the stats tables by default.
 
-export type RetireReason = "duplicate" | "dominated" | "near-duplicate" | "too-complex" | "category-cap";
+export type RetireReason = "hand" | "duplicate" | "dominated" | "near-duplicate" | "too-complex" | "category-cap";
 
 export interface Retirement {
   reason: RetireReason;

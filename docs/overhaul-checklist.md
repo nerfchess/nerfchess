@@ -114,3 +114,9 @@ Branch `claude/lichess-button-redesign-9nt1it`, PR #479. Every phase pushed sepa
 
 ### Guards
 All `npm run test:*` suites green at the head (house-sim included). `test:e2e` requires the worker backend and was not run in the sandbox.
+
+### Hand audit (2026-09-05)
+Every active card was read category by category and judged by hand, not by the script's rules alone. Decisions live in `scripts/hand-audit.json`; `npm run gen:retirements` applies the cuts (reason `hand`) and `npm run gen:retiers` rewrites tiers in the definitions (`npm run test:hand-audit` guards them).
+- 317 cards cut (170 of them pointing at the card that covers their ground). The main groups: file-specific opener twins (one pawn on one file may do X), cosmetic no-ops (22 down to 6), "mark plus reroll" variants, coin-flip twins, "escape clause" hexes whose first-move exemption doubled their length, two-phase and every-second-turn curses, random-square nerfs, and straight duplicates at a higher tier.
+- 42 cards retiered where the tier contradicted the effect: Mass Freeze and Roulette up to 7, Overtime Pay (105 seconds at tier 2) up to 5, Amazon Knight up to 6, Twin Queens up to 7, Time Skip up to 6; weak tier 7 and 8 hexes (Donkey Ears, Glacier Gate, Choke Point, Falling Rubble, Pawn Embargo, Traitor's Gala, Lovestruck Majesty) down to 2 to 4.
+- Pool after the pass: 743 retired, 1,437 active, 235 opening nerfs. Similarity baseline down from 50 pairs to 14.

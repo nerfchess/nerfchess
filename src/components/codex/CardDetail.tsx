@@ -198,6 +198,7 @@ function RetiredNote({ id }: { id: string }) {
     dominated: "a cheaper card did the same thing",
     "near-duplicate": "it was too close to another card",
     "too-complex": "its rule ran too long to read at the board",
+    hand: "it was cut in the hand audit for being unclear, a twin of another card, or wrong for its tier",
     "category-cap": "its category had more variations than the game needed",
   };
   return (
