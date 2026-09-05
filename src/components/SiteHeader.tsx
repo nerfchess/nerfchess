@@ -279,7 +279,7 @@ export function SiteHeader({ active }: { active?: string }) {
   };
 
   const iconButton =
-    "nav-icon-btn relative grid h-11 w-11 place-items-center text-parchment-400 hover:bg-[color:var(--bg-panel)] hover:text-parchment-50";
+    "nav-icon-btn relative grid h-11 w-11 place-items-center text-parchment-400 hover:bg-[color:var(--bg-hover)] hover:text-parchment-50";
 
   // Lichess's tall header: 60px, the wordmark and nav left, the icon cluster
   // right, one hairline underneath.
@@ -312,7 +312,7 @@ export function SiteHeader({ active }: { active?: string }) {
                         key={item.href}
                         href={item.href}
                         className={
-                          "block px-4 py-2 text-[14px] transition-colors hover:bg-[color:var(--bg-panel)] " +
+                          "block px-4 py-2 text-[14px] transition-colors hover:bg-[color:var(--bg-hover)] " +
                           (item.className ?? "text-parchment-200 hover:text-parchment-50")
                         }
                       >
@@ -462,7 +462,7 @@ export function SiteHeader({ active }: { active?: string }) {
                             }
                           }}
                           className={
-                            "block w-full cursor-pointer px-4 py-2.5 text-left transition-colors hover:bg-[color:var(--bg-raised)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--edge-strong)] " +
+                            "block w-full cursor-pointer px-4 py-2.5 text-left transition-colors hover:bg-[color:var(--bg-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--edge-strong)] " +
                             (n.read ? "opacity-60" : "")
                           }
                         >
@@ -504,7 +504,7 @@ export function SiteHeader({ active }: { active?: string }) {
                 onClick={() => toggle("profile")}
                 aria-label={user.isGuest ? "Guest account menu" : "Account menu"}
                 title={user.isGuest ? "Guest account menu" : "Account menu"}
-                className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-2 px-2 py-1.5 text-[14px] text-parchment-200 transition-colors hover:bg-[color:var(--bg-panel)] hover:text-parchment-50"
+                className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-2 px-2 py-1.5 text-[14px] text-parchment-200 transition-colors hover:bg-[color:var(--bg-hover)] hover:text-parchment-50"
                 aria-haspopup="menu"
                 aria-expanded={menu === "profile"}
               >
@@ -750,7 +750,7 @@ function MenuItem({ icon, label, onClick }: { icon: React.ReactNode; label: stri
     <button
       type="button"
       onClick={onClick}
-      className="flex min-h-[40px] w-full items-center gap-2.5 px-4 py-2 text-left text-[14px] text-parchment-200 transition-colors hover:bg-[color:var(--bg-panel)] hover:text-parchment-50"
+      className="flex min-h-[40px] w-full items-center gap-2.5 px-4 py-2 text-left text-[14px] text-parchment-200 transition-colors hover:bg-[color:var(--bg-hover)] hover:text-parchment-50"
     >
       <span className="text-parchment-400">{icon}</span>
       {label}

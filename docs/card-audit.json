@@ -1,24 +1,24 @@
 {
  "summary": {
-  "total": 2448,
+  "total": 2480,
   "byKind": {
-   "buff": 970,
-   "hex": 543,
-   "boon": 418,
+   "buff": 978,
+   "hex": 551,
+   "boon": 426,
    "item": 129,
    "apex": 28,
-   "nerf": 360
+   "nerf": 368
   },
   "flagged": {
-   "duplicateSignature": 262,
-   "nearDuplicate": 204,
-   "dominatedCandidates": 89,
+   "duplicateSignature": 267,
+   "nearDuplicate": 209,
+   "dominatedCandidates": 92,
    "misleading": 0,
    "broken": 0,
    "untested": 0,
    "noAnimation": 0
   },
-  "reviewed": 2390
+  "reviewed": 2414
  },
  "rows": [
   {
@@ -1194,6 +1194,24 @@
    "action": "keep: nerf-mode only via NERF_REVEAL exclusion (buff-mode purity)"
   },
   {
+   "id": "fm_boon_lanternlight",
+   "name": "Lanternlight",
+   "kind": "boon",
+   "tier": 1,
+   "effect": "For your next 2 turns your king may move two squares in a straight line, as long as the first square is empty.",
+   "trigger": "passive",
+   "duration": "2-turns",
+   "targets": "self",
+   "signature": "movement|passive|init+aug+onMove|2-turns|self|king,move,n:2,square",
+   "animation": "canvas+passive",
+   "location": "src/engine/buffs/fantasy/mythic.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "gm_consolation_scratcher",
    "name": "Consolation Scratcher",
    "kind": "boon",
@@ -1512,7 +1530,7 @@
     "lab-run-all.ts"
    ],
    "flags": [
-    "duplicate-signature(bn4_florists_trick)"
+    "duplicate-signature(bn4_florists_trick,fm_boon_lifebloom)"
    ],
    "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
   },
@@ -2091,6 +2109,24 @@
     "near-duplicate(bn4_velvet_queue:0.88)"
    ],
    "action": "keep: T2 rung of the forced-tier ladder"
+  },
+  {
+   "id": "fm_boon_hearthbread",
+   "name": "Hearthbread",
+   "kind": "boon",
+   "tier": 2,
+   "effect": "Choose an empty square on your first two ranks. A new pawn appears there.",
+   "trigger": "activated",
+   "duration": "unstated",
+   "targets": "self",
+   "signature": "pieces|activated|effect+targets|unstated|self|pawn,rank,square",
+   "animation": "canvas",
+   "location": "src/engine/buffs/fantasy/mythic.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
   },
   {
    "id": "held_breath",
@@ -3322,6 +3358,24 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "fm_boon_dewdrop",
+   "name": "Dewdrop",
+   "kind": "boon",
+   "tier": 3,
+   "effect": "Your most advanced pawn cannot be captured for the rest of the game.",
+   "trigger": "instant",
+   "duration": "permanent",
+   "targets": "self",
+   "signature": "protection|instant|effect|permanent|self|advance,capture,pawn",
+   "animation": "canvas",
+   "location": "src/engine/buffs/fantasy/mythic.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "north_star",
    "name": "North Star",
    "kind": "boon",
@@ -3646,8 +3700,7 @@
     "lab-run-all.ts"
    ],
    "flags": [
-    "duplicate-signature(bn4_field_stitches)",
-    "dominated-candidate(higher-tier-of-duplicate-pair)"
+    "duplicate-signature(bn4_field_stitches,fm_boon_lifebloom)"
    ],
    "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
   },
@@ -4443,6 +4496,26 @@
     "near-duplicate(extra_move_repeat:0.79)"
    ],
    "action": "keep: extra-move ladder T4 (2 moves)"
+  },
+  {
+   "id": "fm_boon_oathstone",
+   "name": "Oathstone",
+   "kind": "boon",
+   "tier": 4,
+   "effect": "None of your pawns can be captured for your opponent's next 2 turns.",
+   "trigger": "instant",
+   "duration": "2-turns",
+   "targets": "enemy",
+   "signature": "protection|instant|effect|2-turns|enemy|capture,n:2,pawn",
+   "animation": "canvas",
+   "location": "src/engine/buffs/fantasy/mythic.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [
+    "near-duplicate(bn4_shepherds_watch:1.00)"
+   ],
+   "action": "pending-review"
   },
   {
    "id": "fortress_realm",
@@ -5542,6 +5615,26 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "fm_boon_windrider",
+   "name": "Windrider",
+   "kind": "boon",
+   "tier": 5,
+   "effect": "For your next 2 turns each of your bishops may also leap like a knight.",
+   "trigger": "passive",
+   "duration": "2-turns",
+   "targets": "self",
+   "signature": "movement|passive|init+aug+onMove|2-turns|self|bishop,knight,leap,n:2",
+   "animation": "canvas+passive",
+   "location": "src/engine/buffs/fantasy/mythic.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [
+    "near-duplicate(fm_dragonblood:0.75)"
+   ],
+   "action": "pending-review"
+  },
+  {
    "id": "iron_reign",
    "name": "Iron Reign",
    "kind": "boon",
@@ -6255,7 +6348,9 @@
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [],
+   "flags": [
+    "near-duplicate(fm_boon_oathstone:1.00)"
+   ],
    "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
   },
   {
@@ -6517,6 +6612,27 @@
    ],
    "flags": [],
    "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "fm_boon_lifebloom",
+   "name": "Lifebloom",
+   "kind": "boon",
+   "tier": 6,
+   "effect": "One of your captured pawns returns to the board on an empty square of your second rank.",
+   "trigger": "activated",
+   "duration": "unstated",
+   "targets": "self",
+   "signature": "pieces|activated|effect+targets|unstated|self|capture,pawn,rank,return,square",
+   "animation": "canvas",
+   "location": "src/engine/buffs/fantasy/mythic.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [
+    "duplicate-signature(bn4_field_stitches,bn4_florists_trick)",
+    "dominated-candidate(higher-tier-of-duplicate-pair)"
+   ],
+   "action": "pending-review"
   },
   {
    "id": "long_leash",
@@ -7525,6 +7641,24 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "fm_boon_royal_road",
+   "name": "Royal Road",
+   "kind": "boon",
+   "tier": 7,
+   "effect": "Your king steps to any empty square on your back rank.",
+   "trigger": "activated",
+   "duration": "unstated",
+   "targets": "self",
+   "signature": "movement|activated|effect+targets|unstated|self|king,rank,square",
+   "animation": "canvas",
+   "location": "src/engine/buffs/fantasy/mythic.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "full_pardon",
    "name": "Full Pardon",
    "kind": "boon",
@@ -8425,6 +8559,24 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "fm_boon_worldheart",
+   "name": "Worldheart",
+   "kind": "boon",
+   "tier": 8,
+   "effect": "Take two extra moves right now. Your army cannot be captured until your next turn begins.",
+   "trigger": "activated/free",
+   "duration": "next-turn",
+   "targets": "self",
+   "signature": "tempo|activated|effect|next-turn|self|capture,extra,move",
+   "animation": "canvas",
+   "location": "src/engine/buffs/fantasy/mythic.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "transcendence",
    "name": "Transcendence",
    "kind": "boon",
@@ -8513,6 +8665,24 @@
    ],
    "flags": [],
    "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
+  },
+  {
+   "id": "fm_glowmoss_ward",
+   "name": "Glowmoss Ward",
+   "kind": "buff",
+   "tier": 1,
+   "effect": "Soft light grows over your king's square and the eight squares around it: pieces standing there cannot be captured for your opponent's next 2 turns.",
+   "trigger": "instant",
+   "duration": "2-turns",
+   "targets": "enemy",
+   "signature": "protection|instant|effect|2-turns|enemy|capture,king,n:2,square",
+   "animation": "canvas",
+   "location": "src/engine/buffs/fantasy/mythic.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
   },
   {
    "id": "ghost_pawn",
@@ -11895,6 +12065,26 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "fm_moonlit_stride",
+   "name": "Moonlit Stride",
+   "kind": "buff",
+   "tier": 2,
+   "effect": "For your next 3 turns each of your knights may also step one square straight up, down or sideways.",
+   "trigger": "passive",
+   "duration": "3-turns",
+   "targets": "self",
+   "signature": "movement|passive|init+aug+onMove|3-turns|self|knight,n:3,square",
+   "animation": "canvas+passive",
+   "location": "src/engine/buffs/fantasy/mythic.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [
+    "duplicate-signature(pixie_dust,ov_knight_court)"
+   ],
+   "action": "pending-review"
+  },
+  {
    "id": "free_retreat",
    "name": "Free Retreat",
    "kind": "buff",
@@ -14288,6 +14478,24 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "fm_wyrmscale_mail",
+   "name": "Wyrmscale Mail",
+   "kind": "buff",
+   "tier": 3,
+   "effect": "Choose one of your pieces other than the king. It cannot be captured for your opponent's next 4 turns.",
+   "trigger": "activated",
+   "duration": "4-turns",
+   "targets": "enemy",
+   "signature": "protection|activated|effect+targets|4-turns|enemy|capture,king,n:4",
+   "animation": "canvas",
+   "location": "src/engine/buffs/fantasy/mythic.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "fork_guard",
    "name": "Fork Guard",
    "kind": "buff",
@@ -14924,7 +15132,8 @@
     "lab-run-all.ts"
    ],
    "flags": [
-    "duplicate-signature(pixie_dust)"
+    "duplicate-signature(pixie_dust,fm_moonlit_stride)",
+    "dominated-candidate(higher-tier-of-duplicate-pair)"
    ],
    "action": "pending-review"
   },
@@ -15196,7 +15405,8 @@
     "lab-run-all.ts"
    ],
    "flags": [
-    "duplicate-signature(ov_knight_court)"
+    "duplicate-signature(fm_moonlit_stride,ov_knight_court)",
+    "dominated-candidate(higher-tier-of-duplicate-pair)"
    ],
    "action": "pending-review"
   },
@@ -16667,6 +16877,24 @@
    "signature": "protection|passive|filter+onMove|permanent|enemy|capture,pawn,rank,shield",
    "animation": "bespoke+canvas+passive",
    "location": "src/engine/buffs/pt/passives.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "fm_stormcaller",
+   "name": "Stormcaller",
+   "kind": "buff",
+   "tier": 4,
+   "effect": "For your next 2 turns your rooks may also move diagonally and your bishops may also move straight, each as far as a queen would.",
+   "trigger": "passive",
+   "duration": "2-turns",
+   "targets": "self",
+   "signature": "movement|passive|init+aug+onMove|2-turns|self|bishop,move,n:2,queen,rook",
+   "animation": "canvas+passive",
+   "location": "src/engine/buffs/fantasy/mythic.ts",
    "tests": [
     "lab-run-all.ts"
    ],
@@ -19401,6 +19629,24 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "fm_phoenix_feather",
+   "name": "Phoenix Feather",
+   "kind": "buff",
+   "tier": 5,
+   "effect": "One of your captured knights, bishops or rooks returns to the board on an empty square in your half. Knights first, then bishops, then rooks.",
+   "trigger": "activated",
+   "duration": "unstated",
+   "targets": "self",
+   "signature": "pieces|activated|effect+targets|unstated|self|bishop,capture,knight,return,rook,square",
+   "animation": "canvas",
+   "location": "src/engine/buffs/fantasy/mythic.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "fur_elise",
    "name": "Fur Elise",
    "kind": "buff",
@@ -21760,6 +22006,26 @@
    "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
   },
   {
+   "id": "fm_dragonblood",
+   "name": "Dragonblood",
+   "kind": "buff",
+   "tier": 6,
+   "effect": "For your next 4 turns your queen may also leap like a knight.",
+   "trigger": "passive",
+   "duration": "4-turns",
+   "targets": "self",
+   "signature": "movement|passive|init+aug+onMove|4-turns|self|knight,leap,n:4,queen",
+   "animation": "canvas+passive",
+   "location": "src/engine/buffs/fantasy/mythic.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [
+    "near-duplicate(fm_boon_windrider:0.75)"
+   ],
+   "action": "pending-review"
+  },
+  {
    "id": "frigo_camelo",
    "name": "Frigo Camelo",
    "kind": "buff",
@@ -23994,6 +24260,24 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "fm_sunforge",
+   "name": "Sunforge",
+   "kind": "buff",
+   "tier": 7,
+   "effect": "Choose one of your pawns on your 5th rank or beyond. It becomes a knight where it stands.",
+   "trigger": "activated",
+   "duration": "unstated",
+   "targets": "self",
+   "signature": "pieces|activated|effect+targets|unstated|self|become,knight,pawn,rank",
+   "animation": "canvas",
+   "location": "src/engine/buffs/fantasy/mythic.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "genesis",
    "name": "Genesis",
    "kind": "buff",
@@ -25477,6 +25761,24 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "fm_eclipse_crown",
+   "name": "Eclipse Crown",
+   "kind": "buff",
+   "tier": 8,
+   "effect": "Your opponent's next turn is skipped, and none of your pieces can be captured until your following turn begins.",
+   "trigger": "instant",
+   "duration": "next-turn",
+   "targets": "enemy",
+   "signature": "tempo|instant|effect|next-turn|enemy|capture,skip",
+   "animation": "canvas",
+   "location": "src/engine/buffs/fantasy/mythic.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "gm_the_last_bet",
    "name": "The Last Bet",
    "kind": "buff",
@@ -26362,6 +26664,27 @@
    ],
    "flags": [],
    "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "fm_hex_thistledown",
+   "name": "Thistledown",
+   "kind": "hex",
+   "tier": 1,
+   "effect": "Burrs tangle the enemy cavalry: for their next 2 turns, enemy knights may move but may not take anything.",
+   "trigger": "passive",
+   "duration": "2-turns",
+   "targets": "enemy",
+   "signature": "hex|passive|init+filter+onMove|2-turns|enemy|knight,move,n:2",
+   "animation": "canvas+passive",
+   "location": "src/engine/buffs/fantasy/mythic.ts",
+   "tests": [
+    "lab-run-all.ts",
+    "test-hexes.cjs"
+   ],
+   "flags": [
+    "duplicate-signature(spooked_steeds)"
+   ],
+   "action": "pending-review"
   },
   {
    "id": "foggy_glasses",
@@ -27302,6 +27625,27 @@
    ],
    "flags": [],
    "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "fm_hex_fogbank",
+   "name": "Fogbank",
+   "kind": "hex",
+   "tier": 2,
+   "effect": "Your opponent's bishops cannot move more than 2 squares for their next 2 turns.",
+   "trigger": "passive",
+   "duration": "2-turns",
+   "targets": "enemy",
+   "signature": "hex|passive|init+filter+onMove|2-turns|enemy|bishop,move,n:2,n:2,square",
+   "animation": "canvas+passive",
+   "location": "src/engine/buffs/fantasy/mythic.ts",
+   "tests": [
+    "lab-run-all.ts",
+    "test-hexes.cjs"
+   ],
+   "flags": [
+    "near-duplicate(blinkered_bishops:0.75)"
+   ],
+   "action": "pending-review"
   },
   {
    "id": "hw2_blood_price",
@@ -28593,7 +28937,8 @@
    ],
    "flags": [
     "near-duplicate(spooked_steeds:0.80)",
-    "near-duplicate(hx4_left_glove:0.80)"
+    "near-duplicate(hx4_left_glove:0.80)",
+    "near-duplicate(fm_hex_fogbank:0.75)"
    ],
    "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
   },
@@ -28630,6 +28975,25 @@
    "signature": "hex|activated|effect+targets+filter+onMove|3-turns|enemy|king,move,n:3,square",
    "animation": "generated",
    "location": "src/engine/buffs/crossref.ts",
+   "tests": [
+    "lab-run-all.ts",
+    "test-hexes.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "fm_hex_brambleroot",
+   "name": "Brambleroot",
+   "kind": "hex",
+   "tier": 3,
+   "effect": "Your opponent's rooks cannot move sideways along a rank for their next 3 turns.",
+   "trigger": "passive",
+   "duration": "3-turns",
+   "targets": "enemy",
+   "signature": "hex|passive|init+filter+onMove|3-turns|enemy|move,n:3,rank,rook",
+   "animation": "canvas+passive",
+   "location": "src/engine/buffs/fantasy/mythic.ts",
    "tests": [
     "lab-run-all.ts",
     "test-hexes.cjs"
@@ -29940,6 +30304,25 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "fm_hex_sirens_call",
+   "name": "Siren's Call",
+   "kind": "hex",
+   "tier": 4,
+   "effect": "Choose an enemy knight, bishop, rook or queen. It stands entranced and cannot move for your opponent's next 3 turns.",
+   "trigger": "activated",
+   "duration": "3-turns",
+   "targets": "enemy",
+   "signature": "hex|activated|effect+targets|3-turns|enemy|bishop,knight,move,n:3,queen,rook",
+   "animation": "canvas",
+   "location": "src/engine/buffs/fantasy/mythic.ts",
+   "tests": [
+    "lab-run-all.ts",
+    "test-hexes.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "frozen_furrows",
    "name": "Frozen Furrows",
    "kind": "hex",
@@ -30904,7 +31287,7 @@
     "test-hexes.cjs"
    ],
    "flags": [
-    "duplicate-signature(hx4_great_waltz)"
+    "duplicate-signature(hx4_great_waltz,fm_hex_kings_moat)"
    ],
    "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
   },
@@ -31467,9 +31850,11 @@
     "test-hexes.cjs"
    ],
    "flags": [
+    "duplicate-signature(fm_hex_thistledown)",
     "near-duplicate(crossed_wires:0.80)",
     "near-duplicate(blinkered_bishops:0.80)",
-    "near-duplicate(bn4_tangled_reins:0.80)"
+    "near-duplicate(bn4_tangled_reins:0.80)",
+    "dominated-candidate(higher-tier-of-duplicate-pair)"
    ],
    "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
   },
@@ -31667,6 +32052,25 @@
    ],
    "flags": [],
    "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
+  },
+  {
+   "id": "fm_hex_gorgon_gaze",
+   "name": "Gorgon Gaze",
+   "kind": "hex",
+   "tier": 5,
+   "effect": "Every enemy knight and bishop turns to stone for your opponent's next 2 turns.",
+   "trigger": "instant",
+   "duration": "2-turns",
+   "targets": "enemy",
+   "signature": "hex|instant|effect|2-turns|enemy|bishop,knight,n:2",
+   "animation": "canvas",
+   "location": "src/engine/buffs/fantasy/mythic.ts",
+   "tests": [
+    "lab-run-all.ts",
+    "test-hexes.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
   },
   {
    "id": "frost_wall",
@@ -33365,6 +33769,25 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "fm_hex_iron_maiden",
+   "name": "Iron Maiden",
+   "kind": "hex",
+   "tier": 6,
+   "effect": "Choose an enemy piece other than the king. It is locked in place for your opponent's next 4 turns.",
+   "trigger": "activated",
+   "duration": "4-turns",
+   "targets": "enemy",
+   "signature": "hex|activated|effect+targets|4-turns|enemy|king,n:4,place",
+   "animation": "canvas",
+   "location": "src/engine/buffs/fantasy/mythic.ts",
+   "tests": [
+    "lab-run-all.ts",
+    "test-hexes.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "grounded_command",
    "name": "Grounded Command",
    "kind": "hex",
@@ -34782,6 +35205,27 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "fm_hex_kings_moat",
+   "name": "King's Moat",
+   "kind": "hex",
+   "tier": 7,
+   "effect": "For your opponent's next 3 turns none of their pieces may move onto a square next to your king.",
+   "trigger": "passive",
+   "duration": "3-turns",
+   "targets": "enemy",
+   "signature": "hex|passive|init+filter+onMove|3-turns|enemy|king,move,n:3,square",
+   "animation": "canvas+passive",
+   "location": "src/engine/buffs/fantasy/mythic.ts",
+   "tests": [
+    "lab-run-all.ts",
+    "test-hexes.cjs"
+   ],
+   "flags": [
+    "duplicate-signature(hx4_prowlers_bell,hx4_great_waltz)"
+   ],
+   "action": "pending-review"
+  },
+  {
    "id": "frozen_solid",
    "name": "Frozen Solid",
    "kind": "hex",
@@ -35900,6 +36344,25 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "fm_hex_winter_court",
+   "name": "Winter Court",
+   "kind": "hex",
+   "tier": 8,
+   "effect": "Every enemy piece other than the king standing in your half of the board is frozen for your opponent's next 3 turns.",
+   "trigger": "instant",
+   "duration": "3-turns",
+   "targets": "enemy",
+   "signature": "hex|instant|effect|3-turns|enemy|king,n:3",
+   "animation": "canvas",
+   "location": "src/engine/buffs/fantasy/mythic.ts",
+   "tests": [
+    "lab-run-all.ts",
+    "test-hexes.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "hw2_crown_of_thorns",
    "name": "Crown of Thorns",
    "kind": "hex",
@@ -36264,7 +36727,7 @@
     "test-hexes.cjs"
    ],
    "flags": [
-    "duplicate-signature(hx4_prowlers_bell)",
+    "duplicate-signature(hx4_prowlers_bell,fm_hex_kings_moat)",
     "dominated-candidate(higher-tier-of-duplicate-pair)"
    ],
    "action": "pending-review"
@@ -39405,6 +39868,24 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "fn_pixie_curse",
+   "name": "Pixie Curse",
+   "kind": "nerf",
+   "tier": 1,
+   "effect": "Your knights cannot move onto an edge square of the board, unless that is your only legal move.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|knight,move,square",
+   "animation": "passive",
+   "location": "src/engine/nerfs/fantasy.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "lucky",
    "name": "Lucky",
    "kind": "nerf",
@@ -39599,6 +40080,24 @@
    "signature": "nerf|unstated|advance,pawn,square",
    "animation": "passive",
    "location": "src/engine/nerfs/expanded/tier1.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "fn_gnomes_bargain",
+   "name": "Gnome's Bargain",
+   "kind": "nerf",
+   "tier": 2,
+   "effect": "From your fourth move on, you cannot capture with the same type of piece that made your previous capture.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|capture,move",
+   "animation": "passive",
+   "location": "src/engine/nerfs/fantasy.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -40271,6 +40770,24 @@
    "signature": "nerf|unstated|capture,move,n:15,pawn",
    "animation": "passive",
    "location": "src/engine/nerfs/extras.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "fn_selkie_skin",
+   "name": "Selkie Skin",
+   "kind": "nerf",
+   "tier": 3,
+   "effect": "Your rooks cannot move more than 3 squares along a file. Moves along a rank are free.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|file,move,n:3,rank,rook,square",
+   "animation": "passive",
+   "location": "src/engine/nerfs/fantasy.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -40956,6 +41473,24 @@
    "signature": "nerf|unstated|capture,check,king,n:2,square",
    "animation": "passive",
    "location": "src/engine/nerfs/implemented.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "fn_trolls_toll",
+   "name": "Troll's Toll",
+   "kind": "nerf",
+   "tier": 4,
+   "effect": "After you capture a pawn, your next move must be a pawn move, if you have one.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|next-turn|capture,move,pawn",
+   "animation": "passive",
+   "location": "src/engine/nerfs/fantasy.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -42212,11 +42747,11 @@
    "name": "Crippled Clergy",
    "kind": "nerf",
    "tier": 5,
-   "effect": "Your bishops can only move one square at a time.",
+   "effect": "Each bishop of yours shuffles: every bishop move covers a single diagonal step.",
    "trigger": "passive-rule",
    "duration": "match",
    "targets": "self",
-   "signature": "nerf|unstated|bishop,move,square,time",
+   "signature": "nerf|unstated|bishop,move",
    "animation": "passive",
    "location": "src/engine/nerfs/expanded/tier8.ts",
    "tests": [
@@ -42292,6 +42827,24 @@
    "signature": "nerf|unstated|capture,king,queen",
    "animation": "passive",
    "location": "src/engine/nerfs/library.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "fn_banshee_bond",
+   "name": "Banshee Bond",
+   "kind": "nerf",
+   "tier": 5,
+   "effect": "Your queen may only move to a square next to one of your other pieces. If she has no such move, she stays put.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|move,queen,square",
+   "animation": "passive",
+   "location": "src/engine/nerfs/fantasy.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -43432,6 +43985,24 @@
    "signature": "nerf|unstated|move,pawn",
    "animation": "passive",
    "location": "src/engine/nerfs/library.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "fn_wyrm_hoard",
+   "name": "Wyrm Hoard",
+   "kind": "nerf",
+   "tier": 6,
+   "effect": "You cannot capture a piece worth more than the piece you capture it with. Capturing the king is always allowed.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|capture,king",
+   "animation": "passive",
+   "location": "src/engine/nerfs/fantasy.ts",
    "tests": [
     "test-nerfs.cjs"
    ],
@@ -44766,6 +45337,24 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "fn_lich_pact",
+   "name": "Lich Pact",
+   "kind": "nerf",
+   "tier": 7,
+   "effect": "From your sixth move on, you lose if 6 of your turns pass in a row without one of your pieces ending its move in the enemy half of the board.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|6-turns|move,n:6",
+   "animation": "passive",
+   "location": "src/engine/nerfs/fantasy.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "iron_curtain",
    "name": "Iron Curtain",
    "kind": "nerf",
@@ -45377,6 +45966,24 @@
    "signature": "nerf|unstated|capture,n:4,pawn",
    "animation": "passive",
    "location": "src/engine/nerfs/library.ts",
+   "tests": [
+    "test-nerfs.cjs"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "fn_titans_yoke",
+   "name": "Titan's Yoke",
+   "kind": "nerf",
+   "tier": 8,
+   "effect": "On every second turn of yours, you must move your king if it has a legal move.",
+   "trigger": "passive-rule",
+   "duration": "match",
+   "targets": "self",
+   "signature": "nerf|unstated|king,move",
+   "animation": "passive",
+   "location": "src/engine/nerfs/fantasy.ts",
    "tests": [
     "test-nerfs.cjs"
    ],

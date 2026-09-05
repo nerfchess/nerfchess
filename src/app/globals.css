@@ -27,6 +27,7 @@ body {
   --bg-base: hsl(var(--site-hue) 10% 8%);     /* page   (Lichess --c-bg-page) */
   --bg-panel: hsl(var(--site-hue) 7% 14%);    /* box    (--c-bg) */
   --bg-raised: hsl(var(--site-hue) 7% 22%);   /* low    (--c-bg-low) */
+  --bg-hover: hsl(var(--site-hue) 7% 27%);    /* a menu row under the pointer: one rung above raised */
   --bg-zebra: hsl(var(--site-hue) 5% 19%);    /* zebra  (--c-bg-zebra) */
   --border-subtle: hsl(0 0% 25%);             /* --c-border */
   --border-light: hsl(0 0% 40%);              /* --c-border-light */
@@ -248,6 +249,7 @@ html[data-theme="light"] {
   --bg-base: hsl(var(--site-hue) 10% 92%);
   --bg-panel: hsl(0 0% 100%);
   --bg-raised: hsl(0 0% 89%);
+  --bg-hover: hsl(0 0% 94%);
   --bg-zebra: hsl(var(--site-hue) 12% 96.5%);
   --border-subtle: hsl(0 0% 85%);
   --border-light: hsl(0 0% 80%);
@@ -558,12 +560,8 @@ html[data-light] select option {
    square (no rounding, no heavy blur) while reading a touch more premium.
    Hovering lifts the tint into a tier-colored glow ring. */
 .draft-face {
-  background-image:
-    linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0) 42%),
-    radial-gradient(135% 100% at 50% -8%, rgb(var(--tier-rgb, 216 181 110) / 0.14), transparent 62%);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.10),
-    inset 0 0 42px -20px rgb(var(--tier-rgb, 216 181 110) / 0.60);
+  /* Flat face: the tier shows in the edge ring and the numeral, not a wash. */
+  box-shadow: inset 0 0 0 1px rgb(var(--tier-rgb, 216 181 110) / 0.35);
   transition: box-shadow 220ms var(--ease-out), border-color 220ms var(--ease-out);
 }
 .draft-face:hover {
@@ -577,7 +575,6 @@ html[data-light] select option {
 /* Dock rows: a whisper of the same treatment (hairline top highlight + faint
    top-lit sheen) so the buff dock reads as part of the same card family. */
 .dock-card {
-  background-image: linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0) 60%);
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
 }
 
@@ -851,9 +848,7 @@ html[data-anim="off"] .victory-burst { display: none; }
 /* Rune input: the shared text-field treatment. A carved recess in the stone
    with an energy sill that wakes on focus. */
 .input-rune {
-  background:
-    linear-gradient(180deg, rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.08)),
-    var(--surface-panel);
+  background: var(--surface-panel);
   color: var(--paper);
   border: 1px solid var(--edge);
   border-radius: 1px;
@@ -1154,10 +1149,8 @@ html[data-anim="off"] .sq-check::after {
    lit from the top edge — the "glass shiny" look. */
 .glass-chip {
   border-radius: 1px;
-  background: linear-gradient(165deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.03) 45%, rgba(12, 18, 26, 0.25)),
-    rgba(14, 20, 30, 0.62);
-  backdrop-filter: blur(12px) saturate(1.3);
-  -webkit-backdrop-filter: blur(12px) saturate(1.3);
+  /* Flat, opaque chrome: no frosted glass, no gradient sheen. */
+  background: var(--bg-raised);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.22),
     inset 0 -1px 0 rgba(0, 0, 0, 0.35),
@@ -1826,10 +1819,7 @@ html[data-anim="off"] .card-juicy, html[data-anim="off"] .card-juicy:hover, html
 /* Seam gradient text/border helpers: the two mode colors as one warm-to-cool
    sweep, for headings, rings, and section accents that should feel alive. */
 .grad-seam-text {
-  background: linear-gradient(90deg, var(--coral-glow), rgb(var(--seam-cool-rgb)));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--text-heading);
 }
 
 /* Decorative corners — subtle brass tick marks for editorial framing */
@@ -1847,8 +1837,6 @@ html[data-anim="off"] .card-juicy, html[data-anim="off"] .card-juicy:hover, html
 
 /* Replace the old colorful sigil ring with a soft static brass aura */
 .sigil {
-  background:
-    radial-gradient(circle at 50% 50%, rgb(var(--accent-gold-rgb) / 0.06), transparent 62%);
   border-radius: 9999px;
 }
 
@@ -2349,14 +2337,10 @@ html[data-light] .starfield {
    Hover only firms the borders — no lift, no glow. */
 .hall-row {
   --row-rgb: 216 181 110; /* brass default (draft / legacy entries) */
-  /* Rows are a raised warm-stone step over the panel — the same lamplit
-     granite as the dungeon tokens, not a neutral white-alpha ink that reads
-     unthemed beside them. Only the mode's left bar carries color at rest;
-     the full edge lights on hover (interactive feedback). */
-  background:
-    linear-gradient(180deg, rgba(255, 235, 200, 0.04), transparent 50%, rgba(0, 0, 0, 0.1)),
-    linear-gradient(180deg, #2e2517, var(--stone-hi));
-  border: 1px solid rgb(122 96 58 / 0.22);
+  /* A flat raised row; only the mode's left bar carries colour at rest and
+     the full edge lights on hover. */
+  background: var(--bg-raised);
+  border: 1px solid var(--border-subtle);
   border-left: 2px solid rgb(var(--row-rgb) / 0.6);
   box-shadow: inset 0 1px 0 rgba(255, 230, 180, 0.06);
   /* Hover lightens with an opacity layer, not filter: brightness() repaints

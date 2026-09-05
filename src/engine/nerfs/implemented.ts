@@ -6,6 +6,7 @@ import { EXTRA_NERFS } from "./extras";
 import { EXPANDED_NERFS, FOOTSOLDIERS_ONLY } from "./expanded";
 import { WILD_NERFS } from "./wild";
 import { NERF_WAVE2 } from "./wave2";
+import { FANTASY_NERFS } from "./fantasy";
 
 const cheb = (a: Square, b: Square) =>
   Math.max(Math.abs(FILE(a) - FILE(b)), Math.abs(RANK(a) - RANK(b)));
@@ -1214,6 +1215,7 @@ export const ALL_IMPLEMENTED: Nerf[] = [
   ...EXPANDED_NERFS,
   ...WILD_NERFS,
   ...NERF_WAVE2,
+  ...FANTASY_NERFS,
 ];
 
 // Retired rules: no longer dealt or shown in the Codex, but kept resolvable by

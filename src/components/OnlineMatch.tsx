@@ -566,6 +566,17 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // skip (lastSkip.atPly changes), announcing WHY the draft round passed the
   // player by, then auto-dismisses. Distinct from the passive waiting card.
   const [skipToast, setSkipToast] = useState<null | { reason: "blocked" | "dry" }>(null);
+  // Short answers to the offers you make: "Draw declined", "Takeback declined".
+  // The controls panel already says it in small print, but a reply to your
+  // offer deserves to land where you are looking, so it also rides the same
+  // top toast slot as the draft-skip notice for a few seconds.
+  const [replyToast, setReplyToast] = useState<string | null>(null);
+  const replyToastTimer = useRef<number | null>(null);
+  const showReplyToast = (text: string) => {
+    setReplyToast(text);
+    if (replyToastTimer.current != null) window.clearTimeout(replyToastTimer.current);
+    replyToastTimer.current = window.setTimeout(() => setReplyToast(null), 4500);
+  };
   const seenSkipPlyRef = useRef<number | null>(null);
   useEffect(() => {
     const skip = game?.buffs?.players[myColor]?.lastSkip;
@@ -1221,6 +1232,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
       } else if (e.type === "draw-declined") {
         setDrawOfferBy(null);
         setDrawOfferStatus(e.color === myColor ? "idle" : "declined");
+        if (e.color !== myColor) showReplyToast("Draw declined");
         if (e.color !== myColor) {
           later(() => setDrawOfferStatus("idle"), 2500);
         }
@@ -1231,6 +1243,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
       } else if (e.type === "takeback-declined") {
         setTakebackOfferBy(null);
         setTakebackStatus(e.color === myColor ? "idle" : "declined");
+        if (e.color !== myColor) showReplyToast("Takeback declined");
         if (e.color !== myColor) {
           later(() => setTakebackStatus("idle"), 2500);
         }
@@ -3458,6 +3471,19 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           round passes this player by (blocked by an opponent card or a dry
           pool), so a missing draft is never confusing. Static-friendly: the
           entrance is a short fade/slide and the body is plain text. */}
+      {replyToast && !game.result && (
+        <div className="pointer-events-none fixed inset-x-0 top-14 z-[46] flex justify-center px-4">
+          <motion.div
+            initial={{ opacity: 0, y: -16 }}
+            animate={{ opacity: 1, y: 0 }}
+            role="status"
+            aria-live="assertive"
+            className="plate flex max-w-[92vw] items-center gap-3 px-4 py-2.5 shadow-plate"
+          >
+            <span className="font-display text-sm font-semibold text-parchment-100">{replyToast}</span>
+          </motion.div>
+        </div>
+      )}
       {skipToast && !game.result && (
         <div className="pointer-events-none fixed inset-x-0 top-14 z-[46] flex justify-center px-4">
           <motion.div
@@ -3543,7 +3569,12 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           // server-side is there to take over for them.
           autoResolveOnExpire={false}
           onCardsReady={draftSeq.reportCardsReady}
-          minimized={draftGraceOver}
+          // Never auto-minimize. The free window ending used to collapse the
+          // full draft into the side panel, which read as "the draft menu
+          // minimized for no reason"; the clock warning inside the overlay
+          // already says whose time is running. Only the player's own Hide
+          // moves the draft out of the way.
+          minimized={false}
           cardNoun={draftCardNoun(start.mode)}
           oppLockedIn={oppLockedIn && !oppDrafting}
           oppBanked={oppBanked}

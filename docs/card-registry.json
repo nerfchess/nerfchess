@@ -2,44 +2,44 @@
   "summary": {
     "generated": "derived from ALL_NERFS + ALL_BUFFS + PASSIVE_COMPOSITIONS",
     "totals": {
-      "cards": 2448,
-      "nerfs": 360,
-      "buffs": 2088,
-      "implemented": 2448,
-      "withPassiveAnimation": 1335,
-      "withPassiveSoundCue": 1335,
-      "castVoiced": 1113,
+      "cards": 2480,
+      "nerfs": 368,
+      "buffs": 2112,
+      "implemented": 2480,
+      "withPassiveAnimation": 1352,
+      "withPassiveSoundCue": 1352,
+      "castVoiced": 1128,
       "shortDescriptions": 36,
       "emptyDescriptions": 0
     },
     "effectCategoryCounts": {
-      "movement-phase-jump": 91,
-      "movement-upgrade": 136,
+      "movement-phase-jump": 93,
+      "movement-upgrade": 139,
       "nerf-relief": 82,
-      "promotion-grant": 55,
-      "mass-freeze": 98,
-      "capture-denial": 122,
-      "single-piece-freeze": 141,
-      "single-piece-shield": 120,
+      "promotion-grant": 56,
+      "mass-freeze": 99,
+      "capture-denial": 124,
+      "single-piece-freeze": 144,
+      "single-piece-shield": 123,
       "capture-punishment": 11,
       "draft-advantage": 92,
-      "piece-class-lockdown": 38,
-      "mass-shield": 12,
+      "piece-class-lockdown": 39,
+      "mass-shield": 14,
       "clock-gain-self": 41,
-      "self-movement-restriction": 106,
-      "enemy-movement-restriction": 98,
+      "self-movement-restriction": 107,
+      "enemy-movement-restriction": 99,
       "forced-sacrifice": 19,
       "info-reveal": 58,
       "piece-swap": 31,
       "special-rule-grant": 17,
-      "extra-move": 26,
+      "extra-move": 27,
       "randomness-gamble": 23,
-      "instant-piece-spawn": 95,
+      "instant-piece-spawn": 96,
       "special-rule-denial": 7,
-      "move-budget-change": 35,
-      "piece-downgrade-transform": 58,
+      "move-budget-change": 37,
+      "piece-downgrade-transform": 59,
       "direction-geometry-lock": 23,
-      "zone-denial": 103,
+      "zone-denial": 104,
       "terrain-hazard": 37,
       "delayed-contract": 42,
       "piece-nudge-reposition": 53,
@@ -50,13 +50,13 @@
       "king-protection": 21,
       "retaliation-damage": 16,
       "clock-drain-enemy": 17,
-      "alt-win-loss-condition": 47,
-      "piece-revival": 41,
-      "teleport-relocate": 49,
+      "alt-win-loss-condition": 48,
+      "piece-revival": 43,
+      "teleport-relocate": 50,
       "freeze-cleanse": 12,
       "piece-upgrade-transform": 11,
       "card-tutor-gain": 6,
-      "forced-move": 75,
+      "forced-move": 77,
       "piece-mind-control": 19,
       "capture-condition": 24,
       "draft-denial": 29,
@@ -74,15 +74,15 @@
       "info-denial": 1
     },
     "soundByFamily": {
-      "blessing": 99,
-      "strike": 258,
-      "decree": 271,
-      "territory": 261,
-      "bind": 216,
+      "blessing": 104,
+      "strike": 260,
+      "decree": 273,
+      "territory": 263,
+      "bind": 220,
       "summon": 46,
-      "tempo": 109,
+      "tempo": 110,
       "fracture": 39,
-      "veil": 36
+      "veil": 37
     },
     "note": "Every card is voiced: passive-rule nerfs and passive-kind buffs play their family soundCue on spawn (see sounds.ts playPassiveCue); instant/activated buffs voice through the cast/signature system (playCardUse + signature voices). Fields are derived, not hand-authored."
   },
@@ -988,7 +988,7 @@
         "family": "decree",
         "primitives": [
           "crackLines",
-          "slabSlam"
+          "pulseRing"
         ],
         "sigil": "gavel"
       },
@@ -1055,6 +1055,70 @@
       "target": "piece"
     },
     {
+      "id": "fm_boon_lanternlight",
+      "name": "Lanternlight",
+      "kind": "buff",
+      "category": "movement",
+      "effectCategory": "movement-upgrade",
+      "tier": 1,
+      "mechanic": "passive",
+      "implemented": true,
+      "descriptionLength": 110,
+      "description": "For your next 2 turns your king may move two squares in a straight line, as long as the first square is empty.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "blessing",
+        "primitives": [
+          "moonCircle"
+        ],
+        "sigil": "sun"
+      },
+      "soundCue": "passive/blessing",
+      "soundFamily": "blessing",
+      "target": "piece"
+    },
+    {
+      "id": "fm_glowmoss_ward",
+      "name": "Glowmoss Ward",
+      "kind": "buff",
+      "category": "protection",
+      "effectCategory": "single-piece-shield",
+      "tier": 1,
+      "mechanic": "instant",
+      "implemented": true,
+      "descriptionLength": 148,
+      "description": "Soft light grows over your king's square and the eight squares around it: pieces standing there cannot be captured for your opponent's next 2 turns.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
+      "id": "fm_hex_thistledown",
+      "name": "Thistledown",
+      "kind": "buff",
+      "category": "hex",
+      "effectCategory": "piece-class-lockdown",
+      "tier": 1,
+      "mechanic": "passive",
+      "implemented": true,
+      "descriptionLength": 105,
+      "description": "Burrs tangle the enemy cavalry: for their next 2 turns, enemy knights may move but may not take anything.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "decree",
+        "primitives": [
+          "crackLines",
+          "shockRing"
+        ],
+        "sigil": "gavel"
+      },
+      "soundCue": "passive/decree",
+      "soundFamily": "decree",
+      "target": "piece"
+    },
+    {
       "id": "foggy_glasses",
       "name": "Foggy Glasses",
       "kind": "buff",
@@ -1070,7 +1134,7 @@
         "family": "decree",
         "primitives": [
           "crackLines",
-          "shockRing"
+          "pulseRing"
         ],
         "sigil": "gavel"
       },
@@ -1093,8 +1157,8 @@
       "animation": {
         "family": "strike",
         "primitives": [
-          "edgeBurn",
-          "bolt"
+          "shockRing",
+          "crackBloom"
         ],
         "sigil": "zap"
       },
@@ -1226,7 +1290,7 @@
         "family": "strike",
         "primitives": [
           "edgeBurn",
-          "drainFlow"
+          "shockRing"
         ],
         "sigil": "zap"
       },
@@ -1250,7 +1314,7 @@
         "family": "decree",
         "primitives": [
           "crackLines",
-          "slabSlam"
+          "quakeRumble"
         ],
         "sigil": "gavel"
       },
@@ -1273,8 +1337,8 @@
       "animation": {
         "family": "decree",
         "primitives": [
-          "crackLines",
-          "crackBloom"
+          "drainFlow",
+          "sigilStamp"
         ],
         "sigil": "gavel"
       },
@@ -1320,7 +1384,7 @@
       "animation": {
         "family": "bind",
         "primitives": [
-          "pulseRing"
+          "sigilStamp"
         ],
         "sigil": "link"
       },
@@ -1367,7 +1431,8 @@
       "animation": {
         "family": "territory",
         "primitives": [
-          "crackBloom"
+          "zoneSweep",
+          "edgeBurn"
         ],
         "sigil": "map"
       },
@@ -1391,7 +1456,7 @@
         "family": "bind",
         "primitives": [
           "sigilStamp",
-          "shackleDrop"
+          "gateSlam"
         ],
         "sigil": "link"
       },
@@ -2067,7 +2132,7 @@
       "animation": {
         "family": "territory",
         "primitives": [
-          "pulseRing"
+          "beamHorizontal"
         ],
         "sigil": "map"
       },
@@ -2090,7 +2155,8 @@
       "animation": {
         "family": "blessing",
         "primitives": [
-          "moonCircle"
+          "riseGlow",
+          "orbitSpark"
         ],
         "sigil": "sun"
       },
@@ -2113,7 +2179,8 @@
       "animation": {
         "family": "blessing",
         "primitives": [
-          "orbitSpark"
+          "riseGlow",
+          "cardLift"
         ],
         "sigil": "sun"
       },
@@ -2137,7 +2204,7 @@
         "family": "territory",
         "primitives": [
           "zoneSweep",
-          "beamVertical"
+          "pulseRing"
         ],
         "sigil": "map"
       },
@@ -2161,7 +2228,7 @@
         "family": "bind",
         "primitives": [
           "weightDrop",
-          "sigilStamp"
+          "pulseRing"
         ],
         "sigil": "link"
       },
@@ -6949,7 +7016,7 @@
         "family": "decree",
         "primitives": [
           "shockRing",
-          "sigilStamp"
+          "crackLines"
         ],
         "sigil": "gavel"
       },
@@ -6972,7 +7039,7 @@
       "animation": {
         "family": "blessing",
         "primitives": [
-          "riseGlow",
+          "moonCircle",
           "orbitSpark"
         ],
         "sigil": "sun"
@@ -6996,7 +7063,7 @@
       "animation": {
         "family": "blessing",
         "primitives": [
-          "riseGlow",
+          "moonCircle",
           "cardLift"
         ],
         "sigil": "sun"
@@ -7021,7 +7088,7 @@
         "family": "decree",
         "primitives": [
           "shockRing",
-          "pulseRing"
+          "slabSlam"
         ],
         "sigil": "gavel"
       },
@@ -7062,7 +7129,7 @@
         "family": "strike",
         "primitives": [
           "drainFlow",
-          "pulseRing"
+          "edgeBurn"
         ],
         "sigil": "zap"
       },
@@ -7086,7 +7153,7 @@
         "family": "bind",
         "primitives": [
           "gateSlam",
-          "weightDrop"
+          "sigilStamp"
         ],
         "sigil": "link"
       },
@@ -7109,8 +7176,8 @@
       "animation": {
         "family": "territory",
         "primitives": [
-          "zoneSweep",
-          "crackBloom"
+          "edgeBurn",
+          "zoneSweep"
         ],
         "sigil": "map"
       },
@@ -7151,7 +7218,7 @@
         "family": "bind",
         "primitives": [
           "gateSlam",
-          "shackleDrop"
+          "barCage"
         ],
         "sigil": "link"
       },
@@ -7215,7 +7282,7 @@
         "family": "decree",
         "primitives": [
           "pulseRing",
-          "crackLines"
+          "drainFlow"
         ],
         "sigil": "gavel"
       },
@@ -7238,7 +7305,7 @@
       "animation": {
         "family": "blessing",
         "primitives": [
-          "moonCircle",
+          "orbitSpark",
           "riseGlow"
         ],
         "sigil": "sun"
@@ -7280,7 +7347,7 @@
         "family": "decree",
         "primitives": [
           "pulseRing",
-          "slabSlam"
+          "quakeRumble"
         ],
         "sigil": "gavel"
       },
@@ -7303,7 +7370,7 @@
       "animation": {
         "family": "blessing",
         "primitives": [
-          "moonCircle",
+          "orbitSpark",
           "cardLift"
         ],
         "sigil": "sun"
@@ -7369,7 +7436,7 @@
         "family": "strike",
         "primitives": [
           "pulseRing",
-          "edgeBurn"
+          "shockRing"
         ],
         "sigil": "zap"
       },
@@ -7392,7 +7459,7 @@
       "animation": {
         "family": "blessing",
         "primitives": [
-          "cardLift",
+          "pulseRing",
           "moonCircle"
         ],
         "sigil": "sun"
@@ -8414,7 +8481,7 @@
         "family": "decree",
         "primitives": [
           "crackLines",
-          "pulseRing"
+          "shockRing"
         ],
         "sigil": "gavel"
       },
@@ -8703,6 +8770,69 @@
       "target": null
     },
     {
+      "id": "fm_boon_hearthbread",
+      "name": "Hearthbread",
+      "kind": "buff",
+      "category": "pieces",
+      "effectCategory": "instant-piece-spawn",
+      "tier": 2,
+      "mechanic": "activated",
+      "implemented": true,
+      "descriptionLength": 73,
+      "description": "Choose an empty square on your first two ranks. A new pawn appears there.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
+      "id": "fm_hex_fogbank",
+      "name": "Fogbank",
+      "kind": "buff",
+      "category": "hex",
+      "effectCategory": "move-budget-change",
+      "tier": 2,
+      "mechanic": "passive",
+      "implemented": true,
+      "descriptionLength": 79,
+      "description": "Your opponent's bishops cannot move more than 2 squares for their next 2 turns.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "bind",
+        "primitives": [
+          "pulseRing"
+        ],
+        "sigil": "link"
+      },
+      "soundCue": "passive/bind",
+      "soundFamily": "bind",
+      "target": "piece"
+    },
+    {
+      "id": "fm_moonlit_stride",
+      "name": "Moonlit Stride",
+      "kind": "buff",
+      "category": "movement",
+      "effectCategory": "movement-upgrade",
+      "tier": 2,
+      "mechanic": "passive",
+      "implemented": true,
+      "descriptionLength": 98,
+      "description": "For your next 3 turns each of your knights may also step one square straight up, down or sideways.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "blessing",
+        "primitives": [
+          "cardLift"
+        ],
+        "sigil": "sun"
+      },
+      "soundCue": "passive/blessing",
+      "soundFamily": "blessing",
+      "target": "piece"
+    },
+    {
       "id": "free_retreat",
       "name": "Free Retreat",
       "kind": "buff",
@@ -8768,7 +8898,7 @@
       "animation": {
         "family": "bind",
         "primitives": [
-          "shackleDrop"
+          "barCage"
         ],
         "sigil": "link"
       },
@@ -8890,7 +9020,7 @@
         "family": "bind",
         "primitives": [
           "chainLink",
-          "gateSlam"
+          "sigilStamp"
         ],
         "sigil": "link"
       },
@@ -8988,7 +9118,7 @@
       "animation": {
         "family": "territory",
         "primitives": [
-          "beamHorizontal"
+          "beamVertical"
         ],
         "sigil": "map"
       },
@@ -9012,7 +9142,7 @@
         "family": "decree",
         "primitives": [
           "drainFlow",
-          "crackLines"
+          "sigilStamp"
         ],
         "sigil": "gavel"
       },
@@ -10021,7 +10151,7 @@
         "family": "bind",
         "primitives": [
           "chainLink",
-          "shackleDrop"
+          "barCage"
         ],
         "sigil": "link"
       },
@@ -10044,8 +10174,8 @@
       "animation": {
         "family": "strike",
         "primitives": [
-          "drainFlow",
-          "shockRing"
+          "edgeBurn",
+          "crackBloom"
         ],
         "sigil": "zap"
       },
@@ -10109,7 +10239,7 @@
         "family": "territory",
         "primitives": [
           "zoneSweep",
-          "edgeBurn"
+          "beamVertical"
         ],
         "sigil": "map"
       },
@@ -10133,7 +10263,7 @@
         "family": "bind",
         "primitives": [
           "pulseRing",
-          "gateSlam"
+          "chainLink"
         ],
         "sigil": "link"
       },
@@ -10688,7 +10818,7 @@
       "animation": {
         "family": "strike",
         "primitives": [
-          "bolt"
+          "shockRing"
         ],
         "sigil": "Crown"
       },
@@ -11659,8 +11789,7 @@
       "animation": {
         "family": "veil",
         "primitives": [
-          "fogRoll",
-          "drainFlow"
+          "fogRoll"
         ],
         "sigil": "Feather"
       },
@@ -11981,7 +12110,7 @@
         "family": "decree",
         "primitives": [
           "drainFlow",
-          "slabSlam"
+          "quakeRumble"
         ],
         "sigil": "gavel"
       },
@@ -12181,7 +12310,7 @@
         "family": "decree",
         "primitives": [
           "shockRing",
-          "crackLines"
+          "drainFlow"
         ],
         "sigil": "gavel"
       },
@@ -12245,7 +12374,7 @@
         "family": "decree",
         "primitives": [
           "drainFlow",
-          "crackBloom"
+          "quakeRumble"
         ],
         "sigil": "gavel"
       },
@@ -12332,8 +12461,7 @@
       "animation": {
         "family": "territory",
         "primitives": [
-          "zoneSweep",
-          "beamVertical"
+          "crackBloom"
         ],
         "sigil": "map"
       },
@@ -12448,7 +12576,7 @@
       "animation": {
         "family": "blessing",
         "primitives": [
-          "riseGlow",
+          "moonCircle",
           "pulseRing"
         ],
         "sigil": "sun"
@@ -12473,7 +12601,7 @@
         "family": "strike",
         "primitives": [
           "drainFlow",
-          "quakeRumble"
+          "pulseRing"
         ],
         "sigil": "zap"
       },
@@ -12497,7 +12625,7 @@
         "family": "decree",
         "primitives": [
           "pulseRing",
-          "shockRing"
+          "slabSlam"
         ],
         "sigil": "gavel"
       },
@@ -12680,7 +12808,7 @@
         "family": "territory",
         "primitives": [
           "edgeBurn",
-          "beamHorizontal"
+          "pulseRing"
         ],
         "sigil": "map"
       },
@@ -13737,7 +13865,7 @@
         "family": "strike",
         "primitives": [
           "shockRing",
-          "drainFlow"
+          "edgeBurn"
         ],
         "sigil": "zap"
       },
@@ -14353,6 +14481,63 @@
       "target": null
     },
     {
+      "id": "fm_boon_dewdrop",
+      "name": "Dewdrop",
+      "kind": "buff",
+      "category": "protection",
+      "effectCategory": "single-piece-shield",
+      "tier": 3,
+      "mechanic": "instant",
+      "implemented": true,
+      "descriptionLength": 68,
+      "description": "Your most advanced pawn cannot be captured for the rest of the game.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
+      "id": "fm_hex_brambleroot",
+      "name": "Brambleroot",
+      "kind": "buff",
+      "category": "hex",
+      "effectCategory": "zone-denial",
+      "tier": 3,
+      "mechanic": "passive",
+      "implemented": true,
+      "descriptionLength": 79,
+      "description": "Your opponent's rooks cannot move sideways along a rank for their next 3 turns.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "territory",
+        "primitives": [
+          "beamVertical"
+        ],
+        "sigil": "map"
+      },
+      "soundCue": "passive/territory",
+      "soundFamily": "territory",
+      "target": "rank"
+    },
+    {
+      "id": "fm_wyrmscale_mail",
+      "name": "Wyrmscale Mail",
+      "kind": "buff",
+      "category": "protection",
+      "effectCategory": "single-piece-shield",
+      "tier": 3,
+      "mechanic": "activated",
+      "implemented": true,
+      "descriptionLength": 102,
+      "description": "Choose one of your pieces other than the king. It cannot be captured for your opponent's next 4 turns.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
       "id": "fork_guard",
       "name": "Fork Guard",
       "kind": "buff",
@@ -14368,7 +14553,7 @@
         "family": "strike",
         "primitives": [
           "shockRing",
-          "crackBloom"
+          "quakeRumble"
         ],
         "sigil": "zap"
       },
@@ -14637,7 +14822,7 @@
         "family": "decree",
         "primitives": [
           "crackLines",
-          "quakeRumble"
+          "crackBloom"
         ],
         "sigil": "gavel"
       },
@@ -14660,8 +14845,8 @@
       "animation": {
         "family": "decree",
         "primitives": [
-          "drainFlow",
-          "sigilStamp"
+          "crackLines",
+          "crackBloom"
         ],
         "sigil": "gavel"
       },
@@ -14685,7 +14870,7 @@
         "family": "bind",
         "primitives": [
           "gateSlam",
-          "shackleDrop"
+          "sigilStamp"
         ],
         "sigil": "link"
       },
@@ -15010,8 +15195,7 @@
         "family": "strike",
         "primitives": [
           "bolt",
-          "shockRing",
-          "edgeBurn"
+          "shockRing"
         ],
         "sigil": "Crown"
       },
@@ -15681,8 +15865,8 @@
       "animation": {
         "family": "bind",
         "primitives": [
-          "chainLink",
-          "barCage"
+          "weightDrop",
+          "chainLink"
         ],
         "sigil": "link"
       },
@@ -15774,7 +15958,7 @@
         "family": "decree",
         "primitives": [
           "drainFlow",
-          "shockRing"
+          "crackLines"
         ],
         "sigil": "gavel"
       },
@@ -16418,7 +16602,7 @@
         "family": "decree",
         "primitives": [
           "drainFlow",
-          "pulseRing"
+          "slabSlam"
         ],
         "sigil": "gavel"
       },
@@ -16526,7 +16710,8 @@
       "animation": {
         "family": "blessing",
         "primitives": [
-          "cardLift"
+          "riseGlow",
+          "pulseRing"
         ],
         "sigil": "sun"
       },
@@ -16733,7 +16918,7 @@
         "family": "decree",
         "primitives": [
           "shockRing",
-          "slabSlam"
+          "quakeRumble"
         ],
         "sigil": "gavel"
       },
@@ -16858,8 +17043,8 @@
       "animation": {
         "family": "decree",
         "primitives": [
-          "shockRing",
-          "crackBloom"
+          "pulseRing",
+          "sigilStamp"
         ],
         "sigil": "gavel"
       },
@@ -16900,7 +17085,7 @@
         "family": "bind",
         "primitives": [
           "gateSlam",
-          "sigilStamp"
+          "pulseRing"
         ],
         "sigil": "link"
       },
@@ -17433,7 +17618,7 @@
       "animation": {
         "family": "blessing",
         "primitives": [
-          "orbitSpark",
+          "cardLift",
           "moonCircle"
         ],
         "sigil": "sun"
@@ -17458,7 +17643,7 @@
         "family": "decree",
         "primitives": [
           "shockRing",
-          "pulseRing"
+          "drainFlow"
         ],
         "sigil": "gavel"
       },
@@ -17482,7 +17667,7 @@
         "family": "bind",
         "primitives": [
           "shackleDrop",
-          "sigilStamp"
+          "weightDrop"
         ],
         "sigil": "link"
       },
@@ -17540,7 +17725,7 @@
         "family": "decree",
         "primitives": [
           "slabSlam",
-          "sigilStamp"
+          "crackLines"
         ],
         "sigil": "gavel"
       },
@@ -17563,8 +17748,8 @@
       "animation": {
         "family": "blessing",
         "primitives": [
-          "orbitSpark",
-          "cardLift"
+          "cardLift",
+          "orbitSpark"
         ],
         "sigil": "sun"
       },
@@ -17588,7 +17773,7 @@
         "family": "decree",
         "primitives": [
           "slabSlam",
-          "drainFlow"
+          "shockRing"
         ],
         "sigil": "gavel"
       },
@@ -17750,7 +17935,7 @@
       "animation": {
         "family": "blessing",
         "primitives": [
-          "orbitSpark",
+          "cardLift",
           "pulseRing"
         ],
         "sigil": "sun"
@@ -17792,7 +17977,7 @@
         "family": "strike",
         "primitives": [
           "drainFlow",
-          "pulseRing"
+          "edgeBurn"
         ],
         "sigil": "zap"
       },
@@ -17867,7 +18052,7 @@
         "family": "strike",
         "primitives": [
           "pulseRing",
-          "drainFlow"
+          "edgeBurn"
         ],
         "sigil": "zap"
       },
@@ -17890,8 +18075,8 @@
       "animation": {
         "family": "blessing",
         "primitives": [
-          "cardLift",
-          "pulseRing"
+          "pulseRing",
+          "cardLift"
         ],
         "sigil": "sun"
       },
@@ -17971,7 +18156,7 @@
       "animation": {
         "family": "blessing",
         "primitives": [
-          "orbitSpark"
+          "cardLift"
         ],
         "sigil": "sun"
       },
@@ -19003,7 +19188,7 @@
         "family": "bind",
         "primitives": [
           "weightDrop",
-          "barCage"
+          "pulseRing"
         ],
         "sigil": "link"
       },
@@ -19307,7 +19492,7 @@
         "family": "strike",
         "primitives": [
           "shockRing",
-          "pulseRing"
+          "drainFlow"
         ],
         "sigil": "zap"
       },
@@ -19699,6 +19884,64 @@
       "target": null
     },
     {
+      "id": "fm_boon_oathstone",
+      "name": "Oathstone",
+      "kind": "buff",
+      "category": "protection",
+      "effectCategory": "mass-shield",
+      "tier": 4,
+      "mechanic": "instant",
+      "implemented": true,
+      "descriptionLength": 68,
+      "description": "None of your pawns can be captured for your opponent's next 2 turns.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
+      "id": "fm_hex_sirens_call",
+      "name": "Siren's Call",
+      "kind": "buff",
+      "category": "hex",
+      "effectCategory": "single-piece-freeze",
+      "tier": 4,
+      "mechanic": "activated",
+      "implemented": true,
+      "descriptionLength": 116,
+      "description": "Choose an enemy knight, bishop, rook or queen. It stands entranced and cannot move for your opponent's next 3 turns.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
+      "id": "fm_stormcaller",
+      "name": "Stormcaller",
+      "kind": "buff",
+      "category": "movement",
+      "effectCategory": "movement-upgrade",
+      "tier": 4,
+      "mechanic": "passive",
+      "implemented": true,
+      "descriptionLength": 128,
+      "description": "For your next 2 turns your rooks may also move diagonally and your bishops may also move straight, each as far as a queen would.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "blessing",
+        "primitives": [
+          "riseGlow",
+          "moonCircle"
+        ],
+        "sigil": "sun"
+      },
+      "soundCue": "passive/blessing",
+      "soundFamily": "blessing",
+      "target": "pieceClass"
+    },
+    {
       "id": "forearm_veins",
       "name": "Forearm Veins",
       "kind": "buff",
@@ -19771,7 +20014,7 @@
       "animation": {
         "family": "bind",
         "primitives": [
-          "pulseRing"
+          "shackleDrop"
         ],
         "sigil": "link"
       },
@@ -19795,7 +20038,7 @@
         "family": "strike",
         "primitives": [
           "edgeBurn",
-          "shockRing"
+          "bolt"
         ],
         "sigil": "zap"
       },
@@ -19921,7 +20164,7 @@
         "family": "decree",
         "primitives": [
           "crackLines",
-          "pulseRing"
+          "slabSlam"
         ],
         "sigil": "gavel"
       },
@@ -19985,7 +20228,7 @@
       "animation": {
         "family": "territory",
         "primitives": [
-          "edgeBurn"
+          "zoneSweep"
         ],
         "sigil": "map"
       },
@@ -20026,7 +20269,7 @@
         "family": "bind",
         "primitives": [
           "gateSlam",
-          "sigilStamp"
+          "chainLink"
         ],
         "sigil": "link"
       },
@@ -20101,7 +20344,7 @@
         "family": "strike",
         "primitives": [
           "edgeBurn",
-          "pulseRing"
+          "drainFlow"
         ],
         "sigil": "zap"
       },
@@ -20206,7 +20449,7 @@
       "animation": {
         "family": "territory",
         "primitives": [
-          "beamHorizontal"
+          "pulseRing"
         ],
         "sigil": "map"
       },
@@ -20230,7 +20473,7 @@
         "family": "bind",
         "primitives": [
           "chainLink",
-          "sigilStamp"
+          "pulseRing"
         ],
         "sigil": "link"
       },
@@ -20288,7 +20531,7 @@
         "family": "bind",
         "primitives": [
           "sigilStamp",
-          "pulseRing"
+          "weightDrop"
         ],
         "sigil": "link"
       },
@@ -20312,7 +20555,7 @@
         "family": "strike",
         "primitives": [
           "edgeBurn",
-          "quakeRumble"
+          "pulseRing"
         ],
         "sigil": "zap"
       },
@@ -20524,8 +20767,7 @@
         "family": "decree",
         "primitives": [
           "sigilStamp",
-          "crackLines",
-          "drainFlow"
+          "crackLines"
         ],
         "sigil": "Hexagon"
       },
@@ -20861,8 +21103,7 @@
         "family": "bind",
         "primitives": [
           "chainLink",
-          "weightDrop",
-          "gateSlam"
+          "weightDrop"
         ],
         "sigil": "Heart"
       },
@@ -20975,8 +21216,7 @@
         "family": "bind",
         "primitives": [
           "chainLink",
-          "weightDrop",
-          "gateSlam"
+          "weightDrop"
         ],
         "sigil": "FileWarning"
       },
@@ -21024,8 +21264,7 @@
         "family": "territory",
         "primitives": [
           "zoneSweep",
-          "edgeBurn",
-          "beamVertical"
+          "edgeBurn"
         ],
         "sigil": "FileX2"
       },
@@ -21336,8 +21575,7 @@
       "animation": {
         "family": "strike",
         "primitives": [
-          "bolt",
-          "shockRing"
+          "bolt"
         ],
         "sigil": "Crown"
       },
@@ -21583,7 +21821,7 @@
         "family": "decree",
         "primitives": [
           "drainFlow",
-          "shockRing"
+          "pulseRing"
         ],
         "sigil": "gavel"
       },
@@ -21726,7 +21964,7 @@
         "family": "decree",
         "primitives": [
           "drainFlow",
-          "pulseRing"
+          "shockRing"
         ],
         "sigil": "gavel"
       },
@@ -22400,7 +22638,7 @@
         "family": "bind",
         "primitives": [
           "weightDrop",
-          "pulseRing"
+          "shackleDrop"
         ],
         "sigil": "link"
       },
@@ -22481,7 +22719,8 @@
       "animation": {
         "family": "blessing",
         "primitives": [
-          "pulseRing"
+          "moonCircle",
+          "riseGlow"
         ],
         "sigil": "sun"
       },
@@ -22562,7 +22801,7 @@
       "animation": {
         "family": "blessing",
         "primitives": [
-          "riseGlow"
+          "moonCircle"
         ],
         "sigil": "sun"
       },
@@ -22603,7 +22842,7 @@
         "family": "decree",
         "primitives": [
           "shockRing",
-          "drainFlow"
+          "pulseRing"
         ],
         "sigil": "gavel"
       },
@@ -22643,8 +22882,8 @@
       "animation": {
         "family": "decree",
         "primitives": [
-          "shockRing",
-          "sigilStamp"
+          "drainFlow",
+          "crackBloom"
         ],
         "sigil": "gavel"
       },
@@ -22841,7 +23080,7 @@
       "animation": {
         "family": "blessing",
         "primitives": [
-          "moonCircle"
+          "orbitSpark"
         ],
         "sigil": "sun"
       },
@@ -22882,7 +23121,7 @@
         "family": "bind",
         "primitives": [
           "gateSlam",
-          "pulseRing"
+          "shackleDrop"
         ],
         "sigil": "link"
       },
@@ -22906,7 +23145,7 @@
         "family": "decree",
         "primitives": [
           "pulseRing",
-          "sigilStamp"
+          "crackLines"
         ],
         "sigil": "gavel"
       },
@@ -23082,8 +23321,8 @@
       "animation": {
         "family": "blessing",
         "primitives": [
-          "moonCircle",
-          "orbitSpark"
+          "orbitSpark",
+          "moonCircle"
         ],
         "sigil": "sun"
       },
@@ -23107,7 +23346,7 @@
         "family": "strike",
         "primitives": [
           "drainFlow",
-          "shockRing"
+          "bolt"
         ],
         "sigil": "zap"
       },
@@ -23246,7 +23485,7 @@
       "animation": {
         "family": "blessing",
         "primitives": [
-          "moonCircle",
+          "orbitSpark",
           "pulseRing"
         ],
         "sigil": "sun"
@@ -23446,7 +23685,7 @@
       "animation": {
         "family": "blessing",
         "primitives": [
-          "orbitSpark",
+          "cardLift",
           "riseGlow"
         ],
         "sigil": "sun"
@@ -23606,8 +23845,8 @@
       "animation": {
         "family": "strike",
         "primitives": [
-          "pulseRing",
-          "bolt"
+          "drainFlow",
+          "crackBloom"
         ],
         "sigil": "zap"
       },
@@ -23631,7 +23870,7 @@
         "family": "decree",
         "primitives": [
           "slabSlam",
-          "shockRing"
+          "pulseRing"
         ],
         "sigil": "gavel"
       },
@@ -23868,7 +24107,7 @@
       "animation": {
         "family": "blessing",
         "primitives": [
-          "cardLift",
+          "pulseRing",
           "riseGlow"
         ],
         "sigil": "sun"
@@ -23995,7 +24234,7 @@
         "family": "strike",
         "primitives": [
           "pulseRing",
-          "quakeRumble"
+          "drainFlow"
         ],
         "sigil": "zap"
       },
@@ -24019,7 +24258,7 @@
         "family": "strike",
         "primitives": [
           "pulseRing",
-          "crackBloom"
+          "quakeRumble"
         ],
         "sigil": "zap"
       },
@@ -24042,8 +24281,8 @@
       "animation": {
         "family": "strike",
         "primitives": [
-          "quakeRumble",
-          "shockRing"
+          "pulseRing",
+          "crackBloom"
         ],
         "sigil": "zap"
       },
@@ -24118,7 +24357,7 @@
         "family": "decree",
         "primitives": [
           "slabSlam",
-          "pulseRing"
+          "quakeRumble"
         ],
         "sigil": "gavel"
       },
@@ -24309,8 +24548,7 @@
         "family": "strike",
         "primitives": [
           "bolt",
-          "shockRing",
-          "edgeBurn"
+          "shockRing"
         ],
         "sigil": "Stamp"
       },
@@ -25244,7 +25482,7 @@
         "family": "decree",
         "primitives": [
           "crackLines",
-          "shockRing"
+          "drainFlow"
         ],
         "sigil": "gavel"
       },
@@ -25500,7 +25738,7 @@
         "family": "strike",
         "primitives": [
           "shockRing",
-          "quakeRumble"
+          "pulseRing"
         ],
         "sigil": "zap"
       },
@@ -25631,6 +25869,64 @@
       "target": "rank"
     },
     {
+      "id": "fm_boon_windrider",
+      "name": "Windrider",
+      "kind": "buff",
+      "category": "movement",
+      "effectCategory": "movement-phase-jump",
+      "tier": 5,
+      "mechanic": "passive",
+      "implemented": true,
+      "descriptionLength": 71,
+      "description": "For your next 2 turns each of your bishops may also leap like a knight.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "blessing",
+        "primitives": [
+          "riseGlow",
+          "moonCircle"
+        ],
+        "sigil": "sun"
+      },
+      "soundCue": "passive/blessing",
+      "soundFamily": "blessing",
+      "target": "piece"
+    },
+    {
+      "id": "fm_hex_gorgon_gaze",
+      "name": "Gorgon Gaze",
+      "kind": "buff",
+      "category": "hex",
+      "effectCategory": "piece-downgrade-transform",
+      "tier": 5,
+      "mechanic": "instant",
+      "implemented": true,
+      "descriptionLength": 78,
+      "description": "Every enemy knight and bishop turns to stone for your opponent's next 2 turns.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
+      "id": "fm_phoenix_feather",
+      "name": "Phoenix Feather",
+      "kind": "buff",
+      "category": "pieces",
+      "effectCategory": "piece-revival",
+      "tier": 5,
+      "mechanic": "activated",
+      "implemented": true,
+      "descriptionLength": 141,
+      "description": "One of your captured knights, bishops or rooks returns to the board on an empty square in your half. Knights first, then bishops, then rooks.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
       "id": "frost_wall",
       "name": "Frost Wall",
       "kind": "buff",
@@ -25703,8 +25999,7 @@
       "animation": {
         "family": "blessing",
         "primitives": [
-          "riseGlow",
-          "moonCircle"
+          "pulseRing"
         ],
         "sigil": "sun"
       },
@@ -25929,8 +26224,7 @@
         "family": "summon",
         "primitives": [
           "dropImpact",
-          "shockRing",
-          "riseGlow"
+          "shockRing"
         ],
         "sigil": "Music"
       },
@@ -25987,7 +26281,8 @@
       "animation": {
         "family": "bind",
         "primitives": [
-          "barCage"
+          "chainLink",
+          "gateSlam"
         ],
         "sigil": "link"
       },
@@ -26010,7 +26305,7 @@
       "animation": {
         "family": "summon",
         "primitives": [
-          "orbitSpark"
+          "riseGlow"
         ],
         "sigil": "sparkles"
       },
@@ -27144,7 +27439,7 @@
         "family": "strike",
         "primitives": [
           "edgeBurn",
-          "crackBloom"
+          "quakeRumble"
         ],
         "sigil": "zap"
       },
@@ -27232,8 +27527,8 @@
       "animation": {
         "family": "bind",
         "primitives": [
-          "pulseRing",
-          "weightDrop"
+          "sigilStamp",
+          "barCage"
         ],
         "sigil": "link"
       },
@@ -27308,7 +27603,7 @@
         "family": "bind",
         "primitives": [
           "weightDrop",
-          "gateSlam"
+          "sigilStamp"
         ],
         "sigil": "link"
       },
@@ -27939,7 +28234,7 @@
         "family": "decree",
         "primitives": [
           "drainFlow",
-          "quakeRumble"
+          "slabSlam"
         ],
         "sigil": "gavel"
       },
@@ -28002,7 +28297,7 @@
       "animation": {
         "family": "territory",
         "primitives": [
-          "crackBloom"
+          "pulseRing"
         ],
         "sigil": "map"
       },
@@ -28025,8 +28320,7 @@
       "animation": {
         "family": "blessing",
         "primitives": [
-          "riseGlow",
-          "moonCircle"
+          "riseGlow"
         ],
         "sigil": "sun"
       },
@@ -28090,7 +28384,7 @@
         "family": "decree",
         "primitives": [
           "drainFlow",
-          "quakeRumble"
+          "crackBloom"
         ],
         "sigil": "gavel"
       },
@@ -28113,8 +28407,8 @@
       "animation": {
         "family": "decree",
         "primitives": [
-          "drainFlow",
-          "crackBloom"
+          "shockRing",
+          "sigilStamp"
         ],
         "sigil": "gavel"
       },
@@ -28256,8 +28550,8 @@
       "animation": {
         "family": "bind",
         "primitives": [
-          "weightDrop",
-          "barCage"
+          "gateSlam",
+          "chainLink"
         ],
         "sigil": "link"
       },
@@ -28519,7 +28813,7 @@
         "family": "decree",
         "primitives": [
           "pulseRing",
-          "drainFlow"
+          "shockRing"
         ],
         "sigil": "gavel"
       },
@@ -28543,7 +28837,7 @@
         "family": "bind",
         "primitives": [
           "sigilStamp",
-          "chainLink"
+          "weightDrop"
         ],
         "sigil": "link"
       },
@@ -28584,7 +28878,7 @@
         "family": "territory",
         "primitives": [
           "zoneSweep",
-          "crackBloom"
+          "pulseRing"
         ],
         "sigil": "map"
       },
@@ -28659,7 +28953,7 @@
         "family": "decree",
         "primitives": [
           "shockRing",
-          "crackLines"
+          "sigilStamp"
         ],
         "sigil": "gavel"
       },
@@ -28733,8 +29027,8 @@
       "animation": {
         "family": "decree",
         "primitives": [
-          "pulseRing",
-          "crackBloom"
+          "slabSlam",
+          "sigilStamp"
         ],
         "sigil": "gavel"
       },
@@ -28758,7 +29052,7 @@
         "family": "decree",
         "primitives": [
           "shockRing",
-          "drainFlow"
+          "crackLines"
         ],
         "sigil": "gavel"
       },
@@ -28833,7 +29127,7 @@
         "family": "territory",
         "primitives": [
           "edgeBurn",
-          "zoneSweep"
+          "beamVertical"
         ],
         "sigil": "map"
       },
@@ -28857,7 +29151,7 @@
         "family": "decree",
         "primitives": [
           "shockRing",
-          "slabSlam"
+          "pulseRing"
         ],
         "sigil": "gavel"
       },
@@ -28881,7 +29175,7 @@
         "family": "decree",
         "primitives": [
           "slabSlam",
-          "crackLines"
+          "drainFlow"
         ],
         "sigil": "gavel"
       },
@@ -28939,7 +29233,7 @@
         "family": "decree",
         "primitives": [
           "shockRing",
-          "quakeRumble"
+          "slabSlam"
         ],
         "sigil": "gavel"
       },
@@ -29020,7 +29314,7 @@
         "family": "territory",
         "primitives": [
           "edgeBurn",
-          "beamVertical"
+          "beamHorizontal"
         ],
         "sigil": "map"
       },
@@ -29044,7 +29338,7 @@
         "family": "strike",
         "primitives": [
           "drainFlow",
-          "edgeBurn"
+          "shockRing"
         ],
         "sigil": "zap"
       },
@@ -29068,7 +29362,7 @@
         "family": "strike",
         "primitives": [
           "pulseRing",
-          "shockRing"
+          "bolt"
         ],
         "sigil": "zap"
       },
@@ -29092,7 +29386,7 @@
         "family": "decree",
         "primitives": [
           "shockRing",
-          "crackBloom"
+          "quakeRumble"
         ],
         "sigil": "gavel"
       },
@@ -29394,7 +29688,7 @@
         "family": "strike",
         "primitives": [
           "drainFlow",
-          "quakeRumble"
+          "pulseRing"
         ],
         "sigil": "zap"
       },
@@ -29554,7 +29848,7 @@
         "family": "decree",
         "primitives": [
           "crackLines",
-          "drainFlow"
+          "sigilStamp"
         ],
         "sigil": "gavel"
       },
@@ -29602,7 +29896,7 @@
         "family": "bind",
         "primitives": [
           "weightDrop",
-          "shackleDrop"
+          "sigilStamp"
         ],
         "sigil": "link"
       },
@@ -29923,8 +30217,7 @@
         "family": "decree",
         "primitives": [
           "sigilStamp",
-          "crackLines",
-          "drainFlow"
+          "shockRing"
         ],
         "sigil": "ShieldCheck"
       },
@@ -30917,6 +31210,63 @@
       "target": null
     },
     {
+      "id": "fm_boon_lifebloom",
+      "name": "Lifebloom",
+      "kind": "buff",
+      "category": "pieces",
+      "effectCategory": "piece-revival",
+      "tier": 6,
+      "mechanic": "activated",
+      "implemented": true,
+      "descriptionLength": 87,
+      "description": "One of your captured pawns returns to the board on an empty square of your second rank.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
+      "id": "fm_dragonblood",
+      "name": "Dragonblood",
+      "kind": "buff",
+      "category": "movement",
+      "effectCategory": "movement-phase-jump",
+      "tier": 6,
+      "mechanic": "passive",
+      "implemented": true,
+      "descriptionLength": 61,
+      "description": "For your next 4 turns your queen may also leap like a knight.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "blessing",
+        "primitives": [
+          "orbitSpark"
+        ],
+        "sigil": "sun"
+      },
+      "soundCue": "passive/blessing",
+      "soundFamily": "blessing",
+      "target": "piece"
+    },
+    {
+      "id": "fm_hex_iron_maiden",
+      "name": "Iron Maiden",
+      "kind": "buff",
+      "category": "hex",
+      "effectCategory": "single-piece-freeze",
+      "tier": 6,
+      "mechanic": "activated",
+      "implemented": true,
+      "descriptionLength": 98,
+      "description": "Choose an enemy piece other than the king. It is locked in place for your opponent's next 4 turns.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
       "id": "frigo_camelo",
       "name": "Frigo Camelo",
       "kind": "buff",
@@ -31140,7 +31490,7 @@
         "family": "decree",
         "primitives": [
           "crackLines",
-          "quakeRumble"
+          "slabSlam"
         ],
         "sigil": "gavel"
       },
@@ -31197,8 +31547,8 @@
       "animation": {
         "family": "bind",
         "primitives": [
-          "gateSlam",
-          "weightDrop"
+          "weightDrop",
+          "barCage"
         ],
         "sigil": "link"
       },
@@ -31310,7 +31660,7 @@
       "animation": {
         "family": "territory",
         "primitives": [
-          "beamVertical"
+          "beamHorizontal"
         ],
         "sigil": "map"
       },
@@ -31351,7 +31701,7 @@
         "family": "bind",
         "primitives": [
           "gateSlam",
-          "pulseRing"
+          "weightDrop"
         ],
         "sigil": "link"
       },
@@ -31399,7 +31749,7 @@
         "family": "decree",
         "primitives": [
           "crackLines",
-          "crackBloom"
+          "quakeRumble"
         ],
         "sigil": "gavel"
       },
@@ -31422,7 +31772,7 @@
       "animation": {
         "family": "summon",
         "primitives": [
-          "riseGlow"
+          "shockRing"
         ],
         "sigil": "sparkles"
       },
@@ -31462,7 +31812,7 @@
       "animation": {
         "family": "territory",
         "primitives": [
-          "beamVertical"
+          "edgeBurn"
         ],
         "sigil": "map"
       },
@@ -31536,7 +31886,7 @@
       "animation": {
         "family": "territory",
         "primitives": [
-          "pulseRing"
+          "crackBloom"
         ],
         "sigil": "map"
       },
@@ -31560,7 +31910,7 @@
         "family": "bind",
         "primitives": [
           "chainLink",
-          "pulseRing"
+          "shackleDrop"
         ],
         "sigil": "link"
       },
@@ -32400,7 +32750,7 @@
         "family": "decree",
         "primitives": [
           "drainFlow",
-          "crackLines"
+          "shockRing"
         ],
         "sigil": "gavel"
       },
@@ -32492,7 +32842,7 @@
         "family": "bind",
         "primitives": [
           "weightDrop",
-          "chainLink"
+          "gateSlam"
         ],
         "sigil": "link"
       },
@@ -32922,7 +33272,6 @@
       "animation": {
         "family": "strike",
         "primitives": [
-          "bolt",
           "shockRing"
         ],
         "sigil": "Stamp"
@@ -33237,7 +33586,7 @@
         "family": "decree",
         "primitives": [
           "drainFlow",
-          "slabSlam"
+          "pulseRing"
         ],
         "sigil": "gavel"
       },
@@ -33369,7 +33718,7 @@
         "family": "bind",
         "primitives": [
           "weightDrop",
-          "shackleDrop"
+          "barCage"
         ],
         "sigil": "link"
       },
@@ -33444,7 +33793,7 @@
         "family": "strike",
         "primitives": [
           "drainFlow",
-          "edgeBurn"
+          "shockRing"
         ],
         "sigil": "zap"
       },
@@ -33467,7 +33816,7 @@
       "animation": {
         "family": "summon",
         "primitives": [
-          "pulseRing"
+          "orbitSpark"
         ],
         "sigil": "sparkles"
       },
@@ -33491,7 +33840,7 @@
         "family": "bind",
         "primitives": [
           "gateSlam",
-          "chainLink"
+          "weightDrop"
         ],
         "sigil": "link"
       },
@@ -33623,8 +33972,8 @@
       "animation": {
         "family": "bind",
         "primitives": [
-          "gateSlam",
-          "barCage"
+          "sigilStamp",
+          "chainLink"
         ],
         "sigil": "link"
       },
@@ -33647,8 +33996,8 @@
       "animation": {
         "family": "bind",
         "primitives": [
-          "shackleDrop",
-          "gateSlam"
+          "pulseRing",
+          "barCage"
         ],
         "sigil": "link"
       },
@@ -33672,7 +34021,7 @@
         "family": "territory",
         "primitives": [
           "zoneSweep",
-          "pulseRing"
+          "beamHorizontal"
         ],
         "sigil": "map"
       },
@@ -33788,7 +34137,7 @@
         "family": "strike",
         "primitives": [
           "drainFlow",
-          "crackBloom"
+          "quakeRumble"
         ],
         "sigil": "zap"
       },
@@ -33828,8 +34177,7 @@
       "animation": {
         "family": "summon",
         "primitives": [
-          "dropImpact",
-          "riseGlow"
+          "pulseRing"
         ],
         "sigil": "sparkles"
       },
@@ -33955,7 +34303,7 @@
         "family": "summon",
         "primitives": [
           "dropImpact",
-          "orbitSpark"
+          "riseGlow"
         ],
         "sigil": "sparkles"
       },
@@ -34132,7 +34480,7 @@
         "family": "bind",
         "primitives": [
           "sigilStamp",
-          "weightDrop"
+          "gateSlam"
         ],
         "sigil": "link"
       },
@@ -34265,7 +34613,7 @@
         "family": "bind",
         "primitives": [
           "shackleDrop",
-          "barCage"
+          "sigilStamp"
         ],
         "sigil": "link"
       },
@@ -34356,7 +34704,7 @@
       "animation": {
         "family": "blessing",
         "primitives": [
-          "cardLift",
+          "pulseRing",
           "orbitSpark"
         ],
         "sigil": "sun"
@@ -35073,7 +35421,8 @@
         "family": "tempo",
         "primitives": [
           "tickPips",
-          "orbitSpark"
+          "orbitSpark",
+          "drainFlow"
         ],
         "sigil": "CloudLightning"
       },
@@ -35733,8 +36082,8 @@
       "animation": {
         "family": "bind",
         "primitives": [
-          "gateSlam",
-          "chainLink"
+          "weightDrop",
+          "shackleDrop"
         ],
         "sigil": "link"
       },
@@ -35880,6 +36229,65 @@
       "implemented": true,
       "descriptionLength": 214,
       "description": "Elite fingertip hold on one enemy piece: it freezes for their next 3 turns and the empty squares around it are sealed, so no fresh piece can move in to rescue it, though pieces already beside it may leave normally.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
+      "id": "fm_boon_royal_road",
+      "name": "Royal Road",
+      "kind": "buff",
+      "category": "movement",
+      "effectCategory": "teleport-relocate",
+      "tier": 7,
+      "mechanic": "activated",
+      "implemented": true,
+      "descriptionLength": 54,
+      "description": "Your king steps to any empty square on your back rank.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
+      "id": "fm_hex_kings_moat",
+      "name": "King's Moat",
+      "kind": "buff",
+      "category": "hex",
+      "effectCategory": "enemy-movement-restriction",
+      "tier": 7,
+      "mechanic": "passive",
+      "implemented": true,
+      "descriptionLength": 95,
+      "description": "For your opponent's next 3 turns none of their pieces may move onto a square next to your king.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "veil",
+        "primitives": [
+          "fogRoll",
+          "drainFlow",
+          "moonCircle"
+        ],
+        "sigil": "cloud-fog"
+      },
+      "soundCue": "passive/veil",
+      "soundFamily": "veil",
+      "target": "square"
+    },
+    {
+      "id": "fm_sunforge",
+      "name": "Sunforge",
+      "kind": "buff",
+      "category": "pieces",
+      "effectCategory": "promotion-grant",
+      "tier": 7,
+      "mechanic": "activated",
+      "implemented": true,
+      "descriptionLength": 89,
+      "description": "Choose one of your pawns on your 5th rank or beyond. It becomes a knight where it stands.",
       "soundSource": "cast-voice",
       "animation": null,
       "soundCue": null,
@@ -36179,7 +36587,7 @@
         "family": "decree",
         "primitives": [
           "drainFlow",
-          "sigilStamp"
+          "crackLines"
         ],
         "sigil": "gavel"
       },
@@ -36244,8 +36652,8 @@
       "animation": {
         "family": "bind",
         "primitives": [
-          "sigilStamp",
-          "chainLink"
+          "gateSlam",
+          "shackleDrop"
         ],
         "sigil": "link"
       },
@@ -36285,8 +36693,8 @@
       "animation": {
         "family": "bind",
         "primitives": [
-          "sigilStamp",
-          "weightDrop"
+          "gateSlam",
+          "barCage"
         ],
         "sigil": "link"
       },
@@ -36310,7 +36718,7 @@
         "family": "bind",
         "primitives": [
           "sigilStamp",
-          "barCage"
+          "pulseRing"
         ],
         "sigil": "link"
       },
@@ -37148,7 +37556,7 @@
         "family": "bind",
         "primitives": [
           "pulseRing",
-          "sigilStamp"
+          "weightDrop"
         ],
         "sigil": "link"
       },
@@ -37690,7 +38098,7 @@
         "family": "decree",
         "primitives": [
           "shockRing",
-          "quakeRumble"
+          "crackBloom"
         ],
         "sigil": "gavel"
       },
@@ -37747,8 +38155,8 @@
       "animation": {
         "family": "bind",
         "primitives": [
-          "shackleDrop",
-          "weightDrop"
+          "pulseRing",
+          "shackleDrop"
         ],
         "sigil": "link"
       },
@@ -37772,7 +38180,7 @@
         "family": "territory",
         "primitives": [
           "zoneSweep",
-          "beamHorizontal"
+          "beamVertical"
         ],
         "sigil": "map"
       },
@@ -37925,7 +38333,7 @@
         "family": "decree",
         "primitives": [
           "pulseRing",
-          "quakeRumble"
+          "crackBloom"
         ],
         "sigil": "gavel"
       },
@@ -38068,7 +38476,7 @@
         "family": "bind",
         "primitives": [
           "shackleDrop",
-          "pulseRing"
+          "gateSlam"
         ],
         "sigil": "link"
       },
@@ -38142,8 +38550,8 @@
       "animation": {
         "family": "decree",
         "primitives": [
-          "pulseRing",
-          "sigilStamp"
+          "shockRing",
+          "crackBloom"
         ],
         "sigil": "gavel"
       },
@@ -39260,7 +39668,8 @@
         "family": "bind",
         "primitives": [
           "chainLink",
-          "weightDrop"
+          "weightDrop",
+          "gateSlam"
         ],
         "sigil": "LifeBuoy"
       },
@@ -39675,6 +40084,57 @@
       "target": null
     },
     {
+      "id": "fm_boon_worldheart",
+      "name": "Worldheart",
+      "kind": "buff",
+      "category": "tempo",
+      "effectCategory": "extra-move",
+      "tier": 8,
+      "mechanic": "activated",
+      "implemented": true,
+      "descriptionLength": 89,
+      "description": "Take two extra moves right now. Your army cannot be captured until your next turn begins.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
+      "id": "fm_eclipse_crown",
+      "name": "Eclipse Crown",
+      "kind": "buff",
+      "category": "tempo",
+      "effectCategory": "mass-shield",
+      "tier": 8,
+      "mechanic": "instant",
+      "implemented": true,
+      "descriptionLength": 111,
+      "description": "Your opponent's next turn is skipped, and none of your pieces can be captured until your following turn begins.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
+      "id": "fm_hex_winter_court",
+      "name": "Winter Court",
+      "kind": "buff",
+      "category": "hex",
+      "effectCategory": "mass-freeze",
+      "tier": 8,
+      "mechanic": "instant",
+      "implemented": true,
+      "descriptionLength": 116,
+      "description": "Every enemy piece other than the king standing in your half of the board is frozen for your opponent's next 3 turns.",
+      "soundSource": "cast-voice",
+      "animation": null,
+      "soundCue": null,
+      "soundFamily": null,
+      "target": null
+    },
+    {
       "id": "gm_the_last_bet",
       "name": "The Last Bet",
       "kind": "buff",
@@ -39823,7 +40283,7 @@
         "family": "bind",
         "primitives": [
           "sigilStamp",
-          "gateSlam"
+          "chainLink"
         ],
         "sigil": "link"
       },
@@ -40699,8 +41159,8 @@
       "animation": {
         "family": "bind",
         "primitives": [
-          "pulseRing",
-          "chainLink"
+          "sigilStamp",
+          "shackleDrop"
         ],
         "sigil": "link"
       },
@@ -41186,7 +41646,7 @@
         "family": "bind",
         "primitives": [
           "pulseRing",
-          "barCage"
+          "sigilStamp"
         ],
         "sigil": "link"
       },
@@ -41343,7 +41803,7 @@
         "family": "territory",
         "primitives": [
           "zoneSweep",
-          "pulseRing"
+          "crackBloom"
         ],
         "sigil": "map"
       },
@@ -41789,7 +42249,7 @@
         "family": "bind",
         "primitives": [
           "gateSlam",
-          "barCage"
+          "pulseRing"
         ],
         "sigil": "link"
       },
@@ -42024,7 +42484,7 @@
         "family": "bind",
         "primitives": [
           "pulseRing",
-          "shackleDrop"
+          "gateSlam"
         ],
         "sigil": "link"
       },
@@ -42226,6 +42686,29 @@
       "target": "piece"
     },
     {
+      "id": "fn_pixie_curse",
+      "name": "Pixie Curse",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "single-piece-freeze",
+      "tier": 1,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 95,
+      "description": "Your knights cannot move onto an edge square of the board, unless that is your only legal move.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "bind",
+        "primitives": [
+          "chainLink"
+        ],
+        "sigil": "sparkles"
+      },
+      "soundCue": "passive/bind",
+      "soundFamily": "bind",
+      "target": "pieceClass"
+    },
+    {
       "id": "lucky",
       "name": "Lucky",
       "kind": "nerf",
@@ -42263,7 +42746,7 @@
       "animation": {
         "family": "decree",
         "primitives": [
-          "crackLines"
+          "sigilStamp"
         ],
         "sigil": "church"
       },
@@ -42474,6 +42957,29 @@
           "crackLines"
         ],
         "sigil": "footprints"
+      },
+      "soundCue": "passive/decree",
+      "soundFamily": "decree",
+      "target": "pieceClass"
+    },
+    {
+      "id": "fn_gnomes_bargain",
+      "name": "Gnome's Bargain",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "capture-denial",
+      "tier": 2,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 105,
+      "description": "From your fourth move on, you cannot capture with the same type of piece that made your previous capture.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "decree",
+        "primitives": [
+          "sigilStamp"
+        ],
+        "sigil": "coins"
       },
       "soundCue": "passive/decree",
       "soundFamily": "decree",
@@ -42982,7 +43488,6 @@
       "animation": {
         "family": "decree",
         "primitives": [
-          "slabSlam",
           "sigilStamp"
         ],
         "sigil": "swords"
@@ -43347,6 +43852,30 @@
       "target": "pieceClass"
     },
     {
+      "id": "fn_selkie_skin",
+      "name": "Selkie Skin",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "move-budget-change",
+      "tier": 3,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 85,
+      "description": "Your rooks cannot move more than 3 squares along a file. Moves along a rank are free.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "territory",
+        "primitives": [
+          "beamVertical",
+          "zoneSweep"
+        ],
+        "sigil": "waves"
+      },
+      "soundCue": "passive/territory",
+      "soundFamily": "territory",
+      "target": "file"
+    },
+    {
       "id": "ichthyophobe",
       "name": "Ichthyophobe",
       "kind": "nerf",
@@ -43361,7 +43890,7 @@
       "animation": {
         "family": "decree",
         "primitives": [
-          "pulseRing"
+          "shockRing"
         ],
         "sigil": "gavel"
       },
@@ -43456,6 +43985,7 @@
       "animation": {
         "family": "decree",
         "primitives": [
+          "slabSlam",
           "sigilStamp"
         ],
         "sigil": "church"
@@ -43672,7 +44202,7 @@
         "family": "bind",
         "primitives": [
           "chainLink",
-          "gateSlam"
+          "weightDrop"
         ],
         "sigil": "link"
       },
@@ -43719,7 +44249,7 @@
       "animation": {
         "family": "territory",
         "primitives": [
-          "edgeBurn"
+          "zoneSweep"
         ],
         "sigil": "ban"
       },
@@ -43790,7 +44320,7 @@
         "family": "bind",
         "primitives": [
           "chainLink",
-          "pulseRing"
+          "sigilStamp"
         ],
         "sigil": "link"
       },
@@ -43862,7 +44392,7 @@
         "family": "decree",
         "primitives": [
           "sigilStamp",
-          "quakeRumble"
+          "pulseRing"
         ],
         "sigil": "gavel"
       },
@@ -43909,7 +44439,8 @@
       "animation": {
         "family": "decree",
         "primitives": [
-          "crackLines"
+          "slabSlam",
+          "sigilStamp"
         ],
         "sigil": "leaf"
       },
@@ -44170,7 +44701,8 @@
       "animation": {
         "family": "territory",
         "primitives": [
-          "zoneSweep"
+          "zoneSweep",
+          "crackBloom"
         ],
         "sigil": "map"
       },
@@ -44245,6 +44777,30 @@
           "bolt"
         ],
         "sigil": "eye"
+      },
+      "soundCue": "passive/strike",
+      "soundFamily": "strike",
+      "target": "piece"
+    },
+    {
+      "id": "fn_trolls_toll",
+      "name": "Troll's Toll",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "forced-move",
+      "tier": 4,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 78,
+      "description": "After you capture a pawn, your next move must be a pawn move, if you have one.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "strike",
+        "primitives": [
+          "bolt",
+          "shockRing"
+        ],
+        "sigil": "footprints"
       },
       "soundCue": "passive/strike",
       "soundFamily": "strike",
@@ -44480,6 +45036,7 @@
       "animation": {
         "family": "strike",
         "primitives": [
+          "quakeRumble",
           "bolt"
         ],
         "sigil": "church"
@@ -44552,7 +45109,7 @@
         "family": "decree",
         "primitives": [
           "sigilStamp",
-          "drainFlow"
+          "crackLines"
         ],
         "sigil": "gavel"
       },
@@ -44623,7 +45180,7 @@
       "animation": {
         "family": "bind",
         "primitives": [
-          "barCage"
+          "shackleDrop"
         ],
         "sigil": "link"
       },
@@ -44813,7 +45370,8 @@
       "animation": {
         "family": "summon",
         "primitives": [
-          "dropImpact"
+          "dropImpact",
+          "orbitSpark"
         ],
         "sigil": "sparkles"
       },
@@ -44931,7 +45489,7 @@
       "animation": {
         "family": "bind",
         "primitives": [
-          "gateSlam"
+          "weightDrop"
         ],
         "sigil": "link"
       },
@@ -44954,6 +45512,7 @@
       "animation": {
         "family": "territory",
         "primitives": [
+          "beamHorizontal",
           "zoneSweep"
         ],
         "sigil": "move"
@@ -44978,7 +45537,7 @@
         "family": "bind",
         "primitives": [
           "chainLink",
-          "barCage"
+          "pulseRing"
         ],
         "sigil": "link"
       },
@@ -45119,7 +45678,7 @@
       "animation": {
         "family": "bind",
         "primitives": [
-          "sigilStamp"
+          "gateSlam"
         ],
         "sigil": "link"
       },
@@ -45191,7 +45750,7 @@
         "family": "strike",
         "primitives": [
           "bolt",
-          "pulseRing"
+          "drainFlow"
         ],
         "sigil": "zap"
       },
@@ -45476,7 +46035,8 @@
       "animation": {
         "family": "bind",
         "primitives": [
-          "gateSlam"
+          "shackleDrop",
+          "chainLink"
         ],
         "sigil": "crown"
       },
@@ -45900,8 +46460,8 @@
       "tier": 5,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 48,
-      "description": "Your bishops can only move one square at a time.",
+      "descriptionLength": 79,
+      "description": "Each bishop of yours shuffles: every bishop move covers a single diagonal step.",
       "soundSource": "passive-cue",
       "animation": {
         "family": "decree",
@@ -45953,7 +46513,7 @@
       "animation": {
         "family": "decree",
         "primitives": [
-          "crackLines"
+          "sigilStamp"
         ],
         "sigil": "gavel"
       },
@@ -46000,7 +46560,7 @@
       "animation": {
         "family": "strike",
         "primitives": [
-          "drainFlow",
+          "quakeRumble",
           "bolt"
         ],
         "sigil": "zap"
@@ -46008,6 +46568,30 @@
       "soundCue": "passive/strike",
       "soundFamily": "strike",
       "target": "pieceClass"
+    },
+    {
+      "id": "fn_banshee_bond",
+      "name": "Banshee Bond",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "self-movement-restriction",
+      "tier": 5,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 110,
+      "description": "Your queen may only move to a square next to one of your other pieces. If she has no such move, she stays put.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "bind",
+        "primitives": [
+          "chainLink",
+          "shackleDrop"
+        ],
+        "sigil": "ghost"
+      },
+      "soundCue": "passive/bind",
+      "soundFamily": "bind",
+      "target": "piece"
     },
     {
       "id": "gambler",
@@ -46262,7 +46846,7 @@
       "animation": {
         "family": "decree",
         "primitives": [
-          "quakeRumble"
+          "slabSlam"
         ],
         "sigil": "gavel"
       },
@@ -46355,8 +46939,7 @@
       "animation": {
         "family": "decree",
         "primitives": [
-          "sigilStamp",
-          "crackLines"
+          "crackBloom"
         ],
         "sigil": "gavel"
       },
@@ -46404,7 +46987,7 @@
         "family": "strike",
         "primitives": [
           "bolt",
-          "drainFlow"
+          "quakeRumble"
         ],
         "sigil": "timer"
       },
@@ -46523,8 +47106,7 @@
       "animation": {
         "family": "bind",
         "primitives": [
-          "chainLink",
-          "weightDrop"
+          "barCage"
         ],
         "sigil": "link"
       },
@@ -46692,7 +47274,7 @@
         "family": "decree",
         "primitives": [
           "sigilStamp",
-          "pulseRing"
+          "shockRing"
         ],
         "sigil": "gavel"
       },
@@ -46810,7 +47392,7 @@
         "family": "decree",
         "primitives": [
           "sigilStamp",
-          "crackBloom"
+          "quakeRumble"
         ],
         "sigil": "gavel"
       },
@@ -46978,7 +47560,7 @@
         "family": "strike",
         "primitives": [
           "bolt",
-          "pulseRing"
+          "quakeRumble"
         ],
         "sigil": "eye"
       },
@@ -47337,8 +47919,7 @@
         "family": "bind",
         "primitives": [
           "chainLink",
-          "sigilStamp",
-          "pulseRing"
+          "sigilStamp"
         ],
         "sigil": "rewind"
       },
@@ -47456,7 +48037,7 @@
       "animation": {
         "family": "decree",
         "primitives": [
-          "drainFlow"
+          "crackLines"
         ],
         "sigil": "gavel"
       },
@@ -47510,6 +48091,30 @@
       "soundCue": "passive/bind",
       "soundFamily": "bind",
       "target": "pieceClass"
+    },
+    {
+      "id": "fn_wyrm_hoard",
+      "name": "Wyrm Hoard",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "capture-denial",
+      "tier": 6,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 111,
+      "description": "You cannot capture a piece worth more than the piece you capture it with. Capturing the king is always allowed.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "strike",
+        "primitives": [
+          "bolt",
+          "quakeRumble"
+        ],
+        "sigil": "gem"
+      },
+      "soundCue": "passive/strike",
+      "soundFamily": "strike",
+      "target": "piece"
     },
     {
       "id": "forward_march",
@@ -47597,9 +48202,7 @@
       "animation": {
         "family": "strike",
         "primitives": [
-          "quakeRumble",
-          "bolt",
-          "edgeBurn"
+          "drainFlow"
         ],
         "sigil": "zap"
       },
@@ -47788,7 +48391,7 @@
       "animation": {
         "family": "decree",
         "primitives": [
-          "shockRing"
+          "drainFlow"
         ],
         "sigil": "gavel"
       },
@@ -47859,7 +48462,7 @@
       "animation": {
         "family": "decree",
         "primitives": [
-          "slabSlam"
+          "pulseRing"
         ],
         "sigil": "gavel"
       },
@@ -48023,8 +48626,7 @@
       "animation": {
         "family": "strike",
         "primitives": [
-          "bolt",
-          "edgeBurn"
+          "crackBloom"
         ],
         "sigil": "zap"
       },
@@ -48047,7 +48649,7 @@
       "animation": {
         "family": "decree",
         "primitives": [
-          "crackBloom"
+          "quakeRumble"
         ],
         "sigil": "gavel"
       },
@@ -48190,7 +48792,7 @@
         "family": "decree",
         "primitives": [
           "sigilStamp",
-          "shockRing"
+          "drainFlow"
         ],
         "sigil": "gavel"
       },
@@ -48262,7 +48864,7 @@
         "family": "bind",
         "primitives": [
           "chainLink",
-          "sigilStamp"
+          "gateSlam"
         ],
         "sigil": "link"
       },
@@ -48451,7 +49053,7 @@
         "family": "strike",
         "primitives": [
           "bolt",
-          "drainFlow"
+          "quakeRumble"
         ],
         "sigil": "zap"
       },
@@ -48474,8 +49076,8 @@
       "animation": {
         "family": "bind",
         "primitives": [
-          "weightDrop",
-          "chainLink"
+          "chainLink",
+          "barCage"
         ],
         "sigil": "link"
       },
@@ -48546,7 +49148,7 @@
       "animation": {
         "family": "summon",
         "primitives": [
-          "shockRing"
+          "dropImpact"
         ],
         "sigil": "sparkles"
       },
@@ -48641,7 +49243,7 @@
         "family": "strike",
         "primitives": [
           "bolt",
-          "crackBloom"
+          "pulseRing"
         ],
         "sigil": "zap"
       },
@@ -48665,7 +49267,7 @@
         "family": "bind",
         "primitives": [
           "weightDrop",
-          "sigilStamp"
+          "chainLink"
         ],
         "sigil": "link"
       },
@@ -48688,8 +49290,8 @@
       "animation": {
         "family": "decree",
         "primitives": [
-          "crackLines",
-          "sigilStamp"
+          "sigilStamp",
+          "crackBloom"
         ],
         "sigil": "gavel"
       },
@@ -48713,7 +49315,7 @@
         "family": "bind",
         "primitives": [
           "weightDrop",
-          "pulseRing"
+          "gateSlam"
         ],
         "sigil": "link"
       },
@@ -48976,8 +49578,8 @@
       "animation": {
         "family": "strike",
         "primitives": [
-          "shockRing",
-          "edgeBurn"
+          "bolt",
+          "crackBloom"
         ],
         "sigil": "zap"
       },
@@ -49026,7 +49628,8 @@
         "family": "decree",
         "primitives": [
           "slabSlam",
-          "sigilStamp"
+          "sigilStamp",
+          "quakeRumble"
         ],
         "sigil": "fast-forward"
       },
@@ -49075,7 +49678,8 @@
         "family": "tempo",
         "primitives": [
           "tickPips",
-          "orbitSpark"
+          "orbitSpark",
+          "drainFlow"
         ],
         "sigil": "minimize"
       },
@@ -49124,7 +49728,8 @@
         "family": "strike",
         "primitives": [
           "quakeRumble",
-          "bolt"
+          "bolt",
+          "shockRing"
         ],
         "sigil": "crown"
       },
@@ -49148,7 +49753,8 @@
         "family": "summon",
         "primitives": [
           "dropImpact",
-          "shockRing"
+          "shockRing",
+          "riseGlow"
         ],
         "sigil": "spline"
       },
@@ -49172,7 +49778,8 @@
         "family": "decree",
         "primitives": [
           "sigilStamp",
-          "crackBloom"
+          "crackBloom",
+          "pulseRing"
         ],
         "sigil": "gavel"
       },
@@ -49196,7 +49803,8 @@
         "family": "tempo",
         "primitives": [
           "tickPips",
-          "orbitSpark"
+          "orbitSpark",
+          "drainFlow"
         ],
         "sigil": "audio-waveform"
       },
@@ -49219,7 +49827,9 @@
       "animation": {
         "family": "strike",
         "primitives": [
-          "drainFlow"
+          "bolt",
+          "quakeRumble",
+          "pulseRing"
         ],
         "sigil": "zap"
       },
@@ -49253,6 +49863,31 @@
       "target": "square"
     },
     {
+      "id": "fn_lich_pact",
+      "name": "Lich Pact",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "alt-win-loss-condition",
+      "tier": 7,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 141,
+      "description": "From your sixth move on, you lose if 6 of your turns pass in a row without one of your pieces ending its move in the enemy half of the board.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "tempo",
+        "primitives": [
+          "crackBloom",
+          "tickPips",
+          "drainFlow"
+        ],
+        "sigil": "skull"
+      },
+      "soundCue": "passive/tempo",
+      "soundFamily": "tempo",
+      "target": "winCondition"
+    },
+    {
       "id": "iron_curtain",
       "name": "Iron Curtain",
       "kind": "nerf",
@@ -49267,7 +49902,9 @@
       "animation": {
         "family": "territory",
         "primitives": [
-          "zoneSweep"
+          "beamVertical",
+          "zoneSweep",
+          "crackBloom"
         ],
         "sigil": "ban"
       },
@@ -49291,7 +49928,8 @@
         "family": "decree",
         "primitives": [
           "crackBloom",
-          "sigilStamp"
+          "sigilStamp",
+          "slabSlam"
         ],
         "sigil": "tower-control"
       },
@@ -49314,6 +49952,8 @@
       "animation": {
         "family": "bind",
         "primitives": [
+          "barCage",
+          "chainLink",
           "weightDrop"
         ],
         "sigil": "link"
@@ -49337,6 +49977,8 @@
       "animation": {
         "family": "strike",
         "primitives": [
+          "quakeRumble",
+          "bolt",
           "crackBloom"
         ],
         "sigil": "zap"
@@ -49361,7 +50003,8 @@
         "family": "strike",
         "primitives": [
           "quakeRumble",
-          "bolt"
+          "bolt",
+          "crackBloom"
         ],
         "sigil": "shield-alert"
       },
@@ -49385,7 +50028,8 @@
         "family": "strike",
         "primitives": [
           "quakeRumble",
-          "bolt"
+          "bolt",
+          "shockRing"
         ],
         "sigil": "ban"
       },
@@ -49408,7 +50052,9 @@
       "animation": {
         "family": "bind",
         "primitives": [
-          "shackleDrop"
+          "chainLink",
+          "shackleDrop",
+          "weightDrop"
         ],
         "sigil": "link"
       },
@@ -49582,7 +50228,8 @@
         "family": "strike",
         "primitives": [
           "quakeRumble",
-          "bolt"
+          "bolt",
+          "edgeBurn"
         ],
         "sigil": "wind"
       },
@@ -49681,7 +50328,8 @@
         "family": "tempo",
         "primitives": [
           "tickPips",
-          "orbitSpark"
+          "orbitSpark",
+          "drainFlow"
         ],
         "sigil": "waves"
       },
@@ -49705,7 +50353,7 @@
         "family": "strike",
         "primitives": [
           "bolt",
-          "drainFlow"
+          "edgeBurn"
         ],
         "sigil": "zap"
       },
@@ -49728,8 +50376,9 @@
       "animation": {
         "family": "bind",
         "primitives": [
-          "weightDrop",
-          "gateSlam"
+          "chainLink",
+          "shackleDrop",
+          "barCage"
         ],
         "sigil": "link"
       },
@@ -49753,7 +50402,8 @@
         "family": "bind",
         "primitives": [
           "weightDrop",
-          "chainLink"
+          "chainLink",
+          "gateSlam"
         ],
         "sigil": "link"
       },
@@ -49777,7 +50427,8 @@
         "family": "tempo",
         "primitives": [
           "tickPips",
-          "edgeBurn"
+          "edgeBurn",
+          "pulseRing"
         ],
         "sigil": "timer"
       },
@@ -49849,7 +50500,8 @@
         "family": "tempo",
         "primitives": [
           "orbitSpark",
-          "tickPips"
+          "tickPips",
+          "drainFlow"
         ],
         "sigil": "spline"
       },
@@ -49873,7 +50525,8 @@
         "family": "bind",
         "primitives": [
           "shackleDrop",
-          "chainLink"
+          "chainLink",
+          "sigilStamp"
         ],
         "sigil": "crown"
       },
@@ -49922,7 +50575,8 @@
         "family": "strike",
         "primitives": [
           "bolt",
-          "crackBloom"
+          "crackBloom",
+          "drainFlow"
         ],
         "sigil": "target"
       },
@@ -50020,7 +50674,8 @@
         "family": "bind",
         "primitives": [
           "shackleDrop",
-          "chainLink"
+          "chainLink",
+          "sigilStamp"
         ],
         "sigil": "list-ordered"
       },
@@ -50068,13 +50723,40 @@
       "animation": {
         "family": "decree",
         "primitives": [
-          "sigilStamp"
+          "sigilStamp",
+          "slabSlam",
+          "shockRing"
         ],
         "sigil": "gavel"
       },
       "soundCue": "passive/decree",
       "soundFamily": "decree",
       "target": "pieceClass"
+    },
+    {
+      "id": "fn_titans_yoke",
+      "name": "Titan's Yoke",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "forced-move",
+      "tier": 8,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 78,
+      "description": "On every second turn of yours, you must move your king if it has a legal move.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "bind",
+        "primitives": [
+          "chainLink",
+          "shackleDrop",
+          "weightDrop"
+        ],
+        "sigil": "anchor"
+      },
+      "soundCue": "passive/bind",
+      "soundFamily": "bind",
+      "target": "piece"
     },
     {
       "id": "fog_of_war",
@@ -50209,7 +50891,9 @@
       "animation": {
         "family": "territory",
         "primitives": [
-          "zoneSweep"
+          "zoneSweep",
+          "crackBloom",
+          "beamHorizontal"
         ],
         "sigil": "map"
       },
@@ -50258,7 +50942,8 @@
         "family": "territory",
         "primitives": [
           "beamHorizontal",
-          "zoneSweep"
+          "zoneSweep",
+          "pulseRing"
         ],
         "sigil": "move"
       },
@@ -50282,7 +50967,8 @@
         "family": "strike",
         "primitives": [
           "quakeRumble",
-          "bolt"
+          "bolt",
+          "pulseRing"
         ],
         "sigil": "sprout"
       },
@@ -50406,7 +51092,8 @@
         "family": "decree",
         "primitives": [
           "sigilStamp",
-          "slabSlam"
+          "slabSlam",
+          "pulseRing"
         ],
         "sigil": "swords"
       },
@@ -50455,7 +51142,8 @@
         "family": "strike",
         "primitives": [
           "bolt",
-          "quakeRumble"
+          "quakeRumble",
+          "edgeBurn"
         ],
         "sigil": "hand"
       },
@@ -50504,7 +51192,8 @@
         "family": "tempo",
         "primitives": [
           "tickPips",
-          "drainFlow"
+          "drainFlow",
+          "edgeBurn"
         ],
         "sigil": "footprints"
       },
@@ -50527,7 +51216,9 @@
       "animation": {
         "family": "bind",
         "primitives": [
-          "chainLink"
+          "shackleDrop",
+          "chainLink",
+          "sigilStamp"
         ],
         "sigil": "flag"
       },
@@ -50626,7 +51317,8 @@
         "family": "strike",
         "primitives": [
           "bolt",
-          "quakeRumble"
+          "quakeRumble",
+          "shockRing"
         ],
         "sigil": "fish"
       },

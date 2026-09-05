@@ -1,5 +1,5 @@
 {
-  "_comment": "Hand decisions over the active pool (2026-09 read-through, category by category). `retire` entries leave the draft pools with reason `hand` (definitions stay, archived games replay); `retier` entries rewrite the card's tier in its definition via scripts/apply-retiers.mjs. Reasons are short so the codex banner can show them.",
+  "_comment": "Hand decisions over the active pool (2026-09 read-through, category by category). `retire` entries leave the draft pools with reason `hand` (definitions stay, archived games replay); `retier` entries rewrite the card's tier in its definition via scripts/apply-retiers.mjs. Reasons are short so the codex banner can show them. `keep` entries are hand-kept: never retired, and they neither displace nor merge with a text-signature twin.",
   "retire": {
     "closed_book": {
       "why": "unclear trigger, near-instant loss"
@@ -1298,5 +1298,39 @@
     "nerf:no_mans_land": 7,
     "nerf:pawn_storm": 7
   },
-  "_comment_nerf_retiers": "2026-09 nerf severity pass: tiers follow how much of a game the nerf takes away, not how clever it sounds. Nerfs that ban a capture type or a few squares sit at 2-4; ones that remove a piece's core movement or a whole class of captures sit at 5-7; ones that make winning nearly impossible (no checks, no captures, hidden board, lose conditions the opponent can force) sit at 8."
+  "_comment_nerf_retiers": "2026-09 nerf severity pass: tiers follow how much of a game the nerf takes away, not how clever it sounds. Nerfs that ban a capture type or a few squares sit at 2-4; ones that remove a piece's core movement or a whole class of captures sit at 5-7; ones that make winning nearly impossible (no checks, no captures, hidden board, lose conditions the opponent can force) sit at 8.",
+  "keep": {
+    "fm_glowmoss_ward": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fm_moonlit_stride": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fm_wyrmscale_mail": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fm_stormcaller": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fm_phoenix_feather": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fm_dragonblood": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fm_sunforge": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fm_eclipse_crown": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fm_hex_thistledown": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fm_hex_fogbank": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fm_hex_brambleroot": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fm_hex_sirens_call": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fm_hex_gorgon_gaze": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fm_hex_iron_maiden": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fm_hex_kings_moat": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fm_hex_winter_court": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fm_boon_lanternlight": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fm_boon_hearthbread": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fm_boon_dewdrop": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fm_boon_oathstone": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fm_boon_windrider": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fm_boon_lifebloom": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fm_boon_royal_road": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fm_boon_worldheart": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fn_pixie_curse": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fn_gnomes_bargain": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fn_selkie_skin": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fn_trolls_toll": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fn_banshee_bond": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fn_wyrm_hoard": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fn_lich_pact": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
+    "fn_titans_yoke": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental"
+  }
 }

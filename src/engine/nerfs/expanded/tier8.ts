@@ -106,7 +106,7 @@ export const NERFS_T8: Nerf[] = [
     {
       id: "crippled_clergy",
       name: "Crippled Clergy",
-      description: "Your bishops can only move one square at a time.",
+      description: "Each bishop of yours shuffles: every bishop move covers a single diagonal step.",
       flavor: "The priests hobble along on canes.",
       icon: "church",
       tier: 5,
