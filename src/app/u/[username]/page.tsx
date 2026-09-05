@@ -428,6 +428,17 @@ function ProfileContent() {
       {/* Left rail: one row per rated mode, Lichess's perf list. */}
       <aside className="order-2 mt-4 lg:order-1 lg:mt-0">
         <RatingRail ratings={profile.ratings} history={ratingHistory} placements={placements} />
+        {/* Statistics live in the rail, under the ratings, where Lichess keeps
+            a player's numbers; the main column stays for the chart, the
+            activity and the games. */}
+        {stats && (
+          <div className="mt-4 border-t border-[color:var(--edge)] px-3 pt-4 lg:border-t-0 lg:pt-2">
+            <h2 className="text-[12px] uppercase tracking-[0.06em] text-parchment-400">Statistics</h2>
+            <div className="mt-2">
+              <PlayerStatsPanel stats={stats} peakRating={peakRating} />
+            </div>
+          </div>
+        )}
       </aside>
 
       <div className="order-1 min-w-0 lg:order-2">
@@ -523,14 +534,6 @@ function ProfileContent() {
             <div className="border-t border-[color:var(--edge)] px-4 py-4 sm:px-5">
               <AchievementsStrip username={user.username} />
             </div>
-            {stats && (
-              <div className="border-t border-[color:var(--edge)] px-4 py-4 sm:px-5">
-                <h2 className="text-[13px] uppercase tracking-[0.05em] text-parchment-400">Statistics</h2>
-                <div className="mt-3">
-                  <PlayerStatsPanel stats={stats} peakRating={peakRating} />
-                </div>
-              </div>
-            )}
           </div>
 
           <div role="tabpanel" id="panel-games" aria-labelledby="tab-games" hidden={tab !== "games"} className="px-2 pb-2 sm:px-4">

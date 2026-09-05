@@ -523,6 +523,13 @@ function LobbyInner() {
                   onClick={() => {
                     setTab("play");
                     setChallengesOpen(true);
+                    // The fold opens below the fold line on most screens, so
+                    // without this the button looked like it did nothing.
+                    window.setTimeout(() => {
+                      document
+                        .getElementById("lobby-fold-challenges")
+                        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }, 60);
                   }}
                 >
                   <Swords size={22} strokeWidth={1.6} aria-hidden className="shrink-0 text-parchment-300" />
