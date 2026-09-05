@@ -1055,3 +1055,36 @@ html[data-anim="off"] .g31 * {
 html[data-anim="off"] .g31 {
   display: none !important;
 }
+
+/* =============================================================================
+   FLAGSHIP IMPACT WAVE: the cell-scale quake wrapper. The impact composite
+   rides a ONE-CELL wrapper (the plugin mount), so the shared imp-quake's
+   canvas-percent amplitudes would be invisible here; these keyframes restate
+   the same jolt at cell scale. Rides the shared --imp-delay beat so the shake
+   lands exactly with the laser/shatter/shockwave. Transform only, finite,
+   ends at rest. The wrapper also carries the bare `g31` class, so the module
+   kill switch above (display:none + animation:none) covers the whole impact
+   subtree when animations are off.
+   ========================================================================== */
+.g31-quakecell {
+  animation: g31-quakecell calc(0.55s * var(--fx-dur, 1)) linear both;
+  animation-delay: calc(var(--imp-delay, 0.4s) * var(--fx-dur, 1));
+}
+@keyframes g31-quakecell {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  18% {
+    transform: translate(-7%, 4.5%);
+  }
+  38% {
+    transform: translate(6%, -5%);
+  }
+  58% {
+    transform: translate(-4.5%, -3%);
+  }
+  78% {
+    transform: translate(3.5%, 3.5%);
+  }
+}

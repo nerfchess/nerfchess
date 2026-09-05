@@ -5,6 +5,7 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "rea
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import {
   Check,
+  ChevronRight,
   Crown,
   Flag,
   Gamepad2,
@@ -47,6 +48,8 @@ import { isHouseEditor, isRatingEditor } from "@/lib/godPanel";
 import { fileToDataUrl } from "@/lib/imageUpload";
 import type { DraftMode } from "@/engine/buff";
 import { useModalChrome } from "@/lib/useModalChrome";
+import { Button } from "@/components/ui/Button";
+import { LinkButton } from "@/components/ui/Button";
 
 type Relationship = "self" | "none" | "friends" | "incoming" | "outgoing";
 
@@ -283,9 +286,9 @@ function ProfileContent() {
       <section className="mx-auto max-w-6xl px-5 py-8 sm:px-6">
         <h1 className="font-display text-4xl">Player not found</h1>
         <p className="mt-3 text-parchment-200">No account with that name.</p>
-        <Link href="/lobby" className="mt-6 inline-flex btn-leaf px-4 py-2 font-display text-sm font-semibold">
+        <LinkButton tone="leaf" href="/lobby" className="mt-6 px-4 py-2 text-sm font-semibold">
           Back to the lobby
-        </Link>
+        </LinkButton>
       </section>
     );
   }
@@ -298,16 +301,15 @@ function ProfileContent() {
           <p className="text-sm text-parchment-300">
             Something went wrong reaching the server. Check your connection and try again.
           </p>
-          <button
-            type="button"
+          <Button tone="ghost"
+           
             onClick={() => {
               setLoadError(false);
               setReloadTick((t) => t + 1);
             }}
-            className="btn-ghost inline-flex min-h-[44px] items-center px-5 font-display text-sm font-semibold"
-          >
+            className="px-5 text-sm font-semibold">
             Retry
-          </button>
+          </Button>
         </div>
       </section>
     );
@@ -435,8 +437,10 @@ function ProfileContent() {
       />
 
       {/* House-bot inline editor (house editor only); everyone else sees the
-          read-only bio rendered inside the header component. */}
+          read-only bio rendered inside the header component. Folded behind a
+          disclosure: it is a rarely-used admin tool, not profile content. */}
       {houseEdit && (
+        <EditorFold id="fold-house-editor" label="House bot editor">
         <HouseBotEditor
           userId={houseEdit.userId}
           avatars={houseEdit.avatars}
@@ -458,14 +462,17 @@ function ProfileContent() {
             )
           }
         />
+        </EditorFold>
       )}
 
       {/* Rating editor (ilovenewjeans only): overwrite every rating bucket for
           this player at once. Server re-verifies the gate; this is UX only.
           Hidden on house-bot profiles (houseEdit is set only there): a bot's
           rating is edited from the House bot menu above instead, which persists
-          it as an override the engine resync respects. */}
+          it as an override the engine resync respects. Folded behind a
+          disclosure like the house editor: a mod tool, not profile content. */}
       {isRatingEditor(me?.username) && !houseEdit && (
+        <EditorFold id="fold-rating-editor" label="Rating editor">
         <RatingEditor
           key={user.username}
           username={user.username}
@@ -479,6 +486,7 @@ function ProfileContent() {
             });
           }}
         />
+        </EditorFold>
       )}
 
       {/* ---- Rating cards (spec 2.4) --------------------------------------- */}
@@ -558,7 +566,7 @@ function ProfileContent() {
             <AchievementsStrip username={user.username} />
             {stats && (
               <div className="mt-10">
-                <div className="eyebrow">Record</div>
+                <div>Record</div>
                 <h2 className="mt-1 font-display text-2xl">Statistics</h2>
                 <div className="mt-3">
                   <PlayerStatsPanel stats={stats} peakRating={peakRating} />
@@ -567,7 +575,7 @@ function ProfileContent() {
             )}
             {ratingHistory.length > 0 && (
               <div className="mt-10">
-                <div className="eyebrow">Form</div>
+                <div>Form</div>
                 <h2 className="mt-1 font-display text-2xl">Rating history</h2>
                 <div className="mt-3">
                   <RatingHistoryPanel
@@ -771,9 +779,7 @@ function ProfileHeader({
             </span>
           </div>
 
-          {user.bio && (
-            <p className="mt-3 max-w-prose whitespace-pre-wrap text-sm text-parchment-200">{user.bio}</p>
-          )}
+          {user.bio && <BioText bio={user.bio} />}
 
         </div>
       </div>
@@ -790,6 +796,36 @@ function ProfileHeader({
         onRemoveFriend={onRemoveFriend}
         onReport={onReport}
       />
+    </div>
+  );
+}
+
+// The header bio, clamped to three lines when long with a quiet "More"
+// expander so a wordy bio never pushes the rating cards below the fold. Short
+// bios render exactly as before.
+function BioText({ bio }: { bio: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const long = bio.length > 220 || bio.split("\n").length > 3;
+  return (
+    <div className="mt-3 max-w-prose">
+      <p
+        className={
+          "whitespace-pre-wrap text-sm text-parchment-200 " +
+          (long && !expanded ? "line-clamp-3" : "")
+        }
+      >
+        {bio}
+      </p>
+      {long && (
+        <button
+          type="button"
+          aria-expanded={expanded}
+          onClick={() => setExpanded((v) => !v)}
+          className="mt-1 text-[13px] text-gold-leaf hover:underline"
+        >
+          {expanded ? "Less" : "More"}
+        </button>
+      )}
     </div>
   );
 }
@@ -820,12 +856,11 @@ function HeaderActions({
   if (isOwner) {
     return (
       <div className="flex shrink-0 flex-wrap items-center gap-2">
-        <Link
+        <LinkButton tone="ghost"
           href="/profile/edit"
-          className="btn-ghost inline-flex min-h-[44px] items-center px-4 font-display text-sm"
-        >
+          className="px-4 text-sm">
           Edit profile
-        </Link>
+        </LinkButton>
         <ShareButton username={user.username} />
       </div>
     );
@@ -838,26 +873,24 @@ function HeaderActions({
 
   return (
     <div className="flex shrink-0 flex-wrap items-center gap-2">
-      <button
-        type="button"
+      <Button tone="leaf"
+       
         onClick={() => router.push(`/friend?challenge=${encodeURIComponent(user.username)}`)}
-        className="btn-leaf inline-flex min-h-[44px] items-center gap-1.5 px-4 font-display text-sm font-semibold"
-      >
+        className="px-4 text-sm font-semibold">
         <Swords size={15} strokeWidth={2.3} aria-hidden />
         Challenge
-      </button>
+      </Button>
 
       {/* Friend button state machine (only for real accounts, not guests). */}
       {signedInNonGuest && rel === "none" && (
-        <button
-          type="button"
+        <Button tone="ghost"
+         
           onClick={onAddFriend}
           disabled={friendBusy}
-          className="btn-ghost inline-flex min-h-[44px] items-center gap-1.5 px-4 font-display text-sm disabled:opacity-60"
-        >
+          className="px-4 text-sm disabled:opacity-60">
           <UserPlus size={15} strokeWidth={2.2} aria-hidden />
           Add friend
-        </button>
+        </Button>
       )}
       {signedInNonGuest && rel === "outgoing" && (
         <span className="inline-flex min-h-[44px] items-center gap-1.5 rounded-sm border border-white/10 px-4 font-display text-sm text-parchment-400">
@@ -866,15 +899,14 @@ function HeaderActions({
         </span>
       )}
       {signedInNonGuest && rel === "incoming" && (
-        <button
-          type="button"
+        <Button tone="leaf"
+         
           onClick={onAcceptFriend}
           disabled={friendBusy}
-          className="btn-leaf inline-flex min-h-[44px] items-center gap-1.5 px-4 font-display text-sm font-semibold disabled:opacity-60"
-        >
+          className="px-4 text-sm font-semibold disabled:opacity-60">
           <Check size={15} strokeWidth={2.3} aria-hidden />
           Accept request
-        </button>
+        </Button>
       )}
       {signedInNonGuest && rel === "friends" && (
         <span className="inline-flex min-h-[44px] items-center gap-1.5 rounded-sm border border-verdigris-glow/40 bg-verdigris/10 px-4 font-display text-sm text-verdigris-glow">
@@ -883,11 +915,9 @@ function HeaderActions({
         </span>
       )}
 
-      {signedInNonGuest && (
-        <ShareButton username={user.username} />
-      )}
-
-      {/* Overflow: Message, Report, and Remove friend (when friends). */}
+      {/* Overflow: Share, Message, Report, and Remove friend (when friends).
+          The header row keeps at most two primary buttons (Challenge plus the
+          friend action); everything else folds in here. */}
       {signedInNonGuest && (
         <OverflowMenu
           username={user.username}
@@ -901,48 +931,58 @@ function HeaderActions({
   );
 }
 
-// Share via the Web Share API, falling back to a clipboard copy with a transient
-// "Link copied" confirmation.
+// Share via the Web Share API, falling back to a clipboard copy. Returns true
+// when the fallback copied the link (so the caller can flash "Link copied");
+// false when the share sheet handled it or nothing could be done quietly.
+async function shareProfile(username: string): Promise<boolean> {
+  const url =
+    typeof window !== "undefined"
+      ? window.location.origin + `/u/${encodeURIComponent(username)}`
+      : "";
+  const title = `${username} on Nerf Chess`;
+  if (typeof navigator !== "undefined" && navigator.share) {
+    try {
+      await navigator.share({ title, url });
+      return false;
+    } catch {
+      // Cancelled or unsupported: fall through to the clipboard copy.
+    }
+  }
+  try {
+    await navigator.clipboard?.writeText(url);
+    return true;
+  } catch {
+    // No clipboard access: nothing else we can do quietly.
+    return false;
+  }
+}
+
+// The owner's Share button (the non-owner share action lives in OverflowMenu),
+// with a transient "Link copied" confirmation on the clipboard fallback.
 function ShareButton({ username }: { username: string }) {
   const [copied, setCopied] = useState(false);
 
   const share = async () => {
-    const url =
-      typeof window !== "undefined"
-        ? window.location.origin + `/u/${encodeURIComponent(username)}`
-        : "";
-    const title = `${username} on Nerf Chess`;
-    if (typeof navigator !== "undefined" && navigator.share) {
-      try {
-        await navigator.share({ title, url });
-        return;
-      } catch {
-        // Cancelled or unsupported: fall through to the clipboard copy.
-      }
-    }
-    try {
-      await navigator.clipboard?.writeText(url);
+    if (await shareProfile(username)) {
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // No clipboard access: nothing else we can do quietly.
     }
   };
 
   return (
-    <button
-      type="button"
+    <Button tone="ghost"
+     
       onClick={share}
-      className="btn-ghost inline-flex min-h-[44px] items-center gap-1.5 px-4 font-display text-sm"
-    >
+      className="px-4 text-sm">
       <Share2 size={15} strokeWidth={2.2} aria-hidden />
       {copied ? "Link copied" : "Share"}
-    </button>
+    </Button>
   );
 }
 
 // A keyboard-accessible overflow menu (Escape / click-outside close, focus
-// returns to the trigger) holding Message, Report, and an optional Remove friend.
+// returns to the trigger) holding Share, Message, Report, and an optional
+// Remove friend.
 function OverflowMenu({
   username,
   showRemove,
@@ -957,8 +997,23 @@ function OverflowMenu({
   onReport: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  // "Link copied" flash for the Share item's clipboard fallback: the menu stays
+  // open just long enough to confirm, then closes itself.
+  const [copied, setCopied] = useState(false);
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
+
+  const share = async () => {
+    if (await shareProfile(username)) {
+      setCopied(true);
+      window.setTimeout(() => {
+        setCopied(false);
+        setOpen(false);
+      }, 1200);
+    } else {
+      setOpen(false);
+    }
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -998,6 +1053,15 @@ function OverflowMenu({
           aria-label={`Actions for ${username}`}
           className="absolute right-0 top-full z-40 mt-1.5 w-48 plate dropdown p-1 shadow-2xl"
         >
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => void share()}
+            className="flex min-h-[44px] w-full items-center gap-2 rounded px-3 text-left font-display text-[13px] text-parchment-200 transition hover:bg-white/[0.05]"
+          >
+            <Share2 size={15} strokeWidth={2.2} aria-hidden />
+            {copied ? "Link copied" : "Share"}
+          </button>
           <Link
             role="menuitem"
             href={`/inbox/${encodeURIComponent(username)}`}
@@ -1164,7 +1228,7 @@ function GamesTab({
         style={{ borderColor: "var(--edge)" }}
       >
         {playingNow && (
-          <span className="inline-flex items-center gap-1.5 smallcaps text-[12px] text-oxblood-glow">
+          <span className="inline-flex items-center gap-1.5 text-[12px] text-oxblood-glow">
             <span aria-hidden className="dot-live h-2 w-2 rounded-full bg-oxblood-glow" />
             Playing now
           </span>
@@ -1227,16 +1291,15 @@ function GamesTab({
         ) : phase === "error" ? (
           <div className="plate flex flex-col items-center gap-3 p-6 text-center">
             <p className="text-sm text-parchment-300">Could not load games.</p>
-            <button
-              type="button"
+            <Button tone="ghost"
+             
               onClick={() => {
                 setPhase("loading");
                 setReloadTick((t) => t + 1);
               }}
-              className="btn-ghost inline-flex min-h-[44px] items-center px-5 font-display text-sm font-semibold"
-            >
+              className="px-5 text-sm font-semibold">
               Retry
-            </button>
+            </Button>
           </div>
         ) : games.length === 0 ? (
           <div className="plate p-6 text-center text-sm text-parchment-400">
@@ -1251,14 +1314,13 @@ function GamesTab({
             </div>
             {hasMore && (
               <div className="mt-3 text-center">
-                <button
-                  type="button"
+                <Button tone="ghost"
+                 
                   onClick={loadMore}
                   disabled={loadingMore}
-                  className="btn-ghost inline-flex min-h-[44px] items-center px-5 font-display text-sm disabled:opacity-60"
-                >
+                  className="px-5 text-sm disabled:opacity-60">
                   {loadingMore ? "Loading..." : "Load more"}
-                </button>
+                </Button>
               </div>
             )}
           </>
@@ -1272,7 +1334,7 @@ function Count({ label, value }: { label: string; value: string | number }) {
   return (
     <span className="flex items-baseline gap-1.5">
       <span className="font-mono text-sm tabular-nums text-parchment-100">{value}</span>
-      <span className="smallcaps text-[12px] text-parchment-400">{label}</span>
+      <span className="text-[12px] text-parchment-400">{label}</span>
     </span>
   );
 }
@@ -1359,7 +1421,7 @@ function GameHistoryRow({ game, viewer }: { game: RecentGameRow; viewer: string 
         </span>
 
         <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs sm:justify-end">
-          <span className="smallcaps text-[12px] text-parchment-400">{game.rated ? "Rated" : "Casual"}</span>
+          <span className="text-[12px] text-parchment-400">{game.rated ? "Rated" : "Casual"}</span>
           <span className="font-mono text-parchment-400">{clockLabel(game.time_sec, game.increment_sec)}</span>
           {/* Rating change as its own bordered chip, with a " · " separator, so
               the delta can never run together with the date. Sign in text. */}
@@ -1400,13 +1462,17 @@ interface StripAchievement {
 }
 
 // A one-row trophy shelf: the player's 3 rarest unlocked achievements as
-// rarity-themed medallions plus their earned/total count, linking to the wall.
+// rarity-themed medallions plus their earned/total count. "See all" expands
+// the full grid inline (the same payload already fetched), with the dedicated
+// achievements wall still one link away inside the expanded view.
 function AchievementsStrip({ username }: { username: string }) {
   const [data, setData] = useState<{
     unlockedCount: number;
     total: number;
     rarest: StripAchievement[];
+    all: StripAchievement[];
   } | null>(null);
+  const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -1423,14 +1489,18 @@ function AchievementsStrip({ username }: { username: string }) {
       .then((body) => {
         if (cancelled || !body) return;
         const rank = { legendary: 3, epic: 2, rare: 1, common: 0 } as const;
-        // Rarest first; newest unlock breaks ties within a rarity.
-        const rarest = body.achievements
-          .filter((a) => a.unlocked)
-          .sort(
-            (x, y) => rank[y.rarity] - rank[x.rarity] || (y.unlockedAt ?? 0) - (x.unlockedAt ?? 0),
-          )
-          .slice(0, 3);
-        setData({ unlockedCount: body.unlockedCount, total: body.total, rarest });
+        // Rarest first; newest unlock breaks ties within a rarity. The full
+        // grid keeps the same order with locked medallions sinking last.
+        const byRarity = (x: StripAchievement, y: StripAchievement) =>
+          rank[y.rarity] - rank[x.rarity] || (y.unlockedAt ?? 0) - (x.unlockedAt ?? 0);
+        const unlocked = body.achievements.filter((a) => a.unlocked).sort(byRarity);
+        const locked = body.achievements.filter((a) => !a.unlocked).sort(byRarity);
+        setData({
+          unlockedCount: body.unlockedCount,
+          total: body.total,
+          rarest: unlocked.slice(0, 3),
+          all: [...unlocked, ...locked],
+        });
       })
       .catch(() => {});
     return () => {
@@ -1439,42 +1509,116 @@ function AchievementsStrip({ username }: { username: string }) {
   }, [username]);
 
   return (
-    <Link
-      href={`/achievements?u=${encodeURIComponent(username)}`}
-      className="mt-6 flex flex-wrap items-center justify-between gap-3 border-y py-3 transition hover:bg-white/[0.02]"
-      style={{ borderColor: "var(--edge)" }}
-    >
-      <span className="flex items-center gap-2 font-display text-parchment-100">
-        <Trophy className="h-4 w-4 text-sun-glow" strokeWidth={2} /> Achievements
-        {data && (
-          <span className="font-mono text-sm tabular-nums text-parchment-300">
-            {data.unlockedCount}
-            <span className="text-parchment-500">/{data.total}</span>
-          </span>
-        )}
-      </span>
-      <span className="flex items-center gap-2">
-        {data?.rarest.map((a) => {
-          const Icon = achievementIcon(a.icon);
-          const theme = RARITY_THEME[a.rarity];
-          return (
-            <span
-              key={a.id}
-              title={`${a.name} (${theme.label})`}
-              className="grid h-9 w-9 place-items-center rounded-full border"
-              style={{
-                borderColor: theme.border,
-                background: `radial-gradient(circle at 32% 28%, rgb(${theme.rgb} / 0.30), rgb(${theme.rgb} / 0.06) 72%)`,
-                boxShadow: `0 0 10px -3px ${theme.glow}`,
-              }}
-            >
-              <Icon className="h-[18px] w-[18px]" style={{ color: theme.color }} strokeWidth={2} />
+    <div className="mt-6 border-y" style={{ borderColor: "var(--edge)" }}>
+      <button
+        type="button"
+        aria-expanded={expanded}
+        aria-controls="achievements-fold"
+        onClick={() => setExpanded((v) => !v)}
+        className="flex min-h-[44px] w-full flex-wrap items-center justify-between gap-3 py-3 text-left transition hover:bg-white/[0.02]"
+      >
+        <span className="flex items-center gap-2 font-display text-parchment-100">
+          <ChevronRight
+            aria-hidden
+            size={14}
+            strokeWidth={2.4}
+            className={
+              "shrink-0 text-parchment-400 transition-transform duration-150 " +
+              (expanded ? "rotate-90" : "")
+            }
+          />
+          <Trophy className="h-4 w-4 text-sun-glow" strokeWidth={2} /> Achievements
+          {data && (
+            <span className="font-mono text-sm tabular-nums text-parchment-300">
+              {data.unlockedCount}
+              <span className="text-parchment-500">/{data.total}</span>
             </span>
-          );
-        })}
-        <span className="smallcaps text-[12px] text-gold-leaf">View all</span>
-      </span>
-    </Link>
+          )}
+        </span>
+        <span className="flex items-center gap-2">
+          {data?.rarest.map((a) => {
+            const Icon = achievementIcon(a.icon);
+            const theme = RARITY_THEME[a.rarity];
+            return (
+              <span
+                key={a.id}
+                title={`${a.name} (${theme.label})`}
+                className="grid h-9 w-9 place-items-center rounded-full border"
+                style={{
+                  borderColor: theme.border,
+                  background: `radial-gradient(circle at 32% 28%, rgb(${theme.rgb} / 0.30), rgb(${theme.rgb} / 0.06) 72%)`,
+                  boxShadow: `0 0 10px -3px ${theme.glow}`,
+                }}
+              >
+                <Icon className="h-[18px] w-[18px]" style={{ color: theme.color }} strokeWidth={2} />
+              </span>
+            );
+          })}
+          <span className="text-[12px] text-gold-leaf">
+            {expanded ? "Hide" : "See all"}
+          </span>
+        </span>
+      </button>
+      {expanded && (
+        <div id="achievements-fold" className="pb-4">
+          {!data ? (
+            <p className="text-sm text-parchment-400">Loading achievements…</p>
+          ) : (
+            <>
+              <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                {data.all.map((a) => {
+                  const Icon = achievementIcon(a.icon);
+                  const theme = RARITY_THEME[a.rarity];
+                  return (
+                    <li
+                      key={a.id}
+                      title={`${a.name} (${theme.label}${a.unlocked ? "" : ", locked"})`}
+                      className={
+                        "flex min-w-0 items-center gap-2.5 border px-2.5 py-2 " +
+                        (a.unlocked ? "" : "opacity-50")
+                      }
+                      style={{ borderColor: "var(--edge)" }}
+                    >
+                      <span
+                        className="grid h-8 w-8 shrink-0 place-items-center rounded-full border"
+                        style={
+                          a.unlocked
+                            ? {
+                                borderColor: theme.border,
+                                background: `radial-gradient(circle at 32% 28%, rgb(${theme.rgb} / 0.30), rgb(${theme.rgb} / 0.06) 72%)`,
+                              }
+                            : { borderColor: "var(--edge)" }
+                        }
+                      >
+                        <Icon
+                          className="h-4 w-4"
+                          style={{ color: a.unlocked ? theme.color : undefined }}
+                          strokeWidth={2}
+                        />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm text-parchment-100">{a.name}</span>
+                        <span className="block text-[12px] text-parchment-400">
+                          {a.unlocked ? theme.label : "Locked"}
+                        </span>
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+              <div className="mt-3">
+                <Link
+                  href={`/achievements?u=${encodeURIComponent(username)}`}
+                  className="text-[12px] text-gold-leaf transition-colors hover:text-sun-glow"
+                >
+                  Open the achievements wall
+                </Link>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -1494,7 +1638,7 @@ function CurrentStandings({ placements }: { placements: LaurelPlacement[] }) {
         </span>
         <Link
           href="/leaderboard"
-          className="smallcaps text-[12px] text-gold-leaf transition-colors hover:text-sun-glow"
+          className="text-[12px] text-gold-leaf transition-colors hover:text-sun-glow"
         >
           Leaderboard
         </Link>
@@ -1508,7 +1652,7 @@ function CurrentStandings({ placements }: { placements: LaurelPlacement[] }) {
               href="/leaderboard"
               title={placementTitle(p)}
               className={
-                "hover-lift flex items-center gap-2.5 border px-3 py-2 no-underline " +
+                "flex items-center gap-2.5 border px-3 py-2 no-underline " +
                 (podium
                   ? "podium-rim-gold border-transparent bg-sun/[0.07]"
                   : "bg-white/[0.03]")
@@ -1641,21 +1785,19 @@ function BioSection({
             autoFocus
           />
           <div className="mt-2 flex items-center gap-2 text-sm">
-            <button
-              type="button"
+            <Button tone="ghost"
+             
               onClick={save}
               disabled={saving}
-              className="min-h-[44px] rounded-sm btn-ghost px-3 font-display text-gold-leaf"
-            >
+              className="px-3 text-gold-leaf">
               {saving ? "Saving..." : "Save"}
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button tone="ghost"
+             
               onClick={() => setEditing(false)}
-              className="min-h-[44px] rounded-sm btn-ghost px-3"
-            >
+              className="px-3">
               Cancel
-            </button>
+            </Button>
             <span className="ml-auto text-xs text-parchment-400">{draft.length}/300</span>
           </div>
         </div>
@@ -1705,6 +1847,49 @@ function ratingsWithAllSet(
     }
   }
   return next;
+}
+
+// Collapsed disclosure around the mod-only inline editors (RatingEditor,
+// HouseBotEditor), following the DockSectionHeader pattern: the whole header
+// is the toggle (aria-expanded, chevron rotates open). These tools are used
+// rarely and only by one designated account, so they start folded and never
+// crowd the profile for that viewer.
+function EditorFold({
+  id,
+  label,
+  children,
+}: {
+  id: string;
+  label: string;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="mt-5">
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls={id}
+        onClick={() => setOpen((v) => !v)}
+        className="flex min-h-[44px] items-center gap-1.5 text-left"
+      >
+        <ChevronRight
+          aria-hidden
+          size={13}
+          strokeWidth={2.4}
+          className={
+            "shrink-0 text-parchment-400 transition-transform duration-150 " +
+            (open ? "rotate-90" : "")
+          }
+        />
+        <span className="rounded-[1px] border border-gold/40 px-2 py-0.5 text-[12px] text-gold-leaf">
+          {label}
+        </span>
+        {!open && <span className="text-xs text-parchment-400">Show tools</span>}
+      </button>
+      {open && <div id={id}>{children}</div>}
+    </div>
+  );
 }
 
 // Inline rating editor, shown on ANY non-bot profile ONLY to the designated
@@ -1784,7 +1969,7 @@ function RatingEditor({
   return (
     <div className="mt-5 plate border border-gold/25 p-4">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="smallcaps rounded-[1px] border border-gold/40 px-2 py-0.5 text-[12px] text-gold-leaf">
+        <span className="rounded-[1px] border border-gold/40 px-2 py-0.5 text-[12px] text-gold-leaf">
           Rating editor
         </span>
         <span className="text-xs text-parchment-400">
@@ -1809,14 +1994,13 @@ function RatingEditor({
           }}
           className="w-28 bg-transparent plate px-3 py-1.5 text-sm font-mono tabular-nums outline-none focus:border-gold/40"
         />
-        <button
-          type="button"
+        <Button tone="ghost"
+         
           disabled={saving || value.trim() === ""}
           onClick={() => void save()}
-          className="min-h-[44px] rounded-sm btn-ghost px-3 text-gold-leaf disabled:opacity-40"
-        >
+          className="px-3 text-gold-leaf">
           {saving ? "Saving..." : "Set all ratings"}
-        </button>
+        </Button>
       </div>
 
       {error && <p className="mt-2 text-xs text-oxblood-glow">{error}</p>}
@@ -1983,7 +2167,7 @@ function HouseBotEditor({
   return (
     <div className="mt-5 plate border border-gold/25 p-4">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="smallcaps rounded-[1px] border border-gold/40 px-2 py-0.5 text-[12px] text-gold-leaf">
+        <span className="rounded-[1px] border border-gold/40 px-2 py-0.5 text-[12px] text-gold-leaf">
           House bot
         </span>
         <span className="text-xs text-parchment-400">
@@ -2005,14 +2189,13 @@ function HouseBotEditor({
           maxLength={20}
           className="w-48 bg-transparent plate px-3 py-1.5 text-sm font-display font-semibold outline-none focus:border-gold/40"
         />
-        <button
-          type="button"
+        <Button tone="ghost"
+         
           disabled={saving || !dirty}
           onClick={saveName}
-          className="min-h-[44px] rounded-sm btn-ghost px-3 text-gold-leaf disabled:opacity-40"
-        >
+          className="px-3 text-gold-leaf">
           {saving ? "Saving..." : "Save"}
-        </button>
+        </Button>
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -2032,14 +2215,13 @@ function HouseBotEditor({
           }}
           className="w-28 bg-transparent plate px-3 py-1.5 text-sm font-mono tabular-nums outline-none focus:border-gold/40"
         />
-        <button
-          type="button"
+        <Button tone="ghost"
+         
           disabled={saving || ratingValue.trim() === "" || !ratingDirty}
           onClick={() => void saveRating()}
-          className="min-h-[44px] rounded-sm btn-ghost px-3 text-gold-leaf disabled:opacity-40"
-        >
+          className="px-3 text-gold-leaf">
           {saving ? "Saving..." : "Set rating"}
-        </button>
+        </Button>
         <span className="text-[11px] text-parchment-500">Both modes, engine-safe.</span>
       </div>
 
@@ -2075,42 +2257,38 @@ function HouseBotEditor({
             <div className="flex flex-wrap items-center gap-3">
               <PlayerAvatar name={username} avatar={preview} size={56} />
               <div className="flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
+                <Button tone="ghost"
+                 
                   disabled={saving}
                   onClick={confirmUpload}
-                  className="min-h-[44px] rounded-sm btn-ghost px-3 text-gold-leaf disabled:opacity-40"
-                >
+                  className="px-3 text-gold-leaf">
                   {saving ? "Saving..." : "Use this picture"}
-                </button>
-                <button
-                  type="button"
+                </Button>
+                <Button tone="ghost"
+                 
                   disabled={saving}
                   onClick={() => fileRef.current?.click()}
-                  className="min-h-[44px] rounded-sm btn-ghost px-3 disabled:opacity-40"
-                >
+                  className="px-3">
                   Choose another
-                </button>
-                <button
-                  type="button"
+                </Button>
+                <Button tone="ghost"
+                 
                   disabled={saving}
                   onClick={() => setPreview(null)}
-                  className="min-h-[44px] rounded-sm btn-ghost px-3 disabled:opacity-40"
-                >
+                  className="px-3">
                   Cancel
-                </button>
+                </Button>
               </div>
             </div>
           ) : (
             <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
+              <Button tone="ghost"
+               
                 disabled={saving || preparing}
                 onClick={() => fileRef.current?.click()}
-                className="min-h-[44px] rounded-sm btn-ghost px-3 text-gold-leaf disabled:opacity-40"
-              >
+                className="px-3 text-gold-leaf">
                 {preparing ? "Preparing..." : "Upload image..."}
-              </button>
+              </Button>
               <span className="text-[11px] text-parchment-500">
                 PNG, JPEG, WebP, or GIF. Cropped to a square; max 1 MB after compression.
               </span>
@@ -2193,13 +2371,12 @@ function ReportModal({ username, onClose }: { username: string; onClose: () => v
           <>
             <h2 className="font-display text-2xl">Report sent</h2>
             <p className="mt-2 text-sm text-parchment-200">Thanks, a moderator will take a look.</p>
-            <button
-              type="button"
+            <Button tone="ghost"
+             
               onClick={onClose}
-              className="mt-4 min-h-[44px] rounded-sm btn-ghost px-4 font-display text-sm"
-            >
+              className="mt-4 px-4 text-sm">
               Close
-            </button>
+            </Button>
           </>
         ) : (
           <>
@@ -2231,21 +2408,19 @@ function ReportModal({ username, onClose }: { username: string; onClose: () => v
             />
             {status === "error" && <p className="mt-2 text-sm text-oxblood-glow">{error}</p>}
             <div className="mt-4 flex items-center gap-2">
-              <button
-                type="button"
+              <Button tone="ghost"
+               
                 onClick={submit}
                 disabled={status === "sending" || !description.trim()}
-                className="min-h-[44px] rounded-sm btn-ghost px-4 font-display text-sm text-oxblood-glow disabled:opacity-50"
-              >
+                className="px-4 text-sm text-oxblood-glow disabled:opacity-50">
                 {status === "sending" ? "Sending..." : "Send report"}
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button tone="ghost"
+               
                 onClick={onClose}
-                className="min-h-[44px] rounded-sm btn-ghost px-4 font-display text-sm"
-              >
+                className="px-4 text-sm">
                 Cancel
-              </button>
+              </Button>
             </div>
           </>
         )}

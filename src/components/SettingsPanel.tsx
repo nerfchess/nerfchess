@@ -1,14 +1,12 @@
 "use client";
 
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useModalChrome } from "@/lib/useModalChrome";
 import type { CSSProperties, ReactNode } from "react";
 import { usePathname } from "next/navigation";
-import { ChevronDown, X } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, X } from "lucide-react";
 import {
-  ACCENT_THEMES,
-  AccentColor,
   BOARD_THEMES,
   BoardTheme,
   CUSTOM_BG_DATA_MAX,
@@ -18,6 +16,7 @@ import {
   PieceTheme,
   SITE_THEMES,
   SiteTheme,
+  applyUiPrefs,
   loadSettings,
   sanitizeCustomBgUrl,
   saveSettings,
@@ -33,10 +32,11 @@ import {
   GhostButton,
   Select,
   Slider,
-  Swatches,
   Toggle,
 } from "@/components/settings/controls";
 import "./SettingsPanel.css";
+import { Button } from "@/components/ui/Button";
+import { LinkButton } from "@/components/ui/Button";
 
 interface Props {
   open: boolean;
@@ -48,21 +48,24 @@ interface Props {
 
 export function SettingsPanel({ open, onClose, liveGame }: Props) {
   const [settings, setSettings] = useState<Settings>(loadSettings);
-  const [activeTab, setActiveTab] = useState(SECTIONS[0].id);
+  // Drill-down navigation: the panel opens on a sparse home of category
+  // cards; picking one slides into that section's focused sub-page, with a
+  // Back control at its head. One level, never deeper.
+  const [view, setView] = useState<"home" | string>("home");
   const pathname = usePathname();
   const inLiveGame =
     liveGame ?? (pathname != null && (pathname.startsWith("/game") || pathname.startsWith("/play")));
 
   // Re-sync from storage each time the panel opens, matching the previous
   // behaviour where values were reloaded on open. Also start back on the
-  // first tab so the panel always opens in the same place. Handled on the
+  // home grid so the panel always opens in the same place. Handled on the
   // open transition during render.
   const [prevOpen, setPrevOpen] = useState(open);
   if (prevOpen !== open) {
     setPrevOpen(open);
     if (open) {
       setSettings(loadSettings());
-      setActiveTab(SECTIONS[0].id);
+      setView("home");
     }
   }
 
@@ -140,27 +143,6 @@ export function SettingsPanel({ open, onClose, liveGame }: Props) {
         );
       case "account":
         return <AccountSettings />;
-      case "accentColor":
-        return (
-          <Swatches
-            colors={[
-              {
-                // "Auto" follows whichever theme is active (its swatch shows
-                // the current theme's own accent).
-                id: "auto",
-                color: (SITE_THEMES[settings.siteTheme] ?? SITE_THEMES.dark).accent.accent,
-                label: "Theme",
-              },
-              ...(Object.keys(ACCENT_THEMES) as Exclude<AccentColor, "auto">[]).map((id) => ({
-                id: id as string,
-                color: ACCENT_THEMES[id].accent,
-                label: ACCENT_THEMES[id].label,
-              })),
-            ]}
-            selected={settings.accentColor}
-            onSelect={(id) => update({ accentColor: id as AccentColor })}
-          />
-        );
       case "customBg":
         return (
           <CustomBackgroundControl
@@ -171,9 +153,9 @@ export function SettingsPanel({ open, onClose, liveGame }: Props) {
           />
         );
       case "boardTheme":
-        return <BoardThemePicker value={settings.boardTheme} onChange={(t) => update({ boardTheme: t })} />;
+        return <BoardThemePicker settings={settings} onChange={update} />;
       case "pieceTheme":
-        return <PieceThemePicker value={settings.pieceTheme} onChange={(t) => update({ pieceTheme: t })} />;
+        return <PieceThemePicker settings={settings} onChange={update} />;
       case "reset":
         return (
           <GhostButton
@@ -197,7 +179,7 @@ export function SettingsPanel({ open, onClose, liveGame }: Props) {
     control.kind === "account" ||
     control.kind === "customBg";
 
-  const activeSection = SECTIONS.find((s) => s.id === activeTab) ?? SECTIONS[0];
+  const activeSection = view === "home" ? null : SECTIONS.find((s) => s.id === view) ?? null;
 
   // Portalled to the body. This panel is rendered INSIDE <nav>, which
   // globals.css pins at z-index 30, so the whole modal was trapped in that
@@ -213,16 +195,12 @@ export function SettingsPanel({ open, onClose, liveGame }: Props) {
         role="dialog"
         aria-modal="true"
         aria-label="Settings"
-        className="plate plate-raised dgn-slab settings-slab relative flex max-h-[88dvh] w-full max-w-[40rem] flex-col overflow-hidden"
+        className="plate plate-raised relative flex max-h-[88dvh] w-full max-w-[46rem] flex-col overflow-hidden"
         onPointerDown={(e) => e.stopPropagation()}
       >
-        {/* Iron rivets in the slab corners, as an overlay so the carved-stone
-            background layers underneath survive. Decorative only. */}
-        <div aria-hidden className="dgn-rivets pointer-events-none absolute inset-0 z-10" />
-
-        {/* Header: chiselled crown with an ember seam under it. */}
-        <div className="settings-crown flex shrink-0 items-center justify-between border-b border-[color:var(--edge)] py-2.5 pl-5 pr-2.5">
-          <h2 className="settings-title font-display text-xl font-semibold">Settings</h2>
+        {/* Header. */}
+        <div className="flex shrink-0 items-center justify-between border-b border-[color:var(--edge)] py-2.5 pl-5 pr-2.5">
+          <h2 className="font-display text-[15px] font-bold text-parchment-50">Settings</h2>
           <button
             onClick={onClose}
             className="nav-icon-btn relative z-20 grid min-h-[44px] min-w-[44px] place-items-center text-parchment-400 hover:text-parchment"
@@ -239,68 +217,92 @@ export function SettingsPanel({ open, onClose, liveGame }: Props) {
           </p>
         )}
 
-        {/* Body: sconce rail (left on desktop, chip row on mobile) + the
-            scrolling content pane. The pane height is fixed per viewport so
-            the slab never jumps between tabs. */}
-        <div className="flex min-h-0 flex-col sm:flex-row">
-          <div
-            role="tablist"
+        {/* Body: a left column of section links and a right column of plain
+            rows on desktop; one column on a phone, where the section list is
+            the first view and a Back control returns to it. */}
+        <div className="flex min-h-0 flex-1 flex-col sm:flex-row">
+          {/* Section links. Always on screen from sm up; on a phone this is
+              the whole view until a section is chosen. */}
+          <nav
             aria-label="Settings sections"
-            className="flex shrink-0 gap-1 overflow-x-auto border-b border-[color:var(--edge)] px-2 py-2 sm:w-44 sm:flex-col sm:gap-0.5 sm:overflow-x-hidden sm:overflow-y-auto sm:border-b-0 sm:border-r sm:py-2.5"
+            className={
+              "shrink-0 overflow-y-auto border-[color:var(--edge)] p-2 sm:block sm:w-[13rem] sm:border-r " +
+              (activeSection ? "hidden" : "block h-[min(32rem,60dvh)] sm:h-[min(32rem,60dvh)]")
+            }
           >
-            {SECTIONS.map((section) => {
-              const selected = section.id === activeTab;
-              return (
-                <button
-                  key={section.id}
-                  id={`settings-tab-${section.id}`}
-                  role="tab"
-                  aria-selected={selected}
-                  aria-controls="settings-tabpanel"
-                  onClick={() => setActiveTab(section.id)}
-                  className="settings-tab flex min-h-[44px] shrink-0 items-center gap-2 px-3 font-display text-[14px] sm:w-full sm:text-[13px]"
-                >
-                  <section.icon className="h-4 w-4 shrink-0" strokeWidth={2} />
-                  <span className="truncate">{section.title}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Active tab's rows, grouped under small eyebrow sub-headers where
-              the config declares groups. Fixed height (viewport-aware) so
-              switching tabs doesn't resize the slab; scrolls when a tab
-              outgrows it. Native selects escape no container, so nothing
-              clips. */}
-          <div
-            role="tabpanel"
-            id="settings-tabpanel"
-            aria-labelledby={`settings-tab-${activeSection.id}`}
-            className="h-[min(32rem,60dvh)] min-w-0 flex-1 overflow-y-auto overflow-x-hidden px-4 py-2 sm:px-5"
-          >
-            {activeSection.rows.map((row, i) => {
-              const prevGroup = activeSection.rows[i - 1]?.group;
-              const opensGroup = row.group != null && row.group !== prevGroup;
-              return (
-                <Fragment key={row.id}>
-                  {opensGroup && (
-                    <div className={"flex items-center gap-2.5 pb-1 " + (i === 0 ? "pt-2.5" : "pt-4")}>
-                      <span className="eyebrow">{row.group}</span>
-                      <span aria-hidden className="h-px flex-1 bg-[color:var(--edge)]" />
-                    </div>
-                  )}
-                  <div className={!opensGroup && i > 0 ? "border-t border-[color:var(--edge)]" : ""}>
-                    <SettingRow
-                      label={row.label}
-                      hint={row.hint}
-                      stacked={isStacked(row.control)}
-                      grow={row.control.kind === "slider"}
-                      control={renderControl(row.control, row.label)}
+            <ul className="flex flex-col gap-0.5">
+              {SECTIONS.map((section) => (
+                <li key={section.id}>
+                  <button
+                    onClick={() => setView(section.id)}
+                    aria-current={activeSection?.id === section.id || undefined}
+                    className="settings-tab flex min-h-[44px] w-full items-center gap-2.5 px-2.5 py-2 text-left text-[13px]"
+                  >
+                    <section.icon className="h-4 w-4 shrink-0" strokeWidth={2} />
+                    <span className="min-w-0 flex-1 truncate">{section.title}</span>
+                    <ChevronRight
+                      aria-hidden
+                      className="h-3.5 w-3.5 shrink-0 text-parchment-500 sm:hidden"
                     />
-                  </div>
-                </Fragment>
-              );
-            })}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </nav>
+
+          {/* Content. Plain rows: label left, control right. */}
+          <div
+            className={
+              "min-w-0 flex-1 overflow-y-auto overflow-x-hidden px-4 py-2 sm:block sm:h-[min(32rem,60dvh)] sm:px-5 " +
+              (activeSection ? "block h-[min(32rem,60dvh)]" : "hidden")
+            }
+          >
+            {activeSection ? (
+              <>
+                {/* Sub-page head. The Back control is the phone's way out of a
+                    section; from sm up the section list is already on screen. */}
+                <div className="sticky top-0 z-10 -mx-4 flex items-center gap-2 border-b border-[color:var(--edge)] bg-inherit px-4 py-1.5 sm:-mx-5 sm:px-5">
+                  <button
+                    onClick={() => setView("home")}
+                    className="flex min-h-[36px] items-center gap-1 pr-2 text-[13px] text-parchment-400 transition hover:text-parchment sm:hidden"
+                  >
+                    <ChevronLeft aria-hidden className="h-4 w-4" />
+                    Back
+                  </button>
+                  <span className="flex items-center gap-2 font-display text-[14px] font-semibold text-parchment-100">
+                    <activeSection.icon className="h-4 w-4 shrink-0" strokeWidth={2} />
+                    {activeSection.title}
+                  </span>
+                </div>
+                {activeSection.rows.map((row, i) => {
+                  const prevGroup = activeSection.rows[i - 1]?.group;
+                  const opensGroup = row.group != null && row.group !== prevGroup;
+                  return (
+                    <Fragment key={row.id}>
+                      {opensGroup && (
+                        <div className={"flex items-center gap-2.5 pb-1 " + (i === 0 ? "pt-2.5" : "pt-4")}>
+                          <span className="text-[12px] font-semibold text-parchment-300">{row.group}</span>
+                          <span aria-hidden className="h-px flex-1 bg-[color:var(--edge)]" />
+                        </div>
+                      )}
+                      <div className={!opensGroup && i > 0 ? "border-t border-[color:var(--edge)]" : ""}>
+                        <SettingRow
+                          label={row.label}
+                          hint={row.hint}
+                          stacked={isStacked(row.control)}
+                          grow={row.control.kind === "slider"}
+                          control={renderControl(row.control, row.label)}
+                        />
+                      </div>
+                    </Fragment>
+                  );
+                })}
+              </>
+            ) : (
+              <p className="hidden pt-6 text-[13px] text-parchment-400 sm:block">
+                Pick a section on the left.
+              </p>
+            )}
           </div>
         </div>
       </div>
@@ -326,9 +328,9 @@ const pickerCardClass = (selected: boolean) =>
     ? "border-gold/80 bg-gold/10 shadow-[0_0_16px_-8px_rgb(var(--accent-hi-rgb)/0.55)]"
     : "border-[color:var(--edge)] hover:border-[color:var(--edge-strong)] hover:bg-white/[0.03]";
 
-/** Full-site theme picker: a swatch card per theme showing the page background,
- *  a floating panel chip, and the theme's glow color — so each mood previews at
- *  a glance before it's applied. */
+/** Site theme picker: three cards, dark / light / system. Each shows the page
+ *  background, a panel chip and the accent, so the choice previews at a glance
+ *  before it is applied. */
 function SiteThemePicker({
   value,
   onChange,
@@ -336,15 +338,80 @@ function SiteThemePicker({
   value: SiteTheme;
   onChange: (theme: SiteTheme) => void;
 }) {
+  const ids = Object.keys(SITE_THEMES) as SiteTheme[];
+
+  // Hover-to-preview: resting on a card for a beat repaints the whole page in
+  // that theme (applyUiPrefs with the hovered id over the real settings), and
+  // leaving reverts to what is actually saved. Fine pointers only, so touch
+  // scrolling through the grid never flashes themes; keyboard focus previews
+  // too. A real selection cancels any pending revert, because saveSettings
+  // will apply the picked theme through the normal path.
+  const previewTimer = useRef<number | null>(null);
+  const previewing = useRef(false);
+
+  const clearPreviewTimer = () => {
+    if (previewTimer.current != null) {
+      window.clearTimeout(previewTimer.current);
+      previewTimer.current = null;
+    }
+  };
+  const startPreview = (k: SiteTheme) => {
+    clearPreviewTimer();
+    previewTimer.current = window.setTimeout(() => {
+      previewTimer.current = null;
+      previewing.current = true;
+      applyUiPrefs({ ...loadSettings(), siteTheme: k });
+    }, 250);
+  };
+  const revertPreview = () => {
+    clearPreviewTimer();
+    if (previewing.current) {
+      previewing.current = false;
+      applyUiPrefs(loadSettings());
+    }
+  };
+  const canHoverPreview = () =>
+    !!window.matchMedia?.("(hover: hover) and (pointer: fine)").matches;
+  // Unmount (panel closed, section left) always reverts a live preview. Only
+  // refs and module functions are touched, so the cleanup needs no deps.
+  useEffect(
+    () => () => {
+      if (previewTimer.current != null) window.clearTimeout(previewTimer.current);
+      previewTimer.current = null;
+      if (previewing.current) {
+        previewing.current = false;
+        applyUiPrefs(loadSettings());
+      }
+    },
+    [],
+  );
+
+  const select = (k: SiteTheme) => {
+    clearPreviewTimer();
+    previewing.current = false; // the real save applies it; nothing to revert
+    onChange(k);
+  };
+
   return (
-    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-      {(Object.keys(SITE_THEMES) as SiteTheme[]).map((k) => {
+    <div className="grid grid-cols-3 gap-2">
+      {ids.map((k) => {
         const t = SITE_THEMES[k];
         const selected = value === k;
         return (
           <button
             key={k}
-            onClick={() => onChange(k)}
+            onClick={() => select(k)}
+            onPointerEnter={() => {
+              if (canHoverPreview()) startPreview(k);
+            }}
+            onPointerLeave={revertPreview}
+            onFocus={(e) => {
+              if (e.currentTarget.matches(":focus-visible")) startPreview(k);
+            }}
+            onBlur={revertPreview}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") revertPreview();
+            }}
             aria-pressed={selected}
             className={
               "group press relative overflow-hidden rounded-[1px] border text-left transition-colors " +
@@ -352,7 +419,7 @@ function SiteThemePicker({
             }
           >
             {selected && <SelectedGem />}
-            {/* Miniature page: background wash, a panel chip, a glow dot. */}
+            {/* Miniature page: background wash, a panel chip, an accent dot. */}
             <span
               className="relative block h-12 w-full"
               style={{ background: t.swatch.bg }}
@@ -364,7 +431,7 @@ function SiteThemePicker({
               />
               <span
                 className="absolute bottom-2 right-2 h-2 w-2 rounded-full"
-                style={{ background: t.swatch.glow, boxShadow: `0 0 8px 1px ${t.swatch.glow}` }}
+                style={{ background: t.swatch.glow }}
               />
             </span>
             <span className="block px-2 py-1.5">
@@ -557,15 +624,16 @@ function PickerDisclosure({
   );
 }
 
-/** The board-theme swatch grid — a live control that spans a full row. */
+/** The board-theme swatch grid, a live control that spans a full row. */
 function BoardThemePicker({
-  value,
+  settings,
   onChange,
 }: {
-  value: BoardTheme;
-  onChange: (theme: BoardTheme) => void;
+  settings: Settings;
+  onChange: (patch: Partial<Settings>) => void;
 }) {
-  const current = BOARD_THEMES[value];
+  const value = settings.boardTheme;
+  const current = BOARD_THEMES[value] ?? BOARD_THEMES.brown;
   return (
     <PickerDisclosure
       prompt="Choose board theme"
@@ -580,44 +648,45 @@ function BoardThemePicker({
       }
     >
       <div className="grid grid-cols-2 gap-2">
-      {(Object.keys(BOARD_THEMES) as BoardTheme[]).map((k) => {
-        const t = BOARD_THEMES[k];
-        const selected = value === k;
-        return (
-          <button
-            key={k}
-            onClick={() => onChange(k)}
-            aria-pressed={selected}
-            className={
-              "press relative flex min-h-[44px] items-center gap-2.5 rounded-[1px] border p-2 transition-colors " +
-              pickerCardClass(selected)
-            }
-          >
-            {selected && <SelectedGem />}
-            <span className="grid h-7 w-7 shrink-0 grid-cols-2 grid-rows-2 overflow-hidden rounded-sm">
-              <span style={{ background: t.light }} />
-              <span style={{ background: t.dark }} />
-              <span style={{ background: t.dark }} />
-              <span style={{ background: t.light }} />
-            </span>
-            <span className="font-display text-[13px] text-parchment">{t.label}</span>
-          </button>
-        );
-      })}
+        {(Object.keys(BOARD_THEMES) as BoardTheme[]).map((k) => {
+          const t = BOARD_THEMES[k];
+          const selected = value === k;
+          return (
+            <button
+              key={k}
+              onClick={() => onChange({ boardTheme: k })}
+              aria-pressed={selected}
+              className={
+                "press relative flex min-h-[44px] items-center gap-2.5 rounded-[1px] border p-2 transition-colors " +
+                pickerCardClass(selected)
+              }
+            >
+              {selected && <SelectedGem />}
+              <span className="grid h-7 w-7 shrink-0 grid-cols-2 grid-rows-2 overflow-hidden rounded-sm">
+                <span style={{ background: t.light }} />
+                <span style={{ background: t.dark }} />
+                <span style={{ background: t.dark }} />
+                <span style={{ background: t.light }} />
+              </span>
+              <span className="font-display text-[13px] text-parchment">{t.label}</span>
+            </button>
+          );
+        })}
       </div>
     </PickerDisclosure>
   );
 }
 
-/** The piece-set swatch grid — a live control that spans a full row. */
+/** The piece-set swatch grid, a live control that spans a full row. */
 function PieceThemePicker({
-  value,
+  settings,
   onChange,
 }: {
-  value: PieceTheme;
-  onChange: (theme: PieceTheme) => void;
+  settings: Settings;
+  onChange: (patch: Partial<Settings>) => void;
 }) {
-  const current = PIECE_THEMES[value];
+  const value = settings.pieceTheme;
+  const current = PIECE_THEMES[value] ?? PIECE_THEMES.lichessCburnett;
   return (
     <PickerDisclosure
       prompt="Choose piece set"
@@ -647,53 +716,53 @@ function PieceThemePicker({
       }
     >
       <div className="grid grid-cols-2 gap-2">
-      {(Object.keys(PIECE_THEMES) as PieceTheme[]).map((k) => {
-        const t = PIECE_THEMES[k];
-        const selected = value === k;
-        return (
-          <button
-            key={k}
-            onClick={() => onChange(k)}
-            aria-pressed={selected}
-            className={
-              "press relative flex min-h-[44px] items-center gap-2.5 rounded-[1px] border p-2 transition-colors " +
-              pickerCardClass(selected)
-            }
-          >
-            {selected && <SelectedGem />}
-            <span
-              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-sm bg-ink-700"
-              style={
-                {
-                  "--piece-w-fill": t.wFill,
-                  "--piece-w-stroke": t.wStroke,
-                  "--piece-b-fill": t.bFill,
-                  "--piece-b-stroke": t.bStroke,
-                } as CSSProperties
+        {(Object.keys(PIECE_THEMES) as PieceTheme[]).map((k) => {
+          const t = PIECE_THEMES[k];
+          const selected = value === k;
+          return (
+            <button
+              key={k}
+              onClick={() => onChange({ pieceTheme: k })}
+              aria-pressed={selected}
+              className={
+                "press relative flex min-h-[44px] items-center gap-2.5 rounded-[1px] border p-2 transition-colors " +
+                pickerCardClass(selected)
               }
             >
-              {t.assetSet ? (
-                <>
-                  <span
-                    className="h-4 w-4 bg-contain bg-center bg-no-repeat"
-                    style={{ backgroundImage: `url("/piece/lichess/${t.assetSet}/wN.svg")` }}
-                  />
-                  <span
-                    className="-ml-1 h-4 w-4 bg-contain bg-center bg-no-repeat"
-                    style={{ backgroundImage: `url("/piece/lichess/${t.assetSet}/bN.svg")` }}
-                  />
-                </>
-              ) : (
-                <>
-                  <Piece type="n" color="w" size={16} />
-                  <Piece type="n" color="b" size={16} className="-ml-1" />
-                </>
-              )}
-            </span>
-            <span className="font-display text-[13px] text-parchment">{t.label}</span>
-          </button>
-        );
-      })}
+              {selected && <SelectedGem />}
+              <span
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-sm bg-ink-700"
+                style={
+                  {
+                    "--piece-w-fill": t.wFill,
+                    "--piece-w-stroke": t.wStroke,
+                    "--piece-b-fill": t.bFill,
+                    "--piece-b-stroke": t.bStroke,
+                  } as CSSProperties
+                }
+              >
+                {t.assetSet ? (
+                  <>
+                    <span
+                      className="h-4 w-4 bg-contain bg-center bg-no-repeat"
+                      style={{ backgroundImage: `url("/piece/lichess/${t.assetSet}/wN.svg")` }}
+                    />
+                    <span
+                      className="-ml-1 h-4 w-4 bg-contain bg-center bg-no-repeat"
+                      style={{ backgroundImage: `url("/piece/lichess/${t.assetSet}/bN.svg")` }}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <Piece type="n" color="w" size={16} />
+                    <Piece type="n" color="b" size={16} className="-ml-1" />
+                  </>
+                )}
+              </span>
+              <span className="font-display text-[13px] text-parchment">{t.label}</span>
+            </button>
+          );
+        })}
       </div>
     </PickerDisclosure>
   );
@@ -709,12 +778,11 @@ function AccountSettings() {
           <div className="text-[13px] font-medium text-parchment-100">Profile</div>
           <p className="text-[12px] text-parchment-400">Avatar, bio, and game history</p>
         </div>
-        <Link
+        <LinkButton tone="ghost"
           href="/profile"
-          className="btn-ghost press min-h-[36px] shrink-0 rounded-[1px] px-3 py-1.5 font-display text-[13px]"
-        >
+          className="shrink-0 px-3 py-1.5 text-[13px]">
           Edit profile
-        </Link>
+        </LinkButton>
       </div>
       {[
         { label: "Change username", hint: "Not available yet" },
@@ -736,12 +804,11 @@ function AccountSettings() {
         </div>
       ))}
       <form action="/api/auth/logout" method="post">
-        <button
+        <Button tone="danger"
           type="submit"
-          className="btn-cursed press min-h-[44px] w-full rounded-[1px] px-3 py-2 font-display text-[13px] font-semibold"
-        >
+          className="w-full px-3 py-2 text-[13px] font-semibold">
           Log out
-        </button>
+        </Button>
       </form>
     </div>
   );

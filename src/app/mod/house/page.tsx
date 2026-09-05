@@ -13,6 +13,7 @@ import { useEffect, useRef, useState } from "react";
 import { AccountUser, fetchMe } from "@/lib/authClient";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { fileToDataUrl } from "@/lib/imageUpload";
+import { Button } from "@/components/ui/Button";
 
 type PersonaView = {
   userId: string;
@@ -194,7 +195,7 @@ function PersonaRow({
         )}
         {edited && (
           <span
-            className="smallcaps text-[10px] px-2 py-0.5 rounded-[1px] border border-gold/40 text-gold-leaf"
+            className="text-[10px] px-2 py-0.5 rounded-[1px] border border-gold/40 text-gold-leaf"
             title={`Default: ${persona.defaults.username}`}
           >
             edited
@@ -205,23 +206,21 @@ function PersonaRow({
         </span>
         {canEdit && (
           <span className="flex items-center gap-2 text-sm">
-            <button
-              type="button"
+            <Button tone="ghost"
+             
               disabled={saving || !dirty}
               onClick={saveEdits}
-              className="px-3 py-1 rounded-sm btn-ghost text-gold-leaf disabled:opacity-40"
-            >
+              className="px-3 py-1 text-gold-leaf">
               {saving ? "Saving…" : "Save"}
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button tone="ghost"
+             
               disabled={saving || !edited}
               onClick={() => post({ reset: true })}
               title="Restore the baked username and avatar"
-              className="px-3 py-1 rounded-sm btn-ghost disabled:opacity-40"
-            >
+              className="px-3 py-1">
               Reset
-            </button>
+            </Button>
           </span>
         )}
       </div>
@@ -251,14 +250,13 @@ function PersonaRow({
               className="hidden"
               onChange={(e) => onFile(e.target.files?.[0])}
             />
-            <button
-              type="button"
+            <Button tone="ghost"
+             
               disabled={saving}
               onClick={() => fileRef.current?.click()}
-              className="px-3 py-1 rounded-sm btn-ghost text-gold-leaf disabled:opacity-40"
-            >
+              className="px-3 py-1 text-gold-leaf">
               Upload image…
-            </button>
+            </Button>
             <span className="text-[11px] text-parchment-500">PNG, JPEG, or WebP. Max 1 MB, 1024px.</span>
           </div>
           <div className="flex flex-wrap gap-1.5">

@@ -23,6 +23,7 @@ import { useArchiveReplay } from "@/lib/spectate/useArchiveReplay";
 import { useFeaturedTune } from "@/lib/spectate/useFeaturedTune";
 import type { DraftMode } from "@/engine/buff";
 import type { Color } from "@/engine/types";
+import { LinkButton } from "@/components/ui/Button";
 
 // Lichess-TV-style watch page: the top live game streams full-size, with the
 // other running games listed alongside. Picking a game pins it; otherwise the
@@ -41,6 +42,9 @@ function clockLabel(timeSec: number, incrementSec: number): string {
 // Live-game list ordering: one fixed default, most watched first (ties broken
 // by the stronger board). The first game is the featured board (unless the
 // viewer pinned one).
+// How many live games the rail shows before folding behind "Show all".
+const TV_LIST_FOLD = 12;
+
 function orderLiveGames(games: MPLobbyGame[]): MPLobbyGame[] {
   const best = (g: MPLobbyGame) =>
     Math.max(g.players.w.rating ?? 0, g.players.b.rating ?? 0);
@@ -132,6 +136,10 @@ function TvView() {
   const { lobby, failed: lobbyFailed, reload: reloadLobby } = useLobbySnapshotStatus(5000);
   const [pinnedId, setPinnedId] = useState<string | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
+  // The live-game rail folds after a screenful: playtest feedback was that a
+  // busy night made the page scroll "like 100 pages". Show-all is per-visit
+  // and resets on a channel switch along with the pin.
+  const [showAllGames, setShowAllGames] = useState(false);
 
   // Switching channels (All / Nerf / Buff) clears the pin so nothing from the
   // other pool lingers. The featured-tune hook resets its own selection + retry
@@ -142,6 +150,7 @@ function TvView() {
   if (prevMode !== modeFilter) {
     setPrevMode(modeFilter);
     setPinnedId(null);
+    setShowAllGames(false);
   }
 
   const liveGames = useMemo(() => {
@@ -378,18 +387,16 @@ function TvView() {
             Start one and it shows up here for everyone to watch.
           </p>
           <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
-            <Link
+            <LinkButton tone="leaf"
               href="/lobby"
-              className="press btn-leaf inline-flex min-h-[44px] items-center rounded-sm px-4 py-2 font-display text-[13px] font-semibold sm:min-h-[36px]"
-            >
+              className="px-4 py-2 text-[13px] font-semibold sm:min-h-[36px]">
               Find a match
-            </Link>
-            <Link
+            </LinkButton>
+            <LinkButton tone="ghost"
               href="/play"
-              className="press btn-ghost inline-flex min-h-[44px] items-center rounded-sm px-4 py-2 font-display text-[13px] sm:min-h-[36px]"
-            >
+              className="px-4 py-2 text-[13px] sm:min-h-[36px]">
               Play a bot
-            </Link>
+            </LinkButton>
           </div>
         </div>
       </div>
@@ -506,7 +513,7 @@ function TvView() {
             {/* Live game list */}
             <div className="plate">
               <div className="flex items-center justify-between border-b border-[color:var(--edge)] px-3 py-2.5">
-                <span className="eyebrow text-parchment-400">Live games</span>
+                <span className="text-parchment-400">Live games</span>
                 {liveGames.length > 0 && (
                   <span className="font-mono text-[12px] tabular-nums text-parchment-400">
                     {liveGames.length}
@@ -544,7 +551,7 @@ function TvView() {
                 </p>
               ) : (
                 <ul className="divide-y divide-[color:var(--edge)]">
-                  {liveGames.map((g: MPLobbyGame) => {
+                  {(showAllGames ? liveGames : liveGames.slice(0, TV_LIST_FOLD)).map((g: MPLobbyGame) => {
                     const selected = g.id === shownId;
                     return (
                       <li key={g.id} className="relative">
@@ -594,6 +601,15 @@ function TvView() {
                     );
                   })}
                 </ul>
+              )}
+              {lobby && !showAllGames && liveGames.length > TV_LIST_FOLD && (
+                <button
+                  type="button"
+                  onClick={() => setShowAllGames(true)}
+                  className="block w-full border-t border-[color:var(--edge)] px-3 py-2.5 text-center text-[13px] font-medium text-parchment-300 transition-colors hover:bg-[var(--surface-hover)] hover:text-parchment-100"
+                >
+                  Show all {liveGames.length} games
+                </button>
               )}
             </div>
           </aside>

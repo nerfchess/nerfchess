@@ -2266,7 +2266,7 @@ const T8: Buff[] = [
   ),
   H8(
     { id: "hx4_kings_ransom", name: "King's Ransom", description: "For your opponent's next 4 turns, every time their king moves the ransom is collected: 2 of their other pieces, chosen at random, are frozen for 1 of their turns. The very first piece the ransom would seize slips free.",
-      tip: "It taxes castling and king walks, so it bites hardest on an uncastled king.", flavor: "The crown travels. The treasury pays.", icon: "Gem", fx: { motif: "slow", pieces: "all" } },
+      tip: "It taxes castling and king walks, so it bites hardest on an uncastled king.", flavor: "The crown travels. The treasury pays.", icon: "Gem", fx: { motif: "slow", pieces: "all", king: true } },
     onTheirMove(4, (move, api, inst) => {
       if (move.piece !== "k") return;
       const pool = mySquares(api.board, api.opp).filter(
@@ -2309,7 +2309,7 @@ const T8: Buff[] = [
     }),
   ),
   H8(
-    { id: "hx4_crown_of_lead", name: "Crown of Lead", description: "Their king is crowned with lead and wears the dunce cap for 9 of their turns. Under its weight, for their next 3 turns no piece standing adjacent to their king may capture.", flavor: "It was gold last week. Funny thing, alchemy.", icon: "Crown", fx: { motif: "muzzle", pieces: "all" } },
+    { id: "hx4_crown_of_lead", name: "Crown of Lead", description: "Their king is crowned with lead and wears the dunce cap for 9 of their turns. Under its weight, for their next 3 turns no piece standing adjacent to their king may capture.", flavor: "It was gold last week. Funny thing, alchemy.", icon: "Crown", fx: { motif: "muzzle", pieces: "all", king: true } },
     {
       kind: "passive",
       init: (inst, api) => {

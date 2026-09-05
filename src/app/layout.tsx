@@ -1,36 +1,52 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Noto_Sans } from "next/font/google";
+import { JetBrains_Mono, Noto_Sans } from "next/font/google";
 import { AchievementToast } from "@/components/AchievementToast";
 import { SettingsBootstrap } from "@/components/SettingsBootstrap";
 import "./globals.css";
+import "./zen.css";
 
-// Body text is Noto Sans, the same UI font Lichess ships. next/font self-hosts
-// it at build time and exposes it as --font-body, which globals.css and the
-// Tailwind font-body family already read.
+// ---------------------------------------------------------------------------
+// Typefaces.
+//
+// Lichess sets the whole interface in Noto Sans, and so do we: one face for
+// headings and body alike, with weight doing the hierarchy. JetBrains Mono
+// carries the tabular chrome (clocks, ratings, ids, board coordinates).
+//
+// Each face still gets its OWN variable (--f-*) rather than being wired
+// straight to --font-display / --font-body. The roles live in :root in
+// globals.css, so a component asks for a role and never for a face.
+// ---------------------------------------------------------------------------
+
 const notoSans = Noto_Sans({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   display: "swap",
-  variable: "--font-body",
+  variable: "--f-noto",
 });
 
-// Headings use Inter, also self-hosted via next/font: the old external
-// Google Fonts stylesheet was a render-blocking request on every first paint.
-const inter = Inter({
+// Clocks, ratings, ids and board coordinates. --font-mono used to be a system
+// stack ("Cascadia Mono", "JetBrains Mono", Consolas), and none of those ship
+// on Linux or on phones, so tabular figures fell through to generic monospace
+// and the clock's digits stopped lining up. Self-hosted, the face is real
+// everywhere.
+const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500", "600"],
   display: "swap",
-  variable: "--font-display",
+  variable: "--f-mono",
 });
+
+/** Every face variable, for the <html> class list. */
+const FONT_VARS = [notoSans, jetbrainsMono].map((f) => f.variable).join(" ");
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://nerfchess.com"),
   title: {
-    default: "Nerf Chess · chess with secret rules and power-up cards",
+    default: "Nerf Chess · chess with power-ups, a free online chess variant",
     template: "%s · Nerf Chess",
   },
   description:
-    "Nerf Chess is a free online chess variant with two modes: Nerf (every player carries a secret handicap, in the spirit of drawback chess) and Buff (draft power-up cards every 5 moves). Win by capturing the king. Play in your browser, no download.",
+    "Nerf Chess is chess with power-ups: a free online chess variant. Draft power-up cards every 5 moves in Buff mode, or carry a secret handicap and hex your opponent in Nerf mode (in the spirit of drawback chess). Win by capturing the king. Play in your browser, no download.",
   keywords: [
     "nerf chess",
     "drawback chess",
@@ -59,21 +75,22 @@ export const metadata: Metadata = {
     ],
     apple: [{ url: "/apple-icon-180.png", type: "image/png", sizes: "180x180" }],
   },
+  // No images here on purpose: the file-based src/app/opengraph-image.tsx
+  // supplies a proper 1200x630 preview site-wide, and the codex card routes
+  // each render their own per-card image. Twitter falls back to og:image.
   openGraph: {
     type: "website",
     siteName: "Nerf Chess",
     url: "https://nerfchess.com",
-    title: "Nerf Chess · chess with secret rules and power-up cards",
+    title: "Nerf Chess · chess with power-ups, a free online chess variant",
     description:
-      "A free online chess variant. Secret handicaps in Nerf mode, drafted power-up cards in Buff mode, and the game only ends when a king is captured.",
-    images: [{ url: "/icon-512.png", width: 512, height: 512 }],
+      "Chess with power-ups: a free online chess variant. Draft power-up cards every 5 moves in Buff mode, take a secret handicap in Nerf mode, and win by capturing the king.",
   },
   twitter: {
-    card: "summary",
-    title: "Nerf Chess · chess with secret rules and power-up cards",
+    card: "summary_large_image",
+    title: "Nerf Chess · chess with power-ups, a free online chess variant",
     description:
-      "A free online chess variant. Secret handicaps in Nerf mode, drafted power-up cards in Buff mode, and the game only ends when a king is captured.",
-    images: ["/icon-512.png"],
+      "Chess with power-ups: a free online chess variant. Draft power-up cards every 5 moves in Buff mode, take a secret handicap in Nerf mode, and win by capturing the king.",
   },
 };
 
@@ -160,17 +177,20 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    // data-theme matches DEFAULT_SETTINGS.siteTheme so first paint is already
-    // the default (Crimson) instead of flashing classic; SettingsBootstrap then
-    // applies whatever the user actually chose.
-    <html lang="en" data-theme="crimson">
+    // data-theme matches DEFAULT_SETTINGS.siteTheme ("dark") so first paint is
+    // already the default; SettingsBootstrap then applies whatever the user
+    // actually chose.
+    // The face variables live on <html>, not <body>: --font-display and
+    // --font-body are roles resolved in :root, and a value set on <body> would
+    // beat them for everything inside it.
+    <html lang="en" data-theme="dark" className={FONT_VARS}>
       <head>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
         />
       </head>
-      <body className={`no-tap-highlight font-body ${notoSans.variable} ${inter.variable}`}>
+      <body className="no-tap-highlight font-body">
         <SettingsBootstrap />
         {children}
         {/* Site-wide, desktop-only unlock popups (bottom right). */}

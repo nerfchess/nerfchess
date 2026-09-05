@@ -144,7 +144,7 @@ function PrevNextNav({
         <Link href={prev.path} className={cell}>
           <ChevronLeft size={16} aria-hidden className="shrink-0 text-parchment-400" />
           <span className="min-w-0">
-            <span className="block smallcaps text-[10px] text-parchment-400">Previous {noun}</span>
+            <span className="block text-[10px] text-parchment-400">Previous {noun}</span>
             <span className="block truncate font-display text-[14px] text-parchment-100">{prev.name}</span>
           </span>
         </Link>
@@ -154,7 +154,7 @@ function PrevNextNav({
       {next ? (
         <Link href={next.path} className={cell + " justify-end text-right sm:col-start-2"}>
           <span className="min-w-0">
-            <span className="block smallcaps text-[10px] text-parchment-400">Next {noun}</span>
+            <span className="block text-[10px] text-parchment-400">Next {noun}</span>
             <span className="block truncate font-display text-[14px] text-parchment-100">{next.name}</span>
           </span>
           <ChevronRight size={16} aria-hidden className="shrink-0 text-parchment-400" />
@@ -166,7 +166,7 @@ function PrevNextNav({
 
 function TypeBadge({ type }: { type: CardType }) {
   return (
-    <span className="inline-flex items-center rounded-sm border border-white/15 px-2 py-0.5 text-[11px] smallcaps text-parchment-300">
+    <span className="inline-flex items-center rounded-sm border border-white/15 px-2 py-0.5 text-[11px] text-parchment-300">
       {type}
     </span>
   );
@@ -176,7 +176,7 @@ function TypeBadge({ type }: { type: CardType }) {
 function GlanceRow({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-4">
-      <dt className="smallcaps text-[11px] text-parchment-400 sm:w-32 sm:shrink-0 sm:pt-0.5">{label}</dt>
+      <dt className="text-[11px] text-parchment-400 sm:w-32 sm:shrink-0 sm:pt-0.5">{label}</dt>
       <dd className="text-[15px] text-parchment-100">{children}</dd>
     </div>
   );
@@ -201,17 +201,42 @@ function formatHistoryDate(iso: string): string {
   return `${MONTHS[(m ?? 1) - 1]} ${d}, ${y}`;
 }
 
+// A plate section that opens on demand. Native <details>, so the content is
+// still server-rendered and crawlable (the SEO reason this page exists) while
+// the default view stays short — playtest feedback was that the card page
+// buried the rule under reference material.
+function DisclosureSection({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <details className="plate group">
+      <summary className="cursor-pointer list-none p-6 outline-none focus-visible:text-coral sm:p-7 [&::-webkit-details-marker]:hidden">
+        <span className="flex items-center justify-between gap-3">
+          <span className="display-3 text-parchment">{title}</span>
+          <span
+            aria-hidden
+            className="shrink-0 text-parchment-400 motion-safe:transition-transform group-open:rotate-90"
+          >
+            &#9656;
+          </span>
+        </span>
+      </summary>
+      <div className="space-y-3 px-6 pb-6 text-[15px] leading-relaxed text-parchment-200/90 sm:px-7 sm:pb-7">
+        {children}
+      </div>
+    </details>
+  );
+}
+
 // Editorial timeline (introduction wave + curated balance notes), rendered on
 // the server so every card page ships unique crawlable history prose. Runtime
 // moderator changes are appended client-side by CardInsights.
 function HistoryTimeline({ kind, card }: { kind: "buff" | "nerf"; card: Buff | Nerf }) {
   const events = historyFor(kind, card);
   return (
-    <InfoSection title="History">
+    <DisclosureSection title="History">
       <ol className="space-y-3">
         {events.map((e, i) => (
           <li key={i} className="flex flex-col gap-0.5 sm:flex-row sm:gap-4">
-            <span className="smallcaps text-[11px] text-parchment-400 sm:w-32 sm:shrink-0 sm:pt-0.5">
+            <span className="text-[11px] text-parchment-400 sm:w-32 sm:shrink-0 sm:pt-0.5">
               {formatHistoryDate(e.date)}
             </span>
             <span className="text-[15px] text-parchment-100">
@@ -221,7 +246,7 @@ function HistoryTimeline({ kind, card }: { kind: "buff" | "nerf"; card: Buff | N
           </li>
         ))}
       </ol>
-    </InfoSection>
+    </DisclosureSection>
   );
 }
 
@@ -248,25 +273,6 @@ function RelatedGrid({ title, cards }: { title: string; cards: RelatedCard[] }) 
         ))}
       </div>
     </InfoSection>
-  );
-}
-
-function CardCtas({ guideHref, guideLabel }: { guideHref: string; guideLabel: string }) {
-  return (
-    <div className="pt-4">
-      <div className="smallcaps text-[11px] text-parchment-400">keep exploring</div>
-      <div className="mt-3 flex flex-wrap gap-3">
-        <Link href="/codex" className="rounded-sm btn-ghost px-4 py-2 font-display text-sm">
-          Browse the full codex
-        </Link>
-        <Link href={guideHref} className="rounded-sm btn-ghost px-4 py-2 font-display text-sm">
-          {guideLabel}
-        </Link>
-        <Link href="/play" className="rounded-sm btn-leaf px-4 py-2 font-display text-sm">
-          Play a game
-        </Link>
-      </div>
-    </div>
   );
 }
 
@@ -317,7 +323,7 @@ export function BuffDetail({ buff, extra }: { buff: Buff; extra?: ReactNode }) {
         <p>As a {cat.label.toLowerCase()} card, it {cat.blurb}</p>
         {buff.tip && (
           <p>
-            <span className="smallcaps text-parchment-400">Tip</span>{" "}
+            <span className="text-parchment-400">Tip</span>{" "}
             <GlossaryText text={buff.tip} />
           </p>
         )}
@@ -329,11 +335,6 @@ export function BuffDetail({ buff, extra }: { buff: Buff; extra?: ReactNode }) {
       <RelatedGrid title="Related cards" cards={relatedBuffs(buff)} />
 
       <PrevNextNav prev={prev} next={next} noun={type.toLowerCase()} />
-
-      <CardCtas
-        guideHref={isHex || where === "Nerf mode" ? "/guide/nerf-mode" : "/guide/buff-mode"}
-        guideLabel={isHex || where === "Nerf mode" ? "How Nerf mode works" : "How Buff mode works"}
-      />
     </InfoPageLayout>
   );
 }
@@ -382,7 +383,7 @@ export function NerfDetail({ nerf, extra }: { nerf: Nerf; extra?: ReactNode }) {
         </p>
         {nerf.tip && (
           <p>
-            <span className="smallcaps text-parchment-400">Tip</span>{" "}
+            <span className="text-parchment-400">Tip</span>{" "}
             <GlossaryText text={nerf.tip} />
           </p>
         )}
@@ -394,8 +395,6 @@ export function NerfDetail({ nerf, extra }: { nerf: Nerf; extra?: ReactNode }) {
       <RelatedGrid title="Related nerfs" cards={relatedNerfs(nerf)} />
 
       <PrevNextNav prev={prev} next={next} noun="nerf" />
-
-      <CardCtas guideHref="/guide/nerf-mode" guideLabel="How Nerf mode works" />
     </InfoPageLayout>
   );
 }

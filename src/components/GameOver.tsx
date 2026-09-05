@@ -18,6 +18,9 @@ import { haptic } from "@/lib/haptics";
 import { ThumbsDown, ThumbsUp } from "lucide-react";
 
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
+import { GlossaryText } from "@/components/GlossaryText";
+import { Button } from "@/components/ui/Button";
+import { LinkButton } from "@/components/ui/Button";
 
 // A single card marker on the match timeline. `ply` is the half-move the card
 // landed on; `cardId`/`tier` name it for the hover label and tier tint. Callers
@@ -81,8 +84,10 @@ interface Props {
   moves?: Move[];
   // Card-use markers for the match timeline, one per played card (see above).
   cardEvents?: TimelineCardEvent[];
-  // Accepted for caller compatibility; the clip entry point lives in the game
-  // view's actions ("Clip last moves"), not on the result screen.
+  // Opens the clip modal (auto reel mode). Rendered as a prominent "Share
+  // reel" action on the result screen: the reveal is the emotional peak, so
+  // that is where the reel entry belongs. Omit it (e.g. when the last plies
+  // can't be reconstructed) and the button simply doesn't render.
   onClip?: () => void;
   playerNames?: Record<Color, string>;
   startedAt?: number;
@@ -226,10 +231,14 @@ function DraftedCardRow({
       <div className="flex items-center gap-2">
         <span
           className={`shrink-0 border px-1 font-display text-[11px] font-bold leading-none tier-bg-${buff.tier} tier-${buff.tier}`}
+          // title stays as the desktop hover gloss; the aria-label carries the
+          // same meaning for screen readers (title alone is unreliable there,
+          // and never appears on touch — where the roman numeral plus the full
+          // rule text below already tell the story).
           title={`Tier ${buff.tier}: ${TIER_LABEL[buff.tier]}`}
-          aria-hidden
+          aria-label={`Tier ${buff.tier}: ${TIER_LABEL[buff.tier]}`}
         >
-          {TIER_ROMAN[buff.tier]}
+          <span aria-hidden>{TIER_ROMAN[buff.tier]}</span>
         </span>
         <span
           className={
@@ -252,7 +261,9 @@ function DraftedCardRow({
           row so the name line above keeps its full width in narrow columns. */}
       <div className="mt-0.5 flex items-start gap-2">
         <p className="min-w-0 flex-1 text-left text-xs leading-snug text-parchment-300">
-          {def.description}
+          {/* Glossary terms in the rule text get the tap/hover definition
+              popover: this end screen is where new players most need them. */}
+          <GlossaryText text={def.description} />
         </p>
         {votable && (
           <span className="shrink-0">
@@ -298,7 +309,7 @@ function DraftedGroup({
   return (
     <div className="border border-[color:var(--edge)] bg-ink-900/40 p-3 text-left">
       <div className="flex items-baseline justify-between gap-2">
-        <span className="eyebrow">{label}</span>
+        <span>{label}</span>
         {hint && <span className="shrink-0 text-xs text-parchment-400">{hint}</span>}
       </div>
       <ul className="mt-1.5 divide-y divide-[color:var(--edge)]">
@@ -316,7 +327,7 @@ function RuleReveal({ label, nerf, children }: { label: string; nerf: Nerf; chil
   return (
     <div className={`border p-3 text-left tier-bg-${nerf.tier}`}>
       <div className="flex items-center justify-between gap-2">
-        <span className="eyebrow">{label}</span>
+        <span>{label}</span>
         <span
           className={`inline-flex items-center gap-1 border px-1.5 py-0.5 font-display text-[11px] font-bold leading-none tier-bg-${nerf.tier} tier-${nerf.tier}`}
           title={`Difficulty ${nerf.tier}: ${TIER_LABEL[nerf.tier]}`}
@@ -328,9 +339,54 @@ function RuleReveal({ label, nerf, children }: { label: string; nerf: Nerf; chil
       <div className={`mt-1 font-display text-base font-semibold leading-tight tier-${nerf.tier}`}>
         {nerf.name}
       </div>
-      <p className="mt-1 text-xs leading-snug text-parchment-200">{nerf.description}</p>
+      <p className="mt-1 text-xs leading-snug text-parchment-200">
+        {/* Glossary terms in the revealed rule get the tap/hover definition
+            popover, so the reveal explains itself to new players. */}
+        <GlossaryText text={nerf.description} />
+      </p>
       {children}
     </div>
+  );
+}
+
+// A folded summary section on the game-over panel. Playtest feedback: the end
+// screen printed every rule and drafted card in full and grew "way too large"
+// — the verdict and rating drowned. Each reference block now sits behind a
+// native <details> row that names itself and its count; one tap opens the full
+// content (which still renders complete rule text — the no-truncation rule
+// holds INSIDE the fold).
+function SummaryFold({
+  label,
+  count,
+  hint,
+  children,
+}: {
+  label: string;
+  count?: number;
+  hint?: string;
+  children: ReactNode;
+}) {
+  return (
+    <details className="group mt-5 border border-[color:var(--edge)] bg-ink-900/40 text-left">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-3 py-2.5 outline-none focus-visible:text-gold-leaf [&::-webkit-details-marker]:hidden">
+        <span className="flex min-w-0 items-baseline gap-2">
+          <span>{label}</span>
+          {count != null && (
+            <span className="font-mono text-[11px] tabular-nums text-parchment-400">{count}</span>
+          )}
+        </span>
+        <span className="flex shrink-0 items-center gap-2">
+          {hint && <span className="text-xs text-parchment-400">{hint}</span>}
+          <span
+            aria-hidden
+            className="text-parchment-400 motion-safe:transition-transform group-open:rotate-90"
+          >
+            &#9656;
+          </span>
+        </span>
+      </summary>
+      <div className="px-3 pb-3">{children}</div>
+    </details>
   );
 }
 
@@ -364,7 +420,7 @@ function MatchTimeline({
   return (
     <section className="mt-5 text-left" aria-label="Match timeline">
       <div className="flex items-baseline justify-between gap-2">
-        <span className="eyebrow">Match timeline</span>
+        <span>Match timeline</span>
         <span className="text-xs text-parchment-400 tabular">{total} plies</span>
       </div>
       <div className="relative mt-2 h-8">
@@ -399,7 +455,7 @@ function MatchTimeline({
               (e.tier
                 ? `tier-bg-${e.tier} tier-${e.tier} border-current`
                 : "border-gold/60 bg-gold/30 text-gold-leaf") +
-              (active === i ? " scale-125 shadow-leaf" : "")
+              (active === i ? " scale-125" : "")
             }
             style={{ left: `${(e.ply / total) * 100}%` }}
           />
@@ -415,7 +471,7 @@ function MatchTimeline({
         {activeEvent
           ? `${activeEvent.def?.name ?? "Card"} · ply ${activeEvent.ply}`
           : events.length > 0
-          ? "Hover a marker to see the card played there."
+          ? "Hover or tap a marker to see the card played there."
           : cardEvents
           ? "No cards landed on the board in this game."
           : "Moves only: this game has no card record."}
@@ -479,6 +535,12 @@ const pgnIcon = (
     <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
   </svg>
 );
+const reelIcon = (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <polygon points="23 7 16 12 23 17 23 7" />
+    <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+  </svg>
+);
 
 export function GameOver({
   result,
@@ -496,6 +558,7 @@ export function GameOver({
   onCancelRematch,
   opponentHidden = false,
   moves,
+  onClip,
   cardEvents,
   playerNames,
   startedAt,
@@ -751,7 +814,7 @@ export function GameOver({
         initial={reduceMotion ? { opacity: 0 } : { y: 16, scale: 0.96, opacity: 0 }}
         animate={reduceMotion ? { opacity: 1 } : { y: 0, scale: 1, opacity: 1 }}
         transition={{ type: "spring", stiffness: 320, damping: 26 }}
-        className="dgn-slab dgn-rivets gilt relative w-[min(94vw,30rem)] max-h-[calc(100dvh-3rem)] overflow-y-auto p-6 text-center shadow-2xl sm:p-7"
+        className="plate plate-raised relative w-[min(94vw,30rem)] max-h-[calc(100dvh-3rem)] overflow-y-auto p-6 text-center sm:p-7"
         onPointerDown={(event) => event.stopPropagation()}
       >
         <span className="card-corner tl" />
@@ -778,11 +841,11 @@ export function GameOver({
         )}
 
         <div className="flex items-center justify-center gap-2">
-          <p className="eyebrow">Game over</p>
+          <p>Game over</p>
           {modeChip && (
             <span
               className={
-                "inline-flex items-center rounded-[1px] border px-2 py-0.5 text-[11px] leading-none smallcaps " +
+                "inline-flex items-center rounded-[1px] border px-2 py-0.5 text-[11px] leading-none " +
                 (mode === "nerf"
                   ? "border-mode-nerf/40 bg-mode-nerf/10 text-mode-nerfGlow"
                   : "border-mode-buff/40 bg-mode-buff/10 text-mode-buffGlow")
@@ -842,7 +905,12 @@ export function GameOver({
         )}
 
         {(myNerf || opponentNerf) && (
-          <div className="mt-5 grid gap-2 sm:grid-cols-2">
+          <SummaryFold
+            label="Rules this game"
+            count={(myNerf ? 1 : 0) + (opponentNerf ? 1 : 0)}
+            hint={!spectator && opponentNerf && !oppRevealed ? "opponent's still sealed" : undefined}
+          >
+          <div className="grid gap-2 sm:grid-cols-2">
             {myNerf && (
               <RuleReveal
                 label={spectator ? `${names[myColor]} (${sideLabel(myColor)})` : "Your rule"}
@@ -875,42 +943,49 @@ export function GameOver({
                 </button>
               ))}
           </div>
+          </SummaryFold>
         )}
 
-        {/* Cards drafted: a distinct grouped summary (compact tier chips with
-            spent/nullified/active state, passives-active-first). Spectators see
-            both sides read-only; a seated player sees the opponent's cards and
-            their own with the balance-vote thumbs. */}
-        {spectator ? (
-          (ratableBuffs.length > 0 || revealedOppBuffs.length > 0) && (
-            <div className="mt-5 grid gap-2 sm:grid-cols-2">
-              <DraftedGroup
-                label={`${names[myColor]} (${sideLabel(myColor)})`}
-                buffs={ratableBuffs}
-              />
-              <DraftedGroup
-                label={`${names[oppColor]} (${sideLabel(oppColor)})`}
-                buffs={revealedOppBuffs}
-              />
-            </div>
-          )
-        ) : (
-          (ratableBuffs.length > 0 || revealedOppBuffs.length > 0) && (
-            <div className="mt-5 grid gap-2 sm:grid-cols-2">
-              {ratableBuffs.length > 0 && (
+        {/* Cards drafted: the grouped summary (compact tier chips with
+            spent/nullified/active state, passives-active-first) folds behind a
+            counted disclosure row. Spectators see both sides read-only; a
+            seated player sees the opponent's cards and their own with the
+            balance-vote thumbs — the "Rate the balance" invitation rides the
+            summary row so voting stays discoverable while folded. */}
+        {(ratableBuffs.length > 0 || revealedOppBuffs.length > 0) && (
+          <SummaryFold
+            label="Cards drafted"
+            count={ratableBuffs.length + revealedOppBuffs.length}
+            hint={!spectator && ratableBuffs.length > 0 ? "rate the balance" : undefined}
+          >
+            {spectator ? (
+              <div className="grid gap-2 sm:grid-cols-2">
                 <DraftedGroup
-                  label="Cards you drafted"
-                  hint="Rate the balance"
+                  label={`${names[myColor]} (${sideLabel(myColor)})`}
                   buffs={ratableBuffs}
-                  votable
-                  gameId={gameId}
                 />
-              )}
-              {revealedOppBuffs.length > 0 && (
-                <DraftedGroup label="Opponent's cards" buffs={revealedOppBuffs} />
-              )}
-            </div>
-          )
+                <DraftedGroup
+                  label={`${names[oppColor]} (${sideLabel(oppColor)})`}
+                  buffs={revealedOppBuffs}
+                />
+              </div>
+            ) : (
+              <div className="grid gap-2 sm:grid-cols-2">
+                {ratableBuffs.length > 0 && (
+                  <DraftedGroup
+                    label="Cards you drafted"
+                    hint="Rate the balance"
+                    buffs={ratableBuffs}
+                    votable
+                    gameId={gameId}
+                  />
+                )}
+                {revealedOppBuffs.length > 0 && (
+                  <DraftedGroup label="Opponent's cards" buffs={revealedOppBuffs} />
+                )}
+              </div>
+            )}
+          </SummaryFold>
         )}
 
         <MatchTimeline moves={moves} cardEvents={cardEvents} />
@@ -933,50 +1008,45 @@ export function GameOver({
             {linkedProfiles.length > 0 && (
               <div className="grid grid-cols-2 gap-2">
                 {linkedProfiles.map((p) => (
-                  <Link
+                  <LinkButton tone="ghost"
                     key={p.href}
                     href={p.href}
-                    className="min-h-[44px] rounded-sm px-4 py-2 btn-ghost font-display text-sm inline-flex items-center justify-center gap-2"
-                  >
+                    className="px-4 py-2 text-sm">
                     {p.name}
-                  </Link>
+                  </LinkButton>
                 ))}
               </div>
             )}
             <div className="grid grid-cols-2 gap-2">
-              <button
+              <Button tone="leaf"
                 ref={primaryRef}
-                type="button"
+               
                 onClick={dismiss}
-                className="min-h-[44px] rounded-sm px-5 py-2.5 btn-leaf font-display"
-              >
+                className="px-5 py-2.5">
                 Close
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button tone="ghost"
+               
                 onClick={handleShare}
-                className="min-h-[44px] rounded-sm px-5 py-2.5 btn-ghost font-display text-sm inline-flex items-center justify-center gap-2"
-              >
+                className="px-5 py-2.5 text-sm">
                 {shareIcon}
                 {shared ? "Copied" : "Share game"}
-              </button>
+              </Button>
               {analysisHref && (
-                <Link
+                <LinkButton tone="ghost"
                   href={analysisHref}
-                  className="min-h-[44px] rounded-sm px-4 py-2 btn-ghost font-display text-sm inline-flex items-center justify-center gap-2"
-                >
+                  className="px-4 py-2 text-sm">
                   Analyze
-                </Link>
+                </LinkButton>
               )}
               {moves && (
-                <button
-                  type="button"
+                <Button tone="ghost"
+                 
                   onClick={handleCopyPGN}
-                  className="min-h-[44px] rounded-sm px-5 py-2.5 btn-ghost font-display text-sm inline-flex items-center justify-center gap-2"
-                >
+                  className="px-5 py-2.5 text-sm">
                   {pgnIcon}
                   {pgnCopied ? "Copied" : "Copy PGN"}
-                </button>
+                </Button>
               )}
             </div>
             <Link
@@ -988,29 +1058,46 @@ export function GameOver({
           </div>
         ) : (
           <>
-            <div className="mt-6 grid grid-cols-2 gap-2">
+            {/* The reel entry rides the emotional peak: right under the
+                verdict, before the routine actions (marketing plan Phase 0).
+                Gold, because a ready-to-post highlight of the game you just
+                lived through is a reward, not a routine action. */}
+            {onClip && (
+              <Button
+                tone="gold"
+                onClick={onClip}
+                data-share-reel
+                block
+                className="zen-hide mt-6 px-5 py-2.5 font-semibold"
+              >
+                {reelIcon}
+                Share reel
+              </Button>
+            )}
+            <div className={`${onClip ? "mt-2" : "mt-6"} grid grid-cols-2 gap-2`}>
               {rematchStatus === "offered" && opponentLeft && onCancelRematch ? (
                 // The opponent is gone, so "waiting" is a dead end: offer the way
                 // out instead.
-                <button
+                <Button tone="ghost"
                   ref={primaryRef}
-                  type="button"
+                 
                   onClick={onCancelRematch}
-                  className="min-h-[44px] rounded-sm px-5 py-2.5 btn-ghost font-display"
-                >
+                  className="px-5 py-2.5">
                   Cancel rematch offer
-                </button>
+                </Button>
               ) : (
-                <button
+                <Button
+                  tone={rematchStatus === "offered" ? "ghost" : "leaf"}
                   ref={primaryRef}
-                  type="button"
                   onClick={onRematch}
                   disabled={rematchStatus === "offered"}
                   className={
-                    "min-h-[44px] rounded-sm px-5 py-2.5 font-display " +
+                    "px-5 py-2.5 " +
                     (rematchStatus === "offered"
-                      ? "btn-ghost opacity-70 cursor-default"
-                      : "btn-leaf" + (rematchStatus === "incoming" ? " animate-flicker" : ""))
+                      ? "opacity-70 cursor-default"
+                      : rematchStatus === "incoming"
+                        ? "animate-flicker"
+                        : "")
                   }
                 >
                   {rematchStatus === "offered"
@@ -1018,62 +1105,59 @@ export function GameOver({
                     : rematchStatus === "incoming"
                     ? "Accept rematch"
                     : "Rematch"}
-                </button>
+                </Button>
               )}
-              <Link
+              <LinkButton tone="ghost"
                 href={newOpponentHref ?? "/lobby?tab=quick"}
-                className="min-h-[44px] rounded-sm px-5 py-2.5 btn-ghost font-display inline-flex items-center justify-center"
-              >
+                className="px-5 py-2.5">
                 New opponent
-              </Link>
+              </LinkButton>
             </div>
 
             {/* Secondary actions: Share, Analyze, the archived replay, PGN,
                 and both players' profiles (real usernames). One entry each;
-                the clip and move-review entry points live in the game view. */}
-            <div className="mt-2 grid grid-cols-2 gap-2">
-              <button
-                type="button"
+                the move-review entry point lives in the game view, and the
+                reel entry is the gold action above.
+                zen-hide: these are the social/sharing extras, so zen mode
+                stands them down and leaves Rematch and New opponent. */}
+            <div className="zen-hide mt-2 grid grid-cols-2 gap-2">
+              <Button tone="ghost"
+               
                 onClick={handleShare}
-                className="min-h-[44px] rounded-sm px-4 py-2 btn-ghost font-display text-sm inline-flex items-center justify-center gap-2"
-              >
+                className="px-4 py-2 text-sm">
                 {shareIcon}
                 {shared ? "Copied" : "Share game"}
-              </button>
+              </Button>
               {analysisHref && (
-                <Link
+                <LinkButton tone="ghost"
                   href={analysisHref}
-                  className="min-h-[44px] rounded-sm px-4 py-2 btn-ghost font-display text-sm inline-flex items-center justify-center gap-2"
-                >
+                  className="px-4 py-2 text-sm">
                   Analyze
-                </Link>
+                </LinkButton>
               )}
               {serverGameId && (
-                <Link
+                <LinkButton tone="ghost"
                   href={`/game/${serverGameId}`}
-                  className="min-h-[44px] rounded-sm px-4 py-2 btn-ghost font-display text-sm inline-flex items-center justify-center gap-2"
-                >
+                  className="px-4 py-2 text-sm">
                   Watch replay
-                </Link>
+                </LinkButton>
               )}
               {moves && (
-                <button
-                  type="button"
+                <Button tone="ghost"
+                 
                   onClick={handleCopyPGN}
-                  className="min-h-[44px] rounded-sm px-4 py-2 btn-ghost font-display text-sm inline-flex items-center justify-center gap-2"
-                >
+                  className="px-4 py-2 text-sm">
                   {pgnIcon}
                   {pgnCopied ? "Copied" : "Copy PGN"}
-                </button>
+                </Button>
               )}
               {linkedProfiles.map((p) => (
-                <Link
+                <LinkButton tone="ghost"
                   key={p.href}
                   href={p.href}
-                  className="min-h-[44px] rounded-sm px-4 py-2 btn-ghost font-display text-sm inline-flex items-center justify-center gap-2"
-                >
+                  className="px-4 py-2 text-sm">
                   {p.name}
-                </Link>
+                </LinkButton>
               ))}
             </div>
 

@@ -10,6 +10,7 @@ import { MPSession, saveOnlineSeat } from "@/lib/multiplayer";
 import { getCategory, type RatingCategoryId } from "@/lib/ratingCategories";
 import { useSharedMode } from "@/lib/modeState";
 import type { DraftMode } from "@/engine/buff";
+import { Button } from "@/components/ui/Button";
 
 // Wire names must match QUEUE_POOLS in worker.ts.
 const QUEUE_POOL_OPTIONS: { pool: string; label: string; speed: RatingCategoryId }[] = [
@@ -187,7 +188,7 @@ export function QueueButton({
     modeRatings[mode] ?? (user ? Math.round(user.rating) : null);
 
   return (
-    <div className="plate gilt p-5 sm:p-6">
+    <div className="plate p-5 sm:p-6">
       <div className="flex items-center gap-2.5">
         <span
           aria-hidden
@@ -213,17 +214,16 @@ export function QueueButton({
                 opponent… ({selected.label})
               </span>
             </span>
-            <button
+            <Button tone="ghost"
               onClick={cancelSearch}
-              className="min-h-[44px] px-4 py-2 btn-ghost text-sm font-display"
-            >
+              className="px-4 py-2 text-sm">
               Cancel
-            </button>
+            </Button>
           </div>
           {/* Elapsed time so the queue never reads as a dead "Connecting…":
               the counter ticking is proof the search is live. */}
           <div
-            className="mt-2.5 flex items-center gap-2 smallcaps text-[11px] text-parchment-400"
+            className="mt-2.5 flex items-center gap-2 text-[11px] text-parchment-400"
             aria-live="polite"
           >
             <span>Searching</span>
@@ -261,7 +261,7 @@ export function QueueButton({
           )}
 
           <div className="mt-4">
-            <div className="eyebrow">Time control</div>
+            <div>Time control</div>
             <div className="mt-1.5 grid grid-cols-3 gap-1.5 min-[380px]:grid-cols-5">
               {QUEUE_POOL_OPTIONS.map((option) => {
                 const category = getCategory(option.speed);
@@ -293,17 +293,16 @@ export function QueueButton({
           {/* The one button that actually queues, at the bottom so the flow
               reads mode, clock, play. A mode is always selected (Buff by
               default), so it names the exact game it will find. */}
-          <button
+          <Button tone="slab"
             onClick={() => startSearch(mode)}
             // The forged mode slab: the shared .btn-slab physics with the
             // selected mode's energy core, so the matchmaking primary reads
             // as part of the dungeon control set while keeping its
             // Nerf-terracotta / Buff-sky identity.
             style={{ ["--slab-rgb" as string]: mode === "nerf" ? "196 120 95" : "91 155 212" }}
-            className="btn-slab cta-shine press mt-4 w-full px-8 py-4 font-display text-xl sm:text-2xl font-semibold"
-          >
+            className="cta-shine mt-4 w-full px-8 py-4 text-xl sm:text-2xl font-semibold">
             {`Find a ${selected.label} ${mode === "nerf" ? "Nerf" : "Buff"} Game`}
-          </button>
+          </Button>
 
           {/* Signed-out or guest players can queue and play right away; this
               is a nudge, never a gate. Their rating is throwaway until they
@@ -378,7 +377,7 @@ function ModeCard({
       onClick={onClick}
       aria-pressed={selected}
       className={
-        "plate corner-cut relative p-3.5 sm:p-5 text-left border transition-all duration-200 touch-manipulation " +
+        "plate relative p-3.5 sm:p-5 text-left border transition-all duration-200 touch-manipulation " +
         identity.card +
         (dimmed ? " opacity-55 saturate-[0.85]" : "")
       }
@@ -401,7 +400,7 @@ function ModeCard({
           {mode === "nerf" ? "Nerf" : "Buff"}
         </div>
         {mode === "buff" && (
-          <span className="smallcaps border border-gold/40 bg-gold/10 px-1.5 py-0.5 text-[8px] text-gold-leaf">
+          <span className="border border-gold/40 bg-gold/10 px-1.5 py-0.5 text-[8px] text-gold-leaf">
             Recommended
           </span>
         )}
@@ -412,7 +411,7 @@ function ModeCard({
           : "Start with normal chess. Draft powers for your own army."}
       </p>
       <div className="mt-2 flex items-center gap-2">
-        <span className="smallcaps text-[9px] text-parchment-400">
+        <span className="text-[9px] text-parchment-400">
           Your {mode === "nerf" ? "Nerf" : "Buff"} rating
         </span>
         <span className={"font-mono text-base tabular-nums " + identity.title}>

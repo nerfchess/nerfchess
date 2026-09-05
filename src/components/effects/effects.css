@@ -809,20 +809,8 @@
 }
 .fx-sig-firebreath { animation: fx-sig-firebreath 0.55s ease-out both; transform-origin: 0% 50%; }
 
-/* Wizard: the archmage rises out of the square, holds at the cast, then sinks
-   back as the spell takes hold. */
-@keyframes fx-sig-wizard-rise {
-  0% { opacity: 0; transform: translateY(46%) scale(0.7); }
-  35% { opacity: 1; transform: translateY(-6%) scale(1.05); }
-  50% { transform: translateY(2%) scale(0.99); }
-  64% { transform: translateY(-2%) scale(1); }
-  82% { opacity: 1; transform: translateY(0) scale(1); }
-  100% { opacity: 0; transform: translateY(10%) scale(0.98); }
-}
-.fx-sig-wizard-rise {
-  animation: fx-sig-wizard-rise 1.1s var(--ease-out, cubic-bezier(0.2, 0.8, 0.2, 1)) both;
-  transform-origin: 50% 100%;
-}
+/* (fx-sig-wizard-rise retired: the archmage scenes moved to plugin art and
+   nothing mounted the class any more — removed in the useless-flash pass.) */
 
 /* --- 10g. Batch 7 marquee sea / monster + top-tier boardwide spectacles ------
    Bespoke signatures for the big sea / monster cards (Kraken, Abyss, Whirlpool,
@@ -1357,12 +1345,11 @@ html[data-anim="off"] .fx-sig-glitch,
    new classes; the rest reuse the classes already listed above. */
 html[data-anim="off"] .fx-sig-rewind,
 html[data-anim="off"] .fx-sig-implode,
-/* Batch 6 marquee dragon + wizard: only the dragon fly / wingbeat / fire
-   breath and the wizard rise add new classes; the rest reuse those above. */
+/* Batch 6 marquee dragon: only the dragon fly / wingbeat / fire breath add
+   new classes; the rest reuse those above. */
 html[data-anim="off"] .fx-sig-dragon-fly,
 html[data-anim="off"] .fx-sig-wingbeat,
 html[data-anim="off"] .fx-sig-firebreath,
-html[data-anim="off"] .fx-sig-wizard-rise,
 /* Batch 7 marquee sea / monster + top-tier boardwide: the tentacle, maw,
    whirl, wave, moat ring, meteor streak, and phoenix rise add new classes;
    the rest reuse the classes already listed above. */
@@ -1413,11 +1400,10 @@ html[data-anim="off"] .fx-sig-cross,
 html[data-anim="off"] .fx-sig-rain,
 html[data-anim="off"] .fx-sig-boom,
 /* Batch 11: the Total War reverse charge + battle-standard slash, and the
-   virus takeover's scanline flicker + error window. */
+   virus takeover's scanline flicker. */
 html[data-anim="off"] .fx-sig-crossback,
 html[data-anim="off"] .fx-sig-slash,
 html[data-anim="off"] .fx-cast-scanlines,
-html[data-anim="off"] .fx-cast-errorwin,
 /* Batch 15 marquee upgrades: the jackpot lever / wedge-glow / coin fountain,
    the total-war drum rims + banner scraps, the virus cursor / packet-trail /
    readout chip, the mandate scroll / signature mask / quill / wax seal, the
@@ -1531,20 +1517,9 @@ html[data-anim="off"] .fx-board-shake {
 }
 .fx-cast-scanlines { animation: fx-cast-scanlines 1.5s steps(12) both; }
 
-/* The error window: slams up, rattles like a stuck dialog, blinks out. */
-@keyframes fx-cast-errorwin {
-  0% { opacity: 0; transform: translateY(30%) scale(0.6); }
-  14% { opacity: 1; transform: translateY(0) scale(1.04); }
-  22% { transform: translate(-2%, 0) scale(1); }
-  30% { transform: translate(2%, -1%) scale(1); }
-  38% { transform: translate(-2%, 1%) scale(1); }
-  46% { transform: translate(1%, 0) scale(1); }
-  80% { opacity: 1; transform: translate(0, 0) scale(1); }
-  88% { opacity: 0.2; }
-  94% { opacity: 0.9; }
-  100% { opacity: 0; transform: scale(0.98); }
-}
-.fx-cast-errorwin { animation: fx-cast-errorwin 1.35s var(--ease-out, ease-out) both; }
+/* (fx-cast-errorwin retired: the virus takeover's error window moved to
+   plugin art and nothing mounted the class — removed in the useless-flash
+   pass.) */
 
 /* A chanted word stamped onto the board: pops in oversized, squashes to rest,
    fades. Carries --tilt so each stamp keeps its jaunty angle. */
@@ -1664,16 +1639,9 @@ html[data-anim="off"] .fx-one-shot {
 }
 .fx-cast-shock { animation: fx-cast-shock calc(0.9s * var(--fx-dur, 1)) var(--ease-out, cubic-bezier(0.15, 0.7, 0.2, 1)) both; transform-origin: 50% 50%; }
 
-/* The emblem slam (grand / marquee): drops in oversized, squashes, holds. */
-@keyframes fx-cast-emblem-slam {
-  0% { opacity: 0; transform: scale(2.4); }
-  22% { opacity: 1; transform: scale(0.9); }
-  34% { transform: scale(1.06); }
-  44% { transform: scale(1); }
-  80% { opacity: 0.95; }
-  100% { opacity: 0; transform: scale(1.03); }
-}
-.fx-cast-emblem-slam { animation: fx-cast-emblem-slam calc(1.15s * var(--fx-dur, 1)) var(--ease-out, cubic-bezier(0.2, 0.8, 0.3, 1.1)) both; }
+/* (fx-cast-emblem-slam retired: the giant face-icon slam was replaced by the
+   per-category arrivals in the CastSpectacle rework (design brief section 1)
+   and nothing mounted the class — removed in the useless-flash pass.) */
 
 /* The marquee vignette dim: the room goes dark for the big one. */
 @keyframes fx-cast-dim {

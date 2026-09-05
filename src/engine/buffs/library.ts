@@ -683,24 +683,45 @@ const TIER1: Buff[] = [
     pieceBound("r", "Choose the rook", (board, sq, via) => slideMoves(board, sq, DIAG_DIRS, via, 1)),
   ),
   def(
-    { id: "ferz_king", name: "Ferz King", description: "Your king may move two squares diagonally to an empty square, once per game. It cannot capture.", tier: 1, category: "movement", fx: { motif: "empower", pieces: ["k"], moveAs: "b", self: true } },
-    augment((_m, inst, api) =>
-      mySquares(api.board, api.me, "k")
-        .flatMap((sq) =>
-          leapMoves(api.board, sq, [[2, 2], [2, -2], [-2, 2], [-2, -2]], inst.id),
-        )
-        .filter((m) => !m.captured),
+    // Balance buff 2026-08-04: one non-capturing king hop per game was too
+    // small an edge even for tier 1, so the ferz remembers the step twice.
+    { id: "ferz_king", name: "Ferz King", description: "Your king may move two squares diagonally to an empty square, twice per game. It cannot capture.", tier: 1, category: "movement", fx: { motif: "empower", pieces: ["k"], moveAs: "b", self: true } },
+    augment(
+      (_m, inst, api) =>
+        mySquares(api.board, api.me, "k")
+          .flatMap((sq) =>
+            leapMoves(api.board, sq, [[2, 2], [2, -2], [-2, 2], [-2, -2]], inst.id),
+          )
+          .filter((m) => !m.captured),
+      2,
     ),
   ),
   def(
-    { id: "extra_glance", name: "Extra Glance", description: "See your opponent's nerf for the rest of the game.", tier: 1, category: "info", boon: true },
+    // Balance buff 2026-08-04: the reveal alone was the weakest card in the
+    // tier (and inert in buff mode, where there is no nerf to see), so the
+    // glance now also sharpens your next pick.
+    { id: "extra_glance", name: "Extra Glance", description: "See your opponent's nerf for the rest of the game, and gain 1 draft reroll.", tier: 1, category: "info", boon: true },
     instant((_inst, api) => {
       api.mine.oppNerfRevealed = true;
+      api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
     }),
   ),
   def(
-    { id: "castle_early", name: "Castle Early", description: "Castle even if your king has already moved once.", tier: 2, category: "movement" },
-    instant((_inst, api) => api.restoreCastling()),
+    // Balance buff 2026-08-04: the restore alone was a tier-1 effect sold at
+    // tier 2 (Postern Gate does the same line for less), and the old text
+    // undersold the code, which always restored rook rights too. The text now
+    // says what the code does, and the castle it re-opens arrives guarded.
+    { id: "castle_early", name: "Castle Early", description: "Castle even if your king or rooks have already moved. When you next castle, your king cannot be captured on your opponent's next turn.", tier: 2, category: "movement" },
+    {
+      kind: "passive",
+      init: (_inst, api) => api.restoreCastling(),
+      onMovePlayed: (inst, move, api) => {
+        if (inst.spent || move.color !== api.me || !move.castle) return;
+        addEffect(api, { kind: "king_safe", owner: api.me, turns: 1 });
+        inst.spent = true;
+      },
+      status: () => "the guard waits on your castle",
+    },
   ),
   def(
     { id: "pawn_shield", requires: ["p"], name: "Pawn Shield", description: "One pawn cannot be captured for your opponent's next 4 turns.", tier: 2, category: "protection", boon: true },
@@ -1046,13 +1067,22 @@ const TIER1: Buff[] = [
     // Reworked for the full-transparency era (offer tiers are public): one
     // glance now palms the opponent's do-over. Sole card whose whole effect is
     // stealing a reroll (War Room Sabotage bundles the steal with a block).
-    { id: "quick_glance", name: "Quick Glance", description: "Your opponent loses one draft reroll, if they still hold one.", tier: 2, category: "draft", flavor: "You saw them reaching for the do-over. Now there is no do-over." },
+    // Balance buff 2026-08-04: against an opponent with no reroll banked the
+    // card did literally nothing. The dead branch now pays you instead.
+    { id: "quick_glance", name: "Quick Glance", description: "Your opponent loses one draft reroll. If they have none to lose, you gain one instead.", tier: 2, category: "draft", flavor: "You saw them reaching for the do-over. Now there is no do-over." },
     instant((_inst, api) => {
-      api.theirs.rerollsLeft = Math.max(0, (api.theirs.rerollsLeft ?? 0) - 1);
+      if ((api.theirs.rerollsLeft ?? 0) > 0) {
+        api.theirs.rerollsLeft = (api.theirs.rerollsLeft ?? 0) - 1;
+      } else {
+        api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+      }
     }),
   ),
   def(
-    { id: "nudge", name: "Nudge", description: "Push one enemy pawn back one square if empty behind, once. Using it spends your next unused reroll, if any.", tier: 1, category: "attack" },
+    // Balance buff 2026-08-04: a one-square pawn push is already the smallest
+    // attack in the game; charging a reroll on top priced it below its own
+    // tier. The push is now free of the surcharge.
+    { id: "nudge", name: "Nudge", description: "Push one enemy pawn back one square if empty behind, once.", tier: 1, category: "attack" },
     activated(
       (_inst, api, picks) =>
         picks.length > 0
@@ -1070,7 +1100,6 @@ const TIER1: Buff[] = [
         if (sq == null) return;
         const back = sq + fwdOf(api.me);
         if (!api.board.pieces[back] && pawnRankOk(back)) api.relocate(sq, back);
-        if (api.mine.rerollsLeft > 0) api.mine.rerollsLeft -= 1;
       },
     ),
   ),
@@ -1104,35 +1133,26 @@ const TIER1: Buff[] = [
   def(
     // Guards the rooks without a shield effect, so the ward motif is the only
     // board paint it gets.
-    { id: "cornerstone", name: "Cornerstone", description: "Your rooks cannot be captured while they stand on your back rank.", tier: 2, category: "protection", fx: { motif: "ward", pieces: ["r"], self: true } },
-    // Widened from the two CORNER squares to the whole back rank.
-    //
-    // As written it warded a1 and h1 only, and the sweep measured it at exactly
-    // zero across 20 paired games: a rook sits on its original square about a
-    // third of the time, but the ward only pays when the opponent tries to
-    // capture it THERE, which almost never happens while the rook is still
-    // tucked in the corner. The card was correct and effectively unplayable.
-    //
-    // The rank is the honest reading of the fiction anyway: a cornerstone
-    // anchors the foundation, not one brick. Rooks return to the back rank
-    // constantly, so the ward is now live when it matters.
+    // Balance buff 2026-08-04: guarding only the two literal corner squares
+    // meant the ward died the moment a rook did anything, which is not much of
+    // a cornerstone. The whole back rank is now home ground for the rooks,
+    // matching Tight Formation's shape for pawns.
+    { id: "cornerstone", name: "Cornerstone", description: "Your rooks cannot be captured while they stand on your back rank, for the game.", tier: 2, category: "protection", fx: { motif: "ward", pieces: ["r"], self: true } },
     oppFilter((moves, _inst, api) => {
       const hr = api.me === "w" ? 0 : 7;
-      const warded: number[] = [];
-      for (let f = 0; f < 8; f++) {
-        const sq = SQ(f, hr);
-        const p = api.board.pieces[sq];
-        if (p?.type === "r" && p.color === api.me) warded.push(sq);
-      }
-      if (!warded.length) return moves;
+      const home = mySquares(api.board, api.me, "r").filter((sq) => RANK(sq) === hr);
+      if (!home.length) return moves;
       return moves.filter((m) => {
         const cap = captureSquare(m);
-        return cap == null || !warded.includes(cap);
+        return cap == null || !home.includes(cap);
       });
     }),
   ),
   def(
-    { id: "half_step", requires: ["p"], name: "Half Step", description: "One pawn moves diagonally forward without capturing, once.", tier: 1, category: "movement", fx: { motif: "empower", pieces: ["p"], self: true } },
+    // Balance buff 2026-08-04: a single non-capturing diagonal step was the
+    // thinnest movement gift in tier 1 (Little Leap and Bishop Polish both get
+    // two uses), so Half Step now comes in a pair.
+    { id: "half_step", requires: ["p"], name: "Half Step", description: "One pawn moves diagonally forward without capturing, twice.", tier: 1, category: "movement", fx: { motif: "empower", pieces: ["p"], self: true } },
     augment((_m, inst, api) => {
       const out: Move[] = [];
       for (const sq of mySquares(api.board, api.me, "p")) {
@@ -1144,7 +1164,7 @@ const TIER1: Buff[] = [
         }
       }
       return out;
-    }),
+    }, 2),
   ),
   def(
     { id: "prep", name: "Prep", description: "Your next buff draft shows three cards to pick from instead of two, once.", tier: 2, category: "draft" },
@@ -1343,9 +1363,12 @@ const TIER2: Buff[] = [
   ),
   def(
     // Bound-piece guard with no shield effect; ward is its only board paint.
-    { id: "shielded_advance", requires: ["p"], name: "Shielded Advance", description: "Choose one pawn. While it stands in the enemy half it cannot be captured, for your next 3 turns.", tier: 3, category: "protection", fx: { motif: "ward", pieces: ["p"], self: true } },
+    // Balance buff 2026-08-04: same shape as Screen's fix. The ward only works
+    // in the enemy half and only guards a pawn, and three turns is barely
+    // enough to get one there; the escort now stays for six.
+    { id: "shielded_advance", requires: ["p"], name: "Shielded Advance", description: "Choose one pawn. While it stands in the enemy half it cannot be captured, for your next 6 turns.", tier: 3, category: "protection", fx: { motif: "ward", pieces: ["p"], self: true } },
     bindPiece("Choose the pawn", bindCandidates(["p"]), {
-      turns: 3,
+      turns: 6,
       filterOpp: (moves, sq, api) =>
         inHalf(api.opp, sq) ? moves.filter((m) => captureSquare(m) !== sq) : moves,
     }),
@@ -1402,18 +1425,26 @@ const TIER2: Buff[] = [
     ),
   ),
   def(
-    { id: "trade_up", name: "Trade Up", description: "The next time you lose a minor piece, a new pawn appears in your half.", tier: 3, category: "pieces" },
+    // Balance buff 2026-08-04: knight for pawn, once, was a losing trade sold
+    // at tier 3 (Queen's Echo lives here). The consolation now pays twice.
+    { id: "trade_up", name: "Trade Up", description: "The next 2 times you lose a minor piece, a new pawn appears in your half.", tier: 3, category: "pieces" },
     {
       kind: "passive",
+      init: (inst) => {
+        inst.state.charges = 2;
+      },
       onMovePlayed: (inst, move, api) => {
         if (move.color !== api.opp || (move.captured !== "n" && move.captured !== "b")) return;
+        const left = (inst.state.charges as number) ?? 0;
+        if (left <= 0) return;
         const spot = emptySquares(api.board, (sq) => inHalf(api.me, sq)).sort(
           (a, b) => relRank(api.me, a) - relRank(api.me, b),
         )[0];
         if (spot != null) api.place(spot, "p", api.me);
-        inst.spent = true;
+        inst.state.charges = left - 1;
+        if (left - 1 <= 0) inst.spent = true;
       },
-      status: () => "waiting for a lost minor piece",
+      status: (inst) => `${(inst.state.charges as number) ?? 2} trades left`,
     },
   ),
   def(
@@ -1504,9 +1535,12 @@ const TIER2: Buff[] = [
   ),
   def(
     // king_safe has no square paint of its own; ward marks the king.
-    { id: "sidestep_king", name: "Sidestep King", description: "Your king cannot be captured for 1 turn.", tier: 3, category: "protection", fx: { motif: "ward", pieces: ["k"], self: true } },
+    { id: "sidestep_king", name: "Sidestep King", description: "Your king cannot be captured for your opponent's next 3 turns.", tier: 3, category: "protection", fx: { motif: "ward", pieces: ["k"], self: true } },
+    // Balance buff 2026-08-04: one turn of king safety at tier 3 was strictly
+    // worse than Decoy a tier below it (three turns plus a stand-in), so the
+    // sidestep now buys the same three turns.
     instant((_inst, api) => {
-      addEffect(api, { kind: "king_safe", owner: api.me, turns: 1 });
+      addEffect(api, { kind: "king_safe", owner: api.me, turns: 3 });
     }),
   ),
   def(
@@ -1552,7 +1586,10 @@ const TIER2: Buff[] = [
     pieceBound("b", "Choose the bishop", (board, sq, via) => slideMoves(board, sq, ORTHO_DIRS, via, 1)),
   ),
   def(
-    { id: "spring_pawn", requires: ["p"], name: "Spring Pawn", description: "Your pawns can spring one square sideways onto an empty square, once.", tier: 2, category: "movement", fx: { motif: "empower", pieces: ["p"], self: true }, flavor: "A little hop, a whole new file." },
+    // Balance buff 2026-08-04: a single sideways hop was strictly worse than
+    // Tempo Shuffle one tier below it (same hop plus a reroll), so the spring
+    // now has two bounces in it.
+    { id: "spring_pawn", requires: ["p"], name: "Spring Pawn", description: "Your pawns can spring one square sideways onto an empty square, twice.", tier: 2, category: "movement", fx: { motif: "empower", pieces: ["p"], self: true }, flavor: "A little hop, a whole new file." },
     augment((_m, inst, api) => {
       const out: Move[] = [];
       for (const sq of mySquares(api.board, api.me, "p")) {
@@ -1566,7 +1603,7 @@ const TIER2: Buff[] = [
         }
       }
       return out;
-    }, 1),
+    }, 2),
   ),
   def(
     { id: "rally", requires: ["n"], name: "Rally", description: "One of your knights may move like a king for 1 turn. The king step cannot capture.", tier: 2, category: "movement", fx: { motif: "empower", pieces: ["n"], moveAs: "k", self: true } },
@@ -1655,7 +1692,10 @@ const TIER2: Buff[] = [
     ),
   ),
   def(
-    { id: "vault", requires: ["r"], name: "Vault", description: "One rook jumps its own pawn to the far side, once.", tier: 1, category: "movement", fx: { motif: "empower", pieces: ["r"], self: true } },
+    // Balance buff 2026-08-04: one short hop over one pawn was the weakest of
+    // the tier-1 jump family (Little Leap and Bishop Polish both jump twice),
+    // so the rook now clears the bar twice.
+    { id: "vault", requires: ["r"], name: "Vault", description: "One rook jumps its own pawn to the far side, twice.", tier: 1, category: "movement", fx: { motif: "empower", pieces: ["r"], self: true } },
     augment((_m, inst, api) => {
       const out: Move[] = [];
       for (const sq of mySquares(api.board, api.me, "r")) {
@@ -1670,11 +1710,11 @@ const TIER2: Buff[] = [
         }
       }
       return out;
-    }),
+    }, 2),
   ),
   def(
     // The augment offers the step to every piece, king included.
-    { id: "reposition", name: "Reposition", description: "Move one piece, your king included, one square in any direction to an empty square, once. It cannot capture.", tier: 2, category: "movement", fx: { motif: "empower", pieces: "all", moveAs: "k", self: true } },
+    { id: "reposition", name: "Reposition", description: "Move one piece, your king included, one square in any direction to an empty square, once. It cannot capture.", tier: 2, category: "movement", fx: { motif: "empower", pieces: "all", moveAs: "k", self: true, king: true } },
     augment((_m, inst, api) =>
       mySquares(api.board, api.me).flatMap((sq) =>
         slideMoves(api.board, sq, ALL_DIRS, inst.id, 1).filter((m) => !m.captured),
@@ -1692,9 +1732,13 @@ const TIER2: Buff[] = [
     }),
   ),
   def(
-    { id: "screen", requires: ["b"], name: "Screen", description: "Choose one bishop. While it stands on a square next to your king it cannot be captured, for your next 3 turns.", tier: 3, category: "protection" },
+    // Balance buff 2026-08-04: a conditional shield (one piece type, only
+    // while adjacent to the king) lasting the same three turns as Reinforce's
+    // unconditional one was strictly worse at the same tier; the condition now
+    // buys twice the duration.
+    { id: "screen", requires: ["b"], name: "Screen", description: "Choose one bishop. While it stands on a square next to your king it cannot be captured, for your next 6 turns.", tier: 3, category: "protection" },
     bindPiece("Choose the bishop", bindCandidates(["b"]), {
-      turns: 3,
+      turns: 6,
       filterOpp: (moves, sq, api) => {
         const k = mySquares(api.board, api.me, "k")[0];
         if (k == null || !adjacent(sq, k)) return moves;
@@ -1977,7 +2021,10 @@ const TIER3: Buff[] = [
     pieceBound("p", "Choose the pawn", (board, sq, via) => leapMoves(board, sq, KNIGHT_LEAPS, via)),
   ),
   def(
-    { id: "pin_breaker", name: "Pin Breaker", description: "One of your pieces breaks free with a knight's leap to an empty square, once. Using it spends the card even if the leap cannot resolve.", tier: 3, category: "movement" },
+    // Balance buff 2026-08-04: one non-capturing leap at tier 3 barely beat
+    // Teleport Knight at tier 1. A piece that breaks free should land clear:
+    // the landing square is now warded for two turns.
+    { id: "pin_breaker", name: "Pin Breaker", description: "One of your pieces breaks free with a knight's leap to an empty square and cannot be captured for your opponent's next 2 turns, once. Using it spends the card even if the leap cannot resolve.", tier: 3, category: "movement" },
     // Nerf chess is won by king capture, so there are no true pins; the card
     // instead lets any piece jump clear of whatever is holding it, knight-style.
     activated(
@@ -1997,7 +2044,13 @@ const TIER3: Buff[] = [
       (_inst, api, picks) => {
         const from = picks[0]?.square, to = picks[1]?.square;
         if (from == null || to == null) return;
-        if (api.board.pieces[from] && !api.board.pieces[to]) api.relocate(from, to);
+        if (api.board.pieces[from] && !api.board.pieces[to]) {
+          api.relocate(from, to);
+          // turns:1 here reads as 2 on the card: activateBuff adds one tick to
+          // shields a turn-consuming activation creates (the "for N turns
+          // AFTER the activation turn" compensation).
+          addEffect(api, { kind: "shield", owner: api.me, squares: [to], turns: 1 });
+        }
       },
     ),
   ),
@@ -2219,10 +2272,13 @@ const TIER3: Buff[] = [
     ),
   ),
   def(
-    { id: "iron_bishop", requires: ["b"], name: "Iron Bishop", description: "One bishop cannot be captured by pawns, for the game.", tier: 4, category: "protection" },
+    // Balance buff 2026-08-04: pawn-proofing alone was a tier-1 sized carve
+    // out sitting at tier 4 (Deflect makes the queen fully safe for four turns
+    // here). The iron now turns knights too; only the heavy pieces bite it.
+    { id: "iron_bishop", requires: ["b"], name: "Iron Bishop", description: "One bishop cannot be captured by enemy pawns or knights, for the game.", tier: 4, category: "protection" },
     bindPiece("Choose the bishop", bindCandidates(["b"]), {
       filterOpp: (moves, sq) =>
-        moves.filter((m) => !(m.piece === "p" && captureSquare(m) === sq)),
+        moves.filter((m) => !((m.piece === "p" || m.piece === "n") && captureSquare(m) === sq)),
     }),
   ),
   def(
@@ -2301,8 +2357,11 @@ const TIER3: Buff[] = [
     ),
   ),
   def(
-    { id: "vanguard", requires: ["p"], name: "Vanguard", description: "One pawn on your 6th rank or beyond promotes to a knight, once.", tier: 2, category: "pieces" },
-    promotePawns(1, 6, "n"),
+    // Balance buff 2026-08-04: at tier 2 the drafts land early, when nobody
+    // has a pawn on the 6th rank yet, so the card sat dead in hand. The
+    // vanguard is now knighted from the 5th rank, where a pawn can actually be.
+    { id: "vanguard", requires: ["p"], name: "Vanguard", description: "One pawn on your 5th rank or beyond promotes to a knight, once.", tier: 2, category: "pieces" },
+    promotePawns(1, 5, "n"),
   ),
   def(
     { id: "rewind_one", name: "Rewind One", description: "Undo the last two half-moves: send the last piece each side moved back to the square it came from, once.", tier: 3, category: "tempo" },
@@ -6070,27 +6129,32 @@ const HEXES: Buff[] = [
 
 const ITEMS: Buff[] = [
   def(
-    { id: "walnut_shell", name: "Walnut Shell", description: "Crack it open: free one of your pieces from any freeze or walnut hex.", tier: 1, category: "item" },
+    // Balance buff 2026-08-04: with nothing frozen the shell was a dead card
+    // in hand. It can now always be cracked: freeing a stuck piece when there
+    // is one, or eaten as a snack for a reroll when there is not.
+    { id: "walnut_shell", name: "Walnut Shell", description: "Crack it open: free one of your pieces from any freeze or walnut hex. If none of your pieces is stuck, eat the nut instead: gain 1 draft reroll.", tier: 1, category: "item" },
     activated(
-      (_inst, api, picks) =>
-        picks.length > 0
-          ? null
-          : {
-              kind: "square",
-              label: "Choose a piece to crack free",
-              squares: mySquares(api.board, api.me).filter((sq) =>
-                api.bs.effects.some(
-                  (e) =>
-                    (e.kind === "freeze" || e.kind === "walnut") &&
-                    e.owner === api.me &&
-                    e.sq === sq &&
-                    e.turns > 0,
-                ),
-              ),
-            },
+      (_inst, api, picks) => {
+        if (picks.length > 0) return null;
+        const stuck = mySquares(api.board, api.me).filter((sq) =>
+          api.bs.effects.some(
+            (e) =>
+              (e.kind === "freeze" || e.kind === "walnut") &&
+              e.owner === api.me &&
+              e.sq === sq &&
+              e.turns > 0,
+          ),
+        );
+        // No stuck piece: the card is still usable, targetless (the snack).
+        if (stuck.length === 0) return null;
+        return { kind: "square", label: "Choose a piece to crack free", squares: stuck };
+      },
       (_inst, api, picks) => {
         const sq = picks[0]?.square;
-        if (sq == null) return;
+        if (sq == null) {
+          api.mine.rerollsLeft = (api.mine.rerollsLeft ?? 0) + 1;
+          return;
+        }
         api.bs.effects = api.bs.effects.filter(
           (e) =>
             !((e.kind === "freeze" || e.kind === "walnut") && e.owner === api.me && e.sq === sq),
@@ -6265,7 +6329,10 @@ const ITEMS: Buff[] = [
     ),
   ),
   def(
-    { id: "firecracker", name: "Firecracker", description: "Startle one enemy piece (not the king): it retreats one square toward its home rank.", tier: 4, category: "item" },
+    // Balance buff 2026-08-04: a one-square shove was a tier-1 effect (Nudge)
+    // wearing a tier-4 sticker. A firecracker should rattle: the startled
+    // piece now also loses its next move.
+    { id: "firecracker", name: "Firecracker", description: "Startle one enemy piece (not the king): it retreats one square toward its home rank and is too rattled to move on its owner's next turn.", tier: 4, category: "item" },
     activated(
       (_inst, api, picks) =>
         picks.length > 0
@@ -6290,7 +6357,10 @@ const ITEMS: Buff[] = [
         const p = api.board.pieces[sq];
         if (!p || p.color !== api.opp || p.type === "k") return;
         const back = homeStep(sq, api.opp);
-        if (back != null && !api.board.pieces[back]) api.relocate(sq, back);
+        const moved = back != null && !api.board.pieces[back];
+        if (moved) api.relocate(sq, back!);
+        // The rattle: frozen for one of its owner's turns where it landed.
+        addEffect(api, { kind: "freeze", sq: moved ? back! : sq, owner: api.opp, turns: 1, skin: "shock" });
       },
     ),
   ),

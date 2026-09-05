@@ -1192,3 +1192,70 @@
 /* --- Global kill switch ----------------------------------------------------
    Settings animations-off parks every g07 play outright. */
 html[data-anim="off"] [class^="g07-"], html[data-anim="off"] [class*=" g07-"] { animation: none !important; opacity: 0 !important; }
+
+/* =============================================================================
+   FLAGSHIP IMPACT WAVE: the stage jolt riding each card's impact beat (see the
+   IMPACT table in g07SupplyPlays.tsx). Transform-only, finite, ends at rest.
+   The quake wrapper is one CELL wide, so amplitudes are % of a cell.
+   ========================================================================== */
+
+.g07-quake-s {
+  animation: g07-quake-s calc(0.55s * var(--fx-dur, 1)) linear both;
+  animation-delay: calc(var(--imp-delay, 0.4s) * var(--fx-dur, 1));
+}
+.g07-quake-h {
+  animation: g07-quake-h calc(0.68s * var(--fx-dur, 1)) linear both;
+  animation-delay: calc(var(--imp-delay, 0.4s) * var(--fx-dur, 1));
+}
+@keyframes g07-quake-s {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  18% {
+    transform: translate(-6.5%, 4.3%);
+  }
+  42% {
+    transform: translate(5.5%, -4.3%);
+  }
+  68% {
+    transform: translate(-3.3%, 2.2%);
+  }
+  86% {
+    transform: translate(1.7%, 1.0%);
+  }
+}
+@keyframes g07-quake-h {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  12% {
+    transform: translate(-13%, 8.1%);
+  }
+  28% {
+    transform: translate(11.0%, -9.1%);
+  }
+  46% {
+    transform: translate(-8.1%, -6.0%);
+  }
+  64% {
+    transform: translate(6.0%, 6.0%);
+  }
+  82% {
+    transform: translate(-3.0%, 1.9%);
+  }
+}
+
+/* Animations off: the quake never fires and the rig contributes nothing. */
+html[data-anim="off"] .g07-quake-s,
+html[data-anim="off"] .g07-quake-h {
+  animation: none !important;
+  transform: none !important;
+}
+html[data-anim="off"] .g07-imprig,
+html[data-anim="off"] .g07-imprig * {
+  animation: none !important;
+  transform: none !important;
+  opacity: 0 !important;
+}

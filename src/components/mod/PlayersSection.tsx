@@ -24,8 +24,9 @@ import {
   SectionHead,
   SegmentedControl,
   postJson,
-  untilLabel,
+  untilShort,
   when,
+  whenShort,
 } from "./ui";
 
 type UserFilter = "all" | "members" | "guests";
@@ -136,7 +137,7 @@ export function PlayersSection({
             setSelected(null);
           }}
           placeholder="Search players…"
-          className="plate w-full max-w-sm bg-transparent px-4 py-2 text-sm outline-none focus:border-gold/40"
+          className="plate w-full bg-transparent px-4 py-2.5 text-sm outline-none focus:border-gold/40 sm:max-w-sm sm:py-2"
         />
         <div className="flex items-center gap-2">
           <FilterChip active={filter === "all"} onClick={() => setFilter("all")}>
@@ -152,7 +153,7 @@ export function PlayersSection({
       </div>
 
       {!query.trim() && (
-        <p className="smallcaps text-[10px] text-parchment-400">Recent players</p>
+        <p className="text-[10px] text-parchment-400">Recent players</p>
       )}
 
       {users.length === 0 ? (
@@ -164,7 +165,7 @@ export function PlayersSection({
               key={u.id}
               type="button"
               onClick={() => setSelected(u)}
-              className={`flex w-full flex-wrap items-center gap-2 px-4 py-3 text-left transition hover:bg-white/[0.03] ${
+              className={`flex min-h-[52px] w-full flex-wrap items-center gap-x-2 gap-y-1 px-4 py-3 text-left transition hover:bg-white/[0.03] ${
                 selected?.id === u.id ? "bg-white/[0.04]" : ""
               }`}
             >
@@ -172,12 +173,12 @@ export function PlayersSection({
               {u.role !== "user" && <RoleBadge role={u.role} />}
               {!!u.is_guest && <Pill>guest</Pill>}
               {u.banned_until && u.banned_until > now && (
-                <Pill tone="warn">banned {untilLabel(u.banned_until)}</Pill>
+                <Pill tone="warn">banned {untilShort(u.banned_until)}</Pill>
               )}
               {u.muted_until && u.muted_until > now && (
-                <Pill tone="mute">muted {untilLabel(u.muted_until)}</Pill>
+                <Pill tone="mute">muted {untilShort(u.muted_until)}</Pill>
               )}
-              <span className="ml-auto text-sm text-parchment-400">
+              <span className="w-full text-[12px] text-parchment-400 sm:ml-auto sm:w-auto sm:text-sm">
                 {Math.round(u.rating)} · {u.games} games · joined{" "}
                 {new Date(u.created_at).toLocaleDateString()}
               </span>
@@ -197,9 +198,9 @@ export function PlayersSection({
             </Link>
             {selected.role !== "user" && <RoleBadge role={selected.role} />}
             {!!selected.is_guest && <Pill>guest</Pill>}
-            {isBanned && <Pill tone="warn">banned {untilLabel(selected.banned_until)}</Pill>}
-            {isMuted && <Pill tone="mute">muted {untilLabel(selected.muted_until)}</Pill>}
-            <span className="ml-auto text-sm text-parchment-400">
+            {isBanned && <Pill tone="warn">banned {untilShort(selected.banned_until)}</Pill>}
+            {isMuted && <Pill tone="mute">muted {untilShort(selected.muted_until)}</Pill>}
+            <span className="w-full text-sm text-parchment-400 sm:ml-auto sm:w-auto">
               {Math.round(selected.rating)} · {selected.games} games
             </span>
           </div>
@@ -234,15 +235,16 @@ export function PlayersSection({
                 />
               )}
             </div>
-            <div className="mt-2 flex flex-wrap items-center gap-2">
+            <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
               <input
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 placeholder="Note for the audit log"
-                className="plate min-w-[180px] flex-1 bg-transparent px-3 py-1.5 text-sm outline-none focus:border-gold/40"
+                className="plate w-full bg-transparent px-3 py-2 text-sm outline-none focus:border-gold/40 sm:min-w-[180px] sm:flex-1 sm:py-1.5"
               />
               <ModButton
                 tone={sanction === "ban" ? "danger" : sanction === "mute" ? "primary" : "default"}
+                className="w-full sm:w-auto"
                 onClick={() => {
                   act(selected.username, { action: sanction, durationMs, note });
                   setNote("");
@@ -306,7 +308,7 @@ export function PlayersSection({
 
           <div className="grid gap-4 border-t border-white/10 pt-4 text-sm sm:grid-cols-2">
             <div>
-              <h3 className="smallcaps text-xs text-parchment-400">Mod history</h3>
+              <h3 className="text-xs text-parchment-400">Mod history</h3>
               {history.length === 0 ? (
                 <p className="mt-2 text-parchment-300">Clean record.</p>
               ) : (
@@ -314,7 +316,7 @@ export function PlayersSection({
                   {history.map((h, i) => (
                     <li key={i} className="text-parchment-200">
                       <span className="text-gold-leaf">{h.action}</span> by {h.mod_name} ·{" "}
-                      {when(h.created_at)}
+                      <span title={when(h.created_at)}>{whenShort(h.created_at)}</span>
                       {h.note && <span className="text-parchment-400">: {h.note}</span>}
                     </li>
                   ))}
@@ -322,7 +324,7 @@ export function PlayersSection({
               )}
             </div>
             <div>
-              <h3 className="smallcaps text-xs text-parchment-400">Reports against them</h3>
+              <h3 className="text-xs text-parchment-400">Reports against them</h3>
               {reports.length === 0 ? (
                 <p className="mt-2 text-parchment-300">None.</p>
               ) : (
@@ -330,7 +332,7 @@ export function PlayersSection({
                   {reports.map((r, i) => (
                     <li key={i} className="text-parchment-200">
                       <span className="text-oxblood-glow">{r.reason}</span> by {r.reporter_name} (
-                      {r.status}) · {when(r.created_at)}
+                      {r.status}) · <span title={when(r.created_at)}>{whenShort(r.created_at)}</span>
                     </li>
                   ))}
                 </ul>

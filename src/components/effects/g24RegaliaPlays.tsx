@@ -38,6 +38,7 @@ import "./g24RegaliaPlays.css";
 import type { CSSProperties, ReactNode } from "react";
 import type { SigPlugin, SigRole } from "./sigPlugins";
 import { AimStage, BoardFrame, BoardWideStage } from "./stage";
+import { LaserStrike, PieceShatter, Shockwave, QUAKE_CLASS, impactVars } from "./impact/impact";
 
 interface SceneProps {
   lead: boolean;
@@ -124,19 +125,37 @@ function Cut({ d, children }: { d: number; children: ReactNode }) {
 }
 
 /** Cast-anchored lead: action on the cast square, `frame` over the board. */
-function Lead({ d, frame, children }: { d: number; frame?: ReactNode; children: ReactNode }) {
+function Lead({ d, frame, imp, children }: { d: number; frame?: ReactNode; imp?: ImpCue; children: ReactNode }) {
+  const inner = (
+    <>
+      {frame ? <BoardFrame>{frame}</BoardFrame> : null}
+      {children}
+      {imp ? <ImpactHit d={d} imp={imp} /> : null}
+    </>
+  );
   return (
     <span className={ROOT} style={rootStyle(d)} aria-hidden="true">
       <BoardWideStage>
-        {frame ? <BoardFrame>{frame}</BoardFrame> : null}
-        {children}
+        {imp ? (
+          <QuakeBox d={d} imp={imp}>
+            {inner}
+          </QuakeBox>
+        ) : (
+          inner
+        )}
       </BoardWideStage>
     </span>
   );
 }
 
 /** Aim-anchored lead: `frame` stays square with the board, the art rotates. */
-function AimLead({ d, frame, children }: { d: number; frame?: ReactNode; children: ReactNode }) {
+function AimLead({ d, frame, imp, children }: { d: number; frame?: ReactNode; imp?: ImpCue; children: ReactNode }) {
+  const inner = (
+    <>
+      {children}
+      {imp ? <ImpactHit d={d} imp={imp} /> : null}
+    </>
+  );
   return (
     <span className={ROOT} style={rootStyle(d)} aria-hidden="true">
       {frame ? (
@@ -144,10 +163,148 @@ function AimLead({ d, frame, children }: { d: number; frame?: ReactNode; childre
           <BoardFrame>{frame}</BoardFrame>
         </BoardWideStage>
       ) : null}
-      <AimStage>{children}</AimStage>
+      <AimStage>
+        {imp ? (
+          <QuakeBox d={d} imp={imp}>
+            {inner}
+          </QuakeBox>
+        ) : (
+          inner
+        )}
+      </AimStage>
     </span>
   );
 }
+
+/* =============================================================================
+   FLAGSHIP IMPACT LAYER - the shared violence vocabulary (impact/impact.tsx)
+   staged per card. Each lead names ONE cue in IMP: the moment its own action
+   physically LANDS. The laser leads the beat by 0.4s; the shatter halves,
+   shard spray, ground shockwave and the whole-stage quake all land ON `at`,
+   so the composite reads as one hit. `x`/`y` are % of the 14-cell stage
+   (`far` parks the hit at the aim lane's far end instead), `rot` turns the
+   whole composite so a column can strike along the lane or up from the ground,
+   and `rgb` stays inside the card's own three-colour palette. Kill switch:
+   every node rides a `g24-impx` wrapper, covered by this module's prefix
+   rule; the imp-* internals are covered by the global data-anim gate.
+   ========================================================================== */
+interface ImpCue {
+  /** ms after the lead's own delay: the impact beat. */
+  at: number;
+  /** centre of the struck cell, % of the stage (ignored when `far`). */
+  x?: number;
+  y?: number;
+  /** "r g b" tint, from the card's own palette. */
+  rgb: string;
+  /** the descending column of light. */
+  laser?: boolean;
+  /** index into IMPACT_GLYPHS: silhouette split in half on the beat. */
+  glyph?: number;
+  /** a second, later shockwave: the double boom. */
+  boom?: boolean;
+  /** static rotation of the whole composite, deg. */
+  rot?: number;
+  /** box size, % of the stage. */
+  size?: number;
+  /** park the hit at the far end of the real aim lane. */
+  far?: boolean;
+}
+
+const IMPACT_GLYPHS: ReactNode[] = [
+  <svg key="a" viewBox="0 0 10 12" className="block h-full w-full" aria-hidden="true">
+    <g style={{ fill: "rgb(var(--imp-rgb, 216 181 110))" }}><path d="M1.4 9.5 1 3.6l2.4 2L5 2.2l1.6 3.4 2.4-2-.4 5.9zM1.6 10.3h6.8v1.2H1.6z" /></g>
+  </svg>,
+  <svg key="b" viewBox="0 0 10 12" className="block h-full w-full" aria-hidden="true">
+    <g style={{ fill: "rgb(var(--imp-rgb, 216 181 110))" }}><circle cx="5" cy="2.2" r="1.5" /><path d="M4.4 3.6h1.2V10H4.4zM3.2 10.4h3.6v1H3.2z" /></g>
+  </svg>,
+];
+
+/** The whole stage jolts on the cue's beat. Rides an INNER wrapper because the
+ * stage canvas carries the anchor-clamp transform, which must never be
+ * animated over. In-scene only: the real board crop never shakes. */
+function QuakeBox({ d, imp, children }: { d: number; imp: ImpCue; children: ReactNode }) {
+  return (
+    <span className={`g24-impx ${QUAKE_CLASS} absolute inset-0 block`} style={impactVars(undefined, (d + imp.at) / 1000)}>
+      {children}
+    </span>
+  );
+}
+
+/** The composite hit itself: laser column, split silhouette, shockwave(s). */
+function ImpactHit({ d, imp }: { d: number; imp: ImpCue }) {
+  const size = imp.size ?? 7.2;
+  const pos = imp.far
+    ? { left: `calc(50% + var(--fx-len, 3) * 7.142857% - ${(size / 2).toFixed(3)}%)`, top: `${((imp.y ?? 50) - size / 2).toFixed(3)}%` }
+    : { left: `${((imp.x ?? 50) - size / 2).toFixed(3)}%`, top: `${((imp.y ?? 50) - size / 2).toFixed(3)}%` };
+  return (
+    <span
+      className="g24-impx absolute block"
+      style={{
+        ...pos,
+        width: `${size}%`,
+        height: `${size}%`,
+        ...(imp.rot ? { transform: `rotate(${imp.rot}deg)` } : null),
+        ...impactVars(imp.rgb, (d + imp.at) / 1000),
+      }}
+    >
+      {imp.laser ? <LaserStrike /> : null}
+      {imp.glyph != null ? <PieceShatter glyph={IMPACT_GLYPHS[imp.glyph]} /> : null}
+      <Shockwave />
+      {imp.boom ? (
+        <span className="g24-impx absolute inset-0 block" style={impactVars(imp.rgb, (d + imp.at + 200) / 1000)}>
+          <Shockwave />
+        </span>
+      ) : null}
+    </span>
+  );
+}
+
+/** THE IMPACT CUE SHEET: one named moment of physical contact per card,
+ * choreographed onto that card's own climax - position, beat, tint and
+ * primitive combo all differ per card, so no two siblings land the same hit. */
+const IMP: Record<string, ImpCue> = {
+  // Ascension: THE CROWN COMES DOWN LIKE AN ANVIL - beamed down, it cracks the flags and rings twice
+  bn4_ascension_small: { at: 1040, x: 50, y: 46, rgb: "232 196 106", laser: true, glyph: 0, boom: true },
+  // Crown of Masks: THE MASK CROWN SLAM - the composite crown drops and splits its own face
+  bn4_crown_of_masks: { at: 1080, x: 50, y: 48, rgb: "207 107 184", laser: true, glyph: 0, boom: true },
+  // Crown of Lead: THE LEAD WEIGHT - no beam, just mass: the crown lands and the floor complains twice
+  hx4_crown_of_lead: { at: 1000, x: 50, y: 50, rgb: "154 162 172", glyph: 0, boom: true, size: 8.4 },
+  // Crown of the Undying: THE CROWN THAT WILL NOT DIE - struck apart under the column and still ringing
+  ov_crown_of_the_undying: { at: 1060, x: 50, y: 47, rgb: "224 89 106", laser: true, glyph: 0, boom: true },
+  // Crown Commission: THE COMMISSION STAMP - the order lands as a red column with a double seal
+  bn4_crown_commission: { at: 980, x: 51, y: 49, rgb: "212 85 60", laser: true, boom: true },
+  // Promotion Charter: THE SEAL STAMPED - the scepter of office is driven in and the old office splits
+  bn4_promotion_charter: { at: 960, x: 49, y: 48, rgb: "111 159 216", laser: true, glyph: 1 },
+  // Crown Malaise: THE SICK CROWN SAGS - it falls apart under its own weight, twice over
+  hx4_crown_malaise: { at: 940, x: 50, y: 49, rgb: "168 192 122", glyph: 0, boom: true },
+  // Grim Procession: THE SCEPTER GROUNDED - the procession halts and grounds the staff, hard
+  hx4_grim_procession: { at: 1000, x: 48, y: 52, rgb: "143 127 192", glyph: 1, boom: true },
+  // Royal Quarantine: THE CORDON DROPPED - the quarantine bar beams down around the throne
+  hx4_royal_quarantine: { at: 960, x: 52, y: 50, rgb: "224 138 60", laser: true, boom: true },
+  // Coup d'Etat: THE CROWN STRUCK OFF - lasered off the brow and split on the flags
+  ov_coup_detat: { at: 1000, x: 50, y: 49, rgb: "180 140 224", laser: true, glyph: 0, boom: true },
+  // Promotion Jubilee: THE OLD CROWN RETIRED - it is dropped, breaks, and the crowd stamps
+  ov_promotion_jubilee: { at: 940, x: 51, y: 47, rgb: "232 160 138", glyph: 0, boom: true },
+  // Puppet Coronation: THE STRINGS PULLED TAUT - the puppet is slammed onto the far throne
+  ov_puppet_coronation: { at: 980, rgb: "184 200 216", laser: true, boom: true, far: true },
+  // Crowned Strider: THE STRIDE LANDS - the crowned step booms at the end of the run
+  bn4_crowned_strider: { at: 900, rgb: "201 138 74", boom: true, far: true },
+  // Royal Banquet: THE TABLE THUMP - the whole service lands at once, then the toast
+  bn4_royal_banquet: { at: 880, x: 50, y: 52, rgb: "207 214 221", boom: true, size: 8.6 },
+  // Royal Barge: THE HULL GROUNDS - the barge runs aground exactly at the water gate
+  bn4_royal_barge: { at: 920, rgb: "111 192 168", boom: true, far: true },
+  // Rusted Crown: RUST TO PIECES - the crown flakes clean in half where it sits
+  hx4_rusted_crown: { at: 900, x: 50, y: 48, rgb: "163 95 52", glyph: 0 },
+  // Royal Incognito: THE SIDE-DOOR SLIP - one skewed, hushed shock where the king ducks out
+  bn4_royal_incognito: { at: 840, x: 49, y: 49, rgb: "95 127 168", rot: 14 },
+  // Royal Escort: THE ESCORT POSTED - the guard beam plants at the far end of the route
+  hx4_royal_escort: { at: 880, rgb: "216 180 90", laser: true, far: true },
+  // Summons to Court: THE WRIT DESCENDS - the summons lands as one column of light
+  hx4_summons_to_court: { at: 900, x: 50, y: 47, rgb: "184 176 160", laser: true },
+  // Off-Broadway Queen: THE FOOTLIGHT POP - her entrance beam hits with a double flash
+  ov_off_broadway_queen: { at: 880, x: 52, y: 48, rgb: "255 159 192", laser: true, boom: true },
+};
+
 
 /** Board-wide wash, always inside a BoardFrame. */
 function Wash({ tone, d = 0 }: { tone: string; d?: number }) {
@@ -206,7 +363,7 @@ function AscensionSmallScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead
+    <Lead imp={IMP.bn4_ascension_small}
       d={delayMs}
       frame={
         <>
@@ -273,7 +430,7 @@ function CrownOfMasksScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(207,107,184,0.3)" />}>
+    <Lead imp={IMP.bn4_crown_of_masks} d={delayMs} frame={<Wash tone="rgba(207,107,184,0.3)" />}>
       <V c="g24-cm-trunk" l={42} t={44} w={16} h={12} d={90}>{trunk}</V>
       <V c="g24-cm-lid" l={42} t={35} w={16} h={10} d={280} st={{ transformOrigin: "50% 100%" }}>
         <path d="M3 16C3 8 7 4 12 4s9 4 9 12z" fill="#cf6bb8" stroke="#2b1030" strokeWidth="1.2" {...SJ} />
@@ -323,7 +480,7 @@ function CrownOfLeadScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead
+    <Lead imp={IMP.hx4_crown_of_lead}
       d={delayMs}
       frame={
         <>
@@ -385,7 +542,7 @@ function CrownOfTheUndyingScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead
+    <Lead imp={IMP.ov_crown_of_the_undying}
       d={delayMs}
       frame={
         <>
@@ -449,7 +606,7 @@ function CrownCommissionScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead
+    <Lead imp={IMP.bn4_crown_commission}
       d={delayMs}
       frame={
         <>
@@ -500,7 +657,7 @@ function PromotionCharterScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(111,159,216,0.28)" />}>
+    <Lead imp={IMP.bn4_promotion_charter} d={delayMs} frame={<Wash tone="rgba(111,159,216,0.28)" />}>
       <L c="g24-shaft" l={46} t={22} w={8} h={30} d={60} st={{ background: "linear-gradient(180deg, rgba(255,244,214,0.6), transparent)", transformOrigin: "50% 0%" }} />
       <L c="g24-pc-unroll" l={36} t={42} w={28} h={12} d={160} st={{ background: "linear-gradient(180deg, #fff4d6, rgba(111,159,216,0.55))", transformOrigin: "0% 50%" }} />
       <L c="g24-pc-lines" l={38} t={45} w={24} h={6} d={380} st={{ background: "repeating-linear-gradient(180deg, rgba(20,32,58,0.7) 0 1px, transparent 1px 3px)" }} />
@@ -547,7 +704,7 @@ function CrownMalaiseScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead
+    <Lead imp={IMP.hx4_crown_malaise}
       d={delayMs}
       frame={
         <>
@@ -606,7 +763,7 @@ function GrimProcessionScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead
+    <Lead imp={IMP.hx4_grim_procession}
       d={delayMs}
       frame={
         <>
@@ -667,7 +824,7 @@ function RoyalQuarantineScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(224,138,60,0.28)" />}>
+    <Lead imp={IMP.hx4_royal_quarantine} d={delayMs} frame={<Wash tone="rgba(224,138,60,0.28)" />}>
       <V c="g24-rq-king" l={45.5} t={44} w={9} h={12} d={80}><path d={KING} fill="none" stroke="#fff2d8" strokeWidth="1.4" {...SJ} /></V>
       {RQ_POSTS.map(([l, t], i) => (
         <V key={i} c="g24-rq-post" l={l} t={t} w={5} h={9} d={180 + i * 90}>{post}</V>
@@ -718,7 +875,7 @@ function CoupDetatScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead
+    <Lead imp={IMP.ov_coup_detat}
       d={delayMs}
       frame={
         <>
@@ -779,7 +936,7 @@ function PromotionJubileeScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(232,160,138,0.28)" />}>
+    <Lead imp={IMP.ov_promotion_jubilee} d={delayMs} frame={<Wash tone="rgba(232,160,138,0.28)" />}>
       <V c="g24-borne" l={39} t={46} w={22} h={10} d={120}>
         <path d="M2.6 9.4h18.8l-1.8 8H4.4z" fill="#2e1a14" stroke="#e8a08a" strokeWidth="1.2" {...SJ} />
         <path d="M3.4 17.4l-1.4 3M20.6 17.4l1.4 3" stroke="#fff2d8" strokeWidth="1.2" {...SJ} />
@@ -831,7 +988,7 @@ function PuppetCoronationScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead d={delayMs} frame={<Wash tone="rgba(184,200,216,0.26)" />}>
+    <AimLead imp={IMP.ov_puppet_coronation} d={delayMs} frame={<Wash tone="rgba(184,200,216,0.26)" />}>
       <L c="g24-runout" l={45} t={51} w={30} h={1.8} d={100} st={{ background: "linear-gradient(90deg, #b8c8d8, rgba(184,200,216,0))", transformOrigin: "0% 50%", borderRadius: "999px" }} />
       <V c="g24-pk-bar" l={41} t={30} w={16} h={9} d={200}>{bar}</V>
       {[0, 1, 2].map((i) => (
@@ -879,7 +1036,7 @@ function CrownedStriderScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead d={delayMs} frame={<Wash tone="rgba(201,138,74,0.26)" />}>
+    <AimLead imp={IMP.bn4_crowned_strider} d={delayMs} frame={<Wash tone="rgba(201,138,74,0.26)" />}>
       <L c="g24-runout" l={45} t={53} w={30} h={2.2} d={90} st={{ background: "linear-gradient(90deg, #c98a4a, rgba(201,138,74,0))", transformOrigin: "0% 50%", borderRadius: "999px" }} />
       <V c="g24-cs-boot" l={41} t={41} w={11} h={14} d={180}>{boot}</V>
       <L c="g24-cs-strap" l={41} t={49} w={11} h={1.6} d={360} st={{ borderRadius: "999px", background: "#c98a4a", transformOrigin: "0% 50%" }} />
@@ -926,7 +1083,7 @@ function RoyalBanquetScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(207,214,221,0.26)" />}>
+    <Lead imp={IMP.bn4_royal_banquet} d={delayMs} frame={<Wash tone="rgba(207,214,221,0.26)" />}>
       <L c="g24-rb-cloth" l={37} t={50} w={28} h={5} d={100} st={{ background: "linear-gradient(180deg, #fff4d6, rgba(207,214,221,0.4))", transformOrigin: "0% 50%" }} />
       {RB_SPOTS.map((l, i) => (
         <V key={i} c="g24-rb-set" l={l} t={42} w={7} h={9} d={260 + i * 110}>{dome}</V>
@@ -979,7 +1136,7 @@ function RoyalBargeScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead d={delayMs} frame={<Wash tone="rgba(111,192,168,0.26)" />}>
+    <AimLead imp={IMP.bn4_royal_barge} d={delayMs} frame={<Wash tone="rgba(111,192,168,0.26)" />}>
       <L c="g24-runout" l={44} t={54} w={30} h={2} d={80} st={{ background: "linear-gradient(90deg, #6fc0a8, rgba(111,192,168,0))", transformOrigin: "0% 50%", borderRadius: "999px" }} />
       <V c="g24-bg-glide" l={40} t={44} w={18} h={12} d={200}>{hull}</V>
       {[0, 1, 2].map((i) => (
@@ -1024,7 +1181,7 @@ function RustedCrownScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(163,95,52,0.28)" />}>
+    <Lead imp={IMP.hx4_rusted_crown} d={delayMs} frame={<Wash tone="rgba(163,95,52,0.28)" />}>
       <V c="g24-rc-arch" l={43} t={35} w={14} h={12} d={120}>{arches}</V>
       <L c="g24-rc-rust" l={43} t={46} w={14} h={2.6} d={320} st={{ borderRadius: "999px", background: "linear-gradient(90deg, #a35f34, #ffe7c4)", transformOrigin: "0% 50%" }} />
       <V c="g24-rc-notch" l={45} t={41} w={10} h={10} d={500} st={{ transformOrigin: "50% 90%" }}>
@@ -1074,7 +1231,7 @@ function RoyalIncognitoScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(95,127,168,0.26)" />}>
+    <Lead imp={IMP.bn4_royal_incognito} d={delayMs} frame={<Wash tone="rgba(95,127,168,0.26)" />}>
       <V c="g24-ri-doff" l={45} t={31} w={10} h={9} d={120}>
         <path d={CORONET} fill="#5f7fa8" stroke="#131c2a" strokeWidth="1.2" {...SJ} />
       </V>
@@ -1123,7 +1280,7 @@ function RoyalEscortScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead d={delayMs} frame={<Wash tone="rgba(216,180,90,0.26)" />}>
+    <AimLead imp={IMP.hx4_royal_escort} d={delayMs} frame={<Wash tone="rgba(216,180,90,0.26)" />}>
       <L c="g24-runout" l={45} t={48.8} w={30} h={2} d={90} st={{ background: "linear-gradient(90deg, #d8b45a, rgba(216,180,90,0))", transformOrigin: "0% 50%", borderRadius: "999px" }} />
       {[0, 1, 2, 3].map((i) => (
         <V key={i} c="g24-re-link" l={46 + i * 4.4} t={46} w={5} h={5} d={240 + i * 70}>{link}</V>
@@ -1170,7 +1327,7 @@ function SummonsToCourtScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead
+    <Lead imp={IMP.hx4_summons_to_court}
       d={delayMs}
       frame={
         <>
@@ -1226,7 +1383,7 @@ function OffBroadwayQueenScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead
+    <Lead imp={IMP.ov_off_broadway_queen}
       d={delayMs}
       frame={
         <>

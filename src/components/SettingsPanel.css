@@ -1,92 +1,33 @@
 /* ============================================================================
-   Settings slab (scoped) — the settings modal as a carved-stone monument.
+   Settings panel (scoped) — owned by SettingsPanel.tsx, deliberately kept OUT
+   of globals.css (another lane owns that file).
 
-   Owned by SettingsPanel.tsx. Deliberately kept OUT of globals.css (another
-   lane owns that file). Layers on top of the shared `.dgn-slab` material from
-   the dungeon set; everything here follows the same design law as
-   DungeonMenu.css: 1px radii, structure over glow, animation touches only
-   transform and opacity, decorative bits are pointer-events-none, and every
-   moving part stands down under html[data-anim="off"].
+   Flat, like the rest of the site: no material, no glow, no entrance
+   choreography. What is left here is the handful of controls the browser will
+   not style for us (the toggle and the range input) plus the section-link
+   states, all drawn from the shared tokens so they follow the palette.
    ============================================================================ */
 
-/* --- Entrance ---------------------------------------------------------------
-   Portcullis drop: the slab descends into place with a slight settle, same
-   physics as the nav menu but tuned shorter for a modal (~240ms). */
-.settings-slab {
-  transform-origin: 50% 0%;
-  animation: settings-slab-drop 0.24s cubic-bezier(0.2, 0.9, 0.25, 1.12) both;
-}
-@keyframes settings-slab-drop {
-  0% { opacity: 0; transform: translateY(-14px) scaleY(0.97); }
-  100% { opacity: 1; transform: translateY(0) scaleY(1); }
-}
-
-/* --- Chiselled crown --------------------------------------------------------
-   The header band carries an ember seam along its foot (overlaying the flat
-   --edge hairline), like a sconce burning above the doorway. */
-.settings-crown { position: relative; }
-.settings-crown::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -1px;
-  height: 1px;
-  pointer-events: none;
-  background: linear-gradient(
-    90deg,
-    rgb(var(--energy-ember-rgb) / 0.45),
-    rgb(122 110 96 / 0.25) 55%,
-    transparent
-  );
-}
-/* Letterpress title: struck into the stone like .masthead. */
-.settings-title {
-  color: var(--paper);
-  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.7), 0 -1px 0 rgba(255, 255, 255, 0.05);
-}
-html[data-theme="light"] .settings-title {
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6), 0 -1px 0 rgba(0, 0, 0, 0.06);
-}
-
-/* --- Section tabs (rail on desktop, chip row on mobile) ---------------------
-   Each entry is a sconce on the wall: an ember left edge and firelight wash
-   when lit (selected), a parchment warming on hover. Mirrors
-   .dgn-menu__item[aria-current] so navigation reads as one vocabulary. */
+/* --- Section links (a rail on desktop, a list on mobile) ------------------ */
 .settings-tab {
-  border-left: 2px solid transparent;
-  color: var(--paper-dim);
-  transition: color 160ms ease, background-color 160ms ease,
-    border-color 160ms ease;
+  border-radius: 3px;
+  color: var(--text-secondary);
+  transition: color 120ms ease, background-color 120ms ease;
 }
 @media (hover: hover) {
   .settings-tab:hover {
-    color: var(--paper);
-    background: linear-gradient(
-      90deg,
-      rgb(var(--energy-ember-rgb) / 0.08),
-      transparent 70%
-    );
+    color: var(--text-primary);
+    background: var(--bg-raised);
   }
 }
-.settings-tab[aria-selected="true"] {
-  border-left-color: rgb(255 154 60 / 0.95);
-  background: linear-gradient(
-    90deg,
-    rgb(var(--energy-ember-rgb) / 0.14),
-    transparent 70%
-  );
-  color: rgb(255 200 130);
-  text-shadow: 0 0 12px rgb(var(--energy-ember-rgb) / 0.35);
-}
-html[data-theme="light"] .settings-tab[aria-selected="true"] {
-  text-shadow: none;
+.settings-tab[aria-current] {
+  background: var(--accent);
+  color: var(--text-on-accent);
 }
 
-/* --- Forged toggle -----------------------------------------------------------
-   A carved recess in the stone holding a gem thumb: dormant iron when off,
-   lit with the accent energy when on. The ::before extends the hit area to a
-   44px-tall target without inflating the visual. */
+/* --- Toggle ---------------------------------------------------------------
+   The ::before extends the hit area to a 44px-tall target without inflating
+   the visual. */
 .settings-toggle {
   position: relative;
   display: inline-flex;
@@ -94,14 +35,9 @@ html[data-theme="light"] .settings-tab[aria-selected="true"] {
   height: 24px;
   flex: none;
   border-radius: 999px;
-  border: 1px solid var(--edge);
-  background:
-    linear-gradient(180deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.12)),
-    var(--stone-deep);
-  box-shadow:
-    inset 0 1px 2px rgba(0, 0, 0, 0.5),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.04);
-  transition: border-color 160ms ease, box-shadow 160ms ease;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-raised);
+  transition: border-color 120ms ease, background-color 120ms ease;
   cursor: pointer;
 }
 .settings-toggle::before {
@@ -117,35 +53,26 @@ html[data-theme="light"] .settings-tab[aria-selected="true"] {
   height: 16px;
   margin-top: -8px;
   border-radius: 999px;
-  background: linear-gradient(180deg, var(--iron), var(--iron-deep));
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  background: var(--text-secondary);
   transform: translateX(0);
-  transition: transform 160ms var(--ease-out), background 160ms ease,
-    box-shadow 160ms ease;
+  transition: transform 140ms var(--ease-out), background-color 120ms ease;
 }
 .settings-toggle[aria-checked="true"] {
-  border-color: rgb(var(--accent-hi-rgb) / 0.55);
-  box-shadow:
-    inset 0 1px 2px rgba(0, 0, 0, 0.5),
-    inset 0 0 8px -2px rgb(var(--accent-rgb) / 0.35);
+  border-color: var(--accent);
+  background: var(--accent);
 }
 .settings-toggle[aria-checked="true"] .settings-toggle__thumb {
   transform: translateX(20px);
-  background: linear-gradient(180deg, var(--accent-hi), var(--accent));
-  box-shadow:
-    0 0 10px 1px rgb(var(--accent-hi-rgb) / 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  background: var(--text-on-accent);
 }
 .settings-toggle:disabled {
   cursor: not-allowed;
   opacity: 0.4;
 }
 
-/* --- Carved range slider ------------------------------------------------------
-   Native input, restyled: a recessed stone channel with an accent gem thumb.
-   Height keeps the whole control an easy target. */
+/* --- Range slider ---------------------------------------------------------
+   Native input, restyled to the flat palette. The 24px height keeps the whole
+   control an easy target. */
 .settings-range {
   -webkit-appearance: none;
   appearance: none;
@@ -155,60 +82,35 @@ html[data-theme="light"] .settings-tab[aria-selected="true"] {
 }
 .settings-range:disabled { cursor: not-allowed; }
 .settings-range::-webkit-slider-runnable-track {
-  height: 8px;
-  border-radius: 1px;
-  border: 1px solid var(--edge);
-  background:
-    linear-gradient(180deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.12)),
-    var(--stone-deep);
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.45);
+  height: 6px;
+  border-radius: 3px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border-subtle);
 }
 .settings-range::-webkit-slider-thumb {
   -webkit-appearance: none;
   width: 14px;
   height: 14px;
-  margin-top: -4px;
-  border-radius: 1px;
-  border: 1px solid rgba(0, 0, 0, 0.55);
-  background: linear-gradient(180deg, var(--accent-hi), var(--accent));
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  margin-top: -5px;
+  border-radius: 999px;
+  border: 0;
+  background: var(--accent);
 }
 .settings-range::-moz-range-track {
-  height: 8px;
-  border-radius: 1px;
-  border: 1px solid var(--edge);
-  background:
-    linear-gradient(180deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.12)),
-    var(--stone-deep);
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.45);
+  height: 6px;
+  border-radius: 3px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border-subtle);
 }
 .settings-range::-moz-range-thumb {
   width: 14px;
   height: 14px;
-  border-radius: 1px;
-  border: 1px solid rgba(0, 0, 0, 0.55);
-  background: linear-gradient(180deg, var(--accent-hi), var(--accent));
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3);
-}
-
-/* --- Accent swatch hit area -----------------------------------------------------
-   The color dots stay compact (24px) but each carries an invisible 44px pad. */
-.settings-swatch { position: relative; }
-.settings-swatch::after {
-  content: "";
-  position: absolute;
-  /* Full 44px vertically; horizontally capped so neighbouring gems (8px gap)
-     keep distinct targets. */
-  inset: -10px -4px;
   border-radius: 999px;
+  border: 0;
+  background: var(--accent);
 }
 
-/* --- Anim-off gating ------------------------------------------------------------ */
-html[data-anim="off"] .settings-slab { animation: none; }
+/* --- Anim-off gating ----------------------------------------------------- */
 html[data-anim="off"] .settings-tab,
 html[data-anim="off"] .settings-toggle,
 html[data-anim="off"] .settings-toggle__thumb { transition: none; }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { InfoPageLayout, InfoSection } from "@/components/InfoPageLayout";
+import { LinkButton } from "@/components/ui/Button";
 
 export const metadata: Metadata = {
   title: "Contact | Nerf Chess",
@@ -61,12 +62,12 @@ export default function ContactPage() {
           the FAQ answers the most common first-game questions.
         </p>
         <div className="pt-2 flex flex-wrap gap-3">
-          <Link href="/tutorial" className="px-5 py-2.5 rounded-sm btn-leaf font-display">
+          <LinkButton tone="leaf" href="/tutorial" className="px-5 py-2.5">
             How to play
-          </Link>
-          <Link href="/faq" className="px-5 py-2.5 rounded-sm btn-ghost font-display">
+          </LinkButton>
+          <LinkButton tone="ghost" href="/faq" className="px-5 py-2.5">
             Read the FAQ
-          </Link>
+          </LinkButton>
         </div>
       </InfoSection>
     </InfoPageLayout>

@@ -15,6 +15,7 @@
 
 import type { CSSProperties, ReactNode } from "react";
 import type { SigPlugin, SigRole } from "./sigPlugins";
+import { LaserStrike, PieceShatter, QUAKE_CLASS, Shockwave, impactVars } from "./impact/impact";
 import { AimStage, BoardFrame } from "./stage";
 import "./prankPlays.css";
 
@@ -47,10 +48,20 @@ function Stage({ children, inset = "0" }: { children: ReactNode; inset?: string 
  * Board.tsx already re-centres the wrapper on the board for a "board" anchor,
  * so this canvas must NOT correct itself a second time. Cast- and aim-anchored
  * leads use `Framed` instead. */
-function Wide({ children }: { children: ReactNode }) {
+function Wide({ children, quakeAtMs }: { children: ReactNode; quakeAtMs?: number }) {
   return (
     <span className="prk pointer-events-none absolute inset-0 z-30" aria-hidden="true">
-      <span className="absolute left-[-650%] top-[-650%] block h-[1400%] w-[1400%]">{children}</span>
+      <span className="absolute left-[-650%] top-[-650%] block h-[1400%] w-[1400%]">
+        {quakeAtMs == null ? (
+          children
+        ) : (
+          // FLAGSHIP: the whole skit jolts on the prank's impact beat
+          // (in-scene stage only — never the real board crop)
+          <span className={`${QUAKE_CLASS} absolute inset-0 block`} style={impactVars(undefined, quakeAtMs / 1000)}>
+            {children}
+          </span>
+        )}
+      </span>
     </span>
   );
 }
@@ -66,14 +77,57 @@ function Wide({ children }: { children: ReactNode }) {
  * of the frame and offset -37.5% — that reproduces the old framing exactly
  * while making it independent of the square the card was cast on. The cast
  * square then carries the play's own local beats; see `Spot`. */
-function Framed({ children }: { children: ReactNode }) {
+function Framed({ children, quakeAtMs }: { children: ReactNode; quakeAtMs?: number }) {
   return (
     <span className="prk pointer-events-none absolute inset-0 z-30" aria-hidden="true">
       <span className="fx-stage absolute left-[-650%] top-[-650%] block h-[1400%] w-[1400%]">
         <BoardFrame>
-          <span className="absolute left-[-37.5%] top-[-37.5%] block h-[175%] w-[175%]">{children}</span>
+          <span className="absolute left-[-37.5%] top-[-37.5%] block h-[175%] w-[175%]">
+            {quakeAtMs == null ? (
+              children
+            ) : (
+              // FLAGSHIP: in-scene stage jolt on the impact beat
+              <span className={`${QUAKE_CLASS} absolute inset-0 block`} style={impactVars(undefined, quakeAtMs / 1000)}>
+                {children}
+              </span>
+            )}
+          </span>
         </BoardFrame>
       </span>
+    </span>
+  );
+}
+
+/** FLAGSHIP WAVE: a composed physical hit from the shared impact vocabulary
+ * (impact.tsx) — descending laser column, a prop blown in half with shard
+ * spray, an expanding ground ring — parked wherever the skit's punchline
+ * lands. Slapstick edition: the "piece" being shattered here is usually an
+ * envelope, a captcha tile or a quote-tweet, which is exactly the point.
+ * The laser leads the beat by 0.4s (see the .prk .imp-laser rule). */
+function Impact({
+  left,
+  top,
+  size = "14%",
+  rgb,
+  atMs,
+  laser,
+  shatter,
+  shock,
+}: {
+  left: string;
+  top: string;
+  size?: string;
+  rgb: string;
+  atMs: number;
+  laser?: boolean;
+  shatter?: ReactNode;
+  shock?: boolean;
+}) {
+  return (
+    <span className="prk-impact absolute block" style={{ left, top, width: size, height: size, ...impactVars(rgb, atMs / 1000) }}>
+      {laser && <LaserStrike />}
+      {shatter != null && <PieceShatter glyph={shatter} />}
+      {shock && <Shockwave />}
     </span>
   );
 }
@@ -268,8 +322,23 @@ function PhishingPlay({ lead, role, delayMs }: SceneProps) {
   }
   return (
     <>
-      <Wide>
+      <Wide quakeAtMs={delayMs + 1000}>
       <Wash color="rgba(70,84,116,0.2)" delayMs={delayMs} />
+      {/* the YANK lands like a depth charge: the hooked envelope is ripped
+          clean in half, paper shards flying, as the secret comes out */}
+      <Impact
+        left="44%"
+        top="41%"
+        size="13%"
+        rgb="232 77 91"
+        atMs={delayMs + 1080}
+        shock
+        shatter={
+          <svg viewBox="0 0 40 40" className="h-full w-full">
+            <Envelope x={20} y={20} s={1.15} />
+          </svg>
+        }
+      />
       <Prop left="31%" top="33%" width="38%" height="30%">
         <svg viewBox="0 0 110 78" className="h-full w-full">
           {/* their inbox */}
@@ -340,8 +409,11 @@ function RaidPlay({ lead, role, delayMs }: SceneProps) {
   }
   return (
     <>
-      <Wide>
+      <Wide quakeAtMs={delayMs + 820}>
       <Wash color="rgba(145,71,255,0.2)" delayMs={delayMs} />
+      {/* the raid ARRIVES: a purple spotlight column slams down onto the
+          banner and the hype blast rings out across the board */}
+      <Impact left="43%" top="29%" size="14%" rgb="145 71 255" atMs={delayMs + 820} laser shock />
       <Prop left="28%" top="30%" width="44%" height="20%">
         <svg viewBox="0 0 130 58" className="h-full w-full">
           {/* the donation alert banner slides down */}
@@ -408,9 +480,12 @@ function BsodPlay({ lead, role, delayMs }: SceneProps) {
   }
   return (
     <>
-      <Wide>
+      <Wide quakeAtMs={delayMs + 160}>
       {/* the whole board goes BSOD blue */}
       <span className="prk-glitch absolute inset-0 block" style={{ background: "#1247c8", ...d(delayMs) }} />
+      {/* the CRASH is physical: the stage takes the hit the moment the blue
+          slams in, and the kernel panic blast rolls out mid-reboot */}
+      <Impact left="43%" top="42%" size="14%" rgb="159 192 255" atMs={delayMs + 900} shock />
       <Prop left="26%" top="28%" width="48%" height="40%">
         <svg viewBox="0 0 140 116" className="h-full w-full">
           <g className="prk-glitch" style={d(delayMs)}>
@@ -486,8 +561,11 @@ function ForcedUpdatePlay({ lead, role, delayMs }: SceneProps) {
   }
   return (
     <>
-      <Wide>
+      <Wide quakeAtMs={delayMs + 500}>
       <Wash color="rgba(70,84,116,0.18)" delayMs={delayMs} />
+      {/* the updater WINS: when update 2 of 3 begins, the -8s hits their
+          clock like a dropped toolbox and the blast ripples off the window */}
+      <Impact left="44%" top="30%" size="12%" rgb="90 160 232" atMs={delayMs + 1550} shock />
       <Prop left="30%" top="34%" width="40%" height="28%">
         <svg viewBox="0 0 116 74" className="h-full w-full">
           <g className="prk-window" style={d(delayMs)}>
@@ -556,8 +634,27 @@ function DefenderPlay({ lead, role, delayMs }: SceneProps) {
   }
   return (
     <>
-      <Framed>
+      <Framed quakeAtMs={delayMs + 1150}>
       <Wash color="rgba(90,160,232,0.16)" delayMs={delayMs} />
+      {/* QUARANTINE, WITH PREJUDICE: the scanner locks on, a green purge
+          laser hammers down, and the detected bug is blown clean in half */}
+      <Impact
+        left="42%"
+        top="40%"
+        size="15%"
+        rgb="75 224 138"
+        atMs={delayMs + 1150}
+        laser
+        shock
+        shatter={
+          <svg viewBox="0 0 40 40" className="h-full w-full">
+            <ellipse cx={20} cy={22} rx={9} ry={11} fill="#a5303b" />
+            <circle cx={20} cy={9} r={5} fill="#a5303b" />
+            <path d="M11 14 L4 9 M29 14 L36 9 M10 24 H2 M30 24 H38 M12 32 L6 37 M28 32 L34 37" stroke="#a5303b" strokeWidth={2.2} strokeLinecap="round" />
+            <path d="M20 13 V32" stroke="#e8dcc0" strokeWidth={1.6} />
+          </svg>
+        }
+      />
       <Prop left="29%" top="31%" width="42%" height="34%">
         <svg viewBox="0 0 116 92" className="h-full w-full">
           <g className="prk-window" style={d(delayMs)}>
@@ -624,8 +721,24 @@ function CaptchaPlay({ lead, role, delayMs }: SceneProps) {
   }
   return (
     <>
-      <Framed>
+      <Framed quakeAtMs={delayMs + 1100}>
       <Wash color="rgba(70,84,116,0.2)" delayMs={delayMs} />
+      {/* verification FAILS with force: the FAILED stamp bucks the stage and
+          one innocent horsey tile is blown in half by the rejection */}
+      <Impact
+        left="42.5%"
+        top="38%"
+        size="13%"
+        rgb="232 77 91"
+        atMs={delayMs + 1150}
+        shock
+        shatter={
+          <svg viewBox="0 0 40 40" className="h-full w-full">
+            <rect x={4} y={6} width={32} height={27} rx={3} fill="#cfe0f5" stroke="#9aa8c4" strokeWidth={1.6} />
+            <path d="M14 28 q-1.5 -11 6 -14 q-3 -3 0 -6 q4.5 -3 7.5 1.5 q4.5 0 4.5 6 l-1.5 12.5 Z" fill="#5c6b8c" />
+          </svg>
+        }
+      />
       <Prop left="32%" top="30%" width="36%" height="36%">
         <svg viewBox="0 0 96 100" className="h-full w-full">
           <g className="prk-window" style={d(delayMs)}>
@@ -729,8 +842,11 @@ function PopupStormPlay({ lead, role, delayMs }: SceneProps) {
   ];
   return (
     <>
-      <Framed>
+      <Framed quakeAtMs={delayMs + 1180}>
       <Wash color="rgba(168,106,30,0.16)" delayMs={delayMs} />
+      {/* the NO ESCAPE window lands like a piano: the cascade's final slam
+          bucks the stage and detonates an amber pressure ring */}
+      <Impact left="43%" top="40%" size="14%" rgb="232 162 77" atMs={delayMs + 1450} shock />
       {ads.map((a, i) => (
         <Prop key={i} left={a.left} top={a.top} width="22%" height="16%" className="prk-cascade" style={d(delayMs + a.delay)}>
           <AdWindow tint={a.tint} label={a.label} />
@@ -772,8 +888,11 @@ function ChainLetterPlay({ lead, role, delayMs }: SceneProps) {
   }
   return (
     <>
-      <Wide>
+      <Wide quakeAtMs={delayMs + 1650}>
       <Wash color="rgba(242,119,143,0.18)" delayMs={delayMs} />
+      {/* the final forward MULTIPLIES with a bang: the mail-burst pops a pink
+          shockwave and rattles the stage as the babies scatter */}
+      <Impact left="56%" top="52%" size="13%" rgb="242 144 159" atMs={delayMs + 1650} shock />
       <Prop left="28%" top="34%" width="44%" height="26%">
         <svg viewBox="0 0 130 70" className="h-full w-full">
           <g className="prk-window" style={d(delayMs)}>
@@ -864,8 +983,26 @@ function RatioPlay({ lead, role, delayMs }: SceneProps) {
   }
   return (
     <>
-      <Framed>
+      <Framed quakeAtMs={delayMs + 650}>
       <Wash color="rgba(232,77,91,0.18)" delayMs={delayMs} />
+      {/* the ratio hits like a wrecking ball: the quote-tweet itself is
+          smashed in half when the stamp lands, likes and all */}
+      <Impact
+        left="42%"
+        top="33%"
+        size="15%"
+        rgb="232 77 91"
+        atMs={delayMs + 1300}
+        shock
+        shatter={
+          <svg viewBox="0 0 40 40" className="h-full w-full">
+            <rect x={3} y={8} width={34} height={24} rx={4} fill="#eef2f9" stroke="#8895b0" strokeWidth={1.6} />
+            <circle cx={10} cy={15} r={3} fill="#9aa8c4" />
+            <rect x={15} y={13} width={17} height={3} rx={1.5} fill="#c3cddd" />
+            <rect x={7} y={22} width={26} height={3} rx={1.5} fill="#dce3f0" />
+          </svg>
+        }
+      />
       <Prop left="30%" top="30%" width="40%" height="26%">
         <svg viewBox="0 0 120 70" className="h-full w-full">
           {/* the quote-tweet: replies dwarf the likes */}

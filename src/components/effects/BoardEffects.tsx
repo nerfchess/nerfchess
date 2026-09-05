@@ -931,11 +931,25 @@ function SlowGlyph() {
 }
 
 /** empower: the granted movement's silhouette on the regalia roundel. A
- * rook that moves like a king wears the king mark, amazon-style upgrades a
- * crown; no moveAs falls back to a four-point regalia star. */
-function RegaliaSilhouette({ type }: { type?: PieceType }) {
+ * rook that moves like a king wears the king mark; an amazon grant ("a")
+ * wears the crowned knight — queen's crown over the knight's head — so the
+ * badge itself says "queen AND knight-leap". No moveAs falls back to a
+ * four-point regalia star. */
+function RegaliaSilhouette({ type }: { type?: PieceType | "a" }) {
   const outline = { stroke: MOTIF_DARK, strokeWidth: 0.9, strokeLinejoin: "round" as const };
   switch (type) {
+    case "a":
+      return (
+        <>
+          <path
+            d="M6.2 16.6 C6.2 11.8 7.6 9.8 10.2 8.6 L9.8 5.9 L12.6 8.1 C14.7 9.5 15.2 12 14.8 16.6 Z"
+            fill="currentColor"
+            {...outline}
+          />
+          <circle cx="11.5" cy="9" r="0.6" fill={MOTIF_DARK} />
+          <DualStroke d="M5.6 6.4 L7 3.9 L8.8 5.7 L10.2 3.2 L11.6 5.7 L13.4 3.9 L14.8 6.4" dark={2} light={0.9} />
+        </>
+      );
     case "k":
       return (
         <>
@@ -1110,7 +1124,7 @@ export const MotifBadge = React.memo(function MotifBadge({
   motif: CardFx["motif"];
   tier: number;
   category: BuffCategory;
-  moveAs?: PieceType;
+  moveAs?: PieceType | "a";
   /** Card id + explicit icon name: resolves the card's OWN face icon for the
    * badge chip, so two cards sharing a motif never wear the same mark. */
   cardId?: string;
@@ -2961,16 +2975,15 @@ export function CastSpectacle({
     <CastBanner name={name} description={description} tier={tier} color={theme.color} />
   ) : null;
   if (bespoke) {
-    // Chrome only: tier-tinted frame pulse + wash + the announcement banner.
-    // Everything center-stage belongs to the card's own art.
+    // Chrome only: tier-tinted frame pulse + the announcement banner.
+    // Everything center-stage belongs to the card's own art. The full-board
+    // category wash that used to sit under it was double-telling (the
+    // bespoke scene, the frame ring and the banner already announce the
+    // cast) with no card-specific geometry of its own, so it was removed in
+    // the useless-flash pass; the design brief (section 1) always specced
+    // this branch as banner + frame pulse only.
     return (
       <span className="fx-cast pointer-events-none absolute inset-0 z-40 block" aria-hidden="true">
-        {intensity !== "sleek" && (
-          <span
-            className="fx-cast-wash absolute inset-0 block"
-            style={{ background: `radial-gradient(circle, ${theme.soft}, transparent 74%)` }}
-          />
-        )}
         <span
           className="fx-cast-ring absolute inset-[1%] block rounded-sm"
           style={{

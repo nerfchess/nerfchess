@@ -15,6 +15,12 @@ export type BoardTheme =
   | "forest"
   | "midnight";
 
+/** What the SETTING stores. Board and piece prefs used to carry "auto" and
+ *  "custom" on top of the named sets; both are gone now (one default theme, no
+ *  flagships to resolve to, no hex pickers), so the pref IS the named set. The
+ *  alias stays so call sites read the same. */
+export type BoardThemePref = BoardTheme;
+
 export type PieceTheme =
   | "classic"
   | "ivory"
@@ -34,29 +40,18 @@ export type PieceTheme =
   | "lichessPirouetti"
   | "lichessStaunty";
 
-export type AccentColor = "auto" | "blue" | "green" | "amber" | "rose";
+/** As BoardThemePref, for the piece set. */
+export type PieceThemePref = PieceTheme;
+
 export type AnimationSpeed = "off" | "fast" | "normal";
-export type SiteTheme =
-  | "dark"
-  | "light"
-  | "system"
-  | "midnight"
-  | "void"
-  | "abyss"
-  | "ember"
-  | "crimson"
-  | "moss"
-  | "nebula";
+export type SiteTheme = "dark" | "light" | "system";
 export type SoundTheme = "lichess" | "classic";
 
-// Full site themes. "dark" and "light" are the two originals; the rest are
-// dark variants expressed purely as CSS-variable override blocks in
-// globals.css keyed on html[data-theme="<id>"] (they inherit every dark-theme
-// style, so only the palette shifts — no per-component work). `swatch` feeds
-// the settings picker preview; `scheme` is the value for CSS color-scheme.
-// Each theme also names its own ACCENT (the color of primary buttons, links,
-// and "act here" chrome). It applies while the accent setting sits on "auto";
-// picking an explicit accent color (the default is "rose") overrides every theme.
+// The three site themes. Lichess ships a dark and a light palette and nothing
+// else; "system" simply follows the device and resolves to one of the two.
+// `swatch` feeds the settings picker preview, `scheme` is the value for CSS
+// color-scheme, and `accent` is the one accent both palettes are built on
+// (Lichess blue), fed into the document by applyUiPrefs.
 export interface AccentDef {
   accent: string;
   accentHi: string;
@@ -65,28 +60,23 @@ export interface AccentDef {
   rgbDim: string;
 }
 
-// The one shared accent: gold. Every dark theme uses it (accents stay identical
-// across themes so the game reads consistently); mirrors --accent-gold in
-// globals.css. The Nerf-red / Buff-blue / positive-green accents are fixed in
-// CSS and never vary by theme, so they need no entry here.
-const GOLD_ACCENT: AccentDef = {
-  accent: "#d4a017",
-  accentHi: "#e6b52e",
-  rgb: "212 160 23",
-  rgbHi: "230 181 46",
-  rgbDim: "168 126 18",
+// Lichess blue: links, primary buttons, focus rings. One accent, everywhere.
+const BLUE_ACCENT: AccentDef = {
+  accent: "#3692e7",
+  accentHi: "#4a9fee",
+  rgb: "54 146 231",
+  rgbHi: "74 159 238",
+  rgbDim: "42 111 176",
 };
 
-// Light theme needs a DARKER gold so gold text/links clear WCAG AA on the light
-// background (the bright gold above is only ~1.9:1 there). Mirrors the light
-// override block in globals.css; paired with --text-on-accent:#fff so gold
-// button fills stay legible with white type.
-const LIGHT_GOLD_ACCENT: AccentDef = {
-  accent: "#806310",
-  accentHi: "#96751a",
-  rgb: "128 99 16",
-  rgbHi: "150 117 26",
-  rgbDim: "96 74 12",
+// The light palette wants a slightly deeper blue so links clear WCAG AA on
+// white; mirrors the html[data-theme="light"] block in globals.css.
+const BLUE_ACCENT_LIGHT: AccentDef = {
+  accent: "#1b78d0",
+  accentHi: "#3692e7",
+  rgb: "27 120 208",
+  rgbHi: "54 146 231",
+  rgbDim: "20 92 160",
 };
 
 export const SITE_THEMES: Record<
@@ -99,21 +89,41 @@ export const SITE_THEMES: Record<
     accent: AccentDef;
   }
 > = {
-  dark:     { label: "Classic",  hint: "Warm charcoal, the base palette", scheme: "dark",  swatch: { bg: "#1a1512", panel: "#241d18", glow: "#d4a017" }, accent: GOLD_ACCENT },
-  light:    { label: "Light",    hint: "Paper and ink",                   scheme: "light", swatch: { bg: "#e9e6de", panel: "#f4f1ea", glow: "#806310" }, accent: LIGHT_GOLD_ACCENT },
-  system:   { label: "System",   hint: "Follow your device",              scheme: "dark",  swatch: { bg: "#1a1512", panel: "#e9e6de", glow: "#d4a017" }, accent: GOLD_ACCENT },
-  midnight: { label: "Midnight", hint: "Blue-grey steel",                 scheme: "dark",  swatch: { bg: "#101318", panel: "#1a1f27", glow: "#d4a017" }, accent: GOLD_ACCENT },
-  void:     { label: "Void",     hint: "Crushed near-black, OLED-friendly", scheme: "dark", swatch: { bg: "#0d0b0a", panel: "#141210", glow: "#d4a017" }, accent: GOLD_ACCENT },
-  abyss:    { label: "Abyss",    hint: "Deep-sea teal",                   scheme: "dark",  swatch: { bg: "#0c1517", panel: "#152327", glow: "#d4a017" }, accent: GOLD_ACCENT },
-  ember:    { label: "Ember",    hint: "Smoldering red-brown",            scheme: "dark",  swatch: { bg: "#170f0e", panel: "#261815", glow: "#d4a017" }, accent: GOLD_ACCENT },
-  crimson:  { label: "Crimson",  hint: "Deep blood red",                  scheme: "dark",  swatch: { bg: "#150a0c", panel: "#291015", glow: "#d4a017" }, accent: GOLD_ACCENT },
-  moss:     { label: "Moss",     hint: "Deep forest green",               scheme: "dark",  swatch: { bg: "#0f140e", panel: "#1a2318", glow: "#d4a017" }, accent: GOLD_ACCENT },
-  nebula:   { label: "Nebula",   hint: "Violet dusk",                     scheme: "dark",  swatch: { bg: "#131019", panel: "#1f1929", glow: "#d4a017" }, accent: GOLD_ACCENT },
+  dark:   { label: "Dark",   hint: "The default palette",  scheme: "dark",  swatch: { bg: "#161512", panel: "#262421", glow: "#3692e7" }, accent: BLUE_ACCENT },
+  light:  { label: "Light",  hint: "Paper and ink",        scheme: "light", swatch: { bg: "#edebe9", panel: "#ffffff", glow: "#1b78d0" }, accent: BLUE_ACCENT_LIGHT },
+  system: { label: "System", hint: "Follow your device",   scheme: "dark",  swatch: { bg: "#161512", panel: "#edebe9", glow: "#3692e7" }, accent: BLUE_ACCENT },
+};
+
+/** Site-theme ids that existed before the palette collapse, mapped onto the
+ *  theme that replaces them. A stored value from an old build must still load:
+ *  without this every one of those users would trip the SITE_THEMES guard in
+ *  loadSettings and be silently reset. Light-scheme ids land on "light", the
+ *  rest on "dark". */
+const LEGACY_SITE_THEMES: Record<string, SiteTheme> = {
+  sepia: "light",
+  frost: "light",
+  porcelain: "light",
+  midnight: "dark",
+  void: "dark",
+  abyss: "dark",
+  ember: "dark",
+  crimson: "dark",
+  moss: "dark",
+  nebula: "dark",
+  sakura: "dark",
+  honey: "dark",
+  pine: "dark",
+  wine: "dark",
+  storm: "dark",
+  obsidian: "dark",
+  neon: "dark",
+  jade: "dark",
+  aurora: "dark",
 };
 
 export interface Settings {
-  boardTheme: BoardTheme;
-  pieceTheme: PieceTheme;
+  boardTheme: BoardThemePref;
+  pieceTheme: PieceThemePref;
   volume: number; // 0..1
   moveRiskWarnings: boolean; // yellow/red move-dot warnings for self-loss / check
   autoQueen: boolean; // skip the promotion picker and always promote to queen
@@ -139,39 +149,34 @@ export interface Settings {
   soundEnabled: boolean; // master switch for all game audio
   soundTheme: SoundTheme; // lichess sample set, or the classic synth clicks
   siteTheme: SiteTheme; // dark, light, or follow the OS
-  compactMode: boolean; // tighter interface density
+  // Lichess zen mode: during a game, hide everything that is not the board,
+  // the clocks and the move list. Toggled from the header quick-settings menu
+  // or the `z` key on a game page; applyUiPrefs stamps html[data-zen="on"].
+  zenMode: boolean;
   lowTimeWarning: boolean; // ticking alert when the clock runs low
-  uiScale: number; // 0.85..1.15, multiplies the root font size
-  accentColor: AccentColor;
   animationSpeed: AnimationSpeed;
   uiSounds: boolean; // interface blips (piece select), separate from game sounds
-  highContrast: boolean;
   reducedMotion: boolean;
   // Honor the OS "prefers-reduced-motion" flag automatically (on by default):
   // when the system asks for calm, animations stand down exactly as if
   // reducedMotion were on. Turning this off restores the old app-authoritative
   // behavior for players who reduce motion system-wide but still want plays.
   followSystemMotion: boolean;
-  fpsCounter: boolean;
   customBgUrl: string; // full-page background image URL; empty string = none
   customBgDim: number; // 0..0.6 dark overlay over the custom background
   // Uploaded full-page background as a data URL (device-local: stripped from
   // the server sync so the settings blob stays small). Wins over customBgUrl.
   customBgData: string;
   fxDuration: number; // 0.5..2, multiplies how long card/FX animations last
-  // Performance mode: drops the most paint-costly decorative layers (backdrop
-  // blurs, the full-screen paper-grain blend, fixed-attachment backgrounds)
-  // for smooth play on low-end devices. Auto-enabled once on weak hardware,
-  // then user-overridable. Functional visuals (board, pieces, effects) stay.
-  perfMode: boolean;
 }
 
 export const SETTINGS_CHANGED_EVENT = "nerfchess:settings-changed";
 
 const STORAGE_KEY = "dc:settings-v1";
 export const DEFAULT_SETTINGS: Settings = {
-  boardTheme: "wood",
-  pieceTheme: "classic",
+  // Lichess defaults: the brown board and the cburnett piece set.
+  boardTheme: "brown",
+  pieceTheme: "lichessCburnett",
   volume: 0.8,
   moveRiskWarnings: true,
   autoQueen: false,
@@ -196,37 +201,21 @@ export const DEFAULT_SETTINGS: Settings = {
   soundEnabled: true,
   soundTheme: "lichess",
   siteTheme: "dark",
-  compactMode: false,
-  uiScale: 1,
-  accentColor: "rose",
+  zenMode: false,
   animationSpeed: "normal",
   uiSounds: true,
-  highContrast: false,
   reducedMotion: false,
   followSystemMotion: true,
-  fpsCounter: false,
   customBgUrl: "",
   customBgDim: 0.3,
   customBgData: "",
   fxDuration: 1,
-  perfMode: false,
 };
 const DEFAULT = DEFAULT_SETTINGS;
 
-export const ACCENT_THEMES: Record<
-  Exclude<AccentColor, "auto">,
-  { label: string; accent: string; accentHi: string; rgb: string; rgbHi: string; rgbDim: string }
-> = {
-  blue:  { label: "Blue",  accent: "#3692e7", accentHi: "#4a9fee", rgb: "54 146 231",  rgbHi: "74 159 238",  rgbDim: "42 111 176" },
-  green: { label: "Green", accent: "#629924", accentHi: "#7bb52f", rgb: "98 153 36",   rgbHi: "123 181 47",  rgbDim: "74 116 27" },
-  amber: { label: "Amber", accent: "#d8b56e", accentHi: "#e6bf6a", rgb: "216 181 110", rgbHi: "230 191 106", rgbDim: "168 138 79" },
-  rose:  { label: "Rose",  accent: "#c66860", accentHi: "#dc7a72", rgb: "198 104 96",  rgbHi: "220 122 114", rgbDim: "150 76 70" },
-};
-
 export const BOARD_THEMES: Record<BoardTheme, { light: string; dark: string; label: string }> = {
-  // The default board: parchment light / walnut dark, matching --board-light /
-  // --board-dark in globals.css so the board reads as part of the warm site
-  // palette (never the old blue-grey squares).
+  // Brown is the default, the same two squares Lichess ships. The rest are the
+  // usual named alternatives.
   wood:       { light: "#ecd9ae", dark: "#8a5a38", label: "Wood" },
   brown:      { light: "#f0d9b5", dark: "#b58863", label: "Brown" },
   walnut:     { light: "#e0c39a", dark: "#7a5230", label: "Walnut" },
@@ -302,6 +291,14 @@ export function sanitizeCustomBgData(v: unknown): string {
   return v;
 }
 
+/** Read a stored site-theme id, translating anything from before the palette
+ *  collapse onto the theme that replaced it. */
+function readSiteTheme(v: unknown): SiteTheme {
+  if (typeof v !== "string") return DEFAULT.siteTheme;
+  if (v in SITE_THEMES) return v as SiteTheme;
+  return LEGACY_SITE_THEMES[v] ?? DEFAULT.siteTheme;
+}
+
 export function loadSettings(): Settings {
   if (typeof window === "undefined") return { ...DEFAULT };
   try {
@@ -309,13 +306,15 @@ export function loadSettings(): Settings {
     if (!raw) return { ...DEFAULT };
     const parsed = JSON.parse(raw) as Partial<Settings>;
     return {
+      // "auto" and "custom" were legal stored values before the board and piece
+      // pickers were simplified; both now fall through to the default.
       boardTheme:
         parsed.boardTheme && parsed.boardTheme in BOARD_THEMES
-          ? (parsed.boardTheme as BoardTheme)
+          ? (parsed.boardTheme as BoardThemePref)
           : DEFAULT.boardTheme,
       pieceTheme:
         parsed.pieceTheme && parsed.pieceTheme in PIECE_THEMES
-          ? (parsed.pieceTheme as PieceTheme)
+          ? (parsed.pieceTheme as PieceThemePref)
           : DEFAULT.pieceTheme,
       volume: typeof parsed.volume === "number" ? Math.max(0, Math.min(1, parsed.volume)) : DEFAULT.volume,
       moveRiskWarnings: bool(parsed.moveRiskWarnings, DEFAULT.moveRiskWarnings),
@@ -346,28 +345,17 @@ export function loadSettings(): Settings {
         parsed.soundTheme === "lichess" || parsed.soundTheme === "classic"
           ? parsed.soundTheme
           : DEFAULT.soundTheme,
-      siteTheme:
-        parsed.siteTheme && parsed.siteTheme in SITE_THEMES
-          ? (parsed.siteTheme as SiteTheme)
-          : DEFAULT.siteTheme,
-      compactMode: bool(parsed.compactMode, DEFAULT.compactMode),
-      uiScale:
-        typeof parsed.uiScale === "number"
-          ? Math.max(0.85, Math.min(1.15, parsed.uiScale))
-          : DEFAULT.uiScale,
-      accentColor:
-        parsed.accentColor === "auto" || (parsed.accentColor && parsed.accentColor in ACCENT_THEMES)
-          ? (parsed.accentColor as AccentColor)
-          : DEFAULT.accentColor,
+      // A theme id from an old build maps onto its replacement rather than
+      // resetting the user to the default (see LEGACY_SITE_THEMES).
+      siteTheme: readSiteTheme(parsed.siteTheme),
+      zenMode: bool(parsed.zenMode, DEFAULT.zenMode),
       animationSpeed:
         parsed.animationSpeed === "off" || parsed.animationSpeed === "fast" || parsed.animationSpeed === "normal"
           ? parsed.animationSpeed
           : DEFAULT.animationSpeed,
       uiSounds: bool(parsed.uiSounds, DEFAULT.uiSounds),
-      highContrast: bool(parsed.highContrast, DEFAULT.highContrast),
       reducedMotion: bool(parsed.reducedMotion, DEFAULT.reducedMotion),
       followSystemMotion: bool(parsed.followSystemMotion, DEFAULT.followSystemMotion),
-      fpsCounter: bool(parsed.fpsCounter, DEFAULT.fpsCounter),
       customBgUrl: sanitizeCustomBgUrl(parsed.customBgUrl),
       customBgDim: clampDim(parsed.customBgDim, DEFAULT.customBgDim),
       customBgData: sanitizeCustomBgData(parsed.customBgData),
@@ -375,11 +363,6 @@ export function loadSettings(): Settings {
         typeof parsed.fxDuration === "number" && Number.isFinite(parsed.fxDuration)
           ? Math.max(0.5, Math.min(2, parsed.fxDuration))
           : DEFAULT.fxDuration,
-      // No hardware sniff: animations and full visuals run everywhere by
-      // default. When a device actually struggles, the runtime lag watcher
-      // (LagWatch in SettingsBootstrap) offers performance mode instead of
-      // silently degrading anything.
-      perfMode: bool(parsed.perfMode, DEFAULT.perfMode),
     };
   } catch {}
   return { ...DEFAULT };
@@ -392,8 +375,8 @@ function writeLocalSettings(s: Settings, updatedAt: number) {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
     window.localStorage.setItem(UPDATED_AT_KEY, String(updatedAt));
   } catch {}
-  applyBoardTheme(s.boardTheme);
-  applyPieceTheme(s.pieceTheme);
+  applyBoardColors(s);
+  applyPieceColors(s);
   applyUiPrefs(s);
   window.dispatchEvent(new Event(SETTINGS_CHANGED_EVENT));
 }
@@ -463,15 +446,11 @@ export async function pullSettingsFromServer(): Promise<boolean> {
   }
 }
 
-/** Push the interface-wide preferences (scale, accent, motion, contrast) into
- *  the document so every page picks them up. */
+/** Push the interface-wide preferences (theme, accent, motion, background)
+ *  into the document so every page picks them up. */
 export function applyUiPrefs(s: Settings) {
   if (typeof document === "undefined") return;
   const html = document.documentElement;
-  // Compact mode tightens the whole interface by shrinking the rem base a
-  // notch; it stacks with the UI scale preference.
-  const scale = s.uiScale * (s.compactMode ? 0.92 : 1);
-  html.style.fontSize = scale === 1 ? "" : `${16 * scale}px`;
   html.style.setProperty("--board-cap", `${Math.round(720 * s.boardSize)}px`);
   html.style.setProperty("--piece-fit", s.largerPieces ? "97%" : "88%");
   html.dataset.theme =
@@ -481,12 +460,14 @@ export function applyUiPrefs(s: Settings) {
         : "dark"
       : s.siteTheme;
   // color-scheme only accepts light/dark; every named theme maps to one.
-  html.style.colorScheme = SITE_THEMES[html.dataset.theme as SiteTheme]?.scheme ?? "dark";
-  const theme = SITE_THEMES[html.dataset.theme as SiteTheme] ?? SITE_THEMES.dark;
-  const accent =
-    s.accentColor === "auto"
-      ? theme.accent
-      : (ACCENT_THEMES[s.accentColor as Exclude<AccentColor, "auto">] ?? theme.accent);
+  const scheme = SITE_THEMES[html.dataset.theme as SiteTheme]?.scheme ?? "dark";
+  html.style.colorScheme = scheme;
+  // Paper-scheme treatments (plate fills, ink text ramps, border alphas) hang
+  // off this flag rather than off one theme id, so every light theme gets them
+  // and a new one costs no CSS.
+  if (scheme === "light") html.dataset.light = "on";
+  else delete html.dataset.light;
+  const accent = (SITE_THEMES[html.dataset.theme as SiteTheme] ?? SITE_THEMES.dark).accent;
   html.style.setProperty("--accent", accent.accent);
   html.style.setProperty("--accent-hi", accent.accentHi);
   html.style.setProperty("--gold", accent.accent);
@@ -500,10 +481,10 @@ export function applyUiPrefs(s: Settings) {
   const osReducedMotion =
     s.followSystemMotion && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
   html.dataset.anim = s.reducedMotion || osReducedMotion ? "off" : s.animationSpeed;
-  html.dataset.contrast = s.highContrast ? "high" : "normal";
-  // Performance mode: gates the heaviest decorative paint in globals.css.
-  if (s.perfMode) html.dataset.perf = "low";
-  else delete html.dataset.perf;
+  // Zen mode: one flag on <html> that zen.css hangs every hide rule off, so a
+  // page never has to know whether zen is on.
+  if (s.zenMode) html.dataset.zen = "on";
+  else delete html.dataset.zen;
   // FX duration multiplier: CSS-driven card/board animations read this var
   // (calc(<base> * var(--fx-dur, 1))); the canvas VFX engine reads the same
   // setting through its play specs.
@@ -542,16 +523,59 @@ export function motionOff(): boolean {
   return document.documentElement.dataset.anim === "off";
 }
 
+/** The site theme actually in force, with "system" already resolved. Both
+ *  resolvers below need it, and applyUiPrefs computed it inline. */
+export function effectiveSiteTheme(s: Settings): SiteTheme {
+  if (s.siteTheme !== "system") return s.siteTheme;
+  if (typeof window === "undefined") return "dark";
+  return window.matchMedia?.("(prefers-color-scheme: light)").matches ? "light" : "dark";
+}
+
+/** The board to actually draw. Board and piece prefs are plain named sets
+ *  now, so both resolvers are the identity; they stay so call sites (the clip
+ *  exporter, the settings pickers) read the same as before. */
+export function resolveBoardTheme(s: Settings): BoardTheme {
+  return s.boardTheme;
+}
+
+/** As resolveBoardTheme, for the piece set. */
+export function resolvePieceTheme(s: Settings): PieceTheme {
+  return s.pieceTheme;
+}
+
+/** The two square colors the board should actually paint. */
+export function boardColors(s: Settings): { light: string; dark: string } {
+  const t = BOARD_THEMES[resolveBoardTheme(s)] ?? BOARD_THEMES.brown;
+  return { light: t.light, dark: t.dark };
+}
+
+/** Push the board square colors for these settings into the document,
+ *  honoring the "custom" pref. The settings-aware wrapper every caller should
+ *  use; applyBoardTheme below stays for painting a specific named board. */
+export function applyBoardColors(s: Settings) {
+  if (typeof document === "undefined") return;
+  const c = boardColors(s);
+  const root = document.documentElement.style;
+  root.setProperty("--sq-light", c.light);
+  root.setProperty("--sq-dark", c.dark);
+}
+
+/** As applyBoardColors, for the piece set. */
+export function applyPieceColors(s: Settings) {
+  if (typeof document === "undefined") return;
+  applyPieceTheme(resolvePieceTheme(s));
+}
+
 export function applyBoardTheme(theme: BoardTheme) {
   if (typeof document === "undefined") return;
-  const t = BOARD_THEMES[theme] ?? BOARD_THEMES.wood;
+  const t = BOARD_THEMES[theme] ?? BOARD_THEMES.brown;
   document.documentElement.style.setProperty("--sq-light", t.light);
   document.documentElement.style.setProperty("--sq-dark", t.dark);
 }
 
 export function applyPieceTheme(theme: PieceTheme) {
   if (typeof document === "undefined") return;
-  const t = PIECE_THEMES[theme] ?? PIECE_THEMES.classic;
+  const t = PIECE_THEMES[theme] ?? PIECE_THEMES.lichessCburnett;
   const html = document.documentElement;
   const root = document.documentElement.style;
   root.setProperty("--piece-w-fill", t.wFill);

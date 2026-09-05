@@ -1052,7 +1052,7 @@ export const WILD_ELEMENTAL: Buff[] = [
       tier: 5,
       category: "protection",
       flavor: "Fingers too cold to close, joints too stiff to reach.",
-      fx: { motif: "anchor", pieces: "all" },
+      fx: { motif: "anchor", pieces: "all", king: true },
     },
     curse(1, (moves) => moves.filter((m) => !m.captured && dist(m.from, m.to) <= 2)),
   ),

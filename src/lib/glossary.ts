@@ -13,6 +13,8 @@
 // GlossaryText). Variant spellings and plurals go in `aliases` so either form
 // underlines. Keep every `def` to one short sentence.
 
+import type { ActiveEffect, CosmeticSkin, FreezeSkin } from "@/engine/buff";
+
 export const GLOSSARY_GROUPS = [
   "Modes & winning",
   "Card types",
@@ -409,7 +411,7 @@ export const GLOSSARY_ENTRIES: GlossaryEntry[] = [
     term: "Stun",
     slug: "stun",
     group: "Effects on the board",
-    aliases: ["stuns", "stunned"],
+    aliases: ["stuns", "stunned", "dazed", "glued", "webbed", "tarred"],
     def: "A freeze wearing a different coat: the piece cannot move until the timer runs out.",
     detail:
       "Stun, glue, sleep, tar and web are all the same mechanic as a freeze, painted differently so two 'stuck' cards never look alike. Kings are never stunned.",
@@ -499,7 +501,7 @@ export const GLOSSARY_ENTRIES: GlossaryEntry[] = [
     term: "Ward",
     slug: "ward",
     group: "Effects on the board",
-    aliases: ["wards", "warded"],
+    aliases: ["wards", "warded", "plot armor"],
     def: "A lighter protective charm that guards a piece, the subtler cousin of a shield.",
     detail:
       "The same law binds every protection: while the warded piece cannot be captured, it may not deliver the king-capture itself.",
@@ -628,6 +630,26 @@ export const GLOSSARY_ENTRIES: GlossaryEntry[] = [
     def: "A powerful fairy piece that moves as a queen and a knight combined.",
     detail:
       "The classic super-piece: several cards create one or upgrade an existing piece into one.",
+  },
+  {
+    term: "Leash",
+    slug: "leash",
+    group: "Effects on the board",
+    aliases: ["leashed", "short leash"],
+    def: "A hangover that limits every piece you own to one-square steps until it wears off.",
+    detail:
+      "The price tag on berserk-style cards: for the marked turns, all of your pieces move like slow kings. King captures are always exempt (winning stays possible), the timer ticks on your own turns, and if the leash would leave you with zero moves it relaxes for that turn instead.",
+    related: ["forced-pass", "capture-the-king"],
+  },
+  {
+    term: "Dressing",
+    slug: "dressing",
+    group: "Effects on the board",
+    aliases: ["dressings", "dressed", "costume", "costumes"],
+    def: "A purely cosmetic look pinned to a piece: a giant pawn, sunglasses, a name tag. It changes no rule, ever.",
+    detail:
+      "Comedy cards dress pieces up for identity, and the costume rides along as the piece moves and vanishes when it is captured. If a card pairs its costume with a real mechanic (a freeze, a timer), that mechanic is listed separately on the card, the outfit itself is never the effect.",
+    related: ["marked"],
   },
 
   // --- Board vocabulary --------------------------------------------------------
@@ -837,4 +859,82 @@ export function entryForSlug(slug: string): GlossaryEntry | undefined {
 /** The canonical glossary-page anchor link for an entry. */
 export function glossaryHref(entry: Pick<GlossaryEntry, "slug">): string {
   return `/guide/glossary#${entry.slug}`;
+}
+
+// ---------------------------------------------------------------------------
+// Board-effect coverage: every ActiveEffect kind (and every freeze / cosmetic
+// skin) maps to the glossary entry that explains it in plain language. The
+// Record types make the TypeScript compiler the completeness gate: adding a
+// new effect kind or skin to the engine without teaching the glossary about it
+// is a type error, not a silent gap. scripts/check-glossary-effects.ts then
+// verifies at runtime that every mapped slug resolves to a real entry.
+
+export const EFFECT_KIND_SLUG: Record<ActiveEffect["kind"], string> = {
+  freeze: "freeze",
+  walnut: "walnut",
+  shield: "shield",
+  barred: "barred",
+  king_safe: "king-safe",
+  no_pawn_advance: "no-pawn-advance",
+  king_only: "king-only",
+  nerf_suspended: "suspend",
+  strike: "strike",
+  bonk: "bonk",
+  timed_loss: "doomed",
+  short_leash: "leash",
+  cosmetic: "dressing",
+};
+
+/** Every freeze skin is mechanically a freeze; the entries split hairs only to
+ * explain why two "stuck" cards look different. Ice keeps the canonical freeze
+ * entry, everything else reads as a stun (same rule, different coat). */
+export const FREEZE_SKIN_SLUG: Record<FreezeSkin, string> = {
+  ice: "freeze",
+  glue: "stun",
+  stun: "stun",
+  sleep: "stun",
+  tar: "stun",
+  web: "stun",
+  honey: "stun",
+  vines: "stun",
+  chains: "stun",
+  cement: "stun",
+  slime: "stun",
+  quicksand: "stun",
+  shock: "stun",
+  charm: "stun",
+  roots: "stun",
+  bubble: "stun",
+  petal: "stun",
+  rust: "stun",
+  stone: "stun",
+  gum: "stun",
+  beartrap: "stun",
+};
+
+export const COSMETIC_SKIN_SLUG: Record<CosmeticSkin, string> = {
+  giant: "dressing",
+  sunglasses: "dressing",
+  nametag: "dressing",
+  plush: "dressing",
+  wooden: "dressing",
+  matryoshka: "dressing",
+  slotreels: "dressing",
+  vampire: "dressing",
+  gilded: "dressing",
+  wings: "dressing",
+  dunce: "dressing",
+  checkers: "dressing",
+  pigeon: "dressing",
+  hat: "dressing",
+};
+
+/** The plain-language glossary entry for a live board effect, skin-aware: a
+ * glue freeze explains itself as a stun, an ice freeze as a freeze. */
+export function effectGlossaryEntry(e: ActiveEffect): GlossaryEntry | undefined {
+  const slug =
+    e.kind === "freeze" && e.skin
+      ? FREEZE_SKIN_SLUG[e.skin]
+      : EFFECT_KIND_SLUG[e.kind];
+  return entryForSlug(slug);
 }

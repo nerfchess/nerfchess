@@ -75,8 +75,8 @@ export function MoveList({
   );
   const rootClass = compact ? "plate p-2 min-h-0 h-full flex flex-col" : "plate p-4";
   const titleClass = compact
-    ? "smallcaps text-[12px] text-parchment-400 truncate"
-    : "smallcaps text-[12px] text-parchment-400";
+    ? "text-[12px] text-parchment-400 truncate"
+    : "text-[12px] text-parchment-400";
   const selectedMoveRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
@@ -244,7 +244,7 @@ function MoveCell({
       className={
         "min-w-0 text-left px-1 py-0.5 truncate transition " +
         (selected
-          ? "bg-gold/15 text-gold-leaf"
+          ? "bg-[color:var(--accent)] text-[color:var(--text-on-accent)]"
           : "text-parchment hover:bg-white/[0.04]")
       }
     >

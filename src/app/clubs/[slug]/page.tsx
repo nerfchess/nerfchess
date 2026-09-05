@@ -11,6 +11,8 @@ import { AccountUser, fetchMe } from "@/lib/authClient";
 import { CLUB_ICON_COLORS, CLUB_ICON_NAMES, encodeClubIcon, isUploadedClubIcon, parseClubIcon } from "@/lib/clubIcons";
 import { fileToDataUrl } from "@/lib/imageUpload";
 import type { ClubMemberRow, ClubPostRow, ClubTournamentRow } from "@/app/api/clubs/[slug]/route";
+import { Button } from "@/components/ui/Button";
+import { LinkButton } from "@/components/ui/Button";
 
 // Club home, lichess-teams-style: description and members on one side, the
 // club's events and a members-only message board on the other.
@@ -147,40 +149,37 @@ function ClubIconPicker({
             className="hidden"
             onChange={(e) => onFile(e.target.files?.[0])}
           />
-          <button
-            type="button"
+          <Button tone="ghost"
+           
             onClick={() => fileRef.current?.click()}
             disabled={saving}
-            className="btn-ghost flex items-center gap-1.5 px-4 py-2 font-display text-sm disabled:opacity-50"
-          >
+            className="flex px-4 py-2 text-sm disabled:opacity-50">
             <Upload size={14} /> Upload image
-          </button>
+          </Button>
           <span className="text-xs text-parchment-500">PNG, JPEG, or WebP. Max 1 MB, 1024px.</span>
         </div>
       </div>
 
       <div className="mt-5 flex flex-wrap items-center gap-2">
-        <button
-          type="button"
+        <Button tone="leaf"
+         
           onClick={() => save(encodeClubIcon(iconName, colorId))}
           disabled={saving}
-          className="btn-leaf px-4 py-2 font-display text-sm font-semibold disabled:opacity-50"
-        >
+          className="px-4 py-2 text-sm font-semibold disabled:opacity-50">
           {saving ? "Saving..." : "Save emblem"}
-        </button>
+        </Button>
         {(parsed || uploaded) && (
-          <button
-            type="button"
+          <Button tone="ghost"
+           
             onClick={() => save("")}
             disabled={saving}
-            className="btn-ghost px-4 py-2 font-display text-sm disabled:opacity-50"
-          >
+            className="px-4 py-2 text-sm disabled:opacity-50">
             Remove icon
-          </button>
+          </Button>
         )}
-        <button type="button" onClick={onClose} className="btn-ghost px-4 py-2 font-display text-sm">
+        <Button tone="ghost" onClick={onClose} className="px-4 py-2 text-sm">
           Cancel
-        </button>
+        </Button>
         {saveError && <span className="text-sm text-oxblood-glow">{saveError}</span>}
       </div>
     </div>
@@ -284,9 +283,9 @@ export default function ClubPage() {
         <SiteHeader active="/clubs" />
         <section className="mx-auto max-w-3xl px-6 py-16 text-center">
           <p className="text-parchment-300">{error}</p>
-          <Link href="/clubs" className="mt-4 inline-block btn-ghost px-4 py-2 font-display text-sm">
+          <LinkButton tone="ghost" href="/clubs" className="mt-4 inline-block px-4 py-2 text-sm">
             Back to clubs
-          </Link>
+          </LinkButton>
         </section>
       </main>
     );
@@ -328,39 +327,35 @@ export default function ClubPage() {
               </div>
               <div className="flex flex-wrap gap-2">
                 {mayModerate && (
-                  <button
+                  <Button tone="ghost"
                     onClick={() => setPickingIcon((v) => !v)}
-                    className="btn-ghost flex items-center gap-1.5 px-4 py-2 font-display text-sm"
-                  >
+                    className="flex px-4 py-2 text-sm">
                     <Paintbrush size={14} />{" "}
                     {parseClubIcon(club.icon) || isUploadedClubIcon(club.icon) ? "Change icon" : "Pick an icon"}
-                  </button>
+                  </Button>
                 )}
                 {me && !isMember && (
-                  <button
+                  <Button tone="leaf"
                     onClick={() => membership("join")}
                     disabled={busy}
-                    className="btn-leaf flex items-center gap-1.5 px-4 py-2 font-display text-sm font-semibold disabled:opacity-50"
-                  >
+                    className="flex px-4 py-2 text-sm font-semibold disabled:opacity-50">
                     <LogIn size={14} /> Join club
-                  </button>
+                  </Button>
                 )}
                 {isMember && !isOwner && (
-                  <button
+                  <Button tone="ghost"
                     onClick={() => membership("leave")}
                     disabled={busy}
-                    className="btn-ghost flex items-center gap-1.5 px-4 py-2 font-display text-sm disabled:opacity-50"
-                  >
+                    className="flex px-4 py-2 text-sm disabled:opacity-50">
                     <LogOut size={14} /> Leave
-                  </button>
+                  </Button>
                 )}
                 {isMember && (
-                  <Link
+                  <LinkButton tone="ghost"
                     href={`/tournaments?club=${encodeURIComponent(club.id)}`}
-                    className="btn-ghost flex items-center gap-1.5 px-4 py-2 font-display text-sm"
-                  >
+                    className="flex px-4 py-2 text-sm">
                     <Trophy size={14} /> New event
-                  </Link>
+                  </LinkButton>
                 )}
               </div>
             </div>
@@ -387,8 +382,8 @@ export default function ClubPage() {
                 {/* Members, sorted by rating, doubles as the club leaderboard. */}
                 <div className="plate overflow-hidden">
                   <div className="flex items-center justify-between gap-2 border-b border-white/10 px-5 py-3">
-                    <span className="smallcaps text-[11px] text-parchment-400">Leaderboard</span>
-                    <span className="smallcaps text-[11px] text-parchment-500">
+                    <span className="text-[11px] text-parchment-400">Leaderboard</span>
+                    <span className="text-[11px] text-parchment-500">
                       {data.members.length} member{data.members.length === 1 ? "" : "s"}
                     </span>
                   </div>
@@ -418,7 +413,7 @@ export default function ClubPage() {
 
                 {/* Club events */}
                 <div className="plate overflow-hidden">
-                  <div className="border-b border-white/10 px-5 py-3 smallcaps text-[11px] text-parchment-400">
+                  <div className="border-b border-white/10 px-5 py-3 text-[11px] text-parchment-400">
                     Events
                   </div>
                   {data.tournaments.length === 0 ? (
@@ -428,7 +423,7 @@ export default function ClubPage() {
                       {data.tournaments.map((t) => (
                         <li key={t.id} className="px-5 py-2.5">
                           <div className="truncate text-sm text-parchment-100">{t.name}</div>
-                          <div className="mt-0.5 smallcaps text-[11px] text-parchment-400">
+                          <div className="mt-0.5 text-[11px] text-parchment-400">
                             {t.status} · {t.players}/{t.max_players} players
                             {t.starts_at ? ` · ${new Date(t.starts_at).toLocaleString()}` : ""}
                           </div>
@@ -441,7 +436,7 @@ export default function ClubPage() {
 
               {/* Message board */}
               <div className="plate flex h-fit flex-col overflow-hidden">
-                <div className="border-b border-white/10 px-5 py-3 smallcaps text-[11px] text-parchment-400">
+                <div className="border-b border-white/10 px-5 py-3 text-[11px] text-parchment-400">
                   Club board
                 </div>
                 {isMember ? (
@@ -460,13 +455,12 @@ export default function ClubPage() {
                       ) : (
                         <span className="text-[11px] text-parchment-500">Visible to everyone; members can post.</span>
                       )}
-                      <button
+                      <Button tone="leaf"
                         type="submit"
                         disabled={!postText.trim()}
-                        className="btn-leaf px-4 py-1.5 font-display text-xs font-semibold disabled:opacity-50"
-                      >
+                        className="px-4 py-1.5 text-xs font-semibold disabled:opacity-50">
                         Post
-                      </button>
+                      </Button>
                     </div>
                   </form>
                 ) : (

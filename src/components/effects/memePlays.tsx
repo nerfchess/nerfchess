@@ -19,6 +19,7 @@
 
 import type { CSSProperties, ReactNode } from "react";
 import type { SigPlugin, SigRole } from "./sigPlugins";
+import { LaserStrike, PieceShatter, QUAKE_CLASS, Shockwave, impactVars } from "./impact/impact";
 import { AimStage, BoardFrame } from "./stage";
 import "./memePlays.css";
 
@@ -54,10 +55,20 @@ function Stage({ children, inset = "0" }: { children: ReactNode; inset?: string 
  * Board.tsx already re-centres the wrapper on the board for a "board" anchor,
  * so this canvas must NOT correct itself a second time. Cast- and aim-anchored
  * leads use `Framed`. */
-function Wide({ children }: { children: ReactNode }) {
+function Wide({ children, quakeAtMs }: { children: ReactNode; quakeAtMs?: number }) {
   return (
     <span className="mnp pointer-events-none absolute inset-0 z-30" aria-hidden="true">
-      <span className="absolute left-[-650%] top-[-650%] block h-[1400%] w-[1400%]">{children}</span>
+      <span className="absolute left-[-650%] top-[-650%] block h-[1400%] w-[1400%]">
+        {quakeAtMs == null ? (
+          children
+        ) : (
+          // FLAGSHIP: the whole skit jolts on the meme's impact beat
+          // (in-scene stage only — never the real board crop)
+          <span className={`${QUAKE_CLASS} absolute inset-0 block`} style={impactVars(undefined, quakeAtMs / 1000)}>
+            {children}
+          </span>
+        )}
+      </span>
     </span>
   );
 }
@@ -73,14 +84,57 @@ function Wide({ children }: { children: ReactNode }) {
  * to 175% of the frame and offset -37.5%, which reproduces the old framing
  * exactly at any anchor. The cast square then carries the play's own local
  * beats; see `Spot`. */
-function Framed({ children }: { children: ReactNode }) {
+function Framed({ children, quakeAtMs }: { children: ReactNode; quakeAtMs?: number }) {
   return (
     <span className="mnp pointer-events-none absolute inset-0 z-30" aria-hidden="true">
       <span className="fx-stage absolute left-[-650%] top-[-650%] block h-[1400%] w-[1400%]">
         <BoardFrame>
-          <span className="absolute left-[-37.5%] top-[-37.5%] block h-[175%] w-[175%]">{children}</span>
+          <span className="absolute left-[-37.5%] top-[-37.5%] block h-[175%] w-[175%]">
+            {quakeAtMs == null ? (
+              children
+            ) : (
+              // FLAGSHIP: in-scene stage jolt on the impact beat
+              <span className={`${QUAKE_CLASS} absolute inset-0 block`} style={impactVars(undefined, quakeAtMs / 1000)}>
+                {children}
+              </span>
+            )}
+          </span>
         </BoardFrame>
       </span>
+    </span>
+  );
+}
+
+/** FLAGSHIP WAVE: a composed physical hit from the shared impact vocabulary
+ * (impact.tsx) — descending laser column, a victim blown in half with shard
+ * spray, an expanding ground ring — slapstick tuned: the assassin's ghost
+ * pawn splits like a katana-dojo prop, the flush jet is a laser column of
+ * toilet water, the moai lands a double boom. The laser leads the impact beat
+ * by 0.4s (see the .mnp .imp-laser rule in memePlays.css). */
+function Impact({
+  left,
+  top,
+  size = "14%",
+  rgb,
+  atMs,
+  laser,
+  shatter,
+  shock,
+}: {
+  left: string;
+  top: string;
+  size?: string;
+  rgb: string;
+  atMs: number;
+  laser?: boolean;
+  shatter?: ReactNode;
+  shock?: boolean;
+}) {
+  return (
+    <span className="mnp-impact absolute block" style={{ left, top, width: size, height: size, ...impactVars(rgb, atMs / 1000) }}>
+      {laser && <LaserStrike />}
+      {shatter != null && <PieceShatter glyph={shatter} />}
+      {shock && <Shockwave />}
     </span>
   );
 }
@@ -263,8 +317,23 @@ function CappuccinoAssassinoPlay({ lead, role, delayMs }: SceneProps) {
   }
   return (
     <>
-      <Framed>
+      <Framed quakeAtMs={delayMs + 780}>
       <Wash color="rgba(78,45,21,0.2)" delayMs={delayMs} />
+      {/* the KILL, shown like a dojo cut: where the X of blades met, a ghost
+          of the victim splits cleanly in half and falls apart in shards */}
+      <Impact
+        left="42.5%"
+        top="34%"
+        size="15%"
+        rgb="196 210 224"
+        atMs={delayMs + 800}
+        shock
+        shatter={
+          <svg viewBox="0 0 40 40" className="h-full w-full">
+            <GhostPawn x={20} y={14} s={1.4} fill="#e6f0f8" />
+          </svg>
+        }
+      />
       {/* the assassin blurs clean across the board */}
       <Prop left="36.5%" top="30%" width="27%" height="32%" className="mnp-assassin" style={d(delayMs)}>
         <Figure id="cappuccino_assassino" />
@@ -379,8 +448,11 @@ function BallerinaCappuccinaPlay({ lead, role, delayMs }: SceneProps) {
   }
   return (
     <>
-      <Framed>
+      <Framed quakeAtMs={delayMs + 1050}>
       <Wash color="rgba(245,168,192,0.16)" delayMs={delayMs} />
+      {/* the pirouette FINALE: she sticks the landing so hard the stage hops
+          and a pink pressure ring blasts out from her pointe shoe */}
+      <Impact left="43%" top="42%" size="14%" rgb="245 168 192" atMs={delayMs + 1050} shock />
       {/* the ribbon spiral winds around her, spinning the other way */}
       <Prop left="25%" top="22%" width="50%" height="54%" className="mnp-ribbonspin" style={d(delayMs + 150)}>
         <svg viewBox="0 0 100 100" className="h-full w-full">
@@ -441,8 +513,11 @@ function LaVacaPlay({ lead, role, delayMs }: SceneProps) {
   }
   return (
     <>
-      <Framed>
+      <Framed quakeAtMs={delayMs + 1500}>
       <Wash color="rgba(94,58,134,0.22)" delayMs={delayMs} slow />
+      {/* the cosmic delivery: a golden tractor beam hammers down onto the
+          landing square, and re-entry thumps the board when the orbit ends */}
+      <Impact left="43%" top="40%" size="14%" rgb="242 196 106" atMs={delayMs + 1500} laser shock />
       {/* Saturn's rings sweep the WHOLE board, twice, tilted */}
       <Prop left="15%" top="25%" width="70%" height="50%" className="mnp-ringsweep" style={d(delayMs + 100)}>
         <svg viewBox="0 0 100 72" className="h-full w-full">
@@ -509,8 +584,11 @@ function FrigoCameloPlay({ lead, role, delayMs }: SceneProps) {
   }
   return (
     <>
-      <Wide>
+      <Wide quakeAtMs={delayMs + 420}>
       <Wash color="rgba(79,168,204,0.16)" delayMs={delayMs} />
+      {/* the door doesn't open, it SLAMS open: the stage rocks on the hinge
+          beat and a wall of freezer pressure blasts out across the ranks */}
+      <Impact left="45%" top="38%" size="13%" rgb="143 216 242" atMs={delayMs + 620} shock />
       {/* the fridge-camel backs in from the left */}
       <Prop left="24%" top="25%" width="26%" height="36%" className="mnp-slidein" style={d(delayMs)}>
         <Figure id="frigo_camelo" />
@@ -584,6 +662,11 @@ function TrippiTroppiPlay({ lead, role, delayMs }: SceneProps) {
   return (
     <>
       <Stage inset="-140%">
+      {/* FLAGSHIP: the corrupted feed doesn't just flicker, it BUCKS — the
+          whole scene seizes on the glitch beat and the signal blows a
+          chromatic pressure ring when the feed tears */}
+      <span className={`${QUAKE_CLASS} absolute inset-0 block`} style={impactVars(undefined, (delayMs + 620) / 1000)}>
+      <Impact left="36%" top="34%" size="28%" rgb="242 130 90" atMs={delayMs + 640} shock />
       {/* chromatic ghost copies, out of phase */}
       <span className="mnp-glitch absolute left-[8%] top-[6%] block h-[80%] w-[80%] opacity-40" style={d(delayMs + 60)}>
         <Figure id="trippi_troppi" />
@@ -613,6 +696,7 @@ function TrippiTroppiPlay({ lead, role, delayMs }: SceneProps) {
         {/* the settle: one clean spark once the feed dies */}
         <g className="mnp-star" style={d(delayMs + 1250)}><SparkStar x={50} y={12} s={1.4} fill="#f2825a" /></g>
       </svg>
+      </span>
       </Stage>
       <Spot tone="#f2825a" glow="#5db6e8" tell={d(delayMs + 70)} hit={d(delayMs + 620)} settle={d(delayMs + 1700)} />
     </>
@@ -645,9 +729,13 @@ function ChillGuyPlay({ lead, role, delayMs }: SceneProps) {
   }
   return (
     <>
-      <Wide>
+      <Wide quakeAtMs={delayMs + 1100}>
       {/* everything calms down. that's the whole effect. */}
       <Wash color="rgba(139,147,162,0.14)" delayMs={delayMs} slow />
+      {/* his one concession to the flagship wave: a single, small, deeply
+          unbothered shockwave, delivered well after anyone stopped waiting
+          for it. the stage bumps once, politely, on the "..." beat. */}
+      <Impact left="46%" top="52%" size="8%" rgb="201 210 220" atMs={delayMs + 2100} shock />
       {/* the man himself, sliding across the bottom of the board at a truly
           unbothered pace — no bounce, no spin, no urgency whatsoever */}
       <Prop left="28%" top="52%" width="13%" height="20%" className="mnp-chillslide" style={d(delayMs)}>
@@ -709,9 +797,13 @@ function MoaiHeadPlay({ lead, role, delayMs }: SceneProps) {
   }
   return (
     <>
-      <Framed>
+      <Framed quakeAtMs={delayMs + 500}>
       {/* the impact flash-wash: one hard pulse when it lands */}
       <Wash color="rgba(78,88,98,0.24)" delayMs={delayMs + 480} />
+      {/* the THUD is seismic: a double stone shockwave — the landing blow,
+          then the settle blow — while the whole stage takes the hit */}
+      <Impact left="42%" top="52%" size="16%" rgb="180 188 196" atMs={delayMs + 500} shock />
+      <Impact left="44%" top="54%" size="12%" rgb="132 142 152" atMs={delayMs + 700} shock />
       {/* the moai descends. gravity means it. */}
       <Prop left="37.5%" top="27%" width="25%" height="38%" className="mnp-moaidrop" style={d(delayMs)}>
         <Figure id="moai_head" />
@@ -792,8 +884,11 @@ function SkibidiFlushPlay({ lead, role, delayMs }: SceneProps) {
   }
   return (
     <>
-      <Wide>
+      <Wide quakeAtMs={delayMs + 800}>
       <Wash color="rgba(42,110,168,0.2)" delayMs={delayMs} />
+      {/* the FLUSH JET: a column of pressurized toilet-water lasers straight
+          down into the drain, and the plumbing blowback rocks the stage */}
+      <Impact left="43%" top="43%" size="14%" rgb="93 182 232" atMs={delayMs + 800} laser shock />
       {/* the giant vortex: three nested spirals winding the whole board */}
       <Prop left="22%" top="22%" width="56%" height="56%" className="mnp-vortex" style={d(delayMs)}>
         <svg viewBox="0 0 100 100" className="h-full w-full">
@@ -870,8 +965,23 @@ function TungTungSahurPlay({ lead, role, delayMs }: SceneProps) {
   }
   return (
     <>
-      <Wide>
+      <Wide quakeAtMs={delayMs + 740}>
       <Wash color="rgba(122,74,32,0.22)" delayMs={delayMs} />
+      {/* the BAT lands on the final beat: one stunned ghost-pawn is bonked
+          clean in half, accordion-style, and the drum blast rolls out */}
+      <Impact
+        left="60%"
+        top="50%"
+        size="13%"
+        rgb="255 215 106"
+        atMs={delayMs + 1540}
+        shock
+        shatter={
+          <svg viewBox="0 0 40 40" className="h-full w-full">
+            <GhostPawn x={20} y={14} s={1.4} fill="#ffe9c4" />
+          </svg>
+        }
+      />
       {/* the man himself — the glossy log, board-COLOSSAL, marching across
           (~28% of the 14x14 canvas is ~half the visible board) */}
       <Prop left="36%" top="24%" width="28%" height="44%" className="mnp-march" style={d(delayMs)}>

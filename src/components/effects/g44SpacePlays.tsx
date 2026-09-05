@@ -48,6 +48,7 @@ import "./g44SpacePlays.css";
 import type { CSSProperties, ReactNode } from "react";
 import type { SigPlugin, SigRole } from "./sigPlugins";
 import { AimStage, BoardFrame, BoardWideStage } from "./stage";
+import { LaserStrike, PieceShatter, Shockwave, impactVars } from "./impact/impact";
 
 interface SceneProps {
   lead: boolean;
@@ -2631,6 +2632,134 @@ function LoopStair({ role, delayMs }: SceneProps) {
   );
 }
 
+/* -----------------------------------------------------------------------------
+   44. Anti-Gravity Gala (t9) — THE ROOM LETS GO OF THE FLOOR.
+   Down is a rule of space too, and tonight it is suspended: the gala lamp is
+   lowered in, the floor's grip hums out from under the guests, and the pieces
+   simply RISE — shadows left shrinking on their squares — while one slider
+   glides clean over the head of the piece that was blocking its file and
+   carries on beyond it. Kings decline. Everything is set back down gently.
+   Palette: #b48fe8 / #ffe9c9 / #221436.
+   -------------------------------------------------------------------------- */
+function GalaWithoutGravity({ role, delayMs }: SceneProps) {
+  const lamp = (
+    <>
+      <path d="M12 2v3.4" stroke="#ffe9c9" strokeWidth="1.2" strokeLinecap="round" />
+      <path d="M6.4 9.4a5.6 5.6 0 0 1 11.2 0l-1.4 4.4H7.8z" fill="#b48fe8" stroke="#221436" strokeWidth="1.1" {...SJ} />
+      <path d="M8.6 13.8L8 17.4M12 13.8v4.4M15.4 13.8l.6 3.6" stroke="#ffe9c9" strokeWidth="1" strokeLinecap="round" />
+    </>
+  );
+  const floater = (glyph: string, fill: string) => (
+    <path d={glyph} fill={fill} stroke="#221436" strokeWidth="1.1" {...SJ} />
+  );
+  if (role === "entrance") {
+    return (
+      <Cut d={delayMs}>
+        <L c="g44-ent2" d={60} s={{ ...pct(16, 78, 68, 6), background: "linear-gradient(90deg, transparent, #221436, transparent)" }} />
+        <V c="g44-ent" d={200} s={pct(26, 10, 48, 44)}>{lamp}</V>
+        <V c="g44-ag-lift" d={430} s={pct(38, 44, 26, 34)}>{floater(ROOK, "#b48fe8")}</V>
+        <L c="g44-ent3" d={520} s={{ ...pct(30, 30, 40, 40), borderRadius: "50%", background: "radial-gradient(circle, rgba(255,233,201,0.85), transparent 70%)" }} />
+      </Cut>
+    );
+  }
+  if (role === "target") {
+    return (
+      <Cut d={delayMs}>
+        <L c="g44-ag-shadow" d={40} s={{ ...pct(28, 76, 44, 9), borderRadius: "50%", background: "#221436" }} />
+        <V c="g44-ag-lift" d={160} s={pct(30, 18, 40, 54)}>{floater(ROOK, "#b48fe8")}</V>
+        <L c="g44-hit2" d={380} s={{ ...pct(20, 30, 60, 6), background: "linear-gradient(90deg, transparent, #ffe9c9, transparent)" }} />
+      </Cut>
+    );
+  }
+  return (
+    <Lead d={delayMs} frame={<><Wash tone="rgba(180,143,232,0.26)" d={60} /><Rim tone="rgba(255,233,201,0.26)" d={150} /></>}>
+      {/* tell: the gala lamp is lowered in over the cast square */}
+      <V c="g44-ag-lamp" d={80} s={box(1.6, 1.6, 0, -2.6)}>{lamp}</V>
+      {/* the floor's grip hums out from under the room */}
+      <L c="g44-ag-hum" d={170} s={{ ...box(5.4, 2.6), borderRadius: "50%", border: "1px solid #b48fe8" }} />
+      {/* the shadows stay on the squares and SHRINK: height is leaving them */}
+      {R3.map((i) => (
+        <L key={i} c="g44-ag-shadow" d={300 + i * 90} s={{ ...box(0.9, 0.34, [-1.7, 0, 1.4][i], [0.9, 1.1, 0.7][i]), borderRadius: "50%", background: "#221436" }} />
+      ))}
+      {/* the guests rise, tallest first, drifting with the caster's lean */}
+      {R3.map((i) => (
+        <V key={i} c="g44-ag-float" d={320 + i * 90} s={box(1.15, 1.15, [-1.7, 0, 1.4][i], [0.35, 0.55, 0.15][i])}>
+          {floater([ROOK, PAWN, PAWN][i], i === 0 ? "#b48fe8" : "#ffe9c9")}
+        </V>
+      ))}
+      {/* the blocker holds its square; dignity is a kind of mass */}
+      <V c="g44-ag-blocker" d={420} s={box(1.1, 1.1, 1.5, -0.05)}>{floater(KING, "#221436")}</V>
+      {/* strike: the slider passes clean OVER its head and carries on */}
+      <V c="g44-ag-glide" d={520} s={box(1.1, 1.1, 0.4, -0.1)}>{floater(ROOK, "#ffe9c9")}</V>
+      {/* champagne bubbles: the only thing here still obeying "up" */}
+      {R4.map((i) => (
+        <L key={i} c="g44-ag-bubble" d={640 + i * 70} s={{ ...box(0.22, 0.22, [-2, -0.7, 0.9, 2][i], [1.2, 0.6, 1.3, 0.8][i]), borderRadius: "50%", border: "1px solid #ffe9c9" }} />
+      ))}
+      {/* settle: everything is set back down as gently as it left */}
+      <L c="g44-ag-setdown" d={780} s={{ ...box(4.6, 0.5, 0, 1.15), borderRadius: "999px", background: "linear-gradient(90deg, transparent, rgba(255,233,201,0.8), transparent)" }} />
+    </Lead>
+  );
+}
+
+/* -----------------------------------------------------------------------------
+   45. Let Me Play For You (t9) — THE SECOND CONTROLLER.
+   The distance between the players stops mattering: a second hand comes in
+   over the far side of the table, hovers down the real run, pinches the
+   opponent's own piece and slides it where IT likes — no capture, just the
+   deep insult of being moved by someone else. Three charges; this is one.
+   Palette: #8fb8e8 / #ffedc9 / #1a2438.
+   -------------------------------------------------------------------------- */
+function SecondController({ role, delayMs }: SceneProps) {
+  const hand = (
+    <>
+      <path d="M3 10.4h9.6l-2.2-3.2c-.6-.9.6-1.9 1.4-1.1l5 4.6c.9.8 1.4 2 1.4 3.2v3.3c0 1.6-1.3 2.9-2.9 2.9H9.4c-1 0-2-.5-2.6-1.3L3 14.6z" fill="#8fb8e8" stroke="#1a2438" strokeWidth="1.1" {...SJ} />
+      <path d="M3 9h3.2v7.2H3z" fill="#ffedc9" stroke="#1a2438" strokeWidth="1.1" {...SJ} />
+    </>
+  );
+  const piece = <path d={ROOK} fill="#1a2438" stroke="#8fb8e8" strokeWidth="1.2" {...SJ} />;
+  if (role === "entrance") {
+    return (
+      <Cut d={delayMs}>
+        <L c="g44-ent2" d={60} s={{ ...pct(10, 52, 80, 7), background: "linear-gradient(90deg, #8fb8e8, transparent)" }} />
+        <V c="g44-ent" d={200} s={pct(20, 22, 60, 52)}>{hand}</V>
+        <L c="g44-ent3" d={430} s={{ ...pct(56, 34, 26, 26), borderRadius: "50%", border: "2px solid #ffedc9" }} />
+      </Cut>
+    );
+  }
+  if (role === "target") {
+    return (
+      <Cut d={delayMs}>
+        <L c="g44-hit2" d={40} s={{ ...pct(6, 66, 88, 7), background: "#8fb8e8" }} />
+        <V c="g44-hit" d={180} s={pct(24, 18, 56, 52)}>{hand}</V>
+        <V c="g44-lp-wobble" d={420} s={pct(38, 34, 28, 44)}>{piece}</V>
+      </Cut>
+    );
+  }
+  return (
+    <AimLead d={delayMs} frame={<Wash tone="rgba(143,184,232,0.24)" d={60} />}>
+      {/* tell: the intended move is scribed down the real run first */}
+      <L c="g44-tellline" d={90} s={{ ...lane(0.12), background: "#ffedc9" }} />
+      {R4.map((i) => (
+        <L key={i} c="g44-lp-dot" d={170 + i * 45} per={24} s={{ ...at(0.2 + i * 0.2, 0.24, 0.24), borderRadius: "50%", background: "#ffedc9" }} />
+      ))}
+      {/* the hand's shadow gathers over the piece before it drops */}
+      <L c="g44-lp-hover" d={240} s={{ ...at(0, 1.6, 0.5, 0.55), borderRadius: "50%", background: "#1a2438" }} />
+      {/* the second controller's hand comes in over their side of the table */}
+      <V c="g44-lp-hand" d={320} s={at(0.1, 2.1, 2.1, -0.55)}>{hand}</V>
+      {/* strike: the pinch takes hold */}
+      <L c="g44-lp-pinch" d={470} s={{ ...at(0, 0.9, 0.9), borderRadius: "50%", border: "2px solid #ffedc9" }} />
+      {/* and the opponent's own piece is slid the REAL distance, hand and all */}
+      <V c="g44-lp-slide" d={540} s={at(0, 1.05, 1.05, -0.02)}>{piece}</V>
+      <V c="g44-lp-slide" d={540} s={at(0.1, 2.1, 2.1, -0.55)}>{hand}</V>
+      {/* the piece objects the whole way and wobbles when let go */}
+      <V c="g44-lp-wobble" d={740} s={at(1, 1.05, 1.05, -0.02)}>{piece}</V>
+      {/* settle: the hand lifts away, job done, no capture taken */}
+      <V c="g44-lp-release" d={800} s={at(1.1, 2, 2, -0.7)}>{hand}</V>
+      <L c="g44-dust" d={860} s={{ ...at(1, 2.2, 1.2, 0.3), borderRadius: "50%", background: "radial-gradient(circle, rgba(255,237,201,0.5), transparent 72%)" }} />
+    </AimLead>
+  );
+}
+
 /* =============================================================================
    Registry. Two spaces of indent at object depth 1: the animation audit and
    check-sig-plugins.cjs parse this table as TEXT.
@@ -2809,4 +2938,210 @@ export const PLAYS: Record<string, SigPlugin> = {
     config: { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "petrify", anchor: "board" },
     Render: LoopStair,
   },
+  ov_antigravity_gala: {
+    config: { ordering: "radial", staggerMs: 60, victims: ["b", "r", "q"], hasLead: true, sound: "gacha", source: "empower", anchor: "cast" },
+    Render: GalaWithoutGravity,
+  },
+  ov_let_me_play_for_you: {
+    config: { ordering: "line", staggerMs: 60, victims: "all", hasLead: true, sound: "blitz", anchor: "aim" },
+    Render: SecondController,
+  },
 };
+
+/* =============================================================================
+   FLAGSHIP IMPACT WAVE. Every lead now LANDS: a per-card impact beat from the
+   shared violence vocabulary (impact/impact.tsx). This is the SPACE module,
+   so the signature move is the ORBITAL STRIKE - a column of light called down
+   from far overhead onto the square the card is policing, ground ring and
+   stage jolt on the same beat; the demolition cards additionally shatter
+   their own device (a bell, a meteor, a chain link) in half. The whole scene
+   rides a cell-scale quake wrapper (g44-quakecell, g44SpacePlays.css) on the
+   shared --imp-delay beat. Additive only: the original scenes render
+   unchanged underneath.
+
+   Node cost per lead: quake 1, laser 2, shockwave 1, shatter 6 - the combos
+   below stay inside the 16-animated-node scene budget.
+   ========================================================================== */
+
+interface Imp {
+  /** the impact beat, ms after delayMs - synced to the scene's own strike */
+  at: number;
+  /** "#rrggbb" tint for the impact vocabulary (one of the card's 3 colours) */
+  tint: string;
+  /** the orbital column */
+  laser?: boolean;
+  /** ground ring on the same beat */
+  shock?: boolean;
+  /** shatter silhouette: the struck device splits in half, chips spray */
+  glyph?: ReactNode;
+  /** placement in stage percent (one cell = 7.142857; cast centre = 50) */
+  x?: number;
+  y?: number;
+  s?: number;
+  /** stage the beat on the aim vector (art points +x) instead of upright */
+  aim?: boolean;
+  /** slide the beat to the victim's distance along the vector (--fx-len) */
+  len?: boolean;
+}
+
+/** hex "#rrggbb" -> the "r g b" triple --imp-rgb wants. */
+function impRgb(hex: string): string {
+  return `${parseInt(hex.slice(1, 3), 16)} ${parseInt(hex.slice(3, 5), 16)} ${parseInt(hex.slice(5, 7), 16)}`;
+}
+
+/** Shatter silhouettes, painted in the card's own palette. */
+function impGlyph(path: string, fill: string, stroke: string, w = 1.4): ReactNode {
+  return (
+    <svg viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+      <path d={path} fill={fill} stroke={stroke} strokeWidth={w} strokeLinejoin="round" strokeLinecap="round" />
+    </svg>
+  );
+}
+const IG_BELL = "M12 3c4 0 6 3 6 7v6h2v3H4v-3h2v-6c0-4 2-7 6-7z";
+const IG_NUG = "M4 15l3-8 7-3 8 4 1 7-9 6z";
+const IG_SLAB = "M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z";
+const IG_PANE = "M7 2.6h10v18.8H7z";
+const IG_LINK = "M8.5 4h7A4.5 4.5 0 0 1 20 8.5v7a4.5 4.5 0 0 1-4.5 4.5h-7A4.5 4.5 0 0 1 4 15.5v-7A4.5 4.5 0 0 1 8.5 4z";
+
+/** The orbital composite, staged over the card's own action point. */
+function ImpactBeat({ imp, delayMs }: { imp: Imp; delayMs: number }) {
+  const s = imp.s ?? 7.2;
+  const x = imp.x ?? 50;
+  const y = imp.y ?? 50;
+  const lenShift = imp.len ? " + var(--fx-len, 3) * 7.142857%" : "";
+  const inner = (
+    <span className="g44-impactbed absolute inset-0 block">
+      <span
+        className="absolute block"
+        style={{
+          left: `calc(${x - s / 2}%${lenShift})`,
+          top: `${y - s / 2}%`,
+          width: `${s}%`,
+          height: `${s}%`,
+        }}
+      >
+        {imp.laser && <LaserStrike />}
+        {imp.glyph != null && <PieceShatter glyph={imp.glyph} />}
+        {imp.shock && <Shockwave />}
+      </span>
+    </span>
+  );
+  return imp.aim ? <AimStage>{inner}</AimStage> : <BoardWideStage>{inner}</BoardWideStage>;
+}
+
+/** Wrap a card's Render: leads gain the quake wrapper plus the impact beat. */
+function withImpact(Render: SigPlugin["Render"], imp: Imp): SigPlugin["Render"] {
+  function ImpactLead(props: { lead: boolean; role: SigRole; delayMs: number }) {
+    if (props.role !== "lead") return <Render {...props} />;
+    return (
+      <span
+        className="g44-quakecell absolute inset-0 block"
+        style={impactVars(impRgb(imp.tint), (props.delayMs + imp.at) / 1000)}
+      >
+        <Render {...props} />
+        <ImpactBeat imp={imp} delayMs={props.delayMs} />
+      </span>
+    );
+  }
+  return ImpactLead;
+}
+
+/* Per-card cue sheet: each orbital lands on ITS scene's strike beat, at ITS
+   policed square, in ITS palette - no two siblings share a beat + combo. */
+const IMPACTS: Record<string, Imp> = {
+  // the fold slams shut on the repeated square, down the vector
+  hx4_deja_vu: { at: 540, tint: "#cbb184", laser: true, shock: true, aim: true, len: true, s: 6.4 },
+  // the tape ratchet LOCKS: the no-retreat pawl strikes home
+  hx4_no_full_retreat: { at: 470, tint: "#b9c6d2", laser: true, shock: true, aim: true, s: 6 },
+  // the tea break is enforced from on high: kettle-drop column
+  hx4_tea_break: { at: 560, tint: "#8fc7bd", laser: true, shock: true, y: 52, s: 6.6 },
+  // the plumb bob hits the deck: the monarch is measured and grounded
+  hx4_winded_monarch: { at: 470, tint: "#b9a7e8", laser: true, shock: true, y: 55, s: 6 },
+  // the corner web is pinned by a strike into each anchor line
+  hx4_cobweb_corners: { at: 430, tint: "#cfd8e6", laser: true, shock: true, y: 46, s: 6.2 },
+  // the CRACKED BELL takes one more strike and splits in half
+  hx4_cracked_bell: { at: 620, tint: "#e0b45f", glyph: impGlyph(IG_BELL, "#e0b45f", "#2b2010"), shock: true, y: 50 },
+  // the lodestone slams the needle flat: magnetic down-strike
+  hx4_no_sidling: { at: 500, tint: "#7fb3e8", laser: true, shock: true, y: 50, s: 6.2 },
+  // the visor SLAMS shut: rusted iron boom at eye level
+  hx4_rusty_visor: { at: 470, tint: "#b08a5a", laser: true, shock: true, y: 48, s: 6.8 },
+  // grief lands bodily: the shadow's weight hits the square
+  hx4_stunned_grief: { at: 590, tint: "#8ea2c4", laser: true, shock: true, y: 52, s: 7 },
+  // the oar SNAPS across the gunwale: the blade shears in half
+  hx4_broken_oars: { at: 500, tint: "#7fbfd4", glyph: impGlyph(IG_PANE, "#7fbfd4", "#123240"), shock: true, y: 52 },
+  // the cordon stake is DRIVEN at the scene's corner
+  hx4_crime_scene: { at: 500, tint: "#e8c451", laser: true, shock: true, y: 54, s: 6.4 },
+  // the knot pulls through itself and BINDS: cinch-boom
+  hx4_tangled_marionettes: { at: 520, tint: "#c39ae8", laser: true, shock: true, y: 50, s: 6.6 },
+  // the tempo changes mid-stride: the new step STAMPS in
+  hx4_change_of_step: { at: 480, tint: "#dba6c8", laser: true, shock: true, y: 56, s: 6.4 },
+  // the leaden boots drop from orbit onto the crowded rank
+  hx4_leaden_boots: { at: 500, tint: "#9aa7b8", laser: true, shock: true, y: 54, s: 7.8 },
+  // the duel's counterspell lands at the mirrored wizard's feet
+  ov_wizard_duel: { at: 600, tint: "#a8d8ff", laser: true, shock: true, aim: true, len: true, s: 6.4 },
+  // the shutter GUTTERS the lantern: darkness lands like a weight
+  hx4_lantern_out: { at: 600, tint: "#f0c46a", laser: true, shock: true, y: 48, s: 6.2 },
+  // the curfew bolt thuds into the butt at the marked hour
+  hx4_crossbow_curfew: { at: 560, tint: "#d98b4a", laser: true, shock: true, y: 50, s: 5.6 },
+  // both mouths gulp at once: the twin portal slams its rim
+  ov_portal_pair: { at: 560, tint: "#7fe0d0", laser: true, shock: true, y: 50, s: 7.4 },
+  // the ghost steps land: the LAST print strikes at full reach
+  bn4_ghost_walk: { at: 600, tint: "#b9d8ff", laser: true, shock: true, aim: true, len: true, s: 5.8 },
+  // the faerie door slams open at the far hedge
+  bn4_faerie_door: { at: 520, tint: "#9ee0a6", laser: true, shock: true, aim: true, len: true, s: 6 },
+  // the hammock drops its scholar: undignified full-weight thump
+  ov_archmage_sabbatical: { at: 540, tint: "#e3c07f", laser: true, shock: true, aim: true, s: 7 },
+  // the heavenly stamp descends the pigeonhole rank and LANDS
+  ov_heavenly_bureaucracy: { at: 560, tint: "#a9b8e8", laser: true, shock: true, aim: true, s: 6.6 },
+  // the baton raps the sand table: the whole plan jolts
+  bn4_marshals_baton: { at: 600, tint: "#d8b56a", laser: true, shock: true, y: 52, s: 6.8 },
+  // the velvet rope's brass post is SLAMMED into its socket
+  hx4_velvet_rope: { at: 560, tint: "#d1607e", laser: true, shock: true, y: 54, s: 6.2 },
+  // the worldgate opens: an orbital lance grounds at the far mouth
+  bn4_worldgate: { at: 620, tint: "#8fd8ff", laser: true, shock: true, aim: true, len: true, s: 7 },
+  // the hourglass waist CHOKES: the pinch strikes shut
+  hx4_choke_point: { at: 640, tint: "#d9a15c", laser: true, shock: true, y: 50, s: 6 },
+  // the zip teeth BITE shut: interlock boom down the seam
+  hx4_wall_of_teeth: { at: 500, tint: "#cfd8e2", laser: true, shock: true, y: 50, s: 7.6 },
+  // the wrong livery is struck from the roll: herald's down-stamp
+  hx4_mismatched_livery: { at: 540, tint: "#d9546b", laser: true, shock: true, y: 50, s: 6.4 },
+  // the grapnel BITES the far parapet at full line
+  ov_grappling_hook: { at: 520, tint: "#b0b8c4", laser: true, shock: true, aim: true, len: true, s: 5.8 },
+  // the overdue tome is returned FROM ORBIT: it slams the desk and splits
+  ov_overdue_library_book: { at: 600, tint: "#cf9a63", laser: true, glyph: impGlyph(IG_SLAB, "#cf9a63", "#2a1a0e"), shock: true, aim: true, s: 6.8 },
+  // the hearth ring seats itself: ember-stone boom
+  bn4_hearth_ring: { at: 560, tint: "#f0a95a", laser: true, shock: true, y: 52, s: 6.6 },
+  // the last wagon locks the circle: axle-deep ground boom
+  bn4_wagon_circle: { at: 600, tint: "#c8a06a", laser: true, shock: true, y: 52, s: 9 },
+  // the truce horn plants its standard: parley column
+  bn4_heralds_truce: { at: 500, tint: "#86cbb4", laser: true, shock: true, y: 50, s: 6.2 },
+  // gravity flips BACK: everything lands at once, one big beat
+  ov_gravity_flip: { at: 500, tint: "#7fc9e8", laser: true, shock: true, y: 48, s: 8 },
+  // the tray avalanche hits the desk: paper-weight orbital
+  ov_paperwork_avalanche: { at: 600, tint: "#ccc0a0", laser: true, shock: true, y: 52, s: 8 },
+  // the field glasses find the square: the focused beam grounds it
+  bn4_field_glasses: { at: 620, tint: "#7fd4ff", laser: true, shock: true, y: 50, s: 5.6 },
+  // the star's entrance mark is struck into the boards
+  op_star_dressing_room: { at: 620, tint: "#e0a6c8", laser: true, shock: true, y: 52, s: 6.4 },
+  // the scout's flare comes down EXACTLY where the report said
+  bn4_scouts_report: { at: 620, tint: "#8fd8b0", laser: true, shock: true, y: 50, s: 6 },
+  // FORE: the meteor lands on the green and SHATTERS, divot and all
+  ov_meteor_golf: { at: 620, tint: "#ff9a5a", laser: true, glyph: impGlyph(IG_NUG, "#ff9a5a", "#2a1206"), shock: true, aim: true, len: true },
+  // the hobble strap cinches: the buckle slams at fetlock height
+  hx4_hobble_strap: { at: 600, tint: "#b98a5a", laser: true, shock: true, y: 55, s: 6.2 },
+  // the quartermaster's lock TURNS: the bolt drops like a girder
+  bn4_quartermasters_lock: { at: 610, tint: "#cfd4dc", laser: true, shock: true, y: 52, s: 6.6 },
+  // the gang chain is TESTED and a link gives: it snaps in half
+  hx4_chain_gang: { at: 560, tint: "#a8b0bc", glyph: impGlyph(IG_LINK, "none", "#a8b0bc", 2.6), shock: true, y: 52 },
+  // the court is called to order: the puppet gavel from on high
+  hx4_puppet_court: { at: 640, tint: "#b9a2d8", laser: true, shock: true, y: 50, s: 6.8 },
+  // the floor's grip is cut: the release ring booms out under the dancers
+  ov_antigravity_gala: { at: 520, tint: "#b48fe8", shock: true, y: 54, s: 7.2 },
+  // the pinch lands ON the borrowed piece, the full run away
+  ov_let_me_play_for_you: { at: 470, tint: "#8fb8e8", laser: true, shock: true, aim: true, s: 6.2 },
+};
+
+for (const [id, imp] of Object.entries(IMPACTS)) {
+  const play = PLAYS[id];
+  if (play) PLAYS[id] = { config: play.config, Render: withImpact(play.Render, imp) };
+}

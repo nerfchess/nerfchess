@@ -43,6 +43,7 @@ import "./g09FrostPlays.css";
 import type { CSSProperties, ReactNode } from "react";
 import type { SigPlugin, SigRole } from "./sigPlugins";
 import { AimStage, BoardFrame, BoardWideStage } from "./stage";
+import { LaserStrike, PieceShatter, Shockwave, impactVars } from "./impact/impact";
 
 interface SceneProps {
   lead: boolean;
@@ -2489,6 +2490,149 @@ function GlacierCalvingScene({ role, delayMs }: SceneProps) {
 }
 
 /* =============================================================================
+   30. Mirror of Winter (t9) — THE SYMPATHETIC GLASS. A tall cheval mirror is
+   stood on the board and breathes frost across its own face. Tell: the glass
+   fogs, and one soldier steps up to it. Strike: the glass flashes — and it is
+   not HIS reflection that pays: every other figure of his kind across the
+   board glazes over where it stands, each one catching the cold in the real
+   victim order. When one soldier shivers, the regiment catches cold. Settle:
+   frost ferns creep out of the frame's feet and the glass exhales.
+   ========================================================================== */
+
+const C_MW = { core: "#b9dcef", glow: "#fff1dd", deep: "#16283c" };
+const MW_ECHOES = [
+  { x: 26, y: 40 },
+  { x: 68, y: 34 },
+  { x: 77, y: 58 },
+];
+
+function MirrorOfWinterScene({ role, delayMs }: SceneProps) {
+  const mirror = (
+    <svg viewBox="0 0 40 64" className="block h-full w-full">
+      <path d="M8 4h24v46H8z" fill={C_MW.deep} stroke={C_MW.core} strokeWidth="3" strokeLinejoin="round" />
+      <path d="M12 8h16v38H12z" fill={C_MW.core} opacity="0.55" />
+      <path d="M14 42L26 12" stroke={C_MW.glow} strokeWidth="2.4" strokeLinecap="round" />
+      <path d="M8 50l-4 10M32 50l4 10" stroke={C_MW.core} strokeWidth="3" strokeLinecap="round" />
+    </svg>
+  );
+  if (role === "target")
+    return (
+      <Sq>
+        <g className="g09-hit" style={dm(delayMs, 0)}>
+          <path d="M10 6h20v28H10z" fill="none" stroke={C_MW.core} strokeWidth="2.4" strokeLinejoin="round" />
+          <path d={FIG} fill={C_MW.core} opacity="0.85" transform="scale(0.62) translate(12.5 14)" />
+        </g>
+        <g className="g09-hit2" style={dm(delayMs, 170)}>
+          <path d="M12 30L20 10l8 20M14 20h12" fill="none" stroke={C_MW.glow} strokeWidth="2" strokeLinecap="round" />
+        </g>
+      </Sq>
+    );
+  if (role === "entrance")
+    return (
+      <Sq>
+        <g className="g09-arrive" style={dm(delayMs, 0)}>
+          <path d="M11 4h18v30H11z" fill={C_MW.deep} stroke={C_MW.core} strokeWidth="2.4" strokeLinejoin="round" />
+          <path d="M15 30L25 10" stroke={C_MW.glow} strokeWidth="2" strokeLinecap="round" />
+        </g>
+        <g className="g09-arrive2" style={dm(delayMs, 160)}>
+          <path d={FIG} fill={C_MW.core} transform="scale(0.5) translate(20 22)" />
+          <path d={FIG} fill={C_MW.glow} opacity="0.6" transform="scale(-0.5 0.5) translate(-60 22)" />
+        </g>
+        <g className="g09-arrive-soft" style={dm(delayMs, 400)}>
+          <path d="M8 36q6-4 12 0t12 0" fill="none" stroke={C_MW.core} strokeWidth="2" strokeLinecap="round" />
+        </g>
+      </Sq>
+    );
+  return (
+    <BoardWideStage>
+      <Wash cls="g09-wash" tint="rgba(185,220,239,0.28)" base={delayMs} off={0} />
+      {/* the cold arrives as a sill of light laid across the whole board */}
+      <Band cls="g09-mw-sill" color={C_MW.core} y={52} h={1.6} base={delayMs} off={100} />
+      {/* the glass is stood on the cast square and breathes its own frost */}
+      <P cls="g09-mw-frame" x={50} y={46} w={9} h={15} style={dm(delayMs, 60)}>
+        {mirror}
+      </P>
+      <P
+        cls="g09-mw-breath"
+        x={50}
+        y={44}
+        w={7}
+        h={9}
+        style={{ ...dm(delayMs, 220), background: `radial-gradient(ellipse at 50% 50%, ${C_MW.glow}, transparent 70%)` }}
+      />
+      {/* one soldier steps up to see himself */}
+      <P cls="g09-mw-fig" x={44} y={50} w={5.4} h={5.4} style={dv(delayMs, 300, { "--g09-side": "var(--fx-side, 1)" })}>
+        <svg viewBox="0 0 40 40" className="block h-full w-full">
+          <path d={FIG} fill={C_MW.deep} stroke={C_MW.core} strokeWidth="2" />
+          <path d={FIG_BASE} fill={C_MW.deep} />
+        </svg>
+      </P>
+      {/* strike: the glass flashes white-cold */}
+      <P
+        cls="g09-mw-flash"
+        x={50}
+        y={44.5}
+        w={8}
+        h={12}
+        style={{ ...dm(delayMs, 480), background: `linear-gradient(120deg, transparent 30%, ${C_MW.glow} 50%, transparent 70%)` }}
+      />
+      {/* and the OTHER figures of his kind pay for it, in victim order */}
+      {MW_ECHOES.map((e, i) => (
+        <BoardFrame key={i}>
+          <span
+            className="g09-mw-echo absolute block"
+            style={
+              {
+                left: `${e.x - 3.5}%`,
+                top: `${e.y - 4.5}%`,
+                width: "7%",
+                height: "9%",
+                animationDelay: `calc(${delayMs + i * 120 + 560}ms + var(--fx-index, 0) * 40ms)`,
+                "--g09-side": "var(--fx-side, 1)",
+              } as CSSProperties
+            }
+          >
+            <svg viewBox="0 0 40 40" className="block h-full w-full">
+              <path d={FIG} fill={C_MW.core} stroke={C_MW.deep} strokeWidth="1.6" opacity="0.9" />
+            </svg>
+          </span>
+        </BoardFrame>
+      ))}
+      {/* each one takes its own rime ring as the cold sets */}
+      {MW_ECHOES.map((e, i) => (
+        <BoardFrame key={`r${i}`}>
+          <span
+            className="g09-mw-rime absolute block"
+            style={{
+              left: `${e.x - 5}%`,
+              top: `${e.y - 3}%`,
+              width: "10%",
+              height: "8%",
+              borderRadius: "50%",
+              border: `2px solid ${C_MW.glow}`,
+              animationDelay: `${delayMs + i * 120 + 700}ms`,
+            }}
+          />
+        </BoardFrame>
+      ))}
+      {/* settle: frost ferns creep out of the frame's feet */}
+      <P cls="g09-mw-fern" x={50} y={54} w={16} h={4} style={dm(delayMs, 820)}>
+        <svg viewBox="0 0 120 24" className="block h-full w-full">
+          <path
+            d="M60 4v16M60 12l-14 6M60 12l14 6M60 8l-8-4M60 8l8-4M46 18l-30 2M74 18l30 2"
+            fill="none"
+            stroke={C_MW.glow}
+            strokeWidth="2.4"
+            strokeLinecap="round"
+          />
+        </svg>
+      </P>
+      <Motes cls="g09-mote" color={C_MW.core} base={delayMs} off={900} />
+    </BoardWideStage>
+  );
+}
+
+/* =============================================================================
    Registry — scene + config per card id. Every `sound` is an existing
    SigSoundKey, every `source` an existing SigZone, and every entry declares an
    anchor. Most of these cards decorate pieces that stay on the board, so they
@@ -2497,6 +2641,140 @@ function GlacierCalvingScene({ role, delayMs }: SceneProps) {
 
 function S(Render: SigPlugin["Render"], config: SigPlugin["config"]): SigPlugin {
   return { config, Render };
+}
+
+/* =============================================================================
+   FLAGSHIP IMPACT WAVE - the module-wide moment of real contact.
+
+   Every lead now lands one physical hit from the shared impact vocabulary
+   (impact/impact.tsx), layered OVER the card's own scene: cold violence with no blast rings: an ice lance drops silently and the frozen thing SHEARS in half, all splinter and no boom.
+   Per card, the IMPACT spec picks the primitive combo, the glyph that is split
+   in half, the tint (the card's own core color as an r-g-b triple) and the
+   beat, which is synced to that scene's OWN strike rhythm, so no two siblings
+   land the same hit. The quake wrapper jolts the whole scene stage on the same
+   beat (in-scene only: the real board crop never shakes). Animations-off
+   coverage for all of these nodes is at the bottom of g09FrostPlays.css.
+   ========================================================================== */
+
+interface G09Imp {
+  /** impact beat, ms after the lead's own delayMs */
+  at: number;
+  /** the card's core color as an "r g b" triple (drives --imp-rgb) */
+  rgb: string;
+  laser?: boolean;
+  shock?: boolean;
+  /** which of the module's shatter glyphs is split in half */
+  g?: number;
+  /** stage jolt on the beat: "s" soft, "h" hard */
+  q?: "s" | "h";
+  /** impact centre on the 14-cell stage, in percent (cast square = 50/50) */
+  x?: number;
+  y?: number;
+  /** composite box size, in stage percent (9 is ~1.26 cells) */
+  s?: number;
+}
+
+const IMP_TINT = "rgb(var(--imp-rgb, 216 181 110) / 0.95)";
+const IMP_EDGE = "rgba(247, 241, 227, 0.9)";
+
+/** The module's shatter victims: an ice shard, a frozen pane, an icicle fall. Tinted per card via --imp-rgb. */
+const IMP_GLYPHS: ReactNode[] = [
+  <svg key="a" viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+    <path d="M12 2.6l5 7.4-5 11.4-5-11.4z" fill={IMP_TINT} /><path d="M12 5.6v12" stroke={IMP_EDGE} strokeWidth="1.3" strokeLinecap="round" />
+  </svg>,
+  <svg key="b" viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+    <rect x="4.6" y="4.6" width="14.8" height="14.8" rx="1.2" fill={IMP_TINT} /><path d="M8 8l4.2 4.4-1.4 4.8M12.2 12.4l4.6-1.6" stroke={IMP_EDGE} strokeWidth="1.4" strokeLinecap="round" fill="none" />
+  </svg>,
+  <svg key="c" viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+    <path d="M5 4.4h14v2.8H5z" fill={IMP_TINT} /><path d="M7 7.2L8.4 15 10 7.2zM11 7.2l1.2 12 1.4-12zM15 7.2l1.2 6.4 1.4-6.4z" fill={IMP_TINT} /><circle cx="12.2" cy="20.4" r="0.9" fill={IMP_EDGE} />
+  </svg>,
+];
+
+const IMPACT: Record<string, G09Imp> = {
+  bn4_long_winter: { at: 420, rgb: "143 198 232", laser: true, g: 0, q: "h", s: 12 }, // t8 hero
+  bn4_winter_garrison: { at: 465, rgb: "168 216 230", laser: true, g: 1, q: "h", s: 12 }, // t8 hero
+  bn4_frozen_moat: { at: 440, rgb: "134 200 220", g: 1 },
+  bn4_glacier_calving: { at: 470, rgb: "140 203 228", laser: true, g: 0, q: "s" },
+  hx4_blood_price: { at: 520, rgb: "184 216 238", laser: true, g: 2, q: "h", s: 12 }, // t8 hero
+  hx4_eternal_toll: { at: 510, rgb: "134 194 214", laser: true, g: 2, q: "h", s: 12 }, // t8 hero
+  hx4_kings_ransom: { at: 555, rgb: "166 207 226", laser: true, g: 0, q: "h", s: 12 }, // t8 hero
+  hx4_tribute_demand: { at: 430, rgb: "168 194 208", laser: true, g: 1, q: "s" },
+  // Hero hit tuned by hand: the ice lance drops dead-centre onto the rimed
+  // dial (staged at 50/50) and the frozen-pane glyph shears in half over it,
+  // on the third heavy tick.
+  hx4_doomsday_clock: { at: 560, rgb: "169 200 228", laser: true, g: 1, q: "h", s: 13 }, // t8 hero
+  hx4_tolling_thirds: { at: 590, rgb: "167 196 216", laser: true, g: 0, q: "h", s: 12 }, // t8 hero
+  ov_deus_ex_machina: { at: 600, rgb: "188 212 230", laser: true, g: 2, q: "h", s: 12 }, // t8 hero
+  hx4_burned_keep: { at: 645, rgb: "159 212 232", laser: true, g: 2, q: "h", s: 12 }, // t8 hero
+  hx4_oathbreakers_brand: { at: 690, rgb: "159 208 221", laser: true, g: 0, q: "h", s: 12 }, // t8 hero
+  hx4_shattered_council: { at: 525, rgb: "163 201 221", laser: true, g: 1, q: "h", s: 12 }, // t8 hero
+  hx4_frozen_reserves: { at: 550, rgb: "158 198 216", laser: true, g: 1, q: "h", s: 12 }, // t8 hero
+  hx4_hearth_frost: { at: 570, rgb: "157 200 210", laser: true, g: 0, q: "s" },
+  hx4_great_glacier: { at: 735, rgb: "142 201 224", laser: true, g: 2, q: "h", s: 12 }, // t8 hero
+  hx4_reapers_due: { at: 475, rgb: "143 192 198", laser: true, g: 2, q: "h", s: 12 }, // t8 hero
+  hx4_winter_that_stays: { at: 570, rgb: "158 210 224", laser: true, g: 0, q: "h", s: 12 }, // t8 hero
+  hx4_watchmans_whistle: { at: 565, rgb: "162 207 224", laser: true, g: 1, q: "s" },
+  hx4_wheel_of_ice: { at: 615, rgb: "147 206 222", g: 1 },
+  hx4_glass_prison: { at: 780, rgb: "182 224 239", laser: true, g: 0, q: "h", s: 12 }, // t8 hero
+  hx4_spiders_parlor: { at: 450, rgb: "176 214 228", laser: true, g: 2, q: "h", s: 12 }, // t8 hero
+  hx4_poachers_snare: { at: 660, rgb: "147 194 206", laser: true, g: 2 },
+  hx4_kraken_arms: { at: 635, rgb: "127 195 201", g: 0, q: "s" },
+  hx4_lovestruck_majesty: { at: 825, rgb: "216 176 200", laser: true, g: 1, q: "s" },
+  hx4_tempest: { at: 520, rgb: "156 196 220", laser: true, g: 1, q: "h", s: 12 }, // t8 hero
+  hx4_lead_rain: { at: 495, rgb: "159 182 200", laser: true, g: 0, q: "s" },
+  hx4_frozen_harbor: { at: 500, rgb: "143 188 212", g: 2, q: "s" },
+  // t9 hero: the ice lance drops onto the glass on its flash beat and the
+  // frozen pane shears in half where the reflection stood
+  hx4_mirror_of_winter: { at: 480, rgb: "185 220 239", laser: true, g: 1, q: "h", s: 12 },
+};
+
+/** The impact composite: laser column, glyph split in half, ground ring. */
+function ImpactRig({ imp, delayMs }: { imp: G09Imp; delayMs: number }) {
+  const s = imp.s ?? 9;
+  return (
+    <BoardWideStage>
+      <span
+        className="g09-imprig absolute block"
+        style={{
+          left: `${(imp.x ?? 50) - s / 2}%`,
+          top: `${(imp.y ?? 50) - s / 2}%`,
+          width: `${s}%`,
+          height: `${s}%`,
+          ...impactVars(imp.rgb, (delayMs + imp.at) / 1000),
+        }}
+      >
+        {imp.laser ? <LaserStrike /> : null}
+        {imp.g != null ? <PieceShatter glyph={IMP_GLYPHS[imp.g]} /> : null}
+        {imp.shock ? <Shockwave /> : null}
+      </span>
+    </BoardWideStage>
+  );
+}
+
+/** Leads render inside a quake wrapper (the whole stage jolts on the impact
+ *  beat) with the rig mounted beside them; target/entrance cuts pass through
+ *  untouched. */
+function withImpact(Base: SigPlugin["Render"], imp: G09Imp): SigPlugin["Render"] {
+  function ImpactLead(props: { lead: boolean; role: SigRole; delayMs: number }) {
+    if (props.role !== "lead") return <Base {...props} />;
+    const scene = <Base {...props} />;
+    return (
+      <>
+        {imp.q ? (
+          <span
+            className={`g09-quake-${imp.q} pointer-events-none absolute inset-0 z-30 block`}
+            style={impactVars(imp.rgb, (props.delayMs + imp.at) / 1000)}
+          >
+            {scene}
+          </span>
+        ) : (
+          scene
+        )}
+        <ImpactRig imp={imp} delayMs={props.delayMs} />
+      </>
+    );
+  }
+  return ImpactLead;
 }
 
 export const PLAYS: Record<string, SigPlugin> = {
@@ -2629,4 +2907,17 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true,
     sound: "wall", source: "frozen", anchor: "board",
   }),
+
+  // --- sympathy: the whole regiment catches what one soldier caught ---
+  hx4_mirror_of_winter: S(MirrorOfWinterScene, {
+    ordering: "radial", staggerMs: 55, victims: "all", hasLead: true,
+    sound: "massfreeze", source: "slow", anchor: "board",
+  }),
 };
+
+// Graft the per-card impact beat onto every lead scene (additive: the base
+// scene renders unchanged inside the quake wrapper).
+for (const [id, imp] of Object.entries(IMPACT)) {
+  const play = PLAYS[id];
+  if (play) play.Render = withImpact(play.Render, imp);
+}

@@ -12,93 +12,99 @@ body {
 
 :root {
   /* =========================================================================
-     DESIGN TOKENS — the single base palette every theme derives from.
+     DESIGN TOKENS — the base palette, matched to Lichess.
      ------------------------------------------------------------------------
      These canonical tokens are the source of truth for the whole site. The
-     "Classic" (warm charcoal) values live here; each named theme overrides
-     only the background + border group below (and text where a tint needs it
-     for contrast). Accents and board colors stay identical across every dark
-     theme so the game always reads consistently. Every legacy token further
-     down (--paper, --surface-*, --edge, --gold, --oxblood, --sq-*, …) is now
-     just an ALIAS onto these, so thousands of existing consumers pick up the
-     palette with zero per-component work.
+     DARK values live here; the one other theme (light) overrides the same
+     names in its own block below. Every legacy token further down (--paper,
+     --surface-*, --edge, --gold, --oxblood, --sq-*, and the rest) is an ALIAS
+     onto these, so thousands of existing consumers pick up the palette with
+     zero per-component work.
      ========================================================================= */
 
-  /* Backgrounds — warm charcoal, brown undertone, never blue. */
-  --bg-base: #1a1512;
-  --bg-panel: #241d18;
-  --bg-raised: #2e2620;
-  --border-subtle: #3d332a;
+  /* Backgrounds. The Lichess dark ladder: page, box, raised/hover, border. */
+  --bg-base: #161512;
+  --bg-panel: #262421;
+  --bg-raised: #302e2c;
+  --border-subtle: #404040;
 
-  /* Board — parchment light, walnut dark, gold last-move/selection highlight
-     (stored as an rgb triple so it can be laid down at 40% opacity). */
-  --board-light: #ecd9ae;
-  --board-dark: #8a5a38;
-  --board-highlight: 201 162 39; /* #c9a227 — last move / selected square */
+  /* Board — Lichess brown, with a last-move/selection highlight stored as an
+     rgb triple so it can be laid down at 40% opacity. */
+  --board-light: #f0d9b5;
+  --board-dark: #b58863;
+  --board-highlight: 155 199 0; /* last move / selected square */
   --board-highlight-a: 0.4; /* highlight opacity (Light lifts this for contrast) */
 
-  /* Text. */
-  --text-primary: #f2e8dc;
-  --text-secondary: #a89684;
-  --text-muted: #6e5f52;
-  --text-primary-rgb: 242 232 220;
-  --text-secondary-rgb: 168 150 132;
+  /* Text: Lichess's ramp. #bababa body, #8c8c8c secondary, #707070 muted, and
+     #ccc for headings (--text-heading). */
+  --text-primary: #bababa;
+  --text-heading: #cccccc;
+  --text-secondary: #8c8c8c;
+  --text-muted: #707070;
+  --text-primary-rgb: 186 186 186;
+  --text-secondary-rgb: 140 140 140;
 
-  /* Accents — the four semantic colors. Fixed across all dark themes.
-     Gold = primary CTAs / selection / your own rating.
+  /* Accents — the four semantic colors.
+     Accent blue = links / primary buttons / focus / "act here".
      Nerf red = Nerf mode / curses / resign / danger.
      Buff blue = Buff mode / powers / boons.
-     Positive green = online dots / wins / positive rating change only. */
-  --accent-gold: #d4a017;
-  --accent-gold-hi: #e6b52e; /* lit gold (hover / leaf) */
-  --accent-gold-rgb: 212 160 23;
-  --accent-gold-hi-rgb: 230 181 46;
-  --accent-gold-dim-rgb: 168 126 18;
+     Positive green = online dots / wins / positive rating change only.
+
+     --accent-gold is the historical NAME of the primary accent, kept because
+     several hundred consumers spell it that way. Its value is Lichess blue. */
+  --accent-gold: #3692e7;
+  --accent-gold-hi: #4a9fee;
+  --accent-gold-rgb: 54 146 231;
+  --accent-gold-hi-rgb: 74 159 238;
+  --accent-gold-dim-rgb: 42 111 176;
   --accent-nerf: #e05252;
   --accent-nerf-hi: #ec6f6f;
   --accent-nerf-rgb: 224 82 82;
   --accent-nerf-hi-rgb: 236 111 111;
   --accent-nerf-deep-rgb: 138 46 44; /* scorched red for deep backings */
+  --accent-danger: #c0413b;
   --accent-buff: #5b9bd5;
   --accent-buff-hi: #84b7e2;
   --accent-buff-rgb: 91 155 213;
   --accent-buff-hi-rgb: 132 183 226;
-  --accent-positive: #6faa5e;
-  --accent-positive-hi: #86c074;
-  --accent-positive-rgb: 111 170 94;
-  --accent-positive-hi-rgb: 134 192 116;
-  /* Foreground for text/icons sitting ON a gold (or other accent) fill. Deep
-     warm ink — white on gold is only ~2.4:1, this is ~7.4:1 (WCAG AA). */
-  --text-on-accent: #241a05;
+  --accent-positive: #629924;
+  --accent-positive-hi: #7bb52f;
+  --accent-positive-rgb: 98 153 36;
+  --accent-positive-hi-rgb: 123 181 47;
+  /* Foreground for text/icons sitting ON an accent fill. White on Lichess
+     blue, which is what Lichess itself uses on a primary button. */
+  --text-on-accent: #ffffff;
 
   /* -------------------------------------------------------------------------
-     LEGACY ALIASES — every name below resolves to a token above. Themes and
-     components keep using these; the palette flows through automatically.
+     LEGACY ALIASES — every name below resolves to a token above. Components
+     keep using these; the palette flows through automatically.
      ------------------------------------------------------------------------- */
   --paper: var(--text-primary);
   --paper-dim: var(--text-secondary);
   /* The remaining surface/edge rungs are COMPUTED from the four background +
-     border tokens above, so a theme only has to override those four and the
-     whole ladder (plus the page wash) retints with it. */
+     border tokens above, so the light theme only has to override those four
+     and the whole ladder retints with it. */
   --ink-deep: color-mix(in srgb, var(--bg-base) 82%, #000); /* deepest backing */
-  --ink-warm: color-mix(in srgb, var(--bg-base) 55%, var(--bg-panel)); /* base→panel */
+  --ink-warm: color-mix(in srgb, var(--bg-base) 55%, var(--bg-panel)); /* base to panel */
   --surface-panel: var(--bg-panel);
   --surface-raise: var(--bg-raised);
-  --surface-hover: color-mix(in srgb, var(--bg-panel) 55%, var(--bg-raised)); /* panel→raised */
+  --surface-hover: var(--bg-raised);
   --edge: var(--border-subtle);
   --edge-strong: color-mix(in srgb, var(--border-subtle) 82%, #fff); /* firmer border */
-  /* accent = gold (primary CTAs / links / "act here"). */
+  /* accent = the primary blue (CTAs / links / "act here"). */
   --gold: var(--accent-gold);
   --gold-leaf: var(--accent-gold-hi);
   --oxblood: var(--accent-nerf);
   --verdigris: var(--accent-positive);
-  --bruise: #8a88a8;
-  --bruise-rgb: 138 136 168;
-  /* Two clean sans faces, weight (400/500/600) doing the hierarchy work.
-     Headings are Inter, body text Noto Sans (the UI font Lichess ships).
-     next/font in layout.tsx self-hosts BOTH and defines --font-display and
-     --font-body on <body>; only the mono stack lives here. No serifs. */
-  --font-mono: "Cascadia Mono", "JetBrains Mono", Consolas, monospace;
+  --bruise: #8c8c8c;
+  --bruise-rgb: 140 140 140;
+  /* The type roles. layout.tsx self-hosts the two faces under neutral --f-*
+     names on <html>; these three names are the ROLES. Lichess sets everything
+     in Noto Sans, so display and body are the same face and weight does the
+     hierarchy. */
+  --font-display: var(--f-noto);
+  --font-body: var(--f-noto);
+  --font-mono: var(--f-mono), "Cascadia Mono", Consolas, monospace;
   --accent: var(--accent-gold);
   --accent-hi: var(--accent-gold-hi);
   --accent-rgb: var(--accent-gold-rgb);
@@ -114,48 +120,47 @@ body {
   --seam-warm-rgb: var(--accent-nerf-rgb);   /* Nerf side of the seam (red) */
   --seam-cool-rgb: var(--accent-buff-rgb);   /* Buff side of the seam (blue) */
 
-  /* --- Fun kit: the playful accent trio ---------------------------------------
-     Three saturated, kid-friendly accents that live BESIDE the core blue:
-     coral for warmth/celebration, mint for success/growth, sun for shine and
-     achievement gold. Use them for chips, rings, icons, and gradients; the
-     blue accent still owns "act here". */
-  --coral: #ef8a5f;
-  --coral-glow: #ffab84;
-  --mint: #58c39a;
-  --mint-glow: #7ddcb7;
-  --sun: #eec25e;
-  --sun-glow: #ffd97e;
+  /* --- Three semantic chip colours -------------------------------------------
+     Still referenced across the codex, the dock and the leaderboard, so the
+     names stay; the saturated "fun kit" hues do not. Retoned onto the Lichess
+     palette: coral is the Nerf red, mint the Lichess green, sun a muted brass
+     for rank and achievement. The accent blue still owns "act here". */
+  --coral: #d85a48;
+  --coral-glow: #e5745f;
+  --mint: #629924;
+  --mint-glow: #7bb52f;
+  --sun: #c9a227;
+  --sun-glow: #dcb84a;
 
   /* --- Governed status + celebration colors ----------------------------------
      The semantic status pair, drawn straight from the accent tokens so no new
      colors enter the system: --pos (green) marks positive/good/wins, and
-     --warm (gold) marks celebration / your-turn / streak — attention that is
-     the player's own, which is exactly what gold owns. Danger stays red
-     (--accent-nerf) and never leaks in here. */
+     --warm marks celebration / your-turn / streak, attention that is the
+     player's own. Danger stays red (--accent-nerf) and never leaks in here. */
   --pos-rgb: var(--accent-positive-rgb);
   --warm-rgb: var(--accent-gold-rgb);
   --pos: rgb(var(--pos-rgb));
   --warm: rgb(var(--warm-rgb));
 
-  /* --- Cosmic dungeon energy palette ------------------------------------------
-     The overhaul's shared power colors: one set of rgb triples every energized
-     surface draws from (button cores, rims, loaders, badges, draft chamber),
-     so the whole site pulls current from the same reactor instead of ad-hoc
-     hues. Ember and blood come from the dungeon; void, astral, and teal from
-     the space layer; gold is the shared treasure hue. */
-  --energy-ember-rgb: 255 138 52;
+  /* --- Energy palette ---------------------------------------------------------
+     One set of rgb triples every energized surface draws from (button cores,
+     rims, loaders, badges, draft chamber). Still referenced by several
+     component stylesheets, so the names stay; the values are pulled back onto
+     the semantic accents and a muted brass. */
+  --energy-ember-rgb: var(--accent-nerf-rgb);
   --energy-blood-rgb: var(--accent-nerf-rgb); /* danger energy = Nerf red */
-  --energy-void-rgb: 168 119 216;
+  --energy-void-rgb: 140 140 140;
   --energy-astral-rgb: var(--accent-buff-rgb); /* astral energy = Buff blue */
-  --energy-teal-rgb: 34 211 238;
-  --energy-gold-rgb: 244 196 48;
-  /* Dungeon materials: the three stone values every carved surface layers
-     from, plus the iron the frames are forged in. */
-  --stone-hi: #2a2116;
-  --stone: #1e1810;
-  --stone-deep: #16110a;
-  --iron: #574b3d;
-  --iron-deep: #3a332a;
+  --energy-teal-rgb: var(--accent-buff-rgb);
+  --energy-gold-rgb: 201 162 39;
+  /* Carved-surface materials: the three greys every stone surface layers from,
+     plus the metal the frames are forged in. Retoned onto the neutral dark
+     ladder; several component stylesheets still name them. */
+  --stone-hi: #302e2c;
+  --stone: #262421;
+  --stone-deep: #1c1a18;
+  --iron: #404040;
+  --iron-deep: #2e2c2a;
 
   /* --- Motion vocabulary -----------------------------------------------------
      One named set of curves and durations so every interaction feels
@@ -169,16 +174,25 @@ body {
   --dur-2: 200ms;
   --dur-3: 320ms;
 
+  /* --- Interaction feel ------------------------------------------------------
+     Four tokens dozens of rules read: how far a control gives under a press,
+     how hard the light sits on a panel, how much bloom an accent is allowed,
+     and the reveal curve. One value each now that themes no longer differ. */
+  --feel-press: 0.98; /* .press:active scale */
+  --feel-sheen: 0.028; /* top-light alpha on .plate */
+  --feel-glow: 1; /* multiplier on accent bloom */
+  --ease-signature: var(--ease-out); /* the reveal curve */
+
   /* --- Fluid type scale ------------------------------------------------------
      One ratio, computed once, so every surface pulls headings from the same
-     ramp instead of ad-hoc text-2xl/4xl guesses. Display sizes tighten their
-     tracking as they grow (editorial, not default-Inter). */
-  --step-0:  clamp(0.95rem, 0.92rem + 0.16vw, 1.05rem);   /* body lead */
-  --step-1:  clamp(1.1rem,  1.04rem + 0.34vw, 1.3rem);
-  --step-2:  clamp(1.3rem,  1.18rem + 0.66vw, 1.75rem);
-  --step-3:  clamp(1.6rem,  1.36rem + 1.2vw,  2.35rem);
-  --step-4:  clamp(2rem,    1.58rem + 2.1vw,  3.25rem);
-  --step-5:  clamp(2.5rem,  1.85rem + 3.2vw,  4.4rem);
+     ramp instead of ad-hoc text-2xl/4xl guesses. Tight, the way Lichess sets
+     type: its biggest heading is about 1.6rem, not a display slam. */
+  --step-0:  clamp(0.9rem,  0.88rem + 0.1vw,  0.95rem);   /* body lead */
+  --step-1:  clamp(1rem,    0.97rem + 0.14vw, 1.1rem);
+  --step-2:  clamp(1.1rem,  1.05rem + 0.24vw, 1.25rem);
+  --step-3:  clamp(1.25rem, 1.17rem + 0.36vw, 1.5rem);
+  --step-4:  clamp(1.4rem,  1.28rem + 0.5vw,  1.75rem);
+  --step-5:  clamp(1.6rem,  1.42rem + 0.75vw, 2.1rem);
 
   /* --- Spacing rhythm --------------------------------------------------------
      Landing sections share one vertical cadence so the page breathes evenly
@@ -200,148 +214,89 @@ html[data-anim="fast"] *::after {
   transition-duration: 80ms !important;
 }
 
-/* Site theme (Settings > Appearance): the site is dark-first. Every named dark
-   theme is now a TINT of the one base palette — each overrides ONLY the four
-   background + border tokens below. Text stays the shared warm cream, and the
-   accents + board colors are never touched here, so the game reads identically
-   in every theme (Step 4). The surface/edge ladder and the page wash are
-   computed from these four tokens (see :root), so nothing else is needed. */
-html[data-theme="midnight"] { /* blue-grey steel */
-  --bg-base: #101318;
-  --bg-panel: #1a1f27;
-  --bg-raised: #242b36;
-  --border-subtle: #2d3542;
-}
-html[data-theme="void"] { /* crushed near-black, OLED-friendly */
-  --bg-base: #0d0b0a;
-  --bg-panel: #141210;
-  --bg-raised: #1d1a16;
-  --border-subtle: #2a251f;
-}
-html[data-theme="abyss"] { /* deep-sea teal */
-  --bg-base: #0c1517;
-  --bg-panel: #152327;
-  --bg-raised: #1e3036;
-  --border-subtle: #24383d;
-}
-html[data-theme="ember"] { /* smoldering red-brown */
-  --bg-base: #170f0e;
-  --bg-panel: #261815;
-  --bg-raised: #33211c;
-  --border-subtle: #432c25;
-}
-html[data-theme="crimson"] { /* deep blood red */
-  --bg-base: #150a0c;
-  --bg-panel: #291015;
-  --bg-raised: #38181f;
-  --border-subtle: #48222b;
-}
-html[data-theme="moss"] { /* deep forest green */
-  --bg-base: #0f140e;
-  --bg-panel: #1a2318;
-  --bg-raised: #253021;
-  --border-subtle: #2d3c27;
-}
-html[data-theme="nebula"] { /* violet dusk */
-  --bg-base: #131019;
-  --bg-panel: #1f1929;
-  --bg-raised: #2b2238;
-  --border-subtle: #362c48;
-}
-/* Light: the one non-dark theme. It overrides the bg + border tokens (paper
-   and ink) and the text tokens (dark ink on paper for contrast), and lifts the
-   board-highlight opacity so the gold read stays visible on the light board.
-   Accents and board colors are otherwise the shared set. */
+/* Site theme (Settings > Appearance): two palettes, dark and light, plus
+   "system" which resolves to one of them before it reaches the DOM. Each one
+   owns the four background + border tokens, the text ramp and the accent; the
+   whole surface/edge ladder in :root is computed from those, so nothing else
+   needs a per-theme rule.
+
+   The dark palette IS the :root block above. Only light overrides. */
 html[data-theme="light"] {
-  --bg-base: #e9e6de;
-  --bg-panel: #f4f1ea;
-  --bg-raised: #fbf9f4;
-  --border-subtle: #d8d2c6;
-  --text-primary: #2b2822;
-  --text-secondary: #5c584f;
-  --text-muted: #86816f;
+  --bg-base: #edebe9;
+  --bg-panel: #ffffff;
+  --bg-raised: #f7f6f5;
+  --border-subtle: #d9d9d9;
+  --text-primary: #4d4d4d;
+  --text-heading: #333333;
+  --text-secondary: #787878;
+  --text-muted: #999999;
+  --text-primary-rgb: 77 77 77;
+  --text-secondary-rgb: 120 120 120;
   --board-highlight-a: 0.5;
-  /* Darker accents for the light background: the bright dark-theme accents are
-     too light to pass AA as text on paper (gold was ~1.9:1). These clear AA as
-     text AND, paired with --text-on-accent:#fff below, keep accent-filled
-     buttons legible with white type. (applyUiPrefs sets --accent/--gold from
-     SITE_THEMES.light.accent = LIGHT_GOLD_ACCENT, matching --accent-gold here.) */
-  --accent-gold: #806310;
-  --accent-gold-hi: #96751a;
-  --accent-gold-rgb: 128 99 16;
-  --accent-gold-hi-rgb: 150 117 26;
-  --accent-gold-dim-rgb: 96 74 12;
-  --accent-nerf: #c0322f;
-  --accent-nerf-rgb: 192 50 47;
-  --accent-nerf-hi-rgb: 209 74 69;
+  /* A step deeper than the dark accent so links clear WCAG AA on white. */
+  --accent-gold: #1b78d0;
+  --accent-gold-hi: #3692e7;
+  --accent-gold-rgb: 27 120 208;
+  --accent-gold-hi-rgb: 54 146 231;
+  --accent-gold-dim-rgb: 20 92 160;
+  /* The semantic three, darkened so they still clear AA as text on paper.
+     Same meanings, same hues. */
+  --accent-nerf: #c0413b;
+  --accent-nerf-rgb: 192 65 59;
+  --accent-nerf-hi-rgb: 209 88 82;
   --accent-buff: #2b6aa0;
   --accent-buff-rgb: 43 106 160;
   --accent-buff-hi-rgb: 58 127 187;
-  --accent-positive: #457539;
-  --accent-positive-rgb: 69 117 57;
-  --accent-positive-hi-rgb: 85 136 74;
+  --accent-positive: #4c7a1c;
+  --accent-positive-rgb: 76 122 28;
+  --accent-positive-hi-rgb: 98 153 36;
   --text-on-accent: #ffffff;
 }
-html[data-theme="light"] .plate {
-  background: rgba(255, 255, 255, 0.55);
-  border-color: rgba(0, 0, 0, 0.14);
+
+/* Paper-scheme treatments (plate fills, the ink text ramp, border alphas) hang
+   off html[data-light], which applyUiPrefs sets whenever the active theme's
+   scheme is light. Keyed to the flag rather than to the theme id, so the rules
+   below never have to name a theme. */
+
+html[data-light] .plate {
+  background: var(--bg-panel);
+  border-color: var(--border-subtle);
 }
-html[data-theme="light"] .text-parchment,
-html[data-theme="light"] .text-parchment-50,
-html[data-theme="light"] .text-parchment-100,
-html[data-theme="light"] .text-parchment-200 { color: #2b2822; }
-html[data-theme="light"] .text-parchment-300 { color: #4a463e; }
-html[data-theme="light"] .text-parchment-400 { color: #6b665c; }
-html[data-theme="light"] .text-parchment-500 { color: #86816f; }
+html[data-light] .text-parchment,
+html[data-light] .text-parchment-50,
+html[data-light] .text-parchment-100,
+html[data-light] .text-parchment-200 { color: var(--text-primary); }
+html[data-light] .text-parchment-300 { color: color-mix(in srgb, var(--text-primary) 55%, var(--text-secondary)); }
+html[data-light] .text-parchment-400 { color: color-mix(in srgb, var(--text-secondary) 55%, var(--text-muted)); }
+html[data-light] .text-parchment-500 { color: var(--text-muted); }
 
-/* High contrast preference (Settings): brighter foregrounds, firmer borders. */
-html[data-contrast="high"] { --paper: #efece4; --paper-dim: #bab5aa; }
-html[data-contrast="high"] .plate { border-color: #574e42; }
-html[data-contrast="high"] .text-parchment-300 { color: #c9c7c2; }
-html[data-contrast="high"] .text-parchment-400 { color: #b0ada7; }
-html[data-contrast="high"] .text-parchment-500 { color: #97948e; }
-
-/* A solid dark background-color must sit behind the gradient: during fast
-   scrolls (and rubber-band overscroll) mobile browsers reveal areas the
-   gradient hasn't painted yet, which otherwise flash the default white. Lifted
-   and warmed a step: dark, but never dim, with a faint color wash (warm
-   top-left, cool bottom-right) so the page has weather. */
-html, body {
+/* The canvas fill, flat like Lichess: no gradient wash, no atmosphere layer.
+   Propagated to the viewport, so the page is never white before paint. */
+html {
   background-color: var(--bg-base);
-  /* The page gradient lives on the html::before fixed pseudo-element below
-     (painted once, only translated on scroll) instead of a body
-     background-image. This supersedes the earlier `background-attachment:
-     scroll` fix on master — both target the same scroll-jank, and keeping the
-     body gradient too would double-paint over the pseudo-element. */
+  /* Lichess sets the interface at 14px and lets weight do the hierarchy. */
+  font-size: 14px;
+}
+body {
+  /* Transparent on purpose: html carries the colour, and a custom background
+     image sets background-IMAGE on body so it layers over the same canvas. */
+  background-color: transparent;
   color: var(--paper);
   /* dvh, not vh: on iOS Safari `100vh` is the LARGE viewport, so with the URL
      bar showing every short page was ~90-115px taller than the screen and
-     rubber-banded with no content to scroll to. The game surfaces already use
-     dvh throughout; this was the odd one out. */
+     rubber-banded with no content to scroll to. */
   min-height: 100dvh;
 }
-/* The page gradient rides a fixed pseudo-element instead of
-   `background-attachment: fixed` on the body. Both pin the gradient to the
-   viewport, but a fixed element is painted once and only translated on scroll,
-   whereas a fixed-attachment background forces a full repaint of the gradient
-   every scroll frame — the homepage's biggest scroll-jank source. `body::before`
-   is already the paper grain, so this lives on `html::before`. */
-html::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  /* Token-derived page wash: lifts from the raised surface at the top down to
-     the base. Because it reads the bg ladder, every theme retints it for free
-     just by overriding the background tokens — no per-theme gradient needed. */
-  background: linear-gradient(180deg, var(--bg-raised) 0%, var(--bg-panel) 46%, var(--bg-base) 100%);
-}
 
-/* Geometry: crisp 1px corners everywhere. Owner verdict: soft rounding read
-   as generic; boxes should stand out through edges and structure instead.
-   True circles (rounded-full: status dots, avatars) are the one exception. */
-[class*="rounded"]:not([class*="rounded-full"]) { border-radius: 1px !important; }
+/* Geometry, Lichess's: 7px on a box, 3px on a button. The global override
+   reaches every `rounded-*` utility in the codebase at once; true circles
+   (rounded-full: status dots, avatars) stay exempt. */
+[class*="rounded"]:not([class*="rounded-full"]) { border-radius: 7px !important; }
+button,
+.btn,
+[role="button"],
+button[class*="rounded"]:not([class*="rounded-full"]),
+[role="button"][class*="rounded"]:not([class*="rounded-full"]) { border-radius: 3px !important; }
 
 body {
   font-family: var(--font-body), system-ui, sans-serif;
@@ -360,12 +315,6 @@ body {
 .font-body    { font-family: var(--font-body), system-ui, sans-serif; }
 .font-mono    { font-family: var(--font-mono), ui-monospace, monospace; }
 
-.smallcaps {
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  font-weight: 500;
-  font-family: var(--font-body), system-ui, sans-serif;
-}
 .allcaps {
   letter-spacing: 0.22em;
   text-transform: uppercase;
@@ -409,93 +358,12 @@ body {
   line-height: 1.5;
 }
 
-/* --- Eyebrow + chess-coordinate index --------------------------------------
-   Sections are labelled by squares on the board's long diagonal (a1, c3, e5,
-   g7): a numbering device that is genuinely from chess and encodes real order,
-   in place of the generic 01 / 02 / 03 marker. Set in the mono/data face. */
-.eyebrow {
-  font-family: var(--font-mono), ui-monospace, monospace;
-  text-transform: uppercase;
-  letter-spacing: 0.26em;
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--paper-dim);
-}
 .coord-index {
   font-family: var(--font-mono), ui-monospace, monospace;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.05em;
   color: var(--accent-hi);
-}
-
-/* --- SIGNATURE: the mode seam ----------------------------------------------
-   A hairline where the warm Nerf half meets the cool Buff half, with a small
-   flat diamond bead sitting on the join. Used as a section divider so the two
-   modes are felt structurally down the whole page, not just named in copy. */
-.mode-seam {
-  position: relative;
-  height: 1px;
-  border: 0;
-  margin: 0;
-  background: linear-gradient(
-    90deg,
-    rgb(var(--seam-warm-rgb) / 0) 0%,
-    rgb(var(--seam-warm-rgb) / 0.5) 24%,
-    rgb(255 255 255 / 0.13) 50%,
-    rgb(var(--seam-cool-rgb) / 0.5) 76%,
-    rgb(var(--seam-cool-rgb) / 0) 100%
-  );
-}
-.mode-seam::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 7px;
-  height: 7px;
-  transform: translate(-50%, -50%) rotate(45deg);
-  background: #1c1a17;
-  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.28);
-}
-html[data-theme="light"] .mode-seam::after { background: #e4e0d6; }
-
-/* Header / edge variant: the seam as a bottom border, warm on the left, cool on
-   the right, anchoring the whole site under the nav. */
-.seam-edge-b {
-  position: relative;
-}
-.seam-edge-b::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 1px;
-  pointer-events: none;
-  background: linear-gradient(
-    90deg,
-    rgb(var(--seam-warm-rgb) / 0.5) 0%,
-    rgb(255 255 255 / 0.07) 50%,
-    rgb(var(--seam-cool-rgb) / 0.5) 100%
-  );
-}
-
-/* Hero field: the two territories bleeding faintly in from opposite corners,
-   so the split reads behind the board and action column without shouting. */
-.mode-field {
-  position: relative;
-  isolation: isolate;
-}
-.mode-field::before {
-  content: "";
-  position: absolute;
-  inset: -8% -4% -4%;
-  z-index: -1;
-  pointer-events: none;
-  background:
-    radial-gradient(58% 78% at 6% 4%, rgb(var(--seam-warm-rgb) / 0.11), transparent 62%),
-    radial-gradient(58% 78% at 98% 100%, rgb(var(--seam-cool-rgb) / 0.11), transparent 62%);
 }
 
 /* Shared landing rhythm: one cadence for every marketing band. */
@@ -516,7 +384,7 @@ html[data-theme="light"] .mode-seam::after { background: #e4e0d6; }
 /* Press physics: an instant scale-down on activation, easing back on release.
    Complements the existing translateY presses on the metal buttons. */
 .press { transition: transform var(--dur-1) var(--ease-out); }
-.press:active { transform: scale(0.98); }
+.press:active { transform: scale(var(--feel-press)); }
 
 /* Hover lift: a 1px rise with a WARM near-black shadow (never a colored glow),
    only where a true pointer exists so touch devices get no sticky hover. */
@@ -538,15 +406,6 @@ html[data-theme="light"] .mode-seam::after { background: #e4e0d6; }
   from { opacity: 0; }
   to { opacity: 1; }
 }
-.stagger-in > * { animation: row-in var(--dur-3) var(--ease-out) both; }
-.stagger-in > *:nth-child(1) { animation-delay: 0ms; }
-.stagger-in > *:nth-child(2) { animation-delay: 24ms; }
-.stagger-in > *:nth-child(3) { animation-delay: 48ms; }
-.stagger-in > *:nth-child(4) { animation-delay: 72ms; }
-.stagger-in > *:nth-child(5) { animation-delay: 96ms; }
-.stagger-in > *:nth-child(6) { animation-delay: 120ms; }
-.stagger-in > *:nth-child(7) { animation-delay: 144ms; }
-.stagger-in > *:nth-child(8) { animation-delay: 168ms; }
 
 /* --- Ornament rules → hairline dividers --- */
 .rule-ornament {
@@ -574,22 +433,13 @@ html[data-theme="light"] .mode-seam::after { background: #e4e0d6; }
   font-weight: 500;
 }
 
-/* --- Card / plate --- The base surface of the cosmic dungeon: carved stone
-   with a faint top-light and a shaded foot, so every panel has visible
-   structure and depth instead of a flat fill. Kept SUBTLE on purpose: dozens
-   of plates can share a page, so the material must whisper. */
+/* --- Card / plate --- The ONE box style: a flat panel fill, a 1px hairline
+   border, a 7px radius, and no shadow. Every box on the site is this. There is
+   no second material and no raised/inset variant that paints differently. */
 .plate {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.028), transparent 26%, rgba(0, 0, 0, 0.1) 100%),
-    var(--surface-panel);
-  border: 1px solid var(--edge);
-  /* Structure over glow: a dark drop for lift plus an inner hairline so the
-     edge reads as a machined double line, not a soft blur. */
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.025),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.25),
-    0 12px 40px -24px rgba(0, 0, 0, 0.7);
-  border-radius: 1px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: 7px;
 }
 /* Positioning defaults live in a zero-specificity :where() so any positioning
    utility on the same element (fixed, absolute, sticky, z-30...) wins. This
@@ -621,34 +471,13 @@ html[data-theme="light"] .mode-seam::after { background: #e4e0d6; }
 }
 html[data-anim="off"] .tv-tuning-ring { animation: none; }
 
-/* The in-game command rail: one machined control surface for the left column.
-   A themed panel (follows every site theme via the surface vars) with a faint
-   top-light gradient and a crisp double edge — sharp and minimal, no glow. */
+/* The in-game command rail: the same box as everything else. */
 .rail-panel {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0) 120px),
-    var(--surface-panel);
-  border: 1px solid var(--edge);
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.02),
-    0 10px 34px -26px rgba(0, 0, 0, 0.65);
-  border-radius: 1px;
-}
-html[data-theme="light"] .rail-panel {
-  background: rgba(255, 255, 255, 0.5);
-  border-color: rgba(0, 0, 0, 0.14);
+  background: var(--bg-panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: 7px;
 }
 
-/* Chamfered corners: the signature box device. Two opposite corners cut at
-   45 degrees, like a physical game card sleeve. Apply next to .plate on boxes
-   that should stand out (mode cards, draft panel, hub cards). The cut kills
-   the border on those corners, so a faint inset hairline carries the edge. */
-.corner-cut {
-  clip-path: polygon(
-    10px 0, 100% 0, 100% calc(100% - 10px),
-    calc(100% - 10px) 100%, 0 100%, 0 10px
-  );
-}
 /* A plate used as a floating menu is absolutely positioned (many dropdowns
    carry no `absolute` utility of their own and rely on this). Floating surfaces
    also step ONE rung up the ink ladder (ink-600) so menus and modals read as
@@ -657,34 +486,34 @@ html[data-theme="light"] .rail-panel {
   position: absolute;
   background: var(--surface-raise);
 }
-/* Explicit "one rung up" surface for modals/dialogs (GameOver, settings) so the
-   emotional-peak surfaces sit above the page rather than on the same plane. */
-.plate-raised {
-  background: var(--surface-raise);
+/* Native <select> popup lists: several engines paint the option menu with the
+   control's own background, so a translucent control (bg-ink-900/60 and kin)
+   makes an unreadable floating menu. Every option gets solid ink regardless of
+   the control's fill; the light theme restates it as ink-on-paper. */
+select option {
+  background-color: #221f1a;
+  color: #c2bcaf;
 }
-/* Opt-in warm hover for interactive cards that do NOT set their own border
-   color. Kept opt-in so per-card mode/tier borders are never clobbered, and
-   gated behind hover:hover so touch devices get no sticky hover. */
+html[data-light] select option {
+  background-color: #ffffff;
+  color: #2b2822;
+}
+/* Modals and dialogs sit one rung lighter so they read as closer to the
+   viewer. Lightness, not a shadow. */
+.plate-raised {
+  background: var(--bg-raised);
+}
+/* Opt-in hover for interactive boxes that do NOT set their own border colour.
+   Gated behind hover:hover so touch devices get no sticky hover. */
 .plate-hover {
   transition: border-color var(--dur-2) var(--ease-out),
-    background-color var(--dur-2) var(--ease-out),
-    transform var(--dur-1) var(--ease-out);
+    background-color var(--dur-2) var(--ease-out);
 }
 @media (hover: hover) {
   .plate-hover:hover {
     border-color: var(--edge-strong);
-    background: var(--surface-hover);
+    background: var(--bg-raised);
   }
-}
-.plate-warm {
-  background: #2b2824;
-}
-
-/* Hairline accent edge */
-.gilt {
-  box-shadow:
-    0 0 0 1px rgb(var(--accent-rgb) / 0.45),
-    0 14px 50px -22px rgba(0,0,0,0.6);
 }
 
 /* --- Tier palette: muted editorial, brass→brick gradient by severity --- */
@@ -748,193 +577,80 @@ html[data-theme="light"] .rail-panel {
   0% { opacity: 0; transform: translateY(18px) scale(0.965); }
   100% { opacity: 1; transform: translateY(0) scale(1); }
 }
-.draft-in { animation: draft-in 0.44s var(--ease-out) both; }
+.draft-in { animation: draft-in 0.44s var(--ease-signature) both; }
 
-/* --- Buttons: the cosmic dungeon control set -------------------------------
-   Level-2 primary controls read as ANCIENT SLABS WITH A COSMIC CORE: a dark
-   iron rim, an accent-energy body whose light pools up from the base (the
-   reactor under the stone), corner glints where the energy leaks at the
-   rivets, and a firm inset foot so the slab has physical weight. Hover feeds
-   the core; active presses the slab into its housing. The body is now GOLD, so
-   text is a deep ink (--text-on-accent): white on gold is only ~2.4:1, dark ink
-   is ~7.4:1 — well past AA. The whole treatment is background/box-shadow
-   layers, never extra DOM. */
-.btn-leaf {
-  background:
-    /* Corner glints: energy leaking at two rivet points. */
-    radial-gradient(3px 3px at 7px 7px, rgba(255, 255, 255, 0.55), transparent 70%),
-    radial-gradient(3px 3px at calc(100% - 7px) calc(100% - 7px), rgba(255, 255, 255, 0.4), transparent 70%),
-    /* The cosmic core: light pooling up from beneath the slab. */
-    radial-gradient(120% 95% at 50% 118%, rgb(var(--accent-hi-rgb) / 0.55), transparent 58%),
-    linear-gradient(to bottom, var(--accent-hi), var(--accent) 55%, color-mix(in srgb, var(--accent) 70%, #0a1017));
+/* --- Buttons ---------------------------------------------------------------
+   Flat controls, no material. Three looks and nothing else:
+
+     .btn-leaf    PRIMARY  solid accent fill, white label
+     .btn-ghost   DEFAULT  raised surface, hairline border, lighter on hover
+     .btn-cursed  DANGER   the same shape carrying the red accent
+
+   Geometry (3px radius) comes from the global button rule near the top of this
+   file, so these rules only carry colour. The older material names are kept as
+   aliases so no call-site has to change; they no longer mean anything
+   different. */
+.btn-leaf,
+.btn-cta,
+.btn-gold,
+.btn-slab,
+.btn-glass--primary {
+  background: var(--accent);
   color: var(--text-on-accent);
-  border: 1px solid rgba(0, 0, 0, 0.5);
-  border-radius: 1px;
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.22) inset,
-    0 0 0 1px rgb(var(--accent-hi-rgb) / 0.22) inset,
-    0 -9px 16px -10px rgba(0, 0, 0, 0.55) inset,
-    0 2px 6px -2px rgba(0, 0, 0, 0.55);
-  transition: background 160ms ease, filter 160ms ease, box-shadow 180ms ease, transform 120ms ease;
+  border: 1px solid var(--accent);
   font-weight: 600;
-  letter-spacing: 0.005em;
+  transition: background-color 120ms ease, border-color 120ms ease;
 }
-.btn-leaf:hover:not(:disabled) {
-  filter: brightness(1.07);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.25) inset,
-    0 0 0 1px rgb(var(--accent-hi-rgb) / 0.35) inset,
-    0 -9px 16px -10px rgba(0, 0, 0, 0.5) inset,
-    0 0 22px -8px rgb(var(--accent-hi-rgb) / 0.55),
-    0 2px 6px -2px rgba(0, 0, 0, 0.55);
+.btn-leaf:hover:not(:disabled),
+.btn-cta:hover:not(:disabled),
+.btn-gold:hover:not(:disabled),
+.btn-slab:hover:not(:disabled),
+.btn-glass--primary:hover:not(:disabled) {
+  background: var(--accent-hi);
+  border-color: var(--accent-hi);
 }
-.btn-leaf:active:not(:disabled) {
-  filter: brightness(0.94);
-  transform: translateY(0.5px);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.1) inset,
-    0 1px 2px -1px rgba(0, 0, 0, 0.5);
-}
-/* Extinguished slab: a disabled primary loses its core entirely (gray stone,
-   dim carving), never just fades. */
-.btn-leaf:disabled {
-  background: linear-gradient(to bottom, #34302a, #262320);
-  color: #8f887a;
-  border-color: rgba(0, 0, 0, 0.4);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05) inset;
-  filter: none;
+.btn-leaf:disabled,
+.btn-cta:disabled,
+.btn-gold:disabled,
+.btn-slab:disabled,
+.btn-glass--primary:disabled {
+  background: var(--surface-raise);
+  border-color: var(--edge);
+  color: var(--text-muted);
   cursor: not-allowed;
 }
 
-/* Hero CTA: the most important slab reads clickable through DEPTH: a firm
-   dark base edge below (like a physical key), a crisp outline, a quiet
-   energy halo, and a hover that lifts it 1px off that base. */
-.btn-cta {
-  border: 1px solid rgba(0, 0, 0, 0.45);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.16) inset,
-    0 3px 0 rgba(0, 0, 0, 0.42),
-    0 0 30px -10px rgb(var(--accent-hi-rgb) / 0.45),
-    0 6px 14px -6px rgba(0, 0, 0, 0.6);
-}
-.btn-cta:hover {
-  transform: translateY(-1px);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.18) inset,
-    0 4px 0 rgba(0, 0, 0, 0.42),
-    0 0 36px -8px rgb(var(--accent-hi-rgb) / 0.6),
-    0 8px 16px -6px rgba(0, 0, 0, 0.6);
-}
-.btn-cta:active {
-  transform: translateY(2px);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.1) inset,
-    0 1px 0 rgba(0, 0, 0, 0.42);
-}
-
-/* Glass buttons, reforged as COSMIC GLASS OVER IRON: a translucent pane set
-   in a warm iron sill (dungeon frame) with a faint energy breath at the foot,
-   for emotional-peak commits (draft confirm, lock-in). The primary variant
-   carries the accent core inside the glass. */
+.btn-ghost,
 .btn-glass {
-  background:
-    radial-gradient(110% 70% at 50% 115%, rgb(var(--accent-hi-rgb) / 0.08), transparent 60%),
-    rgba(255, 255, 255, 0.06);
-  color: var(--paper);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 1px;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.16),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.45),
-    0 10px 30px -16px rgba(0, 0, 0, 0.8);
-  transition: border-color 160ms ease, box-shadow 180ms ease, transform 120ms ease, background 160ms ease;
-}
-/* The frosted blur is a desktop nicety: live backdrop-filters are expensive on
-   mobile/low-end GPUs and several glass buttons can be on screen at draft/
-   lock-in moments. Restrict it to fine-pointer devices and drop it in
-   performance mode. */
-@media (hover: hover) and (pointer: fine) {
-  html:not([data-perf="low"]) .btn-glass {
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-  }
-}
-.btn-glass:hover:not(:disabled) {
-  border-color: rgba(255, 255, 255, 0.32);
-  background: rgba(255, 255, 255, 0.09);
-}
-.btn-glass:active:not(:disabled) { transform: translateY(1px); }
-.btn-glass:disabled { opacity: 0.45; cursor: not-allowed; }
-.btn-glass--primary {
-  /* Primary commit (draft confirm / lock-in): gold accent, not blue — blue is
-     reserved for Buff. Deep-ink text keeps AA over the lit gold pane. */
-  color: var(--text-on-accent);
-  border-color: rgb(var(--accent-hi-rgb) / 0.6);
-  background: rgb(var(--accent-rgb) / 0.85);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.22),
-    0 0 30px -10px rgb(var(--accent-rgb) / 0.6),
-    0 10px 30px -16px rgba(0, 0, 0, 0.8);
-}
-.btn-glass--primary:hover:not(:disabled) {
-  border-color: rgb(var(--accent-hi-rgb) / 0.9);
-  background: rgb(var(--accent-rgb) / 0.95);
-}
-
-/* Secondary controls: DARK IRON. A quiet forged plate with a warm hairline
-   sill, no energy of its own until hovered. */
-.btn-ghost {
-  background:
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)),
-    rgba(0, 0, 0, 0.12);
-  color: var(--paper);
-  border: 1px solid var(--edge);
-  border-radius: 1px;
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.07) inset,
-    0 -1px 0 rgba(0, 0, 0, 0.35) inset;
-  transition: background 160ms ease, border-color 160ms ease, transform 120ms ease;
+  background: var(--bg-raised);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
   font-weight: 500;
-  letter-spacing: 0.005em;
+  transition: background-color 120ms ease, border-color 120ms ease;
 }
-.btn-ghost:hover { background: rgba(255,255,255,0.08); border-color: var(--edge-strong); }
-.btn-ghost:active { background: rgba(255,255,255,0.12); transform: translateY(0.5px); }
+.btn-ghost:hover:not(:disabled),
+.btn-glass:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--bg-raised) 88%, #fff);
+  border-color: var(--edge-strong);
+}
+.btn-ghost:disabled,
+.btn-glass:disabled { color: var(--text-muted); cursor: not-allowed; }
 
-/* Destructive controls: THE CURSED SLAB. Dark scorched stone with blood
-   energy seeping up from a crack, a broken-frame diagonal hairline, and a
-   warning glow that never reads as attractive. Use for Resign, Delete,
-   Leave, Decline, Remove. */
 .btn-cursed {
-  position: relative;
-  background:
-    /* The crack: a thin diagonal fissure of dim blood light. */
-    linear-gradient(115deg, transparent 46%, rgb(var(--energy-blood-rgb) / 0.35) 49%, rgb(var(--energy-blood-rgb) / 0.12) 50%, transparent 54%),
-    radial-gradient(110% 85% at 50% 118%, rgb(var(--energy-blood-rgb) / 0.3), transparent 60%),
-    linear-gradient(165deg, #2a1613, #1b0f0c);
-  color: #ffb4ad;
-  border: 1px solid rgb(var(--energy-blood-rgb) / 0.55);
-  border-radius: 1px;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    inset 0 0 0 1px rgba(0, 0, 0, 0.5),
-    0 0 18px -10px rgb(var(--energy-blood-rgb) / 0.5);
-  transition: border-color 160ms ease, box-shadow 180ms ease, transform 120ms ease, background 160ms ease;
+  background: var(--accent-danger);
+  color: #ffffff;
+  border: 1px solid var(--accent-danger);
   font-weight: 600;
-  letter-spacing: 0.005em;
+  transition: background-color 120ms ease, border-color 120ms ease;
 }
 .btn-cursed:hover:not(:disabled) {
-  border-color: rgb(var(--energy-blood-rgb) / 0.85);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    inset 0 0 0 1px rgba(0, 0, 0, 0.5),
-    0 0 22px -8px rgb(var(--energy-blood-rgb) / 0.7);
+  background: var(--accent-nerf);
+  border-color: var(--accent-nerf);
 }
-.btn-cursed:active:not(:disabled) { transform: translateY(0.5px); }
 .btn-cursed:disabled {
-  background: linear-gradient(165deg, #262320, #1d1b18);
-  color: #8f887a;
+  background: var(--surface-raise);
   border-color: var(--edge);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  color: var(--text-muted);
   cursor: not-allowed;
 }
 
@@ -953,9 +669,6 @@ select:focus-visible {
   outline-offset: 2px;
 }
 html[data-anim="off"] .btn-leaf, html[data-anim="off"] .btn-ghost { transition: none; }
-
-/* Kept as an alias so any stale references stay on-brand (blue, not green). */
-.btn-lichess { }
 
 /* --- Cosmic dungeon shared components ---------------------------------------
    The reusable pieces every surface draws from, so loaders, rims, badges,
@@ -1010,6 +723,106 @@ html[data-anim="off"] .rune-loader { animation: none; }
   mask-composite: exclude;
 }
 
+/* The ceremony spotlight: a soft cone of light falling from above the place
+   card, tinted to its metal. Static light under html[data-anim="off"];
+   otherwise it breathes very slowly, like stadium lighting. */
+.podium-beam {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    62% 88% at 50% 0%,
+    rgb(var(--beam-rgb, var(--energy-gold-rgb)) / var(--beam-a, 0.14)),
+    transparent 76%
+  );
+  animation: podium-beam-breathe 7s ease-in-out infinite;
+}
+@keyframes podium-beam-breathe {
+  0%, 100% { opacity: 0.75; }
+  50% { opacity: 1; }
+}
+html[data-anim="off"] .podium-beam { animation: none; opacity: 0.85; }
+.podium-mote {
+  position: absolute;
+  bottom: 18%;
+  left: var(--mx, 50%);
+  width: 3px;
+  height: 3px;
+  border-radius: 999px;
+  pointer-events: none;
+  background: rgb(var(--mote-rgb, var(--energy-gold-rgb)) / 0.85);
+  box-shadow: 0 0 6px 1px rgb(var(--mote-rgb, var(--energy-gold-rgb)) / 0.4);
+  opacity: 0;
+  animation: podium-mote-rise var(--mdur, 5.4s) linear var(--mdelay, 0s) infinite;
+}
+@keyframes podium-mote-rise {
+  0% { opacity: 0; transform: translateY(0) scale(0.7); }
+  14% { opacity: 0.65; }
+  70% { opacity: 0.3; }
+  100% { opacity: 0; transform: translateY(-68px) scale(1); }
+}
+html[data-anim="off"] .podium-mote { animation: none; opacity: 0; }
+/* The champion's sparkles: slow four-point glints near the avatar, the
+   cross-star kind that reads "camera flash" at a medal ceremony. */
+.podium-glint {
+  position: absolute;
+  top: var(--gy, 20%);
+  left: var(--gx, 50%);
+  width: 11px;
+  height: 11px;
+  pointer-events: none;
+  opacity: 0;
+  background:
+    linear-gradient(rgb(var(--energy-gold-rgb) / 0.9), rgb(var(--energy-gold-rgb) / 0.9)) 50% 0 / 1.5px 100% no-repeat,
+    linear-gradient(rgb(var(--energy-gold-rgb) / 0.9), rgb(var(--energy-gold-rgb) / 0.9)) 0 50% / 100% 1.5px no-repeat;
+  animation: podium-glint-twinkle 4.8s ease-in-out var(--gdelay, 0s) infinite;
+}
+@keyframes podium-glint-twinkle {
+  0%, 78%, 100% { opacity: 0; transform: scale(0.4) rotate(0deg); }
+  86% { opacity: 0.9; transform: scale(1) rotate(24deg); }
+  94% { opacity: 0; transform: scale(0.5) rotate(45deg); }
+}
+html[data-anim="off"] .podium-glint { animation: none; opacity: 0; }
+
+/* The petal drift: flower petals loosed over the whole dais, swaying down
+   like the end of a victory lap. Each petal is one span, tinted per place,
+   phased apart; ambient by design (the ceremony is a state, not an event)
+   and parked entirely under html[data-anim="off"]. */
+.podium-petal {
+  position: absolute;
+  top: -6%;
+  left: var(--px, 50%);
+  width: 7px;
+  height: 10px;
+  pointer-events: none;
+  border-radius: 60% 40% 55% 45% / 70% 65% 35% 30%;
+  background: rgb(var(--petal-rgb, 255 217 126) / 0.75);
+  box-shadow: inset 0 0 3px rgb(255 255 255 / 0.25);
+  opacity: 0;
+  animation: podium-petal-fall var(--pdur, 9s) linear var(--pdelay, 0s) infinite;
+}
+@keyframes podium-petal-fall {
+  0% { opacity: 0; transform: translate(0, 0) rotate(0deg); }
+  8% { opacity: 0.8; }
+  30% { transform: translate(14px, 30%) rotate(70deg); }
+  55% { transform: translate(-10px, 62%) rotate(150deg); }
+  80% { opacity: 0.6; transform: translate(10px, 88%) rotate(230deg); }
+  100% { opacity: 0; transform: translate(-4px, 108%) rotate(300deg); }
+}
+html[data-anim="off"] .podium-petal { animation: none; opacity: 0; }
+
+/* The champion's crown, hovering just above the avatar with the sanctioned
+   ambient bob. Static (no bob) under html[data-anim="off"]. */
+.podium-crown {
+  animation: podium-crown-bob 4.2s ease-in-out infinite;
+}
+@keyframes podium-crown-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+html[data-anim="off"] .podium-crown { animation: none; }
+
 /* Rune badge: the shared chip for statuses and counts. Feed it an energy
    triple via --badge-rgb (defaults to ember). */
 .rune-badge {
@@ -1053,179 +866,6 @@ html[data-anim="off"] .rune-loader { animation: none; }
   opacity: 0.6;
 }
 
-/* --- Dungeon material set ----------------------------------------------------
-   The 2026-07 "full dungeon" pass: reusable carved-stone and forged-iron
-   surfaces so major panels (settings, friends, leaderboard, home sections)
-   share one material world with the draft chamber and the nav menus, instead
-   of each page whispering its own theme. Everything below is background /
-   border / shadow layering on the existing tokens — no new DOM, no filters,
-   and all ambient motion parks under html[data-anim="off"]. */
-
-/* Carved stone slab: the hero panel. Hewn block courses, a torchlit top
-   edge, and a deep inset foot. Use INSTEAD of .plate on surfaces that should
-   read as monumental (modals, podium, chamber panels) — not on every card. */
-.dgn-slab {
-  position: relative;
-  /* The slab is defined by its stone fill and shadows, not a colored border:
-     a neutral dark seam keeps panels from competing with interactive and
-     selected elements for the accent hues. */
-  border: 1px solid rgba(0, 0, 0, 0.5);
-  border-radius: 1px;
-  background:
-    /* Torchlight pooling at the top edge. */
-    radial-gradient(120% 42% at 50% -6%, rgb(var(--energy-ember-rgb) / 0.09), transparent 60%),
-    /* Faint star pinpricks in the stone. */
-    radial-gradient(1px 1px at 18% 32%, rgba(255, 235, 200, 0.05), transparent 100%),
-    radial-gradient(1px 1px at 74% 68%, rgba(255, 235, 200, 0.04), transparent 100%),
-    radial-gradient(1px 1px at 42% 84%, rgba(255, 235, 200, 0.035), transparent 100%),
-    /* Block-joint courses: hairline mortar lines every 56px. */
-    repeating-linear-gradient(180deg, transparent 0 55px, rgba(0, 0, 0, 0.22) 55px 56px),
-    /* The stone itself: top-lit, cooling toward the foot. */
-    linear-gradient(180deg, var(--stone-hi), var(--stone) 45%, var(--stone-deep)),
-    var(--surface-panel);
-  box-shadow:
-    inset 0 1px 0 rgb(255 178 96 / 0.1),
-    inset 0 0 0 1px rgba(0, 0, 0, 0.45),
-    inset 0 -14px 24px -18px rgba(0, 0, 0, 0.7),
-    0 24px 60px -28px rgba(0, 0, 0, 0.85);
-}
-html[data-theme="light"] .dgn-slab {
-  background: rgba(255, 255, 255, 0.6);
-  border-color: rgba(0, 0, 0, 0.16);
-  box-shadow: 0 24px 60px -36px rgba(43, 40, 34, 0.5);
-}
-
-/* Forged-iron corner rivets: four dots hammered into a slab's corners.
-   Pure background layers, composable with .dgn-slab or .plate. */
-.dgn-rivets {
-  background-image:
-    radial-gradient(2.5px 2.5px at 8px 8px, rgb(200 178 140 / 0.5), rgba(0, 0, 0, 0.6) 60%, transparent 75%),
-    radial-gradient(2.5px 2.5px at calc(100% - 8px) 8px, rgb(200 178 140 / 0.5), rgba(0, 0, 0, 0.6) 60%, transparent 75%),
-    radial-gradient(2.5px 2.5px at 8px calc(100% - 8px), rgb(200 178 140 / 0.5), rgba(0, 0, 0, 0.6) 60%, transparent 75%),
-    radial-gradient(2.5px 2.5px at calc(100% - 8px) calc(100% - 8px), rgb(200 178 140 / 0.5), rgba(0, 0, 0, 0.6) 60%, transparent 75%);
-  background-repeat: no-repeat;
-}
-
-/* Rune divider: an ornament rule with a glowing diamond bead — the dungeon
-   sibling of .mode-seam for use inside themed panels. */
-.rune-divider {
-  position: relative;
-  height: 1px;
-  border: 0;
-  margin: 0;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgb(var(--energy-ember-rgb) / 0.35) 30%,
-    rgb(var(--energy-ember-rgb) / 0.5) 50%,
-    rgb(var(--energy-ember-rgb) / 0.35) 70%,
-    transparent 100%
-  );
-}
-.rune-divider::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 6px;
-  height: 6px;
-  transform: translate(-50%, -50%) rotate(45deg);
-  background: rgb(var(--energy-ember-rgb) / 0.7);
-  box-shadow: 0 0 8px 1px rgb(var(--energy-ember-rgb) / 0.45);
-}
-
-/* Treasure button: the gold slab for reward/prestige actions (claim,
-   celebrate, rank reveal). Same physics as .btn-leaf, forged in vault gold.
-   Use sparingly — gold is the color of reward, not of "act here". */
-.btn-gold {
-  background:
-    radial-gradient(3px 3px at 7px 7px, rgba(255, 255, 255, 0.6), transparent 70%),
-    radial-gradient(3px 3px at calc(100% - 7px) calc(100% - 7px), rgba(255, 255, 255, 0.4), transparent 70%),
-    radial-gradient(120% 95% at 50% 118%, rgb(var(--energy-gold-rgb) / 0.6), transparent 58%),
-    linear-gradient(to bottom, #f0c65a, #cf9d2e 55%, #7d5c14);
-  color: #241a05;
-  border: 1px solid rgba(0, 0, 0, 0.5);
-  border-radius: 1px;
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.35) inset,
-    0 0 0 1px rgb(var(--energy-gold-rgb) / 0.3) inset,
-    0 -9px 16px -10px rgba(0, 0, 0, 0.45) inset,
-    0 2px 6px -2px rgba(0, 0, 0, 0.55);
-  transition: filter 160ms ease, box-shadow 180ms ease, transform 120ms ease;
-  font-weight: 700;
-  letter-spacing: 0.005em;
-}
-.btn-gold:hover:not(:disabled) {
-  filter: brightness(1.06);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.4) inset,
-    0 0 22px -8px rgb(var(--energy-gold-rgb) / 0.6),
-    0 2px 6px -2px rgba(0, 0, 0, 0.55);
-}
-.btn-gold:active:not(:disabled) {
-  filter: brightness(0.94);
-  transform: translateY(0.5px);
-}
-.btn-gold:disabled {
-  background: linear-gradient(to bottom, #34302a, #262320);
-  color: #8f887a;
-  border-color: rgba(0, 0, 0, 0.4);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05) inset;
-  filter: none;
-  cursor: not-allowed;
-}
-
-/* Parameterized slab: the .btn-leaf physics with a caller-supplied energy
-   core, for primaries that must keep a non-accent identity (the mode-colored
-   matchmaking button). Feed --slab-rgb; text stays white on the lit body. */
-.btn-slab {
-  background:
-    radial-gradient(3px 3px at 7px 7px, rgba(255, 255, 255, 0.5), transparent 70%),
-    radial-gradient(3px 3px at calc(100% - 7px) calc(100% - 7px), rgba(255, 255, 255, 0.35), transparent 70%),
-    radial-gradient(120% 95% at 50% 118%, rgb(var(--slab-rgb, var(--accent-hi-rgb)) / 0.55), transparent 58%),
-    linear-gradient(
-      to bottom,
-      rgb(var(--slab-rgb, var(--accent-rgb)) / 0.9),
-      rgb(var(--slab-rgb, var(--accent-rgb)) / 0.65) 55%,
-      rgb(var(--slab-rgb, var(--accent-rgb)) / 0.3)
-    ),
-    #12100c;
-  color: #fff;
-  border: 1px solid rgba(0, 0, 0, 0.5);
-  border-radius: 1px;
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.2) inset,
-    0 0 0 1px rgb(var(--slab-rgb, var(--accent-hi-rgb)) / 0.25) inset,
-    0 -9px 16px -10px rgba(0, 0, 0, 0.55) inset,
-    0 2px 6px -2px rgba(0, 0, 0, 0.55);
-  transition: filter 160ms ease, box-shadow 180ms ease, transform 120ms ease;
-  font-weight: 600;
-  letter-spacing: 0.005em;
-}
-.btn-slab:hover:not(:disabled) {
-  filter: brightness(1.08);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.24) inset,
-    0 0 0 1px rgb(var(--slab-rgb, var(--accent-hi-rgb)) / 0.4) inset,
-    0 0 22px -8px rgb(var(--slab-rgb, var(--accent-hi-rgb)) / 0.55),
-    0 2px 6px -2px rgba(0, 0, 0, 0.55);
-}
-.btn-slab:active:not(:disabled) {
-  filter: brightness(0.94);
-  transform: translateY(0.5px);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.1) inset,
-    0 1px 2px -1px rgba(0, 0, 0, 0.5);
-}
-.btn-slab:disabled {
-  background: linear-gradient(to bottom, #34302a, #262320);
-  color: #8f887a;
-  border-color: rgba(0, 0, 0, 0.4);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05) inset;
-  filter: none;
-  cursor: not-allowed;
-}
-
 /* Busy state for any slab button: the label dims and a rune-loader (added by
    the call site) carries the motion, so loading never reads as a dead click. */
 .btn-busy {
@@ -1233,25 +873,15 @@ html[data-theme="light"] .dgn-slab {
   filter: saturate(0.7) brightness(0.9);
 }
 
-/* Torch sconce ambience: a warm ember pool for section corners on themed
-   pages. Position with inline styles; decorative only. */
-.torch-pool {
-  position: absolute;
-  width: 220px;
-  height: 220px;
-  pointer-events: none;
-  background: radial-gradient(50% 50% at 50% 50%, rgb(var(--energy-ember-rgb) / 0.1), transparent 70%);
-  animation: aura-breathe 11s ease-in-out infinite;
-}
-html[data-anim="off"] .torch-pool { animation: none; }
-
 /* --- Podium celebration ------------------------------------------------------
-   Dressing for the leaderboard's treasure-dais (Podium.tsx) and the profile's
+   Dressing for the leaderboard's ceremony dais (Podium.tsx) and the profile's
    honors shelf. Each place wears a metal rim (the .energy-edge masked-frame
    device, tinted by --rim-rgb; gold by default), stands in its own ceremony
-   spotlight (.podium-beam), and the champion adds rising motes. Decoration
-   only: transform/opacity, capped node count at the call site, and every
-   animation parks under html[data-anim="off"] (static lighting stays). */
+   spotlight (.podium-beam), and the champion adds rising motes, camera-flash
+   glints, a bobbing crown, and a petal drift across the whole dais.
+   Decoration only: transform/opacity, capped node counts at the call site,
+   and every animation parks under html[data-anim="off"] (static lighting
+   stays). Rebuilt grander by owner request after its first retirement. */
 .podium-rim-gold { position: relative; }
 .podium-rim-gold::before {
   content: "";
@@ -1273,69 +903,6 @@ html[data-anim="off"] .torch-pool { animation: none; }
   mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   mask-composite: exclude;
 }
-/* The ceremony spotlight: a soft cone of light falling from above the place
-   card, tinted to its metal. Static light under html[data-anim="off"] and
-   data-perf="low"; otherwise it breathes very slowly, like stadium lighting. */
-.podium-beam {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background: radial-gradient(
-    62% 88% at 50% 0%,
-    rgb(var(--beam-rgb, var(--energy-gold-rgb)) / var(--beam-a, 0.14)),
-    transparent 76%
-  );
-  animation: podium-beam-breathe 7s ease-in-out infinite;
-}
-@keyframes podium-beam-breathe {
-  0%, 100% { opacity: 0.75; }
-  50% { opacity: 1; }
-}
-html[data-anim="off"] .podium-beam,
-html[data-perf="low"] .podium-beam { animation: none; opacity: 0.85; }
-.podium-mote {
-  position: absolute;
-  bottom: 18%;
-  left: var(--mx, 50%);
-  width: 3px;
-  height: 3px;
-  border-radius: 999px;
-  pointer-events: none;
-  background: rgb(var(--mote-rgb, var(--energy-gold-rgb)) / 0.85);
-  box-shadow: 0 0 6px 1px rgb(var(--mote-rgb, var(--energy-gold-rgb)) / 0.4);
-  opacity: 0;
-  animation: podium-mote-rise var(--mdur, 5.4s) linear var(--mdelay, 0s) infinite;
-}
-@keyframes podium-mote-rise {
-  0% { opacity: 0; transform: translateY(0) scale(0.7); }
-  14% { opacity: 0.65; }
-  70% { opacity: 0.3; }
-  100% { opacity: 0; transform: translateY(-68px) scale(1); }
-}
-html[data-anim="off"] .podium-mote { animation: none; opacity: 0; }
-/* The champion's sparkles: two slow four-point glints near the avatar, the
-   cross-star kind that reads "camera flash" at a medal ceremony. */
-.podium-glint {
-  position: absolute;
-  top: var(--gy, 20%);
-  left: var(--gx, 50%);
-  width: 11px;
-  height: 11px;
-  pointer-events: none;
-  opacity: 0;
-  background:
-    linear-gradient(rgb(var(--energy-gold-rgb) / 0.9), rgb(var(--energy-gold-rgb) / 0.9)) 50% 0 / 1.5px 100% no-repeat,
-    linear-gradient(rgb(var(--energy-gold-rgb) / 0.9), rgb(var(--energy-gold-rgb) / 0.9)) 0 50% / 100% 1.5px no-repeat;
-  animation: podium-glint-twinkle 4.8s ease-in-out var(--gdelay, 0s) infinite;
-}
-@keyframes podium-glint-twinkle {
-  0%, 78%, 100% { opacity: 0; transform: scale(0.4) rotate(0deg); }
-  86% { opacity: 0.9; transform: scale(1) rotate(24deg); }
-  94% { opacity: 0; transform: scale(0.5) rotate(45deg); }
-}
-html[data-anim="off"] .podium-glint,
-html[data-perf="low"] .podium-glint { animation: none; opacity: 0; }
 
 /* Victory burst: the Level-3 celebration behind the game-over panel. One
    energy ring blooms outward while a handful of sparks in the four energy
@@ -1427,58 +994,6 @@ html[data-anim="off"] .victory-burst { display: none; }
   transform: translateY(0.5px) scale(0.95);
 }
 
-/* --- Editorial masthead ----------------------------------------------------
-   The distinctive risk: the hero headline is given the same PHYSICAL language
-   as the metal buttons. A faint dark drop below and a whisper of light above
-   strike the type into the warm ink, like letterpress into parchment, so the
-   page reads as crafted stock rather than a floating web headline. Fluid size
-   and tight tracking do the hierarchy work; it stays restrained and legible. */
-.masthead {
-  font-family: var(--font-display), system-ui, sans-serif;
-  font-weight: 600;
-  line-height: 1.03;
-  letter-spacing: -0.018em;
-  text-wrap: balance;
-  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.38), 0 -1px 0 rgba(255, 255, 255, 0.045);
-}
-html[data-theme="light"] .masthead {
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6), 0 -1px 0 rgba(0, 0, 0, 0.06);
-}
-
-/* Eyebrow/kicker: a smallcaps label led by a short accent rule, so section
-   openings share one editorial rhythm across home and lobby. */
-.kicker {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.6rem;
-  color: var(--paper-dim);
-}
-.kicker::before {
-  content: "";
-  width: 1.6rem;
-  height: 1px;
-  flex: none;
-  background: rgb(var(--accent-hi-rgb));
-  opacity: 0.7;
-}
-
-/* Section title with a crisp accent spine on its left edge. Gives the dense
-   lobby cards a shared vertical rhythm without adding chrome. */
-.sec-title {
-  position: relative;
-  padding-left: 0.85rem;
-}
-.sec-title::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0.16em;
-  bottom: 0.16em;
-  width: 3px;
-  background: rgb(var(--accent-hi-rgb));
-  opacity: 0.7;
-}
-
 /* Soft depth behind the hero: two barely-there radial washes (accent + a
    whisper of Nerf terracotta) that lift the board and headline off the flat
    ink. Sits behind the section's own content (negative z within the main
@@ -1500,10 +1015,6 @@ html[data-theme="light"] .masthead {
 @keyframes aura-breathe {
   0%, 100% { opacity: 0.82; }
   50% { opacity: 1; }
-}
-.hero-aura,
-.mode-field::before {
-  animation: aura-breathe 14s ease-in-out infinite;
 }
 
 /* --- Home hero: the TV panel -------------------------------------------------
@@ -1557,7 +1068,7 @@ html[data-theme="light"] .masthead {
   mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   mask-composite: exclude;
 }
-html[data-theme="light"] .tv-frame::before { display: none; }
+html[data-light] .tv-frame::before { display: none; }
 @media (hover: hover) {
   .tv-frame:hover {
     transform: translateY(-2px);
@@ -1568,7 +1079,7 @@ html[data-theme="light"] .tv-frame::before { display: none; }
       0 38px 96px -32px rgba(0, 0, 0, 0.95);
   }
 }
-html[data-theme="light"] .tv-frame {
+html[data-light] .tv-frame {
   background: rgba(255, 255, 255, 0.9);
   border-color: rgba(43, 40, 34, 0.18);
   box-shadow:
@@ -1614,121 +1125,6 @@ html[data-theme="light"] .tv-frame {
 @keyframes cta-sweep {
   0%, 62% { transform: translateX(0) skewX(-18deg); }
   86%, 100% { transform: translateX(452%) skewX(-18deg); }
-}
-
-/* Open Lobby CTA: the quiet secondary in the blue family. A desaturated
-   steel-blue tint of the brand azure with dark ink — present and airy, but
-   reads as subordinate to the saturated .btn-cyan primary below it. Same
-   metal-button physics as .btn-leaf. */
-.btn-sky {
-  background: #9cb6d1;
-  color: #16283a;
-  border: 1px solid rgba(0, 0, 0, 0.28);
-  border-radius: 1px;
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.35) inset,
-    0 2px 6px -2px rgba(0, 0, 0, 0.5);
-  transition: background 160ms ease, filter 160ms ease, box-shadow 180ms ease, transform 120ms ease;
-  font-weight: 600;
-  letter-spacing: 0.005em;
-}
-.btn-sky:hover { filter: brightness(1.05); }
-
-/* --- Nebula: the play surfaces go full space -------------------------------
-   Under the nebula theme the big play CTAs and the mode cards trade their
-   daylight blues for deep-space violet with a starfield speckle, matching the
-   page's dusk wash. Stars are layered radial dots — no images, no motion. */
-html[data-theme="nebula"] .btn-sky,
-html[data-theme="nebula"] .btn-cyan {
-  color: #efe9ff;
-  text-shadow: 0 1px 6px rgba(20, 10, 40, 0.8);
-}
-/* Open Lobby: deep-space BLUE. */
-html[data-theme="nebula"] .btn-sky {
-  background:
-    radial-gradient(1px 1px at 12% 30%, rgba(255, 255, 255, 0.9), transparent 55%),
-    radial-gradient(1px 1px at 78% 22%, rgba(255, 255, 255, 0.7), transparent 55%),
-    radial-gradient(1.5px 1.5px at 55% 68%, rgba(190, 214, 255, 0.8), transparent 55%),
-    radial-gradient(1px 1px at 32% 82%, rgba(255, 255, 255, 0.55), transparent 55%),
-    radial-gradient(2px 2px at 68% 40%, rgba(255, 255, 255, 0.35), transparent 60%),
-    linear-gradient(135deg, #2c4a86 0%, #223768 52%, #16224a 100%);
-  border: 1px solid rgba(140, 172, 235, 0.55);
-  box-shadow:
-    inset 0 1px 0 rgba(190, 214, 255, 0.35),
-    0 0 26px -8px rgba(111, 149, 218, 0.7),
-    0 2px 8px -2px rgba(0, 0, 0, 0.6);
-}
-/* Play Someone: LIGHT PURPLE space. */
-html[data-theme="nebula"] .btn-cyan {
-  background:
-    radial-gradient(1px 1px at 16% 28%, rgba(255, 255, 255, 0.9), transparent 55%),
-    radial-gradient(1px 1px at 74% 20%, rgba(255, 255, 255, 0.7), transparent 55%),
-    radial-gradient(1.5px 1.5px at 52% 70%, rgba(232, 218, 255, 0.85), transparent 55%),
-    radial-gradient(1px 1px at 30% 84%, rgba(255, 255, 255, 0.55), transparent 55%),
-    radial-gradient(2px 2px at 66% 42%, rgba(255, 255, 255, 0.35), transparent 60%),
-    linear-gradient(135deg, #7a5cb8 0%, #62479c 52%, #45306f 100%);
-  border: 1px solid rgba(200, 174, 245, 0.6);
-  box-shadow:
-    inset 0 1px 0 rgba(232, 218, 255, 0.4),
-    0 0 26px -8px rgba(180, 148, 226, 0.75),
-    0 2px 8px -2px rgba(0, 0, 0, 0.6);
-}
-html[data-theme="nebula"] .btn-sky:hover,
-html[data-theme="nebula"] .btn-cyan:hover {
-  filter: brightness(1.12);
-}
-html[data-theme="nebula"] .mode-def-card {
-  background:
-    radial-gradient(1px 1px at 18% 26%, rgba(255, 255, 255, 0.5), transparent 55%),
-    radial-gradient(1px 1px at 72% 70%, rgba(214, 197, 255, 0.45), transparent 55%),
-    radial-gradient(1.5px 1.5px at 86% 24%, rgba(255, 255, 255, 0.35), transparent 55%),
-    var(--surface-panel);
-}
-.btn-sky:active {
-  filter: brightness(0.95);
-  transform: translateY(0.5px);
-}
-
-/* Play Someone CTA: the loud primary in brand azure with white type,
-   unmistakably "go". Anchors the blue family; .btn-sky above is its quieter
-   sibling. */
-.btn-cyan {
-  background: linear-gradient(to bottom, var(--accent-buff-hi), var(--accent-buff));
-  color: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.32);
-  border-radius: 1px;
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.28) inset,
-    0 2px 6px -2px rgba(0, 0, 0, 0.5);
-  transition: background 160ms ease, filter 160ms ease, box-shadow 180ms ease, transform 120ms ease;
-  font-weight: 600;
-  letter-spacing: 0.005em;
-}
-.btn-cyan:hover { filter: brightness(1.05); }
-.btn-cyan:active {
-  filter: brightness(0.95);
-  transform: translateY(0.5px);
-}
-
-/* Welcoming mint CTA: a friendly spring green with dark ink type, softer than
-   the utility green and clearly distinct from the accent blue. Same
-   metal-button physics as .btn-leaf. */
-.btn-mint {
-  background: linear-gradient(to bottom, var(--mint-glow), var(--mint));
-  color: #10281d;
-  border: 1px solid rgba(0, 0, 0, 0.28);
-  border-radius: 1px;
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.28) inset,
-    0 2px 6px -2px rgba(0, 0, 0, 0.5);
-  transition: background 160ms ease, filter 160ms ease, box-shadow 180ms ease, transform 120ms ease;
-  font-weight: 600;
-  letter-spacing: 0.005em;
-}
-.btn-mint:hover { filter: brightness(1.05); }
-.btn-mint:active {
-  filter: brightness(0.95);
-  transform: translateY(0.5px);
 }
 
 /* The home screen's signature animation: the knight plays Geometry Dash. A
@@ -1779,13 +1175,18 @@ html[data-theme="nebula"] .mode-def-card {
   height: 1px;
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.14) 18%, rgba(255, 255, 255, 0.14) 82%, transparent);
   /* The floor pulses on the beat, brightest the instant the knight lands
-     (phase-locked to gd-jump: same 3s cycle and -0.66s delay, flash at 67%). */
+     (phase-locked to gd-jump: same 3s cycle and -0.66s delay, flash at 67%).
+     The glow is baked into a static drop-shadow-free gradient and only
+     OPACITY animates: the old keyframe animated box-shadow, a full repaint
+     every frame of an infinite home-page loop. */
+  filter: drop-shadow(0 0 4px rgb(var(--accent-rgb) / 0.35));
   animation: gd-ground-pulse 3s linear -0.66s infinite;
+  will-change: opacity;
 }
 @keyframes gd-ground-pulse {
-  0%, 60% { opacity: 0.55; box-shadow: none; }
-  67% { opacity: 1; box-shadow: 0 0 7px rgb(var(--accent-rgb) / 0.45); }
-  82%, 100% { opacity: 0.55; box-shadow: none; }
+  0%, 60% { opacity: 0.45; }
+  67% { opacity: 1; }
+  82%, 100% { opacity: 0.45; }
 }
 .gd-world {
   position: absolute;
@@ -1939,9 +1340,10 @@ html[data-theme="nebula"] .mode-def-card {
 /* Wide desktop (lg+), lichess-style: the field rolls out LEFTWARD from the
    search icon instead of dropping down. Below lg the drop-under panel above is
    kept even once the inline nav appears (md), because a 17rem leftward rollout
-   at tablet widths lands on top of the "Rules"/"Leaderboard" links. Width is
-   animated (not transform) so the input never looks squashed; clamped so it
-   can't run off small screens. */
+   at tablet widths lands on top of the "Rules"/"Leaderboard" links. The
+   rollout is a clip-path reveal at the final width: the input is never
+   squashed (the old width animation promised that, at the price of running
+   layout every frame) and the reveal composites cleanly. */
 @media (min-width: 1024px) {
   .header-search-panel {
     width: min(17rem, calc(100vw - 8.5rem));
@@ -1949,8 +1351,8 @@ html[data-theme="nebula"] .mode-def-card {
   }
 }
 @keyframes search-grow {
-  from { width: 2.5rem; opacity: 0; }
-  to { width: min(17rem, calc(100vw - 8.5rem)); opacity: 1; }
+  from { clip-path: inset(0 0 0 calc(100% - 2.5rem)); opacity: 0; }
+  to { clip-path: inset(0 0 0 0); opacity: 1; }
 }
 
 /* --- Top-nav micro-interactions -------------------------------------------
@@ -2189,6 +1591,24 @@ html[data-anim="off"] .sq-pickable {
 }
 .piece-shielded {
   filter: drop-shadow(0 0 3px rgb(var(--accent-gold-hi-rgb) / 0.9)) drop-shadow(0 0 9px rgb(var(--accent-gold-rgb) / 0.55));
+}
+/* Card-keyed piece treatment (effects/pieceTreatment.ts): the composed filter
+   rides a CSS var so one class serves 900+ per-card looks. Filter-only, like
+   the state looks above, so both piece sources (inline SVG and image skins)
+   pick it up. The arrival pulse is a one-shot transform that replays only
+   when a DIFFERENT card takes over the piece (keyed remount); the filter
+   itself is static information and survives data-anim="off". */
+.piece-treat {
+  filter: var(--pt-filter, none);
+  animation: pt-arrive 0.26s ease-out both;
+}
+@keyframes pt-arrive {
+  0% { transform: scale(0.94); }
+  55% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+html[data-anim="off"] .piece-treat {
+  animation: none;
 }
 
 /* Hostile variant for nerf-affected squares (NerfAura): the same pooled glow
@@ -2524,16 +1944,30 @@ html[data-anim="off"] .sq-pickable {
    when the lock lands, then a calm persistent pall. Runs once on mount. */
 @keyframes locked-in {
   0% { opacity: 0; }
-  40% { opacity: 1; box-shadow: inset 0 0 22px 3px rgba(30, 41, 59, 0.7); }
-  100% { opacity: 1; box-shadow: inset 0 0 8px 0 rgba(30, 41, 59, 0.25); }
+  40% { opacity: 1; }
+  100% { opacity: 1; }
+}
+@keyframes locked-in-flash {
+  0% { opacity: 0; }
+  40% { opacity: 1; }
+  100% { opacity: 0; }
 }
 .sq-locked {
-  /* `both`, like every comparable rule (.sq-shield-in, .walnut-root, the fx-*
-     set in effects.css). Without a fill mode the 100% keyframe's inset shadow
-     was dropped the moment the 550ms run ended, so the "calm persistent pall"
-     the comment above promises evaporated and only a flat grey wash remained
-     for the rest of the lockdown. */
+  /* The calm persistent pall is a STATIC inset shadow; the landing clamp is a
+     one-shot flash on a pseudo layer animating opacity only. The old keyframe
+     animated box-shadow itself, and Shackled can stamp ~16 squares at once.
+     No position here: the square overlay is already absolutely positioned by
+     its utility class, which also makes it the containing block for ::after. */
+  box-shadow: inset 0 0 8px 0 rgba(30, 41, 59, 0.25);
   animation: locked-in 0.55s ease-out both;
+}
+.sq-locked::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 22px 3px rgba(30, 41, 59, 0.7);
+  animation: locked-in-flash 0.55s ease-out both;
 }
 @keyframes locked-chain-in {
   0% { opacity: 0; transform: scale(1.8) rotate(12deg); }
@@ -2657,11 +2091,10 @@ nav, header { position: relative; z-index: 30; }
 
 html[data-anim="off"] .animate-rise, html[data-anim="off"] .animate-seal, html[data-anim="off"] .animate-sigil, html[data-anim="off"] .animate-flicker, html[data-anim="off"] .animate-reveal, html[data-anim="off"] .animate-bob,
 html[data-anim="off"] .draft-in,
-html[data-anim="off"] .hero-aura, html[data-anim="off"] .mode-field::before,
+html[data-anim="off"] .hero-aura,
 html[data-anim="off"] .dot-live::after, html[data-anim="off"] .cta-shine::after, html[data-anim="off"] .header-search-panel,
 html[data-anim="off"] .gd-world, html[data-anim="off"] .gd-knight > span, html[data-anim="off"] .knight-track::before, html[data-anim="off"] .knight-track::after,
 html[data-anim="off"] .board-splash, html[data-anim="off"] .board-splash-card,
-html[data-anim="off"] .stagger-in > *,
 html[data-anim="off"] .sq-strike, html[data-anim="off"] .sq-freeze, html[data-anim="off"] .sq-freeze-flake, html[data-anim="off"] .sq-shield-in, html[data-anim="off"] .walnut-piece, html[data-anim="off"] .banana-peel,
 html[data-anim="off"] .sq-walnut,
 html[data-anim="off"] .empower-shine::before, html[data-anim="off"] .empower-shine::after, html[data-anim="off"] .edge-aura,
@@ -2683,8 +2116,7 @@ html[data-anim="off"] .dc-orbit-counter.spin, html[data-anim="off"] .dc-orbit-co
 html[data-anim="off"] * { transition: none !important; }
 
 @media (max-width: 640px) {
-  .btn-leaf, .btn-ghost, .btn-cyan, .btn-sky, .btn-mint,
-  .btn-glass, .btn-cta { min-height: 44px; }
+  .btn-leaf, .btn-ghost, .btn-glass, .btn-cta { min-height: 44px; }
 }
 
 ::selection { background: rgb(var(--accent-gold-rgb) / 0.4); color: var(--text-on-accent); }
@@ -2767,37 +2199,11 @@ html[data-anim="off"] .card-juicy, html[data-anim="off"] .card-juicy:hover, html
 
 .parchment-noise::before { content: none !important; }
 
-/* Subtle paper grain over everything — adds editorial texture without busyness */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 1;
-  opacity: 0.04;
-  mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.92 0 0 0 0 0.90 0 0 0 0 0.84 0 0 0 0.7 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
-}
-
-/* --- Performance mode: drop the paint-costliest DECORATIVE layers ------------
-   Gated on data-perf="low" (the Performance-mode setting, auto-seeded on
-   low-end hardware) OR animations turned off in Settings, so users who never
-   open the effects settings still benefit. Functional visuals (board, pieces,
-   effect art) are never touched here. */
-html[data-perf="low"] body::before { display: none; }
-html[data-anim="off"] body::before { display: none; }
-
-/* The hero "TV" panel blurs the LIVE animating board behind it — a backdrop
-   filter re-run every frame. Perf mode / animations-off swaps it for a plain
-   translucent panel (no blur), which reads nearly identical over the dark art. */
-html[data-perf="low"] .tv-frame,
-html[data-perf="low"] .btn-glass {
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
+/* The hero "TV" panel blurs the LIVE animating board behind it, a backdrop
+   filter re-run every frame. Animations-off swaps it for a plain translucent
+   panel (no blur), which reads nearly identical over the dark art. */
 html[data-anim="off"] .tv-frame { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
 /* Continuous decorative sweeps stop pinning the main thread/compositor. */
-html[data-perf="low"] .cta-shine::after { animation: none; opacity: 0; }
 
 /* === THEME CUSTOMIZATION (settings-driven) === */
 
@@ -2818,13 +2224,6 @@ html[data-custom-bg="on"] body {
   background-attachment: fixed;
   background-repeat: no-repeat;
 }
-/* Fixed-attachment cover backgrounds repaint the whole viewport on every
-   scroll frame (see the file's own note near the page background). Perf mode
-   scrolls the image with the page instead, trading the parallax for smooth
-   scrolling on weak GPUs. */
-html[data-perf="low"][data-custom-bg="on"] body {
-  background-attachment: scroll;
-}
 
 /* Light theme, pass 2: surfaces that were still dark-only. Same warm paper
    palette as the core light remaps above (#e9e6de paper, #2b2822 ink). */
@@ -2832,85 +2231,59 @@ html[data-perf="low"][data-custom-bg="on"] body {
 /* Form fields: the site-wide input recipe is bg-ink-900/60 + border-white/15,
    which stays near-black on paper. Remap the ink washes to translucent white
    and give every field dark text. */
-html[data-theme="light"] .bg-ink-900\/60,
-html[data-theme="light"] .bg-ink-900\/70,
-html[data-theme="light"] .bg-ink-800\/60 {
+html[data-light] .bg-ink-900\/60,
+html[data-light] .bg-ink-900\/70,
+html[data-light] .bg-ink-800\/60 {
   background-color: rgba(255, 255, 255, 0.65);
 }
-html[data-theme="light"] input,
-html[data-theme="light"] textarea,
-html[data-theme="light"] select {
+html[data-light] input,
+html[data-light] textarea,
+html[data-light] select {
   color: #2b2822;
 }
-html[data-theme="light"] ::placeholder {
+html[data-light] ::placeholder {
   color: #86816f;
 }
 
 /* White hairlines and dividers are invisible on paper; restate them in ink at
    comparable strengths. */
-html[data-theme="light"] .border-white\/5 { border-color: rgba(43, 40, 34, 0.08); }
-html[data-theme="light"] .border-white\/10 { border-color: rgba(43, 40, 34, 0.12); }
-html[data-theme="light"] .border-white\/12 { border-color: rgba(43, 40, 34, 0.14); }
-html[data-theme="light"] .border-white\/15 { border-color: rgba(43, 40, 34, 0.16); }
-html[data-theme="light"] .divide-white\/5 > :not([hidden]) ~ :not([hidden]),
-html[data-theme="light"] .divide-white\/10 > :not([hidden]) ~ :not([hidden]),
-html[data-theme="light"] .divide-white\/\[0\.06\] > :not([hidden]) ~ :not([hidden]) {
+html[data-light] .border-white\/5 { border-color: rgba(43, 40, 34, 0.08); }
+html[data-light] .border-white\/10 { border-color: rgba(43, 40, 34, 0.12); }
+html[data-light] .border-white\/12 { border-color: rgba(43, 40, 34, 0.14); }
+html[data-light] .border-white\/15 { border-color: rgba(43, 40, 34, 0.16); }
+html[data-light] .divide-white\/5 > :not([hidden]) ~ :not([hidden]),
+html[data-light] .divide-white\/10 > :not([hidden]) ~ :not([hidden]),
+html[data-light] .divide-white\/\[0\.06\] > :not([hidden]) ~ :not([hidden]) {
   border-color: rgba(43, 40, 34, 0.1);
 }
 
 /* White-tint raises and hovers read as ink tints on paper. */
-html[data-theme="light"] .bg-white\/5,
-html[data-theme="light"] .bg-white\/\[0\.01\],
-html[data-theme="light"] .bg-white\/\[0\.02\],
-html[data-theme="light"] .bg-white\/\[0\.03\],
-html[data-theme="light"] .bg-white\/\[0\.04\],
-html[data-theme="light"] .bg-white\/\[0\.06\] {
+html[data-light] .bg-white\/5,
+html[data-light] .bg-white\/\[0\.01\],
+html[data-light] .bg-white\/\[0\.02\],
+html[data-light] .bg-white\/\[0\.03\],
+html[data-light] .bg-white\/\[0\.04\],
+html[data-light] .bg-white\/\[0\.06\] {
   background-color: rgba(43, 40, 34, 0.05);
 }
-html[data-theme="light"] .hover\:bg-white\/5:hover,
-html[data-theme="light"] .hover\:bg-white\/\[0\.03\]:hover,
-html[data-theme="light"] .hover\:bg-white\/\[0\.04\]:hover {
+html[data-light] .hover\:bg-white\/5:hover,
+html[data-light] .hover\:bg-white\/\[0\.03\]:hover,
+html[data-light] .hover\:bg-white\/\[0\.04\]:hover {
   background-color: rgba(43, 40, 34, 0.07);
 }
 
-/* Frosted glass buttons: white-on-white otherwise. */
-html[data-theme="light"] .btn-glass {
-  background: rgba(255, 255, 255, 0.72);
-  color: #2b2822;
-  border-color: rgba(43, 40, 34, 0.22);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.85),
-    0 10px 30px -18px rgba(43, 40, 34, 0.35);
-}
-html[data-theme="light"] .btn-glass:hover:not(:disabled) {
-  border-color: rgba(43, 40, 34, 0.38);
-  background: rgba(255, 255, 255, 0.9);
-}
-
-/* Ghost buttons: same treatment, one step quieter. */
-html[data-theme="light"] .btn-ghost {
-  background: rgba(255, 255, 255, 0.5);
-  color: #2b2822;
-  border-color: rgba(43, 40, 34, 0.18);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.7) inset;
-}
-html[data-theme="light"] .btn-ghost:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.75);
-  border-color: rgba(43, 40, 34, 0.3);
-}
-
 /* Buff dock cards: swap the white sheen for a paper lift. */
-html[data-theme="light"] .dock-card {
+html[data-light] .dock-card {
   background-image: none;
   background-color: rgba(255, 255, 255, 0.55);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
 /* Loading skeletons: ink shimmer instead of white-on-white. */
-html[data-theme="light"] .skeleton {
+html[data-light] .skeleton {
   background: rgba(43, 40, 34, 0.09);
 }
-html[data-theme="light"] .skeleton::after {
+html[data-light] .skeleton::after {
   background: linear-gradient(
     90deg,
     transparent 0%,
@@ -2920,7 +2293,7 @@ html[data-theme="light"] .skeleton::after {
 }
 
 /* Floating draft timer chip. */
-html[data-theme="light"] .draft-timer {
+html[data-light] .draft-timer {
   background: rgba(255, 255, 255, 0.9);
   border-color: rgba(43, 40, 34, 0.2);
   box-shadow:
@@ -2929,7 +2302,7 @@ html[data-theme="light"] .draft-timer {
 }
 
 /* Settings modal scrim: black/70 over paper is too heavy in light mode. */
-html[data-theme="light"] .bg-black\/70 {
+html[data-light] .bg-black\/70 {
   background-color: rgba(43, 40, 34, 0.35);
 }
 /* === END THEME CUSTOMIZATION === */
@@ -3112,111 +2485,15 @@ html[data-anim="off"] .sq-invalid-shake { animation: none !important; }
   .sq-invalid-shake { animation: none !important; }
 }
 
-/* --- Left-rail luxe (additive) -----------------------------------------------
-   Opt-in dressing for the in-game command rail: richer layered plate texture,
-   gold corner filigree echoing the chamfered corner-cut, a glinting header
-   hairline, and a breathing gold halo on whichever player's clock is running.
-   All decoration is pointer-events-none; animation is opacity-only and fully
-   dropped when animations are off in Settings. */
-.rail-lux {
-  position: relative;
-  background:
-    radial-gradient(120% 55% at 0% 0%, rgb(var(--seam-warm-rgb) / 0.05), transparent 55%),
-    radial-gradient(120% 55% at 100% 100%, rgb(var(--seam-cool-rgb) / 0.05), transparent 55%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0) 140px),
-    linear-gradient(345deg, rgb(var(--accent-gold-rgb) / 0.03), transparent 42%),
-    var(--surface-panel);
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.03),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    0 14px 44px -28px rgba(0, 0, 0, 0.75);
-}
-/* Corner filigree: a gold diagonal echoing the 10px chamfer plus two fading
-   hairlines along the adjacent edges. Drawn as pseudo-elements (absolutely
-   positioned, so they never become grid items) on the two cut corners, with a
-   slow candle-glint breathing their opacity. */
-.rail-lux::before,
-.rail-lux::after {
-  content: "";
-  position: absolute;
-  width: 46px;
-  height: 46px;
-  pointer-events: none;
-  z-index: 4;
-  background:
-    linear-gradient(135deg, transparent 8px, rgb(216 181 110 / 0.75) 9px, rgb(216 181 110 / 0.75) 10px, transparent 11px) no-repeat,
-    linear-gradient(90deg, rgb(216 181 110 / 0.5), transparent 85%) 13px 0 / 30px 1px no-repeat,
-    linear-gradient(180deg, rgb(216 181 110 / 0.5), transparent 85%) 0 13px / 1px 30px no-repeat;
-  animation: rail-filigree-glint 5.5s ease-in-out infinite;
-}
-.rail-lux::before {
-  top: 0;
-  left: 0;
-}
-.rail-lux::after {
-  right: 0;
-  bottom: 0;
-  transform: rotate(180deg);
-  animation-delay: 2.75s;
-}
-@keyframes rail-filigree-glint {
-  0%, 100% { opacity: 0.55; }
-  50% { opacity: 1; }
-}
-/* Header hairline glint: a narrow gold gleam that occasionally travels the
-   seam-edge divider under the mode header. Transform-only, mostly at rest. */
-.rail-header-sheen {
-  position: absolute;
-  inset-inline: 0;
-  bottom: 0;
-  height: 1px;
-  overflow: hidden;
-  pointer-events: none;
-}
-.rail-header-sheen::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, transparent, rgb(255 233 170 / 0.9), transparent);
-  transform: translateX(-100%);
-  will-change: transform;
-  animation: rail-hairline-sweep 7s ease-in-out infinite;
-}
-@keyframes rail-hairline-sweep {
-  0%, 55% { transform: translateX(-100%); }
-  90%, 100% { transform: translateX(100%); }
-}
-/* Active-player halo: a soft gold breath around the player card whose clock
-   is running. The glow is a static box-shadow on an overlay whose opacity
-   breathes (compositor-cheap); the plate itself is untouched. */
-.rail-glow-wrap {
-  position: relative;
-}
-.rail-glow-wrap--active::before {
-  content: "";
-  position: absolute;
-  inset: -2px;
-  z-index: 0;
-  border-radius: 1px;
-  pointer-events: none;
-  box-shadow:
-    0 0 0 1px rgb(216 181 110 / 0.4),
-    0 0 22px -4px rgb(216 181 110 / 0.45);
-  animation: rail-glow-breathe 3s ease-in-out infinite;
-}
-@keyframes rail-glow-breathe {
-  0%, 100% { opacity: 0.45; }
-  50% { opacity: 1; }
-}
-html[data-anim="off"] .rail-lux::before,
-html[data-anim="off"] .rail-lux::after,
-html[data-anim="off"] .rail-glow-wrap--active::before {
-  animation: none;
-  opacity: 0.7;
-}
-html[data-anim="off"] .rail-header-sheen::before {
-  animation: none;
-  opacity: 0;
+/* --- Left-rail extras -------------------------------------------------------
+   The rail is the same flat box as everything else. The two class names below
+   survive because CommandRail still spells them; they now carry a plain
+   accent border on the active player's card and nothing else. */
+.rail-lux { position: relative; }
+.rail-header-sheen { display: none; }
+.rail-glow-wrap { position: relative; }
+.rail-glow-wrap--active {
+  box-shadow: 0 0 0 1px var(--accent);
 }
 
 /* === Post-draft "waiting for opponent" notice ==============================
@@ -3226,19 +2503,31 @@ html[data-anim="off"] .rail-header-sheen::before {
    fading ellipsis — all compositor-cheap and all dropped when animations are
    off in Settings so the notice stays legible without motion. */
 .waiting-banner {
+  /* The breath used to animate box-shadow directly (a full repaint every
+     frame, for minutes at a time). The dim state now sits statically on the
+     element and the bright state on a pseudo layer whose OPACITY breathes:
+     same read, compositor-only cost. */
+  position: relative;
+  box-shadow:
+    0 0 0 1px rgb(var(--accent-rgb) / 0.30),
+    0 0 18px -6px rgb(var(--accent-rgb) / 0.35);
+}
+.waiting-banner::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow:
+    0 0 0 1px rgb(var(--accent-rgb) / 0.55),
+    0 0 26px -4px rgb(var(--accent-rgb) / 0.60);
+  opacity: 0;
   animation: waiting-breathe 2.8s ease-in-out infinite;
+  will-change: opacity;
 }
 @keyframes waiting-breathe {
-  0%, 100% {
-    box-shadow:
-      0 0 0 1px rgb(216 181 110 / 0.30),
-      0 0 18px -6px rgb(216 181 110 / 0.35);
-  }
-  50% {
-    box-shadow:
-      0 0 0 1px rgb(216 181 110 / 0.55),
-      0 0 26px -4px rgb(216 181 110 / 0.60);
-  }
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
 }
 .waiting-ping {
   animation: waiting-ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
@@ -3255,6 +2544,7 @@ html[data-anim="off"] .rail-header-sheen::before {
   0%, 100% { opacity: 0.35; }
   50% { opacity: 1; }
 }
+html[data-anim="off"] .waiting-banner::after,
 html[data-anim="off"] .waiting-banner,
 html[data-anim="off"] .waiting-ping,
 html[data-anim="off"] .waiting-ellipsis::after {
@@ -3264,14 +2554,16 @@ html[data-anim="off"] .waiting-ping { opacity: 0; }
 html[data-anim="off"] .waiting-ellipsis::after { opacity: 1; }
 
 /* === Ambient gold-dust star field (home + lobby) =============================
-   A fixed, pointer-events-none field of candlelight motes behind the page
-   (shared via src/components/StarField.tsx): three parallax dust layers (each
-   ONE animated node carrying a tiled
+   A fixed, pointer-events-none field of candlelight motes behind the page:
+   three parallax dust layers (each ONE animated node carrying a tiled
    radial-gradient speckle), a handful of 4-point brass glints that twinkle,
    and two slow diagonal shooting stars. Everything is transform/opacity only,
    no JS, no canvas. Node budget: 3 layers + 12 glints + 2 shooting = 17
-   animated nodes (10 on phones). Colors are the brass/candle family
-   (216 181 110 / 255 233 170) — gold dust, never sci-fi white.
+   animated nodes (10 on phones). The dust is the ACTIVE THEME's accent
+   (--accent-rgb) rather than a literal brass, so Neon's dust is magenta and
+   Jade's is green — it used to be gold in every theme, which read as the
+   default palette leaking through whatever the player had chosen. Warm
+   candle-white highlights stay literal: they are light, not hue.
    Fully dropped when animations are off in Settings, in perf mode, and under
    the light theme (pale dust on paper is just noise). */
 .starfield {
@@ -3286,6 +2578,7 @@ html[data-anim="off"] .waiting-ellipsis::after { opacity: 1; }
    element is oversized top-left by one tile so the drift never exposes a gap.
    Custom-property keyframes let all three layers share one animation. */
 .star-layer {
+  will-change: transform;
   --tile: 360px;
   position: absolute;
   top: calc(-1 * var(--tile));
@@ -3306,11 +2599,11 @@ html[data-anim="off"] .waiting-ellipsis::after { opacity: 1; }
   --tile: 360px;
   animation-duration: 260s;
   background-image:
-    radial-gradient(1px 1px at 23px 41px, rgb(216 181 110 / 0.5), transparent 60%),
-    radial-gradient(1px 1px at 133px 89px, rgb(216 181 110 / 0.34), transparent 60%),
+    radial-gradient(1px 1px at 23px 41px, rgb(var(--accent-rgb) / 0.5), transparent 60%),
+    radial-gradient(1px 1px at 133px 89px, rgb(var(--accent-rgb) / 0.34), transparent 60%),
     radial-gradient(1px 1px at 279px 157px, rgb(255 233 170 / 0.4), transparent 60%),
-    radial-gradient(1px 1px at 81px 231px, rgb(216 181 110 / 0.3), transparent 60%),
-    radial-gradient(1px 1px at 317px 305px, rgb(216 181 110 / 0.44), transparent 60%),
+    radial-gradient(1px 1px at 81px 231px, rgb(var(--accent-rgb) / 0.3), transparent 60%),
+    radial-gradient(1px 1px at 317px 305px, rgb(var(--accent-rgb) / 0.44), transparent 60%),
     radial-gradient(1px 1px at 191px 337px, rgb(255 233 170 / 0.26), transparent 60%);
 }
 /* Mid layer: slightly larger sparks, a notch quicker. */
@@ -3318,10 +2611,10 @@ html[data-anim="off"] .waiting-ellipsis::after { opacity: 1; }
   --tile: 460px;
   animation-duration: 170s;
   background-image:
-    radial-gradient(1.4px 1.4px at 61px 117px, rgb(216 181 110 / 0.5), transparent 60%),
+    radial-gradient(1.4px 1.4px at 61px 117px, rgb(var(--accent-rgb) / 0.5), transparent 60%),
     radial-gradient(1.2px 1.2px at 233px 47px, rgb(255 233 170 / 0.42), transparent 60%),
-    radial-gradient(1.4px 1.4px at 397px 203px, rgb(216 181 110 / 0.38), transparent 60%),
-    radial-gradient(1.2px 1.2px at 147px 331px, rgb(216 181 110 / 0.46), transparent 60%),
+    radial-gradient(1.4px 1.4px at 397px 203px, rgb(var(--accent-rgb) / 0.38), transparent 60%),
+    radial-gradient(1.2px 1.2px at 147px 331px, rgb(var(--accent-rgb) / 0.46), transparent 60%),
     radial-gradient(1.4px 1.4px at 329px 411px, rgb(255 233 170 / 0.32), transparent 60%);
 }
 /* Near layer: the brightest, fastest dust — hidden on phones. */
@@ -3330,16 +2623,17 @@ html[data-anim="off"] .waiting-ellipsis::after { opacity: 1; }
   animation-duration: 110s;
   background-image:
     radial-gradient(1.8px 1.8px at 97px 73px, rgb(255 233 170 / 0.55), transparent 60%),
-    radial-gradient(1.6px 1.6px at 341px 181px, rgb(216 181 110 / 0.5), transparent 60%),
-    radial-gradient(1.8px 1.8px at 203px 359px, rgb(216 181 110 / 0.42), transparent 60%),
+    radial-gradient(1.6px 1.6px at 341px 181px, rgb(var(--accent-rgb) / 0.5), transparent 60%),
+    radial-gradient(1.8px 1.8px at 203px 359px, rgb(var(--accent-rgb) / 0.42), transparent 60%),
     radial-gradient(1.6px 1.6px at 471px 449px, rgb(255 233 170 / 0.38), transparent 60%),
-    radial-gradient(2px 2px at 519px 61px, rgb(216 181 110 / 0.34), transparent 60%);
+    radial-gradient(2px 2px at 519px 61px, rgb(var(--accent-rgb) / 0.34), transparent 60%);
 }
 /* 4-point glint stars: a soft candle core clipped to a star, pulsing scale and
    opacity on individually offset beats so the field never reads mechanical. */
 .star-glint {
+  will-change: transform, opacity;
   position: absolute;
-  background: radial-gradient(circle, rgb(255 240 190 / 0.95) 0%, rgb(216 181 110 / 0.8) 34%, rgb(216 181 110 / 0) 72%);
+  background: radial-gradient(circle, rgb(255 240 190 / 0.95) 0%, rgb(var(--accent-rgb) / 0.8) 34%, rgb(var(--accent-rgb) / 0) 72%);
   clip-path: polygon(50% 0%, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0% 50%, 40% 40%);
   animation: star-twinkle var(--glint-dur, 4.5s) ease-in-out var(--glint-delay, 0s) infinite;
 }
@@ -3351,11 +2645,12 @@ html[data-anim="off"] .waiting-ellipsis::after { opacity: 1; }
    leading, tail trailing), alive for ~1.3s of a 28s cycle. Two in the DOM on
    staggered delays = one pass roughly every 14 seconds. */
 .star-shoot {
+  will-change: transform, opacity;
   position: absolute;
   width: 120px;
   height: 2px;
   border-radius: 999px;
-  background: linear-gradient(90deg, transparent, rgb(216 181 110 / 0.4) 45%, rgb(255 236 180 / 0.95));
+  background: linear-gradient(90deg, transparent, rgb(var(--accent-rgb) / 0.4) 45%, rgb(255 236 180 / 0.95));
   opacity: 0;
   transform: translate3d(0, 0, 0) rotate(38deg);
   animation: star-shoot 28s linear var(--shoot-delay, 5s) infinite;
@@ -3374,23 +2669,8 @@ html[data-anim="off"] .waiting-ellipsis::after { opacity: 1; }
   }
 }
 /* Perf mode and the light theme drop the whole field. */
-html[data-perf="low"] .starfield,
-html[data-theme="light"] .starfield {
+html[data-light] .starfield {
   display: none;
-}
-
-/* === The Lobby (flat, space-themed) ==========================================
-   Solid ink panels (.plate) with 1px hairline borders over the shared star
-   field (src/components/StarField.tsx). Mode identity is a flat 2px left
-   border on each row — no gradient plates, washes, spines, or glows. */
-
-/* Plain flat brass hairline under "The Lobby" masthead. */
-.hall-hairline {
-  height: 1px;
-  background: rgb(216 181 110 / 0.4);
-}
-html[data-theme="light"] .hall-hairline {
-  background: rgba(43, 40, 34, 0.25);
 }
 
 /* Each waiting seek / challenge / live game is one flat row: a solid ink
@@ -3423,7 +2703,7 @@ html[data-theme="light"] .hall-hairline {
 .hall-row--nerf { --row-rgb: var(--seam-warm-rgb); }
 .hall-row--buff { --row-rgb: var(--seam-cool-rgb); }
 .hall-row--live { --row-rgb: 239 138 95; } /* coral, for legacy live games */
-html[data-theme="light"] .hall-row {
+html[data-light] .hall-row {
   background: rgba(255, 255, 255, 0.4);
   border-color: rgba(43, 40, 34, 0.12);
   border-left-color: rgb(var(--row-rgb) / 0.6);
@@ -3461,6 +2741,7 @@ html[data-theme="light"] .hall-row {
    stars, motes), keep every static paint. */
 html[data-anim="off"] .star-layer,
 html[data-anim="off"] .star-glint {
+  will-change: transform, opacity;
   animation: none !important;
 }
 html[data-anim="off"] .star-shoot,
@@ -3469,6 +2750,7 @@ html[data-anim="off"] .hall-mote {
   opacity: 0 !important;
 }
 html[data-anim="off"] .star-glint {
+  will-change: transform, opacity;
   opacity: 0.5;
   transform: scale(0.8);
 }
@@ -3593,3 +2875,7 @@ main.recording-mode .match-board-shell {
 main.recording-mode .draft-col--rec {
   max-width: min(48rem, calc(var(--rec-w) - 1rem), 92vw) !important;
 }
+
+/* Hover lifts are decoration: they stand down with the rest. */
+html[data-anim="off"] .btn-leaf::after { display: none; }
+html[data-anim="off"] .btn-leaf:hover:not(:disabled) { transform: none; }

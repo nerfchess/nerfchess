@@ -1,19 +1,70 @@
 "use client";
 
-// Clip sharing modal: live canvas preview of a stylized replay of the last
-// few plies, recorded client-side to a webm via canvas.captureStream +
-// MediaRecorder. No backend involved; the result is offered as a download
-// and through the Web Share API where files are shareable.
+// THE STUDIO: the clip modal rebuilt as a recording panel. Three zones:
+//
+//   VIEWPORT  the preview canvas in editor chrome (REC strip, resolution
+//             readout, live mono timecode, viewfinder brackets, transport).
+//   TIMELINE  a film-strip scrubber over the whole reel: one cell per ply,
+//             capture tint, card ticks, payoff bracket, draggable playhead.
+//   DECK      the control surface: preset swatches pinned over a smallcaps
+//             tab rail (STYLE / CAM / FX / PACE / GRADE / TEXT / AUDIO /
+//             EXPLAIN / BRAND / FORMAT), dense label-left rows below.
+//
+// The instant-reel machinery is unchanged underneath: opening the modal
+// starts the offline Tier 1 encode immediately; every config change discards
+// the take and re-renders on a 450ms debounce. Transport state (play, pause,
+// scrub) lives entirely in refs and the renderer handle, so seeking and
+// pausing can NEVER trigger a re-encode. Browsers without WebCodecs get the
+// realtime Tier 2 recorder behind an explicit Record button; the rest get an
+// honest "unsupported".
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { BoardState, Color, Move } from "@/engine/types";
 import type { GameResult } from "@/engine/game";
-import { BOARD_THEMES, PIECE_THEMES, loadSettings } from "@/lib/settings";
-import { buildClipTimeline } from "./clipReplay";
-import { ClipRenderer, clipTimings, type ClipRendererHandle } from "./ClipRenderer";
+import {
+  PIECE_THEMES,
+  boardColors,
+  loadSettings,
+  resolvePieceTheme,
+} from "@/lib/settings";
+import { buildClipTimeline, planAutoClip } from "./clipReplay";
+import {
+  PIECE_WORD,
+  biggestClipCard,
+  buildClipScene,
+  clipLayout,
+  loadClipPieceImages,
+  type ClipPoster,
+  type ClipScene,
+  type ClipVerdict,
+  type PieceImageSource,
+} from "./clipScene";
+import {
+  EncodeCancelled,
+  detectEncodeSupport,
+  encodeClipOffline,
+  recordClipRealtime,
+  type EncodeSupport,
+} from "./clipEncoder";
+import { playPreviewSfx, type ClipAudioOptions } from "./clipAudio";
+import { type ClipCustomMusic, type ClipMusicSelection } from "./clipMusic";
+import { STYLE_DEFAULTS, surpriseStyle, type ClipStyle, type StylePreset } from "./clipStyles";
+import {
+  HOOK_PRESETS,
+  TIKTOK_MODE,
+  TRACK_META,
+  type ClipOptionsState,
+  type PliesChoice,
+} from "./clipOptions";
+import { type ClipRendererHandle } from "./ClipRenderer";
+import { Viewport, formatClipTime } from "./studio/Viewport";
+import { Timeline } from "./studio/Timeline";
+import { Deck } from "./studio/Deck";
+import type { Studio } from "./studio/controls";
 import { useModalChrome } from "@/lib/useModalChrome";
-
-const LENGTH_OPTIONS = [4, 6, 10] as const;
+import { useReducedMotion } from "@/lib/useReducedMotion";
+import { Button } from "@/components/ui/Button";
+import "./clipStudio.css";
 
 interface Props {
   open: boolean;
@@ -29,11 +80,9 @@ interface Props {
   result?: GameResult | null;
 }
 
-function pickMimeType(): string | undefined {
-  if (typeof MediaRecorder === "undefined") return undefined;
-  return ["video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm"].find((m) =>
-    MediaRecorder.isTypeSupported(m),
-  );
+function sizeLabel(bytes: number): string {
+  if (bytes >= 1_000_000) return `${(bytes / 1_000_000).toFixed(1)} MB`;
+  return `${Math.max(1, Math.round(bytes / 1024))} KB`;
 }
 
 export function ClipModal({
@@ -47,31 +96,115 @@ export function ClipModal({
   playerNames,
   result,
 }: Props) {
-  // Scroll lock, Escape, and the ghost-click guard on the backdrop.
   const chrome = useModalChrome(open, onClose);
-  const [plies, setPlies] = useState<number>(6);
-  const [ready, setReady] = useState(false);
+  const reduced = useReducedMotion();
+  const [pliesChoice, setPliesChoiceState] = useState<PliesChoice>("auto");
+  const [opts, setOpts] = useState<ClipOptionsState>(TIKTOK_MODE);
+  // Which style preset the current knobs came from (null: hand-tuned), and
+  // the Surprise-me tap counter (each tap is a fresh deterministic shuffle).
+  const [presetId, setPresetId] = useState<string | null>("tiktok");
+  const [surpriseTap, setSurpriseTap] = useState(0);
+  const [hook, setHook] = useState<string | null>(null); // null = auto default
+  const [images, setImages] = useState<Map<string, HTMLImageElement> | null>(null);
+  const [support, setSupport] = useState<EncodeSupport | null>(null);
   const [recording, setRecording] = useState(false);
-  const [clip, setClip] = useState<{ url: string; blob: Blob } | null>(null);
+  const [progress, setProgress] = useState<number | null>(null);
+  const [clip, setClip] = useState<{
+    url: string;
+    blob: Blob;
+    container: "mp4" | "webm";
+    tier: 1 | 2;
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [shared, setShared] = useState(false);
+  // GIF loop export: a secondary take of just the payoff window. Encoded on
+  // demand (never automatically) and discarded with the video take.
+  const [gif, setGif] = useState<{ url: string; blob: Blob } | null>(null);
+  const [gifBusy, setGifBusy] = useState(false);
+  const [gifProgress, setGifProgress] = useState(0);
+  const gifUrlRef = useRef<string | null>(null);
+  const gifRunRef = useRef(0);
+  // Imported backing track (audio/*, decoded client-side, never uploaded).
+  const [customMusic, setCustomMusic] = useState<ClipCustomMusic | null>(null);
+  const musicFileRef = useRef<HTMLInputElement | null>(null);
   const rendererRef = useRef<ClipRendererHandle | null>(null);
-  const recorderRef = useRef<MediaRecorder | null>(null);
+  const stopRef = useRef<(() => void) | null>(null);
   const clipUrlRef = useRef<string | null>(null);
+  // Monotonic id for the background auto-encode: bumping it cancels whatever
+  // render is in flight (the encoder polls it between frames).
+  const encodeRunRef = useRef(0);
 
-  // Board colors / piece sprites follow the player's settings so the clip
-  // looks like THEIR board. Loaded once per open (settings rarely change
-  // mid-session and the modal is short-lived).
-  const { colors, pieceSet } = useMemo(() => {
+  // --- Transport state: refs + tiny UI mirrors, NEVER config state ----------
+  const [playing, setPlaying] = useState(true);
+  const playingRef = useRef(true);
+  const [loopOn, setLoopOn] = useState(true);
+  const [muted, setMuted] = useState(true);
+  const wasPlayingRef = useRef(false);
+  const monitorRef = useRef<{ stop: () => void } | null>(null);
+  const tickTargets = useRef<Record<string, HTMLElement | null>>({});
+  const sceneRef = useRef<ClipScene | null>(null);
+  const optsRef = useRef(opts);
+  const mutedRef = useRef(muted);
+  useEffect(() => {
+    optsRef.current = opts;
+  }, [opts]);
+  useEffect(() => {
+    mutedRef.current = muted;
+  }, [muted]);
+
+  // Board colors and piece sprites follow the player's settings so the clip
+  // looks like THEIR board. Inline piece themes rasterize the site's own SVG
+  // silhouettes rather than swapping to a lichess set.
+  const { colors, pieceSource } = useMemo(() => {
     const s = loadSettings();
-    const theme = BOARD_THEMES[s.boardTheme] ?? BOARD_THEMES.wood;
-    return {
-      colors: { light: theme.light, dark: theme.dark },
-      pieceSet: PIECE_THEMES[s.pieceTheme]?.assetSet ?? "cburnett",
-    };
+    const t = PIECE_THEMES[resolvePieceTheme(s)] ?? PIECE_THEMES.lichessCburnett;
+    const source: PieceImageSource = t.assetSet
+      ? { kind: "asset", set: t.assetSet }
+      : { kind: "inline", wFill: t.wFill, wStroke: t.wStroke, bFill: t.bFill, bStroke: t.bStroke };
+    return { colors: boardColors(s), pieceSource: source };
     // Re-read when the modal reopens.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
+
+  // Fonts and accent resolved once from the document's CSS variables. Three
+  // voices reach the frame: display slams, body rule copy, mono chrome.
+  const { fonts, accent } = useMemo(() => {
+    const fallback = {
+      fonts: {
+        display: "system-ui, sans-serif",
+        body: "system-ui, sans-serif",
+        mono: "ui-monospace, monospace",
+      },
+      accent: "#d4a017", // gold literal, mirrors --accent-gold (canvas can't read CSS vars)
+    };
+    if (typeof document === "undefined") return fallback;
+    const read = (name: string) =>
+      getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    const font = (name: string, fb: string) => {
+      const v = read(name);
+      return v ? `${v}, ${fb}` : fb;
+    };
+    return {
+      fonts: {
+        display: font("--font-display", "system-ui, sans-serif"),
+        body: font("--font-body", "system-ui, sans-serif"),
+        mono: font("--font-mono", "ui-monospace, monospace"),
+      },
+      accent: read("--accent-hi") || read("--accent") || fallback.accent,
+    };
+  }, []);
+
+  // The auto-director's pick: window length + payoff ply + what the payoff IS
+  // (drives the suggested hook). Recomputed only when the inputs change.
+  const autoPlan = useMemo(
+    () =>
+      open
+        ? planAutoClip({ moves, snapshots, historyDiverged, signatureIds })
+        : null,
+    [open, moves, snapshots, historyDiverged, signatureIds],
+  );
+
+  const plies = pliesChoice === "auto" ? (autoPlan?.plies ?? 8) : pliesChoice;
 
   const timeline = useMemo(
     () =>
@@ -81,41 +214,246 @@ export function ClipModal({
     [open, moves, snapshots, historyDiverged, plies, signatureIds],
   );
 
-  const endText = useMemo(() => {
-    if (!result || !timeline || timeline.startPly + timeline.segments.length < moves.length) {
-      return null;
+  const bigCard = useMemo(() => (timeline ? biggestClipCard(timeline) : null), [timeline]);
+
+  // Hook auto-suggested from the payoff, respecting the emoji knob.
+  const hookSuggestion = useMemo(() => {
+    const level = opts.emojiLevel;
+    if (autoPlan?.kind === "card" && autoPlan.card) {
+      const base = `${autoPlan.card.name.toUpperCase()} IS BROKEN`;
+      return level === "brainrot" ? `${base} \u{1F525}` : base;
     }
-    return result.winner === "draw"
-      ? "Draw"
-      : result.winner === "w"
-      ? "White wins"
-      : result.winner === "b"
-      ? "Black wins"
-      : "Game aborted";
-  }, [result, timeline, moves.length]);
+    if (autoPlan?.kind === "capture" && autoPlan.captured) {
+      const base = `WAIT FOR THE ${PIECE_WORD[autoPlan.captured]}`;
+      if (level === "off") return base;
+      return level === "brainrot" ? `${base} \u{1F480}\u{1F480}` : `${base} \u{1F480}`;
+    }
+    if (bigCard) return `${bigCard.name.toUpperCase()} IS BROKEN`;
+    return HOOK_PRESETS[0];
+  }, [autoPlan, bigCard, opts.emojiLevel]);
+
+  // Intro title templates: a non-custom template supplies the hook line (the
+  // "ruined" one auto-fills the payoff card's name) AND restyles the intro
+  // slam typography inside the scene renderer. Custom keeps free text.
+  const templateHook = useMemo(() => {
+    const card = autoPlan?.card ?? bigCard;
+    switch (opts.style.titleTemplate) {
+      case "pov": {
+        if (card) return `POV: HE DRAWS ${card.name.toUpperCase()}`;
+        if (autoPlan?.kind === "capture" && autoPlan.captured) {
+          return `POV: YOUR ${PIECE_WORD[autoPlan.captured]} IS GONE`;
+        }
+        return "POV: THE ENDGAME FINDS YOU";
+      }
+      case "neversaw":
+        return "He never saw it coming";
+      case "waitforit":
+        return "Wait for it...";
+      case "illegal":
+        return "This card is ILLEGAL";
+      case "ruined":
+        return `${card?.name ?? "This card"} just ruined his life`;
+      default:
+        return null;
+    }
+  }, [opts.style.titleTemplate, autoPlan, bigCard]);
+  const hookText = templateHook ?? hook ?? hookSuggestion;
+
+  const verdict = useMemo<ClipVerdict | null>(() => {
+    const coversEnd =
+      !!timeline && timeline.startPly + timeline.segments.length >= moves.length;
+    if (result && coversEnd) {
+      if (result.winner === "draw") return { main: "DRAW", sub: result.reason };
+      if (result.winner === "w" || result.winner === "b") {
+        const name = playerNames[result.winner];
+        if (result.reason === "no legal moves" || result.reason === "king captured") {
+          return { main: "CHECKMATE", sub: `${name} wins` };
+        }
+        return {
+          main: name.toLowerCase() === "you" ? "YOU WIN" : `${name.toUpperCase()} WINS`,
+          sub: result.reason,
+        };
+      }
+      return { main: "GAME OVER", sub: null };
+    }
+    if (bigCard) return { main: bigCard.name.toUpperCase(), sub: "signature play" };
+    return { main: "TO BE CONTINUED", sub: null };
+  }, [result, timeline, moves.length, playerNames, bigCard]);
+
+  // Thumbnail designer spec: null keeps the classic frame-0 poster.
+  const poster = useMemo<ClipPoster | null>(
+    () =>
+      opts.posterFrac === null
+        ? null
+        : {
+            frac: opts.posterFrac,
+            text: opts.posterText.trim() || hookText,
+            ring: opts.posterRing,
+          },
+    [opts.posterFrac, opts.posterText, opts.posterRing, hookText],
+  );
+
+  // Beat grid for beat-synced cuts: built-in tracks only (imported audio has
+  // no BPM map, so the PACE toggle disables itself with a note).
+  const beatBpm =
+    opts.style.beatSync && opts.musicOn && !customMusic
+      ? TRACK_META[opts.musicTrack].bpm
+      : null;
+
+  const scene = useMemo<ClipScene | null>(() => {
+    if (!timeline) return null;
+    return buildClipScene({
+      timeline,
+      orientation,
+      colors,
+      names: playerNames,
+      aspect: opts.aspect,
+      hookText,
+      captionStyle: opts.captionStyle,
+      emojiLevel: opts.emojiLevel,
+      style: opts.style,
+      ctaText: opts.ctaText,
+      speedRamp: opts.speedRamp,
+      freezeStamp: opts.freezeStamp,
+      momentumBar: opts.momentumBar,
+      moveCounter: opts.moveCounter,
+      watermark: opts.watermarkOn ? opts.handle.trim() || "nerfchess.com" : null,
+      endCard: opts.endCard,
+      explainArrows: opts.explainArrows,
+      explainRules: opts.explainRules,
+      explainCallouts: opts.explainCallouts,
+      verdict,
+      fonts,
+      accent,
+      payoffPly: pliesChoice === "auto" ? (autoPlan?.payoffPly ?? null) : null,
+      beatBpm,
+      poster,
+    });
+  }, [
+    timeline,
+    orientation,
+    colors,
+    playerNames,
+    opts,
+    hookText,
+    verdict,
+    fonts,
+    accent,
+    pliesChoice,
+    autoPlan,
+    beatBpm,
+    poster,
+  ]);
+  useEffect(() => {
+    sceneRef.current = scene;
+  }, [scene]);
+
+  // The music selection handed to both encode tiers. Null when off; the
+  // imported track (if any) replaces the built-in one.
+  const music = useMemo<ClipMusicSelection | null>(
+    () =>
+      opts.musicOn
+        ? { track: opts.musicTrack, volume: opts.musicVolume, custom: customMusic }
+        : null,
+    [opts.musicOn, opts.musicTrack, opts.musicVolume, customMusic],
+  );
+
+  // The whole audio mix: sfx level + per-voice mutes + the music bed. One
+  // object so the encode effect keys on every audible knob.
+  const audioMix = useMemo<ClipAudioOptions>(
+    () => ({
+      sfx: opts.sound,
+      sfxVolume: opts.sfxVolume,
+      mutes: opts.voiceMutes,
+      music,
+    }),
+    [opts.sound, opts.sfxVolume, opts.voiceMutes, music],
+  );
 
   const discardClip = useCallback(() => {
     if (clipUrlRef.current) URL.revokeObjectURL(clipUrlRef.current);
     clipUrlRef.current = null;
     setClip(null);
     setShared(false);
+    // The GIF is a take of the same config: discard it too, and supersede any
+    // GIF encode in flight (the encoder polls the run id between frames).
+    if (gifUrlRef.current) URL.revokeObjectURL(gifUrlRef.current);
+    gifUrlRef.current = null;
+    setGif(null);
+    gifRunRef.current++;
+    setGifBusy(false);
   }, []);
 
-  // A new length invalidates the recorded take (handled in the length
-  // buttons' onClick; closing unmounts the modal entirely).
-  const selectPlies = useCallback(
-    (n: number) => {
-      setPlies(n);
-      setError(null);
-      discardClip();
-    },
-    [discardClip],
-  );
+  // GIF loop: 2-4s of the payoff window, encoded client-side by the
+  // dependency-free quantizer + LZW in clipGif.ts.
+  const exportGif = useCallback(async () => {
+    const sc = sceneRef.current;
+    if (!sc || !images || gifBusy) return;
+    const run = ++gifRunRef.current;
+    setGifBusy(true);
+    setGifProgress(0);
+    try {
+      const { encodeClipGif } = await import("./clipGif");
+      const res = await encodeClipGif(
+        sc,
+        images,
+        (f) => {
+          if (gifRunRef.current === run) setGifProgress(f);
+        },
+        () => gifRunRef.current !== run,
+      );
+      if (gifRunRef.current !== run) return;
+      const url = URL.createObjectURL(res.blob);
+      gifUrlRef.current = url;
+      setGif({ url, blob: res.blob });
+      // Surfaced for automated tests / debugging.
+      console.log(`nerfchess gif recorded: ${res.blob.size} bytes`);
+    } catch (e) {
+      if (gifRunRef.current === run && (e as Error)?.name !== "GifCancelled") {
+        setError("GIF export failed in this browser.");
+      }
+    } finally {
+      if (gifRunRef.current === run) setGifBusy(false);
+    }
+  }, [images, gifBusy]);
+
+  // Piece sprites, loaded once per source (the modal mounts fresh per open,
+  // so the initial null state already covers the loading readout).
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    loadClipPieceImages(pieceSource).then((loaded) => {
+      if (!cancelled) setImages(loaded);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, pieceSource]);
+
+  // Which encode tier this browser gets, for the readout and the encode path.
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    const L = clipLayout(opts.aspect);
+    detectEncodeSupport(L.W, L.H, opts.sound || opts.musicOn).then((s) => {
+      if (!cancelled) setSupport(s);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, opts.aspect, opts.sound, opts.musicOn]);
 
   useEffect(() => {
+    const runRef = encodeRunRef;
+    const monitor = monitorRef;
+    const gifRun = gifRunRef;
     return () => {
-      recorderRef.current?.stop();
+      stopRef.current?.();
+      runRef.current++;
+      gifRun.current++;
+      monitor.current?.stop();
       if (clipUrlRef.current) URL.revokeObjectURL(clipUrlRef.current);
+      if (gifUrlRef.current) URL.revokeObjectURL(gifUrlRef.current);
     };
   }, []);
 
@@ -131,65 +469,365 @@ export function ClipModal({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [open, onClose]);
 
-  const record = () => {
-    const handle = rendererRef.current;
-    const canvas = handle?.canvas;
-    if (!handle || !canvas || recording) return;
-    const mimeType = pickMimeType();
-    if (!mimeType || typeof canvas.captureStream !== "function") {
-      setError("Recording isn't supported in this browser.");
-      return;
+  // INSTANT REEL: as soon as the scene, sprites, and a Tier 1 encoder are
+  // ready (and after any settings change discards the old take), the offline
+  // render starts by itself. Debounced so chip-mashing restarts once, and
+  // cancellable mid-render via the run id the encoder polls. Transport state
+  // (pause / scrub) is deliberately absent from these deps.
+  useEffect(() => {
+    if (!open || !scene || !images || !support || support.tier !== 1) return;
+    if (clip || error) return;
+    const runRef = encodeRunRef;
+    const run = ++runRef.current;
+    const timer = window.setTimeout(async () => {
+      if (encodeRunRef.current !== run) return;
+      setRecording(true);
+      setProgress(0);
+      try {
+        const res = await encodeClipOffline(
+          scene,
+          images,
+          support,
+          audioMix,
+          (f) => {
+            if (encodeRunRef.current === run) setProgress(f);
+          },
+          () => encodeRunRef.current !== run,
+        );
+        if (encodeRunRef.current !== run) return;
+        const url = URL.createObjectURL(res.blob);
+        clipUrlRef.current = url;
+        setClip({ url, blob: res.blob, container: res.container, tier: res.tier });
+        // Surfaced for automated tests / debugging.
+        console.log(`nerfchess clip recorded: ${res.blob.size} bytes`);
+      } catch (e) {
+        if (encodeRunRef.current === run && !(e instanceof EncodeCancelled)) {
+          setError("Rendering failed in this browser. Try adjusting the format.");
+        }
+      } finally {
+        if (encodeRunRef.current === run) {
+          setRecording(false);
+          setProgress(null);
+        }
+      }
+    }, 450);
+    return () => {
+      window.clearTimeout(timer);
+      // Supersede any in-flight render; the encoder bails at the next frame.
+      runRef.current++;
+    };
+  }, [open, scene, images, support, clip, error, audioMix]);
+
+  // Every option change invalidates the recorded take (frame 0 is burned into
+  // the file, so even a caption edit means a re-render). The auto-encode
+  // effect above then rebuilds the reel on its own.
+  const set = useCallback(
+    <K extends keyof ClipOptionsState>(key: K, value: ClipOptionsState[K]) => {
+      setOpts((o) => ({ ...o, [key]: value }));
+      setError(null);
+      discardClip();
+    },
+    [discardClip],
+  );
+  const editHook = useCallback(
+    (value: string | null) => {
+      setHook(value);
+      setError(null);
+      discardClip();
+    },
+    [discardClip],
+  );
+  const setPliesChoice = useCallback(
+    (p: PliesChoice) => {
+      setPliesChoiceState(p);
+      setError(null);
+      discardClip();
+    },
+    [discardClip],
+  );
+
+  // One style knob changed by hand: the preset chip lets go.
+  const setStyle = useCallback(
+    (patch: Partial<ClipStyle>) => {
+      setOpts((o) => ({ ...o, style: { ...o.style, ...patch } }));
+      setPresetId(null);
+      setError(null);
+      discardClip();
+    },
+    [discardClip],
+  );
+
+  // Preset tap: a partial override of the defaults (plus its vibe extras),
+  // keeping the current Surprise seed so seeded FX stay stable.
+  const applyPreset = useCallback(
+    (p: StylePreset) => {
+      setOpts((o) => ({
+        ...o,
+        style: { ...STYLE_DEFAULTS, ...p.style, seed: o.style.seed },
+        ...(p.extras?.emojiLevel !== undefined ? { emojiLevel: p.extras.emojiLevel } : {}),
+        ...(p.extras?.captionStyle !== undefined ? { captionStyle: p.extras.captionStyle } : {}),
+        ...(p.extras?.musicTrack !== undefined ? { musicTrack: p.extras.musicTrack } : {}),
+      }));
+      setPresetId(p.id);
+      setError(null);
+      discardClip();
+    },
+    [discardClip],
+  );
+
+  // Surprise me: deterministic per tap count. Tap N always yields combo N.
+  const surpriseMe = useCallback(() => {
+    const tap = surpriseTap + 1;
+    setSurpriseTap(tap);
+    setOpts((o) => ({ ...o, style: surpriseStyle(tap) }));
+    setPresetId("surprise");
+    setError(null);
+    discardClip();
+  }, [surpriseTap, discardClip]);
+
+  const resetTikTok = useCallback(() => {
+    setOpts(TIKTOK_MODE);
+    setPliesChoiceState("auto");
+    setPresetId("tiktok");
+    setHook(null);
+    setError(null);
+    discardClip();
+  }, [discardClip]);
+
+  // Import your own backing track: decoded with the Web Audio API right here
+  // in the browser; the file is never uploaded anywhere.
+  const importMusicFile = useCallback(
+    async (file: File) => {
+      try {
+        const data = await file.arrayBuffer();
+        const ac = new AudioContext();
+        try {
+          const buffer = await ac.decodeAudioData(data);
+          setCustomMusic({ buffer, name: file.name });
+          setError(null);
+          discardClip();
+        } finally {
+          void ac.close();
+        }
+      } catch {
+        setError("Couldn't decode that audio file. Try an mp3, wav, or ogg.");
+      }
+    },
+    [discardClip],
+  );
+  const clearCustomMusic = useCallback(() => {
+    setCustomMusic(null);
+    setError(null);
+    discardClip();
+  }, [discardClip]);
+
+  // --- Preview monitor (sfx out loud while unmuted) --------------------------
+  const stopMonitor = useCallback(() => {
+    monitorRef.current?.stop();
+    monitorRef.current = null;
+  }, []);
+  const syncMonitor = useCallback(() => {
+    stopMonitor();
+    const h = rendererRef.current;
+    const sc = sceneRef.current;
+    const o = optsRef.current;
+    if (!h || !sc || mutedRef.current || !h.isPlaying() || !o.sound) return;
+    monitorRef.current = playPreviewSfx(sc.audio, h.getTime(), {
+      volume: o.sfxVolume,
+      mutes: o.voiceMutes,
+    });
+  }, [stopMonitor]);
+  useEffect(() => {
+    if (muted) stopMonitor();
+    else syncMonitor();
+  }, [muted, stopMonitor, syncMonitor]);
+  // A new scene (config change) restarts the schedule under the monitor.
+  useEffect(() => {
+    if (!mutedRef.current) syncMonitor();
+  }, [scene, syncMonitor]);
+
+  // --- Transport -------------------------------------------------------------
+  const togglePlay = useCallback(() => {
+    const h = rendererRef.current;
+    if (!h) return;
+    const p = h.toggle();
+    playingRef.current = p;
+    setPlaying(p);
+    if (p) syncMonitor();
+    else stopMonitor();
+  }, [syncMonitor, stopMonitor]);
+  const restart = useCallback(() => {
+    rendererRef.current?.restart();
+    playingRef.current = true;
+    setPlaying(true);
+    syncMonitor();
+  }, [syncMonitor]);
+  const scrubStart = useCallback(() => {
+    const h = rendererRef.current;
+    if (!h) return;
+    wasPlayingRef.current = h.isPlaying();
+    h.pause();
+    playingRef.current = false;
+    setPlaying(false);
+    stopMonitor();
+  }, [stopMonitor]);
+  const scrub = useCallback((tMs: number) => {
+    rendererRef.current?.seek(tMs);
+  }, []);
+  const scrubEnd = useCallback(() => {
+    if (!wasPlayingRef.current) return;
+    rendererRef.current?.play();
+    playingRef.current = true;
+    setPlaying(true);
+    syncMonitor();
+  }, [syncMonitor]);
+  const stepFrame = useCallback(
+    (dir: 1 | -1) => {
+      rendererRef.current?.stepFrame(dir);
+      playingRef.current = false;
+      setPlaying(false);
+      stopMonitor();
+    },
+    [stopMonitor],
+  );
+  const jumpPly = useCallback(
+    (dir: 1 | -1) => {
+      const h = rendererRef.current;
+      const sc = sceneRef.current;
+      if (!h || !sc) return;
+      const marks = [0, ...sc.segs.map((sf) => sf.start), sc.freezeStart];
+      const t = h.getTime();
+      let target = dir > 0 ? sc.durationMs : 0;
+      if (dir > 0) {
+        for (const m of marks) {
+          if (m > t + 1) {
+            target = m;
+            break;
+          }
+        }
+      } else {
+        for (let i = marks.length - 1; i >= 0; i--) {
+          if (marks[i] < t - 40) {
+            target = marks[i];
+            break;
+          }
+        }
+      }
+      h.seek(target);
+      if (h.isPlaying()) syncMonitor();
+    },
+    [syncMonitor],
+  );
+
+  // The transport tick writes straight into DOM nodes (timecode, playhead,
+  // meter needle), bypassing React so a 60fps preview costs zero renders.
+  const registerTickTarget = useCallback((key: string, el: HTMLElement | null) => {
+    tickTargets.current[key] = el;
+  }, []);
+  const onTick = useCallback((tMs: number, isPlaying: boolean) => {
+    const sc = sceneRef.current;
+    if (!sc) return;
+    const els = tickTargets.current;
+    const pct = `${((tMs / Math.max(1, sc.durationMs)) * 100).toFixed(2)}%`;
+    const stampText = formatClipTime(tMs);
+    if (els.timecode) els.timecode.textContent = stampText;
+    if (els.playhead) els.playhead.style.left = pct;
+    if (els.ptime) els.ptime.textContent = stampText;
+    if (els.needle) els.needle.style.left = pct;
+    if (els.strip) els.strip.setAttribute("aria-valuenow", String(Math.round(tMs)));
+    if (playingRef.current !== isPlaying) {
+      playingRef.current = isPlaying;
+      setPlaying(isPlaying);
     }
+  }, []);
+  const onLoop = useCallback(() => {
+    if (!mutedRef.current) syncMonitor();
+  }, [syncMonitor]);
+  const onAutoPause = useCallback(() => {
+    stopMonitor();
+  }, [stopMonitor]);
+
+  // Desktop keyboard transport: space play/pause, arrows step a frame,
+  // [ ] jump a ply. Fine-pointer devices only, so mobile stays untouched.
+  const keysRef = useRef({ togglePlay, stepFrame, jumpPly });
+  useEffect(() => {
+    keysRef.current = { togglePlay, stepFrame, jumpPly };
+  }, [togglePlay, stepFrame, jumpPly]);
+  useEffect(() => {
+    if (!open || typeof window === "undefined") return;
+    if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+    const onKey = (e: KeyboardEvent) => {
+      const tgt = e.target as HTMLElement | null;
+      if (
+        tgt &&
+        (tgt.tagName === "INPUT" ||
+          tgt.tagName === "TEXTAREA" ||
+          tgt.tagName === "SELECT" ||
+          tgt.isContentEditable)
+      ) {
+        return;
+      }
+      if (e.key === " ") {
+        if (tgt && (tgt.tagName === "BUTTON" || tgt.tagName === "A")) return;
+        e.preventDefault();
+        keysRef.current.togglePlay();
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        keysRef.current.stepFrame(1);
+      } else if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        keysRef.current.stepFrame(-1);
+      } else if (e.key === "]") {
+        e.preventDefault();
+        keysRef.current.jumpPly(1);
+      } else if (e.key === "[") {
+        e.preventDefault();
+        keysRef.current.jumpPly(-1);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  // Tier 2 fallback: realtime MediaRecorder over the live preview canvas,
+  // behind an explicit Record / Re-record button (a realtime take needs the
+  // preview restarted from the top, so it never auto-fires).
+  const recordRealtime = async () => {
+    if (!scene || !images || recording || !support || support.tier !== 2) return;
     discardClip();
     setError(null);
+    setRecording(true);
+    setProgress(null);
     try {
-      const stream = canvas.captureStream(30);
-      const recorder = new MediaRecorder(stream, {
-        mimeType,
-        videoBitsPerSecond: 6_000_000,
-      });
-      const chunks: Blob[] = [];
-      recorder.ondataavailable = (e) => {
-        if (e.data.size > 0) chunks.push(e.data);
-      };
-      recorder.onstop = () => {
-        recorderRef.current = null;
-        setRecording(false);
-        for (const track of stream.getTracks()) track.stop();
-        const blob = new Blob(chunks, { type: mimeType.split(";")[0] });
-        if (blob.size === 0) {
-          setError("Recording produced no data. Try again.");
-          return;
-        }
-        const url = URL.createObjectURL(blob);
-        clipUrlRef.current = url;
-        setClip({ url, blob });
-        // Surfaced for automated tests / debugging.
-        console.log(`nerfchess clip recorded: ${blob.size} bytes`);
-      };
-      recorderRef.current = recorder;
-      setRecording(true);
-      recorder.start(250);
+      const canvas = rendererRef.current?.canvas;
+      if (!canvas) throw new Error("no canvas");
+      const rec = recordClipRealtime(canvas, scene, support, audioMix);
+      stopRef.current = rec.stop;
       // Restart the timeline in sync with the recorder; stop shortly after
       // the run completes so the final frame lands in the file.
-      handle.restart(() => {
-        window.setTimeout(() => {
-          if (recorderRef.current === recorder && recorder.state !== "inactive") {
-            recorder.stop();
-          }
-        }, 250);
+      rendererRef.current?.restart(() => {
+        window.setTimeout(() => rec.stop(), 250);
       });
+      playingRef.current = true;
+      setPlaying(true);
+      const res = await rec.done;
+      stopRef.current = null;
+      const url = URL.createObjectURL(res.blob);
+      clipUrlRef.current = url;
+      setClip({ url, blob: res.blob, container: res.container, tier: res.tier });
+      console.log(`nerfchess clip recorded: ${res.blob.size} bytes`);
     } catch {
-      setRecording(false);
-      recorderRef.current = null;
-      setError("Recording failed to start in this browser.");
+      setError("Recording failed in this browser. Try again or switch format.");
     }
+    setRecording(false);
   };
 
   const clipFile = useMemo(
     () =>
       clip
-        ? new File([clip.blob], "nerfchess-clip.webm", { type: clip.blob.type || "video/webm" })
+        ? new File([clip.blob], `nerfchess-clip.${clip.container}`, {
+            type: clip.blob.type || `video/${clip.container}`,
+          })
         : null,
     [clip],
   );
@@ -202,7 +840,7 @@ export function ClipModal({
   const share = async () => {
     if (!clipFile) return;
     try {
-      await navigator.share({ files: [clipFile], title: "Nerf Chess clip" });
+      await navigator.share({ files: [clipFile], title: "Nerf Chess reel" });
       setShared(true);
       window.setTimeout(() => setShared(false), 2000);
     } catch {
@@ -212,20 +850,56 @@ export function ClipModal({
 
   if (!open) return null;
 
-  const durationSec = timeline ? Math.round(clipTimings(timeline).durationMs / 100) / 10 : null;
+  const durationSec = scene ? Math.round(scene.durationMs / 100) / 10 : null;
+  const previewMax =
+    opts.aspect === "tiktok"
+      ? "max-w-[13rem] sm:max-w-[15rem]"
+      : opts.aspect === "square"
+        ? "max-w-[18rem]"
+        : opts.aspect === "youtube"
+          ? "max-w-[24rem]"
+          : "max-w-[19rem]";
+  const settingsLocked = recording && support?.tier === 2;
+
+  const studio: Studio = {
+    opts,
+    set,
+    setStyle,
+    locked: settingsLocked,
+    accent,
+    scene,
+    images,
+    hookText,
+    hookSuggestion,
+    editHook,
+    pliesChoice,
+    setPliesChoice,
+    resetTikTok,
+    customMusic,
+    pickMusicFile: () => musicFileRef.current?.click(),
+    clearCustomMusic,
+    musicFileRef,
+    importMusicFile: (file) => void importMusicFile(file),
+    registerTickTarget,
+  };
 
   return (
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Share a clip of the final moves"
+      aria-label="Clip studio: cut and save a reel of the final moves"
       data-clip-modal
       data-clip-bytes={clip?.blob.size ?? 0}
-      className="fixed inset-0 z-[60] grid place-items-center bg-[#0f0d0a]/70 px-4 py-6 backdrop-blur-sm"
+      data-clip-gif-bytes={gif?.blob.size ?? 0}
+      data-clip-gif-type={gif?.blob.type ?? ""}
+      data-clip-duration={scene?.durationMs ?? 0}
+      data-clip-style-sig={`${opts.style.grade}:${opts.style.particles}:${opts.style.transition}:${opts.style.zoom}:${opts.style.speed}:${opts.style.seed}:${opts.style.captionPack}:${opts.style.titleTemplate}:${opts.style.outro}:${opts.style.beatSync ? "beat" : "free"}:${opts.style.tensionMeter ? "tension" : "-"}:${opts.style.minimap ? "minimap" : "-"}`}
+      data-clip-preset={presetId ?? "custom"}
+      className="fixed inset-0 z-[60] grid place-items-center bg-[#0f0d0a]/70 px-2 py-3 backdrop-blur-sm sm:px-4 sm:py-6"
       onPointerDown={chrome.onBackdropPointerDown}
     >
       <div
-        className="plate plate-raised gilt relative w-[min(94vw,30rem)] max-h-[calc(100dvh-3rem)] overflow-y-auto p-5 shadow-2xl sm:p-6"
+        className="plate plate-raised relative w-[min(97vw,66rem)] max-h-[calc(100dvh-1.5rem)] overflow-y-auto p-3 shadow-2xl sm:p-5"
         onPointerDown={(event) => event.stopPropagation()}
       >
         <span className="card-corner tl" />
@@ -234,103 +908,77 @@ export function ClipModal({
         <span className="card-corner br" />
 
         <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="smallcaps text-[10px] text-parchment-400">Clip the finish</p>
-            <h2 className="mt-0.5 font-display text-2xl font-bold text-parchment">
-              Share a replay clip
+          <div className="min-w-0">
+            <p>Clip the finish</p>
+            <h2 className="mt-0.5 font-display text-xl font-bold text-parchment sm:text-2xl">
+              The studio
             </h2>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="grid h-9 w-9 shrink-0 place-items-center btn-ghost text-parchment-300"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
+          <div className="flex items-center gap-2">
+            <span
+              className="hidden font-mono text-[10px] uppercase tracking-[0.14em] text-parchment-400 sm:inline"
+              data-clip-tier={support?.tier ?? 0}
+            >
+              {support ? support.detail : "Probing encoder"}
+            </span>
+            <Button
+              tone="ghost"
+              onClick={onClose}
+              aria-label="Close"
+              iconOnly
+              className="shrink-0 text-parchment-300"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </Button>
+          </div>
         </div>
-        <p className="mt-1 text-xs leading-snug text-parchment-400">
-          A stylized replay of the last moves: captures, spawns, and signature plays are
-          re-drawn in the clip&apos;s own look, not the full in-game effects.
-        </p>
 
-        {timeline ? (
+        {timeline && scene ? (
           <>
-            <div className="mt-4">
-              <ClipRenderer
-                ref={rendererRef}
-                timeline={timeline}
-                orientation={orientation}
-                colors={colors}
-                pieceSet={pieceSet}
-                names={playerNames}
-                endText={endText}
-                onReady={() => setReady(true)}
-                className="mx-auto block w-full max-w-[24rem] border border-white/10 shadow-plate"
-              />
-            </div>
-
-            <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-              <div className="flex items-center gap-1" role="group" aria-label="Clip length">
-                <span className="smallcaps mr-1 text-[10px] text-parchment-400">Last</span>
-                {LENGTH_OPTIONS.map((n) => (
-                  <button
-                    key={n}
-                    type="button"
-                    onClick={() => selectPlies(n)}
-                    disabled={recording}
-                    aria-pressed={plies === n}
-                    className={
-                      "min-h-[36px] border px-3 py-1 font-display text-xs font-semibold transition " +
-                      (plies === n
-                        ? "border-gold/60 bg-gold/15 text-gold-leaf"
-                        : "border-white/15 bg-white/[0.03] text-parchment-300 hover:border-white/30")
-                    }
-                  >
-                    {n}
-                  </button>
-                ))}
-                <span className="smallcaps ml-1 text-[10px] text-parchment-400">plies</span>
-              </div>
-              <span className="text-[11px] text-parchment-400">
-                {timeline.segments.length < plies
-                  ? `${timeline.segments.length} replayable`
-                  : durationSec
-                  ? `~${durationSec}s`
-                  : ""}
-              </span>
-            </div>
-
-            <div className="mt-3 grid grid-cols-1 gap-2">
-              <button
-                type="button"
-                onClick={record}
-                disabled={recording || !ready}
-                data-clip-record
-                className={
-                  "min-h-[44px] rounded-sm px-5 py-2.5 font-display font-semibold " +
-                  (recording ? "btn-ghost opacity-80 cursor-default" : "btn-leaf")
-                }
-              >
-                {recording ? (
-                  <span className="inline-flex items-center gap-2">
-                    <span
-                      aria-hidden
-                      className="h-2 w-2 animate-pulse rounded-full bg-oxblood-glow"
-                    />
-                    Recording…
-                  </span>
-                ) : !ready ? (
-                  "Loading pieces…"
-                ) : clip ? (
-                  "Re-record"
-                ) : (
-                  "Record clip"
+            <div className="clip-studio-grid mt-3">
+              <div className="clip-studio-left">
+                <Viewport
+                  scene={scene}
+                  images={images}
+                  rendererRef={rendererRef}
+                  playing={playing}
+                  loop={loopOn}
+                  muted={muted}
+                  onTogglePlay={togglePlay}
+                  onRestart={restart}
+                  onToggleLoop={() => setLoopOn((v) => !v)}
+                  onToggleMute={() => setMuted((v) => !v)}
+                  onTick={onTick}
+                  onLoop={onLoop}
+                  onAutoPause={onAutoPause}
+                  registerTickTarget={registerTickTarget}
+                  previewMax={previewMax}
+                />
+                <div className="mt-2">
+                  <Timeline
+                    scene={scene}
+                    onScrubStart={scrubStart}
+                    onScrub={scrub}
+                    onScrubEnd={scrubEnd}
+                    registerTickTarget={registerTickTarget}
+                  />
+                </div>
+                {reduced && (
+                  <p className="mt-1 font-mono text-[9px] uppercase tracking-[0.14em] text-parchment-500">
+                    Reduced motion: chrome still; transport live
+                  </p>
                 )}
-              </button>
+              </div>
+
+              <Deck
+                studio={studio}
+                presetId={presetId}
+                applyPreset={applyPreset}
+                surpriseMe={surpriseMe}
+              />
             </div>
 
             {error && (
@@ -339,50 +987,110 @@ export function ClipModal({
               </p>
             )}
 
-            {clip && (
-              <div className="mt-3 border border-white/10 bg-white/[0.02] p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="smallcaps text-[10px] text-parchment-400">
-                    Clip ready · {(clip.blob.size / 1024).toFixed(0)} KB · webm
-                  </span>
-                </div>
-                <div className="mt-2 grid grid-cols-2 gap-2">
-                  <a
-                    href={clip.url}
-                    download="nerfchess-clip.webm"
-                    data-clip-download
-                    className="btn-leaf inline-flex min-h-[44px] items-center justify-center gap-2 rounded-sm px-4 py-2 font-display text-sm font-semibold"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                      <polyline points="7 10 12 15 17 10" />
-                      <line x1="12" y1="15" x2="12" y2="3" />
-                    </svg>
-                    Download
-                  </a>
-                  {canShare ? (
-                    <button
-                      type="button"
-                      onClick={share}
-                      className="btn-ghost inline-flex min-h-[44px] items-center justify-center gap-2 rounded-sm px-4 py-2 font-display text-sm"
+            {/* Fixed export bar: SAVE with format + size baked into the label,
+                Share beside it, encode progress as a hairline fill. */}
+            <div className="clip-export">
+              {recording && support?.tier === 1 && (
+                <div
+                  className="clip-export-hairline"
+                  style={{ width: `${Math.round((progress ?? 0) * 100)}%` }}
+                  aria-hidden
+                />
+              )}
+              <div className="clip-export-row" aria-live="polite">
+                {clip ? (
+                  <>
+                    <a
+                      href={clip.url}
+                      download={`nerfchess-clip.${clip.container}`}
+                      data-clip-download
+                      data-clip-ready
+                      className="btn-leaf press inline-flex min-h-[48px] flex-1 items-center justify-center gap-2 rounded-[1px] px-4 py-2 font-display text-base font-semibold"
                     >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                        <circle cx="18" cy="5" r="3" />
-                        <circle cx="6" cy="12" r="3" />
-                        <circle cx="18" cy="19" r="3" />
-                        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-                        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
                       </svg>
-                      {shared ? "Shared" : "Share"}
-                    </button>
-                  ) : (
-                    <span className="inline-flex min-h-[44px] items-center justify-center px-2 text-center text-[11px] text-parchment-400">
-                      Sharing files isn&apos;t available here
-                    </span>
-                  )}
-                </div>
+                      Save {clip.container.toUpperCase()} {sizeLabel(clip.blob.size)}
+                    </a>
+                    {canShare ? (
+                      <Button tone="primary" size="lg" onClick={share} className="font-semibold">
+                        {shared ? "Shared" : "Share"}
+                      </Button>
+                    ) : null}
+                    {clip.tier === 2 && (
+                      <Button tone="ghost" size="lg" onClick={recordRealtime} disabled={recording} data-clip-record>
+                        Re-record
+                      </Button>
+                    )}
+                  </>
+                ) : support?.tier === 1 ? (
+                  <span className="inline-flex min-h-[48px] flex-1 items-center justify-center gap-2 border border-white/10 bg-white/[0.02] px-4 font-mono text-[11px] uppercase tracking-[0.14em] text-parchment-300">
+                    {progress !== null
+                      ? `Render ${Math.round(progress * 100)}%`
+                      : images
+                        ? "Render queued"
+                        : "Loading pieces"}
+                  </span>
+                ) : support?.tier === 2 ? (
+                  <Button
+                    tone={recording ? "ghost" : "leaf"}
+                    size="lg"
+                    onClick={recordRealtime}
+                    disabled={recording || !images}
+                    data-clip-record
+                    block
+                    className={"font-semibold " + (recording ? "opacity-80" : "")}
+                  >
+                    {recording ? "Recording live" : !images ? "Loading pieces" : "Record reel"}
+                  </Button>
+                ) : (
+                  <span className="inline-flex min-h-[48px] flex-1 items-center justify-center px-4 text-center text-xs text-parchment-400">
+                    {support ? support.detail : "Probing this browser's encoder"}
+                  </span>
+                )}
+                {/* GIF loop: a secondary export of just the payoff window,
+                    encoded on demand by the dependency-free encoder. */}
+                {gif ? (
+                  <a
+                    href={gif.url}
+                    download="nerfchess-loop.gif"
+                    data-clip-gif-download
+                    className="btn-ghost press inline-flex min-h-[48px] items-center justify-center gap-2 px-4 font-display text-sm font-semibold"
+                  >
+                    GIF {sizeLabel(gif.blob.size)}
+                  </a>
+                ) : (
+                  <Button
+                    tone="ghost"
+                    size="lg"
+                    onClick={() => void exportGif()}
+                    disabled={gifBusy || !scene || !images}
+                    data-clip-gif
+                    title="Export a 2-4s looping GIF of the payoff"
+                    className="font-semibold"
+                  >
+                    {gifBusy ? `GIF ${Math.round(gifProgress * 100)}%` : "GIF loop"}
+                  </Button>
+                )}
               </div>
-            )}
+              <div className="clip-export-status">
+                <span>
+                  {pliesChoice === "auto" ? "Auto window" : `Last ${plies}`} · {timeline.segments.length}
+                  {" "}plies · {durationSec ?? "?"}s
+                </span>
+                <span>
+                  {clip
+                    ? `Tier ${clip.tier} · ${clip.container}`
+                    : canShare === false && clipFile
+                      ? "Save works everywhere"
+                      : support
+                        ? `Tier ${support.tier}`
+                        : ""}
+                </span>
+              </div>
+            </div>
           </>
         ) : (
           <div className="mt-4 border border-white/10 bg-white/[0.02] p-4 text-sm text-parchment-300">

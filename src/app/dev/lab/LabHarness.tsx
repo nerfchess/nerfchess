@@ -32,7 +32,7 @@ import { turnCost } from "@/engine/buff";
 import type { Color, Move, Square } from "@/engine/types";
 import { squareName } from "@/engine/types";
 import { draftZones } from "@/lib/draftOnline";
-import { computeFxVisual } from "@/components/effects/fxZones";
+import { computeFxVisual, fxVisualFields } from "@/components/effects/fxZones";
 import { FX_LEVELS, setFxLevel, useFxLevel, type FxLevel } from "@/lib/fxToggle";
 import {
   LAB_KINDS,
@@ -188,10 +188,7 @@ export function LabHarness() {
           doomSquares: zone.doom,
           lockedSquares: zone.locked,
           barredSquares: zone.barred,
-          kingSafeSquares: fxZone.kingSafeSquares,
-          pawnClampSquares: fxZone.pawnClampSquares,
-          stunSquares: fxZone.stunSquares,
-          motifSquares: fxZone.motifs,
+          ...fxVisualFields(fxZone),
         },
         error: null,
       };

@@ -175,13 +175,9 @@
 }
 .prk-spin { animation: prk-spin calc(1.5s * var(--fx-dur, 1)) linear both; transform-origin: 50% 50%; }
 
-/* Blinking badge (LIVE / cursor / alert). */
-@keyframes prk-blink {
-  0%, 100% { opacity: 0; }
-  20%, 40%, 60%, 80% { opacity: 1; }
-  30%, 50%, 70% { opacity: 0.25; }
-}
-.prk-blink { animation: prk-blink calc(1.5s * var(--fx-dur, 1)) steps(1, end) both; }
+/* (prk-blink retired: the blinking LIVE/alert badge was never mounted by any
+   scene — a generic blink telling no event, removed in the useless-flash
+   pass.) */
 
 /* Rubber stamp slam. */
 @keyframes prk-stamp {
@@ -387,6 +383,15 @@
   100% { opacity: 1; transform: scale(1); }
 }
 .prk-pop--hold { animation-name: prk-pop-hold; }
+
+/* --- FLAGSHIP impact vocabulary hookup ---------------------------------------
+   The shared impact primitives (impact/impact.css) fire their laser at t=0 and
+   land the rest on --imp-delay. Scenes here schedule composites inline via
+   --imp-delay, so the laser is re-timed to LEAD the beat by the vocabulary's
+   own 0.4s instead of firing at scene start. */
+.prk .imp-laser {
+  animation-delay: calc((var(--imp-delay, 0.4s) - 0.4s) * var(--fx-dur, 1));
+}
 
 html[data-anim="off"] .prk,
 html[data-anim="off"] .prk * {

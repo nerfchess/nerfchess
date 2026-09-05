@@ -11,7 +11,7 @@
 // bots are, then the owner's private toggle, then the outbound webhook.
 
 import { useEffect, useState } from "react";
-import type { HouseState, PresetMap } from "./types";
+import type { HouseState, PresetMap, SkillTier } from "./types";
 import { ModButton, ModLinkButton, ModToggle, SectionHead } from "./ui";
 
 export function ControlsSection({ isOwner, isAdmin }: { isOwner: boolean; isAdmin: boolean }) {
@@ -89,6 +89,7 @@ function HouseBotsControl() {
       <SectionHead
         title="House bots"
         blurb="The engine roster that keeps the lobby warm. Turning them off clears bot seeks within a few seconds and winds down bot games already running."
+        actionsInline
         actions={
           <ModToggle
             label="House bots"
@@ -109,11 +110,14 @@ function HouseBotsControl() {
           out over a few minutes. Commits on release. Turning the bots off (above)
           clears them from the lobby entirely. */}
       <div className={"border-t border-white/10 pt-3 " + (enabled === false ? "opacity-50" : "")}>
-        <div className="flex items-center justify-between">
-          <label htmlFor="house-games" className="smallcaps text-[11px] text-parchment-400">
-            Filler games running at once ({bounds.min}–{bounds.max})
+        <div className="flex items-baseline justify-between gap-3">
+          <label htmlFor="house-games" className="text-[11px] text-parchment-400">
+            Filler games running
           </label>
-          <span className="font-mono text-sm tabular-nums text-gold-leaf">{games ?? "…"}</span>
+          <span className="shrink-0 font-mono text-sm tabular-nums text-gold-leaf">
+            {games ?? "…"}
+            <span className="text-parchment-500"> / {bounds.max}</span>
+          </span>
         </div>
         <input
           id="house-games"
@@ -126,7 +130,9 @@ function HouseBotsControl() {
           onChange={(e) => setGames(Number(e.target.value))}
           onPointerUp={(e) => commitGames(Number((e.target as HTMLInputElement).value))}
           onKeyUp={(e) => commitGames(Number((e.target as HTMLInputElement).value))}
-          className="mt-1.5 w-full accent-gold-leaf disabled:cursor-not-allowed"
+          // Extra vertical padding widens the drag strip for a thumb without
+          // changing how the track looks.
+          className="mt-1 w-full touch-manipulation py-2 accent-gold-leaf disabled:cursor-not-allowed"
         />
       </div>
 
@@ -155,6 +161,59 @@ const STRENGTH_FIELDS = [
 ] as const;
 
 type StrengthFieldKey = (typeof STRENGTH_FIELDS)[number]["key"];
+type StrengthField = (typeof STRENGTH_FIELDS)[number];
+
+// One editable strength number, shared by the phone blocks and the desktop
+// table so both commit identically. Uncontrolled with a value-derived key: the
+// field keeps whatever is typed until blur, then remounts on the API's answer.
+function StrengthInput({
+  tier,
+  field,
+  clamp,
+  saving,
+  onCommit,
+  className,
+}: {
+  tier: SkillTier;
+  field: StrengthField;
+  clamp: HouseState["clamp"];
+  saving: boolean;
+  onCommit: (skill: number, key: StrengthFieldKey, pct: boolean, raw: number) => void;
+  className?: string;
+}) {
+  const [lo, hi] = clamp[field.key] ?? [0, 9999];
+  const eff = tier.effective[field.key] as number;
+  const def = tier.defaults[field.key] as number;
+  const shown = field.pct ? Math.round(eff * 100) : eff;
+  const defShown = field.pct ? Math.round(def * 100) : def;
+  const isOver = Object.prototype.hasOwnProperty.call(tier.overrides ?? {}, field.key);
+  return (
+    <input
+      type="number"
+      inputMode="numeric"
+      min={field.pct ? lo * 100 : lo}
+      max={field.pct ? hi * 100 : hi}
+      step={field.step}
+      defaultValue={shown}
+      key={`${tier.skill}-${field.key}-${shown}`}
+      disabled={saving}
+      title={`default ${defShown}`}
+      onBlur={(e) => {
+        const v = Number(e.target.value);
+        if (v !== shown) onCommit(tier.skill, field.key, field.pct, v);
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+      }}
+      className={
+        "rounded border bg-black/20 px-1 py-1 text-right font-mono tabular-nums outline-none focus:border-gold-leaf/60 sm:py-0.5 " +
+        (isOver ? "border-gold-leaf/50 text-gold-leaf" : "border-white/10 text-parchment-300") +
+        " " +
+        (className ?? "")
+      }
+    />
+  );
+}
 
 // Per-tier house-bot strength tuning. Presets fill the whole override map in one
 // click; the table edits any single field live. Effective values come straight
@@ -197,7 +256,7 @@ function HouseStrengthEditor({
   return (
     <div className={"border-t border-white/10 pt-3 " + (disabled ? "opacity-50" : "")}>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="smallcaps text-[11px] text-parchment-400">Strength by tier</span>
+        <span className="text-[11px] text-parchment-400">Strength by tier</span>
         <div className="flex flex-wrap gap-1.5">
           <ModButton
             size="sm"
@@ -215,11 +274,57 @@ function HouseStrengthEditor({
         </div>
       </div>
 
-      <div className="mt-2 overflow-x-auto">
+      {/* Phones: one block per tier. A six-column table of number inputs at
+          390px clipped "noise", "blndr%" and the reset button clean off the
+          right edge, so half the controls did not exist on a phone. */}
+      <div className="mt-2 space-y-2 sm:hidden">
+        {skillTiers.map((t) => {
+          const over = t.overrides ?? {};
+          const touched = Object.keys(over).length > 0;
+          return (
+            <div key={t.skill} className="rounded-[1px] border border-white/10 bg-black/20 p-2.5">
+              <div className="flex items-center justify-between">
+                <span
+                  className={
+                    "font-display text-sm " + (touched ? "text-gold-leaf" : "text-parchment-200")
+                  }
+                >
+                  Tier {t.skill}
+                </span>
+                <ModButton
+                  size="sm"
+                  disabled={saving || !touched}
+                  onClick={() => resetTier(t.skill)}
+                  title="Reset this tier to baked default"
+                >
+                  Reset ↺
+                </ModButton>
+              </div>
+              <div className="mt-2 grid grid-cols-3 gap-2">
+                {STRENGTH_FIELDS.map((f) => (
+                  <label key={f.key} className="block">
+                    <span className="block text-[10px] text-parchment-400">{f.label}</span>
+                    <StrengthInput
+                      tier={t}
+                      field={f}
+                      clamp={clamp}
+                      saving={saving}
+                      onCommit={commitField}
+                      className="mt-0.5 w-full"
+                    />
+                  </label>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="mt-2 hidden overflow-x-auto sm:block">
         <table className="w-full min-w-[420px] border-collapse text-[11px]">
           <thead>
             <tr className="text-parchment-400">
-              <th className="smallcaps py-1 pr-2 text-left font-normal">Tier</th>
+              <th className="py-1 pr-2 text-left font-normal">Tier</th>
               {STRENGTH_FIELDS.map((f) => (
                 <th key={f.key} className="px-1 py-1 text-right font-normal">
                   {f.label}
@@ -237,41 +342,18 @@ function HouseStrengthEditor({
                   <td className={"py-1 pr-2 " + (touched ? "text-gold-leaf" : "text-parchment-200")}>
                     {t.skill}
                   </td>
-                  {STRENGTH_FIELDS.map((f) => {
-                    const [lo, hi] = clamp[f.key] ?? [0, 9999];
-                    const eff = t.effective[f.key] as number;
-                    const def = t.defaults[f.key] as number;
-                    const shown = f.pct ? Math.round(eff * 100) : eff;
-                    const defShown = f.pct ? Math.round(def * 100) : def;
-                    const isOver = Object.prototype.hasOwnProperty.call(over, f.key);
-                    return (
-                      <td key={f.key} className="px-1 py-1 text-right">
-                        <input
-                          type="number"
-                          min={f.pct ? lo * 100 : lo}
-                          max={f.pct ? hi * 100 : hi}
-                          step={f.step}
-                          defaultValue={shown}
-                          key={`${t.skill}-${f.key}-${shown}`}
-                          disabled={saving}
-                          title={`default ${defShown}`}
-                          onBlur={(e) => {
-                            const v = Number(e.target.value);
-                            if (v !== shown) commitField(t.skill, f.key, f.pct, v);
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-                          }}
-                          className={
-                            "w-12 rounded border bg-black/20 px-1 py-0.5 text-right outline-none focus:border-gold-leaf/60 " +
-                            (isOver
-                              ? "border-gold-leaf/50 text-gold-leaf"
-                              : "border-white/10 text-parchment-300")
-                          }
-                        />
-                      </td>
-                    );
-                  })}
+                  {STRENGTH_FIELDS.map((f) => (
+                    <td key={f.key} className="px-1 py-1 text-right">
+                      <StrengthInput
+                        tier={t}
+                        field={f}
+                        clamp={clamp}
+                        saving={saving}
+                        onCommit={commitField}
+                        className="w-12"
+                      />
+                    </td>
+                  ))}
                   <td className="pl-1 text-right">
                     <button
                       type="button"
@@ -363,6 +445,7 @@ function GodPanelControl() {
       <SectionHead
         title="God panel"
         blurb="Your in-game card-summon panel. Hidden by default so it never gets in the way; switch it on and it mounts in your next draft game. Only you can see or use it."
+        actionsInline
         actions={<ModToggle label="God panel" on={enabled} busy={saving} onToggle={toggle} />}
       />
       {error && <p className="mt-2 text-xs text-oxblood-glow">{error}</p>}

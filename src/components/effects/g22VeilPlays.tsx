@@ -40,6 +40,7 @@ import "./g22VeilPlays.css";
 import type { CSSProperties, ReactNode } from "react";
 import type { SigPlugin, SigRole } from "./sigPlugins";
 import { AimStage, BoardFrame, BoardWideStage } from "./stage";
+import { LaserStrike, PieceShatter, Shockwave, QUAKE_CLASS, impactVars } from "./impact/impact";
 
 interface SceneProps {
   lead: boolean;
@@ -126,19 +127,37 @@ function Cut({ d, children }: { d: number; children: ReactNode }) {
 }
 
 /** Cast-anchored lead: action on the cast square, `frame` over the board. */
-function Lead({ d, frame, children }: { d: number; frame?: ReactNode; children: ReactNode }) {
+function Lead({ d, frame, imp, children }: { d: number; frame?: ReactNode; imp?: ImpCue; children: ReactNode }) {
+  const inner = (
+    <>
+      {frame ? <BoardFrame>{frame}</BoardFrame> : null}
+      {children}
+      {imp ? <ImpactHit d={d} imp={imp} /> : null}
+    </>
+  );
   return (
     <span className={ROOT} style={rootStyle(d)} aria-hidden="true">
       <BoardWideStage>
-        {frame ? <BoardFrame>{frame}</BoardFrame> : null}
-        {children}
+        {imp ? (
+          <QuakeBox d={d} imp={imp}>
+            {inner}
+          </QuakeBox>
+        ) : (
+          inner
+        )}
       </BoardWideStage>
     </span>
   );
 }
 
 /** Aim-anchored lead: `frame` stays square with the board, the art rotates. */
-function AimLead({ d, frame, children }: { d: number; frame?: ReactNode; children: ReactNode }) {
+function AimLead({ d, frame, imp, children }: { d: number; frame?: ReactNode; imp?: ImpCue; children: ReactNode }) {
+  const inner = (
+    <>
+      {children}
+      {imp ? <ImpactHit d={d} imp={imp} /> : null}
+    </>
+  );
   return (
     <span className={ROOT} style={rootStyle(d)} aria-hidden="true">
       {frame ? (
@@ -146,10 +165,150 @@ function AimLead({ d, frame, children }: { d: number; frame?: ReactNode; childre
           <BoardFrame>{frame}</BoardFrame>
         </BoardWideStage>
       ) : null}
-      <AimStage>{children}</AimStage>
+      <AimStage>
+        {imp ? (
+          <QuakeBox d={d} imp={imp}>
+            {inner}
+          </QuakeBox>
+        ) : (
+          inner
+        )}
+      </AimStage>
     </span>
   );
 }
+
+/* =============================================================================
+   FLAGSHIP IMPACT LAYER - the shared violence vocabulary (impact/impact.tsx)
+   staged per card. Each lead names ONE cue in IMP: the moment its own action
+   physically LANDS. The laser leads the beat by 0.4s; the shatter halves,
+   shard spray, ground shockwave and the whole-stage quake all land ON `at`,
+   so the composite reads as one hit. `x`/`y` are % of the 14-cell stage
+   (`far` parks the hit at the aim lane's far end instead), `rot` turns the
+   whole composite so a column can strike along the lane or up from the ground,
+   and `rgb` stays inside the card's own three-colour palette. Kill switch:
+   every node rides a `g22-impx` wrapper, covered by this module's prefix
+   rule; the imp-* internals are covered by the global data-anim gate.
+   ========================================================================== */
+interface ImpCue {
+  /** ms after the lead's own delay: the impact beat. */
+  at: number;
+  /** centre of the struck cell, % of the stage (ignored when `far`). */
+  x?: number;
+  y?: number;
+  /** "r g b" tint, from the card's own palette. */
+  rgb: string;
+  /** the descending column of light. */
+  laser?: boolean;
+  /** index into IMPACT_GLYPHS: silhouette split in half on the beat. */
+  glyph?: number;
+  /** a second, later shockwave: the double boom. */
+  boom?: boolean;
+  /** static rotation of the whole composite, deg. */
+  rot?: number;
+  /** box size, % of the stage. */
+  size?: number;
+  /** park the hit at the far end of the real aim lane. */
+  far?: boolean;
+}
+
+const IMPACT_GLYPHS: ReactNode[] = [
+  <svg key="a" viewBox="0 0 10 12" className="block h-full w-full" aria-hidden="true">
+    <g style={{ fill: "rgb(var(--imp-rgb, 216 181 110))" }}><path d="M2 1h6v7.5l-1 1-1-1-1 1.4-1-1.2-1 .9-1-1z" /></g>
+  </svg>,
+  <svg key="b" viewBox="0 0 10 12" className="block h-full w-full" aria-hidden="true">
+    <g style={{ fill: "rgb(var(--imp-rgb, 216 181 110))" }}><path d="M2.5 1h5v1.6L5.4 6l2.1 3.4V11h-5V9.4L4.6 6 2.5 2.6z" /></g>
+  </svg>,
+];
+
+/** The whole stage jolts on the cue's beat. Rides an INNER wrapper because the
+ * stage canvas carries the anchor-clamp transform, which must never be
+ * animated over. In-scene only: the real board crop never shakes. */
+function QuakeBox({ d, imp, children }: { d: number; imp: ImpCue; children: ReactNode }) {
+  return (
+    <span className={`g22-impx ${QUAKE_CLASS} absolute inset-0 block`} style={impactVars(undefined, (d + imp.at) / 1000)}>
+      {children}
+    </span>
+  );
+}
+
+/** The composite hit itself: laser column, split silhouette, shockwave(s). */
+function ImpactHit({ d, imp }: { d: number; imp: ImpCue }) {
+  const size = imp.size ?? 7.2;
+  const pos = imp.far
+    ? { left: `calc(50% + var(--fx-len, 3) * 7.142857% - ${(size / 2).toFixed(3)}%)`, top: `${((imp.y ?? 50) - size / 2).toFixed(3)}%` }
+    : { left: `${((imp.x ?? 50) - size / 2).toFixed(3)}%`, top: `${((imp.y ?? 50) - size / 2).toFixed(3)}%` };
+  return (
+    <span
+      className="g22-impx absolute block"
+      style={{
+        ...pos,
+        width: `${size}%`,
+        height: `${size}%`,
+        ...(imp.rot ? { transform: `rotate(${imp.rot}deg)` } : null),
+        ...impactVars(imp.rgb, (d + imp.at) / 1000),
+      }}
+    >
+      {imp.laser ? <LaserStrike /> : null}
+      {imp.glyph != null ? <PieceShatter glyph={IMPACT_GLYPHS[imp.glyph]} /> : null}
+      <Shockwave />
+      {imp.boom ? (
+        <span className="g22-impx absolute inset-0 block" style={impactVars(imp.rgb, (d + imp.at + 200) / 1000)}>
+          <Shockwave />
+        </span>
+      ) : null}
+    </span>
+  );
+}
+
+/** THE IMPACT CUE SHEET: one named moment of physical contact per card,
+ * choreographed onto that card's own climax - position, beat, tint and
+ * primitive combo all differ per card, so no two siblings land the same hit. */
+const IMP: Record<string, ImpCue> = {
+  // Great Waltz: THE VEIL TORN MID-TURN - a light seam splits the curtain and the ballroom jolts
+  hx4_great_waltz: { at: 1050, x: 50, y: 47, rgb: "201 162 216", laser: true, glyph: 0, boom: true },
+  // Donkey Ears: THE HOOD YANKED - the veil is torn off in two halves under a light shaft
+  hx4_donkey_ears: { at: 980, x: 52, y: 44, rgb: "232 201 138", laser: true, glyph: 0 },
+  // Eclipse: THE CORONA SNAP - totality lands as a column with a double ground ring
+  hx4_eclipse: { at: 1000, x: 50, y: 42, rgb: "255 176 102", laser: true, boom: true },
+  // Falling Rubble: THE CEILING LETS GO - the slab bursts apart where it lands
+  hx4_falling_rubble: { at: 940, x: 49, y: 55, rgb: "168 154 134", glyph: 0, boom: true, size: 8 },
+  // Glass Floor: THE PANE CRACKS THROUGH - the light seam splits the floor panel in half
+  hx4_glass_floor: { at: 960, x: 51, y: 58, rgb: "191 228 238", laser: true, glyph: 0 },
+  // The Long Night: THE LAST LAMP SPIKED - the final light is driven down into the dark
+  hx4_the_long_night: { at: 1020, x: 50, y: 45, rgb: "255 210 138", laser: true, boom: true },
+  // Big Nap: THE PILLOW DROP - the bolster hits and everything settles twice
+  ov_big_nap: { at: 980, x: 48, y: 52, rgb: "143 160 216", glyph: 0, boom: true },
+  // Hourglass Throne: THE GLASS TURNED AND SPLIT - the hourglass cracks along the waist
+  bn4_hourglass_throne: { at: 940, x: 50, y: 49, rgb: "227 182 97", laser: true, glyph: 1 },
+  // Tithe of Time: THE COLLECTION STRIKE - the tithe is exacted with a beam and a double toll
+  bn4_tithe_of_time: { at: 900, x: 53, y: 47, rgb: "169 180 188", laser: true, boom: true },
+  // White Flag Hour: THE POLE PLANT - the flag staff is driven in at a lean
+  hx4_white_flag_hour: { at: 880, x: 50, y: 44, rgb: "207 216 210", laser: true, rot: 8 },
+  // Smoke Break Union: THE SHIFT WHISTLE SHAFT - one light shaft cuts the smoke
+  bn4_smoke_break_union: { at: 860, x: 47, y: 50, rgb: "214 160 90", laser: true },
+  // Stolen Hour: THE HOUR SNAPPED IN HALF - the stolen glass breaks in the thief's grip
+  bn4_stolen_hour: { at: 920, x: 52, y: 48, rgb: "224 160 138", glyph: 1, boom: true },
+  // Court in Session: THE SESSION GAVEL - the opening strike lands as a verdict column
+  hx4_court_in_session: { at: 900, x: 50, y: 46, rgb: "163 122 78", laser: true, boom: true },
+  // Drawn Curtain: THE CURTAIN TEARS ON THE SEAM - light splits the drape top to hem
+  hx4_drawn_curtain: { at: 940, x: 50, y: 50, rgb: "176 56 79", laser: true, glyph: 0 },
+  // Lockstep: THE DOUBLE STAMP - both files stamp on the same beat, twice
+  hx4_lockstep: { at: 880, x: 50, y: 53, rgb: "154 166 184", boom: true, size: 8 },
+  // Night Ledger: THE ENTRY RULED OFF - one bright rule strikes the page shut
+  hx4_night_ledger: { at: 860, x: 54, y: 48, rgb: "125 147 196", laser: true },
+  // Night Watch Rota: THE ROUND'S END - the watch beam stabs the far post of the route
+  hx4_night_watch_rota: { at: 900, rgb: "159 208 192", laser: true, far: true },
+  // Censor's Ink: THE STRIKE-THROUGH - the redaction bar slams down at a pen angle
+  hx4_censors_ink: { at: 840, x: 51, y: 49, rgb: "201 194 180", laser: true, rot: 12 },
+  // Moth-Eaten Gloves: THE GLOVE COMES APART - the veil-cloth splits into ragged halves
+  hx4_moth_eaten_gloves: { at: 860, x: 49, y: 51, rgb: "180 148 168", glyph: 0 },
+  // Night Soil: THE CART DUMP - the load lands with an unglamorous double thud
+  hx4_night_soil: { at: 820, x: 52, y: 56, rgb: "143 138 74", boom: true },
+  // Slack Bowstrings: THE UNSTRUNG SNAP - the loosed string whips down the lane into the far post
+  hx4_slack_bowstrings: { at: 880, rgb: "159 184 126", laser: true, rot: -90, far: true },
+};
+
 
 /** The light going out of the board. Always inside a <BoardFrame>. */
 function Gloom({ tone, d = 0 }: { tone: string; d?: number }) {
@@ -222,7 +381,7 @@ function GreatWaltzScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead
+    <Lead imp={IMP.hx4_great_waltz}
       d={delayMs}
       frame={
         <>
@@ -275,7 +434,7 @@ function DonkeyEarsScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead
+    <Lead imp={IMP.hx4_donkey_ears}
       d={delayMs}
       frame={
         <>
@@ -326,7 +485,7 @@ function EclipseScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead
+    <Lead imp={IMP.hx4_eclipse}
       d={delayMs}
       frame={
         <>
@@ -382,7 +541,7 @@ function FallingRubbleScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead
+    <Lead imp={IMP.hx4_falling_rubble}
       d={delayMs}
       frame={
         <>
@@ -437,7 +596,7 @@ function GlassFloorScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead
+    <Lead imp={IMP.hx4_glass_floor}
       d={delayMs}
       frame={
         <>
@@ -489,7 +648,7 @@ function TheLongNightScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead
+    <Lead imp={IMP.hx4_the_long_night}
       d={delayMs}
       frame={
         <>
@@ -548,7 +707,7 @@ function BigNapScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead
+    <Lead imp={IMP.ov_big_nap}
       d={delayMs}
       frame={
         <>
@@ -607,7 +766,7 @@ function HourglassThroneScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead
+    <Lead imp={IMP.bn4_hourglass_throne}
       d={delayMs}
       frame={
         <>
@@ -663,7 +822,7 @@ function TitheOfTimeScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead
+    <Lead imp={IMP.bn4_tithe_of_time}
       d={delayMs}
       frame={
         <>
@@ -724,7 +883,7 @@ function WhiteFlagHourScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead
+    <Lead imp={IMP.hx4_white_flag_hour}
       d={delayMs}
       frame={
         <>
@@ -781,7 +940,7 @@ function SmokeBreakScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead
+    <Lead imp={IMP.bn4_smoke_break_union}
       d={delayMs}
       frame={
         <>
@@ -836,7 +995,7 @@ function StolenHourScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead
+    <Lead imp={IMP.bn4_stolen_hour}
       d={delayMs}
       frame={
         <>
@@ -897,7 +1056,7 @@ function CourtInSessionScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead
+    <Lead imp={IMP.hx4_court_in_session}
       d={delayMs}
       frame={
         <>
@@ -954,7 +1113,7 @@ function DrawnCurtainScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead
+    <Lead imp={IMP.hx4_drawn_curtain}
       d={delayMs}
       frame={
         <>
@@ -1007,7 +1166,7 @@ function LockstepScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead
+    <Lead imp={IMP.hx4_lockstep}
       d={delayMs}
       frame={
         <>
@@ -1064,7 +1223,7 @@ function NightLedgerScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead
+    <Lead imp={IMP.hx4_night_ledger}
       d={delayMs}
       frame={
         <>
@@ -1126,7 +1285,7 @@ function NightWatchRotaScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead
+    <AimLead imp={IMP.hx4_night_watch_rota}
       d={delayMs}
       frame={
         <>
@@ -1183,7 +1342,7 @@ function CensorsInkScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead
+    <Lead imp={IMP.hx4_censors_ink}
       d={delayMs}
       frame={
         <>
@@ -1243,7 +1402,7 @@ function MothGlovesScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead
+    <Lead imp={IMP.hx4_moth_eaten_gloves}
       d={delayMs}
       frame={
         <>
@@ -1301,7 +1460,7 @@ function NightSoilScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead
+    <Lead imp={IMP.hx4_night_soil}
       d={delayMs}
       frame={
         <>
@@ -1362,7 +1521,7 @@ function SlackBowstringsScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead d={delayMs} frame={<Gloom tone="rgba(159,184,126,0.26)" />}>
+    <AimLead imp={IMP.hx4_slack_bowstrings} d={delayMs} frame={<Gloom tone="rgba(159,184,126,0.26)" />}>
       <L c="g22-runout" l={46} t={49} w={28} h={1.6} d={90} st={{ borderRadius: "999px", background: "linear-gradient(90deg, #9fb87e, transparent)", transformOrigin: "0% 50%" }} />
       <V c="g22-sl-bow" l={40} t={40} w={10} h={16} d={230}>{bow}</V>
       <L c="g22-sl-string" l={44} t={41} w={1.4} h={14} d={380} st={{ background: "#fff2dc", transformOrigin: "50% 50%" }} />

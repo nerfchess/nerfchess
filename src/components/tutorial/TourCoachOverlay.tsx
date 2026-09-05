@@ -21,6 +21,7 @@ import {
   type CSSProperties,
   type ReactNode,
 } from "react";
+import { Button } from "@/components/ui/Button";
 
 export interface CoachStep {
   id: string;
@@ -240,11 +241,11 @@ export function TourCoachOverlay({
         style={cardStyle}
       >
         <div className="flex items-baseline justify-between gap-3">
-          <div className="smallcaps text-[10px] text-gold-leaf/90">{step.kicker}</div>
+          <div className="text-[10px] text-gold-leaf/90">{step.kicker}</div>
           <button
             type="button"
             onClick={onSkip}
-            className="smallcaps shrink-0 text-[10px] text-parchment-400 underline decoration-parchment-400/40 underline-offset-2 transition-colors hover:text-parchment-200"
+            className="shrink-0 text-[10px] text-parchment-400 underline decoration-parchment-400/40 underline-offset-2 transition-colors hover:text-parchment-200"
           >
             Skip tour
           </button>
@@ -272,22 +273,20 @@ export function TourCoachOverlay({
           </span>
           <div className="ml-auto flex items-center gap-2">
             {onBack && (
-              <button
-                type="button"
+              <Button tone="ghost"
+               
                 onClick={onBack}
-                className="btn-ghost rounded-[1px] px-3 py-1.5 font-display text-sm"
-              >
+                className="px-3 py-1.5 text-sm">
                 Back
-              </button>
+              </Button>
             )}
             {onNext ? (
-              <button
-                type="button"
+              <Button tone="leaf"
+               
                 onClick={onNext}
-                className="btn-leaf rounded-[1px] px-4 py-1.5 font-display text-sm font-semibold"
-              >
+                className="px-4 py-1.5 text-sm font-semibold">
                 {step.nextLabel ?? "Next"}
-              </button>
+              </Button>
             ) : (
               step.waitLabel && (
                 <span

@@ -9,7 +9,17 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ModeBadge } from "@/components/ModeBadge";
 import type { GamesStats, ModGame, ModGameSeat, SeatKind } from "./types";
-import { Empty, Loading, ModButton, ModLinkButton, Pill, StatCard, fmtDuration, when } from "./ui";
+import {
+  Empty,
+  Loading,
+  ModButton,
+  ModLinkButton,
+  Pill,
+  StatGrid,
+  fmtDuration,
+  when,
+  whenShort,
+} from "./ui";
 
 function tcLabel(baseSec: number, incSec: number): string {
   if (baseSec <= 0) return "∞";
@@ -35,7 +45,7 @@ function SeatBadge({ kind }: { kind: SeatKind }) {
   if (kind === "member") return null;
   if (kind === "house")
     return (
-      <span className="smallcaps shrink-0 rounded-[1px] border border-bruise-glow/40 px-1.5 py-px text-[9px] text-bruise-glow">
+      <span className="shrink-0 rounded-[1px] border border-bruise-glow/40 px-1.5 py-px text-[9px] text-bruise-glow">
         house bot
       </span>
     );
@@ -115,48 +125,53 @@ export function GamesSection() {
   return (
     <div className="space-y-6">
       {stats && (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          <StatCard
-            label="Human games today"
-            value={String(stats.today.total)}
-            sub={`${stats.today.humanVsHuman} vs humans · ${stats.today.humanVsHouse} vs house`}
-          />
-          <StatCard
-            label="This week"
-            value={String(stats.week.total)}
-            sub={`${stats.week.humanVsHuman} vs humans · ${stats.week.humanVsHouse} vs house`}
-          />
-          <StatCard
-            label="Avg. game (7d)"
-            value={stats.averageGame.moves !== null ? `${stats.averageGame.moves} moves` : "-"}
-            sub={fmtDuration(stats.averageGame.durationMs)}
-          />
-          <StatCard
-            label="Most played mode (7d)"
-            value={stats.topMode ? stats.topMode.label : "-"}
-            sub={stats.topMode ? `${stats.topMode.games} games` : undefined}
-          />
-          <StatCard
-            label="Humans today"
-            value={`${stats.humansToday.members + stats.humansToday.guests}`}
-            sub={`${stats.humansToday.members} members · ${stats.humansToday.guests} guests${
-              stats.humansToday.anonSeatGames > 0
-                ? ` · ${stats.humansToday.anonSeatGames} anon-seat games`
-                : ""
-            }`}
-          />
-          {stats.guestsCreated && (
-            <StatCard
-              label="Guests created"
-              value={`${stats.guestsCreated.today} today`}
-              sub={`${stats.guestsCreated.week} this week`}
-            />
-          )}
-          <StatCard
-            label="Last human game"
-            value={stats.lastHumanGame ? when(stats.lastHumanGame.completedAt) : "none yet"}
-          />
-        </div>
+        <StatGrid
+          cols={3}
+          items={[
+            {
+              label: "Human games today",
+              value: String(stats.today.total),
+              sub: `${stats.today.humanVsHuman} vs humans · ${stats.today.humanVsHouse} vs house`,
+            },
+            {
+              label: "This week",
+              value: String(stats.week.total),
+              sub: `${stats.week.humanVsHuman} vs humans · ${stats.week.humanVsHouse} vs house`,
+            },
+            {
+              label: "Avg. game (7d)",
+              value: stats.averageGame.moves !== null ? `${stats.averageGame.moves} moves` : "-",
+              sub: fmtDuration(stats.averageGame.durationMs),
+            },
+            {
+              label: "Most played mode (7d)",
+              value: stats.topMode ? stats.topMode.label : "-",
+              sub: stats.topMode ? `${stats.topMode.games} games` : undefined,
+            },
+            {
+              label: "Humans today",
+              value: `${stats.humansToday.members + stats.humansToday.guests}`,
+              sub: `${stats.humansToday.members} members · ${stats.humansToday.guests} guests${
+                stats.humansToday.anonSeatGames > 0
+                  ? ` · ${stats.humansToday.anonSeatGames} anon-seat games`
+                  : ""
+              }`,
+            },
+            ...(stats.guestsCreated
+              ? [
+                  {
+                    label: "Guests created",
+                    value: `${stats.guestsCreated.today} today`,
+                    sub: `${stats.guestsCreated.week} this week`,
+                  },
+                ]
+              : []),
+            {
+              label: "Last human game",
+              value: stats.lastHumanGame ? whenShort(stats.lastHumanGame.completedAt) : "none yet",
+            },
+          ]}
+        />
       )}
 
       {!games ? (
@@ -168,7 +183,7 @@ export function GamesSection() {
           <div className="space-y-2">
             {games.map((g, i) => (
               <div key={g.id} className={`plate p-4 ${i === 0 ? "border border-gold/40" : ""}`}>
-                {i === 0 && <div className="smallcaps text-[10px] text-gold-leaf">Last human game</div>}
+                {i === 0 && <div className="text-[10px] text-gold-leaf">Last human game</div>}
                 <div className={`flex flex-wrap items-center gap-2 text-sm ${i === 0 ? "mt-1" : ""}`}>
                   <Seat seat={g.white} />
                   <span className="font-mono tabular-nums text-parchment-200">
@@ -179,7 +194,12 @@ export function GamesSection() {
                     mode={g.category === "nerf" || g.category === "buff" ? g.category : undefined}
                   />
                   <Pill>{g.rated ? "rated" : "casual"}</Pill>
-                  <span className="ml-auto text-xs text-parchment-400">{when(g.completedAt)}</span>
+                  <span
+                    className="w-full text-xs text-parchment-400 sm:ml-auto sm:w-auto"
+                    title={when(g.completedAt)}
+                  >
+                    {whenShort(g.completedAt)}
+                  </span>
                 </div>
                 <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-parchment-400">
                   <span>{g.reason}</span>

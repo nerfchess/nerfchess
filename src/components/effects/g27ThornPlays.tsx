@@ -38,6 +38,7 @@ import "./g27ThornPlays.css";
 import type { CSSProperties, ReactNode } from "react";
 import type { SigPlugin, SigRole } from "./sigPlugins";
 import { AimStage, BoardFrame, BoardWideStage } from "./stage";
+import { LaserStrike, PieceShatter, Shockwave, QUAKE_CLASS, impactVars } from "./impact/impact";
 
 interface SceneProps {
   lead: boolean;
@@ -124,19 +125,37 @@ function Cut({ d, children }: { d: number; children: ReactNode }) {
 }
 
 /** Cast-anchored lead: the growth on the cast square, `frame` over the board. */
-function Lead({ d, frame, children }: { d: number; frame?: ReactNode; children: ReactNode }) {
+function Lead({ d, frame, imp, children }: { d: number; frame?: ReactNode; imp?: ImpCue; children: ReactNode }) {
+  const inner = (
+    <>
+      {frame ? <BoardFrame>{frame}</BoardFrame> : null}
+      {children}
+      {imp ? <ImpactHit d={d} imp={imp} /> : null}
+    </>
+  );
   return (
     <span className={ROOT} style={rootStyle(d)} aria-hidden="true">
       <BoardWideStage>
-        {frame ? <BoardFrame>{frame}</BoardFrame> : null}
-        {children}
+        {imp ? (
+          <QuakeBox d={d} imp={imp}>
+            {inner}
+          </QuakeBox>
+        ) : (
+          inner
+        )}
       </BoardWideStage>
     </span>
   );
 }
 
 /** Aim-anchored lead: `frame` stays square with the board, the art rotates. */
-function AimLead({ d, frame, children }: { d: number; frame?: ReactNode; children: ReactNode }) {
+function AimLead({ d, frame, imp, children }: { d: number; frame?: ReactNode; imp?: ImpCue; children: ReactNode }) {
+  const inner = (
+    <>
+      {children}
+      {imp ? <ImpactHit d={d} imp={imp} /> : null}
+    </>
+  );
   return (
     <span className={ROOT} style={rootStyle(d)} aria-hidden="true">
       {frame ? (
@@ -144,10 +163,162 @@ function AimLead({ d, frame, children }: { d: number; frame?: ReactNode; childre
           <BoardFrame>{frame}</BoardFrame>
         </BoardWideStage>
       ) : null}
-      <AimStage>{children}</AimStage>
+      <AimStage>
+        {imp ? (
+          <QuakeBox d={d} imp={imp}>
+            {inner}
+          </QuakeBox>
+        ) : (
+          inner
+        )}
+      </AimStage>
     </span>
   );
 }
+
+/* =============================================================================
+   FLAGSHIP IMPACT LAYER - the shared violence vocabulary (impact/impact.tsx)
+   staged per card. Each lead names ONE cue in IMP: the moment its own action
+   physically LANDS. The laser leads the beat by 0.4s; the shatter halves,
+   shard spray, ground shockwave and the whole-stage quake all land ON `at`,
+   so the composite reads as one hit. `x`/`y` are % of the 14-cell stage
+   (`far` parks the hit at the aim lane's far end instead), `rot` turns the
+   whole composite so a column can strike along the lane or up from the ground,
+   and `rgb` stays inside the card's own three-colour palette. Kill switch:
+   every node rides a `g27-impx` wrapper, covered by this module's prefix
+   rule; the imp-* internals are covered by the global data-anim gate.
+   ========================================================================== */
+interface ImpCue {
+  /** ms after the lead's own delay: the impact beat. */
+  at: number;
+  /** centre of the struck cell, % of the stage (ignored when `far`). */
+  x?: number;
+  y?: number;
+  /** "r g b" tint, from the card's own palette. */
+  rgb: string;
+  /** the descending column of light. */
+  laser?: boolean;
+  /** index into IMPACT_GLYPHS: silhouette split in half on the beat. */
+  glyph?: number;
+  /** a second, later shockwave: the double boom. */
+  boom?: boolean;
+  /** static rotation of the whole composite, deg. */
+  rot?: number;
+  /** box size, % of the stage. */
+  size?: number;
+  /** park the hit at the far end of the real aim lane. */
+  far?: boolean;
+}
+
+const IMPACT_GLYPHS: ReactNode[] = [
+  <svg key="a" viewBox="0 0 10 12" className="block h-full w-full" aria-hidden="true">
+    <g style={{ fill: "rgb(var(--imp-rgb, 216 181 110))" }}><path d="M2 11 3.2 4l1 4.2L5.4 1l1.2 7.2 1-4.2L8.8 11z" /></g>
+  </svg>,
+  <svg key="b" viewBox="0 0 10 12" className="block h-full w-full" aria-hidden="true">
+    <g style={{ fill: "rgb(var(--imp-rgb, 216 181 110))" }}><path d="M4.2 1h1.6v7L5 11 4.2 8z" /></g>
+  </svg>,
+];
+
+/** The whole stage jolts on the cue's beat. Rides an INNER wrapper because the
+ * stage canvas carries the anchor-clamp transform, which must never be
+ * animated over. In-scene only: the real board crop never shakes. */
+function QuakeBox({ d, imp, children }: { d: number; imp: ImpCue; children: ReactNode }) {
+  return (
+    <span className={`g27-impx ${QUAKE_CLASS} absolute inset-0 block`} style={impactVars(undefined, (d + imp.at) / 1000)}>
+      {children}
+    </span>
+  );
+}
+
+/** The composite hit itself: laser column, split silhouette, shockwave(s). */
+function ImpactHit({ d, imp }: { d: number; imp: ImpCue }) {
+  const size = imp.size ?? 7.2;
+  const pos = imp.far
+    ? { left: `calc(50% + var(--fx-len, 3) * 7.142857% - ${(size / 2).toFixed(3)}%)`, top: `${((imp.y ?? 50) - size / 2).toFixed(3)}%` }
+    : { left: `${((imp.x ?? 50) - size / 2).toFixed(3)}%`, top: `${((imp.y ?? 50) - size / 2).toFixed(3)}%` };
+  return (
+    <span
+      className="g27-impx absolute block"
+      style={{
+        ...pos,
+        width: `${size}%`,
+        height: `${size}%`,
+        ...(imp.rot ? { transform: `rotate(${imp.rot}deg)` } : null),
+        ...impactVars(imp.rgb, (d + imp.at) / 1000),
+      }}
+    >
+      {imp.laser ? <LaserStrike /> : null}
+      {imp.glyph != null ? <PieceShatter glyph={IMPACT_GLYPHS[imp.glyph]} /> : null}
+      <Shockwave />
+      {imp.boom ? (
+        <span className="g27-impx absolute inset-0 block" style={impactVars(imp.rgb, (d + imp.at + 200) / 1000)}>
+          <Shockwave />
+        </span>
+      ) : null}
+    </span>
+  );
+}
+
+/** THE IMPACT CUE SHEET: one named moment of physical contact per card,
+ * choreographed onto that card's own climax - position, beat, tint and
+ * primitive combo all differ per card, so no two siblings land the same hit. */
+const IMP: Record<string, ImpCue> = {
+  // Echo Chamber: THE ECHO MADE SOLID - the returned sound spikes up and shatters its source
+  hx4_echo_chamber: { at: 1020, x: 50, y: 49, rgb: "224 176 112", laser: true, glyph: 0, boom: true },
+  // Iron Ring: THE RING DRIVEN HOME - the stake column slams in and the ring booms twice
+  hx4_iron_ring: { at: 1040, x: 50, y: 50, rgb: "192 106 52", laser: true, glyph: 1, boom: true },
+  // Maze of Thorns: THE HEDGE SPEARS UP - a canted thorn column erupts and bursts the path
+  hx4_maze_of_thorns: { at: 1000, x: 51, y: 52, rgb: "95 154 82", laser: true, glyph: 0, boom: true, rot: -14 },
+  // Sealed Meridian: THE MERIDIAN SEALED - one continent-sized column, two ground rings
+  hx4_sealed_meridian: { at: 1060, x: 50, y: 47, rgb: "168 194 90", laser: true, boom: true, size: 9 },
+  // Terraform: THE GROUND HEAVES - the terrain itself splits and resettles twice
+  ov_terraform: { at: 980, x: 49, y: 53, rgb: "122 166 74", glyph: 0, boom: true, size: 9 },
+  // Sting of the Wasp: THE STING LANCED HOME - the stinger runs the lane and detonates at the far square
+  bn4_sting_of_the_wasp: { at: 960, rgb: "210 180 135", laser: true, boom: true, rot: -90, far: true },
+  // Signal Jam: THE MAST SPIKED - the jamming spike goes up at a lean and thumps twice
+  hx4_signal_jam: { at: 900, x: 50, y: 48, rgb: "143 194 122", laser: true, boom: true, rot: 14 },
+  // Keep Gate: THE PORTCULLIS STAKE - the gate bar drops, splits the sill, and booms
+  bn4_keep_gate: { at: 880, x: 50, y: 51, rgb: "111 174 94", glyph: 1, boom: true },
+  // Ford Crossing: THE FORD CHURNS - the crossing stamps the water into two rings
+  hx4_ford_crossing: { at: 860, x: 52, y: 55, rgb: "185 162 78", boom: true },
+  // No Homecoming: THE ROAD BARRED - the bar spikes up across the way home
+  hx4_no_homecoming: { at: 880, x: 48, y: 50, rgb: "159 174 122", laser: true, rot: -12 },
+  // No Return: THE ROAD SPIKED BEHIND - the lane is lanced shut at its far end
+  hx4_no_return: { at: 900, rgb: "226 211 168", laser: true, rot: -90, far: true },
+  // Tar Pits: THE TAR BELCH - the pit burps one heavy ring, then another
+  hx4_tar_pits: { at: 840, x: 51, y: 54, rgb: "216 179 58", boom: true, size: 8.4 },
+  // Fresh Crater: THE SECOND COLLAPSE - the crater rim gives way in two shocks
+  hx4_fresh_crater: { at: 860, x: 50, y: 52, rgb: "217 204 166", boom: true, size: 9 },
+  // Prowler's Bell: THE TRIPWIRE SPIKE - the alarm stabs up askew where the wire was hit
+  hx4_prowlers_bell: { at: 820, x: 52, y: 48, rgb: "176 106 158", laser: true, rot: 12 },
+  // Bramble Patch: THE FIRST THORN - one bright spike out of the patch
+  hx4_bramble_patch: { at: 800, x: 49, y: 53, rgb: "125 154 78", laser: true, size: 6.4 },
+  // Restless Blades: THE BLADES JUMP - the grass blades leap and scatter apart
+  hx4_restless_blades: { at: 820, x: 51, y: 50, rgb: "143 192 106", glyph: 0 },
+  // Rope Bridge: THE FAR POST SNAPS TAUT - the anchor takes the load with a double jolt
+  hx4_rope_bridge: { at: 800, rgb: "127 174 98", boom: true, far: true },
+  // Thorn Hedge: THE HEDGE SPIKE - one canted thorn column out of the row
+  bn4_thorn_hedge: { at: 780, x: 50, y: 52, rgb: "94 138 70", laser: true, rot: -14, size: 6 },
+  // Gnat Cloud: THE SWAT - one small irritated shock in the middle of the cloud
+  hx4_gnat_cloud: { at: 740, x: 51, y: 47, rgb: "154 138 92", size: 5.4 },
+  // House Arrest: THE DOOR BARRED - the bolt lands and the frame knocks twice
+  hx4_house_arrest: { at: 780, x: 50, y: 51, rgb: "79 138 88", boom: true },
+  // Garden Door: THE FAR LATCH - the door swings the length of the path and latches with a boom
+  op_garden_door: { at: 760, rgb: "138 168 88", boom: true, far: true },
+  // Garden Scarecrow: THE POLE RAMMED IN - the scarecrow's stake spikes the row
+  op_garden_scarecrow: { at: 780, x: 49, y: 49, rgb: "216 180 92", laser: true, rot: 10 },
+  // Loose Floorboard: THE BOARD SNAPS UP - the far end kicks with a double knock
+  ov_loose_floorboard: { at: 780, rgb: "169 121 63", boom: true, far: true },
+  // Garden Fence: THE POST DRIVEN - one fence post, two mallet rings
+  bn4_garden_fence: { at: 740, x: 52, y: 52, rgb: "134 176 96", boom: true },
+  // Buttoned Scabbard: THE BUTTON SNAP - the smallest click of a shock
+  hx4_buttoned_scabbard: { at: 700, x: 50, y: 50, rgb: "159 191 142", size: 5.4 },
+  // Garden Gate: THE GATE BANGS - once, and once again on the rebound
+  op_garden_gate: { at: 720, x: 48, y: 51, rgb: "232 194 74", boom: true },
+  // Garden Hedge: THE CLIPPING SPIKE - one green shoot fired up out of the trim
+  op_garden_hedge: { at: 740, x: 51, y: 53, rgb: "63 122 78", laser: true, rot: -10, size: 5.6 },
+};
+
 
 /** Board-wide wash, always inside a BoardFrame. */
 function Wash({ tone, d = 0 }: { tone: string; d?: number }) {
@@ -198,7 +369,7 @@ function EchoChamberScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<><Wash tone="rgba(224,176,112,0.28)" /><Rim tone="rgba(255,242,208,0.26)" /></>}>
+    <Lead imp={IMP.hx4_echo_chamber} d={delayMs} frame={<><Wash tone="rgba(224,176,112,0.28)" /><Rim tone="rgba(255,242,208,0.26)" /></>}>
       <L c="g27-leanshade" l={40} t={46} w={20} h={7} d={80} st={{ borderRadius: "50%", background: "rgba(43,32,21,0.6)" }} />
       <V c="g27-spike" l={46} t={40} w={8} h={12} d={140}>{cap("#e0b070")}</V>
       {EC_INNER.map((a, i) => (
@@ -251,7 +422,7 @@ function IronRingScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead
+    <Lead imp={IMP.hx4_iron_ring}
       d={delayMs}
       frame={
         <>
@@ -318,7 +489,7 @@ function MazeOfThornsScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(95,154,82,0.3)" />}>
+    <Lead imp={IMP.hx4_maze_of_thorns} d={delayMs} frame={<Wash tone="rgba(95,154,82,0.3)" />}>
       {MZ_WALLS.map(([l, t, w, h, rot], i) => (
         <P key={i} l={l} t={t} w={w} h={h} rot={rot}>
           <V c="g27-mz-wall" d={120 + i * 90} par="none">{wall}</V>
@@ -371,7 +542,7 @@ function SealedMeridianScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead
+    <Lead imp={IMP.hx4_sealed_meridian}
       d={delayMs}
       frame={
         <>
@@ -437,7 +608,7 @@ function TerraformScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<><Wash tone="rgba(122,166,74,0.28)" /><Rim tone="rgba(255,238,196,0.22)" /></>}>
+    <Lead imp={IMP.ov_terraform} d={delayMs} frame={<><Wash tone="rgba(122,166,74,0.28)" /><Rim tone="rgba(255,238,196,0.22)" /></>}>
       {TF_SODS.map(([l, t], i) => (
         <V key={i} c="g27-tf-sod" l={l} t={t} w={9} h={7} d={140 + i * 110}>{sod}</V>
       ))}
@@ -493,7 +664,7 @@ function StingOfTheWaspScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead d={delayMs} frame={<Wash tone="rgba(210,180,135,0.28)" />}>
+    <AimLead imp={IMP.bn4_sting_of_the_wasp} d={delayMs} frame={<Wash tone="rgba(210,180,135,0.28)" />}>
       {WN_LAYERS.map((i) => (
         <V key={i} c="g27-wn-layer" l={44 - i * 1.6} t={41 - i * 1.8} w={12 + i * 3.2} h={14 + i * 3.6} d={100 + i * 90}>{nest}</V>
       ))}
@@ -540,7 +711,7 @@ function SignalJamScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead
+    <Lead imp={IMP.hx4_signal_jam}
       d={delayMs}
       frame={
         <>
@@ -596,7 +767,7 @@ function KeepGateScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(111,174,94,0.28)" />}>
+    <Lead imp={IMP.bn4_keep_gate} d={delayMs} frame={<Wash tone="rgba(111,174,94,0.28)" />}>
       <L c="g27-kg-gate" l={38} t={39} w={24} h={2} d={80} st={{ borderRadius: "999px", background: "#fff0cc" }} />
       {KG_STEMS.map((i) => (
         <V key={i} c="g27-sprout" l={41 + i * 8} t={38} w={7} h={14} d={200 + i * 90}>{nettle}</V>
@@ -646,7 +817,7 @@ function FordCrossingScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead
+    <Lead imp={IMP.hx4_ford_crossing}
       d={delayMs}
       frame={
         <>
@@ -702,7 +873,7 @@ function NoHomecomingScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead
+    <Lead imp={IMP.hx4_no_homecoming}
       d={delayMs}
       frame={
         <>
@@ -755,7 +926,7 @@ function NoReturnScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead d={delayMs} frame={<Wash tone="rgba(226,211,168,0.26)" />}>
+    <AimLead imp={IMP.hx4_no_return} d={delayMs} frame={<Wash tone="rgba(226,211,168,0.26)" />}>
       <L c="g27-nr-crack" l={44} t={50} w={28} h={1.4} d={80} st={{ borderRadius: "999px", background: "#2a2018", transformOrigin: "0% 50%" }} />
       {NR_FANGS.map((i) => (
         <V key={i} c="g27-nr-fang" l={44 + i * 5.4} t={42} w={5} h={9} d={180 + i * 80} st={{ transformOrigin: "50% 100%", rotate: "-16deg" }}>
@@ -802,7 +973,7 @@ function TarPitsScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(216,179,58,0.26)" />}>
+    <Lead imp={IMP.hx4_tar_pits} d={delayMs} frame={<Wash tone="rgba(216,179,58,0.26)" />}>
       <L c="g27-tp-pool" l={38} t={42} w={26} h={16} d={90} st={{ borderRadius: "50%", background: "radial-gradient(circle, #d8b33a, rgba(26,20,8,0.85) 74%)" }} />
       {TP_BUBBLES.map(([l, t], i) => (
         <L key={i} c="g27-tp-bubble" l={l} t={t} w={4} h={4} d={220 + i * 80} st={{ borderRadius: "50%", background: "#ffe9a0" }} />
@@ -850,7 +1021,7 @@ function FreshCraterScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(217,204,166,0.28)" />}>
+    <Lead imp={IMP.hx4_fresh_crater} d={delayMs} frame={<Wash tone="rgba(217,204,166,0.28)" />}>
       <V c="g27-fr-dome" l={44} t={42} w={12} h={12} d={80}>{dome}</V>
       <L c="g27-fr-split" l={49.4} t={41} w={1.2} h={9} d={340} st={{ borderRadius: "999px", background: "#2b2418" }} />
       <L c="g27-fr-plume" l={45} t={24} w={10} h={22} d={440} st={{ background: "linear-gradient(0deg, rgba(255,242,208,0.8), transparent)", transformOrigin: "50% 100%" }} />
@@ -899,7 +1070,7 @@ function ProwlersBellScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<><Wash tone="rgba(176,106,158,0.28)" /><Rim tone="rgba(255,228,208,0.22)" /></>}>
+    <Lead imp={IMP.hx4_prowlers_bell} d={delayMs} frame={<><Wash tone="rgba(176,106,158,0.28)" /><Rim tone="rgba(255,228,208,0.22)" /></>}>
       <L c="g27-spike" l={48} t={34} w={2.4} h={22} d={100} st={{ borderRadius: "999px", background: "#2a1830", transformOrigin: "50% 100%" }} />
       {PB_BELLS.map((i) => (
         <V key={i} c="g27-pb-bell" l={i % 2 ? 50 : 43.6} t={49 - i * 4} w={6.6} h={8} d={260 + i * 90} st={{ transformOrigin: "50% 10%" }}>
@@ -956,7 +1127,7 @@ function BramblePatchScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(125,154,78,0.28)" />}>
+    <Lead imp={IMP.hx4_bramble_patch} d={delayMs} frame={<Wash tone="rgba(125,154,78,0.28)" />}>
       {BP_CANES.map((i) => (
         <V key={i} c="g27-bp-cane" l={38 + i * 4} t={38 - i * 2} w={18} h={18} d={140 + i * 90} st={{ transformOrigin: "0% 100%", rotate: `${i * 22 - 16}deg` }}>
           {cane}
@@ -1001,7 +1172,7 @@ function RestlessBladesScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(143,192,106,0.26)" />}>
+    <Lead imp={IMP.hx4_restless_blades} d={delayMs} frame={<Wash tone="rgba(143,192,106,0.26)" />}>
       <L c="g27-rb-tuft" l={42} t={51} w={16} h={5} d={80} st={{ borderRadius: "50%", background: "rgba(30,42,24,0.7)" }} />
       {RB_BLADES.map((i) => (
         <V key={i} c="g27-rb-blade" l={43 + i * 3.4} t={38} w={5} h={16} d={180 + i * 70} st={{ transformOrigin: "50% 100%", rotate: `${i * 9 - 18}deg` }}>
@@ -1048,7 +1219,7 @@ function RopeBridgeScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead d={delayMs} frame={<Wash tone="rgba(127,174,98,0.26)" />}>
+    <AimLead imp={IMP.hx4_rope_bridge} d={delayMs} frame={<Wash tone="rgba(127,174,98,0.26)" />}>
       {[0, 1].map((i) => (
         <V key={i} c="g27-vb-reach" l={45} t={41 + i * 8} w={20} h={9} d={120 + i * 100} st={{ transformOrigin: "0% 50%", rotate: i ? "0deg" : "-6deg" }}>
           {tendril}
@@ -1105,7 +1276,7 @@ function ThornHedgeScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(94,138,70,0.26)" />}>
+    <Lead imp={IMP.bn4_thorn_hedge} d={delayMs} frame={<Wash tone="rgba(94,138,70,0.26)" />}>
       <V c="g27-th-bill" l={38} t={30} w={16} h={16} d={100} st={{ transformOrigin: "10% 10%" }}>{bill}</V>
       {TH_STAKES.map((i) => (
         <V key={i} c="g27-th-stake" l={40 + i * 6} t={40} w={5} h={14} d={200 + i * 90}>{stake}</V>
@@ -1156,7 +1327,7 @@ function GnatCloudScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(154,138,92,0.26)" />}>
+    <Lead imp={IMP.hx4_gnat_cloud} d={delayMs} frame={<Wash tone="rgba(154,138,92,0.26)" />}>
       <V c="g27-gc-heap" l={42} t={46} w={16} h={11} d={80}>{heap}</V>
       <L c="g27-gc-fizz" l={44} t={42} w={12} h={12} d={280} st={{ borderRadius: "50%", background: "radial-gradient(circle, #ffeec4, transparent 68%)" }} />
       {GC_GNATS.map(([l, t], i) => (
@@ -1205,7 +1376,7 @@ function HouseArrestScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(79,138,88,0.28)" />}>
+    <Lead imp={IMP.hx4_house_arrest} d={delayMs} frame={<Wash tone="rgba(79,138,88,0.28)" />}>
       <V c="g27-ha-arch" l={43} t={36} w={14} h={18} d={80}>{arch}</V>
       {HA_TENDRILS.map((i) => (
         <V key={i} c="g27-ha-tendril" l={40 + i * 4} t={40 + (i % 2) * 4} w={11} h={11} d={200 + i * 90} st={{ transformOrigin: "0% 100%", rotate: `${i * 26 - 30}deg` }}>
@@ -1263,7 +1434,7 @@ function GardenDoorScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead d={delayMs} frame={<Wash tone="rgba(138,168,88,0.26)" />}>
+    <AimLead imp={IMP.op_garden_door} d={delayMs} frame={<Wash tone="rgba(138,168,88,0.26)" />}>
       <V c="g27-gd-frame" l={42} t={38} w={14} h={18} d={80}>{frame}</V>
       <V c="g27-gd-limb" l={48} t={40} w={20} h={12} d={240} st={{ transformOrigin: "0% 50%" }}>
         <path d="M1 20C8 18 13 12 22 4" fill="none" stroke="#8aa858" strokeWidth="2.6" {...SJ} />
@@ -1317,7 +1488,7 @@ function GardenScarecrowScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(216,180,92,0.26)" />}>
+    <Lead imp={IMP.op_garden_scarecrow} d={delayMs} frame={<Wash tone="rgba(216,180,92,0.26)" />}>
       <V c="g27-gs-pole" l={44} t={34} w={12} h={22} d={80}>{pole}</V>
       {GS_STRAW.map((i) => (
         <V key={i} c="g27-gs-straw" l={42 + i * 7} t={38 + (i % 2) * 4} w={6} h={7} d={220 + i * 90}>
@@ -1370,7 +1541,7 @@ function LooseFloorboardScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <AimLead d={delayMs} frame={<Wash tone="rgba(169,121,63,0.26)" />}>
+    <AimLead imp={IMP.ov_loose_floorboard} d={delayMs} frame={<Wash tone="rgba(169,121,63,0.26)" />}>
       <V c="g27-lf-bulge" l={42} t={46} w={20} h={10} d={90}>{root}</V>
       <V c="g27-lf-plank" l={44} t={41} w={18} h={9} d={300} st={{ transformOrigin: "10% 100%" }}>{plank}</V>
       <V c="g27-lf-kick" l={50} t={38} w={9} h={12} d={480}><path d={PAWN} fill="#ffe8bc" stroke="#2a1c10" strokeWidth="1" {...SJ} /></V>
@@ -1411,7 +1582,7 @@ function GardenFenceScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(134,176,96,0.26)" />}>
+    <Lead imp={IMP.bn4_garden_fence} d={delayMs} frame={<Wash tone="rgba(134,176,96,0.26)" />}>
       {GF_PICKETS.map((i) => (
         <V key={i} c="g27-gf-picket" l={40 + i * 5} t={39} w={4.4} h={14} d={120 + i * 80}>{picket}</V>
       ))}
@@ -1468,7 +1639,7 @@ function ButtonedScabbardScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(159,191,142,0.26)" />}>
+    <Lead imp={IMP.hx4_buttoned_scabbard} d={delayMs} frame={<Wash tone="rgba(159,191,142,0.26)" />}>
       <V c="g27-bs-sword" l={45} t={34} w={10} h={22} d={80}>{sword}</V>
       {BS_CRUSTS.map(([l, t], i) => (
         <V key={i} c="g27-bs-crust" l={l} t={t} w={6} h={6} d={220 + i * 90}>{crust}</V>
@@ -1520,7 +1691,7 @@ function GardenGateScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(232,194,74,0.26)" />}>
+    <Lead imp={IMP.op_garden_gate} d={delayMs} frame={<Wash tone="rgba(232,194,74,0.26)" />}>
       <L c="g27-gg-crack" l={40} t={50} w={22} h={1.4} d={90} st={{ borderRadius: "999px", background: "#2a2416", transformOrigin: "0% 50%" }} />
       {[0, 1].map((i) => (
         <V key={i} c="g27-gg-leaf" l={43 + i * 8} t={47} w={6} h={5} d={240 + i * 80}>
@@ -1570,7 +1741,7 @@ function GardenHedgeScene({ role, delayMs }: SceneProps) {
     );
   }
   return (
-    <Lead d={delayMs} frame={<Wash tone="rgba(63,122,78,0.28)" />}>
+    <Lead imp={IMP.op_garden_hedge} d={delayMs} frame={<Wash tone="rgba(63,122,78,0.28)" />}>
       <V c="g27-gh-block" l={36} t={41} w={28} h={14} d={80} par="none">{block}</V>
       <V c="g27-gh-arch" l={45} t={42} w={10} h={13} d={280}>{archway}</V>
       <V c="g27-gh-hop" l={45} t={38} w={10} h={13} d={480}><path d={QUEEN} fill="#ffeec2" stroke="#1c2418" strokeWidth="1" {...SJ} /></V>

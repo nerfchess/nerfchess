@@ -27,7 +27,6 @@ export type Control =
   | { kind: "animationSpeed"; options: Array<{ value: AnimationSpeed; label: string }> }
   | { kind: "siteTheme" }
   | { kind: "soundTheme"; options: Array<{ value: SoundTheme; label: string }> }
-  | { kind: "accentColor" }
   | { kind: "customBg" }
   | { kind: "boardTheme" }
   | { kind: "pieceTheme" }
@@ -48,6 +47,9 @@ export interface SectionConfig {
   id: string;
   title: string;
   icon: LucideIcon;
+  /** One short line on the drill-down home card: what lives in this section.
+   *  Written as content, not a sales pitch; keep it under ~8 words. */
+  blurb: string;
   rows: RowConfig[];
 }
 
@@ -57,6 +59,7 @@ export const SECTIONS: SectionConfig[] = [
   {
     id: "gameplay",
     title: "Gameplay",
+    blurb: "Moves, confirmations, opponent",
     icon: Gamepad2,
     rows: [
       {
@@ -97,14 +100,12 @@ export const SECTIONS: SectionConfig[] = [
       {
         id: "confirmResign",
         label: "Confirm resign",
-        hint: "Ask before resigning a game",
         group: "Confirmations",
         control: { kind: "toggle", setting: "confirmResign" },
       },
       {
         id: "confirmDrawOffer",
         label: "Confirm draw offers",
-        hint: "Ask before sending a draw offer",
         group: "Confirmations",
         control: { kind: "toggle", setting: "confirmDrawOffer" },
       },
@@ -118,7 +119,6 @@ export const SECTIONS: SectionConfig[] = [
       {
         id: "muteChat",
         label: "Mute chat",
-        hint: "Hide in-game chat messages from opponents",
         group: "Opponent",
         control: { kind: "toggle", setting: "muteChat" },
       },
@@ -127,6 +127,7 @@ export const SECTIONS: SectionConfig[] = [
   {
     id: "board",
     title: "Board & Pieces",
+    blurb: "Board and piece themes, layout",
     icon: Grid3x3,
     rows: [
       {
@@ -150,14 +151,12 @@ export const SECTIONS: SectionConfig[] = [
       {
         id: "largerPieces",
         label: "Larger pieces",
-        hint: "Draw pieces bigger inside their squares",
         group: "Layout",
         control: { kind: "toggle", setting: "largerPieces" },
       },
       {
         id: "flipBoard",
         label: "Flip board",
-        hint: "View the board from the opponent's side",
         group: "Layout",
         control: { kind: "toggle", setting: "flipBoard" },
       },
@@ -205,12 +204,12 @@ export const SECTIONS: SectionConfig[] = [
   {
     id: "audio",
     title: "Sound",
+    blurb: "Volume, game and interface sounds",
     icon: Volume2,
     rows: [
       {
         id: "soundEnabled",
         label: "All sounds",
-        hint: "Master switch for every game sound",
         group: "Master",
         control: { kind: "toggle", setting: "soundEnabled" },
       },
@@ -260,14 +259,14 @@ export const SECTIONS: SectionConfig[] = [
       {
         id: "uiSounds",
         label: "UI sounds",
-        hint: "Interface blips like piece selection",
+        hint: "Piece-select blips",
         group: "Interface",
         control: { kind: "toggle", setting: "uiSounds" },
       },
       {
         id: "lowTimeWarning",
         label: "Low-time warning",
-        hint: "Ticking alert when your clock runs low",
+        hint: "Ticks when your clock runs low",
         group: "Interface",
         control: { kind: "toggle", setting: "lowTimeWarning" },
       },
@@ -276,20 +275,21 @@ export const SECTIONS: SectionConfig[] = [
   {
     id: "appearance",
     title: "Appearance",
+    blurb: "Site theme, background, motion",
     icon: Palette,
     rows: [
       {
         id: "siteTheme",
         label: "Theme",
-        hint: "Full site palettes: pick a mood",
         group: "Theme",
         control: { kind: "siteTheme" },
       },
       {
-        id: "accentColor",
-        label: "Accent color",
+        id: "zenMode",
+        label: "Zen mode",
+        hint: "During a game, hide everything but the board, clocks and moves. Press z to toggle.",
         group: "Theme",
-        control: { kind: "accentColor" },
+        control: { kind: "toggle", setting: "zenMode" },
       },
       {
         id: "customBg",
@@ -299,36 +299,15 @@ export const SECTIONS: SectionConfig[] = [
         control: { kind: "customBg" },
       },
       {
-        id: "uiScale",
-        label: "UI scale",
-        group: "Interface",
-        control: { kind: "slider", setting: "uiScale", min: 0.85, max: 1.15, step: 0.05, format: pct },
-      },
-      {
-        id: "compactMode",
-        label: "Compact mode",
-        hint: "Tighter interface density",
-        group: "Interface",
-        control: { kind: "toggle", setting: "compactMode" },
-      },
-      {
-        id: "perfMode",
-        label: "Performance mode",
-        hint: "Drops heavy blur/grain effects for smoother play on low-end devices",
-        group: "Interface",
-        control: { kind: "toggle", setting: "perfMode" },
-      },
-      {
         id: "reducedMotion",
         label: "Reduced motion",
-        hint: "Minimize animations and transitions",
         group: "Motion",
         control: { kind: "toggle", setting: "reducedMotion" },
       },
       {
         id: "followSystemMotion",
         label: "Follow system motion",
-        hint: "Stand card effects down when your device asks apps to reduce motion. Turn this off to keep the effects regardless.",
+        hint: "Follow your device's reduce-motion setting.",
         group: "Motion",
         control: { kind: "toggle", setting: "followSystemMotion" },
       },
@@ -337,6 +316,7 @@ export const SECTIONS: SectionConfig[] = [
   {
     id: "account",
     title: "Account",
+    blurb: "Profile and sign-in",
     icon: UserRound,
     rows: [
       {
@@ -349,26 +329,9 @@ export const SECTIONS: SectionConfig[] = [
   {
     id: "accessibility",
     title: "Accessibility",
+    blurb: "Motion",
     icon: Accessibility,
     rows: [
-      {
-        id: "highContrast",
-        label: "High contrast",
-        hint: "Brighter text and firmer borders",
-        control: { kind: "toggle", setting: "highContrast" },
-      },
-      {
-        id: "largerPiecesA11y",
-        label: "Larger pieces",
-        hint: "Also available under Board & Pieces",
-        control: { kind: "toggle", setting: "largerPieces" },
-      },
-      {
-        id: "largerText",
-        label: "Larger text",
-        hint: "Scales the whole interface (same as UI scale)",
-        control: { kind: "slider", setting: "uiScale", min: 0.85, max: 1.15, step: 0.05, format: pct },
-      },
       {
         id: "reducedMotionA11y",
         label: "Reduced motion",
@@ -377,7 +340,7 @@ export const SECTIONS: SectionConfig[] = [
       {
         id: "followSystemMotionA11y",
         label: "Follow system motion",
-        hint: "Stand card effects down when your device asks apps to reduce motion. Turn this off to keep the effects regardless.",
+        hint: "Follow your device's reduce-motion setting.",
         control: { kind: "toggle", setting: "followSystemMotion" },
       },
     ],
@@ -385,13 +348,9 @@ export const SECTIONS: SectionConfig[] = [
   {
     id: "advanced",
     title: "Advanced",
+    blurb: "Resets",
     icon: SlidersHorizontal,
     rows: [
-      {
-        id: "fpsCounter",
-        label: "FPS counter",
-        control: { kind: "toggle", setting: "fpsCounter" },
-      },
       {
         id: "resetSettings",
         label: "Reset settings",

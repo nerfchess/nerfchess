@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { LinkButton } from "@/components/ui/Button";
 
 // Route-level error boundary: any client exception in a page renders this
 // panel inside the normal layout instead of white-screening the site.
@@ -8,18 +9,17 @@ export default function Error({ reset }: { error: Error & { digest?: string }; r
   return (
     <main className="min-h-screen flex items-center justify-center px-6">
       <div className="plate w-full max-w-sm p-6 text-center">
-        <div className="smallcaps text-[10px] text-parchment-400">Well, that broke</div>
+        <div className="text-[10px] text-parchment-400">Well, that broke</div>
         <h1 className="font-display text-2xl text-parchment mt-1">Something went wrong</h1>
         <p className="mt-2 text-sm text-parchment-300">
           The page hit an unexpected error. Your game state is saved locally.
         </p>
         <div className="mt-5 grid grid-cols-2 gap-2">
-          <Link
+          <LinkButton tone="ghost"
             href="/"
-            className="inline-flex min-h-[44px] items-center justify-center px-3 py-2 btn-ghost text-xs font-display tracking-wide sm:min-h-0"
-          >
+            className="px-3 py-2 text-xs tracking-wide sm:min-h-0">
             Back to the game
-          </Link>
+          </LinkButton>
           <button
             onClick={reset}
             className="inline-flex min-h-[44px] items-center justify-center px-3 py-2 border border-gold/40 bg-gold/10 text-gold-leaf hover:bg-gold/20 transition text-xs font-display font-semibold tracking-wide sm:min-h-0"

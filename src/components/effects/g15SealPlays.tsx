@@ -35,6 +35,7 @@ import "./g15SealPlays.css";
 import type { CSSProperties, ReactNode } from "react";
 import type { SigPlugin, SigRole } from "./sigPlugins";
 import { AimStage, BoardFrame, BoardWideStage } from "./stage";
+import { LaserStrike, PieceShatter, Shockwave, QUAKE_CLASS, impactVars } from "./impact/impact";
 
 interface SceneProps {
   lead: boolean;
@@ -1597,35 +1598,128 @@ function CouponBookScene({ role, delayMs }: SceneProps) {
    on the square it was played on.
    ========================================================================== */
 
-/** Bind one bespoke scene to its config. */
-function S(Render: SigPlugin["Render"], config: SigPlugin["config"]): SigPlugin {
-  return { config, Render };
+/* =============================================================================
+   FLAGSHIP IMPACT PASS — every seal SLAMS DOWN under a column of light.
+
+   Layered OVER each scene's own signature from the shared impact vocabulary
+   (impact/impact.tsx): a descending laser column, the struck thing splitting
+   in half and spraying shards, a ground shockwave, and the whole stage
+   jolting on the same beat. Each PLAYS entry declares its own combination,
+   impact beat, tint, landing box and tilt below, so every card in the module
+   lands a hit its siblings do not. The quake rides an inner wrapper (the
+   stage's own transform is the anchor clamp and must not be overridden) and
+   stays inside this scene's stage — the real board crop never shakes. The
+   whole composite is transform/opacity only, one-shot, scaled by --fx-dur,
+   and dark under html[data-anim="off"] via the global animation gate.
+   ========================================================================== */
+
+/** Per-card impact spec. `at` is the impact beat in ms after the lead's
+ * stagger; the laser (when present) LEADS that beat by 0.4s per the shared
+ * impact-timing contract, so the column reads as the CAUSE of the hit. */
+interface Imp {
+  /** Impact tint: the "r g b" triple --imp-rgb expects (the card's core). */
+  rgb: string;
+  /** The impact beat, ms into the lead. */
+  at: number;
+  laser?: boolean;
+  shock?: boolean;
+  /** Shatter glyph (24x24 viewBox): the struck thing, split in half. */
+  glyph?: ReactNode;
+  /** Landing box, % of the scene canvas. Defaults to the cast square. */
+  box?: [number, number, number, number];
+  /** Static tilt of the whole composite, in degrees (angled columns). */
+  rot?: number;
 }
 
+/** A ribboned wax seal: the authority the column drives into the board. */
+const impSeal = (fill: string, edge: string): ReactNode => (
+  <>
+    <circle cx="12" cy="11" r="7" fill={fill} stroke={edge} strokeWidth="1.2" />
+    <circle cx="12" cy="11" r="3.4" fill="none" stroke={edge} strokeWidth="1.1" />
+    <path d="M8.6 17.4L6.4 22M15.4 17.4l2.2 4.6" stroke={fill} strokeWidth="2.2" strokeLinecap="round" />
+  </>
+);
+
+/** The composite itself, staged over the scene's canvas on the impact beat. */
+function ImpactHit({ s, delayMs }: { s: Imp; delayMs: number }) {
+  const [l, t, w, h] = s.box ?? [43, 38, 14, 14];
+  return (
+    <span className="pointer-events-none absolute inset-0 z-30 block" aria-hidden="true">
+      <BoardWideStage>
+        <span
+          className="absolute block"
+          style={{
+            left: `${l}%`,
+            top: `${t}%`,
+            width: `${w}%`,
+            height: `${h}%`,
+            rotate: s.rot ? `${s.rot}deg` : undefined,
+            ...impactVars(s.rgb, (delayMs + s.at) / 1000),
+          }}
+        >
+          {s.laser ? <LaserStrike /> : null}
+          {s.glyph ? (
+            <PieceShatter
+              glyph={
+                <svg viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+                  {s.glyph}
+                </svg>
+              }
+            />
+          ) : null}
+          {s.shock ? <Shockwave /> : null}
+        </span>
+      </BoardWideStage>
+    </span>
+  );
+}
+
+/** Bind one bespoke scene to its config, landing its per-card impact over the
+ * lead. Target and entrance cuts keep the scene's own art unchanged. */
+function S(Render: SigPlugin["Render"], config: SigPlugin["config"], imp?: Imp): SigPlugin {
+  if (!imp) return { config, Render };
+  function FlagshipHit(p: { lead: boolean; role: SigRole; delayMs: number }) {
+    if (p.role !== "lead") return <Render {...p} />;
+    return (
+      <span className="pointer-events-none absolute inset-0 block" aria-hidden="true">
+        <span
+          className={`${QUAKE_CLASS} absolute inset-0 block`}
+          style={impactVars(imp!.rgb, (p.delayMs + imp!.at) / 1000)}
+        >
+          <Render {...p} />
+        </span>
+        <ImpactHit s={imp!} delayMs={p.delayMs} />
+      </span>
+    );
+  }
+  return { config, Render: FlagshipHit };
+}
+
+
 export const PLAYS: Record<string, SigPlugin> = {
-  bn4_deck_of_kings: S(DeckOfKingsScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation", anchor: "board" }),
-  bn4_triumphal_arch: S(TriumphalArchScene, { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "cathedral", anchor: "cast" }),
-  ov_cartographers_vault: S(CartographersVaultScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "vault", anchor: "board" }),
-  ov_the_menu: S(TheMenuScene, { ordering: "file", staggerMs: 70, victims: "all", hasLead: true, sound: "wall", anchor: "board" }),
-  bn4_eye_of_ages: S(EyeOfAgesScene, { ordering: "radial", staggerMs: 55, victims: "all", hasLead: true, sound: "cathedral", anchor: "board" }),
-  bn4_feast_of_fools: S(FeastOfFoolsScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation", anchor: "board" }),
-  hx4_broken_supply: S(BrokenSupplyScene, { ordering: "line", staggerMs: 65, victims: "all", hasLead: true, sound: "shades", anchor: "board" }),
-  ov_patch_notes: S(PatchNotesScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage", anchor: "board" }),
-  bn4_all_seeing_spire: S(AllSeeingSpireScene, { ordering: "octagon", staggerMs: 55, victims: "all", hasLead: true, sound: "wall", anchor: "board" }),
-  bn4_ravens_court: S(RavensCourtScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades", anchor: "board" }),
-  hx4_wax_seal: S(WaxSealScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall", anchor: "board" }),
-  ov_grand_illusionist: S(GrandIllusionistScene, { ordering: "radial", staggerMs: 60, victims: ["n", "b"], hasLead: true, sound: "shades", anchor: "cast" }),
-  ov_season_pass: S(SeasonPassScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage", anchor: "board" }),
-  hx4_dead_letter: S(DeadLetterScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades", anchor: "board" }),
-  hx4_paper_orders: S(PaperOrdersScene, { ordering: "line", staggerMs: 70, victims: "all", hasLead: true, sound: "vault", anchor: "board" }),
-  ov_checkmate_rehearsal: S(CheckmateRehearsalScene, { ordering: "radial", staggerMs: 55, victims: "all", hasLead: true, sound: "clockcage", anchor: "board" }),
-  ov_upper_shelf: S(UpperShelfScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "vault", anchor: "board" }),
-  bn4_augurs_flight: S(AugursFlightScene, { ordering: "line", staggerMs: 60, victims: "all", hasLead: true, sound: "cathedral", anchor: "board" }),
-  bn4_season_ticket: S(SeasonTicketScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage", anchor: "board" }),
-  ov_tasting_flight: S(TastingFlightScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall", anchor: "board" }),
-  ov_ventriloquist: S(VentriloquistScene, { ordering: "line", staggerMs: 60, victims: ["n"], hasLead: true, sound: "shades", anchor: "aim" }),
-  bn4_bakers_dozen: S(BakersDozenScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall", anchor: "board" }),
-  bn4_punch_card: S(PunchCardScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage", anchor: "board" }),
-  ov_focus_group: S(FocusGroupScene, { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "coronation", anchor: "board" }),
-  bn4_coupon_book: S(CouponBookScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "vault", anchor: "board" }),
+  bn4_deck_of_kings: S(DeckOfKingsScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation", anchor: "board" }, { rgb: "232 196 106", at: 780, laser: true, glyph: impSeal("#e8c46a", "#2a1e0b"), shock: true, box: [41, 33, 16, 18] }),
+  bn4_triumphal_arch: S(TriumphalArchScene, { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "cathedral", anchor: "cast" }, { rgb: "203 184 148", at: 720, laser: true, shock: true, box: [42, 32, 15, 20] }),
+  ov_cartographers_vault: S(CartographersVaultScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "vault", anchor: "board" }, { rgb: "159 176 192", at: 740, laser: true, glyph: impSeal("#9fb0c0", "#1c2530"), shock: true, box: [42, 35, 15, 16], rot: 8 }),
+  ov_the_menu: S(TheMenuScene, { ordering: "file", staggerMs: 70, victims: "all", hasLead: true, sound: "wall", anchor: "board" }, { rgb: "224 162 78", at: 700, laser: true, shock: true, box: [43, 36, 14, 16] }),
+  bn4_eye_of_ages: S(EyeOfAgesScene, { ordering: "radial", staggerMs: 55, victims: "all", hasLead: true, sound: "cathedral", anchor: "board" }, { rgb: "184 199 216", at: 680, laser: true, box: [43, 33, 13, 19] }),
+  bn4_feast_of_fools: S(FeastOfFoolsScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation", anchor: "board" }, { rgb: "224 122 154", at: 640, glyph: impSeal("#e07a9a", "#2e1420"), shock: true, box: [42, 37, 15, 14] }),
+  hx4_broken_supply: S(BrokenSupplyScene, { ordering: "line", staggerMs: 65, victims: "all", hasLead: true, sound: "shades", anchor: "board" }, { rgb: "192 90 60", at: 660, laser: true, shock: true, box: [42, 36, 14, 16], rot: -10 }),
+  ov_patch_notes: S(PatchNotesScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage", anchor: "board" }, { rgb: "127 194 168", at: 600, laser: true, box: [44, 35, 12, 17] }),
+  bn4_all_seeing_spire: S(AllSeeingSpireScene, { ordering: "octagon", staggerMs: 55, victims: "all", hasLead: true, sound: "wall", anchor: "board" }, { rgb: "158 200 216", at: 640, laser: true, box: [43, 32, 13, 20] }),
+  bn4_ravens_court: S(RavensCourtScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades", anchor: "board" }, { rgb: "143 127 176", at: 620, laser: true, glyph: impSeal("#8f7fb0", "#1a1524"), box: [42, 36, 14, 15] }),
+  hx4_wax_seal: S(WaxSealScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall", anchor: "board" }, { rgb: "210 69 47", at: 680, glyph: impSeal("#d2452f", "#2c0f0a"), shock: true, box: [43, 37, 14, 14] }),
+  ov_grand_illusionist: S(GrandIllusionistScene, { ordering: "radial", staggerMs: 60, victims: ["n", "b"], hasLead: true, sound: "shades", anchor: "cast" }, { rgb: "180 143 216", at: 560, laser: true, box: [44, 36, 12, 16] }),
+  ov_season_pass: S(SeasonPassScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage", anchor: "board" }, { rgb: "111 216 192", at: 540, shock: true, box: [44, 39, 12, 12] }),
+  hx4_dead_letter: S(DeadLetterScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades", anchor: "board" }, { rgb: "168 86 78", at: 580, glyph: impSeal("#a8564e", "#241a16"), box: [43, 38, 13, 13] }),
+  hx4_paper_orders: S(PaperOrdersScene, { ordering: "line", staggerMs: 70, victims: "all", hasLead: true, sound: "vault", anchor: "board" }, { rgb: "185 160 106", at: 600, laser: true, shock: true, box: [43, 35, 13, 16] }),
+  ov_checkmate_rehearsal: S(CheckmateRehearsalScene, { ordering: "radial", staggerMs: 55, victims: "all", hasLead: true, sound: "clockcage", anchor: "board" }, { rgb: "224 104 90", at: 620, shock: true, box: [42, 38, 15, 12] }),
+  ov_upper_shelf: S(UpperShelfScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "vault", anchor: "board" }, { rgb: "127 154 208", at: 520, laser: true, box: [44, 34, 12, 17] }),
+  bn4_augurs_flight: S(AugursFlightScene, { ordering: "line", staggerMs: 60, victims: "all", hasLead: true, sound: "cathedral", anchor: "board" }, { rgb: "158 196 168", at: 500, shock: true, box: [44, 39, 12, 11] }),
+  bn4_season_ticket: S(SeasonTicketScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage", anchor: "board" }, { rgb: "208 138 78", at: 540, glyph: impSeal("#d08a4e", "#2a1608"), box: [44, 38, 12, 12] }),
+  ov_tasting_flight: S(TastingFlightScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall", anchor: "board" }, { rgb: "224 122 58", at: 480, shock: true, box: [45, 40, 11, 11] }),
+  ov_ventriloquist: S(VentriloquistScene, { ordering: "line", staggerMs: 60, victims: ["n"], hasLead: true, sound: "shades", anchor: "aim" }, { rgb: "127 182 224", at: 500, laser: true, box: [44, 36, 12, 15], rot: 12 }),
+  bn4_bakers_dozen: S(BakersDozenScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall", anchor: "board" }, { rgb: "200 160 106", at: 460, shock: true, box: [44, 40, 12, 11] }),
+  bn4_punch_card: S(PunchCardScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage", anchor: "board" }, { rgb: "184 192 122", at: 520, glyph: impSeal("#b8c07a", "#26290f"), box: [43, 38, 13, 12] }),
+  ov_focus_group: S(FocusGroupScene, { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "coronation", anchor: "board" }, { rgb: "155 184 200", at: 440, shock: true, box: [45, 39, 11, 11] }),
+  bn4_coupon_book: S(CouponBookScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "vault", anchor: "board" }, { rgb: "232 176 192", at: 420, shock: true, box: [45, 40, 10, 10] }),
 };

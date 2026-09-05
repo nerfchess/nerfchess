@@ -25,9 +25,11 @@ const TONE: Record<ButtonTone, string> = {
     "border border-transparent text-parchment-300 hover:text-parchment-50 hover:border-white/15",
 };
 
+// Touch first: every control clears a 36/40px tap target on a phone and only
+// tightens once there is a pointer, so nothing here is a coin-flip to hit.
 const SIZE: Record<ButtonSize, string> = {
-  sm: "px-2.5 py-1 text-[12px]",
-  md: "px-4 py-1.5 text-sm",
+  sm: "min-h-[36px] px-3 py-1.5 text-[12px] sm:min-h-0 sm:px-2.5 sm:py-1",
+  md: "min-h-[40px] px-4 py-2 text-sm sm:min-h-0 sm:py-1.5",
 };
 
 function buttonClass(tone: ButtonTone, size: ButtonSize, extra?: string): string {
@@ -167,7 +169,12 @@ export function SegmentedControl<T extends string>({
   return (
     <div
       role="group"
-      className={"inline-flex rounded-[1px] border border-white/15 p-0.5 " + (className ?? "")}
+      // Full width on a phone so the segments are thumb-sized, shrink-wrapped
+      // once there is room for it to sit beside something else.
+      className={
+        "flex w-full rounded-[1px] border border-white/15 p-0.5 sm:inline-flex sm:w-auto " +
+        (className ?? "")
+      }
     >
       {options.map((opt) => {
         const active = opt.value === value;
@@ -178,7 +185,7 @@ export function SegmentedControl<T extends string>({
             aria-pressed={active}
             onClick={() => onChange(opt.value)}
             className={
-              "press rounded-[1px] font-display transition " +
+              "press flex-1 rounded-[1px] text-center font-display transition sm:flex-none " +
               SIZE[size] +
               " " +
               (active
@@ -258,60 +265,121 @@ export function Pill({
             ? "border-gold/40 text-gold-leaf"
             : "border-white/15 text-parchment-300";
   return (
-    <span className={`smallcaps shrink-0 rounded-[1px] border px-2 py-0.5 text-[10px] ${style}`}>
+    <span className={`shrink-0 rounded-[1px] border px-2 py-0.5 text-[10px] ${style}`}>
       {children}
     </span>
   );
 }
 
-/** One number with its label. `tone` is for the numbers a moderator should
- *  react to, never for decoration. */
-export function StatCard({
-  label,
-  value,
-  sub,
-  tone,
-}: {
+export type StatItem = {
   label: string;
   value: string | number;
   sub?: string;
   tone?: "warn" | "good";
-}) {
+};
+
+function valueTone(tone?: "warn" | "good"): string {
+  return tone === "warn"
+    ? "text-oxblood-glow"
+    : tone === "good"
+      ? "text-verdigris-glow"
+      : "text-parchment-50";
+}
+
+/** One number with its label. `tone` is for the numbers a moderator should
+ *  react to, never for decoration. */
+export function StatCard({ label, value, sub, tone }: StatItem) {
   return (
     <div className="plate p-4">
-      <div className="smallcaps text-[11px] text-parchment-400">{label}</div>
-      <div
-        className={
-          "mt-1 font-display text-2xl tabular-nums " +
-          (tone === "warn"
-            ? "text-oxblood-glow"
-            : tone === "good"
-              ? "text-verdigris-glow"
-              : "text-parchment-50")
-        }
-      >
-        {value}
-      </div>
+      <div className="text-[11px] text-parchment-400">{label}</div>
+      <div className={"mt-1 font-display text-2xl tabular-nums " + valueTone(tone)}>{value}</div>
       {sub && <div className="mt-0.5 text-[11px] leading-snug text-parchment-400">{sub}</div>}
     </div>
   );
 }
 
-/** Heading for a block inside a section, with optional right-aligned controls. */
+/** A block of numbers, laid out for the screen it is on.
+ *
+ *  On a phone a grid of stat cards is the wrong shape: two columns of boxes wide
+ *  enough for "HUMAN GAMES, 15 MIN" to wrap three times, turning eight numbers
+ *  into four screens of scrolling. So phones get a single plate with one line per
+ *  number — label left, value right — which reads down the page like a table and
+ *  fits the whole block in one glance. The card grid returns as soon as there is
+ *  width to make it look deliberate. */
+export function StatGrid({ items, cols = 4 }: { items: StatItem[]; cols?: 3 | 4 | 5 }) {
+  const grid =
+    cols === 5
+      ? "sm:grid-cols-3 lg:grid-cols-5"
+      : cols === 3
+        ? "sm:grid-cols-3"
+        : "sm:grid-cols-2 lg:grid-cols-4";
+  return (
+    <>
+      <div className="plate divide-y divide-white/5 sm:hidden">
+        {items.map((it) => (
+          <div key={it.label} className="flex items-center justify-between gap-3 px-3.5 py-2.5">
+            <span className="min-w-0 text-[11px] leading-tight text-parchment-400">
+              {it.label}
+            </span>
+            <span className="shrink-0 text-right">
+              <span className={"font-display text-lg tabular-nums " + valueTone(it.tone)}>
+                {it.value}
+              </span>
+              {it.sub && (
+                <span className="block text-[10px] leading-tight text-parchment-400">{it.sub}</span>
+              )}
+            </span>
+          </div>
+        ))}
+      </div>
+      <div className={`hidden gap-3 sm:grid ${grid}`}>
+        {items.map((it) => (
+          <StatCard key={it.label} {...it} />
+        ))}
+      </div>
+    </>
+  );
+}
+
+/** Heading for a block inside a section, with optional right-aligned controls.
+ *
+ *  `actionsInline` puts the control on the title's own row and drops the blurb
+ *  beneath both. Use it for a switch that belongs to the thing being named — on
+ *  a phone the default layout wraps a lone toggle under a paragraph of prose,
+ *  which reads as a stray button rather than as this section's switch. */
 export function SectionHead({
   title,
   blurb,
   actions,
+  actionsInline,
 }: {
   title: string;
   blurb?: ReactNode;
   actions?: ReactNode;
+  actionsInline?: boolean;
 }) {
+  const heading = <h2 className="font-display text-lg text-parchment-100">{title}</h2>;
+  const prose = blurb && (
+    <p className="mt-1 max-w-2xl text-[12px] leading-snug text-parchment-400">{blurb}</p>
+  );
+
+  if (actionsInline) {
+    return (
+      <div>
+        <div className="flex items-center justify-between gap-3">
+          {heading}
+          {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
+        </div>
+        {prose}
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-wrap items-start justify-between gap-3">
+    <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
       <div className="min-w-0">
-        <h2 className="font-display text-lg text-parchment-100">{title}</h2>
-        {blurb && <p className="mt-1 max-w-2xl text-[12px] leading-snug text-parchment-400">{blurb}</p>}
+        {heading}
+        {prose}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </div>
@@ -338,9 +406,29 @@ export function when(ts: number): string {
   return new Date(ts).toLocaleString();
 }
 
+/** The list-row timestamp. `toLocaleString()` spends 22 characters on
+ *  "7/31/2026, 9:13:12 AM" — on a phone that is a whole line for a detail
+ *  nobody reads to the second. This keeps the day and the minute; the full
+ *  value stays available as a title attribute wherever it is used. */
+export function whenShort(ts: number): string {
+  const d = new Date(ts);
+  const day = d.toLocaleDateString(undefined, { day: "numeric", month: "short" });
+  const time = d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  return `${day}, ${time}`;
+}
+
+const FOREVER_MS = 50 * 365 * 24 * 60 * 60 * 1000;
+
 export function untilLabel(ts: number | null): string {
   if (!ts || ts <= Date.now()) return "";
-  return ts > Date.now() + 50 * 365 * 24 * 60 * 60 * 1000 ? "permanently" : `until ${when(ts)}`;
+  return ts > Date.now() + FOREVER_MS ? "permanently" : `until ${when(ts)}`;
+}
+
+/** Expiry for a badge sitting next to a username, where the year and the
+ *  seconds are noise: "until 1 Aug, 10:36". */
+export function untilShort(ts: number | null): string {
+  if (!ts || ts <= Date.now()) return "";
+  return ts > Date.now() + FOREVER_MS ? "permanently" : `until ${whenShort(ts)}`;
 }
 
 export function fmtDuration(ms: number | null): string {

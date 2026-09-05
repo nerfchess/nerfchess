@@ -79,7 +79,7 @@ function StatTile({ label, value, sub }: { label: string; value: string; sub?: s
   return (
     <div className="rounded-sm border border-white/10 px-3 py-2">
       <div className="font-mono text-xl text-parchment-50 tabular-nums">{value}</div>
-      <div className="mt-0.5 smallcaps text-[10px] text-parchment-400">{label}</div>
+      <div className="mt-0.5 text-[10px] text-parchment-400">{label}</div>
       {sub && <div className="mt-0.5 text-[11px] text-parchment-400">{sub}</div>}
     </div>
   );
@@ -125,10 +125,37 @@ export function CardInsights({
   const hasGames = humanVolume + botVolume + (human?.offered ?? 0) + (bots?.offered ?? 0) > 0;
   const verb = isNerf ? "carried" : "picked";
 
+  // Collapsed by default (playtest feedback: the card page buried the rule
+  // under stat noise). Native <details>, so no extra client state; the numbers
+  // are one tap away and the disabled/tier-moved banners still surface on the
+  // summary row via the note chip.
+  const noteChip = !effective.enabled
+    ? "disabled"
+    : effective.tier !== codeTier
+      ? `tier ${effective.tier}`
+      : null;
+
   return (
-    <section className="plate p-6 sm:p-7">
-      <h2 className="font-display text-2xl text-parchment">In play</h2>
-      <div className="mt-3 space-y-3 text-[15px] leading-relaxed text-parchment-200/90">
+    <details className="plate group">
+      <summary className="cursor-pointer list-none p-6 outline-none focus-visible:text-coral sm:p-7 [&::-webkit-details-marker]:hidden">
+        <span className="flex items-center justify-between gap-3">
+          <span className="flex items-center gap-2.5">
+            <span className="display-3 text-parchment">In play</span>
+            {noteChip && (
+              <span className="rounded-sm border border-sun/30 bg-sun/5 px-1.5 py-px text-[11px] text-parchment-200">
+                {noteChip}
+              </span>
+            )}
+          </span>
+          <span
+            aria-hidden
+            className="shrink-0 text-parchment-400 motion-safe:transition-transform group-open:rotate-90"
+          >
+            &#9656;
+          </span>
+        </span>
+      </summary>
+      <div className="space-y-3 px-6 pb-6 text-[15px] leading-relaxed text-parchment-200/90 sm:px-7 sm:pb-7">
         {!effective.enabled && (
           <p className="rounded-sm border border-sun/30 bg-sun/5 px-4 py-2 text-sm text-parchment-200">
             Currently disabled by the moderators: it is not being dealt.
@@ -190,11 +217,11 @@ export function CardInsights({
 
         {events.length > 0 && (
           <div className="pt-2">
-            <div className="smallcaps text-[11px] text-parchment-400">Moderator changes</div>
+            <div className="text-[11px] text-parchment-400">Moderator changes</div>
             <ol className="mt-2 space-y-2">
               {events.map((e, i) => (
                 <li key={i} className="flex flex-col gap-0.5 sm:flex-row sm:gap-4">
-                  <span className="smallcaps text-[11px] text-parchment-400 sm:w-32 sm:shrink-0 sm:pt-0.5">
+                  <span className="text-[11px] text-parchment-400 sm:w-32 sm:shrink-0 sm:pt-0.5">
                     {formatDate(e.at)}
                   </span>
                   <span className="text-sm text-parchment-100">{eventText(e)}</span>
@@ -204,6 +231,6 @@ export function CardInsights({
           </div>
         )}
       </div>
-    </section>
+    </details>
   );
 }

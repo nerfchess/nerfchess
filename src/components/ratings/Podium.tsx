@@ -1,17 +1,17 @@
 "use client";
 
-// The leaderboard podium: a treasure-dais for the top three of the active
-// ladder — runner-up left, champion center and elevated, third right. The
-// dais keeps the same three-across silhouette on every screen (owner request:
-// the phone podium must read like the desktop one, not a squashed stack) —
-// on phones the columns simply tighten: smaller avatars, trimmed padding,
-// and the bios step down onto their own line. Purely a highlight above the
-// full table; it never replaces a row. Metal identity (gold / silver / bronze)
-// marks the places, while the header wears the active mode's color (Nerf
-// rose, Buff blue) so switching tabs re-tints the dais. Each riser reads as
-// carved stone (the dungeon slab carries the section); the champion's column
-// adds a gold rim, a laurel arc behind the avatar, and a few rising gold
-// motes — all decoration, all parked under html[data-anim="off"].
+// The leaderboard podium, second coronation: a full ceremony dais for the top
+// three of the active ladder — runner-up left, champion center and elevated,
+// third right. Retired once after playtest feedback, rebuilt grander by owner
+// request: every place stands in its metal spotlight under a strung laurel
+// garland, flower petals drift down the whole dais, bouquets rest on the
+// stone, the champion wears a hovering crown, rising motes, and camera-flash
+// glints. The dais keeps the same three-across silhouette on every screen —
+// on phones the columns simply tighten. Purely a highlight above the full
+// table; it never replaces a row. Metal identity (gold / silver / bronze)
+// marks the places while the header wears the active mode's color, so
+// switching tabs re-tints the ceremony. All decoration is transform/opacity,
+// node-capped, and parked under html[data-anim="off"] (static lighting stays).
 
 import Link from "next/link";
 import { useEffect, useState, type CSSProperties } from "react";
@@ -50,6 +50,8 @@ const MEDALS: Record<
     wash: string;
     /** How many rising motes this place burns (champion the most). */
     motes: number;
+    /** How many camera-flash glints twinkle over this place. */
+    glints: number;
     /** Spotlight strength for .podium-beam (--beam-a). */
     beamA: number;
     /** Petal hues for the ceremony bouquet laid at this place. */
@@ -66,7 +68,8 @@ const MEDALS: Record<
     riser: "sm:min-h-12 md:min-h-14",
     wash: "bg-sun/[0.08]",
     motes: 7,
-    beamA: 0.16,
+    glints: 3,
+    beamA: 0.18,
     petals: ["#ffd97e", "#e4674f"],
   },
   2: {
@@ -79,7 +82,8 @@ const MEDALS: Record<
     riser: "sm:min-h-9",
     wash: "bg-white/[0.03]",
     motes: 3,
-    beamA: 0.1,
+    glints: 1,
+    beamA: 0.11,
     petals: ["#e8e4da", "#9fb4cf"],
   },
   3: {
@@ -92,7 +96,8 @@ const MEDALS: Record<
     riser: "sm:min-h-7",
     wash: "bg-white/[0.02]",
     motes: 2,
-    beamA: 0.09,
+    glints: 1,
+    beamA: 0.1,
     petals: ["#e0a06a", "#b8653e"],
   },
 };
@@ -122,8 +127,8 @@ function useNarrow(): boolean {
   return narrow;
 }
 
-// Rising gold motes above the champion card: a fixed handful (well under the
-// 8-node cap), spread and phased inline so no two climb in step.
+// Rising metal motes above the champion card: a fixed handful, spread and
+// phased inline so no two climb in step.
 const MOTES = [
   { mx: "22%", mdelay: "0s", mdur: "5.2s" },
   { mx: "38%", mdelay: "1.8s", mdur: "6.1s" },
@@ -134,11 +139,29 @@ const MOTES = [
   { mx: "70%", mdelay: "4.1s", mdur: "5.9s" },
 ];
 
-// Four-point camera-flash glints near the champion's avatar (see .podium-glint):
-// two only, phased apart, so it reads as ceremony sparkle rather than confetti.
+// Four-point camera-flash glints near the avatars (see .podium-glint), phased
+// far apart so they read as ceremony sparkle rather than confetti.
 const GLINTS = [
   { gx: "16%", gy: "24%", gdelay: "0s" },
   { gx: "78%", gy: "36%", gdelay: "2.3s" },
+  { gx: "48%", gy: "14%", gdelay: "3.7s" },
+];
+
+// The dais-wide petal drift: ten petals loosed across the whole ceremony,
+// phased and colored from the three places' bouquet hues. Ten spans total for
+// the entire section — well within budget — and the CSS parks them all under
+// html[data-anim="off"].
+const DRIFT: { px: string; pdelay: string; pdur: string; rgb: string }[] = [
+  { px: "6%", pdelay: "0s", pdur: "9.5s", rgb: "255 217 126" },
+  { px: "16%", pdelay: "3.2s", pdur: "11s", rgb: "228 103 79" },
+  { px: "27%", pdelay: "6.1s", pdur: "10s", rgb: "232 228 218" },
+  { px: "38%", pdelay: "1.4s", pdur: "9s", rgb: "255 217 126" },
+  { px: "49%", pdelay: "4.8s", pdur: "12s", rgb: "224 160 106" },
+  { px: "58%", pdelay: "7.6s", pdur: "9.8s", rgb: "255 217 126" },
+  { px: "68%", pdelay: "2.3s", pdur: "10.7s", rgb: "159 180 207" },
+  { px: "78%", pdelay: "5.5s", pdur: "9.2s", rgb: "228 103 79" },
+  { px: "88%", pdelay: "0.9s", pdur: "11.4s", rgb: "255 217 126" },
+  { px: "95%", pdelay: "8.4s", pdur: "10.2s", rgb: "184 101 62" },
 ];
 
 // The laurel arc behind an avatar: the LaurelBadge leaf swept around a wider
@@ -165,6 +188,71 @@ function WreathArc({ color, size, opacity }: { color: string; size: number; opac
           />
         )),
       )}
+    </svg>
+  );
+}
+
+// The garland strung across the top of the dais: two laurel swags meeting at
+// a center rosette, the way a ceremony stage is dressed. Static SVG, tinted
+// by the active mode's accent at low opacity so it reads as set dressing.
+function GarlandSwag({ tint }: { tint: string }) {
+  return (
+    <svg
+      viewBox="0 0 400 34"
+      preserveAspectRatio="none"
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-x-2 top-0 h-8 w-[calc(100%-1rem)]"
+      style={{ opacity: 0.5 }}
+    >
+      <path d="M2 4 Q100 34 198 6" fill="none" stroke="#5f7a4a" strokeWidth="2.4" strokeLinecap="round" />
+      <path d="M202 6 Q300 34 398 4" fill="none" stroke="#5f7a4a" strokeWidth="2.4" strokeLinecap="round" />
+      {[
+        [30, 13], [62, 20], [96, 25], [130, 25], [164, 18],
+        [236, 18], [270, 25], [304, 25], [338, 20], [370, 13],
+      ].map(([x, y], i) => (
+        <path
+          key={i}
+          d={`M${x} ${y} c-3.4 -1 -4.4 -3.6 -2.6 -6 2.8 0.6 4 3.2 2.6 6z`}
+          fill="#6d8a54"
+          transform={i % 2 ? `scale(-1,1) translate(${-2 * x},0)` : undefined}
+        />
+      ))}
+      {[52, 118, 282, 348].map((x, i) => (
+        <circle key={`b${i}`} cx={x} cy={i % 2 ? 22 : 17} r="2.6" fill={tint} opacity="0.8" />
+      ))}
+      <g transform="translate(200 6)">
+        {[0, 60, 120, 180, 240, 300].map((deg) => (
+          <ellipse key={deg} cx="0" cy="-4" rx="2.6" ry="4" fill={tint} transform={`rotate(${deg})`} />
+        ))}
+        <circle r="2.6" fill="#f4e8c8" />
+      </g>
+    </svg>
+  );
+}
+
+// The champion's crown, hovering just over the avatar with the sanctioned
+// ambient bob (.podium-crown). One small SVG; decoration only.
+function ChampionCrown({ size }: { size: number }) {
+  return (
+    <svg
+      viewBox="0 0 34 20"
+      width={size}
+      height={Math.round((size * 20) / 34)}
+      aria-hidden="true"
+      className="podium-crown pointer-events-none absolute left-1/2 -translate-x-1/2"
+      style={{ top: -Math.round((size * 20) / 34) - 2 }}
+    >
+      <path
+        d="M3 16 L1.6 5.5 L9 10.5 L17 2.5 L25 10.5 L32.4 5.5 L31 16 Z"
+        fill="#ffd97e"
+        stroke="#b8892e"
+        strokeWidth="1.1"
+        strokeLinejoin="round"
+      />
+      <path d="M3 16 H31 V18.4 H3 Z" fill="#e6bf6a" stroke="#b8892e" strokeWidth="0.9" />
+      <circle cx="9" cy="13" r="1.3" fill="#e4674f" />
+      <circle cx="17" cy="12.4" r="1.5" fill="#7eb59a" />
+      <circle cx="25" cy="13" r="1.3" fill="#9fb4cf" />
     </svg>
   );
 }
@@ -233,30 +321,59 @@ export function Podium({
   // frame border is set inline because .dgn-slab carries its own brass edge.
   const accent =
     category === "buff"
-      ? { text: "text-mode-buffGlow", rule: "bg-mode-buff/40", border: "rgb(var(--accent-buff-rgb) / 0.3)" }
-      : { text: "text-mode-nerfGlow", rule: "bg-mode-nerf/40", border: "rgb(var(--accent-nerf-rgb) / 0.3)" };
+      ? {
+          text: "text-mode-buffGlow",
+          rule: "bg-mode-buff/40",
+          border: "rgb(var(--accent-buff-rgb) / 0.3)",
+          garland: "#8fb8d8",
+        }
+      : {
+          text: "text-mode-nerfGlow",
+          rule: "bg-mode-nerf/40",
+          border: "rgb(var(--accent-nerf-rgb) / 0.3)",
+          garland: "#e08a8a",
+        };
 
   return (
     <section
       aria-label="Podium: top three"
-      className="dgn-slab dgn-rivets relative mt-6 overflow-hidden px-3 pb-0 pt-4 sm:px-6"
+      className="relative mt-6 overflow-hidden px-3 pb-0 pt-5 sm:px-6"
       style={{ borderColor: accent.border }}
     >
       {/* The gold underglow pool beneath the dais: treasure light rising from
-          the vault floor, turned up a notch for the ceremony so the whole
-          dais reads lit from below as well as from the beams above. */}
+          the vault floor, turned up for the ceremony so the whole dais reads
+          lit from below as well as from the beams above. */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-x-0 bottom-0 h-28"
         style={{
           background:
-            "radial-gradient(58% 95% at 50% 100%, rgb(var(--energy-gold-rgb) / 0.16), transparent 72%)",
+            "radial-gradient(58% 95% at 50% 100%, rgb(var(--energy-gold-rgb) / 0.18), transparent 72%)",
         }}
       />
+      {/* The garland strung over the whole stage. */}
+      <GarlandSwag tint={accent.garland} />
+      {/* The dais-wide petal drift: the ceremony's falling flowers. */}
+      <span aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+        {DRIFT.map((petal, i) => (
+          <span
+            key={i}
+            className="podium-petal"
+            style={
+              {
+                "--px": petal.px,
+                "--pdelay": petal.pdelay,
+                "--pdur": petal.pdur,
+                "--petal-rgb": petal.rgb,
+              } as CSSProperties
+            }
+          />
+        ))}
+      </span>
 
-      <div className="flex items-center justify-center gap-2 pb-2">
+      <div className="relative flex items-center justify-center gap-2 pb-2 pt-2">
         <span className={"h-px w-8 " + accent.rule} aria-hidden="true" />
-        <span className={"smallcaps text-[11px] " + accent.text}>Podium</span>
+        <span className={"text-[11px] " + accent.text}>Podium</span>
         <span className={"h-px w-8 " + accent.rule} aria-hidden="true" />
       </div>
 
@@ -268,6 +385,7 @@ export function Podium({
           const champion = rank === 1;
           const mine = !!isMe && !row.guest && isMe(row.username);
           const avatarSize = narrow ? medal.avatarNarrow : medal.avatar;
+          const provisional = isProvisionalRd(row.rd);
           // Display-time defense: bios are censored at write time, but run
           // them through the shared filter again so any pre-existing rows
           // that slipped past still render clean on the podium.
@@ -301,8 +419,8 @@ export function Podium({
                 }
               />
               {/* Rising metal motes over every place — a full handful of gold
-                  for the champion, a quieter few in silver and bronze; the CSS
-                  parks them all under html[data-anim="off"]. */}
+                  for the champion, a quieter few in silver and bronze — and
+                  camera-flash glints for all three, most over the champion. */}
               <span aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
                 {MOTES.slice(0, medal.motes).map((m, i) => (
                   <span
@@ -318,16 +436,15 @@ export function Podium({
                     }
                   />
                 ))}
-                {champion &&
-                  GLINTS.map((g, i) => (
-                    <span
-                      key={`g${i}`}
-                      className="podium-glint"
-                      style={
-                        { "--gx": g.gx, "--gy": g.gy, "--gdelay": g.gdelay } as CSSProperties
-                      }
-                    />
-                  ))}
+                {GLINTS.slice(0, medal.glints).map((g, i) => (
+                  <span
+                    key={`g${i}`}
+                    className="podium-glint"
+                    style={
+                      { "--gx": g.gx, "--gy": g.gy, "--gdelay": g.gdelay } as CSSProperties
+                    }
+                  />
+                ))}
               </span>
               <span
                 className="rune-badge"
@@ -338,18 +455,20 @@ export function Podium({
               {/* Each step's own word, in its metal: unique recognition per
                   placement, like the announcer's call at a medal ceremony. */}
               <span
-                className="smallcaps mb-2 mt-1 text-[10px] tracking-widest"
+                className="mb-2 mt-1 text-[10px] tracking-widest"
                 style={{ color: medal.metal }}
               >
                 {medal.epithet}
               </span>
               <div className="relative">
-                {/* The laurel arc behind the avatar: radiant for the champion,
-                    a static metal tint for second and third. */}
+                {/* The champion's crown hovers over the avatar; the laurel arc
+                    behind it is radiant for the champion, a static metal tint
+                    for second and third. */}
+                {champion && <ChampionCrown size={narrow ? 26 : 34} />}
                 <WreathArc
                   color={medal.metal}
                   size={avatarSize + 26}
-                  opacity={champion ? 0.4 : 0.2}
+                  opacity={champion ? 0.45 : 0.22}
                 />
                 <span className="relative inline-block">
                   <PlayerAvatar
@@ -366,9 +485,7 @@ export function Podium({
               <span
                 className={
                   // Wraps rather than truncates, and breaks inside a long
-                  // handle if it has to. At phone width the three risers are
-                  // ~100px wide, so a single truncated line cut every name in
-                  // the roster down to a stub: the whole point of a podium is
+                  // handle if it has to: the whole point of a podium is
                   // knowing WHO is on it. Two tighter lines fit comfortably.
                   "mt-2 line-clamp-2 max-w-full break-words text-center text-[12px] " +
                   "font-medium leading-tight tracking-tight sm:text-base sm:tracking-normal " +
@@ -391,29 +508,37 @@ export function Podium({
                   you
                 </span>
               )}
+              {/* Provisional ratings render dimmed with the site-wide "?"
+                  marker and a hover explanation, matching the table below, so
+                  a two-game 2894 reads as "still settling", not a glitch. */}
               <span
                 className={
                   "mt-1.5 font-mono text-base tabular-nums sm:text-lg " +
-                  (champion ? "text-sun" : "text-parchment-50")
+                  (provisional
+                    ? "text-parchment-400"
+                    : champion
+                      ? "text-sun"
+                      : "text-parchment-50")
+                }
+                title={
+                  provisional
+                    ? `Provisional: rating deviation above ${PROVISIONAL_RD}`
+                    : undefined
                 }
               >
                 {Math.round(row.rating)}
-                {isProvisionalRd(row.rd) && (
-                  <span
-                    className="text-parchment-400"
-                    title={`Provisional: rating deviation above ${PROVISIONAL_RD}`}
-                  >
-                    ?
-                  </span>
-                )}
+                {provisional && <span>?</span>}
               </span>
-              <span className="smallcaps whitespace-nowrap text-[11px] text-parchment-400">
+              <span className="whitespace-nowrap text-[11px] text-parchment-400">
                 {row.games} {row.games === 1 ? "game" : "games"}
               </span>
-              {/* The ceremony bouquet laid at the front edge of the riser,
-                  overlapping it slightly so the flowers rest ON the stone. */}
-              <span aria-hidden="true" className="relative z-[1] -mb-3 mt-1.5">
+              {/* The ceremony bouquets on the front edge of the riser — the
+                  champion's place is laid with a pair. */}
+              <span aria-hidden="true" className="relative z-[1] -mb-3 mt-1.5 flex items-end gap-1">
                 <CeremonyBouquet petals={medal.petals} size={narrow ? 30 : 40} />
+                {champion && !narrow && (
+                  <CeremonyBouquet petals={[medal.petals[1], medal.petals[0]]} size={32} />
+                )}
               </span>
               {/* The dais riser: a carved stone block carrying the player's
                   bio. Bios only fit from `sm` up, so the riser renders only

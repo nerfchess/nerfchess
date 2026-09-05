@@ -14,19 +14,19 @@ test("home page renders", async ({ page }) => {
   await page.goto("/");
   await expect(page).toHaveTitle(/Nerf Chess/i);
   // One dominant CTA into the lobby, plus the two secondary ways in.
-  await expect(page.getByRole("link", { name: /open lobby/i })).toBeVisible({
+  await expect(page.getByRole("link", { name: /^create a game$/i })).toBeVisible({
     timeout: 30_000,
   });
-  await expect(page.getByRole("link", { name: /^play a friend$/i })).toBeVisible();
+  await expect(page.getByRole("link", { name: /^play with a friend$/i })).toBeVisible();
   await expect(
-    page.getByRole("link", { name: /^play a bot$/i }),
+    page.getByRole("link", { name: /^play with the computer$/i }),
   ).toBeVisible();
 });
 
 test("lobby page renders", async ({ page }) => {
   await page.goto("/lobby");
   await expect(
-    page.getByRole("heading", { name: /the lobby/i }),
+    page.getByRole("heading", { name: /^lobby$/i }),
   ).toBeVisible({ timeout: 30_000 });
 });
 

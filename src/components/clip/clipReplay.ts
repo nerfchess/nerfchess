@@ -12,11 +12,27 @@
 
 import { sanLabels } from "@/engine/board";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
+import type { BuffCategory, CardFx } from "@/engine/buff";
 import { boardAtPly, replayBoardSpan } from "@/lib/gameReview";
-import type { BoardState, Move, Piece, Square } from "@/engine/types";
-import { FILE, RANK } from "@/engine/types";
+import type { BoardState, Move, Piece, PieceType, Square } from "@/engine/types";
+import { FILE, PIECE_VALUE, RANK } from "@/engine/types";
 
 export type ClipPieces = (Piece | null)[];
+
+/** Card metadata attached to a signature-play segment: everything the energy
+ *  renderer needs to pick a scene (motif polarity + category) and scale it
+ *  (tier). Pulled from BUFF_BY_ID at build time so the canvas layer never
+ *  touches the buff library. */
+export interface ClipSigMeta {
+  id: string;
+  name: string;
+  tier: number;
+  category: BuffCategory;
+  motif: CardFx["motif"] | null;
+  /** The card's rule text, shown by the explainer rule panel so a stranger
+   *  watching the reel learns what just fired. */
+  description: string;
+}
 
 /** A piece that slides from one square to another during a segment. */
 export interface ClipPair {
@@ -48,6 +64,8 @@ export interface ClipSegment {
   statics: { sq: Square; piece: Piece }[];
   /** Card name to splash as a big banner over this segment, when known. */
   sigName: string | null;
+  /** Full card metadata for the energy renderer (null when no card fired). */
+  sig: ClipSigMeta | null;
 }
 
 export interface ClipTimeline {
@@ -56,10 +74,43 @@ export interface ClipTimeline {
   initial: ClipPieces;
   final: ClipPieces;
   segments: ClipSegment[];
+  /** Tension heuristic per board (length = segments + 1): white-minus-black
+   *  material plus a cheap mobility proxy. No engine calls; the tension meter
+   *  smooth-lerps between these values. */
+  tension: number[];
 }
 
 function samePiece(a: Piece | null, b: Piece | null): boolean {
   return !!a && !!b && a.type === b.type && a.color === b.color;
+}
+
+/** Cheap eval-style tension for one board: weighted material (p1 n3 b3 r5 q9,
+ *  the standard PIECE_VALUE table) plus 0.1 per mobility proxy point, where
+ *  the proxy is the count of free squares adjacent to each of the side's
+ *  pieces. White minus black; positive means White is on top. Deliberately
+ *  engine-free so the meter costs nothing at build time. */
+export function boardTension(pieces: ClipPieces): number {
+  let v = 0;
+  for (let sq = 0 as Square; sq < 64; sq++) {
+    const p = pieces[sq];
+    if (!p) continue;
+    const sign = p.color === "w" ? 1 : -1;
+    if (p.type !== "k") v += sign * PIECE_VALUE[p.type];
+    const f = FILE(sq);
+    const r = RANK(sq);
+    let free = 0;
+    for (let df = -1; df <= 1; df++) {
+      for (let dr = -1; dr <= 1; dr++) {
+        if (df === 0 && dr === 0) continue;
+        const nf = f + df;
+        const nr = r + dr;
+        if (nf < 0 || nf > 7 || nr < 0 || nr > 7) continue;
+        if (!pieces[nr * 8 + nf]) free++;
+      }
+    }
+    v += sign * 0.1 * free;
+  }
+  return v;
 }
 
 function clonePieces(pieces: (Piece | null)[]): ClipPieces {
@@ -104,7 +155,7 @@ function diffSegment(
   ply: number,
   move: Move | null,
   label: string | null,
-  sigName: string | null,
+  sig: ClipSigMeta | null,
 ): ClipSegment {
   const departures = new Map<Square, Piece>();
   const arrivals = new Map<Square, Piece>();
@@ -164,7 +215,8 @@ function diffSegment(
     spawns: [...arrivals].map(([sq, piece]) => ({ sq, piece })),
     vanishes: [...departures].map(([sq, piece]) => ({ sq, piece })),
     statics,
-    sigName,
+    sigName: sig?.name ?? null,
+    sig,
   };
 }
 
@@ -202,10 +254,20 @@ export function buildClipTimeline(opts: BuildClipOptions): ClipTimeline | null {
   if (boards.length < 2) return null;
 
   const labels = sanLabels(moves);
-  const sigNameAt = (afterPly: number, move: Move | null): string | null => {
+  const sigAt = (afterPly: number, move: Move | null): ClipSigMeta | null => {
     const fired = signatureIds?.get(afterPly);
     const id = fired ?? move?.via ?? null;
-    return id ? BUFF_BY_ID[id]?.name ?? null : null;
+    if (!id) return null;
+    const buff = BUFF_BY_ID[id];
+    if (!buff) return null;
+    return {
+      id,
+      name: buff.name,
+      tier: buff.tier,
+      category: buff.category,
+      motif: buff.fx?.motif ?? null,
+      description: buff.description,
+    };
   };
 
   const segments: ClipSegment[] = [];
@@ -219,7 +281,7 @@ export function buildClipTimeline(opts: BuildClipOptions): ClipTimeline | null {
         ply,
         move,
         labels[ply] ?? null,
-        sigNameAt(ply + 1, move),
+        sigAt(ply + 1, move),
       ),
     );
   }
@@ -228,6 +290,101 @@ export function buildClipTimeline(opts: BuildClipOptions): ClipTimeline | null {
     initial: boards[0],
     final: boards[boards.length - 1],
     segments,
+    tension: boards.map(boardTension),
+  };
+}
+
+// --- Auto-director -----------------------------------------------------------
+
+/** What the auto-director decided the clip is ABOUT. */
+export type ClipPayoffKind = "card" | "capture" | "finish";
+
+export interface ClipAutoPlan {
+  /** Window length (last N plies) the director chose. */
+  plies: number;
+  /** Absolute ply index of the payoff segment, or null for a plain finish. */
+  payoffPly: number | null;
+  kind: ClipPayoffKind;
+  /** The payoff card, when the payoff is a card play. */
+  card: ClipSigMeta | null;
+  /** Highest-value piece taken in the payoff, when it is a capture swing. */
+  captured: PieceType | null;
+}
+
+/** How far back the director scans for a payoff, and the setup lead it keeps
+ *  in front of one. Both in plies. */
+const AUTO_SCAN = 14;
+const AUTO_LEAD = 3;
+const AUTO_FALLBACK = 8;
+
+/** Scan the reconstructable tail of the game for the best payoff and choose
+ *  the clip window around it: the highest-tier card play in the last ~14
+ *  plies, else the biggest capture swing, else the final 8 plies. The window
+ *  always ends at the head (the reveal is the finish), so "around" means
+ *  keeping a few plies of setup in front of the payoff. */
+export function planAutoClip(
+  opts: Omit<BuildClipOptions, "plies">,
+): ClipAutoPlan | null {
+  const probe = buildClipTimeline({ ...opts, plies: AUTO_SCAN });
+  if (!probe) return null;
+  const segs = probe.segments;
+  const head = probe.startPly + segs.length;
+
+  // Highest-tier card play; ties go to the LATER play (closer to the finish).
+  let cardIdx = -1;
+  for (let i = 0; i < segs.length; i++) {
+    const sig = segs[i].sig;
+    if (sig && (cardIdx < 0 || sig.tier >= segs[cardIdx].sig!.tier)) cardIdx = i;
+  }
+
+  // Biggest capture swing: total point value removed in one segment.
+  let capIdx = -1;
+  let capBest = 0;
+  let capPiece: PieceType | null = null;
+  for (let i = 0; i < segs.length; i++) {
+    const seg = segs[i];
+    let value = 0;
+    let top: PieceType | null = null;
+    const count = (p: Piece) => {
+      value += p.type === "k" ? 12 : PIECE_VALUE[p.type];
+      if (!top || PIECE_VALUE[p.type] >= PIECE_VALUE[top]) top = p.type;
+    };
+    for (const pr of seg.pairs) if (pr.captured) count(pr.captured);
+    for (const v of seg.vanishes) count(v.piece);
+    if (value > 0 && value >= capBest) {
+      capBest = value;
+      capIdx = i;
+      capPiece = top;
+    }
+  }
+
+  const windowFor = (idx: number) =>
+    Math.max(4, Math.min(segs.length, head - (probe.startPly + idx) + AUTO_LEAD));
+
+  if (cardIdx >= 0) {
+    return {
+      plies: windowFor(cardIdx),
+      payoffPly: segs[cardIdx].ply,
+      kind: "card",
+      card: segs[cardIdx].sig,
+      captured: null,
+    };
+  }
+  if (capIdx >= 0) {
+    return {
+      plies: windowFor(capIdx),
+      payoffPly: segs[capIdx].ply,
+      kind: "capture",
+      card: null,
+      captured: capPiece,
+    };
+  }
+  return {
+    plies: Math.min(AUTO_FALLBACK, segs.length),
+    payoffPly: null,
+    kind: "finish",
+    card: null,
+    captured: null,
   };
 }
 

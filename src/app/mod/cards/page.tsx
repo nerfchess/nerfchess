@@ -11,6 +11,7 @@ import type { Nerf } from "@/engine/nerf";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { AccountUser, fetchMe } from "@/lib/authClient";
+import { Button } from "@/components/ui/Button";
 
 type Kind = "buff" | "nerf";
 
@@ -233,16 +234,19 @@ export default function ModCardsPage() {
                 className="w-64 max-w-full bg-ink-900/70 border border-white/15 rounded-[1px] px-3 py-1.5 text-sm text-parchment placeholder:text-parchment-400/60 focus:outline-none focus:border-gold/60"
               />
               {(["all", "buff", "nerf"] as const).map((k) => (
-                <button
+                <Button
                   key={k}
                   onClick={() => setKind(k)}
                   aria-pressed={kind === k}
-                  className={`px-3 py-1.5 rounded-[1px] text-sm capitalize ${
-                    kind === k ? "border border-gold/60 bg-gold/10 text-gold-leaf" : "btn-ghost"
-                  }`}
+                  tone={kind === k ? "quiet" : "ghost"}
+                  size="sm"
+                  className={
+                    "capitalize " +
+                    (kind === k ? "border-gold/60 bg-gold/10 text-gold-leaf" : "")
+                  }
                 >
                   {k === "all" ? "All" : `${k}s`}
-                </button>
+                </Button>
               ))}
               <label className="flex items-center gap-2 text-sm text-parchment-300 ml-1">
                 <input
@@ -264,7 +268,7 @@ export default function ModCardsPage() {
             <div className="mt-4 plate p-0 overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-left smallcaps text-[10px] text-parchment-400 border-b border-white/10">
+                  <tr className="text-left text-[10px] text-parchment-400 border-b border-white/10">
                     <th className="px-3 py-2 font-normal">Card</th>
                     <th className="px-3 py-2 font-normal">Kind</th>
                     <th className="px-3 py-2 font-normal">Tier</th>
@@ -359,12 +363,12 @@ function FragmentRow({
             {effectiveName}
           </span>
           {overridden && (
-            <span className="ml-2 smallcaps text-[9px] px-1.5 py-0.5 border border-gold/50 text-gold-leaf rounded-[1px]">
+            <span className="ml-2 text-[9px] px-1.5 py-0.5 border border-gold/50 text-gold-leaf rounded-[1px]">
               override
             </span>
           )}
           {!card.implemented && (
-            <span className="ml-2 smallcaps text-[9px] text-parchment-400">stub</span>
+            <span className="ml-2 text-[9px] text-parchment-400">stub</span>
           )}
           <div className="text-[11px] text-parchment-400">{card.id}</div>
         </td>
@@ -378,23 +382,21 @@ function FragmentRow({
         <td className="px-3 py-2 text-parchment-300">{enabled ? "Yes" : "No"}</td>
         <td className="px-3 py-2 text-right whitespace-nowrap">
           {isEditing ? (
-            <button onClick={onCancel} className="btn-ghost px-3 py-1 rounded-[1px] text-xs" disabled={busy}>
+            <Button tone="ghost" onClick={onCancel} className="px-3 py-1 text-xs" disabled={busy}>
               Cancel
-            </button>
+            </Button>
           ) : (
             <>
-              <button onClick={onEdit} className="btn-ghost px-3 py-1 rounded-[1px] text-xs">
+              <Button tone="ghost" onClick={onEdit} className="px-3 py-1 text-xs">
                 Edit
-              </button>
+              </Button>
               {overridden && (
-                <button
+                <Button tone="ghost"
                   onClick={onReset}
-                  className="ml-2 btn-ghost px-3 py-1 rounded-[1px] text-xs"
-                  disabled={busy}
-                  title="Delete the override and fall back to the code definition"
-                >
+                  className="ml-2 px-3 py-1 text-xs" disabled={busy}
+                  title="Delete the override and fall back to the code definition">
                   Reset to code
-                </button>
+                </Button>
               )}
             </>
           )}
@@ -405,7 +407,7 @@ function FragmentRow({
           <td colSpan={5} className="px-3 py-3">
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="flex flex-col gap-1">
-                <span className="smallcaps text-[10px] text-parchment-400">Name</span>
+                <span className="text-[10px] text-parchment-400">Name</span>
                 <input
                   value={draft.name}
                   onChange={(e) => patch({ name: e.target.value })}
@@ -414,7 +416,7 @@ function FragmentRow({
                 />
               </label>
               <label className="flex flex-col gap-1">
-                <span className="smallcaps text-[10px] text-parchment-400">Tier (blank = code tier {card.tier})</span>
+                <span className="text-[10px] text-parchment-400">Tier (blank = code tier {card.tier})</span>
                 <select
                   value={draft.tier}
                   onChange={(e) => patch({ tier: e.target.value })}
@@ -427,7 +429,7 @@ function FragmentRow({
                 </select>
               </label>
               <label className="flex flex-col gap-1 sm:col-span-2">
-                <span className="smallcaps text-[10px] text-parchment-400">Description</span>
+                <span className="text-[10px] text-parchment-400">Description</span>
                 <textarea
                   value={draft.description}
                   onChange={(e) => patch({ description: e.target.value })}
@@ -437,7 +439,7 @@ function FragmentRow({
                 />
               </label>
               <label className="flex flex-col gap-1 sm:col-span-2">
-                <span className="smallcaps text-[10px] text-parchment-400">Flavor</span>
+                <span className="text-[10px] text-parchment-400">Flavor</span>
                 <textarea
                   value={draft.flavor}
                   onChange={(e) => patch({ flavor: e.target.value })}
@@ -455,9 +457,9 @@ function FragmentRow({
                 Enabled (unchecked = never offered in drafts or dealt as a nerf)
               </label>
               <div className="flex items-center justify-end gap-2">
-                <button onClick={onSave} className="btn-glass px-4 py-1.5 rounded-[1px] text-sm" disabled={busy}>
+                <Button tone="glass" onClick={onSave} className="px-4 py-1.5 text-sm" disabled={busy}>
                   {busy ? "Saving…" : "Save"}
-                </button>
+                </Button>
               </div>
             </div>
           </td>

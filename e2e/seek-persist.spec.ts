@@ -77,13 +77,13 @@ test("quick play seek persists across tab switches", async ({ page }) => {
   const cancel = page.getByRole("button", { name: /^cancel$/i });
   await expect(cancel).toBeVisible();
 
-  // Flip to Watch, then Friends, then back to Quick Play.
-  await page.getByRole("tab", { name: /watch/i }).click();
+  // Flip to Watch & Friends, open the friends fold, then back to Play.
+  await page.getByRole("tab", { name: /watch & friends/i }).click();
   await expect(page.getByText("Live games")).toBeVisible();
   await expect(findButton).toBeHidden();
-  await page.getByRole("tab", { name: /friends/i }).click();
+  await page.getByRole("button", { name: /play a friend/i }).click();
   await expect(page.getByLabel("Friend game code")).toBeVisible();
-  await page.getByRole("tab", { name: /quick play/i }).click();
+  await page.getByRole("tab", { name: /^play/i }).click();
 
   // The in-progress search is still shown, with its Cancel button.
   await expect(page.getByText(/finding a/i)).toBeVisible();

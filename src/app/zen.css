@@ -1,0 +1,56 @@
+/* Zen mode (Lichess parity).
+   ---------------------------------------------------------------------------
+   One flag, html[data-zen="on"], written by applyUiPrefs from the zenMode
+   setting. While it is on the game surface keeps only what the game is made
+   of: the board, the clocks, the move list and the resign/draw/rematch
+   controls. Everything social or navigational stands down.
+
+   Gameplay is never hidden. The draft overlay, the card dock and the board's
+   own effect layers are how a Buff/Nerf game is PLAYED, so they stay put; only
+   chrome carries .zen-hide.
+
+   Nothing here animates: zen is a state, not a transition, and the reduced
+   motion contract has nothing to stand down. */
+
+/* The opt-in hide. Any chrome that should stand down in zen wears this. */
+html[data-zen="on"] .zen-hide {
+  display: none !important;
+}
+
+/* The site header collapses to nothing but its exit affordance. The nav stays
+   in the flow at zero height, so the page below simply moves up rather than
+   sliding under a fixed bar. */
+html[data-zen="on"] .site-nav {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+html[data-zen="on"] .site-nav > *:not(.zen-exit) {
+  display: none !important;
+}
+
+/* Site footer and the page-level social rails. */
+html[data-zen="on"] body > footer,
+html[data-zen="on"] .site-footer {
+  display: none !important;
+}
+
+/* The exit affordance itself: absent until zen is on, then a small floating
+   control in the top right, clear of the board on every width. */
+.zen-exit {
+  display: none;
+}
+html[data-zen="on"] .zen-exit {
+  position: fixed;
+  top: 8px;
+  right: 8px;
+  z-index: 70;
+  display: inline-flex;
+  min-height: 44px;
+}
+@media (min-width: 640px) {
+  html[data-zen="on"] .zen-exit {
+    min-height: 36px;
+  }
+}

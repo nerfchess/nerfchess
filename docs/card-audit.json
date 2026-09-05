@@ -10,15 +10,15 @@
    "nerf": 360
   },
   "flagged": {
-   "duplicateSignature": 269,
-   "nearDuplicate": 205,
-   "dominatedCandidates": 90,
+   "duplicateSignature": 262,
+   "nearDuplicate": 204,
+   "dominatedCandidates": 88,
    "misleading": 0,
    "broken": 0,
    "untested": 0,
    "noAnimation": 0
   },
-  "reviewed": 2386
+  "reviewed": 2390
  },
  "rows": [
   {
@@ -219,6 +219,7 @@
    "animation": "bespoke+canvas",
    "location": "src/engine/buffs/tier9.ts",
    "tests": [
+    "test-fx-zones.ts",
     "lab-run-all.ts"
    ],
    "flags": [],
@@ -458,6 +459,7 @@
    "animation": "bespoke+canvas",
    "location": "src/engine/buffs/tier9.ts",
    "tests": [
+    "test-fx-zones.ts",
     "lab-run-all.ts"
    ],
    "flags": [],
@@ -477,6 +479,7 @@
    "location": "src/engine/buffs/tier9.ts",
    "tests": [
     "sim-chess-diff.ts",
+    "test-fx-zones.ts",
     "lab-run-all.ts"
    ],
    "flags": [],
@@ -640,19 +643,17 @@
    "name": "Field Glasses",
    "kind": "boon",
    "tier": 1,
-   "effect": "Every enemy piece currently standing in your half of the board lights up until your opponent replies.",
-   "trigger": "instant",
+   "effect": "Every enemy piece currently standing in your half of the board lights up until your opponent replies, and the spotted pieces hold their fire: they cannot capture on that turn.",
+   "trigger": "passive",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "info|instant|effect|unstated|enemy|",
-   "animation": "generated",
+   "signature": "info|passive|init+filter+onMove|unstated|enemy|capture",
+   "animation": "passive",
    "location": "src/engine/buffs/boons4.ts",
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [
-    "duplicate-signature(bn4_scouts_report,bn4_war_room_map,bn4_augurs_flight,bn4_auditors_ledger)"
-   ],
+   "flags": [],
    "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
   },
   {
@@ -716,11 +717,11 @@
    "name": "Hairline Crack",
    "kind": "boon",
    "tier": 1,
-   "effect": "Every one of your pieces that no other piece of yours defends lights up until your opponent replies, and any temporary shield covering one of those pieces is stripped away.",
+   "effect": "Every one of your pieces that no other piece of yours defends lights up until your opponent replies, and the loose stone nearest your king is mortared: it cannot be captured on your opponent's next turn.",
    "trigger": "instant",
-   "duration": "unstated",
+   "duration": "next-turn",
    "targets": "enemy",
-   "signature": "info|instant|effect|unstated|enemy|shield",
+   "signature": "info|instant|effect|next-turn|enemy|capture,king",
    "animation": "generated",
    "location": "src/engine/buffs/boons4.ts",
    "tests": [
@@ -770,7 +771,7 @@
    "name": "Lucky Coin",
    "kind": "boon",
    "tier": 1,
-   "effect": "Gain 1 draft reroll. If you do not spend it within your next two draft offers, it is reclaimed.",
+   "effect": "Gain 1 draft reroll. Spend a reroll within your next two draft offers and the coin lands heads: you gain that reroll back.",
    "trigger": "passive",
    "duration": "unstated",
    "targets": "self",
@@ -1179,11 +1180,11 @@
    "name": "Extra Glance",
    "kind": "boon",
    "tier": 1,
-   "effect": "See your opponent's nerf for the rest of the game.",
+   "effect": "See your opponent's nerf for the rest of the game, and gain 1 draft reroll.",
    "trigger": "instant",
    "duration": "permanent",
    "targets": "enemy",
-   "signature": "info|instant|effect|permanent|enemy|see",
+   "signature": "info|instant|effect|permanent|enemy|draft,n:1,reroll,see",
    "animation": "generated",
    "location": "src/engine/buffs/library.ts",
    "tests": [
@@ -2378,11 +2379,11 @@
    "name": "Danger Sense",
    "kind": "boon",
    "tier": 3,
-   "effect": "Every enemy piece currently aiming at your king or your queen lights up until your opponent replies.",
+   "effect": "Every enemy piece currently aiming at your king or your queen lights up until your opponent replies, and both crowns brace: neither can be captured on that turn.",
    "trigger": "instant",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "info|instant|effect|unstated|enemy|king,queen",
+   "signature": "info|instant|effect|unstated|enemy|capture,king,queen",
    "animation": "generated",
    "location": "src/engine/buffs/boons4.ts",
    "tests": [
@@ -2657,6 +2658,7 @@
     "lab-run-all.ts"
    ],
    "flags": [
+    "duplicate-signature(bn4_listening_post)",
     "near-duplicate(bn4_ear_to_the_ground:0.78)"
    ],
    "action": "pending-review"
@@ -2873,6 +2875,7 @@
     "lab-run-all.ts"
    ],
    "flags": [
+    "near-duplicate(sidestep_king:0.78)",
     "near-duplicate(deflect:0.78)",
     "near-duplicate(bn4_royal_taster:0.78)",
     "near-duplicate(bn4_glass_case:0.78)"
@@ -2884,18 +2887,18 @@
    "name": "Scout's Report",
    "kind": "boon",
    "tier": 3,
-   "effect": "Every enemy piece currently aiming at any of your pieces lights up until your opponent replies.",
+   "effect": "Every enemy piece currently aiming at any of your pieces lights up until your opponent replies, and your threatened pieces dig in: they cannot be captured on that turn.",
    "trigger": "instant",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "info|instant|effect|unstated|enemy|",
+   "signature": "info|instant|effect|unstated|enemy|capture",
    "animation": "generated",
    "location": "src/engine/buffs/boons4.ts",
    "tests": [
     "lab-run-all.ts"
    ],
    "flags": [
-    "duplicate-signature(bn4_field_glasses,bn4_war_room_map,bn4_augurs_flight,bn4_auditors_ledger)"
+    "duplicate-signature(bn4_augurs_flight)"
    ],
    "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
   },
@@ -2999,19 +3002,17 @@
    "name": "War Room Map",
    "kind": "boon",
    "tier": 3,
-   "effect": "Every enemy piece that no other enemy piece defends lights up until your opponent replies.",
+   "effect": "Every enemy piece that no other enemy piece defends lights up until your opponent replies, and the planners hand you 2 draft rerolls.",
    "trigger": "instant",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "info|instant|effect|unstated|enemy|",
+   "signature": "info|instant|effect|unstated|enemy|draft,n:2,reroll",
    "animation": "generated",
    "location": "src/engine/buffs/boons4.ts",
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [
-    "duplicate-signature(bn4_field_glasses,bn4_scouts_report,bn4_augurs_flight,bn4_auditors_ledger)"
-   ],
+   "flags": [],
    "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
   },
   {
@@ -3441,18 +3442,19 @@
    "name": "Augur's Flight",
    "kind": "boon",
    "tier": 4,
-   "effect": "Every one of your pieces that is both under enemy attack and undefended by your own side lights up until your opponent replies.",
+   "effect": "Every one of your pieces that is both under enemy attack and undefended by your own side lights up until your opponent replies, and the birds shelter each one: they cannot be captured on that turn.",
    "trigger": "instant",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "info|instant|effect|unstated|enemy|",
+   "signature": "info|instant|effect|unstated|enemy|capture",
    "animation": "generated",
    "location": "src/engine/buffs/boons4b.ts",
    "tests": [
     "lab-run-all.ts"
    ],
    "flags": [
-    "duplicate-signature(bn4_field_glasses,bn4_scouts_report,bn4_war_room_map,bn4_auditors_ledger)"
+    "duplicate-signature(bn4_scouts_report)",
+    "dominated-candidate(higher-tier-of-duplicate-pair)"
    ],
    "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
   },
@@ -3479,20 +3481,18 @@
    "name": "Border Survey",
    "kind": "boon",
    "tier": 4,
-   "effect": "Every square in your half currently reachable by an enemy attack lights up until your opponent replies.",
+   "effect": "Every square in your half currently reachable by an enemy attack lights up until your opponent replies, and the surveyed ground is staked: your opponent cannot move onto a lit square on their next turn.",
    "trigger": "instant",
-   "duration": "unstated",
+   "duration": "next-turn",
    "targets": "enemy",
-   "signature": "info|instant|effect|unstated|enemy|square",
+   "signature": "info|instant|effect|next-turn|enemy|move,square",
    "animation": "generated",
    "location": "src/engine/buffs/boons4b.ts",
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [
-    "duplicate-signature(bn4_lighthouse_beam)"
-   ],
-   "action": "pending-review"
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
   },
   {
    "id": "bn4_bread_and_salt",
@@ -3791,17 +3791,20 @@
    "name": "Listening Post",
    "kind": "boon",
    "tier": 4,
-   "effect": "See both the cards and the tier of your opponent's next draft offer. If that draft is already skipped, you learn nothing.",
+   "effect": "See both the cards and the tier of your opponent's next draft offer. If that draft is already skipped, the wire is dead: gain 1 draft reroll instead.",
    "trigger": "instant",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "info|instant|effect|unstated|enemy|draft,see,skip",
+   "signature": "info|instant|effect|unstated|enemy|draft,n:1,reroll,see,skip",
    "animation": "generated",
    "location": "src/engine/buffs/boons4.ts",
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [],
+   "flags": [
+    "duplicate-signature(bn4_over_the_shoulder)",
+    "dominated-candidate(higher-tier-of-duplicate-pair)"
+   ],
    "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
   },
   {
@@ -3955,6 +3958,7 @@
     "lab-run-all.ts"
    ],
    "flags": [
+    "near-duplicate(sidestep_king:0.78)",
     "near-duplicate(deflect:1.00)",
     "near-duplicate(bn4_rook_nest:0.78)",
     "near-duplicate(bn4_glass_case:1.00)",
@@ -4725,6 +4729,7 @@
     "lab-run-all.ts"
    ],
    "flags": [
+    "near-duplicate(sidestep_king:0.78)",
     "near-duplicate(deflect:1.00)",
     "near-duplicate(bn4_rook_nest:0.78)",
     "near-duplicate(bn4_royal_taster:1.00)",
@@ -4888,21 +4893,18 @@
    "name": "Lighthouse Beam",
    "kind": "boon",
    "tier": 5,
-   "effect": "Every enemy piece standing in your half, and every enemy piece currently attacking a square in your half, lights up until your opponent replies.",
+   "effect": "Every enemy piece standing in your half, and every enemy piece currently attacking a square in your half, lights up until your opponent replies. The intruder deepest into your half is caught in the glare, frozen for 1 of its owner's turns (kings excepted).",
    "trigger": "instant",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "info|instant|effect|unstated|enemy|square",
+   "signature": "info|instant|effect|unstated|enemy|king,n:1,square",
    "animation": "generated",
    "location": "src/engine/buffs/boons4b.ts",
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [
-    "duplicate-signature(bn4_border_survey)",
-    "dominated-candidate(higher-tier-of-duplicate-pair)"
-   ],
-   "action": "pending-review"
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
   },
   {
    "id": "bn4_logjam",
@@ -5499,8 +5501,7 @@
     "lab-run-all.ts"
    ],
    "flags": [
-    "duplicate-signature(aegis)",
-    "near-duplicate(sidestep_king:0.86)"
+    "duplicate-signature(aegis)"
    ],
    "action": "keep: royal shield T5; Aegis T6 covers the army instead (different target class)"
   },
@@ -5664,20 +5665,17 @@
    "name": "Auditor's Ledger",
    "kind": "boon",
    "tier": 6,
-   "effect": "Every undefended piece on the board, yours and your opponent's alike, lights up until your opponent replies.",
+   "effect": "Every undefended piece on the board, yours and your opponent's alike, lights up until your opponent replies. Yours are underwritten: they cannot be captured on that turn. Gain 1 draft reroll.",
    "trigger": "instant",
    "duration": "unstated",
    "targets": "enemy",
-   "signature": "info|instant|effect|unstated|enemy|",
+   "signature": "info|instant|effect|unstated|enemy|capture,draft,n:1,reroll",
    "animation": "generated",
    "location": "src/engine/buffs/boons4b.ts",
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [
-    "duplicate-signature(bn4_field_glasses,bn4_scouts_report,bn4_war_room_map,bn4_augurs_flight)",
-    "dominated-candidate(higher-tier-of-duplicate-pair)"
-   ],
+   "flags": [],
    "action": "keep: reviewed tier ladder; higher rungs pay more (magnitude, scope, extra rider, or free-action timing)"
   },
   {
@@ -8521,19 +8519,17 @@
    "name": "Ferz King",
    "kind": "buff",
    "tier": 1,
-   "effect": "Your king may move two squares diagonally to an empty square, once per game. It cannot capture.",
+   "effect": "Your king may move two squares diagonally to an empty square, twice per game. It cannot capture.",
    "trigger": "passive",
-   "duration": "one-shot",
+   "duration": "unstated",
    "targets": "self",
-   "signature": "movement|passive|init+aug+onMove|one-shot|self|capture,king,move,square",
+   "signature": "movement|passive|init+aug+onMove|unstated|self|capture,king,move,square",
    "animation": "passive",
    "location": "src/engine/buffs/library.ts",
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [
-    "duplicate-signature(reposition)"
-   ],
+   "flags": [],
    "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
   },
   {
@@ -8613,11 +8609,11 @@
    "name": "Half Step",
    "kind": "buff",
    "tier": 1,
-   "effect": "One pawn moves diagonally forward without capturing, once.",
+   "effect": "One pawn moves diagonally forward without capturing, twice.",
    "trigger": "passive",
-   "duration": "one-shot",
+   "duration": "unstated",
    "targets": "board",
-   "signature": "movement|passive|init+aug+onMove|one-shot|board|move,pawn",
+   "signature": "movement|passive|init+aug+onMove|unstated|board|move,pawn",
    "animation": "passive",
    "location": "src/engine/buffs/library.ts",
    "tests": [
@@ -8685,11 +8681,11 @@
    "name": "Nudge",
    "kind": "buff",
    "tier": 1,
-   "effect": "Push one enemy pawn back one square if empty behind, once. Using it spends your next unused reroll, if any.",
+   "effect": "Push one enemy pawn back one square if empty behind, once.",
    "trigger": "activated",
    "duration": "one-shot",
    "targets": "enemy",
-   "signature": "attack|activated|effect+targets|one-shot|enemy|pawn,push,reroll,square",
+   "signature": "attack|activated|effect+targets|one-shot|enemy|pawn,push,square",
    "animation": "generated",
    "location": "src/engine/buffs/library.ts",
    "tests": [
@@ -10537,7 +10533,6 @@
     "lab-run-all.ts"
    ],
    "flags": [
-    "duplicate-signature(spring_pawn)",
     "near-duplicate(op_homesick_private:0.77)",
     "near-duplicate(op_regroup_at_camp:0.77)"
    ],
@@ -11577,11 +11572,11 @@
    "name": "Vault",
    "kind": "buff",
    "tier": 1,
-   "effect": "One rook jumps its own pawn to the far side, once.",
+   "effect": "One rook jumps its own pawn to the far side, twice.",
    "trigger": "passive",
-   "duration": "one-shot",
+   "duration": "unstated",
    "targets": "unstated",
-   "signature": "movement|passive|init+aug+onMove|one-shot|unstated|jump,pawn,rook",
+   "signature": "movement|passive|init+aug+onMove|unstated|unstated|jump,pawn,rook",
    "animation": "passive",
    "location": "src/engine/buffs/library.ts",
    "tests": [
@@ -11777,12 +11772,12 @@
    "name": "Castle Early",
    "kind": "buff",
    "tier": 2,
-   "effect": "Castle even if your king has already moved once.",
-   "trigger": "instant",
-   "duration": "one-shot",
-   "targets": "self",
-   "signature": "movement|instant|effect|one-shot|self|castle,king,move",
-   "animation": "generated",
+   "effect": "Castle even if your king or rooks have already moved. When you next castle, your king cannot be captured on your opponent's next turn.",
+   "trigger": "passive",
+   "duration": "next-turn",
+   "targets": "enemy",
+   "signature": "movement|passive|init+onMove|next-turn|enemy|capture,castle,king,move,rook",
+   "animation": "passive",
    "location": "src/engine/buffs/library.ts",
    "tests": [
     "lab-run-all.ts"
@@ -11813,7 +11808,7 @@
    "name": "Cornerstone",
    "kind": "buff",
    "tier": 2,
-   "effect": "Your rooks cannot be captured while they stand on your back rank.",
+   "effect": "Your rooks cannot be captured while they stand on your back rank, for the game.",
    "trigger": "passive",
    "duration": "unstated",
    "targets": "self",
@@ -13744,7 +13739,7 @@
    "name": "Quick Glance",
    "kind": "buff",
    "tier": 2,
-   "effect": "Your opponent loses one draft reroll, if they still hold one.",
+   "effect": "Your opponent loses one draft reroll. If they have none to lose, you gain one instead.",
    "trigger": "instant",
    "duration": "unstated",
    "targets": "enemy",
@@ -13772,6 +13767,8 @@
    "animation": "passive",
    "location": "src/engine/buffs/library.ts",
    "tests": [
+    "check-treatment-coverage.cjs",
+    "test-fx-zones.ts",
     "lab-run-all.ts"
    ],
    "flags": [],
@@ -13829,11 +13826,8 @@
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [
-    "duplicate-signature(ferz_king)",
-    "dominated-candidate(higher-tier-of-duplicate-pair)"
-   ],
-   "action": "pending-review"
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
   },
   {
    "id": "rook_chancellor",
@@ -13897,21 +13891,18 @@
    "name": "Spring Pawn",
    "kind": "buff",
    "tier": 2,
-   "effect": "Your pawns can spring one square sideways onto an empty square, once.",
+   "effect": "Your pawns can spring one square sideways onto an empty square, twice.",
    "trigger": "passive",
-   "duration": "one-shot",
+   "duration": "unstated",
    "targets": "self",
-   "signature": "movement|passive|init+aug+onMove|one-shot|self|pawn,square",
+   "signature": "movement|passive|init+aug+onMove|unstated|self|pawn,square",
    "animation": "passive",
    "location": "src/engine/buffs/library.ts",
    "tests": [
     "lab-run-all.ts"
    ],
-   "flags": [
-    "duplicate-signature(op_sidestep_and_bow)",
-    "dominated-candidate(higher-tier-of-duplicate-pair)"
-   ],
-   "action": "pending-review"
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
   },
   {
    "id": "steady_hand",
@@ -13954,7 +13945,7 @@
    "name": "Vanguard",
    "kind": "buff",
    "tier": 2,
-   "effect": "One pawn on your 6th rank or beyond promotes to a knight, once.",
+   "effect": "One pawn on your 5th rank or beyond promotes to a knight, once.",
    "trigger": "activated",
    "duration": "one-shot",
    "targets": "self",
@@ -15250,11 +15241,11 @@
    "name": "Pin Breaker",
    "kind": "buff",
    "tier": 3,
-   "effect": "One of your pieces breaks free with a knight's leap to an empty square, once. Using it spends the card even if the leap cannot resolve.",
+   "effect": "One of your pieces breaks free with a knight's leap to an empty square and cannot be captured for your opponent's next 2 turns, once. Using it spends the card even if the leap cannot resolve.",
    "trigger": "activated",
-   "duration": "one-shot",
-   "targets": "self",
-   "signature": "movement|activated|effect+targets|one-shot|self|knight,leap,square",
+   "duration": "2-turns",
+   "targets": "enemy",
+   "signature": "movement|activated|effect+targets|2-turns|enemy|capture,knight,leap,n:2,square",
    "animation": "generated",
    "location": "src/engine/buffs/library.ts",
    "tests": [
@@ -15450,11 +15441,11 @@
    "name": "Screen",
    "kind": "buff",
    "tier": 3,
-   "effect": "Choose one bishop. While it stands on a square next to your king it cannot be captured, for your next 3 turns.",
+   "effect": "Choose one bishop. While it stands on a square next to your king it cannot be captured, for your next 6 turns.",
    "trigger": "activated/lingering",
-   "duration": "3-turns",
+   "duration": "6-turns",
    "targets": "self",
-   "signature": "protection|activated|effect+targets+filter+onMove|3-turns|self|bishop,capture,king,n:3,square",
+   "signature": "protection|activated|effect+targets+filter+onMove|6-turns|self|bishop,capture,king,n:6,square",
    "animation": "generated",
    "location": "src/engine/buffs/library.ts",
    "tests": [
@@ -15522,11 +15513,11 @@
    "name": "Shielded Advance",
    "kind": "buff",
    "tier": 3,
-   "effect": "Choose one pawn. While it stands in the enemy half it cannot be captured, for your next 3 turns.",
+   "effect": "Choose one pawn. While it stands in the enemy half it cannot be captured, for your next 6 turns.",
    "trigger": "activated/lingering",
-   "duration": "3-turns",
+   "duration": "6-turns",
    "targets": "enemy",
-   "signature": "protection|activated|effect+targets+filter+onMove|3-turns|enemy|capture,n:3,pawn",
+   "signature": "protection|activated|effect+targets+filter+onMove|6-turns|enemy|capture,n:6,pawn",
    "animation": "generated",
    "location": "src/engine/buffs/library.ts",
    "tests": [
@@ -15540,18 +15531,22 @@
    "name": "Sidestep King",
    "kind": "buff",
    "tier": 3,
-   "effect": "Your king cannot be captured for 1 turn.",
+   "effect": "Your king cannot be captured for your opponent's next 3 turns.",
    "trigger": "instant",
-   "duration": "1-turns",
-   "targets": "self",
-   "signature": "protection|instant|effect|1-turns|self|capture,king,n:1",
+   "duration": "3-turns",
+   "targets": "enemy",
+   "signature": "protection|instant|effect|3-turns|enemy|capture,king,n:3",
    "animation": "generated",
    "location": "src/engine/buffs/library.ts",
    "tests": [
     "lab-run-all.ts"
    ],
    "flags": [
-    "near-duplicate(iron_reign:0.86)"
+    "near-duplicate(deflect:0.78)",
+    "near-duplicate(bn4_rook_nest:0.78)",
+    "near-duplicate(bn4_royal_taster:0.78)",
+    "near-duplicate(bn4_glass_case:0.78)",
+    "near-duplicate(wa_royal_aegis:0.80)"
    ],
    "action": "pending-review"
   },
@@ -15706,11 +15701,11 @@
    "name": "Trade Up",
    "kind": "buff",
    "tier": 3,
-   "effect": "The next time you lose a minor piece, a new pawn appears in your half.",
+   "effect": "The next 2 times you lose a minor piece, a new pawn appears in your half.",
    "trigger": "passive",
    "duration": "unstated",
    "targets": "self",
-   "signature": "pieces|passive|onMove|unstated|self|pawn,time",
+   "signature": "pieces|passive|init+onMove|unstated|self|n:2,pawn,time",
    "animation": "passive",
    "location": "src/engine/buffs/library.ts",
    "tests": [
@@ -16745,6 +16740,7 @@
     "lab-run-all.ts"
    ],
    "flags": [
+    "near-duplicate(sidestep_king:0.78)",
     "near-duplicate(bn4_rook_nest:0.78)",
     "near-duplicate(bn4_royal_taster:1.00)",
     "near-duplicate(bn4_glass_case:1.00)",
@@ -17009,11 +17005,11 @@
    "name": "Iron Bishop",
    "kind": "buff",
    "tier": 4,
-   "effect": "One bishop cannot be captured by pawns, for the game.",
+   "effect": "One bishop cannot be captured by enemy pawns or knights, for the game.",
    "trigger": "activated/lingering",
    "duration": "unstated",
-   "targets": "unstated",
-   "signature": "protection|activated|effect+targets+filter+onMove|unstated|unstated|bishop,capture,pawn",
+   "targets": "enemy",
+   "signature": "protection|activated|effect+targets+filter+onMove|unstated|enemy|bishop,capture,knight,pawn",
    "animation": "generated",
    "location": "src/engine/buffs/library.ts",
    "tests": [
@@ -23214,6 +23210,7 @@
     "lab-run-all.ts"
    ],
    "flags": [
+    "near-duplicate(sidestep_king:0.80)",
     "near-duplicate(deflect:0.80)",
     "near-duplicate(divine_right:0.77)",
     "near-duplicate(bn4_royal_taster:0.80)",
@@ -23865,14 +23862,14 @@
   },
   {
    "id": "cr_chat_picks",
-   "name": "Chat Picks",
+   "name": "Chat Picks: Creator vs Chat",
    "kind": "buff",
    "tier": 7,
-   "effect": "You do not get an effect. Instead your opponent picks one of your pieces, and for your next 5 turns you may not move it at all.",
-   "trigger": "activated",
-   "duration": "5-turns",
-   "targets": "enemy",
-   "signature": "draft|activated|effect+targets+aug+onMove|5-turns|enemy|move,n:5",
+   "effect": "Chat rolls two of its four penalties and pins one on you at random for your next 10 turns. In exchange, you take both cards in your next draft.",
+   "trigger": "activated/lingering",
+   "duration": "10-turns",
+   "targets": "self",
+   "signature": "draft|activated|effect+aug+onMove|10-turns|self|draft,n:10,random",
    "animation": "generated",
    "location": "src/engine/buffs/creators.ts",
    "tests": [
@@ -23883,14 +23880,14 @@
   },
   {
    "id": "cr_family_game_night",
-   "name": "Family Game Night",
+   "name": "Cramling Family Night",
    "kind": "buff",
    "tier": 7,
-   "effect": "Choose one enemy piece. For the next 4 turns neither player may capture it, and both players can see every card the other is holding.",
-   "trigger": "activated",
+   "effect": "Choose one enemy piece. For 4 turns nobody may capture it, each player sees the cards in the other's next draft, and the biggest piece each side is attacking wears a name tag.",
+   "trigger": "activated/lingering",
    "duration": "4-turns",
    "targets": "enemy",
-   "signature": "info|activated|effect+targets+filter|4-turns|enemy|capture,n:4,see",
+   "signature": "info|activated|effect+targets+filter+onMove|4-turns|enemy|capture,draft,n:4,see",
    "animation": "generated",
    "location": "src/engine/buffs/creators.ts",
    "tests": [
@@ -23901,14 +23898,14 @@
   },
   {
    "id": "cr_stalling_bishop",
-   "name": "The Stalling Bishop",
+   "name": "Rosen's Stafford Trap",
    "kind": "buff",
    "tier": 7,
-   "effect": "Choose one of your bishops. For your opponent's next 3 turns it cannot be captured, and it cannot capture either. It just sits there being a problem.",
-   "trigger": "activated",
+   "effect": "Mark one of your knights or bishops as bait. If an enemy piece takes it within their next 3 turns, that piece is trapped in place for 2 of their turns and you gain 20 seconds. If nobody bites, the bait cannot be captured for 2 turns.",
+   "trigger": "activated/lingering",
    "duration": "3-turns",
    "targets": "enemy",
-   "signature": "protection|activated|effect+targets+aug+onMove|3-turns|enemy|bishop,capture,n:3",
+   "signature": "protection|activated|effect+targets+onMove|3-turns|enemy|bishop,capture,knight,n:2,n:2,n:20,n:3,place,seconds",
    "animation": "generated",
    "location": "src/engine/buffs/creators.ts",
    "tests": [
@@ -25332,14 +25329,14 @@
   },
   {
    "id": "cr_oh_no_my_queen",
-   "name": "Oh No My Queen",
+   "name": "Gotham's THE ROOK!!",
    "kind": "buff",
    "tier": 8,
-   "effect": "Your queen is snatched back to her starting square. Every enemy piece that was attacking her is frozen for 2 of their turns, and you gain 30 seconds.",
-   "trigger": "activated",
+   "effect": "Pick one of your rooks. For your next 2 turns it moves like a queen, and every capture it makes gains you 10 seconds.",
+   "trigger": "activated/lingering",
    "duration": "2-turns",
-   "targets": "enemy",
-   "signature": "pieces|activated|effect|2-turns|enemy|n:2,n:30,queen,seconds,square",
+   "targets": "self",
+   "signature": "movement|activated|effect+targets+aug+onMove|2-turns|self|capture,move,n:10,n:2,queen,rook,seconds",
    "animation": "generated",
    "location": "src/engine/buffs/creators.ts",
    "tests": [
@@ -25350,14 +25347,14 @@
   },
   {
    "id": "cr_speedrun_protocol",
-   "name": "Speedrun Protocol",
+   "name": "Danya's Speedrun",
    "kind": "buff",
    "tier": 8,
-   "effect": "For your opponent's next 6 turns they may only play a capture, a check, or a pawn move. Every turn the protocol holds, you gain 3 seconds.",
+   "effect": "For your opponent's next 6 turns they may only play a capture, a check, or a pawn move. Each held turn pays you more time: 2 seconds, then 3, then 4, and so on.",
    "trigger": "passive",
    "duration": "6-turns",
    "targets": "enemy",
-   "signature": "tempo|passive|init+filter+onMove|6-turns|enemy|capture,check,move,n:3,n:6,pawn,seconds",
+   "signature": "tempo|passive|init+filter+onMove|6-turns|enemy|capture,check,move,n:2,n:3,n:4,n:6,pawn,seconds,time",
    "animation": "passive",
    "location": "src/engine/buffs/creators.ts",
    "tests": [
@@ -38597,11 +38594,11 @@
    "name": "Walnut Shell",
    "kind": "item",
    "tier": 1,
-   "effect": "Crack it open: free one of your pieces from any freeze or walnut hex.",
+   "effect": "Crack it open: free one of your pieces from any freeze or walnut hex. If none of your pieces is stuck, eat the nut instead: gain 1 draft reroll.",
    "trigger": "activated",
    "duration": "unstated",
    "targets": "self",
-   "signature": "item|activated|effect+targets|unstated|self|freeze",
+   "signature": "item|activated|effect+targets|unstated|self|draft,freeze,n:1,reroll",
    "animation": "generated",
    "location": "src/engine/buffs/library.ts",
    "tests": [
@@ -39103,11 +39100,11 @@
    "name": "Firecracker",
    "kind": "item",
    "tier": 4,
-   "effect": "Startle one enemy piece (not the king): it retreats one square toward its home rank.",
+   "effect": "Startle one enemy piece (not the king): it retreats one square toward its home rank and is too rattled to move on its owner's next turn.",
    "trigger": "activated",
-   "duration": "unstated",
+   "duration": "next-turn",
    "targets": "enemy",
-   "signature": "item|activated|effect+targets|unstated|enemy|king,rank,square",
+   "signature": "item|activated|effect+targets|next-turn|enemy|king,move,rank,square",
    "animation": "canvas",
    "location": "src/engine/buffs/library.ts",
    "tests": [

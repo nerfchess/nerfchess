@@ -90,7 +90,7 @@ export function MobileMoveDrawer({
           onClick={() => setOpen((v) => !v)}
           className="flex h-11 w-full items-center justify-between px-4 transition-colors duration-150 hover:bg-white/[0.04] active:bg-white/[0.07]"
         >
-          <span className="flex items-center gap-2 smallcaps text-[12px] text-parchment-400">
+          <span className="flex items-center gap-2 text-[12px] text-parchment-400">
             Moves &amp; chat
             {unreadChat > 0 && (
               <span className="grid h-4 min-w-[1rem] place-items-center rounded-[1px] bg-gold px-1 font-mono text-[12px] font-bold text-ink-950">

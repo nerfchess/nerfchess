@@ -33,6 +33,7 @@ import "./g13GaugePlays.css";
 import type { CSSProperties, ReactNode } from "react";
 import type { SigPlugin, SigRole } from "./sigPlugins";
 import { AimStage, BoardFrame, BoardWideStage } from "./stage";
+import { LaserStrike, PieceShatter, Shockwave, QUAKE_CLASS, impactVars } from "./impact/impact";
 
 interface SceneProps {
   lead: boolean;
@@ -1370,37 +1371,130 @@ function EarlyBirdScene({ role, delayMs }: SceneProps) {
    scripts/audit-animations.ts and scripts/check-sig-plugins.cjs).
    ========================================================================== */
 
-/** Bind one bespoke scene to its config. */
-function S(Render: SigPlugin["Render"], config: SigPlugin["config"]): SigPlugin {
-  return { config, Render };
+/* =============================================================================
+   FLAGSHIP IMPACT PASS — every gauge BLOWS ITS NEEDLE past the peg.
+
+   Layered OVER each scene's own signature from the shared impact vocabulary
+   (impact/impact.tsx): a descending laser column, the struck thing splitting
+   in half and spraying shards, a ground shockwave, and the whole stage
+   jolting on the same beat. Each PLAYS entry declares its own combination,
+   impact beat, tint, landing box and tilt below, so every card in the module
+   lands a hit its siblings do not. The quake rides an inner wrapper (the
+   stage's own transform is the anchor clamp and must not be overridden) and
+   stays inside this scene's stage — the real board crop never shakes. The
+   whole composite is transform/opacity only, one-shot, scaled by --fx-dur,
+   and dark under html[data-anim="off"] via the global animation gate.
+   ========================================================================== */
+
+/** Per-card impact spec. `at` is the impact beat in ms after the lead's
+ * stagger; the laser (when present) LEADS that beat by 0.4s per the shared
+ * impact-timing contract, so the column reads as the CAUSE of the hit. */
+interface Imp {
+  /** Impact tint: the "r g b" triple --imp-rgb expects (the card's core). */
+  rgb: string;
+  /** The impact beat, ms into the lead. */
+  at: number;
+  laser?: boolean;
+  shock?: boolean;
+  /** Shatter glyph (24x24 viewBox): the struck thing, split in half. */
+  glyph?: ReactNode;
+  /** Landing box, % of the scene canvas. Defaults to the cast square. */
+  box?: [number, number, number, number];
+  /** Static tilt of the whole composite, in degrees (angled columns). */
+  rot?: number;
 }
 
+/** A gauge face with its needle hard past the peg: what the blow ruins. */
+const impDial = (fill: string, edge: string): ReactNode => (
+  <>
+    <circle cx="12" cy="12" r="7.6" fill={fill} stroke={edge} strokeWidth="1.3" />
+    <path d="M12 12L17.2 6.6M12 12l-3 4.4" stroke={edge} strokeWidth="1.6" strokeLinecap="round" />
+    <circle cx="12" cy="12" r="1.4" fill={edge} />
+  </>
+);
+
+/** The composite itself, staged over the scene's canvas on the impact beat. */
+function ImpactHit({ s, delayMs }: { s: Imp; delayMs: number }) {
+  const [l, t, w, h] = s.box ?? [43, 38, 14, 14];
+  return (
+    <span className="pointer-events-none absolute inset-0 z-30 block" aria-hidden="true">
+      <BoardWideStage>
+        <span
+          className="absolute block"
+          style={{
+            left: `${l}%`,
+            top: `${t}%`,
+            width: `${w}%`,
+            height: `${h}%`,
+            rotate: s.rot ? `${s.rot}deg` : undefined,
+            ...impactVars(s.rgb, (delayMs + s.at) / 1000),
+          }}
+        >
+          {s.laser ? <LaserStrike /> : null}
+          {s.glyph ? (
+            <PieceShatter
+              glyph={
+                <svg viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+                  {s.glyph}
+                </svg>
+              }
+            />
+          ) : null}
+          {s.shock ? <Shockwave /> : null}
+        </span>
+      </BoardWideStage>
+    </span>
+  );
+}
+
+/** Bind one bespoke scene to its config, landing its per-card impact over the
+ * lead. Target and entrance cuts keep the scene's own art unchanged. */
+function S(Render: SigPlugin["Render"], config: SigPlugin["config"], imp?: Imp): SigPlugin {
+  if (!imp) return { config, Render };
+  function FlagshipHit(p: { lead: boolean; role: SigRole; delayMs: number }) {
+    if (p.role !== "lead") return <Render {...p} />;
+    return (
+      <span className="pointer-events-none absolute inset-0 block" aria-hidden="true">
+        <span
+          className={`${QUAKE_CLASS} absolute inset-0 block`}
+          style={impactVars(imp!.rgb, (p.delayMs + imp!.at) / 1000)}
+        >
+          <Render {...p} />
+        </span>
+        <ImpactHit s={imp!} delayMs={p.delayMs} />
+      </span>
+    );
+  }
+  return { config, Render: FlagshipHit };
+}
+
+
 export const PLAYS: Record<string, SigPlugin> = {
-  ov_backseat_gamer: S(BackseatGamerScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", anchor: "cast" }),
-  ov_bake_sale: S(BakeSaleScene, { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "chips", anchor: "board" }),
-  ov_chat_vote: S(ChatVoteScene, { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "chips", anchor: "cast" }),
-  ov_compound_interest: S(CompoundInterestScene, { ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "vault", anchor: "board" }),
-  ov_draft_dodger: S(DraftDodgerScene, { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "chips", anchor: "cast" }),
-  ov_emote_wheel: S(EmoteWheelScene, { ordering: "line", staggerMs: 60, victims: "all", hasLead: true, sound: "siege", anchor: "aim" }),
-  ov_gold_rush: S(GoldRushScene, { ordering: "radial", staggerMs: 70, victims: "all", hasLead: true, sound: "chips", anchor: "board" }),
-  ov_royal_wedding: S(RoyalWeddingScene, { ordering: "radial", staggerMs: 60, victims: ["k", "q", "p"], hasLead: true, sound: "vault", anchor: "board" }),
-  ov_tax_audit: S(TaxAuditScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "vault", anchor: "board" }),
-  bn4_egg_timer: S(EggTimerScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage", anchor: "board" }),
-  ov_alt_account: S(AltAccountScene, { ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "vault", anchor: "board" }),
-  ov_compost_heap: S(CompostHeapScene, { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "clockice", anchor: "cast" }),
-  ov_encore: S(EncoreScene, { ordering: "radial", staggerMs: 70, victims: "all", hasLead: true, sound: "clockcage", anchor: "cast" }),
-  ov_prank_call: S(PrankCallScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz", anchor: "board" }),
-  ov_rubber_stamp: S(RubberStampScene, { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "vault", anchor: "board" }),
-  ov_rube_goldberg: S(RubeGoldbergScene, { ordering: "line", staggerMs: 70, victims: "all", hasLead: true, sound: "blitz", anchor: "cast" }),
-  ov_rules_lawyer: S(RulesLawyerScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage", anchor: "board" }),
-  ov_speedrun_timer: S(SpeedrunTimerScene, { ordering: "line", staggerMs: 60, victims: "all", hasLead: true, sound: "clockcage", anchor: "board" }),
-  ov_sponsored_segment: S(SponsoredSegmentScene, { ordering: "line", staggerMs: 70, victims: "all", hasLead: true, sound: "chips", anchor: "board" }),
-  bn4_hairline_crack: S(HairlineCrackScene, { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "clockice", anchor: "cast" }),
-  bn4_pinch_of_sand: S(PinchOfSandScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage", anchor: "board" }),
-  bn4_stutter_step: S(StutterStepScene, { ordering: "line", staggerMs: 70, victims: "all", hasLead: true, sound: "blitz", anchor: "board" }),
-  bn4_understudy: S(UnderstudyScene, { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "vault", anchor: "cast" }),
-  op_barometer_falling: S(BarometerFallingScene, { ordering: "radial", staggerMs: 60, victims: ["r"], hasLead: true, sound: "clockice", anchor: "board" }),
-  op_coachs_whistle: S(CoachsWhistleScene, { ordering: "line", staggerMs: 60, victims: "all", hasLead: true, sound: "blitz", anchor: "aim" }),
-  op_curfew_patrol: S(CurfewPatrolScene, { ordering: "line", staggerMs: 70, victims: "all", hasLead: true, sound: "siege", anchor: "board" }),
-  op_early_bird: S(EarlyBirdScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage", anchor: "board" }),
+  ov_backseat_gamer: S(BackseatGamerScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", anchor: "cast" }, { rgb: "169 216 240", at: 560, laser: true, shock: true, box: [43, 36, 14, 15], rot: 14 }),
+  ov_bake_sale: S(BakeSaleScene, { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "chips", anchor: "board" }, { rgb: "240 180 106", at: 520, shock: true, box: [43, 39, 14, 12] }),
+  ov_chat_vote: S(ChatVoteScene, { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "chips", anchor: "cast" }, { rgb: "143 224 208", at: 600, laser: true, box: [44, 35, 12, 16] }),
+  ov_compound_interest: S(CompoundInterestScene, { ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "vault", anchor: "board" }, { rgb: "227 201 135", at: 640, glyph: impDial("#e3c987", "#2a2414"), shock: true, box: [42, 37, 15, 14] }),
+  ov_draft_dodger: S(DraftDodgerScene, { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "chips", anchor: "cast" }, { rgb: "207 224 160", at: 480, shock: true, box: [44, 40, 12, 11] }),
+  ov_emote_wheel: S(EmoteWheelScene, { ordering: "line", staggerMs: 60, victims: "all", hasLead: true, sound: "siege", anchor: "aim" }, { rgb: "185 200 240", at: 520, laser: true, box: [44, 36, 12, 15], rot: -16 }),
+  ov_gold_rush: S(GoldRushScene, { ordering: "radial", staggerMs: 70, victims: "all", hasLead: true, sound: "chips", anchor: "board" }, { rgb: "242 192 78", at: 700, laser: true, glyph: impDial("#f2c04e", "#241a08"), shock: true, box: [41, 34, 17, 17] }),
+  ov_royal_wedding: S(RoyalWeddingScene, { ordering: "radial", staggerMs: 60, victims: ["k", "q", "p"], hasLead: true, sound: "vault", anchor: "board" }, { rgb: "240 207 224", at: 620, laser: true, shock: true, box: [43, 37, 14, 15] }),
+  ov_tax_audit: S(TaxAuditScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "vault", anchor: "board" }, { rgb: "216 220 232", at: 560, glyph: impDial("#d8dce8", "#1c1f2b"), box: [43, 38, 13, 13] }),
+  bn4_egg_timer: S(EggTimerScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage", anchor: "board" }, { rgb: "240 154 134", at: 500, shock: true, box: [44, 39, 12, 12] }),
+  ov_alt_account: S(AltAccountScene, { ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "vault", anchor: "board" }, { rgb: "184 160 224", at: 460, laser: true, box: [44, 37, 12, 14], rot: 10 }),
+  ov_compost_heap: S(CompostHeapScene, { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "clockice", anchor: "cast" }, { rgb: "168 216 120", at: 440, shock: true, box: [43, 41, 13, 11] }),
+  ov_encore: S(EncoreScene, { ordering: "radial", staggerMs: 70, victims: "all", hasLead: true, sound: "clockcage", anchor: "cast" }, { rgb: "159 208 232", at: 520, glyph: impDial("#9fd0e8", "#2d3a41"), box: [44, 38, 12, 12] }),
+  ov_prank_call: S(PrankCallScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz", anchor: "board" }, { rgb: "240 168 192", at: 420, shock: true, box: [45, 39, 11, 11] }),
+  ov_rubber_stamp: S(RubberStampScene, { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "vault", anchor: "board" }, { rgb: "224 138 114", at: 560, glyph: impDial("#e08a72", "#2b1410"), shock: true, box: [43, 38, 14, 13] }),
+  ov_rube_goldberg: S(RubeGoldbergScene, { ordering: "line", staggerMs: 70, victims: "all", hasLead: true, sound: "blitz", anchor: "cast" }, { rgb: "160 224 184", at: 600, laser: true, shock: true, box: [42, 36, 14, 16], rot: -8 }),
+  ov_rules_lawyer: S(RulesLawyerScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage", anchor: "board" }, { rgb: "207 216 176", at: 540, laser: true, box: [44, 36, 12, 15] }),
+  ov_speedrun_timer: S(SpeedrunTimerScene, { ordering: "line", staggerMs: 60, victims: "all", hasLead: true, sound: "clockcage", anchor: "board" }, { rgb: "240 208 96", at: 380, shock: true, box: [45, 40, 10, 10] }),
+  ov_sponsored_segment: S(SponsoredSegmentScene, { ordering: "line", staggerMs: 70, victims: "all", hasLead: true, sound: "chips", anchor: "board" }, { rgb: "240 160 48", at: 580, laser: true, box: [43, 35, 13, 16] }),
+  bn4_hairline_crack: S(HairlineCrackScene, { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "clockice", anchor: "cast" }, { rgb: "242 106 90", at: 480, glyph: impDial("#f26a5a", "#441e19"), box: [44, 38, 12, 13] }),
+  bn4_pinch_of_sand: S(PinchOfSandScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage", anchor: "board" }, { rgb: "232 207 154", at: 400, shock: true, box: [45, 41, 11, 10] }),
+  bn4_stutter_step: S(StutterStepScene, { ordering: "line", staggerMs: 70, victims: "all", hasLead: true, sound: "blitz", anchor: "board" }, { rgb: "176 192 216", at: 460, shock: true, box: [42, 40, 14, 10] }),
+  bn4_understudy: S(UnderstudyScene, { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "vault", anchor: "cast" }, { rgb: "216 192 240", at: 500, laser: true, box: [44, 36, 12, 14] }),
+  op_barometer_falling: S(BarometerFallingScene, { ordering: "radial", staggerMs: 60, victims: ["r"], hasLead: true, sound: "clockice", anchor: "board" }, { rgb: "143 176 208", at: 620, glyph: impDial("#8fb0d0", "#16222f"), shock: true, box: [43, 36, 14, 15] }),
+  op_coachs_whistle: S(CoachsWhistleScene, { ordering: "line", staggerMs: 60, victims: "all", hasLead: true, sound: "blitz", anchor: "aim" }, { rgb: "240 224 160", at: 430, shock: true, box: [44, 39, 12, 12] }),
+  op_curfew_patrol: S(CurfewPatrolScene, { ordering: "line", staggerMs: 70, victims: "all", hasLead: true, sound: "siege", anchor: "board" }, { rgb: "127 192 200", at: 470, laser: true, box: [44, 37, 12, 14], rot: -6 }),
+  op_early_bird: S(EarlyBirdScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage", anchor: "board" }, { rgb: "240 184 80", at: 450, shock: true, box: [43, 40, 13, 11] }),
 };

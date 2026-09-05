@@ -99,8 +99,16 @@ export function PassiveSpawn({
   const hex = colorHexOverride ?? visual.color;
   const squares = targetSquares.length > 0 ? targetSquares : null;
 
+  // The reveal-variant spawn (docs section 9) is a nerf's big entrance moment:
+  // the same composition, but the whole anchor presses into the board with a
+  // physical compress-overshoot-settle (pfx-reveal-press). CSS-only, so the
+  // StrictMode-safe play/dedupe logic and onDone timing above are untouched.
+  const isReveal = String(activationPly) === "reveal";
+  const rootClass = isReveal && !isReduced ? "pfx-spawn pfx-spawn-reveal" : "pfx-spawn";
+  const durVar = { ["--pfx-d"]: `${duration}ms` } as React.CSSProperties & Record<string, string>;
+
   return (
-    <div className="pfx-spawn" data-card={cardId} aria-hidden>
+    <div className={rootClass} data-card={cardId} aria-hidden>
       {squares
         ? squares.map((sq) => {
             const c = squareCenter(sq, boardMetrics);
@@ -114,6 +122,7 @@ export function PassiveSpawn({
                   top: c.y - boardMetrics.squarePx / 2,
                   width: boardMetrics.squarePx,
                   height: boardMetrics.squarePx,
+                  ...durVar,
                 }}
               >
                 <CompositionLayers
@@ -122,18 +131,20 @@ export function PassiveSpawn({
                   durationMs={duration}
                   maxNodes={visual.maxNodes}
                   reduced={isReduced}
+                  cue={visual.cue}
                 />
               </span>
             );
           })
         : (
-          <span className="pfx-anchor pfx-anchor-board" style={{ position: "absolute", inset: 0 }}>
+          <span className="pfx-anchor pfx-anchor-board" style={{ position: "absolute", inset: 0, ...durVar }}>
             <CompositionLayers
               composition={visual.composition}
               color={hex}
               durationMs={duration}
               maxNodes={visual.maxNodes}
               reduced={isReduced}
+              cue={visual.cue}
             />
           </span>
         )}

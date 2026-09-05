@@ -39,6 +39,8 @@ import { PresenceBadge } from "../PresenceBadge";
 import { EmptyState } from "../EmptyState";
 import { derivePresence, useLobbyFeed, type Presence, type PresenceState } from "@/lib/presence";
 import type { MPLobby } from "@/lib/multiplayer";
+import { Button } from "@/components/ui/Button";
+import { LinkButton } from "@/components/ui/Button";
 
 // ---- Shared shapes ----------------------------------------------------------
 
@@ -193,7 +195,7 @@ function OwnerFriends() {
         {/* Incoming requests answer first: they are the only time-sensitive item. */}
         {incoming.length > 0 && (
           <div className="space-y-2">
-            <div className="smallcaps text-[12px] text-gold-leaf">
+            <div className="text-[12px] text-gold-leaf">
               Requests ({incoming.length})
             </div>
             {incoming.map((f) => (
@@ -203,24 +205,22 @@ function OwnerFriends() {
               >
                 <Identity f={f} lobby={lobby} />
                 <div className="ml-auto flex shrink-0 items-center gap-2">
-                  <button
-                    type="button"
+                  <Button tone="leaf"
+                   
                     onClick={() => void act("accept", f.username)}
                     disabled={busy}
-                    className="btn-leaf inline-flex min-h-[44px] items-center gap-1.5 px-3 font-display text-[13px] font-semibold disabled:opacity-40"
-                  >
+                    className="px-3 text-[13px] font-semibold">
                     <Check size={15} strokeWidth={2.4} aria-hidden />
                     Accept
-                  </button>
-                  <button
-                    type="button"
+                  </Button>
+                  <Button tone="ghost"
+                   
                     onClick={() => void act("decline", f.username)}
                     disabled={busy}
-                    className="btn-ghost inline-flex min-h-[44px] items-center gap-1.5 px-3 font-display text-[13px] disabled:opacity-40"
-                  >
+                    className="px-3 text-[13px]">
                     <X size={15} strokeWidth={2.4} aria-hidden />
                     Decline
-                  </button>
+                  </Button>
                 </div>
               </div>
             ))}
@@ -277,7 +277,7 @@ function OwnerFriends() {
               type="button"
               onClick={() => setShowOutgoing((v) => !v)}
               aria-expanded={showOutgoing}
-              className="flex min-h-[44px] w-full items-center gap-2 text-left smallcaps text-[12px] text-parchment-500 transition hover:text-parchment-300"
+              className="flex min-h-[44px] w-full items-center gap-2 text-left text-[12px] text-parchment-500 transition hover:text-parchment-300"
             >
               <ChevronDown
                 size={14}
@@ -333,22 +333,20 @@ function FriendRow({
       <Identity f={f} lobby={lobby} presence={presence} />
       <div className="ml-auto flex shrink-0 items-center gap-1.5">
         {presence.state === "in-game" && presence.gameId && (
-          <Link
+          <LinkButton tone="ghost"
             href={`/game/${encodeURIComponent(presence.gameId)}`}
-            className="btn-ghost inline-flex min-h-[44px] items-center gap-1.5 px-3 font-display text-[13px] no-underline"
-          >
+            className="px-3 text-[13px]">
             <Eye size={14} strokeWidth={2.2} aria-hidden />
             Watch
-          </Link>
+          </LinkButton>
         )}
         {presence.state === "online" && (
-          <Link
+          <LinkButton tone="leaf"
             href={`/friend?challenge=${encodeURIComponent(f.username)}`}
-            className="btn-leaf inline-flex min-h-[44px] items-center gap-1.5 px-3 font-display text-[13px] font-semibold no-underline"
-          >
+            className="px-3 text-[13px] font-semibold">
             <Swords size={14} strokeWidth={2.3} aria-hidden />
             Challenge
-          </Link>
+          </LinkButton>
         )}
         <RowMenu username={f.username} busy={busy} onRemove={onRemove} />
       </div>
@@ -415,25 +413,23 @@ function RowMenu({ username, busy, onRemove }: { username: string; busy: boolean
                 Remove {username} from your friends?
               </p>
               <div className="flex items-center gap-1.5">
-                <button
-                  type="button"
+                <Button tone="leaf"
+                 
                   role="menuitem"
                   onClick={() => {
                     onRemove();
                     setOpen(false);
                   }}
                   disabled={busy}
-                  className="btn-leaf inline-flex min-h-[44px] flex-1 items-center justify-center px-2 font-display text-[13px] font-semibold disabled:opacity-40"
-                >
+                  className="flex-1 px-2 text-[13px] font-semibold">
                   Remove
-                </button>
-                <button
-                  type="button"
+                </Button>
+                <Button tone="ghost"
+                 
                   onClick={() => setConfirming(false)}
-                  className="btn-ghost inline-flex min-h-[44px] flex-1 items-center justify-center px-2 font-display text-[13px]"
-                >
+                  className="flex-1 px-2 text-[13px]">
                   Cancel
-                </button>
+                </Button>
               </div>
             </div>
           ) : (
@@ -531,13 +527,12 @@ function PublicFriends({ username }: { username: string }) {
             >
               <Identity f={f} lobby={lobby} presence={presence} tag={f.mutual ? "Mutual" : undefined} />
               {presence.state === "in-game" && presence.gameId && (
-                <Link
+                <LinkButton tone="ghost"
                   href={`/game/${encodeURIComponent(presence.gameId)}`}
-                  className="btn-ghost ml-auto inline-flex min-h-[44px] shrink-0 items-center gap-1.5 px-3 font-display text-[13px] no-underline"
-                >
+                  className="ml-auto shrink-0 px-3 text-[13px]">
                   <Eye size={14} strokeWidth={2.2} aria-hidden />
                   Watch
-                </Link>
+                </LinkButton>
               )}
             </div>
           );
@@ -574,7 +569,7 @@ function Identity({
             <span className="shrink-0 font-mono text-[12px] tabular-nums text-parchment-400">{f.rating}</span>
           )}
           {tag && (
-            <span className="shrink-0 rounded-[1px] border border-verdigris-glow/40 bg-verdigris/10 px-1.5 py-px smallcaps text-[12px] text-verdigris-glow">
+            <span className="shrink-0 rounded-[1px] border border-verdigris-glow/40 bg-verdigris/10 px-1.5 py-px text-[12px] text-verdigris-glow">
               {tag}
             </span>
           )}
@@ -618,14 +613,13 @@ function ErrorRow({ onRetry }: { onRetry: () => void }) {
   return (
     <div className="flex flex-col items-center gap-3 py-6 text-center">
       <p className="text-sm text-parchment-300">Could not load friends.</p>
-      <button
-        type="button"
+      <Button tone="ghost"
+       
         onClick={onRetry}
-        className="btn-ghost inline-flex min-h-[44px] items-center gap-1.5 px-4 font-display text-sm font-semibold"
-      >
+        className="px-4 text-sm font-semibold">
         <RotateCw size={15} strokeWidth={2.2} aria-hidden />
         Retry
-      </button>
+      </Button>
     </div>
   );
 }

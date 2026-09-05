@@ -183,10 +183,16 @@ export function trackBoundPiece(inst: BuffInstance, move: Move, opts?: { dieOnPr
   }
 }
 
-/** Decrement a timed passive after each of the owner's moves. */
+/** Decrement a timed passive after each of the owner's moves. A card whose
+ * countdown was never armed (state.turns unset — e.g. an activated card
+ * ticking before its effect ran) is left alone: the old `?? 0` read made an
+ * unset counter tick straight to -1 and silently retire the card, which is
+ * never what an unarmed tick means. Cards that want an immediate retire set
+ * turns explicitly (or set spent themselves). */
 export function tickTurns(inst: BuffInstance, move: Move, owner: Color) {
   if (move.color !== owner) return;
-  const t = ((inst.state.turns as number) ?? 0) - 1;
+  if (typeof inst.state.turns !== "number") return;
+  const t = inst.state.turns - 1;
   inst.state.turns = t;
   if (t <= 0) inst.spent = true;
 }

@@ -12,6 +12,8 @@ import React, {
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, type LucideIcon } from "lucide-react";
 import { CardEntrance } from "./effects/cardEntrance";
+import { UseSpectacle } from "./effects/UseSpectacle";
+import { resolvePieceTreatment, type PieceTreatment } from "./effects/pieceTreatment";
 import { cardFaceIcon } from "@/lib/cardIcon";
 import {
   Piece,
@@ -144,6 +146,8 @@ import {
 } from "./effects/geometry";
 import { findKing } from "@/engine/board";
 import { PassiveLayer } from "./effects/passive/PassiveLayer";
+import { FruitionLayer } from "./effects/fruition/FruitionLayer";
+import type { FxEvent } from "@/engine/fxEvents";
 import { buffPassiveAuras, nerfPassiveAuras } from "./effects/passive/derive";
 import type { PassiveAuraEntry, NerfAuraInput } from "./effects/passive/derive";
 
@@ -338,7 +342,7 @@ function PlayAnnouncement({ name, tier, outcome }: { name: string; tier: number;
     <div aria-live="polite" className="pointer-events-none absolute inset-x-0 top-[6%] z-[45] flex justify-center">
       <div
         className={
-          "extra-turns-banner mx-4 flex max-w-[min(92%,30rem)] flex-col items-center gap-1 border border-white/25 bg-ink-950/70 text-center shadow-plate backdrop-blur-[2px] " +
+          "extra-turns-banner mx-4 flex max-w-[min(92%,30rem)] flex-col items-center gap-1 border border-white/25 bg-ink-950/90 text-center shadow-plate " +
           (big ? "px-5 py-2.5" : mid ? "px-4 py-2" : "px-3 py-1.5")
         }
       >
@@ -418,14 +422,14 @@ function NerfRevealSplash({
       {/* small supporting caption: the reveal composition is the show, the
           name is a footnote (bottom edge, one compact line) */}
       <div className="absolute inset-x-0 bottom-[4%] flex justify-center">
-        <div className="nerf-reveal-stamp mx-4 flex max-w-[min(92%,22rem)] items-center gap-2 border border-white/20 bg-ink-950/80 px-3 py-1.5 shadow-plate backdrop-blur-[2px]">
+        <div className="nerf-reveal-stamp mx-4 flex max-w-[min(92%,22rem)] items-center gap-2 border border-white/20 bg-ink-950/90 px-3 py-1.5 shadow-plate">
           <span className={`font-display text-sm font-bold tracking-wide tier-${tier}`}>{name}</span>
           <span
             className={`shrink-0 rounded-[1px] border px-1 py-px font-display text-[10px] font-bold tier-bg-${tier} tier-${tier}`}
           >
             {TIER_ROMAN[tier as 1]}
           </span>
-          <span className="smallcaps text-[10px] font-semibold tracking-wider text-parchment-300">
+          <span className="text-[10px] font-semibold tracking-wider text-parchment-300">
             {mine ? "your rule" : "their rule"}
           </span>
         </div>
@@ -648,6 +652,10 @@ interface Props {
    * PassiveLayer keeps auras but suppresses live spawn/pulse/exit so scrubbing
    * never fires spurious intros. */
   reviewingHistory?: boolean;
+  /** The engine's transient fx-event log for the latest apply cycle
+   * (game.fx): drives the FruitionLayer's clamp/receive/ward/expire pulses.
+   * Surfaces that replay history simply omit it. */
+  fx?: FxEvent[] | null;
 }
 
 /** Placeholder rules that must never play the reveal splash: buff mode's
@@ -1472,7 +1480,8 @@ interface SquareEnv {
   stunBySquare: Map<Square, number>;
   companionSquares: Map<Square, { art: string }>;
   amazonSquares: Set<Square>;
-  moveAsSquares: Map<Square, PieceType>;
+  moveAsSquares: Map<Square, PieceType | "a">;
+  treatmentBySquare: Map<Square, PieceTreatment>;
   showLegalMoves: boolean;
   showCoordinates: boolean;
   inspectTargets: Map<Square, boolean>;
@@ -1563,6 +1572,7 @@ const BoardSquare = React.memo(function BoardSquare({
     companionSquares,
     amazonSquares,
     moveAsSquares,
+    treatmentBySquare,
     showLegalMoves,
     showCoordinates,
     inspectTargets,
@@ -1616,6 +1626,10 @@ const BoardSquare = React.memo(function BoardSquare({
             // motif (the piece is out of action), and the buckler/heater
             // shield covers what a ward ring would say.
             const motifMark = motifBySquare.get(sq);
+            // The card-keyed piece treatment this square's mark carries (worn
+            // by the piece wrapper below; the frozen/doomed/shielded state
+            // looks outrank it).
+            const treatment = treatmentBySquare.get(sq);
             // Duelist-style bound-buff marker for this square (skipped where a
             // motif badge already stamps the piece, so the two never stack).
             const boundMark = !motifShown ? boundMarks.get(sq) : undefined;
@@ -1707,9 +1721,20 @@ const BoardSquare = React.memo(function BoardSquare({
                 // Desktop hover raises the styled effect popover in place of the
                 // old browser title (only when the square explains something and
                 // no drag is in flight). Pointer-leave dismisses it; pointerdown
-                // move handling is untouched.
+                // move handling is untouched. Touch is excluded from the leave:
+                // a touch pointer "leaves" the square the instant the finger
+                // lifts, which fired right after the tap-to-inspect paths in
+                // handleSquarePointerDown opened this square's popover and
+                // flash-closed it. On touch the popover closes via the window
+                // tap-away listener instead (the next press anywhere).
                 onPointerEnter={hasEffectInfo ? () => onOpenPopover(sq) : undefined}
-                onPointerLeave={hasEffectInfo ? () => onClosePopover(sq) : undefined}
+                onPointerLeave={
+                  hasEffectInfo
+                    ? (e) => {
+                        if (e.pointerType !== "touch") onClosePopover(sq);
+                      }
+                    : undefined
+                }
               >
                 {underwater && (
                   <div className="absolute inset-0 bg-cyan-500/25 mix-blend-screen pointer-events-none" />
@@ -2078,6 +2103,8 @@ const BoardSquare = React.memo(function BoardSquare({
                     key={
                       boardFx && (boardFx.kind === "morph" || boardFx.kind === "summon")
                         ? `piece-fx-${boardFx.key}`
+                        : treatment
+                        ? `piece-treat-${treatment.key}`
                         : undefined
                     }
                     className={
@@ -2085,13 +2112,19 @@ const BoardSquare = React.memo(function BoardSquare({
                       (isDragging ? "opacity-30 " : "") +
                       // The piece itself wears its live effect (owner: "a mark
                       // should actually change the piece"): frostbitten when
-                      // frozen, gilded when shielded, deathly when doomed.
+                      // frozen, gilded when shielded, deathly when doomed —
+                      // and under a running card's fx, the CARD-KEYED
+                      // treatment (rusted by one hex, moonlit by one boon).
+                      // The three state looks outrank the treatment: a frozen
+                      // piece reads frozen whoever froze it.
                       (frozenSquares.has(sq)
                         ? "piece-frozen "
                         : doomMarks.has(sq)
                         ? "piece-doomed "
                         : shieldedSquares.has(sq)
                         ? "piece-shielded "
+                        : treatment
+                        ? "piece-treat "
                         : "") +
                       (boardFx?.kind === "morph"
                         ? "fx-piece-pop"
@@ -2100,7 +2133,16 @@ const BoardSquare = React.memo(function BoardSquare({
                         : "")
                     }
                     data-anim-piece={isAnimPiece ? sq : undefined}
-                    style={{ width: "var(--piece-fit, 88%)", height: "var(--piece-fit, 88%)" }}
+                    style={{
+                      width: "var(--piece-fit, 88%)",
+                      height: "var(--piece-fit, 88%)",
+                      ...(treatment &&
+                      !frozenSquares.has(sq) &&
+                      !doomMarks.has(sq) &&
+                      !shieldedSquares.has(sq)
+                        ? ({ "--pt-filter": treatment.filter } as React.CSSProperties)
+                        : {}),
+                    }}
                   >
                     {walnutSquares.has(sq) ? (
                       <WalnutPiece type={piece.type} color={piece.color} size="100%" />
@@ -2224,6 +2266,7 @@ export function Board({
   passiveNerfs,
   passiveBuffs,
   reviewingHistory,
+  fx,
   onInvalidPick,
 }: Props) {
   const pickSquareSet = useMemo(() => new Set(pickSquares ?? []), [pickSquares]);
@@ -2520,6 +2563,69 @@ export function Board({
       icon: cardFaceIcon(def.id, def.category, def.icon) ?? Sparkles,
       name: def.name,
       mine: fresh.mine,
+    });
+  }, [buffs, myColor]);
+  // --- Usage beat: one shot the moment a card is USED (or cancelled) --------
+  // Diffs the public buff lists by per-card USED-instance count (spent,
+  // usedActivation, or nullified), instant/activated cards only — a passive
+  // expiring is not a "use". Fires only for instances this board previously
+  // saw LIVE, so a mid-game reload (first snapshot seeds the counts) and a
+  // card that arrives already resolved (the cast layer's job) stay silent.
+  // The cast layer tells the board what the play DID; this beat shows the
+  // card itself being consumed at its owner's edge — or, on the nullified
+  // read, being voided by the opponent.
+  const usageSeenRef = useRef<{ used: Map<string, number>; live: Map<string, number> } | null>(null);
+  const usageKeyRef = useRef(0);
+  const [usage, setUsage] = useState<{
+    key: number;
+    cardId: string;
+    category: BuffCategory;
+    tier: number;
+    icon: LucideIcon;
+    mine: boolean;
+    nullified: boolean;
+  } | null>(null);
+  useEffect(() => {
+    if (!buffs) return;
+    const used = new Map<string, number>();
+    const live = new Map<string, number>();
+    const meta = new Map<string, { tier: number; mine: boolean; nullified: boolean }>();
+    for (const color of ["w", "b"] as Color[]) {
+      for (const inst of buffs.players[color].buffs) {
+        if (!inst.id) continue;
+        const def = BUFF_BY_ID[inst.id];
+        if (!def || def.kind === "passive") continue;
+        const k = `${color}:${inst.id}`;
+        if (inst.spent || inst.nullified || inst.usedActivation) {
+          used.set(k, (used.get(k) ?? 0) + 1);
+          meta.set(k, { tier: inst.tier, mine: color === myColor, nullified: !!inst.nullified });
+        } else {
+          live.set(k, (live.get(k) ?? 0) + 1);
+        }
+      }
+    }
+    const prev = usageSeenRef.current;
+    usageSeenRef.current = { used, live };
+    if (!prev) return;
+    let fresh: { id: string; tier: number; mine: boolean; nullified: boolean } | null = null;
+    for (const [k, n] of used) {
+      if (n <= (prev.used.get(k) ?? 0)) continue;
+      if ((prev.live.get(k) ?? 0) === 0) continue; // never seen live here: not our beat
+      const m = meta.get(k);
+      if (m) fresh = { id: k.slice(2), ...m };
+    }
+    if (!fresh) return;
+    const def = BUFF_BY_ID[fresh.id];
+    if (!def) return;
+    usageKeyRef.current += 1;
+    setUsage({
+      key: usageKeyRef.current,
+      cardId: def.id,
+      category: def.category,
+      tier: fresh.tier,
+      icon: cardFaceIcon(def.id, def.category, def.icon) ?? Sparkles,
+      mine: fresh.mine,
+      nullified: fresh.nullified,
     });
   }, [buffs, myColor]);
   // --- Nerf reveal splash: one shot per newly-known rule --------------------
@@ -2850,19 +2956,26 @@ export function Board({
     const grid = boardRef.current?.querySelector("[data-board-grid]") as HTMLElement | null;
     if (!grid) return;
     const cell = grid.getBoundingClientRect().width / 8;
+    // Pieces glide: the classic chessground slide, transform-only, scaled by
+    // the animation-speed duration (dur === 0, animations off, already
+    // returned above).
     for (const el of Array.from(grid.querySelectorAll<HTMLElement>("[data-anim-piece]"))) {
       const sq = Number(el.dataset.animPiece) as Square;
       const anim = anims.get(sq);
       if (!anim) continue;
       const pendingCleanup = animCleanups.get(el);
       if (pendingCleanup !== undefined) window.clearTimeout(pendingCleanup);
-      el.style.transition = "none";
-      el.style.transform = `translate(${anim.dxCells * cell}px, ${anim.dyCells * cell}px)`;
+      const dx = anim.dxCells * cell;
+      const dy = anim.dyCells * cell;
       el.style.position = "relative";
       el.style.zIndex = "5";
+      const totalMs = dur + 50;
+      el.style.transition = "none";
+      el.style.transform = `translate(${dx}px, ${dy}px)`;
       el.getBoundingClientRect(); // commit the starting transform
-      // Fast-launch / decisive-stop curve (vs the old gentle `ease-out`, which
-      // coasted): the piece leaves quickly and lands crisply, so moves feel light.
+      // Fast-launch / decisive-stop curve (vs the old gentle `ease-out`,
+      // which coasted): the piece leaves quickly and lands crisply, so
+      // moves feel light.
       el.style.transition = `transform ${dur}ms cubic-bezier(0.22, 1, 0.36, 1)`;
       el.style.transform = "translate(0, 0)";
       animCleanups.set(
@@ -2872,7 +2985,7 @@ export function Board({
           el.style.zIndex = "";
           el.style.position = "";
           animCleanups.delete(el);
-        }, dur + 50),
+        }, totalMs),
       );
     }
   }, [board.pieces, orientation]);
@@ -3137,7 +3250,7 @@ export function Board({
   // marks derive from public card state on both surfaces, so both players see
   // the same new piece.
   const moveAsSquares = useMemo(() => {
-    const m = new Map<number, PieceType>();
+    const m = new Map<number, PieceType | "a">();
     for (const mk of visual?.motifSquares ?? []) {
       if (mk.motif !== "empower" || !mk.moveAs) continue;
       const p = board.pieces[mk.sq];
@@ -3145,6 +3258,17 @@ export function Board({
     }
     return m;
   }, [visual?.motifSquares, board.pieces]);
+  // Card-keyed piece treatment per square: the look a piece WEARS while a
+  // card's fx runs on it (rusted under one hex, moonlit under one boon),
+  // derived from the same motif marks as the badges so both surfaces and
+  // both players see the same changed piece. Filter-only by design.
+  const treatmentBySquare = useMemo(() => {
+    const m = new Map<number, PieceTreatment>();
+    for (const mk of visual?.motifSquares ?? []) {
+      m.set(mk.sq, resolvePieceTreatment(mk));
+    }
+    return m;
+  }, [visual?.motifSquares]);
   const strikeSquares = useMemo(() => new Set(visual?.strikeSquares ?? []), [visual?.strikeSquares]);
   const walnutSquares = useMemo(() => new Set(visual?.walnutSquares ?? []), [visual?.walnutSquares]);
   const frozenSkins = visual?.frozenSkins ?? EMPTY_SKINS;
@@ -4337,6 +4461,7 @@ export function Board({
       companionSquares,
       amazonSquares,
       moveAsSquares,
+      treatmentBySquare,
       showLegalMoves,
       showCoordinates,
       inspectTargets,
@@ -4389,6 +4514,7 @@ export function Board({
       companionSquares,
       amazonSquares,
       moveAsSquares,
+      treatmentBySquare,
       showLegalMoves,
       showCoordinates,
       inspectTargets,
@@ -4483,6 +4609,20 @@ export function Board({
           />
         )}
 
+        {/* Fruition pulses: the engine's fx-event log made visible (a nerf
+            filter biting, a hostile effect seating on the viewer's squares, a
+            ward rising, a timer dissolving). Same one-shot band and hygiene
+            as the PassiveLayer one-shots. */}
+        {fx !== undefined && (
+          <FruitionLayer
+            fx={fx}
+            viewerColor={myColor}
+            orientation={orientation}
+            reviewing={!!reviewingHistory}
+            fxHidden={fxHiddenPref}
+          />
+        )}
+
         {/* Passive-grant edge aura: while any of the VIEWER's own pieces
             carries a live self-grant motif (empower / ward / rally), a very
             faint tinted glow breathes along the viewer's edge of the crop —
@@ -4528,6 +4668,20 @@ export function Board({
             name={BUFF_BY_ID[cast.id]!.name}
             description={BUFF_BY_ID[cast.id]?.description}
             tier={cast.tier}
+          />
+        )}
+        {/* Usage beat: a card just LEFT a hand (used, or nullified). The
+            card's sigil performs its consumption family at the owner's edge
+            while the cast layer answers on the board. */}
+        {!fxHiddenPref && !fxCalmClock && usage && (
+          <UseSpectacle
+            key={`use-${usage.key}`}
+            cardId={usage.cardId}
+            category={usage.category}
+            tier={usage.tier}
+            icon={usage.icon}
+            mine={usage.mine}
+            nullified={usage.nullified}
           />
         )}
         {/* Acquire entrance: a card just ENTERED a hand (draft pick, steal,
@@ -4773,7 +4927,7 @@ export function Board({
           >
             <div
               onPointerDown={(e) => e.stopPropagation()}
-              className="plate gilt flex flex-col items-center gap-2 p-3 sm:p-4"
+              className="plate flex flex-col items-center gap-2 p-3 sm:p-4"
             >
               <div className="flex gap-2">
                 {promotionMove.map((m) => (

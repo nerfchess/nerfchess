@@ -7,7 +7,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { ChatFlag } from "./types";
-import { Empty, FilterChip, Loading, ModButton, ModLinkButton, postJson, when } from "./ui";
+import { Empty, FilterChip, Loading, ModButton, ModLinkButton, postJson, when, whenShort } from "./ui";
 
 export function ChatFlagsSection({
   onHandled,
@@ -75,9 +75,11 @@ export function ChatFlagsSection({
             <div key={f.id} className="plate p-4">
               <div className="flex flex-wrap items-center gap-2 text-sm">
                 <span className="font-display font-semibold text-parchment-50">{f.username}</span>
-                <span className="text-parchment-400">{when(f.created_at)}</span>
+                <span className="text-parchment-400" title={when(f.created_at)}>
+                  {whenShort(f.created_at)}
+                </span>
                 {f.reviewed ? (
-                  <span className="smallcaps ml-auto text-[10px] text-parchment-400">reviewed</span>
+                  <span className="ml-auto text-[10px] text-parchment-400">reviewed</span>
                 ) : null}
               </div>
               <p className="mt-2 break-words text-sm text-parchment-100">{f.text}</p>

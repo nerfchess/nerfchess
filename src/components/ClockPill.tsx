@@ -25,11 +25,16 @@ export function ClockPill({
   startDelayMs = 0,
   warnLowTime = false,
   draftRunning = false,
+  seat = null,
 }: {
   ms: number;
   active: boolean;
   compact?: boolean;
   startDelayMs?: number;
+  /** Engine color of the seat this pill times, stamped as data-clock-seat so
+   * the clock-raid overlay can find and aim at the on-screen pill. Mobile and
+   * desktop copies share the seat; the overlay picks whichever is visible. */
+  seat?: "w" | "b" | null;
   // When true, this clock belongs to the local player: play a low-time warning
   // as it ticks past 10s, and an urgent tick past 5s. Fires once per crossing
   // and re-arms only if time climbs back above the threshold (increment).
@@ -113,17 +118,16 @@ export function ClockPill({
   const critical = displayMs < 10000;
   return (
     <div
+      data-clock-seat={seat ?? undefined}
       className={
         "plate flex items-center justify-center transition " +
         (compact ? "shrink-0 px-3 py-1.5 " : "p-4 ") +
         (active
           ? critical
-            ? "border-2 border-oxblood-glow bg-oxblood/25 shadow-oxblood ring-1 ring-oxblood-glow/50 animate-pulse"
-            : low
-            ? "border-2 border-gold bg-gold/15 shadow-leaf ring-1 ring-gold/40 clock-pulse-soft"
-            : "border-2 border-gold bg-gold/15 shadow-leaf ring-1 ring-gold/40"
-          // Idle clocks stay clearly readable; the gold border/glow on the
-          // running clock (not heavy dimming) is what marks whose turn it is.
+            ? "border-oxblood-glow bg-oxblood/25"
+            : "border-gold bg-gold/10"
+          // Idle clocks stay clearly readable; the accent border and fill on
+          // the running clock (not heavy dimming) marks whose turn it is.
           : "opacity-80")
       }
     >
@@ -145,7 +149,7 @@ export function ClockPill({
           title="Your draft is unresolved and this clock is running"
           aria-label="Draft unresolved: this clock is running"
           className={
-            "smallcaps shrink-0 border border-oxblood-glow/60 bg-oxblood/20 font-display font-bold tracking-wide text-oxblood-glow animate-flicker " +
+            "shrink-0 border border-oxblood-glow/60 bg-oxblood/20 font-display font-bold text-oxblood-glow " +
             (compact ? "ml-1.5 px-1 text-[9px]" : "ml-2 px-1.5 text-[11px]")
           }
         >

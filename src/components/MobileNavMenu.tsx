@@ -7,7 +7,7 @@ import { createPortal } from "react-dom";
 import { Menu, X } from "lucide-react";
 import { AccountUser, fetchMe } from "@/lib/authClient";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
-import "./DungeonMenu.css";
+import { Button } from "@/components/ui/Button";
 
 type MobileNavItem = { href: string; label: string; className?: string };
 type MobileNavGroup = { header: string; items: MobileNavItem[] };
@@ -173,16 +173,15 @@ export function MobileNavMenu({
 
   return (
     <div className={"relative " + hideClass}>
-      <button
+      <Button tone="ghost"
         ref={triggerRef}
-        type="button"
+       
         aria-expanded={open}
         aria-label={open ? "Close menu" : "Open menu"}
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex h-11 w-11 items-center justify-center btn-ghost"
-      >
+        className="h-11 w-11">
         {open ? <X size={18} /> : <Menu size={18} />}
-      </button>
+      </Button>
       {open && panelPos &&
         createPortal(
           <>
@@ -193,30 +192,22 @@ export function MobileNavMenu({
               onClick={() => setOpen(false)}
               className="fixed inset-0 z-[60] cursor-default bg-black/40"
             />
-            {/* !fixed / !z-[61]: the .plate helper hard-codes position:relative
-                and z-index:2 later in the cascade, so plain utilities lose.
-                `dropdown` lifts the panel onto the opaque raised surface so the
-                page content underneath can never bleed through the menu. */}
-            {/* max-h + internal scroll so a short landscape viewport (height <
-                480px) never traps the lower destinations off-screen. */}
+            {/* A plain dropdown box, the same surface the header's other
+                popovers use: panel fill, one hairline, 7px corners. Fixed and
+                lifted above the bar; max-h + internal scroll so a short
+                landscape viewport never traps the lower destinations. */}
             <div
-              style={{ top: panelPos.top, left: panelPos.left, right: panelPos.right }}
-              className="!fixed !z-[61] max-h-[calc(100dvh-4.5rem)] w-60 max-w-[calc(100vw-1.5rem)] overflow-y-auto overscroll-contain plate dropdown dgn-menu border border-white/10 py-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] shadow-xl"
+              style={{
+                top: panelPos.top,
+                left: panelPos.left,
+                right: panelPos.right,
+                background: "var(--bg-panel)",
+                border: "1px solid var(--border-subtle)",
+                borderRadius: "7px",
+              }}
+              data-testid="mobile-nav-panel"
+              className="!fixed !z-[61] max-h-[calc(100dvh-4.5rem)] w-60 max-w-[calc(100vw-1.5rem)] overflow-y-auto overscroll-contain py-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] shadow-xl"
             >
-            {/* Ember sparks drifting up the slab. Decorative, deterministic. */}
-            {Array.from({ length: 6 }).map((_, i) => (
-              <i
-                key={i}
-                aria-hidden
-                style={{
-                  ["--ex" as string]: `${8 + ((i * 61) % 84)}%`,
-                  ["--edrift" as string]: `${((i * 37) % 17) - 8}px`,
-                  ["--edur" as string]: `${5.5 + ((i * 43) % 40) / 10}s`,
-                  ["--edelay" as string]: `${-((i * 131) % 55) / 10}s`,
-                }}
-                className="dgn-menu__ember"
-              />
-            ))}
             <Link
               href={user ? `/u/${encodeURIComponent(user.username)}` : "/login"}
               onClick={() => setOpen(false)}
@@ -238,8 +229,8 @@ export function MobileNavMenu({
             </Link>
             {groups.map((group) => (
               <div key={group.header}>
-                <div className="dgn-menu__rule mx-3 mb-1 mt-2 h-px bg-white/10" />
-                <div className="dgn-menu__header smallcaps px-4 pb-1 pt-0.5 text-[11px] text-parchment-400">{group.header}</div>
+                <div className="mx-3 mb-1 mt-2 h-px bg-white/10" />
+                <div className="px-4 pb-1 pt-0.5 text-[11px] text-parchment-400">{group.header}</div>
                 {group.items.map((item, ii) => {
                   const activeItem = itemActive(item.href, pathname);
                   return (
@@ -250,7 +241,7 @@ export function MobileNavMenu({
                       aria-current={activeItem ? "page" : undefined}
                       style={{ ["--i" as string]: group.offset + ii }}
                       className={
-                        "dgn-menu__item flex min-h-[44px] items-center border-l-2 py-2.5 pr-4 text-sm font-medium hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-gold/60 " +
+                        "flex min-h-[44px] items-center border-l-2 py-2.5 pr-4 text-sm font-medium hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-gold/60 " +
                         (activeItem ? "border-gold-leaf bg-white/5 pl-[calc(1rem-2px)] font-semibold " : "border-transparent pl-[calc(1rem-2px)] ") +
                         (activeItem ? "text-gold-leaf" : item.className ?? "text-parchment-100")
                       }

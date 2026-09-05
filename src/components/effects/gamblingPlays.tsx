@@ -15,12 +15,23 @@
 // Choreography follows the casinoPlays.tsx vocabulary: a lead-only Wide
 // scene (~1.5-2.7s), a small square-local flourish for non-lead squares,
 // chunky silhouettes, satisfying easing, reduced-motion gated in the CSS.
+//
+// FLAGSHIP UPGRADE WAVE: every lead's stage now QUAKES on its own impact
+// beat (quakeMs on Wide/Framed, the shared imp-quake wrapper - in-scene
+// only, never the real board crop), and each card lands a bespoke `Slam`
+// composite on the cast square: laser columns for the beam-from-above plays
+// (lootbox, claw, wheel, jackpots), Slab shatters split in half for the
+// break-apart plays (torn raffle stub, cracked monte card, augered-in crash
+// rocket, blood-paid piece, blown vault door, cracked bone die, toppled
+// last-bet tower), and single/double/triple shockwaves everywhere else,
+// tinted per card and timed to that scene's own strike.
 
 import { useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import type { SigPlugin, SigRole } from "./sigPlugins";
 import { BoardFrame } from "./stage";
 import { takeGamblingOutcome } from "./gamblingOutcome";
+import { LaserStrike, PieceShatter, Shockwave, QUAKE_CLASS, impactVars } from "./impact/impact";
 import "./gamblingPlays.css";
 
 /* ------------------------------------------------------------------------- */
@@ -98,10 +109,15 @@ function Stage({ children }: { children: ReactNode }) {
 /** Board-crop stage for a wide lead: oversized around the lead square so the
  * skit takes over the whole visible board (the caller's crop clips it). Same
  * geometry as casinoPlays' Wide, rebuilt here (no cross-module import). */
-function Wide({ children }: { children: ReactNode }) {
+function Wide({ children, quakeMs }: { children: ReactNode; quakeMs?: number }) {
   return (
     <span className="gsp pointer-events-none absolute inset-0 z-30" aria-hidden="true">
-      <span className="absolute left-[-650%] top-[-650%] block h-[1400%] w-[1400%]">{children}</span>
+      <span
+        className={`absolute left-[-650%] top-[-650%] block h-[1400%] w-[1400%]${quakeMs != null ? ` ${QUAKE_CLASS}` : ""}`}
+        style={quakeMs != null ? impactVars(undefined, quakeMs / 1000) : undefined}
+      >
+        {children}
+      </span>
     </span>
   );
 }
@@ -117,15 +133,81 @@ function Wide({ children }: { children: ReactNode }) {
  * -37.5%: that reproduces the pre-anchoring composition EXACTLY while making
  * it independent of which square the card was cast on. The cast square then
  * carries the play's own local beats; see `Spot`. */
-function Framed({ children }: { children: ReactNode }) {
+function Framed({ children, quakeMs }: { children: ReactNode; quakeMs?: number }) {
+  // The quake rides an INNER wrapper: .fx-stage's own transform is the anchor
+  // clamp, and imp-quake's keyframed transform would override it mid-jolt.
+  const inner = (
+    <BoardFrame>
+      <span className="absolute left-[-37.5%] top-[-37.5%] block h-[175%] w-[175%]">{children}</span>
+    </BoardFrame>
+  );
   return (
     <span className="gsp pointer-events-none absolute inset-0 z-30" aria-hidden="true">
       <span className="fx-stage absolute left-[-650%] top-[-650%] block h-[1400%] w-[1400%]">
-        <BoardFrame>
-          <span className="absolute left-[-37.5%] top-[-37.5%] block h-[175%] w-[175%]">{children}</span>
-        </BoardFrame>
+        {quakeMs != null ? (
+          <span className={`${QUAKE_CLASS} absolute inset-0 block`} style={impactVars(undefined, quakeMs / 1000)}>
+            {inner}
+          </span>
+        ) : (
+          inner
+        )}
       </span>
     </span>
+  );
+}
+
+/** FLAGSHIP PASS: the cast square's IMPACT composite, mounted beside `Spot`.
+ * The shared impact vocabulary at one-cell scale: an optional laser column
+ * hammers down onto the square the bet was placed on, an optional slab is
+ * SPLIT IN HALF with shard spray, and a ground shockwave rolls out - all on
+ * one impact beat (`atMs`, absolute like every other delay here) and tinted
+ * with the play's own colour. The stage quake (`quakeMs` on Wide/Framed)
+ * rides the same beat so the table jolt and the square hit read as ONE
+ * moment of contact. */
+function Slam({
+  rgb,
+  atMs,
+  laser = true,
+  shatter,
+}: {
+  rgb: string;
+  atMs: number;
+  laser?: boolean;
+  shatter?: ReactNode;
+}) {
+  return (
+    <span className="gsp pointer-events-none absolute inset-0 z-30 block" aria-hidden="true" style={impactVars(rgb, atMs / 1000)}>
+      {laser && <LaserStrike />}
+      {shatter != null && <PieceShatter glyph={shatter} />}
+      <Shockwave />
+    </span>
+  );
+}
+
+/** A chunky prop slab for `Slam`'s shatter: the thing that gets split in half
+ * on the cast square (a torn ticket, a cracked die, a blown vault door...). */
+function Slab({
+  left,
+  top,
+  width,
+  height,
+  color,
+  edge,
+  round = "12%",
+}: {
+  left: string;
+  top: string;
+  width: string;
+  height: string;
+  color: string;
+  edge: string;
+  round?: string;
+}) {
+  return (
+    <span
+      className="absolute block"
+      style={{ left, top, width, height, borderRadius: round, background: color, border: `2px solid ${edge}` }}
+    />
   );
 }
 
@@ -492,7 +574,7 @@ function PennySlotsPlay({ lead, role, delayMs }: PlayProps) {
   }
   return (
     <>
-      <Framed>
+      <Framed quakeMs={delayMs + 1150}>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(30,10,20,0.55)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -544,6 +626,7 @@ function PennySlotsPlay({ lead, role, delayMs }: PlayProps) {
         )}
       </svg>
       </Framed>
+      <Slam rgb="255 157 61" atMs={delayMs + 1150} />
       <Spot tone="#ffd76a" glow="#e04b63" tell={d(delayMs + 90)} hit={d(delayMs + 1150)} settle={d(delayMs + 2200)} />
     </>
   );
@@ -575,7 +658,7 @@ function HeadsOrTailsPlay({ lead, role, delayMs }: PlayProps) {
   }
   return (
     <>
-      <Framed>
+      <Framed quakeMs={delayMs + 950}>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(28,20,8,0.5)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -611,6 +694,8 @@ function HeadsOrTailsPlay({ lead, role, delayMs }: PlayProps) {
         )}
       </svg>
       </Framed>
+      <Slam rgb="127 160 224" atMs={delayMs + 950} laser={false} />
+      <Slam rgb="255 215 106" atMs={delayMs + 1250} laser={false} />
       <Spot tone="#ffd76a" glow="#7fa0e0" tell={d(delayMs + 80)} hit={d(delayMs + 950)} settle={d(delayMs + 1900)} />
     </>
   );
@@ -669,7 +754,7 @@ function ClawMachinePlay({ lead, role, delayMs }: PlayProps) {
   }
   return (
     <>
-      <Wide>
+      <Wide quakeMs={delayMs + 1050}>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(10,14,30,0.55)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -713,6 +798,7 @@ function ClawMachinePlay({ lead, role, delayMs }: PlayProps) {
         )}
       </svg>
       </Wide>
+      <Slam rgb="127 160 224" atMs={delayMs + 1050} />
       <Spot tone="#7fa0e0" glow="#ffd76a" tell={d(delayMs + 100)} hit={d(delayMs + 1050)} settle={d(delayMs + 2100)} />
     </>
   );
@@ -743,7 +829,7 @@ function RaffleTicketPlay({ lead, role, delayMs }: PlayProps) {
   }
   return (
     <>
-      <Framed>
+      <Framed quakeMs={delayMs + 1000}>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(28,20,8,0.5)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -778,6 +864,7 @@ function RaffleTicketPlay({ lead, role, delayMs }: PlayProps) {
         <Tag x={50} y={90} w={52} text="WINNER: A FREE MARCH" delayMs={delayMs + 1550} color={GREEN} />
       </svg>
       </Framed>
+      <Slam rgb="224 75 99" atMs={delayMs + 1000} laser={false} shatter={<Slab left="20%" top="34%" width="60%" height="32%" color="#f4ecd6" edge="#c2a24a" />} />
       <Spot tone="#ffd76a" glow="#e04b63" tell={d(delayMs + 90)} hit={d(delayMs + 1000)} settle={d(delayMs + 2000)} />
     </>
   );
@@ -812,7 +899,7 @@ function CardCountingPlay({ lead, role, delayMs }: PlayProps) {
   const verdictAt = (i: number) => delayMs + 500 + i * 420;
   return (
     <>
-      <Framed>
+      <Framed quakeMs={delayMs + 1050}>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(8,26,16,0.5)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -875,6 +962,8 @@ function CardCountingPlay({ lead, role, delayMs }: PlayProps) {
         {known && hits === 0 && <SadPuffs x={32} y={44} delayMs={delayMs + 1450} />}
       </svg>
       </Framed>
+      <Slam rgb="232 220 192" atMs={delayMs + 1050} laser={false} />
+      <Slam rgb="79 208 138" atMs={delayMs + 2050} laser={false} />
       <Spot tone="#7fa0e0" glow="#e8dcc0" tell={d(delayMs + 90)} hit={d(delayMs + 1050)} settle={d(delayMs + 2100)} />
     </>
   );
@@ -910,7 +999,7 @@ function LoadedDicePlay({ lead, role, delayMs }: PlayProps) {
   const boxcars = total === 12;
   return (
     <>
-      <Framed>
+      <Framed quakeMs={delayMs + 980}>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(8,26,16,0.5)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -953,6 +1042,8 @@ function LoadedDicePlay({ lead, role, delayMs }: PlayProps) {
         />
       </svg>
       </Framed>
+      <Slam rgb="224 75 99" atMs={delayMs + 980} laser={false} />
+      <Slam rgb="224 75 99" atMs={delayMs + 1130} laser={false} />
       <Spot tone="#e04b63" glow="#ffd76a" tell={d(delayMs + 80)} hit={d(delayMs + 980)} settle={d(delayMs + 1950)} />
     </>
   );
@@ -1015,7 +1106,7 @@ function LootboxPlay({ lead, role, delayMs }: PlayProps) {
     );
   return (
     <>
-      <Framed>
+      <Framed quakeMs={delayMs + 1100}>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(18,10,30,0.55)" /></g>
         {/* rarity rays, tinted by what the box ACTUALLY held */}
@@ -1074,6 +1165,7 @@ function LootboxPlay({ lead, role, delayMs }: PlayProps) {
         />
       </svg>
       </Framed>
+      <Slam rgb="185 140 255" atMs={delayMs + 1100} />
       <Spot tone="#b98cff" glow="#ffd76a" tell={d(delayMs + 100)} hit={d(delayMs + 1100)} settle={d(delayMs + 2150)} />
     </>
   );
@@ -1106,7 +1198,7 @@ function ThreeCardMontePlay({ lead, role, delayMs }: PlayProps) {
   }
   return (
     <>
-      <Wide>
+      <Wide quakeMs={delayMs + 1050}>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(28,20,8,0.5)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -1157,6 +1249,7 @@ function ThreeCardMontePlay({ lead, role, delayMs }: PlayProps) {
         )}
       </svg>
       </Wide>
+      <Slam rgb="224 75 99" atMs={delayMs + 2350} laser={false} shatter={<Slab left="28%" top="18%" width="44%" height="64%" color="#2c4f9e" edge="#16264d" round="10%" />} />
       <Spot tone="#e04b63" glow="#e8dcc0" tell={d(delayMs + 90)} hit={d(delayMs + 1050)} settle={d(delayMs + 2100)} />
     </>
   );
@@ -1195,7 +1288,7 @@ function UnderdogParlayPlay({ lead, role, delayMs }: PlayProps) {
   );
   return (
     <>
-      <Framed>
+      <Framed quakeMs={delayMs + 1100}>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(28,20,8,0.5)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -1232,6 +1325,8 @@ function UnderdogParlayPlay({ lead, role, delayMs }: PlayProps) {
         {hits == null && <Tag x={50} y={90} w={44} text="LEGS STILL OPEN" delayMs={delayMs + 1500} color={GREY} />}
       </svg>
       </Framed>
+      <Slam rgb="79 208 138" atMs={delayMs + 1100} laser={false} />
+      <Slam rgb="255 215 106" atMs={delayMs + 1700} laser={false} />
       <Spot tone="#4fd08a" glow="#ffd76a" tell={d(delayMs + 100)} hit={d(delayMs + 1100)} settle={d(delayMs + 2150)} />
     </>
   );
@@ -1268,7 +1363,7 @@ function RiverCardPlay({ lead, role, delayMs }: PlayProps) {
   }
   return (
     <>
-      <Framed>
+      <Framed quakeMs={delayMs + 1050}>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(8,26,16,0.5)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -1306,6 +1401,8 @@ function RiverCardPlay({ lead, role, delayMs }: PlayProps) {
         )}
       </svg>
       </Framed>
+      <Slam rgb="79 208 138" atMs={delayMs + 1050} laser={false} />
+      <Slam rgb="255 215 106" atMs={delayMs + 1900} laser={false} />
       <Spot tone="#7fa0e0" glow="#ffd76a" tell={d(delayMs + 90)} hit={d(delayMs + 1050)} settle={d(delayMs + 2100)} />
     </>
   );
@@ -1357,7 +1454,7 @@ function PieceRoulettePlay({ lead, role, delayMs }: PlayProps) {
   }
   return (
     <>
-      <Framed>
+      <Framed quakeMs={delayMs + 1200}>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(8,26,16,0.55)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -1423,6 +1520,7 @@ function PieceRoulettePlay({ lead, role, delayMs }: PlayProps) {
         {result == null && <Tag x={50} y={94} w={44} text="ROUND AND ROUND" delayMs={delayMs + 2100} color={GREY} />}
       </svg>
       </Framed>
+      <Slam rgb="255 215 106" atMs={delayMs + 1200} />
       <Spot tone="#ffd76a" glow="#e04b63" tell={d(delayMs + 110)} hit={d(delayMs + 1200)} settle={d(delayMs + 2300)} />
     </>
   );
@@ -1458,7 +1556,7 @@ function JackpotPawnPlay({ lead, role, delayMs }: PlayProps) {
   }
   return (
     <>
-      <Framed>
+      <Framed quakeMs={delayMs + 1200}>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(30,10,20,0.5)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -1498,6 +1596,7 @@ function JackpotPawnPlay({ lead, role, delayMs }: PlayProps) {
         {!banked && !promoted && <Tag x={50} y={90} w={56} text="REELS FITTED: 5 SPINS AHEAD" delayMs={delayMs + 1800} color={GREY} />}
       </svg>
       </Framed>
+      <Slam rgb="255 215 106" atMs={delayMs + 1200} />
       <Spot tone="#ffd76a" glow="#4fd08a" tell={d(delayMs + 90)} hit={d(delayMs + 1050)} settle={d(delayMs + 2050)} />
     </>
   );
@@ -1534,7 +1633,7 @@ function DoubleDownDraftPlay({ lead, role, delayMs }: PlayProps) {
   }
   return (
     <>
-      <Framed>
+      <Framed quakeMs={delayMs + 1050}>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(8,26,16,0.5)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -1582,6 +1681,8 @@ function DoubleDownDraftPlay({ lead, role, delayMs }: PlayProps) {
         {result === "bust" && <Tag x={50} y={92} w={52} text="THE DEALER SMILES" delayMs={delayMs + 2350} color={RED} />}
       </svg>
       </Framed>
+      <Slam rgb="185 140 255" atMs={delayMs + 1050} laser={false} />
+      <Slam rgb="185 140 255" atMs={delayMs + 2250} laser={false} />
       <Spot tone="#b98cff" glow="#ffd76a" tell={d(delayMs + 100)} hit={d(delayMs + 1150)} settle={d(delayMs + 2200)} />
     </>
   );
@@ -1629,7 +1730,7 @@ function CrashGamePlay({ lead, role, delayMs }: PlayProps) {
   const SilComp = payload ? PIECE_SIL[payload.sil] : null;
   return (
     <>
-      <Wide>
+      <Wide quakeMs={delayMs + 1800}>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(6,10,26,0.6)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -1696,6 +1797,7 @@ function CrashGamePlay({ lead, role, delayMs }: PlayProps) {
         )}
       </svg>
       </Wide>
+      <Slam rgb="224 75 99" atMs={delayMs + 1800} laser={false} shatter={<Slab left="30%" top="20%" width="40%" height="60%" color="#e04b63" edge="#8a1230" round="40% 40% 12% 12%" />} />
       <Spot tone="#e04b63" glow="#4fd08a" tell={d(delayMs + 100)} hit={d(delayMs + 1200)} settle={d(delayMs + 2300)} />
     </>
   );
@@ -1730,7 +1832,7 @@ function BloodWagerPlay({ lead, role, delayMs }: PlayProps) {
   }
   return (
     <>
-      <Framed>
+      <Framed quakeMs={delayMs + 1150}>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(30,6,14,0.6)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -1787,6 +1889,7 @@ function BloodWagerPlay({ lead, role, delayMs }: PlayProps) {
         {result == null && <Tag x={50} y={90} w={44} text="THE DAIS DECIDES" delayMs={delayMs + 1800} color={GREY} />}
       </svg>
       </Framed>
+      <Slam rgb="138 18 48" atMs={delayMs + 1150} shatter={<Slab left="30%" top="16%" width="40%" height="68%" color="#8a1230" edge="#e04b63" round="45% 45% 16% 16%" />} />
       <Spot tone="#8a1230" glow="#e04b63" tell={d(delayMs + 110)} hit={d(delayMs + 1150)} settle={d(delayMs + 2250)} />
     </>
   );
@@ -1820,7 +1923,7 @@ function ProgressiveJackpotPlay({ lead, role, delayMs }: PlayProps) {
   }
   return (
     <>
-      <Framed>
+      <Framed quakeMs={delayMs + 1150}>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(20,8,26,0.55)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -1857,6 +1960,9 @@ function ProgressiveJackpotPlay({ lead, role, delayMs }: PlayProps) {
         {!known && <Tag x={50} y={90} w={48} text="COUNTING SOULS" delayMs={delayMs + 1800} color={GREY} />}
       </svg>
       </Framed>
+      <Slam rgb="255 215 106" atMs={delayMs + 1150} laser={false} />
+      <Slam rgb="255 215 106" atMs={delayMs + 1450} laser={false} />
+      <Slam rgb="255 215 106" atMs={delayMs + 1750} laser={false} />
       <Spot tone="#ffd76a" glow="#b98cff" tell={d(delayMs + 110)} hit={d(delayMs + 1200)} settle={d(delayMs + 2300)} />
     </>
   );
@@ -1887,7 +1993,7 @@ function TheHousePlay({ lead, role, delayMs }: PlayProps) {
   }
   return (
     <>
-      <Wide>
+      <Wide quakeMs={delayMs + 1600}>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(8,26,16,0.55)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -1912,6 +2018,7 @@ function TheHousePlay({ lead, role, delayMs }: PlayProps) {
         <Tag x={50} y={94} w={58} text="RAKE CASHED: A FRESH PAWN" delayMs={delayMs + 1800} />
       </svg>
       </Wide>
+      <Slam rgb="255 215 106" atMs={delayMs + 1600} laser={false} />
       <Spot tone="#12070d" glow="#ffd76a" tell={d(delayMs + 120)} hit={d(delayMs + 1250)} settle={d(delayMs + 2400)} />
     </>
   );
@@ -1955,7 +2062,7 @@ function GachaBannerPlay({ lead, role, delayMs }: PlayProps) {
   const hasSSR = pulls?.includes("ssr") ?? false;
   return (
     <>
-      <Framed>
+      <Framed quakeMs={delayMs + 1200}>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(18,10,30,0.55)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -2033,6 +2140,8 @@ function GachaBannerPlay({ lead, role, delayMs }: PlayProps) {
         />
       </svg>
       </Framed>
+      <Slam rgb="185 140 255" atMs={delayMs + 1200} />
+      <Slam rgb="255 215 106" atMs={delayMs + 1500} laser={false} />
       <Spot tone="#b98cff" glow="#ffd76a" tell={d(delayMs + 110)} hit={d(delayMs + 1200)} settle={d(delayMs + 2350)} />
     </>
   );
@@ -2068,7 +2177,7 @@ function SevenCasesPlay({ lead, role, delayMs }: PlayProps) {
   }
   return (
     <>
-      <Wide>
+      <Wide quakeMs={delayMs + 1250}>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(14,12,8,0.6)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -2126,6 +2235,7 @@ function SevenCasesPlay({ lead, role, delayMs }: PlayProps) {
         />
       </svg>
       </Wide>
+      <Slam rgb="255 215 106" atMs={delayMs + 1250} laser={false} shatter={<Slab left="22%" top="28%" width="56%" height="44%" color="#8a5a2a" edge="#4a2f14" />} />
       <Spot tone="#ffd76a" glow="#7fa0e0" tell={d(delayMs + 110)} hit={d(delayMs + 1250)} settle={d(delayMs + 2400)} />
     </>
   );
@@ -2175,7 +2285,7 @@ function MartingalePlay({ lead, role, delayMs }: PlayProps) {
   const stackColor = [["#d6234f", DEEP_RED], ["#5fc9b0", "#2a7a68"], ["#7fa0e0", "#2c4f9e"], [GOLD, GOLD_EDGE]] as const;
   return (
     <>
-      <Framed>
+      <Framed quakeMs={delayMs + 1250}>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(8,26,16,0.5)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -2236,6 +2346,8 @@ function MartingalePlay({ lead, role, delayMs }: PlayProps) {
         <Tag x={50} y={94} w={62} text={known ? MARTINGALE_PRIZE[wins] : "FLIPPING..."} delayMs={delayMs + (known ? 350 + Math.min(wins + 1, 4) * 380 + 400 : 1600)} color={known ? (wins === 0 ? RED : GOLD) : GREY} />
       </svg>
       </Framed>
+      <Slam rgb="127 160 224" atMs={delayMs + 1250} laser={false} />
+      <Slam rgb="127 160 224" atMs={delayMs + 1630} laser={false} />
       <Spot tone="#e04b63" glow="#ffd76a" tell={d(delayMs + 110)} hit={d(delayMs + 1250)} settle={d(delayMs + 2400)} />
     </>
   );
@@ -2322,7 +2434,7 @@ function DevilsDeckPlay({ lead, role, delayMs }: PlayProps) {
   const flipSlots = [1, 2, 4]; // which of the six fanned cards flip
   return (
     <>
-      <Framed>
+      <Framed quakeMs={delayMs + 1250}>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(26,4,10,0.6)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -2379,6 +2491,7 @@ function DevilsDeckPlay({ lead, role, delayMs }: PlayProps) {
         {!drawn && <Tag x={50} y={90} w={48} text="THREE CARDS DRAW" delayMs={delayMs + 2100} color={GREY} />}
       </svg>
       </Framed>
+      <Slam rgb="224 75 99" atMs={delayMs + 1250} />
       <Spot tone="#8a1230" glow="#ffd76a" tell={d(delayMs + 120)} hit={d(delayMs + 1300)} settle={d(delayMs + 2500)} />
     </>
   );
@@ -2424,7 +2537,7 @@ function BreakTheBankPlay({ lead, role, delayMs }: PlayProps) {
   }
   return (
     <>
-      <Framed>
+      <Framed quakeMs={delayMs + 1300}>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(6,10,22,0.62)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -2499,6 +2612,8 @@ function BreakTheBankPlay({ lead, role, delayMs }: PlayProps) {
         {!known && <Tag x={50} y={92} w={48} text="THE PLAN HAD ONE JOB" delayMs={delayMs + 2100} color={GREY} />}
       </svg>
       </Framed>
+      <Slam rgb="185 190 201" atMs={delayMs + 1300} laser={false} shatter={<Slab left="18%" top="18%" width="64%" height="64%" color="#b9bec9" edge="#8a94a8" round="50%" />} />
+      <Slam rgb="255 215 106" atMs={delayMs + 1650} laser={false} />
       <Spot tone="#ffd76a" glow="#b9bec9" tell={d(delayMs + 120)} hit={d(delayMs + 1350)} settle={d(delayMs + 2550)} />
     </>
   );
@@ -2560,7 +2675,7 @@ function WheelOfTheCosmosPlay({ lead, role, delayMs }: PlayProps) {
   }
   return (
     <>
-      <Framed>
+      <Framed quakeMs={delayMs + 1400}>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(10,6,26,0.62)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -2614,6 +2729,7 @@ function WheelOfTheCosmosPlay({ lead, role, delayMs }: PlayProps) {
         />
       </svg>
       </Framed>
+      <Slam rgb="227 208 255" atMs={delayMs + 1400} />
       <Spot tone="#b98cff" glow="#ffd76a" tell={d(delayMs + 130)} hit={d(delayMs + 1400)} settle={d(delayMs + 2600)} />
     </>
   );
@@ -2661,7 +2777,7 @@ function CursedDicePlay({ lead, role, delayMs }: PlayProps) {
   }
   return (
     <>
-      <Framed>
+      <Framed quakeMs={delayMs + 1050}>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(26,4,12,0.6)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -2710,6 +2826,7 @@ function CursedDicePlay({ lead, role, delayMs }: PlayProps) {
         {result == null && <Tag x={50} y={90} w={44} text="THE BONES DECIDE" delayMs={delayMs + 1750} color={GREY} />}
       </svg>
       </Framed>
+      <Slam rgb="185 190 201" atMs={delayMs + 1700} laser={false} shatter={<Slab left="24%" top="24%" width="52%" height="52%" color="#e8dcc0" edge="#8a94a8" round="18%" />} />
       <Spot tone="#8a1230" glow="#e8dcc0" tell={d(delayMs + 100)} hit={d(delayMs + 1050)} settle={d(delayMs + 2100)} />
     </>
   );
@@ -2742,7 +2859,7 @@ function RiggedRafflePlay({ lead, role, delayMs }: PlayProps) {
   }
   return (
     <>
-      <Framed>
+      <Framed quakeMs={delayMs + 1350}>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(20,22,6,0.55)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -2777,6 +2894,7 @@ function RiggedRafflePlay({ lead, role, delayMs }: PlayProps) {
         <Tag x={50} y={92} w={62} text="GLUED IN PLACE FOR A TURN" delayMs={delayMs + 1900} color="#b8e05a" />
       </svg>
       </Framed>
+      <Slam rgb="138 18 48" atMs={delayMs + 1350} laser={false} />
       <Spot tone="#e04b63" glow="#ffd76a" tell={d(delayMs + 90)} hit={d(delayMs + 1000)} settle={d(delayMs + 2000)} />
     </>
   );
@@ -2807,7 +2925,7 @@ function ConsolationScratcherPlay({ lead, role, delayMs }: PlayProps) {
   }
   return (
     <>
-      <Framed>
+      <Framed quakeMs={delayMs + 950}>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(28,20,8,0.5)" /></g>
         <g className={result === "dust" ? "gsp-slump" : "gsp-linger gsp-linger--long"} style={d(delayMs + (result === "dust" ? 1200 : 0))}>
@@ -2855,6 +2973,7 @@ function ConsolationScratcherPlay({ lead, role, delayMs }: PlayProps) {
         {result == null && <Tag x={50} y={90} w={44} text="SCRATCHING..." delayMs={delayMs + 1650} color={GREY} />}
       </svg>
       </Framed>
+      <Slam rgb="185 190 201" atMs={delayMs + 950} laser={false} />
       <Spot tone="#b9bec9" glow="#ffd76a" tell={d(delayMs + 80)} hit={d(delayMs + 950)} settle={d(delayMs + 1900)} />
     </>
   );
@@ -2889,7 +3008,7 @@ function HardshipJackpotPlay({ lead, role, delayMs }: PlayProps) {
   const showThaw = result === "thaw" || result === "double";
   return (
     <>
-      <Framed>
+      <Framed quakeMs={delayMs + 900}>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(28,12,20,0.5)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -2950,6 +3069,8 @@ function HardshipJackpotPlay({ lead, role, delayMs }: PlayProps) {
         />
       </svg>
       </Framed>
+      <Slam rgb="255 215 106" atMs={delayMs + 900} laser={false} />
+      <Slam rgb="255 215 106" atMs={delayMs + 1900} laser={false} />
       <Spot tone="#ffd76a" glow="#4fd08a" tell={d(delayMs + 100)} hit={d(delayMs + 1100)} settle={d(delayMs + 2150)} />
     </>
   );
@@ -2978,7 +3099,7 @@ function TheLastBetPlay({ lead, role, delayMs }: PlayProps) {
   }
   return (
     <>
-      <Framed>
+      <Framed quakeMs={delayMs + 1400}>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="gsp-wash"><rect width={100} height={100} fill="rgba(8,26,16,0.58)" /></g>
         <g className="gsp-linger gsp-linger--long" style={d(delayMs)}>
@@ -3040,6 +3161,7 @@ function TheLastBetPlay({ lead, role, delayMs }: PlayProps) {
         )}
       </svg>
       </Framed>
+      <Slam rgb="255 215 106" atMs={delayMs + 1400} shatter={<Slab left="30%" top="22%" width="40%" height="56%" color="#ffd76a" edge="#b98a1e" round="20%" />} />
       <Spot tone="#8a1230" glow="#ffd76a" tell={d(delayMs + 130)} hit={d(delayMs + 1400)} settle={d(delayMs + 2600)} />
     </>
   );

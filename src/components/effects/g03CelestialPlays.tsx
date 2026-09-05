@@ -33,6 +33,7 @@ import "./g03CelestialPlays.css";
 import type { CSSProperties, ReactNode } from "react";
 import type { SigPlugin, SigRole } from "./sigPlugins";
 import { AimStage, BoardFrame, BoardWideStage } from "./stage";
+import { LaserStrike, PieceShatter, Shockwave, impactVars } from "./impact/impact";
 
 interface SceneProps {
   lead: boolean;
@@ -1540,6 +1541,88 @@ function RadiantScene({ role, delayMs }: SceneProps) {
   );
 }
 
+/* --- 33. Ragnarok Postponed (t9) — THE DOOM THAT AGREED TO WAIT -------------
+   The sky event nobody argues with: night comes down, an omen reddens the
+   horizon, and the doom-star simply FALLS, trail and all, straight for the
+   middle of the world. Then the toll: one great ring, and the star is caught
+   dead in the air a hand's breadth over the board, tethered by rune-chains
+   from both sides, its own trail still hanging above it. Ten tallies tick
+   along the horizon rail: the bell has counted, not cancelled. Settle: slow
+   embers sift down from the held fire and the stars come back out.
+   Board-anchored: this happens to the whole world or not at all. Palette:
+   #ffb366 / #ffe8c2 / #190f2e. */
+const DM_TALLY = Array.from({ length: 10 }, (_, i) => i);
+
+function RagnarokPostponedScene({ role, delayMs }: SceneProps) {
+  const star = (
+    <g {...SJ}>
+      <circle cx="12" cy="14" r="6" fill="#ffb366" stroke="#190f2e" strokeWidth="1.1" />
+      <path d="M8.4 10.4L4.8 3.6M12 8V1.4M15.6 10.4l3.6-6.8" stroke="#ffe8c2" strokeWidth="1.6" />
+    </g>
+  );
+  const chain = (
+    <path d="M2 12h3.6m2.4 0h3.6m2.4 0h3.6m2.4 0H22" stroke="#ffe8c2" strokeWidth="2.2" strokeLinecap="round" />
+  );
+  if (role === "entrance") return (
+    <Cut d={delayMs}>
+      <L c="g03-ent-pop" l={18} t={64} w={64} h={5} d={40} st={{ borderRadius: "999px", background: "#190f2e" }} />
+      <V c="g03-dm-fall" l={30} t={6} w={40} h={48} d={220}>{star}</V>
+      <L c="g03-dm-halt" l={24} t={22} w={52} h={40} d={430} st={{ borderRadius: "50%", border: "2px solid #ffe8c2" }} />
+      {[0, 1, 2].map((i) => (
+        <L key={i} c="g03-dm-tally" l={30 + i * 15} t={74} w={4} h={12} d={560 + i * 70} st={{ background: "#ffb366" }} />
+      ))}
+    </Cut>
+  );
+  if (role === "target") return (
+    <Cut d={delayMs}>
+      <V c="g03-hit" l={26} t={10} w={48} h={52} d={0}>{star}</V>
+      <L c="g03-dm-halt" l={20} t={20} w={60} h={44} d={160} st={{ borderRadius: "50%", border: "2px solid #ffe8c2" }} />
+      <L c="g03-hit2" l={12} t={70} w={76} h={4} d={300} st={{ borderRadius: "999px", background: "#ffb366" }} />
+    </Cut>
+  );
+  return (
+    <Lead
+      d={delayMs}
+      frame={
+        <>
+          <Night tone="rgba(25,15,46,0.66)" d={0} />
+          <Wash tone="rgba(255,179,102,0.2)" d={140} />
+          {/* the omen reddening the horizon rail on the CASTER's side */}
+          <L c="g03-dm-omen" d={120} l={0} t={0} w={100} h={16} st={{ top: "calc(42% + var(--fx-side, 1) * 42%)", background: "linear-gradient(180deg, rgba(255,179,102,0.5), transparent)" }} />
+          {/* the toll: one great ring out over the whole world */}
+          <L c="g03-dm-toll" d={560} l={26} t={16} w={48} h={48} st={{ borderRadius: "50%", border: "2px solid #ffe8c2" }} />
+          {/* ten tallies tick along the horizon: counted, not cancelled */}
+          {DM_TALLY.map((i) => (
+            <L key={i} c="g03-dm-tally" d={640 + i * 45} l={7 + i * 9} t={0} w={1.2} h={4.4} st={{ top: "calc(46% + var(--fx-side, 1) * 40%)", background: i === 9 ? "#ffe8c2" : "#ffb366", animationDelay: `calc(var(--g03-d, 0ms) + ${640 + i * 45}ms * var(--fx-dur, 1) + var(--fx-index, 0) * 20ms)` }} />
+          ))}
+          <Rim tone="rgba(255,232,194,0.2)" d={900} />
+        </>
+      }
+    >
+      {/* the doom-star falls for the middle of the world, growing as it comes */}
+      <V c="g03-dm-fall" l={46} t={30} w={8} h={8} d={220}>{star}</V>
+      {/* its trail, stretched up behind the fall and left hanging by the halt */}
+      <L c="g03-dm-trail" d={260} l={49.2} t={18} w={1.6} h={13} st={{ borderRadius: "999px", background: "linear-gradient(180deg, transparent, #ffb366 60%, #ffe8c2)" }} />
+      {/* strike: CAUGHT. The halt flash stamps where it stopped. */}
+      <L c="g03-dm-halt" d={560} l={44.5} t={35} w={11} h={11} st={{ borderRadius: "50%", border: "2px solid #ffe8c2" }} />
+      {/* rune-chains go taut from both sides and hold it there */}
+      <V c="g03-dm-chain" d={620} vb="0 0 24 24" par="none" l={33} t={39.5} w={13} h={2} st={{ transformOrigin: "0% 50%" }}>{chain}</V>
+      <V c="g03-dm-chain" d={620} vb="0 0 24 24" par="none" l={54} t={39.5} w={13} h={2} st={{ transformOrigin: "100% 50%", rotate: "180deg" }}>{chain}</V>
+      {/* the held star breathes where it hangs: fury on a leash */}
+      <L c="g03-dm-held" d={760} l={46.5} t={37} w={7} h={7} st={{ borderRadius: "50%", background: "radial-gradient(circle, rgba(255,232,194,0.85), rgba(255,179,102,0.4) 55%, transparent 74%)" }} />
+      {/* settle: slow embers sift down out of the caught fire */}
+      {[0, 1, 2, 3].map((i) => (
+        <L key={i} c="g03-dm-ember" l={45 + i * 3} t={44} w={1.1} h={1.1} d={860 + i * 90} st={{ borderRadius: "50%", background: i % 2 ? "#ffb366" : "#ffe8c2" }} />
+      ))}
+      {[0, 1].map((i) => (
+        <V key={i} c="g03-twinkle" l={38 + i * 22} t={28 + i * 6} w={3.4} h={3.4} d={1000 + i * 110}>
+          <path d={SPARKSTAR} fill="#ffe8c2" />
+        </V>
+      ))}
+    </Lead>
+  );
+}
+
 /* =============================================================================
    Registry. Every entry declares an anchor; every `sound` is an existing
    SigSoundKey drawn from the batch's six voices (clockcage, clockice, snooze,
@@ -1551,6 +1634,140 @@ function RadiantScene({ role, delayMs }: SceneProps) {
 /** Bind one bespoke scene to its config. */
 function S(Render: SigPlugin["Render"], config: SigPlugin["config"]): SigPlugin {
   return { config, Render };
+}
+
+/* =============================================================================
+   FLAGSHIP IMPACT WAVE - the module-wide moment of real contact.
+
+   Every lead now lands one physical hit from the shared impact vocabulary
+   (impact/impact.tsx), layered OVER the card's own scene: starfire lances down out of the module's own night sky and the omen (star, moon, comet) is burst apart where it hangs.
+   Per card, the IMPACT spec picks the primitive combo, the glyph that is split
+   in half, the tint (the card's own core color as an r-g-b triple) and the
+   beat, which is synced to that scene's OWN strike rhythm, so no two siblings
+   land the same hit. The quake wrapper jolts the whole scene stage on the same
+   beat (in-scene only: the real board crop never shakes). Animations-off
+   coverage for all of these nodes is at the bottom of g03CelestialPlays.css.
+   ========================================================================== */
+
+interface G03Imp {
+  /** impact beat, ms after the lead's own delayMs */
+  at: number;
+  /** the card's core color as an "r g b" triple (drives --imp-rgb) */
+  rgb: string;
+  laser?: boolean;
+  shock?: boolean;
+  /** which of the module's shatter glyphs is split in half */
+  g?: number;
+  /** stage jolt on the beat: "s" soft, "h" hard */
+  q?: "s" | "h";
+  /** impact centre on the 14-cell stage, in percent (cast square = 50/50) */
+  x?: number;
+  y?: number;
+  /** composite box size, in stage percent (9 is ~1.26 cells) */
+  s?: number;
+}
+
+const IMP_TINT = "rgb(var(--imp-rgb, 216 181 110) / 0.95)";
+const IMP_EDGE = "rgba(247, 241, 227, 0.9)";
+
+/** The module's shatter victims: a five-point star, a crescent moon, a comet head. Tinted per card via --imp-rgb. */
+const IMP_GLYPHS: ReactNode[] = [
+  <svg key="a" viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+    <path d="M12 2.6l2.2 6.9 7.2 2.5-7.2 2.5L12 21.4l-2.2-6.9-7.2-2.5 7.2-2.5z" fill={IMP_TINT} /><circle cx="12" cy="12" r="1.6" fill={IMP_EDGE} />
+  </svg>,
+  <svg key="b" viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+    <path d="M15.6 2.8a9.6 9.6 0 1 0 5.6 15.4A10.6 10.6 0 0 1 15.6 2.8z" fill={IMP_TINT} /><circle cx="9.4" cy="9" r="1.1" fill={IMP_EDGE} />
+  </svg>,
+  <svg key="c" viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+    <circle cx="8.4" cy="15.6" r="5" fill={IMP_TINT} /><path d="M11.6 12.4L21 3l-4.4 10.4z" fill={IMP_TINT} /><circle cx="8.4" cy="15.6" r="1.7" fill={IMP_EDGE} />
+  </svg>,
+];
+
+const IMPACT: Record<string, G03Imp> = {
+  hx4_the_bell_tolls: { at: 420, rgb: "255 207 110", laser: true, g: 0, q: "s" },
+  ov_managers_challenge: { at: 460, rgb: "159 208 255", laser: true, shock: true, q: "s" },
+  ov_nesting_doll: { at: 520, rgb: "255 158 196", laser: true, g: 1, q: "s" },
+  bn4_bread_and_salt: { at: 650, rgb: "240 198 116", shock: true, g: 0, q: "s" },
+  bn4_clerical_error: { at: 660, rgb: "255 210 122", laser: true, shock: true, g: 2, q: "h" },
+  bn4_coronation_rest: { at: 440, rgb: "255 217 160", laser: true, q: "s" },
+  bn4_furlough: { at: 465, rgb: "255 178 122", laser: true, g: 0, q: "s" },
+  bn4_general_strike: { at: 565, rgb: "168 230 255", laser: true, shock: true, q: "s" },
+  bn4_harvest_rest: { at: 560, rgb: "255 190 92", laser: true, g: 1, q: "s" },
+  bn4_hidden_stair: { at: 610, rgb: "185 200 255", shock: true, g: 0, q: "s" },
+  bn4_hold_the_door: { at: 510, rgb: "143 159 208", laser: true, shock: true, g: 2, q: "h" },
+  bn4_home_square: { at: 505, rgb: "207 227 255", laser: true, q: "s" },
+  bn4_listening_post: { at: 550, rgb: "158 240 216", laser: true, g: 0, q: "s" },
+  bn4_paid_leave: { at: 605, rgb: "255 196 106", laser: true, shock: true, q: "s" },
+  bn4_scaffold_crane: { at: 655, rgb: "216 192 140", laser: true, g: 1, q: "s" },
+  bn4_second_skin: { at: 555, rgb: "191 226 255", shock: true, g: 0, q: "s" },
+  bn4_seven_league_boots: { at: 470, rgb: "127 224 255", laser: true, shock: true, g: 2, q: "h" },
+  bn4_worry_beads: { at: 540, rgb: "169 200 255", laser: true, q: "s" },
+  hx4_coronation_bill: { at: 650, rgb: "207 232 160", laser: true, g: 0, q: "s" },
+  ov_sleeping_draught: { at: 600, rgb: "185 168 240", laser: true, shock: true, q: "s" },
+  bn4_bottom_of_the_well: { at: 600, rgb: "143 201 255", laser: true, g: 1, q: "s" },
+  bn4_bribe_the_clerk: { at: 485, rgb: "224 185 120", shock: true, g: 0, q: "s" },
+  bn4_dragonslayer: { at: 610, rgb: "255 154 114", laser: true, shock: true, g: 2, q: "h" },
+  bn4_forty_winks: { at: 700, rgb: "208 180 255", laser: true, q: "s" },
+  bn4_hermits_hour: { at: 705, rgb: "200 176 232", laser: true, g: 0, q: "s" },
+  bn4_hush_money: { at: 645, rgb: "143 240 180", laser: true, shock: true, q: "s" },
+  bn4_lone_crown: { at: 500, rgb: "255 208 140", laser: true, g: 1, q: "s" },
+  bn4_over_the_shoulder: { at: 490, rgb: "255 159 140", shock: true, g: 0, q: "s" },
+  bn4_over_the_wall: { at: 585, rgb: "127 230 168", laser: true, shock: true, g: 2, q: "h" },
+  bn4_pawns_ransom: { at: 695, rgb: "255 207 140", laser: true, q: "s" },
+  bn4_rest_stop: { at: 690, rgb: "255 201 140", laser: true, g: 0, q: "s" },
+  bn4_sparring_rhythm: { at: 530, rgb: "154 216 255", laser: true, shock: true, q: "s" },
+  // t9 hero: the catch itself is the hit — starfire column onto the held
+  // star, the five-point omen burst in half, the whole sky bucking once
+  ov_ragnarok_postponed: { at: 560, rgb: "255 179 102", laser: true, shock: true, g: 0, q: "h", s: 12 },
+};
+
+/** The impact composite: laser column, glyph split in half, ground ring. */
+function ImpactRig({ imp, delayMs }: { imp: G03Imp; delayMs: number }) {
+  const s = imp.s ?? 9;
+  return (
+    <BoardWideStage>
+      <span
+        className="g03-imprig absolute block"
+        style={{
+          left: `${(imp.x ?? 50) - s / 2}%`,
+          top: `${(imp.y ?? 50) - s / 2}%`,
+          width: `${s}%`,
+          height: `${s}%`,
+          ...impactVars(imp.rgb, (delayMs + imp.at) / 1000),
+        }}
+      >
+        {imp.laser ? <LaserStrike /> : null}
+        {imp.g != null ? <PieceShatter glyph={IMP_GLYPHS[imp.g]} /> : null}
+        {imp.shock ? <Shockwave /> : null}
+      </span>
+    </BoardWideStage>
+  );
+}
+
+/** Leads render inside a quake wrapper (the whole stage jolts on the impact
+ *  beat) with the rig mounted beside them; target/entrance cuts pass through
+ *  untouched. */
+function withImpact(Base: SigPlugin["Render"], imp: G03Imp): SigPlugin["Render"] {
+  function ImpactLead(props: { lead: boolean; role: SigRole; delayMs: number }) {
+    if (props.role !== "lead") return <Base {...props} />;
+    const scene = <Base {...props} />;
+    return (
+      <>
+        {imp.q ? (
+          <span
+            className={`g03-quake-${imp.q} pointer-events-none absolute inset-0 z-30 block`}
+            style={impactVars(imp.rgb, (props.delayMs + imp.at) / 1000)}
+          >
+            {scene}
+          </span>
+        ) : (
+          scene
+        )}
+        <ImpactRig imp={imp} delayMs={props.delayMs} />
+      </>
+    );
+  }
+  return ImpactLead;
 }
 
 export const PLAYS: Record<string, SigPlugin> = {
@@ -1586,4 +1803,12 @@ export const PLAYS: Record<string, SigPlugin> = {
   bn4_pawns_ransom: S(StarRansomScene, { ordering: "radial", staggerMs: 60, victims: ["p"], hasLead: true, sound: "crownrain", anchor: "cast" }),
   bn4_rest_stop: S(SolsticeMarkScene, { ordering: "radial", staggerMs: 55, victims: "all", hasLead: true, sound: "cathedral", anchor: "board" }),
   bn4_sparring_rhythm: S(RadiantScene, { ordering: "octagon", staggerMs: 60, victims: "all", hasLead: true, sound: "blitz", anchor: "board" }),
+  ov_ragnarok_postponed: S(RagnarokPostponedScene, { ordering: "sweep", staggerMs: 70, victims: ["q", "r", "b", "n"], hasLead: true, sound: "cathedral", anchor: "board" }),
 };
+
+// Graft the per-card impact beat onto every lead scene (additive: the base
+// scene renders unchanged inside the quake wrapper).
+for (const [id, imp] of Object.entries(IMPACT)) {
+  const play = PLAYS[id];
+  if (play) play.Render = withImpact(play.Render, imp);
+}

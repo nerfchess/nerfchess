@@ -1,0 +1,357 @@
+// Self-contained clip audio: a tiny deterministic synthesizer, no sample
+// files, so exported clips stay license-clean. The same event schedule renders
+// two ways:
+//
+//   renderClipAudio  — the whole schedule into an OfflineAudioContext,
+//                      returning an AudioBuffer for Tier 1 (mediabunny) muxing
+//   startLiveClipAudio — the same schedule scheduled live into a
+//                      MediaStreamAudioDestination for Tier 2 (MediaRecorder)
+//
+// Sounds: a noise-burst knock for moves, a brighter knock plus a flash tone
+// for captures, a rising two-tone ding for card plays (pitch and shimmer scale
+// with tier), and a three-note sting under the verdict stamp. The animated
+// reel beats each get a voice too: a two-note sting under the intro slam,
+// filtered-noise whooshes under the between-ply edge shimmers, a rising
+// pre-beat tone into the payoff, a deeper sub-thump for the slow-motion hit,
+// and a resolve chord under the end card. The explainer layer adds two more:
+// a subtle draw tick as a move arrow sketches itself, and a soft page-flip
+// whoosh as a card's rule panel slides in.
+//
+// Music rides the same two paths: when a ClipMusicSelection is provided, the
+// procedural backing track (or the player's imported audio) is scheduled into
+// the SAME context, ducked under the sfx impacts, so Tier 1 gets it mixed
+// into the rendered buffer and Tier 2 hears it live.
+
+import type { ClipAudioEvent } from "./clipScene";
+import { mulberry32 } from "./clipScene";
+import { scheduleClipMusic, type ClipMusicSelection } from "./clipMusic";
+
+const SAMPLE_RATE = 44100;
+const MASTER_GAIN = 0.85;
+
+/** One shared noise buffer, generated from a fixed seed so offline and live
+ *  renders knock identically. */
+function noiseBuffer(ctx: BaseAudioContext): AudioBuffer {
+  const len = Math.floor(SAMPLE_RATE * 0.25);
+  const buf = ctx.createBuffer(1, len, SAMPLE_RATE);
+  const data = buf.getChannelData(0);
+  const rng = mulberry32(0xc0ffee);
+  for (let i = 0; i < len; i++) data[i] = rng() * 2 - 1;
+  return buf;
+}
+
+function knock(
+  ctx: BaseAudioContext,
+  noise: AudioBuffer,
+  dest: AudioNode,
+  at: number,
+  opts: { freq: number; gain: number; decay: number },
+): void {
+  const src = ctx.createBufferSource();
+  src.buffer = noise;
+  const bp = ctx.createBiquadFilter();
+  bp.type = "bandpass";
+  bp.frequency.value = opts.freq;
+  bp.Q.value = 1.4;
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(opts.gain, at);
+  g.gain.exponentialRampToValueAtTime(0.001, at + opts.decay);
+  src.connect(bp).connect(g).connect(dest);
+  src.start(at);
+  src.stop(at + opts.decay + 0.02);
+}
+
+function tone(
+  ctx: BaseAudioContext,
+  dest: AudioNode,
+  at: number,
+  opts: {
+    type: OscillatorType;
+    from: number;
+    to?: number;
+    gain: number;
+    attack?: number;
+    decay: number;
+  },
+): void {
+  const osc = ctx.createOscillator();
+  osc.type = opts.type;
+  osc.frequency.setValueAtTime(opts.from, at);
+  if (opts.to !== undefined) {
+    osc.frequency.exponentialRampToValueAtTime(Math.max(1, opts.to), at + opts.decay);
+  }
+  const g = ctx.createGain();
+  const attack = opts.attack ?? 0.008;
+  g.gain.setValueAtTime(0.0001, at);
+  g.gain.exponentialRampToValueAtTime(opts.gain, at + attack);
+  g.gain.exponentialRampToValueAtTime(0.001, at + opts.decay);
+  osc.connect(g).connect(dest);
+  osc.start(at);
+  osc.stop(at + opts.decay + 0.02);
+}
+
+/** The four sfx voices a viewer can mute independently in the AUDIO panel. */
+export interface ClipVoiceMutes {
+  /** Knocks, captures, and the slow-motion impact. */
+  moves: boolean;
+  /** Card dings and the rule-panel page flip. */
+  cards: boolean;
+  /** The verdict sting and the end-card resolve chord. */
+  verdict: boolean;
+  /** Intro sting, shimmer whooshes, risers, and arrow ticks. */
+  ambience: boolean;
+}
+
+export const NO_MUTES: ClipVoiceMutes = {
+  moves: false,
+  cards: false,
+  verdict: false,
+  ambience: false,
+};
+
+/** Which mute switch owns each event kind. */
+const VOICE_OF: Record<ClipAudioEvent["kind"], keyof ClipVoiceMutes> = {
+  move: "moves",
+  capture: "moves",
+  impact: "moves",
+  card: "cards",
+  flip: "cards",
+  verdict: "verdict",
+  outro: "verdict",
+  intro: "ambience",
+  shimmer: "ambience",
+  riser: "ambience",
+  tick: "ambience",
+};
+
+/** Schedule every event into `ctx` starting at context time `t0`. Shared by
+ *  the offline and live paths, so both produce the same soundtrack. `volume`
+ *  scales the sfx master; `mutes` drops whole voices from the schedule. */
+function scheduleEvents(
+  ctx: BaseAudioContext,
+  dest: AudioNode,
+  events: ClipAudioEvent[],
+  t0: number,
+  volume = 1,
+  mutes: ClipVoiceMutes = NO_MUTES,
+): void {
+  const noise = noiseBuffer(ctx);
+  const master = ctx.createGain();
+  master.gain.value = MASTER_GAIN * Math.max(0, Math.min(1, volume));
+  master.connect(dest);
+
+  for (const ev of events) {
+    if (mutes[VOICE_OF[ev.kind]]) continue;
+    const at = t0 + ev.t / 1000;
+    switch (ev.kind) {
+      case "move":
+        knock(ctx, noise, master, at, { freq: 1700, gain: 0.5, decay: 0.07 });
+        knock(ctx, noise, master, at + 0.004, { freq: 650, gain: 0.35, decay: 0.1 });
+        break;
+      case "capture":
+        knock(ctx, noise, master, at, { freq: 2300, gain: 0.65, decay: 0.06 });
+        knock(ctx, noise, master, at + 0.004, { freq: 480, gain: 0.5, decay: 0.14 });
+        tone(ctx, master, at + 0.01, {
+          type: "triangle", from: 880, to: 420, gain: 0.22, decay: 0.16,
+        });
+        break;
+      case "card": {
+        // Rising two-tone ding, a semitone ladder scaled by tier.
+        const tier = ev.tier ?? 3;
+        const base = 440 * Math.pow(2, (tier - 3) / 12);
+        tone(ctx, master, at, {
+          type: "sine", from: base, gain: 0.3, decay: 0.22,
+        });
+        tone(ctx, master, at + 0.11, {
+          type: "sine", from: base * 1.5, gain: 0.34, decay: 0.34,
+        });
+        if (tier >= 6) {
+          // High-tier shimmer: a faint octave sparkle on top.
+          tone(ctx, master, at + 0.2, {
+            type: "sine", from: base * 3, gain: 0.12, decay: 0.4,
+          });
+        }
+        break;
+      }
+      case "verdict":
+        tone(ctx, master, at, { type: "square", from: 196, gain: 0.16, decay: 0.5 });
+        tone(ctx, master, at + 0.05, { type: "triangle", from: 294, gain: 0.22, decay: 0.55 });
+        tone(ctx, master, at + 0.16, { type: "triangle", from: 392, gain: 0.26, decay: 0.75 });
+        knock(ctx, noise, master, at, { freq: 320, gain: 0.4, decay: 0.3 });
+        break;
+      case "intro":
+        // Board slam: a low thud under a bright two-note wordmark sting.
+        knock(ctx, noise, master, at, { freq: 220, gain: 0.55, decay: 0.28 });
+        tone(ctx, master, at + 0.02, { type: "triangle", from: 392, gain: 0.24, decay: 0.28 });
+        tone(ctx, master, at + 0.15, { type: "triangle", from: 587, gain: 0.28, decay: 0.42 });
+        break;
+      case "shimmer":
+        // Edge-shimmer whoosh: airy filtered noise plus a rising sparkle.
+        knock(ctx, noise, master, at, { freq: 3200, gain: 0.14, decay: 0.22 });
+        tone(ctx, master, at + 0.02, {
+          type: "sine", from: 1400, to: 2600, gain: 0.05, decay: 0.2,
+        });
+        break;
+      case "riser": {
+        // Pre-beat riser: pitch and level both climb into the payoff.
+        const osc = ctx.createOscillator();
+        osc.type = "sawtooth";
+        osc.frequency.setValueAtTime(150, at);
+        osc.frequency.exponentialRampToValueAtTime(620, at + 0.3);
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0.015, at);
+        g.gain.exponentialRampToValueAtTime(0.22, at + 0.3);
+        g.gain.exponentialRampToValueAtTime(0.001, at + 0.36);
+        osc.connect(g).connect(master);
+        osc.start(at);
+        osc.stop(at + 0.4);
+        break;
+      }
+      case "impact":
+        // Slow-motion hit: everything a capture has, plus a sub-bass drop.
+        knock(ctx, noise, master, at, { freq: 2400, gain: 0.6, decay: 0.06 });
+        knock(ctx, noise, master, at + 0.004, { freq: 90, gain: 0.9, decay: 0.4 });
+        tone(ctx, master, at + 0.01, {
+          type: "sine", from: 110, to: 38, gain: 0.5, decay: 0.5,
+        });
+        tone(ctx, master, at + 0.01, {
+          type: "triangle", from: 880, to: 340, gain: 0.2, decay: 0.2,
+        });
+        break;
+      case "outro":
+        // End-card resolve chord, rolled gently.
+        tone(ctx, master, at, { type: "triangle", from: 131, gain: 0.14, decay: 1.0 });
+        tone(ctx, master, at + 0.04, { type: "triangle", from: 262, gain: 0.15, decay: 0.95 });
+        tone(ctx, master, at + 0.09, { type: "triangle", from: 330, gain: 0.14, decay: 0.9 });
+        tone(ctx, master, at + 0.14, { type: "triangle", from: 392, gain: 0.15, decay: 0.9 });
+        tone(ctx, master, at + 0.2, { type: "sine", from: 523, gain: 0.1, decay: 0.85 });
+        break;
+      case "tick":
+        // Subtle draw tick as a move arrow sketches on.
+        knock(ctx, noise, master, at, { freq: 5200, gain: 0.1, decay: 0.03 });
+        break;
+      case "flip": {
+        // Soft page-flip whoosh under the rule panel slide-in: a bandpassed
+        // noise sweep rising through the mids, like a card turned over.
+        const src = ctx.createBufferSource();
+        src.buffer = noise;
+        const bp = ctx.createBiquadFilter();
+        bp.type = "bandpass";
+        bp.Q.value = 1.1;
+        bp.frequency.setValueAtTime(420, at);
+        bp.frequency.exponentialRampToValueAtTime(2600, at + 0.16);
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0.0001, at);
+        g.gain.exponentialRampToValueAtTime(0.12, at + 0.03);
+        g.gain.exponentialRampToValueAtTime(0.001, at + 0.2);
+        src.connect(bp).connect(g).connect(master);
+        src.start(at);
+        src.stop(at + 0.24);
+        break;
+      }
+    }
+  }
+}
+
+export interface ClipAudioOptions {
+  /** Schedule the sfx voices (default true). */
+  sfx?: boolean;
+  /** 0..1 sfx master level, independent of the music volume (default 1). */
+  sfxVolume?: number;
+  /** Per-voice mutes for the sfx layer. */
+  mutes?: ClipVoiceMutes;
+  /** Backing music selection, or null/undefined for none. */
+  music?: ClipMusicSelection | null;
+}
+
+/** Render the whole schedule (sfx + optional music bed) offline for Tier 1
+ *  muxing. */
+export async function renderClipAudio(
+  events: ClipAudioEvent[],
+  durationMs: number,
+  opts: ClipAudioOptions = {},
+): Promise<AudioBuffer | null> {
+  if (typeof OfflineAudioContext === "undefined") return null;
+  const frames = Math.max(1, Math.ceil((durationMs / 1000) * SAMPLE_RATE));
+  const ctx = new OfflineAudioContext(2, frames, SAMPLE_RATE);
+  if (opts.sfx !== false) {
+    scheduleEvents(ctx, ctx.destination, events, 0, opts.sfxVolume ?? 1, opts.mutes ?? NO_MUTES);
+  }
+  if (opts.music) scheduleClipMusic(ctx, ctx.destination, opts.music, events, durationMs, 0);
+  return ctx.startRendering();
+}
+
+// --- Preview monitor ---------------------------------------------------------
+
+/** One lazily created AudioContext for the studio's preview monitor; reused
+ *  across plays so browsers don't accumulate contexts. */
+let monitorCtx: AudioContext | null = null;
+
+/** Play the sfx schedule out loud from `fromMs`, for the studio preview's
+ *  unmuted transport. SFX only by design: the full mix (music bed, ducking)
+ *  lives in the export; the monitor is for checking hit timing. Returns a
+ *  handle whose stop() silences the run immediately. */
+export function playPreviewSfx(
+  events: ClipAudioEvent[],
+  fromMs: number,
+  opts: { volume?: number; mutes?: ClipVoiceMutes } = {},
+): { stop: () => void } | null {
+  if (typeof AudioContext === "undefined") return null;
+  try {
+    monitorCtx ??= new AudioContext();
+    const ctx = monitorCtx;
+    void ctx.resume();
+    const bus = ctx.createGain();
+    bus.connect(ctx.destination);
+    const upcoming = events
+      .filter((e) => e.t >= fromMs - 15)
+      .map((e) => ({ ...e, t: e.t - fromMs }));
+    scheduleEvents(ctx, bus, upcoming, ctx.currentTime + 0.04, opts.volume ?? 1, opts.mutes ?? NO_MUTES);
+    return {
+      stop: () => {
+        bus.gain.value = 0;
+        bus.disconnect();
+      },
+    };
+  } catch {
+    return null;
+  }
+}
+
+export interface LiveClipAudio {
+  /** Audio track stream to merge into the MediaRecorder stream. */
+  stream: MediaStream;
+  /** Begin playback of the schedule NOW (call in sync with the replay). */
+  start: () => void;
+  stop: () => void;
+}
+
+/** The same schedule (sfx + optional music bed) as a live MediaStream for
+ *  Tier 2 recording. */
+export function startLiveClipAudio(
+  events: ClipAudioEvent[],
+  durationMs: number,
+  opts: ClipAudioOptions = {},
+): LiveClipAudio | null {
+  if (typeof AudioContext === "undefined") return null;
+  try {
+    const ctx = new AudioContext({ sampleRate: SAMPLE_RATE });
+    const dest = ctx.createMediaStreamDestination();
+    return {
+      stream: dest.stream,
+      start: () => {
+        void ctx.resume();
+        const t0 = ctx.currentTime + 0.05;
+        if (opts.sfx !== false) {
+          scheduleEvents(ctx, dest, events, t0, opts.sfxVolume ?? 1, opts.mutes ?? NO_MUTES);
+        }
+        if (opts.music) scheduleClipMusic(ctx, dest, opts.music, events, durationMs, t0);
+      },
+      stop: () => {
+        void ctx.close();
+      },
+    };
+  } catch {
+    return null;
+  }
+}

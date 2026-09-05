@@ -13,14 +13,16 @@ interface Props {
    * Only honoured for queens (the Amazon card crowns a queen so she also moves
    * like a knight); ignored for every other piece. */
   amazon?: boolean;
-  /** The piece type whose MOVEMENT this piece has been granted (CardFx.moveAs):
-   * the piece renders as a fused HYBRID — its own body with the granted
-   * piece's silhouette rising behind its shoulder — so an empowered piece
-   * reads as a genuinely new piece, not a plain one with a badge (owner
-   * request). A queen granted knight moves (or a knight granted queen moves)
-   * renders the bespoke Amazon sprite; every other combination composes the
-   * two Cburnett silhouettes. Ignored when equal to `type`. */
-  moveAs?: PieceType;
+  /** The movement this piece has been granted (CardFx.moveAs): the piece
+   * renders as a fused HYBRID — its own body with the granted piece's
+   * silhouette rising behind its shoulder — so an empowered piece reads as a
+   * genuinely new piece, not a plain one with a badge (owner request). A
+   * queen granted knight moves (or a knight granted queen moves) renders the
+   * bespoke Amazon sprite; "a" (an explicit amazon grant, e.g. Ascendancy /
+   * Titan Legion) does too on queens and knights, and composes the queen
+   * silhouette on everything else (the knight-leap half of the grant reads
+   * through the motif badge). Ignored when equal to `type`. */
+  moveAs?: PieceType | "a";
 }
 
 // Memoized so identical (type, color, size, className) props skip re-rendering.
@@ -29,17 +31,21 @@ interface Props {
 export const Piece = React.memo(function Piece({ type, color, size = 60, className = "", amazon = false, moveAs }: Props) {
   const grant = moveAs && moveAs !== type ? moveAs : undefined;
   // Queen+knight in either direction is the classic amazon: use the bespoke
-  // fused sprite rather than the generic hybrid composition.
+  // fused sprite rather than the generic hybrid composition. An explicit
+  // amazon grant ("a") is the same beast by name.
   const isAmazon =
     (amazon && type === "q") ||
     (grant === "n" && type === "q") ||
-    (grant === "q" && type === "n");
-  const isHybrid = !isAmazon && !!grant;
+    (grant === "q" && type === "n") ||
+    (grant === "a" && (type === "q" || type === "n"));
+  // Amazon-granted rooks/bishops/pawns compose the queen silhouette.
+  const hybridGrant = grant === "a" ? (type === "q" ? undefined : "q") : grant;
+  const isHybrid = !isAmazon && !!hybridGrant && hybridGrant !== type;
   const key = `${color}${type}`;
   const path = isAmazon
     ? AMAZON_PATHS[color]
     : isHybrid
-      ? hybridPath(type, grant!, color)
+      ? hybridPath(type, hybridGrant!, color)
       : PATHS[key];
   const style: CSSProperties = { width: size, height: size };
   const fancy = isAmazon || isHybrid;
@@ -49,7 +55,11 @@ export const Piece = React.memo(function Piece({ type, color, size = 60, classNa
       style={style}
       role="img"
       aria-label={`${color === "w" ? "White" : "Black"} ${
-        isAmazon ? "amazon" : isHybrid ? `${type} empowered with ${grant} movement` : type
+        isAmazon
+          ? "amazon"
+          : isHybrid
+            ? `${type} empowered with ${grant === "a" ? "amazon" : grant} movement`
+            : type
       }`}
     >
       <svg
@@ -794,3 +804,8 @@ const AMAZON_PATHS: Record<Color, string> = {
   w: amazon("w"),
   b: amazon("b"),
 };
+
+// The clip exporter rasterizes these same silhouettes onto its canvas (with
+// the CSS variables substituted for the resolved theme colors), so a recorded
+// clip shows the player's actual pieces instead of a swapped-in sprite set.
+export const PIECE_PATHS: Readonly<Record<string, string>> = PATHS;

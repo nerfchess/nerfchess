@@ -39,8 +39,8 @@ export interface MotifMark {
   tier: number;
   /** Card category: the micro-glyph stamped beside the motif. */
   category: BuffCategory;
-  /** Empower only: the granted movement's piece silhouette. */
-  moveAs?: PieceType;
+  /** Empower only: the granted movement's piece silhouette ("a" = amazon). */
+  moveAs?: PieceType | "a";
   turns: number | null;
 }
 
@@ -60,6 +60,20 @@ export interface FxVisual {
 }
 
 const EMPTY: FxVisual = { kingSafeSquares: [], pawnClampSquares: [], stunSquares: [], motifs: [] };
+
+/** The FxVisual fields spread into a Board `visual` object. Every game surface
+ * (OnlineMatch, the bot game, archived games, the dev lab) MUST build its
+ * board visual through this one mapper: the four of them used to open-code the
+ * same four-field spread, which is exactly how a new FxVisual channel would
+ * have reached one surface and silently missed the others. */
+export function fxVisualFields(fx: FxVisual) {
+  return {
+    kingSafeSquares: fx.kingSafeSquares,
+    pawnClampSquares: fx.pawnClampSquares,
+    stunSquares: fx.stunSquares,
+    motifSquares: fx.motifs,
+  };
+}
 
 // Strongest motif first when several cards touch the same square: a piece's
 // restrictions matter more than its perks.
@@ -81,11 +95,19 @@ function motifTurns(inst: BuffInstance): number | null {
   return typeof inst.state.turns === "number" ? inst.state.turns : null;
 }
 
-/** Piece-bound cards (helpers.pieceBound / bindPiece) follow ONE designated
- * piece via state.sq; their fx paints that square alone, never every piece
- * of the type. */
-function boundSquare(inst: BuffInstance): number | null {
-  return typeof inst.state.sq === "number" ? inst.state.sq : null;
+/** The squares a card's mechanic is actually bound to, when it tracks them.
+ * Two engine conventions feed this:
+ *   state.sq  — helpers.pieceBound / bindPiece: ONE designated piece;
+ *   state.sqs — chosen-subset cards (ascendancy, titan_legion, uplifted
+ *               pawns, banana_peel...): the player-picked squares, pruned by
+ *               the card's own onMovePlayed as pieces move or die.
+ * A bound card's fx paints these squares ALONE — never every piece of the
+ * type. (The old singular-only read was the "whole army looks empowered"
+ * bug: a card storing state.sqs fell through to the army-wide loop.) */
+function boundSquares(inst: BuffInstance): number[] | null {
+  const sqs = inst.state.sqs;
+  if (Array.isArray(sqs)) return sqs.filter((sq): sq is number => typeof sq === "number");
+  return typeof inst.state.sq === "number" ? [inst.state.sq] : null;
 }
 
 /** True while a held card's fx is actually running. Concrete instance state
@@ -103,7 +125,7 @@ function fxRunning(def: Buff, inst: BuffInstance): boolean {
   const charges = typeof inst.state.charges === "number" ? inst.state.charges : null;
   if (charges != null && charges <= 0) return false;
   if (def.kind === "activated") {
-    return boundSquare(inst) != null || turns != null || charges != null;
+    return boundSquares(inst) != null || turns != null || charges != null;
   }
   if (turns != null || charges != null) return true;
   if (def.status) return def.status(inst) != null;
@@ -175,23 +197,35 @@ export function computeFxVisual(game: { board: BoardState; buffs?: BuffMatchStat
         ...(fx.moveAs ? { moveAs: fx.moveAs } : {}),
         turns: motifTurns(inst),
       };
+      // Bound cards (a designated piece, or a chosen subset) paint their
+      // tracked squares alone — exclusively, never falling through to the
+      // army-wide loop OR the rally king-banner. An empty tracked set (every
+      // chosen piece captured) paints nothing, even while the countdown still
+      // runs. Checked before rally on purpose: a rally card that binds chosen
+      // champions (Age of Heroes) marks the champions, not the king.
+      const bound = boundSquares(inst);
+      if (bound != null) {
+        for (const sq of bound) {
+          const p = game.board.pieces[sq];
+          if (p && p.color === target) consider(sq, { sq, ...mark });
+        }
+        continue;
+      }
+      // Army-wide rally is transient tempo: one banner on the rallied side's
+      // king square instead of tiling the whole army.
       if (fx.motif === "rally") {
         const sq = kingSquare(target);
         if (sq != null) consider(sq, { sq, ...mark });
-        continue;
-      }
-      // Piece-bound cards empower/guard ONE designated piece: paint its
-      // tracked square alone, not every piece of the type.
-      const bound = boundSquare(inst);
-      if (bound != null) {
-        const p = game.board.pieces[bound];
-        if (p && p.color === target) consider(bound, { sq: bound, ...mark });
         continue;
       }
       for (let sq = 0; sq < 64; sq++) {
         const p = game.board.pieces[sq];
         if (!p || p.color !== target) continue;
         if (fx.pieces !== "all" && !fx.pieces.includes(p.type)) continue;
+        // Army-wide fx skip the king unless the card opts it in: most "all"
+        // cards read "...other than the king", and a falsely marked king is
+        // the worst signal a board can send.
+        if (fx.pieces === "all" && p.type === "k" && !fx.king) continue;
         consider(sq, { sq, ...mark });
       }
     }

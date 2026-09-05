@@ -125,11 +125,11 @@ named after someone that plays like a generic freeze is worth nothing to them:
 
 | Creator | Card | Mechanic sketch | Why it is them |
 | --- | --- | --- | --- |
-| Eric Rosen | **The Stalling Bishop** | Your bishop cannot be captured for 3 of your opponent's turns, but it may not capture either. It is simply *there*, and it is a problem. | The bishop-sac-then-stall-into-a-win identity, and the honest joy of a position that should not work |
-| GothamChess | **Oh No My Queen** | Your queen is instantly returned to her starting square. Every enemy piece that was attacking her is frozen for 2 turns, and you gain 30 seconds. | The catchphrase-shaped disaster that turns out fine, out loud |
-| Anna Cramling | **Family Game Night** | Name one enemy piece. For 4 turns neither player may capture it, and both players see every card the other holds. | Playing on camera with people who are not trying to beat you, plus total openness |
-| Daniel Naroditsky | **Speedrun Protocol** | For your next 6 turns every move you make must be a capture, a check, or a pawn push — and each one adds 3 seconds to your clock. | The speedrun identity: constant forward pressure, narrated |
-| Chat / viewers | **Chat Picks** | The card does nothing on its own. Your opponent chooses which of two nerfs YOU carry for the rest of the game. | The format the plan actually recommends selling: creator versus chat |
+| Eric Rosen | **Rosen's Stafford Trap** (`cr_stalling_bishop`) | Mark one of your knights or bishops as bait. Take it within 3 turns and the capturer is trapped 2 turns while Rosen gains 20 seconds; resist, and the bait becomes uncapturable for 2 turns. | The Stafford Gambit identity: a piece that is obviously free, is not free, and "oh no..." while the trap closes |
+| GothamChess | **Gotham's THE ROOK!!** (`cr_oh_no_my_queen`) | Pick a rook: for 2 turns it moves like a queen, and every capture it makes gains 10 seconds. | The catchphrase IS the mechanic, at full volume |
+| Anna Cramling | **Cramling Family Night** (`cr_family_game_night`) | Name one enemy piece. For 4 turns nobody may capture it, each player sees the other's next draft offer, and the biggest piece each side is attacking wears a name tag for all to see. | Family chess on camera: a truce, nothing hidden, and everyone can see what everyone is eyeing |
+| Daniel Naroditsky | **Danya's Speedrun** (`cr_speedrun_protocol`) | For the opponent's next 6 turns they may only play a capture, a check, or a pawn move, and each held turn pays escalating time: 2s, 3s, 4s... | The speedrun identity: constant forward pressure, and the splits keep getting better |
+| Chat / viewers | **Chat Picks: Creator vs Chat** (`cr_chat_picks`) | Chat rolls two of its four penalties and pins one on YOU at random for 10 turns; in exchange your next draft deals you both cards. | The format the plan actually recommends selling: creator versus chat, and chat is not on your side |
 
 Implementation notes, so this is buildable rather than aspirational:
 

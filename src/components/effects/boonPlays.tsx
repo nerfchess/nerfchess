@@ -42,6 +42,7 @@ import "./boonPlays.css";
 
 import type { ComponentType, CSSProperties, ReactNode } from "react";
 import type { SigPlugin, SigRole } from "./sigPlugins";
+import { LaserStrike, PieceShatter, Shockwave, QUAKE_CLASS, impactVars } from "./impact/impact";
 import { BoardFrame, BoardWideStage } from "./stage";
 
 /* =============================================================================
@@ -82,10 +83,190 @@ const SJ = { strokeLinejoin: "round", strokeLinecap: "round" } as const;
 
 /** Oversized-clipped board-wide stage: the overlay mounts inside ONE square;
  * this canvas is ~14 squares wide, anchored on the cast square and clamping
- * itself over the board (see stage.tsx). */
-function Stage({ children }: { children: ReactNode }) {
-  return <BoardWideStage>{children}</BoardWideStage>;
+ * itself over the board (see stage.tsx).
+ *
+ * FLAGSHIP UPGRADE: `quakeMs` (absolute, like every other delay here) makes
+ * the whole scene stage JOLT on that card's own impact beat via the shared
+ * imp-quake wrapper. The quake rides an INNER span because the BoardWideStage
+ * canvas carries the anchor-clamp transform, which must not be animated over.
+ * In-scene only: the real board crop never shakes. The bwp- prefix on the
+ * wrapper keeps the animations-off kill switch covering the impact subtree. */
+function Stage({ children, quakeMs }: { children: ReactNode; quakeMs?: number }) {
+  if (quakeMs == null) return <BoardWideStage>{children}</BoardWideStage>;
+  return (
+    <BoardWideStage>
+      <span className={`bwp-quakebox ${QUAKE_CLASS} absolute inset-0 block`} style={impactVars(undefined, quakeMs / 1000)}>
+        {children}
+      </span>
+    </BoardWideStage>
+  );
 }
+
+/** hex "#rrggbb" -> "r g b" for the impact vocabulary's --imp-rgb channel. */
+function rgbOf(hex: string): string {
+  return `${parseInt(hex.slice(1, 3), 16)} ${parseInt(hex.slice(3, 5), 16)} ${parseInt(hex.slice(5, 7), 16)}`;
+}
+
+/** FLAGSHIP IMPACT: the shared violence vocabulary (impact.css) staged at one
+ * point of the 14-cell canvas. The laser column leads the beat by 0.4s, then
+ * the shatter halves, shard spray and ground shockwave all land ON `atMs`,
+ * the same beat the Stage quake rides, so a composite reads as ONE hit.
+ * `left`/`top` are the CENTER of the struck cell, in % of the stage. */
+function Impact({
+  atMs, left, top, rgb, laser, glyph, size = 7.2,
+}: { atMs: number; left: number; top: number; rgb: string; laser?: boolean; glyph?: ReactNode; size?: number }) {
+  return (
+    <span
+      className="bwp-impact absolute block"
+      style={{
+        left: `${left - size / 2}%`,
+        top: `${top - size / 2}%`,
+        width: `${size}%`,
+        height: `${size}%`,
+        ...impactVars(rgbOf(rgb), atMs / 1000),
+      }}
+      aria-hidden="true"
+    >
+      {laser && <LaserStrike />}
+      {glyph != null && <PieceShatter glyph={glyph} />}
+      <Shockwave />
+    </span>
+  );
+}
+
+/** THE IMPACT CUE SHEET: one named moment of physical contact per template
+ * card, keyed by the card's unique flourish. Every cue is choreographed onto
+ * that flourish's own climax (position, beat and tint all differ per card), so
+ * no two cards land the same hit. `man` marks a piece being REMOVED or DENIED:
+ * it is lasered down and split in half; cues without one are triumphant
+ * ground-slams (shockwave + stage quake only). */
+interface ImpactCue {
+  /** ms after delayMs: the shared impact beat (quake + shockwave + shatter). */
+  at: number;
+  /** center of the struck cell, % of the 14-cell stage */
+  left: number;
+  top: number;
+  /** tint override (default: the card's glow colour p1) */
+  rgb?: string;
+  /** the descending column of light (hostile strips / denials / judgments) */
+  laser?: boolean;
+  /** silhouette split in half on the beat */
+  man?: keyof typeof CHESSMAN;
+  size?: number;
+}
+const CUE: Record<string, ImpactCue> = {
+  /* FalconDash */
+  // Ancient Custom: THE PASSING TAKE - the bypassed pawn is lasered where it stood and split in passing
+  passant: { at: 980, left: 51.5, top: 59, man: "p", laser: true },
+  // Hit and Run: THE FAR-POST SMASH - the raid's victim is beamed down at the turn-point before the snap-back
+  raid: { at: 940, left: 57, top: 55.5, man: "p", laser: true },
+  // Cornered King: THE WALL-BREAK - the L-shaped bolt-path is blasted open at the corner
+  cornered: { at: 1060, left: 44, top: 42 },
+  // Blood Duel: THE MEETING FLASH - the duel's loser is split in half where the charges collide
+  duel: { at: 1000, left: 49, top: 53, man: "b", laser: true, rgb: "#ffb454" },
+  // Forced March: THE DOUBLE-STEP THUMP - both pawns land their two-rank spring as one boom
+  march2: { at: 900, left: 48, top: 46 },
+  // Royal Caper: THE VAULT LANDING - the king's L-jump slams down clear of the check-ray
+  caper: { at: 1010, left: 52, top: 46 },
+  // Tunnelers: THE BREAKTHROUGH - the rook bursts out the far side of its own pawn screen
+  tunnel: { at: 1060, left: 63, top: 54 },
+  // Rally to the King: THE MUSTER SLAM - the rallying knight arrives at the king's side like a dropped portcullis
+  rally: { at: 1000, left: 56, top: 55.5 },
+  // Underdog's Gambit: THE DOUBLE JAB - the flanker on the hard side is jabbed clean apart
+  sidejab: { at: 940, left: 57.5, top: 57, man: "p", laser: true },
+
+  /* DawnHalo */
+  // Divine Right: THE ROYAL EDICT - the law's red bar stamps a rattling peasant out of existence
+  edict: { at: 1020, left: 38.5, top: 59, man: "p", laser: true, rgb: "#d6234f" },
+  // Pioneer's Banner: THE POLE PLANT - the frontier standard is driven into the boards
+  banner: { at: 880, left: 49.8, top: 51 },
+  // Diplomatic Immunity: THE BORDER BURST - the barrier bars are blown apart for the envoy
+  laissez: { at: 940, left: 47, top: 61 },
+  // Deathless Oath: THE RE-RISE - the sworn piece breaks back up through the boards
+  rebirth: { at: 1080, left: 59, top: 56 },
+  // Bishop's Blessing: THE WARD REBUKE - the lunging knight is beamed back and broken on the ward
+  b3ward: { at: 1000, left: 43, top: 57, man: "n", laser: true },
+  // Shield Wall: THE LOCK-BAR - the phalanx bar slams down across both shields
+  phalanx3: { at: 960, left: 48.5, top: 56 },
+  // King's Shield: THE HALF-SHIELD DROP - the guard plate lands in front of the crown
+  kingfront: { at: 920, left: 50, top: 52 },
+  // Praetorian: THE CLOSING RING - the guard circle booms shut around the queen
+  praetor: { at: 980, left: 50, top: 54 },
+  // Watchword: THE SIGNAL FLARE - the sentry's ward lights with a ground-crack
+  sentry: { at: 1080, left: 57, top: 52 },
+  // Vantage Point: THE SUMMIT CLAIM - the high ground is stamped with one clap
+  vantage: { at: 1020, left: 52.5, top: 39 },
+  // Hallowed Ground: THE CONSECRATION BURST - the circle burns in with a ground shock
+  hallow: { at: 1100, left: 57.5, top: 57.5 },
+
+  /* Reliquary */
+  // Spoils of War: THE TURNCOAT STRIP - the prisoner's grey coat is lasered off and shatters
+  defector: { at: 900, left: 59, top: 44.5, man: "r", laser: true },
+  // Prisoner Exchange: THE HANDOVER SLAM - both crossings land on one chest-boom
+  exchange: { at: 960, left: 50, top: 52 },
+  // Highwayman's Toll: THE STAND-AND-DELIVER - the beam robs the hourglass mid-keel
+  toll: { at: 1000, left: 62, top: 47, laser: true },
+  // Queen's Testament: THE LAST WILL - the queen herself is taken up in the column and split
+  testament: { at: 900, left: 50, top: 39, man: "q", laser: true },
+  // First Blood: THE FIRST DROP - the red drop hits the dial like a hammer
+  firstblood: { at: 960, left: 48, top: 45, rgb: "#d6234f", laser: true },
+  // Postern Gate: THE SIDE-DOOR KICK - the hidden door bangs open off its hinge
+  postern: { at: 1000, left: 60, top: 52 },
+  // Coronation Bonus: THE CROWN DROP - the crown lands with a clock-jumping boom
+  coronclock: { at: 1000, left: 46.5, top: 38 },
+  // Plunderer's Ledger: THE COIN SLAM - the take hits the ledger hard enough to flip the die
+  ledger: { at: 1050, left: 60.5, top: 47.5 },
+  // Eleventh Hour: THE LAST-TICK LIFT - the grave-light cracks the ground open on the final second
+  eleventh: { at: 1080, left: 58, top: 54 },
+  // Deep Position: THE DEEP PLANT - the flag stakes enemy ground with a shock
+  deeptime: { at: 960, left: 43.6, top: 42 },
+  // Martyr's Gift: THE GIVING FALL - the martyr splits apart into its own reroll motes
+  martyrgift: { at: 920, left: 47, top: 47, man: "n" },
+
+  /* AstralAnvil */
+  // Scarecrow: THE POST DRIVE - the strawman's post is hammered into the field
+  strawman: { at: 1100, left: 64, top: 48 },
+  // Masquerade: THE MID-AIR PASS - the masks clap past each other over the anvil
+  masks: { at: 1050, left: 49.5, top: 42 },
+  // Alchemist's Trade: THE LEAD PRICE - the bishop paid away is beamed down to a pawn
+  transmute: { at: 1060, left: 64, top: 44, man: "b", laser: true },
+  // Early Coronation: THE TRIPLE CROWNING - the coronet rank lands as one strike
+  coronet: { at: 1100, left: 49.5, top: 39 },
+  // Standard Bearer: THE UNFURL SNAP - the standard cracks open at full height
+  standard: { at: 1120, left: 66, top: 40 },
+  // Heir Apparent: THE INHERITANCE FLASH - the heir's remaking cracks the forge floor
+  heir: { at: 1000, left: 63, top: 45 },
+  // Field Knighting: THE ACCOLADE - the sword-tap lands like a hammer blow
+  knighting: { at: 1040, left: 63, top: 47 },
+  // Battlefield Commission: THE MEDAL PIN - the decoration is punched onto the pawn
+  commission: { at: 1120, left: 62, top: 44 },
+  // Ironwright's Bargain: THE FORGE FEED - the fed pawn is lasered into the coals and split
+  ironwright: { at: 960, left: 35.8, top: 44, man: "p", laser: true },
+  // Second Face: THE MASK FLIP - the bishop's face cracks off in one snap
+  archbishop: { at: 1010, left: 47.5, top: 45.5 },
+
+  /* PactScroll */
+  // Ascetic's Bargain: THE REFUSAL SHOVE - the refused card is knocked off the pact with a boom
+  fasting: { at: 960, left: 47, top: 34.5 },
+  // Blood Price: THE OFFERING - the offered knight is taken in a red column and split
+  bloodseal: { at: 840, left: 36, top: 33.5, man: "n", laser: true, rgb: "#d6234f" },
+  // Jester's Rule: THE STRUCK TROPHY - the duplicate trophy is lasered off the list in red
+  motley: { at: 1120, left: 54.3, top: 59.5, man: "r", laser: true, rgb: "#d6234f" },
+  // Home Guard: THE FENCE SLAM - the pickets hammer down along the home rank
+  homeward: { at: 960, left: 50, top: 62.5 },
+  // Double Down: THE CHIP PUSH - the raised stake hits the table felt
+  doubledown: { at: 1060, left: 45, top: 57.5 },
+  // King's Road: THE MILESTONE STRIKE - the road's final marker is driven home
+  kingsroad: { at: 1000, left: 50.2, top: 47 },
+  // Futures Market: THE CONTRACT BURN - the losing futures combust on one beat
+  futures: { at: 1080, left: 50, top: 30.5 },
+  // Castle in the Storm: THE CASTLING BOOM - king and rook slam into the castled rank together
+  stormcastle: { at: 960, left: 50, top: 56.5 },
+  // Last Muster: THE GRAVE CALL - the mustered rank stamps up out of the ground
+  muster: { at: 1010, left: 52.5, top: 54 },
+  // Funeral Pyre: THE PYRE BLAST - the chosen piece is taken by the flame column and split
+  pyre: { at: 960, left: 50.3, top: 49, man: "b", laser: true, rgb: "#ff9d3d" },
+};
 
 /** Full-board colour wash. Inside <BoardFrame>, so it is exactly the board at
  * any anchor rather than a fixed slice of a canvas that has moved. */
@@ -345,10 +526,25 @@ function DawnHalo({ palette, glyph, lead, role, delayMs, flourish, aim }: Templa
   const [p0, p1, p2] = palette;
   if (role === "entrance") return <EntranceCut palette={palette} glyph={glyph} delayMs={delayMs} mark={MARK.halo(palette)} />;
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
+  const cue = flourish ? CUE[flourish] : undefined;
   return (
-    <Stage>
+    <Stage quakeMs={cue ? delayMs + cue.at : undefined}>
       <Wash color={tint(p0, 0.22)} delayMs={delayMs} />
       {aim && <AimLeg color={tint(p1, 0.9)} delayMs={delayMs + 300} />}
+      {/* THE HIT: this card's own named impact beat (see CUE) - laser/shatter
+          where something is stripped, ground-shock + stage quake where the
+          boon slams home */}
+      {cue && (
+        <Impact
+          atMs={delayMs + cue.at}
+          left={cue.left}
+          top={cue.top}
+          rgb={cue.rgb ?? p1}
+          laser={cue.laser}
+          glyph={cue.man ? <Man kind={cue.man} fill={tint(p1, 0.92)} stroke={p2} /> : undefined}
+          size={cue.size}
+        />
+      )}
       {/* the disc, settling out of the sky */}
       <span className="bwp-drop absolute block" style={{ left: "36%", top: "24%", width: "28%", height: "28%", animationDelay: `${delayMs + 140}ms` }}>
         <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
@@ -524,10 +720,23 @@ function Reliquary({ palette, glyph, lead, role, delayMs, flourish, aim }: Templ
   const [p0, p1, p2] = palette;
   if (role === "entrance") return <EntranceCut palette={palette} glyph={glyph} delayMs={delayMs} mark={MARK.chest(palette)} />;
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
+  const cue = flourish ? CUE[flourish] : undefined;
   return (
-    <Stage>
+    <Stage quakeMs={cue ? delayMs + cue.at : undefined}>
       <Wash color={tint(p0, 0.22)} delayMs={delayMs} />
       {aim && <AimLeg color={tint(p1, 0.9)} delayMs={delayMs + 300} />}
+      {/* THE HIT: this card's own named impact beat (see CUE) */}
+      {cue && (
+        <Impact
+          atMs={delayMs + cue.at}
+          left={cue.left}
+          top={cue.top}
+          rgb={cue.rgb ?? p1}
+          laser={cue.laser}
+          glyph={cue.man ? <Man kind={cue.man} fill={tint(p1, 0.92)} stroke={p2} /> : undefined}
+          size={cue.size}
+        />
+      )}
       {/* the chest rises */}
       <span className="bwp-rise absolute block" style={{ left: "40%", top: "50%", width: "20%", height: "13%", animationDelay: `${delayMs + 140}ms` }}>
         <svg viewBox="0 0 20 13" className="block h-full w-full" aria-hidden="true">
@@ -716,10 +925,24 @@ function AstralAnvil({ palette, glyph, lead, role, delayMs, flourish, aim }: Tem
   const [p0, p1, p2] = palette;
   if (role === "entrance") return <EntranceCut palette={palette} glyph={glyph} delayMs={delayMs} mark={MARK.anvil(palette)} />;
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
+  const cue = flourish ? CUE[flourish] : undefined;
   return (
-    <Stage>
+    <Stage quakeMs={cue ? delayMs + cue.at : undefined}>
       <Wash color={tint(p0, 0.22)} delayMs={delayMs} />
       {aim && <AimLeg color={tint(p1, 0.9)} delayMs={delayMs + 300} />}
+      {/* THE HIT: this card's own named impact beat (see CUE), landing over
+          the hammer-strike so forge and impact read as one act */}
+      {cue && (
+        <Impact
+          atMs={delayMs + cue.at}
+          left={cue.left}
+          top={cue.top}
+          rgb={cue.rgb ?? p1}
+          laser={cue.laser}
+          glyph={cue.man ? <Man kind={cue.man} fill={tint(p1, 0.92)} stroke={p2} /> : undefined}
+          size={cue.size}
+        />
+      )}
       {/* the anvil rises */}
       <span className="bwp-rise absolute block" style={{ left: "39%", top: "48%", width: "22%", height: "13%", animationDelay: `${delayMs + 140}ms` }}>
         <svg viewBox="0 0 22 13" className="block h-full w-full" aria-hidden="true">
@@ -919,10 +1142,24 @@ function PactScroll({ palette, glyph, lead, role, delayMs, flourish, aim }: Temp
   const [p0, p1, p2] = palette;
   if (role === "entrance") return <EntranceCut palette={palette} glyph={glyph} delayMs={delayMs} mark={MARK.scroll(palette)} />;
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
+  const cue = flourish ? CUE[flourish] : undefined;
   return (
-    <Stage>
+    <Stage quakeMs={cue ? delayMs + cue.at : undefined}>
       <Wash color={tint(p0, 0.22)} delayMs={delayMs} />
       {aim && <AimLeg color={tint(p1, 0.9)} delayMs={delayMs + 300} />}
+      {/* THE HIT: this card's own named impact beat (see CUE) - the pact is
+          not merely signed, it is ENFORCED */}
+      {cue && (
+        <Impact
+          atMs={delayMs + cue.at}
+          left={cue.left}
+          top={cue.top}
+          rgb={cue.rgb ?? p1}
+          laser={cue.laser}
+          glyph={cue.man ? <Man kind={cue.man} fill={tint(p1, 0.92)} stroke={p2} /> : undefined}
+          size={cue.size}
+        />
+      )}
       {/* the scroll unrolls left to right */}
       <span className="bwp-unroll absolute block" style={{ left: "28%", top: "42%", width: "44%", height: "14%", transformOrigin: "0% 50%", animationDelay: `${delayMs + 160}ms` }}>
         <svg viewBox="0 0 44 14" className="block h-full w-full" preserveAspectRatio="none" aria-hidden="true">
@@ -1095,10 +1332,24 @@ function FalconDash({ palette, glyph, lead, role, delayMs, flourish, aim }: Temp
   const [p0, p1, p2] = palette;
   if (role === "entrance") return <EntranceCut palette={palette} glyph={glyph} delayMs={delayMs} mark={MARK.falcon(palette)} />;
   if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
+  const cue = flourish ? CUE[flourish] : undefined;
   return (
-    <Stage>
+    <Stage quakeMs={cue ? delayMs + cue.at : undefined}>
       <Wash color={tint(p0, 0.2)} delayMs={delayMs} />
       {aim && <AimLeg color={tint(p1, 0.9)} delayMs={delayMs + 300} />}
+      {/* THE HIT: this card's own named impact beat (see CUE) at the point
+          the dash actually connects */}
+      {cue && (
+        <Impact
+          atMs={delayMs + cue.at}
+          left={cue.left}
+          top={cue.top}
+          rgb={cue.rgb ?? p1}
+          laser={cue.laser}
+          glyph={cue.man ? <Man kind={cue.man} fill={tint(p1, 0.92)} stroke={p2} /> : undefined}
+          size={cue.size}
+        />
+      )}
       {/* speed lines */}
       {[34, 44, 56].map((t, i) => (
         <Beam key={t} delayMs={delayMs + 120 + i * 70} color={tint(p1, 0.55)} left={26} top={t} w={30 - i * 4} h={0.8} />
@@ -1240,10 +1491,13 @@ function KingmakerScene({ lead, role, delayMs }: SceneProps) {
   if (role === "entrance") return <EntranceCut palette={["#c9a84c", "#ffd76a", "#2a1c08"]} glyph={GLYPH.bw2_kingmakers_pact} delayMs={delayMs} />;
   if (!lead) return <TargetHit palette={["#c9a84c", "#ffd76a", "#2a1c08"]} glyph={GLYPH.bw2_kingmakers_pact} delayMs={delayMs} />;
   return (
-    <Stage>
+    <Stage quakeMs={delayMs + 900}>
       <Wash color="rgba(42,28,8,0.34)" delayMs={delayMs} />
       {/* tell: the unseen hand's light gathers over the empty table */}
       <Tell color="rgba(255,215,106,0.5)" delayMs={delayMs + 220} left={40} top={40} />
+      {/* THE CORONATION HAMMER: a pillar of kingmaking light drives the crown
+          onto the card-throne and the whole court quakes */}
+      <Impact atMs={delayMs + 900} left={50} top={40} rgb="#ffd76a" laser size={9} />
       {/* the card-throne stacks itself */}
       {[0, 1, 2].map((i) => (
         <span key={i} className="bwp-rise absolute block" style={{ left: `${43 - i * 2.4}%`, top: `${56 - i * 5}%`, width: `${14 + i * 4.8}%`, height: "6%", animationDelay: `${delayMs + 160 + (2 - i) * 130}ms` }}>
@@ -1289,8 +1543,18 @@ function BoltHoleScene({ lead, role, delayMs }: SceneProps) {
   if (role === "entrance") return <EntranceCut palette={["#5a6b8f", "#cdd6ff", "#1c1c2a"]} glyph={GLYPH.bw2_bolt_hole} delayMs={delayMs} />;
   if (!lead) return <TargetHit palette={["#5a6b8f", "#cdd6ff", "#1c1c2a"]} glyph={GLYPH.bw2_bolt_hole} delayMs={delayMs} />;
   return (
-    <Stage>
+    <Stage quakeMs={delayMs + 1000}>
       <Wash color="rgba(28,28,42,0.36)" delayMs={delayMs} />
+      {/* THE EMPTY-SQUARE STRIKE: the killers' converged fire lasers the spot
+          the king just vacated and splits only his afterimage in half */}
+      <Impact
+        atMs={delayMs + 1000}
+        left={47}
+        top={50}
+        rgb="#d6234f"
+        laser
+        glyph={<Man kind="k" fill="rgba(205,214,255,0.55)" stroke="#1c1c2a" />}
+      />
       {/* the check-rays converge on the king */}
       {["12deg", "168deg", "-36deg"].map((rot, i) => (
         <Beam key={rot} delayMs={delayMs + 140 + i * 90} color="rgba(214,35,79,0.85)" left={i === 1 ? 66 : 30} top={38 + i * 8} w={20} h={1.2} rot={rot} />
@@ -1333,8 +1597,11 @@ function CarnivalScene({ lead, role, delayMs }: SceneProps) {
     { k: "q", swap: "r", l: 29.5, t: 45 },
   ];
   return (
-    <Stage>
+    <Stage quakeMs={delayMs + 1040}>
       <Wash color="rgba(42,16,48,0.36)" delayMs={delayMs} />
+      {/* THE CAROUSEL STOP: the ride brakes dead on one beat and the whole
+          swapped court lands at once with a ground-shock */}
+      <Impact atMs={delayMs + 1040} left={50} top={50} rgb="#c94ad1" size={10} />
       {/* confetti */}
       {["#ffd76a", "#6fe3ff", "#c94ad1", "#a8e07f", "#ff9d3d", "#e3d0ff"].map((c, i) => (
         <span key={c} className="bwp-rain absolute block" style={{ left: `${32 + i * 7}%`, top: `${26 + (i % 3) * 4}%`, width: "1.6%", height: "2.4%", rotate: `${i * 50}deg`, background: c, animationDelay: `${delayMs + 160 + i * 90}ms` }} />
@@ -1371,10 +1638,13 @@ function RestitutionScene({ lead, role, delayMs }: SceneProps) {
   if (role === "entrance") return <EntranceCut palette={["#c9b89a", "#ffd76a", "#3a3026"]} glyph={GLYPH.bw2_restitution} delayMs={delayMs} />;
   if (!lead) return <TargetHit palette={["#c9b89a", "#ffd76a", "#3a3026"]} glyph={GLYPH.bw2_restitution} delayMs={delayMs} />;
   return (
-    <Stage>
+    <Stage quakeMs={delayMs + 1060}>
       <Wash color="rgba(58,48,38,0.34)" delayMs={delayMs} />
       {/* the leg: laid down the real source -> target vector, sized by --fx-len */}
       <AimLeg color="rgba(255,215,106,0.85)" delayMs={delayMs + 300} />
+      {/* THE VERDICT STRIKE: judgment light hammers the wronged pan the
+          instant the beam levels, and the courtroom floor jolts */}
+      <Impact atMs={delayMs + 1060} left={36} top={42} rgb="#ffd76a" laser />
       {/* the pillar and the tilted beam */}
       <span className="bwp-gate absolute block" style={{ left: "49.3%", top: "34%", width: "1.4%", height: "24%", transformOrigin: "50% 100%", background: "rgba(201,184,154,0.95)", animationDelay: `${delayMs + 160}ms` }} />
       <span className="bwp-tip absolute block" style={{ left: "32%", top: "33%", width: "36%", height: "3%", transformOrigin: "50% 50%", animationDelay: `${delayMs + 420}ms` }}>
@@ -1411,8 +1681,11 @@ function LongTruceScene({ lead, role, delayMs }: SceneProps) {
   if (role === "entrance") return <EntranceCut palette={["#5fc9b0", "#e8fff7", "#1c3a32"]} glyph={GLYPH.bw2_long_truce} delayMs={delayMs} />;
   if (!lead) return <TargetHit palette={["#5fc9b0", "#e8fff7", "#1c3a32"]} glyph={GLYPH.bw2_long_truce} delayMs={delayMs} />;
   return (
-    <Stage>
+    <Stage quakeMs={delayMs + 1020}>
       <Wash color="rgba(28,58,50,0.34)" delayMs={delayMs} />
+      {/* THE ARMISTICE STAMP: both armies ground their arms on one beat and
+          the field itself shudders into stillness */}
+      <Impact atMs={delayMs + 1020} left={50} top={44} rgb="#5fc9b0" size={9} />
       {/* tell: the field draws one breath and the noise drops out of it */}
       <Tell color="rgba(95,201,176,0.5)" delayMs={delayMs + 220} left={40} top={34} size={26} />
       {/* the two war banners dip toward each other */}
@@ -1463,8 +1736,11 @@ function GreatReturnScene({ lead, role, delayMs }: SceneProps) {
     { k: "b", dx: 150, d: 210, c: "#9fd8ff", s: "#2c3e6b" },
   ];
   return (
-    <Stage>
+    <Stage quakeMs={delayMs + 1000}>
       <Wash color="rgba(18,8,31,0.4)" delayMs={delayMs} />
+      {/* THE GATE-BREACH: the underworld column blasts up between the pillars
+          and the whole horizon rocks as the dead pour through */}
+      <Impact atMs={delayMs + 1000} left={49} top={41} rgb="#8f6bff" laser size={9} />
       {/* the gate: twin pillars and the pane of light between them */}
       {[44, 54].map((l, i) => (
         <span key={l} className="bwp-rise absolute block" style={{ left: `${l}%`, top: "30%", width: "2%", height: "22%", background: "rgba(143,107,255,0.95)", animationDelay: `${delayMs + 160 + i * 90}ms` }} />
@@ -1493,8 +1769,11 @@ function ShadowReserveScene({ lead, role, delayMs }: SceneProps) {
   if (role === "entrance") return <EntranceCut palette={["#3a3a40", "#c9cdd6", "#12081f"]} glyph={GLYPH.bw2_shadow_reserve} delayMs={delayMs} />;
   if (!lead) return <TargetHit palette={["#3a3a40", "#c9cdd6", "#12081f"]} glyph={GLYPH.bw2_shadow_reserve} delayMs={delayMs} />;
   return (
-    <Stage>
+    <Stage quakeMs={delayMs + 1060}>
       <Wash color="rgba(18,8,31,0.42)" delayMs={delayMs} />
+      {/* THE CONTRABAND DROP: the smuggler slams the crate of majors down at
+          his feet hard enough to rattle the alley */}
+      <Impact atMs={delayMs + 1060} left={50} top={47} rgb="#c9cdd6" size={8.5} />
       {/* the smuggler rises, hooded */}
       <span className="bwp-rise absolute block" style={{ left: "40%", top: "28%", width: "20%", height: "30%", animationDelay: `${delayMs + 160}ms` }}>
         <svg viewBox="0 0 20 30" className="block h-full w-full" aria-hidden="true">
@@ -1541,8 +1820,11 @@ function EternalKeepScene({ lead, role, delayMs }: SceneProps) {
   if (role === "entrance") return <EntranceCut palette={["#8a8478", "#e8dcc0", "#3a3026"]} glyph={GLYPH.bw2_eternal_keep} delayMs={delayMs} />;
   if (!lead) return <TargetHit palette={["#8a8478", "#e8dcc0", "#3a3026"]} glyph={GLYPH.bw2_eternal_keep} delayMs={delayMs} />;
   return (
-    <Stage>
+    <Stage quakeMs={delayMs + 820}>
       <Wash color="rgba(58,48,38,0.34)" delayMs={delayMs} />
+      {/* THE GATE BOOM: the keep's gate slams shut on forever and the ground
+          shock rolls out from the threshold */}
+      <Impact atMs={delayMs + 820} left={50} top={57} rgb="#e8dcc0" size={9} />
       {/* the rampart rises along the home rank */}
       <span className="bwp-rise absolute block" style={{ left: "26%", top: "50%", width: "48%", height: "12%", animationDelay: `${delayMs + 180}ms` }}>
         <svg viewBox="0 0 48 12" className="block h-full w-full" preserveAspectRatio="none" aria-hidden="true">
@@ -1593,8 +1875,11 @@ function MummersDanceScene({ lead, role, delayMs }: SceneProps) {
     { k: "b", swap: "n", l: 60, t: 56 },
   ];
   return (
-    <Stage>
+    <Stage quakeMs={delayMs + 1040}>
       <Wash color="rgba(28,15,40,0.34)" delayMs={delayMs} />
+      {/* THE FINAL POSE: the whole whirling corps stamps its landing in
+          unison and the dance floor jolts */}
+      <Impact atMs={delayMs + 1040} left={46.5} top={48} rgb="#c9b0e8" size={9} />
       <span className="bwp-whirl absolute block" style={{ left: "30%", top: "28%", width: "40%", height: "44%", animationDelay: `${delayMs + 320}ms` }}>
         <svg viewBox="0 0 40 44" className="block h-full w-full" aria-hidden="true">
           <ellipse cx="20" cy="22" rx="18" ry="20" fill="none" stroke="rgba(201,176,232,0.7)" strokeWidth="0.9" strokeDasharray="3 2.2" />
@@ -1624,8 +1909,11 @@ function LastStandScene({ lead, role, delayMs }: SceneProps) {
   if (role === "entrance") return <EntranceCut palette={["#5a6b8f", "#ffe9b0", "#1c2438"]} glyph={GLYPH.bw3_last_stand} delayMs={delayMs} />;
   if (!lead) return <TargetHit palette={["#5a6b8f", "#ffe9b0", "#1c2438"]} glyph={GLYPH.bw3_last_stand} delayMs={delayMs} />;
   return (
-    <Stage>
+    <Stage quakeMs={delayMs + 640}>
       <Wash color="rgba(28,36,56,0.34)" delayMs={delayMs} />
+      {/* THE SHIELD-WALL SLAM: four shields hit the line as one and the
+          rampart quake rolls back through the army */}
+      <Impact atMs={delayMs + 640} left={50} top={54} rgb="#ffe9b0" size={9} />
       {/* tell: the muster-light gathers along the line before the shields go up */}
       <Tell color="rgba(255,233,176,0.45)" delayMs={delayMs + 220} left={38} top={44} size={26} />
       {[30, 40, 50, 60].map((l, i) => (
@@ -1660,8 +1948,11 @@ function HighStakesScene({ lead, role, delayMs }: SceneProps) {
   if (role === "entrance") return <EntranceCut palette={["#8a5a2a", "#ffd76a", "#2a1c08"]} glyph={GLYPH.bw3_high_stakes} delayMs={delayMs} />;
   if (!lead) return <TargetHit palette={["#8a5a2a", "#ffd76a", "#2a1c08"]} glyph={GLYPH.bw3_high_stakes} delayMs={delayMs} />;
   return (
-    <Stage>
+    <Stage quakeMs={delayMs + 880}>
       <Wash color="rgba(42,28,8,0.34)" delayMs={delayMs} />
+      {/* THE ALL-IN HAMMER: the house light lasers the forfeited dice on the
+          felt and the whole table jumps */}
+      <Impact atMs={delayMs + 880} left={48} top={53} rgb="#ffd76a" laser />
       {/* tell: the table lamp swells over the offer before the sweep */}
       <Tell color="rgba(255,215,106,0.5)" delayMs={delayMs + 240} left={40} top={34} />
       {[30, 42, 54, 64].map((l, i) => (
@@ -1695,8 +1986,11 @@ function FromTheAshesScene({ lead, role, delayMs }: SceneProps) {
   if (role === "entrance") return <EntranceCut palette={["#7a3a2a", "#ff9d3d", "#2b1208"]} glyph={GLYPH.bw3_from_the_ashes} delayMs={delayMs} />;
   if (!lead) return <TargetHit palette={["#7a3a2a", "#ff9d3d", "#2b1208"]} glyph={GLYPH.bw3_from_the_ashes} delayMs={delayMs} />;
   return (
-    <Stage>
+    <Stage quakeMs={delayMs + 1020}>
       <Wash color="rgba(43,18,8,0.36)" delayMs={delayMs} />
+      {/* THE PHOENIX GROUND-BURST: the reborn rank punches up through the ash
+          crust together and the cinder floor heaves */}
+      <Impact atMs={delayMs + 1020} left={50} top={50} rgb="#ff9d3d" size={9} />
       <span className="bwp-beam absolute block" style={{ left: "28%", top: "40%", width: "44%", height: "0.8%", background: "rgba(255,157,61,0.85)", transformOrigin: "0% 50%", animationDelay: `${delayMs + 320}ms` }} />
       {(["p", "n", "b", "r"] as (keyof typeof CHESSMAN)[]).map((k, i) => (
         <span key={k} className="bwp-rise absolute block" style={{ left: `${34 + i * 9}%`, top: "48%", width: "5.5%", height: "8.5%", animationDelay: `${delayMs + 480 + i * 150}ms` }}>
@@ -1719,8 +2013,18 @@ function KingsguardDuelScene({ lead, role, delayMs }: SceneProps) {
   if (role === "entrance") return <EntranceCut palette={["#5a6b8f", "#ff9d9d", "#22283a"]} glyph={GLYPH.bw3_kingsguard_duel} delayMs={delayMs} />;
   if (!lead) return <TargetHit palette={["#5a6b8f", "#ff9d9d", "#22283a"]} glyph={GLYPH.bw3_kingsguard_duel} delayMs={delayMs} />;
   return (
-    <Stage>
+    <Stage quakeMs={delayMs + 900}>
       <Wash color="rgba(34,40,58,0.34)" delayMs={delayMs} />
+      {/* THE MUTUAL FELLING: both champions connect at once; the collision
+          column splits the meeting guard in half and rocks both courts */}
+      <Impact
+        atMs={delayMs + 900}
+        left={50}
+        top={49}
+        rgb="#ff9d9d"
+        laser
+        glyph={<Man kind="n" fill="rgba(255,208,208,0.9)" stroke="#4a2020" />}
+      />
       {/* the leg: laid down the real source -> target vector, sized by --fx-len */}
       <AimLeg color="rgba(255,157,157,0.85)" delayMs={delayMs + 300} />
       <span className="bwp-hold absolute block" style={{ left: "26%", top: "44%", width: "6.5%", height: "10%", animationDelay: `${delayMs + 200}ms` }}>
@@ -1755,8 +2059,11 @@ function KingsSanctuaryScene({ lead, role, delayMs }: SceneProps) {
   if (role === "entrance") return <EntranceCut palette={["#5a8fc0", "#dfe8ff", "#1c2a44"]} glyph={GLYPH.bw3_kings_sanctuary} delayMs={delayMs} />;
   if (!lead) return <TargetHit palette={["#5a8fc0", "#dfe8ff", "#1c2a44"]} glyph={GLYPH.bw3_kings_sanctuary} delayMs={delayMs} />;
   return (
-    <Stage>
+    <Stage quakeMs={delayMs + 1000}>
       <Wash color="rgba(28,42,68,0.34)" delayMs={delayMs} />
+      {/* THE SANCTUARY SEAL: a column of consecrating light drives the dome
+          down over the corner and the flagstones jump */}
+      <Impact atMs={delayMs + 1000} left={66} top={49} rgb="#dfe8ff" laser size={8.5} />
       {/* the leg: laid down the real source -> target vector, sized by --fx-len */}
       <AimLeg color="rgba(223,232,255,0.85)" delayMs={delayMs + 300} />
       {/* tell: sanctuary light kindles in the far corner before the king runs */}
@@ -1787,8 +2094,18 @@ function MartyrdomScene({ lead, role, delayMs }: SceneProps) {
   if (role === "entrance") return <EntranceCut palette={["#8a4a5a", "#ffd0d8", "#2b1820"]} glyph={GLYPH.bw3_martyrdom} delayMs={delayMs} />;
   if (!lead) return <TargetHit palette={["#8a4a5a", "#ffd0d8", "#2b1820"]} glyph={GLYPH.bw3_martyrdom} delayMs={delayMs} />;
   return (
-    <Stage>
+    <Stage quakeMs={delayMs + 920}>
       <Wash color="rgba(43,24,32,0.34)" delayMs={delayMs} />
+      {/* THE ANSWERED SACRIFICE: the martyr's release column detonates where
+          it fell, splitting an enemy minor in the answering blast */}
+      <Impact
+        atMs={delayMs + 920}
+        left={33.5}
+        top={47}
+        rgb="#ffd0d8"
+        laser
+        glyph={<Man kind="n" fill="rgba(201,138,152,0.95)" stroke="#2b1820" />}
+      />
       {/* the leg: laid down the real source -> target vector, sized by --fx-len */}
       <AimLeg color="rgba(255,208,216,0.85)" delayMs={delayMs + 300} />
       <span className="bwp-shatter absolute block" style={{ left: "45%", top: "44%", width: "8%", height: "12%", animationDelay: `${delayMs + 360}ms` }}>
@@ -1826,8 +2143,19 @@ function ReckoningScene({ lead, role, delayMs }: SceneProps) {
     { k: "b", l: 66, t: 54, d: 360 },
   ];
   return (
-    <Stage>
+    <Stage quakeMs={delayMs + 800}>
       <Wash color="rgba(18,18,26,0.4)" delayMs={delayMs} />
+      {/* THE SCYTHE-FALL: the reckoning column drops dead centre of the cull
+          line, splits a minor in half, and the whole field convulses */}
+      <Impact
+        atMs={delayMs + 800}
+        left={50}
+        top={44}
+        rgb="#c9c9cf"
+        laser
+        size={8.5}
+        glyph={<Man kind="n" fill="rgba(201,201,207,0.95)" stroke="#12121a" />}
+      />
       <span className="bwp-beam absolute block" style={{ left: "24%", top: "44%", width: "52%", height: "1.4%", background: "linear-gradient(90deg, transparent, rgba(201,201,207,0.9), transparent)", transformOrigin: "0% 50%", animationDelay: `${delayMs + 260}ms` }} />
       {fallen.map((v, i) => (
         <span key={i} className="bwp-shatter absolute block" style={{ left: `${v.l}%`, top: `${v.t}%`, width: "6%", height: "9%", animationDelay: `${delayMs + 560 + v.d}ms` }}>
@@ -1850,8 +2178,11 @@ function CovenantScene({ lead, role, delayMs }: SceneProps) {
   if (role === "entrance") return <EntranceCut palette={["#5b2b8f", "#e3d0ff", "#12081f"]} glyph={GLYPH.bw3_covenant_of_return} delayMs={delayMs} />;
   if (!lead) return <TargetHit palette={["#5b2b8f", "#e3d0ff", "#12081f"]} glyph={GLYPH.bw3_covenant_of_return} delayMs={delayMs} />;
   return (
-    <Stage>
+    <Stage quakeMs={delayMs + 1020}>
       <Wash color="rgba(18,8,31,0.38)" delayMs={delayMs} />
+      {/* THE LOOP CLOSING: the eternal sigil snaps shut on its own tail and
+          the returned dead land together in one ground-shock */}
+      <Impact atMs={delayMs + 1020} left={50} top={50} rgb="#e3d0ff" size={9} />
       <span className="bwp-spin absolute block" style={{ left: "36%", top: "34%", width: "28%", height: "32%", animationDelay: `${delayMs + 300}ms` }}>
         <svg viewBox="0 0 28 32" className="block h-full w-full" aria-hidden="true">
           <path d="M8 16 C8 8 20 8 20 16 C20 24 8 24 8 16 Z" fill="none" stroke="rgba(227,208,255,0.85)" strokeWidth="1" />
@@ -1877,8 +2208,11 @@ function HomecomingScene({ lead, role, delayMs }: SceneProps) {
   if (role === "entrance") return <EntranceCut palette={["#6a5a3a", "#ffe9b0", "#2a2216"]} glyph={GLYPH.bw3_the_homecoming} delayMs={delayMs} />;
   if (!lead) return <TargetHit palette={["#6a5a3a", "#ffe9b0", "#2a2216"]} glyph={GLYPH.bw3_the_homecoming} delayMs={delayMs} />;
   return (
-    <Stage>
+    <Stage quakeMs={delayMs + 1000}>
       <Wash color="rgba(42,34,22,0.34)" delayMs={delayMs} />
+      {/* THE VETERANS' STAMP: the returning pair halt at the home rank and
+          ground their arms in one drill-square boom */}
+      <Impact atMs={delayMs + 1000} left={50} top={56} rgb="#ffe9b0" size={8.5} />
       {/* the leg: laid down the real source -> target vector, sized by --fx-len */}
       <AimLeg color="rgba(255,233,176,0.85)" delayMs={delayMs + 300} />
       <span className="bwp-drop absolute block" style={{ left: "36%", top: "26%", width: "28%", height: "14%", animationDelay: `${delayMs + 220}ms` }}>
@@ -1909,8 +2243,11 @@ function TurnTheTideScene({ lead, role, delayMs }: SceneProps) {
   if (role === "entrance") return <EntranceCut palette={["#3a6b7a", "#a8e0e8", "#16303a"]} glyph={GLYPH.bw3_turn_the_tide} delayMs={delayMs} />;
   if (!lead) return <TargetHit palette={["#3a6b7a", "#a8e0e8", "#16303a"]} glyph={GLYPH.bw3_turn_the_tide} delayMs={delayMs} />;
   return (
-    <Stage>
+    <Stage quakeMs={delayMs + 980}>
       <Wash color="rgba(22,48,58,0.34)" delayMs={delayMs} />
+      {/* THE BREAKER: the pawn-wave crests and comes down on the next rank as
+          one crashing wall of surf */}
+      <Impact atMs={delayMs + 980} left={50} top={53} rgb="#a8e0e8" size={9.5} />
       <span className="bwp-surge absolute block" style={{ left: "24%", top: "50%", width: "52%", height: "12%", borderRadius: "45%", background: "linear-gradient(180deg, rgba(168,224,232,0.5), transparent)", animationDelay: `${delayMs + 260}ms` }} />
       {[30, 40, 50, 60, 70].map((l, i) => (
         <span key={l} className="bwp-surge absolute block" style={{ left: `${l}%`, top: "56%", width: "5%", height: "8%", animationDelay: `${delayMs + 420 + i * 70}ms` }}>
@@ -1933,8 +2270,11 @@ function PretenderScene({ lead, role, delayMs }: SceneProps) {
   if (role === "entrance") return <EntranceCut palette={["#8a6a2a", "#ffd76a", "#2a1c08"]} glyph={GLYPH.bw3_pretender} delayMs={delayMs} />;
   if (!lead) return <TargetHit palette={["#8a6a2a", "#ffd76a", "#2a1c08"]} glyph={GLYPH.bw3_pretender} delayMs={delayMs} />;
   return (
-    <Stage>
+    <Stage quakeMs={delayMs + 860}>
       <Wash color="rgba(42,28,8,0.36)" delayMs={delayMs} />
+      {/* THE USURPER'S CROWNING: the coronation column hammers the crown down
+          onto the pretender and the throne room floor jumps */}
+      <Impact atMs={delayMs + 860} left={50} top={47} rgb="#ffd76a" laser size={8.5} />
       <span className="bwp-gate absolute block" style={{ left: "45%", top: "26%", width: "10%", height: "34%", transformOrigin: "50% 100%", background: "linear-gradient(180deg, rgba(255,215,106,0.1), rgba(255,215,106,0.55))", animationDelay: `${delayMs + 240}ms` }} />
       <span className="bwp-rise absolute block" style={{ left: "45.5%", top: "42%", width: "9%", height: "14%", animationDelay: `${delayMs + 620}ms` }}>
         <Man kind="q" fill="#ffe9b0" stroke="#2a1c08" />
@@ -1960,8 +2300,18 @@ function DriveThemOutScene({ lead, role, delayMs }: SceneProps) {
   if (role === "entrance") return <EntranceCut palette={["#3a5a6a", "#bfe0e8", "#16282e"]} glyph={GLYPH.bw3_drive_them_out} delayMs={delayMs} />;
   if (!lead) return <TargetHit palette={["#3a5a6a", "#bfe0e8", "#16282e"]} glyph={GLYPH.bw3_drive_them_out} delayMs={delayMs} />;
   return (
-    <Stage>
+    <Stage quakeMs={delayMs + 900}>
       <Wash color="rgba(22,40,46,0.34)" delayMs={delayMs} />
+      {/* THE EVICTION BOLT: the river-light lasers the nearest invader and
+          splits it in half as both sweeps drive the rest out */}
+      <Impact
+        atMs={delayMs + 900}
+        left={43}
+        top={42}
+        rgb="#bfe0e8"
+        laser
+        glyph={<Man kind="n" fill="rgba(143,176,192,0.95)" stroke="#16282e" />}
+      />
       <span className="bwp-gate absolute block" style={{ left: "49.2%", top: "28%", width: "1.6%", height: "36%", transformOrigin: "50% 0%", background: "linear-gradient(180deg, rgba(191,224,232,0.9), rgba(58,90,106,0.4))", animationDelay: `${delayMs + 240}ms` }} />
       <span className="bwp-cross absolute block" style={{ left: "40%", top: "38%", width: "6%", height: "9%", "--dx": "-160%", animationDelay: `${delayMs + 560}ms` } as CSSProperties}>
         <Man kind="n" fill="#8fb0c0" stroke="#16282e" />

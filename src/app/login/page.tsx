@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { login, register } from "@/lib/authClient";
 import { SiteHeader } from "@/components/SiteHeader";
+import { Button } from "@/components/ui/Button";
 
 // Public sitekey; when unset the widget is skipped and signup works as before.
 const TURNSTILE_SITEKEY = process.env.NEXT_PUBLIC_TURNSTILE_SITEKEY;
@@ -189,7 +190,7 @@ function LoginPage() {
                 placeholder="you@example.com"
               />
               <p className="mt-1 text-[12px] text-parchment-400">
-                Lets you sign in with your email instead of your username.
+                Sign in with your email.
               </p>
             </div>
           )}
@@ -210,7 +211,7 @@ function LoginPage() {
           {tab === "register" && TURNSTILE_SITEKEY && (
             <div ref={turnstileRef} className="flex justify-center" />
           )}
-          <button
+          <Button tone="leaf"
             type="submit"
             disabled={
               busy ||
@@ -218,14 +219,13 @@ function LoginPage() {
               !password ||
               (tab === "register" && !!TURNSTILE_SITEKEY && !turnstileToken)
             }
-            className="press w-full py-3 btn-leaf font-display text-lg disabled:opacity-50 disabled:cursor-not-allowed"
-          >
+            className="w-full py-3 text-lg disabled:opacity-50">
             {busy ? "One moment…" : tab === "login" ? "Sign in" : "Create account"}
-          </button>
+          </Button>
 
           <div className="flex items-center gap-3">
             <div className="h-px flex-1 bg-white/10" />
-            <span className="text-[12px] smallcaps text-parchment-400">or</span>
+            <span className="text-[12px] text-parchment-400">or</span>
             <div className="h-px flex-1 bg-white/10" />
           </div>
           <a

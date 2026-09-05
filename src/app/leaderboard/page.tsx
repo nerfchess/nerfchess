@@ -14,6 +14,8 @@ import { DEFAULT_CATEGORY, getCategory, type RatingCategoryId } from "@/lib/rati
 import { isProvisionalRd, PROVISIONAL_RD } from "@/lib/ratingDisplay";
 import { laurelTier } from "@/lib/laurels";
 import { LaurelBadge } from "@/components/LaurelBadge";
+import { Button } from "@/components/ui/Button";
+import { LinkButton } from "@/components/ui/Button";
 
 interface Row {
   username: string;
@@ -122,7 +124,7 @@ export default function LeaderboardPage() {
       <SiteHeader active="/leaderboard" />
 
       <section className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
-        <span className="eyebrow">Ranked ladder</span>
+        <span>Ranked ladder</span>
         <h1 className="mt-1 font-display text-4xl text-parchment-50 sm:text-5xl">Leaderboard</h1>
 
         {/* Ladder switch: the only two boards, Nerf and Buff. */}
@@ -131,14 +133,13 @@ export default function LeaderboardPage() {
         {/* Controls: search and the jump-to-me shortcut. */}
         <div className="mt-4 flex flex-wrap items-center gap-3">
           {canJump && (
-            <button
-              type="button"
+            <Button tone="ghost"
+             
               onClick={jumpToMe}
-              className="btn-ghost press ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 text-[13px]"
-            >
+              className="ml-auto px-3 py-1.5 text-[13px]">
               <Trophy size={13} aria-hidden />
               Jump to my rank
-            </button>
+            </Button>
           )}
         </div>
 
@@ -154,16 +155,15 @@ export default function LeaderboardPage() {
           >
             <span className="text-sm text-parchment">{error}</span>
             <div className="flex shrink-0 items-center gap-2">
-              <button
-                type="button"
+              <Button tone="leaf"
+               
                 onClick={() => setReloadKey((k) => k + 1)}
-                className="btn-leaf press px-4 py-2 text-sm font-semibold"
-              >
+                className="px-4 py-2 text-sm font-semibold">
                 Retry
-              </button>
-              <Link href="/lobby" className="btn-ghost press px-4 py-2 text-sm">
+              </Button>
+              <LinkButton tone="ghost" href="/lobby" className="px-4 py-2 text-sm">
                 Back to lobby
-              </Link>
+              </LinkButton>
             </div>
           </div>
         )}
@@ -182,7 +182,10 @@ export default function LeaderboardPage() {
           />
         )}
 
-        {/* Podium for the active ladder's top three, above the full table. */}
+        {/* The ceremony dais for the active ladder's top three, above the
+            full table. Retired once by playtest feedback, rebuilt grander by
+            owner request — the provisional read it fumbled the first time now
+            matches the table's dimmed style. */}
         {rows && rows.length > 0 && (
           <Podium rows={rows.slice(0, 3)} category={category} isMe={isMeName} />
         )}
@@ -193,11 +196,11 @@ export default function LeaderboardPage() {
                 so rank, name, and rating carry the hierarchy on their own. */}
             <div className="mt-6 overflow-hidden border-y border-[color:var(--edge)]">
               <div className="grid grid-cols-[2.25rem_1fr_4.5rem] items-center border-b border-[color:var(--edge)] px-3 py-3 text-xs text-parchment-400 sm:grid-cols-[3rem_1fr_5rem_4rem_6rem] sm:px-4">
-                <span className="eyebrow text-[11px]">#</span>
-                <span className="eyebrow text-[11px]">Player</span>
-                <span className="eyebrow text-right text-[11px]">{active.label}</span>
-                <span className="eyebrow hidden text-right text-[11px] sm:block">Games</span>
-                <span className="eyebrow hidden text-right text-[11px] sm:block">W / L / D</span>
+                <span className="text-[11px]">#</span>
+                <span className="text-[11px]">Player</span>
+                <span className="text-right text-[11px]">{active.label}</span>
+                <span className="hidden text-right text-[11px] sm:block">Games</span>
+                <span className="hidden text-right text-[11px] sm:block">W / L / D</span>
               </div>
 
               {pageRows.length === 0 ? (
@@ -230,27 +233,25 @@ export default function LeaderboardPage() {
 
             {pageCount > 1 && (
               <div className="mt-4 flex items-center justify-between gap-3">
-                <button
-                  type="button"
+                <Button tone="ghost"
+                 
                   onClick={() => setPage((p) => Math.max(0, p - 1))}
                   disabled={safePage === 0}
-                  className="btn-ghost press inline-flex min-h-[44px] items-center px-4 text-sm disabled:cursor-not-allowed disabled:opacity-40 sm:min-h-0 sm:py-2"
-                >
+                  className="px-4 text-sm sm:min-h-0 sm:py-2">
                   Previous
-                </button>
+                </Button>
                 <span className="font-mono text-xs tabular-nums text-parchment-400">
                   Ranks {safePage * PAGE_SIZE + 1}
                   {"-"}
                   {Math.min(filtered.length, (safePage + 1) * PAGE_SIZE)} of {filtered.length}
                 </span>
-                <button
-                  type="button"
+                <Button tone="ghost"
+                 
                   onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
-                  disabled={safePage >= pageCount - 1}
-                  className="btn-ghost press inline-flex min-h-[44px] items-center px-4 text-sm disabled:cursor-not-allowed disabled:opacity-40 sm:min-h-0 sm:py-2"
-                >
+                  disabled={safePage>= pageCount - 1}
+                  className="px-4 text-sm sm:min-h-0 sm:py-2" >
                   Next
-                </button>
+                </Button>
               </div>
             )}
 
@@ -342,13 +343,21 @@ function LeaderboardRow({
           </span>
         )}
       </span>
-      <span className="text-right font-mono tabular-nums text-parchment-100">
+      {/* Provisional ratings render dimmed with the site-wide "?" marker, so a
+          two-game 2894 reads as "still settling", not as a glitched number. */}
+      <span
+        className={
+          "text-right font-mono tabular-nums " +
+          (isProvisionalRd(row.rd) ? "text-parchment-400" : "text-parchment-100")
+        }
+        title={
+          isProvisionalRd(row.rd)
+            ? `Provisional: rating deviation above ${PROVISIONAL_RD}`
+            : undefined
+        }
+      >
         {Math.round(row.rating)}
-        {isProvisionalRd(row.rd) && (
-          <span className="text-parchment-400" title={`Provisional: rating deviation above ${PROVISIONAL_RD}`}>
-            ?
-          </span>
-        )}
+        {isProvisionalRd(row.rd) && <span>?</span>}
       </span>
       <span className="hidden text-right font-mono tabular-nums text-parchment-400 sm:block">{row.games}</span>
       <span className="hidden text-right font-mono text-xs tabular-nums text-parchment-400 sm:block sm:text-sm">

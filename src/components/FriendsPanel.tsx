@@ -8,6 +8,8 @@ import { PlayerLink } from "./PlayerLink";
 import { PresenceBadge } from "./PresenceBadge";
 import { derivePresence, useLobbyFeed, type PresenceState } from "@/lib/presence";
 import type { MPLobby } from "@/lib/multiplayer";
+import { Button } from "@/components/ui/Button";
+import { LinkButton } from "@/components/ui/Button";
 
 // Friends list + add-a-friend + incoming/outgoing requests, with a one-tap
 // Challenge that deep-links into the friend-game flow (/friend?challenge=name),
@@ -130,20 +132,19 @@ export function FriendsPanel() {
     // Initial load. A network/5xx failure gets a retry; otherwise a themed
     // skeleton that mirrors the roster rows (no blank panel, no spinner text).
     return (
-      <div className="plate dgn-rivets p-4">
+      <div className="plate p-4">
         <div className="flex items-center justify-between gap-3">
           <h2 className="font-display text-lg text-parchment">Friends</h2>
         </div>
         {loadFailed ? (
           <div className="mt-4 text-sm text-parchment-300">
             <p>Could not load your friends.</p>
-            <button
-              type="button"
+            <Button tone="ghost"
+             
               onClick={() => void load()}
-              className="btn-ghost mt-2 inline-flex min-h-[40px] items-center px-3 font-display text-sm"
-            >
+              className="mt-2 px-3 text-sm">
               Try again
-            </button>
+            </Button>
           </div>
         ) : (
           <div className="mt-4 space-y-2" aria-hidden>
@@ -165,7 +166,7 @@ export function FriendsPanel() {
   }
   if (!signedIn) {
     return (
-      <div className="plate dgn-rivets p-4">
+      <div className="plate p-4">
         <h2 className="font-display text-lg text-parchment">Friends</h2>
         <p className="mt-1 text-sm text-parchment-300">
           <Link href="/login" className="text-gold-leaf hover:underline">
@@ -198,7 +199,7 @@ export function FriendsPanel() {
   const visible = query ? sorted.filter((f) => f.username.toLowerCase().includes(query)) : sorted;
 
   return (
-    <div className="plate dgn-rivets p-4">
+    <div className="plate p-4">
       <div className="flex items-center justify-between gap-3">
         <h2 className="font-display text-lg text-parchment">Friends</h2>
         {friends.length > 0 && (
@@ -219,7 +220,7 @@ export function FriendsPanel() {
           everything else, because they are the most actionable thing here. */}
       {incoming.length > 0 && (
         <div className="mt-4 space-y-2 rounded-sm border border-gold/40 bg-gold/[0.07] p-2.5">
-          <div className="eyebrow text-gold-leaf">Requests ({incoming.length})</div>
+          <div className="text-gold-leaf">Requests ({incoming.length})</div>
           {incoming.map((f) => (
             <div key={f.id} className="flex items-center gap-3">
               <Identity f={f} lobby={lobby} />
@@ -263,14 +264,13 @@ export function FriendsPanel() {
           maxLength={24}
           className="input-rune min-h-[44px] min-w-0 flex-1 px-3 text-[16px] sm:text-sm"
         />
-        <button
+        <Button tone="leaf"
           type="submit"
           disabled={busy || !addName.trim()}
-          className="btn-leaf press inline-flex min-h-[44px] shrink-0 items-center gap-1.5 px-4 font-display text-sm font-semibold disabled:opacity-40"
-        >
+          className="shrink-0 px-4 text-sm font-semibold">
           <UserPlus size={15} strokeWidth={2.2} aria-hidden />
           Add
-        </button>
+        </Button>
       </form>
       {note && (
         <p className={"mt-2 text-[12px] " + (note.kind === "ok" ? "text-verdigris-glow" : "text-oxblood-glow")}>
@@ -278,18 +278,17 @@ export function FriendsPanel() {
         </p>
       )}
 
-      <div className="rune-divider my-4" aria-hidden />
+      <div className="my-4" aria-hidden />
 
       {/* Accepted friends, presence-sorted, each with a one-tap action. */}
       {empty ? (
         <div className="empty-vault">
           <p className="text-[13px]">Add friends by username to challenge them in one tap.</p>
-          <Link
+          <LinkButton tone="ghost"
             href="/lobby"
-            className="btn-ghost press inline-flex min-h-[44px] items-center px-4 font-display text-[13px] no-underline sm:min-h-9"
-          >
+            className="px-4 text-[13px] sm:min-h-9">
             Find players
-          </Link>
+          </LinkButton>
         </div>
       ) : (
         friends.length > 0 && (
@@ -317,7 +316,7 @@ export function FriendsPanel() {
       {/* Outgoing pending, quietly at the foot. */}
       {outgoing.length > 0 && (
         <div className="mt-4 space-y-1.5 border-t pt-3" style={{ borderColor: "var(--edge)" }}>
-          <div className="eyebrow">Pending</div>
+          <div>Pending</div>
           {outgoing.map((f) => (
             <div key={f.id} className="flex items-center gap-3 text-sm text-parchment-400">
               <PlayerAvatar name={f.username} avatar={f.avatar} size={24} />
@@ -364,24 +363,22 @@ function FriendRow({
         {/* Labels compress to icon-only below sm so actions never wrap; the
             aria-labels keep them readable. */}
         {presence.state === "in-game" && presence.gameId && (
-          <Link
+          <LinkButton tone="ghost"
             href={`/game/${encodeURIComponent(presence.gameId)}`}
             aria-label={`Watch ${f.username}'s game`}
-            className="btn-ghost press inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-1.5 px-3 font-display text-[13px] no-underline"
-          >
+            className="min-w-[44px] px-3 text-[13px]">
             <Eye size={14} strokeWidth={2.2} aria-hidden />
             <span className="hidden sm:inline">Watch</span>
-          </Link>
+          </LinkButton>
         )}
         {presence.state !== "in-game" && (
-          <Link
+          <LinkButton tone="leaf"
             href={`/friend?challenge=${encodeURIComponent(f.username)}`}
             aria-label={`Challenge ${f.username}`}
-            className="btn-leaf press inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-1.5 px-3 font-display text-[13px] font-semibold no-underline"
-          >
+            className="min-w-[44px] px-3 text-[13px] font-semibold">
             <Swords size={14} strokeWidth={2.3} aria-hidden />
             <span className="hidden sm:inline">Challenge</span>
-          </Link>
+          </LinkButton>
         )}
         <button
           onClick={onRemove}

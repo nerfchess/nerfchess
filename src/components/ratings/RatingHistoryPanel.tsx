@@ -98,10 +98,17 @@ export function RatingHistoryPanel({ points, currentRatings, className = "" }: R
         .map((p) => ({ at: p.at, rating: p.rating }))
         .sort((a, b) => a.at - b.at);
       const current = currentRatings[c.id];
+      // The synthetic "now" point anchors the line to the current time by design.
+      // eslint-disable-next-line react-hooks/purity
+      const now = Date.now();
+      const last = real[real.length - 1];
+      // Skip the anchor when the newest archived game is at (or ahead of) the
+      // client clock: a zero- or negative-width final segment gave the smooth
+      // line a place to fold back on itself.
       const withNow =
-        // The synthetic "now" point anchors the line to the current time by design.
-        // eslint-disable-next-line react-hooks/purity
-        typeof current === "number" ? [...real, { at: Date.now(), rating: current }] : real;
+        typeof current === "number" && (!last || now - last.at > 60_000)
+          ? [...real, { at: now, rating: current }]
+          : real;
       return { id: c.id, label: c.label, color: c.accent, points: withNow };
     });
   }, [points, currentRatings, visibleModes]);

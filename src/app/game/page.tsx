@@ -4,7 +4,9 @@ import dynamic from "next/dynamic";
 import { Board, NERF_REVEAL_SKIP, type NerfRevealInfo } from "@/components/Board";
 import { BoardPlayerRow } from "@/components/BoardPlayerRow";
 import { ClockPill } from "@/components/ClockPill";
+import { ClockRaidLayer } from "@/components/effects/clockraid/ClockRaidLayer";
 import { RailResizeHandle, useRailWidth } from "@/components/RailResizeHandle";
+import { CommandRail, railGridClass } from "@/components/match/CommandRail";
 // The end screen is never part of first paint; loading it on demand keeps it
 // out of the page's initial bundle.
 const GameOver = dynamic(() => import("@/components/GameOver").then((m) => m.GameOver), {
@@ -49,7 +51,7 @@ import { BuffDock, EnemyBuffModal, TargetingBanner, againstYouRows, useBuffTarge
 import { BoardSplashHost } from "@/components/BoardSplash";
 import { draftCardNoun, turnCost } from "@/engine/buff";
 import { draftZones } from "@/lib/draftOnline";
-import { computeFxVisual } from "@/components/effects/fxZones";
+import { computeFxVisual, fxVisualFields } from "@/components/effects/fxZones";
 import { useSignatureQueue } from "@/components/effects/useSignatureQueue";
 import { MobileBuffDrawer } from "@/components/MobileBuffDrawer";
 import { bottomChromePadClass } from "@/components/mobileChrome";
@@ -68,16 +70,17 @@ import { makeSeed } from "@/engine/rng";
 import { BoardState, Color, Move, Square } from "@/engine/types";
 import { cloneBoard, findKing, isInCheck, makeMove, moveToUCI } from "@/engine/board";
 import { computeMoveRisks } from "@/engine/moveSafety";
-import { loadSettings } from "@/lib/settings";
+import { SETTINGS_CHANGED_EVENT, loadSettings } from "@/lib/settings";
+import { CompactSiteHeader } from "@/components/SiteHeader";
+import { useZenHotkey } from "@/lib/useZenMode";
 import { ensureAccount } from "@/lib/authClient";
 import type { QueuedPremove } from "@/components/Board";
 import { buildCustomNerf, CustomNerf } from "@/engine/nerfs/custom";
-import { isMuted, playCapture, playCheck, playNerf, playMove as playMoveSfx, setMuted } from "@/lib/sounds";
+import { playCapture, playCheck, playNerf, playMove as playMoveSfx } from "@/lib/sounds";
 import { nerfSummary, outcomeFor, recordCompletedGame } from "@/lib/gameHistory";
 import { applyResult, loadRatingFor, saveRatingFor } from "@/lib/rating";
 import { loadRatings } from "@/lib/ratings";
-import { SettingsPanel } from "@/components/SettingsPanel";
-import { loadSavedAiGame, restoreSavedAiGame, saveAiGame, snapshotGame } from "@/lib/gamePersistence";
+import { clearSavedAiGame, loadSavedAiGame, restoreSavedAiGame, saveAiGame, snapshotGame } from "@/lib/gamePersistence";
 import { boardAtPly, replayBoardSpan } from "@/lib/gameReview";
 import { clipPliesAvailable } from "@/components/clip/clipReplay";
 import { premoveOptionsFor, premoveSelfChecks, previewMovesFor } from "@/lib/premoves";
@@ -87,6 +90,7 @@ import type { AIWorkerRequest, AIWorkerResponse } from "@/workers/aiWorker";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, type CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Button } from "@/components/ui/Button";
 
 function pickRandomNerf(): Nerf {
   // Random rolls respect the temporary opening cap (tiers 1-2 only).
@@ -156,9 +160,15 @@ const DRAFT_REVEAL_EASE_MS = 450;
 const DRAFT_REVEAL_HOLD_MS = 4000;
 
 export default function GamePageWrapper() {
+  // Rematch remounts GamePage under a fresh key with the URL untouched, so
+  // bootstrapGame re-runs against the SAME configuration (mode, strength,
+  // color, clock) with every piece of game state reset. GamePage clears the
+  // saved game first so the remount deals fresh instead of restoring the
+  // finished game.
+  const [session, setSession] = useState(0);
   return (
     <Suspense fallback={<LoadingPanel />}>
-      <GamePage />
+      <GamePage key={session} onRematch={() => setSession((s) => s + 1)} />
     </Suspense>
   );
 }
@@ -172,7 +182,7 @@ function LoadingPanel() {
           <span className="w-2 h-2 rounded-full bg-verdigris-glow animate-bob" style={{ animationDelay: "0.15s" }} />
           <span className="w-2 h-2 rounded-full bg-bruise-glow animate-bob" style={{ animationDelay: "0.3s" }} />
         </div>
-        <div className="font-display text-xl text-parchment animate-flicker">
+        <div className="font-display text-xl text-parchment">
           Dealing the cards
         </div>
       </div>
@@ -180,7 +190,9 @@ function LoadingPanel() {
   );
 }
 
-function GamePage() {
+function GamePage({ onRematch }: { onRematch: () => void }) {
+  // Zen mode: `z` hides everything but the board, clocks and move list.
+  useZenHotkey();
   const router = useRouter();
   const params = useSearchParams();
   const querySignature = params.toString();
@@ -241,7 +253,6 @@ function GamePage() {
   // of the deliberation costs the player's own time.
   const [offerOnClockIndex, setOfferOnClockIndex] = useState<number | null>(null);
   const [, force] = useState(0);
-  const [muted, setMutedState] = useState(false);
   const [premoves, setPremoves] = useState<QueuedPremove[]>([]);
   const [confirmingResign, setConfirmingResign] = useState(false);
   const [confirmingDraw, setConfirmingDraw] = useState(false);
@@ -251,8 +262,12 @@ function GamePage() {
   const [drawOfferStatus, setDrawOfferStatus] = useState<"idle" | "offering" | "declined">("idle");
   const [whiteMs, setWhiteMs] = useState(initialTimeMs);
   const [blackMs, setBlackMs] = useState(initialTimeMs);
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const [uiSettings, setUiSettings] = useState(() => loadSettings());
+  useEffect(() => {
+    const sync = () => setUiSettings(loadSettings());
+    window.addEventListener(SETTINGS_CHANGED_EVENT, sync);
+    return () => window.removeEventListener(SETTINGS_CHANGED_EVENT, sync);
+  }, []);
   const [historyPly, setHistoryPly] = useState<number | null>(null);
   const [boardHeight, setBoardHeight] = useState<number | null>(null);
   const [playerElo, setPlayerElo] = useState<number | null>(null);
@@ -396,7 +411,6 @@ function GamePage() {
 
   useEffect(() => {
     queueMicrotask(() => {
-      setMutedState(isMuted());
       setPlayerElo(loadRatingFor(ratingCategory).rating);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1424,7 +1438,6 @@ function GamePage() {
     const offer = mine?.offer ?? null;
     wheelNavRef.current = {
       blocked:
-        settingsOpen ||
         (!!game.result && showResult) ||
         !!buffTargeting.targeting ||
         (!!offer && offerOnClockIndex !== offer.index),
@@ -1440,7 +1453,7 @@ function GamePage() {
       return (
         <main className="min-h-screen flex items-center justify-center px-4 py-8">
           <div className="w-full max-w-2xl">
-            <div className="smallcaps text-[12px] text-parchment-400 text-center">Nerf draft</div>
+            <div className="text-[12px] text-parchment-400 text-center">Nerf draft</div>
             <h1 className="font-display text-4xl text-parchment text-center mt-1">
               Choose your handicap
             </h1>
@@ -1469,7 +1482,7 @@ function GamePage() {
                   className={
                     "mx-auto block w-full max-w-md sm:max-w-none text-left transition touch-manipulation [@media(hover:hover)]:hover:-translate-y-1" +
                     (nerfSelected === i
-                      ? " -translate-y-1 ring-2 ring-gold shadow-leaf"
+                      ? " -translate-y-1 ring-2 ring-gold"
                       : nerfSelected != null
                       ? " opacity-60"
                       : "")
@@ -1481,12 +1494,11 @@ function GamePage() {
             </div>
             {nerfSelected != null && (
               <div className="mt-4 text-center">
-                <button
+                <Button tone="primary"
                   onClick={() => startDraftGame(nerfDraft.myOptions[nerfSelected])}
-                  className="btn-glass btn-glass--primary px-8 py-3 font-display text-base font-semibold tracking-wide"
-                >
+                  className="px-8 py-3 text-base font-semibold tracking-wide">
                   Confirm pick
-                </button>
+                </Button>
               </div>
             )}
             {/* Nerf mode: the opponent's rule is completely hidden until the
@@ -1497,7 +1509,7 @@ function GamePage() {
               </p>
             ) : (
               <div className="mt-5 plate p-3 text-center">
-                <span className="smallcaps text-[12px] text-parchment-400">
+                <span className="text-[12px] text-parchment-400">
                   Your opponent is choosing between
                 </span>
                 <div className="mt-1 text-sm text-parchment-200 font-display">
@@ -1682,7 +1694,16 @@ function GamePage() {
 
   const cancelPremove = () => setPremoves([]);
 
-  const handleRematch = () => router.push("/play");
+  // Rematch restarts the same configuration in place: clear the finished
+  // game's save (so the remounted page deals a fresh one instead of restoring
+  // it) and let the wrapper remount this component. "New game" stays a
+  // separate door back to the /play setup screen.
+  const handleRematch = () => {
+    clearSavedAiGame();
+    onRematch();
+  };
+
+  const handleNewGame = () => router.push("/play");
 
   const onResign = () => {
     if (!game.result) {
@@ -1729,15 +1750,9 @@ function GamePage() {
     }, 800);
   };
 
-  const toggleMute = () => {
-    const next = !muted;
-    setMuted(next);
-    setMutedState(next);
-  };
-
   const historyActions = game.result ? null : confirmMovePending ? (
     <div className="space-y-2">
-      <div className="smallcaps text-[12px] text-parchment-300">Play this move?</div>
+      <div className="text-[12px] text-parchment-300">Play this move?</div>
       <div className="grid grid-cols-2 gap-2">
         <button
           onClick={confirmHeldMove}
@@ -1745,17 +1760,16 @@ function GamePage() {
         >
           Confirm
         </button>
-        <button
+        <Button tone="ghost"
           onClick={() => setConfirmMovePending(null)}
-          className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 btn-ghost text-xs font-display tracking-wide"
-        >
+          className="min-w-0 px-3 py-2 text-xs tracking-wide">
           Cancel
-        </button>
+        </Button>
       </div>
     </div>
   ) : confirmingDraw ? (
     <div className="space-y-2">
-      <div className="smallcaps text-[12px] text-parchment-300">Offer a draw?</div>
+      <div className="text-[12px] text-parchment-300">Offer a draw?</div>
       <div className="grid grid-cols-2 gap-2">
         <button
           onClick={onOfferDraw}
@@ -1763,36 +1777,33 @@ function GamePage() {
         >
           Offer draw
         </button>
-        <button
+        <Button tone="ghost"
           onClick={() => setConfirmingDraw(false)}
-          className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 btn-ghost text-xs font-display tracking-wide"
-        >
+          className="min-w-0 px-3 py-2 text-xs tracking-wide">
           Cancel
-        </button>
+        </Button>
       </div>
     </div>
   ) : confirmingResign ? (
     <div className="space-y-2">
-      <div className="smallcaps text-[12px] text-parchment-300">Resign the game?</div>
+      <div className="text-[12px] text-parchment-300">Resign the game?</div>
       <div className="grid grid-cols-2 gap-2">
-        <button
+        <Button tone="danger"
           onClick={() => { onResign(); setConfirmingResign(false); }}
-          className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 btn-cursed text-xs font-display font-semibold tracking-wide"
-        >
+          className="min-w-0 px-3 py-2 text-xs font-semibold tracking-wide">
           Yes
-        </button>
-        <button
+        </Button>
+        <Button tone="ghost"
           onClick={() => setConfirmingResign(false)}
-          className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 btn-ghost text-xs font-display tracking-wide"
-        >
+          className="min-w-0 px-3 py-2 text-xs tracking-wide">
           Cancel
-        </button>
+        </Button>
       </div>
     </div>
   ) : (
     <div className="space-y-2">
       {drawOfferStatus === "declined" && (
-        <div className="smallcaps text-[12px] text-parchment-300">Draw declined.</div>
+        <div className="text-[12px] text-parchment-300">Draw declined.</div>
       )}
       <div className="grid grid-cols-2 gap-2">
         <button
@@ -1804,14 +1815,13 @@ function GamePage() {
         >
           {drawOfferStatus === "offering" ? "Offering..." : "Draw"}
         </button>
-        <button
+        <Button tone="danger"
           onClick={requestResign}
           title="Resign the game"
           aria-label="Resign the game"
-          className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 btn-cursed text-xs font-display font-semibold tracking-wide"
-        >
+          className="min-w-0 px-3 py-2 text-xs font-semibold tracking-wide">
           Resign
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -1821,8 +1831,8 @@ function GamePage() {
   // can't be reconstructed (board rewritten by a card, no stored positions).
   const clipButton =
     game.board.history.length >= 2 ? (
-      <button
-        type="button"
+      <Button tone="ghost"
+       
         onClick={openClip}
         disabled={clipPlies < 2}
         data-clip-open
@@ -1831,14 +1841,13 @@ function GamePage() {
             ? "Clip unavailable: these moves can't be replayed (the board was rewritten by a card)"
             : "Save the last moves as a short video clip"
         }
-        className="min-w-0 min-h-[44px] w-full inline-flex items-center justify-center gap-2 px-3 py-2 btn-ghost text-xs font-display tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
-      >
+        className="min-w-0 w-full px-3 py-2 text-xs tracking-wide disabled:opacity-50">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
           <polygon points="23 7 16 12 23 17 23 7" />
           <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
         </svg>
         Clip last moves
-      </button>
+      </Button>
     ) : null;
 
   const moveListFooter =
@@ -1851,12 +1860,9 @@ function GamePage() {
 
   return (
     <main className="flex h-dvh min-h-0 flex-col overflow-hidden">
-      <nav className="sticky top-0 z-20 flex w-full shrink-0 items-center justify-between px-5 py-3">
-        <Link href="/" className="font-display text-2xl tracking-tight">
-          nerf<span className="text-gold-leaf">chess</span>
-        </Link>
-        <div className="flex items-center gap-4">
-          <div className="smallcaps text-[12px] text-parchment-400 hidden sm:block">
+      <CompactSiteHeader
+        status={
+          <span className="zen-hide hidden sm:inline">
             playing {myColor === "w" ? "White" : "Black"} ·{" "}
             {gameMode && (
               <>
@@ -1868,40 +1874,9 @@ function GamePage() {
             )}
             {plainMode && <>plain chess · </>}
             bot on {difficulty} · {rated ? "rated" : "casual"}
-          </div>
-          <button
-            onClick={toggleMute}
-            aria-label={muted ? "Unmute" : "Mute"}
-            title={muted ? "Sound off" : "Sound on"}
-            className="h-11 w-11 sm:h-9 sm:w-9 inline-flex items-center justify-center rounded-full btn-ghost"
-          >
-            {muted ? (
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                <line x1="22" y1="9" x2="16" y2="15" />
-                <line x1="16" y1="9" x2="22" y2="15" />
-              </svg>
-            ) : (
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-                <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
-              </svg>
-            )}
-          </button>
-          <button
-            onClick={() => setSettingsOpen(true)}
-            aria-label="Settings"
-            title="Settings"
-            className="h-11 w-11 sm:h-9 sm:w-9 inline-flex items-center justify-center rounded-full btn-ghost"
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <circle cx="12" cy="12" r="3" />
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-            </svg>
-          </button>
-        </div>
-      </nav>
+          </span>
+        }
+      />
 
       <div
         className={
@@ -1930,105 +1905,91 @@ function GamePage() {
           // The rail column tracks the draggable --match-rail-w and a thin
           // resize-handle column sits between rail and board; the 6px gaps +
           // 4px handle keep the same 16px gutter as before.
-          className="grid min-h-0 flex-1 gap-y-2 lg:grid-cols-[var(--match-rail-w,320px)_0.25rem_auto] lg:justify-center lg:gap-x-1.5"
+          className={railGridClass(false)}
           style={{ ...railHeightStyle, ...railWidthStyle }}
         >
           {/* The command rail: one framed column (mode header, opponent, dock,
-              you) instead of floating islands; mirrors the online layout. */}
-          <aside className="rail-panel corner-cut hidden min-h-0 gap-3 overflow-hidden p-2.5 lg:grid lg:min-h-[var(--board-height)] lg:max-h-full lg:grid-rows-[auto_auto_minmax(8rem,1fr)_auto] lg:self-start">
-            <div className="seam-edge-b flex items-center justify-between gap-2 px-1 pb-2">
-              <span
-                className={
-                  "flex items-center gap-1.5 font-display text-xs font-bold uppercase tracking-[0.14em] " +
-                  (plainMode
-                    ? "text-parchment-300"
-                    : gameMode === "buff"
-                    ? "text-mode-buffGlow"
-                    : "text-mode-nerfGlow")
-                }
-              >
-                {/* A lit mode ember anchors the rail's identity at a glance. */}
-                <span
-                  aria-hidden
-                  className="h-1.5 w-1.5 shrink-0 rounded-full bg-current"
-                  style={{ boxShadow: "0 0 8px 1px currentColor" }}
-                />
-                {plainMode ? "Plain chess" : gameMode === "buff" ? "Buff mode" : "Nerf mode"}
-              </span>
-              <span className="smallcaps min-w-0 truncate text-[12px] text-parchment-400">
-                Casual · vs bot
-              </span>
-            </div>
-            <PlayerNerfCard
-              board={boardForDisplay}
-              playerColor={myColor === "w" ? "b" : "w"}
-              myColor={myColor}
-              name={`${difficulty[0].toUpperCase()}${difficulty.slice(1)} Bot`}
-              elo={BOT_ELO[difficulty]}
-              nerf={opponentNerf}
-              revealed={oppRevealed}
-              hideNerf={hideOppNerfCard}
-              ownerLabel=""
-              compact
-              action={
-                // Section games: the opponent's rule stays fully hidden until
-                // the game ends, so there is no self-peek. Plain chess has no
-                // rule to reveal at all.
-                gameMode == null && !plainMode && !oppRevealed && !uiSettings.hideOpponentReveal ? (
-                  <button
-                    onClick={() => setOppPeek(true)}
-                    className="w-full px-3 py-2 border border-white/15 bg-white/[0.03] text-parchment-200 hover:border-white/30 hover:bg-white/[0.06] transition text-xs font-semibold"
-                  >
-                    Reveal their rule
-                  </button>
-                ) : null
-              }
-            />
-            {game.buffs ? (
-              <BuffDock
-                game={game}
+              you) instead of floating islands; the same component the online
+              match uses, so the two layouts cannot drift apart again. */}
+          <CommandRail
+            mode={plainMode ? "plain" : gameMode === "buff" ? "buff" : "nerf"}
+            subtitle="Casual · vs bot"
+            opponent={
+              <PlayerNerfCard
+                board={boardForDisplay}
+                playerColor={myColor === "w" ? "b" : "w"}
                 myColor={myColor}
-                canAct={
-                  !game.result && game.board.turn === myColor && !myOffer && !isReviewingHistory
+                heartbeatKey={
+                  game.fx?.find(
+                    (e) => e.kind === "nerf-turnstart" && e.color === (myColor === "w" ? "b" : "w"),
+                  )?.ply ?? null
                 }
-                onStartUse={(i) => {
-                  snapshotMySignature(i);
-                  buffTargeting.start(i);
-                }}
-                plays={oppLog}
+                name={`${difficulty[0].toUpperCase()}${difficulty.slice(1)} Bot`}
+                elo={BOT_ELO[difficulty]}
+                nerf={opponentNerf}
+                revealed={oppRevealed}
+                hideNerf={hideOppNerfCard}
+                ownerLabel=""
+                compact
+                action={
+                  // Section games: the opponent's rule stays fully hidden until
+                  // the game ends, so there is no self-peek. Plain chess has no
+                  // rule to reveal at all.
+                  gameMode == null && !plainMode && !oppRevealed && !uiSettings.hideOpponentReveal ? (
+                    <Button tone="ghost" size="sm" block onClick={() => setOppPeek(true)}>
+                      Reveal their rule
+                    </Button>
+                  ) : null
+                }
               />
-            ) : (
-              <div className="hidden lg:block" />
-            )}
-            <PlayerNerfCard
-              board={boardForDisplay}
-              playerColor={myColor}
-              myColor={myColor}
-              name="You"
-              elo={playerElo}
-              nerf={myNerf}
-              hideNerf={hideMyNerfCard}
-              ownerLabel=""
-              compact
-              progress={myNerf.progress?.(myState, myCtx) ?? null}
-              boons={myHeldBoons}
-              action={
-                gameMode === "buff" || plainMode ? null : (
-                  <button
-                    onClick={() => setSharedMine((v) => !v)}
-                    className={
-                      "w-full px-3 py-2 border transition text-xs font-semibold " +
-                      (sharedMine
-                        ? "border-gold/50 bg-gold/10 text-gold-leaf"
-                        : "border-white/15 bg-white/[0.03] text-parchment-200 hover:border-white/30 hover:bg-white/[0.06]")
-                    }
-                  >
-                    {sharedMine ? "Rule shared with opponent" : "Reveal my rule to opponent"}
-                  </button>
-                )
-              }
-            />
-          </aside>
+            }
+            center={
+              game.buffs ? (
+                <BuffDock
+                  game={game}
+                  myColor={myColor}
+                  canAct={
+                    !game.result && game.board.turn === myColor && !myOffer && !isReviewingHistory
+                  }
+                  onStartUse={(i) => {
+                    snapshotMySignature(i);
+                    buffTargeting.start(i);
+                  }}
+                  plays={oppLog}
+                />
+              ) : undefined
+            }
+            self={
+              <PlayerNerfCard
+                board={boardForDisplay}
+                playerColor={myColor}
+                myColor={myColor}
+                heartbeatKey={
+                  game.fx?.find((e) => e.kind === "nerf-turnstart" && e.color === myColor)?.ply ?? null
+                }
+                name="You"
+                elo={playerElo}
+                nerf={myNerf}
+                hideNerf={hideMyNerfCard}
+                ownerLabel=""
+                compact
+                progress={myNerf.progress?.(myState, myCtx) ?? null}
+                boons={myHeldBoons}
+                action={
+                  gameMode === "buff" || plainMode ? null : (
+                    <Button
+                      tone={sharedMine ? "leaf" : "ghost"}
+                      size="sm"
+                      block
+                      onClick={() => setSharedMine((v) => !v)}
+                    >
+                      {sharedMine ? "Rule shared with opponent" : "Reveal my rule to opponent"}
+                    </Button>
+                  )
+                }
+              />
+            }
+          />
           <RailResizeHandle railWidth={railWidth} resizeRail={resizeRail} />
           <div className="flex min-h-0 flex-col gap-2 sm:flex-row sm:items-stretch sm:justify-start">
             <div ref={boardShellRef} className="min-h-0 min-w-0 sm:flex-none">
@@ -2050,6 +2011,7 @@ function GamePage() {
                 {clockEnabled && (
                   <ClockPill
                     ms={myColor === "w" ? blackMs : whiteMs}
+                    seat={myColor === "w" ? "b" : "w"}
                     active={!game.result && offerPausedAt == null && game.board.turn !== myColor}
                     compact
                   />
@@ -2098,10 +2060,7 @@ function GamePage() {
                           doomSquares: zone.doom,
                           lockedSquares: zone.locked,
                           barredSquares: zone.barred,
-                          kingSafeSquares: fxZone.kingSafeSquares,
-                          pawnClampSquares: fxZone.pawnClampSquares,
-                          stunSquares: fxZone.stunSquares,
-                          motifSquares: fxZone.motifs,
+                          ...fxVisualFields(fxZone),
                         }
                   }
                   lastMove={lastMoveForDisplay}
@@ -2109,6 +2068,9 @@ function GamePage() {
                   passiveNerfs={passiveNerfs}
                   passiveBuffs={isReviewingHistory ? null : game.buffs}
                   reviewingHistory={isReviewingHistory}
+                  // The engine's per-cycle fx narration (nerf bites, victim
+                  // receives, expiries) for the FruitionLayer.
+                  fx={isReviewingHistory ? null : game.fx ?? null}
                   disabled={!!game.result || premovePending || isReviewingHistory || !!confirmMovePending || !!myOffer}
                   premoveMode={!isReviewingHistory && premoveMode}
                   premoves={isReviewingHistory ? [] : validPremoves}
@@ -2167,6 +2129,7 @@ function GamePage() {
                 {clockEnabled && (
                   <ClockPill
                     ms={myColor === "w" ? whiteMs : blackMs}
+                    seat={myColor}
                     active={!game.result && offerPausedAt == null && game.board.turn === myColor}
                     warnLowTime={uiSettings.lowTimeWarning}
                     draftRunning={myDraftCharging}
@@ -2206,6 +2169,7 @@ function GamePage() {
               {clockEnabled && (
                 <ClockPill
                   ms={myColor === "w" ? blackMs : whiteMs}
+                  seat={myColor === "w" ? "b" : "w"}
                   active={!game.result && offerPausedAt == null && game.board.turn !== myColor}
                 />
               )}
@@ -2221,12 +2185,13 @@ function GamePage() {
               {clockEnabled && (
                 <ClockPill
                   ms={myColor === "w" ? whiteMs : blackMs}
+                  seat={myColor}
                   active={!game.result && offerPausedAt == null && game.board.turn === myColor}
                   warnLowTime={uiSettings.lowTimeWarning}
                   draftRunning={myDraftCharging}
                 />
               )}
-              <div className="flex justify-end pt-1">
+              <div className="zen-hide flex justify-end pt-1">
                 <FxToggleButton />
               </div>
             </div>
@@ -2280,6 +2245,10 @@ function GamePage() {
       )}
 
       <OppPlaysLog plays={oppLog} />
+      {/* Clock-raid spectacle for clock-touching cards (Time Thief and kin):
+          measures the [data-clock-seat] pills and runs the grab/carry/pop
+          out-of-board choreography. Cosmetic; clock frames stay authoritative. */}
+      <ClockRaidLayer fx={game.fx ?? null} />
 
       {/* Shared reveal moment: both sides of the simultaneous draft round
           resolved. Non-blocking, click to dismiss, auto-dismisses after
@@ -2359,13 +2328,12 @@ function GamePage() {
       )}
 
       {game.result && !showResult && (
-        <button
-          type="button"
+        <Button tone="leaf"
+         
           onClick={() => setShowResult(true)}
-          className="btn-leaf fixed bottom-24 right-3 z-40 px-4 py-2 font-display text-sm font-semibold shadow-xl sm:bottom-16 lg:bottom-4"
-        >
+          className="fixed bottom-24 right-3 z-40 px-4 py-2 text-sm font-semibold shadow-xl sm:bottom-16 lg:bottom-4">
           Show result
-        </button>
+        </Button>
       )}
       {game.result && showResult && (
         <GameOver
@@ -2380,7 +2348,7 @@ function GamePage() {
           record={postRecord}
           newOpponentHref={`/lobby?tab=quick${gameMode ? `&mode=${gameMode}` : ""}`}
           onRematch={handleRematch}
-          onNewGame={handleRematch}
+          onNewGame={handleNewGame}
           onReview={() => handleHistoryPlyChange(0)}
           onClip={clipPlies >= 2 ? openClip : undefined}
           moves={game.board.history}
@@ -2409,13 +2377,6 @@ function GamePage() {
           result={game.result ?? null}
         />
       )}
-      <SettingsPanel
-        open={settingsOpen}
-        onClose={() => {
-          setSettingsOpen(false);
-          setUiSettings(loadSettings());
-        }}
-      />
     </main>
   );
 }

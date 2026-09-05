@@ -442,8 +442,19 @@
 }
 .cwp-wilt { animation: cwp-wilt calc(1.15s * var(--fx-dur, 1)) ease-in-out both; transform-origin: 50% 0%; }
 
+/* --- FLAGSHIP impact vocabulary hookup ---------------------------------------
+   The shared impact primitives (impact.css) fire their laser at t=0 and land
+   everything else on --imp-delay. Scenes here schedule the whole composite
+   inline via --imp-delay, so the laser must be re-timed to LEAD the beat by
+   the vocabulary's own 0.4s instead of firing at scene start. */
+.cwp-impact .imp-laser {
+  animation-delay: calc((var(--imp-delay, 0.4s) - 0.4s) * var(--fx-dur, 1));
+}
+
 /* --- Kill switch ------------------------------------------------------------
-   Settings animation toggle: park every cwp-* element outright. */
+   Settings animation toggle: park every cwp-* element outright. The cwp-impact
+   and cwp-quakebox wrappers match [class^="cwp-"], so their imp-* children go
+   dark with them (opacity 0 on the wrapper hides the subtree). */
 html[data-anim="off"] [class^="cwp-"],
 html[data-anim="off"] [class*=" cwp-"] {
   animation: none !important;

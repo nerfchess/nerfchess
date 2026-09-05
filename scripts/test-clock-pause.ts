@@ -12,6 +12,7 @@
 import {
   PAUSE_BUDGET_MS,
   PAUSE_MAX_MS,
+  RECONNECT_CLOCK_FLOOR_MS,
   chargePauseBudget,
   pauseGrantMs,
   releaseExpiredPause,
@@ -224,6 +225,52 @@ console.log("clock pause rules");
   m.runningSince = at;
   check(m.pausedTotalMs?.w === 20_000, `the interrupted pause bills its 20s (got ${m.pausedTotalMs?.w})`);
   check(m.pauseUntil === null, "and leaves no stranded deadline behind");
+}
+
+// 10. RETRO-BILLING. The pause is a flag shield, not free time: the away span
+//     must come off the actual clock when the pause ends, not just the budget.
+//     The reported gap: away ~15s, socket died ~7s in, and only those 7s of
+//     close-detection ever hit the clock — the paused remainder was free.
+{
+  const m = houseGame({ clocks: { w: 120_000, b: 120_000 }, setup: { timeSec: 120 } });
+  pause(m, 10_000);
+  reconnect(m, "w", 10_000 + 15_000); // away 15s through the real path
+  check(m.clocks!.w === 120_000 - 15_000, `15s away costs 15s of clock (got ${m.clocks!.w})`);
+  check(m.clocks!.b === 120_000, "the opponent's clock is untouched");
+}
+
+// 11. The floor: billing never drains a clock below RECONNECT_CLOCK_FLOOR_MS,
+//     and a clock already below the floor is left where it was.
+{
+  const m = houseGame({ clocks: { w: 12_000, b: 120_000 }, setup: { timeSec: 120 } });
+  pause(m, 10_000);
+  releaseExpiredPause(m, 10_000 + PAUSE_MAX_MS); // full 45s grant elapses
+  check(m.clocks!.w === RECONNECT_CLOCK_FLOOR_MS, `a long absence drains to the floor (got ${m.clocks!.w})`);
+  check(m.runningSince !== null, "and the clock is running again, so the normal flag path finishes the job");
+
+  const low = houseGame({ clocks: { w: 2_000, b: 120_000 }, setup: { timeSec: 120 } });
+  pause(low, 10_000);
+  reconnect(low, "w", 10_000 + 10_000);
+  check(low.clocks!.w === 2_000, "a clock already below the floor is not topped up");
+}
+
+// 12. Untimed games bill budget but never touch clocks.
+{
+  const m = houseGame({ clocks: { w: 0, b: 0 }, setup: { timeSec: 0 } });
+  pause(m, 10_000);
+  reconnect(m, "w", 10_000 + 20_000);
+  check(m.pausedTotalMs?.w === 20_000, "an untimed absence still bills the budget");
+  check(m.clocks!.w === 0 && m.clocks!.b === 0, "but the clocks stay untouched");
+}
+
+// 13. A draft-style resume with the player still away bills the clock too
+//     (same path as case 9, now with the clock attached).
+{
+  const m = houseGame({ clocks: { w: 60_000, b: 60_000 }, setup: { timeSec: 60 } });
+  pause(m, 10_000);
+  chargePauseBudget(m, "w", 30_000); // 20s into the pause
+  m.runningSince = 30_000;
+  check(m.clocks!.w === 40_000, `the subsumed pause costs its 20s of clock (got ${m.clocks!.w})`);
 }
 
 if (failures) {

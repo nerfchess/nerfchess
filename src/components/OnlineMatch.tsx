@@ -12,7 +12,9 @@ import { BuffDock, EnemyBuffModal, TargetingBanner, againstYouRows, useBuffTarge
 import { BoardSplashHost } from "@/components/BoardSplash";
 import { ChatPanel } from "@/components/ChatPanel";
 import { ClockPill } from "@/components/ClockPill";
+import { ClockRaidLayer } from "@/components/effects/clockraid/ClockRaidLayer";
 import { RailResizeHandle, useRailWidth } from "@/components/RailResizeHandle";
+import { CommandRail, railGridClass } from "@/components/match/CommandRail";
 import { ConnectionBanner } from "@/components/ConnectionBanner";
 import { DraftNotice } from "@/components/DraftNotice";
 import { GodPanelNotice, type GodPanelNoticeItem } from "@/components/GodPanelNotice";
@@ -74,7 +76,7 @@ import {
   replayDraftGame,
   revealHeldBuffs,
 } from "@/lib/draftOnline";
-import { computeFxVisual } from "@/components/effects/fxZones";
+import { computeFxVisual, fxVisualFields } from "@/components/effects/fxZones";
 import { stashGamblingOutcome } from "@/components/effects/gamblingOutcome";
 import { useSignatureQueue } from "@/components/effects/useSignatureQueue";
 import { isGodPanelUser, INFINITE_REROLLS } from "@/lib/godPanel";
@@ -94,6 +96,7 @@ import {
 } from "@/lib/multiplayer";
 import { premoveOptionsFor, premoveSelfChecks, previewMovesFor } from "@/lib/premoves";
 import { isMuted, playCapture, playChallenge, playCheck, playError, playGameStart, playMove as playMoveSfx, playNerf, setMuted } from "@/lib/sounds";
+import { Button } from "@/components/ui/Button";
 
 // Mirrors the server's start-of-game grace: each side's first move gets this
 // many free milliseconds before their clock starts charging.
@@ -227,7 +230,7 @@ function RatingStakes({ stakes }: { stakes: { win: number; draw: number; loss: n
   const fmt = (n: number) => (n >= 0 ? `+${n}` : `${n}`);
   return (
     <div className="plate flex items-center justify-between gap-2 p-2 px-3">
-      <span className="smallcaps text-[12px] text-parchment-400">Rating at stake</span>
+      <span className="text-[12px] text-parchment-400">Rating at stake</span>
       <span className="font-mono text-[12px] tabular-nums">
         <span className="text-verdigris">W {fmt(stakes.win)}</span>
         <span className="text-parchment-400"> · D {fmt(stakes.draw)} · </span>
@@ -701,7 +704,16 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     if (!draftCovered) notifyGateOpen();
   }, [draftCovered, notifyGateOpen]);
   useEffect(() => {
-    const left = draftDeadline == null ? -1 : draftDeadline - Date.now();
+    // A null deadline means "no live lock-in window" — not started yet, or
+    // closed because both seats resolved (draft-state sends an explicit null
+    // then). Neither is "the window expired": treating null as already-over
+    // was the bug behind "the draft menu keeps minimizing randomly" — a start
+    // replay or a frame-early offer saw the deadline as null for a beat and
+    // the fresh draft opened straight into the minimized side panel. With no
+    // window there is no offer on screen, so the last grace state simply
+    // stops mattering; leave it be.
+    if (draftDeadline == null) return;
+    const left = draftDeadline - Date.now();
     if (left <= 0) {
       queueMicrotask(() => setDraftGraceOver(true));
       return;
@@ -710,6 +722,22 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     const id = window.setTimeout(() => setDraftGraceOver(true), left + 50);
     return () => window.clearTimeout(id);
   }, [draftDeadline]);
+  // A genuinely new offer round always opens full-screen, even when its
+  // deadline frame lands a beat behind the offer (the old stale-past deadline
+  // would otherwise keep the fresh draft minimized). The one exception is a
+  // reconnecting straggler whose window really has expired: a stale-PAST
+  // deadline for this very round keeps the side panel. Keyed on the offer
+  // alone by design — the deadline effect above owns deadline changes.
+  const draftDeadlineRef = useRef(draftDeadline);
+  useEffect(() => {
+    draftDeadlineRef.current = draftDeadline;
+  }, [draftDeadline]);
+  useEffect(() => {
+    if (liveOfferKey == null) return;
+    const dl = draftDeadlineRef.current;
+    if (dl != null && dl - Date.now() <= 0) return;
+    setDraftGraceOver(false);
+  }, [liveOfferKey]);
 
   // Auto-dismiss the full-screen "waiting for opponent" overlay: while it is
   // up, start a short timer that collapses it to the non-blocking corner pill.
@@ -2065,14 +2093,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
             // now paint here too.
             lockedSquares: dZone.locked,
             barredSquares: dZone.barred,
-            ...(dFxZone
-              ? {
-                  kingSafeSquares: dFxZone.kingSafeSquares,
-                  pawnClampSquares: dFxZone.pawnClampSquares,
-                  stunSquares: dFxZone.stunSquares,
-                  motifSquares: dFxZone.motifs,
-                }
-              : {}),
+            ...(dFxZone ? fxVisualFields(dFxZone) : {}),
           }
         : {}),
     };
@@ -2251,7 +2272,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
       <main className="min-h-dvh flex items-center justify-center px-4 py-8">
         <ConnectionBanner session={session} />
         <div className="w-full max-w-2xl">
-          <div className="smallcaps text-[12px] text-parchment-400 text-center">Nerf draft</div>
+          <div className="text-[12px] text-parchment-400 text-center">Nerf draft</div>
           <h1 className="font-display text-4xl text-parchment text-center mt-1">
             Choose your handicap
           </h1>
@@ -2307,7 +2328,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                     className={
                       "mx-auto block w-full max-w-md sm:max-w-none text-left transition touch-manipulation [@media(hover:hover)]:hover:-translate-y-1" +
                       (nerfSelected === i
-                        ? " -translate-y-1 ring-2 ring-gold shadow-leaf"
+                        ? " -translate-y-1 ring-2 ring-gold"
                         : nerfSelected != null
                         ? " opacity-60"
                         : "")
@@ -2323,12 +2344,11 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               </div>
               {nerfSelected != null && (
                 <div className="mt-4 text-center">
-                  <button
+                  <Button tone="primary"
                     onClick={() => sendPick(nerfSelected)}
-                    className="btn-glass btn-glass--primary px-8 py-3 font-display text-base font-semibold tracking-wide"
-                  >
+                    className="px-8 py-3 text-base font-semibold tracking-wide">
                     Confirm pick
-                  </button>
+                  </Button>
                 </div>
               )}
             </>
@@ -2337,7 +2357,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               reveals when the game ends, so their options never show. */}
           {!isNerfMode && (
             <div className="mt-5 plate p-3 text-center">
-              <span className="smallcaps text-[12px] text-parchment-400">
+              <span className="text-[12px] text-parchment-400">
                 Your opponent is choosing between
               </span>
               <div className="mt-1 text-sm text-parchment-200 font-display">
@@ -2569,7 +2589,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     </div>
   ) : myRevealState === "confirm" ? (
     <div className="plate space-y-2 p-2 px-3">
-      <div className="smallcaps text-[12px] text-parchment-300">
+      <div className="text-[12px] text-parchment-300">
         Show your secret rule to your opponent? This can&apos;t be undone.
       </div>
       <div className="grid grid-cols-2 gap-2">
@@ -2581,12 +2601,11 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         >
           Reveal
         </button>
-        <button
+        <Button tone="ghost"
           onClick={() => setMyRevealState("hidden")}
-          className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 btn-ghost text-xs font-display tracking-wide"
-        >
+          className="min-w-0 px-3 py-2 text-xs tracking-wide">
           Cancel
-        </button>
+        </Button>
       </div>
     </div>
   ) : (
@@ -2600,7 +2619,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
 
   const historyActions = game.result ? null : confirmMovePending ? (
     <div className="space-y-2">
-      <div className="smallcaps text-[12px] text-parchment-300">Play this move?</div>
+      <div className="text-[12px] text-parchment-300">Play this move?</div>
       <div className="grid grid-cols-2 gap-2">
         <button
           onClick={confirmHeldMove}
@@ -2608,17 +2627,16 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         >
           Confirm
         </button>
-        <button
+        <Button tone="ghost"
           onClick={() => setConfirmMovePending(null)}
-          className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 btn-ghost text-xs font-display tracking-wide"
-        >
+          className="min-w-0 px-3 py-2 text-xs tracking-wide">
           Cancel
-        </button>
+        </Button>
       </div>
     </div>
   ) : confirmingDraw ? (
     <div className="space-y-2">
-      <div className="smallcaps text-[12px] text-parchment-300">Offer a draw?</div>
+      <div className="text-[12px] text-parchment-300">Offer a draw?</div>
       <div className="grid grid-cols-2 gap-2">
         <button
           onClick={onOfferDraw}
@@ -2626,38 +2644,35 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         >
           Offer draw
         </button>
-        <button
+        <Button tone="ghost"
           onClick={() => setConfirmingDraw(false)}
-          className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 btn-ghost text-xs font-display tracking-wide"
-        >
+          className="min-w-0 px-3 py-2 text-xs tracking-wide">
           Cancel
-        </button>
+        </Button>
       </div>
     </div>
   ) : confirmingResign ? (
     <div className="space-y-2">
-      <div className="smallcaps text-[12px] text-parchment-300">Resign the game?</div>
+      <div className="text-[12px] text-parchment-300">Resign the game?</div>
       <div className="grid grid-cols-2 gap-2">
-        <button
+        <Button tone="danger"
           onClick={() => {
             onResign();
             setConfirmingResign(false);
           }}
-          className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 btn-cursed text-xs font-display font-semibold tracking-wide"
-        >
+          className="min-w-0 px-3 py-2 text-xs font-semibold tracking-wide">
           Yes
-        </button>
-        <button
+        </Button>
+        <Button tone="ghost"
           onClick={() => setConfirmingResign(false)}
-          className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 btn-ghost text-xs font-display tracking-wide"
-        >
+          className="min-w-0 px-3 py-2 text-xs tracking-wide">
           Cancel
-        </button>
+        </Button>
       </div>
     </div>
   ) : claimReady ? (
     <div className="space-y-2">
-      <div className="smallcaps text-[12px] text-parchment-300">
+      <div className="text-[12px] text-parchment-300">
         Your opponent seems to have abandoned the game.
       </div>
       {error && <div className="text-xs text-oxblood-glow leading-snug">{error}</div>}
@@ -2668,17 +2683,16 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         >
           Claim win
         </button>
-        <button
+        <Button tone="ghost"
           onClick={onClaimDraw}
-          className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 btn-ghost text-xs font-display font-semibold tracking-wide"
-        >
+          className="min-w-0 px-3 py-2 text-xs font-semibold tracking-wide">
           Claim draw
-        </button>
+        </Button>
       </div>
     </div>
   ) : opponentGone && !game?.result ? (
     <div className="space-y-2" role="status" aria-live="polite">
-      <div className="smallcaps text-[12px] text-parchment-300">
+      <div className="text-[12px] text-parchment-300">
         Opponent disconnected.{" "}
         {claimInSeconds > 0
           ? `You can claim the win in ${claimInSeconds}s.`
@@ -2688,7 +2702,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     </div>
   ) : takebackOfferBy && takebackOfferBy !== myColor ? (
     <div className="space-y-2">
-      <div className="smallcaps text-[12px] text-parchment-300">Opponent asks for a takeback.</div>
+      <div className="text-[12px] text-parchment-300">Opponent asks for a takeback.</div>
       {error && <div className="text-xs text-oxblood-glow leading-snug">{error}</div>}
       <div className="grid grid-cols-2 gap-2">
         <button
@@ -2697,17 +2711,16 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         >
           Allow
         </button>
-        <button
+        <Button tone="ghost"
           onClick={onDeclineTakeback}
-          className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 btn-ghost text-xs font-display font-semibold tracking-wide"
-        >
+          className="min-w-0 px-3 py-2 text-xs font-semibold tracking-wide">
           Decline
-        </button>
+        </Button>
       </div>
     </div>
   ) : drawOfferBy && drawOfferBy !== myColor ? (
     <div className="space-y-2">
-      <div className="smallcaps text-[12px] text-parchment-300">Opponent offered a draw.</div>
+      <div className="text-[12px] text-parchment-300">Opponent offered a draw.</div>
       {error && <div className="text-xs text-oxblood-glow leading-snug">{error}</div>}
       <div className="grid grid-cols-2 gap-2">
         <button
@@ -2716,27 +2729,25 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         >
           Accept
         </button>
-        <button
+        <Button tone="ghost"
           onClick={onDeclineDraw}
-          className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 btn-ghost text-xs font-display font-semibold tracking-wide"
-        >
+          className="min-w-0 px-3 py-2 text-xs font-semibold tracking-wide">
           Decline
-        </button>
+        </Button>
       </div>
-      <button
+      <Button tone="danger"
         onClick={requestResign}
-        className="w-full min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 btn-cursed text-xs font-display font-semibold tracking-wide"
-      >
+        className="w-full min-w-0 px-3 py-2 text-xs font-semibold tracking-wide">
         Resign
-      </button>
+      </Button>
     </div>
   ) : (
     <div className="space-y-2">
       {drawOfferStatus === "declined" && (
-        <div className="smallcaps text-[12px] text-parchment-300">Draw declined.</div>
+        <div className="text-[12px] text-parchment-300">Draw declined.</div>
       )}
       {takebackStatus === "declined" && (
-        <div className="smallcaps text-[12px] text-parchment-300">Takeback declined.</div>
+        <div className="text-[12px] text-parchment-300">Takeback declined.</div>
       )}
       {error && <div className="text-xs text-oxblood-glow leading-snug">{error}</div>}
       <div className={"grid gap-2 " + (takebackAvailable ? "grid-cols-3" : "grid-cols-2")}>
@@ -2767,12 +2778,11 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
             {takebackStatus === "offering" ? "Asked" : "Takeback"}
           </button>
         )}
-        <button
+        <Button tone="danger"
           onClick={requestResign}
-          className="min-w-0 min-h-[44px] inline-flex items-center justify-center px-3 py-2 btn-cursed text-xs font-display font-semibold tracking-wide"
-        >
+          className="min-w-0 px-3 py-2 text-xs font-semibold tracking-wide">
           Resign
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -2791,9 +2801,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           aria-live="polite"
           // Owns the top-16 lane; OppPlaysLog sits below it at z-[39] so the
           // two can never render on top of each other.
-          className="fixed right-3 top-16 z-40 w-[min(80vw,20rem)] animate-rise border border-gold/40 bg-ink-700/95 p-3 shadow-plate backdrop-blur-sm"
+          className="fixed right-3 top-16 z-40 w-[min(80vw,20rem)] border border-gold/40 bg-ink-700/95 p-3 shadow-plate backdrop-blur-sm"
         >
-          <div className="smallcaps text-[10px] text-parchment-400">
+          <div className="text-[10px] text-parchment-400">
             {abortNotice.level === "timeout" ? "New games paused" : "Abort warning"}
           </div>
           <p className="mt-1 text-xs leading-snug text-parchment-300">
@@ -2801,12 +2811,11 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               ? `You've aborted too many of your recent games, so starting new games is paused for about ${abortNotice.minutes ?? 10} minutes.`
               : "You've aborted several of your recent games. Abort another soon and starting new games will be paused for a while."}
           </p>
-          <button
+          <Button tone="ghost"
             onClick={() => setAbortNotice(null)}
-            className="mt-2 btn-ghost px-2 py-1 text-[11px] font-display tracking-wide"
-          >
+            className="mt-2 px-2 py-1 text-[11px] tracking-wide">
             Dismiss
-          </button>
+          </Button>
         </div>
       )}
       <nav className="sticky top-0 z-20 flex w-full shrink-0 items-center justify-between px-5 py-3">
@@ -2821,7 +2830,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           </Link>
         </div>
         <div className="flex items-center gap-4">
-          <div className="smallcaps hidden text-[12px] text-parchment-400 sm:block">
+          <div className="hidden text-[12px] text-parchment-400 sm:block">
             playing {myColor === "w" ? "White" : "Black"} ·{" "}
             {isDraft && (
               <>
@@ -2838,12 +2847,11 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
             {subtitle}
           </div>
           <SpectatorPill n={spectators.n} names={spectators.names} />
-          <button
+          <Button tone="ghost"
             onClick={toggleMute}
             aria-label={muted ? "Unmute" : "Mute"}
             title={muted ? "Sound off" : "Sound on"}
-            className="h-11 w-11 sm:h-9 sm:w-9 inline-flex items-center justify-center rounded-full btn-ghost"
-          >
+            className="h-11 w-11 sm:h-9 sm:w-9 rounded-full">
             {muted ? (
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
@@ -2857,18 +2865,17 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
               </svg>
             )}
-          </button>
-          <button
+          </Button>
+          <Button tone="ghost"
             onClick={() => setSettingsOpen(true)}
             aria-label="Settings"
             title="Settings"
-            className="h-11 w-11 sm:h-9 sm:w-9 inline-flex items-center justify-center rounded-full btn-ghost"
-          >
+            className="h-11 w-11 sm:h-9 sm:w-9 rounded-full">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <circle cx="12" cy="12" r="3" />
               <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
             </svg>
-          </button>
+          </Button>
         </div>
       </nav>
 
@@ -2898,113 +2905,76 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         {/* The opponent-drafting status lives in the waiting overlay below
             (and inside the draft overlay while my own pick is open). */}
         <div
-          className={
-            // Expanded, the rail column tracks the draggable --match-rail-w and
-            // a thin resize-handle column sits between rail and board; the
-            // 6px gaps + 4px handle keep the same 16px gutter as before.
-            "match-grid grid min-h-0 flex-1 gap-y-2 lg:justify-center lg:gap-x-1.5 " +
-            (railCollapsed
-              ? "lg:grid-cols-[auto]"
-              : "lg:grid-cols-[var(--match-rail-w,320px)_0.25rem_auto]")
-          }
+          className={railGridClass(railCollapsed)}
           style={{ ...railHeightStyle, ...railWidthStyle }}
         >
           {/* The command rail: one framed column (mode header, opponent, dock
               + chat, you) instead of three floating islands, so the left side
               reads as a single control surface. */}
-          <aside
-            className={
-              "rail-panel rail-lux corner-cut hidden min-h-0 gap-2 overflow-y-auto p-2.5 lg:min-h-[var(--board-height)] lg:max-h-full lg:grid-rows-[auto_auto_minmax(8rem,1fr)_auto] lg:self-start " +
-              (railCollapsed ? "" : "lg:grid")
+          <CommandRail
+            mode={isBuffMode ? "buff" : "nerf"}
+            subtitle={subtitle}
+            collapsed={railCollapsed}
+            onToggleCollapse={toggleRail}
+            opponentCharged={chargedColor === oppColor}
+            selfCharged={chargedColor === myColor}
+            opponent={
+              <PlayerNerfCard
+                board={boardForDisplay}
+                playerColor={oppColor}
+                myColor={myColor}
+                heartbeatKey={
+                  game.fx?.find((e) => e.kind === "nerf-turnstart" && e.color === oppColor)?.ply ?? null
+                }
+                name={oppName}
+                elo={oppRating}
+                provisional={oppProvisional}
+                avatar={start.players?.[oppColor]?.avatar}
+                nerf={opponentNerf}
+                revealed={oppNerfShown}
+                hideNerf={hideOppNerfCard}
+                ownerLabel=""
+                compact
+                connected={!opponentGone}
+              />
             }
-          >
-            <div className="seam-edge-b relative flex items-center justify-between gap-2 px-1 pb-2">
-              <span
+            center={
+              <div
                 className={
-                  "flex items-center gap-1.5 font-display text-xs font-bold uppercase tracking-[0.14em] " +
-                  (isBuffMode ? "text-mode-buffGlow" : "text-mode-nerfGlow")
+                  "hidden min-h-0 gap-2 lg:grid " +
+                  (isDraft && game.buffs
+                    ? // The dock owns the column; chat rests as a compact strip
+                      // (auto row) and expands in place on demand.
+                      "grid-rows-[minmax(0,1fr)_auto]"
+                    : "grid-rows-[minmax(0,1fr)]")
                 }
               >
-                {/* A lit mode ember anchors the rail's identity at a glance. */}
-                <span
-                  aria-hidden
-                  className="h-1.5 w-1.5 shrink-0 rounded-full bg-current"
-                  style={{ boxShadow: "0 0 8px 1px currentColor" }}
-                />
-                {isBuffMode ? "Buff mode" : "Nerf mode"}
-              </span>
-              {subtitle && (
-                <span className="smallcaps min-w-0 truncate text-[12px] text-parchment-400">{subtitle}</span>
-              )}
-              {/* Collapse the rail for a bigger board; a matching expand
-                  control rides the opponent bar while collapsed. */}
-              <button
-                type="button"
-                onClick={toggleRail}
-                aria-label="Collapse side panel"
-                title="Collapse side panel for a bigger board"
-                className="btn-ghost grid h-7 w-7 shrink-0 place-items-center text-parchment-300 hover:text-parchment-100"
-              >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                  <polyline points="11 17 6 12 11 7" />
-                  <polyline points="18 17 13 12 18 7" />
-                </svg>
-              </button>
-              {/* A gold gleam that occasionally travels the header hairline. */}
-              <span aria-hidden className="rail-header-sheen" />
-            </div>
-            {/* The active player's card wears a soft breathing gold halo while
-                their clock is charged (decorative wrapper only). */}
-            <div className={"rail-glow-wrap" + (chargedColor === oppColor ? " rail-glow-wrap--active" : "")}>
-            <PlayerNerfCard
-              board={boardForDisplay}
-              playerColor={oppColor}
-              myColor={myColor}
-              name={oppName}
-              elo={oppRating}
-              provisional={oppProvisional}
-              avatar={start.players?.[oppColor]?.avatar}
-              nerf={opponentNerf}
-              revealed={oppNerfShown}
-              hideNerf={hideOppNerfCard}
-              ownerLabel=""
-              compact
-              connected={!opponentGone}
-            />
-            </div>
-            <div
-              className={
-                "hidden min-h-0 gap-2 lg:grid " +
-                (isDraft && game.buffs
-                  ? // The dock owns the column; chat rests as a compact strip
-                    // (auto row) and expands in place on demand.
-                    "grid-rows-[minmax(0,1fr)_auto]"
-                  : "grid-rows-[minmax(0,1fr)]")
-              }
-            >
-              {isDraft && game.buffs && (
-                <BuffDock
-                  game={game}
+                {isDraft && game.buffs && (
+                  <BuffDock
+                    game={game}
+                    myColor={myColor}
+                    canAct={draftCanAct}
+                    onStartUse={startBuffUse}
+                    plays={oppLog}
+                  />
+                )}
+                <ChatPanel
+                  messages={chatMessages}
                   myColor={myColor}
-                  canAct={draftCanAct}
-                  onStartUse={startBuffUse}
-                  plays={oppLog}
+                  onSend={handleSendChat}
+                  collapsible={isDraft && !!game.buffs}
+                  className={isDraft && game.buffs ? "" : "h-full"}
                 />
-              )}
-              <ChatPanel
-                messages={chatMessages}
-                myColor={myColor}
-                onSend={handleSendChat}
-                collapsible={isDraft && !!game.buffs}
-                className={isDraft && game.buffs ? "" : "h-full"}
-              />
-            </div>
-            <div className="space-y-2">
-              <div className={"rail-glow-wrap" + (chargedColor === myColor ? " rail-glow-wrap--active" : "")}>
+              </div>
+            }
+            self={
               <PlayerNerfCard
                 board={boardForDisplay}
                 playerColor={myColor}
                 myColor={myColor}
+                heartbeatKey={
+                  game.fx?.find((e) => e.kind === "nerf-turnstart" && e.color === myColor)?.ply ?? null
+                }
                 name={myName}
                 elo={myRating}
                 provisional={myProvisional}
@@ -3017,11 +2987,14 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 compact
                 connected={!connectionLost}
               />
-              </div>
-              {!isBuffMode && revealControl}
-              {ratingStakes && <RatingStakes stakes={ratingStakes} />}
-            </div>
-          </aside>
+            }
+            footer={
+              <>
+                {!isBuffMode && revealControl}
+                {ratingStakes && <RatingStakes stakes={ratingStakes} />}
+              </>
+            }
+          />
           {!railCollapsed && !recordingLayout && (
             <RailResizeHandle railWidth={railWidth} resizeRail={resizeRail} />
           )}
@@ -3033,18 +3006,17 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   across the screen. The rails keep the rules/moves/chat. */}
               <div className="board-strip flex items-center justify-between gap-2">
                 {railCollapsed && (
-                  <button
-                    type="button"
+                  <Button tone="ghost"
+                   
                     onClick={toggleRail}
                     aria-label="Show side panel"
                     title="Show the side panel"
-                    className="btn-ghost hidden h-8 w-8 shrink-0 place-items-center text-parchment-300 hover:text-parchment-100 lg:grid"
-                  >
+                    className="hidden h-8 w-8 shrink-0 place-items-center text-parchment-300 hover:text-parchment-100 lg:grid">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                       <polyline points="13 17 18 12 13 7" />
                       <polyline points="6 17 11 12 6 7" />
                     </svg>
-                  </button>
+                  </Button>
                 )}
                 <BoardPlayerRow
                   // Material counts read the COMMITTED position (a queued premove
@@ -3063,6 +3035,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 {clockEnabled && (
                   <ClockPill
                     ms={myColor === "w" ? blackMs : whiteMs}
+                    seat={myColor === "w" ? "b" : "w"}
                     active={chargedColor === oppColor}
                     startDelayMs={clockStartDelay(oppColor)}
                     compact
@@ -3112,6 +3085,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   nerfReveals={nerfReveals}
                   passiveNerfs={passiveNerfs}
                   reviewingHistory={isReviewingHistory}
+                  // The engine's per-cycle fx narration (nerf bites, victim
+                  // receives, expiries) for the FruitionLayer.
+                  fx={isReviewingHistory ? null : game.fx ?? null}
                   fxTimePressure={
                     clockEnabled && !game.result && (whiteMs < 15_000 || blackMs < 15_000)
                   }
@@ -3226,6 +3202,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 {clockEnabled && (
                   <ClockPill
                     ms={myColor === "w" ? whiteMs : blackMs}
+                    seat={myColor}
                     active={chargedColor === myColor}
                     startDelayMs={clockStartDelay(myColor)}
                     warnLowTime={uiSettings.lowTimeWarning}
@@ -3277,6 +3254,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                     </span>
                     <ClockPill
                       ms={myColor === "w" ? blackMs : whiteMs}
+                      seat={myColor === "w" ? "b" : "w"}
                       active={chargedColor === oppColor}
                       startDelayMs={clockStartDelay(oppColor)}
                       compact
@@ -3285,6 +3263,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   <div className="flex min-w-0 items-center gap-2">
                     <ClockPill
                       ms={myColor === "w" ? whiteMs : blackMs}
+                      seat={myColor}
                       active={chargedColor === myColor}
                       startDelayMs={clockStartDelay(myColor)}
                       draftRunning={myDraftCharging}
@@ -3355,6 +3334,10 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
       </div>
 
       <OppPlaysLog plays={oppLog} />
+      {/* Clock-raid spectacle for clock-touching cards (Time Thief and kin):
+          measures the [data-clock-seat] pills and runs the grab/carry/pop
+          out-of-board choreography. Cosmetic; clock frames stay authoritative. */}
+      <ClockRaidLayer fx={game.fx ?? null} />
 
       {/* Owner god panel: far-right, mounted only for the ilovenewjeans account,
           only when he has switched it on from /mod, and only in a live draft game
@@ -3498,7 +3481,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                 <span className="text-parchment-300">(you&rsquo;re not stuck)</span>
                 {/* Only claim "on their clock" once the free window has truly
                     expired; before then both clocks are still paused. */}
-                <span className="smallcaps ml-2 text-[12px] text-parchment-400">
+                <span className="ml-2 text-[12px] text-parchment-400">
                   {draftGraceOver ? "on their clock now" : "clocks paused"}
                 </span>
               </span>
@@ -3546,7 +3529,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
               title="Dismiss"
               className="waiting-banner plate pointer-events-auto w-full max-w-xs cursor-pointer border-gold/30 p-4 text-center shadow-plate"
             >
-              <div className="smallcaps text-[12px] text-parchment-400">
+              <div className="text-[12px] text-parchment-400">
                 {genuinelySkipped
                   ? "Draft skipped"
                   : draftCardNoun(start.mode) === "hex"
@@ -3746,23 +3729,21 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           <span className="min-w-0 truncate font-display text-sm text-parchment-100">
             {oppName} wants a rematch
           </span>
-          <button
-            type="button"
+          <Button tone="leaf"
+           
             onClick={handleRematch}
-            className="btn-leaf shrink-0 px-3 py-1.5 font-display text-xs font-semibold"
-          >
+            className="shrink-0 px-3 py-1.5 text-xs font-semibold">
             Accept
-          </button>
+          </Button>
         </motion.div>
       )}
       {game.result && !showResult && (
-        <button
-          type="button"
+        <Button tone="leaf"
+         
           onClick={() => setShowResult(true)}
-          className="btn-leaf fixed bottom-24 right-3 z-40 px-4 py-2 font-display text-sm font-semibold shadow-xl sm:bottom-16 lg:bottom-4"
-        >
+          className="fixed bottom-24 right-3 z-40 px-4 py-2 text-sm font-semibold shadow-xl sm:bottom-16 lg:bottom-4">
           Show result
-        </button>
+        </Button>
       )}
       {game.result && showResult && (
         <GameOver

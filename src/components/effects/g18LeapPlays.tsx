@@ -38,9 +38,10 @@
 
 import "./g18LeapPlays.css";
 
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import type { SigPlugin, SigRole } from "./sigPlugins";
 import { AimStage, BoardFrame, BoardWideStage } from "./stage";
+import { LaserStrike, PieceShatter, Shockwave, QUAKE_CLASS, impactVars } from "./impact/impact";
 
 interface SceneProps {
   lead: boolean;
@@ -1771,103 +1772,202 @@ function WornShoe({ role, delayMs }: SceneProps) {
    so the leap should cover that real distance in that real direction.
    ========================================================================== */
 
-function S(Render: SigPlugin["Render"], config: SigPlugin["config"]): SigPlugin {
-  return { config, Render };
+/* =============================================================================
+   FLAGSHIP IMPACT PASS — every leap LANDS: hoofquake touchdowns, shoes thrown and split.
+
+   Layered OVER each scene's own signature from the shared impact vocabulary
+   (impact/impact.tsx): a descending laser column, the struck thing splitting
+   in half and spraying shards, a ground shockwave, and the whole stage
+   jolting on the same beat. Each PLAYS entry declares its own combination,
+   impact beat, tint, landing box and tilt below, so every card in the module
+   lands a hit its siblings do not. The quake rides an inner wrapper (the
+   stage's own transform is the anchor clamp and must not be overridden) and
+   stays inside this scene's stage — the real board crop never shakes. The
+   whole composite is transform/opacity only, one-shot, scaled by --fx-dur,
+   and dark under html[data-anim="off"] via the global animation gate.
+   ========================================================================== */
+
+/** Per-card impact spec. `at` is the impact beat in ms after the lead's
+ * stagger; the laser (when present) LEADS that beat by 0.4s per the shared
+ * impact-timing contract, so the column reads as the CAUSE of the hit. */
+interface Imp {
+  /** Impact tint: the "r g b" triple --imp-rgb expects (the card's core). */
+  rgb: string;
+  /** The impact beat, ms into the lead. */
+  at: number;
+  laser?: boolean;
+  shock?: boolean;
+  /** Shatter glyph (24x24 viewBox): the struck thing, split in half. */
+  glyph?: ReactNode;
+  /** Landing box, % of the scene canvas. Defaults to the cast square. */
+  box?: [number, number, number, number];
+  /** Static tilt of the whole composite, in degrees (angled columns). */
+  rot?: number;
 }
+
+/** A thrown horseshoe: what a hard landing costs. */
+const impShoe = (fill: string, edge: string): ReactNode => (
+  <>
+    <path
+      d="M6 20.4V10.6a6 6 0 0 1 12 0v9.8"
+      fill="none"
+      stroke={fill}
+      strokeWidth="3.4"
+      strokeLinecap="round"
+    />
+    <path d="M6 20.4V10.6a6 6 0 0 1 12 0v9.8" fill="none" stroke={edge} strokeWidth="1" strokeLinecap="round" />
+  </>
+);
+
+/** The composite itself, staged over the scene's canvas on the impact beat. */
+function ImpactHit({ s, delayMs }: { s: Imp; delayMs: number }) {
+  const [l, t, w, h] = s.box ?? [43, 38, 14, 14];
+  return (
+    <span className="pointer-events-none absolute inset-0 z-30 block" aria-hidden="true">
+      <BoardWideStage>
+        <span
+          className="absolute block"
+          style={{
+            left: `${l}%`,
+            top: `${t}%`,
+            width: `${w}%`,
+            height: `${h}%`,
+            rotate: s.rot ? `${s.rot}deg` : undefined,
+            ...impactVars(s.rgb, (delayMs + s.at) / 1000),
+          }}
+        >
+          {s.laser ? <LaserStrike /> : null}
+          {s.glyph ? (
+            <PieceShatter
+              glyph={
+                <svg viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+                  {s.glyph}
+                </svg>
+              }
+            />
+          ) : null}
+          {s.shock ? <Shockwave /> : null}
+        </span>
+      </BoardWideStage>
+    </span>
+  );
+}
+
+/** Bind one bespoke scene to its config, landing its per-card impact over the
+ * lead. Target and entrance cuts keep the scene's own art unchanged. */
+function S(Render: SigPlugin["Render"], config: SigPlugin["config"], imp?: Imp): SigPlugin {
+  if (!imp) return { config, Render };
+  function FlagshipHit(p: { lead: boolean; role: SigRole; delayMs: number }) {
+    if (p.role !== "lead") return <Render {...p} />;
+    return (
+      <span className="pointer-events-none absolute inset-0 block" aria-hidden="true">
+        <span
+          className={`${QUAKE_CLASS} absolute inset-0 block`}
+          style={impactVars(imp!.rgb, (p.delayMs + imp!.at) / 1000)}
+        >
+          <Render {...p} />
+        </span>
+        <ImpactHit s={imp!} delayMs={p.delayMs} />
+      </span>
+    );
+  }
+  return { config, Render: FlagshipHit };
+}
+
 
 export const PLAYS: Record<string, SigPlugin> = {
   // --- Tier 8 ---
   bn4_founding_of_the_city: S(FurrowLeap, {
     ordering: "line", staggerMs: 60, victims: ["n"], hasLead: true, sound: "coronation", anchor: "aim",
-  }),
+  }, { rgb: "224 180 92", at: 760, laser: true, glyph: impShoe("#e0b45c", "#2c2010"), shock: true, box: [41, 34, 16, 16] }),
 
   // --- Tier 7 ---
   bn4_dancing_master: S(GrandJete, {
     ordering: "sweep", staggerMs: 60, victims: ["n", "b"], hasLead: true, sound: "coronation", source: "empower", anchor: "aim",
-  }),
+  }, { rgb: "201 162 232", at: 700, laser: true, shock: true, box: [43, 35, 14, 16], rot: 10 }),
   bn4_griffins_brood: S(FledgeLedge, {
     ordering: "radial", staggerMs: 65, victims: ["n", "b"], hasLead: true, sound: "coronation", anchor: "aim",
-  }),
+  }, { rgb: "127 208 192", at: 660, laser: true, shock: true, box: [42, 34, 15, 17] }),
   bn4_pocket_cavalry: S(TrapezeCatch, {
     ordering: "line", staggerMs: 55, victims: ["n", "p"], hasLead: true, sound: "gacha", anchor: "board",
-  }),
+  }, { rgb: "240 165 184", at: 640, glyph: impShoe("#f0a5b8", "#3a1826"), shock: true, box: [43, 37, 14, 14] }),
 
   // --- Tier 6 ---
   bn4_summer_levy: S(GrasshopperLevy, {
     ordering: "radial", staggerMs: 55, victims: ["n"], hasLead: true, sound: "blitz", anchor: "cast",
-  }),
+  }, { rgb: "183 216 97", at: 600, shock: true, box: [41, 38, 17, 12] }),
   hx4_plush_cavalry: S(PlushFlop, {
     ordering: "sweep", staggerMs: 60, victims: ["n"], hasLead: true, sound: "gacha", anchor: "aim",
-  }),
+  }, { rgb: "242 184 208", at: 560, glyph: impShoe("#f2b8d0", "#40202f"), box: [44, 38, 12, 13] }),
 
   // --- Tier 5 ---
   bn4_falconers_glove: S(FalconBate, {
     ordering: "radial", staggerMs: 55, victims: ["n"], hasLead: true, sound: "blitz", source: "empower", anchor: "board",
-  }),
+  }, { rgb: "216 160 90", at: 620, laser: true, glyph: impShoe("#d8a05a", "#2e1f10"), box: [43, 35, 13, 16] }),
   bn4_pathfinders: S(StoneSkip, {
     ordering: "line", staggerMs: 50, victims: ["n"], hasLead: true, sound: "blitz", source: "empower", anchor: "aim",
-  }),
+  }, { rgb: "134 199 234", at: 580, laser: true, shock: true, box: [44, 37, 12, 14], rot: -10 }),
   bn4_reserve_officer: S(SkiTable, {
     ordering: "line", staggerMs: 55, victims: ["n"], hasLead: true, sound: "gacha", anchor: "aim",
-  }),
+  }, { rgb: "159 212 234", at: 540, laser: true, box: [44, 35, 12, 16] }),
   bn4_veterans_return: S(SalmonWeir, {
     ordering: "line", staggerMs: 60, victims: ["n", "b"], hasLead: true, sound: "wheel", anchor: "aim",
-  }),
+  }, { rgb: "111 185 164", at: 560, shock: true, box: [43, 39, 13, 12] }),
   hx4_ash_veil: S(AshFlea, {
     ordering: "radial", staggerMs: 60, victims: ["n", "b"], hasLead: true, sound: "blitz", anchor: "board",
-  }),
+  }, { rgb: "182 177 164", at: 520, laser: true, box: [43, 36, 13, 15] }),
   hx4_grooms_leash: S(LungeLine, {
     ordering: "sweep", staggerMs: 55, victims: ["n"], hasLead: true, sound: "siege", anchor: "aim",
-  }),
+  }, { rgb: "201 143 94", at: 600, glyph: impShoe("#c98f5e", "#2f1c10"), shock: true, box: [43, 38, 13, 13] }),
   hx4_honey_spill: S(HoneyPour, {
     ordering: "radial", staggerMs: 70, victims: ["n"], hasLead: true, sound: "siege", anchor: "board",
-  }),
+  }, { rgb: "232 169 60", at: 540, shock: true, box: [42, 39, 15, 12] }),
   hx4_paddock_fence: S(WaterJump, {
     ordering: "line", staggerMs: 55, victims: ["n"], hasLead: true, sound: "siege", anchor: "aim",
-  }),
+  }, { rgb: "127 178 201", at: 520, shock: true, box: [44, 38, 12, 12] }),
   hx4_toy_box: S(StuntRamp, {
     ordering: "line", staggerMs: 50, victims: "all", hasLead: true, sound: "gacha", source: "slow", anchor: "board",
-  }),
+  }, { rgb: "242 112 79", at: 580, glyph: impShoe("#f2704f", "#33170e"), shock: true, box: [43, 36, 14, 14] }),
 
   // --- Tier 4 ---
   bn4_beetle_shell: S(ClickBeetle, {
     ordering: "radial", staggerMs: 55, victims: ["n", "b"], hasLead: true, sound: "blitz", anchor: "cast",
-  }),
+  }, { rgb: "200 118 58", at: 500, glyph: impShoe("#c8763a", "#2a1408"), box: [44, 38, 12, 12] }),
   bn4_tangled_reins: S(TangledReins, {
     ordering: "sweep", staggerMs: 55, victims: ["n"], hasLead: true, sound: "rampage", source: "slow", anchor: "aim",
-  }),
+  }, { rgb: "227 208 168", at: 480, shock: true, box: [44, 39, 12, 12] }),
   hx4_reined_back: S(RailVaultBack, {
     ordering: "sweep", staggerMs: 55, victims: ["n"], hasLead: true, sound: "siege", anchor: "aim",
-  }),
+  }, { rgb: "143 160 200", at: 500, laser: true, box: [44, 36, 12, 15], rot: 8 }),
   hx4_skittish_mounts: S(CatPounce, {
     ordering: "radial", staggerMs: 55, victims: ["n"], hasLead: true, sound: "blitz", anchor: "board",
-  }),
+  }, { rgb: "154 214 160", at: 460, shock: true, box: [43, 38, 14, 12] }),
   hx4_tin_soldiers: S(TinTip, {
     ordering: "sweep", staggerMs: 60, victims: ["n", "b"], hasLead: true, sound: "gacha", anchor: "board",
-  }),
+  }, { rgb: "185 194 201", at: 520, glyph: impShoe("#b9c2c9", "#262c31"), shock: true, box: [43, 37, 14, 13] }),
   ov_templar_vows: S(PoleVault, {
     ordering: "radial", staggerMs: 55, victims: ["b"], hasLead: true, sound: "coronation", anchor: "aim",
-  }),
+  }, { rgb: "224 72 60", at: 560, laser: true, box: [43, 34, 13, 17] }),
 
   // --- Tier 3 ---
   bn4_dressage: S(Capriole, {
     ordering: "octagon", staggerMs: 55, victims: ["n"], hasLead: true, sound: "coronation", source: "empower", anchor: "cast",
-  }),
+  }, { rgb: "203 184 148", at: 440, shock: true, box: [44, 39, 12, 11] }),
   hx4_know_your_place: S(HeightBar, {
     ordering: "line", staggerMs: 55, victims: ["n", "b"], hasLead: true, sound: "siege", anchor: "aim",
-  }),
+  }, { rgb: "168 63 82", at: 480, laser: true, shock: true, box: [43, 36, 13, 15], rot: -6 }),
   hx4_plumed_helmets: S(PlumeStall, {
     ordering: "sweep", staggerMs: 60, victims: ["n"], hasLead: true, sound: "coronation", source: "slow", anchor: "aim",
-  }),
+  }, { rgb: "143 127 212", at: 460, glyph: impShoe("#8f7fd4", "#2a2340"), box: [44, 37, 12, 13] }),
   ov_frog_prince: S(FrogHop, {
     ordering: "radial", staggerMs: 55, victims: ["n", "b"], hasLead: true, sound: "wheel", anchor: "aim",
-  }),
+  }, { rgb: "127 208 106", at: 420, shock: true, box: [44, 40, 12, 11] }),
   ov_knight_court: S(KnightL, {
     ordering: "line", staggerMs: 55, victims: ["n"], hasLead: true, sound: "coronation", anchor: "aim",
-  }),
+  }, { rgb: "217 196 142", at: 460, laser: true, box: [44, 36, 12, 14] }),
 
   // --- Tier 2 ---
   hx4_blunted_horseshoes: S(WornShoe, {
     ordering: "sweep", staggerMs: 55, victims: ["n"], hasLead: true, sound: "rampage", anchor: "aim",
-  }),
+  }, { rgb: "138 127 110", at: 440, glyph: impShoe("#8a7f6e", "#241f18"), box: [44, 38, 12, 12] }),
 };

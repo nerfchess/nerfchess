@@ -92,29 +92,39 @@ test("/play is bot practice only: one shared mode, no online queue", async ({ pa
   await expect(page.getByText("Draft buffs to outbuild the bot.")).toBeVisible();
 });
 
-test("lobby tabs: Quick Play default, Watch and Friends switch panels", async ({ page }) => {
+test("lobby tabs: Play default, folds open, legacy deep links map", async ({ page }) => {
   await page.goto("/lobby");
-  const quickTab = page.getByRole("tab", { name: /quick play/i });
-  await expect(quickTab).toHaveAttribute("aria-selected", "true", { timeout: 30_000 });
+  const playTab = page.getByRole("tab", { name: /^play/i });
+  await expect(playTab).toHaveAttribute("aria-selected", "true", { timeout: 30_000 });
   await expect(findButton(page)).toBeVisible();
 
-  await page.getByRole("tab", { name: /watch/i }).click();
+  await page.getByRole("tab", { name: /watch & friends/i }).click();
   await expect(page.getByText("Live games")).toBeVisible();
   await expect(findButton(page)).toBeHidden();
 
-  await page.getByRole("tab", { name: /friends/i }).click();
+  // The friends flow sits folded inside Watch & Friends.
+  await page.getByRole("button", { name: /play a friend/i }).click();
   await expect(page.getByLabel("Friend game code")).toBeVisible();
 
-  await page.getByRole("tab", { name: /challenges/i }).click();
-  await expect(page.getByText("Open challenges")).toBeVisible();
+  // Open challenges sits folded inside Play.
+  await page.getByRole("tab", { name: /^play/i }).click();
+  await page.getByRole("button", { name: /open challenges/i }).click();
+  await expect(page.getByRole("group", { name: "Filter challenges by mode" })).toBeVisible();
 
-  // Deep link straight into a tab.
+  // Legacy deep links map onto the two tabs and auto-open the right fold.
   await page.goto("/lobby?tab=watch");
-  await expect(page.getByRole("tab", { name: /watch/i })).toHaveAttribute(
+  await expect(page.getByRole("tab", { name: /watch & friends/i })).toHaveAttribute(
     "aria-selected",
     "true",
     { timeout: 30_000 },
   );
+  await page.goto("/lobby?tab=challenges");
+  await expect(page.getByRole("tab", { name: /^play/i })).toHaveAttribute(
+    "aria-selected",
+    "true",
+    { timeout: 30_000 },
+  );
+  await expect(page.getByRole("group", { name: "Filter challenges by mode" })).toBeVisible();
 });
 
 test("friend-code entry rejects an unjoinable code and stays on the lobby", async ({ page }) => {

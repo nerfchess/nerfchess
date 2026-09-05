@@ -16,7 +16,7 @@
 
 import type { Overview } from "./types";
 import type { SectionId } from "./nav";
-import { Empty, ModButton, SectionHead, StatCard, fmtDuration, pct } from "./ui";
+import { Empty, ModButton, Pill, SectionHead, StatGrid, fmtDuration, pct } from "./ui";
 
 /** How far a tier's score sits from a fair 50%, and whether that is worth
  *  flagging. A small sample says nothing, so it is never flagged. */
@@ -72,20 +72,20 @@ export function DashboardSection({
             ) : undefined
           }
         />
-        <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <StatCard
-            label="Open reports"
-            value={queue.openReports}
-            tone={queue.openReports > 0 ? "warn" : "good"}
+        <div className="mt-3">
+          <StatGrid
+            items={[
+              { label: "Open reports", value: queue.openReports, tone: queue.openReports > 0 ? "warn" : "good" },
+              {
+                label: "Chat flags",
+                value: queue.unreviewedChatFlags,
+                sub: "unreviewed",
+                tone: queue.unreviewedChatFlags > 0 ? "warn" : "good",
+              },
+              { label: "Active mutes", value: queue.activeMutes },
+              { label: "Active bans", value: queue.activeBans },
+            ]}
           />
-          <StatCard
-            label="Chat flags"
-            value={queue.unreviewedChatFlags}
-            sub="unreviewed"
-            tone={queue.unreviewedChatFlags > 0 ? "warn" : "good"}
-          />
-          <StatCard label="Active mutes" value={queue.activeMutes} />
-          <StatCard label="Active bans" value={queue.activeBans} />
         </div>
         <div className="mt-2 flex flex-wrap gap-2">
           <ModButton size="sm" onClick={() => onGo("players")}>
@@ -113,25 +113,31 @@ export function DashboardSection({
             </ModButton>
           }
         />
-        <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <StatCard label="Signups today" value={accounts.membersToday} sub={`${accounts.membersWeek} this week`} />
-          <StatCard label="Guests today" value={accounts.guestsToday} sub={`${accounts.guestsWeek} this week`} />
-          <StatCard label="Members, all time" value={accounts.membersTotal} />
-          <StatCard label="Human games, 15 min" value={games.humanGamesLast15Min} sub="finished recently" />
-        </div>
-        <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <StatCard
-            label="Human games today"
-            value={games.today.total}
-            sub={`${games.today.humanVsHuman} vs human · ${games.today.humanVsHouse} vs house`}
+        <div className="mt-3 space-y-3">
+          <StatGrid
+            items={[
+              { label: "Signups today", value: accounts.membersToday, sub: `${accounts.membersWeek} this week` },
+              { label: "Guests today", value: accounts.guestsToday, sub: `${accounts.guestsWeek} this week` },
+              { label: "Members, all time", value: accounts.membersTotal },
+              { label: "Human games, 15 min", value: games.humanGamesLast15Min, sub: "finished recently" },
+            ]}
           />
-          <StatCard
-            label="This week"
-            value={games.week.total}
-            sub={`${pct(games.week.humanVsHuman, games.week.total)} human-vs-human`}
+          <StatGrid
+            items={[
+              {
+                label: "Human games today",
+                value: games.today.total,
+                sub: `${games.today.humanVsHuman} vs human · ${games.today.humanVsHouse} vs house`,
+              },
+              {
+                label: "This week",
+                value: games.week.total,
+                sub: `${pct(games.week.humanVsHuman, games.week.total)} human-vs-human`,
+              },
+              { label: "Last 30 days", value: games.month.total },
+              { label: "Average game", value: fmtDuration(games.avgDurationMs), sub: "this week" },
+            ]}
           />
-          <StatCard label="Last 30 days" value={games.month.total} />
-          <StatCard label="Average game" value={fmtDuration(games.avgDurationMs)} sub="this week" />
         </div>
       </section>
 
@@ -141,17 +147,22 @@ export function DashboardSection({
           title="How human games ended"
           blurb={`Last 7 days, ${endings.total} games. A rising abandon share is the loudest signal that something mid-game is driving people off.`}
         />
-        <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-5">
-          <StatCard label="Decided" value={pct(endings.decided, endings.total)} sub={`${endings.decided} games`} />
-          <StatCard label="Resigned" value={pct(endings.resigned, endings.total)} sub={`${endings.resigned} games`} />
-          <StatCard label="Flagged" value={pct(endings.flagged, endings.total)} sub={`${endings.flagged} on time`} />
-          <StatCard
-            label="Abandoned"
-            value={pct(endings.abandoned, endings.total)}
-            sub={`${endings.abandoned} games`}
-            tone={endings.total > 20 && endings.abandoned / endings.total > 0.15 ? "warn" : undefined}
+        <div className="mt-3">
+          <StatGrid
+            cols={5}
+            items={[
+              { label: "Decided", value: pct(endings.decided, endings.total), sub: `${endings.decided} games` },
+              { label: "Resigned", value: pct(endings.resigned, endings.total), sub: `${endings.resigned} games` },
+              { label: "Flagged", value: pct(endings.flagged, endings.total), sub: `${endings.flagged} on time` },
+              {
+                label: "Abandoned",
+                value: pct(endings.abandoned, endings.total),
+                sub: `${endings.abandoned} games`,
+                tone: endings.total > 20 && endings.abandoned / endings.total > 0.15 ? "warn" : undefined,
+              },
+              { label: "Drawn", value: pct(endings.drawn, endings.total), sub: `${endings.drawn} games` },
+            ]}
           />
-          <StatCard label="Drawn" value={pct(endings.drawn, endings.total)} sub={`${endings.drawn} games`} />
         </div>
       </section>
 
@@ -171,44 +182,71 @@ export function DashboardSection({
             No house-vs-human games archived in this window yet.
           </p>
         ) : (
-          <div className="mt-3 overflow-x-auto">
-            <table className="w-full min-w-[34rem] text-left text-[13px]">
-              <thead className="smallcaps text-[11px] text-parchment-400">
-                <tr>
-                  <th className="py-1.5 pr-3">Tier</th>
-                  <th className="py-1.5 pr-3">Games</th>
-                  <th className="py-1.5 pr-3">W / D / L</th>
-                  <th className="py-1.5 pr-3">Score</th>
-                  <th className="py-1.5">Reading</th>
-                </tr>
-              </thead>
-              <tbody className="text-parchment-100">
-                {house.tiers.map((t) => {
-                  const verdict = tierVerdict(t.scorePct, t.played);
-                  return (
-                    <tr key={t.skill} className="border-t border-white/5">
-                      <td className="py-1.5 pr-3 font-mono tabular-nums">{t.skill}</td>
-                      <td className="py-1.5 pr-3 tabular-nums">{t.played}</td>
-                      <td className="py-1.5 pr-3 tabular-nums text-parchment-300">
-                        {t.won} / {t.drawn} / {t.lost}
-                      </td>
-                      <td className="py-1.5 pr-3 tabular-nums">
+          <>
+            {/* Phones: one block per tier. The "Reading" column is the whole
+                point of this section, and in a table at 390px it is exactly the
+                column that falls off the right edge. */}
+            <ul className="plate mt-3 divide-y divide-white/5 sm:hidden">
+              {house.tiers.map((t) => {
+                const v = tierVerdict(t.scorePct, t.played);
+                return (
+                  <li key={t.skill} className="px-3.5 py-2.5">
+                    <div className="flex items-center gap-2">
+                      <span className="font-display text-sm text-parchment-50">Tier {t.skill}</span>
+                      <span className="font-mono text-sm tabular-nums text-parchment-100">
                         {t.scorePct == null ? "n/a" : `${t.scorePct}%`}
-                      </td>
-                      <td
-                        className={
-                          "py-1.5 text-[12px] " +
-                          (verdict.tone === "warn" ? "text-oxblood-glow" : "text-parchment-400")
-                        }
-                      >
-                        {verdict.text}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                      </span>
+                      <span className="ml-auto">
+                        <Pill tone={v.tone === "warn" ? "warn" : "neutral"}>{v.text}</Pill>
+                      </span>
+                    </div>
+                    <div className="mt-0.5 font-mono text-[11px] tabular-nums text-parchment-400">
+                      {t.played} games · {t.won} / {t.drawn} / {t.lost}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+
+            <div className="mt-3 hidden overflow-x-auto sm:block">
+              <table className="w-full min-w-[34rem] text-left text-[13px]">
+                <thead className="text-[11px] text-parchment-400">
+                  <tr>
+                    <th className="py-1.5 pr-3">Tier</th>
+                    <th className="py-1.5 pr-3">Games</th>
+                    <th className="py-1.5 pr-3">W / D / L</th>
+                    <th className="py-1.5 pr-3">Score</th>
+                    <th className="py-1.5">Reading</th>
+                  </tr>
+                </thead>
+                <tbody className="text-parchment-100">
+                  {house.tiers.map((t) => {
+                    const verdict = tierVerdict(t.scorePct, t.played);
+                    return (
+                      <tr key={t.skill} className="border-t border-white/5">
+                        <td className="py-1.5 pr-3 font-mono tabular-nums">{t.skill}</td>
+                        <td className="py-1.5 pr-3 tabular-nums">{t.played}</td>
+                        <td className="py-1.5 pr-3 tabular-nums text-parchment-300">
+                          {t.won} / {t.drawn} / {t.lost}
+                        </td>
+                        <td className="py-1.5 pr-3 tabular-nums">
+                          {t.scorePct == null ? "n/a" : `${t.scorePct}%`}
+                        </td>
+                        <td
+                          className={
+                            "py-1.5 text-[12px] " +
+                            (verdict.tone === "warn" ? "text-oxblood-glow" : "text-parchment-400")
+                          }
+                        >
+                          {verdict.text}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </section>
 
@@ -232,7 +270,7 @@ export function DashboardSection({
               ] as const
             ).map(([label, rows]) => (
               <div key={label}>
-                <div className="smallcaps text-[11px] text-parchment-400">{label}</div>
+                <div className="text-[11px] text-parchment-400">{label}</div>
                 <ul className="mt-1.5 space-y-1">
                   {rows.map((r) => (
                     <li key={r.id} className="flex items-baseline justify-between gap-3 text-[13px]">

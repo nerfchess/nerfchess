@@ -12,10 +12,20 @@
 // in. Prop-comedy realism: chunky silhouettes, clean strokes, satisfying
 // easing, leads about 1.5s. Every card registers a lead-only Wide scene plus a
 // small square-local flourish; the reduced-motion gate lives in the CSS.
+//
+// FLAGSHIP UPGRADE WAVE: every lead's stage now QUAKES on its own impact
+// beat (quakeMs on Wide/Framed, the shared imp-quake wrapper - in-scene
+// only, never the real board crop), and each card lands a bespoke `Slam`
+// composite on the cast square: the slot's gold jackpot beacon, roulette's
+// red plummet-flash, blackjack's double felt thump, the scratch card's foil
+// panel SPLIT IN HALF, Let It Ride's coin bellyflop ripple pair, the loot
+// box's violet rarity beam, and the poker bluff's face-down card cracking
+// apart when the bluff is called.
 
 import type { CSSProperties, ReactNode } from "react";
 import type { SigPlugin, SigRole } from "./sigPlugins";
 import { BoardFrame } from "./stage";
+import { LaserStrike, PieceShatter, Shockwave, QUAKE_CLASS, impactVars } from "./impact/impact";
 import "./casinoPlays.css";
 
 interface SceneProps {
@@ -49,10 +59,15 @@ function Stage({ children, inset = "0" }: { children: ReactNode; inset?: string 
  * Board.tsx re-centres the wrapper on the board for a "board" anchor, so this
  * canvas must NOT correct itself a second time. Cast-anchored leads use
  * `Framed` instead. */
-function Wide({ children }: { children: ReactNode }) {
+function Wide({ children, quakeMs }: { children: ReactNode; quakeMs?: number }) {
   return (
     <span className="csp pointer-events-none absolute inset-0 z-30" aria-hidden="true">
-      <span className="absolute left-[-650%] top-[-650%] block h-[1400%] w-[1400%]">{children}</span>
+      <span
+        className={`absolute left-[-650%] top-[-650%] block h-[1400%] w-[1400%]${quakeMs != null ? ` ${QUAKE_CLASS}` : ""}`}
+        style={quakeMs != null ? impactVars(undefined, quakeMs / 1000) : undefined}
+      >
+        {children}
+      </span>
     </span>
   );
 }
@@ -68,14 +83,53 @@ function Wide({ children }: { children: ReactNode }) {
  * offset -37.5%: that reproduces the pre-anchoring composition EXACTLY while
  * making it independent of which square the card was cast on. The cast square
  * then carries the play's own local beats — see `Spot`. */
-function Framed({ children }: { children: ReactNode }) {
+function Framed({ children, quakeMs }: { children: ReactNode; quakeMs?: number }) {
+  // The quake rides an INNER wrapper: .fx-stage's own transform is the anchor
+  // clamp, and imp-quake's keyframed transform would override it mid-jolt.
+  const inner = (
+    <BoardFrame>
+      <span className="absolute left-[-37.5%] top-[-37.5%] block h-[175%] w-[175%]">{children}</span>
+    </BoardFrame>
+  );
   return (
     <span className="csp pointer-events-none absolute inset-0 z-30" aria-hidden="true">
       <span className="fx-stage absolute left-[-650%] top-[-650%] block h-[1400%] w-[1400%]">
-        <BoardFrame>
-          <span className="absolute left-[-37.5%] top-[-37.5%] block h-[175%] w-[175%]">{children}</span>
-        </BoardFrame>
+        {quakeMs != null ? (
+          <span className={`${QUAKE_CLASS} absolute inset-0 block`} style={impactVars(undefined, quakeMs / 1000)}>
+            {inner}
+          </span>
+        ) : (
+          inner
+        )}
       </span>
+    </span>
+  );
+}
+
+/** FLAGSHIP PASS: the cast square's IMPACT composite, mounted beside `Spot`.
+ * The shared impact vocabulary at one-cell scale: an optional laser column
+ * hammers down onto the square the card was played on, an optional glyph is
+ * split in half with shard spray, and a ground shockwave rolls out - all on
+ * one impact beat (`atMs`, absolute like every other delay here) and tinted
+ * with the play's own colour. The stage quake (`quakeMs` on Wide/Framed)
+ * rides the same beat, so the table jolt and the square hit read as ONE
+ * moment of contact. */
+function Slam({
+  rgb,
+  atMs,
+  laser = true,
+  shatter,
+}: {
+  rgb: string;
+  atMs: number;
+  laser?: boolean;
+  shatter?: ReactNode;
+}) {
+  return (
+    <span className="csp pointer-events-none absolute inset-0 z-30 block" aria-hidden="true" style={impactVars(rgb, atMs / 1000)}>
+      {laser && <LaserStrike />}
+      {shatter != null && <PieceShatter glyph={shatter} />}
+      <Shockwave />
     </span>
   );
 }
@@ -268,7 +322,7 @@ function SlotMachinePlay({ lead, role, delayMs }: SceneProps) {
   }
   return (
     <>
-      <Framed>
+      <Framed quakeMs={delayMs + 1000}>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="csp-wash"><rect x={0} y={0} width={100} height={100} fill="rgba(30,10,20,0.55)" /></g>
         <g className="csp-linger csp-linger--long" style={d(delayMs)}>
@@ -315,6 +369,7 @@ function SlotMachinePlay({ lead, role, delayMs }: SceneProps) {
       </svg>
       </Framed>
       {/* ...and the square that actually pulled the lever keeps its own beats */}
+      <Slam rgb="255 215 106" atMs={delayMs + 1000} />
       <Spot tone="#ffd76a" glow="#ff4d6d" tell={d(delayMs + 90)} hit={d(delayMs + 1000)} settle={d(delayMs + 2100)} />
     </>
   );
@@ -370,7 +425,7 @@ function RoulettePlay({ lead, role, delayMs }: SceneProps) {
   }
   return (
     <>
-      <Wide>
+      <Wide quakeMs={delayMs + 900}>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="csp-wash"><rect x={0} y={0} width={100} height={100} fill="rgba(8,26,16,0.55)" /></g>
         <g className="csp-linger csp-linger--long" style={d(delayMs)}>
@@ -396,6 +451,7 @@ function RoulettePlay({ lead, role, delayMs }: SceneProps) {
         <Payout x={23} y={82} delayMs={delayMs + 1700} n={4} />
       </svg>
       </Wide>
+      <Slam rgb="224 75 99" atMs={delayMs + 900} />
       <Spot tone="#ffd76a" glow="#e04b63" tell={d(delayMs + 120)} hit={d(delayMs + 900)} settle={d(delayMs + 1900)} />
     </>
   );
@@ -442,7 +498,7 @@ function BlackjackPlay({ lead, role, delayMs }: SceneProps) {
   }
   return (
     <>
-      <Framed>
+      <Framed quakeMs={delayMs + 1180}>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="csp-wash"><rect x={0} y={0} width={100} height={100} fill="rgba(8,26,16,0.5)" /></g>
         {/* felt table arc */}
@@ -467,6 +523,8 @@ function BlackjackPlay({ lead, role, delayMs }: SceneProps) {
         <Payout x={50} y={86} delayMs={delayMs + 2200} n={4} />
       </svg>
       </Framed>
+      <Slam rgb="31 107 68" atMs={delayMs + 1180} laser={false} />
+      <Slam rgb="255 215 106" atMs={delayMs + 2050} laser={false} />
       <Spot tone="#ffd76a" glow="#1f6b44" tell={d(delayMs + 100)} hit={d(delayMs + 1180)} settle={d(delayMs + 2400)} />
     </>
   );
@@ -503,7 +561,7 @@ function ScratchCardPlay({ lead, role, delayMs }: SceneProps) {
   ];
   return (
     <>
-      <Wide>
+      <Wide quakeMs={delayMs + 1120}>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="csp-wash"><rect x={0} y={0} width={100} height={100} fill="rgba(28,20,8,0.5)" /></g>
         <g className="csp-linger csp-linger--long" style={d(delayMs)}>
@@ -541,6 +599,7 @@ function ScratchCardPlay({ lead, role, delayMs }: SceneProps) {
         <Payout x={50} y={64} delayMs={delayMs + 1700} n={4} />
       </svg>
       </Wide>
+      <Slam rgb="185 190 201" atMs={delayMs + 1120} laser={false} shatter={<span className="absolute block" style={{ left: "22%", top: "30%", width: "56%", height: "40%", borderRadius: "8%", background: "#b9bec9", border: "2px solid #8a94a8" }} />} />
       <Spot tone="#ffd76a" glow="#c2a24a" tell={d(delayMs + 90)} hit={d(delayMs + 1120)} settle={d(delayMs + 1900)} />
     </>
   );
@@ -575,7 +634,7 @@ function LetItRidePlay({ lead, role, delayMs }: SceneProps) {
   }
   return (
     <>
-      <Framed>
+      <Framed quakeMs={delayMs + 1300}>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="csp-wash"><rect x={0} y={0} width={100} height={100} fill="rgba(28,20,8,0.5)" /></g>
         <g className="csp-linger csp-linger--long" style={d(delayMs)}>
@@ -602,6 +661,8 @@ function LetItRidePlay({ lead, role, delayMs }: SceneProps) {
         <Payout x={64} y={80} delayMs={delayMs + 1800} n={4} />
       </svg>
       </Framed>
+      <Slam rgb="95 201 176" atMs={delayMs + 1300} laser={false} />
+      <Slam rgb="255 215 106" atMs={delayMs + 1560} laser={false} />
       <Spot tone="#ffd76a" glow="#5fc9b0" tell={d(delayMs + 80)} hit={d(delayMs + 1300)} settle={d(delayMs + 2000)} />
     </>
   );
@@ -646,7 +707,7 @@ function LootBoxPlay({ lead, role, delayMs }: SceneProps) {
   }
   return (
     <>
-      <Framed>
+      <Framed quakeMs={delayMs + 980}>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="csp-wash"><rect x={0} y={0} width={100} height={100} fill="rgba(18,10,30,0.55)" /></g>
         {/* rarity rays behind the crate */}
@@ -678,6 +739,7 @@ function LootBoxPlay({ lead, role, delayMs }: SceneProps) {
         <Payout x={50} y={58} delayMs={delayMs + 1350} n={4} />
       </svg>
       </Framed>
+      <Slam rgb="185 140 255" atMs={delayMs + 980} />
       <Spot tone="#b98cff" glow="#ffd76a" tell={d(delayMs + 110)} hit={d(delayMs + 980)} settle={d(delayMs + 1800)} />
     </>
   );
@@ -712,7 +774,7 @@ function PokerBluffPlay({ lead, role, delayMs }: SceneProps) {
   }
   return (
     <>
-      <Framed>
+      <Framed quakeMs={delayMs + 1300}>
       <svg viewBox="0 0 100 100" className="h-full w-full">
         <g className="csp-wash"><rect x={0} y={0} width={100} height={100} fill="rgba(8,26,16,0.5)" /></g>
         <g className="csp-linger csp-linger--long" style={d(delayMs)}>
@@ -750,6 +812,7 @@ function PokerBluffPlay({ lead, role, delayMs }: SceneProps) {
         <g className="csp-star" style={d(delayMs + 2100)}><Star x={60} y={56} s={1.5} /></g>
       </svg>
       </Framed>
+      <Slam rgb="214 35 79" atMs={delayMs + 2100} laser={false} shatter={<span className="absolute block" style={{ left: "28%", top: "18%", width: "44%", height: "64%", borderRadius: "10%", background: "#2c4f9e", border: "2px solid #16264d" }} />} />
       <Spot tone="#d6234f" glow="#e8dcc0" tell={d(delayMs + 150)} hit={d(delayMs + 1300)} settle={d(delayMs + 2300)} />
     </>
   );

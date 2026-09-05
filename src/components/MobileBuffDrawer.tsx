@@ -71,7 +71,7 @@ export function MobileBuffDrawer({
           onClick={() => setOpen((v) => !v)}
           className="flex h-11 w-full items-center justify-between px-4 transition-colors duration-150 hover:bg-white/[0.04] active:bg-white/[0.07]"
         >
-          <span className="flex items-center gap-2 smallcaps text-[12px] text-parchment-400">
+          <span className="flex items-center gap-2 text-[12px] text-parchment-400">
             {/* Mint icon chip echoes the desktop dock's "your buffs" hero so the
                 drawer reads as the same colored surface. */}
             <span

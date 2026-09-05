@@ -9,6 +9,7 @@ import { LaurelBadge } from "./LaurelBadge";
 import { PlayerAvatar } from "./PlayerAvatar";
 import { PresenceBadge } from "./PresenceBadge";
 import { MODE_RATING_CATEGORIES } from "@/lib/ratingCategories";
+import { Button } from "@/components/ui/Button";
 
 interface Hit {
   username: string;
@@ -407,9 +408,9 @@ export function PlayerSearch({ className = "", autoFocus = false }: { className?
       {showingResults && error && (
         <div className="absolute inset-x-0 top-full z-30 mt-1 plate dropdown flex items-center justify-between gap-3 px-4 py-2.5 text-sm text-parchment-400 shadow-2xl">
           <span>Search failed.</span>
-          <button type="button" onClick={retry} className="btn-ghost min-h-[44px] px-3 py-1.5 text-xs">
+          <Button tone="ghost" onClick={retry} className="px-3 py-1.5 text-xs">
             Retry
-          </button>
+          </Button>
         </div>
       )}
 
@@ -420,7 +421,7 @@ export function PlayerSearch({ className = "", autoFocus = false }: { className?
           aria-label="Recent searches"
           className="absolute inset-x-0 top-full z-30 mt-1 plate dropdown overflow-hidden shadow-2xl"
         >
-          <p className="eyebrow px-4 pt-2 pb-1">Recent</p>
+          <p className="px-4 pt-2 pb-1">Recent</p>
           <div className="divide-y divide-white/5">
             {recent.map((item, i) => (
               <div key={item.username} className="relative flex items-center">

@@ -36,7 +36,7 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
     alternates: { canonical: path },
     robots: buff.implemented ? undefined : { index: false, follow: true },
     openGraph: { title: `${buff.name} · Nerf Chess`, description, url: path, type: "article" },
-    twitter: { card: "summary", title: `${buff.name} · Nerf Chess`, description },
+    twitter: { card: "summary_large_image", title: `${buff.name} · Nerf Chess`, description },
   };
 }
 
@@ -52,7 +52,7 @@ export default async function BuffCardPage(props: { params: Promise<{ id: string
     <>
       {NEWJEANS_PORTRAITS.has(buff.id) && (
         <div className="mx-auto max-w-3xl px-4 pt-6 sm:px-6">
-          <div className="plate corner-cut mx-auto w-40 overflow-hidden p-2 sm:w-48">
+          <div className="plate mx-auto w-40 overflow-hidden p-2 sm:w-48">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={`/newjeans/${buff.id}.svg`}
