@@ -2173,25 +2173,22 @@ html[data-anim="off"] .sq-invalid-shake { animation: none !important; }
    the box-shadow, a live "ping" ripple behind the status dot, and a gently
    fading ellipsis — all compositor-cheap and all dropped when animations are
    off in Settings so the notice stays legible without motion. */
-.waiting-banner {
+.corner-notice {
   /* The breath used to animate box-shadow directly (a full repaint every
      frame, for minutes at a time). The dim state now sits statically on the
      element and the bright state on a pseudo layer whose OPACITY breathes:
-     same read, compositor-only cost. */
+     same read, compositor-only cost. Flat box, a one pixel brass edge that
+     breathes; no glow spread. */
   position: relative;
-  box-shadow:
-    0 0 0 1px rgb(var(--accent-rgb) / 0.30),
-    0 0 18px -6px rgb(var(--accent-rgb) / 0.35);
+  box-shadow: 0 0 0 1px rgb(var(--accent-rgb) / 0.25), 0 2px 6px rgb(0 0 0 / 0.25);
 }
-.waiting-banner::after {
+.corner-notice::after {
   content: "";
   position: absolute;
   inset: 0;
   border-radius: inherit;
   pointer-events: none;
-  box-shadow:
-    0 0 0 1px rgb(var(--accent-rgb) / 0.55),
-    0 0 26px -4px rgb(var(--accent-rgb) / 0.60);
+  box-shadow: 0 0 0 1px rgb(var(--accent-rgb) / 0.55);
   opacity: 0;
   animation: waiting-breathe 2.8s ease-in-out infinite;
   will-change: opacity;
@@ -2215,8 +2212,8 @@ html[data-anim="off"] .sq-invalid-shake { animation: none !important; }
   0%, 100% { opacity: 0.35; }
   50% { opacity: 1; }
 }
-html[data-anim="off"] .waiting-banner::after,
-html[data-anim="off"] .waiting-banner,
+html[data-anim="off"] .corner-notice::after,
+html[data-anim="off"] .corner-notice,
 html[data-anim="off"] .waiting-ping,
 html[data-anim="off"] .waiting-ellipsis::after {
   animation: none;

@@ -175,6 +175,9 @@ export async function GET(request: Request, props: { params: Promise<{ username:
   // existed fall back to the time control. Take the NEWEST 300 rows (then
   // restore chronological order in JS): the old ASC LIMIT froze the chart on
   // a prolific player's oldest 300 games and never showed current history.
+  // The cap is generous (a heavy player's newest 300 games covered six weeks,
+  // so "All" was a lie); the chart buckets dense spans by day, so the payload
+  // stays small on screen even when the archive is long.
   const ratingHistoryDesc = await pgAll<{
     at: number;
     category: string | null;
@@ -186,7 +189,7 @@ export async function GET(request: Request, props: { params: Promise<{ username:
             CASE WHEN white_user_id = ? THEN white_rating_after ELSE black_rating_after END AS rating
      FROM games
      WHERE (white_user_id = ? OR black_user_id = ?) AND rated = 1
-     ORDER BY completed_at DESC LIMIT 300`,
+     ORDER BY completed_at DESC LIMIT 4000`,
     [user.id, user.id, user.id],
   );
   const ratingHistory = ratingHistoryDesc.reverse();

@@ -12,6 +12,7 @@ import { BUFF_BY_ID } from "@/engine/buffs/library";
 import { TIER_ROMAN } from "@/lib/tiers";
 import { motion } from "framer-motion";
 import { ChevronRight } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { TurnCostBadge } from "../TurnCostBadge";
 import { PassiveChip, StatusChip, UsedBadge, pliesTitle } from "./bits";
@@ -54,6 +55,39 @@ export function DockRow({
   const canUse = !!usable && activatable;
   const status = inst.spent || inst.nullified ? null : def.status?.(inst) ?? null;
 
+  // Three separate lifecycle beats, each its own class so none can swallow
+  // another:
+  //   arrive   the card lands in the hand (flash prop: newest card). Plays on
+  //            the row itself, independent of the usable styling, so a card
+  //            that is usable the moment it lands still gets its entrance.
+  //   used     the row just went from live to spent/used (or a keep-alive
+  //            rider fired and changed its status line). A one-shot burst,
+  //            detected here from the prop flip so both hands get it.
+  //   live     the card is doing something right now: a status line is
+  //            running (countdown, armed rider). A slow breath on the tier
+  //            edge and a live dot next to the chip, until it ends.
+  const [prevDead, setPrevDead] = useState(dead);
+  const [prevStatus, setPrevStatus] = useState(status);
+  const [useBeat, setUseBeat] = useState(0);
+  if (prevDead !== dead || prevStatus !== status) {
+    setPrevDead(dead);
+    setPrevStatus(status);
+    // Only a flip INTO the used state, or a rider firing on a live card,
+    // counts as a use. Going from nothing to a status is the card arming
+    // (that is the arrival), not a use.
+    if ((!prevDead && dead) || (prevStatus != null && status != null && prevStatus !== status)) {
+      setUseBeat((b) => b + 1);
+    }
+  }
+  const [bursting, setBursting] = useState(false);
+  useEffect(() => {
+    if (useBeat === 0) return;
+    setBursting(true);
+    const id = window.setTimeout(() => setBursting(false), 900);
+    return () => window.clearTimeout(id);
+  }, [useBeat]);
+  const inEffect = !dead && !!status;
+
   return (
     <motion.div
       // Gated: ungated, every dock row slid in from x:-20 under OS reduced
@@ -62,8 +96,10 @@ export function DockRow({
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: reduceMotion ? 0 : 0.25 }}
       className={
-        "dock-card relative w-full overflow-hidden rounded-[1px] border transition-transform duration-100 " +
-        (flash ? "dock-pocket-flash " : "") +
+        "dock-card relative w-full overflow-hidden rounded-[1px] border transition-colors duration-200 " +
+        (flash ? "dock-pocket-flash dock-arrive " : "") +
+        (bursting ? "dock-used-burst " : "") +
+        (inEffect ? "dock-live " : "") +
         (dead
           ? "border-[color:var(--edge)] bg-white/[0.012] "
           : canUse
@@ -77,6 +113,12 @@ export function DockRow({
       {canUse && <span aria-hidden className="absolute inset-y-1 left-0 w-[3px] bg-verdigris-glow/80" />}
       {dead && <span aria-hidden className="absolute inset-y-1 left-0 w-[3px] bg-white/15" />}
       {!canUse && !dead && <span aria-hidden className={`dock-tier-edge tier-bg-${inst.tier}`} />}
+      {/* Arrival sheen: a tier-coloured band crosses the row once as it lands.
+          Its own layer, so it plays over usable and idle rows alike. */}
+      {flash && <span aria-hidden className={`dock-arrive-sheen tier-bg-${inst.tier}`} />}
+      {/* Use burst: a bright ring that blooms and fades the moment the card
+          fires. Mounted only for the burst so nothing idles. */}
+      {bursting && <span aria-hidden className={`dock-used-ring tier-bg-${inst.tier}`} />}
       {/* Idle foil shimmer on high-tier holdings (tier 6+), the dock's quiet
           echo of the draft cards' holo finish. */}
       {!dead && inst.tier >= 6 && <span aria-hidden className="dock-shimmer" />}
@@ -120,6 +162,7 @@ export function DockRow({
         {def.kind === "passive" && !dead && <PassiveChip />}
         {/* Collapsed rows carry the live countdown/status right on the
             one-liner; the detail body repeats it in full. */}
+        {inEffect && <span aria-hidden className={`dock-live-dot tier-bg-${inst.tier}`} title="In effect" />}
         {!open && status && <StatusChip status={status} />}
         <TurnCostBadge cost={turnCost(def)} short />
         {canUse && (
