@@ -27,7 +27,8 @@ const SCAN_DIRS = ["src"];
 // data/identifier rather than copy. Kept deliberately small and explicit.
 const IGNORE = [
   // Generated registries: derived from other sources, not authored copy.
-  "src/lib/cardIconMap.gen.ts",
+  "src/lib/cardIconNames.gen.ts",
+  "src/lib/cardIconComponents.gen.ts",
   // Demo/dev-only scaffolding never shipped in the product UI.
   "src/components/effects/vfx/demo.ts",
 ];

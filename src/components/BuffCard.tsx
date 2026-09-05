@@ -2,7 +2,7 @@
 
 import { createElement } from "react";
 import { Buff, turnCost } from "@/engine/buff";
-import { COMBO_TAGS, COMBO_TAG_LABELS } from "@/engine/draft";
+import { COMBO_TAGS, COMBO_TAG_LABELS } from "@/engine/comboTags";
 import { Tier } from "@/engine/nerf";
 import { cardFaceIcon } from "@/lib/cardIcon";
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";

@@ -14,16 +14,22 @@
 //
 // NOW the exact same algorithm runs once at BUILD TIME:
 //
-//   scripts/gen-card-icons.mjs  ->  src/lib/cardIconMap.gen.ts
+//   scripts/gen-card-icons.mjs  ->  src/lib/cardIconNames.gen.ts
+//                               ->  src/lib/cardIconComponents.gen.ts
 //
-// The generated file holds the id -> icon-name map (CARD_ICON_NAMES) plus a
-// name -> component registry (GEN_ICON_COMPONENTS) built from per-icon named
-// imports, which Next's default optimizePackageImports for lucide-react
-// rewrites into per-icon deep imports — only icons actually assigned to a
-// card ship. Determinism and uniqueness guarantees are unchanged (same
-// algorithm, same inputs, verified at generation time), and the assignment is
-// bit-identical to what the runtime version produced, so every shipped card
-// keeps the face players know.
+// The NAMES file holds the id -> icon-name map (CARD_ICON_NAMES) and the set
+// of icon names the registry ships; it is small strings and loads eagerly.
+// The COMPONENTS file holds the name -> component registry
+// (GEN_ICON_COMPONENTS) built from per-icon named imports, which Next's
+// default optimizePackageImports for lucide-react rewrites into per-icon deep
+// imports. That file is reached ONLY through a dynamic import below, so the
+// ~1500 icon components are their own chunk and never ride along with a page
+// that merely draws a few card faces: cardFaceIcon stays synchronous and hands
+// back a tiny wrapper component that renders the category ring glyph until
+// the chunk lands (once per session), then the real icon. Determinism and
+// uniqueness guarantees are unchanged (same algorithm, same inputs, verified
+// at generation time), and the assignment is bit-identical to what the
+// runtime version produced, so every shipped card keeps the face players know.
 //
 // WHEN TO REGENERATE — after adding/removing/renaming cards in the libraries,
 // moving a card between nerfs and buffs, changing a card's `icon` field, or
@@ -42,7 +48,8 @@
 // ids that are not in the generated map (e.g. a stale id arriving over the
 // wire from a newer server build); library cards never reach them.
 
-import type { LucideIcon } from "lucide-react";
+import { createElement, forwardRef, lazy, Suspense } from "react";
+import type { LucideIcon, LucideProps } from "lucide-react";
 import { categoryGlyph } from "@/components/icons/cardGlyphs";
 import { CARD_GLYPH_CATEGORY, CURATED_ICON_IDS, GLYPH_CATEGORIES } from "./cardGlyphMap.gen";
 import {
@@ -181,31 +188,91 @@ import {
   Zap,
 } from "lucide-react";
 import type { BuffCategory } from "@/engine/buff";
-import { CARD_ICON_NAMES, GEN_ICON_COMPONENTS } from "./cardIconMap.gen";
+import { CARD_ICON_NAMES, CARD_ICON_REGISTRY_NAMES } from "./cardIconNames.gen";
+
+type IconComponents = typeof import("./cardIconComponents.gen");
 
 /** Canonicalize an icon name to its PascalCase key in the shipped registry.
  * Accepts both the export key ("Bomb") and lucide's kebab-case id
  * ("shield-alert"). Unknown, misspelled, or NOT-SHIPPED names return
- * undefined so a bad name never crashes (the caller falls back). */
+ * undefined so a bad name never crashes (the caller falls back). Answered
+ * from the eager names set, so no component has to load to validate a name. */
 function canonicalIconName(name: string | undefined): string | undefined {
   if (!name) return undefined;
-  // Object.hasOwn (not `in`): the registry is a plain object literal, and ids
-  // arrive off the wire — "constructor" must not resolve via the prototype.
-  if (Object.hasOwn(GEN_ICON_COMPONENTS, name)) return name;
+  if (CARD_ICON_REGISTRY_NAMES.has(name)) return name;
   const pascal = name.replace(/(^|[-_ ])(\w)/g, (_m: string, _s: string, c: string) =>
     c.toUpperCase(),
   );
-  return Object.hasOwn(GEN_ICON_COMPONENTS, pascal) ? pascal : undefined;
+  return CARD_ICON_REGISTRY_NAMES.has(pascal) ? pascal : undefined;
 }
 
-/** Resolve a lucide icon NAME to its component. Accepts both the PascalCase
+// ---------------------------------------------------------------------------
+// Lazy component registry. The components chunk is imported once, on the
+// first lucide-path face anyone renders; until it lands each wrapper draws its
+// fallback (the category ring glyph, same size and props), then the real
+// icon. After it lands, wrappers render the real icon synchronously, so there
+// is no flash on later renders, no Suspense re-entry, and SSR (which awaits
+// the import while streaming) emits the real icon too.
+// ---------------------------------------------------------------------------
+
+let loadedComponents: IconComponents | null = null;
+let componentsPromise: Promise<IconComponents> | null = null;
+
+function loadComponents(): Promise<IconComponents> {
+  if (!componentsPromise) {
+    componentsPromise = import("./cardIconComponents.gen").then((m) => {
+      loadedComponents = m;
+      return m;
+    });
+  }
+  return componentsPromise;
+}
+
+/** One wrapper per (icon name, fallback) pair, memoised so callers that key
+ * on component identity (or the static-components lint) see a stable
+ * reference across renders. */
+const LAZY_FACES = new Map<string, LucideIcon>();
+
+function lazyFace(name: string, fallback: LucideIcon): LucideIcon {
+  const key = `${name}|${fallback.displayName ?? ""}`;
+  const hit = LAZY_FACES.get(key);
+  if (hit) return hit;
+  const Inner = lazy(() =>
+    loadComponents().then((m) => ({
+      // Object.hasOwn (not `in`): the registry is a plain object literal, and
+      // ids arrive off the wire; "constructor" must not resolve via the
+      // prototype. A miss here is impossible for a generated name, but the
+      // fallback keeps a stale wire name from ever throwing.
+      default: Object.hasOwn(m.GEN_ICON_COMPONENTS, name) ? m.GEN_ICON_COMPONENTS[name] : fallback,
+    })),
+  );
+  const Face = forwardRef<SVGSVGElement, Omit<LucideProps, "ref">>(function LazyFace(props, ref) {
+    const ready = loadedComponents;
+    if (ready) {
+      const Real = Object.hasOwn(ready.GEN_ICON_COMPONENTS, name) ? ready.GEN_ICON_COMPONENTS[name] : fallback;
+      return createElement(Real, { ...props, ref });
+    }
+    return createElement(
+      Suspense,
+      { fallback: createElement(fallback, { ...props, ref }) },
+      createElement(Inner, { ...props, ref }),
+    );
+  });
+  Face.displayName = `CardFace(${name})`;
+  LAZY_FACES.set(key, Face);
+  return Face;
+}
+
+/** Resolve a lucide icon NAME to a component. Accepts both the PascalCase
  * export key ("Bomb") and lucide's kebab-case id ("shield-alert"). Resolves
- * against the generated registry — every icon any shipped card references —
+ * against the generated registry (every icon any shipped card references),
  * NOT the full lucide catalog (that is the whole point: the catalog no longer
- * ships). A name outside the registry returns undefined, same as a typo. */
-export function resolveLucideIcon(name: string | undefined): LucideIcon | undefined {
+ * ships). A name outside the registry returns undefined, same as a typo. The
+ * component is the lazy wrapper described above, drawing `fallback` until
+ * the components chunk lands; without one, the Package glyph. */
+export function resolveLucideIcon(name: string | undefined, fallback?: LucideIcon): LucideIcon | undefined {
   const key = canonicalIconName(name);
-  return key ? GEN_ICON_COMPONENTS[key] : undefined;
+  return key ? lazyFace(key, fallback ?? Package) : undefined;
 }
 
 // Thematic rings, one per category — LEGACY FALLBACK ONLY (see header). Kept
@@ -334,19 +401,22 @@ export function cardFaceIcon(
   // Overflow variants ("Name#2"): resolve the base component; the visual
   // variant is exposed separately via cardFaceVariant.
   const name = raw?.split("#")[0];
-  if (name && Object.hasOwn(GEN_ICON_COMPONENTS, name)) {
-    return GEN_ICON_COMPONENTS[name];
+  // The ring pick doubles as the lazy wrapper's fallback: it is what this id
+  // would have worn before the unique-face pass, so the swap reads as a
+  // refinement, never a jump between unrelated glyphs.
+  const ring = RINGS[category];
+  const ringPick = ring && ring.length > 0 ? ring[hashId(id) % ring.length] : undefined;
+  if (name && CARD_ICON_REGISTRY_NAMES.has(name)) {
+    return lazyFace(name, ringPick ?? Package);
   }
   if (DEV_LIBRARY_IDS?.has(id)) {
     console.error(
       `[cardIcon] library card "${id}" has no generated face icon. Run: npm run gen:icons`,
     );
   }
-  const own = resolveLucideIcon(icon);
+  const own = resolveLucideIcon(icon, ringPick);
   if (own) return own;
-  const ring = RINGS[category];
-  if (!ring || ring.length === 0) return undefined;
-  return ring[hashId(id) % ring.length];
+  return ringPick;
 }
 
 /** The face VARIANT for a card (0 = the plain icon). The library outgrew the
