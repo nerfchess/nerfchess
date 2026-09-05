@@ -141,9 +141,9 @@ test("mobile navigation (375px): hamburger opens grouped Play/Watch/Community/Yo
   await expect(openBtn).toBeVisible({ timeout: 30_000 });
   await openBtn.click();
 
-  // Scope to the opened mobile panel (uniquely identified by its "New game"
-  // entry) so the desktop nav's hidden-but-present links can't be matched.
-  const panel = page.locator(".dropdown").filter({ hasText: "New game" });
+  // Scope to the opened mobile panel so the desktop nav's hidden-but-present
+  // links can't be matched.
+  const panel = page.getByTestId("mobile-nav-panel");
   await expect(panel).toBeVisible();
   for (const header of ["Play", "Watch", "Community", "You"]) {
     await expect(panel.getByText(header, { exact: true })).toBeVisible();
@@ -167,9 +167,9 @@ test("/play is bot practice with a Play online door and no online queue; homepag
   );
   await expect(page.getByRole("button", { name: /find a .* game/i })).toHaveCount(0);
 
-  // Homepage: a visible play-a-bot entry into /play.
+  // Homepage: a visible play-the-computer entry into /play.
   await page.goto("/");
-  await expect(page.getByRole("link", { name: /^play a bot$/i })).toHaveAttribute(
+  await expect(page.getByRole("link", { name: /^play with the computer$/i })).toHaveAttribute(
     "href",
     "/play",
     { timeout: 30_000 },

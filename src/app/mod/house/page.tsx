@@ -195,7 +195,7 @@ function PersonaRow({
         )}
         {edited && (
           <span
-            className="smallcaps text-[10px] px-2 py-0.5 rounded-[1px] border border-gold/40 text-gold-leaf"
+            className="text-[10px] px-2 py-0.5 rounded-[1px] border border-gold/40 text-gold-leaf"
             title={`Default: ${persona.defaults.username}`}
           >
             edited

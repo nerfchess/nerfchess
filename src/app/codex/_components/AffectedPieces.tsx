@@ -12,7 +12,7 @@ export function AffectedPieces({ kind, card }: { kind: "buff" | "nerf"; card: Bu
   if (!line) return null;
   return (
     <div className="plate flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-center sm:gap-3">
-      <span className="smallcaps text-[12px] text-parchment-400 sm:w-32 sm:shrink-0">
+      <span className="text-[12px] text-parchment-400 sm:w-32 sm:shrink-0">
         Affected pieces
       </span>
       <p className="text-[14px] text-parchment-100">{line}</p>

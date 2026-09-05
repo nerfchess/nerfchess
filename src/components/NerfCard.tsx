@@ -36,7 +36,7 @@ export function NerfCard({ nerf, revealed = true, compact = false, dense = false
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-full border border-gold/40 bg-gold/10 flex items-center justify-center font-display text-2xl text-gold/80 font-bold">?</div>
           <div>
-            <div className="smallcaps text-[11px] text-parchment-400">{ownerLabel ?? "Opponent"}</div>
+            <div className="text-[11px] text-parchment-400">{ownerLabel ?? "Opponent"}</div>
             <div className="font-display text-xl text-parchment/80">Hidden rule</div>
           </div>
         </div>
@@ -82,7 +82,7 @@ export function NerfCard({ nerf, revealed = true, compact = false, dense = false
       <div className="relative flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="smallcaps text-[11px] text-parchment-400">
+            <span className="text-[11px] text-parchment-400">
               {ownerLabel ?? "Your nerf"}
             </span>
             <TurnCostBadge cost={NERF_TURN_COST} />
@@ -107,7 +107,7 @@ export function NerfCard({ nerf, revealed = true, compact = false, dense = false
       {progress && progress.max > 0 && (
         <div className="mt-3">
           <div className="flex items-center justify-between mb-1">
-            <span className="smallcaps text-[10px] text-parchment-400">Progress</span>
+            <span className="text-[10px] text-parchment-400">Progress</span>
             <span className="font-mono text-[10px] text-parchment-300">{progress.label}</span>
           </div>
           <div className="h-1.5 bg-white/5 overflow-hidden">
@@ -121,7 +121,7 @@ export function NerfCard({ nerf, revealed = true, compact = false, dense = false
       {/* How to live with the handicap. Advice, never a rule. */}
       {!compact && nerf.tip && (
         <p className="mt-2 text-[10.5px] leading-snug text-parchment-400">
-          <span className="smallcaps text-parchment-300">Tip</span>{" "}
+          <span className="text-parchment-300">Tip</span>{" "}
           <GlossaryText text={nerf.tip} />
         </p>
       )}
@@ -131,7 +131,7 @@ export function NerfCard({ nerf, revealed = true, compact = false, dense = false
         </p>
       )}
       {!nerf.implemented && (
-        <div className="mt-3 smallcaps text-[10px] text-gold/80">
+        <div className="mt-3 text-[10px] text-gold/80">
           Engine implementation pending
         </div>
       )}

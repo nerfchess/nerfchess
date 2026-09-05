@@ -97,7 +97,7 @@ export default function TutorialPage() {
       />
       <SiteHeader />
       <section className="max-w-3xl mx-auto px-6 pt-4">
-        <div className="smallcaps text-[11px] text-parchment-400">how to play</div>
+        <div className="text-[11px] text-parchment-400">how to play</div>
         <h1 className="font-display text-5xl sm:text-6xl mt-1">House rules</h1>
         <p className="mt-5 text-[16px] leading-[1.7] text-parchment-200">
           Nerf Chess is chess, until it isn&apos;t. Five house rules are everything you need to know.
@@ -107,7 +107,7 @@ export default function TutorialPage() {
         {/* Primary entry: the guided first game. A real bot game (weakest
             bot, no clock, buff mode) with coach marks over the live board. */}
         <div className="mt-8 plate border-gold/40 bg-gold/5 p-5 sm:p-6">
-          <div className="smallcaps text-[11px] text-gold-leaf/90">new? start here</div>
+          <div className="text-[11px] text-gold-leaf/90">new? start here</div>
           <h2 className="font-display text-3xl sm:text-4xl mt-1">
             Learn in 3 minutes: play your first draft
           </h2>
@@ -138,7 +138,7 @@ export default function TutorialPage() {
           </p>
         </div>
         <div className="mt-14">
-          <div className="smallcaps text-[11px] text-parchment-400">the four cards</div>
+          <div className="text-[11px] text-parchment-400">the four cards</div>
           <h2 className="font-display text-3xl sm:text-4xl mt-1">Nerf, buff, hex, boon</h2>
           <p className="mt-4 text-[15px] leading-[1.7] text-parchment-200">
             Every card in the game is one of these four. The trick is who each one lands on: a nerf and
@@ -150,12 +150,12 @@ export default function TutorialPage() {
               <div key={c.tag} className="plate p-5 sm:p-6">
                 <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                   <span className="font-display text-2xl text-gold-leaf">{c.tag}</span>
-                  <span className="smallcaps text-[11px] text-parchment-400">{c.who}</span>
+                  <span className="text-[11px] text-parchment-400">{c.who}</span>
                 </div>
                 <p className="mt-2 text-[15px] leading-relaxed text-parchment-200/90">{c.d}</p>
                 {c.example && (
                   <p className="mt-3 text-[14px] leading-relaxed text-parchment-200/80 border-l border-gold-leaf/40 pl-3">
-                    <span className="smallcaps text-[11px] text-parchment-400">for example</span>
+                    <span className="text-[11px] text-parchment-400">for example</span>
                     <br />
                     {c.example}
                   </p>

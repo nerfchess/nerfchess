@@ -566,7 +566,7 @@ function ProfileContent() {
             <AchievementsStrip username={user.username} />
             {stats && (
               <div className="mt-10">
-                <div className="eyebrow">Record</div>
+                <div>Record</div>
                 <h2 className="mt-1 font-display text-2xl">Statistics</h2>
                 <div className="mt-3">
                   <PlayerStatsPanel stats={stats} peakRating={peakRating} />
@@ -575,7 +575,7 @@ function ProfileContent() {
             )}
             {ratingHistory.length > 0 && (
               <div className="mt-10">
-                <div className="eyebrow">Form</div>
+                <div>Form</div>
                 <h2 className="mt-1 font-display text-2xl">Rating history</h2>
                 <div className="mt-3">
                   <RatingHistoryPanel
@@ -1228,7 +1228,7 @@ function GamesTab({
         style={{ borderColor: "var(--edge)" }}
       >
         {playingNow && (
-          <span className="inline-flex items-center gap-1.5 smallcaps text-[12px] text-oxblood-glow">
+          <span className="inline-flex items-center gap-1.5 text-[12px] text-oxblood-glow">
             <span aria-hidden className="dot-live h-2 w-2 rounded-full bg-oxblood-glow" />
             Playing now
           </span>
@@ -1334,7 +1334,7 @@ function Count({ label, value }: { label: string; value: string | number }) {
   return (
     <span className="flex items-baseline gap-1.5">
       <span className="font-mono text-sm tabular-nums text-parchment-100">{value}</span>
-      <span className="smallcaps text-[12px] text-parchment-400">{label}</span>
+      <span className="text-[12px] text-parchment-400">{label}</span>
     </span>
   );
 }
@@ -1421,7 +1421,7 @@ function GameHistoryRow({ game, viewer }: { game: RecentGameRow; viewer: string 
         </span>
 
         <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs sm:justify-end">
-          <span className="smallcaps text-[12px] text-parchment-400">{game.rated ? "Rated" : "Casual"}</span>
+          <span className="text-[12px] text-parchment-400">{game.rated ? "Rated" : "Casual"}</span>
           <span className="font-mono text-parchment-400">{clockLabel(game.time_sec, game.increment_sec)}</span>
           {/* Rating change as its own bordered chip, with a " · " separator, so
               the delta can never run together with the date. Sign in text. */}
@@ -1554,7 +1554,7 @@ function AchievementsStrip({ username }: { username: string }) {
               </span>
             );
           })}
-          <span className="smallcaps text-[12px] text-gold-leaf">
+          <span className="text-[12px] text-gold-leaf">
             {expanded ? "Hide" : "See all"}
           </span>
         </span>
@@ -1609,7 +1609,7 @@ function AchievementsStrip({ username }: { username: string }) {
               <div className="mt-3">
                 <Link
                   href={`/achievements?u=${encodeURIComponent(username)}`}
-                  className="smallcaps text-[12px] text-gold-leaf transition-colors hover:text-sun-glow"
+                  className="text-[12px] text-gold-leaf transition-colors hover:text-sun-glow"
                 >
                   Open the achievements wall
                 </Link>
@@ -1638,7 +1638,7 @@ function CurrentStandings({ placements }: { placements: LaurelPlacement[] }) {
         </span>
         <Link
           href="/leaderboard"
-          className="smallcaps text-[12px] text-gold-leaf transition-colors hover:text-sun-glow"
+          className="text-[12px] text-gold-leaf transition-colors hover:text-sun-glow"
         >
           Leaderboard
         </Link>
@@ -1652,7 +1652,7 @@ function CurrentStandings({ placements }: { placements: LaurelPlacement[] }) {
               href="/leaderboard"
               title={placementTitle(p)}
               className={
-                "hover-lift flex items-center gap-2.5 border px-3 py-2 no-underline " +
+                "flex items-center gap-2.5 border px-3 py-2 no-underline " +
                 (podium
                   ? "podium-rim-gold border-transparent bg-sun/[0.07]"
                   : "bg-white/[0.03]")
@@ -1882,7 +1882,7 @@ function EditorFold({
             (open ? "rotate-90" : "")
           }
         />
-        <span className="smallcaps rounded-[1px] border border-gold/40 px-2 py-0.5 text-[12px] text-gold-leaf">
+        <span className="rounded-[1px] border border-gold/40 px-2 py-0.5 text-[12px] text-gold-leaf">
           {label}
         </span>
         {!open && <span className="text-xs text-parchment-400">Show tools</span>}
@@ -1969,7 +1969,7 @@ function RatingEditor({
   return (
     <div className="mt-5 plate border border-gold/25 p-4">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="smallcaps rounded-[1px] border border-gold/40 px-2 py-0.5 text-[12px] text-gold-leaf">
+        <span className="rounded-[1px] border border-gold/40 px-2 py-0.5 text-[12px] text-gold-leaf">
           Rating editor
         </span>
         <span className="text-xs text-parchment-400">
@@ -2167,7 +2167,7 @@ function HouseBotEditor({
   return (
     <div className="mt-5 plate border border-gold/25 p-4">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="smallcaps rounded-[1px] border border-gold/40 px-2 py-0.5 text-[12px] text-gold-leaf">
+        <span className="rounded-[1px] border border-gold/40 px-2 py-0.5 text-[12px] text-gold-leaf">
           House bot
         </span>
         <span className="text-xs text-parchment-400">

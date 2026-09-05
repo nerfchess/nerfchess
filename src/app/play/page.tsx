@@ -313,7 +313,7 @@ function TimeSlider({
   return (
     <div className={disabled ? "opacity-50" : ""}>
       <div className="flex items-center justify-between mb-2">
-        <div className="smallcaps text-[11px] text-parchment-400">{label}</div>
+        <div className="text-[11px] text-parchment-400">{label}</div>
         <div className="font-mono text-sm text-gold-leaf tabular-nums">{display}</div>
       </div>
       <input
@@ -337,7 +337,7 @@ function TimeSlider({
 function Group({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <div className="smallcaps text-[11px] text-parchment-400 mb-2">{label}</div>
+      <div className="text-[11px] text-parchment-400 mb-2">{label}</div>
       <div className="flex flex-wrap gap-2">{children}</div>
     </div>
   );
@@ -355,7 +355,7 @@ function Pill({
       className={
         "press inline-flex min-h-[44px] items-center justify-center border px-4 py-2 font-display text-[13px] transition " +
         (selected
-          ? "bg-gold/20 border-gold text-gold-leaf shadow-leaf"
+          ? "bg-gold/20 border-gold text-gold-leaf"
           : "border-white/15 text-parchment-200 hover:border-white/30 hover:bg-white/5")
       }
     >

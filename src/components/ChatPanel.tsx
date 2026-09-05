@@ -100,11 +100,11 @@ export function ChatPanel({
         aria-expanded={false}
         aria-label="Expand chat"
         className={
-          "plate flex w-full items-center gap-2 p-2 px-3 text-left transition hover:border-gold/40 " +
+          "plate plate-hover flex w-full items-center gap-2 p-2 px-3 text-left " +
           className
         }
       >
-        <span className="smallcaps shrink-0 text-[9px] text-parchment-400">Chat</span>
+        <span className="shrink-0 text-[9px] text-parchment-400">Chat</span>
         {unread > 0 && (
           <span className="grid h-4 min-w-[1rem] shrink-0 place-items-center rounded-[1px] bg-gold px-1 font-mono text-[9px] font-bold text-ink-950">
             {unread}
@@ -155,12 +155,12 @@ export function ChatPanel({
       }
     >
       <div className="flex shrink-0 items-center justify-between px-1 pb-1">
-        <span className="smallcaps text-[9px] text-parchment-400">Chat</span>
+        <span className="text-[9px] text-parchment-400">Chat</span>
         <span className="flex items-center gap-2">
           <button
             type="button"
             onClick={toggleMute}
-            className="inline-flex items-center -mx-1 -my-1 min-h-[44px] px-2 py-2 smallcaps text-[9px] text-parchment-400 hover:text-parchment-100 transition-colors"
+            className="inline-flex items-center -mx-1 -my-1 min-h-[44px] px-2 py-2 text-[9px] text-parchment-400 hover:text-parchment-100 transition-colors"
             title={muted ? "Show chat messages" : "Hide chat messages"}
           >
             {muted ? "Unmute" : "Mute"}
@@ -171,7 +171,7 @@ export function ChatPanel({
               onClick={() => setExpanded(false)}
               aria-label="Collapse chat"
               title="Collapse chat"
-              className="inline-flex items-center -mx-1 -my-1 min-h-[44px] px-2 py-2 smallcaps text-[9px] text-parchment-400 hover:text-parchment-100 transition-colors"
+              className="inline-flex items-center -mx-1 -my-1 min-h-[44px] px-2 py-2 text-[9px] text-parchment-400 hover:text-parchment-100 transition-colors"
             >
               Collapse
             </button>

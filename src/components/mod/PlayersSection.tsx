@@ -153,7 +153,7 @@ export function PlayersSection({
       </div>
 
       {!query.trim() && (
-        <p className="smallcaps text-[10px] text-parchment-400">Recent players</p>
+        <p className="text-[10px] text-parchment-400">Recent players</p>
       )}
 
       {users.length === 0 ? (
@@ -308,7 +308,7 @@ export function PlayersSection({
 
           <div className="grid gap-4 border-t border-white/10 pt-4 text-sm sm:grid-cols-2">
             <div>
-              <h3 className="smallcaps text-xs text-parchment-400">Mod history</h3>
+              <h3 className="text-xs text-parchment-400">Mod history</h3>
               {history.length === 0 ? (
                 <p className="mt-2 text-parchment-300">Clean record.</p>
               ) : (
@@ -324,7 +324,7 @@ export function PlayersSection({
               )}
             </div>
             <div>
-              <h3 className="smallcaps text-xs text-parchment-400">Reports against them</h3>
+              <h3 className="text-xs text-parchment-400">Reports against them</h3>
               {reports.length === 0 ? (
                 <p className="mt-2 text-parchment-300">None.</p>
               ) : (

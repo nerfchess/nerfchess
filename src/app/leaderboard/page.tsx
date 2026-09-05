@@ -124,7 +124,7 @@ export default function LeaderboardPage() {
       <SiteHeader active="/leaderboard" />
 
       <section className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
-        <span className="eyebrow">Ranked ladder</span>
+        <span>Ranked ladder</span>
         <h1 className="mt-1 font-display text-4xl text-parchment-50 sm:text-5xl">Leaderboard</h1>
 
         {/* Ladder switch: the only two boards, Nerf and Buff. */}
@@ -196,11 +196,11 @@ export default function LeaderboardPage() {
                 so rank, name, and rating carry the hierarchy on their own. */}
             <div className="mt-6 overflow-hidden border-y border-[color:var(--edge)]">
               <div className="grid grid-cols-[2.25rem_1fr_4.5rem] items-center border-b border-[color:var(--edge)] px-3 py-3 text-xs text-parchment-400 sm:grid-cols-[3rem_1fr_5rem_4rem_6rem] sm:px-4">
-                <span className="eyebrow text-[11px]">#</span>
-                <span className="eyebrow text-[11px]">Player</span>
-                <span className="eyebrow text-right text-[11px]">{active.label}</span>
-                <span className="eyebrow hidden text-right text-[11px] sm:block">Games</span>
-                <span className="eyebrow hidden text-right text-[11px] sm:block">W / L / D</span>
+                <span className="text-[11px]">#</span>
+                <span className="text-[11px]">Player</span>
+                <span className="text-right text-[11px]">{active.label}</span>
+                <span className="hidden text-right text-[11px] sm:block">Games</span>
+                <span className="hidden text-right text-[11px] sm:block">W / L / D</span>
               </div>
 
               {pageRows.length === 0 ? (

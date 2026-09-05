@@ -123,7 +123,7 @@ export function DockRow({
         {!open && status && <StatusChip status={status} />}
         <TurnCostBadge cost={turnCost(def)} short />
         {canUse && (
-          <span className="smallcaps shrink-0 rounded-[1px] border border-verdigris-glow/50 bg-verdigris/15 px-1 py-px text-[12px] font-semibold text-verdigris-glow">
+          <span className="shrink-0 rounded-[1px] border border-verdigris-glow/50 bg-verdigris/15 px-1 py-px text-[12px] font-semibold text-verdigris-glow">
             Usable
           </span>
         )}
@@ -137,12 +137,12 @@ export function DockRow({
       {open && (
         <div className="px-2 pb-1.5">
           {count > 1 && (
-            <div className="smallcaps mb-1 text-[11px] text-parchment-400">
+            <div className="mb-1 text-[11px] text-parchment-400">
               {count} identical copies{owner === "mine" ? " · Use plays one at a time" : ""}
             </div>
           )}
           {status && (
-            <div title={pliesTitle(status)} className="smallcaps mb-1 truncate text-[12px] text-gold/80">
+            <div title={pliesTitle(status)} className="mb-1 truncate text-[12px] text-gold/80">
               {status}
             </div>
           )}

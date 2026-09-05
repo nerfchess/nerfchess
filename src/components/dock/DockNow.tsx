@@ -66,7 +66,7 @@ export function DockNow({ game, myColor }: { game: NerfGame; myColor: Color }) {
       className={"mt-2 flex items-center gap-2 rounded-[1px] border px-2 py-1.5 " + draftStatus.frame}
     >
       <draftStatus.Icon aria-hidden size={11} strokeWidth={2.2} className={"shrink-0 " + draftStatus.ink} />
-      <span className={"smallcaps min-w-0 flex-1 truncate text-[12px] " + draftStatus.ink}>
+      <span className={"min-w-0 flex-1 truncate text-[12px] " + draftStatus.ink}>
         {draftStatus.label}
       </span>
       {/* The next offer is taken whole. A chip, not a banner: it changes what
@@ -74,7 +74,7 @@ export function DockNow({ game, myColor }: { game: NerfGame; myColor: Color }) {
       {takeBoth && draftMovesLeft != null && !myDraftBlocked && (
         <span
           title="Your next draft takes BOTH cards"
-          className="smallcaps flex shrink-0 items-center gap-1 rounded-[1px] border border-gold/50 bg-gold/10 px-1 py-px text-[12px] font-semibold text-gold-leaf"
+          className="flex shrink-0 items-center gap-1 rounded-[1px] border border-gold/50 bg-gold/10 px-1 py-px text-[12px] font-semibold text-gold-leaf"
         >
           <Layers aria-hidden size={10} strokeWidth={2.4} />
           Both
@@ -89,7 +89,7 @@ export function DockNow({ game, myColor }: { game: NerfGame; myColor: Color }) {
               ? "Opponent's next draft is blocked"
               : `Opponent's next ${oppDraftBlocked} drafts are blocked`
           }
-          className="smallcaps flex shrink-0 items-center gap-1 rounded-[1px] border border-oxblood-glow/40 bg-oxblood/15 px-1 py-px text-[12px] font-semibold text-oxblood-glow"
+          className="flex shrink-0 items-center gap-1 rounded-[1px] border border-oxblood-glow/40 bg-oxblood/15 px-1 py-px text-[12px] font-semibold text-oxblood-glow"
         >
           <Ban aria-hidden size={10} strokeWidth={2.4} />
           {oppDraftBlocked > 1 ? oppDraftBlocked : ""}

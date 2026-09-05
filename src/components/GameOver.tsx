@@ -309,7 +309,7 @@ function DraftedGroup({
   return (
     <div className="border border-[color:var(--edge)] bg-ink-900/40 p-3 text-left">
       <div className="flex items-baseline justify-between gap-2">
-        <span className="eyebrow">{label}</span>
+        <span>{label}</span>
         {hint && <span className="shrink-0 text-xs text-parchment-400">{hint}</span>}
       </div>
       <ul className="mt-1.5 divide-y divide-[color:var(--edge)]">
@@ -327,7 +327,7 @@ function RuleReveal({ label, nerf, children }: { label: string; nerf: Nerf; chil
   return (
     <div className={`border p-3 text-left tier-bg-${nerf.tier}`}>
       <div className="flex items-center justify-between gap-2">
-        <span className="eyebrow">{label}</span>
+        <span>{label}</span>
         <span
           className={`inline-flex items-center gap-1 border px-1.5 py-0.5 font-display text-[11px] font-bold leading-none tier-bg-${nerf.tier} tier-${nerf.tier}`}
           title={`Difficulty ${nerf.tier}: ${TIER_LABEL[nerf.tier]}`}
@@ -370,7 +370,7 @@ function SummaryFold({
     <details className="group mt-5 border border-[color:var(--edge)] bg-ink-900/40 text-left">
       <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-3 py-2.5 outline-none focus-visible:text-gold-leaf [&::-webkit-details-marker]:hidden">
         <span className="flex min-w-0 items-baseline gap-2">
-          <span className="eyebrow">{label}</span>
+          <span>{label}</span>
           {count != null && (
             <span className="font-mono text-[11px] tabular-nums text-parchment-400">{count}</span>
           )}
@@ -420,7 +420,7 @@ function MatchTimeline({
   return (
     <section className="mt-5 text-left" aria-label="Match timeline">
       <div className="flex items-baseline justify-between gap-2">
-        <span className="eyebrow">Match timeline</span>
+        <span>Match timeline</span>
         <span className="text-xs text-parchment-400 tabular">{total} plies</span>
       </div>
       <div className="relative mt-2 h-8">
@@ -455,7 +455,7 @@ function MatchTimeline({
               (e.tier
                 ? `tier-bg-${e.tier} tier-${e.tier} border-current`
                 : "border-gold/60 bg-gold/30 text-gold-leaf") +
-              (active === i ? " scale-125 shadow-leaf" : "")
+              (active === i ? " scale-125" : "")
             }
             style={{ left: `${(e.ply / total) * 100}%` }}
           />
@@ -814,7 +814,7 @@ export function GameOver({
         initial={reduceMotion ? { opacity: 0 } : { y: 16, scale: 0.96, opacity: 0 }}
         animate={reduceMotion ? { opacity: 1 } : { y: 0, scale: 1, opacity: 1 }}
         transition={{ type: "spring", stiffness: 320, damping: 26 }}
-        className="dgn-slab dgn-rivets gilt relative w-[min(94vw,30rem)] max-h-[calc(100dvh-3rem)] overflow-y-auto p-6 text-center shadow-2xl sm:p-7"
+        className="plate plate-raised relative w-[min(94vw,30rem)] max-h-[calc(100dvh-3rem)] overflow-y-auto p-6 text-center sm:p-7"
         onPointerDown={(event) => event.stopPropagation()}
       >
         <span className="card-corner tl" />
@@ -841,11 +841,11 @@ export function GameOver({
         )}
 
         <div className="flex items-center justify-center gap-2">
-          <p className="eyebrow">Game over</p>
+          <p>Game over</p>
           {modeChip && (
             <span
               className={
-                "inline-flex items-center rounded-[1px] border px-2 py-0.5 text-[11px] leading-none smallcaps " +
+                "inline-flex items-center rounded-[1px] border px-2 py-0.5 text-[11px] leading-none " +
                 (mode === "nerf"
                   ? "border-mode-nerf/40 bg-mode-nerf/10 text-mode-nerfGlow"
                   : "border-mode-buff/40 bg-mode-buff/10 text-mode-buffGlow")
@@ -1068,7 +1068,7 @@ export function GameOver({
                 onClick={onClip}
                 data-share-reel
                 block
-                className="mt-6 px-5 py-2.5 font-semibold"
+                className="zen-hide mt-6 px-5 py-2.5 font-semibold"
               >
                 {reelIcon}
                 Share reel
@@ -1117,8 +1117,10 @@ export function GameOver({
             {/* Secondary actions: Share, Analyze, the archived replay, PGN,
                 and both players' profiles (real usernames). One entry each;
                 the move-review entry point lives in the game view, and the
-                reel entry is the gold action above. */}
-            <div className="mt-2 grid grid-cols-2 gap-2">
+                reel entry is the gold action above.
+                zen-hide: these are the social/sharing extras, so zen mode
+                stands them down and leaves Rematch and New opponent. */}
+            <div className="zen-hide mt-2 grid grid-cols-2 gap-2">
               <Button tone="ghost"
                
                 onClick={handleShare}

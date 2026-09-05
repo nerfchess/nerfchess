@@ -630,7 +630,7 @@
    "duration": "unstated",
    "targets": "enemy",
    "signature": "info|passive|init+filter+onMove|unstated|enemy|capture",
-   "animation": "generated",
+   "animation": "passive",
    "location": "src/engine/buffs/boons4.ts",
    "tests": [
     "lab-run-all.ts"
@@ -11760,7 +11760,7 @@
    "duration": "next-turn",
    "targets": "enemy",
    "signature": "movement|passive|init+onMove|next-turn|enemy|capture,castle,king,move,rook",
-   "animation": "generated",
+   "animation": "passive",
    "location": "src/engine/buffs/library.ts",
    "tests": [
     "lab-run-all.ts"

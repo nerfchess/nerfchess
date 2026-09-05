@@ -259,7 +259,7 @@ export default function CommunityPage() {
       <section className="mx-auto max-w-5xl px-5 py-6 sm:px-6 sm:py-8">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <span className="eyebrow">The hall</span>
+            <span>The hall</span>
             <h1 className="mt-1 font-display text-4xl sm:text-5xl">Community</h1>
           </div>
           {/* One status pill, same border-chip treatment the lobby uses. */}
