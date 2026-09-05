@@ -244,6 +244,7 @@ export const CARD_HISTORY: Record<string, CardHistoryEvent[]> = {
   ],
   "buff:bw2_alchemists_trade": [
     { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+    { date: "2026-09-05", kind: "reword", note: "Text rewritten to say plainly what the effect does; the rule itself did not change." },
   ],
   "buff:queen_storm": [
     { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 7 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
@@ -268,6 +269,7 @@ export const CARD_HISTORY: Record<string, CardHistoryEvent[]> = {
   ],
   "buff:loyal_pawn": [
     { date: "2026-09-05", kind: "retier", note: "Moved from Tier 1 to Tier 6 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+    { date: "2026-09-05", kind: "reword", note: "Text rewritten to say plainly what the effect does; the rule itself did not change." },
   ],
   "buff:bw3_heir_apparent": [
     { date: "2026-09-05", kind: "retier", note: "Moved from Tier 1 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
@@ -286,6 +288,7 @@ export const CARD_HISTORY: Record<string, CardHistoryEvent[]> = {
   ],
   "buff:warp_field": [
     { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+    { date: "2026-09-05", kind: "reword", note: "Text rewritten to say plainly what the effect does; the rule itself did not change." },
   ],
   "buff:bw3_turn_the_tide": [
     { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
@@ -541,6 +544,7 @@ export const CARD_HISTORY: Record<string, CardHistoryEvent[]> = {
   ],
   "buff:moai_head": [
     { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+    { date: "2026-09-05", kind: "reword", note: "Text rewritten to say plainly what the effect does; the rule itself did not change." },
   ],
   "buff:bn4_town_walls": [
     { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 3 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
@@ -640,9 +644,11 @@ export const CARD_HISTORY: Record<string, CardHistoryEvent[]> = {
   ],
   "buff:wa_stone_pawns": [
     { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 1 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+    { date: "2026-09-05", kind: "reword", note: "Text rewritten to say plainly what the effect does; the rule itself did not change." },
   ],
   "buff:wc_quicksand_patch": [
     { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 1 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+    { date: "2026-09-05", kind: "reword", note: "Text rewritten to say plainly what the effect does; the rule itself did not change." },
   ],
   "buff:ov_midas_gauntlet": [
     { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 2 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
@@ -1085,9 +1091,6 @@ export const CARD_HISTORY: Record<string, CardHistoryEvent[]> = {
   "buff:chess_diff": [
     { date: "2026-09-05", kind: "reword", note: "Text rewritten to say plainly what the effect does; the rule itself did not change." },
   ],
-  "buff:moai_head": [
-    { date: "2026-09-05", kind: "reword", note: "Text rewritten to say plainly what the effect does; the rule itself did not change." },
-  ],
   "buff:skibidi_flush": [
     { date: "2026-09-05", kind: "reword", note: "Text rewritten to say plainly what the effect does; the rule itself did not change." },
   ],
@@ -1106,22 +1109,7 @@ export const CARD_HISTORY: Record<string, CardHistoryEvent[]> = {
   "buff:divine_reckoning": [
     { date: "2026-09-05", kind: "reword", note: "Text rewritten to say plainly what the effect does; the rule itself did not change." },
   ],
-  "buff:bw2_alchemists_trade": [
-    { date: "2026-09-05", kind: "reword", note: "Text rewritten to say plainly what the effect does; the rule itself did not change." },
-  ],
-  "buff:loyal_pawn": [
-    { date: "2026-09-05", kind: "reword", note: "Text rewritten to say plainly what the effect does; the rule itself did not change." },
-  ],
   "buff:bee_swarm_simulator": [
-    { date: "2026-09-05", kind: "reword", note: "Text rewritten to say plainly what the effect does; the rule itself did not change." },
-  ],
-  "buff:warp_field": [
-    { date: "2026-09-05", kind: "reword", note: "Text rewritten to say plainly what the effect does; the rule itself did not change." },
-  ],
-  "buff:wa_stone_pawns": [
-    { date: "2026-09-05", kind: "reword", note: "Text rewritten to say plainly what the effect does; the rule itself did not change." },
-  ],
-  "buff:wc_quicksand_patch": [
     { date: "2026-09-05", kind: "reword", note: "Text rewritten to say plainly what the effect does; the rule itself did not change." },
   ],
   "buff:nerf_this": [

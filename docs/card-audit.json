@@ -21726,7 +21726,7 @@
    "duration": "next-turn",
    "targets": "enemy",
    "signature": "pieces|passive|onMove|next-turn|enemy|knight,move,pawn,square",
-   "animation": "bespoke+passive",
+   "animation": "bespoke+canvas+passive",
    "location": "src/engine/buffs/funny/summons.ts",
    "tests": [
     "test-desync.cjs",

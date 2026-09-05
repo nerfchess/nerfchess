@@ -1120,6 +1120,23 @@ function text(c: ClassifiableCard): string {
 // ---------------------------------------------------------------------------
 
 export const EFFECT_CATEGORY_OVERRIDES: Record<string, EffectCategoryId> = {
+  // 2026-09 balance pass: these descriptions were rewritten to plain language;
+  // the effect (and so its category, which the play scenes are graded against)
+  // did not change, so the previous classification is pinned.
+  "buff:chess_diff": "draft-advantage",
+  "buff:bee_swarm_simulator": "mass-army-spawn",
+  "buff:bw2_shadow_reserve": "instant-piece-spawn",
+  "buff:skibidi_flush": "enemy-movement-restriction",
+  "buff:wa_stone_pawns": "piece-downgrade-transform",
+  "buff:wc_quicksand_patch": "terrain-hazard",
+  "buff:loyal_pawn": "promotion-grant",
+  "buff:warp_field": "delayed-contract",
+  "buff:moai_head": "movement-upgrade",
+  "buff:hw2_pauper_crown": "promotion-grant",
+  "buff:bw3_the_homecoming": "piece-revival",
+  "buff:grand_conjunction": "mass-freeze",
+  "buff:divine_reckoning": "single-piece-freeze",
+  "buff:bw2_alchemists_trade": "promotion-grant",
   // Flavour NAMES that read as a mechanic the card does not have. The ladder
   // matches "name. description" (same as nerfCategories) because names carry
   // real signal for terse rules text ("Resurrect", "Eternal Freeze",

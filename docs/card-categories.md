@@ -14,24 +14,24 @@ Cards do several things at once, so the ladder is priority-ordered and first-mat
 | [single-piece-shield](#single-piece-shield) | Makes one piece hard to capture | 123 | 70 | 2 | 37 | 14 | - | - |
 | [self-movement-restriction](#self-movement-restriction) | Narrows how you may move | 107 | 8 | 6 | 22 | - | 1 | 70 |
 | [zone-denial](#zone-denial) | Closes off squares, ranks or files | 104 | 16 | 42 | 2 | 4 | 1 | 39 |
+| [enemy-movement-restriction](#enemy-movement-restriction) | Narrows how the opponent may move | 99 | 15 | 72 | 10 | 2 | - | - |
 | [mass-freeze](#mass-freeze) | Freezes the whole enemy army | 99 | 29 | 55 | 5 | 1 | 4 | 5 |
-| [enemy-movement-restriction](#enemy-movement-restriction) | Narrows how the opponent may move | 98 | 14 | 72 | 10 | 2 | - | - |
-| [instant-piece-spawn](#instant-piece-spawn) | Instantly spawns a piece | 95 | 58 | 2 | 19 | 9 | 2 | 5 |
+| [instant-piece-spawn](#instant-piece-spawn) | Instantly spawns a piece | 96 | 58 | 2 | 20 | 9 | 2 | 5 |
 | [movement-phase-jump](#movement-phase-jump) | Lets a piece jump or pass through pieces | 93 | 47 | 35 | 10 | - | 1 | - |
-| [draft-advantage](#draft-advantage) | Improves your own drafts | 91 | 56 | 3 | 26 | 6 | - | - |
+| [draft-advantage](#draft-advantage) | Improves your own drafts | 92 | 56 | 3 | 27 | 6 | - | - |
 | [nerf-relief](#nerf-relief) | Suspends or removes your own nerf | 82 | - | - | 81 | - | - | 1 |
 | [forced-move](#forced-move) | Forces a specific move | 77 | 1 | 11 | - | - | 1 | 64 |
+| [piece-downgrade-transform](#piece-downgrade-transform) | Turns a piece into something weaker | 59 | 10 | 46 | - | - | 1 | 2 |
 | [info-reveal](#info-reveal) | Reveals hidden information | 58 | 22 | - | 15 | 21 | - | - |
-| [piece-downgrade-transform](#piece-downgrade-transform) | Turns a piece into something weaker | 58 | 9 | 46 | - | - | 1 | 2 |
 | [promotion-grant](#promotion-grant) | Promotes a pawn early or for free | 56 | 24 | 11 | 16 | - | 1 | 4 |
-| [piece-nudge-reposition](#piece-nudge-reposition) | Shoves a piece without a move | 53 | 38 | 4 | 2 | 8 | 1 | - |
+| [piece-nudge-reposition](#piece-nudge-reposition) | Shoves a piece without a move | 52 | 37 | 4 | 2 | 8 | 1 | - |
 | [teleport-relocate](#teleport-relocate) | Teleports a piece | 49 | 26 | - | 16 | 1 | - | 6 |
 | [alt-win-loss-condition](#alt-win-loss-condition) | Changes how the game is won or lost | 48 | 5 | - | - | - | - | 43 |
 | [mass-removal](#mass-removal) | Removes several pieces at once | 48 | 32 | 2 | 8 | 1 | 5 | - |
 | [piece-revival](#piece-revival) | Brings a captured piece back | 43 | 22 | 1 | 20 | - | - | - |
 | [delayed-contract](#delayed-contract) | Sets a delayed or conditional payoff | 42 | 30 | 3 | 4 | 2 | - | 3 |
 | [clock-gain-self](#clock-gain-self) | Adds time to your clock | 41 | 24 | - | 8 | 9 | - | - |
-| [piece-class-lockdown](#piece-class-lockdown) | Shuts down a whole piece class | 40 | 6 | 19 | 3 | - | - | 12 |
+| [piece-class-lockdown](#piece-class-lockdown) | Shuts down a whole piece class | 39 | 5 | 19 | 3 | - | - | 12 |
 | [move-budget-change](#move-budget-change) | Caps or extends how far a move may go | 37 | 3 | 26 | - | - | - | 8 |
 | [terrain-hazard](#terrain-hazard) | Puts a hazard on the board | 37 | 14 | 19 | - | 1 | - | 3 |
 | [conditional-piece-removal](#conditional-piece-removal) | Deletes a piece on a trigger | 35 | 26 | 4 | 3 | - | 1 | 1 |
@@ -49,7 +49,7 @@ Cards do several things at once, so the ladder is priority-ordered and first-mat
 | [clock-drain-enemy](#clock-drain-enemy) | Drains the opponent's clock | 17 | 15 | - | 2 | - | - | - |
 | [special-rule-grant](#special-rule-grant) | Restores or widens a special chess rule | 17 | 11 | 2 | 3 | - | - | 1 |
 | [turn-skip-enemy](#turn-skip-enemy) | Makes the opponent lose a turn | 17 | 6 | 9 | 2 | - | - | - |
-| [mass-army-spawn](#mass-army-spawn) | Instantly spawns several pieces | 16 | 4 | - | 9 | 1 | 2 | - |
+| [mass-army-spawn](#mass-army-spawn) | Instantly spawns several pieces | 16 | 5 | - | 8 | 1 | 2 | - |
 | [retaliation-damage](#retaliation-damage) | Punishes the piece that captures | 16 | 7 | 5 | - | - | - | 4 |
 | [mass-shield](#mass-shield) | Shields many pieces at once | 14 | 2 | - | 11 | 1 | - | - |
 | [freeze-cleanse](#freeze-cleanse) | Frees your own frozen pieces | 12 | 3 | 3 | 2 | 4 | - | - |
@@ -864,6 +864,114 @@ Cards do several things at once, so the ladder is priority-ordered and first-mat
 | world_lock | World Lock | buff | 8 | instant | Seal the border: your opponent cannot move any piece into your half of the board for their next 3 turns. |
 | ov_continental_drift | Continental Drift | apex | 9 | activated | A chasm tears the board between the fourth and fifth ranks for your opponent's next 5 turns: their pieces cannot cross it, except knights or through the two bridge squares you choose. |
 
+## enemy-movement-restriction
+
+**Narrows how the opponent may move** - The opponent keeps their turn but loses options: a catch-all denial bucket.
+
+99 cards.
+
+| id | name | family | tier | trigger | rule |
+|---|---|---|---|---|---|
+| bn4_stutter_step | Stutter Step | boon | 1 | passive | On your opponent's next turn, they cannot move the piece they just moved. |
+| cold_open | Cold Open | hex | 1 | passive | Your opponent cannot move their queen for their next turn. |
+| hw2_bad_omen | Bad Omen | hex | 1 | passive | A dark omen is read over their camp: on your opponent's 3rd turn from now, it strikes, and for that one turn they may move only a pawn or their king. They can see it coming and set up around it. |
+| hx4_cobweb_corners | Cobweb Corners | hex | 1 | passive | Starting after your opponent's next move, great webs fill all four corners for their following 3 turns: their pieces may not stop on the corner squares or the diagonal squares beside them (b2, g2, b7, g7). |
+| hx4_puddle | The Puddle | hex | 1 | activated | Choose an empty square: it becomes a deep puddle for 2 of your opponent's turns, and none of their pieces will stop in it. The first piece the puddle would turn away may step in once, then it binds fully. |
+| op_bread_for_the_table | Bread for the Table | item | 1 | activated | Use once as a free action: a d- or e-file pawn carries the loaves one square forward. The square ahead must be empty, and no enemy piece may be attacking it. |
+| op_fresh_sod | Fresh Sod | buff | 1 | passive | On your opponent's next turn, enemy pieces cannot end a non-capturing move on the four center squares (a capture may still land there). |
+| op_personal_space | Personal Space | buff | 1 | passive | On your opponent's next turn, enemy pieces cannot end a non-capturing move next to your king (a capture may still land there). |
+| op_private_booth | Private Booth | item | 1 | activated | Use once as a free action, while your king still sits at his own table: reserve one empty square beside him. No enemy piece may end a move there during your opponent's next turn. |
+| bn4_boundary_stones | Boundary Stones | boon | 2 | activated | Mark 2 empty squares in your half: no enemy piece may move onto them for 4 turns. |
+| hw3_toll_road | Toll Road | hex | 2 | passive | For your opponent's next 6 turns, any turn they move a piece out of their own half and into yours, their following turn is taxed: they may move only a pawn or their king. Kings crossing pay the same toll. |
+| hx4_bridge_toll | Bridge Toll | hex | 2 | passive | For your opponent's next 2 turns, only their pawns and king may cross the midline into your half. The bridge keeper distrusts officers. |
+| hx4_clumsy_heralds | Clumsy Heralds | hex | 2 | passive | For your opponent's next 2 turns, every check they give is followed by apologies: on their following turn they may only move a pawn or their king. |
+| hx4_elbow_room | Elbow Room | hex | 2 | passive | Starting after your opponent's next move, for their following 2 turns, none of their pieces may end a move adjacent to another of their own pieces. The army demands personal space. Their king is exempt. |
+| hx4_gnat_cloud | Gnat Cloud | hex | 2 | passive | For your opponent's next 3 turns, they may not move the same piece they moved on their previous turn. Their king is exempt. |
+| hx4_moth_eaten_gloves | Moth Eaten Gloves | hex | 2 | passive | For your opponent's next 4 turns, their queen may only capture on light squares. Her dark glove is full of holes. |
+| hx4_shadowed_meadow | Shadowed Meadow | hex | 2 | passive | On your opponent's next turn, their pieces may not stop on dark squares in your half of the board. Their king is exempt. |
+| hx4_slow_clap | Slow Clap | hex | 2 | passive | For your opponent's next 6 turns, castling draws sarcastic applause: if they castle in that window, on their following turn they may only move a pawn or their king. |
+| hx4_the_quarrel | The Quarrel | hex | 2 | passive | The royal couple is not speaking: for your opponent's next 4 turns, their queen may not end a move adjacent to their king. |
+| anchored_rooks | Anchored Rooks | hex | 3 | passive | After your opponent's next move, they cannot move their rooks for their following 2 turns. |
+| blinkered_bishops | Blinkered Bishops | hex | 3 | passive | Your opponent cannot move their bishops for their next 2 turns. |
+| bn4_slow_procession | Slow Procession | boon | 3 | passive | For your opponent's next 2 turns, their queen cannot move. When it resolves, their queen lights up until they reply. |
+| bn4_town_walls | Town Walls | boon | 3 | instant | No enemy piece may move onto your second rank for 2 turns. |
+| durian | Durian | hex | 3 | activated | Lob the king of fruits onto an empty square: for your opponent's next 3 turns no enemy piece may move onto a square next to it. The first piece caught by the stench still gets one step into the ring; after that the ring is sealed until the stench clears. |
+| hw3_no_retreat | No Retreat | hex | 3 | passive | For your opponent's next 4 turns, none of their pieces may move toward their own back rank: no retreating, no sidestepping backward. They may advance or move straight across. The king is exempt, and a piece with no forward move is freed for that turn. |
+| hx4_bramble_patch | Bramble Patch | hex | 3 | activated | Choose 2 empty squares: brambles cover them for 2 of your opponent's turns, and none of their pieces may stop there. |
+| hx4_cold_shoulder | Cold Shoulder | hex | 3 | passive | For your opponent's next 3 turns, their king may not end a move adjacent to any of your pieces. |
+| hx4_court_gossip | Court Gossip | hex | 3 | passive | Starting after your opponent's next move, for their following 2 turns, none of their pieces may end a move adjacent to your queen: everyone is terrified of being mentioned. |
+| hx4_crooked_arrow | Crooked Arrow | hex | 3 | passive | Starting after your opponent's next move, for their following 4 turns, their rooks may only move an odd number of squares: 1, 3, 5 or 7. |
+| hx4_drawn_curtain | Drawn Curtain | hex | 3 | activated | Choose one rank. Your opponent's next move passes freely; then, for their following turn, none of their pieces may stop on it or cross it. Your pieces pass freely. |
+| hx4_iron_ring | The Iron Ring | hex | 3 | instant | An iron ring closes around the board's rim: your opponent's pieces cannot stop on any edge square for their next turn. |
+| hx4_severed_lines | Severed Lines | hex | 3 | instant | Their supply roads are cut: your opponent's pieces cannot stop on their own 3rd or 4th rank for their next turn. |
+| hx4_shifting_floor | Shifting Floor | hex | 3 | passive | Starting after your opponent's next move, for their following 3 turns, none of their pieces may end a move on the rank your king stands on. The floor there will not hold them. Their king is exempt. |
+| hx4_soft_shells | Soft Shells | hex | 3 | passive | Two of your opponent's pawns, chosen at random, molt into walnuts for 2 of their turns: one square shuffles only. The first affected pawn gets one legal escape move before it molts. |
+| ov_petting_zoo | Petting Zoo | buff | 3 | instant | A Goat, a Duck, and a Sheep (a pawn each) appear on random empty squares in your half for 8 of your turns. They cannot move or capture, they just block, then they wander home. |
+| ov_prophecy_engine | Prophecy Engine | buff | 3 | activated | Point at an enemy piece: for your opponent's next 6 turns, every move they make with that piece type gains you 6 seconds. If they never move one, the engine pays 40 seconds when the prophecy closes. |
+| trippi_troppi | Trippi Troppi | hex | 3 | activated | The shrimp-cat scrambles their proprioception: mark up to 3 enemy pieces (never the king). After your opponent's next move they grow stubby shrimp legs, and for their next 2 turns each can only shuffle one square at a time. |
+| wall | Wall | buff | 3 | activated | Raise a wall on one empty square you pick: enemy pieces can never move onto it, for the game. The wall only rises on an empty square and captures nothing. |
+| wasted_hour | Wasted Hour | hex | 3 | passive | The officers argue all morning: after your opponent's next move, on their following turn they may only move a pawn or their king. |
+| bn4_warding_circle | Warding Circle | boon | 4 | activated | Chalk 4 empty squares of your choice: no enemy piece may move onto them for your opponent's next 4 turns. Capturing onto a chalked square clears that mark. |
+| bw3_kings_road | King's Road | boon | 4 | activated | One lane on the board is declared yours: choose a file, and for the rest of the game no enemy piece may stand on that file across your own half of the board, save its most advanced square, which stays open. Your pieces travel it freely. |
+| gremlins | Gremlins | hex | 4 | passive | For their next 4 turns, your opponent's rooks can only move an even number of squares. |
+| hw3_sinking_mire | Sinking Mire | hex | 4 | instant | A mire of four squares opens in your opponent's half: no enemy piece may step onto it, though pieces caught inside may still climb out. It drains away one square on each of their turns until nothing is left, over 4 of their turns. |
+| hx4_burden_of_command | Burden of Command | hex | 4 | passive | For your opponent's next 4 turns, every time their queen moves, the whole army stops to salute: on their following turn they may move only their king. When the burden lifts, they bank one draft reroll. |
+| hx4_fresh_crater | Fresh Crater | hex | 4 | passive | For your opponent's next 2 turns, pieces standing adjacent to the piece you last moved cannot move: everyone is staring at the crater. Their king is exempt. |
+| hx4_gilded_cage | Gilded Cage | hex | 4 | passive | For your opponent's next 3 turns, their queen may only move to squares on their own back two ranks. The palace doors are locked from outside. |
+| hx4_rusted_crown | Rusted Crown | hex | 4 | passive | For your opponent's next 2 turns, their queen may move only 1 square at a time, like a stiff old king. |
+| hx4_tangled_marionettes | Tangled Marionettes | hex | 4 | passive | Starting after your opponent's next move, for their following 3 turns the strings cross: they may not move any piece standing adjacent to the piece they moved last turn. That piece itself may move on. Their king is exempt. |
+| royal_duty | Royal Duty | hex | 4 | instant | On your opponent's next turn they may move only their king. |
+| skibidi_flush | Skibidi Flush | buff | 4 | activated | Up to 3 enemy pieces (never the king) are sent back to their home squares, or the nearest empty square toward home. |
+| spooked_steeds | Spooked Steeds | hex | 4 | passive | Your opponent cannot move their knights for their next 2 turns. |
+| vertigo | Vertigo | hex | 4 | passive | The whole room tilts sideways: for their next turn your opponent may only make diagonal moves. Their king keeps its footing and may still step anywhere. |
+| warding_circle | Warding Circle | buff | 4 | passive | You chalk a circle of old names around your throne: no enemy piece may end its move on any of the squares around your king, for your opponent's next 2 turns. |
+| we_lightning_bolt | Lightning Bolt | buff | 4 | activated | One queen charges a bolt down a diagonal; after your opponent's next move it fires, removing the first enemy piece in its path (never a king) and landing beyond it, once. |
+| bn4_wall_of_faith | Wall of Faith | boon | 5 | activated | Consecrate 6 empty squares of your choice, no two of them touching: no enemy piece may move onto them for your opponent's next 3 turns. |
+| fault_line | Fault Line | buff | 5 | activated | Split the board; enemy pieces cannot cross one file you pick, for 2 turns. |
+| hw2_creeping_blight | Creeping Blight | hex | 5 | activated | Blight one square in your opponent's half. Their next move may still cross it, then no enemy piece may move onto blighted ground, though pieces already there may leave. Each of their following turns it creeps to one more adjacent square, for 5 turns. |
+| hx4_castle_of_sand | Castle of Sand | hex | 5 | passive | Both of your opponent's rooks crumble into walnuts for 4 of their turns: heavy husks that can only shuffle one square at a time. The first tower the sand would claim may make one move, then it too crumbles. |
+| hx4_court_in_session | Court in Session | hex | 5 | passive | For your opponent's next 2 turns, any of their pieces standing adjacent to their own king may not move. The king itself is free to go. |
+| hx4_echo_of_bells | Echo of Bells | hex | 5 | passive | Your opponent's next move passes freely. Then, for their next 6 turns, every second turn (the 2nd, 4th and 6th) the bells toll and they may only move a pawn or their king. |
+| hx4_iron_portcullis | Iron Portcullis | hex | 5 | passive | The armory gate slams shut: your opponent's next draft is skipped outright, and their following draft offers only two cards and cannot be rerolled. |
+| hx4_night_ledger | Night Ledger | hex | 5 | passive | For your opponent's next 2 turns, their rooks and queen answer to the accountants: they may only move if the move is a capture. Quiet heavy moves are struck from the ledger. |
+| hx4_no_homecoming | No Homecoming | hex | 5 | passive | For your opponent's next 4 turns, none of their pieces may stop on their own back rank. Their king is exempt. The first piece the ban would turn away may return home once, then it binds fully. |
+| hx4_summons_to_court | Summons to Court | hex | 5 | instant | On your opponent's next 2 turns they may move only their king. The crown answers alone. |
+| hx4_tidal_wall | Tidal Wall | hex | 5 | instant | Your opponent's pieces cannot stop on either central rank, the 4th and 5th, for their next 2 turns, save one bridge square left standing: the wall square nearest their king. |
+| opposite_day | Opposite Day | hex | 5 | passive | For your opponent's next 2 turns, they cannot move any piece closer to your king. Moves that keep the same distance are allowed. If that would leave them with no legal move, the restriction is lifted for that turn. |
+| peasant_levy | Peasant Levy | hex | 5 | passive | The levy defends only the homeland: for your opponent's next 2 turns they may move only pieces standing in their own half of the board. Anything already across the middle is stranded. |
+| pucks_mischief | Puck's Mischief | hex | 5 | passive | A hobgoblin ties every royal shoelace together: for their next 3 turns your opponent's queen and rooks may move only one square at a time. |
+| shatter | Shatter | buff | 5 | activated | Choose one enemy rook, bishop, or knight; after your opponent's next move it shatters into a walnut for the rest of the game (it can only shuffle one square at a time), unless it has moved or been lost. |
+| wc_shy_pieces | Shy Pieces | hex | 5 | passive | Your opponent's pieces are too shy to approach the crown: for their next 2 turns none of them may move onto a square touching your king. |
+| wc_wrong_way | Wrong Way | hex | 5 | passive | Every one of your opponent's pieces has its map upside down: after their next move, for the 2 turns that follow none of them may retreat toward their own back rank. |
+| we_mountain_range | Mountain Range | buff | 5 | activated | Three peaks heave up out of the board: pick three empty squares; your opponent's pieces can never move onto them, for the rest of the game. |
+| bn4_castle_ditch | Castle Ditch | boon | 6 | passive | Every empty square around your king becomes a moat for your opponent's next 5 turns: no enemy piece may advance onto them, though the moat cannot stop a capture that lands there. |
+| hw3_avalanche | Avalanche | hex | 6 | passive | Snow gathers over their half for 3 of their turns, then falls. For the 3 turns after, their pieces may only capture or move into your half, never onto an empty square at home. The first piece they move once it falls gets one escape onto open ground. |
+| hx4_dockmasters_fee | Dockmaster's Fee | hex | 6 | passive | For your opponent's next 4 turns, every capture they make is taxed: on the turn after a capture they may only move a pawn or their king. The first piece the tax would hold back may make one move regardless, then it binds fully. |
+| hx4_sealed_meridian | Sealed Meridian | hex | 6 | activated | Choose a file: for 2 of your opponent's turns none of their pieces may cross it, though they may move along it, stop on it, or leave it. Your pieces pass freely. |
+| hx4_signal_jam | Signal Jam | hex | 6 | passive | Your opponent's next move passes freely, then for their following 3 turns, none of their pieces may end a move on the same file as their own king. The king itself may move freely. |
+| ov_the_tutorial | The Tutorial | buff | 6 | passive | A relentlessly cheerful tutorial haunts your opponent for their next 3 turns: every enemy move is marked and reviewed, and whenever their moved piece ends up hanging you are paid 8 seconds while it congratulates them. |
+| rust | Rust | hex | 6 | passive | Idle enemy pieces seize up: any enemy piece (never a king) that has stood still for 2 of your opponent's turns rusts solid and may only move if the move is a capture, until it finally moves. |
+| union_rules | Union Rules | buff | 6 | passive | Your pieces get mandated rest: for your opponent's next 2 turns after they capture one of your pieces, they cannot make a capture. If capturing is their only legal option, the rule is waived for that turn. |
+| bn4_palace_walls | Palace Walls | boon | 7 | instant | No enemy piece may move onto your second rank for your opponent's next 2 turns. Any enemy piece already standing there may still leave. |
+| fm_hex_kings_moat | King's Moat | hex | 7 | passive | For your opponent's next 3 turns none of their pieces may move onto a square next to your king. |
+| hw2_hollow_crown | The Hollow Crown | hex | 7 | passive | For the rest of the game, whenever your opponent's king moves, castling included, the court mourns: on their following turn they may move only pawns or the king. |
+| hw2_tide_of_ash | Tide of Ash | hex | 7 | passive | Their 1st rank is buried at once, and the tide swallows one more home rank on each of their next 3 turns, up to their 4th. No enemy piece may move ONTO buried ground, but a piece already standing in it may leave normally. It blows away after their 6th turn. |
+| hx4_command_paralysis | Command Paralysis | hex | 7 | passive | For your opponent's next 3 turns they may only move pieces standing in your half of the board. The first piece the silence would stop may move once regardless, then it binds fully. If they have none in your half, they move freely that turn. |
+| hx4_crossbow_curfew | Crossbow Curfew | hex | 7 | passive | Ranged warfare is outlawed: after your opponent's next move, for their following 4 turns they may only capture from 1 square away. Long range kills are forbidden. |
+| hx4_field_of_spears | Field of Spears | hex | 7 | passive | Your pawns raise a hedge of spears: for your opponent's next 3 turns, their pieces may not stop on any square one of your pawns attacks. A piece already standing on such a square may leave it freely. Their king is exempt. |
+| hx4_grim_procession | Grim Procession | hex | 7 | passive | For your opponent's next 3 turns, no piece of theirs may end a move farther from their own king than it started. The army huddles toward the crown. Their king walks free. |
+| hx4_muster_silence | Muster of Silence | hex | 7 | passive | For your opponent's next 2 turns, any piece of theirs that is defended by another of their pieces may not move. Only the unguarded stragglers may act. Their king is exempt. |
+| hx4_royal_quarantine | Royal Quarantine | hex | 7 | passive | Their king is declared contagious: for your opponent's next 4 turns, none of their pieces may end a move adjacent to their own king. The king itself moves freely. The first piece the quarantine would turn away may make one such move, then it binds fully. |
+| soul_harvest | Soul Harvest | buff | 7 | activated | Your queen sweeps one diagonal, reaping every enemy piece she passes and landing on an empty square beyond them, never on a capture; for each piece reaped, a friendly pawn rises on an empty square in your half, plus one bonus pawn, once. |
+| stone_prelates | Stone Prelates | hex | 7 | passive | The pews claim whoever lingers: for your opponent's next 6 turns, any of their bishops standing in their own half may only shuffle one square at a time. Bishops that cross into your half move freely. |
+| throne_and_silence | Throne and Silence | hex | 7 | passive | For your opponent's next turn they may move only their king or their single most valuable piece, and their next draft is skipped entirely. |
+| bw2_long_truce | The Long Truce | boon | 8 | instant | Heralds cross the field and every blade is lowered: for 2 full turns, no piece on EITHER side can be captured, kings included. While the truce holds you breathe freely: your own nerf is suspended for your next 3 turns. |
+| cr_speedrun_protocol | Danya's Speedrun | buff | 8 | passive | For your opponent's next 6 turns they may only play a capture, a check, or a pawn move. Each held turn pays you more time: 2 seconds, then 3, then 4, and so on. |
+| hw3_blood_tithe | Blood Tithe | hex | 8 | passive | It holds off until after their next move, then for their next 6 turns: whenever they capture anything larger than a pawn, one of their own pawns is claimed as tribute and removed from the board. Once they have no pawns left, the tithe goes unpaid. |
+| hx4_echo_chamber | Echo Chamber | hex | 8 | passive | For your opponent's next 4 turns, they may not move a piece of the same type as the piece you moved on your previous turn. Their king is always allowed. |
+| hx4_great_waltz | The Great Waltz | hex | 8 | passive | The board itself calls the dance: your opponent's next move passes freely, then for their following 3 turns they may only move pieces standing on the color the waltz names, dark squares first, then light, then dark. Their king may always dance. |
+| hx4_puppet_court | Puppet Court | hex | 8 | passive | Every officer's strings are cut: for your opponent's next 3 turns they may move only pawns and their king. The first officer the strings would bind may make one move, then it binds fully. |
+
 ## mass-freeze
 
 **Freezes the whole enemy army** - Board-wide immobilization: every enemy piece, or every piece of a class.
@@ -972,118 +1080,11 @@ Cards do several things at once, so the ladder is priority-ordered and first-mat
 | hx4_mirror_of_winter | Mirror of Winter | apex | 9 | passive | A sympathetic frost binds their army: for your opponent's next 2 turns, whenever they move a piece, every OTHER piece they own of that same type is frozen for 1 of their turns. |
 | ice_age | Ice Age | apex | 9 | activated | Choose up to three enemy pieces other than the king; each freezes solid and cannot move for your opponent's next 3 turns. |
 
-## enemy-movement-restriction
-
-**Narrows how the opponent may move** - The opponent keeps their turn but loses options: a catch-all denial bucket.
-
-98 cards.
-
-| id | name | family | tier | trigger | rule |
-|---|---|---|---|---|---|
-| bn4_stutter_step | Stutter Step | boon | 1 | passive | On your opponent's next turn, they cannot move the piece they just moved. |
-| cold_open | Cold Open | hex | 1 | passive | Your opponent cannot move their queen for their next turn. |
-| hw2_bad_omen | Bad Omen | hex | 1 | passive | A dark omen is read over their camp: on your opponent's 3rd turn from now, it strikes, and for that one turn they may move only a pawn or their king. They can see it coming and set up around it. |
-| hx4_cobweb_corners | Cobweb Corners | hex | 1 | passive | Starting after your opponent's next move, great webs fill all four corners for their following 3 turns: their pieces may not stop on the corner squares or the diagonal squares beside them (b2, g2, b7, g7). |
-| hx4_puddle | The Puddle | hex | 1 | activated | Choose an empty square: it becomes a deep puddle for 2 of your opponent's turns, and none of their pieces will stop in it. The first piece the puddle would turn away may step in once, then it binds fully. |
-| op_bread_for_the_table | Bread for the Table | item | 1 | activated | Use once as a free action: a d- or e-file pawn carries the loaves one square forward. The square ahead must be empty, and no enemy piece may be attacking it. |
-| op_fresh_sod | Fresh Sod | buff | 1 | passive | On your opponent's next turn, enemy pieces cannot end a non-capturing move on the four center squares (a capture may still land there). |
-| op_personal_space | Personal Space | buff | 1 | passive | On your opponent's next turn, enemy pieces cannot end a non-capturing move next to your king (a capture may still land there). |
-| op_private_booth | Private Booth | item | 1 | activated | Use once as a free action, while your king still sits at his own table: reserve one empty square beside him. No enemy piece may end a move there during your opponent's next turn. |
-| bn4_boundary_stones | Boundary Stones | boon | 2 | activated | Mark 2 empty squares in your half: no enemy piece may move onto them for 4 turns. |
-| hw3_toll_road | Toll Road | hex | 2 | passive | For your opponent's next 6 turns, any turn they move a piece out of their own half and into yours, their following turn is taxed: they may move only a pawn or their king. Kings crossing pay the same toll. |
-| hx4_bridge_toll | Bridge Toll | hex | 2 | passive | For your opponent's next 2 turns, only their pawns and king may cross the midline into your half. The bridge keeper distrusts officers. |
-| hx4_clumsy_heralds | Clumsy Heralds | hex | 2 | passive | For your opponent's next 2 turns, every check they give is followed by apologies: on their following turn they may only move a pawn or their king. |
-| hx4_elbow_room | Elbow Room | hex | 2 | passive | Starting after your opponent's next move, for their following 2 turns, none of their pieces may end a move adjacent to another of their own pieces. The army demands personal space. Their king is exempt. |
-| hx4_gnat_cloud | Gnat Cloud | hex | 2 | passive | For your opponent's next 3 turns, they may not move the same piece they moved on their previous turn. Their king is exempt. |
-| hx4_moth_eaten_gloves | Moth Eaten Gloves | hex | 2 | passive | For your opponent's next 4 turns, their queen may only capture on light squares. Her dark glove is full of holes. |
-| hx4_shadowed_meadow | Shadowed Meadow | hex | 2 | passive | On your opponent's next turn, their pieces may not stop on dark squares in your half of the board. Their king is exempt. |
-| hx4_slow_clap | Slow Clap | hex | 2 | passive | For your opponent's next 6 turns, castling draws sarcastic applause: if they castle in that window, on their following turn they may only move a pawn or their king. |
-| hx4_the_quarrel | The Quarrel | hex | 2 | passive | The royal couple is not speaking: for your opponent's next 4 turns, their queen may not end a move adjacent to their king. |
-| anchored_rooks | Anchored Rooks | hex | 3 | passive | After your opponent's next move, they cannot move their rooks for their following 2 turns. |
-| blinkered_bishops | Blinkered Bishops | hex | 3 | passive | Your opponent cannot move their bishops for their next 2 turns. |
-| bn4_slow_procession | Slow Procession | boon | 3 | passive | For your opponent's next 2 turns, their queen cannot move. When it resolves, their queen lights up until they reply. |
-| bn4_town_walls | Town Walls | boon | 3 | instant | No enemy piece may move onto your second rank for 2 turns. |
-| durian | Durian | hex | 3 | activated | Lob the king of fruits onto an empty square: for your opponent's next 3 turns no enemy piece may move onto a square next to it. The first piece caught by the stench still gets one step into the ring; after that the ring is sealed until the stench clears. |
-| hw3_no_retreat | No Retreat | hex | 3 | passive | For your opponent's next 4 turns, none of their pieces may move toward their own back rank: no retreating, no sidestepping backward. They may advance or move straight across. The king is exempt, and a piece with no forward move is freed for that turn. |
-| hx4_bramble_patch | Bramble Patch | hex | 3 | activated | Choose 2 empty squares: brambles cover them for 2 of your opponent's turns, and none of their pieces may stop there. |
-| hx4_cold_shoulder | Cold Shoulder | hex | 3 | passive | For your opponent's next 3 turns, their king may not end a move adjacent to any of your pieces. |
-| hx4_court_gossip | Court Gossip | hex | 3 | passive | Starting after your opponent's next move, for their following 2 turns, none of their pieces may end a move adjacent to your queen: everyone is terrified of being mentioned. |
-| hx4_crooked_arrow | Crooked Arrow | hex | 3 | passive | Starting after your opponent's next move, for their following 4 turns, their rooks may only move an odd number of squares: 1, 3, 5 or 7. |
-| hx4_drawn_curtain | Drawn Curtain | hex | 3 | activated | Choose one rank. Your opponent's next move passes freely; then, for their following turn, none of their pieces may stop on it or cross it. Your pieces pass freely. |
-| hx4_iron_ring | The Iron Ring | hex | 3 | instant | An iron ring closes around the board's rim: your opponent's pieces cannot stop on any edge square for their next turn. |
-| hx4_severed_lines | Severed Lines | hex | 3 | instant | Their supply roads are cut: your opponent's pieces cannot stop on their own 3rd or 4th rank for their next turn. |
-| hx4_shifting_floor | Shifting Floor | hex | 3 | passive | Starting after your opponent's next move, for their following 3 turns, none of their pieces may end a move on the rank your king stands on. The floor there will not hold them. Their king is exempt. |
-| hx4_soft_shells | Soft Shells | hex | 3 | passive | Two of your opponent's pawns, chosen at random, molt into walnuts for 2 of their turns: one square shuffles only. The first affected pawn gets one legal escape move before it molts. |
-| ov_petting_zoo | Petting Zoo | buff | 3 | instant | A Goat, a Duck, and a Sheep (a pawn each) appear on random empty squares in your half for 8 of your turns. They cannot move or capture, they just block, then they wander home. |
-| ov_prophecy_engine | Prophecy Engine | buff | 3 | activated | Point at an enemy piece: for your opponent's next 6 turns, every move they make with that piece type gains you 6 seconds. If they never move one, the engine pays 40 seconds when the prophecy closes. |
-| trippi_troppi | Trippi Troppi | hex | 3 | activated | The shrimp-cat scrambles their proprioception: mark up to 3 enemy pieces (never the king). After your opponent's next move they grow stubby shrimp legs, and for their next 2 turns each can only shuffle one square at a time. |
-| wall | Wall | buff | 3 | activated | Raise a wall on one empty square you pick: enemy pieces can never move onto it, for the game. The wall only rises on an empty square and captures nothing. |
-| wasted_hour | Wasted Hour | hex | 3 | passive | The officers argue all morning: after your opponent's next move, on their following turn they may only move a pawn or their king. |
-| bn4_warding_circle | Warding Circle | boon | 4 | activated | Chalk 4 empty squares of your choice: no enemy piece may move onto them for your opponent's next 4 turns. Capturing onto a chalked square clears that mark. |
-| bw3_kings_road | King's Road | boon | 4 | activated | One lane on the board is declared yours: choose a file, and for the rest of the game no enemy piece may stand on that file across your own half of the board, save its most advanced square, which stays open. Your pieces travel it freely. |
-| gremlins | Gremlins | hex | 4 | passive | For their next 4 turns, your opponent's rooks can only move an even number of squares. |
-| hw3_sinking_mire | Sinking Mire | hex | 4 | instant | A mire of four squares opens in your opponent's half: no enemy piece may step onto it, though pieces caught inside may still climb out. It drains away one square on each of their turns until nothing is left, over 4 of their turns. |
-| hx4_burden_of_command | Burden of Command | hex | 4 | passive | For your opponent's next 4 turns, every time their queen moves, the whole army stops to salute: on their following turn they may move only their king. When the burden lifts, they bank one draft reroll. |
-| hx4_fresh_crater | Fresh Crater | hex | 4 | passive | For your opponent's next 2 turns, pieces standing adjacent to the piece you last moved cannot move: everyone is staring at the crater. Their king is exempt. |
-| hx4_gilded_cage | Gilded Cage | hex | 4 | passive | For your opponent's next 3 turns, their queen may only move to squares on their own back two ranks. The palace doors are locked from outside. |
-| hx4_rusted_crown | Rusted Crown | hex | 4 | passive | For your opponent's next 2 turns, their queen may move only 1 square at a time, like a stiff old king. |
-| hx4_tangled_marionettes | Tangled Marionettes | hex | 4 | passive | Starting after your opponent's next move, for their following 3 turns the strings cross: they may not move any piece standing adjacent to the piece they moved last turn. That piece itself may move on. Their king is exempt. |
-| royal_duty | Royal Duty | hex | 4 | instant | On your opponent's next turn they may move only their king. |
-| spooked_steeds | Spooked Steeds | hex | 4 | passive | Your opponent cannot move their knights for their next 2 turns. |
-| vertigo | Vertigo | hex | 4 | passive | The whole room tilts sideways: for their next turn your opponent may only make diagonal moves. Their king keeps its footing and may still step anywhere. |
-| warding_circle | Warding Circle | buff | 4 | passive | You chalk a circle of old names around your throne: no enemy piece may end its move on any of the squares around your king, for your opponent's next 2 turns. |
-| we_lightning_bolt | Lightning Bolt | buff | 4 | activated | One queen charges a bolt down a diagonal; after your opponent's next move it fires, removing the first enemy piece in its path (never a king) and landing beyond it, once. |
-| bn4_wall_of_faith | Wall of Faith | boon | 5 | activated | Consecrate 6 empty squares of your choice, no two of them touching: no enemy piece may move onto them for your opponent's next 3 turns. |
-| fault_line | Fault Line | buff | 5 | activated | Split the board; enemy pieces cannot cross one file you pick, for 2 turns. |
-| hw2_creeping_blight | Creeping Blight | hex | 5 | activated | Blight one square in your opponent's half. Their next move may still cross it, then no enemy piece may move onto blighted ground, though pieces already there may leave. Each of their following turns it creeps to one more adjacent square, for 5 turns. |
-| hx4_castle_of_sand | Castle of Sand | hex | 5 | passive | Both of your opponent's rooks crumble into walnuts for 4 of their turns: heavy husks that can only shuffle one square at a time. The first tower the sand would claim may make one move, then it too crumbles. |
-| hx4_court_in_session | Court in Session | hex | 5 | passive | For your opponent's next 2 turns, any of their pieces standing adjacent to their own king may not move. The king itself is free to go. |
-| hx4_echo_of_bells | Echo of Bells | hex | 5 | passive | Your opponent's next move passes freely. Then, for their next 6 turns, every second turn (the 2nd, 4th and 6th) the bells toll and they may only move a pawn or their king. |
-| hx4_iron_portcullis | Iron Portcullis | hex | 5 | passive | The armory gate slams shut: your opponent's next draft is skipped outright, and their following draft offers only two cards and cannot be rerolled. |
-| hx4_night_ledger | Night Ledger | hex | 5 | passive | For your opponent's next 2 turns, their rooks and queen answer to the accountants: they may only move if the move is a capture. Quiet heavy moves are struck from the ledger. |
-| hx4_no_homecoming | No Homecoming | hex | 5 | passive | For your opponent's next 4 turns, none of their pieces may stop on their own back rank. Their king is exempt. The first piece the ban would turn away may return home once, then it binds fully. |
-| hx4_summons_to_court | Summons to Court | hex | 5 | instant | On your opponent's next 2 turns they may move only their king. The crown answers alone. |
-| hx4_tidal_wall | Tidal Wall | hex | 5 | instant | Your opponent's pieces cannot stop on either central rank, the 4th and 5th, for their next 2 turns, save one bridge square left standing: the wall square nearest their king. |
-| opposite_day | Opposite Day | hex | 5 | passive | For your opponent's next 2 turns, they cannot move any piece closer to your king. Moves that keep the same distance are allowed. If that would leave them with no legal move, the restriction is lifted for that turn. |
-| peasant_levy | Peasant Levy | hex | 5 | passive | The levy defends only the homeland: for your opponent's next 2 turns they may move only pieces standing in their own half of the board. Anything already across the middle is stranded. |
-| pucks_mischief | Puck's Mischief | hex | 5 | passive | A hobgoblin ties every royal shoelace together: for their next 3 turns your opponent's queen and rooks may move only one square at a time. |
-| shatter | Shatter | buff | 5 | activated | Choose one enemy rook, bishop, or knight; after your opponent's next move it shatters into a walnut for the rest of the game (it can only shuffle one square at a time), unless it has moved or been lost. |
-| wc_shy_pieces | Shy Pieces | hex | 5 | passive | Your opponent's pieces are too shy to approach the crown: for their next 2 turns none of them may move onto a square touching your king. |
-| wc_wrong_way | Wrong Way | hex | 5 | passive | Every one of your opponent's pieces has its map upside down: after their next move, for the 2 turns that follow none of them may retreat toward their own back rank. |
-| we_mountain_range | Mountain Range | buff | 5 | activated | Three peaks heave up out of the board: pick three empty squares; your opponent's pieces can never move onto them, for the rest of the game. |
-| bn4_castle_ditch | Castle Ditch | boon | 6 | passive | Every empty square around your king becomes a moat for your opponent's next 5 turns: no enemy piece may advance onto them, though the moat cannot stop a capture that lands there. |
-| hw3_avalanche | Avalanche | hex | 6 | passive | Snow gathers over their half for 3 of their turns, then falls. For the 3 turns after, their pieces may only capture or move into your half, never onto an empty square at home. The first piece they move once it falls gets one escape onto open ground. |
-| hx4_dockmasters_fee | Dockmaster's Fee | hex | 6 | passive | For your opponent's next 4 turns, every capture they make is taxed: on the turn after a capture they may only move a pawn or their king. The first piece the tax would hold back may make one move regardless, then it binds fully. |
-| hx4_sealed_meridian | Sealed Meridian | hex | 6 | activated | Choose a file: for 2 of your opponent's turns none of their pieces may cross it, though they may move along it, stop on it, or leave it. Your pieces pass freely. |
-| hx4_signal_jam | Signal Jam | hex | 6 | passive | Your opponent's next move passes freely, then for their following 3 turns, none of their pieces may end a move on the same file as their own king. The king itself may move freely. |
-| ov_the_tutorial | The Tutorial | buff | 6 | passive | A relentlessly cheerful tutorial haunts your opponent for their next 3 turns: every enemy move is marked and reviewed, and whenever their moved piece ends up hanging you are paid 8 seconds while it congratulates them. |
-| rust | Rust | hex | 6 | passive | Idle enemy pieces seize up: any enemy piece (never a king) that has stood still for 2 of your opponent's turns rusts solid and may only move if the move is a capture, until it finally moves. |
-| union_rules | Union Rules | buff | 6 | passive | Your pieces get mandated rest: for your opponent's next 2 turns after they capture one of your pieces, they cannot make a capture. If capturing is their only legal option, the rule is waived for that turn. |
-| bn4_palace_walls | Palace Walls | boon | 7 | instant | No enemy piece may move onto your second rank for your opponent's next 2 turns. Any enemy piece already standing there may still leave. |
-| fm_hex_kings_moat | King's Moat | hex | 7 | passive | For your opponent's next 3 turns none of their pieces may move onto a square next to your king. |
-| hw2_hollow_crown | The Hollow Crown | hex | 7 | passive | For the rest of the game, whenever your opponent's king moves, castling included, the court mourns: on their following turn they may move only pawns or the king. |
-| hw2_tide_of_ash | Tide of Ash | hex | 7 | passive | Their 1st rank is buried at once, and the tide swallows one more home rank on each of their next 3 turns, up to their 4th. No enemy piece may move ONTO buried ground, but a piece already standing in it may leave normally. It blows away after their 6th turn. |
-| hx4_command_paralysis | Command Paralysis | hex | 7 | passive | For your opponent's next 3 turns they may only move pieces standing in your half of the board. The first piece the silence would stop may move once regardless, then it binds fully. If they have none in your half, they move freely that turn. |
-| hx4_crossbow_curfew | Crossbow Curfew | hex | 7 | passive | Ranged warfare is outlawed: after your opponent's next move, for their following 4 turns they may only capture from 1 square away. Long range kills are forbidden. |
-| hx4_field_of_spears | Field of Spears | hex | 7 | passive | Your pawns raise a hedge of spears: for your opponent's next 3 turns, their pieces may not stop on any square one of your pawns attacks. A piece already standing on such a square may leave it freely. Their king is exempt. |
-| hx4_grim_procession | Grim Procession | hex | 7 | passive | For your opponent's next 3 turns, no piece of theirs may end a move farther from their own king than it started. The army huddles toward the crown. Their king walks free. |
-| hx4_muster_silence | Muster of Silence | hex | 7 | passive | For your opponent's next 2 turns, any piece of theirs that is defended by another of their pieces may not move. Only the unguarded stragglers may act. Their king is exempt. |
-| hx4_royal_quarantine | Royal Quarantine | hex | 7 | passive | Their king is declared contagious: for your opponent's next 4 turns, none of their pieces may end a move adjacent to their own king. The king itself moves freely. The first piece the quarantine would turn away may make one such move, then it binds fully. |
-| soul_harvest | Soul Harvest | buff | 7 | activated | Your queen sweeps one diagonal, reaping every enemy piece she passes and landing on an empty square beyond them, never on a capture; for each piece reaped, a friendly pawn rises on an empty square in your half, plus one bonus pawn, once. |
-| stone_prelates | Stone Prelates | hex | 7 | passive | The pews claim whoever lingers: for your opponent's next 6 turns, any of their bishops standing in their own half may only shuffle one square at a time. Bishops that cross into your half move freely. |
-| throne_and_silence | Throne and Silence | hex | 7 | passive | For your opponent's next turn they may move only their king or their single most valuable piece, and their next draft is skipped entirely. |
-| bw2_long_truce | The Long Truce | boon | 8 | instant | Heralds cross the field and every blade is lowered: for 2 full turns, no piece on EITHER side can be captured, kings included. While the truce holds you breathe freely: your own nerf is suspended for your next 3 turns. |
-| cr_speedrun_protocol | Danya's Speedrun | buff | 8 | passive | For your opponent's next 6 turns they may only play a capture, a check, or a pawn move. Each held turn pays you more time: 2 seconds, then 3, then 4, and so on. |
-| hw3_blood_tithe | Blood Tithe | hex | 8 | passive | It holds off until after their next move, then for their next 6 turns: whenever they capture anything larger than a pawn, one of their own pawns is claimed as tribute and removed from the board. Once they have no pawns left, the tithe goes unpaid. |
-| hx4_echo_chamber | Echo Chamber | hex | 8 | passive | For your opponent's next 4 turns, they may not move a piece of the same type as the piece you moved on your previous turn. Their king is always allowed. |
-| hx4_great_waltz | The Great Waltz | hex | 8 | passive | The board itself calls the dance: your opponent's next move passes freely, then for their following 3 turns they may only move pieces standing on the color the waltz names, dark squares first, then light, then dark. Their king may always dance. |
-| hx4_puppet_court | Puppet Court | hex | 8 | passive | Every officer's strings are cut: for your opponent's next 3 turns they may move only pawns and their king. The first officer the strings would bind may make one move, then it binds fully. |
-
 ## instant-piece-spawn
 
 **Instantly spawns a piece** - A brand new piece appears on the board out of nothing.
 
-95 cards.
+96 cards.
 
 | id | name | family | tier | trigger | rule |
 |---|---|---|---|---|---|
@@ -1179,6 +1180,7 @@ Cards do several things at once, so the ladder is priority-ordered and first-mat
 | wc_genie_wish | Genie Wish | buff | 7 | instant | You wished for a queen and the genie obliges, with a flourish of fine print: a new queen appears in your pocket, and a knight appears in your OPPONENT'S. Both drop onto empty squares on later turns, and the fine print costs you your next draft. |
 | bn4_founding_of_the_city | Founding of the City | boon | 8 | activated | Place a new knight on an empty square on your home rank. |
 | bn4_menagerie_gates | Menagerie Gates | boon | 8 | instant | The gates open: a knight, a bishop and a pawn all join your pocket, ready to be dropped onto empty squares on later turns (each drop spends that turn). |
+| bw2_shadow_reserve | Shadow Reserve | boon | 8 | instant | A knight, a bishop and a rook join your pocket to drop onto empty squares on later turns. Your next 2 drafts are skipped. |
 | grand_reset | Grand Reset | buff | 8 | instant | Add replacements to your pocket until your army would be back to full starting strength, then drop them onto empty squares on later turns. You skip your next draft in exchange. |
 | second_coming | Second Coming | apex | 9 | activated | Summon a queen on an empty square in your half, and your whole army cannot be captured for your opponent's next turn. |
 | grand_army | Grand Army | apex | 10 | instant | A fresh queen, rook, bishop, and knight join your pocket to drop onto empty squares on later turns. |
@@ -1289,7 +1291,7 @@ Cards do several things at once, so the ladder is priority-ordered and first-mat
 
 **Improves your own drafts** - Rerolls, banking, higher tiers, wider offers: better cards for the holder.
 
-91 cards.
+92 cards.
 
 | id | name | family | tier | trigger | rule |
 |---|---|---|---|---|---|
@@ -1348,6 +1350,7 @@ Cards do several things at once, so the ladder is priority-ordered and first-mat
 | bn4_private_auction | Private Auction | boon | 4 | passive | Your next draft offer is fated to deal tier 5 cards. If it has not been dealt within two of your drafts, the fated offer is reclaimed. |
 | bn4_season_ticket | Season Ticket | boon | 4 | instant | Gain 2 draft rerolls. |
 | bw3_double_down | Double Down | boon | 4 | instant | Push it all onto the next hand: your next draft shows three cards and you keep all three of them. In return, the draft after that is skipped. |
+| chess_diff | Chess Diff | boon | 4 | instant | Pause the game and play a clean 1+0 chess game with no cards. The winner gains a tier 9 buff, then the paused game resumes. |
 | gm_crash_game | Crash Game | buff | 4 | activated | Strap a pawn to the rocket and let it ride: 30% it lands with a free sidestep, 25% it comes back a knight, 20% a knight plus a draft reroll, 10% it comes back a ROOK, 15% the rocket crashes and the pawn burns up. |
 | mass_recall | Mass Recall | buff | 4 | activated | Return any two pieces to your back rank, once. Using it spends your next unused reroll, if any. |
 | metamorphosis | Metamorphosis | buff | 4 | activated | Force a violent change of form on one of your own pawns, knights, or bishops: it reshapes itself into a rook, once. Using it consumes your next unused reroll, if you have one. |
@@ -1562,6 +1565,74 @@ Cards do several things at once, so the ladder is priority-ordered and first-mat
 | wagon_train | Wagon Train | nerf | 8 | passive-rule | Keep the wagons together: each move must land within one file and one rank of your previous move's destination. A knight may leap out of the convoy only on a turn when no such move exists. |
 | blackout | Blackout | apex | 9 | activated | Your opponent's next turn is skipped. For their following two turns they may make only a single non-pawn move in total; otherwise they must move a pawn. |
 
+## piece-downgrade-transform
+
+**Turns a piece into something weaker** - A piece is demoted, petrified into scenery or reduced in kind. Usually an enemy piece; on a nerf it is your own.
+
+59 cards.
+
+| id | name | family | tier | trigger | rule |
+|---|---|---|---|---|---|
+| hx4_dusty_boots | Dusty Boots | hex | 1 | instant | One of your opponent's pawns, chosen at random, becomes a walnut for 1 of their turns: it can only shuffle a single square. Their most advanced pawn is spared and is never chosen. |
+| hx4_loose_horseshoe | Loose Horseshoe | hex | 1 | activated | One enemy knight you target loses a shoe after your opponent's next move and becomes a walnut for 1 of their turns: no leaping, only a one square hobble. |
+| hx4_plush_cavalry | Plush Cavalry | hex | 1 | passive | Your opponent's knights become adorable plush toys for 6 of their turns; stuffed hooves cannot fight, and after their next move their knights cannot capture for 2 of their turns. |
+| op_garden_hedge | Garden Hedge | buff | 1 | passive | Your queen may hop over an adjacent friendly pawn in any direction, landing on the square directly beyond, once. The landing square must be empty. The hop becomes available only after your opponent's next move. |
+| op_green_room | Green Room | buff | 1 | passive | Once, while on your back rank, one of your knights may hop exactly 1 square sideways along it, ignoring anything between. The destination must be empty. The hop becomes available only after your opponent's next move. |
+| op_piggyback | Piggyback | buff | 1 | passive | One of your pawns may hop over the friendly pawn directly ahead of it, landing on the square directly beyond, once. The landing square must be empty. The hop becomes available only after your opponent's next move. |
+| op_signal_rocket | Signal Rocket | buff | 1 | passive | Once, one of your knights may make a launch of exactly 4 straight, clearing anything between. It may capture on landing. The leap becomes available only after your opponent's next move. |
+| op_tower_bridge | Tower Bridge | buff | 1 | passive | One of your rooks may hop over your other rook when adjacent on a rank or file, landing on the square directly beyond, once. The landing square must be empty. The hop becomes available only after your opponent's next move. |
+| wa_stone_pawns | Stone the Pawns | buff | 1 | passive | For their next 3 turns your opponent's pawns cannot make two-square advances. |
+| hx4_gum_wrapper | Gum Wrapper | hex | 2 | activated | One enemy pawn you target is wrapped up like a sweet: after your opponent's next move it becomes a walnut for 2 of their turns, shuffling one square at best. |
+| hx4_toad_pond | Toad Pond | hex | 2 | activated | Choose an empty square: for your opponent's next 6 turns it is a cursed pond, and the first piece of theirs to stop in it becomes a walnut for 1 of their turns. Kings do not fit in ponds. |
+| basilisk_stare | Basilisk's Gaze | hex | 3 | activated | Turn one enemy piece to stone. It may make one last legal move to escape; then it becomes a walnut that can only shuffle one square at a time for 4 of their turns, and while petrified it cannot capture. Kings cannot be targeted. |
+| hobbled_cavalry | Hobbled Cavalry | hex | 3 | passive | After your opponent's next move, their knights turn to walnuts for their following 2 turns: a walnut can only shuffle one square at a time. |
+| hw3_slow_poison | Slow Poison | hex | 3 | activated | Poison one enemy queen, rook or bishop. In 4 of their turns it withers a full rank: queen to rook, rook to bishop, bishop to knight. One capture is the antidote: if the poisoned piece takes anything before then, the poison is purged. |
+| hx4_borrowed_crown | Borrowed Crown | hex | 3 | instant | One of your opponent's pawns, chosen at random, finds a crown and gets ideas: it is gilded for 6 of their turns and, weighed down by delusion, becomes a walnut for 1. |
+| hx4_gargoyle_perch | Gargoyle Perch | hex | 3 | activated | Up to two enemy rooks you target turn into walnuts for 1 of their turns: they can only shuffle one square at a time. |
+| stone_curse | Stone Curse | hex | 3 | activated | Target one enemy piece, not a king. It gets one unaffected move; then it turns to a walnut for 4 of their turns, able only to shuffle one square at a time. |
+| wc_stage_fright | Stage Fright | hex | 3 | passive | The next time your opponent's queen moves, she freezes where she lands for one of their turns. If that move gives check, stage fright hits harder and she becomes a walnut, shuffling one square at a time, for two of their turns instead. |
+| crown_and_castle | Crown and Castle | hex | 4 | instant | Your opponent's queen and rooks turn to walnuts for 2 of their turns: a walnut is so heavy it can only shuffle one square at a time. |
+| granite_towers | Granite Towers | hex | 4 | passive | After your opponent's next move, their rooks turn to walnuts for their following 3 turns: a walnut is so heavy it can only shuffle one square at a time. |
+| hw3_aging_blade | Aging Blade | hex | 4 | passive | It takes hold after your opponent's next move, then for their next 6 turns: whenever a queen, rook or bishop captures, it ages one rank on the spot. Queen to rook, rook to bishop, bishop to knight. Knights and pawns never age. |
+| hx4_bell_jar | Bell Jar | hex | 4 | activated | Drop a bell jar over one enemy piece you target: it and every enemy piece adjacent to it become walnuts for 1 of their turns, except the defender's most valuable piece under the jar, which is spared. Kings never fit under glass. |
+| hx4_brittle_arsenal | Brittle Arsenal | hex | 4 | instant | Every enemy bishop, rook and queen turns to a walnut for 1 of their turns: the whole long range arsenal reduced to shuffling. |
+| hx4_stone_garden | Stone Garden | hex | 4 | instant | All of your opponent's knights, bishops and rooks turn to walnuts for 1 of their turns, heavy nuts that can only shuffle one square at a time. Their two most valuable affected pieces resist and keep their footing. |
+| hx4_traitors_gala | Traitor's Gala | hex | 4 | instant | Two of your opponent's knights or bishops, chosen at random, drink the wrong toast and become walnuts for 1 of their turns. |
+| queen_of_stone | Queen of Stone | hex | 4 | passive | The curse waits in her shoes: the next time your opponent moves their queen, she turns to a walnut for 3 of their turns the moment she lands. |
+| stone_clergy | Stone Clergy | hex | 4 | passive | Your opponent's bishops turn to walnuts for 3 of their turns: a walnut is so heavy it can only shuffle one square at a time. The first bishop keeps one free move before it too sets. |
+| fm_hex_gorgon_gaze | Gorgon Gaze | hex | 5 | instant | Every enemy knight and bishop turns to stone for your opponent's next 2 turns. |
+| granite_ramparts | Granite Ramparts | hex | 5 | instant | Your opponent's rooks turn to walnuts for 2 of their turns, and for their next 2 turns they cannot move any piece onto their own back two ranks. |
+| hw2_weight_of_toil | Weight of Toil | hex | 5 | passive | For your opponent's next 6 turns, any single piece that makes its third move in that time collapses under the toil and becomes a walnut for 2 of their turns, shuffling one square at a time. Kings never collapse. |
+| hx4_no_quarter | No Quarter | hex | 5 | instant | Your half of the board rejects the invasion: every enemy piece currently standing in your half becomes a walnut for 1 of their turns. |
+| hx4_stone_rain | Stone Rain | hex | 5 | instant | Petrifying hail sweeps their lines: 5 of your opponent's pieces, chosen at random (never the king), become walnuts for 1 of their turns. |
+| medusas_verdict | Medusa's Verdict | hex | 5 | passive | After your opponent's next move, their queen turns to a walnut for 4 of their turns, and every enemy piece then standing next to her is frozen for 1 of their turns. |
+| shapeshifter | Shapeshifter | nerf | 5 | passive-rule | For your first 3 moves the queen moves normally. From then on she is a bishop; capturing a non-pawn turns her into a copy of that piece, and capturing a knight freezes her. |
+| statue_stable | Statue Stable | hex | 5 | instant | Your opponent's knights turn to walnuts for 2 of their turns, and your own knights harden into living statues: they cannot be captured for those same 2 turns. |
+| we_overgrowth | Overgrowth | buff | 5 | activated | Choose one of your pawns; after your opponent replies it blooms into a queen for your next 3 turns, then withers back into a pawn. |
+| we_petrify_ranks | Petrify the Ranks | buff | 5 | instant | Every enemy knight and bishop turns to stone: they cannot move for their next 2 turns. The card is spent even if your opponent has no knights or bishops to petrify. |
+| withering_touch | Withering Touch | hex | 5 | activated | One enemy piece freezes solid for 2 of their turns, then withers to a walnut that can only shuffle one square at a time for the rest of the game. Kings cannot be targeted. |
+| hx4_gorgons_court | Gorgon's Court | hex | 6 | activated | Choose 2 enemy pieces (never the king): both become walnuts for 3 of their turns. The first piece chosen may make one move before it petrifies. |
+| hx4_hunters_moon | Hunter's Moon | hex | 6 | passive | For your opponent's next 4 turns, any piece of theirs that captures is cursed by the moon and becomes a walnut for 2 of their turns. Kings are beyond the curse. |
+| hx4_walnut_crown | The Walnut Crown | hex | 6 | instant | Your opponent's queen becomes a walnut for 2 of their turns: the mightiest piece on the board reduced to a slow, dignified shuffle. |
+| hx4_walnut_pinch | Walnut Pinch | hex | 6 | instant | Your opponent's queen turns into a walnut for 1 of their turns: a heavy nut that can only shuffle one square. |
+| second_king | Second King | buff | 6 | activated | Choose one of your pawns, on any rank; after your opponent's next move it becomes a second king. Your opponent must capture both of your kings to win. |
+| serpent_brood | Serpent Brood | hex | 6 | passive | Venomous stone serpents coil around the enemy clergy: every one of your opponent's bishops turns to a walnut for 4 of their turns, and the venom lingers so no enemy bishop may capture for the rest of the game. |
+| statue_garden | Statue Garden | hex | 6 | passive | Your opponent's knights and bishops turn to walnuts for 3 of their turns, shuffling one square at a time. The first one struck petrifies only after your opponent's next move, and escapes if they move it away. |
+| stone_bastions | Stone Bastions | hex | 6 | instant | Your opponent's rooks turn to walnuts for 2 of their turns, and each stone bastion seals its ground: for their next 2 turns your opponent cannot move any piece onto the files their petrified rooks stand on. |
+| stone_riders | Stone Riders | hex | 6 | passive | After your opponent's next move, their knights turn to walnuts for 3 of their turns, and the stone is catching: on each of those turns one random enemy piece standing beside a stone rider is petrified for 1 turn too. |
+| the_big_chill | The Big Chill | hex | 6 | passive | Freeze all of your opponent's pieces except their king for one of their turns. As the ice lets go, two random survivors turn to walnuts, able to shuffle only one square at a time, for one more of their turns. |
+| amazon_army | Amazon Army | buff | 7 | passive | For your next three turns your knights also move as bishops and your bishops also move as knights. Neither becomes a full amazon. |
+| cockatrice_gaze | Cockatrice Gaze | hex | 7 | passive | Every enemy knight and bishop in your half turns to a walnut for 4 of their turns. Minors still in their own half only catch the reflection and are frozen for 1 turn. The first piece the gaze lands on petrifies only after their next move, and escapes if moved. |
+| hex_of_stone | Hex of Stone | hex | 7 | passive | Every one of your opponent's knights and bishops turns to a walnut for 4 of their turns, though the first affected piece may make one move first. For those same 4 turns their rooks and queen may slide no more than two squares. |
+| hx4_gorgon_field | Gorgon Field | hex | 7 | passive | A gorgon's gaze sweeps the middle of the board: for your opponent's next 3 turns, any piece of theirs that ends a move on the central 4x4 (c3 to f6) becomes a walnut for 1 of their turns. Kings resist the gaze. |
+| hx4_stone_orchard | Stone Orchard | hex | 7 | instant | All of your opponent's knights and bishops turn to walnuts for 1 of their turns: heavy nuts that can only shuffle one square. One resists: the affected piece nearest the a1 corner keeps its footing. |
+| hx4_doomsday_clock | Doomsday Clock | hex | 8 | passive | A great clock ticks in full view: after 3 of your opponent's turns, every piece of theirs then standing in your half becomes a walnut for 2 of their turns. If none are there, their most advanced piece is frozen for 1 turn instead. |
+| nw2_pyrrhic_victories | Pyrrhic Victories | nerf | 8 | passive-rule | Any of your pieces that captures turns to stone and can never move again; a petrified piece can still be captured by your opponent. Your king is immune to the curse. |
+| obsidian_bastions | Obsidian Bastions | hex | 8 | passive | Your opponent's rooks turn to walnuts for the rest of the game, able only to shuffle one square at a time. A rook breaks free the instant it makes a capture. |
+| petrified_forest | Petrified Forest | hex | 8 | passive | Your opponent's knights and bishops turn to walnuts for 4 of their turns, except the first, which may move once before it too petrifies. The forest has roots: any enemy piece that ends a move beside one of the stone trees is frozen for 1 turn. |
+| walnut_court | Walnut Court | hex | 8 | instant | The whole court hardens where it sits: every enemy piece except the king still on its own back rank turns into a walnut for 3 of their turns. A walnut can only shuffle one square at a time. |
+| mass_petrify | Mass Petrify | apex | 9 | activated | Choose up to five enemy pieces other than the king to turn to stone for your opponent's next 2 turns; the two most valuable among them resist and are spared. A petrified piece may only shuffle one square. |
+
 ## info-reveal
 
 **Reveals hidden information** - The holder gets to see something the rules normally keep secret.
@@ -1628,73 +1699,6 @@ Cards do several things at once, so the ladder is priority-ordered and first-mat
 | bn4_all_seeing_spire | All-Seeing Spire | boon | 6 | instant | See both the cards and the tier of your opponent's next draft offer, and every enemy piece that no other enemy piece defends lights up until your opponent replies. |
 | bn4_eye_of_ages | Eye of Ages | boon | 7 | instant | See both the cards and the tier of your opponent's next draft offer, gain 3 draft rerolls, and every enemy piece that no other enemy piece defends lights up until your opponent replies. |
 | sovereign_draft | Sovereign Draft | buff | 7 | instant | Take both cards in your next draft, that draft rolls one tier higher, and you see the tier of your opponent's next offer. |
-
-## piece-downgrade-transform
-
-**Turns a piece into something weaker** - A piece is demoted, petrified into scenery or reduced in kind. Usually an enemy piece; on a nerf it is your own.
-
-58 cards.
-
-| id | name | family | tier | trigger | rule |
-|---|---|---|---|---|---|
-| hx4_dusty_boots | Dusty Boots | hex | 1 | instant | One of your opponent's pawns, chosen at random, becomes a walnut for 1 of their turns: it can only shuffle a single square. Their most advanced pawn is spared and is never chosen. |
-| hx4_loose_horseshoe | Loose Horseshoe | hex | 1 | activated | One enemy knight you target loses a shoe after your opponent's next move and becomes a walnut for 1 of their turns: no leaping, only a one square hobble. |
-| hx4_plush_cavalry | Plush Cavalry | hex | 1 | passive | Your opponent's knights become adorable plush toys for 6 of their turns; stuffed hooves cannot fight, and after their next move their knights cannot capture for 2 of their turns. |
-| op_garden_hedge | Garden Hedge | buff | 1 | passive | Your queen may hop over an adjacent friendly pawn in any direction, landing on the square directly beyond, once. The landing square must be empty. The hop becomes available only after your opponent's next move. |
-| op_green_room | Green Room | buff | 1 | passive | Once, while on your back rank, one of your knights may hop exactly 1 square sideways along it, ignoring anything between. The destination must be empty. The hop becomes available only after your opponent's next move. |
-| op_piggyback | Piggyback | buff | 1 | passive | One of your pawns may hop over the friendly pawn directly ahead of it, landing on the square directly beyond, once. The landing square must be empty. The hop becomes available only after your opponent's next move. |
-| op_signal_rocket | Signal Rocket | buff | 1 | passive | Once, one of your knights may make a launch of exactly 4 straight, clearing anything between. It may capture on landing. The leap becomes available only after your opponent's next move. |
-| op_tower_bridge | Tower Bridge | buff | 1 | passive | One of your rooks may hop over your other rook when adjacent on a rank or file, landing on the square directly beyond, once. The landing square must be empty. The hop becomes available only after your opponent's next move. |
-| hx4_gum_wrapper | Gum Wrapper | hex | 2 | activated | One enemy pawn you target is wrapped up like a sweet: after your opponent's next move it becomes a walnut for 2 of their turns, shuffling one square at best. |
-| hx4_toad_pond | Toad Pond | hex | 2 | activated | Choose an empty square: for your opponent's next 6 turns it is a cursed pond, and the first piece of theirs to stop in it becomes a walnut for 1 of their turns. Kings do not fit in ponds. |
-| basilisk_stare | Basilisk's Gaze | hex | 3 | activated | Turn one enemy piece to stone. It may make one last legal move to escape; then it becomes a walnut that can only shuffle one square at a time for 4 of their turns, and while petrified it cannot capture. Kings cannot be targeted. |
-| hobbled_cavalry | Hobbled Cavalry | hex | 3 | passive | After your opponent's next move, their knights turn to walnuts for their following 2 turns: a walnut can only shuffle one square at a time. |
-| hw3_slow_poison | Slow Poison | hex | 3 | activated | Poison one enemy queen, rook or bishop. In 4 of their turns it withers a full rank: queen to rook, rook to bishop, bishop to knight. One capture is the antidote: if the poisoned piece takes anything before then, the poison is purged. |
-| hx4_borrowed_crown | Borrowed Crown | hex | 3 | instant | One of your opponent's pawns, chosen at random, finds a crown and gets ideas: it is gilded for 6 of their turns and, weighed down by delusion, becomes a walnut for 1. |
-| hx4_gargoyle_perch | Gargoyle Perch | hex | 3 | activated | Up to two enemy rooks you target turn into walnuts for 1 of their turns: they can only shuffle one square at a time. |
-| stone_curse | Stone Curse | hex | 3 | activated | Target one enemy piece, not a king. It gets one unaffected move; then it turns to a walnut for 4 of their turns, able only to shuffle one square at a time. |
-| wc_stage_fright | Stage Fright | hex | 3 | passive | The next time your opponent's queen moves, she freezes where she lands for one of their turns. If that move gives check, stage fright hits harder and she becomes a walnut, shuffling one square at a time, for two of their turns instead. |
-| crown_and_castle | Crown and Castle | hex | 4 | instant | Your opponent's queen and rooks turn to walnuts for 2 of their turns: a walnut is so heavy it can only shuffle one square at a time. |
-| granite_towers | Granite Towers | hex | 4 | passive | After your opponent's next move, their rooks turn to walnuts for their following 3 turns: a walnut is so heavy it can only shuffle one square at a time. |
-| hw3_aging_blade | Aging Blade | hex | 4 | passive | It takes hold after your opponent's next move, then for their next 6 turns: whenever a queen, rook or bishop captures, it ages one rank on the spot. Queen to rook, rook to bishop, bishop to knight. Knights and pawns never age. |
-| hx4_bell_jar | Bell Jar | hex | 4 | activated | Drop a bell jar over one enemy piece you target: it and every enemy piece adjacent to it become walnuts for 1 of their turns, except the defender's most valuable piece under the jar, which is spared. Kings never fit under glass. |
-| hx4_brittle_arsenal | Brittle Arsenal | hex | 4 | instant | Every enemy bishop, rook and queen turns to a walnut for 1 of their turns: the whole long range arsenal reduced to shuffling. |
-| hx4_stone_garden | Stone Garden | hex | 4 | instant | All of your opponent's knights, bishops and rooks turn to walnuts for 1 of their turns, heavy nuts that can only shuffle one square at a time. Their two most valuable affected pieces resist and keep their footing. |
-| hx4_traitors_gala | Traitor's Gala | hex | 4 | instant | Two of your opponent's knights or bishops, chosen at random, drink the wrong toast and become walnuts for 1 of their turns. |
-| queen_of_stone | Queen of Stone | hex | 4 | passive | The curse waits in her shoes: the next time your opponent moves their queen, she turns to a walnut for 3 of their turns the moment she lands. |
-| stone_clergy | Stone Clergy | hex | 4 | passive | Your opponent's bishops turn to walnuts for 3 of their turns: a walnut is so heavy it can only shuffle one square at a time. The first bishop keeps one free move before it too sets. |
-| fm_hex_gorgon_gaze | Gorgon Gaze | hex | 5 | instant | Every enemy knight and bishop turns to stone for your opponent's next 2 turns. |
-| granite_ramparts | Granite Ramparts | hex | 5 | instant | Your opponent's rooks turn to walnuts for 2 of their turns, and for their next 2 turns they cannot move any piece onto their own back two ranks. |
-| hw2_weight_of_toil | Weight of Toil | hex | 5 | passive | For your opponent's next 6 turns, any single piece that makes its third move in that time collapses under the toil and becomes a walnut for 2 of their turns, shuffling one square at a time. Kings never collapse. |
-| hx4_no_quarter | No Quarter | hex | 5 | instant | Your half of the board rejects the invasion: every enemy piece currently standing in your half becomes a walnut for 1 of their turns. |
-| hx4_stone_rain | Stone Rain | hex | 5 | instant | Petrifying hail sweeps their lines: 5 of your opponent's pieces, chosen at random (never the king), become walnuts for 1 of their turns. |
-| medusas_verdict | Medusa's Verdict | hex | 5 | passive | After your opponent's next move, their queen turns to a walnut for 4 of their turns, and every enemy piece then standing next to her is frozen for 1 of their turns. |
-| shapeshifter | Shapeshifter | nerf | 5 | passive-rule | For your first 3 moves the queen moves normally. From then on she is a bishop; capturing a non-pawn turns her into a copy of that piece, and capturing a knight freezes her. |
-| statue_stable | Statue Stable | hex | 5 | instant | Your opponent's knights turn to walnuts for 2 of their turns, and your own knights harden into living statues: they cannot be captured for those same 2 turns. |
-| we_overgrowth | Overgrowth | buff | 5 | activated | Choose one of your pawns; after your opponent replies it blooms into a queen for your next 3 turns, then withers back into a pawn. |
-| we_petrify_ranks | Petrify the Ranks | buff | 5 | instant | Every enemy knight and bishop turns to stone: they cannot move for their next 2 turns. The card is spent even if your opponent has no knights or bishops to petrify. |
-| withering_touch | Withering Touch | hex | 5 | activated | One enemy piece freezes solid for 2 of their turns, then withers to a walnut that can only shuffle one square at a time for the rest of the game. Kings cannot be targeted. |
-| hx4_gorgons_court | Gorgon's Court | hex | 6 | activated | Choose 2 enemy pieces (never the king): both become walnuts for 3 of their turns. The first piece chosen may make one move before it petrifies. |
-| hx4_hunters_moon | Hunter's Moon | hex | 6 | passive | For your opponent's next 4 turns, any piece of theirs that captures is cursed by the moon and becomes a walnut for 2 of their turns. Kings are beyond the curse. |
-| hx4_walnut_crown | The Walnut Crown | hex | 6 | instant | Your opponent's queen becomes a walnut for 2 of their turns: the mightiest piece on the board reduced to a slow, dignified shuffle. |
-| hx4_walnut_pinch | Walnut Pinch | hex | 6 | instant | Your opponent's queen turns into a walnut for 1 of their turns: a heavy nut that can only shuffle one square. |
-| second_king | Second King | buff | 6 | activated | Choose one of your pawns, on any rank; after your opponent's next move it becomes a second king. Your opponent must capture both of your kings to win. |
-| serpent_brood | Serpent Brood | hex | 6 | passive | Venomous stone serpents coil around the enemy clergy: every one of your opponent's bishops turns to a walnut for 4 of their turns, and the venom lingers so no enemy bishop may capture for the rest of the game. |
-| statue_garden | Statue Garden | hex | 6 | passive | Your opponent's knights and bishops turn to walnuts for 3 of their turns, shuffling one square at a time. The first one struck petrifies only after your opponent's next move, and escapes if they move it away. |
-| stone_bastions | Stone Bastions | hex | 6 | instant | Your opponent's rooks turn to walnuts for 2 of their turns, and each stone bastion seals its ground: for their next 2 turns your opponent cannot move any piece onto the files their petrified rooks stand on. |
-| stone_riders | Stone Riders | hex | 6 | passive | After your opponent's next move, their knights turn to walnuts for 3 of their turns, and the stone is catching: on each of those turns one random enemy piece standing beside a stone rider is petrified for 1 turn too. |
-| the_big_chill | The Big Chill | hex | 6 | passive | Freeze all of your opponent's pieces except their king for one of their turns. As the ice lets go, two random survivors turn to walnuts, able to shuffle only one square at a time, for one more of their turns. |
-| amazon_army | Amazon Army | buff | 7 | passive | For your next three turns your knights also move as bishops and your bishops also move as knights. Neither becomes a full amazon. |
-| cockatrice_gaze | Cockatrice Gaze | hex | 7 | passive | Every enemy knight and bishop in your half turns to a walnut for 4 of their turns. Minors still in their own half only catch the reflection and are frozen for 1 turn. The first piece the gaze lands on petrifies only after their next move, and escapes if moved. |
-| hex_of_stone | Hex of Stone | hex | 7 | passive | Every one of your opponent's knights and bishops turns to a walnut for 4 of their turns, though the first affected piece may make one move first. For those same 4 turns their rooks and queen may slide no more than two squares. |
-| hx4_gorgon_field | Gorgon Field | hex | 7 | passive | A gorgon's gaze sweeps the middle of the board: for your opponent's next 3 turns, any piece of theirs that ends a move on the central 4x4 (c3 to f6) becomes a walnut for 1 of their turns. Kings resist the gaze. |
-| hx4_stone_orchard | Stone Orchard | hex | 7 | instant | All of your opponent's knights and bishops turn to walnuts for 1 of their turns: heavy nuts that can only shuffle one square. One resists: the affected piece nearest the a1 corner keeps its footing. |
-| hx4_doomsday_clock | Doomsday Clock | hex | 8 | passive | A great clock ticks in full view: after 3 of your opponent's turns, every piece of theirs then standing in your half becomes a walnut for 2 of their turns. If none are there, their most advanced piece is frozen for 1 turn instead. |
-| nw2_pyrrhic_victories | Pyrrhic Victories | nerf | 8 | passive-rule | Any of your pieces that captures turns to stone and can never move again; a petrified piece can still be captured by your opponent. Your king is immune to the curse. |
-| obsidian_bastions | Obsidian Bastions | hex | 8 | passive | Your opponent's rooks turn to walnuts for the rest of the game, able only to shuffle one square at a time. A rook breaks free the instant it makes a capture. |
-| petrified_forest | Petrified Forest | hex | 8 | passive | Your opponent's knights and bishops turn to walnuts for 4 of their turns, except the first, which may move once before it too petrifies. The forest has roots: any enemy piece that ends a move beside one of the stone trees is frozen for 1 turn. |
-| walnut_court | Walnut Court | hex | 8 | instant | The whole court hardens where it sits: every enemy piece except the king still on its own back rank turns into a walnut for 3 of their turns. A walnut can only shuffle one square at a time. |
-| mass_petrify | Mass Petrify | apex | 9 | activated | Choose up to five enemy pieces other than the king to turn to stone for your opponent's next 2 turns; the two most valuable among them resist and are spared. A petrified piece may only shuffle one square. |
 
 ## promotion-grant
 
@@ -1765,7 +1769,7 @@ Cards do several things at once, so the ladder is priority-ordered and first-mat
 
 **Shoves a piece without a move** - A piece is dragged, bounced or advanced a square by the card itself, not by its owner playing a move.
 
-53 cards.
+52 cards.
 
 | id | name | family | tier | trigger | rule |
 |---|---|---|---|---|---|
@@ -1802,7 +1806,6 @@ Cards do several things at once, so the ladder is priority-ordered and first-mat
 | tidal_push | Tidal Push | buff | 3 | activated | Choose one enemy piece and where it lands; after your opponent's next move, shove it two squares in a straight line if the path is still empty, once. |
 | ww_forced_retreat | Forced Retreat | buff | 3 | activated | Mark one enemy piece, a king aside: after your opponent's next move it is pushed one square directly away from your king, if that square is empty, once. Kings cannot be pushed. |
 | ww_regroup_lines | Regroup the Lines | buff | 3 | instant | Sound the recall: every one of your pieces standing in the enemy half falls back one square toward home, wherever the square behind it is free. |
-| skibidi_flush | Skibidi Flush | buff | 4 | activated | Up to 3 enemy pieces (never the king) are sent back to their home squares, or the nearest empty square toward home. |
 | total_recall | Total Recall | buff | 4 | activated | Pull each of your pieces past your 4th rank back to your 3rd rank where empty, once. Using it spends your next unused reroll, if any. |
 | wc_banana_peel_trail | Banana Peel Trail | buff | 4 | activated | Grease one file with banana peels: pieces may still enter, but the first enemy piece to do so slips one square back toward its home rank and cannot move next turn. An enemy king is too dignified to slip, but still treads the peels flat and spends them. |
 | cavalry_charge | Cavalry Charge | buff | 5 | activated | Charge a knight along a rank or file: it smashes the first two enemy pieces it hits, never kings, then rolls to the far side of them, stopping before the next piece or the edge. Its landing shock shoves every enemy a knight's leap away one square back. |
@@ -2152,7 +2155,7 @@ Cards do several things at once, so the ladder is priority-ordered and first-mat
 
 **Shuts down a whole piece class** - Every knight, every bishop, every pawn: one type of piece stops working.
 
-40 cards.
+39 cards.
 
 | id | name | family | tier | trigger | rule |
 |---|---|---|---|---|---|
@@ -2163,7 +2166,6 @@ Cards do several things at once, so the ladder is priority-ordered and first-mat
 | nw2_silent_infantry | Silent Infantry | nerf | 1 | passive-rule | From your fourth move on, your pawns can't give check: any pawn move that would leave the enemy king in check is forbidden. A pawn may still capture the king itself. |
 | op_walking_pace | Walking Pace, Please | buff | 1 | passive | On your opponent's next turn, enemy pawns cannot make two-square moves. |
 | ov_nightlight | Nightlight | buff | 1 | passive | A little lamp clicks on: enemy knights cannot end a move next to your king for your opponent's next turn. |
-| wa_stone_pawns | Stone the Pawns | buff | 1 | passive | For their next 3 turns your opponent's pawns cannot make two-square advances. |
 | bn4_slow_doors | Slow Doors | boon | 2 | instant | Your opponent's pawns cannot advance for their next 2 turns, though they may still capture. |
 | flat_footed | Flat Footed | nerf | 2 | passive-rule | Your pawns can't advance two squares. |
 | hx4_short_stirrups | Short Stirrups | hex | 2 | passive | For your opponent's next 3 turns, their knights may not land adjacent to your king. The horses refuse the last stretch. |
@@ -2796,6 +2798,7 @@ Cards do several things at once, so the ladder is priority-ordered and first-mat
 | bn4_twin_buttons | Twin Buttons | boon | 4 | instant | Two pawns slip into your pocket, ready to be dropped onto empty squares on later turns (each drop spends that turn). |
 | direwolf_pack | Direwolf Pack | buff | 4 | activated | Two spectral direwolves answer your howl: place two knights on empty squares in your half. The pack melts back into the mist after 5 of your turns. Using it consumes your next unused reroll, if you have one. |
 | ov_flash_mob | Flash Mob | buff | 4 | instant | Four pawns appear on random empty squares of your third rank. They hold the final pose (cannot move) for 1 turn. |
+| bee_swarm_simulator | Bee Swarm Simulator | buff | 5 | activated | Choose 3 empty squares on the two centre ranks. After your opponent's next move, one of your pawns appears on each square still empty. |
 | bn4_color_guard | Color Guard | boon | 5 | activated | Place two new pawns on empty squares on your second rank. |
 | bn4_pocket_cavalry | Pocket Cavalry | boon | 5 | instant | A knight and a pawn join your pocket, ready to be dropped onto empty squares on later turns (each drop spends that turn). |
 | bn4_winter_garrison | Winter Garrison | boon | 5 | activated | Place three new pawns on empty squares on your second through fourth ranks. Only the first pawn you place cannot be captured on your opponent's next turn. |
@@ -2805,7 +2808,6 @@ Cards do several things at once, so the ladder is priority-ordered and first-mat
 | bn4_drawbridge_crew | Drawbridge Crew | boon | 7 | activated | Place three new pawns on empty squares on your second rank. |
 | roost_of_rocs | Roost of Rocs | buff | 7 | activated | Three titanic rocs descend and perch along the board's edge: place three knights on empty squares of the outer rim, then skip your next draft. |
 | bn4_pact_of_the_dawn | Pact of the Dawn | boon | 8 | instant | Suspend your nerf for your next 12 turns, and every one of your captured pawns returns at once to squares nearest your home rank. The most advanced returning pawn cannot move until your opponent replies. |
-| bw2_shadow_reserve | Shadow Reserve | boon | 8 | instant | A knight, a bishop and a rook join your pocket to drop onto empty squares on later turns. Your next 2 drafts are skipped. |
 | full_resurrection | Full Resurrection | apex | 9 | instant | Revive your queen, both rooks, and one minor piece to your half. |
 | iron_legion | Iron Legion | apex | 9 | instant | A rook and a knight join your pocket to drop onto empty squares on later turns; a queen joins them only if your queen has already been captured. |
 
