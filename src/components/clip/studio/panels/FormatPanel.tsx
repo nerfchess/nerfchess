@@ -9,8 +9,19 @@
 import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/Button";
 import { renderClipPoster, type ClipPoster, type ClipScene } from "../../clipScene";
-import { ASPECTS, LENGTH_OPTIONS } from "../../clipOptions";
-import { Chip, Row, SliderRow, type Studio } from "../controls";
+import {
+  ASPECTS,
+  BOARD_THEME_OPTIONS,
+  FORMAT_OPTIONS,
+  FPS_OPTIONS,
+  LENGTH_OPTIONS,
+  QUALITY_OPTIONS,
+  TARGET_OPTIONS,
+} from "../../clipOptions";
+import { Chip, ChoiceRow, Row, SliderRow, type Studio } from "../controls";
+
+/** Mbps readouts for the quality chips (mono voice, numbers only). */
+const QUALITY_MBPS = { compact: 6, standard: 10, high: 16 } as const;
 
 const THUMB_W = 96;
 
@@ -45,9 +56,15 @@ function PosterPreview({
 }
 
 export function FormatPanel({ studio }: { studio: Studio }) {
-  const { opts, set, locked, pliesChoice, setPliesChoice, resetTikTok, scene, images, hookText } =
-    studio;
+  const {
+    opts, set, locked, pliesChoice, setPliesChoice, resetTikTok, scene, images, hookText, encode,
+    highlightsCount,
+  } = studio;
+  const highlightsOn = opts.format === "highlights" && highlightsCount > 0;
   const current = ASPECTS.find((a) => a.id === opts.aspect);
+  // 60fps needs the offline encoder AND a codec that takes a 60Hz config.
+  const fpsBlocked = opts.fps === 60 && !!encode && !encode.fps60;
+  const effFps = fpsBlocked ? 30 : opts.fps;
   // Default poster moment when the designer switches on: the payoff landing.
   const payoffFrac = (() => {
     if (!scene) return 0.6;
@@ -81,17 +98,98 @@ export function FormatPanel({ studio }: { studio: Studio }) {
       <div className="clip-row">
         <span className="clip-row-label">Output</span>
         <div className="clip-row-body">
-          <span className="clip-readout">{current?.res ?? ""} 30fps</span>
+          <span className="clip-readout" data-clip-output>
+            {current?.res ?? ""} {effFps}fps {QUALITY_MBPS[opts.quality]}Mbps
+          </span>
         </div>
       </div>
+      <Row label="Quality">
+        {QUALITY_OPTIONS.map(([id, label]) => (
+          <Chip
+            key={id}
+            label={label}
+            on={opts.quality === id}
+            onClick={() => set("quality", id)}
+            disabled={locked}
+            title={`${QUALITY_MBPS[id]} Mbps video`}
+          />
+        ))}
+      </Row>
+      <Row label="Rate">
+        {FPS_OPTIONS.map(([id, label]) => (
+          <Chip
+            key={id}
+            label={label}
+            on={opts.fps === id}
+            onClick={() => set("fps", id)}
+            disabled={locked}
+            title={id === 60 ? "Double the frame samples through the same renderer" : "The classic rate"}
+          />
+        ))}
+        {fpsBlocked && (
+          <span className="clip-readout" data-clip-fps-note>
+            {encode?.tier === 2 ? "realtime records at 30" : "no 60fps encoder; using 30"}
+          </span>
+        )}
+      </Row>
+      {/* Reel-only board looks: recolors squares and frame in the render;
+          the game board is untouched, and grades composite on top. */}
+      <ChoiceRow
+        label="Board"
+        options={BOARD_THEME_OPTIONS}
+        value={opts.boardTheme}
+        onPick={(v) => set("boardTheme", v)}
+        disabled={locked}
+      />
+      {/* Reel format: one continuous moment, or stitched highlight chapters
+          (top card plays + biggest swings, 8+ plies apart). */}
+      <Row label="Format">
+        {FORMAT_OPTIONS.map(([id, label]) => (
+          <Chip
+            key={id}
+            label={id === "highlights" && highlightsCount > 0 ? `${label} (${highlightsCount})` : label}
+            on={opts.format === id}
+            onClick={() => set("format", id)}
+            disabled={locked || (id === "highlights" && highlightsCount === 0)}
+            title={
+              id === "highlights"
+                ? highlightsCount === 0
+                  ? "No distinct moments to chapter in this game"
+                  : "Stitch up to 3 highlight moments into one reel"
+                : "One continuous window (classic)"
+            }
+          />
+        ))}
+      </Row>
+      {/* Reel length target: fit by trimming holds, never by playback speed
+          (that stays a PACE choice). */}
+      <Row label="Target">
+        {TARGET_OPTIONS.map(([id, label]) => (
+          <Chip
+            key={String(id)}
+            label={label}
+            on={opts.lengthTarget === id}
+            onClick={() => set("lengthTarget", id)}
+            disabled={locked}
+            title={
+              id === "auto"
+                ? "Natural duration (highlights still fit 8-20s)"
+                : `Fit the reel to about ${id}s by trimming holds`
+            }
+          />
+        ))}
+      </Row>
       <Row label="Window">
         {LENGTH_OPTIONS.map((num) => (
           <Chip
             key={String(num)}
             label={num === "auto" ? "Auto" : `Last ${num}`}
-            on={pliesChoice === num}
+            on={!highlightsOn && pliesChoice === num}
             onClick={() => setPliesChoice(num)}
-            disabled={locked}
+            disabled={locked || highlightsOn}
+            title={
+              highlightsOn ? "Highlights mode cuts its own chapter windows" : undefined
+            }
           />
         ))}
       </Row>

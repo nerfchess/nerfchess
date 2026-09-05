@@ -4,6 +4,7 @@
 // ink source (auto from grade / accent / white / custom hex), size, vertical
 // parking, and the stamp rotation dial.
 
+import { Button } from "@/components/ui/Button";
 import {
   CAPTION_COLOR_OPTIONS,
   CAPTION_PACK_OPTIONS,
@@ -12,6 +13,7 @@ import {
   CAPTION_STYLES,
   EMOJI_LEVELS,
   HOOK_PRESETS,
+  HOOK_SIZE_OPTIONS,
   STAMP_ROT_OPTIONS,
   TITLE_TEMPLATE_OPTIONS,
 } from "../../clipOptions";
@@ -31,6 +33,18 @@ export function TextPanel({ studio }: { studio: Studio }) {
         onPick={(v) => setStyle({ titleTemplate: v })}
         disabled={locked}
       />
+      {/* Versus intro: the pre-slam match card (names slam from opposite
+          sides, ratings when rated, mode chip). Off by default; the Grudge
+          Match preset switches it on. */}
+      <Row label="Intro">
+        <Chip
+          label="Versus card"
+          on={opts.versusIntro}
+          onClick={() => set("versusIntro", !opts.versusIntro)}
+          disabled={locked}
+          title="Open on a match card before the board slams in"
+        />
+      </Row>
       <div className="clip-row">
         <span className="clip-row-label">Hook</span>
         <input
@@ -64,6 +78,37 @@ export function TextPanel({ studio }: { studio: Studio }) {
             />
           ))}
       </Row>
+      {/* Hook geometry: its own type scale, and the drag-to-park position
+          (vertical, safe-zone clamped) with a reset back to the layout line. */}
+      <Row label="Hook size">
+        {HOOK_SIZE_OPTIONS.map(([id, label]) => (
+          <Chip
+            key={id}
+            label={label}
+            on={opts.hookScale === id}
+            onClick={() => set("hookScale", id)}
+            disabled={locked}
+          />
+        ))}
+        {opts.hookYFrac !== null ? (
+          <Button
+            tone="quiet"
+            size="xs"
+            press={false}
+            onClick={() => set("hookYFrac", null)}
+            disabled={locked}
+            data-clip-hook-reset
+            className="text-parchment-400"
+            title="Snap the hook back to the layout's classic line"
+          >
+            Reset position
+          </Button>
+        ) : (
+          <span className="clip-readout" data-clip-hook-note>
+            drag it in the preview
+          </span>
+        )}
+      </Row>
       <ChoiceRow label="Captions" options={CAPTION_STYLES} value={opts.captionStyle} onPick={(v) => set("captionStyle", v)} disabled={locked} />
       <ChoiceRow label="Pack" options={CAPTION_PACK_OPTIONS} value={s.captionPack} onPick={(v) => setStyle({ captionPack: v })} disabled={locked || opts.captionStyle === "off"} />
       <ChoiceRow label="Ink" options={CAPTION_COLOR_OPTIONS} value={s.captionColor} onPick={(v) => setStyle({ captionColor: v })} disabled={locked || opts.captionStyle === "off"} />
@@ -81,6 +126,23 @@ export function TextPanel({ studio }: { studio: Studio }) {
       <ChoiceRow label="Park" options={CAPTION_POS_OPTIONS} value={s.captionPos} onPick={(v) => setStyle({ captionPos: v })} disabled={locked || opts.captionStyle === "off"} />
       <ChoiceRow label="Rotation" options={STAMP_ROT_OPTIONS} value={s.stampRotation} onPick={(v) => setStyle({ stampRotation: v })} disabled={locked} />
       <ChoiceRow label="Emoji" options={EMOJI_LEVELS} value={opts.emojiLevel} onPick={(v) => set("emojiLevel", v)} disabled={locked} />
+      {/* Commentary track: the creator's own voice layer. Notes are written
+          per ply from the timeline cell strip; this is the master switch. */}
+      <Row label="Notes">
+        <Chip
+          label="Commentary"
+          on={opts.commentaryOn}
+          onClick={() => set("commentaryOn", !opts.commentaryOn)}
+          disabled={locked}
+          title="Render your per-ply notes as lower-third bars"
+        />
+        <span className="clip-readout" data-clip-note-count>
+          {(() => {
+            const n = Object.values(opts.plyMods).filter((m) => m.note?.trim()).length;
+            return n === 0 ? "tap a timeline cell to add" : `${n} note${n === 1 ? "" : "s"}`;
+          })()}
+        </span>
+      </Row>
     </div>
   );
 }

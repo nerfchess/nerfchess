@@ -21,12 +21,27 @@ const FPS = 30;
 const VIDEO_BITRATE = 10_000_000;
 const AUDIO_BITRATE = 128_000;
 
+/** Export quality tiers (FORMAT panel), as video bitrates. */
+export type ClipQualityId = "standard" | "high" | "compact";
+export const QUALITY_BITRATE: Record<ClipQualityId, number> = {
+  standard: VIDEO_BITRATE,
+  high: 16_000_000,
+  compact: 6_000_000,
+};
+
+/** Export frame rates. 60 doubles the sample count through the same pure
+ *  renderer; support is probed per codec and falls back to 30. */
+export type ClipFps = 30 | 60;
+
 export interface EncodeSupport {
   tier: 1 | 2 | 3;
   /** Container the encode will produce ("mp4" | "webm"), tiers 1-2 only. */
   container: "mp4" | "webm" | null;
   /** Human-readable description for the modal readout. */
   detail: string;
+  /** Whether the detected Tier 1 codec accepts a 60fps configuration. Tier 2
+   *  records the live canvas at 30 and never supports 60. */
+  fps60: boolean;
   /** Tier 1 plumbing, resolved during detection. */
   t1?: {
     video: "avc" | "vp9" | "vp8" | "av1";
@@ -34,6 +49,40 @@ export interface EncodeSupport {
   };
   /** Tier 2 mime type. */
   t2MimeType?: string;
+}
+
+/** Candidate WebCodecs codec strings per family, high enough in level for
+ *  1080p60. Used only for the 60fps capability probe; mediabunny picks its
+ *  own string for the actual encode. */
+const FPS60_PROBE_CODECS: Record<"avc" | "vp9" | "vp8" | "av1", string[]> = {
+  avc: ["avc1.640033", "avc1.4d0033", "avc1.42003e"],
+  vp9: ["vp09.00.50.08", "vp09.00.41.08"],
+  vp8: ["vp8"],
+  av1: ["av01.0.09M.08", "av01.0.08M.08"],
+};
+
+async function probeFps60(
+  video: "avc" | "vp9" | "vp8" | "av1",
+  width: number,
+  height: number,
+  bitrate: number,
+): Promise<boolean> {
+  if (typeof VideoEncoder === "undefined" || !VideoEncoder.isConfigSupported) return false;
+  for (const codec of FPS60_PROBE_CODECS[video]) {
+    try {
+      const res = await VideoEncoder.isConfigSupported({
+        codec,
+        width,
+        height,
+        framerate: 60,
+        bitrate,
+      });
+      if (res.supported) return true;
+    } catch {
+      // try the next codec string
+    }
+  }
+  return false;
 }
 
 function pickRecorderMime(): string | null {
@@ -53,16 +102,18 @@ function pickRecorderMime(): string | null {
 }
 
 /** Probe what this browser can do for a WxH clip. Cheap enough to run on
- *  every modal open; results feed both the encode and the UI readout. */
+ *  every modal open; results feed both the encode and the UI readout.
+ *  `bitrate` follows the quality tier so the probe matches the real encode. */
 export async function detectEncodeSupport(
   width: number,
   height: number,
   wantAudio: boolean,
+  bitrate: number = VIDEO_BITRATE,
 ): Promise<EncodeSupport> {
   if (typeof window !== "undefined" && typeof VideoEncoder !== "undefined") {
     try {
       const mb = await import("mediabunny");
-      const dims = { width, height, bitrate: VIDEO_BITRATE };
+      const dims = { width, height, bitrate };
       const avc = await mb.canEncodeVideo("avc", dims);
       const aac = wantAudio ? await mb.canEncodeAudio("aac", { bitrate: AUDIO_BITRATE }) : false;
       if (avc && (!wantAudio || aac)) {
@@ -70,6 +121,7 @@ export async function detectEncodeSupport(
           tier: 1,
           container: "mp4",
           detail: wantAudio ? "MP4 (H.264 + AAC), rendered offline" : "MP4 (H.264), rendered offline",
+          fps60: await probeFps60("avc", width, height, bitrate),
           t1: { video: "avc", audio: aac ? "aac" : null },
         };
       }
@@ -82,6 +134,7 @@ export async function detectEncodeSupport(
                 tier: 1,
                 container: "webm",
                 detail: `WebM (${v.toUpperCase()} + Opus), rendered offline`,
+                fps60: await probeFps60(v, width, height, bitrate),
                 t1: { video: v, audio: "opus" },
               };
             }
@@ -98,6 +151,7 @@ export async function detectEncodeSupport(
             tier: 1,
             container: "mp4",
             detail: "MP4 (H.264, no audio codec available), rendered offline",
+            fps60: await probeFps60("avc", width, height, bitrate),
             t1: { video: "avc", audio: null },
           };
         }
@@ -113,10 +167,11 @@ export async function detectEncodeSupport(
       tier: 2,
       container,
       detail: `${container.toUpperCase()} (MediaRecorder, realtime)`,
+      fps60: false,
       t2MimeType: mime,
     };
   }
-  return { tier: 3, container: null, detail: "No supported video encoder in this browser" };
+  return { tier: 3, container: null, detail: "No supported video encoder in this browser", fps60: false };
 }
 
 export interface EncodeResult {
@@ -144,9 +199,13 @@ export async function encodeClipOffline(
   mix: ClipAudioOptions,
   onProgress?: (frac: number) => void,
   cancelled?: () => boolean,
+  /** Export settings from the FORMAT panel; defaults keep the classic take. */
+  settings?: { fps?: ClipFps; bitrate?: number },
 ): Promise<EncodeResult> {
   const mb = await import("mediabunny");
   const t1 = support.t1!;
+  const fps = settings?.fps ?? FPS;
+  const bitrate = settings?.bitrate ?? VIDEO_BITRATE;
   const { W, H } = scene.layout;
 
   const canvas = document.createElement("canvas");
@@ -162,9 +221,9 @@ export async function encodeClipOffline(
   });
   const videoSource = new mb.CanvasSource(canvas, {
     codec: t1.video,
-    bitrate: VIDEO_BITRATE,
+    bitrate,
   });
-  output.addVideoTrack(videoSource, { frameRate: FPS });
+  output.addVideoTrack(videoSource, { frameRate: fps });
 
   let audioSource: InstanceType<typeof mb.AudioBufferSource> | null = null;
   let audioBuffer: AudioBuffer | null = null;
@@ -181,21 +240,21 @@ export async function encodeClipOffline(
 
   await output.start();
 
-  const totalFrames = Math.max(1, Math.ceil((scene.durationMs / 1000) * FPS));
+  const totalFrames = Math.max(1, Math.ceil((scene.durationMs / 1000) * fps));
   for (let i = 0; i < totalFrames; i++) {
     if (cancelled?.()) {
       videoSource.close();
       await output.cancel();
       throw new EncodeCancelled();
     }
-    const tMs = Math.min((i * 1000) / FPS, scene.durationMs);
+    const tMs = Math.min((i * 1000) / fps, scene.durationMs);
     // Frame 0 is the export's thumbnail: when the studio designed a poster,
     // burn it here (renderClipPoster falls back to the plain frame 0), so the
     // saved file previews exactly what the THUMB section shows.
     if (i === 0) renderClipPoster(scene, ctx, images);
     else renderClipFrame(scene, ctx, tMs, images);
     // Awaiting add() respects encoder backpressure, per mediabunny's contract.
-    await videoSource.add(i / FPS, 1 / FPS);
+    await videoSource.add(i / fps, 1 / fps);
     onProgress?.((i + 1) / totalFrames);
   }
   videoSource.close();
@@ -224,6 +283,8 @@ export function recordClipRealtime(
   scene: ClipScene,
   support: EncodeSupport,
   mix: ClipAudioOptions,
+  /** Quality-tier bitrate; the realtime recorder always captures at 30fps. */
+  bitrate: number = VIDEO_BITRATE,
 ): RealtimeRecording {
   const mimeType = support.t2MimeType!;
   const container = support.container!;
@@ -237,7 +298,7 @@ export function recordClipRealtime(
   }
   const recorder = new MediaRecorder(stream, {
     mimeType,
-    videoBitsPerSecond: VIDEO_BITRATE,
+    videoBitsPerSecond: bitrate,
     audioBitsPerSecond: AUDIO_BITRATE,
   });
   const chunks: Blob[] = [];

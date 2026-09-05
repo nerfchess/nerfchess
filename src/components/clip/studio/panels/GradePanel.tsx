@@ -9,8 +9,8 @@ import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/Button";
 import { renderClipFrame, type ClipScene } from "../../clipScene";
 import { applyGrade, type GradeId } from "../../clipStyles";
-import { GRADE_OPTIONS } from "../../clipOptions";
-import { HexWell, Row, SliderRow, type Studio } from "../controls";
+import { GRADE_OPTIONS, SCENE_SET_OPTIONS } from "../../clipOptions";
+import { ChoiceRow, HexWell, Row, SliderRow, type Studio } from "../controls";
 
 const THUMB_W = 84;
 
@@ -87,6 +87,15 @@ export function GradePanel({ studio }: { studio: Studio }) {
         value={s.gradeStrength}
         onChange={(v) => setStyle({ gradeStrength: v })}
         disabled={locked || s.grade === "none"}
+      />
+      {/* Ambient scene sets: precomputed layer packs framing the board
+          (crowd + camera flashes, paper + pencil frame, CRT + marquee). */}
+      <ChoiceRow
+        label="Scene"
+        options={SCENE_SET_OPTIONS}
+        value={s.sceneSet}
+        onPick={(v) => setStyle({ sceneSet: v })}
+        disabled={locked}
       />
       <Row label="Duotone">
         <HexWell

@@ -70,6 +70,11 @@ export type TitleTemplateId =
 /** End-card variants: the logo pop, a rematch taunt, the card-codex tease, or
  *  the run's stats splat. */
 export type OutroVariantId = "logo" | "taunt" | "codex" | "stats";
+/** Ambient scene sets: coordinated chrome layered around the board. Void is
+ *  the classic bare backdrop; the rest are precomputed layer packs. */
+export type SceneSetId = "void" | "stadium" | "study" | "arcade";
+/** Impact zoom curves: how punch-ins (and the payoff arc) ease. */
+export type ZoomCurveId = "snap" | "whip" | "creep" | "bounce";
 
 /** Every wave-2 knob in one object. Lives on ClipSceneOptions as `style`, so
  *  the whole thing participates in the auto re-encode dependency. */
@@ -145,6 +150,10 @@ export interface ClipStyle {
   tensionMeter: boolean;
   /** Viewer-facing replay minimap strip in the bottom safe zone. */
   minimap: boolean;
+  /** Ambient scene set layered around the board (Void is the classic look). */
+  sceneSet: SceneSetId;
+  /** Impact zoom curve for punch-ins and the payoff arc. */
+  zoomCurve: ZoomCurveId;
   /** Deterministic seed for glitch slices, pixel dissolves, confetti, and the
    *  Surprise-me shuffle. Incremented per Surprise tap. */
   seed: number;
@@ -202,6 +211,8 @@ export const STYLE_DEFAULTS: ClipStyle = {
   beatSync: false,
   tensionMeter: false,
   minimap: false,
+  sceneSet: "void",
+  zoomCurve: "snap",
   seed: 0,
 };
 
@@ -213,6 +224,8 @@ export interface StylePresetExtras {
   emojiLevel?: EmojiLevel;
   captionStyle?: CaptionStyle;
   musicTrack?: MusicTrackId;
+  /** Versus intro match card (a modal option, not a style knob). */
+  versusIntro?: boolean;
 }
 
 export interface StylePreset {
@@ -343,6 +356,23 @@ export const STYLE_PRESETS: StylePreset[] = [
     extras: { emojiLevel: "off", musicTrack: "quiet" },
   },
   {
+    id: "grudge",
+    label: "Grudge Match",
+    style: {
+      shake: "heavy",
+      zoom: "punchy",
+      zoomCurve: "bounce",
+      grade: "infrared",
+      particles: "sparks",
+      transition: "whip",
+      outro: "taunt",
+      verdictStamps: true,
+      scoreBug: true,
+      stampRotation: "rowdy",
+    },
+    extras: { versusIntro: true, musicTrack: "wardrums" },
+  },
+  {
     id: "vapor",
     label: "Vaporwave",
     style: {
@@ -393,6 +423,9 @@ export function surpriseStyle(tap: number): ClipStyle {
   if (rng() < 0.35) s.beatSync = true;
   if (rng() < 0.3) s.tensionMeter = true;
   if (rng() < 0.3) s.minimap = true;
+  // Wave-6 presentation knobs, biased toward the classic picks.
+  s.sceneSet = pick(["void", "void", "void", "stadium", "study", "arcade"] as const);
+  s.zoomCurve = pick(["snap", "snap", "whip", "creep", "bounce"] as const);
   s.seed = tap;
   return s;
 }
@@ -471,6 +504,29 @@ export function gradeSwatch(
   };
   return [DEEP[grade], p.accent, p.paper];
 }
+
+// --- Reel board themes -------------------------------------------------------
+//
+// Render-only board looks for the reel: square colors plus a frame ink,
+// applied by the scene renderer without touching the player's site settings.
+// Grades composite on top, so a Walnut board still goes Noir.
+
+export type ReelBoardThemeId = "site" | "slate" | "walnut" | "midnight" | "paper";
+
+export interface ReelBoardTheme {
+  label: string;
+  light: string;
+  dark: string;
+  /** Frame stroke ink (replaces the palette accent around the board). */
+  frame: string;
+}
+
+export const REEL_BOARD_THEMES: Record<Exclude<ReelBoardThemeId, "site">, ReelBoardTheme> = {
+  slate: { label: "Slate", light: "#a3abb5", dark: "#4e565f", frame: "#c2ccd6" },
+  walnut: { label: "Walnut", light: "#d8b688", dark: "#7c5130", frame: "#e6c893" },
+  midnight: { label: "Midnight", light: "#414a6e", dark: "#1d2440", frame: "#8b96c9" },
+  paper: { label: "Paper", light: "#f2ecdd", dark: "#c6bca2", frame: "#847b69" },
+};
 
 // --- Color grades ------------------------------------------------------------
 //
@@ -759,6 +815,260 @@ export function applyGrade(
     }
     ctx.restore();
   }
+}
+
+// --- Ambient scene sets ------------------------------------------------------
+//
+// Coordinated chrome layered around the board, in the grade-cache mold: the
+// expensive parts (crowd silhouettes, paper texture, pencil frame, CRT
+// corners) are precomputed ONCE per (set, size, palette) onto offscreen
+// canvases and composited per frame; only the cheap animated bits (flash
+// twinkles, marquee pulse) draw live. Palette-cohesive: every ink comes from
+// the reel palette or the house darks.
+
+const sceneSetCache = new Map<string, HTMLCanvasElement>();
+
+function sceneLayer(
+  key: string,
+  W: number,
+  H: number,
+  paint: (g: CanvasRenderingContext2D) => void,
+): HTMLCanvasElement | null {
+  if (typeof document === "undefined") return null;
+  const hit = sceneSetCache.get(key);
+  if (hit) return hit;
+  const c = document.createElement("canvas");
+  c.width = W;
+  c.height = H;
+  const g = c.getContext("2d");
+  if (!g) return null;
+  paint(g);
+  sceneSetCache.set(key, c);
+  return c;
+}
+
+/** Crowd silhouette band: seeded head-and-shoulder bumps along `yBase`. */
+function paintCrowdRow(
+  g: CanvasRenderingContext2D,
+  rng: () => number,
+  x0: number,
+  x1: number,
+  yBase: number,
+  scale: number,
+  ink: string,
+): void {
+  g.fillStyle = ink;
+  let x = x0;
+  while (x < x1) {
+    const r = (10 + rng() * 8) * scale;
+    const bob = (rng() - 0.5) * 8 * scale;
+    // Shoulders + head.
+    g.fillRect(x - r * 1.15, yBase + bob - r * 0.35, r * 2.3, r * 3);
+    g.beginPath();
+    g.arc(x, yBase + bob - r * 0.6, r, 0, Math.PI * 2);
+    g.fill();
+    x += r * (1.7 + rng() * 0.9);
+  }
+}
+
+/** Draw the scene set's precomputed layers plus its live accents.
+ *  `phase: "back"` runs under the board (behind everything), `"front"` runs
+ *  with the finishing overlays. `impactQ` (0..1) is how recently a hit landed
+ *  and drives the stadium's camera flashes. Pure function of its inputs. */
+export function paintSceneSet(
+  ctx: CanvasRenderingContext2D,
+  set: SceneSetId,
+  phase: "back" | "front",
+  t: number,
+  W: number,
+  H: number,
+  seed: number,
+  pal: ReelPalette,
+  impactQ = 0,
+): void {
+  if (set === "void") return;
+
+  if (set === "stadium") {
+    if (phase === "back") {
+      const layer = sceneLayer(`stadium:${W}x${H}:${seed & 0xff}`, W, H, (g) => {
+        // Two rows of crowd silhouettes pooling in the bottom corners, plus a
+        // faint stand glow so the vignette reads as an arena, not a smudge.
+        const rng = mulberry32(seed ^ 0x57ad1a);
+        const grad = g.createLinearGradient(0, H * 0.72, 0, H);
+        grad.addColorStop(0, "rgba(0,0,0,0)");
+        grad.addColorStop(1, "rgba(6,5,4,0.85)");
+        g.fillStyle = grad;
+        g.fillRect(0, H * 0.72, W, H * 0.28);
+        g.globalAlpha = 0.8;
+        paintCrowdRow(g, rng, -20, W * 0.34, H * 0.93, W / 1080, "#0d0a08");
+        paintCrowdRow(g, rng, W * 0.66, W + 20, H * 0.93, W / 1080, "#0d0a08");
+        g.globalAlpha = 0.95;
+        paintCrowdRow(g, rng, -20, W * 0.28, H * 0.985, W / 900, "#080605");
+        paintCrowdRow(g, rng, W * 0.72, W + 20, H * 0.985, W / 900, "#080605");
+        // Upper-corner crowd shadow wedges.
+        g.globalAlpha = 0.55;
+        for (const side of [0, 1]) {
+          const cg = g.createRadialGradient(
+            side * W, 0, 0, side * W, 0, Math.min(W, H) * 0.4,
+          );
+          cg.addColorStop(0, "rgba(8,6,5,0.7)");
+          cg.addColorStop(1, "rgba(0,0,0,0)");
+          g.fillStyle = cg;
+          g.fillRect(side === 0 ? 0 : W * 0.6, 0, W * 0.4, H * 0.4);
+        }
+        g.globalAlpha = 1;
+      });
+      if (layer) ctx.drawImage(layer, 0, 0);
+      return;
+    }
+    // Front: camera-flash twinkles in the crowd bands, alive on impacts.
+    if (impactQ <= 0.02) return;
+    const rng = mulberry32(seed ^ 0xf1a54);
+    ctx.save();
+    for (let i = 0; i < 14; i++) {
+      const fx = rng() * W;
+      // Flashes live in the crowd corners, never over the board.
+      const inCorner = fx < W * 0.3 || fx > W * 0.7;
+      const fy = H * (0.78 + rng() * 0.2);
+      const phaseK = rng();
+      if (!inCorner) continue;
+      const tw = Math.abs(Math.sin(t * 0.021 + phaseK * 9));
+      const a = impactQ * tw;
+      if (a <= 0.06) continue;
+      const r = (2 + rng() * 3) * (W / 1080);
+      ctx.globalAlpha = Math.min(0.9, a);
+      ctx.fillStyle = phaseK > 0.7 ? pal.accent : "#f5f1e6";
+      ctx.fillRect(fx - r, fy - r * 0.3, r * 2, r * 0.6);
+      ctx.fillRect(fx - r * 0.3, fy - r, r * 0.6, r * 2);
+    }
+    ctx.restore();
+    return;
+  }
+
+  if (set === "study") {
+    if (phase !== "back") return;
+    const layer = sceneLayer(
+      `study:${W}x${H}:${seed & 0xff}:${pal.dim}`,
+      W, H,
+      (g) => {
+        const rng = mulberry32(seed ^ 0x9a9e12);
+        // Paper wash + seeded fiber flecks.
+        g.fillStyle = "rgba(236,227,205,0.05)";
+        g.fillRect(0, 0, W, H);
+        for (let i = 0; i < 420; i++) {
+          const x = rng() * W;
+          const y = rng() * H;
+          const len = 1 + rng() * 3;
+          const ang = rng() * Math.PI;
+          g.globalAlpha = 0.03 + rng() * 0.05;
+          g.strokeStyle = rng() > 0.5 ? "#e8dfc8" : "#2a241c";
+          g.lineWidth = 1;
+          g.beginPath();
+          g.moveTo(x, y);
+          g.lineTo(x + Math.cos(ang) * len, y + Math.sin(ang) * len);
+          g.stroke();
+        }
+        // Pencil-line frame: two hand-wobbled rectangles inset from the edge,
+        // sampled as short jittered strokes so they read as drawn, not ruled.
+        g.globalAlpha = 1;
+        const inset = Math.round(Math.min(W, H) * 0.028);
+        for (const [pad, alpha, width] of [
+          [inset, 0.5, 1.6],
+          [inset + 7, 0.28, 1.1],
+        ] as const) {
+          g.strokeStyle = pal.dim;
+          g.globalAlpha = alpha;
+          g.lineWidth = width;
+          g.lineCap = "round";
+          const jitter = () => (rng() - 0.5) * 2.4;
+          const edges: [number, number, number, number][] = [
+            [pad, pad, W - pad, pad],
+            [W - pad, pad, W - pad, H - pad],
+            [W - pad, H - pad, pad, H - pad],
+            [pad, H - pad, pad, pad],
+          ];
+          for (const [ax, ay, bx, by] of edges) {
+            const steps = Math.ceil(Math.hypot(bx - ax, by - ay) / 60);
+            g.beginPath();
+            g.moveTo(ax + jitter(), ay + jitter());
+            for (let k = 1; k <= steps; k++) {
+              const s = k / steps;
+              g.lineTo(ax + (bx - ax) * s + jitter(), ay + (by - ay) * s + jitter());
+            }
+            g.stroke();
+          }
+        }
+        g.globalAlpha = 1;
+      },
+    );
+    if (layer) ctx.drawImage(layer, 0, 0);
+    return;
+  }
+
+  // Arcade.
+  if (phase === "back") {
+    // Marquee glow: cabinet-light washes climbing both side edges, pulsing.
+    const pulse = 0.7 + 0.3 * Math.sin(t * 0.0032);
+    ctx.save();
+    for (const side of [0, 1]) {
+      const g = ctx.createLinearGradient(side * W, 0, side === 0 ? W * 0.2 : W * 0.8, 0);
+      g.addColorStop(0, withAlphaHex(side === 0 ? pal.accent : pal.hot, 0.16 * pulse));
+      g.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = g;
+      ctx.fillRect(side === 0 ? 0 : W * 0.8, 0, W * 0.2, H);
+    }
+    // Marquee bulb dots along the top edge, blinking in a marching pattern.
+    const n = Math.max(8, Math.round(W / 90));
+    for (let i = 0; i < n; i++) {
+      const on = (i + Math.floor(t / 400)) % 3 === 0;
+      ctx.globalAlpha = on ? 0.5 : 0.14;
+      ctx.fillStyle = on ? pal.accent : pal.dim;
+      const bx = (W / n) * (i + 0.5);
+      ctx.fillRect(bx - 2, 8, 4, 4);
+    }
+    ctx.restore();
+    return;
+  }
+  // Front: CRT curvature corners + a faint glass glare arc.
+  const layer = sceneLayer(`arcade:${W}x${H}`, W, H, (g) => {
+    const R = Math.min(W, H) * 0.09;
+    // CRT corners: fill the frame, then knock out a giant rounded rect; what
+    // survives is the four curved-tube corners.
+    g.fillStyle = "#060504";
+    g.fillRect(0, 0, W, H);
+    g.globalCompositeOperation = "destination-out";
+    g.beginPath();
+    g.moveTo(R, 0);
+    g.lineTo(W - R, 0);
+    g.arcTo(W, 0, W, R, R);
+    g.lineTo(W, H - R);
+    g.arcTo(W, H, W - R, H, R);
+    g.lineTo(R, H);
+    g.arcTo(0, H, 0, H - R, R);
+    g.lineTo(0, R);
+    g.arcTo(0, 0, R, 0, R);
+    g.closePath();
+    g.fill();
+    g.globalCompositeOperation = "source-over";
+    // Glass glare: a soft diagonal highlight arc near the top-left.
+    g.globalAlpha = 0.05;
+    g.strokeStyle = "#f2ecdc";
+    g.lineWidth = Math.min(W, H) * 0.05;
+    g.beginPath();
+    g.arc(W * 0.16, H * 0.14, Math.min(W, H) * 0.22, Math.PI * 1.05, Math.PI * 1.6);
+    g.stroke();
+    g.globalAlpha = 1;
+  });
+  if (layer) ctx.drawImage(layer, 0, 0);
+}
+
+/** Local hex-with-alpha (clipScene has its own; kept here so the scene-set
+ *  painters stay self-contained). */
+function withAlphaHex(hex: string, a: number): string {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+  if (!m) return hex;
+  const n = parseInt(m[1], 16);
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
 }
 
 // --- Ambient particle fields -------------------------------------------------
