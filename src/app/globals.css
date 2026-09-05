@@ -358,15 +358,6 @@ body {
   letter-spacing: 0.22em;
   text-transform: uppercase;
 }
-.dropcap::first-letter {
-  font-family: var(--font-display), system-ui, sans-serif;
-  font-weight: 600;
-  float: left;
-  font-size: 3.4em;
-  line-height: 0.88;
-  padding: 0.05em 0.14em 0 0;
-  color: var(--gold-leaf);
-}
 
 /* Page title, Lichess's size: 1.6rem, regular weight, heading colour. Every
    route's h1 wears this; there is no display slam anywhere on the site. */
@@ -406,19 +397,6 @@ body {
 .lead {
   font-size: var(--step-1);
   line-height: 1.5;
-}
-
-.coord-index {
-  font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  color: var(--accent-hi);
-}
-
-/* Shared landing rhythm: one cadence for every marketing band. */
-.section-rhythm {
-  padding-block: var(--rhythm-section);
 }
 
 /* --- Shared interaction + figure utilities ---------------------------------
@@ -501,25 +479,6 @@ body {
   position: relative;
   z-index: 2;
 }
-
-/* TV tuning-in spinner: one quiet accent ring orbiting the radio glyph. */
-.tv-tuning-ring {
-  position: absolute;
-  top: -14px;
-  left: 50%;
-  width: 56px;
-  height: 56px;
-  margin-left: -28px;
-  border-radius: 999px;
-  border: 2px solid transparent;
-  border-top-color: rgb(var(--accent-rgb) / 0.8);
-  border-right-color: rgb(var(--accent-rgb) / 0.25);
-  animation: tv-tuning-spin 1s linear infinite;
-}
-@keyframes tv-tuning-spin {
-  to { transform: rotate(360deg); }
-}
-html[data-anim="off"] .tv-tuning-ring { animation: none; }
 
 /* The in-game command rail: the same box as everything else. */
 .rail-panel {
@@ -781,26 +740,6 @@ html[data-anim="off"] .rune-loader { animation: none; }
    teal, the site's signature "powered frame". Needs position:relative on the
    host (it is a pseudo-element overlay). */
 .energy-edge { position: relative; }
-.energy-edge::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  border-radius: inherit;
-  padding: 1px;
-  pointer-events: none;
-  background: linear-gradient(
-    135deg,
-    rgb(var(--energy-ember-rgb) / 0.55),
-    rgb(var(--energy-void-rgb) / 0.35) 45%,
-    rgb(var(--energy-teal-rgb) / 0.4) 70%,
-    rgb(var(--energy-ember-rgb) / 0.45)
-  );
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  mask-composite: exclude;
-}
 
 /* Rune badge: the shared chip for statuses and counts. Feed it an energy
    triple via --badge-rgb (defaults to ember). */
@@ -856,26 +795,6 @@ html[data-anim="off"] .rune-loader { animation: none; }
    Still worn by the profile's honors shelf; the leaderboard podium itself is
    now three plain plates. */
 .podium-rim-gold { position: relative; }
-.podium-rim-gold::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  border-radius: inherit;
-  padding: 1px;
-  pointer-events: none;
-  background: linear-gradient(
-    135deg,
-    rgb(var(--rim-rgb, var(--energy-gold-rgb)) / 0.65),
-    rgb(var(--rim-rgb, var(--energy-gold-rgb)) / 0.22) 45%,
-    rgb(var(--rim-rgb, var(--energy-gold-rgb)) / 0.4) 70%,
-    rgb(var(--rim-rgb, var(--energy-gold-rgb)) / 0.55)
-  );
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  mask-composite: exclude;
-}
 
 /* Victory burst: the Level-3 celebration behind the game-over panel. One
    energy ring blooms outward while a handful of sparks in the four energy
@@ -956,20 +875,6 @@ html[data-anim="off"] .victory-burst { display: none; }
 .nav-icon-btn {
   border-radius: var(--btn-roundness);
   transition: color 150ms ease, background-color 150ms ease;
-}
-
-/* Soft depth behind the hero: two barely-there radial washes (accent + a
-   whisper of Nerf terracotta) that lift the board and headline off the flat
-   ink. Sits behind the section's own content (negative z within the main
-   stacking context) and never intercepts pointers. */
-.hero-aura {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background:
-    radial-gradient(46% 52% at 24% 28%, rgb(var(--accent-rgb) / 0.1), transparent 72%),
-    radial-gradient(38% 48% at 84% 74%, rgb(var(--seam-warm-rgb) / 0.06), transparent 70%);
 }
 
 /* A very slow opacity pulse gives the ambient washes a sense of life without
@@ -1070,87 +975,8 @@ html[data-anim="off"] .victory-burst { display: none; }
   0% { transform: translateX(0); }
   100% { transform: translateX(-26px); }
 }
-.knight-track::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 7px;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.14) 18%, rgba(255, 255, 255, 0.14) 82%, transparent);
-  /* The floor pulses on the beat, brightest the instant the knight lands
-     (phase-locked to gd-jump: same 3s cycle and -0.66s delay, flash at 67%).
-     The glow is baked into a static drop-shadow-free gradient and only
-     OPACITY animates: the old keyframe animated box-shadow, a full repaint
-     every frame of an infinite home-page loop. */
-  filter: drop-shadow(0 0 4px rgb(var(--accent-rgb) / 0.35));
-  animation: gd-ground-pulse 3s linear -0.66s infinite;
-  will-change: opacity;
-}
-@keyframes gd-ground-pulse {
-  0%, 60% { opacity: 0.45; }
-  67% { opacity: 1; }
-  82%, 100% { opacity: 0.45; }
-}
-.gd-world {
-  position: absolute;
-  inset: 0;
-  width: 200%;
-  animation: gd-scroll 24s linear infinite;
-  /* Compositor-only scroll: the strip animates as one GPU layer. */
-  will-change: transform;
-}
-@keyframes gd-scroll {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
-.gd-obstacle {
-  position: absolute;
-  bottom: 8px;
-  display: flex;
-  align-items: flex-end;
-  gap: 2px;
-}
-.gd-spike {
-  display: block;
-  width: 9px;
-  height: 10px;
-  background: rgb(var(--accent-rgb) / 0.75);
-  clip-path: polygon(50% 0, 100% 100%, 0 100%);
-}
-.gd-block {
-  display: block;
-  width: 9px;
-  height: 9px;
-  background: rgb(var(--accent-dim-rgb) / 0.7);
-  box-shadow: inset 0 0 0 1px rgb(var(--accent-hi-rgb) / 0.5);
-}
 /* Structure variants: a two-high tower, a wide low platform, a runt spike. */
 .gd-block--tall { height: 17px; }
-.gd-platform {
-  display: block;
-  width: 24px;
-  height: 6px;
-  background: rgb(var(--accent-dim-rgb) / 0.7);
-  box-shadow: inset 0 0 0 1px rgb(var(--accent-hi-rgb) / 0.5);
-}
-.gd-spike--small { width: 7px; height: 7px; }
-.gd-stack {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-.gd-knight {
-  position: absolute;
-  bottom: 6px;
-  left: 18%;
-  font-size: 21px;
-  line-height: 1;
-  /* The knight-cube reads as a lit neon avatar: accent-tinted with a soft
-     glow, so the jump pops against the darker course. */
-  color: rgb(var(--accent-hi-rgb) / 0.92);
-  filter: drop-shadow(0 0 5px rgb(var(--accent-rgb) / 0.5));
-}
 /* One 3s beat: grounded, then a 1s jump with a full 360 flip. Obstacles cross
    the knight's lane at t = 3n + 0.84s (strip spacing 12.5% / scroll speed
    4.167% per second, lane at 18%), so the -0.66s delay puts the jump's apex
@@ -1163,31 +989,6 @@ html[data-anim="off"] .victory-burst { display: none; }
   0%, 33% { transform: translateY(0) rotate(0deg); }
   50% { transform: translateY(-20px) rotate(180deg); }
   67%, 100% { transform: translateY(0) rotate(360deg); }
-}
-
-/* Nerf / Buff definition cards on the home lobby panel: each carries its mode
-   color as an rgb triple so one hover rule lights the pair correctly. */
-.mode-def-card {
-  --def-rgb: var(--accent-rgb);
-  /* Each card wears its mode at rest — a flat tinted fill and a colored
-     hairline border, no gradients — so the pair reads as two territories
-     before any hover. */
-  border-color: rgb(var(--def-rgb) / 0.35);
-  background: rgb(var(--def-rgb) / 0.08);
-  transition: transform var(--dur-2) var(--ease-out),
-    border-color var(--dur-2) var(--ease-out),
-    box-shadow var(--dur-2) var(--ease-out);
-}
-.mode-def-card--nerf { --def-rgb: var(--seam-warm-rgb); }
-.mode-def-card--buff { --def-rgb: var(--seam-cool-rgb); }
-@media (hover: hover) {
-  .mode-def-card:hover {
-    transform: translateY(-2px);
-    border-color: rgb(var(--def-rgb) / 0.7);
-    box-shadow:
-      0 0 26px -10px rgb(var(--def-rgb) / 0.5),
-      0 12px 28px -18px rgba(0, 0, 0, 0.8);
-  }
 }
 
 /* --- Board splash: big board-wide event announcement -------------------------
@@ -1269,31 +1070,6 @@ html[data-anim="off"] .victory-burst { display: none; }
 .nav-item {
   position: relative;
   transition: color 160ms ease, background-color 160ms ease, transform 120ms ease;
-}
-.nav-item::after {
-  content: "";
-  position: absolute;
-  left: 0.75rem;
-  right: 0.75rem;
-  bottom: 0.26rem;
-  height: 1.5px;
-  background: rgb(var(--accent-hi-rgb));
-  transform: scaleX(0);
-  transform-origin: center;
-  opacity: 0;
-  transition: transform 190ms var(--ease-out), opacity 190ms ease;
-}
-.nav-item:hover::after,
-.nav-item:focus-visible::after {
-  transform: scaleX(1);
-  opacity: 0.9;
-}
-.nav-item[data-active="true"]::after {
-  transform: scaleX(1);
-  opacity: 0.5;
-}
-.nav-item:active {
-  transform: translateY(0.5px);
 }
 /* .nav-icon-btn: relic housing treatment lives with the cosmic dungeon
    shared components (see the buttons section above). */
@@ -1673,10 +1449,6 @@ html[data-anim="off"] .piece-treat {
   box-shadow: inset 0 0 0 4px currentColor;
   background: color-mix(in srgb, currentColor 24%, transparent);
 }
-.sq-rmb-mark-1 { color: rgb(var(--accent-gold-rgb) / 0.95); }
-.sq-rmb-mark-2 { color: rgb(var(--accent-positive-rgb) / 0.95); }
-.sq-rmb-mark-3 { color: rgb(var(--bruise-rgb) / 0.95); }
-.sq-rmb-mark-4 { color: rgb(var(--accent-nerf-rgb) / 0.95); }
 
 /* Move-target dot */
 .dot-target {
@@ -1742,7 +1514,6 @@ html[data-anim="off"] .piece-treat {
   0% { opacity: 0; transform: translateY(20px) scale(0.96); }
   100% { opacity: 1; transform: translateY(0) scale(1); }
 }
-.animate-reveal { animation: nerf-reveal 0.55s var(--ease-out); }
 
 /* Lightning Strike: a one-shot flash on each struck square. The effect record
    lives until the opponent replies, but the overlay animates to transparent
@@ -1873,11 +1644,6 @@ html[data-anim="off"] .piece-treat {
   box-shadow: inset 0 0 22px 3px rgba(30, 41, 59, 0.7);
   animation: locked-in-flash 0.55s ease-out both;
 }
-@keyframes locked-chain-in {
-  0% { opacity: 0; transform: scale(1.8) rotate(12deg); }
-  100% { opacity: 0.85; transform: scale(1) rotate(0deg); }
-}
-.sq-locked-chain { animation: locked-chain-in 0.45s ease-out; }
 
 /* Shield / sanctuary: one soft pulse when the protection appears. */
 @keyframes shield-in {
@@ -2012,10 +1778,6 @@ html[data-anim="off"] .empower-mote { animation: none !important; }
    animations-off shows their settled end state instead of hiding them. */
 html[data-anim="off"] .walnut-root { animation: none !important; transform: none; opacity: 1; }
 html[data-anim="off"] .sq-walnut::after { animation: none !important; opacity: 0 !important; }
-html[data-anim="off"] .dc-orbit-ring.spin, html[data-anim="off"] .dc-orbit-ring.spin-r,
-html[data-anim="off"] .dc-orbit-counter.spin, html[data-anim="off"] .dc-orbit-counter.spin-r {
-  animation: none !important;
-}
 html[data-anim="off"] * { transition: none !important; }
 
 @media (max-width: 640px) {
@@ -2067,18 +1829,6 @@ html[data-anim="off"] .card-juicy, html[data-anim="off"] .card-juicy:hover, html
   background-clip: text;
   color: transparent;
 }
-.grad-seam-ring {
-  position: relative;
-  border-radius: 1px;
-}
-.grad-seam-ring::before {
-  content: "";
-  position: absolute;
-  inset: -1.5px;
-  z-index: -1;
-  border-radius: inherit;
-  background: linear-gradient(120deg, rgb(var(--seam-warm-rgb) / 0.75), rgb(var(--seam-cool-rgb) / 0.75));
-}
 
 /* Decorative corners — subtle brass tick marks for editorial framing */
 .card-corner {
@@ -2099,8 +1849,6 @@ html[data-anim="off"] .card-juicy, html[data-anim="off"] .card-juicy:hover, html
     radial-gradient(circle at 50% 50%, rgb(var(--accent-gold-rgb) / 0.06), transparent 62%);
   border-radius: 9999px;
 }
-
-.parchment-noise::before { content: none !important; }
 
 /* The hero "TV" panel blurs the LIVE animating board behind it, a backdrop
    filter re-run every frame. Animations-off swaps it for a plain translucent
@@ -2154,11 +1902,6 @@ html[data-light] .border-white\/5 { border-color: rgba(43, 40, 34, 0.08); }
 html[data-light] .border-white\/10 { border-color: rgba(43, 40, 34, 0.12); }
 html[data-light] .border-white\/12 { border-color: rgba(43, 40, 34, 0.14); }
 html[data-light] .border-white\/15 { border-color: rgba(43, 40, 34, 0.16); }
-html[data-light] .divide-white\/5 > :not([hidden]) ~ :not([hidden]),
-html[data-light] .divide-white\/10 > :not([hidden]) ~ :not([hidden]),
-html[data-light] .divide-white\/\[0\.06\] > :not([hidden]) ~ :not([hidden]) {
-  border-color: rgba(43, 40, 34, 0.1);
-}
 
 /* White-tint raises and hovers read as ink tints on paper. */
 html[data-light] .bg-white\/5,
@@ -2387,8 +2130,6 @@ html[data-anim="off"] .nerf-reveal-cell {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.78; }
 }
-.clock-pulse-soft { animation: clock-pulse-soft 1.8s ease-in-out infinite; }
-html[data-anim="off"] .clock-pulse-soft { animation: none !important; }
 
 /* --- Refused-input feedback ---------------------------------------------------
    A rejected move or card target flashes a brief oxblood inner ring on the
@@ -2421,7 +2162,6 @@ html[data-anim="off"] .sq-invalid-shake { animation: none !important; }
    survive because CommandRail still spells them; they now carry a plain
    accent border on the active player's card and nothing else. */
 .rail-lux { position: relative; }
-.rail-header-sheen { display: none; }
 .rail-glow-wrap { position: relative; }
 .rail-glow-wrap--active {
   box-shadow: 0 0 0 1px var(--accent);
@@ -2679,11 +2419,6 @@ html[data-anim="off"] .star-shoot,
 html[data-anim="off"] .hall-mote {
   animation: none !important;
   opacity: 0 !important;
-}
-html[data-anim="off"] .star-glint {
-  will-change: transform, opacity;
-  opacity: 0.5;
-  transform: scale(0.8);
 }
 
 /* ============================================================

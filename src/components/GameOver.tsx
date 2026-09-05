@@ -782,7 +782,7 @@ export function GameOver({
       aria-describedby="game-over-reason"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="fixed inset-0 z-50 grid place-items-center overflow-y-auto overscroll-contain bg-[#0f0d0a]/68 px-4 py-6 backdrop-blur-sm"
+      className="fixed inset-0 z-50 grid place-items-center overflow-y-auto overscroll-contain bg-[#0f0d0a]/80 px-4 py-6"
       onPointerDown={chrome.onBackdropPointerDown}
     >
       {/* Level-3 victory beat: one energy ring blooms behind the panel while

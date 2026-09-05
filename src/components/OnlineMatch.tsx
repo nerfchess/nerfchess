@@ -2801,7 +2801,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           aria-live="polite"
           // Owns the top-16 lane; OppPlaysLog sits below it at z-[39] so the
           // two can never render on top of each other.
-          className="fixed right-3 top-16 z-40 w-[min(80vw,20rem)] border border-gold/40 bg-ink-700/95 p-3 shadow-plate backdrop-blur-sm"
+          className="fixed right-3 top-16 z-40 w-[min(80vw,20rem)] border border-gold/40 bg-ink-700/95 p-3 shadow-plate"
         >
           <div className="text-[10px] text-parchment-400">
             {abortNotice.level === "timeout" ? "New games paused" : "Abort warning"}

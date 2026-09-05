@@ -245,7 +245,7 @@ export function EnemyBuffModal({
   return (
     // Scroll-locked while the target picker is up (see useModalChrome); it has
     // no backdrop dismissal of its own, so only the lock and Escape apply.
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto overscroll-contain bg-black/70 backdrop-blur-sm px-4 py-6">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto overscroll-contain bg-black/80 px-4 py-6">
       <div className="plate w-full max-w-md p-5 max-h-[90dvh] overflow-y-auto">
         <div className="text-[12px] text-parchment-400">{buffName}</div>
         <div className="font-display text-lg text-parchment mt-0.5">{target.label}</div>

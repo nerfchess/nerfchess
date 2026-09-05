@@ -1405,7 +1405,7 @@ export function ClipModal({
       data-clip-quality={opts.quality}
       data-clip-board={opts.boardTheme}
       data-clip-compare={compareOn ? "on" : "off"}
-      className="fixed inset-0 z-[60] grid place-items-center bg-[#0f0d0a]/70 px-2 py-3 backdrop-blur-sm sm:px-4 sm:py-6"
+      className="fixed inset-0 z-[60] grid place-items-center bg-[#0f0d0a]/80 px-2 py-3 sm:px-4 sm:py-6"
       onPointerDown={chrome.onBackdropPointerDown}
     >
       <div

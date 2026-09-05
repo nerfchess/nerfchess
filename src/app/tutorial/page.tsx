@@ -106,8 +106,7 @@ export default function TutorialPage() {
         {/* Primary entry: the guided first game. A real bot game (weakest
             bot, no clock, buff mode) with coach marks over the live board. */}
         <div className="mt-8 plate border-gold/40 bg-gold/5 p-5 sm:p-6">
-          <div className="text-[11px] text-gold-leaf/90">new? start here</div>
-          <h2 className="font-display text-3xl sm:text-4xl mt-1">
+          <h2 className="font-display text-[1.35rem] font-medium">
             Learn in 3 minutes: play your first draft
           </h2>
           <p className="mt-3 text-[15px] leading-relaxed text-parchment-200/90">
@@ -137,7 +136,7 @@ export default function TutorialPage() {
           </p>
         </div>
         <div className="mt-14">
-          <h2 className="font-display text-3xl sm:text-4xl mt-1">Nerf, buff, hex, boon</h2>
+          <h2 className="font-display text-[1.35rem] font-medium">Nerf, buff, hex, boon</h2>
           <p className="mt-4 text-[15px] leading-[1.7] text-parchment-200">
             Every card in the game is one of these four. The trick is who each one lands on: a nerf and
             a boon act on your side of the board, while a hex acts on your opponent&apos;s. Buffs belong
