@@ -809,7 +809,7 @@ const BOON_WAVE4A: Buff[] = [
     ),
   ),
   card(
-    { id: "bn4_night_watch", name: "Night Watch", tier: 2, category: "protection", icon: "Moon",
+    { id: "bn4_night_watch", name: "Night Watch", tier: 1, category: "protection", icon: "Moon",
       description: "Your king cannot be captured on your opponent's next turn.",
       flavor: "One lantern, one spear, one very long night.",
       fx: { motif: "ward", pieces: ["k"], self: true } },

@@ -1372,7 +1372,7 @@ export const WILD_CHAOS: Buff[] = [
       // and route around; Void Rift (tier 4) is the same idea with the
       // adjacency-pull rider, so the plain hole prices a tier below it.
       description: "Open a black hole on one empty square: any enemy piece that steps onto it, never a king, is swallowed off the board. It stays open for the rest of the game.",
-      tier: 2,
+      tier: 3,
       category: "attack",
       flavor: "Do not look directly into it.",
       fx: { motif: "blindfold" },

@@ -1304,7 +1304,7 @@ const TIER2: Buff[] = [
     instant((_inst, api) => grantInventory(api, "p", 1)),
   ),
   def(
-    { id: "phase_rook", requires: ["r"], name: "Phase Rook", description: "Choose one rook. For the game it may pass through one friendly piece per move; it still cannot capture friendly pieces or phase through two.", tier: 2, category: "movement", fx: { motif: "empower", pieces: ["r"], self: true } },
+    { id: "phase_rook", requires: ["r"], name: "Phase Rook", description: "Choose one rook. For the game it may pass through one friendly piece per move; it still cannot capture friendly pieces or phase through two.", tier: 3, category: "movement", fx: { motif: "empower", pieces: ["r"], self: true } },
     pieceBound("r", "Choose the rook", (board, sq, via) =>
       phasingSlideMoves(board, sq, ORTHO_DIRS, via, 1),
     ),
@@ -1350,7 +1350,7 @@ const TIER2: Buff[] = [
     }),
   ),
   def(
-    { id: "camel_knight", requires: ["n"], name: "Camel Knight", description: "One knight also moves as a camel (3-1 leap), for the game.", tier: 2, category: "movement", fx: { motif: "empower", pieces: ["n"], moveAs: "n", self: true } },
+    { id: "camel_knight", requires: ["n"], name: "Camel Knight", description: "One knight also moves as a camel (3-1 leap), for the game.", tier: 3, category: "movement", fx: { motif: "empower", pieces: ["n"], moveAs: "n", self: true } },
     pieceBound("n", "Choose the knight", (board, sq, via) => leapMoves(board, sq, CAMEL_LEAPS, via)),
   ),
   def(
@@ -1859,13 +1859,13 @@ const TIER2: Buff[] = [
 
 const TIER3: Buff[] = [
   def(
-    { id: "knight_nightrook", requires: ["n"], name: "Knight to Nightrook", description: "One knight also slides straight up and down its file, any distance, for the game.", tier: 2, category: "movement", fx: { motif: "empower", pieces: ["n"], moveAs: "r", self: true }, flavor: "At night, the horse remembers it was once a tower." },
+    { id: "knight_nightrook", requires: ["n"], name: "Knight to Nightrook", description: "One knight also slides straight up and down its file, any distance, for the game.", tier: 3, category: "movement", fx: { motif: "empower", pieces: ["n"], moveAs: "r", self: true }, flavor: "At night, the horse remembers it was once a tower." },
     pieceBound("n", "Choose the knight", (board, sq, via) =>
       slideMoves(board, sq, [[0, 1], [0, -1]], via),
     ),
   ),
   def(
-    { id: "bishop_archbishop", requires: ["b"], name: "Bishop to Archbishop", description: "One bishop also moves like a knight, for the game.", tier: 2, category: "movement", fx: { motif: "empower", pieces: ["b"], moveAs: "n", self: true } },
+    { id: "bishop_archbishop", requires: ["b"], name: "Bishop to Archbishop", description: "One bishop also moves like a knight, for the game.", tier: 4, category: "movement", fx: { motif: "empower", pieces: ["b"], moveAs: "n", self: true } },
     pieceBound("b", "Choose the bishop", (board, sq, via) => leapMoves(board, sq, KNIGHT_LEAPS, via)),
   ),
   def(
@@ -1984,7 +1984,7 @@ const TIER3: Buff[] = [
     }),
   ),
   def(
-    { id: "cannon", requires: ["r"], name: "Cannon", description: "Choose one rook. For the game it keeps its normal moves and may also capture along a rank or file by jumping exactly one piece of either color and taking the first enemy piece beyond it.", tier: 2, category: "movement", fx: { motif: "empower", pieces: ["r"], self: true } },
+    { id: "cannon", requires: ["r"], name: "Cannon", description: "Choose one rook. For the game it keeps its normal moves and may also capture along a rank or file by jumping exactly one piece of either color and taking the first enemy piece beyond it.", tier: 3, category: "movement", fx: { motif: "empower", pieces: ["r"], self: true } },
     pieceBound("r", "Choose the rook", (board, sq, via) => {
       const p = board.pieces[sq]!;
       const out: Move[] = [];
@@ -2017,7 +2017,7 @@ const TIER3: Buff[] = [
     ),
   ),
   def(
-    { id: "dragon_pawn", requires: ["p"], name: "Dragon Pawn", description: "One pawn moves as a pawn or knight until it promotes.", tier: 2, category: "movement", fx: { motif: "empower", pieces: ["p"], moveAs: "n", self: true } },
+    { id: "dragon_pawn", requires: ["p"], name: "Dragon Pawn", description: "One pawn moves as a pawn or knight until it promotes.", tier: 3, category: "movement", fx: { motif: "empower", pieces: ["p"], moveAs: "n", self: true } },
     pieceBound("p", "Choose the pawn", (board, sq, via) => leapMoves(board, sq, KNIGHT_LEAPS, via)),
   ),
   def(
@@ -2632,7 +2632,7 @@ const TIER4: Buff[] = [
     ),
   ),
   def(
-    { id: "second_army", name: "Second Army", description: "Add two pawns to your pocket, then drop them onto empty squares on later turns.", tier: 5, category: "pieces" },
+    { id: "second_army", name: "Second Army", description: "Add two pawns to your pocket, then drop them onto empty squares on later turns.", tier: 4, category: "pieces" },
     instant((_inst, api) => grantInventory(api, "p", 2)),
   ),
   def(
@@ -3049,7 +3049,7 @@ const TIER5: Buff[] = [
     },
   ),
   def(
-    { id: "god_knight", requires: ["n"], name: "God Knight", description: "One knight becomes an amazon (queen plus knight), for the game.", tier: 4, category: "movement", fx: { motif: "empower", pieces: ["n"], moveAs: "q", self: true } },
+    { id: "god_knight", requires: ["n"], name: "God Knight", description: "One knight becomes an amazon (queen plus knight), for the game.", tier: 7, category: "movement", fx: { motif: "empower", pieces: ["n"], moveAs: "q", self: true } },
     pieceBound("n", "Choose the knight", (board, sq, via) => slideMoves(board, sq, ALL_DIRS, via)),
   ),
   def(
@@ -3442,8 +3442,13 @@ const TIER5: Buff[] = [
     // Distinct from Recall (which drops a piece on any empty back-two-ranks
     // square): Warp Home teleports a piece to a vacant STARTING square of its
     // own type, a precise return-to-post rather than a free relocation.
-    { id: "warp_home", name: "Warp Home", description: "Teleport one of your pieces back to a vacant starting square of its own type, once. A rook warps to an empty a1 or h1, a knight to b1 or g1, a pawn to any open square on its second rank, and so on.", tier: 2, category: "movement" },
-    activated(
+    // Balance pass 2026-09: Recall (same tier) reaches any back-two-ranks
+    // square, so the precise return-to-post only earns its slot as a free
+    // action: the warp does not spend the turn.
+    { id: "warp_home", name: "Warp Home", description: "Teleport one of your pieces back to a vacant starting square of its own type, once. It does not use your turn.", tier: 2, category: "movement" },
+    {
+      // Free action: the warp does not spend the turn.
+      ...activated(
       (_inst, api, picks) => {
         const homesFor = (type: PieceType) =>
           homeSquares(api.me)
@@ -3479,7 +3484,9 @@ const TIER5: Buff[] = [
         const home = homeSquares(api.me).some(([sq, t]) => sq === to && t === p?.type);
         if (p && home && !api.board.pieces[to]) api.relocate(from, to);
       },
-    ),
+      ),
+      freeAction: true,
+    },
   ),
   def(
     // king_safe has no square paint of its own; ward marks the king.

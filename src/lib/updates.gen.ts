@@ -1,0 +1,219 @@
+// GENERATED FILE. Do not edit by hand.
+// Built from docs/CHANGELOG.md by scripts/gen-updates.ts; regenerate with
+// `npm run gen:updates` (and `npm run test:updates` verifies it is current).
+
+import type { GeneratedUpdate } from "./updates";
+
+export const GENERATED_UPDATES: GeneratedUpdate[] = [
+  {
+    date: "2026-09-05",
+    title: "UI redesign and bug sweep",
+    summary: "New Midnight site theme (navy take on the Lichess ladder, cooler text ramp, accent lifted to #4c9ff0) and it is the default. Dark, Light and System stay; System resolves to Midnight or Light.",
+    anchor: "u-20260905-1325",
+    bullets: [
+      "Piece glide is now a millisecond setting (Settings > Board > Motion, presets Off / 60 / 100 / 150 / 250 ms, default 100) with a curve that finishes its travel by the stated time instead of creeping.",
+      "The check highlight reads the optimistic board, so the enemy king turns red when your piece lands, not one round trip later.",
+      "A move played during a socket blip is held and flushed on reconnect instead of being dropped with an error toast.",
+      "New Lichess prefs: Tenths of seconds (never / under 10s / always), Material difference, Show ratings.",
+      "The treasure chest is gone. Opening (~920ms): spin-up, rings flare and lift, faces shear away, core blooms into a flash and shockwave, cards deal out of the light.",
+      "When the 20s window ends the draft no longer auto-picks or vanishes, online or against a bot: it shrinks into the corner panel and STAYS there (the 12s auto-tuck fuse is gone) until the player...",
+      "Headers are 44-48px on phones, chat and clock labels come up to 12px, corner overlays sit at the edge.",
+    ],
+  },
+  {
+    date: "2026-08-03",
+    title: "Animation quality pass on the three entrance systems the owner flagged as basic",
+    summary: "Nerf entrances: the category arrival is now a 9-layer verdict stamp (warning under-glow and judicial seal tell, two-part stamp head with a one-frame squash, ink shards, emboss afterglow, drips and...",
+    anchor: "u-20260803-0958",
+    bullets: [
+      "Creator cards: the one shared ring-and-step-in entrance is gone; each of the five cards arrives as its play in miniature (bait tips over and SPROINGs out of the snare; the rook slams in behind...",
+      "Passive spawns: every activation now announces itself with a tell (color under-bloom plus anchor inhale), an announce ring with rising motes, and a slow settle, fitted inside each visual's...",
+    ],
+  },
+  {
+    date: "2026-08-03",
+    title: "Card animations now default ON even when the device asks apps to reduce motion",
+    summary: "\"Follow system motion\" flips to default OFF: card plays are gameplay information (they are how you see what a card just did), so the OS prefers-reduced-motion flag no longer stands them down...",
+    anchor: "u-20260803-0926",
+    bullets: [
+      "On a reduced-motion device with the new default, a one-time notice explains that effects are on by default and offers to turn them off, labelled not recommended since quiet plays are easy to miss.",
+      "Settings hints for \"Follow system motion\" (Interface and Accessibility) now say it is off by default and that turning it on is not recommended.",
+    ],
+  },
+  {
+    date: "2026-07-28",
+    title: "The misaligned draft box, clock tier 1, exploit, mobile leaderboard",
+    summary: "Clock rebalance, tier 1: 13 cards down to 2. Kept Polite Cough and Pinch of Sand, where time IS the card. Eight were pure riders on cards already complete without them.",
+    anchor: "u-20260728-2320",
+    bullets: [
+      "The lock-in bar transitioned width at 10Hz for the whole 20 second window, relayouting inside an overflow-hidden parent on every tick.",
+      "The most blocking surface in the product had no dialog semantics at all: a keyboard user tabbed straight out of a forced decision into the board.",
+      "The reduced-motion notice added last session could render over the draft cards. It now waits before asking for a slot.",
+    ],
+  },
+  {
+    date: "2026-07-28",
+    title: "Rating bug, board render, rounded corners, I Hate My Ex",
+    summary: "I Hate My Ex: was a tier 1 card freezing one pawn each side. Now destroys every piece on the board, both armies, leaving only the two kings. Tier 1 to 8, passive to instant.",
+    anchor: "u-20260728-1940",
+    bullets: [],
+  },
+  {
+    date: "2026-07-28",
+    title: "Dead cards, notation, animation reliability, draft escalation",
+    summary: "Machinery fixed three ways: the restriction is live from the moment the curse lands (only the first affected piece keeps its forbidden moves, once); spending the escape no longer ticks the...",
+    anchor: "u-20260728-1411",
+    bullets: [
+      "The move list was ambiguous and every PGN from the Download PGN button was unreplayable by any reader.",
+      "Analysis board numbered moves by ply parity, so any FEN with black to move numbered the whole line wrong and never showed the leading \"N...\".",
+      "Phones enable reduced motion for battery saving and accessibility defaults, so a large share of players saw no card animations at all with nothing explaining it.",
+      "Each now carries a constellation varying by arrangement (orbit, arc, column, corners, spiral, cross) and count, 36 distinct geometries, assigned so no two cards sharing a template share one.",
+      "A game runs about eleven drafts per player, so six or seven were statistically identical. Rounds 1 to 5 are byte-identical; round 8 onward lands tier 8 about 64% of the time.",
+      "Only positions since the last irreversible move can match, so the earlier keys are skipped: 0.43ms to 0.17ms on a 150-ply board.",
+    ],
+  },
+  {
+    date: "2026-07-23",
+    title: "Animations, draft picker selection ring",
+    summary: "Animations: summon/morph/convert/promote signature cards fell back to a generic poof (or nothing) because the board suppressed their bespoke board-wide lead unconditionally; the suppress now...",
+    anchor: "u-20260723-0410",
+    bullets: [
+      "Draft picker selection ring: on hover-capable devices the gold ring sat 3px below the lifted card; the ring now lifts in lockstep (and the minimized panel's ring rides the card itself via glow).",
+      "Starfields now paint once, the ambient set follows the FX intensity dial, and sustained sub-30fps auto-downgrades the ambience for the session.",
+    ],
+  },
+  {
+    date: "2026-07-23",
+    title: "Balance overhaul",
+    summary: "Balance overhaul (owner doc \"Nerf Chess Balance Overhaul\", 2228 named card changes).",
+    anchor: "u-20260723-0311",
+    bullets: [
+      "Full-library balance pass across all four sections: 949 buffs, 527 hexes, 404 boons, 348 nerfs. 837 tier moves, 1372 mechanical tweaks, 12 replacements, 7 renames (ids never change).",
+      "Recurring templates applied consistently: duration shortenings (minimum one; exactly-one-turn effects grant one defender exemption instead), delayed activations (effects begin after the opponent's...",
+      "Tier 9 is now a valid apex band for hexes (special: true, never in the normal curve): The Curse Engine, Peace of the Grave, Mirror of Winter.",
+      "Codex: every touched card gains a dated balance-history event merged into each card page's timeline.",
+      "Living Board's targeting chain terminates after the optional king-step pick.",
+      "Guardian-family openers enforce protection via move filters (the shared shield effect expired the turn it was added); flagged for a wider shield-family fix.",
+      "Draft picker: the gold selection ring now follows the card's hover lift on desktop (it sat 3px low); the minimized panel's ring rides the card itself.",
+    ],
+  },
+  {
+    date: "2026-07-20",
+    title: "Sound for every effect, whole-library card review",
+    summary: "Every card's persistent effect (a nerf reveal, a buff/boon/hex acquisition) already carried a sound family in its passive composition that nothing ever played.",
+    anchor: "u-20260720-0429",
+    bullets: [
+      "Result: all 677 passive effects (360 nerfs + 317 passive buffs) are voiced; the other 689 buffs are instant/activated and already voice through the cast/signature system.",
+    ],
+  },
+  {
+    date: "2026-07-20",
+    title: "Draft preview, knight/bishop overlap, em-dash guard, rule accuracy",
+    summary: "Fixed three nerf descriptions that misdescribed their own code: Thunderdome now says a piece in the center 16 can never leave the zone (the code makes it impossible, not \"rarely\"); Quicksand now...",
+    anchor: "u-20260720-0320",
+    bullets: [],
+  },
+  {
+    date: "2026-07-18",
+    title: "Codex rule completeness: two orphaned nerfs restored",
+    summary: "All 1006 buffs and 358 nerfs already surfaced; found five nerf rules defined in source but absent from the Codex, two of them accidental.",
+    anchor: "u-20260718-1708",
+    bullets: [
+      "Left the deliberately retired rules retired: Foot Soldiers Only (verified exact mechanical duplicate of the live Serf Labor, identical move filter), Number of the Beast, and Hand and Gigabrain.",
+    ],
+  },
+  {
+    date: "2026-07-17",
+    title: "Dungeon lobby",
+    summary: "+44 boons and +40 hexes in the genuinely open mechanic families (turncoat/possession, summoned hazards, sympathetic links, contracts, contagion, comeback, clocks, terrain, miracles); zero...",
+    anchor: "u-20260717-1745",
+    bullets: [],
+  },
+  {
+    date: "2026-07-17",
+    title: "Dungeon gate lobby CTA, chest reveal ledger, nerf-mode wave 2",
+    summary: "The Open Lobby CTA is now a full dungeon gate: carved granite courses, iron corner braces with rivets, an Elder-Futhark rune lintel that ignites on hover, torch-pooled jambs, and a clipped...",
+    anchor: "u-20260717-1330",
+    bullets: [
+      "Leaderboard podium keeps the same three-across treasure-dais silhouette on phones instead of the squished vertical stack.",
+      "New reveal-state ledger: the treasure chest plays exactly once per unique offer version (scope game id + offer index + reroll count).",
+      "+28 boons, +27 hexes, +16 nerfs. Family totals: boons 60->88, hexes 180->207, nerfs 342->358.",
+      "Animation coverage: five boon templates + five curse templates, 41 unique per-card flourish dressings, 14 fully bespoke tier 7-8 scenes; shared-flagship ratchet unchanged at 381/45, every new card...",
+    ],
+  },
+  {
+    date: "2026-07-12",
+    title: "Codex card insights: stats + history on every card page",
+    summary: "Hexes and boons get their own URL namespaces, statically generated like the buff/nerf pages.",
+    anchor: "u-20260712-0018",
+    bullets: [
+      "Every card page gains a server-rendered \"History\" timeline: wave-introduction line plus room for curated per-card balance notes.",
+      "Copy fix: hex/item category blurbs were missing their verb (\"As a hex card, it a curse...\").",
+    ],
+  },
+  {
+    date: "2026-07-05",
+    title: "Walnut hex: lifetime fix + walnut-piece visual",
+    summary: "Fix: a walnut (and freeze) is bound to the piece on its square, but the effect was only removed when its turn timer expired, so when the walnutted piece was captured or removed the marker lingered...",
+    anchor: "u-20260705-2139",
+    bullets: [
+      "Visual: a walnutted piece now renders as the whole piece becoming a plump, glossy walnut with the original piece shrunk down and nestled inside the shell so you can still tell what it was.",
+      "Animation: the walnut pops in with a comedic crunch, then gives a periodic little shudder as if the trapped piece is rattling to crack out.",
+    ],
+  },
+  {
+    date: "2026-07-05",
+    title: "Turn-cost labels on every card",
+    summary: "Feature: every draftable card now states whether using it uses up a turn, with a small badge in four states: Uses your turn (activated, playing it is your move), Free action (activated but...",
+    anchor: "u-20260705-2102",
+    bullets: [
+      "Audit: swept all 419 cards for turn-cost mislabels. Deterministic pass: zero description-vs-behavior contradictions. No flags changed: the derived badge is correct by construction.",
+    ],
+  },
+  {
+    date: "2026-07-05",
+    title: "Count-based cards no longer soft-lock with few targets",
+    summary: "Fix: cards that collect N targets soft-locked when the board had fewer than N eligible targets: you picked the few that existed, then got stranded on an empty step you could neither complete nor...",
+    anchor: "u-20260705-2050",
+    bullets: [],
+  },
+  {
+    date: "2026-07-05",
+    title: "Homepage copy + 3 nerf and 3 buff clickable cards to the codex",
+    summary: "Homepage copy (Nerf = secret handicaps revealed at end; drafting; Buff = no nerfs, draft power-ups; win by capturing the king) + 3 nerf and 3 buff clickable cards to the codex.",
+    anchor: "u-20260705-2",
+    bullets: [
+      "Draft settings on /play + fixed Play-vs-Bot (it silently gave both sides hidden nerfs) + true Plain chess vs bot.",
+    ],
+  },
+  {
+    date: "2026-07-05",
+    title: "Tournaments, feature wave",
+    summary: "Cooler draft: glass reveal FX (drama scales with tier) + Surprise-your-friend stacked preset.",
+    anchor: "u-20260705-1839",
+    bullets: [
+      "UI redesign: research, mode-seam signature, fluid type scale, de-bland home/lobby, lichess rating chart, snappier search.",
+      "Low-time warning sound synced to the visible clock.",
+      "Profile polish + custom emoji flairs + avatar/flair rejection messaging.",
+      "Rule audit (judgment): correctness / tier-fit / clarity fixes.",
+      "Board bugs: mobile premove cancel, illegal-move arrows, fullscreen/resize.",
+    ],
+  },
+  {
+    date: "2026-07-05",
+    title: "Opponent-hexes: 104 new, 10 to 16 per tier",
+    summary: "Opponent-hexes (curses on your opponent): 104 new, 10 to 16 per tier. Reshipped missing tier 5-8 hexes (53 cards).",
+    anchor: "u-20260705-1",
+    bullets: [
+      "Nerf-relief boons (soften your own nerf): 32 new, pool 25 to 52.",
+      "Expanded nerfs: 82 new across all 8 tiers (implemented count 232 to 302).",
+      "Draggable hotbar (drag an activated card onto its target).",
+      "Per-effect board animations (king-only, no-pawn-advance, hex cast).",
+      "Jargon glossary tooltips.",
+      "Mobile draft/UX fixes.",
+      "Tutorial \"The four cards\" section (nerf/buff/hex/boon, who-it-hits distinction).",
+      "Codex: buff cards get the difficulty ornament; hex and boon become their own tabs; \"Suggest a nerf\" becomes \"Suggest a rule\".",
+      "Client connection resilience (retry/backoff, reconnect during matchmaking, seat at pairing).",
+    ],
+  },
+];

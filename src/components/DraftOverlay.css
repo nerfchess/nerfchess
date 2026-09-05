@@ -738,6 +738,8 @@ html[data-anim="off"] .dock-pocket-flash { animation: none; }
 .draft-fx[data-tier="6"] { --tier-rgb: 198 95 143;  --fx: 0.78; }
 .draft-fx[data-tier="7"] { --tier-rgb: 168 119 216; --fx: 0.92; }
 .draft-fx[data-tier="8"] { --tier-rgb: 224 82 82;   --fx: 1.00; }
+.draft-fx[data-tier="9"] { --tier-rgb: 244 196 48;  --fx: 1.00; }
+.draft-fx[data-tier="10"] { --tier-rgb: 34 211 238;  --fx: 1.00; }
 
 /* Persistent tier edge: a thin tier-colored line plus a modest dark-tinted
    drop behind the card, opacity driven by --fx. Amplitude roughly halved from

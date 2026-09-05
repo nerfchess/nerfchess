@@ -1346,7 +1346,7 @@
     "boneca_ambalabu": 8,
     "guard_rotation": 4,
     "rook_chancellor": 4,
-    "camel_knight": 2,
+    "camel_knight": 3,
     "twin_queens": 7,
     "bn4_keep_gate": 3,
     "glacial_flanks": 4,
@@ -1494,7 +1494,22 @@
     "nerf:anchored_rooks": 3,
     "nerf:slowpoke": 8,
     "nerf:no_mans_land": 7,
-    "nerf:pawn_storm": 7
+    "nerf:pawn_storm": 7,
+    "bishop_archbishop": 4,
+    "knight_nightrook": 3,
+    "dragon_pawn": 3,
+    "cannon": 3,
+    "phase_rook": 3,
+    "god_knight": 7,
+    "dragon_mount": 4,
+    "wc_black_hole": 3,
+    "bn4_shepherds_watch": 5,
+    "hx4_lantern_out": 5,
+    "hx4_prowlers_bell": 6,
+    "second_army": 4,
+    "ov_pet_rock": 1,
+    "bn4_night_watch": 1,
+    "ov_sandbags": 2
   },
   "_comment_nerf_retiers": "2026-09 nerf severity pass: tiers follow how much of a game the nerf takes away, not how clever it sounds. Nerfs that ban a capture type or a few squares sit at 2-4; ones that remove a piece's core movement or a whole class of captures sit at 5-7; ones that make winning nearly impossible (no checks, no captures, hidden board, lose conditions the opponent can force) sit at 8.",
   "keep": {
@@ -1530,5 +1545,6 @@
     "fn_wyrm_hoard": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
     "fn_lich_pact": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental",
     "fn_titans_yoke": "2026-09 mythic ladder: hand-designed set, one card per tier and kind; text-signature twins are coincidental"
-  }
+  },
+  "_comment_balance_pass_2026_09": "2026-09 full balance pass, structural lenses first (dominance ladders inside a family, twins priced apart, permanent unconditional upgrades under the temporary anchors, one-shot defensive cards with no rider), win-rate sweep second. Every move below has a CARD_HISTORY event in src/data/cardHistory.ts."
 }

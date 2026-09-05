@@ -194,13 +194,13 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    // data-theme matches DEFAULT_SETTINGS.siteTheme ("midnight") so first paint is
+    // data-theme matches DEFAULT_SETTINGS.siteTheme ("dark") so first paint is
     // already the default; SettingsBootstrap then applies whatever the user
     // actually chose.
     // The face variables live on <html>, not <body>: --font-display and
     // --font-body are roles resolved in :root, and a value set on <body> would
     // beat them for everything inside it.
-    <html lang="en" data-theme="midnight" className={FONT_VARS}>
+    <html lang="en" data-theme="dark" className={FONT_VARS}>
       <head>
         <script
           type="application/ld+json"

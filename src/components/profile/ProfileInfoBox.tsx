@@ -63,23 +63,21 @@ export function ProfileInfoBox({
       <p>
         {friendCount.toLocaleString()} {friendCount === 1 ? "friend" : "friends"}
       </p>
-      <p>
-        {clubs.length === 0 ? (
-          <Link href="/clubs" className="no-underline hover:underline">Clubs</Link>
-        ) : (
-          <>
-            {clubs.length === 1 ? "Club: " : "Clubs: "}
-            {clubs.map((c, i) => (
-              <span key={c.slug}>
-                {i > 0 && ", "}
-                <Link href={`/clubs/${encodeURIComponent(c.slug)}`} className="no-underline hover:underline">
-                  {c.name}
-                </Link>
-              </span>
-            ))}
-          </>
-        )}
-      </p>
+      {clubs.length > 0 && (
+        <p>
+          {clubs.map((c, i) => (
+            <span key={c.slug}>
+              {i > 0 && " · "}
+              <Link
+                href={`/clubs/${encodeURIComponent(c.slug)}`}
+                className="text-[color:var(--accent)] no-underline hover:underline"
+              >
+                {c.name}
+              </Link>
+            </span>
+          ))}
+        </p>
+      )}
     </div>
   );
 }

@@ -133,6 +133,66 @@ function nerfWave(n: Nerf): WaveId {
  * a card is retiered, reworked, or reworded in code, with the changelog date
  * and PR. Keep each note one sentence; the page renders them as a timeline. */
 export const CARD_HISTORY: Record<string, CardHistoryEvent[]> = {
+  // --- 2026-09-05 full balance pass, structural batch: dominance ladders,
+  // twins priced apart, permanent upgrades under the temporary anchors, and
+  // one-shot defensive cards with no rider. Win-rate sizing follows.
+  "buff:bishop_archbishop": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 2 to Tier 4: a permanent, unconditional extra piece-class was priced under a one-step add (Wazir Bishop, Tier 3); its retired twin Rook to Chancellor was hand-priced at 4." },
+  ],
+  "buff:knight_nightrook": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 2 to Tier 3: a permanent rook slide on one knight; Twin Knights (both knights) sits at 4." },
+  ],
+  "buff:camel_knight": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 2 to Tier 3: a permanent extra leap is priced like the other permanent one-step adds." },
+  ],
+  "buff:dragon_pawn": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 2 to Tier 3: a knight that can still promote outclasses the conditional Vanguard promotion at 2." },
+  ],
+  "buff:cannon": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 2 to Tier 3: permanent capture-by-screen on a rook is a permanent upgrade, priced with the others." },
+  ],
+  "buff:phase_rook": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 2 to Tier 3: permanent phasing is a permanent upgrade, priced with the others." },
+  ],
+  "buff:god_knight": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 7: a permanent amazon sat below the two-turn amazons (Amazon Knight, Tier 6)." },
+  ],
+  "buff:dragon_mount": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 4: a knight with a permanent diagonal slide is an archbishop built from the other side, so it matches Bishop to Archbishop." },
+  ],
+  "buff:wc_black_hole": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 2 to Tier 3, level with Void Rift, the same permanent trap square." },
+  ],
+  "buff:bn4_shepherds_watch": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 5: Oathstone (Tier 4) is the same pawn immunity for one turn less." },
+  ],
+  "buff:hx4_lantern_out": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 5: a two-turn capture ban in their own half, next to Withered Hands (three turns, whole board) at 7." },
+  ],
+  "buff:hx4_prowlers_bell": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 4 to Tier 6: three turns of no landing anywhere in your half strictly contains King's Moat (Tier 7)." },
+  ],
+  "buff:second_army": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 5 to Tier 4: two pocket pawns beside Bodyguard (a pocket knight) at 4 and Spare Button (one pawn) at 2." },
+  ],
+  "buff:ov_pet_rock": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 2 to Tier 1: one pawn safe for one turn, where Pawn Shield gives four turns at 2." },
+  ],
+  "buff:bn4_night_watch": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 2 to Tier 1: one turn of king cover, where Decoy gives three turns plus a piece at 2." },
+  ],
+  "buff:ov_sandbags": [
+    { date: "2026-09-05", kind: "retier", note: "Moved from Tier 3 to Tier 2: two pawns for one turn, level with Pawn Shield." },
+  ],
+  "buff:warp_home": [
+    { date: "2026-09-05", kind: "rework", note: "The warp no longer spends your turn. Recall at the same tier already reaches any back-two-ranks square, so the precise return-to-post needed the timing to be worth a pick. The example sentence is gone." },
+  ],
+  "buff:hard_reset": [
+    { date: "2026-09-05", kind: "rework", note: "When the pawn's home square is taken the card used to do nothing; it now freezes that pawn for a turn instead." },
+  ],
+  "buff:fm_boon_lifebloom": [
+    { date: "2026-09-05", kind: "rework", note: "The pawn returns to your fourth rank and cannot be captured for the opponent's next two turns. It read identically to Field Stitches (Tier 2) and weaker than Florist's Trick (Tier 4)." },
+  ],
   // --- 2026-08-04 weak-card buff pass: ~30 underpowered buffs, boons and
   // items lifted to their tier, one card at a time. No retiers, no nerfs.
   "buff:extra_glance": [

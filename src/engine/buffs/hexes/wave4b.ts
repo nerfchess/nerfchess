@@ -1106,7 +1106,7 @@ const T6: Buff[] = [
       },
     ),
   ),
-  H6(
+  H5(
     { id: "hx4_lantern_out", name: "Lantern Out", description: "The lights go out at home: for your opponent's next 2 turns, they cannot capture anything standing in their own half of the board.", flavor: "Hard to aim in your own dark hallway.", icon: "LampOff", fx: { motif: "muzzle", pieces: "all" } },
     curse(2, (moves, api) =>
       moves.filter((m) => {

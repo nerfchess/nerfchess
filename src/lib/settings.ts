@@ -60,9 +60,9 @@ export type SoundTheme = "lichess" | "classic";
 /** Lichess "Tenths of seconds": never, only under ten seconds, or always. */
 export type ClockTenths = "never" | "low" | "always";
 
-// The site themes. Midnight (the default) is a navy take on Lichess's dark
-// ladder; dark is Lichess's own warm-grey palette; light is paper. "system"
-// follows the device and resolves to midnight or light.
+// The site themes. Dark (the default) is Lichess's own warm-grey palette;
+// Midnight is a navy take on the same ladder; light is paper. "system"
+// follows the device and resolves to dark or light.
 // `swatch` feeds the settings picker preview, `scheme` is the value for CSS
 // color-scheme, and `accent` is the one accent both palettes are built on
 // (Lichess blue), fed into the document by applyUiPrefs.
@@ -113,10 +113,10 @@ export const SITE_THEMES: Record<
     accent: AccentDef;
   }
 > = {
-  midnight: { label: "Midnight", hint: "Navy and steel, the default", scheme: "dark",  swatch: { bg: "#0f141c", panel: "#1a2130", glow: "#4c9ff0" }, accent: BLUE_ACCENT_MIDNIGHT },
-  dark:     { label: "Dark",     hint: "Lichess's warm grey",        scheme: "dark",  swatch: { bg: "#161512", panel: "#262421", glow: "#3692e7" }, accent: BLUE_ACCENT },
+  dark:     { label: "Dark",     hint: "The default palette",        scheme: "dark",  swatch: { bg: "#161512", panel: "#262421", glow: "#3692e7" }, accent: BLUE_ACCENT },
+  midnight: { label: "Midnight", hint: "Navy and steel",             scheme: "dark",  swatch: { bg: "#0f141c", panel: "#1a2130", glow: "#4c9ff0" }, accent: BLUE_ACCENT_MIDNIGHT },
   light:    { label: "Light",    hint: "Paper and ink",              scheme: "light", swatch: { bg: "#edebe9", panel: "#ffffff", glow: "#1b78d0" }, accent: BLUE_ACCENT_LIGHT },
-  system:   { label: "System",   hint: "Follow your device",         scheme: "dark",  swatch: { bg: "#0f141c", panel: "#edebe9", glow: "#4c9ff0" }, accent: BLUE_ACCENT_MIDNIGHT },
+  system:   { label: "System",   hint: "Follow your device",         scheme: "dark",  swatch: { bg: "#161512", panel: "#edebe9", glow: "#3692e7" }, accent: BLUE_ACCENT },
 };
 
 /** Site-theme ids that existed before the palette collapse, mapped onto the
@@ -224,8 +224,9 @@ export const PIECE_ANIM_PRESETS: Array<{ value: number; label: string }> = [
 
 const STORAGE_KEY = "dc:settings-v1";
 export const DEFAULT_SETTINGS: Settings = {
-  // Lichess defaults: the brown board and the cburnett piece set.
-  boardTheme: "brown",
+  // The dark grey-blue board on the dark site by default, with Lichess's
+  // cburnett piece set.
+  boardTheme: "midnight",
   pieceTheme: "lichessCburnett",
   pieceColor: "classic",
   volume: 0.8,
@@ -254,7 +255,7 @@ export const DEFAULT_SETTINGS: Settings = {
   gameEndSound: true,
   soundEnabled: true,
   soundTheme: "lichess",
-  siteTheme: "midnight",
+  siteTheme: "dark",
   zenMode: false,
   animationSpeed: "normal",
   pieceAnimMs: 100,
@@ -555,7 +556,7 @@ export function applyUiPrefs(s: Settings) {
     s.siteTheme === "system"
       ? window.matchMedia?.("(prefers-color-scheme: light)").matches
         ? "light"
-        : "midnight"
+        : "dark"
       : s.siteTheme;
   // color-scheme only accepts light/dark; every named theme maps to one.
   const scheme = SITE_THEMES[html.dataset.theme as SiteTheme]?.scheme ?? "dark";
@@ -565,7 +566,7 @@ export function applyUiPrefs(s: Settings) {
   // and a new one costs no CSS.
   if (scheme === "light") html.dataset.light = "on";
   else delete html.dataset.light;
-  const accent = (SITE_THEMES[html.dataset.theme as SiteTheme] ?? SITE_THEMES.midnight).accent;
+  const accent = (SITE_THEMES[html.dataset.theme as SiteTheme] ?? SITE_THEMES.dark).accent;
   html.style.setProperty("--accent", accent.accent);
   html.style.setProperty("--accent-hi", accent.accentHi);
   html.style.setProperty("--gold", accent.accent);
@@ -630,8 +631,8 @@ export function motionOff(): boolean {
  *  resolvers below need it, and applyUiPrefs computed it inline. */
 export function effectiveSiteTheme(s: Settings): SiteTheme {
   if (s.siteTheme !== "system") return s.siteTheme;
-  if (typeof window === "undefined") return "midnight";
-  return window.matchMedia?.("(prefers-color-scheme: light)").matches ? "light" : "midnight";
+  if (typeof window === "undefined") return "dark";
+  return window.matchMedia?.("(prefers-color-scheme: light)").matches ? "light" : "dark";
 }
 
 /** The board to actually draw. Board and piece prefs are plain named sets

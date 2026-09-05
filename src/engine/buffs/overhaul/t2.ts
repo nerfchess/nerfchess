@@ -395,7 +395,7 @@ export const OVERHAUL_T2: Buff[] = [
       id: "ov_sandbags",
       name: "Sandbags",
       description: "Stack sandbags on up to 2 of your pawns: they cannot be captured during your opponent's next turn.",
-      tier: 3,
+      tier: 2,
       category: "protection",
       icon: "Layers",
       flavor: "Sand: nature's bureaucracy against progress.",

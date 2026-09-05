@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import {
   Check,
@@ -1142,27 +1142,35 @@ function GamesTab({
 
   return (
     <div>
-      {/* Counts header: one quiet line above a hairline. */}
-      <div
-        className="flex flex-wrap items-center gap-x-5 gap-y-2 border-b px-1 pb-3"
-        style={{ borderColor: "var(--edge)" }}
-      >
-        {playingNow && (
-          <span className="inline-flex items-center gap-1.5 text-[12px] text-oxblood-glow">
-            <span aria-hidden className="dot-live h-2 w-2 rounded-full bg-oxblood-glow" />
-            Playing now
-          </span>
-        )}
-        <Count label="Total" value={user.games} />
-        <Count label="Record" value={`${user.wins}W ${user.losses}L ${user.draws}D`} />
+      {/* Summary: one stat tile per number, label above value, so the counts
+          never run together into a single wrapping line. */}
+      <div className="grid grid-cols-2 gap-3 border-b py-3 sm:grid-cols-4" style={{ borderColor: "var(--edge)" }}>
+        <StatTile label="Games" value={user.games.toLocaleString()} />
+        <StatTile label="Record" value={`${user.wins} W · ${user.losses} L · ${user.draws} D`} />
         {decided > 0 && (
-          <Count label="Win rate" value={`${Math.round((user.wins / Math.max(1, user.wins + user.losses)) * 100)}%`} />
+          <StatTile
+            label="Win rate"
+            value={`${Math.round((user.wins / Math.max(1, user.wins + user.losses)) * 100)}%`}
+          />
+        )}
+        {playingNow && (
+          <StatTile
+            label="Playing now"
+            value={
+              <span className="inline-flex items-center gap-2 text-[rgb(var(--pos-rgb))]">
+                <span aria-hidden className="dot-live h-2 w-2 rounded-full bg-[rgb(var(--pos-rgb))]" />
+                Live
+              </span>
+            }
+          />
         )}
       </div>
 
-      {/* Filters */}
-      <div className="mt-3 flex flex-col gap-2">
+      {/* Filters: the three groups share one row from sm up, split by a
+          hairline, and stack below it. */}
+      <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-y-2">
         <ChipGroup
+          label="Mode"
           aria-label="Filter by mode"
           value={mode}
           onChange={(v) => setMode(v as ModeFilter)}
@@ -1173,6 +1181,8 @@ function GamesTab({
           ]}
         />
         <ChipGroup
+          label="Result"
+          divider
           aria-label="Filter by result"
           value={result}
           onChange={(v) => setResult(v as ResultFilter)}
@@ -1184,6 +1194,8 @@ function GamesTab({
           ]}
         />
         <ChipGroup
+          label="Rated"
+          divider
           aria-label="Filter by rated"
           value={rated}
           onChange={(v) => setRated(v as RatedFilter)}
@@ -1250,28 +1262,43 @@ function GamesTab({
   );
 }
 
-function Count({ label, value }: { label: string; value: string | number }) {
+// One summary tile: a muted 12px label above a bold mono value.
+function StatTile({ label, value }: { label: string; value: ReactNode }) {
   return (
-    <span className="flex items-baseline gap-1.5">
-      <span className="font-mono text-sm tabular-nums text-parchment-100">{value}</span>
-      <span className="text-[12px] text-parchment-400">{label}</span>
-    </span>
+    <div className="min-w-0 rounded border border-[color:var(--edge)] px-3 py-2">
+      <div className="text-[12px] text-parchment-400">{label}</div>
+      <div className="mt-0.5 truncate font-mono text-[15px] font-bold tabular-nums text-parchment-100">{value}</div>
+    </div>
   );
 }
 
+// A labelled row of filter chips. `divider` draws the hairline that separates
+// it from the previous group when the groups share a row (sm and up).
 function ChipGroup({
+  label,
+  divider = false,
   value,
   onChange,
   options,
   "aria-label": ariaLabel,
 }: {
+  label: string;
+  divider?: boolean;
   value: string;
   onChange: (value: string) => void;
   options: { value: string; label: string }[];
   "aria-label": string;
 }) {
   return (
-    <div role="group" aria-label={ariaLabel} className="flex flex-wrap gap-1.5">
+    <div
+      role="group"
+      aria-label={ariaLabel}
+      className={
+        "flex flex-wrap items-center gap-2" +
+        (divider ? " sm:ml-2.5 sm:border-l sm:border-[color:var(--edge)] sm:pl-2.5" : "")
+      }
+    >
+      <span className="w-12 shrink-0 text-[12px] text-parchment-400 sm:w-auto sm:pr-1">{label}</span>
       {options.map((o) => {
         const on = value === o.value;
         return (
@@ -1281,7 +1308,7 @@ function ChipGroup({
             aria-pressed={on}
             onClick={() => onChange(o.value)}
             className={
-              "inline-flex min-h-[44px] items-center rounded-none border px-3 text-[13px] font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] sm:min-h-0 sm:py-1.5 " +
+              "inline-flex h-[44px] items-center rounded-none border px-3 text-[14px] font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] sm:h-[36px] sm:text-[13px] " +
               (on
                 ? "border-[color:var(--edge-strong)] bg-[color:var(--bg-raised)] text-gold-leaf"
                 : "border-[color:var(--edge)] text-parchment-400 hover:border-[color:var(--edge-strong)] hover:text-parchment-200")
@@ -1298,8 +1325,9 @@ function ChipGroup({
 // One finished-game row for the Games tab. The whole row opens the replay via a
 // stretched overlay Link that is a SIBLING of the inner opponent PlayerLink (the
 // content is pointer-events-none so clicks fall through to the overlay, while
-// PlayerLink re-enables pointer events for itself), so no anchors nest. Below
-// 640px it stacks so nothing is truncated away.
+// PlayerLink re-enables pointer events for itself), so no anchors nest. From sm
+// up it is a 48px three-column grid (outcome / opponent / meta on one line);
+// below that it takes two lines, identity then meta.
 function GameHistoryRow({ game, viewer }: { game: RecentGameRow; viewer: string }) {
   const viewerIsWhite = game.white_name.toLowerCase() === viewer.toLowerCase();
   const myColor: "w" | "b" = viewerIsWhite ? "w" : "b";
@@ -1322,33 +1350,33 @@ function GameHistoryRow({ game, viewer }: { game: RecentGameRow; viewer: string 
         aria-label={`View replay of the ${outcome.toLowerCase()} game vs ${opponent}`}
         className="absolute inset-0 z-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--edge-strong)]"
       />
-      <div className="pointer-events-none relative z-10 flex flex-col gap-2 px-3 py-3 sm:flex-row sm:items-center sm:gap-3">
-        <span className={`shrink-0 font-display text-sm font-semibold sm:w-14 ${tone}`}>{outcome}</span>
+      <div className="pointer-events-none relative z-10 grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-2 gap-y-1.5 px-3 py-[12px] sm:h-[48px] sm:grid-cols-[4rem_minmax(0,1fr)_auto] sm:gap-x-3 sm:py-0">
+        <span className={`font-display text-[14px] font-semibold sm:text-[13px] ${tone}`}>{outcome}</span>
 
-        <span className="flex min-w-0 flex-1 items-center gap-1.5">
-          <span className="text-xs text-parchment-500">vs</span>
+        <span className="flex min-w-0 items-center gap-1.5">
+          <span className="text-[12px] text-parchment-500">vs</span>
           <PlayerAvatar name={opponent} avatar={null} size={22} />
           <PlayerLink
             name={opponent}
-            className="pointer-events-auto relative z-20 min-w-0 font-display text-sm text-parchment-100 hover:text-gold-leaf"
+            className="pointer-events-auto relative z-20 min-w-0 truncate font-display text-[14px] text-parchment-100 hover:text-gold-leaf sm:text-[13px]"
           />
           {oppRating != null && (
-            <span className="shrink-0 font-mono text-xs tabular-nums text-parchment-400">
+            <span className="shrink-0 font-mono text-[12px] tabular-nums text-parchment-400">
               ({Math.round(oppRating)})
             </span>
           )}
           {game.mode ? <ModeBadge mode={game.mode} /> : null}
         </span>
 
-        <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs sm:justify-end">
-          <span className="text-[12px] text-parchment-400">{game.rated ? "Rated" : "Casual"}</span>
-          <span className="font-mono text-parchment-400">{clockLabel(game.time_sec, game.increment_sec)}</span>
-          {/* Rating change as its own bordered chip, with a " · " separator, so
-              the delta can never run together with the date. Sign in text. */}
-          {delta != null && (
+        {/* Meta: one right-aligned line from sm up. Every item is nowrap and
+            the delta chip has a fixed width, so the columns line up row to row. */}
+        <span className="col-span-2 flex flex-wrap items-center gap-x-3 gap-y-1 whitespace-nowrap text-[12px] text-parchment-400 sm:col-span-1 sm:flex-nowrap sm:justify-end">
+          <span>{game.rated ? "Rated" : "Casual"}</span>
+          <span className="font-mono tabular-nums">{clockLabel(game.time_sec, game.increment_sec)}</span>
+          {delta != null ? (
             <span
               className={
-                "inline-flex items-center rounded-none border px-1.5 py-px font-mono text-[11px] tabular-nums " +
+                "inline-flex w-12 items-center justify-center rounded-none border px-1 py-px font-mono text-[12px] tabular-nums " +
                 (delta > 0
                   ? "border-[color:var(--edge-strong)] bg-[color:var(--bg-raised)] text-gold-leaf"
                   : delta < 0
@@ -1359,11 +1387,11 @@ function GameHistoryRow({ game, viewer }: { game: RecentGameRow; viewer: string 
               {delta > 0 ? "+" : ""}
               {delta}
             </span>
+          ) : (
+            <span aria-hidden className="hidden w-12 sm:inline-block" />
           )}
-          <span aria-hidden className="text-parchment-600">·</span>
-          <span className="text-parchment-400">{game.reason}</span>
-          <span aria-hidden className="text-parchment-600">·</span>
-          <span className="text-parchment-400">{relativeTime(game.completed_at)}</span>
+          <span className="sm:w-[6rem] sm:truncate">{game.reason}</span>
+          <span className="sm:w-[5.5rem] sm:truncate sm:text-right">{relativeTime(game.completed_at)}</span>
         </span>
       </div>
     </div>

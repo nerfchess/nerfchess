@@ -917,14 +917,20 @@ html[data-anim="off"] .victory-burst { display: none; }
   50% { opacity: 1; }
 }
 
-/* The hero board: a plain box like every other box on the page. */
+/* The hero board: a plain box like every other box on the page, with a 6px
+   panel gutter between its one token border and the board's own outline. */
 .tv-frame {
   position: relative;
   display: block;
-  padding: 0;
+  padding: 6px;
   background: var(--bg-panel);
   border: 1px solid var(--border-subtle);
   border-radius: var(--ui-roundness);
+}
+/* Dark schemes only: a soft lift so the frame separates from the page. The
+   light theme keeps the flat box. */
+html:not([data-light]) .tv-frame {
+  box-shadow: 0 0 0 1px var(--edge), 0 10px 30px -18px rgb(0 0 0 / 0.6);
 }
 
 /* Live dot with an expanding echo, so "LIVE" is impossible to miss. The echo

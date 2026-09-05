@@ -3786,9 +3786,13 @@ export function Board({
   // a premove fired) mid-drag, a perfectly good drop would silently die.
   const tryPlayRef = useRef(tryPlay);
   const targetsRef = useRef(targets);
+  const premoveModeRef = useRef(premoveMode);
+  const onCancelPremoveRef = useRef(onCancelPremove);
   useEffect(() => {
     tryPlayRef.current = tryPlay;
     targetsRef.current = targets;
+    premoveModeRef.current = premoveMode;
+    onCancelPremoveRef.current = onCancelPremove;
   });
 
   // Refused-input feedback: an oxblood inner ring on the refused square plus
@@ -3903,31 +3907,18 @@ export function Board({
     }
     // A plain left-click / tap on the board that neither plays a move nor picks
     // up a piece wipes every drawn arrow and square mark, lichess-style ("click
-    // the board to clear your shapes"). It must NOT cancel a queued premove:
-    // clearing shapes and canceling a premove are separate concerns. A premove
-    // is still canceled the normal way (a different premove, the right-click
-    // context menu, or the dedicated cancel control), never by a stray click.
+    // the board to clear your shapes"), and, exactly as on Lichess, it also
+    // cancels the premove: any press that is not a new valid premove clears the
+    // one you had. Right-click still cancels too (handleSquareContextMenu).
     const hadSelection = selected != null;
     clearAnnotations();
     if (hadSelection) {
       setSelected(null);
     }
     setInspectSq(null);
-    // Touch has no right-click, which is how desktop cancels a queued premove
-    // (handleSquareContextMenu). On mobile, a double-tap on the same empty
-    // square cancels the whole premove queue. Only a "pure" dead tap counts (one
-    // that did not just deselect a piece), so retrying a mis-tapped premove
-    // never nukes the queue. We only reach here on a tap that played no move and
-    // grabbed no piece, so this can never disturb tap-to-move or premove making.
-    if (e.pointerType === "touch" && premoves && premoves.length > 0 && onCancelPremove) {
-      const now = e.timeStamp || nowMs();
-      const prev = lastTapRef.current;
-      if (!hadSelection && prev && prev.sq === sq && now - prev.t < 320) {
-        lastTapRef.current = null;
-        onCancelPremove();
-        return;
-      }
-      lastTapRef.current = hadSelection ? null : { sq, t: now };
+    lastTapRef.current = null;
+    if (premoveMode && premoves && premoves.length > 0 && onCancelPremove) {
+      onCancelPremove();
     }
   };
 
@@ -4049,9 +4040,11 @@ export function Board({
       } else if (sq != null && sq !== drag.from) {
         // Dropped on a square this piece cannot reach: refused move. The
         // piece returns to its origin exactly as before; the ring + shake are
-        // feedback only.
+        // feedback only. A refused drop is not a new premove, so (Lichess)
+        // it cancels the one you had.
         flagInvalid(sq, drag.from);
         setSelected(null);
+        if (premoveModeRef.current && onCancelPremoveRef.current) onCancelPremoveRef.current();
       } else if (sq === drag.from && pressRef.current?.sq === sq && pressRef.current.wasSelected) {
         // Releasing on an already-selected piece deselects it (click toggle).
         setSelected(null);

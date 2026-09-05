@@ -878,7 +878,7 @@ export const BOON_WAVE4B: Buff[] = [
     ),
   ),
   card(
-    { id: "bn4_shepherds_watch", name: "Shepherd's Watch", tier: 6, category: "protection", icon: "Moon",
+    { id: "bn4_shepherds_watch", name: "Shepherd's Watch", tier: 5, category: "protection", icon: "Moon",
       description: "None of your pawns can be captured for your opponent's next 3 turns.",
       flavor: "Count them all you like. None go missing tonight.", requires: ["p"],
       fx: { motif: "ward", pieces: ["p"], self: true } },

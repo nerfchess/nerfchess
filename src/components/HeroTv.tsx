@@ -182,11 +182,11 @@ export function HeroTv() {
             className={
               "flex items-center gap-1.5 border px-2 py-1 text-[11px] " +
               (!over
-                ? "border-verdigris-glow/40 bg-verdigris/10 text-verdigris-glow"
+                ? "border-[rgb(var(--accent-positive-rgb)_/_0.4)] bg-[rgb(var(--accent-positive-rgb)_/_0.1)] text-[rgb(var(--accent-positive-rgb))]"
                 : "border-[color:var(--edge)] bg-[color:var(--bg-zebra)] text-parchment-300")
             }
           >
-            {!over ? <span className="dot-live h-2 w-2 bg-verdigris-glow" /> : null}
+            {!over ? <span className="dot-live h-2 w-2 bg-[rgb(var(--accent-positive-rgb))]" /> : null}
             {over ? "Just finished" : "LIVE"}
           </span>
           {shownMode ? (

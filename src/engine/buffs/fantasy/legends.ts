@@ -386,7 +386,7 @@ export const FANTASY_LEGENDS: Buff[] = [
       name: "Dragon Mount",
       description:
         "One of your knights breaks a young dragon to the saddle: for the game it may also slide any distance diagonally, though the dragon's glide cannot capture.",
-      tier: 6,
+      tier: 4,
       category: "movement",
       requires: ["n"],
       flavor: "The hard part is not the taming. It is the dismount.",

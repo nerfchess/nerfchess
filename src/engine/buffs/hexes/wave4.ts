@@ -58,6 +58,8 @@ const H1 = tierHexes(1);
 const H2 = tierHexes(2);
 const H3 = tierHexes(3);
 const H4 = tierHexes(4);
+// Balance pass 2026-09 lifted one wave-4 hex to tier 6 (see hand-audit.json).
+const H6 = tierHexes(6);
 
 // A curse that grants the first affected piece one escape, then binds fully:
 // `pred` (a per-move KEEP test) is enforced from the moment the curse lands,
@@ -1887,7 +1889,7 @@ const T4: Buff[] = [
       }
     }),
   ),
-  H4(
+  H6(
     { id: "hx4_prowlers_bell", name: "Prowler's Bell", description: "A bell is tied to every gate in your half: for your opponent's next 3 turns, their pieces may not end a move on an EMPTY square in your half. They may enter only by capturing. Their king is exempt.", flavor: "Come in swinging or do not come in.", icon: "BellRing", fx: { motif: "blindfold", pieces: "all" } },
     curse(3, (moves, api) =>
       moves.filter((m) => m.piece === "k" || m.captured != null || relRank(api.opp, m.to) <= 4),
