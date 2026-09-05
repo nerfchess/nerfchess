@@ -70,6 +70,9 @@ export default function TournamentsPage() {
   const [maxPlayers, setMaxPlayers] = useState(16);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // The form's own error: a refused create must not blank the directory,
+  // which renders nothing while the load error above is set.
+  const [createError, setCreateError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -154,7 +157,7 @@ export default function TournamentsPage() {
     event.preventDefault();
     if (name.trim().length < 3) return;
     setBusy(true);
-    setError(null);
+    setCreateError(null);
     try {
       const preset = CLOCK_PRESETS[clockIdx] ?? CLOCK_PRESETS[2];
       const starts = startsAt ? new Date(startsAt).getTime() : null;
@@ -181,7 +184,7 @@ export default function TournamentsPage() {
       setShowCreate(false);
       router.push(`/tournaments/${encodeURIComponent(data.tournament.id)}`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not create tournament.");
+      setCreateError(e instanceof Error ? e.message : "Could not create tournament.");
       setBusy(false);
     }
   };
@@ -211,7 +214,7 @@ export default function TournamentsPage() {
           </div>
         </div>
 
-        {error && !showCreate && (
+        {error && (
           <div
             role="alert"
             className="mt-5 plate flex flex-col gap-3 border-oxblood-glow/60 bg-oxblood/15 p-4 sm:flex-row sm:items-center sm:justify-between"
@@ -235,9 +238,9 @@ export default function TournamentsPage() {
         {showCreate && (
           <form onSubmit={createTournament} className="mt-5 plate p-5">
             <div className="font-display text-xl text-parchment">Create tournament</div>
-            {error && (
+            {createError && (
               <div className="mt-3 border border-oxblood-glow/60 bg-oxblood/15 px-3 py-2 text-[13px] text-parchment">
-                {error}
+                {createError}
               </div>
             )}
             {user === undefined ? (

@@ -10,41 +10,53 @@ export async function GET(request: Request) {
   if (guard instanceof NextResponse) return guard;
   const { db, user } = guard;
 
-  const rows = await db
-    .prepare(
-      `SELECT m.*,
-              CASE WHEN m.from_user_id = ?1 THEN m.to_user_id ELSE m.from_user_id END AS peer_id
-       FROM messages m
-       WHERE m.id IN (
-         SELECT id FROM messages
-         WHERE from_user_id = ?1 OR to_user_id = ?1
-         ORDER BY created_at DESC LIMIT 400
-       )
-       ORDER BY m.created_at DESC`,
-    )
-    .bind(user.id)
-    .all<{
-      id: string;
-      from_user_id: string;
-      to_user_id: string;
-      text: string;
-      created_at: number;
-      read: number;
-      peer_id: string;
-    }>();
+  // One row per correspondent: the newest message in that thread over ALL of
+  // the caller's messages. A global newest-N window would drop any thread
+  // whose last message fell outside it (an old unread from C behind a long
+  // A-B exchange), and undercount its unread.
+  const [latest, unreadRows] = await Promise.all([
+    db
+      .prepare(
+        `SELECT m.from_user_id, m.to_user_id, m.text, m.created_at, t.peer_id
+         FROM (
+           SELECT CASE WHEN from_user_id = ?1 THEN to_user_id ELSE from_user_id END AS peer_id,
+                  MAX(created_at) AS last_at
+           FROM messages
+           WHERE from_user_id = ?1 OR to_user_id = ?1
+           GROUP BY peer_id
+         ) t
+         JOIN messages m
+           ON m.created_at = t.last_at
+          AND (m.from_user_id = ?1 OR m.to_user_id = ?1)
+          AND CASE WHEN m.from_user_id = ?1 THEN m.to_user_id ELSE m.from_user_id END = t.peer_id
+         ORDER BY m.created_at DESC
+         LIMIT 200`,
+      )
+      .bind(user.id)
+      .all<{ from_user_id: string; to_user_id: string; text: string; created_at: number; peer_id: string }>(),
+    db
+      .prepare(
+        `SELECT from_user_id AS peer_id, COUNT(*) AS unread
+         FROM messages WHERE to_user_id = ?1 AND read = 0
+         GROUP BY from_user_id`,
+      )
+      .bind(user.id)
+      .all<{ peer_id: string; unread: number }>(),
+  ]);
+  const unreadByPeer = new Map(unreadRows.results.map((r) => [r.peer_id, Number(r.unread)]));
 
-  // Reduce to one row per correspondent, newest first.
   const byPeer = new Map<string, { peerId: string; lastText: string; lastAt: number; fromMe: boolean; unread: number }>();
-  for (const row of rows.results) {
-    const entry = byPeer.get(row.peer_id) ?? {
+  for (const row of latest.results) {
+    // Two messages in one thread can share a timestamp; keep the first (newest
+    // ordering ties are arbitrary but stable enough for a preview line).
+    if (byPeer.has(row.peer_id)) continue;
+    byPeer.set(row.peer_id, {
       peerId: row.peer_id,
       lastText: row.text,
       lastAt: row.created_at,
       fromMe: row.from_user_id === user.id,
-      unread: 0,
-    };
-    if (row.to_user_id === user.id && !row.read) entry.unread++;
-    byPeer.set(row.peer_id, entry);
+      unread: unreadByPeer.get(row.peer_id) ?? 0,
+    });
   }
 
   const peers = [...byPeer.values()];

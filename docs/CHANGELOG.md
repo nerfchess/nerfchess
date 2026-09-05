@@ -769,3 +769,30 @@ Match page and settings:
 Checks: `test:retired` now enforces a floor of 12 cards per tier per mode; `test:glossary-effects` fails on an empty map.
 
 Verified: tsc, eslint, the full check battery, Playwright (30 passed, 1 skipped).
+
+## 2026-09-05 20:10 EDT
+
+Round four: bot game, analysis, inbox, clubs and tournament fixes
+
+Another sweep over the pages the earlier passes skipped. PR #485. OPEN.
+
+Bot game and analysis:
+- With premoves off, the board no longer shows premove dots during the bot's think, and the clock pill freezes at its live value across a draft pause instead of jumping back to the banked time (it used to read ahead of the real flag by whatever you had already spent that turn).
+- The board's low-time effects now watch the live clock, waking exactly when the active side crosses the 15s line, rather than the banked figure that only moved after the pressure was over.
+- The end screen no longer re-hides an opponent rule a reveal card already showed you all game.
+- Arrow-key move review stays off while the result panel, buff targeting or a front-and-center draft owns the board, matching the wheel navigation.
+- The analysis board's eval, bar and best-move squares only render for the position they were searched from, so a move no longer flips the eval sign for a frame or highlights a piece that is not there.
+- Settings validation tests own keys only, so a stored "toString" theme can no longer strip the board colours; the Board section's Layout and Motion headings each appear once.
+
+Inbox and notifications:
+- The conversation list groups over every message, not a global newest-400 window, so an older thread with an unread message no longer vanishes behind a busy one, and unread counts are exact.
+- Message bell entries are matched by the sender's id, so a renamed sender's notification clears when you read the thread and does not multiply.
+
+Clubs and tournaments:
+- Joining checks the stored finished status (an arena that played all its rounds early) and, for club events, club membership, the same rule creation already enforced.
+- A refused create on the tournaments page no longer blanks the directory behind the form.
+- Club pages show the true member count for clubs past the 200-row leaderboard and derive each event's phase from its schedule instead of printing a stale stored status.
+
+Lobby and TV:
+- Sub-minute and half-minute clocks (30s+0, 1.5+0) are labelled correctly in open challenges, live games, the watch rail and TV, instead of rounding to 1+0 and 2+0.
+- Quick pairing shows "?" for a mode you have not played rather than the frozen legacy rating.

@@ -231,7 +231,9 @@ export function QuickMatch({ active = true }: { active?: boolean } = {}) {
   };
 
   const selected = QUEUE_POOL_OPTIONS.find((o) => o.pool === pool) ?? QUEUE_POOL_OPTIONS[3];
-  const ratingFor = (m: DraftMode) => modeRatings[m] ?? (user ? Math.round(user.rating) : null);
+  // Per-mode ratings only: users.rating is the frozen legacy column, so an
+  // unplayed bucket shows the "?" placeholder rather than a made-up figure.
+  const ratingFor = (m: DraftMode) => modeRatings[m] ?? null;
   const modeLabel = mode === "nerf" ? "Nerf" : "Buff";
   const findLabel = `Find a ${selected.label} ${modeLabel} game`;
 

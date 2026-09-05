@@ -25,16 +25,35 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
   if (!action) return NextResponse.json({ error: "Unknown action." }, { status: 400 });
 
   const tournament = await db
-    .prepare("SELECT id, starts_at, duration_min, max_players FROM tournaments WHERE id = ?")
+    .prepare("SELECT id, status, club_id, starts_at, duration_min, max_players FROM tournaments WHERE id = ?")
     .bind(params.id)
-    .first<{ id: string; starts_at: number | null; duration_min: number; max_players: number }>();
+    .first<{
+      id: string;
+      status: string;
+      club_id: string | null;
+      starts_at: number | null;
+      duration_min: number;
+      max_players: number;
+    }>();
   if (!tournament) return NextResponse.json({ error: "Tournament not found." }, { status: 404 });
 
   const phase = tournamentPhase(tournament.starts_at, tournament.duration_min);
 
   if (action === "join") {
-    if (phase === "finished") {
+    // An event that played all its rounds early carries status 'finished'
+    // before its duration window closes; the derived phase alone misses it.
+    if (phase === "finished" || tournament.status === "finished") {
       return NextResponse.json({ error: "This tournament has finished." }, { status: 400 });
+    }
+    // Club events seat members only, the same rule creation enforces.
+    if (tournament.club_id) {
+      const member = await db
+        .prepare("SELECT 1 AS present FROM club_members WHERE club_id = ? AND user_id = ?")
+        .bind(tournament.club_id, user.id)
+        .first<{ present: number }>();
+      if (!member) {
+        return NextResponse.json({ error: "Join that club to enter its tournaments." }, { status: 403 });
+      }
     }
     const already = await db
       .prepare("SELECT 1 AS present FROM tournament_entries WHERE tournament_id = ? AND user_id = ?")

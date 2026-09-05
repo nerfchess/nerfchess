@@ -73,7 +73,7 @@ function AnalysisInner() {
   const [viewPly, setViewPly] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [engineOn, setEngineOn] = useState(true);
-  const [analysis, setAnalysis] = useState<BoardAnalysis | null>(null);
+  const [analysis, setAnalysis] = useState<(BoardAnalysis & { board: BoardState }) | null>(null);
   const [fenInput, setFenInput] = useState("");
   const [fenError, setFenError] = useState(false);
   // Ply count at which a ?moves= deep link stopped replaying (a move the
@@ -162,7 +162,7 @@ function AnalysisInner() {
       return;
     }
     analysisTimer.current = window.setTimeout(() => {
-      setAnalysis(analyzeBoard(board, 300));
+      setAnalysis({ board, ...analyzeBoard(board, 300) });
     }, 120);
     return () => {
       if (analysisTimer.current) window.clearTimeout(analysisTimer.current);
@@ -184,8 +184,13 @@ function AnalysisInner() {
     return () => window.removeEventListener("keydown", onKey);
   }, [moves.length]);
 
-  const cpWhite = analysis ? analysis.scoreCp * (board.turn === "w" ? 1 : -1) : 0;
-  const bestSan = analysis?.move ? moveToSAN(analysis.move, board) : null;
+  // A result belongs to the position it was searched from. Between a move
+  // and the next search the held line is stale: re-signing its side-to-move
+  // score against the new board would flip the eval, and its best move may
+  // not even be legal here, so it shows as pending instead.
+  const current = analysis && analysis.board === board ? analysis : null;
+  const cpWhite = current ? current.scoreCp * (board.turn === "w" ? 1 : -1) : 0;
+  const bestSan = current?.move ? moveToSAN(current.move, board) : null;
 
   const orientation: Color = flipped ? "b" : "w";
   const fen = boardToFen(board);
@@ -236,9 +241,9 @@ function AnalysisInner() {
           <div className="relative hidden w-6 shrink-0 overflow-hidden border border-[color:var(--edge)] bg-[#1a1917] sm:block">
             <div
               className="absolute inset-x-0 bottom-0 bg-parchment-100 transition-[height] duration-300"
-              style={{ height: `${engineOn && analysis ? evalPercent(cpWhite) : 50}%` }}
+              style={{ height: `${engineOn && current ? evalPercent(cpWhite) : 50}%` }}
             />
-            {engineOn && analysis && (
+            {engineOn && current && (
               <span
                 className={
                   "absolute inset-x-0 text-center font-mono text-[12px] leading-4 " +
@@ -261,8 +266,8 @@ function AnalysisInner() {
               visual={
                 statusDemo
                   ? STATUS_DEMO_VISUAL
-                  : engineOn && analysis?.move
-                    ? { highlightSquares: [analysis.move.from, analysis.move.to] }
+                  : engineOn && current?.move
+                    ? { highlightSquares: [current.move.from, current.move.to] }
                     : undefined
               }
             />
@@ -310,11 +315,11 @@ function AnalysisInner() {
             <h1 className="font-display text-lg text-parchment-50">Analysis board</h1>
             {engineOn ? (
               <p className="mt-1 text-sm text-parchment-300">
-                <span className="font-mono text-parchment-50">{analysis ? evalLabel(cpWhite) : "…"}</span>
+                <span className="font-mono text-parchment-50">{current ? evalLabel(cpWhite) : "…"}</span>
                 {bestSan && (
                   <span className="text-parchment-400">
                     {" "}
-                    · best {bestSan} · depth {analysis?.depth}
+                    · best {bestSan} · depth {current?.depth}
                   </span>
                 )}
               </p>

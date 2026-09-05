@@ -14,6 +14,7 @@ export function MoveList({
   showHeader = true,
   footer,
   startBoard,
+  navBlocked = false,
 }: {
   moves: Move[];
   currentPly?: number;
@@ -31,6 +32,10 @@ export function MoveList({
    *  (the analysis board can be set up from an arbitrary FEN). Only used to
    *  disambiguate the notation. */
   startBoard?: BoardState;
+  /** Something else owns the board (result panel, buff targeting, a draft
+   *  front-and-center): the global arrow-key navigation stays off, matching
+   *  the wheel navigation the game pages gate the same way. */
+  navBlocked?: boolean;
 }) {
   // Notation is disambiguated by replaying the line ("Nbd2" vs "Nfd2"), which
   // costs one replay per list change rather than one per render.
@@ -84,7 +89,7 @@ export function MoveList({
   }, [currentPly]);
 
   useEffect(() => {
-    if (!onPlyChange) return;
+    if (!onPlyChange || navBlocked) return;
     const onKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
       const isTyping =
@@ -114,7 +119,7 @@ export function MoveList({
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [canBack, canForward, currentPly, floorPly, jumpTo, maxPly, onPlyChange]);
+  }, [canBack, canForward, currentPly, floorPly, jumpTo, maxPly, navBlocked, onPlyChange]);
 
   return (
     <div className={rootClass + (compact ? " overflow-hidden" : "")}>

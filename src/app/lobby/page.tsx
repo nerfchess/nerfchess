@@ -13,6 +13,7 @@ import { MPLobby, MPLobbyChallenge, MPLobbyGame, MPLobbySeek, MPSession, saveOnl
 import { ModeBadge } from "@/components/ModeBadge";
 import { FriendGameProvider, FriendGameSetup, useFriendGame } from "@/components/FriendGame";
 import { categoryForTimeControl, getCategory } from "@/lib/ratingCategories";
+import { clockLabel } from "@/lib/tournaments";
 import { Button } from "@/components/ui/Button";
 import { LinkButton } from "@/components/ui/Button";
 
@@ -1190,10 +1191,7 @@ function SeekRow({
 
 function ChallengeRow({ challenge }: { challenge: MPLobbyChallenge }) {
   const { joinWithCode } = useFriendGame();
-  const clock =
-    challenge.timeSec > 0
-      ? `${Math.round(challenge.timeSec / 60)}+${challenge.incrementSec}`
-      : "No clock";
+  const clock = challenge.timeSec > 0 ? clockLabel(challenge.timeSec, challenge.incrementSec) : "No clock";
   return (
     <li className={`hall-row ${rowModeClass(challenge.mode)} flex items-center justify-between gap-3 p-3 sm:px-4`}>
       <div className="min-w-0">
@@ -1231,8 +1229,7 @@ function ChallengeRow({ challenge }: { challenge: MPLobbyChallenge }) {
 }
 
 function LiveGameRow({ game }: { game: MPLobbyGame }) {
-  const clock =
-    game.timeSec > 0 ? `${Math.round(game.timeSec / 60)}+${game.incrementSec}` : "No clock";
+  const clock = game.timeSec > 0 ? clockLabel(game.timeSec, game.incrementSec) : "No clock";
   return (
     <li className={`hall-row ${rowModeClass(game.mode, "hall-row--live")} flex items-center justify-between gap-3 p-3 sm:px-4`}>
       <div className="min-w-0">
@@ -1274,8 +1271,7 @@ function LiveGameRow({ game }: { game: MPLobbyGame }) {
 // read differently at a glance. Denser than the full LiveGameRow in the Watch
 // tab.
 function RailWatchRow({ game }: { game: MPLobbyGame }) {
-  const clock =
-    game.timeSec > 0 ? `${Math.round(game.timeSec / 60)}+${game.incrementSec}` : "No clock";
+  const clock = game.timeSec > 0 ? clockLabel(game.timeSec, game.incrementSec) : "No clock";
   const moveNumber = Math.ceil(game.moves / 2);
   return (
     <li>
