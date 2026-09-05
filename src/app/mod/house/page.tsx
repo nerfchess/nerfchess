@@ -28,10 +28,28 @@ type PersonaView = {
 
 type PersonasPayload = { personas: PersonaView[]; avatars: string[] };
 
+const PAGE = 60;
+
+function filtered(personas: PersonaView[], query: string): PersonaView[] {
+  const q = query.trim().toLowerCase();
+  if (!q) return personas;
+  return personas.filter(
+    (p) =>
+      p.effective.username.toLowerCase().includes(q) ||
+      p.defaults.username.toLowerCase().includes(q) ||
+      p.location.toLowerCase().includes(q) ||
+      String(p.skill).startsWith(q),
+  );
+}
+
 export default function ModHousePage() {
   const [me, setMe] = useState<AccountUser | null | undefined>(undefined);
   const [data, setData] = useState<PersonasPayload | null>(null);
   const [failed, setFailed] = useState(false);
+  // 900 personas with three controls each is too much DOM to mount at once:
+  // filter by name and page the rest in.
+  const [query, setQuery] = useState("");
+  const [shown, setShown] = useState(PAGE);
 
   useEffect(() => {
     fetchMe().then(setMe);
@@ -64,8 +82,25 @@ export default function ModHousePage() {
             ) : !data ? (
               <p className="mt-6 text-parchment-300">Loading…</p>
             ) : (
-              <div className="mt-6 plate divide-y divide-[color:var(--edge)]">
-                {data.personas.map((p) => (
+              <>
+              <div className="mt-6 flex flex-wrap items-center gap-3">
+                <input
+                  type="search"
+                  value={query}
+                  onChange={(e) => {
+                    setQuery(e.target.value);
+                    setShown(PAGE);
+                  }}
+                  placeholder="Filter by name, location or skill"
+                  aria-label="Filter personas"
+                  className="w-full max-w-sm bg-[color:var(--bg-base)] border border-[color:var(--edge)] rounded-none px-3 py-1.5 text-sm text-parchment placeholder:text-parchment-400/60 focus:outline-none focus:border-[color:var(--edge-strong)]"
+                />
+                <span className="text-xs text-parchment-400">
+                  {filtered(data.personas, query).length} of {data.personas.length} personas
+                </span>
+              </div>
+              <div className="mt-3 plate divide-y divide-[color:var(--edge)]">
+                {filtered(data.personas, query).slice(0, shown).map((p) => (
                   // Keyed on the server-side username too: a save (any row's)
                   // that changes it remounts the row, so the name input resets
                   // to the fresh server value without an effect.
@@ -78,6 +113,14 @@ export default function ModHousePage() {
                   />
                 ))}
               </div>
+              {filtered(data.personas, query).length > shown && (
+                <div className="mt-3">
+                  <Button tone="default" onClick={() => setShown((n) => n + PAGE)}>
+                    Show {Math.min(PAGE, filtered(data.personas, query).length - shown)} more
+                  </Button>
+                </div>
+              )}
+              </>
             )}
           </>
         )}
