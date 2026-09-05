@@ -1068,7 +1068,7 @@ export function GameOver({
                 onClick={onClip}
                 data-share-reel
                 block
-                className="mt-6 px-5 py-2.5 font-semibold"
+                className="zen-hide mt-6 px-5 py-2.5 font-semibold"
               >
                 {reelIcon}
                 Share reel
@@ -1117,8 +1117,10 @@ export function GameOver({
             {/* Secondary actions: Share, Analyze, the archived replay, PGN,
                 and both players' profiles (real usernames). One entry each;
                 the move-review entry point lives in the game view, and the
-                reel entry is the gold action above. */}
-            <div className="mt-2 grid grid-cols-2 gap-2">
+                reel entry is the gold action above.
+                zen-hide: these are the social/sharing extras, so zen mode
+                stands them down and leaves Rematch and New opponent. */}
+            <div className="zen-hide mt-2 grid grid-cols-2 gap-2">
               <Button tone="ghost"
                
                 onClick={handleShare}

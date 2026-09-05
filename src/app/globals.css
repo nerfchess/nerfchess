@@ -2554,9 +2554,8 @@ html[data-anim="off"] .waiting-ping { opacity: 0; }
 html[data-anim="off"] .waiting-ellipsis::after { opacity: 1; }
 
 /* === Ambient gold-dust star field (home + lobby) =============================
-   A fixed, pointer-events-none field of candlelight motes behind the page
-   (shared via src/components/StarField.tsx): three parallax dust layers (each
-   ONE animated node carrying a tiled
+   A fixed, pointer-events-none field of candlelight motes behind the page:
+   three parallax dust layers (each ONE animated node carrying a tiled
    radial-gradient speckle), a handful of 4-point brass glints that twinkle,
    and two slow diagonal shooting stars. Everything is transform/opacity only,
    no JS, no canvas. Node budget: 3 layers + 12 glints + 2 shooting = 17

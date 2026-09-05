@@ -2,7 +2,6 @@
 
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
-import { StarField } from "@/components/StarField";
 import { FriendsPanel } from "@/components/FriendsPanel";
 import { OnlineMatch } from "@/components/OnlineMatch";
 import {
@@ -378,7 +377,6 @@ export function FriendGameProvider({ children }: { children: React.ReactNode }) 
   if (view === "lobby") {
     return (
       <main className="min-h-screen pb-16">
-        <StarField />
         <SiteHeader active="/lobby" />
         <section className="max-w-xl mx-auto px-6 py-12 text-center">
           <div className="text-[11px] text-parchment-400">
@@ -412,7 +410,6 @@ export function FriendGameProvider({ children }: { children: React.ReactNode }) 
   if (view === "joining") {
     return (
       <main className="min-h-screen pb-16">
-        <StarField />
         <SiteHeader active="/lobby" />
         <section className="max-w-xl mx-auto px-6 py-12 text-center">
           <div className="text-[11px] text-parchment-400">Connecting…</div>

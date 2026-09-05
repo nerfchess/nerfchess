@@ -1462,14 +1462,6 @@ export function DraftOverlay({
 
   const mid = (offer.cards.length - 1) / 2;
 
-  // The chamber answers the offer: the strongest card's category re-tints the
-  // torch light once the pack is open (attack burns blood red, hexes go void,
-  // protection cools to teal, tempo turns astral). Ember is the default mood.
-  const topCard = offer.cards.reduce((best, c) => (c.tier > best.tier ? c : best), offer.cards[0]);
-  const topCat = topCard ? BUFF_BY_ID[topCard.id]?.category : undefined;
-  const stageMood =
-    topCat === "attack" ? "blood" : topCat === "hex" ? "void" : topCat === "protection" ? "teal" : topCat === "tempo" ? "astral" : undefined;
-
   return (
     <>
       {/* Peek at the board: while hidden, a slim chip keeps the draft (and
@@ -1508,81 +1500,20 @@ export function DraftOverlay({
         // eat the pick clicks. No backdrop blur: a full-screen blur repainted
         // on every board animation frame chugged phones.
         //
-        // The scrim is a light 20% dim on desktop so the board stays visible
-        // behind the draft. On PHONES it is much heavier, because there the
-        // draft column has nowhere to go: it overlaps the masthead and the
-        // player row, and at 20% the logo, avatar and clocks read straight
-        // through the timer chip and the clock notice, which is the single
-        // worst readability problem on the mobile draft.
+        // The scrim is one flat 60% dim at every width: the draft is a plain
+        // modal over the board, not a lit stage, and the panel has to stay
+        // readable on a phone where the column overlaps the masthead and the
+        // player row.
         // overflow-x-hidden is load-bearing, not tidiness: `overflow-y: auto`
         // with overflow-x left at `visible` makes the browser COMPUTE
-        // overflow-x as `auto` too, so the decorations that deliberately bleed
-        // outside the panel (the wall torches at left/right -8px, the corner
-        // braces, every -2px ring glow) made this root horizontally
-        // scrollable on a phone. Any stray sideways scroll then dragged the
-        // whole panel off-centre and clipped the ember frame at both edges,
-        // which is exactly what the off-centre-frame report showed.
+        // overflow-x as `auto` too, so anything bleeding a pixel or two past
+        // the panel made this root horizontally scrollable on a phone. Any
+        // stray sideways scroll then dragged the whole panel off-centre.
         className={
-          "fixed inset-0 z-[55] overflow-y-auto overflow-x-hidden overscroll-contain bg-black/70 sm:bg-black/20" +
+          "fixed inset-0 z-[55] overflow-y-auto overflow-x-hidden overscroll-contain bg-black/60" +
           (hidden ? " invisible" : "")
         }
       >
-      {/* Ambient stage behind the cards — the dungeon chamber: a torchlit
-          vignette, two guttering torch glows low on the walls, crawling floor
-          fog, a slow firelight aurora, and rising ember motes. Fixed (never
-          scrolls with the panel), pointer-events-none, transform/opacity only;
-          the moving layers are skipped entirely under reduced motion. */}
-      <div aria-hidden className="draft-stage" data-mood={packStage === "open" ? stageMood : undefined}>
-        <span className="draft-stage__vignette" />
-        {/* The starfield is a pair of static, painted-once gradient layers (see
-            .draft-stage__stars) — cheap enough to keep as the base backdrop at
-            every intensity, including Calm/Off. */}
-        {!reduceMotion && (
-          <>
-            <span className="draft-stage__stars" />
-            <span className="draft-stage__stars draft-stage__stars--far" />
-          </>
-        )}
-        {/* The heavy moving ambiance — two guttering torch glows, two breathing
-            nebulae, crawling fog, the firelight aurora and 14 rising motes — is
-            ~10 large, full-viewport, continuously-composited layers. That is
-            the single biggest paint/compositing cost of a buff draft and is
-            what dragged the whole screen to a crawl on weaker GPUs while any
-            draft was on screen. It is decorative garnish, so it now honors the
-            FX intensity dial the same way the canvas VFX do: full at Normal/High
-            (the default, unchanged), dropped at Calm/Off — giving players who
-            feel the lag a real relief valve short of turning motion off
-            entirely (the card reveals themselves keep animating). */}
-        {!reduceMotion && !fxCalm && (
-          <>
-            {/* Five full-viewport layers, down from seven: the two nebulae and
-                the two fog banks each merged onto one node. Their parallax was
-                never readable through the scrim at these alphas, and each pair
-                cost a second composited layer on the heaviest screen we ship. */}
-            <span className="draft-stage__nebula" />
-            <span className="draft-stage__torch draft-stage__torch--l" />
-            <span className="draft-stage__torch draft-stage__torch--r" />
-            <span className="draft-stage__fog" />
-            <span className="draft-stage__aurora" />
-            {/* Six motes, down from fourteen. The field reads as "sparks rising
-                off unseen coals" at six; the other eight were paying full
-                animated-node cost to make it very slightly denser. */}
-            {Array.from({ length: 6 }).map((_, i) => (
-              <i
-                key={i}
-                style={{
-                  ["--mx" as string]: `${4 + ((i * 67) % 92)}%`,
-                  ["--mdrift" as string]: `${((i * 53) % 9) - 4}vw`,
-                  ["--mdur" as string]: `${11 + ((i * 41) % 9)}s`,
-                  ["--mdelay" as string]: `${-((i * 137) % 110) / 10}s`,
-                  ["--mscale" as string]: `${0.6 + ((i * 29) % 7) / 10}`,
-                }}
-                className="draft-stage__mote"
-              />
-            ))}
-          </>
-        )}
-      </div>
       {/* A high-tier pull warms the whole screen once: a soft tier-colored
           glow pulse breathing in from the viewport edges as the cards reveal.
           Decorative, one shot per deal, gone under reduced motion. */}
@@ -1636,13 +1567,13 @@ export function DraftOverlay({
           // inside is a choreographed game effect with its own budget.
           transition={{ duration: 0.28, ease: "easeOut" }}
           className={
-            "draft-frame min-w-0 w-full" +
+            "min-w-0 w-full" +
             // A mythic-grade pull rattles the whole panel as the chest opens
             // (stood down when the FX dial disables shake).
             (packStage === "open" && maxTier >= 9 && !reduceMotion && fxShake ? " draft-shake" : "")
           }
         >
-          <div className="plate plate-raised draft-panel max-h-[78dvh] w-full overflow-y-auto overflow-x-hidden p-5 sm:p-8">
+          <div className="plate max-h-[78dvh] w-full overflow-y-auto overflow-x-hidden p-5 sm:p-8">
         <div className="flex items-center justify-between gap-4">
           <div className="flex min-w-0 items-center gap-3">
             <span className="truncate text-[12px] text-parchment-400">
