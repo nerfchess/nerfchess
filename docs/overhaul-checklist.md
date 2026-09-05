@@ -120,3 +120,7 @@ Every active card was read category by category and judged by hand, not by the s
 - 317 cards cut (170 of them pointing at the card that covers their ground). The main groups: file-specific opener twins (one pawn on one file may do X), cosmetic no-ops (22 down to 6), "mark plus reroll" variants, coin-flip twins, "escape clause" hexes whose first-move exemption doubled their length, two-phase and every-second-turn curses, random-square nerfs, and straight duplicates at a higher tier.
 - 42 cards retiered where the tier contradicted the effect: Mass Freeze and Roulette up to 7, Overtime Pay (105 seconds at tier 2) up to 5, Amazon Knight up to 6, Twin Queens up to 7, Time Skip up to 6; weak tier 7 and 8 hexes (Donkey Ears, Glacier Gate, Choke Point, Falling Rubble, Pawn Embargo, Traitor's Gala, Lovestruck Majesty) down to 2 to 4.
 - Pool after the pass: 743 retired, 1,437 active, 235 opening nerfs. Similarity baseline down from 50 pairs to 14.
+
+### Balance (2026-09-05)
+- Paired-game win-rate sweep (`scripts/sim-card-winrate.ts --games 16 --only gm_`) run on the gambling set: every card fired, none resolved at that sample (standard error around 12 points), so no tier moved on that evidence. A full-library sweep needs hours of a quiet machine and was not run in the sandbox.
+- Tier corrections came from the hand read instead (42 retiers above), and the retirement rules keep dominated and duplicate cards out of the pools. Gambling payout text is asserted against the odds constants by the existing guards (`test:balance-fixes`, `test:card-audit`).
