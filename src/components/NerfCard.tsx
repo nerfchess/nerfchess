@@ -2,7 +2,6 @@
 
 import { createElement } from "react";
 import { Nerf } from "@/engine/nerf";
-import { motion } from "framer-motion";
 import { DraftPreview } from "@/components/DraftPreview";
 import { GlossaryText } from "@/components/GlossaryText";
 import { NERF_TURN_COST } from "@/engine/buff";
@@ -29,6 +28,12 @@ interface Props {
 
 import { TIER_LABEL, TIER_ROMAN } from "@/lib/tiers";
 
+// Mirror of globals.css .tier-bg-N --tier-rgb, for the wax seal outside the card.
+const TIER_RGB: Record<number, string> = {
+  1: "126 181 154", 2: "139 169 196", 3: "216 181 110", 4: "199 148 104", 5: "198 104 96",
+  6: "198 95 143", 7: "168 119 216", 8: "224 82 82", 9: "244 196 48", 10: "34 211 238",
+};
+
 export function NerfCard({ nerf, revealed = true, compact = false, dense = false, ownerLabel, progress, preview }: Props) {
   if (!revealed) {
     return (
@@ -54,10 +59,15 @@ export function NerfCard({ nerf, revealed = true, compact = false, dense = false
   const faceIcon: LucideIcon = nerfFaceIcon(nerf.id, nerf.icon) ?? Unlink;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className={`group/card relative plate draft-face overflow-hidden tier-bg-${nerf.tier} border ${
+    <div className="nerf-enter" style={{ ["--tier-rgb" as string]: TIER_RGB[nerf.tier] ?? TIER_RGB[3] }}>
+    {/* The seal: a wax disc that stamps the card, then cracks in two as the
+        rule unfolds beneath it. Pure CSS, transform/opacity only. */}
+    <span aria-hidden className="nerf-enter__seal">
+      <b className="nerf-enter__seal-half nerf-enter__seal-half--l" />
+      <b className="nerf-enter__seal-half nerf-enter__seal-half--r" />
+    </span>
+    <div
+      className={`nerf-enter__card group/card relative plate draft-face overflow-hidden tier-bg-${nerf.tier} border ${
         dense ? "flex h-full flex-col p-4" : "p-5"
       }`}
     >
@@ -79,7 +89,7 @@ export function NerfCard({ nerf, revealed = true, compact = false, dense = false
       {preview && (
         <DraftPreview kind="nerf" id={nerf.id} icon={faceIcon} className="bottom-2.5 right-2.5" />
       )}
-      <div className="relative flex items-start justify-between gap-3">
+      <div className="nerf-enter__line relative flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="text-[11px] text-parchment-400">
@@ -98,10 +108,10 @@ export function NerfCard({ nerf, revealed = true, compact = false, dense = false
           {TIER_ROMAN[nerf.tier]}
         </span>
       </div>
-      <div className={`rule-ornament text-[10px] ${dense ? "my-2.5" : "my-3"}`}>
+      <div className={`nerf-enter__line rule-ornament text-[10px] ${dense ? "my-2.5" : "my-3"}`}>
         <span className="font-display">{TIER_LABEL[nerf.tier]}</span>
       </div>
-      <p className={dense ? "flex-1 text-[13px] leading-snug text-parchment/90" : "text-[15px] leading-relaxed text-parchment/95"}>
+      <p className={"nerf-enter__line " + (dense ? "flex-1 text-[13px] leading-snug text-parchment/90" : "text-[15px] leading-relaxed text-parchment/95")}>
         <GlossaryText text={nerf.description} />
       </p>
       {progress && progress.max > 0 && (
@@ -135,6 +145,7 @@ export function NerfCard({ nerf, revealed = true, compact = false, dense = false
           Engine implementation pending
         </div>
       )}
-    </motion.div>
+    </div>
+    </div>
   );
 }
