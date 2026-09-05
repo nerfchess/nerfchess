@@ -113,7 +113,8 @@ test.describe("draft decision timing (reduced motion)", () => {
     // and the board is playable again with the clock running.
     await expect(page.locator("[data-draft-compact-cards]")).toBeVisible({ timeout: 40_000 });
     await expect(page.locator(".draft-deal-grid")).toHaveCount(0);
-    await expect(page.getByText("Draft pending.")).toHaveCount(0);
+    // The cards themselves are showing, not the slim "Resolve draft" chip.
+    await expect(page.getByRole("button", { name: /resolve your .* draft/i })).toHaveCount(0);
     await expect(page.getByRole("gridcell").first()).toBeVisible();
 
     // The corner panel never tucks itself away: it is still there well after
