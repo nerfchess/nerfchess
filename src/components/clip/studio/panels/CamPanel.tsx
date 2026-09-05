@@ -8,6 +8,7 @@ import {
   PUNCH_TIMING_OPTIONS,
   SHAKE_OPTIONS,
   ZOOM_BIAS_OPTIONS,
+  ZOOM_CURVE_OPTIONS,
   ZOOM_OPTIONS,
 } from "../../clipOptions";
 import { ChoiceRow, ToggleRow, type Studio } from "../controls";
@@ -20,6 +21,9 @@ export function CamPanel({ studio }: { studio: Studio }) {
       <ChoiceRow label="Zoom" options={ZOOM_OPTIONS} value={s.zoom} onPick={(v) => setStyle({ zoom: v })} disabled={locked} />
       <ChoiceRow label="Aim" options={ZOOM_BIAS_OPTIONS} value={s.zoomBias} onPick={(v) => setStyle({ zoomBias: v })} disabled={locked || s.zoom === "off"} />
       <ChoiceRow label="Punch" options={PUNCH_TIMING_OPTIONS} value={s.punchTiming} onPick={(v) => setStyle({ punchTiming: v })} disabled={locked || s.zoom === "off"} />
+      {/* Impact zoom curve: how the punch-in (and the payoff arc) releases.
+          Snap pops, Whip lingers, Creep pushes, Bounce wobbles. */}
+      <ChoiceRow label="Curve" options={ZOOM_CURVE_OPTIONS} value={s.zoomCurve} onPick={(v) => setStyle({ zoomCurve: v })} disabled={locked} />
       <ChoiceRow label="Drift" options={DRIFT_OPTIONS} value={s.driftCam} onPick={(v) => setStyle({ driftCam: v })} disabled={locked} />
       <ChoiceRow label="Shake" options={SHAKE_OPTIONS} value={s.shake} onPick={(v) => setStyle({ shake: v })} disabled={locked} />
       <ToggleRow
