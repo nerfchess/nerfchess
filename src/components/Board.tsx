@@ -2780,6 +2780,7 @@ export function Board({
         vfxPlay({
           tier,
           palette: spec.palette,
+          depth: spec.depth,
           source,
           targets: [{ p, delayMs: 0 }],
           travel: calm ? "none" : spec.travel,
@@ -2917,6 +2918,7 @@ export function Board({
           pendingVfxRef.current.push({
             tier: def.tier,
             palette: spec.palette,
+            depth: spec.depth,
             source,
             targets: hits.map((h, i) => ({
               p: sqToFrac(h.sq, orientation),
@@ -3606,6 +3608,7 @@ export function Board({
           pendingVfxRef.current.push({
             tier: def.tier,
             palette: spec.palette,
+            depth: spec.depth,
             source,
             targets: ordered.map(([sq, m], i) => ({
               p: sqToFrac(sq, orientation),

@@ -99,7 +99,9 @@ export function PlayerNerfCard({
       className={
         "relative plate overflow-hidden border " +
         (compact ? "p-3 " : "p-4 ") +
-        (revealed && !hideNerf ? `tier-bg-${nerf.tier}` : "border-[color:var(--edge)]")
+        // Lichess's game side is flat: the seat card stays on the plain
+        // panel surface and the nerf's tier shows in its name, not a wash.
+        "border-[color:var(--edge)]"
       }
     >
       {/* One breath per heartbeat tick; keyed so each tick replays from zero. */}
