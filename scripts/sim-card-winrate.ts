@@ -65,6 +65,7 @@ import {
 } from "../src/engine/game";
 import type { NerfGame } from "../src/engine/game";
 import type { Buff } from "../src/engine/buff";
+import { isRetired } from "../src/engine/retired";
 
 type Tier = Buff["tier"];
 
@@ -75,6 +76,7 @@ const flag = (name: string, dflt: string): string => {
 };
 const GAMES = Number(flag("games", "20"));
 const ONLY = flag("only", "");
+const INCLUDE_RETIRED = process.argv.includes("--include-retired");
 /** `--category nerf` measures one mechanical family. Used for the targeted
  *  re-runs that fix a blind spot for a specific population without paying for
  *  a whole sweep. */
@@ -468,9 +470,13 @@ function measure(id: string): Row | null {
 }
 
 function main(): void {
+  // Retired cards keep their definitions for archived replays but are out of
+  // every draft pool, so a sweep over them is wasted compute (about a third of
+  // the library). --include-retired puts them back for the record.
   const all = ALL_BUFFS.filter(
     (b) =>
       b.implemented &&
+      (INCLUDE_RETIRED || !isRetired(b.id)) &&
       (!ONLY || b.id.includes(ONLY)) &&
       (!CATEGORY || (b as { category?: string }).category === CATEGORY),
   );
