@@ -4602,7 +4602,7 @@ export function Board({
 
   return (
     <div ref={boardRef} className="relative w-full max-w-full aspect-square mx-auto">
-      <div ref={cropRef} className="absolute inset-2 sm:inset-3 rounded-sm overflow-hidden border border-black/40">
+      <div ref={cropRef} className="absolute inset-0 sm:inset-3 overflow-hidden border border-black/40 sm:rounded-sm">
         {/* Canvas VFX layer: particles, projectiles, beams and cinematics for
             card plays, drawn over the squares but under floating UI. The
             engine sleeps whenever nothing is animating. */}

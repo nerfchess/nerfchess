@@ -1,17 +1,17 @@
 // Geometry of the fixed bottom chrome on the match surfaces, in one place.
 //
-// Both match views (OnlineMatch and the local /game page) render up to two
-// stacked, position:fixed drawer bars below the board:
+// Both match views (OnlineMatch and the local /game page) render one
+// position:fixed drawer bar below the board on tablet widths only:
 //
-//   MobileMoveDrawer   `sm:hidden`  — bottom: 0,        bar 2.75rem + safe area
-//   MobileBuffDrawer   `lg:hidden`  — stacked above it, bar 2.75rem
-//                                     (drops to the edge from sm up, where the
-//                                      move drawer is gone, and takes the inset)
+//   MobileBuffDrawer   `sm:block lg:hidden` — bottom: 0, bar 2.75rem + safe area
+//
+// Below sm there is no fixed chrome at all: the page scrolls and everything
+// stacks under the board (MobileMatchStack).
 //
 // The match column is `h-dvh` + `overflow-hidden`, so anything it fails to
 // reserve room for is not scrollable-to — it is simply hidden behind the bars.
 // It used to hardcode `pb-14` (56px) against as much as 88px of chrome, which
-// buried the bottom player row, the rating strip, and the MobileActionsMenu
+// buried the bottom player row, the rating strip, and the game-actions
 // trigger — the only route to Draw/Resign/Takeback on a phone.
 //
 // The class strings below are written out IN FULL, never assembled from parts:
@@ -29,7 +29,11 @@
  *   lg   both hidden — ordinary page padding
  */
 export function bottomChromePadClass(hasBuffDrawer: boolean): string {
+  // Phones have no fixed bars any more (the move strip, cards and chat stack
+  // inline under the board and the page scrolls), so only the home-indicator
+  // inset is reserved there. The tablet-width buff drawer (sm..lg) still
+  // needs its bar's height.
   return hasBuffDrawer
-    ? "pb-[calc(5.5rem+env(safe-area-inset-bottom))] sm:pb-[calc(2.75rem+env(safe-area-inset-bottom))] lg:pb-6"
-    : "pb-[calc(2.75rem+env(safe-area-inset-bottom))] sm:pb-6 lg:pb-6";
+    ? "pb-[env(safe-area-inset-bottom)] sm:pb-[calc(2.75rem+env(safe-area-inset-bottom))] lg:pb-6"
+    : "pb-[env(safe-area-inset-bottom)] sm:pb-6 lg:pb-6";
 }

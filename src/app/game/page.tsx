@@ -17,8 +17,7 @@ const GameOver = dynamic(() => import("@/components/GameOver").then((m) => m.Gam
 const ClipModal = dynamic(() => import("@/components/clip/ClipModal").then((m) => m.ClipModal), {
   ssr: false,
 });
-import { MobileActionsMenu } from "@/components/MobileActionsMenu";
-import { MobileMoveDrawer } from "@/components/MobileMoveDrawer";
+import { MobileMatchStack } from "@/components/MobileMatchStack";
 import { FxToggleButton } from "@/components/FxToggleButton";
 import { MoveList } from "@/components/MoveList";
 import { PlayerNerfCard } from "@/components/PlayerNerfCard";
@@ -1662,8 +1661,8 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
   // bottom clock get pushed off). Literal strings only, so Tailwind's JIT
   // emits them.
   const boardFitClass = hint
-    ? "w-[min(calc(100vw-8px),calc(100dvh-16rem))] sm:w-[min(var(--board-cap,720px),calc(100dvh-11rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-11rem),calc(100vw_-_380px_-_var(--match-rail-w,320px)))] max-w-full"
-    : "w-[min(calc(100vw-8px),calc(100dvh-13rem))] sm:w-[min(var(--board-cap,720px),calc(100dvh-8rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-8rem),calc(100vw_-_380px_-_var(--match-rail-w,320px)))] max-w-full";
+    ? "w-[min(100vw,max(60dvh,calc(100dvh-14rem)))] sm:w-[min(var(--board-cap,720px),calc(100dvh-11rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-11rem),calc(100vw_-_380px_-_var(--match-rail-w,320px)))] max-w-full"
+    : "w-[min(100vw,max(60dvh,calc(100dvh-12rem)))] sm:w-[min(var(--board-cap,720px),calc(100dvh-8rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-8rem),calc(100vw_-_380px_-_var(--match-rail-w,320px)))] max-w-full";
 
   const handleMove = (m: Move) => {
     if (game.result || isReviewingHistory) return;
@@ -1866,7 +1865,7 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
     ) : null;
 
   return (
-    <main className="flex h-dvh min-h-0 flex-col overflow-hidden">
+    <main className="flex min-h-dvh flex-col sm:h-dvh sm:min-h-0 sm:overflow-hidden">
       <CompactSiteHeader
         status={
           <span className="zen-hide hidden sm:inline">
@@ -1887,7 +1886,7 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
 
       <div
         className={
-          "mx-auto flex w-full max-w-[1360px] flex-1 min-h-0 flex-col gap-2 overflow-hidden px-1 sm:px-6 xl:max-w-[1680px] " +
+          "mx-auto flex w-full max-w-[1360px] flex-1 min-h-0 flex-col gap-2 px-0 sm:overflow-hidden sm:px-6 xl:max-w-[1680px] " +
           bottomChromePadClass(!!game.buffs)
         }
       >
@@ -2002,7 +2001,7 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
             <div ref={boardShellRef} className="min-h-0 min-w-0 sm:flex-none">
               {/* Mobile-only player strips: the side rails (clocks, cards,
                   actions) are hidden below the sm breakpoint. */}
-              <div className="flex items-center justify-between gap-2 sm:hidden">
+              <div className="flex items-center justify-between gap-2 px-2 sm:hidden">
                 <BoardPlayerRow
                   // Material counts read the COMMITTED position (a queued premove
                   // must never bump the capture tally early); history review
@@ -2127,7 +2126,7 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
                 )}
                 {!isReviewingHistory && <BoardSplashHost rows={againstMe} />}
               </div>
-              <div className="flex items-center justify-between gap-2 sm:hidden">
+              <div className="flex items-center justify-between gap-2 px-2 sm:hidden">
                 <BoardPlayerRow
                   // Material counts read the COMMITTED position (a queued premove
                   // must never bump the capture tally early); history review
@@ -2151,27 +2150,55 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
                   />
                 )}
               </div>
-              {gameMode !== "buff" && !plainMode && (
-                <div className="plate mt-1 p-2 px-3 sm:hidden">
-                  <div className="flex items-center gap-2">
-                    <span className={`min-w-0 truncate font-display text-sm font-semibold tier-${myNerf.tier}`}>
-                      {myNerf.name}
-                    </span>
-                    <span
-                      className={`ml-auto shrink-0 rounded-[1px] border px-2 py-0.5 font-display text-[12px] font-bold tier-bg-${myNerf.tier} tier-${myNerf.tier}`}
-                      title={`Tier ${myNerf.tier}: ${TIER_LABEL[myNerf.tier]}`}
-                    >
-                      {TIER_ROMAN[myNerf.tier]} · {TIER_LABEL[myNerf.tier]}
-                    </span>
-                  </div>
-                  <p className="mt-0.5 text-xs leading-snug text-parchment-300">{myNerf.description}</p>
-                </div>
-              )}
-              {historyActions && (
-                <div className="mt-1 sm:hidden">
-                  <MobileActionsMenu>{historyActions}</MobileActionsMenu>
-                </div>
-              )}
+              <MobileMatchStack
+                actions={historyActions}
+                moves={game.board.history}
+                currentPly={currentHistoryPly}
+                onPlyChange={handleHistoryPlyChange}
+                minPly={reviewFloor}
+                rule={
+                  gameMode !== "buff" && !plainMode ? (
+                    <div className="plate p-2 px-3">
+                      <div className="flex items-center gap-2">
+                        <span className={`min-w-0 truncate font-display text-sm font-semibold tier-${myNerf.tier}`}>
+                          {myNerf.name}
+                        </span>
+                        <span
+                          className={`ml-auto shrink-0 rounded-[1px] border px-2 py-0.5 font-display text-[12px] font-bold tier-bg-${myNerf.tier} tier-${myNerf.tier}`}
+                          title={`Tier ${myNerf.tier}: ${TIER_LABEL[myNerf.tier]}`}
+                        >
+                          {TIER_ROMAN[myNerf.tier]} · {TIER_LABEL[myNerf.tier]}
+                        </span>
+                      </div>
+                      <p className="mt-0.5 text-[13px] leading-snug text-parchment-300">{myNerf.description}</p>
+                    </div>
+                  ) : null
+                }
+                cards={
+                  game.buffs
+                    ? {
+                        label: draftCardNoun(game.buffs.mode) === "hex" ? "Hexes & boons" : "Buffs",
+                        summary:
+                          game.buffs.players[myColor].buffs.length === 0
+                            ? "None yet"
+                            : `${game.buffs.players[myColor].buffs.length} held`,
+                        content: (
+                          <BuffDock
+                            game={game}
+                            myColor={myColor}
+                            canAct={!game.result && game.board.turn === myColor && !myOffer && !isReviewingHistory}
+                            onStartUse={(i) => {
+                              snapshotMySignature(i);
+                              buffTargeting.start(i);
+                            }}
+                            plays={oppLog}
+                          />
+                        ),
+                      }
+                    : null
+                }
+                extra={clipButton}
+              />
             </div>
             <div
               className={
@@ -2213,13 +2240,6 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
         </div>
       </div>
 
-      <MobileMoveDrawer
-        moves={game.board.history}
-        currentPly={currentHistoryPly}
-        onPlyChange={handleHistoryPlyChange}
-        minPly={reviewFloor}
-        footer={moveListFooter}
-      />
 
       {game.buffs && (
         <MobileBuffDrawer
@@ -2363,7 +2383,7 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
         <Button tone="leaf"
          
           onClick={() => setShowResult(true)}
-          className="fixed bottom-24 right-3 z-40 px-4 py-2 text-sm font-semibold shadow-xl sm:bottom-16 lg:bottom-4">
+          className="fixed bottom-4 right-3 z-40 px-4 py-2 text-sm font-semibold shadow-xl sm:bottom-16 lg:bottom-4">
           Show result
         </Button>
       )}

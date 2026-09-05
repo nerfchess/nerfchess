@@ -283,7 +283,7 @@ function DraftPrepChip({ label }: { label: string }) {
  * the effects settle, and the decision timer starts later still. */
 export function DraftResolvingChip() {
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-[calc(5.75rem+env(safe-area-inset-bottom))] z-40 flex justify-center px-3 sm:inset-x-auto sm:bottom-6 sm:left-4 sm:justify-start">
+    <div className="pointer-events-none fixed inset-x-0 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-40 flex justify-center px-3 sm:inset-x-auto sm:bottom-6 sm:left-4 sm:justify-start">
       <div
         role="status"
         aria-live="polite"
@@ -1234,7 +1234,7 @@ export function DraftOverlay({
         <div
           ref={panelRef}
           style={dragPos ? { left: dragPos.x, top: dragPos.y } : undefined}
-          className={"fixed z-40 " + (dragPos ? "" : "bottom-24 right-3 sm:bottom-16 lg:bottom-4")}
+          className={"fixed z-40 " + (dragPos ? "" : "bottom-4 right-3 sm:bottom-16 lg:bottom-4")}
         >
           <button
             type="button"
@@ -1281,7 +1281,7 @@ export function DraftOverlay({
         ref={panelRef}
         style={dragPos ? { left: dragPos.x, top: dragPos.y } : undefined}
         className={
-          "fixed z-40 w-[min(92vw,19rem)] " + (dragPos ? "" : "bottom-24 right-3 sm:bottom-16 lg:bottom-4")
+          "fixed z-40 w-[min(92vw,19rem)] " + (dragPos ? "" : "bottom-4 right-3 sm:bottom-16 lg:bottom-4")
         }
       >
         <motion.div
@@ -1460,7 +1460,7 @@ export function DraftOverlay({
           mounted underneath (visibility only), so timers, the pick state,
           and any in-flight animation carry on unaffected. */}
       {hidden && (
-        <div className="fixed bottom-24 right-3 z-50 sm:bottom-16 lg:bottom-4">
+        <div className="fixed bottom-4 right-3 z-50 sm:bottom-16 lg:bottom-4">
           <button
             type="button"
             onClick={() => setHidden(false)}
@@ -2201,7 +2201,7 @@ export function DraftRevealBanner({
     return () => window.clearTimeout(t);
   }, [onDismiss]);
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-[calc(5.75rem+env(safe-area-inset-bottom))] z-40 flex justify-center px-3 sm:inset-x-auto sm:bottom-6 sm:left-4 sm:justify-start">
+    <div className="pointer-events-none fixed inset-x-0 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-40 flex justify-center px-3 sm:inset-x-auto sm:bottom-6 sm:left-4 sm:justify-start">
       <motion.button
         type="button"
         onClick={onDismiss}

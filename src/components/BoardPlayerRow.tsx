@@ -35,78 +35,81 @@ export function BoardPlayerRow({ board, playerColor, myColor, name, elo, avatar,
   const showLink = linkProfile && isNamed;
 
   return (
-    <div className={`flex min-h-[3.25rem] items-center gap-3 px-2 py-2 sm:px-6 ${className}`}>
-      <div className="flex min-w-0 items-center gap-2">
-        <div className="flex min-w-[8.5rem] items-center gap-2 px-0 py-2">
-          {isNamed ? (
+    // Phone: Lichess's column-one bar, name over material in ~2.75rem with the
+    // clock beside it. From sm up the same row spreads out to the desktop
+    // height. Material never wraps: the row cannot grow mid-game and push the
+    // board around, the pieces just overlap tighter.
+    <div className={`flex min-h-[2.75rem] items-center gap-2 px-2 py-1 sm:min-h-[3.25rem] sm:gap-3 sm:py-2 sm:px-6 ${className}`}>
+      <div className="flex min-w-0 flex-1 items-center gap-2">
+        {isNamed ? (
+          <span className="hidden sm:block">
             <PlayerAvatar name={name} avatar={avatar} size={32} />
-          ) : (
-            <div
-              className={
-                "grid h-8 w-8 shrink-0 place-items-center rounded-md border font-display text-xs font-semibold " +
-                (isMe
-                  ? "border-gold/60 bg-gold/20 text-gold-leaf"
-                  : "border-bruise/60 bg-bruise/20 text-bruise-glow")
-              }
-              aria-hidden="true"
-            >
-              {initial}
-            </div>
-          )}
-          <div className="min-w-0">
-            <div className="truncate font-display text-sm font-semibold text-parchment">
-              {showLink ? (
-                // Opens in a new tab so following a player never abandons the
-                // board being watched (spectator / replay rows only).
-                <a
-                  href={`/u/${encodeURIComponent(name)}`}
-                  target="_blank"
-                  rel="noopener"
-                  className="inline-flex min-h-[44px] items-center align-middle sm:min-h-0 hover:text-gold-leaf hover:underline transition-colors"
-                >
-                  {name}
-                </a>
-              ) : (
-                name
-              )}
-              {typeof elo === "number" && (
-                <span className="text-parchment-400"> ({Math.round(elo)})</span>
-              )}
-              {connected !== null && (
-                <span
-                  aria-label={connected ? "Connected" : "Disconnected"}
-                  title={connected ? "Connected" : "Disconnected"}
-                  className={
-                    "ml-1.5 inline-block h-1.5 w-1.5 shrink-0 rounded-full align-middle " +
-                    (connected ? "bg-[rgb(var(--pos-rgb))]" : "bg-oxblood-glow")
-                  }
-                />
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="flex min-w-0 flex-wrap items-center">
-          {pieces.map((piece, index) => (
-            <div
-              key={`${piece}-${index}`}
-              className={index > 0 && pieces[index - 1] === piece ? "-ml-[15px]" : ""}
-            >
-              <Piece
-                type={piece}
-                color={opponentOf(playerColor)}
-                size={22}
-                className="opacity-90"
-              />
-            </div>
-          ))}
-        </div>
-
-        {delta > 0 && (
-          <div className="shrink-0 font-mono text-sm font-semibold text-white">
-            +{delta}
+          </span>
+        ) : (
+          <div
+            className={
+              "hidden h-8 w-8 shrink-0 place-items-center rounded-md border font-display text-xs font-semibold sm:grid " +
+              (isMe
+                ? "border-gold/60 bg-gold/20 text-gold-leaf"
+                : "border-bruise/60 bg-bruise/20 text-bruise-glow")
+            }
+            aria-hidden="true"
+          >
+            {initial}
           </div>
         )}
+        <div className="flex min-w-0 flex-1 flex-col sm:flex-row sm:items-center sm:gap-3">
+          <div className="min-w-0 truncate font-display text-[14px] font-semibold leading-tight text-parchment sm:min-w-[7rem] sm:text-sm">
+            {showLink ? (
+              // Opens in a new tab so following a player never abandons the
+              // board being watched (spectator / replay rows only).
+              <a
+                href={`/u/${encodeURIComponent(name)}`}
+                target="_blank"
+                rel="noopener"
+                className="inline-flex items-center align-middle hover:text-gold-leaf hover:underline transition-colors"
+              >
+                {name}
+              </a>
+            ) : (
+              name
+            )}
+            {typeof elo === "number" && (
+              <span className="font-normal text-parchment-400"> {Math.round(elo)}</span>
+            )}
+            {connected !== null && (
+              <span
+                aria-label={connected ? "Connected" : "Disconnected"}
+                title={connected ? "Connected" : "Disconnected"}
+                className={
+                  "ml-1.5 inline-block h-1.5 w-1.5 shrink-0 rounded-full align-middle " +
+                  (connected ? "bg-[rgb(var(--pos-rgb))]" : "bg-oxblood-glow")
+                }
+              />
+            )}
+          </div>
+
+          <div className="flex h-5 min-w-0 items-center overflow-hidden sm:h-auto">
+            <div className="flex min-w-0 flex-nowrap items-center">
+              {pieces.map((piece, index) => (
+                <div
+                  key={`${piece}-${index}`}
+                  className={
+                    "h-4 w-4 shrink-0 [&>svg]:h-full [&>svg]:w-full sm:h-[22px] sm:w-[22px] " +
+                    (index > 0 && pieces[index - 1] === piece ? "-ml-[9px] sm:-ml-[15px]" : "")
+                  }
+                >
+                  <Piece type={piece} color={opponentOf(playerColor)} size={22} className="opacity-90" />
+                </div>
+              ))}
+            </div>
+            {delta > 0 && (
+              <div className="ml-1 shrink-0 font-mono text-[13px] font-semibold text-white sm:text-sm">
+                +{delta}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

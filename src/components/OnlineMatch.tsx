@@ -34,12 +34,11 @@ import { OpponentDraftViewer } from "@/components/OpponentDraftViewer";
 const GameOver = dynamic(() => import("@/components/GameOver").then((m) => m.GameOver), {
   ssr: false,
 });
-import { MobileActionsMenu } from "@/components/MobileActionsMenu";
 import { MobileNavMenu } from "@/components/MobileNavMenu";
 import { MobileBuffDrawer } from "@/components/MobileBuffDrawer";
 import { cardFaceIcon } from "@/lib/cardIcon";
 import { bottomChromePadClass } from "@/components/mobileChrome";
-import { MobileMoveDrawer } from "@/components/MobileMoveDrawer";
+import { MobileMatchStack } from "@/components/MobileMatchStack";
 import { FxToggleButton } from "@/components/FxToggleButton";
 import { MoveList } from "@/components/MoveList";
 import { NerfCard } from "@/components/NerfCard";
@@ -2590,11 +2589,11 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // Literal class strings only, so Tailwind's JIT emits them.
   const boardFitClass = hint
     ? railCollapsed
-      ? "w-[min(calc(100vw-8px),calc(100dvh-16rem))] sm:w-[min(var(--board-cap,720px),calc(100dvh-17rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-17rem),calc(100vw-380px))] max-w-full"
-      : "w-[min(calc(100vw-8px),calc(100dvh-16rem))] sm:w-[min(var(--board-cap,720px),calc(100dvh-17rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-17rem),calc(100vw_-_380px_-_var(--match-rail-w,320px)))] max-w-full"
+      ? "w-[min(100vw,max(60dvh,calc(100dvh-14rem)))] sm:w-[min(var(--board-cap,720px),calc(100dvh-17rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-17rem),calc(100vw-380px))] max-w-full"
+      : "w-[min(100vw,max(60dvh,calc(100dvh-14rem)))] sm:w-[min(var(--board-cap,720px),calc(100dvh-17rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-17rem),calc(100vw_-_380px_-_var(--match-rail-w,320px)))] max-w-full"
     : railCollapsed
-    ? "w-[min(calc(100vw-8px),calc(100dvh-13rem))] sm:w-[min(var(--board-cap,720px),calc(100dvh-14rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-14rem),calc(100vw-380px))] max-w-full"
-    : "w-[min(calc(100vw-8px),calc(100dvh-13rem))] sm:w-[min(var(--board-cap,720px),calc(100dvh-14rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-14rem),calc(100vw_-_380px_-_var(--match-rail-w,320px)))] max-w-full";
+    ? "w-[min(100vw,max(60dvh,calc(100dvh-12rem)))] sm:w-[min(var(--board-cap,720px),calc(100dvh-14rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-14rem),calc(100vw-380px))] max-w-full"
+    : "w-[min(100vw,max(60dvh,calc(100dvh-12rem)))] sm:w-[min(var(--board-cap,720px),calc(100dvh-14rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-14rem),calc(100vw_-_380px_-_var(--match-rail-w,320px)))] max-w-full";
   // Takebacks are casual-only (and off in Draft games, whose rolled offers
   // and applied buffs cannot rewind) and need a move of mine on the board.
   const takebackAvailable =
@@ -2811,7 +2810,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   return (
     <main
       className={
-        "flex h-dvh min-h-0 flex-col overflow-hidden" +
+        "flex min-h-dvh flex-col sm:h-dvh sm:min-h-0 sm:overflow-hidden" +
         (recordingLayout ? " recording-mode" : "")
       }
     >
@@ -2839,14 +2838,14 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           </Button>
         </div>
       )}
-      <nav className="sticky top-0 z-20 flex w-full shrink-0 items-center justify-between px-5 py-3">
+      <nav className="sticky top-0 z-20 flex w-full shrink-0 items-center justify-between px-2 py-1 sm:px-5 sm:py-3">
         {/* Wordmark + collapsed nav menu: design system §9 keeps every global
             destination reachable from the in-game bar (the menu shows on desktop
             too via hideAt="none"), compacted rather than dropped. Plain links,
             no confirm traps -- the live game keeps running server-side. */}
         <div className="flex items-center gap-2">
           <MobileNavMenu align="left" hideAt="none" />
-          <Link href="/" className="font-display text-2xl tracking-tight">
+          <Link href="/" className="font-display text-xl tracking-tight sm:text-2xl">
             nerf<span className="text-gold-leaf">chess</span>
           </Link>
         </div>
@@ -2902,7 +2901,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
 
       <div
         className={
-          "match-content mx-auto flex w-full max-w-[1360px] flex-1 min-h-0 flex-col gap-2 overflow-hidden px-1 sm:px-6 xl:max-w-[1680px] " +
+          "match-content mx-auto flex w-full max-w-[1360px] flex-1 min-h-0 flex-col gap-2 px-0 sm:overflow-hidden sm:px-6 xl:max-w-[1680px] " +
           bottomChromePadClass(!!(isDraft && game.buffs))
         }
       >
@@ -3025,7 +3024,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   opponent's identity + clock ride directly above the board and
                   the viewer's directly below it, so nothing forces a scan
                   across the screen. The rails keep the rules/moves/chat. */}
-              <div className="board-strip flex items-center justify-between gap-2">
+              <div className="board-strip flex items-center justify-between gap-2 px-2 sm:px-0">
                 {railCollapsed && (
                   <Button tone="ghost"
                    
@@ -3205,7 +3204,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   />
                 </div>
               )}
-              <div className="board-strip flex items-center justify-between gap-2">
+              <div className="board-strip flex items-center justify-between gap-2 px-2 sm:px-0">
                 <BoardPlayerRow
                   // Material counts read the COMMITTED position (a queued premove
                   // must never bump the capture tally early); history review
@@ -3232,32 +3231,61 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   />
                 )}
               </div>
-              {!isBuffMode && (
-                <div className="plate mt-1 p-2 px-3 sm:hidden">
-                  <div className="flex items-center gap-2">
-                    <span className={`min-w-0 truncate font-display text-sm font-semibold tier-${myNerf.tier}`}>
-                      {myNerf.name}
-                    </span>
-                    <span
-                      className={`ml-auto shrink-0 rounded-[1px] border px-2 py-0.5 font-display text-[12px] font-bold tier-bg-${myNerf.tier} tier-${myNerf.tier}`}
-                      title={`Tier ${myNerf.tier}: ${TIER_LABEL[myNerf.tier]}`}
-                    >
-                      {TIER_ROMAN[myNerf.tier]} · {TIER_LABEL[myNerf.tier]}
-                    </span>
-                  </div>
-                  <p className="mt-0.5 text-xs leading-snug text-parchment-300">{myNerf.description}</p>
-                </div>
-              )}
-              {ratingStakes && (
-                <div className="mt-1 sm:hidden">
-                  <RatingStakes stakes={ratingStakes} />
-                </div>
-              )}
-              {historyActions && (
-                <div className="mt-1 sm:hidden">
-                  <MobileActionsMenu>{historyActions}</MobileActionsMenu>
-                </div>
-              )}
+              <MobileMatchStack
+                actions={historyActions}
+                moves={game.board.history}
+                currentPly={currentHistoryPly}
+                onPlyChange={handleHistoryPlyChange}
+                minPly={reviewFloor}
+                rule={
+                  !isBuffMode ? (
+                    <div className="plate p-2 px-3">
+                      <div className="flex items-center gap-2">
+                        <span className={`min-w-0 truncate font-display text-sm font-semibold tier-${myNerf.tier}`}>
+                          {myNerf.name}
+                        </span>
+                        <span
+                          className={`ml-auto shrink-0 rounded-[1px] border px-2 py-0.5 font-display text-[12px] font-bold tier-bg-${myNerf.tier} tier-${myNerf.tier}`}
+                          title={`Tier ${myNerf.tier}: ${TIER_LABEL[myNerf.tier]}`}
+                        >
+                          {TIER_ROMAN[myNerf.tier]} · {TIER_LABEL[myNerf.tier]}
+                        </span>
+                      </div>
+                      <p className="mt-0.5 text-[13px] leading-snug text-parchment-300">{myNerf.description}</p>
+                    </div>
+                  ) : null
+                }
+                cards={
+                  isDraft && game.buffs
+                    ? {
+                        label: draftCardNoun(start.mode) === "hex" ? "Hexes & boons" : "Buffs",
+                        summary:
+                          game.buffs.players[myColor].buffs.length === 0
+                            ? "None yet"
+                            : `${game.buffs.players[myColor].buffs.length} held`,
+                        content: (
+                          <BuffDock
+                            game={game}
+                            myColor={myColor}
+                            canAct={draftCanAct}
+                            onStartUse={buffTargeting.start}
+                            plays={oppLog}
+                          />
+                        ),
+                      }
+                    : null
+                }
+                chat={
+                  <ChatPanel
+                    messages={chatMessages}
+                    myColor={myColor}
+                    onSend={handleSendChat}
+                    collapsible
+                    expandedClassName="h-48"
+                  />
+                }
+                extra={ratingStakes ? <RatingStakes stakes={ratingStakes} /> : null}
+              />
               {/* Recording mode: both clocks (with names) flow directly beneath
                   the board, inside the board shell, so they hug the board's
                   bottom edge in the 9:16 frame instead of being pinned near the
@@ -3390,26 +3418,6 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           onDismiss={() => setDraftReveal(null)}
         />
       )}
-
-      <MobileMoveDrawer
-        moves={game.board.history}
-        currentPly={currentHistoryPly}
-        onPlyChange={handleHistoryPlyChange}
-        minPly={reviewFloor}
-        chatCount={chatMessages.length}
-        footer={
-          <div className="space-y-2">
-            {historyActions}
-            <ChatPanel
-              messages={chatMessages}
-              myColor={myColor}
-              onSend={handleSendChat}
-              collapsible
-              expandedClassName="h-40"
-            />
-          </div>
-        }
-      />
 
       {isDraft && game.buffs && (
         <MobileBuffDrawer
@@ -3661,7 +3669,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
           animate={{ opacity: 1, y: 0 }}
           role="status"
           aria-live="assertive"
-          className="plate fixed bottom-36 right-3 z-40 flex max-w-[92vw] items-center gap-3 border-gold/50 p-3 px-4 shadow-xl sm:bottom-28 lg:bottom-16"
+          className="plate fixed bottom-20 right-3 z-40 flex max-w-[92vw] items-center gap-3 border-gold/50 p-3 px-4 shadow-xl sm:bottom-28 lg:bottom-16"
         >
           <span aria-hidden className="h-2 w-2 shrink-0 bg-gold-leaf animate-flicker" />
           <span className="min-w-0 truncate font-display text-sm text-parchment-100">
@@ -3679,7 +3687,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         <Button tone="leaf"
          
           onClick={() => setShowResult(true)}
-          className="fixed bottom-24 right-3 z-40 px-4 py-2 text-sm font-semibold shadow-xl sm:bottom-16 lg:bottom-4">
+          className="fixed bottom-4 right-3 z-40 px-4 py-2 text-sm font-semibold shadow-xl sm:bottom-16 lg:bottom-4">
           Show result
         </Button>
       )}

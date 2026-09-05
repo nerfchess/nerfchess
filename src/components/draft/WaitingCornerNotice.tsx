@@ -59,9 +59,11 @@ export function WaitingCornerNotice({
   const clockLine = onClock ? "On their clock" : "Clocks paused";
   const pos =
     "pointer-events-none fixed right-3 z-30 w-[min(92vw,19rem)] " +
+    // Phones have no fixed drawer any more; the tablet buff drawer (sm..lg)
+    // still lifts the notice clear of its bar.
     (liftForDrawer
-      ? "bottom-[calc(5.5rem+env(safe-area-inset-bottom)+0.5rem)] sm:bottom-16 lg:bottom-4"
-      : "bottom-[calc(2.75rem+env(safe-area-inset-bottom)+0.5rem)] sm:bottom-16 lg:bottom-4");
+      ? "bottom-[calc(1rem+env(safe-area-inset-bottom))] sm:bottom-16 lg:bottom-4"
+      : "bottom-[calc(1rem+env(safe-area-inset-bottom))] sm:bottom-16 lg:bottom-4");
 
   if (compact) {
     return (

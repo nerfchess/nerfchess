@@ -121,7 +121,6 @@ const BASELINE: string[] = [
   "src/components/FriendGame.tsx",
   "src/components/GameOver.tsx",
   "src/components/MobileBuffDrawer.tsx",
-  "src/components/MobileMoveDrawer.tsx",
   "src/components/MobileNavMenu.tsx",
   "src/components/MoveList.tsx",
   "src/components/OnlineMatch.tsx",
