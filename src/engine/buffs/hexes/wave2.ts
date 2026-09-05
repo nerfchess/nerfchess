@@ -1300,7 +1300,7 @@ export const HEX_WAVE2: Buff[] = [
   // they CHECK your king; the checking piece is then rooted where it stands.
   // The check itself still lands — the curse punishes the attacker without
   // ever undoing the attack, so it pressures their plan, never their clock.
-  H8(
+  H7(
     {
       id: "hw2_crown_of_thorns",
       name: "Crown of Thorns",
@@ -1337,7 +1337,7 @@ export const HEX_WAVE2: Buff[] = [
     {
       id: "hw2_pauper_crown",
       name: "Pauper's Crown",
-      description: "Their queen is humbled into a rook for 4 of their turns, then restored. Blood restores her sooner: the moment she captures anything while humbled she becomes a queen again. If she is captured while humbled she is lost as a rook. Requires an enemy queen.",
+      description: "Their queen becomes a rook for 4 of their turns, or until she captures. If she is taken while a rook, she is lost as a rook.",
       tip: "She still fights as a full rook the whole time, so it is a demotion, not a paralysis.",
       flavor: "Walk a mile in a tower's boots, your majesty.",
       fx: { motif: "anchor", pieces: ["q"] },

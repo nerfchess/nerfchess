@@ -137,7 +137,7 @@ export const FANTASY_LEGENDS: Buff[] = [
       name: "Shieldmaiden",
       description:
         "A shieldmaiden plants herself before one of your pieces: it cannot be captured for your opponent's next 3 turns, but the instant that piece moves to attack the enemy king, her guard shatters and the protection ends.",
-      tier: 4,
+      tier: 2,
       category: "protection",
       flavor: "Her shield arm has never once come back empty.",
       fx: { motif: "ward", pieces: "all", self: true },
@@ -238,7 +238,7 @@ export const FANTASY_LEGENDS: Buff[] = [
       name: "Giant's Maul",
       description:
         "The maul comes down once: crush one enemy knight, bishop, or rook, and the shock leaves every enemy piece beside it (kings aside) frozen for 1 of their turns.",
-      tier: 7,
+      tier: 6,
       category: "attack",
       flavor: "Subtlety is for people who cannot lift the hammer.",
     },
@@ -386,7 +386,7 @@ export const FANTASY_LEGENDS: Buff[] = [
       name: "Dragon Mount",
       description:
         "One of your knights breaks a young dragon to the saddle: for the game it may also slide any distance diagonally, though the dragon's glide cannot capture.",
-      tier: 6,
+      tier: 4,
       category: "movement",
       requires: ["n"],
       flavor: "The hard part is not the taming. It is the dismount.",
@@ -404,7 +404,7 @@ export const FANTASY_LEGENDS: Buff[] = [
       name: "Legendary Forge",
       description:
         "The forge mends what war broke: one of your captured knights or bishops is reforged and returns to your pocket. Spend a later turn to drop it onto any empty square.",
-      tier: 4,
+      tier: 3,
       category: "pieces",
       flavor: "Iron remembers every shape it has ever worn.",
     },
@@ -441,7 +441,7 @@ export const FANTASY_LEGENDS: Buff[] = [
       name: "Age of Heroes",
       description:
         "The old songs come true for three champions: choose one of your knights, one bishop, and one rook. Until each next moves it may also move like a queen, a single stroke apiece.",
-      tier: 8,
+      tier: 7,
       category: "movement",
       flavor: "For one bright hour, everyone is the chosen one.",
       fx: { motif: "rally", pieces: ["n", "b", "r"], self: true },

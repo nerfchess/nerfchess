@@ -37,6 +37,7 @@ import {
   relRank,
 } from "./shared";
 import type { BuffApi, Square } from "./shared";
+import { markRevived, revivable } from "../helpers";
 
 /** The eight squares around a king (those on the board). */
 function ringAround(api: BuffApi, kingSq: Square): Square[] {
@@ -418,13 +419,34 @@ export const FANTASY_MYTHIC: Buff[] = [
     {
       id: "fm_boon_lifebloom",
       name: "Lifebloom",
-      description: "One of your captured pawns returns to the board on an empty square of your second rank.",
+      // Balance pass 2026-09: the second-rank return read identically to
+      // Field Stitches (Tier 2) and weaker than Florist's Trick (Tier 4). A
+      // Tier 6 revive lands on the fourth rank, already in the fight, under a
+      // two-turn shield.
+      description: "One of your captured pawns returns to an empty square on your fourth rank and cannot be captured for your opponent's next 2 turns.",
       tier: 6,
       category: "pieces",
       boon: true,
       flavor: "Where it fell, something green.",
     },
-    reviveOne(["p"], (api) => (sq) => relRank(api.me, sq) === 2),
+    activated(
+      (_inst, api, picks) => {
+        if (picks.length > 0) return null;
+        if (revivable(api, "p") <= 0) return { kind: "square", label: "No captured pawn to return", squares: [] };
+        return {
+          kind: "square",
+          label: "Choose where the pawn blooms",
+          squares: emptySquares(api.board, (sq) => relRank(api.me, sq) === 4),
+        };
+      },
+      (_inst, api, picks) => {
+        const sq = picks[0]?.square;
+        if (sq == null || revivable(api, "p") <= 0) return;
+        api.place(sq, "p", api.me);
+        markRevived(api, "p");
+        addEffect(api, { kind: "shield", owner: api.me, squares: [sq], turns: 2 });
+      },
+    ),
   ),
   card(
     {

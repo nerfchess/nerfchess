@@ -26,6 +26,7 @@ import { BUFF_BY_ID } from "@/engine/buffs/library";
 import { NerfGame } from "@/engine/game";
 import { Color } from "@/engine/types";
 import { useReducedMotion } from "@/lib/useReducedMotion";
+import { useDockHotkeys, useDockView } from "@/lib/dockView";
 import { ScrollText } from "lucide-react";
 import { useState } from "react";
 import { OppPlaysDockSection, type OppPlay } from "../OppPlaysLog";
@@ -62,8 +63,10 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
   // Whose hand is on screen. One question, one control: the old dock's three
   // tabs (Yours / Theirs / Log) folded the play ledger in as a peer of the two
   // hands; it is a history, not a hand, so it now lives in its own collapsed
-  // disclosure at the foot.
-  const [view, setView] = useState<"you" | "them">("you");
+  // disclosure at the foot. The view is shared across every mounted dock and
+  // flips with the y / t hotkeys.
+  const [view, setView] = useDockView();
+  useDockHotkeys();
   const [logOpen, setLogOpen] = useState(false);
 
   const bs = game.buffs;
@@ -196,8 +199,8 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
         <div role="tablist" aria-label="Whose cards" className="flex gap-1 pt-1">
           {(
             [
-              { id: "you", label: "You", n: mine.length, badge: canAct ? usableCount : 0 },
-              { id: "them", label: "Them", n: theirsShown.length, badge: 0 },
+              { id: "you", label: "You", key: "y", n: mine.length, badge: canAct ? usableCount : 0 },
+              { id: "them", label: "Them", key: "t", n: theirsShown.length, badge: 0 },
             ] as const
           ).map((t) => (
             <button
@@ -214,7 +217,14 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
               }
             >
               {t.label}
-              {t.n > 0 && <span className="tabular text-[11px] text-parchment-400">{t.n}</span>}
+              {t.n > 0 && <span className="tabular text-[12px] text-parchment-400">{t.n}</span>}
+              {/* Hotkey hint, pointer devices only: a phone has no key. */}
+              <kbd
+                aria-hidden
+                className="hidden rounded-[1px] border border-[color:var(--edge)] px-1 font-mono text-[11px] leading-4 text-parchment-400 [@media(hover:hover)]:inline"
+              >
+                {t.key}
+              </kbd>
               {t.badge > 0 && (
                 <span
                   title={`${t.badge} card${t.badge === 1 ? "" : "s"} you could use now`}

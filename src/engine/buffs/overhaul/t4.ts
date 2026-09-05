@@ -413,7 +413,7 @@ export const OVERHAUL_T4: Buff[] = [
       name: "Weather Balloon",
       description:
         "Three scans, one after each of your opponent's moves: every square the opponent could reach with their next move is highlighted. Each scan spends one of the three even if it lights up nothing.",
-      tier: 4,
+      tier: 2,
       category: "info",
       icon: "Radar",
       flavor: "It sees everything. It reports most of it.",
@@ -635,7 +635,7 @@ export const OVERHAUL_T4: Buff[] = [
       name: "Templar Vows",
       description:
         "Choose one of your bishops: for 6 of your turns it is a Templar and may also make knight leaps onto empty squares. These leaps cannot capture.",
-      tier: 4,
+      tier: 3,
       category: "movement",
       icon: "Cross",
       flavor: "The armor assembles plate by plate, mid-prayer.",
@@ -867,7 +867,7 @@ export const OVERHAUL_T4: Buff[] = [
       name: "Wallhack Goggles",
       description:
         "Three scans, one after each of your opponent's moves: every piece of yours standing on an enemy slider's line, even behind blockers, is highlighted. Each scan spends one of the three even if it finds nothing.",
-      tier: 4,
+      tier: 2,
       category: "info",
       icon: "ScanEye",
       flavor: "Green wireframes never lie. They just flicker.",

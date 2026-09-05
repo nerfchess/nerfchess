@@ -116,7 +116,7 @@ export const OVERHAUL_T5: Buff[] = [
       name: "Wizard Duel",
       description:
         "One of your bishops duels an enemy bishop: 50% either way, the loser is removed. If your bishop wins, it also gains single king steps for 3 of your turns.",
-      tier: 6,
+      tier: 3,
       category: "attack",
       icon: "Wand2",
       flavor: "Two beams meet, spark, and one hat goes home empty.",
@@ -303,7 +303,7 @@ export const OVERHAUL_T5: Buff[] = [
       name: "Manager's Challenge",
       description:
         "Challenge your opponent's last move: 50% their piece is marched back to the square it came from (if free) and stunned for 1 turn; 50% the call goes against you and your own last-moved piece is stunned for 1 turn.",
-      tier: 5,
+      tier: 1,
       category: "tempo",
       icon: "Flag",
       flavor: "The red flag flies. The replay hood descends.",
@@ -342,7 +342,7 @@ export const OVERHAUL_T5: Buff[] = [
       name: "Trojan Pawn",
       description:
         "Choose one of your pawns: if it is captured within 8 of your turns, two fresh pawns leap out onto empty squares adjacent to where it fell.",
-      tier: 5,
+      tier: 3,
       category: "pieces",
       icon: "Box",
       flavor: "It is exactly as hollow as it looks.",
@@ -409,7 +409,7 @@ export const OVERHAUL_T5: Buff[] = [
       name: "Checkmate Rehearsal",
       description:
         "Run the rehearsal, once: every enemy piece currently attacking one of your pieces is spotlighted, and the director's notes include one free draft reroll.",
-      tier: 5,
+      tier: 1,
       category: "info",
       icon: "Clapperboard",
       flavor: "Places, everyone. The blunder is in act two.",
@@ -1204,7 +1204,7 @@ export const OVERHAUL_T5: Buff[] = [
       name: "Gravity Flip",
       description:
         "For 2 of your turns, your pawns may also step one square straight backward onto an empty square. No backward captures.",
-      tier: 6,
+      tier: 2,
       category: "movement",
       icon: "ArrowDownUp",
       flavor: "The board tilts and the infantry discovers reverse.",

@@ -565,6 +565,9 @@ export const CARD_VFX: Record<string, CardVfx> = {
   // Just add water: four splashes and the little pawns hatch.
   sea_monkeys: { travel: "none", impact: "burst", aftermath: "sparkle", palette: ["#5fc9b0", "#e8963a", "#dff7ff"], source: "lead" },
   second_army: { travel: "none", impact: "sparkle", aftermath: "none", palette: ["#8a94a8", "#ffd76a", "#eef1f7"], source: "caster" },
+  // Supply Drop (tier 5 after the 2026-09 pass): a knight and a pawn land in
+  // the pocket after the opponent moves, so the crate sparkles in at the caster.
+  supply_drop: { travel: "none", impact: "sparkle", aftermath: "none", palette: ["#8a94a8", "#ffd76a", "#eef1f7"], source: "caster" },
   // Stone serpents coil out and around the enemy bishops.
   serpent_brood: { travel: "arc", impact: "smoke", aftermath: "smolder", palette: ["#5f8f4a", "#8d8d94", "#2f3a26"], source: "caster" },
   // Cursed iron chains rattle out and bind the queen.

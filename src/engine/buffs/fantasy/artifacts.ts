@@ -30,7 +30,7 @@ export const FANTASY_ARTIFACTS: Buff[] = [
       name: "Excalibur",
       description:
         "Draw the lake's blade: choose one of your bishops. Until it next moves it may also slide like a rook, giving it full queen movement, but the first move it makes, straight or diagonal, spends the blade.",
-      tier: 5,
+      tier: 4,
       category: "movement",
       requires: ["b"],
       flavor: "The lake gives up its blade only once.",

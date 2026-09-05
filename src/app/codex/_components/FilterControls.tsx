@@ -160,14 +160,6 @@ export function FilterControls({
           </option>
         ))}
       </FilterSelect>
-      <label className="flex min-h-[36px] items-center gap-2 self-end text-[12px] text-parchment-300">
-        <input
-          type="checkbox"
-          checked={filters.showRetired}
-          onChange={(e) => onPatch({ showRetired: e.target.checked })}
-        />
-        Show retired
-      </label>
     </div>
   );
 }

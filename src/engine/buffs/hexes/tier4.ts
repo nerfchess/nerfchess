@@ -405,9 +405,10 @@ export const HEXES_T4: Buff[] = [
   ),
 
   // --- targeted rail: one enemy rook is locked to its current rank ---------
-  H(
+  hex(
     {
       id: "ironbound_rook",
+      tier: 2,
       name: "Ironbound Rook",
       description: "Bind one enemy rook to its rank: for 4 of their turns it cannot leave the rank it stands on. Its first move may still break to any rank; after that it may only slide sideways along the rank it then holds.",
       flavor: "Banded, bolted, and rolled onto a rail.",

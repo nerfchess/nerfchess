@@ -366,7 +366,7 @@ export const FANTASY_FEY: Buff[] = [
       name: "Fey Step",
       description:
         "One of your knights or bishops slips into the hedgerow and steps out behind their lines: move it to any empty square on your opponent's back two ranks, once. The step lands on an empty square only and cannot capture.",
-      tier: 5,
+      tier: 2,
       category: "movement",
       requires: ["n", "b"],
       flavor: "The shortest path runs through a country that is not there.",
@@ -384,7 +384,7 @@ export const FANTASY_FEY: Buff[] = [
       name: "Gossamer Veil",
       description:
         "A shimmering veil of spider-silk tangles every long blade: your pieces cannot be captured by enemy bishops, rooks, or queens for your opponent's next 2 turns. Pawns, knights, and kings still cut through.",
-      tier: 6,
+      tier: 5,
       category: "protection",
       flavor: "Softer than moonlight, stronger than mail.",
       fx: { motif: "ward", pieces: "all", self: true },

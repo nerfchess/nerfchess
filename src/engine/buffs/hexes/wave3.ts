@@ -185,7 +185,7 @@ const T1: Buff[] = [
 
   // vs: The Long Road Home (one MARKED piece must retreat). This forbids the
   // WHOLE army from retreating - an army-wide forward-only rule, no mark.
-  H1(
+  H3(
     {
       id: "hw3_no_retreat",
       name: "No Retreat",
@@ -1838,7 +1838,7 @@ const T6: Buff[] = [
 
   // vs: The Hollow Crown (king move taxes the NEXT turn's piece class). This
   // makes every king move cost a GUARD: the piece nearest the king is frozen.
-  H6(
+  H4(
     {
       id: "hw3_kings_guard",
       name: "Standing Guard",
@@ -2087,7 +2087,7 @@ const T7: Buff[] = [
   // queen+bishop lockout). It is stamped H6 in place; the block is kept in
   // source order rather than moved, and only its `.tier` field (what the draft
   // pool reads) changes.
-  H6(
+  H4(
     {
       id: "hw3_hydra_hex",
       name: "Hydra Hex",

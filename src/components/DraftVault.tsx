@@ -1,6 +1,7 @@
 "use client";
 
 import "./DraftVault.css";
+import { TIER_ROMAN } from "@/lib/tiers";
 
 // The draft vault: every offer arrives sealed inside a floating six-sided
 // sigil vault, a real CSS 3D prism (six faces, two caps) hovering over a pair
@@ -135,7 +136,12 @@ export function DraftVault({ tier, count, label, stage, onOpen, mini, calm, stil
       </span>
 
       <span className="vault-caption">
-        <span className="vault-caption__band">{BAND_NAME[band]}</span>
+        {/* Band plus the exact tier numeral, so the caption names the tier the
+            best card inside will show. */}
+        <span className="vault-caption__band">
+          {BAND_NAME[band]}
+          {TIER_ROMAN[tier] ? ` · ${TIER_ROMAN[tier]}` : ""}
+        </span>
         <span className="vault-caption__label">{label}</span>
         {stage === "sealed" && <span className="vault-caption__hint">Tap to open</span>}
       </span>

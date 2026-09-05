@@ -170,7 +170,7 @@ export const MYSTIC_FATE: Buff[] = [
       id: "grand_conjunction",
       name: "Grand Conjunction",
       description:
-        "Every sign, sphere, and spirit aligns at once: all enemy pieces except the king are frozen for 2 of their turns, save their single most valuable piece, which slips free; and none of your pieces can be captured for your opponent's next 2 turns.",
+        "All enemy pieces except the king and their most valuable piece are frozen for 2 of their turns. None of your pieces can be captured for 2 turns.",
       tier: 9,
       special: true,
       category: "tempo",

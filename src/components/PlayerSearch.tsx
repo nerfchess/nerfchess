@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { fetchTopStandings, placementTitle, type TopStandings } from "@/lib/laurels";
 import { fetchMe } from "@/lib/authClient";
 import { isAllowedFlair } from "@/lib/flair";
@@ -70,6 +71,7 @@ function writeRecent(items: RecentItem[]): void {
 // opens the player's profile. An empty, focused box offers recently opened
 // profiles instead.
 export function PlayerSearch({ className = "", autoFocus = false }: { className?: string; autoFocus?: boolean }) {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [hits, setHits] = useState<Hit[]>([]);
   const [open, setOpen] = useState(false);
@@ -243,11 +245,13 @@ export function PlayerSearch({ className = "", autoFocus = false }: { className?
       avatar: item.avatar,
       flair: item.flair,
     });
-    // Hard navigation: router.push from a keydown inside this input proved
-    // unreliable in the packaged worker build.
+    setOpen(false);
+    // Client-side navigation, the same router.push the header's own profile
+    // links use, so the shell (lobby feed, presence poll) survives the hop
+    // instead of a full reload.
     // Encoded like every other profile link (lobby, leaderboard): a username
     // is server-validated, but the URL must never depend on that.
-    window.location.assign(`/u/${encodeURIComponent(item.username)}`);
+    router.push(`/u/${encodeURIComponent(item.username)}`);
   };
 
   useEffect(() => {
@@ -259,6 +263,18 @@ export function PlayerSearch({ className = "", autoFocus = false }: { className?
   }, []);
 
   const q = query.trim();
+  // Any interaction with the box while it holds a searchable query reopens the
+  // dropdown. Before this, an outside click closed it for good: retyping the
+  // same letters changed nothing, so the query effect never re-fired and the
+  // results stayed hidden. Empty-box recents reopen the same way.
+  const reopen = () => {
+    if (q.length >= 2) {
+      setOpen(true);
+    } else if (q.length === 0 && recent.length > 0) {
+      setOpen(true);
+      setActive(0);
+    }
+  };
   const showingResults = open && q.length >= 2;
   const showingRecent = open && q.length === 0 && recent.length > 0;
   // The list the arrow keys currently traverse.
@@ -331,14 +347,15 @@ export function PlayerSearch({ className = "", autoFocus = false }: { className?
       <input
         ref={inputRef}
         value={query}
-        onChange={(e) => setQuery(e.target.value)}
+        onChange={(e) => {
+          setQuery(e.target.value);
+          setOpen(true);
+        }}
         onFocus={() => {
           loadFriends();
-          if (hits.length > 0 || pending || error || (query.trim().length === 0 && recent.length > 0)) {
-            setOpen(true);
-            if (query.trim().length === 0 && recent.length > 0) setActive(0);
-          }
+          reopen();
         }}
+        onClick={reopen}
         onKeyDown={(e) => {
           if (e.key === "ArrowDown") {
             e.preventDefault();
@@ -352,6 +369,10 @@ export function PlayerSearch({ className = "", autoFocus = false }: { className?
             go(navList[active >= 0 ? active : 0]);
           } else if (e.key === "Escape") {
             setOpen(false);
+          } else if (e.key !== "Tab" && e.key !== "Shift") {
+            // A keystroke that leaves the text unchanged (retyping the same
+            // letters, the box at maxLength) still reopens the list.
+            reopen();
           }
         }}
         placeholder="Find a player…"
@@ -372,7 +393,7 @@ export function PlayerSearch({ className = "", autoFocus = false }: { className?
           id={listId}
           role="listbox"
           aria-label="Search results"
-          className="absolute inset-x-0 top-full z-30 mt-1 plate dropdown divide-y divide-[color:var(--edge)] overflow-hidden shadow-2xl"
+          className="absolute inset-x-0 top-full z-[70] mt-1 plate dropdown divide-y divide-[color:var(--edge)] overflow-hidden shadow-2xl"
         >
           {hits.map((hit, i) => (
             <button
@@ -382,12 +403,7 @@ export function PlayerSearch({ className = "", autoFocus = false }: { className?
               aria-selected={i === active}
               type="button"
               onMouseEnter={() => setActive(i)}
-              onClick={() => {
-                // Reuse the same hard navigation the keyboard path uses: plain
-                // router.push proved unreliable in the packaged worker build.
-                setOpen(false);
-                go(hit);
-              }}
+              onClick={() => go(hit)}
               className={
                 "flex w-full min-h-[44px] items-center gap-2 px-4 py-2 text-left text-sm transition-colors " +
                 (i === active ? "bg-[color:var(--bg-raised)]" : "hover:bg-[color:var(--bg-raised)]")
@@ -400,13 +416,16 @@ export function PlayerSearch({ className = "", autoFocus = false }: { className?
       )}
 
       {showingResults && !error && hits.length === 0 && (
-        <div className="absolute inset-x-0 top-full z-30 mt-1 plate dropdown px-4 py-2.5 text-sm text-parchment-400 shadow-2xl">
-          {pending ? "Searching…" : `No players match “${q}”.`}
+        <div
+          role="status"
+          className="absolute inset-x-0 top-full z-[70] mt-1 plate dropdown px-4 py-2.5 text-sm text-parchment-400 shadow-2xl"
+        >
+          {pending ? "Searching…" : `No player named “${q}”.`}
         </div>
       )}
 
       {showingResults && error && (
-        <div className="absolute inset-x-0 top-full z-30 mt-1 plate dropdown flex items-center justify-between gap-3 px-4 py-2.5 text-sm text-parchment-400 shadow-2xl">
+        <div className="absolute inset-x-0 top-full z-[70] mt-1 plate dropdown flex items-center justify-between gap-3 px-4 py-2.5 text-sm text-parchment-400 shadow-2xl">
           <span>Search failed.</span>
           <Button tone="ghost" onClick={retry} className="px-3 py-1.5 text-xs">
             Retry
@@ -419,7 +438,7 @@ export function PlayerSearch({ className = "", autoFocus = false }: { className?
           id={listId}
           role="listbox"
           aria-label="Recent searches"
-          className="absolute inset-x-0 top-full z-30 mt-1 plate dropdown overflow-hidden shadow-2xl"
+          className="absolute inset-x-0 top-full z-[70] mt-1 plate dropdown overflow-hidden shadow-2xl"
         >
           <p className="px-4 pt-2 pb-1">Recent</p>
           <div className="divide-y divide-[color:var(--edge)]">
@@ -431,10 +450,7 @@ export function PlayerSearch({ className = "", autoFocus = false }: { className?
                   aria-selected={i === active}
                   type="button"
                   onMouseEnter={() => setActive(i)}
-                  onClick={() => {
-                    setOpen(false);
-                    go(item);
-                  }}
+                  onClick={() => go(item)}
                   className={
                     "flex w-full min-h-[44px] items-center gap-2 py-2 pl-4 pr-12 text-left text-sm transition-colors " +
                     (i === active ? "bg-[color:var(--bg-raised)]" : "hover:bg-[color:var(--bg-raised)]")

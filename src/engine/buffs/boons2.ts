@@ -442,7 +442,7 @@ export const BOON_WAVE2: Buff[] = [
       name: "Cornered King",
       description:
         "Desperation teaches strange footwork: once, while you have fewer pieces than your opponent (kings aside), your king may move like a knight.",
-      tier: 4,
+      tier: 2,
       category: "movement",
       icon: "Swords",
       flavor: "An old king remembers being a soldier.",
@@ -568,7 +568,7 @@ export const BOON_WAVE2: Buff[] = [
       name: "Spoils of War",
       description: "The finest piece you have captured defects to your colours: place it on an empty square on your home rank. It leaves your opponent's revival pool for eighteen of your turns, then rejoins it, and you gain one draft reroll.",
       tip: "Queens defect first, then rooks, bishops, knights, pawns.",
-      tier: 4,
+      tier: 6,
       category: "pieces",
       icon: "Handshake",
       flavor: "Everyone has a price. Yours was room and board.",
@@ -632,7 +632,7 @@ export const BOON_WAVE2: Buff[] = [
       name: "Blood Price",
       description:
         "The deck feeds on sacrifice: destroy one of your own pieces (your king excepted), and your next draft is fated to offer tier 6 cards.",
-      tier: 5,
+      tier: 3,
       category: "draft",
       icon: "FlaskConical",
       flavor: "The cards do not take coin.",
@@ -684,7 +684,7 @@ export const BOON_WAVE2: Buff[] = [
       name: "Deathless Oath",
       description:
         "One of your pieces (your king excepted) swears the oath: the first time it is captured, it instantly returns to the empty square nearest your home rank. One rebirth, then the oath is spent.",
-      tier: 4,
+      tier: 5,
       category: "pieces",
       icon: "Sunrise",
       flavor: "Death kept the appointment. The piece did not.",
@@ -745,7 +745,7 @@ export const BOON_WAVE2: Buff[] = [
       name: "Blood Duel",
       description:
         "Call a duel of equals: choose one enemy knight, bishop or rook, then one of your own pieces of the same kind. Both are removed from the board. Both losses are real and feed both revival pools.",
-      tier: 5,
+      tier: 3,
       category: "attack",
       icon: "Axe",
       flavor: "Pistols at dawn, bishops at diagonal.",
@@ -825,7 +825,7 @@ export const BOON_WAVE2: Buff[] = [
       name: "Prisoner Exchange",
       description:
         "Envoys meet at the river: your finest captured piece returns to the board, placed on the empty square nearest your home rank (queens first, then rooks, bishops, knights, pawns).",
-      tier: 6,
+      tier: 5,
       category: "pieces",
       icon: "Scale",
       flavor: "Both banks watched. Neither waved.",
@@ -899,8 +899,8 @@ export const BOON_WAVE2: Buff[] = [
       id: "bw2_alchemists_trade",
       name: "Alchemist's Trade",
       description:
-        "Equivalent exchange: one of your knights, bishops or rooks is transmuted into a queen; in payment, another of your knights, bishops, rooks or queens crumbles into a pawn where it stands (it cannot be standing on a first or last rank).",
-      tier: 7,
+        "One of your knights, bishops or rooks becomes a queen. In payment, another of your officers (not on a first or last rank) becomes a pawn.",
+      tier: 5,
       category: "pieces",
       icon: "Gem",
       flavor: "Gold from lead, lead from gold. The scales do not care which way.",
@@ -1081,7 +1081,7 @@ export const BOON_WAVE2: Buff[] = [
       name: "Bolt Hole",
       description:
         "Old castles keep old secrets: while your king is in check, it, or one other of your pieces, may escape through the walls to any empty square within 2 squares of where the king stands. The passage bears 2 such escapes, then collapses.",
-      tier: 7,
+      tier: 5,
       category: "movement",
       icon: "DoorOpen",
       flavor: "Every throne room has a second door. Ask the architect. You can't; he was walled in.",
@@ -1257,7 +1257,7 @@ export const BOON_WAVE2: Buff[] = [
     {
       id: "bw2_shadow_reserve",
       name: "Shadow Reserve",
-      description: "A knight, a bishop and a rook slip into your pocket, ready to be dropped onto empty squares on later turns, each drop spending that turn. A drop lands on an empty square, so it cannot capture until your opponent has replied. Your next 2 drafts are skipped.",
+      description: "A knight, a bishop and a rook join your pocket to drop onto empty squares on later turns. Your next 2 drafts are skipped.",
       tip: "You are trading two drafts for three pieces and three turns to place them.",
       tier: 8,
       category: "pieces",
@@ -1280,7 +1280,7 @@ export const BOON_WAVE2: Buff[] = [
       name: "The Eternal Keep",
       description: "For your opponent's next 4 turns, your pieces standing on your first rank cannot be captured, your king excepted. The ward ends the moment your king crosses the midline into their half.",
       tip: "Step off the rampart and the stone no longer knows you: keep the king at home to keep it.",
-      tier: 8,
+      tier: 5,
       category: "protection",
       icon: "Castle",
       flavor: "The masons built for a season. The season held.",

@@ -220,7 +220,7 @@ export const PT_PASSIVE_CARDS: Buff[] = [
       name: "Landlord",
       description:
         "Claim four empty squares as your property. Any enemy piece (never a king) that ends its move on one of them owes rent: it is stuck fast for 1 of their turns.",
-      tier: 6,
+      tier: 4,
       category: "tempo",
       flavor: "First, last, and a security deposit.",
     },
