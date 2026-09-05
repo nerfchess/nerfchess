@@ -120,7 +120,7 @@ export const NO_GOING_HOME: Nerf = db({
 });
 
 export const KNIGHT_TOLL: Nerf = db({
-  id: "wn_knight_toll", name: "Knight Toll", tier: 3, icon: "swords", implemented: true,
+  id: "wn_knight_toll", name: "Knight Toll", tier: 2, icon: "swords", implemented: true,
   description: "You can't capture with a knight if a knight of yours captured on your previous turn.",
   flavor: "The horses need a turn to recover.",
   filterMoves: (moves, _s, ctx) => {
@@ -229,7 +229,7 @@ export const FLINCH: Nerf = db({
 // --------------------------- TIER 4 (severe) ---------------------------
 
 export const WEIGH_STATION: Nerf = db({
-  id: "wn_weigh_station", name: "Weigh Station", tier: 4, icon: "anchor", implemented: true,
+  id: "wn_weigh_station", name: "Weigh Station", tier: 6, icon: "anchor", implemented: true,
   description: "Your rooks and queen can't cross into the enemy half (relative ranks 5 to 8).",
   flavor: "The heavy pieces are too big for the border checkpoint.",
   filterMoves: (moves, _s, ctx) =>
@@ -346,7 +346,7 @@ export const CURFEW: Nerf = db({
 // --------------------------- TIER 5 (brutal) ---------------------------
 
 export const GRAVITY: Nerf = db({
-  id: "wn_gravity", name: "Gravity", tier: 5, icon: "arrow-down", implemented: true,
+  id: "wn_gravity", name: "Gravity", tier: 6, icon: "arrow-down", implemented: true,
   description: "None of your pieces may move more than two ranks ahead of your own king, unless the piece already starts more than two ranks ahead (a piece inside the region may move freely).",
   flavor: "The army can't outrun its monarch.",
   filterMoves: (moves, _s, ctx) => {
@@ -364,7 +364,7 @@ export const GRAVITY: Nerf = db({
 });
 
 export const BOTTOM_FEEDER: Nerf = db({
-  id: "wn_bottom_feeder", name: "Bottom Feeder", tier: 6, icon: "fish", implemented: true,
+  id: "wn_bottom_feeder", name: "Bottom Feeder", tier: 8, icon: "fish", implemented: true,
   description: "You can only capture pawns. You can't capture any other piece, except the enemy king to win.",
   flavor: "Scraps only.",
   filterMoves: (moves) =>
@@ -461,7 +461,7 @@ export const METEOR_SHOWER: Nerf = db({
 // --------------------------- TIER 6 (cruel) ---------------------------
 
 export const KINGS_LEASH: Nerf = db({
-  id: "wn_kings_leash", name: "King's Leash", tier: 6, icon: "crown", implemented: true,
+  id: "wn_kings_leash", name: "King's Leash", tier: 7, icon: "crown", implemented: true,
   description: "You can't move any piece to a square more than 3 king-steps from your own king. If no compliant move exists, only your king may move.",
   flavor: "Nobody strays far from the throne.",
   filterMoves: (moves, _s, ctx) => {
@@ -477,7 +477,7 @@ export const KINGS_LEASH: Nerf = db({
 });
 
 export const REGICIDE_CLOCK: Nerf = db({
-  id: "wn_regicide_clock", name: "Regicide Clock", tier: 6, icon: "target", implemented: true,
+  id: "wn_regicide_clock", name: "Regicide Clock", tier: 7, icon: "target", implemented: true,
   description: "You must give check at least once every 6 of your turns, or you lose.",
   flavor: "Keep the pressure on, or the clock runs out.",
   init: () => ({ sinceCheck: 0 }),
@@ -563,7 +563,7 @@ export const DEADLINE_QUEEN: Nerf = db({
 });
 
 export const DAISY_CHAIN: Nerf = db({
-  id: "wn_daisy_chain", name: "Daisy Chain", tier: 6, icon: "spline", implemented: true,
+  id: "wn_daisy_chain", name: "Daisy Chain", tier: 7, icon: "spline", implemented: true,
   description: "From your 4th move on, the piece you move must start its move adjacent to the square your last move ended on (if any such move exists).",
   flavor: "Link every step to the last.",
   filterMoves: (moves, _s, ctx) => {
@@ -655,7 +655,7 @@ export const PIN_CUSHION: Nerf = db({
 });
 
 export const ROYAL_MERIDIAN: Nerf = db({
-  id: "wn_royal_meridian", name: "Royal Meridian", tier: 7, icon: "plus", implemented: true,
+  id: "wn_royal_meridian", name: "Royal Meridian", tier: 8, icon: "plus", implemented: true,
   description: "Every piece you move must land on your king's file or your king's rank. If no compliant move exists, only your king may move.",
   flavor: "All roads run through the crown.",
   filterMoves: (moves, _s, ctx) => {
@@ -672,7 +672,7 @@ export const ROYAL_MERIDIAN: Nerf = db({
 });
 
 export const KINGPIN: Nerf = db({
-  id: "wn_kingpin", name: "Kingpin", tier: 7, icon: "crown", implemented: true,
+  id: "wn_kingpin", name: "Kingpin", tier: 8, icon: "crown", implemented: true,
   description: "Only your king may capture. No other piece can make a capture. If no compliant move exists, only your king may move.",
   flavor: "The boss does all the dirty work himself.",
   filterMoves: (moves) => {

@@ -131,7 +131,7 @@ function ClubIconPicker({
             aria-label={`Color ${c.label}`}
             aria-pressed={colorId === c.id}
             title={c.label}
-            className={`h-10 w-10 sm:h-8 sm:w-8 cursor-pointer rounded-full border-2 transition-transform hover:scale-110 ${
+            className={`h-10 w-10 sm:h-8 sm:w-8 cursor-pointer rounded-full border-2 transition-[border-color] duration-150 hover:border-parchment-300 ${
               colorId === c.id ? "border-parchment-50" : "border-transparent"
             }`}
             style={{ background: c.hex }}

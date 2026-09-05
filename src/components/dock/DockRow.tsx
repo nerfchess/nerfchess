@@ -45,15 +45,12 @@ export function DockRow({
   flash?: boolean;
 }) {
   const def = BUFF_BY_ID[inst.id];
-  if (!def) return null;
   // usedActivation retires an activated card the same as spent for the Use
   // button and the "Used" stamp, but a spendOnUse:false card is NOT spent, so
   // it stays in the list running its rider. Keep its live status line visible
   // (only spent/nullified cards truly go silent).
   const dead = !!(inst.spent || inst.nullified || inst.usedActivation);
-  const activatable = owner === "mine" && def.kind === "activated" && !dead;
-  const canUse = !!usable && activatable;
-  const status = inst.spent || inst.nullified ? null : def.status?.(inst) ?? null;
+  const status = def && !(inst.spent || inst.nullified) ? def.status?.(inst) ?? null : null;
 
   // Three separate lifecycle beats, each its own class so none can swallow
   // another:
@@ -66,9 +63,12 @@ export function DockRow({
   //   live     the card is doing something right now: a status line is
   //            running (countdown, armed rider). A slow breath on the tier
   //            edge and a live dot next to the chip, until it ends.
+  // Hooks sit above the missing-definition return below so their order never
+  // changes between renders.
   const [prevDead, setPrevDead] = useState(dead);
   const [prevStatus, setPrevStatus] = useState(status);
-  const [useBeat, setUseBeat] = useState(0);
+  const [burst, setBurst] = useState(0);
+  const [bursting, setBursting] = useState(false);
   if (prevDead !== dead || prevStatus !== status) {
     setPrevDead(dead);
     setPrevStatus(status);
@@ -76,16 +76,21 @@ export function DockRow({
     // counts as a use. Going from nothing to a status is the card arming
     // (that is the arrival), not a use.
     if ((!prevDead && dead) || (prevStatus != null && status != null && prevStatus !== status)) {
-      setUseBeat((b) => b + 1);
+      setBurst((b) => b + 1);
+      setBursting(true);
     }
   }
-  const [bursting, setBursting] = useState(false);
+  // The burst layer unmounts itself after its animation; the timer callback
+  // is the only place this effect writes state.
   useEffect(() => {
-    if (useBeat === 0) return;
-    setBursting(true);
+    if (burst === 0) return;
     const id = window.setTimeout(() => setBursting(false), 900);
     return () => window.clearTimeout(id);
-  }, [useBeat]);
+  }, [burst]);
+
+  if (!def) return null;
+  const activatable = owner === "mine" && def.kind === "activated" && !dead;
+  const canUse = !!usable && activatable;
   const inEffect = !dead && !!status;
 
   return (

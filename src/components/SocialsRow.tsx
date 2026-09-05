@@ -84,7 +84,7 @@ export function SocialsRow({
               href={s.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="btn-ghost flex items-center gap-3 px-6 py-3.5 font-display text-[17px] font-semibold no-underline transition-transform hover:-translate-y-0.5"
+              className="btn-ghost flex items-center gap-3 px-6 py-3.5 font-display text-[17px] font-semibold no-underline"
             >
               <span style={{ color: s.brand }} className="flex items-center">
                 {s.icon(26)}

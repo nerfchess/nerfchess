@@ -109,7 +109,7 @@ export const NERFS_T8: Nerf[] = [
       description: "Your bishops can only move one square at a time.",
       flavor: "The priests hobble along on canes.",
       icon: "church",
-      tier: 4,
+      tier: 5,
     },
     {
       filterMoves: filter((m) => !(m.piece === "b" && cheb(m.from, m.to) > 1)),
@@ -122,7 +122,7 @@ export const NERFS_T8: Nerf[] = [
       description: "Your queen can only move one square at a time, like a second king.",
       flavor: "Her crown is heavy and her feet are sore.",
       icon: "crown",
-      tier: 5,
+      tier: 6,
     },
     {
       filterMoves: filter((m) => !(m.piece === "q" && cheb(m.from, m.to) > 1)),

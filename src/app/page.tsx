@@ -71,21 +71,21 @@ export default function HomePage() {
               choice in the lobby. */}
           <ul className="mt-5 divide-y divide-[color:var(--edge)] border-y border-[color:var(--edge)]">
             <li>
-              <Link href="/lobby?mode=buff" className="group flex items-baseline justify-between gap-3 py-2.5 no-underline">
+              <Link href="/lobby?mode=buff" className="group flex items-center justify-between gap-3 py-2 no-underline">
                 <span className="min-w-0">
                   <span className="font-semibold text-mode-buffGlow">Buff mode</span>
                   <span className="ml-2 text-[13px] text-parchment-300">Stack powers onto your own army.</span>
                 </span>
-                <span className="shrink-0 text-[12px] uppercase tracking-[0.05em] text-parchment-400 group-hover:text-parchment-100">Play</span>
+                <span className="btn-ghost inline-flex min-h-[36px] shrink-0 items-center px-4 text-[13px] uppercase tracking-[0.05em]">Play</span>
               </Link>
             </li>
             <li>
-              <Link href="/lobby?mode=nerf" className="group flex items-baseline justify-between gap-3 py-2.5 no-underline">
+              <Link href="/lobby?mode=nerf" className="group flex items-center justify-between gap-3 py-2 no-underline">
                 <span className="min-w-0">
                   <span className="font-semibold text-mode-nerfGlow">Nerf mode</span>
                   <span className="ml-2 text-[13px] text-parchment-300">Secret handicaps, hexes, and boons.</span>
                 </span>
-                <span className="shrink-0 text-[12px] uppercase tracking-[0.05em] text-parchment-400 group-hover:text-parchment-100">Play</span>
+                <span className="btn-ghost inline-flex min-h-[36px] shrink-0 items-center px-4 text-[13px] uppercase tracking-[0.05em]">Play</span>
               </Link>
             </li>
           </ul>

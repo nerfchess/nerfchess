@@ -7,7 +7,7 @@ import { nerf, filter, relRank, isInCheck, makeMove, FILE, RANK, SQ } from "./sh
 
 export const NERFS_T1: Nerf[] = [
   nerf(
-    { id: "right_handed", name: "Right Handed", description: "You can't move to the a-file, except once per game.", tier: 2, flavor: "The left edge is a blind spot.", icon: "ban" },
+    { id: "right_handed", name: "Right Handed", description: "You can't move to the a-file, except once per game.", tier: 3, flavor: "The left edge is a blind spot.", icon: "ban" },
     {
       filterMoves: (moves, _state, ctx) => {
         const usedExemption = ctx.board.history.some(
@@ -18,7 +18,7 @@ export const NERFS_T1: Nerf[] = [
     },
   ),
   nerf(
-    { id: "no_stone_cutting", name: "No Stone Cutting", description: "You can't capture bishops.", tier: 2, flavor: "The clergy are untouchable.", icon: "church" },
+    { id: "no_stone_cutting", name: "No Stone Cutting", description: "You can't capture bishops.", tier: 3, flavor: "The clergy are untouchable.", icon: "church" },
     { filterMoves: filter((m) => m.captured !== "b") },
   ),
   nerf(

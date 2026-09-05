@@ -23,7 +23,7 @@ const N = tierNerf(3);
 
 export const NERFS_T3: Nerf[] = [
   nerf(
-    { id: "half_a_queen", name: "Half a Queen", description: "Your queen can only move like a rook, never diagonally, except one diagonal move is allowed once per game.", flavor: "She left the diagonals at home.", icon: "castle", tier: 4 },
+    { id: "half_a_queen", name: "Half a Queen", description: "Your queen can only move like a rook, never diagonally, except one diagonal move is allowed once per game.", flavor: "She left the diagonals at home.", icon: "castle", tier: 5 },
     {
       filterMoves: (moves, _state, ctx) => {
         // Once-per-game exemption: a single diagonal queen move is allowed. Once
@@ -59,7 +59,7 @@ export const NERFS_T3: Nerf[] = [
     },
   ),
   nerf(
-    { id: "pull_of_the_center", name: "Pull of the Center", description: "Your pawns can only capture toward the center files.", flavor: "Blades are drawn inward.", icon: "move-horizontal", tier: 4 },
+    { id: "pull_of_the_center", name: "Pull of the Center", description: "Your pawns can only capture toward the center files.", flavor: "Blades are drawn inward.", icon: "move-horizontal", tier: 3 },
     {
       filterMoves: filter((m) => {
         if (m.piece !== "p" || !m.captured) return true;
@@ -68,7 +68,7 @@ export const NERFS_T3: Nerf[] = [
     },
   ),
   nerf(
-    { id: "one_bite_at_a_time", name: "One Bite at a Time", description: "After a capture, you can't capture again for two of your turns, except your chosen pawn (on a random file, shown from the start) may still capture.", flavor: "Chew before you swallow.", icon: "timer", tier: 4 },
+    { id: "one_bite_at_a_time", name: "One Bite at a Time", description: "After a capture, you can't capture again for two of your turns, except your chosen pawn (on a random file, shown from the start) may still capture.", flavor: "Chew before you swallow.", icon: "timer", tier: 5 },
     {
       // Distinct from remorseful (a single-turn cooldown) and battle_fatigue (a
       // per-piece cooldown): here ANY capture in your last two turns blocks all
@@ -111,14 +111,14 @@ export const NERFS_T3: Nerf[] = [
     },
   ),
   nerf(
-    { id: "carnivore_bishops", name: "Carnivore Bishops", description: "Starting on your fourth move, your bishops can only move when they capture.", flavor: "They march only to feed.", icon: "church", tier: 4 },
+    { id: "carnivore_bishops", name: "Carnivore Bishops", description: "Starting on your fourth move, your bishops can only move when they capture.", flavor: "They march only to feed.", icon: "church", tier: 5 },
     {
       filterMoves: (moves, _state, ctx) =>
         ctx.moveNumber < 3 ? moves : moves.filter((m) => !(m.piece === "b" && !m.captured)),
     },
   ),
   nerf(
-    { id: "no_retreat", name: "No Retreat", description: "Your king can't step backward toward your own back rank.", flavor: "A king never gives ground.", icon: "crown", tier: 4 },
+    { id: "no_retreat", name: "No Retreat", description: "Your king can't step backward toward your own back rank.", flavor: "A king never gives ground.", icon: "crown", tier: 3 },
     {
       filterMoves: (moves, _state, ctx) =>
         moves.filter(

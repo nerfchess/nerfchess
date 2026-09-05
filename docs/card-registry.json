@@ -70,8 +70,8 @@
       "promotion-denial": 2,
       "zone-buff": 2,
       "check-rule-change": 2,
-      "info-denial": 1,
-      "zone-lock-in": 1
+      "zone-lock-in": 1,
+      "info-denial": 1
     },
     "soundByFamily": {
       "blessing": 99,
@@ -42226,6 +42226,29 @@
       "target": "piece"
     },
     {
+      "id": "lucky",
+      "name": "Lucky",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "nerf-relief",
+      "tier": 1,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 53,
+      "description": "You have no nerf. A rare gift from the gods of chess.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "decree",
+        "primitives": [
+          "sigilStamp"
+        ],
+        "sigil": "sparkles"
+      },
+      "soundCue": "passive/decree",
+      "soundFamily": "decree",
+      "target": "pieceClass"
+    },
+    {
       "id": "nw2_gentle_shepherds",
       "name": "Gentle Shepherds",
       "kind": "nerf",
@@ -42410,30 +42433,6 @@
       "target": "piece"
     },
     {
-      "id": "cess",
-      "name": "Cess",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "zone-denial",
-      "tier": 2,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 29,
-      "description": "You can't move to the h-file.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "territory",
-        "primitives": [
-          "beamVertical",
-          "zoneSweep"
-        ],
-        "sigil": "ban"
-      },
-      "soundCue": "passive/territory",
-      "soundFamily": "territory",
-      "target": "file"
-    },
-    {
       "id": "columnar_rooks",
       "name": "Columnar Rooks",
       "kind": "nerf",
@@ -42456,29 +42455,6 @@
       "soundCue": "passive/territory",
       "soundFamily": "territory",
       "target": "file"
-    },
-    {
-      "id": "crossing_the_rubicon",
-      "name": "Crossing the Rubicon",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "zone-denial",
-      "tier": 2,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 61,
-      "description": "Once a piece crosses to the opponent's half, it can't return.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "territory",
-        "primitives": [
-          "zoneSweep"
-        ],
-        "sigil": "map"
-      },
-      "soundCue": "passive/territory",
-      "soundFamily": "territory",
-      "target": "zone"
     },
     {
       "id": "flat_footed",
@@ -42645,29 +42621,6 @@
       "target": "piece"
     },
     {
-      "id": "lucky",
-      "name": "Lucky",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "nerf-relief",
-      "tier": 2,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 53,
-      "description": "You have no nerf. A rare gift from the gods of chess.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "decree",
-        "primitives": [
-          "sigilStamp"
-        ],
-        "sigil": "sparkles"
-      },
-      "soundCue": "passive/decree",
-      "soundFamily": "decree",
-      "target": "pieceClass"
-    },
-    {
       "id": "merciful_queen",
       "name": "Merciful Queen",
       "kind": "nerf",
@@ -42685,29 +42638,6 @@
           "bolt"
         ],
         "sigil": "crown"
-      },
-      "soundCue": "passive/strike",
-      "soundFamily": "strike",
-      "target": "pieceClass"
-    },
-    {
-      "id": "monastic_vows",
-      "name": "Monastic Vows",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "capture-denial",
-      "tier": 2,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 97,
-      "description": "Your bishops can't capture, except capturing a piece that has your king in check is always legal.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "strike",
-        "primitives": [
-          "bolt"
-        ],
-        "sigil": "church"
       },
       "soundCue": "passive/strike",
       "soundFamily": "strike",
@@ -42754,29 +42684,6 @@
           "sigilStamp"
         ],
         "sigil": "droplet"
-      },
-      "soundCue": "passive/decree",
-      "soundFamily": "decree",
-      "target": "pieceClass"
-    },
-    {
-      "id": "no_stone_cutting",
-      "name": "No Stone Cutting",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "capture-denial",
-      "tier": 2,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 26,
-      "description": "You can't capture bishops.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "decree",
-        "primitives": [
-          "sigilStamp"
-        ],
-        "sigil": "church"
       },
       "soundCue": "passive/decree",
       "soundFamily": "decree",
@@ -42921,27 +42828,28 @@
       "target": "piece"
     },
     {
-      "id": "right_handed",
-      "name": "Right Handed",
+      "id": "rook_buddies",
+      "name": "Rook Buddies",
       "kind": "nerf",
       "category": "nerf",
       "effectCategory": "zone-denial",
       "tier": 2,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 51,
-      "description": "You can't move to the a-file, except once per game.",
+      "descriptionLength": 114,
+      "description": "Your rooks can't move while any piece sits between them on your home rank; clear the back rank between them first.",
       "soundSource": "passive-cue",
       "animation": {
         "family": "territory",
         "primitives": [
-          "edgeBurn"
+          "zoneSweep",
+          "beamHorizontal"
         ],
-        "sigil": "ban"
+        "sigil": "link"
       },
       "soundCue": "passive/territory",
       "soundFamily": "territory",
-      "target": "file"
+      "target": "rank"
     },
     {
       "id": "sacred_file",
@@ -42990,30 +42898,6 @@
       "target": "pieceClass"
     },
     {
-      "id": "separation_church_state",
-      "name": "Separation of Church and State",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "self-movement-restriction",
-      "tier": 2,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 71,
-      "description": "Can't move bishops next to a king and can't move king next to a bishop.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "bind",
-        "primitives": [
-          "chainLink",
-          "pulseRing"
-        ],
-        "sigil": "link"
-      },
-      "soundCue": "passive/bind",
-      "soundFamily": "bind",
-      "target": "pieceClass"
-    },
-    {
       "id": "soft_paws",
       "name": "Soft Paws",
       "kind": "nerf",
@@ -43029,29 +42913,6 @@
         "family": "decree",
         "primitives": [
           "sigilStamp"
-        ],
-        "sigil": "leaf"
-      },
-      "soundCue": "passive/decree",
-      "soundFamily": "decree",
-      "target": "pieceClass"
-    },
-    {
-      "id": "vegan",
-      "name": "Vegan",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "capture-denial",
-      "tier": 2,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 77,
-      "description": "You can't capture knights, unless the knight is the piece checking your king.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "decree",
-        "primitives": [
-          "crackLines"
         ],
         "sigil": "leaf"
       },
@@ -43105,6 +42966,30 @@
       "soundCue": "passive/decree",
       "soundFamily": "decree",
       "target": "pieceClass"
+    },
+    {
+      "id": "wn_knight_toll",
+      "name": "Knight Toll",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "capture-denial",
+      "tier": 2,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 84,
+      "description": "You can't capture with a knight if a knight of yours captured on your previous turn.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "decree",
+        "primitives": [
+          "slabSlam",
+          "sigilStamp"
+        ],
+        "sigil": "swords"
+      },
+      "soundCue": "passive/decree",
+      "soundFamily": "decree",
+      "target": "piece"
     },
     {
       "id": "wn_moonlit_king",
@@ -43199,27 +43084,51 @@
       "target": "pieceClass"
     },
     {
-      "id": "advancing_faith",
-      "name": "Advancing Faith",
+      "id": "anchored_rooks",
+      "name": "Anchored Rooks",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "self-movement-restriction",
+      "tier": 3,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 99,
+      "description": "Your rooks may leave your back rank, but once a rook has left it, that rook can never return to it.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "territory",
+        "primitives": [
+          "beamHorizontal",
+          "zoneSweep"
+        ],
+        "sigil": "castle"
+      },
+      "soundCue": "passive/territory",
+      "soundFamily": "territory",
+      "target": "rank"
+    },
+    {
+      "id": "artillery",
+      "name": "Artillery",
       "kind": "nerf",
       "category": "nerf",
       "effectCategory": "forced-move",
       "tier": 3,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 211,
-      "description": "Your bishops must gain ground on every move: each bishop move has to advance toward the enemy, never staying level and never falling back, except a bishop move that gets your king out of check is always allowed.",
+      "descriptionLength": 35,
+      "description": "Rooks must capture at distance ≥ 4.",
       "soundSource": "passive-cue",
       "animation": {
-        "family": "decree",
+        "family": "strike",
         "primitives": [
-          "sigilStamp",
-          "slabSlam"
+          "quakeRumble",
+          "bolt"
         ],
-        "sigil": "move-up"
+        "sigil": "crosshair"
       },
-      "soundCue": "passive/decree",
-      "soundFamily": "decree",
+      "soundCue": "passive/strike",
+      "soundFamily": "strike",
       "target": "pieceClass"
     },
     {
@@ -43295,28 +43204,28 @@
       "target": "pieceClass"
     },
     {
-      "id": "clergy",
-      "name": "Clergy",
+      "id": "cess",
+      "name": "Cess",
       "kind": "nerf",
       "category": "nerf",
       "effectCategory": "zone-denial",
       "tier": 3,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 116,
-      "description": "Your bishops can't move backward toward your own side; each bishop move must stay level or advance toward the enemy.",
+      "descriptionLength": 29,
+      "description": "You can't move to the h-file.",
       "soundSource": "passive-cue",
       "animation": {
-        "family": "bind",
+        "family": "territory",
         "primitives": [
-          "shackleDrop",
-          "chainLink"
+          "beamVertical",
+          "zoneSweep"
         ],
-        "sigil": "cross"
+        "sigil": "ban"
       },
-      "soundCue": "passive/bind",
-      "soundFamily": "bind",
-      "target": "pieceClass"
+      "soundCue": "passive/territory",
+      "soundFamily": "territory",
+      "target": "file"
     },
     {
       "id": "comfort_zone",
@@ -43341,54 +43250,6 @@
       "soundCue": "passive/veil",
       "soundFamily": "veil",
       "target": "zone"
-    },
-    {
-      "id": "conscientious_objectors",
-      "name": "Conscientious Objectors",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "capture-denial",
-      "tier": 3,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 76,
-      "description": "Your pawns can't capture, unless the target is the piece checking your king.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "decree",
-        "primitives": [
-          "slabSlam",
-          "sigilStamp"
-        ],
-        "sigil": "feather"
-      },
-      "soundCue": "passive/decree",
-      "soundFamily": "decree",
-      "target": "pieceClass"
-    },
-    {
-      "id": "court_martial",
-      "name": "Court Martial",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "capture-denial",
-      "tier": 3,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 52,
-      "description": "A piece that's attacked at turn start can't capture.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "strike",
-        "primitives": [
-          "pulseRing",
-          "bolt"
-        ],
-        "sigil": "gavel"
-      },
-      "soundCue": "passive/strike",
-      "soundFamily": "strike",
-      "target": "piece"
     },
     {
       "id": "cramped_rooks",
@@ -43462,52 +43323,28 @@
       "target": "piece"
     },
     {
-      "id": "femme_fatale",
-      "name": "Femme Fatale",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "capture-condition",
-      "tier": 3,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 52,
-      "description": "You can only capture the enemy king with your queen.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "strike",
-        "primitives": [
-          "drainFlow",
-          "bolt"
-        ],
-        "sigil": "zap"
-      },
-      "soundCue": "passive/strike",
-      "soundFamily": "strike",
-      "target": "pieceClass"
-    },
-    {
-      "id": "greedy",
-      "name": "Greedy",
+      "id": "famine",
+      "name": "Famine",
       "kind": "nerf",
       "category": "nerf",
       "effectCategory": "capture-denial",
       "tier": 3,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 110,
-      "description": "You can't capture a lesser piece when a higher-value capture is on the table. You may still play a quiet move.",
+      "descriptionLength": 39,
+      "description": "After move 15, you can't capture pawns.",
       "soundSource": "passive-cue",
       "animation": {
-        "family": "strike",
+        "family": "tempo",
         "primitives": [
-          "bolt",
-          "edgeBurn"
+          "tickPips",
+          "drainFlow"
         ],
-        "sigil": "coins"
+        "sigil": "wheat-off"
       },
-      "soundCue": "passive/strike",
-      "soundFamily": "strike",
-      "target": "piece"
+      "soundCue": "passive/tempo",
+      "soundFamily": "tempo",
+      "target": "pieceClass"
     },
     {
       "id": "ichthyophobe",
@@ -43533,27 +43370,28 @@
       "target": "pieceClass"
     },
     {
-      "id": "leading_the_charge",
-      "name": "Leading the Charge",
+      "id": "kingfisher",
+      "name": "Kingfisher",
       "kind": "nerf",
       "category": "nerf",
-      "effectCategory": "self-movement-restriction",
+      "effectCategory": "delayed-contract",
       "tier": 3,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 86,
-      "description": "As long as you have a knight, non-knights can't be ahead of your most advanced knight.",
+      "descriptionLength": 157,
+      "description": "Starting after your third move, when your king can capture it must dive for the richest prize: it has to take the most valuable enemy piece within its reach.",
       "soundSource": "passive-cue",
       "animation": {
         "family": "decree",
         "primitives": [
-          "quakeRumble"
+          "sigilStamp",
+          "slabSlam"
         ],
-        "sigil": "gavel"
+        "sigil": "crown"
       },
       "soundCue": "passive/decree",
       "soundFamily": "decree",
-      "target": "pieceClass"
+      "target": "piece"
     },
     {
       "id": "no_free_lunch",
@@ -43578,6 +43416,53 @@
       "soundCue": "passive/strike",
       "soundFamily": "strike",
       "target": "piece"
+    },
+    {
+      "id": "no_retreat",
+      "name": "No Retreat",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "zone-denial",
+      "tier": 3,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 56,
+      "description": "Your king can't step backward toward your own back rank.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "territory",
+        "primitives": [
+          "zoneSweep",
+          "beamHorizontal"
+        ],
+        "sigil": "crown"
+      },
+      "soundCue": "passive/territory",
+      "soundFamily": "territory",
+      "target": "rank"
+    },
+    {
+      "id": "no_stone_cutting",
+      "name": "No Stone Cutting",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "capture-denial",
+      "tier": 3,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 26,
+      "description": "You can't capture bishops.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "decree",
+        "primitives": [
+          "sigilStamp"
+        ],
+        "sigil": "church"
+      },
+      "soundCue": "passive/decree",
+      "soundFamily": "decree",
+      "target": "pieceClass"
     },
     {
       "id": "nw2_cold_trail",
@@ -43700,6 +43585,30 @@
       "target": "pieceClass"
     },
     {
+      "id": "prince_charming",
+      "name": "Prince Charming",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "forced-move",
+      "tier": 3,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 58,
+      "description": "If your queen is attacked, must move a knight if possible.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "strike",
+        "primitives": [
+          "crackBloom",
+          "bolt"
+        ],
+        "sigil": "zap"
+      },
+      "soundCue": "passive/strike",
+      "soundFamily": "strike",
+      "target": "pieceClass"
+    },
+    {
       "id": "professional_courtesy",
       "name": "Professional Courtesy",
       "kind": "nerf",
@@ -43772,76 +43681,51 @@
       "target": "pieceClass"
     },
     {
-      "id": "queen_disguise",
-      "name": "Queen Disguise",
+      "id": "pull_of_the_center",
+      "name": "Pull of the Center",
       "kind": "nerf",
       "category": "nerf",
-      "effectCategory": "self-movement-restriction",
+      "effectCategory": "capture-condition",
       "tier": 3,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 110,
-      "description": "Your queen is secretly either a rook or a bishop. Once you move it like one, you can't move it like the other.",
+      "descriptionLength": 52,
+      "description": "Your pawns can only capture toward the center files.",
       "soundSource": "passive-cue",
       "animation": {
-        "family": "veil",
+        "family": "territory",
         "primitives": [
-          "fogRoll",
-          "drainFlow"
+          "beamVertical",
+          "zoneSweep"
         ],
-        "sigil": "cloud-fog"
+        "sigil": "move-horizontal"
       },
-      "soundCue": "passive/veil",
-      "soundFamily": "veil",
-      "target": "pieceClass"
+      "soundCue": "passive/territory",
+      "soundFamily": "territory",
+      "target": "file"
     },
     {
-      "id": "queen_fatigue",
-      "name": "Queen Fatigue",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "alt-win-loss-condition",
-      "tier": 3,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 100,
-      "description": "You lose if you move your queen more than 12 times. The count is only checked after your sixth move.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "decree",
-        "primitives": [
-          "sigilStamp",
-          "crackBloom"
-        ],
-        "sigil": "timer"
-      },
-      "soundCue": "passive/decree",
-      "soundFamily": "decree",
-      "target": "winCondition"
-    },
-    {
-      "id": "rook_buddies",
-      "name": "Rook Buddies",
+      "id": "right_handed",
+      "name": "Right Handed",
       "kind": "nerf",
       "category": "nerf",
       "effectCategory": "zone-denial",
       "tier": 3,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 114,
-      "description": "Your rooks can't move while any piece sits between them on your home rank; clear the back rank between them first.",
+      "descriptionLength": 51,
+      "description": "You can't move to the a-file, except once per game.",
       "soundSource": "passive-cue",
       "animation": {
         "family": "territory",
         "primitives": [
-          "zoneSweep",
-          "beamHorizontal"
+          "edgeBurn"
         ],
-        "sigil": "link"
+        "sigil": "ban"
       },
       "soundCue": "passive/territory",
       "soundFamily": "territory",
-      "target": "rank"
+      "target": "file"
     },
     {
       "id": "royal_bloodlust",
@@ -43891,51 +43775,28 @@
       "target": "pieceClass"
     },
     {
-      "id": "scouting_ahead",
-      "name": "Scouting Ahead",
+      "id": "separation_church_state",
+      "name": "Separation of Church and State",
       "kind": "nerf",
       "category": "nerf",
       "effectCategory": "self-movement-restriction",
       "tier": 3,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 80,
-      "description": "As long as you have a pawn, non-pawns can't go ahead of your most advanced pawn.",
+      "descriptionLength": 71,
+      "description": "Can't move bishops next to a king and can't move king next to a bishop.",
       "soundSource": "passive-cue",
       "animation": {
-        "family": "decree",
+        "family": "bind",
         "primitives": [
-          "sigilStamp",
+          "chainLink",
           "pulseRing"
         ],
-        "sigil": "gavel"
+        "sigil": "link"
       },
-      "soundCue": "passive/decree",
-      "soundFamily": "decree",
+      "soundCue": "passive/bind",
+      "soundFamily": "bind",
       "target": "pieceClass"
-    },
-    {
-      "id": "shadow_queen",
-      "name": "Shadow Queen",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "direction-geometry-lock",
-      "tier": 3,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 41,
-      "description": "Your queen can only move to dark squares.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "veil",
-        "primitives": [
-          "fogRoll"
-        ],
-        "sigil": "moon-star"
-      },
-      "soundCue": "passive/veil",
-      "soundFamily": "veil",
-      "target": "piece"
     },
     {
       "id": "skittish",
@@ -43986,68 +43847,46 @@
       "target": "piece"
     },
     {
-      "id": "stir_crazy",
-      "name": "Stir Crazy",
+      "id": "snipers",
+      "name": "Snipers",
       "kind": "nerf",
       "category": "nerf",
-      "effectCategory": "zone-buff",
+      "effectCategory": "capture-condition",
       "tier": 3,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 64,
-      "description": "If you haven't moved your king for 4 turns, you must on the 5th.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "decree",
-        "primitives": [
-          "pulseRing"
-        ],
-        "sigil": "gavel"
-      },
-      "soundCue": "passive/decree",
-      "soundFamily": "decree",
-      "target": "piece"
-    },
-    {
-      "id": "trophy_wife",
-      "name": "Trophy Wife",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "capture-denial",
-      "tier": 3,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 76,
-      "description": "Your queen can't capture, unless the target is the piece checking your king.",
+      "descriptionLength": 43,
+      "description": "Bishops can only capture from distance ≥ 4.",
       "soundSource": "passive-cue",
       "animation": {
         "family": "decree",
         "primitives": [
           "sigilStamp",
-          "slabSlam"
+          "quakeRumble"
         ],
-        "sigil": "gem"
+        "sigil": "gavel"
       },
       "soundCue": "passive/decree",
       "soundFamily": "decree",
       "target": "pieceClass"
     },
     {
-      "id": "truant",
-      "name": "Truant",
+      "id": "switchback",
+      "name": "Switchback",
       "kind": "nerf",
       "category": "nerf",
-      "effectCategory": "direction-geometry-lock",
+      "effectCategory": "zone-denial",
       "tier": 3,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 45,
-      "description": "You can't move the same piece twice in a row.",
+      "descriptionLength": 84,
+      "description": "You can't move in the exact same direction (same file and rank step) twice in a row.",
       "soundSource": "passive-cue",
       "animation": {
         "family": "tempo",
         "primitives": [
-          "tickPips"
+          "tickPips",
+          "orbitSpark"
         ],
         "sigil": "shuffle"
       },
@@ -44056,76 +43895,27 @@
       "target": "clock"
     },
     {
-      "id": "true_gentleman",
-      "name": "True Gentleman",
+      "id": "vegan",
+      "name": "Vegan",
       "kind": "nerf",
       "category": "nerf",
       "effectCategory": "capture-denial",
       "tier": 3,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 25,
-      "description": "You can't capture queens.",
+      "descriptionLength": 77,
+      "description": "You can't capture knights, unless the knight is the piece checking your king.",
       "soundSource": "passive-cue",
       "animation": {
         "family": "decree",
         "primitives": [
-          "sigilStamp",
-          "slabSlam"
+          "crackLines"
         ],
-        "sigil": "crown"
+        "sigil": "leaf"
       },
       "soundCue": "passive/decree",
       "soundFamily": "decree",
       "target": "pieceClass"
-    },
-    {
-      "id": "whites_of_their_eyes",
-      "name": "Whites of Their Eyes",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "retaliation-damage",
-      "tier": 3,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 74,
-      "description": "You can only capture within 2 squares (king-steps) of the capturing piece.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "strike",
-        "primitives": [
-          "bolt",
-          "pulseRing"
-        ],
-        "sigil": "eye"
-      },
-      "soundCue": "passive/strike",
-      "soundFamily": "strike",
-      "target": "piece"
-    },
-    {
-      "id": "wn_knight_toll",
-      "name": "Knight Toll",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "capture-denial",
-      "tier": 3,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 84,
-      "description": "You can't capture with a knight if a knight of yours captured on your previous turn.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "decree",
-        "primitives": [
-          "slabSlam",
-          "sigilStamp"
-        ],
-        "sigil": "swords"
-      },
-      "soundCue": "passive/decree",
-      "soundFamily": "decree",
-      "target": "piece"
     },
     {
       "id": "wn_no_going_home",
@@ -44175,27 +43965,27 @@
       "target": "board"
     },
     {
-      "id": "artillery",
-      "name": "Artillery",
+      "id": "advancing_faith",
+      "name": "Advancing Faith",
       "kind": "nerf",
       "category": "nerf",
       "effectCategory": "forced-move",
       "tier": 4,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 35,
-      "description": "Rooks must capture at distance ≥ 4.",
+      "descriptionLength": 211,
+      "description": "Your bishops must gain ground on every move: each bishop move has to advance toward the enemy, never staying level and never falling back, except a bishop move that gets your king out of check is always allowed.",
       "soundSource": "passive-cue",
       "animation": {
-        "family": "strike",
+        "family": "decree",
         "primitives": [
-          "quakeRumble",
-          "bolt"
+          "sigilStamp",
+          "slabSlam"
         ],
-        "sigil": "crosshair"
+        "sigil": "move-up"
       },
-      "soundCue": "passive/strike",
-      "soundFamily": "strike",
+      "soundCue": "passive/decree",
+      "soundFamily": "decree",
       "target": "pieceClass"
     },
     {
@@ -44223,40 +44013,64 @@
       "target": "piece"
     },
     {
-      "id": "broadside_rooks",
-      "name": "Broadside Rooks",
+      "id": "bishop_tunnel_vision",
+      "name": "Bishop Tunnel Vision",
       "kind": "nerf",
       "category": "nerf",
-      "effectCategory": "self-movement-restriction",
+      "effectCategory": "zone-denial",
       "tier": 4,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 110,
-      "description": "Your rooks glide any distance sideways along a rank, but can only inch one square at a time up or down a file.",
+      "descriptionLength": 94,
+      "description": "Your bishops can't move more than three squares in a single move, unless the move gives check.",
       "soundSource": "passive-cue",
       "animation": {
-        "family": "territory",
+        "family": "veil",
         "primitives": [
-          "zoneSweep",
-          "beamVertical"
+          "pulseRing",
+          "fogRoll"
         ],
-        "sigil": "castle"
+        "sigil": "church"
       },
-      "soundCue": "passive/territory",
-      "soundFamily": "territory",
-      "target": "file"
+      "soundCue": "passive/veil",
+      "soundFamily": "veil",
+      "target": "square"
     },
     {
-      "id": "carnivore_bishops",
-      "name": "Carnivore Bishops",
+      "id": "clergy",
+      "name": "Clergy",
       "kind": "nerf",
       "category": "nerf",
-      "effectCategory": "self-movement-restriction",
+      "effectCategory": "zone-denial",
       "tier": 4,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 75,
-      "description": "Starting on your fourth move, your bishops can only move when they capture.",
+      "descriptionLength": 116,
+      "description": "Your bishops can't move backward toward your own side; each bishop move must stay level or advance toward the enemy.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "bind",
+        "primitives": [
+          "shackleDrop",
+          "chainLink"
+        ],
+        "sigil": "cross"
+      },
+      "soundCue": "passive/bind",
+      "soundFamily": "bind",
+      "target": "pieceClass"
+    },
+    {
+      "id": "cloistered_queen",
+      "name": "Cloistered Queen",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "single-piece-freeze",
+      "tier": 4,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 87,
+      "description": "Your queen cannot move until you castle or reach your 12th move, whichever comes first.",
       "soundSource": "passive-cue",
       "animation": {
         "family": "bind",
@@ -44264,47 +44078,23 @@
           "chainLink",
           "shackleDrop"
         ],
-        "sigil": "church"
+        "sigil": "crown"
       },
       "soundCue": "passive/bind",
       "soundFamily": "bind",
-      "target": "pieceClass"
+      "target": "piece"
     },
     {
-      "id": "cheerleaders",
-      "name": "Cheerleaders",
+      "id": "conscientious_objectors",
+      "name": "Conscientious Objectors",
       "kind": "nerf",
       "category": "nerf",
-      "effectCategory": "capture-condition",
+      "effectCategory": "capture-denial",
       "tier": 4,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 60,
-      "description": "Non-pawns can only capture if adjacent to one of your pawns.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "decree",
-        "primitives": [
-          "sigilStamp",
-          "slabSlam"
-        ],
-        "sigil": "gavel"
-      },
-      "soundCue": "passive/decree",
-      "soundFamily": "decree",
-      "target": "pieceClass"
-    },
-    {
-      "id": "chivalry",
-      "name": "Chivalry",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "capture-condition",
-      "tier": 4,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 94,
-      "description": "Can only capture heavies (rooks, queens) with a knight. This activates only after your move 3.",
+      "descriptionLength": 76,
+      "description": "Your pawns can't capture, unless the target is the piece checking your king.",
       "soundSource": "passive-cue",
       "animation": {
         "family": "decree",
@@ -44312,35 +44102,35 @@
           "slabSlam",
           "sigilStamp"
         ],
-        "sigil": "gavel"
+        "sigil": "feather"
       },
       "soundCue": "passive/decree",
       "soundFamily": "decree",
       "target": "pieceClass"
     },
     {
-      "id": "control_center",
-      "name": "Control Center",
+      "id": "court_martial",
+      "name": "Court Martial",
       "kind": "nerf",
       "category": "nerf",
-      "effectCategory": "forced-move",
+      "effectCategory": "capture-denial",
       "tier": 4,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 136,
-      "description": "Non-capturing moves must go to files c, d, e, or f, unless the piece already starts on those files, in which case it may leave normally.",
+      "descriptionLength": 52,
+      "description": "A piece that's attacked at turn start can't capture.",
       "soundSource": "passive-cue",
       "animation": {
         "family": "strike",
         "primitives": [
-          "quakeRumble",
+          "pulseRing",
           "bolt"
         ],
-        "sigil": "zap"
+        "sigil": "gavel"
       },
       "soundCue": "passive/strike",
       "soundFamily": "strike",
-      "target": "file"
+      "target": "piece"
     },
     {
       "id": "covering_fire",
@@ -44366,28 +44156,51 @@
       "target": "piece"
     },
     {
-      "id": "crippled_clergy",
-      "name": "Crippled Clergy",
+      "id": "crossing_the_rubicon",
+      "name": "Crossing the Rubicon",
       "kind": "nerf",
       "category": "nerf",
-      "effectCategory": "self-movement-restriction",
+      "effectCategory": "zone-denial",
       "tier": 4,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 48,
-      "description": "Your bishops can only move one square at a time.",
+      "descriptionLength": 61,
+      "description": "Once a piece crosses to the opponent's half, it can't return.",
       "soundSource": "passive-cue",
       "animation": {
-        "family": "decree",
+        "family": "territory",
         "primitives": [
-          "sigilStamp",
-          "crackLines"
+          "zoneSweep"
         ],
-        "sigil": "church"
+        "sigil": "map"
       },
-      "soundCue": "passive/decree",
-      "soundFamily": "decree",
-      "target": "pieceClass"
+      "soundCue": "passive/territory",
+      "soundFamily": "territory",
+      "target": "zone"
+    },
+    {
+      "id": "crusade",
+      "name": "Crusade",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "forced-move",
+      "tier": 4,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 148,
+      "description": "For 4 moves starting on a random move (announced a turn early), if at least three of your moves reach a specific random square, you must move to it.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "bind",
+        "primitives": [
+          "chainLink",
+          "barCage"
+        ],
+        "sigil": "link"
+      },
+      "soundCue": "passive/bind",
+      "soundFamily": "bind",
+      "target": "square"
     },
     {
       "id": "elephants_fear_mice",
@@ -44411,53 +44224,6 @@
       },
       "soundCue": "passive/decree",
       "soundFamily": "decree",
-      "target": "pieceClass"
-    },
-    {
-      "id": "entrenched",
-      "name": "Entrenched",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "move-budget-change",
-      "tier": 4,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 37,
-      "description": "Rooks can't move more than 2 squares.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "bind",
-        "primitives": [
-          "weightDrop"
-        ],
-        "sigil": "link"
-      },
-      "soundCue": "passive/bind",
-      "soundFamily": "bind",
-      "target": "pieceClass"
-    },
-    {
-      "id": "famine",
-      "name": "Famine",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "capture-denial",
-      "tier": 4,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 39,
-      "description": "After move 15, you can't capture pawns.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "tempo",
-        "primitives": [
-          "tickPips",
-          "drainFlow"
-        ],
-        "sigil": "wheat-off"
-      },
-      "soundCue": "passive/tempo",
-      "soundFamily": "tempo",
       "target": "pieceClass"
     },
     {
@@ -44485,28 +44251,28 @@
       "target": "piece"
     },
     {
-      "id": "gambler",
-      "name": "Gambler",
+      "id": "frozen_cavalry",
+      "name": "Frozen Cavalry",
       "kind": "nerf",
       "category": "nerf",
-      "effectCategory": "self-movement-restriction",
+      "effectCategory": "single-piece-freeze",
       "tier": 4,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 163,
-      "description": "Can't move a specific piece type, re-randomized each turn and revealed one turn early. The ban is dropped whenever it would leave you fewer than three legal moves.",
+      "descriptionLength": 99,
+      "description": "From your 18th move on, you can't move your knights, except for a single once-per-game knight move.",
       "soundSource": "passive-cue",
       "animation": {
-        "family": "veil",
+        "family": "bind",
         "primitives": [
-          "fogRoll",
-          "drainFlow"
+          "chainLink",
+          "shackleDrop"
         ],
-        "sigil": "cloud-fog"
+        "sigil": "snowflake"
       },
-      "soundCue": "passive/veil",
-      "soundFamily": "veil",
-      "target": "zone"
+      "soundCue": "passive/bind",
+      "soundFamily": "bind",
+      "target": "pieceClass"
     },
     {
       "id": "goldfish",
@@ -44533,28 +44299,28 @@
       "target": "pieceClass"
     },
     {
-      "id": "half_a_queen",
-      "name": "Half a Queen",
+      "id": "greedy",
+      "name": "Greedy",
       "kind": "nerf",
       "category": "nerf",
-      "effectCategory": "self-movement-restriction",
+      "effectCategory": "capture-denial",
       "tier": 4,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 106,
-      "description": "Your queen can only move like a rook, never diagonally, except one diagonal move is allowed once per game.",
+      "descriptionLength": 110,
+      "description": "You can't capture a lesser piece when a higher-value capture is on the table. You may still play a quiet move.",
       "soundSource": "passive-cue",
       "animation": {
-        "family": "territory",
+        "family": "strike",
         "primitives": [
-          "beamVertical",
-          "zoneSweep"
+          "bolt",
+          "edgeBurn"
         ],
-        "sigil": "castle"
+        "sigil": "coins"
       },
-      "soundCue": "passive/territory",
-      "soundFamily": "territory",
-      "target": "zone"
+      "soundCue": "passive/strike",
+      "soundFamily": "strike",
+      "target": "piece"
     },
     {
       "id": "haunted",
@@ -44579,30 +44345,6 @@
       "soundCue": "passive/bind",
       "soundFamily": "bind",
       "target": "square"
-    },
-    {
-      "id": "heavy_boots",
-      "name": "Heavy Boots",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "move-budget-change",
-      "tier": 4,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 36,
-      "description": "All non-pawn moves are distance ≤ 3.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "decree",
-        "primitives": [
-          "slabSlam",
-          "sigilStamp"
-        ],
-        "sigil": "boot"
-      },
-      "soundCue": "passive/decree",
-      "soundFamily": "decree",
-      "target": "piece"
     },
     {
       "id": "hipster",
@@ -44677,30 +44419,6 @@
       "target": "pieceClass"
     },
     {
-      "id": "kingfisher",
-      "name": "Kingfisher",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "delayed-contract",
-      "tier": 4,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 157,
-      "description": "Starting after your third move, when your king can capture it must dive for the richest prize: it has to take the most valuable enemy piece within its reach.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "decree",
-        "primitives": [
-          "sigilStamp",
-          "slabSlam"
-        ],
-        "sigil": "crown"
-      },
-      "soundCue": "passive/decree",
-      "soundFamily": "decree",
-      "target": "piece"
-    },
-    {
       "id": "knight_parade",
       "name": "Knight Parade",
       "kind": "nerf",
@@ -44748,40 +44466,39 @@
       "target": "piece"
     },
     {
-      "id": "moving_day",
-      "name": "Moving Day",
+      "id": "monastic_vows",
+      "name": "Monastic Vows",
       "kind": "nerf",
       "category": "nerf",
-      "effectCategory": "zone-denial",
+      "effectCategory": "capture-denial",
       "tier": 4,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 48,
-      "description": "After turn 20, no piece may be on your home row.",
+      "descriptionLength": 97,
+      "description": "Your bishops can't capture, except capturing a piece that has your king in check is always legal.",
       "soundSource": "passive-cue",
       "animation": {
-        "family": "decree",
+        "family": "strike",
         "primitives": [
-          "sigilStamp",
-          "crackLines"
+          "bolt"
         ],
-        "sigil": "gavel"
+        "sigil": "church"
       },
-      "soundCue": "passive/decree",
-      "soundFamily": "decree",
+      "soundCue": "passive/strike",
+      "soundFamily": "strike",
       "target": "pieceClass"
     },
     {
-      "id": "no_retreat",
-      "name": "No Retreat",
+      "id": "no_retreat_rooks",
+      "name": "No Retreat Rooks",
       "kind": "nerf",
       "category": "nerf",
       "effectCategory": "zone-denial",
       "tier": 4,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 56,
-      "description": "Your king can't step backward toward your own back rank.",
+      "descriptionLength": 112,
+      "description": "From your 10th move on, your rooks can't move toward your own back rank, except for a single once-per-game move.",
       "soundSource": "passive-cue",
       "animation": {
         "family": "territory",
@@ -44789,7 +44506,7 @@
           "zoneSweep",
           "beamHorizontal"
         ],
-        "sigil": "crown"
+        "sigil": "castle"
       },
       "soundCue": "passive/territory",
       "soundFamily": "territory",
@@ -44842,54 +44559,6 @@
       "soundCue": "passive/decree",
       "soundFamily": "decree",
       "target": "pieceClass"
-    },
-    {
-      "id": "one_bite_at_a_time",
-      "name": "One Bite at a Time",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "capture-denial",
-      "tier": 4,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 147,
-      "description": "After a capture, you can't capture again for two of your turns, except your chosen pawn (on a random file, shown from the start) may still capture.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "strike",
-        "primitives": [
-          "bolt",
-          "drainFlow"
-        ],
-        "sigil": "timer"
-      },
-      "soundCue": "passive/strike",
-      "soundFamily": "strike",
-      "target": "piece"
-    },
-    {
-      "id": "out_of_breath",
-      "name": "Out of Breath",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "self-movement-restriction",
-      "tier": 4,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 49,
-      "description": "You can only move your king once the entire game.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "bind",
-        "primitives": [
-          "chainLink",
-          "shackleDrop"
-        ],
-        "sigil": "wind"
-      },
-      "soundCue": "passive/bind",
-      "soundFamily": "bind",
-      "target": "piece"
     },
     {
       "id": "overzealous",
@@ -44963,54 +44632,6 @@
       "target": "pieceClass"
     },
     {
-      "id": "prince_charming",
-      "name": "Prince Charming",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "forced-move",
-      "tier": 4,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 58,
-      "description": "If your queen is attacked, must move a knight if possible.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "strike",
-        "primitives": [
-          "crackBloom",
-          "bolt"
-        ],
-        "sigil": "zap"
-      },
-      "soundCue": "passive/strike",
-      "soundFamily": "strike",
-      "target": "pieceClass"
-    },
-    {
-      "id": "pull_of_the_center",
-      "name": "Pull of the Center",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "capture-condition",
-      "tier": 4,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 52,
-      "description": "Your pawns can only capture toward the center files.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "territory",
-        "primitives": [
-          "beamVertical",
-          "zoneSweep"
-        ],
-        "sigil": "move-horizontal"
-      },
-      "soundCue": "passive/territory",
-      "soundFamily": "territory",
-      "target": "file"
-    },
-    {
       "id": "punching_down",
       "name": "Punching Down",
       "kind": "nerf",
@@ -45033,6 +44654,102 @@
       "soundCue": "passive/decree",
       "soundFamily": "decree",
       "target": "pieceClass"
+    },
+    {
+      "id": "quarantine",
+      "name": "Quarantine",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "king-protection",
+      "tier": 4,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 196,
+      "description": "You can't move a piece into your own first two ranks from outside them (pieces already on those ranks may still move within them). Separately, while your king is in check, only your king may move.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "territory",
+        "primitives": [
+          "zoneSweep",
+          "beamHorizontal"
+        ],
+        "sigil": "biohazard"
+      },
+      "soundCue": "passive/territory",
+      "soundFamily": "territory",
+      "target": "rank"
+    },
+    {
+      "id": "queen_disguise",
+      "name": "Queen Disguise",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "self-movement-restriction",
+      "tier": 4,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 110,
+      "description": "Your queen is secretly either a rook or a bishop. Once you move it like one, you can't move it like the other.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "veil",
+        "primitives": [
+          "fogRoll",
+          "drainFlow"
+        ],
+        "sigil": "cloud-fog"
+      },
+      "soundCue": "passive/veil",
+      "soundFamily": "veil",
+      "target": "pieceClass"
+    },
+    {
+      "id": "queen_fatigue",
+      "name": "Queen Fatigue",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "alt-win-loss-condition",
+      "tier": 4,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 100,
+      "description": "You lose if you move your queen more than 12 times. The count is only checked after your sixth move.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "decree",
+        "primitives": [
+          "sigilStamp",
+          "crackBloom"
+        ],
+        "sigil": "timer"
+      },
+      "soundCue": "passive/decree",
+      "soundFamily": "decree",
+      "target": "winCondition"
+    },
+    {
+      "id": "queen_grounded",
+      "name": "Queen Grounded",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "zone-denial",
+      "tier": 4,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 124,
+      "description": "From your 12th move on, your queen can't move into the opponent's half of the board, except for a single once-per-game move.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "territory",
+        "primitives": [
+          "crackBloom",
+          "zoneSweep"
+        ],
+        "sigil": "crown"
+      },
+      "soundCue": "passive/territory",
+      "soundFamily": "territory",
+      "target": "zone"
     },
     {
       "id": "quicksand",
@@ -45080,6 +44797,29 @@
       "soundCue": "passive/tempo",
       "soundFamily": "tempo",
       "target": "clock"
+    },
+    {
+      "id": "royal_berth",
+      "name": "Royal Berth",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "self-movement-restriction",
+      "tier": 4,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 42,
+      "description": "Can't place a piece adjacent to your king.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "summon",
+        "primitives": [
+          "dropImpact"
+        ],
+        "sigil": "sparkles"
+      },
+      "soundCue": "passive/summon",
+      "soundFamily": "summon",
+      "target": "square"
     },
     {
       "id": "royal_guard",
@@ -45130,27 +44870,51 @@
       "target": "pieceClass"
     },
     {
-      "id": "shapeshifter",
-      "name": "Shapeshifter",
+      "id": "secret_garden",
+      "name": "Secret Garden",
       "kind": "nerf",
       "category": "nerf",
-      "effectCategory": "piece-downgrade-transform",
+      "effectCategory": "mass-freeze",
       "tier": 4,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 172,
-      "description": "For your first 3 moves the queen moves normally. From then on she is a bishop; capturing a non-pawn turns her into a copy of that piece, and capturing a knight freezes her.",
+      "descriptionLength": 198,
+      "description": "Two random garden zones (each a 3-file-wide, 3-rank-deep block in front of one of your pawns, shown as marked squares) are off limits for the whole game: you can't move any piece onto those squares.",
       "soundSource": "passive-cue",
       "animation": {
-        "family": "strike",
+        "family": "veil",
         "primitives": [
-          "shockRing"
+          "fogRoll",
+          "orbitSpark"
         ],
-        "sigil": "zap"
+        "sigil": "flower"
       },
-      "soundCue": "passive/strike",
-      "soundFamily": "strike",
-      "target": "pieceClass"
+      "soundCue": "passive/veil",
+      "soundFamily": "veil",
+      "target": "file"
+    },
+    {
+      "id": "shadow_queen",
+      "name": "Shadow Queen",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "direction-geometry-lock",
+      "tier": 4,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 41,
+      "description": "Your queen can only move to dark squares.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "veil",
+        "primitives": [
+          "fogRoll"
+        ],
+        "sigil": "moon-star"
+      },
+      "soundCue": "passive/veil",
+      "soundFamily": "veil",
+      "target": "piece"
     },
     {
       "id": "shellshocked",
@@ -45174,6 +44938,29 @@
       "soundCue": "passive/bind",
       "soundFamily": "bind",
       "target": "square"
+    },
+    {
+      "id": "short_leash_knights",
+      "name": "Short Leash Knights",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "piece-class-lockdown",
+      "tier": 4,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 62,
+      "description": "Your knights may never move beyond your own first three ranks.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "territory",
+        "primitives": [
+          "zoneSweep"
+        ],
+        "sigil": "move"
+      },
+      "soundCue": "passive/territory",
+      "soundFamily": "territory",
+      "target": "rank"
     },
     {
       "id": "sibling_rivalry",
@@ -45247,78 +45034,6 @@
       "target": "piece"
     },
     {
-      "id": "snipers",
-      "name": "Snipers",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "capture-condition",
-      "tier": 4,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 43,
-      "description": "Bishops can only capture from distance ≥ 4.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "decree",
-        "primitives": [
-          "sigilStamp",
-          "quakeRumble"
-        ],
-        "sigil": "gavel"
-      },
-      "soundCue": "passive/decree",
-      "soundFamily": "decree",
-      "target": "pieceClass"
-    },
-    {
-      "id": "social_distancing",
-      "name": "Social Distancing",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "self-movement-restriction",
-      "tier": 4,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 132,
-      "description": "Can't make non-capturing moves to squares adjacent to opponent pieces. The forbidden ring around enemy pieces is shown on the board.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "strike",
-        "primitives": [
-          "bolt",
-          "drainFlow"
-        ],
-        "sigil": "zap"
-      },
-      "soundCue": "passive/strike",
-      "soundFamily": "strike",
-      "target": "board"
-    },
-    {
-      "id": "solar_flare",
-      "name": "Solar Flare",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "capture-condition",
-      "tier": 4,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 170,
-      "description": "The flare burns for 3 of your turns, then sleeps for 2, over and over. While it burns you can only capture on light squares. The dark squares are shown whenever it is up.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "territory",
-        "primitives": [
-          "pulseRing",
-          "zoneSweep"
-        ],
-        "sigil": "sun"
-      },
-      "soundCue": "passive/territory",
-      "soundFamily": "territory",
-      "target": "square"
-    },
-    {
       "id": "spice_of_life",
       "name": "Spice of Life",
       "kind": "nerf",
@@ -45341,6 +45056,29 @@
       "soundCue": "passive/tempo",
       "soundFamily": "tempo",
       "target": "clock"
+    },
+    {
+      "id": "stir_crazy",
+      "name": "Stir Crazy",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "zone-buff",
+      "tier": 4,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 64,
+      "description": "If you haven't moved your king for 4 turns, you must on the 5th.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "decree",
+        "primitives": [
+          "pulseRing"
+        ],
+        "sigil": "gavel"
+      },
+      "soundCue": "passive/decree",
+      "soundFamily": "decree",
+      "target": "piece"
     },
     {
       "id": "stop_stalling",
@@ -45390,28 +45128,28 @@
       "target": "square"
     },
     {
-      "id": "three_check",
-      "name": "Three Check",
+      "id": "tidy_desk",
+      "name": "Tidy Desk",
       "kind": "nerf",
       "category": "nerf",
-      "effectCategory": "alt-win-loss-condition",
+      "effectCategory": "forced-move",
       "tier": 4,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 53,
-      "description": "If you have been checked three times total, you lose.",
+      "descriptionLength": 131,
+      "description": "By move 25, you must have at least one piece on every rank of your half but one; you may leave a single rank of your choosing open.",
       "soundSource": "passive-cue",
       "animation": {
-        "family": "decree",
+        "family": "tempo",
         "primitives": [
-          "sigilStamp",
-          "crackBloom"
+          "tickPips",
+          "drainFlow"
         ],
-        "sigil": "alert-triangle"
+        "sigil": "layout-grid"
       },
-      "soundCue": "passive/decree",
-      "soundFamily": "decree",
-      "target": "winCondition"
+      "soundCue": "passive/tempo",
+      "soundFamily": "tempo",
+      "target": "clock"
     },
     {
       "id": "timid",
@@ -45486,6 +45224,53 @@
       "target": "rank"
     },
     {
+      "id": "truant",
+      "name": "Truant",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "direction-geometry-lock",
+      "tier": 4,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 45,
+      "description": "You can't move the same piece twice in a row.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "tempo",
+        "primitives": [
+          "tickPips"
+        ],
+        "sigil": "shuffle"
+      },
+      "soundCue": "passive/tempo",
+      "soundFamily": "tempo",
+      "target": "clock"
+    },
+    {
+      "id": "true_gentleman",
+      "name": "True Gentleman",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "capture-denial",
+      "tier": 4,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 25,
+      "description": "You can't capture queens.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "decree",
+        "primitives": [
+          "sigilStamp",
+          "slabSlam"
+        ],
+        "sigil": "crown"
+      },
+      "soundCue": "passive/decree",
+      "soundFamily": "decree",
+      "target": "pieceClass"
+    },
+    {
       "id": "vampiric",
       "name": "Vampiric",
       "kind": "nerf",
@@ -45528,30 +45313,6 @@
           "beamHorizontal"
         ],
         "sigil": "spiral"
-      },
-      "soundCue": "passive/territory",
-      "soundFamily": "territory",
-      "target": "rank"
-    },
-    {
-      "id": "warlord",
-      "name": "Warlord",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "zone-denial",
-      "tier": 4,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 150,
-      "description": "From turn 12 onward, your king can't be on your first two ranks. From turn 11, while your king is still on those ranks, you are warned one move early.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "territory",
-        "primitives": [
-          "zoneSweep",
-          "beamHorizontal"
-        ],
-        "sigil": "map"
       },
       "soundCue": "passive/territory",
       "soundFamily": "territory",
@@ -45820,30 +45581,6 @@
       "target": "piece"
     },
     {
-      "id": "wn_weigh_station",
-      "name": "Weigh Station",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "piece-class-lockdown",
-      "tier": 4,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 77,
-      "description": "Your rooks and queen can't cross into the enemy half (relative ranks 5 to 8).",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "territory",
-        "primitives": [
-          "beamHorizontal",
-          "zoneSweep"
-        ],
-        "sigil": "anchor"
-      },
-      "soundCue": "passive/territory",
-      "soundFamily": "territory",
-      "target": "rank"
-    },
-    {
       "id": "alternator",
       "name": "Alternator",
       "kind": "nerf",
@@ -45866,30 +45603,6 @@
       "soundCue": "passive/decree",
       "soundFamily": "decree",
       "target": "piece"
-    },
-    {
-      "id": "anchored_rooks",
-      "name": "Anchored Rooks",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "self-movement-restriction",
-      "tier": 5,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 99,
-      "description": "Your rooks may leave your back rank, but once a rook has left it, that rook can never return to it.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "territory",
-        "primitives": [
-          "beamHorizontal",
-          "zoneSweep"
-        ],
-        "sigil": "castle"
-      },
-      "soundCue": "passive/territory",
-      "soundFamily": "territory",
-      "target": "rank"
     },
     {
       "id": "armory",
@@ -45940,76 +45653,52 @@
       "target": "clock"
     },
     {
-      "id": "bishop_fan_club",
-      "name": "Bishop Fan Club",
+      "id": "boxing_with_shadow",
+      "name": "Boxing with Shadow",
       "kind": "nerf",
       "category": "nerf",
-      "effectCategory": "promotion-grant",
+      "effectCategory": "forced-move",
       "tier": 5,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 65,
-      "description": "Must promote to bishops. King and queen can only move diagonally.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "bind",
-        "primitives": [
-          "shackleDrop",
-          "chainLink"
-        ],
-        "sigil": "link"
-      },
-      "soundCue": "passive/bind",
-      "soundFamily": "bind",
-      "target": "pieceClass"
-    },
-    {
-      "id": "bishop_tunnel_vision",
-      "name": "Bishop Tunnel Vision",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "zone-denial",
-      "tier": 5,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 94,
-      "description": "Your bishops can't move more than three squares in a single move, unless the move gives check.",
+      "descriptionLength": 95,
+      "description": "From your move 4 on, when opponent moves, if you can move to the square they vacated, you must.",
       "soundSource": "passive-cue",
       "animation": {
         "family": "veil",
         "primitives": [
-          "pulseRing",
+          "orbitSpark",
           "fogRoll"
         ],
-        "sigil": "church"
+        "sigil": "cloud-fog"
       },
       "soundCue": "passive/veil",
       "soundFamily": "veil",
       "target": "square"
     },
     {
-      "id": "burning_bridges",
-      "name": "Burning Bridges",
+      "id": "broadside_rooks",
+      "name": "Broadside Rooks",
       "kind": "nerf",
       "category": "nerf",
-      "effectCategory": "zone-denial",
+      "effectCategory": "self-movement-restriction",
       "tier": 5,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 108,
-      "description": "Your bishops, rooks, and queen can't travel over a square they have already passed over earlier in the game.",
+      "descriptionLength": 110,
+      "description": "Your rooks glide any distance sideways along a rank, but can only inch one square at a time up or down a file.",
       "soundSource": "passive-cue",
       "animation": {
-        "family": "decree",
+        "family": "territory",
         "primitives": [
-          "slabSlam",
-          "sigilStamp"
+          "zoneSweep",
+          "beamVertical"
         ],
-        "sigil": "flame"
+        "sigil": "castle"
       },
-      "soundCue": "passive/decree",
-      "soundFamily": "decree",
-      "target": "pieceClass"
+      "soundCue": "passive/territory",
+      "soundFamily": "territory",
+      "target": "file"
     },
     {
       "id": "caged_queen",
@@ -46036,6 +45725,30 @@
       "target": "rank"
     },
     {
+      "id": "carnivore_bishops",
+      "name": "Carnivore Bishops",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "self-movement-restriction",
+      "tier": 5,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 75,
+      "description": "Starting on your fourth move, your bishops can only move when they capture.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "bind",
+        "primitives": [
+          "chainLink",
+          "shackleDrop"
+        ],
+        "sigil": "church"
+      },
+      "soundCue": "passive/bind",
+      "soundFamily": "bind",
+      "target": "pieceClass"
+    },
+    {
       "id": "castle_curfew",
       "name": "Castle Curfew",
       "kind": "nerf",
@@ -46060,16 +45773,16 @@
       "target": "winCondition"
     },
     {
-      "id": "champing_at_the_bit",
-      "name": "Champing at the Bit",
+      "id": "chivalry",
+      "name": "Chivalry",
       "kind": "nerf",
       "category": "nerf",
-      "effectCategory": "move-budget-change",
+      "effectCategory": "capture-condition",
       "tier": 5,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 34,
-      "description": "All pawn moves must be distance 2.",
+      "descriptionLength": 94,
+      "description": "Can only capture heavies (rooks, queens) with a knight. This activates only after your move 3.",
       "soundSource": "passive-cue",
       "animation": {
         "family": "decree",
@@ -46077,35 +45790,11 @@
           "slabSlam",
           "sigilStamp"
         ],
-        "sigil": "fast-forward"
+        "sigil": "gavel"
       },
       "soundCue": "passive/decree",
       "soundFamily": "decree",
-      "target": "piece"
-    },
-    {
-      "id": "cloistered_queen",
-      "name": "Cloistered Queen",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "single-piece-freeze",
-      "tier": 5,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 87,
-      "description": "Your queen cannot move until you castle or reach your 12th move, whichever comes first.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "bind",
-        "primitives": [
-          "chainLink",
-          "shackleDrop"
-        ],
-        "sigil": "crown"
-      },
-      "soundCue": "passive/bind",
-      "soundFamily": "bind",
-      "target": "piece"
+      "target": "pieceClass"
     },
     {
       "id": "closed_book",
@@ -46132,27 +45821,28 @@
       "target": "winCondition"
     },
     {
-      "id": "colorblind",
-      "name": "Colorblind",
+      "id": "control_center",
+      "name": "Control Center",
       "kind": "nerf",
       "category": "nerf",
-      "effectCategory": "zone-denial",
+      "effectCategory": "forced-move",
       "tier": 5,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 180,
-      "description": "Can't move to one random color of squares, re-randomized each turn and revealed one turn early. The restriction is dropped whenever it would leave you fewer than three legal moves.",
+      "descriptionLength": 136,
+      "description": "Non-capturing moves must go to files c, d, e, or f, unless the piece already starts on those files, in which case it may leave normally.",
       "soundSource": "passive-cue",
       "animation": {
-        "family": "veil",
+        "family": "strike",
         "primitives": [
-          "fogRoll"
+          "quakeRumble",
+          "bolt"
         ],
-        "sigil": "cloud-fog"
+        "sigil": "zap"
       },
-      "soundCue": "passive/veil",
-      "soundFamily": "veil",
-      "target": "square"
+      "soundCue": "passive/strike",
+      "soundFamily": "strike",
+      "target": "file"
     },
     {
       "id": "court_jester",
@@ -46202,73 +45892,50 @@
       "target": "pieceClass"
     },
     {
-      "id": "crusade",
-      "name": "Crusade",
+      "id": "crippled_clergy",
+      "name": "Crippled Clergy",
       "kind": "nerf",
       "category": "nerf",
-      "effectCategory": "forced-move",
+      "effectCategory": "self-movement-restriction",
       "tier": 5,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 148,
-      "description": "For 4 moves starting on a random move (announced a turn early), if at least three of your moves reach a specific random square, you must move to it.",
+      "descriptionLength": 48,
+      "description": "Your bishops can only move one square at a time.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "decree",
+        "primitives": [
+          "sigilStamp",
+          "crackLines"
+        ],
+        "sigil": "church"
+      },
+      "soundCue": "passive/decree",
+      "soundFamily": "decree",
+      "target": "pieceClass"
+    },
+    {
+      "id": "entrenched",
+      "name": "Entrenched",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "move-budget-change",
+      "tier": 5,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 37,
+      "description": "Rooks can't move more than 2 squares.",
       "soundSource": "passive-cue",
       "animation": {
         "family": "bind",
         "primitives": [
-          "chainLink",
-          "barCage"
+          "weightDrop"
         ],
         "sigil": "link"
       },
       "soundCue": "passive/bind",
       "soundFamily": "bind",
-      "target": "square"
-    },
-    {
-      "id": "doctor_octopus",
-      "name": "Doctor Octopus",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "capture-condition",
-      "tier": 5,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 47,
-      "description": "Can only capture non-king pieces 8 times total.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "decree",
-        "primitives": [
-          "sigilStamp"
-        ],
-        "sigil": "gavel"
-      },
-      "soundCue": "passive/decree",
-      "soundFamily": "decree",
-      "target": "piece"
-    },
-    {
-      "id": "eat_your_vegetables",
-      "name": "Eat Your Vegetables",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "capture-denial",
-      "tier": 5,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 63,
-      "description": "Can't capture non-pawns until opponent has ≤ 4 pawns remaining.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "decree",
-        "primitives": [
-          "sigilStamp"
-        ],
-        "sigil": "gavel"
-      },
-      "soundCue": "passive/decree",
-      "soundFamily": "decree",
       "target": "pieceClass"
     },
     {
@@ -46319,28 +45986,52 @@
       "target": "piece"
     },
     {
-      "id": "frozen_cavalry",
-      "name": "Frozen Cavalry",
+      "id": "femme_fatale",
+      "name": "Femme Fatale",
       "kind": "nerf",
       "category": "nerf",
-      "effectCategory": "single-piece-freeze",
+      "effectCategory": "capture-condition",
       "tier": 5,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 99,
-      "description": "From your 18th move on, you can't move your knights, except for a single once-per-game knight move.",
+      "descriptionLength": 52,
+      "description": "You can only capture the enemy king with your queen.",
       "soundSource": "passive-cue",
       "animation": {
-        "family": "bind",
+        "family": "strike",
         "primitives": [
-          "chainLink",
-          "shackleDrop"
+          "drainFlow",
+          "bolt"
         ],
-        "sigil": "snowflake"
+        "sigil": "zap"
       },
-      "soundCue": "passive/bind",
-      "soundFamily": "bind",
+      "soundCue": "passive/strike",
+      "soundFamily": "strike",
       "target": "pieceClass"
+    },
+    {
+      "id": "gambler",
+      "name": "Gambler",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "self-movement-restriction",
+      "tier": 5,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 163,
+      "description": "Can't move a specific piece type, re-randomized each turn and revealed one turn early. The ban is dropped whenever it would leave you fewer than three legal moves.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "veil",
+        "primitives": [
+          "fogRoll",
+          "drainFlow"
+        ],
+        "sigil": "cloud-fog"
+      },
+      "soundCue": "passive/veil",
+      "soundFamily": "veil",
+      "target": "zone"
     },
     {
       "id": "get_down_mr_president",
@@ -46367,27 +46058,76 @@
       "target": "piece"
     },
     {
-      "id": "hobbled_queen",
-      "name": "Hobbled Queen",
+      "id": "half_a_queen",
+      "name": "Half a Queen",
       "kind": "nerf",
       "category": "nerf",
       "effectCategory": "self-movement-restriction",
       "tier": 5,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 66,
-      "description": "Your queen can only move one square at a time, like a second king.",
+      "descriptionLength": 106,
+      "description": "Your queen can only move like a rook, never diagonally, except one diagonal move is allowed once per game.",
       "soundSource": "passive-cue",
       "animation": {
-        "family": "bind",
+        "family": "territory",
         "primitives": [
-          "weightDrop"
+          "beamVertical",
+          "zoneSweep"
         ],
-        "sigil": "crown"
+        "sigil": "castle"
       },
-      "soundCue": "passive/bind",
-      "soundFamily": "bind",
+      "soundCue": "passive/territory",
+      "soundFamily": "territory",
+      "target": "zone"
+    },
+    {
+      "id": "heavy_boots",
+      "name": "Heavy Boots",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "move-budget-change",
+      "tier": 5,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 36,
+      "description": "All non-pawn moves are distance ≤ 3.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "decree",
+        "primitives": [
+          "slabSlam",
+          "sigilStamp"
+        ],
+        "sigil": "boot"
+      },
+      "soundCue": "passive/decree",
+      "soundFamily": "decree",
       "target": "piece"
+    },
+    {
+      "id": "hobbled_knights",
+      "name": "Hobbled Knights",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "piece-class-lockdown",
+      "tier": 5,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 80,
+      "description": "Your knights can't advance toward the enemy side; their rank may never increase.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "territory",
+        "primitives": [
+          "zoneSweep",
+          "beamHorizontal"
+        ],
+        "sigil": "move"
+      },
+      "soundCue": "passive/territory",
+      "soundFamily": "territory",
+      "target": "rank"
     },
     {
       "id": "homebound_pawns",
@@ -46436,52 +46176,6 @@
       "soundCue": "passive/strike",
       "soundFamily": "strike",
       "target": "piece"
-    },
-    {
-      "id": "hopscotch",
-      "name": "Hopscotch",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "forced-move",
-      "tier": 5,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 97,
-      "description": "Must alternate light/dark destination squares. The required destination color is shown each turn.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "tempo",
-        "primitives": [
-          "tickPips"
-        ],
-        "sigil": "timer"
-      },
-      "soundCue": "passive/tempo",
-      "soundFamily": "tempo",
-      "target": "clock"
-    },
-    {
-      "id": "horse_eats_first",
-      "name": "Horse Eats First",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "capture-condition",
-      "tier": 5,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 103,
-      "description": "As long as you have a knight, you can only capture with knights. This activates only after your move 3.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "decree",
-        "primitives": [
-          "shockRing"
-        ],
-        "sigil": "gavel"
-      },
-      "soundCue": "passive/decree",
-      "soundFamily": "decree",
-      "target": "pieceClass"
     },
     {
       "id": "inside_the_lines",
@@ -46554,27 +46248,27 @@
       "target": "pieceClass"
     },
     {
-      "id": "left_for_dead",
-      "name": "Left for Dead",
+      "id": "leading_the_charge",
+      "name": "Leading the Charge",
       "kind": "nerf",
       "category": "nerf",
-      "effectCategory": "capture-condition",
+      "effectCategory": "self-movement-restriction",
       "tier": 5,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 44,
-      "description": "Can only capture leftward (file decreasing).",
+      "descriptionLength": 86,
+      "description": "As long as you have a knight, non-knights can't be ahead of your most advanced knight.",
       "soundSource": "passive-cue",
       "animation": {
-        "family": "territory",
+        "family": "decree",
         "primitives": [
-          "zoneSweep"
+          "quakeRumble"
         ],
-        "sigil": "map"
+        "sigil": "gavel"
       },
-      "soundCue": "passive/territory",
-      "soundFamily": "territory",
-      "target": "file"
+      "soundCue": "passive/decree",
+      "soundFamily": "decree",
+      "target": "pieceClass"
     },
     {
       "id": "march_or_die",
@@ -46647,28 +46341,100 @@
       "target": "clock"
     },
     {
-      "id": "no_retreat_rooks",
-      "name": "No Retreat Rooks",
+      "id": "moving_day",
+      "name": "Moving Day",
       "kind": "nerf",
       "category": "nerf",
       "effectCategory": "zone-denial",
       "tier": 5,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 112,
-      "description": "From your 10th move on, your rooks can't move toward your own back rank, except for a single once-per-game move.",
+      "descriptionLength": 48,
+      "description": "After turn 20, no piece may be on your home row.",
       "soundSource": "passive-cue",
       "animation": {
-        "family": "territory",
+        "family": "decree",
         "primitives": [
-          "zoneSweep",
-          "beamHorizontal"
+          "sigilStamp",
+          "crackLines"
         ],
-        "sigil": "castle"
+        "sigil": "gavel"
       },
-      "soundCue": "passive/territory",
-      "soundFamily": "territory",
-      "target": "rank"
+      "soundCue": "passive/decree",
+      "soundFamily": "decree",
+      "target": "pieceClass"
+    },
+    {
+      "id": "myopic_bishops",
+      "name": "Myopic Bishops",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "zone-denial",
+      "tier": 5,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 72,
+      "description": "From your fourth move on, your bishops can't move more than two squares.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "bind",
+        "primitives": [
+          "shackleDrop",
+          "chainLink"
+        ],
+        "sigil": "church"
+      },
+      "soundCue": "passive/bind",
+      "soundFamily": "bind",
+      "target": "pieceClass"
+    },
+    {
+      "id": "one_bite_at_a_time",
+      "name": "One Bite at a Time",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "capture-denial",
+      "tier": 5,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 147,
+      "description": "After a capture, you can't capture again for two of your turns, except your chosen pawn (on a random file, shown from the start) may still capture.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "strike",
+        "primitives": [
+          "bolt",
+          "drainFlow"
+        ],
+        "sigil": "timer"
+      },
+      "soundCue": "passive/strike",
+      "soundFamily": "strike",
+      "target": "piece"
+    },
+    {
+      "id": "out_of_breath",
+      "name": "Out of Breath",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "self-movement-restriction",
+      "tier": 5,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 49,
+      "description": "You can only move your king once the entire game.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "bind",
+        "primitives": [
+          "chainLink",
+          "shackleDrop"
+        ],
+        "sigil": "wind"
+      },
+      "soundCue": "passive/bind",
+      "soundFamily": "bind",
+      "target": "piece"
     },
     {
       "id": "pack_mentality",
@@ -46767,76 +46533,52 @@
       "target": "pieceClass"
     },
     {
-      "id": "quarantine",
-      "name": "Quarantine",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "king-protection",
-      "tier": 5,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 196,
-      "description": "You can't move a piece into your own first two ranks from outside them (pieces already on those ranks may still move within them). Separately, while your king is in check, only your king may move.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "territory",
-        "primitives": [
-          "zoneSweep",
-          "beamHorizontal"
-        ],
-        "sigil": "biohazard"
-      },
-      "soundCue": "passive/territory",
-      "soundFamily": "territory",
-      "target": "rank"
-    },
-    {
-      "id": "queen_grounded",
-      "name": "Queen Grounded",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "zone-denial",
-      "tier": 5,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 124,
-      "description": "From your 12th move on, your queen can't move into the opponent's half of the board, except for a single once-per-game move.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "territory",
-        "primitives": [
-          "crackBloom",
-          "zoneSweep"
-        ],
-        "sigil": "crown"
-      },
-      "soundCue": "passive/territory",
-      "soundFamily": "territory",
-      "target": "zone"
-    },
-    {
-      "id": "respectful",
-      "name": "Respectful",
+      "id": "predatory_knights",
+      "name": "Predatory Knights",
       "kind": "nerf",
       "category": "nerf",
       "effectCategory": "self-movement-restriction",
       "tier": 5,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 124,
-      "description": "You can't end your turn giving check. Once per game, if every legal move would give check, you may give check that one time.",
+      "descriptionLength": 119,
+      "description": "Your knights can only move by capturing, except that every third turn a knight with no capture may make one quiet move.",
       "soundSource": "passive-cue",
       "animation": {
         "family": "strike",
         "primitives": [
-          "bolt",
-          "quakeRumble"
+          "quakeRumble",
+          "bolt"
         ],
-        "sigil": "hand"
+        "sigil": "sword"
       },
       "soundCue": "passive/strike",
       "soundFamily": "strike",
-      "target": "piece"
+      "target": "pieceClass"
+    },
+    {
+      "id": "restless_crown",
+      "name": "Restless Crown",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "alt-win-loss-condition",
+      "tier": 5,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 132,
+      "description": "Your king may move only six times all game. One compliance token excuses a single extra king move; you lose only on his eighth move.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "decree",
+        "primitives": [
+          "crackBloom",
+          "sigilStamp"
+        ],
+        "sigil": "crown"
+      },
+      "soundCue": "passive/decree",
+      "soundFamily": "decree",
+      "target": "winCondition"
     },
     {
       "id": "retreating_bishops",
@@ -46887,30 +46629,6 @@
       "target": "pieceClass"
     },
     {
-      "id": "rook_fan_club",
-      "name": "Rook Fan Club",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "promotion-grant",
-      "tier": 5,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 56,
-      "description": "Must promote to rooks. King/queen can't move diagonally.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "bind",
-        "primitives": [
-          "chainLink",
-          "sigilStamp"
-        ],
-        "sigil": "link"
-      },
-      "soundCue": "passive/bind",
-      "soundFamily": "bind",
-      "target": "pieceClass"
-    },
-    {
       "id": "rook_on_seventh",
       "name": "Rook on the Seventh",
       "kind": "nerf",
@@ -46933,29 +46651,6 @@
       "soundCue": "passive/tempo",
       "soundFamily": "tempo",
       "target": "piece"
-    },
-    {
-      "id": "rooks_charge",
-      "name": "Rooks Charge",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "piece-class-lockdown",
-      "tier": 5,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 158,
-      "description": "Your rooks can only move straight forward toward the enemy, never sideways or backward. If that leaves you with no legal move, you may move your king instead.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "bind",
-        "primitives": [
-          "chainLink"
-        ],
-        "sigil": "castle"
-      },
-      "soundCue": "passive/bind",
-      "soundFamily": "bind",
-      "target": "pieceClass"
     },
     {
       "id": "scholarship",
@@ -46982,99 +46677,98 @@
       "target": "pieceClass"
     },
     {
-      "id": "secret_garden",
-      "name": "Secret Garden",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "mass-freeze",
-      "tier": 5,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 198,
-      "description": "Two random garden zones (each a 3-file-wide, 3-rank-deep block in front of one of your pawns, shown as marked squares) are off limits for the whole game: you can't move any piece onto those squares.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "veil",
-        "primitives": [
-          "fogRoll",
-          "orbitSpark"
-        ],
-        "sigil": "flower"
-      },
-      "soundCue": "passive/veil",
-      "soundFamily": "veil",
-      "target": "file"
-    },
-    {
-      "id": "short_leash_knights",
-      "name": "Short Leash Knights",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "piece-class-lockdown",
-      "tier": 5,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 62,
-      "description": "Your knights may never move beyond your own first three ranks.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "territory",
-        "primitives": [
-          "zoneSweep"
-        ],
-        "sigil": "move"
-      },
-      "soundCue": "passive/territory",
-      "soundFamily": "territory",
-      "target": "rank"
-    },
-    {
-      "id": "simp",
-      "name": "Simp",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "alt-win-loss-condition",
-      "tier": 5,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 30,
-      "description": "You lose if you have no queen.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "decree",
-        "primitives": [
-          "sigilStamp",
-          "crackBloom"
-        ],
-        "sigil": "heart"
-      },
-      "soundCue": "passive/decree",
-      "soundFamily": "decree",
-      "target": "winCondition"
-    },
-    {
-      "id": "stay_at_home_mom",
-      "name": "Stay-at-Home Mom",
+      "id": "scouting_ahead",
+      "name": "Scouting Ahead",
       "kind": "nerf",
       "category": "nerf",
       "effectCategory": "self-movement-restriction",
       "tier": 5,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 52,
-      "description": "Your queen can only move within your two home ranks.",
+      "descriptionLength": 80,
+      "description": "As long as you have a pawn, non-pawns can't go ahead of your most advanced pawn.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "decree",
+        "primitives": [
+          "sigilStamp",
+          "pulseRing"
+        ],
+        "sigil": "gavel"
+      },
+      "soundCue": "passive/decree",
+      "soundFamily": "decree",
+      "target": "pieceClass"
+    },
+    {
+      "id": "shapeshifter",
+      "name": "Shapeshifter",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "piece-downgrade-transform",
+      "tier": 5,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 172,
+      "description": "For your first 3 moves the queen moves normally. From then on she is a bishop; capturing a non-pawn turns her into a copy of that piece, and capturing a knight freezes her.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "strike",
+        "primitives": [
+          "shockRing"
+        ],
+        "sigil": "zap"
+      },
+      "soundCue": "passive/strike",
+      "soundFamily": "strike",
+      "target": "pieceClass"
+    },
+    {
+      "id": "solar_flare",
+      "name": "Solar Flare",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "capture-condition",
+      "tier": 5,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 170,
+      "description": "The flare burns for 3 of your turns, then sleeps for 2, over and over. While it burns you can only capture on light squares. The dark squares are shown whenever it is up.",
       "soundSource": "passive-cue",
       "animation": {
         "family": "territory",
         "primitives": [
-          "zoneSweep",
-          "beamHorizontal"
+          "pulseRing",
+          "zoneSweep"
         ],
-        "sigil": "home"
+        "sigil": "sun"
       },
       "soundCue": "passive/territory",
       "soundFamily": "territory",
-      "target": "rank"
+      "target": "square"
+    },
+    {
+      "id": "stunted_rooks",
+      "name": "Stunted Rooks",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "self-movement-restriction",
+      "tier": 5,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 72,
+      "description": "From your fourth move on, your rooks can only move one square at a time.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "bind",
+        "primitives": [
+          "weightDrop"
+        ],
+        "sigil": "castle"
+      },
+      "soundCue": "passive/bind",
+      "soundFamily": "bind",
+      "target": "pieceClass"
     },
     {
       "id": "sunrise",
@@ -47099,30 +46793,6 @@
       "soundCue": "passive/bind",
       "soundFamily": "bind",
       "target": "pieceClass"
-    },
-    {
-      "id": "switchback",
-      "name": "Switchback",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "zone-denial",
-      "tier": 5,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 84,
-      "description": "You can't move in the exact same direction (same file and rank step) twice in a row.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "tempo",
-        "primitives": [
-          "tickPips",
-          "orbitSpark"
-        ],
-        "sigil": "shuffle"
-      },
-      "soundCue": "passive/tempo",
-      "soundFamily": "tempo",
-      "target": "clock"
     },
     {
       "id": "theocracy",
@@ -47173,28 +46843,28 @@
       "target": "winCondition"
     },
     {
-      "id": "tidy_desk",
-      "name": "Tidy Desk",
+      "id": "three_check",
+      "name": "Three Check",
       "kind": "nerf",
       "category": "nerf",
-      "effectCategory": "forced-move",
+      "effectCategory": "alt-win-loss-condition",
       "tier": 5,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 131,
-      "description": "By move 25, you must have at least one piece on every rank of your half but one; you may leave a single rank of your choosing open.",
+      "descriptionLength": 53,
+      "description": "If you have been checked three times total, you lose.",
       "soundSource": "passive-cue",
       "animation": {
-        "family": "tempo",
+        "family": "decree",
         "primitives": [
-          "tickPips",
-          "drainFlow"
+          "sigilStamp",
+          "crackBloom"
         ],
-        "sigil": "layout-grid"
+        "sigil": "alert-triangle"
       },
-      "soundCue": "passive/tempo",
-      "soundFamily": "tempo",
-      "target": "clock"
+      "soundCue": "passive/decree",
+      "soundFamily": "decree",
+      "target": "winCondition"
     },
     {
       "id": "timid_bishops",
@@ -47221,72 +46891,24 @@
       "target": "rank"
     },
     {
-      "id": "toothless_pawns",
-      "name": "Toothless Pawns",
+      "id": "trophy_wife",
+      "name": "Trophy Wife",
       "kind": "nerf",
       "category": "nerf",
       "effectCategory": "capture-denial",
       "tier": 5,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 60,
-      "description": "Your pawns can never capture and can never move two squares.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "strike",
-        "primitives": [
-          "bolt",
-          "quakeRumble"
-        ],
-        "sigil": "flag"
-      },
-      "soundCue": "passive/strike",
-      "soundFamily": "strike",
-      "target": "pieceClass"
-    },
-    {
-      "id": "triple_play",
-      "name": "Triple Play",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "capture-condition",
-      "tier": 5,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 176,
-      "description": "Can only capture the enemy king while you have 3 of a set piece type, shown from the start. The restriction is dropped whenever it would leave you fewer than three legal moves.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "strike",
-        "primitives": [
-          "bolt",
-          "crackBloom"
-        ],
-        "sigil": "zap"
-      },
-      "soundCue": "passive/strike",
-      "soundFamily": "strike",
-      "target": "piece"
-    },
-    {
-      "id": "turn_other_cheek",
-      "name": "Turn the Other Cheek",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "self-movement-restriction",
-      "tier": 5,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 16,
-      "description": "Can't recapture.",
+      "descriptionLength": 76,
+      "description": "Your queen can't capture, unless the target is the piece checking your king.",
       "soundSource": "passive-cue",
       "animation": {
         "family": "decree",
         "primitives": [
-          "crackLines",
-          "sigilStamp"
+          "sigilStamp",
+          "slabSlam"
         ],
-        "sigil": "gavel"
+        "sigil": "gem"
       },
       "soundCue": "passive/decree",
       "soundFamily": "decree",
@@ -47317,28 +46939,52 @@
       "target": "winCondition"
     },
     {
-      "id": "windup_toys",
-      "name": "Windup Toys",
+      "id": "warlord",
+      "name": "Warlord",
       "kind": "nerf",
       "category": "nerf",
-      "effectCategory": "self-movement-restriction",
+      "effectCategory": "zone-denial",
       "tier": 5,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 45,
-      "description": "After move 12, can't move knights or bishops.",
+      "descriptionLength": 150,
+      "description": "From turn 12 onward, your king can't be on your first two ranks. From turn 11, while your king is still on those ranks, you are warned one move early.",
       "soundSource": "passive-cue",
       "animation": {
-        "family": "tempo",
+        "family": "territory",
         "primitives": [
-          "tickPips",
-          "edgeBurn"
+          "zoneSweep",
+          "beamHorizontal"
         ],
-        "sigil": "timer"
+        "sigil": "map"
       },
-      "soundCue": "passive/tempo",
-      "soundFamily": "tempo",
-      "target": "pieceClass"
+      "soundCue": "passive/territory",
+      "soundFamily": "territory",
+      "target": "rank"
+    },
+    {
+      "id": "whites_of_their_eyes",
+      "name": "Whites of Their Eyes",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "retaliation-damage",
+      "tier": 5,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 74,
+      "description": "You can only capture within 2 squares (king-steps) of the capturing piece.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "strike",
+        "primitives": [
+          "bolt",
+          "pulseRing"
+        ],
+        "sigil": "eye"
+      },
+      "soundCue": "passive/strike",
+      "soundFamily": "strike",
+      "target": "piece"
     },
     {
       "id": "wn_curfew",
@@ -47387,30 +47033,6 @@
       "soundCue": "passive/fracture",
       "soundFamily": "fracture",
       "target": "piece"
-    },
-    {
-      "id": "wn_gravity",
-      "name": "Gravity",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "self-movement-restriction",
-      "tier": 5,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 175,
-      "description": "None of your pieces may move more than two ranks ahead of your own king, unless the piece already starts more than two ranks ahead (a piece inside the region may move freely).",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "territory",
-        "primitives": [
-          "beamHorizontal",
-          "zoneSweep"
-        ],
-        "sigil": "arrow-down"
-      },
-      "soundCue": "passive/territory",
-      "soundFamily": "territory",
-      "target": "rank"
     },
     {
       "id": "wn_meteor_shower",
@@ -47485,6 +47107,30 @@
       "target": "piece"
     },
     {
+      "id": "bishop_fan_club",
+      "name": "Bishop Fan Club",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "promotion-grant",
+      "tier": 6,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 65,
+      "description": "Must promote to bishops. King and queen can only move diagonally.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "bind",
+        "primitives": [
+          "shackleDrop",
+          "chainLink"
+        ],
+        "sigil": "link"
+      },
+      "soundCue": "passive/bind",
+      "soundFamily": "bind",
+      "target": "pieceClass"
+    },
+    {
       "id": "blood_quota",
       "name": "Blood Quota",
       "kind": "nerf",
@@ -47533,30 +47179,6 @@
       "target": "piece"
     },
     {
-      "id": "boxing_with_shadow",
-      "name": "Boxing with Shadow",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "forced-move",
-      "tier": 6,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 95,
-      "description": "From your move 4 on, when opponent moves, if you can move to the square they vacated, you must.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "veil",
-        "primitives": [
-          "orbitSpark",
-          "fogRoll"
-        ],
-        "sigil": "cloud-fog"
-      },
-      "soundCue": "passive/veil",
-      "soundFamily": "veil",
-      "target": "square"
-    },
-    {
       "id": "bridge_over_troubled_water",
       "name": "Bridge Over Troubled Water",
       "kind": "nerf",
@@ -47579,6 +47201,30 @@
       "soundCue": "passive/territory",
       "soundFamily": "territory",
       "target": "file"
+    },
+    {
+      "id": "burning_bridges",
+      "name": "Burning Bridges",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "zone-denial",
+      "tier": 6,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 108,
+      "description": "Your bishops, rooks, and queen can't travel over a square they have already passed over earlier in the game.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "decree",
+        "primitives": [
+          "slabSlam",
+          "sigilStamp"
+        ],
+        "sigil": "flame"
+      },
+      "soundCue": "passive/decree",
+      "soundFamily": "decree",
+      "target": "pieceClass"
     },
     {
       "id": "centralized_command",
@@ -47629,52 +47275,76 @@
       "target": "piece"
     },
     {
-      "id": "constriction",
-      "name": "Constriction",
+      "id": "cheerleaders",
+      "name": "Cheerleaders",
       "kind": "nerf",
       "category": "nerf",
-      "effectCategory": "self-movement-restriction",
+      "effectCategory": "capture-condition",
       "tier": 6,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 139,
-      "description": "Every 6 of your turns, the playable board loses a rank from the back, up to 3 ranks. This restriction cannot be overridden by card effects.",
+      "descriptionLength": 60,
+      "description": "Non-pawns can only capture if adjacent to one of your pawns.",
       "soundSource": "passive-cue",
       "animation": {
-        "family": "tempo",
+        "family": "decree",
         "primitives": [
-          "tickPips",
-          "orbitSpark"
+          "sigilStamp",
+          "slabSlam"
         ],
-        "sigil": "minimize"
+        "sigil": "gavel"
       },
-      "soundCue": "passive/tempo",
-      "soundFamily": "tempo",
-      "target": "clock"
+      "soundCue": "passive/decree",
+      "soundFamily": "decree",
+      "target": "pieceClass"
     },
     {
-      "id": "counting_sheep",
-      "name": "Counting Sheep",
+      "id": "colorblind",
+      "name": "Colorblind",
       "kind": "nerf",
       "category": "nerf",
-      "effectCategory": "self-movement-restriction",
+      "effectCategory": "zone-denial",
       "tier": 6,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 64,
-      "description": "Once you've moved a piece type 5 times, you can't move it again.",
+      "descriptionLength": 180,
+      "description": "Can't move to one random color of squares, re-randomized each turn and revealed one turn early. The restriction is dropped whenever it would leave you fewer than three legal moves.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "veil",
+        "primitives": [
+          "fogRoll"
+        ],
+        "sigil": "cloud-fog"
+      },
+      "soundCue": "passive/veil",
+      "soundFamily": "veil",
+      "target": "square"
+    },
+    {
+      "id": "cowardly",
+      "name": "Cowardly",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "alt-win-loss-condition",
+      "tier": 6,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 158,
+      "description": "When the opponent captures, you must move backward. The first time you fail to retreat you get a one turn warning; fail to retreat a second time and you lose.",
       "soundSource": "passive-cue",
       "animation": {
         "family": "bind",
         "primitives": [
-          "shackleDrop",
-          "chainLink"
+          "chainLink",
+          "sigilStamp",
+          "pulseRing"
         ],
-        "sigil": "list-ordered"
+        "sigil": "rewind"
       },
       "soundCue": "passive/bind",
       "soundFamily": "bind",
-      "target": "pieceClass"
+      "target": "winCondition"
     },
     {
       "id": "cowering_in_fear",
@@ -47701,30 +47371,6 @@
       "target": "pieceClass"
     },
     {
-      "id": "defanged_queen",
-      "name": "Defanged Queen",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "capture-denial",
-      "tier": 6,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 46,
-      "description": "Your queen can't capture and can't give check.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "strike",
-        "primitives": [
-          "quakeRumble",
-          "bolt"
-        ],
-        "sigil": "crown"
-      },
-      "soundCue": "passive/strike",
-      "soundFamily": "strike",
-      "target": "piece"
-    },
-    {
       "id": "devil_on_shoulder",
       "name": "Devil on Your Shoulder",
       "kind": "nerf",
@@ -47749,76 +47395,27 @@
       "target": "square"
     },
     {
-      "id": "domino",
-      "name": "Domino",
+      "id": "doctor_octopus",
+      "name": "Doctor Octopus",
       "kind": "nerf",
       "category": "nerf",
-      "effectCategory": "teleport-relocate",
+      "effectCategory": "capture-condition",
       "tier": 6,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 117,
-      "description": "Each move must end adjacent to your previous move's destination. Spawned and teleported pieces obey this immediately.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "summon",
-        "primitives": [
-          "dropImpact",
-          "shockRing"
-        ],
-        "sigil": "spline"
-      },
-      "soundCue": "passive/summon",
-      "soundFamily": "summon",
-      "target": "square"
-    },
-    {
-      "id": "drag",
-      "name": "Drag",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "alt-win-loss-condition",
-      "tier": 6,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 53,
-      "description": "Your queen is now royal: if it is captured, you lose.",
+      "descriptionLength": 47,
+      "description": "Can only capture non-king pieces 8 times total.",
       "soundSource": "passive-cue",
       "animation": {
         "family": "decree",
         "primitives": [
-          "sigilStamp",
-          "crackBloom"
+          "sigilStamp"
         ],
         "sigil": "gavel"
       },
       "soundCue": "passive/decree",
       "soundFamily": "decree",
-      "target": "winCondition"
-    },
-    {
-      "id": "echo_chamber",
-      "name": "Echo Chamber",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "direction-geometry-lock",
-      "tier": 6,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 83,
-      "description": "Starting on move 4, you must move to the same rank as your last move's destination.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "tempo",
-        "primitives": [
-          "tickPips",
-          "orbitSpark"
-        ],
-        "sigil": "audio-waveform"
-      },
-      "soundCue": "passive/tempo",
-      "soundFamily": "tempo",
-      "target": "clock"
+      "target": "piece"
     },
     {
       "id": "exclusivity_clause",
@@ -47843,29 +47440,6 @@
       "soundCue": "passive/summon",
       "soundFamily": "summon",
       "target": "square"
-    },
-    {
-      "id": "eye_for_an_eye",
-      "name": "Eye for an Eye",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "forced-move",
-      "tier": 6,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 57,
-      "description": "If opponent captures, you must capture next turn or lose.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "strike",
-        "primitives": [
-          "drainFlow"
-        ],
-        "sigil": "zap"
-      },
-      "soundCue": "passive/strike",
-      "soundFamily": "strike",
-      "target": "piece"
     },
     {
       "id": "eye_of_sauron",
@@ -47938,29 +47512,6 @@
       "target": "pieceClass"
     },
     {
-      "id": "fog_of_war",
-      "name": "Fog of War",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "info-denial",
-      "tier": 6,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 188,
-      "description": "Enemy pieces are hidden by fog. An enemy piece is marked (its square lit) only if it is checking your king or stands within two squares of one of your pieces; everything else stays hidden.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "veil",
-        "primitives": [
-          "fogRoll"
-        ],
-        "sigil": "cloud-fog"
-      },
-      "soundCue": "passive/veil",
-      "soundFamily": "veil",
-      "target": "zone"
-    },
-    {
       "id": "forward_march",
       "name": "Forward March",
       "kind": "nerf",
@@ -48030,6 +47581,31 @@
       "soundCue": "passive/bind",
       "soundFamily": "bind",
       "target": "square"
+    },
+    {
+      "id": "glorious_battle",
+      "name": "Glorious Battle",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "forced-move",
+      "tier": 6,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 104,
+      "description": "On a midgame move drawn at random, the battle begins: for 3 consecutive moves you must capture, or lose.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "strike",
+        "primitives": [
+          "quakeRumble",
+          "bolt",
+          "edgeBurn"
+        ],
+        "sigil": "zap"
+      },
+      "soundCue": "passive/strike",
+      "soundFamily": "strike",
+      "target": "piece"
     },
     {
       "id": "going_the_distance",
@@ -48152,51 +47728,73 @@
       "target": "winCondition"
     },
     {
-      "id": "hobbled_knights",
-      "name": "Hobbled Knights",
+      "id": "hobbled_queen",
+      "name": "Hobbled Queen",
       "kind": "nerf",
       "category": "nerf",
-      "effectCategory": "piece-class-lockdown",
+      "effectCategory": "self-movement-restriction",
       "tier": 6,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 80,
-      "description": "Your knights can't advance toward the enemy side; their rank may never increase.",
+      "descriptionLength": 66,
+      "description": "Your queen can only move one square at a time, like a second king.",
       "soundSource": "passive-cue",
       "animation": {
-        "family": "territory",
+        "family": "bind",
         "primitives": [
-          "zoneSweep",
-          "beamHorizontal"
+          "weightDrop"
         ],
-        "sigil": "move"
+        "sigil": "crown"
       },
-      "soundCue": "passive/territory",
-      "soundFamily": "territory",
-      "target": "rank"
+      "soundCue": "passive/bind",
+      "soundFamily": "bind",
+      "target": "piece"
     },
     {
-      "id": "homeland_security",
-      "name": "Homeland Security",
+      "id": "hopscotch",
+      "name": "Hopscotch",
       "kind": "nerf",
       "category": "nerf",
-      "effectCategory": "alt-win-loss-condition",
+      "effectCategory": "forced-move",
       "tier": 6,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 49,
-      "description": "If opponent enters your two home ranks, you lose.",
+      "descriptionLength": 97,
+      "description": "Must alternate light/dark destination squares. The required destination color is shown each turn.",
       "soundSource": "passive-cue",
       "animation": {
-        "family": "territory",
+        "family": "tempo",
         "primitives": [
-          "zoneSweep"
+          "tickPips"
         ],
-        "sigil": "map"
+        "sigil": "timer"
       },
-      "soundCue": "passive/territory",
-      "soundFamily": "territory",
-      "target": "winCondition"
+      "soundCue": "passive/tempo",
+      "soundFamily": "tempo",
+      "target": "clock"
+    },
+    {
+      "id": "horse_eats_first",
+      "name": "Horse Eats First",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "capture-condition",
+      "tier": 6,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 103,
+      "description": "As long as you have a knight, you can only capture with knights. This activates only after your move 3.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "decree",
+        "primitives": [
+          "shockRing"
+        ],
+        "sigil": "gavel"
+      },
+      "soundCue": "passive/decree",
+      "soundFamily": "decree",
+      "target": "pieceClass"
     },
     {
       "id": "icy_squares",
@@ -48270,29 +47868,6 @@
       "target": "pieceClass"
     },
     {
-      "id": "iron_curtain",
-      "name": "Iron Curtain",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "teleport-relocate",
-      "tier": 6,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 170,
-      "description": "You can't move any piece onto the central 16 squares (files c through f, ranks 3 through 6). Card-granted drops and teleports onto those squares are blocked the same way.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "territory",
-        "primitives": [
-          "zoneSweep"
-        ],
-        "sigil": "ban"
-      },
-      "soundCue": "passive/territory",
-      "soundFamily": "territory",
-      "target": "file"
-    },
-    {
       "id": "jumpy",
       "name": "Jumpy",
       "kind": "nerf",
@@ -48364,27 +47939,27 @@
       "target": "square"
     },
     {
-      "id": "leaps_and_bounds",
-      "name": "Leaps and Bounds",
+      "id": "left_for_dead",
+      "name": "Left for Dead",
       "kind": "nerf",
       "category": "nerf",
-      "effectCategory": "mass-freeze",
+      "effectCategory": "capture-condition",
       "tier": 6,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 146,
-      "description": "Every move must be a leap: a piece can't move to a square adjacent to the square it's leaving. A move granted by another card must also be a leap.",
+      "descriptionLength": 44,
+      "description": "Can only capture leftward (file decreasing).",
       "soundSource": "passive-cue",
       "animation": {
-        "family": "bind",
+        "family": "territory",
         "primitives": [
-          "weightDrop"
+          "zoneSweep"
         ],
-        "sigil": "link"
+        "sigil": "map"
       },
-      "soundCue": "passive/bind",
-      "soundFamily": "bind",
-      "target": "square"
+      "soundCue": "passive/territory",
+      "soundFamily": "territory",
+      "target": "file"
     },
     {
       "id": "left_to_right",
@@ -48407,29 +47982,6 @@
       },
       "soundCue": "passive/tempo",
       "soundFamily": "tempo",
-      "target": "piece"
-    },
-    {
-      "id": "leveling_up",
-      "name": "Leveling Up",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "capture-denial",
-      "tier": 6,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 131,
-      "description": "Can't capture a piece type until you've captured its predecessor. A move granted by another card can't make a barred capture legal.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "strike",
-        "primitives": [
-          "crackBloom"
-        ],
-        "sigil": "zap"
-      },
-      "soundCue": "passive/strike",
-      "soundFamily": "strike",
       "target": "piece"
     },
     {
@@ -48551,30 +48103,6 @@
       "target": "winCondition"
     },
     {
-      "id": "myopic_bishops",
-      "name": "Myopic Bishops",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "zone-denial",
-      "tier": 6,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 72,
-      "description": "From your fourth move on, your bishops can't move more than two squares.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "bind",
-        "primitives": [
-          "shackleDrop",
-          "chainLink"
-        ],
-        "sigil": "church"
-      },
-      "soundCue": "passive/bind",
-      "soundFamily": "bind",
-      "target": "pieceClass"
-    },
-    {
       "id": "no_clean_trades",
       "name": "No Clean Trades",
       "kind": "nerf",
@@ -48597,125 +48125,6 @@
       "soundCue": "passive/decree",
       "soundFamily": "decree",
       "target": "square"
-    },
-    {
-      "id": "no_hanging_pieces",
-      "name": "No Hanging Pieces",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "teleport-relocate",
-      "tier": 6,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 143,
-      "description": "You can't make a move that leaves any of your pieces attacked by the enemy and undefended. Card-granted drops and teleports must obey this too.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "strike",
-        "primitives": [
-          "quakeRumble",
-          "bolt"
-        ],
-        "sigil": "shield-alert"
-      },
-      "soundCue": "passive/strike",
-      "soundFamily": "strike",
-      "target": "piece"
-    },
-    {
-      "id": "no_mans_land",
-      "name": "No Man's Land",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "zone-denial",
-      "tier": 6,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 130,
-      "description": "You can't move any piece onto a square your opponent currently attacks, except once per game you may step onto an attacked square.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "strike",
-        "primitives": [
-          "quakeRumble",
-          "bolt"
-        ],
-        "sigil": "ban"
-      },
-      "soundCue": "passive/strike",
-      "soundFamily": "strike",
-      "target": "square"
-    },
-    {
-      "id": "no_retreat_ever",
-      "name": "No Retreat Ever",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "forced-move",
-      "tier": 6,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 156,
-      "description": "Every move you make must advance toward the enemy; no piece may move backward or even hold its rank, except one non-advancing move is allowed once per game.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "territory",
-        "primitives": [
-          "beamHorizontal",
-          "zoneSweep"
-        ],
-        "sigil": "move"
-      },
-      "soundCue": "passive/territory",
-      "soundFamily": "territory",
-      "target": "rank"
-    },
-    {
-      "id": "noble_steed",
-      "name": "Noble Steed",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "self-movement-restriction",
-      "tier": 6,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 67,
-      "description": "Non-knight pieces can only move if adjacent to one of your knights.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "bind",
-        "primitives": [
-          "shackleDrop"
-        ],
-        "sigil": "link"
-      },
-      "soundCue": "passive/bind",
-      "soundFamily": "bind",
-      "target": "pieceClass"
-    },
-    {
-      "id": "nurturer",
-      "name": "Nurturer",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "promotion-grant",
-      "tier": 6,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 113,
-      "description": "Can't capture the enemy king until you've promoted a pawn. No card effect can make that capture legal any sooner.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "strike",
-        "primitives": [
-          "quakeRumble",
-          "bolt"
-        ],
-        "sigil": "sprout"
-      },
-      "soundCue": "passive/strike",
-      "soundFamily": "strike",
-      "target": "pieceClass"
     },
     {
       "id": "obsession",
@@ -48766,78 +48175,6 @@
       "target": "winCondition"
     },
     {
-      "id": "pawn_storm",
-      "name": "Pawn Storm",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "forced-move",
-      "tier": 6,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 73,
-      "description": "If your last move wasn't a pawn move, you must move a pawn (if possible).",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "strike",
-        "primitives": [
-          "quakeRumble",
-          "bolt"
-        ],
-        "sigil": "wind"
-      },
-      "soundCue": "passive/strike",
-      "soundFamily": "strike",
-      "target": "piece"
-    },
-    {
-      "id": "pawns_do_the_dirty_work",
-      "name": "Pawns Do the Dirty Work",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "capture-condition",
-      "tier": 6,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 67,
-      "description": "Only your pawns may capture; none of your other pieces can capture.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "decree",
-        "primitives": [
-          "sigilStamp",
-          "slabSlam"
-        ],
-        "sigil": "swords"
-      },
-      "soundCue": "passive/decree",
-      "soundFamily": "decree",
-      "target": "pieceClass"
-    },
-    {
-      "id": "predatory_knights",
-      "name": "Predatory Knights",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "self-movement-restriction",
-      "tier": 6,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 119,
-      "description": "Your knights can only move by capturing, except that every third turn a knight with no capture may make one quiet move.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "strike",
-        "primitives": [
-          "quakeRumble",
-          "bolt"
-        ],
-        "sigil": "sword"
-      },
-      "soundCue": "passive/strike",
-      "soundFamily": "strike",
-      "target": "pieceClass"
-    },
-    {
       "id": "reconnaissance",
       "name": "Reconnaissance",
       "kind": "nerf",
@@ -48886,30 +48223,6 @@
       "target": "clock"
     },
     {
-      "id": "restless_crown",
-      "name": "Restless Crown",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "alt-win-loss-condition",
-      "tier": 6,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 132,
-      "description": "Your king may move only six times all game. One compliance token excuses a single extra king move; you lose only on his eighth move.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "decree",
-        "primitives": [
-          "crackBloom",
-          "sigilStamp"
-        ],
-        "sigil": "crown"
-      },
-      "soundCue": "passive/decree",
-      "soundFamily": "decree",
-      "target": "winCondition"
-    },
-    {
       "id": "rhythm_master",
       "name": "Rhythm Master",
       "kind": "nerf",
@@ -48934,51 +48247,51 @@
       "target": "piece"
     },
     {
-      "id": "rising_water",
-      "name": "Rising Water",
+      "id": "rook_fan_club",
+      "name": "Rook Fan Club",
       "kind": "nerf",
       "category": "nerf",
-      "effectCategory": "terrain-hazard",
+      "effectCategory": "promotion-grant",
       "tier": 6,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 124,
-      "description": "Every 10 of your turns, water rises one rank from your back rank. You can't move underwater pieces or to underwater squares.",
+      "descriptionLength": 56,
+      "description": "Must promote to rooks. King/queen can't move diagonally.",
       "soundSource": "passive-cue",
       "animation": {
-        "family": "tempo",
+        "family": "bind",
         "primitives": [
-          "tickPips",
-          "orbitSpark"
+          "chainLink",
+          "sigilStamp"
         ],
-        "sigil": "waves"
+        "sigil": "link"
       },
-      "soundCue": "passive/tempo",
-      "soundFamily": "tempo",
-      "target": "clock"
+      "soundCue": "passive/bind",
+      "soundFamily": "bind",
+      "target": "pieceClass"
     },
     {
-      "id": "royal_berth",
-      "name": "Royal Berth",
+      "id": "rooks_charge",
+      "name": "Rooks Charge",
       "kind": "nerf",
       "category": "nerf",
-      "effectCategory": "self-movement-restriction",
+      "effectCategory": "piece-class-lockdown",
       "tier": 6,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 42,
-      "description": "Can't place a piece adjacent to your king.",
+      "descriptionLength": 158,
+      "description": "Your rooks can only move straight forward toward the enemy, never sideways or backward. If that leaves you with no legal move, you may move your king instead.",
       "soundSource": "passive-cue",
       "animation": {
-        "family": "summon",
+        "family": "bind",
         "primitives": [
-          "dropImpact"
+          "chainLink"
         ],
-        "sigil": "sparkles"
+        "sigil": "castle"
       },
-      "soundCue": "passive/summon",
-      "soundFamily": "summon",
-      "target": "square"
+      "soundCue": "passive/bind",
+      "soundFamily": "bind",
+      "target": "pieceClass"
     },
     {
       "id": "savior_complex",
@@ -49099,28 +48412,52 @@
       "target": "clock"
     },
     {
-      "id": "slowpoke",
-      "name": "Slowpoke",
+      "id": "simp",
+      "name": "Simp",
       "kind": "nerf",
       "category": "nerf",
-      "effectCategory": "move-budget-change",
+      "effectCategory": "alt-win-loss-condition",
       "tier": 6,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 104,
-      "description": "All your moves must be distance exactly 1. On every fifth turn, a single knight leap is allowed instead.",
+      "descriptionLength": 30,
+      "description": "You lose if you have no queen.",
       "soundSource": "passive-cue",
       "animation": {
-        "family": "tempo",
+        "family": "decree",
         "primitives": [
-          "tickPips",
+          "sigilStamp",
+          "crackBloom"
+        ],
+        "sigil": "heart"
+      },
+      "soundCue": "passive/decree",
+      "soundFamily": "decree",
+      "target": "winCondition"
+    },
+    {
+      "id": "social_distancing",
+      "name": "Social Distancing",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "self-movement-restriction",
+      "tier": 6,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 132,
+      "description": "Can't make non-capturing moves to squares adjacent to opponent pieces. The forbidden ring around enemy pieces is shown on the board.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "strike",
+        "primitives": [
+          "bolt",
           "drainFlow"
         ],
-        "sigil": "footprints"
+        "sigil": "zap"
       },
-      "soundCue": "passive/tempo",
-      "soundFamily": "tempo",
-      "target": "piece"
+      "soundCue": "passive/strike",
+      "soundFamily": "strike",
+      "target": "board"
     },
     {
       "id": "spread_out",
@@ -49147,30 +48484,6 @@
       "target": "pieceClass"
     },
     {
-      "id": "stand_your_ground",
-      "name": "Stand Your Ground",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "capture-condition",
-      "tier": 6,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 36,
-      "description": "Pieces can only capture if attacked.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "strike",
-        "primitives": [
-          "bolt",
-          "drainFlow"
-        ],
-        "sigil": "zap"
-      },
-      "soundCue": "passive/strike",
-      "soundFamily": "strike",
-      "target": "piece"
-    },
-    {
       "id": "statue_king",
       "name": "Statue King",
       "kind": "nerf",
@@ -49195,50 +48508,28 @@
       "target": "piece"
     },
     {
-      "id": "straight_and_narrow",
-      "name": "Straight and Narrow",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "capture-denial",
-      "tier": 6,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 122,
-      "description": "You can't make any diagonal move: your bishops are stuck, your queen moves only like a rook, and your pawns can't capture.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "bind",
-        "primitives": [
-          "chainLink"
-        ],
-        "sigil": "flag"
-      },
-      "soundCue": "passive/bind",
-      "soundFamily": "bind",
-      "target": "pieceClass"
-    },
-    {
-      "id": "stunted_rooks",
-      "name": "Stunted Rooks",
+      "id": "stay_at_home_mom",
+      "name": "Stay-at-Home Mom",
       "kind": "nerf",
       "category": "nerf",
       "effectCategory": "self-movement-restriction",
       "tier": 6,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 72,
-      "description": "From your fourth move on, your rooks can only move one square at a time.",
+      "descriptionLength": 52,
+      "description": "Your queen can only move within your two home ranks.",
       "soundSource": "passive-cue",
       "animation": {
-        "family": "bind",
+        "family": "territory",
         "primitives": [
-          "weightDrop"
+          "zoneSweep",
+          "beamHorizontal"
         ],
-        "sigil": "castle"
+        "sigil": "home"
       },
-      "soundCue": "passive/bind",
-      "soundFamily": "bind",
-      "target": "pieceClass"
+      "soundCue": "passive/territory",
+      "soundFamily": "territory",
+      "target": "rank"
     },
     {
       "id": "taking_turns",
@@ -49287,52 +48578,28 @@
       "target": "file"
     },
     {
-      "id": "torchlight",
-      "name": "Torchlight",
+      "id": "toothless_pawns",
+      "name": "Toothless Pawns",
       "kind": "nerf",
       "category": "nerf",
-      "effectCategory": "self-movement-restriction",
+      "effectCategory": "capture-denial",
       "tier": 6,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 80,
-      "description": "Non-pawns can only move if start or end square is adjacent to one of your pawns.",
+      "descriptionLength": 60,
+      "description": "Your pawns can never capture and can never move two squares.",
       "soundSource": "passive-cue",
       "animation": {
-        "family": "bind",
+        "family": "strike",
         "primitives": [
-          "weightDrop",
-          "gateSlam"
+          "bolt",
+          "quakeRumble"
         ],
-        "sigil": "link"
+        "sigil": "flag"
       },
-      "soundCue": "passive/bind",
-      "soundFamily": "bind",
+      "soundCue": "passive/strike",
+      "soundFamily": "strike",
       "target": "pieceClass"
-    },
-    {
-      "id": "tower_defense",
-      "name": "Tower Defense",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "alt-win-loss-condition",
-      "tier": 6,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 50,
-      "description": "Can't move rooks. If you lose all rooks, you lose.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "bind",
-        "primitives": [
-          "weightDrop",
-          "chainLink"
-        ],
-        "sigil": "link"
-      },
-      "soundCue": "passive/bind",
-      "soundFamily": "bind",
-      "target": "winCondition"
     },
     {
       "id": "tribute",
@@ -49353,6 +48620,30 @@
           "quakeRumble"
         ],
         "sigil": "coins"
+      },
+      "soundCue": "passive/strike",
+      "soundFamily": "strike",
+      "target": "piece"
+    },
+    {
+      "id": "triple_play",
+      "name": "Triple Play",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "capture-condition",
+      "tier": 6,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 176,
+      "description": "Can only capture the enemy king while you have 3 of a set piece type, shown from the start. The restriction is dropped whenever it would leave you fewer than three legal moves.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "strike",
+        "primitives": [
+          "bolt",
+          "crackBloom"
+        ],
+        "sigil": "zap"
       },
       "soundCue": "passive/strike",
       "soundFamily": "strike",
@@ -49383,28 +48674,28 @@
       "target": "pieceClass"
     },
     {
-      "id": "unlucky",
-      "name": "Unlucky",
+      "id": "turn_other_cheek",
+      "name": "Turn the Other Cheek",
       "kind": "nerf",
       "category": "nerf",
       "effectCategory": "self-movement-restriction",
       "tier": 6,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 142,
-      "description": "20 random squares are unusable each turn, re-randomized and shown on the board. The restriction never leaves you fewer than three legal moves.",
+      "descriptionLength": 16,
+      "description": "Can't recapture.",
       "soundSource": "passive-cue",
       "animation": {
-        "family": "tempo",
+        "family": "decree",
         "primitives": [
-          "tickPips",
-          "edgeBurn"
+          "crackLines",
+          "sigilStamp"
         ],
-        "sigil": "timer"
+        "sigil": "gavel"
       },
-      "soundCue": "passive/tempo",
-      "soundFamily": "tempo",
-      "target": "clock"
+      "soundCue": "passive/decree",
+      "soundFamily": "decree",
+      "target": "pieceClass"
     },
     {
       "id": "unrequited_love",
@@ -49431,29 +48722,6 @@
       "target": "pieceClass"
     },
     {
-      "id": "unspooling",
-      "name": "Unspooling",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "alt-win-loss-condition",
-      "tier": 6,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 61,
-      "description": "Total move distance budget = 100. When you run out, you lose.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "decree",
-        "primitives": [
-          "sigilStamp"
-        ],
-        "sigil": "gavel"
-      },
-      "soundCue": "passive/decree",
-      "soundFamily": "decree",
-      "target": "winCondition"
-    },
-    {
       "id": "vanishing_point",
       "name": "Vanishing Point",
       "kind": "nerf",
@@ -49478,6 +48746,30 @@
       "target": "square"
     },
     {
+      "id": "windup_toys",
+      "name": "Windup Toys",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "self-movement-restriction",
+      "tier": 6,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 45,
+      "description": "After move 12, can't move knights or bishops.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "tempo",
+        "primitives": [
+          "tickPips",
+          "edgeBurn"
+        ],
+        "sigil": "timer"
+      },
+      "soundCue": "passive/tempo",
+      "soundFamily": "tempo",
+      "target": "pieceClass"
+    },
+    {
       "id": "wn_bodyguard",
       "name": "Bodyguard",
       "kind": "nerf",
@@ -49500,54 +48792,6 @@
       "soundCue": "passive/decree",
       "soundFamily": "decree",
       "target": "winCondition"
-    },
-    {
-      "id": "wn_bottom_feeder",
-      "name": "Bottom Feeder",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "capture-denial",
-      "tier": 6,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 92,
-      "description": "You can only capture pawns. You can't capture any other piece, except the enemy king to win.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "strike",
-        "primitives": [
-          "bolt",
-          "quakeRumble"
-        ],
-        "sigil": "fish"
-      },
-      "soundCue": "passive/strike",
-      "soundFamily": "strike",
-      "target": "pieceClass"
-    },
-    {
-      "id": "wn_daisy_chain",
-      "name": "Daisy Chain",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "forced-move",
-      "tier": 6,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 135,
-      "description": "From your 4th move on, the piece you move must start its move adjacent to the square your last move ended on (if any such move exists).",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "tempo",
-        "primitives": [
-          "orbitSpark",
-          "tickPips"
-        ],
-        "sigil": "spline"
-      },
-      "soundCue": "passive/tempo",
-      "soundFamily": "tempo",
-      "target": "clock"
     },
     {
       "id": "wn_deadline_queen",
@@ -49646,28 +48890,28 @@
       "target": "winCondition"
     },
     {
-      "id": "wn_kings_leash",
-      "name": "King's Leash",
+      "id": "wn_gravity",
+      "name": "Gravity",
       "kind": "nerf",
       "category": "nerf",
-      "effectCategory": "zone-denial",
+      "effectCategory": "self-movement-restriction",
       "tier": 6,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 133,
-      "description": "You can't move any piece to a square more than 3 king-steps from your own king. If no compliant move exists, only your king may move.",
+      "descriptionLength": 175,
+      "description": "None of your pieces may move more than two ranks ahead of your own king, unless the piece already starts more than two ranks ahead (a piece inside the region may move freely).",
       "soundSource": "passive-cue",
       "animation": {
-        "family": "bind",
+        "family": "territory",
         "primitives": [
-          "shackleDrop",
-          "chainLink"
+          "beamHorizontal",
+          "zoneSweep"
         ],
-        "sigil": "crown"
+        "sigil": "arrow-down"
       },
-      "soundCue": "passive/bind",
-      "soundFamily": "bind",
-      "target": "piece"
+      "soundCue": "passive/territory",
+      "soundFamily": "territory",
+      "target": "rank"
     },
     {
       "id": "wn_mimicry",
@@ -49694,28 +48938,28 @@
       "target": "clock"
     },
     {
-      "id": "wn_regicide_clock",
-      "name": "Regicide Clock",
+      "id": "wn_weigh_station",
+      "name": "Weigh Station",
       "kind": "nerf",
       "category": "nerf",
-      "effectCategory": "alt-win-loss-condition",
+      "effectCategory": "piece-class-lockdown",
       "tier": 6,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 69,
-      "description": "You must give check at least once every 6 of your turns, or you lose.",
+      "descriptionLength": 77,
+      "description": "Your rooks and queen can't cross into the enemy half (relative ranks 5 to 8).",
       "soundSource": "passive-cue",
       "animation": {
-        "family": "strike",
+        "family": "territory",
         "primitives": [
-          "bolt",
-          "crackBloom"
+          "beamHorizontal",
+          "zoneSweep"
         ],
-        "sigil": "target"
+        "sigil": "anchor"
       },
-      "soundCue": "passive/strike",
-      "soundFamily": "strike",
-      "target": "winCondition"
+      "soundCue": "passive/territory",
+      "soundFamily": "territory",
+      "target": "rank"
     },
     {
       "id": "you_best_not_miss",
@@ -49767,54 +49011,28 @@
       "target": "winCondition"
     },
     {
-      "id": "always_check_it_might_be_mate",
-      "name": "Always Check, It Might Be Mate",
+      "id": "champing_at_the_bit",
+      "name": "Champing at the Bit",
       "kind": "nerf",
       "category": "nerf",
-      "effectCategory": "alt-win-loss-condition",
+      "effectCategory": "move-budget-change",
       "tier": 7,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 122,
-      "description": "If you are checked, you lose. A temporary shield or suspension can't spare you: the check is read straight from the board.",
+      "descriptionLength": 34,
+      "description": "All pawn moves must be distance 2.",
       "soundSource": "passive-cue",
       "animation": {
         "family": "decree",
         "primitives": [
-          "sigilStamp",
-          "crackBloom",
-          "crackLines"
+          "slabSlam",
+          "sigilStamp"
         ],
-        "sigil": "gavel"
+        "sigil": "fast-forward"
       },
       "soundCue": "passive/decree",
       "soundFamily": "decree",
-      "target": "winCondition"
-    },
-    {
-      "id": "boastful",
-      "name": "Boastful",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "alt-win-loss-condition",
-      "tier": 7,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 75,
-      "description": "You lose if you end one of your turns with fewer pieces than your opponent.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "decree",
-        "primitives": [
-          "crackBloom",
-          "sigilStamp",
-          "quakeRumble"
-        ],
-        "sigil": "gavel"
-      },
-      "soundCue": "passive/decree",
-      "soundFamily": "decree",
-      "target": "winCondition"
+      "target": "piece"
     },
     {
       "id": "compulsory_capture",
@@ -49842,29 +49060,28 @@
       "target": "piece"
     },
     {
-      "id": "cowardly",
-      "name": "Cowardly",
+      "id": "constriction",
+      "name": "Constriction",
       "kind": "nerf",
       "category": "nerf",
-      "effectCategory": "alt-win-loss-condition",
+      "effectCategory": "self-movement-restriction",
       "tier": 7,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 158,
-      "description": "When the opponent captures, you must move backward. The first time you fail to retreat you get a one turn warning; fail to retreat a second time and you lose.",
+      "descriptionLength": 139,
+      "description": "Every 6 of your turns, the playable board loses a rank from the back, up to 3 ranks. This restriction cannot be overridden by card effects.",
       "soundSource": "passive-cue",
       "animation": {
-        "family": "bind",
+        "family": "tempo",
         "primitives": [
-          "chainLink",
-          "sigilStamp",
-          "pulseRing"
+          "tickPips",
+          "orbitSpark"
         ],
-        "sigil": "rewind"
+        "sigil": "minimize"
       },
-      "soundCue": "passive/bind",
-      "soundFamily": "bind",
-      "target": "winCondition"
+      "soundCue": "passive/tempo",
+      "soundFamily": "tempo",
+      "target": "clock"
     },
     {
       "id": "deer_in_headlights",
@@ -49884,6 +49101,125 @@
           "bolt",
           "quakeRumble",
           "shockRing"
+        ],
+        "sigil": "zap"
+      },
+      "soundCue": "passive/strike",
+      "soundFamily": "strike",
+      "target": "piece"
+    },
+    {
+      "id": "defanged_queen",
+      "name": "Defanged Queen",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "capture-denial",
+      "tier": 7,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 46,
+      "description": "Your queen can't capture and can't give check.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "strike",
+        "primitives": [
+          "quakeRumble",
+          "bolt"
+        ],
+        "sigil": "crown"
+      },
+      "soundCue": "passive/strike",
+      "soundFamily": "strike",
+      "target": "piece"
+    },
+    {
+      "id": "domino",
+      "name": "Domino",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "teleport-relocate",
+      "tier": 7,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 117,
+      "description": "Each move must end adjacent to your previous move's destination. Spawned and teleported pieces obey this immediately.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "summon",
+        "primitives": [
+          "dropImpact",
+          "shockRing"
+        ],
+        "sigil": "spline"
+      },
+      "soundCue": "passive/summon",
+      "soundFamily": "summon",
+      "target": "square"
+    },
+    {
+      "id": "drag",
+      "name": "Drag",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "alt-win-loss-condition",
+      "tier": 7,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 53,
+      "description": "Your queen is now royal: if it is captured, you lose.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "decree",
+        "primitives": [
+          "sigilStamp",
+          "crackBloom"
+        ],
+        "sigil": "gavel"
+      },
+      "soundCue": "passive/decree",
+      "soundFamily": "decree",
+      "target": "winCondition"
+    },
+    {
+      "id": "echo_chamber",
+      "name": "Echo Chamber",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "direction-geometry-lock",
+      "tier": 7,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 83,
+      "description": "Starting on move 4, you must move to the same rank as your last move's destination.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "tempo",
+        "primitives": [
+          "tickPips",
+          "orbitSpark"
+        ],
+        "sigil": "audio-waveform"
+      },
+      "soundCue": "passive/tempo",
+      "soundFamily": "tempo",
+      "target": "clock"
+    },
+    {
+      "id": "eye_for_an_eye",
+      "name": "Eye for an Eye",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "forced-move",
+      "tier": 7,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 57,
+      "description": "If opponent captures, you must capture next turn or lose.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "strike",
+        "primitives": [
+          "drainFlow"
         ],
         "sigil": "zap"
       },
@@ -49917,54 +49253,27 @@
       "target": "square"
     },
     {
-      "id": "fog_of_war_old",
-      "name": "Fog of War (extended)",
+      "id": "iron_curtain",
+      "name": "Iron Curtain",
       "kind": "nerf",
       "category": "nerf",
-      "effectCategory": "self-movement-restriction",
+      "effectCategory": "teleport-relocate",
       "tier": 7,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 118,
-      "description": "Hide opponent pieces entirely, starting on your move 4. The opening is shown in the clear so it cannot be soft-locked.",
+      "descriptionLength": 170,
+      "description": "You can't move any piece onto the central 16 squares (files c through f, ranks 3 through 6). Card-granted drops and teleports onto those squares are blocked the same way.",
       "soundSource": "passive-cue",
       "animation": {
-        "family": "veil",
+        "family": "territory",
         "primitives": [
-          "fogRoll",
-          "orbitSpark",
-          "pulseRing"
+          "zoneSweep"
         ],
-        "sigil": "cloud-fog"
+        "sigil": "ban"
       },
-      "soundCue": "passive/veil",
-      "soundFamily": "veil",
-      "target": "zone"
-    },
-    {
-      "id": "glorious_battle",
-      "name": "Glorious Battle",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "forced-move",
-      "tier": 7,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 104,
-      "description": "On a midgame move drawn at random, the battle begins: for 3 consecutive moves you must capture, or lose.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "strike",
-        "primitives": [
-          "quakeRumble",
-          "bolt",
-          "edgeBurn"
-        ],
-        "sigil": "zap"
-      },
-      "soundCue": "passive/strike",
-      "soundFamily": "strike",
-      "target": "piece"
+      "soundCue": "passive/territory",
+      "soundFamily": "territory",
+      "target": "file"
     },
     {
       "id": "ivory_tower",
@@ -49989,6 +49298,123 @@
       "soundCue": "passive/decree",
       "soundFamily": "decree",
       "target": "winCondition"
+    },
+    {
+      "id": "leaps_and_bounds",
+      "name": "Leaps and Bounds",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "mass-freeze",
+      "tier": 7,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 146,
+      "description": "Every move must be a leap: a piece can't move to a square adjacent to the square it's leaving. A move granted by another card must also be a leap.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "bind",
+        "primitives": [
+          "weightDrop"
+        ],
+        "sigil": "link"
+      },
+      "soundCue": "passive/bind",
+      "soundFamily": "bind",
+      "target": "square"
+    },
+    {
+      "id": "leveling_up",
+      "name": "Leveling Up",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "capture-denial",
+      "tier": 7,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 131,
+      "description": "Can't capture a piece type until you've captured its predecessor. A move granted by another card can't make a barred capture legal.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "strike",
+        "primitives": [
+          "crackBloom"
+        ],
+        "sigil": "zap"
+      },
+      "soundCue": "passive/strike",
+      "soundFamily": "strike",
+      "target": "piece"
+    },
+    {
+      "id": "no_hanging_pieces",
+      "name": "No Hanging Pieces",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "teleport-relocate",
+      "tier": 7,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 143,
+      "description": "You can't make a move that leaves any of your pieces attacked by the enemy and undefended. Card-granted drops and teleports must obey this too.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "strike",
+        "primitives": [
+          "quakeRumble",
+          "bolt"
+        ],
+        "sigil": "shield-alert"
+      },
+      "soundCue": "passive/strike",
+      "soundFamily": "strike",
+      "target": "piece"
+    },
+    {
+      "id": "no_mans_land",
+      "name": "No Man's Land",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "zone-denial",
+      "tier": 7,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 130,
+      "description": "You can't move any piece onto a square your opponent currently attacks, except once per game you may step onto an attacked square.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "strike",
+        "primitives": [
+          "quakeRumble",
+          "bolt"
+        ],
+        "sigil": "ban"
+      },
+      "soundCue": "passive/strike",
+      "soundFamily": "strike",
+      "target": "square"
+    },
+    {
+      "id": "noble_steed",
+      "name": "Noble Steed",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "self-movement-restriction",
+      "tier": 7,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 67,
+      "description": "Non-knight pieces can only move if adjacent to one of your knights.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "bind",
+        "primitives": [
+          "shackleDrop"
+        ],
+        "sigil": "link"
+      },
+      "soundCue": "passive/bind",
+      "soundFamily": "bind",
+      "target": "pieceClass"
     },
     {
       "id": "nw2_chameleon",
@@ -50141,6 +49567,30 @@
       "target": "rank"
     },
     {
+      "id": "pawn_storm",
+      "name": "Pawn Storm",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "forced-move",
+      "tier": 7,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 73,
+      "description": "If your last move wasn't a pawn move, you must move a pawn (if possible).",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "strike",
+        "primitives": [
+          "quakeRumble",
+          "bolt"
+        ],
+        "sigil": "wind"
+      },
+      "soundCue": "passive/strike",
+      "soundFamily": "strike",
+      "target": "piece"
+    },
+    {
       "id": "pilgrimage",
       "name": "Pilgrimage",
       "kind": "nerf",
@@ -50191,31 +49641,6 @@
       "target": "piece"
     },
     {
-      "id": "reflective",
-      "name": "Reflective",
-      "kind": "nerf",
-      "category": "nerf",
-      "effectCategory": "forced-move",
-      "tier": 7,
-      "mechanic": "passive-rule",
-      "implemented": true,
-      "descriptionLength": 164,
-      "description": "From your move 4 on, non-pawns must move to squares whose mirror across the center is occupied. The first three moves are free so the opening cannot be soft-locked.",
-      "soundSource": "passive-cue",
-      "animation": {
-        "family": "bind",
-        "primitives": [
-          "shackleDrop",
-          "chainLink",
-          "gateSlam"
-        ],
-        "sigil": "link"
-      },
-      "soundCue": "passive/bind",
-      "soundFamily": "bind",
-      "target": "pieceClass"
-    },
-    {
       "id": "relentless_hunter",
       "name": "Relentless Hunter",
       "kind": "nerf",
@@ -50239,6 +49664,149 @@
       "soundCue": "passive/strike",
       "soundFamily": "strike",
       "target": "piece"
+    },
+    {
+      "id": "rising_water",
+      "name": "Rising Water",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "terrain-hazard",
+      "tier": 7,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 124,
+      "description": "Every 10 of your turns, water rises one rank from your back rank. You can't move underwater pieces or to underwater squares.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "tempo",
+        "primitives": [
+          "tickPips",
+          "orbitSpark"
+        ],
+        "sigil": "waves"
+      },
+      "soundCue": "passive/tempo",
+      "soundFamily": "tempo",
+      "target": "clock"
+    },
+    {
+      "id": "stand_your_ground",
+      "name": "Stand Your Ground",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "capture-condition",
+      "tier": 7,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 36,
+      "description": "Pieces can only capture if attacked.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "strike",
+        "primitives": [
+          "bolt",
+          "drainFlow"
+        ],
+        "sigil": "zap"
+      },
+      "soundCue": "passive/strike",
+      "soundFamily": "strike",
+      "target": "piece"
+    },
+    {
+      "id": "torchlight",
+      "name": "Torchlight",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "self-movement-restriction",
+      "tier": 7,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 80,
+      "description": "Non-pawns can only move if start or end square is adjacent to one of your pawns.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "bind",
+        "primitives": [
+          "weightDrop",
+          "gateSlam"
+        ],
+        "sigil": "link"
+      },
+      "soundCue": "passive/bind",
+      "soundFamily": "bind",
+      "target": "pieceClass"
+    },
+    {
+      "id": "tower_defense",
+      "name": "Tower Defense",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "alt-win-loss-condition",
+      "tier": 7,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 50,
+      "description": "Can't move rooks. If you lose all rooks, you lose.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "bind",
+        "primitives": [
+          "weightDrop",
+          "chainLink"
+        ],
+        "sigil": "link"
+      },
+      "soundCue": "passive/bind",
+      "soundFamily": "bind",
+      "target": "winCondition"
+    },
+    {
+      "id": "unlucky",
+      "name": "Unlucky",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "self-movement-restriction",
+      "tier": 7,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 142,
+      "description": "20 random squares are unusable each turn, re-randomized and shown on the board. The restriction never leaves you fewer than three legal moves.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "tempo",
+        "primitives": [
+          "tickPips",
+          "edgeBurn"
+        ],
+        "sigil": "timer"
+      },
+      "soundCue": "passive/tempo",
+      "soundFamily": "tempo",
+      "target": "clock"
+    },
+    {
+      "id": "unspooling",
+      "name": "Unspooling",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "alt-win-loss-condition",
+      "tier": 7,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 61,
+      "description": "Total move distance budget = 100. When you run out, you lose.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "decree",
+        "primitives": [
+          "sigilStamp"
+        ],
+        "sigil": "gavel"
+      },
+      "soundCue": "passive/decree",
+      "soundFamily": "decree",
+      "target": "winCondition"
     },
     {
       "id": "velociraptor",
@@ -50266,51 +49834,51 @@
       "target": "square"
     },
     {
-      "id": "war_footing",
-      "name": "War Footing",
+      "id": "wn_daisy_chain",
+      "name": "Daisy Chain",
       "kind": "nerf",
       "category": "nerf",
-      "effectCategory": "alt-win-loss-condition",
+      "effectCategory": "forced-move",
       "tier": 7,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 63,
-      "description": "You lose if you make more than 12 non-capturing moves all game.",
+      "descriptionLength": 135,
+      "description": "From your 4th move on, the piece you move must start its move adjacent to the square your last move ended on (if any such move exists).",
       "soundSource": "passive-cue",
       "animation": {
-        "family": "strike",
+        "family": "tempo",
         "primitives": [
-          "crackBloom",
-          "bolt",
-          "shockRing"
+          "orbitSpark",
+          "tickPips"
         ],
-        "sigil": "timer"
+        "sigil": "spline"
       },
-      "soundCue": "passive/strike",
-      "soundFamily": "strike",
-      "target": "winCondition"
+      "soundCue": "passive/tempo",
+      "soundFamily": "tempo",
+      "target": "clock"
     },
     {
-      "id": "wn_kingpin",
-      "name": "Kingpin",
+      "id": "wn_kings_leash",
+      "name": "King's Leash",
       "kind": "nerf",
       "category": "nerf",
-      "effectCategory": "capture-condition",
+      "effectCategory": "zone-denial",
       "tier": 7,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 116,
-      "description": "Only your king may capture. No other piece can make a capture. If no compliant move exists, only your king may move.",
+      "descriptionLength": 133,
+      "description": "You can't move any piece to a square more than 3 king-steps from your own king. If no compliant move exists, only your king may move.",
       "soundSource": "passive-cue",
       "animation": {
-        "family": "decree",
+        "family": "bind",
         "primitives": [
-          "drainFlow"
+          "shackleDrop",
+          "chainLink"
         ],
         "sigil": "crown"
       },
-      "soundCue": "passive/decree",
-      "soundFamily": "decree",
+      "soundCue": "passive/bind",
+      "soundFamily": "bind",
       "target": "piece"
     },
     {
@@ -50339,29 +49907,78 @@
       "target": "winCondition"
     },
     {
-      "id": "wn_royal_meridian",
-      "name": "Royal Meridian",
+      "id": "wn_regicide_clock",
+      "name": "Regicide Clock",
       "kind": "nerf",
       "category": "nerf",
-      "effectCategory": "direction-geometry-lock",
+      "effectCategory": "alt-win-loss-condition",
       "tier": 7,
       "mechanic": "passive-rule",
       "implemented": true,
-      "descriptionLength": 125,
-      "description": "Every piece you move must land on your king's file or your king's rank. If no compliant move exists, only your king may move.",
+      "descriptionLength": 69,
+      "description": "You must give check at least once every 6 of your turns, or you lose.",
       "soundSource": "passive-cue",
       "animation": {
-        "family": "territory",
+        "family": "strike",
         "primitives": [
-          "beamVertical",
-          "zoneSweep",
-          "edgeBurn"
+          "bolt",
+          "crackBloom"
         ],
-        "sigil": "plus"
+        "sigil": "target"
       },
-      "soundCue": "passive/territory",
-      "soundFamily": "territory",
-      "target": "file"
+      "soundCue": "passive/strike",
+      "soundFamily": "strike",
+      "target": "winCondition"
+    },
+    {
+      "id": "always_check_it_might_be_mate",
+      "name": "Always Check, It Might Be Mate",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "alt-win-loss-condition",
+      "tier": 8,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 122,
+      "description": "If you are checked, you lose. A temporary shield or suspension can't spare you: the check is read straight from the board.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "decree",
+        "primitives": [
+          "sigilStamp",
+          "crackBloom",
+          "crackLines"
+        ],
+        "sigil": "gavel"
+      },
+      "soundCue": "passive/decree",
+      "soundFamily": "decree",
+      "target": "winCondition"
+    },
+    {
+      "id": "boastful",
+      "name": "Boastful",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "alt-win-loss-condition",
+      "tier": 8,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 75,
+      "description": "You lose if you end one of your turns with fewer pieces than your opponent.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "decree",
+        "primitives": [
+          "crackBloom",
+          "sigilStamp",
+          "quakeRumble"
+        ],
+        "sigil": "gavel"
+      },
+      "soundCue": "passive/decree",
+      "soundFamily": "decree",
+      "target": "winCondition"
     },
     {
       "id": "bottled_lightning",
@@ -50388,6 +50005,30 @@
       "target": "piece"
     },
     {
+      "id": "counting_sheep",
+      "name": "Counting Sheep",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "self-movement-restriction",
+      "tier": 8,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 64,
+      "description": "Once you've moved a piece type 5 times, you can't move it again.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "bind",
+        "primitives": [
+          "shackleDrop",
+          "chainLink"
+        ],
+        "sigil": "list-ordered"
+      },
+      "soundCue": "passive/bind",
+      "soundFamily": "bind",
+      "target": "pieceClass"
+    },
+    {
       "id": "death_wish",
       "name": "Death Wish",
       "kind": "nerf",
@@ -50411,6 +50052,77 @@
       "soundCue": "passive/fracture",
       "soundFamily": "fracture",
       "target": "piece"
+    },
+    {
+      "id": "eat_your_vegetables",
+      "name": "Eat Your Vegetables",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "capture-denial",
+      "tier": 8,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 63,
+      "description": "Can't capture non-pawns until opponent has ≤ 4 pawns remaining.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "decree",
+        "primitives": [
+          "sigilStamp"
+        ],
+        "sigil": "gavel"
+      },
+      "soundCue": "passive/decree",
+      "soundFamily": "decree",
+      "target": "pieceClass"
+    },
+    {
+      "id": "fog_of_war",
+      "name": "Fog of War",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "info-denial",
+      "tier": 8,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 188,
+      "description": "Enemy pieces are hidden by fog. An enemy piece is marked (its square lit) only if it is checking your king or stands within two squares of one of your pieces; everything else stays hidden.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "veil",
+        "primitives": [
+          "fogRoll"
+        ],
+        "sigil": "cloud-fog"
+      },
+      "soundCue": "passive/veil",
+      "soundFamily": "veil",
+      "target": "zone"
+    },
+    {
+      "id": "fog_of_war_old",
+      "name": "Fog of War (extended)",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "self-movement-restriction",
+      "tier": 8,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 118,
+      "description": "Hide opponent pieces entirely, starting on your move 4. The opening is shown in the clear so it cannot be soft-locked.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "veil",
+        "primitives": [
+          "fogRoll",
+          "orbitSpark",
+          "pulseRing"
+        ],
+        "sigil": "cloud-fog"
+      },
+      "soundCue": "passive/veil",
+      "soundFamily": "veil",
+      "target": "zone"
     },
     {
       "id": "glass_king",
@@ -50483,6 +50195,29 @@
       "target": "zone"
     },
     {
+      "id": "homeland_security",
+      "name": "Homeland Security",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "alt-win-loss-condition",
+      "tier": 8,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 49,
+      "description": "If opponent enters your two home ranks, you lose.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "territory",
+        "primitives": [
+          "zoneSweep"
+        ],
+        "sigil": "map"
+      },
+      "soundCue": "passive/territory",
+      "soundFamily": "territory",
+      "target": "winCondition"
+    },
+    {
       "id": "neat_freak",
       "name": "Neat Freak",
       "kind": "nerf",
@@ -50506,6 +50241,54 @@
       "soundCue": "passive/fracture",
       "soundFamily": "fracture",
       "target": "piece"
+    },
+    {
+      "id": "no_retreat_ever",
+      "name": "No Retreat Ever",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "forced-move",
+      "tier": 8,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 156,
+      "description": "Every move you make must advance toward the enemy; no piece may move backward or even hold its rank, except one non-advancing move is allowed once per game.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "territory",
+        "primitives": [
+          "beamHorizontal",
+          "zoneSweep"
+        ],
+        "sigil": "move"
+      },
+      "soundCue": "passive/territory",
+      "soundFamily": "territory",
+      "target": "rank"
+    },
+    {
+      "id": "nurturer",
+      "name": "Nurturer",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "promotion-grant",
+      "tier": 8,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 113,
+      "description": "Can't capture the enemy king until you've promoted a pawn. No card effect can make that capture legal any sooner.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "strike",
+        "primitives": [
+          "quakeRumble",
+          "bolt"
+        ],
+        "sigil": "sprout"
+      },
+      "soundCue": "passive/strike",
+      "soundFamily": "strike",
+      "target": "pieceClass"
     },
     {
       "id": "nw2_doomsday_clock",
@@ -50608,6 +50391,79 @@
       "target": "rank"
     },
     {
+      "id": "pawns_do_the_dirty_work",
+      "name": "Pawns Do the Dirty Work",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "capture-condition",
+      "tier": 8,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 67,
+      "description": "Only your pawns may capture; none of your other pieces can capture.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "decree",
+        "primitives": [
+          "sigilStamp",
+          "slabSlam"
+        ],
+        "sigil": "swords"
+      },
+      "soundCue": "passive/decree",
+      "soundFamily": "decree",
+      "target": "pieceClass"
+    },
+    {
+      "id": "reflective",
+      "name": "Reflective",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "forced-move",
+      "tier": 8,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 164,
+      "description": "From your move 4 on, non-pawns must move to squares whose mirror across the center is occupied. The first three moves are free so the opening cannot be soft-locked.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "bind",
+        "primitives": [
+          "shackleDrop",
+          "chainLink",
+          "gateSlam"
+        ],
+        "sigil": "link"
+      },
+      "soundCue": "passive/bind",
+      "soundFamily": "bind",
+      "target": "pieceClass"
+    },
+    {
+      "id": "respectful",
+      "name": "Respectful",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "self-movement-restriction",
+      "tier": 8,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 124,
+      "description": "You can't end your turn giving check. Once per game, if every legal move would give check, you may give check that one time.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "strike",
+        "primitives": [
+          "bolt",
+          "quakeRumble"
+        ],
+        "sigil": "hand"
+      },
+      "soundCue": "passive/strike",
+      "soundFamily": "strike",
+      "target": "piece"
+    },
+    {
       "id": "serf_labor",
       "name": "Serf Labor",
       "kind": "nerf",
@@ -50625,6 +50481,53 @@
           "chainLink",
           "shackleDrop",
           "gateSlam"
+        ],
+        "sigil": "flag"
+      },
+      "soundCue": "passive/bind",
+      "soundFamily": "bind",
+      "target": "pieceClass"
+    },
+    {
+      "id": "slowpoke",
+      "name": "Slowpoke",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "move-budget-change",
+      "tier": 8,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 104,
+      "description": "All your moves must be distance exactly 1. On every fifth turn, a single knight leap is allowed instead.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "tempo",
+        "primitives": [
+          "tickPips",
+          "drainFlow"
+        ],
+        "sigil": "footprints"
+      },
+      "soundCue": "passive/tempo",
+      "soundFamily": "tempo",
+      "target": "piece"
+    },
+    {
+      "id": "straight_and_narrow",
+      "name": "Straight and Narrow",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "capture-denial",
+      "tier": 8,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 122,
+      "description": "You can't make any diagonal move: your bishops are stuck, your queen moves only like a rook, and your pawns can't capture.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "bind",
+        "primitives": [
+          "chainLink"
         ],
         "sigil": "flag"
       },
@@ -50681,6 +50584,55 @@
       "soundCue": "passive/territory",
       "soundFamily": "territory",
       "target": "file"
+    },
+    {
+      "id": "war_footing",
+      "name": "War Footing",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "alt-win-loss-condition",
+      "tier": 8,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 63,
+      "description": "You lose if you make more than 12 non-capturing moves all game.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "strike",
+        "primitives": [
+          "crackBloom",
+          "bolt",
+          "shockRing"
+        ],
+        "sigil": "timer"
+      },
+      "soundCue": "passive/strike",
+      "soundFamily": "strike",
+      "target": "winCondition"
+    },
+    {
+      "id": "wn_bottom_feeder",
+      "name": "Bottom Feeder",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "capture-denial",
+      "tier": 8,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 92,
+      "description": "You can only capture pawns. You can't capture any other piece, except the enemy king to win.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "strike",
+        "primitives": [
+          "bolt",
+          "quakeRumble"
+        ],
+        "sigil": "fish"
+      },
+      "soundCue": "passive/strike",
+      "soundFamily": "strike",
+      "target": "pieceClass"
     },
     {
       "id": "wn_floor_is_lava",
@@ -50753,6 +50705,29 @@
       "target": "pieceClass"
     },
     {
+      "id": "wn_kingpin",
+      "name": "Kingpin",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "capture-condition",
+      "tier": 8,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 116,
+      "description": "Only your king may capture. No other piece can make a capture. If no compliant move exists, only your king may move.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "decree",
+        "primitives": [
+          "drainFlow"
+        ],
+        "sigil": "crown"
+      },
+      "soundCue": "passive/decree",
+      "soundFamily": "decree",
+      "target": "piece"
+    },
+    {
       "id": "wn_perfect_defense",
       "name": "Perfect Defense",
       "kind": "nerf",
@@ -50776,6 +50751,31 @@
       "soundCue": "passive/strike",
       "soundFamily": "strike",
       "target": "piece"
+    },
+    {
+      "id": "wn_royal_meridian",
+      "name": "Royal Meridian",
+      "kind": "nerf",
+      "category": "nerf",
+      "effectCategory": "direction-geometry-lock",
+      "tier": 8,
+      "mechanic": "passive-rule",
+      "implemented": true,
+      "descriptionLength": 125,
+      "description": "Every piece you move must land on your king's file or your king's rank. If no compliant move exists, only your king may move.",
+      "soundSource": "passive-cue",
+      "animation": {
+        "family": "territory",
+        "primitives": [
+          "beamVertical",
+          "zoneSweep",
+          "edgeBurn"
+        ],
+        "sigil": "plus"
+      },
+      "soundCue": "passive/territory",
+      "soundFamily": "territory",
+      "target": "file"
     }
   ]
 }

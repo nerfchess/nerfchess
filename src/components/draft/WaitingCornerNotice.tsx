@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { LockInCountdown } from "@/components/DraftOverlay";
+import { Button } from "@/components/ui/Button";
 
 /**
  * Post-pick waiting notice. Your side of the simultaneous draft is settled
@@ -86,14 +87,14 @@ export function WaitingCornerNotice({
             {clockLine}
           </span>
           {canViewTheirs && (
-            <button
-              type="button"
+            <Button
+              size="sm"
               onClick={onViewTheirs}
-              className="btn-ghost shrink-0 touch-manipulation px-2.5 py-1 text-[12px]"
+              className="shrink-0 touch-manipulation"
               title="See the cards your opponent is choosing between"
             >
               Their cards
-            </button>
+            </Button>
           )}
         </motion.div>
       </div>
@@ -160,14 +161,14 @@ export function WaitingCornerNotice({
         </div>
         {deadline != null && <LockInCountdown deadline={deadline} className="mt-2" />}
         {canViewTheirs && !oppLockedIn && (
-          <button
-            type="button"
+          <Button
+            block
             onClick={onViewTheirs}
-            className="btn-ghost mt-2 w-full touch-manipulation px-3 py-2 text-[13px]"
+            className="mt-2 touch-manipulation"
             title="See the cards your opponent is choosing between"
           >
             View their cards
-          </button>
+          </Button>
         )}
       </motion.div>
     </div>

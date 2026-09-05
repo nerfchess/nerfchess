@@ -1095,7 +1095,7 @@ Flags: 262 duplicate-signature, 204 near-duplicate, 89 dominated-candidates, 0 m
 | ov_winter_palace | Winter Palace | buff | 5 | passive | 4-turns | enemy | passive | src/engine/buffs/overhaul/t5.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | overclocked | Overclocked | buff | 5 | instant | 3-turns | self | bespoke+canvas | src/engine/buffs/pt/timefaustian.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | overrun | Overrun | buff | 5 | passive | next-turn | self | canvas+passive | src/engine/buffs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| overtime_pay | Overtime Pay | buff | 5 | instant | unstated | self | bespoke | src/engine/buffs/pt/timefaustian.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| overtime_pay | Overtime Pay | buff | 5 | instant | unstated | self | bespoke+canvas | src/engine/buffs/pt/timefaustian.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | phase_army | Phase Army | buff | 5 | passive | 1-turns | self | canvas+passive | src/engine/buffs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | pop_up_ad | Pop-up Ad | buff | 5 | activated/lingering | 4-turns | self | generated | src/engine/buffs/funny/meta.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | queens_echo | Queen's Echo | buff | 5 | passive | 2-turns | self | passive | src/engine/buffs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
@@ -1243,7 +1243,7 @@ Flags: 262 duplicate-signature, 204 near-duplicate, 89 dominated-candidates, 0 m
 | smurf_account | Smurf Account | buff | 6 | activated/lingering | next-turn | enemy | generated | src/engine/buffs/funny/meta.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | starlight_ward | Starlight Ward | buff | 6 | instant | 3-turns | enemy | canvas | src/engine/buffs/mystic/celestial.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | time_lock | Time Lock | buff | 6 | instant | next-turn | enemy | bespoke+canvas | src/engine/buffs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| time_skip | Time Skip | buff | 6 | instant | 2-turns | enemy | bespoke | src/engine/buffs/library.ts | 2 | - | keep (auto: no flags, harness-executed) |
+| time_skip | Time Skip | buff | 6 | instant | 2-turns | enemy | bespoke+canvas | src/engine/buffs/library.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | time_stop_short | Time Stop (Short) | buff | 6 | activated/free | 1-turns | enemy | canvas | src/engine/buffs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | total_nullify | Total Nullify | buff | 6 | instant | unstated | enemy | canvas | src/engine/buffs/library.ts | 1 | duplicate-signature(grand_nullify) | keep: nullify sweep T6 |
 | tung_tung_sahur | Tung Tung Tung Sahur | buff | 6 | passive | 5-turns | enemy | canvas+passive | src/engine/buffs/brainrot.ts | 1 | - | keep (auto: no flags, harness-executed) |
@@ -2095,6 +2095,7 @@ Flags: 262 duplicate-signature, 204 near-duplicate, 89 dominated-candidates, 0 m
 | ov_pandemonium_carnival | Pandemonium Carnival | item | 8 | passive | 4-turns | self | passive | src/engine/buffs/overhaul/t8.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | ov_the_fool | The Fool | item | 8 | activated/lingering | 6-turns | enemy | generated | src/engine/buffs/overhaul/t8.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | escort_mission | Escort Mission | nerf | 1 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| lucky | Lucky | nerf | 1 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 4 | - | keep (auto: no flags, harness-executed) |
 | nw2_gentle_shepherds | Gentle Shepherds | nerf | 1 | passive-rule | match | self | passive | src/engine/nerfs/wave2.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | nw2_minor_nobility | Minor Nobility | nerf | 1 | passive-rule | match | self | passive | src/engine/nerfs/wave2.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | nw2_opening_ceremony | Opening Ceremony | nerf | 1 | passive-rule | match | self | passive | src/engine/nerfs/wave2.ts | 1 | - | keep (auto: no flags, harness-executed) |
@@ -2103,9 +2104,7 @@ Flags: 262 duplicate-signature, 204 near-duplicate, 89 dominated-candidates, 0 m
 | teetotaler | Teetotaler | nerf | 1 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier1.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | untitled_duck | Untitled duck nerf | nerf | 1 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | battle_fatigue | Battle Fatigue | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| cess | Cess | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | columnar_rooks | Columnar Rooks | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier2.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| crossing_the_rubicon | Crossing the Rubicon | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | flat_footed | Flat Footed | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier1.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | homebody_king | Homebody King | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier1.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | just_passing_through | Just Passing Through | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
@@ -2113,129 +2112,120 @@ Flags: 262 duplicate-signature, 204 near-duplicate, 89 dominated-candidates, 0 m
 | knights_abroad | Knights Abroad | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier2.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | knights_off_the_rail | Knights Off the Rail | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier1.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | level_headed | Level Headed | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier1.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| lucky | Lucky | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 4 | - | keep (auto: no flags, harness-executed) |
 | merciful_queen | Merciful Queen | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier2.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| monastic_vows | Monastic Vows | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier2.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | no_drawbridge | No Drawbridge | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier1.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | no_first_blood_pawn | Squeamish | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier1.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| no_stone_cutting | No Stone Cutting | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier1.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | nw2_clean_hands | Clean Hands | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/wave2.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | nw2_late_riser | Late Riser | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/wave2.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | nw2_rusty_hinges | Rusty Hinges | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/wave2.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | prima_donna | Prima Donna | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | queen_bee | Queen Bee | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | quit_horsing_around | Quit Horsing Around | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| right_handed | Right Handed | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier1.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| rook_buddies | Rook Buddies | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | sacred_file | Sacred File | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | separation_anxiety | Separation Anxiety | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| separation_church_state | Separation of Church and State | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | soft_paws | Soft Paws | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier1.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| vegan | Vegan | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | wn_edge_shy_queen | Edge-Shy Queen | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | wn_gentle_giant | Gentle Giant | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| wn_knight_toll | Knight Toll | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | wn_moonlit_king | Moonlit King | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | wn_no_takebacks | No Takebacks | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | wn_sabbath | Sabbath | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | wn_wallflower | Wallflower | nerf | 2 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| advancing_faith | Advancing Faith | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier2.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| anchored_rooks | Anchored Rooks | nerf | 3 | passive-rule | match | self | passive | src/engine/buffs/hexes/tier3.ts | 4 | - | keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin) |
+| artillery | Artillery | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | blinded_by_sun | Blinded by the Sun | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | cautious_cavalry | Cautious Cavalry | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier3.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | cavalry_charge | Cavalry Charge | nerf | 3 | passive-rule | match | self | passive+bespoke+canvas | src/engine/buffs/funny/summons.ts | 2 | - | keep (auto: no flags, harness-executed) |
-| clergy | Clergy | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| cess | Cess | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | comfort_zone | Comfort Zone | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| conscientious_objectors | Conscientious Objectors | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| court_martial | Court Martial | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | cramped_rooks | Cramped Rooks | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier2.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | diplomatic_immunity | Diplomatic Immunity | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | evil_twin | Evil Twin | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| femme_fatale | Femme Fatale | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| greedy | Greedy | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| famine | Famine | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | ichthyophobe | Ichthyophobe | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| leading_the_charge | Leading the Charge | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| kingfisher | Kingfisher | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | no_free_lunch | No Free Lunch | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier3.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| no_retreat | No Retreat | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier3.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| no_stone_cutting | No Stone Cutting | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier1.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | nw2_cold_trail | Cold Trail | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/wave2.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | one_way_bishops | One Way Bishops | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier3.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | orthodox_king | Orthodox King | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier2.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | outflanked | Outflanked | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | pawn_ceiling | Pawn Ceiling | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier2.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| prince_charming | Prince Charming | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | professional_courtesy | Professional Courtesy | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | promotion_phobia | Promotion Phobia | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | protected_pawns | Protected Pawns | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| queen_disguise | Queen Disguise | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| queen_fatigue | Queen Fatigue | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier2.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| rook_buddies | Rook Buddies | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| pull_of_the_center | Pull of the Center | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier3.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| right_handed | Right Handed | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier1.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | royal_bloodlust | Royal Bloodlust | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier4.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | rusty_knights | Rusty Knights | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| scouting_ahead | Scouting Ahead | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| shadow_queen | Shadow Queen | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| separation_church_state | Separation of Church and State | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | skittish | Skittish | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | sleepy_king | Sleepy King | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| stir_crazy | Stir Crazy | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| trophy_wife | Trophy Wife | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| truant | Truant | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| true_gentleman | True Gentleman | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| whites_of_their_eyes | Whites of Their Eyes | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| wn_knight_toll | Knight Toll | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| snipers | Snipers | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| switchback | Switchback | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| vegan | Vegan | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | wn_no_going_home | No Going Home | nerf | 3 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | active_volcano | Active Volcano | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| artillery | Artillery | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| advancing_faith | Advancing Faith | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier2.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | barbarian_rage | Barbarian Rage | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| broadside_rooks | Broadside Rooks | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier7.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| carnivore_bishops | Carnivore Bishops | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier3.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| cheerleaders | Cheerleaders | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| chivalry | Chivalry | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| control_center | Control Center | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| bishop_tunnel_vision | Bishop Tunnel Vision | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier4.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| clergy | Clergy | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| cloistered_queen | Cloistered Queen | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier7.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| conscientious_objectors | Conscientious Objectors | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| court_martial | Court Martial | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | covering_fire | Covering Fire | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| crippled_clergy | Crippled Clergy | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier8.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| crossing_the_rubicon | Crossing the Rubicon | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 2 | - | keep (auto: no flags, harness-executed) |
+| crusade | Crusade | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | elephants_fear_mice | Elephants Fear Mice | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| entrenched | Entrenched | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| famine | Famine | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | far_sighted | Far Sighted | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| gambler | Gambler | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| frozen_cavalry | Frozen Cavalry | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier4.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | goldfish | Goldfish | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| half_a_queen | Half a Queen | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier3.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| greedy | Greedy | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | haunted | Haunted | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| heavy_boots | Heavy Boots | nerf | 4 | passive-rule | match | self | passive | src/engine/buffs/library.ts | 3 | - | keep (auto: no flags, harness-executed) |
 | hipster | Hipster | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | horse_tranquilizer | Horse Tranquilizer | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | hungry_pawns | Hungry Pawns | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier4.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| kingfisher | Kingfisher | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | knight_parade | Knight Parade | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | lethal_attraction | Lethal Attraction | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| moving_day | Moving Day | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| no_retreat | No Retreat | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier3.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| monastic_vows | Monastic Vows | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier2.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| no_retreat_rooks | No Retreat Rooks | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier4.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | no_shuffling | No Shuffling | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | oddball | Oddball | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| one_bite_at_a_time | One Bite at a Time | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier3.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| out_of_breath | Out of Breath | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | overzealous | Overzealous | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier3.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | pawn_duty | Pawn Duty | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | peons_first | Peons First | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| prince_charming | Prince Charming | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| pull_of_the_center | Pull of the Center | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier3.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | punching_down | Punching Down | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| quarantine | Quarantine | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| queen_disguise | Queen Disguise | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| queen_fatigue | Queen Fatigue | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier2.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| queen_grounded | Queen Grounded | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier4.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | quicksand | Quicksand | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | remorseful | Remorseful | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| royal_berth | Royal Berth | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | royal_guard | Royal Guard | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | royal_jubilee | Royal Jubilee | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| shapeshifter | Shapeshifter | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| secret_garden | Secret Garden | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| shadow_queen | Shadow Queen | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | shellshocked | Shellshocked | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| short_leash_knights | Short Leash Knights | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier6.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | sibling_rivalry | Sibling Rivalry | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | sidewinder | Sidewinder | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier3.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | simplifier | Simplifier | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| snipers | Snipers | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| social_distancing | Social Distancing | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| solar_flare | Solar Flare | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | spice_of_life | Spice of Life | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| stir_crazy | Stir Crazy | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | stop_stalling | Stop Stalling | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | superstitious | Superstitious | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| three_check | Three Check | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| tidy_desk | Tidy Desk | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | timid | Timid | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | torpedoes | Torpedoes | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | tripwire | Tripwire | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| truant | Truant | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| true_gentleman | True Gentleman | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | vampiric | Vampiric | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | vertigo | Vertigo | nerf | 4 | passive-rule | match | self | passive+bespoke+canvas | src/engine/buffs/funny/curses.ts | 3 | - | keep: diagonal-only constraint at T4, different geometry |
-| warlord | Warlord | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | winds_of_fate | Winds of Fate | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | wn_flinch | Flinch | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | wn_lonely_king | Lonely King | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
@@ -2247,210 +2237,220 @@ Flags: 262 duplicate-signature, 204 near-duplicate, 89 dominated-candidates, 0 m
 | wn_slow_start | Slow Start | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | wn_stampede | Stampede | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | wn_tax_season | Tax Season | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| wn_weigh_station | Weigh Station | nerf | 4 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | alternator | Alternator | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| anchored_rooks | Anchored Rooks | nerf | 5 | passive-rule | match | self | passive | src/engine/buffs/hexes/tier3.ts | 4 | - | keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin) |
 | armory | Armory | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | bipartisanship | Bipartisanship | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| bishop_fan_club | Bishop Fan Club | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| bishop_tunnel_vision | Bishop Tunnel Vision | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier4.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| burning_bridges | Burning Bridges | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| boxing_with_shadow | Boxing with Shadow | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| broadside_rooks | Broadside Rooks | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier7.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | caged_queen | Caged Queen | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier6.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| carnivore_bishops | Carnivore Bishops | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier3.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | castle_curfew | Castle Curfew | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier4.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| champing_at_the_bit | Champing at the Bit | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| cloistered_queen | Cloistered Queen | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier7.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| chivalry | Chivalry | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | closed_book | Closed Book | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| colorblind | Colorblind | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| control_center | Control Center | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | court_jester | Court Jester | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | crenellations | Crenellations | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| crusade | Crusade | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| doctor_octopus | Doctor Octopus | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| eat_your_vegetables | Eat Your Vegetables | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| crippled_clergy | Crippled Clergy | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier8.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| entrenched | Entrenched | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | even_keeled | Even Keeled | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | fair_fight | Fair Fight | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier4.ts | 2 | - | keep (auto: no flags, harness-executed) |
-| frozen_cavalry | Frozen Cavalry | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier4.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| femme_fatale | Femme Fatale | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| gambler | Gambler | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | get_down_mr_president | Get Down Mr. President | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| hobbled_queen | Hobbled Queen | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier8.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| half_a_queen | Half a Queen | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier3.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| heavy_boots | Heavy Boots | nerf | 5 | passive-rule | match | self | passive | src/engine/buffs/library.ts | 3 | - | keep (auto: no flags, harness-executed) |
+| hobbled_knights | Hobbled Knights | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier5.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | homebound_pawns | Homebound Pawns | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier5.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | honey_trap | Honey Trap | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| hopscotch | Hopscotch | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| horse_eats_first | Horse Eats First | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | inside_the_lines | Inside the Lines | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | irresistible | Irresistible | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | ladies_first | Ladies First | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| left_for_dead | Left for Dead | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| leading_the_charge | Leading the Charge | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | march_or_die | March or Die | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier8.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | messy_divorce | Messy Divorce | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | mirror_march | Mirror March | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| no_retreat_rooks | No Retreat Rooks | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier4.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| moving_day | Moving Day | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| myopic_bishops | Myopic Bishops | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier5.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| one_bite_at_a_time | One Bite at a Time | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier3.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| out_of_breath | Out of Breath | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | pack_mentality | Pack Mentality | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | pacman | Pacman | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | phobia_of_edges | Phobia of Edges | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | power_cells | Power Cells | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| quarantine | Quarantine | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| queen_grounded | Queen Grounded | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier4.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| respectful | Respectful | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| predatory_knights | Predatory Knights | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier7.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| restless_crown | Restless Crown | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier5.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | retreating_bishops | Retreating Bishops | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier7.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | retrograde_knights | Retrograde Knights | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier8.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| rook_fan_club | Rook Fan Club | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | rook_on_seventh | Rook on the Seventh | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 2 | - | keep (auto: no flags, harness-executed) |
-| rooks_charge | Rooks Charge | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier4.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | scholarship | Scholarship | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| secret_garden | Secret Garden | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| short_leash_knights | Short Leash Knights | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier6.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| simp | Simp | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| stay_at_home_mom | Stay-at-Home Mom | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 2 | - | keep (auto: no flags, harness-executed) |
+| scouting_ahead | Scouting Ahead | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| shapeshifter | Shapeshifter | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| solar_flare | Solar Flare | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| stunted_rooks | Stunted Rooks | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier5.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | sunrise | Sunrise | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| switchback | Switchback | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | theocracy | Theocracy | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | thinning_ranks | Thinning Ranks | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier4.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| tidy_desk | Tidy Desk | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| three_check | Three Check | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | timid_bishops | Timid Bishops | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier6.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| toothless_pawns | Toothless Pawns | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier6.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| triple_play | Triple Play | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| turn_other_cheek | Turn the Other Cheek | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 2 | - | keep (auto: no flags, harness-executed) |
+| trophy_wife | Trophy Wife | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | war_of_attrition | War of Attrition | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier4.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| windup_toys | Windup Toys | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| warlord | Warlord | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| whites_of_their_eyes | Whites of Their Eyes | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | wn_curfew | Curfew | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | wn_glass_jaw | Glass Jaw | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| wn_gravity | Gravity | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | wn_meteor_shower | Meteor Shower | nerf | 5 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | absolution | Absolution | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | ascetic | Ascetic | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| bishop_fan_club | Bishop Fan Club | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | blood_quota | Blood Quota | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier5.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | bloodthirsty | Bloodthirsty | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| boxing_with_shadow | Boxing with Shadow | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | bridge_over_troubled_water | Bridge Over Troubled Water | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| burning_bridges | Burning Bridges | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | centralized_command | Centralized Command | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | checkers | Checkers | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| constriction | Constriction | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| counting_sheep | Counting Sheep | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| cheerleaders | Cheerleaders | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| colorblind | Colorblind | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| cowardly | Cowardly | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | cowering_in_fear | Cowering in Fear | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| defanged_queen | Defanged Queen | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier5.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | devil_on_shoulder | Devil on Your Shoulder | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 2 | - | keep (auto: no flags, harness-executed) |
-| domino | Domino | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 2 | - | keep (auto: no flags, harness-executed) |
-| drag | Drag | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| echo_chamber | Echo Chamber | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| doctor_octopus | Doctor Octopus | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | exclusivity_clause | Exclusivity Clause | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 2 | - | keep (auto: no flags, harness-executed) |
-| eye_for_an_eye | Eye for an Eye | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | eye_of_sauron | Eye of Sauron | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | feast_or_famine | Feast or Famine | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier6.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | flatterer | Flatterer | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| fog_of_war | Fog of War | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | forward_march | Forward March | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | fresh_faces | Fresh Faces | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | friendly_fire | Friendly Fire | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| glorious_battle | Glorious Battle | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | going_the_distance | Going the Distance | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | guerilla_tactics | Guerilla Tactics | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | hand_and_brainless | Hand and Brainless | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | hedonic_treadmill | Hedonic Treadmill | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | helicopter_parent | Helicopter Parent | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| hobbled_knights | Hobbled Knights | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier5.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| homeland_security | Homeland Security | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| hobbled_queen | Hobbled Queen | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier8.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| hopscotch | Hopscotch | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| horse_eats_first | Horse Eats First | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | icy_squares | Icy Squares | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | inching_forward | Inching Forward | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | indecisive | Indecisive | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| iron_curtain | Iron Curtain | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier6.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | jumpy | Jumpy | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | king_of_the_hill | King of the Hill | nerf | 6 | passive-rule | match | self | passive+bespoke+canvas | src/engine/buffs/funny/transforms.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | lame_duck | Lame Duck | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| leaps_and_bounds | Leaps and Bounds | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| left_for_dead | Left for Dead | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | left_to_right | Left to Right | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| leveling_up | Leveling Up | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | magnetic_kings | Magnetic Kings | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | medusa | Medusa | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | modest | Modest | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | monkey_see | Monkey See | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | my_kingdom_for_a_horse | My Kingdom for a Horse | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| myopic_bishops | Myopic Bishops | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier5.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | no_clean_trades | No Clean Trades | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier6.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| no_hanging_pieces | No Hanging Pieces | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier6.ts | 2 | - | keep (auto: no flags, harness-executed) |
-| no_mans_land | No Man's Land | nerf | 6 | passive-rule | match | self | passive | src/engine/buffs/hexes/tier2.ts | 3 | - | keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool |
-| no_retreat_ever | No Retreat Ever | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier5.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| noble_steed | Noble Steed | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| nurturer | Nurturer | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | obsession | Obsession | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | paranoid | Paranoid | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 2 | - | keep (auto: no flags, harness-executed) |
-| pawn_storm | Pawn Storm | nerf | 6 | passive-rule | match | self | passive | src/engine/buffs/library.ts | 2 | - | keep (auto: no flags, harness-executed) |
-| pawns_do_the_dirty_work | Pawns Do the Dirty Work | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier5.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| predatory_knights | Predatory Knights | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier7.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | reconnaissance | Reconnaissance | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | relay_race | Relay Race | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| restless_crown | Restless Crown | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier5.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | rhythm_master | Rhythm Master | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| rising_water | Rising Water | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| royal_berth | Royal Berth | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| rook_fan_club | Rook Fan Club | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| rooks_charge | Rooks Charge | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier4.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | savior_complex | Savior Complex | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | scent_of_blood | The Scent of Blood | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | scorched_earth | Scorched Earth | nerf | 6 | passive-rule | match | self | passive+canvas | src/engine/buffs/hexes/tier8.ts | 3 | - | keep (auto: no flags, harness-executed) |
 | siege | Siege | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | simon_says | Simon Says | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| slowpoke | Slowpoke | nerf | 6 | passive-rule | match | self | passive+bespoke | src/engine/buffs/pt/curseschaos.ts | 2 | - | keep (auto: no flags, harness-executed) |
+| simp | Simp | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| social_distancing | Social Distancing | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | spread_out | Spread Out | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| stand_your_ground | Stand Your Ground | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | statue_king | Statue King | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier6.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| straight_and_narrow | Straight and Narrow | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier7.ts | 2 | - | keep (auto: no flags, harness-executed) |
-| stunted_rooks | Stunted Rooks | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier5.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| stay_at_home_mom | Stay-at-Home Mom | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | taking_turns | Taking Turns | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | thunderdome | Thunderdome | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| torchlight | Torchlight | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| tower_defense | Tower Defense | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| toothless_pawns | Toothless Pawns | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier6.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | tribute | Tribute | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| triple_play | Triple Play | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | true_love | True Love | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| unlucky | Unlucky | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| turn_other_cheek | Turn the Other Cheek | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | unrequited_love | Unrequited Love | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| unspooling | Unspooling | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | vanishing_point | Vanishing Point | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| windup_toys | Windup Toys | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | wn_bodyguard | Bodyguard | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| wn_bottom_feeder | Bottom Feeder | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| wn_daisy_chain | Daisy Chain | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | wn_deadline_queen | Deadline | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | wn_equalizer | Equalizer | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | wn_follow_the_leader | Follow the Leader | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | wn_glass_queen | Glass Queen | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| wn_kings_leash | King's Leash | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| wn_gravity | Gravity | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | wn_mimicry | Mimicry | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| wn_regicide_clock | Regicide Clock | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| wn_weigh_station | Weigh Station | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | you_best_not_miss | You Best Not Miss | nerf | 6 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | abstinence | Abstinence | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| always_check_it_might_be_mate | Always Check, It Might Be Mate | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| boastful | Boastful | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| champing_at_the_bit | Champing at the Bit | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | compulsory_capture | No Restraint | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier7.ts | 2 | - | keep (auto: no flags, harness-executed) |
-| cowardly | Cowardly | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| constriction | Constriction | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | deer_in_headlights | Deer in the Headlights | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 2 | - | keep (auto: no flags, harness-executed) |
+| defanged_queen | Defanged Queen | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier5.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| domino | Domino | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 2 | - | keep (auto: no flags, harness-executed) |
+| drag | Drag | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| echo_chamber | Echo Chamber | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| eye_for_an_eye | Eye for an Eye | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | fischer_random_endgame | Fischer Random Endgame | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| fog_of_war_old | Fog of War (extended) | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| glorious_battle | Glorious Battle | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| iron_curtain | Iron Curtain | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier6.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | ivory_tower | Ivory Tower | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| leaps_and_bounds | Leaps and Bounds | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| leveling_up | Leveling Up | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| no_hanging_pieces | No Hanging Pieces | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier6.ts | 2 | - | keep (auto: no flags, harness-executed) |
+| no_mans_land | No Man's Land | nerf | 7 | passive-rule | match | self | passive | src/engine/buffs/hexes/tier2.ts | 3 | - | keep: reviewed cross-pool cluster; twins live in different draft pools (buff vs boon/hex vs opener) or scale by tier within their pool |
+| noble_steed | Noble Steed | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | nw2_chameleon | Chameleon | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/wave2.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | nw2_grandstanding | Grandstanding | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/wave2.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | nw2_metronome | Metronome | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/wave2.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | nw2_royal_entourage | Royal Entourage | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/wave2.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | nw2_shield_wall | Shield Wall | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/wave2.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | onward_only | Onward Only | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier7.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| pawn_storm | Pawn Storm | nerf | 7 | passive-rule | match | self | passive | src/engine/buffs/library.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | pilgrimage | Pilgrimage | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | reckless_monarch | Reckless Monarch | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier7.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| reflective | Reflective | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | relentless_hunter | Relentless Hunter | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier7.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| rising_water | Rising Water | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| stand_your_ground | Stand Your Ground | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| torchlight | Torchlight | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| tower_defense | Tower Defense | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| unlucky | Unlucky | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| unspooling | Unspooling | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | velociraptor | Velociraptor | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 2 | - | keep (auto: no flags, harness-executed) |
-| war_footing | War Footing | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier7.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| wn_kingpin | Kingpin | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| wn_daisy_chain | Daisy Chain | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| wn_kings_leash | King's Leash | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | wn_pin_cushion | Pin Cushion | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
-| wn_royal_meridian | Royal Meridian | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| wn_regicide_clock | Regicide Clock | nerf | 7 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| always_check_it_might_be_mate | Always Check, It Might Be Mate | nerf | 8 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| boastful | Boastful | nerf | 8 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | bottled_lightning | Bottled Lightning | nerf | 8 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| counting_sheep | Counting Sheep | nerf | 8 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | death_wish | Death Wish | nerf | 8 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| eat_your_vegetables | Eat Your Vegetables | nerf | 8 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| fog_of_war | Fog of War | nerf | 8 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| fog_of_war_old | Fog of War (extended) | nerf | 8 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | glass_king | Glass King | nerf | 8 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier8.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | hoarder | Hoarder | nerf | 8 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | hold_them_back | Hold Them Back | nerf | 8 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| homeland_security | Homeland Security | nerf | 8 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | neat_freak | Neat Freak | nerf | 8 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| no_retreat_ever | No Retreat Ever | nerf | 8 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier5.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| nurturer | Nurturer | nerf | 8 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | nw2_doomsday_clock | Doomsday Clock | nerf | 8 | passive-rule | match | self | passive | src/engine/nerfs/wave2.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | nw2_killing_spree | Killing Spree | nerf | 8 | passive-rule | match | self | passive | src/engine/nerfs/wave2.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | nw2_pyrrhic_victories | Pyrrhic Victories | nerf | 8 | passive-rule | match | self | passive | src/engine/nerfs/wave2.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | own_half_only | Own Half Only | nerf | 8 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier8.ts | 2 | - | keep (auto: no flags, harness-executed) |
+| pawns_do_the_dirty_work | Pawns Do the Dirty Work | nerf | 8 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier5.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| reflective | Reflective | nerf | 8 | passive-rule | match | self | passive | src/engine/nerfs/library.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| respectful | Respectful | nerf | 8 | passive-rule | match | self | passive | src/engine/nerfs/implemented.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | serf_labor | Serf Labor | nerf | 8 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier8.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| slowpoke | Slowpoke | nerf | 8 | passive-rule | match | self | passive+bespoke | src/engine/buffs/pt/curseschaos.ts | 2 | - | keep (auto: no flags, harness-executed) |
+| straight_and_narrow | Straight and Narrow | nerf | 8 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier7.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | total_pacifism | Total Pacifism | nerf | 8 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier8.ts | 2 | - | keep (auto: no flags, harness-executed) |
 | wagon_train | Wagon Train | nerf | 8 | passive-rule | match | self | passive | src/engine/nerfs/extras.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| war_footing | War Footing | nerf | 8 | passive-rule | match | self | passive | src/engine/nerfs/expanded/tier7.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| wn_bottom_feeder | Bottom Feeder | nerf | 8 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | wn_floor_is_lava | The Floor Is Lava | nerf | 8 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | wn_glass_army | Glass Army | nerf | 8 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | wn_house_of_cards | House of Cards | nerf | 8 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| wn_kingpin | Kingpin | nerf | 8 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
 | wn_perfect_defense | Perfect Defense | nerf | 8 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |
+| wn_royal_meridian | Royal Meridian | nerf | 8 | passive-rule | match | self | passive | src/engine/nerfs/wild.ts | 1 | - | keep (auto: no flags, harness-executed) |

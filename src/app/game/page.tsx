@@ -1481,9 +1481,9 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
                   type="button"
                   onClick={() => (nerfSelected === i ? startDraftGame(n) : setNerfSelected(i))}
                   className={
-                    "mx-auto block w-full max-w-md sm:max-w-none text-left transition touch-manipulation [@media(hover:hover)]:hover:-translate-y-1" +
+                    "mx-auto block w-full max-w-md sm:max-w-none text-left transition-[box-shadow,opacity] duration-200 touch-manipulation" +
                     (nerfSelected === i
-                      ? " -translate-y-1 ring-2 ring-gold"
+                      ? " ring-2 ring-gold"
                       : nerfSelected != null
                       ? " opacity-60"
                       : "")

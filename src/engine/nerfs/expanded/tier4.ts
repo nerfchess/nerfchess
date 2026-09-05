@@ -6,13 +6,15 @@ import { Nerf } from "./shared";
 import { tierNerf, filter, relRank, isInCheck, makeMove, FILE, RANK, PIECE_VALUE, Color } from "./shared";
 
 const N = tierNerf(4);
+const N6 = tierNerf(6);
+const N4 = tierNerf(4);
 const N3 = tierNerf(3);
 const N5 = tierNerf(5);
 
 const other = (c: Color): Color => (c === "w" ? "b" : "w");
 
 export const NERFS_T4: Nerf[] = [
-  N5(
+  N6(
     { id: "rooks_charge", name: "Rooks Charge", description: "Your rooks can only move straight forward toward the enemy, never sideways or backward. If that leaves you with no legal move, you may move your king instead.", flavor: "The towers only know one command: advance.", icon: "castle" },
     {
       filterMoves: (moves, _state, ctx) => {
@@ -29,7 +31,7 @@ export const NERFS_T4: Nerf[] = [
       },
     },
   ),
-  N5(
+  N4(
     { id: "frozen_cavalry", name: "Frozen Cavalry", description: "From your 18th move on, you can't move your knights, except for a single once-per-game knight move.", flavor: "The horses seize up mid campaign.", icon: "snowflake" },
     {
       filterMoves: (moves, _state, ctx) => {
@@ -73,7 +75,7 @@ export const NERFS_T4: Nerf[] = [
       },
     },
   ),
-  N5(
+  N4(
     { id: "queen_grounded", name: "Queen Grounded", description: "From your 12th move on, your queen can't move into the opponent's half of the board, except for a single once-per-game move.", flavor: "Her range collapses to home soil.", icon: "crown" },
     {
       filterMoves: (moves, _state, ctx) => {
@@ -102,7 +104,7 @@ export const NERFS_T4: Nerf[] = [
       progress: (state) => ({ value: 8 - (state.pawns as number), max: 6, label: state.pawns + " pawns left" }),
     },
   ),
-  N5(
+  N4(
     { id: "no_retreat_rooks", name: "No Retreat Rooks", description: "From your 10th move on, your rooks can't move toward your own back rank, except for a single once-per-game move.", flavor: "The towers only ever roll forward.", icon: "castle" },
     {
       filterMoves: (moves, _state, ctx) => {
@@ -117,7 +119,7 @@ export const NERFS_T4: Nerf[] = [
       },
     },
   ),
-  N5(
+  N4(
     { id: "bishop_tunnel_vision", name: "Bishop Tunnel Vision", description: "Your bishops can't move more than three squares in a single move, unless the move gives check.", flavor: "The clergy squint down short diagonals.", icon: "church" },
     {
       filterMoves: (moves, _state, ctx) => {
