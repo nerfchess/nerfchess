@@ -15,7 +15,7 @@ import { isGodlikeCard } from "@/lib/signatureCards";
 import { useFxLevel, FX_LEVELS } from "@/lib/fxToggle";
 import { INFINITE_REROLLS } from "@/lib/godPanel";
 import { BuffCard } from "./BuffCard";
-import { DraftChest } from "./DraftChest";
+import { DraftVault, VAULT_OPEN_MS } from "./DraftVault";
 import { OpponentDraftPanel } from "./OpponentDraftPanel";
 import "./DraftOverlay.css";
 import { Button } from "@/components/ui/Button";
@@ -469,9 +469,9 @@ const PACK_HOLD_MS = 1150;
 // The minimized panel runs on the player's own clock: the pack still shows
 // (a reroll always earns its box) but tears itself almost immediately.
 const PACK_HOLD_MINIMIZED_MS = 450;
-// The chest-opening sequence: quake -> hasp pops -> lid swings -> light
-// floods. Slightly longer than the old pack tear so the lid swing lands.
-const PACK_TEAR_MS = 780;
+// The vault-opening sequence: spin-up -> faces shear away -> core blooms ->
+// flash and shockwave. The cards deal out of the flash.
+const PACK_TEAR_MS = VAULT_OPEN_MS;
 const flipDelayMs = (i: number, tier: number) => i * DEAL_STAGGER_MS + DEAL_MS + 40 + tier * 12;
 
 // Accidental-double-click guard: a click on the already-selected card only
@@ -1354,8 +1354,8 @@ export function DraftOverlay({
           )}
           {packStage !== "open" ? (
             /* Reroll (or a fresh offer) in the compact panel still earns its
-               chest moment: a mini chest that springs open on a fast fuse. */
-            <DraftChest
+               vault moment: a mini vault that bursts open on a fast fuse. */
+            <DraftVault
               tier={maxTier}
               count={offer.cards.length}
               label={draftLabel}
@@ -1656,13 +1656,13 @@ export function DraftOverlay({
         )}
 
         {packStage !== "open" && (
-          /* The sealed treasure chest: the individual cards stay secret, but
-             the chest's material climbs with the best card inside — worn oak
-             at the bottom of the ladder, up through iron, gilded vault,
-             arcane relic, apex crown, and the mythic star chest. Tap opens
-             it immediately; Skip drops the whole ceremony and deals now. */
+          /* The sealed sigil vault: the individual cards stay secret, but the
+             vault's material climbs with the best card inside, from rough
+             slate at the bottom of the ladder up through iron, gilt, arcane
+             glass, apex gold and mythic star-glass. Tap opens it immediately;
+             Skip drops the whole ceremony and deals now. */
           <>
-            <DraftChest
+            <DraftVault
               tier={maxTier}
               count={offer.cards.length}
               label={draftLabel}
