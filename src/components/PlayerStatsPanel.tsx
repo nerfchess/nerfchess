@@ -213,8 +213,8 @@ export function PlayerStatsPanel({
         {row("Average opponent", stats.avgOpponentRating != null ? String(stats.avgOpponentRating) : "-")}
         {peak > 0 && row("Highest rating", String(Math.round(peak)))}
         {stats.lowest && row("Lowest rating", String(Math.round(stats.lowest.rating)))}
-        {row("Best win streak", `${stats.winStreak.longest}`, "win")}
-        {row("Worst loss streak", `${stats.lossStreak.longest}`, "loss")}
+        {row("Best win streak", String(stats.winStreak.longest.length), "win")}
+        {row("Worst loss streak", String(stats.lossStreak.longest.length), "loss")}
       </div>
     );
   }
