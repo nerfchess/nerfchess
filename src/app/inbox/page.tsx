@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { MailPlus } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { MailPlus, WifiOff } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { EmptyState } from "@/components/EmptyState";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
@@ -30,24 +30,38 @@ function formatWhen(at: number): string {
 export default function InboxPage() {
   const [user, setUser] = useState<AccountUser | null | undefined>(undefined);
   const [conversations, setConversations] = useState<Conversation[] | null>(null);
+  // A failed conversations fetch shows a retry instead of an endless skeleton.
+  const [loadError, setLoadError] = useState(false);
+  const [reloadTick, setReloadTick] = useState(0);
+
+  const retry = useCallback(() => {
+    setLoadError(false);
+    setConversations(null);
+    setReloadTick((n) => n + 1);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
     fetchMe().then((me) => {
       if (cancelled) return;
-      setUser(me);
+      setUser(me ?? null);
       if (!me) return;
       fetch("/api/messages")
-        .then((res) => (res.ok ? (res.json() as Promise<{ conversations: Conversation[] }>) : null))
-        .then((data) => {
-          if (!cancelled && data) setConversations(data.conversations);
+        .then((res) => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return res.json() as Promise<{ conversations: Conversation[] }>;
         })
-        .catch(() => {});
+        .then((data) => {
+          if (!cancelled) setConversations(data.conversations);
+        })
+        .catch(() => {
+          if (!cancelled) setLoadError(true);
+        });
     });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [reloadTick]);
 
   return (
     <main className="min-h-screen">
@@ -73,7 +87,15 @@ export default function InboxPage() {
               </p>
             </div>
 
-            {!conversations ? (
+            {loadError ? (
+              <EmptyState
+                className="mt-6"
+                icon={WifiOff}
+                title="Could not load your inbox"
+                body="Check your connection and try again."
+                action={{ onClick: retry, label: "Retry" }}
+              />
+            ) : !conversations ? (
               <ul className="mt-6 plate divide-y divide-[color:var(--edge)]" aria-hidden>
                 {Array.from({ length: 5 }).map((_, i) => (
                   <li key={i} className="flex items-center gap-3 px-4 py-3">

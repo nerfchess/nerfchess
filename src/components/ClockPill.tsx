@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { formatClock } from "@/lib/clockFormat";
+import { useSettingsValue } from "@/lib/useSettingsValue";
 import { playLowTime, playUrgentTick } from "@/lib/sounds";
 
 // Shared across every ClockPill instance so the duplicated mobile/desktop
@@ -114,6 +115,7 @@ export function ClockPill({
   // under 10s it pulses stronger and tints oxblood. Border stays 2px across
   // every active tier so switching urgency never shifts layout; the countdown
   // text is always tabular-nums so digits never jitter.
+  const { clockTenths: tenths } = useSettingsValue();
   const low = displayMs < 30000;
   const critical = displayMs < 10000;
   return (
@@ -121,7 +123,7 @@ export function ClockPill({
       data-clock-seat={seat ?? undefined}
       className={
         "plate flex items-center justify-center transition " +
-        (compact ? "shrink-0 px-3 py-1.5 " : "p-4 ") +
+        (compact ? "shrink-0 px-2.5 py-1 sm:px-3 sm:py-1.5 " : "p-4 ") +
         (active
           ? critical
             ? "border-oxblood-glow bg-oxblood/25"
@@ -134,7 +136,7 @@ export function ClockPill({
       <span
         className={
           "font-mono tabular-nums font-bold tracking-wide " +
-          (compact ? "text-xl " : "text-4xl ") +
+          (compact ? "text-[26px] leading-none sm:text-xl sm:leading-normal " : "text-4xl ") +
           (critical
             ? "text-oxblood-glow"
             : low
@@ -142,7 +144,7 @@ export function ClockPill({
             : "text-parchment")
         }
       >
-        {formatClock(displayMs)}
+        {formatClock(displayMs, tenths)}
       </span>
       {draftRunning && (
         <span
@@ -150,7 +152,7 @@ export function ClockPill({
           aria-label="Draft unresolved: this clock is running"
           className={
             "shrink-0 border border-oxblood-glow/60 bg-oxblood/20 font-display font-bold text-oxblood-glow " +
-            (compact ? "ml-1.5 px-1 text-[9px]" : "ml-2 px-1.5 text-[11px]")
+            (compact ? "ml-1.5 px-1 text-[12px]" : "ml-2 px-1.5 text-[12px]")
           }
         >
           Draft
@@ -163,7 +165,7 @@ export function ClockPill({
           title="Free time before your clock starts"
           className={
             "font-mono tabular-nums text-gold-leaf/80 " +
-            (compact ? "ml-1.5 text-[10px]" : "ml-2 text-sm")
+            (compact ? "ml-1.5 text-[12px]" : "ml-2 text-sm")
           }
         >
           +{Math.ceil(graceMs / 1000)}

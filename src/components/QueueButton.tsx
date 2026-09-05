@@ -183,7 +183,8 @@ export function QueueButton({
     setState("idle");
   };
 
-  const selected = QUEUE_POOL_OPTIONS.find((o) => o.pool === pool) ?? QUEUE_POOL_OPTIONS[4];
+  const selected =
+    QUEUE_POOL_OPTIONS.find((o) => o.pool === pool) ?? QUEUE_POOL_OPTIONS.find((o) => o.pool === "3+2")!;
   const ratingFor = (mode: DraftMode) =>
     modeRatings[mode] ?? (user ? Math.round(user.rating) : null);
 

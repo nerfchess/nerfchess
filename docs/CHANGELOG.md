@@ -651,3 +651,67 @@ under html[data-anim="off"]. Verified: tsc, test:animations,
 test:scene-complexity (2130 scenes, 0 below floor), test:passive-registry,
 test:passive-motifs, test:nerf-visuals, check-vfx-coverage (2448/2448),
 test:emdash, test:rounded, check-reduced-motion.
+
+## 2026-09-05 13:25 EDT
+
+UI redesign and bug sweep (branch claude/ui-redesign-bug-sweep-ausg0e). OPEN.
+
+Theme:
+- New Midnight site theme (navy take on the Lichess ladder, cooler text
+  ramp, accent lifted to #4c9ff0) and it is the default. Dark, Light and
+  System stay; System resolves to Midnight or Light. Old stored ids still
+  migrate through LEGACY_SITE_THEMES.
+
+Move feel:
+- Piece glide is now a millisecond setting (Settings > Board > Motion, presets
+  Off / 60 / 100 / 150 / 250 ms, default 100) with a curve that finishes its
+  travel by the stated time instead of creeping. applyUiPrefs stamps
+  --piece-anim-ms; the board reads it when it starts a slide.
+- Move-risk dots compute in an idle callback (useDeferredMoveRisks) instead of
+  inside the render that lands the opponent's move, so that frame paints
+  before 30 to 80 makeMove calls run.
+- The check highlight reads the optimistic board, so the enemy king turns red
+  when your piece lands, not one round trip later.
+- A move played during a socket blip is held and flushed on reconnect
+  (multiplayer.sendMove) instead of being dropped with an error toast.
+- New Lichess prefs: Tenths of seconds (never / under 10s / always), Material
+  difference, Show ratings.
+
+Draft:
+- The treasure chest is gone. DraftVault is a CSS 3D six-sided sigil prism
+  over counter-rotating rune rings; materials slate / iron / gilt / arcane /
+  apex / mythic climb with the offer's best card. Opening (~920ms): spin-up,
+  rings flare and lift, faces shear away, core blooms into a flash and
+  shockwave, cards deal out of the light. Same contract, same reduced-motion
+  handling, /dev/chest gallery updated.
+- When the 20s window ends the draft no longer auto-picks or vanishes, online
+  or against a bot: it shrinks into the corner panel and STAYS there (the 12s
+  auto-tuck fuse is gone) until the player resolves it. The bot game resumes
+  the player's clock at that point. e2e draft-timing updated accordingly.
+
+Phone layout (Lichess column one):
+- The match page scrolls on phones instead of clipping inside h-dvh. Board is
+  full-bleed, player bars are ~2.75rem (name over material, never wrapping)
+  with the clock beside them, and MobileMatchStack renders actions, a
+  horizontal MoveStrip with prev/next, your rule, the buff dock inline, chat
+  and stakes under the board. MobileMoveDrawer and MobileActionsMenu are
+  removed; MobileBuffDrawer is tablet-only now. Headers are 44-48px on phones,
+  chat and clock labels come up to 12px, corner overlays sit at the edge.
+
+Loading:
+- LockInCountdown split out of DraftOverlay so the corner notice no longer
+  pulls the whole overlay and its stylesheet into first paint; PassiveLayer
+  loads lazily; sound preload waits for an idle callback; framer-motion added
+  to optimizePackageImports.
+
+Bug sweep (see the PR for the file list): 15+10 friend preset broke the
+custom slider, settings writes ran inside setState updaters, rematch button
+could stay disabled forever, inbox failed silently, poll writes after unmount,
+uncleared flash timers, friendBusy not reset across profiles, silent friend
+refresh failures, wrong queue fallback pool, details/open desync, case
+sensitive own-seek check, guest accounts minted on a transient auth blip,
+leaked seek timers.
+
+Verified: tsc, eslint, check battery (emdash, rounded, buttons, reduced-motion,
+animations, anim-props, board3d, sound, treatments, usage, clock-format).
+

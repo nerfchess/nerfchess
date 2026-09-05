@@ -25,6 +25,8 @@ export type Control =
   | { kind: "toggle"; setting: BoolKey }
   | { kind: "slider"; setting: NumKey; min: number; max: number; step: number; format?: (v: number) => string }
   | { kind: "animationSpeed"; options: Array<{ value: AnimationSpeed; label: string }> }
+  | { kind: "pieceAnimMs" }
+  | { kind: "clockTenths" }
   | { kind: "siteTheme" }
   | { kind: "soundTheme"; options: Array<{ value: SoundTheme; label: string }> }
   | { kind: "customBg" }
@@ -169,6 +171,20 @@ export const SECTIONS: SectionConfig[] = [
         control: { kind: "toggle", setting: "flipBoard" },
       },
       {
+        id: "showCaptured",
+        label: "Material difference",
+        hint: "Captured pieces and the point lead beside each player",
+        group: "Board",
+        control: { kind: "toggle", setting: "showCaptured" },
+      },
+      {
+        id: "showRatings",
+        label: "Show ratings",
+        hint: "Ratings beside player names in a game",
+        group: "Board",
+        control: { kind: "toggle", setting: "showRatings" },
+      },
+      {
         id: "showCoordinates",
         label: "Show coordinates",
         group: "Layout",
@@ -199,6 +215,13 @@ export const SECTIONS: SectionConfig[] = [
             { value: "normal", label: "Normal" },
           ],
         },
+      },
+      {
+        id: "pieceAnimMs",
+        label: "Piece glide",
+        hint: "How long a piece takes to slide between squares. 0 teleports",
+        group: "Motion",
+        control: { kind: "pieceAnimMs" },
       },
       {
         id: "effects3d",
@@ -284,6 +307,13 @@ export const SECTIONS: SectionConfig[] = [
         hint: "Ticks when your clock runs low",
         group: "Interface",
         control: { kind: "toggle", setting: "lowTimeWarning" },
+      },
+      {
+        id: "clockTenths",
+        label: "Tenths of seconds",
+        hint: "When the clock shows tenths",
+        group: "Interface",
+        control: { kind: "clockTenths" },
       },
     ],
   },

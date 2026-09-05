@@ -156,6 +156,7 @@ function ProfileContent() {
     setHouseEdit(null);
     setNewestGame(undefined);
     setRel(null);
+    setFriendBusy(false);
     setReporting(false);
   }
 
@@ -201,7 +202,7 @@ function ProfileContent() {
 
       const account = await fetchMe();
       if (cancelled) return;
-      setMe(account);
+      setMe(account ?? null);
       // House editor (ilovenewjeans only): learn whether this profile is a bot
       // and, if so, load its persona id + the pickable avatar catalog. The
       // personas endpoint is authorized for this account and 403s for everyone
@@ -864,11 +865,19 @@ async function shareProfile(username: string): Promise<boolean> {
 // with a transient "Link copied" confirmation on the clipboard fallback.
 function ShareButton({ username }: { username: string }) {
   const [copied, setCopied] = useState(false);
+  const copiedTimer = useRef<number | null>(null);
+  useEffect(
+    () => () => {
+      if (copiedTimer.current != null) window.clearTimeout(copiedTimer.current);
+    },
+    [],
+  );
 
   const share = async () => {
     if (await shareProfile(username)) {
       setCopied(true);
-      window.setTimeout(() => setCopied(false), 2000);
+      if (copiedTimer.current != null) window.clearTimeout(copiedTimer.current);
+      copiedTimer.current = window.setTimeout(() => setCopied(false), 2000);
     }
   };
 
@@ -905,11 +914,19 @@ function OverflowMenu({
   const [copied, setCopied] = useState(false);
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const copiedTimer = useRef<number | null>(null);
+  useEffect(
+    () => () => {
+      if (copiedTimer.current != null) window.clearTimeout(copiedTimer.current);
+    },
+    [],
+  );
 
   const share = async () => {
     if (await shareProfile(username)) {
       setCopied(true);
-      window.setTimeout(() => {
+      if (copiedTimer.current != null) window.clearTimeout(copiedTimer.current);
+      copiedTimer.current = window.setTimeout(() => {
         setCopied(false);
         setOpen(false);
       }, 1200);

@@ -12,6 +12,7 @@ import {
   CUSTOM_BG_DATA_MAX,
   CUSTOM_BG_URL_MAX,
   DEFAULT_SETTINGS,
+  PIECE_ANIM_PRESETS,
   PIECE_COLORS,
   PIECE_THEMES,
   PieceColor,
@@ -83,23 +84,23 @@ export function SettingsPanel({ open, onClose, liveGame }: Props) {
   // effects. saveSettings() already re-applies the themes and UI preferences;
   // audio needs an explicit push into the sound engine.
   const update = (patch: Partial<Settings>) => {
-    setSettings((prev) => {
-      const merged = { ...prev, ...patch };
-      saveSettings(merged);
-      if (patch.volume != null) setVolume(merged.volume);
-      if (patch.uiSounds != null) setUiSounds(merged.uiSounds);
-      configureSoundPrefs({
-        enabled: merged.soundEnabled,
-        move: merged.moveSound,
-        capture: merged.captureSound,
-        check: merged.checkSound,
-        gameEnd: merged.gameEndSound,
-        theme: merged.soundTheme,
-      });
-      // Audition the new set so the choice is audible immediately.
-      if (patch.soundTheme != null || patch.volume != null) playMoveSample();
-      return merged;
+    // Merge from storage (the latest persisted value, which state mirrors) and
+    // run the side effects outside the state updater, which React may replay.
+    const merged = { ...loadSettings(), ...patch };
+    setSettings(merged);
+    saveSettings(merged);
+    if (patch.volume != null) setVolume(merged.volume);
+    if (patch.uiSounds != null) setUiSounds(merged.uiSounds);
+    configureSoundPrefs({
+      enabled: merged.soundEnabled,
+      move: merged.moveSound,
+      capture: merged.captureSound,
+      check: merged.checkSound,
+      gameEnd: merged.gameEndSound,
+      theme: merged.soundTheme,
     });
+    // Audition the new set so the choice is audible immediately.
+    if (patch.soundTheme != null || patch.volume != null) playMoveSample();
   };
 
   const renderControl = (control: Control, label: string) => {
@@ -131,6 +132,36 @@ export function SettingsPanel({ open, onClose, liveGame }: Props) {
             value={settings.animationSpeed}
             options={control.options}
             onChange={(v) => update({ animationSpeed: v })}
+          />
+        );
+      case "pieceAnimMs": {
+        const known = PIECE_ANIM_PRESETS.some((o) => o.value === settings.pieceAnimMs);
+        const options = known
+          ? PIECE_ANIM_PRESETS.map((o) => ({ value: String(o.value), label: o.label }))
+          : [
+              ...PIECE_ANIM_PRESETS.map((o) => ({ value: String(o.value), label: o.label })),
+              { value: String(settings.pieceAnimMs), label: `${settings.pieceAnimMs} ms` },
+            ];
+        return (
+          <Select
+            label={label}
+            value={String(settings.pieceAnimMs)}
+            options={options}
+            onChange={(v) => update({ pieceAnimMs: Number(v) })}
+          />
+        );
+      }
+      case "clockTenths":
+        return (
+          <Select
+            label={label}
+            value={settings.clockTenths}
+            options={[
+              { value: "never", label: "Never" },
+              { value: "low", label: "Under 10 seconds" },
+              { value: "always", label: "Always" },
+            ]}
+            onChange={(v) => update({ clockTenths: v })}
           />
         );
       case "siteTheme":
@@ -399,7 +430,7 @@ function SiteThemePicker({
   };
 
   return (
-    <div className="grid grid-cols-3 gap-2">
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
       {ids.map((k) => {
         const t = SITE_THEMES[k];
         const selected = value === k;

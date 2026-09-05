@@ -1,18 +1,20 @@
 # Site themes
 
 The site theme is a Settings > Appearance preference (`settings.siteTheme`),
-applied by `applyUiPrefs` as `html[data-theme="<id>"]`. There are exactly three
-ids and only two palettes:
+applied by `applyUiPrefs` as `html[data-theme="<id>"]`. There are four ids and
+three palettes:
 
 | Id | What it is |
 | --- | --- |
-| `dark` | The default. Lichess's dark palette. |
+| `midnight` | The default. Lichess's dark ladder on a navy hue (`--site-hue: 218deg`), a cooler text ramp and the accent lifted one notch (`#4c9ff0`). |
+| `dark` | Lichess's own warm-grey dark palette. |
 | `light` | Lichess's light palette. |
-| `system` | Follows the device, resolving to `dark` or `light` before it reaches the DOM. |
+| `system` | Follows the device, resolving to `midnight` or `light` before it reaches the DOM. |
 
 `applyUiPrefs` never writes `system` into `data-theme`: it reads
 `prefers-color-scheme` and stamps the palette that wins, so CSS only ever sees
-two values.
+three values. Midnight and light are override blocks in `globals.css`; the
+warm dark palette IS the `:root` block.
 
 ## The two palettes
 

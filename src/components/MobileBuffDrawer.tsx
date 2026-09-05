@@ -4,11 +4,10 @@ import { ChevronDown, ChevronUp, Layers } from "lucide-react";
 import { type ReactNode, useState } from "react";
 
 /**
- * Collapsible bottom drawer for the draft-mode buff dock below the lg
- * breakpoint (the desktop side rail is the only other place it renders).
- * Sits above the MobileMoveDrawer bar on phones; on sm–lg widths the move
- * drawer is hidden and this bar drops to the bottom edge. `usable` drives a
- * badge so a buff becoming activatable doesn't go unnoticed while closed.
+ * Collapsible bottom drawer for the draft-mode buff dock on tablet widths
+ * (sm to lg). Phones render the dock inline under the board
+ * (MobileMatchStack) and desktop has the side rail. `usable` drives a badge
+ * so a buff becoming activatable doesn't go unnoticed while closed.
  */
 export function MobileBuffDrawer({
   held,
@@ -42,7 +41,7 @@ export function MobileBuffDrawer({
   }
 
   return (
-    <div className="lg:hidden">
+    <div className="hidden sm:block lg:hidden">
       {open && (
         <button
           type="button"
@@ -58,7 +57,7 @@ export function MobileBuffDrawer({
           move drawer is hidden (`sm:hidden`), so this drops to the edge and
           takes the inset itself. */}
       <div
-        className="fixed inset-x-0 bottom-[calc(2.75rem+env(safe-area-inset-bottom))] z-40 plate overflow-hidden border-t border-[color:var(--edge)] sm:bottom-0 sm:pb-[env(safe-area-inset-bottom)]"
+        className="fixed inset-x-0 bottom-0 z-40 plate overflow-hidden border-t border-[color:var(--edge)] pb-[env(safe-area-inset-bottom)]"
         // Drawer geometry: rounded top corners, square bottom against the
         // screen edge. Inline so it reliably overrides the plate's 10px.
         style={{ borderRadius: "1px 1px 0 0" }}

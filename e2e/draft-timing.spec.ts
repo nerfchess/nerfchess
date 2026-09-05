@@ -93,7 +93,7 @@ test.describe("draft decision timing (reduced motion)", () => {
     expect(secs).toBeGreaterThanOrEqual(18);
   });
 
-  test("an expired window auto-resolves the draft — no pending panel", async ({
+  test("an expired window minimizes the draft to the corner and keeps it open", async ({
     page,
   }) => {
     // Sits through the full 20s window on purpose.
@@ -108,19 +108,23 @@ test.describe("draft decision timing (reduced motion)", () => {
     // Tentatively select the first card, then walk away — never press Confirm.
     await page.locator(".draft-deal-grid button").first().click();
 
-    // The window runs out. Deterministic recovery: the draft resolves itself,
-    // the overlay closes, and play resumes. The old "Draft pending" recovery
-    // panel / Resolve chip must NEVER appear, and nothing is left for the
-    // player to clear by hand.
-    await expect(decisionTimer(page)).toHaveCount(0, { timeout: 40_000 });
+    // The window runs out. Nothing is picked for the player: the full overlay
+    // steps aside into the compact corner panel, the cards stay one tap away,
+    // and the board is playable again with the clock running.
+    await expect(page.locator("[data-draft-compact-cards]")).toBeVisible({ timeout: 40_000 });
     await expect(page.locator(".draft-deal-grid")).toHaveCount(0);
-    await expect(page.getByText("Draft pending.")).toHaveCount(0);
-    await expect(
-      page.getByRole("button", { name: /resolve your .* draft/i }),
-    ).toHaveCount(0);
-
-    // The board is back and interactive: a labelled square is present, so the
-    // game returned to a playable state rather than sitting stuck on a draft.
+    // The cards themselves are showing, not the slim "Resolve draft" chip.
+    await expect(page.getByRole("button", { name: /resolve your .* draft/i })).toHaveCount(0);
     await expect(page.getByRole("gridcell").first()).toBeVisible();
+
+    // The corner panel never tucks itself away: it is still there well after
+    // the old auto-tuck fuse would have fired, and resolving it works from
+    // there.
+    await page.waitForTimeout(13_000);
+    const compact = page.locator("[data-draft-compact-cards]");
+    await expect(compact).toBeVisible();
+    await compact.locator("button").first().click();
+    await page.getByRole("button", { name: /^confirm/i }).click();
+    await expect(compact).toHaveCount(0, { timeout: 10_000 });
   });
 });

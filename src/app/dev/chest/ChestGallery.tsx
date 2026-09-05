@@ -1,16 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { DraftChest } from "@/components/DraftChest";
+import { DraftVault } from "@/components/DraftVault";
 
-// Dev gallery for the draft treasure chest: one chest per material band so
-// the ladder (worn oak -> mythic star) can be eyeballed side by side, with a
-// click-to-replay opening on each. Sibling of /dev/plays and /dev/effects.
+// Dev gallery for the draft vault: one vault per material band so the ladder
+// (slate -> mythic) can be eyeballed side by side, with a click-to-replay
+// opening on each. Sibling of /dev/plays and /dev/effects.
 
 const BANDS: { tier: number; label: string }[] = [
-  { tier: 2, label: "Tier 2 · wood" },
+  { tier: 2, label: "Tier 2 · slate" },
   { tier: 4, label: "Tier 4 · iron" },
-  { tier: 6, label: "Tier 6 · gilded" },
+  { tier: 6, label: "Tier 6 · gilt" },
   { tier: 8, label: "Tier 8 · arcane" },
   { tier: 9, label: "Tier 9 · apex" },
   { tier: 10, label: "Tier 10 · mythic" },
@@ -28,15 +28,15 @@ export function ChestGallery() {
 
   return (
     <main className="mx-auto max-w-6xl px-5 py-8">
-      <h1 className="font-display text-2xl text-parchment">Treasure chest ladder</h1>
+      <h1 className="font-display text-2xl text-parchment">Draft vault ladder</h1>
       <p className="mt-1 text-sm text-parchment-400">
-        Click a chest to play its opening; Reset re-seals it. The material climbs with the best
+        Click a vault to play its opening; Reset re-seals it. The material climbs with the best
         card in the offer.
       </p>
       <div className="mt-6 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
         {BANDS.map((b) => (
           <div key={b.tier} className="plate flex flex-col items-center gap-3 p-5">
-            <DraftChest
+            <DraftVault
               key={runs[b.tier]?.n ?? 0}
               tier={b.tier}
               count={3}

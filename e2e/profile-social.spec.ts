@@ -41,8 +41,9 @@ test("public profile: header, tabs switch and drive ?tab=, clean empty states", 
   // A brand-new account is never "in-game", so no live-game module or its
   // "Playing right now" shell should ever render.
   await expect(page.getByText("Playing right now")).toHaveCount(0);
-  // Instead the own-profile empty state invites a first game.
-  await expect(page.getByText(/have not played online yet/i)).toBeVisible();
+  // Instead the empty rating chart invites a first rated game (the old
+  // "have not played online yet" card went with the Lichess-style relayout).
+  await expect(page.getByText(/play a rated game and your rating history/i)).toBeVisible();
 
   // Tabs default to Activity; the URL carries no ?tab= yet.
   const activityTab = page.getByRole("tab", { name: "Activity" });

@@ -245,6 +245,42 @@ html[data-anim="fast"] *::after {
    needs a per-theme rule.
 
    The dark palette IS the :root block above. Only light overrides. */
+/* Midnight, the default: the same ladder on a navy hue with a touch more
+   saturation, a cooler text ramp and the accent lifted one notch so it still
+   clears AA on the bluer panels. Brass (--brag) stays warm on purpose. */
+html[data-theme="midnight"] {
+  --site-hue: 218deg;
+  --bg-base: hsl(218 30% 8%);
+  --bg-panel: hsl(218 24% 14%);
+  --bg-raised: hsl(218 20% 22%);
+  --bg-hover: hsl(218 20% 27%);
+  --bg-zebra: hsl(218 20% 18%);
+  --border-subtle: hsl(218 16% 26%);
+  --border-light: hsl(218 14% 40%);
+  --text-primary: #cad2dd;
+  --text-heading: #e3e9f2;
+  --text-secondary: #9aa6b8;
+  --text-muted: #7c889a;
+  --text-primary-rgb: 202 210 221;
+  --text-secondary-rgb: 154 166 184;
+  --accent-gold: #4c9ff0;
+  --accent-gold-hi: #6db2f5;
+  --accent-gold-rgb: 76 159 240;
+  --accent-gold-hi-rgb: 109 178 245;
+  --accent-gold-dim-rgb: 51 118 186;
+  --accent-buff: #6aa8e0;
+  --accent-buff-hi: #92c1ea;
+  --accent-buff-rgb: 106 168 224;
+  --accent-buff-hi-rgb: 146 193 234;
+  --c-metal-top: hsl(218 20% 23%);
+  --c-metal-bottom: hsl(218 20% 19%);
+  --c-metal-top-hover: hsl(218 20% 26%);
+  --c-metal-bottom-hover: hsl(218 20% 22%);
+  --c-body-gradient: hsl(218 26% 16%);
+  --brag: hsl(37deg 74% 46%);
+  --brag-hi: hsl(37deg 80% 58%);
+}
+
 html[data-theme="light"] {
   --bg-base: hsl(var(--site-hue) 10% 92%);
   --bg-panel: hsl(0 0% 100%);

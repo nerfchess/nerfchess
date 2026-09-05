@@ -141,7 +141,7 @@ function LobbyInner() {
   useEffect(() => {
     let cancelled = false;
     fetchMe().then((me) => {
-      if (!cancelled) setUser(me);
+      if (!cancelled) setUser(me ?? null);
     });
     return () => {
       cancelled = true;
@@ -291,12 +291,15 @@ function LobbyInner() {
       if (joinSessionRef.current === session) joinSessionRef.current = null;
       router.push(`/game/${paired.id}`);
     };
+    // Both race timers are cleared in the finally so neither outlives the join.
+    let goneTimer: number | undefined;
+    let graceTimer: number | undefined;
     try {
       const paired = await Promise.race([
         queuePromise,
-        new Promise<never>((_, reject) =>
-          window.setTimeout(() => reject(new Error("seek_gone")), 10000),
-        ),
+        new Promise<never>((_, reject) => {
+          goneTimer = window.setTimeout(() => reject(new Error("seek_gone")), 10000);
+        }),
       ]);
       enterGame(paired);
     } catch (e) {
@@ -306,7 +309,9 @@ function LobbyInner() {
       // pairing a brief grace window; if it completed, honor it.
       const late = await Promise.race([
         queuePromise.catch(() => null),
-        new Promise<null>((resolve) => window.setTimeout(() => resolve(null), 400)),
+        new Promise<null>((resolve) => {
+          graceTimer = window.setTimeout(() => resolve(null), 400);
+        }),
       ]);
       if (late) {
         enterGame(late);
@@ -321,6 +326,9 @@ function LobbyInner() {
           ? "That player is no longer waiting. Try quick pairing instead."
           : "Could not join that game right now.",
       );
+    } finally {
+      if (goneTimer !== undefined) window.clearTimeout(goneTimer);
+      if (graceTimer !== undefined) window.clearTimeout(graceTimer);
     }
   };
 
@@ -607,7 +615,7 @@ function LobbyInner() {
                           <SeekRow
                             key={`${seek.mode ?? "buff"}:${seek.pool}:${seek.name}:${seek.at}`}
                             seek={seek}
-                            isMine={!!user && user.username === seek.name}
+                            isMine={!!user && user.username.toLowerCase() === seek.name.toLowerCase()}
                             joining={joiningPool === `${seek.mode ?? "buff"}:${seek.pool}`}
                             busy={joiningPool !== null}
                             onJoin={() => joinSeek(seek)}

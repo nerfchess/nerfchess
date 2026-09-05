@@ -148,7 +148,10 @@ import {
   type SceneGeo,
 } from "./effects/geometry";
 import { findKing } from "@/engine/board";
-import { PassiveLayer } from "./effects/passive/PassiveLayer";
+import dynamic from "next/dynamic";
+// The passive-effect layer carries a 280KB generated composition table that
+// nothing needs until a passive card is in play; it loads off the first paint.
+const PassiveLayer = dynamic(() => import("./effects/passive/PassiveLayer"), { ssr: false });
 import { FruitionLayer } from "./effects/fruition/FruitionLayer";
 import type { FxEvent } from "@/engine/fxEvents";
 import { buffPassiveAuras, nerfPassiveAuras } from "./effects/passive/derive";
@@ -900,15 +903,15 @@ interface PieceAnim {
 
 function animDurationMs(): number {
   if (typeof document === "undefined") return 0;
-  const mode = document.documentElement.dataset.anim;
+  const html = document.documentElement;
+  const mode = html.dataset.anim;
   if (mode === "off") return 0;
-  // Snappier slides so pieces feel LIGHT, not heavy — the move glide used to be
-  // 220ms/120ms and coasted into place; a shorter slide (paired with a fast-start
-  // easing below) reads as a decisive snap and stops stacking on top of network
-  // lag when an opponent's move arrives late.
-  if (mode === "fast") return 90;
-  // Inside the 90-130ms target for normal piece movement (2026-07 pass).
-  return 120;
+  // The player's own number (Settings > Board > Piece glide), stamped by
+  // applyUiPrefs. Falls back to the old per-mode ladder if it is missing, e.g.
+  // before the settings bootstrap has run.
+  const own = Number.parseFloat(html.style.getPropertyValue("--piece-anim-ms"));
+  if (Number.isFinite(own)) return Math.max(0, Math.min(400, own));
+  return mode === "fast" ? 60 : 100;
 }
 
 // Pending animation cleanups, per piece element: starting a new slide on an
@@ -3002,7 +3005,10 @@ export function Board({
       // Fast-launch / decisive-stop curve (vs the old gentle `ease-out`,
       // which coasted): the piece leaves quickly and lands crisply, so
       // moves feel light.
-      el.style.transition = `transform ${dur}ms cubic-bezier(0.22, 1, 0.36, 1)`;
+      // Most of the travel happens in the first half of the window, so the
+      // piece visibly ARRIVES by the stated duration instead of creeping the
+      // last few pixels the way a quintic ease-out does.
+      el.style.transition = `transform ${dur}ms cubic-bezier(0.2, 0.8, 0.3, 1)`;
       el.style.transform = "translate(0, 0)";
       animCleanups.set(
         el,
@@ -4599,7 +4605,7 @@ export function Board({
 
   return (
     <div ref={boardRef} className="relative w-full max-w-full aspect-square mx-auto">
-      <div ref={cropRef} className="absolute inset-2 sm:inset-3 rounded-sm overflow-hidden border border-black/40">
+      <div ref={cropRef} className="absolute inset-0 sm:inset-3 overflow-hidden border border-black/40 sm:rounded-sm">
         {/* Canvas VFX layer: particles, projectiles, beams and cinematics for
             card plays, drawn over the squares but under floating UI. The
             engine sleeps whenever nothing is animating. */}

@@ -153,7 +153,7 @@ export function MoveList({
       <div
         className={
           "font-mono space-y-0.5 overflow-y-auto pr-1 " +
-          (compact ? "min-h-0 flex-1 text-[12px]" : "max-h-72 text-[13px]")
+          (compact ? "min-h-0 flex-1 text-[13px]" : "max-h-72 text-[13px]")
         }
       >
         {rows.map((row, i) => (

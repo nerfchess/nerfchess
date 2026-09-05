@@ -15,8 +15,11 @@ import { isGodlikeCard } from "@/lib/signatureCards";
 import { useFxLevel, FX_LEVELS } from "@/lib/fxToggle";
 import { INFINITE_REROLLS } from "@/lib/godPanel";
 import { BuffCard } from "./BuffCard";
-import { DraftChest } from "./DraftChest";
+import { DraftVault, VAULT_OPEN_MS } from "./DraftVault";
 import { OpponentDraftPanel } from "./OpponentDraftPanel";
+import { LockInCountdown, useCountdown } from "./draft/LockInCountdown";
+// Re-exported for the nerf-draft screen, which imported it from here.
+export { LockInCountdown };
 import "./DraftOverlay.css";
 import { Button } from "@/components/ui/Button";
 import { GlossaryText } from "@/components/GlossaryText";
@@ -96,78 +99,6 @@ interface Props {
 function fmtClock(ms: number): string {
   const s = Math.max(0, Math.ceil(ms / 1000));
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
-}
-
-/** Shared countdown tick: milliseconds left plus a one-shot expiry callback
- * that always sees the latest closure. */
-function useCountdown(deadline: number, onExpire?: () => void) {
-  const [leftMs, setLeftMs] = useState(() => Math.max(0, deadline - Date.now()));
-  const expiredRef = useRef(false);
-  const onExpireRef = useRef(onExpire);
-  useEffect(() => {
-    onExpireRef.current = onExpire;
-  });
-
-  useEffect(() => {
-    expiredRef.current = false;
-    const id = window.setInterval(() => {
-      const left = Math.max(0, deadline - Date.now());
-      setLeftMs(left);
-      if (left <= 0 && !expiredRef.current) {
-        expiredRef.current = true;
-        onExpireRef.current?.();
-      }
-    }, 100);
-    return () => window.clearInterval(id);
-  }, [deadline]);
-
-  return leftMs;
-}
-
-/** Thin lock-in countdown: bar plus seconds. Silent by design: picking a
- * card should not come with time-pressure noise. */
-export function LockInCountdown({
-  deadline,
-  onExpire,
-  className = "",
-}: {
-  deadline: number;
-  onExpire?: () => void;
-  className?: string;
-}) {
-  const total = 20_000;
-  const leftMs = useCountdown(deadline, onExpire);
-  const seconds = Math.ceil(leftMs / 1000);
-  const fraction = Math.max(0, Math.min(1, leftMs / total));
-  // The whole window is paused free time (same rule as DraftTimerWindow
-  // below): flashing the on-your-clock red at 5s-left showed it 5 seconds
-  // too early, so the urgent style only fires once the window truly ends.
-  const urgent = leftMs <= 0;
-  return (
-    <div className={"flex items-center gap-2 " + className} role="timer" aria-label="Lock-in timer">
-      <div className="h-1 flex-1 overflow-hidden rounded-[1px] bg-white/10">
-        {/* scaleX, not width. The countdown ticks ten times a second for the
-            whole 20 second window, and a width transition relayouts the bar
-            (inside an overflow-hidden parent) on every one of those ticks. A
-            transform runs on the compositor instead. */}
-        <div
-          className={
-            "h-full w-full origin-left transition-transform duration-100 " +
-            (urgent ? "bg-oxblood-glow" : "bg-gold-leaf")
-          }
-          style={{ transform: `scaleX(${fraction})` }}
-        />
-      </div>
-      <span
-        className={
-          "w-6 shrink-0 text-right font-mono text-sm font-bold tabular-nums " +
-          (urgent ? "text-oxblood-glow" : "text-gold-leaf")
-        }
-      >
-        {seconds}
-      </span>
-    </div>
-  );
 }
 
 /** The draft clock as its own chip, sitting centered immediately above
@@ -283,7 +214,7 @@ function DraftPrepChip({ label }: { label: string }) {
  * the effects settle, and the decision timer starts later still. */
 export function DraftResolvingChip() {
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-[calc(5.75rem+env(safe-area-inset-bottom))] z-40 flex justify-center px-3 sm:inset-x-auto sm:bottom-6 sm:left-4 sm:justify-start">
+    <div className="pointer-events-none fixed inset-x-0 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-40 flex justify-center px-3 sm:inset-x-auto sm:bottom-6 sm:left-4 sm:justify-start">
       <div
         role="status"
         aria-live="polite"
@@ -469,9 +400,9 @@ const PACK_HOLD_MS = 1150;
 // The minimized panel runs on the player's own clock: the pack still shows
 // (a reroll always earns its box) but tears itself almost immediately.
 const PACK_HOLD_MINIMIZED_MS = 450;
-// The chest-opening sequence: quake -> hasp pops -> lid swings -> light
-// floods. Slightly longer than the old pack tear so the lid swing lands.
-const PACK_TEAR_MS = 780;
+// The vault-opening sequence: spin-up -> faces shear away -> core blooms ->
+// flash and shockwave. The cards deal out of the flash.
+const PACK_TEAR_MS = VAULT_OPEN_MS;
 const flipDelayMs = (i: number, tier: number) => i * DEAL_STAGGER_MS + DEAL_MS + 40 + tier * 12;
 
 // Accidental-double-click guard: a click on the already-selected card only
@@ -1017,20 +948,10 @@ export function DraftOverlay({
     return () => window.clearTimeout(id);
   }, [bankArmed]);
 
-  // Auto-tuck the minimized panel into its slim chip once it has clearly been
-  // seen, so it stops hogging the corner; any interaction (dragging,
-  // un-tucking, resolving) holds it open, and a fresh offer re-shows it via
-  // the deal effect above. Skip entirely once the user has pinned it open by
-  // re-opening the chip. Twelve seconds, not five: the old fuse tucked the
-  // panel while players were still reading their cards, which read as the
-  // draft "minimizing randomly".
-  useEffect(() => {
-    if (userPinnedRef.current) return;
-    if (!minimized || tucked || dragging) return;
-    if (chosen != null || banking || committedRef.current) return;
-    const id = window.setTimeout(() => setTucked(true), 12_000);
-    return () => window.clearTimeout(id);
-  }, [minimized, tucked, dragging, chosen, banking]);
+  // The compact panel never tucks itself away: once the draft has stepped
+  // into the corner it stays there, cards visible, until the player resolves
+  // it. (The old auto-tuck fuse was the "draft minimized randomly" complaint.)
+  // The slim chip below is only reachable by an explicit user action.
 
   const confirmCard = (i: number) => {
     if (chosen != null || banking || committedRef.current) return;
@@ -1244,7 +1165,7 @@ export function DraftOverlay({
         <div
           ref={panelRef}
           style={dragPos ? { left: dragPos.x, top: dragPos.y } : undefined}
-          className={"fixed z-40 " + (dragPos ? "" : "bottom-24 right-3 sm:bottom-16 lg:bottom-4")}
+          className={"fixed z-40 " + (dragPos ? "" : "bottom-4 right-3 sm:bottom-16 lg:bottom-4")}
         >
           <button
             type="button"
@@ -1291,7 +1212,7 @@ export function DraftOverlay({
         ref={panelRef}
         style={dragPos ? { left: dragPos.x, top: dragPos.y } : undefined}
         className={
-          "fixed z-40 w-[min(92vw,19rem)] " + (dragPos ? "" : "bottom-24 right-3 sm:bottom-16 lg:bottom-4")
+          "fixed z-40 w-[min(92vw,19rem)] " + (dragPos ? "" : "bottom-4 right-3 sm:bottom-16 lg:bottom-4")
         }
       >
         <motion.div
@@ -1364,8 +1285,8 @@ export function DraftOverlay({
           )}
           {packStage !== "open" ? (
             /* Reroll (or a fresh offer) in the compact panel still earns its
-               chest moment: a mini chest that springs open on a fast fuse. */
-            <DraftChest
+               vault moment: a mini vault that bursts open on a fast fuse. */
+            <DraftVault
               tier={maxTier}
               count={offer.cards.length}
               label={draftLabel}
@@ -1470,7 +1391,7 @@ export function DraftOverlay({
           mounted underneath (visibility only), so timers, the pick state,
           and any in-flight animation carry on unaffected. */}
       {hidden && (
-        <div className="fixed bottom-24 right-3 z-50 sm:bottom-16 lg:bottom-4">
+        <div className="fixed bottom-4 right-3 z-50 sm:bottom-16 lg:bottom-4">
           <button
             type="button"
             onClick={() => setHidden(false)}
@@ -1666,13 +1587,13 @@ export function DraftOverlay({
         )}
 
         {packStage !== "open" && (
-          /* The sealed treasure chest: the individual cards stay secret, but
-             the chest's material climbs with the best card inside — worn oak
-             at the bottom of the ladder, up through iron, gilded vault,
-             arcane relic, apex crown, and the mythic star chest. Tap opens
-             it immediately; Skip drops the whole ceremony and deals now. */
+          /* The sealed sigil vault: the individual cards stay secret, but the
+             vault's material climbs with the best card inside, from rough
+             slate at the bottom of the ladder up through iron, gilt, arcane
+             glass, apex gold and mythic star-glass. Tap opens it immediately;
+             Skip drops the whole ceremony and deals now. */
           <>
-            <DraftChest
+            <DraftVault
               tier={maxTier}
               count={offer.cards.length}
               label={draftLabel}
@@ -2211,7 +2132,7 @@ export function DraftRevealBanner({
     return () => window.clearTimeout(t);
   }, [onDismiss]);
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-[calc(5.75rem+env(safe-area-inset-bottom))] z-40 flex justify-center px-3 sm:inset-x-auto sm:bottom-6 sm:left-4 sm:justify-start">
+    <div className="pointer-events-none fixed inset-x-0 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-40 flex justify-center px-3 sm:inset-x-auto sm:bottom-6 sm:left-4 sm:justify-start">
       <motion.button
         type="button"
         onClick={onDismiss}

@@ -738,8 +738,10 @@ export class MPSession {
     if (this.destroyed) return;
     try {
       await this.connect();
-      if (this.seat) this.sendFrame("reconnect", this.seat);
-      else if (this.watchingId) this.sendFrame("watch", { id: this.watchingId });
+      if (this.seat) {
+        this.sendFrame("reconnect", this.seat);
+        this.flushHeldMove();
+      } else if (this.watchingId) this.sendFrame("watch", { id: this.watchingId });
       else if (this.searching && this.searchQueue)
         this.sendFrame("queue", {
           pool: this.searchQueue.pool,
@@ -1377,8 +1379,36 @@ export class MPSession {
     });
   }
 
+  // A move played during a socket blip is held (one at a time: a newer move
+  // for the same ply replaces an older one) and flushed the moment the seat is
+  // reclaimed. The server's ply guard rejects it if the position moved on, so
+  // a stale replay can never land on the wrong board. Without this a brief
+  // drop threw the move away with an error toast and the board felt dead.
+  private heldMove: { u: string; ply: number } | null = null;
+
   sendMove(uci: string, ply: number): boolean {
-    return this.sendFrame("move", { u: uci, ply });
+    if (this.sendFrame("move", { u: uci, ply })) {
+      this.heldMove = null;
+      return true;
+    }
+    if (!this.seat || this.destroyed || !this.autoReconnect) return false;
+    this.heldMove = { u: uci, ply };
+    // Not connected: kick the reconnect loop now rather than waiting for the
+    // next heartbeat to notice the dead socket.
+    if (this.socket?.readyState !== WebSocket.CONNECTING) this.scheduleReconnect();
+    return true;
+  }
+
+  /** Drop a move held for a reconnect (the position moved on locally). */
+  dropHeldMove(ply?: number) {
+    if (ply === undefined || this.heldMove?.ply === ply) this.heldMove = null;
+  }
+
+  private flushHeldMove() {
+    const held = this.heldMove;
+    if (!held) return;
+    this.heldMove = null;
+    this.sendFrame("move", held);
   }
 
   // Ask the server for authoritative clocks now (outside the regular

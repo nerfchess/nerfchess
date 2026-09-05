@@ -41,7 +41,7 @@ const PANEL_STYLE: CSSProperties = {
   boxShadow: "0 14px 28px rgba(0,0,0,0.15), 0 10px 10px rgba(0,0,0,0.12)",
 };
 
-const THEME_ORDER: SiteTheme[] = ["dark", "light", "system"];
+const THEME_ORDER: SiteTheme[] = ["midnight", "dark", "light", "system"];
 
 /** The white knight from a piece set, the same preview the Preferences piece
  *  picker shows: an asset set draws its own wN.svg, an inline set draws the
@@ -217,20 +217,20 @@ export function HeaderSettingsMenu({
   // The single write path, mirroring the Preferences panel: persist (which
   // re-applies board, pieces and UI prefs), then push audio into the engine.
   const update = useCallback((patch: Partial<Settings>) => {
-    setSettings((prev) => {
-      const merged = { ...prev, ...patch };
-      saveSettings(merged);
-      if (patch.volume != null) setVolume(merged.volume);
-      if (patch.uiSounds != null) setUiSounds(merged.uiSounds);
-      configureSoundPrefs({
-        enabled: merged.soundEnabled,
-        move: merged.moveSound,
-        capture: merged.captureSound,
-        check: merged.checkSound,
-        gameEnd: merged.gameEndSound,
-        theme: merged.soundTheme,
-      });
-      return merged;
+    // Merge from storage (the latest persisted value, which state mirrors) and
+    // run the side effects outside the state updater, which React may replay.
+    const merged = { ...loadSettings(), ...patch };
+    setSettings(merged);
+    saveSettings(merged);
+    if (patch.volume != null) setVolume(merged.volume);
+    if (patch.uiSounds != null) setUiSounds(merged.uiSounds);
+    configureSoundPrefs({
+      enabled: merged.soundEnabled,
+      move: merged.moveSound,
+      capture: merged.captureSound,
+      check: merged.checkSound,
+      gameEnd: merged.gameEndSound,
+      theme: merged.soundTheme,
     });
   }, []);
 
@@ -347,7 +347,7 @@ function BackgroundSection({ value, onPick }: { value: SiteTheme; onPick: (t: Si
   return (
     <div>
       <SectionLabel>Background</SectionLabel>
-      <div className="grid grid-cols-3 gap-1.5">
+      <div className="grid grid-cols-2 gap-1.5">
         {THEME_ORDER.map((id) => (
           <Button
             key={id}

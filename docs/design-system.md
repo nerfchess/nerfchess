@@ -107,7 +107,7 @@ Rules:
 - Top nav: Play, Watch, Community, Leaderboard, Rules + search, inbox, alerts, identity. Active route always marked. Identical on every page including game and TV (game pages may compact it, never replace it).
 - Footer only on marketing/reading pages, never on app surfaces.
 - Every player name links to `/u/[username]`. Every game id links to `/game/[id]`. Every card name links to its codex page. No dead nouns.
-- Mobile: bottom action bar on app surfaces (lobby quick match, game actions), bottom sheets for pickers, drawers for rails. Breakpoints: rails stack below `sm` (640), game rail becomes bottom section below `md`.
+- Mobile: the match page is Lichess's column one below `sm` (640): the page scrolls, the board is full-bleed, the player bars are ~2.75rem with the clock beside them, and everything else stacks under the board in order (actions, horizontal move strip, your rule, your cards, chat, stakes) via `MobileMatchStack`. No fixed drawers on phones; the tablet range (`sm`..`lg`) keeps the buff drawer. Lobby keeps its bottom quick-match bar. Headers are 44-48px on phones.
 
 ## 10. Accessibility
 

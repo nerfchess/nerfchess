@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CalendarDays, Crown, Flame, LogIn, LogOut, Swords, Timer, Trophy, Users } from "lucide-react";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -44,16 +44,25 @@ export default function TournamentDetailPage() {
   const [busy, setBusy] = useState(false);
   const [now, setNow] = useState(() => Date.now());
 
+  // Request sequence: only the newest in-flight load may set state, so a
+  // stale poll (or one that resolves after unmount) never lands.
+  const loadReqRef = useRef(0);
   const load = useCallback(async () => {
+    const req = ++loadReqRef.current;
     const res = await fetch(`/api/tournaments/${encodeURIComponent(id)}`);
     if (!res.ok) {
       throw new Error(res.status === 404 ? "That tournament doesn't exist." : "Could not load the tournament.");
     }
-    setData((await res.json()) as DetailResponse);
+    const body = (await res.json()) as DetailResponse;
+    if (req !== loadReqRef.current) return;
+    setData(body);
   }, [id]);
 
   useEffect(() => {
     let cancelled = false;
+    // The ref object itself (not .current) is stable; aliased so the cleanup
+    // can invalidate any load still in flight.
+    const reqRef = loadReqRef;
     void (async () => {
       try {
         await load();
@@ -61,10 +70,11 @@ export default function TournamentDetailPage() {
         if (!cancelled) setError(e instanceof Error ? e.message : "Could not load the tournament.");
       }
     })();
-    fetchMe().then((u) => !cancelled && setMe(u));
+    fetchMe().then((u) => !cancelled && setMe(u ?? null));
     const tick = window.setInterval(() => setNow(Date.now()), 1000);
     return () => {
       cancelled = true;
+      reqRef.current++;
       window.clearInterval(tick);
     };
   }, [load]);
