@@ -294,7 +294,160 @@
   100% { transform: rotate(-112deg); }
 }
 
-/* --- nerf: rubber stamp slams down, ink ring bleeds --------------------------- */
+/* --- nerf: the verdict stamp -------------------------------------------------
+   Tell: under-glow blooms + seal ring fades in + the emblem inhales/cowers.
+   Strike: the stamp head falls fast with a one-frame squash at contact, ink
+   shards kick, the double ce-ink ring bleeds. Settle: the head lifts away,
+   the embossed emblem rises back, afterglow decays, drips and flecks close.
+   (.ce-stamp below is retained: the anchor motif still drops with it.) */
+
+/* Warning under-glow: blooms during the tell, takes a press-jolt at contact
+   (approx 38% of its run), then decays through the settle. */
+.ce-nerf-glow {
+  transform: scale(0.4);
+  opacity: 0;
+  animation: ce-nerf-glow calc(1.15s * var(--fx-dur, 1)) ease-out both;
+}
+@keyframes ce-nerf-glow {
+  0% { transform: scale(0.4); opacity: 0; }
+  26% { transform: scale(1); opacity: 1; }
+  38% { transform: scale(0.95); }
+  44% { transform: scale(1); }
+  70% { opacity: 0.5; }
+  100% { transform: scale(1.06); opacity: 0; }
+}
+
+/* Faint judicial seal ring: fades in askew, squares up, bows out. */
+.ce-nerf-seal {
+  transform: rotate(-18deg) scale(1.15);
+  opacity: 0;
+  animation: ce-nerf-seal calc(0.9s * var(--fx-dur, 1)) ease-out both;
+}
+@keyframes ce-nerf-seal {
+  0% { transform: rotate(-18deg) scale(1.15); opacity: 0; }
+  30% { opacity: 0.85; }
+  55% { transform: rotate(0deg) scale(1); opacity: 0.85; }
+  100% { transform: rotate(6deg) scale(1.08); opacity: 0; }
+}
+
+/* The emblem's whole arc on one timeline: inhale, cower, pressed flat at the
+   contact frame (30%), then the embossed lift-back with a small overshoot. */
+.ce-nerf-emblem {
+  transform: translateY(-6%) scale(0.72);
+  opacity: 0;
+  animation: ce-nerf-emblem calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.7, 0.3, 1) both;
+}
+@keyframes ce-nerf-emblem {
+  0% { transform: translateY(-6%) scale(0.72); opacity: 0; }
+  14% { transform: translateY(0) scale(0.9); opacity: 0.85; }
+  24% { transform: translateY(1%) scale(0.86); }
+  30% { transform: translateY(4%) scale(0.8) scaleY(0.7); }
+  38% { transform: translateY(1%) scale(0.94); opacity: 1; }
+  52% { transform: translateY(-3%) scale(1.06); }
+  66% { transform: translateY(0) scale(1); }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+/* The stamp head: fast fall (contact at 25%), one-frame squash-and-stretch,
+   a short rebound hold, then it lifts away and fades. */
+.ce-nerf-head {
+  transform: translateY(-330%) scale(1.05);
+  opacity: 0;
+  animation: ce-nerf-head calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 0.65, 1) both;
+}
+@keyframes ce-nerf-head {
+  0% { transform: translateY(-330%) scale(1.05); opacity: 0; }
+  8% { opacity: 1; }
+  25% { transform: translateY(0) scaleY(1) scaleX(1); }
+  31% { transform: translateY(2%) scaleY(0.82) scaleX(1.14); }
+  40% { transform: translateY(-2%) scaleY(1.02) scaleX(0.99); }
+  58% { transform: translateY(-8%) scale(1); }
+  100% { transform: translateY(-190%) scale(0.96); opacity: 0; }
+}
+
+/* Ink splatter shard: kicked straight out from the contact point. */
+.ce-nerf-splat {
+  transform: translate(0, 0) rotate(0) scale(0.3);
+  opacity: 0;
+  animation: ce-nerf-splat calc(0.55s * var(--fx-dur, 1)) cubic-bezier(0.15, 0.75, 0.3, 1) both;
+}
+@keyframes ce-nerf-splat {
+  0% { transform: translate(0, 0) rotate(0) scale(0.3); opacity: 0; }
+  12% { opacity: 1; }
+  100% { transform: translate(var(--dx, 200%), var(--dy, -60%)) rotate(var(--rot, 140deg)) scale(1); opacity: 0; }
+}
+
+/* Dull afterglow behind the embossed mark: blooms once and decays. */
+.ce-nerf-after {
+  transform: scale(0.7);
+  opacity: 0;
+  animation: ce-nerf-after calc(0.7s * var(--fx-dur, 1)) ease-out both;
+}
+@keyframes ce-nerf-after {
+  0% { transform: scale(0.7); opacity: 0; }
+  22% { transform: scale(1); opacity: 0.9; }
+  100% { transform: scale(1.15); opacity: 0; }
+}
+
+/* --- neutral floor: the edict ------------------------------------------------
+   Tell: the parchment strip unrolls from a rolled bar. Strike: the sigil is
+   branded in behind a scorch flash, the wax seal punches the lower corner.
+   Settle: ce-drip wax runs, ce-dust embers drift, ce-ring closes it. */
+
+.ce-edict-scroll {
+  transform-origin: 50% 0%;
+  transform: scaleY(0.08);
+  opacity: 0;
+  animation: ce-edict-scroll calc(0.55s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.9, 0.35, 1.15) both;
+}
+@keyframes ce-edict-scroll {
+  0% { transform: scaleY(0.08); opacity: 0; }
+  20% { opacity: 1; }
+  78% { transform: scaleY(1.04); }
+  100% { transform: scaleY(1); opacity: 1; }
+}
+
+.ce-edict-flash {
+  transform: scale(0.4);
+  opacity: 0;
+  animation: ce-edict-flash calc(0.45s * var(--fx-dur, 1)) ease-out both;
+}
+@keyframes ce-edict-flash {
+  0% { transform: scale(0.4); opacity: 0; }
+  18% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1.3); opacity: 0; }
+}
+
+/* The brand: drops in oversized, bites past its rest size for one frame,
+   then settles embossed. */
+.ce-edict-brand {
+  transform: scale(2) rotate(-4deg);
+  opacity: 0;
+  animation: ce-edict-brand calc(0.5s * var(--fx-dur, 1)) cubic-bezier(0.5, 0, 0.3, 1) both;
+}
+@keyframes ce-edict-brand {
+  0% { transform: scale(2) rotate(-4deg); opacity: 0; }
+  40% { transform: scale(0.9) rotate(0deg); opacity: 1; }
+  52% { transform: scale(1.08); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* The wax seal: a short drop, a squash at the punch, a small rebound. */
+.ce-edict-seal {
+  transform: translateY(-140%) scale(1.2);
+  opacity: 0;
+  animation: ce-edict-seal calc(0.45s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 0.7, 0.6) both;
+}
+@keyframes ce-edict-seal {
+  0% { transform: translateY(-140%) scale(1.2); opacity: 0; }
+  20% { opacity: 1; }
+  55% { transform: translateY(0) scale(1); }
+  68% { transform: translateY(1%) scaleX(1.14) scaleY(0.84); }
+  82% { transform: translateY(-2%) scale(1.02); }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+/* --- anchor drop + ink bleed (shared verbs) ----------------------------------- */
 
 .ce-stamp {
   transform: translateY(-170%) scale(1.25) rotate(-7deg);

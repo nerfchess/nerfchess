@@ -3,9 +3,12 @@
  * Every keyframe animates transform and/or opacity exclusively (no layout, no
  * paint of width/height/color over time). Animations are gated two ways:
  *   1. html[data-anim="off"] * { animation: none } (global rule in globals.css)
- *      already stops every keyframe when the player turns animations off.
- *   2. The prefers-reduced-motion guard below hard-stops them for the OS
- *      setting, and the components render their static fallback instead.
+ *      already stops every keyframe when the player turns animations off. The
+ *      same attribute absorbs the OS reduced-motion request when "Follow
+ *      system motion" is opted into (applyUiPrefs folds both together).
+ *   2. The data-anim guard at the bottom of this file additionally pins a
+ *      readable static end-state, and the components render their static
+ *      fallback instead.
  * Settle is the final ~30% of each animation; nothing loops (single play).
  */
 
@@ -576,21 +579,157 @@
   100% { opacity: 0.35; }
 }
 
+/* ---- Spawn chrome (lifecycle stage 1, docs section 7): the three-beat
+ * arrival every passive composition plays inside. Four nodes per anchor, all
+ * in the visual's own hue (--pfx-c, set on the anchor by PassiveSpawn), all
+ * transform/opacity, all one-shot, and every delay + duration sums to at most
+ * one --pfx-d so the chrome settles inside the tier's spawn budget.
+ *   TELL    a soft under-bloom attacks inside the first eighth, plus a
+ *           barely-there inhale scale on the anchor itself (<=250ms).
+ *   STRIKE  one crisp announce ring expands from the anchor center as the
+ *           composition lands, and two mote flecks rise off the landing.
+ *   SETTLE  the bloom decays out over the whole tail, slower than it came.
+ * Restrained by design: this plays under EVERY composition, so it flatters the
+ * composition instead of competing with it. ---- */
+.pfx-chrome {
+  position: absolute;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+.pfx-spawn:not(.pfx-spawn-reveal) .pfx-anchor {
+  animation: pfx-anchor-inhale min(250ms, calc(var(--pfx-d, 850ms) * 0.25)) ease-in-out both;
+}
+@keyframes pfx-anchor-inhale {
+  0% { transform: scale(1); }
+  55% { transform: scale(0.985); }
+  100% { transform: scale(1); }
+}
+.pfx-chrome-bloom {
+  left: 50%;
+  top: 50%;
+  width: 52%;
+  height: 52%;
+  background: radial-gradient(circle, var(--pfx-c), transparent 70%);
+  border-radius: 999px;
+  opacity: 0;
+  animation: pfx-chrome-bloom var(--pfx-d) ease-out both;
+}
+@keyframes pfx-chrome-bloom {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.7); }
+  12% { opacity: 0.3; transform: translate(-50%, -50%) scale(0.94); }
+  40% { opacity: 0.26; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.06); }
+}
+.pfx-chrome-ring {
+  left: 50%;
+  top: 50%;
+  width: 24%;
+  height: 24%;
+  border: 2px solid var(--pfx-c);
+  border-radius: 999px;
+  opacity: 0;
+  animation: pfx-chrome-announce calc(var(--pfx-d) * 0.6) cubic-bezier(0.15, 0.7, 0.2, 1) both;
+  animation-delay: calc(var(--pfx-d) * 0.3);
+}
+@keyframes pfx-chrome-announce {
+  0% { opacity: 0.8; transform: translate(-50%, -50%) scale(0.3); }
+  60% { opacity: 0.35; transform: translate(-50%, -50%) scale(2.2); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(2.5); }
+}
+.pfx-chrome-mote {
+  width: 5%;
+  height: 5%;
+  background: var(--pfx-c);
+  border-radius: 999px;
+  opacity: 0;
+  animation: pfx-chrome-mote calc(var(--pfx-d) * 0.55) ease-out both;
+}
+.pfx-chrome-mote-a {
+  left: 36%;
+  top: 58%;
+  animation-delay: calc(var(--pfx-d) * 0.34);
+}
+.pfx-chrome-mote-b {
+  left: 60%;
+  top: 62%;
+  width: 3.5%;
+  height: 3.5%;
+  animation-delay: calc(var(--pfx-d) * 0.42);
+}
+@keyframes pfx-chrome-mote {
+  0% { opacity: 0; transform: translateY(0) scale(0.6); }
+  22% { opacity: 0.85; transform: translateY(-150%) scale(1); }
+  100% { opacity: 0; transform: translateY(-620%) scale(0.5); }
+}
+/* The board-wide anchor spans the whole effects layer, so the same chrome
+ * shrinks to stay an accent rather than a board cover (section 4: board spawns
+ * never full-cover). */
+.pfx-anchor-board .pfx-chrome-bloom { width: 30%; height: 30%; }
+.pfx-anchor-board .pfx-chrome-ring { width: 10%; height: 10%; }
+.pfx-anchor-board .pfx-chrome-mote { width: 1.6%; height: 1.6%; }
+.pfx-anchor-board .pfx-chrome-mote-a { left: 46%; top: 54%; }
+.pfx-anchor-board .pfx-chrome-mote-b { left: 53%; top: 56%; }
+
 /* ---- Reveal press (docs section 9): a nerf's reveal-variant spawn presses
- * into the board. The whole composition arrives with a physical push: a
- * compress, an overshoot, a settle wobble. Transform-only, single play, and
- * suppressed entirely under reduced motion (the spawn already collapses to the
- * static fallback there, and the guard below hard-stops this too). ---- */
+ * into the board. Weightier arrival than the plain spawn: a pre-press hover
+ * with a warm-dark shadow hint beneath (the ::before, opacity-only), the press
+ * itself landing on a one-frame squash, then a release overshoot whose
+ * shockwave ring fires as the squash lets go (the chrome ring, retimed below).
+ * Transform/opacity only, single play, and suppressed entirely under reduced
+ * motion (the spawn already collapses to the static fallback there, and the
+ * guard below hard-stops this too). ---- */
 .pfx-spawn-reveal .pfx-anchor {
   animation: pfx-reveal-press var(--pfx-d, 850ms) cubic-bezier(0.3, 1.2, 0.35, 1) both;
 }
+.pfx-spawn-reveal .pfx-anchor::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 72%;
+  height: 72%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(24, 19, 13, 0.55), transparent 70%);
+  border-radius: 999px;
+  opacity: 0;
+  pointer-events: none;
+  animation: pfx-reveal-dim var(--pfx-d, 850ms) ease-out both;
+}
+@keyframes pfx-reveal-dim {
+  0% { opacity: 0; }
+  8% { opacity: 0.9; }
+  16% { opacity: 0.9; }
+  34% { opacity: 0; }
+  100% { opacity: 0; }
+}
 @keyframes pfx-reveal-press {
-  0% { transform: scale(0.9); }
-  16% { transform: scale(1.06); }
-  30% { transform: scale(0.982) rotate(-0.7deg); }
-  46% { transform: scale(1.014) rotate(0.45deg); }
-  62% { transform: scale(0.996); }
+  0% { transform: translateY(-3%) scale(0.92); }
+  10% { transform: translateY(-1.5%) scale(0.95); }
+  15% { transform: translateY(0) scale(1.1, 0.86); }
+  17% { transform: translateY(0) scale(1.1, 0.86); }
+  24% { transform: scale(0.97, 1.04); }
+  34% { transform: scale(1.05) rotate(-0.7deg); }
+  48% { transform: scale(0.99) rotate(0.45deg); }
+  64% { transform: scale(1.004); }
   100% { transform: scale(1); }
+}
+/* Release shockwave: the announce ring fires earlier and harder, right as the
+ * squash lets go (press release sits at ~17-24% of the budget). */
+.pfx-spawn-reveal .pfx-chrome-ring {
+  border-width: 3px;
+  animation: pfx-reveal-shockwave calc(var(--pfx-d) * 0.45) cubic-bezier(0.1, 0.8, 0.2, 1) both;
+  animation-delay: calc(var(--pfx-d) * 0.2);
+}
+@keyframes pfx-reveal-shockwave {
+  0% { opacity: 0.9; transform: translate(-50%, -50%) scale(0.2); }
+  55% { opacity: 0.4; transform: translate(-50%, -50%) scale(2.6); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(3); }
+}
+/* Under the press the bloom waits out the dim hint, then plays shorter so it
+ * still settles inside the budget. */
+.pfx-spawn-reveal .pfx-chrome-bloom {
+  animation-duration: calc(var(--pfx-d) * 0.85);
+  animation-delay: calc(var(--pfx-d) * 0.15);
 }
 
 /* ---- Persistent auras (section 4). Information, so they stay under reduced
@@ -704,21 +843,32 @@
 }
 
 /* Hard reduced-motion guard: even if a primitive is mounted without the
- * `reduced` prop, the OS setting stops every keyframe and pins a readable
- * static end-state. */
-@media (prefers-reduced-motion: reduce) {
-  .pfx-el {
-    animation: none !important;
-    opacity: 0.4 !important;
-  }
-  .pfx-fallback {
-    animation: none !important;
-    opacity: 0.4 !important;
-  }
-  .pfx-aura-piece {
-    animation: none !important;
-  }
-  .pfx-spawn-reveal .pfx-anchor {
-    animation: none !important;
-  }
+ * `reduced` prop, the app's motion gate (html[data-anim="off"], which absorbs
+ * the OS reduced-motion request when "Follow system motion" is opted into)
+ * stops every keyframe and pins a readable static end-state. */
+html[data-anim="off"] .pfx-el {
+  animation: none !important;
+  opacity: 0.4 !important;
+}
+html[data-anim="off"] .pfx-fallback {
+  animation: none !important;
+  opacity: 0.4 !important;
+}
+html[data-anim="off"] .pfx-aura-piece {
+  animation: none !important;
+}
+html[data-anim="off"] .pfx-spawn .pfx-anchor {
+  animation: none !important;
+}
+html[data-anim="off"] .pfx-spawn-reveal .pfx-anchor {
+  animation: none !important;
+}
+html[data-anim="off"] .pfx-spawn-reveal .pfx-anchor::before {
+  animation: none !important;
+  opacity: 0 !important;
+}
+/* Spawn chrome is choreography, not information: it stands down entirely. */
+html[data-anim="off"] .pfx-chrome {
+  animation: none !important;
+  opacity: 0 !important;
 }

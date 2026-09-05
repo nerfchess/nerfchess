@@ -307,7 +307,7 @@ export const SECTIONS: SectionConfig[] = [
       {
         id: "followSystemMotion",
         label: "Follow system motion",
-        hint: "Follow your device's reduce-motion setting.",
+        hint: "Follow your device's reduce-motion setting. Off by default so card plays stay visible; turning it on is not recommended.",
         group: "Motion",
         control: { kind: "toggle", setting: "followSystemMotion" },
       },
@@ -340,7 +340,7 @@ export const SECTIONS: SectionConfig[] = [
       {
         id: "followSystemMotionA11y",
         label: "Follow system motion",
-        hint: "Follow your device's reduce-motion setting.",
+        hint: "Follow your device's reduce-motion setting. Off by default so card plays stay visible; turning it on is not recommended.",
         control: { kind: "toggle", setting: "followSystemMotion" },
       },
     ],
