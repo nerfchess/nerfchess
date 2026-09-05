@@ -1174,6 +1174,10 @@ export class MPSession {
     }
     const socket = this.socket;
     this.socket = null;
+    // Drop the in-flight connect marker too (as setServerUrl does): with the
+    // socket nulled, a stale promise would make the reconnect below resolve
+    // against a socket that no longer exists.
+    this.connecting = null;
     if (this.heartbeat) window.clearInterval(this.heartbeat);
     this.heartbeat = null;
     if (socket) {
@@ -1386,17 +1390,20 @@ export class MPSession {
   // drop threw the move away with an error toast and the board felt dead.
   private heldMove: { u: string; ply: number } | null = null;
 
-  sendMove(uci: string, ply: number): boolean {
+  /** "sent" went out on the open socket; "held" is buffered until the seat is
+   *  reclaimed (see heldMove); false means it can never go (no seat, or the
+   *  session is destroyed / not auto-reconnecting). */
+  sendMove(uci: string, ply: number): "sent" | "held" | false {
     if (this.sendFrame("move", { u: uci, ply })) {
       this.heldMove = null;
-      return true;
+      return "sent";
     }
     if (!this.seat || this.destroyed || !this.autoReconnect) return false;
     this.heldMove = { u: uci, ply };
     // Not connected: kick the reconnect loop now rather than waiting for the
     // next heartbeat to notice the dead socket.
     if (this.socket?.readyState !== WebSocket.CONNECTING) this.scheduleReconnect();
-    return true;
+    return "held";
   }
 
   /** Drop a move held for a reconnect (the position moved on locally). */

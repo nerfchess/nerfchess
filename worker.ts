@@ -550,6 +550,9 @@ const abandonmentClaimMs = 30 * 1000;
 // reaching abortWarnCount aborts in the window draws a warning, and aborting
 // again while still at the threshold blocks new games for abortTimeoutMs.
 const abortMaxPlies = 2;
+// Provisional value of StoredMatch.rematchedTo while rematchRequest is still
+// building the new game (see rematchRequest); never a real match id.
+const REMATCH_PENDING = "pending";
 const abortWindow = 6;
 const abortWarnCount = 3;
 const abortTimeoutMs = 10 * 60 * 1000;
@@ -812,7 +815,7 @@ type HouseSeekEntry = {
 // (deserializing every finished game's move history), which on a bloated table
 // blew the DO CPU limit before it could cache or GC anything: the crash loop.
 const liveIdsKey = "live:ids";
-const buildVersion = "sprint-overhaul-1";
+const buildVersion = "sprint-overhaul-2";
 // The single account allowed to use the owner "fun with friends" tools: the
 // -15s opponent-clock button and the god panel card grant. SERVER-verified on
 // every gated message (never trust the client). Compared case-insensitively so
@@ -3674,7 +3677,7 @@ export class GameServer extends DurableObject<Env> {
     // reclaims it instead of arriving at the rematch as a spectator. Only
     // while the rematch is still unfinished, so revisiting an old game page
     // never bounces into an already-decided one.
-    if (match.rematchedTo) {
+    if (match.rematchedTo && match.rematchedTo !== REMATCH_PENDING) {
       const rematch = await this.loadMatch(match.rematchedTo);
       if (rematch && !rematch.result) {
         const newColor: Color = color === "w" ? "b" : "w";
@@ -3813,7 +3816,23 @@ export class GameServer extends DurableObject<Env> {
     // A pending buff offer pauses the game clock only during its free
     // lock-in window (dtDeadline). Once the window has expired the clock
     // runs on: deliberating past it costs the straggler's own time.
-    match.runningSince = nextGame.result || (offersPending && match.dtDeadline) ? null : now;
+    if (nextGame.result || (offersPending && match.dtDeadline)) {
+      match.runningSince = null;
+    } else if (match.pauseUntil != null && now < match.pauseUntil) {
+      // A live disconnect-pause outranks the move resume (same rule as
+      // settleDraftAction): restarting the clock here would silently end the
+      // absent player's protection early and orphan pauseUntil, which the
+      // alarm would later sweep as stale, billing nothing. Leave the clock
+      // paused; releaseExpiredPause owns the resume.
+      match.runningSince = null;
+    } else {
+      if (match.pauseUntil != null) {
+        const away = awaySeat(match);
+        if (away) chargePauseBudget(match, away, now);
+        else clearPause(match);
+      }
+      match.runningSince = now;
+    }
     match.result = nextGame.result;
     if (nextGame.result) match.completedAt = now;
     // A move that decided a Chess Diff restores the paused game's clocks (the
@@ -3897,7 +3916,7 @@ export class GameServer extends DurableObject<Env> {
   // temporary matchmaking timeout; see the abort* constants.
   private async abortGame(ws: WebSocket) {
     const session = this.session(ws);
-    const match = session.matchId ? await this.loadMatch(session.matchId) : null;
+    let match = session.matchId ? await this.loadMatch(session.matchId) : null;
     if (!match || !session.color) return error(ws, "no_game", "Join a game before aborting.");
     if (await this.finishOnFlag(match)) return;
     if (match.result) return;
@@ -3921,6 +3940,16 @@ export class GameServer extends DurableObject<Env> {
           .first<{ recent_aborts: string | null }>();
         prevFlags = row?.recent_aborts ?? "";
       } catch {}
+      // That read was a subrequest, so it did not hold the DO input gate: a
+      // frame landing mid-read (a move that ended the game, a flag, the other
+      // seat's abort) may have finished the stored match. Re-check before
+      // writing the aborted result over it.
+      const fresh = await this.loadMatch(match.id);
+      if (!fresh || fresh.result) return;
+      match = fresh;
+      if (match.moves.length >= abortMaxPlies) {
+        return error(ws, "abort_too_late", "The game can no longer be aborted once both sides have moved.");
+      }
     }
 
     this.bankClocks(match);
@@ -6956,6 +6985,35 @@ export class GameServer extends DurableObject<Env> {
     }
 
     // Both agreed: new game with colors swapped, fresh rules and seed.
+    // Persist the claim BEFORE the first await below (same discipline as
+    // endMatch's `recorded`): the rating reads, code allocation and overrides
+    // snapshot are subrequests that do not hold the DO input gate, so a
+    // double-tapped rematch (or a concurrent rematchCancel) loading the match
+    // mid-flight must already see it as taken. The real id replaces the
+    // provisional marker once the new match is saved; a failure rolls it back.
+    match.rematchedTo = REMATCH_PENDING;
+    await this.saveMatch(match, false);
+    let rematch: StoredMatch;
+    try {
+      rematch = await this.buildRematch(match);
+    } catch (err) {
+      match.rematchedTo = null;
+      await this.saveMatch(match, false);
+      throw err;
+    }
+    const id = rematch.id;
+    match.rematchOfferBy = null;
+    match.rematchedTo = id;
+    await this.saveMatch(match, false);
+
+    send(this.connectedSession(match.id, "w"), "rematched", { id, color: "b", token: rematch.tokens.b });
+    send(this.connectedSession(match.id, "b"), "rematched", { id, color: "w", token: rematch.tokens.w });
+  }
+
+  /** Create and persist the swapped-colors rematch of a finished match. Runs
+   * subrequests (ratings, code, overrides), so callers claim the source match
+   * first (see rematchRequest). */
+  private async buildRematch(match: StoredMatch): Promise<StoredMatch> {
     const users: StoredMatch["users"] = {};
     if (match.users?.b) users.w = { ...match.users.b };
     if (match.users?.w) users.b = { ...match.users.w };
@@ -7017,12 +7075,7 @@ export class GameServer extends DurableObject<Env> {
         : {}),
     };
     await this.saveMatch(rematch);
-    match.rematchOfferBy = null;
-    match.rematchedTo = id;
-    await this.saveMatch(match, false);
-
-    send(this.connectedSession(match.id, "w"), "rematched", { id, color: "b", token: rematch.tokens.b });
-    send(this.connectedSession(match.id, "b"), "rematched", { id, color: "w", token: rematch.tokens.w });
+    return rematch;
   }
 
   // ---------------- chat ----------------
@@ -8048,7 +8101,21 @@ export class GameServer extends DurableObject<Env> {
     // human-vs-human is untouched); their enforcement lag is bounded by the
     // alarm anyway.
     if (!match.result && match.runningSince === null) {
-      match.runningSince = match.bots ? expiredAt : now;
+      // A live disconnect-pause outranks the window resume (same rule as
+      // settleDraftAction): restarting the clock here would end the absent
+      // player's protection early and orphan pauseUntil (later swept as
+      // stale, billing nothing). Leave it paused; releaseExpiredPause owns
+      // the resume. An already-expired pause is billed before resuming.
+      if (match.pauseUntil != null && now < match.pauseUntil) {
+        // nothing to do: releaseExpiredPause owns the resume
+      } else {
+        if (match.pauseUntil != null) {
+          const away = awaySeat(match);
+          if (away) chargePauseBudget(match, away, now);
+          else clearPause(match);
+        }
+        match.runningSince = match.bots ? expiredAt : now;
+      }
     }
     // The lock-in window expiring resumes play; if a house seat is to move (or
     // still holds its own offer) and its think timer was lost while the clock

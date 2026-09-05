@@ -53,13 +53,15 @@ export function MoveStrip({
     if (!row) return;
     const el = activeRef.current;
     // Live head: keep the newest move in view. Reviewing: centre the pick.
+    // No active cell at the start of the line (ply 0, or the review floor):
+    // rest at the left edge rather than the far right.
     if (!el) {
-      row.scrollLeft = row.scrollWidth;
+      row.scrollLeft = currentPly <= floorPly ? 0 : row.scrollWidth;
       return;
     }
     const target = el.offsetLeft - row.clientWidth / 2 + el.offsetWidth / 2;
     row.scrollTo({ left: Math.max(0, target), behavior: "auto" });
-  }, [currentPly, moves.length]);
+  }, [currentPly, floorPly, moves.length]);
 
   return (
     <div className="flex h-11 items-stretch border-y border-[color:var(--edge)] bg-[color:var(--bg-panel)]">

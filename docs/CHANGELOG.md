@@ -741,3 +741,31 @@ Balance, full pass: 334 tier moves through hand-audit.json, three reworks (Warp 
 
 Bundle (PR #483): the 1,539-icon lucide map loads on demand behind the category ring fallback; combo tags moved to a leaf module. Match routes drop from 1,539 statically reachable icons to 159.
 
+
+## 2026-09-05 19:24 EDT
+
+Round three: worker, engine and match-flow bug fixes
+
+A second sweep over the areas the first two passes skipped: the game server's clock and rematch paths, the engine's chained-move guard and notation, and the match page's reconnect and draft flows. PR #484. OPEN.
+
+Server and sync:
+- A disconnect pause taken during a move or a draft deadline is billed again: both resume paths now check the live pause before restarting the clock, the same way draft actions did.
+- Rematch requests claim the slot before any database await, so a double tap makes one rematch game and a cancel during the await is not lost; the cancel frame carries the canceller's colour so only the other side's offer resets.
+- Aborting a game re-reads the match after the abort-history await, so a game that ended in between is not aborted twice.
+- A resync clears the in-flight connect handle, so a reconnect no longer waits out the full eight-second fail timer.
+- A move buffered during a disconnect is dropped along with any premove when the board rolls back, and sending now reports sent, held or failed so the optimistic board is only kept on sent.
+
+Engine:
+- A free action that grants no extra move (Warp Home) no longer arms the chained-move king guard, so the activator's own king capture stays legal. Covered in `test:balance-pass`.
+- Move numbers no longer double-increment on two consecutive Black moves. Covered in `test:san`.
+- Move-risk lookups key on castle and drop as well as from/to, so a castling move and a king step to the same square no longer share a risk badge.
+
+Match page and settings:
+- Settings pulled from the server are validated before they touch local storage, and pushes adopt the server's timestamp so a change no longer reverts on reload when the clocks disagree.
+- The minimized draft panel has a Tuck control; its double-tap guard now measures real elapsed time. The phone move strip rests at the left edge when reviewing from the start of the line.
+- Dock rows show one Use button, dragging a card with no target no longer fires it, and an expanded row stays open while a copy's countdown ticks.
+- Analyze is hidden for card games (the analysis board would silently truncate them) and the analysis page says when a line stops early. Tournament pages clear a stale error on a successful load.
+
+Checks: `test:retired` now enforces a floor of 12 cards per tier per mode; `test:glossary-effects` fails on an empty map.
+
+Verified: tsc, eslint, the full check battery, Playwright (30 passed, 1 skipped).

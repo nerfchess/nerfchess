@@ -230,6 +230,41 @@ check(
   doubleLabels.join(" | "),
 );
 
+// Two black moves in a row (an extra-move card): the numbering must agree with
+// the move list's row pairing (MoveList.tsx / MoveStrip.tsx), where a black
+// move always closes its row and the next move opens a new number. The
+// expected labels are derived by that exact row algorithm rather than typed
+// in, so the two can never drift apart silently.
+function moveListNumbers(ms: Move[]): number[] {
+  const out: number[] = [];
+  let num = 1;
+  let openW = false;
+  for (const m of ms) {
+    if (m.color === "w") {
+      if (openW) num += 1;
+      out.push(num);
+      openW = true;
+    } else {
+      out.push(num);
+      num += 1;
+      openW = false;
+    }
+  }
+  return out;
+}
+{
+  const [wNf3, bNf6, wNc3, bNc6] = fourKnights;
+  const wbbw: Move[] = [wNf3, bNf6, bNc6, wNc3];
+  const got = sanLabels(wbbw);
+  const nums = moveListNumbers(wbbw);
+  const want = wbbw.map((m, i) => `${nums[i]}${m.color === "w" ? ". " : "… "}${["Nf3", "Nf6", "Nc6", "Nc3"][i]}`);
+  check(
+    "consecutive black moves match the move list rows (w, b, b, w)",
+    got.join(" | ") === want.join(" | ") && got.join(" | ") === "1. Nf3 | 1… Nf6 | 2… Nc6 | 3. Nc3",
+    `got ${got.join(" | ")}; want ${want.join(" | ")}`,
+  );
+}
+
 // A move the replay cannot apply (a card rewrote the board) must degrade to the
 // bare form for the rest of the list rather than printing a wrong origin hint.
 const bogus: Move = { from: S("h6"), to: S("h7"), piece: "r", color: "w" };

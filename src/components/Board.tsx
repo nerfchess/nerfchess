@@ -1,5 +1,7 @@
 "use client";
 
+import { moveRiskKey } from "@/engine/moveSafety";
+
 import React, {
   type CSSProperties,
   useCallback,
@@ -569,7 +571,7 @@ interface Props {
   premoveMode?: boolean;
   premoves?: QueuedPremove[];
   onCancelPremove?: () => void;
-  // Keyed by `${from}-${to}-${promotion ?? ""}` (see engine/moveSafety.ts).
+  // Keyed by moveRiskKey (engine/moveSafety.ts): from, to, promotion, castle, drop.
   // Tints a destination's move dot yellow (self-inflicted nerf loss) or red
   // (moves into check) as a warning before the player commits to the move.
   moveRisks?: Map<string, MoveRisk>;
@@ -790,7 +792,7 @@ function riskOf(moves: Move[], moveRisks: Map<string, MoveRisk> | undefined): Mo
   if (!moveRisks) return null;
   let worst: MoveRisk = null;
   for (const m of moves) {
-    const r = moveRisks.get(`${m.from}-${m.to}-${m.promotion ?? ""}`);
+    const r = moveRisks.get(moveRiskKey(m));
     if (r === "check") return "check";
     if (r === "nerf") worst = "nerf";
   }

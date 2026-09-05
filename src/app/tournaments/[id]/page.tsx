@@ -56,6 +56,8 @@ export default function TournamentDetailPage() {
     const body = (await res.json()) as DetailResponse;
     if (req !== loadReqRef.current) return;
     setData(body);
+    // A poll that recovers after a failed one clears the error banner.
+    setError(null);
   }, [id]);
 
   useEffect(() => {
