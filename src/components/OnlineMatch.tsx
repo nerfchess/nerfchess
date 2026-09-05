@@ -2589,11 +2589,11 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
   // Literal class strings only, so Tailwind's JIT emits them.
   const boardFitClass = hint
     ? railCollapsed
-      ? "w-[min(100vw,max(60dvh,calc(100dvh-14rem)))] sm:w-[min(var(--board-cap,720px),calc(100dvh-17rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-17rem),calc(100vw-380px))] max-w-full"
-      : "w-[min(100vw,max(60dvh,calc(100dvh-14rem)))] sm:w-[min(var(--board-cap,720px),calc(100dvh-17rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-17rem),calc(100vw_-_380px_-_var(--match-rail-w,320px)))] max-w-full"
+      ? "w-[min(100vw,max(60dvh,calc(100dvh-12rem)))] sm:w-[min(var(--board-cap,720px),calc(100dvh-15rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-15rem),calc(100vw-380px))] max-w-full"
+      : "w-[min(100vw,max(60dvh,calc(100dvh-12rem)))] sm:w-[min(var(--board-cap,720px),calc(100dvh-15rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-15rem),calc(100vw_-_380px_-_var(--match-rail-w,320px)))] max-w-full"
     : railCollapsed
-    ? "w-[min(100vw,max(60dvh,calc(100dvh-12rem)))] sm:w-[min(var(--board-cap,720px),calc(100dvh-14rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-14rem),calc(100vw-380px))] max-w-full"
-    : "w-[min(100vw,max(60dvh,calc(100dvh-12rem)))] sm:w-[min(var(--board-cap,720px),calc(100dvh-14rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-14rem),calc(100vw_-_380px_-_var(--match-rail-w,320px)))] max-w-full";
+    ? "w-[min(100vw,max(60dvh,calc(100dvh-12rem)))] sm:w-[min(var(--board-cap,720px),calc(100dvh-12rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-12rem),calc(100vw-380px))] max-w-full"
+    : "w-[min(100vw,max(60dvh,calc(100dvh-12rem)))] sm:w-[min(var(--board-cap,720px),calc(100dvh-12rem),calc(100vw-344px))] lg:w-[min(var(--board-cap,720px),calc(100dvh-12rem),calc(100vw_-_380px_-_var(--match-rail-w,320px)))] max-w-full";
   // Takebacks are casual-only (and off in Draft games, whose rolled offers
   // and applied buffs cannot rewind) and need a move of mine on the board.
   const takebackAvailable =

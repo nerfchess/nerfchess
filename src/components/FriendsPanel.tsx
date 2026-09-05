@@ -64,7 +64,10 @@ export function FriendsPanel() {
   const [note, setNote] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
   const lobby = useLobbyFeed();
 
-  const load = useCallback(async () => {
+  // Resolves true when the roster loaded (or the user is signed out), false
+  // when the request failed; callers refreshing after an action use that to
+  // surface a note, since loadFailed only renders before hydration.
+  const load = useCallback(async (): Promise<boolean> => {
     setLoadFailed(false);
     try {
       // Every outcome below ends in exactly one of signed-out / failed /
@@ -73,23 +76,25 @@ export function FriendsPanel() {
       const res = await fetch("/api/friends", { signal: AbortSignal.timeout(10_000) });
       if (res.status === 401) {
         setSignedIn(false);
-        return;
+        return true;
       }
       if (!res.ok) {
         // Non-401 error (e.g. 5xx) on the initial load: surface a retry
         // instead of leaving signedIn undefined (an endless skeleton).
         setLoadFailed(true);
-        return;
+        return false;
       }
       // Parse before flipping signedIn, so a truncated/invalid body lands in
       // the failure state rather than "signed in with no data".
       const body = (await res.json()) as FriendsData;
       setSignedIn(true);
       setData(body);
+      return true;
     } catch {
       // Offline / timeout / bad body: keep any last snapshot, but if we have
       // none yet, show a retry.
       setLoadFailed(true);
+      return false;
     }
   }, []);
 
@@ -120,7 +125,12 @@ export function FriendsPanel() {
           text: body?.status === "accepted" ? `You are now friends with ${username}.` : `Request sent to ${username}.`,
         });
       }
-      await load();
+      const refreshed = await load();
+      // The action itself went through; only the follow-up refresh failed, so
+      // say so without clobbering an action error.
+      if (!refreshed && res.ok) {
+        setNote({ kind: "err", text: "Saved, but the list could not be refreshed. Reload to see it." });
+      }
     } catch {
       setNote({ kind: "err", text: "Network error. Try again." });
     } finally {

@@ -183,25 +183,34 @@
 html[data-anim="off"] .vault-ring { animation: none; }
 
 /* --- The prism ------------------------------------------------------------ */
-.vault-prism {
+/* The lift wrapper hovers (transform only); the prism inside it spins. */
+.vault-lift {
   width: var(--v-r);
   height: var(--v-fh);
   margin-left: calc(var(--v-r) / -2);
   margin-top: calc(var(--v-fh) / -2 - 8px);
   transform-style: preserve-3d;
-  transform: rotateX(-14deg) rotateY(0deg) translateY(0);
-  animation:
-    vault-prism-spin 18s linear infinite,
-    vault-prism-hover 3.6s ease-in-out infinite;
+  animation: vault-prism-hover 3.6s ease-in-out infinite;
+}
+@keyframes vault-prism-hover {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+.vault-prism {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transform: rotateX(-14deg) rotateY(0deg);
+  animation: vault-prism-spin 18s linear infinite;
 }
 @keyframes vault-prism-spin {
   from { transform: rotateX(-14deg) rotateY(0deg); }
   to   { transform: rotateX(-14deg) rotateY(360deg); }
 }
-@keyframes vault-prism-hover {
-  0%, 100% { margin-top: calc(var(--v-fh) / -2 - 8px); }
-  50% { margin-top: calc(var(--v-fh) / -2 - 14px); }
-}
+.vault-shell--still .vault-lift,
+html[data-anim="off"] .vault-lift { animation: none; }
 .vault-shell--still .vault-prism,
 html[data-anim="off"] .vault-prism { animation: none; transform: rotateX(-14deg) rotateY(-24deg); }
 

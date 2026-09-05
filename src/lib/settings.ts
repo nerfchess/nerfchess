@@ -57,6 +57,8 @@ const LEGACY_PIECE_COLOR_THEMES: Record<string, PieceColor> = {
 export type AnimationSpeed = "off" | "fast" | "normal";
 export type SiteTheme = "midnight" | "dark" | "light" | "system";
 export type SoundTheme = "lichess" | "classic";
+/** Lichess "Tenths of seconds": never, only under ten seconds, or always. */
+export type ClockTenths = "never" | "low" | "always";
 
 // The site themes. Midnight (the default) is a navy take on Lichess's dark
 // ladder; dark is Lichess's own warm-grey palette; light is paper. "system"
@@ -177,6 +179,9 @@ export interface Settings {
   // or the `z` key on a game page; applyUiPrefs stamps html[data-zen="on"].
   zenMode: boolean;
   lowTimeWarning: boolean; // ticking alert when the clock runs low
+  clockTenths: ClockTenths; // when the clock shows tenths of a second
+  showCaptured: boolean; // material difference (captured pieces) beside each player
+  showRatings: boolean; // ratings beside player names
   animationSpeed: AnimationSpeed;
   // How long a piece takes to glide between squares, in milliseconds. 0 is a
   // teleport. Lichess's ladder is none / fast / normal / slow; we expose the
@@ -234,6 +239,9 @@ export const DEFAULT_SETTINGS: Settings = {
   showLegalMoves: true,
   premovesEnabled: true,
   lowTimeWarning: true,
+  clockTenths: "low",
+  showCaptured: true,
+  showRatings: true,
   confirmMove: false,
   confirmDrawOffer: false,
   flipBoard: false,
@@ -406,6 +414,12 @@ export function loadSettings(): Settings {
       showLegalMoves: bool(parsed.showLegalMoves, DEFAULT.showLegalMoves),
       premovesEnabled: bool(parsed.premovesEnabled, DEFAULT.premovesEnabled),
       lowTimeWarning: bool(parsed.lowTimeWarning, DEFAULT.lowTimeWarning),
+      clockTenths:
+        parsed.clockTenths === "never" || parsed.clockTenths === "low" || parsed.clockTenths === "always"
+          ? parsed.clockTenths
+          : DEFAULT.clockTenths,
+      showCaptured: bool(parsed.showCaptured, DEFAULT.showCaptured),
+      showRatings: bool(parsed.showRatings, DEFAULT.showRatings),
       confirmMove: bool(parsed.confirmMove, DEFAULT.confirmMove),
       confirmDrawOffer: bool(parsed.confirmDrawOffer, DEFAULT.confirmDrawOffer),
       flipBoard: bool(parsed.flipBoard, DEFAULT.flipBoard),

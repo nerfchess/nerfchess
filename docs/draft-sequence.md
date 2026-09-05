@@ -46,7 +46,7 @@ exactly two events:
    allowed to mount until it drops; a small "Resolving effects" chip
    (`DraftResolvingChip`) shows meanwhile. Cap: 7 seconds.
 2. **Cards ready.** `DraftOverlay` fires `onCardsReady(offerKey)` exactly once
-   per offer version, after the chest is open, the deal has settled, and two
+   per offer version, after the vault is open, the deal has settled, and two
    further animation frames have painted the card faces. Only then is the
    decision window armed. Cap: 12 seconds.
 
@@ -143,7 +143,7 @@ draft state.
   opening and recurring rounds; plus the invariant that a silent timeout never
   banks.
 - `e2e/draft-timing.spec.ts`: real browser flows on the bot game: the
-  countdown stays hidden through chest and deal (full motion), appears with
+  countdown stays hidden through vault and deal (full motion), appears with
   at least 18 of 20 seconds, reduced motion arms it immediately, and an
   expired window auto-resolves the draft with no "Draft pending" recovery
   panel, returning the board to a playable state.

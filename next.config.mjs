@@ -70,6 +70,11 @@ const securityHeaders = [
 
 const nextConfig = {
   reactStrictMode: true,
+  experimental: {
+    // Deep-import rewriting for the one animation library the match routes
+    // pull in (lucide-react is already on Next's default list).
+    optimizePackageImports: ["framer-motion"],
+  },
   env: {
     NEXT_PUBLIC_BUILD_VERSION: buildVersion(),
     // Public Turnstile sitekey for the signup widget. Override per-environment

@@ -585,6 +585,17 @@ export function GameOver({
   const chrome = useModalChrome(!dismissed, dismiss);
   const [shared, setShared] = useState(false);
   const [pgnCopied, setPgnCopied] = useState(false);
+  // The "Shared" / "Copied" flashes reset on a timer; cleared on unmount so a
+  // late tick never sets state on a gone component.
+  const sharedTimer = useRef<number | null>(null);
+  const pgnCopiedTimer = useRef<number | null>(null);
+  useEffect(
+    () => () => {
+      if (sharedTimer.current != null) window.clearTimeout(sharedTimer.current);
+      if (pgnCopiedTimer.current != null) window.clearTimeout(pgnCopiedTimer.current);
+    },
+    [],
+  );
   // Guests get one quiet post-game nudge to keep what they just earned; it
   // never blocks the actions below. Spectators are never nudged here.
   const [isGuest, setIsGuest] = useState(false);
@@ -704,7 +715,8 @@ export function GameOver({
         await navigator.clipboard.writeText(text);
       }
       setShared(true);
-      window.setTimeout(() => setShared(false), 2000);
+      if (sharedTimer.current != null) window.clearTimeout(sharedTimer.current);
+      sharedTimer.current = window.setTimeout(() => setShared(false), 2000);
     } catch {
       // User dismissed the share sheet or clipboard was blocked; ignore.
     }
@@ -728,7 +740,8 @@ export function GameOver({
     try {
       await navigator.clipboard.writeText(pgn);
       setPgnCopied(true);
-      window.setTimeout(() => setPgnCopied(false), 2000);
+      if (pgnCopiedTimer.current != null) window.clearTimeout(pgnCopiedTimer.current);
+      pgnCopiedTimer.current = window.setTimeout(() => setPgnCopied(false), 2000);
     } catch {
       // Clipboard blocked; ignore.
     }
@@ -1075,9 +1088,10 @@ export function GameOver({
               </Button>
             )}
             <div className={`${onClip ? "mt-2" : "mt-6"} grid grid-cols-2 gap-2`}>
-              {rematchStatus === "offered" && opponentLeft && onCancelRematch ? (
-                // The opponent is gone, so "waiting" is a dead end: offer the way
-                // out instead.
+              {rematchStatus === "offered" && onCancelRematch ? (
+                // The Rematch button is disabled while an offer is out, so the
+                // cancel control is the only way back (not just when the
+                // opponent is gone).
                 <Button tone="ghost"
                   ref={primaryRef}
                  

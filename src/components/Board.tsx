@@ -148,7 +148,10 @@ import {
   type SceneGeo,
 } from "./effects/geometry";
 import { findKing } from "@/engine/board";
-import { PassiveLayer } from "./effects/passive/PassiveLayer";
+import dynamic from "next/dynamic";
+// The passive-effect layer carries a 280KB generated composition table that
+// nothing needs until a passive card is in play; it loads off the first paint.
+const PassiveLayer = dynamic(() => import("./effects/passive/PassiveLayer"), { ssr: false });
 import { FruitionLayer } from "./effects/fruition/FruitionLayer";
 import type { FxEvent } from "@/engine/fxEvents";
 import { buffPassiveAuras, nerfPassiveAuras } from "./effects/passive/derive";

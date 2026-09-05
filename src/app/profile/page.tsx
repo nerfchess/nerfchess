@@ -42,7 +42,9 @@ export default function ProfilePage() {
         router.replace(`/u/${encodeURIComponent(me.username)}`);
         return;
       }
-      setAccount(me);
+      // null (guest creation failed) or undefined (could not reach the server):
+      // either way, fall through to the offline shell rather than the skeleton.
+      setAccount(me ?? null);
     });
     return () => {
       cancelled = true;

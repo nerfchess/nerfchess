@@ -3,7 +3,13 @@
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { FriendsPanel } from "@/components/FriendsPanel";
-import { OnlineMatch } from "@/components/OnlineMatch";
+import dynamic from "next/dynamic";
+// The whole match runtime (board, effects, card library) only renders once a
+// challenge is accepted; loading it lazily keeps it out of the lobby's first
+// paint, where this provider also mounts.
+const OnlineMatch = dynamic(() => import("@/components/OnlineMatch").then((m) => m.OnlineMatch), {
+  ssr: false,
+});
 import {
   clearSavedFriendSession,
   loadSavedFriendSession,
@@ -32,9 +38,10 @@ const TIME_STEPS_SEC = [
   150,
   180,
   ...range(5 * 60, 10 * 60, 60),
+  15 * 60, // the 15+10 preset's base falls between the coarser ranges
   ...range(12 * 60, 30 * 60, 2 * 60),
   ...range(35 * 60, 2 * 60 * 60, 5 * 60),
-];
+].sort((a, b) => a - b);
 
 type FriendGameContextValue = {
   // Setup-form state.
@@ -470,6 +477,15 @@ export function FriendGameSetup({ showFriends = true }: { showFriends?: boolean 
   const [joinCode, setJoinCode] = useState("");
   const presetActive = (b: number, i: number) => baseSec === b && incrementSec === i;
   const onPreset = presetActive(baseSec, incrementSec) && TIME_PRESETS.some((t) => presetActive(t.base, t.inc));
+  // The custom-time disclosure owns its open state (mirrored from the DOM via
+  // onToggle) so a user toggle sticks; it pops open when the sliders leave the
+  // presets, since that is the only way to see the value they now hold.
+  const [customOpen, setCustomOpen] = useState(!onPreset);
+  const [prevOnPreset, setPrevOnPreset] = useState(onPreset);
+  if (prevOnPreset !== onPreset) {
+    setPrevOnPreset(onPreset);
+    if (!onPreset) setCustomOpen(true);
+  }
 
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)] lg:items-start">
@@ -514,7 +530,7 @@ export function FriendGameSetup({ showFriends = true }: { showFriends?: boolean 
             );
           })}
         </div>
-        <details className="mt-3" open={!onPreset}>
+        <details className="mt-3" open={customOpen} onToggle={(e) => setCustomOpen(e.currentTarget.open)}>
           <summary className="cursor-pointer select-none text-[12px] text-parchment-400 hover:text-parchment-200">
             Custom time
           </summary>

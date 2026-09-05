@@ -174,7 +174,7 @@ export function SiteHeader({ active }: { active?: string }) {
     // games right away; registering later upgrades the same account.
     ensureAccount().then((me) => {
       if (cancelled) return;
-      setUser(me);
+      setUser(me ?? null);
       if (me) {
         refreshSocial();
         interval = window.setInterval(refreshSocial, 30000);

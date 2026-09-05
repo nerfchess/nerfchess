@@ -207,16 +207,25 @@ export default function ClubPage() {
   const [postError, setPostError] = useState<string | null>(null);
   const [pickingIcon, setPickingIcon] = useState(false);
 
+  // Request sequence: only the newest in-flight load may set state, so a
+  // stale refresh (or one that resolves after unmount) never lands.
+  const loadReqRef = useRef(0);
   const load = useCallback(async () => {
+    const req = ++loadReqRef.current;
     const res = await fetch(`/api/clubs/${encodeURIComponent(slug)}`);
     if (!res.ok) {
       throw new Error(res.status === 404 ? "That club doesn't exist." : "Could not load the club.");
     }
-    setData((await res.json()) as ClubDetail);
+    const body = (await res.json()) as ClubDetail;
+    if (req !== loadReqRef.current) return;
+    setData(body);
   }, [slug]);
 
   useEffect(() => {
     let cancelled = false;
+    // The ref object itself (not .current) is stable; aliased so the cleanup
+    // can invalidate any load still in flight.
+    const reqRef = loadReqRef;
     void (async () => {
       try {
         await load();
@@ -224,9 +233,10 @@ export default function ClubPage() {
         if (!cancelled) setError(e instanceof Error ? e.message : "Could not load the club.");
       }
     })();
-    fetchMe().then((u) => !cancelled && setMe(u));
+    fetchMe().then((u) => !cancelled && setMe(u ?? null));
     return () => {
       cancelled = true;
+      reqRef.current++;
     };
   }, [load]);
 

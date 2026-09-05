@@ -4,6 +4,7 @@ import { BoardState, Color } from "@/engine/types";
 import { Piece } from "@/components/Pieces";
 import { capturedPiecesFor, capturedValue, opponentOf } from "@/lib/material";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
+import { useSettingsValue } from "@/lib/useSettingsValue";
 
 interface Props {
   board: BoardState;
@@ -23,7 +24,8 @@ interface Props {
 }
 
 export function BoardPlayerRow({ board, playerColor, myColor, name, elo, avatar, className = "", linkProfile = true, connected = null }: Props) {
-  const pieces = capturedPiecesFor(board, playerColor);
+  const { showCaptured, showRatings } = useSettingsValue();
+  const pieces = showCaptured ? capturedPiecesFor(board, playerColor) : [];
   const mineValue = capturedValue(capturedPiecesFor(board, myColor));
   const opponentValue = capturedValue(capturedPiecesFor(board, opponentOf(myColor)));
   const playerValue = playerColor === myColor ? mineValue : opponentValue;
@@ -74,7 +76,7 @@ export function BoardPlayerRow({ board, playerColor, myColor, name, elo, avatar,
             ) : (
               name
             )}
-            {typeof elo === "number" && (
+            {typeof elo === "number" && showRatings && (
               <span className="font-normal text-parchment-400"> {Math.round(elo)}</span>
             )}
             {connected !== null && (
@@ -103,7 +105,7 @@ export function BoardPlayerRow({ board, playerColor, myColor, name, elo, avatar,
                 </div>
               ))}
             </div>
-            {delta > 0 && (
+            {showCaptured && delta > 0 && (
               <div className="ml-1 shrink-0 font-mono text-[13px] font-semibold text-white sm:text-sm">
                 +{delta}
               </div>

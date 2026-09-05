@@ -84,23 +84,23 @@ export function SettingsPanel({ open, onClose, liveGame }: Props) {
   // effects. saveSettings() already re-applies the themes and UI preferences;
   // audio needs an explicit push into the sound engine.
   const update = (patch: Partial<Settings>) => {
-    setSettings((prev) => {
-      const merged = { ...prev, ...patch };
-      saveSettings(merged);
-      if (patch.volume != null) setVolume(merged.volume);
-      if (patch.uiSounds != null) setUiSounds(merged.uiSounds);
-      configureSoundPrefs({
-        enabled: merged.soundEnabled,
-        move: merged.moveSound,
-        capture: merged.captureSound,
-        check: merged.checkSound,
-        gameEnd: merged.gameEndSound,
-        theme: merged.soundTheme,
-      });
-      // Audition the new set so the choice is audible immediately.
-      if (patch.soundTheme != null || patch.volume != null) playMoveSample();
-      return merged;
+    // Merge from storage (the latest persisted value, which state mirrors) and
+    // run the side effects outside the state updater, which React may replay.
+    const merged = { ...loadSettings(), ...patch };
+    setSettings(merged);
+    saveSettings(merged);
+    if (patch.volume != null) setVolume(merged.volume);
+    if (patch.uiSounds != null) setUiSounds(merged.uiSounds);
+    configureSoundPrefs({
+      enabled: merged.soundEnabled,
+      move: merged.moveSound,
+      capture: merged.captureSound,
+      check: merged.checkSound,
+      gameEnd: merged.gameEndSound,
+      theme: merged.soundTheme,
     });
+    // Audition the new set so the choice is audible immediately.
+    if (patch.soundTheme != null || patch.volume != null) playMoveSample();
   };
 
   const renderControl = (control: Control, label: string) => {
@@ -151,6 +151,19 @@ export function SettingsPanel({ open, onClose, liveGame }: Props) {
           />
         );
       }
+      case "clockTenths":
+        return (
+          <Select
+            label={label}
+            value={settings.clockTenths}
+            options={[
+              { value: "never", label: "Never" },
+              { value: "low", label: "Under 10 seconds" },
+              { value: "always", label: "Always" },
+            ]}
+            onChange={(v) => update({ clockTenths: v })}
+          />
+        );
       case "siteTheme":
         return <SiteThemePicker value={settings.siteTheme} onChange={(t) => update({ siteTheme: t })} />;
       case "soundTheme":

@@ -94,8 +94,10 @@ export function DraftVault({ tier, count, label, stage, onOpen, mini, calm, stil
         <i className="vault-shock" />
         {relic && <i className="vault-shock vault-shock--2" />}
 
-        {/* The prism: six faces around a hexagon, a cap top and bottom. */}
-        <i className="vault-prism">
+        {/* The prism: six faces around a hexagon, a cap top and bottom. The
+            lift wrapper owns the hover (translateY), the prism owns the spin. */}
+        <i className="vault-lift">
+        <b className="vault-prism">
           {FACES.map((deg, i) => (
             <b
               key={deg}
@@ -111,6 +113,7 @@ export function DraftVault({ tier, count, label, stage, onOpen, mini, calm, stil
           ))}
           <b className="vault-cap vault-cap--top" />
           <b className="vault-cap vault-cap--bottom" />
+        </b>
         </i>
 
         {/* Rising motes: a faint idle drift on relic vaults, a column on open. */}

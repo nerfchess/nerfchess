@@ -26,6 +26,7 @@ export type Control =
   | { kind: "slider"; setting: NumKey; min: number; max: number; step: number; format?: (v: number) => string }
   | { kind: "animationSpeed"; options: Array<{ value: AnimationSpeed; label: string }> }
   | { kind: "pieceAnimMs" }
+  | { kind: "clockTenths" }
   | { kind: "siteTheme" }
   | { kind: "soundTheme"; options: Array<{ value: SoundTheme; label: string }> }
   | { kind: "customBg" }
@@ -170,6 +171,20 @@ export const SECTIONS: SectionConfig[] = [
         control: { kind: "toggle", setting: "flipBoard" },
       },
       {
+        id: "showCaptured",
+        label: "Material difference",
+        hint: "Captured pieces and the point lead beside each player",
+        group: "Board",
+        control: { kind: "toggle", setting: "showCaptured" },
+      },
+      {
+        id: "showRatings",
+        label: "Show ratings",
+        hint: "Ratings beside player names in a game",
+        group: "Board",
+        control: { kind: "toggle", setting: "showRatings" },
+      },
+      {
         id: "showCoordinates",
         label: "Show coordinates",
         group: "Layout",
@@ -292,6 +307,13 @@ export const SECTIONS: SectionConfig[] = [
         hint: "Ticks when your clock runs low",
         group: "Interface",
         control: { kind: "toggle", setting: "lowTimeWarning" },
+      },
+      {
+        id: "clockTenths",
+        label: "Tenths of seconds",
+        hint: "When the clock shows tenths",
+        group: "Interface",
+        control: { kind: "clockTenths" },
       },
     ],
   },

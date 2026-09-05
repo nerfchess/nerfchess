@@ -31,7 +31,13 @@ export function SettingsBootstrap() {
         gameEnd: s.gameEndSound,
         theme: s.soundTheme,
       });
-      if (s.soundEnabled && s.soundTheme === "lichess") preloadSounds();
+      // Decoding eight samples competes with hydration on a cold load, and
+      // nothing can play before a gesture anyway: wait for an idle moment.
+      if (s.soundEnabled && s.soundTheme === "lichess") {
+        const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number };
+        if (typeof w.requestIdleCallback === "function") w.requestIdleCallback(() => preloadSounds(), { timeout: 4000 });
+        else window.setTimeout(preloadSounds, 1500);
+      }
     };
     apply();
     // Signed-in accounts sync settings across devices: adopt the server copy

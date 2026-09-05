@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { LockInCountdown } from "@/components/DraftOverlay";
+import { LockInCountdown } from "@/components/draft/LockInCountdown";
 import { Button } from "@/components/ui/Button";
 
 /**

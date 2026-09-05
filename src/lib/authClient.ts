@@ -62,24 +62,35 @@ export async function logout(): Promise<void> {
   await post("/api/auth/logout", {});
 }
 
-export async function fetchMe(): Promise<AccountUser | null> {
+/**
+ * Who am I. `null` is a real signed-out answer (the server said so, or a
+ * 401); `undefined` means the request failed in transit (offline, 5xx),
+ * so the caller does not actually know and should not act as if signed out.
+ */
+export async function fetchMe(): Promise<AccountUser | null | undefined> {
   try {
     const res = await fetch("/api/auth/me");
-    if (!res.ok) return null;
+    if (res.status === 401) return null;
+    if (!res.ok) return undefined;
     const data = (await res.json()) as { user: AccountUser | null };
     return data.user;
   } catch {
-    return null;
+    return undefined;
   }
 }
 
 // One guest-creation attempt per page load, shared across components.
-let guestPromise: Promise<AccountUser | null> | null = null;
+let guestPromise: Promise<AccountUser | null | undefined> | null = null;
 
-/** Who am I, creating an instant guest account on the first visit. */
-export async function ensureAccount(): Promise<AccountUser | null> {
+/**
+ * Who am I, creating an instant guest account on the first visit. Passes
+ * fetchMe's `undefined` (transport failure) through without minting a guest:
+ * an existing account we merely could not reach must not be shadowed by a
+ * throwaway one.
+ */
+export async function ensureAccount(): Promise<AccountUser | null | undefined> {
   const me = await fetchMe();
-  if (me) return me;
+  if (me !== null) return me;
   if (!guestPromise) {
     guestPromise = (async () => {
       try {

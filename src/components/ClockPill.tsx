@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { formatClock } from "@/lib/clockFormat";
+import { useSettingsValue } from "@/lib/useSettingsValue";
 import { playLowTime, playUrgentTick } from "@/lib/sounds";
 
 // Shared across every ClockPill instance so the duplicated mobile/desktop
@@ -114,6 +115,7 @@ export function ClockPill({
   // under 10s it pulses stronger and tints oxblood. Border stays 2px across
   // every active tier so switching urgency never shifts layout; the countdown
   // text is always tabular-nums so digits never jitter.
+  const { clockTenths: tenths } = useSettingsValue();
   const low = displayMs < 30000;
   const critical = displayMs < 10000;
   return (
@@ -142,7 +144,7 @@ export function ClockPill({
             : "text-parchment")
         }
       >
-        {formatClock(displayMs)}
+        {formatClock(displayMs, tenths)}
       </span>
       {draftRunning && (
         <span

@@ -75,7 +75,7 @@ export default function LeaderboardPage() {
         if (!cancelled) setError(e instanceof Error ? e.message : "Could not load the leaderboard.");
       }
       const user = await fetchMe();
-      if (!cancelled) setMe(user);
+      if (!cancelled) setMe(user ?? null);
     })();
     return () => {
       cancelled = true;

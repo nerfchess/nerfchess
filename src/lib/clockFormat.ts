@@ -14,10 +14,15 @@
  * above it in intent (never overstate what is left) and reaches "0:00.0" only
  * at true zero.
  */
-export function formatClock(ms: number): string {
+export function formatClock(ms: number, tenths: "never" | "low" | "always" = "low"): string {
   const clamped = Math.max(0, ms);
-  if (clamped < 10000) {
-    return `0:${(Math.floor(clamped / 100) / 10).toFixed(1).padStart(4, "0")}`;
+  const showTenths = tenths === "always" ? clamped < 3_600_000 : tenths === "low" && clamped < 10000;
+  if (showTenths) {
+    const totalTenths = Math.floor(clamped / 100);
+    const m = Math.floor(totalTenths / 600);
+    const s = Math.floor((totalTenths % 600) / 10);
+    const t = totalTenths % 10;
+    return `${m}:${s.toString().padStart(2, "0")}.${t}`;
   }
   const totalSec = Math.ceil(clamped / 1000);
   const m = Math.floor(totalSec / 60);
