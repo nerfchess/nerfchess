@@ -180,7 +180,11 @@ type Result = NerfGame["result"];
 //     to the tier-8 cap) and the top-tier slip gate now eases off in later
 //     rounds. Both feed rollSharedTiers, so a v10 match replays into a
 //     different stream of offers from round 5 on.
-const REPLAY_VERSION = 11;
+//  12 - rollSharedTiers deals ONE tier for both slots and both players: the
+//     per-card top-tier slip gate is gone (it no longer draws from the RNG)
+//     and round 1 never jitters up. A v11 match that reached tier 7+ replays
+//     into a different stream of offers.
+const REPLAY_VERSION = 12;
 
 // Refresh a match's replay checkpoint (see StoredMatch.checkpoint) at most once
 // per this many committed events (moves + draft actions), so gameForPlay never
@@ -815,7 +819,7 @@ type HouseSeekEntry = {
 // (deserializing every finished game's move history), which on a bloated table
 // blew the DO CPU limit before it could cache or GC anything: the crash loop.
 const liveIdsKey = "live:ids";
-const buildVersion = "sprint-overhaul-2";
+const buildVersion = "sprint-overhaul-3";
 // The single account allowed to use the owner "fun with friends" tools: the
 // -15s opponent-clock button and the god panel card grant. SERVER-verified on
 // every gated message (never trust the client). Compared case-insensitively so

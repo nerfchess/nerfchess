@@ -12,14 +12,15 @@ import { BoardState, Color, PieceType } from "./types";
 //
 // Design decisions (see docs/draft-system.md):
 // - Buff cadence: a draft every 5 of your own moves.
-// - Natural tier curve: draft round k rolls one shared tier pair for BOTH
-//   players. The base follows TIER_CURVE (1, 2, 3, 5, 7, 7, 7, 8; later
-//   rounds stay at 8), a single ±1 jitter applies to the whole round, and
-//   every level above 6 may be knocked back down one per card, at a rate
-//   that eases off in later rounds (45%, then 34% from round 6, then 26%
-//   from round 8). The early game is unchanged and the top tiers still take
-//   real time to arrive, but a long game now keeps escalating instead of
-//   repeating one frozen distribution from round 5 to the end.
+// - Natural tier curve: draft round k rolls ONE shared tier for BOTH players
+//   and BOTH cards of every offer. The base follows TIER_CURVE (1, 2, 3, 5,
+//   7, 7, 7, 8; later rounds stay at 8) and a single ±1 jitter applies to the
+//   whole round, except that round 1 never jitters UP: the first draft is
+//   always tier 1 (tier 2 at most with a banked opener). There is no per-card
+//   slip gate any more: the two cards in an offer always share the round's
+//   tier, and the two players always see the same tier unless one of them
+//   banked (+1), plays under the stacked preset (stackBoost), or holds a card
+//   that fixes their next draft's tier (forceTier).
 // - Banking: skipping a draft lifts your next offer exactly one tier above
 //   the shared roll for that round. It does not stack (cap +1).
 // ---------------------------------------------------------------------------
@@ -181,36 +182,22 @@ function ownedPieceTypes(board: BoardState, color: Color): Set<PieceType> {
 // game moves; only the late rounds get stronger.
 const TIER_CURVE = [1, 2, 3, 5, 7, 7, 7, 8];
 
-// Chance that a rolled level above 6 slips back one, by round. The flat 45%
-// was what kept tier 8 rare no matter how long a game ran; letting it decay is
-// what actually makes a long game feel like it is building to something.
-function slipChance(round: number): number {
-  if (round >= 8) return 0.26;
-  if (round >= 6) return 0.34;
-  return 0.45;
-}
-
-/** Roll the shared pair of card tiers for the next draft round. Both
- * players' offers that round use exactly this pair: the base comes from
- * TIER_CURVE, a single ±1 jitter is rolled once for the whole round, and
- * each card then runs the top-tier slip gate (a level above 6 may slip back
- * one, less often the later the round). */
+/** Roll the shared tier for the next draft round. Both players' offers, and
+ * both cards inside each offer, use exactly this tier: the base comes from
+ * TIER_CURVE and a single ±1 jitter is rolled once for the whole round.
+ * Round 1 never jitters up (the first draft is always tier 1), and there is
+ * no per-card slip gate, so a round's tier is one number for everyone. */
 export function rollSharedTiers(bs: BuffMatchState): [Tier, Tier] {
   const rng = drawRng(bs);
   const round = Math.max(bs.players.w.draftsTaken, bs.players.b.draftsTaken) + 1;
   let t = TIER_CURVE[Math.min(Math.max(1, round), TIER_CURVE.length) - 1];
+  // Always exactly one draw per round so the RNG stream stays one shape.
   const r = rng.next();
-  if (r < 0.18) t += 1;
+  if (r < 0.18 && round > 1) t += 1;
   else if (r > 0.82) t -= 1;
-  const slip = slipChance(round);
-  const gate = (): Tier => {
-    let g = t;
-    while (g > 6 && rng.next() < slip) g -= 1;
-    return Math.max(1, Math.min(8, g)) as Tier;
-  };
-  const tiers: [Tier, Tier] = [gate(), gate()];
+  const tier = Math.max(1, Math.min(8, t)) as Tier;
   saveRng(bs, rng);
-  return tiers;
+  return [tier, tier];
 }
 
 /** Roll one fresh card per resolved pool tier in `slotTiers`, applying the

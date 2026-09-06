@@ -178,9 +178,9 @@ if (Math.abs(rate - APEX_MYTHIC_CHANCE) > 0.03) {
 // --- Part 2b: the reward does not depend on the next round's shared roll ------
 // Banking an offer that contained a tier-8 card GUARANTEES the apex pull. The
 // promotion must not hinge on what rollSharedTiers deals for the next round:
-// that is a fresh, independent draw, and the top-tier slip gate frequently
-// lands it below 8. A banked tier-8 must still promote to a two-card, tier
-// 9/10 apex offer at EVERY shared pair, not just [8, 8].
+// that is a fresh, independent draw (curve plus jitter) that usually lands
+// below 8. A banked tier-8 must still promote to a two-card, tier 9/10 apex
+// offer at EVERY shared pair, not just [8, 8].
 let lowRollMiss = 0;
 let lowRollOffers = 0;
 for (let seed = 1; seed <= 300; seed++) {

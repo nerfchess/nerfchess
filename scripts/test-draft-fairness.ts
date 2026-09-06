@@ -22,7 +22,7 @@
 import { newBuffMatchState } from "../src/engine/buff";
 import { isRetired } from "../src/engine/retired";
 import type { DraftMode } from "../src/engine/buff";
-import { rollOffer, rerollOffer, rollOpenerOffers, openerPool, COMBO_TAGS, NERF_REVEAL } from "../src/engine/draft";
+import { rollOffer, rerollOffer, rollOpenerOffers, rollSharedTiers, openerPool, COMBO_TAGS, NERF_REVEAL } from "../src/engine/draft";
 import { ALL_BUFFS, BUFF_BY_ID } from "../src/engine/buffs/library";
 import { FUNNY_CARDS } from "../src/engine/buffs/funny";
 import { FANTASY_CARDS } from "../src/engine/buffs/fantasy";
@@ -284,6 +284,37 @@ for (const mode of ["buff", "nerf"] as DraftMode[]) {
   } else {
     check(false, "opener pool unexpectedly empty");
   }
+}
+
+// --- 8. SHARED ROUND TIER ----------------------------------------------------
+// One tier per round for both slots and both players: rollSharedTiers never
+// deals two different tiers, round 1 is always tier 1, and two fresh players
+// (no bank, no stacked boost, no forceTier) receive identical tiers.
+{
+  let mixed = 0;
+  let round1High = 0;
+  let unequal = 0;
+  let above8 = 0;
+  for (let seed = 1; seed <= 400; seed++) {
+    const bs = newBuffMatchState(seed, 5, "buff");
+    for (let round = 1; round <= 10; round++) {
+      const [a, b] = rollSharedTiers(bs);
+      if (a !== b) mixed++;
+      if (round === 1 && a !== 1) round1High++;
+      if (a > 8) above8++;
+      const w = rollOffer(bs, "w", [a, b]);
+      const k = rollOffer(bs, "b", [a, b]);
+      const wt = (w?.cards ?? []).map((c) => c.tier).join(",");
+      const kt = (k?.cards ?? []).map((c) => c.tier).join(",");
+      if (wt !== kt || wt !== `${a},${b}`) unequal++;
+      bs.players.w.offer = null;
+      bs.players.b.offer = null;
+    }
+  }
+  check(mixed === 0, `shared tier roll never deals two different tiers (${mixed} mixed)`);
+  check(round1High === 0, `round 1 is always tier 1 (${round1High} rounds above)`);
+  check(above8 === 0, `shared tier never exceeds 8 (${above8})`);
+  check(unequal === 0, `both players' offers carry the round tier (${unequal} unequal)`);
 }
 
 console.log(failures ? `\n${failures} FAILURES` : "\nall fairness checks passed");

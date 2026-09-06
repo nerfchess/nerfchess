@@ -23,16 +23,17 @@ draft your way back to power. The comeback is the game.
 
 ## Tier progression
 
-Every draft round rolls one **shared** tier pair used by both players'
-offers. The base tier follows the curve **1, 2, 3, 5, 7** over rounds 1
-through 5 (later rounds stay at 7), then a single ±1 jitter (18% up / 18%
-down) is rolled once for the whole round. **Tiers above 6 are gated**: every
-rolled level above 6 has a 45% chance to slip back one, per card, so the
-board-clearing / near-invincibility cards stay rare blowout moments instead
-of the default endgame. A banked skip lifts your next offer exactly one tier
-above the shared roll for that round (cap +1, one round only).
-All rolls come from a seeded RNG stored in the match state, so replays and
-snapshots are deterministic.
+Every draft round rolls one **shared** tier used by both players' offers and
+by both cards inside each offer. The base tier follows the curve
+**1, 2, 3, 5, 7, 7, 7, 8** over rounds 1 through 8 (later rounds stay at 8),
+then a single ±1 jitter (18% up / 18% down) is rolled once for the whole
+round. Round 1 never jitters up, so the first draft is always tier 1. There
+is no per-card slip gate: a round's tier is one number for everyone, and the
+only things that move a player off it are a banked skip (exactly +1 for the
+next offer, cap +1, one round only), the stacked-draft match preset (+2 for
+the joining friend on every offer), and cards that fix your next draft's tier
+(`forceTier`, e.g. Draft Insight, North Star). All rolls come from a seeded
+RNG stored in the match state, so replays and snapshots are deterministic.
 
 ## Engine architecture
 

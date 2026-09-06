@@ -1,6 +1,8 @@
 // Per-user settings stored in localStorage. Currently covers board theme and
 // sound volume. Plain functions, no React; pages subscribe via small hooks.
 
+import { lowTimeMotionHeld, setLowTimeReapply } from "@/lib/lowTimeMotion";
+
 export type BoardTheme =
   | "wood"
   | "green"
@@ -614,11 +616,15 @@ export function applyUiPrefs(s: Settings) {
   // they stay on by default; the in-app toggles always win either way.
   const osReducedMotion =
     s.followSystemMotion && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-  html.dataset.anim = s.reducedMotion || osReducedMotion ? "off" : s.animationSpeed;
+  // Low-time hold (src/lib/lowTimeMotion.ts): while either clock is under 20s
+  // motion is off regardless of the settings, and a settings write during
+  // that window cannot switch it back on; clearing the hold re-runs this.
+  const held = s.reducedMotion || osReducedMotion || lowTimeMotionHeld();
+  html.dataset.anim = held ? "off" : s.animationSpeed;
   // The piece glide, read imperatively by the board when it starts a slide.
   html.style.setProperty(
     "--piece-anim-ms",
-    String(s.reducedMotion || osReducedMotion || s.animationSpeed === "off" ? 0 : s.pieceAnimMs),
+    String(held || s.animationSpeed === "off" ? 0 : s.pieceAnimMs),
   );
   // Zen mode: one flag on <html> that zen.css hangs every hide rule off, so a
   // page never has to know whether zen is on.
@@ -642,6 +648,10 @@ export function applyUiPrefs(s: Settings) {
     html.style.removeProperty("--custom-bg-dim");
   }
 }
+
+// The low-time hold re-stamps the document through the same path as a
+// settings write, so every consumer of html[data-anim] follows it.
+setLowTimeReapply(() => applyUiPrefs(loadSettings()));
 
 /** Current card-FX duration multiplier as applied to the document by
  *  applyUiPrefs (--fx-dur). Read at play time by the board's VFX dispatch so
