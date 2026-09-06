@@ -3090,7 +3090,7 @@ export const BOON_WAVE4B: Buff[] = [
     },
   ),
   card(
-    { id: "bn4_ascension_small", name: "Ascension of the Small", tier: 6, category: "pieces", icon: "Sparkles",
+    { id: "bn4_ascension_small", name: "Ascension of the Small", tier: 7, category: "pieces", icon: "Sparkles",
       description: "Choose one of your knights or bishops. After your opponent's next move, it ascends: it becomes a queen where it stands.",
       flavor: "Nobody saw it coming. It saw everything coming. That is why." },
     {

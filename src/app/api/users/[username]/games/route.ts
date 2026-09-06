@@ -113,6 +113,10 @@ export async function GET(request: Request, props: { params: Promise<{ username:
   const hasMore = rows.length > limit;
   const games = rows.slice(0, limit).map((row) => ({
     ...row,
+    // Which seat the profile's player held, by user id: white_name/black_name
+    // are snapshots taken at game time and go stale on a rename, so rows must
+    // not resolve the seat by comparing them to the current username.
+    seat: row.white_user_id === user.id ? "w" : row.black_user_id === user.id ? "b" : null,
     // Explicit mode badge; legacy/casual rows recorded under a speed bucket
     // have no mode and report null.
     mode: isModeCategory(row.category) ? row.category : null,

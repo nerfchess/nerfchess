@@ -977,7 +977,7 @@ export const WILD_CHAOS: Buff[] = [
       id: "wc_deal_with_the_devil",
       name: "Deal with the Devil",
       description: "Sign here: promote one of your pawns to a queen at once, but the devil collects and you skip your next 2 turns, and the signing burns your next unused draft reroll, if you have one.",
-      tier: 4,
+      tier: 5,
       category: "pieces",
       requires: ["p"],
       flavor: "The ink is still smoking.",

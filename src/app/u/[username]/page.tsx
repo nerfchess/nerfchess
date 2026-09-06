@@ -37,7 +37,7 @@ import {
 import { RatingRail } from "@/components/profile/RatingRail";
 import { ProfileInfoBox } from "@/components/profile/ProfileInfoBox";
 import { ActivityFeed } from "@/components/profile/ActivityFeed";
-import { type RecentGameRow } from "@/components/profile/RecentGameCard";
+import { type RecentGameRow, viewerPlayedWhite } from "@/components/profile/RecentGameCard";
 import { FriendsModule } from "@/components/profile/FriendsModule";
 import { relativeTime } from "@/components/profile/relativeTime";
 import { usePresence } from "@/lib/presence";
@@ -133,10 +133,6 @@ function ProfileContent() {
   // avatar catalog so the inline editor can rename it, swap its pfp, or set its
   // bio. Null for everyone else, so house-bot status stays invisible to others.
   const [houseEdit, setHouseEdit] = useState<{ userId: string; avatars: string[] } | null>(null);
-  // The newest finished game, for the recent-game module (fetched from the games
-  // endpoint so it carries `mode`; the profile payload's games do not).
-  const [newestGame, setNewestGame] = useState<RecentGameRow | null | undefined>(undefined);
-
   // Friend button state machine, seeded from the payload relationship and driven
   // locally by the header's Add / Accept / Remove actions.
   const [rel, setRel] = useState<Relationship | null>(null);
@@ -154,7 +150,6 @@ function ProfileContent() {
     setProfile(null);
     setStats(null);
     setHouseEdit(null);
-    setNewestGame(undefined);
     setRel(null);
     setFriendBusy(false);
     setReporting(false);
@@ -231,38 +226,6 @@ function ProfileContent() {
     // inputs below are the complete dependency set. router is Next's stable
     // App Router instance (used only for the renamed-account redirect).
   }, [username, reloadTick, router]);
-
-  // Newest finished game (limit 1, no filters) for the recent-game module. Kept
-  // separate from the Games tab feed so a finished live game can refetch it.
-  // Guards against a stale response landing on the wrong profile. This page
-  // deliberately does NOT remount on a profile -> profile navigation (it resets
-  // during render instead), so without the check a slow reply for the previous
-  // username could overwrite the new profile's recent-game card. Every other
-  // fetch on this page already has an equivalent `cancelled` flag; this one was
-  // the exception. The ref (not a local flag) is what lets the callback be
-  // re-run by refetchers while still binding each run to a username.
-  const newestGameReqRef = useRef(0);
-  const loadNewestGame = useCallback(async () => {
-    const req = ++newestGameReqRef.current;
-    const forUser = username;
-    try {
-      const res = await fetch(`/api/users/${encodeURIComponent(forUser)}/games?limit=1`);
-      if (!res.ok) return;
-      const body = (await res.json()) as { games: RecentGameRow[] };
-      if (req !== newestGameReqRef.current) return;
-      setNewestGame(body.games[0] ?? null);
-    } catch {
-      if (req !== newestGameReqRef.current) return;
-      setNewestGame((g) => (g === undefined ? null : g));
-    }
-  }, [username]);
-
-  useEffect(() => {
-    // loadNewestGame only setState after awaiting the fetch (never synchronously);
-    // the lint rule can't see past the await boundary. Same pattern as FriendsModule.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void loadNewestGame();
-  }, [loadNewestGame]);
 
   // Live presence for the game module and the header badge.
   const presence = usePresence(username);
@@ -1329,7 +1292,7 @@ function ChipGroup({
 // up it is a 48px three-column grid (outcome / opponent / meta on one line);
 // below that it takes two lines, identity then meta.
 function GameHistoryRow({ game, viewer }: { game: RecentGameRow; viewer: string }) {
-  const viewerIsWhite = game.white_name.toLowerCase() === viewer.toLowerCase();
+  const viewerIsWhite = viewerPlayedWhite(game, viewer);
   const myColor: "w" | "b" = viewerIsWhite ? "w" : "b";
   const opponent = viewerIsWhite ? game.black_name : game.white_name;
   const oppRating = viewerIsWhite ? game.black_rating_before : game.white_rating_before;
@@ -2225,16 +2188,23 @@ function ReportModal({ username, onClose }: { username: string; onClose: () => v
 
   const submit = async () => {
     setStatus("sending");
-    const res = await fetch("/api/report", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, reason, description }),
-    });
-    if (res.ok) {
-      setStatus("sent");
-    } else {
-      const data = (await res.json().catch(() => ({}))) as { error?: string };
-      setError(data.error ?? "Could not send the report.");
+    try {
+      const res = await fetch("/api/report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, reason, description }),
+      });
+      if (res.ok) {
+        setStatus("sent");
+      } else {
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        setError(data.error ?? "Could not send the report.");
+        setStatus("error");
+      }
+    } catch {
+      // Offline or aborted: without this the button stayed on "Sending"
+      // for good, with Cancel the only way out.
+      setError("Could not reach the server. Check your connection and try again.");
       setStatus("error");
     }
   };

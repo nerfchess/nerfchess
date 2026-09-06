@@ -19,6 +19,9 @@ export interface RecentGameRow {
   id: string;
   white_name: string;
   black_name: string;
+  /** The profile player's seat, resolved server-side by user id. Null when
+   *  the archive row predates user ids; the name comparison is the fallback. */
+  seat?: "w" | "b" | null;
   winner: "w" | "b" | "draw" | null;
   reason: string;
   rated: number;
@@ -37,8 +40,16 @@ export interface RecentGameRow {
 // (avatar + clickable name + rating), the viewer's rating change as an explicit
 // chip, mode badge when known, time control, rated/casual, end reason, and
 // relative time. "View replay" opens the game.
+/** Did `viewer` play White in this row? The server's id-resolved seat wins;
+ *  the archived name is only consulted for rows without one. */
+export function viewerPlayedWhite(game: RecentGameRow, viewer: string): boolean {
+  if (game.seat === "w") return true;
+  if (game.seat === "b") return false;
+  return game.white_name.toLowerCase() === viewer.toLowerCase();
+}
+
 export function RecentGameCard({ game, viewer }: { game: RecentGameRow; viewer: string }) {
-  const viewerIsWhite = game.white_name.toLowerCase() === viewer.toLowerCase();
+  const viewerIsWhite = viewerPlayedWhite(game, viewer);
   const myColor: "w" | "b" = viewerIsWhite ? "w" : "b";
   const opponent = viewerIsWhite ? game.black_name : game.white_name;
   const oppRating = viewerIsWhite ? game.black_rating_before : game.white_rating_before;

@@ -6,7 +6,7 @@
 
 import { useEffect, useState } from "react";
 import { Swords } from "lucide-react";
-import type { RecentGameRow } from "@/components/profile/RecentGameCard";
+import { type RecentGameRow, viewerPlayedWhite } from "@/components/profile/RecentGameCard";
 
 interface DayGroup {
   key: string;
@@ -45,7 +45,7 @@ function groupByDay(games: RecentGameRow[], viewer: string): DayGroup[] {
       group = { key, label: dayLabel(g.completed_at), rows: [] };
       groups.set(key, group);
     }
-    const isWhite = g.white_name.toLowerCase() === lower;
+    const isWhite = viewerPlayedWhite(g, lower);
     const my: "w" | "b" = isWhite ? "w" : "b";
     const mode: DayGroup["rows"][number]["mode"] = g.rated && (g.mode === "nerf" || g.mode === "buff") ? g.mode : "casual";
     let row = group.rows.find((r) => r.mode === mode);

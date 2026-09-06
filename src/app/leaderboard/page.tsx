@@ -93,7 +93,10 @@ export default function LeaderboardPage() {
   const safePage = Math.min(page, pageCount - 1);
   const pageRows = filtered.slice(safePage * PAGE_SIZE, safePage * PAGE_SIZE + PAGE_SIZE);
 
-  const meVisible = pageRows.some(({ row }) => isMeName(row.username));
+  // Tested against meRow (same fetch as the rows), not the later /me fetch:
+  // until that resolved, a ranked viewer saw their row twice.
+  const meVisible =
+    !!meRow && pageRows.some(({ row }) => row.username.toLowerCase() === meRow.username.toLowerCase());
   // A signed-in, ranked viewer can jump to their row; guests have no rank.
   const canJump = !!meRow && !meRow.guest;
 

@@ -2017,7 +2017,7 @@ const TIER3: Buff[] = [
     ),
   ),
   def(
-    { id: "dragon_pawn", requires: ["p"], name: "Dragon Pawn", description: "One pawn moves as a pawn or knight until it promotes.", tier: 3, category: "movement", fx: { motif: "empower", pieces: ["p"], moveAs: "n", self: true } },
+    { id: "dragon_pawn", requires: ["p"], name: "Dragon Pawn", description: "One pawn moves as a pawn or knight until it promotes.", tier: 4, category: "movement", fx: { motif: "empower", pieces: ["p"], moveAs: "n", self: true } },
     pieceBound("p", "Choose the pawn", (board, sq, via) => leapMoves(board, sq, KNIGHT_LEAPS, via)),
   ),
   def(

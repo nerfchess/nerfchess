@@ -238,9 +238,11 @@ export const CARD_HISTORY: Record<string, CardHistoryEvent[]> = {
   ],
   "buff:wc_deal_with_the_devil": [
     { date: "2026-09-05", kind: "retier", note: "Moved from Tier 6 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+    { date: "2026-09-06", kind: "retier", note: "Moved from Tier 4 to Tier 5 on the 2026-09 targeted sweep (12 paired games per card): it resolved at +59 points, above every tier-4 pieces card." },
   ],
   "buff:bn4_ascension_small": [
     { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 6 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+    { date: "2026-09-06", kind: "retier", note: "Moved from Tier 6 to Tier 7 on the 2026-09 targeted sweep (12 paired games per card): it resolved at +46 points, above every tier-6 pieces card." },
   ],
   "buff:bw2_alchemists_trade": [
     { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 5 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
@@ -427,6 +429,7 @@ export const CARD_HISTORY: Record<string, CardHistoryEvent[]> = {
   ],
   "buff:mirror_of_souls": [
     { date: "2026-09-05", kind: "retier", note: "Moved from Tier 7 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
+    { date: "2026-09-06", kind: "retier", note: "Moved from Tier 4 to Tier 5 on the 2026-09 targeted sweep (12 paired games per card): it resolved at +50 points, above every tier-4 movement card." },
   ],
   "buff:warp_sovereign": [
     { date: "2026-09-05", kind: "retier", note: "Moved from Tier 8 to Tier 4 in the 2026-09 full pass: priced against the cards in its own family that do the same job." },
@@ -1141,6 +1144,7 @@ export const CARD_HISTORY: Record<string, CardHistoryEvent[]> = {
   ],
   "buff:dragon_pawn": [
     { date: "2026-09-05", kind: "retier", note: "Moved from Tier 2 to Tier 3: a knight that can still promote outclasses the conditional Vanguard promotion at 2." },
+    { date: "2026-09-06", kind: "retier", note: "Moved from Tier 3 to Tier 4 on the 2026-09 targeted sweep (12 paired games per card): it resolved at +42 points, above every tier-3 movement card, so the pin from the structural pass moves with it." },
   ],
   "buff:cannon": [
     { date: "2026-09-05", kind: "retier", note: "Moved from Tier 2 to Tier 3: permanent capture-by-screen on a rook is a permanent upgrade, priced with the others." },

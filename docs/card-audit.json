@@ -6397,24 +6397,6 @@
    "action": "keep: reviewed same-tier cluster; members differ by a real axis (file band, direction, piece class, trigger, query, or cosmetic skin)"
   },
   {
-   "id": "bn4_ascension_small",
-   "name": "Ascension of the Small",
-   "kind": "boon",
-   "tier": 6,
-   "effect": "Choose one of your knights or bishops. After your opponent's next move, it ascends: it becomes a queen where it stands.",
-   "trigger": "activated/lingering",
-   "duration": "next-turn",
-   "targets": "enemy",
-   "signature": "pieces|activated|effect+targets+onMove|next-turn|enemy|become,bishop,knight,move,queen",
-   "animation": "generated",
-   "location": "src/engine/buffs/boons4b.ts",
-   "tests": [
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
    "id": "bn4_castle_ditch",
    "name": "Castle Ditch",
    "kind": "boon",
@@ -7273,6 +7255,24 @@
    "signature": "protection|passive|init+onMove|one-shot|self|capture,king,n:2,protect,time",
    "animation": "canvas+passive",
    "location": "src/engine/buffs/library.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "bn4_ascension_small",
+   "name": "Ascension of the Small",
+   "kind": "boon",
+   "tier": 7,
+   "effect": "Choose one of your knights or bishops. After your opponent's next move, it ascends: it becomes a queen where it stands.",
+   "trigger": "activated/lingering",
+   "duration": "next-turn",
+   "targets": "enemy",
+   "signature": "pieces|activated|effect+targets+onMove|next-turn|enemy|become,bishop,knight,move,queen",
+   "animation": "generated",
+   "location": "src/engine/buffs/boons4b.ts",
    "tests": [
     "lab-run-all.ts"
    ],
@@ -14911,24 +14911,6 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "dragon_pawn",
-   "name": "Dragon Pawn",
-   "kind": "buff",
-   "tier": 3,
-   "effect": "One pawn moves as a pawn or knight until it promotes.",
-   "trigger": "activated/lingering",
-   "duration": "unstated",
-   "targets": "unstated",
-   "signature": "movement|activated|effect+targets+aug+onMove|unstated|unstated|knight,move,pawn,promote",
-   "animation": "generated",
-   "location": "src/engine/buffs/library.ts",
-   "tests": [
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
    "id": "fm_wyrmscale_mail",
    "name": "Wyrmscale Mail",
    "kind": "buff",
@@ -17624,6 +17606,24 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "dragon_pawn",
+   "name": "Dragon Pawn",
+   "kind": "buff",
+   "tier": 4,
+   "effect": "One pawn moves as a pawn or knight until it promotes.",
+   "trigger": "activated/lingering",
+   "duration": "unstated",
+   "targets": "unstated",
+   "signature": "movement|activated|effect+targets+aug+onMove|unstated|unstated|knight,move,pawn,promote",
+   "animation": "generated",
+   "location": "src/engine/buffs/library.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "excalibur",
    "name": "Excalibur",
    "kind": "buff",
@@ -18014,24 +18014,6 @@
    "signature": "pieces|activated|effect+targets+onMove|permanent|enemy|bishop,knight,move",
    "animation": "canvas",
    "location": "src/engine/buffs/library.ts",
-   "tests": [
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
-   "id": "mirror_of_souls",
-   "name": "Mirror of Souls",
-   "kind": "buff",
-   "tier": 4,
-   "effect": "You hold the glass between two reflections: name one of your pieces and an enemy piece of the same kind. After your opponent's next move, they trade places. Kings cast no reflection.",
-   "trigger": "activated/lingering",
-   "duration": "next-turn",
-   "targets": "enemy",
-   "signature": "movement|activated|effect+targets+onMove|next-turn|enemy|king,move,place",
-   "animation": "canvas",
-   "location": "src/engine/buffs/mystic/occult.ts",
    "tests": [
     "lab-run-all.ts"
    ],
@@ -19455,24 +19437,6 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
-   "id": "wc_deal_with_the_devil",
-   "name": "Deal with the Devil",
-   "kind": "buff",
-   "tier": 4,
-   "effect": "Sign here: promote one of your pawns to a queen at once, but the devil collects and you skip your next 2 turns, and the signing burns your next unused draft reroll, if you have one.",
-   "trigger": "activated",
-   "duration": "2-turns",
-   "targets": "self",
-   "signature": "pieces|activated|effect+targets|2-turns|self|draft,n:2,pawn,promote,queen,reroll,skip",
-   "animation": "bespoke+canvas",
-   "location": "src/engine/buffs/wild/chaos.ts",
-   "tests": [
-    "lab-run-all.ts"
-   ],
-   "flags": [],
-   "action": "keep (auto: no flags, harness-executed)"
-  },
-  {
    "id": "wc_double_trouble",
    "name": "Double Trouble",
    "kind": "buff",
@@ -20824,6 +20788,24 @@
    "action": "keep (auto: no flags, harness-executed)"
   },
   {
+   "id": "mirror_of_souls",
+   "name": "Mirror of Souls",
+   "kind": "buff",
+   "tier": 5,
+   "effect": "You hold the glass between two reflections: name one of your pieces and an enemy piece of the same kind. After your opponent's next move, they trade places. Kings cast no reflection.",
+   "trigger": "activated/lingering",
+   "duration": "next-turn",
+   "targets": "enemy",
+   "signature": "movement|activated|effect+targets+onMove|next-turn|enemy|king,move,place",
+   "animation": "canvas",
+   "location": "src/engine/buffs/mystic/occult.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
    "id": "mortgage",
    "name": "Mortgage",
    "kind": "buff",
@@ -22021,6 +22003,24 @@
    "duration": "unstated",
    "targets": "self",
    "signature": "movement|activated|effect+targets|unstated|self|capture,pawn,square",
+   "animation": "bespoke+canvas",
+   "location": "src/engine/buffs/wild/chaos.ts",
+   "tests": [
+    "lab-run-all.ts"
+   ],
+   "flags": [],
+   "action": "keep (auto: no flags, harness-executed)"
+  },
+  {
+   "id": "wc_deal_with_the_devil",
+   "name": "Deal with the Devil",
+   "kind": "buff",
+   "tier": 5,
+   "effect": "Sign here: promote one of your pawns to a queen at once, but the devil collects and you skip your next 2 turns, and the signing burns your next unused draft reroll, if you have one.",
+   "trigger": "activated",
+   "duration": "2-turns",
+   "targets": "self",
+   "signature": "pieces|activated|effect+targets|2-turns|self|draft,n:2,pawn,promote,queen,reroll,skip",
    "animation": "bespoke+canvas",
    "location": "src/engine/buffs/wild/chaos.ts",
    "tests": [
