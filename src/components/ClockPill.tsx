@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { formatClock } from "@/lib/clockFormat";
+import { LOW_TIME_MOTION_MS, releaseLowTime, reportLowTime } from "@/lib/lowTimeMotion";
 import { useSettingsValue } from "@/lib/useSettingsValue";
 import { playLowTime, playUrgentTick } from "@/lib/sounds";
 
@@ -27,6 +28,7 @@ export function ClockPill({
   warnLowTime = false,
   draftRunning = false,
   seat = null,
+  ended = false,
 }: {
   ms: number;
   active: boolean;
@@ -44,6 +46,9 @@ export function ClockPill({
   // a small DRAFT tag rides inside the pill so the reason the clock is
   // running is visible right where the player watches the time.
   draftRunning?: boolean;
+  // The game is over: release the low-time animation hold so the result
+  // screen animates normally even though this clock still reads under 20s.
+  ended?: boolean;
 }) {
   const [displayMs, setDisplayMs] = useState(ms);
   const lowFiredRef = useRef(false);
@@ -121,6 +126,19 @@ export function ClockPill({
       window.clearTimeout(timer);
     };
   }, [active, base, startDelayMs, warnLowTime]);
+
+  // Low-time animation hold: while this seat's clock reads under 20s every
+  // animation stands down (src/lib/lowTimeMotion.ts), for either seat, and
+  // returns once both clocks are back above the line. Keyed by seat so the
+  // mobile and desktop copies of one pill agree; released on unmount.
+  useEffect(() => {
+    if (!seat) return;
+    reportLowTime(seat, !ended && displayMs < LOW_TIME_MOTION_MS);
+  }, [seat, ended, displayMs]);
+  useEffect(() => {
+    if (!seat) return;
+    return () => releaseLowTime(seat);
+  }, [seat]);
 
   // Urgency ramp: under 30s the running clock breathes a subtle pulse (gold),
   // under 10s it pulses stronger and tints oxblood. Border stays 2px across

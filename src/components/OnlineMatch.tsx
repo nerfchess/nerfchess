@@ -3086,6 +3086,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   <ClockPill
                     ms={myColor === "w" ? blackMs : whiteMs}
                     seat={myColor === "w" ? "b" : "w"}
+                    ended={!!game.result}
                     active={chargedColor === oppColor}
                     startDelayMs={clockStartDelay(oppColor)}
                     compact
@@ -3253,6 +3254,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                   <ClockPill
                     ms={myColor === "w" ? whiteMs : blackMs}
                     seat={myColor}
+                    ended={!!game.result}
                     active={chargedColor === myColor}
                     startDelayMs={clockStartDelay(myColor)}
                     warnLowTime={uiSettings.lowTimeWarning}
@@ -3334,6 +3336,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                     <ClockPill
                       ms={myColor === "w" ? blackMs : whiteMs}
                       seat={myColor === "w" ? "b" : "w"}
+                      ended={!!game.result}
                       active={chargedColor === oppColor}
                       startDelayMs={clockStartDelay(oppColor)}
                       compact
@@ -3343,6 +3346,7 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
                     <ClockPill
                       ms={myColor === "w" ? whiteMs : blackMs}
                       seat={myColor}
+                      ended={!!game.result}
                       active={chargedColor === myColor}
                       startDelayMs={clockStartDelay(myColor)}
                       draftRunning={myDraftCharging}

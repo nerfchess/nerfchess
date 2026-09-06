@@ -2040,6 +2040,7 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
                   <ClockPill
                     ms={myColor === "w" ? blackMs : whiteMs}
                     seat={myColor === "w" ? "b" : "w"}
+                    ended={!!game.result}
                     active={!game.result && offerPausedAt == null && game.board.turn !== myColor}
                     compact
                   />
@@ -2165,6 +2166,7 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
                   <ClockPill
                     ms={myColor === "w" ? whiteMs : blackMs}
                     seat={myColor}
+                    ended={!!game.result}
                     active={!game.result && offerPausedAt == null && game.board.turn === myColor}
                     warnLowTime={uiSettings.lowTimeWarning}
                     draftRunning={myDraftCharging}
@@ -2233,6 +2235,7 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
                 <ClockPill
                   ms={myColor === "w" ? blackMs : whiteMs}
                   seat={myColor === "w" ? "b" : "w"}
+                  ended={!!game.result}
                   active={!game.result && offerPausedAt == null && game.board.turn !== myColor}
                 />
               )}
@@ -2250,6 +2253,7 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
                 <ClockPill
                   ms={myColor === "w" ? whiteMs : blackMs}
                   seat={myColor}
+                  ended={!!game.result}
                   active={!game.result && offerPausedAt == null && game.board.turn === myColor}
                   warnLowTime={uiSettings.lowTimeWarning}
                   draftRunning={myDraftCharging}

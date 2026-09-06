@@ -814,3 +814,15 @@ Profile and social:
 - A renamed sender's bell entries swap only the leading name (a short name is also a substring of the copy).
 - The leaderboard no longer pins a duplicate of your own row while your account loads.
 - The codex tier filter resets when you switch between buffs and nerfs, so a tier the other family lacks cannot blank the list.
+
+## 2026-09-06 01:20 EDT
+
+Draft tier order, and animations off under 20 seconds
+
+Draft:
+- Every round now deals one tier for both players and both cards in the offer. The per-card top-tier slip gate is gone, so a round is never 7+6 for one side and 7+7 for the other.
+- The first draft never jitters up: round 1 is always tier 1 (tier 2 at most after banking the opener). The stacked preset and forceTier cards remain the only other ways off the shared tier.
+- REPLAY_VERSION 12 (the tier roll consumes fewer RNG draws). Engine and arena services need ENGINE_REPLAY_VERSION / ARENA_REPLAY_VERSION moved to 12 in lockstep.
+
+Clocks:
+- Animations switch off on their own while either clock is under 20 seconds and come back once both are above it again (increment). Works through the same html[data-anim] gate as the Settings switch, so a settings write during low time cannot turn motion back on.
