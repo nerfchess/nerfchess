@@ -7,6 +7,22 @@ import type { GeneratedUpdate } from "./updates";
 export const GENERATED_UPDATES: GeneratedUpdate[] = [
   {
     date: "2026-09-05",
+    title: "Sweep-sized retiers, profile and notification fixes",
+    summary: "The targeted win-rate re-measure of the 336 cards moved by the full pass is in, and four of them move one more step.",
+    anchor: "u-20260905-2050",
+    bullets: [
+      "Two shards at 12 paired games per card measured all 336 moved cards; 334 fired and 18 resolved outside two standard errors. The tier ladder over the moved set rises from tier 1 to tier 8.",
+      "Sized up one step each on that data: Deal with the Devil to Tier 5, Ascension (small) to Tier 7, Dragon Pawn to Tier 4, Mirror of Souls to Tier 5.",
+      "Amazon Army measured against its holder and is flagged for a play-policy check before any tier change.",
+      "Game rows resolve which seat you held by user id, so a renamed player's history no longer shows every result flipped.",
+      "The report dialog recovers from a failed request instead of sticking on Sending; a dead extra fetch on every profile view is gone.",
+      "A renamed sender's bell entries swap only the leading name (a short name is also a substring of the copy).",
+      "The leaderboard no longer pins a duplicate of your own row while your account loads.",
+      "The codex tier filter resets when you switch between buffs and nerfs, so a tier the other family lacks cannot blank the list.",
+    ],
+  },
+  {
+    date: "2026-09-05",
     title: "Round four: bot game, analysis, inbox, clubs and tournament fixes",
     summary: "Another sweep over the pages the earlier passes skipped.",
     anchor: "u-20260905-2010",

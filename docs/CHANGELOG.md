@@ -796,3 +796,21 @@ Clubs and tournaments:
 Lobby and TV:
 - Sub-minute and half-minute clocks (30s+0, 1.5+0) are labelled correctly in open challenges, live games, the watch rail and TV, instead of rounding to 1+0 and 2+0.
 - Quick pairing shows "?" for a mode you have not played rather than the frozen legacy rating.
+
+## 2026-09-05 20:50 EDT
+
+Sweep-sized retiers, profile and notification fixes
+
+The targeted win-rate re-measure of the 336 cards moved by the full pass is in, and four of them move one more step. PR #486. OPEN.
+
+Balance:
+- Two shards at 12 paired games per card measured all 336 moved cards; 334 fired and 18 resolved outside two standard errors. The tier ladder over the moved set rises from tier 1 to tier 8. Committed record: docs/card-winrate.targeted-2026-09-06.json.
+- Sized up one step each on that data: Deal with the Devil to Tier 5, Ascension (small) to Tier 7, Dragon Pawn to Tier 4, Mirror of Souls to Tier 5. Each has a history note; the Dragon Pawn pin in `test:balance-pass` moves with it.
+- Amazon Army measured against its holder and is flagged for a play-policy check before any tier change.
+
+Profile and social:
+- Game rows resolve which seat you held by user id, so a renamed player's history no longer shows every result flipped.
+- The report dialog recovers from a failed request instead of sticking on Sending; a dead extra fetch on every profile view is gone.
+- A renamed sender's bell entries swap only the leading name (a short name is also a substring of the copy).
+- The leaderboard no longer pins a duplicate of your own row while your account loads.
+- The codex tier filter resets when you switch between buffs and nerfs, so a tier the other family lacks cannot blank the list.

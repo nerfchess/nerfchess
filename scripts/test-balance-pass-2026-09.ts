@@ -57,7 +57,8 @@ const PINS: Record<string, number> = {
   bishop_archbishop: 4,
   knight_nightrook: 3,
   camel_knight: 3,
-  dragon_pawn: 3,
+  // Sized to 4 by the 2026-09 targeted sweep (see CARD_HISTORY).
+  dragon_pawn: 4,
   cannon: 3,
   phase_rook: 3,
   god_knight: 7,

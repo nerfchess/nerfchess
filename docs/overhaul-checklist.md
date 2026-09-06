@@ -135,3 +135,8 @@ Every active card was read category by category and judged by hand, not by the s
 - Reworks: Warp Home is a free action, Hard Reset freezes the pawn when its home square is taken, Lifebloom returns the pawn to the fourth rank under a two-turn shield. 14 descriptions rewritten to plain statements of the effect. Retired: Nerf This (condition never fires), Midas Charter (boost window could never hold a draft), Checkmate Immunity (ward spent by the checking move), Clone Army and Rook to Chancellor (kept twins now price them honestly).
 - Win-rate sizing: the full sweep (`--games 20`, four shards) ran at about 3.5 minutes per card under load, roughly 20 hours for the library, and was stopped; `sim-card-winrate.ts` gained `--ids` for a targeted re-measure of the moved cards, which runs after this PR and sizes any move by one step where the data disagrees.
 
+
+### Balance, targeted sweep (2026-09-06)
+- `scripts/sim-card-winrate.ts --games 12 --ids=<the 336 moved cards>` in two shards (`docs/card-winrate.shard0.json`, `docs/card-winrate.shard1.json`; `npm run report:winrate` merges them). 334 of 336 fired; 18 resolved outside two standard errors; the tier ladder rises from -1.0 points at tier 1 to +15.9 at tier 8 over the moved set.
+- Sized by the sim, one step each, all upward, per `propose-retiers.ts` (dry run, never `--write`): Deal with the Devil 4 to 5, Ascension (small) 6 to 7, Dragon Pawn 3 to 4 (its structural pin moves with it), Mirror of Souls 4 to 5. Recorded in `scripts/hand-audit.json` and `CARD_HISTORY`.
+- Wrong sign: Amazon Army (tier 7, passive) measured -25 points for its holder; left as is, flagged for a play-policy check before any tier change.
