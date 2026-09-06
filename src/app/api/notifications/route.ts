@@ -45,9 +45,11 @@ export async function GET(request: Request) {
       // live name has since changed, swap the old snapshot for the current one
       // so the bell reads correctly. Only substitutes when we have both a stored
       // snapshot and a live name that actually differs, so nothing else is touched.
+      // Only the leading occurrence: the name opens the sentence, and a short
+      // name can also be a substring of the copy ("sen" in "sent").
       const text =
-        n.live_actor_name && n.actor_name && n.live_actor_name !== n.actor_name
-          ? n.text.split(n.actor_name).join(n.live_actor_name)
+        n.live_actor_name && n.actor_name && n.live_actor_name !== n.actor_name && n.text.startsWith(n.actor_name)
+          ? n.live_actor_name + n.text.slice(n.actor_name.length)
           : n.text;
       return {
         id: n.id,

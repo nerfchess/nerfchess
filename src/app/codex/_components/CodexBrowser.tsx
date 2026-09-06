@@ -242,7 +242,7 @@ export function CodexBrowser() {
     setTab(next);
     // Category ids and behaviour differ between families; a stale one would
     // silently filter everything out.
-    setFilters((f) => ({ ...f, categories: [], collection: null }));
+    setFilters((f) => ({ ...f, categories: [], collection: null, tier: null }));
     setBehaviour("all");
   }, []);
 
