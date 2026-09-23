@@ -74,6 +74,11 @@ const nextConfig = {
     // Deep-import rewriting for the one animation library the match routes
     // pull in (lucide-react is already on Next's default list).
     optimizePackageImports: ["framer-motion"],
+    // Dev only: evict Turbopack's in-memory task cache aggressively. The card
+    // effect routes pull in thousands of keyframes, and under the default
+    // eviction `next dev` grew to 11.6 GB in minutes and was OOM-killed on the
+    // 16 GB box (2026-09-23, polish pass).
+    turbopackMemoryEviction: "full",
   },
   env: {
     NEXT_PUBLIC_BUILD_VERSION: buildVersion(),
