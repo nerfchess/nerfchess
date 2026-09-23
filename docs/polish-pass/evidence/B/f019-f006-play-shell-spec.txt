@@ -10,3 +10,5 @@
   2 passed (9.0s)
 # after: dev server with slice B changes
   5 passed (9.5s)
+# after, production: next build + next start of dc01ca2 on :3200 (play-shell + hero-frame specs)
+  7 passed (10.0s)

@@ -1,0 +1,35 @@
+# BEFORE: same probe against next build of 2d175c9 on :3100
+=== 390x844 1
+DIFF  main > section:nth-of-type(1) > div.order-3 li
+   loading: 11,979 369x32 | 11,1021 369x32 | 11,1063 369x32 | 11,1105 369x32 | 11,1147 369x32 | 11,1189 369x32
+   loaded:  11,1037 369x53 | 11,1090 369x53 | 11,1142 369x53 | 11,1195 369x53 | 11,1248 369x53 | 11,1300 369x53 | 11,1353 369x53 | 11,1405 369x53 | 11,1458 369x53 | 11,1511 369x52
+DIFF  main > section:nth-of-type(1) > div.order-2 > *
+   loading: 11,489 369x23 | 11,519 369x170 | 11,706 369x119 | 11,839 369x72
+   loaded:  11,489 369x23 | 11,519 369x170 | 11,706 369x44 | 11,768 369x119 | 11,901 369x72
+same  main > section:nth-of-type(1) > div.order-2 > div.mt-2 > *
+   loading: 11,519 369x52 | 11,578 369x52 | 11,637 369x52
+   loaded:  11,519 369x52 | 11,578 369x52 | 11,637 369x52
+DIFF  main > section:nth-of-type(2) > *
+   loading: 11,1249 369x524 | 11,1794 369x186
+   loaded:  11,1590 369x524 | 11,2136 369x186
+DIFF  main > section:nth-of-type(2) > div:last-child > div > *
+   loading: 26,1809 339x37 | 26,1856 339x108
+   loaded:  26,2151 339x37 | 26,2198 339x108
+MISMATCH
+=== 1280x800
+DIFF  main > section:nth-of-type(1) > div.order-3 li
+   loading: 18,104 250x32 | 18,146 250x32 | 18,188 250x32 | 18,230 250x32 | 18,272 250x32 | 18,314 250x32
+   loaded:  18,101 250x53 | 18,153 250x53 | 18,206 250x53 | 18,258 250x53 | 18,311 250x53 | 18,364 250x53 | 18,416 250x53 | 18,469 250x53 | 18,522 250x53 | 18,574 250x52
+DIFF  main > section:nth-of-type(1) > div.order-2 > *
+   loading: 943,74 320x23 | 943,104 320x170 | 943,291 320x117 | 943,422 320x72
+   loaded:  943,74 320x23 | 943,104 320x170 | 943,291 320x42 | 943,351 320x117 | 943,482 320x72
+same  main > section:nth-of-type(1) > div.order-2 > div.mt-2 > *
+   loading: 943,104 320x52 | 943,163 320x52 | 943,222 320x52
+   loaded:  943,104 320x52 | 943,163 320x52 | 943,222 320x52
+same  main > section:nth-of-type(2) > *
+   loading: 18,703 904x362 | 943,703 320x362
+   loaded:  18,703 904x362 | 943,703 320x362
+same  main > section:nth-of-type(2) > div:last-child > div > *
+   loading: 961,721 283x20 | 961,751 283x126
+   loaded:  961,721 283x20 | 961,751 283x126
+MISMATCH

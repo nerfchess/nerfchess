@@ -1,0 +1,35 @@
+# / with /api/community/recent and /api/lobby held (loading) vs fulfilled with 10 games and a lobby (loaded), dev server
+=== 390x844 1
+same  main > section:nth-of-type(1) > div.order-3 li
+   loading: 11,1073 369x53 | 11,1126 369x53 | 11,1178 369x53 | 11,1231 369x53 | 11,1284 369x53 | 11,1336 369x53 | 11,1389 369x53 | 11,1441 369x53 | 11,1494 369x53 | 11,1547 369x52
+   loaded:  11,1073 369x53 | 11,1126 369x53 | 11,1178 369x53 | 11,1231 369x53 | 11,1284 369x53 | 11,1336 369x53 | 11,1389 369x53 | 11,1441 369x53 | 11,1494 369x53 | 11,1547 369x52
+same  main > section:nth-of-type(1) > div.order-2 > *
+   loading: 11,525 369x23 | 11,555 369x170 | 11,742 369x44 | 11,804 369x119 | 11,937 369x72
+   loaded:  11,525 369x23 | 11,555 369x170 | 11,742 369x44 | 11,804 369x119 | 11,937 369x72
+same  main > section:nth-of-type(1) > div.order-2 > div.mt-2 > *
+   loading: 11,555 369x52 | 11,614 369x52 | 11,673 369x52
+   loaded:  11,555 369x52 | 11,614 369x52 | 11,673 369x52
+same  main > section:nth-of-type(2) > *
+   loading: 11,1626 369x524 | 11,2172 369x186
+   loaded:  11,1626 369x524 | 11,2172 369x186
+same  main > section:nth-of-type(2) > div:last-child > div > *
+   loading: 26,2187 339x37 | 26,2234 339x108
+   loaded:  26,2187 339x37 | 26,2234 339x108
+ALL SAME
+=== 1280x800
+same  main > section:nth-of-type(1) > div.order-3 li
+   loading: 18,101 250x53 | 18,153 250x53 | 18,206 250x53 | 18,258 250x53 | 18,311 250x53 | 18,364 250x53 | 18,416 250x53 | 18,469 250x53 | 18,522 250x53 | 18,574 250x52
+   loaded:  18,101 250x53 | 18,153 250x53 | 18,206 250x53 | 18,258 250x53 | 18,311 250x53 | 18,364 250x53 | 18,416 250x53 | 18,469 250x53 | 18,522 250x53 | 18,574 250x52
+same  main > section:nth-of-type(1) > div.order-2 > *
+   loading: 943,74 320x23 | 943,104 320x170 | 943,291 320x42 | 943,351 320x117 | 943,482 320x72
+   loaded:  943,74 320x23 | 943,104 320x170 | 943,291 320x42 | 943,351 320x117 | 943,482 320x72
+same  main > section:nth-of-type(1) > div.order-2 > div.mt-2 > *
+   loading: 943,104 320x52 | 943,163 320x52 | 943,222 320x52
+   loaded:  943,104 320x52 | 943,163 320x52 | 943,222 320x52
+same  main > section:nth-of-type(2) > *
+   loading: 18,748 904x362 | 943,748 320x362
+   loaded:  18,748 904x362 | 943,748 320x362
+same  main > section:nth-of-type(2) > div:last-child > div > *
+   loading: 961,767 283x20 | 961,797 283x126
+   loaded:  961,767 283x20 | 961,797 283x126
+ALL SAME
