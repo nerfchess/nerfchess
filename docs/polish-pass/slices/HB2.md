@@ -45,7 +45,7 @@ Filled from the evidence files; each line is the HB.md acceptance line.
 | Frozen clock (A25), hard@80, CPU of a capped search | mid 781ms, late 528ms, depth 4.22 / 5.30 | mid 698ms, late 388ms, depth 5.22 / 6.75 | 27 + 20 | no more CPU than before | MET | `bench-frozen.{txt,json}` |
 | Frozen clock, medium@80 (runs to depth 3, never capped) | mid 32ms, late 8ms | mid 48ms, late 15ms | | not in the plan | a cost, see LEFT | same |
 | Strength, new vs baseline, hard@120ms, 60 pairs | | +83 =34 -3, 83.3% (Wilson 95% 75.7-88.9%) | 120 games | 58% or more, lower bound above 50% | MET | `engine-ab.{txt,json}` |
-| Guards | | `test-search-buff-visibility` OK, `test-ai-activation` OK, `test-card-impact` PASS, `bench-move-review` 51 of 51 at depth 2 in the 60ms budget (p95 43ms), `bench-search-buffs` reported (amazon_army hard@2000: depth 4 against 7 without the card, since the table and null move are off while a move-granting buff is live) | | pass | MET | `after-guard-*.txt`, `after-bench-search-buffs.txt` |
+| Guards | | `test-search-buff-visibility` OK, `test-ai-activation` OK, `test-card-impact` PASS, `bench-move-review` 51 of 51 at depth 2 in the 60ms budget (p95 43ms), HB1's `test-house-snap`, `sim-house-bots` and `audit-house-bots` pass against the new engine at `8e475db`, `bench-search-buffs` reported (amazon_army hard@2000: depth 4 against 7 without the card, since the table and null move are off while a move-granting buff is live) | | pass | MET | `after-guard-*.txt`, `after-bench-search-buffs.txt` |
 | Filtered tsc and eslint | | clean on `src/engine/ai.ts` and the HB2 scripts; no new error in bots.ts, worker.ts, engine-service, arena-service or the ai.ts importers | | clean | MET | |
 
 ### Depth table for HB1 (goal 6)
