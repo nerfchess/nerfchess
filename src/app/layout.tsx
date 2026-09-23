@@ -3,6 +3,8 @@ import { JetBrains_Mono, Noto_Sans } from "next/font/google";
 import { cookies } from "next/headers";
 import { AchievementToast } from "@/components/AchievementToast";
 import { SettingsBootstrap } from "@/components/SettingsBootstrap";
+import { SiteJsonLd } from "@/components/seo/JsonLd";
+import { HOME_DESCRIPTION, THEME_COLOR } from "@/lib/seo";
 import { LAST_MODE_COOKIE, parseMode } from "@/lib/modeCookie";
 import { SESSION_COOKIE } from "@/lib/server/auth";
 import { PRE_PAINT_SCRIPT } from "@/lib/session/prePaint";
@@ -51,8 +53,7 @@ export const metadata: Metadata = {
     default: "Nerf Chess · chess with power-ups, a free online chess variant",
     template: "%s · Nerf Chess",
   },
-  description:
-    "Nerf Chess is chess with power-ups: a free online chess variant. Draft power-up cards every 5 moves in Buff mode, or carry a secret handicap and hex your opponent in Nerf mode (in the spirit of drawback chess). Win by capturing the king. Play in your browser, no download.",
+  description: HOME_DESCRIPTION,
   keywords: [
     "nerf chess",
     "drawback chess",
@@ -89,99 +90,13 @@ export const metadata: Metadata = {
     siteName: "Nerf Chess",
     url: "https://nerfchess.com",
     title: "Nerf Chess · chess with power-ups, a free online chess variant",
-    description:
-      "Chess with power-ups: a free online chess variant. Draft power-up cards every 5 moves in Buff mode, take a secret handicap in Nerf mode, and win by capturing the king.",
+    description: HOME_DESCRIPTION,
   },
   twitter: {
     card: "summary_large_image",
     title: "Nerf Chess · chess with power-ups, a free online chess variant",
-    description:
-      "Chess with power-ups: a free online chess variant. Draft power-up cards every 5 moves in Buff mode, take a secret handicap in Nerf mode, and win by capturing the king.",
+    description: HOME_DESCRIPTION,
   },
-};
-
-// Site-wide structured data, one @graph so a single script tag carries it all:
-// - Organization: tells Google which image is the site's logo, so search shows
-//   it instead of the generic globe/placeholder.
-// - WebSite + SearchAction: names the site and points crawlers at the codex
-//   search (sitelinks search box eligibility).
-// - VideoGame co-typed with WebApplication: Google only shows software rich
-//   results when VideoGame is paired with an application type. Declares the
-//   game free (offers price 0), browser-playable, and carries the
-//   "Drawback Chess" alternate name AI answer engines associate with the
-//   secret-handicap concept.
-const organizationJsonLd = {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Organization",
-      "@id": "https://nerfchess.com/#org",
-      name: "Nerf Chess",
-      url: "https://nerfchess.com",
-      logo: "https://nerfchess.com/icon-512.png",
-    },
-    {
-      "@type": "VideoGame",
-      "@id": "https://nerfchess.com/#game",
-      name: "Nerf Chess",
-      url: "https://nerfchess.com",
-      description:
-        "A free online chess variant: draft power-up cards every five moves in Buff mode, or carry a secret handicap and hex your opponent in Nerf mode. Win by capturing the king.",
-      genre: ["Chess variant", "Strategy", "Board game"],
-      gamePlatform: "Web browser",
-      applicationCategory: "Game",
-      operatingSystem: "Any",
-      playMode: ["MultiPlayer", "SinglePlayer"],
-      numberOfPlayers: { "@type": "QuantitativeValue", minValue: 1, maxValue: 2 },
-      isAccessibleForFree: true,
-      offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
-      publisher: { "@id": "https://nerfchess.com/#org" },
-    },
-    {
-      "@type": "WebSite",
-      "@id": "https://nerfchess.com/#website",
-      name: "Nerf Chess",
-      url: "https://nerfchess.com",
-      publisher: { "@id": "https://nerfchess.com/#org" },
-      potentialAction: {
-        "@type": "SearchAction",
-        target: {
-          "@type": "EntryPoint",
-          urlTemplate: "https://nerfchess.com/codex?search={search_term_string}",
-        },
-        "query-input": "required name=search_term_string",
-      },
-    },
-    {
-      "@type": ["VideoGame", "WebApplication"],
-      "@id": "https://nerfchess.com/#game",
-      name: "Nerf Chess",
-      alternateName: ["Drawback Chess", "Buff Chess", "Power-up Chess"],
-      url: "https://nerfchess.com",
-      description:
-        "A free online chess variant with two modes: Nerf mode gives every player a secret handicap revealed at game end, and Buff mode lets both players draft power-up cards every 5 moves. The game ends by capturing the king, not checkmate.",
-      genre: ["Chess variant", "Board game", "Strategy", "Card game"],
-      keywords:
-        "chess variant, chess with power-ups, power-up chess, buff chess, drawback chess, chess with cards, capture the king chess, chess without checkmate, chess roguelike, chess card game",
-      gamePlatform: "Web browser",
-      applicationCategory: "GameApplication",
-      applicationSubCategory: "Chess",
-      operatingSystem: "Any",
-      browserRequirements: "Requires a modern web browser with JavaScript",
-      inLanguage: "en",
-      isAccessibleForFree: true,
-      playMode: ["MultiPlayer", "SinglePlayer"],
-      numberOfPlayers: { "@type": "QuantitativeValue", minValue: 1, maxValue: 2 },
-      image: "https://nerfchess.com/icon-512.png",
-      offers: {
-        "@type": "Offer",
-        price: "0",
-        priceCurrency: "USD",
-        availability: "https://schema.org/InStock",
-      },
-      publisher: { "@id": "https://nerfchess.com/#org" },
-    },
-  ],
 };
 
 // resizes-content makes the mobile on-screen keyboard shrink the layout
@@ -195,6 +110,8 @@ export const viewport: Viewport = {
   // have room to work. User zoom is intentionally left enabled (no
   // maximum-scale / user-scalable lock) for accessibility.
   viewportFit: "cover",
+  // Browser chrome matches the page background (design-system --bg).
+  themeColor: THEME_COLOR,
   interactiveWidget: "resizes-content",
 };
 
@@ -222,10 +139,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {/* Must stay the first script in <head>: it has to run before the
             stylesheet paints anything. */}
         <script dangerouslySetInnerHTML={{ __html: PRE_PAINT_SCRIPT }} />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
-        />
+        {/* Organization, WebSite and VideoGame in one graph (src/components/seo/JsonLd.tsx). */}
+        <SiteJsonLd />
       </head>
       <body className="no-tap-highlight font-body">
         <SessionProvider hint={hint} hasSession={hasSession} lastMode={lastMode}>

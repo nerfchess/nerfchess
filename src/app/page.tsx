@@ -1,5 +1,7 @@
 "use client";
 
+import { FOOTER_LINKS } from "@/components/SiteFooter";
+import { TEAM_ANCHOR } from "@/lib/team";
 import Link from "next/link";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Cpu, Sparkles, User, Users, type LucideIcon } from "lucide-react";
@@ -548,15 +550,9 @@ function timeAgo(at: number): string {
   return `${Math.floor(h / 24)}d ago`;
 }
 
+// The home page keeps its own footer layout (socials and the build stamp), but
+// its links and credit come from the shared footer so they cannot drift.
 function SiteFooter() {
-  const footerLinks = [
-    { href: "/about", label: "About" },
-    { href: "/faq", label: "FAQ" },
-    { href: "/contact", label: "Contact" },
-    { href: "/guidelines", label: "Guidelines" },
-    { href: "/privacy-policy", label: "Privacy" },
-    { href: "/terms-of-service", label: "Terms" },
-  ];
 
   return (
     <footer className="mx-auto mt-12 w-full max-w-[1300px] px-3 pb-8 sm:px-5">
@@ -580,7 +576,7 @@ function SiteFooter() {
           aria-label="Footer"
           className="flex flex-wrap items-center gap-x-1 gap-y-1 [@media(pointer:fine)]:gap-x-4"
         >
-          {footerLinks.map((link) => (
+          {FOOTER_LINKS.map((link) => (
             <Link
               key={link.href}
               href={link.href}
@@ -593,7 +589,13 @@ function SiteFooter() {
         <SocialsRow label="" className="" variant="quiet" />
       </div>
       <div className="mt-2 flex items-center justify-between text-[12px] text-parchment-500">
-        <span>Nerf Chess</span>
+        {/* The team credit, same as the shared footer (brief section 18). */}
+        <Link
+          href={`/about#${TEAM_ANCHOR}`}
+          className="text-[13px] no-underline transition-colors hover:text-parchment-100"
+        >
+          Made by the Nerf Chess team
+        </Link>
         <BuildVersionLabel />
       </div>
     </footer>

@@ -100,7 +100,6 @@ const BASELINE: string[] = [
   "src/components/profile/ActivityFeed.tsx",
   "src/components/profile/RatingRail.tsx",
   // Open Graph card rendering: an image, not a page.
-  "src/lib/ogCard.tsx",
 ];
 
 interface Finding {

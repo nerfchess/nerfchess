@@ -96,7 +96,17 @@
     "polish:section4": "./node_modules/.bin/tsx scripts/polish/section4.ts",
     "polish:axe": "./node_modules/.bin/tsx scripts/polish/axe.ts",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
-    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"
+    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "test:api-fuzz": "./node_modules/.bin/tsx scripts/polish/api-fuzz.ts",
+    "test:api-unit": "./node_modules/.bin/tsx scripts/polish/api-unit-test.ts",
+    "test:text-input": "./node_modules/.bin/tsx scripts/polish/text-input-test.ts",
+    "test:seo-dupes": "./node_modules/.bin/tsx scripts/check-seo.ts",
+    "test:jsonld": "./node_modules/.bin/tsx scripts/check-jsonld.ts",
+    "test:og": "./node_modules/.bin/tsx scripts/test-og-render.ts",
+    "test:seo-static": "./node_modules/.bin/tsx scripts/check-seo-static.ts",
+    "polish:og-offline": "./node_modules/.bin/tsx scripts/polish/og-grid-offline.ts",
+    "gen:og-assets": "node scripts/gen-og-assets.mjs",
+    "gen:sitemap-dates": "./node_modules/.bin/tsx scripts/gen-sitemap-dates.ts"
   },
   "dependencies": {
     "framer-motion": "^11.11.17",
