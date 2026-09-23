@@ -13,7 +13,7 @@ export default function Error(props: { error: Error & { digest?: string }; retry
     <RouteError
       {...props}
       title="Your game history could not load"
-      detail="The archive failed to render. Your games are stored on the server and are not affected."
+      detail="The list failed to render. Your games are saved on this device and are not affected."
       back={{ href: "/lobby", label: "Back to lobby" }}
     />
   );

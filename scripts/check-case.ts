@@ -94,7 +94,6 @@ const BASELINE: string[] = [
   "src/app/tv/page.tsx",
   "src/app/u/[username]/page.tsx",
   "src/app/updates/page.tsx",
-  "src/app/global-error.tsx",
   "src/components/FriendGame.tsx",
   "src/components/QueueButton.tsx",
   "src/components/match/CommandRail.tsx",

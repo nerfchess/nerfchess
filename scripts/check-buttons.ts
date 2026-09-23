@@ -87,7 +87,6 @@ const BASELINE: string[] = [
   "src/app/codex/_components/CodexRow.tsx",
   "src/app/codex/suggest/page.tsx",
   "src/app/community/page.tsx",
-  "src/app/error.tsx",
   "src/app/game/[id]/page.tsx",
   "src/app/game/page.tsx",
   "src/app/history/[id]/page.tsx",

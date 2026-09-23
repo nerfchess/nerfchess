@@ -1,0 +1,98 @@
+[
+  {
+    "name": "global-before",
+    "w": 390,
+    "title": "",
+    "boxShadow": "rgba(0, 0, 0, 0.7) 0px 12px 40px -24px",
+    "boxRadius": "0px",
+    "btns": [
+      {
+        "text": "Back to the game",
+        "radius": "0px",
+        "font": "12px",
+        "bg": "rgba(255, 255, 255, 0.04)",
+        "h": 44
+      },
+      {
+        "text": "Reload",
+        "radius": "0px",
+        "font": "12px",
+        "bg": "rgba(212, 160, 23, 0.1)",
+        "h": 44
+      }
+    ],
+    "text": "WELL, THAT BROKE\nSomething went wrong\n\nThe site hit an unexpected error. Your game state is saved locally.\n\nBack to the game\nReload"
+  },
+  {
+    "name": "global-before",
+    "w": 1280,
+    "title": "",
+    "boxShadow": "rgba(0, 0, 0, 0.7) 0px 12px 40px -24px",
+    "boxRadius": "0px",
+    "btns": [
+      {
+        "text": "Back to the game",
+        "radius": "0px",
+        "font": "12px",
+        "bg": "rgba(255, 255, 255, 0.04)",
+        "h": 44
+      },
+      {
+        "text": "Reload",
+        "radius": "0px",
+        "font": "12px",
+        "bg": "rgba(212, 160, 23, 0.1)",
+        "h": 44
+      }
+    ],
+    "text": "WELL, THAT BROKE\nSomething went wrong\n\nThe site hit an unexpected error. Your game state is saved locally.\n\nBack to the game\nReload"
+  },
+  {
+    "name": "global-after",
+    "w": 390,
+    "title": "Something went wrong · Nerf Chess",
+    "boxShadow": "none",
+    "boxRadius": "0px",
+    "btns": [
+      {
+        "text": "Retry",
+        "radius": "2px",
+        "font": "13px",
+        "bg": "rgb(54, 146, 231)",
+        "h": 40
+      },
+      {
+        "text": "Back to lobby",
+        "radius": "2px",
+        "font": "13px",
+        "bg": "rgb(48, 46, 44)",
+        "h": 40
+      }
+    ],
+    "text": "Something went wrong\nNerf Chess hit an error\n\nThe site failed to load. Retry usually brings it back; if it does not, head to the lobby.\n\nReference 1234567890\n\nRetry\nBack to lobby"
+  },
+  {
+    "name": "global-after",
+    "w": 1280,
+    "title": "Something went wrong · Nerf Chess",
+    "boxShadow": "none",
+    "boxRadius": "0px",
+    "btns": [
+      {
+        "text": "Retry",
+        "radius": "2px",
+        "font": "13px",
+        "bg": "rgb(54, 146, 231)",
+        "h": 40
+      },
+      {
+        "text": "Back to lobby",
+        "radius": "2px",
+        "font": "13px",
+        "bg": "rgb(48, 46, 44)",
+        "h": 40
+      }
+    ],
+    "text": "Something went wrong\nNerf Chess hit an error\n\nThe site failed to load. Retry usually brings it back; if it does not, head to the lobby.\n\nReference 1234567890\n\nRetry\nBack to lobby"
+  }
+]
