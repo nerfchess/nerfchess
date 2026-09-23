@@ -1,0 +1,3 @@
+F185, e2e/polish/board-splash.spec.ts 'the reveal banner times out under a ticking parent' (/dev/splash, parent re-renders every 250ms with an inline onDismiss)
+Before: FAILED, banner still present after 9s (the 7s timer restarted on every tick)
+After: 1 passed (18.7s)

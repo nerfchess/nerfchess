@@ -2503,11 +2503,19 @@ export function DraftRevealBanner({
 }) {
   const reduceMotion = useReducedMotion();
   // The banner explains itself in a glance; it leaves on its own after a few
-  // seconds so it never sits over the board on a phone.
+  // seconds so it never sits over the board on a phone. Both callers pass an
+  // inline onDismiss, so keying the timer on it restarted the 7s on every
+  // parent render (a clock tick, a move) and a banner could outstay its
+  // welcome indefinitely (F185). The timer runs once; the ref keeps the
+  // latest callback.
+  const onDismissRef = useRef(onDismiss);
   useEffect(() => {
-    const t = window.setTimeout(onDismiss, 7000);
+    onDismissRef.current = onDismiss;
+  });
+  useEffect(() => {
+    const t = window.setTimeout(() => onDismissRef.current(), 7000);
     return () => window.clearTimeout(t);
-  }, [onDismiss]);
+  }, []);
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-40 flex justify-center px-3 sm:inset-x-auto sm:bottom-6 sm:left-4 sm:justify-start">
       <motion.button

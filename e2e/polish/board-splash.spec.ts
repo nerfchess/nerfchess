@@ -59,3 +59,13 @@ test.describe("animations off", () => {
     await expect(card).toHaveCount(0, { timeout: 4_000 });
   });
 });
+
+// F185 regression: the draft reveal banner leaves on its own after 7s even
+// while its parent re-renders every clock tick with a fresh inline onDismiss.
+test("the reveal banner times out under a ticking parent", async ({ page }) => {
+  await page.goto("/dev/splash");
+  await page.getByRole("button", { name: "Reveal banner" }).click();
+  const banner = page.getByText("Draft resolved");
+  await expect(banner).toBeVisible();
+  await expect(banner).toHaveCount(0, { timeout: 9_000 });
+});
