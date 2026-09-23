@@ -1,0 +1,270 @@
+{
+ "generatedAt": "2026-09-23T03:28:02.974Z",
+ "routes": [
+  {
+   "key": "/|signed-out",
+   "items": [
+    {
+     "sig": "requestfailed: GET https://arena.nerfchess.com/lobby net::ERR_TUNNEL_CONNECTION_FAILED",
+     "text": "GET https://arena.nerfchess.com/lobby net::ERR_TUNNEL_CONNECTION_FAILED",
+     "url": "https://arena.nerfchess.com/lobby"
+    },
+    {
+     "sig": "console-error: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED",
+     "text": "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED",
+     "url": "https://arena.nerfchess.com/lobby"
+    },
+    {
+     "sig": "requestfailed: GET /sound/lichess/LowTime.mp<n> net::ERR_SOCKET_NOT_CONNECTED",
+     "text": "GET /sound/lichess/LowTime.mp3 net::ERR_SOCKET_NOT_CONNECTED",
+     "url": "/sound/lichess/LowTime.mp3"
+    },
+    {
+     "sig": "console-error: Failed to load resource: net::ERR_SOCKET_NOT_CONNECTED",
+     "text": "Failed to load resource: net::ERR_SOCKET_NOT_CONNECTED",
+     "url": "/sound/lichess/LowTime.mp3"
+    },
+    {
+     "sig": "requestfailed: GET /sound/lichess/Capture.mp<n> net::ERR_CONNECTION_RESET",
+     "text": "GET /sound/lichess/Capture.mp3 net::ERR_CONNECTION_RESET",
+     "url": "/sound/lichess/Capture.mp3"
+    },
+    {
+     "sig": "console-error: Failed to load resource: net::ERR_CONNECTION_RESET",
+     "text": "Failed to load resource: net::ERR_CONNECTION_RESET",
+     "url": "/sound/lichess/SocialNotify.mp3"
+    },
+    {
+     "sig": "requestfailed: GET /sound/lichess/Select.mp<n> net::ERR_CONNECTION_RESET",
+     "text": "GET /sound/lichess/Select.mp3 net::ERR_CONNECTION_RESET",
+     "url": "/sound/lichess/Select.mp3"
+    },
+    {
+     "sig": "requestfailed: GET /sound/lichess/GenericNotify.mp<n> net::ERR_CONNECTION_RESET",
+     "text": "GET /sound/lichess/GenericNotify.mp3 net::ERR_CONNECTION_RESET",
+     "url": "/sound/lichess/GenericNotify.mp3"
+    },
+    {
+     "sig": "requestfailed: GET /sound/lichess/SocialNotify.mp<n> net::ERR_CONNECTION_RESET",
+     "text": "GET /sound/lichess/SocialNotify.mp3 net::ERR_CONNECTION_RESET",
+     "url": "/sound/lichess/SocialNotify.mp3"
+    },
+    {
+     "sig": "requestfailed: GET /api/lobby?<q> net::ERR_CONNECTION_REFUSED",
+     "text": "GET /api/lobby?fresh=596711359 net::ERR_CONNECTION_REFUSED",
+     "url": "/api/lobby?fresh=596711359"
+    },
+    {
+     "sig": "console-error: Failed to load resource: net::ERR_CONNECTION_REFUSED",
+     "text": "Failed to load resource: net::ERR_CONNECTION_REFUSED",
+     "url": "/api/community/recent"
+    },
+    {
+     "sig": "requestfailed: GET /sound/lichess/CountDown<n>.mp<n> net::ERR_CONNECTION_REFUSED",
+     "text": "GET /sound/lichess/CountDown0.mp3 net::ERR_CONNECTION_REFUSED",
+     "url": "/sound/lichess/CountDown0.mp3"
+    },
+    {
+     "sig": "requestfailed: GET /sound/lichess/Error.mp<n> net::ERR_CONNECTION_REFUSED",
+     "text": "GET /sound/lichess/Error.mp3 net::ERR_CONNECTION_REFUSED",
+     "url": "/sound/lichess/Error.mp3"
+    },
+    {
+     "sig": "requestfailed: GET /api/auth/me net::ERR_CONNECTION_REFUSED",
+     "text": "GET /api/auth/me net::ERR_CONNECTION_REFUSED",
+     "url": "/api/auth/me"
+    },
+    {
+     "sig": "requestfailed: GET /sound/lichess/Move.mp<n> net::ERR_CONNECTION_REFUSED",
+     "text": "GET /sound/lichess/Move.mp3 net::ERR_CONNECTION_REFUSED",
+     "url": "/sound/lichess/Move.mp3"
+    },
+    {
+     "sig": "requestfailed: GET /api/games/recent?<q> net::ERR_CONNECTION_REFUSED",
+     "text": "GET /api/games/recent?limit=8 net::ERR_CONNECTION_REFUSED",
+     "url": "/api/games/recent?limit=8"
+    },
+    {
+     "sig": "requestfailed: GET /api/community/recent net::ERR_CONNECTION_REFUSED",
+     "text": "GET /api/community/recent net::ERR_CONNECTION_REFUSED",
+     "url": "/api/community/recent"
+    },
+    {
+     "sig": "console-error: WebSocket connection to 'ws://localhost:<n>/_next/hmr?<q>' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+     "text": "WebSocket connection to 'ws://localhost:3000/_next/hmr?id=K8kaDBPcjfnR5n11oRquS' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED",
+     "url": "webpack-internal:///(app-pages-browser)/./node_modules/next/dist/client/dev/hot-reloader/app/web-socket.js"
+    }
+   ]
+  },
+  {
+   "key": "/|user",
+   "items": [
+    {
+     "sig": "requestfailed: GET / net::ERR_CONNECTION_REFUSED",
+     "text": "GET / net::ERR_CONNECTION_REFUSED",
+     "url": "/"
+    },
+    {
+     "sig": "load: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/",
+     "text": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/"
+    }
+   ]
+  },
+  {
+   "key": "/lobby|signed-out",
+   "items": [
+    {
+     "sig": "requestfailed: GET /lobby net::ERR_CONNECTION_REFUSED",
+     "text": "GET /lobby net::ERR_CONNECTION_REFUSED",
+     "url": "/lobby"
+    },
+    {
+     "sig": "load: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/lobby",
+     "text": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/lobby"
+    }
+   ]
+  },
+  {
+   "key": "/lobby|user",
+   "items": [
+    {
+     "sig": "requestfailed: GET /lobby net::ERR_CONNECTION_REFUSED",
+     "text": "GET /lobby net::ERR_CONNECTION_REFUSED",
+     "url": "/lobby"
+    },
+    {
+     "sig": "load: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/lobby",
+     "text": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/lobby"
+    }
+   ]
+  },
+  {
+   "key": "/play|signed-out",
+   "items": [
+    {
+     "sig": "requestfailed: GET /play net::ERR_CONNECTION_REFUSED",
+     "text": "GET /play net::ERR_CONNECTION_REFUSED",
+     "url": "/play"
+    },
+    {
+     "sig": "load: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/play",
+     "text": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/play"
+    }
+   ]
+  },
+  {
+   "key": "/play|user",
+   "items": [
+    {
+     "sig": "requestfailed: GET /play net::ERR_CONNECTION_REFUSED",
+     "text": "GET /play net::ERR_CONNECTION_REFUSED",
+     "url": "/play"
+    },
+    {
+     "sig": "load: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/play",
+     "text": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/play"
+    }
+   ]
+  },
+  {
+   "key": "/game?mode=nerf&difficulty=easy&color=w&t=0&inc=0&rated=0|signed-out",
+   "items": [
+    {
+     "sig": "requestfailed: GET /game?<q> net::ERR_CONNECTION_REFUSED",
+     "text": "GET /game?mode=nerf&difficulty=easy&color=w&t=0&inc=0&rated=0 net::ERR_CONNECTION_REFUSED",
+     "url": "/game?mode=nerf&difficulty=easy&color=w&t=0&inc=0&rated=0"
+    },
+    {
+     "sig": "load: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/game?mode=nerf&difficulty=easy&color=w&t=0&inc=0&rated=0",
+     "text": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/game?mode=nerf&difficulty=easy&color=w&t=0&inc=0&rated=0"
+    }
+   ]
+  },
+  {
+   "key": "/game?mode=nerf&difficulty=easy&color=w&t=0&inc=0&rated=0|user",
+   "items": [
+    {
+     "sig": "requestfailed: GET /game?<q> net::ERR_CONNECTION_REFUSED",
+     "text": "GET /game?mode=nerf&difficulty=easy&color=w&t=0&inc=0&rated=0 net::ERR_CONNECTION_REFUSED",
+     "url": "/game?mode=nerf&difficulty=easy&color=w&t=0&inc=0&rated=0"
+    },
+    {
+     "sig": "load: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/game?mode=nerf&difficulty=easy&color=w&t=0&inc=0&rated=0",
+     "text": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/game?mode=nerf&difficulty=easy&color=w&t=0&inc=0&rated=0"
+    }
+   ]
+  }
+ ],
+ "warnings": [
+  "/: The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/bl",
+  "/: The resource http://localhost:3000/_next/static/media/1755441e3a2fa970-s.p.woff2?v=1790134039521 was preloaded using link preload but not us",
+  "/: The resource http://localhost:3000/_next/static/media/558ca1a6aa3cb55e-s.p.woff2?v=1790134039521 was preloaded using link preload but not us"
+ ],
+ "apiCallCounts": [
+  {
+   "route": "/",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "calls": [
+    [
+     "/api/games/recent",
+     5
+    ],
+    [
+     "/api/community/recent",
+     5
+    ],
+    [
+     "/api/lobby",
+     2
+    ],
+    [
+     "/api/auth/me",
+     2
+    ],
+    [
+     "/api/auth/guest",
+     1
+    ],
+    [
+     "/api/users/QuietBadger/achievements",
+     1
+    ]
+   ]
+  },
+  {
+   "route": "/",
+   "state": "1280x800|dark|full|user|normal",
+   "calls": []
+  },
+  {
+   "route": "/lobby",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "calls": []
+  },
+  {
+   "route": "/lobby",
+   "state": "1280x800|dark|full|user|normal",
+   "calls": []
+  },
+  {
+   "route": "/play",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "calls": []
+  },
+  {
+   "route": "/play",
+   "state": "1280x800|dark|full|user|normal",
+   "calls": []
+  },
+  {
+   "route": "/game?mode=nerf&difficulty=easy&color=w&t=0&inc=0&rated=0",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "calls": []
+  },
+  {
+   "route": "/game?mode=nerf&difficulty=easy&color=w&t=0&inc=0&rated=0",
+   "state": "1280x800|dark|full|user|normal",
+   "calls": []
+  }
+ ]
+}

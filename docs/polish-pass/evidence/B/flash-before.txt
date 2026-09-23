@@ -1,0 +1,33 @@
+  /  390x844|dark|full|signed-out|normal  HTTP 200  CLS 0.0135 (sum 0.0135, 1 >0.01)  flash max 0.437  3557ms
+  /  390x844|light|full|signed-out|normal  HTTP 200  CLS 0.0135 (sum 0.0135, 1 >0.01)  flash max 0.993  3306ms
+  /  390x844|dark|full|user|normal  HTTP 200  CLS 0.0144 (sum 0.0144, 1 >0.01)  flash max 0.436  4193ms
+  /  390x844|light|full|user|normal  HTTP 200  CLS 0.0144 (sum 0.0144, 1 >0.01)  flash max 0.994  4761ms
+  /lobby  390x844|dark|full|signed-out|normal  HTTP 200  CLS 0.0176 (sum 0.0176, 1 >0.01)  flash max 0.169  3198ms
+  /lobby  390x844|light|full|signed-out|normal  HTTP 200  CLS 0.0174 (sum 0.0174, 1 >0.01)  flash max 0.994  3075ms
+  /lobby  390x844|dark|full|user|normal  HTTP 200  CLS 0.005 (sum 0.005, 0 >0.01)  flash max 0.075  4635ms
+  /lobby  390x844|light|full|user|normal  HTTP 200  CLS 0.005 (sum 0.005, 0 >0.01)  flash max 0.999  3326ms
+  /play  390x844|dark|full|signed-out|normal  HTTP 200  CLS 0.0528 (sum 0.0528, 1 >0.01)  flash max 0.219  2928ms
+  /play  390x844|light|full|signed-out|normal  HTTP 200  CLS 0.0528 (sum 0.0528, 1 >0.01)  flash max 0.997  2941ms
+  /play  390x844|dark|full|user|normal  HTTP 200  CLS 0.0538 (sum 0.0538, 1 >0.01)  flash max 0.219  3073ms
+  /play  390x844|light|full|user|normal  HTTP 200  CLS 0.0538 (sum 0.0538, 1 >0.01)  flash max 0.997  3303ms
+  /game?mode=nerf&difficulty=easy&color=w&t=0&inc=0&rated=0  390x844|dark|full|signed-out|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  flash max 0.093  3254ms
+  /game?mode=nerf&difficulty=easy&color=w&t=0&inc=0&rated=0  390x844|light|full|signed-out|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  flash max 1.000  2957ms
+  /game?mode=nerf&difficulty=easy&color=w&t=0&inc=0&rated=0  390x844|dark|full|user|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  flash max 0.095  2990ms
+  /game?mode=nerf&difficulty=easy&color=w&t=0&inc=0&rated=0  390x844|light|full|user|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  flash max 1.000  3061ms
+[flash] wrote e2e/__screens__/polish/flash/flash.json
+  /  390x844|dark|full|signed-out|normal  43.7% of the viewport changes between fcp and settled
+  /  390x844|light|full|signed-out|normal  99.3% of the viewport changes between hydrated and settled
+  /  390x844|dark|full|user|normal  43.6% of the viewport changes between dcl and settled
+  /  390x844|light|full|user|normal  99.4% of the viewport changes between dcl and settled
+  /lobby  390x844|dark|full|signed-out|normal  16.9% of the viewport changes between hydrated and settled
+  /lobby  390x844|light|full|signed-out|normal  99.4% of the viewport changes between dcl and settled
+  /lobby  390x844|dark|full|user|normal  7.5% of the viewport changes between hydrated and settled
+  /lobby  390x844|light|full|user|normal  99.9% of the viewport changes between dcl and settled
+  /play  390x844|dark|full|signed-out|normal  21.9% of the viewport changes between dcl and settled
+  /play  390x844|light|full|signed-out|normal  99.7% of the viewport changes between hydrated and settled
+  /play  390x844|dark|full|user|normal  21.9% of the viewport changes between dcl and settled
+  /play  390x844|light|full|user|normal  99.7% of the viewport changes between hydrated and settled
+  /game?mode=nerf&difficulty=easy&color=w&t=0&inc=0&rated=0  390x844|dark|full|signed-out|normal  9.3% of the viewport changes between dcl and settled
+  /game?mode=nerf&difficulty=easy&color=w&t=0&inc=0&rated=0  390x844|light|full|signed-out|normal  100.0% of the viewport changes between fcp and settled
+  /game?mode=nerf&difficulty=easy&color=w&t=0&inc=0&rated=0  390x844|dark|full|user|normal  9.5% of the viewport changes between fcp and settled
+  /game?mode=nerf&difficulty=easy&color=w&t=0&inc=0&rated=0  390x844|light|full|user|normal  100.0% of the viewport changes between dcl and settled

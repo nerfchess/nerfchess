@@ -1,0 +1,231 @@
+{
+ "generatedAt": "2026-09-23T13:07:10.048Z",
+ "routes": [
+  {
+   "key": "/|signed-out",
+   "items": [
+    {
+     "sig": "requestfailed: GET https://arena.nerfchess.com/lobby net::ERR_TUNNEL_CONNECTION_FAILED",
+     "text": "GET https://arena.nerfchess.com/lobby net::ERR_TUNNEL_CONNECTION_FAILED",
+     "url": "https://arena.nerfchess.com/lobby"
+    },
+    {
+     "sig": "console-error: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED",
+     "text": "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED",
+     "url": "https://arena.nerfchess.com/lobby"
+    }
+   ]
+  },
+  {
+   "key": "/|user",
+   "items": [
+    {
+     "sig": "requestfailed: GET https://arena.nerfchess.com/lobby net::ERR_TUNNEL_CONNECTION_FAILED",
+     "text": "GET https://arena.nerfchess.com/lobby net::ERR_TUNNEL_CONNECTION_FAILED",
+     "url": "https://arena.nerfchess.com/lobby"
+    },
+    {
+     "sig": "console-error: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED",
+     "text": "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED",
+     "url": "https://arena.nerfchess.com/lobby"
+    }
+   ]
+  },
+  {
+   "key": "/lobby|signed-out",
+   "items": [
+    {
+     "sig": "requestfailed: GET https://arena.nerfchess.com/lobby net::ERR_TUNNEL_CONNECTION_FAILED",
+     "text": "GET https://arena.nerfchess.com/lobby net::ERR_TUNNEL_CONNECTION_FAILED",
+     "url": "https://arena.nerfchess.com/lobby"
+    },
+    {
+     "sig": "console-error: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED",
+     "text": "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED",
+     "url": "https://arena.nerfchess.com/lobby"
+    }
+   ]
+  },
+  {
+   "key": "/lobby|user",
+   "items": [
+    {
+     "sig": "requestfailed: GET https://arena.nerfchess.com/lobby net::ERR_TUNNEL_CONNECTION_FAILED",
+     "text": "GET https://arena.nerfchess.com/lobby net::ERR_TUNNEL_CONNECTION_FAILED",
+     "url": "https://arena.nerfchess.com/lobby"
+    },
+    {
+     "sig": "console-error: Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED",
+     "text": "Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED",
+     "url": "https://arena.nerfchess.com/lobby"
+    }
+   ]
+  },
+  {
+   "key": "/play|signed-out",
+   "items": [
+    {
+     "sig": "requestfailed: GET /play net::ERR_CONNECTION_REFUSED",
+     "text": "GET /play net::ERR_CONNECTION_REFUSED",
+     "url": "/play"
+    },
+    {
+     "sig": "load: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/play",
+     "text": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/play"
+    }
+   ]
+  },
+  {
+   "key": "/play|user",
+   "items": [
+    {
+     "sig": "requestfailed: GET /play net::ERR_CONNECTION_REFUSED",
+     "text": "GET /play net::ERR_CONNECTION_REFUSED",
+     "url": "/play"
+    },
+    {
+     "sig": "load: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/play",
+     "text": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/play"
+    }
+   ]
+  }
+ ],
+ "warnings": [
+  "/: The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/bl",
+  "/: The resource http://localhost:3000/_next/static/media/1755441e3a2fa970-s.p.woff2?v=1790168640182 was preloaded using link preload but not us",
+  "/: The resource http://localhost:3000/_next/static/media/558ca1a6aa3cb55e-s.p.woff2?v=1790168640182 was preloaded using link preload but not us",
+  "/: The resource http://localhost:3000/_next/static/media/558ca1a6aa3cb55e-s.p.woff2?v=1790168670211 was preloaded using link preload but not us",
+  "/: The resource http://localhost:3000/_next/static/media/1755441e3a2fa970-s.p.woff2?v=1790168670211 was preloaded using link preload but not us",
+  "/lobby: The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/bl",
+  "/lobby: The resource http://localhost:3000/_next/static/media/558ca1a6aa3cb55e-s.p.woff2?v=1790168746214 was preloaded using link preload but not us",
+  "/lobby: The resource http://localhost:3000/_next/static/media/1755441e3a2fa970-s.p.woff2?v=1790168746214 was preloaded using link preload but not us"
+ ],
+ "apiCallCounts": [
+  {
+   "route": "/",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "calls": [
+    [
+     "/api/lobby",
+     3
+    ],
+    [
+     "/api/games/recent",
+     3
+    ],
+    [
+     "/api/community/recent",
+     3
+    ],
+    [
+     "/api/auth/me",
+     2
+    ],
+    [
+     "/api/auth/guest",
+     1
+    ],
+    [
+     "/api/users/settings",
+     1
+    ],
+    [
+     "/api/challenges",
+     1
+    ],
+    [
+     "/api/notifications",
+     1
+    ],
+    [
+     "/api/users/IronCastle/achievements",
+     1
+    ]
+   ]
+  },
+  {
+   "route": "/",
+   "state": "1280x800|dark|full|user|normal",
+   "calls": [
+    [
+     "/api/lobby",
+     3
+    ],
+    [
+     "/api/games/recent",
+     3
+    ],
+    [
+     "/api/community/recent",
+     3
+    ],
+    [
+     "/api/auth/me",
+     1
+    ],
+    [
+     "/api/users/settings",
+     1
+    ],
+    [
+     "/api/users/polish_user/achievements",
+     1
+    ],
+    [
+     "/api/notifications",
+     1
+    ],
+    [
+     "/api/challenges",
+     1
+    ],
+    [
+     "/api/users/polish_user",
+     1
+    ]
+   ]
+  },
+  {
+   "route": "/lobby",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "calls": [
+    [
+     "/api/lobby",
+     7
+    ],
+    [
+     "/api/auth/me",
+     1
+    ],
+    [
+     "/api/auth/guest",
+     1
+    ]
+   ]
+  },
+  {
+   "route": "/lobby",
+   "state": "1280x800|dark|full|user|normal",
+   "calls": [
+    [
+     "/api/lobby",
+     2
+    ],
+    [
+     "/api/auth/me",
+     1
+    ]
+   ]
+  },
+  {
+   "route": "/play",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "calls": []
+  },
+  {
+   "route": "/play",
+   "state": "1280x800|dark|full|user|normal",
+   "calls": []
+  }
+ ]
+}
