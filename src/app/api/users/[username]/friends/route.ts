@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/server/db";
 import { isModerator, sessionTokenFromCookieHeader, userForSession } from "@/lib/server/auth";
+import { apiError, PRIVATE_NO_STORE, usernameParam } from "@/lib/server/request";
+
+// The answer depends on the viewer (mutual friends, private lists), so it is
+// never stored by a shared cache.
+const NO_STORE = { "Cache-Control": PRIVATE_NO_STORE };
 
 export const dynamic = "force-dynamic";
 
@@ -13,13 +18,14 @@ export const dynamic = "force-dynamic";
 // private).
 export async function GET(request: Request, props: { params: Promise<{ username: string }> }) {
   const params = await props.params;
-  const username = params.username.trim().toLowerCase();
+  const username = usernameParam(params.username);
+  if (!username) return apiError(404, "User not found.", NO_STORE);
   const db = await getDb();
   const user = await db
     .prepare(`SELECT id, friends_visibility FROM users WHERE username_lower = ?`)
     .bind(username)
     .first<{ id: string; friends_visibility: string | null }>();
-  if (!user) return NextResponse.json({ error: "User not found." }, { status: 404 });
+  if (!user) return apiError(404, "User not found.", NO_STORE);
 
   const viewer = await userForSession(
     db,
@@ -63,7 +69,7 @@ export async function GET(request: Request, props: { params: Promise<{ username:
   const count = countRow?.n ?? 0;
 
   if (!canSeeList) {
-    return NextResponse.json({ private: true, count, mutual });
+    return NextResponse.json({ private: true, count, mutual }, { headers: NO_STORE });
   }
 
   // The other side of each accepted friendship, with its public card (name,
@@ -90,5 +96,5 @@ export async function GET(request: Request, props: { params: Promise<{ username:
     rating: r.rating != null ? Math.round(r.rating) : null,
   }));
 
-  return NextResponse.json({ friends, count, mutual });
+  return NextResponse.json({ friends, count, mutual }, { headers: NO_STORE });
 }

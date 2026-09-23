@@ -4,6 +4,7 @@ import { pgAll } from "@/lib/server/pg";
 import { currentLiveGameForUser } from "@/lib/server/gameServer";
 import { MODE_CATEGORIES, categoryForTimeControl } from "@/lib/speed";
 import { isModerator, sessionTokenFromCookieHeader, userForSession } from "@/lib/server/auth";
+import { apiError, PRIVATE_NO_STORE, usernameParam } from "@/lib/server/request";
 
 export const dynamic = "force-dynamic";
 
@@ -14,9 +15,25 @@ function pair(a: string, b: string): { lo: string; hi: string } {
 
 type Relationship = "self" | "none" | "friends" | "incoming" | "outgoing";
 
+type CategoryRow = {
+  category: string;
+  rating: number;
+  rd: number;
+  games: number;
+  wins: number;
+  losses: number;
+  draws: number;
+  peak: number;
+};
+
+// The response depends on who is looking (relationship, mutual friends), so
+// it is never stored by a shared cache.
+const NO_STORE = { "Cache-Control": PRIVATE_NO_STORE };
+
 export async function GET(request: Request, props: { params: Promise<{ username: string }> }) {
   const params = await props.params;
-  const username = params.username.trim().toLowerCase();
+  const username = usernameParam(params.username);
+  if (!username) return apiError(404, "User not found.", NO_STORE);
   // Account + per-category ratings stay on D1; the game archive is on Postgres.
   const db = await getDb();
   const user = await db
@@ -58,39 +75,85 @@ export async function GET(request: Request, props: { params: Promise<{ username:
       .bind(username)
       .first<{ username: string }>();
     if (renamed?.username && renamed.username.toLowerCase() !== username) {
-      return NextResponse.json({ redirectTo: renamed.username }, { status: 200 });
+      return NextResponse.json({ redirectTo: renamed.username }, { status: 200, headers: NO_STORE });
     }
-    return NextResponse.json({ error: "User not found." }, { status: 404 });
+    return apiError(404, "User not found.", NO_STORE);
   }
-
-  // The signed-in viewer (if any), resolved with the same helpers /api/friends
-  // uses, drives the relationship state and mutual-friends disclosure below.
-  const viewer = await userForSession(
-    db,
-    sessionTokenFromCookieHeader(request.headers.get("cookie")),
-  );
 
   const friendsVisibility = user.friends_visibility === "private" ? "private" : "public";
   const showOnline = user.show_online == null ? true : !!user.show_online;
 
-  // Accepted-friendships count (cheap indexed D1 read).
-  const friendCountRow = await db
-    .prepare(
-      `SELECT COUNT(*) AS n FROM friendships
-       WHERE (user_lo = ? OR user_hi = ?) AND status = 'accepted'`,
-    )
-    .bind(user.id, user.id)
-    .first<{ n: number }>();
+  // Every read below depends only on the account row, so they run together
+  // instead of one after another (F103: eight sequential round trips, two of
+  // them to the Postgres archive and one to the game-server Durable Object).
+  const [viewer, friendCountRow, clubRows, categoryRows, recentGames, ratingHistoryDesc, live] = await Promise.all([
+    // The signed-in viewer (if any), resolved with the same helpers /api/friends
+    // uses, drives the relationship state and mutual-friends disclosure below.
+    userForSession(db, sessionTokenFromCookieHeader(request.headers.get("cookie"))),
+    // Accepted-friendships count (cheap indexed D1 read).
+    db
+      .prepare(
+        `SELECT COUNT(*) AS n FROM friendships
+         WHERE (user_lo = ? OR user_hi = ?) AND status = 'accepted'`,
+      )
+      .bind(user.id, user.id)
+      .first<{ n: number }>(),
+    // Clubs the player belongs to (name + slug), for the profile's info box.
+    db
+      .prepare(
+        `SELECT c.slug, c.name FROM club_members m JOIN clubs c ON c.id = m.club_id
+         WHERE m.user_id = ? ORDER BY m.joined_at ASC LIMIT 12`,
+      )
+      .bind(user.id)
+      .all<{ slug: string; name: string }>(),
+    // Independent per-time-control ratings; buckets a user never played show
+    // as null so the UI can label them provisional/unrated.
+    db
+      .prepare(
+        `SELECT category, rating, rd, games, wins, losses, draws, peak
+         FROM user_ratings WHERE user_id = ?`,
+      )
+      .bind(user.id)
+      .all<CategoryRow>(),
+    pgAll(
+      `SELECT id, white_name, black_name, winner, reason, rated, category, ruleset,
+              white_user_id, black_user_id,
+              white_rating_before, white_rating_after, black_rating_before, black_rating_after,
+              time_sec, increment_sec, completed_at
+       FROM games
+       WHERE white_user_id = ? OR black_user_id = ?
+       ORDER BY completed_at DESC LIMIT 30`,
+      [user.id, user.id],
+    ),
+    // Rating after each rated game: powers the profile's rating-history graph
+    // (a la Lichess). Each point carries its speed category so the chart can
+    // show one bucket at a time; rows recorded before the category column
+    // existed fall back to the time control. Take the NEWEST rows (then
+    // restore chronological order in JS): the old ASC LIMIT froze the chart on
+    // a prolific player's oldest games and never showed current history. The
+    // chart buckets dense spans by day, so the drawn line stays light even
+    // when the archive is long.
+    pgAll<{
+      at: number;
+      category: string | null;
+      time_sec: number;
+      increment_sec: number;
+      rating: number | null;
+    }>(
+      `SELECT completed_at AS at, category, time_sec, increment_sec,
+              CASE WHEN white_user_id = ? THEN white_rating_after ELSE black_rating_after END AS rating
+       FROM games
+       WHERE (white_user_id = ? OR black_user_id = ?) AND rated = 1
+       ORDER BY completed_at DESC LIMIT 4000`,
+      [user.id, user.id, user.id],
+    ),
+    // Authoritative "is this player in a live game right now" lookup, resolved
+    // from the game-server DO's live-seat index rather than the stale lobby
+    // cache. Best-effort: a null (not playing, binding absent, or DO error)
+    // simply means the profile shows no live preview.
+    currentLiveGameForUser(user.id),
+  ]);
   const friendCount = friendCountRow?.n ?? 0;
-
-  // Clubs the player belongs to (name + slug), for the profile's info box.
-  const clubRows = await db
-    .prepare(
-      `SELECT c.slug, c.name FROM club_members m JOIN clubs c ON c.id = m.club_id
-       WHERE m.user_id = ? ORDER BY m.joined_at ASC LIMIT 12`,
-    )
-    .bind(user.id)
-    .all<{ slug: string; name: string }>();
   const clubs = clubRows.results;
 
   // relationship: null when signed out, else the viewer's tie to this profile.
@@ -137,25 +200,7 @@ export async function GET(request: Request, props: { params: Promise<{ username:
     mutualFriends = mutual.results;
   }
 
-  // Independent per-time-control ratings; buckets a user never played show
-  // as null so the UI can label them provisional/unrated.
-  const categoryRows = await db
-    .prepare(
-      `SELECT category, rating, rd, games, wins, losses, draws, peak
-       FROM user_ratings WHERE user_id = ?`,
-    )
-    .bind(user.id)
-    .all<{
-      category: string;
-      rating: number;
-      rd: number;
-      games: number;
-      wins: number;
-      losses: number;
-      draws: number;
-      peak: number;
-    }>();
-  const ratings: Record<string, (typeof categoryRows.results)[number]> = {};
+  const ratings: Record<string, CategoryRow> = {};
   for (const row of categoryRows.results) ratings[row.category] = row;
 
   // The top-level `rating` mirrors bestLiveRatingSql (src/lib/server/ratingSql.ts):
@@ -168,82 +213,45 @@ export async function GET(request: Request, props: { params: Promise<{ username:
     .sort((a, b) => b.games - a.games || b.rating - a.rating);
   const displayRating = liveRows[0]?.rating ?? user.rating;
 
-  const recentGames = await pgAll(
-    `SELECT id, white_name, black_name, winner, reason, rated, category, ruleset,
-            white_user_id, black_user_id,
-            white_rating_before, white_rating_after, black_rating_before, black_rating_after,
-            time_sec, increment_sec, completed_at
-     FROM games
-     WHERE white_user_id = ? OR black_user_id = ?
-     ORDER BY completed_at DESC LIMIT 30`,
-    [user.id, user.id],
-  );
-
-  // Rating after each rated game — powers the profile's rating-history graph
-  // (a la Lichess). Each point carries its speed category so the chart can
-  // show one bucket at a time; rows recorded before the category column
-  // existed fall back to the time control. Take the NEWEST 300 rows (then
-  // restore chronological order in JS): the old ASC LIMIT froze the chart on
-  // a prolific player's oldest 300 games and never showed current history.
-  // The cap is generous (a heavy player's newest 300 games covered six weeks,
-  // so "All" was a lie); the chart buckets dense spans by day, so the payload
-  // stays small on screen even when the archive is long.
-  const ratingHistoryDesc = await pgAll<{
-    at: number;
-    category: string | null;
-    time_sec: number;
-    increment_sec: number;
-    rating: number | null;
-  }>(
-    `SELECT completed_at AS at, category, time_sec, increment_sec,
-            CASE WHEN white_user_id = ? THEN white_rating_after ELSE black_rating_after END AS rating
-     FROM games
-     WHERE (white_user_id = ? OR black_user_id = ?) AND rated = 1
-     ORDER BY completed_at DESC LIMIT 4000`,
-    [user.id, user.id, user.id],
-  );
   const ratingHistory = ratingHistoryDesc.reverse();
 
-  // Authoritative "is this player in a live game right now" lookup, resolved
-  // from the game-server DO's live-seat index rather than the stale lobby cache.
-  // Best-effort: a null (not playing, binding absent, or DO error) simply means
-  // the profile shows no live preview. Never blocks the rest of the payload.
-  const live = await currentLiveGameForUser(user.id);
-
-  return NextResponse.json({
-    user: {
-      username: user.username,
-      rating: displayRating,
-      rd: user.rd,
-      games: user.games,
-      wins: user.wins,
-      losses: user.losses,
-      draws: user.draws,
-      avatar: user.avatar,
-      createdAt: user.created_at,
-      role: user.role,
-      bio: user.bio,
-      flair: user.flair,
-      // last-seen is suppressed entirely when the player hides their presence.
-      lastSeenAt: showOnline ? (user.last_seen_at ?? null) : null,
-      showOnline,
-      friendsVisibility,
-      friendCount,
-      clubs,
+  return NextResponse.json(
+    {
+      user: {
+        username: user.username,
+        rating: displayRating,
+        rd: user.rd,
+        games: user.games,
+        wins: user.wins,
+        losses: user.losses,
+        draws: user.draws,
+        avatar: user.avatar,
+        createdAt: user.created_at,
+        role: user.role,
+        bio: user.bio,
+        flair: user.flair,
+        // last-seen is suppressed entirely when the player hides their presence.
+        lastSeenAt: showOnline ? (user.last_seen_at ?? null) : null,
+        showOnline,
+        friendsVisibility,
+        friendCount,
+        clubs,
+      },
+      relationship,
+      mutualFriends,
+      // The player's current live game, or null when not playing. Public: a game
+      // id and its section only.
+      currentGame: live,
+      games: recentGames,
+      ratings,
+      ratingHistory: ratingHistory
+        .filter((p) => p.rating != null)
+        .map((p) => ({
+          at: p.at,
+          rating: p.rating,
+          category: p.category ?? categoryForTimeControl(p.time_sec, p.increment_sec),
+        })),
     },
-    relationship,
-    mutualFriends,
-    // The player's current live game, or null when not playing. Public: a game
-    // id and its section only.
-    currentGame: live,
-    games: recentGames,
-    ratings,
-    ratingHistory: ratingHistory
-      .filter((p) => p.rating != null)
-      .map((p) => ({
-        at: p.at,
-        rating: p.rating,
-        category: p.category ?? categoryForTimeControl(p.time_sec, p.increment_sec),
-      })),
-  });
+    { headers: NO_STORE },
+  );
 }

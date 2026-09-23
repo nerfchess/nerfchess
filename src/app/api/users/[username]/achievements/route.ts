@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/server/db";
+import { apiError, PUBLIC_SHORT_CACHE, usernameParam } from "@/lib/server/request";
 import { ACHIEVEMENTS } from "@/lib/achievements";
 
 export const dynamic = "force-dynamic";
@@ -10,13 +11,14 @@ export const dynamic = "force-dynamic";
 // (bounded, indexed) - there is no game scan here.
 export async function GET(_request: Request, props: { params: Promise<{ username: string }> }) {
   const params = await props.params;
-  const username = params.username.trim().toLowerCase();
+  const username = usernameParam(params.username);
+  if (!username) return apiError(404, "User not found.");
   const db = await getDb();
   const user = await db
     .prepare(`SELECT id, username FROM users WHERE username_lower = ?`)
     .bind(username)
     .first<{ id: string; username: string }>();
-  if (!user) return NextResponse.json({ error: "User not found." }, { status: 404 });
+  if (!user) return apiError(404, "User not found.");
 
   const rows = await db
     .prepare(`SELECT achievement_id, progress, unlocked_at FROM user_achievements WHERE user_id = ?`)
@@ -43,10 +45,8 @@ export async function GET(_request: Request, props: { params: Promise<{ username
 
   const unlockedCount = achievements.filter((a) => a.unlocked).length;
 
-  return NextResponse.json({
-    username: user.username,
-    unlockedCount,
-    total: achievements.length,
-    achievements,
-  });
+  return NextResponse.json(
+    { username: user.username, unlockedCount, total: achievements.length, achievements },
+    { headers: { "Cache-Control": PUBLIC_SHORT_CACHE } },
+  );
 }

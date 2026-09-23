@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/server/db";
 import { pgAll } from "@/lib/server/pg";
+import { PUBLIC_SHORT_CACHE } from "@/lib/server/request";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +25,8 @@ export async function GET() {
      ORDER BY games DESC LIMIT 50`,
     [weekAgo, weekAgo],
   );
-  if (!counts.length) return NextResponse.json({ players: [] });
+  const headers = { "Cache-Control": PUBLIC_SHORT_CACHE };
+  if (!counts.length) return NextResponse.json({ players: [] }, { headers });
 
   const ids = counts.map((c) => c.user_id);
   const db = await getDb();
@@ -46,5 +48,5 @@ export async function GET() {
       return { username: u.username, avatar: u.avatar, games: c.games };
     });
 
-  return NextResponse.json({ players });
+  return NextResponse.json({ players }, { headers });
 }

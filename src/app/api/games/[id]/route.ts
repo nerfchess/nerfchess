@@ -1,14 +1,22 @@
 import { NextResponse } from "next/server";
 import { pgFirst } from "@/lib/server/pg";
 import { publicDraftReplayFromColumn } from "@/lib/server/publicDraftRecord";
+import { apiError } from "@/lib/server/request";
 
 export const dynamic = "force-dynamic";
+
+// A finished game's archive row never changes once written, so a found game
+// can be cached; a miss is not cached (the game may be archived moments later).
+const ARCHIVE_CACHE = "public, max-age=300, s-maxage=3600";
 
 export async function GET(_request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const id = params.id.trim().toUpperCase();
-  if (!/^[A-Z2-9]{4,12}$/.test(id)) {
-    return NextResponse.json({ error: "Bad game id." }, { status: 400 });
+  // Queue and friend codes avoid 0/O and 1/I, but arena ids are hex and use
+  // every digit, so the old [A-Z2-9] pattern refused most arena replays with a
+  // 400 (F073).
+  if (!/^[A-Z0-9]{4,12}$/.test(id)) {
+    return apiError(400, "Bad game id.");
   }
   // The game archive lives on Postgres (OCI, via Hyperdrive), not D1. Select the
   // full draft record too, so an archived draft game replays through the exact
@@ -23,7 +31,7 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
      FROM games WHERE id = ?`,
     [id],
   );
-  if (!row) return NextResponse.json({ error: "Game not found." }, { status: 404 });
+  if (!row) return apiError(404, "Game not found.");
   // Convert the stored draft record into the SAME spectator-safe public action
   // stream a live watcher gets (raw grant/reroll actions are never exposed;
   // draft_record may be a JSON string on D1 or an object from Postgres jsonb).
@@ -34,5 +42,5 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
     ...row,
     ...(replay ? { dtActions: replay.dtActions, ...(replay.mode ? { mode: replay.mode } : {}) } : {}),
   };
-  return NextResponse.json({ game });
+  return NextResponse.json({ game }, { headers: { "Cache-Control": ARCHIVE_CACHE } });
 }

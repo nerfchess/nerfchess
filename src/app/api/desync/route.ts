@@ -1,6 +1,15 @@
 import { NextResponse } from "next/server";
+import { clientIp, memoryRateLimit, readJsonObject } from "@/lib/server/request";
 
 export const dynamic = "force-dynamic";
+
+// Flood guard for this unauthenticated log sink (F066): a real report is a few
+// hundred bytes, and a client reports a desync once per game, so bigger
+// bodies and faster streams are refused before anything is logged. The
+// counter lives in memory per isolate so the sink still never writes D1.
+const MAX_BODY_BYTES = 4096;
+const PER_IP_WINDOW_MS = 60_000;
+const PER_IP_MAX = 20;
 
 // Desync telemetry sink. The client calls this only when its recomputed game
 // fingerprint disagrees with the server's (see src/engine/desync.ts). We log a
@@ -16,18 +25,11 @@ export const dynamic = "force-dynamic";
 //   rules: string[]   // the culprit shortlist from compareFingerprints
 // }
 export async function POST(request: Request) {
-  let body: {
-    gameId?: unknown;
-    clientHash?: unknown;
-    serverHash?: unknown;
-    diverged?: unknown;
-    rules?: unknown;
-  };
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid body." }, { status: 400 });
+  if (!memoryRateLimit(`desync:${clientIp(request) ?? "unknown"}`, PER_IP_MAX, PER_IP_WINDOW_MS)) {
+    return NextResponse.json({ error: "Too many reports." }, { status: 429 });
   }
+  const body = await readJsonObject(request, { maxBytes: MAX_BODY_BYTES, requireJsonType: false });
+  if (body instanceof NextResponse) return body;
 
   const str = (v: unknown, cap: number) => (typeof v === "string" ? v.slice(0, cap) : "");
   const gameId = str(body.gameId, 24);

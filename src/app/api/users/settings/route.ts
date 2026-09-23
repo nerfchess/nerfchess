@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/server/db";
 import { sessionTokenFromCookieHeader, userForSession } from "@/lib/server/auth";
+import { apiError, guardJsonWrite, PRIVATE_NO_STORE } from "@/lib/server/request";
 
 export const dynamic = "force-dynamic";
 
@@ -10,7 +11,12 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   const db = await getDb();
   const user = await userForSession(db, sessionTokenFromCookieHeader(request.headers.get("cookie")));
-  if (!user) return NextResponse.json({ settings: null, updatedAt: null }, { status: 401 });
+  if (!user) {
+    return NextResponse.json(
+      { settings: null, updatedAt: null },
+      { status: 401, headers: { "Cache-Control": PRIVATE_NO_STORE } },
+    );
+  }
   const row = await db
     .prepare(
       `SELECT settings, settings_updated_at AS updatedAt, friends_visibility, show_online
@@ -29,30 +35,28 @@ export async function GET(request: Request) {
   } catch {
     settings = null;
   }
-  return NextResponse.json({
+  return NextResponse.json(
+    {
     settings,
     updatedAt: row?.updatedAt ?? null,
     // Privacy toggles live in their own columns (see /profile/edit) rather than
     // the free-form settings blob.
     friendsVisibility: row?.friends_visibility === "private" ? "private" : "public",
     showOnline: row?.show_online == null ? true : !!row.show_online,
-  });
+    },
+    { headers: { "Cache-Control": PRIVATE_NO_STORE } },
+  );
 }
 
 // Privacy toggles: friends-list visibility and online/last-seen presence. These
 // are dedicated columns (not part of the device-synced settings blob PUT
 // handles) so the profile and friends endpoints can enforce them cheaply.
 export async function POST(request: Request) {
+  const body = await guardJsonWrite(request);
+  if (body instanceof NextResponse) return body;
   const db = await getDb();
   const user = await userForSession(db, sessionTokenFromCookieHeader(request.headers.get("cookie")));
   if (!user) return NextResponse.json({ error: "Sign in to change privacy." }, { status: 401 });
-
-  let body: { friendsVisibility?: unknown; showOnline?: unknown };
-  try {
-    body = (await request.json()) as typeof body;
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON." }, { status: 400 });
-  }
 
   const sets: string[] = [];
   const binds: unknown[] = [];
@@ -83,18 +87,14 @@ export async function POST(request: Request) {
 }
 
 export async function PUT(request: Request) {
+  const body = await guardJsonWrite(request);
+  if (body instanceof NextResponse) return body;
   const db = await getDb();
   const user = await userForSession(db, sessionTokenFromCookieHeader(request.headers.get("cookie")));
   if (!user) return NextResponse.json({ error: "Sign in to sync settings." }, { status: 401 });
 
-  let body: { settings?: unknown; updatedAt?: unknown };
-  try {
-    body = (await request.json()) as typeof body;
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON." }, { status: 400 });
-  }
-  if (!body.settings || typeof body.settings !== "object") {
-    return NextResponse.json({ error: "Missing settings." }, { status: 400 });
+  if (!body.settings || typeof body.settings !== "object" || Array.isArray(body.settings)) {
+    return apiError(400, "Missing settings.");
   }
   const serialized = JSON.stringify(body.settings);
   if (serialized.length > 8192) {

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/server/db";
+import { apiError, PUBLIC_SHORT_CACHE, usernameParam } from "@/lib/server/request";
 import { pgAll } from "@/lib/server/pg";
 import { computePlayerStats, type StatsGameRow } from "@/lib/playerStats";
 
@@ -8,14 +9,15 @@ export const dynamic = "force-dynamic";
 // Detailed statistics for one player, computed from their recorded games.
 export async function GET(_request: Request, props: { params: Promise<{ username: string }> }) {
   const params = await props.params;
-  const username = params.username.trim().toLowerCase();
+  const username = usernameParam(params.username);
+  if (!username) return apiError(404, "User not found.");
   // The account lookup stays on D1; the games it computes over are on Postgres.
   const db = await getDb();
   const user = await db
     .prepare(`SELECT id, username FROM users WHERE username_lower = ?`)
     .bind(username)
     .first<{ id: string; username: string }>();
-  if (!user) return NextResponse.json({ error: "User not found." }, { status: 404 });
+  if (!user) return apiError(404, "User not found.");
 
   // Take the NEWEST 5000 games (then restore the chronological order
   // computePlayerStats expects): the old ASC LIMIT kept only a prolific
@@ -37,8 +39,8 @@ export async function GET(_request: Request, props: { params: Promise<{ username
   );
   games.reverse();
 
-  return NextResponse.json({
-    username: user.username,
-    stats: computePlayerStats(user.id, games),
-  });
+  return NextResponse.json(
+    { username: user.username, stats: computePlayerStats(user.id, games) },
+    { headers: { "Cache-Control": PUBLIC_SHORT_CACHE } },
+  );
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { pgAll } from "@/lib/server/pg";
 import { categoryForTimeControl } from "@/lib/speed";
+import { PUBLIC_SHORT_CACHE } from "@/lib/server/request";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +26,8 @@ export async function GET() {
      FROM games ORDER BY completed_at DESC LIMIT 12`,
   );
 
-  return NextResponse.json({
+  return NextResponse.json(
+    {
     games: games.map((game) => ({
       id: game.id,
       whiteName: game.white_name,
@@ -36,5 +38,7 @@ export async function GET() {
       category: game.category ?? categoryForTimeControl(game.time_sec, game.increment_sec),
       completedAt: game.completed_at,
     })),
-  });
+    },
+    { headers: { "Cache-Control": PUBLIC_SHORT_CACHE } },
+  );
 }

@@ -2,10 +2,12 @@ import { NextResponse } from "next/server";
 import { getDb } from "@/lib/server/db";
 import { sessionTokenFromCookieHeader, userForSession } from "@/lib/server/auth";
 import { isModeCategory, type ModeCategory } from "@/lib/speed";
+import { intParam, PRIVATE_NO_STORE } from "@/lib/server/request";
 
 export const dynamic = "force-dynamic";
 
 const DEFAULT_CATEGORY: ModeCategory = "nerf";
+const BOARD_SIZE = 250;
 
 interface LeaderboardRow {
   username: string;
@@ -42,6 +44,11 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const requested = url.searchParams.get("category");
   const category: ModeCategory = isModeCategory(requested) ? requested : DEFAULT_CATEGORY;
+  // Optional trims for callers that need less than the full board (F106): the
+  // community hub shows five rows and the game-over panel only needs `me`.
+  // Without them the response is unchanged (250 rows plus `me`).
+  const limit = intParam(url.searchParams.get("limit"), 1, BOARD_SIZE, BOARD_SIZE);
+  const meOnly = url.searchParams.get("meOnly") === "1";
 
   // Who appears on the board: anyone with a rated game in this category, plus
   // house bots (always), plus any player whose rating in this category was set
@@ -53,16 +60,18 @@ export async function GET(request: Request) {
   const houseFilter = `(r.games > 0 OR r.hand_set = 1 OR r.user_id LIKE ? ESCAPE '\\')`;
 
   const db = await getDb();
-  const rows = await db
-    .prepare(
-      `SELECT u.username, r.rating, r.rd, r.games, r.wins, r.losses, r.draws, u.avatar, u.flair, u.bio, u.is_guest AS guest
-       FROM user_ratings r JOIN users u ON u.id = r.user_id
-       WHERE r.category = ? AND ${houseFilter}
-         AND (u.banned_until IS NULL OR u.banned_until <= ?)
-       ORDER BY r.rating DESC, r.games DESC LIMIT 250`,
-    )
-    .bind(category, HOUSE_ID_MATCH, Date.now())
-    .all<LeaderboardRow>();
+  const rows = meOnly
+    ? { results: [] as LeaderboardRow[] }
+    : await db
+        .prepare(
+          `SELECT u.username, r.rating, r.rd, r.games, r.wins, r.losses, r.draws, u.avatar, u.flair, u.bio, u.is_guest AS guest
+           FROM user_ratings r JOIN users u ON u.id = r.user_id
+           WHERE r.category = ? AND ${houseFilter}
+             AND (u.banned_until IS NULL OR u.banned_until <= ?)
+           ORDER BY r.rating DESC, r.games DESC LIMIT ?`,
+        )
+        .bind(category, HOUSE_ID_MATCH, Date.now(), limit)
+        .all<LeaderboardRow>();
 
   const players = rows.results.map((row) => ({ ...row, guest: !!row.guest }));
 
@@ -106,5 +115,6 @@ export async function GET(request: Request) {
     // The list itself is still useful without the viewer row.
   }
 
-  return NextResponse.json({ category, players, me });
+  // `me` is per viewer, so the board is never stored by a shared cache.
+  return NextResponse.json({ category, players, me }, { headers: { "Cache-Control": PRIVATE_NO_STORE } });
 }
