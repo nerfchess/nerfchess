@@ -686,6 +686,15 @@ const ADDITIVE_COLUMNS: string[] = [
   `ALTER TABLE tournaments ADD COLUMN current_round INTEGER NOT NULL DEFAULT 0`,
   `ALTER TABLE tournaments ADD COLUMN round_started_at INTEGER`,
   `ALTER TABLE tournaments ADD COLUMN finished_at INTEGER`,
+  // Indexes for the per-request lookups the API routes run on every write or
+  // poll: the inbox thread (both directions of one pair), the report and
+  // suggestion throttles, the expired-session sweep, and the clubs-per-owner
+  // cap. Additive. Mirrors migrations/0045_api_request_indexes.sql.
+  `CREATE INDEX IF NOT EXISTS idx_messages_pair ON messages(from_user_id, to_user_id, created_at DESC)`,
+  `CREATE INDEX IF NOT EXISTS idx_reports_reporter ON reports(reporter_user_id, created_at DESC)`,
+  `CREATE INDEX IF NOT EXISTS idx_rule_suggestions_user ON rule_suggestions(user_id, created_at DESC)`,
+  `CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires_at)`,
+  `CREATE INDEX IF NOT EXISTS idx_clubs_owner ON clubs(owner_user_id)`,
 ];
 
 // The additive pass is versioned by list length (the list is append-only) and
