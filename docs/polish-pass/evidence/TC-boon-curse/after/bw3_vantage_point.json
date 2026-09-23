@@ -1,0 +1,101 @@
+{
+ "id": "bw3_vantage_point",
+ "url": "/dev/plays?id=bw3_vantage_point&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "bw3_vantage_point",
+  "name": "Vantage Point",
+  "tier": 7,
+  "category": "protection",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:bw3_vantage_point",
+  "anchor": "board",
+  "source": "shield",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 55,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, shield diff",
+  "castSq": "b2",
+  "targets": [
+   "b2",
+   "c2",
+   "d2"
+  ],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2470,
+  "cssEndMs": 3491,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 25,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 192,
+  "maxGapMs": 118.1
+ },
+ "raf": {
+  "frames": 202,
+  "medianMs": 16.7,
+  "maxMs": 50,
+  "dropped": 18
+ },
+ "longAnimationFrames": {
+  "count": 3,
+  "worstMs": 68,
+  "totalBlockingMs": 7,
+  "entries": [
+   {
+    "atMs": -53,
+    "duration": 55,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 20,
+    "duration": 59,
+    "blocking": 7,
+    "scripts": []
+   },
+   {
+    "atMs": 944,
+    "duration": 68,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  189,
+  483,
+  835,
+  1231,
+  1664,
+  2128,
+  2620
+ ],
+ "png": "docs/polish-pass/evidence/TC-boon-curse/after/bw3_vantage_point.png",
+ "pngBytes": 28931,
+ "off": {
+  "url": "/dev/plays?id=bw3_vantage_point&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "docs/polish-pass/evidence/TC-boon-curse/after/bw3_vantage_point.off.png"
+ }
+}

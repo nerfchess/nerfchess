@@ -19,10 +19,12 @@
 //                  shackle ring (binds, compulsions, ransoms)
 //   MidasVeil    — a gilded veil sweeps the ranks and figures gild one by
 //                  one where it passes (transferring / accumulating marks)
-// plus SIX fully bespoke scenes for the tier 7–8 flagships (Death Knell,
-// The Hollow Crown, Tide of Ash, Crown of Thorns, Pauper's Crown, Beacon of
-// Woe). The CARD -> TEMPLATE / PALETTE / GLYPH table is the PLAYS registry
-// at the bottom of this file.
+// plus fully bespoke scenes (registered with S) for every tier 7 and above
+// card and a few lower-tier flagships, from Death Knell and The Hollow Crown
+// to Doomed Vow, whose scene draws its rule on the cast square (the cord,
+// four turn candles, the eight rescue squares, the king's rescue). The
+// CARD -> TEMPLATE / PALETTE / GLYPH table is the PLAYS registry at the
+// bottom of this file.
 
 // STAGING. Every card declares an anchor, so a hex happens where it was
 // actually laid. `Stage` is the shared <BoardWideStage>, which clamps itself
@@ -165,7 +167,6 @@ const FLOURISH_IMPACT: Record<string, ImpactSpec> = {
   jammedgate: { l: 51, t: 42, s: 14, at: 900, laser: true, shock: true }, // the portcullis slams down a light-column
   powderkeg: { l: 44, t: 50, s: 16, at: 1080, shock: true }, // the keg's preview blast rocks the ground
   collapse: { l: 44, t: 54, s: 15, at: 780, man: "n", shock: true }, // a piece goes down with the caving floor
-  doomedvow: { l: 43, t: 42, s: 13, at: 1000, laser: true }, // the axe-light falls on the condemned
   /* BlightGarden */
   footprints: { l: 47, t: 62, s: 12, at: 920, shock: true }, // each print ices shut with a crack
   creep: { l: 60, t: 44, s: 12, at: 1120, shock: true }, // the outrider tile bites into fresh ground
@@ -973,23 +974,6 @@ function OmenBell({ palette, glyph, lead, role, delayMs, flourish, aim }: Templa
           ))}
         </>
       )}
-      {/* wave3 Doomed Vow — a condemned piece pleads under a falling axe unless the king comes */}
-      {flourish === "doomedvow" && (
-        <>
-          <span className="cwp-hold absolute block" style={{ left: "46%", top: "56%", width: "6%", height: "9%", animationDelay: `${delayMs + 620}ms` }}>
-            <Man kind="b" fill={tint(p1, 0.9)} stroke={p2} />
-          </span>
-          <span className="cwp-drop absolute block" style={{ left: "44%", top: "44%", width: "10%", height: "10%", animationDelay: `${delayMs + 820}ms` }}>
-            <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
-              <path d="M5 0.8 V9" stroke="#8a6a3a" strokeWidth="0.7" strokeLinecap="round" />
-              <path d="M5 1 C7 1.2 8.4 2.4 8.6 4 L5 3.4 Z" fill={tint(p2, 0.9)} stroke={p0} strokeWidth="0.4" {...SJ} />
-            </svg>
-          </span>
-          <span className="cwp-glint absolute block" style={{ left: "60%", top: "56%", width: "3%", height: "3%", animationDelay: `${delayMs + 1120}ms` }}>
-            <svg viewBox="0 0 8 10" className="block h-full w-full" aria-hidden="true"><path d="M4 0.8 C6 3.6 7 5.4 7 6.8 A3 3 0 1 1 1 6.8 C1 5.4 2 3.6 4 0.8 Z" fill="#c94a5a" /></svg>
-          </span>
-        </>
-      )}
       <SettlePair color={tint(p1, 0.7)} delayMs={delayMs + 1200} />
     </Stage>
   );
@@ -1639,9 +1623,9 @@ function DeathKnellScene({ lead, role, delayMs }: SceneProps) {
     <Stage quakeAtMs={delayMs + 700}>
       <Wash color={tint(p0, 0.3)} delayMs={delayMs} />
       <Tell color={tint(p1, 0.35)} delayMs={delayMs} left={41} top={22} />
-      {/* the fourth stroke falls as a column of grave-light on the doomed
+      {/* the third stroke falls as a column of grave-light on the doomed
           queen, and her ghost-preview splits in half — the knell shown true */}
-      <ImpactCell spec={{ l: 44, t: 52, s: 12, at: 1270, laser: true, man: "q", shock: true }} rgb="201 176 232" delayMs={delayMs} />
+      <ImpactCell spec={{ l: 44, t: 52, s: 12, at: 1200, laser: true, man: "q", shock: true }} rgb="201 176 232" delayMs={delayMs} />
       {/* the doomed one, shivering under the bell's shadow */}
       <span className="cwp-hold absolute block" style={{ left: "46.5%", top: "56%", width: "7%", height: "10%", animationDelay: `${delayMs + 480}ms` }}>
         <Man kind="q" fill={tint(p1, 0.9)} stroke={p0} />
@@ -1659,18 +1643,19 @@ function DeathKnellScene({ lead, role, delayMs }: SceneProps) {
           </svg>
         </span>
       </span>
-      {/* four counted strokes: toll rings, one per remaining turn */}
-      {[0, 1, 2, 3].map((i) => (
+      {/* three counted strokes (the card's three turns): toll rings, one per
+          remaining turn */}
+      {[0, 1, 2].map((i) => (
         <span
           key={i}
           className="cwp-ring absolute block rounded-full"
-          style={{ left: "31%", top: "40%", width: "38%", height: "26%", border: `2.5px solid ${tint(p1, 0.85 - i * 0.12)}`, animationDelay: `${delayMs + 700 + i * 190}ms` }}
+          style={{ left: "31%", top: "40%", width: "38%", height: "26%", border: `2.5px solid ${tint(p1, 0.85 - i * 0.12)}`, animationDelay: `${delayMs + 700 + i * 250}ms` }}
         />
       ))}
-      {/* the numeral counts down: IV flickers, then I burns */}
+      {/* the numeral counts down: III flickers, then I burns */}
       <span className="cwp-facein absolute block" style={{ left: "63%", top: "30%", width: "9%", height: "8%", animationDelay: `${delayMs + 760}ms` }}>
         <svg viewBox="0 0 16 10" className="block h-full w-full" aria-hidden="true">
-          <path d="M2.5 1.5 V8.5 M5.5 1.5 L7.5 8.5 L9.5 1.5" fill="none" stroke={tint(p1, 0.95)} strokeWidth="1.2" {...SJ} />
+          <path d="M4.5 1.5 V8.5 M8 1.5 V8.5 M11.5 1.5 V8.5" fill="none" stroke={tint(p1, 0.95)} strokeWidth="1.2" {...SJ} />
         </svg>
       </span>
       <span className="cwp-pop absolute block" style={{ left: "64.6%", top: "40%", width: "4%", height: "7%", animationDelay: `${delayMs + 1120}ms` }}>
@@ -2254,9 +2239,29 @@ function MartyrCrownScene({ lead, role, delayMs }: SceneProps) {
   );
 }
 
-/* --- The Curse Engine: two iron gears grind up the winding, and every third
-   turn a cold discharge seizes the strongest piece. ----------------------- */
+/* --- The Curse Engine (slice TC-boon-curse rule scene): the machine is
+   bolted to the edge of the board at the border and a nine-notch track
+   (their nine turns) runs along the border of their half, every third
+   notch heavy. The pawl clicks one notch, two, three; on the third the frost
+   clamp shuts on their strongest piece with two pips (two of their turns)
+   while their king beside it stays clear; then the pawl snaps back to
+   zero (the count resets). ------------------------------------------------ */
 const CURSE_ENGINE: Palette = ["#2a2a32", "#8a94a8", "#9fd8ff"];
+/** Top edge of the caster's rank `r` (1 = their home rank) in BoardFrame %. */
+function rankTop(r: number): string {
+  return `calc(43.75% + var(--fx-side, 1) * ${43.75 - (r - 1) * 12.5}%)`;
+}
+/** Top edge of the band over the caster's ranks `lo`..`hi` in BoardFrame %. */
+function bandTop(lo: number, hi: number): string {
+  const c = (8 - hi + (lo - 1)) * 6.25;
+  const d = (8 - hi - (lo - 1)) * 6.25;
+  return `calc(${c}% + var(--fx-side, 1) * ${d}%)`;
+}
+/** A box `h`% tall centred on the line between the caster's ranks `r` and
+ * `r + 1` (BoardFrame %). */
+function onLine(r: number, h: number): string {
+  return `calc(50% + var(--fx-side, 1) * ${50 - r * 12.5}% - ${h / 2}%)`;
+}
 function CurseEngineScene({ lead, role, delayMs }: SceneProps) {
   const [p0, p1, p2] = CURSE_ENGINE;
   if (role === "entrance") return <EntranceCut palette={CURSE_ENGINE} glyph={GLYPH.hw3_curse_engine} delayMs={delayMs} />;
@@ -2267,33 +2272,69 @@ function CurseEngineScene({ lead, role, delayMs }: SceneProps) {
       <circle cx="10" cy="9" r="3.2" fill={tint(p0, 0.9)} stroke={p2} strokeWidth="0.5" />
     </svg>
   );
+  // The track: the zero mark and nine notches (their nine turns) from 12.5%
+  // to 87.5% of the board width; notches 3, 6 and 9 are the heavy ones.
+  const step = 75 / 9;
   return (
-    // FLAGSHIP: the machine's discharge stroke slams through the stage
-    <Stage quakeAtMs={delayMs + 960}>
-      <Wash color={tint(p0, 0.34)} delayMs={delayMs} />
-      <Tell color={tint(p1, 0.34)} delayMs={delayMs} left={42} top={36} />
-      {/* the cold discharge: an ice-blue column hammers the strongest piece
-          and the frost blast rings out around her */}
-      <ImpactCell spec={{ l: 57, t: 56, s: 12, at: 1000, laser: true, shock: true }} rgb="159 216 255" delayMs={delayMs} />
-      <span className="cwp-grind absolute block" style={{ left: "34%", top: "34%", width: "18%", height: "18%", animationDelay: `${delayMs + 300}ms` }}>{gear(tint(p1, 0.9))}</span>
-      <span className="cwp-grindrev absolute block" style={{ left: "50%", top: "44%", width: "15%", height: "15%", animationDelay: `${delayMs + 420}ms` }}>{gear(tint(p1, 0.7))}</span>
-      {[0, 1, 2].map((i) => (
-        <span key={i} className="cwp-glint absolute block" style={{ left: `${38 + i * 10}%`, top: "28%", width: "2%", height: "2%", animationDelay: `${delayMs + 620 + i * 150}ms` }}>
-          <Mote color={tint(p1, 0.9)} />
+    <Stage>
+      <BoardFrame>
+        {/* tell: their half of the board shudders as the machine takes hold */}
+        <span
+          className="cwp-hold absolute block"
+          style={{ left: 0, width: "100%", top: bandTop(5, 8), height: "50%", background: tint(p0, 0.42), animationDelay: dm(delayMs, 0), animationDuration: "calc(1800ms * var(--fx-dur, 1))" }}
+        />
+        {/* the engine itself, bolted to the edge of the board at the border */}
+        <span className="cwp-grind absolute block" style={{ left: "-5%", top: onLine(4, 18), width: "18%", height: "18%", animationDelay: dm(delayMs, 120), animationDuration: "calc(1700ms * var(--fx-dur, 1))" }}>{gear(p1)}</span>
+        <span className="cwp-grindrev absolute block" style={{ left: "6%", top: `calc(${onLine(4, 11)} - var(--fx-side, 1) * 8%)`, width: "10%", height: "10%", animationDelay: dm(delayMs, 200), animationDuration: "calc(1700ms * var(--fx-dur, 1))" }}>{gear(tint(p1, 0.85))}</span>
+        {/* the nine-notch track, every third notch heavy */}
+        <span className="cwp-beam absolute block" style={{ left: "11%", width: "78%", top: onLine(4, 4), height: "4%", animationDelay: dm(delayMs, 260), animationDuration: "calc(1500ms * var(--fx-dur, 1))" }}>
+          <svg viewBox="0 0 78 4" preserveAspectRatio="none" className="block h-full w-full" aria-hidden="true">
+            <path d="M1.5 2 H76.5" stroke={p1} strokeWidth="0.8" strokeLinecap="round" />
+            {Array.from({ length: 10 }, (_, i) => {
+              const heavy = i > 0 && i % 3 === 0;
+              return <path key={i} d={`M${1.5 + i * step} ${heavy ? 0.2 : 1} V${heavy ? 3.8 : 3}`} stroke={heavy ? p2 : p1} strokeWidth={heavy ? 1.1 : 0.6} strokeLinecap="round" />;
+            })}
+          </svg>
         </span>
-      ))}
-      <span className="absolute block" style={{ left: "36%", top: "62%", width: "8%", height: "8%", rotate: "-90deg" }}>
-        <span className="cwp-lash absolute inset-0 block" style={{ background: `linear-gradient(90deg, ${tint(p2, 0.95)}, transparent)`, animationDelay: `${delayMs + 900}ms` }} />
-      </span>
-      <span className="absolute block" style={{ left: "58%", top: "58%", width: "6.5%", height: "10%" }}>
-        <span className="cwp-hold absolute inset-0 block" style={{ animationDelay: `${delayMs + 960}ms` }}>
-          <Man kind="q" fill={tint(p1, 0.9)} stroke={p0} />
+        {/* strike: the pawl clicks one notch, two, three */}
+        <span className="cwp-notch absolute block" style={{ left: "11%", width: "3%", top: `calc(${onLine(4, 3.4)} - var(--fx-side, 1) * 3.4%)`, height: "3.4%", "--step": `${(step / 3) * 100}%`, animationDelay: dm(delayMs, 420) } as CSSProperties}>
+          <svg viewBox="0 0 6 6" className="block h-full w-full" aria-hidden="true">
+            <path d="M0.6 0.8 H5.4 L3 5.4 Z" fill={p2} stroke={p0} strokeWidth="0.4" {...SJ} />
+          </svg>
         </span>
-        <span className="cwp-gild absolute inset-0 block" style={{ animationDelay: `${delayMs + 1100}ms` }}>
-          <Man kind="q" fill={tint(p2, 0.85)} stroke={p0} />
+        {/* on the third notch the clamp shuts on their strongest piece (drawn
+            as a rule chart on their third rank, clear of the cast banner;
+            the real piece gets the target cut) */}
+        <span className="cwp-facein absolute block" style={{ left: "39.8%", top: `calc(${rankTop(6)} + 1%)`, width: "8.9%", height: "10.5%", animationDelay: dm(delayMs, 860), animationDuration: "calc(1100ms * var(--fx-dur, 1))" }}>
+          <Man kind="q" fill={tint(p1, 0.95)} stroke={p0} />
         </span>
-      </span>
-      <SettlePair color={tint(p1, 0.7)} delayMs={delayMs + 1360} />
+        <span className="cwp-stamp absolute block" style={{ left: "37.5%", top: rankTop(6), width: "12.5%", height: "12.5%", animationDelay: dm(delayMs, 960) }}>
+          <svg viewBox="0 0 12 12" className="block h-full w-full" aria-hidden="true">
+            <rect x="0.8" y="0.8" width="10.4" height="10.4" rx="1" fill={tint(p2, 0.28)} stroke={p2} strokeWidth="0.7" />
+            <path d="M0.8 4 L3 2.4 M11.2 8 L9 9.6 M4 0.8 L2.4 3" stroke={p2} strokeWidth="0.5" strokeLinecap="round" />
+          </svg>
+        </span>
+        {/* two pips: frozen for two of their turns */}
+        {[0, 1].map((i) => (
+          <span key={i} className="cwp-pop absolute block rounded-full" style={{ left: `${40.3 + i * 4.2}%`, top: `calc(${rankTop(6)} + 6.25% - var(--fx-side, 1) * 9%)`, width: "3%", height: "3%", background: p2, animationDelay: dm(delayMs, 1060 + i * 90) }} />
+        ))}
+        {/* their king beside it is never seized */}
+        <span className="cwp-rise absolute block" style={{ left: "51.8%", top: `calc(${rankTop(6)} + 1%)`, width: "8.9%", height: "10.5%", animationDelay: dm(delayMs, 1120) }}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <path d={CHESSMAN.k} fill={tint(p1, 0.95)} stroke={p0} strokeWidth="0.45" {...SJ} />
+            <circle cx="5" cy="5.4" r="4.6" fill="none" stroke={p1} strokeWidth="0.45" strokeDasharray="1.2 0.9" />
+          </svg>
+        </span>
+        {/* settle: frost motes drift off the clamp as the count resets */}
+        {[
+          { dx: "-60%", dy: "140%", rot: "-100deg", d: 1340 },
+          { dx: "70%", dy: "120%", rot: "110deg", d: 1420 },
+        ].map((v, i) => (
+          <span key={i} className="cwp-settle absolute block" style={{ left: `${41 + i * 6}%`, top: `calc(${rankTop(6)} + 5%)`, width: "2%", height: "2%", "--dx": v.dx, "--dy": v.dy, "--rot": v.rot, animationDelay: dm(delayMs, v.d) } as CSSProperties}>
+            <Mote color={tint(p2, 0.85)} />
+          </span>
+        ))}
+      </BoardFrame>
     </Stage>
   );
 }
@@ -2366,6 +2407,102 @@ function InvertedCrownScene({ lead, role, delayMs }: SceneProps) {
         </span>
       ))}
       <SettlePair color={tint(p1, 0.7)} delayMs={delayMs + 1300} />
+    </Stage>
+  );
+}
+
+/* --- Doomed Vow (slice TC-boon-curse rule scene): the vow's cord binds the
+   condemned piece on its own square, four candles light for the four turns
+   it has left, the eight squares round it are marked as the only way out,
+   then their king comes to stand on one of them and the cord snaps (the
+   king's rescue that breaks the vow). No bell: that is Death Knell's. ------ */
+const VOW: Palette = ["#2a1030", "#c9b0e8", "#8a94a8"];
+/** One cell of the 14-cell stage, in stage %. */
+const VOW_CELL = 100 / 14;
+/** A box `w` x `h` cells whose centre sits `dx`/`dy` cells off the cast square. */
+function vowBox(dx: number, dy: number, w: number, h: number): CSSProperties {
+  return {
+    left: `${50 + dx * VOW_CELL - (w * VOW_CELL) / 2}%`,
+    top: `${50 + dy * VOW_CELL - (h * VOW_CELL) / 2}%`,
+    width: `${w * VOW_CELL}%`,
+    height: `${h * VOW_CELL}%`,
+  };
+}
+/** Top edge of a box `h` cells tall whose centre sits `dy` cells from the
+ * cast square toward the caster's edge (the board centre, for a piece on the
+ * opponent's side), right for either player through --fx-side. */
+function vowTop(dy: number, h: number): string {
+  return `calc(${50 - (h * VOW_CELL) / 2}% + var(--fx-side, 1) * ${dy * VOW_CELL}%)`;
+}
+/** Absolute start plus a --fx-dur scaled offset. */
+function dm(delayMs: number, off: number): string {
+  return `calc(${delayMs}ms + ${off}ms * var(--fx-dur, 1))`;
+}
+function DoomedVowScene({ lead, role, delayMs }: SceneProps) {
+  const [p0, p1, p2] = VOW;
+  if (role === "entrance") return <EntranceCut palette={VOW} glyph={GLYPH.hw3_doomed_vow} delayMs={delayMs} />;
+  if (!lead) return <CurseHit palette={VOW} glyph={GLYPH.hw3_doomed_vow} delayMs={delayMs} />;
+  const flames = [
+    { x: -0.75, d: 520 },
+    { x: -0.25, d: 620 },
+    { x: 0.25, d: 720 },
+    { x: 0.75, d: 820 },
+  ];
+  return (
+    <Stage>
+      {/* tell: the eight squares round the piece, the only way the vow breaks */}
+      <span className="cwp-pop absolute block" style={{ ...vowBox(0, 0, 3, 3), animationDelay: dm(delayMs, 100), animationDuration: "calc(1750ms * var(--fx-dur, 1))" }}>
+        <svg viewBox="0 0 30 30" className="block h-full w-full" aria-hidden="true">
+          {[0, 1, 2].flatMap((r) => [0, 1, 2].map((c) => (r === 1 && c === 1 ? null : (
+            <rect key={`${r}${c}`} x={c * 10 + 0.8} y={r * 10 + 0.8} width="8.4" height="8.4" rx="0.8" fill={tint(p1, 0.08)} stroke={tint(p1, 0.7)} strokeWidth="0.5" strokeDasharray="1.6 1.2" />
+          ))))}
+        </svg>
+      </span>
+      {/* strike: the vow's cord cinches round the condemned piece */}
+      <span className="cwp-stamp absolute block" style={{ ...vowBox(0, 0, 1.2, 1.2), animationDelay: dm(delayMs, 260), animationDuration: "calc(1300ms * var(--fx-dur, 1))" }}>
+        <svg viewBox="0 0 12 12" className="block h-full w-full" aria-hidden="true">
+          <ellipse cx="6" cy="6.4" rx="4.6" ry="4.4" fill="none" stroke={p1} strokeWidth="0.7" strokeDasharray="2.2 0.6" />
+          <path d="M6 2 C5 1 4.2 0.6 3.6 1.2 M6 2 C7 1 7.8 0.6 8.4 1.2" fill="none" stroke={p1} strokeWidth="0.6" {...SJ} />
+          <circle cx="6" cy="2" r="0.8" fill={p0} stroke={p1} strokeWidth="0.4" />
+        </svg>
+      </span>
+      {/* four candles stand beside it, on the board-centre side: four of
+          their turns left */}
+      <span className="cwp-rise absolute block" style={{ ...vowBox(0, 0, 2, 0.6), top: vowTop(1.05, 0.6), animationDelay: dm(delayMs, 400), animationDuration: "calc(1500ms * var(--fx-dur, 1))" }}>
+        <svg viewBox="0 0 20 6" className="block h-full w-full" aria-hidden="true">
+          {[2.5, 7.5, 12.5, 17.5].map((x) => (
+            <rect key={x} x={x - 1} y="1" width="2" height="4.6" rx="0.4" fill={tint(p1, 0.85)} stroke={p0} strokeWidth="0.35" />
+          ))}
+          <path d="M0.6 5.7 H19.4" stroke={p2} strokeWidth="0.6" strokeLinecap="round" />
+        </svg>
+      </span>
+      {flames.map((f) => (
+        <span key={f.x} className="cwp-flame absolute block" style={{ ...vowBox(f.x, 0, 0.2, 0.3), top: `calc(${vowTop(1.05, 0.3)} - ${0.42 * VOW_CELL}%)`, animationDelay: dm(delayMs, f.d), animationDuration: "calc(1200ms * var(--fx-dur, 1))" }}>
+          <svg viewBox="0 0 4 6" className="block h-full w-full" aria-hidden="true">
+            <path d="M2 0.3 C3.4 2.2 3.6 3.6 2 5.7 C0.4 3.6 0.6 2.2 2 0.3 Z" fill={p1} stroke={p0} strokeWidth="0.3" {...SJ} />
+          </svg>
+        </span>
+      ))}
+      {/* their king walks up and stands on a square beside it */}
+      <span className="cwp-kneel absolute block" style={{ ...vowBox(1, 0, 0.8, 0.8), "--dx": "260%", "--dy": "120%", animationDelay: dm(delayMs, 900) } as CSSProperties}>
+        <Man kind="k" fill={p1} stroke={p0} />
+      </span>
+      {/* settle: the cord snaps and its ends fall away */}
+      <span className="cwp-crack absolute block" style={{ ...vowBox(0.5, 0, 0.5, 0.9), animationDelay: dm(delayMs, 1240) }}>
+        <svg viewBox="0 0 5 9" className="block h-full w-full" aria-hidden="true">
+          <path d="M2.6 0.6 L1.6 3.4 L3.2 5 L2 8.4" fill="none" stroke={p2} strokeWidth="0.6" {...SJ} />
+        </svg>
+      </span>
+      {[
+        { dx: "-40%", dy: "160%", rot: "-80deg", d: 1300 },
+        { dx: "60%", dy: "150%", rot: "90deg", d: 1360 },
+      ].map((v, i) => (
+        <span key={i} className="cwp-settle absolute block" style={{ ...vowBox(0.35, i ? 0.3 : -0.3, 0.3, 0.3), "--dx": v.dx, "--dy": v.dy, "--rot": v.rot, animationDelay: dm(delayMs, v.d) } as CSSProperties}>
+          <svg viewBox="0 0 6 6" className="block h-full w-full" aria-hidden="true">
+            <path d="M1 1 C2.6 2.4 3.4 3.6 5 5" fill="none" stroke={p1} strokeWidth="0.8" strokeLinecap="round" />
+          </svg>
+        </span>
+      ))}
     </Stage>
   );
 }
@@ -2555,7 +2692,7 @@ const GLYPH: Record<string, ReactNode> = {
     <Gl>
       <path d="M2.6 6.4 C2.6 3.2 3.6 1.6 5 1.2 C6.4 1.6 7.4 3.2 7.4 6.4 Z" fill="#2a1030" stroke="#c9b0e8" strokeWidth="0.5" {...SJ} />
       <path d="M2 6.4 H8 L7.6 7.6 H2.4 Z" fill="#c9b0e8" />
-      <path d="M3.4 8.4 V9.6 M4.6 8.4 L5.2 9.6 L5.8 8.4" fill="none" stroke="#c94a5a" strokeWidth="0.5" {...SJ} />
+      <path d="M3.8 8.4 V9.6 M5 8.4 V9.6 M6.2 8.4 V9.6" fill="none" stroke="#c94a5a" strokeWidth="0.5" {...SJ} />
       <path d="M5.4 3 L4.8 4.4 L5.6 5.6" fill="none" stroke="#8a94a8" strokeWidth="0.4" {...SJ} />
     </Gl>
   ),
@@ -3162,10 +3299,12 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "clockice", source: "frozen",
     anchor: "board",
   }, "collapse"),
-  hw3_doomed_vow: G(OmenBell, ["#2a1030", "#c9b0e8", "#8a94a8"], GLYPH.hw3_doomed_vow, {
-    ordering: "radial", staggerMs: 0, victims: ["b", "r", "q"], hasLead: true, sound: "cathedral",
+  hw3_doomed_vow: S(DoomedVowScene, {
+    // Any non-king piece can be condemned, and exactly one is: the victim is
+    // the one piece on the cast square.
+    ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral",
     anchor: "cast",
-  }, "doomedvow"),
+  }),
 
   /* --- BlightGarden (hazards / contagion / terrain) ----------------------- */
   hw3_wandering_sentry: G(BlightGarden, ["#2f3a26", "#8faf4a", "#c9d69a"], GLYPH.hw3_wandering_sentry, {

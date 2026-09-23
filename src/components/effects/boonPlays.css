@@ -390,6 +390,43 @@
 }
 .bwp-whirl { animation: bwp-whirl calc(1.45s * var(--fx-dur, 1)) cubic-bezier(0.35, 0, 0.4, 1) both; }
 
+/* --- Rule scenes (slice TC-boon-curse) ------------------------------------ */
+
+/* Vantage Point / Home Guard: a piece (or blade) pushes toward the caster's
+   edge by --reach and is thrown back to where it stood. --rb-side overrides
+   the direction for art already mirrored by a static --fx-side flip. */
+@keyframes bwp-rebuff {
+  0% { opacity: 0; transform: translateY(0); }
+  14% { opacity: 1; transform: translateY(0); }
+  40% { transform: translateY(calc(var(--rb-side, var(--fx-side, 1)) * var(--reach, 40%))); }
+  52% { transform: translateY(calc(var(--rb-side, var(--fx-side, 1)) * var(--reach, 40%) * 0.35)); }
+  66% { transform: translateY(calc(var(--rb-side, var(--fx-side, 1)) * var(--reach, 40%) * -0.12)); }
+  80% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(0); }
+}
+.bwp-rebuff { animation: bwp-rebuff calc(1s * var(--fx-dur, 1)) var(--ease-out) both; }
+
+/* Vantage Point / Covenant of Return: a piece comes back toward the caster
+   by --steps ranks (default one; it starts that many of its own heights
+   further from the caster's edge). */
+@keyframes bwp-stepoff {
+  0% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * -117% * var(--steps, 1))); }
+  18% { opacity: 1; transform: translateY(calc(var(--fx-side, 1) * -117% * var(--steps, 1))); }
+  54% { transform: translateY(0); }
+  84% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(0); }
+}
+.bwp-stepoff { animation: bwp-stepoff calc(1s * var(--fx-dur, 1)) var(--ease-io) both; }
+
+/* Drive Them Out: an invader is thrown back across the border toward its own
+   side by --reach (negative runs away from the caster) and is gone. */
+@keyframes bwp-expel {
+  0% { opacity: 0; transform: translateY(0) rotate(0deg); }
+  16% { opacity: 1; transform: translateY(calc(var(--fx-side, 1) * 8%)) rotate(0deg); }
+  100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * var(--reach, -150%))) rotate(var(--rot, 20deg)); }
+}
+.bwp-expel { animation: bwp-expel calc(0.95s * var(--fx-dur, 1)) var(--ease-io) both; }
+
 /* --- Global kill switch ----------------------------------------------------
    Settings animations-off parks every boon play outright. The FLAGSHIP impact
    composites (impact.css laser / shatter / shockwave) and the stage quake all

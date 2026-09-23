@@ -1,0 +1,155 @@
+{
+ "id": "bw3_home_guard",
+ "url": "/dev/plays?id=bw3_home_guard&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "bw3_home_guard",
+  "name": "Home Guard",
+  "tier": 7,
+  "category": "protection",
+  "mechanic": "instant",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:bw3_home_guard",
+  "anchor": "board",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 55,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2511,
+  "cssEndMs": 3528,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 71,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 175,
+  "maxGapMs": 297.3
+ },
+ "raf": {
+  "frames": 207,
+  "medianMs": 16.7,
+  "maxMs": 66.7,
+  "dropped": 11
+ },
+ "longAnimationFrames": {
+  "count": 2,
+  "worstMs": 69,
+  "totalBlockingMs": 0,
+  "entries": [
+   {
+    "atMs": -48,
+    "duration": 55,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 79,
+    "duration": 69,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  192,
+  490,
+  848,
+  1250,
+  1690,
+  2161,
+  2661
+ ],
+ "png": "docs/polish-pass/evidence/TC-boon-curse/after/bw3_home_guard.png",
+ "pngBytes": 29308,
+ "off": {
+  "url": "/dev/plays?id=bw3_home_guard&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0.0011,
+  "endRegions": [
+   {
+    "x": 232,
+    "y": 416,
+    "w": 16,
+    "h": 56,
+    "cells": 8
+   },
+   {
+    "x": 120,
+    "y": 416,
+    "w": 8,
+    "h": 16,
+    "cells": 2
+   },
+   {
+    "x": 176,
+    "y": 416,
+    "w": 8,
+    "h": 16,
+    "cells": 2
+   },
+   {
+    "x": 304,
+    "y": 416,
+    "w": 8,
+    "h": 16,
+    "cells": 2
+   },
+   {
+    "x": 360,
+    "y": 416,
+    "w": 8,
+    "h": 16,
+    "cells": 2
+   },
+   {
+    "x": 120,
+    "y": 456,
+    "w": 8,
+    "h": 16,
+    "cells": 2
+   },
+   {
+    "x": 176,
+    "y": 456,
+    "w": 8,
+    "h": 16,
+    "cells": 2
+   },
+   {
+    "x": 304,
+    "y": 456,
+    "w": 8,
+    "h": 16,
+    "cells": 2
+   },
+   {
+    "x": 360,
+    "y": 456,
+    "w": 8,
+    "h": 16,
+    "cells": 2
+   }
+  ],
+  "png": "docs/polish-pass/evidence/TC-boon-curse/after/bw3_home_guard.off.png"
+ }
+}

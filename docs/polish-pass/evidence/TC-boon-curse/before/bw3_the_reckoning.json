@@ -1,0 +1,76 @@
+{
+ "id": "bw3_the_reckoning",
+ "url": "/dev/plays?id=bw3_the_reckoning&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "bw3_the_reckoning",
+  "name": "The Reckoning",
+  "tier": 8,
+  "category": "attack",
+  "mechanic": "instant",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:bw3_the_reckoning",
+  "anchor": "board",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 65,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2488,
+  "cssEndMs": 3893,
+  "settled": true,
+  "windowMs": 4144,
+  "cssAnimations": 68,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 155,
+  "maxGapMs": 340.6
+ },
+ "raf": {
+  "frames": 229,
+  "medianMs": 16.7,
+  "maxMs": 66.7,
+  "dropped": 24
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 89,
+  "totalBlockingMs": 35,
+  "entries": [
+   {
+    "atMs": -77,
+    "duration": 89,
+    "blocking": 35,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  191,
+  486,
+  840,
+  1239,
+  1675,
+  2142,
+  2638
+ ],
+ "png": "docs/polish-pass/evidence/TC-boon-curse/before/bw3_the_reckoning.png",
+ "pngBytes": 31925
+}

@@ -455,6 +455,31 @@
    Settings animation toggle: park every cwp-* element outright. The cwp-impact
    and cwp-quakebox wrappers match [class^="cwp-"], so their imp-* children go
    dark with them (opacity 0 on the wrapper hides the subtree). */
+/* Doomed Vow (slice TC-boon-curse): their king walks in from --dx/--dy to
+   the square beside the condemned piece and bows there (the rescue). */
+@keyframes cwp-kneel {
+  0% { opacity: 0; transform: translate(var(--dx, 200%), var(--dy, 100%)) scale(1); }
+  18% { opacity: 1; }
+  58% { transform: translate(0, 0) scale(1); }
+  68% { transform: translate(0, 0) scale(1.06, 0.84); }
+  80% { opacity: 1; transform: translate(0, 0) scale(1); }
+  100% { opacity: 0; transform: translate(0, 0) scale(1); }
+}
+.cwp-kneel { animation: cwp-kneel calc(1.1s * var(--fx-dur, 1)) var(--ease-io) both; transform-origin: 50% 100%; }
+
+/* The Curse Engine (slice TC-boon-curse): the pawl clicks along the track
+   one notch (--step) at a time, three times, holds on the heavy notch and
+   snaps back to zero as it fades (the count resets). */
+@keyframes cwp-notch {
+  0% { opacity: 0; transform: translateX(0); }
+  10% { opacity: 1; transform: translateX(0); }
+  18%, 30% { transform: translateX(var(--step, 300%)); }
+  38%, 50% { transform: translateX(calc(var(--step, 300%) * 2)); }
+  58%, 84% { opacity: 1; transform: translateX(calc(var(--step, 300%) * 3)); }
+  100% { opacity: 0; transform: translateX(0); }
+}
+.cwp-notch { animation: cwp-notch calc(1.2s * var(--fx-dur, 1)) var(--ease-out) both; }
+
 html[data-anim="off"] [class^="cwp-"],
 html[data-anim="off"] [class*=" cwp-"] {
   animation: none !important;
