@@ -9,17 +9,64 @@ Full design: [`../docs/bot-offload-tier1-engine-service.md`](../docs/bot-offload
 ## API
 
 ```
-GET  /healthz -> 200 "ok"
-POST /move    -> 200 { "move": <Move|null> }
+GET  /healthz -> 200 "ok", or 503 "misconfigured" when HOUSE_ENGINE_TOKEN is
+                 empty or ENGINE_REPLAY_VERSION is not a positive integer
+GET  /stats   -> 200 pool counters (bearer token required)
+POST /move    -> 200 { "move": <Move|null>, "scoreCp": number|null, "depth": number }
   Authorization: Bearer <HOUSE_ENGINE_TOKEN>
-  { "match": <EngineMatch>, "skill": 1200|1400|1600|1750,
-    "remainingClockMs"?: number, "replayVersion": number }
+  { "match": <EngineMatch>, "skill": <HouseSkill>, "replayVersion": number,
+    "profile"?: <resolved profile>, "remainingClockMs"?: number,
+    "persona"?: <house user id>, "incrementSec"?: number, "deadlineMs"?: number }
 ```
 
-- `401` — missing/wrong bearer token.
-- `409 {error:"replay_version"}` — this box's engine is out of lockstep with the
+- `401`: missing or wrong bearer token.
+- `409 {error:"replay_version"}`: this box's engine is out of lockstep with the
   Worker's `REPLAY_VERSION`; the DO falls back to local compute.
-- `move: null` — the position has no legal move, or the record could not replay.
+- `400`: unparsable JSON, a malformed `match`, or an unknown `skill`.
+- `503 {error:"busy"}`: every search thread is busy and the queue is full; the
+  answer is immediate, so the DO falls back to local compute at once.
+- `503 {error:"deadline"}`: the request waited so long in the queue that less
+  than 20ms of search would fit before its deadline.
+- `500 {error:"search_failed"}`: the search thread threw, crashed or overran.
+- `move: null`: the position has no legal move, or the record could not replay.
+
+Every field past `match`, `skill`, `profile`, `remainingClockMs` and
+`replayVersion` is optional and additive, so an old worker and a new box (or
+the other way round) keep working in either deploy order:
+
+- `match.cardOverrides` (`{ off?: string[], tier?: Record<string, number> }`):
+  the moderator card overrides stamped on the match. They are installed around
+  the replay and the search (draft matches only, as the DO does), so a match
+  with a disabled or re-tiered card replays to the same position as the DO's.
+- `persona`: the house persona's user id. The box resolves it itself; an
+  unknown id is ignored. With no persona, the opening repertoire is seeded from
+  the match seed and the side to move, so one line is not replayed for a whole
+  rating band.
+- `incrementSec`: the game's increment, for the graded move budget.
+- `deadlineMs`: how long the caller will wait, measured from arrival at the
+  box (default 2400, clamped to 5000). The search gets what is left of it after
+  any queue wait, less a 250ms margin.
+- `scoreCp` in the reply: the searched root score from the mover's side, null
+  when the move did not come from a completed search (book, blunder, forced).
+  Server-only: it must never reach a client.
+
+## Search pool
+
+Searches run on `ENGINE_POOL_SIZE` worker threads (default 2, leaving the rest
+of the box to the arena service), started from the same `server.mjs`. At most
+2 x the pool size requests wait; a request whose client hangs up while it waits
+is dropped without being searched, and the bot's `remainingClockMs` is charged
+the time it waited. A thread that crashes, or overruns its deadline by 2s, is
+replaced. `GET /stats` reports submitted, searched, rejected, expired and
+abandoned counts.
+
+Tests (local ports only):
+
+```sh
+node engine-service/build.mjs
+./node_modules/.bin/tsx engine-service/test/server.test.ts
+node engine-service/test/load.mjs --k 1,2,3,4 --tier 2200 --requests 12
+```
 
 ## Build
 
@@ -39,7 +86,7 @@ npm run build        # -> dist/server.mjs
 sudo mkdir -p /opt/nerfchess-engine
 sudo cp dist/server.mjs /opt/nerfchess-engine/
 
-# 2. env file (chmod 600) — set the shared token + REPLAY_VERSION
+# 2. env file (chmod 600), set the shared token + REPLAY_VERSION
 sudo cp deploy/nerfchess-engine.env.example /etc/nerfchess-engine.env
 sudo chmod 600 /etc/nerfchess-engine.env
 sudo editor /etc/nerfchess-engine.env   # HOUSE_ENGINE_TOKEN, ENGINE_REPLAY_VERSION
@@ -48,7 +95,7 @@ sudo editor /etc/nerfchess-engine.env   # HOUSE_ENGINE_TOKEN, ENGINE_REPLAY_VERS
 sudo cp deploy/nerfchess-engine.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable --now nerfchess-engine
-curl -s localhost:8787/healthz    # -> ok
+curl -s localhost:8787/healthz    # -> ok (503 misconfigured if the env is incomplete)
 ```
 
 ### Tunnel ingress
@@ -85,21 +132,21 @@ path is off or unreachable.
 
 `ENGINE_REPLAY_VERSION` (env) must equal the Worker's `REPLAY_VERSION` constant
 (`worker.ts`). On mismatch the service 409s and the DO computes locally, so a
-stale box degrades safely rather than desyncing — but rebuild + redeploy this
+stale box degrades safely rather than desyncing, but rebuild + redeploy this
 service whenever `REPLAY_VERSION` bumps.
 
 ## Self-update webhook (drift heals itself)
 
 Deployed on the box alongside the engine (files in `deploy/`):
 
-- `updater.mjs` — HTTP service on `127.0.0.1:8789` (systemd:
+- `updater.mjs`, HTTP service on `127.0.0.1:8789` (systemd:
   `nerfchess-engine-updater.service`, runs as `ubuntu`, token in
   `/etc/nerfchess-engine-updater.env` = the same `HOUSE_ENGINE_TOKEN`).
   `POST /update {replayVersion}` starts a rebuild; `GET /update` reports the
   last run. Per-version cooldown (5 min) so a lagging master isn't hammered.
-- `update.sh` — unprivileged: fetches master into `/opt/nerfchess-engine/repo`
+- `update.sh`, unprivileged: fetches master into `/opt/nerfchess-engine/repo`
   over HTTPS with a short-lived GitHub App installation token (org policy: no
-  deploy keys; `github-app-token.mjs` mints it — RS256 JWT via `node:crypto`,
+  deploy keys; `github-app-token.mjs` mints it, RS256 JWT via `node:crypto`,
   no deps), refuses unless master's `REPLAY_VERSION` equals the requested one,
   builds, then hands off to…
 - `nerfchess-engine-apply` (root, `/usr/local/sbin`, the only sudoers grant):
@@ -119,16 +166,16 @@ private key, then on the box put the PEM at
 URL of the App's "Configure" page, or `GET /app/installations` with an App
 JWT). Restart `nerfchess-engine-updater` after editing the env.
 
-The Worker side (`pingEngineUpdate` in `worker.ts`) fires this webhook —
-throttled, fire-and-forget — whenever `/move` answers 409. Net effect: deploy
+The Worker side (`pingEngineUpdate` in `worker.ts`) fires this webhook ,
+throttled, fire-and-forget, whenever `/move` answers 409. Net effect: deploy
 the worker from origin/master and the box catches up on its own within
 seconds of the first bot move; a worker deployed from unpushed code just keeps
 falling back to local compute (and, until the frozen-clock search abort lands,
-that fallback can still blow the DO CPU limit — push master first).
+that fallback can still blow the DO CPU limit, push master first).
 
 ## Note on the repo typecheck
 
 `server.ts` uses `node:http` and imports from `../src`. It builds standalone via
 `build.mjs` (esbuild, types erased) and is not part of the Worker bundle. If the
 repo's `tsc` project picks it up and lacks `@types/node` in scope, add
-`engine-service` to `tsconfig` `exclude` — it has its own build.
+`engine-service` to `tsconfig` `exclude`, it has its own build.

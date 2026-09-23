@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Unprivileged half of the Tokyo box self-update: fetch master (auth via a
-# short-lived GitHub App installation token — org policy forbids deploy keys),
+# short-lived GitHub App installation token, org policy forbids deploy keys),
 # verify its REPLAY_VERSION matches what the caller asked for, build BOTH
-# bundles (engine + arena — the arena shares the replay code and rots the same
+# bundles (engine + arena, the arena shares the replay code and rots the same
 # way; see docs/tokyo-box-self-update.md), then hand off to the root-owned
 # nerfchess-engine-apply. Invoked by updater.mjs (as ubuntu), which supplies
 # the GITHUB_APP_* env.
@@ -35,7 +35,7 @@ if [ "$SRC_VER" != "$REQ" ]; then
   exit 3
 fi
 if [ -f "$STAMP" ] && [ "$(cat "$STAMP")" = "$COMMIT" ]; then
-  echo "already applied $COMMIT — nothing to do"
+  echo "already applied $COMMIT, nothing to do"
   exit 0
 fi
 cd engine-service

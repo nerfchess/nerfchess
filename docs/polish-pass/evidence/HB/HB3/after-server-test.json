@@ -1,0 +1,80 @@
+{
+  "results": {
+    "healthz 200 when configured": {
+      "pass": true,
+      "detail": "status 200"
+    },
+    "healthz 503 with an empty token": {
+      "pass": true,
+      "detail": "status 503"
+    },
+    "legal move on the fixed record": {
+      "pass": true,
+      "detail": "status 200"
+    },
+    "401 on a bad token": {
+      "pass": true,
+      "detail": "status 401"
+    },
+    "409 on a version mismatch": {
+      "pass": true,
+      "detail": "status 409"
+    },
+    "400 on garbage (bad JSON, bad match shape, bad skill)": {
+      "pass": true,
+      "detail": "statuses 400 / 400 / 400"
+    },
+    "scoreCp present on a searched move": {
+      "pass": true,
+      "detail": "scoreCp -5"
+    },
+    "unknown fields and an unknown persona ignored": {
+      "pass": true,
+      "detail": "status 200"
+    },
+    "persona honored (pet opening at ply 0 in 10 or more of 20)": {
+      "pass": true,
+      "detail": "endgamegrace pet b2b3: 16/20"
+    },
+    "variety with no persona: 8 or more distinct 8-ply lines over 20 seeds at 1650": {
+      "pass": true,
+      "detail": "19 lines, 6 first moves (d2d4 g1f3 e2e4 g2g3 c2c4 b1c3)"
+    },
+    "overrides: the service replays 16-cards-off matches identically to the local engine": {
+      "pass": true,
+      "detail": "640 turns over 8 games; a replay without the overrides diverges on 182 and cannot replay 308; service answers: 0 null, 0 illegal, 0 non-200"
+    }
+  },
+  "metrics": {
+    "bundle": "/home/user/nerfchess/engine-service/dist/server.mjs",
+    "persona": {
+      "name": "endgamegrace",
+      "pet": "b2b3",
+      "hits": 16,
+      "n": 20
+    },
+    "variety": {
+      "seeds": 20,
+      "plies": 8,
+      "distinctLines": 19,
+      "distinctFirstMoves": 6,
+      "firstMoves": [
+        "d2d4",
+        "g1f3",
+        "e2e4",
+        "g2g3",
+        "c2c4",
+        "b1c3"
+      ]
+    },
+    "overrides": {
+      "cardsOff": 16,
+      "turns": 640,
+      "divergedWithoutOverrides": 182,
+      "unreplayableWithoutOverrides": 308,
+      "nullMoves": 0,
+      "illegal": 0,
+      "non200": 0
+    }
+  }
+}

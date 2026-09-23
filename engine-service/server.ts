@@ -1,65 +1,28 @@
 // nerfchess house-bot engine service (Tier 1).
 //
 // Runs on the OCI box. Given a stored-match subset, it replays the position
-// with the bundled engine and returns a house move — moving the (unbounded,
-// CPU-heavy) engine search off the single-threaded game-server Durable Object.
+// with the bundled engine and returns a house move, moving the (CPU-heavy)
+// engine search off the single-threaded game-server Durable Object.
 // See docs/bot-offload-tier1-engine-service.md.
 //
 // Stateless. No DB. The only trust it grants is the shared bearer token.
 // Build:  node build.mjs   ->  dist/server.mjs
 // Run:    node dist/server.mjs   (env from /etc/nerfchess-engine.env)
+//
+// The one bundle is both the HTTP front (main thread) and the search threads
+// (searchPool.ts starts this same file as each worker), so the deploy stays a
+// single file.
+import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import { isMainThread, parentPort } from "node:worker_threads";
+import { parseMoveBody, runSearch, type SearchTask } from "./search";
+import { SearchPool } from "./searchPool";
 
-import { createServer, type IncomingMessage } from "node:http";
-import { replayToPosition, type EngineMatch } from "../src/engine/replay";
-import {
-  HOUSE_SKILL_PROFILES,
-  pickHouseMove,
-  sanitizeResolvedProfile,
-  type HouseSkill,
-} from "../src/lib/server/bots";
-
-const TOKEN = process.env.HOUSE_ENGINE_TOKEN ?? "";
-const REPLAY_VERSION = Number(process.env.ENGINE_REPLAY_VERSION ?? "0");
-const PORT = Number(process.env.PORT ?? "8787");
-// Unlike the DO, this box has no shared thread to protect — search here costs
-// nothing else. This is a non-binding safety cap (today's tiers top out at
-// 800ms, see bots.ts); actual wall time can run to ~2x nominal budgetMs
-// (negamax's own timeout check fires at budget*2) plus ~600ms of tunnel/
-// network overhead over the public path, so the real ceiling on worst-case
-// latency is the per-tier budgetMs values, sized (and measured against the
-// public URL) to leave margin under the Worker's HOUSE_ENGINE_TIMEOUT_MS
-// (3000ms).
-// Doubled from 900 with the 2026-09 deadline change. negamax used to abort at
-// `budget * 2`, so a 900ms request really spent 1.8-2.25s; it now hard-deadlines
-// at the ask, so 900 would have halved every house tier's think time. 1800 here
-// is the same real spend these tiers always had, and it is now a BOUND rather
-// than a midpoint, which is more margin below the worker's 3000ms
-// HOUSE_ENGINE_TIMEOUT_MS than before. Moves in lockstep with
-// HOUSE_SKILL_PROFILES and WEAKEN_CLAMP.budgetMs in src/lib/server/bots.ts;
-// a ceiling only ever clamps down, so the two sides can deploy in any order.
-const REMOTE_SEARCH_CEILING_MS = 1800;
-// Derived from the roster's profile map so the accepted tiers never drift out
-// of sync with bots.ts when the skill tiers change.
-const VALID_SKILLS = new Set<HouseSkill>(
-  (Object.keys(HOUSE_SKILL_PROFILES) as unknown[]).map(Number) as HouseSkill[],
-);
-
-// The blunder branch inside pickHouseMove is nondeterministic by design, so a
-// local RNG is correct here — only the replayed BOARD must match the DO's, and
-// that is guaranteed by the shared engine + the REPLAY_VERSION guard below.
-const randomInt = (max: number) => Math.floor(Math.random() * max);
-
-interface MoveRequest {
-  match: EngineMatch;
-  skill: HouseSkill;
-  // Moderator-resolved strength the DO computed. Optional (older Workers omit
-  // it) and re-clamped here field-by-field against the tier's baked profile, so
-  // a malformed or version-skewed payload degrades to baked strength, never to
-  // a broken search. Absent -> baked profile for `skill`.
-  profile?: unknown;
-  remainingClockMs?: number;
-  replayVersion: number;
-}
+/** Default request deadline, measured from arrival, for a worker that sends
+ * none: the old worker waits 3000ms, and about 600ms of that is the round
+ * trip through the tunnel. */
+const DEFAULT_DEADLINE_MS = 2400;
+/** A caller's deadline is clamped to this range. */
+const MAX_DEADLINE_MS = 5000;
 
 function readBody(req: IncomingMessage, limit = 2_000_000): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -79,56 +42,134 @@ function readBody(req: IncomingMessage, limit = 2_000_000): Promise<string> {
   });
 }
 
-const server = createServer(async (req, res) => {
-  try {
-    if (req.method === "GET" && req.url === "/healthz") {
-      res.writeHead(200, { "content-type": "text/plain" });
-      res.end("ok");
-      return;
-    }
-    if (req.method !== "POST" || req.url !== "/move") {
-      res.writeHead(404);
-      res.end("not found");
-      return;
-    }
-    if (!TOKEN || req.headers.authorization !== `Bearer ${TOKEN}`) {
-      res.writeHead(401);
-      res.end("unauthorized");
-      return;
-    }
+function main(): void {
+  const TOKEN = process.env.HOUSE_ENGINE_TOKEN ?? "";
+  const REPLAY_VERSION = Number(process.env.ENGINE_REPLAY_VERSION ?? "0");
+  const PORT = Number(process.env.PORT ?? "8787");
+  // Search threads. Default 2 leaves the rest of the box's cores to the arena
+  // service that shares it.
+  const POOL_SIZE = Math.max(1, Math.min(16, Math.floor(Number(process.env.ENGINE_POOL_SIZE ?? "2")) || 2));
+  const QUEUE_LIMIT = 2 * POOL_SIZE;
+  // Misconfigured: every /move would 401 (no token) or 409 (no version), and
+  // the worker would silently fall back to local compute forever. /healthz
+  // says so, so the apply script's health check and any monitor see it.
+  const configured = TOKEN.length > 0 && Number.isInteger(REPLAY_VERSION) && REPLAY_VERSION > 0;
 
-    const body = JSON.parse(await readBody(req)) as MoveRequest;
+  const pool = new SearchPool({ size: POOL_SIZE, queueLimit: QUEUE_LIMIT, workerUrl: new URL(import.meta.url) });
 
-    // Version guard: if this box's engine is out of lockstep with the Worker's
-    // REPLAY_VERSION, refuse rather than risk a desynced replay. The DO reads
-    // 409 as "fall back to local".
-    if (body.replayVersion !== REPLAY_VERSION) {
-      res.writeHead(409, { "content-type": "application/json" });
-      res.end(JSON.stringify({ error: "replay_version", expected: REPLAY_VERSION }));
-      return;
+  const json = (res: ServerResponse, code: number, body: unknown) => {
+    if (res.headersSent || res.destroyed) return;
+    res.writeHead(code, { "content-type": "application/json" });
+    res.end(JSON.stringify(body));
+  };
+  const authed = (req: IncomingMessage) => !!TOKEN && req.headers.authorization === `Bearer ${TOKEN}`;
+
+  const server = createServer(async (req, res) => {
+    try {
+      if (req.method === "GET" && req.url === "/healthz") {
+        res.writeHead(configured ? 200 : 503, { "content-type": "text/plain" });
+        res.end(configured ? "ok" : "misconfigured");
+        return;
+      }
+      // Pool counters for the operator; behind the token like /move.
+      if (req.method === "GET" && req.url === "/stats") {
+        if (!authed(req)) {
+          res.writeHead(401);
+          res.end("unauthorized");
+          return;
+        }
+        json(res, 200, { poolSize: pool.size, queueLimit: QUEUE_LIMIT, busy: pool.busy, queued: pool.queued, ...pool.counters });
+        return;
+      }
+      if (req.method !== "POST" || req.url !== "/move") {
+        res.writeHead(404);
+        res.end("not found");
+        return;
+      }
+      if (!authed(req)) {
+        res.writeHead(401);
+        res.end("unauthorized");
+        return;
+      }
+
+      let raw: unknown;
+      try {
+        raw = JSON.parse(await readBody(req));
+      } catch (err) {
+        json(res, 400, { error: "bad_request", message: String(err) });
+        return;
+      }
+      const parsed = parseMoveBody(raw);
+      // Version guard first: if this box's engine is out of lockstep with the
+      // Worker's REPLAY_VERSION, refuse rather than risk a desynced replay. The
+      // DO reads 409 as "fall back to local" and pings the self-updater.
+      const version = parsed.ok ? parsed.replayVersion : (raw as { replayVersion?: unknown } | null)?.replayVersion;
+      if (version !== REPLAY_VERSION) {
+        json(res, 409, { error: "replay_version", expected: REPLAY_VERSION });
+        return;
+      }
+      if (!parsed.ok) {
+        json(res, 400, { error: "bad_request", message: parsed.error });
+        return;
+      }
+
+      // The client hanging up (the worker's own timeout firing) drops the
+      // request if it is still queued, so nobody searches for an answer no
+      // one will read.
+      const ctl = new AbortController();
+      res.on("close", () => {
+        if (!res.writableFinished) ctl.abort();
+      });
+      const deadlineMs = Math.max(1, Math.min(MAX_DEADLINE_MS, parsed.deadlineMs ?? DEFAULT_DEADLINE_MS));
+      const outcome = await pool.submit(parsed.task, deadlineMs, ctl.signal);
+      switch (outcome.kind) {
+        case "done":
+          json(res, 200, outcome.result);
+          return;
+        case "full":
+          // Busy: the worker falls back to its local search at once.
+          res.setHeader("retry-after", "1");
+          json(res, 503, { error: "busy" });
+          return;
+        case "expired":
+          json(res, 503, { error: "deadline" });
+          return;
+        case "aborted":
+          return;
+        case "error":
+          json(res, 500, { error: "search_failed" });
+          return;
+      }
+    } catch (err) {
+      json(res, 500, { error: "internal", message: String(err) });
     }
-    if (!VALID_SKILLS.has(body.skill)) {
-      res.writeHead(400);
-      res.end("bad skill");
-      return;
-    }
+  });
 
-    // Honor the DO's resolved profile when present (re-clamped), else baked.
-    const profile = body.profile != null ? sanitizeResolvedProfile(body.skill, body.profile) : undefined;
-    const game = replayToPosition(body.match);
-    const move = game
-      ? pickHouseMove(game, body.skill, randomInt, body.remainingClockMs, REMOTE_SEARCH_CEILING_MS, profile)
-      : null;
+  server.listen(PORT, () => {
+    // eslint-disable-next-line no-console
+    console.log(
+      `nerfchess-engine listening on :${PORT} (REPLAY_VERSION=${REPLAY_VERSION}, pool=${POOL_SIZE}, queue=${QUEUE_LIMIT}${configured ? "" : ", MISCONFIGURED"})`,
+    );
+  });
 
-    res.writeHead(200, { "content-type": "application/json" });
-    res.end(JSON.stringify({ move }));
-  } catch (err) {
-    res.writeHead(400, { "content-type": "application/json" });
-    res.end(JSON.stringify({ error: "bad_request", message: String(err) }));
+  for (const sig of ["SIGTERM", "SIGINT"] as const) {
+    process.on(sig, () => {
+      server.close();
+      void pool.close().finally(() => process.exit(0));
+    });
   }
-});
+}
 
-server.listen(PORT, () => {
-  // eslint-disable-next-line no-console
-  console.log(`nerfchess-engine listening on :${PORT} (REPLAY_VERSION=${REPLAY_VERSION})`);
-});
+// A search thread: one task at a time, answered by id.
+function thread(): void {
+  parentPort!.on("message", (msg: { id: number; task: SearchTask }) => {
+    try {
+      parentPort!.postMessage({ id: msg.id, result: runSearch(msg.task) });
+    } catch (err) {
+      parentPort!.postMessage({ id: msg.id, error: String(err) });
+    }
+  });
+}
+
+if (isMainThread) main();
+else thread();
