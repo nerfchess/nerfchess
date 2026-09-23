@@ -1,0 +1,93 @@
+{
+ "id": "fm_boon_dewdrop",
+ "url": "/dev/plays?id=fm_boon_dewdrop&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "fm_boon_dewdrop",
+  "name": "Dewdrop",
+  "tier": 3,
+  "category": "protection",
+  "mechanic": "instant",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:fm_boon_dewdrop",
+  "anchor": "cast",
+  "source": "shield",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2352,
+  "cssEndMs": 3405,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 20,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 178,
+  "maxGapMs": 276.8
+ },
+ "raf": {
+  "frames": 213,
+  "medianMs": 16.7,
+  "maxMs": 66.8,
+  "dropped": 6
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 92,
+  "totalBlockingMs": 31,
+  "entries": [
+   {
+    "atMs": 26,
+    "duration": 92,
+    "blocking": 31,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  181,
+  461,
+  797,
+  1175,
+  1589,
+  2032,
+  2502
+ ],
+ "png": "docs/polish-pass/evidence/TC-fantasy/after/fm_boon_dewdrop.png",
+ "pngBytes": 17597,
+ "off": {
+  "url": "/dev/plays?id=fm_boon_dewdrop&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0.0001,
+  "endRegions": [
+   {
+    "x": 16,
+    "y": 400,
+    "w": 16,
+    "h": 8,
+    "cells": 2
+   }
+  ],
+  "png": "docs/polish-pass/evidence/TC-fantasy/after/fm_boon_dewdrop.off.png"
+ }
+}

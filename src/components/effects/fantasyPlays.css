@@ -1251,6 +1251,242 @@
 }
 .ftp-pf-ember { animation: ftp-pf-ember calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
+/* Static seat on the caster's side of the board centre (board-anchored scenes). */
+.ftp-near { transform: translateY(calc(var(--fx-side, 1) * 16%)); }
+
+/* Oathstone: the stone rises, an oath rune, a chain along your pawn rank */
+@keyframes ftp-os-shadow {
+  0% { opacity: 0; transform: scaleX(0.3); }
+  30% { opacity: 1; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1.1); }
+}
+.ftp-os-shadow { animation: ftp-os-shadow calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+@keyframes ftp-os-stone {
+  0% { opacity: 0; transform: translateY(-50%); }
+  20% { opacity: 1; }
+  24% { transform: translateY(0) scale(1.06, 0.94); }
+  34% { transform: translateY(0) scale(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(0); }
+}
+.ftp-os-stone { animation: ftp-os-stone calc(1.6s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 0.35, 1) both; transform-origin: 50% 100%; }
+
+@keyframes ftp-os-rune {
+  0% { opacity: 0; transform: scale(0.6); }
+  30% { opacity: 1; transform: scale(1.1); }
+  44% { transform: scale(1); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1); }
+}
+.ftp-os-rune { animation: ftp-os-rune calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.2, 1.1, 0.3, 1) both; }
+
+@keyframes ftp-os-dust {
+  0% { opacity: 0; transform: scale(0.4, 0.6); }
+  30% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.5, 1); }
+}
+.ftp-os-dust { animation: ftp-os-dust calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+@keyframes ftp-os-chain {
+  0% { opacity: 0; transform: scaleX(0); }
+  40% { opacity: 1; transform: scaleX(1); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.ftp-os-chain { animation: ftp-os-chain calc(1.4s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+/* Siren's Call: a sea-wave, notes swim in, a spiral holds the piece */
+@keyframes ftp-sc-wave {
+  0% { opacity: 0; transform: translateX(-8%); }
+  30% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(8%); }
+}
+.ftp-sc-wave { animation: ftp-sc-wave calc(1.6s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
+
+@keyframes ftp-sc-note {
+  0% { opacity: 0; transform: translate(0, 0) rotate(-10deg); }
+  20% { opacity: 1; transform: translate(calc(var(--dx, 0%) * 0.2), calc(var(--dy, 0%) * 0.25)) rotate(12deg); }
+  50% { transform: translate(calc(var(--dx, 0%) * 0.55), calc(var(--dy, 0%) * 0.5)) rotate(-12deg); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--dx, 0%), var(--dy, 0%)) rotate(0deg) scale(0.5); }
+}
+.ftp-sc-note { animation: ftp-sc-note calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.45, 0, 0.3, 1) both; }
+
+@keyframes ftp-sc-spiral {
+  0% { opacity: 0; transform: rotate(0deg) scale(1.4); }
+  24% { opacity: 1; transform: rotate(-120deg) scale(1); }
+  80% { opacity: 1; transform: rotate(-330deg) scale(0.92); }
+  100% { opacity: 0; transform: rotate(-400deg) scale(0.9); }
+}
+.ftp-sc-spiral { animation: ftp-sc-spiral calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.6, 0.4, 1) both; }
+
+@keyframes ftp-sc-sway {
+  0% { opacity: 0; transform: rotate(0deg) translateX(0); }
+  20% { opacity: 1; transform: rotate(-6deg) translateX(-4%); }
+  40% { transform: rotate(6deg) translateX(4%); }
+  60% { transform: rotate(-5deg) translateX(-3%); }
+  80% { opacity: 1; transform: rotate(3deg) translateX(2%); }
+  100% { opacity: 0; transform: rotate(0deg) translateX(0); }
+}
+.ftp-sc-sway { animation: ftp-sc-sway calc(1.4s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; transform-origin: 50% 100%; }
+
+@keyframes ftp-sc-bubble {
+  0% { opacity: 0; transform: translateY(0) scale(0.5); }
+  30% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * -240%)) scale(1.1); }
+}
+.ftp-sc-bubble { animation: ftp-sc-bubble calc(1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+/* Stormcaller: cloud, bolt, the straight cross twists into the diagonal one */
+@keyframes ftp-st-cloud {
+  0% { opacity: 0; transform: translateY(-30%) scale(0.8); }
+  24% { opacity: 1; transform: translateY(0) scale(1); }
+  36% { transform: translateX(-2%); }
+  46% { transform: translateX(2%); }
+  80% { opacity: 1; transform: translateX(0); }
+  100% { opacity: 0; transform: translateX(0); }
+}
+.ftp-st-cloud { animation: ftp-st-cloud calc(1.6s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+
+@keyframes ftp-st-bolt {
+  0% { opacity: 0; transform: scaleY(0); }
+  20% { opacity: 1; transform: scaleY(1); }
+  36% { opacity: 0.3; }
+  48% { opacity: 1; }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+.ftp-st-bolt { animation: ftp-st-bolt calc(0.5s * var(--fx-dur, 1)) steps(6, end) both; transform-origin: 50% 0; }
+
+@keyframes ftp-st-cross {
+  0% { opacity: 0; transform: rotate(var(--from, 0deg)) scale(0.5); }
+  24% { opacity: 1; transform: rotate(var(--from, 0deg)) scale(1); }
+  58% { transform: rotate(var(--to, 45deg)) scale(1); }
+  82% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(var(--to, 45deg)) scale(1.04); }
+}
+.ftp-st-cross { animation: ftp-st-cross calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
+
+@keyframes ftp-st-rook {
+  0% { opacity: 0; transform: scale(0.7); }
+  20% { opacity: 1; transform: scale(1.1); }
+  34% { transform: scale(1); }
+  82% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1); }
+}
+.ftp-st-rook { animation: ftp-st-rook calc(1.4s * var(--fx-dur, 1)) cubic-bezier(0.2, 1.1, 0.3, 1) both; }
+
+/* Dewdrop: a drop falls, splashes, and sets as a dome over the pawn */
+@keyframes ftp-dd-leaf {
+  0% { opacity: 0; transform: rotate(0deg); }
+  20% { opacity: 1; }
+  30% { transform: rotate(8deg); }
+  44% { transform: rotate(-3deg); }
+  56% { transform: rotate(0deg); }
+  100% { opacity: 0; transform: rotate(0deg); }
+}
+.ftp-dd-leaf { animation: ftp-dd-leaf calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; transform-origin: 0 50%; }
+
+@keyframes ftp-dd-drop {
+  0% { opacity: 0; transform: translateY(0) scale(0.4); }
+  30% { opacity: 1; transform: translateY(0) scale(1, 1.15); }
+  86% { opacity: 1; transform: translateY(520%) scale(1, 1.2); }
+  100% { opacity: 0; transform: translateY(560%) scale(1.6, 0.4); }
+}
+.ftp-dd-drop { animation: ftp-dd-drop calc(0.46s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 1, 0.45) both; }
+
+@keyframes ftp-dd-splash {
+  0% { opacity: 0; transform: scale(0.4, 0.2); }
+  30% { opacity: 1; transform: scale(1, 1); }
+  100% { opacity: 0; transform: scale(1.3, 0.6); }
+}
+.ftp-dd-splash { animation: ftp-dd-splash calc(0.6s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 100%; }
+
+@keyframes ftp-dd-pawn {
+  0% { opacity: 0; }
+  24% { opacity: 1; }
+  84% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.ftp-dd-pawn { animation: ftp-dd-pawn calc(1.3s * var(--fx-dur, 1)) linear both; }
+
+@keyframes ftp-dd-dome {
+  0% { opacity: 0; transform: scale(0.3, 0.1); }
+  30% { opacity: 1; transform: scale(1.08, 1.04); }
+  44% { transform: scale(0.98, 1); }
+  56% { transform: scale(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1); }
+}
+.ftp-dd-dome { animation: ftp-dd-dome calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.2, 1.1, 0.3, 1) both; transform-origin: 50% 100%; }
+
+@keyframes ftp-dd-glint {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.4); }
+  30% { opacity: 1; transform: translate(80%, -20%) scale(1); }
+  100% { opacity: 0; transform: translate(260%, 40%) scale(0.5); }
+}
+.ftp-dd-glint { animation: ftp-dd-glint calc(0.7s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
+
+/* Brambleroot: hedges on both flanks of a rook, sideways runs stopped */
+@keyframes ftp-br-rook {
+  0% { opacity: 0; transform: scale(0.7); }
+  20% { opacity: 1; transform: scale(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1); }
+}
+.ftp-br-rook { animation: ftp-br-rook calc(1.6s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.25, 1) both; }
+
+@keyframes ftp-br-hedge {
+  0% { opacity: 0; transform: scaleY(0); }
+  30% { opacity: 1; transform: scaleY(1.08); }
+  42% { transform: scaleY(1); }
+  82% { opacity: 1; }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+.ftp-br-hedge { animation: ftp-br-hedge calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.2, 1.1, 0.3, 1) both; transform-origin: 50% 100%; }
+
+/* a sideways run toward the hedge that stops short and recoils */
+@keyframes ftp-br-run {
+  0% { opacity: 0; transform: translateX(0); }
+  20% { opacity: 1; }
+  48% { transform: translateX(calc(var(--dir, 1) * 60%)); }
+  58% { opacity: 1; transform: translateX(calc(var(--dir, 1) * 36%)) scaleX(0.8); }
+  100% { opacity: 0; transform: translateX(calc(var(--dir, 1) * 20%)); }
+}
+.ftp-br-run { animation: ftp-br-run calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.6, 0.3, 1) both; }
+
+@keyframes ftp-br-open {
+  0% { opacity: 0; transform: scaleY(0); }
+  30% { opacity: 1; transform: scaleY(1); }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+.ftp-br-open { animation: ftp-br-open calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 100%; }
+
+/* Wyrmscale Mail: a coil circles, four scale rows lock on, a sheen */
+@keyframes ftp-ws-coil {
+  0% { opacity: 0; transform: rotate(-120deg) scale(1.3); }
+  30% { opacity: 1; transform: rotate(0deg) scale(1); }
+  70% { opacity: 1; transform: rotate(40deg) scale(0.96); }
+  100% { opacity: 0; transform: rotate(80deg) scale(0.9); }
+}
+.ftp-ws-coil { animation: ftp-ws-coil calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.6, 0.3, 1) both; }
+
+@keyframes ftp-ws-row {
+  0% { opacity: 0; transform: translateY(-60%) scaleX(0.4); }
+  24% { opacity: 1; transform: translateY(0) scaleX(1.06); }
+  36% { transform: translateY(0) scaleX(1); }
+  82% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(0) scaleX(1); }
+}
+.ftp-ws-row { animation: ftp-ws-row calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.2, 1.1, 0.3, 1) both; }
+
+@keyframes ftp-ws-sheen {
+  0% { opacity: 0; transform: translateX(0); }
+  20% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(300%); }
+}
+.ftp-ws-sheen { animation: ftp-ws-sheen calc(0.6s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
+
 /* ============================================================================
    Global animations-off guard: Settings toggles html[data-anim="off"], which
    must silence every ftp-* layer outright (no first-frame flash).

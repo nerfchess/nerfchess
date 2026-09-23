@@ -2087,6 +2087,233 @@ function PhoenixFeatherScene({ palette, delayMs }: SceneProps) {
   );
 }
 
+const ROOK_D = "M2.4 1.2 H3.6 V2.4 H4.4 V1.2 H5.6 V2.4 H6.4 V1.2 H7.6 V3.6 L6.6 4.4 V7 L7.4 7.8 H2.6 L3.4 7 V4.4 L2.4 3.6 Z M2 8.2 H8 V9.3 H2 Z";
+
+/* --- T4 Oathstone: none of your pawns can be captured for 2 turns ----------
+   A standing stone rises on your side and an oath rune kindles on it with two
+   notches (two turns); a gold chain of the oath then links along your pawn
+   rank from the middle out. */
+function OathstoneScene({ palette, delayMs }: SceneProps) {
+  const [core, glow, deep] = palette;
+  return (
+    <Stage quakeMs={delayMs + 420}>
+      <Mine>
+        <span
+          className="ftp-os-chain absolute block"
+          style={{ left: 0, top: "80.2%", width: "100%", height: "2.2%", background: `repeating-linear-gradient(90deg, ${tint(glow, 0.95)} 0 2.2%, transparent 2.2% 2.8%, ${tint(core, 0.9)} 2.8% 5.6%, transparent 5.6% 6.25%)`, ...d(delayMs + 700) }}
+        />
+      </Mine>
+      <span className="ftp-near absolute inset-0 block">
+        <span className="ftp-os-shadow absolute block rounded-full" style={{ left: "44%", top: "54%", width: "12%", height: "3%", background: `radial-gradient(closest-side, ${tint(deep, 0.8)}, transparent)`, ...d(delayMs + 40) }} />
+        <span className="ftp-os-stone absolute block" style={{ left: "46%", top: "40%", width: "8%", height: "15%", ...d(delayMs + 160) }}>
+          <svg viewBox="0 0 8 15" className="block h-full w-full" aria-hidden="true">
+            <path d="M1 15 L0.6 4 Q1 0.6 4 0.4 Q7 0.6 7.4 4 L7 15 Z" fill={tint(core, 0.95)} stroke={tint(deep, 0.9)} strokeWidth="0.4" {...SJ} />
+            <path d="M2.4 4 L2.4 5.6 M5.6 4 L5.6 5.6" stroke={tint(deep, 0.9)} strokeWidth="0.5" {...SJ} />
+          </svg>
+        </span>
+        <span className="ftp-os-rune absolute block" style={{ left: "47.4%", top: "45%", width: "5.2%", height: "6%", ...d(delayMs + 480) }}>
+          <svg viewBox="0 0 5 6" className="block h-full w-full" aria-hidden="true">
+            <path d="M2.5 0.4 V5.6 M0.6 1.6 L2.5 3 L4.4 1.6 M0.8 4.6 H4.2" fill="none" stroke={glow} strokeWidth="0.6" {...SJ} />
+          </svg>
+        </span>
+        <span className="ftp-os-dust absolute block rounded-full" style={{ left: "42%", top: "53%", width: "16%", height: "4%", background: `radial-gradient(closest-side, ${tint(core, 0.55)}, transparent)`, ...d(delayMs + 420) }} />
+      </span>
+      <Drift tone={core} delayMs={delayMs + 1500} />
+    </Stage>
+  );
+}
+
+/* --- T4 Siren's Call: one enemy piece is entranced for 3 turns -------------
+   Notes of the siren's song ride a wave in from your side to the chosen
+   piece; a slow spiral turns over it and it sways, held where it stands. */
+const SC_NOTES = [
+  { x: -3.2, y: 2.6, d: 0 },
+  { x: -1.6, y: 3.2, d: 120 },
+  { x: 1.4, y: 3, d: 240 },
+  { x: 3, y: 2.4, d: 360 },
+];
+function SirensCallScene({ palette, delayMs }: SceneProps) {
+  const [core, glow, deep] = palette;
+  const cell = 100 / 14;
+  return (
+    <Stage>
+      <Forward>
+        <span
+          className="ftp-sc-wave absolute block"
+          style={{ left: "20%", top: `${50 + cell * 1.9}%`, width: "60%", height: `${cell * 1.4}%`, ...d(delayMs + 40) }}
+        >
+          <svg viewBox="0 0 60 10" className="block h-full w-full" aria-hidden="true" preserveAspectRatio="none">
+            <path d="M0 6 Q7.5 1 15 6 T30 6 T45 6 T60 6" fill="none" stroke={tint(glow, 0.8)} strokeWidth="1" {...SJ} />
+            <path d="M0 9 Q7.5 4 15 9 T30 9 T45 9 T60 9" fill="none" stroke={tint(core, 0.6)} strokeWidth="0.8" {...SJ} />
+          </svg>
+        </span>
+        {SC_NOTES.map((n, i) => (
+          <span
+            key={i}
+            className="ftp-sc-note absolute block"
+            style={{ left: `${50 + n.x * cell - 1.6}%`, top: `${50 + n.y * cell - 2}%`, width: "3.2%", height: "4%", "--dx": `${-n.x * 100 / 3.2 * (cell / 1)}%`, "--dy": `${-n.y * 100 / 4 * (cell / 1)}%`, ...d(delayMs + 260 + n.d) } as CSSProperties}
+          >
+            <svg viewBox="0 0 4 5" className="block h-full w-full" aria-hidden="true">
+              <path d="M2.6 0.4 V3.6 M2.6 0.4 L3.8 1" stroke={glow} strokeWidth="0.45" fill="none" {...SJ} />
+              <ellipse cx="1.8" cy="3.8" rx="1.1" ry="0.8" fill={glow} />
+            </svg>
+          </span>
+        ))}
+      </Forward>
+      <span className="ftp-sc-spiral absolute block" style={{ left: `${50 - cell * 0.75}%`, top: `${50 - cell * 0.75}%`, width: `${cell * 1.5}%`, height: `${cell * 1.5}%`, ...d(delayMs + 700) }}>
+        <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+          <path d="M10 10 Q10 8 12 8.4 Q14.4 9.4 13.4 12 Q12 15 8.4 14 Q4.6 12.4 5.6 8 Q7 3.6 12 4 Q17.4 5 16.6 11 Q15.6 17.6 9 17.6" fill="none" stroke={tint(glow, 0.9)} strokeWidth="0.9" {...SJ} />
+        </svg>
+      </span>
+      <span className="ftp-sc-sway absolute block rounded-full" style={{ left: `${50 - cell * 0.6}%`, top: `${50 - cell * 0.6}%`, width: `${cell * 1.2}%`, height: `${cell * 1.2}%`, border: `1.5px solid ${tint(core, 0.8)}`, background: tint(deep, 0.2), ...d(delayMs + 760) }} />
+      {[0, 1, 2].map((i) => (
+        <span
+          key={i}
+          className="ftp-sc-bubble absolute block rounded-full"
+          style={{ left: `${46 + i * 3.4}%`, top: "44%", width: "1.4%", height: "1.4%", border: `1px solid ${tint(glow, 0.9)}`, ...d(delayMs + 1150 + i * 120) }}
+        />
+      ))}
+    </Stage>
+  );
+}
+
+/* --- T4 Stormcaller: rooks move diagonally and bishops straight, 2 turns ---
+   A storm cloud gathers over the piece and a bolt strikes it; the rook's
+   straight cross of lines then twists a quarter turn into a diagonal cross
+   while a second cross twists the other way: the two movement rules trade. */
+function StormcallerScene({ palette, delayMs }: SceneProps) {
+  const [core, glow, deep] = palette;
+  const cell = 100 / 14;
+  return (
+    <Stage quakeMs={delayMs + 520}>
+      <span className="ftp-st-cloud absolute block" style={{ left: `${50 - cell * 1.3}%`, top: `${50 - cell * 2.2}%`, width: `${cell * 2.6}%`, height: `${cell * 1.1}%`, ...d(delayMs + 30) }}>
+        <svg viewBox="0 0 26 11" className="block h-full w-full" aria-hidden="true">
+          <path d="M3 10 Q0.4 10 0.6 7.4 Q1 5 3.6 5.4 Q4 1.4 8.4 1.8 Q11 0 14 1.6 Q18 0.6 19.4 4 Q24.6 3.4 25.2 7.4 Q25.4 10 22.6 10 Z" fill={tint(deep, 0.95)} stroke={tint(core, 0.8)} strokeWidth="0.5" {...SJ} />
+        </svg>
+      </span>
+      <span className="ftp-st-bolt absolute block" style={{ left: `${50 - cell * 0.4}%`, top: `${50 - cell * 1.3}%`, width: `${cell * 0.8}%`, height: `${cell * 1.4}%`, ...d(delayMs + 420) }}>
+        <svg viewBox="0 0 8 14" className="block h-full w-full" aria-hidden="true">
+          <path d="M5 0 L1.6 6.4 H4.4 L2.2 14 L7 5 H4.2 L6.4 0 Z" fill={glow} stroke={WARM} strokeWidth="0.3" {...SJ} />
+        </svg>
+      </span>
+      {[
+        { from: 0, to: 45, color: core },
+        { from: 45, to: 0, color: glow },
+      ].map((x, i) => (
+        <span
+          key={i}
+          className="ftp-st-cross absolute block"
+          style={{ left: `${50 - cell * 2}%`, top: `${50 - cell * 2}%`, width: `${cell * 4}%`, height: `${cell * 4}%`, "--from": `${x.from}deg`, "--to": `${x.to}deg`, ...d(delayMs + 640 + i * 160) } as CSSProperties}
+        >
+          <svg viewBox="0 0 40 40" className="block h-full w-full" aria-hidden="true">
+            <path d={i ? "M20 6 V34 M6 20 H34" : "M20 2 V38 M2 20 H38"} stroke={tint(x.color, 0.9)} strokeWidth={i ? 0.9 : 1.2} strokeDasharray={i ? "2 2" : undefined} fill="none" {...SJ} />
+            <path d={i ? "M17 6 L20 3 L23 6 M17 34 L20 37 L23 34 M6 17 L3 20 L6 23 M34 17 L37 20 L34 23" : "M17 5 L20 2 L23 5 M17 35 L20 38 L23 35 M5 17 L2 20 L5 23 M35 17 L38 20 L35 23"} stroke={tint(x.color, 0.9)} strokeWidth="1" fill="none" {...SJ} />
+          </svg>
+        </span>
+      ))}
+      <span className="ftp-st-rook absolute block" style={{ left: `${50 - cell * 0.42}%`, top: `${50 - cell * 0.42}%`, width: `${cell * 0.84}%`, height: `${cell * 0.84}%`, ...d(delayMs + 500) }}>
+        <Sil path={ROOK_D} fill={tint(core, 0.95)} stroke={WARM} />
+      </span>
+      <Drift tone={core} delayMs={delayMs + 1450} />
+    </Stage>
+  );
+}
+
+/* --- T3 Dewdrop: your most advanced pawn can never be captured -------------
+   One dewdrop falls from a leaf tip, splashes a little crown of water, and
+   settles as a clear dome over a pawn with a glint across it. */
+function DewdropScene({ palette, delayMs }: SceneProps) {
+  const [core, glow, deep] = palette;
+  return (
+    <Stage>
+      <span className="ftp-dd-leaf absolute block" style={{ left: "46%", top: "30%", width: "9%", height: "4%", background: tint(core, 0.85), borderRadius: "0 100%", ...d(delayMs + 20) }} />
+      <span className="ftp-dd-drop absolute block" style={{ left: "49%", top: "33%", width: "2.4%", height: "3.2%", background: `radial-gradient(circle at 35% 35%, ${WARM}, ${tint(glow, 0.8)} 50%, ${tint(core, 0.8)})`, borderRadius: "50% 50% 50% 50% / 30% 30% 70% 70%", ...d(delayMs + 160) }} />
+      <span className="ftp-dd-splash absolute block" style={{ left: "44%", top: "50%", width: "12%", height: "5%", ...d(delayMs + 560) }}>
+        <svg viewBox="0 0 12 5" className="block h-full w-full" aria-hidden="true">
+          <path d="M1 5 L2 1.6 L3 4 L4.6 0.4 L6 3.6 L7.4 0.4 L9 4 L10 1.6 L11 5" fill="none" stroke={tint(glow, 0.95)} strokeWidth="0.5" {...SJ} />
+        </svg>
+      </span>
+      <span className="ftp-dd-pawn absolute block" style={{ left: "46.6%", top: "44.6%", width: "6.8%", height: "7%", ...d(delayMs + 600) }}>
+        <Sil path={PAWN_D} fill={tint(deep, 0.8)} stroke={glow} />
+      </span>
+      <span className="ftp-dd-dome absolute block" style={{ left: "44%", top: "41%", width: "12%", height: "12%", background: `radial-gradient(circle at 36% 30%, ${tint(glow, 0.6)}, ${tint(core, 0.18)} 45%, ${tint(core, 0.4)} 70%, transparent 72%)`, borderRadius: "50% 50% 8% 8%", ...d(delayMs + 640) }} />
+      <span className="ftp-dd-glint absolute block rounded-full" style={{ left: "46.4%", top: "43%", width: "2%", height: "2%", background: WARM, ...d(delayMs + 1000) }} />
+      <span className="ftp-ripple absolute block rounded-full" style={{ left: "40%", top: "51%", width: "20%", height: "4%", border: `1.5px solid ${tint(glow, 0.7)}`, ...d(delayMs + 600) }} />
+      <Drift tone={core} delayMs={delayMs + 1300} />
+    </Stage>
+  );
+}
+
+/* --- T3 Brambleroot: enemy rooks cannot move sideways along a rank ---------
+   Bramble hedges shoot up on both sides of an enemy rook; its sideways runs
+   hit the thorns and stop, while its forward path stays open. */
+function BramblerootScene({ palette, delayMs }: SceneProps) {
+  const [core, glow, deep] = palette;
+  const cell = 100 / 14;
+  return (
+    <Stage>
+      <span className="ftp-br-rook absolute block" style={{ left: `${50 - cell * 0.42}%`, top: `${50 - cell * 0.42}%`, width: `${cell * 0.84}%`, height: `${cell * 0.84}%`, ...d(delayMs + 40) }}>
+        <Sil path={ROOK_D} fill={tint(deep, 0.9)} stroke={glow} />
+      </span>
+      {[-1, 1].map((s) => (
+        <span
+          key={s}
+          className="ftp-br-hedge absolute block"
+          style={{ left: `${50 + s * cell * 0.95 - cell * 0.3}%`, top: `${50 - cell * 0.7}%`, width: `${cell * 0.6}%`, height: `${cell * 1.4}%`, ...d(delayMs + 220 + (s + 1) * 60) }}
+        >
+          <svg viewBox="0 0 6 14" className="block h-full w-full" aria-hidden="true">
+            <path d="M3 14 Q1.4 10 3 7 Q4.6 4 3 0.4" fill="none" stroke={tint(glow, 0.95)} strokeWidth="1.3" {...SJ} />
+            <path d="M2.4 11 L0.4 10.2 M3.6 8.4 L5.6 7.6 M2.4 5.6 L0.4 4.8 M3.4 2.6 L5.4 1.8" stroke={WARM} strokeWidth="0.6" {...SJ} />
+          </svg>
+        </span>
+      ))}
+      {[-1, 1].map((s) => (
+        <span
+          key={s}
+          className="ftp-br-run absolute block"
+          style={{ left: `${50 - cell * 0.3}%`, top: `${50 - cell * 0.18}%`, width: `${cell * 0.6}%`, height: `${cell * 0.36}%`, "--dir": String(s), ...d(delayMs + 640 + (s + 1) * 50) } as CSSProperties}
+        >
+          <svg viewBox="0 0 6 4" className="block h-full w-full" aria-hidden="true" style={{ transform: s < 0 ? "scaleX(-1)" : undefined }}>
+            <path d="M0.4 2 H4.4 M3 0.5 L5.4 2 L3 3.5" fill="none" stroke={tint(glow, 0.95)} strokeWidth="0.7" {...SJ} />
+          </svg>
+        </span>
+      ))}
+      <Forward>
+        <span className="ftp-br-open absolute block" style={{ left: `${50 - 0.4}%`, top: `${50 - cell * 2.6}%`, width: "0.8%", height: `${cell * 2}%`, background: `linear-gradient(0deg, ${tint(glow, 0.8)}, transparent)`, ...d(delayMs + 900) }} />
+      </Forward>
+      <Drift tone={core} delayMs={delayMs + 1400} />
+    </Stage>
+  );
+}
+
+/* --- T3 Wyrmscale Mail: one of your pieces cannot be captured for 4 turns --
+   A wyrm's coil circles the chosen piece, then four rows of dragon scales
+   lock on from the ground up (one row per turn of protection) and a sheen
+   runs over the finished mail. */
+function WyrmscaleScene({ palette, delayMs }: SceneProps) {
+  const [core, glow, deep] = palette;
+  const cell = 100 / 14;
+  return (
+    <Stage>
+      <span className="ftp-ws-coil absolute block" style={{ left: `${50 - cell * 0.9}%`, top: `${50 - cell * 0.9}%`, width: `${cell * 1.8}%`, height: `${cell * 1.8}%`, ...d(delayMs + 30) }}>
+        <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+          <path d="M10 1.4 A8.6 8.6 0 1 1 1.6 12 L0.4 10.6 M1.6 12 L3.2 11.2" fill="none" stroke={tint(core, 0.9)} strokeWidth="1.4" {...SJ} />
+          <circle cx="10" cy="1.4" r="1.2" fill={tint(deep, 0.9)} stroke={glow} strokeWidth="0.4" />
+        </svg>
+      </span>
+      {[0, 1, 2, 3].map((i) => (
+        <span
+          key={i}
+          className="ftp-ws-row absolute block"
+          style={{ left: `${50 - cell * 0.5}%`, top: `${50 + cell * (0.28 - i * 0.24)}%`, width: `${cell}%`, height: `${cell * 0.26}%`, background: `radial-gradient(circle at 50% 0, ${tint(glow, 0.95)} 0 30%, ${tint(core, 0.95)} 31% 58%, transparent 60%) 0 0 / 25% 100%`, ...d(delayMs + 300 + i * 150) }}
+        />
+      ))}
+      <span className="ftp-ws-sheen absolute block" style={{ left: `${50 - cell * 0.5}%`, top: `${50 - cell * 0.5}%`, width: `${cell * 0.3}%`, height: `${cell}%`, background: `linear-gradient(90deg, transparent, ${tint(WARM, 0.8)}, transparent)`, ...d(delayMs + 1000) }} />
+      <Drift tone={core} delayMs={delayMs + 1400} />
+    </Stage>
+  );
+}
+
 function Gl({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
@@ -2775,10 +3002,10 @@ export const PLAYS: Record<string, SigPlugin> = {
   fm_moonlit_stride: F(RuneforgeScene, ["#8faadc", "#cdd6ff", "#222c44"], GLYPH.fm_moonlit_stride, {
     ordering: "radial", staggerMs: 60, victims: ["n"], hasLead: true, sound: "coronation", source: "empower", anchor: "cast",
   }, "moon"),
-  fm_wyrmscale_mail: F(RuneforgeScene, ["#7fae5a", "#a8e07f", "#2a3a22"], GLYPH.fm_wyrmscale_mail, {
+  fm_wyrmscale_mail: F(WyrmscaleScene, ["#7fae5a", "#a8e07f", "#2a3a22"], GLYPH.fm_wyrmscale_mail, {
     ordering: "radial", staggerMs: 0, victims: ["p", "n", "b", "r", "q"], hasLead: true, sound: "aegis", source: "shield", anchor: "cast",
   }, "scale"),
-  fm_stormcaller: F(RuneforgeScene, ["#8faadc", "#ffd76a", "#3a3f5e"], GLYPH.fm_stormcaller, {
+  fm_stormcaller: F(StormcallerScene, ["#8faadc", "#ffd76a", "#3a3f5e"], GLYPH.fm_stormcaller, {
     ordering: "sweep", staggerMs: 70, victims: ["r", "b"], hasLead: true, sound: "lightning", source: "empower", anchor: "cast",
   }, "storm"),
   fm_phoenix_feather: F(PhoenixFeatherScene, ["#e6432c", "#ffd76a", "#2b1218"], GLYPH.fm_phoenix_feather, {
@@ -2801,10 +3028,10 @@ export const PLAYS: Record<string, SigPlugin> = {
   fm_hex_fogbank: F(HexweaveScene, ["#8a94a8", "#d9d2c0", "#22262e"], GLYPH.fm_hex_fogbank, {
     ordering: "radial", staggerMs: 60, victims: ["b"], hasLead: true, sound: "shades", anchor: "board",
   }, "fog"),
-  fm_hex_brambleroot: F(HexweaveScene, ["#4a5c2f", "#a8e07f", "#1c2418"], GLYPH.fm_hex_brambleroot, {
+  fm_hex_brambleroot: F(BramblerootScene, ["#4a5c2f", "#a8e07f", "#1c2418"], GLYPH.fm_hex_brambleroot, {
     ordering: "radial", staggerMs: 60, victims: ["r"], hasLead: true, sound: "wall", anchor: "cast",
   }, "thorn"),
-  fm_hex_sirens_call: F(HexweaveScene, ["#5fc9b0", "#8fe8ff", "#1c3a5e"], GLYPH.fm_hex_sirens_call, {
+  fm_hex_sirens_call: F(SirensCallScene, ["#5fc9b0", "#8fe8ff", "#1c3a5e"], GLYPH.fm_hex_sirens_call, {
     ordering: "radial", staggerMs: 0, victims: ["n", "b", "r", "q"], hasLead: true, sound: "petrify", source: "walnut", anchor: "cast",
   }, "song"),
   fm_hex_gorgon_gaze: F(GorgonGazeScene, ["#7fae5a", "#a8e07f", "#26262c"], GLYPH.fm_hex_gorgon_gaze, {
@@ -2827,10 +3054,10 @@ export const PLAYS: Record<string, SigPlugin> = {
   fm_boon_hearthbread: F(BlessingScene, ["#c98a4c", "#ffe9b0", "#3e2f1c"], GLYPH.fm_boon_hearthbread, {
     ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "wall", source: "summon", anchor: "cast",
   }, "bread"),
-  fm_boon_dewdrop: F(BlessingScene, ["#5fc9b0", "#dff7ff", "#1c3a3a"], GLYPH.fm_boon_dewdrop, {
+  fm_boon_dewdrop: F(DewdropScene, ["#5fc9b0", "#dff7ff", "#1c3a3a"], GLYPH.fm_boon_dewdrop, {
     ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "aegis", source: "shield", anchor: "cast",
   }, "drop"),
-  fm_boon_oathstone: F(BlessingScene, ["#d9d2c0", "#ffd76a", "#3a3026"], GLYPH.fm_boon_oathstone, {
+  fm_boon_oathstone: F(OathstoneScene, ["#d9d2c0", "#ffd76a", "#3a3026"], GLYPH.fm_boon_oathstone, {
     ordering: "sweep", staggerMs: 60, victims: ["p"], hasLead: true, sound: "aegis", source: "shield", anchor: "board",
   }, "oath"),
   fm_boon_windrider: F(WindriderScene, ["#9fd8ff", "#fff4d6", "#1c3a5e"], GLYPH.fm_boon_windrider, {
