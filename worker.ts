@@ -2839,6 +2839,15 @@ export class GameServer extends DurableObject<Env> {
     ) {
       return this.gameFromMatch(match);
     }
+    // A checkpoint written before serializeGame persisted the buff mutation
+    // counter restores it as 0, and every random card effect after it then
+    // rolls differently than on the clients (parity fuzz). The fingerprint
+    // below does not cover the counter, so reject those by shape: they fall
+    // back to a full replay once and the next checkpoint carries the counter.
+    const snapBuffs = (ckpt.snap as { buffs?: { mutations?: unknown } }).buffs;
+    if (snapBuffs && typeof snapBuffs.mutations !== "number") {
+      return this.gameFromMatch(match);
+    }
     const game = deserializeGame(ckpt.snap);
     if (!game || desyncFingerprint(game).hash !== ckpt.fp) {
       return this.gameFromMatch(match);

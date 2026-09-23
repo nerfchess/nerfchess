@@ -1,0 +1,16 @@
+{
+  "summary": {
+    "games": 62,
+    "baseSeed": 1,
+    "maxPlies": 160,
+    "plies": 7215,
+    "draftActions": 1858,
+    "activations": 388,
+    "distinctCardsFired": 219,
+    "rngProblems": 0,
+    "divergences": 0,
+    "byPath": {},
+    "ms": 103083
+  },
+  "divergences": []
+}
