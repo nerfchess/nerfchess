@@ -127,12 +127,30 @@ export default function SuggestRulePage() {
           ...payloadForType(type),
         }),
       });
-      const data = (await res.json()) as { error?: string };
-      if (!res.ok) throw new Error(data.error || "Could not send your suggestion.");
+      if (!res.ok) {
+        // The body is only JSON when our route answered. A proxy error page, a
+        // 502 or an empty body used to surface as a raw SyntaxError here.
+        let data: { error?: unknown } = {};
+        try {
+          data = (await res.json()) as { error?: unknown };
+        } catch {
+          // Not JSON: fall through to the plain message for the status.
+        }
+        setState("error");
+        setError(
+          typeof data.error === "string" && data.error.trim()
+            ? data.error
+            : res.status === 429
+              ? "Too many suggestions from here just now. Wait a few minutes and try again."
+              : "Could not send your suggestion. Try again in a moment.",
+        );
+        return;
+      }
       setState("sent");
-    } catch (err) {
+    } catch {
+      // fetch itself rejected: offline, or the connection dropped.
       setState("error");
-      setError(err instanceof Error ? err.message : "Could not send your suggestion.");
+      setError("Could not reach the server. Check your connection and try again.");
     }
   };
 
@@ -247,7 +265,11 @@ export default function SuggestRulePage() {
               />
             </div>
 
-            {error && <div className="text-sm text-oxblood-glow">{error}</div>}
+            {error && (
+              <div role="alert" className="text-sm text-oxblood-glow">
+                {error}
+              </div>
+            )}
 
             <Button tone="cta"
               type="submit"

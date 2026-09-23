@@ -101,7 +101,10 @@ export function CodexBrowser() {
 
   const [visible, setVisible] = useState(BATCH);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
+  // Which row's link was last copied, and whether the write actually landed:
+  // a refused clipboard (permissions, an insecure origin, an old browser) must
+  // say so rather than claim "Copied" over an empty clipboard.
+  const [copied, setCopied] = useState<{ id: string; ok: boolean } | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const hydrated = useRef(false);
@@ -249,10 +252,14 @@ export function CodexBrowser() {
 
   const copyLink = useCallback((path: string, id: string) => {
     const url = `${window.location.origin}${path}`;
-    navigator.clipboard?.writeText(url).catch(() => {});
-    setCopiedId(id);
-    if (copyTimer.current) clearTimeout(copyTimer.current);
-    copyTimer.current = setTimeout(() => setCopiedId(null), 1600);
+    const settle = (ok: boolean) => {
+      setCopied({ id, ok });
+      if (copyTimer.current) clearTimeout(copyTimer.current);
+      copyTimer.current = setTimeout(() => setCopied(null), ok ? 1600 : 3200);
+    };
+    const write = navigator.clipboard?.writeText(url);
+    if (write) write.then(() => settle(true), () => settle(legacyCopy(url)));
+    else settle(legacyCopy(url));
   }, []);
 
   const nounPlural = LIBRARY_NOUN_PLURAL[tab];
@@ -323,6 +330,11 @@ export function CodexBrowser() {
 
       <section className="mx-auto max-w-7xl px-6 pt-4">
         <h1 className="page-title">Codex</h1>
+        {/* The copy buttons swap their own label, which a screen reader does
+            not reliably announce; this line does, success or failure. */}
+        <p className="sr-only" role="status" aria-live="polite">
+          {copied ? (copied.ok ? "Link copied" : "Could not copy the link") : ""}
+        </p>
         <p className="mt-2 text-[15px] text-parchment-300">
           {load === "ready"
             ? `Browse every card and rule. ${totalCount} ${nounPlural} in this tab: search by name or effect, then open a row for the full card.`
@@ -477,7 +489,7 @@ export function CodexBrowser() {
                     <CodexRow
                       entry={entry}
                       expanded={isOpen}
-                      copied={copiedId === id}
+                      copy={copied?.id === id ? (copied.ok ? "copied" : "failed") : "idle"}
                       onToggle={() => setExpandedId((cur) => (cur === id ? null : id))}
                       onCopy={() => copyLink(entryPath(entry), id)}
                     />
@@ -485,7 +497,7 @@ export function CodexBrowser() {
                       <div className="mt-2">
                         <ExpandedCard
                           entry={entry}
-                          copied={copiedId === id}
+                          copy={copied?.id === id ? (copied.ok ? "copied" : "failed") : "idle"}
                           onCopy={() => copyLink(entryPath(entry), id)}
                           onCollapse={() => setExpandedId(null)}
                         />
@@ -525,6 +537,28 @@ export function CodexBrowser() {
       </FilterSheet>
     </main>
   );
+}
+
+/** The pre-Clipboard-API path, and the fallback when the async write is
+ *  refused: select the text in an offscreen field and ask for a copy. Returns
+ *  whether the browser says it worked. */
+function legacyCopy(text: string): boolean {
+  const field = document.createElement("textarea");
+  field.value = text;
+  field.setAttribute("readonly", "");
+  field.style.position = "fixed";
+  field.style.opacity = "0";
+  field.style.pointerEvents = "none";
+  document.body.appendChild(field);
+  field.select();
+  let ok = false;
+  try {
+    ok = document.execCommand("copy");
+  } catch {
+    ok = false;
+  }
+  field.remove();
+  return ok;
 }
 
 function SkeletonRows() {

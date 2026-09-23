@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { ExternalLink, Link2, X } from "lucide-react";
 import { affectedLine } from "./affected";
 import { entryPath, type CodexEntry } from "./codexData";
+import type { CopyState } from "./CodexRow";
 import { Button } from "@/components/ui/Button";
 import { LinkButton } from "@/components/ui/Button";
 
@@ -23,12 +24,12 @@ const BuffCard = dynamic(() => import("@/components/BuffCard").then((m) => m.Buf
 // asks for (a visible copy-link, a link to the stable detail page, collapse).
 export function ExpandedCard({
   entry,
-  copied,
+  copy,
   onCopy,
   onCollapse,
 }: {
   entry: CodexEntry;
-  copied: boolean;
+  copy: CopyState;
   onCopy: () => void;
   onCollapse: () => void;
 }) {
@@ -49,7 +50,7 @@ export function ExpandedCard({
           onClick={onCopy}
           className="px-3 py-1.5 text-[13px]">
           <Link2 size={14} aria-hidden />
-          {copied ? "Link copied" : "Copy link"}
+          {copy === "copied" ? "Link copied" : copy === "failed" ? "Copy failed" : "Copy link"}
         </Button>
         <Button tone="ghost"
          

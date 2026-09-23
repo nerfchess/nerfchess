@@ -1,0 +1,6 @@
+  ✓  1 [chromium] › e2e/content-states.spec.ts:9:7 › content route states › codex copy link reports a failed clipboard write (1.9s)
+  ✓  2 [chromium] › e2e/content-states.spec.ts:29:7 › content route states › codex copy link confirms a successful clipboard write (1.4s)
+  ✓  3 [chromium] › e2e/content-states.spec.ts:50:7 › suggest form errors › a non-JSON error response shows a plain message in an alert (683ms)
+  ✓  4 [chromium] › e2e/content-states.spec.ts:62:7 › suggest form errors › a dropped connection shows a plain message in an alert (624ms)
+  ✓  5 [chromium] › e2e/content-states.spec.ts:73:7 › suggest form errors › a JSON error from the route is shown as written (603ms)
+  5 passed (6.2s)
