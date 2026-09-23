@@ -25,9 +25,10 @@ TL;DR of the moving parts (2026-07, after the wave-3 spread):
   the same tier could read 400 apart and no tier's displayed band matched its
   engine strength.
 - **Tiers 2400-2700 advertise more than the engine can currently back.** The
-  remote engine clamps every search to its own ceiling and measured wall time
-  runs 1.5-2.5x nominal, so 900ms already sits close to the Worker's 3000ms
-  engine timeout. Those tiers differ from 2200 only by having no forced blunder.
+  remote engine clamps every search to its 1800ms ceiling, which 2200 already
+  uses, against the Worker's 3000ms engine timeout. Those tiers differ from 2200
+  only by having no forced blunder (search efficiency, slice HB2, is the route
+  to making them real).
   Their live ratings will drift down toward what they actually play, which is
   self-correcting; making them genuinely 2400+ needs a bigger service ceiling and
   a raised worker timeout, measured against the public URL first.
@@ -36,7 +37,7 @@ TL;DR of the moving parts (2026-07, after the wave-3 spread):
   fictional location.
 - Each persona has a stable **style** (`houseStyle`): think tempo, buff
   activation appetite, draft bank bias, aggression-driven search jitter, and a
-  pet opening for each color — so no two bots pace or play identically.
+  pet opening for each color, so no two bots pace or play identically.
 - **Availability**: never the whole roster at once. The ACTIVE window (bots that
   seek, get picked up, or play filler) breathes daily between 260 and 380, and
   both windows rotate daily through the full roster.
@@ -49,17 +50,20 @@ TL;DR of the moving parts (2026-07, after the wave-3 spread):
   separation is what lets the site read 800 online without shipping 800 rows.
 - **Concurrent filler games run 80-120** (was 40-55), which is safe only because
   filler lives in `arena-service` rather than the Durable Object, and because
-  bot-vs-bot is never rated or archived — so the arena caps each filler search at
+  bot-vs-bot is never rated or archived, so the arena caps each filler search at
   `ARENA_SEARCH_CEILING_MS` (300ms) to keep 120 games inside one event loop.
 - Bots now occasionally play a **premove-style instant recapture**
-  (`houseSnapReplyMs`): when the opponent just traded, or the bot has one legal
-  move, it sometimes answers in 120-350ms instead of thinking for 1-4 seconds.
+  (`houseSnapReplyMs`): when the opponent just traded, or the bot has exactly
+  one king-safe move, it sometimes answers in 120-350ms instead of thinking.
   Appetite is stable per persona (0.15-0.50), so a given bot is consistently
   snappy or consistently deliberate, and no bot snaps every time.
-- Each move is chosen by a **local chess engine** (a small alpha-beta search in
-  `src/engine/ai.ts`) with a **hard 80ms budget** so it can never stall the
-  server. It is NOT Maia and nothing is outsourced (see "Notes vs the original
-  spec").
+- Each move is chosen by the site's own alpha-beta engine (`src/engine/ai.ts`).
+  A human game's search runs on the remote engine service (`engine-service/`,
+  up to 1800ms) while the bot has more than 5 seconds left, and otherwise on the
+  Durable Object itself, capped at `HOUSE_SEARCH_CEILING_MS` (80ms) so it can
+  never stall the server. On top of the search sit a king-safety floor, a
+  human-shaped blunder, an opening repertoire and a card policy, all in
+  `bots.ts` (see "Playing strength" below).
 - The whole roster is driven from the game server's **alarm loop** (`houseTick`
   in `worker.ts`), one action at a time, and **stands down completely when no
   human is connected**.
@@ -117,15 +121,16 @@ cold start, idempotent):
   players' once they play.
 - Its avatar is one of two house-only looks. **About half** the roster
   (`HOUSE_PFP_ASSIGN` in `bots.ts`) gets a "real uploaded-looking" profile
-  picture: an original SVG (a scenic/object image — a coffee mug, a night
-  skyline — or one of the memorable character/meme-style subjects: a troll
+  picture: an original SVG (a scenic/object image such as a coffee mug or a night
+  skyline, or one of the memorable character/meme-style subjects: a troll
   grin, a puzzle cube, a shiba, a moai, ...) stored as `house_pfp:<name>` and
   served from `public/house-pfp/<name>.svg`, so the crowd reads like real
   users who uploaded a random photo. Thematic names get thematic images
   (`teatimechess -> tea_set`, `lazydodge -> shiba_wow`), and the generated
   pool (`scripts/gen-house-pfps.mjs`) covers the rest with 50 distinct
   subjects x 4 palette variations. The rest keep a **flower** preset (`FLOWER_AVATARS`): the
-  normal piece-on-plate look plus a small flower mark. Real accounts can never
+  normal piece-on-plate look (the "_flower" preset id survives only as an
+  internal marker; no visible mark is drawn from it). Real accounts can never
   pick either kind (`isAvatarId` and the avatar upload route reject them, and
   `isHousePfp` only matches house-held ids), so both stay house-only. The
   `/mod/house` editor may move a persona between any look in `HOUSE_AVATAR_IDS`
@@ -139,45 +144,121 @@ the leaderboard exactly like humans (moderator views filter them out).
 ## Playing strength (`HOUSE_SKILL_PROFILES`)
 
 The engine itself (`src/engine/ai.ts`) has three levels: `easy` (1-ply greedy
-with heavy noise), `medium` (3-ply alpha-beta + quiescence), and `hard`
-(iterative-deepening search up to 12 plies + a richer evaluation). The client's
-"play vs bot" uses these with 700-2000ms to think.
+with heavy noise and a 22% random move, used only by the client practice bot),
+`medium` (alpha-beta to depth 3 plus quiescence) and `hard` (iterative deepening
+up to 12 plies with a richer evaluation). House players never use `easy`.
 
-House players use the SAME engine but on a **tiny time budget**, and their
-strength difference comes from the budget plus a blunder chance, not from deep
-thinking:
+Each tier's baked profile (the table below is checked against the code by
+`scripts/audit-house-bots.ts`; update both together). Depth, top-K, temperature
+and noise are the weakening knobs (`WeakenParams`): a tier with top-K above 1,
+a temperature or noise samples among the best root moves instead of playing the
+single best one. A dash means the engine default (argmax, the level's depth).
 
-| Skill band | Engine level | Search budget | Blunder chance |
-| --- | --- | --- | --- |
-| 800-1200 | easy/medium | 12-20 ms, plus baked weakening (shallow depth, top-K, noise) | 28% down to 12% |
-| 1350-1750 | medium/hard | 60-300 ms | 5% down to 0.3% |
-| 1900-2200 | hard | 380-900 ms | 0.2% down to 0.05% |
-| 2400-2700 | hard | 900 ms (the ceiling) | 0.02% down to 0 |
+<!-- house-skill-profiles:start -->
+| Tier | Level | Budget ms | Blunder | Depth | Top-K | Temp cp | Noise cp |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 800 | medium | 24 | 0.28 | 1 | 7 | 320 | 150 |
+| 900 | medium | 30 | 0.22 | 1 | 6 | 260 | 120 |
+| 1050 | medium | 40 | 0.16 | 1 | 4 | 150 | 70 |
+| 1200 | medium | 40 | 0.12 | 3 | 4 | 150 | 70 |
+| 1350 | medium | 120 | 0.05 | - | - | - | - |
+| 1450 | medium | 180 | 0.035 | - | - | - | - |
+| 1550 | hard | 240 | 0.02 | - | - | - | - |
+| 1650 | hard | 400 | 0.01 | - | - | - | - |
+| 1750 | hard | 600 | 0.003 | - | - | - | - |
+| 1900 | hard | 760 | 0.002 | - | - | - | - |
+| 1950 | hard | 960 | 0.002 | - | - | - | - |
+| 2000 | hard | 1160 | 0.001 | - | - | - | - |
+| 2050 | hard | 1360 | 0.001 | - | - | - | - |
+| 2100 | hard | 1520 | 0.001 | - | - | - | - |
+| 2150 | hard | 1680 | 0.0005 | - | - | - | - |
+| 2200 | hard | 1800 | 0.0005 | - | - | - | - |
+| 2400 | hard | 1800 | 0.0002 | - | - | - | - |
+| 2500 | hard | 1800 | 0.0001 | - | - | - | - |
+| 2600 | hard | 1800 | 0 | - | - | - | - |
+| 2700 | hard | 1800 | 0 | - | - | - | - |
+<!-- house-skill-profiles:end -->
 
-- **Blunder chance** is the probability, per move, of ignoring the search
-  entirely and playing a random legal move (that does not instantly lose to the
-  bot's own nerf). This is what makes the lower tiers feel human-fallible.
-- Every search is clamped to **`HOUSE_SEARCH_CEILING_MS = 80ms`**, and shrunk
-  further when the bot's own clock is low (down to ~25ms under 30s left, floor
-  10ms). This ceiling is the single most important safety number: while a search
-  runs, the single-threaded server answers nothing else.
+How one move is chosen (`pickHouseMove`), in order:
+
+1. A king capture, when one is on the board.
+2. The persona's pet first move (70% of the time, when legal), then the opening
+   repertoire (`HOUSE_BOOK`, about 50 mainstream lines) for the first 4 to 12
+   plies depending on tier. Each persona weights the lines its own way, or a
+   `varietySeed` does when no persona is known, so the house plays many
+   openings instead of the search's single favourite. A book move is played
+   only when the position is exactly the book's, the move keeps the king safe
+   and it does not trip the bot's own nerf.
+3. At 800 and 900 only, a small check leak (7% and 4.5% when in check): the bot
+   has not noticed the check and grabs material instead.
+4. The blunder roll (the table's chance, one and a half times as likely under
+   10 seconds): a human-shaped blunder (`houseBlunderMove`), a move that leaves
+   something to take and loses 100-600cp statically at 800-1050, 100-450 up to
+   1450 and 80-350 above, never a king hang or an own-nerf loss. If nothing in
+   the position fits, a shallow sampled search instead.
+5. Otherwise the search at the graded budget (`houseMoveBudgetMs`, below).
+6. The king-safety floor over 4 and 5: no move after which the opponent can
+   capture the king while another move exists.
+
+The search budget (`houseMoveBudgetMs`) is graded from the clock: untimed, the
+tier's budget; timed, about remaining / 30 plus 0.7 x the increment, minus the
+expected visible think and (on the remote path) a 500ms round trip, capped by
+the tier and the ceiling, and floored at 60ms (40ms under 5 seconds). It
+replaced a flat 25ms under 30 seconds, which made every tier play like a 1300
+for most of a bullet game.
+
+Persona style (`applyPersonaStyle`) jitters the temperature and noise of the
+sampled tiers only. Argmax tiers keep their full search: their variety comes
+from the repertoire, which costs no depth.
+
+Measured (evidence in `docs/polish-pass/evidence/HB/HB1/`, slice HB1): the
+800-1050 tiers used to leave the king capturable after 47-57% of moves played in
+check (now 0-1.3%); each adjacent tier from 800 to 1450 now scores 55-88%
+against the one below over 20 games (a direction, not a calibration, at that
+sample size); a forced blunder used to be a random move (7 king hangs in 320,
+12.8% losing 900cp or more) and is now a missed tactic (0 king hangs, median
+loss 330cp at 800 down to 120cp at 1900, none at 900cp or more).
+
+### Moderator overrides (formerly `docs/bot-weakening-spec.md`)
+
+That document was never committed; this section replaces it. A moderator can
+patch any tier's profile live from `/mod/house`, stored as JSON in
+`app_settings.house_skill_overrides` and read by the Durable Object about every
+15 seconds (`resolveSkillProfile`). Every field is clamped to `WEAKEN_CLAMP`
+and a bad or missing field falls back to the baked value, so no stored value
+can stall the thread. `WEAKENED_PRESET` and `VERY_WEAK_PRESET` are the one-click
+presets. `level` is never overridable.
 
 ---
 
 ## Pacing: how long a bot "waits" before acting
 
-The delay before an action lands is separate from the (tiny) time it actually
-spends computing.
+The delay before an action lands is separate from the time the search takes,
+and gives way to it: the caller passes the expected search time and it is taken
+out of the wait, since a human sees the two added together and both come off
+the bot's clock.
 
-- **Moves** (`houseThinkMs`): about **90% of moves take 1-4 seconds**, and
-  roughly **1 in 10 takes 6-10 seconds** (a human-like "long think"). The delay
-  is clamped hard when the bot's own clock is low so pacing can never flag a bot
-  that still has time on the bank (under 10s left it moves in ~0.3-0.8s; under
-  25s in ~0.7-1.5s; otherwise never spends more than a fifth of its remaining
-  clock waiting).
+- **Moves against a human** (`houseThinkMs`): shaped by the time control, using
+  the estimated game length (base + 40 x increment). 0.3-1.0s in 1+0,
+  0.4-1.4s in 2+1, 0.7-2.2s in 3+0 and 3+2, and the familiar 1-4s from 5+0 up,
+  where about 1 move in 10 is a 6-10s long think, more often when captures are
+  on the board. The first five own moves come in 0.3-1.1s and a forced move
+  (one king-safe move) in 0.2-0.7s. The clock caps every think at a sixtieth of
+  what is left (a 25th for a long think), so a bot low on time speeds up the way
+  a person does. The persona `tempo` (0.75-1.35) leans every think.
+- **Filler games** (bot against bot, `thinkMultiplier > 1`) keep the exact
+  pre-2026-09-23 pacing (`houseFillerThinkMs`: 1-3s up to 3 minutes, else 1-4s
+  with a 6-10s tail, then the multiplier and the low-clock clamps).
+  `scripts/sim-house-clock.ts` checks 10,000 seeds against a copy of the old
+  function.
 - **Draft picks** (`houseDraftThinkMs`): **2-8 seconds** before a pick lands,
   comfortably inside the 15-second lock-in window (the server's deadline
   auto-resolve is the backstop).
+
+Measured with the worker as it is (`scripts/sim-house-clock.ts`, 400 runs a
+cell, 500ms round trip): a 1+0 bot used to flag around move 34-41 with 59-72% of
+its first 40 moves searched at 25ms; now around move 72-81, none at 30ms or
+less. 3+0: from 62-92 to 105-141. No increment pool flags inside 150 moves.
 
 ---
 
@@ -191,11 +272,29 @@ spends computing.
   passives and instants score highest, activated cards a bit lower, pure
   info/reveal cards score zero, and if every option is unusable to a bot it
   **banks** the draft instead.
-- **Using held buffs**: on each of its turns in a draft game there is a **40%
-  chance** the bot tries to fire a held buff instead of moving
-  (`aiChooseBuffActivation`), which applies its own "is this worth it" gates. The
-  coin keeps bots from dumping every card the instant it clears the bar. Any card
+- **Using held buffs**: today `worker.ts` rolls the persona's activation
+  appetite (0.25-0.55) each turn and fires the first card
+  `aiChooseBuffActivation`'s gates accept. `houseChooseActivation` (in
+  `bots.ts`, waiting on REQUEST R9 in `docs/polish-pass/slices/HB.md` to be wired
+  in) replaces that: it looks at every card the gates accept, never passes the
+  turn with a piece hanging that a move would have saved, takes the best card
+  rather than the first, and grows keener as the board empties. Measured over 80
+  paired games: bad fires 17-19 to 0, paired score 53-58% against today's policy
+  (the interval still includes 50%). `houseDraftChoice` leans each persona its
+  own way among equal cards and banks less as the offered tier rises. Any card
   that throws mid-activation is caught and the bot just makes a normal move.
+
+### Behaviour helpers waiting on `worker.ts`
+
+Pure decisions in `bots.ts`, tested by `scripts/test-house-policy.ts`, for the
+worker to call through the same frames a human's action produces (REQUESTS R5
+to R11 in `docs/polish-pass/slices/HB.md`): `houseResignDecision` (1500 and up
+resign after 2-6 own moves at -600cp or worse, beginners play on, some personas
+never resign), `houseDrawDecision` and `houseDrawOffer` (dead-level endings are
+always drawn, winning ones never), `houseRematchDecision` (50-85% by persona,
+2-6s), `houseSnapMove` (the recapture a snap plays, without the remote round
+trip), `houseEngineTimeoutMs` and `HouseEngineBreaker` (stop paying a timeout
+per move when the engine box hangs). Their numbers never reach a client.
 
 ---
 
@@ -293,10 +392,11 @@ blip. Both switches must be on for the roster to run.
 
 ## How they present to players
 
-House players are intentionally indistinguishable from humans except:
-
-- the **flower** in the bottom-left of their avatar,
-- moderator-only user lists filter them out.
+House players are intentionally indistinguishable from humans: no visible mark,
+no bot flag in any payload, and moderator-only user lists are the one place
+they are filtered out. Their resigns, draw answers and rematch answers (once
+wired, REQUESTS R5 and R6) use exactly the frames and human-like delays a
+person's would.
 
 They have profiles, real (moving) ratings in both pools, appear in game history
 and on the leaderboard, and their games show on TV like any other.
@@ -311,13 +411,14 @@ so it doesn't crash the servers." The shipped system does **neither**:
 - It uses a **local, homegrown alpha-beta engine** (`src/engine/ai.ts`), not
   Maia. Maia would have meant bundling a neural-net weights file and running
   inference, which is far too heavy for the single-threaded Durable Object.
-- Nothing is outsourced. Instead the crash risk is handled by making each search
-  trivially cheap (<=80ms) and strictly serialized (at most a few per tick, only
-  while a human is watching). The human-like feel comes from the pacing (1-4s,
-  occasionally 6-10s) and the per-tier blunder chance, not from engine strength.
+- Search for human games is outsourced now: the remote engine service
+  (`engine-service/`, on the OCI box) takes up to 1800ms a move, and the
+  Durable Object only searches locally (80ms ceiling, strictly serialized) when
+  the bot is low on time or the service does not answer. The human-like feel
+  comes from the pacing, the opening repertoire and the human-shaped blunders.
 
-Where the implementation does match the spec: the 1-4s / up-to-10s move timing,
-the ~40/30/20/10 skill mix around 1200/1400/1600/1750, a mix of Nerf and Buff
-games, the flower avatar mark, and keeping a couple of personas in the queue at
-all times (here, 2-4). The roster is 50 (the spec floated 10-20) to comfortably
-fill a busy lobby and serve as a load test.
+Where the implementation does match the spec: the 1-4s / up-to-10s move timing
+from 5+0 up (shorter in bullet and 3-minute blitz), a mix of Nerf and Buff
+games, and keeping a couple of personas in the queue at all times (here, 2-4).
+The roster is 900 (the spec floated 10-20) and the skill mix is set by
+`HOUSE_SKILL_WEIGHTS` (see "The roster" above).
