@@ -1,0 +1,122 @@
+{
+ "id": "amazon",
+ "url": "/dev/plays?id=amazon&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "amazon",
+  "name": "Amazon",
+  "tier": 7,
+  "category": "movement",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "core",
+  "visual": "amazoncrown",
+  "anchor": "cast",
+  "source": "empower",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "engine",
+  "driveNote": "activated with 1 pick(s)",
+  "castSq": "d1",
+  "targets": [
+   "d1"
+  ],
+  "picks": [
+   "d1"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2775,
+  "cssEndMs": 3496,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 39,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 174,
+  "maxGapMs": 206.5
+ },
+ "raf": {
+  "frames": 155,
+  "medianMs": 16.7,
+  "maxMs": 283.3,
+  "dropped": 76
+ },
+ "longAnimationFrames": {
+  "count": 7,
+  "worstMs": 298,
+  "totalBlockingMs": 593,
+  "entries": [
+   {
+    "atMs": -253,
+    "duration": 298,
+    "blocking": 233,
+    "scripts": []
+   },
+   {
+    "atMs": 54,
+    "duration": 52,
+    "blocking": 2,
+    "scripts": []
+   },
+   {
+    "atMs": 111,
+    "duration": 250,
+    "blocking": 200,
+    "scripts": []
+   },
+   {
+    "atMs": 503,
+    "duration": 69,
+    "blocking": 0,
+    "scripts": [
+     {
+      "duration": 9,
+      "invoker": "TimerHandler:setInterval",
+      "source": ""
+     }
+    ]
+   },
+   {
+    "atMs": 731,
+    "duration": 61,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 877,
+    "duration": 209,
+    "blocking": 158,
+    "scripts": []
+   },
+   {
+    "atMs": 1134,
+    "duration": 52,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  211,
+  539,
+  932,
+  1374,
+  1857,
+  2375,
+  2925
+ ],
+ "png": "docs/polish-pass/evidence/TC-core/before/amazon.png",
+ "pngBytes": 27472
+}

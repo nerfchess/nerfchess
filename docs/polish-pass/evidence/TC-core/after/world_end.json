@@ -1,0 +1,117 @@
+{
+ "id": "world_end",
+ "url": "/dev/plays?id=world_end&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "world_end",
+  "name": "World End",
+  "tier": 8,
+  "category": "tempo",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "core",
+  "visual": "worldend",
+  "anchor": "board",
+  "source": "frozen",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 55,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, frozen diff",
+  "castSq": "c7",
+  "targets": [
+   "c7",
+   "d7",
+   "e7"
+  ],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2932,
+  "cssEndMs": 3430,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 47,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 172,
+  "maxGapMs": 93.6
+ },
+ "raf": {
+  "frames": 190,
+  "medianMs": 16.7,
+  "maxMs": 66.7,
+  "dropped": 29
+ },
+ "longAnimationFrames": {
+  "count": 2,
+  "worstMs": 58,
+  "totalBlockingMs": 8,
+  "entries": [
+   {
+    "atMs": -52,
+    "duration": 58,
+    "blocking": 5,
+    "scripts": []
+   },
+   {
+    "atMs": 55,
+    "duration": 54,
+    "blocking": 3,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  223,
+  568,
+  982,
+  1448,
+  1957,
+  2503,
+  3082
+ ],
+ "png": "docs/polish-pass/evidence/TC-core/after/world_end.png",
+ "pngBytes": 32461,
+ "off": {
+  "url": "/dev/plays?id=world_end&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0.0011,
+  "endRegions": [
+   {
+    "x": 224,
+    "y": 72,
+    "w": 24,
+    "h": 56,
+    "cells": 11
+   },
+   {
+    "x": 168,
+    "y": 72,
+    "w": 16,
+    "h": 16,
+    "cells": 4
+   },
+   {
+    "x": 280,
+    "y": 72,
+    "w": 16,
+    "h": 16,
+    "cells": 4
+   }
+  ],
+  "png": "docs/polish-pass/evidence/TC-core/after/world_end.off.png"
+ }
+}

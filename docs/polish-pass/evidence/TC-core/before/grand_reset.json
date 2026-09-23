@@ -1,0 +1,82 @@
+{
+ "id": "grand_reset",
+ "url": "/dev/plays?id=grand_reset&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "grand_reset",
+  "name": "Grand Reset",
+  "tier": 8,
+  "category": "pieces",
+  "mechanic": "instant",
+  "retired": false,
+  "art": "core",
+  "visual": "archmage",
+  "anchor": "cast",
+  "source": "summon",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 80,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2550,
+  "cssEndMs": 3572,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 36,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 133,
+  "maxGapMs": 274.2
+ },
+ "raf": {
+  "frames": 164,
+  "medianMs": 16.7,
+  "maxMs": 300,
+  "dropped": 56
+ },
+ "longAnimationFrames": {
+  "count": 2,
+  "worstMs": 98,
+  "totalBlockingMs": 64,
+  "entries": [
+   {
+    "atMs": 14,
+    "duration": 98,
+    "blocking": 47,
+    "scripts": []
+   },
+   {
+    "atMs": 117,
+    "duration": 73,
+    "blocking": 17,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  195,
+  498,
+  860,
+  1268,
+  1714,
+  2193,
+  2700
+ ],
+ "png": "docs/polish-pass/evidence/TC-core/before/grand_reset.png",
+ "pngBytes": 31284
+}

@@ -1,0 +1,99 @@
+{
+ "id": "immortal_king",
+ "url": "/dev/plays?id=immortal_king&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "immortal_king",
+  "name": "Immortal King",
+  "tier": 8,
+  "category": "protection",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "core",
+  "visual": "shades",
+  "anchor": "board",
+  "source": "kingSafe",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, kingSafe diff",
+  "castSq": "e1",
+  "targets": [
+   "e1"
+  ],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2537,
+  "cssEndMs": 3544,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 30,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 184,
+  "maxGapMs": 282
+ },
+ "raf": {
+  "frames": 195,
+  "medianMs": 16.7,
+  "maxMs": 100,
+  "dropped": 24
+ },
+ "longAnimationFrames": {
+  "count": 3,
+  "worstMs": 124,
+  "totalBlockingMs": 36,
+  "entries": [
+   {
+    "atMs": 15,
+    "duration": 86,
+    "blocking": 36,
+    "scripts": []
+   },
+   {
+    "atMs": 435,
+    "duration": 52,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 563,
+    "duration": 124,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  194,
+  495,
+  856,
+  1262,
+  1706,
+  2182,
+  2687
+ ],
+ "png": "docs/polish-pass/evidence/TC-core/after/immortal_king.png",
+ "pngBytes": 27626,
+ "off": {
+  "url": "/dev/plays?id=immortal_king&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "docs/polish-pass/evidence/TC-core/after/immortal_king.off.png"
+ }
+}

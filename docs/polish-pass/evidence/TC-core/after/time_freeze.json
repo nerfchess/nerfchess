@@ -1,0 +1,181 @@
+{
+ "id": "time_freeze",
+ "url": "/dev/plays?id=time_freeze&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "time_freeze",
+  "name": "Time Freeze",
+  "tier": 8,
+  "category": "tempo",
+  "mechanic": "instant",
+  "retired": false,
+  "art": "core",
+  "visual": "clockice",
+  "anchor": "board",
+  "source": "stun",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2600,
+  "cssEndMs": 3486,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 63,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 194,
+  "maxGapMs": 90.6
+ },
+ "raf": {
+  "frames": 191,
+  "medianMs": 16.7,
+  "maxMs": 100,
+  "dropped": 30
+ },
+ "longAnimationFrames": {
+  "count": 4,
+  "worstMs": 126,
+  "totalBlockingMs": 81,
+  "entries": [
+   {
+    "atMs": -94,
+    "duration": 126,
+    "blocking": 64,
+    "scripts": []
+   },
+   {
+    "atMs": 80,
+    "duration": 68,
+    "blocking": 17,
+    "scripts": []
+   },
+   {
+    "atMs": 514,
+    "duration": 58,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 853,
+    "duration": 58,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  199,
+  507,
+  876,
+  1292,
+  1746,
+  2233,
+  2750
+ ],
+ "png": "docs/polish-pass/evidence/TC-core/after/time_freeze.png",
+ "pngBytes": 29149,
+ "off": {
+  "url": "/dev/plays?id=time_freeze&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0.0047,
+  "endRegions": [
+   {
+    "x": 216,
+    "y": 16,
+    "w": 32,
+    "h": 112,
+    "cells": 22
+   },
+   {
+    "x": 336,
+    "y": 16,
+    "w": 24,
+    "h": 16,
+    "cells": 6
+   },
+   {
+    "x": 392,
+    "y": 16,
+    "w": 24,
+    "h": 16,
+    "cells": 6
+   },
+   {
+    "x": 272,
+    "y": 72,
+    "w": 24,
+    "h": 16,
+    "cells": 6
+   },
+   {
+    "x": 336,
+    "y": 72,
+    "w": 24,
+    "h": 16,
+    "cells": 6
+   },
+   {
+    "x": 392,
+    "y": 72,
+    "w": 24,
+    "h": 16,
+    "cells": 6
+   },
+   {
+    "x": 48,
+    "y": 72,
+    "w": 16,
+    "h": 16,
+    "cells": 4
+   },
+   {
+    "x": 104,
+    "y": 72,
+    "w": 16,
+    "h": 16,
+    "cells": 4
+   },
+   {
+    "x": 160,
+    "y": 72,
+    "w": 16,
+    "h": 16,
+    "cells": 4
+   },
+   {
+    "x": 448,
+    "y": 72,
+    "w": 16,
+    "h": 16,
+    "cells": 4
+   },
+   {
+    "x": 456,
+    "y": 16,
+    "w": 8,
+    "h": 16,
+    "cells": 2
+   }
+  ],
+  "png": "docs/polish-pass/evidence/TC-core/after/time_freeze.off.png"
+ }
+}

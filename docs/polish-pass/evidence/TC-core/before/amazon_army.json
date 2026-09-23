@@ -1,0 +1,128 @@
+{
+ "id": "amazon_army",
+ "url": "/dev/plays?id=amazon_army&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "amazon_army",
+  "name": "Amazon Army",
+  "tier": 7,
+  "category": "movement",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "core",
+  "visual": "crownlegion",
+  "anchor": "cast",
+  "source": "empower",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 90,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, empower diff",
+  "castSq": "b1",
+  "targets": [
+   "b1",
+   "c1",
+   "f1"
+  ],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2994,
+  "cssEndMs": 3497,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 74,
+  "infiniteAnimations": 10
+ },
+ "screencast": {
+  "framesInWindow": 143,
+  "maxGapMs": 381.7
+ },
+ "raf": {
+  "frames": 110,
+  "medianMs": 16.7,
+  "maxMs": 283.3,
+  "dropped": 108
+ },
+ "longAnimationFrames": {
+  "count": 8,
+  "worstMs": 100,
+  "totalBlockingMs": 181,
+  "entries": [
+   {
+    "atMs": -65,
+    "duration": 90,
+    "blocking": 35,
+    "scripts": []
+   },
+   {
+    "atMs": 41,
+    "duration": 100,
+    "blocking": 49,
+    "scripts": []
+   },
+   {
+    "atMs": 299,
+    "duration": 82,
+    "blocking": 29,
+    "scripts": []
+   },
+   {
+    "atMs": 488,
+    "duration": 71,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 870,
+    "duration": 65,
+    "blocking": 14,
+    "scripts": [
+     {
+      "duration": 7,
+      "invoker": "TimerHandler:setInterval",
+      "source": ""
+     }
+    ]
+   },
+   {
+    "atMs": 1180,
+    "duration": 57,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 1920,
+    "duration": 68,
+    "blocking": 18,
+    "scripts": []
+   },
+   {
+    "atMs": 2017,
+    "duration": 86,
+    "blocking": 36,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  227,
+  579,
+  1002,
+  1477,
+  1996,
+  2553,
+  3144
+ ],
+ "png": "docs/polish-pass/evidence/TC-core/before/amazon_army.png",
+ "pngBytes": 29115
+}

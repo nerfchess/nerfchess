@@ -1,0 +1,111 @@
+{
+ "id": "time_prison",
+ "url": "/dev/plays?id=time_prison&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "time_prison",
+  "name": "Time Prison",
+  "tier": 8,
+  "category": "tempo",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "core",
+  "visual": "clockcage",
+  "anchor": "board",
+  "source": "stun",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, stun diff",
+  "castSq": "e8",
+  "targets": [
+   "e8"
+  ],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2692,
+  "cssEndMs": 3407,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 34,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 152,
+  "maxGapMs": 283
+ },
+ "raf": {
+  "frames": 167,
+  "medianMs": 16.7,
+  "maxMs": 149.9,
+  "dropped": 51
+ },
+ "longAnimationFrames": {
+  "count": 4,
+  "worstMs": 84,
+  "totalBlockingMs": 22,
+  "entries": [
+   {
+    "atMs": -48,
+    "duration": 52,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 7,
+    "duration": 51,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 142,
+    "duration": 84,
+    "blocking": 22,
+    "scripts": [
+     {
+      "duration": 9,
+      "invoker": "TimerHandler:setInterval",
+      "source": ""
+     }
+    ]
+   },
+   {
+    "atMs": 958,
+    "duration": 55,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  205,
+  524,
+  905,
+  1335,
+  1804,
+  2308,
+  2842
+ ],
+ "png": "docs/polish-pass/evidence/TC-core/after/time_prison.png",
+ "pngBytes": 27115,
+ "off": {
+  "url": "/dev/plays?id=time_prison&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "docs/polish-pass/evidence/TC-core/after/time_prison.off.png"
+ }
+}

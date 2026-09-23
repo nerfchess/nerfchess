@@ -1,0 +1,145 @@
+{
+ "id": "eternal_reign",
+ "url": "/dev/plays?id=eternal_reign&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "eternal_reign",
+  "name": "Eternal Reign",
+  "tier": 8,
+  "category": "movement",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "core",
+  "visual": "eternalreign",
+  "anchor": "cast",
+  "source": "empower",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, empower diff",
+  "castSq": "b2",
+  "targets": [
+   "b2",
+   "c2",
+   "d2"
+  ],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2692,
+  "cssEndMs": 3460,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 61,
+  "infiniteAnimations": 10
+ },
+ "screencast": {
+  "framesInWindow": 160,
+  "maxGapMs": 176.5
+ },
+ "raf": {
+  "frames": 106,
+  "medianMs": 16.7,
+  "maxMs": 666.7,
+  "dropped": 136
+ },
+ "longAnimationFrames": {
+  "count": 9,
+  "worstMs": 649,
+  "totalBlockingMs": 1121,
+  "entries": [
+   {
+    "atMs": -88,
+    "duration": 96,
+    "blocking": 41,
+    "scripts": []
+   },
+   {
+    "atMs": 38,
+    "duration": 116,
+    "blocking": 65,
+    "scripts": []
+   },
+   {
+    "atMs": 2065,
+    "duration": 76,
+    "blocking": 7,
+    "scripts": [
+     {
+      "duration": 47,
+      "invoker": "FrameRequestCallback",
+      "source": ""
+     }
+    ]
+   },
+   {
+    "atMs": 2141,
+    "duration": 156,
+    "blocking": 68,
+    "scripts": []
+   },
+   {
+    "atMs": 2297,
+    "duration": 59,
+    "blocking": 8,
+    "scripts": []
+   },
+   {
+    "atMs": 2457,
+    "duration": 649,
+    "blocking": 556,
+    "scripts": [
+     {
+      "duration": 603,
+      "invoker": "http://localhost:3000/_next/static/chunks/_app-pages-browser_src_components_effe...",
+      "source": "/_next/static/chunks/_app-pages-browser_src_components_effects_board3d_engine3d_ts.js"
+     },
+     {
+      "duration": 5,
+      "invoker": "TimerHandler:setInterval",
+      "source": ""
+     }
+    ]
+   },
+   {
+    "atMs": 3177,
+    "duration": 115,
+    "blocking": 17,
+    "scripts": []
+   },
+   {
+    "atMs": 3292,
+    "duration": 65,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 3501,
+    "duration": 437,
+    "blocking": 359,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  205,
+  524,
+  905,
+  1335,
+  1804,
+  2308,
+  2842
+ ],
+ "png": "docs/polish-pass/evidence/TC-core/before/eternal_reign.png",
+ "pngBytes": 29164
+}

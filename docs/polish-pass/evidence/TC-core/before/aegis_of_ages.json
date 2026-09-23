@@ -1,0 +1,76 @@
+{
+ "id": "aegis_of_ages",
+ "url": "/dev/plays?id=aegis_of_ages&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "aegis_of_ages",
+  "name": "Aegis of the Ages",
+  "tier": 7,
+  "category": "protection",
+  "mechanic": "instant",
+  "retired": false,
+  "art": "core",
+  "visual": "agesward",
+  "anchor": "cast",
+  "source": "shield",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 35,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2555,
+  "cssEndMs": 3489,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 110,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 165,
+  "maxGapMs": 405
+ },
+ "raf": {
+  "frames": 196,
+  "medianMs": 16.7,
+  "maxMs": 100,
+  "dropped": 24
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 108,
+  "totalBlockingMs": 50,
+  "entries": [
+   {
+    "atMs": -85,
+    "duration": 108,
+    "blocking": 50,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  196,
+  499,
+  862,
+  1271,
+  1717,
+  2197,
+  2705
+ ],
+ "png": "docs/polish-pass/evidence/TC-core/before/aegis_of_ages.png",
+ "pngBytes": 32860
+}
