@@ -1,0 +1,6 @@
+  /tv  1280x800|dark|full|signed-out|normal  HTTP 200  console 0  5150ms
+  /tv  1280x800|dark|full|user|normal  HTTP 200  console 2  11420ms
+  /leaderboard  1280x800|dark|full|signed-out|normal  HTTP 200  console 2  8767ms
+  /leaderboard  1280x800|dark|full|user|normal  HTTP 200  console 2  7551ms
+
+[console] 4 cells, 6 known item(s), 0 new
