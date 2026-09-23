@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { refuseCrossSite } from "../_lib/sameOrigin";
 import { getDb, requestIsSecure } from "@/lib/server/db";
 import {
   recordUsernameChange,
@@ -20,6 +21,8 @@ export const dynamic = "force-dynamic";
 // design: the flag and validation both live in the database, never in the
 // client.
 export async function POST(request: Request) {
+  const refused = refuseCrossSite(request);
+  if (refused) return refused;
   let body: { username?: unknown };
   try {
     body = await request.json();

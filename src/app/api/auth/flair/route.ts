@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { refuseCrossSite } from "../_lib/sameOrigin";
 import { getDb } from "@/lib/server/db";
 import { sessionTokenFromCookieHeader, userForSession } from "@/lib/server/auth";
 import { isFlairEmoji, LAUREL_FLAIR } from "@/lib/flair";
@@ -12,6 +13,8 @@ export const dynamic = "force-dynamic";
 // be claimed while the account currently holds a top-10 leaderboard spot
 // (checked here, statelessly, on every claim).
 export async function POST(request: Request) {
+  const refused = refuseCrossSite(request);
+  if (refused) return refused;
   let body: { flair?: unknown };
   try {
     body = await request.json();

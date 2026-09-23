@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { refuseCrossSite } from "../_lib/sameOrigin";
 import { getDb, requestIsSecure } from "@/lib/server/db";
 import {
   createSession,
@@ -26,6 +27,8 @@ export const dynamic = "force-dynamic";
 const REGISTER_MAX_PER_IP = 10;
 
 export async function POST(request: Request) {
+  const refused = refuseCrossSite(request);
+  if (refused) return refused;
   let body: { username?: unknown; password?: unknown; email?: unknown; turnstileToken?: unknown };
   try {
     body = await request.json();

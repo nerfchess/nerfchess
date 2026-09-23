@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { refuseCrossSite } from "../_lib/sameOrigin";
 import { getDb, requestIsSecure } from "@/lib/server/db";
 import { sessionTokenFromCookieHeader, userForSession } from "@/lib/server/auth";
 import { isAvatarId, isCustomAvatar } from "@/lib/avatars";
@@ -10,6 +11,8 @@ export const dynamic = "force-dynamic";
 // Sets the signed-in account's profile picture: a preset id from lib/avatars,
 // or an uploaded image as a small data URL (client-side cropped to 96px).
 export async function POST(request: Request) {
+  const refused = refuseCrossSite(request);
+  if (refused) return refused;
   let body: { avatar?: unknown };
   try {
     body = await request.json();

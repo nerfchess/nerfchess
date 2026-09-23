@@ -11,6 +11,7 @@
 //   oauth      /login shows only the known Google sign-in messages.
 // HTTP (the local dev server on POLISH_BASE or http://localhost:3000; refuses
 // anything but localhost):
+//   F046  a cross-site browser POST (Origin or Sec-Fetch-Site) is a 403.
 //   F047  a JSON body of null / [] / 7 is a 400 on every auth POST, not a 500.
 //   F043  names in ADMIN_USERNAMES cannot be registered.
 //   F063  ten wrong passwords from one IP do not lock the owner out from
@@ -117,6 +118,20 @@ async function http() {
       check(`F047 ${route} ${body}`, res.status === 400, `status ${res.status}`);
     }
   }
+
+  // F046: a cross-site browser request cannot sign anyone in or out.
+  for (const route of ["login", "register", "guest", "logout"]) {
+    const evil = await post(`/api/auth/${route}`, "{}", { origin: "https://evil.example", "CF-Connecting-IP": randomIp() });
+    check(`F046 ${route} cross-site Origin`, evil.status === 403, `status ${evil.status}`);
+    const fetchSite = await post(`/api/auth/${route}`, "{}", { "sec-fetch-site": "cross-site", "CF-Connecting-IP": randomIp() });
+    check(`F046 ${route} Sec-Fetch-Site cross-site`, fetchSite.status === 403, `status ${fetchSite.status}`);
+  }
+  const sameSite = await post("/api/auth/login", JSON.stringify({ username: "nobody_here", password: "x" }), {
+    origin: BASE,
+    "sec-fetch-site": "same-origin",
+    "CF-Connecting-IP": randomIp(),
+  });
+  check("F046 same-origin login still answers", sameSite.status === 401, `status ${sameSite.status}`);
 
   // F043: every name in ADMIN_USERNAMES (wrangler.jsonc vars) is reserved.
   for (const name of ["ilovenewjeans", "RuyLopezSolos"]) {

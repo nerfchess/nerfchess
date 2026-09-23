@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { refuseCrossSite } from "../_lib/sameOrigin";
 import { getDb, requestIsSecure } from "@/lib/server/db";
 import {
   clearLoginFailures,
@@ -20,6 +21,8 @@ export const dynamic = "force-dynamic";
 const LOGIN_MAX_FAILURES_PER_USER_ANY_IP = 50;
 
 export async function POST(request: Request) {
+  const refused = refuseCrossSite(request);
+  if (refused) return refused;
   let body: { username?: unknown; password?: unknown };
   try {
     body = await request.json();

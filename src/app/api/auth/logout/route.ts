@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { refuseCrossSite } from "../_lib/sameOrigin";
 import { getDb, requestIsSecure } from "@/lib/server/db";
 import { deleteSession, sessionCookie, sessionTokenFromCookieHeader } from "@/lib/server/auth";
 import { clearWhoCookie } from "../_lib/who";
@@ -6,6 +7,8 @@ import { clearWhoCookie } from "../_lib/who";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
+  const refused = refuseCrossSite(request);
+  if (refused) return refused;
   const token = sessionTokenFromCookieHeader(request.headers.get("cookie"));
   if (token) {
     const db = await getDb();

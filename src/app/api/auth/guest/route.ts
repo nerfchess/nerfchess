@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { refuseCrossSite } from "../_lib/sameOrigin";
 import { getDb, requestIsSecure } from "@/lib/server/db";
 import {
   createSession,
@@ -21,6 +22,8 @@ export const dynamic = "force-dynamic";
 // visitors can play rated games immediately. The password is an unknowable
 // random secret; registering later upgrades the same account in place.
 export async function POST(request: Request) {
+  const refused = refuseCrossSite(request);
+  if (refused) return refused;
   const db = await getDb();
 
   // Already signed in (guest or not): return that account instead of minting

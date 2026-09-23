@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { refuseCrossSite } from "../_lib/sameOrigin";
 import { getDb } from "@/lib/server/db";
 import { sessionTokenFromCookieHeader, userForSession } from "@/lib/server/auth";
 import { censorText, findProfanity } from "@/lib/profanity";
@@ -10,6 +11,8 @@ const MAX_BIO = 300;
 // Sets the signed-in account's profile bio (shown on the public profile,
 // like Lichess's "about me"). Profanity is censored, not rejected.
 export async function POST(request: Request) {
+  const refused = refuseCrossSite(request);
+  if (refused) return refused;
   let body: { bio?: unknown };
   try {
     body = await request.json();
