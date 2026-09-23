@@ -1,7 +1,7 @@
 {
-  "at": "2026-09-23T22:47:47.805Z",
+  "at": "2026-09-23T22:42:09.746Z",
   "base": "http://localhost:3000",
-  "passed": 22,
+  "passed": 20,
   "total": 22,
   "checks": [
     {
@@ -50,31 +50,31 @@
       "id": "context by id carries the player's own mod history",
       "finding": "F115",
       "pass": true,
-      "detail": "{\"status\":200,\"hist\":[{\"mod_name\":\"polish_mod\",\"action\":\"warn\",\"expires_at\":null,\"note\":\"mod-test warn muep0g2u\",\"created_at\":1790203643880},{\"mod_name\":\"polish_mod\",\"action\":\"report_resolved\",\"expires_at\":null,\"note\":\"handled in test\",\"created_at\":1790203521518},{\"mod_name\":\"polish_mod\",\"action\":\"warn\",\"expires_at\":null,\"note\":\"mod-test warn mueoxb2q\",\"created_at\":1790203510284}]}"
+      "detail": "{\"status\":200,\"hist\":[{\"mod_name\":\"polish_mod\",\"action\":\"warn\",\"expires_at\":null,\"note\":\"mod-test warn mueotmmb\",\"created_at\":1790203307668},{\"mod_name\":\"polish_mod\",\"action\":\"report_resolved\",\"expires_at\":null,\"note\":\"handled in test\",\"created_at\":1790201766379},{\"mod_name\":\"polish_mod\",\"action\":\"warn\",\"expires_at\":null,\"note\":\"mod-test warn muenwag9\",\"created_at\":1790201762255}]}"
     },
     {
       "id": "context by id carries reports against the player",
       "finding": "F115",
       "pass": true,
-      "detail": "{\"status\":200,\"n\":6}"
+      "detail": "{\"status\":200,\"n\":4}"
     },
     {
       "id": "context carries reports the player filed",
       "finding": "F115",
       "pass": true,
-      "detail": "{\"status\":200,\"filed\":[{\"id\":\"polishrep_muep0g2u\",\"reporter_name\":\"polish_admin\",\"reported_name\":\"polish_user\",\"reason\":\"chat\",\"description\":\"mod-test fixture\",\"status\":\"open\",\"created_at\":1790203618541},{\"id\":\"polishrep_mueoxb2q\",\"reporter_name\":\"polish_admin\",\"reported_name\":\"polish_user\",\"reason\":\"chat\",\"description\":\"mod-test fixture\",\"status\":\"resolved\",\"created_at\":1790203472299},{\"id\":\"poli"
+      "detail": "{\"status\":200,\"filed\":[{\"id\":\"polishrep_mueotmmb\",\"reporter_name\":\"polish_admin\",\"reported_name\":\"polish_user\",\"reason\":\"chat\",\"description\":\"mod-test fixture\",\"status\":\"open\",\"created_at\":1790203300090},{\"id\":\"polishrep_muenwag9\",\"reporter_name\":\"polish_admin\",\"reported_name\":\"polish_user\",\"reason\":\"chat\",\"description\":\"mod-test fixture\",\"status\":\"resolved\",\"created_at\":1790201749774},{\"id\":\"poli"
     },
     {
       "id": "context names the requested player, not a search match",
       "finding": "F115",
       "pass": true,
-      "detail": "{\"id\":\"2f97bdf7-5074-4f4d-addb-a1c13bbdbbca\",\"username\":\"polish_admin\",\"role\":\"admin\",\"rating\":1500,\"games\":0,\"created_at\":1790122217309,\"muted_until\":null,\"banned_until\":null,\"is_guest\":0,\"has_email\":false,\"last_seen_at\":1790203618449,\"name_flagged\":false}"
+      "detail": "{\"id\":\"2f97bdf7-5074-4f4d-addb-a1c13bbdbbca\",\"username\":\"polish_admin\",\"role\":\"admin\",\"rating\":1500,\"games\":0,\"created_at\":1790122217309,\"muted_until\":null,\"banned_until\":null,\"is_guest\":0,\"has_email\":false,\"last_seen_at\":1790203300047,\"name_flagged\":false}"
     },
     {
       "id": "bulk review clears exactly the ids sent",
       "finding": "F122",
       "pass": true,
-      "detail": "{\"status\":200,\"open\":[\"polishflag_muep0g2u_2\"]}"
+      "detail": "{\"status\":200,\"open\":[\"polishflag_mueotmmb_2\"]}"
     },
     {
       "id": "first close succeeds",
@@ -98,19 +98,19 @@
       "id": "the sanction is in the log with its reason",
       "finding": "F116",
       "pass": true,
-      "detail": "[{\"mod_name\":\"polish_mod\",\"target_name\":\"polish_user\",\"action\":\"report_resolved\",\"expires_at\":null,\"note\":\"handled in test\",\"created_at\":1790203647155,\"target_kind\":\"report\",\"target_ref\":\"polishrep_muep0g2u\",\"before_json\":\"{\\\"status\\\":\\\"open\\\"}\",\"after_json\":\"{\\\"status\\\":\\\"resolved\\\",\\\"reason\\\":\\\"chat\\\"}\"},{\"mod_name\":\"polish_mod\",\"target_name\":\"polish_user\",\"action\":\"chat_flag_reviewed\",\"expires_"
+      "detail": "[{\"mod_name\":\"polish_mod\",\"target_name\":\"polish_user\",\"action\":\"report_resolved\",\"expires_at\":null,\"note\":\"handled in test\",\"created_at\":1790203310237,\"target_kind\":\"report\",\"target_ref\":\"polishrep_mueotmmb\",\"before_json\":\"{\\\"status\\\":\\\"open\\\"}\",\"after_json\":\"{\\\"status\\\":\\\"resolved\\\",\\\"reason\\\":\\\"chat\\\"}\"},{\"mod_name\":\"polish_mod\",\"target_name\":\"polish_user\",\"action\":\"chat_flag_reviewed\",\"expires_"
     },
     {
       "id": "report triage is in the log with the report id and note",
       "finding": "F116",
       "pass": true,
-      "detail": "[{\"mod_name\":\"polish_mod\",\"target_name\":\"polish_user\",\"action\":\"report_resolved\",\"expires_at\":null,\"note\":\"handled in test\",\"created_at\":1790203647155,\"target_kind\":\"report\",\"target_ref\":\"polishrep_muep0g2u\",\"before_json\":\"{\\\"status\\\":\\\"open\\\"}\",\"after_json\":\"{\\\"status\\\":\\\"resolved\\\",\\\"reason\\\":\\\"chat\\\"}\"},{\"mod_name\":\"polish_mod\",\"target_name\":\"polish_user\",\"action\":\"chat_flag_reviewed\",\"expires_"
+      "detail": "[{\"mod_name\":\"polish_mod\",\"target_name\":\"polish_user\",\"action\":\"report_resolved\",\"expires_at\":null,\"note\":\"handled in test\",\"created_at\":1790203310237,\"target_kind\":\"report\",\"target_ref\":\"polishrep_mueotmmb\",\"before_json\":\"{\\\"status\\\":\\\"open\\\"}\",\"after_json\":\"{\\\"status\\\":\\\"resolved\\\",\\\"reason\\\":\\\"chat\\\"}\"},{\"mod_name\":\"polish_mod\",\"target_name\":\"polish_user\",\"action\":\"chat_flag_reviewed\",\"expires_"
     },
     {
       "id": "chat-flag review is in the log with the count",
       "finding": "F116",
       "pass": true,
-      "detail": "[{\"mod_name\":\"polish_mod\",\"target_name\":\"polish_user\",\"action\":\"report_resolved\",\"expires_at\":null,\"note\":\"handled in test\",\"created_at\":1790203647155,\"target_kind\":\"report\",\"target_ref\":\"polishrep_muep0g2u\",\"before_json\":\"{\\\"status\\\":\\\"open\\\"}\",\"after_json\":\"{\\\"status\\\":\\\"resolved\\\",\\\"reason\\\":\\\"chat\\\"}\"},{\"mod_name\":\"polish_mod\",\"target_name\":\"polish_user\",\"action\":\"chat_flag_reviewed\",\"expires_"
+      "detail": "[{\"mod_name\":\"polish_mod\",\"target_name\":\"polish_user\",\"action\":\"report_resolved\",\"expires_at\":null,\"note\":\"handled in test\",\"created_at\":1790203310237,\"target_kind\":\"report\",\"target_ref\":\"polishrep_mueotmmb\",\"before_json\":\"{\\\"status\\\":\\\"open\\\"}\",\"after_json\":\"{\\\"status\\\":\\\"resolved\\\",\\\"reason\\\":\\\"chat\\\"}\"},{\"mod_name\":\"polish_mod\",\"target_name\":\"polish_user\",\"action\":\"chat_flag_reviewed\",\"expires_"
     },
     {
       "id": "metrics answer with written definitions",
@@ -127,14 +127,14 @@
     {
       "id": "a 41-ply game lists as 21 moves",
       "finding": "F128",
-      "pass": true,
-      "detail": "{\"status\":200,\"moveCount\":21}"
+      "pass": false,
+      "detail": "{\"status\":200,\"moveCount\":41}"
     },
     {
       "id": "the weekly average is in chess moves, rounded like the archive",
       "finding": "F128",
-      "pass": true,
-      "detail": "{\"status\":200,\"avgPlies\":41,\"avgMoves\":21,\"expected\":21}"
+      "pass": false,
+      "detail": "{\"status\":200,\"avgPlies\":41,\"avgMoves\":41,\"expected\":21}"
     }
   ]
 }

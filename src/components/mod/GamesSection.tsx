@@ -45,7 +45,7 @@ function SeatBadge({ kind }: { kind: SeatKind }) {
   if (kind === "member") return null;
   if (kind === "house")
     return (
-      <span className="shrink-0 rounded-none border border-bruise-glow/40 px-1.5 py-px text-[12px] text-bruise-glow">
+      <span className="shrink-0 rounded-none border border-bruise-glow/40 px-1.5 py-px text-[13px] text-bruise-glow">
         house bot
       </span>
     );
@@ -183,7 +183,7 @@ export function GamesSection() {
           <div className="space-y-2">
             {games.map((g, i) => (
               <div key={g.id} className={`plate p-4 ${i === 0 ? "border border-[color:var(--edge-strong)]" : ""}`}>
-                {i === 0 && <div className="text-[12px] text-parchment-50">Last human game</div>}
+                {i === 0 && <div className="text-[13px] text-parchment-50">Last human game</div>}
                 <div className={`flex flex-wrap items-center gap-2 text-sm ${i === 0 ? "mt-1" : ""}`}>
                   <Seat seat={g.white} />
                   <span className="font-mono tabular-nums text-parchment-200">
@@ -195,13 +195,13 @@ export function GamesSection() {
                   />
                   <Pill>{g.rated ? "rated" : "casual"}</Pill>
                   <span
-                    className="w-full text-xs text-parchment-400 sm:ml-auto sm:w-auto"
+                    className="w-full text-[13px] text-parchment-400 sm:ml-auto sm:w-auto"
                     title={when(g.completedAt)}
                   >
                     {whenShort(g.completedAt)}
                   </span>
                 </div>
-                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-parchment-400">
+                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-parchment-400">
                   <span>{g.reason}</span>
                   <span>{tcLabel(g.timeSec, g.incrementSec)}</span>
                   <span>{g.moveCount} moves</span>

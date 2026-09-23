@@ -103,7 +103,7 @@ export async function GET(request: Request) {
     .prepare(
       `SELECT created_at / 86400000 AS day, target_kind AS kind, COUNT(*) AS n
        FROM mod_actions
-       WHERE target_kind IN ('report', 'chat_flag', 'user') AND created_at >= ?
+       WHERE target_kind IN ('report', 'chat_flag', 'user') AND action <> 'rating_set' AND created_at >= ?
        GROUP BY 1, 2`,
     )
     .bind((todayIndex - 6) * DAY_MS)

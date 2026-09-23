@@ -371,17 +371,16 @@ async function computeMetrics(db: D1Database, now: number): Promise<SiteMetrics>
 
 /** How long one computation is reused (per server instance). */
 export const METRICS_TTL_MS = 60_000;
-let cached: { at: number; value: Promise<SiteMetrics> } | null = null;
+let cached: { at: number; value: SiteMetrics } | null = null;
 
-/** Site metrics, recomputed at most once per METRICS_TTL_MS per instance. A
- *  failed computation is not cached. */
-export function getSiteMetrics(db: D1Database, now = Date.now()): Promise<SiteMetrics> {
+/** Site metrics, recomputed at most once per METRICS_TTL_MS per instance.
+ *  Only a finished result is cached, never an in-flight promise: a Worker must
+ *  not make one request wait on I/O that a different (possibly cancelled)
+ *  request started. A failed computation is not cached. */
+export async function getSiteMetrics(db: D1Database, now = Date.now()): Promise<SiteMetrics> {
   if (cached && now - cached.at < METRICS_TTL_MS) return cached.value;
-  const value = computeMetrics(db, now);
+  const value = await computeMetrics(db, now);
   cached = { at: now, value };
-  value.catch(() => {
-    if (cached?.value === value) cached = null;
-  });
   return value;
 }
 

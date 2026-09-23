@@ -5,6 +5,7 @@ import {
   BOTH_HUMAN_SQL,
   BOT_SEAT_SQL,
   HUMAN_GAME_SQL,
+  fullMovesFromPlies,
   guestIdSet,
 } from "@/lib/server/modGames";
 
@@ -128,7 +129,7 @@ export async function GET(request: Request) {
     week: { total: weekTotal, humanVsHuman: weekHvH, humanVsHouse: weekTotal - weekHvH },
     averageGame: {
       // avg_moves is plies; the panel shows chess moves (F128).
-      moves: agg?.avg_moves != null ? Math.round(Number(agg.avg_moves) / 2) : null,
+      moves: agg?.avg_moves != null ? fullMovesFromPlies(Number(agg.avg_moves)) : null,
       durationMs: agg?.avg_duration_ms != null ? Math.round(Number(agg.avg_duration_ms)) : null,
     },
     topMode,

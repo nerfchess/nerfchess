@@ -89,11 +89,11 @@ export function ChatFlagsSection({
                   {whenShort(f.created_at)}
                 </span>
                 {f.reviewed ? (
-                  <span className="ml-auto text-[12px] text-parchment-400">reviewed</span>
+                  <span className="ml-auto text-[13px] text-parchment-400">reviewed</span>
                 ) : null}
               </div>
               <p className="mt-2 break-words text-sm text-parchment-100">{f.text}</p>
-              <p className="mt-1 text-xs text-oxblood-glow">matched: {f.matched_words}</p>
+              <p className="mt-1 text-[13px] text-oxblood-glow">matched: {f.matched_words}</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 {!f.reviewed && (
                   <ModButton

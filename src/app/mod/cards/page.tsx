@@ -261,7 +261,7 @@ export default function ModCardsPage() {
             <div className="mt-4 plate p-0 overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-left text-[12px] text-parchment-400 border-b border-[color:var(--edge)]">
+                  <tr className="text-left text-[13px] text-parchment-400 border-b border-[color:var(--edge)]">
                     <th className="px-3 py-2 font-normal">Card</th>
                     <th className="px-3 py-2 font-normal">Kind</th>
                     <th className="px-3 py-2 font-normal">Tier</th>
@@ -305,7 +305,7 @@ export default function ModCardsPage() {
                 <p className="px-3 py-6 text-center text-parchment-400">No cards match.</p>
               )}
               {rows.length > LIST_CAP && (
-                <p className="px-3 py-3 text-xs text-parchment-400 border-t border-[color:var(--edge)]">
+                <p className="px-3 py-3 text-[13px] text-parchment-400 border-t border-[color:var(--edge)]">
                   Showing {LIST_CAP} of {rows.length} cards. Refine the search to see the rest.
                 </p>
               )}
@@ -358,20 +358,20 @@ function FragmentRow({
             {effectiveName}
           </span>
           {overridden && (
-            <span className="ml-2 text-[12px] px-1.5 py-0.5 border border-[color:var(--edge-strong)] text-parchment-50 rounded-none">
+            <span className="ml-2 text-[13px] px-1.5 py-0.5 border border-[color:var(--edge-strong)] text-parchment-50 rounded-none">
               override
             </span>
           )}
           {!card.implemented && (
-            <span className="ml-2 text-[12px] text-parchment-400">stub</span>
+            <span className="ml-2 text-[13px] text-parchment-400">stub</span>
           )}
-          <div className="text-[12px] text-parchment-400">{card.id}</div>
+          <div className="text-[13px] text-parchment-400">{card.id}</div>
         </td>
         <td className="px-3 py-2 capitalize text-parchment-300">{card.kind}</td>
         <td className="px-3 py-2 text-parchment-300">
           {effectiveTier}
           {effectiveTier !== card.tier && (
-            <span className="ml-1 text-[12px] text-parchment-400">(code {card.tier})</span>
+            <span className="ml-1 text-[13px] text-parchment-400">(code {card.tier})</span>
           )}
         </td>
         <td className="px-3 py-2 text-parchment-300">
@@ -413,7 +413,7 @@ function FragmentRow({
           <td colSpan={5} className="px-3 py-3">
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="flex flex-col gap-1">
-                <span className="text-[12px] text-parchment-400">Name</span>
+                <span className="text-[13px] text-parchment-400">Name</span>
                 <input
                   value={draft.name}
                   onChange={(e) => patch({ name: e.target.value })}
@@ -422,7 +422,7 @@ function FragmentRow({
                 />
               </label>
               <label className="flex flex-col gap-1">
-                <span className="text-[12px] text-parchment-400">Tier (blank = code tier {card.tier})</span>
+                <span className="text-[13px] text-parchment-400">Tier (blank = code tier {card.tier})</span>
                 <select
                   value={draft.tier}
                   onChange={(e) => patch({ tier: e.target.value })}
@@ -435,7 +435,7 @@ function FragmentRow({
                 </select>
               </label>
               <label className="flex flex-col gap-1 sm:col-span-2">
-                <span className="text-[12px] text-parchment-400">Description</span>
+                <span className="text-[13px] text-parchment-400">Description</span>
                 <textarea
                   value={draft.description}
                   onChange={(e) => patch({ description: e.target.value })}
@@ -445,7 +445,7 @@ function FragmentRow({
                 />
               </label>
               <label className="flex flex-col gap-1 sm:col-span-2">
-                <span className="text-[12px] text-parchment-400">Flavor</span>
+                <span className="text-[13px] text-parchment-400">Flavor</span>
                 <textarea
                   value={draft.flavor}
                   onChange={(e) => patch({ flavor: e.target.value })}

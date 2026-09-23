@@ -62,7 +62,7 @@ export function ReportsSection({
           Everything
         </FilterChip>
         {reports && (
-          <span className="ml-auto text-[12px] text-parchment-400">
+          <span className="ml-auto text-[13px] text-parchment-400">
             {status === "open"
               ? `${openCount} waiting`
               : `${reports.length} report${reports.length === 1 ? "" : "s"}`}

@@ -117,7 +117,7 @@ export function AuditLogSection() {
               )}
               {entry.note && <span className="text-parchment-400">“{entry.note}”</span>}
               {(entry.before_json || entry.after_json) && (
-                <details className="w-full text-[12px] text-parchment-400">
+                <details className="w-full text-[13px] text-parchment-400">
                   <summary className="cursor-pointer">Change</summary>
                   <div className="mt-1 break-all font-mono">
                     <div>before: {entry.before_json ?? "none"}</div>
@@ -126,7 +126,7 @@ export function AuditLogSection() {
                 </details>
               )}
               <span
-                className="w-full text-[12px] text-parchment-400 sm:ml-auto sm:w-auto sm:text-sm"
+                className="w-full text-[13px] text-parchment-400 sm:ml-auto sm:w-auto sm:text-sm"
                 title={when(entry.created_at)}
               >
                 {whenShort(entry.created_at)}
@@ -135,7 +135,7 @@ export function AuditLogSection() {
           ))}
         </div>
       )}
-      <p className="text-[12px] text-parchment-500">
+      <p className="text-[13px] text-parchment-500">
         Showing {rows.length} of {log.length} recorded actions.
       </p>
     </div>

@@ -244,7 +244,7 @@ function FeedbackTable({
         </FilterChip>
         {tiers.length > 0 && (
           <>
-            <span className="ml-2 text-[12px] text-parchment-400">Tier</span>
+            <span className="ml-2 text-[13px] text-parchment-400">Tier</span>
             <FilterChip active={tier === "all"} onClick={() => setTier("all")}>
               Any
             </FilterChip>
@@ -260,7 +260,7 @@ function FeedbackTable({
       {/* Sorting on a phone, where there are no column headers to click. The
           four that matter; the desktop table keeps all six. */}
       <div className="flex flex-wrap items-center gap-2 sm:hidden">
-        <span className="text-[12px] text-parchment-400">Sort</span>
+        <span className="text-[13px] text-parchment-400">Sort</span>
         {(
           [
             ["score", "Score"],
@@ -296,7 +296,7 @@ function FeedbackTable({
                   {v.text}
                 </Pill>
               </div>
-              <div className="mt-1 flex items-center gap-3 font-mono text-[12px] tabular-nums">
+              <div className="mt-1 flex items-center gap-3 font-mono text-[13px] tabular-nums">
                 <span className="text-verdigris-glow">+{row.up}</span>
                 <span className="text-oxblood-glow">-{row.down}</span>
                 <span className="text-parchment-100">
@@ -319,7 +319,7 @@ function FeedbackTable({
       <div className="plate hidden overflow-x-auto sm:block">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-[12px] text-parchment-400">
+            <tr className="text-[13px] text-parchment-400">
               <Header align="left" active={sort === "name"} onClick={() => toggle("name")}>
                 {label}
                 {arrow("name")}
@@ -366,7 +366,7 @@ function FeedbackTable({
                       {v.text}
                     </Pill>
                   </td>
-                  <td className="px-4 py-2 text-right text-xs text-parchment-400">
+                  <td className="px-4 py-2 text-right text-[13px] text-parchment-400">
                     {new Date(row.last_at).toLocaleDateString()}
                   </td>
                 </tr>
@@ -385,7 +385,7 @@ function FeedbackTable({
 
       {recent.length > 0 && (
         <div>
-          <h3 className="text-xs text-parchment-400">Recent votes</h3>
+          <h3 className="text-[13px] text-parchment-400">Recent votes</h3>
           <ul className="plate mt-2 divide-y divide-[color:var(--edge)] text-sm">
             {recent.map((v, i) => (
               <li key={i} className="flex items-center justify-between gap-3 px-4 py-2">
@@ -396,7 +396,7 @@ function FeedbackTable({
                   {v.name}
                   <span className="text-parchment-400"> by {v.username ?? "unknown"}</span>
                 </span>
-                <span className="shrink-0 text-xs text-parchment-400">
+                <span className="shrink-0 text-[13px] text-parchment-400">
                   {new Date(v.created_at).toLocaleString()}
                 </span>
               </li>

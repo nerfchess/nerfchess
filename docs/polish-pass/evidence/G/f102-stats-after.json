@@ -1,0 +1,74 @@
+{
+  "at": "2026-09-23T22:44:31.019Z",
+  "label": "after",
+  "timingsMs": [
+    23.9,
+    15.3,
+    14.4,
+    11.9,
+    18.6
+  ],
+  "medianMs": 15.3,
+  "cacheControl": "public, max-age=0, s-maxage=60, stale-while-revalidate=60",
+  "keys": [
+    "games.averageMoves",
+    "games.blackWins",
+    "games.draws",
+    "games.rated",
+    "games.today",
+    "games.total",
+    "games.vsBots",
+    "games.whiteWins",
+    "gamesPlayed",
+    "humans.games.averageMoves",
+    "humans.games.blackWins",
+    "humans.games.draws",
+    "humans.games.rated",
+    "humans.games.today",
+    "humans.games.total",
+    "humans.games.whiteWins",
+    "humans.players.withGames",
+    "humans.topNerfs",
+    "players.total",
+    "players.withGames",
+    "topNerfs"
+  ],
+  "payload": {
+    "gamesPlayed": 114,
+    "games": {
+      "total": 0,
+      "rated": 0,
+      "today": 0,
+      "whiteWins": 0,
+      "blackWins": 0,
+      "draws": 0,
+      "averageMoves": 0,
+      "vsBots": 114
+    },
+    "players": {
+      "total": 702,
+      "withGames": 0
+    },
+    "topNerfs": [],
+    "humans": {
+      "games": {
+        "total": 0,
+        "rated": 0,
+        "today": 0,
+        "whiteWins": 0,
+        "blackWins": 0,
+        "draws": 0,
+        "averageMoves": 0
+      },
+      "players": {
+        "withGames": 0
+      },
+      "topNerfs": []
+    }
+  },
+  "compare": {
+    "against": "docs/polish-pass/evidence/G/f102-stats-before.json",
+    "sameKeys": true,
+    "differingValues": []
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "at": "2026-09-23T22:41:39.276Z",
+  "label": "before",
+  "timingsMs": [
+    145.3,
+    179.1,
+    152.7,
+    169.5,
+    154.1
+  ],
+  "medianMs": 154.1,
+  "cacheControl": null,
+  "keys": [
+    "games.averageMoves",
+    "games.blackWins",
+    "games.draws",
+    "games.rated",
+    "games.today",
+    "games.total",
+    "games.vsBots",
+    "games.whiteWins",
+    "gamesPlayed",
+    "humans.games.averageMoves",
+    "humans.games.blackWins",
+    "humans.games.draws",
+    "humans.games.rated",
+    "humans.games.today",
+    "humans.games.total",
+    "humans.games.whiteWins",
+    "humans.players.withGames",
+    "humans.topNerfs",
+    "players.total",
+    "players.withGames",
+    "topNerfs"
+  ],
+  "payload": {
+    "gamesPlayed": 114,
+    "games": {
+      "total": 0,
+      "rated": 0,
+      "today": 0,
+      "whiteWins": 0,
+      "blackWins": 0,
+      "draws": 0,
+      "averageMoves": 0,
+      "vsBots": 114
+    },
+    "players": {
+      "total": 702,
+      "withGames": 0
+    },
+    "topNerfs": [],
+    "humans": {
+      "games": {
+        "total": 0,
+        "rated": 0,
+        "today": 0,
+        "whiteWins": 0,
+        "blackWins": 0,
+        "draws": 0,
+        "averageMoves": 0
+      },
+      "players": {
+        "withGames": 0
+      },
+      "topNerfs": []
+    }
+  }
+}

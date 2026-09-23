@@ -96,7 +96,7 @@ export function DashboardSection({
         </div>
         {queue.handledPerDay && (
           <p className="mt-2 text-[13px] text-parchment-400">
-            Handled per day, last 7 UTC days (reports closed / flag reviews / player actions):{" "}
+            Handled per day, last 7 UTC days (reports closed / flag review passes / player actions):{" "}
             <span className="tabular-nums text-parchment-200">
               {queue.handledPerDay.map((d) => `${d.date.slice(5)} ${d.reports}/${d.chatFlags}/${d.sanctions}`).join(" · ")}
             </span>
@@ -107,7 +107,7 @@ export function DashboardSection({
             Look up a player
           </ModButton>
           <ModButton size="sm" onClick={() => onGo("log")}>
-            Audit log · {queue.modActionsWeek} action{queue.modActionsWeek === 1 ? "" : "s"} this week
+            Audit log · {queue.modActionsWeek} entr{queue.modActionsWeek === 1 ? "y" : "ies"} this week
           </ModButton>
         </div>
       </section>
@@ -194,7 +194,7 @@ export function DashboardSection({
           }
         />
         {house.tiers.length === 0 ? (
-          <p className="mt-3 text-[12px] text-parchment-400">
+          <p className="mt-3 text-[13px] text-parchment-400">
             No house-vs-human games archived in this window yet.
           </p>
         ) : (
@@ -216,7 +216,7 @@ export function DashboardSection({
                         <Pill tone={v.tone === "warn" ? "warn" : "neutral"}>{v.text}</Pill>
                       </span>
                     </div>
-                    <div className="mt-0.5 font-mono text-[12px] tabular-nums text-parchment-400">
+                    <div className="mt-0.5 font-mono text-[13px] tabular-nums text-parchment-400">
                       {t.played} games · {t.won} / {t.drawn} / {t.lost}
                     </div>
                   </li>
@@ -231,7 +231,7 @@ export function DashboardSection({
                 safety net for a long "Reading" verdict. */}
             <div className="mt-3 hidden overflow-x-auto sm:block">
               <table className="w-full text-left text-[13px]">
-                <thead className="text-[12px] text-parchment-400">
+                <thead className="text-[13px] text-parchment-400">
                   <tr>
                     <th className="py-1.5 pr-3">Tier</th>
                     <th className="py-1.5 pr-3">Games</th>
@@ -255,7 +255,7 @@ export function DashboardSection({
                         </td>
                         <td
                           className={
-                            "py-1.5 text-[12px] " +
+                            "py-1.5 text-[13px] " +
                             (verdict.tone === "warn" ? "text-oxblood-glow" : "text-parchment-400")
                           }
                         >
@@ -291,7 +291,7 @@ export function DashboardSection({
               ] as const
             ).map(([label, rows]) => (
               <div key={label}>
-                <div className="text-[12px] text-parchment-400">{label}</div>
+                <div className="text-[13px] text-parchment-400">{label}</div>
                 <ul className="plate mt-1.5 divide-y divide-[color:var(--edge)]">
                   {rows.map((r) => (
                     <li key={r.id} className="px-3 py-2 text-[13px]">
@@ -313,7 +313,7 @@ export function DashboardSection({
         </section>
       )}
 
-      <p className="text-[12px] text-parchment-500">
+      <p className="text-[13px] text-parchment-500">
         Generated {new Date(data.generatedAt).toISOString()}.
       </p>
     </div>

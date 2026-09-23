@@ -96,7 +96,7 @@ export default function ModHousePage() {
                   aria-label="Filter personas"
                   className="w-full max-w-sm bg-[color:var(--bg-base)] border border-[color:var(--edge)] rounded-none px-3 py-1.5 text-sm text-parchment placeholder:text-parchment-400/60 focus:outline-none focus:border-[color:var(--edge-strong)]"
                 />
-                <span className="text-xs text-parchment-400">
+                <span className="text-[13px] text-parchment-400">
                   {filtered(data.personas, query).length} of {data.personas.length} personas
                 </span>
               </div>
@@ -233,7 +233,7 @@ function PersonaRow({
         )}
         {edited && (
           <span
-            className="text-[12px] px-2 py-0.5 rounded-none border border-[color:var(--edge-strong)] text-parchment-50"
+            className="text-[13px] px-2 py-0.5 rounded-none border border-[color:var(--edge-strong)] text-parchment-50"
             title={`Default: ${persona.defaults.username}`}
           >
             edited
@@ -278,7 +278,7 @@ function PersonaRow({
           />
         </div>
       )}
-      {error && <p className="mt-2 text-xs text-oxblood-glow">{error}</p>}
+      {error && <p className="mt-2 text-[13px] text-oxblood-glow">{error}</p>}
       {picking && canEdit && (
         <div className="mt-3">
           <div className="mb-2 flex items-center gap-3">
@@ -296,7 +296,7 @@ function PersonaRow({
               className="px-3 py-1 text-parchment-50">
               Upload image…
             </Button>
-            <span className="text-[12px] text-parchment-500">PNG, JPEG, or WebP. Max 1 MB, 1024px.</span>
+            <span className="text-[13px] text-parchment-500">PNG, JPEG, or WebP. Max 1 MB, 1024px.</span>
           </div>
           <div className="flex flex-wrap gap-1.5">
           {avatars.map((id) => (

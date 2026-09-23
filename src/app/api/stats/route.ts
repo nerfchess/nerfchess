@@ -22,18 +22,16 @@ const HUMAN_GAME = `white_user_id IS NOT NULL AND black_user_id IS NOT NULL
 // is reused for STATS_TTL_MS per server instance, and shared caches may hold
 // the response for as long; the numbers themselves are unchanged.
 const STATS_TTL_MS = 60_000;
-let memo: { at: number; body: Promise<unknown> } | null = null;
+// Only the finished payload is cached, never an in-flight promise: a Worker
+// must not make one request wait on I/O a different request started.
+let memo: { at: number; body: unknown } | null = null;
 
 export async function GET() {
   const now = Date.now();
   if (!memo || now - memo.at >= STATS_TTL_MS) {
-    const body = computeStats(now);
-    memo = { at: now, body };
-    body.catch(() => {
-      if (memo?.body === body) memo = null;
-    });
+    memo = { at: now, body: await computeStats(now) };
   }
-  return NextResponse.json(await memo.body, {
+  return NextResponse.json(memo.body, {
     headers: { "cache-control": "public, max-age=0, s-maxage=60, stale-while-revalidate=60" },
   });
 }

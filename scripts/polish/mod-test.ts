@@ -11,6 +11,7 @@
 import { execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import path from "node:path";
+import { HUMAN_GAME_SQL, fullMovesFromPlies } from "../../src/lib/server/modGames";
 
 const ROOT = path.resolve(__dirname, "..", "..");
 const BASE = process.env.POLISH_BASE ?? "http://localhost:3000";
@@ -59,6 +60,16 @@ function d1(sql: string) {
     cwd: ROOT,
     stdio: ["ignore", "pipe", "pipe"],
   });
+}
+
+function d1q<T = Record<string, unknown>>(sql: string): T[] {
+  const out = execFileSync(
+    path.join(ROOT, "node_modules", ".bin", "wrangler"),
+    ["d1", "execute", "nerfchess", "--local", "--json", "--command", sql],
+    { cwd: ROOT, stdio: ["ignore", "pipe", "pipe"], maxBuffer: 16 * 1024 * 1024 },
+  ).toString();
+  const parsed = JSON.parse(out) as { results: T[] }[];
+  return parsed[parsed.length - 1]?.results ?? [];
 }
 
 type Check = { id: string; finding: string; pass: boolean; detail: string };
@@ -174,6 +185,45 @@ async function main() {
     check("F118", "metrics answer with written definitions", m.status === 200 && !!defs?.exclusion && !!defs?.active, { status: m.status, keys: Object.keys(m.json) });
     const u = await call("user", "GET", "/api/mod/metrics");
     check("auth", "metrics are moderator-only", u.status === 403, u.status);
+  }
+
+  // ---- F128: move counts are chess moves, not plies -------------------------
+  // A 41-ply fixture game between two human seats is the newest archive row.
+  // The archive list must say 21 moves (ceil(41 / 2)), and the weekly average
+  // must be the same helper applied to the average ply count, read straight
+  // from D1 with the route's own predicate.
+  {
+    const gameId = `polishgame_${nonce}`;
+    const plies = 41;
+    const moves = Array.from({ length: plies }, (_, i) => (i % 2 ? "e7e5" : "e2e4")).join(" ");
+    const done = Date.now();
+    d1(
+      `INSERT INTO games (id, white_user_id, black_user_id, white_name, black_name, white_nerf_id, black_nerf_id, seed, time_sec, increment_sec, moves, winner, reason, rated, started_at, completed_at)
+       VALUES ('${gameId}', '${userMe.id}', '${adminMe.id}', '${userMe.username}', '${adminMe.username}', 'none', 'none', 1, 180, 0, '${moves}', 'w', 'checkmate', 0, ${done - 60000}, ${done})`,
+    );
+    try {
+      const list = await call("mod", "GET", "/api/mod/games?limit=100");
+      const row = ((list.json.games as { id: string; moveCount: number }[]) ?? []).find((g) => g.id === gameId);
+      check("F128", `a ${plies}-ply game lists as ${fullMovesFromPlies(plies)} moves`, row?.moveCount === fullMovesFromPlies(plies), { status: list.status, moveCount: row?.moveCount });
+
+      const stats = await call("mod", "GET", "/api/mod/games/stats");
+      const weekStart = Date.now() - 7 * 24 * 60 * 60 * 1000;
+      const avgPlies = Number(
+        d1q<{ a: number | null }>(
+          `SELECT AVG(CASE WHEN moves <> '' THEN LENGTH(moves) - LENGTH(REPLACE(moves, ' ', '')) + 1 ELSE 0 END) AS a
+           FROM games WHERE completed_at >= ${weekStart} AND ${HUMAN_GAME_SQL}`,
+        )[0]?.a ?? 0,
+      );
+      const avgMoves = (stats.json.averageGame as { moves: number | null } | undefined)?.moves;
+      check(
+        "F128",
+        "the weekly average is in chess moves, rounded like the archive",
+        avgPlies >= 2 && avgMoves === fullMovesFromPlies(avgPlies),
+        { status: stats.status, avgPlies, avgMoves, expected: fullMovesFromPlies(avgPlies) },
+      );
+    } finally {
+      d1(`DELETE FROM games WHERE id = '${gameId}'`);
+    }
   }
 
   const failed = checks.filter((c) => !c.pass).length;

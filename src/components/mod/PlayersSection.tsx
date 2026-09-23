@@ -179,7 +179,7 @@ export function PlayersSection({
       </div>
 
       {!query.trim() && (
-        <p className="text-[12px] text-parchment-400">Recent players</p>
+        <p className="text-[13px] text-parchment-400">Recent players</p>
       )}
 
       {users.length === 0 ? (
@@ -204,7 +204,7 @@ export function PlayersSection({
               {u.muted_until && u.muted_until > now && (
                 <Pill tone="mute">muted {untilShort(u.muted_until)}</Pill>
               )}
-              <span className="w-full text-[12px] text-parchment-400 sm:ml-auto sm:w-auto sm:text-sm">
+              <span className="w-full text-[13px] text-parchment-400 sm:ml-auto sm:w-auto sm:text-sm">
                 {Math.round(u.rating)} · {u.games} games · joined{" "}
                 {new Date(u.created_at).toLocaleDateString()}
               </span>

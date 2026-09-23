@@ -60,7 +60,7 @@ export function MetricsPanel() {
     <div className="mt-10 space-y-8">
       <div>
         <SectionHead title="People" blurb={d.exclusion} />
-        <p className="mt-1 max-w-2xl text-[12px] leading-snug text-parchment-400">
+        <p className="mt-1 max-w-2xl text-[13px] leading-snug text-parchment-400">
           {d.days} Excluded right now: {n(m.accounts.excluded.bots)} bot or seeded accounts, {n(m.accounts.excluded.tests)} test
           accounts. Updated {whenShort(m.generatedAt)}, refreshed at most once a minute.
         </p>
@@ -80,7 +80,7 @@ export function MetricsPanel() {
             { label: "Public figure", value: n(m.online.publicFigure), sub: "Includes house personas (owner decision)" },
           ]}
         />
-        {m.online.note && <p className="text-[12px] text-parchment-400">{m.online.note}</p>}
+        {m.online.note && <p className="text-[13px] text-parchment-400">{m.online.note}</p>}
       </div>
 
       <div className="space-y-2">
@@ -151,7 +151,7 @@ function DayBars({ series, label }: { series: DayCount[]; label: string }) {
   const max = Math.max(1, ...series.map((s) => s.n));
   return (
     <figure className="plate px-3.5 py-3">
-      <figcaption className="text-[12px] text-parchment-400">
+      <figcaption className="text-[13px] text-parchment-400">
         {label} (peak {max.toLocaleString()})
       </figcaption>
       <div className="mt-2 flex h-24 items-end gap-px" role="list" aria-label={label}>
@@ -170,7 +170,7 @@ function DayBars({ series, label }: { series: DayCount[]; label: string }) {
           </span>
         ))}
       </div>
-      <div className="mt-1 flex justify-between text-[12px] text-parchment-400">
+      <div className="mt-1 flex justify-between text-[13px] text-parchment-400">
         <span>{series[0]?.date}</span>
         <span>{series[series.length - 1]?.date}</span>
       </div>
@@ -190,7 +190,7 @@ function CountTable({ title, rows }: { title: string; rows: DayCount[] }) {
       <tbody>
         {rows.map((r) => (
           <tr key={r.date} className="border-t border-[color:var(--edge)]">
-            <td className="py-1">{r.date}</td>
+            <td className="whitespace-nowrap py-1">{r.date}</td>
             <td className="py-1 text-right">{r.n.toLocaleString()}</td>
           </tr>
         ))}
