@@ -1,0 +1,22 @@
+# worker.ts at HEAD 1f21f42; socketGuard.ts did not exist before this slice
+  ok  src/lib/server/socketGuard.ts exists
+  ok  broken JSON is rejected as bad_json
+  ok  one second later 10 more pass
+  ok  a sustained flood is closed after about 200 drops (took 190)
+  ok  found the ok:false /healthz bodies
+FAIL  no ok:false /healthz body carries error text or a stack
+  ok  found the /healthz handler
+FAIL  /healthz does not return the D1 error text
+FAIL  /healthz does not return the tick error text
+FAIL  /healthz does not return desync detail (game id, draft actions)
+FAIL  /healthz does not return the engine reject detail
+FAIL  /healthz lobby probe does not return the error message
+FAIL  worker JSON sets nosniff
+FAIL  /healthz sends the nosniff header
+  ok  the public worker fetch never forwards /mod/online
+FAIL  the DO serves the internal /mod/online route
+FAIL  webSocketClose prunes per-socket throttle state
+FAIL  lastChatAt entries are deleted (F090)
+FAIL  a superseded seat is closed with SEAT_SUPERSEDED_CLOSE (F082)
+
+12 failure(s)

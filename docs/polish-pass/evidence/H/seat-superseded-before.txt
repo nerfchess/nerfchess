@@ -1,0 +1,15 @@
+FAIL  multiplayer exports SEAT_SUPERSEDED_CLOSE = 4001
+  ok  resume sends a reconnect frame
+  ok  an ordinary drop (1006) reconnects on its own
+  ok  the reconnect re-sends the seat claim
+FAIL  a superseded close does not auto-reconnect (no steal-back loop)
+FAIL  a superseded close emits a superseded event
+FAIL  a superseded close does not report reconnecting
+FAIL  an unfocused wake (online, pageshow) does not reclaim the seat
+FAIL  a hidden visibilitychange does not reclaim the seat
+  ok  focusing the tab reclaims the seat once
+  ok  the reclaim sends the seat claim
+FAIL  a second superseded close stays quiet
+FAIL  MPSession exposes reclaim()
+
+8 failure(s)

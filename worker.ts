@@ -113,6 +113,8 @@ import { categoryForTimeControl, isModeCategory, type RatingCategory } from "./s
 import { censorText, findProfanity } from "./src/lib/profanity";
 import { isGodPanelUser, INFINITE_REROLLS } from "./src/lib/godPanel";
 import { GLICKO_DEFAULT, glickoUpdatePair, isProvisional } from "./src/lib/glicko";
+import { checkClientFrame, newFrameBudget, spendFrame, type FrameBudget } from "./src/lib/server/socketGuard";
+import { SEAT_SUPERSEDED_CLOSE, SOCKET_POLICY_CLOSE } from "./src/lib/socketProtocol";
 
 type Result = NerfGame["result"];
 
@@ -399,6 +401,9 @@ type SessionAttachment = {
   // Account attached at websocket upgrade from the session cookie.
   userId?: string;
   username?: string;
+  // The account is a guest (users.is_guest), read at upgrade. Only used to
+  // split the internal human online count (/mod/online).
+  guest?: boolean;
   // Chat mute (moderation): timestamp the mute expires, read at connect time.
   mutedUntil?: number;
   // Match id this socket spectates (mutually exclusive with a seat).
@@ -965,6 +970,24 @@ type SpectatorEnvelope = {
   ts: number;
 };
 
+// Internal human online peak for the mod panel (/mod/online), one per UTC day.
+type HumanPeak = { day: string; peak: number; at: number };
+const humanPeakKey = "humanPeak:v1";
+
+// A real person's account under INTEGRATOR DECISIONS Q5: not a house bot
+// (hp_), not the retired seeded roster (seed_), not a local test account
+// (polish_). Mirrors BOT_ID_PREFIXES / TEST_USERNAME_PREFIX in
+// src/lib/server/metrics.ts, which the worker bundle does not import.
+function isHumanAccount(userId: string, username: string | undefined): boolean {
+  if (userId.startsWith("hp_") || userId.startsWith("seed_")) return false;
+  if (username && username.toLowerCase().startsWith("polish_")) return false;
+  return true;
+}
+
+// Headers for JSON the worker serves itself (/healthz, /api/lobby, /arena/*),
+// which never pass through next.config's security headers (F056).
+const workerJsonHeaders = { "x-content-type-options": "nosniff" } as const;
+
 function error(ws: WebSocket, code: string, message: string) {
   send(ws, "error", { code, message });
 }
@@ -1127,6 +1150,10 @@ function draftRecordFromMatch(match: StoredMatch): DraftRecord {
 
 export class GameServer extends DurableObject<Env> {
   private sessions = new Map<WebSocket, SessionAttachment>();
+  // Per-socket inbound frame budget (F068). In memory only: a hibernation
+  // wake starts every socket with a full bucket, which only ever errs toward
+  // letting a real player through.
+  private frameBudgets = new Map<WebSocket, FrameBudget>();
   private dbReady: Promise<boolean> | null = null;
   // Short-lived in-memory cache of the assembled lobby snapshot. Every client
   // polls the lobby roughly every 5s and each rebuild does a full match scan on
@@ -1500,10 +1527,9 @@ export class GameServer extends DurableObject<Env> {
         pathname = new URL(request.url).pathname;
       } catch {}
       if (pathname === "/healthz") {
-        return Response.json(
-          { ok: false, version: buildVersion, error: err instanceof Error ? `${err.name}: ${err.message}` : String(err) },
-          { status: 200 },
-        );
+        // Public endpoint: status only. The error itself is in the log above
+        // (F050, decision Q20).
+        return Response.json({ ok: false, version: buildVersion }, { status: 200, headers: workerJsonHeaders });
       }
       return new Response("game server unavailable", { status: 503 });
     }
@@ -1579,8 +1605,12 @@ export class GameServer extends DurableObject<Env> {
           challenges: p.challenges?.length ?? 0,
         };
       } catch (err) {
-        lobbySnapshot = { error: err instanceof Error ? err.message : String(err) };
+        console.error("healthz lobby snapshot failed", err);
+        lobbySnapshot = { error: true };
       }
+      // Public and unauthenticated, so it reports whether something failed,
+      // never the error text, stack, game ids or draft actions (F050, decision
+      // Q20). Every one of those strings is console.error'd where it is set.
       return Response.json({
         ok: true,
         version: buildVersion,
@@ -1606,7 +1636,7 @@ export class GameServer extends DurableObject<Env> {
           // true = schema ensured; false = last attempt failed (retrying);
           // null = not attempted yet this isolate.
           ready: this.dbReady ? await this.dbReady : null,
-          lastError: this.dbLastError,
+          lastError: this.dbLastError !== null,
         },
         presence: {
           sitePresence: this.sitePresence(),
@@ -1623,13 +1653,13 @@ export class GameServer extends DurableObject<Env> {
           seeks: seeks.length,
           games: houseGames,
           houseVsHouse,
-          tickError: this.houseTickError,
-          seedError: this.houseSeedError,
-          lastDesync: this.houseLastDesync,
+          tickError: this.houseTickError !== null,
+          seedError: this.houseSeedError !== null,
+          lastDesync: this.houseLastDesync !== null,
           engineRejects: this.houseEngineRejects,
-          lastEngineReject: this.houseLastEngineReject,
+          lastEngineReject: this.houseLastEngineReject !== null,
         },
-      });
+      }, { headers: workerJsonHeaders });
     }
 
     if (url.pathname === "/lobby" && request.method === "GET") {
@@ -1644,6 +1674,40 @@ export class GameServer extends DurableObject<Env> {
         await this.reviveAlarmChain();
       } catch {}
       return Response.json(await this.buildLobbyPayload());
+    }
+
+    if (url.pathname === "/mod/online" && request.method === "GET") {
+      // INTERNAL: the real human online figure for the mod panel
+      // (src/lib/server/metrics.ts getOnlineNow). Reachable only through the
+      // server-side DO stub: the public worker fetch forwards just the socket
+      // path, /healthz and /arena/* here, so this never reaches a browser. The
+      // public figure (players.length + anonymous on /lobby) is unchanged by
+      // owner decision (OWNER DIRECTIVE 2) and is echoed here only so the mod
+      // panel can show both side by side.
+      const now = Date.now();
+      const counts = this.humansOnlineNow();
+      const peak = await this.sampleHumanPeak(now);
+      let publicFigure: number | null = null;
+      try {
+        const p = (await this.buildLobbyPayload()) as { players?: unknown[]; anonymous?: number };
+        publicFigure = (p.players?.length ?? 0) + (p.anonymous ?? 0);
+      } catch (err) {
+        console.error("mod/online lobby payload failed", err);
+      }
+      return Response.json(
+        {
+          humans: counts.humans,
+          humansOnline: counts.humans,
+          guests: counts.guests,
+          anonymousSockets: counts.anonymousSockets,
+          peakHumansToday: peak.peak,
+          peakAt: peak.at || null,
+          peakDay: peak.day,
+          publicFigure,
+          at: now,
+        },
+        { headers: { "cache-control": "no-store", ...workerJsonHeaders } },
+      );
     }
 
     if (url.pathname === "/live-game" && request.method === "GET") {
@@ -1690,6 +1754,7 @@ export class GameServer extends DurableObject<Env> {
         if (user) {
           attachment.userId = user.id;
           attachment.username = user.username;
+          if (user.is_guest) attachment.guest = true;
           if (user.muted_until && user.muted_until > Date.now()) {
             attachment.mutedUntil = user.muted_until;
           }
@@ -1719,17 +1784,51 @@ export class GameServer extends DurableObject<Env> {
     try {
       await this.reviveAlarmChain();
     } catch {}
+    // The human count only rises when a socket connects, so sampling here
+    // catches every daily peak exactly. Best-effort: a storage hiccup must not
+    // fail the upgrade.
+    if (attachment.userId) {
+      try {
+        await this.sampleHumanPeak(Date.now());
+      } catch (err) {
+        console.error("human peak sample failed", err);
+      }
+    }
 
     return new Response(null, { status: 101, webSocket: client });
   }
 
   async webSocketMessage(ws: WebSocket, message: ArrayBuffer | string) {
-    let frame: ClientFrame;
-    try {
-      frame = JSON.parse(typeof message === "string" ? message : new TextDecoder().decode(message)) as ClientFrame;
-    } catch {
-      return error(ws, "bad_json", "Messages must be JSON objects.");
+    // Budget first, then size, then parse (F068): a flooding or oversized
+    // client costs a map read, not a JSON.parse on the single thread.
+    const now = Date.now();
+    let budget = this.frameBudgets.get(ws);
+    if (!budget) {
+      budget = newFrameBudget(now);
+      this.frameBudgets.set(ws, budget);
     }
+    const spend = spendFrame(budget, now);
+    if (spend === "close") {
+      this.frameBudgets.delete(ws);
+      try {
+        ws.close(SOCKET_POLICY_CLOSE, "Too many messages");
+      } catch {}
+      return;
+    }
+    if (spend === "drop") {
+      if (now - budget.warnedAt >= 1000) {
+        budget.warnedAt = now;
+        error(ws, "rate_limited", "Too many messages. Slow down.");
+      }
+      return;
+    }
+    const checked = checkClientFrame(message);
+    if (!checked.ok) {
+      if (checked.code === "frame_too_large") return error(ws, "frame_too_large", "Message too large.");
+      if (checked.code === "bad_json") return error(ws, "bad_json", "Messages must be JSON objects.");
+      return error(ws, "bad_frame", "Messages must be objects with a type.");
+    }
+    const frame = checked.frame as ClientFrame;
 
     switch (frame.t) {
       case "create":
@@ -1810,15 +1909,26 @@ export class GameServer extends DurableObject<Env> {
   }
 
   async webSocketClose(ws: WebSocket) {
+    this.forgetSocket(ws);
     await this.queueLeave(ws, false);
     this.notifyWatcherCount(ws);
     await this.detachSession(ws);
   }
 
   async webSocketError(ws: WebSocket) {
+    this.forgetSocket(ws);
     await this.queueLeave(ws, false);
     this.notifyWatcherCount(ws);
     await this.detachSession(ws);
+  }
+
+  // Drop the per-socket throttle state a closed socket leaves behind (F090:
+  // lastChatAt was never pruned, so it grew by one entry per chatting socket
+  // for the life of the isolate).
+  private forgetSocket(ws: WebSocket) {
+    this.frameBudgets.delete(ws);
+    const session = this.sessions.get(ws) ?? (ws.deserializeAttachment() as SessionAttachment | null);
+    if (session?.id) this.lastChatAt.delete(session.id);
   }
 
   // When a spectating socket goes away, tell the remaining watchers the new
@@ -2107,6 +2217,44 @@ export class GameServer extends DurableObject<Env> {
     return null;
   }
 
+  // Real people with an open socket right now, for the internal mod figure.
+  // humans: distinct signed-in accounts (guests included, also counted in
+  // guests) under the exclusion rule of INTEGRATOR DECISIONS Q5 (no hp_ or
+  // seed_ ids, no polish_ test usernames). anonymousSockets: open sockets with
+  // no account (signed-out visitors, one per tab). House bots never hold a
+  // socket, so none of this includes them.
+  private humansOnlineNow(): { humans: number; guests: number; anonymousSockets: number } {
+    const humans = new Set<string>();
+    const guests = new Set<string>();
+    let anonymousSockets = 0;
+    for (const [socket, session] of this.sessions) {
+      if (socket.readyState !== WebSocket.OPEN) continue;
+      if (!session.userId) {
+        anonymousSockets++;
+        continue;
+      }
+      if (!isHumanAccount(session.userId, session.username)) continue;
+      humans.add(session.userId);
+      if (session.guest) guests.add(session.userId);
+    }
+    return { humans: humans.size, guests: guests.size, anonymousSockets };
+  }
+
+  // Today's (UTC) peak of humansOnlineNow().humans, kept in storage so it
+  // survives isolate restarts. Written only when the peak rises.
+  private humanPeak: HumanPeak | null = null;
+  private async sampleHumanPeak(now: number): Promise<HumanPeak> {
+    const day = new Date(now).toISOString().slice(0, 10);
+    if (!this.humanPeak) this.humanPeak = (await this.ctx.storage.get<HumanPeak>(humanPeakKey)) ?? null;
+    if (!this.humanPeak || this.humanPeak.day !== day) this.humanPeak = { day, peak: 0, at: 0 };
+    const humans = this.humansOnlineNow().humans;
+    if (humans > this.humanPeak.peak) {
+      this.humanPeak = { day, peak: humans, at: now };
+      await this.ctx.storage.put(humanPeakKey, this.humanPeak);
+    }
+    return this.humanPeak;
+  }
+
   private connectedSession(matchId: string, color: Color): WebSocket | undefined {
     for (const [ws, session] of this.sessions) {
       if (session.matchId === matchId && session.color === color && ws.readyState === WebSocket.OPEN) return ws;
@@ -2135,7 +2283,28 @@ export class GameServer extends DurableObject<Env> {
 
   private async attachSession(ws: WebSocket, match: StoredMatch, color: Color) {
     const existing = this.connectedSession(match.id, color);
-    if (existing && existing !== ws) existing.close(1000, "Reconnected from another tab");
+    if (existing && existing !== ws) {
+      // The same seat was claimed from another tab or device. Unseat the old
+      // socket first so a frame it sends before the close lands cannot act on
+      // the seat, then close it with the code the client reads as "taken
+      // elsewhere, do not auto-reconnect" (F082: a plain 1000 close made the
+      // old tab reconnect with the shared token and steal the seat back,
+      // forever).
+      const old = this.sessions.get(existing) ?? (existing.deserializeAttachment() as SessionAttachment | null);
+      if (old) {
+        const unseated: SessionAttachment = { ...old };
+        delete unseated.matchId;
+        delete unseated.color;
+        delete unseated.token;
+        this.sessions.set(existing, unseated);
+        try {
+          existing.serializeAttachment(unseated);
+        } catch {}
+      }
+      try {
+        existing.close(SEAT_SUPERSEDED_CLOSE, "Seat opened in another tab");
+      } catch {}
+    }
 
     const session = { ...this.session(ws), matchId: match.id, color, token: match.tokens[color] };
     delete session.watching;
@@ -8976,6 +9145,7 @@ async function handleLobbyEdge(url: URL, env: Env, ctx: ExecutionContext): Promi
     // must never hold this: the shared caching happens above, under our
     // rotating key, where staleness is provably bounded.
     "cache-control": "no-store",
+    ...workerJsonHeaders,
   };
   const cached = await cache.match(cacheKey);
   if (cached) {
@@ -9017,14 +9187,13 @@ export default {
         return await env.GAME_SERVER.get(id).fetch(request);
       } catch (err) {
         // The game server threw. Without this the platform returns an opaque
-        // 1101 page with no detail. Surface the actual error on /healthz so it
-        // can be read from a browser (there is no other log access here), and
-        // fail the socket upgrade cleanly instead of crashing the request.
-        const message = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
-        const stack = err instanceof Error ? err.stack : undefined;
+        // 1101 page with no detail. /healthz answers ok:false so an uptime
+        // check sees the failure, and the socket upgrade fails cleanly instead
+        // of crashing the request. The error and stack go to the log only:
+        // /healthz is public (F050, decision Q20).
         console.error("game server fetch threw", err);
         if (url.pathname === "/healthz") {
-          return Response.json({ ok: false, version: buildVersion, error: message, stack }, { status: 200 });
+          return Response.json({ ok: false, version: buildVersion }, { status: 200, headers: workerJsonHeaders });
         }
         return new Response("game server unavailable", { status: 503 });
       }

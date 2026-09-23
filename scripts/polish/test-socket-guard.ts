@@ -1,0 +1,126 @@
+// Regression checks for the game socket's inbound guard and the public
+// diagnostics (slice H: F068, F050, F056, F090, and the internal human count).
+//
+//   ./node_modules/.bin/tsx scripts/polish/test-socket-guard.ts
+//
+// Part 1 exercises src/lib/server/socketGuard.ts directly. Part 2 reads
+// worker.ts, because the Durable Object cannot run under next dev: it asserts
+// the public /healthz bodies carry no error text or stack, that the worker's
+// own JSON carries nosniff, that the internal /mod/online route is not one the
+// public fetch forwards, and that closed sockets are pruned from the throttle
+// maps.
+
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
+let failures = 0;
+function ok(cond: boolean, label: string) {
+  console.log((cond ? "  ok  " : "FAIL  ") + label);
+  if (!cond) failures++;
+}
+
+async function main() {
+  let guard: typeof import("../../src/lib/server/socketGuard") | null = null;
+  try {
+    guard = await import("../../src/lib/server/socketGuard");
+  } catch {
+    guard = null;
+  }
+  ok(!!guard, "src/lib/server/socketGuard.ts exists");
+  if (guard) {
+    const { checkClientFrame, newFrameBudget, spendFrame, FRAME_BUDGET } = guard;
+    const good = checkClientFrame('{"t":"move","d":{"u":"e2e4","ply":0}}');
+    ok(good.ok && good.frame.t === "move", "a normal move frame passes");
+    ok(checkClientFrame('{"t":"p"}').ok, "a frame without d passes");
+    for (const [raw, code, label] of [
+      ["null", "bad_frame", "JSON null"],
+      ["42", "bad_frame", "a bare number"],
+      ['"move"', "bad_frame", "a bare string"],
+      ["[1,2]", "bad_frame", "an array"],
+      ['{"d":{}}', "bad_frame", "an object without t"],
+      ['{"t":5}', "bad_frame", "a numeric t"],
+      ['{"t":""}', "bad_frame", "an empty t"],
+      [`{"t":"${"x".repeat(40)}"}`, "bad_frame", "a 40-char t"],
+      ["{nope", "bad_json", "broken JSON"],
+    ] as const) {
+      const r = checkClientFrame(raw);
+      ok(!r.ok && r.code === code, `${label} is rejected as ${code}`);
+    }
+    const big = JSON.stringify({ t: "chat", d: { text: "a".repeat(9000) } });
+    const rBig = checkClientFrame(big);
+    ok(!rBig.ok && rBig.code === "frame_too_large", "a 9KB string frame is rejected before parsing");
+    const bigBuf = new TextEncoder().encode(big).buffer as ArrayBuffer;
+    const rBuf = checkClientFrame(bigBuf);
+    ok(!rBuf.ok && rBuf.code === "frame_too_large", "a 9KB binary frame is rejected before parsing");
+    // 3000 three-byte characters: under 8192 UTF-16 units, over 8192 bytes.
+    const wide = JSON.stringify({ t: "chat", d: { text: "€".repeat(3000) } });
+    ok(checkClientFrame(wide).ok, "a 3000-char euro frame (9KB UTF-8, 3KB of units) is under the unit precheck");
+    const wide2 = JSON.stringify({ t: "chat", d: { text: "€".repeat(9000) } });
+    const rWide = checkClientFrame(wide2);
+    ok(!rWide.ok && rWide.code === "frame_too_large", "a 27KB UTF-8 frame is rejected");
+
+    // Token bucket: a real burst passes, a flood is dropped then closed, and
+    // a client that backs off recovers.
+    let t = 1_000_000;
+    const b = newFrameBudget(t);
+    let passed = 0;
+    for (let i = 0; i < FRAME_BUDGET.capacity; i++) if (spendFrame(b, t) === "ok") passed++;
+    ok(passed === FRAME_BUDGET.capacity, `a burst of ${FRAME_BUDGET.capacity} frames at once passes`);
+    ok(spendFrame(b, t) === "drop", "the next frame in the same instant is dropped");
+    t += 1000;
+    let after = 0;
+    for (let i = 0; i < 20; i++) if (spendFrame(b, t) === "ok") after++;
+    ok(after === FRAME_BUDGET.perSecond, `one second later ${FRAME_BUDGET.perSecond} more pass`);
+    let verdict = "ok";
+    let n = 0;
+    while (verdict !== "close" && n < 10_000) {
+      verdict = spendFrame(b, t);
+      n++;
+    }
+    ok(verdict === "close" && n <= FRAME_BUDGET.closeAfterDropped + 1, `a sustained flood is closed after about ${FRAME_BUDGET.closeAfterDropped} drops (took ${n})`);
+    const steady = newFrameBudget(t);
+    let steadyDropped = 0;
+    for (let i = 0; i < 600; i++) {
+      t += 200; // 5 frames a second for two minutes: far above real play
+      if (spendFrame(steady, t) !== "ok") steadyDropped++;
+    }
+    ok(steadyDropped === 0, "5 frames a second for two minutes never drops");
+  }
+
+  // Part 2: worker.ts source checks.
+  const worker = readFileSync(process.env.POLISH_WORKER_PATH ?? join(__dirname, "..", "..", "worker.ts"), "utf8");
+  const healthzBodies = [...worker.matchAll(/Response\.json\(\s*\{\s*ok: false[^}]*\}/g)].map((m) => m[0]);
+  ok(healthzBodies.length >= 2, "found the ok:false /healthz bodies");
+  ok(healthzBodies.every((b) => !/error|stack/.test(b)), "no ok:false /healthz body carries error text or a stack");
+  const healthzStart = worker.indexOf('if (url.pathname === "/healthz") {');
+  const healthzEnd = worker.indexOf('if (url.pathname === "/lobby"', healthzStart);
+  const healthz = worker.slice(healthzStart, healthzEnd);
+  ok(healthzStart > 0 && healthzEnd > healthzStart, "found the /healthz handler");
+  ok(!/lastError: this\.dbLastError,/.test(healthz), "/healthz does not return the D1 error text");
+  ok(!/tickError: this\.houseTickError,/.test(healthz), "/healthz does not return the tick error text");
+  ok(!/lastDesync: this\.houseLastDesync,/.test(healthz), "/healthz does not return desync detail (game id, draft actions)");
+  ok(!/lastEngineReject: this\.houseLastEngineReject,/.test(healthz), "/healthz does not return the engine reject detail");
+  ok(!/error: err instanceof Error \? err\.message/.test(healthz), "/healthz lobby probe does not return the error message");
+  ok(/x-content-type-options": "nosniff"/.test(worker), "worker JSON sets nosniff");
+  ok(/headers: workerJsonHeaders/.test(healthz), "/healthz sends the nosniff header");
+
+  const publicFetch = worker.slice(worker.indexOf("export default {"));
+  ok(!publicFetch.includes("/mod/online"), "the public worker fetch never forwards /mod/online");
+  ok(worker.includes('url.pathname === "/mod/online"'), "the DO serves the internal /mod/online route");
+
+  const closeBody = worker.slice(worker.indexOf("async webSocketClose("), worker.indexOf("async webSocketError("));
+  ok(/forgetSocket\(ws\)/.test(closeBody), "webSocketClose prunes per-socket throttle state");
+  ok(/this\.lastChatAt\.delete\(/.test(worker), "lastChatAt entries are deleted (F090)");
+  ok(/SEAT_SUPERSEDED_CLOSE/.test(worker.slice(worker.indexOf("private async attachSession("))), "a superseded seat is closed with SEAT_SUPERSEDED_CLOSE (F082)");
+
+  if (failures) {
+    console.log(`\n${failures} failure(s)`);
+    process.exit(1);
+  }
+  console.log("\nall socket guard checks passed");
+}
+
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
