@@ -54,6 +54,7 @@ import {
   summarize,
   type RunAllRow,
 } from "./runAllCore";
+import { stageQuery } from "../plays/stageParams";
 
 const LAB_SEED = 0x1abcafe;
 
@@ -594,6 +595,12 @@ export function LabHarness() {
                 <button type="button" className={btn} onClick={() => forceDraft(selected, "b")}>
                   Force draft (B)
                 </button>
+                {/* The play stage replays this card's effect on any square,
+                    side and speed, cloned the way an online update is (this
+                    sandbox updates in place, which hides removal diffs). */}
+                <a className={btn} href={`/dev/plays?${stageQuery({ id: selected.id })}`}>
+                  Play stage
+                </a>
               </div>
               {selected.kind === "passive" && (
                 <p className="mt-1 text-[12px] text-parchment-400">

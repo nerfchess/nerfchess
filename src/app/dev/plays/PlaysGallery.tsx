@@ -1,13 +1,17 @@
 "use client";
 
 // Dev gallery for PLAY signatures (the flagship cast animations), the sibling
-// of /dev/effects (which covers the passive layer). Renders any card's
-// signature visual on a lone demo square so designers can review and compare
-// flagship animations across tiers — and spot two cards that read the same.
-// Plugin cards route through the merged registry ("x:<id>" visuals); core
-// cards render their SIGNATURES visual key. Board-context choreography
-// (orderings, per-square staggers, canvas VFX, sounds) is out of scope here:
-// this reviews the per-square scene art itself.
+// of /dev/effects (which covers the passive layer). Two views:
+//
+//  - The grid (no `id` in the URL): every live card's lead scene staged on
+//    real boards at five probe squares, for scanning and anchoring checks.
+//    Retired cards are left out: they can never be drafted, so reviewing
+//    their art is wasted effort.
+//  - The stage (`?id=<card>`, see stageParams.ts for every parameter): one
+//    card played on the REAL Board, on the square, targets, side, speed and
+//    --fx-dur the URL names, with the full choreography (cast spectacle,
+//    lead, per-target cuts, canvas VFX). Scriptable through
+//    window.__cardStage; scripts/polish/card-strip.ts drives it.
 
 import * as React from "react";
 import { ALL_BUFFS } from "@/engine/buffs/library";
@@ -27,7 +31,10 @@ import {
   cellDelta,
   neutralGeo,
 } from "@/components/effects/geometry";
-import type { Square } from "@/engine/types";
+import type { Color, Square } from "@/engine/types";
+import { isRetired } from "@/engine/retired";
+import { CardStage } from "./CardStage";
+import { parseStageParams, stageQuery, type StageParams } from "./stageParams";
 
 /** "anchors" shows one scene at five squares side by side; "single" is the
  *  compact grid for scanning many cards at once. */
@@ -51,7 +58,7 @@ function rows(): Row[] {
   // keeps the whole board, and "did the marquee cards stay board-scale" is
   // exactly what a reviewer needs to check alongside the anchored ones.
   for (const b of ALL_BUFFS) {
-    if (!b.implemented || b.tier < 1) continue;
+    if (!b.implemented || b.tier < 1 || isRetired(b.id)) continue;
     const core = SIGNATURES[b.id];
     if (core) {
       out.push({
@@ -118,12 +125,12 @@ const PROBE_TARGET: Record<number, number> = {
   63: 32, // h8 -> a5, across the board
 };
 
-function BoardProbe({ row, sq, runKey }: { row: Row; sq: number; runKey: number }) {
-  const { col, row: r } = cellPos(sq as Square, "w");
-  const base = neutralGeo(sq as Square, "w");
+function BoardProbe({ row, sq, runKey, view }: { row: Row; sq: number; runKey: number; view: Color }) {
+  const { col, row: r } = cellPos(sq as Square, view);
+  const base = neutralGeo(sq as Square, view);
   const to = PROBE_TARGET[sq];
   if (to != null) {
-    const d = cellDelta(sq as Square, to as Square, "w");
+    const d = cellDelta(sq as Square, to as Square, view);
     base.angDeg = d.angDeg;
     base.len = d.dist;
     if (d.dist > 0) {
@@ -143,7 +150,7 @@ function BoardProbe({ row, sq, runKey }: { row: Row; sq: number; runKey: number 
   const shift = anchored
     ? undefined
     : (() => {
-        const { sx, sy } = boardCentreShift(sq as Square, "w");
+        const { sx, sy } = boardCentreShift(sq as Square, view);
         return { transform: `translate(${sx * 100}%, ${sy * 100}%)` };
       })();
   return (
@@ -174,7 +181,7 @@ function BoardProbe({ row, sq, runKey }: { row: Row; sq: number; runKey: number 
   );
 }
 
-function Cell({ row, mode }: { row: Row; mode: Mode }) {
+function Cell({ row, mode, view }: { row: Row; mode: Mode; view: Color }) {
   // Remount key replays the one-shot scene.
   const [runKey, setRunKey] = React.useState(0);
   const squares = mode === "anchors" ? PROBE_SQUARES : PROBE_SQUARES.slice(2, 3);
@@ -189,7 +196,7 @@ function Cell({ row, mode }: { row: Row; mode: Mode }) {
         <div className={`grid gap-1 ${mode === "anchors" ? "grid-cols-5" : "grid-cols-1"}`}>
           {squares.map((p) => (
             <div key={p.label}>
-              <BoardProbe row={row} sq={p.sq} runKey={runKey} />
+              <BoardProbe row={row} sq={p.sq} runKey={runKey} view={view} />
               {mode === "anchors" && (
                 <div className="text-center text-[12px] text-parchment-400">{p.label}</div>
               )}
@@ -201,13 +208,31 @@ function Cell({ row, mode }: { row: Row; mode: Mode }) {
         {row.name}
       </div>
       <div className="text-[12px] text-parchment-400">
-        {TIER_ROMAN[row.tier]} · {row.kind} · {row.category} · anchor {row.anchor}
+        {TIER_ROMAN[row.tier]} · {row.kind} · {row.category} · anchor {row.anchor} ·{" "}
+        <a
+          className="text-parchment-200 underline"
+          href={`/dev/plays?${stageQuery({ id: row.id, side: view })}`}
+        >
+          stage
+        </a>
       </div>
     </div>
   );
 }
 
 export function PlaysGallery() {
+  // The URL decides the view. Read after mount (window only), so the page
+  // needs no Suspense boundary and never prerenders an empty body.
+  const [stage, setStage] = React.useState<StageParams | null | undefined>(undefined);
+  React.useEffect(() => {
+    queueMicrotask(() => setStage(parseStageParams(window.location.search)));
+  }, []);
+  if (stage === undefined) return null;
+  if (stage) return <CardStage params={stage} />;
+  return <PlaysGrid />;
+}
+
+function PlaysGrid() {
   // Rebuilt AFTER the play modules land, not memoized on mount: a card's
   // declared anchor lives in its module, and PLUGIN_SIGNATURES is populated as
   // modules load. Reading it once at mount reported every card as "board",
@@ -220,6 +245,7 @@ export function PlaysGallery() {
   // scene happens where the card was played. "single" is for scanning many
   // cards at once.
   const [mode, setMode] = React.useState<Mode>("anchors");
+  const [view, setView] = React.useState<Color>("w");
   const [ready, setReady] = React.useState(false);
   React.useEffect(() => {
     // The gallery reviews the WHOLE library, so unlike a game board it wants
@@ -261,6 +287,13 @@ export function PlaysGallery() {
         >
           {mode === "anchors" ? "a1 / h1 / e4 / a8 / h8" : "e4 only"}
         </button>
+        <button
+          type="button"
+          onClick={() => setView((v) => (v === "w" ? "b" : "w"))}
+          className="rounded-sm border border-white/15 px-2 py-1 text-xs text-parchment-200"
+        >
+          {view === "w" ? "White at bottom" : "Black at bottom"}
+        </button>
         {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((t) => (
           <button
             key={t}
@@ -282,7 +315,7 @@ export function PlaysGallery() {
           }`}
         >
           {shown.slice(0, mode === "anchors" ? 24 : 120).map((r) => (
-            <Cell key={r.id} row={r} mode={mode} />
+            <Cell key={r.id} row={r} mode={mode} view={view} />
           ))}
         </div>
       )}
