@@ -507,3 +507,25 @@ test.describe("codex filter row (1280x800)", () => {
     expect(moved, JSON.stringify(moved)).toEqual([]);
   });
 });
+
+test.describe("codex card insights", () => {
+  // The "In play" panel rendered nothing until /api/cards/insights answered,
+  // then pushed "How it works" and everything below it down 87px. Its
+  // collapsed row is now part of the first render.
+  test("the In play row is in the server HTML", async ({ request }) => {
+    const res = await request.get("/codex/buff/pawn_push", { timeout: 300_000 });
+    const html = await res.text();
+    expect(html).toMatch(/<summary[^>]*>(?:(?!<\/summary>)[\s\S])*In play/);
+  });
+
+  test("a failed insights request says so and offers Retry", async ({ page }) => {
+    await page.route("**/api/cards/insights**", (route) => route.fulfill({ status: 503, body: "" }));
+    await page.goto("/codex/buff/pawn_push");
+    await page.getByText("In play", { exact: true }).click();
+    const alert = page.getByRole("alert").filter({ hasText: "could not load" });
+    await expect(alert).toBeVisible({ timeout: 30_000 });
+    await page.unroute("**/api/cards/insights**");
+    await page.getByRole("button", { name: "Retry" }).click();
+    await expect(alert).toHaveCount(0, { timeout: 30_000 });
+  });
+});

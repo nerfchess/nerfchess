@@ -1,0 +1,87 @@
+
+Running 2 tests using 1 worker
+
+  ✘  1 [chromium] › e2e/content-states.spec.ts:515:7 › codex card insights › the In play row is in the server HTML (8.8s)
+  ✘  2 [chromium] › e2e/content-states.spec.ts:521:7 › codex card insights › a failed insights request says so and offers Retry (2.5m)
+
+
+  1) [chromium] › e2e/content-states.spec.ts:515:7 › codex card insights › the In play row is in the server HTML 
+
+    Error: expect(received).toMatch(expected)
+
+    Expected pattern: /<summary[^>]*>(?:(?!<\/summary>)[\s\S])*In play/
+    Received string:  "<!DOCTYPE html><html lang=\"en\" data-theme=\"dark\" class=\"__variable_50a98f __variable_e896d9\"><head><meta charSet=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content\"/><link rel=\"preloa
+    var own=function(m,k){return typeof k===\"string\"&&Object.prototype.hasOwnProperty.call(m,k);};
+    var num=function(v){return typeof v===\"number\"&&isFinite(v);};
+    var mm=function(q){try{return !!(window.matchMedia&&window.matchMedia(q).matches);}catch(e){return false;}};
+    try{var raw=localStorage.getItem(\"dc:settings-v1\");if(raw){var j=JSON.parse(raw);if(j&&typeof j===\"object\"&&!Array.isArray(j))p=j;}}catch(e){}
+    var board=own(D.boards,p.boardTheme)?p.boardTheme:d.boardTheme;
+    var piece=own(D.pieces,p.pieceTheme)?p.pieceTheme:own(D.legacyColors,p.pieceTheme)?\"classic\":d.pieceTheme;
+    var color=own(D.colors,p.pieceColor)?p.pieceColor:own(D.legacyColors,p.pieceTheme)?D.legacyColors[p.pieceTheme]:d.pieceColor;
+    var size=typeof p.boardSize===\"number\"?Math.max(0.8,Math.min(1.1,p.boardSize)):d.boardSize;
+    var theme=typeof p.siteTheme!==\"string\"?d.siteTheme:own(D.themes,p.siteTheme)?p.siteTheme:own(D.legacyThemes,p.siteTheme)?D.legacyThemes[p.siteTheme]:d.siteTheme;
+    var speed=p.animationSpeed===\"off\"||p.animationSpeed===\"fast\"||p.animationSpeed===\"normal\"?p.animationSpeed:d.animationSpeed;
+    var glide=num(p.pieceAnimMs)?Math.max(0,Math.min(D.animMax,Math.round(p.pieceAnimMs))):d.pieceAnimMs;
+    var fx=num(p.fxDuration)?Math.max(0.5,Math.min(2,p.fxDuration)):d.fxDuration;
+    var dim=num(p.customBgDim)?Math.max(0,Math.min(0.6,p.customBgDim)):d.customBgDim;
+    var b=D.boards[board]||D.boards.brown;
+    s.setProperty(\"--sq-light\",b[0]);s.setProperty(\"--sq-dark\",b[1]);
+    var pd=D.pieces[piece]||D.pieces.lichessCburnett,pf=pd[4]?pd:(D.colors[color]||D.colors.classic);
+    s.setProperty(\"--piece-w-fill\",pf[0]);s.setProperty(\"--piece-w-stroke\",pf[1]);s.setProperty(\"--piece-b-fill\",pf[2]);s.setProperty(\"--piece-b-stroke\",pf[3]);
+    if(pd[4]){h.dataset.pieceSource=\"lichess\";var cs=[\"w\",\"b\"],ts=[\"k\",\"q\",\"r\",\"b\",\"n\",\"p\"];for(var i=0;i<2;i++)for(var k=0;k<6;k++)s.setProperty(\"--piece-\"+cs[i]+ts[k]+\"-image\",'url(\"/piece/lichess/'+pd[4]+\"/\"+cs[i]+ts[k].toUpperCase()+'.svg\")');}else h.dataset.pieceSource
+    s.setProperty(\"--board-cap\",Math.round(720*size)+\"px\");
+    s.setProperty(\"--piece-fit\",p.largerPieces===true?\"97%\":\"88%\");
+    h.dataset.theme=theme===\"system\"?(mm(\"(prefers-color-scheme: light)\")?\"light\":\"dark\"):theme;
+    var t=D.themes[h.dataset.theme],scheme=t?t[0]:\"dark\";
+    s.colorScheme=scheme;
+    if(scheme===\"light\")h.dataset.light=\"on\";else delete h.dataset.light;
+    var a=t||D.themes.dark;
+    s.setProperty(\"--accent\",a[1]);s.setProperty(\"--accent-hi\",a[2]);s.setProperty(\"--gold\",a[1]);s.setProperty(\"--gold-leaf\",a[2]);
+    s.setProperty(\"--accent-rgb\",a[3]);s.setProperty(\"--accent-hi-rgb\",a[4]);s.setProperty(\"--accent-dim-rgb\",a[5]);
+    var held=p.reducedMotion===true||(p.followSystemMotion===true&&mm(\"(prefers-reduced-motion: reduce)\"));
+    h.dataset.anim=held?\"off\":speed;
+    s.setProperty(\"--piece-anim-ms\",String(held||speed===\"off\"?0:glide));
+    if(p.zenMode===true)h.dataset.zen=\"on\";else delete h.dataset.zen;
+    s.setProperty(\"--fx-dur\",String(fx));
+    var bd=typeof p.customBgData===\"string\"&&p.customBgData&&p.customBgData.length<=D.bgDataMax&&/^data:image\\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(p.customBgData)?p.customBgData:\"\";
+    var bu=\"\";if(typeof p.customBgUrl===\"string\"){var u=p.customBgUrl.trim();if(u&&u.length<=D.bgUrlMax&&/^https?:\\/\\//i.test(u)&&!/[\\s\"'\\\\<>()]/.test(u))bu=u;}
+    var bg=bd||bu;
+    if(bg){h.dataset.customBg=\"on\";s.setProperty(\"--custom-bg-url\",'url(\"'+bg+'\")');s.setProperty(\"--custom-bg-dim\",String(dim));}
+    else{delete h.dataset.customBg;s.removeProperty(\"--custom-bg-url\");s.removeProperty(\"--custom-bg-dim\");}
+    try{var rw=Number(localStorage.getItem(D.rail[0]));if(isFinite(rw)&&rw>0)s.setProperty(\"--match-rail-w\",Math.min(D.rail[2],Math.max(D.rail[1],Math.round(rw)))+\"px\");}catch(e){}}catch(e){}})();</script><script type=\"application/ld+json\">{\"@context\":\"https://schema.org\",\"@graph\":[{\"@t
+    $RC=function(a,b){if(b=document.getElementById(b))(a=document.getElementById(a))?(a.previousSibling.data=\"$~\",$RB.push(a,b),2===$RB.length&&(\"number\"!==typeof $RT?requestAnimationFrame($RV.bind(null,$RB)):(a=performance.now(),setTimeout($RV.bind(null,$RB),2300>a&&2E3<a?2300-a:$RT+300-a)))):b
+
+      516 |     const res = await request.get("/codex/buff/pawn_push", { timeout: 300_000 });
+      517 |     const html = await res.text();
+    > 518 |     expect(html).toMatch(/<summary[^>]*>(?:(?!<\/summary>)[\s\S])*In play/);
+          |                  ^
+      519 |   });
+      520 |
+      521 |   test("a failed insights request says so and offers Retry", async ({ page }) => {
+        at /home/user/nerfchess/e2e/content-states.spec.ts:518:18
+
+    Error Context: test-results/content-states-codex-card--7c45c-y-row-is-in-the-server-HTML-chromium/error-context.md
+
+  2) [chromium] › e2e/content-states.spec.ts:521:7 › codex card insights › a failed insights request says so and offers Retry 
+
+    Test timeout of 150000ms exceeded.
+
+    Error: locator.click: Test timeout of 150000ms exceeded.
+    Call log:
+      - waiting for getByText('In play', { exact: true })
+
+
+      522 |     await page.route("**/api/cards/insights**", (route) => route.fulfill({ status: 503, body: "" }));
+      523 |     await page.goto("/codex/buff/pawn_push");
+    > 524 |     await page.getByText("In play", { exact: true }).click();
+          |                                                      ^
+      525 |     const alert = page.getByRole("alert").filter({ hasText: "could not load" });
+      526 |     await expect(alert).toBeVisible({ timeout: 30_000 });
+      527 |     await page.unroute("**/api/cards/insights**");
+        at /home/user/nerfchess/e2e/content-states.spec.ts:524:54
+
+    Error Context: test-results/content-states-codex-card--99f64-st-says-so-and-offers-Retry-chromium/error-context.md
+
+  2 failed
+    [chromium] › e2e/content-states.spec.ts:515:7 › codex card insights › the In play row is in the server HTML 
+    [chromium] › e2e/content-states.spec.ts:521:7 › codex card insights › a failed insights request says so and offers Retry 

@@ -1,0 +1,8 @@
+  /codex/buff/pawn_push  390x844|dark|full|signed-out|normal  HTTP 200  CLS 0.2083 (sum 0.2093, 1 >0.01)  14680ms
+  /codex/buff/pawn_push  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.2578 (sum 0.2609, 1 >0.01)  14002ms
+  /codex/nerf/lucky  390x844|dark|full|signed-out|normal  HTTP 200  CLS 0.001 (sum 0.001, 0 >0.01)  8158ms
+  /codex/nerf/lucky  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.004 (sum 0.0067, 0 >0.01)  5434ms
+
+[cls] 4 cells, 2 above target 0.01, 2 over ceiling
+  FAIL  /codex/buff/pawn_push|390x844|dark|full|signed-out|normal  CLS 0.2083  ceiling 0.01  top: main.min-h-screen.pb-20 > section.mx-auto.max-w-\[1100px\].px-6 > div.mt-9.space-y-4 > details.plate dy -24
+  FAIL  /codex/buff/pawn_push|1280x800|dark|full|signed-out|normal  CLS 0.2578  ceiling 0.01  top: main.min-h-screen.pb-20 > section.mx-auto.max-w-\[1100px\].px-6 > div.mt-9.space-y-4 > details.plate dy -24
