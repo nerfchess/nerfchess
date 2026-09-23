@@ -22,7 +22,7 @@ export const dynamic = "force-dynamic";
 // Completes Google sign-in. Account rules, in order:
 //   1. A user already linked to this Google account signs straight in.
 //   2. A signed-in caller (guest or registered) links this Google account to
-//      their existing account — guests upgrade in place, keeping their
+//      their existing account; guests upgrade in place, keeping their
 //      rating and history, exactly like password registration.
 //   3. Otherwise a fresh account is created.
 // If Google's (verified) email already belongs to a *different* account we

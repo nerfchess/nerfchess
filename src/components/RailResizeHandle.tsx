@@ -55,7 +55,7 @@ const EMPTY_STYLE: CSSProperties = {};
 
 /** The draggable gutter between the command rail and the board: its own thin
  * grid column, with an oversized invisible hit area so it's easy to grab. Also
- * a keyboard separator — arrows nudge, Home/End jump, Enter or double-click
+ * a keyboard separator: arrows nudge, Home/End jump, Enter or double-click
  * resets to the default width. */
 export function RailResizeHandle({
   railWidth,

@@ -168,7 +168,7 @@ export interface Settings {
   volume: number; // 0..1
   moveRiskWarnings: boolean; // yellow/red move-dot warnings for self-loss / check
   autoQueen: boolean; // skip the promotion picker and always promote to queen
-  // When on, the opponent's rule is never shown to you — not even after the
+  // When on, the opponent's rule is never shown to you, not even after the
   // game ends, and mid-game reveal is disabled. Default off.
   hideOpponentReveal: boolean;
   muteChat: boolean; // hide in-game chat messages and input
@@ -678,7 +678,7 @@ export function fxDurationScale(): number {
 
 /** True when animations are off: the user turned them off in Settings
  *  (reduced motion or animation speed "off"), or the OS asked for reduced
- *  motion and "Follow system motion" (opt-in, default off) is honoring it —
+ *  motion and "Follow system motion" (opt-in, default off) is honoring it;
  *  applyUiPrefs folds both into data-anim, so this single read stays
  *  authoritative. SSR-safe (false). */
 export function motionOff(): boolean {

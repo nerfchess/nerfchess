@@ -104,11 +104,11 @@ export function MobileNavMenu({
   // Why: an ancestor with a z-index traps the whole subtree in its stacking
   // context, and `!z-50` on the panel only orders it WITHIN that context. Two
   // places broke on this. In-game the nav is `sticky top-0 z-20`, below the
-  // z-40 drawer bars — so the bottom of a tall menu (and its backdrop) rendered
+  // z-40 drawer bars, so the bottom of a tall menu (and its backdrop) rendered
   // underneath them, and tapping down there hit the drawer instead of the menu
   // item. On the lobby the header sits inside `main`, which globals.css pins at
   // z-index 2, while QuickMatch's sticky CTA is itself portalled to the body at
-  // z-40 — so "Find game" covered the lower menu entries and a tap there
+  // z-40, so "Find game" covered the lower menu entries and a tap there
   // started matchmaking. Escaping to the body removes the whole class of bug.
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const [panelPos, setPanelPos] = useState<{ top: number; left?: number; right?: number } | null>(
@@ -186,7 +186,7 @@ export function MobileNavMenu({
 
   // Empty groups (all items conditional and absent) render nothing, not a
   // stray header. Each group also carries a running item offset so the
-  // per-item entrance stagger (--i) is cumulative across groups — a fixed
+  // per-item entrance stagger (--i) is cumulative across groups; a fixed
   // stride would collide once a group holds more items than the stride.
   const visibleGroups = buildGroups(user).filter((group) => group.items.length > 0);
   const groups = visibleGroups.map((group, gi) => ({

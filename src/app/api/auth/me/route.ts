@@ -28,7 +28,7 @@ export async function GET(request: Request) {
   // Presence heartbeat: stamp last_seen_at at most once every 5 minutes per
   // user (the guarded UPDATE only writes when the column is null or older than
   // the window, so a chatty client polling /me does not hammer D1). Best
-  // effort — a failed write must never break the account chip.
+  // effort: a failed write must never break the account chip.
   try {
     const now = Date.now();
     await db
@@ -42,10 +42,10 @@ export async function GET(request: Request) {
     // Presence is non-essential; the response below is unaffected.
   }
   // The rating the header account chip DISPLAYS. `rating` (below) stays the
-  // legacy shared column — some callers use it as the seed-fallback value —
+  // legacy shared column (some callers use it as the seed-fallback value),
   // but it is never written after games anymore, so displaying it drifts from
   // the leaderboard/profile. displayRating resolves with the shared rule
-  // (best live mode bucket, legacy fallback — lib/server/ratingSql.ts), the
+  // (best live mode bucket, legacy fallback, lib/server/ratingSql.ts), the
   // same number the lobby's online list and player search show.
   let displayRating = user.rating;
   try {

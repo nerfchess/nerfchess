@@ -17,7 +17,7 @@ export interface AccountUser {
    *  useful as a seed-fallback value. DISPLAY displayRating instead. */
   rating: number;
   /** The rating to show for this account with no category context: best live
-   *  mode bucket (nerf/buff), falling back to the legacy column — the same
+   *  mode bucket (nerf/buff), falling back to the legacy column: the same
    *  number the lobby's online list, player search, and club lists resolve.
    *  Optional: older cached payloads may not carry it. */
   displayRating?: number;

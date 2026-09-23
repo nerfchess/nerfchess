@@ -95,7 +95,7 @@ type MotionNoticeVariant = "effectsOff" | "effectsOn";
  *
  *  The "effectsOff" variant covers players who HAVE opted in (or carry the old
  *  stored default): applyUiPrefs folds the OS flag into html[data-anim="off"],
- *  a hard kill switch, which is indistinguishable from the game being broken —
+ *  a hard kill switch, which is indistinguishable from the game being broken:
  *  phones enable reduced motion for battery saving and accessibility defaults,
  *  so nothing would ever animate with nothing explaining it. This variant says
  *  why, and offers to show the effects anyway.
@@ -227,7 +227,7 @@ function MotionNotice() {
 // time is spent inside slow frames (a gap over 34ms means the device dipped
 // under ~30fps). Five bad windows in a row (~20s of sustained jank, never a
 // single hitch) trip the notice, and the first two windows after load are
-// discarded outright — page-load warm-up (hydration, JIT, asset decode) janks
+// discarded outright: page-load warm-up (hydration, JIT, asset decode) janks
 // every device for a few seconds and says nothing about steady-state pacing.
 const LAG_WINDOW_MS = 4000;
 const LAG_SLOW_FRAME_MS = 34;
@@ -237,7 +237,7 @@ const LAG_WARMUP_WINDOWS = 2;
 const LAG_NOTICE_KEY = "dc:lag-notice"; // "dismissed" | "applied"
 
 /** Watches real frame pacing and, on sustained jank, offers performance mode
- *  in a small popup — animations are never silently degraded or disabled.
+ *  in a small popup; animations are never silently degraded or disabled.
  *  One-shot per device: any choice (or already-reduced settings) disarms it.
  *
  *  PRESENTATION IS GATED: the detection runs silently in the background, but
