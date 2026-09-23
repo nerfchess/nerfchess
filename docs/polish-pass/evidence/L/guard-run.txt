@@ -1,0 +1,48 @@
+ok   test:emdash (4.9s)
+FAIL test:case (1.1s)
+FAIL test:buttons (0.8s)
+ok   test:rounded (0.8s)
+ok   test:reduced-motion (0.4s)
+ok   test:anim-props (0.8s)
+ok   test:sound (0.3s)
+ok   test:usage (1.9s)
+ok   test:board3d (0.8s)
+ok   test:retired (1.7s)
+ok   test:card-registry (1.8s)
+ok   test:prepaint (1.3s)
+ok   test:error-boundaries (1.0s)
+ok   test:codex-routes:static (1.5s)
+ok   test:seo-static (2.5s)
+ok   test:sitemap-dates (1.1s)
+ok   test:api-unit (1.8s)
+ok   test:text-input (1.0s)
+ok   test:auth-safety:unit (0.9s)
+ok   test:email (1.4s)
+
+--- test:case ---
+[check-case] 39 uppercase site(s) across 18 file(s); 20 file(s) baselined, 1 exempt.
+    (--list for every finding)
+
+2 stale baseline entr(y/ies), now clean. Remove them:
+  src/app/page.tsx
+  src/components/QueueButton.tsx
+
+--- test:buttons ---
+    (--list for every finding)
+
+3 file(s) with NEW bespoke buttons:
+  src/app/login/LoginForm.tsx
+  src/app/play/PlayIntro.tsx
+  src/app/play/setupParts.tsx
+
+Use <Button tone=… /> from src/components/ui/Button.tsx (or <LinkButton> for navigation styled as a control). A themed flagship material is authored against .btn-*, so a hand-rolled button will not pick it up.
+
+3 stale BASELINE entry(s) — these files are clean now:
+  src/app/login/page.tsx
+  src/app/play/page.tsx
+  src/components/QueueButton.tsx
+
+Remove them from BASELINE in this script so the list keeps shrinking.
+
+18 of 20 guards passed in 28s
+rc=1
