@@ -446,3 +446,23 @@ test.describe("contact socials", () => {
     }
   });
 });
+
+test.describe("codex card breadcrumbs", () => {
+  // F246: the card BreadcrumbList gave the family crumb the /codex URL, the
+  // same as the Codex crumb above it.
+  for (const path of ["/codex/buff/pawn_push", "/codex/nerf/lucky", "/codex/hex/heavy_boots", "/codex/boon/extra_glance"]) {
+    test(`${path} BreadcrumbList has one URL per crumb and ends on the page`, async ({ request }) => {
+      const res = await request.get(path, { timeout: 300_000 });
+      expect(res.status()).toBe(200);
+      const html = await res.text();
+      const lists = [...html.matchAll(/<script type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g)]
+        .map((m) => JSON.parse(m[1]) as Record<string, unknown>)
+        .flatMap((b) => (Array.isArray(b["@graph"]) ? (b["@graph"] as Record<string, unknown>[]) : [b]))
+        .filter((b) => b["@type"] === "BreadcrumbList");
+      expect(lists).toHaveLength(1);
+      const urls = (lists[0].itemListElement as { item: string }[]).map((i) => i.item);
+      expect(new Set(urls).size, urls.join(" ")).toBe(urls.length);
+      expect(urls[urls.length - 1]).toMatch(new RegExp(`${path}$`));
+    });
+  }
+});
