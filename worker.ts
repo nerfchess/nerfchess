@@ -115,6 +115,8 @@ import { isGodPanelUser, INFINITE_REROLLS } from "./src/lib/godPanel";
 import { GLICKO_DEFAULT, glickoUpdatePair, isProvisional } from "./src/lib/glicko";
 import { checkClientFrame, newFrameBudget, spendFrame, type FrameBudget } from "./src/lib/server/socketGuard";
 import { SEAT_SUPERSEDED_CLOSE, SOCKET_POLICY_CLOSE } from "./src/lib/socketProtocol";
+import { cleanText } from "./src/lib/textInput";
+import { CUSTOM_GAME_CLOCK, TOURNAMENT_CLOCK, clockWithin } from "./src/lib/clockBounds";
 
 type Result = NerfGame["result"];
 
@@ -266,6 +268,10 @@ type StoredMatch = {
   abortedBy?: Color;
   // Pending takeback request (casual games only).
   takebackOfferBy?: Color | null;
+  // The move count the pending takeback rewinds to, fixed when it was offered
+  // (F086). Recomputing it at accept time undid the wrong moves when the
+  // offerer had moved in between. Absent on offers stored before the fix.
+  takebackToPly?: number | null;
   createdAt: number;
   startedAt: number | null;
   completedAt: number | null;
@@ -2525,9 +2531,21 @@ export class GameServer extends DurableObject<Env> {
     // type (the board/draft/clock/end frames). Untyped fanned frames (watcher
     // counts, spectator chat) carry no header, exactly as before.
     const e = envType ? this.spectatorEnvelope(match, envType) : undefined;
+    // Spectator chat never reaches a player of the live game who is also
+    // watching it from another window (F083): spectators discuss the game.
+    const skipSeated = t === "schat";
     for (const [ws, session] of this.sessions) {
-      if (session.watching === match.id && ws.readyState === WebSocket.OPEN) send(ws, t, d, e);
+      if (session.watching !== match.id || ws.readyState !== WebSocket.OPEN) continue;
+      if (skipSeated && this.seatedInLiveGame(match, session)) continue;
+      send(ws, t, d, e);
     }
+  }
+
+  // True when this socket's account holds a seat in `match` and the game is
+  // still being played. Used to keep spectator chat away from the players.
+  private seatedInLiveGame(match: StoredMatch, session: SessionAttachment): boolean {
+    if (match.result || !session.userId) return false;
+    return match.users?.w?.id === session.userId || match.users?.b?.id === session.userId;
   }
 
   // Projected rating movement for each seat before the game is decided, so
@@ -3643,7 +3661,8 @@ export class GameServer extends DurableObject<Env> {
     const requested = (data || {}) as { timeSec?: unknown; incrementSec?: unknown; draft?: unknown; mode?: unknown; picksVisible?: unknown; invite?: unknown; stacked?: unknown; rated?: unknown };
     const timeSec = Number.isInteger(requested.timeSec) ? Number(requested.timeSec) : 600;
     const incrementSec = Number.isInteger(requested.incrementSec) ? Number(requested.incrementSec) : 0;
-    if (timeSec < 0 || timeSec > 7200 || incrementSec < 0 || incrementSec > 60) {
+    // Same bounds the challenge API enforces (src/lib/clockBounds.ts, F078).
+    if (!clockWithin(timeSec, incrementSec, CUSTOM_GAME_CLOCK)) {
       return error(ws, "invalid_clock", "Unsupported time control.");
     }
     // Custom challenges may opt into a rated game. Rating still only moves when
@@ -3869,10 +3888,15 @@ export class GameServer extends DurableObject<Env> {
   }
 
   private async playClientMove(ws: WebSocket, data: unknown) {
+    // One clock reading for the whole move (F088): the flag check and the
+    // clock bank used to read Date.now() separately, so the replay in between
+    // could take a clock that passed the flag check below zero and still
+    // accept the move. The server's own replay time is not the mover's.
+    const receivedAt = Date.now();
     const session = this.session(ws);
     const match = session.matchId ? await this.loadMatch(session.matchId) : null;
     if (!match || !session.color) return error(ws, "no_game", "Join a game before sending moves.");
-    if (await this.finishOnFlag(match)) return;
+    if (await this.finishOnFlag(match, receivedAt)) return;
     if (match.result) return error(ws, "game_over", "This game is over.");
     // Draft games: no moves while the opening nerf draft is unresolved.
     if (match.draft && match.nerfOptions && !match.startedAt) {
@@ -3907,7 +3931,7 @@ export class GameServer extends DurableObject<Env> {
     const move = moveByUci(game, uci);
     if (!move) return error(ws, "illegal_move", "That move is not legal in the current position.");
 
-    await this.commitMove(match, game, session.color, move, uci);
+    await this.commitMove(match, game, session.color, move, uci, receivedAt);
   }
 
   // Apply an accepted move and everything that follows it: clocks, pending
@@ -3915,8 +3939,17 @@ export class GameServer extends DurableObject<Env> {
   // flow. Shared verbatim by human moves (playClientMove) and house-player
   // moves (playHouseAction), so a house game's record and wire frames are
   // identical to a human game's.
-  private async commitMove(match: StoredMatch, game: NerfGame, mover: Color, move: Move, uci: string) {
-    const now = Date.now();
+  private async commitMove(
+    match: StoredMatch,
+    game: NerfGame,
+    mover: Color,
+    move: Move,
+    uci: string,
+    // When the move arrived (the same reading its flag check used). Defaults
+    // to now for server-originated moves (house bots).
+    at?: number,
+  ) {
+    const now = at ?? Date.now();
     this.bankClocks(match, now);
     if (match.drawOfferBy && match.drawOfferBy !== mover) {
       match.drawOfferBy = null;
@@ -3925,6 +3958,7 @@ export class GameServer extends DurableObject<Env> {
     // Moving past an opponent's takeback request declines it.
     if (match.takebackOfferBy && match.takebackOfferBy !== mover) {
       match.takebackOfferBy = null;
+      match.takebackToPly = null;
       this.broadcast(match, "takebackDeclined", { color: mover });
     }
     // Which seats already had a pending offer: playMove mutates the game, so
@@ -4013,7 +4047,10 @@ export class GameServer extends DurableObject<Env> {
         if (away) chargePauseBudget(match, away, now);
         else clearPause(match);
       }
-      match.runningSince = now;
+      // The mover was charged up to when the move arrived; the opponent's
+      // clock starts when it is committed, so neither pays for the server's
+      // own replay time (F088).
+      match.runningSince = at === undefined ? now : Math.max(now, Date.now());
     }
     match.result = nextGame.result;
     if (nextGame.result) match.completedAt = now;
@@ -4301,6 +4338,7 @@ export class GameServer extends DurableObject<Env> {
     if (match.takebackOfferBy && match.takebackOfferBy !== session.color) return this.acceptTakeback(ws);
 
     match.takebackOfferBy = session.color;
+    match.takebackToPly = match.moves.length - this.takebackPlies(match, session.color);
     await this.saveMatch(match);
     this.broadcast(match, "takebackOffer", { color: session.color });
   }
@@ -4316,9 +4354,13 @@ export class GameServer extends DurableObject<Env> {
       return error(ws, "no_takeback_offer", "There is no takeback request to accept.");
     }
 
-    const remove = this.takebackPlies(match, offerer);
-    if (remove > match.moves.length) {
+    // Rewind to the position the offerer asked for when they offered, even if
+    // they have moved since (F086).
+    const target = typeof match.takebackToPly === "number" ? match.takebackToPly : null;
+    const remove = target !== null ? match.moves.length - target : this.takebackPlies(match, offerer);
+    if (remove < 1 || remove > match.moves.length) {
       match.takebackOfferBy = null;
+      match.takebackToPly = null;
       await this.saveMatch(match);
       return error(ws, "no_moves", "There is nothing to take back.");
     }
@@ -4331,6 +4373,7 @@ export class GameServer extends DurableObject<Env> {
     // game catches back up (the bounds guard keeps it correct either way).
     match.checkpoint = null;
     match.takebackOfferBy = null;
+    match.takebackToPly = null;
     match.runningSince = match.startedAt ? now : null;
     // A takeback rewinds the board: rebuild the snapshot from the rewound game
     // so the takeback envelope carries the exact post-rewind parity hash. The
@@ -4371,6 +4414,7 @@ export class GameServer extends DurableObject<Env> {
     }
 
     match.takebackOfferBy = null;
+    match.takebackToPly = null;
     await this.saveMatch(match);
     this.broadcast(match, "takebackDeclined", { color: session.color });
   }
@@ -4634,7 +4678,8 @@ export class GameServer extends DurableObject<Env> {
     if (!whiteId || !blackId || !whiteName || !blackName || whiteId === blackId) {
       return Response.json({ error: "bad_players" }, { status: 400 });
     }
-    if (timeSec < 0 || timeSec > 7200 || incrementSec < 0 || incrementSec > 180) {
+    // Same bounds /api/tournaments enforces (src/lib/clockBounds.ts, F078).
+    if (!clockWithin(timeSec, incrementSec, TOURNAMENT_CLOCK)) {
       return Response.json({ error: "invalid_clock" }, { status: 400 });
     }
 
@@ -6021,7 +6066,7 @@ export class GameServer extends DurableObject<Env> {
     const mode: DraftMode = req.mode === "nerf" ? "nerf" : "buff";
     const timeSec = Number.isInteger(req.timeSec) ? Number(req.timeSec) : 600;
     const incrementSec = Number.isInteger(req.incrementSec) ? Number(req.incrementSec) : 0;
-    if (timeSec < 0 || timeSec > 7200 || incrementSec < 0 || incrementSec > 60) {
+    if (!clockWithin(timeSec, incrementSec, CUSTOM_GAME_CLOCK)) {
       return error(ws, "invalid_clock", "Unsupported time control.");
     }
     if (!(await this.houseEnabled())) {
@@ -6954,7 +6999,7 @@ export class GameServer extends DurableObject<Env> {
       result: match.result,
       watchers: this.watcherCount(id),
       watcherNames: this.watcherInfo(id).names,
-      spectatorChat: match.spectatorChat ?? [],
+      spectatorChat: this.seatedInLiveGame(match, this.session(ws)) ? [] : match.spectatorChat ?? [],
       ...(match.result ? { nerfs: { w: match.setup.whiteNerfId, b: match.setup.blackNerfId } } : {}),
       ...(draftExtras ?? {}),
       ...(pub
@@ -7270,14 +7315,17 @@ export class GameServer extends DurableObject<Env> {
     const session = this.session(ws);
     const match = session.matchId ? await this.loadMatch(session.matchId) : null;
     if (!match || !session.color) return error(ws, "no_game", "Join a game before chatting.");
-    const raw = String((data as { text?: unknown } | undefined)?.text ?? "").trim();
+    // Shared sanitizer (F052, F053): NFC, invisible format and bidi
+    // characters dropped, whitespace tidied, capped at 200 code points (the
+    // old .slice(0, 200) could split an emoji into a lone surrogate).
+    const raw = cleanText((data as { text?: unknown } | undefined)?.text, { maxChars: 200 });
     if (!raw) return;
     const now = Date.now();
     if (now - (this.lastChatAt.get(session.id) ?? 0) < 500) return;
     this.lastChatAt.set(session.id, now);
 
     const name = match.users?.[session.color]?.name ?? (session.color === "w" ? "White" : "Black");
-    const clipped = raw.slice(0, 200);
+    const clipped = raw;
     // Shadow-mute (Lichess-style): a chat-muted player sees their own message
     // echoed back, but it is neither stored nor shown to anyone else.
     if (session.mutedUntil && session.mutedUntil > Date.now()) {
@@ -7316,14 +7364,17 @@ export class GameServer extends DurableObject<Env> {
     const session = this.session(ws);
     const match = session.watching ? await this.loadMatch(session.watching) : null;
     if (!match) return error(ws, "not_watching", "Watch a game before chatting.");
-    const raw = String((data as { text?: unknown } | undefined)?.text ?? "").trim();
+    if (this.seatedInLiveGame(match, session)) {
+      return error(ws, "seated_player", "Players cannot use spectator chat during their own game.");
+    }
+    const raw = cleanText((data as { text?: unknown } | undefined)?.text, { maxChars: 200 });
     if (!raw) return;
     const now = Date.now();
     if (now - (this.lastChatAt.get(session.id) ?? 0) < 500) return;
     this.lastChatAt.set(session.id, now);
 
     const name = session.username ?? "Anonymous";
-    const clipped = raw.slice(0, 200);
+    const clipped = raw;
     // Shadow-mute works here too: the muted watcher sees only their own echo.
     if (session.mutedUntil && session.mutedUntil > Date.now()) {
       send(ws, "schat", { name, text: clipped, at: now } satisfies SpectatorChatEntry);

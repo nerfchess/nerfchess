@@ -183,6 +183,23 @@ export interface RatingChange {
 // guaranteeing the call always terminates.
 const RATING_CAS_MAX_RETRIES = 5;
 
+/** Whether a finished game moves ratings and win/loss counts. Both seats must
+ *  be accounts and they must be DIFFERENT accounts: a rated custom challenge
+ *  accepted by its own creator from a second tab (F080) used to rate the
+ *  account against itself, a free way to farm wins. The row is still archived,
+ *  just unrated. */
+export function countsForRating(
+  game: Pick<FinishedGameRecord, "rated" | "whiteUserId" | "blackUserId" | "winner">,
+): boolean {
+  return (
+    !!game.rated &&
+    !!game.whiteUserId &&
+    !!game.blackUserId &&
+    game.whiteUserId !== game.blackUserId &&
+    game.winner !== null
+  );
+}
+
 export async function recordFinishedGame(
   db: D1Database,
   game: FinishedGameRecord,
@@ -205,7 +222,7 @@ export async function recordFinishedGame(
   let whiteBefore: GlickoRating | null = null;
   let blackBefore: GlickoRating | null = null;
 
-  const rated = game.rated && !!game.whiteUserId && !!game.blackUserId && game.winner !== null;
+  const rated = countsForRating(game);
   // Which independent rating bucket this game counts toward. Only that
   // bucket's rating moves; every other bucket is untouched. Every rated game
   // is a queue game and always passes its mode ("nerf"/"buff"), so the speed
