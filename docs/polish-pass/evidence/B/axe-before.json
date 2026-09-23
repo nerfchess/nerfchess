@@ -1,0 +1,113 @@
+{
+ "generatedAt": "2026-09-23T01:44:34.042Z",
+ "rows": [
+  {
+   "route": "/",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": []
+  },
+  {
+   "route": "/",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": []
+  },
+  {
+   "route": "/lobby",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 2,
+     "targets": [
+      ".btn-leaf.\\[\\@media\\(pointer\\:fine\\)\\]\\:min-h-\\[36px\\].gap-1\\.5",
+      ".fixed > .btn-leaf.w-full.min-h-\\[52px\\]"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/lobby",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 2,
+     "targets": [
+      ".btn-leaf.\\[\\@media\\(pointer\\:fine\\)\\]\\:min-h-\\[36px\\].gap-1\\.5",
+      ".btn-leaf.w-full.sm\\:inline-flex"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/play",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 4,
+     "targets": [
+      "div:nth-child(1) > div > .grid-flow-col.auto-cols-fr.gap-2 > .border-gold.bg-gold\\/20.text-gold-leaf",
+      "div:nth-child(3) > .grid-flow-col.auto-cols-fr.gap-2 > .border-gold.bg-gold\\/20.text-gold-leaf",
+      ".space-y-4 > div:nth-child(1) > .grid-flow-col.auto-cols-fr.gap-2 > .border-gold.bg-gold\\/20.text-gold-leaf",
+      ".btn-leaf"
+     ]
+    },
+    {
+     "id": "label",
+     "impact": "critical",
+     "help": "Form elements must have labels",
+     "nodes": 2,
+     "targets": [
+      "input[max=\"42\"]",
+      "input[max=\"30\"]"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/play",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 6,
+     "targets": [
+      "div:nth-child(1) > div > .grid-flow-col.auto-cols-fr.gap-2 > .border-gold.bg-gold\\/20.text-gold-leaf",
+      "div:nth-child(2) > .grid-flow-col.auto-cols-fr.gap-2 > .border-gold.bg-gold\\/20.text-gold-leaf",
+      ".border-gold.bg-gold\\/20.text-gold-leaf > .ml-1\\.5.opacity-70.font-mono",
+      "div:nth-child(3) > .grid-flow-col.auto-cols-fr.gap-2 > .border-gold.bg-gold\\/20.text-gold-leaf"
+     ]
+    },
+    {
+     "id": "label",
+     "impact": "critical",
+     "help": "Form elements must have labels",
+     "nodes": 2,
+     "targets": [
+      "input[max=\"42\"]",
+      "input[max=\"30\"]"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/game?mode=nerf&difficulty=easy&color=w&t=0&inc=0&rated=0",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": []
+  },
+  {
+   "route": "/game?mode=nerf&difficulty=easy&color=w&t=0&inc=0&rated=0",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": []
+  }
+ ]
+}

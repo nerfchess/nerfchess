@@ -91,3 +91,54 @@ test.describe("tour note", () => {
     await expect(page.getByRole("note")).toHaveCount(0);
   });
 });
+
+// axe on /play: the selected option pills drew the accent on a 20% accent
+// wash, 4.17:1 in the dark scheme, and the bot Elo inside them was dimmed to
+// 70% on top of that. Every pressed pill's text, the Elo included, must reach
+// the 4.5:1 AA floor in both schemes.
+const PRESSED_CONTRAST = `(() => {
+  const nums = (c) => c.match(/[\\d.]+/g).map(Number);
+  const lum = (rgb) => {
+    const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+    return 0.2126 * f(rgb[0]) + 0.7152 * f(rgb[1]) + 0.0722 * f(rgb[2]);
+  };
+  const ground = (el) => {
+    const layers = [];
+    for (let e = el; e; e = e.parentElement) {
+      const c = nums(getComputedStyle(e).backgroundColor);
+      const a = c.length > 3 ? c[3] : 1;
+      if (a > 0) { layers.push([c[0], c[1], c[2], a]); if (a >= 1) break; }
+    }
+    let base = [0, 0, 0];
+    for (const [r, g, b, a] of layers.reverse()) base = [r * a + base[0] * (1 - a), g * a + base[1] * (1 - a), b * a + base[2] * (1 - a)];
+    return base;
+  };
+  const els = Array.from(document.querySelectorAll('button[aria-pressed="true"], button[aria-pressed="true"] *'));
+  return els.filter((el) => el.textContent.trim()).map((el) => {
+    let opacity = 1;
+    for (let e = el; e && e.tagName !== "BUTTON"; e = e.parentElement) opacity *= Number(getComputedStyle(e).opacity);
+    const bg = ground(el.closest("button"));
+    const c = nums(getComputedStyle(el).color);
+    const a = (c.length > 3 ? c[3] : 1) * opacity;
+    const fg = [0, 1, 2].map((i) => c[i] * a + bg[i] * (1 - a));
+    const l1 = lum(fg), l2 = lum(bg);
+    return { text: el.textContent.trim(), ratio: (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05) };
+  });
+})()`;
+
+for (const scheme of ["dark", "light"] as const) {
+  test(`pressed option pills clear AA, ${scheme}`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    await page.addInitScript((s) => {
+      try {
+        localStorage.setItem("dc:settings-v1", JSON.stringify({ siteTheme: s }));
+      } catch {}
+    }, scheme);
+    await page.goto("/play");
+    await expect(page.locator('button[aria-pressed="true"]').first()).toBeVisible({ timeout: 90_000 });
+    const rows = (await page.evaluate(PRESSED_CONTRAST)) as { text: string; ratio: number }[];
+    console.log(scheme, JSON.stringify(rows.map((r) => `${r.text} ${r.ratio.toFixed(2)}`)));
+    expect(rows.length).toBeGreaterThan(0);
+    for (const r of rows) expect(r.ratio, r.text).toBeGreaterThanOrEqual(4.5);
+  });
+}

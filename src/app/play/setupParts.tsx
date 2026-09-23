@@ -133,7 +133,9 @@ export function BotStrengthLabel({ level }: { level: "easy" | "medium" | "hard" 
   return (
     <>
       {level[0].toUpperCase() + level.slice(1)}
-      <span className="font-mono text-[12px] opacity-70">~{BOT_ELO[level]}</span>
+      {/* No dimming: at 70% opacity the Elo fell below AA on the selected
+          pill. The mono face and the smaller size carry the hierarchy. */}
+      <span className="font-mono text-[12px]">~{BOT_ELO[level]}</span>
     </>
   );
 }
@@ -153,7 +155,10 @@ export function Pill({
       className={
         "inline-flex min-h-[44px] w-full flex-wrap items-center justify-center gap-x-1.5 border px-3 py-2 text-center font-display text-[14px] font-medium transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-60 " +
         (selected
-          ? "border-gold bg-gold/20 text-gold-leaf"
+          ? // Accent text and edge on the pill's own raised surface, the lobby's
+            // selected time tile: accent text on a 20% accent wash measured
+            // 4.17:1, under the AA floor for 14px text.
+            "border-gold bg-[color:var(--bg-raised)] text-gold-leaf"
           : "border-[color:var(--edge)] bg-[color:var(--bg-raised)] text-parchment-200 hover:border-[color:var(--edge-strong)] hover:text-parchment-50")
       }
     >
