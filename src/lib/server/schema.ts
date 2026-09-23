@@ -686,6 +686,25 @@ const ADDITIVE_COLUMNS: string[] = [
   `ALTER TABLE tournaments ADD COLUMN current_round INTEGER NOT NULL DEFAULT 0`,
   `ALTER TABLE tournaments ADD COLUMN round_started_at INTEGER`,
   `ALTER TABLE tournaments ADD COLUMN finished_at INTEGER`,
+  // Every moderator action is audited, not only sanctions on a player: a row
+  // about a report, a card, a setting or a persona stores '' in target_user_id
+  // and names its target with target_kind and target_ref, and an edit keeps the
+  // values it replaced and wrote (before_json, after_json) so it can be undone.
+  // reports.handled_note is the note a moderator closed the report with.
+  // Mirrors migrations/0041_mod_audit.sql.
+  `ALTER TABLE mod_actions ADD COLUMN target_kind TEXT NOT NULL DEFAULT 'user'`,
+  `ALTER TABLE mod_actions ADD COLUMN target_ref TEXT`,
+  `ALTER TABLE mod_actions ADD COLUMN before_json TEXT`,
+  `ALTER TABLE mod_actions ADD COLUMN after_json TEXT`,
+  `CREATE INDEX IF NOT EXISTS idx_mod_actions_kind ON mod_actions(target_kind, created_at DESC)`,
+  `CREATE INDEX IF NOT EXISTS idx_mod_actions_mod ON mod_actions(mod_user_id, created_at DESC)`,
+  `ALTER TABLE reports ADD COLUMN handled_note TEXT`,
+  // Account totals and sign-ups per day (src/lib/server/metrics.ts) read a
+  // range of this index instead of scanning every account; "reports filed by"
+  // in the moderator player context reads the reporter index. Mirrors
+  // migrations/0042_metrics_indexes.sql.
+  `CREATE INDEX IF NOT EXISTS idx_users_guest_created ON users(is_guest, created_at)`,
+  `CREATE INDEX IF NOT EXISTS idx_reports_reporter ON reports(reporter_user_id, created_at DESC)`,
 ];
 
 // The additive pass is versioned by list length (the list is append-only) and

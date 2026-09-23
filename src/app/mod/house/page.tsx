@@ -15,6 +15,7 @@ import { ModShell } from "@/components/mod/ModShell";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { fileToDataUrl } from "@/lib/imageUpload";
 import { Button } from "@/components/ui/Button";
+import { useArmedPress } from "@/components/mod/ui";
 
 type PersonaView = {
   userId: string;
@@ -144,6 +145,8 @@ function PersonaRow({
   const [bio, setBio] = useState(persona.effective.bio ?? "");
   const [picking, setPicking] = useState(false);
   const [saving, setSaving] = useState(false);
+  // Reset throws away the edited identity: it asks twice (F121).
+  const resetPress = useArmedPress();
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -251,10 +254,11 @@ function PersonaRow({
             <Button tone="ghost"
              
               disabled={saving || !edited}
-              onClick={() => post({ reset: true })}
+              onClick={() => resetPress.press(() => post({ reset: true }))}
+              onBlur={resetPress.disarm}
               title="Restore the baked username and avatar"
               className="px-3 py-1">
-              Reset
+              {resetPress.armed ? "Confirm reset" : "Reset"}
             </Button>
           </span>
         )}

@@ -10,7 +10,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { HistoryEntry } from "./types";
 import { Empty, FilterChip, Loading, Pill, untilShort, when, whenShort } from "./ui";
 
-type Kind = "all" | "ban" | "mute" | "warn" | "role";
+type Kind = "all" | "ban" | "mute" | "warn" | "role" | "queue" | "config";
 
 const KINDS: { value: Kind; label: string }[] = [
   { value: "all", label: "All" },
@@ -18,15 +18,28 @@ const KINDS: { value: Kind; label: string }[] = [
   { value: "mute", label: "Mutes" },
   { value: "warn", label: "Warnings" },
   { value: "role", label: "Roles & names" },
+  { value: "queue", label: "Reports & flags" },
+  { value: "config", label: "Cards, bots & settings" },
 ];
 
-function kindOf(action: string): Exclude<Kind, "all"> | null {
+// Rows about something other than a player (F116) carry target_kind.
+const CONFIG_KINDS = new Set(["card", "house", "persona", "setting", "webhook"]);
+
+function kindOf(action: string, targetKind?: string): Exclude<Kind, "all"> | null {
+  if (targetKind === "report" || targetKind === "chat_flag") return "queue";
+  if ((targetKind && CONFIG_KINDS.has(targetKind)) || action === "rating_set") return "config";
   const a = action.toLowerCase();
   if (a.includes("ban")) return "ban";
   if (a.includes("mute")) return "mute";
   if (a.includes("warn")) return "warn";
   if (a.includes("role") || a.includes("name")) return "role";
   return null;
+}
+
+/** True when target_name is a username worth linking to a profile. */
+function isPlayerTarget(e: HistoryEntry): boolean {
+  if (!e.target_kind || e.target_kind === "user" || e.target_kind === "report" || e.target_kind === "persona") return true;
+  return e.target_kind === "chat_flag" && !!e.target_ref;
 }
 
 function toneOf(action: string): "warn" | "mute" | "neutral" {
@@ -50,13 +63,14 @@ export function AuditLogSection() {
     if (!log) return [];
     const needle = q.trim().toLowerCase();
     return log.filter((e) => {
-      if (kind !== "all" && kindOf(e.action) !== kind) return false;
+      if (kind !== "all" && kindOf(e.action, e.target_kind) !== kind) return false;
       if (!needle) return true;
       return (
         e.mod_name.toLowerCase().includes(needle) ||
         (e.target_name ?? "").toLowerCase().includes(needle) ||
         e.action.toLowerCase().includes(needle) ||
-        (e.note ?? "").toLowerCase().includes(needle)
+        (e.note ?? "").toLowerCase().includes(needle) ||
+        (e.target_ref ?? "").toLowerCase().includes(needle)
       );
     });
   }, [log, kind, q]);
@@ -88,7 +102,9 @@ export function AuditLogSection() {
             <div key={i} className="flex flex-wrap items-baseline gap-x-2 gap-y-1 px-4 py-3 text-sm">
               <span className="font-display font-semibold">{entry.mod_name}</span>
               <Pill tone={toneOf(entry.action)}>{entry.action}</Pill>
-              {entry.target_name && (
+              {entry.target_name && !isPlayerTarget(entry) ? (
+                <span className="font-display font-semibold">{entry.target_name}</span>
+              ) : entry.target_name && (
                 <Link
                   href={`/u/${entry.target_name}`}
                   className="font-display font-semibold hover:underline"
@@ -100,6 +116,15 @@ export function AuditLogSection() {
                 <span className="text-parchment-400">{untilShort(entry.expires_at)}</span>
               )}
               {entry.note && <span className="text-parchment-400">“{entry.note}”</span>}
+              {(entry.before_json || entry.after_json) && (
+                <details className="w-full text-[12px] text-parchment-400">
+                  <summary className="cursor-pointer">Change</summary>
+                  <div className="mt-1 break-all font-mono">
+                    <div>before: {entry.before_json ?? "none"}</div>
+                    <div>after: {entry.after_json ?? "none"}</div>
+                  </div>
+                </details>
+              )}
               <span
                 className="w-full text-[12px] text-parchment-400 sm:ml-auto sm:w-auto sm:text-sm"
                 title={when(entry.created_at)}

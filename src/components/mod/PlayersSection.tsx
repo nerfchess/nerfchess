@@ -14,8 +14,9 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import type { HistoryEntry, ModUser, UserReportEntry } from "./types";
+import type { ModUser, ModUserContext } from "./types";
 import {
+  ConfirmButton,
   Empty,
   FilterChip,
   ModButton,
@@ -59,9 +60,11 @@ export function PlayersSection({
   // either side. Applies to the default roster and to searches alike.
   const [filter, setFilter] = useState<UserFilter>("all");
   const [users, setUsers] = useState<ModUser[]>([]);
-  const [history, setHistory] = useState<HistoryEntry[]>([]);
-  const [reports, setReports] = useState<UserReportEntry[]>([]);
   const [selected, setSelected] = useState<ModUser | null>(null);
+  // Everything the detail shows is loaded by the selected player's id (F115):
+  // it used to come from the search's exact-name match, so picking a player
+  // from the roster showed another player's record, or "Clean record".
+  const [ctx, setCtx] = useState<ModUserContext | null>(null);
   const [sanction, setSanction] = useState<Sanction>("mute");
   const [duration, setDuration] = useState<string>("7d");
   const [note, setNote] = useState("");
@@ -85,17 +88,36 @@ export function PlayersSection({
       const qs = params.toString();
       const res = await fetch(`/api/mod/users${qs ? `?${qs}` : ""}`);
       if (!res.ok) return;
-      const data = (await res.json()) as {
-        users: ModUser[];
-        history: HistoryEntry[];
-        reports: UserReportEntry[];
-      };
+      const data = (await res.json()) as { users: ModUser[] };
       setUsers(data.users);
-      setHistory(data.history);
-      setReports(data.reports);
     },
     [filter],
   );
+
+  const loadContext = useCallback(async (id: string) => {
+    const res = await fetch(`/api/mod/users?id=${encodeURIComponent(id)}`);
+    if (!res.ok) return null;
+    const data = (await res.json()) as ModUserContext;
+    // `context` below only shows an answer whose id matches the selection, so
+    // a slow answer for a player no longer selected never lands on screen.
+    setCtx(data);
+    return data;
+  }, []);
+
+  const selectedId = selected?.id ?? null;
+  useEffect(() => {
+    if (!selectedId) return;
+    let live = true;
+    void (async () => {
+      const res = await fetch(`/api/mod/users?id=${encodeURIComponent(selectedId)}`);
+      if (!live || !res.ok) return;
+      setCtx((await res.json()) as ModUserContext);
+    })();
+    return () => {
+      live = false;
+    };
+  }, [selectedId]);
+  const context = ctx && selected && ctx.user.id === selected.id ? ctx : null;
 
   useEffect(() => {
     const t = setTimeout(() => search(query), 300);
@@ -106,13 +128,11 @@ export function PlayersSection({
     setMessage(null);
     const res = await postJson("/api/mod/users", { username, ...body });
     setMessage(res.ok ? "Done." : (res.error ?? "Failed."));
+    if (res.ok) setNote("");
     await search(query);
     if (selected) {
-      const refreshed = await fetch(`/api/mod/users?q=${encodeURIComponent(selected.username)}`);
-      if (refreshed.ok) {
-        const data = (await refreshed.json()) as { users: ModUser[] };
-        setSelected(data.users.find((u) => u.username === selected.username) ?? null);
-      }
+      const fresh = await loadContext(selected.id);
+      if (fresh) setSelected(fresh.user);
     }
     onActed?.();
   };
@@ -125,6 +145,9 @@ export function PlayersSection({
     return `${sanction === "mute" ? "Mute" : "Ban"} ${selected.username} ${span}`;
   })();
 
+  const reason = note.trim();
+  // A ban, or any permanent sanction, asks twice before it runs.
+  const needsConfirm = sanction === "ban" || (sanction === "mute" && duration === "perm");
   const isMuted = !!selected?.muted_until && selected.muted_until > now;
   const isBanned = !!selected?.banned_until && selected.banned_until > now;
 
@@ -206,6 +229,19 @@ export function PlayersSection({
             <span className="w-full text-sm text-parchment-400 sm:ml-auto sm:w-auto">
               {Math.round(selected.rating)} · {selected.games} games
             </span>
+            <p className="w-full text-[13px] text-parchment-400">
+              Account age {ageLabel(now - selected.created_at)} (joined{" "}
+              {new Date(selected.created_at).toLocaleDateString()})
+              {context && (
+                <>
+                  {" · "}
+                  {context.user.has_email ? "email on file" : "no email"}
+                  {" · "}
+                  {context.user.last_seen_at ? `last seen ${whenShort(context.user.last_seen_at)}` : "never seen"}
+                  {context.user.name_flagged && " · username flagged"}
+                </>
+              )}
+            </p>
           </div>
 
           {/* --- the escalation ladder --- */}
@@ -242,108 +278,183 @@ export function PlayersSection({
               <input
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
-                placeholder="Note for the audit log"
+                aria-label="Reason (required)"
+                maxLength={500}
+                placeholder="Reason, required (goes in the audit log)"
                 className="plate w-full bg-transparent px-3 py-2 text-sm outline-none focus:border-[color:var(--edge-strong)] sm:min-w-[180px] sm:flex-1 sm:py-1.5"
               />
-              <ModButton
-                tone={sanction === "ban" ? "danger" : sanction === "mute" ? "primary" : "default"}
-                className="w-full sm:w-auto"
-                onClick={() => {
-                  act(selected.username, { action: sanction, durationMs, note });
-                  setNote("");
-                }}
-              >
-                {commitLabel}
-              </ModButton>
+              {needsConfirm ? (
+                <ConfirmButton
+                  tone="danger"
+                  className="w-full sm:w-auto"
+                  disabled={!reason}
+                  title={reason ? undefined : "Write a reason first"}
+                  confirmLabel={`Confirm: ${commitLabel}`}
+                  onConfirm={() => act(selected.username, { action: sanction, durationMs, note: reason })}
+                >
+                  {commitLabel}
+                </ConfirmButton>
+              ) : (
+                <ModButton
+                  tone={sanction === "mute" ? "primary" : "default"}
+                  className="w-full sm:w-auto"
+                  disabled={!reason}
+                  title={reason ? undefined : "Write a reason first"}
+                  onClick={() => act(selected.username, { action: sanction, durationMs, note: reason })}
+                >
+                  {commitLabel}
+                </ModButton>
+              )}
             </div>
           </div>
 
           {/* --- everything that is not an escalation --- */}
           <div className="border-t border-[color:var(--edge)] pt-4">
-            <SectionHead title="Account" blurb="Reversals, username flags, and role changes." />
+            <SectionHead
+              title="Account"
+              blurb="Reversals, username flags, and role changes. Each one takes the reason written above."
+            />
             <div className="mt-3 flex flex-wrap gap-2">
               {isMuted && (
-                <ModButton size="sm" onClick={() => act(selected.username, { action: "unmute" })}>
+                <ModButton size="sm" disabled={!reason} onClick={() => act(selected.username, { action: "unmute", note: reason })}>
                   Lift mute
                 </ModButton>
               )}
               {isBanned && (
-                <ModButton size="sm" onClick={() => act(selected.username, { action: "unban" })}>
+                <ModButton size="sm" disabled={!reason} onClick={() => act(selected.username, { action: "unban", note: reason })}>
                   Lift ban
                 </ModButton>
               )}
-              <ModButton
+              <ConfirmButton
                 tone="danger"
                 size="sm"
+                disabled={!reason}
                 title="Requires the owner to pick a new name; the account, ratings, games, and achievements are kept"
-                onClick={() => act(selected.username, { action: "flag_name", note })}
+                confirmLabel={`Confirm: flag ${selected.username}`}
+                onConfirm={() => act(selected.username, { action: "flag_name", note: reason })}
               >
                 Flag username
-              </ModButton>
+              </ConfirmButton>
               <ModButton
                 size="sm"
+                disabled={!reason}
                 title="Clear a username flag (false positive)"
-                onClick={() => act(selected.username, { action: "unflag_name" })}
+                onClick={() => act(selected.username, { action: "unflag_name", note: reason })}
               >
                 Clear name flag
               </ModButton>
               {isAdmin && selected.role === "user" && (
-                <ModButton
+                <ConfirmButton
                   tone="primary"
                   size="sm"
-                  onClick={() => act(selected.username, { action: "set_role", role: "mod" })}
+                  disabled={!reason}
+                  confirmLabel={`Confirm: make ${selected.username} a moderator`}
+                  onConfirm={() => act(selected.username, { action: "set_role", role: "mod", note: reason })}
                 >
                   Promote to moderator
-                </ModButton>
+                </ConfirmButton>
               )}
               {isAdmin && selected.role === "mod" && (
-                <ModButton
+                <ConfirmButton
                   size="sm"
-                  onClick={() => act(selected.username, { action: "set_role", role: "user" })}
+                  disabled={!reason}
+                  confirmLabel={`Confirm: demote ${selected.username}`}
+                  onConfirm={() => act(selected.username, { action: "set_role", role: "user", note: reason })}
                 >
                   Demote to player
-                </ModButton>
+                </ConfirmButton>
               )}
             </div>
           </div>
 
           {message && <p className="text-sm text-parchment-200">{message}</p>}
 
-          <div className="grid gap-4 border-t border-[color:var(--edge)] pt-4 text-sm sm:grid-cols-2">
-            <div>
-              <h3 className="text-xs text-parchment-400">Mod history</h3>
-              {history.length === 0 ? (
-                <p className="mt-2 text-parchment-300">Clean record.</p>
-              ) : (
-                <ul className="mt-2 space-y-1.5">
-                  {history.map((h, i) => (
-                    <li key={i} className="text-parchment-200">
-                      <span className="text-parchment-50">{h.action}</span> by {h.mod_name} ·{" "}
-                      <span title={when(h.created_at)}>{whenShort(h.created_at)}</span>
-                      {h.note && <span className="text-parchment-400">: {h.note}</span>}
-                    </li>
-                  ))}
-                </ul>
-              )}
+          {!context ? (
+            <p className="border-t border-[color:var(--edge)] pt-4 text-sm text-parchment-400">Loading history…</p>
+          ) : (
+            <div className="grid gap-4 border-t border-[color:var(--edge)] pt-4 text-sm sm:grid-cols-2">
+              <div>
+                <h3 className="text-[13px] text-parchment-400">Mod history</h3>
+                {context.history.length === 0 ? (
+                  <p className="mt-2 text-parchment-300">Clean record.</p>
+                ) : (
+                  <ul className="mt-2 space-y-1.5">
+                    {context.history.map((h, i) => (
+                      <li key={i} className="text-parchment-200">
+                        <span className="text-parchment-50">{h.action}</span> by {h.mod_name} ·{" "}
+                        <span title={when(h.created_at)}>{whenShort(h.created_at)}</span>
+                        {h.note && <span className="text-parchment-400">: {h.note}</span>}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              <div>
+                <h3 className="text-[13px] text-parchment-400">Recent games</h3>
+                {context.recentGames.length === 0 ? (
+                  <p className="mt-2 text-parchment-300">No archived games.</p>
+                ) : (
+                  <ul className="mt-2 space-y-1.5">
+                    {context.recentGames.map((g) => (
+                      <li key={g.id} className="text-parchment-200">
+                        <Link href={`/game/${g.id}`} className="hover:underline">
+                          <span className={g.result === "win" ? "text-verdigris-glow" : g.result === "loss" ? "text-oxblood-glow" : "text-parchment-50"}>
+                            {g.result}
+                          </span>{" "}
+                          vs {g.opponent}
+                          {g.opponentIsBot && " (house)"}
+                        </Link>{" "}
+                        · {g.reason}
+                        {g.rated ? " · rated" : ""} · <span title={when(g.completed_at)}>{whenShort(g.completed_at)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              <div>
+                <h3 className="text-[13px] text-parchment-400">Reports against them</h3>
+                {context.reports.length === 0 ? (
+                  <p className="mt-2 text-parchment-300">None.</p>
+                ) : (
+                  <ul className="mt-2 space-y-1.5">
+                    {context.reports.map((r, i) => (
+                      <li key={i} className="text-parchment-200">
+                        <span className="text-oxblood-glow">{r.reason}</span> by {r.reporter_name} ({r.status}) ·{" "}
+                        <span title={when(r.created_at)}>{whenShort(r.created_at)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              <div>
+                <h3 className="text-[13px] text-parchment-400">Reports they filed</h3>
+                {context.reportsBy.length === 0 ? (
+                  <p className="mt-2 text-parchment-300">None.</p>
+                ) : (
+                  <ul className="mt-2 space-y-1.5">
+                    {context.reportsBy.map((r, i) => (
+                      <li key={i} className="text-parchment-200">
+                        <span className="text-parchment-50">{r.reason}</span> against {r.reported_name} ({r.status}) ·{" "}
+                        <span title={when(r.created_at)}>{whenShort(r.created_at)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             </div>
-            <div>
-              <h3 className="text-xs text-parchment-400">Reports against them</h3>
-              {reports.length === 0 ? (
-                <p className="mt-2 text-parchment-300">None.</p>
-              ) : (
-                <ul className="mt-2 space-y-1.5">
-                  {reports.map((r, i) => (
-                    <li key={i} className="text-parchment-200">
-                      <span className="text-oxblood-glow">{r.reason}</span> by {r.reporter_name} (
-                      {r.status}) · <span title={when(r.created_at)}>{whenShort(r.created_at)}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </div>
+          )}
         </div>
       )}
     </div>
   );
+}
+
+/** "3 days", "5 months": how long an account has existed. */
+function ageLabel(ms: number): string {
+  const days = Math.max(0, Math.floor(ms / 86400000));
+  if (days < 1) return "under a day";
+  if (days < 60) return `${days} day${days === 1 ? "" : "s"}`;
+  const months = Math.floor(days / 30);
+  if (months < 24) return `${months} months`;
+  return `${Math.floor(days / 365)} years`;
 }

@@ -1,0 +1,128 @@
+{
+  "at": "2026-09-23T19:02:30.303Z",
+  "base": "http://localhost:3000",
+  "passed": 6,
+  "total": 20,
+  "checks": [
+    {
+      "id": "a player gets 403 from the mod API",
+      "finding": "auth",
+      "pass": true,
+      "detail": "{\"status\":403,\"json\":{\"error\":\"Moderator access required.\"}}"
+    },
+    {
+      "id": "a cross-site mod write is refused",
+      "finding": "F046",
+      "pass": false,
+      "detail": "{\"status\":200,\"json\":{\"ok\":true}}"
+    },
+    {
+      "id": "a mod cannot act on themselves",
+      "finding": "safety",
+      "pass": true,
+      "detail": "{\"status\":400,\"json\":{\"error\":\"You cannot moderate yourself.\"}}"
+    },
+    {
+      "id": "a mod cannot act on an admin",
+      "finding": "safety",
+      "pass": true,
+      "detail": "{\"status\":400,\"json\":{\"error\":\"Admins cannot be moderated.\"}}"
+    },
+    {
+      "id": "a mute without a reason is refused",
+      "finding": "F121",
+      "pass": false,
+      "detail": "{\"status\":200,\"json\":{\"ok\":true}}"
+    },
+    {
+      "id": "searching \"polish_u\" finds polish_user",
+      "finding": "F120",
+      "pass": false,
+      "detail": "[]"
+    },
+    {
+      "id": "warn with a reason succeeds",
+      "finding": "F115",
+      "pass": true,
+      "detail": "{\"status\":200,\"json\":{\"ok\":true}}"
+    },
+    {
+      "id": "context by id carries the player's own mod history",
+      "finding": "F115",
+      "pass": false,
+      "detail": "{\"status\":200,\"hist\":[]}"
+    },
+    {
+      "id": "context by id carries reports against the player",
+      "finding": "F115",
+      "pass": false,
+      "detail": "{\"status\":200,\"n\":0}"
+    },
+    {
+      "id": "context carries reports the player filed",
+      "finding": "F115",
+      "pass": false,
+      "detail": "{\"status\":200,\"filed\":null}"
+    },
+    {
+      "id": "context names the requested player, not a search match",
+      "finding": "F115",
+      "pass": false,
+      "detail": "{\"users\":[{\"id\":\"5f29bce0-b8cb-49b5-9f6c-05693bac15bc\",\"username\":\"WilyWalrus\",\"role\":\"user\",\"rating\":1500,\"games\":0,\"created_at\":1790189663667,\"muted_until\":null,\"banned_until\":null,\"is_guest\":1},{\"id\":\"2e14d642-6563-4954-87b0-b17e5f76e612\",\"username\":\"CunningKnight\",\"role\":\"user\",\"rating\":1500,\"games\":0,\"created_at\":1790189591900,\"muted_until\":null,\"banned_until\":null,\"is_guest\":1},{\"id\":\"d6977d"
+    },
+    {
+      "id": "bulk review clears exactly the ids sent",
+      "finding": "F122",
+      "pass": false,
+      "detail": "{\"status\":400,\"open\":[\"polishflag_muegywu7_0\",\"polishflag_muegywu7_1\",\"polishflag_muegywu7_2\"]}"
+    },
+    {
+      "id": "first close succeeds",
+      "finding": "F127",
+      "pass": true,
+      "detail": "{\"status\":200,\"json\":{\"ok\":true}}"
+    },
+    {
+      "id": "a second close of the same report answers 409",
+      "finding": "F127",
+      "pass": false,
+      "detail": "{\"status\":200,\"json\":{\"ok\":true}}"
+    },
+    {
+      "id": "deleting an unknown card id answers 400",
+      "finding": "F124",
+      "pass": false,
+      "detail": "{\"status\":200,\"json\":{\"ok\":true}}"
+    },
+    {
+      "id": "the sanction is in the log with its reason",
+      "finding": "F116",
+      "pass": true,
+      "detail": "[{\"mod_name\":\"polish_mod\",\"target_name\":\"polish_user\",\"action\":\"warn\",\"expires_at\":null,\"note\":\"mod-test warn muegywu7\",\"created_at\":1790190139225},{\"mod_name\":\"polish_mod\",\"target_name\":\"polish_user\",\"action\":\"mute\",\"expires_at\":1790190199066,\"note\":null,\"created_at\":1790190139087},{\"mod_name\":\"polish_mod\",\"target_name\":\"polish_user\",\"action\":\"warn\",\"expires_at\":null,\"note\":\"x\",\"created_at\":17901"
+    },
+    {
+      "id": "report triage is in the log with the report id and note",
+      "finding": "F116",
+      "pass": false,
+      "detail": "[{\"mod_name\":\"polish_mod\",\"target_name\":\"polish_user\",\"action\":\"warn\",\"expires_at\":null,\"note\":\"mod-test warn muegywu7\",\"created_at\":1790190139225},{\"mod_name\":\"polish_mod\",\"target_name\":\"polish_user\",\"action\":\"mute\",\"expires_at\":1790190199066,\"note\":null,\"created_at\":1790190139087},{\"mod_name\":\"polish_mod\",\"target_name\":\"polish_user\",\"action\":\"warn\",\"expires_at\":null,\"note\":\"x\",\"created_at\":17901"
+    },
+    {
+      "id": "chat-flag review is in the log with the count",
+      "finding": "F116",
+      "pass": false,
+      "detail": "[{\"mod_name\":\"polish_mod\",\"target_name\":\"polish_user\",\"action\":\"warn\",\"expires_at\":null,\"note\":\"mod-test warn muegywu7\",\"created_at\":1790190139225},{\"mod_name\":\"polish_mod\",\"target_name\":\"polish_user\",\"action\":\"mute\",\"expires_at\":1790190199066,\"note\":null,\"created_at\":1790190139087},{\"mod_name\":\"polish_mod\",\"target_name\":\"polish_user\",\"action\":\"warn\",\"expires_at\":null,\"note\":\"x\",\"created_at\":17901"
+    },
+    {
+      "id": "metrics answer with written definitions",
+      "finding": "F118",
+      "pass": false,
+      "detail": "{\"status\":404,\"keys\":[]}"
+    },
+    {
+      "id": "metrics are moderator-only",
+      "finding": "auth",
+      "pass": false,
+      "detail": "404"
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireMod } from "@/lib/server/mod";
+import { logModEvent, requireMod } from "@/lib/server/mod";
 import { modWebhookConfigured, notifyModEvent } from "@/lib/server/modWebhook";
 
 export const dynamic = "force-dynamic";
@@ -30,6 +30,7 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
+  await logModEvent(guard.db, guard.mod, { action: "webhook_test", targetKind: "webhook", targetName: "mod webhook" });
   notifyModEvent({
     kind: "test",
     actor: guard.mod.username,

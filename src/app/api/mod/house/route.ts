@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireMod } from "@/lib/server/mod";
+import { logModEvent, readModBody, requireMod } from "@/lib/server/mod";
 import {
   HOUSE_ENABLED_KEY,
   HOUSE_GAMES_KEY,
@@ -22,7 +22,6 @@ import {
   VERY_WEAK_PRESET,
   WEAKEN_CLAMP,
 } from "@/lib/server/bots";
-import { notifyModEvent } from "@/lib/server/modWebhook";
 
 export const dynamic = "force-dynamic";
 
@@ -106,17 +105,8 @@ function mergeOverrides(
 export async function POST(request: Request) {
   const guard = await requireMod(request);
   if (guard instanceof NextResponse) return guard;
-  let body: {
-    enabled?: unknown;
-    games?: unknown;
-    skillOverrides?: unknown;
-    resetSkillOverrides?: unknown;
-  };
-  try {
-    body = (await request.json()) as typeof body;
-  } catch {
-    return NextResponse.json({ error: "Bad request." }, { status: 400 });
-  }
+  const body = await readModBody(request);
+  if (body instanceof NextResponse) return body;
   const hasEnabled = typeof body.enabled === "boolean";
   const hasGames = body.games != null;
   const hasOverrides = body.skillOverrides != null;
@@ -134,6 +124,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "`skillOverrides` must be an object." }, { status: 400 });
   }
 
+  // What each touched knob held before, for the audit row (reversible by hand).
+  const [prevEnabled, prevGames, prevOverrides] = await Promise.all([
+    getAppSetting(guard.db, HOUSE_ENABLED_KEY),
+    getAppSetting(guard.db, HOUSE_GAMES_KEY),
+    getAppSetting(guard.db, HOUSE_SKILL_OVERRIDES_KEY),
+  ]);
+
   if (hasEnabled) {
     await setAppSetting(guard.db, HOUSE_ENABLED_KEY, body.enabled ? "1" : "0");
   }
@@ -150,28 +147,53 @@ export async function POST(request: Request) {
     await setAppSetting(guard.db, HOUSE_SKILL_OVERRIDES_KEY, JSON.stringify(merged));
   }
 
-  // One event per knob actually touched, so the sheet reads as a change log
-  // rather than one opaque "house settings saved" row.
+  // One audit row per knob actually touched, so the log reads as a change
+  // log rather than one opaque "house settings saved" row.
+  const actor = guard.mod;
   if (hasEnabled) {
-    notifyModEvent({
-      kind: "house_toggled",
-      actor: guard.mod.username,
-      detail: body.enabled ? "on" : "off",
-    });
+    await logModEvent(
+      guard.db,
+      actor,
+      {
+        action: "house_toggled",
+        targetKind: "house",
+        targetName: "house bots",
+        targetRef: HOUSE_ENABLED_KEY,
+        before: { enabled: settingIsOn(prevEnabled) },
+        after: { enabled: body.enabled },
+      },
+      "house_toggled",
+    );
   }
   if (hasGames) {
-    notifyModEvent({
-      kind: "house_games_pinned",
-      actor: guard.mod.username,
-      detail: String(clampHouseGames(body.games as number)),
-    });
+    await logModEvent(
+      guard.db,
+      actor,
+      {
+        action: "house_games_pinned",
+        targetKind: "house",
+        targetName: "house games",
+        targetRef: HOUSE_GAMES_KEY,
+        before: { games: prevGames == null ? null : readGames(prevGames) },
+        after: { games: clampHouseGames(body.games as number) },
+      },
+      "house_games_pinned",
+    );
   }
   if (hasReset || hasOverrides) {
-    notifyModEvent({
-      kind: "house_skill_override",
-      actor: guard.mod.username,
-      detail: hasReset ? "reset to baked" : JSON.stringify(body.skillOverrides).slice(0, 400),
-    });
+    await logModEvent(
+      guard.db,
+      actor,
+      {
+        action: "house_skill_override",
+        targetKind: "house",
+        targetName: "house strength",
+        targetRef: HOUSE_SKILL_OVERRIDES_KEY,
+        before: parseSkillOverrides(prevOverrides),
+        after: parseSkillOverrides(await getAppSetting(guard.db, HOUSE_SKILL_OVERRIDES_KEY)),
+      },
+      "house_skill_override",
+    );
   }
 
   return NextResponse.json(await state(guard.db));

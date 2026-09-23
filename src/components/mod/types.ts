@@ -11,6 +11,7 @@ export interface Report {
   game_id: string | null;
   status: string;
   handled_by: string | null;
+  handled_note?: string | null;
   created_at: number;
 }
 
@@ -39,6 +40,10 @@ export interface ModUser {
 
 export interface HistoryEntry {
   mod_name: string;
+  target_kind?: string;
+  target_ref?: string | null;
+  before_json?: string | null;
+  after_json?: string | null;
   target_name?: string;
   action: string;
   expires_at: number | null;
@@ -47,11 +52,33 @@ export interface HistoryEntry {
 }
 
 export interface UserReportEntry {
+  id?: string;
   reporter_name: string;
+  reported_name?: string;
   reason: string;
   description: string;
   status: string;
   created_at: number;
+}
+
+/** One archived game in the player context (GET /api/mod/users?id=). */
+export interface ContextGame {
+  id: string;
+  opponent: string;
+  opponentIsBot: boolean;
+  result: "win" | "loss" | "draw";
+  reason: string;
+  rated: boolean;
+  completed_at: number;
+}
+
+/** Everything the player detail shows, loaded by user id on selection (F115). */
+export interface ModUserContext {
+  user: ModUser & { has_email: boolean; last_seen_at: number | null; name_flagged: boolean };
+  history: HistoryEntry[];
+  reports: UserReportEntry[];
+  reportsBy: UserReportEntry[];
+  recentGames: ContextGame[];
 }
 
 export interface Suggestion {
@@ -123,6 +150,9 @@ export interface Overview {
     activeMutes: number;
     activeBans: number;
     modActionsWeek: number;
+    oldestOpenReportAt?: number | null;
+    oldestUnreviewedFlagAt?: number | null;
+    handledPerDay?: { date: string; reports: number; chatFlags: number; sanctions: number }[];
   };
   games: {
     humanGamesLast15Min: number;

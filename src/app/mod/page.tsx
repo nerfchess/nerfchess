@@ -29,6 +29,7 @@ import { BuffFeedbackSection, NerfFeedbackSection } from "@/components/mod/Feedb
 import { GamesSection } from "@/components/mod/GamesSection";
 import { IdeasSection } from "@/components/mod/IdeasSection";
 import { PlayersSection } from "@/components/mod/PlayersSection";
+import { detectReduced } from "@/lib/useReducedMotion";
 import { ReportsSection } from "@/components/mod/ReportsSection";
 import { SECTION_TITLE, isSectionId, type SectionId } from "@/components/mod/nav";
 import type { Overview } from "@/components/mod/types";
@@ -83,7 +84,8 @@ export default function ModPage() {
   const go = useCallback((next: SectionId) => {
     setSection(next);
     if (window.location.hash.replace(/^#/, "") !== next) window.location.hash = next;
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    // A smooth scroll is motion: it follows the Animations setting (F200).
+    window.scrollTo({ top: 0, behavior: detectReduced() ? "auto" : "smooth" });
   }, []);
 
   const inspectPlayer = useCallback(
@@ -127,7 +129,7 @@ export default function ModPage() {
       onInspectPlayer={inspectPlayer}
     >
       {section === "dashboard" && <DashboardSection data={overview} failed={overviewFailed} onGo={go} />}
-      {section === "reports" && <ReportsSection onHandled={loadOverview} />}
+      {section === "reports" && <ReportsSection onHandled={loadOverview} onInspectPlayer={inspectPlayer} />}
       {section === "chat" && <ChatFlagsSection onHandled={loadOverview} onInspectPlayer={inspectPlayer} />}
       {/* Keyed on the handed-over player so each handoff mounts a fresh lookup
           rather than editing the open one. */}

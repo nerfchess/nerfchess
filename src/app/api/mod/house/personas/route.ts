@@ -25,6 +25,8 @@ import {
   loadHouseIdentityOverrides,
 } from "@/lib/server/bots";
 import { notifyModEvent } from "@/lib/server/modWebhook";
+import { modEventStatement } from "@/lib/server/mod";
+import { assertSameOrigin } from "@/lib/server/request";
 
 export const dynamic = "force-dynamic";
 
@@ -43,6 +45,10 @@ const MAX_RATING = 4000;
 async function resolveActor(
   request: Request,
 ): Promise<{ db: D1Database; user: SessionUser } | NextResponse> {
+  if (request.method !== "GET") {
+    const refused = assertSameOrigin(request);
+    if (refused) return refused;
+  }
   const db = await getDb();
   const user = await userForSession(db, sessionTokenFromCookieHeader(request.headers.get("cookie")));
   if (!user) return NextResponse.json({ error: "Sign in first." }, { status: 401 });
@@ -322,6 +328,21 @@ export async function POST(request: Request) {
       );
     }
   }
+  // The audit row rides in the same atomic batch (F116). An uploaded avatar is
+  // a data URL; the row records that one was set, not the image.
+  const brief = <T extends { avatar?: string | null }>(o: T | null) =>
+    o && { ...o, avatar: o.avatar?.startsWith("data:") ? "(uploaded image)" : o.avatar };
+  writes.push(
+    modEventStatement(db, guard.user, {
+      action: "house_persona_edited",
+      targetKind: "persona",
+      targetUserId: persona.userId,
+      targetName: effective.name,
+      targetRef: persona.userId,
+      before: brief(current),
+      after: brief(next),
+    }),
+  );
   try {
     // A unique-index collision on a restored baked name surfaces here as 409.
     await db.batch(writes);

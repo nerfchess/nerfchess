@@ -12,7 +12,7 @@
 
 import { useEffect, useState } from "react";
 import type { HouseState, PresetMap, SkillTier } from "./types";
-import { ModButton, ModLinkButton, ModToggle, SectionHead } from "./ui";
+import { ConfirmButton, ModButton, ModLinkButton, ModToggle, SectionHead } from "./ui";
 
 export function ControlsSection({ isOwner, isAdmin }: { isOwner: boolean; isAdmin: boolean }) {
   return (
@@ -258,19 +258,26 @@ function HouseStrengthEditor({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="text-[12px] text-parchment-400">Strength by tier</span>
         <div className="flex flex-wrap gap-1.5">
-          <ModButton
+          <ConfirmButton
             size="sm"
             disabled={saving || !anyOverride}
-            onClick={() => onSave({ resetSkillOverrides: true })}
+            confirmLabel="Confirm: reset all tiers"
+            onConfirm={() => onSave({ resetSkillOverrides: true })}
           >
             Reset all
-          </ModButton>
+          </ConfirmButton>
           <ModButton tone="primary" size="sm" disabled={saving} onClick={() => applyPreset(presets.weakened)}>
             Weakened 50/30/20
           </ModButton>
-          <ModButton tone="danger" size="sm" disabled={saving} onClick={() => applyPreset(presets.veryWeak)}>
+          <ConfirmButton
+            tone="danger"
+            size="sm"
+            disabled={saving}
+            confirmLabel="Confirm: very weak"
+            onConfirm={() => applyPreset(presets.veryWeak)}
+          >
             Very weak
-          </ModButton>
+          </ConfirmButton>
         </div>
       </div>
 

@@ -7,7 +7,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { ChatFlag } from "./types";
-import { Empty, FilterChip, Loading, ModButton, ModLinkButton, postJson, when, whenShort } from "./ui";
+import { ConfirmButton, Empty, FilterChip, Loading, ModButton, ModLinkButton, postJson, when, whenShort } from "./ui";
 
 export function ChatFlagsSection({
   onHandled,
@@ -39,9 +39,13 @@ export function ChatFlagsSection({
     onHandled?.();
   };
 
+  // Marks exactly the flags on screen (F122): the list is capped at 200, and
+  // "all" used to clear flags the moderator never saw.
   const reviewAll = async () => {
+    const ids = (flags ?? []).filter((f) => !f.reviewed).map((f) => f.id);
+    if (!ids.length) return;
     setBusy("all");
-    await postJson("/api/mod/chat-flags", { all: true });
+    await postJson("/api/mod/chat-flags", { ids });
     await load();
     setBusy(null);
     onHandled?.();
@@ -59,9 +63,15 @@ export function ChatFlagsSection({
           Everything
         </FilterChip>
         {pending > 0 && (
-          <ModButton size="sm" className="ml-auto" disabled={busy === "all"} onClick={reviewAll}>
-            Mark all {pending} reviewed
-          </ModButton>
+          <ConfirmButton
+            size="sm"
+            className="ml-auto"
+            disabled={busy === "all"}
+            confirmLabel={`Confirm: mark ${pending} reviewed`}
+            onConfirm={reviewAll}
+          >
+            Mark all {pending} shown reviewed
+          </ConfirmButton>
         )}
       </div>
 

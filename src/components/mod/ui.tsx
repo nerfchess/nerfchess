@@ -12,7 +12,7 @@
 //   quiet    text       inline text actions inside a row
 
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Button, LinkButton, type ButtonSize as CoreSize } from "@/components/ui/Button";
 
 export type ButtonTone = "default" | "primary" | "danger" | "quiet";
@@ -52,6 +52,74 @@ export function ModButton({
       {children}
     </Button>
   );
+}
+
+/**
+ * A destructive action that asks twice (F121). The first press arms it: the
+ * label turns into the confirmation (`confirmLabel`) and the button keeps its
+ * place, so nothing on the page moves. A second press within five seconds
+ * runs `onConfirm`; Escape, leaving the button or the timeout disarms it.
+ */
+export function ConfirmButton({
+  onConfirm,
+  confirmLabel,
+  children,
+  disabled,
+  ...rest
+}: {
+  onConfirm: () => void;
+  confirmLabel: ReactNode;
+  tone?: ButtonTone;
+  size?: ButtonSize;
+  className?: string;
+  title?: string;
+  disabled?: boolean;
+  children: ReactNode;
+}) {
+  const { armed: pressArmed, press, disarm } = useArmedPress();
+  // A button that turns disabled while armed shows its plain label again.
+  const armed = pressArmed && !disabled;
+  return (
+    <ModButton
+      {...rest}
+      disabled={disabled}
+      aria-live="polite"
+      data-armed={armed ? "true" : undefined}
+      onClick={() => press(onConfirm)}
+      onBlur={disarm}
+      onKeyDown={(e) => {
+        if (e.key === "Escape") disarm();
+      }}
+    >
+      {armed ? confirmLabel : children}
+    </ModButton>
+  );
+}
+
+/**
+ * The two-press rule of ConfirmButton for a button that keeps its own look:
+ * `press(fn)` arms on the first call and runs `fn` on a second within five
+ * seconds; `disarm` is for blur and Escape.
+ */
+export function useArmedPress(): { armed: boolean; press: (fn: () => void) => void; disarm: () => void } {
+  const [armed, setArmed] = useState(false);
+  useEffect(() => {
+    if (!armed) return;
+    const t = window.setTimeout(() => setArmed(false), 5000);
+    return () => window.clearTimeout(t);
+  }, [armed]);
+  return {
+    armed,
+    press: (fn) => {
+      if (!armed) {
+        setArmed(true);
+        return;
+      }
+      setArmed(false);
+      fn();
+    },
+    disarm: () => setArmed(false),
+  };
 }
 
 /** Same shape as ModButton, for the links that behave like actions. */
@@ -375,12 +443,16 @@ export function pct(part: number, whole: number): string {
   return `${Math.round((part / whole) * 100)}%`;
 }
 
-export async function postJson(path: string, body: unknown): Promise<{ ok: boolean; error?: string }> {
+export async function postJson(
+  path: string,
+  body: unknown,
+  method: "POST" | "DELETE" = "POST",
+): Promise<{ ok: boolean; status: number; error?: string }> {
   const res = await fetch(path, {
-    method: "POST",
+    method,
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
   const data = (await res.json().catch(() => ({}))) as { error?: string };
-  return { ok: res.ok, error: data.error };
+  return { ok: res.ok, status: res.status, error: data.error };
 }

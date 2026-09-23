@@ -1,8 +1,10 @@
 /// <reference types="@cloudflare/workers-types" />
 
 // Moderation primitives shared by the /api/mod routes: role gate, target
-// lookup, and the actions themselves. Every action is written to mod_actions
-// so there is always an audit trail of who did what to whom.
+// lookup, the actions themselves, and the audit log. Every mutating mod route
+// writes one mod_actions row through logModEvent (who, what, to what, when,
+// why, and the values an edit replaced), so the audit log is the complete
+// record; the optional webhook only mirrors it.
 
 import { NextResponse } from "next/server";
 import { getDb } from "./db";
@@ -15,6 +17,8 @@ import {
 } from "./auth";
 import { createNotification } from "./social";
 import { notifyModEvent, type ModEventKind } from "./modWebhook";
+import { assertSameOrigin, readJsonObject, type JsonObject } from "./request";
+import { isPowerUsername } from "../godPanel";
 
 // Sentinel for "permanent": far enough out to outlive the site.
 export const PERMANENT_MS = 4102444800000; // 2100-01-01
@@ -39,10 +43,17 @@ export interface ModeratedUser {
   banned_until: number | null;
 }
 
-// Resolves the calling moderator or an error response ready to return.
+// Resolves the calling moderator or an error response ready to return. A
+// mutating request (anything but GET/HEAD) from another site is refused first
+// (F046): the session cookie is SameSite=Lax, which a cross-site top-level
+// form POST still carries.
 export async function requireMod(
   request: Request,
 ): Promise<{ db: D1Database; mod: SessionUser } | NextResponse> {
+  if (request.method !== "GET" && request.method !== "HEAD") {
+    const refused = assertSameOrigin(request);
+    if (refused) return refused;
+  }
   const db = await getDb();
   const user = await userForSession(db, sessionTokenFromCookieHeader(request.headers.get("cookie")));
   if (!user) return NextResponse.json({ error: "Sign in first." }, { status: 401 });
@@ -60,22 +71,95 @@ export async function findUserByName(db: D1Database, username: string): Promise<
     .first<ModeratedUser>();
 }
 
-async function logAction(
-  db: D1Database,
-  mod: SessionUser,
-  target: ModeratedUser,
-  action: string,
-  expiresAt: number | null,
-  note: string | null,
-): Promise<void> {
-  await db
-    .prepare(
-      `INSERT INTO mod_actions (id, mod_user_id, mod_name, target_user_id, target_name, action, expires_at, note, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    )
-    .bind(crypto.randomUUID(), mod.id, mod.username, target.id, target.username, action, expiresAt, note, Date.now())
-    .run();
+/** A size-capped JSON object body for a mod write (the same-origin check has
+ *  already run in requireMod). */
+export async function readModBody(request: Request): Promise<JsonObject | NextResponse> {
+  return readJsonObject(request);
 }
+
+/** What an audit row is about. 'user' rows carry the player's id. */
+export type ModTargetKind = "user" | "report" | "chat_flag" | "card" | "house" | "persona" | "setting" | "webhook";
+
+export interface ModEventRecord {
+  /** Short verb, e.g. 'ban', 'report_resolved', 'card_override_saved'. */
+  action: string;
+  targetKind: ModTargetKind;
+  /** The player's id for 'user' rows (and for a rating edit). */
+  targetUserId?: string | null;
+  /** Human-readable target: a username, 'buff:<id>', a setting name. */
+  targetName: string;
+  /** Machine reference: a report id, 'buff:<id>', a setting key. */
+  targetRef?: string | null;
+  /** Why (the moderator's note). */
+  reason?: string | null;
+  expiresAt?: number | null;
+  /** Values the action replaced and wrote, for reading back and reverting. */
+  before?: unknown;
+  after?: unknown;
+}
+
+function jsonOrNull(value: unknown): string | null {
+  if (value === undefined) return null;
+  try {
+    const text = JSON.stringify(value);
+    return text.length > 4000 ? text.slice(0, 4000) : text;
+  } catch {
+    return null;
+  }
+}
+
+/** The one statement that writes an audit row, for callers that batch it with
+ *  the change it records (so the change and its record land together). */
+export function modEventStatement(db: D1Database, actor: { id: string; username: string }, ev: ModEventRecord) {
+  return db
+    .prepare(
+      `INSERT INTO mod_actions (id, mod_user_id, mod_name, target_user_id, target_name, action, expires_at, note,
+                                created_at, target_kind, target_ref, before_json, after_json)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    )
+    .bind(
+      crypto.randomUUID(),
+      actor.id,
+      actor.username,
+      ev.targetUserId ?? "",
+      ev.targetName,
+      ev.action,
+      ev.expiresAt ?? null,
+      ev.reason?.trim() ? ev.reason.trim().slice(0, 500) : null,
+      Date.now(),
+      ev.targetKind,
+      ev.targetRef ?? null,
+      jsonOrNull(ev.before),
+      jsonOrNull(ev.after),
+    );
+}
+
+/**
+ * Record one moderator action in the audit log, then mirror it to the webhook
+ * (a no-op unless MOD_WEBHOOK_URL is set). The row is written first so the
+ * webhook can never claim an action the database does not hold.
+ */
+export async function logModEvent(
+  db: D1Database,
+  actor: { id: string; username: string },
+  ev: ModEventRecord,
+  webhookKind?: ModEventKind,
+): Promise<void> {
+  await modEventStatement(db, actor, ev).run();
+  if (webhookKind) {
+    notifyModEvent({
+      kind: webhookKind,
+      actor: actor.username,
+      target: ev.targetName,
+      detail: [ev.reason?.trim() || null, ev.after !== undefined ? jsonOrNull(ev.after) : null].filter(Boolean).join(" ") || undefined,
+      expiresAt: ev.expiresAt ?? null,
+    });
+  }
+}
+
+/** Actions that need a written reason. Every player action does: the audit
+ *  log answers "why" for each one (brief 15). */
+export const REASON_REQUIRED = "Write a reason; it goes in the audit log.";
 
 // Applies one moderation action. Returns an error string (user-facing) or
 // null on success. Hierarchy: nobody touches admins, only admins touch mods,
@@ -92,6 +176,13 @@ export async function applyModAction(
   if (target.id === mod.id) return "You cannot moderate yourself.";
   if (target.role === "admin") return "Admins cannot be moderated.";
   if (target.role === "mod" && mod.role !== "admin") return "Only an admin can moderate a moderator.";
+  if (!note || !note.trim()) return REASON_REQUIRED;
+  // A flagged name gets renamed and then freed; for a name that carries owner
+  // powers (godPanel.ts) that would let anyone register it and inherit them
+  // (F045), so those names are never flagged from the panel.
+  if (action === "flag_name" && isPowerUsername(target.username)) {
+    return "This account's name carries owner tools and cannot be flagged here.";
+  }
 
   // A null duration means a permanent sanction (the UI's "Permanent" option).
   // A provided but non-positive duration is a bad request, not a request for a
@@ -139,7 +230,16 @@ export async function applyModAction(
   }
 
   const timed = action === "mute" || action === "ban";
-  await logAction(db, mod, target, action === "set_role" ? `set_role:${role}` : action, timed ? until : null, note);
+  await modEventStatement(db, mod, {
+    action: action === "set_role" ? `set_role:${role}` : action,
+    targetKind: "user",
+    targetUserId: target.id,
+    targetName: target.username,
+    targetRef: target.id,
+    reason: note,
+    expiresAt: timed ? until : null,
+    before: { role: target.role, muted_until: target.muted_until, banned_until: target.banned_until },
+  }).run();
 
   // Warned or muted players find out via their bell. Bans kill the session,
   // so a ban notice waits in the bell if the account ever comes back.

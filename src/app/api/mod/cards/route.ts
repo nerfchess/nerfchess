@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
-import { requireMod } from "@/lib/server/mod";
+import { logModEvent, readModBody, requireMod } from "@/lib/server/mod";
 import {
   deleteCardOverride,
+  getCardOverride,
   isCardKind,
   isValidTierOverride,
   listCardOverrides,
@@ -9,7 +10,6 @@ import {
 } from "@/lib/server/cardOverrides";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
 import { getNerf } from "@/engine/nerfs/library";
-import { notifyModEvent } from "@/lib/server/modWebhook";
 
 export const dynamic = "force-dynamic";
 
@@ -46,20 +46,8 @@ function cleanText(value: unknown, max: number): string | null | "bad" {
 export async function POST(request: Request) {
   const guard = await requireMod(request);
   if (guard instanceof NextResponse) return guard;
-  let body: {
-    id?: unknown;
-    kind?: unknown;
-    name?: unknown;
-    description?: unknown;
-    flavor?: unknown;
-    tier?: unknown;
-    enabled?: unknown;
-  };
-  try {
-    body = (await request.json()) as typeof body;
-  } catch {
-    return NextResponse.json({ error: "Bad request." }, { status: 400 });
-  }
+  const body = await readModBody(request);
+  if (body instanceof NextResponse) return body;
 
   if (!isCardKind(body.kind)) {
     return NextResponse.json({ error: "`kind` must be 'buff' or 'nerf'." }, { status: 400 });
@@ -88,16 +76,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "`enabled` must be a boolean." }, { status: 400 });
   }
   const enabled = body.enabled !== false;
+  // The row this write replaces, kept in the audit log so the edit can be
+  // read back and undone by hand.
+  const before = await getCardOverride(guard.db, id);
+  const target = { targetKind: "card" as const, targetName: `${body.kind}:${id}`, targetRef: `${body.kind}:${id}` };
 
   if (name === null && description === null && flavor === null && tier === null && enabled) {
     // Nothing overrides the code definition: drop the row instead of keeping
     // a no-op record around.
     await deleteCardOverride(guard.db, id);
-    notifyModEvent({
-      kind: "card_override_cleared",
-      actor: guard.mod.username,
-      target: `${body.kind}:${id}`,
-    });
+    if (before) {
+      await logModEvent(guard.db, guard.mod, { action: "card_override_cleared", ...target, before, after: null }, "card_override_cleared");
+    }
     return NextResponse.json({ ok: true, cleared: true });
   }
 
@@ -110,31 +100,54 @@ export async function POST(request: Request) {
     tier,
     enabled,
   });
-  notifyModEvent({
-    kind: "card_override_saved",
-    actor: guard.mod.username,
-    target: `${body.kind}:${id}`,
-    detail: [
-      name != null ? `name="${name}"` : null,
-      description != null ? "description" : null,
-      flavor != null ? "flavor" : null,
-      tier != null ? `tier=${tier}` : null,
-      enabled ? null : "disabled",
-    ]
-      .filter(Boolean)
-      .join(" "),
-  });
+  await logModEvent(
+    guard.db,
+    guard.mod,
+    {
+      action: "card_override_saved",
+      ...target,
+      before,
+      after: { name, description, flavor, tier, enabled },
+    },
+    "card_override_saved",
+  );
   return NextResponse.json({ ok: true });
 }
 
-// DELETE ?id=<card id>: remove the override, resetting the card to code.
+// DELETE ?id=<card id>[&kind=buff|nerf]: remove the override, resetting the
+// card to code. The id must be a real card (F124: any string used to be
+// accepted), and the removed row goes to the audit log so it can be restored.
 export async function DELETE(request: Request) {
   const guard = await requireMod(request);
   if (guard instanceof NextResponse) return guard;
-  const id = new URL(request.url).searchParams.get("id")?.trim() ?? "";
+  const params = new URL(request.url).searchParams;
+  const id = params.get("id")?.trim().slice(0, 120) ?? "";
+  const kindParam = params.get("kind");
   if (!id) {
     return NextResponse.json({ error: "`id` is required." }, { status: 400 });
   }
+  if (kindParam != null && !isCardKind(kindParam)) {
+    return NextResponse.json({ error: "`kind` must be 'buff' or 'nerf'." }, { status: 400 });
+  }
+  const known = kindParam === "buff" ? !!BUFF_BY_ID[id] : kindParam === "nerf" ? !!getNerf(id) : !!BUFF_BY_ID[id] || !!getNerf(id);
+  if (!known) {
+    return NextResponse.json({ error: "Unknown card id." }, { status: 400 });
+  }
+  const before = await getCardOverride(guard.db, id);
+  if (!before) return NextResponse.json({ ok: true, cleared: false });
   await deleteCardOverride(guard.db, id);
-  return NextResponse.json({ ok: true });
+  await logModEvent(
+    guard.db,
+    guard.mod,
+    {
+      action: "card_override_cleared",
+      targetKind: "card",
+      targetName: `${before.kind}:${id}`,
+      targetRef: `${before.kind}:${id}`,
+      before,
+      after: null,
+    },
+    "card_override_cleared",
+  );
+  return NextResponse.json({ ok: true, cleared: true });
 }

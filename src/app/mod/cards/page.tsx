@@ -14,6 +14,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AccountUser, fetchMe } from "@/lib/authClient";
 import { ModShell } from "@/components/mod/ModShell";
 import { Button } from "@/components/ui/Button";
+import { useArmedPress } from "@/components/mod/ui";
 import { SearchInput } from "@/components/ui/SearchInput";
 
 type Kind = "buff" | "nerf";
@@ -188,7 +189,7 @@ export default function ModCardsPage() {
 
   const reset = async (card: CodeCard) => {
     setBusy(true);
-    const res = await fetch(`/api/mod/cards?id=${encodeURIComponent(card.id)}`, { method: "DELETE" });
+    const res = await fetch(`/api/mod/cards?id=${encodeURIComponent(card.id)}&kind=${card.kind}`, { method: "DELETE" });
     setBusy(false);
     if (!res.ok) {
       setNotice("Reset failed.");
@@ -347,6 +348,8 @@ function FragmentRow({
   onReset: () => void;
 }) {
   const patch = (p: Partial<Draft>) => draft && setDraft({ ...draft, ...p });
+  // Reset deletes the override: it asks twice (F121).
+  const resetPress = useArmedPress();
   return (
     <>
       <tr className="border-b border-[color:var(--edge)] align-top">
@@ -394,10 +397,11 @@ function FragmentRow({
               </Button>
               {overridden && (
                 <Button tone="ghost"
-                  onClick={onReset}
+                  onClick={() => resetPress.press(onReset)}
+                  onBlur={resetPress.disarm}
                   className="ml-2 px-3 py-1 text-[13px]" disabled={busy}
                   title="Delete the override and fall back to the code definition">
-                  Reset to code
+                  {resetPress.armed ? "Confirm reset" : "Reset to code"}
                 </Button>
               )}
             </>
