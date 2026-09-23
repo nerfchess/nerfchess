@@ -8,7 +8,11 @@ import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { PlayerLink } from "@/components/PlayerLink";
 import { SiteHeader } from "@/components/SiteHeader";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
-import { AccountUser, fetchMe } from "@/lib/authClient";
+import { useSession } from "@/lib/session/SessionProvider";
+import { NotFoundPanel } from "@/app/_components/NotFoundPanel";
+import { NOT_FOUND_COPY } from "@/app/_components/notFoundCopy";
+import { DetailLoadFailed } from "@/components/social/DetailLoadFailed";
+import { TournamentDetailSkeleton } from "./DetailSkeleton";
 import { saveOnlineSeat } from "@/lib/multiplayer";
 import type {
   MyTournamentGame,
@@ -41,8 +45,16 @@ export default function TournamentDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [data, setData] = useState<DetailResponse | null>(null);
-  const [me, setMe] = useState<AccountUser | null | undefined>(undefined);
+  // Who is looking, from the shared session (F014): the server hint draws the
+  // join column on the first paint instead of an empty slot that fills in
+  // once a page-level /me answers. The id (for "is this row me") comes from
+  // the full user when it lands.
+  const { user, display } = useSession();
+  const meId = user?.id ?? null;
   const [error, setError] = useState<string | null>(null);
+  // A 404 is a missing event, not a failed load: it gets the shared 404 copy
+  // instead of a retry (F031).
+  const [missing, setMissing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [now, setNow] = useState(() => Date.now());
 
@@ -53,6 +65,7 @@ export default function TournamentDetailPage() {
     const req = ++loadReqRef.current;
     const res = await fetch(`/api/tournaments/${encodeURIComponent(id)}`);
     if (!res.ok) {
+      if (res.status === 404 && req === loadReqRef.current) setMissing(true);
       throw new Error(res.status === 404 ? "That tournament doesn't exist." : "Could not load the tournament.");
     }
     const body = (await res.json()) as DetailResponse;
@@ -74,7 +87,6 @@ export default function TournamentDetailPage() {
         if (!cancelled) setError(e instanceof Error ? e.message : "Could not load the tournament.");
       }
     })();
-    fetchMe().then((u) => !cancelled && setMe(u ?? null));
     const tick = window.setInterval(() => setNow(Date.now()), 1000);
     return () => {
       cancelled = true;
@@ -137,17 +149,18 @@ export default function TournamentDetailPage() {
     }
   };
 
+  if (missing && !data) {
+    return <NotFoundPanel {...NOT_FOUND_COPY.tournament} />;
+  }
   if (error && !data) {
     return (
-      <main className="min-h-screen">
-        <SiteHeader active="/tournaments" />
-        <section className="mx-auto max-w-3xl px-6 py-16 text-center">
-          <p className="text-parchment-300">{error}</p>
-          <LinkButton tone="ghost" href="/tournaments" className="mt-4 inline-block px-4 py-2 text-sm">
-            Back to tournaments
-          </LinkButton>
-        </section>
-      </main>
+      <DetailLoadFailed
+        active="/tournaments"
+        title="This tournament could not load"
+        detail="The server did not answer. The event itself is still running, and if you had joined you are still entered."
+        retry={load}
+        back={{ href: "/tournaments", label: "All tournaments" }}
+      />
     );
   }
 
@@ -164,11 +177,12 @@ export default function TournamentDetailPage() {
           // client-side navigation from /tournaments never renders it, so the
           // page's own in-flight branch has to carry one. Generic until the
           // real name arrives. Not used as a Suspense fallback, so it never
-          // doubles up with another heading.
-          <>
+          // doubles up with another heading. The body is the route skeleton,
+          // not a "Loading..." line (F022).
+          <div aria-busy="true">
             <h1 className="sr-only">Tournament</h1>
-            <p className="py-16 text-center text-sm text-parchment-400">Loading...</p>
-          </>
+            <TournamentDetailSkeleton />
+          </div>
         ) : (
           <>
             {/* Header */}
@@ -201,7 +215,7 @@ export default function TournamentDetailPage() {
                   </span>
                   {t.club_name && t.club_id && (
                     <Link
-                      href={`/clubs`}
+                      href={t.club_slug ? `/clubs/${encodeURIComponent(t.club_slug)}` : "/clubs"}
                       className="border border-[color:var(--edge)] px-2 py-0.5 text-[13px] text-parchment-300 hover:text-gold-leaf"
                     >
                       {t.club_name}
@@ -212,27 +226,27 @@ export default function TournamentDetailPage() {
 
               {/* Join / withdraw */}
               <div className="flex flex-col items-end gap-1">
-                {me === undefined ? null : phase === "finished" ? (
+                {display === undefined ? null : phase === "finished" ? (
                   <span className="text-[12px] text-parchment-500">Event over</span>
-                ) : !me ? (
+                ) : !display ? (
                   <LinkButton tone="leaf"
                     href={`/login?next=/tournaments/${encodeURIComponent(id)}`}
                     className="flex px-5 py-2.5 text-sm font-semibold">
-                    <LogIn size={15} /> Sign in to join
+                    <LogIn size={15} aria-hidden /> Sign in to join
                   </LinkButton>
                 ) : entered ? (
                   <Button tone="ghost"
                     onClick={() => entry("withdraw")}
                     disabled={busy}
                     className="flex px-5 py-2.5 text-sm disabled:opacity-50">
-                    <LogOut size={15} /> Withdraw
+                    <LogOut size={15} aria-hidden /> Withdraw
                   </Button>
                 ) : (
                   <Button tone="cta"
                     onClick={() => entry("join")}
                     disabled={busy}
                     className="flex px-6 py-2.5 text-sm font-semibold disabled:opacity-50">
-                    <LogIn size={15} /> Join
+                    <LogIn size={15} aria-hidden /> Join
                   </Button>
                 )}
                 {entered && phase !== "finished" && (
@@ -276,14 +290,14 @@ export default function TournamentDetailPage() {
                 {podium.length > 0 && <Podium podium={podium} />}
 
                 {(data?.rounds.length ?? 0) > 0 && (
-                  <Rounds rounds={data!.rounds} currentRound={t.current_round} phase={phase} meId={me?.id ?? null} />
+                  <Rounds rounds={data!.rounds} currentRound={t.current_round} phase={phase} meId={meId} />
                 )}
 
                 <div className="plate overflow-hidden">
                   <div className="flex items-center justify-between gap-2 border-b border-[color:var(--edge)] px-5 py-3">
                     <span className="text-[12px] text-parchment-400">Standings</span>
                     <span className="flex items-center gap-1.5 text-[12px] text-parchment-500">
-                      <Users size={12} /> {standings.length}/{t.max_players}
+                      <Users size={12} aria-hidden /> {standings.length}/{t.max_players}
                     </span>
                   </div>
                   {standings.length === 0 ? (
@@ -314,7 +328,7 @@ export default function TournamentDetailPage() {
                         </thead>
                         <tbody className="divide-y divide-[color:var(--edge)]">
                           {standings.map((s, i) => {
-                            const isMe = me?.id === s.user_id;
+                            const isMe = meId === s.user_id;
                             const isCreator = s.user_id === t.creator_user_id;
                             return (
                               <tr key={s.user_id} className={isMe ? "bg-[color:var(--bg-raised)]" : "transition-colors hover:bg-[color:var(--bg-raised)]"}>
@@ -355,9 +369,12 @@ export default function TournamentDetailPage() {
                       </table>
                     </div>
                   )}
+                  {/* Keyed on the format (F167). Every format runs the same
+                      score-then-rating pairing today (tournamentEngine.ts), so
+                      only a Swiss event is told it is Swiss. */}
                   <p className="border-t border-[color:var(--edge)] px-5 py-2.5 text-[13px] text-parchment-500">
-                    Swiss pairing by score, then rating. Win 1 point, draw 0.5, bye 1. Rounds pair
-                    automatically while the event runs.
+                    {t.format === "swiss" ? "Swiss pairing by score, then rating." : "Each round pairs by score, then rating."}{" "}
+                    Win 1 point, draw 0.5, bye 1. Rounds pair automatically while the event runs.
                   </p>
                 </div>
               </div>
@@ -392,7 +409,7 @@ export default function TournamentDetailPage() {
                     />
                   </div>
                   <div className="mt-2 flex items-center gap-1.5 text-[12px] text-parchment-500">
-                    <CalendarDays size={12} /> Created {new Date(t.created_at).toLocaleDateString()}
+                    <CalendarDays size={12} aria-hidden /> Created {new Date(t.created_at).toLocaleDateString()}
                   </div>
                 </div>
               </aside>
@@ -427,15 +444,20 @@ function Countdown({ t, phase, now }: { t: TournamentDetail; phase: string; now:
     tone = "text-gold-leaf";
   }
 
+  // The countdown changes every second, so it is not a live region (F134): a
+  // screen reader would read it out once a second. Only the phase is
+  // announced, from a separate status line that changes when the event starts
+  // or finishes. The number stays readable in place.
   return (
     <div className="mt-5 plate flex items-center gap-4 px-5 py-4">
       <Timer size={22} className="shrink-0 text-parchment-400" aria-hidden />
       <div>
         <div className="text-[12px] text-parchment-400">{kicker}</div>
-        <div className={"font-display text-2xl tabular-nums sm:text-3xl " + tone} aria-live="polite">
-          {big}
-        </div>
+        <div className={"font-display text-2xl tabular-nums sm:text-3xl " + tone}>{big}</div>
       </div>
+      <p role="status" className="sr-only">
+        {phase === "ongoing" ? "The tournament is in progress." : phase === "finished" ? "The tournament has finished." : ""}
+      </p>
     </div>
   );
 }
@@ -447,7 +469,7 @@ function Podium({ podium }: { podium: StandingRow[] }) {
   return (
     <div className="plate px-5 py-6">
       <div className="mb-4 flex items-center gap-2 text-[12px] text-parchment-400">
-        <Trophy size={13} className="text-gold-leaf" /> Podium
+        <Trophy size={13} className="text-gold-leaf" aria-hidden /> Podium
       </div>
       <div className="flex items-end justify-center gap-4 sm:gap-8">
         {order.map((s) => {
@@ -500,7 +522,7 @@ function Rounds({
     <div className="plate overflow-hidden">
       <div className="flex items-center justify-between gap-2 border-b border-[color:var(--edge)] px-5 py-3">
         <span className="flex items-center gap-1.5 text-[12px] text-parchment-400">
-          <Swords size={12} /> Pairings
+          <Swords size={12} aria-hidden /> Pairings
         </span>
         <span className="text-[12px] text-parchment-500">
           Round {currentRound}
@@ -521,14 +543,15 @@ function Rounds({
                   className={"flex items-center gap-3 px-5 py-2.5 " + (mine ? "bg-[color:var(--bg-raised)]" : "")}
                 >
                   {g.black_user_id == null ? (
-                    <span className="min-w-0 flex-1 truncate text-sm text-parchment-300">
-                      {g.white_username} has a bye
+                    <span className="flex min-w-0 flex-1 items-center gap-1 text-sm text-parchment-300">
+                      <PlayerLink name={g.white_username} className="min-w-0 text-parchment-100 hover:text-gold-leaf" />
+                      <span className="shrink-0">has a bye</span>
                     </span>
                   ) : (
-                    <span className="min-w-0 flex-1 truncate text-sm text-parchment-100">
-                      {g.white_username}
-                      <span className="px-1.5 text-parchment-500">vs</span>
-                      {g.black_username}
+                    <span className="flex min-w-0 flex-1 items-center text-sm">
+                      <PlayerLink name={g.white_username} className="min-w-0 text-parchment-100 hover:text-gold-leaf" />
+                      <span className="shrink-0 px-1.5 text-parchment-400">vs</span>
+                      <PlayerLink name={g.black_username} className="min-w-0 text-parchment-100 hover:text-gold-leaf" />
                     </span>
                   )}
                   <ResultBadge result={g.result} />
@@ -556,7 +579,7 @@ function ResultBadge({ result }: { result: string | null }) {
         : result === "b"
           ? ["0-1", "border-[color:var(--edge)] text-parchment-100"]
           : result === "draw"
-            ? ["1/2-1/2", "border-[color:var(--edge)] text-parchment-300"]
+            ? ["½-½", "border-[color:var(--edge)] text-parchment-300"]
             : result === "bye"
               ? ["+1", "border-[color:var(--edge-strong)] text-gold-leaf"]
               : ["Void", "border-[color:var(--edge)] text-parchment-500"];

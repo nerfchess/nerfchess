@@ -1,0 +1,15 @@
+  ✓  1 [chromium] › e2e/polish/social-routes.spec.ts:198:7 › /tournaments/[id] › the countdown is not a live region; only the phase is announced (13.9s)
+  ✓  2 [chromium] › e2e/polish/social-routes.spec.ts:212:7 › /tournaments/[id] › a missing event shows the shared 404 copy (9.0s)
+  ✓  3 [chromium] › e2e/polish/social-routes.spec.ts:218:7 › /tournaments/[id] › a failed load has an h1 and a Retry that loads the event (2.4s)
+  ✓  4 [chromium] › e2e/polish/social-routes.spec.ts:231:7 › /tournaments/[id] › the in-flight state is the route skeleton (1.2s)
+  ✓  5 [chromium] › e2e/polish/social-routes.spec.ts:240:7 › /tournaments/[id] › arena footnote, club chip and pairing links (2.6s)
+  ✘  6 [chromium] › e2e/polish/social-routes.spec.ts:258:7 › /tournaments/[id] signed in › the join control does not wait for /api/auth/me (4.5s)
+    Error: expect(locator).toBeVisible() failed
+    Expected: visible
+    Error: element(s) not found
+    > 266 |     await expect(page.getByRole("button", { name: /^Join$/ })).toBeVisible({ timeout: 3000 });
+    Error Context: test-results/polish-social-routes--tour-28e66-es-not-wait-for-api-auth-me-chromium/error-context.md
+  1 failed
+  5 passed (3.3m)
+  ✓  1 [chromium] › e2e/polish/social-routes.spec.ts:258:7 › /tournaments/[id] signed in › the join control does not wait for /api/auth/me (15.2s)
+  1 passed (47.9s)
