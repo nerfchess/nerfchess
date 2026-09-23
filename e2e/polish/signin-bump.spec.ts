@@ -22,7 +22,7 @@
 // ---------------------------------------------------------------------------
 
 import { expect, test, type Page } from "@playwright/test";
-import { installClsProbe, readCls, throttle } from "./clsProbe";
+import { installClsProbe, polishAuthState, readCls, throttle } from "./clsProbe";
 import { seedAll } from "../../scripts/polish/seed";
 import { GAME, SECTION4 } from "../../scripts/polish/lib/routes";
 
@@ -152,3 +152,42 @@ for (const vp of [
     }
   });
 }
+
+// F153: on a phone the signed-in right-hand cluster (search, challenges, bell,
+// settings, avatar) needs about 230px, and it used to paint over the
+// wordmark. The wordmark now steps out of view when there is no room; nothing
+// in the brand block may overlap the cluster at the widths the brief covers.
+test.describe("header brand never sits under the right-hand cluster", () => {
+  for (const width of [360, 390, 768]) {
+    test(`signed in at ${width}px`, async ({ browser }) => {
+      await seedAll(() => {});
+      const ctx = await browser.newContext({
+        viewport: { width, height: 780 },
+        storageState: polishAuthState("user"),
+      });
+      const page = await ctx.newPage();
+      await page.goto("/leaderboard");
+      await page.locator("[data-header-right]").waitFor();
+      const m = await page.evaluate(() => {
+        const brand = document.querySelector("nav.site-nav > .site-nav-brand");
+        const link = brand?.querySelector(":scope > a[href='/']");
+        const word = link?.querySelector("span");
+        const mark = link?.querySelector("img");
+        const right = document.querySelector("nav.site-nav [data-header-right]");
+        const r = (el: Element | null | undefined) => (el ? el.getBoundingClientRect() : null);
+        const w = r(word);
+        return {
+          rightLeft: r(right)?.left ?? 0,
+          markRight: r(mark)?.right ?? 0,
+          wordRight: w && w.width > 2 ? w.right : null,
+          linkName: link?.textContent?.trim() ?? "",
+        };
+      });
+      await ctx.close();
+      expect(m.markRight, JSON.stringify(m)).toBeLessThanOrEqual(m.rightLeft);
+      if (m.wordRight !== null) expect(m.wordRight, JSON.stringify(m)).toBeLessThanOrEqual(m.rightLeft);
+      // Hidden or not, the home link keeps its accessible name.
+      expect(m.linkName).toBe("nerfchess");
+    });
+  }
+});

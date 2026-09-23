@@ -1,0 +1,291 @@
+{
+ "note": "nav.site-nav on /leaderboard; logoRight is the home link, rightLeft the right-hand cluster; gap < 0 means they overlap. before logoRight is the full link box (word always shown); after, the word is visually hidden when the brand block is under 200px",
+ "before": {
+  "signed-out@320": {
+   "navHeight": 48,
+   "logoRight": 202,
+   "rightLeft": 170,
+   "rightRight": 313,
+   "gap": -32,
+   "docOverflowX": 0
+  },
+  "signed-out@360": {
+   "navHeight": 48,
+   "logoRight": 202,
+   "rightLeft": 168,
+   "rightRight": 353,
+   "gap": -33,
+   "docOverflowX": 0
+  },
+  "guest@320": {
+   "navHeight": 48,
+   "logoRight": 202,
+   "rightLeft": 128,
+   "rightRight": 313,
+   "gap": -73,
+   "docOverflowX": 0
+  },
+  "guest@360": {
+   "navHeight": 48,
+   "logoRight": 202,
+   "rightLeft": 168,
+   "rightRight": 353,
+   "gap": -33,
+   "docOverflowX": 0
+  },
+  "user@320": {
+   "navHeight": 48,
+   "logoRight": 202,
+   "rightLeft": 83,
+   "rightRight": 313,
+   "gap": -119,
+   "docOverflowX": 0
+  },
+  "user@360": {
+   "navHeight": 48,
+   "logoRight": 202,
+   "rightLeft": 123,
+   "rightRight": 353,
+   "gap": -79,
+   "docOverflowX": 0
+  },
+  "admin@320": {
+   "navHeight": 48,
+   "logoRight": 202,
+   "rightLeft": 83,
+   "rightRight": 313,
+   "gap": -119,
+   "docOverflowX": 0
+  },
+  "admin@360": {
+   "navHeight": 48,
+   "logoRight": 202,
+   "rightLeft": 123,
+   "rightRight": 353,
+   "gap": -79,
+   "docOverflowX": 0
+  }
+ },
+ "after": {
+  "signed-out@320": {
+   "navHeight": 48,
+   "logoRight": 89,
+   "rightLeft": 128,
+   "rightRight": 313,
+   "gap": 40,
+   "wordVisible": false,
+   "wordRight": 56,
+   "logoName": "nerfchess",
+   "docOverflowX": 0
+  },
+  "signed-out@360": {
+   "navHeight": 48,
+   "logoRight": 89,
+   "rightLeft": 168,
+   "rightRight": 353,
+   "gap": 80,
+   "wordVisible": false,
+   "wordRight": 56,
+   "logoName": "nerfchess",
+   "docOverflowX": 0
+  },
+  "signed-out@390": {
+   "navHeight": 48,
+   "logoRight": 89,
+   "rightLeft": 198,
+   "rightRight": 383,
+   "gap": 110,
+   "wordVisible": false,
+   "wordRight": 56,
+   "logoName": "nerfchess",
+   "docOverflowX": 0
+  },
+  "signed-out@768": {
+   "navHeight": 60,
+   "logoRight": 174,
+   "rightLeft": 362,
+   "rightRight": 751,
+   "gap": 187,
+   "wordVisible": true,
+   "wordRight": 174,
+   "logoName": "nerfchess",
+   "docOverflowX": 0
+  },
+  "signed-out@1280": {
+   "navHeight": 60,
+   "logoRight": 174,
+   "rightLeft": 862,
+   "rightRight": 1263,
+   "gap": 688,
+   "wordVisible": true,
+   "wordRight": 174,
+   "logoName": "nerfchess",
+   "docOverflowX": 0
+  },
+  "guest@320": {
+   "navHeight": 48,
+   "logoRight": 89,
+   "rightLeft": 128,
+   "rightRight": 313,
+   "gap": 40,
+   "wordVisible": false,
+   "wordRight": 56,
+   "logoName": "nerfchess",
+   "docOverflowX": 0
+  },
+  "guest@360": {
+   "navHeight": 48,
+   "logoRight": 89,
+   "rightLeft": 168,
+   "rightRight": 353,
+   "gap": 80,
+   "wordVisible": false,
+   "wordRight": 56,
+   "logoName": "nerfchess",
+   "docOverflowX": 0
+  },
+  "guest@390": {
+   "navHeight": 48,
+   "logoRight": 89,
+   "rightLeft": 198,
+   "rightRight": 383,
+   "gap": 110,
+   "wordVisible": false,
+   "wordRight": 56,
+   "logoName": "nerfchess",
+   "docOverflowX": 0
+  },
+  "guest@768": {
+   "navHeight": 60,
+   "logoRight": 174,
+   "rightLeft": 372,
+   "rightRight": 751,
+   "gap": 198,
+   "wordVisible": true,
+   "wordRight": 174,
+   "logoName": "nerfchess",
+   "docOverflowX": 0
+  },
+  "guest@1280": {
+   "navHeight": 60,
+   "logoRight": 174,
+   "rightLeft": 884,
+   "rightRight": 1263,
+   "gap": 710,
+   "wordVisible": true,
+   "wordRight": 174,
+   "logoName": "nerfchess",
+   "docOverflowX": 0
+  },
+  "user@320": {
+   "navHeight": 48,
+   "logoRight": 89,
+   "rightLeft": 83,
+   "rightRight": 313,
+   "gap": -6,
+   "wordVisible": false,
+   "wordRight": 56,
+   "logoName": "nerfchess",
+   "docOverflowX": 0
+  },
+  "user@360": {
+   "navHeight": 48,
+   "logoRight": 89,
+   "rightLeft": 123,
+   "rightRight": 353,
+   "gap": 34,
+   "wordVisible": false,
+   "wordRight": 56,
+   "logoName": "nerfchess",
+   "docOverflowX": 0
+  },
+  "user@390": {
+   "navHeight": 48,
+   "logoRight": 89,
+   "rightLeft": 153,
+   "rightRight": 383,
+   "gap": 64,
+   "wordVisible": false,
+   "wordRight": 56,
+   "logoName": "nerfchess",
+   "docOverflowX": 0
+  },
+  "user@768": {
+   "navHeight": 60,
+   "logoRight": 174,
+   "rightLeft": 437,
+   "rightRight": 751,
+   "gap": 263,
+   "wordVisible": true,
+   "wordRight": 174,
+   "logoName": "nerfchess",
+   "docOverflowX": 0
+  },
+  "user@1280": {
+   "navHeight": 60,
+   "logoRight": 174,
+   "rightLeft": 949,
+   "rightRight": 1263,
+   "gap": 775,
+   "wordVisible": true,
+   "wordRight": 174,
+   "logoName": "nerfchess",
+   "docOverflowX": 0
+  },
+  "admin@320": {
+   "navHeight": 48,
+   "logoRight": 89,
+   "rightLeft": 83,
+   "rightRight": 313,
+   "gap": -6,
+   "wordVisible": false,
+   "wordRight": 56,
+   "logoName": "nerfchess",
+   "docOverflowX": 0
+  },
+  "admin@360": {
+   "navHeight": 48,
+   "logoRight": 89,
+   "rightLeft": 123,
+   "rightRight": 353,
+   "gap": 34,
+   "wordVisible": false,
+   "wordRight": 56,
+   "logoName": "nerfchess",
+   "docOverflowX": 0
+  },
+  "admin@390": {
+   "navHeight": 48,
+   "logoRight": 89,
+   "rightLeft": 153,
+   "rightRight": 383,
+   "gap": 64,
+   "wordVisible": false,
+   "wordRight": 56,
+   "logoName": "nerfchess",
+   "docOverflowX": 0
+  },
+  "admin@768": {
+   "navHeight": 60,
+   "logoRight": 174,
+   "rightLeft": 424,
+   "rightRight": 751,
+   "gap": 250,
+   "wordVisible": true,
+   "wordRight": 174,
+   "logoName": "nerfchess",
+   "docOverflowX": 0
+  },
+  "admin@1280": {
+   "navHeight": 60,
+   "logoRight": 174,
+   "rightLeft": 936,
+   "rightRight": 1263,
+   "gap": 762,
+   "wordVisible": true,
+   "wordRight": 174,
+   "logoName": "nerfchess",
+   "docOverflowX": 0
+  }
+ }
+}

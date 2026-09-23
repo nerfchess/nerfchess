@@ -43,3 +43,25 @@ nav.site-nav {
   border: 1px solid var(--border-subtle);
   border-radius: var(--ui-roundness);
 }
+
+/* The brand block takes whatever the right-hand cluster leaves, and when that
+   is too narrow for the wordmark (a signed-in phone: search, challenges, bell,
+   settings and the avatar need about 230px of a 360px bar) the word steps out
+   of view and the mark stays, instead of the icons painting over the text
+   (F153). Visually hidden, not display:none, so the home link keeps its
+   accessible name. A container query, so it follows the real space left for
+   every auth state and width, and it holds from the first paint. */
+nav.site-nav > .site-nav-brand {
+  container-type: inline-size;
+  flex: 1 1 0%;
+}
+@container (max-width: 199px) {
+  .site-nav-brand > a > span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}

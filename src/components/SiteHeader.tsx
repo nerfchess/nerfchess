@@ -309,7 +309,7 @@ export function SiteHeader({ active }: { active?: string }) {
   // right, one hairline underneath.
   return (
     <nav className="site-nav relative z-[60] flex min-h-[48px] items-center justify-between gap-2 px-2 sm:min-h-[60px] sm:gap-3 sm:px-5">
-      <div className="flex min-w-0 items-center gap-1 sm:gap-2">
+      <div className="site-nav-brand flex min-w-0 items-center gap-1 sm:gap-2">
         {/* Mobile hamburger, left of the wordmark: opens every destination on
             phones and tablets, where the inline nav below is hidden. */}
         <MobileNavMenu align="left" hideAt="md" />
