@@ -108,6 +108,15 @@ test.describe("content route layout stability (390x844)", () => {
     const report = await readCls(page);
     expect(report.cls, JSON.stringify(report.offenders.slice(0, 3))).toBeLessThan(CLS_CEILING);
   });
+
+  // The codex intro gained its card count (and a line on a phone) when the
+  // library import landed, pushing the list down 22px (0.044 before).
+  test("/codex keeps the list still while the library loads", async ({ page }) => {
+    await installClsProbe(page);
+    await page.goto("/codex");
+    const report = await readCls(page);
+    expect(report.cls, JSON.stringify(report.offenders.slice(0, 3))).toBeLessThan(CLS_CEILING);
+  });
 });
 
 test.describe("achievements states", () => {
@@ -465,4 +474,36 @@ test.describe("codex card breadcrumbs", () => {
       expect(urls[urls.length - 1]).toMatch(new RegExp(`${path}$`));
     });
   }
+});
+
+test.describe("codex deep links", () => {
+  // /codex?tab=hexes (the card breadcrumbs link there) rendered the Buff tab
+  // and switched after hydration. The server now reads the query.
+  test("?tab= and filters are the first render", async ({ request }) => {
+    const res = await request.get("/codex?tab=hexes&search=frost", { timeout: 300_000 });
+    const html = await res.text();
+    const selected = [...html.matchAll(/role="tab" aria-selected="true"[^>]*>([^<]+)/g)].map((m) => m[1]);
+    expect(selected).toEqual(["Hex"]);
+    expect(html).toMatch(/value="frost"/);
+  });
+});
+
+test.describe("codex filter row (1280x800)", () => {
+  test.use({ viewport: { width: 1280, height: 800 } });
+  // The tier select got its options only when the library import landed, so
+  // it widened and pushed the rest of the filter row 43px sideways. The page
+  // still has a small font-swap shift on the header and title (root layout).
+  test("the filter row holds its place while the library loads", async ({ page }) => {
+    await installClsProbe(page);
+    await page.goto("/codex");
+    const report = await readCls(page);
+    // A few px of font-swap reflow is the root layout's (see the E1 slice
+    // notes); the select widening moved the row 43px.
+    const moved = report.offenders.filter(
+      (o) =>
+        (o.selector.includes("> label") || o.selector.includes("#codex-results > ul")) &&
+        (Math.abs(o.maxDx) > 8 || Math.abs(o.maxDy) > 8),
+    );
+    expect(moved, JSON.stringify(moved)).toEqual([]);
+  });
 });

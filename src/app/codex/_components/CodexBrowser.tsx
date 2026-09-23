@@ -3,7 +3,6 @@
 import { SiteHeader } from "@/components/SiteHeader";
 import { isRetired } from "@/engine/retired";
 import { EmptyState } from "@/components/EmptyState";
-import { isBoon } from "@/engine/buff";
 import type { Buff } from "@/engine/buff";
 import type { Nerf } from "@/engine/nerf";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -11,7 +10,6 @@ import { AlertTriangle, SearchX, SlidersHorizontal, X } from "lucide-react";
 import {
   EMPTY_FILTERS,
   filterAndSortNerfs,
-  filtersFromQueryString,
   filtersToQueryString,
   hasActiveFilters,
   matchesSearch,
@@ -30,6 +28,8 @@ import {
   DEFAULT_TAB,
   LIBRARY_NOUN_PLURAL,
   LIBRARY_TABS,
+  isBoonCard,
+  isHexCard,
   TAB_LABEL,
   entryPath,
   tiersPresent,
@@ -44,9 +44,6 @@ import { SearchInput } from "@/components/ui/SearchInput";
 // The list defaults to this many so the DOM near page load stays small (well
 // under a hundred rows) however many hundred cards the family holds.
 const BATCH = 60;
-
-const isHexCard = (b: Buff) => b.category === "hex";
-const isBoonCard = (b: Buff) => isBoon(b) && !isHexCard(b);
 
 type EngineData = {
   nerfs: Nerf[];
@@ -90,10 +87,23 @@ function filterBuffs(source: Buff[], filters: CodexFilters, behaviour: Behaviour
   return sortBuffs(list, filters.sort);
 }
 
-export function CodexBrowser() {
-  const [tab, setTab] = useState<Library>(DEFAULT_TAB);
-  const [filters, setFilters] = useState<CodexFilters>(EMPTY_FILTERS);
-  const [behaviour, setBehaviour] = useState<Behaviour>("all");
+type CodexBrowserProps = {
+  /** In-play cards per tab, from the server, so the intro is final at first paint. */
+  counts: Record<Library, number>;
+  /** Tiers present per tab, from the server, so the tier select has its
+   *  options (and its width) before the library import lands. */
+  tiers: Record<Library, number[]>;
+  /** The tab, behaviour and filters the URL asked for, read on the server. */
+  initial?: { tab: Library; behaviour: Behaviour; filters: CodexFilters };
+  /** Route skeleton mode (loading.tsx): the same geometry, with the controls
+   *  inert and no library import or URL sync. */
+  shell?: boolean;
+};
+
+export function CodexBrowser({ counts, tiers, initial, shell = false }: CodexBrowserProps) {
+  const [tab, setTab] = useState<Library>(initial?.tab ?? DEFAULT_TAB);
+  const [filters, setFilters] = useState<CodexFilters>(initial?.filters ?? EMPTY_FILTERS);
+  const [behaviour, setBehaviour] = useState<Behaviour>(initial?.behaviour ?? "all");
   const [engine, setEngine] = useState<EngineData | null>(null);
   const [load, setLoad] = useState<Load>("loading");
   const [textHydrated, setTextHydrated] = useState(false);
@@ -117,6 +127,7 @@ export function CodexBrowser() {
   // a retired card's page stays reachable only by its direct link. Re-runs when
   // the reader retries after an error.
   useEffect(() => {
+    if (shell) return;
     let cancelled = false;
     Promise.all([import("@/engine/nerfs/library"), import("@/engine/buffs/library")])
       .then(([nerfs, buffs]) => {
@@ -136,11 +147,12 @@ export function CodexBrowser() {
     return () => {
       cancelled = true;
     };
-  }, [reloadKey]);
+  }, [reloadKey, shell]);
 
   // Moderator text overrides, fetched once. The libraries render as-is until
   // (or unless) any land, so the codex never waits on the network.
   useEffect(() => {
+    if (shell) return;
     let alive = true;
     hydrateCardText().then((any) => {
       if (alive && any) setTextHydrated(true);
@@ -148,25 +160,14 @@ export function CodexBrowser() {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [shell]);
 
-  // Restore tab / filters / behaviour from the URL on mount, then mirror them
-  // back (replace, so history is not spammed) as they change.
+  // The URL's tab / filters / behaviour arrive as `initial` from the server
+  // page, so the first paint is already the linked view. From here on, mirror
+  // them back (replace, so history is not spammed) as they change.
   useEffect(() => {
-    const search = window.location.search;
-    const params = new URLSearchParams(search);
-    const tabParam = params.get("tab") as Library | null;
-    // Post-hydration URL restoration: initial render matches the static markup
-    // (defaults), then this one-shot effect adopts the shared/refreshed URL.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (tabParam && LIBRARY_TABS.includes(tabParam)) setTab(tabParam);
-    const behaviourParam = params.get("behaviour");
-    if (behaviourParam === "passive" || behaviourParam === "instant" || behaviourParam === "activated") {
-      setBehaviour(behaviourParam);
-    }
-    setFilters(filtersFromQueryString(search));
-    hydrated.current = true;
-  }, []);
+    if (!shell) hydrated.current = true;
+  }, [shell]);
 
   useEffect(() => {
     if (!hydrated.current) return;
@@ -193,7 +194,10 @@ export function CodexBrowser() {
 
   const currentSource: (Nerf | Buff)[] =
     tab === "rules" ? nerfSource : buffFamilies[tab];
-  const availableTiers = useMemo(() => tiersPresent(currentSource), [currentSource]);
+  const availableTiers = useMemo(
+    () => (engine ? tiersPresent(currentSource) : tiers[tab]),
+    [engine, currentSource, tiers, tab],
+  );
 
   const entries = useMemo<CodexEntry[]>(() => {
     if (!engine) return [];
@@ -263,8 +267,6 @@ export function CodexBrowser() {
   }, []);
 
   const nounPlural = LIBRARY_NOUN_PLURAL[tab];
-  // In-play cards only: retired ones never reach currentSource.
-  const totalCount = currentSource.length;
   const shownCount = entries.length;
   const active = hasActiveFilters(filters) || behaviour !== "all";
   const visibleEntries = entries.slice(0, visible);
@@ -336,16 +338,23 @@ export function CodexBrowser() {
           {copied ? (copied.ok ? "Link copied" : "Could not copy the link") : ""}
         </p>
         <p className="mt-2 text-[15px] text-parchment-300">
-          {load === "ready"
-            ? `Browse every card and rule. ${totalCount} ${nounPlural} in this tab: search by name or effect, then open a row for the full card.`
-            : "Browse every card and rule: search by name or effect, then open a row for the full card."}
+          {/* The route skeleton cannot see the URL, so it holds the count's
+              place without claiming a tab. */}
+          Browse every card and rule.{" "}
+          <span className={shell ? "invisible" : undefined}>
+            {counts[tab]} {nounPlural}
+          </span>{" "}
+          in this tab: search by name or effect, then open a row for the full card.
         </p>
 
         {/* Sticky compact header: tabs, search, and the filter chip row (or, on
             phones, the bottom-sheet trigger). No (banned): a
             near-opaque ink surface keeps the content beneath from bleeding
             through. */}
-        <div className="sticky top-0 z-30 -mx-6 mt-4 border-b border-[color:var(--edge)] bg-[color:var(--bg-base)] px-6 pb-3 pt-3">
+        <div
+          inert={shell}
+          className="sticky top-0 z-30 -mx-6 mt-4 border-b border-[color:var(--edge)] bg-[color:var(--bg-base)] px-6 pb-3 pt-3"
+        >
           {/* WAI-ARIA tabs (F145): one tab stop (roving tabindex), arrows,
               Home and End move and select, and each tab names the results
               panel it controls. */}
@@ -369,7 +378,8 @@ export function CodexBrowser() {
             }}
           >
             {LIBRARY_TABS.map((t) => {
-              const selected = tab === t;
+              // No tab is marked in the route skeleton: it cannot see ?tab=.
+              const selected = !shell && tab === t;
               return (
                 <button
                   key={t}
@@ -378,7 +388,7 @@ export function CodexBrowser() {
                   role="tab"
                   aria-selected={selected}
                   aria-controls="codex-results"
-                  tabIndex={selected ? 0 : -1}
+                  tabIndex={selected || (shell && t === DEFAULT_TAB) ? 0 : -1}
                   onClick={() => switchTab(t)}
                   // Same 44px floor and same `(pointer: fine)` step-down as
                   // every other navigation chip: px-3 py-2 left these tabs 35px
@@ -457,7 +467,7 @@ export function CodexBrowser() {
                   // Chip-shaped, but the whole pill IS the control (its name is
                   // "Remove filter: …"), so its text is interactive text at
                   // 13px rather than a 12px label. The static chips on this
-                  // page — the tier roman numeral and the filter count badge —
+                  // page (the tier roman numeral and the filter count badge)
                   // stay at 12px because they are labels beside a control, not
                   // the control itself.
                   className="inline-flex min-h-[44px] items-center gap-1 rounded-none border border-[color:var(--accent)]/40 bg-[rgb(var(--accent-rgb)/0.1)] px-2 py-1 text-[13px] text-parchment-100 transition-colors hover:border-[color:var(--accent)] hover:bg-[rgb(var(--accent-rgb)/0.18)] [@media(pointer:fine)]:min-h-[28px]"

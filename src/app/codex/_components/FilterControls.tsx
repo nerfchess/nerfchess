@@ -47,7 +47,7 @@ function FilterSelect({
         onChange={(e) => onChange(e.target.value)}
         // 31.5px tall and 12px text. Both are floors, not preferences: §10 puts
         // the hit area at 44px on a finger and §3 puts interactive text at
-        // 13px (the 12px allowance is captions and labels — the eyebrow above
+        // 13px (the 12px allowance is captions and labels; the eyebrow above
         // is one, the control is not). The step-down is `(pointer: fine)`
         // rather than `sm:`, because this row is only rendered from `sm` up and
         // "sm and up" includes every tablet, which is a coarse pointer.

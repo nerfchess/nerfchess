@@ -1,0 +1,14 @@
+[cls] run 1/2
+  /codex  390x844|dark|full|signed-out|normal  HTTP 200  CLS 0.0034 (sum 0.0034, 0 >0.01)  3292ms
+  /codex  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.019 (sum 0.0214, 1 >0.01)  22720ms
+  /codex  390x844|dark|full|user|normal  HTTP 200  CLS 0.0034 (sum 0.0053, 0 >0.01)  9963ms
+  /codex  1280x800|dark|full|user|normal  HTTP 200  CLS 0.019 (sum 0.0204, 1 >0.01)  9332ms
+[cls] run 2/2
+  /codex  390x844|dark|full|signed-out|normal  HTTP 200  CLS 0.0034 (sum 0.0044, 0 >0.01)  8084ms
+  /codex  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.019 (sum 0.0215, 1 >0.01)  9336ms
+  /codex  390x844|dark|full|user|normal  HTTP 200  CLS 0.0034 (sum 0.0053, 0 >0.01)  7950ms
+  /codex  1280x800|dark|full|user|normal  HTTP 200  CLS 0.019 (sum 0.0204, 1 >0.01)  17294ms
+
+[cls] 4 cells, 2 above target 0.01, 0 over ceiling
+  debt  /codex|1280x800|dark|full|signed-out|normal  CLS 0.019  ceiling 0.022  top: div#codex-results.mt-4 dy 3
+  debt  /codex|1280x800|dark|full|user|normal  CLS 0.019  ceiling 0.021  top: div#codex-results.mt-4 dy 3

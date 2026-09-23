@@ -1,0 +1,6 @@
+  /codex  390x844|dark|full|signed-out|normal  HTTP 200  CLS 0.044 (sum 0.0459, 2 >0.01)  19494ms
+  /codex  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0217 (sum 0.0398, 2 >0.01)  16179ms
+
+[cls] 2 cells, 2 above target 0.01, 0 over ceiling
+  debt  /codex|390x844|dark|full|signed-out|normal  CLS 0.044  ceiling 0.046  top: div#codex-results.mt-4 > ul.grid.grid-cols-1.gap-2 > li dy -48
+  debt  /codex|1280x800|dark|full|signed-out|normal  CLS 0.0217  ceiling 0.022  top: div#codex-results.mt-4 > ul.grid.grid-cols-1.gap-2 > li dy -42

@@ -54,7 +54,11 @@ export function CodexRow({
     onToggle();
   };
 
-  const rowStyle: CSSProperties = { contentVisibility: "auto", containIntrinsicSize: "auto 48px" };
+  // The placeholder size is the content box of a real row (44px border box
+  // less the two 1px borders). It was 48px, so rows first laid out 50px tall
+  // and shrank to 44px as they entered the viewport, walking the list up to
+  // 48px under the reader (0.03 CLS on a phone).
+  const rowStyle: CSSProperties = { contentVisibility: "auto", containIntrinsicSize: "auto 42px" };
 
   // The Copy button is a SIBLING of the card link, not a child: nesting one
   // interactive control inside another is invalid and lets a Copy click also

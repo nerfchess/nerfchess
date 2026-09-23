@@ -1,26 +1,13 @@
-// Branded route skeleton for /codex: search bar plus a grid of card-shaped
-// shimmer blocks, mirroring the rule library while the page chunk loads.
+// Route skeleton for /codex: the browser itself in shell mode, so the header,
+// title, intro with its count, tabs, search and filter row, and the row
+// skeletons sit exactly where the page puts them. It used to be a 6xl column
+// of three-across card plates under a 40px title block, a different shape from
+// the 7xl list of rows the page settles into. The controls are inert and the
+// library is not loaded until the page itself mounts.
 
-import { SkeletonHeader } from "@/components/ui/Skeleton";
+import { CodexBrowser } from "./_components/CodexBrowser";
+import { CODEX_COUNTS, CODEX_TIERS } from "./_components/codexCounts";
 
 export default function Loading() {
-  return (
-    <main className="min-h-screen pb-16">
-      <SkeletonHeader />
-      <section className="mx-auto max-w-6xl px-5 py-8 sm:px-6">
-        <div className="skeleton h-10 w-40 rounded-none" style={{ borderRadius: 1 }} />
-        <div className="skeleton mt-2 h-4 w-72 max-w-full rounded-none" style={{ borderRadius: 1 }} />
-        <div className="skeleton mt-6 h-11 w-full rounded-none" style={{ borderRadius: 1 }} />
-        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 9 }).map((_, i) => (
-            <div key={i} className="plate p-4">
-              <div className="skeleton h-5 w-2/3 rounded-none" style={{ borderRadius: 1 }} />
-              <div className="skeleton mt-2.5 h-3.5 w-full rounded-none" style={{ borderRadius: 1 }} />
-              <div className="skeleton mt-1.5 h-3.5 w-4/5 rounded-none" style={{ borderRadius: 1 }} />
-            </div>
-          ))}
-        </div>
-      </section>
-    </main>
-  );
+  return <CodexBrowser counts={CODEX_COUNTS} tiers={CODEX_TIERS} shell />;
 }

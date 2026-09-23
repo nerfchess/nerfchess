@@ -1,0 +1,6 @@
+# cls.ts --routes /codex --viewports 1280x800 --runs 2, after the intro and row fixes, before the server tier list
+/codex|1280x800|dark|full|signed-out|normal  CLS 0.019
+  div.sticky.top-0.z-30 > div.mt-3.hidden.items-end > div.flex.flex-wrap.items-end > label.flex.min-w-0.flex-col "CategoryAll categoriesMovementPiecesTempoProtectio..." 0.0049 dx 43 dw -7 dy 0
+  div#codex-results.mt-4 "" 0.0038 dx 0 dw 0 dy 3
+  nav.site-nav > div.site-nav-brand > div.ml-2.hidden.items-center "PlayLobbyChallenge a friendPractice vs computerDai..." 0.0038 dx -18 dw -43 dy 0
+  section.mx-auto.max-w-7xl.px-6 > h1.page-title "Codex" 0.0038 dx 0 dw 0 dy -3

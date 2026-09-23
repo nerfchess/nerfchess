@@ -1,0 +1,6 @@
+
+Running 1 test using 1 worker
+
+  ✓  1 [chromium] › e2e/content-states.spec.ts:496:7 › codex filter row (1280x800) › the filter row holds its place while the library loads (14.3s)
+
+  1 passed (15.7s)
