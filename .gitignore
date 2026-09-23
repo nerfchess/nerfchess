@@ -46,3 +46,6 @@ AGENTS.md
 # finished one. The merged result is committed on completion.
 docs/card-winrate.shard*.json
 
+
+# Polish-pass harness: seeded local session cookies (scripts/polish/seed.ts).
+/.polish-auth/

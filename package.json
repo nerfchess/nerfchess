@@ -87,6 +87,14 @@
     "test:archive-replay": "npx -y tsx scripts/test-archive-replay.ts",
     "validate:tv-snapshots": "npm run server:build && node scripts/validate-tv-snapshots.cjs --selftest",
     "test:e2e": "playwright test",
+    "test:cls": "./node_modules/.bin/tsx scripts/polish/cls.ts",
+    "test:flash": "./node_modules/.bin/tsx scripts/polish/flash.ts",
+    "test:console": "./node_modules/.bin/tsx scripts/polish/console.ts",
+    "polish:seed": "./node_modules/.bin/tsx scripts/polish/seed.ts",
+    "polish:matrix": "./node_modules/.bin/tsx scripts/polish/matrix.ts",
+    "polish:strip": "./node_modules/.bin/tsx scripts/polish/strip.ts",
+    "polish:section4": "./node_modules/.bin/tsx scripts/polish/section4.ts",
+    "polish:axe": "./node_modules/.bin/tsx scripts/polish/axe.ts",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"
   },
@@ -102,6 +110,7 @@
     "ws": "^8.21.0"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@cloudflare/workers-types": "^5.20260708.1",
     "@opennextjs/cloudflare": "^1.20.1",
     "@playwright/test": "^1.61.1",
