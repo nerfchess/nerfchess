@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
-import { getDb } from "@/lib/server/db";
+import { getDb, requestIsSecure } from "@/lib/server/db";
 import {
   recordUsernameChange,
-  RESERVED_USERNAMES,
   sessionTokenFromCookieHeader,
   userForSession,
   validUsername,
 } from "@/lib/server/auth";
 import { containsProfanity } from "@/lib/profanity";
+import { whoCookieHeader } from "@/lib/session/who";
+import { hintFromRow } from "../_lib/who";
+import { isReservedUsername } from "../_lib/reserved";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +23,9 @@ export async function POST(request: Request) {
   let body: { username?: unknown };
   try {
     body = await request.json();
+    // `null`, an array or a bare value parses fine and then crashed the
+    // field reads below with a 500 (F047): refuse anything but an object.
+    if (!body || typeof body !== "object" || Array.isArray(body)) throw new Error("not an object");
   } catch {
     return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
   }
@@ -39,7 +44,7 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
-  if (RESERVED_USERNAMES.includes(username.toLowerCase())) {
+  if (isReservedUsername(username)) {
     return NextResponse.json({ error: "That username is reserved." }, { status: 400 });
   }
   if (containsProfanity(username)) {
@@ -72,5 +77,7 @@ export async function POST(request: Request) {
     await recordUsernameChange(db, user.id, user.username.toLowerCase(), username.toLowerCase());
   } catch {}
 
-  return NextResponse.json({ ok: true, username });
+  const response = NextResponse.json({ ok: true, username });
+  response.headers.append("Set-Cookie", whoCookieHeader(hintFromRow({ ...user, username }), requestIsSecure(request)));
+  return response;
 }

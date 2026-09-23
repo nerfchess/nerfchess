@@ -15,6 +15,9 @@ export async function POST(request: Request) {
   let body: { flair?: unknown };
   try {
     body = await request.json();
+    // `null`, an array or a bare value parses fine and then crashed the
+    // field reads below with a 500 (F047): refuse anything but an object.
+    if (!body || typeof body !== "object" || Array.isArray(body)) throw new Error("not an object");
   } catch {
     return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
   }

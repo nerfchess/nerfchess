@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
-import { getDb } from "@/lib/server/db";
+import { getDb, requestIsSecure } from "@/lib/server/db";
 import { sessionTokenFromCookieHeader, userForSession } from "@/lib/server/auth";
 import { isAvatarId, isCustomAvatar } from "@/lib/avatars";
+import { whoCookieHeader } from "@/lib/session/who";
+import { hintFromRow } from "../_lib/who";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +13,9 @@ export async function POST(request: Request) {
   let body: { avatar?: unknown };
   try {
     body = await request.json();
+    // `null`, an array or a bare value parses fine and then crashed the
+    // field reads below with a 500 (F047): refuse anything but an object.
+    if (!body || typeof body !== "object" || Array.isArray(body)) throw new Error("not an object");
   } catch {
     return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
   }
@@ -25,5 +30,7 @@ export async function POST(request: Request) {
   }
 
   await db.prepare("UPDATE users SET avatar = ? WHERE id = ?").bind(avatar, user.id).run();
-  return NextResponse.json({ ok: true, avatar });
+  const response = NextResponse.json({ ok: true, avatar });
+  response.headers.append("Set-Cookie", whoCookieHeader(hintFromRow({ ...user, avatar }), requestIsSecure(request)));
+  return response;
 }
