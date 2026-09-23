@@ -1,0 +1,43 @@
+[cls] run 1/2
+  /profile  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0.0013 (sum 0.0014, 0 >0.01)  3446ms
+  /profile  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  3290ms
+  /profile  360x780|dark|full|user|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  47304ms
+  /profile  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0014 (sum 0.0028, 0 >0.01)  10673ms
+  /u/polish_user  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  15882ms
+  /u/polish_user  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0014 (sum 0.0014, 0 >0.01)  11226ms
+  /u/polish_user  360x780|dark|full|user|normal  HTTP 200  CLS 0.0025 (sum 0.0025, 0 >0.01)  3639ms
+  /u/polish_user  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0014 (sum 0.0028, 0 >0.01)  3498ms
+  /u/polish_mod  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  3255ms
+  /u/polish_mod  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0014 (sum 0.0014, 0 >0.01)  3739ms
+  /u/polish_mod  360x780|dark|full|user|normal  HTTP 200  CLS 0.0025 (sum 0.0025, 0 >0.01)  4399ms
+  /u/polish_mod  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0014 (sum 0.0028, 0 >0.01)  3660ms
+  /profile/edit  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0.0013 (sum 0.0015, 0 >0.01)  8936ms
+  /profile/edit  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0024 (sum 0.004, 0 >0.01)  3318ms
+  /profile/edit  360x780|dark|full|user|normal  HTTP 200  CLS 0.0025 (sum 0.0027, 0 >0.01)  3661ms
+  /profile/edit  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0016 (sum 0.003, 0 >0.01)  3079ms
+  /settings  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0.0013 (sum 0.0015, 0 >0.01)  8910ms
+  /settings  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0026 (sum 0.0051, 0 >0.01)  3823ms
+  /settings  360x780|dark|full|user|normal  HTTP 200  CLS 0.0025 (sum 0.0026, 0 >0.01)  2997ms
+  /settings  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0025 (sum 0.0039, 0 >0.01)  4500ms
+[cls] run 2/2
+  /profile  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0.0013 (sum 0.0014, 0 >0.01)  8055ms
+  /profile  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  33745ms
+  /profile  360x780|dark|full|user|normal  HTTP 200  CLS 0.0025 (sum 0.0026, 0 >0.01)  2923ms
+  /profile  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0014 (sum 0.0028, 0 >0.01)  32797ms
+  /u/polish_user  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  12573ms
+  /u/polish_user  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0014 (sum 0.0014, 0 >0.01)  6935ms
+  /u/polish_user  360x780|dark|full|user|normal  HTTP 200  CLS 0.0025 (sum 0.0025, 0 >0.01)  4213ms
+  /u/polish_user  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0014 (sum 0.0028, 0 >0.01)  35254ms
+  /u/polish_mod  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  4122ms
+  /u/polish_mod  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0014 (sum 0.0014, 0 >0.01)  4038ms
+  /u/polish_mod  360x780|dark|full|user|normal  HTTP 200  CLS 0.0025 (sum 0.0025, 0 >0.01)  3312ms
+  /u/polish_mod  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0014 (sum 0.0028, 0 >0.01)  3777ms
+  /profile/edit  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0.0013 (sum 0.0015, 0 >0.01)  4474ms
+  /profile/edit  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0029 (sum 0.0045, 0 >0.01)  2749ms
+  /profile/edit  360x780|dark|full|user|normal  HTTP 200  CLS 0.0025 (sum 0.0027, 0 >0.01)  5159ms
+  /profile/edit  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0016 (sum 0.003, 0 >0.01)  3014ms
+  /settings  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0.0013 (sum 0.0015, 0 >0.01)  2941ms
+  /settings  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0024 (sum 0.0024, 0 >0.01)  2863ms
+  /settings  360x780|dark|full|user|normal  HTTP 200  CLS 0.0025 (sum 0.0027, 0 >0.01)  3318ms
+  /settings  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0025 (sum 0.0039, 0 >0.01)  4627ms
+[cls] 20 cells, 0 above target 0.01, 0 over ceiling

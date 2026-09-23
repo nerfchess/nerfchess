@@ -1,0 +1,739 @@
+{
+ "generatedAt": "2026-09-23T20:54:28.378Z",
+ "target": 0.01,
+ "runs": 1,
+ "rows": [
+  {
+   "key": "/profile|360x780|dark|full|signed-out|normal",
+   "best": null,
+   "worst": null,
+   "ceiling": 0.01,
+   "pass": false,
+   "overTarget": false,
+   "errors": [
+    "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/profile"
+   ],
+   "offenders": [],
+   "findings": []
+  },
+  {
+   "key": "/profile|1280x800|dark|full|signed-out|normal",
+   "best": null,
+   "worst": null,
+   "ceiling": 0.037,
+   "pass": false,
+   "overTarget": false,
+   "errors": [
+    "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/profile"
+   ],
+   "offenders": [],
+   "findings": []
+  },
+  {
+   "key": "/profile|360x780|dark|full|user|normal",
+   "best": null,
+   "worst": null,
+   "ceiling": 0.01,
+   "pass": false,
+   "overTarget": false,
+   "errors": [
+    "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/profile"
+   ],
+   "offenders": [],
+   "findings": []
+  },
+  {
+   "key": "/profile|1280x800|dark|full|user|normal",
+   "best": null,
+   "worst": null,
+   "ceiling": 0.034,
+   "pass": false,
+   "overTarget": false,
+   "errors": [
+    "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/profile"
+   ],
+   "offenders": [],
+   "findings": []
+  },
+  {
+   "key": "/u/polish_user|360x780|dark|full|signed-out|normal",
+   "best": null,
+   "worst": null,
+   "ceiling": 0.01,
+   "pass": false,
+   "overTarget": false,
+   "errors": [
+    "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/u/polish_user"
+   ],
+   "offenders": [],
+   "findings": []
+  },
+  {
+   "key": "/u/polish_user|1280x800|dark|full|signed-out|normal",
+   "best": null,
+   "worst": null,
+   "ceiling": 0.01,
+   "pass": false,
+   "overTarget": false,
+   "errors": [
+    "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/u/polish_user"
+   ],
+   "offenders": [],
+   "findings": []
+  },
+  {
+   "key": "/u/polish_user|360x780|dark|full|user|normal",
+   "best": null,
+   "worst": null,
+   "ceiling": 0.01,
+   "pass": false,
+   "overTarget": false,
+   "errors": [
+    "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/u/polish_user"
+   ],
+   "offenders": [],
+   "findings": []
+  },
+  {
+   "key": "/u/polish_user|1280x800|dark|full|user|normal",
+   "best": 0.031,
+   "worst": 0.031,
+   "ceiling": 0.01,
+   "pass": false,
+   "overTarget": true,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "div#panel-activity > div.border-t.border-\\[color\\:var(--edge)\\].px-4",
+     "text": "Achievements0/102See all",
+     "score": 0.0155,
+     "count": 1,
+     "maxDy": -117,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    },
+    {
+     "selector": "section.mx-auto.w-full.max-w-\\[1300px\\] > div.order-1.min-w-0.lg\\:order-2 > div.mt-4 > div.plate",
+     "text": "Friends (0)No friends yetAdd players to line up ch...",
+     "score": 0.0155,
+     "count": 1,
+     "maxDy": -117,
+     "maxDx": 0,
+     "maxDh": 117,
+     "maxDw": 0
+    },
+    {
+     "selector": "main.flex.min-h-screen.items-center > div.plate",
+     "text": "404No player by that nameNobody on Nerf Chess is s...",
+     "score": 0.0008,
+     "count": 1,
+     "maxDy": 11,
+     "maxDx": 0,
+     "maxDh": -22,
+     "maxDw": 0
+    },
+    {
+     "selector": "nav.site-nav > div.relative.flex.items-center > button.relic-unread > svg",
+     "text": "",
+     "score": 0,
+     "count": 1,
+     "maxDy": -6,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    }
+   ],
+   "findings": [
+    {
+     "t": 39796.1,
+     "value": 0.031,
+     "hadRecentInput": false,
+     "sources": [
+      {
+       "selector": "div#panel-activity > div.border-t.border-\\[color\\:var(--edge)\\].px-4",
+       "text": "Achievements0/102See all",
+       "prev": {
+        "x": 263,
+        "y": 555,
+        "w": 999,
+        "h": 69
+       },
+       "curr": {
+        "x": 263,
+        "y": 438,
+        "w": 999,
+        "h": 69
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": -117,
+       "dw": 0,
+       "dh": 0
+      },
+      {
+       "selector": "section.mx-auto.w-full.max-w-\\[1300px\\] > div.order-1.min-w-0.lg\\:order-2 > div.mt-4 > div.plate",
+       "text": "Friends (0)No friends yetAdd players to line up ch...",
+       "prev": {
+        "x": 262,
+        "y": 639,
+        "w": 1001,
+        "h": 161
+       },
+       "curr": {
+        "x": 262,
+        "y": 522,
+        "w": 1001,
+        "h": 278
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": -117,
+       "dw": 0,
+       "dh": 117
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "key": "/profile/edit|360x780|dark|full|signed-out|normal",
+   "best": 0.0013,
+   "worst": 0.0013,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestFriskyOtter ·Sign in",
+     "score": 0.0013,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -10,
+     "maxDh": 0,
+     "maxDw": 10
+    },
+    {
+     "selector": "main.min-h-screen > section.max-w-3xl.mx-auto.px-6 > div.flex.items-center.gap-3 > h1.page-title",
+     "text": "Edit profile",
+     "score": 0.0001,
+     "count": 1,
+     "maxDy": -3,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": -5
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/profile/edit|1280x800|dark|full|signed-out|normal",
+   "best": 0.0024,
+   "worst": 0.0024,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestOddBishop ·Sign in",
+     "score": 0.0024,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -194,
+     "maxDh": 0,
+     "maxDw": 194
+    },
+    {
+     "selector": "nav.site-nav > div.site-nav-brand > a.\\[@media(pointer\\:fine)\\]\\:min-h-0 > span.font-display.text-\\[22px\\].font-medium",
+     "text": "nerfchess",
+     "score": 0.0005,
+     "count": 1,
+     "maxDy": -3,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": -18
+    },
+    {
+     "selector": "main.min-h-screen > nav.site-nav > div.site-nav-brand > div.ml-2.hidden.items-center",
+     "text": "PlayLobbyChallenge a friendPractice vs computerDai...",
+     "score": 0.0005,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -18,
+     "maxDh": 0,
+     "maxDw": -43
+    },
+    {
+     "selector": "main.min-h-screen > section.max-w-3xl.mx-auto.px-6 > div.flex.items-center.gap-3 > h1.page-title",
+     "text": "Edit profile",
+     "score": 0.0005,
+     "count": 1,
+     "maxDy": -3,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": -5
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/profile/edit|360x780|dark|full|user|normal",
+   "best": 0.004,
+   "worst": 0.004,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen > section.max-w-3xl.mx-auto.px-6 > div.flex.items-center.gap-3 > h1.page-title",
+     "text": "Edit profile",
+     "score": 0.002,
+     "count": 2,
+     "maxDy": 9,
+     "maxDx": 55,
+     "maxDh": 0,
+     "maxDw": -5
+    },
+    {
+     "selector": "main.min-h-screen > nav.site-nav > div.relative.flex.items-center",
+     "text": "polish_user",
+     "score": 0.002,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -55,
+     "maxDh": 0,
+     "maxDw": 55
+    },
+    {
+     "selector": "nav.site-nav > div.relative.flex.items-center > button.relic-unread > svg",
+     "text": "",
+     "score": 0,
+     "count": 1,
+     "maxDy": -6,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/profile/edit|1280x800|dark|full|user|normal",
+   "best": 0.002,
+   "worst": 0.002,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen > section.max-w-3xl.mx-auto.px-6 > div.flex.items-center.gap-3 > h1.page-title",
+     "text": "Edit profile",
+     "score": 0.0015,
+     "count": 2,
+     "maxDy": 9,
+     "maxDx": 55,
+     "maxDh": 0,
+     "maxDw": -5
+    },
+    {
+     "selector": "main.min-h-screen > nav.site-nav > div.relative.flex.items-center",
+     "text": "polish_user",
+     "score": 0.001,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -135,
+     "maxDh": 0,
+     "maxDw": 135
+    },
+    {
+     "selector": "nav.site-nav > div.site-nav-brand > a.\\[@media(pointer\\:fine)\\]\\:min-h-0 > span.font-display.text-\\[22px\\].font-medium",
+     "text": "nerfchess",
+     "score": 0.0005,
+     "count": 1,
+     "maxDy": -3,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": -18
+    },
+    {
+     "selector": "main.min-h-screen > nav.site-nav > div.site-nav-brand > div.ml-2.hidden.items-center",
+     "text": "PlayLobbyChallenge a friendPractice vs computerDai...",
+     "score": 0.0005,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -18,
+     "maxDh": 0,
+     "maxDw": -43
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/settings|360x780|dark|full|signed-out|normal",
+   "best": 0.0841,
+   "worst": 0.0841,
+   "ceiling": 0.01,
+   "pass": false,
+   "overTarget": true,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-16 > div.mx-auto.max-w-5xl.px-5 > div.flex.min-w-0.items-center",
+     "text": "",
+     "score": 0.0276,
+     "count": 1,
+     "maxDy": 99,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    },
+    {
+     "selector": "main.min-h-screen.pb-16 > div.mx-auto.max-w-5xl.px-5 > div.mt-5.grid.gap-5",
+     "text": "GameplayBoard & PiecesSoundAppearanceAccountAccess...",
+     "score": 0.0276,
+     "count": 1,
+     "maxDy": 99,
+     "maxDx": 0,
+     "maxDh": -99,
+     "maxDw": 0
+    },
+    {
+     "selector": "div.flex.min-h-\\[44px\\].items-center > div.shrink-0 > button.settings-toggle[role=\"switch\"] > ::before",
+     "text": "",
+     "score": 0.0276,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    },
+    {
+     "selector": "main.min-h-screen.pb-16 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestJollyRaven ·Sign in",
+     "score": 0.0013,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -10,
+     "maxDh": 0,
+     "maxDw": 10
+    }
+   ],
+   "findings": [
+    {
+     "t": 3145.8,
+     "value": 0.0828,
+     "hadRecentInput": false,
+     "sources": [
+      {
+       "selector": "main.min-h-screen.pb-16 > div.mx-auto.max-w-5xl.px-5 > div.flex.min-w-0.items-center",
+       "text": "",
+       "prev": {
+        "x": 18,
+        "y": 200,
+        "w": 325,
+        "h": 38
+       },
+       "curr": {
+        "x": 18,
+        "y": 299,
+        "w": 325,
+        "h": 38
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": 99,
+       "dw": 0,
+       "dh": 0
+      },
+      {
+       "selector": "main.min-h-screen.pb-16 > div.mx-auto.max-w-5xl.px-5 > div.mt-5.grid.gap-5",
+       "text": "GameplayBoard & PiecesSoundAppearanceAccountAccess...",
+       "prev": {
+        "x": 18,
+        "y": 256,
+        "w": 325,
+        "h": 524
+       },
+       "curr": {
+        "x": 18,
+        "y": 355,
+        "w": 325,
+        "h": 425
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": 99,
+       "dw": 0,
+       "dh": -99
+      },
+      {
+       "selector": "div.flex.min-h-\\[44px\\].items-center > div.shrink-0 > button.settings-toggle[role=\"switch\"] > ::before",
+       "text": "",
+       "prev": {
+        "x": 283,
+        "y": 718,
+        "w": 46,
+        "h": 42
+       },
+       "curr": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0
+       },
+       "change": "left",
+       "dx": null,
+       "dy": null,
+       "dw": null,
+       "dh": null
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "key": "/settings|1280x800|dark|full|signed-out|normal",
+   "best": 0.0212,
+   "worst": 0.0212,
+   "ceiling": 0.01,
+   "pass": false,
+   "overTarget": true,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-16 > div.mx-auto.max-w-5xl.px-5 > div.flex.min-w-0.items-center",
+     "text": "",
+     "score": 0.0046,
+     "count": 1,
+     "maxDy": 50,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    },
+    {
+     "selector": "main.min-h-screen.pb-16 > div.mx-auto.max-w-5xl.px-5 > div.mt-5.grid.gap-5",
+     "text": "GameplayBoard & PiecesSoundAppearanceAccountAccess...",
+     "score": 0.0046,
+     "count": 1,
+     "maxDy": 50,
+     "maxDx": 0,
+     "maxDh": -50,
+     "maxDw": 0
+    },
+    {
+     "selector": "div.flex.min-h-\\[44px\\].items-center > div.shrink-0 > button.settings-toggle[role=\"switch\"] > span.settings-toggle__thumb",
+     "text": "",
+     "score": 0.0046,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    },
+    {
+     "selector": "div.flex.min-h-\\[44px\\].items-center > div.shrink-0 > button.settings-toggle[role=\"switch\"] > ::before",
+     "text": "",
+     "score": 0.0046,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    }
+   ],
+   "findings": [
+    {
+     "t": 1810.8,
+     "value": 0.0184,
+     "hadRecentInput": false,
+     "sources": [
+      {
+       "selector": "main.min-h-screen.pb-16 > div.mx-auto.max-w-5xl.px-5 > div.flex.min-w-0.items-center",
+       "text": "",
+       "prev": {
+        "x": 213,
+        "y": 198,
+        "w": 336,
+        "h": 38
+       },
+       "curr": {
+        "x": 213,
+        "y": 248,
+        "w": 336,
+        "h": 38
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": 50,
+       "dw": 0,
+       "dh": 0
+      },
+      {
+       "selector": "main.min-h-screen.pb-16 > div.mx-auto.max-w-5xl.px-5 > div.mt-5.grid.gap-5",
+       "text": "GameplayBoard & PiecesSoundAppearanceAccountAccess...",
+       "prev": {
+        "x": 213,
+        "y": 253,
+        "w": 854,
+        "h": 547
+       },
+       "curr": {
+        "x": 213,
+        "y": 303,
+        "w": 854,
+        "h": 497
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": 50,
+       "dw": 0,
+       "dh": -50
+      },
+      {
+       "selector": "div.flex.min-h-\\[44px\\].items-center > div.shrink-0 > button.settings-toggle[role=\"switch\"] > span.settings-toggle__thumb",
+       "text": "",
+       "prev": {
+        "x": 1009,
+        "y": 751,
+        "w": 16,
+        "h": 16
+       },
+       "curr": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0
+       },
+       "change": "left",
+       "dx": null,
+       "dy": null,
+       "dw": null,
+       "dh": null
+      },
+      {
+       "selector": "div.flex.min-h-\\[44px\\].items-center > div.shrink-0 > button.settings-toggle[role=\"switch\"] > ::before",
+       "text": "",
+       "prev": {
+        "x": 1004,
+        "y": 786,
+        "w": 46,
+        "h": 14
+       },
+       "curr": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0
+       },
+       "change": "left",
+       "dx": null,
+       "dy": null,
+       "dw": null,
+       "dh": null
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "key": "/settings|360x780|dark|full|user|normal",
+   "best": 0.0025,
+   "worst": 0.0025,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-16 > nav.site-nav > div.relative.flex.items-center",
+     "text": "polish_user",
+     "score": 0.0025,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -55,
+     "maxDh": 0,
+     "maxDw": 55
+    },
+    {
+     "selector": "main.min-h-screen.pb-16 > div.mx-auto.max-w-5xl.px-5 > h1.page-title",
+     "text": "Settings",
+     "score": 0.0002,
+     "count": 1,
+     "maxDy": -3,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    },
+    {
+     "selector": "nav.site-nav > div.relative.flex.items-center > button.relic-unread > svg",
+     "text": "",
+     "score": 0,
+     "count": 1,
+     "maxDy": -6,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/settings|1280x800|dark|full|user|normal",
+   "best": 0.0025,
+   "worst": 0.0025,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-16 > nav.site-nav > div.relative.flex.items-center",
+     "text": "polish_user",
+     "score": 0.0014,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -135,
+     "maxDh": 0,
+     "maxDw": 135
+    },
+    {
+     "selector": "nav.site-nav > div.site-nav-brand > a.\\[@media(pointer\\:fine)\\]\\:min-h-0 > span.font-display.text-\\[22px\\].font-medium",
+     "text": "nerfchess",
+     "score": 0.0008,
+     "count": 1,
+     "maxDy": -3,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": -18
+    },
+    {
+     "selector": "main.min-h-screen.pb-16 > nav.site-nav > div.site-nav-brand > div.ml-2.hidden.items-center",
+     "text": "PlayLobbyChallenge a friendPractice vs computerDai...",
+     "score": 0.0008,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -18,
+     "maxDh": 0,
+     "maxDw": -43
+    },
+    {
+     "selector": "main.min-h-screen.pb-16 > div.mx-auto.max-w-5xl.px-5 > h1.page-title",
+     "text": "Settings",
+     "score": 0.0008,
+     "count": 1,
+     "maxDy": -3,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    }
+   ],
+   "findings": []
+  }
+ ]
+}

@@ -1,0 +1,511 @@
+{
+ "generatedAt": "2026-09-23T20:58:35.039Z",
+ "target": 0.01,
+ "runs": 1,
+ "rows": [
+  {
+   "key": "/profile|360x780|dark|full|signed-out|normal",
+   "best": 0,
+   "worst": 0,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [],
+   "findings": []
+  },
+  {
+   "key": "/profile|1280x800|dark|full|signed-out|normal",
+   "best": 0.0027,
+   "worst": 0.0027,
+   "ceiling": 0.037,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-16 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestGallantPatzer ·Sign in",
+     "score": 0.0027,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -209,
+     "maxDh": 0,
+     "maxDw": 209
+    },
+    {
+     "selector": "nav.site-nav > div.site-nav-brand > a.\\[@media(pointer\\:fine)\\]\\:min-h-0 > span.font-display.text-\\[22px\\].font-medium",
+     "text": "nerfchess",
+     "score": 0.0006,
+     "count": 1,
+     "maxDy": -3,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": -18
+    },
+    {
+     "selector": "main.min-h-screen.pb-16 > nav.site-nav > div.site-nav-brand > div.ml-2.hidden.items-center",
+     "text": "PlayLobbyChallenge a friendPractice vs computerDai...",
+     "score": 0.0006,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -18,
+     "maxDh": 0,
+     "maxDw": -43
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/profile|360x780|dark|full|user|normal",
+   "best": 0.0807,
+   "worst": 0.0807,
+   "ceiling": 0.01,
+   "pass": false,
+   "overTarget": true,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "div#panel-activity > div.space-y-3.px-4.py-5 > div.skeleton",
+     "text": "",
+     "score": 0.0403,
+     "count": 2,
+     "maxDy": 0,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    },
+    {
+     "selector": "main.min-h-screen.pb-16 > section.mx-auto.w-full.max-w-\\[1300px\\] > div.order-1.min-w-0.lg\\:order-2 > div.plate",
+     "text": "polish_userAdd a bio0Games0Wins0Losses0DrawsEdit p...",
+     "score": 0.0202,
+     "count": 1,
+     "maxDy": 90,
+     "maxDx": 0,
+     "maxDh": -90,
+     "maxDw": 0
+    },
+    {
+     "selector": "div#panel-activity > div.space-y-3.px-4.py-5 > div.skeleton > ::after",
+     "text": "",
+     "score": 0.0202,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    },
+    {
+     "selector": "main.min-h-screen.pb-16 > nav.site-nav > div.relative.flex.items-center",
+     "text": "polish_user",
+     "score": 0.0025,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -55,
+     "maxDh": 0,
+     "maxDw": 55
+    }
+   ],
+   "findings": [
+    {
+     "t": 11031.6,
+     "value": 0.0807,
+     "hadRecentInput": false,
+     "sources": [
+      {
+       "selector": "main.min-h-screen.pb-16 > section.mx-auto.w-full.max-w-\\[1300px\\] > div.order-1.min-w-0.lg\\:order-2 > div.plate",
+       "text": "polish_userAdd a bio0Games0Wins0Losses0DrawsEdit p...",
+       "prev": {
+        "x": 11,
+        "y": 201,
+        "w": 339,
+        "h": 579
+       },
+       "curr": {
+        "x": 11,
+        "y": 291,
+        "w": 339,
+        "h": 489
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": 90,
+       "dw": 0,
+       "dh": -90
+      },
+      {
+       "selector": "div#panel-activity > div.space-y-3.px-4.py-5 > div.skeleton > ::after",
+       "text": "",
+       "prev": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0
+       },
+       "curr": {
+        "x": 26,
+        "y": 758,
+        "w": 286,
+        "h": 22
+       },
+       "change": "entered",
+       "dx": null,
+       "dy": null,
+       "dw": null,
+       "dh": null
+      },
+      {
+       "selector": "div#panel-activity > div.space-y-3.px-4.py-5 > div.skeleton",
+       "text": "",
+       "prev": {
+        "x": 26,
+        "y": 706,
+        "w": 309,
+        "h": 28
+       },
+       "curr": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0
+       },
+       "change": "left",
+       "dx": null,
+       "dy": null,
+       "dw": null,
+       "dh": null
+      },
+      {
+       "selector": "div#panel-activity > div.space-y-3.px-4.py-5 > div.skeleton",
+       "text": "",
+       "prev": {
+        "x": 26,
+        "y": 745,
+        "w": 309,
+        "h": 28
+       },
+       "curr": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0
+       },
+       "change": "left",
+       "dx": null,
+       "dy": null,
+       "dw": null,
+       "dh": null
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "key": "/profile|1280x800|dark|full|user|normal",
+   "best": 0.0014,
+   "worst": 0.0014,
+   "ceiling": 0.034,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-16 > nav.site-nav > div.relative.flex.items-center",
+     "text": "polish_user",
+     "score": 0.0014,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -135,
+     "maxDh": 0,
+     "maxDw": 135
+    },
+    {
+     "selector": "nav.site-nav > div.site-nav-brand > a.\\[@media(pointer\\:fine)\\]\\:min-h-0 > span.font-display.text-\\[22px\\].font-medium",
+     "text": "nerfchess",
+     "score": 0.0006,
+     "count": 1,
+     "maxDy": -3,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": -18
+    },
+    {
+     "selector": "main.min-h-screen.pb-16 > nav.site-nav > div.site-nav-brand > div.ml-2.hidden.items-center",
+     "text": "PlayLobbyChallenge a friendPractice vs computerDai...",
+     "score": 0.0006,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -18,
+     "maxDh": 0,
+     "maxDw": -43
+    },
+    {
+     "selector": "nav.site-nav > div.relative.flex.items-center > button.relic-unread > svg",
+     "text": "",
+     "score": 0,
+     "count": 1,
+     "maxDy": -6,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/u/polish_user|360x780|dark|full|signed-out|normal",
+   "best": 0.0013,
+   "worst": 0.0013,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-16 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestProudGecko ·Sign in",
+     "score": 0.0013,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -10,
+     "maxDh": 0,
+     "maxDw": 10
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/u/polish_user|1280x800|dark|full|signed-out|normal",
+   "best": 0.0027,
+   "worst": 0.0027,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-16 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestRapidMarmot ·Sign in",
+     "score": 0.0027,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -211,
+     "maxDh": 0,
+     "maxDw": 211
+    },
+    {
+     "selector": "nav.site-nav > div.site-nav-brand > a.\\[@media(pointer\\:fine)\\]\\:min-h-0 > span.font-display.text-\\[22px\\].font-medium",
+     "text": "nerfchess",
+     "score": 0.0006,
+     "count": 1,
+     "maxDy": -3,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": -18
+    },
+    {
+     "selector": "main.min-h-screen.pb-16 > nav.site-nav > div.site-nav-brand > div.ml-2.hidden.items-center",
+     "text": "PlayLobbyChallenge a friendPractice vs computerDai...",
+     "score": 0.0006,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -18,
+     "maxDh": 0,
+     "maxDw": -43
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/u/polish_user|360x780|dark|full|user|normal",
+   "best": 0.0025,
+   "worst": 0.0025,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-16 > nav.site-nav > div.relative.flex.items-center",
+     "text": "polish_user",
+     "score": 0.0025,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -55,
+     "maxDh": 0,
+     "maxDw": 55
+    },
+    {
+     "selector": "nav.site-nav > div.relative.flex.items-center > button.relic-unread > svg",
+     "text": "",
+     "score": 0,
+     "count": 1,
+     "maxDy": -6,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/u/polish_user|1280x800|dark|full|user|normal",
+   "best": 0.0014,
+   "worst": 0.0014,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-16 > nav.site-nav > div.relative.flex.items-center",
+     "text": "polish_user",
+     "score": 0.0014,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -135,
+     "maxDh": 0,
+     "maxDw": 135
+    },
+    {
+     "selector": "nav.site-nav > div.site-nav-brand > a.\\[@media(pointer\\:fine)\\]\\:min-h-0 > span.font-display.text-\\[22px\\].font-medium",
+     "text": "nerfchess",
+     "score": 0.0006,
+     "count": 1,
+     "maxDy": -3,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": -18
+    },
+    {
+     "selector": "main.min-h-screen.pb-16 > nav.site-nav > div.site-nav-brand > div.ml-2.hidden.items-center",
+     "text": "PlayLobbyChallenge a friendPractice vs computerDai...",
+     "score": 0.0006,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -18,
+     "maxDh": 0,
+     "maxDw": -43
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/u/polish_mod|360x780|dark|full|signed-out|normal",
+   "best": 0,
+   "worst": 0,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [],
+   "findings": []
+  },
+  {
+   "key": "/u/polish_mod|1280x800|dark|full|signed-out|normal",
+   "best": 0.0028,
+   "worst": 0.0028,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-16 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestGentleKibitzer ·Sign in",
+     "score": 0.0028,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -214,
+     "maxDh": 0,
+     "maxDw": 214
+    },
+    {
+     "selector": "nav.site-nav > div.site-nav-brand > a.\\[@media(pointer\\:fine)\\]\\:min-h-0 > span.font-display.text-\\[22px\\].font-medium",
+     "text": "nerfchess",
+     "score": 0.0006,
+     "count": 1,
+     "maxDy": -3,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": -18
+    },
+    {
+     "selector": "main.min-h-screen.pb-16 > nav.site-nav > div.site-nav-brand > div.ml-2.hidden.items-center",
+     "text": "PlayLobbyChallenge a friendPractice vs computerDai...",
+     "score": 0.0006,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -18,
+     "maxDh": 0,
+     "maxDw": -43
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/u/polish_mod|360x780|dark|full|user|normal",
+   "best": 0.0025,
+   "worst": 0.0025,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-16 > nav.site-nav > div.relative.flex.items-center",
+     "text": "polish_user",
+     "score": 0.0025,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -55,
+     "maxDh": 0,
+     "maxDw": 55
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/u/polish_mod|1280x800|dark|full|user|normal",
+   "best": 0.0014,
+   "worst": 0.0014,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-16 > nav.site-nav > div.relative.flex.items-center",
+     "text": "polish_user",
+     "score": 0.0014,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -135,
+     "maxDh": 0,
+     "maxDw": 135
+    },
+    {
+     "selector": "nav.site-nav > div.site-nav-brand > a.\\[@media(pointer\\:fine)\\]\\:min-h-0 > span.font-display.text-\\[22px\\].font-medium",
+     "text": "nerfchess",
+     "score": 0.0006,
+     "count": 1,
+     "maxDy": -3,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": -18
+    },
+    {
+     "selector": "main.min-h-screen.pb-16 > nav.site-nav > div.site-nav-brand > div.ml-2.hidden.items-center",
+     "text": "PlayLobbyChallenge a friendPractice vs computerDai...",
+     "score": 0.0006,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -18,
+     "maxDh": 0,
+     "maxDw": -43
+    }
+   ],
+   "findings": []
+  }
+ ]
+}
