@@ -1,0 +1,105 @@
+{
+ "id": "twin_queens",
+ "url": "/dev/plays?id=twin_queens&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "twin_queens",
+  "name": "Twin Queens",
+  "tier": 7,
+  "category": "pieces",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:twin_queens",
+  "anchor": "aim",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 60,
+  "drive": "engine",
+  "driveNote": "activated with 2 pick(s) (position: promotion-race)",
+  "castSq": "g7",
+  "targets": [
+   "g7",
+   "h6"
+  ],
+  "picks": [
+   "g7",
+   "h6"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2554,
+  "cssEndMs": 3558,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 52,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 178,
+  "maxGapMs": 256.7
+ },
+ "raf": {
+  "frames": 210,
+  "medianMs": 16.7,
+  "maxMs": 66.7,
+  "dropped": 8
+ },
+ "longAnimationFrames": {
+  "count": 2,
+  "worstMs": 73,
+  "totalBlockingMs": 0,
+  "entries": [
+   {
+    "atMs": 26,
+    "duration": 51,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 84,
+    "duration": 73,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  195,
+  498,
+  861,
+  1270,
+  1717,
+  2196,
+  2704
+ ],
+ "png": "docs/polish-pass/evidence/TC-great/after/twin_queens.png",
+ "pngBytes": 21595,
+ "off": {
+  "url": "/dev/plays?id=twin_queens&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0.0022,
+  "endRegions": [
+   {
+    "x": 224,
+    "y": 360,
+    "w": 40,
+    "h": 56,
+    "cells": 21
+   }
+  ],
+  "png": "docs/polish-pass/evidence/TC-great/after/twin_queens.off.png"
+ }
+}
