@@ -205,3 +205,15 @@ test.describe("history", () => {
     await expect(page.getByText("Loading…")).toHaveCount(0);
   });
 });
+
+test.describe("puzzle by id", () => {
+  // F040: an unknown puzzle id used EmptyState with copy that differed from
+  // NOT_FOUND_COPY.puzzle; it is the shared not-found panel now.
+  test("an unknown puzzle id uses the shared not-found panel", async ({ page }) => {
+    await page.goto("/puzzles/not-a-real-puzzle");
+    await expect(page.getByRole("heading", { level: 1, name: "No puzzle with that id" })).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText("404")).toBeVisible();
+    await expect(page.getByRole("link", { name: "Today's puzzles" })).toBeVisible();
+    await expect(page.locator("h1")).toHaveCount(1);
+  });
+});

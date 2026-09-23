@@ -15,7 +15,8 @@ import {
   PuzzleStates,
 } from "../_components/PuzzleStates";
 import { SiteHeader } from "@/components/SiteHeader";
-import { EmptyState } from "@/components/EmptyState";
+import { NotFoundPanel } from "@/app/_components/NotFoundPanel";
+import { NOT_FOUND_COPY } from "@/app/_components/notFoundCopy";
 import type { Puzzle, PuzzleFormat } from "@/lib/puzzles/types";
 import { usePuzzleCorpus } from "@/lib/puzzles/useCorpus";
 
@@ -40,6 +41,15 @@ export default function PuzzleByIdPage() {
     corpus.puzzles.length > 1
       ? corpus.puzzles[(Math.max(0, index) + 1) % corpus.puzzles.length]
       : null;
+
+  // An id that is not in the corpus gets the site's shared not-found panel and
+  // copy (F040), the same words the root 404 uses for /puzzles/<anything>.
+  if (corpus.status === "ready" && !puzzle && id) {
+    const copy = NOT_FOUND_COPY.puzzle;
+    return (
+      <NotFoundPanel title={copy.title} detail={copy.detail} action={copy.action} secondary={copy.secondary} />
+    );
+  }
 
   return (
     <main className="min-h-screen pb-16">
@@ -83,14 +93,6 @@ export default function PuzzleByIdPage() {
               key={puzzle.id}
               puzzle={puzzle}
               nextHref={next ? `/puzzles/${next.id}` : undefined}
-            />
-          ) : id ? (
-            <EmptyState
-              glyph="♞"
-              title="No puzzle with that id"
-              body="Puzzles are regenerated in batches, so an old link can stop resolving. Today's is always one click away."
-              action={{ href: "/puzzles", label: "Today's puzzle" }}
-              secondary={{ href: "/play", label: "Play the computer" }}
             />
           ) : (
             <PuzzleSkeleton />
