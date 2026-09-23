@@ -31,14 +31,14 @@ export async function fetchPage(path: string, ua = BOT_UA, timeoutMs = 60_000): 
 
 /** fetch() that survives the shared dev server being restarted by its
  *  supervisor mid-crawl: a refused connection waits for the server to answer
- *  again (up to 5 minutes) and retries, twice at most. An HTTP error status is
+ *  again (up to 5 minutes) and retries, five times at most. An HTTP error status is
  *  returned as is; only a dead socket is retried. */
 export async function fetchRetry(url: string, init: RequestInit = {}): Promise<Response> {
   for (let attempt = 0; ; attempt++) {
     try {
       return await fetch(url, attempt ? { ...init, signal: AbortSignal.timeout(60_000) } : init);
     } catch (e) {
-      if (attempt >= 2) throw e;
+      if (attempt >= 5) throw e;
       await waitForServer();
     }
   }
@@ -120,7 +120,7 @@ export const first = (h: Head, key: string): string | undefined => h.meta.get(ke
 
 /** Every <loc> of the dev server's sitemap, as a site path. */
 export async function sitemapPaths(): Promise<string[]> {
-  const res = await fetch(`${BASE}/sitemap.xml`, { signal: AbortSignal.timeout(120_000) });
+  const res = await fetchRetry(`${BASE}/sitemap.xml`, { signal: AbortSignal.timeout(120_000) });
   if (!res.ok) throw new Error(`sitemap.xml answered ${res.status}`);
   const xml = await res.text();
   return [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => {

@@ -1,0 +1,38 @@
+{
+  "note": "JSON-LD emitters and the @types they declare at HEAD before slice E2 (git show HEAD).",
+  "emitters": {
+    "src/app/faq/page.tsx": [
+      "Answer",
+      "FAQPage",
+      "Question"
+    ],
+    "src/app/guide/glossary/page.tsx": [
+      "DefinedTerm",
+      "DefinedTermSet"
+    ],
+    "src/app/guide/shared.tsx": [
+      "Answer",
+      "BreadcrumbList",
+      "FAQPage",
+      "ListItem",
+      "Question"
+    ],
+    "src/app/layout.tsx": [
+      "EntryPoint",
+      "Offer",
+      "Organization",
+      "QuantitativeValue",
+      "SearchAction",
+      "VideoGame",
+      "WebSite"
+    ],
+    "src/app/tutorial/page.tsx": [
+      "HowTo",
+      "HowToStep"
+    ],
+    "src/components/codex/CardDetail.tsx": [
+      "BreadcrumbList",
+      "ListItem"
+    ]
+  }
+}

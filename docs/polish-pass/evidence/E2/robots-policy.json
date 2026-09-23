@@ -1,0 +1,48 @@
+{
+  "note": "ROBOTS_EXPECT (scripts/polish/lib/seoCrawl.ts) evaluated against robots.ts at HEAD and now; listed rows are violations.",
+  "before": [
+    {
+      "ua": "Twitterbot/1.0",
+      "path": "/game/ABCDE",
+      "allowed": true,
+      "got": false
+    },
+    {
+      "ua": "Twitterbot/1.0",
+      "path": "/game/ABCDE/opengraph-image/card",
+      "allowed": true,
+      "got": false
+    },
+    {
+      "ua": "Slackbot-LinkExpanding 1.0",
+      "path": "/game/ABCDE",
+      "allowed": true,
+      "got": false
+    },
+    {
+      "ua": "Twitterbot/1.0",
+      "path": "/settings",
+      "allowed": false,
+      "got": true
+    },
+    {
+      "ua": "Googlebot/2.1",
+      "path": "/c/ABCDE",
+      "allowed": false,
+      "got": true
+    },
+    {
+      "ua": "Googlebot/2.1",
+      "path": "/settings/board",
+      "allowed": false,
+      "got": true
+    },
+    {
+      "ua": "SomeNewBot/1.0",
+      "path": "/settings",
+      "allowed": false,
+      "got": true
+    }
+  ],
+  "after": []
+}

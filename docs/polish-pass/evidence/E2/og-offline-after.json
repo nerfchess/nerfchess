@@ -1,0 +1,324 @@
+{
+  "tiles": [
+    {
+      "route": "/",
+      "note": null,
+      "bytes": 99155,
+      "width": 1200,
+      "height": 630,
+      "ms": 967
+    },
+    {
+      "route": "/play",
+      "note": null,
+      "bytes": 85076,
+      "width": 1200,
+      "height": 630,
+      "ms": 346
+    },
+    {
+      "route": "/lobby",
+      "note": null,
+      "bytes": 88302,
+      "width": 1200,
+      "height": 630,
+      "ms": 285
+    },
+    {
+      "route": "/codex/suggest",
+      "note": null,
+      "bytes": 77252,
+      "width": 1200,
+      "height": 630,
+      "ms": 310
+    },
+    {
+      "route": "/updates",
+      "note": null,
+      "bytes": 78558,
+      "width": 1200,
+      "height": 630,
+      "ms": 256
+    },
+    {
+      "route": "/tutorial",
+      "note": null,
+      "bytes": 86541,
+      "width": 1200,
+      "height": 630,
+      "ms": 265
+    },
+    {
+      "route": "/tutorial/walkthrough",
+      "note": null,
+      "bytes": 72832,
+      "width": 1200,
+      "height": 630,
+      "ms": 259
+    },
+    {
+      "route": "/tutorial/first-game",
+      "note": null,
+      "bytes": 71850,
+      "width": 1200,
+      "height": 630,
+      "ms": 250
+    },
+    {
+      "route": "/guide",
+      "note": null,
+      "bytes": 83892,
+      "width": 1200,
+      "height": 630,
+      "ms": 260
+    },
+    {
+      "route": "/guide/how-to-play",
+      "note": null,
+      "bytes": 76533,
+      "width": 1200,
+      "height": 630,
+      "ms": 248
+    },
+    {
+      "route": "/guide/nerf-mode",
+      "note": null,
+      "bytes": 87292,
+      "width": 1200,
+      "height": 630,
+      "ms": 239
+    },
+    {
+      "route": "/guide/buff-mode",
+      "note": null,
+      "bytes": 89549,
+      "width": 1200,
+      "height": 630,
+      "ms": 263
+    },
+    {
+      "route": "/guide/chess-with-power-ups",
+      "note": null,
+      "bytes": 80797,
+      "width": 1200,
+      "height": 630,
+      "ms": 234
+    },
+    {
+      "route": "/guide/capture-the-king",
+      "note": null,
+      "bytes": 89023,
+      "width": 1200,
+      "height": 630,
+      "ms": 263
+    },
+    {
+      "route": "/guide/chess-roguelike",
+      "note": null,
+      "bytes": 89965,
+      "width": 1200,
+      "height": 630,
+      "ms": 286
+    },
+    {
+      "route": "/guide/chess-variants",
+      "note": null,
+      "bytes": 78213,
+      "width": 1200,
+      "height": 630,
+      "ms": 243
+    },
+    {
+      "route": "/guide/glossary",
+      "note": null,
+      "bytes": 75324,
+      "width": 1200,
+      "height": 630,
+      "ms": 235
+    },
+    {
+      "route": "/about",
+      "note": null,
+      "bytes": 80257,
+      "width": 1200,
+      "height": 630,
+      "ms": 269
+    },
+    {
+      "route": "/faq",
+      "note": null,
+      "bytes": 84800,
+      "width": 1200,
+      "height": 630,
+      "ms": 251
+    },
+    {
+      "route": "/tournaments",
+      "note": null,
+      "bytes": 76629,
+      "width": 1200,
+      "height": 630,
+      "ms": 301
+    },
+    {
+      "route": "/clubs",
+      "note": null,
+      "bytes": 73923,
+      "width": 1200,
+      "height": 630,
+      "ms": 236
+    },
+    {
+      "route": "/community",
+      "note": null,
+      "bytes": 75576,
+      "width": 1200,
+      "height": 630,
+      "ms": 246
+    },
+    {
+      "route": "/tv",
+      "note": null,
+      "bytes": 79193,
+      "width": 1200,
+      "height": 630,
+      "ms": 277
+    },
+    {
+      "route": "/achievements",
+      "note": null,
+      "bytes": 74148,
+      "width": 1200,
+      "height": 630,
+      "ms": 235
+    },
+    {
+      "route": "/analysis",
+      "note": null,
+      "bytes": 69085,
+      "width": 1200,
+      "height": 630,
+      "ms": 262
+    },
+    {
+      "route": "/codex",
+      "note": null,
+      "bytes": 76356,
+      "width": 1200,
+      "height": 630,
+      "ms": 302
+    },
+    {
+      "route": "/codex/buff/pawn_push",
+      "note": null,
+      "bytes": 69767,
+      "width": 1200,
+      "height": 630,
+      "ms": 58
+    },
+    {
+      "route": "/codex/boon/extra_glance",
+      "note": null,
+      "bytes": 59222,
+      "width": 1200,
+      "height": 630,
+      "ms": 53
+    },
+    {
+      "route": "/codex/hex/heavy_boots",
+      "note": null,
+      "bytes": 62084,
+      "width": 1200,
+      "height": 630,
+      "ms": 54
+    },
+    {
+      "route": "/codex/nerf/lucky",
+      "note": null,
+      "bytes": 55736,
+      "width": 1200,
+      "height": 630,
+      "ms": 47
+    },
+    {
+      "route": "/puzzles",
+      "note": null,
+      "bytes": 84059,
+      "width": 1200,
+      "height": 630,
+      "ms": 244
+    },
+    {
+      "route": "/puzzles/kh-1llz0yx",
+      "note": null,
+      "bytes": 81831,
+      "width": 1200,
+      "height": 630,
+      "ms": 220
+    },
+    {
+      "route": "/game/[id] finished",
+      "note": "sample data",
+      "bytes": 84237,
+      "width": 1200,
+      "height": 630,
+      "ms": 279
+    },
+    {
+      "route": "/game/[id] live",
+      "note": "sample data",
+      "bytes": 71874,
+      "width": 1200,
+      "height": 630,
+      "ms": 282
+    },
+    {
+      "route": "/u/[username]",
+      "note": "sample data",
+      "bytes": 65565,
+      "width": 1200,
+      "height": 630,
+      "ms": 56
+    },
+    {
+      "route": "/c/[code] challenge",
+      "note": "sample data",
+      "bytes": 81781,
+      "width": 1200,
+      "height": 630,
+      "ms": 287
+    },
+    {
+      "route": "/c/[code] unknown",
+      "note": "no data",
+      "bytes": 75515,
+      "width": 1200,
+      "height": 630,
+      "ms": 265
+    },
+    {
+      "route": "/clubs/[slug]",
+      "note": "sample data",
+      "bytes": 79689,
+      "width": 1200,
+      "height": 630,
+      "ms": 256
+    },
+    {
+      "route": "/tournaments/[id]",
+      "note": "sample data",
+      "bytes": 81114,
+      "width": 1200,
+      "height": 630,
+      "ms": 280
+    },
+    {
+      "route": "/leaderboard",
+      "note": "sample data",
+      "bytes": 82791,
+      "width": 1200,
+      "height": 630,
+      "ms": 252
+    }
+  ]
+}
