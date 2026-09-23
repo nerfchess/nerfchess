@@ -8,6 +8,7 @@ import { NerfGame, legalMoves, newGame, playMove, resign } from "../src/engine/g
 import { makeSeed, RNG } from "../src/engine/rng";
 import { Color } from "../src/engine/types";
 import { censorText, findProfanity } from "../src/lib/profanity";
+import { SEAT_SUPERSEDED_CLOSE } from "../src/lib/socketProtocol";
 import WebSocket, { RawData, WebSocketServer } from "ws";
 
 type Result = NerfGame["result"];
@@ -133,7 +134,9 @@ function playersPayload() {
 function attachClient(match: Match, client: Client, color: Color) {
   const existing = match.clients[color];
   if (existing && existing !== client && existing.readyState === WebSocket.OPEN) {
-    existing.close(1000, "Reconnected from another tab");
+    // Same close code as the Durable Object (F082): the old tab must not
+    // auto-reconnect and steal the seat back.
+    existing.close(SEAT_SUPERSEDED_CLOSE, "Seat opened in another tab");
   }
   client.matchId = match.id;
   client.color = color;

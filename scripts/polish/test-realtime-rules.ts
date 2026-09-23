@@ -30,6 +30,10 @@ async function main() {
   }
 
   const worker = readFileSync(process.env.POLISH_WORKER_PATH ?? join(__dirname, "..", "..", "worker.ts"), "utf8");
+  // Everything below reads the worker.ts source (the Durable Object does not
+  // run under next dev), so each label says "source check" to keep it apart
+  // from the behavioural checks above.
+  const src = (cond: boolean, label: string) => ok(cond, `source check: ${label}`);
   const fn = (name: string) => {
     const start = worker.indexOf(`private async ${name}(`);
     if (start < 0) return "";
@@ -39,31 +43,38 @@ async function main() {
 
   const offer = fn("offerTakeback");
   const accept = fn("acceptTakeback");
-  ok(/match\.takebackToPly = match\.moves\.length - this\.takebackPlies/.test(offer), "a takeback offer pins the ply it rewinds to (F086)");
-  ok(/match\.takebackToPly/.test(accept) && /match\.moves\.length - target/.test(accept), "accepting rewinds to the pinned ply, not a recomputed one (F086)");
+  src(/match\.takebackToPly = match\.moves\.length - this\.takebackPlies/.test(offer), "a takeback offer pins the ply it rewinds to (F086)");
+  src(/match\.takebackToPly/.test(accept) && /match\.moves\.length - target/.test(accept), "accepting rewinds to the pinned ply, not a recomputed one (F086)");
 
   const play = fn("playClientMove");
-  ok(/finishOnFlag\(match, receivedAt\)/.test(play), "the move's flag check uses the arrival time (F088)");
-  ok(/commitMove\([^)]*receivedAt\)/.test(play), "the move's clock bank uses the same arrival time (F088)");
+  src(/finishOnFlag\(match, receivedAt\)/.test(play), "the move's flag check uses the arrival time (F088)");
+  src(/commitMove\([^)]*receivedAt\)/.test(play), "the move's clock bank uses the same arrival time (F088)");
 
   const schat = fn("spectatorChatMessage");
-  ok(/seatedInLiveGame\(match, session\)/.test(schat), "a seated player cannot post spectator chat in their live game (F083)");
-  ok(/skipSeated && this\.seatedInLiveGame/.test(worker), "spectator chat fan-out skips seated players (F083)");
-  ok(/spectatorChat: this\.seatedInLiveGame\(/.test(worker), "the watch start frame hides spectator chat from seated players (F083)");
+  src(/seatedInLiveGame\(match, session\)/.test(schat), "a seated player cannot post spectator chat in their live game (F083)");
+  src(/skipSeated && this\.seatedInLiveGame/.test(worker), "spectator chat fan-out skips seated players (F083)");
+  src(/spectatorChat: this\.seatedInLiveGame\(/.test(worker), "the watch start frame hides spectator chat from seated players (F083)");
 
   const chat = fn("chatMessage");
-  ok(/cleanText\(/.test(chat) && !/raw\.slice\(0, 200\)/.test(chat), "player chat goes through cleanText, not a UTF-16 slice (F052, F053)");
-  ok(/cleanText\(/.test(schat) && !/raw\.slice\(0, 200\)/.test(schat), "spectator chat goes through cleanText (F052, F053)");
+  src(/cleanText\(/.test(chat) && !/raw\.slice\(0, 200\)/.test(chat), "player chat goes through cleanText, not a UTF-16 slice (F052, F053)");
+  src(/cleanText\(/.test(schat) && !/raw\.slice\(0, 200\)/.test(schat), "spectator chat goes through cleanText (F052, F053)");
 
-  ok(!/timeSec > 7200/.test(worker), "no clock bound literal is left in worker.ts (F078)");
-  ok((worker.match(/clockWithin\(timeSec, incrementSec, (CUSTOM_GAME_CLOCK|TOURNAMENT_CLOCK)\)/g) ?? []).length === 3, "all three clock checks use src/lib/clockBounds.ts (F078)");
+  src(!/timeSec > 7200/.test(worker), "no clock bound literal is left in worker.ts (F078)");
+  src((worker.match(/clockWithin\(timeSec, incrementSec, (CUSTOM_GAME_CLOCK|TOURNAMENT_CLOCK)\)/g) ?? []).length === 3, "all three clock checks use src/lib/clockBounds.ts (F078)");
 
   const serializedAfter = (field: string) =>
     new RegExp(`session\\.${field} = [^;]+;\\s*(//[^\\n]*\\n\\s*)*ws\\.serializeAttachment\\(session\\);`).test(worker);
-  ok(serializedAfter("seeOppBuffs"), "the see-opponent-buffs toggle survives a hibernation wake (F091)");
-  ok(serializedAfter("godRerolls"), "the infinite-rerolls toggle survives a hibernation wake (F091)");
-  ok(serializedAfter("lastClockAdjustAt"), "the clock-adjust debounce survives a hibernation wake (F091)");
+  src(serializedAfter("seeOppBuffs"), "the see-opponent-buffs toggle survives a hibernation wake (F091)");
+  src(serializedAfter("godRerolls"), "the infinite-rerolls toggle survives a hibernation wake (F091)");
+  src(serializedAfter("lastClockAdjustAt"), "the clock-adjust debounce survives a hibernation wake (F091)");
 
+
+  src(
+    /if \(match\.rated && match\.users\.w\?\.id && match\.users\.w\.id === match\.users\.b\?\.id\) match\.rated = false;/.test(fn("attachSession")),
+    "seating the same account on both seats drops the rated flag, so no rated badge (F080 review round 1)",
+  );
+  const preview = worker.slice(worker.indexOf("private ratingPreview("), worker.indexOf("private startPayload("));
+  src(/match\.users\.w\.id === match\.users\.b\.id\) return null/.test(preview), "ratingPreview shows no +N / -N for a same-account game (F080 review round 1)");
   if (failures) {
     console.log(`\n${failures} failure(s)`);
     process.exit(1);

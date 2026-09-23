@@ -115,7 +115,7 @@ import { isGodPanelUser, INFINITE_REROLLS } from "./src/lib/godPanel";
 import { GLICKO_DEFAULT, glickoUpdatePair, isProvisional } from "./src/lib/glicko";
 import {
   MATCH_CREATE_LIMITS,
-  WindowLimiter,
+  MatchCreateLimiter,
   checkClientFrame,
   newFrameBudget,
   spendFrame,
@@ -417,8 +417,11 @@ type SessionAttachment = {
   // The account is a guest (users.is_guest), read at upgrade. Only used to
   // split the internal human online count (/mod/online).
   guest?: boolean;
-  // FNV-1a digest of the client address at upgrade (never the address
-  // itself), the key for the per-address match-creation limit (F067).
+  // Unsalted 32-bit FNV-1a digest of the client address at upgrade, the key
+  // for the per-address match-creation limit (F067, anonymous and guest
+  // sockets only). It keeps the raw address out of the attachment, but it is
+  // not anonymisation: the IPv4 space is small enough to reverse it. It lives
+  // only on the in-memory socket attachment and is never stored or logged.
   addr?: string;
   // Chat mute (moderation): timestamp the mute expires, read at connect time.
   mutedUntil?: number;
@@ -1170,19 +1173,16 @@ export class GameServer extends DurableObject<Env> {
   // wake starts every socket with a full bucket, which only ever errs toward
   // letting a real player through.
   private frameBudgets = new Map<WebSocket, FrameBudget>();
-  // New matches per account and per client address (F067): every friend game
-  // or bot game is a durable record the alarm and lobby passes scan, and a
-  // script could open sockets in a loop to create them without end.
-  private createsByAccount = new WindowLimiter(MATCH_CREATE_LIMITS.perAccount, MATCH_CREATE_LIMITS.windowMs);
-  private createsByAddress = new WindowLimiter(MATCH_CREATE_LIMITS.perAddress, MATCH_CREATE_LIMITS.windowMs);
+  // New matches per account, and per client address for anonymous and guest
+  // sockets only (F067): every friend game or bot game is a durable record the
+  // alarm and lobby passes scan, and a script could open sockets in a loop to
+  // create them without end. See MatchCreateLimiter for who spends what.
+  private createLimiter = new MatchCreateLimiter(MATCH_CREATE_LIMITS);
 
-  // Spend one match creation for this socket's account and address. False
-  // means the caller must refuse (and has already been told why).
+  // Spend one match creation for this socket. False means the caller must
+  // refuse (and has already been told why); a refusal spends nothing.
   private allowMatchCreate(ws: WebSocket, session: SessionAttachment): boolean {
-    const now = Date.now();
-    const byAccount = session.userId ? this.createsByAccount.take([session.userId], now) : true;
-    const byAddress = byAccount && session.addr ? this.createsByAddress.take([session.addr], now) : byAccount;
-    if (byAccount && byAddress) return true;
+    if (this.createLimiter.take(session, Date.now())) return true;
     error(ws, "too_many_games", "Too many new games in a short time. Try again in a few minutes.");
     return false;
   }
@@ -2369,6 +2369,11 @@ export class GameServer extends DurableObject<Env> {
         ...(match.users ?? {}),
         [color]: { id: session.userId, name: session.username, rating, rd, vol, avatar },
       };
+      // One account on both seats (its own rated challenge taken from a second
+      // tab) never moves ratings (F080, countsForRating). Drop the rated flag
+      // here too, so the start frames, the rated badge and the "+N / -N"
+      // preview do not promise a rating change that will never happen.
+      if (match.rated && match.users.w?.id && match.users.w.id === match.users.b?.id) match.rated = false;
     } else if (match.users?.[color]?.id) {
       // Returning seat: re-read its rating so every start frame this player
       // receives shows the live number for this game's own rating bucket
@@ -2580,6 +2585,8 @@ export class GameServer extends DurableObject<Env> {
   // players can see what a win/draw/loss is worth ("+8 / +0 / -8").
   private ratingPreview(match: StoredMatch): Record<Color, { win: number; draw: number; loss: number }> | null {
     if (!match.rated || !match.users?.w || !match.users?.b) return null;
+    // Same account on both seats: unrated (F080), so there is nothing to preview.
+    if (match.users.w.id === match.users.b.id) return null;
     const w = { rating: match.users.w.rating, rd: match.users.w.rd ?? GLICKO_DEFAULT.rd, vol: match.users.w.vol ?? GLICKO_DEFAULT.vol };
     const b = { rating: match.users.b.rating, rd: match.users.b.rd ?? GLICKO_DEFAULT.rd, vol: match.users.b.vol ?? GLICKO_DEFAULT.vol };
     const whiteWins = glickoUpdatePair(w, b, 1);

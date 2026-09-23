@@ -19,10 +19,13 @@ export type FrameCheck =
  * reach `frame.t` on null or a primitive and throw out of webSocketMessage.
  */
 export function checkClientFrame(message: ArrayBuffer | string, maxBytes = MAX_CLIENT_FRAME_BYTES): FrameCheck {
-  // A JS string's length is UTF-16 units; one unit is at most 3 UTF-8 bytes,
-  // so length * 3 bounds the byte size without encoding anything.
+  // A JS string's length is UTF-16 units, and each unit is 1 to 3 UTF-8
+  // bytes (a surrogate pair is 4 bytes for 2 units). So length > maxBytes is
+  // always too large, length * 3 <= maxBytes is always fine, and only the
+  // band between needs the exact encoded size.
   if (typeof message === "string") {
-    if (message.length > maxBytes && new TextEncoder().encode(message).byteLength > maxBytes) {
+    if (message.length > maxBytes) return { ok: false, code: "frame_too_large" };
+    if (message.length * 3 > maxBytes && new TextEncoder().encode(message).byteLength > maxBytes) {
       return { ok: false, code: "frame_too_large" };
     }
   } else if (message.byteLength > maxBytes) {
@@ -93,6 +96,18 @@ export class WindowLimiter {
     private readonly maxKeys = 10_000,
   ) {}
 
+  /** True when `key` is under the limit right now. Records nothing. */
+  allows(key: string, now: number): boolean {
+    const from = now - this.windowMs;
+    return (this.hits.get(key) ?? []).filter((at) => at > from).length < this.limit;
+  }
+
+  /** How many live hits `key` holds in the window (tests and diagnostics). */
+  count(key: string, now: number): number {
+    const from = now - this.windowMs;
+    return (this.hits.get(key) ?? []).filter((at) => at > from).length;
+  }
+
   /** Record one hit for every key if all of them are under the limit.
    *  Returns false (and records nothing) when any key is at the limit. */
   take(keys: string[], now: number): boolean {
@@ -136,3 +151,35 @@ export const MATCH_CREATE_LIMITS = {
   perAccount: 20,
   perAddress: 40,
 } as const;
+
+/** Who is asking to create a match, as the socket attachment knows it. */
+export type MatchCreator = { userId?: string; guest?: boolean; addr?: string };
+
+/**
+ * The match creation limit (F067). A full account is limited per account
+ * only: many real people can share one address (a school, an office, a
+ * carrier NAT), and one of them must not be able to lock the rest out. The
+ * address bucket covers only callers who can mint new identities for free,
+ * which are anonymous sockets and guest accounts (/api/auth/guest). A guest
+ * spends both its own bucket and its address bucket. Both limits are checked
+ * before either is recorded, so a refused create uses up nothing.
+ */
+export class MatchCreateLimiter {
+  readonly byAccount: WindowLimiter;
+  readonly byAddress: WindowLimiter;
+  constructor(limits: { windowMs: number; perAccount: number; perAddress: number } = MATCH_CREATE_LIMITS) {
+    this.byAccount = new WindowLimiter(limits.perAccount, limits.windowMs);
+    this.byAddress = new WindowLimiter(limits.perAddress, limits.windowMs);
+  }
+
+  /** Spend one creation for this caller, or return false and spend nothing. */
+  take(who: MatchCreator, now: number): boolean {
+    const account = who.userId || undefined;
+    const address = who.addr && (!account || who.guest) ? who.addr : undefined;
+    if (account && !this.byAccount.allows(account, now)) return false;
+    if (address && !this.byAddress.allows(address, now)) return false;
+    if (account) this.byAccount.take([account], now);
+    if (address) this.byAddress.take([address], now);
+    return true;
+  }
+}

@@ -992,6 +992,9 @@ export class MPSession {
       case "created":
         this.code = frame.d.id;
         this.seat = { id: frame.d.id, color: frame.d.color, token: frame.d.token };
+        // This socket now holds the seat, so a stale superseded flag from an
+        // earlier seat must not keep auto-reconnect off for this one.
+        this.superseded = false;
         this.reconnectAttempt = 0;
         if (this.persistFriendSession) {
           saveFriendSession({ id: frame.d.id, color: frame.d.color, token: frame.d.token });
@@ -1001,6 +1004,9 @@ export class MPSession {
       case "start":
         this.code = frame.d.id;
         this.seat = { id: frame.d.id, color: frame.d.color, token: frame.d.token };
+        // This socket now holds the seat, so a stale superseded flag from an
+        // earlier seat must not keep auto-reconnect off for this one.
+        this.superseded = false;
         this.reconnectAttempt = 0;
         if (this.persistFriendSession) {
           saveFriendSession({ id: frame.d.id, color: frame.d.color, token: frame.d.token });
@@ -1030,6 +1036,9 @@ export class MPSession {
         // are not persisted here as friend sessions; /game/[id] reclaims them
         // via the saved online seat.
         this.seat = { id: frame.d.id, color: frame.d.color, token: frame.d.token };
+        // This socket now holds the seat, so a stale superseded flag from an
+        // earlier seat must not keep auto-reconnect off for this one.
+        this.superseded = false;
         this.searching = false;
         this.reconnectAttempt = 0;
         this.emit({ type: "paired", id: frame.d.id, color: frame.d.color, token: frame.d.token });
@@ -1190,6 +1199,8 @@ export class MPSession {
   async resume(saved: MPSavedSession): Promise<void> {
     this.code = saved.id;
     this.seat = saved;
+    // Resuming is the reader asking for this seat, the same as reclaim().
+    this.superseded = false;
     await this.connect();
     return new Promise((resolve, reject) => {
       const off = this.on((event) => {

@@ -203,6 +203,36 @@ async function main() {
     ok(sockets.length === 4, "reclaim() opens a new socket and claims the seat");
   }
 
+  // Review round 1: a session that was superseded and is then reused for a
+  // NEW seat must get auto-reconnect back for that game. The flag used to be
+  // cleared only by reclaim(), so a new seat from created/start/paired kept
+  // reconnects and resync() off for the whole next game.
+  const latest = sockets[sockets.length - 1];
+  latest.serverClose(code);
+  advance(60000);
+  await flush();
+  ok(session.isSuperseded(), "the session is superseded again before the new game");
+  const countBefore = sockets.length;
+  const joined = session.join("g2");
+  advance(20);
+  await flush();
+  const joinSock = sockets[sockets.length - 1];
+  ok(sockets.length === countBefore + 1 && joinSock.sent.some((s) => s.includes('"join"')), "join opens a socket for the new game");
+  joinSock.onmessage?.({
+    data: JSON.stringify({ t: "start", d: { id: "g2", color: "b", token: "tok2" } }),
+  });
+  await joined.catch(() => {});
+  await flush();
+  ok(!session.isSuperseded(), "a new seat (start frame) clears the superseded state");
+  joinSock.serverClose(1006);
+  advance(20000);
+  await flush();
+  advance(20);
+  await flush();
+  ok(sockets.length === countBefore + 2, "an ordinary drop in the new game reconnects on its own");
+  const rejoin = sockets[sockets.length - 1];
+  ok(!!rejoin && rejoin.sent.some((s) => s.includes('"reconnect"') && s.includes("g2")), "the reconnect claims the new seat");
+
   session.destroy();
   if (failures) {
     console.log(`\n${failures} failure(s)`);
