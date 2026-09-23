@@ -1,0 +1,25 @@
+e2e/polish/game-id-states.spec.ts on the shared dev server (webpack), 2026-09-23.
+The game server socket is answered by Playwright WebSocket routing (watch -> error not_found),
+the arena lobby is answered empty, /api/games/<id> is mocked (404, 503, or a stored game).
+
+F007: board box in the connecting frame vs the replay view (GameShell), x,y and width in px.
+  before (the connecting skeleton as it was, same classes as HEAD's inline one: an 18px status
+  line, 28px player rows):
+    phone 390x844   connecting 11,98 w369   replay 11,142 w369   board drops 44px on swap
+    desktop 1280x800 connecting 61,113 w720  replay 61,136 w720   board drops 23px on swap
+  pieces (measured): status line 18px vs meta row 47px (phone, two lines) / 24px (desktop);
+  player row 28px vs BoardPlayerRow 43px (phone) / 46px (desktop).
+  after (meta row built like GameShell's, player rows in BoardPlayerRow's box):
+    phone   {"connecting":{"header":45,"board":{"x":11,"y":142,"w":369}},"replay":{"header":45,"board":{"x":11,"y":142,"w":369}}}
+    desktop {"connecting":{"header":60,"board":{"x":61,"y":136,"w":720}},"replay":{"header":60,"board":{"x":61,"y":136,"w":720}}}
+
+F029: unknown id and archive down.
+  before (HEAD source): an id that neither the socket nor the archive knows renders
+  "That game has wrapped up ... Taking you back to the lobby in 6s" and router.replace("/lobby");
+  the spec's first test fails on it by construction (no "No game with that id" heading, the URL
+  becomes /lobby after 6s). An archive 503 was treated as "no stored copy" and took the same path.
+  after: 4 of 4 pass (retries only for dev server restarts during the run):
+    an id nobody knows shows the not-found panel and stays on the page     passed (URL still /game/NOSUCH1 at 8s)
+    an archive that does not answer is an error with Retry, not a 404       passed
+    connecting frame and replay share the board box, phone                 passed
+    connecting frame and replay share the board box, desktop                passed

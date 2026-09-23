@@ -1,37 +1,11 @@
-// Branded route skeleton for /game and /game/[id]: a board-shaped shimmer
-// with player rows and a side panel, shown while the game page chunk loads.
+// Route skeleton for /game and /game/[id]: the same game frame the pages show
+// while a game is being found (the compact header, a status line, the board
+// column and the move-list column), so the page chunk swaps in without the
+// header or the board moving. It used to be a separate drawing with the full
+// header's stand-in, a 1152px column and inline 1px radii.
 
-import { SkeletonHeader } from "@/components/ui/Skeleton";
+import { GameFrameSkeleton } from "./GameSkeleton";
 
 export default function Loading() {
-  return (
-    <main className="min-h-screen pb-16">
-      <SkeletonHeader />
-      <section className="mx-auto max-w-6xl px-5 py-6 sm:px-6">
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
-          <div className="mx-auto w-full max-w-2xl">
-            <div className="flex items-center gap-2.5">
-              <div className="skeleton h-9 w-9 rounded-full" style={{ borderRadius: "50%" }} />
-              <div className="skeleton h-5 w-32 rounded-[1px]" style={{ borderRadius: 1 }} />
-              <div className="skeleton ml-auto h-8 w-20 rounded-[1px]" style={{ borderRadius: 1 }} />
-            </div>
-            <div className="skeleton mt-3 aspect-square w-full rounded-[1px]" style={{ borderRadius: 1 }} />
-            <div className="mt-3 flex items-center gap-2.5">
-              <div className="skeleton h-9 w-9 rounded-full" style={{ borderRadius: "50%" }} />
-              <div className="skeleton h-5 w-32 rounded-[1px]" style={{ borderRadius: 1 }} />
-              <div className="skeleton ml-auto h-8 w-20 rounded-[1px]" style={{ borderRadius: 1 }} />
-            </div>
-          </div>
-          <div className="plate hidden h-fit p-5 lg:block">
-            <div className="skeleton h-5 w-24 rounded-[1px]" style={{ borderRadius: 1 }} />
-            <div className="mt-4 space-y-2">
-              {Array.from({ length: 10 }).map((_, i) => (
-                <div key={i} className="skeleton h-6 rounded-[1px]" style={{ borderRadius: 1 }} />
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-    </main>
-  );
+  return <GameFrameSkeleton label="Loading the game…" />;
 }

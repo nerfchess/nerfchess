@@ -83,6 +83,7 @@ import { cloneBoard, findKing, isInCheck, makeMove, moveToUCI } from "@/engine/b
 import { useDeferredMoveRisks } from "@/lib/useDeferredMoveRisks";
 import { SETTINGS_CHANGED_EVENT, loadSettings } from "@/lib/settings";
 import { CompactSiteHeader } from "@/components/SiteHeader";
+import { GameFrameSkeleton } from "./GameSkeleton";
 import { useZenHotkey } from "@/lib/useZenMode";
 import { ensureAccount } from "@/lib/authClient";
 import type { QueuedPremove } from "@/components/Board";
@@ -152,7 +153,7 @@ function dealNerfOptions(exclude: Set<string>): Nerf[] {
 
 // Starting a local bot game is real engagement, so it mints a guest account
 // (fire-and-forget) to make engaged visitors visible in the moderators' guest
-// counts — see the effect below. Module-level so remounts (color swaps,
+// counts, see the effect below. Module-level so remounts (color swaps,
 // rematches, strict-mode double effects) never re-trigger it: at most one
 // ensure per page load.
 let ensuredAccountForBotGame = false;
@@ -204,21 +205,13 @@ export default function GamePageWrapper() {
   );
 }
 
+// The bot game before its first position is dealt: the shared game frame
+// (compact header, status line, board and move-list columns) with the status
+// saying what is happening. It was three bouncing dots and "Dealing the cards"
+// centred on an empty page with no header (F020), which is also what a hard
+// load painted until the game bootstrapped.
 function LoadingPanel() {
-  return (
-    <main className="min-h-screen flex items-center justify-center px-6">
-      <div className="relative flex flex-col items-center">
-        <div className="flex gap-1.5 mb-3">
-          <span className="w-2 h-2 rounded-full bg-gold-leaf animate-bob" />
-          <span className="w-2 h-2 rounded-full bg-verdigris-glow animate-bob" style={{ animationDelay: "0.15s" }} />
-          <span className="w-2 h-2 rounded-full bg-bruise-glow animate-bob" style={{ animationDelay: "0.3s" }} />
-        </div>
-        <div className="font-display text-xl text-parchment">
-          Dealing the cards
-        </div>
-      </div>
-    </main>
-  );
+  return <GameFrameSkeleton label="Dealing the cards…" />;
 }
 
 function GamePage({ onRematch }: { onRematch: () => void }) {
@@ -257,7 +250,7 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
     return Number.isFinite(inc) && inc > 0 ? inc * 1000 : 0;
   }, [params]);
   const clockEnabled = initialTimeMs > 0;
-  // Which independent rating bucket a rated result counts toward — derived
+  // Which independent rating bucket a rated result counts toward, derived
   // from the chosen time control, exactly like online games.
   const ratingCategory = categoryForTimeControl(initialTimeMs / 1000, incrementMs / 1000);
 
@@ -281,7 +274,7 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
   const [offerDeadline, setOfferDeadline] = useState<number | null>(null);
   const [offerPausedAt, setOfferPausedAt] = useState<number | null>(null);
   // Offer index whose free lock-in window has expired: the draft panel moves
-  // aside, the board comes back into view, and the clock resumes — the rest
+  // aside, the board comes back into view, and the clock resumes, the rest
   // of the deliberation costs the player's own time.
   const [offerOnClockIndex, setOfferOnClockIndex] = useState<number | null>(null);
   const [, force] = useState(0);
@@ -416,7 +409,7 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
     if (diffActive && !diffSavedClocksRef.current) {
       // Stash the LIVE remaining time, not the banked value. whiteMs/blackMs
       // are only banked when a move commits, and a diff is started by a buff
-      // ACTIVATION — commitClock never ran — so the mover can have been
+      // ACTIVATION, commitClock never ran, so the mover can have been
       // thinking for a while. Saving the banked figure handed all of that time
       // back when the diff resolved. remainingClock is the same helper the
       // display uses, and the server does the equivalent (applyDiffTransitions
@@ -781,7 +774,7 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
     persist();
     if (!clockEnabled || game.result) return;
     // The active side's clock keeps draining between renders, so re-save it
-    // periodically and on page hide — a refresh must restore the live
+    // periodically and on page hide, a refresh must restore the live
     // remaining time, not the time as of the last move.
     window.addEventListener("pagehide", persist);
     const id = window.setInterval(persist, 3000);
@@ -848,7 +841,7 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
     setClipOpen(true);
   }, []);
 
-  // History shrank past (or exactly to) the reviewed ply — a rewind or a
+  // History shrank past (or exactly to) the reviewed ply, a rewind or a
   // fresh game replaced the record. Return to the LIVE board (null), never
   // to historyPly === length: that would strand the UI in a half-review
   // state showing the live position while review still blocks every move
@@ -1353,7 +1346,7 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
       };
       activeWorker.addEventListener("message", onMessage);
       // Watchdog: a wedged worker must never freeze the game or let the bot
-      // think indefinitely — terminate it and fall back to a quick sync pick.
+      // think indefinitely, terminate it and fall back to a quick sync pick.
       watchdog = window.setTimeout(() => {
         activeWorker.removeEventListener("message", onMessage);
         aiWorkerRef.current?.terminate();
@@ -1440,7 +1433,7 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
   // Earliest ply history review can faithfully reach. While the move list
   // still reproduces the board (no card rewrote it) everything replays from
   // ply 0. After divergence only positions witnessed live (the snapshots) are
-  // trustworthy — a restored game that diverged before this session began has
+  // trustworthy, a restored game that diverged before this session began has
   // none, so its earlier plies are unreviewable. Navigation clamps here and
   // the MoveList explains why instead of showing a wrong (or live) board.
   const [reviewFloor, setReviewFloor] = useState(0);
@@ -1527,6 +1520,46 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
       nav: handleHistoryPlyChange,
     };
   });
+
+  // The board's visual layer (my rule's marks, the forced-move highlight, the
+  // draft zones and the fx layer), derived once per game state rather than on
+  // every render: fresh arrays each render defeated Board's memos, so every
+  // clock tick and hover repainted the zone layers (F112). Keyed on `game`
+  // identity, which is safe for the same reason OnlineMatch relies on it:
+  // every setGame call here passes a fresh object. Declared above the early
+  // returns below so the hook order never changes.
+  const derivedVisual = useMemo(() => {
+    if (!game) return null;
+    const nerf = myColor === "w" ? game.white.nerf : game.black.nerf;
+    const nerfState = myColor === "w" ? game.white.state : game.black.state;
+    const ruleVisual = nerf.visual?.(nerfState, makeContext(game, myColor));
+    // Draft-mode zone effects are public information: paint frozen pieces
+    // (Immobilizer auras included), shielded (sanctuary) squares, and barred
+    // squares for both sides, the same painting the online match uses.
+    const zone = draftZones(game, myColor);
+    // Effect kinds draftZones does not paint (king_safe shields, pawn-clamp
+    // fences, pending-skip stuns): shared derivation, same as OnlineMatch.
+    const fxZone = computeFxVisual(game);
+    const boardVisual = {
+      ...(ruleVisual ?? {}),
+      highlightSquares: currentHint(game, myColor)?.squares ?? [],
+      bannedSquares: [...(ruleVisual?.bannedSquares ?? []), ...zone.barred],
+      frozenSquares: zone.frozen,
+      frozenSkins: zone.frozenSkin,
+      effectTurns: zone.turns,
+      shieldedSquares: zone.shielded,
+      wardSquares: zone.ward,
+      strikeSquares: zone.strike,
+      walnutSquares: zone.walnut,
+      bananaSquares: zone.banana,
+      trapSquares: zone.traps,
+      doomSquares: zone.doom,
+      lockedSquares: zone.locked,
+      barredSquares: zone.barred,
+      ...fxVisualFields(fxZone),
+    };
+    return { ruleVisual, boardVisual };
+  }, [game, myColor]);
 
   if (!game) {
     if (draftMode && nerfDraft) {
@@ -1648,14 +1681,7 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
   const myNerf = myColor === "w" ? game.white.nerf : game.black.nerf;
   const myState = myColor === "w" ? game.white.state : game.black.state;
   const myCtx = makeContext(game, myColor);
-  const visual = myNerf.visual?.(myState, myCtx);
-  // Draft-mode zone effects are public information: paint frozen pieces
-  // (Immobilizer auras included), shielded (sanctuary) squares, and barred
-  // squares for both sides — the same painting the online match uses.
-  const zone = draftZones(game, myColor);
-  // Effect kinds draftZones does not paint (king_safe shields, pawn-clamp
-  // fences, pending-skip stuns): shared derivation, same as OnlineMatch.
-  const fxZone = computeFxVisual(game);
+  const visual = derivedVisual?.ruleVisual;
   const opponentNerf = myColor === "w" ? game.black.nerf : game.white.nerf;
   const bsMine = game.buffs?.players[myColor];
   const bsTheirs = game.buffs?.players[myColor === "w" ? "b" : "w"];
@@ -1674,7 +1700,7 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
   const hideOppNerfCard = plainMode || gameMode === "buff" || (draftMode && !oppRevealed);
   const hideMyNerfCard = plainMode || gameMode === "buff";
   // "The rule descends": every nerf the viewer currently knows, for the
-  // board's one-shot reveal splash (fired once per color+id inside Board) —
+  // board's one-shot reveal splash (fired once per color+id inside Board),
   // your own rule from game start, the bot's when it reveals (peek, reveal
   // buff, or game end). Same wiring as OnlineMatch; placeholder rules never
   // announce. Each entry pulses the squares the rule's visual() marks.
@@ -1756,7 +1782,6 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
   // "Against you" section keeps the permanent record.
   const againstMe = game.buffs ? againstYouRows(game, myColor) : [];
   const hint = currentHint(game, myColor);
-  const forcedSquares = hint?.squares ?? [];
   const railHeightStyle = boardHeight
     ? ({ "--board-height": `${boardHeight}px` } as CSSProperties)
     : undefined;
@@ -2126,7 +2151,7 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
           />
           <RailResizeHandle railWidth={railWidth} resizeRail={resizeRail} />
           <div className={"flex min-h-0 flex-col gap-2 sm:flex-row sm:items-stretch sm:justify-start " + TABLET_STACK_COL}>
-            {/* In the band the whole column — player strips, board, stack —
+            {/* In the band the whole column, player strips, board, stack,
                 shares the board's width and centres as one, so the strips line
                 up with the board's edges instead of spanning the viewport. */}
             <div
@@ -2182,28 +2207,7 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
                     isReviewingHistory || buffTargeting.targeting ? [] : oppPreviewMoves
                   }
                   fxTimePressure={clockEnabled && !game.result && timePressure}
-                  visual={
-                    isReviewingHistory
-                      ? undefined
-                      : {
-                          ...(visual ?? {}),
-                          highlightSquares: forcedSquares,
-                          bannedSquares: [...(visual?.bannedSquares ?? []), ...zone.barred],
-                          frozenSquares: zone.frozen,
-                          frozenSkins: zone.frozenSkin,
-                          effectTurns: zone.turns,
-                          shieldedSquares: zone.shielded,
-                          wardSquares: zone.ward,
-                          strikeSquares: zone.strike,
-                          walnutSquares: zone.walnut,
-                          bananaSquares: zone.banana,
-                          trapSquares: zone.traps,
-                          doomSquares: zone.doom,
-                          lockedSquares: zone.locked,
-                          barredSquares: zone.barred,
-                          ...fxVisualFields(fxZone),
-                        }
-                  }
+                  visual={isReviewingHistory ? undefined : derivedVisual?.boardVisual}
                   lastMove={lastMoveForDisplay}
                   nerfReveals={nerfReveals}
                   passiveNerfs={passiveNerfs}
@@ -2288,7 +2292,7 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
                 {/* Flip, on the surface that cannot press `f`. The rail below
                     carries the same button plus the keymap, but the rail is
                     display:none on a phone, so this was the one layout where
-                    the flip setting was still three levels into Settings —
+                    the flip setting was still three levels into Settings,
                     which is the whole complaint the rail button answered. The
                     keys stay bound once, in the rail's BoardTools. */}
                 <FlipBoardButton className="zen-hide shrink-0" />

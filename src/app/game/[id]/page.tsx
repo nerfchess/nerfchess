@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Eye } from "lucide-react";
 import { Board, NERF_REVEAL_SKIP, type NerfRevealInfo } from "@/components/Board";
@@ -77,6 +77,10 @@ import {
 import type { DraftMode } from "@/engine/buff";
 import { Button } from "@/components/ui/Button";
 import { LinkButton } from "@/components/ui/Button";
+import { RouteError } from "@/components/ui/RouteError";
+import { NotFoundPanel } from "@/app/_components/NotFoundPanel";
+import { NOT_FOUND_COPY } from "@/app/_components/notFoundCopy";
+import { GameFrameSkeleton } from "../GameSkeleton";
 
 type Mode =
   | { kind: "loading" }
@@ -84,8 +88,10 @@ type Mode =
   | { kind: "player"; start: MPStart }
   | { kind: "spectator"; setup: MPWatchStart }
   | { kind: "replay"; game: ReplayGame }
-  | { kind: "missing" }
-  | { kind: "error"; message: string };
+  // The server has no live game with this id and the archive has none either.
+  | { kind: "notfound" }
+  // Neither the game server nor the archive answered, or something broke.
+  | { kind: "error"; reason: "unreachable" | "failed"; message: string };
 
 interface ReplayGame {
   id: string;
@@ -121,10 +127,6 @@ function withResponseTimeout<T>(promise: Promise<T>, message: string, ms = 10000
   return Promise.race([promise, timeout]).finally(() => window.clearTimeout(timeoutId));
 }
 
-// How long a viewer lingers on the "this game is over" screen before being
-// eased back to the lobby automatically.
-const REDIRECT_SECONDS = 6;
-
 // Lichess-style game URL: the player who owns a seat token plays here; anyone
 // else watches live, or gets the stored replay once the game has been archived.
 export default function OnlineGamePage() {
@@ -132,15 +134,11 @@ export default function OnlineGamePage() {
   // and leaves the board, the clocks and the move list.
   useZenHotkey();
   const params = useParams<{ id: string }>();
-  const router = useRouter();
   const gameId = String(params.id ?? "").toUpperCase();
   const [mode, setMode] = useState<Mode>({ kind: "loading" });
   // Bumped whenever a reconnect replays the spectator state, so the viewer
   // remounts with the fresh payload.
   const [watchGen, setWatchGen] = useState(0);
-  // Seconds left before a viewer stranded on a game that has ended / gone dark
-  // is eased back to the lobby (see the `missing` effect + view below).
-  const [redirectIn, setRedirectIn] = useState(REDIRECT_SECONDS);
   // Held as state (not a ref) because the render below chooses the view from
   // it; a ref cannot drive rendering. Set inside the effect once the session
   // exists, cleared on teardown.
@@ -162,30 +160,50 @@ export default function OnlineGamePage() {
     // Fetch the archived game once, returning it (or null if it is not stored).
     // Kept separate from rendering so the request can be kicked off in parallel
     // with the live-watch attempt and awaited later.
-    const fetchReplay = async (): Promise<ReplayGame | null> => {
+    // Three answers, because they lead to different screens: the stored game,
+    // "absent" (the archive answered 404: there is no such game) and "failed"
+    // (the archive did not answer: network down, server error).
+    const fetchReplay = async (): Promise<ReplayGame | "absent" | "failed"> => {
       try {
         const res = await fetch(`/api/games/${gameId}`);
-        if (res.ok) return ((await res.json()) as { game: ReplayGame }).game ?? null;
-      } catch {}
-      return null;
+        if (res.status === 404) return "absent";
+        if (!res.ok) return "failed";
+        return ((await res.json()) as { game?: ReplayGame }).game ?? "absent";
+      } catch {
+        return "failed";
+      }
     };
 
     // Render the stored replay, reusing a fetch already in flight when one was
     // started in parallel with the watch attempt.
-    const showReplay = async (pending?: Promise<ReplayGame | null>) => {
+    //
+    // `liveAnswer` is what the game server said: "not_found" means it has no
+    // live game with this id, "no_answer" means the watch timed out.
+    const showReplay = async (
+      liveAnswer: "not_found" | "no_answer",
+      pending?: Promise<ReplayGame | "absent" | "failed">,
+    ) => {
       let game = await (pending ?? fetchReplay());
       if (cancelled) return;
       // A game that has only just ended (the common reason a live watch drops
       // to "not_found") may not be archived for a second or two. Rather than
       // flash "not found" at the viewer, give the write a brief beat and look
       // once more before deciding the game is truly gone.
-      if (!game) {
+      if (game === "absent") {
         await new Promise((r) => window.setTimeout(r, 2500));
         if (cancelled) return;
         game = await fetchReplay();
         if (cancelled) return;
       }
-      setMode(game ? { kind: "replay", game } : { kind: "missing" });
+      if (typeof game === "object") {
+        setMode({ kind: "replay", game });
+      } else if (game === "absent" && liveAnswer === "not_found") {
+        // Both authorities answered and neither has it: a real 404 (F029).
+        setMode({ kind: "notfound" });
+      } else {
+        // Someone did not answer, so "no such game" would be a guess.
+        setMode({ kind: "error", reason: "unreachable", message: `live ${liveAnswer}, archive ${game}` });
+      }
     };
 
     // Any watch payload (initial or after an automatic reconnect) refreshes
@@ -206,7 +224,7 @@ export default function OnlineGamePage() {
     // recursive call to itself. Every caller invokes it without awaiting, so
     // anything that threw in there rejected a promise nobody was holding. The
     // rejection went to `unhandledrejection` and the page stayed on
-    // {kind:"loading"} — "Connecting…", forever, with no error and no way out
+    // {kind:"loading"}, "Connecting…", forever, with no error and no way out
     // but the reload button the 10s slow-connect banner offers. Reproduced with
     // scripts/repro-a17-connecting.mjs, which makes isArenaGameLive throw.
     //
@@ -214,7 +232,7 @@ export default function OnlineGamePage() {
     // backstop whose only job is that the page always ends up somewhere the
     // viewer can act on. Losing the archive is a bad outcome; a permanent
     // skeleton is not an outcome at all.
-    const spectate = async (pendingReplay?: Promise<ReplayGame | null>, s: MPSession = session) => {
+    const spectate = async (pendingReplay?: Promise<ReplayGame | "absent" | "failed">, s: MPSession = session) => {
       let failure: unknown;
       try {
         await withResponseTimeout(s.watch(gameId), "watch_timeout", 15000);
@@ -227,7 +245,7 @@ export default function OnlineGamePage() {
         if (failure instanceof Error && failure.message === "not_found") {
           // Tier 3: a live arena-hosted (OCI bot-vs-bot) game is unknown to the
           // game-server DO. Before treating not_found as "finished, show the
-          // archive", ask the arena — a direct link to a live filler game then
+          // archive", ask the arena, a direct link to a live filler game then
           // watches it instead of flashing "not found". Fail-soft: an
           // unreachable arena answers false and the archive path runs as ever.
           // That fail-soft is now enforced here rather than assumed of the
@@ -250,12 +268,13 @@ export default function OnlineGamePage() {
             return;
           }
           s.destroy();
-          await showReplay(pendingReplay);
+          await showReplay("not_found", pendingReplay);
         } else if (failure instanceof Error && failure.message === "watch_timeout") {
-          await showReplay(pendingReplay);
+          await showReplay("no_answer", pendingReplay);
         } else if (!cancelled) {
           setMode({
             kind: "error",
+            reason: "failed",
             message: failure instanceof Error ? failure.message : String(failure),
           });
         }
@@ -266,6 +285,7 @@ export default function OnlineGamePage() {
         if (cancelled) return;
         setMode({
           kind: "error",
+          reason: "failed",
           message:
             recoveryFailure instanceof Error ? recoveryFailure.message : String(recoveryFailure),
         });
@@ -312,7 +332,7 @@ export default function OnlineGamePage() {
           .catch((err) => {
             if (cancelled) return;
             if (err instanceof Error && err.message === "reconnect_failed") {
-              // Seat expired (game archived or gone) — fall back to watching.
+              // Seat expired (game archived or gone), fall back to watching.
               off();
               clearOnlineSeat(gameId);
               // Deliberately not awaited (nothing here can wait on it), which
@@ -357,24 +377,11 @@ export default function OnlineGamePage() {
       cancelled = true;
       offWatch();
       // `active` may have been swapped for an arena-pointed session by the
-      // not_found fallback above — destroy whichever is current.
+      // not_found fallback above, destroy whichever is current.
       active.destroy();
       setLiveSession(null);
     };
   }, [gameId]);
-
-  // When a spectated game turns out to be over (or its live broadcast dropped
-  // and it was never saved), don't leave the viewer staring at a dead end —
-  // count down and gently send them to the lobby, with manual buttons meanwhile
-  // for anyone who wants to go home or jump straight to another game.
-  // Restart the countdown the moment a game is found missing; adjusted during
-  // render so the effect below only owns the interval.
-  const isMissing = mode.kind === "missing";
-  const [prevMissing, setPrevMissing] = useState(isMissing);
-  if (prevMissing !== isMissing) {
-    setPrevMissing(isMissing);
-    if (isMissing) setRedirectIn(REDIRECT_SECONDS);
-  }
 
   // A connect/seat handshake that never resolves must not leave the viewer on
   // an endless "Connecting…" / "Waiting for your opponent…" skeleton. After
@@ -388,27 +395,6 @@ export default function OnlineGamePage() {
     const id = window.setTimeout(() => setSlowConnect(true), 10000);
     return () => window.clearTimeout(id);
   }, [mode.kind]);
-
-  useEffect(() => {
-    if (mode.kind !== "missing") return;
-    // The countdown state and the navigation are kept SEPARATE. Driving the
-    // redirect from inside a setState updater made the updater impure — React
-    // may invoke it twice (StrictMode, or a render discarded before commit),
-    // which fires the navigation twice. The updater now only decrements; the
-    // effect below owns the one-shot navigation.
-    const tick = window.setInterval(() => {
-      setRedirectIn((s) => (s <= 0 ? 0 : s - 1));
-    }, 1000);
-    return () => window.clearInterval(tick);
-  }, [mode.kind]);
-
-  useEffect(() => {
-    if (mode.kind !== "missing" || redirectIn > 0) return;
-    // router.replace, not window.location.href: this keeps the SPA alive (no
-    // full document reload) and does not push a history entry the viewer would
-    // have to click Back through twice.
-    router.replace("/lobby");
-  }, [mode.kind, redirectIn, router]);
 
   if (mode.kind === "player" && liveSession) {
     return (
@@ -437,138 +423,67 @@ export default function OnlineGamePage() {
     return <ReplayView game={mode.game} />;
   }
 
-  if (mode.kind === "loading" || mode.kind === "waiting") {
+  // Loading, waiting for an opponent, or a player/spectator mode in the
+  // instant before its session is attached: all show the connecting frame.
+  if (mode.kind !== "error" && mode.kind !== "notfound") {
     // Paint the real board frame straight away so connecting reads as "the
-    // game is loading", not a frozen page. The skeleton mirrors GameShell's
-    // layout so the swap to the live board when `start`/`watch-start` arrives
-    // is a fill-in, not a jump.
+    // game is loading", not a frozen page. The shared frame mirrors
+    // GameShell's layout so the swap to the live board when
+    // `start`/`watch-start` arrives is a fill-in, not a jump.
     return (
-      <main className="min-h-screen">
-        <SiteNav />
-        {/* Every terminal branch below has an h1; this one did not, so a game
-            that is slow to resolve (or an id with no game behind it, which
-            sits here until the socket gives up) served a page with no
-            accessible name and no document outline. Same shape as C34 on
-            /u/[username]. sr-only because the visible chrome here is a
-            skeleton and a real heading would be a jump when the board fills
-            in. */}
-        <h1 className="sr-only">Game</h1>
-        <div className="mx-auto w-full max-w-[1200px] px-3 pb-10 sm:px-6">
-          <div className="mb-2 flex items-center justify-between gap-3">
-            <div className="text-[12px] text-parchment-400">
-              {mode.kind === "waiting" ? "Waiting for your opponent…" : "Connecting…"}
-            </div>
-            <div className="font-mono text-[12px] tracking-[0.2em] text-gold-leaf">{gameId}</div>
-          </div>
-          {slowConnect && (
-            <div
-              role="status"
-              aria-live="polite"
-              className="mb-3 plate flex flex-wrap items-center justify-between gap-3 border-gold/40 bg-gold/10 p-2 px-3"
-            >
-              <span className="text-xs text-parchment-200">
+      <GameFrameSkeleton label={mode.kind === "waiting" ? "Waiting for your opponent…" : "Connecting…"} gameId={gameId}>
+        {/* After ~10s without an answer, the way out floats over the top of
+            the page like the connection banner does, rather than being
+            inserted above the board and pushing it down (F007). */}
+        {slowConnect && (
+          <div
+            role="status"
+            aria-live="polite"
+            className="pointer-events-none fixed inset-x-0 top-2 z-[65] flex justify-center px-3"
+          >
+            <div className="pointer-events-auto plate flex max-w-[92vw] flex-wrap items-center justify-between gap-3 border-gold/40 bg-[color:var(--bg-raised)] p-2 px-3">
+              <span className="text-[13px] text-parchment-200">
                 {mode.kind === "waiting"
                   ? "Still waiting for your opponent to arrive."
                   : "This is taking longer than usual to connect."}
               </span>
               <div className="flex items-center gap-2">
-                <Button tone="leaf"
-                 
-                  onClick={() => window.location.reload()}
-                  className="px-3 py-1.5 text-xs font-semibold">
+                <Button tone="primary" size="sm" onClick={() => window.location.reload()}>
                   Retry
                 </Button>
-                <Link
-                  href="/lobby"
-                  className="min-h-[36px] inline-flex items-center rounded-sm border border-parchment-700 px-3 py-1.5 font-display text-[13px] text-parchment-200 hover:text-parchment-50"
-                >
+                <LinkButton tone="default" size="sm" href="/lobby">
                   Back to lobby
-                </Link>
+                </LinkButton>
               </div>
-            </div>
-          )}
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center justify-between gap-2 py-1">
-                <span className="skeleton h-6 w-40" aria-hidden />
-                <span className="skeleton h-6 w-14" aria-hidden />
-              </div>
-              <div className="w-full max-w-[720px]">
-                <BoardSkeleton />
-              </div>
-              <div className="flex items-center justify-between gap-2 py-1">
-                <span className="skeleton h-6 w-40" aria-hidden />
-                <span className="skeleton h-6 w-14" aria-hidden />
-              </div>
-            </div>
-            <div className="sm:w-64 sm:shrink-0">
-              <div className="skeleton h-64 w-full xl:h-72" aria-hidden />
             </div>
           </div>
-        </div>
-      </main>
+        )}
+      </GameFrameSkeleton>
     );
   }
 
-  if (mode.kind === "missing") {
-    return (
-      <main className="min-h-screen">
-        <SiteNav />
-        <section className="max-w-xl mx-auto px-6 py-16 text-center">
-          <h1 className="page-title">That game has wrapped up</h1>
-          <p className="mt-3 text-parchment-200">
-            It&apos;s no longer live and we couldn&apos;t find a saved copy: the
-            match likely just finished, or the broadcast ended. Taking you back
-            to the lobby in {redirectIn}s&hellip;
-          </p>
-          <div className="mt-8 flex items-center justify-center gap-3">
-            <LinkButton tone="leaf" href="/tv" className="inline-block px-5 py-2 font-body">
-              Watch another game
-            </LinkButton>
-            <Link
-              href="/"
-              className="inline-block px-5 py-2 rounded-sm border border-parchment-700 font-body text-parchment-200 hover:text-parchment-50"
-            >
-              Home
-            </Link>
-          </div>
-        </section>
-      </main>
-    );
+  if (mode.kind === "notfound") {
+    // The shared 404 words and panel, the same ones /game/<id>/not-found.tsx
+    // and the root 404 use. This used to say "That game has wrapped up" for
+    // an id that never existed and then bounce the viewer to the lobby after
+    // six seconds (F029); a 404 now stays put and offers the way onward.
+    const copy = NOT_FOUND_COPY.game;
+    return <NotFoundPanel title={copy.title} detail={copy.detail} action={copy.action} secondary={copy.secondary} />;
   }
 
+  // mode.kind === "error". Plain words for the viewer (the raw failure string
+  // goes to the console through RouteError), a Retry, and the way out.
   return (
-    <main className="min-h-screen">
-      <SiteNav />
-      <section className="max-w-xl mx-auto px-6 py-16 text-center">
-        <h1 className="page-title">Something interrupted the game</h1>
-        <p className="mt-3 text-parchment-200">
-          {mode.kind === "error"
-            ? mode.message
-            : "This game doesn't exist, or it hasn't been played yet."}
-        </p>
-        <LinkButton tone="leaf" href="/lobby" className="inline-block mt-8 px-5 py-2 font-body">
-          Back to the lobby
-        </LinkButton>
-      </section>
-    </main>
-  );
-}
-
-// A quiet checkered board frame with a shimmer sweep, shown while a game
-// connects. Same 8x8 grid and square colors as the live board so it holds the
-// exact footprint the real Board will fill.
-function BoardSkeleton() {
-  return (
-    <div className="relative aspect-square w-full overflow-hidden border border-[color:var(--edge)]">
-      <div className="grid h-full w-full grid-cols-8 grid-rows-8" aria-hidden>
-        {Array.from({ length: 64 }).map((_, i) => {
-          const isLight = (Math.floor(i / 8) + (i % 8)) % 2 === 0;
-          return <div key={i} className={isLight ? "sq-light" : "sq-dark"} />;
-        })}
-      </div>
-      <div className="skeleton absolute inset-0" aria-hidden />
-    </div>
+    <RouteError
+      error={new Error(mode.message)}
+      retry={() => window.location.reload()}
+      title="Something interrupted the game"
+      detail={
+        mode.reason === "unreachable"
+          ? "The game server did not answer in time, so the game could not be loaded. Try again in a moment."
+          : "The game could not be loaded. Try again, or head back to the lobby."
+      }
+    />
   );
 }
 
@@ -603,7 +518,7 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
   // The public draft-action record, seeded from the wstart and appended as
   // events arrive. Kept so history review can reconstruct any PAST ply through
   // the engine (moves + actions interleaved), which reproduces board rewrites a
-  // plain move-replay cannot — so review works past a divergence instead of
+  // plain move-replay cannot, so review works past a divergence instead of
   // locking. State (not a ref) so the reviewed-board memo below recomputes.
   const [dtActions, setDtActions] = useState<MPDraftAction[]>(() =>
     setup.dtActions ? [...setup.dtActions] : [],
@@ -680,7 +595,7 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
         if (g && !g.result) {
           // Same fallback OnlineMatch uses: a server-accepted move this
           // replica cannot regenerate (a hidden nerf/buff effect) is applied
-          // raw instead of silently dropped — a skipped move froze the
+          // raw instead of silently dropped, a skipped move froze the
           // spectator's draft board for the rest of the game (dtState frames
           // never carry the board, so nothing else could repair it).
           const move =
@@ -833,14 +748,14 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
 
   // No local 100ms decrement interval here: it re-rendered the WHOLE
   // SpectatorView subtree 10x/second for the entire game. The visible clock is
-  // unaffected — ClockPill self-interpolates from its `ms` prop via rAF — and
+  // unaffected, ClockPill self-interpolates from its `ms` prop via rAF, and
   // server clock frames keep whiteMs/blackMs authoritative. The time-pressure
   // FX (below) reads those server-frame values, which refresh often enough
   // that a low clock still calms the effects.
 
   // History review. A reviewed PAST ply of a draft game is rebuilt from the
   // move + action record through the engine (buildSpectatorDraftGameAtPly),
-  // which reproduces board rewrites — summons, removals, teleports, drops — so
+  // which reproduces board rewrites, summons, removals, teleports, drops, so
   // review works PAST a divergence instead of locking. Returns null only when
   // the record cannot replay that far (an older stream with an unknown card):
   // we then fall back to the live board rather than showing a wrong one.
@@ -854,7 +769,7 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
   // the viewer never sees a wrong position (graceful degrade, not a wrong
   // board). Clamped during render (converges next frame: historyPly === null
   // makes the memo above return undefined), matching the head-clamp pattern the
-  // player game page uses — not an effect, which would cascade renders.
+  // player game page uses, not an effect, which would cascade renders.
   if (reviewDraftBoard === null && historyPly != null) {
     setHistoryPly(null);
   }
@@ -871,7 +786,6 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
         ? reviewDraftBoard ?? board
         : boardAtPly(history, historyPly);
   const lastMove = displayBoard.history[displayBoard.history.length - 1] ?? null;
-  const zones = isDraft && draftGame ? draftZones(draftGame, "w") : null;
 
   // The result panel wants Nerf objects and both sides' cards. Rules only exist
   // in nerf/nerf-buff modes; the draft replica holds the (now-revealed) buffs.
@@ -884,20 +798,50 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
   //  - R6: feed nerfReveals so a rule becoming KNOWN plays the reveal splash;
   //    `nerfs` is the reveal channel (public rules only, populated at end-of-
   //    game reveals), so this honours section-9 "hidden until revealed".
-  const fxZone = isDraft && draftGame ? computeFxVisual(draftGame) : null;
-  const nerfReveals: NerfRevealInfo[] = [];
-  for (const [color, nerf] of [["w", whiteNerf], ["b", blackNerf]] as const) {
-    if (nerf && !NERF_REVEAL_SKIP.has(nerf.id)) {
-      nerfReveals.push({
-        id: nerf.id,
-        name: nerf.name,
-        tier: nerf.tier as number,
-        color,
-        highlightSquares: [],
-      });
+  //
+  // Both are memoized (F112): fresh arrays and objects on every render (a
+  // clock frame, a chat line, a watcher count) defeated Board's memos and
+  // repainted the zone layers. The draft replica is replaced with a fresh
+  // object on every update (setDraftGame({ ...g })), so its identity is the
+  // right key.
+  const boardVisual = useMemo(() => {
+    if (!isDraft || !draftGame) return undefined;
+    const zones = draftZones(draftGame, "w");
+    const fxZone = computeFxVisual(draftGame);
+    return {
+      bannedSquares: zones.barred,
+      frozenSquares: zones.frozen,
+      frozenSkins: zones.frozenSkin,
+      effectTurns: zones.turns,
+      shieldedSquares: zones.shielded,
+      wardSquares: zones.ward,
+      strikeSquares: zones.strike,
+      walnutSquares: zones.walnut,
+      bananaSquares: zones.banana,
+      trapSquares: zones.traps,
+      doomSquares: zones.doom,
+      lockedSquares: zones.locked,
+      ...fxVisualFields(fxZone),
+    };
+  }, [isDraft, draftGame]);
+  const { nerfReveals, passiveNerfs } = useMemo(() => {
+    const reveals: NerfRevealInfo[] = [];
+    for (const [color, nerf] of [["w", whiteNerf], ["b", blackNerf]] as const) {
+      if (nerf && !NERF_REVEAL_SKIP.has(nerf.id)) {
+        reveals.push({
+          id: nerf.id,
+          name: nerf.name,
+          tier: nerf.tier as number,
+          color,
+          highlightSquares: [],
+        });
+      }
     }
-  }
-  const passiveNerfs = nerfReveals.map((r) => ({ cardId: r.id, color: r.color, squares: [] }));
+    return {
+      nerfReveals: reveals,
+      passiveNerfs: reveals.map((r) => ({ cardId: r.id, color: r.color, squares: [] })),
+    };
+  }, [whiteNerf, blackNerf]);
 
   return (
     <>
@@ -922,7 +866,7 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
       headerState={result ? "final" : setup.started ? "live" : "waiting"}
       watchers={watchers}
       statusLabel={
-        // The Live/Final/Waiting state badge already carries the game state —
+        // The Live/Final/Waiting state badge already carries the game state, so
         // only spell out extra detail (result text, reconnect note) so the
         // header doesn't read "Live · Live game".
         reconnecting
@@ -934,25 +878,7 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
               : "Waiting for players"
       }
       nerfs={nerfs}
-      visual={
-        zones
-          ? {
-              bannedSquares: zones.barred,
-              frozenSquares: zones.frozen,
-              frozenSkins: zones.frozenSkin,
-              effectTurns: zones.turns,
-              shieldedSquares: zones.shielded,
-              wardSquares: zones.ward,
-              strikeSquares: zones.strike,
-              walnutSquares: zones.walnut,
-              bananaSquares: zones.banana,
-              trapSquares: zones.traps,
-              doomSquares: zones.doom,
-              lockedSquares: zones.locked,
-              ...(fxZone ? fxVisualFields(fxZone) : {}),
-            }
-          : undefined
-      }
+      visual={boardVisual}
       // No flourish while scrubbing history (a past position isn't a live
       // play), matching the players' own board.
       signatureCard={historyPly == null ? signatureCard : null}
@@ -999,7 +925,7 @@ function SpectatorView({ session, setup }: { session: MPSession; setup: MPWatchS
       <Button tone="leaf"
        
         onClick={() => setShowResult(true)}
-        className="fixed bottom-14 right-3 z-40 px-4 py-2 text-sm font-semibold shadow-xl sm:bottom-4">
+        className="fixed bottom-14 right-3 z-40 px-4 py-2 text-sm font-semibold sm:bottom-4">
         Show result
       </Button>
     )}
@@ -1157,7 +1083,7 @@ function WatchersPanel({ count, names }: { count: number; names: string[] }) {
   );
 }
 
-// Chat between spectators only — the players never see this room.
+// Chat between spectators only, the players never see this room.
 function SpectatorChat({
   messages,
   onSend,
@@ -1440,7 +1366,7 @@ function ReplayView({ game }: { game: ReplayGame }) {
       <Button tone="leaf"
        
         onClick={() => setShowResult(true)}
-        className="fixed bottom-14 right-3 z-40 px-4 py-2 text-sm font-semibold shadow-xl sm:bottom-4">
+        className="fixed bottom-14 right-3 z-40 px-4 py-2 text-sm font-semibold sm:bottom-4">
         Show result
       </Button>
     )}
@@ -1601,6 +1527,14 @@ function GameShell({
     );
   return (
     <main className="min-h-screen">
+      {/* The spectator and replay views had no h1 (F131). Visually hidden:
+          the board is the content and the identity units below already say
+          who is playing, so a printed heading would only push the board down.
+          It names the game the way the header does. */}
+      <h1 className="sr-only">
+        {players.w.name} vs {players.b.name}
+        {headerState === "live" ? ", live" : headerState === "final" ? ", final" : ""}
+      </h1>
       <SiteNav
         status={
           <>
