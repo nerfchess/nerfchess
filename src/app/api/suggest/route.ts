@@ -4,6 +4,7 @@ import { getDb } from "@/lib/server/db";
 import { sessionTokenFromCookieHeader, userForSession } from "@/lib/server/auth";
 import { apiError, clientIp, guardJsonWrite, rateLimit, tooManyRequests } from "@/lib/server/request";
 import { cleanText, codePointLength, TEXT_POLICIES } from "@/lib/textInput";
+import { sendSuggestionEmail, type SuggestionEmailEnv } from "@/lib/server/suggestEmail";
 
 export const dynamic = "force-dynamic";
 
@@ -15,10 +16,12 @@ const IP_WINDOW_MAX = 10;
 const ACCOUNT_DAILY_MAX = 12;
 
 // Accepts a nerf or buff suggestion, stores it in D1, and, when an email
-// provider is configured, forwards it to the site owner. Set two worker
-// secrets/vars to enable email delivery:
+// provider is configured, forwards it to the site owner through the shared
+// email module (src/lib/server/suggestEmail.ts). Set two worker secrets/vars
+// to enable email delivery:
 //   RESEND_API_KEY     an API key from https://resend.com
 //   SUGGESTIONS_EMAIL  the inbox that should receive suggestions
+// EMAIL_FROM, when set, is the sender; otherwise Resend's sandbox sender.
 // Without them the suggestion is still saved in the rule_suggestions table.
 export async function POST(request: Request) {
   const body = await guardJsonWrite(request);
@@ -94,49 +97,26 @@ export async function POST(request: Request) {
     )
     .run();
 
-  // Best-effort email; a provider outage must not lose the suggestion.
+  // Best-effort email; a provider outage must not lose the suggestion. Only
+  // registered accounts trigger an email (F057). Anonymous and guest
+  // submissions are saved to the table but never send mail: a guest is one
+  // POST away (30 per 15 minutes per IP), so counting guests as accounts
+  // would let a loop burn the Resend quota.
   let emailed = false;
-  try {
-    const { env } = getCloudflareContext();
-    const apiKey = (env as { RESEND_API_KEY?: string }).RESEND_API_KEY;
-    const to = (env as { SUGGESTIONS_EMAIL?: string }).SUGGESTIONS_EMAIL;
-    // Only registered accounts trigger an email (F057). Anonymous and guest
-    // submissions are saved to the table but never send mail: a guest is one
-    // POST away (30 per 15 minutes per IP), so counting guests as accounts
-    // would let a loop burn the Resend quota.
-    if (apiKey && to && user && !user.is_guest) {
-      const kindLabel =
-        kind === "buff"
-          ? pool === "boon"
-            ? "Boon (Nerf-mode relief)"
-            : "Buff (Buff mode card)"
-          : kind === "hex"
-            ? "Hex (Nerf-mode curse)"
-            : "Nerf";
-      const lines = [
-        `${kindLabel}: ${name || fallbackName}`,
-        "",
+  if (user && !user.is_guest) {
+    try {
+      const { env } = getCloudflareContext();
+      const res = await sendSuggestionEmail(env as SuggestionEmailEnv, {
+        kind,
+        pool,
+        name: name || fallbackName,
         description,
-        "",
-        `From: ${user.username}${contact ? ` (${contact})` : ""}`,
-      ];
-      const res = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          from: "NerfChess <onboarding@resend.dev>",
-          to: [to],
-          subject: `${
-            kind === "buff" ? (pool === "boon" ? "Boon" : "Buff") : kind === "hex" ? "Hex" : "Nerf"
-          } suggestion: ${name || fallbackName}`,
-          text: lines.join("\n"),
-        }),
-        // A slow provider must not hold the request open.
-        signal: AbortSignal.timeout(5000),
+        contact,
+        username: user.username,
       });
       emailed = res.ok;
-    }
-  } catch {}
+    } catch {}
+  }
 
   return NextResponse.json({ ok: true, emailed });
 }

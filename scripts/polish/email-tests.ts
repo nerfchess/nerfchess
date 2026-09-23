@@ -17,6 +17,7 @@ import { emailProviderFromEnv, sendEmail } from "../../src/lib/server/email";
 import { getEmailPrefs, setEmailSubscribed, unsubscribeWithToken } from "../../src/lib/server/emailPrefs";
 import { unsubscribeToken, verifyUnsubscribeToken } from "../../src/lib/email/unsubscribe";
 import { renderFounderReport, renderWelcomeEmail } from "../../src/lib/email/templates";
+import { sendSuggestionEmail } from "../../src/lib/server/suggestEmail";
 
 // ---------------------------------------------------------------- D1 shim
 type Params = unknown[];
@@ -300,6 +301,26 @@ async function main() {
     check("report renders html and text, skips empty sections", r.html.includes("Registered") && r.text.includes("Registered: 10") && !r.text.includes("Empty"));
     const all = [w.html, w.text, r.html, r.text].join("\n");
     check("no em dashes in any email", !all.includes("—"));
+  }
+
+  // ------------------------------------------------ suggestion email (F100)
+  {
+    const s = { kind: "buff" as const, pool: "boon" as const, name: "Tiny <b>", description: "Pawns & kings", contact: "me@x.test", username: "alice" };
+    const fake = fakeResend();
+    const env = { RESEND_API_KEY: "re_test", SUGGESTIONS_EMAIL: "owner@nerfchess.test" };
+    const res = await sendSuggestionEmail(env, s, { log: quiet, fetchImpl: fake.fetchImpl });
+    const m = fake.sent[0];
+    check("suggestion goes through the shared provider", res.ok && fake.calls() === 1 && JSON.stringify(m?.to) === JSON.stringify(["owner@nerfchess.test"]), res);
+    check("suggestion uses the sandbox sender without EMAIL_FROM", (m as unknown as { from?: string })?.from === "Nerf Chess <onboarding@resend.dev>", m);
+    check("suggestion subject and text", m?.subject === "Boon suggestion: Tiny <b>" && m.text.startsWith("Boon (Nerf-mode relief): Tiny <b>") && m.text.includes("From: alice (me@x.test)"), m);
+    check("suggestion html is escaped plain text", m?.html === `<pre>${"Boon (Nerf-mode relief): Tiny &lt;b&gt;\n\nPawns &amp; kings\n\nFrom: alice (me@x.test)"}</pre>`, m?.html);
+    const fake2 = fakeResend();
+    await sendSuggestionEmail({ ...env, EMAIL_FROM: "Nerf Chess <hello@nerfchess.test>" }, s, { log: quiet, fetchImpl: fake2.fetchImpl });
+    check("suggestion uses EMAIL_FROM when set", (fake2.sent[0] as unknown as { from?: string })?.from === "Nerf Chess <hello@nerfchess.test>", fake2.sent[0]);
+    const fake3 = fakeResend();
+    const noKey = await sendSuggestionEmail({ SUGGESTIONS_EMAIL: "owner@nerfchess.test" }, s, { log: quiet, fetchImpl: fake3.fetchImpl });
+    const noInbox = await sendSuggestionEmail({ RESEND_API_KEY: "re_test" }, s, { log: quiet, fetchImpl: fake3.fetchImpl });
+    check("suggestion without key or inbox sends nothing", !noKey.ok && !noInbox.ok && fake3.calls() === 0, { noKey, noInbox });
   }
 
   console.log(`\n${passes} passed, ${failures} failed`);
