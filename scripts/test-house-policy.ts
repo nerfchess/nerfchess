@@ -24,9 +24,12 @@
 //      exceeds the tier or the ceiling; the engine timeout is budget + 1s,
 //      at most 3s; filler pacing is the frozen function.
 //   8. Cards: in harvested Buff-mode positions where the engine's own chooser
-//      would fire a turn-costing card while an own piece of 3 or more hangs and
-//      the card does not save it, houseChooseActivation never fires it; drafts
-//      return a valid index and never bank an offer that was already banked.
+//      would fire a turn-costing card while an own piece of 3 or more hangs,
+//      the card does not save it and a king-safe, nerf-safe move would have,
+//      houseChooseActivation never fires it; drafts return a valid index and
+//      never bank an offer that was already banked. The harvest runs under a
+//      frozen clock and repeats exactly. --policy engine runs this section
+//      with the engine's first-qualifying chooser instead, which must fail.
 
 import {
   HOUSE_ROSTER,
@@ -51,7 +54,8 @@ import {
   pickHouseMove,
   type HousePersona,
 } from "../src/lib/server/bots";
-import { attackedBy, generateMoves, moveToUCI } from "../src/engine/board";
+import { attackedBy, generateMoves, makeMove, moveToUCI } from "../src/engine/board";
+import { triggersOwnNerfLoss } from "../src/engine/moveSafety";
 import {
   UNRESTRICTED_NERF,
   activateBuff,
@@ -60,6 +64,7 @@ import {
   aiDraftChoice,
   deserializeGame,
   enableDraftMode,
+  gameInCheck,
   legalMoves,
   newGame,
   pickDraftCard,
@@ -317,7 +322,22 @@ function position(pieces: Record<string, string>, turn: Color): NerfGame {
   check(b.snapshot(t).state === "closed", "rejected and null moves never open it");
   const snap = b.snapshot(t);
   check(snap.rttEmaMs === 480 && snap.counts.timeout === 4 && snap.counts.ok === 1, "counts and RTT average");
-  console.log(`6. breaker: transitions ok, counts ${JSON.stringify(snap.counts)}`);
+  // A probe whose outcome is never recorded expires, so the breaker cannot
+  // wedge half-open.
+  const w = new HouseEngineBreaker();
+  let u = 0;
+  w.record("timeout", u);
+  w.record("timeout", u);
+  u += 45_000;
+  check(w.allow(u), "half-open probe goes out");
+  u += 9_000;
+  check(!w.allow(u) && w.snapshot(u).state === "half-open", "an unrecorded probe still blocks before it expires");
+  u += 1_000;
+  check(w.allow(u), "an unrecorded probe expires after 10s and a new probe goes out");
+  check(!w.allow(u), "and only one");
+  w.record("ok", u, 300);
+  check(w.allow(u) && w.snapshot(u).state === "closed", "the new probe's healthy answer closes it");
+  console.log(`6. breaker: transitions ok, counts ${JSON.stringify(snap.counts)}; an unrecorded probe expires after 10s`);
 }
 
 // ---------------------------------------------------------------------------
@@ -338,6 +358,13 @@ function position(pieces: Record<string, string>, turn: Color): NerfGame {
   }
   check(bad === 0, `graded budget within [floor, cap] (${bad} violations)`);
   check(houseMoveBudgetMs(1800, 20_000, HOUSE_SEARCH_CEILING_MS) >= 60, "no 25ms cliff under 30s");
+  // A raised local ceiling (the arena, 300ms) is not charged the remote round
+  // trip once the caller says it is local; left out, the old inference holds.
+  check(houseMoveBudgetMs(1800, 45_000, 300, 0, false) === 300, "a local 300ms ceiling at 45s keeps its full 300ms");
+  check(
+    houseMoveBudgetMs(1800, 45_000, 300, 0) === houseMoveBudgetMs(1800, 45_000, 300, 0, true),
+    "an unflagged ceiling above 80ms is still treated as remote",
+  );
   check(houseEngineTimeoutMs(1800) === 2800 && houseEngineTimeoutMs(60) === 1060 && houseEngineTimeoutMs(5000) === 3000, "engine timeout");
   check(
     houseExpectedSearchMs(1800, 120_000, true) > houseExpectedSearchMs(1800, 120_000, false),
@@ -355,6 +382,25 @@ function position(pieces: Record<string, string>, turn: Color): NerfGame {
   check(longBullet === 0, `no long think in bullet (${longBullet})`);
   check(longForced === 0, `no long think on a forced move (${longForced})`);
   check(openingFast >= 6000, `own moves 1-5 under 1.2s at least 60% (${pct(openingFast / 10_000)})`);
+  // An explicit filler flag wins over the multiplier: filler at multiplier 1
+  // is still the frozen pacing, and a multiplier above 1 flagged as not filler
+  // is the human pacing.
+  let fillerMismatch = 0;
+  let fillerAtOneSlow = 0;
+  for (let i = 0; i < 2000; i++) {
+    const seed = 7000 + i;
+    const clock = 60_000;
+    // Explicit filler at the DO's multiplier is the same draw as the inferred one.
+    if (houseThinkMs(seeded(seed), clock, 60, 8, 1, { filler: true }) !== houseThinkMs(seeded(seed), clock, 60, 8, 1)) fillerMismatch++;
+    // Flagged as not filler, a multiplier above 1 is the human pacing.
+    if (houseThinkMs(seeded(seed), clock, 60, 8, 1, { filler: false }) !== houseThinkMs(seeded(seed), clock, 60, 1, 1)) fillerMismatch++;
+    // Filler at multiplier 1 keeps the frozen 1-3s draw in 1+0 (human pacing
+    // there is 0.3-1.0s), so an operator setting ARENA_THINK_MULT=1 does not
+    // silently move filler to the human pacing.
+    if (houseThinkMs(seeded(seed), clock, 60, 1, 1, { filler: true }) >= 1000) fillerAtOneSlow++;
+  }
+  check(fillerMismatch === 0, `an explicit filler flag decides the pacing (${fillerMismatch} mismatches)`);
+  check(fillerAtOneSlow === 2000, `filler at multiplier 1 keeps the frozen pacing (${fillerAtOneSlow}/2000)`);
   console.log(`7. clock helpers ok; opening moves under 1.2s ${pct(openingFast / 10_000)}`);
 }
 
@@ -374,62 +420,113 @@ function hanging(g: NerfGame, me: Color): Square[] {
   }
   return [...minAtt].filter(([sq, a]) => !defended.has(sq) || a < VALUE[g.board.pieces[sq]!.type]).map(([sq]) => sq);
 }
+// The harvest must be reproducible: positions advance with a sampled depth-1
+// tier (1050) under a frozen Date.now, so no step depends on wall time or box
+// load. The clock is restored when the section ends.
+//
+// A fire is bad only when a move could have avoided it: the engine's own
+// chooser would pass the turn with a turn-costing card while an own piece of 3
+// or more hangs, the card leaves one of those pieces hanging, and some
+// king-safe, own-nerf-safe move leaves no such piece hanging. That is what
+// houseChooseActivation promises and the same refined definition
+// sim-house-cards.ts counts. When every move leaves a piece hanging, passing
+// the turn with a card is no worse than moving.
+//
+// --policy engine swaps houseChooseActivation for the engine's first
+// qualifying chooser (the policy before HB1), which this section must fail.
+function savable(g: NerfGame, me: Color): boolean {
+  for (const m of legalMoves(g)) {
+    if (m.captured !== "k" && gameInCheck({ ...g, board: makeMove(g.board, m) }, me)) continue;
+    if (triggersOwnNerfLoss(g, m)) continue;
+    if (!hanging({ ...g, board: makeMove(g.board, m) }, me).length) return true;
+  }
+  return false;
+}
 {
+  const policyArg = process.argv.indexOf("--policy");
+  const enginePolicy = policyArg >= 0 && process.argv[policyArg + 1] === "engine";
+  const choose = enginePolicy
+    ? (g: NerfGame, c: Color) => aiChooseBuffActivation(g, c)
+    : (g: NerfGame, c: Color, p: HousePersona) => houseChooseActivation(g, c, p, always);
+  const realNow = Date.now;
+  const FROZEN = realNow();
+  Date.now = () => FROZEN;
   let badFound = 0;
+  let unsavable = 0;
   let wrapperFiredBad = 0;
   let draftsChecked = 0;
   let draftBad = 0;
-  const always = () => 0;
-  for (let s = 0; s < 24 && badFound < 12; s++) {
-    const rng = seeded(80 + s);
-    const persona = HOUSE_ROSTER[rng(HOUSE_ROSTER.length)];
-    let g = newGame(UNRESTRICTED_NERF, UNRESTRICTED_NERF, 900 + s);
-    enableDraftMode(g, 901 + s, { mode: "buff" });
-    for (let ply = 0; ply < 120 && !g.result; ply++) {
-      for (const c of ["w", "b"] as Color[]) {
-        const offer = g.buffs?.players[c].offer;
-        if (!offer) continue;
-        const d = houseDraftChoice(g, c, persona, rng);
-        draftsChecked++;
-        if (!d || (d.action === "pick" && (d.index < 0 || d.index >= offer.cards.length)) || (d.action === "bank" && offer.banked)) {
-          draftBad++;
+  const trace: string[] = [];
+  function always() {
+    return 0;
+  }
+  try {
+    // At most 4 test positions a game, so the set spans several games and cards.
+    for (let s = 0; s < 60 && badFound < 20; s++) {
+      let perGame = 0;
+      const rng = seeded(80 + s);
+      const persona = HOUSE_ROSTER[rng(HOUSE_ROSTER.length)];
+      let g = newGame(UNRESTRICTED_NERF, UNRESTRICTED_NERF, 900 + s);
+      enableDraftMode(g, 901 + s, { mode: "buff" });
+      for (let ply = 0; ply < 120 && !g.result && perGame < 4; ply++) {
+        for (const c of ["w", "b"] as Color[]) {
+          const offer = g.buffs?.players[c].offer;
+          if (!offer) continue;
+          const d = houseDraftChoice(g, c, persona, rng);
+          draftsChecked++;
+          if (!d || (d.action === "pick" && (d.index < 0 || d.index >= offer.cards.length)) || (d.action === "bank" && offer.banked)) {
+            draftBad++;
+          }
+          const base = aiDraftChoice(g, c);
+          if (base?.action === "pick") pickDraftCard(g, c, base.index);
+          else bankDraft(g, c);
         }
-        const base = aiDraftChoice(g, c);
-        if (base?.action === "pick") pickDraftCard(g, c, base.index);
-        else bankDraft(g, c);
-      }
-      if (g.result) break;
-      const turn = g.board.turn;
-      const engine = aiChooseBuffActivation(g, turn);
-      const hung = hanging(g, turn);
-      if (engine && hung.length) {
-        const inst = g.buffs!.players[turn].buffs[engine.buffIndex];
-        const def = BUFF_BY_ID[inst.id];
-        if (def && !def.freeAction) {
-          const trial = deserializeGame(serializeGame(g))!;
-          if (activateBuff(trial, turn, engine.buffIndex, engine.picks) && !trial.result) {
-            const after = new Set(hanging(trial, turn));
-            if (hung.some((sq) => after.has(sq))) {
-              badFound++;
-              const pick = houseChooseActivation(g, turn, persona, always);
-              if (pick && pick.buffIndex === engine.buffIndex) wrapperFiredBad++;
+        if (g.result) break;
+        const turn = g.board.turn;
+        const engine = aiChooseBuffActivation(g, turn);
+        const hung = hanging(g, turn);
+        if (engine && hung.length) {
+          const inst = g.buffs!.players[turn].buffs[engine.buffIndex];
+          const def = BUFF_BY_ID[inst.id];
+          if (def && !def.freeAction) {
+            const trial = deserializeGame(serializeGame(g))!;
+            if (activateBuff(trial, turn, engine.buffIndex, engine.picks) && !trial.result) {
+              const after = new Set(hanging(trial, turn));
+              if (hung.some((sq) => after.has(sq))) {
+                if (!savable(g, turn)) {
+                  unsavable++;
+                } else {
+                  badFound++;
+                  perGame++;
+                  const pick = choose(g, turn, persona);
+                  const fired = !!pick && pick.buffIndex === engine.buffIndex;
+                  if (fired) wrapperFiredBad++;
+                  trace.push(`${s}:${ply}:${inst.id}${fired ? "!" : ""}`);
+                }
+              }
             }
           }
         }
+        // Advance with a depth-1 sampled tier; with the clock frozen its search
+        // is bounded by depth alone, so the game replays exactly.
+        const m = pickHouseMove(g, 1050, rng, undefined, 10);
+        if (!m) break;
+        const lm = legalMoves(g).find((x) => moveToUCI(x) === moveToUCI(m));
+        if (!lm) break;
+        g = playMove(g, lm);
       }
-      // Advance with a cheap search so positions stay varied.
-      const m = pickHouseMove(g, 1200, rng, undefined, 10);
-      if (!m) break;
-      const lm = legalMoves(g).find((x) => moveToUCI(x) === moveToUCI(m));
-      if (!lm) break;
-      g = playMove(g, lm);
     }
+  } finally {
+    Date.now = realNow;
   }
   console.log(
-    `8. cards: ${badFound} positions where the engine's chooser would waste a turn with a piece hanging; houseChooseActivation fired that card ${wrapperFiredBad} times. drafts: ${draftsChecked} checked, ${draftBad} invalid`,
+    `8. cards (${enginePolicy ? "engine's first-qualifying chooser" : "houseChooseActivation"}): ${badFound} positions where the engine's chooser would waste a turn ` +
+      `with a piece hanging that a king-safe, nerf-safe move saves (${unsavable} more where no move saves it, not counted); ` +
+      `the policy fired that card ${wrapperFiredBad} times. drafts: ${draftsChecked} checked, ${draftBad} invalid`,
   );
-  check(badFound > 0, "harvest found positions to test the activation floor on");
-  check(wrapperFiredBad === 0, "houseChooseActivation never wastes the turn while a piece hangs");
+  console.log(`   harvest trace (seed:ply:card, ! = fired): ${trace.join(" ")}`);
+  check(badFound >= 12, `harvest found at least 12 positions to test the activation floor on (${badFound})`);
+  check(wrapperFiredBad === 0, "the policy never wastes the turn while a piece hangs that a move would have saved");
   check(draftsChecked > 0 && draftBad === 0, "draft choices are valid and never re-bank a banked offer");
 }
 

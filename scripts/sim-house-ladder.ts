@@ -31,6 +31,14 @@
 //   800-1050 tiers (the A25 guard: HB may not raise nodes per move on the DO
 //   path), with node counts when the engine reports them.
 //
+// Gates: both probes are regression checks as well as measurements. They print
+// a PASS or FAIL line per gate and exit 1 when any gate fails (after writing
+// --out), so a change that brings back king hangs or random blunders turns
+// the run red. --probe check: king left capturable at or under 8% at 800, 6%
+// at 900, 4% at 1050, 3% at 1200 and 1% from 1350 up. --probe blunder: no
+// king hang in any forced blunder, and at most 10% of the pooled forced
+// blunders lose 900cp or more. The baseline tree (bbe4271) fails both.
+//
 // The script must run unchanged against the baseline tree (the before numbers)
 // and the changed tree: the only new call shape it uses is the optional 8th
 // argument of pickHouseMove, which older code ignores.
@@ -125,6 +133,23 @@ function quantile(xs: number[], q: number): number {
   return lo === hi ? s[lo] : s[lo] + (s[hi] - s[lo]) * (i - lo);
 }
 const pct = (x: number) => `${(x * 100).toFixed(1)}%`;
+
+// ---------------------------------------------------------------------------
+// Gates
+// ---------------------------------------------------------------------------
+
+type Gate = { gate: string; value: number; limit: number; pass: boolean };
+const gates: Gate[] = [];
+function gate(name: string, value: number, limit: number): void {
+  const pass = value <= limit;
+  gates.push({ gate: name, value, limit, pass });
+  console.log(`  ${pass ? "PASS" : "FAIL"} ${name}: ${value} (limit ${limit})`);
+}
+
+/** HB1 acceptance: the most a tier may leave its king capturable after a move
+ * played in check. 800 and 900 keep a small, deliberate check leak. */
+const CHECK_HANG_LIMIT: Partial<Record<number, number>> = { 800: 0.08, 900: 0.06, 1050: 0.04, 1200: 0.03 };
+const CHECK_HANG_LIMIT_DEFAULT = 0.01;
 
 // ---------------------------------------------------------------------------
 // Position helpers
@@ -282,7 +307,10 @@ function probeCheck() {
     );
     rows.push({ tier, hang, n, share: w.p, ciLo: w.lo, ciHi: w.hi });
   }
-  return { probe: "check", positions: pos.length, picksPerPosition: perPos, rows };
+  for (const r of rows as Array<{ tier: number; share: number }>) {
+    gate(`${r.tier} king left capturable share`, Number(r.share.toFixed(4)), CHECK_HANG_LIMIT[r.tier] ?? CHECK_HANG_LIMIT_DEFAULT);
+  }
+  return { probe: "check", positions: pos.length, picksPerPosition: perPos, rows, gates };
 }
 
 // ---------------------------------------------------------------------------
@@ -375,7 +403,9 @@ function probeBlunder() {
   console.log(
     `  pooled: n=${allN} king hangs ${allHang}, CPL median ${pooled.medianCpl.toFixed(0)}, >=900cp ${pct(pooled.share900)}; judge mean depth ${pooled.judgeDepthMean.toFixed(2)}`,
   );
-  return { probe: "blunder", positions: pos.length, samples, judgeMs, rows, pooled };
+  for (const r of rows as Array<{ tier: number; kingHangs: number }>) gate(`${r.tier} forced-blunder king hangs`, r.kingHangs, 0);
+  gate("pooled forced-blunder share losing 900cp or more", Number(pooled.share900.toFixed(4)), 0.1);
+  return { probe: "blunder", positions: pos.length, samples, judgeMs, rows, pooled, gates };
 }
 
 // ---------------------------------------------------------------------------
@@ -556,3 +586,9 @@ if (OUT) {
   writeFileSync(OUT, JSON.stringify(payload, null, 2) + "\n");
   console.log(`wrote ${OUT}`);
 }
+const failed = gates.filter((g) => !g.pass);
+if (failed.length) {
+  console.error(`${failed.length} gate(s) failed: ${failed.map((g) => g.gate).join("; ")}`);
+  process.exit(1);
+}
+if (gates.length) console.log(`all ${gates.length} gates pass`);

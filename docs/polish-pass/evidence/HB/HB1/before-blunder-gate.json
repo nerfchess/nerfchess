@@ -1,0 +1,117 @@
+{
+  "script": "scripts/sim-house-ladder.ts",
+  "commit": "bbe4271",
+  "argv": "--probe blunder --positions 40 --judge-ms 1000 --seed 1 --commit bbe4271 --load-positions docs/polish-pass/evidence/HB/HB1/blunder-positions.json --out docs/polish-pass/evidence/HB/HB1/before-blunder-gate.json",
+  "seed": 1,
+  "seconds": 319.394202451,
+  "probe": "blunder",
+  "positions": 40,
+  "samples": 2,
+  "judgeMs": 1000,
+  "rows": [
+    {
+      "tier": 800,
+      "n": 80,
+      "kingHangs": 1,
+      "medianCpl": 231.5,
+      "p25Cpl": 75,
+      "p75Cpl": 430,
+      "share900": 0.1375,
+      "share900Ci": {
+        "p": 0.1375,
+        "lo": 0.07854633679551143,
+        "hi": 0.22967297199630554
+      },
+      "zeroShare": 0.025
+    },
+    {
+      "tier": 1200,
+      "n": 80,
+      "kingHangs": 2,
+      "medianCpl": 258.5,
+      "p25Cpl": 69.5,
+      "p75Cpl": 440,
+      "share900": 0.125,
+      "share900Ci": {
+        "p": 0.125,
+        "lo": 0.06933483036777514,
+        "hi": 0.21502997183065622
+      },
+      "zeroShare": 0.0125
+    },
+    {
+      "tier": 1550,
+      "n": 80,
+      "kingHangs": 2,
+      "medianCpl": 255,
+      "p25Cpl": 79.5,
+      "p75Cpl": 462.5,
+      "share900": 0.1,
+      "share900Ci": {
+        "p": 0.1,
+        "lo": 0.051546999177685536,
+        "hi": 0.18510878983397458
+      },
+      "zeroShare": 0.0125
+    },
+    {
+      "tier": 1900,
+      "n": 80,
+      "kingHangs": 2,
+      "medianCpl": 219,
+      "p25Cpl": 85,
+      "p75Cpl": 426.25,
+      "share900": 0.15,
+      "share900Ci": {
+        "p": 0.15,
+        "lo": 0.08793954037414209,
+        "hi": 0.24413427501106047
+      },
+      "zeroShare": 0.0125
+    }
+  ],
+  "pooled": {
+    "n": 320,
+    "kingHangs": 7,
+    "medianCpl": 240,
+    "share900": 0.128125,
+    "share900Ci": {
+      "p": 0.128125,
+      "lo": 0.0958673632725479,
+      "hi": 0.16920543775116242
+    },
+    "judgeDepthMean": 5.05
+  },
+  "gates": [
+    {
+      "gate": "800 forced-blunder king hangs",
+      "value": 1,
+      "limit": 0,
+      "pass": false
+    },
+    {
+      "gate": "1200 forced-blunder king hangs",
+      "value": 2,
+      "limit": 0,
+      "pass": false
+    },
+    {
+      "gate": "1550 forced-blunder king hangs",
+      "value": 2,
+      "limit": 0,
+      "pass": false
+    },
+    {
+      "gate": "1900 forced-blunder king hangs",
+      "value": 2,
+      "limit": 0,
+      "pass": false
+    },
+    {
+      "gate": "pooled forced-blunder share losing 900cp or more",
+      "value": 0.1281,
+      "limit": 0.1,
+      "pass": false
+    }
+  ]
+}

@@ -2919,6 +2919,11 @@ export type HouseThinkOptions = {
    * position is, so the occasional long think lands where there is something
    * to calculate. */
   capturesAvailable?: number;
+  /** Filler game (bot against bot): the frozen pre-2026-09-23 pacing. When
+   * left out it is inferred from `thinkMultiplier > 1`, as before; callers
+   * should pass it, so an operator setting a multiplier of 1 does not switch
+   * filler to the human pacing without anyone noticing. */
+  filler?: boolean;
 };
 
 /** The pre-2026-09-23 pacing, kept byte for byte for filler games
@@ -2994,7 +2999,7 @@ export function houseThinkMs(
   tempo = 1,
   opts: HouseThinkOptions = {},
 ): number {
-  if (thinkMultiplier > 1) return houseFillerThinkMs(random, myClockMs, timeSec, thinkMultiplier, tempo);
+  if (opts.filler ?? thinkMultiplier > 1) return houseFillerThinkMs(random, myClockMs, timeSec, thinkMultiplier, tempo);
   const hasClock = timeSec > 0;
   const incSec = Math.max(0, opts.incrementSec ?? 0);
   const estimatedSec = hasClock ? timeSec + 40 * incSec : Infinity;
@@ -3171,10 +3176,13 @@ export function houseMoveBudgetMs(
   remainingClockMs?: number,
   ceilingMs: number = HOUSE_SEARCH_CEILING_MS,
   incrementSec?: number,
+  /** Whether the search goes to the remote engine and pays its round trip.
+   * Inferred from a ceiling above the local one when left out; a caller with
+   * a raised local ceiling (the arena searches locally at 300ms) passes false. */
+  remote: boolean = ceilingMs > HOUSE_SEARCH_CEILING_MS,
 ): number {
   const cap = Math.max(10, Math.min(budgetMs, ceilingMs));
   if (remainingClockMs == null) return cap;
-  const remote = ceilingMs > HOUSE_SEARCH_CEILING_MS;
   const inc = Math.max(0, incrementSec ?? 0) * 1000;
   const think = Math.max(275, remainingClockMs / 60);
   const share =
@@ -3195,8 +3203,8 @@ export function houseExpectedSearchMs(
 ): number {
   return remote
     ? HOUSE_REMOTE_RTT_ESTIMATE_MS +
-        houseMoveBudgetMs(profileBudgetMs, remainingClockMs, HOUSE_REMOTE_CEILING_MS, incrementSec)
-    : houseMoveBudgetMs(profileBudgetMs, remainingClockMs, HOUSE_SEARCH_CEILING_MS, incrementSec);
+        houseMoveBudgetMs(profileBudgetMs, remainingClockMs, HOUSE_REMOTE_CEILING_MS, incrementSec, true)
+    : houseMoveBudgetMs(profileBudgetMs, remainingClockMs, HOUSE_SEARCH_CEILING_MS, incrementSec, false);
 }
 
 /** How long the worker should wait for a remote move searched with `budgetMs`:
@@ -4118,7 +4126,10 @@ export type HouseEngineOutcome = "ok" | "timeout" | "error" | "version" | "rejec
  * open it for 45 seconds, during which the caller skips the remote engine and
  * searches locally at once instead of paying a timeout per move. After that it
  * goes half-open and lets exactly one probe through: a healthy answer closes
- * it, another failure re-opens it.
+ * it, another failure re-opens it. A probe whose outcome is never recorded
+ * (the caller threw, or forgot) expires after `probeTimeoutMs`, well past the
+ * 3s engine timeout, and the next request becomes the probe, so the breaker
+ * cannot wedge half-open for the life of the isolate.
  *
  * A 409 (engine version drift), a rejected (illegal) move or a null move are
  * fast, healthy answers from a live box, so they never open it. Keeps counts
@@ -4130,6 +4141,7 @@ export class HouseEngineBreaker {
   private failures = 0;
   private openedAt = 0;
   private probeInFlight = false;
+  private probeStartedAt = 0;
   private rttEma: number | null = null;
   private readonly counts: Record<HouseEngineOutcome, number> = {
     ok: 0,
@@ -4143,6 +4155,7 @@ export class HouseEngineBreaker {
   constructor(
     private readonly failuresToOpen = 2,
     private readonly openMs = 45_000,
+    private readonly probeTimeoutMs = 10_000,
   ) {}
 
   /** May a remote request go out now? In half-open, only one at a time. */
@@ -4153,8 +4166,9 @@ export class HouseEngineBreaker {
       this.state = "half-open";
       this.probeInFlight = false;
     }
-    if (this.probeInFlight) return false;
+    if (this.probeInFlight && now - this.probeStartedAt < this.probeTimeoutMs) return false;
     this.probeInFlight = true;
+    this.probeStartedAt = now;
     return true;
   }
 
