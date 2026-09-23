@@ -44,6 +44,11 @@ const PAGE_DEBT: Record<string, number> = {
   "/profile|1280x800": 0.035,
   // Slice B, F004: home right column inserts rows after mount.
   "/|390x844": 0.015,
+  // Slices B and J: when the opening draft resolves on a slow load, the rail
+  // content drops about 110px (measured 0.0134 once, 0 when the watch ends
+  // before the lock-in timer).
+  [`${GAME}|1280x800`]: 0.02,
+  [`${GAME}|390x844`]: 0.02,
 };
 const TARGET = 0.01;
 
@@ -57,7 +62,16 @@ const HEADER_WATCH = `(() => {
   window.__headerShapes = log;
   let last = null;
   const tick = () => {
-    const nav = document.readyState === "loading" ? null : document.querySelector("nav.site-nav");
+    // The first header actually on screen: a streamed Suspense segment sits
+    // in a hidden container (0x0) until React reveals it, and that is
+    // construction, not a visible header changing shape.
+    let nav = null;
+    if (document.readyState !== "loading") {
+      for (const el of document.querySelectorAll("nav.site-nav")) {
+        const box = el.getBoundingClientRect();
+        if (box.width > 0 && box.height > 0) { nav = el; break; }
+      }
+    }
     if (nav) {
       const r = nav.getBoundingClientRect();
       const right = nav.querySelector("[data-header-right]");
@@ -102,7 +116,6 @@ for (const vp of [
 ]) {
   const vpLabel = `${vp.width}x${vp.height}`;
   test.describe(`section 4 sign-in bump at ${vpLabel}`, () => {
-    test.describe.configure({ mode: "serial" });
     test.use({ viewport: vp });
 
     test.beforeAll(async () => {
@@ -125,9 +138,12 @@ for (const vp of [
         const cls = await readCls(page, { quietMs: 2500 });
         const shapes = (await page.evaluate("window.__headerShapes || []")) as Shape[];
 
-        expect(shapes.length, "the site header rendered").toBeGreaterThan(0);
+        // The bot game opens on the draft overlay, which replaces the page
+        // (header included) until a card is picked, so there may be no header
+        // to watch there. Everywhere else the header must be present.
+        if (route !== GAME) expect(shapes.length, "the site header rendered").toBeGreaterThan(0);
         // A header that only ever had one shape did not bump.
-        expect(shapes, `header changed shape after the first frame at ${vpLabel}`).toHaveLength(1);
+        expect(shapes.length, `header changed shape after the first frame at ${vpLabel}: ${JSON.stringify(shapes)}`).toBeLessThanOrEqual(1);
 
         const debt = PAGE_DEBT[`${route}|${vpLabel}`];
         const ceiling = debt ?? TARGET;
