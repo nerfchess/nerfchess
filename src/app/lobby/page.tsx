@@ -6,7 +6,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { ChevronRight, Eye, Swords, Users } from "lucide-react";
 import { QuickMatch } from "./QuickMatch";
-import { AccountUser, ensureAccount, fetchMe } from "@/lib/authClient";
+import { ensureAccount } from "@/lib/authClient";
+import { useSession } from "@/lib/session/SessionProvider";
 import { fetchLobbySnapshot } from "@/lib/lobbyClient";
 import { readSnapshot, writeSnapshot } from "@/lib/snapshotCache";
 import { MPLobby, MPLobbyChallenge, MPLobbyGame, MPLobbySeek, MPSession, saveOnlineSeat } from "@/lib/multiplayer";
@@ -98,7 +99,11 @@ function tabFromQuery(wanted: string | null): { tab: LobbyTab; challenges: boole
 function LobbyInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [user, setUser] = useState<AccountUser | null | undefined>(undefined);
+  // Who is here, from the shared session. `display` is known at the first
+  // paint for anyone with a session (the display cookie), so the Online now
+  // sign-in note is decided before the page draws; `user` is the full /me
+  // answer, used to spot your own seek (F005).
+  const { user, display } = useSession();
   const [lobby, setLobby] = useState<MPLobby | null>(null);
   // Two separate errors: the snapshot poll failing (the connection pill and
   // each rail say so) and a seek join failing (said next to the seek list).
@@ -188,24 +193,9 @@ function LobbyInner() {
     });
   }, [wantedChallenge]);
 
-  useEffect(() => {
-    let cancelled = false;
-    fetchMe().then((me) => {
-      if (!cancelled) setUser(me ?? null);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  // Opening the lobby is real engagement: mint a guest account right away
-  // (ensureAccount no-ops for signed-in users and dedupes per page load) so
-  // engaged visitors show up in the moderators' guest counts instead of being
-  // invisible until they join a seek. Fire-and-forget and non-blocking: the
-  // lobby renders identically whether or not this ever resolves.
-  useEffect(() => {
-    void ensureAccount().catch(() => {});
-  }, []);
+  // Opening the lobby is real engagement, and the site header's session
+  // mints a guest for a signed-out visitor on every page (useSession with
+  // ensure), so the lobby no longer mints its own or asks /me separately.
 
   // Poll the lobby snapshot over the edge-cached HTTP route (no socket). The
   // socket is created on demand only when the player acts (queue / answer a
@@ -305,10 +295,7 @@ function LobbyInner() {
     // wall. Ratings only move between registered accounts, so a guest plays
     // out casual; registering later keeps the name and rating.
     let me = user;
-    if (!me) {
-      me = await ensureAccount();
-      if (me) setUser(me);
-    }
+    if (!me) me = await ensureAccount();
     if (!me) {
       setJoiningPool(null);
       setJoinError("Could not start a guest session. Please try again.");
@@ -766,7 +753,7 @@ function LobbyInner() {
                     + {lobby.anonymous} anonymous player{lobby.anonymous === 1 ? "" : "s"}
                   </p>
                 )}
-                {(user === null || user?.isGuest) && (
+                {(display === null || display?.isGuest) && (
                   <p className="mt-4 border-t border-[color:var(--edge)] pt-3 text-[13px] text-parchment-300">
                     <Link href="/login?next=/lobby" className="font-semibold text-gold-leaf hover:underline">
                       Sign in

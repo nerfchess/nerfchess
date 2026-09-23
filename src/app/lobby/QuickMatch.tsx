@@ -4,8 +4,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { AccountUser, ensureAccount, fetchMe } from "@/lib/authClient";
-import { clearSnapshot, readSnapshot, writeSnapshot } from "@/lib/snapshotCache";
+import { ensureAccount } from "@/lib/authClient";
+import { useSession } from "@/lib/session/SessionProvider";
+import { readSnapshot, writeSnapshot } from "@/lib/snapshotCache";
 import { MPConnectionState, MPSession, saveOnlineSeat } from "@/lib/multiplayer";
 import { getCategory, type RatingCategoryId } from "@/lib/ratingCategories";
 import { useSharedMode } from "@/lib/modeState";
@@ -17,7 +18,7 @@ import { Button } from "@/components/ui/Button";
 // opponent. It owns the matchmaking socket (MPSession) and its searching state,
 // and it stays mounted across lobby tab switches so an in-flight search (and
 // its Cancel button) survives leaving and returning to Quick Play. This is a
-// lobby-local reimplementation of the shared QueueButton, redesigned to the
+// lobby-local reimplementation of the old shared QueueButton, redesigned to the
 // route contract: a segmented mode control, a flat grid of time-control tiles
 // (the big time in the middle, the speed name beneath), one primary action, and
 // a mobile sticky action bar carrying that same action.
@@ -46,7 +47,11 @@ const LAST_POOL_KEY = "dc:last-pool";
 
 export function QuickMatch({ active = true }: { active?: boolean } = {}) {
   const router = useRouter();
-  const [user, setUser] = useState<AccountUser | null | undefined>(undefined);
+  // Who is playing, from the shared session: `display` is known at the first
+  // paint for anyone with a session (the display cookie), so the guest note
+  // under the tiles is decided before the page draws instead of dropping in
+  // when this card's own /me answered (F005, F010).
+  const { user, display } = useSession();
   const [modeRatings, setModeRatings] = useState<Partial<Record<DraftMode, number>>>({});
   const [state, setState] = useState<"idle" | "searching" | "paired">("idle");
   const [sharedMode, pickSharedMode] = useSharedMode();
@@ -130,38 +135,46 @@ export function QuickMatch({ active = true }: { active?: boolean } = {}) {
     return () => window.clearInterval(id);
   }, [state]);
 
+  // Per-mode ratings for the mode segments, for a registered player: painted
+  // from the last answer this tab saw, then refreshed.
+  const ratingsFor = display && !display.isGuest ? display.username : null;
   useEffect(() => {
     let cancelled = false;
-    // Instant paint from the session cache, corrected by the live fetch below.
-    const cached = readSnapshot<{ user: AccountUser | null; ratings: Partial<Record<DraftMode, number>> }>(
+    if (!ratingsFor) {
+      // Signed out or a guest: no ratings to show (the segments say "?").
+      queueMicrotask(() => {
+        if (!cancelled) setModeRatings({});
+      });
+      return () => {
+        cancelled = true;
+      };
+    }
+    const cached = readSnapshot<{ username: string; ratings: Partial<Record<DraftMode, number>> }>(
       "nerfchess:queue-card",
     );
-    if (cached) {
+    if (cached?.username === ratingsFor) {
       queueMicrotask(() => {
-        setUser(cached.user);
-        setModeRatings(cached.ratings ?? {});
+        if (!cancelled) setModeRatings(cached.ratings ?? {});
       });
     }
-    fetchMe().then((me) => {
-      if (cancelled) return;
-      setUser(me);
-      if (!me) {
-        clearSnapshot("nerfchess:queue-card");
-        return;
-      }
-      fetch(`/api/users/${encodeURIComponent(me.username)}`)
-        .then((res) => (res.ok ? res.json() : null) as Promise<{ ratings?: Record<string, { rating: number }> } | null>)
-        .then((data) => {
-          if (cancelled || !data?.ratings) return;
-          const ratings = {
-            nerf: data.ratings.nerf ? Math.round(data.ratings.nerf.rating) : undefined,
-            buff: data.ratings.buff ? Math.round(data.ratings.buff.rating) : undefined,
-          };
-          setModeRatings(ratings);
-          writeSnapshot("nerfchess:queue-card", { user: me, ratings });
-        })
-        .catch(() => {});
-    });
+    fetch(`/api/users/${encodeURIComponent(ratingsFor)}`)
+      .then((res) => (res.ok ? res.json() : null) as Promise<{ ratings?: Record<string, { rating: number }> } | null>)
+      .then((data) => {
+        if (cancelled || !data?.ratings) return;
+        const ratings = {
+          nerf: data.ratings.nerf ? Math.round(data.ratings.nerf.rating) : undefined,
+          buff: data.ratings.buff ? Math.round(data.ratings.buff.rating) : undefined,
+        };
+        setModeRatings(ratings);
+        writeSnapshot("nerfchess:queue-card", { username: ratingsFor, ratings });
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [ratingsFor]);
+
+  useEffect(() => {
     queueMicrotask(() => {
       try {
         const saved = window.localStorage.getItem(LAST_POOL_KEY);
@@ -171,7 +184,6 @@ export function QuickMatch({ active = true }: { active?: boolean } = {}) {
       } catch {}
     });
     return () => {
-      cancelled = true;
       sessionRef.current?.destroy();
       sessionRef.current = null;
     };
@@ -186,14 +198,17 @@ export function QuickMatch({ active = true }: { active?: boolean } = {}) {
 
   const pickMode = (m: DraftMode) => pickSharedMode(m);
 
+  // One search at a time: a second tap while the guest account is still
+  // being made (or the socket is opening) must not queue twice.
+  const startingRef = useRef(false);
   const startSearch = async () => {
+    if (startingRef.current || state !== "idle") return;
+    startingRef.current = true;
     setError(null);
     let me = user;
+    if (!me) me = await ensureAccount();
     if (!me) {
-      me = await ensureAccount();
-      if (me) setUser(me);
-    }
-    if (!me) {
+      startingRef.current = false;
       setError("Could not start a guest session. Please try again.");
       return;
     }
@@ -205,6 +220,7 @@ export function QuickMatch({ active = true }: { active?: boolean } = {}) {
     session.onConnectionState((s) => {
       if (sessionRef.current === session) setConnection(s);
     });
+    startingRef.current = false;
     try {
       const paired = await session.queue(pool, mode);
       if (sessionRef.current !== session) return;
@@ -301,7 +317,7 @@ export function QuickMatch({ active = true }: { active?: boolean } = {}) {
             {findLabel}
           </Button>
 
-          {user !== undefined && (!user || user.isGuest) && (
+          {display !== undefined && (!display || display.isGuest) && (
             <p className="mt-2.5 text-[13px] text-parchment-300">
               Playing as a guest.{" "}
               <Link href="/login?next=/lobby" className="font-semibold text-gold-leaf hover:underline">

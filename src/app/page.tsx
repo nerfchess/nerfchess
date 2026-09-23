@@ -13,7 +13,7 @@ import { ModeBadge } from "@/components/ModeBadge";
 // HeroRatings lazy-import them so the engine never ships in this chunk.
 import { TIER_ROMAN } from "@/lib/tiers";
 import { useLobbySnapshotStatus } from "@/lib/lobbyClient";
-import { AccountUser, fetchMe } from "@/lib/authClient";
+import { useSession } from "@/lib/session/SessionProvider";
 import { ActiveGame, loadActiveGame, clearActiveGame } from "@/lib/multiplayer";
 import { UPDATES, formatUpdateDate } from "@/lib/updates";
 import { Button, LinkButton } from "@/components/ui/Button";
@@ -161,39 +161,39 @@ function LiveNowStrip() {
 // A signed-in player with mode ratings sees them beside the title; guests get
 // nothing. Same reads the profile uses, no card engine.
 function HeroRatings() {
-  const [user, setUser] = useState<AccountUser | null | undefined>(undefined);
+  // The name comes from the shared session (known at the first paint for a
+  // returning player), so the ratings read starts at once instead of after a
+  // /me round trip of this component's own.
+  const { display } = useSession();
+  const username = display && !display.isGuest ? display.username : null;
   const [ratings, setRatings] = useState<Partial<Record<"nerf" | "buff", number>>>({});
 
   useEffect(() => {
+    if (!username) return;
     let cancelled = false;
-    fetchMe().then((me) => {
-      if (cancelled) return;
-      setUser(me);
-      if (!me || me.isGuest) return;
-      fetch(`/api/users/${encodeURIComponent(me.username)}`)
-        .then((res) => (res.ok ? res.json() : null) as Promise<{ ratings?: Record<string, { rating: number }> } | null>)
-        .then((data) => {
-          if (cancelled || !data?.ratings) return;
-          setRatings({
-            nerf: data.ratings.nerf ? Math.round(data.ratings.nerf.rating) : undefined,
-            buff: data.ratings.buff ? Math.round(data.ratings.buff.rating) : undefined,
-          });
-        })
-        .catch(() => {});
-    });
+    fetch(`/api/users/${encodeURIComponent(username)}`)
+      .then((res) => (res.ok ? res.json() : null) as Promise<{ ratings?: Record<string, { rating: number }> } | null>)
+      .then((data) => {
+        if (cancelled || !data?.ratings) return;
+        setRatings({
+          nerf: data.ratings.nerf ? Math.round(data.ratings.nerf.rating) : undefined,
+          buff: data.ratings.buff ? Math.round(data.ratings.buff.rating) : undefined,
+        });
+      })
+      .catch(() => {});
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [username]);
 
-  if (!user || user.isGuest) return null;
+  if (!username) return null;
   const chips: { key: "nerf" | "buff"; label: string; value: number; tone: string }[] = [];
   if (ratings.nerf != null) chips.push({ key: "nerf", label: "Nerf", value: ratings.nerf, tone: "text-mode-nerfGlow" });
   if (ratings.buff != null) chips.push({ key: "buff", label: "Buff", value: ratings.buff, tone: "text-mode-buffGlow" });
   if (chips.length === 0) return null;
   return (
     <Link
-      href={`/u/${encodeURIComponent(user.username)}`}
+      href={`/u/${encodeURIComponent(username)}`}
       title="Your profile"
       className="flex flex-wrap items-center justify-end gap-x-3 text-[13px] no-underline"
     >
@@ -602,17 +602,9 @@ function SiteFooter() {
 
 // The deployed build stamp: moderators and admins only.
 function BuildVersionLabel() {
-  const [isModerator, setIsModerator] = useState(false);
-  useEffect(() => {
-    let cancelled = false;
-    fetchMe().then((me) => {
-      if (cancelled || !me || me.isGuest) return;
-      if (me.role === "mod" || me.role === "admin") setIsModerator(true);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  // The full /me answer, not the display hint: the hint is for layout only.
+  const { user } = useSession();
+  const isModerator = !!user && !user.isGuest && (user.role === "mod" || user.role === "admin");
   const version = process.env.NEXT_PUBLIC_BUILD_VERSION ?? "";
   if (!isModerator || !version) return null;
   return (
