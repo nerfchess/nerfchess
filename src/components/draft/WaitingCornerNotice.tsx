@@ -33,7 +33,6 @@ export function WaitingCornerNotice({
   canViewTheirs,
   onViewTheirs,
   onDismiss,
-  liftForDrawer,
 }: {
   oppName: string;
   noun: string;
@@ -49,6 +48,8 @@ export function WaitingCornerNotice({
   canViewTheirs: boolean;
   onViewTheirs: () => void;
   onDismiss: () => void;
+  /** Kept for the caller. Both lifts are the same now that phones have no
+   *  fixed drawer (the tablet bar is cleared by sm:bottom-16 either way). */
   liftForDrawer: boolean;
 }) {
   const oppState = oppLockedIn
@@ -57,13 +58,12 @@ export function WaitingCornerNotice({
       : `${oppName} locked in.`
     : `${oppName} is still choosing a ${noun}`;
   const clockLine = onClock ? "On their clock" : "Clocks paused";
+  // Phones have no fixed drawer any more; sm:bottom-16 keeps the notice clear
+  // of the tablet buff drawer's bar (sm..lg). The two branches this used to
+  // pick between were identical (F158).
   const pos =
     "pointer-events-none fixed right-3 z-30 w-[min(92vw,19rem)] " +
-    // Phones have no fixed drawer any more; the tablet buff drawer (sm..lg)
-    // still lifts the notice clear of its bar.
-    (liftForDrawer
-      ? "bottom-[calc(1rem+env(safe-area-inset-bottom))] sm:bottom-16 lg:bottom-4"
-      : "bottom-[calc(1rem+env(safe-area-inset-bottom))] sm:bottom-16 lg:bottom-4");
+    "bottom-[calc(1rem+env(safe-area-inset-bottom))] sm:bottom-16 lg:bottom-4";
 
   if (compact) {
     return (
@@ -115,22 +115,26 @@ export function WaitingCornerNotice({
       >
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <div className="text-[12px] uppercase tracking-wide text-parchment-400">
+            <div className="text-[12px] text-parchment-400">
               {skipped ? "Draft skipped" : `${noun[0].toUpperCase()}${noun.slice(1)} draft`}
             </div>
             <div className="mt-0.5 truncate font-display text-[15px] font-semibold text-parchment-100">
               {skipped ? "Your draft was skipped" : `Waiting for ${oppName}`}
             </div>
           </div>
-          <button
-            type="button"
+          {/* A real icon button: 44px on touch, 36px under a fine pointer.
+              It was a bare 24px glyph (F158). */}
+          <Button
+            tone="ghost"
+            size="sm"
+            iconOnly
             onClick={onDismiss}
             aria-label="Minimize"
             title="Minimize"
-            className="-mr-1 -mt-1 shrink-0 touch-manipulation px-2 py-1 text-[16px] leading-none text-parchment-400 transition-colors duration-150 hover:text-parchment-100"
+            className="-mr-1.5 -mt-1.5 shrink-0 touch-manipulation text-[16px] leading-none text-parchment-400 hover:text-parchment-100"
           >
-            &times;
-          </button>
+            <span aria-hidden>&times;</span>
+          </Button>
         </div>
         {skipped && (
           <p className="mt-1 text-[12px] leading-snug text-parchment-300">

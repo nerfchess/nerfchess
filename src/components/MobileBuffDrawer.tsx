@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronDown, ChevronUp, Layers } from "lucide-react";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import { TABLET_STACK_HIDE } from "./matchLayout";
 
 /**
@@ -23,7 +23,7 @@ export function MobileBuffDrawer({
   preview,
   children,
 }: {
-  /** Cards you currently hold (spent ones included — they stay on record). */
+  /** Cards you currently hold (spent ones included, they stay on record). */
   held: number;
   /** Activated buffs you could use right now. */
   usable: number;
@@ -37,6 +37,29 @@ export function MobileBuffDrawer({
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
+  const panelId = useId();
+  const toggleRef = useRef<HTMLButtonElement | null>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
+
+  // Closed, the hand is parked below the screen edge but still mounted (so
+  // opening is instant); inert takes it out of the tab order and the
+  // accessibility tree so a keyboard user does not tab through cards they
+  // cannot see (F142). Set on the element because React 18 has no inert prop.
+  useEffect(() => {
+    panelRef.current?.toggleAttribute("inert", !open);
+  }, [open]);
+
+  // Escape closes, and focus goes back to the bar that opened it.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      setOpen(false);
+      toggleRef.current?.focus();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
 
   // Collapse the drawer when the parent signals an auto-close (e.g. a buff was
   // used); handled on the transition during render rather than in an effect.
@@ -49,21 +72,28 @@ export function MobileBuffDrawer({
   return (
     <div className={"hidden sm:block lg:hidden " + TABLET_STACK_HIDE}>
       {open && (
+        // A pointer target only: keyboard users close with Escape or the bar,
+        // so the scrim is not a Tab stop of its own.
         <button
           type="button"
-          aria-label="Close buffs"
+          tabIndex={-1}
+          aria-hidden
           onClick={() => setOpen(false)}
           className="fixed inset-0 z-30 bg-black/50"
         />
       )}
-      {/* Below sm the move drawer's bar sits underneath this one, so stack on
-          its REAL height: 44px plus the home-indicator inset it now absorbs.
-          The old hardcoded `bottom-11` assumed a flat 44px and left the two
-          bars overlapping by the inset on every notched iPhone. From sm up the
-          move drawer is hidden (`sm:hidden`), so this drops to the edge and
-          takes the inset itself. */}
+      {/* The drawer is drawn only from sm to lg (landscape tablets), where it
+          is the bottom-most bar, so it sits on the screen edge and takes the
+          home-indicator inset itself. It opens by sliding up (transform on the
+          motion tokens), not by growing its height: the bar and the 46dvh
+          panel are one block that rests translated down by the panel's height
+          when closed (F191). */}
       <div
-        className="fixed inset-x-0 bottom-0 z-40 plate overflow-hidden border-t border-[color:var(--edge)] pb-[env(safe-area-inset-bottom)]"
+        className={
+          "fixed inset-x-0 bottom-0 z-40 plate overflow-hidden border-t border-[color:var(--edge)] pb-[env(safe-area-inset-bottom)] " +
+          "transition-transform duration-[var(--dur-2)] ease-[var(--ease-out)] motion-reduce:transition-none " +
+          (open ? "translate-y-0" : "translate-y-[46dvh]")
+        }
         // Drawer geometry: rounded top corners, square bottom against the
         // screen edge. Inline so it reliably overrides the plate's 10px.
         style={{ borderRadius: "1px 1px 0 0" }}
@@ -75,8 +105,10 @@ export function MobileBuffDrawer({
           className="pointer-events-none absolute left-1/2 top-1.5 h-1 w-9 -translate-x-1/2 rounded-full bg-white/15"
         />
         <button
+          ref={toggleRef}
           type="button"
           aria-expanded={open}
+          aria-controls={panelId}
           onClick={() => setOpen((v) => !v)}
           // 44px in pixels, not `h-11`: this interface roots at 14px, so
           // 2.75rem is 38.5px and the bar was under the 44px hit floor.
@@ -106,13 +138,8 @@ export function MobileBuffDrawer({
             </span>
           </span>
         </button>
-        <div
-          className={
-            "overflow-hidden transition-[height] duration-200 ease-out " + (open ? "h-[46dvh]" : "h-0")
-          }
-        >
-          {/* The wrapper owns any safe-area inset (only from sm up, where this
-              bar is the bottom-most element); here just breathing room. */}
+        <div ref={panelRef} id={panelId} aria-hidden={!open} className="h-[46dvh] overflow-hidden">
+          {/* The wrapper owns the safe-area inset; here just breathing room. */}
           <div className="h-full overflow-y-auto px-2 pb-2">{children}</div>
         </div>
       </div>

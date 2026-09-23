@@ -224,17 +224,21 @@ function GameSummary({ game, onClose }: { game: CompletedGame; onClose: () => vo
 
   // Escape (which this modal already had) plus the body scroll lock and
   // ghost-click guard it did not.
-  const chrome = useModalChrome(true, onClose);
+  const { attachDialog, onBackdropPointerDown } = useModalChrome(true, onClose);
 
+  // The scrim is the site's black/60 (was an off-palette #0a111e, F163), and
+  // the panel is the dialog (F138): attachDialog moves focus in, keeps Tab
+  // inside and returns focus to the row that opened it.
   return (
     <div
-      role="dialog"
-      aria-modal="true"
-      aria-label="Game summary"
-      className="fixed inset-0 z-50 grid place-items-center overflow-y-auto overscroll-contain bg-[#0a111e]/80 px-4 py-6"
-      onPointerDown={chrome.onBackdropPointerDown}
+      className="fixed inset-0 z-50 grid place-items-center overflow-y-auto overscroll-contain bg-black/60 px-4 py-6"
+      onPointerDown={onBackdropPointerDown}
     >
       <div
+        ref={attachDialog}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Game summary"
         className="plate w-[min(92vw,26rem)] p-6 sm:p-7"
         onPointerDown={(event) => event.stopPropagation()}
       >
@@ -246,10 +250,10 @@ function GameSummary({ game, onClose }: { game: CompletedGame; onClose: () => vo
             </h2>
           </div>
           <Button tone="ghost"
-           
+            iconOnly
             onClick={onClose}
             aria-label="Close"
-            className="h-8 w-8 text-sm">
+            className="shrink-0 text-sm">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <path d="M18 6 6 18M6 6l12 12" />
             </svg>
