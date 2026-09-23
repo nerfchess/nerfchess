@@ -129,6 +129,82 @@ async function main() {
   const noIcon = allCardMeta().filter((c) => !codexFaceIcon(c.path.split("/")[3]));
   check(noIcon.length === 0, `every live card has a face icon (${noIcon.length} fall back to a letter, e.g. ${noIcon.slice(0, 3).map((c) => c.path).join(", ")})`);
 
+  // 6. SECURITY: link-preview edge-cache keys come only from validated,
+  //    found data. Next decodes route params, so /tournaments/..%2Fgame%2FX
+  //    reaches the image with "../game/X"; the URL parser would fold that
+  //    into v1/game/X (a finished game's immutable key) and "#" would cut a
+  //    key down to a real player's. A fake caches.default records every key
+  //    the renderer touches; a hostile or unknown param must touch none.
+  const touched: string[] = [];
+  const fakeCache = {
+    async match(req: Request) {
+      touched.push(req.url);
+      return undefined;
+    },
+    async put(req: Request) {
+      touched.push(req.url);
+    },
+  };
+  const g = globalThis as { caches?: unknown };
+  const prevCaches = g.caches;
+  g.caches = { default: fakeCache };
+  console.error = () => {};
+  try {
+    const routes = await import("../src/lib/og/routes");
+    const hostile = ["../game/ABCDE", "..%2Fgame%2FABCDE", "abc#x", "abc?x", "a/b", "..\\game\\ABCDE", "%2e%2e/puzzles/x", " ABCDE"];
+    const images: [string, (p: string) => Promise<Response>][] = [
+      ["profile", routes.profileImage],
+      ["club", routes.clubImage],
+      ["tournament", routes.tournamentImage],
+      ["invite", routes.inviteImage],
+      ["game", routes.gameImage],
+    ];
+    for (const [name, image] of images) {
+      for (const param of hostile) {
+        touched.length = 0;
+        const res = await image(param);
+        check(res.status === 200, `${name}(${JSON.stringify(param)}): still answers 200`);
+        check(touched.length === 0, `${name}(${JSON.stringify(param)}): no edge-cache key (touched ${touched.join(", ")})`);
+      }
+    }
+    // Unknown but well-formed params are misses too: no key, so a "not
+    // found" card is never pinned over a record created a minute later.
+    for (const [name, image, param] of [
+      ["profile", routes.profileImage, "nobody_here_zz"],
+      ["club", routes.clubImage, "no-such-club-zz"],
+      ["tournament", routes.tournamentImage, "no-such-tournament-zz"],
+      ["invite", routes.inviteImage, "ZZZZZZ"],
+    ] as const) {
+      touched.length = 0;
+      await image(param);
+      check(touched.length === 0, `${name}(${JSON.stringify(param)}) miss: no edge-cache key (touched ${touched.join(", ")})`);
+    }
+  } finally {
+    console.error = quiet;
+  }
+
+  // The key builder itself: every key stays under its own namespace, and a
+  // key with an empty, "." or ".." segment is refused outright.
+  const renderMod = (await import("../src/lib/og/render")) as { ogCacheRequest?: (key: string) => Request | null };
+  check(typeof renderMod.ogCacheRequest === "function", "render.ts exports ogCacheRequest, the one place a cache key becomes a URL");
+  const ogCacheRequest = renderMod.ogCacheRequest ?? ((key: string) => new Request(`https://og-cache.nerfchess.com/v1/${key}`));
+  for (const bad of ["u/../game/ABCDE", "clubs/..", "tournaments/./x", "c//X", "", "../x"]) {
+    check(ogCacheRequest(bad) === null, `ogCacheRequest(${JSON.stringify(bad)}) refused`);
+  }
+  for (const [key, ns] of [
+    ["u/abc#x", "u"],
+    ["clubs/abc?x", "clubs"],
+    ["u/a\\..\\game", "u"],
+    ["tournaments/%2e%2e", "tournaments"],
+    ["game/ABCDE", "game"],
+    ["codex/nerf/lucky/0a1b2c3d", "codex"],
+  ] as const) {
+    const req = ogCacheRequest(key);
+    const u = req ? new URL(req.url) : null;
+    check(!!u && u.pathname.startsWith(`/v1/${ns}/`) && u.pathname.split("/").length === key.split("/").length + 2 && !u.hash && !u.search, `ogCacheRequest(${JSON.stringify(key)}) stays in ${ns}/ (got ${req?.url})`);
+  }
+  g.caches = prevCaches;
+
   console.log(`${checks - failures}/${checks} checks passed`);
   process.exit(failures ? 1 : 0);
 }

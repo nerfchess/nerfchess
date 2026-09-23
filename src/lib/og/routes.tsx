@@ -70,35 +70,53 @@ export async function gameImage(id: string) {
             board: { pieces: START },
           }),
     finished ? OG_CACHE.immutable : OG_CACHE.live,
-    finished ? `game/${id.toUpperCase()}` : undefined,
+    // Keyed on the id the archive returned (validated against GAME_ID_RE),
+    // never on the raw route param.
+    finished && g ? `game/${g.id}` : undefined,
   );
 }
 
 // ---- profiles ---------------------------------------------------------------
+//
+// SECURITY: profiles, clubs, tournaments and invites read their record before
+// rendering and key the edge cache on the record that was found, never on the
+// route param. Next decodes params, so a param can carry "/", ".." or "#",
+// and a key built from it could overwrite another card's cache entry. A miss
+// renders its "not found" card with no key, so it is never pinned either.
 
-export function profileImage(username: string) {
-  return ogImage(async () => {
-    const p = await profileSummary(username);
-    if (!p) {
-      return pageCard({ kicker: "Player", title: "Player not found", subtitle: "Find players on the Nerf Chess leaderboard and community pages." });
-    }
-    return profileCard({ username: p.username, avatar: p.avatar, ratings: p.ratings, games: p.games, topCards: p.topCards });
-  }, OG_CACHE.slow, `u/${username.toLowerCase()}`);
+export async function profileImage(username: string) {
+  const p = await profileSummary(username);
+  if (!p) {
+    return ogImage(
+      () => pageCard({ kicker: "Player", title: "Player not found", subtitle: "Find players on the Nerf Chess leaderboard and community pages." }),
+      OG_CACHE.slow,
+    );
+  }
+  return ogImage(
+    () => profileCard({ username: p.username, avatar: p.avatar, ratings: p.ratings, games: p.games, topCards: p.topCards }),
+    OG_CACHE.slow,
+    `u/${p.username.toLowerCase()}`,
+  );
 }
 
 // ---- clubs and tournaments --------------------------------------------------
 
-export function clubImage(slug: string) {
-  return ogImage(async () => {
-    const c = await clubSummary(slug);
-    if (!c) return pageCard({ kicker: "Club", title: "Club not found", subtitle: "Browse the Nerf Chess clubs to find one to join." });
-    return pageCard({
-      kicker: "Club",
-      title: c.name,
-      subtitle: c.description || "A Nerf Chess club.",
-      stat: { value: formatCount(c.members), label: c.members === 1 ? "member" : "members" },
-    });
-  }, OG_CACHE.slow, `clubs/${slug.toLowerCase()}`);
+export async function clubImage(slug: string) {
+  const c = await clubSummary(slug);
+  if (!c) {
+    return ogImage(() => pageCard({ kicker: "Club", title: "Club not found", subtitle: "Browse the Nerf Chess clubs to find one to join." }), OG_CACHE.slow);
+  }
+  return ogImage(
+    () =>
+      pageCard({
+        kicker: "Club",
+        title: c.name,
+        subtitle: c.description || "A Nerf Chess club.",
+        stat: { value: formatCount(c.members), label: c.members === 1 ? "member" : "members" },
+      }),
+    OG_CACHE.slow,
+    `clubs/${c.slug.toLowerCase()}`,
+  );
 }
 
 function statusLine(status: string, startsAt: number | null): string {
@@ -111,33 +129,44 @@ function statusLine(status: string, startsAt: number | null): string {
   return "Open for entries";
 }
 
-export function tournamentImage(id: string) {
-  return ogImage(async () => {
-    const t = await tournamentSummary(id);
-    if (!t) return pageCard({ kicker: "Tournament", title: "Tournament not found", subtitle: "See the upcoming Nerf Chess events." });
-    const mode = t.mode === "buff" ? "Buff mode" : t.mode === "nerf" ? "Nerf mode" : "";
-    return pageCard({
-      kicker: "Tournament",
-      title: t.name,
-      subtitle: [statusLine(t.status, t.startsAt), mode, clockLabel(t.timeSec, t.incrementSec), t.rated ? "Rated" : "Casual"].filter(Boolean).join(", "),
-      stat: { value: `${t.players}/${t.maxPlayers}`, label: "players" },
-      mode: t.mode ?? undefined,
-    });
-  }, OG_CACHE.slow, `tournaments/${id}`);
+export async function tournamentImage(id: string) {
+  const t = await tournamentSummary(id);
+  if (!t) {
+    return ogImage(() => pageCard({ kicker: "Tournament", title: "Tournament not found", subtitle: "See the upcoming Nerf Chess events." }), OG_CACHE.slow);
+  }
+  const mode = t.mode === "buff" ? "Buff mode" : t.mode === "nerf" ? "Nerf mode" : "";
+  return ogImage(
+    () =>
+      pageCard({
+        kicker: "Tournament",
+        title: t.name,
+        subtitle: [statusLine(t.status, t.startsAt), mode, clockLabel(t.timeSec, t.incrementSec), t.rated ? "Rated" : "Casual"].filter(Boolean).join(", "),
+        stat: { value: `${t.players}/${t.maxPlayers}`, label: "players" },
+        mode: t.mode ?? undefined,
+      }),
+    OG_CACHE.slow,
+    `tournaments/${t.id}`,
+  );
 }
 
 // ---- invites ----------------------------------------------------------------
 
-export function inviteImage(code: string) {
-  return ogImage(async () => {
-    const inv = await inviteSummary(code);
-    return inviteCard({
-      from: inv?.from ?? null,
-      rating: inv?.rating ?? null,
-      clock: inv && inv.timeSec !== null ? clockLabel(inv.timeSec, inv.incrementSec ?? 0) : null,
-      mode: inv?.mode ?? null,
-      rated: inv?.rated ?? null,
-      code: code.toUpperCase().slice(0, 10),
-    });
-  }, OG_CACHE.live, `c/${code.toUpperCase()}`);
+/** An unknown or expired code still gets the generic invite card (the code
+ *  drawn as letters and digits only), uncached at the edge. */
+export async function inviteImage(code: string) {
+  const inv = await inviteSummary(code);
+  return ogImage(
+    () =>
+      inviteCard({
+        from: inv?.from ?? null,
+        rating: inv?.rating ?? null,
+        clock: inv && inv.timeSec !== null ? clockLabel(inv.timeSec, inv.incrementSec ?? 0) : null,
+        mode: inv?.mode ?? null,
+        rated: inv?.rated ?? null,
+        code: inv?.code ?? code.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 10),
+      }),
+    OG_CACHE.live,
+    // inv.code passed INVITE_CODE_RE inside inviteSummary.
+    inv ? `c/${inv.code}` : undefined,
+  );
 }

@@ -89,15 +89,37 @@ export type OgRequest = {
   /** Seconds the image may be reused (OG_CACHE). */
   maxAge: number;
   /** Edge cache key, unique per card and per data version, e.g.
-   *  "game/ABCDE". Omit for images Next prerenders at build. */
+   *  "game/ABCDE". Build it only from a validated record that was found;
+   *  omit it for a miss (a "not found" card must never be pinned) and for
+   *  images Next prerenders at build. */
   key?: string;
 };
+
+/** The edge-cache request for a key such as "game/ABCDE", or null when the
+ *  key is unsafe. SECURITY: this is the only place a key becomes a URL. Each
+ *  "/" segment is percent-encoded, so "#", "?", a backslash and "%2e" cannot end
+ *  the path or turn into a dot segment, and an empty, "." or ".." segment is
+ *  refused, so the URL parser can never fold one key into another
+ *  namespace. Callers still build keys only from validated, found records. */
+export function ogCacheRequest(key: string): Request | null {
+  const parts = key.split("/");
+  if (parts.length < 2 || parts.some((s) => s === "" || s === "." || s === "..")) return null;
+  try {
+    const url = `https://og-cache.nerfchess.com/v1/${parts.map(encodeURIComponent).join("/")}`;
+    // Belt and braces: the parsed URL must be exactly the one we wrote.
+    if (new URL(url).href !== url) return null;
+    return new Request(url);
+  } catch {
+    // A lone surrogate makes encodeURIComponent throw: no key, no cache.
+    return null;
+  }
+}
 
 /** Build, render and cache one preview; any failure answers with the brand
  *  card, never an error or a blank image. */
 export async function ogResponse({ build, fallback, maxAge, key }: OgRequest): Promise<Response> {
   const cache = key ? edgeCache() : null;
-  const cacheReq = cache && key ? new Request(`https://og-cache.nerfchess.com/v1/${key}`) : null;
+  const cacheReq = cache && key ? ogCacheRequest(key) : null;
   if (cache && cacheReq) {
     try {
       const hit = await cache.match(cacheReq);
