@@ -53,16 +53,26 @@ export default function PuzzleByIdPage() {
         <h1 className="page-title mt-1">
           {puzzle ? TITLE[puzzle.format](puzzle) : "Puzzle"}
         </h1>
-        {puzzle && (
-          <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-parchment-300">
-            {puzzle.tags.map((t) => (
-              <span key={t}>{t}</span>
-            ))}
-            <span className="font-mono tabular-nums text-parchment-400">
-              Difficulty {puzzle.difficulty}/5
+        {/* The tag line is always in the flow: it used to mount with the
+            corpus and push the board down a line (F015). Before the puzzle is
+            known it holds one invisible line of the same text, so the line box
+            is the real font's, not a guessed height. */}
+        <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-parchment-300">
+          {puzzle ? (
+            <>
+              {puzzle.tags.map((t) => (
+                <span key={t}>{t}</span>
+              ))}
+              <span className="font-mono tabular-nums text-parchment-400">
+                Difficulty {puzzle.difficulty}/5
+              </span>
+            </>
+          ) : (
+            <span className="invisible font-mono tabular-nums" aria-hidden>
+              Difficulty 0/5
             </span>
-          </p>
-        )}
+          )}
+        </p>
 
         <div className="mt-4">
           <PuzzleConnectionNotice corpus={corpus} />

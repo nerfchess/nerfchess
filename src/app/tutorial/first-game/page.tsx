@@ -13,10 +13,14 @@ import GamePageWrapper from "@/app/game/page";
 import { FirstGameTour } from "@/components/tutorial/FirstGameTour";
 import { clearSavedAiGame, loadSavedAiGame } from "@/lib/gamePersistence";
 import { FIRST_GAME_TOUR_HREF } from "@/components/tutorial/tourState";
+import Loading from "./loading";
 
+// Until the route knows its query string and has cleared a finished tour game,
+// it shows the route skeleton (the game's board geometry) rather than nothing:
+// a null here prerendered an empty body, header included, on every hard load.
 export default function FirstGameTourPage() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<Loading />}>
       <FirstGameTourRoute />
     </Suspense>
   );
@@ -45,7 +49,7 @@ function FirstGameTourRoute() {
     queueMicrotask(() => setReady(true));
   }, [configured, params, router]);
 
-  if (!configured || !ready) return null;
+  if (!configured || !ready) return <Loading />;
   return (
     <>
       <GamePageWrapper />

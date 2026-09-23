@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { installClsProbe, readCls } from "./polish/clsProbe";
 
 // Regression specs for slice E1 (content routes): states that used to lie to
 // the reader or dead-end. Each test names the ledger row it guards.
@@ -78,5 +79,33 @@ test.describe("suggest form errors", () => {
     await page.locator("#rule-desc").fill("A nerf where the queen may only move on even turns.");
     await page.getByRole("button", { name: /^Send .* suggestion$/ }).click();
     await expect(page.getByRole("alert").filter({ hasText: "too short" })).toHaveText("Description is too short.");
+  });
+});
+
+// Layout stability on the content routes: rows that used to mount after
+// hydration and push the board down. The ceiling sits well under the measured
+// before values (docs/polish-pass/evidence/E1/baseline-before.json) and above
+// the after values, so a regression of the class fails and dev-server noise
+// does not.
+const CLS_CEILING = 0.015;
+const PUZZLE_ID = "cc-1tpxut9";
+
+test.describe("content route layout stability (390x844)", () => {
+  test.use({ viewport: { width: 390, height: 844 } });
+
+  // F015: the day strip mounted with the client-only date (0.043 before).
+  test("/puzzles keeps the board still while the date and corpus arrive", async ({ page }) => {
+    await installClsProbe(page);
+    await page.goto("/puzzles");
+    const report = await readCls(page);
+    expect(report.cls, JSON.stringify(report.offenders.slice(0, 3))).toBeLessThan(CLS_CEILING);
+  });
+
+  // F015: the tag and difficulty line mounted with the corpus (0.024 before).
+  test("/puzzles/[id] keeps the board still while the corpus arrives", async ({ page }) => {
+    await installClsProbe(page);
+    await page.goto(`/puzzles/${PUZZLE_ID}`);
+    const report = await readCls(page);
+    expect(report.cls, JSON.stringify(report.offenders.slice(0, 3))).toBeLessThan(CLS_CEILING);
   });
 });

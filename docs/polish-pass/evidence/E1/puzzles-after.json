@@ -1,0 +1,835 @@
+{
+ "generatedAt": "2026-09-23T02:24:30.017Z",
+ "routes": [
+  "/puzzles",
+  "/puzzles/cc-1tpxut9"
+ ],
+ "states": [
+  "390x844|dark|full|signed-out|normal",
+  "1280x800|dark|full|signed-out|normal"
+ ],
+ "probes": [
+  "cls",
+  "console"
+ ],
+ "summary": [
+  {
+   "route": "/puzzles",
+   "state": "390x844|dark|full|signed-out|normal",
+   "status": 200,
+   "cls": 0.0049,
+   "clsSum": 0.0049,
+   "shiftsOver001": 0,
+   "topOffender": "main.min-h-screen.pb-16 > section.mx-auto.max-w-\\[1200px\\].px-4 > div.grid.gap-4.lg\\:grid-cols-\\[minmax(0,1fr)_320px\\]",
+   "consoleErrors": 0,
+   "http4xx5xx": 0
+  },
+  {
+   "route": "/puzzles",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "status": 200,
+   "cls": 0.005,
+   "clsSum": 0.005,
+   "shiftsOver001": 0,
+   "topOffender": "main.min-h-screen.pb-16 > nav.site-nav > div.relative.flex.items-center",
+   "consoleErrors": 0,
+   "http4xx5xx": 0
+  },
+  {
+   "route": "/puzzles/cc-1tpxut9",
+   "state": "390x844|dark|full|signed-out|normal",
+   "status": 200,
+   "cls": 0.001,
+   "clsSum": 0.001,
+   "shiftsOver001": 0,
+   "topOffender": "main.min-h-screen.pb-16 > nav.site-nav > div.relative.flex.items-center",
+   "consoleErrors": 0,
+   "http4xx5xx": 0
+  },
+  {
+   "route": "/puzzles/cc-1tpxut9",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "status": 200,
+   "cls": 0.0032,
+   "clsSum": 0.0032,
+   "shiftsOver001": 0,
+   "topOffender": "main.min-h-screen.pb-16 > nav.site-nav > div.relative.flex.items-center",
+   "consoleErrors": 0,
+   "http4xx5xx": 0
+  }
+ ],
+ "cells": [
+  {
+   "route": "/puzzles",
+   "state": "390x844|dark|full|signed-out|normal",
+   "status": 200,
+   "loadMs": 4406,
+   "html": {
+    "theme": "dark",
+    "anim": "normal"
+   },
+   "cls": {
+    "cls": 0.0049,
+    "total": 0.0049,
+    "shiftCount": 2,
+    "inputShiftCount": 0,
+    "findings": [],
+    "offenders": [
+     {
+      "selector": "main.min-h-screen.pb-16 > section.mx-auto.max-w-\\[1200px\\].px-4 > div.grid.gap-4.lg\\:grid-cols-\\[minmax(0,1fr)_320px\\]",
+      "text": "Loading the puzzle",
+      "score": 0.0039,
+      "count": 1,
+      "maxDy": 5,
+      "maxDx": 0,
+      "maxDh": -5,
+      "maxDw": 0
+     },
+     {
+      "selector": "main.min-h-screen.pb-16 > nav.site-nav > div.relative.flex.items-center",
+      "text": "GuestCraftyMole ·Sign in",
+      "score": 0.001,
+      "count": 1,
+      "maxDy": 0,
+      "maxDx": -10,
+      "maxDh": 0,
+      "maxDw": 10
+     }
+    ],
+    "marks": {
+     "dcl": 195,
+     "firstPaint": 196,
+     "fcp": 196,
+     "load": 630,
+     "hydrated": 707,
+     "ttfb": 74
+    },
+    "api": [
+     {
+      "url": "/api/auth/me",
+      "start": 702,
+      "end": 723
+     },
+     {
+      "url": "/api/auth/me",
+      "start": 756,
+      "end": 768
+     },
+     {
+      "url": "/api/auth/guest",
+      "start": 772,
+      "end": 1070
+     },
+     {
+      "url": "/api/auth/me",
+      "start": 1110,
+      "end": 1250
+     },
+     {
+      "url": "/api/users/settings",
+      "start": 1264,
+      "end": 1662
+     },
+     {
+      "url": "/api/users/CraftyMole/achievements",
+      "start": 1266,
+      "end": 2401
+     },
+     {
+      "url": "/api/notifications",
+      "start": 1267,
+      "end": 1700
+     },
+     {
+      "url": "/api/challenges",
+      "start": 1267,
+      "end": 1656
+     }
+    ],
+    "longFrames": {
+     "count": 4,
+     "worst": 201,
+     "totalBlocking": 159
+    },
+    "probeErrors": []
+   },
+   "console": {
+    "counts": {
+     "console-error": 0,
+     "react-warning": 0,
+     "console-warning": 8,
+     "pageerror": 0,
+     "http": 0,
+     "requestfailed": 0
+    },
+    "items": [
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     }
+    ],
+    "requests": 73,
+    "apiCalls": [
+     {
+      "method": "GET",
+      "url": "/api/auth/me",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/auth/me",
+      "status": 200
+     },
+     {
+      "method": "POST",
+      "url": "/api/auth/guest",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/auth/me",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/challenges",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/users/settings",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/notifications",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/users/CraftyMole/achievements",
+      "status": 200
+     }
+    ]
+   }
+  },
+  {
+   "route": "/puzzles",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "status": 200,
+   "loadMs": 3844,
+   "html": {
+    "theme": "dark",
+    "anim": "normal"
+   },
+   "cls": {
+    "cls": 0.005,
+    "total": 0.005,
+    "shiftCount": 2,
+    "inputShiftCount": 0,
+    "findings": [],
+    "offenders": [
+     {
+      "selector": "main.min-h-screen.pb-16 > nav.site-nav > div.relative.flex.items-center",
+      "text": "GuestEagerGecko ·Sign in",
+      "score": 0.0025,
+      "count": 1,
+      "maxDy": 0,
+      "maxDx": -200,
+      "maxDh": 0,
+      "maxDw": 200
+     },
+     {
+      "selector": "main.min-h-screen.pb-16 > section.mx-auto.max-w-\\[1200px\\].px-4 > div.grid.gap-4.lg\\:grid-cols-\\[minmax(0,1fr)_320px\\]",
+      "text": "Loading the puzzle",
+      "score": 0.0025,
+      "count": 1,
+      "maxDy": 4,
+      "maxDx": 0,
+      "maxDh": 0,
+      "maxDw": 0
+     }
+    ],
+    "marks": {
+     "dcl": 639,
+     "firstPaint": 752,
+     "fcp": 752,
+     "load": 1032,
+     "hydrated": 1104,
+     "ttfb": 582
+    },
+    "api": [
+     {
+      "url": "/api/auth/me",
+      "start": 1098,
+      "end": 1109
+     },
+     {
+      "url": "/api/auth/me",
+      "start": 1138,
+      "end": 1147
+     },
+     {
+      "url": "/api/auth/guest",
+      "start": 1153,
+      "end": 1301
+     },
+     {
+      "url": "/api/auth/me",
+      "start": 1359,
+      "end": 1434
+     },
+     {
+      "url": "/api/users/settings",
+      "start": 1447,
+      "end": 1680
+     },
+     {
+      "url": "/api/users/EagerGecko/achievements",
+      "start": 1448,
+      "end": 1831
+     },
+     {
+      "url": "/api/notifications",
+      "start": 1449,
+      "end": 1830
+     },
+     {
+      "url": "/api/challenges",
+      "start": 1450,
+      "end": 1822
+     }
+    ],
+    "longFrames": {
+     "count": 4,
+     "worst": 188,
+     "totalBlocking": 152
+    },
+    "probeErrors": []
+   },
+   "console": {
+    "counts": {
+     "console-error": 0,
+     "react-warning": 0,
+     "console-warning": 8,
+     "pageerror": 0,
+     "http": 0,
+     "requestfailed": 0
+    },
+    "items": [
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     }
+    ],
+    "requests": 71,
+    "apiCalls": [
+     {
+      "method": "GET",
+      "url": "/api/auth/me",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/auth/me",
+      "status": 200
+     },
+     {
+      "method": "POST",
+      "url": "/api/auth/guest",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/auth/me",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/users/settings",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/challenges",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/users/EagerGecko/achievements",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/notifications",
+      "status": 200
+     }
+    ]
+   }
+  },
+  {
+   "route": "/puzzles/cc-1tpxut9",
+   "state": "390x844|dark|full|signed-out|normal",
+   "status": 200,
+   "loadMs": 3782,
+   "html": {
+    "theme": "dark",
+    "anim": "normal"
+   },
+   "cls": {
+    "cls": 0.001,
+    "total": 0.001,
+    "shiftCount": 1,
+    "inputShiftCount": 0,
+    "findings": [],
+    "offenders": [
+     {
+      "selector": "main.min-h-screen.pb-16 > nav.site-nav > div.relative.flex.items-center",
+      "text": "GuestFierceHedgehog ·Sign in",
+      "score": 0.001,
+      "count": 1,
+      "maxDy": 0,
+      "maxDx": -10,
+      "maxDh": 0,
+      "maxDw": 10
+     }
+    ],
+    "marks": {
+     "dcl": 699,
+     "firstPaint": 712,
+     "fcp": 712,
+     "load": 1124,
+     "hydrated": 1193,
+     "ttfb": 501
+    },
+    "api": [
+     {
+      "url": "/api/auth/me",
+      "start": 1188,
+      "end": 1198
+     },
+     {
+      "url": "/api/auth/me",
+      "start": 1234,
+      "end": 1244
+     },
+     {
+      "url": "/api/auth/guest",
+      "start": 1264,
+      "end": 1411
+     },
+     {
+      "url": "/api/auth/me",
+      "start": 1410,
+      "end": 1474
+     },
+     {
+      "url": "/api/users/settings",
+      "start": 1485,
+      "end": 1566
+     },
+     {
+      "url": "/api/users/FierceHedgehog/achievements",
+      "start": 1486,
+      "end": 1773
+     },
+     {
+      "url": "/api/notifications",
+      "start": 1488,
+      "end": 1766
+     },
+     {
+      "url": "/api/challenges",
+      "start": 1488,
+      "end": 1745
+     }
+    ],
+    "longFrames": {
+     "count": 4,
+     "worst": 192,
+     "totalBlocking": 133
+    },
+    "probeErrors": []
+   },
+   "console": {
+    "counts": {
+     "console-error": 0,
+     "react-warning": 0,
+     "console-warning": 8,
+     "pageerror": 0,
+     "http": 0,
+     "requestfailed": 0
+    },
+    "items": [
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     }
+    ],
+    "requests": 72,
+    "apiCalls": [
+     {
+      "method": "GET",
+      "url": "/api/auth/me",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/auth/me",
+      "status": 200
+     },
+     {
+      "method": "POST",
+      "url": "/api/auth/guest",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/auth/me",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/users/settings",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/challenges",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/notifications",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/users/FierceHedgehog/achievements",
+      "status": 200
+     }
+    ]
+   }
+  },
+  {
+   "route": "/puzzles/cc-1tpxut9",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "status": 200,
+   "loadMs": 3769,
+   "html": {
+    "theme": "dark",
+    "anim": "normal"
+   },
+   "cls": {
+    "cls": 0.0032,
+    "total": 0.0032,
+    "shiftCount": 1,
+    "inputShiftCount": 0,
+    "findings": [],
+    "offenders": [
+     {
+      "selector": "main.min-h-screen.pb-16 > nav.site-nav > div.relative.flex.items-center",
+      "text": "GuestGentleMongoose ·Sign in",
+      "score": 0.0032,
+      "count": 1,
+      "maxDy": 0,
+      "maxDx": -234,
+      "maxDh": 0,
+      "maxDw": 234
+     }
+    ],
+    "marks": {
+     "dcl": 407,
+     "firstPaint": 424,
+     "fcp": 424,
+     "load": 1126,
+     "hydrated": 1139,
+     "ttfb": 306
+    },
+    "api": [
+     {
+      "url": "/api/auth/me",
+      "start": 1143,
+      "end": 1151
+     },
+     {
+      "url": "/api/auth/me",
+      "start": 1199,
+      "end": 1211
+     },
+     {
+      "url": "/api/auth/guest",
+      "start": 1226,
+      "end": 1383
+     },
+     {
+      "url": "/api/auth/me",
+      "start": 1389,
+      "end": 1455
+     },
+     {
+      "url": "/api/users/settings",
+      "start": 1470,
+      "end": 1672
+     },
+     {
+      "url": "/api/users/GentleMongoose/achievements",
+      "start": 1472,
+      "end": 1757
+     },
+     {
+      "url": "/api/notifications",
+      "start": 1474,
+      "end": 1762
+     },
+     {
+      "url": "/api/challenges",
+      "start": 1474,
+      "end": 1750
+     }
+    ],
+    "longFrames": {
+     "count": 4,
+     "worst": 118,
+     "totalBlocking": 60
+    },
+    "probeErrors": []
+   },
+   "console": {
+    "counts": {
+     "console-error": 0,
+     "react-warning": 0,
+     "console-warning": 8,
+     "pageerror": 0,
+     "http": 0,
+     "requestfailed": 0
+    },
+    "items": [
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     }
+    ],
+    "requests": 75,
+    "apiCalls": [
+     {
+      "method": "GET",
+      "url": "/api/auth/me",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/auth/me",
+      "status": 200
+     },
+     {
+      "method": "POST",
+      "url": "/api/auth/guest",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/auth/me",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/users/settings",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/challenges",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/users/GentleMongoose/achievements",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/notifications",
+      "status": 200
+     }
+    ]
+   }
+  }
+ ]
+}
