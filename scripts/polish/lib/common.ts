@@ -15,16 +15,17 @@ import { chromium, type Browser } from "@playwright/test";
 
 export const ROOT = path.resolve(__dirname, "..", "..", "..");
 /**
- * The card-effect strip tool talks to a second dev server (POLISH_FX_BASE,
- * default :3100) that only ever compiles /dev/plays: every edit to a play
- * module recompiles the whole effects graph, and doing that on the shared
- * :3000 server pushed it past 10 GB and into an OOM kill every few minutes
- * while the Tier C lane worked (2026-09-23). Everything else uses :3000.
+ * The card-effect strip tool can talk to a second dev server (POLISH_FX_BASE)
+ * that only ever compiles /dev/plays, so play-module edits do not recompile the
+ * effects graph on the shared server. It defaults to the shared :3000 server:
+ * on the 16 GB box two dev servers (5.8 + 4.9 GB) plus a fleet's tsc and
+ * browsers ran out of memory and thrashed (load 57, 2026-09-23 20:35 UTC), so
+ * set POLISH_FX_BASE only when the box has room for both.
  */
 const IS_FX_TOOL = /card-strip/.test(process.argv[1] ?? "");
 export const BASE = (
   process.env.POLISH_BASE ||
-  (IS_FX_TOOL ? process.env.POLISH_FX_BASE || "http://localhost:3100" : "http://localhost:3000")
+  (IS_FX_TOOL ? process.env.POLISH_FX_BASE || "http://localhost:3000" : "http://localhost:3000")
 ).replace(/\/$/, "");
 /** Committed evidence (small JSON and PNG strips only). */
 export const EVIDENCE_DIR = path.join(ROOT, "docs", "polish-pass", "evidence");
