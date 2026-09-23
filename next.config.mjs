@@ -23,7 +23,7 @@ function buildVersion() {
 // `next dev` via wrangler's platform proxy. Guard to dev only: during a
 // production `next build` (e.g. Cloudflare Workers Builds / CI) this call sets
 // up the local platform proxy and, because of the Hyperdrive binding, demands a
-// local Postgres connection string that CI has no reason to provide — throwing
+// local Postgres connection string that CI has no reason to provide, throwing
 // and failing the build. Production uses the real bindings at runtime, so the
 // dev proxy is never needed there.
 if (process.env.NODE_ENV === "development") {
@@ -33,7 +33,11 @@ if (process.env.NODE_ENV === "development") {
 // Content Security Policy. The only third-party origin is Cloudflare Turnstile
 // (challenges.cloudflare.com) on the signup form: its api.js script, its widget
 // iframe, and the XHRs it makes each need to be allow-listed below.
-// Fonts come from Google Fonts (see src/app/layout.tsx).
+// Fonts are self-hosted: next/font/google downloads them at build time and
+// serves them from /_next/static, so no Google Fonts origin is needed (F055).
+// img-src allows any https: image because Settings > Background image URL
+// paints a user-chosen image from any host; without it the setting silently
+// did nothing (F044). http: stays blocked (mixed content on an https page).
 // 'unsafe-inline' for styles is needed because tailwind + next inject style tags;
 // 'unsafe-inline' for scripts is required by Next's hydration boot script.
 // 'unsafe-eval' is only needed by webpack's dev-mode source maps, so it is
@@ -41,16 +45,16 @@ if (process.env.NODE_ENV === "development") {
 const devEval = process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : "";
 // Tier 3 direct-arena gate (see the env block below): the client fetches the
 // arena's /lobby over plain HTTPS, so its origin must be in connect-src or the
-// browser silently blocks every arena call — which broke the whole Tier 3
+// browser silently blocks every arena call, which broke the whole Tier 3
 // spectating path (lobby merge dead, TV stuck "Tuning in…" on arena games).
 // The wss:// spectator socket was already covered by the `wss:` scheme source.
 const arenaUrl = (process.env.NEXT_PUBLIC_ARENA_URL || "https://arena.nerfchess.com").trim().replace(/\/$/, "");
 const csp = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com${devEval}`,
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "img-src 'self' data: blob:",
-  "font-src 'self' data: https://fonts.gstatic.com",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https:",
+  "font-src 'self' data:",
   `connect-src 'self' ws: wss: https://challenges.cloudflare.com${arenaUrl ? ` ${arenaUrl}` : ""}`,
   "frame-src https://challenges.cloudflare.com",
   "frame-ancestors 'none'",
@@ -64,12 +68,26 @@ const securityHeaders = [
   { key: "X-Frame-Options", value: "DENY" },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), interest-cohort=()" },
+  // interest-cohort (FLoC) is retired; Chrome logs an "unrecognized feature"
+  // console error for it on every page (F055).
+  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
   { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
 ];
 
+// Non-hashed public assets that change rarely (house avatars, piece sets,
+// sounds, companion and theme art). A day of freshness plus a week of
+// stale-while-revalidate stops the lobby revalidating every avatar on every
+// visit, while a replaced file still shows up within a day (F113). The same
+// rules live in public/_headers for the Cloudflare assets layer, which serves
+// these files before the worker runs; this copy covers next dev and any path
+// the worker serves itself.
+const PUBLIC_ASSET_DIRS = ["house-pfp", "piece", "sound", "companions", "brainrot", "newjeans"];
+const PUBLIC_ASSET_CACHE = "public, max-age=86400, stale-while-revalidate=604800";
+
 const nextConfig = {
   reactStrictMode: true,
+  // No X-Powered-By: Next.js on every response (F055).
+  poweredByHeader: false,
   // Lets a second local dev server (for example a webpack one on another
   // port) keep its build output apart from the main one. Unset everywhere
   // else, so builds and deploys still use .next.
@@ -93,13 +111,13 @@ const nextConfig = {
       process.env.NEXT_PUBLIC_TURNSTILE_SITEKEY ?? "0x4AAAAAADyLZ_9QP6JEhhkU",
     // Tier 3 direct-arena gate: the public base URL of the arena service.
     // Baked to the prod arena here (like the Turnstile sitekey above) so it is
-    // inlined at every build and survives CI/dashboard var resets — a runtime
+    // inlined at every build and survives CI/dashboard var resets, a runtime
     // wrangler var can't drive it because NEXT_PUBLIC_* is inlined into the
     // client at build time. `||` (not `??`) so a stray empty CI var still falls
     // through to this default. Override with a non-empty NEXT_PUBLIC_ARENA_URL
     // for non-prod; to turn client Tier 3 off, change this default to "".
     // See src/lib/arenaLobby.ts.
-    // (Kept in lockstep with the CSP connect-src grant above — both read the
+    // (Kept in lockstep with the CSP connect-src grant above, both read the
     // same `arenaUrl` fallback so the origin the client calls is always the
     // origin the CSP allows.)
     NEXT_PUBLIC_ARENA_URL: arenaUrl,
@@ -112,7 +130,7 @@ const nextConfig = {
       },
       {
         // Content-hashed build output (JS, CSS, media): the filename changes
-        // whenever the bytes change, so it is safe — and correct — to cache it
+        // whenever the bytes change, so it is safe, and correct, to cache it
         // for a year and never revalidate. These were being served
         // `public, max-age=0, must-revalidate`, forcing a revalidation round
         // trip on every hashed chunk. `immutable` tells the browser not to
@@ -126,6 +144,10 @@ const nextConfig = {
           { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
         ],
       },
+      ...PUBLIC_ASSET_DIRS.map((dir) => ({
+        source: `/${dir}/:path*`,
+        headers: [{ key: "Cache-Control", value: PUBLIC_ASSET_CACHE }],
+      })),
     ];
   },
   async redirects() {
@@ -133,6 +155,9 @@ const nextConfig = {
     return [
       { source: "/codex/nerf/middle_part", destination: "/codex/buff/middle_part", permanent: true },
       { source: "/codex/nerf/forearm_veins", destination: "/codex/buff/forearm_veins", permanent: true },
+      // The page's own redirect() streams a 200 with a meta refresh to bots; a
+      // config redirect is a real 308 (slice E2 request).
+      { source: "/codex/build", destination: "/codex/suggest", permanent: true },
     ];
   },
 };

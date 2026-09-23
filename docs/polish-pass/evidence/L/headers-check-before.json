@@ -1,0 +1,55 @@
+{
+ "base": "http://localhost:3000",
+ "at": "2026-09-23T19:02:14.099Z",
+ "results": [
+  {
+   "name": "no x-powered-by",
+   "ok": false,
+   "detail": "Next.js"
+  },
+  {
+   "name": "no interest-cohort",
+   "ok": false,
+   "detail": "camera=(), microphone=(), geolocation=(), interest-cohort=()"
+  },
+  {
+   "name": "csp has no google fonts origins",
+   "ok": false,
+   "detail": "default-src 'self'; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' ws: wss: https://challenges.cloudflare.com https://arena.nerfchess.com; frame-src https://challenges.cloudflare.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+  },
+  {
+   "name": "cache /house-pfp/aurora.svg",
+   "ok": false,
+   "detail": {
+    "status": 200,
+    "cc": "public, max-age=0"
+   }
+  },
+  {
+   "name": "cache /piece/lichess/cardinal/wK.svg",
+   "ok": false,
+   "detail": {
+    "status": 200,
+    "cc": "public, max-age=0"
+   }
+  },
+  {
+   "name": "cache /sound/lichess/Capture.mp3",
+   "ok": false,
+   "detail": {
+    "status": 200,
+    "cc": "public, max-age=0"
+   }
+  },
+  {
+   "name": "custom background not blocked by csp",
+   "ok": false,
+   "detail": {
+    "violations": [
+     "img-src https://images.example.com/polish-bg.png"
+    ],
+    "bodyBackgroundImage": "linear-gradient(rgba(12, 11, 9, 0.3), rgba(12, 11, 9, 0.3)), url(\"https://images.example.com/polish-bg.png\")"
+   }
+  }
+ ]
+}
