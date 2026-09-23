@@ -3,6 +3,8 @@ import { getDb } from "@/lib/server/db";
 import { isModerator, sessionTokenFromCookieHeader, userForSession } from "@/lib/server/auth";
 import { isValidClubIcon } from "@/lib/clubIcons";
 import { bestLiveRatingSql } from "@/lib/server/ratingSql";
+import { apiError, guardJsonWrite, PRIVATE_NO_STORE } from "@/lib/server/request";
+import { CLUB_ICON_BODY_BYTES, CLUB_ICON_MAX_CHARS, validSlug } from "../limits";
 
 export const dynamic = "force-dynamic";
 
@@ -37,6 +39,7 @@ export type ClubTournamentRow = {
 
 export async function GET(request: Request, props: { params: Promise<{ slug: string }> }) {
   const params = await props.params;
+  if (!validSlug(params.slug)) return apiError(404, "Club not found.");
   const db = await getDb();
   const club = await db
     .prepare(
@@ -113,14 +116,18 @@ export async function GET(request: Request, props: { params: Promise<{ slug: str
     myRole = row?.role ?? null;
   }
 
-  return NextResponse.json({
-    club,
-    members: members.results,
-    memberCount: Number(count?.n ?? members.results.length),
-    posts: posts.results,
-    tournaments: tournaments.results,
-    myRole,
-  });
+  // myRole is per viewer, so the response is never shared from a cache.
+  return NextResponse.json(
+    {
+      club,
+      members: members.results,
+      memberCount: Number(count?.n ?? members.results.length),
+      posts: posts.results,
+      tournaments: tournaments.results,
+      myRole,
+    },
+    { headers: { "Cache-Control": PRIVATE_NO_STORE } },
+  );
 }
 
 // Club settings: today just the identity icon, a curated "emoji|colorId"
@@ -128,6 +135,9 @@ export async function GET(request: Request, props: { params: Promise<{ slug: str
 // override the post-delete path uses.
 export async function PATCH(request: Request, props: { params: Promise<{ slug: string }> }) {
   const params = await props.params;
+  const body = await guardJsonWrite(request, { maxBytes: CLUB_ICON_BODY_BYTES });
+  if (body instanceof NextResponse) return body;
+  if (!validSlug(params.slug)) return apiError(404, "Club not found.");
   const db = await getDb();
   const user = await userForSession(db, sessionTokenFromCookieHeader(request.headers.get("cookie")));
   if (!user) return NextResponse.json({ error: "Sign in first." }, { status: 401 });
@@ -141,16 +151,13 @@ export async function PATCH(request: Request, props: { params: Promise<{ slug: s
   const mayEdit = club.owner_user_id === user.id || isModerator(user);
   if (!mayEdit) return NextResponse.json({ error: "Only the club owner can change the club's icon." }, { status: 403 });
 
-  let body: { icon?: unknown };
-  try {
-    body = (await request.json()) as typeof body;
-  } catch {
-    return NextResponse.json({ error: "Bad JSON." }, { status: 400 });
+  if (body.icon === undefined) return apiError(400, "Nothing to update.");
+  if (typeof body.icon === "string" && body.icon.length > CLUB_ICON_MAX_CHARS) {
+    return apiError(413, "That image is too large. Try a smaller picture.");
   }
-  if (body.icon === undefined) return NextResponse.json({ error: "Nothing to update." }, { status: 400 });
   // "" clears · "name|colorId" is a curated emblem · a data-URL image is a
   // custom upload (re-validated server-side: MIME, byte-size, and pixel
-  // dimensions — client checks are never trusted).
+  // dimensions; client checks are never trusted).
   if (!isValidClubIcon(body.icon)) {
     return NextResponse.json(
       { error: "Pick an emblem from the set, or upload a PNG/JPEG/WebP image (max 1 MB, 1024px)." },

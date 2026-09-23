@@ -4,6 +4,7 @@ import { sessionTokenFromCookieHeader, userForSession } from "@/lib/server/auth"
 import { tournamentPhase, type TournamentPhase } from "@/lib/tournaments";
 import { categoryRatingSql } from "@/lib/server/ratingSql";
 import { isModeCategory } from "@/lib/speed";
+import { apiError, PRIVATE_NO_STORE } from "@/lib/server/request";
 import {
   advanceTournament,
   listRoundGames,
@@ -22,6 +23,8 @@ export type TournamentDetail = {
   creator_name: string;
   club_id: string | null;
   club_name: string | null;
+  // The club's URL slug, so the page can link straight to it (F168).
+  club_slug: string | null;
   format: string;
   mode: string;
   rated: number;
@@ -58,6 +61,10 @@ export type { TournamentRoundGame, MyTournamentGame };
 
 export async function GET(request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
+  // Ids are UUIDs; anything else cannot exist, and must not reach the engine.
+  if (!/^[A-Za-z0-9-]{1,64}$/.test(params.id)) {
+    return apiError(404, "Tournament not found.", { "Cache-Control": PRIVATE_NO_STORE });
+  }
   const db = await getDb();
 
   // Lazy driver: advance the tournament (collect results, pair the next
@@ -72,7 +79,7 @@ export async function GET(request: Request, props: { params: Promise<{ id: strin
   const row = await db
     .prepare(
       `SELECT t.id, t.name, t.description, t.creator_user_id, t.creator_name, t.club_id,
-              c.name AS club_name, t.format, t.mode, t.rated, t.clock_time_sec,
+              c.name AS club_name, c.slug AS club_slug, t.format, t.mode, t.rated, t.clock_time_sec,
               t.clock_increment_sec, t.duration_min, t.starts_at, t.max_players, t.created_at,
               t.status, t.rounds_total, t.current_round
        FROM tournaments t
@@ -81,7 +88,7 @@ export async function GET(request: Request, props: { params: Promise<{ id: strin
     )
     .bind(params.id)
     .first<Omit<TournamentDetail, "players" | "phase">>();
-  if (!row) return NextResponse.json({ error: "Tournament not found." }, { status: 404 });
+  if (!row) return apiError(404, "Tournament not found.", { "Cache-Control": PRIVATE_NO_STORE });
 
   // Standings show each entrant's LIVE rating in the bucket this tournament
   // is played in (its mode: nerf or buff), the same number the leaderboard
@@ -122,5 +129,9 @@ export async function GET(request: Request, props: { params: Promise<{ id: strin
     phase: row.status === "finished" ? "finished" : tournamentPhase(row.starts_at, row.duration_min),
   };
 
-  return NextResponse.json({ tournament, standings: standings.results, entered, rounds, myGame });
+  // myGame carries the caller's seat token: never cache this response anywhere.
+  return NextResponse.json(
+    { tournament, standings: standings.results, entered, rounds, myGame },
+    { headers: { "Cache-Control": PRIVATE_NO_STORE } },
+  );
 }

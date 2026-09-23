@@ -2,8 +2,19 @@ import { NextResponse } from "next/server";
 import { getDb } from "@/lib/server/db";
 import { sessionTokenFromCookieHeader, userForSession } from "@/lib/server/auth";
 import { isValidClubIcon } from "@/lib/clubIcons";
+import { censorText, findProfanity } from "@/lib/profanity";
+import { cleanText, codePointLength, TEXT_POLICIES } from "@/lib/textInput";
+import { mutedRefusal } from "@/lib/server/social";
+import { apiError, guardJsonWrite, PRIVATE_NO_STORE, rateLimit, tooManyRequests } from "@/lib/server/request";
+import { CLUB_ICON_MAX_CHARS, CLUB_ICON_BODY_BYTES } from "./limits";
 
 export const dynamic = "force-dynamic";
+
+// Club creation is capped per owner (F061): a few new clubs a day, and a
+// ceiling on clubs one account owns at once.
+const CREATE_WINDOW_MS = 24 * 60 * 60 * 1000;
+const CREATE_WINDOW_MAX = 3;
+const MAX_OWNED_CLUBS = 10;
 
 function slugify(name: string): string {
   return (
@@ -27,51 +38,98 @@ async function uniqueSlug(db: D1Database, name: string): Promise<string> {
   return `${base}-${crypto.randomUUID().slice(0, 8)}`;
 }
 
+type ClubListRow = {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  icon: string;
+  owner_name: string;
+  created_at: number;
+  members: number;
+  joined: number;
+};
+
+const LIST_COLUMNS = `c.id, c.slug, c.name, c.description, c.icon, c.owner_name, c.created_at,
+              COUNT(cm.user_id) AS members,
+              MAX(CASE WHEN cm.user_id = ? THEN 1 ELSE 0 END) AS joined`;
+
+// The directory: the 50 biggest clubs, plus every club the viewer belongs to
+// (F038: "Your clubs" used to miss any joined club outside the top 50).
+// Optional ?q= narrows the directory to names containing the text, searched
+// in the database rather than over the 50 rows the page already has.
 export async function GET(request: Request) {
   const db = await getDb();
   const user = await userForSession(db, sessionTokenFromCookieHeader(request.headers.get("cookie")));
-  const rows = await db
-    .prepare(
-      `SELECT c.id, c.slug, c.name, c.description, c.icon, c.owner_name, c.created_at,
-              COUNT(cm.user_id) AS members,
-              MAX(CASE WHEN cm.user_id = ? THEN 1 ELSE 0 END) AS joined
-       FROM clubs c
-       LEFT JOIN club_members cm ON cm.club_id = c.id
-       GROUP BY c.id
-       ORDER BY members DESC, c.created_at DESC
-       LIMIT 50`,
-    )
-    .bind(user?.id ?? "")
-    .all<{
-      id: string;
-      slug: string;
-      name: string;
-      description: string;
-      icon: string;
-      owner_name: string;
-      created_at: number;
-      members: number;
-      joined: number;
-    }>();
-  return NextResponse.json({ clubs: rows.results });
+  const viewerId = user?.id ?? "";
+  const q = cleanText(new URL(request.url).searchParams.get("q"), { maxChars: 60 }).toLowerCase();
+  const nameFilter = q ? `WHERE lower(c.name) LIKE ? ESCAPE '\\'` : "";
+  const binds: unknown[] = [viewerId];
+  if (q) binds.push(`%${q.replace(/[\\%_]/g, (ch) => `\\${ch}`)}%`);
+
+  const [top, mine] = await Promise.all([
+    db
+      .prepare(
+        `SELECT ${LIST_COLUMNS}
+         FROM clubs c
+         LEFT JOIN club_members cm ON cm.club_id = c.id
+         ${nameFilter}
+         GROUP BY c.id
+         ORDER BY members DESC, c.created_at DESC
+         LIMIT 50`,
+      )
+      .bind(...binds)
+      .all<ClubListRow>(),
+    viewerId && !q
+      ? db
+          .prepare(
+            `SELECT ${LIST_COLUMNS}
+             FROM clubs c
+             LEFT JOIN club_members cm ON cm.club_id = c.id
+             WHERE c.id IN (SELECT club_id FROM club_members WHERE user_id = ?)
+             GROUP BY c.id
+             ORDER BY members DESC, c.created_at DESC
+             LIMIT 200`,
+          )
+          .bind(viewerId, viewerId)
+          .all<ClubListRow>()
+      : Promise.resolve({ results: [] as ClubListRow[] }),
+  ]);
+  const seen = new Set(top.results.map((c) => c.id));
+  const clubs = [...top.results, ...mine.results.filter((c) => !seen.has(c.id))];
+  // `joined` is per viewer, so the list is never shared from a cache.
+  return NextResponse.json({ clubs }, { headers: { "Cache-Control": PRIVATE_NO_STORE } });
 }
 
 export async function POST(request: Request) {
+  const body = await guardJsonWrite(request, { maxBytes: CLUB_ICON_BODY_BYTES });
+  if (body instanceof NextResponse) return body;
   const db = await getDb();
   const user = await userForSession(db, sessionTokenFromCookieHeader(request.headers.get("cookie")));
-  if (!user) return NextResponse.json({ error: "Sign in to create a club." }, { status: 401 });
+  if (!user) return apiError(401, "Sign in to create a club.");
+  const muted = mutedRefusal(user, "create clubs");
+  if (muted) return muted;
 
-  let body: { name?: unknown; description?: unknown; icon?: unknown };
-  try {
-    body = (await request.json()) as typeof body;
-  } catch {
-    return NextResponse.json({ error: "Bad JSON." }, { status: 400 });
+  // Names are identity: invisible characters, bidi overrides and profanity
+  // are refused outright. Descriptions are running text: censored in place.
+  const name = cleanText(body.name, TEXT_POLICIES.clubName);
+  const description = censorText(cleanText(body.description, TEXT_POLICIES.clubDescription));
+  if (codePointLength(name) < 3) return apiError(400, "Club name must be at least 3 characters.");
+  if (findProfanity(name).length > 0) return apiError(400, "Pick a different club name.");
+  if (typeof body.icon === "string" && body.icon.length > CLUB_ICON_MAX_CHARS) {
+    return apiError(413, "That image is too large. Try a smaller picture.");
   }
-
-  const name = typeof body.name === "string" ? body.name.trim().slice(0, 60) : "";
-  const description = typeof body.description === "string" ? body.description.trim().slice(0, 240) : "";
   const icon = isValidClubIcon(body.icon) ? body.icon : "";
-  if (name.length < 3) return NextResponse.json({ error: "Club name must be at least 3 characters." }, { status: 400 });
+
+  const owned = await db
+    .prepare("SELECT COUNT(*) AS n FROM clubs WHERE owner_user_id = ?")
+    .bind(user.id)
+    .first<{ n: number }>();
+  if ((owned?.n ?? 0) >= MAX_OWNED_CLUBS) {
+    return apiError(429, `You already own ${MAX_OWNED_CLUBS} clubs.`);
+  }
+  const limit = await rateLimit(db, `club:create:${user.id}`, CREATE_WINDOW_MAX, CREATE_WINDOW_MS);
+  if (!limit.ok) return tooManyRequests("You have created a lot of clubs today. Try again tomorrow.", limit.retryAfterSec);
 
   const id = crypto.randomUUID();
   const slug = await uniqueSlug(db, name);
