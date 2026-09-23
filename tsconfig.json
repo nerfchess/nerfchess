@@ -40,7 +40,9 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     ".next-wp/types/**/*.ts",
-    ".next-wp/dev/types/**/*.ts"
+    ".next-wp/dev/types/**/*.ts",
+    ".next-fx/types/**/*.ts",
+    ".next-fx/dev/types/**/*.ts"
   ],
   // `.next/dev/types` is the SAME thing regenerated continuously by `next dev`,
   // and it is excluded here for exactly the reason Next gives for filtering it
@@ -73,6 +75,7 @@
   "exclude": [
     "node_modules",
     ".next/dev/types",
-    ".next-wp/dev/types"
+    ".next-wp/dev/types",
+    ".next-fx/dev/types"
   ]
 }

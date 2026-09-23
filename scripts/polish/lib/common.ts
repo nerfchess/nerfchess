@@ -14,7 +14,18 @@ import path from "node:path";
 import { chromium, type Browser } from "@playwright/test";
 
 export const ROOT = path.resolve(__dirname, "..", "..", "..");
-export const BASE = (process.env.POLISH_BASE || "http://localhost:3000").replace(/\/$/, "");
+/**
+ * The card-effect strip tool talks to a second dev server (POLISH_FX_BASE,
+ * default :3100) that only ever compiles /dev/plays: every edit to a play
+ * module recompiles the whole effects graph, and doing that on the shared
+ * :3000 server pushed it past 10 GB and into an OOM kill every few minutes
+ * while the Tier C lane worked (2026-09-23). Everything else uses :3000.
+ */
+const IS_FX_TOOL = /card-strip/.test(process.argv[1] ?? "");
+export const BASE = (
+  process.env.POLISH_BASE ||
+  (IS_FX_TOOL ? process.env.POLISH_FX_BASE || "http://localhost:3100" : "http://localhost:3000")
+).replace(/\/$/, "");
 /** Committed evidence (small JSON and PNG strips only). */
 export const EVIDENCE_DIR = path.join(ROOT, "docs", "polish-pass", "evidence");
 /** Gitignored scratch output (full screenshots, raw frames). */

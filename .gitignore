@@ -1,6 +1,7 @@
 node_modules
 .next
 .next-wp
+.next-fx
 .open-next
 .wrangler
 .wrangler-dry-run
