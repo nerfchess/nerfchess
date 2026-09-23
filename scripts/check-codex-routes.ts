@@ -7,7 +7,9 @@
  *
  * Two checks:
  *  1. Static (always): no file under src/app types `params` or `searchParams`
- *     as a plain object.
+ *     as a plain object. The one exception is generateImageMetadata, which
+ *     Next 16 still calls with synchronous params (upgrading/version-16.md,
+ *     "generateImageMetadata continues to receive synchronous params").
  *  2. Live (skipped with --static-only): fetch two ids from every codex family
  *     on the dev server and assert each renders the card (no 404 fallback,
  *     an h1 with the card name), and that an unknown id still 404s.
@@ -49,6 +51,9 @@ for (const file of walk(APP)) {
   const lines = fs.readFileSync(file, "utf8").split("\n");
   lines.forEach((line, i) => {
     if (line.trim().startsWith("//") || line.trim().startsWith("*")) return;
+    // generateImageMetadata keeps sync params in Next 16; its signature may
+    // wrap, so look at this line and the two above it.
+    if (lines.slice(Math.max(0, i - 2), i + 1).some((l) => l.includes("generateImageMetadata("))) return;
     if (SYNC_PROP.test(line)) {
       failures.push(`${path.relative(ROOT, file)}:${i + 1} types params/searchParams as a plain object (Next 16 passes a Promise): ${line.trim()}`);
     }
