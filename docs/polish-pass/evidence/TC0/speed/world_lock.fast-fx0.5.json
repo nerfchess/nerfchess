@@ -1,0 +1,176 @@
+{
+ "id": "world_lock",
+ "url": "/dev/plays?id=world_lock&anim=fast&fx=0.5&bare=1",
+ "anim": "fast",
+ "fx": 0.5,
+ "info": {
+  "id": "world_lock",
+  "name": "World Lock",
+  "tier": 8,
+  "category": "protection",
+  "mechanic": "instant",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:world_lock",
+  "anchor": "cast",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 60,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "fast",
+  "fx": 0.5,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2814,
+  "cssEndMs": 3838,
+  "settled": true,
+  "windowMs": 4000,
+  "cssAnimations": 291,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 151,
+  "maxGapMs": 506
+ },
+ "raf": {
+  "frames": 190,
+  "medianMs": 16.7,
+  "maxMs": 166.7,
+  "dropped": 55
+ },
+ "longAnimationFrames": {
+  "count": 9,
+  "worstMs": 136,
+  "totalBlockingMs": 325,
+  "entries": [
+   {
+    "atMs": -73,
+    "duration": 118,
+    "blocking": 59,
+    "scripts": [
+     {
+      "duration": 66,
+      "invoker": "MessagePort.onmessage",
+      "source": "/_next/static/chunks/node_modules_next_dist_compiled_1amofcm._.js performWorkUntilDeadline"
+     }
+    ]
+   },
+   {
+    "atMs": 55,
+    "duration": 106,
+    "blocking": 56,
+    "scripts": [
+     {
+      "duration": 100,
+      "invoker": "MessagePort.onmessage",
+      "source": "/_next/static/chunks/node_modules_next_dist_compiled_1amofcm._.js performWorkUntilDeadline"
+     }
+    ]
+   },
+   {
+    "atMs": 166,
+    "duration": 136,
+    "blocking": 85,
+    "scripts": [
+     {
+      "duration": 46,
+      "invoker": "MessagePort.onmessage",
+      "source": "/_next/static/chunks/node_modules_next_dist_compiled_1amofcm._.js performWorkUntilDeadline"
+     }
+    ]
+   },
+   {
+    "atMs": 321,
+    "duration": 122,
+    "blocking": 66,
+    "scripts": [
+     {
+      "duration": 74,
+      "invoker": "FrameRequestCallback",
+      "source": "/_next/static/chunks/src_components_effects_19nrgbz._.js tick"
+     },
+     {
+      "duration": 13,
+      "invoker": "MessagePort.onmessage",
+      "source": "/_next/static/chunks/node_modules_next_dist_compiled_1amofcm._.js performWorkUntilDeadline"
+     }
+    ]
+   },
+   {
+    "atMs": 490,
+    "duration": 82,
+    "blocking": 0,
+    "scripts": [
+     {
+      "duration": 8,
+      "invoker": "#document.onanimationstart",
+      "source": "/_next/static/chunks/node_modules_next_dist_compiled_react-dom_096_9a-._.js dispatchEvent"
+     },
+     {
+      "duration": 5,
+      "invoker": "MessagePort.onmessage",
+      "source": "/_next/static/chunks/node_modules_next_dist_compiled_next-devtools_index_090k2jm.js N"
+     }
+    ]
+   },
+   {
+    "atMs": 572,
+    "duration": 56,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 629,
+    "duration": 59,
+    "blocking": 0,
+    "scripts": [
+     {
+      "duration": 10,
+      "invoker": "FrameRequestCallback",
+      "source": "/_next/static/chunks/src_components_effects_19nrgbz._.js tick"
+     }
+    ]
+   },
+   {
+    "atMs": 699,
+    "duration": 133,
+    "blocking": 59,
+    "scripts": []
+   },
+   {
+    "atMs": 1755,
+    "duration": 55,
+    "blocking": 0,
+    "scripts": [
+     {
+      "duration": 26,
+      "invoker": "TimerHandler:setInterval",
+      "source": ""
+     }
+    ]
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  214,
+  546,
+  944,
+  1392,
+  1882,
+  2407,
+  2964
+ ],
+ "png": "docs/polish-pass/evidence/TC0/speed/world_lock.fast-fx0.5.png",
+ "pngBytes": 26723
+}

@@ -75,7 +75,10 @@
 //                        the frame of its strip that differs most from the
 //                        board before the play (its strike), six to a row.
 //                        Two cards whose tiles read the same are the generic
-//                        pairs the owner directive asks to split
+//                        pairs the owner directive asks to split. Also writes
+//                        NAME.similar.json: every pair of cards in the run
+//                        ranked by how alike their strips look (a triage
+//                        heuristic, the strips decide)
 // Compare (no browser, no server)
 //   --compare A,B --out DIR   for every strip in both folders, write
 //                        DIR/<name>.vs.png with A's strip above B's (before
@@ -185,7 +188,7 @@ const THUMBS = String.raw`async (o) => {
       img.src = "data:image/jpeg;base64," + d;
     });
   }
-  var S = 48;
+  var S = o.size || 48;
   var c = document.createElement("canvas");
   c.width = S; c.height = S;
   var g = c.getContext("2d", { willReadFrequently: true });
@@ -284,9 +287,9 @@ function bench(browser: Browser): Promise<Page> {
   return benchPage;
 }
 
-async function thumbs(browser: Browser, frames: Frame[], clip: Rect): Promise<number[][]> {
+async function thumbs(browser: Browser, frames: Frame[], clip: Rect, size = 48): Promise<number[][]> {
   const page = await bench(browser);
-  return (await page.evaluate(`(${THUMBS})(${JSON.stringify({ frames: frames.map((f) => f.data), clip })})`)) as number[][];
+  return (await page.evaluate(`(${THUMBS})(${JSON.stringify({ frames: frames.map((f) => f.data), clip, size })})`)) as number[][];
 }
 
 async function crop(browser: Browser, frame: Frame, clip: Rect): Promise<string> {
@@ -487,11 +490,12 @@ const OFF_EARLY_MS = 400;
 const OFF_HELD_MS = 3000;
 const OFF_WINDOW_MS = 4400;
 
-/** The shared dev server restarts now and then (the supervisor revives it).
- *  A capture that lost the server waits for it and tries once more. */
+/** The shared dev server restarts now and then (the supervisor revives it),
+ *  and another agent's edit can hot-reload the page mid-capture. Either way
+ *  the capture waits for the server and tries once more. */
 async function captureRetry(...a: Parameters<typeof capture>): Promise<Capture> {
   const first = await capture(...a);
-  if (first.ok || !/net::ERR_|Target closed|ECONNREFUSED|Navigation timeout/i.test(first.error ?? "")) return first;
+  if (first.ok || !/net::ERR_|Target closed|ECONNREFUSED|Navigation timeout|Execution context was destroyed/i.test(first.error ?? "")) return first;
   console.log(`[card-strip] ${a[1].id}: ${first.error}; waiting for the dev server and retrying once`);
   await waitForServer();
   await warmRoutes(["/dev/plays"]);
@@ -574,6 +578,37 @@ async function peakTile(browser: Browser, tiles: { data: string; label: string }
   return best;
 }
 
+/**
+ * A card's look as one vector: for every tile after the first, what the play
+ * drew on top of the resting board (tile minus the pre-play tile, 24x24 grey,
+ * standardised so a board-wide dim cancels), concatenated in time order. Two
+ * cards on the same template produce near-parallel vectors.
+ */
+async function lookVector(browser: Browser, tiles: { data: string }[], clip: Rect): Promise<number[]> {
+  const th = await thumbs(
+    browser,
+    tiles.map((t) => ({ data: t.data, ts: 0, width: 0, height: 0 })),
+    clip,
+    24,
+  );
+  const out: number[] = [];
+  for (let i = 1; i < th.length; i++) out.push(...zscore(th[i].map((v, k) => v - th[0][k])));
+  return out;
+}
+
+function cosine(a: number[], b: number[]): number {
+  let dot = 0;
+  let na = 0;
+  let nb = 0;
+  const n = Math.min(a.length, b.length);
+  for (let i = 0; i < n; i++) {
+    dot += a[i] * b[i];
+    na += a[i] * a[i];
+    nb += b[i] * b[i];
+  }
+  return na && nb ? dot / Math.sqrt(na * nb) : 0;
+}
+
 // ---------- main ----------
 
 async function main() {
@@ -633,6 +668,7 @@ async function main() {
   const browser = await launch();
   const sheetName = args.values.get("sheet");
   const sheet: { data: string; label: string }[] = [];
+  const looks: { name: string; v: number[] }[] = [];
   let sheetClip: Rect | null = null;
   const summary: { id: string; png?: string; visualMs?: number; longFrames?: number; drive?: string; off?: string; error?: string }[] = [];
   try {
@@ -669,6 +705,7 @@ async function main() {
           const k = await peakTile(browser, tiles, cap.clip);
           sheetClip ??= cap.clip;
           sheet.push({ data: tiles[k].data, label: `${name} T${cap.info?.tier ?? "?"} ${tiles[k].label}` });
+          looks.push({ name, v: await lookVector(browser, tiles, cap.clip) });
         }
         writeJson(path.join(outDir, `${name}.json`), {
           id: spec.id,
@@ -764,6 +801,27 @@ async function main() {
       const sheetPath = path.join(outDir, `${sheetName}.sheet.png`);
       fs.writeFileSync(sheetPath, png);
       console.log(`[card-strip] ${rel(sheetPath)} (${sheet.length} cards, ${Math.round(png.length / 1024)} KB)`);
+      // Look-alike triage: every pair of cards in this run by how parallel
+      // their look vectors are. A heuristic for where to look first, not a
+      // verdict: the strips decide.
+      const pairs: { a: string; b: string; similarity: number }[] = [];
+      for (let i = 0; i < looks.length; i++)
+        for (let j = i + 1; j < looks.length; j++)
+          pairs.push({ a: looks[i].name, b: looks[j].name, similarity: round(cosine(looks[i].v, looks[j].v), 3) });
+      pairs.sort((x, y) => y.similarity - x.similarity);
+      const nearest = Object.fromEntries(
+        looks.map((l) => {
+          const best = pairs.filter((q) => q.a === l.name || q.b === l.name)[0];
+          return [l.name, best ? { card: best.a === l.name ? best.b : best.a, similarity: best.similarity } : null];
+        }),
+      );
+      const simPath = writeJson(path.join(outDir, `${sheetName}.similar.json`), {
+        method:
+          "cosine similarity of per-tile (tile minus pre-play tile) 24x24 grey thumbnails, standardised per tile; 1 = same look, near 0 = unrelated",
+        pairs: pairs.slice(0, 60),
+        nearest,
+      });
+      console.log(`[card-strip] ${rel(simPath)}; most alike: ${pairs.slice(0, 5).map((q) => `${q.a}~${q.b} ${q.similarity}`).join(", ")}`);
     }
   } finally {
     await browser.close();
