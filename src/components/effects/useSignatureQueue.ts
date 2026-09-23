@@ -15,6 +15,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Color, Square } from "@/engine/types";
+import { fxDurationScale } from "@/lib/settings";
+import { detectTempo, tempoScale } from "@/components/useMotionTempo";
 
 /** What a surface can tell the board about a play beyond the card id. Today
  *  that is who cast it: the effect geometry aims and leans away from the
@@ -44,8 +46,24 @@ export interface SigPlaySlot {
 }
 
 /** How long one cast spectacle owns the board before the next queued play
- *  steps out (the historic hold-and-replay spacing). */
+ *  steps out (the historic hold-and-replay spacing), at normal tempo and the
+ *  default effect duration. */
 const SPACING_MS = 2600;
+
+/** The spacing as it applies right now. It used to be the fixed 2.6s even
+ *  with animations off, where the spectacle it waits for does not play at
+ *  all: the board sat held and the draft overlay's entrance was deferred for
+ *  nothing, time that comes out of the decision window (F208). It now follows
+ *  the same two dials the spectacle itself follows: the effect duration
+ *  (--fx-dur) and the tempo (fast 0.6, off 0, which also covers reduced
+ *  motion and the low-time hold, where a bullet player cannot spare it). */
+function spacingMs(): number {
+  return Math.round(SPACING_MS * fxDurationScale() * tempoScale(detectTempo()));
+}
+/** Even with no spacing, each play keeps its own frame: plays fired in one
+ *  tick would otherwise batch into one render and only the last would reach
+ *  the board (the R9 coalescing defect this queue exists to prevent). */
+const MIN_STEP_MS = 16;
 /** Newest plays kept when a burst outruns the queue (historic cap). */
 const MAX_QUEUED = 6;
 
@@ -87,15 +105,19 @@ export function useSignatureQueue(gateRef?: { current: boolean }) {
 
   const playNow = useCallback(
     (play: QueuedPlay) => {
-      busyUntilRef.current = Date.now() + SPACING_MS;
+      const spacing = spacingMs();
+      busyUntilRef.current = Date.now() + Math.max(spacing, MIN_STEP_MS);
       setSignatureCard({
         id: play.id,
         key: ++keyRef.current,
         caster: play.meta?.caster,
         sq: play.meta?.sq,
       });
-      setBusy(true);
-      scheduleBusyClear();
+      // Nothing is playing when there is no spacing, so nothing is busy.
+      if (spacing > 0) {
+        setBusy(true);
+        scheduleBusyClear();
+      }
     },
     [scheduleBusyClear],
   );
@@ -113,7 +135,10 @@ export function useSignatureQueue(gateRef?: { current: boolean }) {
       if (play == null) return;
       playNow(play);
       if (queueRef.current.length > 0)
-        timerRef.current = window.setTimeout(() => drainRef.current(), SPACING_MS);
+        timerRef.current = window.setTimeout(
+          () => drainRef.current(),
+          Math.max(0, busyUntilRef.current - Date.now()),
+        );
     };
   }, [gateRef, playNow]);
 

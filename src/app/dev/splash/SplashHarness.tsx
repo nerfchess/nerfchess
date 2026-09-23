@@ -4,6 +4,28 @@ import { useEffect, useRef, useState } from "react";
 import { BoardSplashHost } from "@/components/BoardSplash";
 import type { AgainstRow } from "@/components/BuffDock";
 import { DraftRevealBanner } from "@/components/DraftOverlay";
+import { useSignatureQueue } from "@/components/effects/useSignatureQueue";
+
+// The signature queue on its own: three plays fired in one burst, with the
+// slot each one reaches and the busy flag stamped on the page, so its spacing
+// can be timed at each tempo without a live game.
+function SigQueueProbe() {
+  const { signatureCard, fire, busy } = useSignatureQueue();
+  return (
+    <div className="mt-4 flex items-center gap-3">
+      <button
+        type="button"
+        className="btn-ghost"
+        onClick={() => ["one", "two", "three"].forEach((id) => fire(id))}
+      >
+        Fire three plays
+      </button>
+      <span data-sig-slot={signatureCard?.id ?? ""} data-sig-busy={busy ? "1" : "0"}>
+        {signatureCard ? `${signatureCard.id}${busy ? " (busy)" : ""}` : "idle"}
+      </span>
+    </div>
+  );
+}
 
 // The draft reveal banner under a parent that re-renders like a live game
 // does (a clock tick every 250ms), with the inline onDismiss both real
@@ -55,6 +77,7 @@ export function SplashHarness() {
         </button>
       </div>
       {banner && <TickingBanner onDone={() => setBanner(false)} />}
+      <SigQueueProbe />
       <div
         data-splash-stage
         className="relative mt-6 aspect-square w-full border border-[color:var(--edge)] bg-[var(--surface-panel)]"
