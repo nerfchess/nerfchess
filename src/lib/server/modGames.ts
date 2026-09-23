@@ -64,8 +64,16 @@ export function classifySeat(userId: string | null, guests: Set<string>): SeatKi
   return seatKindFromId(userId) ?? (guests.has(userId!) ? "guest" : "member");
 }
 
-/** Move count from the space-joined UCI move text stored in games.moves. */
+/** Ply count (half-moves) from the space-joined UCI move text stored in
+ *  games.moves: one entry per side's turn. */
 export function moveCountFromText(moves: unknown): number {
   if (typeof moves !== "string" || moves.length === 0) return 0;
   return moves.split(" ").length;
+}
+
+/** Chess moves (a white turn and the black reply) from a ply count. Every
+ *  "moves" figure in the mod panel uses this, so the game archive and the stats
+ *  pages agree (F128: the archive showed plies, twice the stats figure). */
+export function fullMovesFromPlies(plies: number): number {
+  return Math.ceil(Math.max(0, plies) / 2);
 }

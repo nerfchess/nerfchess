@@ -5,6 +5,7 @@
 // /mod/stats/humans (human-vs-human archive rows only); this page just points
 // at them.
 
+import { MetricsPanel } from "@/components/mod/stats/MetricsPanel";
 import { StatsShell } from "@/components/mod/stats/StatsShell";
 import { LinkButton } from "@/components/ui/Button";
 
@@ -26,6 +27,7 @@ export default function ModStatsPage() {
           blurb="Human vs human games, no bot seats"
         />
       </div>
+      <MetricsPanel />
     </StatsShell>
   );
 }

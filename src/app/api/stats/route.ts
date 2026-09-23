@@ -17,9 +17,29 @@ const HUMAN_GAME = `white_user_id IS NOT NULL AND black_user_id IS NOT NULL
        AND white_user_id NOT LIKE 'hp\\_%' ESCAPE '\\'
        AND black_user_id NOT LIKE 'hp\\_%' ESCAPE '\\'`;
 
+// The payload is public and identical for every viewer, and it runs six
+// aggregates over the whole archive plus a users scan (F102). One computation
+// is reused for STATS_TTL_MS per server instance, and shared caches may hold
+// the response for as long; the numbers themselves are unchanged.
+const STATS_TTL_MS = 60_000;
+let memo: { at: number; body: Promise<unknown> } | null = null;
+
 export async function GET() {
-  const db = await getDb();
   const now = Date.now();
+  if (!memo || now - memo.at >= STATS_TTL_MS) {
+    const body = computeStats(now);
+    memo = { at: now, body };
+    body.catch(() => {
+      if (memo?.body === body) memo = null;
+    });
+  }
+  return NextResponse.json(await memo.body, {
+    headers: { "cache-control": "public, max-age=0, s-maxage=60, stale-while-revalidate=60" },
+  });
+}
+
+async function computeStats(now: number) {
+  const db = await getDb();
   const dayAgo = now - 24 * 60 * 60 * 1000;
 
   // Casts keep aggregate types as JS numbers: COUNT/SUM (int8) -> int, AVG
@@ -103,7 +123,7 @@ export async function GET() {
   const nerfBlock = (rows: { nerf: string; dealt: number; wins: number | null }[]) =>
     rows.map((row) => ({ id: row.nerf, dealt: row.dealt, wins: row.wins ?? 0 }));
 
-  return NextResponse.json({
+  return {
     gamesPlayed: (games?.total ?? 0) + botGames,
     games: { ...gameBlock(games), vsBots: botGames },
     players: {
@@ -117,5 +137,5 @@ export async function GET() {
       players: { withGames: humanPlayers?.players ?? 0 },
       topNerfs: nerfBlock(humanNerfs),
     },
-  });
+  };
 }

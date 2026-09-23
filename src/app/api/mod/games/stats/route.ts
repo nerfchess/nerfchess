@@ -127,7 +127,8 @@ export async function GET(request: Request) {
     today: { total: todayTotal, humanVsHuman: todayHvH, humanVsHouse: todayTotal - todayHvH },
     week: { total: weekTotal, humanVsHuman: weekHvH, humanVsHouse: weekTotal - weekHvH },
     averageGame: {
-      moves: agg?.avg_moves != null ? Math.round(Number(agg.avg_moves)) : null,
+      // avg_moves is plies; the panel shows chess moves (F128).
+      moves: agg?.avg_moves != null ? Math.round(Number(agg.avg_moves) / 2) : null,
       durationMs: agg?.avg_duration_ms != null ? Math.round(Number(agg.avg_duration_ms)) : null,
     },
     topMode,

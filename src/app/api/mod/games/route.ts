@@ -6,6 +6,7 @@ import {
   classifySeat,
   guestIdSet,
   moveCountFromText,
+  fullMovesFromPlies,
   seatKindFromId,
   type SeatKind,
 } from "@/lib/server/modGames";
@@ -95,7 +96,8 @@ export async function GET(request: Request) {
   });
 
   const games = rows.map((row) => {
-    const moveCount = moveCountFromText(row.moves);
+    const plies = moveCountFromText(row.moves);
+    const moveCount = fullMovesFromPlies(plies);
     return {
       id: row.id,
       white: seat(row.white_user_id, row.white_name, row.white_rating_before, row.white_rating_after),
@@ -110,7 +112,7 @@ export async function GET(request: Request) {
       moveCount,
       // Games archived without their move text can't be replayed; the list
       // row still renders, the replay link just hides.
-      replayable: moveCount > 0,
+      replayable: plies > 0,
       durationMs: Math.max(0, row.completed_at - row.started_at),
       startedAt: row.started_at,
       completedAt: row.completed_at,

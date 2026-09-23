@@ -75,11 +75,18 @@ export function DashboardSection({
         <div className="mt-3">
           <StatGrid
             items={[
-              { label: "Open reports", value: queue.openReports, tone: queue.openReports > 0 ? "warn" : "good" },
+              {
+                label: "Open reports",
+                value: queue.openReports,
+                sub: queue.oldestOpenReportAt ? `oldest waiting ${waited(data.generatedAt - queue.oldestOpenReportAt)}` : undefined,
+                tone: queue.openReports > 0 ? "warn" : "good",
+              },
               {
                 label: "Chat flags",
                 value: queue.unreviewedChatFlags,
-                sub: "unreviewed",
+                sub: queue.oldestUnreviewedFlagAt
+                  ? `unreviewed, oldest ${waited(data.generatedAt - queue.oldestUnreviewedFlagAt)}`
+                  : "unreviewed",
                 tone: queue.unreviewedChatFlags > 0 ? "warn" : "good",
               },
               { label: "Active mutes", value: queue.activeMutes },
@@ -87,6 +94,14 @@ export function DashboardSection({
             ]}
           />
         </div>
+        {queue.handledPerDay && (
+          <p className="mt-2 text-[13px] text-parchment-400">
+            Handled per day, last 7 UTC days (reports closed / flag reviews / player actions):{" "}
+            <span className="tabular-nums text-parchment-200">
+              {queue.handledPerDay.map((d) => `${d.date.slice(5)} ${d.reports}/${d.chatFlags}/${d.sanctions}`).join(" · ")}
+            </span>
+          </p>
+        )}
         <div className="mt-2 flex flex-wrap gap-2">
           <ModButton size="sm" onClick={() => onGo("players")}>
             Look up a player
@@ -103,8 +118,9 @@ export function DashboardSection({
           title="Humans"
           blurb={
             <>
-              House accounts (<code>hp_</code>) and the retired seeded ones (<code>seed_</code>) are
-              excluded from every number here.
+              House accounts (<code>hp_</code>), the retired seeded ones (<code>seed_</code>) and test
+              accounts (<code>polish_</code>) are excluded from every number here. Today is the UTC day.
+              Full counts with definitions are on the stats page.
             </>
           }
           actions={
@@ -302,4 +318,13 @@ export function DashboardSection({
       </p>
     </div>
   );
+}
+
+/** How long an item has waited: "40m", "5h", "3d". */
+function waited(ms: number): string {
+  const m = Math.max(0, Math.round(ms / 60000));
+  if (m < 60) return `${m}m`;
+  const h = Math.round(m / 60);
+  if (h < 48) return `${h}h`;
+  return `${Math.round(h / 24)}d`;
 }
