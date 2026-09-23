@@ -1,0 +1,42 @@
+bench-house-search: 27 mid + 20 late positions, engines baseline vs current (baseline = bbe4271), node v22.22.2, load 1.43 2.48 9.42, 239s
+
+[mid]
+level   budget  baseline   depth(min-max)  nodes     n/ms   ms | current    depth(min-max)  nodes     n/ms   ms
+medium     25ms             2.30 (1-3)        3860    168    23 |             1.96 (1-3)        4956    198    25
+medium     80ms             2.96 (2-3)        6336    190    33 |             2.85 (2-3)        9858    215    46
+medium    120ms             3.00 (3-3)        6389    194    33 |             2.96 (2-3)       10538    223    47
+medium    400ms             3.00 (3-3)        6389    201    32 |             3.00 (3-3)       10801    225    48
+medium   1800ms             3.00 (3-3)        6389    195    33 |             3.00 (3-3)       10801    230    47
+hard       25ms             2.19 (1-3)        4293    166    26 |             1.96 (1-3)        5231    204    26
+hard       80ms             3.04 (3-4)       13205    164    81 |             3.00 (2-4)       17464    217    81
+hard      120ms             3.11 (3-4)       18398    152   121 |             3.33 (3-4)       25562    212   121
+hard      400ms             3.85 (3-5)       67012    167   401 |             4.63 (4-6)       92012    230   401
+hard     1800ms             4.96 (4-6)      385230    214  1801 |             6.48 (5-8)      436014    242  1801
+  current vs baseline, medium: 25ms -0.33 ply, n/ms x1.18; 80ms -0.11 ply, n/ms x1.13; 120ms -0.04 ply, n/ms x1.15; 400ms +0.00 ply, n/ms x1.12; 1800ms +0.00 ply, n/ms x1.18
+  current vs baseline, hard: 25ms -0.22 ply, n/ms x1.22; 80ms -0.04 ply, n/ms x1.32; 120ms +0.22 ply, n/ms x1.39; 400ms +0.78 ply, n/ms x1.37; 1800ms +1.52 ply, n/ms x1.13
+
+[late]
+level   budget  baseline   depth(min-max)  nodes     n/ms   ms | current    depth(min-max)  nodes     n/ms   ms
+medium     25ms             2.95 (2-3)        3085    373     8 |             2.85 (2-3)        5166    392    13
+medium     80ms             3.00 (3-3)        3167    355     9 |             3.00 (3-3)        5717    360    16
+medium    120ms             3.00 (3-3)        3167    358     9 |             3.00 (3-3)        5717    353    16
+medium    400ms             3.00 (3-3)        3167    347     9 |             3.00 (3-3)        5717    387    15
+medium   1800ms             3.00 (3-3)        3167    379     8 |             3.00 (3-3)        5717    383    15
+hard       25ms             3.20 (2-4)        6871    268    26 |             3.50 (2-6)        9977    390    26
+hard       80ms             4.05 (3-5)       25001    310    81 |             4.75 (3-8)       30870    383    81
+hard      120ms             4.35 (3-6)       40654    337   121 |             5.15 (4-9)       48389    401   121
+hard      400ms             5.10 (4-6)      133511    333   401 |             6.90 (5-12)      166448    416   401
+hard     1800ms             6.25 (5-8)      604341    336  1801 |             8.80 (6-12)      688534    412  1672
+  current vs baseline, medium: 25ms -0.10 ply, n/ms x1.05; 80ms +0.00 ply, n/ms x1.02; 120ms +0.00 ply, n/ms x0.99; 400ms +0.00 ply, n/ms x1.12; 1800ms +0.00 ply, n/ms x1.01
+  current vs baseline, hard: 25ms +0.30 ply, n/ms x1.45; 80ms +0.70 ply, n/ms x1.24; 120ms +0.80 ply, n/ms x1.19; 400ms +1.80 ply, n/ms x1.25; 1800ms +2.55 ply, n/ms x1.23
+
+Completed-depth table (mean over the set, for HB1's ladder re-spacing):
+  mid baseline medium  25:2.30  80:2.96  120:3.00  400:3.00  1800:3.00
+  mid baseline hard  25:2.19  80:3.04  120:3.11  400:3.85  1800:4.96
+  mid current medium  25:1.96  80:2.85  120:2.96  400:3.00  1800:3.00
+  mid current hard  25:1.96  80:3.00  120:3.33  400:4.63  1800:6.48
+  late baseline medium  25:2.95  80:3.00  120:3.00  400:3.00  1800:3.00
+  late baseline hard  25:3.20  80:4.05  120:4.35  400:5.10  1800:6.25
+  late current medium  25:2.85  80:3.00  120:3.00  400:3.00  1800:3.00
+  late current hard  25:3.50  80:4.75  120:5.15  400:6.90  1800:8.80
+wrote docs/polish-pass/evidence/HB/HB2/bench-depth.json

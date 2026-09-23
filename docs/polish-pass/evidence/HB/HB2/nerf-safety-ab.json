@@ -1,0 +1,77 @@
+{
+ "script": "scripts/sim-search-nerf-safety.ts --ab",
+ "argv": [
+  "--ab",
+  "--nerfs",
+  "8",
+  "--pairs",
+  "20",
+  "--seed",
+  "1",
+  "--out",
+  "docs/polish-pass/evidence/HB/HB2/nerf-safety-ab.json"
+ ],
+ "head": "6ddc711",
+ "loadavg": [
+  2.02,
+  2,
+  4.74
+ ],
+ "when": "2026-09-23T16:28:57.248Z",
+ "pairs": 160,
+ "deltaPoints": 11.88,
+ "ci95": [
+  3.61,
+  20.14
+ ],
+ "perNerf": {
+  "my_kingdom_for_a_horse": {
+   "pairs": 20,
+   "score": 15.5,
+   "nerfLossOn": 4,
+   "nerfLossOff": 31
+  },
+  "simp": {
+   "pairs": 20,
+   "score": 7,
+   "nerfLossOn": 1,
+   "nerfLossOff": 12
+  },
+  "rook_on_seventh": {
+   "pairs": 20,
+   "score": 11,
+   "nerfLossOn": 18,
+   "nerfLossOff": 22
+  },
+  "you_best_not_miss": {
+   "pairs": 20,
+   "score": 10.5,
+   "nerfLossOn": 19,
+   "nerfLossOff": 21
+  },
+  "savior_complex": {
+   "pairs": 20,
+   "score": 10.5,
+   "nerfLossOn": 5,
+   "nerfLossOff": 16
+  },
+  "march_or_die": {
+   "pairs": 20,
+   "score": 11,
+   "nerfLossOn": 18,
+   "nerfLossOff": 22
+  },
+  "glorious_battle": {
+   "pairs": 20,
+   "score": 11,
+   "nerfLossOn": 11,
+   "nerfLossOff": 15
+  },
+  "always_check_it_might_be_mate": {
+   "pairs": 20,
+   "score": 13,
+   "nerfLossOn": 14,
+   "nerfLossOff": 26
+  }
+ }
+}

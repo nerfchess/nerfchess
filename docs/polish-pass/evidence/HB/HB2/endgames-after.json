@@ -1,0 +1,768 @@
+{
+ "script": "scripts/sim-house-endgames.ts",
+ "argv": [
+  "--starts",
+  "10",
+  "--tiers",
+  "1350,1750",
+  "--defender-ms",
+  "80",
+  "--seed",
+  "1",
+  "--engine",
+  "current",
+  "--out",
+  "docs/polish-pass/evidence/HB/HB2/endgames-after.json"
+ ],
+ "baselineCommit": "bbe4271",
+ "head": "353c8a5",
+ "loadavg": [
+  1.56,
+  1.69,
+  2.33
+ ],
+ "when": "2026-09-23T16:54:59.405Z",
+ "summary": {
+  "1350/kqk": {
+   "n": 10,
+   "wins": 9,
+   "wilson95": [
+    0.596,
+    0.982
+   ],
+   "threefold": 0,
+   "fifty": 0,
+   "window": 0,
+   "loss": 1,
+   "medianMovesToWin": 5
+  },
+  "1350/krk": {
+   "n": 10,
+   "wins": 8,
+   "wilson95": [
+    0.49,
+    0.943
+   ],
+   "threefold": 0,
+   "fifty": 0,
+   "window": 2,
+   "loss": 0,
+   "medianMovesToWin": 17
+  },
+  "1350/krpkp": {
+   "n": 10,
+   "wins": 9,
+   "wilson95": [
+    0.596,
+    0.982
+   ],
+   "threefold": 0,
+   "fifty": 0,
+   "window": 0,
+   "loss": 1,
+   "medianMovesToWin": 14
+  },
+  "1750/kqk": {
+   "n": 10,
+   "wins": 10,
+   "wilson95": [
+    0.722,
+    1
+   ],
+   "threefold": 0,
+   "fifty": 0,
+   "window": 0,
+   "loss": 0,
+   "medianMovesToWin": 5
+  },
+  "1750/krk": {
+   "n": 10,
+   "wins": 9,
+   "wilson95": [
+    0.596,
+    0.982
+   ],
+   "threefold": 0,
+   "fifty": 0,
+   "window": 1,
+   "loss": 0,
+   "medianMovesToWin": 11
+  },
+  "1750/krpkp": {
+   "n": 10,
+   "wins": 10,
+   "wilson95": [
+    0.722,
+    1
+   ],
+   "threefold": 0,
+   "fifty": 0,
+   "window": 0,
+   "loss": 0,
+   "medianMovesToWin": 11
+  }
+ },
+ "threefolds": 0,
+ "games": [
+  {
+   "family": "kqk",
+   "tier": 1350,
+   "start": 0,
+   "fen": "8/K2Q4/8/8/8/8/8/2k5 w",
+   "attacker": "w",
+   "outcome": "loss",
+   "reason": "king captured",
+   "attackerMoves": 17,
+   "blunders": 3
+  },
+  {
+   "family": "kqk",
+   "tier": 1350,
+   "start": 1,
+   "fen": "8/2k4q/4K3/8/8/8/8/8 b",
+   "attacker": "b",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 5,
+   "blunders": 0
+  },
+  {
+   "family": "kqk",
+   "tier": 1350,
+   "start": 2,
+   "fen": "8/8/6Q1/8/7k/8/8/6K1 w",
+   "attacker": "w",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 2,
+   "blunders": 0
+  },
+  {
+   "family": "kqk",
+   "tier": 1350,
+   "start": 3,
+   "fen": "4K3/8/3k4/8/8/8/8/q7 b",
+   "attacker": "b",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 2,
+   "blunders": 0
+  },
+  {
+   "family": "kqk",
+   "tier": 1350,
+   "start": 4,
+   "fen": "8/1K6/4Q3/8/8/8/6k1/8 w",
+   "attacker": "w",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 5,
+   "blunders": 0
+  },
+  {
+   "family": "kqk",
+   "tier": 1350,
+   "start": 5,
+   "fen": "8/5q2/8/6K1/8/1k6/8/8 b",
+   "attacker": "b",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 9,
+   "blunders": 0
+  },
+  {
+   "family": "kqk",
+   "tier": 1350,
+   "start": 6,
+   "fen": "6Q1/8/8/8/8/8/1K5k/8 w",
+   "attacker": "w",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 3,
+   "blunders": 0
+  },
+  {
+   "family": "kqk",
+   "tier": 1350,
+   "start": 7,
+   "fen": "1k6/8/8/K7/8/8/8/3q4 b",
+   "attacker": "b",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 3,
+   "blunders": 0
+  },
+  {
+   "family": "kqk",
+   "tier": 1350,
+   "start": 8,
+   "fen": "8/2K1Q3/8/8/8/2k5/8/8 w",
+   "attacker": "w",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 6,
+   "blunders": 0
+  },
+  {
+   "family": "kqk",
+   "tier": 1350,
+   "start": 9,
+   "fen": "q7/8/4K2k/8/8/8/8/8 b",
+   "attacker": "b",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 8,
+   "blunders": 0
+  },
+  {
+   "family": "krk",
+   "tier": 1350,
+   "start": 0,
+   "fen": "8/8/8/2R5/6k1/K7/8/8 w",
+   "attacker": "w",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 16,
+   "blunders": 1
+  },
+  {
+   "family": "krk",
+   "tier": 1350,
+   "start": 1,
+   "fen": "k7/8/K7/8/8/2r5/8/8 b",
+   "attacker": "b",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 11,
+   "blunders": 0
+  },
+  {
+   "family": "krk",
+   "tier": 1350,
+   "start": 2,
+   "fen": "6k1/8/5R2/8/8/8/3K4/8 w",
+   "attacker": "w",
+   "outcome": "window",
+   "reason": "no king capture in 50 moves",
+   "attackerMoves": 50,
+   "blunders": 2
+  },
+  {
+   "family": "krk",
+   "tier": 1350,
+   "start": 3,
+   "fen": "8/8/r4k2/8/8/3K4/8/8 b",
+   "attacker": "b",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 36,
+   "blunders": 1
+  },
+  {
+   "family": "krk",
+   "tier": 1350,
+   "start": 4,
+   "fen": "8/5K2/8/8/8/2k5/R7/8 w",
+   "attacker": "w",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 18,
+   "blunders": 0
+  },
+  {
+   "family": "krk",
+   "tier": 1350,
+   "start": 5,
+   "fen": "8/8/8/8/5k2/K7/8/1r6 b",
+   "attacker": "b",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 8,
+   "blunders": 0
+  },
+  {
+   "family": "krk",
+   "tier": 1350,
+   "start": 6,
+   "fen": "8/3R4/8/K7/8/8/8/4k3 w",
+   "attacker": "w",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 17,
+   "blunders": 0
+  },
+  {
+   "family": "krk",
+   "tier": 1350,
+   "start": 7,
+   "fen": "8/8/7r/8/8/8/8/1k1K4 b",
+   "attacker": "b",
+   "outcome": "window",
+   "reason": "no king capture in 50 moves",
+   "attackerMoves": 50,
+   "blunders": 1
+  },
+  {
+   "family": "krk",
+   "tier": 1350,
+   "start": 8,
+   "fen": "8/6R1/k7/8/6K1/8/8/8 w",
+   "attacker": "w",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 31,
+   "blunders": 2
+  },
+  {
+   "family": "krk",
+   "tier": 1350,
+   "start": 9,
+   "fen": "8/8/8/3K4/5r2/8/k7/8 b",
+   "attacker": "b",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 15,
+   "blunders": 0
+  },
+  {
+   "family": "krpkp",
+   "tier": 1350,
+   "start": 0,
+   "fen": "8/1K6/6R1/3k4/1p6/6P1/8/8 w",
+   "attacker": "w",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 21,
+   "blunders": 3
+  },
+  {
+   "family": "krpkp",
+   "tier": 1350,
+   "start": 1,
+   "fen": "8/8/7p/6Pr/8/2k5/8/1K6 b",
+   "attacker": "b",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 4,
+   "blunders": 0
+  },
+  {
+   "family": "krpkp",
+   "tier": 1350,
+   "start": 2,
+   "fen": "8/8/8/P7/p1R5/1k6/8/2K5 w",
+   "attacker": "w",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 15,
+   "blunders": 0
+  },
+  {
+   "family": "krpkp",
+   "tier": 1350,
+   "start": 3,
+   "fen": "8/8/3k4/1p6/8/8/P4r2/7K b",
+   "attacker": "b",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 8,
+   "blunders": 1
+  },
+  {
+   "family": "krpkp",
+   "tier": 1350,
+   "start": 4,
+   "fen": "8/5K2/1R6/7p/8/8/4P3/4k3 w",
+   "attacker": "w",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 14,
+   "blunders": 0
+  },
+  {
+   "family": "krpkp",
+   "tier": 1350,
+   "start": 5,
+   "fen": "6k1/8/8/8/6p1/3P2K1/7r/8 b",
+   "attacker": "b",
+   "outcome": "loss",
+   "reason": "king captured",
+   "attackerMoves": 30,
+   "blunders": 3
+  },
+  {
+   "family": "krpkp",
+   "tier": 1350,
+   "start": 6,
+   "fen": "8/7p/8/3P4/8/2R5/1K3k2/8 w",
+   "attacker": "w",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 13,
+   "blunders": 0
+  },
+  {
+   "family": "krpkp",
+   "tier": 1350,
+   "start": 7,
+   "fen": "8/8/1pP5/2k3r1/8/7K/8/8 b",
+   "attacker": "b",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 20,
+   "blunders": 2
+  },
+  {
+   "family": "krpkp",
+   "tier": 1350,
+   "start": 8,
+   "fen": "2K5/8/8/3p1k2/1R6/4P3/8/8 w",
+   "attacker": "w",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 20,
+   "blunders": 2
+  },
+  {
+   "family": "krpkp",
+   "tier": 1350,
+   "start": 9,
+   "fen": "8/8/8/4r3/1K2p3/8/2k3P1/8 b",
+   "attacker": "b",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 12,
+   "blunders": 0
+  },
+  {
+   "family": "kqk",
+   "tier": 1750,
+   "start": 0,
+   "fen": "8/K2Q4/8/8/8/8/8/2k5 w",
+   "attacker": "w",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 6,
+   "blunders": 0
+  },
+  {
+   "family": "kqk",
+   "tier": 1750,
+   "start": 1,
+   "fen": "8/2k4q/4K3/8/8/8/8/8 b",
+   "attacker": "b",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 5,
+   "blunders": 0
+  },
+  {
+   "family": "kqk",
+   "tier": 1750,
+   "start": 2,
+   "fen": "8/8/6Q1/8/7k/8/8/6K1 w",
+   "attacker": "w",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 2,
+   "blunders": 0
+  },
+  {
+   "family": "kqk",
+   "tier": 1750,
+   "start": 3,
+   "fen": "4K3/8/3k4/8/8/8/8/q7 b",
+   "attacker": "b",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 2,
+   "blunders": 0
+  },
+  {
+   "family": "kqk",
+   "tier": 1750,
+   "start": 4,
+   "fen": "8/1K6/4Q3/8/8/8/6k1/8 w",
+   "attacker": "w",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 5,
+   "blunders": 0
+  },
+  {
+   "family": "kqk",
+   "tier": 1750,
+   "start": 5,
+   "fen": "8/5q2/8/6K1/8/1k6/8/8 b",
+   "attacker": "b",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 7,
+   "blunders": 0
+  },
+  {
+   "family": "kqk",
+   "tier": 1750,
+   "start": 6,
+   "fen": "6Q1/8/8/8/8/8/1K5k/8 w",
+   "attacker": "w",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 3,
+   "blunders": 0
+  },
+  {
+   "family": "kqk",
+   "tier": 1750,
+   "start": 7,
+   "fen": "1k6/8/8/K7/8/8/8/3q4 b",
+   "attacker": "b",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 3,
+   "blunders": 0
+  },
+  {
+   "family": "kqk",
+   "tier": 1750,
+   "start": 8,
+   "fen": "8/2K1Q3/8/8/8/2k5/8/8 w",
+   "attacker": "w",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 6,
+   "blunders": 0
+  },
+  {
+   "family": "kqk",
+   "tier": 1750,
+   "start": 9,
+   "fen": "q7/8/4K2k/8/8/8/8/8 b",
+   "attacker": "b",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 7,
+   "blunders": 0
+  },
+  {
+   "family": "krk",
+   "tier": 1750,
+   "start": 0,
+   "fen": "8/8/8/2R5/6k1/K7/8/8 w",
+   "attacker": "w",
+   "outcome": "window",
+   "reason": "no king capture in 50 moves",
+   "attackerMoves": 50,
+   "blunders": 1
+  },
+  {
+   "family": "krk",
+   "tier": 1750,
+   "start": 1,
+   "fen": "k7/8/K7/8/8/2r5/8/8 b",
+   "attacker": "b",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 9,
+   "blunders": 0
+  },
+  {
+   "family": "krk",
+   "tier": 1750,
+   "start": 2,
+   "fen": "6k1/8/5R2/8/8/8/3K4/8 w",
+   "attacker": "w",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 9,
+   "blunders": 0
+  },
+  {
+   "family": "krk",
+   "tier": 1750,
+   "start": 3,
+   "fen": "8/8/r4k2/8/8/3K4/8/8 b",
+   "attacker": "b",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 12,
+   "blunders": 0
+  },
+  {
+   "family": "krk",
+   "tier": 1750,
+   "start": 4,
+   "fen": "8/5K2/8/8/8/2k5/R7/8 w",
+   "attacker": "w",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 15,
+   "blunders": 0
+  },
+  {
+   "family": "krk",
+   "tier": 1750,
+   "start": 5,
+   "fen": "8/8/8/8/5k2/K7/8/1r6 b",
+   "attacker": "b",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 8,
+   "blunders": 0
+  },
+  {
+   "family": "krk",
+   "tier": 1750,
+   "start": 6,
+   "fen": "8/3R4/8/K7/8/8/8/4k3 w",
+   "attacker": "w",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 11,
+   "blunders": 0
+  },
+  {
+   "family": "krk",
+   "tier": 1750,
+   "start": 7,
+   "fen": "8/8/7r/8/8/8/8/1k1K4 b",
+   "attacker": "b",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 8,
+   "blunders": 0
+  },
+  {
+   "family": "krk",
+   "tier": 1750,
+   "start": 8,
+   "fen": "8/6R1/k7/8/6K1/8/8/8 w",
+   "attacker": "w",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 14,
+   "blunders": 0
+  },
+  {
+   "family": "krk",
+   "tier": 1750,
+   "start": 9,
+   "fen": "8/8/8/3K4/5r2/8/k7/8 b",
+   "attacker": "b",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 16,
+   "blunders": 0
+  },
+  {
+   "family": "krpkp",
+   "tier": 1750,
+   "start": 0,
+   "fen": "8/1K6/6R1/3k4/1p6/6P1/8/8 w",
+   "attacker": "w",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 11,
+   "blunders": 0
+  },
+  {
+   "family": "krpkp",
+   "tier": 1750,
+   "start": 1,
+   "fen": "8/8/7p/6Pr/8/2k5/8/1K6 b",
+   "attacker": "b",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 4,
+   "blunders": 0
+  },
+  {
+   "family": "krpkp",
+   "tier": 1750,
+   "start": 2,
+   "fen": "8/8/8/P7/p1R5/1k6/8/2K5 w",
+   "attacker": "w",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 10,
+   "blunders": 0
+  },
+  {
+   "family": "krpkp",
+   "tier": 1750,
+   "start": 3,
+   "fen": "8/8/3k4/1p6/8/8/P4r2/7K b",
+   "attacker": "b",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 8,
+   "blunders": 0
+  },
+  {
+   "family": "krpkp",
+   "tier": 1750,
+   "start": 4,
+   "fen": "8/5K2/1R6/7p/8/8/4P3/4k3 w",
+   "attacker": "w",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 19,
+   "blunders": 0
+  },
+  {
+   "family": "krpkp",
+   "tier": 1750,
+   "start": 5,
+   "fen": "6k1/8/8/8/6p1/3P2K1/7r/8 b",
+   "attacker": "b",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 19,
+   "blunders": 0
+  },
+  {
+   "family": "krpkp",
+   "tier": 1750,
+   "start": 6,
+   "fen": "8/7p/8/3P4/8/2R5/1K3k2/8 w",
+   "attacker": "w",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 7,
+   "blunders": 0
+  },
+  {
+   "family": "krpkp",
+   "tier": 1750,
+   "start": 7,
+   "fen": "8/8/1pP5/2k3r1/8/7K/8/8 b",
+   "attacker": "b",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 13,
+   "blunders": 0
+  },
+  {
+   "family": "krpkp",
+   "tier": 1750,
+   "start": 8,
+   "fen": "2K5/8/8/3p1k2/1R6/4P3/8/8 w",
+   "attacker": "w",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 13,
+   "blunders": 0
+  },
+  {
+   "family": "krpkp",
+   "tier": 1750,
+   "start": 9,
+   "fen": "8/8/8/4r3/1K2p3/8/2k3P1/8 b",
+   "attacker": "b",
+   "outcome": "win",
+   "reason": "king captured",
+   "attackerMoves": 5,
+   "blunders": 0
+  }
+ ]
+}

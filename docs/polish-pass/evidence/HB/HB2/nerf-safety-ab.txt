@@ -1,0 +1,11 @@
+  my_kingdom_for_a_horse         ON scores 77.5% over 20 pairs; nerf losses ON 4, OFF 31
+  simp                           ON scores 35.0% over 20 pairs; nerf losses ON 1, OFF 12
+  rook_on_seventh                ON scores 55.0% over 20 pairs; nerf losses ON 18, OFF 22
+  you_best_not_miss              ON scores 52.5% over 20 pairs; nerf losses ON 19, OFF 21
+  savior_complex                 ON scores 52.5% over 20 pairs; nerf losses ON 5, OFF 16
+  march_or_die                   ON scores 55.0% over 20 pairs; nerf losses ON 18, OFF 22
+  glorious_battle                ON scores 55.0% over 20 pairs; nerf losses ON 11, OFF 15
+  always_check_it_might_be_mate  ON scores 65.0% over 20 pairs; nerf losses ON 14, OFF 26
+
+A/B filter ON vs OFF: 160 pairs (320 games), hard@40ms, win-rate delta +11.9 points, 95% 3.6 to 20.1, 473s
+wrote docs/polish-pass/evidence/HB/HB2/nerf-safety-ab.json

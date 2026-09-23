@@ -1,0 +1,6 @@
+
+tactics: 33 positions, load 1.6 2.3 8.4
+    40ms  baseline 3/33 (9%) deep-judge 6/33 depth 3.00 nodes 9135  |  current 26/33 (79%) deep-judge 28/33 depth 3.06 nodes 13406
+   120ms  baseline 11/33 (33%) deep-judge 13/33 depth 3.42 nodes 26174  |  current 30/33 (91%) deep-judge 33/33 depth 4.61 nodes 41780
+   400ms  baseline 31/33 (94%) deep-judge 31/33 depth 4.48 nodes 132645  |  current 29/33 (88%) deep-judge 32/33 depth 6.33 nodes 142417
+wrote docs/polish-pass/evidence/HB/HB2/tactics-before-after.json
