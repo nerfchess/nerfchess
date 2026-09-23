@@ -44,7 +44,6 @@ export default function LeaderboardPage() {
   // Who is looking, from the shared session (F014): the hint names the
   // viewer's own row from the first render, with no page-level /me call.
   const { display } = useSession();
-  const rankedViewer = !!display && !display.isGuest;
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   // Jump-to-me: a bumped nonce triggers the scroll effect after the page state
@@ -134,27 +133,20 @@ export default function LeaderboardPage() {
         {/* Ladder switch: the only two boards, Nerf and Buff. */}
         <CategoryTabs value={category} onChange={setCategory} className="mt-5" />
 
-        {/* Controls: search and the jump-to-me shortcut. */}
-        <div className="mt-4 flex flex-wrap items-center gap-3">
-          {/* While the standings load, a signed-in viewer's button holds
-              its place (hidden) so the search and table do not move down when
-              it appears (F014). An unranked viewer loses it with the skeleton
-              swap. */}
-          {(canJump || (rankedViewer && !rows && !error)) && (
+        {/* Controls: search and the jump-to-me shortcut on one row, so the
+            button appearing with a ranked viewer's standings (or a signed-in
+            viewer turning out to be unranked) never moves the table (F014).
+            The row's height is the search box's. */}
+        <div className="mt-4 flex items-center gap-3">
+          <PlayerSearch className="min-w-0 max-w-sm flex-1" />
+          {canJump && (
             <Button tone="ghost"
               onClick={jumpToMe}
-              disabled={!canJump}
-              aria-hidden={!canJump || undefined}
-              tabIndex={canJump ? undefined : -1}
-              className={"ml-auto px-3 py-1.5 text-[13px]" + (canJump ? "" : " invisible")}>
+              className="ml-auto shrink-0 px-3 py-1.5 text-[13px]">
               <Trophy size={13} aria-hidden />
               Jump to my rank
             </Button>
           )}
-        </div>
-
-        <div className="mt-4">
-          <PlayerSearch className="max-w-sm" />
         </div>
 
         {/* Error / disconnected: plain words, a retry, and a way out. */}

@@ -11,3 +11,6 @@
 # test 4 rerun after (the server restarted mid-run above):
   ✓  1 [chromium] › e2e/polish/social-routes.spec.ts:744:7 › /community › opponents read View profile and replay links are 44px on touch (15.9s)
   1 passed (58.3s)
+  ✓  1 [chromium] › e2e/polish/social-routes.spec.ts:667:7 › /leaderboard › the skeleton has the table's geometry (34.2s)
+  ✓  2 [chromium] › e2e/polish/social-routes.spec.ts:695:7 › /leaderboard › chips are sentence case and the jump obeys data-anim (12.0s)
+  2 passed (1.0m)

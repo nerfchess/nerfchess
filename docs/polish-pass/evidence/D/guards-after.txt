@@ -1,0 +1,18 @@
+== emdash
+[check-emdash] OK: no user-facing em dashes in src
+== case
+  src/app/leaderboard/page.tsx
+  src/app/tv/page.tsx
+== buttons
+[check-buttons] 129 bespoke button(s) in 57 file(s); 0 raw btn-* call-site(s) in 0 file(s)
+  Bespoke buttons by file (worst first):
+      4  src/app/community/page.tsx
+      4  src/app/tv/TvView.tsx
+      2  src/app/clubs/[slug]/page.tsx
+      2  src/app/tournaments/page.tsx
+      2  src/components/FriendGame.tsx
+4 file(s) with NEW bespoke buttons:
+== rounded
+[check-rounded] OK: no rounded rectangular surfaces in src
+== reduced-motion
+== anim-props
