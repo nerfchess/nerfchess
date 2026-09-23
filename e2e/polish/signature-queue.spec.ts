@@ -33,10 +33,12 @@ async function timeline(page: Page) {
   return (await page.evaluate("window.__sig")) as { t: number; slot: string; busy: string }[];
 }
 
+// Evidence only when asked for (F208_LABEL=before|after).
 const save = (name: string, data: unknown) => {
+  if (!process.env.F208_LABEL) return;
   const dir = path.join("docs", "polish-pass", "evidence", "J");
   fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(path.join(dir, `f208-${process.env.F208_LABEL ?? "run"}-${name}.json`), JSON.stringify(data, null, 1));
+  fs.writeFileSync(path.join(dir, `f208-${process.env.F208_LABEL}-${name}.json`), JSON.stringify(data, null, 1));
 };
 
 test.describe("animations off", () => {

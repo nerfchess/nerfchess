@@ -90,11 +90,12 @@ test("game over under the low-time hold still choreographs the ending", async ({
     }
     return out;
   });
-  fs.mkdirSync(EVIDENCE, { recursive: true });
-  fs.writeFileSync(
-    path.join(EVIDENCE, `f204-${process.env.F204_LABEL ?? "run"}.json`),
-    JSON.stringify(beats, null, 1),
-  );
+  // Evidence only when asked for (F204_LABEL=before|after), so a routine
+  // run never leaves files in the tree.
+  if (process.env.F204_LABEL) {
+    fs.mkdirSync(EVIDENCE, { recursive: true });
+    fs.writeFileSync(path.join(EVIDENCE, `f204-${process.env.F204_LABEL}.json`), JSON.stringify(beats, null, 1));
+  }
 
   // The hold is gone once the game is over.
   expect(await page.evaluate(() => document.documentElement.dataset.anim)).toBe("normal");
