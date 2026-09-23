@@ -59,9 +59,16 @@ TL;DR of the moving parts (2026-07, after the wave-3 spread):
   snappy or consistently deliberate, and no bot snaps every time.
 - Each move is chosen by the site's own alpha-beta engine (`src/engine/ai.ts`).
   A human game's search runs on the remote engine service (`engine-service/`,
-  up to 1800ms) while the bot has more than 5 seconds left, and otherwise on the
-  Durable Object itself, capped at `HOUSE_SEARCH_CEILING_MS` (80ms) so it can
-  never stall the server. On top of the search sit a king-safety floor, a
+  up to 1800ms) only when the graded budget for the move, after the round
+  trip, is more than the local ceiling would give (`houseMoveBudgetMs(...,
+  1800, increment) > HOUSE_SEARCH_CEILING_MS`), so a small bullet search never
+  pays 500ms of network. Otherwise it runs on the Durable Object itself, capped
+  at `HOUSE_SEARCH_CEILING_MS` (80ms) so it can never stall the server. The
+  worker waits `houseEngineTimeoutMs(budget)` (the budget plus a second, never
+  more than 3s) and an isolate-level `HouseEngineBreaker` stops asking a
+  failing box for 45 seconds after two timeouts or errors. The request carries
+  the persona, the increment, a queue deadline and the match's card overrides;
+  the reply's `scoreCp` is kept server-side for the resign and draw decisions. On top of the search sit a king-safety floor, a
   human-shaped blunder, an opening repertoire and a card policy, all in
   `bots.ts` (see "Playing strength" below).
 - The whole roster is driven from the game server's **alarm loop** (`houseTick`
@@ -267,34 +274,53 @@ less. 3+0: from 62-92 to 105-141. No increment pool flags inside 150 moves.
 - **Opening nerf pick** (`houseNerfPickIndex`): between the two dealt options the
   bot prefers the **lower tier** (the milder handicap), random on a tie. It is a
   pure function so a deadline re-roll lands the same way.
-- **Buff / hex offers** (`aiDraftChoice` in `game.ts`): the bot prefers the
+- **Buff / hex offers** (`houseDraftChoice` in `bots.ts`, over `aiDraftChoice` in `game.ts`): the bot prefers the
   **highest-tier card it can actually use** without a human's targeting UI;
   passives and instants score highest, activated cards a bit lower, pure
   info/reveal cards score zero, and if every option is unusable to a bot it
   **banks** the draft instead.
-- **Using held buffs**: today `worker.ts` rolls the persona's activation
-  appetite (0.25-0.55) each turn and fires the first card
-  `aiChooseBuffActivation`'s gates accept. `houseChooseActivation` (in
-  `bots.ts`, waiting on REQUEST R9 in `docs/polish-pass/slices/HB.md` to be wired
-  in) replaces that: it looks at every card the gates accept, never passes the
-  turn with a piece hanging that a move would have saved, takes the best card
-  rather than the first, and grows keener as the board empties. Measured over 80
+- **Using held buffs**: `worker.ts` asks `houseChooseActivation` (in
+  `bots.ts`) every turn. It looks at every card the gates accept, never passes
+  the turn with a piece hanging that a move would have saved, takes the best
+  card rather than the first, and grows keener as the board empties. (It
+  replaced a persona coin, 0.25-0.55 a turn, in front of the first card
+  `aiChooseBuffActivation` accepted.) A snapped reply never stops to play a
+  card. Measured over 80
   paired games: bad fires 17-19 to 0, paired score 53-58% against today's policy
   (the interval still includes 50%). `houseDraftChoice` leans each persona its
   own way among equal cards and banks less as the offered tier rises. Any card
   that throws mid-activation is caught and the bot just makes a normal move.
 
-### Behaviour helpers waiting on `worker.ts`
+### Resigns, draws, rematches and snaps (wired in `worker.ts`)
 
-Pure decisions in `bots.ts`, tested by `scripts/test-house-policy.ts`, for the
-worker to call through the same frames a human's action produces (REQUESTS R5
-to R11 in `docs/polish-pass/slices/HB.md`): `houseResignDecision` (1500 and up
-resign after 2-6 own moves at -600cp or worse, beginners play on, some personas
-never resign), `houseDrawDecision` and `houseDrawOffer` (dead-level endings are
-always drawn, winning ones never), `houseRematchDecision` (50-85% by persona,
-2-6s), `houseSnapMove` (the recapture a snap plays, without the remote round
-trip), `houseEngineTimeoutMs` and `HouseEngineBreaker` (stop paying a timeout
-per move when the engine box hangs). Their numbers never reach a client.
+Pure decisions in `bots.ts`, tested by `scripts/test-house-policy.ts`, that the
+worker calls through the same frames a human's action produces (REQUESTS R5 to
+R11 in `docs/polish-pass/slices/HB.md`; the wiring is checked by
+`scripts/polish/test-house-wiring.ts`):
+
+- After each of its moves in a human game the bot records its evaluation
+  (the engine's `scoreCp`, else the local search's, else material) in a
+  server-only history, and `houseResignDecision` decides whether it resigns
+  (1500 and up after 2-6 own moves at -600cp or worse, beginners play on, some
+  personas never resign). A resignation lands 1-4 seconds later through the
+  same end flow as a human's resign.
+- A draw offer to a bot is answered by `houseDrawDecision` after 1.5-5 seconds
+  (dead-level endings always drawn, winning ones never): an accept ends the game
+  as a draw by agreement, a decline is the `drawDeclined` frame. The bot may
+  offer a draw itself in a dead-level ending (`houseDrawOffer`), with the
+  `drawOffer` frame a person's offer sends.
+- A rematch request to a bot is answered by `houseRematchDecision` (50-85% by
+  persona) after 2-6 seconds, only while the persona is in today's active
+  roster and not seated in another game. Accept starts the colour-swapped
+  rematch with the bot on the other side; decline withdraws the offer and the
+  bot leaves the board, the way a person who does not want another game does.
+- A snapped reply (`houseSnapReplyMs`) plays `houseSnapMove` locally, with no
+  search and no round trip, and falls back to the normal search when the
+  recapture is not simple.
+
+None of these numbers, and no timer or flag behind them, reaches a client.
+Filler games (bot against bot) keep none of it: they never resign, offer or
+answer draws.
 
 ---
 
@@ -375,10 +401,13 @@ blip. Both switches must be on for the roster to run.
 3. Draft games: each side's opening nerf is picked (bots prefer the milder one);
    then buff/hex offers are resolved every few moves as they come.
 4. On the bot's turn the alarm, after the pacing delay, either fires a held buff
-   (40% coin) or plays a move from the capped engine search.
+   (when `houseChooseActivation` finds one worth it) or plays a move.
 5. If the human seat disconnects **during its own turn**, that game's clock
-   pauses so a dropped socket never flags them mid-move, and the bot resumes
-   when they return. The pause is **bounded**: one absence buys at most 45
+   pauses so a dropped socket never flags them mid-move. If they disconnect on
+   the bot's turn, the bot plays its move anyway (it used to wait, with its own
+   clock running, until it flagged and handed the absent player a time win),
+   and the move opens the same pause for the away human
+   (`openHandoverPause`). The pause is **bounded**: one absence buys at most 45
    seconds and a seat gets at most 90 seconds across the whole game
    (`src/lib/server/clockPause.ts`). Past that the clock restarts itself from
    the alarm and the ordinary flag path applies, so an absent player can lose on
@@ -394,9 +423,8 @@ blip. Both switches must be on for the roster to run.
 
 House players are intentionally indistinguishable from humans: no visible mark,
 no bot flag in any payload, and moderator-only user lists are the one place
-they are filtered out. Their resigns, draw answers and rematch answers (once
-wired, REQUESTS R5 and R6) use exactly the frames and human-like delays a
-person's would.
+they are filtered out. Their resigns, draw answers and rematch answers use exactly the frames and
+human-like delays a person's would.
 
 They have profiles, real (moving) ratings in both pools, appear in game history
 and on the leaderboard, and their games show on TV like any other.
@@ -414,7 +442,8 @@ so it doesn't crash the servers." The shipped system does **neither**:
 - Search for human games is outsourced now: the remote engine service
   (`engine-service/`, on the OCI box) takes up to 1800ms a move, and the
   Durable Object only searches locally (80ms ceiling, strictly serialized) when
-  the bot is low on time or the service does not answer. The human-like feel
+  the move's budget is too small to be worth the round trip, the breaker is
+  open, or the service does not answer. The human-like feel
   comes from the pacing, the opening repertoire and the human-shaped blunders.
 
 Where the implementation does match the spec: the 1-4s / up-to-10s move timing
