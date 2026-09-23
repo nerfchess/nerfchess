@@ -93,15 +93,19 @@ const BASELINE: string[] = [
   "src/app/history/page.tsx",
   "src/app/inbox/page.tsx",
   "src/app/lobby/page.tsx",
-  "src/app/login/page.tsx",
+  // The server-rendered /login and /play (slices A and B) moved their bespoke
+  // affordances into client parts: the login/register tab pair, the lobby
+  // door and the setup chips. Moves, not new debt; the page entries retired.
+  "src/app/login/LoginForm.tsx",
   "src/app/mod/house/page.tsx",
-  "src/app/play/page.tsx",
-  "src/app/profile/edit/page.tsx",
+  "src/app/play/PlayIntro.tsx",
+  "src/app/play/setupParts.tsx",
   "src/app/profile/page.tsx",
   "src/app/tournaments/[id]/page.tsx",
   "src/app/tournaments/page.tsx",
   "src/app/tutorial/walkthrough/page.tsx",
-  "src/app/tv/page.tsx",
+  // /tv moved to a server wrapper plus TvView.tsx (slice D); same buttons.
+  "src/app/tv/TvView.tsx",
   "src/app/u/[username]/page.tsx",
   "src/components/AchievementToast.tsx",
   "src/components/AdminGodPanel.tsx",
@@ -127,7 +131,6 @@ const BASELINE: string[] = [
   "src/components/OpponentDraftViewer.tsx",
   "src/components/PlayerSearch.tsx",
   "src/components/PlayerStatsPanel.tsx",
-  "src/components/QueueButton.tsx",
   "src/components/RatingChart.tsx",
   "src/components/SettingsBootstrap.tsx",
   // The settings split (SettingsPanel.tsx -> components/settings/rows.tsx)

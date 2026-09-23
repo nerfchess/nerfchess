@@ -75,7 +75,6 @@ const EXCLUDED_DIRS = ["effects"];
 const BASELINE: string[] = [
   // The clip studio: a dense video-editing surface with its own visual
   // language, worth doing as one deliberate pass rather than piecemeal.
-  "src/components/clip/ClipModal.tsx",
   "src/components/clip/clipStudio.css",
   // The moderator console. Internal, and its density conventions differ.
   "src/components/mod/ModShell.tsx",
@@ -86,19 +85,11 @@ const BASELINE: string[] = [
   // decision on whether a board splash is "interface copy" at all.
   "src/app/globals.css",
   "src/components/DraftOverlay.tsx",
-  "src/components/draft/WaitingCornerNotice.tsx",
   "src/components/EffectPopover.tsx",
   // Ordinary chrome. These are the ones to fix first.
-  "src/app/page.tsx",
-  "src/app/leaderboard/page.tsx",
-  "src/app/tv/page.tsx",
-  "src/app/u/[username]/page.tsx",
   "src/app/updates/page.tsx",
   "src/components/FriendGame.tsx",
-  "src/components/QueueButton.tsx",
   "src/components/match/CommandRail.tsx",
-  "src/components/profile/ActivityFeed.tsx",
-  "src/components/profile/RatingRail.tsx",
   // Open Graph card rendering: an image, not a page.
 ];
 
