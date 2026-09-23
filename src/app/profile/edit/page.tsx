@@ -2,7 +2,7 @@
 
 import { SiteHeader } from "@/components/SiteHeader";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { AccountUser, fetchMe } from "@/lib/authClient";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
@@ -10,6 +10,11 @@ import { AVATAR_PICKER_IDS, avatarIdFor, CUSTOM_AVATAR_MAX_CHARS, isCustomAvatar
 import { FLAIR_EMOJI, LAUREL_FLAIR } from "@/lib/flair";
 import { Button } from "@/components/ui/Button";
 import { LinkButton } from "@/components/ui/Button";
+import { useSession } from "@/lib/session/SessionProvider";
+import { EditProfileSections } from "./EditProfileSkeleton";
+// The privacy switches use the site's one switch (.settings-toggle), the same
+// control the settings screen and the mod console draw.
+import "@/components/SettingsPanel.css";
 
 // The formats a browser canvas can reliably decode + re-encode. Anything else
 // (HEIC, TIFF, PDF, a mislabeled file) is rejected up front with a clear
@@ -73,6 +78,12 @@ type SaveState = "idle" | "saving" | "saved" | "error";
 
 export default function EditProfilePage() {
   const [account, setAccount] = useState<AccountUser | null | undefined>(undefined);
+  // Who the server says this is, known at first paint from the display
+  // cookie, so the back control is drawn with the title instead of arriving
+  // with /api/auth/me and pushing it sideways (F012).
+  const { display } = useSession();
+  const backName = account?.username ?? display?.username ?? null;
+  const fileRef = useRef<HTMLInputElement | null>(null);
   const [savingAvatar, setSavingAvatar] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
   const [savingFlair, setSavingFlair] = useState(false);
@@ -286,18 +297,18 @@ export default function EditProfilePage() {
       <section className="max-w-3xl mx-auto px-6 py-8">
         {/* Header: back to the player's own profile + the page title. */}
         <div className="flex items-center gap-3">
-          {account && (
-            <LinkButton tone="ghost"
-              href={`/u/${encodeURIComponent(account.username)}`}
-              className="h-[44px] w-[44px] shrink-0 rounded-none text-parchment-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]" aria-label="Back to your profile">
-              <ArrowLeft className="h-5 w-5" strokeWidth={2} />
-            </LinkButton>
-          )}
+          <LinkButton tone="ghost"
+            href={backName ? `/u/${encodeURIComponent(backName)}` : "/profile"}
+            className="h-[44px] w-[44px] shrink-0 rounded-none text-parchment-300" aria-label="Back to your profile">
+            <ArrowLeft className="h-5 w-5" strokeWidth={2} />
+          </LinkButton>
           <h1 className="page-title">Edit profile</h1>
         </div>
 
         {account === undefined ? (
-          <div className="mt-8 plate p-5 text-sm text-parchment-400">Loading…</div>
+          // The same sections the form settles into (and the route skeleton
+          // draws), not a one-line plate: one geometry from first paint.
+          <EditProfileSections />
         ) : !account ? (
           <div className="mt-8 plate p-4 text-sm text-parchment-300">
             <Link href="/login?next=/profile/edit" className="text-gold-leaf hover:underline">
@@ -314,31 +325,43 @@ export default function EditProfilePage() {
               </div>
               <div className="plate p-4 sm:p-5">
                 <div className="flex flex-wrap gap-2">
-                  <label
+                  {/* A real button that opens the picker (F136). The old tile
+                      was a <label> around a display:none input, which no key
+                      press can reach. The input stays out of the tab order:
+                      the button is its only way in. */}
+                  <button
+                    type="button"
+                    onClick={() => fileRef.current?.click()}
+                    disabled={savingAvatar}
+                    aria-label="Upload your own picture"
+                    aria-pressed={isCustomAvatar(account.avatar)}
+                    title="Upload your own picture"
                     className={
                       "grid h-[46px] w-[46px] cursor-pointer place-items-center rounded-none p-0.5 text-center transition " +
                       (isCustomAvatar(account.avatar)
                         ? "ring-2 ring-[color:var(--accent)]"
                         : "ring-1 ring-white/10 hover:ring-white/40")
                     }
-                    title="Upload your own picture"
                   >
                     {isCustomAvatar(account.avatar) ? (
                       <PlayerAvatar name={account.username} avatar={account.avatar} size={44} />
                     ) : (
-                      <span className="font-display text-xl text-parchment-300 leading-none">+</span>
+                      <span className="font-display text-xl text-parchment-300 leading-none" aria-hidden>+</span>
                     )}
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      disabled={savingAvatar}
-                      onChange={(e) => {
-                        uploadAvatar(e.target.files?.[0]);
-                        e.target.value = "";
-                      }}
-                    />
-                  </label>
+                  </button>
+                  <input
+                    ref={fileRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    tabIndex={-1}
+                    aria-hidden
+                    disabled={savingAvatar}
+                    onChange={(e) => {
+                      uploadAvatar(e.target.files?.[0]);
+                      e.target.value = "";
+                    }}
+                  />
                   {(AVATAR_PICKER_IDS.includes(avatarIdFor(account.username, account.avatar)) ||
                   isCustomAvatar(account.avatar)
                     ? AVATAR_PICKER_IDS
@@ -373,7 +396,9 @@ export default function EditProfilePage() {
                   Shown in the lobby, on leaderboards, and at the board. Use the + tile to upload
                   your own picture (PNG, JPG, WebP, or GIF, under 8 MB, cropped square and scaled
                   down automatically).
-                  {avatarError && <span className="ml-2 text-oxblood-glow">{avatarError}</span>}
+                  {/* Always mounted, so a screen reader hears the message the
+                      moment it fills (F144). */}
+                  <span role="status" className="ml-2 text-oxblood-glow">{avatarError ?? ""}</span>
                 </p>
               </div>
             </div>
@@ -455,7 +480,7 @@ export default function EditProfilePage() {
                 <p className="mt-3 text-sm text-parchment-400">
                   An emoji shown next to your name on your profile and on your avatar around the
                   site. Pick one from the set above.
-                  {flairError && <span className="ml-2 text-oxblood-glow">{flairError}</span>}
+                  <span role="status" className="ml-2 text-oxblood-glow">{flairError ?? ""}</span>
                 </p>
               </div>
             </div>
@@ -472,22 +497,26 @@ export default function EditProfilePage() {
                   rows={3}
                   placeholder="Say something about yourself…"
                   aria-label="Profile bio"
-                  className="w-full resize-none bg-transparent text-sm text-parchment-100 outline-none focus-visible:outline-none"
+                  // No outline override: the site's accent focus ring shows here
+                  // like on every other field (F137).
+                  className="w-full resize-none bg-transparent text-sm text-parchment-100"
                 />
                 <div className="mt-2 flex items-center gap-3 text-sm">
                   <Button tone="ghost"
                    
                     onClick={saveBio}
                     disabled={bioState === "saving" || bioDraft.trim() === (account.bio ?? "")}
-                    className="px-3 text-gold-leaf focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] disabled:opacity-50">
+                    className="px-3 text-gold-leaf disabled:opacity-50">
                     {bioState === "saving" ? "Saving…" : "Save bio"}
                   </Button>
-                  {bioState === "saved" && (
-                    <span className="text-[12px] text-verdigris-glow">Saved</span>
-                  )}
-                  {bioState === "error" && bioError && (
-                    <span className="text-xs text-oxblood-glow">{bioError}</span>
-                  )}
+                  <span role="status" className="inline-flex items-center">
+                    {bioState === "saved" && (
+                      <span className="text-[12px] text-verdigris-glow">Saved</span>
+                    )}
+                    {bioState === "error" && bioError && (
+                      <span className="text-xs text-oxblood-glow">{bioError}</span>
+                    )}
+                  </span>
                   <span className="ml-auto text-xs text-parchment-400 tabular-nums">
                     {bioDraft.length}/300
                   </span>
@@ -526,9 +555,12 @@ export default function EditProfilePage() {
   );
 }
 
-// A real switch: a labelled button with aria-pressed, a 44px target, a
-// visible on/off state that is never color-only (the "On"/"Off" text carries
-// it), and its own transient saved / error feedback.
+// A real switch (role="switch", aria-checked) in the site's one switch style,
+// .settings-toggle: a 44px-tall hit area, a thumb that moves by transform on
+// the motion tokens and stands still under data-anim="off" (F164, F198). The
+// On / Off word beside it carries the state, so it is never colour-only, and
+// the row has its own always-mounted live region for saved and error
+// feedback (F144).
 function PrivacyToggle({
   label,
   description,
@@ -550,54 +582,29 @@ function PrivacyToggle({
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <span className="text-sm text-parchment-100">{label}</span>
-          {state === "saved" && (
-            <span className="text-[12px] text-verdigris-glow">Saved</span>
-          )}
-          {state === "error" && error && (
-            <span className="text-xs text-oxblood-glow">{error}</span>
-          )}
+          <span role="status" className="inline-flex items-center">
+            {state === "saved" && <span className="text-[12px] text-verdigris-glow">Saved</span>}
+            {state === "error" && error && <span className="text-xs text-oxblood-glow">{error}</span>}
+          </span>
         </div>
         <p className="mt-1 text-sm text-parchment-400">{description}</p>
       </div>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={!!on}
-        aria-label={label}
-        disabled={loading || state === "saving"}
-        onClick={onToggle}
-        className={
-          "relative grid h-11 min-h-[44px] w-[72px] shrink-0 grid-cols-2 items-center rounded-none border px-1 transition disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] motion-reduce:transition-none " +
-          (on
-            ? "border-[color:var(--edge-strong)] bg-[color:var(--bg-raised)]"
-            : "border-[color:var(--edge)] bg-[color:var(--bg-raised)]")
-        }
-      >
-        {/* The label reads regardless of color; the knob just reinforces it. */}
-        <span
-          className={
-            "z-10 text-center text-[12px] transition-colors " +
-            (on ? "text-gold-leaf" : "text-transparent")
-          }
+      <span className="flex min-h-[44px] shrink-0 items-center gap-2.5">
+        <button
+          type="button"
+          role="switch"
+          aria-checked={!!on}
+          aria-label={label}
+          disabled={loading || state === "saving"}
+          onClick={onToggle}
+          className="settings-toggle"
         >
-          On
+          <span aria-hidden="true" className="settings-toggle__thumb" />
+        </button>
+        <span aria-hidden className={"w-7 text-[12px] " + (on ? "text-parchment-100" : "text-parchment-400")}>
+          {loading ? "" : on ? "On" : "Off"}
         </span>
-        <span
-          className={
-            "z-10 text-center text-[12px] transition-colors " +
-            (on ? "text-transparent" : "text-parchment-400")
-          }
-        >
-          Off
-        </span>
-        <span
-          className={
-            "absolute top-1/2 h-8 w-8 -translate-y-1/2 rounded-full shadow transition-all motion-reduce:transition-none " +
-            (on ? "left-[calc(100%-2.25rem)] bg-gold-leaf" : "left-1 bg-parchment-300")
-          }
-          aria-hidden="true"
-        />
-      </button>
+      </span>
     </div>
   );
 }

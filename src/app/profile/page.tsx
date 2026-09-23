@@ -14,6 +14,8 @@ import type { PlayerStats } from "@/lib/playerStats";
 import { ModeRatingCard, type ModeRatingRow } from "@/components/ratings/ModeRatingCard";
 import { MODE_RATING_CATEGORIES } from "@/lib/ratingCategories";
 import { LinkButton } from "@/components/ui/Button";
+import { ProfileSkeleton } from "@/components/profile/ProfileSkeleton";
+import { useSession } from "@/lib/session/SessionProvider";
 
 // /profile: the public profile at /u/<username> is THE profile for registered
 // players, so this route forwards them there. Guests keep a real profile shell
@@ -26,6 +28,15 @@ export default function ProfilePage() {
   // undefined = still resolving the session; afterwards the guest account (or
   // null when even guest creation failed, e.g. fully offline).
   const [account, setAccount] = useState<AccountUser | null | undefined>(undefined);
+  // The display cookie names the account before /api/auth/me answers, so a
+  // returning player is forwarded at once instead of after the round trip.
+  // A stale name (renamed elsewhere) is fine: /u/<old name> forwards to the
+  // current one.
+  const hinted = useSession().display?.username ?? null;
+
+  useEffect(() => {
+    if (hinted) router.replace(`/u/${encodeURIComponent(hinted)}`);
+  }, [hinted, router]);
 
   useEffect(() => {
     let cancelled = false;
@@ -54,13 +65,10 @@ export default function ProfilePage() {
   return (
     <main className="min-h-screen pb-16">
       <SiteHeader />
-      {/* The skeleton had no heading, so for the two seconds before the guest
-          identity resolves this page had no accessible name and no document
-          outline. Measured: 8 of 12 samples over 3.4s. Rendered only on the
-          skeleton branch, because GuestProfile brings its own visible h1 and
-          two would be worse than none. */}
-      {account === undefined && <h1 className="sr-only">Player profile</h1>}
-      {account === undefined ? <GuestProfileSkeleton /> : <GuestProfile account={account} />}
+      {/* The shared profile skeleton (the one /u/<name> shows next) carries
+          an sr-only h1, so the route has a heading while the account
+          resolves; GuestProfile brings its own visible one. */}
+      {account === undefined ? <ProfileSkeleton /> : <GuestProfile account={account} />}
     </main>
   );
 }
@@ -202,8 +210,7 @@ function GuestProfile({ account }: { account: AccountUser | null }) {
           {/* Statistics: PlayerStatsPanel carries its own content-sized empty
               state for a zero-game account. */}
           <div className="mt-10">
-            <div>Record</div>
-            <h2 className="mt-1 font-display text-2xl">Statistics</h2>
+            <h2 className="font-display text-2xl">Statistics</h2>
             <div className="mt-3">
               {stats ? (
                 <PlayerStatsPanel
@@ -228,36 +235,6 @@ function GuestProfile({ account }: { account: AccountUser | null }) {
         <aside className="mt-8 xl:mt-0">
           <FriendsPanel bounded />
         </aside>
-      </div>
-    </section>
-  );
-}
-
-// Skeleton in the final geometry (design system section 8): banner, header,
-// two rating cards, the game module. Static under reduced motion via .skeleton.
-function GuestProfileSkeleton() {
-  return (
-    <section className="mx-auto max-w-6xl px-5 py-8 sm:px-6">
-      <div className="plate p-4">
-        <div className="skeleton h-5 w-2/3 rounded-none" style={{ borderRadius: 2 }} />
-      </div>
-      <div className="mt-6 flex items-center gap-4">
-        <div className="skeleton h-[72px] w-[72px] shrink-0 rounded-full" style={{ borderRadius: "50%" }} />
-        <div className="min-w-0">
-          <div className="skeleton h-9 w-48 max-w-full rounded-none" style={{ borderRadius: 2 }} />
-          <div className="skeleton mt-2 h-4 w-40 rounded-none" style={{ borderRadius: 2 }} />
-        </div>
-      </div>
-      <div className="mt-6 grid gap-3 sm:grid-cols-2">
-        {[0, 1].map((i) => (
-          <div key={i} className="plate p-4">
-            <div className="skeleton h-4 w-16 rounded-none" style={{ borderRadius: 2 }} />
-            <div className="skeleton mt-3 h-7 w-20 rounded-none" style={{ borderRadius: 2 }} />
-          </div>
-        ))}
-      </div>
-      <div className="plate mt-4 p-4">
-        <div className="skeleton h-24 w-full rounded-none" style={{ borderRadius: 2 }} />
       </div>
     </section>
   );

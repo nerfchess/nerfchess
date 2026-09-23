@@ -18,7 +18,7 @@ import {
   UserPlus,
   UserX,
 } from "lucide-react";
-import { AccountUser, fetchMe } from "@/lib/authClient";
+import { AccountUser, ensureAccount } from "@/lib/authClient";
 import { achievementIcon } from "@/lib/achievementIcons";
 import { RARITY_THEME } from "@/lib/achievementTheme";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
@@ -51,6 +51,8 @@ import type { DraftMode } from "@/engine/buff";
 import { useModalChrome } from "@/lib/useModalChrome";
 import { Button } from "@/components/ui/Button";
 import { LinkButton } from "@/components/ui/Button";
+import { ProfileSkeleton } from "@/components/profile/ProfileSkeleton";
+import { NOT_FOUND_COPY } from "@/app/_components/notFoundCopy";
 
 type Relationship = "self" | "none" | "friends" | "incoming" | "outgoing";
 
@@ -121,6 +123,9 @@ function ProfileContent() {
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [stats, setStats] = useState<PlayerStats | null>(null);
   const [me, setMe] = useState<AccountUser | null>(null);
+  // The first page of the Activity tab, fetched with the profile. Keyed by the
+  // username it belongs to, so a stale answer never feeds the next profile.
+  const [activity, setActivity] = useState<{ username: string; games: RecentGameRow[] | "failed" } | null>(null);
   const [missing, setMissing] = useState(false);
   // A network / server failure on the primary profile fetch (distinct from a
   // 404, which is `missing`): without this a dropped request left the page
@@ -153,12 +158,38 @@ function ProfileContent() {
     setRel(null);
     setFriendBusy(false);
     setReporting(false);
+    setActivity(null);
   }
 
   // Load the profile payload, stats, the signed-in account, and (house editor
   // only) the persona roster.
   useEffect(() => {
     let cancelled = false;
+    // Who is looking, asked at the same time as the profile rather than after
+    // it (F011). ensureAccount shares the site header's one /me request and
+    // its guest mint, so this adds no request; the header actions then render
+    // with the profile instead of arriving a round trip later and wrapping the
+    // action bar onto a second row on a phone.
+    const viewer = ensureAccount();
+    // The Activity tab's games, also in parallel. The feed below the stat
+    // strip used to fetch only once the profile had rendered, so its skeleton
+    // was swapped for a shorter list and pulled the achievements strip up
+    // 117px after the page had settled (0.031 CLS measured at 1280x800).
+    const activity: Promise<RecentGameRow[] | "failed"> = fetch(
+      `/api/users/${encodeURIComponent(username)}/games?limit=50`,
+    )
+      .then((r) => (r.ok ? (r.json() as Promise<{ games: RecentGameRow[] }>) : Promise.reject()))
+      .then((body) => body.games)
+      .catch(() => "failed" as const);
+    // Statistics, in parallel too. Below lg the rating rail comes before the
+    // plate in the page, so the Statistics block arriving late under the rail
+    // pushed the whole profile plate 90px down on a phone (0.081 CLS).
+    const statsRequest: Promise<PlayerStats | null> = fetch(
+      `/api/users/${encodeURIComponent(username)}/stats`,
+    )
+      .then((r) => (r.ok ? (r.json() as Promise<{ stats: PlayerStats }>) : null))
+      .then((body) => body?.stats ?? null)
+      .catch(() => null);
     (async () => {
       let data: ProfileData;
       try {
@@ -185,19 +216,16 @@ function ProfileContent() {
         return;
       }
       if (cancelled) return;
+
+      const [account, games, playerStats] = await Promise.all([viewer, activity, statsRequest]);
+      if (cancelled) return;
+      // One commit for the profile, the viewer, the statistics and the first
+      // activity page, so the page paints once in its settled shape.
+      setMe(account ?? null);
+      setActivity({ username, games });
+      if (playerStats) setStats(playerStats);
       setProfile(data);
       setRel(data.relationship);
-
-      fetch(`/api/users/${encodeURIComponent(username)}/stats`)
-        .then((r) => (r.ok ? (r.json() as Promise<{ stats: PlayerStats }>) : null))
-        .then((s) => {
-          if (!cancelled && s) setStats(s.stats);
-        })
-        .catch(() => {});
-
-      const account = await fetchMe();
-      if (cancelled) return;
-      setMe(account ?? null);
       // House editor (ilovenewjeans only): learn whether this profile is a bot
       // and, if so, load its persona id + the pickable avatar catalog. The
       // personas endpoint is authorized for this account and 403s for everyone
@@ -222,7 +250,7 @@ function ProfileContent() {
     };
     // reloadTick re-runs the primary fetch when the user taps Retry after a
     // load error. Every other value the body touches (setState updaters,
-    // fetchMe, isHouseEditor) is a stable import or setter, so the two reactive
+    // ensureAccount, isHouseEditor) is a stable import or setter, so the two reactive
     // inputs below are the complete dependency set. router is Next's stable
     // App Router instance (used only for the renamed-account redirect).
   }, [username, reloadTick, router]);
@@ -247,35 +275,57 @@ function ProfileContent() {
     });
   };
 
+  // The two dead ends wear the site's shared panels (F030): the not-found
+  // words and layout of NotFoundPanel (the same copy /u/<name>/not-found.tsx
+  // and the root 404 use) and the RouteError layout with Retry. They are drawn
+  // here rather than by those components because both render their own
+  // <main>, and this page already sits inside one under the site header.
   if (missing) {
+    const copy = NOT_FOUND_COPY.player;
     return (
-      <section className="mx-auto max-w-6xl px-5 py-8 sm:px-6">
-        <h1 className="page-title">Player not found</h1>
-        <p className="mt-3 text-parchment-200">No account with that name.</p>
-        <LinkButton tone="leaf" href="/lobby" className="mt-6 px-4 py-2 text-sm font-semibold">
-          Back to the lobby
-        </LinkButton>
+      <section className="flex justify-center px-5 py-10 sm:px-6">
+        <div className="plate w-full max-w-md p-5 sm:p-6">
+          <div className="font-mono text-[12px] text-parchment-400">404</div>
+          <h1 className="page-title mt-1">{copy.title}</h1>
+          <p className="mt-2 text-[13px] leading-relaxed text-parchment-300">{copy.detail}</p>
+          <div className="mt-5 flex flex-col gap-2 sm:flex-row">
+            <LinkButton tone="primary" href={copy.action.href}>
+              {copy.action.label}
+            </LinkButton>
+            {copy.secondary && (
+              <LinkButton tone="default" href={copy.secondary.href}>
+                {copy.secondary.label}
+              </LinkButton>
+            )}
+          </div>
+        </div>
       </section>
     );
   }
 
   if (loadError && !profile) {
     return (
-      <section className="mx-auto max-w-6xl px-5 py-8 sm:px-6">
-        <div className="plate flex flex-col items-center gap-3 p-8 text-center">
-          <h1 className="font-display text-2xl">Could not load this profile</h1>
-          <p className="text-sm text-parchment-300">
-            Something went wrong reaching the server. Check your connection and try again.
+      <section className="flex justify-center px-5 py-10 sm:px-6">
+        <div className="plate w-full max-w-md p-5 sm:p-6" role="alert">
+          <div className="text-[12px] text-parchment-400">Something went wrong</div>
+          <h1 className="page-title mt-1">Could not load this profile</h1>
+          <p className="mt-2 text-[13px] leading-relaxed text-parchment-300">
+            The server did not answer. Check your connection and try again.
           </p>
-          <Button tone="ghost"
-           
-            onClick={() => {
-              setLoadError(false);
-              setReloadTick((t) => t + 1);
-            }}
-            className="px-5 text-sm font-semibold">
-            Retry
-          </Button>
+          <div className="mt-5 flex flex-col gap-2 sm:flex-row">
+            <Button
+              tone="primary"
+              onClick={() => {
+                setLoadError(false);
+                setReloadTick((t) => t + 1);
+              }}
+            >
+              Retry
+            </Button>
+            <LinkButton tone="default" href="/lobby">
+              Back to lobby
+            </LinkButton>
+          </div>
         </div>
       </section>
     );
@@ -285,7 +335,7 @@ function ProfileContent() {
 
   const user = profile.user;
   // Authoritative current rating: the ACTIVE (most-played) live mode bucket,
-  // ties broken by the higher number — the same rule as bestLiveRatingSql and
+  // ties broken by the higher number, the same rule as bestLiveRatingSql and
   // the profile API's top-level `rating` (itself derived the same way, with
   // the frozen legacy column only as a last resort for bucket-less accounts).
   let bestLiveRow: CategoryRatingRow | null = null;
@@ -389,16 +439,19 @@ function ProfileContent() {
   const gamesLabel = `${totalGames.toLocaleString()} ${totalGames === 1 ? "Game" : "Games"}`;
 
   return (
-    <section className="mx-auto w-full max-w-[1300px] px-3 pt-4 sm:px-5 lg:grid lg:grid-cols-[230px_minmax(0,1fr)] lg:gap-4">
+    <section
+      data-profile-shell
+      className="mx-auto w-full max-w-[1300px] px-3 pt-4 sm:px-5 lg:grid lg:grid-cols-[230px_minmax(0,1fr)] lg:gap-4"
+    >
       {/* Left rail: one row per rated mode, Lichess's perf list. */}
-      <aside className="order-2 mt-4 lg:order-1 lg:mt-0">
+      <aside data-part="rail" className="order-2 mt-4 lg:order-1 lg:mt-0">
         <RatingRail ratings={profile.ratings} history={ratingHistory} placements={placements} />
         {/* Statistics live in the rail, under the ratings, where Lichess keeps
             a player's numbers; the main column stays for the chart, the
             activity and the games. */}
         {stats && (
           <div className="mt-4 border-t border-[color:var(--edge)] px-3 pt-4 lg:border-t-0 lg:pt-2">
-            <h2 className="text-[12px] uppercase tracking-[0.06em] text-parchment-400">Statistics</h2>
+            <h2 className="text-[12px] text-parchment-400">Statistics</h2>
             <div className="mt-2">
               <PlayerStatsPanel stats={stats} peakRating={peakRating} compact />
             </div>
@@ -407,7 +460,7 @@ function ProfileContent() {
       </aside>
 
       <div className="order-1 min-w-0 lg:order-2">
-        <div className="plate">
+        <div data-part="plate" className="plate">
       <ProfileHeader
             user={user}
             liveGameId={liveGameId}
@@ -490,13 +543,33 @@ function ProfileContent() {
             role="tablist"
             aria-label="Profile sections"
             className="grid grid-cols-2 border-t border-[color:var(--edge)]"
+            onKeyDown={(e) => {
+              // The tabs pattern (F145): arrows, Home and End move between
+              // the two tabs and select them; only the selected tab is a Tab
+              // stop.
+              const keys: Record<string, "activity" | "games"> = {
+                ArrowLeft: tab === "games" ? "activity" : "games",
+                ArrowRight: tab === "games" ? "activity" : "games",
+                Home: "activity",
+                End: "games",
+              };
+              const next = keys[e.key];
+              if (!next) return;
+              e.preventDefault();
+              setTab(next);
+              document.getElementById(`tab-${next}`)?.focus();
+            }}
           >
             <TabButton id="activity" label="Activity" active={tab === "activity"} onSelect={() => setTab("activity")} />
             <TabButton id="games" label={gamesLabel} active={tab === "games"} onSelect={() => setTab("games")} />
           </div>
 
           <div role="tabpanel" id="panel-activity" aria-labelledby="tab-activity" hidden={tab !== "activity"}>
-            <ActivityFeed username={user.username} active={tab === "activity"} />
+            <ActivityFeed
+              username={user.username}
+              active={tab === "activity"}
+              initial={activity?.username === username ? activity.games : undefined}
+            />
             <div className="border-t border-[color:var(--edge)] px-4 py-4 sm:px-5">
               <AchievementsStrip username={user.username} />
             </div>
@@ -579,9 +652,10 @@ function ProfileContent() {
 // One number over one word, the stats strip under the profile header.
 function StatCell({ value, label }: { value: number; label: string }) {
   return (
-    <div>
-      <dd className="text-[15px] font-semibold tabular-nums text-parchment-50">{value.toLocaleString()}</dd>
+    // dt then dd in the source (F147), shown value over label.
+    <div className="flex flex-col-reverse">
       <dt className="text-[12px] text-parchment-400">{label}</dt>
+      <dd className="text-[15px] font-semibold tabular-nums text-parchment-50">{value.toLocaleString()}</dd>
     </div>
   );
 }
@@ -631,26 +705,32 @@ function ProfileHeader({
         <div className="shrink-0 self-start">{avatar}</div>
       )}
       <div className="min-w-0 flex-1">
-        <h1 className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1 font-display text-[26px] font-normal leading-tight text-parchment-50">
-          {showPresence && (
-            <span
-              aria-label={online ? "Online" : "Offline"}
-              title={online ? "Online" : "Offline"}
-              className={"inline-block h-3 w-3 shrink-0 rounded-full " + (online ? "bg-[rgb(var(--pos-rgb))]" : "bg-parchment-500")}
-            />
-          )}
-          <span className="min-w-0 break-words">{user.username}</span>
-          {user.flair && (
-            <span className="text-[22px]" aria-hidden="true">
-              {user.flair}
-            </span>
-          )}
+        {/* The heading holds the name alone (F146): the presence dot is
+            decorative with its word beside it for screen readers, and the
+            live-game link sits after the heading on the same row. */}
+        <div className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1 font-display text-[26px] font-normal leading-tight text-parchment-50">
+          <h1 className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1 text-[26px] font-normal leading-tight">
+            {showPresence && (
+              <span
+                aria-hidden
+                title={online ? "Online" : "Offline"}
+                className={"inline-block h-3 w-3 shrink-0 rounded-full " + (online ? "bg-[rgb(var(--pos-rgb))]" : "bg-parchment-500")}
+              />
+            )}
+            <span className="min-w-0 break-words">{user.username}</span>
+            {user.flair && (
+              <span className="text-[22px]" aria-hidden="true">
+                {user.flair}
+              </span>
+            )}
+          </h1>
+          {showPresence && <span className="sr-only">{online ? "Online" : "Offline"}</span>}
           {liveGameId && (
             <Link href={`/game/${encodeURIComponent(liveGameId)}`} className="text-[13px] text-gold-leaf no-underline hover:underline">
               playing now
             </Link>
           )}
-        </h1>
+        </div>
         {user.bio && <BioText bio={user.bio} />}
         {!user.bio && isOwner && (
           <Link href="/profile/edit" className="mt-1 inline-block text-[13px] text-[color:var(--accent)] no-underline hover:underline">
@@ -911,6 +991,8 @@ function OverflowMenu({
     };
     document.addEventListener("mousedown", onDown);
     document.addEventListener("keydown", onKey);
+    // Focus moves into the menu when it opens, to the first item.
+    wrapRef.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
     return () => {
       document.removeEventListener("mousedown", onDown);
       document.removeEventListener("keydown", onKey);
@@ -934,7 +1016,25 @@ function OverflowMenu({
         <div
           role="menu"
           aria-label={`Actions for ${username}`}
-          className="absolute right-0 top-full z-40 mt-1.5 w-48 plate dropdown p-1 shadow-2xl"
+          className="absolute right-0 top-full z-40 mt-1.5 w-48 plate dropdown p-1"
+          onKeyDown={(e) => {
+            // The menu pattern (F145): arrows, Home and End move between the
+            // items, Tab leaves and closes.
+            const items = Array.from(
+              e.currentTarget.querySelectorAll<HTMLElement>('[role="menuitem"]:not([disabled])'),
+            );
+            const at = items.indexOf(document.activeElement as HTMLElement);
+            let next = -1;
+            if (e.key === "ArrowDown") next = (at + 1) % items.length;
+            else if (e.key === "ArrowUp") next = (at - 1 + items.length) % items.length;
+            else if (e.key === "Home") next = 0;
+            else if (e.key === "End") next = items.length - 1;
+            else if (e.key === "Tab") setOpen(false);
+            if (next >= 0) {
+              e.preventDefault();
+              items[next]?.focus();
+            }
+          }}
         >
           <button
             type="button"
@@ -1006,6 +1106,7 @@ function TabButton({
       id={`tab-${id}`}
       aria-selected={active}
       aria-controls={`panel-${id}`}
+      tabIndex={active ? 0 : -1}
       onClick={onSelect}
       className={
         "min-h-[44px] px-4 text-[14px] transition-colors " +
@@ -1537,60 +1638,6 @@ function AchievementsStrip({ username }: { username: string }) {
   );
 }
 
-function ProfileSkeleton() {
-  return (
-    <section className="mx-auto max-w-6xl px-5 py-8 sm:px-6">
-      {/* The route has THREE loading states and this is the one that was
-          headingless: the client component's own, shown while it fetches, and
-          reached on any client-side navigation where `loading.tsx` never
-          renders at all. Without a heading here the page had none for the
-          whole fetch, which on a slow connection is most of the time anyone
-          spends on it.
-
-          The heading lives here rather than in `loading.tsx` because this
-          component covers every path, including the one that file misses.
-          `loading.tsx` deliberately has none, or the two would stack.
-
-          Known and accepted: this component is mounted TWICE for a frame or
-          two on arrival, once as the Suspense fallback in ProfilePage and once
-          as ProfileContent's own `!profile` return, so two identical sr-only
-          headings are briefly live. Removing one leaves a phase with none,
-          which is the worse failure: a duplicate heading for 100ms is not
-          something a reader will notice, and a missing one for the length of a
-          fetch is. Worth knowing if the route sweep's one-h1 assertion ever
-          flakes here; it should read settled state. */}
-      <h1 className="sr-only">Player profile</h1>
-      <div className="flex items-center gap-4">
-        <div className="skeleton h-[72px] w-[72px] shrink-0 rounded-full" style={{ borderRadius: "50%" }} />
-        <div className="min-w-0">
-          <div className="skeleton h-9 w-48 max-w-full rounded-none" style={{ borderRadius: 2 }} />
-          <div className="skeleton mt-2 h-4 w-40 rounded-none" style={{ borderRadius: 2 }} />
-        </div>
-      </div>
-      <div className="mt-6 grid gap-3 sm:grid-cols-2">
-        {[0, 1].map((i) => (
-          <div key={i} className="plate p-4">
-            <div className="skeleton h-4 w-16 rounded-none" style={{ borderRadius: 2 }} />
-            <div className="skeleton mt-3 h-7 w-20 rounded-none" style={{ borderRadius: 2 }} />
-            <div className="skeleton mt-3 h-3 w-32 rounded-none" style={{ borderRadius: 2 }} />
-          </div>
-        ))}
-      </div>
-      <div className="plate mt-4 p-4">
-        <div className="skeleton h-24 w-full rounded-none" style={{ borderRadius: 2 }} />
-      </div>
-      <div className="plate mt-8 p-5">
-        <div className="skeleton h-5 w-28 rounded-none" style={{ borderRadius: 2 }} />
-        <div className="mt-4 space-y-2.5">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="skeleton h-9 rounded-none" style={{ borderRadius: 2 }} />
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
 // ---- House-bot editor (unchanged behavior) ----------------------------------
 
 // Read-only bio helper reused by the house editor's editable variant. For a
@@ -1766,7 +1813,7 @@ function EditorFold({
 // identically across the profile cards, the header chip, the leaderboard, the
 // lobby, and player search. The server re-verifies the ilovenewjeans gate; this
 // control is a UX affordance only. (For house bots the same control is folded
-// into the House bot menu — see HouseBotEditor.)
+// into the House bot menu, see HouseBotEditor.)
 function RatingEditor({
   username,
   current,
@@ -1795,7 +1842,7 @@ function RatingEditor({
 
   const save = async () => {
     // Re-entrancy guard: the Save button is disabled while saving, but Enter in
-    // the input is not — without this a double-press fires duplicate POSTs.
+    // the input is not, without this a double-press fires duplicate POSTs.
     if (saving) return;
     const trimmed = value.trim();
     if (trimmed === "") return;
@@ -2208,7 +2255,7 @@ const REPORT_REASONS = [
 
 function ReportModal({ username, onClose }: { username: string; onClose: () => void }) {
   // Body scroll lock, Escape, and the ghost-click guard on the backdrop.
-  const chrome = useModalChrome(true, onClose);
+  const { attachDialog, onBackdropPointerDown } = useModalChrome(true, onClose);
   const [reason, setReason] = useState<string>("cheating");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
@@ -2240,15 +2287,22 @@ function ReportModal({ username, onClose }: { username: string; onClose: () => v
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto overscroll-contain bg-black/60 px-4 py-6"
-      onPointerDown={chrome.onBackdropPointerDown}
+      onPointerDown={onBackdropPointerDown}
     >
+      {/* The panel is the dialog (F138): named by its heading, and
+          attachDialog moves focus in, keeps Tab inside and hands focus back
+          to the menu trigger on close. */}
       <div
+        ref={attachDialog}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="report-dialog-title"
         className="plate w-full max-w-md max-h-[90dvh] overflow-y-auto p-5"
         onClick={(e) => e.stopPropagation()}
       >
         {status === "sent" ? (
           <>
-            <h2 className="font-display text-2xl">Report sent</h2>
+            <h2 id="report-dialog-title" className="font-display text-2xl">Report sent</h2>
             <p className="mt-2 text-sm text-parchment-200">Thanks, a moderator will take a look.</p>
             <Button tone="ghost"
              
@@ -2259,10 +2313,10 @@ function ReportModal({ username, onClose }: { username: string; onClose: () => v
           </>
         ) : (
           <>
-            <h2 className="font-display text-2xl">
+            <h2 id="report-dialog-title" className="font-display text-2xl">
               Report <span className="text-gold-leaf">{username}</span>
             </h2>
-            <div className="mt-4 space-y-2">
+            <div role="radiogroup" aria-label="Reason" className="mt-4 space-y-2">
               {REPORT_REASONS.map(([value, label]) => (
                 <label
                   key={value}
@@ -2283,9 +2337,12 @@ function ReportModal({ username, onClose }: { username: string; onClose: () => v
               onChange={(e) => setDescription(e.target.value.slice(0, 1000))}
               rows={4}
               placeholder="What happened? Include game links or examples."
-              className="mt-4 w-full plate resize-none bg-transparent p-3 text-sm text-parchment-100 outline-none focus:border-[color:var(--edge-strong)]"
+              aria-label="What happened"
+              className="mt-4 w-full plate resize-none bg-transparent p-3 text-sm text-parchment-100 focus:border-[color:var(--edge-strong)]"
             />
-            {status === "error" && <p className="mt-2 text-sm text-oxblood-glow">{error}</p>}
+            <p role="alert" className="mt-2 text-sm text-oxblood-glow empty:hidden">
+              {status === "error" ? error : ""}
+            </p>
             <div className="mt-4 flex items-center gap-2">
               <Button tone="ghost"
                

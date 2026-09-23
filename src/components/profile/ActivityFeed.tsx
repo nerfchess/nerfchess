@@ -72,12 +72,24 @@ function groupByDay(games: RecentGameRow[], viewer: string): DayGroup[] {
   return [...groups.values()];
 }
 
-export function ActivityFeed({ username, active }: { username: string; active: boolean }) {
-  const [games, setGames] = useState<RecentGameRow[] | null>(null);
-  const [failed, setFailed] = useState(false);
+export function ActivityFeed({
+  username,
+  active,
+  initial,
+}: {
+  username: string;
+  active: boolean;
+  /** The first page when the page already fetched it alongside the profile
+   *  (so the feed paints with the profile instead of after it). */
+  initial?: RecentGameRow[] | "failed";
+}) {
+  const [fetched, setGames] = useState<RecentGameRow[] | null>(null);
+  const [fetchFailed, setFailed] = useState(false);
+  const games = fetched ?? (Array.isArray(initial) ? initial : null);
+  const failed = fetchFailed || (fetched === null && initial === "failed");
 
   useEffect(() => {
-    if (!active) return;
+    if (!active || initial !== undefined) return;
     let cancelled = false;
     fetch(`/api/users/${encodeURIComponent(username)}/games?limit=50`)
       .then((r) => (r.ok ? (r.json() as Promise<{ games: RecentGameRow[] }>) : Promise.reject()))
@@ -90,7 +102,7 @@ export function ActivityFeed({ username, active }: { username: string; active: b
     return () => {
       cancelled = true;
     };
-  }, [username, active]);
+  }, [username, active, initial]);
 
   if (failed) return <p className="px-4 py-6 text-[13px] text-parchment-400">Could not load recent activity.</p>;
   if (games === null) {
@@ -110,7 +122,7 @@ export function ActivityFeed({ username, active }: { username: string; active: b
     <div className="px-2 py-3 sm:px-4">
       {days.map((day) => (
         <section key={day.key} className="py-2">
-          <h3 className="text-[15px] font-semibold uppercase tracking-[0.02em] text-brag">{day.label}</h3>
+          <h3 className="text-[15px] font-semibold text-brag">{day.label}</h3>
           <ul className="mt-1 border-l border-[color:var(--edge)]">
             {day.rows.map((r) => {
               const modeWord = r.mode === "nerf" ? "Nerf" : r.mode === "buff" ? "Buff" : "casual";

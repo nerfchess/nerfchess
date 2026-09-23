@@ -9,8 +9,19 @@ import { profileImage } from "@/lib/og/routes";
 // in src/lib/og/render.ts, never frozen at build.
 export const dynamic = "force-dynamic";
 
+// A name that is not valid percent-encoding (/u/%25zz reaches here as "%zz")
+// must not throw: decodeURIComponent raised a URIError that errored the
+// page's metadata (F035). Fall back to the raw segment.
+function safeName(raw: string): string {
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return raw;
+  }
+}
+
 export async function generateImageMetadata({ params }: { params: { username: string } }) {
-  return [{ id: "card", size: OG_SIZE, contentType: OG_CONTENT_TYPE, alt: `${decodeURIComponent(String(params.username))} on Nerf Chess: ratings in each mode, games played and favourite cards` }];
+  return [{ id: "card", size: OG_SIZE, contentType: OG_CONTENT_TYPE, alt: `${safeName(String(params.username))} on Nerf Chess: ratings in each mode, games played and favourite cards` }];
 }
 
 export default async function OgImage(props: { params: Promise<{ username: string }> }) {
