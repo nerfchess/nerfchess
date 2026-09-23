@@ -20,6 +20,13 @@ export function useBoardSplash(rows: AgainstRow[]): {
   dismiss: () => void;
 } {
   const seen = useRef<Set<string> | null>(null);
+  // Monotonic splash ids. Keys used to be `${title}:${queue length}`, which
+  // repeat as soon as the queue drains and refills: the same title arriving
+  // while an equal key was still current produced two identical keys in a
+  // row, BoardSplash's timer (keyed on event.key) never re-armed, and that
+  // splash sat on the board for the rest of the game with every later one
+  // queued behind it (F207).
+  const nextId = useRef(0);
   const [queue, setQueue] = useState<SplashEvent[]>([]);
   useEffect(() => {
     if (seen.current === null) {
@@ -57,9 +64,8 @@ export function useBoardSplash(rows: AgainstRow[]): {
           : `${g.length} of your pieces are affected.`,
       };
     });
-    setQueue((q) =>
-      [...q, ...events.map((e, i) => ({ key: `${e.title}:${q.length + i}`, ...e }))].slice(0, 5),
-    );
+    const stamped = events.map((e) => ({ key: `${e.title}:${nextId.current++}`, ...e }));
+    setQueue((q) => [...q, ...stamped].slice(0, 5));
   }, [rows]);
   return {
     current: queue[0] ?? null,
@@ -88,8 +94,9 @@ export function BoardSplash({ event, onDone }: { event: SplashEvent; onDone: () 
   return (
     <div
       key={event.key}
-      role="status"
-      aria-live="assertive"
+      // role="alert" is the assertive live region; role="status" is polite
+      // and contradicted the old aria-live="assertive" on the same node.
+      role="alert"
       className="board-splash pointer-events-none absolute inset-0 z-40 grid place-items-center"
     >
       <div className="board-splash-card px-4 text-center">

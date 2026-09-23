@@ -1,0 +1,10 @@
+F207 BoardSplash key collision, e2e/polish/board-splash.spec.ts against /dev/splash
+
+Before (HEAD c72ac58 BoardSplash.tsx):
+  full motion > a repeated constraint never stalls the splash queue: FAILED
+    expect(.board-splash).toHaveCount(0) within 8s, received 1 (queue stalled on a duplicate key)
+  animations off > the splash is shown still, then goes: FAILED at the live region
+    (role="status" with aria-live="assertive"; no role="alert" node)
+After (monotonic ids, role="alert"):
+  2 passed (three consecutive runs: 52.6s cold compile, 21.1s, 14.2s)
+Motion-off parking was already handled by globals.css:2036; the spec now pins it (both layers opacity 1 after 400ms, gone within 4s).
