@@ -1165,31 +1165,6 @@ function WitchCircle({ palette, glyph, lead, role, anchored, delayMs, flourish, 
           />
         </>
       )}
-      {/* bespoke: Sticky Floor — golden glue strands stretch up from the
-          boards and the straining piece can only rattle in place */}
-      {flourish === "sticky" && (
-        <>
-          <span className="grp-shiver absolute block" style={{ left: "46%", top: "33%", width: "6%", height: "9%", animationDelay: `${delayMs + 560}ms` }}>
-            <Man kind="n" fill={tint(p2, 0.95)} stroke={p1} />
-          </span>
-          {[44, 49, 54].map((l, i) => (
-            <span
-              key={l}
-              className="grp-ray absolute block"
-              style={{
-                left: `${l}%`,
-                top: "40%",
-                width: "1%",
-                height: "7%",
-                background: `linear-gradient(0deg, ${tint(p1, 0.9)}, transparent)`,
-                transformOrigin: "50% 100%",
-                animationDelay: `${delayMs + 700 + i * 90}ms`,
-              }}
-            />
-          ))}
-          <Drifts delayMs={delayMs + 900} sizePct={2} render={() => <Mote color={tint(p1, 0.8)} />} />
-        </>
-      )}
       {/* bespoke: Mind Control — the control bar descends, strings hook the
           knight, and it is yanked upright into its new master's colour */}
       {flourish === "puppet" && (
@@ -2788,29 +2763,6 @@ function CardRite({ palette, glyph, lead, role, anchored, delayMs, flourish, tie
           ))}
         </>
       )}
-      {/* bespoke: Greed — a SECOND card slides out from behind the first, and
-          the taker's hand sweeps up to claim the pair whole */}
-      {flourish === "bothcards" && (
-        <>
-          <span
-            className="grp-cross absolute block"
-            style={{ left: "41%", top: "27%", width: "20%", height: "42%", "--dx": "42%", animationDelay: `${delayMs + 760}ms` } as CSSProperties}
-          >
-            <svg viewBox="0 0 20 42" className="block h-full w-full" aria-hidden="true">
-              <rect x="1" y="1" width="18" height="40" rx="2.2" fill={tint(p0, 0.9)} stroke={tint(p1, 0.9)} strokeWidth="1" />
-              <path d="M5 6 L6 8.4 L5 10.8 L4 8.4 Z" fill={tint(p1, 0.9)} />
-            </svg>
-          </span>
-          <span
-            className="grp-tug absolute block"
-            style={{ left: "46%", top: "62%", width: "9%", height: "7%", "--dx": "0%", "--dy": "-90%", animationDelay: `${delayMs + 1060}ms` } as CSSProperties}
-          >
-            <svg viewBox="0 0 10 7" className="block h-full w-full" aria-hidden="true">
-              <path d="M1 6.4 C1 4 2 2.6 3.2 2.6 L3.6 1 L4.6 2.4 L5.6 0.8 L6.6 2.4 L7.6 1.2 L8 2.8 C8.8 3.4 9 4.6 9 6.4 Z" fill="#e8c97a" stroke="#8a6a3a" strokeWidth="0.5" {...SJ} />
-            </svg>
-          </span>
-        </>
-      )}
       {/* bespoke: Riddle Game — the burning question hangs on the face, then
           the whole wager flips face-down before it answers */}
       {flourish === "riddle" && (
@@ -3097,38 +3049,6 @@ function ThiefHand({ palette, glyph, lead, role, anchored, delayMs, flourish, ti
           </svg>
         )}
       />
-      {/* bespoke: Buff Siphon — not one prize but TWO, drawn off in single
-          file down the same dark throat */}
-      {flourish === "siphon" && (
-        <>
-          {[
-            { l: 36, t: 33, d: 0 },
-            { l: 33, t: 44, d: 200 },
-          ].map((v, i) => (
-            <span
-              key={i}
-              className="grp-cross absolute block"
-              style={{ left: `${v.l}%`, top: `${v.t}%`, width: "6%", height: "8%", "--dx": "420%", animationDelay: `${delayMs + 640 + v.d}ms` } as CSSProperties}
-            >
-              <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
-                <circle cx="5" cy="5" r="3.8" fill={tint(p1, 0.45)} stroke={tint(p1, 0.95)} strokeWidth="0.8" />
-              </svg>
-            </span>
-          ))}
-          <span
-            className="grp-beam absolute block"
-            style={{
-              left: "38%",
-              top: "41%",
-              width: "30%",
-              height: "2.4%",
-              background: `linear-gradient(90deg, transparent, ${tint(p1, 0.6)})`,
-              transformOrigin: "100% 50%",
-              animationDelay: `${delayMs + 700}ms`,
-            }}
-          />
-        </>
-      )}
       {/* bespoke: Spelltheft — a trade, technically: the prize goes right and
           a dull lowly bauble is lobbed back the other way */}
       {flourish === "trade" && (
@@ -3397,31 +3317,6 @@ function CrownForge({ palette, glyph, lead, role, anchored, delayMs, flourish, t
               <Man kind="n" fill={tint(p1, 0.95)} stroke={p2} />
             </span>
           ))}
-        </>
-      )}
-      {/* bespoke: Resurrect Queen — she climbs whole out of the forge fire,
-          embers streaming, and the ward ring seals around her */}
-      {flourish === "requeen" && (
-        <>
-          <span className="grp-riseslow absolute block" style={{ left: "45%", top: "30%", width: "9%", height: "13%", animationDelay: `${delayMs + 700}ms` }}>
-            <Man kind="q" fill={tint(p1, 0.95)} stroke={p2} />
-          </span>
-          {[
-            { l: 44, t: 40, d: 0 },
-            { l: 54, t: 38, d: 150 },
-          ].map((v, i) => (
-            <span
-              key={i}
-              className="grp-settle absolute block"
-              style={{ left: `${v.l}%`, top: `${v.t}%`, width: "1.8%", height: "1.8%", "--dx": `${i % 2 ? -50 : 60}%`, "--dy": "-190%", "--rot": "140deg", animationDelay: `${delayMs + 880 + v.d}ms` } as CSSProperties}
-            >
-              <Mote color="#ff9d3d" />
-            </span>
-          ))}
-          <span
-            className="grp-hold absolute block rounded-full"
-            style={{ left: "41%", top: "24%", width: "17%", height: "17%", border: `2px solid ${tint(p1, 0.7)}`, animationDelay: `${delayMs + 1180}ms` }}
-          />
         </>
       )}
       {/* bespoke: Legendary Forge — the broken knight is laid on the face and
@@ -5546,6 +5441,427 @@ function IronBulwarkScene({ palette, glyph, lead, role, anchored, delayMs, tier 
   );
 }
 
+/* --- stone_prelates --------------------------------------------------------
+   "For your opponent's next 6 turns, any of their bishops standing in their
+   own half may only shuffle one square at a time. Bishops that cross into
+   your half move freely." Pews are set across the opponent's half, two
+   bishops there turn to stone and each one's long diagonal is drawn and then
+   cut back to a single step; a third bishop walks out through the transept
+   door on the halfway line and its diagonal runs full length again. Six
+   pips on the line are the six turns. */
+function Pew({ wood, edge }: { wood: string; edge: string }) {
+  return (
+    <svg viewBox="0 0 40 6" preserveAspectRatio="none" className="block h-full w-full" aria-hidden="true">
+      <rect x="0.5" y="0.5" width="39" height="2.2" fill={wood} stroke={edge} strokeWidth="0.4" />
+      <rect x="0.5" y="3.2" width="39" height="1.2" fill={wood} stroke={edge} strokeWidth="0.3" />
+      {[2, 13, 27, 38].map((x) => (
+        <rect key={x} x={x - 0.6} y="4.4" width="1.2" height="1.6" fill={edge} />
+      ))}
+    </svg>
+  );
+}
+/** The two stone bishops: column (0..7) and ranks in from the enemy edge. */
+const PRELATES = [
+  { col: 2, rank: 1, ang: 45 },
+  { col: 5, rank: 2, ang: 135 },
+];
+function StonePrelatesScene({ palette, glyph, lead, role, anchored, delayMs, tier }: TemplateProps) {
+  const [p0, p1, p2] = palette;
+  if (role === "entrance") return <EntranceCut palette={palette} glyph={glyph} delayMs={delayMs} motif={<Man kind="b" fill={p0} stroke={p2} />} />;
+  if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
+  /** Top of the rank `r` squares in from the opponent's edge. */
+  const rankTop = (r: number) => `calc(43.75% - var(--fx-side, 1) * ${43.75 - r * 12.5}%)`;
+  return (
+    <Stage anchored={anchored} quakeMs={delayMs + 420}>
+      <Frame anchored={anchored}>
+        {/* tell: the opponent's half, the only place the curse holds */}
+        <span className="grp-c-in absolute block" style={{ left: "0%", top: "calc(25% - var(--fx-side, 1) * 25%)", width: "100%", height: "50%", background: tint(p2, 0.22), "--gd": "1.8s", "--s0": "1", animationDelay: dm(delayMs, 0) } as CSSProperties} />
+        <span className="grp-tellglow absolute block rounded-full" style={{ left: "35%", top: "calc(50% - var(--fx-side, 1) * 25% - 12%)", width: "30%", height: "24%", background: tint(p1, 0.3), animationDelay: dm(delayMs, 100) }} />
+        {/* the pews are set, row by row */}
+        {[0.6, 1.6, 2.6].map((r, i) => (
+          <span key={r} className="grp-c-in absolute block" style={{ left: "6%", top: rankTop(r + 0.35), width: "88%", height: "3.6%", "--ty0": "calc(var(--fx-side, 1) * -60%)", "--s0": "1", "--gd": "1.6s", animationDelay: dm(delayMs, 220 + i * 70) } as CSSProperties}>
+            <Pew wood={tint(p0, 0.85)} edge={p2} />
+          </span>
+        ))}
+        {PRELATES.map((b, i) => (
+          <span key={b.col} className="absolute block" style={{ left: `${b.col * 12.5}%`, top: rankTop(b.rank), width: "12.5%", height: "12.5%" }}>
+            {/* the bishop turns to stone */}
+            <span className="grp-c-stamp absolute block" style={{ left: "8%", top: "4%", width: "84%", height: "88%", "--gd": "1.4s", "--r0": "0deg", animationDelay: dm(delayMs, 420 + i * 60) } as CSSProperties}>
+              <Man kind="b" fill={p0} stroke={p2} />
+            </span>
+            {/* its long diagonal is drawn, then cut back to one step */}
+            <span className="absolute block" style={{ left: "50%", top: "50%", width: "560%", height: "8%", marginTop: "-4%", rotate: `calc(var(--fx-side, 1) * ${b.ang}deg)`, transformOrigin: "0% 50%" }}>
+              <span className="grp-c-clip absolute inset-0 block" style={{ background: `linear-gradient(90deg, ${p1}, ${tint(p1, 0.4)})`, "--gk": "0.26", "--gd": "1.5s", animationDelay: dm(delayMs, 560 + i * 80) } as CSSProperties} />
+            </span>
+          </span>
+        ))}
+        {/* the transept door on the halfway line, and the one who walks out */}
+        <span className="grp-c-up absolute block" style={{ left: "43.75%", top: "calc(50% - 7%)", width: "12.5%", height: "14%", "--gd": "1.4s", animationDelay: dm(delayMs, 700) } as CSSProperties}>
+          <svg viewBox="0 0 10 11" className="block h-full w-full" aria-hidden="true">
+            <path d="M1 11 V4.4 A4 4 0 0 1 9 4.4 V11" fill="none" stroke={p1} strokeWidth="1" />
+            <path d="M3 11 V5 A2 2 0 0 1 7 5 V11" fill="none" stroke={tint(p1, 0.5)} strokeWidth="0.6" />
+          </svg>
+        </span>
+        <span className="grp-c-go absolute block" style={{ left: "44.5%", top: "calc(50% - 5.5%)", width: "11%", height: "11%", "--ty0": "calc(var(--fx-side, 1) * -120%)", "--ty1": "calc(var(--fx-side, 1) * 150%)", "--gd": "1s", animationDelay: dm(delayMs, 820) } as CSSProperties}>
+          <Man kind="b" fill={p1} stroke={p2} />
+        </span>
+        <span className="absolute block" style={{ left: "50%", top: "calc(50% + var(--fx-side, 1) * 12%)", width: "50%", height: "1%", rotate: "calc(var(--fx-side, 1) * 45deg)", transformOrigin: "0% 50%" }}>
+          <span className="grp-c-draw absolute inset-0 block" style={{ background: `linear-gradient(90deg, ${p1}, transparent)`, "--gd": "0.9s", animationDelay: dm(delayMs, 1040) } as CSSProperties} />
+        </span>
+        {/* six turns */}
+        {[0, 1, 2, 3, 4, 5].map((i) => (
+          <span key={i} className="grp-c-pip absolute block rounded-full" style={{ left: `${6 + i * 3.4}%`, top: "calc(50% - 1.2%)", width: "2.4%", height: "2.4%", background: p0, border: `1px solid ${p2}`, "--gd": "1s", animationDelay: dm(delayMs, 900 + i * 60) } as CSSProperties} />
+        ))}
+        {/* settle: stone dust sifts off the pews */}
+        <Flecks delayMs={delayMs + 1160} at={{ left: "10%", top: "calc(25% - var(--fx-side, 1) * 25%)", width: "80%", height: "40%" }} color={tint(p0, 0.7)} n={5} />
+      </Frame>
+      <GrandAccent tier={tier} color={tint(p1, 0.7)} delayMs={delayMs + 480} anchored={anchored} />
+    </Stage>
+  );
+}
+
+/* --- total_whiteout --------------------------------------------------------
+   "For their next 3 turns, your opponent's pieces can only capture at arm's
+   length, exactly one square away." A blizzard front crosses the board;
+   three of the opponent's long sightlines (a file, and both diagonals) are
+   drawn out toward the caster and the snow buries each one past its first
+   square, a drift piling up where it is cut and a bracket marking the one
+   square that is left. Three snowflakes are the three turns. */
+function Snowflake({ ice }: { ice: string }) {
+  return (
+    <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+      <path d="M5 0.6 V9.4 M1.2 2.8 L8.8 7.2 M1.2 7.2 L8.8 2.8 M5 2 L4 1 M5 2 L6 1 M5 8 L4 9 M5 8 L6 9" stroke={ice} strokeWidth="0.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+const SIGHTLINES = [
+  { col: 1, ang: 90 },
+  { col: 4, ang: 45 },
+  { col: 6, ang: 135 },
+];
+function TotalWhiteoutScene({ palette, glyph, lead, role, anchored, delayMs, tier }: TemplateProps) {
+  const [p0, p1, p2] = palette;
+  if (role === "entrance") return <EntranceCut palette={palette} glyph={glyph} delayMs={delayMs} from="above" motif={<Snowflake ice={p2} />} />;
+  if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
+  // sightlines start on the opponent's 2nd rank and point at the caster
+  const startTop = "calc(50% - var(--fx-side, 1) * 31.25%)";
+  return (
+    <Stage anchored={anchored} quakeMs={delayMs + 640}>
+      <Frame anchored={anchored}>
+        {/* tell: the blizzard front crosses the board */}
+        <span className="grp-tellglow absolute block rounded-full" style={{ left: "30%", top: `calc(${startTop} - 12%)`, width: "40%", height: "24%", background: tint(p1, 0.35), animationDelay: dm(delayMs, 100) }} />
+        {[14, 30, 46, 62, 78].map((y, i) => (
+          <span key={y} className="grp-c-go absolute block" style={{ left: "0%", top: `${y}%`, width: "40%", height: "1.4%", background: `linear-gradient(90deg, transparent, ${tint(p1, 0.85)})`, "--tx0": "-100%", "--tx1": "260%", "--gd": "0.9s", animationDelay: dm(delayMs, 40 + i * 60) } as CSSProperties} />
+        ))}
+        {/* the opponent's pieces the lines start from */}
+        {SIGHTLINES.map((l, i) => (
+          <span key={l.col} className="grp-c-in absolute block rounded-full" style={{ left: `${l.col * 12.5 + 4.25}%`, top: `calc(${startTop} - 2%)`, width: "4%", height: "4%", background: p2, "--gd": "1.6s", animationDelay: dm(delayMs, 240 + i * 70) } as CSSProperties} />
+        ))}
+        {SIGHTLINES.map((l, i) => {
+          const long = l.ang === 90 ? 62.5 : 70.7;
+          const keep = (l.ang === 90 ? 12.5 : 17.7) / long;
+          return (
+            <span key={`s${l.col}`} className="absolute block" style={{ left: `${l.col * 12.5 + 6.25}%`, top: startTop, width: `${long}%`, height: "1.2%", marginTop: "-0.6%", rotate: `calc(var(--fx-side, 1) * ${l.ang}deg)`, transformOrigin: "0% 50%" }}>
+              <span className="grp-c-clip absolute inset-0 block" style={{ background: `linear-gradient(90deg, ${p2}, ${tint(p2, 0.5)})`, "--gk": String(Math.round(keep * 100) / 100), "--gd": "1.6s", animationDelay: dm(delayMs, 300 + i * 80) } as CSSProperties} />
+            </span>
+          );
+        })}
+        {/* a drift buries each line just past its one square */}
+        {SIGHTLINES.map((l, i) => {
+          const ux = l.ang === 90 ? 0 : l.ang === 45 ? 1 : -1;
+          return (
+            <span
+              key={`d${l.col}`}
+              className="grp-c-up absolute block"
+              style={{ left: `${l.col * 12.5 + 6.25 + ux * 19 - 8}%`, top: `calc(${startTop} + var(--fx-side, 1) * 19% - 6%)`, width: "16%", height: "11%", "--gd": "1.2s", animationDelay: dm(delayMs, 640 + i * 70) } as CSSProperties}
+            >
+              <svg viewBox="0 0 12 8" className="block h-full w-full" aria-hidden="true">
+                <path d="M0.4 7.6 C1.6 3.6 4 2 6 3 C8 1.4 10.8 3.4 11.6 7.6 Z" fill={p0} stroke={p2} strokeWidth="0.5" {...SJ} />
+              </svg>
+            </span>
+          );
+        })}
+        {/* three snowflakes, three turns */}
+        {[0, 1, 2].map((i) => (
+          <span key={i} className="grp-c-pip absolute block" style={{ left: `${42 + i * 6}%`, top: "calc(50% - 3%)", width: "5%", height: "5%", "--gd": "1.1s", animationDelay: dm(delayMs, 900 + i * 110) } as CSSProperties}>
+            <Snowflake ice={p2} />
+          </span>
+        ))}
+        {/* settle: snow sifts down across the board */}
+        <Flecks delayMs={delayMs + 1150} at={{ left: "10%", top: "10%", width: "80%", height: "60%" }} color={tint(p1, 0.9)} n={6} />
+      </Frame>
+      <GrandAccent tier={tier} color={tint(p2, 0.7)} delayMs={delayMs + 700} anchored={anchored} />
+    </Stage>
+  );
+}
+
+/* --- buff_siphon -----------------------------------------------------------
+   "Steal two active buffs from your opponent. Locked-in upgrades stay put."
+   The opponent's cards are laid out at their edge, a siphon is run from
+   them to the caster's edge and its pump wheel turns; two cards are drawn
+   off and carried down the pipe to the caster, while the other two are
+   padlocked where they lie (the locked-in upgrades). */
+function CardBack({ face, edge }: { face: string; edge: string }) {
+  return (
+    <svg viewBox="0 0 10 14" className="block h-full w-full" aria-hidden="true">
+      <rect x="0.6" y="0.6" width="8.8" height="12.8" fill={face} stroke={edge} strokeWidth="0.7" />
+      <path d="M5 3.4 L7.2 7 L5 10.6 L2.8 7 Z" fill="none" stroke={edge} strokeWidth="0.6" />
+    </svg>
+  );
+}
+function Padlock({ body, shackle }: { body: string; shackle: string }) {
+  return (
+    <svg viewBox="0 0 10 11" className="block h-full w-full" aria-hidden="true">
+      <path d="M2.6 5 V3.6 A2.4 2.4 0 0 1 7.4 3.6 V5" fill="none" stroke={shackle} strokeWidth="1.1" />
+      <rect x="1.2" y="5" width="7.6" height="5.4" fill={body} stroke={shackle} strokeWidth="0.6" />
+      <circle cx="5" cy="7.4" r="0.9" fill={shackle} />
+    </svg>
+  );
+}
+const SIPHON_CARDS = [
+  { x: 20, take: true },
+  { x: 36, take: false },
+  { x: 52, take: true },
+  { x: 68, take: false },
+];
+function BuffSiphonScene({ palette, glyph, lead, role, anchored, delayMs, tier }: TemplateProps) {
+  const [p0, p1, p2] = palette;
+  if (role === "entrance") return <EntranceCut palette={palette} glyph={glyph} delayMs={delayMs} motif={<CardBack face={p0} edge={p1} />} />;
+  if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
+  const row = "calc(50% - var(--fx-side, 1) * 36% - 7%)";
+  return (
+    <Stage anchored={anchored} quakeMs={delayMs + 560}>
+      <Frame anchored={anchored}>
+        {/* tell: the opponent's cards are laid out at their edge */}
+        {SIPHON_CARDS.map((c, i) => (
+          <span key={c.x} className="grp-c-in absolute block" style={{ left: `${c.x}%`, top: row, width: "12%", height: "14%", "--ty0": "calc(var(--fx-side, 1) * -40%)", "--gd": c.take ? "0.7s" : "1.7s", animationDelay: dm(delayMs, 60 + i * 50) } as CSSProperties}>
+            <CardBack face={tint(p0, 0.9)} edge={p1} />
+          </span>
+        ))}
+        {/* the siphon runs from their cards to the caster's edge */}
+        <span className="absolute block" style={{ left: "49%", top: "calc(50% - var(--fx-side, 1) * 26%)", width: "60%", height: "2%", rotate: "calc(var(--fx-side, 1) * 90deg)", transformOrigin: "0% 50%" }}>
+          <span className="grp-c-draw absolute inset-0 block" style={{ background: `linear-gradient(90deg, ${tint(p0, 0.9)}, ${tint(p1, 0.8)})`, "--gd": "1.5s", animationDelay: dm(delayMs, 280) } as CSSProperties} />
+        </span>
+        <span className="grp-c-spin absolute block" style={{ left: "44%", top: "44%", width: "12%", height: "12%", "--gd": "1.3s", animationDelay: dm(delayMs, 340) } as CSSProperties}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <circle cx="5" cy="5" r="4" fill={p2} stroke={p1} strokeWidth="0.7" />
+            <path d="M5 1 V9 M1 5 H9 M2.2 2.2 L7.8 7.8 M7.8 2.2 L2.2 7.8" stroke={p1} strokeWidth="0.5" />
+          </svg>
+        </span>
+        {SIPHON_CARDS.map((c, i) =>
+          c.take ? (
+            // two are drawn off, into the pipe and down to the caster
+            <span
+              key={`t${c.x}`}
+              className="grp-c-go absolute block"
+              style={{ left: `${c.x}%`, top: row, width: "12%", height: "14%", "--tx1": `${((44 - c.x) / 12) * 100}%`, "--ty1": "calc(var(--fx-side, 1) * 520%)", "--gd": "1s", animationDelay: dm(delayMs, 520 + i * 60) } as CSSProperties}
+            >
+              <CardBack face={p1} edge={p0} />
+            </span>
+          ) : (
+            // the locked-in ones stay put under a padlock
+            <span key={`l${c.x}`} className="grp-c-stamp absolute block" style={{ left: `${c.x + 3}%`, top: `calc(${row} + 3%)`, width: "6%", height: "7%", "--gd": "1.2s", animationDelay: dm(delayMs, 580 + i * 40) } as CSSProperties}>
+              <Padlock body={p1} shackle={p2} />
+            </span>
+          ),
+        )}
+        {/* the two arrive on the caster's side */}
+        {[0, 1].map((i) => (
+          <span key={i} className="grp-c-pip absolute block" style={{ left: `${36 + i * 16}%`, top: "calc(50% + var(--fx-side, 1) * 36% - 7%)", width: "12%", height: "14%", "--gd": "0.9s", animationDelay: dm(delayMs, 1000 + i * 90) } as CSSProperties}>
+            <CardBack face={p1} edge={p0} />
+          </span>
+        ))}
+        {/* settle: the last drops from the pipe */}
+        <Flecks delayMs={delayMs + 1150} at={{ left: "40%", top: "35%", width: "20%", height: "30%" }} color={tint(p0, 0.8)} n={4} />
+      </Frame>
+      <GrandAccent tier={tier} color={tint(p0, 0.75)} delayMs={delayMs + 600} anchored={anchored} />
+    </Stage>
+  );
+}
+
+/* --- resurrect_queen -------------------------------------------------------
+   "Bring your captured queen back to any empty square, and she cannot be
+   captured for your opponent's next turn." A grave slab at the caster's
+   corner cracks open, the queen's shade rises from it and glides across the
+   board to the chosen square (the path is the real one, from the corner to
+   the cast square), stands there whole, and one ward ring with ONE pip holds
+   round her: the single turn she cannot be taken. */
+function GraveSlab({ stone, crack }: { stone: string; crack: string }) {
+  return (
+    <svg viewBox="0 0 10 12" className="block h-full w-full" aria-hidden="true">
+      <path d="M1 12 V4 A4 4 0 0 1 9 4 V12 Z" fill={stone} stroke={crack} strokeWidth="0.6" />
+      <path d="M5 2 V6 M3.6 3.4 H6.4" stroke={crack} strokeWidth="0.6" strokeLinecap="round" />
+      <path d="M2.4 7 L4.4 8.6 L3.6 10.4 L5.6 12" fill="none" stroke={crack} strokeWidth="0.5" {...SJ} />
+    </svg>
+  );
+}
+function ResurrectQueenScene({ palette, glyph, lead, role, anchored, delayMs, tier }: TemplateProps) {
+  const [p0, p1, p2] = palette;
+  if (role === "entrance") return <EntranceCut palette={palette} glyph={glyph} delayMs={delayMs} motif={<Man kind="q" fill={p1} stroke={p2} />} />;
+  if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
+  // the grave sits on the caster's back rank, at the a-side corner
+  const graveAt: CSSProperties = { left: "0%", top: "calc(50% + var(--fx-side, 1) * 43.75% - 6.25%)", width: "12.5%", height: "12.5%" };
+  return (
+    <Stage anchored={anchored} quakeMs={delayMs + 900}>
+      <Frame anchored={anchored}>
+        {/* tell: the slab at the caster's corner cracks */}
+        <span className="grp-tellshadow absolute block rounded-full" style={{ ...graveAt, background: tint(p2, 0.6), animationDelay: dm(delayMs, 0) }} />
+        <span className="grp-c-stamp absolute block" style={{ ...graveAt, "--gd": "1s", "--r0": "0deg", animationDelay: dm(delayMs, 80) } as CSSProperties}>
+          <GraveSlab stone={tint(p0, 0.95)} crack={p1} />
+        </span>
+        {/* her shade rises from it... */}
+        <span className="grp-c-up absolute block" style={{ ...graveAt, "--gd": "0.6s", animationDelay: dm(delayMs, 260) } as CSSProperties}>
+          <Man kind="q" fill={tint(p1, 0.55)} stroke={p1} />
+        </span>
+        {/* ...and glides the real path to the chosen square */}
+        <span
+          className="grp-c-go absolute block"
+          style={{ ...cell(0, 0), "--tx0": "calc((-3.5 - var(--fx-ox, 0)) * 100%)", "--ty0": "calc((var(--fx-side, 1) * 3.5 - var(--fx-oy, 0)) * 100%)", "--gd": "0.75s", animationDelay: dm(delayMs, 400) } as CSSProperties}
+        >
+          <Man kind="q" fill={tint(p1, 0.55)} stroke={p1} />
+        </span>
+        {/* strike: she stands whole on the square */}
+        <span className="grp-flash absolute block rounded-full" style={{ ...cell(0, 0, 1.4), background: tint(p1, 0.55), animationDelay: dm(delayMs, 880) }} />
+        <span className="grp-c-up absolute block" style={{ ...cell(0, -0.05, 1.05), "--gd": "1.1s", animationDelay: dm(delayMs, 900) } as CSSProperties}>
+          <Man kind="q" fill={p1} stroke={p0} />
+        </span>
+        {/* one ward ring and ONE pip: the opponent's next turn only */}
+        <span className="grp-c-stamp absolute block rounded-full" style={{ ...cell(0, 0, 1.3), border: `2px solid ${p1}`, "--gd": "1s", animationDelay: dm(delayMs, 1000) } as CSSProperties} />
+        <span className="grp-c-pip absolute block rounded-full" style={{ ...cell(0, 0.78, 0.2), background: p1, border: `1px solid ${p0}`, "--gd": "0.9s", animationDelay: dm(delayMs, 1080) } as CSSProperties} />
+        {/* settle: grave dust climbs off her */}
+        <Flecks delayMs={delayMs + 1150} at={cell(0, 0, 1.6)} color={tint(p0, 0.8)} dir={-1} n={4} />
+      </Frame>
+      <GrandAccent tier={tier} color={tint(p1, 0.7)} delayMs={delayMs + 940} anchored={anchored} />
+    </Stage>
+  );
+}
+
+/* --- wc_sticky_floor -------------------------------------------------------
+   "The whole floor is flypaper: every one of your opponent's pieces may move
+   at most one square for their next 2 turns." Flypaper unrolls over the
+   opponent's half, three of their pieces try long moves and are held: each
+   one's arrow is cut back to a single square while the piece tugs and cannot
+   leave, a one-square box marks the step it is allowed. Two pips, two turns. */
+const STUCK = [
+  { col: 1, rank: 1, ang: 90, kind: "r" as const, long: 62.5 },
+  { col: 3, rank: 1, ang: 45, kind: "b" as const, long: 53 },
+  { col: 6, rank: 0, ang: 115, kind: "n" as const, long: 28 },
+];
+function StickyFloorScene({ palette, glyph, lead, role, anchored, delayMs, tier }: TemplateProps) {
+  const [p0, p1, p2] = palette;
+  if (role === "entrance")
+    return (
+      <EntranceCut
+        palette={palette}
+        glyph={glyph}
+        delayMs={delayMs}
+        motif={
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <rect x="1" y="1" width="8" height="8" fill={p0} stroke={p2} strokeWidth="0.6" />
+            <path d="M1 4 L9 2.4 M1 7 L9 5.4" stroke={p1} strokeWidth="0.5" />
+          </svg>
+        }
+      />
+    );
+  if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
+  const rankTop = (r: number) => `calc(50% - var(--fx-side, 1) * ${43.75 - r * 12.5}% - 6.25%)`;
+  return (
+    <Stage anchored={anchored} quakeMs={delayMs + 560}>
+      <Frame anchored={anchored}>
+        {/* tell: the flypaper unrolls over the opponent's half */}
+        <span className="grp-c-in absolute block" style={{ left: "0%", top: "calc(25% - var(--fx-side, 1) * 25%)", width: "100%", height: "50%", background: tint(p0, 0.3), "--ty0": "calc(var(--fx-side, 1) * -40%)", "--s0": "1", "--gd": "1.9s", animationDelay: dm(delayMs, 0) } as CSSProperties}>
+          <svg viewBox="0 0 40 20" preserveAspectRatio="none" className="block h-full w-full" aria-hidden="true">
+            {[2, 7, 12, 17].map((y) => (
+              <path key={y} d={`M0 ${y} C10 ${y - 1.4} 30 ${y + 1.4} 40 ${y}`} fill="none" stroke={tint(p1, 0.55)} strokeWidth="0.35" />
+            ))}
+          </svg>
+        </span>
+        <span className="grp-tellglow absolute block rounded-full" style={{ left: "30%", top: "calc(50% - var(--fx-side, 1) * 25% - 14%)", width: "40%", height: "28%", background: tint(p1, 0.3), animationDelay: dm(delayMs, 120) }} />
+        {STUCK.map((m, i) => (
+          <span key={m.col} className="absolute block" style={{ left: `${m.col * 12.5}%`, top: rankTop(m.rank), width: "12.5%", height: "12.5%" }}>
+            {/* the long move it wanted, cut back to one square */}
+            <span className="absolute block" style={{ left: "50%", top: "50%", width: `${(m.long / 12.5) * 100}%`, height: "9%", marginTop: "-4.5%", rotate: `calc(var(--fx-side, 1) * ${m.ang}deg)`, transformOrigin: "0% 50%" }}>
+              <span className="grp-c-clip absolute inset-0 block" style={{ background: `linear-gradient(90deg, ${p2}, ${tint(p2, 0.4)})`, "--gk": String(Math.round((12.5 / m.long) * 100) / 100), "--gd": "1.5s", animationDelay: dm(delayMs, 320 + i * 90) } as CSSProperties} />
+            </span>
+            {/* the piece tugs and cannot leave the paper */}
+            <span className="grp-c-stuck absolute block" style={{ left: "10%", top: "8%", width: "80%", height: "84%", "--tx1": `${Math.round(Math.cos((m.ang * Math.PI) / 180) * 30)}%`, "--ty1": `calc(var(--fx-side, 1) * ${Math.round(Math.sin((m.ang * Math.PI) / 180) * 30)}%)`, "--gd": "1.4s", animationDelay: dm(delayMs, 420 + i * 90) } as CSSProperties}>
+              <Man kind={m.kind} fill={p1} stroke={p2} />
+            </span>
+            {/* glue strands hold its foot */}
+            <span className="grp-c-in absolute block" style={{ left: "10%", top: "78%", width: "80%", height: "22%", "--s0": "0.4", "--gd": "1.1s", animationDelay: dm(delayMs, 560 + i * 90) } as CSSProperties}>
+              <svg viewBox="0 0 10 3" preserveAspectRatio="none" className="block h-full w-full" aria-hidden="true">
+                <path d="M1 0 C1.4 1.6 2 2.4 2.4 3 M5 0 C5 1.4 5.2 2.2 5 3 M9 0 C8.6 1.6 8 2.4 7.6 3" fill="none" stroke={p0} strokeWidth="0.5" />
+              </svg>
+            </span>
+          </span>
+        ))}
+        {/* two turns */}
+        {[0, 1].map((i) => (
+          <span key={i} className="grp-c-pip absolute block rounded-full" style={{ left: `${46 + i * 5}%`, top: "calc(50% - 1.5%)", width: "3%", height: "3%", background: p1, border: `1px solid ${p2}`, "--gd": "1s", animationDelay: dm(delayMs, 900 + i * 110) } as CSSProperties} />
+        ))}
+        {/* settle: glue drips off the paper */}
+        <Flecks delayMs={delayMs + 1150} at={{ left: "10%", top: "calc(25% - var(--fx-side, 1) * 25%)", width: "80%", height: "40%" }} color={tint(p0, 0.8)} n={5} />
+      </Frame>
+      <GrandAccent tier={tier} color={tint(p1, 0.7)} delayMs={delayMs + 600} anchored={anchored} />
+    </Stage>
+  );
+}
+
+/* --- wa_greed --------------------------------------------------------------
+   "Your next draft offer, you take both cards instead of choosing one." Two
+   cards are dealt side by side with the choice bar standing between them;
+   the bar snaps, a sack opens under both and both cards drop in. Two gold
+   pips: two cards, not one. */
+function Sack({ cloth, tie }: { cloth: string; tie: string }) {
+  return (
+    <svg viewBox="0 0 12 12" className="block h-full w-full" aria-hidden="true">
+      <path d="M4 3 L3 1 H9 L8 3 C11 4.6 11.8 8 11 10.4 C10.4 11.6 1.6 11.6 1 10.4 C0.2 8 1 4.6 4 3 Z" fill={cloth} stroke={tie} strokeWidth="0.6" {...SJ} />
+      <path d="M3.6 3.2 H8.4" stroke={tie} strokeWidth="0.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+function GreedScene({ palette, glyph, lead, role, anchored, delayMs, tier }: TemplateProps) {
+  const [p0, p1, p2] = palette;
+  if (role === "entrance") return <EntranceCut palette={palette} glyph={glyph} delayMs={delayMs} motif={<Sack cloth={p0} tie={p1} />} />;
+  if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
+  const cards = [30, 54];
+  return (
+    <Stage anchored={anchored} quakeMs={delayMs + 560}>
+      <Frame anchored={anchored}>
+        {/* tell: the offer is dealt, two cards side by side */}
+        {cards.map((x, i) => (
+          <span key={x} className="grp-c-in absolute block" style={{ left: `${x}%`, top: "22%", width: "16%", height: "22%", "--ty0": "-60%", "--r0": `${i ? 8 : -8}deg`, "--gd": "0.75s", animationDelay: dm(delayMs, 60 + i * 80) } as CSSProperties}>
+            <CardBack face={p1} edge={p2} />
+          </span>
+        ))}
+        {/* the choice bar between them, and it snaps */}
+        <span className="grp-c-in absolute block" style={{ left: "48.6%", top: "20%", width: "2.8%", height: "26%", background: p2, "--gd": "0.5s", "--s0": "1", animationDelay: dm(delayMs, 200) } as CSSProperties} />
+        {[-1, 1].map((s) => (
+          <span key={s} className="grp-c-part absolute block" style={{ left: "48.6%", top: s < 0 ? "20%" : "33%", width: "2.8%", height: "13%", background: p2, "--tx1": `${s * 120}%`, "--ty1": `${s * -30 + 60}%`, "--r1": `${s * 35}deg`, "--gd": "0.6s", animationDelay: dm(delayMs, 440) } as CSSProperties} />
+        ))}
+        {/* strike: the sack opens under both and both drop in */}
+        <span className="grp-c-up absolute block" style={{ left: "36%", top: "46%", width: "28%", height: "28%", "--gd": "1.3s", animationDelay: dm(delayMs, 480) } as CSSProperties}>
+          <Sack cloth={p0} tie={p1} />
+        </span>
+        {cards.map((x, i) => (
+          <span key={`d${x}`} className="grp-c-go absolute block" style={{ left: `${x}%`, top: "22%", width: "16%", height: "22%", "--tx1": `${((42 - x) / 16) * 100}%`, "--ty1": "130%", "--gd": "0.55s", animationDelay: dm(delayMs, 560 + i * 60) } as CSSProperties}>
+            <CardBack face={p1} edge={p2} />
+          </span>
+        ))}
+        {/* two pips: both cards are yours */}
+        {[0, 1].map((i) => (
+          <span key={i} className="grp-c-pip absolute block rounded-full" style={{ left: `${45 + i * 7}%`, top: "76%", width: "4%", height: "4%", background: p1, border: `1px solid ${p2}`, "--gd": "1s", animationDelay: dm(delayMs, 880 + i * 110) } as CSSProperties} />
+        ))}
+        {/* settle: gold motes spill from the sack's mouth, off the caster's side */}
+        <span className="absolute block" style={{ left: "38%", top: "44%", width: "24%", height: "20%", rotate: "calc((var(--fx-side, 1) - 1) * 90deg)" }}>
+          <Flecks delayMs={delayMs + 1150} at={{ left: "0%", top: "0%", width: "100%", height: "100%" }} color={tint(p1, 0.85)} dir={-1} n={5} />
+        </span>
+      </Frame>
+      <GrandAccent tier={tier} color={tint(p1, 0.7)} delayMs={delayMs + 620} anchored={anchored} />
+    </Stage>
+  );
+}
+
 /* =============================================================================
    Registry — CARD -> TEMPLATE / PALETTE / GLYPH, one entry per still-uncovered
    tier 5-6 card. `source` names an fx zone ONLY where the card reliably paints
@@ -5677,9 +5993,9 @@ export const PLAYS: Record<string, SigPlugin> = {
   wc_voodoo_doll: G(WitchCircle, ["#6b4a8f", "#c94a5a", "#1c0f18"], GLYPH.wc_voodoo_doll, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades", anchor: "cast",
   }, "voodoo"),
-  wc_sticky_floor: G(WitchCircle, ["#c9a84c", "#ffd23f", "#4a3a22"], GLYPH.wc_sticky_floor, {
+  wc_sticky_floor: G(StickyFloorScene, ["#c9a84c", "#ffd23f", "#4a3a22"], GLYPH.wc_sticky_floor, {
     ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "snooze", anchor: "board",
-  }, "sticky"),
+  }),
   threads_of_fate: G(ThreadsOfFateScene, ["#5a6b8f", "#cdd6ff", "#2c3e6b"], GLYPH.threads_of_fate, {
     ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "shades", source: "stun", anchor: "cast",
   }),
@@ -5706,9 +6022,9 @@ export const PLAYS: Record<string, SigPlugin> = {
   stone_riders: G(StoneGaze, ["#8d8d94", "#b58a5a", "#4c4c53"], GLYPH.stone_riders, {
     ordering: "sweep", staggerMs: 60, victims: ["n"], hasLead: true, sound: "petrifiedforest", source: "walnut", anchor: "cast",
   }, "contagion"),
-  stone_prelates: G(StoneGaze, ["#9a9a9a", "#e8dcc0", "#5c5c63"], GLYPH.stone_prelates, {
+  stone_prelates: G(StonePrelatesScene, ["#9a9a9a", "#e8dcc0", "#5c5c63"], GLYPH.stone_prelates, {
     ordering: "sweep", staggerMs: 60, victims: ["b"], hasLead: true, sound: "petrifiedforest", source: "walnut", anchor: "board",
-  }, "pews"),
+  }),
   stone_bastions: G(StoneGaze, ["#8a94a8", "#c9b89a", "#3a3a40"], GLYPH.stone_bastions, {
     ordering: "sweep", staggerMs: 60, victims: ["r"], hasLead: true, sound: "petrify", source: "walnut", anchor: "cast",
   }, "bastion"),
@@ -5735,9 +6051,9 @@ export const PLAYS: Record<string, SigPlugin> = {
   glacial_flanks: G(ColdFront, ["#9fd8ff", "#c9cdd6", "#4f8fd1"], GLYPH.glacial_flanks, {
     ordering: "sweep", staggerMs: 50, victims: ["n", "b"], hasLead: true, sound: "massfreeze", source: "frozen", anchor: "cast",
   }, "pincer"),
-  total_whiteout: G(ColdFront, ["#e8f8ff", "#eef8ff", "#6fb5e8"], GLYPH.total_whiteout, {
+  total_whiteout: G(TotalWhiteoutScene, ["#e8f8ff", "#eef8ff", "#6fb5e8"], GLYPH.total_whiteout, {
     ordering: "sweep", staggerMs: 45, victims: "all", hasLead: true, sound: "massfreeze", source: "frozen", anchor: "board",
-  }, "whiteout"),
+  }),
   we_frostbite_curse: G(ColdFront, ["#9fd8ff", "#eef8ff", "#5a8fc0"], GLYPH.we_frostbite_curse, {
     ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "clockice", anchor: "board",
   }),
@@ -5873,9 +6189,9 @@ export const PLAYS: Record<string, SigPlugin> = {
   chess_diff: G(CardRite, ["#5a6b8f", "#eef1f7", "#2c3e6b"], GLYPH.chess_diff, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation", anchor: "board",
   }, "sidegame"),
-  wa_greed: G(CardRite, ["#8a6a3a", "#ffd76a", "#4a3a22"], GLYPH.wa_greed, {
+  wa_greed: G(GreedScene, ["#8a6a3a", "#ffd76a", "#4a3a22"], GLYPH.wa_greed, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "rampage", anchor: "board",
-  }, "bothcards"),
+  }),
   riddle_game: G(CardRite, ["#8a6a3a", "#e8dcc0", "#4a3a22"], GLYPH.riddle_game, {
     ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "snooze", source: "stun", anchor: "board",
   }, "riddle"),
@@ -5908,9 +6224,9 @@ export const PLAYS: Record<string, SigPlugin> = {
   buff_thief: G(ThiefHand, ["#8f6bff", "#ffd76a", "#2a2a38"], GLYPH.buff_thief, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "rampage", anchor: "board",
   }),
-  buff_siphon: G(ThiefHand, ["#c94ad1", "#ffd76a", "#1c0f18"], GLYPH.buff_siphon, {
+  buff_siphon: G(BuffSiphonScene, ["#c94ad1", "#ffd76a", "#1c0f18"], GLYPH.buff_siphon, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "rampage", anchor: "board",
-  }, "siphon"),
+  }),
   wa_spelltheft: G(ThiefHand, ["#5b2b8f", "#e3d0ff", "#1c0f2a"], GLYPH.wa_spelltheft, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades", anchor: "aim",
   }, "trade"),
@@ -5948,9 +6264,9 @@ export const PLAYS: Record<string, SigPlugin> = {
     // the leg has a real vector to run along.
     ordering: "sweep", staggerMs: 60, victims: ["p"], hasLead: true, sound: "coronation", anchor: "aim",
   }),
-  resurrect_queen: G(CrownForge, ["#6b1a2a", "#ffd76a", "#3a0e1a"], GLYPH.resurrect_queen, {
+  resurrect_queen: G(ResurrectQueenScene, ["#6b1a2a", "#ffd76a", "#3a0e1a"], GLYPH.resurrect_queen, {
     ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "coronation", source: "summon", anchor: "cast",
-  }, "requeen"),
+  }),
   legendary_forge: G(CrownForge, ["#ff9d3d", "#ffd166", "#3a1c12"], GLYPH.legendary_forge, {
     ordering: "radial", staggerMs: 0, victims: ["n", "b"], hasLead: true, sound: "colossus", anchor: "cast",
   }, "reforge"),

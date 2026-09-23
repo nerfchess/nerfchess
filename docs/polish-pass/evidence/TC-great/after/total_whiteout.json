@@ -1,0 +1,129 @@
+{
+ "id": "total_whiteout",
+ "url": "/dev/plays?id=total_whiteout&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "total_whiteout",
+  "name": "Total Whiteout",
+  "tier": 7,
+  "category": "hex",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:total_whiteout",
+  "anchor": "board",
+  "source": "frozen",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 45,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, frozen diff",
+  "castSq": "c7",
+  "targets": [
+   "c7",
+   "d7",
+   "e7"
+  ],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 3291,
+  "cssEndMs": 3658,
+  "settled": true,
+  "windowMs": 3909,
+  "cssAnimations": 66,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 154,
+  "maxGapMs": 477.6
+ },
+ "raf": {
+  "frames": 138,
+  "medianMs": 16.7,
+  "maxMs": 616.6,
+  "dropped": 102
+ },
+ "longAnimationFrames": {
+  "count": 3,
+  "worstMs": 211,
+  "totalBlockingMs": 271,
+  "entries": [
+   {
+    "atMs": -91,
+    "duration": 109,
+    "blocking": 52,
+    "scripts": []
+   },
+   {
+    "atMs": 22,
+    "duration": 119,
+    "blocking": 68,
+    "scripts": []
+   },
+   {
+    "atMs": 621,
+    "duration": 211,
+    "blocking": 151,
+    "scripts": [
+     {
+      "duration": 7,
+      "invoker": "TimerHandler:setInterval",
+      "source": ""
+     }
+    ]
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  249,
+  634,
+  1096,
+  1617,
+  2185,
+  2795,
+  3441
+ ],
+ "png": "docs/polish-pass/evidence/TC-great/after/total_whiteout.png",
+ "pngBytes": 26170,
+ "off": {
+  "url": "/dev/plays?id=total_whiteout&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0.0011,
+  "endRegions": [
+   {
+    "x": 224,
+    "y": 72,
+    "w": 24,
+    "h": 56,
+    "cells": 11
+   },
+   {
+    "x": 168,
+    "y": 72,
+    "w": 16,
+    "h": 16,
+    "cells": 4
+   },
+   {
+    "x": 280,
+    "y": 72,
+    "w": 16,
+    "h": 16,
+    "cells": 4
+   }
+  ],
+  "png": "docs/polish-pass/evidence/TC-great/after/total_whiteout.off.png"
+ }
+}

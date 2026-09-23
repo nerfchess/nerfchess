@@ -1,0 +1,85 @@
+{
+ "id": "wa_greed",
+ "url": "/dev/plays?id=wa_greed&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "wa_greed",
+  "name": "Greed",
+  "tier": 7,
+  "category": "draft",
+  "mechanic": "instant",
+  "retired": true,
+  "art": "plugin",
+  "visual": "x:wa_greed",
+  "anchor": "board",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2450,
+  "cssEndMs": 3504,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 31,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 169,
+  "maxGapMs": 394.3
+ },
+ "raf": {
+  "frames": 211,
+  "medianMs": 16.7,
+  "maxMs": 66.6,
+  "dropped": 8
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 56,
+  "totalBlockingMs": 0,
+  "entries": [
+   {
+    "atMs": 64,
+    "duration": 56,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  188,
+  479,
+  828,
+  1221,
+  1651,
+  2112,
+  2600
+ ],
+ "png": "docs/polish-pass/evidence/TC-great/after/wa_greed.png",
+ "pngBytes": 23678,
+ "off": {
+  "url": "/dev/plays?id=wa_greed&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "docs/polish-pass/evidence/TC-great/after/wa_greed.off.png"
+ }
+}

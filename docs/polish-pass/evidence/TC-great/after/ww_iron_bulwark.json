@@ -35,66 +35,48 @@
  },
  "stageError": null,
  "durationMs": {
-  "visualMs": 2580,
-  "cssEndMs": 3601,
+  "visualMs": 2490,
+  "cssEndMs": 3526,
   "settled": true,
-  "windowMs": 3851,
+  "windowMs": 3600,
   "cssAnimations": 44,
   "infiniteAnimations": 0
  },
  "screencast": {
-  "framesInWindow": 174,
-  "maxGapMs": 256.1
+  "framesInWindow": 173,
+  "maxGapMs": 245.7
  },
  "raf": {
-  "frames": 210,
+  "frames": 200,
   "medianMs": 16.7,
-  "maxMs": 133.4,
-  "dropped": 23
+  "maxMs": 133.3,
+  "dropped": 17
  },
  "longAnimationFrames": {
-  "count": 3,
-  "worstMs": 123,
-  "totalBlockingMs": 97,
+  "count": 1,
+  "worstMs": 61,
+  "totalBlockingMs": 0,
   "entries": [
    {
-    "atMs": 51,
-    "duration": 78,
-    "blocking": 27,
-    "scripts": []
-   },
-   {
-    "atMs": 149,
-    "duration": 54,
+    "atMs": 62,
+    "duration": 61,
     "blocking": 0,
     "scripts": []
-   },
-   {
-    "atMs": 204,
-    "duration": 123,
-    "blocking": 70,
-    "scripts": [
-     {
-      "duration": 117,
-      "invoker": "http://localhost:3000/_next/static/chunks/_app-pages-browser_src_components_effe...",
-      "source": "/_next/static/chunks/_app-pages-browser_src_components_effects_board3d_engine3d_ts.js"
-     }
-    ]
    }
   ]
  },
  "tiles": [
   0,
-  197,
-  503,
-  870,
-  1283,
-  1733,
-  2217,
-  2730
+  191,
+  487,
+  841,
+  1240,
+  1676,
+  2144,
+  2640
  ],
  "png": "docs/polish-pass/evidence/TC-great/after/ww_iron_bulwark.png",
- "pngBytes": 25980,
+ "pngBytes": 29527,
  "off": {
   "url": "/dev/plays?id=ww_iron_bulwark&anim=off&bare=1",
   "pass": true,
