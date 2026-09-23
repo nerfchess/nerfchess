@@ -24,6 +24,12 @@
 # a slow first compile of a heavy route is not a dead server, and restarting on
 # one would cost more than the outage.
 #
+# DEV_WEBPACK=1 runs webpack instead of Turbopack, with its own dist dir
+# (.next-wp). Use it when the card-effect routes are being worked on: on
+# 2026-09-23 Turbopack grew past 11 GB compiling /dev/plays and the bot game and
+# was OOM-killed every few minutes on the 16 GB box, while webpack held about
+# 5 GB on the same routes. Its pgrep also matches the webpack server.
+#
 # Prints one line per restart and nothing otherwise, so it is quiet until
 # something has actually happened.
 set -u
@@ -40,7 +46,11 @@ while true; do
       echo "[dev-supervisor] $(date -u +%H:%M:%S) dev server down, restarting"
       pgrep -f "next dev|next-server" | xargs -r kill -9 2>/dev/null
       sleep 2
-      nohup npm run dev > "$LOG" 2>&1 &
+      if [ "${DEV_WEBPACK:-}" = "1" ]; then
+        NEXT_DIST_DIR=.next-wp nohup ./node_modules/.bin/next dev --webpack -p 3000 > "$LOG" 2>&1 &
+      else
+        nohup npm run dev > "$LOG" 2>&1 &
+      fi
       sleep 45
     fi
   fi

@@ -70,6 +70,10 @@ const securityHeaders = [
 
 const nextConfig = {
   reactStrictMode: true,
+  // Lets a second local dev server (for example a webpack one on another
+  // port) keep its build output apart from the main one. Unset everywhere
+  // else, so builds and deploys still use .next.
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   experimental: {
     // Deep-import rewriting for the one animation library the match routes
     // pull in (lucide-react is already on Next's default list).
