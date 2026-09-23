@@ -1,1 +1,77 @@
+ok   safeNextPath refuses "https://evil.com"
+ok   safeNextPath refuses "//evil.com"
+ok   safeNextPath refuses "/\\evil.com"
+ok   safeNextPath refuses "/\\/evil.com"
+ok   safeNextPath refuses "\\\\evil.com"
+ok   safeNextPath refuses "/\t/evil.com"
+ok   safeNextPath refuses "/\n/evil.com"
+ok   safeNextPath refuses "/..//evil.com"
+ok   safeNextPath refuses "javascript:alert(1)"
+ok   safeNextPath refuses "evil.com"
+ok   safeNextPath refuses ""
+ok   safeNextPath refuses "/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+ok   safeNextPath null
+ok   safeNextPath fallback
+ok   safeNextPath keeps /
+ok   safeNextPath keeps /lobby
+ok   safeNextPath keeps /lobby?tab=friends#x
+ok   safeNextPath keeps /u/some_one
+ok   safeNextPath keeps /%2F%2Fevil.com
+ok   who round trip
+ok   who round trip encoded
+ok   who guest
+ok   who refuses 
+ok   who refuses v2.u.user.x.
+ok   who refuses v1.u.root.x.
+ok   who refuses v1.u.user.<b>.
+ok   who refuses v1.x.user.a.
+ok   who refuses v1.u.user.a.b.c
+ok   who refuses %E0%A4%A
+ok   who clear header
+ok   who header not httpOnly
+ok   oauth known message kept
+ok   oauth unknown message replaced
+ok   oauth none
+ok   F047 login null
+ok   F047 login []
+ok   F047 login 7
+ok   F047 register null
+ok   F047 register []
+ok   F047 register 7
+ok   F047 rename null
+ok   F047 rename []
+ok   F047 rename 7
+ok   F047 avatar null
+ok   F047 avatar []
+ok   F047 avatar 7
+ok   F047 bio null
+ok   F047 bio []
+ok   F047 bio 7
+ok   F047 flair null
+ok   F047 flair []
+ok   F047 flair 7
+ok   F046 login cross-site Origin
+ok   F046 login Sec-Fetch-Site cross-site
+ok   F046 register cross-site Origin
+ok   F046 register Sec-Fetch-Site cross-site
+ok   F046 guest cross-site Origin
+ok   F046 guest Sec-Fetch-Site cross-site
+ok   F046 logout cross-site Origin
+ok   F046 logout Sec-Fetch-Site cross-site
+ok   F046 same-origin login still answers
+ok   F043 register ilovenewjeans
+ok   F043 register RuyLopezSolos
+ok   register ok
+ok   register sets nc_who
+ok   F063 attacker IP is throttled
+ok   F063 owner from another IP signs in
+ok   login sets nc_who
+ok   me corrects a stale hint
+ok   me leaves a correct hint alone
+ok   logout clears nc_who
+ok   me clears a hint with no session
+ok   guest sets nc_who
+ok   guest upgrade ok
+ok   guest upgrade re-stamps nc_who
+ok   F076 old guest name redirects
 [auth-safety] 76 checks, 0 failures
