@@ -4,13 +4,9 @@ import { GlossaryText } from "@/components/GlossaryText";
 import { KeyTerms } from "@/components/guide/KeyTerms";
 import { InfoPageLayout, InfoSection } from "@/components/InfoPageLayout";
 import { BreadcrumbJsonLd, FaqSection, GuideFooter } from "../shared";
+import { staticMeta } from "@/lib/seoPages";
 
-export const metadata: Metadata = {
-  title: "Nerf mode: chess with secret handicaps",
-  description:
-    "Nerf mode is chess where every player carries a hidden handicap. Pick one of two secret rules, deduce your opponent's, and draft hexes to curse them along the way. How it works and how to win.",
-  alternates: { canonical: "/guide/nerf-mode" },
-};
+export const metadata: Metadata = staticMeta("/guide/nerf-mode", { image: "segment" });
 
 export default function NerfModePage() {
   return (

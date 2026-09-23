@@ -4,13 +4,9 @@ import { GlossaryText } from "@/components/GlossaryText";
 import { KeyTerms } from "@/components/guide/KeyTerms";
 import { InfoPageLayout, InfoSection } from "@/components/InfoPageLayout";
 import { BreadcrumbJsonLd, FaqSection, GuideFooter } from "../shared";
+import { staticMeta } from "@/lib/seoPages";
 
-export const metadata: Metadata = {
-  title: "How to play Nerf Chess: rules and card types",
-  description:
-    "Learn the Nerf Chess rules in five minutes: win by capturing the king, no checkmate or stalemate, secret handicaps, and the five card types (nerf, buff, hex, boon, item).",
-  alternates: { canonical: "/guide/how-to-play" },
-};
+export const metadata: Metadata = staticMeta("/guide/how-to-play", { image: "segment" });
 
 export default function HowToPlayPage() {
   return (

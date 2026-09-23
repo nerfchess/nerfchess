@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SECTIONS } from "@/components/settings/config";
 import { SettingsScreen } from "../_components/SettingsScreen";
+import { privateMeta } from "@/lib/seo";
 
 // One section, at its own address. This is a server component on purpose: the
 // section name has to be validated before the response streams for an unknown
@@ -21,13 +22,12 @@ export async function generateMetadata(props: {
 }): Promise<Metadata> {
   const { section } = await props.params;
   const found = SECTIONS.find((s) => s.id === section);
-  if (!found) return { title: "Settings" };
-  return {
-    title: `${found.title} settings`,
-    description: found.blurb,
-    robots: { index: false, follow: true },
-    alternates: { canonical: `/settings/${found.id}` },
-  };
+  if (!found) return privateMeta("Settings", "/settings", "Nerf Chess settings: the board and pieces, sound, motion, game preferences and your account.");
+  return privateMeta(
+    `${found.title} settings`,
+    `/settings/${found.id}`,
+    `The ${found.title.toLowerCase()} section of your Nerf Chess settings: ${found.blurb.toLowerCase()}.`,
+  );
 }
 
 export default async function SettingsSectionPage(props: {

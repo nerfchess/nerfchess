@@ -1,12 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { InfoPageLayout } from "@/components/InfoPageLayout";
+import { staticMeta } from "@/lib/seoPages";
 
-export const metadata: Metadata = {
-  title: "Community Guidelines · Nerf Chess",
-  description:
-    "The house rules for behavior on Nerf Chess: play fair, keep chat friendly, pick a reasonable name, and use the report tools when something is off.",
-};
+export const metadata: Metadata = staticMeta("/guidelines");
 
 // The community guidelines: short, concrete, and linked from chat reports and
 // the moderation flow. Rules-of-play live in the codex; this page is about

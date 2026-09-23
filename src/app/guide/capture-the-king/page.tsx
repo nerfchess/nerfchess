@@ -4,22 +4,9 @@ import { GlossaryText } from "@/components/GlossaryText";
 import { KeyTerms } from "@/components/guide/KeyTerms";
 import { InfoPageLayout, InfoSection } from "@/components/InfoPageLayout";
 import { BreadcrumbJsonLd, FaqSection, GuideFooter } from "../shared";
+import { staticMeta } from "@/lib/seoPages";
 
-export const metadata: Metadata = {
-  title: "Capture the king: chess with no checkmate",
-  description:
-    "Capture-the-king chess replaces checkmate with a simpler rule: you win by actually taking the enemy king. Learn how no-checkmate chess works in Nerf Chess, why the king becomes a real piece, and how it changes play.",
-  keywords: [
-    "capture the king chess",
-    "chess capture the king",
-    "no checkmate chess",
-    "chess win by capturing king",
-    "chess without checkmate",
-    "king capture chess variant",
-    "chess no stalemate",
-  ],
-  alternates: { canonical: "/guide/capture-the-king" },
-};
+export const metadata: Metadata = staticMeta("/guide/capture-the-king", { image: "segment" });
 
 export default function CaptureTheKingPage() {
   return (

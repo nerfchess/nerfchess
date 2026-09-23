@@ -1,12 +1,9 @@
 import type { Metadata } from "next";
+import { staticMeta } from "@/lib/seoPages";
 
-// Per-user surface: kept out of the index (robots.ts also disallows it) and
-// given its own canonical so it does not inherit the root "/".
-export const metadata: Metadata = {
-  title: "Game in progress",
-  robots: { index: false, follow: true },
-  alternates: { canonical: "/game" },
-};
+// A per-viewer surface: its own title and canonical, kept out of the index,
+// the brand card as its preview (src/lib/seoPages.ts).
+export const metadata: Metadata = staticMeta("/game");
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return children;

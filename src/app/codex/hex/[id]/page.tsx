@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import { ALL_BUFFS } from "@/engine/buffs/library";
 import { BuffDetail } from "@/components/codex/CardDetail";
 import { AffectedPieces } from "@/app/codex/_components/AffectedPieces";
-import { BUFF_BY_ID, buffType, metaDescription, tierName } from "@/lib/cardCodex";
+import { BUFF_BY_ID, buffType } from "@/lib/cardCodex";
+import { cardPageMeta, buffSeo } from "@/lib/seoCards";
 
 // One static page per hex, at the family path the codex's Hexes tab implies.
 // Hexes also still render at /codex/buff/[id] (they live in ALL_BUFFS), but
@@ -20,20 +21,9 @@ export function generateStaticParams() {
 }
 
 export async function generateMetadata(props: { params: Promise<{ id: string }> }): Promise<Metadata> {
-  const params = await props.params;
-  const buff = BUFF_BY_ID[params.id];
-  if (!buff || buffType(buff) !== "Hex") return {};
-  const lead = `${buff.name} is a ${tierName(buff.tier)} hex in Nerf Chess: a curse you draft in Nerf mode and cast on your opponent.`;
-  const description = metaDescription(buff.name, lead, buff.description);
-  const path = `/codex/hex/${buff.id}`;
-  return {
-    title: buff.name,
-    description,
-    alternates: { canonical: path },
-    robots: buff.implemented ? undefined : { index: false, follow: true },
-    openGraph: { title: `${buff.name} · Nerf Chess`, description, url: path, type: "article" },
-    twitter: { card: "summary_large_image", title: `${buff.name} · Nerf Chess`, description },
-  };
+  const { id } = await props.params;
+  const seo = buffSeo(id);
+  return seo && seo.family === "Hex" ? cardPageMeta(seo) : {};
 }
 
 export default async function HexCardPage(props: { params: Promise<{ id: string }> }) {

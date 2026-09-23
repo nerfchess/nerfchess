@@ -4,23 +4,9 @@ import { GlossaryText } from "@/components/GlossaryText";
 import { KeyTerms } from "@/components/guide/KeyTerms";
 import { InfoPageLayout, InfoSection } from "@/components/InfoPageLayout";
 import { BreadcrumbJsonLd, FaqSection, GuideFooter } from "../shared";
+import { staticMeta } from "@/lib/seoPages";
 
-export const metadata: Metadata = {
-  title: "Chess with power-ups: yes, it exists, and it is free",
-  description:
-    "Looking for a chess game with power-ups? Nerf Chess is a free online chess variant where you draft power-up cards every 5 moves. Learn how power-up chess works and how to start playing in your browser.",
-  keywords: [
-    "chess with power ups",
-    "power up chess",
-    "chess game with power ups",
-    "is there a chess game with power ups",
-    "chess power ups online",
-    "buff chess",
-    "chess with special abilities",
-    "chess with cards and power ups",
-  ],
-  alternates: { canonical: "/guide/chess-with-power-ups" },
-};
+export const metadata: Metadata = staticMeta("/guide/chess-with-power-ups", { image: "segment" });
 
 export default function ChessWithPowerUpsPage() {
   return (

@@ -1,16 +1,9 @@
 import type { Metadata } from "next";
+import { staticMeta } from "@/lib/seoPages";
 
-export const metadata: Metadata = {
-  title: "Achievements: Nerf Chess badges and milestones",
-  description:
-    "Every Nerf Chess achievement in one place. Unlock badges for winning with power-up cards, surviving brutal nerfs, capturing kings, and mastering both Buff and Nerf mode.",
-  keywords: [
-    "nerf chess achievements",
-    "chess variant badges",
-    "chess with power ups achievements",
-  ],
-  alternates: { canonical: "/achievements" },
-};
+// Full metadata from its row in src/lib/seoPages.ts (self canonical, og and
+// twitter tags, the preview from this folder's opengraph-image file).
+export const metadata: Metadata = staticMeta("/achievements", { image: "segment" });
 
 export default function AchievementsLayout({ children }: { children: React.ReactNode }) {
   return children;

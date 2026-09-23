@@ -2,10 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { InfoPageLayout, InfoSection } from "@/components/InfoPageLayout";
 import { LinkButton } from "@/components/ui/Button";
+import { staticMeta } from "@/lib/seoPages";
 
-export const metadata: Metadata = {
-  title: "Contact | Nerf Chess",
-};
+export const metadata: Metadata = staticMeta("/contact");
 
 export default function ContactPage() {
   return (

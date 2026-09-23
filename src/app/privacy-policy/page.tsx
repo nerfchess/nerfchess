@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { InfoPageLayout, InfoSection } from "@/components/InfoPageLayout";
+import { staticMeta } from "@/lib/seoPages";
 
-export const metadata: Metadata = {
-  title: "Privacy Policy | Nerf Chess",
-};
+export const metadata: Metadata = staticMeta("/privacy-policy");
 
 function ContactLink({ children }: { children: React.ReactNode }) {
   return (

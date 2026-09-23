@@ -3,13 +3,9 @@ import Link from "next/link";
 import { UPDATES, formatUpdateDate } from "@/lib/updates";
 import { SiteHeader } from "@/components/SiteHeader";
 import { BreadcrumbJsonLd } from "../guide/shared";
+import { staticMeta } from "@/lib/seoPages";
 
-export const metadata: Metadata = {
-  title: "Updates: what's new in Nerf Chess",
-  description:
-    "The latest additions to Nerf Chess: hundreds of new buff and nerf cards, bigger card animations, rebalanced tiers, clearer card wording, spectators, and more. A running log of what changed.",
-  alternates: { canonical: "/updates" },
-};
+export const metadata: Metadata = staticMeta("/updates", { image: "segment" });
 
 // Full write-ups keyed by the timeline anchor (src/lib/updates.ts carries the
 // date, title and one-line summary). Each entry is one card on the wall; the

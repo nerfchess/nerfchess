@@ -10,13 +10,9 @@ import {
   type GlossaryEntry,
 } from "@/lib/glossary";
 import { BreadcrumbJsonLd, GuideFooter } from "../shared";
+import { staticMeta } from "@/lib/seoPages";
 
-export const metadata: Metadata = {
-  title: "Glossary: nerf, buff, hex, boon, bank, and more",
-  description:
-    "Every Nerf Chess term defined in one place: nerf, buff, hex, boon, item, draft, bank, reroll, tier (up to Apex and Mythic), freeze, walnut, shield, Chess Diff, lock-in window, and the rest of the card vocabulary.",
-  alternates: { canonical: "/guide/glossary" },
-};
+export const metadata: Metadata = staticMeta("/guide/glossary", { image: "segment" });
 
 // Anchor id for a group heading (the term chips at the top jump to these).
 function groupSlug(group: string): string {

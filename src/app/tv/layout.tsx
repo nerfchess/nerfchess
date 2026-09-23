@@ -1,17 +1,9 @@
 import type { Metadata } from "next";
+import { staticMeta } from "@/lib/seoPages";
 
-export const metadata: Metadata = {
-  title: "Nerf Chess TV: watch live chess-variant games",
-  description:
-    "Watch live Nerf Chess games as they happen. See secret handicaps and drafted power-up cards play out in real time in Buff and Nerf mode. Free to spectate in your browser.",
-  keywords: [
-    "watch chess variant",
-    "nerf chess tv",
-    "live chess variant games",
-    "spectate chess with power ups",
-  ],
-  alternates: { canonical: "/tv" },
-};
+// Full metadata from its row in src/lib/seoPages.ts (self canonical, og and
+// twitter tags, the preview from this folder's opengraph-image file).
+export const metadata: Metadata = staticMeta("/tv", { image: "segment" });
 
 export default function TvLayout({ children }: { children: React.ReactNode }) {
   return children;

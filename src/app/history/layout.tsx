@@ -1,14 +1,9 @@
 import type { Metadata } from "next";
+import { staticMeta } from "@/lib/seoPages";
 
-// /history is a client component showing the signed-in player's own games;
-// this server layout supplies its metadata. The page is user-specific, so it
-// stays out of the index, and the self-canonical stops it inheriting the root
-// layout's canonical "/".
-export const metadata: Metadata = {
-  title: "Game history",
-  robots: { index: false, follow: true },
-  alternates: { canonical: "/history" },
-};
+// A per-viewer surface: its own title and canonical, kept out of the index,
+// the brand card as its preview (src/lib/seoPages.ts).
+export const metadata: Metadata = staticMeta("/history");
 
 export default function HistoryLayout({ children }: { children: React.ReactNode }) {
   return children;

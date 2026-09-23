@@ -1,17 +1,9 @@
 import type { Metadata } from "next";
+import { staticMeta } from "@/lib/seoPages";
 
-export const metadata: Metadata = {
-  title: "Leaderboard: the top Nerf Chess players",
-  description:
-    "The Nerf Chess leaderboard ranks the strongest players in each rated pool. Buff mode and Nerf mode keep separate ratings, so climb the board in the mode you play best.",
-  keywords: [
-    "nerf chess leaderboard",
-    "chess variant rankings",
-    "chess variant ratings",
-    "top chess variant players",
-  ],
-  alternates: { canonical: "/leaderboard" },
-};
+// Full metadata from its row in src/lib/seoPages.ts (self canonical, og and
+// twitter tags, the preview from this folder's opengraph-image file).
+export const metadata: Metadata = staticMeta("/leaderboard", { image: "segment" });
 
 export default function LeaderboardLayout({ children }: { children: React.ReactNode }) {
   return children;

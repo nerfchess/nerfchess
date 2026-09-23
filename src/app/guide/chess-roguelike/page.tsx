@@ -4,23 +4,9 @@ import { GlossaryText } from "@/components/GlossaryText";
 import { KeyTerms } from "@/components/guide/KeyTerms";
 import { InfoPageLayout, InfoSection } from "@/components/InfoPageLayout";
 import { BreadcrumbJsonLd, FaqSection, GuideFooter } from "../shared";
+import { staticMeta } from "@/lib/seoPages";
 
-export const metadata: Metadata = {
-  title: "Chess roguelike and chess card game: Nerf Chess",
-  description:
-    "Nerf Chess is chess crossed with a card game: draft from a tiered deck of 1,000+ cards every 5 moves, with escalating power like a roguelike. Learn how the drafting works and play free in your browser.",
-  keywords: [
-    "chess roguelike",
-    "chess card game",
-    "chess deckbuilder",
-    "roguelike chess",
-    "chess with cards",
-    "chess drafting game",
-    "deckbuilding chess",
-    "chess card drafting",
-  ],
-  alternates: { canonical: "/guide/chess-roguelike" },
-};
+export const metadata: Metadata = staticMeta("/guide/chess-roguelike", { image: "segment" });
 
 export default function ChessRoguelikePage() {
   return (

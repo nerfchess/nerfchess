@@ -3,21 +3,9 @@ import { SiteHeader } from "@/components/SiteHeader";
 import Link from "next/link";
 import { FIRST_GAME_TOUR_HREF } from "@/components/tutorial/tourState";
 import { LinkButton } from "@/components/ui/Button";
+import { staticMeta } from "@/lib/seoPages";
 
-export const metadata: Metadata = {
-  title: "Nerf Chess tutorial: the five house rules and card types",
-  description:
-    "Learn to play Nerf Chess in minutes. The five house rules (win by capturing the king, no checkmate, secret nerfs) and the four card types: nerf, buff, hex, and boon. Then jump into a game.",
-  keywords: [
-    "how to play nerf chess",
-    "nerf chess rules",
-    "nerf chess tutorial",
-    "chess with power ups how to play",
-    "capture the king chess rules",
-    "chess variant rules",
-  ],
-  alternates: { canonical: "/tutorial" },
-};
+export const metadata: Metadata = staticMeta("/tutorial", { image: "segment" });
 
 // HowTo structured data: a short, honest step list for onboarding a new
 // player. Google can surface it as a how-to result and AI engines can cite
