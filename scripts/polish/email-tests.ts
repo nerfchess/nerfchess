@@ -178,7 +178,10 @@ async function main() {
     const to1 = welcomes1.map((s) => s.to[0]).sort();
     check("run 1 welcomes exactly the new sign-ups (new and upgraded guest)", JSON.stringify(to1) === JSON.stringify(["alice@x.test", "bob@x.test"]), to1);
     check("run 1 sends one founders' report to both founders", fake.sent.filter((s) => /daily report/.test(s.subject)).length === 1 && r1.report.status === "sent", r1.report);
-    const r2 = await runDailyJob(env, { now: now + 3600_000, provider, log: quiet, sendGapMs: 0 });
+    // Later on the same UTC day: an hour on, but never past midnight, or the
+    // report check below fails whenever the suite runs after 23:00 UTC.
+    const sameDayLater = Math.min(now + 3600_000, Math.floor(now / DAY) * DAY + DAY - 1);
+    const r2 = await runDailyJob(env, { now: sameDayLater, provider, log: quiet, sendGapMs: 0 });
     const welcomes2 = fake.sent.filter((s) => s.subject === "Welcome to Nerf Chess").length - welcomes1.length;
     check("run 2 (retry, same day) sends no welcome again", welcomes2 === 0 && r2.welcome.sent === 0, r2.welcome);
     check("run 2 (same UTC day) does not resend the report", r2.report.status === "already-sent", r2.report);
