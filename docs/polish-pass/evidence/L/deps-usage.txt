@@ -1,0 +1,10 @@
+Runtime dependency use (files importing each, src + worker.ts), 2026-09-23
+framer-motion: 8 (src/components/GameOver.tsx src/components/dock/DockRow.tsx )
+lucide-react: 68 (src/components/FxToggleButton.tsx src/components/OppPlaysLog.tsx )
+mediabunny: 1 (src/components/clip/clipEncoder.ts )
+next: 219 (src/components/PlayerStatsPanel.tsx src/components/GameOver.tsx )
+postgres: 3 (src/lib/server/pg.ts src/lib/server/dailyJob.ts )
+react: 245 (src/components/OppPlaysLog.tsx src/components/MobileMatchStack.tsx )
+react-dom: 8 (src/components/board/ShortcutsDialog.tsx src/components/effects/BoardEffects.tsx )
+three: 1 (src/components/effects/board3d/engine3d.ts )
+ws: 2 (server/index.ts arena-service/spectate.ts )
