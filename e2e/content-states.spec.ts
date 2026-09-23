@@ -133,3 +133,15 @@ test.describe("achievements states", () => {
     expect(unnamed).toBe(0);
   });
 });
+
+test.describe("stats redirect", () => {
+  // /stats read a failed session check (undefined) as signed out and sent the
+  // player to /login.
+  test("a failed session check stays put and offers Retry", async ({ page }) => {
+    await page.route("**/api/auth/me", (route) => route.abort("internetdisconnected"));
+    await page.goto("/stats");
+    await expect(page.getByRole("alert").filter({ hasText: "Could not check your account" })).toBeVisible({ timeout: 30_000 });
+    expect(new URL(page.url()).pathname).toBe("/stats");
+    await expect(page.getByRole("button", { name: "Retry" })).toBeVisible();
+  });
+});
