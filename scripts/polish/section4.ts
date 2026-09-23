@@ -15,7 +15,8 @@
 //   section4-<vp>.png      per route: the frame as /api/auth/me lands and
 //                          1.5s later with every watched box that changed
 //                          outlined (red was, blue now), then the largest
-//                          layout shift outside that window, same colours
+//                          site header box change, then the largest layout
+//                          shift outside that window, same colours
 //
 // Besides layout-shift entries it watches the boxes of the header and main
 // column every frame (see WATCH), because a swapped or resized node is not a
@@ -182,6 +183,23 @@ async function main() {
               list.push({ data: pre.data, label: `${route}: as the first /api/auth/me lands @${me.end}ms`, rects: was });
               list.push({ data: post.data, label: `+${WINDOW}ms: ${changed.length} boxes changed (red was, blue now)`, rects: [...was, ...now] });
             }
+            // The site header: its largest box change after first paint (the
+            // account chip swapping shape is often a tiny CLS score but a big
+            // visible jump, so it gets its own pair).
+            const size = (m: Move) => Math.abs(m.dx ?? 0) + Math.abs(m.dy ?? 0) + Math.abs(m.dw ?? 0) + Math.abs(m.dh ?? 0);
+            const hdr = moves(raw)
+              .filter((m) => /site-nav|^header|> header/.test(m.node) && (m.kind === "moved" || m.kind === "resized"))
+              .sort((a, b) => size(b) - size(a))[0];
+            if (hdr && frames.length && !(me && hdr.t >= me.end - 50 && hdr.t <= me.end + WINDOW)) {
+              const at = raw.timeOrigin + hdr.t;
+              const pre = frameAt(frames, at - 20) ?? frames[0];
+              const post = frameAt(frames, at + 200) ?? frames[frames.length - 1];
+              const a = rectOf(hdr.from);
+              const b = rectOf(hdr.to);
+              const rects = [...(a ? [{ ...a, color: "#ff3b30" }] : []), ...(b ? [{ ...b, color: "#0a84ff" }] : [])];
+              list.push({ data: pre.data, label: `${route}: header box change @${hdr.t}ms, before`, rects: rects.slice(0, 1) });
+              list.push({ data: post.data, label: `after: dx ${hdr.dx ?? 0} dw ${hdr.dw ?? 0} dy ${hdr.dy ?? 0} dh ${hdr.dh ?? 0}`, rects });
+            }
             const big = [...shifts].sort((a, b) => b.value - a.value)[0];
             if (big && frames.length && !(me && big.t >= me.end - 50 && big.t <= me.end + WINDOW)) {
               const at = raw.timeOrigin + big.t;
@@ -200,8 +218,8 @@ async function main() {
       const wide = Number(vp.split("x")[0]) > 800;
       // vp here is the tile key: viewport-auth[-net]
       const png = await composeStrip(browser, tiles, {
-        columns: wide ? 2 : 4,
-        title: `Section 4 bump ${vp}: auth resolve, then largest other shift`,
+        columns: wide ? 2 : 6,
+        title: `Section 4 bump ${vp}: auth resolve, header change, largest other shift`,
         scale: wide ? 0.4 : 0.5,
       });
       const file = path.join(outDir, `section4-${vp}.png`);

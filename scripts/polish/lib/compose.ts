@@ -87,12 +87,18 @@ const COMPOSE = String.raw`async (o) => {
     for (var ln = 0; ln < wrapped[k].length; ln++) g.fillText(wrapped[k][ln], x, y + ln * lineH);
     g.drawImage(imgs[k], src.x, src.y, src.w, src.h, x, y + labelH, tw, th);
     var rects = o.tiles[k].rects || [];
+    // Outlines stay inside their own tile even when a box runs off screen.
+    g.save();
+    g.beginPath();
+    g.rect(x, y + labelH, tw, th);
+    g.clip();
     for (var r = 0; r < rects.length; r++) {
       var q = rects[r];
       g.strokeStyle = q.color;
       g.lineWidth = 2;
       g.strokeRect(x + (q.x - src.x) * s, y + labelH + (q.y - src.y) * s, q.w * s, q.h * s);
     }
+    g.restore();
   }
   return c.toDataURL("image/png").split(",")[1];
 }`;
