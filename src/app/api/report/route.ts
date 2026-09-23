@@ -39,8 +39,7 @@ export async function POST(request: Request) {
     .first<{ id: string; username: string }>();
   if (!target) return apiError(404, "Player not found.");
 
-  // Light throttle so one account can't flood the queue (served by
-  // idx_reports_reporter, migration 0045).
+  // Light throttle so one account can't flood the queue.
   const dayAgo = Date.now() - 24 * 60 * 60 * 1000;
   const recent = await db
     .prepare("SELECT COUNT(*) AS n FROM reports WHERE reporter_user_id = ? AND created_at > ?")
