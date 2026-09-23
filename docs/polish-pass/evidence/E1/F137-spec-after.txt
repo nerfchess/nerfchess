@@ -1,0 +1,6 @@
+
+Running 1 test using 1 worker
+
+  ✓  1 [chromium] › e2e/content-states.spec.ts:372:7 › suggest form focus › every field shows the focus ring when reached by keyboard (24.9s)
+
+  1 passed (25.8s)

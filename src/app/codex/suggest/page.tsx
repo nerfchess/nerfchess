@@ -230,7 +230,7 @@ export default function SuggestRulePage() {
                 value={name}
                 onChange={(e) => setName(e.target.value.slice(0, 80))}
                 placeholder={cfg.namePlaceholder}
-                className="bg-[color:var(--bg-base)] border border-[color:var(--edge)] rounded-none min-h-[44px] px-4 py-2 text-base font-display w-full focus:outline-none focus:border-[color:var(--edge-strong)] text-parchment placeholder:text-parchment-500 [@media(pointer:fine)]:min-h-0"
+                className="bg-[color:var(--bg-base)] border border-[color:var(--edge)] rounded-none min-h-[44px] px-4 py-2 text-base font-display w-full focus:border-[color:var(--edge-strong)] text-parchment placeholder:text-parchment-500 [@media(pointer:fine)]:min-h-0"
               />
             </div>
 
@@ -245,7 +245,7 @@ export default function SuggestRulePage() {
                 required
                 rows={5}
                 placeholder={cfg.descPlaceholder}
-                className="bg-[color:var(--bg-base)] border border-[color:var(--edge)] rounded-2xl px-4 py-3 text-sm w-full focus:outline-none focus:border-[color:var(--edge-strong)] text-parchment placeholder:text-parchment-500 resize-y"
+                className="bg-[color:var(--bg-base)] border border-[color:var(--edge)] rounded-2xl px-4 py-3 text-sm w-full focus:border-[color:var(--edge-strong)] text-parchment placeholder:text-parchment-500 resize-y"
               />
               <div className="mt-1 text-right font-mono text-[12px] text-parchment-500">
                 {description.length}/1000
@@ -261,7 +261,7 @@ export default function SuggestRulePage() {
                 value={contact}
                 onChange={(e) => setContact(e.target.value.slice(0, 120))}
                 placeholder="username, email, discord…"
-                className="bg-[color:var(--bg-base)] border border-[color:var(--edge)] rounded-none min-h-[44px] px-4 py-2 text-sm w-full focus:outline-none focus:border-[color:var(--edge-strong)] text-parchment placeholder:text-parchment-500 [@media(pointer:fine)]:min-h-0"
+                className="bg-[color:var(--bg-base)] border border-[color:var(--edge)] rounded-none min-h-[44px] px-4 py-2 text-sm w-full focus:border-[color:var(--edge-strong)] text-parchment placeholder:text-parchment-500 [@media(pointer:fine)]:min-h-0"
               />
             </div>
 

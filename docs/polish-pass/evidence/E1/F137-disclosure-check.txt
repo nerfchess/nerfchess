@@ -1,0 +1,7 @@
+
+Running 2 tests using 1 worker
+
+  ✓  1 [chromium] › e2e/content-states.spec.ts:397:9 › disclosure focus › /guide/glossary disclosure summary shows the focus ring (6.9s)
+  ✓  2 [chromium] › e2e/content-states.spec.ts:397:9 › disclosure focus › /codex/buff/pawn_push disclosure summary shows the focus ring (34.4s)
+
+  2 passed (42.3s)

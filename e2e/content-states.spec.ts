@@ -365,3 +365,49 @@ test.describe("content routes at 360px", () => {
     });
   }
 });
+
+test.describe("suggest form focus", () => {
+  // F137: `focus:outline-none` on the three suggest fields beat the global
+  // :focus-visible ring, so a keyboard reader only saw a faint border change.
+  test("every field shows the focus ring when reached by keyboard", async ({ page }) => {
+    await page.goto("/codex/suggest");
+    const name = page.locator("#rule-name");
+    await expect(name).toBeVisible({ timeout: 60_000 });
+    for (const id of ["rule-name", "rule-desc", "rule-contact"]) {
+      await page.locator(`#${id}`).focus();
+      const ring = await page.locator(`#${id}`).evaluate((el) => {
+        const s = getComputedStyle(el);
+        // Tailwind's outline-none is a 2px transparent outline, so the colour
+        // is what tells a visible ring from a hidden one.
+        const m = s.outlineColor.match(/rgba?\(([^)]+)\)/);
+        const alpha = m ? Number(m[1].split(",")[3] ?? 1) : 1;
+        return { style: s.outlineStyle, width: parseFloat(s.outlineWidth), color: s.outlineColor, alpha };
+      });
+      expect(ring.style, id).not.toBe("none");
+      expect(ring.alpha, `${id} ${ring.color}`).toBeGreaterThan(0.5);
+      expect(ring.width, id).toBeGreaterThanOrEqual(2);
+    }
+  });
+});
+
+test.describe("disclosure focus", () => {
+  // F137 sibling check: the glossary and card detail disclosures carry
+  // outline-none, which the global :focus-visible ring outranks today (same
+  // specificity, later in the cascade). This holds that order in place.
+  for (const route of ["/guide/glossary", "/codex/buff/pawn_push"]) {
+    test(`${route} disclosure summary shows the focus ring`, async ({ page }) => {
+      await page.goto(route);
+      const summary = page.locator("details > summary").first();
+      await expect(summary).toBeVisible({ timeout: 60_000 });
+      await page.keyboard.press("Tab");
+      await summary.focus();
+      const ring = await summary.evaluate((el) => {
+        const s = getComputedStyle(el);
+        const m = s.outlineColor.match(/rgba?\(([^)]+)\)/);
+        return { style: s.outlineStyle, alpha: m ? Number(m[1].split(",")[3] ?? 1) : 1, color: s.outlineColor };
+      });
+      expect(ring.style).not.toBe("none");
+      expect(ring.alpha, ring.color).toBeGreaterThan(0.5);
+    });
+  }
+});
