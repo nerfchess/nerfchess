@@ -1,7 +1,7 @@
 A26: MoveReview at target depth 2, 51 middlegame positions, node v22.22.2
 
-shipped (60ms)         depth2 reached  51/51 (100.0%)  ms p50   11.3  p95   35.7  max   44.2 (L1p14)
-old 2x (120ms)         depth2 reached  51/51 (100.0%)  ms p50   10.5  p95   32.4  max   44.8 (L1p10)
-headroom (300ms)       depth2 reached  51/51 (100.0%)  ms p50   10.8  p95   39.1  max   56.3 (L1p10)
+shipped (60ms)         depth2 reached  51/51 (100.0%)  ms p50   12.9  p95   43.0  max   56.4 (L1p14)
+old 2x (120ms)         depth2 reached  51/51 (100.0%)  ms p50   13.1  p95   39.7  max   57.2 (L1p14)
+headroom (300ms)       depth2 reached  51/51 (100.0%)  ms p50   13.0  p95   42.0  max   58.4 (L1p14)
 
-OK: every position reaches an even depth inside the shipped 60ms budget, with p95 35.7ms and a worst case of 44.2ms. The hard deadline did not cost the review anything: the budget was never the binding constraint at depth 2.
+OK: every position reaches an even depth inside the shipped 60ms budget, with p95 43.0ms and a worst case of 56.4ms. The hard deadline did not cost the review anything: the budget was never the binding constraint at depth 2.

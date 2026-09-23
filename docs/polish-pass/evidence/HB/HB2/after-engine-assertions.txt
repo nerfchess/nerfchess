@@ -18,9 +18,10 @@ engine assertions (current)
   ok  a root move allowing an own-nerf loss in one is dropped
   ok  when every move allows the loss, the filter keeps them all
   ok  the opponent's nerf is never read by the search
-  ok  a move back into a game-history position scores as a draw with contempt
+  ok  a move into a position the game has seen twice scores as a draw with contempt
   ok  a fresh position does not
-  ok  TT on and off give identical depth-4 root scores (27/27); nodes 1038642 -> 855952 (-18%)
+  ok  a position the game has seen only once is not scored as a draw
+  ok  TT on and off give identical depth-4 root scores (27/27); nodes 1855686 -> 1564647 (-16%)
   ok  the fast attack test agrees with isInCheck (14400 checks)
   ok  the incremental hash agrees with a from-scratch hash
   ok  easy still returns a legal move

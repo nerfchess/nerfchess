@@ -582,6 +582,8 @@ export type EngineTuning = {
   nullMove: boolean;
   /** Late move reductions for late quiet moves. */
   lmr: boolean;
+  /** Principal variation search: null window for every move after the first. */
+  pvs: boolean;
   /** Quiescence delta pruning: skip a capture that cannot lift alpha. */
   deltaPruning: boolean;
   /** One extra ply when the side to move is in check, twice per line at most. */
@@ -597,6 +599,7 @@ const DEFAULT_TUNING: EngineTuning = {
   tt: true,
   nullMove: true,
   lmr: true,
+  pvs: true,
   deltaPruning: true,
   checkExt: true,
   nerfSafety: true,
@@ -620,6 +623,9 @@ const MAX_EXTENSIONS = 2;
 const MAX_PLY = 120;
 const LMR_MIN_DEPTH = 3;
 const LMR_MIN_INDEX = 3;
+// Later still, and with depth to spare, the reduction is two plies.
+const LMR_DEEP_INDEX = 8;
+const LMR_DEEP_DEPTH = 5;
 const DELTA_MARGIN = 200;
 
 function sameMove(a: Move, b: Move): boolean {
@@ -1183,12 +1189,18 @@ export function pickAIMove(
     const beta = Infinity;
     let timedOut = false;
 
+    let first = true;
     for (const m of orderMoves(moves, bestMove, state, 0)) {
       const nb = makeMove(root, m);
       childHashInto(root, nb, m, state.hLo[0], state.hHi[0]);
       state.hLo[1] = hashLo;
       state.hHi[1] = hashHi;
-      const score = -negamax(nb, d - 1, -beta, -alpha, opp, state, 1, childMask(state, 0, m, 0), 0, true);
+      const cm = childMask(state, 0, m, 0);
+      const score =
+        !first && tuning.pvs && alpha > -KING_CAPTURE_FLOOR && alpha < KING_CAPTURE_FLOOR
+          ? pvsChild(nb, d, alpha, beta, opp, state, 0, cm, 0)
+          : -negamax(nb, d - 1, -beta, -alpha, opp, state, 1, cm, 0, true);
+      first = false;
       if (Number.isNaN(score)) {
         timedOut = true;
         break;
@@ -1534,10 +1546,11 @@ function negamax(
       tuning.lmr && depth >= LMR_MIN_DEPTH && i >= LMR_MIN_INDEX && !inCheck && alpha > -KING_CAPTURE_FLOOR &&
       !m.captured && !m.promotion && !isKiller(state, ply, m) && !kingAttacked(nb, opp)
     ) {
-      v = -negamax(nb, depth - 2, -alpha - 1, -alpha, opp, state, ply + 1, cm, ext, true);
-      if (!Number.isNaN(v) && v > alpha) {
-        v = -negamax(nb, depth - 1, -beta, -alpha, opp, state, ply + 1, cm, ext, true);
-      }
+      const r = i >= LMR_DEEP_INDEX && depth >= LMR_DEEP_DEPTH ? 2 : 1;
+      v = -negamax(nb, depth - 1 - r, -alpha - 1, -alpha, opp, state, ply + 1, cm, ext, true);
+      if (!Number.isNaN(v) && v > alpha) v = pvsChild(nb, depth, alpha, beta, opp, state, ply, cm, ext);
+    } else if (i > 0 && tuning.pvs && alpha > -KING_CAPTURE_FLOOR && beta - alpha > 1) {
+      v = pvsChild(nb, depth, alpha, beta, opp, state, ply, cm, ext);
     } else {
       v = -negamax(nb, depth - 1, -beta, -alpha, opp, state, ply + 1, cm, ext, true);
     }
@@ -1567,6 +1580,28 @@ function negamax(
     }
   }
   return best;
+}
+
+// Principal variation search for a move after the first: a null window
+// proves it is no better than alpha, which is usually true once the moves are
+// well ordered, and only a move that beats alpha is searched again with the
+// full window. Exact: it changes node counts, never a score.
+function pvsChild(
+  nb: BoardState,
+  depth: number,
+  alpha: number,
+  beta: number,
+  opp: Color,
+  state: SearchState,
+  ply: number,
+  cm: number,
+  ext: number,
+): number {
+  let v = -negamax(nb, depth - 1, -alpha - 1, -alpha, opp, state, ply + 1, cm, ext, true);
+  if (!Number.isNaN(v) && v > alpha && v < beta) {
+    v = -negamax(nb, depth - 1, -beta, -alpha, opp, state, ply + 1, cm, ext, true);
+  }
+  return v;
 }
 
 // Quiescence search: only consider captures so the leaf eval isn't called on a
