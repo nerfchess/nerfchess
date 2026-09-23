@@ -1,0 +1,3 @@
+  ✓  1 [chromium] › e2e/content-states.spec.ts:116:7 › achievements states › a failed session check offers Retry, not sign in (1.1s)
+  ✓  2 [chromium] › e2e/content-states.spec.ts:125:7 › achievements states › every progress bar is named (1.0s)
+  2 passed (3.4s)

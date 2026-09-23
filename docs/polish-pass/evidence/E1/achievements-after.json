@@ -1,0 +1,870 @@
+{
+ "generatedAt": "2026-09-23T02:39:37.729Z",
+ "routes": [
+  "/achievements"
+ ],
+ "states": [
+  "390x844|dark|full|signed-out|normal",
+  "1280x800|dark|full|signed-out|normal",
+  "390x844|dark|full|user|normal",
+  "1280x800|dark|full|user|normal"
+ ],
+ "probes": [
+  "cls",
+  "console"
+ ],
+ "summary": [
+  {
+   "route": "/achievements",
+   "state": "390x844|dark|full|signed-out|normal",
+   "status": 200,
+   "cls": 0.0989,
+   "clsSum": 0.0989,
+   "shiftsOver001": 1,
+   "topOffender": "main.min-h-screen.pb-16 > section.mx-auto.max-w-6xl.px-4 > div.mt-8.space-y-9",
+   "consoleErrors": 0,
+   "http4xx5xx": 0
+  },
+  {
+   "route": "/achievements",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "status": 200,
+   "cls": 0.0378,
+   "clsSum": 0.0378,
+   "shiftsOver001": 1,
+   "topOffender": "main.min-h-screen.pb-16 > section.mx-auto.max-w-6xl.px-4 > div.mt-8.space-y-9",
+   "consoleErrors": 0,
+   "http4xx5xx": 0
+  },
+  {
+   "route": "/achievements",
+   "state": "390x844|dark|full|user|normal",
+   "status": 200,
+   "cls": 0,
+   "clsSum": 0,
+   "shiftsOver001": 0,
+   "consoleErrors": 0,
+   "http4xx5xx": 0
+  },
+  {
+   "route": "/achievements",
+   "state": "1280x800|dark|full|user|normal",
+   "status": 200,
+   "cls": 0,
+   "clsSum": 0,
+   "shiftsOver001": 0,
+   "consoleErrors": 0,
+   "http4xx5xx": 0
+  }
+ ],
+ "cells": [
+  {
+   "route": "/achievements",
+   "state": "390x844|dark|full|signed-out|normal",
+   "status": 200,
+   "loadMs": 3215,
+   "html": {
+    "theme": "dark",
+    "anim": "normal"
+   },
+   "cls": {
+    "cls": 0.0989,
+    "total": 0.0989,
+    "shiftCount": 2,
+    "inputShiftCount": 0,
+    "findings": [
+     {
+      "t": 805.6,
+      "value": 0.0978,
+      "hadRecentInput": false,
+      "sources": [
+       {
+        "selector": "main.min-h-screen.pb-16 > section.mx-auto.max-w-6xl.px-4 > div.mt-8.space-y-9",
+        "text": "The JourneyShow up, play games, and keep coming ba...",
+        "prev": {
+         "x": 14,
+         "y": 296,
+         "w": 362,
+         "h": 548
+        },
+        "curr": {
+         "x": 14,
+         "y": 433,
+         "w": 362,
+         "h": 411
+        },
+        "change": "moved",
+        "dx": 0,
+        "dy": 137,
+        "dw": 0,
+        "dh": -137
+       }
+      ]
+     }
+    ],
+    "offenders": [
+     {
+      "selector": "main.min-h-screen.pb-16 > section.mx-auto.max-w-6xl.px-4 > div.mt-8.space-y-9",
+      "text": "The JourneyShow up, play games, and keep coming ba...",
+      "score": 0.0978,
+      "count": 1,
+      "maxDy": 137,
+      "maxDx": 0,
+      "maxDh": -137,
+      "maxDw": 0
+     },
+     {
+      "selector": "main.min-h-screen.pb-16 > nav.site-nav > div.relative.flex.items-center",
+      "text": "GuestDashingGopher ·Sign in",
+      "score": 0.001,
+      "count": 1,
+      "maxDy": 0,
+      "maxDx": -10,
+      "maxDh": 0,
+      "maxDw": 10
+     }
+    ],
+    "marks": {
+     "dcl": 221,
+     "firstPaint": 256,
+     "fcp": 256,
+     "load": 461,
+     "hydrated": 499,
+     "ttfb": 52
+    },
+    "api": [
+     {
+      "url": "/api/auth/me",
+      "start": 494,
+      "end": 508
+     },
+     {
+      "url": "/api/auth/me",
+      "start": 534,
+      "end": 545
+     },
+     {
+      "url": "/api/auth/guest",
+      "start": 552,
+      "end": 718
+     },
+     {
+      "url": "/api/auth/me",
+      "start": 555,
+      "end": 590
+     },
+     {
+      "url": "/api/auth/me",
+      "start": 812,
+      "end": 898
+     },
+     {
+      "url": "/api/users/settings",
+      "start": 908,
+      "end": 1174
+     },
+     {
+      "url": "/api/users/DashingGopher/achievements",
+      "start": 910,
+      "end": 1200
+     },
+     {
+      "url": "/api/notifications",
+      "start": 911,
+      "end": 1205
+     },
+     {
+      "url": "/api/challenges",
+      "start": 911,
+      "end": 1193
+     }
+    ],
+    "longFrames": {
+     "count": 3,
+     "worst": 208,
+     "totalBlocking": 291
+    },
+    "probeErrors": []
+   },
+   "console": {
+    "counts": {
+     "console-error": 0,
+     "react-warning": 0,
+     "console-warning": 8,
+     "pageerror": 0,
+     "http": 0,
+     "requestfailed": 0
+    },
+    "items": [
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     }
+    ],
+    "requests": 47,
+    "apiCalls": [
+     {
+      "method": "GET",
+      "url": "/api/auth/me",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/auth/me",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/auth/me",
+      "status": 200
+     },
+     {
+      "method": "POST",
+      "url": "/api/auth/guest",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/auth/me",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/users/settings",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/challenges",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/users/DashingGopher/achievements",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/notifications",
+      "status": 200
+     }
+    ]
+   }
+  },
+  {
+   "route": "/achievements",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "status": 200,
+   "loadMs": 3222,
+   "html": {
+    "theme": "dark",
+    "anim": "normal"
+   },
+   "cls": {
+    "cls": 0.0378,
+    "total": 0.0378,
+    "shiftCount": 2,
+    "inputShiftCount": 0,
+    "findings": [
+     {
+      "t": 797.1,
+      "value": 0.035,
+      "hadRecentInput": false,
+      "sources": [
+       {
+        "selector": "main.min-h-screen.pb-16 > section.mx-auto.max-w-6xl.px-4 > div.mt-8.space-y-9",
+        "text": "The JourneyShow up, play games, and keep coming ba...",
+        "prev": {
+         "x": 157,
+         "y": 257,
+         "w": 966,
+         "h": 275
+        },
+        "curr": {
+         "x": 157,
+         "y": 345,
+         "w": 966,
+         "h": 455
+        },
+        "change": "moved",
+        "dx": 0,
+        "dy": 88,
+        "dw": 0,
+        "dh": 180
+       }
+      ]
+     }
+    ],
+    "offenders": [
+     {
+      "selector": "main.min-h-screen.pb-16 > section.mx-auto.max-w-6xl.px-4 > div.mt-8.space-y-9",
+      "text": "The JourneyShow up, play games, and keep coming ba...",
+      "score": 0.035,
+      "count": 1,
+      "maxDy": 88,
+      "maxDx": 0,
+      "maxDh": 180,
+      "maxDw": 0
+     },
+     {
+      "selector": "main.min-h-screen.pb-16 > nav.site-nav > div.relative.flex.items-center",
+      "text": "GuestHastyWombat ·Sign in",
+      "score": 0.0028,
+      "count": 1,
+      "maxDy": 0,
+      "maxDx": -214,
+      "maxDh": 0,
+      "maxDw": 214
+     }
+    ],
+    "marks": {
+     "dcl": 179,
+     "firstPaint": 216,
+     "fcp": 216,
+     "load": 437,
+     "hydrated": 509,
+     "ttfb": 61
+    },
+    "api": [
+     {
+      "url": "/api/auth/me",
+      "start": 505,
+      "end": 518
+     },
+     {
+      "url": "/api/auth/me",
+      "start": 545,
+      "end": 553
+     },
+     {
+      "url": "/api/auth/guest",
+      "start": 557,
+      "end": 661
+     },
+     {
+      "url": "/api/auth/me",
+      "start": 566,
+      "end": 603
+     },
+     {
+      "url": "/api/auth/me",
+      "start": 805,
+      "end": 881
+     },
+     {
+      "url": "/api/users/settings",
+      "start": 891,
+      "end": 1152
+     },
+     {
+      "url": "/api/users/HastyWombat/achievements",
+      "start": 893,
+      "end": 1209
+     },
+     {
+      "url": "/api/notifications",
+      "start": 894,
+      "end": 1217
+     },
+     {
+      "url": "/api/challenges",
+      "start": 894,
+      "end": 1201
+     }
+    ],
+    "longFrames": {
+     "count": 3,
+     "worst": 208,
+     "totalBlocking": 224
+    },
+    "probeErrors": []
+   },
+   "console": {
+    "counts": {
+     "console-error": 0,
+     "react-warning": 0,
+     "console-warning": 8,
+     "pageerror": 0,
+     "http": 0,
+     "requestfailed": 0
+    },
+    "items": [
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     }
+    ],
+    "requests": 47,
+    "apiCalls": [
+     {
+      "method": "GET",
+      "url": "/api/auth/me",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/auth/me",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/auth/me",
+      "status": 200
+     },
+     {
+      "method": "POST",
+      "url": "/api/auth/guest",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/auth/me",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/users/settings",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/challenges",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/users/HastyWombat/achievements",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/notifications",
+      "status": 200
+     }
+    ]
+   }
+  },
+  {
+   "route": "/achievements",
+   "state": "390x844|dark|full|user|normal",
+   "status": 200,
+   "loadMs": 3055,
+   "html": {
+    "theme": "dark",
+    "anim": "normal"
+   },
+   "cls": {
+    "cls": 0,
+    "total": 0,
+    "shiftCount": 0,
+    "inputShiftCount": 0,
+    "findings": [],
+    "offenders": [],
+    "marks": {
+     "dcl": 98,
+     "firstPaint": 268,
+     "fcp": 268,
+     "load": 440,
+     "hydrated": 525,
+     "ttfb": 53
+    },
+    "api": [
+     {
+      "url": "/api/auth/me",
+      "start": 521,
+      "end": 585
+     },
+     {
+      "url": "/api/users/polish_user/achievements",
+      "start": 587,
+      "end": 761
+     },
+     {
+      "url": "/api/users/settings",
+      "start": 598,
+      "end": 829
+     },
+     {
+      "url": "/api/users/polish_user/achievements",
+      "start": 599,
+      "end": 763
+     },
+     {
+      "url": "/api/notifications",
+      "start": 599,
+      "end": 852
+     },
+     {
+      "url": "/api/challenges",
+      "start": 600,
+      "end": 841
+     },
+     {
+      "url": "/api/users/polish_user/achievements",
+      "start": 767,
+      "end": 901
+     }
+    ],
+    "longFrames": {
+     "count": 3,
+     "worst": 229,
+     "totalBlocking": 333
+    },
+    "probeErrors": []
+   },
+   "console": {
+    "counts": {
+     "console-error": 0,
+     "react-warning": 0,
+     "console-warning": 8,
+     "pageerror": 0,
+     "http": 0,
+     "requestfailed": 0
+    },
+    "items": [
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     }
+    ],
+    "requests": 45,
+    "apiCalls": [
+     {
+      "method": "GET",
+      "url": "/api/auth/me",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/users/polish_user/achievements",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/users/polish_user/achievements",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/users/settings",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/challenges",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/notifications",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/users/polish_user/achievements",
+      "status": 200
+     }
+    ]
+   }
+  },
+  {
+   "route": "/achievements",
+   "state": "1280x800|dark|full|user|normal",
+   "status": 200,
+   "loadMs": 3636,
+   "html": {
+    "theme": "dark",
+    "anim": "normal"
+   },
+   "cls": {
+    "cls": 0,
+    "total": 0,
+    "shiftCount": 0,
+    "inputShiftCount": 0,
+    "findings": [],
+    "offenders": [],
+    "marks": {
+     "dcl": 204,
+     "firstPaint": 228,
+     "fcp": 228,
+     "load": 661,
+     "hydrated": 692,
+     "ttfb": 102
+    },
+    "api": [
+     {
+      "url": "/api/auth/me",
+      "start": 695,
+      "end": 869
+     },
+     {
+      "url": "/api/users/polish_user/achievements",
+      "start": 872,
+      "end": 1315
+     },
+     {
+      "url": "/api/users/settings",
+      "start": 885,
+      "end": 1251
+     },
+     {
+      "url": "/api/users/polish_user/achievements",
+      "start": 887,
+      "end": 1315
+     },
+     {
+      "url": "/api/notifications",
+      "start": 887,
+      "end": 1322
+     },
+     {
+      "url": "/api/challenges",
+      "start": 887,
+      "end": 1306
+     },
+     {
+      "url": "/api/users/polish_user/achievements",
+      "start": 1317,
+      "end": 1443
+     }
+    ],
+    "longFrames": {
+     "count": 3,
+     "worst": 221,
+     "totalBlocking": 261
+    },
+    "probeErrors": []
+   },
+   "console": {
+    "counts": {
+     "console-error": 0,
+     "react-warning": 0,
+     "console-warning": 8,
+     "pageerror": 0,
+     "http": 0,
+     "requestfailed": 0
+    },
+    "items": [
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "/_next/static/chunks/src_0encb-n._.js"
+     }
+    ],
+    "requests": 44,
+    "apiCalls": [
+     {
+      "method": "GET",
+      "url": "/api/auth/me",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/users/settings",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/challenges",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/users/polish_user/achievements",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/users/polish_user/achievements",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/notifications",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/users/polish_user/achievements",
+      "status": 200
+     }
+    ]
+   }
+  }
+ ]
+}

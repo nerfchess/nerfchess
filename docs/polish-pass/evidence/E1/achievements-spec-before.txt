@@ -1,0 +1,9 @@
+  ✘  1 [chromium] › e2e/content-states.spec.ts:116:7 › achievements states › a failed session check offers Retry, not sign in (33.1s)
+  ✘  2 [chromium] › e2e/content-states.spec.ts:125:7 › achievements states › every progress bar is named (3.1s)
+  1) [chromium] › e2e/content-states.spec.ts:116:7 › achievements states › a failed session check offers Retry, not sign in 
+    Error: expect(locator).toBeVisible() failed
+    Expected: visible
+    Expected: 0
+    Received: 52
+  2 failed
+    [chromium] › e2e/content-states.spec.ts:116:7 › achievements states › a failed session check offers Retry, not sign in 

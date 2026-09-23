@@ -109,3 +109,27 @@ test.describe("content route layout stability (390x844)", () => {
     expect(report.cls, JSON.stringify(report.offenders.slice(0, 3))).toBeLessThan(CLS_CEILING);
   });
 });
+
+test.describe("achievements states", () => {
+  // A /me request that fails in transit (undefined) used to be read as signed
+  // out, so a signed-in player on a flaky connection was told to sign in.
+  test("a failed session check offers Retry, not sign in", async ({ page }) => {
+    await page.route("**/api/auth/me", (route) => route.abort("internetdisconnected"));
+    await page.goto("/achievements");
+    await expect(page.getByText("Your progress could not load")).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole("button", { name: "Retry" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Sign in", exact: true }).and(page.locator("main section a"))).toHaveCount(0);
+  });
+
+  // F152: every progress bar on the wall has an accessible name.
+  test("every progress bar is named", async ({ page }) => {
+    await page.goto("/achievements");
+    await expect(page.getByRole("heading", { level: 2 }).first()).toBeVisible({ timeout: 30_000 });
+    const unnamed = await page.evaluate(() =>
+      [...document.querySelectorAll('[role="progressbar"]')].filter(
+        (el) => !(el.getAttribute("aria-label") || el.getAttribute("aria-labelledby")),
+      ).length,
+    );
+    expect(unnamed).toBe(0);
+  });
+});
