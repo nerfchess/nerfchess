@@ -4,6 +4,7 @@
 // /api/arena/end. Kept out of the route file so the regression script
 // (scripts/polish/api-unit-test.ts) can exercise it without a bearer token.
 
+import type { DraftPoolOverrides } from "../../engine/draft";
 import { isHouseUserId } from "./bots";
 
 // Mirrors the DO's ArenaEndRecord (worker.ts): the subset of the arena's
@@ -27,7 +28,32 @@ export type ArenaEndRecord = {
   cadence?: number;
   draftActions?: StoredDraftAction[];
   replayVersion?: number;
+  // The draft pool the arena rolled this game's offers under (HB3 R14), so a
+  // rebuild from this record rolls the same offers. Sanitized on read.
+  cardOverrides?: DraftPoolOverrides;
 };
+
+/** Only the two documented override keys, in the shapes setDraftPoolOverrides
+ * expects (the same rule as engine-service's sanitizeCardOverrides). Anything
+ * else is dropped, so a malformed field degrades to "no overrides", never to a
+ * broken replay. */
+export function sanitizeArenaCardOverrides(raw: unknown): DraftPoolOverrides | null {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const r = raw as { off?: unknown; tier?: unknown };
+  const out: DraftPoolOverrides = {};
+  if (Array.isArray(r.off)) {
+    const off = r.off.filter((x): x is string => typeof x === "string" && x.length > 0 && x.length < 80);
+    if (off.length) out.off = off.slice(0, 500);
+  }
+  if (r.tier && typeof r.tier === "object" && !Array.isArray(r.tier)) {
+    const tier: Record<string, number> = {};
+    for (const [id, t] of Object.entries(r.tier as Record<string, unknown>).slice(0, 500)) {
+      if (Number.isInteger(t) && (t as number) >= 1 && (t as number) <= 8) tier[id] = t as number;
+    }
+    if (Object.keys(tier).length) out.tier = tier;
+  }
+  return out.off || out.tier ? out : null;
+}
 
 // A record from the arena is trusted for WHO may send it (the bearer), not for
 // its shape: a missing seat used to throw inside the archive call and answer

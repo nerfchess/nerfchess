@@ -3,7 +3,7 @@ import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { getDb, getEnvVar } from "@/lib/server/db";
 import { recordFinishedGame } from "@/lib/server/games";
 import { readJsonObject } from "@/lib/server/request";
-import { MAX_RECORD_BYTES, validArenaEndRecord } from "@/lib/server/arenaRecord";
+import { MAX_RECORD_BYTES, sanitizeArenaCardOverrides, validArenaEndRecord } from "@/lib/server/arenaRecord";
 
 export const dynamic = "force-dynamic";
 
@@ -90,6 +90,11 @@ export async function POST(request: Request) {
                 mode: rec.mode,
                 draftSeed: rec.draftSeed,
                 ...(rec.cadence !== undefined ? { cadence: rec.cadence } : {}),
+                // The pool the arena rolled offers under (HB3 R14), archived the
+                // way draftRecordFromMatch archives a DO match's overrides.
+                ...(sanitizeArenaCardOverrides(rec.cardOverrides)
+                  ? { cardOverrides: sanitizeArenaCardOverrides(rec.cardOverrides)! }
+                  : {}),
                 draftActions: rec.draftActions,
               },
             }

@@ -118,6 +118,7 @@
     "test:codex-routes:static": "tsx scripts/check-codex-routes.ts --static-only",
     "test:sitemap-dates": "tsx scripts/gen-sitemap-dates.ts --check",
     "test:house-policy": "tsx scripts/test-house-policy.ts",
+    "test:house-wiring": "tsx scripts/polish/test-house-wiring.ts",
     "test:house-strength": "tsx scripts/sim-house-ladder.ts --probe check --positions 30 --picks 300 --seed 1 --load-positions docs/polish-pass/evidence/HB/HB1/check-positions.json && tsx scripts/sim-house-ladder.ts --probe blunder --positions 40 --judge-ms 1000 --seed 1 --load-positions docs/polish-pass/evidence/HB/HB1/blunder-positions.json",
     "polish:card-strip": "tsx scripts/polish/card-strip.ts",
     "test:mod": "./node_modules/.bin/tsx scripts/polish/mod-test.ts",
