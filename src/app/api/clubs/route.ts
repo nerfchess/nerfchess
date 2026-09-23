@@ -6,7 +6,7 @@ import { censorText, findProfanity } from "@/lib/profanity";
 import { cleanText, codePointLength, TEXT_POLICIES } from "@/lib/textInput";
 import { mutedRefusal } from "@/lib/server/social";
 import { apiError, guardJsonWrite, PRIVATE_NO_STORE, rateLimit, tooManyRequests } from "@/lib/server/request";
-import { CLUB_ICON_MAX_CHARS, CLUB_ICON_BODY_BYTES } from "./limits";
+import { CLUB_ICON_LIMIT_TEXT, CLUB_ICON_MAX_CHARS, CLUB_ICON_BODY_BYTES } from "./limits";
 
 export const dynamic = "force-dynamic";
 
@@ -117,7 +117,7 @@ export async function POST(request: Request) {
   if (codePointLength(name) < 3) return apiError(400, "Club name must be at least 3 characters.");
   if (findProfanity(name).length > 0) return apiError(400, "Pick a different club name.");
   if (typeof body.icon === "string" && body.icon.length > CLUB_ICON_MAX_CHARS) {
-    return apiError(413, "That image is too large. Try a smaller picture.");
+    return apiError(413, `That image is too large (${CLUB_ICON_LIMIT_TEXT}). Try a smaller picture.`);
   }
   const icon = isValidClubIcon(body.icon) ? body.icon : "";
 

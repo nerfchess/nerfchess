@@ -4,7 +4,7 @@ import { isModerator, sessionTokenFromCookieHeader, userForSession } from "@/lib
 import { isValidClubIcon } from "@/lib/clubIcons";
 import { bestLiveRatingSql } from "@/lib/server/ratingSql";
 import { apiError, guardJsonWrite, PRIVATE_NO_STORE } from "@/lib/server/request";
-import { CLUB_ICON_BODY_BYTES, CLUB_ICON_MAX_CHARS, validSlug } from "../limits";
+import { CLUB_ICON_BODY_BYTES, CLUB_ICON_LIMIT_TEXT, CLUB_ICON_MAX_CHARS, validSlug } from "../limits";
 
 export const dynamic = "force-dynamic";
 
@@ -153,14 +153,14 @@ export async function PATCH(request: Request, props: { params: Promise<{ slug: s
 
   if (body.icon === undefined) return apiError(400, "Nothing to update.");
   if (typeof body.icon === "string" && body.icon.length > CLUB_ICON_MAX_CHARS) {
-    return apiError(413, "That image is too large. Try a smaller picture.");
+    return apiError(413, `That image is too large (${CLUB_ICON_LIMIT_TEXT}). Try a smaller picture.`);
   }
   // "" clears · "name|colorId" is a curated emblem · a data-URL image is a
   // custom upload (re-validated server-side: MIME, byte-size, and pixel
   // dimensions; client checks are never trusted).
   if (!isValidClubIcon(body.icon)) {
     return NextResponse.json(
-      { error: "Pick an emblem from the set, or upload a PNG/JPEG/WebP image (max 1 MB, 1024px)." },
+      { error: `Pick an emblem from the set, or upload an image (${CLUB_ICON_LIMIT_TEXT}).` },
       { status: 400 },
     );
   }

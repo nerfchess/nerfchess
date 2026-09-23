@@ -9,6 +9,10 @@
 // is proposal P-club-icon.
 export const CLUB_ICON_MAX_CHARS = 300_000;
 
+/** The upload limit in words, for error text. 300,000 base64 characters
+ *  decode to about 220 KB; imageValidate still caps pixels at 1024px. */
+export const CLUB_ICON_LIMIT_TEXT = "PNG, JPEG or WebP, up to about 220 KB and 1024px";
+
 /** Body cap for club writes that may carry an icon (icon plus small fields). */
 export const CLUB_ICON_BODY_BYTES = CLUB_ICON_MAX_CHARS + 16 * 1024;
 

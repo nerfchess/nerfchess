@@ -41,10 +41,12 @@ export function apiError(status: number, error: string, headers?: Record<string,
  * cookie is SameSite=Lax, which still lets a cross-site top-level form POST
  * or a same-site subdomain carry it, and login/guest/register mint a cookie
  * without needing one. Browsers label every request with Sec-Fetch-Site (and
- * send Origin on every non-GET), so a forged request is recognisable:
+ * send Origin on every non-GET), so a forged request is recognisable. No
+ * sibling subdomain (arena, engine, og-cache) writes here from a browser, so
+ * same-site is refused like cross-site:
  *
- *   Sec-Fetch-Site: same-origin | same-site | none  -> allowed
- *   Sec-Fetch-Site: cross-site                       -> 403
+ *   Sec-Fetch-Site: same-origin | none               -> allowed
+ *   Sec-Fetch-Site: same-site | cross-site           -> 403
  *   no Sec-Fetch-Site, Origin present                -> Origin host must equal Host
  *   neither header                                   -> allowed (not a browser, so
  *                                                        no ambient cookie to abuse)
@@ -54,7 +56,7 @@ export function apiError(status: number, error: string, headers?: Record<string,
 export function assertSameOrigin(request: Request): NextResponse | null {
   const site = request.headers.get("sec-fetch-site");
   if (site) {
-    if (site === "same-origin" || site === "same-site" || site === "none") return null;
+    if (site === "same-origin" || site === "none") return null;
     return apiError(403, "Cross-site request refused.");
   }
   const origin = request.headers.get("origin");

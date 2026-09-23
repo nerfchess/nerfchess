@@ -7,6 +7,8 @@
 //   F078  clock bounds match what the game server runs
 //   F073  every arena id shape (hex from newId) and DO code shape passes the
 //         archive id check
+//   F046  the same-origin rule refuses cross-site and same-site (sibling
+//         subdomain) writes
 //
 //   ./node_modules/.bin/tsx scripts/polish/api-unit-test.ts
 //
@@ -18,6 +20,7 @@ import { avatarIdFor, isAvatarId } from "../../src/lib/avatars";
 import { clockWithin, CUSTOM_GAME_CLOCK, TOURNAMENT_CLOCK } from "../../src/lib/clockBounds";
 import { newId } from "../../arena-service/pools";
 import { HOUSE_ROSTER } from "../../src/lib/server/bots";
+import { assertSameOrigin } from "../../src/lib/server/request";
 
 let failed = 0;
 let passed = 0;
@@ -91,6 +94,19 @@ const oldPattern = /^[A-Z2-9]{4,12}$/;
 let oldMisses = 0;
 for (let i = 0; i < 2000; i++) if (!oldPattern.test(newId().toUpperCase())) oldMisses++;
 check("the old pattern refused most arena ids (documents F073)", oldMisses > 1000, oldMisses);
+
+// ---- F046 ----
+function originStatus(headers: Record<string, string>): number {
+  const req = new Request("https://nerfchess.com/api/friends", { method: "POST", headers: { host: "nerfchess.com", ...headers } });
+  return assertSameOrigin(req)?.status ?? 200;
+}
+check("same-origin fetch allowed", originStatus({ "sec-fetch-site": "same-origin" }) === 200);
+check("user-initiated (none) allowed", originStatus({ "sec-fetch-site": "none" }) === 200);
+check("cross-site refused", originStatus({ "sec-fetch-site": "cross-site" }) === 403);
+check("same-site sibling subdomain refused", originStatus({ "sec-fetch-site": "same-site" }) === 403, originStatus({ "sec-fetch-site": "same-site" }));
+check("no fetch metadata, matching Origin allowed", originStatus({ origin: "https://nerfchess.com" }) === 200);
+check("no fetch metadata, sibling Origin refused", originStatus({ origin: "https://arena.nerfchess.com" }) === 403);
+check("no browser headers allowed (server to server)", originStatus({}) === 200);
 
 console.log(`${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

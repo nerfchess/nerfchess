@@ -45,6 +45,13 @@ async function main() {
   check("clean word passes", !prof.containsProfanity("GrandmasterFlash"));
   check("assist is not flagged in chat", prof.findProfanity("nice assist, class move").length === 0);
   check("cyrillic prose passes", prof.findProfanity("привет друг").length === 0);
+  // A wholly Cyrillic or Greek word is a real word in that script, not a
+  // disguise: "соска" (Russian) folds letter by letter to "cocka" and was
+  // censored. Mixing scripts, or Cyrillic with ASCII, is still caught.
+  check("russian word that folds to a listed word passes", prof.findProfanity("соска").length === 0, prof.findProfanity("соска"));
+  check("russian prose is not censored", prof.censorText("соска и кот") === "соска и кот", prof.censorText("соска и кот"));
+  check("cyrillic mixed with latin is caught", prof.findProfanity("сосk off").length > 0);
+  check("cyrillic mixed with a digit is caught", prof.containsProfanity("sh1т"));
   if (onlyProfanity) return;
 
   // ---- textInput (F052, F053) ----

@@ -62,16 +62,26 @@ const SUBS: Record<string, string> = {
 // Letters from other scripts that render the same as a Latin letter, so
 // "fuсk" with a Cyrillic "с" reads as the word it looks like. Deliberately
 // small: only lowercase shapes that are near-identical in common fonts.
-const CONFUSABLES: Record<string, string> = {
+// Accented forms (ё, ї) need no entry: NFKD splits them into the base
+// letter and a mark, and the mark is stripped.
+//
+// These apply only when the same text also carries ASCII letters, digits
+// or substitution symbols. A disguise mixes scripts ("fuсk", "sh1т"); a
+// word written wholly in Cyrillic or Greek is a real word in that language
+// (Russian "соска" would otherwise fold to "cocka" and be censored).
+const SCRIPT_LOOKALIKES: Record<string, string> = {
   // Cyrillic
-  "а": "a", "в": "b", "е": "e", "ё": "e", "к": "k", "м": "m", "н": "h", "о": "o",
-  "р": "p", "с": "c", "т": "t", "у": "y", "х": "x", "ѕ": "s", "і": "i", "ї": "i",
-  "ј": "j", "ԁ": "d", "ԛ": "q", "ԝ": "w", "һ": "h", "ɡ": "g",
+  "а": "a", "в": "b", "е": "e", "к": "k", "м": "m", "н": "h", "о": "o",
+  "р": "p", "с": "c", "т": "t", "у": "y", "х": "x", "ѕ": "s", "і": "i",
+  "ј": "j", "ԁ": "d", "ԛ": "q", "ԝ": "w", "һ": "h",
   // Greek
   "α": "a", "β": "b", "ε": "e", "ι": "i", "κ": "k", "ν": "v", "ο": "o", "ρ": "p",
   "τ": "t", "υ": "u", "χ": "x",
-  // Latin lookalikes that NFKD does not fold
-  "ı": "i", "ł": "l", "ø": "o", "đ": "d", "ħ": "h",
+};
+
+// Latin letters that NFKD does not fold. Always mapped.
+const LATIN_LOOKALIKES: Record<string, string> = {
+  "ı": "i", "ł": "l", "ø": "o", "đ": "d", "ħ": "h", "ɡ": "g",
 };
 
 /** Fold compatibility forms (fullwidth, circled, math letters) and accents,
@@ -79,9 +89,17 @@ const CONFUSABLES: Record<string, string> = {
  *  only a to z. */
 function normalize(text: string): string {
   const folded = text.normalize("NFKD").replace(/\p{M}/gu, "").toLowerCase();
+  let mixed = false;
+  for (const raw of folded) {
+    if ((raw >= "a" && raw <= "z") || raw in SUBS || raw in LATIN_LOOKALIKES) {
+      mixed = true;
+      break;
+    }
+  }
   let out = "";
   for (const raw of folded) {
-    const ch = raw in CONFUSABLES ? CONFUSABLES[raw] : raw;
+    const ch =
+      raw in LATIN_LOOKALIKES ? LATIN_LOOKALIKES[raw] : mixed && raw in SCRIPT_LOOKALIKES ? SCRIPT_LOOKALIKES[raw] : raw;
     const mapped = ch in SUBS ? SUBS[ch] : ch;
     if (mapped >= "a" && mapped <= "z") out += mapped;
   }
