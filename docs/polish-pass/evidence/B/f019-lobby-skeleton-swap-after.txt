@@ -1,0 +1,81 @@
+# skeleton (JS off) vs first client render (JS on, /api/lobby and /api/auth held) on the dev server, per viewport
+=== 360x780 1
+   skeleton: 18,59 325x30
+   page:     18,59 325x30
+   skeleton: 18,61 52x25
+   page:     18,61 52x25
+   skeleton: 232,59 111x30
+   page:     232,59 111x30
+   skeleton: 18,103 325x44
+   page:     18,103 325x44
+   skeleton: 18,164 325x984
+   page:     18,164 325x984
+   skeleton: 18,164 325x256 | 18,438 325x170 | 18,625 325x81
+   page:     18,164 325x256 | 18,438 325x170 | 18,625 325x81
+   skeleton: 18,724 325x197 | 18,938 325x210
+   page:     18,724 325x197 | 18,938 325x210
+ALL SAME
+=== 390x844 1
+   skeleton: 18,59 355x30
+   page:     18,59 355x30
+   skeleton: 18,61 52x25
+   page:     18,61 52x25
+   skeleton: 262,59 111x30
+   page:     262,59 111x30
+   skeleton: 18,103 355x44
+   page:     18,103 355x44
+   skeleton: 18,164 355x984
+   page:     18,164 355x984
+   skeleton: 18,164 355x256 | 18,438 355x170 | 18,625 355x81
+   page:     18,164 355x256 | 18,438 355x170 | 18,625 355x81
+   skeleton: 18,724 355x197 | 18,938 355x210
+   page:     18,724 355x197 | 18,938 355x210
+ALL SAME
+=== 768x1024 1
+   skeleton: 21,74 726x30
+   page:     21,74 726x30
+   skeleton: 21,75 63x28
+   page:     21,75 63x28
+   skeleton: 432,74 315x30
+   page:     432,74 315x30
+   skeleton: 21,118 726x44
+   page:     21,118 726x44
+   skeleton: 21,180 726x959
+   page:     21,180 726x959
+   skeleton: 21,180 726x326 | 21,523 726x69 | 21,609 726x88
+   page:     21,180 726x326 | 21,523 726x69 | 21,609 726x88
+   skeleton: 21,715 726x197 | 21,929 726x210
+   page:     21,715 726x197 | 21,929 726x210
+ALL SAME
+=== 1280x800
+   skeleton: 101,74 1078x30
+   page:     101,74 1078x30
+   skeleton: 101,75 63x28
+   page:     101,75 63x28
+   skeleton: 864,74 315x30
+   page:     864,74 315x30
+   skeleton: 101,118 1078x44
+   page:     101,118 1078x44
+   skeleton: 101,180 1078x510
+   page:     101,180 1078x510
+   skeleton: 101,180 721x318 | 101,515 721x69 | 101,601 721x88
+   page:     101,180 721x318 | 101,515 721x69 | 101,601 721x88
+   skeleton: 839,180 340x197 | 839,394 340x210
+   page:     839,180 340x197 | 839,394 340x210
+ALL SAME
+=== 1920x1080
+   skeleton: 421,74 1078x30
+   page:     421,74 1078x30
+   skeleton: 421,75 63x28
+   page:     421,75 63x28
+   skeleton: 1184,74 315x30
+   page:     1184,74 315x30
+   skeleton: 421,118 1078x44
+   page:     421,118 1078x44
+   skeleton: 421,180 1078x510
+   page:     421,180 1078x510
+   skeleton: 421,180 721x318 | 421,515 721x69 | 421,601 721x88
+   page:     421,180 721x318 | 421,515 721x69 | 421,601 721x88
+   skeleton: 1159,180 340x197 | 1159,394 340x210
+   page:     1159,180 340x197 | 1159,394 340x210
+ALL SAME

@@ -4,7 +4,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
-import { ChevronRight, Cpu, Eye, Swords, Users } from "lucide-react";
+import { ChevronRight, Eye, Swords, Users } from "lucide-react";
 import { QuickMatch } from "./QuickMatch";
 import { AccountUser, ensureAccount, fetchMe } from "@/lib/authClient";
 import { fetchLobbySnapshot } from "@/lib/lobbyClient";
@@ -16,6 +16,9 @@ import { categoryForTimeControl, getCategory } from "@/lib/ratingCategories";
 import { clockLabel } from "@/lib/tournaments";
 import { Button } from "@/components/ui/Button";
 import { LinkButton } from "@/components/ui/Button";
+import { motionOff } from "@/lib/settings";
+import { HallStatSlot, LobbySkeletonBody, SkeletonPlayerRows } from "./LobbySkeleton";
+import { LobbyWaysIn } from "./LobbyWaysIn";
 
 // The lobby: the central place to find a game. Flat boxes on a flat page, a
 // tab row across the top, and quick pairing as the first thing in the Play
@@ -24,8 +27,8 @@ import { LinkButton } from "@/components/ui/Button";
 // The two lobby tabs. Play is the default: quick matchmaking front and center
 // with open challenges folded behind a disclosure; Watch & Friends carries the
 // live boards with the friends flow folded the same way. The old four-tab deep
-// links (?tab=quick/challenges/watch/friends) still resolve — see the mapping
-// in LobbyInner — so nothing bookmarked breaks.
+// links (?tab=quick/challenges/watch/friends) still resolve (see the mapping
+// in tabFromQuery), so nothing bookmarked breaks.
 const LOBBY_TABS = [
   { id: "play", label: "Play" },
   { id: "watch", label: "Watch & Friends" },
@@ -55,7 +58,7 @@ const SERVER_UNREACHABLE = "Can't reach the game server right now.";
 // lobby below.
 export default function LobbyPage() {
   // Suspense wraps LobbyInner because it (and QuickMatch below it, via
-  // useSharedMode) reads useSearchParams — the deep-link source of truth for
+  // useSharedMode) reads useSearchParams, the deep-link source of truth for
   // ?tab= and ?mode=. Same pattern as /game and /tv.
   return (
     <Suspense fallback={<LobbyFallback />}>
@@ -66,8 +69,30 @@ export default function LobbyPage() {
   );
 }
 
+// What a hard load paints before the lobby can render: the real site header
+// over the lobby's skeleton, in the geometry of the lobby's first client render
+// (F019: this used to be an empty <main>, so the page, header included, was
+// blank until the JavaScript ran). A prerendered fallback is never hydrated;
+// React discards it and renders the lobby, so the header here is only HTML and
+// fires none of its session fetches.
 function LobbyFallback() {
-  return <main className="min-h-screen pb-16" aria-busy="true" />;
+  return (
+    <main className="min-h-screen pb-16">
+      <SiteHeader active="/lobby" />
+      <LobbySkeletonBody />
+    </main>
+  );
+}
+
+// ?tab= deep links, including the four-tab era values: the tab to show and the
+// fold to open. Read synchronously for the first render (no flip after mount)
+// and again whenever the query changes on a same-segment navigation.
+function tabFromQuery(wanted: string | null): { tab: LobbyTab; challenges: boolean; friends: boolean } | null {
+  if (wanted === "play" || wanted === "quick") return { tab: "play", challenges: false, friends: false };
+  if (wanted === "challenges") return { tab: "play", challenges: true, friends: false };
+  if (wanted === "watch") return { tab: "watch", challenges: false, friends: false };
+  if (wanted === "friends") return { tab: "watch", challenges: false, friends: true };
+  return null;
 }
 
 function LobbyInner() {
@@ -75,20 +100,42 @@ function LobbyInner() {
   const searchParams = useSearchParams();
   const [user, setUser] = useState<AccountUser | null | undefined>(undefined);
   const [lobby, setLobby] = useState<MPLobby | null>(null);
+  // Two separate errors: the snapshot poll failing (the connection pill and
+  // each rail say so) and a seek join failing (said next to the seek list).
+  // They used to share one state, so a failed join also flipped the pill to
+  // "Reconnecting".
   const [lobbyError, setLobbyError] = useState<string | null>(null);
-  const [tab, setTab] = useState<LobbyTab>("play");
+  const [joinError, setJoinError] = useState<string | null>(null);
+  // The first render already honours ?tab= and ?challenge=, so a deep link
+  // never paints the Play tab and then flips (F005).
+  const [initialView] = useState(() => {
+    const fromTab = tabFromQuery(searchParams.get("tab"));
+    if (searchParams.get("challenge")) return { tab: "watch" as LobbyTab, challenges: false, friends: true };
+    return fromTab ?? { tab: "play" as LobbyTab, challenges: false, friends: false };
+  });
+  const [tab, setTab] = useState<LobbyTab>(initialView.tab);
   // The folded secondary sections: Open challenges inside Play, and the
   // Play-a-friend flow inside Watch & Friends. Collapsed by default so each
   // tab leads with exactly one primary thing; deep links and in-page shortcuts
   // open them explicitly.
-  const [challengesOpen, setChallengesOpen] = useState(false);
-  const [friendsOpen, setFriendsOpen] = useState(false);
+  const [challengesOpen, setChallengesOpen] = useState(initialView.challenges);
+  const [friendsOpen, setFriendsOpen] = useState(initialView.friends);
   // Bumped by a Retry to force an immediate re-poll of the lobby snapshot.
   const [reloadKey, setReloadKey] = useState(0);
   // Mode filters for the Challenges and Watch sections.
   const [challengeFilter, setChallengeFilter] = useState<"all" | "nerf" | "buff">("all");
   const [watchFilter, setWatchFilter] = useState<"all" | "nerf" | "buff">("all");
   const [showAllPlayers, setShowAllPlayers] = useState(false);
+  // Bumped by "Custom game": scroll the challenges fold into view after the
+  // render that opens it (not after a guessed timeout), smoothly only when
+  // animations are on (F200).
+  const [scrollToChallenges, setScrollToChallenges] = useState(0);
+  useEffect(() => {
+    if (scrollToChallenges === 0) return;
+    document
+      .getElementById("lobby-fold-challenges")
+      ?.scrollIntoView({ behavior: motionOff() ? "auto" : "smooth", block: "start" });
+  }, [scrollToChallenges]);
   const [showAllGames, setShowAllGames] = useState(false);
   // The MPSession backing an in-flight "answer this seek" join, so unmounting
   // mid-join tears it down instead of leaking it (see joinSeek below).
@@ -105,25 +152,24 @@ function LobbyInner() {
   // Read through useSearchParams, not window.location in a mount-only effect:
   // SiteHeader and MobileNavMenu both link to /lobby?tab=friends, and clicking
   // that WHILE ALREADY on /lobby is a same-segment App Router navigation. The
-  // component re-renders without remounting, so the old effect never re-ran —
+  // component re-renders without remounting, so the old effect never re-ran:
   // the URL said ?tab=friends while the UI stayed on Quick Play.
   // Legacy values from the four-tab era map onto the two tabs AND open the
   // right disclosure, so an old /lobby?tab=challenges or ?tab=friends link
   // still lands the visitor on the exact content it always did.
   const wantedTab = searchParams.get("tab");
+  // The first render took ?tab= from initialView; this only follows LATER
+  // changes (a same-segment navigation to another ?tab= while on /lobby).
+  const appliedTabRef = useRef(wantedTab);
   useEffect(() => {
+    if (appliedTabRef.current === wantedTab) return;
+    appliedTabRef.current = wantedTab;
+    const next = tabFromQuery(wantedTab);
+    if (!next) return;
     queueMicrotask(() => {
-      if (wantedTab === "play" || wantedTab === "quick") {
-        setTab("play");
-      } else if (wantedTab === "challenges") {
-        setTab("play");
-        setChallengesOpen(true);
-      } else if (wantedTab === "watch") {
-        setTab("watch");
-      } else if (wantedTab === "friends") {
-        setTab("watch");
-        setFriendsOpen(true);
-      }
+      setTab(next.tab);
+      if (next.challenges) setChallengesOpen(true);
+      if (next.friends) setFriendsOpen(true);
     });
   }, [wantedTab]);
 
@@ -131,7 +177,10 @@ function LobbyInner() {
   // the friends flow: surface that section so the pre-addressed setup panel is
   // on screen rather than folded away.
   const wantedChallenge = searchParams.get("challenge");
+  const appliedChallengeRef = useRef(wantedChallenge);
   useEffect(() => {
+    if (appliedChallengeRef.current === wantedChallenge) return;
+    appliedChallengeRef.current = wantedChallenge;
     if (!wantedChallenge) return;
     queueMicrotask(() => {
       setTab("watch");
@@ -167,7 +216,7 @@ function LobbyInner() {
     // (seeks/games a few seconds stale), and the first live poll replaces it.
     const cached = readSnapshot<MPLobby>("nerfchess:lobby-snapshot");
     // Deferred a microtask so the paint happens after mount (no hydration
-    // mismatch) but still before the first poll resolves — effectively instant.
+    // mismatch) but still before the first poll resolves, so effectively instant.
     if (cached) queueMicrotask(() => setLobby(cached));
     // The snapshot is served from an edge cache in front of the single-threaded
     // Durable Object, so a poll can occasionally arrive late. Keep showing the
@@ -250,6 +299,7 @@ function LobbyInner() {
     // The two modes share pool (time control) names, so key the in-flight
     // marker on both.
     setJoiningPool(`${seek.mode ?? "buff"}:${seek.pool}`);
+    setJoinError(null);
     // Signed-out players join as a guest (a throwaway account) so the server
     // can seat them: quick pairing needs an identity, but there is no login
     // wall. Ratings only move between registered accounts, so a guest plays
@@ -261,7 +311,7 @@ function LobbyInner() {
     }
     if (!me) {
       setJoiningPool(null);
-      setLobbyError("Could not start a guest session. Please try again.");
+      setJoinError("Could not start a guest session. Please try again.");
       return;
     }
     const session = new MPSession();
@@ -269,10 +319,10 @@ function LobbyInner() {
     // Tracked so unmounting mid-join tears it down. Without this the session
     // lived only in this closure: navigating away inside the ~10s join window
     // left the socket, its 10s heartbeat, the reconnect timer and five
-    // window/document wake listeners alive for the life of the tab — and
+    // window/document wake listeners alive for the life of the tab, and
     // because auto-reconnect re-sends the queue frame, the server could still
     // seat the player in a game they had left, stranding an opponent on the
-    // clock. QuickMatch and QueueButton already keep this ref; the lobby's own
+    // clock. QuickMatch already keeps this ref; the lobby's own
     // seek-answer path was the one that did not.
     joinSessionRef.current?.destroy();
     joinSessionRef.current = session;
@@ -322,7 +372,7 @@ function LobbyInner() {
       session.destroy();
       if (joinSessionRef.current === session) joinSessionRef.current = null;
       setJoiningPool(null);
-      setLobbyError(
+      setJoinError(
         e instanceof Error && e.message === "seek_gone"
           ? "That player is no longer waiting. Try quick pairing instead."
           : "Could not join that game right now.",
@@ -350,21 +400,30 @@ function LobbyInner() {
             <h1 className="font-display text-xl font-bold text-parchment-50 sm:text-2xl">Lobby</h1>
             <div className="flex flex-wrap items-center gap-2 pb-0.5">
               <StatusPill lobby={!!lobby} error={!!lobbyError} onlineCount={onlineCount} />
-              {lobby && (
-                <span className="hidden sm:contents">
-                  <HallStat dotClass="bg-sun/80">{`${waitingCount} waiting`}</HallStat>
-                  <HallStat dotClass="bg-coral/80">{`${lobby.games.length} in play`}</HallStat>
-                </span>
-              )}
+              {/* The two counters hold their place (a skeleton number) until
+                  the first snapshot, so the header row does not grow and push
+                  the connection pill sideways when the data lands. */}
+              <span className="hidden sm:contents">
+                {lobby ? (
+                  <>
+                    <HallStat dotClass="bg-sun/80">{`${waitingCount} waiting`}</HallStat>
+                    <HallStat dotClass="bg-coral/80">{`${lobby.games.length} in play`}</HallStat>
+                  </>
+                ) : (
+                  <>
+                    <HallStatSlot dotClass="bg-sun/80" label="waiting" />
+                    <HallStatSlot dotClass="bg-coral/80" label="in play" />
+                  </>
+                )}
+              </span>
             </div>
           </div>
         </header>
 
-        {lobbyError && (
-          <div role="alert" className="mt-5 plate p-3 px-4 border-oxblood-glow/60 bg-oxblood/15 text-parchment text-sm">
-            {lobbyError}
-          </div>
-        )}
+        {/* No page-level alert here any more: it was inserted above the tabs
+            and pushed the whole page down. A failing snapshot poll is shown
+            by the connection pill and by each rail's own error and Retry; a
+            failed seek join is shown beside the seek list (F005). */}
 
         {/* The lobby's two sections as an underline tab row, so the page never
             stacks them all into one long scroll. Play is the default. One
@@ -391,10 +450,31 @@ function LobbyInner() {
             return (
               <button
                 key={t.id}
+                type="button"
                 role="tab"
                 aria-selected={selected}
                 id={`lobby-tab-${t.id}`}
-                aria-controls={`lobby-panel-${t.id}`}
+                // Only point at a panel that is in the DOM: the Play panel
+                // always is (hidden when inactive), the Watch panel only while
+                // it is the selected tab.
+                aria-controls={t.id === "play" || selected ? `lobby-panel-${t.id}` : undefined}
+                // Roving tabindex: Tab reaches the selected tab only, and the
+                // arrow keys (plus Home and End) move between tabs, per the
+                // WAI-ARIA tabs pattern (F145).
+                tabIndex={selected ? 0 : -1}
+                onKeyDown={(e) => {
+                  const ids = LOBBY_TABS.map((x) => x.id);
+                  const at = ids.indexOf(t.id);
+                  let next: LobbyTab | null = null;
+                  if (e.key === "ArrowRight") next = ids[(at + 1) % ids.length];
+                  else if (e.key === "ArrowLeft") next = ids[(at - 1 + ids.length) % ids.length];
+                  else if (e.key === "Home") next = ids[0];
+                  else if (e.key === "End") next = ids[ids.length - 1];
+                  if (!next) return;
+                  e.preventDefault();
+                  setTab(next);
+                  document.getElementById(`lobby-tab-${next}`)?.focus();
+                }}
                 onClick={() => setTab(t.id)}
                 className={
                   // 33.9px WIDE before this. The height was fixed and the width never was,
@@ -490,15 +570,15 @@ function LobbyInner() {
 
               {/* Set up a private game with a specific person: pick a clock and
                   mode, create + share the code (or challenge a named friend), or
-                  join with a code you were given — all without leaving /lobby.
+                  join with a code you were given, all without leaving /lobby.
                   Folded by default; ?tab=friends and the in-page shortcuts open
                   it. */}
               <FriendsSection open={friendsOpen} onToggle={() => setFriendsOpen((v) => !v)} />
             </div>
             )}
 
-            {/* Quick Play stays MOUNTED across tab switches — hidden with the
-                `hidden` attribute, never unmounted. QueueButton owns the live
+            {/* Quick Play stays MOUNTED across tab switches, hidden with the
+                `hidden` attribute, never unmounted. QuickMatch owns the live
                 matchmaking socket (MPSession) and its "searching" state;
                 unmounting it on a tab switch ran its effect cleanup, which
                 destroyed the session and silently cancelled an in-flight seek.
@@ -518,51 +598,23 @@ function LobbyInner() {
               {/* The main action: get matched with a real opponent. `active`
                   gates the portalled mobile sticky bar to the Play tab. */}
               <QuickMatch active={tab === "play"} />
-              {/* The other ways to start a game, as a proper 3-card row beneath
+              {/* The other ways in (custom game, a friend, the bot), beneath
                   the dominant Quick Match panel so matchmaking stays the
-                  headline while these stay one tap away. Each opens its
-                  existing flow (the challenges fold, the friends fold, bot
-                  practice). */}
-              {/* The other ways in, as Lichess's lobby buttons: three metal
-                  rows, icon left, label flush left. Each opens its existing
-                  flow (the challenges fold, the friends fold, bot practice). */}
-              <div className="grid gap-2 sm:grid-cols-3">
-                <Button
-                  tone="default"
-                  size="lg"
-                  align="start"
-                  onClick={() => {
-                    setTab("play");
-                    setChallengesOpen(true);
-                    // The fold opens below the fold line on most screens, so
-                    // without this the button looked like it did nothing.
-                    window.setTimeout(() => {
-                      document
-                        .getElementById("lobby-fold-challenges")
-                        ?.scrollIntoView({ behavior: "smooth", block: "start" });
-                    }, 60);
-                  }}
-                >
-                  <Swords size={22} strokeWidth={1.6} aria-hidden className="shrink-0 text-parchment-300" />
-                  Custom game
-                </Button>
-                <Button
-                  tone="default"
-                  size="lg"
-                  align="start"
-                  onClick={() => {
-                    setTab("watch");
-                    setFriendsOpen(true);
-                  }}
-                >
-                  <Users size={22} strokeWidth={1.6} aria-hidden className="shrink-0 text-parchment-300" />
-                  Challenge a friend
-                </Button>
-                <LinkButton tone="default" size="lg" align="start" href="/play">
-                  <Cpu size={22} strokeWidth={1.6} aria-hidden className="shrink-0 text-parchment-300" />
-                  Play against computer
-                </LinkButton>
-              </div>
+                  headline while these stay one tap away. */}
+              <LobbyWaysIn
+                onCustomGame={() => {
+                  setTab("play");
+                  setChallengesOpen(true);
+                  // The fold opens below the fold line on most screens, so
+                  // without a scroll the button looked like it did nothing.
+                  // An effect scrolls once the fold has rendered.
+                  setScrollToChallenges((n) => n + 1);
+                }}
+                onChallengeFriend={() => {
+                  setTab("watch");
+                  setFriendsOpen(true);
+                }}
+              />
 
               {/* Open challenges: players waiting in a quick-pairing pool plus
                   friend games waiting for an opponent, each on its own flat row
@@ -593,6 +645,11 @@ function LobbyInner() {
                         Create a friend game
                       </button>
                     </div>
+                    {joinError && (
+                      <p role="alert" className="mt-3 border border-oxblood-glow/60 bg-oxblood/15 p-3 text-sm text-parchment">
+                        {joinError}
+                      </p>
+                    )}
                     <ModeFilter value={challengeFilter} onChange={setChallengeFilter} label="Filter challenges by mode" />
                     {!lobby ? (
                       lobbyError ? (
@@ -826,7 +883,7 @@ function StatusPill({
 
 // Each lobby section wears a small color identity: an icon chip beside the
 // title (mint for friends, sun for open challenges, coral for live games; the
-// online queue keeps the core blue inside QueueButton). Color on the chip
+// online queue keeps the core blue inside QuickMatch). Color on the chip
 // only, never the whole panel, so the page stays quiet.
 const SECTION_TINTS = {
   mint: "border-mint/30 bg-mint/10 text-mint-glow",
@@ -841,7 +898,7 @@ const SECTION_TINTS = {
 // stack with setup first. FriendGameSetup's own inline FriendsPanel is
 // suppressed here (showFriends={false}) so the list renders exactly once.
 // On the direct-challenge flow (?challenge=name) the setup panel is already
-// about one opponent, so the list stands down — same as the old inline rule.
+// about one opponent, so the list stands down, same as the old inline rule.
 function FriendsSection({ open, onToggle }: { open: boolean; onToggle: () => void }) {
   const { challenging } = useFriendGame();
   return (
@@ -1044,19 +1101,6 @@ function SkeletonRows({ count }: { count: number }) {
             <span className="skeleton block h-2.5 w-1/3" />
           </div>
           <span className="skeleton h-9 w-20 shrink-0" />
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-function SkeletonPlayerRows({ count }: { count: number }) {
-  return (
-    <ul className="mt-3 space-y-2" aria-hidden>
-      {Array.from({ length: count }).map((_, i) => (
-        <li key={i} className="flex items-center justify-between gap-2">
-          <span className="skeleton block h-3 w-2/5" />
-          <span className="skeleton h-4 w-14 shrink-0" />
         </li>
       ))}
     </ul>
@@ -1275,7 +1319,7 @@ function LiveGameRow({ game }: { game: MPLobbyGame }) {
 
 // A compact live game for the right-rail "Games to watch" panel: the whole row
 // is one link into the spectator route, showing both players WITH their
-// ratings, mode + clock, and how deep the game is — so two 5+3 games still
+// ratings, mode + clock, and how deep the game is, so two 5+3 games still
 // read differently at a glance. Denser than the full LiveGameRow in the Watch
 // tab.
 function RailWatchRow({ game }: { game: MPLobbyGame }) {

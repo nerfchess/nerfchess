@@ -12,7 +12,7 @@ import { MPLobby } from "./multiplayer";
 // per-viewer WebSocket `lobby` poll: a crowd of browsers now shares one cached
 // copy per colo, so the DO sees ~1 request per cache window instead of one
 // socket poll each, and idle viewers hold no socket at all. The counts come
-// entirely from this one shared snapshot — arena (OCI bot-vs-bot) games are
+// entirely from this one shared snapshot: arena (OCI bot-vs-bot) games are
 // unioned into it server-side (worker.ts, gated ARENA_LOBBY_ENABLED), so every
 // client agrees; withArenaLobby only warms arena spectator-routing state and
 // leaves the numbers untouched (see arenaLobby.ts, Tier 3). Throws on a non-OK
@@ -25,7 +25,7 @@ export async function fetchLobbySnapshot(): Promise<MPLobby> {
   // ~3s window a fresh URL, so no URL-keyed cache in front of the worker can
   // ever pin the lobby again; the worker's own edge cache maps ANY query to
   // its shared per-window key (worker.ts handleLobbyEdge), so this adds no
-  // load on the game server — a crowd still costs ~1 DO hit per window.
+  // load on the game server; a crowd still costs ~1 DO hit per window.
   const bucket = Math.floor(Date.now() / 3000);
   const res = await fetch(`/api/lobby?fresh=${bucket}`, {
     headers: { accept: "application/json" },
