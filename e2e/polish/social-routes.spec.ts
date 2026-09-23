@@ -621,3 +621,23 @@ test.describe("/tournaments directory", () => {
     await ctx.close();
   });
 });
+
+// ---------------------------------------------------------------------------
+// /clubs directory.
+
+test.describe("/clubs directory", () => {
+  // F038: search only covered the 50 clubs the page had loaded.
+  test("search also finds clubs outside the loaded list", async ({ page }) => {
+    const club = (id: string, name: string) => ({
+      id, slug: id, name, description: "", icon: "", owner_name: "polish_mod", created_at: 0, members: 1, joined: 0,
+    });
+    await page.route("**/api/clubs**", (route) => {
+      const q = new URL(route.request().url()).searchParams.get("q");
+      return route.fulfill({ json: { clubs: q ? [club("deep1", "Deep archive club")] : [club("top1", "Top club")] } });
+    });
+    await page.goto("/clubs");
+    await expect(page.getByText("Top club")).toBeVisible({ timeout: 60_000 });
+    await page.getByRole("searchbox", { name: "Search clubs" }).or(page.getByLabel("Search clubs")).first().fill("deep");
+    await expect(page.getByText("Deep archive club")).toBeVisible({ timeout: 5000 });
+  });
+});

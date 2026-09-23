@@ -1,0 +1,5 @@
+  ✘  1 [chromium] › e2e/polish/social-routes.spec.ts:630:7 › /clubs directory › search also finds clubs outside the loaded list (8.0s)
+    Error: expect(locator).toBeVisible() failed
+    Error: element(s) not found
+    Error Context: test-results/polish-social-routes--club-faa56-ubs-outside-the-loaded-list-chromium/error-context.md
+  1 failed
