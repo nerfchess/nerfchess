@@ -47,3 +47,12 @@
   3 failed
 # after: dev server
   3 passed (21.8s)
+# before (2d175c9 build on :3100), rejoin slot tests
+    Error: page.waitForFunction: Test timeout of 150000ms exceeded.
+      115 |     expect(new Set(ys).size, `counter tops: ${[...new Set(ys)].join(", ")}`).toBe(1);
+    Error: expect(locator).toBeVisible() failed
+    Error: element(s) not found
+      115 |     expect(new Set(ys).size, `counter tops: ${[...new Set(ys)].join(", ")}`).toBe(1);
+  2 failed
+# after (dev)
+  2 passed (15.6s)

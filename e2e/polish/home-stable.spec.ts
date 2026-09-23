@@ -85,3 +85,33 @@ test("one lobby request serves the hero and the live counter", async ({ page }) 
   await page.waitForTimeout(2000);
   expect(requests).toBe(1);
 });
+
+// The rejoin slot: a returning player with a game on this device gets the
+// button in the first frame, so the live counter under it never moves; when
+// the archive says the game is over, the slot says so in place.
+const SAMPLE_COUNTER = `(() => {
+  window.__counterYs = [];
+  const tick = () => {
+    const el = document.querySelector('main a[href="/lobby"][aria-busy], main a[href="/lobby"].mt-5');
+    if (el) window.__counterYs.push(Math.round(el.getBoundingClientRect().top));
+    if (window.__counterYs.length < 400) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+})();`;
+
+for (const finished of [false, true]) {
+  test(`a stored game ${finished ? "that has ended" : "in progress"} holds its slot from the first paint`, async ({ page }) => {
+    await page.addInitScript(
+      `try { localStorage.setItem("nerfchess.activeGame.v1", JSON.stringify({ id: "polish-rejoin", at: Date.now() })); } catch (e) {}`,
+    );
+    await page.addInitScript(SAMPLE_COUNTER);
+    await page.route("**/api/games/polish-rejoin", (route) =>
+      route.fulfill({ json: { game: finished ? { winner: "w", completed_at: Date.now() } : { winner: null, completed_at: null } } }),
+    );
+    await page.goto("/");
+    await expect(page.getByRole("link", { name: finished ? "See how your last game ended" : "Rejoin your game" })).toBeVisible();
+    await page.waitForFunction(() => (window as unknown as { __counterYs: number[] }).__counterYs.length >= 120);
+    const ys = await page.evaluate(() => (window as unknown as { __counterYs: number[] }).__counterYs);
+    expect(new Set(ys).size, `counter tops: ${[...new Set(ys)].join(", ")}`).toBe(1);
+  });
+}
