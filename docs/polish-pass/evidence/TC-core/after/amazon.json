@@ -1,0 +1,128 @@
+{
+ "id": "amazon",
+ "url": "/dev/plays?id=amazon&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "amazon",
+  "name": "Amazon",
+  "tier": 7,
+  "category": "movement",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "core",
+  "visual": "amazoncrown",
+  "anchor": "cast",
+  "source": "empower",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "engine",
+  "driveNote": "activated with 1 pick(s)",
+  "castSq": "d1",
+  "targets": [
+   "d1"
+  ],
+  "picks": [
+   "d1"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2577,
+  "cssEndMs": 3425,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 27,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 202,
+  "maxGapMs": 41
+ },
+ "raf": {
+  "frames": 189,
+  "medianMs": 16.7,
+  "maxMs": 3949.9,
+  "dropped": 263
+ },
+ "longAnimationFrames": {
+  "count": 4,
+  "worstMs": 3966,
+  "totalBlockingMs": 4026,
+  "entries": [
+   {
+    "atMs": -110,
+    "duration": 120,
+    "blocking": 70,
+    "scripts": []
+   },
+   {
+    "atMs": 67,
+    "duration": 90,
+    "blocking": 40,
+    "scripts": []
+   },
+   {
+    "atMs": 3259,
+    "duration": 51,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 3449,
+    "duration": 3966,
+    "blocking": 3916,
+    "scripts": [
+     {
+      "duration": 3964,
+      "invoker": "http://localhost:3000/_next/static/chunks/_app-pages-browser_src_lib_cardIconCom...",
+      "source": "/_next/static/chunks/_app-pages-browser_src_lib_cardIconComponents_gen_ts.js"
+     }
+    ]
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  197,
+  503,
+  869,
+  1281,
+  1731,
+  2215,
+  2727
+ ],
+ "png": "docs/polish-pass/evidence/TC-core/after/amazon.png",
+ "pngBytes": 25831,
+ "off": {
+  "url": "/dev/plays?id=amazon&anim=off&bare=1",
+  "pass": false,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0.0865,
+  "endRegions": [
+   {
+    "x": 40,
+    "y": 32,
+    "w": 408,
+    "h": 64,
+    "cells": 401
+   },
+   {
+    "x": 232,
+    "y": 432,
+    "w": 16,
+    "h": 8,
+    "cells": 2
+   }
+  ],
+  "png": "docs/polish-pass/evidence/TC-core/after/amazon.off.png"
+ }
+}

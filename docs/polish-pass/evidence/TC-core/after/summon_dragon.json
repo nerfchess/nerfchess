@@ -1,0 +1,161 @@
+{
+ "id": "summon_dragon",
+ "url": "/dev/plays?id=summon_dragon&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "summon_dragon",
+  "name": "Summon Dragon",
+  "tier": 7,
+  "category": "pieces",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "core",
+  "visual": "dragonrise",
+  "anchor": "cast",
+  "source": "summon",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "engine",
+  "driveNote": "activated with 1 pick(s)",
+  "castSq": "d4",
+  "targets": [
+   "d4"
+  ],
+  "picks": [
+   "d4"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2904,
+  "cssEndMs": 3510,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 28,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 153,
+  "maxGapMs": 390.5
+ },
+ "raf": {
+  "frames": 145,
+  "medianMs": 16.7,
+  "maxMs": 116.7,
+  "dropped": 73
+ },
+ "longAnimationFrames": {
+  "count": 10,
+  "worstMs": 111,
+  "totalBlockingMs": 79,
+  "entries": [
+   {
+    "atMs": -55,
+    "duration": 56,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 15,
+    "duration": 64,
+    "blocking": 13,
+    "scripts": []
+   },
+   {
+    "atMs": 97,
+    "duration": 51,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 1868,
+    "duration": 73,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 2122,
+    "duration": 82,
+    "blocking": 21,
+    "scripts": []
+   },
+   {
+    "atMs": 2218,
+    "duration": 68,
+    "blocking": 0,
+    "scripts": [
+     {
+      "duration": 6,
+      "invoker": "Response.json.then",
+      "source": "/_next/static/chunks/webpack.js?v=1790200186825"
+     }
+    ]
+   },
+   {
+    "atMs": 2300,
+    "duration": 60,
+    "blocking": 9,
+    "scripts": [
+     {
+      "duration": 57,
+      "invoker": "http://localhost:3000/_next/static/webpack/app/layout.7d978c2a9ebad7ac.hot-updat...",
+      "source": "/_next/static/webpack/app/layout.7d978c2a9ebad7ac.hot-update.js"
+     }
+    ]
+   },
+   {
+    "atMs": 2364,
+    "duration": 92,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 2468,
+    "duration": 56,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 2586,
+    "duration": 111,
+    "blocking": 36,
+    "scripts": [
+     {
+      "duration": 27,
+      "invoker": "TimerHandler:setInterval",
+      "source": ""
+     }
+    ]
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  221,
+  563,
+  973,
+  1435,
+  1939,
+  2480,
+  3054
+ ],
+ "png": "docs/polish-pass/evidence/TC-core/after/summon_dragon.png",
+ "pngBytes": 28490,
+ "off": {
+  "url": "/dev/plays?id=summon_dragon&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "docs/polish-pass/evidence/TC-core/after/summon_dragon.off.png"
+ }
+}

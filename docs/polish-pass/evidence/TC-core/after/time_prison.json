@@ -33,72 +33,72 @@
  },
  "stageError": null,
  "durationMs": {
-  "visualMs": 2692,
-  "cssEndMs": 3407,
+  "visualMs": 2556,
+  "cssEndMs": 3400,
   "settled": true,
   "windowMs": 3600,
   "cssAnimations": 34,
   "infiniteAnimations": 0
  },
  "screencast": {
-  "framesInWindow": 152,
-  "maxGapMs": 283
+  "framesInWindow": 136,
+  "maxGapMs": 272.8
  },
  "raf": {
-  "frames": 167,
+  "frames": 176,
   "medianMs": 16.7,
-  "maxMs": 149.9,
-  "dropped": 51
+  "maxMs": 283.2,
+  "dropped": 43
  },
  "longAnimationFrames": {
-  "count": 4,
-  "worstMs": 84,
-  "totalBlockingMs": 22,
+  "count": 3,
+  "worstMs": 308,
+  "totalBlockingMs": 263,
   "entries": [
    {
-    "atMs": -48,
-    "duration": 52,
-    "blocking": 0,
+    "atMs": -57,
+    "duration": 62,
+    "blocking": 7,
     "scripts": []
    },
    {
-    "atMs": 7,
-    "duration": 51,
+    "atMs": 476,
+    "duration": 91,
     "blocking": 0,
-    "scripts": []
-   },
-   {
-    "atMs": 142,
-    "duration": 84,
-    "blocking": 22,
     "scripts": [
      {
-      "duration": 9,
+      "duration": 5,
       "invoker": "TimerHandler:setInterval",
       "source": ""
      }
     ]
    },
    {
-    "atMs": 958,
-    "duration": 55,
-    "blocking": 0,
-    "scripts": []
+    "atMs": 748,
+    "duration": 308,
+    "blocking": 256,
+    "scripts": [
+     {
+      "duration": 301,
+      "invoker": "http://localhost:3000/_next/static/chunks/_app-pages-browser_src_components_effe...",
+      "source": "/_next/static/chunks/_app-pages-browser_src_components_effects_board3d_engine3d_ts.js"
+     }
+    ]
    }
   ]
  },
  "tiles": [
   0,
-  205,
-  524,
-  905,
-  1335,
-  1804,
-  2308,
-  2842
+  196,
+  499,
+  862,
+  1271,
+  1718,
+  2198,
+  2706
  ],
  "png": "docs/polish-pass/evidence/TC-core/after/time_prison.png",
- "pngBytes": 27115,
+ "pngBytes": 30681,
  "off": {
   "url": "/dev/plays?id=time_prison&anim=off&bare=1",
   "pass": true,
