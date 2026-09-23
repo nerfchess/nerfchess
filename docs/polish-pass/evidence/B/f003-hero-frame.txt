@@ -1,0 +1,6 @@
+# before: build of 2d175c9 on :3100
+    Error: demo {"frameY":106,"frameH":369,"heroH":413,"nextY":489} vs replay {"frameY":62,"frameH":369,"heroH":396,"nextY":472}
+    Error: demo {"frameY":101,"frameH":574,"heroH":601,"nextY":74} vs replay {"frameY":74,"frameH":574,"heroH":601,"nextY":74}
+  2 failed
+# after: dev server with slice B change
+  2 passed (4.6s)
