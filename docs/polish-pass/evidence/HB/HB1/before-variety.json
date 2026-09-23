@@ -1,0 +1,107 @@
+{
+  "script": "scripts/sim-house-variety.ts",
+  "commit": "bbe4271",
+  "argv": "--tiers 1350,1650,2000,2400 --seeds 20 --plies 8 --commit bbe4271 --out /home/user/nerfchess/docs/polish-pass/evidence/HB/HB1/before-variety.json",
+  "frozenClock": true,
+  "ceilingMs": 20,
+  "depthCeilingMs": 40,
+  "sequences": [
+    {
+      "tier": 1350,
+      "distinct": 7,
+      "of": 20,
+      "distinctFirstMoves": 3,
+      "mostCommon": "b1c3 b8c6 g1f3 g8f6 d2d4 d7d5 c1f4 e7e6",
+      "mostCommonCount": 14
+    },
+    {
+      "tier": 1650,
+      "distinct": 4,
+      "of": 20,
+      "distinctFirstMoves": 1,
+      "mostCommon": "b1c3 b8c6 g1f3 g8f6 d2d4 d7d5 c1f4 e7e6",
+      "mostCommonCount": 17
+    },
+    {
+      "tier": 2000,
+      "distinct": 1,
+      "of": 20,
+      "distinctFirstMoves": 1,
+      "mostCommon": "b1c3 b8c6 g1f3 g8f6 d2d4 d7d5 c1f4 e7e6",
+      "mostCommonCount": 20
+    },
+    {
+      "tier": 2400,
+      "distinct": 1,
+      "of": 20,
+      "distinctFirstMoves": 1,
+      "mostCommon": "b1c3 b8c6 g1f3 g8f6 d2d4 d7d5 c1f4 e7e6",
+      "mostCommonCount": 20
+    }
+  ],
+  "personaFirstMoves": {
+    "personas": 40,
+    "distinct": 9,
+    "counts": {
+      "d2d3": 1,
+      "g1f3": 6,
+      "b1c3": 5,
+      "e2e4": 5,
+      "g2g3": 10,
+      "c2c4": 4,
+      "b2b3": 3,
+      "d2d4": 4,
+      "f2f4": 2
+    }
+  },
+  "styleDepth": [
+    {
+      "tier": 1350,
+      "personas": 57,
+      "styledOnSamplingPath": 53,
+      "bakedMeanDepth": null,
+      "styledMeanDepth": null,
+      "depthReported": {
+        "baked": 0,
+        "styled": 0,
+        "of": 27
+      }
+    },
+    {
+      "tier": 1650,
+      "personas": 70,
+      "styledOnSamplingPath": 69,
+      "bakedMeanDepth": null,
+      "styledMeanDepth": null,
+      "depthReported": {
+        "baked": 0,
+        "styled": 0,
+        "of": 27
+      }
+    },
+    {
+      "tier": 2000,
+      "personas": 21,
+      "styledOnSamplingPath": 20,
+      "bakedMeanDepth": null,
+      "styledMeanDepth": null,
+      "depthReported": {
+        "baked": 0,
+        "styled": 0,
+        "of": 27
+      }
+    },
+    {
+      "tier": 2400,
+      "personas": 45,
+      "styledOnSamplingPath": 43,
+      "bakedMeanDepth": null,
+      "styledMeanDepth": null,
+      "depthReported": {
+        "baked": 0,
+        "styled": 0,
+        "of": 27
+      }
+    }
+  ]
+}

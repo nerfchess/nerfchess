@@ -1,0 +1,8 @@
+house snap replies
+  forced branch: fired on 0 of 20 positions with exactly one king-safe move
+  FAIL the forced branch fires on every one-king-safe-move position (0/20)
+  houseSnapMove: not exported on this tree
+  FAIL houseSnapMove is exported
+  FAIL houseSnapMove plays the hard@400 move on at least 90% of recapture positions (0%)
+
+3 snap-reply assertion(s) failed
