@@ -750,6 +750,25 @@ New things built in this pass, each with its justification. Planned rows are lis
 | A-team | src/lib/team.ts and team section on /about with Person JSON-LD, footer credit | Brief 18 | TODO |
 | A-guards | check-shadows, motion guards, codex 200 guard, metadata crawl guard, JSON-LD parse guard, CI workflow | F028, F161, F231, F250 | TODO |
 
+## INTEGRATOR DECISIONS
+
+Defaults the integrator took so work is not blocked. Each one is reversible and the owner can overrule it in OWNER QUESTIONS.
+
+| Q | Default taken | Why |
+|---|---|---|
+| Q1 | Server knows the user before render via a small non-httpOnly display cookie (`nc_who`: username, avatar key, role, guest flag, signed by nothing and trusted for nothing but layout). The root layout reads it with `cookies()` and passes it to a SessionProvider, so the first paint has the final header shape. `/api/auth/me` stays the authority and corrects the hint. No D1 lookup per page. | Brief section 4 wants the server to know who you are; a D1 read per page view costs TTFB on every route, a hint cookie costs nothing and cannot grant access. |
+| Q4 | Public "players online" shows the real human count only, the same number the mod panel shows. The padding and synthetic curve are removed. | Brief 16: never inflate or seed a public count. |
+| Q5 | Human counts exclude house bots (is_bot / hp_ prefix), seed_ and polish_ prefixes. Written next to every number. | Brief 16 exclusion rule. |
+| Q7 | The privacy policy is rewritten to match what is actually collected and what email is sent; the date is bumped. Owner signs off before merge. | Brief 17.3 requires it and the current text is false (F175). |
+| Q2, Q3 | Guest behaviour unchanged. Counts report guests separately and exclude guests with zero games from active-user numbers. | Business decision; counting can be honest without changing it. |
+| Q14 | Unchanged role model. Safest fix only: the usernames in ADMIN_USERNAMES become reserved (cannot be registered or renamed into). | Security fix without changing who is admin. |
+| Q20 | /healthz keeps `ok` and `version`, drops the stack and error text from the public response (logged instead). | Safest change for an information leak; no new secret needed. |
+| Q21-Q23 | Email ships dormant: sends nothing until RESEND_API_KEY, EMAIL_FROM and FOUNDER_REPORT_EMAILS are set. Cron `0 13 * * *` (9am EDT). Mailing address is an env var (EMAIL_MAILING_ADDRESS); without it the welcome email is not sent (CASL). | Nothing breaks before the owner sets it up. |
+| Q10, Q12 | Copy spelling and card counts left as they are, except where a number is provably wrong in the same sentence. | Brand decision. |
+| Q37 | No proposal is built. | Brief rule 0.1. |
+
+Fleet mechanics (wave 1 on): agents share the main working tree with disjoint file ownership (SLICES), so the one supervised dev server shows everyone's work and evidence is real. Heavy commands go through `scripts/polish/heavy.sh` (two box-wide slots). Commits go through `scripts/polish/commit.sh "msg" paths...` (commits only the named paths, under a lock). Per-slice ledger updates go to `docs/polish-pass/slices/<slice>.md` and the integrator folds them into this file, so no two agents edit the ledger at once.
+
 ## OWNER QUESTIONS
 
 Decisions only the owner can make (secrets, business decisions, PROPOSALS). Work that does not depend on them continues. Answer inline here.
