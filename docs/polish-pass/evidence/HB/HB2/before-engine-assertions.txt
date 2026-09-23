@@ -1,0 +1,26 @@
+engine assertions (baseline)
+
+FAIL  KING_CAPTURE_SCORE is exported and is 100000
+FAIL  isKingCaptureScore is exported
+FAIL  argmax path sets SearchStats.scoreCp: scoreCp undefined, depth 3
+FAIL  sampling path sets SearchStats.scoreCp and depth: scoreCp undefined, depth 0
+FAIL  an immediate king capture scores KING_CAPTURE_SCORE - 1: got 100000 e1e8
+FAIL  pickAIMove reports the same king-capture score: got undefined
+  ok  isKingCaptureScore draws the line at 90000
+FAIL  a king lost on ply 2 scores -(KING_CAPTURE_SCORE - 2): got -100000
+  ok  king-capture magnitudes stay at or above the eval bar's 90000
+FAIL  the faster of two king captures is chosen, sampling path: 8/40
+  ok  the faster of two king captures is chosen, argmax path
+FAIL  no stand-pat at an in-check leaf: depth 1 sees the back-rank capture: got d1d7 -540
+FAIL  the same through pickAIMove at depth 1
+FAIL  a depth-1 timeout returns a king-safe move (argmax path)
+FAIL  a depth-1 timeout returns a king-safe move (sampling path): 5/20
+FAIL  a root move allowing an own-nerf loss in one is dropped: played e4d5
+  ok  when every move allows the loss, the filter keeps them all
+  ok  the opponent's nerf is never read by the search
+FAIL  rankRootMoves / getEngineTuning are not exported
+FAIL  setEngineTuning is not exported
+FAIL  engineInternals is not exported
+  ok  easy still returns a legal move
+
+16 engine assertion(s) failed
