@@ -1562,7 +1562,7 @@ export function DraftOverlay({
                 setChosen(selected);
                 commit(selected);
               }}
-              className="min-w-[6rem] flex-1 touch-manipulation px-3 py-2 text-xs font-semibold tracking-wide">
+              className="min-w-[6rem] flex-1 touch-manipulation px-3 py-2 text-[14px] font-semibold tracking-wide sm:text-[13px]">
               {selected != null
                 ? `Confirm ${BUFF_BY_ID[offer.cards[selected]?.id]?.name ?? "pick"}`
                 : "Pick a card"}
@@ -1630,11 +1630,17 @@ export function DraftOverlay({
           <button
             type="button"
             onClick={() => setHidden(false)}
-            aria-label="Show the draft"
-            className="plate plate-raised flex items-center gap-2 border-gold/40 px-3 py-2 shadow-plate transition hover:border-gold/70"
+            data-draft-chip
+            // The visible label and the countdown ARE the name: an aria-label
+            // here used to replace both, so a screen reader heard "Show the
+            // draft" with no hint of the clock running down (F157). The
+            // action rides along as screen-reader text instead. 44px on a
+            // touchscreen, the 36px floor only under a fine pointer.
+            className="plate plate-raised flex min-h-[44px] items-center gap-2 border-gold/40 px-3 py-2 transition hover:border-gold/70 [@media(pointer:fine)]:min-h-[36px]"
           >
             <EyeIcon className="text-gold-leaf" />
-            <span className="font-display text-xs font-semibold tracking-wide text-parchment-100">
+            <span className="sr-only">Show the draft:</span>{" "}
+            <span className="font-display text-[14px] font-semibold tracking-wide text-parchment-100 sm:text-[13px]">
               Draft open
             </span>
             {deadline != null && <ChipCountdown deadline={deadline} />}
@@ -1923,7 +1929,7 @@ export function DraftOverlay({
                 // 44px on a touchscreen, the desktop 36px floor only where the
                 // pointer is actually fine. `sm:` was never a proxy for "has a
                 // mouse": a touchscreen laptop at 1440 still needs 44.
-                className="min-h-[44px] px-3 py-1 text-[12px] text-parchment-400 transition-colors hover:text-parchment-100 [@media(pointer:fine)]:min-h-[36px]"
+                className="min-h-[44px] px-3 py-1 text-[14px] text-parchment-400 transition-colors hover:text-parchment-100 sm:text-[13px] [@media(pointer:fine)]:min-h-[36px]"
               >
                 Skip
               </button>

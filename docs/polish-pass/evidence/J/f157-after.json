@@ -1,0 +1,340 @@
+[
+ {
+  "viewport": "390x844",
+  "touch": true,
+  "open": [
+   {
+    "text": "Hide",
+    "name": null,
+    "h": 44,
+    "w": 73,
+    "minFont": 14
+   },
+   {
+    "text": "",
+    "name": null,
+    "h": 231,
+    "w": 330,
+    "minFont": null
+   },
+   {
+    "text": "marked",
+    "name": null,
+    "h": 18,
+    "w": 47,
+    "minFont": 13
+   },
+   {
+    "text": "capture",
+    "name": null,
+    "h": 18,
+    "w": 47,
+    "minFont": 13
+   },
+   {
+    "text": "flashes",
+    "name": null,
+    "h": 18,
+    "w": 43,
+    "minFont": 13
+   },
+   {
+    "text": "One use",
+    "name": null,
+    "h": 36,
+    "w": 276,
+    "minFont": 13
+   },
+   {
+    "text": "",
+    "name": null,
+    "h": 267,
+    "w": 330,
+    "minFont": null
+   },
+   {
+    "text": "flash",
+    "name": null,
+    "h": 18,
+    "w": 29,
+    "minFont": 13
+   },
+   {
+    "text": "Confirm Hoofbeat Log",
+    "name": null,
+    "h": 44,
+    "w": 332,
+    "minFont": 13
+   },
+   {
+    "text": "Reroll (1)",
+    "name": null,
+    "h": 44,
+    "w": 332,
+    "minFont": 13
+   },
+   {
+    "text": "Skip & bank +1 tier next draft",
+    "name": null,
+    "h": 44,
+    "w": 332,
+    "minFont": 13
+   }
+  ],
+  "hidden": [
+   {
+    "text": "Show the draft: Draft open",
+    "name": "Show the draft: Draft open",
+    "h": 44,
+    "w": 118,
+    "minFont": 14
+   },
+   {
+    "text": "Hide",
+    "name": null,
+    "h": 44,
+    "w": 73,
+    "minFont": 14
+   },
+   {
+    "text": "",
+    "name": null,
+    "h": 231,
+    "w": 330,
+    "minFont": null
+   },
+   {
+    "text": "marked",
+    "name": null,
+    "h": 18,
+    "w": 47,
+    "minFont": 13
+   },
+   {
+    "text": "capture",
+    "name": null,
+    "h": 18,
+    "w": 47,
+    "minFont": 13
+   },
+   {
+    "text": "flashes",
+    "name": null,
+    "h": 18,
+    "w": 43,
+    "minFont": 13
+   },
+   {
+    "text": "One use",
+    "name": null,
+    "h": 36,
+    "w": 276,
+    "minFont": 13
+   },
+   {
+    "text": "",
+    "name": null,
+    "h": 267,
+    "w": 330,
+    "minFont": null
+   },
+   {
+    "text": "flash",
+    "name": null,
+    "h": 18,
+    "w": 29,
+    "minFont": 13
+   },
+   {
+    "text": "Confirm Hoofbeat Log",
+    "name": null,
+    "h": 44,
+    "w": 332,
+    "minFont": 13
+   },
+   {
+    "text": "Reroll (1)",
+    "name": null,
+    "h": 44,
+    "w": 332,
+    "minFont": 13
+   },
+   {
+    "text": "Skip & bank +1 tier next draft",
+    "name": null,
+    "h": 44,
+    "w": 332,
+    "minFont": 13
+   }
+  ]
+ },
+ {
+  "viewport": "1280x800",
+  "touch": false,
+  "open": [
+   {
+    "text": "Hide",
+    "name": null,
+    "h": 44,
+    "w": 71,
+    "minFont": 13
+   },
+   {
+    "text": "",
+    "name": null,
+    "h": 284,
+    "w": 298,
+    "minFont": null
+   },
+   {
+    "text": "marked",
+    "name": null,
+    "h": 18,
+    "w": 47,
+    "minFont": 13
+   },
+   {
+    "text": "capture",
+    "name": null,
+    "h": 18,
+    "w": 47,
+    "minFont": 13
+   },
+   {
+    "text": "flashes",
+    "name": null,
+    "h": 18,
+    "w": 43,
+    "minFont": 13
+   },
+   {
+    "text": "One use",
+    "name": null,
+    "h": 18,
+    "w": 51,
+    "minFont": 13
+   },
+   {
+    "text": "",
+    "name": null,
+    "h": 284,
+    "w": 298,
+    "minFont": null
+   },
+   {
+    "text": "flash",
+    "name": null,
+    "h": 18,
+    "w": 29,
+    "minFont": 13
+   },
+   {
+    "text": "Confirm Hoofbeat Log",
+    "name": null,
+    "h": 40,
+    "w": 167,
+    "minFont": 13
+   },
+   {
+    "text": "Reroll (1)",
+    "name": null,
+    "h": 40,
+    "w": 106,
+    "minFont": 13
+   },
+   {
+    "text": "Skip & bank +1 tier next draft",
+    "name": null,
+    "h": 41,
+    "w": 236,
+    "minFont": 13
+   }
+  ],
+  "hidden": [
+   {
+    "text": "Show the draft: Draft open",
+    "name": "Show the draft: Draft open",
+    "h": 36,
+    "w": 112,
+    "minFont": 13
+   },
+   {
+    "text": "Hide",
+    "name": null,
+    "h": 44,
+    "w": 71,
+    "minFont": 13
+   },
+   {
+    "text": "",
+    "name": null,
+    "h": 284,
+    "w": 298,
+    "minFont": null
+   },
+   {
+    "text": "marked",
+    "name": null,
+    "h": 18,
+    "w": 47,
+    "minFont": 13
+   },
+   {
+    "text": "capture",
+    "name": null,
+    "h": 18,
+    "w": 47,
+    "minFont": 13
+   },
+   {
+    "text": "flashes",
+    "name": null,
+    "h": 18,
+    "w": 43,
+    "minFont": 13
+   },
+   {
+    "text": "One use",
+    "name": null,
+    "h": 18,
+    "w": 51,
+    "minFont": 13
+   },
+   {
+    "text": "",
+    "name": null,
+    "h": 284,
+    "w": 298,
+    "minFont": null
+   },
+   {
+    "text": "flash",
+    "name": null,
+    "h": 18,
+    "w": 29,
+    "minFont": 13
+   },
+   {
+    "text": "Confirm Hoofbeat Log",
+    "name": null,
+    "h": 40,
+    "w": 167,
+    "minFont": 13
+   },
+   {
+    "text": "Reroll (1)",
+    "name": null,
+    "h": 40,
+    "w": 106,
+    "minFont": 13
+   },
+   {
+    "text": "Skip & bank +1 tier next draft",
+    "name": null,
+    "h": 41,
+    "w": 236,
+    "minFont": 13
+   }
+  ]
+ }
+]
