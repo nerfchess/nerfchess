@@ -270,3 +270,145 @@ test.describe("/tournaments/[id] signed in", () => {
     await expect(page.getByRole("button", { name: /^Join$/ })).toBeVisible({ timeout: 3000 });
   });
 });
+
+// ---------------------------------------------------------------------------
+// /clubs/[slug]. The club API is stubbed so each state is exact.
+
+function clubDetail(myRole: string | null) {
+  const now = Date.now();
+  return {
+    club: {
+      id: "c1",
+      slug: "testclub",
+      name: "Test club",
+      description: "",
+      icon: "",
+      owner_user_id: "o1",
+      owner_name: "polish_mod",
+      created_at: now - 86_400_000,
+    },
+    members: [{ user_id: "o1", username: "polish_mod", avatar: null, rating: 1500, games: 3, role: "owner", joined_at: now }],
+    memberCount: 1,
+    posts: [{ id: "p1", user_id: "o1", username: "polish_mod", avatar: null, text: "Hello club", created_at: now - 60_000 }],
+    tournaments: [
+      { id: "tt1", name: "Club cup", status: "ongoing", starts_at: now - 60_000, duration_min: 60, players: 2, max_players: 8 },
+    ],
+    myRole,
+  };
+}
+
+async function stubClub(page: Page, body: unknown, status = 200, delayMs = 0) {
+  await page.route("**/api/clubs/testclub", async (route) => {
+    if (route.request().method() !== "GET") return route.fallback();
+    if (delayMs) await new Promise((r) => setTimeout(r, delayMs));
+    await route.fulfill({ status, json: body });
+  });
+}
+
+test.describe("/clubs/[slug] signed out", () => {
+  test("a missing club shows the shared 404 copy", async ({ page }) => {
+    await stubClub(page, { error: "Club not found." }, 404);
+    await page.goto("/clubs/testclub");
+    await expect(page.getByRole("heading", { level: 1, name: "No club at that address" })).toBeVisible({ timeout: 60_000 });
+  });
+
+  test("a failed load has an h1 and a Retry", async ({ page }) => {
+    let fail = true;
+    await page.route("**/api/clubs/testclub", (route) =>
+      fail ? route.fulfill({ status: 500, json: { error: "boom" } }) : route.fulfill({ json: clubDetail(null) }),
+    );
+    await page.goto("/clubs/testclub");
+    await expect(page.getByRole("heading", { level: 1, name: /could not load/i })).toBeVisible({ timeout: 60_000 });
+    fail = false;
+    await page.getByRole("button", { name: "Retry" }).click();
+    await expect(page.getByRole("heading", { level: 1, name: "Test club" })).toBeVisible();
+  });
+
+  test("the in-flight state is the route skeleton", async ({ page }) => {
+    await stubClub(page, clubDetail(null), 200, 4000);
+    await page.goto("/clubs/testclub");
+    await expect(page.locator("main .skeleton").first()).toBeVisible({ timeout: 60_000 });
+    await expect(page.getByText(/^Loading/)).toHaveCount(0);
+  });
+
+  // F036: a signed-out visitor had no way to join.
+  test("a signed-out visitor gets a sign-in link back to the club", async ({ page }) => {
+    await stubClub(page, clubDetail(null));
+    await page.goto("/clubs/testclub");
+    await expect(page.getByRole("heading", { level: 1, name: "Test club" })).toBeVisible({ timeout: 60_000 });
+    const join = page.getByRole("link", { name: /sign in to join/i });
+    await expect(join).toBeVisible();
+    expect(decodeURIComponent((await join.getAttribute("href")) ?? "")).toContain("next=/clubs/testclub");
+  });
+
+  // F170: event rows were plain text with a raw lowercase phase.
+  test("club events are links with sentence-case phases", async ({ page }) => {
+    await stubClub(page, clubDetail(null));
+    await page.goto("/clubs/testclub");
+    const row = page.getByRole("link", { name: /Club cup/ });
+    await expect(row).toHaveAttribute("href", "/tournaments/tt1", { timeout: 60_000 });
+    await expect(row).toContainText("In progress");
+  });
+});
+
+test.describe("/clubs/[slug] member", () => {
+  test.use({ storageState: polishAuthState("user") });
+
+  // F179: two quick submits posted twice.
+  test("a double submit posts once", async ({ page }) => {
+    await stubClub(page, clubDetail("member"));
+    let posts = 0;
+    await page.route("**/api/clubs/testclub/posts", async (route) => {
+      posts++;
+      await new Promise((r) => setTimeout(r, 1500));
+      await route.fulfill({
+        json: { post: { id: `n${posts}`, user_id: "me", username: "polish_user", avatar: null, text: "hi", created_at: Date.now() } },
+      });
+    });
+    await page.goto("/clubs/testclub");
+    const box = page.locator("form textarea");
+    await expect(box).toBeVisible({ timeout: 60_000 });
+    await box.fill("hi");
+    await box.evaluate((el) => {
+      const form = (el as HTMLTextAreaElement).form!;
+      form.requestSubmit();
+      form.requestSubmit();
+    });
+    await page.waitForTimeout(2500);
+    expect(posts).toBe(1);
+  });
+
+  // F155: the board field was below 16px on a phone.
+  test("the board field is 16px on a phone", async ({ browser }) => {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, storageState: polishAuthState("user") });
+    const page = await ctx.newPage();
+    await stubClub(page, clubDetail("member"));
+    await page.goto("/clubs/testclub");
+    const box = page.locator("form textarea");
+    await expect(box).toBeVisible({ timeout: 60_000 });
+    expect(await box.evaluate((el) => getComputedStyle(el).fontSize)).toBe("16px");
+    await ctx.close();
+  });
+});
+
+test.describe("/clubs/[slug] owner on touch", () => {
+  test.use({ storageState: polishAuthState("user"), viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+
+  // F180: delete was hover-only, 13px, unconfirmed and silent on failure.
+  test("delete is visible on touch, 44px, asks first and reports a failure", async ({ page }) => {
+    await stubClub(page, clubDetail("owner"));
+    await page.route("**/api/clubs/testclub/posts?**", (route) =>
+      route.fulfill({ status: 500, json: { error: "Could not delete the post." } }),
+    );
+    await page.goto("/clubs/testclub");
+    const del = page.getByRole("button", { name: "Delete post" });
+    await expect(del).toBeVisible({ timeout: 60_000 });
+    expect(await del.evaluate((el) => getComputedStyle(el).opacity)).toBe("1");
+    const b = await del.boundingBox();
+    expect(Math.round(b!.height)).toBeGreaterThanOrEqual(44);
+    await del.click();
+    await page.getByRole("button", { name: "Delete", exact: true }).click();
+    await expect(page.getByRole("alert").filter({ hasText: "Could not delete the post." })).toBeVisible();
+    await expect(page.getByText("Hello club")).toBeVisible();
+  });
+});

@@ -8,11 +8,16 @@ import { ClubIcon, renderClubIconGlyph } from "@/components/ClubIcon";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { PlayerLink } from "@/components/PlayerLink";
 import { SiteHeader } from "@/components/SiteHeader";
-import { AccountUser, fetchMe } from "@/lib/authClient";
+import { useSession } from "@/lib/session/SessionProvider";
+import { NotFoundPanel } from "@/app/_components/NotFoundPanel";
+import { NOT_FOUND_COPY } from "@/app/_components/notFoundCopy";
+import { DetailLoadFailed } from "@/components/social/DetailLoadFailed";
+import { FIELD_TEXT } from "@/components/social/fieldText";
+import { ClubDetailSkeleton } from "./DetailSkeleton";
 import { CLUB_ICON_COLORS, CLUB_ICON_NAMES, encodeClubIcon, isUploadedClubIcon, parseClubIcon } from "@/lib/clubIcons";
 import { fileToDataUrl } from "@/lib/imageUpload";
 import type { ClubMemberRow, ClubPostRow, ClubTournamentRow } from "@/app/api/clubs/[slug]/route";
-import { tournamentPhase } from "@/lib/tournaments";
+import { tournamentPhase, type TournamentPhase } from "@/lib/tournaments";
 import { Button } from "@/components/ui/Button";
 import { LinkButton } from "@/components/ui/Button";
 
@@ -157,7 +162,7 @@ function ClubIconPicker({
             onClick={() => fileRef.current?.click()}
             disabled={saving}
             className="flex px-4 py-2 text-sm disabled:opacity-50">
-            <Upload size={14} /> Upload image
+            <Upload size={14} aria-hidden /> Upload image
           </Button>
           <span className="text-xs text-parchment-500">PNG, JPEG, or WebP. Max 1 MB, 1024px.</span>
         </div>
@@ -189,6 +194,12 @@ function ClubIconPicker({
   );
 }
 
+const PHASE_LABEL: Record<TournamentPhase, string> = {
+  upcoming: "Upcoming",
+  ongoing: "In progress",
+  finished: "Finished",
+};
+
 function timeAgo(at: number): string {
   const s = Math.max(1, Math.floor((Date.now() - at) / 1000));
   if (s < 60) return `${s}s ago`;
@@ -203,11 +214,25 @@ export default function ClubPage() {
   const { slug } = useParams<{ slug: string }>();
   const router = useRouter();
   const [data, setData] = useState<ClubDetail | null>(null);
-  const [me, setMe] = useState<AccountUser | null>(null);
+  // Who is looking, from the shared session (F014): the server hint decides
+  // the join and sign-in controls on the first paint. Anything that grants a
+  // power (moderating, deleting someone's post) waits for the full user.
+  const { user: me, display } = useSession();
   const [error, setError] = useState<string | null>(null);
+  // A 404 is a missing club, not a failed load (F031).
+  const [missing, setMissing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [postText, setPostText] = useState("");
   const [postError, setPostError] = useState<string | null>(null);
+  // In flight guard for the board post (F179): a second Enter or click while
+  // the first post is on its way no longer creates a duplicate.
+  const [posting, setPosting] = useState(false);
+  const postingRef = useRef(false);
+  // Delete asks once, inline (F180): the id awaiting confirmation, the id being
+  // deleted, and the last failure, which is shown instead of swallowed.
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [pickingIcon, setPickingIcon] = useState(false);
 
   // Request sequence: only the newest in-flight load may set state, so a
@@ -217,6 +242,7 @@ export default function ClubPage() {
     const req = ++loadReqRef.current;
     const res = await fetch(`/api/clubs/${encodeURIComponent(slug)}`);
     if (!res.ok) {
+      if (res.status === 404 && req === loadReqRef.current) setMissing(true);
       throw new Error(res.status === 404 ? "That club doesn't exist." : "Could not load the club.");
     }
     const body = (await res.json()) as ClubDetail;
@@ -236,7 +262,6 @@ export default function ClubPage() {
         if (!cancelled) setError(e instanceof Error ? e.message : "Could not load the club.");
       }
     })();
-    fetchMe().then((u) => !cancelled && setMe(u ?? null));
     return () => {
       cancelled = true;
       reqRef.current++;
@@ -264,43 +289,60 @@ export default function ClubPage() {
 
   const submitPost = async (event: FormEvent) => {
     event.preventDefault();
-    if (!postText.trim()) return;
+    if (!postText.trim() || postingRef.current) return;
+    postingRef.current = true;
+    setPosting(true);
     setPostError(null);
+    const sent = postText;
     try {
       const res = await fetch(`/api/clubs/${encodeURIComponent(slug)}/posts`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: postText }),
+        body: JSON.stringify({ text: sent }),
       });
       const body = (await res.json().catch(() => ({}))) as { post?: ClubPostRow; error?: string };
       if (!res.ok || !body.post) throw new Error(body.error || "Could not post.");
       setData((d) => (d ? { ...d, posts: [body.post!, ...d.posts] } : d));
-      setPostText("");
+      // Only clear what was sent, never text typed while it was in flight.
+      setPostText((cur) => (cur === sent ? "" : cur));
     } catch (e) {
       setPostError(e instanceof Error ? e.message : "Could not post.");
+    } finally {
+      postingRef.current = false;
+      setPosting(false);
     }
   };
 
   const deletePost = async (id: string) => {
+    setDeleting(id);
+    setDeleteError(null);
     try {
       const res = await fetch(`/api/clubs/${encodeURIComponent(slug)}/posts?id=${encodeURIComponent(id)}`, {
         method: "DELETE",
       });
-      if (res.ok) setData((d) => (d ? { ...d, posts: d.posts.filter((p) => p.id !== id) } : d));
-    } catch {}
+      const body = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) throw new Error(body.error || "Could not delete the post.");
+      setData((d) => (d ? { ...d, posts: d.posts.filter((p) => p.id !== id) } : d));
+      setConfirmDelete(null);
+    } catch (e) {
+      setDeleteError(e instanceof Error ? e.message : "Could not delete the post.");
+    } finally {
+      setDeleting(null);
+    }
   };
 
+  if (missing && !data) {
+    return <NotFoundPanel {...NOT_FOUND_COPY.club} />;
+  }
   if (error && !data) {
     return (
-      <main className="min-h-screen">
-        <SiteHeader active="/clubs" />
-        <section className="mx-auto max-w-3xl px-6 py-16 text-center">
-          <p className="text-parchment-300">{error}</p>
-          <LinkButton tone="ghost" href="/clubs" className="mt-4 inline-block px-4 py-2 text-sm">
-            Back to clubs
-          </LinkButton>
-        </section>
-      </main>
+      <DetailLoadFailed
+        active="/clubs"
+        title="This club could not load"
+        detail="The server did not answer. Your membership is unaffected."
+        retry={load}
+        back={{ href: "/clubs", label: "All clubs" }}
+      />
     );
   }
 
@@ -321,10 +363,11 @@ export default function ClubPage() {
           // wording as loading.tsx; the loaded page replaces it with the real
           // club name. This page is not used as a Suspense fallback anywhere,
           // so there is no phase where two of these are live at once.
-          <>
+          // The body is the route skeleton, not a "Loading…" line (F022).
+          <div aria-busy="true">
             <h1 className="sr-only">Club</h1>
-            <p className="py-16 text-center text-sm text-parchment-400">Loading…</p>
-          </>
+            <ClubDetailSkeleton />
+          </div>
         ) : (
           <>
             <div className="flex flex-wrap items-end justify-between gap-3">
@@ -340,10 +383,10 @@ export default function ClubPage() {
                     <PlayerLink name={club.owner_name} className="min-w-0 hover:text-gold-leaf" />
                   </span>
                   <span className="flex items-center gap-1.5">
-                    <Users size={13} /> {data.memberCount} member{data.memberCount === 1 ? "" : "s"}
+                    <Users size={13} aria-hidden /> {data.memberCount} member{data.memberCount === 1 ? "" : "s"}
                   </span>
                   <span className="flex items-center gap-1.5">
-                    <CalendarDays size={13} /> since {new Date(club.created_at).toLocaleDateString()}
+                    <CalendarDays size={13} aria-hidden /> since {new Date(club.created_at).toLocaleDateString()}
                   </span>
                 </p>
                 </div>
@@ -353,31 +396,40 @@ export default function ClubPage() {
                   <Button tone="ghost"
                     onClick={() => setPickingIcon((v) => !v)}
                     className="flex px-4 py-2 text-sm">
-                    <Paintbrush size={14} />{" "}
+                    <Paintbrush size={14} aria-hidden />{" "}
                     {parseClubIcon(club.icon) || isUploadedClubIcon(club.icon) ? "Change icon" : "Pick an icon"}
                   </Button>
                 )}
-                {me && !isMember && (
+                {display && !isMember && (
                   <Button tone="leaf"
                     onClick={() => membership("join")}
                     disabled={busy}
                     className="flex px-4 py-2 text-sm font-semibold disabled:opacity-50">
-                    <LogIn size={14} /> Join club
+                    <LogIn size={14} aria-hidden /> Join club
                   </Button>
+                )}
+                {/* A signed-out visitor gets a way in, back to this club
+                    (F036), the same as the tournament page. */}
+                {display === null && (
+                  <LinkButton tone="leaf"
+                    href={`/login?next=${encodeURIComponent(`/clubs/${club.slug}`)}`}
+                    className="flex px-4 py-2 text-sm font-semibold">
+                    <LogIn size={14} aria-hidden /> Sign in to join
+                  </LinkButton>
                 )}
                 {isMember && !isOwner && (
                   <Button tone="ghost"
                     onClick={() => membership("leave")}
                     disabled={busy}
                     className="flex px-4 py-2 text-sm disabled:opacity-50">
-                    <LogOut size={14} /> Leave
+                    <LogOut size={14} aria-hidden /> Leave
                   </Button>
                 )}
                 {isMember && (
                   <LinkButton tone="ghost"
                     href={`/tournaments?club=${encodeURIComponent(club.id)}`}
                     className="flex px-4 py-2 text-sm">
-                    <Trophy size={14} /> New event
+                    <Trophy size={14} aria-hidden /> New event
                   </LinkButton>
                 )}
               </div>
@@ -450,13 +502,20 @@ export default function ClubPage() {
                   ) : (
                     <ul className="divide-y divide-[color:var(--edge)]">
                       {data.tournaments.map((t) => (
-                        <li key={t.id} className="px-5 py-2.5">
-                          <div className="truncate text-sm text-parchment-100">{t.name}</div>
-                          <div className="mt-0.5 text-[12px] text-parchment-400">
-                            {t.status === "finished" ? "finished" : tournamentPhase(t.starts_at, t.duration_min)} ·{" "}
-                            {t.players}/{t.max_players} players
-                            {t.starts_at ? ` · ${new Date(t.starts_at).toLocaleString()}` : ""}
-                          </div>
+                        <li key={t.id}>
+                          {/* The row is the link to the event, with the phase
+                              in sentence case (F170). */}
+                          <Link
+                            href={`/tournaments/${encodeURIComponent(t.id)}`}
+                            className="group block min-h-[44px] px-5 py-2.5 transition-colors hover:bg-[color:var(--bg-raised)]"
+                          >
+                            <div className="truncate text-sm text-parchment-100 group-hover:text-gold-leaf">{t.name}</div>
+                            <div className="mt-0.5 text-[12px] text-parchment-400">
+                              {PHASE_LABEL[t.status === "finished" ? "finished" : tournamentPhase(t.starts_at, t.duration_min)]} ·{" "}
+                              {t.players}/{t.max_players} players
+                              {t.starts_at ? ` · ${new Date(t.starts_at).toLocaleString()}` : ""}
+                            </div>
+                          </Link>
                         </li>
                       ))}
                     </ul>
@@ -477,7 +536,8 @@ export default function ClubPage() {
                       maxLength={500}
                       rows={2}
                       placeholder={`Message the members of ${club.name}…`}
-                      className="w-full resize-none border border-[color:var(--edge)] bg-[color:var(--bg-base)] px-3 py-2 text-sm text-parchment focus:border-[color:var(--edge-strong)] focus:outline-none"
+                      aria-label={`Message the members of ${club.name}`}
+                      className={`w-full resize-none border border-[color:var(--edge)] bg-[color:var(--bg-base)] px-3 py-2 ${FIELD_TEXT} text-parchment focus:border-[color:var(--edge-strong)] focus:outline-none`}
                     />
                     <div className="mt-2 flex items-center justify-between gap-2">
                       {postError ? (
@@ -488,6 +548,7 @@ export default function ClubPage() {
                       <Button tone="leaf"
                         type="submit"
                         disabled={!postText.trim()}
+                        loading={posting}
                         className="px-4 py-1.5 text-[13px] font-semibold disabled:opacity-50">
                         Post
                       </Button>
@@ -495,7 +556,24 @@ export default function ClubPage() {
                   </form>
                 ) : (
                   <p className="border-b border-[color:var(--edge)] px-5 py-3 text-sm text-parchment-400">
-                    {me ? "Join the club to post on its board." : "Sign in and join to post."}
+                    {display ? (
+                      "Join the club to post on its board."
+                    ) : (
+                      <>
+                        <Link
+                          href={`/login?next=${encodeURIComponent(`/clubs/${club.slug}`)}`}
+                          className="text-gold-leaf hover:underline"
+                        >
+                          Sign in
+                        </Link>{" "}
+                        and join to post.
+                      </>
+                    )}
+                  </p>
+                )}
+                {deleteError && (
+                  <p role="alert" className="border-b border-[color:var(--edge)] px-5 py-2.5 text-[13px] text-oxblood-glow">
+                    {deleteError}
                   </p>
                 )}
                 {data.posts.length === 0 ? (
@@ -511,15 +589,37 @@ export default function ClubPage() {
                             className="min-w-0 text-sm font-medium text-parchment-100 hover:text-gold-leaf"
                           />
                           <span className="text-[12px] text-parchment-500">{timeAgo(p.created_at)}</span>
-                          {(mayModerate || p.user_id === me?.id) && (
-                            <button
-                              onClick={() => deletePost(p.id)}
-                              className="ml-auto text-parchment-500 opacity-0 transition hover:text-oxblood-glow group-hover:opacity-100"
-                              aria-label="Delete post"
-                            >
-                              <Trash2 size={13} />
-                            </button>
-                          )}
+                          {(mayModerate || p.user_id === me?.id) &&
+                            (confirmDelete === p.id ? (
+                              <span className="ml-auto flex items-center gap-1">
+                                <Button
+                                  tone="danger"
+                                  size="xs"
+                                  loading={deleting === p.id}
+                                  onClick={() => deletePost(p.id)}
+                                >
+                                  Delete
+                                </Button>
+                                <Button tone="quiet" size="xs" onClick={() => setConfirmDelete(null)}>
+                                  Keep
+                                </Button>
+                              </span>
+                            ) : (
+                              // Shown on hover, on keyboard focus anywhere in the
+                              // post, and always on a touch screen, with a 44px
+                              // target there (F180). It asks before deleting.
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setDeleteError(null);
+                                  setConfirmDelete(p.id);
+                                }}
+                                className="ml-auto grid min-h-[44px] min-w-[44px] place-items-center text-parchment-400 opacity-0 transition-opacity hover:text-oxblood-glow focus-visible:opacity-100 group-hover:opacity-100 group-focus-within:opacity-100 [@media(pointer:coarse)]:opacity-100 [@media(pointer:fine)]:min-h-[28px] [@media(pointer:fine)]:min-w-[28px]"
+                                aria-label="Delete post"
+                              >
+                                <Trash2 size={16} aria-hidden />
+                              </button>
+                            ))}
                         </div>
                         <p className="mt-1.5 whitespace-pre-wrap break-words text-sm text-parchment-200">{p.text}</p>
                       </li>
