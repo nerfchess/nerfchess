@@ -4,21 +4,10 @@ import { GlossaryText } from "@/components/GlossaryText";
 import { KeyTerms } from "@/components/guide/KeyTerms";
 import { InfoPageLayout, InfoSection } from "@/components/InfoPageLayout";
 import { LinkButton } from "@/components/ui/Button";
+import { FaqJsonLd } from "@/components/seo/JsonLd";
+import { staticMeta } from "@/lib/seoPages";
 
-export const metadata: Metadata = {
-  title: "Nerf Chess FAQ: how the chess variant works",
-  description:
-    "Answers to common questions about Nerf Chess: the two modes (Nerf and Buff), what a nerf and a buff are, how card drafting and banking work, ratings, and playing a friend with no account.",
-  keywords: [
-    "nerf chess faq",
-    "how does nerf chess work",
-    "chess with power ups faq",
-    "buff chess rules",
-    "chess variant questions",
-    "is nerf chess free",
-  ],
-  alternates: { canonical: "/faq" },
-};
+export const metadata: Metadata = staticMeta("/faq", { image: "segment" });
 
 const FAQS = [
   {
@@ -78,19 +67,9 @@ const FAQS = [
   },
 ];
 
-// FAQPage structured data backed by the same questions rendered below, so the
-// marked-up Q&A is visible on the page as Google requires. Lets search and AI
-// answer engines lift these answers directly.
-const faqJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  mainEntity: FAQS.map((f) => ({
-    "@type": "Question",
-    name: f.question,
-    acceptedAnswer: { "@type": "Answer", text: f.answer },
-  })),
-};
-
+// The FAQPage structured data (<FaqJsonLd> below) is built from the same
+// questions rendered on the page, so the marked-up Q&A is visible as Google
+// requires, and search and AI answer engines can lift the answers directly.
 export default function FAQPage() {
   return (
     <InfoPageLayout
@@ -98,10 +77,7 @@ export default function FAQPage() {
       title="Frequently asked"
       intro="The short version: two modes, one board. Nerf mode is chess until your secret rule says otherwise; Buff mode is chess until the cards arrive. Here are the questions players usually ask first."
     >
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
-      />
+      <FaqJsonLd items={FAQS} />
       {FAQS.map((faq) => (
         <InfoSection key={faq.question} title={faq.question}>
           {/* Answers render through GlossaryText so every game term is

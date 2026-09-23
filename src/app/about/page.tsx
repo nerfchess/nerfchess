@@ -2,20 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { InfoPageLayout, InfoSection } from "@/components/InfoPageLayout";
 import { LinkButton } from "@/components/ui/Button";
+import { TeamSection } from "@/components/TeamSection";
+import { staticMeta } from "@/lib/seoPages";
 
-export const metadata: Metadata = {
-  title: "About Nerf Chess: the chess variant with secrets and power-ups",
-  description:
-    "Nerf Chess is a free online chess variant with two modes: Nerf mode gives every player a secret handicap, and Buff mode lets both players draft power-up cards. Win by capturing the king. Learn what it is and why it plays differently.",
-  keywords: [
-    "about nerf chess",
-    "what is nerf chess",
-    "chess variant with power ups",
-    "chess with secret rules",
-    "capture the king chess",
-  ],
-  alternates: { canonical: "/about" },
-};
+export const metadata: Metadata = staticMeta("/about", { image: "segment" });
 
 export default function AboutPage() {
   return (
@@ -41,6 +31,8 @@ export default function AboutPage() {
           players draft buffs every 5 moves and race to build the strongest army.
         </p>
       </InfoSection>
+
+      <TeamSection />
 
       <InfoSection title="Play your way">
         <p>

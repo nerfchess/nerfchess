@@ -1,18 +1,26 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
+import { ProfileJsonLd } from "@/components/seo/ProfileJsonLd";
+import { profileMeta } from "@/lib/seoDynamic";
 
-// Public profile pages are client-rendered; this server layout gives each one
-// its own title and a self-canonical so it does not inherit the root "/".
+// Public profiles are client-rendered; this server layout gives each one its
+// own title (from the account: ratings per mode, games played), a canonical
+// on the lowercase name, and noindex for unknown names and guest accounts, so
+// /u/<anything> is no longer an indexable page for a player who does not
+// exist (F237). The preview is this folder's opengraph-image.
 export async function generateMetadata(props: { params: Promise<{ username: string }> }): Promise<Metadata> {
   const { username } = await props.params;
-  const name = decodeURIComponent(username).trim();
-  return {
-    title: `${name}: profile, rating and games`,
-    description: `${name} on Nerf Chess: rating history in Buff and Nerf mode, recent games, cards drafted, friends and achievements.`,
-    alternates: { canonical: `/u/${encodeURIComponent(name.toLowerCase())}` },
-    openGraph: { title: `${name} on Nerf Chess`, url: `/u/${encodeURIComponent(name.toLowerCase())}` },
-  };
+  return profileMeta(username);
 }
 
-export default function UserLayout({ children }: { children: React.ReactNode }) {
-  return children;
+export default async function UserLayout(props: { children: React.ReactNode; params: Promise<{ username: string }> }) {
+  const { username } = await props.params;
+  return (
+    <>
+      <Suspense fallback={null}>
+        <ProfileJsonLd username={username} />
+      </Suspense>
+      {props.children}
+    </>
+  );
 }
