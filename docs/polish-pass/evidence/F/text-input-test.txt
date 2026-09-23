@@ -1,0 +1,11 @@
+# profanity.ts at HEAD (before F054)
+FAIL fullwidth word is caught
+FAIL accented word is caught
+FAIL cyrillic lookalike is caught
+FAIL greek lookalike is caught
+FAIL circled letters are caught
+FAIL censor keeps token length -> "ｆｕｃｋ you"
+4 passed, 6 failed
+
+# after
+54 passed, 0 failed

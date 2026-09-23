@@ -1,7 +1,8 @@
 // Basic profanity screening, shared by username registration (reject), the
 // in-game chat relay (censor + flag), and any future report surfaces. This is
-// a lightweight first pass, not a complete moderation system: it normalizes
-// common letter substitutions and checks against a compact word list.
+// a lightweight first pass, not a complete moderation system: it folds
+// fullwidth and accented forms (NFKD), maps a small set of lookalike letters,
+// undoes common letter substitutions and checks against a compact word list.
 //
 // Environment-agnostic on purpose (no Node/DOM APIs): it runs in Workers, the
 // Durable Object, Next API routes, and the browser.
@@ -58,10 +59,29 @@ const SUBS: Record<string, string> = {
   "*": "",
 };
 
-/** Lowercase and undo common letter substitutions; keep only letters. */
+// Letters from other scripts that render the same as a Latin letter, so
+// "fuсk" with a Cyrillic "с" reads as the word it looks like. Deliberately
+// small: only lowercase shapes that are near-identical in common fonts.
+const CONFUSABLES: Record<string, string> = {
+  // Cyrillic
+  "а": "a", "в": "b", "е": "e", "ё": "e", "к": "k", "м": "m", "н": "h", "о": "o",
+  "р": "p", "с": "c", "т": "t", "у": "y", "х": "x", "ѕ": "s", "і": "i", "ї": "i",
+  "ј": "j", "ԁ": "d", "ԛ": "q", "ԝ": "w", "һ": "h", "ɡ": "g",
+  // Greek
+  "α": "a", "β": "b", "ε": "e", "ι": "i", "κ": "k", "ν": "v", "ο": "o", "ρ": "p",
+  "τ": "t", "υ": "u", "χ": "x",
+  // Latin lookalikes that NFKD does not fold
+  "ı": "i", "ł": "l", "ø": "o", "đ": "d", "ħ": "h",
+};
+
+/** Fold compatibility forms (fullwidth, circled, math letters) and accents,
+ *  lowercase, map lookalike letters, undo common substitutions, and keep
+ *  only a to z. */
 function normalize(text: string): string {
+  const folded = text.normalize("NFKD").replace(/\p{M}/gu, "").toLowerCase();
   let out = "";
-  for (const ch of text.toLowerCase()) {
+  for (const raw of folded) {
+    const ch = raw in CONFUSABLES ? CONFUSABLES[raw] : raw;
     const mapped = ch in SUBS ? SUBS[ch] : ch;
     if (mapped >= "a" && mapped <= "z") out += mapped;
   }
