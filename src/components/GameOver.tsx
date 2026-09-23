@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { useReducedMotion } from "@/lib/useReducedMotion";
+import { detectReduced, useReducedMotion } from "@/lib/useReducedMotion";
 import { releaseAllLowTime } from "@/lib/lowTimeMotion";
-import { useMotionTempo, tempoScale } from "@/components/useMotionTempo";
+import { detectTempo, useMotionTempo, tempoScale } from "@/components/useMotionTempo";
 import { useModalChrome } from "@/lib/useModalChrome";
 import {
   useCallback,
@@ -699,7 +699,53 @@ const reelIcon = (
   </svg>
 );
 
-export function GameOver({
+// THE SETTLE. The ending used to land in the same frame as the move that
+// caused it, so the backdrop covered the board before the final position had
+// registered and the check chime of a mating move ran into the game-over
+// chime (F205). The panel now waits one short beat while the board holds the
+// final position, then plays its three acts from zero. Only endings that
+// happen ON the board settle; a resignation, an agreed draw, an abort or an
+// interruption was a button press and answers at once. Scaled by the tempo,
+// so it is 0 with motion off and never delays anything a player needs.
+const SETTLE_MS = 600;
+const OFF_BOARD_ENDING =
+  /^(resignation|draw by agreement|abandonment|aborted|game interrupted|server update interrupted|house players are paused)/i;
+
+export function settleMsFor(result: GameResult, scale: number): number {
+  if (scale <= 0 || result.winner === null) return 0;
+  return OFF_BOARD_ENDING.test(result.reason.trim()) ? 0 : Math.round(SETTLE_MS * scale);
+}
+
+// Games whose ending has already settled once: reopening the panel from "Show
+// result" is a button press and must answer at once, not settle again.
+const settledGameOverKeys = new Set<string>();
+
+export function GameOver(props: Props) {
+  const { result, gameId, startedAt } = props;
+  // Read through the low-time hold (see F204 below): the game is over.
+  const key = gameId ?? (startedAt != null ? `local:${startedAt}` : null);
+  const [settleMs] = useState(() =>
+    key == null || settledGameOverKeys.has(key)
+      ? 0
+      : settleMsFor(result, detectReduced(true) ? 0 : tempoScale(detectTempo(true))),
+  );
+  const [settled, setSettled] = useState(settleMs === 0);
+  // The game ending is what ends the low-time hold, so the settle frames
+  // already run at the player's own tempo, and the panel's CSS beats agree
+  // with its motion reads from their first paint.
+  useLayoutEffect(() => {
+    releaseAllLowTime();
+    if (key != null) settledGameOverKeys.add(key);
+  }, [key]);
+  useEffect(() => {
+    if (settled) return;
+    const t = window.setTimeout(() => setSettled(true), settleMs);
+    return () => window.clearTimeout(t);
+  }, [settled, settleMs]);
+  return settled ? <GameOverPanel {...props} /> : null;
+}
+
+function GameOverPanel({
   result,
   myColor,
   myNerf,
@@ -796,12 +842,9 @@ export function GameOver({
   // Both motion reads look through the low-time hold: this panel exists
   // because the game ended, which is what ends the hold, but it mounts in the
   // same commit whose effects release it, so a plain read took the scramble's
-  // "off" as the whole ending's tempo (F204). The layout effect below lifts
-  // the hold before the first paint so the CSS beats agree with these.
+  // "off" as the whole ending's tempo (F204). The GameOver wrapper lifts the
+  // hold before the first paint so the CSS beats agree with these.
   const reduceMotion = useReducedMotion(undefined, { ignoreLowTimeHold: true });
-  useLayoutEffect(() => {
-    releaseAllLowTime();
-  }, []);
   // Tempo. `beat` multiplies every duration and delay in the ending, on both
   // sides of the CSS boundary: it is handed to the stylesheet as --beat and
   // used here for the framer springs, the rating count-up and the one timer.

@@ -1,0 +1,12 @@
+[
+ {
+  "kind": "flag",
+  "speed": "off",
+  "endToDialogMs": 532
+ },
+ {
+  "kind": "resign",
+  "speed": "off",
+  "endToDialogMs": 508
+ }
+]

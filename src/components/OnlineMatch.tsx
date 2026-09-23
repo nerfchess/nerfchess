@@ -1223,7 +1223,9 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
         }
         if (!alreadySounded) {
           playMoveCue(lm, { opponent: lm.color !== myColor, premove: wasAwaitingPremove && lm.color === myColor });
-          if (gameInCheck(next, next.board.turn)) later(() => playCheck({ onMe: next.board.turn === myColor }), 80);
+          // No check bell on a move that ended the game: the result panel
+          // voices the ending, and the two used to ring over each other (F205).
+          if (!next.result && gameInCheck(next, next.board.turn)) later(() => playCheck({ onMe: next.board.turn === myColor }), 80);
         }
         // Our turn again (opponent moved, or our premove landed and the next
         // queued one already applies): fire the queued premove immediately.
