@@ -14,6 +14,7 @@
 // counters), and the Suspense fallback was an empty <main> (F019).
 
 import { LobbyWaysIn } from "./LobbyWaysIn";
+import { ModeSegmentSlots } from "./ModeSegment";
 
 // The same tab labels the page renders, so the row has the same widths.
 const TAB_LABELS = ["Play", "Watch & Friends"];
@@ -68,10 +69,7 @@ export function LobbySkeletonBody() {
             <div className="plate p-3 sm:p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <h2 className="font-display text-[15px] font-bold text-parchment-50">Quick pairing</h2>
-                <div className="flex items-stretch gap-1">
-                  <span className="skeleton block min-h-[44px] w-[4.5rem] [@media(pointer:fine)]:min-h-[36px]" />
-                  <span className="skeleton block min-h-[44px] w-[4.5rem] [@media(pointer:fine)]:min-h-[36px]" />
-                </div>
+                <ModeSegmentSlots />
               </div>
               <div className="mt-3 grid grid-cols-3 gap-1.5">
                 {Array.from({ length: 9 }).map((_, i) => (

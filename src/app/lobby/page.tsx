@@ -511,7 +511,7 @@ function LobbyInner() {
                       Open Nerf Chess TV
                     </Link>
                     <span className="text-xs text-parchment-400">
-                      {lobby ? `${lobby.games.length} in play` : "…"}
+                      {lobby ? `${lobby.games.length} in play` : <CountSlot label="in play" />}
                     </span>
                   </div>
                 </div>
@@ -616,7 +616,7 @@ function LobbyInner() {
                   tint="sun"
                   icon={<Swords size={15} aria-hidden />}
                   title="Open challenges"
-                  meta={lobby ? `${waitingCount} waiting` : "…"}
+                  meta={lobby ? `${waitingCount} waiting` : <CountSlot label="waiting" />}
                 />
                 {challengesOpen && (
                   <div id="lobby-fold-challenges">
@@ -819,6 +819,20 @@ function LobbyInner() {
 }
 
 // One live-pulse chip in the header: a status dot beside a readable count.
+// A count before the first snapshot: the label with its number held by a
+// skeleton block, like the header chips. It was an ellipsis, so "0 waiting"
+// and "3 in play" widened the line by 42px when the snapshot landed and moved
+// the text beside them.
+// The block is a text-height inline box (a no-break space inside), so the
+// line keeps its height; one digit wide, the usual count.
+function CountSlot({ label }: { label: string }) {
+  return (
+    <>
+      <span aria-hidden className="skeleton inline-block w-[1ch]">&nbsp;</span> {label}
+    </>
+  );
+}
+
 function HallStat({ dotClass, children }: { dotClass: string; children: React.ReactNode }) {
   return (
     <span className="flex items-center gap-2 border border-[color:var(--edge)] bg-[color:var(--bg-zebra)] px-3 py-1.5 text-xs tabular-nums text-parchment-300">
@@ -931,7 +945,7 @@ function DisclosureHeader({
   tint: keyof typeof SECTION_TINTS;
   icon: React.ReactNode;
   title: string;
-  meta?: string;
+  meta?: React.ReactNode;
 }) {
   return (
     <button

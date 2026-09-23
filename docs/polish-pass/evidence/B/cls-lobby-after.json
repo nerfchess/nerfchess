@@ -1,0 +1,215 @@
+{
+ "generatedAt": "2026-09-23T12:46:29.080Z",
+ "target": 0.01,
+ "runs": 2,
+ "rows": [
+  {
+   "key": "/lobby|390x844|dark|full|signed-out|normal",
+   "best": 0.0012,
+   "worst": 0.0012,
+   "ceiling": 0.018,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "header.mt-3.sm\\:mt-4 > div.flex.flex-wrap.items-center > div.flex.flex-wrap.items-center",
+     "text": "Connecting…waitingin play",
+     "score": 0.0003,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": 5,
+     "maxDh": 0,
+     "maxDw": -5
+    },
+    {
+     "selector": "button#lobby-tab-watch.\\[@media(pointer\\:fine)\\]\\:min-w-0",
+     "text": "Watch & Friends",
+     "score": 0.0003,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -5,
+     "maxDh": 0,
+     "maxDw": -17
+    },
+    {
+     "selector": "div#lobby-panel-play.space-y-5 > div.plate > p.mt-2\\.5.text-\\[13px\\].text-parchment-300",
+     "text": "Playing as a guest. Sign in to keep your rating.",
+     "score": 0.0003,
+     "count": 1,
+     "maxDy": -2,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    },
+    {
+     "selector": "div#lobby-panel-play.space-y-5 > div.plate > button.flex.min-h-\\[44px\\].w-full > span.tabular-nums",
+     "text": "waiting",
+     "score": 0.0003,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": 4,
+     "maxDh": 0,
+     "maxDw": -4
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/lobby|1280x800|dark|full|signed-out|normal",
+   "best": 0.005,
+   "worst": 0.0076,
+   "ceiling": 0.022,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "header.mt-3.sm\\:mt-4 > div.flex.flex-wrap.items-center > div.flex.flex-wrap.items-center",
+     "text": "Connecting…waitingin play",
+     "score": 0.003,
+     "count": 2,
+     "maxDy": 0,
+     "maxDx": 13,
+     "maxDh": 0,
+     "maxDw": -13
+    },
+    {
+     "selector": "main.min-h-screen.pb-16 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestPluckyOcelot ·Sign in",
+     "score": 0.0026,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -206,
+     "maxDh": 0,
+     "maxDw": 206
+    },
+    {
+     "selector": "section.max-w-7xl.mx-auto.px-5 > div.mt-5.grid.gap-5 > aside.h-fit.space-y-5.lg\\:sticky > div.plate",
+     "text": "Games to watch0No live games right now. Answer a c...",
+     "score": 0.0025,
+     "count": 1,
+     "maxDy": -64,
+     "maxDx": 0,
+     "maxDh": -104,
+     "maxDw": 0
+    },
+    {
+     "selector": "nav.site-nav > div.site-nav-brand > a.\\[@media(pointer\\:fine)\\]\\:min-h-0 > span.font-display.text-\\[22px\\].font-medium",
+     "text": "nerfchess",
+     "score": 0.0005,
+     "count": 1,
+     "maxDy": -3,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": -18
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/lobby|390x844|dark|full|user|normal",
+   "best": 0.0036,
+   "worst": 0.0064,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-16 > nav.site-nav > div.relative.flex.items-center",
+     "text": "polish_user",
+     "score": 0.0018,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -55,
+     "maxDh": 0,
+     "maxDw": 55
+    },
+    {
+     "selector": "div#lobby-panel-play.space-y-5 > div.plate > div.flex.flex-wrap.items-center > div.flex.items-stretch.gap-1[role=\"group\"]",
+     "text": "Buff Nerf",
+     "score": 0.0018,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -43,
+     "maxDh": 0,
+     "maxDw": 43
+    },
+    {
+     "selector": "header.mt-3.sm\\:mt-4 > div.flex.flex-wrap.items-center > div.flex.flex-wrap.items-center",
+     "text": "Connecting…waitingin play",
+     "score": 0.0014,
+     "count": 2,
+     "maxDy": 0,
+     "maxDx": -9,
+     "maxDh": 0,
+     "maxDw": 9
+    },
+    {
+     "selector": "section.max-w-7xl.mx-auto.px-5 > div.mt-5.grid.gap-5 > aside.h-fit.space-y-5.lg\\:sticky > div.plate",
+     "text": "Games to watch0No live games right now. Answer a c...",
+     "score": 0.0014,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/lobby|1280x800|dark|full|user|normal",
+   "best": 0.0108,
+   "worst": 0.0108,
+   "ceiling": 0.019,
+   "pass": true,
+   "overTarget": true,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "header.mt-3.sm\\:mt-4 > div.flex.flex-wrap.items-center > div.flex.flex-wrap.items-center",
+     "text": "Connecting…waitingin play",
+     "score": 0.0047,
+     "count": 2,
+     "maxDy": 0,
+     "maxDx": 13,
+     "maxDh": 0,
+     "maxDw": -13
+    },
+    {
+     "selector": "section.max-w-7xl.mx-auto.px-5 > div.mt-5.grid.gap-5 > aside.h-fit.space-y-5.lg\\:sticky > div.plate",
+     "text": "Games to watch0No live games right now. Answer a c...",
+     "score": 0.0043,
+     "count": 1,
+     "maxDy": -98,
+     "maxDx": 0,
+     "maxDh": -104,
+     "maxDw": 0
+    },
+    {
+     "selector": "main.min-h-screen.pb-16 > nav.site-nav > div.relative.flex.items-center",
+     "text": "polish_user",
+     "score": 0.0011,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -135,
+     "maxDh": 0,
+     "maxDw": 135
+    },
+    {
+     "selector": "div#lobby-panel-play.space-y-5 > div.plate > div.flex.flex-wrap.items-center > div.flex.items-stretch.gap-1[role=\"group\"]",
+     "text": "Buff Nerf",
+     "score": 0.0011,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -43,
+     "maxDh": 0,
+     "maxDw": 43
+    }
+   ],
+   "findings": []
+  }
+ ]
+}

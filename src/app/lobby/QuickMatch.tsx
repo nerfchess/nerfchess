@@ -12,6 +12,7 @@ import { getCategory, type RatingCategoryId } from "@/lib/ratingCategories";
 import { useSharedMode } from "@/lib/modeState";
 import type { DraftMode } from "@/engine/buff";
 import { Button } from "@/components/ui/Button";
+import { ModeSegment } from "./ModeSegment";
 
 // The lobby's Quick Match panel: pick a mode (Buff recommended / Nerf), pick a
 // time control, and one primary button finds a rated game against a real
@@ -138,6 +139,11 @@ export function QuickMatch({ active = true }: { active?: boolean } = {}) {
   // Per-mode ratings for the mode segments, for a registered player: painted
   // from the last answer this tab saw, then refreshed.
   const ratingsFor = display && !display.isGuest ? display.username : null;
+  // Whose ratings the segments hold an answer for (the cache or the fetch).
+  // Until then a registered player's segments show a rating-wide skeleton
+  // instead of "?", which the number replaced 44px wider on a phone.
+  const [ratingsAnsweredFor, setRatingsAnsweredFor] = useState<string | null>(null);
+  const ratingsPending = ratingsFor !== null && ratingsAnsweredFor !== ratingsFor;
   useEffect(() => {
     let cancelled = false;
     if (!ratingsFor) {
@@ -154,13 +160,17 @@ export function QuickMatch({ active = true }: { active?: boolean } = {}) {
     );
     if (cached?.username === ratingsFor) {
       queueMicrotask(() => {
-        if (!cancelled) setModeRatings(cached.ratings ?? {});
+        if (cancelled) return;
+        setModeRatings(cached.ratings ?? {});
+        setRatingsAnsweredFor(ratingsFor);
       });
     }
     fetch(`/api/users/${encodeURIComponent(ratingsFor)}`)
       .then((res) => (res.ok ? res.json() : null) as Promise<{ ratings?: Record<string, { rating: number }> } | null>)
       .then((data) => {
-        if (cancelled || !data?.ratings) return;
+        if (cancelled) return;
+        setRatingsAnsweredFor(ratingsFor);
+        if (!data?.ratings) return;
         const ratings = {
           nerf: data.ratings.nerf ? Math.round(data.ratings.nerf.rating) : undefined,
           buff: data.ratings.buff ? Math.round(data.ratings.buff.rating) : undefined,
@@ -168,7 +178,9 @@ export function QuickMatch({ active = true }: { active?: boolean } = {}) {
         setModeRatings(ratings);
         writeSnapshot("nerfchess:queue-card", { username: ratingsFor, ratings });
       })
-      .catch(() => {});
+      .catch(() => {
+        if (!cancelled) setRatingsAnsweredFor(ratingsFor);
+      });
     return () => {
       cancelled = true;
     };
@@ -264,12 +276,14 @@ export function QuickMatch({ active = true }: { active?: boolean } = {}) {
           <ModeSegment
             mode="buff"
             rating={ratingFor("buff")}
+            pending={ratingsPending}
             selected={mode === "buff"}
             onClick={() => pickMode("buff")}
           />
           <ModeSegment
             mode="nerf"
             rating={ratingFor("nerf")}
+            pending={ratingsPending}
             selected={mode === "nerf"}
             onClick={() => pickMode("nerf")}
           />
@@ -468,40 +482,3 @@ function TimeCell({
   );
 }
 
-// One half of the mode selector. The description rides on aria-label so the
-// accessible names the mode-defaults e2e spec matches survive the compaction
-// (buff: "...Start with normal chess..."; nerf: "Start with a secret
-// handicap...").
-function ModeSegment({
-  mode,
-  rating,
-  selected,
-  onClick,
-}: {
-  mode: DraftMode;
-  rating: number | null;
-  selected: boolean;
-  onClick: () => void;
-}) {
-  const isNerf = mode === "nerf";
-  const label = isNerf ? "Nerf" : "Buff";
-  const description = isNerf
-    ? "Nerf. Start with a secret handicap. Draft curses for your opponent."
-    : "Buff. Start with normal chess. Draft powers for your own army.";
-  return (
-    <Button
-      tone={selected ? "primary" : "default"}
-      size="sm"
-      onClick={onClick}
-      aria-pressed={selected}
-      aria-label={description}
-      title={description}
-      className="font-semibold"
-    >
-      {label}
-      <span className="font-mono text-[12px] font-normal tabular-nums opacity-80">
-        {rating ?? "?"}
-      </span>
-    </Button>
-  );
-}
