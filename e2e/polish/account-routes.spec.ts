@@ -310,5 +310,13 @@ test.describe("settings", () => {
       const cls = await readCls(page);
       expect(cls.cls, JSON.stringify(cls.offenders, null, 1)).toBeLessThan(0.01);
     });
+    // Slice L request 2: the account section carries the real email
+    // preference row, not the "Email preferences / Coming soon" placeholder.
+    test("the account section has the email preference row", async ({ page }) => {
+      await page.goto("/settings/account");
+      await expect(page.getByText("Emails from Nerf Chess").first()).toBeVisible();
+      await expect(page.getByText("Email preferences")).toHaveCount(0);
+      await expect(page.getByText(/^Account emails, like the welcome email|There is no email address|Sign in with an email/)).toBeVisible();
+    });
   });
 });

@@ -43,6 +43,7 @@ import { configureSoundPrefs, playMove as playMoveSample, setUiSounds, setVolume
 import { Piece } from "@/components/Pieces";
 import type { Control, SectionConfig } from "@/components/settings/config";
 import { SettingRow } from "@/components/settings/SettingRow";
+import { EmailPrefsRow } from "@/components/settings/EmailPrefsRow";
 import { GhostButton, Select, Slider, Toggle } from "@/components/settings/controls";
 import { Button, LinkButton } from "@/components/ui/Button";
 // The carved-recess control styling (toggle track, range channel) is authored
@@ -794,10 +795,10 @@ function AccountSettings() {
           Edit profile
         </LinkButton>
       </div>
+      <div className="rounded-none border border-[color:var(--edge)] px-2.5"><EmailPrefsRow /></div>
       {[
         { label: "Change username", hint: "Not available yet" },
         { label: "Change password", hint: "Not available yet" },
-        { label: "Email preferences", hint: "Coming soon" },
         { label: "Log out of all devices", hint: "Coming soon" },
       ].map((item) => (
         <div
