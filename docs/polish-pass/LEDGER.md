@@ -119,6 +119,14 @@ File ownership for work waves. One slice owns a file for the whole wave. A slice
 | J game moments Tier B | Board, match, draft, game over | `src/components/Board.tsx`, `OnlineMatch.tsx`, `GameOver.tsx`, `ClockPill.tsx`, `BoardSplash.tsx`, `src/lib/lowTimeMotion.ts`, `src/lib/useReducedMotion.ts`, `src/components/useMotionTempo.ts`, `DraftOverlay.tsx` + `.css`, `DraftVault.tsx` + `.css`, `src/components/effects/useSignatureQueue.ts`, `fxZones.ts`, `cardEntrance.*`, `UseSpectacle.*`, `src/lib/sounds.ts` | Tier C play modules |
 | K card effects Tier C | Play modules, registry guards, review galleries | `src/components/effects/**` except files owned by J, `scripts/audit-animations.ts`, `scripts/audit-scene-complexity.ts`, `scripts/check-vfx-coverage.cjs`, `scripts/audit-bespoke-coverage.cjs`, `docs/animation-registry.json`, `src/app/dev/plays/*`, `src/app/dev/lab/*` | Board.tsx |
 | L side end + email | Config, CI, DX, email plumbing, daily cron | `next.config.mjs`, `public/_headers`, `wrangler.jsonc`, `package.json` scripts, `.gitignore`, `README.md`, `.github/*`, `.claude/*`, new `src/lib/server/email.ts`, the daily cron route | `worker.ts` default export (ask H to add `scheduled()`); `api/suggest` (slice F switches it to email.ts) |
+| TC0 gallery + strips | Tier C step 1 (F228) | `src/app/dev/plays/*`, `src/app/dev/lab/*`, new `scripts/polish/card-strip.ts` | play modules |
+| TC-god | godPlays, F221, F227 | `src/components/effects/godPlays.tsx` + `.css` | other play modules |
+| TC-fantasy | fantasyPlays mythic ladder, F223 | `src/components/effects/fantasyPlays.tsx` + `.css` | other play modules |
+| TC-great | greatPlays, F222 | `src/components/effects/greatPlays.tsx` + `.css` | other play modules |
+| TC-core | core SIGNATURES and sigVisuals (live T7-8 first) | `src/components/effects/BoardEffects.tsx` (signature scenes only), `sigVisuals.tsx`, `effects.css` | useSignatureQueue, fxZones, cardEntrance, UseSpectacle (slice J) |
+| TC-boon-curse | boonPlays and cursePlays, F226 | `boonPlays.*`, `cursePlays.*` | other play modules |
+| TC-basic | basicPlays T1-T6 live cards, F225 | `basicPlays.*` | other play modules |
+| TC-g | high-frequency members of g01..g44 (g01, g09, g24, g28 first, then by tier) | `g01*`..`g44*` play modules, `sigPlugins.tsx` registration only | other play modules |
 
 ## ROUTES
 
@@ -768,6 +776,12 @@ Defaults the integrator took so work is not blocked. Each one is reversible and 
 | Q37 | No proposal is built. | Brief rule 0.1. |
 
 Fleet mechanics (wave 1 on): agents share the main working tree with disjoint file ownership (SLICES), so the one supervised dev server shows everyone's work and evidence is real. Heavy commands go through `scripts/polish/heavy.sh` (two box-wide slots). Commits go through `scripts/polish/commit.sh "msg" paths...` (commits only the named paths, under a lock). Per-slice ledger updates go to `docs/polish-pass/slices/<slice>.md` and the integrator folds them into this file, so no two agents edit the ledger at once.
+
+### OWNER DIRECTIVE 2026-09-23: card effects are card-specific
+
+The owner asked for many card effects to become specific to each card, not generic board effects. This overrides the default "NO-CHANGE if already fine" bar for Tier C: a card play is weak if it could belong to another card. Every revamped play must show what that card actually does (the pieces and squares it touches, the rule it bends) through a motif unique to its name and theme (a walnut court looks like walnuts and a court, a winter court freezes the squares it names). Generic rings, sparks, flashes, pulses and whole-board washes are not a card's effect; they may be a small accent at most. Shared templates (GodDescent on 9 cards, GorgonIdol on 6, CelestialRing on 6, the mythic ladder's 3 scenes for 24 cards) get split into per-card scenes. The contract still holds: transform and opacity, no glow, no shadow, no blur, tokens, data-anim and reduced-motion gates, --fx-dur, the scene-complexity and anim-props guards, board legible throughout.
+
+Tier C is now worked by a dedicated lane (slices TC0 and TC-*, see SLICES). Slice K's ownership is NARROWED to: `scripts/audit-animations.ts`, `scripts/audit-scene-complexity.ts`, `scripts/check-vfx-coverage.cjs`, `scripts/audit-bespoke-coverage.cjs`, `docs/animation-registry.json`, and the families `effects/passive/*`, `effects/fruition/*`, `effects/clockraid/*`, `effects/vfx/*`, `effects/impact/*`, `effects/board3d/*` and the small plugin modules (casino, funny, gambling, meme, prank, stub, creator, personal). This row overrides any wider list in slice K's prompt. Slice K applies the card-specific directive to its families too.
 
 ## OWNER QUESTIONS
 
