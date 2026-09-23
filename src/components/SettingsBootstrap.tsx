@@ -13,8 +13,20 @@ import {
 import { configureSoundPrefs, preloadSounds, setUiSounds, setVolume } from "@/lib/sounds";
 import { fxLevel, setFxLevel } from "@/lib/fxToggle";
 import { requestUiSlot, UI_PRIORITY } from "@/lib/uiInterrupts";
+import { useSession } from "@/lib/session/SessionProvider";
 
 export function SettingsBootstrap() {
+  // Account settings sync only exists for an account: asking while signed out
+  // was a guaranteed 401 logged as a console error on every page (F256).
+  const { user } = useSession();
+  const accountId = user ? user.id : null;
+  useEffect(() => {
+    if (!accountId) return;
+    // Adopt the server copy when it is newer than this device's (writes
+    // re-fire the changed event, which re-applies everything below).
+    void pullSettingsFromServer();
+  }, [accountId]);
+
   useEffect(() => {
     const apply = () => {
       const s = loadSettings();
@@ -39,10 +51,10 @@ export function SettingsBootstrap() {
         else window.setTimeout(preloadSounds, 1500);
       }
     };
+    // The pre-paint stamp in the root layout (src/lib/session/prePaint.ts)
+    // already put the document into this state before the first paint, so
+    // this pass changes nothing visible; it also loads the sound prefs.
     apply();
-    // Signed-in accounts sync settings across devices: adopt the server copy
-    // when it is newer than this device's (writes re-fire the changed event).
-    void pullSettingsFromServer();
     window.addEventListener(SETTINGS_CHANGED_EVENT, apply);
     // "System" theme follows the OS live.
     const media = window.matchMedia?.("(prefers-color-scheme: light)");
@@ -146,7 +158,7 @@ function MotionNotice() {
       // 12px this notice started inside the home-bar zone and put its buttons
       // right where the swipe lives.
       style={{ bottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
-      className="fixed left-1/2 z-[95] w-[min(92vw,22rem)] -translate-x-1/2 border border-gold/40 bg-ink-700/95 p-3 shadow-plate"
+      className="fixed left-1/2 z-[95] w-[min(92vw,22rem)] -translate-x-1/2 border border-gold/40 bg-ink-700/95 p-3"
     >
       {show === "effectsOff" ? (
         <>
@@ -311,7 +323,7 @@ function LagWatch() {
       // 12px this notice started inside the home-bar zone and put its buttons
       // right where the swipe lives.
       style={{ bottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
-      className="fixed left-1/2 z-[95] w-[min(92vw,22rem)] -translate-x-1/2 border border-gold/40 bg-ink-700/95 p-3 shadow-plate"
+      className="fixed left-1/2 z-[95] w-[min(92vw,22rem)] -translate-x-1/2 border border-gold/40 bg-ink-700/95 p-3"
     >
       <div className="font-display text-sm font-bold text-parchment-100">Animations running slow?</div>
       <p className="mt-1 text-xs leading-snug text-parchment-300">

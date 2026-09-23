@@ -1,34 +1,45 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
+import {
+  RAIL_WIDTH_DEFAULT,
+  RAIL_WIDTH_KEY,
+  RAIL_WIDTH_MAX,
+  RAIL_WIDTH_MIN,
+  clampRailWidth,
+} from "@/lib/session/railWidth";
 
 // The desktop command rail (left column of the match screens) can be dragged
 // wider or narrower by its right edge. The chosen width is shared between the
 // online and vs-bot screens and persisted per browser (like dc:rail-collapsed).
-export const RAIL_WIDTH_MIN = 240;
-export const RAIL_WIDTH_MAX = 440;
-export const RAIL_WIDTH_DEFAULT = 320;
-const RAIL_WIDTH_KEY = "dc:rail-width";
 
-const clampRailWidth = (w: number) =>
-  Math.min(RAIL_WIDTH_MAX, Math.max(RAIL_WIDTH_MIN, Math.round(w)));
+function stampedRailWidth(): number {
+  const v = parseFloat(document.documentElement.style.getPropertyValue("--match-rail-w"));
+  return Number.isFinite(v) && v > 0 ? clampRailWidth(v) : RAIL_WIDTH_DEFAULT;
+}
 
-/** The rail's current width plus the style that carries it to the match grid:
+/** The rail's current width plus the style that carries it to the match grid.
  * --match-rail-w drives both the grid's rail column and the board-width math,
- * so the board gives back exactly what the rail takes. Storage is read after
- * mount so SSR markup and first paint stay deterministic. */
+ * so the board gives back exactly what the rail takes.
+ *
+ * The width lives on <html>, not on the grid: the pre-paint stamp in the root
+ * layout (src/lib/session/prePaint.ts) writes the saved width there before
+ * the first paint, and every CSS reader falls back to 320px when it is
+ * absent. Reading storage after mount and then setting an inline width on the
+ * grid made the board and rail jump on every load for anyone who had dragged
+ * the rail (F008). A drag writes the same property, so there is one source.
+ * railWidthStyle stays for the callers that spread it, and is empty. */
 export function useRailWidth() {
   const [railWidth, setRailWidth] = useState(RAIL_WIDTH_DEFAULT);
   useEffect(() => {
-    try {
-      const saved = Number(window.localStorage.getItem(RAIL_WIDTH_KEY));
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      if (Number.isFinite(saved) && saved > 0) setRailWidth(clampRailWidth(saved));
-    } catch {}
+    // Only the separator's aria-valuenow reads this state; the layout already
+    // has the stamped width, so syncing it after mount moves nothing.
+    queueMicrotask(() => setRailWidth(stampedRailWidth()));
   }, []);
   const resizeRail = (w: number, commit: boolean) => {
     const next = clampRailWidth(w);
     setRailWidth(next);
+    document.documentElement.style.setProperty("--match-rail-w", `${next}px`);
     // Live drag frames skip storage; only the released width is written.
     if (commit) {
       try {
@@ -36,9 +47,11 @@ export function useRailWidth() {
       } catch {}
     }
   };
-  const railWidthStyle = { "--match-rail-w": `${railWidth}px` } as CSSProperties;
+  const railWidthStyle = EMPTY_STYLE;
   return { railWidth, resizeRail, railWidthStyle };
 }
+
+const EMPTY_STYLE: CSSProperties = {};
 
 /** The draggable gutter between the command rail and the board: its own thin
  * grid column, with an oversized invisible hit area so it's easy to grab. Also

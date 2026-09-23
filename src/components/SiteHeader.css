@@ -25,7 +25,7 @@ nav.site-nav {
   font-weight: 600;
   line-height: 1.2;
   color: var(--text-secondary);
-  transition: color 0.15s ease, background-color 0.15s ease;
+  transition: color var(--dur-1) var(--ease-out), background-color var(--dur-1) var(--ease-out);
 }
 .site-nav-link:hover {
   color: var(--text-heading);
@@ -36,10 +36,10 @@ nav.site-nav {
 }
 
 /* The hover dropdown under a nav link, and the header's own popovers: the same
-   plain box the quick-settings menu uses. */
+   plain box the quick-settings menu uses. Elevation is the raised fill and
+   the hairline, never a shadow (design system: no shadows, F161). */
 .site-nav-pop {
   background: var(--bg-raised);
   border: 1px solid var(--border-subtle);
   border-radius: var(--ui-roundness);
-  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.15), 0 10px 10px rgba(0, 0, 0, 0.12);
 }

@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Menu, X } from "lucide-react";
-import { AccountUser, fetchMe } from "@/lib/authClient";
+import { useSession, type SessionDisplay } from "@/lib/session/SessionProvider";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { Button } from "@/components/ui/Button";
 
@@ -16,7 +16,7 @@ type MobileNavGroup = { header: string; items: MobileNavItem[] };
 // Community) plus a "You" group for personal pages. Every destination the old
 // flat list reached stays reachable; friend challenges now route through the
 // lobby friends tab, matching the desktop Play menu.
-function buildGroups(user: AccountUser | null | undefined): MobileNavGroup[] {
+function buildGroups(user: SessionDisplay | null | undefined): MobileNavGroup[] {
   return [
     {
       header: "Play",
@@ -90,18 +90,10 @@ export function MobileNavMenu({
   hideAt?: "sm" | "md" | "none";
 } = {}) {
   const [open, setOpen] = useState(false);
-  const [user, setUser] = useState<AccountUser | null | undefined>(undefined);
+  // The same session the header draws (F010): this menu used to fetch /me on
+  // its own and kept saying Sign in after the header had minted a guest.
+  const { user: account, display: user } = useSession();
   const pathname = usePathname();
-
-  useEffect(() => {
-    let cancelled = false;
-    fetchMe().then((me) => {
-      if (!cancelled) setUser(me);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   // Static class strings (Tailwind cannot see interpolated class names).
   const hideClass = hideAt === "none" ? "" : hideAt === "md" ? "md:hidden" : "sm:hidden";
@@ -151,11 +143,42 @@ export function MobileNavMenu({
     };
   }, [open, measure]);
 
-  // Escape closes, matching every other dismissible surface.
+  // Focus follows the panel (F140). The panel is portalled to <body>, so
+  // without this a keyboard user opened it and kept tabbing through the page
+  // behind it. On open focus moves to the first link; Tab and Shift+Tab wrap
+  // inside the panel; Escape closes and every close hands focus back to the
+  // trigger (the HeaderSettingsMenu pattern).
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const wasOpen = useRef(false);
+  useEffect(() => {
+    if (open && panelPos) {
+      if (!wasOpen.current) panelRef.current?.querySelector<HTMLElement>("a[href]")?.focus();
+      wasOpen.current = true;
+    } else if (!open && wasOpen.current) {
+      wasOpen.current = false;
+      triggerRef.current?.focus();
+    }
+  }, [open, panelPos]);
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
+      if (e.key === "Escape") {
+        setOpen(false);
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const links = panelRef.current?.querySelectorAll<HTMLElement>("a[href]");
+      if (!links || links.length === 0) return;
+      const first = links[0];
+      const last = links[links.length - 1];
+      const inside = panelRef.current?.contains(document.activeElement);
+      if (e.shiftKey && (document.activeElement === first || !inside)) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && (document.activeElement === last || !inside)) {
+        e.preventDefault();
+        first.focus();
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -197,6 +220,9 @@ export function MobileNavMenu({
                 lifted above the bar; max-h + internal scroll so a short
                 landscape viewport never traps the lower destinations. */}
             <div
+              ref={panelRef}
+              role="dialog"
+              aria-label="Site menu"
               style={{
                 top: panelPos.top,
                 left: panelPos.left,
@@ -206,7 +232,7 @@ export function MobileNavMenu({
                 borderRadius: "var(--ui-roundness)",
               }}
               data-testid="mobile-nav-panel"
-              className="!fixed !z-[61] max-h-[calc(100dvh-4.5rem)] w-60 max-w-[calc(100vw-1.5rem)] overflow-y-auto overscroll-contain py-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] shadow-xl"
+              className="!fixed !z-[61] max-h-[calc(100dvh-4.5rem)] w-60 max-w-[calc(100vw-1.5rem)] overflow-y-auto overscroll-contain py-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))]"
             >
             <Link
               href={user ? `/u/${encodeURIComponent(user.username)}` : "/login"}
@@ -219,9 +245,11 @@ export function MobileNavMenu({
                   <span className="min-w-0 truncate">{user.username}</span>
                   {/* Live displayed rating (best mode bucket), matching the
                       header chip and profile, not the frozen legacy column. */}
-                  <span className="ml-auto shrink-0 font-mono text-xs text-parchment-400">
-                    {Math.round(user.displayRating ?? user.rating)}
-                  </span>
+                  {account && (
+                    <span className="ml-auto shrink-0 font-mono text-xs text-parchment-400">
+                      {Math.round(account.displayRating ?? account.rating)}
+                    </span>
+                  )}
                 </>
               ) : (
                 "Sign in"

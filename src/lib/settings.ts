@@ -47,7 +47,7 @@ export type PieceColor = "classic" | "ivory" | "steel" | "rosewood" | "forest" |
 
 /** Stored piece-set ids from before colour was split out of the design
  *  picker: each was the inline design in one colour. */
-const LEGACY_PIECE_COLOR_THEMES: Record<string, PieceColor> = {
+export const LEGACY_PIECE_COLOR_THEMES: Record<string, PieceColor> = {
   ivory: "ivory",
   steel: "steel",
   rosewood: "rosewood",
@@ -140,7 +140,7 @@ export const SITE_THEMES: Record<
  *  without this every one of those users would trip the SITE_THEMES guard in
  *  loadSettings and be silently reset. Light-scheme ids land on "light", the
  *  rest on "dark". */
-const LEGACY_SITE_THEMES: Record<string, SiteTheme> = {
+export const LEGACY_SITE_THEMES: Record<string, SiteTheme> = {
   sepia: "light",
   frost: "light",
   porcelain: "light",

@@ -1,7 +1,13 @@
 import type { Metadata, Viewport } from "next";
 import { JetBrains_Mono, Noto_Sans } from "next/font/google";
+import { cookies } from "next/headers";
 import { AchievementToast } from "@/components/AchievementToast";
 import { SettingsBootstrap } from "@/components/SettingsBootstrap";
+import { LAST_MODE_COOKIE, parseMode } from "@/lib/modeCookie";
+import { SESSION_COOKIE } from "@/lib/server/auth";
+import { PRE_PAINT_SCRIPT } from "@/lib/session/prePaint";
+import { SessionProvider } from "@/lib/session/SessionProvider";
+import { parseWho, WHO_COOKIE } from "@/lib/session/who";
 import "./globals.css";
 import "./zen.css";
 
@@ -192,26 +198,42 @@ export const viewport: Viewport = {
   interactiveWidget: "resizes-content",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // Who is this, before anything renders (brief section 4, decision Q1): the
+  // display cookie says which header to draw, so a signed-in visitor gets the
+  // final header on the first paint instead of an unknown one that grows when
+  // /api/auth/me answers. Reading cookies makes pages render per request, but
+  // there is no database read here: the hint is a cookie, trusted for layout
+  // only, and /me stays the authority (src/lib/session/who.ts).
+  const jar = await cookies();
+  const hasSession = !!jar.get(SESSION_COOKIE)?.value;
+  const hint = hasSession ? parseWho(jar.get(WHO_COOKIE)?.value) : null;
+  const lastMode = parseMode(jar.get(LAST_MODE_COOKIE)?.value);
   return (
-    // data-theme matches DEFAULT_SETTINGS.siteTheme ("dark") so first paint is
-    // already the default; SettingsBootstrap then applies whatever the user
-    // actually chose.
+    // data-theme matches DEFAULT_SETTINGS.siteTheme ("dark") for the rare
+    // visitor with scripts off; the pre-paint script below replaces it (and
+    // stamps data-anim, zen, board and rail prefs) before the first paint.
+    // suppressHydrationWarning covers exactly those attributes on <html>.
     // The face variables live on <html>, not <body>: --font-display and
     // --font-body are roles resolved in :root, and a value set on <body> would
     // beat them for everything inside it.
-    <html lang="en" data-theme="dark" className={FONT_VARS}>
+    <html lang="en" data-theme="dark" className={FONT_VARS} suppressHydrationWarning>
       <head>
+        {/* Must stay the first script in <head>: it has to run before the
+            stylesheet paints anything. */}
+        <script dangerouslySetInnerHTML={{ __html: PRE_PAINT_SCRIPT }} />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
         />
       </head>
       <body className="no-tap-highlight font-body">
-        <SettingsBootstrap />
-        {children}
-        {/* Site-wide, desktop-only unlock popups (bottom right). */}
-        <AchievementToast />
+        <SessionProvider hint={hint} hasSession={hasSession} lastMode={lastMode}>
+          <SettingsBootstrap />
+          {children}
+          {/* Site-wide, desktop-only unlock popups (bottom right). */}
+          <AchievementToast />
+        </SessionProvider>
       </body>
     </html>
   );

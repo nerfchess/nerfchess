@@ -1,5 +1,14 @@
 // Client-side helpers for the account API. The session itself lives in an
 // httpOnly cookie, so "who am I" is always answered by the server.
+//
+// Every answer is published to the shared session store
+// (src/lib/session/store.ts), and concurrent fetchMe() calls share one
+// request, so a page that mounts several account-aware components makes one
+// /api/auth/me call, not one per component. Components should read the user
+// with useSession() (src/lib/session/SessionProvider.tsx) rather than calling
+// fetchMe themselves.
+
+import { publishSessionUser, resetSessionUser } from "@/lib/session/store";
 
 export interface AccountUser {
   id: string;
@@ -44,7 +53,7 @@ async function expectUser(res: Response): Promise<{ id: string; username: string
 }
 
 export async function register(username: string, password: string, email?: string, turnstileToken?: string) {
-  return expectUser(
+  const who = await expectUser(
     await post("/api/auth/register", {
       username,
       password,
@@ -52,14 +61,23 @@ export async function register(username: string, password: string, email?: strin
       turnstileToken: turnstileToken || undefined,
     }),
   );
+  resetSessionUser();
+  void fetchMe();
+  return who;
 }
 
 export async function login(username: string, password: string) {
-  return expectUser(await post("/api/auth/login", { username, password }));
+  const who = await expectUser(await post("/api/auth/login", { username, password }));
+  // A different account now owns the tab: drop the old answer, then load the
+  // new one so every mounted consumer follows without a reload.
+  resetSessionUser();
+  void fetchMe();
+  return who;
 }
 
 export async function logout(): Promise<void> {
   await post("/api/auth/logout", {});
+  resetSessionUser(null);
 }
 
 /**
@@ -67,16 +85,29 @@ export async function logout(): Promise<void> {
  * 401); `undefined` means the request failed in transit (offline, 5xx),
  * so the caller does not actually know and should not act as if signed out.
  */
-export async function fetchMe(): Promise<AccountUser | null | undefined> {
-  try {
-    const res = await fetch("/api/auth/me");
-    if (res.status === 401) return null;
-    if (!res.ok) return undefined;
-    const data = (await res.json()) as { user: AccountUser | null };
-    return data.user;
-  } catch {
-    return undefined;
-  }
+let mePromise: Promise<AccountUser | null | undefined> | null = null;
+
+export function fetchMe(): Promise<AccountUser | null | undefined> {
+  // One request in flight at a time, shared by every caller. A caller that
+  // arrives after it settles gets a fresh request (pollers want fresh data).
+  if (mePromise) return mePromise;
+  const request = (async (): Promise<AccountUser | null | undefined> => {
+    try {
+      const res = await fetch("/api/auth/me");
+      if (res.status === 401) return null;
+      if (!res.ok) return undefined;
+      const data = (await res.json()) as { user: AccountUser | null };
+      return data.user;
+    } catch {
+      return undefined;
+    }
+  })();
+  mePromise = request;
+  void request.then((user) => {
+    if (mePromise === request) mePromise = null;
+    publishSessionUser(user);
+  });
+  return request;
 }
 
 // One guest-creation attempt per page load, shared across components.
