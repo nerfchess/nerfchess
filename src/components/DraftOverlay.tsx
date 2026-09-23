@@ -791,6 +791,11 @@ export function DraftOverlay({
     if (!root.contains(document.activeElement)) focusables()[0]?.focus();
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
+        // An inner disclosure (a pinned glossary definition) owns the first
+        // Escape. This listener runs in the capture phase, ahead of the
+        // term's own handler, so it used to tuck the whole draft away and
+        // leave the definition floating over the board (F143).
+        if (root.querySelector('[role="button"][aria-expanded="true"]')) return;
         e.preventDefault();
         setHidden(true);
         return;
