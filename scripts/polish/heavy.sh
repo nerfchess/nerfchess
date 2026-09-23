@@ -5,6 +5,9 @@
 #
 #   scripts/polish/heavy.sh ./node_modules/.bin/tsc --noEmit
 set -u
+# Playwright must never start its own dev server on the shared :3000 port
+# (playwright.config.ts skips webServer when this is 1).
+export PW_NO_WEBSERVER="${PW_NO_WEBSERVER:-1}"
 while :; do
   for s in 1 2; do
     flock -n -E 75 "/tmp/polish-heavy.$s.lock" "$@"
