@@ -411,3 +411,38 @@ test.describe("disclosure focus", () => {
     });
   }
 });
+
+test.describe("contact socials", () => {
+  // F166: /contact hard-coded its four social links as hand-rolled btn-*
+  // anchors, apart from the shared SOCIAL_LINKS list and under the 44px
+  // touch floor. They now map SOCIAL_LINKS through LinkButton.
+  test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  test("socials match the shared list and clear the touch floor", async ({ page }) => {
+    await page.goto("/contact");
+    const links = page.locator('main a[target="_blank"]');
+    await expect(links.first()).toBeVisible({ timeout: 60_000 });
+    const got = await links.evaluateAll((els) =>
+      els.map((a) => ({ href: (a as HTMLAnchorElement).href, h: a.getBoundingClientRect().height, rel: a.getAttribute("rel") })),
+    );
+    expect(got.map((g) => g.href).sort()).toEqual(
+      [
+        "https://discord.gg/a5bJYFrTx",
+        "https://tiktok.com/@nerfchess",
+        "https://www.instagram.com/officialnerfchess",
+        "https://www.youtube.com/@OfficialNerfChess",
+      ].sort(),
+    );
+    for (const name of [
+      "Join the Discord",
+      "@officialnerfchess on Instagram",
+      "@nerfchess on TikTok",
+      "@OfficialNerfChess on YouTube",
+    ]) {
+      await expect(page.getByRole("link", { name, exact: true })).toBeVisible();
+    }
+    for (const g of got) {
+      expect(g.h, g.href).toBeGreaterThanOrEqual(44);
+      expect(g.rel, g.href).toContain("noopener");
+    }
+  });
+});

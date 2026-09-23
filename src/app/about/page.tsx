@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { InfoPageLayout, InfoSection } from "@/components/InfoPageLayout";
 import { LinkButton } from "@/components/ui/Button";
 import { TeamSection } from "@/components/TeamSection";
