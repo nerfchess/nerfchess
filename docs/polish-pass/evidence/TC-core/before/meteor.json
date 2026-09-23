@@ -1,0 +1,82 @@
+{
+ "id": "meteor",
+ "url": "/dev/plays?id=meteor&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "meteor",
+  "name": "Meteor",
+  "tier": 7,
+  "category": "attack",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "core",
+  "visual": "meteorcross",
+  "anchor": "board",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 35,
+  "drive": "engine",
+  "driveNote": "activated with 2 pick(s)",
+  "castSq": "d4",
+  "targets": [
+   "d4",
+   "e4"
+  ],
+  "picks": [
+   "d4",
+   "e4"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2456,
+  "cssEndMs": 3528,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 36,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 144,
+  "maxGapMs": 398.8
+ },
+ "raf": {
+  "frames": 173,
+  "medianMs": 16.7,
+  "maxMs": 200.1,
+  "dropped": 44
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 114,
+  "totalBlockingMs": 57,
+  "entries": [
+   {
+    "atMs": 67,
+    "duration": 114,
+    "blocking": 57,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  188,
+  480,
+  830,
+  1224,
+  1655,
+  2116,
+  2606
+ ],
+ "png": "docs/polish-pass/evidence/TC-core/before/meteor.png",
+ "pngBytes": 28691
+}

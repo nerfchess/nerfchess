@@ -1,0 +1,92 @@
+{
+ "id": "ruin",
+ "url": "/dev/plays?id=ruin&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "ruin",
+  "name": "Ruin",
+  "tier": 7,
+  "category": "attack",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "core",
+  "visual": "ruin",
+  "anchor": "board",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 60,
+  "drive": "engine",
+  "driveNote": "activated with 1 pick(s)",
+  "castSq": "c8",
+  "targets": [
+   "c8"
+  ],
+  "picks": [
+   "c8"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2621,
+  "cssEndMs": 3880,
+  "settled": true,
+  "windowMs": 4131,
+  "cssAnimations": 93,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 157,
+  "maxGapMs": 333.1
+ },
+ "raf": {
+  "frames": 178,
+  "medianMs": 16.7,
+  "maxMs": 133.3,
+  "dropped": 73
+ },
+ "longAnimationFrames": {
+  "count": 3,
+  "worstMs": 65,
+  "totalBlockingMs": 15,
+  "entries": [
+   {
+    "atMs": -55,
+    "duration": 64,
+    "blocking": 10,
+    "scripts": []
+   },
+   {
+    "atMs": 122,
+    "duration": 55,
+    "blocking": 5,
+    "scripts": []
+   },
+   {
+    "atMs": 966,
+    "duration": 65,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  200,
+  511,
+  883,
+  1302,
+  1759,
+  2250,
+  2771
+ ],
+ "png": "docs/polish-pass/evidence/TC-core/before/ruin.png",
+ "pngBytes": 33259
+}
