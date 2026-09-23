@@ -1,0 +1,281 @@
+[
+  {
+    "route": "/about",
+    "status": 200,
+    "ms": 16611,
+    "titles": [
+      "About Nerf Chess and the team behind it"
+    ],
+    "canonical": "https://nerfchess.com/about",
+    "description": "Nerf Chess is a free online chess variant with secret handicaps and power-up cards. What it is, why it plays differently, and the team that makes it.",
+    "robots": "index, follow",
+    "og": {
+      "title": "About Nerf Chess and the team behind it",
+      "url": "https://nerfchess.com/about",
+      "type": "website",
+      "site_name": "Nerf Chess",
+      "image": "http://localhost:3000/about/opengraph-image?a98321dc3ac29289",
+      "w": "1200",
+      "h": "630",
+      "alt": "Chess, with secrets, on Nerf Chess"
+    },
+    "twitter": {
+      "card": "summary_large_image",
+      "title": "About Nerf Chess and the team behind it",
+      "image": "http://localhost:3000/about/opengraph-image?a98321dc3ac29289"
+    },
+    "jsonLdTypes": [
+      [
+        "Organization",
+        "VideoGame",
+        "WebSite",
+        [
+          "VideoGame",
+          "WebApplication"
+        ]
+      ],
+      [
+        "Organization",
+        "Person",
+        "Person",
+        "Person"
+      ]
+    ]
+  },
+  {
+    "route": "/faq",
+    "status": 200,
+    "ms": 2783,
+    "titles": [
+      "Nerf Chess FAQ: how the variant works"
+    ],
+    "canonical": "https://nerfchess.com/faq",
+    "description": "Answers to common questions: the two modes, what nerfs and buffs are, how drafting and banking work, ratings, and playing a friend with no account.",
+    "robots": "index, follow",
+    "og": {
+      "title": "Nerf Chess FAQ: how the variant works",
+      "url": "https://nerfchess.com/faq",
+      "type": "website",
+      "site_name": "Nerf Chess",
+      "image": "http://localhost:3000/faq/opengraph-image?bb2f677050fc826e",
+      "w": "1200",
+      "h": "630",
+      "alt": "Questions and answers, on Nerf Chess"
+    },
+    "twitter": {
+      "card": "summary_large_image",
+      "title": "Nerf Chess FAQ: how the variant works",
+      "image": "http://localhost:3000/faq/opengraph-image?bb2f677050fc826e"
+    },
+    "jsonLdTypes": [
+      [
+        "Organization",
+        "VideoGame",
+        "WebSite",
+        [
+          "VideoGame",
+          "WebApplication"
+        ]
+      ],
+      [
+        "FAQPage"
+      ]
+    ]
+  },
+  {
+    "route": "/guide/how-to-play",
+    "status": 200,
+    "ms": 7638,
+    "titles": [
+      "How to play Nerf Chess: rules and card types"
+    ],
+    "canonical": "https://nerfchess.com/guide/how-to-play",
+    "description": "The Nerf Chess rules in five minutes: capture the king to win, no checkmate or stalemate, secret handicaps, and the card types from nerf to item.",
+    "robots": "index, follow",
+    "og": {
+      "title": "How to play Nerf Chess: rules and card types",
+      "url": "https://nerfchess.com/guide/how-to-play",
+      "type": "article",
+      "site_name": "Nerf Chess",
+      "image": "http://localhost:3000/guide/how-to-play/opengraph-image?28c1144181ab6acd",
+      "w": "1200",
+      "h": "630",
+      "alt": "How to play, on Nerf Chess"
+    },
+    "twitter": {
+      "card": "summary_large_image",
+      "title": "How to play Nerf Chess: rules and card types",
+      "image": "http://localhost:3000/guide/how-to-play/opengraph-image?28c1144181ab6acd"
+    },
+    "jsonLdTypes": [
+      [
+        "Organization",
+        "VideoGame",
+        "WebSite",
+        [
+          "VideoGame",
+          "WebApplication"
+        ]
+      ],
+      [
+        "Organization",
+        "Article",
+        "BreadcrumbList"
+      ],
+      [
+        "FAQPage"
+      ]
+    ]
+  },
+  {
+    "route": "/codex/nerf/lucky",
+    "status": 200,
+    "ms": 66290,
+    "titles": [
+      "Lucky: Trivial nerf · Nerf Chess"
+    ],
+    "canonical": "https://nerfchess.com/codex/nerf/lucky",
+    "description": "Lucky is a Trivial (tier I) nerf in Nerf Chess, a secret handicap in Nerf mode. You have no nerf. A rare gift from the gods of chess.",
+    "robots": "index, follow",
+    "og": {
+      "title": "Lucky: Trivial nerf · Nerf Chess",
+      "url": "https://nerfchess.com/codex/nerf/lucky",
+      "type": "article",
+      "site_name": "Nerf Chess",
+      "image": "http://localhost:3000/codex/nerf/lucky/opengraph-image/card?2f55d6f440b95cf0",
+      "w": "1200",
+      "h": "630",
+      "alt": "Lucky: Trivial nerf: the card's tier, mode and rule on Nerf Chess"
+    },
+    "twitter": {
+      "card": "summary_large_image",
+      "title": "Lucky: Trivial nerf · Nerf Chess",
+      "image": "http://localhost:3000/codex/nerf/lucky/opengraph-image/card?2f55d6f440b95cf0"
+    },
+    "jsonLdTypes": [
+      [
+        "Organization",
+        "VideoGame",
+        "WebSite",
+        [
+          "VideoGame",
+          "WebApplication"
+        ]
+      ],
+      [
+        "BreadcrumbList"
+      ]
+    ]
+  },
+  {
+    "route": "/c/ZZZZZ",
+    "status": 200,
+    "ms": 67755,
+    "titles": [
+      "You are invited to a game of Nerf Chess"
+    ],
+    "canonical": "https://nerfchess.com/c/ZZZZZ",
+    "description": "Chess with power-ups and secret handicaps, free in your browser with no download. Tap to accept.",
+    "robots": "noindex, follow",
+    "og": {
+      "title": "You are invited to a game of Nerf Chess",
+      "url": "https://nerfchess.com/c/ZZZZZ",
+      "type": "website",
+      "site_name": "Nerf Chess",
+      "image": "http://localhost:3000/c/ZZZZZ/opengraph-image/card?e274207a2160385a",
+      "w": "1200",
+      "h": "630",
+      "alt": "An invitation to play Nerf Chess with code ZZZZZ"
+    },
+    "twitter": {
+      "card": "summary_large_image",
+      "title": "You are invited to a game of Nerf Chess",
+      "image": "http://localhost:3000/c/ZZZZZ/opengraph-image/card?e274207a2160385a"
+    },
+    "jsonLdTypes": [
+      [
+        "Organization",
+        "VideoGame",
+        "WebSite",
+        [
+          "VideoGame",
+          "WebApplication"
+        ]
+      ]
+    ]
+  },
+  {
+    "route": "/contact",
+    "status": 200,
+    "ms": 1784,
+    "titles": [
+      "Contact the Nerf Chess team"
+    ],
+    "canonical": "https://nerfchess.com/contact",
+    "description": "Share a card idea, report a bug or talk strategy on the Nerf Chess Discord, and find updates and clips on Instagram, TikTok and YouTube.",
+    "robots": "index, follow",
+    "og": {
+      "title": "Contact the Nerf Chess team",
+      "url": "https://nerfchess.com/contact",
+      "type": "website",
+      "site_name": "Nerf Chess",
+      "image": "https://nerfchess.com/opengraph-image",
+      "w": "1200",
+      "h": "630",
+      "alt": "Nerf Chess: chess with power-ups, a free online chess variant"
+    },
+    "twitter": {
+      "card": "summary_large_image",
+      "title": "Contact the Nerf Chess team",
+      "image": "https://nerfchess.com/opengraph-image"
+    },
+    "jsonLdTypes": [
+      [
+        "Organization",
+        "VideoGame",
+        "WebSite",
+        [
+          "VideoGame",
+          "WebApplication"
+        ]
+      ]
+    ]
+  },
+  {
+    "route": "/clubs",
+    "status": 200,
+    "ms": 71045,
+    "titles": [
+      "Clubs: Nerf Chess teams and communities"
+    ],
+    "canonical": "https://nerfchess.com/clubs",
+    "description": "Find or start a Nerf Chess club: a player-run community with its own board, members and games. Join one and play with your team.",
+    "robots": "index, follow",
+    "og": {
+      "title": "Clubs: Nerf Chess teams and communities",
+      "url": "https://nerfchess.com/clubs",
+      "type": "website",
+      "site_name": "Nerf Chess",
+      "image": "http://localhost:3000/clubs/opengraph-image?b29fb38600d1a448",
+      "w": "1200",
+      "h": "630",
+      "alt": "Clubs, on Nerf Chess"
+    },
+    "twitter": {
+      "card": "summary_large_image",
+      "title": "Clubs: Nerf Chess teams and communities",
+      "image": "http://localhost:3000/clubs/opengraph-image?b29fb38600d1a448"
+    },
+    "jsonLdTypes": [
+      [
+        "Organization",
+        "VideoGame",
+        "WebSite",
+        [
+          "VideoGame",
+          "WebApplication"
+        ]
+      ]
+    ]
+  }
+]

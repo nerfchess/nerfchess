@@ -1,0 +1,36 @@
+1697 entries
+https://nerfchess.com 2026-09-23 weekly 1
+https://nerfchess.com/play 2026-09-23 monthly 0.9
+https://nerfchess.com/lobby 2026-09-23 monthly 0.9
+https://nerfchess.com/codex 2026-09-23 weekly 0.9
+https://nerfchess.com/puzzles 2026-09-23 daily 0.9
+https://nerfchess.com/updates 2026-09-05 weekly 0.7
+https://nerfchess.com/tutorial 2026-09-23 monthly 0.8
+https://nerfchess.com/tutorial/walkthrough 2026-09-23 monthly 0.6
+https://nerfchess.com/tutorial/first-game 2026-09-23 monthly 0.5
+https://nerfchess.com/guide 2026-09-23 monthly 0.8
+https://nerfchess.com/guide/how-to-play 2026-09-23 monthly 0.8
+https://nerfchess.com/guide/nerf-mode 2026-09-23 monthly 0.7
+https://nerfchess.com/guide/buff-mode 2026-09-23 monthly 0.7
+https://nerfchess.com/guide/chess-with-power-ups 2026-09-23 monthly 0.7
+https://nerfchess.com/guide/capture-the-king 2026-09-23 monthly 0.7
+https://nerfchess.com/guide/chess-roguelike 2026-09-23 monthly 0.7
+https://nerfchess.com/guide/chess-variants 2026-09-23 monthly 0.7
+https://nerfchess.com/guide/glossary 2026-09-23 monthly 0.6
+https://nerfchess.com/about 2026-09-23 yearly 0.6
+https://nerfchess.com/faq 2026-09-23 monthly 0.6
+https://nerfchess.com/leaderboard 2026-09-23 daily 0.5
+https://nerfchess.com/tournaments 2026-09-23 daily 0.5
+https://nerfchess.com/community 2026-09-23 weekly 0.5
+https://nerfchess.com/clubs 2026-09-23 weekly 0.5
+https://nerfchess.com/achievements 2026-09-23 monthly 0.4
+https://nerfchess.com/tv 2026-09-23 daily 0.4
+https://nerfchess.com/analysis 2026-09-23 monthly 0.4
+https://nerfchess.com/codex/suggest 2026-09-23 yearly 0.4
+https://nerfchess.com/contact 2026-09-23 yearly 0.3
+https://nerfchess.com/guidelines 2026-09-23 yearly 0.2
+https://nerfchess.com/privacy-policy 2026-09-23 yearly 0.2
+https://nerfchess.com/terms-of-service 2026-09-23 yearly 0.2
+https://nerfchess.com/codex/buff/pawn_push (no lastmod) monthly 0.4
+https://nerfchess.com/codex/buff/wazir_rook (no lastmod) monthly 0.4
+... card pages: 1665 without lastmod
