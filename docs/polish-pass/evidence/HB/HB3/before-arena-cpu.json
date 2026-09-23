@@ -1,0 +1,14 @@
+{
+  "games": 60,
+  "minutes": 4,
+  "warmupS": 150,
+  "meanLive": 59.7,
+  "lagP50Ms": 10.1,
+  "lagP95Ms": 12.1,
+  "lagP99Ms": 303.8,
+  "lagMaxMs": 2033.2,
+  "cpuPerWallS": 0.36,
+  "movesPerS": 3.93,
+  "draftActionsPerS": 0.8,
+  "finished": 12
+}
