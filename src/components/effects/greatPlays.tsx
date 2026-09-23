@@ -12,9 +12,10 @@
 // lands ONE unique physical SIGNATURE BEAT on top of its strike (the circle
 // closing, petrify creep, flash-freeze sheet, hang-time debris, rally horn,
 // root ripple, phantom after-images, tower chime, dealt after-images, fumbled
-// coin, spark fountain, gate surge, hoof-shock), and TIER-6 cards read
-// grander than tier-5: a second shock ring + board-edge glow keyed off the
-// flourish (TIER6 / GrandAccent — tier-5 plays keep ONE shockwave). Non-lead
+// coin, spark fountain, gate surge, hoof-shock), and cards at tier 6 and up
+// read grander than tier 5: a second shock ring + board-edge glow keyed off
+// the card's LIVE tier (GrandAccent; tier 5 and below keep ONE shockwave,
+// ledger F222). Non-lead
 // ("target") renders are compact per-square hits because zone-fed cards mount
 // one overlay per affected square.
 //
@@ -80,7 +81,9 @@
 
 import "./greatPlays.css";
 
+import { useEffect, useLayoutEffect, useRef } from "react";
 import type { ComponentType, CSSProperties, ReactNode } from "react";
+import { BUFF_BY_ID } from "@/engine/buffs/library";
 import type { SigPlugin, SigRole } from "./sigPlugins";
 import { BoardFrame } from "./stage";
 import { LaserStrike, PieceShatter, Shockwave, QUAKE_CLASS, impactVars } from "./impact/impact";
@@ -108,6 +111,9 @@ interface TemplateProps {
   /** Optional bespoke-flourish key for marquee cards (extra scene dressing
    * layered on the shared template; never changes the template's core beats). */
   flourish?: string;
+  /** The card's live tier (BUFF_BY_ID), bound per entry by `bindTiers`. Drives
+   * the tier-6+ accent (GrandAccent) and the short cut for tier 4 and below. */
+  tier: number;
 }
 
 /** hex "#rrggbb" -> rgba() at the given alpha (glow fills, gradients). */
@@ -694,55 +700,32 @@ function TargetHit({ palette, glyph, delayMs }: { palette: Palette; glyph: React
   );
 }
 
-/* --- Tier-scaled weight (flagship pass) --------------------------------------
-   Tier-6 cards read GRANDER than tier-5 inside the same template: a second,
-   later shock ring plus a brief board-edge glow around the strike. Templates
-   read the weight off the card's flourish key — every tier-6 card in this
-   module carries one (the config objects stay untouched, so the audit parser
-   sees the same PLAYS table). */
-const TIER6 = new Set([
-  // WitchCircle
-  "eclipse", "sticky", "dominion", "exile", "grounded", "leadcast",
-  // StoneGaze
-  "hammer", "bastion", "pews", "contagion", "stoneshoes", "statue",
-  // ColdFront
-  "creepfrost", "bigchill", "pincer", "whiteout",
-  // SiegeRoll
-  "chain", "threebombs", "maul", "firestorm",
-  // WarBanner
-  "bulwark", "bridge", "gates", "praetorian",
-  // Grove
-  "roots",
-  // PhantomParade
-  "gossamer", "chooser",
-  // ClockSpire
-  "timestop", "rewind", "lostdays",
-  // CardRite
-  "nullseal", "death", "sidegame", "bothcards", "bargain", "riddle",
-  // ThiefHand
-  "siphon", "seize", "voidmaw", "emptypockets",
-  // CrownForge
-  "requeen", "ascension", "secondking", "leadcrown", "wings", "chainbreak",
-  // RiftGate
-  "mirror",
-  // BeastRush
-  "hunt", "dragon",
-]);
+/* --- Tier-scaled weight -----------------------------------------------------
+   Cards at tier 6 and above read GRANDER than tier 5 inside the same template:
+   a second, later shock ring plus a brief board-edge glow around the strike.
+   The weight is read from the card's LIVE tier (BUFF_BY_ID, bound onto each
+   entry by `bindTiers` below the registry), never from a table of flourish
+   keys: that table went stale as cards were re-tiered, so 38 cards played the
+   wrong weight, a tier-8 card played as tier 5 and tier-2 cards played the
+   full tier-6 accent (ledger F222). */
+function grand(tier: number): boolean {
+  return tier >= 6;
+}
 
-/** Tier-6 accent: a board-edge glow frame (the crop is the central ~57% of
- * the canvas) + a second, later shock ring. Renders nothing for tier-5. */
+/** Tier-6+ accent: a board-edge glow frame (the crop is the central ~57% of
+ * the canvas) + a second, later shock ring. Renders nothing below tier 6. */
 function GrandAccent({
-  flourish,
+  tier,
   color,
   delayMs,
   anchored,
 }: {
-  flourish?: string;
+  tier: number;
   color: string;
   delayMs: number;
   anchored?: boolean;
 }) {
-  if (!flourish || !TIER6.has(flourish)) return null;
+  if (!grand(tier)) return null;
   return (
     <>
       {/* the rim of the BOARD kindles, so this one goes through the Frame */}
@@ -823,7 +806,7 @@ const CIRCLE_EDGES = [
   { l: 33, t: 62.5, rot: "180deg", d: 180 },
   { l: 14.5, t: 46, rot: "270deg", d: 270 },
 ];
-function WitchCircle({ palette, glyph, lead, role, anchored, delayMs, flourish }: TemplateProps) {
+function WitchCircle({ palette, glyph, lead, role, anchored, delayMs, flourish, tier }: TemplateProps) {
   const [p0, p1, p2] = palette;
   if (role === "entrance")
     return (
@@ -1327,7 +1310,7 @@ function WitchCircle({ palette, glyph, lead, role, anchored, delayMs, flourish }
       <Impact rgb={rgbOf(p1)} atMs={delayMs + 820} laser left={40} top={33} size={20} />
       {/* geometry: the working REACHES: hex-light runs off the circle down the real line to the piece it is binding */}
       <Reach delayMs={delayMs + 460} color={tint(p1, 0.85)} top={48.6} thickness={1.2} />
-      <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 960} anchored={anchored} />
+      <GrandAccent tier={tier} color={tint(p1, 0.75)} delayMs={delayMs + 960} anchored={anchored} />
       <Glint delayMs={delayMs + 1150} color={p1} left={48} top={40} />
       {/* settle: candle-smoke embers lift off the guttering circle */}
       <Afterglow delayMs={delayMs + 960} color={tint(p1, 0.28)} left={38} top={34} w={24} h={22} />
@@ -1340,7 +1323,7 @@ function WitchCircle({ palette, glyph, lead, role, anchored, delayMs, flourish }
    Template 2: StoneGaze — a gorgon bust rises at the board's heart and rakes
    the crop with a petrifying gaze beam; stone chips spall off the victims.
    ========================================================================== */
-function StoneGaze({ palette, glyph, lead, role, anchored, delayMs, flourish }: TemplateProps) {
+function StoneGaze({ palette, glyph, lead, role, anchored, delayMs, flourish, tier }: TemplateProps) {
   const [p0, p1, p2] = palette;
   if (role === "entrance")
     return (
@@ -1495,7 +1478,7 @@ function StoneGaze({ palette, glyph, lead, role, anchored, delayMs, flourish }: 
       />
       {/* geometry: the gaze does not rake at random: it runs the real line to the piece being taken */}
       <Reach delayMs={delayMs + 520} color={tint(p1, 0.9)} top={33} thickness={2.6} minCells={2.8} />
-      <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 920} anchored={anchored} />
+      <GrandAccent tier={tier} color={tint(p1, 0.75)} delayMs={delayMs + 920} anchored={anchored} />
       <Glint delayMs={delayMs + 1120} color={p1} left={48} top={30} />
       {/* settle: masonry dust sifts down off the fresh stone */}
       <Afterglow delayMs={delayMs + 920} color={tint(p0, 0.3)} left={38} top={38} w={24} h={20} />
@@ -1514,7 +1497,7 @@ const FROST_STRIPES = [
   { t: 47, d: 240 },
   { t: 62, d: 340 },
 ];
-function ColdFront({ palette, glyph, lead, role, anchored, delayMs, flourish }: TemplateProps) {
+function ColdFront({ palette, glyph, lead, role, anchored, delayMs, flourish, tier }: TemplateProps) {
   const [p0, p1, p2] = palette;
   if (role === "entrance")
     return (
@@ -1657,7 +1640,7 @@ function ColdFront({ palette, glyph, lead, role, anchored, delayMs, flourish }: 
       />
       {/* geometry: the front runs the play's own line, not a fixed compass bearing */}
       <Reach delayMs={delayMs + 700} color={tint(p1, 0.8)} top={46} thickness={2.2} minCells={3} />
-      <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 1140} anchored={anchored} />
+      <GrandAccent tier={tier} color={tint(p1, 0.75)} delayMs={delayMs + 1140} anchored={anchored} />
       <Glint delayMs={delayMs + 1320} color={p1} left={52} top={34} />
       {/* settle: fine snow sifts down in the front's wake */}
       <Afterglow delayMs={delayMs + 1140} color={tint(p1, 0.26)} left={38} top={36} w={26} h={22} />
@@ -1670,7 +1653,7 @@ function ColdFront({ palette, glyph, lead, role, anchored, delayMs, flourish }: 
    Template 4: SiegeRoll — a siege engine rolls in from the left wing, its arm
    swings, and the payload arcs across to a strike flash on the far side.
    ========================================================================== */
-function SiegeRoll({ palette, glyph, lead, role, anchored, delayMs, flourish }: TemplateProps) {
+function SiegeRoll({ palette, glyph, lead, role, anchored, delayMs, flourish, tier }: TemplateProps) {
   const [p0, p1, p2] = palette;
   // Comic-timing: the party cannon holds its wind-up a beat before the punchline.
   const hold = flourish === "confetti" ? 200 : 0;
@@ -1791,7 +1774,7 @@ function SiegeRoll({ palette, glyph, lead, role, anchored, delayMs, flourish }: 
       />
       {/* geometry: the shot's line of fire, laid down the real source -> victim vector */}
       <Reach delayMs={delayMs + 640 + hold} color={tint(p1, 0.85)} top={40} thickness={1.6} minCells={3} />
-      <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 1220 + hold} anchored={anchored} />
+      <GrandAccent tier={tier} color={tint(p1, 0.75)} delayMs={delayMs + 1220 + hold} anchored={anchored} />
       <Glint delayMs={delayMs + 1360 + hold} color={p1} left={67} top={33} sizePct={7} />
       {/* settle: powder smoke drifts down off the impact */}
       <Afterglow delayMs={delayMs + 1200 + hold} color={tint(p1, 0.28)} left={56} top={32} w={22} h={18} />
@@ -1806,7 +1789,7 @@ function SiegeRoll({ palette, glyph, lead, role, anchored, delayMs, flourish }: 
    Template 5: WarBanner — a great command banner slams in mid-board while two
    shield-wall ranks rise at its flanks; a rally flare rolls out.
    ========================================================================== */
-function WarBanner({ palette, glyph, lead, role, anchored, delayMs, flourish }: TemplateProps) {
+function WarBanner({ palette, glyph, lead, role, anchored, delayMs, flourish, tier }: TemplateProps) {
   const [p0, p1, p2] = palette;
   if (role === "entrance")
     return (
@@ -2050,7 +2033,7 @@ function WarBanner({ palette, glyph, lead, role, anchored, delayMs, flourish }: 
       <Impact rgb={rgbOf(p1)} atMs={delayMs + 860} left={40} top={38} size={20} />
       {/* geometry: the rally runs the line: the ward reaches the piece it is covering */}
       <Reach delayMs={delayMs + 560} color={tint(p1, 0.8)} top={52} thickness={1.8} />
-      <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 1000} anchored={anchored} />
+      <GrandAccent tier={tier} color={tint(p1, 0.75)} delayMs={delayMs + 1000} anchored={anchored} />
       <Glint delayMs={delayMs + 1180} color={p1} left={49} top={24} />
       {/* settle: pennant threads and rally-light sift down over the ranks */}
       <Afterglow delayMs={delayMs + 1000} color={tint(p1, 0.26)} left={38} top={34} w={24} h={22} />
@@ -2063,7 +2046,7 @@ function WarBanner({ palette, glyph, lead, role, anchored, delayMs, flourish }: 
    Template 6: Grove — a great tree bursts up through the board's heart, its
    canopy unfurling while petals drift down; the glyph glows in a trunk knot.
    ========================================================================== */
-function Grove({ palette, glyph, lead, role, anchored, delayMs, flourish }: TemplateProps) {
+function Grove({ palette, glyph, lead, role, anchored, delayMs, flourish, tier }: TemplateProps) {
   const [p0, p1, p2] = palette;
   if (role === "entrance")
     return (
@@ -2267,7 +2250,7 @@ function Grove({ palette, glyph, lead, role, anchored, delayMs, flourish }: Temp
       />
       {/* geometry: a root runs the real line to whatever the grove is seizing */}
       <Reach delayMs={delayMs + 520} color={tint(p1, 0.85)} top={56} thickness={1.6} minCells={2.8} />
-      <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 940} anchored={anchored} />
+      <GrandAccent tier={tier} color={tint(p1, 0.75)} delayMs={delayMs + 940} anchored={anchored} />
       <Glint delayMs={delayMs + 1130} color={p1} left={49} top={24} />
       {/* settle: pollen motes hang and sink in the canopy's shade */}
       <Afterglow delayMs={delayMs + 940} color={tint(p1, 0.26)} left={36} top={30} w={28} h={22} />
@@ -2285,7 +2268,7 @@ const GHOSTS = [
   { l: 40, t: 25, w: 17, d: 0 },
   { l: 59, t: 32, w: 14, d: 220 },
 ];
-function PhantomParade({ palette, glyph, lead, role, anchored, delayMs, flourish }: TemplateProps) {
+function PhantomParade({ palette, glyph, lead, role, anchored, delayMs, flourish, tier }: TemplateProps) {
   const [p0, p1, p2] = palette;
   if (role === "entrance")
     return (
@@ -2480,7 +2463,7 @@ function PhantomParade({ palette, glyph, lead, role, anchored, delayMs, flourish
       <Impact rgb={rgbOf(p1)} atMs={delayMs + 980} laser left={40} top={36} size={20} />
       {/* geometry: the procession's road, laid down the play's own line */}
       <Reach delayMs={delayMs + 640} color={tint(p1, 0.75)} top={44} thickness={1.4} minCells={3} />
-      <GrandAccent flourish={flourish} color={tint(p1, 0.7)} delayMs={delayMs + 1120} anchored={anchored} />
+      <GrandAccent tier={tier} color={tint(p1, 0.7)} delayMs={delayMs + 1120} anchored={anchored} />
       <Glint delayMs={delayMs + 1290} color={p1} left={57} top={30} />
       {/* settle: lantern-light wisps rise off the parade's wake */}
       <Afterglow delayMs={delayMs + 1120} color={tint(p1, 0.24)} left={36} top={32} w={28} h={22} />
@@ -2493,7 +2476,7 @@ function PhantomParade({ palette, glyph, lead, role, anchored, delayMs, flourish
    Template 8: ClockSpire — a clock tower rises mid-board, its great pendulum
    swinging twice beneath the face; a time-ring pulse rolls out.
    ========================================================================== */
-function ClockSpire({ palette, glyph, lead, role, anchored, delayMs, flourish }: TemplateProps) {
+function ClockSpire({ palette, glyph, lead, role, anchored, delayMs, flourish, tier }: TemplateProps) {
   const [p0, p1, p2] = palette;
   if (role === "entrance")
     return (
@@ -2669,7 +2652,7 @@ function ClockSpire({ palette, glyph, lead, role, anchored, delayMs, flourish }:
       <Impact rgb={rgbOf(p1)} atMs={delayMs + 1000} left={41} top={42} size={18} />
       {/* geometry: the spire's shadow falls down the play's own line, onto the clock it is stopping */}
       <Reach delayMs={delayMs + 660} color={tint(p1, 0.85)} top={46} thickness={1.4} />
-      <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 1140} anchored={anchored} />
+      <GrandAccent tier={tier} color={tint(p1, 0.75)} delayMs={delayMs + 1140} anchored={anchored} />
       <Glint delayMs={delayMs + 1320} color={p1} left={49} top={18} />
       {/* settle: loosed clock-dust — for Rewind it climbs back UP the hour */}
       <Afterglow delayMs={delayMs + 1140} color={tint(p1, 0.24)} left={40} top={26} w={20} h={20} />
@@ -2682,7 +2665,7 @@ function ClockSpire({ palette, glyph, lead, role, anchored, delayMs, flourish }:
    Template 9: CardRite — a colossal card is dealt down over the board and its
    face resolves into the play; sparks scatter off the deal.
    ========================================================================== */
-function CardRite({ palette, glyph, lead, role, anchored, delayMs, flourish }: TemplateProps) {
+function CardRite({ palette, glyph, lead, role, anchored, delayMs, flourish, tier }: TemplateProps) {
   const [p0, p1, p2] = palette;
   if (role === "entrance")
     return (
@@ -3112,7 +3095,7 @@ function CardRite({ palette, glyph, lead, role, anchored, delayMs, flourish }: T
       <Impact rgb={rgbOf(p1)} atMs={delayMs + 880} laser shock={false} left={39} top={30} size={22} />
       {/* geometry: the deal reaches its mark: the rite runs the real line to the piece it names */}
       <Reach delayMs={delayMs + 560} color={tint(p1, 0.8)} top={50} thickness={1.4} />
-      <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 1020} anchored={anchored} />
+      <GrandAccent tier={tier} color={tint(p1, 0.75)} delayMs={delayMs + 1020} anchored={anchored} />
       <Glint delayMs={delayMs + 1200} color={p1} left={54} top={27} />
       {/* settle: paper-fate flecks drift off the deal — Death's rise as souls */}
       <Afterglow delayMs={delayMs + 1020} color={tint(p1, 0.24)} left={40} top={32} w={20} h={22} />
@@ -3130,7 +3113,7 @@ function CardRite({ palette, glyph, lead, role, anchored, delayMs, flourish }: T
    Template 10: ThiefHand — the prize gleams at mid-board, then a shadow
    gauntlet sweeps in from the right wing and drags it off the board.
    ========================================================================== */
-function ThiefHand({ palette, glyph, lead, role, anchored, delayMs, flourish }: TemplateProps) {
+function ThiefHand({ palette, glyph, lead, role, anchored, delayMs, flourish, tier }: TemplateProps) {
   const [p0, p1, p2] = palette;
   if (role === "entrance")
     return (
@@ -3405,7 +3388,7 @@ function ThiefHand({ palette, glyph, lead, role, anchored, delayMs, flourish }: 
       />
       {/* geometry: the reach itself: the arm runs the real line out to the prize */}
       <Reach delayMs={delayMs + 560} color={tint(p1, 0.85)} top={42} thickness={1.6} minCells={3} />
-      <GrandAccent flourish={flourish} color={tint(p1, 0.7)} delayMs={delayMs + 1060} anchored={anchored} />
+      <GrandAccent tier={tier} color={tint(p1, 0.7)} delayMs={delayMs + 1060} anchored={anchored} />
       <Glint delayMs={delayMs + 1230} color={p1} left={47} top={36} />
       {/* settle: shadow-smoke curls up where the prize used to sit */}
       <Afterglow delayMs={delayMs + 1060} color={tint(p1, 0.22)} left={38} top={32} w={22} h={20} />
@@ -3418,7 +3401,7 @@ function ThiefHand({ palette, glyph, lead, role, anchored, delayMs, flourish }: 
    Template 11: CrownForge — the old kings' anvil rises mid-board, the hammer
    falls in a fan of sparks, and the finished work comes out glowing.
    ========================================================================== */
-function CrownForge({ palette, glyph, lead, role, anchored, delayMs, flourish }: TemplateProps) {
+function CrownForge({ palette, glyph, lead, role, anchored, delayMs, flourish, tier }: TemplateProps) {
   const [p0, p1, p2] = palette;
   if (role === "entrance")
     return (
@@ -3743,7 +3726,7 @@ function CrownForge({ palette, glyph, lead, role, anchored, delayMs, flourish }:
       />
       {/* geometry: the finished work is carried down the real line to the piece it crowns */}
       <Reach delayMs={delayMs + 620} color={tint(p1, 0.85)} top={50} thickness={1.8} />
-      <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 1080} anchored={anchored} />
+      <GrandAccent tier={tier} color={tint(p1, 0.75)} delayMs={delayMs + 1080} anchored={anchored} />
       <Glint delayMs={delayMs + 1260} color={p1} left={49} top={27} />
       {/* settle: forge embers climb and gutter out over the cooling work */}
       <Afterglow delayMs={delayMs + 1080} color={tint(p1, 0.28)} left={38} top={36} w={24} h={20} />
@@ -3756,7 +3739,7 @@ function CrownForge({ palette, glyph, lead, role, anchored, delayMs, flourish }:
    Template 12: RiftGate — twin obelisks rise flanking the centre and an aurora
    pane stretches open between them; the glyph shines through the gate.
    ========================================================================== */
-function RiftGate({ palette, glyph, lead, role, anchored, delayMs, flourish }: TemplateProps) {
+function RiftGate({ palette, glyph, lead, role, anchored, delayMs, flourish, tier }: TemplateProps) {
   const [p0, p1, p2] = palette;
   if (role === "entrance")
     return (
@@ -3951,7 +3934,7 @@ function RiftGate({ palette, glyph, lead, role, anchored, delayMs, flourish }: T
       <Impact rgb={rgbOf(p1)} atMs={delayMs + 900} laser left={39} top={34} size={21} />
       {/* geometry: the gate opens ONTO somewhere: the current runs the play's real vector */}
       <Reach delayMs={delayMs + 580} color={tint(p1, 0.85)} top={47} thickness={2} minCells={3} />
-      <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 1040} anchored={anchored} />
+      <GrandAccent tier={tier} color={tint(p1, 0.75)} delayMs={delayMs + 1040} anchored={anchored} />
       <Glint delayMs={delayMs + 1220} color={p1} left={49} top={31} />
       {/* settle: gate-light motes float up as the pane lets go */}
       <Afterglow delayMs={delayMs + 1040} color={tint(p1, 0.26)} left={39} top={32} w={22} h={24} />
@@ -3964,7 +3947,7 @@ function RiftGate({ palette, glyph, lead, role, anchored, delayMs, flourish }: T
    Template 13: BeastRush — a horned beast charges the full width of the crop,
    dust kicked up behind it; the card's glyph rides on its flank drape.
    ========================================================================== */
-function BeastRush({ palette, glyph, lead, role, anchored, delayMs, flourish }: TemplateProps) {
+function BeastRush({ palette, glyph, lead, role, anchored, delayMs, flourish, tier }: TemplateProps) {
   const [p0, p1, p2] = palette;
   // Comic-timing: the bonk holds its beat before the punchline lands.
   const hold = flourish === "sahur" ? 200 : 0;
@@ -4127,7 +4110,7 @@ function BeastRush({ palette, glyph, lead, role, anchored, delayMs, flourish }: 
       />
       {/* geometry: the charge line, laid down the real source -> victim vector */}
       <Reach delayMs={delayMs + 560 + hold} color={tint(p1, 0.85)} top={52} thickness={2.4} minCells={3} />
-      <GrandAccent flourish={flourish} color={tint(p1, 0.75)} delayMs={delayMs + 1040 + hold} anchored={anchored} />
+      <GrandAccent tier={tier} color={tint(p1, 0.75)} delayMs={delayMs + 1040 + hold} anchored={anchored} />
       <Glint delayMs={delayMs + 1220 + hold} color={p1} left={62} top={33} />
       {/* settle: the kicked-up trail dust sinks back to the boards */}
       <Afterglow delayMs={delayMs + 1040 + hold} color={tint(p1, 0.22)} left={44} top={34} w={26} h={18} />
@@ -5156,10 +5139,11 @@ function G(
   // find the board. One left at "board" is re-centred by Board itself and must
   // not: see the Frame helper at the top of this file.
   const anchored = config.anchor === "cast" || config.anchor === "aim";
-  return {
+  const plugin: SigPlugin = {
     config,
     Render: function GreatPlayRender({ lead, role, delayMs }: { lead: boolean; role: SigRole; delayMs: number }) {
-      return (
+      const tier = TIER_OF.get(plugin) ?? 6;
+      const scene = (
         <Template
           palette={palette}
           glyph={glyph}
@@ -5168,10 +5152,50 @@ function G(
           anchored={anchored}
           delayMs={delayMs}
           flourish={flourish}
+          tier={tier}
         />
       );
+      // The short cut is for the board-scale lead only: a per-square hit and
+      // an arrival are already one square's worth of art.
+      const rate = role === "lead" ? tempoFor(tier) : 1;
+      return rate === 1 ? scene : <Tempo rate={rate}>{scene}</Tempo>;
     },
   };
+  return plugin;
+}
+
+/** Live tier per plugin entry, filled by `bindTiers` right after PLAYS is
+ * built (G cannot see the card id: the registry audits parse the
+ * `G(Template, palette, glyph, config, flourish?)` shape, so it stays). */
+const TIER_OF = new WeakMap<SigPlugin, number>();
+
+/** Playback rate for the short cut. The great scenes were written for tiers 5
+ * and 6 and run about 2.2 to 2.6s; a card that lives at tier 4 or below
+ * should not hold the board that long (the tier ladder, ledger F222 / F227).
+ * The whole scene, durations AND delays (Web Animations playbackRate scales
+ * the local time), plays faster, so every beat keeps its order. */
+function tempoFor(tier: number): number {
+  if (tier <= 3) return 1.6;
+  if (tier === 4) return 1.3;
+  return 1;
+}
+
+/** Plays its subtree's CSS animations at `rate`. With animations off the
+ * grp-* layers carry `animation: none`, so there is nothing to speed up and
+ * the end state is unchanged. */
+const useIsoLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
+function Tempo({ rate, children }: { rate: number; children: ReactNode }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  useIsoLayoutEffect(() => {
+    const el = ref.current;
+    if (!el || typeof el.getAnimations !== "function") return;
+    for (const a of el.getAnimations({ subtree: true })) a.playbackRate = rate;
+  }, [rate]);
+  return (
+    <span ref={ref} className="contents">
+      {children}
+    </span>
+  );
 }
 
 export const PLAYS: Record<string, SigPlugin> = {
@@ -5551,3 +5575,13 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz", anchor: "cast",
   }, "sahur"),
 };
+
+/** The live tier bound to an entry (see TIER_OF). Exported so the weight check
+ * (docs/polish-pass/evidence/TC-great/check-great-weight.ts) can assert it. */
+export function greatPlayTier(id: string): number {
+  return TIER_OF.get(PLAYS[id]) ?? 6;
+}
+function bindTiers(): void {
+  for (const [id, plugin] of Object.entries(PLAYS)) TIER_OF.set(plugin, BUFF_BY_ID[id]?.tier ?? 6);
+}
+bindTiers();

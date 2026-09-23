@@ -12,10 +12,10 @@
    - all grp-* classes are hidden outright when animations are off in Settings
      (guard at the bottom of this file);
    - ONE shockwave per tier-5 play, no letterboxing, everything inside ~2.2s:
-     this is the "great" band, one notch below the god-tier set. Flagship
-     pass: TIER-6 plays read grander than tier-5 — they add a SECOND, later
-     shock ring plus a brief board-edge glow (grp-edgeglow, keyed off the
-     card's flourish — see TIER6/GrandAccent in the module).
+     this is the "great" band, one notch below the god-tier set. Cards at
+     tier 6 and above read grander: a SECOND, later shock ring plus a brief
+     board-edge glow (grp-edgeglow), keyed off the card's LIVE tier (see
+     GrandAccent in the module; ledger F222).
 
    Every play follows the three-beat brief: a ≤300ms TELL (grp-tell*), the
    strike — now carrying one template-unique signature beat (circle closing,
@@ -531,6 +531,124 @@
   100% { opacity: 0; transform: scale(1.8); }
 }
 .grp-tring { animation: grp-tring calc(0.5s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+/* === PER-CARD SCENES (slice TC-great) ===========================================
+   The tier 7-8 cards that used to ride a shared template now play their own
+   scene (see "PER-CARD SCENES" in greatPlays.tsx). The motifs are drawn in
+   the module; these are the few motion verbs they are built from. Same
+   discipline: transform/opacity only, one-shot `both`, every track ends at
+   opacity 0, durations scaled by --fx-dur, grp-* so the off guard applies.
+   --gd sets a layer's own length where one verb serves several beats. */
+
+/* Arrive, hold, release: the default life of a scene object. */
+@keyframes grp-c-in {
+  0% { opacity: 0; transform: translate(var(--tx0, 0), var(--ty0, 0)) scale(var(--s0, 0.6)) rotate(var(--r0, 0deg)); }
+  20% { opacity: 1; transform: translate(0, 0) scale(1) rotate(0deg); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1); }
+}
+.grp-c-in { animation: grp-c-in calc(var(--gd, 1.3s) * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+
+/* A slam: lands oversized and seats with a small overshoot. */
+@keyframes grp-c-stamp {
+  0% { opacity: 0; transform: scale(1.9) rotate(var(--r0, -8deg)); }
+  16% { opacity: 1; transform: scale(0.94) rotate(0deg); }
+  24% { transform: scale(1.03); }
+  32% { transform: scale(1); }
+  82% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1); }
+}
+.grp-c-stamp { animation: grp-c-stamp calc(var(--gd, 1.2s) * var(--fx-dur, 1)) cubic-bezier(0.3, 0, 0.2, 1) both; }
+
+/* A line drawn from its left end (threads, rails, ranks, diagonals). */
+@keyframes grp-c-draw {
+  0% { opacity: 0; transform: scaleX(0); }
+  8% { opacity: 1; }
+  34% { transform: scaleX(1); }
+  82% { opacity: 1; }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.grp-c-draw { animation: grp-c-draw calc(var(--gd, 1.3s) * var(--fx-dur, 1)) cubic-bezier(0.2, 0.8, 0.2, 1) both; transform-origin: 0% 50%; }
+
+/* A line that is drawn long, then cut back to --gk of its length (a reach
+   the rule clips: a sightline to arm's length, a diagonal to one step). */
+@keyframes grp-c-clip {
+  0% { opacity: 0; transform: scaleX(0); }
+  10% { opacity: 1; }
+  34% { transform: scaleX(1); }
+  52% { transform: scaleX(1); }
+  62% { transform: scaleX(var(--gk, 0.2)); }
+  86% { opacity: 1; transform: scaleX(var(--gk, 0.2)); }
+  100% { opacity: 0; transform: scaleX(var(--gk, 0.2)); }
+}
+.grp-c-clip { animation: grp-c-clip calc(var(--gd, 1.4s) * var(--fx-dur, 1)) cubic-bezier(0.3, 0.7, 0.2, 1) both; transform-origin: 0% 50%; }
+
+/* A traveller: fades in at (--tx0, --ty0), crosses to (--tx1, --ty1), fades
+   out there (riders, the exiled court, stolen cards, a returning queen). */
+@keyframes grp-c-go {
+  0% { opacity: 0; transform: translate(var(--tx0, 0), var(--ty0, 0)); }
+  14% { opacity: 1; }
+  78% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--tx1, 0), var(--ty1, 0)); }
+}
+.grp-c-go { animation: grp-c-go calc(var(--gd, 1.2s) * var(--fx-dur, 1)) cubic-bezier(0.45, 0.05, 0.4, 1) both; }
+
+/* A blast cell: kicks out along (--tx1, --ty1) and burns off. */
+@keyframes grp-c-blast {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.3); }
+  18% { opacity: 1; transform: translate(calc(var(--tx1, 0) * 0.3), calc(var(--ty1, 0) * 0.3)) scale(1.15); }
+  100% { opacity: 0; transform: translate(var(--tx1, 0), var(--ty1, 0)) scale(0.8); }
+}
+.grp-c-blast { animation: grp-c-blast calc(var(--gd, 0.8s) * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+/* Grows up out of its base (a mushroom cloud, a gravestone, a queen). */
+@keyframes grp-c-up {
+  0% { opacity: 0; transform: translateY(30%) scale(0.5, 0.2); }
+  30% { opacity: 1; transform: translateY(0) scale(1, 1.06); }
+  40% { transform: scale(1, 1); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-6%) scale(1.04, 1); }
+}
+.grp-c-up { animation: grp-c-up calc(var(--gd, 1.3s) * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.3, 1) both; transform-origin: 50% 100%; }
+
+/* A tally pip: pops in and holds to the end of the scene. */
+@keyframes grp-c-pip {
+  0% { opacity: 0; transform: scale(0.2); }
+  24% { opacity: 1; transform: scale(1.25); }
+  36% { transform: scale(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1); }
+}
+.grp-c-pip { animation: grp-c-pip calc(var(--gd, 1.1s) * var(--fx-dur, 1)) cubic-bezier(0.2, 1.2, 0.4, 1) both; }
+
+/* Stuck: a tug that cannot leave its square (flypaper, pews). */
+@keyframes grp-c-stuck {
+  0% { opacity: 0; transform: translate(0, 0); }
+  12% { opacity: 1; }
+  30% { transform: translate(var(--tx1, 12%), var(--ty1, 0)); }
+  40% { transform: translate(calc(var(--tx1, 12%) * 0.2), calc(var(--ty1, 0) * 0.2)); }
+  54% { transform: translate(calc(var(--tx1, 12%) * 0.7), calc(var(--ty1, 0) * 0.7)); }
+  64% { transform: translate(0, 0); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: translate(0, 0); }
+}
+.grp-c-stuck { animation: grp-c-stuck calc(var(--gd, 1.3s) * var(--fx-dur, 1)) cubic-bezier(0.4, 0, 0.3, 1) both; }
+
+/* A cut: two halves part and fall (a snipped thread, a broken choice). */
+@keyframes grp-c-part {
+  0% { opacity: 1; transform: translate(0, 0) rotate(0deg); }
+  100% { opacity: 0; transform: translate(var(--tx1, 0), var(--ty1, 60%)) rotate(var(--r1, 20deg)); }
+}
+.grp-c-part { animation: grp-c-part calc(var(--gd, 0.7s) * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 1, 0.45) both; }
+
+/* Spin in place (a spindle, a siphon's pump wheel). */
+@keyframes grp-c-spin {
+  0% { opacity: 0; transform: rotate(0deg) scale(0.7); }
+  16% { opacity: 1; transform: rotate(90deg) scale(1); }
+  82% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(var(--r1, 540deg)) scale(1); }
+}
+.grp-c-spin { animation: grp-c-spin calc(var(--gd, 1.3s) * var(--fx-dur, 1)) cubic-bezier(0.3, 0.2, 0.3, 1) both; }
 
 /* --- Animations off (Settings) -----------------------------------------------
    Mirror effects.css / godPlays.css: the plays are pure flourish; the
