@@ -18,6 +18,7 @@ import {
 } from "@/lib/multiplayer";
 import { resolvePreferredMode, savePreferredMode } from "@/lib/modeState";
 import { Button } from "@/components/ui/Button";
+import { CopyInviteLink } from "@/components/social/CopyInviteLink";
 
 // The whole "Play a Friend" experience, folded into the lobby's Friends tab so
 // a player never leaves /lobby to set up a private game. `FriendGameProvider`
@@ -390,7 +391,8 @@ export function FriendGameProvider({ children }: { children: React.ReactNode }) 
             {challenging ? `Challenge sent to ${challenging}` : "Share this code"}
           </div>
           <div className="mt-3 font-mono text-5xl tracking-[0.2em] text-gold-leaf">{code}</div>
-          <p className="mt-6 text-parchment-200">
+          <CopyInviteLink code={code} className="mt-4" />
+          <p className="mt-4 text-parchment-200">
             {challenging
               ? `${challenging} has been notified.`
               : "Send this code to your friend."}
