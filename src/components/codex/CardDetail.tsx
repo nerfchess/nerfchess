@@ -228,7 +228,7 @@ function formatHistoryDate(iso: string): string {
 
 // A plate section that opens on demand. Native <details>, so the content is
 // still server-rendered and crawlable (the SEO reason this page exists) while
-// the default view stays short — playtest feedback was that the card page
+// the default view stays short: playtest feedback was that the card page
 // buried the rule under reference material.
 function DisclosureSection({ title, children }: { title: string; children: ReactNode }) {
   return (

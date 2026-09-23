@@ -252,7 +252,7 @@ function AnalysisInner() {
 
   // 44px square on a coarse pointer, stepped DOWN to the compact 9-scale square
   // only where a mouse is driving. It used to be `h-9 w-9` outright, which is
-  // 31.5px in both axes under this app's 14px root — the height was rescued on
+  // 31.5px in both axes under this app's 14px root; the height was rescued on
   // phones by the max-width rule on .btn-ghost in globals.css, but that is a
   // width test, not a pointer test, and it never touched the width at all. So a
   // tablet got a 31.5px target and every device got a 31.5px-wide one.
