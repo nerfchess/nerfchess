@@ -18,9 +18,14 @@ export function codexIndexImage() {
 
 const NERF_BY_ID = Object.fromEntries(ALL_NERFS.map((n) => [n.id, n]));
 
-function faceIcon(id: string): CodexCardProps["Icon"] {
-  const name = CARD_ICON_NAMES[id];
-  return name ? (GEN_ICON_COMPONENTS[name] as unknown as CodexCardProps["Icon"]) : undefined;
+/** The card's face icon, as the codex draws it. Overflow faces are named
+ *  "Sword#1" (the base icon plus a variant the site tints), so the base name
+ *  resolves the component, as src/lib/cardIcon.ts does; without the split a
+ *  third of the cards previewed with their first letter instead. */
+export function codexFaceIcon(id: string): CodexCardProps["Icon"] {
+  const raw = Object.hasOwn(CARD_ICON_NAMES, id) ? CARD_ICON_NAMES[id] : undefined;
+  const name = raw?.split("#")[0];
+  return name && Object.hasOwn(GEN_ICON_COMPONENTS, name) ? (GEN_ICON_COMPONENTS[name] as unknown as CodexCardProps["Icon"]) : undefined;
 }
 
 /** The codex card preview, or the brand card for an unknown id or an id
@@ -41,12 +46,12 @@ export function codexImage(kind: "buff" | "nerf", id: string, family?: "Hex" | "
         mode: seo.mode,
         modeText: seo.modeText,
         rule: card.description,
-        Icon: faceIcon(id),
+        Icon: codexFaceIcon(id),
       }),
     OG_CACHE.static,
-    // Content-addressed: a retier or a rewording is a new key, so a deploy
-    // never serves last week's card from the edge cache.
-    `codex/${kind}/${id}/${fnv(`${card.name}|${seo.tierLabel}|${seo.modeText}|${card.description}`)}`,
+    // Content-addressed: a retier, a rewording or a new face is a new key,
+    // so a deploy never serves last week's card from the edge cache.
+    `codex/${kind}/${id}/${fnv(`${card.name}|${seo.tierLabel}|${seo.modeText}|${card.description}|${CARD_ICON_NAMES[id] ?? ""}`)}`,
   );
 }
 

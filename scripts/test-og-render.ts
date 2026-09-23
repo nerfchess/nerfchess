@@ -121,6 +121,14 @@ async function main() {
   check(fitSize("Lucky", width, 2, [76, 66, 58, 50]) === 76, "short title keeps the largest size");
   check(lineCount("Joseph challenged you", 76, width, true) >= 2, "a title that wraps is counted as wrapping");
 
+  // 5. Every live codex card's preview carries its face icon, not the letter
+  //    fallback (overflow faces are named "Sword#1": the base icon plus a
+  //    variant the site tints; the preview draws the base icon).
+  const { allCardMeta } = await import("../src/lib/seoCards");
+  const { codexFaceIcon } = await import("../src/lib/og/codexImage");
+  const noIcon = allCardMeta().filter((c) => !codexFaceIcon(c.path.split("/")[3]));
+  check(noIcon.length === 0, `every live card has a face icon (${noIcon.length} fall back to a letter, e.g. ${noIcon.slice(0, 3).map((c) => c.path).join(", ")})`);
+
   console.log(`${checks - failures}/${checks} checks passed`);
   process.exit(failures ? 1 : 0);
 }
