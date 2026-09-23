@@ -1,0 +1,11 @@
+
+Running 6 tests using 1 worker
+
+  ✓  1 [chromium] › e2e/polish/social-routes.spec.ts:65:7 › /tv › the server HTML carries the header and the page heading (6.0s)
+  ✓  2 [chromium] › e2e/polish/social-routes.spec.ts:74:7 › /tv › keeps exactly one h1 once a game is on the board (8.8s)
+  ✓  3 [chromium] › e2e/polish/social-routes.spec.ts:83:7 › /tv › live rows do not nest links inside the row button (7.2s)
+  ✓  4 [chromium] › e2e/polish/social-routes.spec.ts:96:7 › /tv › board controls are 44px on a coarse pointer (6.2s)
+  ✓  5 [chromium] › e2e/polish/social-routes.spec.ts:112:7 › /tv › fullscreen is a modal dialog that takes and returns focus (3.0s)
+  ✓  6 [chromium] › e2e/polish/social-routes.spec.ts:133:7 › /tv › status chips are sentence case (20.8s)
+
+  6 passed (1.1m)
