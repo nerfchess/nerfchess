@@ -14,6 +14,7 @@ import { RD_START, VOL_START } from "@/lib/glicko";
 import { whoCookieHeader } from "@/lib/session/who";
 import { hintFromRow } from "../_lib/who";
 import { isReservedUsername } from "../_lib/reserved";
+import { claimsPowerUsername } from "@/lib/godPanel";
 import { randomGuestName, randomGuestNameNumbered } from "@/lib/guestNames";
 
 export const dynamic = "force-dynamic";
@@ -57,7 +58,7 @@ export async function POST(request: Request) {
   let username: string | null = null;
   for (let attempt = 0; attempt < 12 && !username; attempt++) {
     const candidate = attempt < 6 ? randomGuestName() : randomGuestNameNumbered();
-    if (isReservedUsername(candidate)) continue;
+    if (isReservedUsername(candidate) || claimsPowerUsername(candidate)) continue;
     const taken = await db
       .prepare("SELECT id FROM users WHERE username_lower = ?")
       .bind(candidate.toLowerCase())

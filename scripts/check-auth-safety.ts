@@ -14,6 +14,8 @@
 //   F046  a cross-site browser POST (Origin or Sec-Fetch-Site) is a 403.
 //   F047  a JSON body of null / [] / 7 is a 400 on every auth POST, not a 500.
 //   F043  names in ADMIN_USERNAMES cannot be registered.
+//   F045  a guest cannot upgrade into a POWER_USERNAMES name (unit: nobody
+//         but the holder can claim one, and every naming route checks).
 //   F063  ten wrong passwords from one IP do not lock the owner out from
 //         another IP.
 //   F076  a guest upgrading keeps its old /u/<GuestName> link working.
@@ -25,6 +27,8 @@
 import { safeNextPath } from "../src/lib/safeNext";
 import { encodeWho, parseWho, whoCookieHeader } from "../src/lib/session/who";
 import { OAUTH_ERRORS, oauthErrorMessage } from "../src/app/login/oauthErrors";
+import { claimsPowerUsername, POWER_USERNAMES } from "../src/lib/godPanel";
+import fs from "node:fs";
 
 const BASE = (process.env.POLISH_BASE || "http://localhost:3000").replace(/\/$/, "");
 let failures = 0;
@@ -78,6 +82,24 @@ function unit() {
   check("oauth known message kept", oauthErrorMessage(OAUTH_ERRORS.expired) === OAUTH_ERRORS.expired);
   check("oauth unknown message replaced", oauthErrorMessage("Your account is locked, call 555") === OAUTH_ERRORS.failed);
   check("oauth none", oauthErrorMessage(null) === null);
+
+  // F045: power names (src/lib/godPanel.ts) cannot be claimed by an account
+  // that does not already hold them.
+  for (const name of POWER_USERNAMES) {
+    const shout = name.toUpperCase();
+    check(`F045 new account cannot claim ${name}`, claimsPowerUsername(name) && claimsPowerUsername(` ${shout} `, null));
+    check(`F045 another account cannot claim ${name}`, claimsPowerUsername(name, "someone_else"));
+    check(`F045 the holder keeps ${name}`, !claimsPowerUsername(shout, name));
+  }
+  check("F045 an ordinary name is free", !claimsPowerUsername("plain_player"));
+  // Every route that sets a username refuses power names.
+  const routes: Array<[string, RegExp]> = [
+    ["src/app/api/auth/register/route.ts", /claimsPowerUsername\(username, caller\?\.username\)/],
+    ["src/app/api/auth/rename/route.ts", /claimsPowerUsername\(username, user\.username\)/],
+    ["src/app/api/auth/guest/route.ts", /claimsPowerUsername\(candidate\)/],
+    ["src/app/api/auth/google/callback/route.ts", /claimsPowerUsername\(candidate\)/],
+  ];
+  for (const [file, re] of routes) check(`F045 ${file} refuses power names`, re.test(fs.readFileSync(file, "utf8")));
 }
 
 function cookieOf(res: Response, name: string): string | null | undefined {
@@ -201,6 +223,20 @@ async function http() {
     const data = (await old.json().catch(() => ({}))) as { redirectTo?: string };
     check("F076 old guest name redirects", data.redirectTo === upgraded, `${old.status} ${JSON.stringify(data)}`);
   }
+
+  // F045: a guest cannot upgrade into a power name.
+  const guest2 = await post("/api/auth/guest", "{}", { "CF-Connecting-IP": randomIp() });
+  const guest2Session = cookieOf(guest2, "dc_session");
+  if (guest2Session) {
+    for (const name of POWER_USERNAMES) {
+      const up = await post("/api/auth/register", JSON.stringify({ username: name, password }), {
+        cookie: `dc_session=${guest2Session}`,
+        "CF-Connecting-IP": randomIp(),
+      });
+      const data = (await up.json().catch(() => ({}))) as { error?: string };
+      check(`F045 guest upgrade into ${name}`, up.status === 400 && /reserved/i.test(data.error ?? ""), `${up.status} ${data.error}`);
+    }
+  } else check("F045 guest for the upgrade check", false, `status ${guest2.status}`);
 }
 
 async function main() {

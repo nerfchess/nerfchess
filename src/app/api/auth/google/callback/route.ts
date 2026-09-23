@@ -15,6 +15,7 @@ import { cryptoRand, randomGuestNameNumbered } from "@/lib/guestNames";
 import { safeNextPath } from "@/lib/safeNext";
 import { OAUTH_ERRORS } from "@/app/login/oauthErrors";
 import { isReservedUsername } from "../../_lib/reserved";
+import { claimsPowerUsername } from "@/lib/godPanel";
 import { whoCookieFor } from "../../_lib/who";
 
 export const dynamic = "force-dynamic";
@@ -50,13 +51,13 @@ function failRedirect(origin: string, message: string): NextResponse {
 async function pickUsername(db: D1Database, email: string | null): Promise<string> {
   const base = (email ? email.split("@")[0] : "").replace(/[^A-Za-z0-9_]/g, "").slice(0, 16);
   const candidates: string[] = [];
-  if (validUsername(base) && !isReservedUsername(base) && !containsProfanity(base)) {
+  if (validUsername(base) && !isReservedUsername(base) && !claimsPowerUsername(base) && !containsProfanity(base)) {
     candidates.push(base);
     for (let i = 0; i < 5; i++) candidates.push(`${base}${Math.floor(cryptoRand() * 9000) + 1000}`);
   }
   for (let i = 0; i < 6; i++) candidates.push(randomGuestNameNumbered());
   for (const candidate of candidates) {
-    if (isReservedUsername(candidate)) continue;
+    if (isReservedUsername(candidate) || claimsPowerUsername(candidate)) continue;
     const taken = await db
       .prepare("SELECT id FROM users WHERE username_lower = ?")
       .bind(candidate.toLowerCase())

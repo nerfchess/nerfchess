@@ -11,6 +11,7 @@ import { containsProfanity } from "@/lib/profanity";
 import { whoCookieHeader } from "@/lib/session/who";
 import { hintFromRow } from "../_lib/who";
 import { isReservedUsername } from "../_lib/reserved";
+import { claimsPowerUsername } from "@/lib/godPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -42,7 +43,7 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
-  if (isReservedUsername(username)) {
+  if (isReservedUsername(username) || claimsPowerUsername(username, user.username)) {
     return NextResponse.json({ error: "That username is reserved." }, { status: 400 });
   }
   if (containsProfanity(username)) {

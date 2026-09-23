@@ -60,3 +60,10 @@ export const POWER_USERNAMES: readonly string[] = [
 export function isPowerUsername(username: string | null | undefined): boolean {
   return !!username && POWER_USERNAMES.includes(username.toLowerCase());
 }
+/** True when taking `name` would claim a power name the account does not
+ *  already hold (`heldName` is its current name, or none for a new account).
+ *  Register, guest upgrade, rename and fresh Google accounts refuse these. */
+export function claimsPowerUsername(name: string, heldName?: string | null): boolean {
+  const lower = name.trim().toLowerCase();
+  return isPowerUsername(lower) && lower !== (heldName ?? "").trim().toLowerCase();
+}

@@ -20,6 +20,7 @@ import { verifyTurnstile } from "@/lib/server/turnstile";
 import { whoCookieHeader } from "@/lib/session/who";
 import { hintFromRow } from "../_lib/who";
 import { isReservedUsername } from "../_lib/reserved";
+import { claimsPowerUsername } from "@/lib/godPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -64,6 +65,11 @@ export async function POST(request: Request) {
 
   const db = await getDb();
   const caller = await userForSession(db, sessionTokenFromCookieHeader(request.headers.get("cookie")));
+  // Power names (src/lib/godPanel.ts) unlock owner tools by name (F045): no
+  // new account or upgrading guest may take one it does not already hold.
+  if (claimsPowerUsername(username, caller?.username)) {
+    return NextResponse.json({ error: "That username is reserved." }, { status: 400 });
+  }
 
   // Account creation per client IP, on the same rolling-window counter the
   // sign-in and guest guards use (F062). Turnstile is fail-open when its
