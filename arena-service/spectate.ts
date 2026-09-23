@@ -1,6 +1,6 @@
 // Direct spectator WebSocket for arena games (Tier 3 / M3, see
 // docs/bot-offload-tier3-direct-arena.md §A). Speaks the same wire protocol the
-// game-server DO speaks to watchers ({t, d} JSON frames — see
+// game-server DO speaks to watchers ({t, d} JSON frames, see
 // src/lib/multiplayer.ts ServerFrame), so the site's MPSession works unchanged;
 // only the socket URL differs. Spectator-only: no seats, no moves accepted.
 //
@@ -166,7 +166,7 @@ export class SpectatorHub implements ArenaSink {
     // stays registered and the first event after the game starts flushes the
     // wstart (mirrors the DO waiting for the arena's started snapshot). Ack
     // with wpending so the client's watch() extends its deadline instead of
-    // timing out at 10s while the bots finish their opening picks — without
+    // timing out at 10s while the bots finish their opening picks, without
     // it, tuning in to a just-spawned game failed even on a healthy socket.
     if (game.started()) this.bootstrap(ws, game);
     else send(ws, "wpending", { id });
@@ -193,7 +193,7 @@ export class SpectatorHub implements ArenaSink {
     if (ws.lastChatAt && now - ws.lastChatAt < CHAT_MIN_INTERVAL_MS) return;
     const raw = String((data as { text?: unknown } | undefined)?.text ?? "").trim();
     if (!raw) return;
-    // Watchers here are anonymous (no auth on the arena — named chat would be
+    // Watchers here are anonymous (no auth on the arena, named chat would be
     // spoofable). Everyone shows as "spectator"; profanity is censored with the
     // shared filter, same as the DO's chat paths.
     ws.lastChatAt = now;
@@ -219,12 +219,12 @@ export class SpectatorHub implements ArenaSink {
   }
 
   /** Send a frame to every bootstrapped watcher of a game; un-bootstrapped
-   *  watchers (joined during the nerf draft) get their wstart first — which
+   *  watchers (joined during the nerf draft) get their wstart first, which
    *  already contains this event's outcome, so the incremental frame is
    *  skipped for them (the client's ply/state guards would drop it anyway).
    *
    *  `terminal` marks a frame nobody may miss (the end frame). A watcher that
-   *  still cannot be bootstrapped — no game in the map, or it never started —
+   *  still cannot be bootstrapped, no game in the map, or it never started,
    *  is sent it anyway rather than skipped: endForWatchers clears `watching`
    *  immediately afterwards, so a skipped terminal frame can never be
    *  redelivered and the client sits on `wpending` until its 20s hard
@@ -285,7 +285,7 @@ export class SpectatorHub implements ArenaSink {
   }
 
   gameAbort(record: ArenaFinishedRecord): void {
-    // An abort still ends the board for its watchers (null winner) — the DO's
+    // An abort still ends the board for its watchers (null winner), the DO's
     // replica watchdog existed exactly because a silent abort froze TV.
     this.endForWatchers(record);
   }

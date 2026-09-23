@@ -1,29 +1,51 @@
 // One bot-vs-bot game, run entirely in RAM. Faithful port of the DO's
 // startHouseVsHouseGame + armBotAction + playHouseAction + the clock model,
 // minus all wire/reveal bookkeeping (no humans, no spectators in M1). The whole
-// point: the NerfGame lives in memory and is mutated in place — no O(plies)
+// point: the NerfGame lives in memory and is mutated in place, no O(plies)
 // replay between actions.
 import {
   NerfGame, UNRESTRICTED_NERF,
   newGame, enableDraftMode, playMove, legalMoves, checkLossConditions, resign,
-  activateBuff, pickDraftCard, bankDraft, aiDraftChoice, aiChooseBuffActivation,
+  activateBuff, pickDraftCard, bankDraft,
 } from "../src/engine/game";
 import { moveToUCI, positionKey } from "../src/engine/board";
 import { fnv1a } from "../src/engine/desync";
 import { PLAYABLE_NERFS, openingNerfPool } from "../src/engine/nerfs/library";
-import { NERF_MODE_CADENCE, DEFAULT_CADENCE } from "../src/engine/draft";
+import { NERF_MODE_CADENCE, DEFAULT_CADENCE, setDraftPoolOverrides, type DraftPoolOverrides } from "../src/engine/draft";
 import { replayToPosition, type EngineMatch } from "../src/engine/replay";
 import {
   pickHouseMove, houseThinkMs, houseDraftThinkMs, houseNerfPickIndex, houseSeedRating,
   houseSnapReplyMs, snapContext,
-  houseStyle,
+  houseStyle, houseChooseActivation, houseDraftChoice, FILLER_EXCLUDED_CARD_IDS,
   type HousePersona,
 } from "../src/lib/server/bots";
+
 import type { Move } from "../src/engine/types";
 import { QUEUE_POOLS, firstMoveGraceMs, MAX_PLIES, randomInt, makeSeed, newId } from "./pools";
 import type { ArenaSink } from "./sink";
 import type { ArenaFinishedRecord, ArenaGameSummary, ArenaSnapshot, Color, ExternalGameMeta, StoredDraftAction } from "./types";
 import { other } from "./types";
+
+/** The draft-pool overrides an arena filler game rolls its offers under: the
+ * DO's filler exclusion (FILLER_EXCLUDED_CARD_IDS, Chess Diff) when enabled,
+ * else none. Every consumer that re-rolls this game's offers (the DO replica,
+ * the archive route) must apply the same set, which is why it rides on the
+ * snapshot and the finished record as `cardOverrides`. */
+export function arenaFillerOverrides(excludeFillerCards: boolean): DraftPoolOverrides | null {
+  return excludeFillerCards ? { off: [...FILLER_EXCLUDED_CARD_IDS] } : null;
+}
+
+/** Run `fn` with a game's draft-pool overrides installed, and always clear
+ * them again: the pool is module state, and the arena interleaves many games
+ * on one event loop. */
+export function withDraftPool<T>(overrides: DraftPoolOverrides | null, fn: () => T): T {
+  setDraftPoolOverrides(overrides);
+  try {
+    return fn();
+  } finally {
+    setDraftPoolOverrides(null);
+  }
+}
 
 type Result = { winner: Color | "draw" | null; reason: string };
 
@@ -57,6 +79,7 @@ export class ArenaGame {
 
   private timer: NodeJS.Timeout | null = null;
   private done = false;
+  private readonly cardOverrides: DraftPoolOverrides | null;
 
   constructor(
     white: HousePersona,
@@ -74,7 +97,12 @@ export class ArenaGame {
     // loop with the tick, so an uncapped search at high concurrency starves it.
     // Safe to cap: filler is never rated or archived.
     private readonly searchCeilingMs: number | undefined = undefined,
+    // ARENA_EXCLUDE_FILLER_CARDS: roll this game's drafts without the DO's
+    // filler-excluded cards. Off by default until the DO replica and the
+    // archive route apply the record's cardOverrides (slice HB, P20).
+    excludeFillerCards = false,
   ) {
+    this.cardOverrides = arenaFillerOverrides(excludeFillerCards);
     this.seats = { w: white, b: black };
     this.ratings = { w: houseSeedRating(white), b: houseSeedRating(black) };
     this.pool = pool;
@@ -91,7 +119,7 @@ export class ArenaGame {
   start(): void {
     if (this.mode === "buff") {
       this.nerf = { w: UNRESTRICTED_NERF.id, b: UNRESTRICTED_NERF.id };
-      this.buildGame();
+      withDraftPool(this.cardOverrides, () => this.buildGame());
     } else {
       // Opening nerf draft: deal two options per seat; bots pick after a beat.
       this.nerfOptions = this.dealNerfOptions();
@@ -109,7 +137,7 @@ export class ArenaGame {
     // replica in the DO only ends on an end frame, so a silent abort stranded
     // TV watchers on a board that never moves again. The record is best-effort
     // (an abort can land before the nerf draft resolves, so the nerf ids fall
-    // back to unrestricted) with a null winner — the DO ends the replica for
+    // back to unrestricted) with a null winner, the DO ends the replica for
     // its watchers and drops it, and never records a result from it.
     this.sink.gameAbort({
       id: this.id,
@@ -126,6 +154,7 @@ export class ArenaGame {
       draftSeed: this.draftSeed,
       moves: [...this.moves],
       draftActions: [...this.draftActions],
+      ...(this.cardOverrides ? { cardOverrides: this.cardOverrides } : {}),
       bots: { w: this.seats.w.userId, b: this.seats.b.userId },
       seats: { w: seat(this.seats.w, this.ratings.w), b: seat(this.seats.b, this.ratings.b) },
       result: { winner: null, reason },
@@ -167,6 +196,7 @@ export class ArenaGame {
       cadence: this.cadence,
       moves: [...this.moves],
       draftActions: [...this.draftActions],
+      ...(this.cardOverrides ? { cardOverrides: this.cardOverrides } : {}),
       clocks: { ...this.clocks },
       startedAt: this.startedAt,
       seats: {
@@ -183,7 +213,7 @@ export class ArenaGame {
   // ---- direct spectating (Tier 3 / M3, docs/bot-offload-tier3-direct-arena.md) ----
   // Payload builders for the arena's own spectator WebSocket. Shapes mirror the
   // client protocol (src/lib/multiplayer.ts MPWatchStart / MPDraftState). Draft
-  // state ships fully open — the DO itself moved to full transparency
+  // state ships fully open, the DO itself moved to full transparency
   // (worker.ts draftStateFor), and a bot-vs-bot game has no human secrets.
 
   /** Display clocks right now: the on-turn side's bank minus elapsed think
@@ -232,7 +262,7 @@ export class ArenaGame {
     };
   }
 
-  /** The spectator bootstrap frame (MPWatchStart shape, minus watcher counts —
+  /** The spectator bootstrap frame (MPWatchStart shape, minus watcher counts,
    *  the hub owns those). Only meaningful once started(). */
   wstartPayload(): Record<string, unknown> {
     const clocks = this.liveClocks();
@@ -329,8 +359,12 @@ export class ArenaGame {
   private step(): void {
     if (this.done) return;
     try {
-      if (!this.startedAt) return this.stepNerfDraft();
-      return this.stepPlay();
+      // Every offer this game rolls (and the replays in finish and the
+      // activation rebuild) sees this game's own pool, and no other's.
+      return withDraftPool(this.cardOverrides, () => {
+        if (!this.startedAt) return this.stepNerfDraft();
+        return this.stepPlay();
+      });
     } catch (err) {
       // A game that throws while acting must never wedge the roster: drop it
       // (nobody is watching a filler game's rating). Mirrors worker.ts retire.
@@ -375,7 +409,9 @@ export class ArenaGame {
         const offer = g.buffs.players[c].offer;
         if (!offer) continue;
         const cards = offer.cards.map((card) => ({ id: card.id, tier: card.tier as number }));
-        const choice = aiDraftChoice(g, c);
+        // The DO's house draft policy (slice HB, P17): the persona leans its
+        // own way within a tier and banks less as the offered tier rises.
+        const choice = houseDraftChoice(g, c, this.seats[c], randomInt);
         if (choice?.action === "pick") {
           pickDraftCard(g, c, choice.index);
           this.record({ ply: this.moves.length, color: c, a: "pick", index: choice.index, cards });
@@ -389,13 +425,15 @@ export class ArenaGame {
 
     const turn = g.board.turn;
 
-    // 3. Sometimes fire a held buff instead of moving (persona-styled coin,
-    // draft games): each bot has its own stable activation appetite.
-    if (g.buffs && randomInt(100) < Math.round(houseStyle(this.seats[turn]).activationChance * 100)) {
+    // 3. Sometimes fire a held buff instead of moving (slice HB, P11): the
+    // house activation policy weighs the qualifying cards against the best
+    // plain move, never passes the turn with a savable piece hanging, and
+    // applies the persona's own appetite (the old flat coin).
+    if (g.buffs) {
       try {
-        const act = aiChooseBuffActivation(g, turn);
+        const act = houseChooseActivation(g, turn, this.seats[turn], randomInt);
         if (act) {
-          // Capture the card face BEFORE activation mutates/spends it — a fired
+          // Capture the card face BEFORE activation mutates/spends it, a fired
           // buff is public, so spectators get its identity to render the effect.
           const held = g.buffs.players[turn].buffs[act.buffIndex];
           const card = held ? { id: held.id, tier: held.tier as number } : undefined;
@@ -530,6 +568,7 @@ export class ArenaGame {
       draftSeed: this.draftSeed,
       moves: this.moves,
       draftActions: this.draftActions,
+      ...(this.cardOverrides ? { cardOverrides: this.cardOverrides } : {}),
       bots: { w: this.seats.w.userId, b: this.seats.b.userId },
       seats: { w: seat(this.seats.w, this.ratings.w), b: seat(this.seats.b, this.ratings.b) },
       result,
@@ -540,7 +579,7 @@ export class ArenaGame {
     };
 
     // Self-validation: the recorded stream must reconstruct the in-RAM board.
-    // This is the M1 acceptance gate — proves the archive will replay in M2.
+    // This is the M1 acceptance gate, proves the archive will replay in M2.
     let replayOk = false;
     try {
       const replayed = replayToPosition(this.toEngineMatch());
@@ -559,8 +598,8 @@ function seat(p: HousePersona, rating: number): { name: string; rating: number }
 }
 
 // Board equality: the reconstructed position must match the live one. The board
-// is pure data (piece array, turn, castling, en-passant, move history) — no
-// functions or RNG — so a JSON compare is sound and catches any recording bug
+// is pure data (piece array, turn, castling, en-passant, move history), no
+// functions or RNG, so a JSON compare is sound and catches any recording bug
 // (missing/mis-ordered action, wrong seed).
 function boardEq(a: NerfGame, b: NerfGame): boolean {
   return a.board.turn === b.board.turn && JSON.stringify(a.board) === JSON.stringify(b.board);

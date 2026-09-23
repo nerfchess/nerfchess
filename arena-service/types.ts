@@ -2,10 +2,11 @@
 // NOTE: in M2 these move to src/lib/arena/types.ts so the DO's /arena handler
 // imports the exact same shapes. Kept local for M1 to stay fully isolated.
 import type { BuffPick } from "../src/engine/buff";
+import type { DraftPoolOverrides } from "../src/engine/draft";
 
 export type Color = "w" | "b";
 
-/** One resolved draft interaction — the EXACT union the DO replays via
+/** One resolved draft interaction, the EXACT union the DO replays via
  *  applyStoredDraftAction (worker.ts). `ply` = accepted moves at the time. */
 export type StoredDraftAction =
   | { ply: number; color: Color; a: "pick"; index: number; cards: { id: string; tier: number }[] }
@@ -24,6 +25,10 @@ export interface ArenaFinishedRecord {
   draftSeed: number;
   moves: string[];
   draftActions: StoredDraftAction[];
+  /** Draft-pool overrides the game rolled its offers under (the filler
+   *  exclusion, when ARENA_EXCLUDE_FILLER_CARDS is on). A replay must install
+   *  the same set. Absent when there are none. */
+  cardOverrides?: DraftPoolOverrides;
   bots: Record<Color, string>; // persona ids
   seats: Record<Color, { name: string; rating: number }>;
   result: { winner: Color | "draw" | null; reason: string };
@@ -54,7 +59,7 @@ export interface ArenaGameSummary {
 }
 
 /** Bootstrap state the DO turns into a spectator `wstart` (Tier 2 / M3). Only
- *  posted for a WATCHED, STARTED game — the DO holds no replica until then, so
+ *  posted for a WATCHED, STARTED game, the DO holds no replica until then, so
  *  a spectator waits (a few seconds) rather than see a nerf-draft-pending board
  *  it cannot reconstruct (hidden nerfs). */
 export interface ArenaSnapshot {
@@ -66,6 +71,10 @@ export interface ArenaSnapshot {
   cadence: number;
   moves: string[];
   draftActions: StoredDraftAction[];
+  /** Draft-pool overrides the game rolled its offers under (the filler
+   *  exclusion, when ARENA_EXCLUDE_FILLER_CARDS is on). A replay must install
+   *  the same set. Absent when there are none. */
+  cardOverrides?: DraftPoolOverrides;
   clocks: Record<Color, number>;
   startedAt: number; // 0 until the game leaves the opening nerf draft
   seats: Record<Color, { userId: string; name: string; rating: number }>;

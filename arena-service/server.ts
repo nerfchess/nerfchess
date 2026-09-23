@@ -30,7 +30,7 @@ const ingest =
 const sinks: ArenaSink[] = ingest ? [logSink, new IngestSink(ingest)] : [logSink];
 const sink = new CompositeSink(sinks);
 const arena = new Arena(config, sink, ingest);
-// Tier 3 / M3: direct spectator WebSocket — game events fan out to local
+// Tier 3 / M3: direct spectator WebSocket, game events fan out to local
 // sockets instead of relaying through the DO.
 const hub = new SpectatorHub(arena, config.publicOrigins);
 sinks.push(hub);

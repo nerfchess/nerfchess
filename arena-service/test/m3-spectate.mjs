@@ -1,4 +1,4 @@
-// Tier 2 · M3 integration test — the arena's spectator protocol against a mock
+// Tier 2 · M3 integration test, the arena's spectator protocol against a mock
 // DO. Boots a mock DO that picks ONE live arena game to "watch", then spawns the
 // real arena bundle pointed at it and asserts the wire contract:
 //
@@ -11,6 +11,7 @@
 // only (unwatched games stay silent), records round-trip, and an end is reported.
 //
 // Run:  node build.mjs && node test/m3-spectate.mjs   (from arena-service/)
+// Env:  ITEST_BUNDLE (default dist/server.mjs), ITEST_WINDOW_MS, ITEST_DO_PORT, ITEST_ARENA_PORT
 import { createServer } from "node:http";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
@@ -18,8 +19,13 @@ import { dirname, join } from "node:path";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const TOKEN = "itest-ingest-token";
-const PORT = 8899;
-const WINDOW_MS = Number(process.env.ITEST_WINDOW_MS ?? "25000");
+// Local ports in the polish range (8790-8899). The arena used to bind 8788,
+// the production arena's own port, which collides on a box running both.
+const PORT = Number(process.env.ITEST_DO_PORT ?? "8899");
+const ARENA_PORT = process.env.ITEST_ARENA_PORT ?? "8898";
+// The run ends as soon as every check holds, or fails at this deadline. A
+// fixed 25s window failed on a loaded box before any game finished.
+const WINDOW_MS = Number(process.env.ITEST_WINDOW_MS ?? "90000");
 
 const frames = [];
 const ends = [];
@@ -53,7 +59,8 @@ const server = createServer(async (req, res) => {
 });
 
 server.listen(PORT, () => {
-  const arena = spawn(process.execPath, ["dist/server.mjs"], {
+  // ITEST_BUNDLE runs another build (the before evidence used the unmodified one).
+  const arena = spawn(process.execPath, [process.env.ITEST_BUNDLE ?? "dist/server.mjs"], {
     cwd: ROOT,
     env: {
       ...process.env,
@@ -65,7 +72,7 @@ server.listen(PORT, () => {
       ARENA_ENABLED: "true",
       ARENA_SYNC_MS: "500",
       ARENA_FAST_MS: "8",
-      PORT: "8788",
+      PORT: ARENA_PORT,
     },
     stdio: ["ignore", "pipe", "pipe"],
   });
@@ -82,16 +89,12 @@ server.listen(PORT, () => {
   });
   arena.stderr.on("data", (d) => process.stderr.write(d));
 
-  setTimeout(() => {
-    arena.kill("SIGTERM");
-    server.close();
-
+  const evaluate = () => {
     const wf = frames.filter((f) => f.id === watched);
     const stray = frames.filter((f) => f.id !== watched);
     const snapIdx = wf.findIndex((f) => f.kind === "snapshot");
     const firstMoveIdx = wf.findIndex((f) => f.kind === "move");
     const moves = wf.filter((f) => f.kind === "move").length;
-
     const checks = {
       "sync happened": syncCount >= 2,
       "a game was watched": !!watched,
@@ -102,10 +105,31 @@ server.listen(PORT, () => {
       "every finished game round-tripped": replayMismatch === 0,
       "a finished game was reported to DO": ends.length >= 1,
     };
-    console.log(JSON.stringify({ watched, syncCount, moves, drafts: wf.filter((f) => f.kind === "draft").length, stray: stray.length, endsReported: ends.length, gameEndsLogged: gameEnds, replayMismatch }, null, 2));
+    return { checks, wf, stray, moves };
+  };
+  const started = Date.now();
+  let arenaExit = null;
+  arena.on("exit", (code, sig) => { arenaExit = { code, sig }; });
+  const finish = () => {
+    clearInterval(poll);
+    const early = arenaExit;
+    // Wait for the arena to be gone before exiting, so a back-to-back run
+    // never finds its port still bound (that failed 1 run in 10 with no sync).
+    const killer = setTimeout(() => arena.kill("SIGKILL"), 3000);
+    arena.kill("SIGTERM");
+    server.close();
+    const { checks, wf, stray, moves } = evaluate();
+    console.log(JSON.stringify({ watched, syncCount, moves, drafts: wf.filter((f) => f.kind === "draft").length, stray: stray.length, endsReported: ends.length, gameEndsLogged: gameEnds, replayMismatch, seconds: Math.round((Date.now() - started) / 1000) }, null, 2));
     let ok = true;
     for (const [k, v] of Object.entries(checks)) { console.log(`${v ? "PASS" : "FAIL"}  ${k}`); if (!v) ok = false; }
+    if (early) console.log(`arena exited early: ${JSON.stringify(early)}`);
     console.log(ok ? "\nRESULT: PASS" : "\nRESULT: FAIL");
-    process.exit(ok ? 0 : 1);
-  }, WINDOW_MS);
+    const done = () => { clearTimeout(killer); process.exit(ok ? 0 : 1); };
+    if (arenaExit || arena.exitCode != null) done();
+    else arena.once("exit", done);
+  };
+  const poll = setInterval(() => {
+    const { checks } = evaluate();
+    if (arenaExit || Object.values(checks).every(Boolean) || Date.now() - started >= WINDOW_MS) finish();
+  }, 500);
 });

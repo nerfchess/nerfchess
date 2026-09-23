@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
 
-// Blitz time controls the arena spawns from — kept identical to QUEUE_POOLS in
+// Blitz time controls the arena spawns from, kept identical to QUEUE_POOLS in
 // worker.ts. Each is (timeSec base + incrementSec). All are timed, so every
 // game flags eventually (no untimed = no runaway).
 export const QUEUE_POOLS: Record<string, { timeSec: number; incrementSec: number }> = {

@@ -1,0 +1,14 @@
+lane model: 20 runs x 10 min per cell, alarm 250-300ms, 3 actions or 250ms per tick, RTT 500ms, local fallback 80ms, human think log-normal median 4s, bot think 0.8-2.5s, tier budgets uniform over the roster (capped 1800ms). today: old single-threaded engine, flat 3000ms timeout; breaker: R7 (2 failures open it 45s, timeout budget+1s) with the pooled engine (2 threads, deadline 2300ms); breaker+concurrent: R7 plus R8 (fetch starts when the bot is armed, commit at max(due, fetch done)).
+N  engine   policy               moves    mean s   p95 s  lane mean  lane p95
+5  healthy  today                  6218     2.53    5.19      1.11     3.50
+5  healthy  breaker                6218     2.53    5.19      1.11     3.50
+5  healthy  breaker+concurrent     8076     0.41    1.37      0.14     0.26
+5  hung     today                  3839     8.46   12.20      5.38     9.12
+5  hung     breaker                7972     0.35    1.34      0.20     0.29
+5  hung     breaker+concurrent     8126     0.24    0.36      0.14     0.27
+8  healthy  today                  8192     4.56    8.36      3.16     6.80
+8  healthy  breaker                8192     4.56    8.36      3.16     6.80
+8  healthy  breaker+concurrent    12851     0.42    1.39      0.14     0.26
+8  hung     today                  3873    17.35   21.41     14.27    18.33
+8  hung     breaker               12884     0.33    1.12      0.21     0.32
+8  hung     breaker+concurrent    12987     0.24    0.36      0.15     0.27
