@@ -2220,9 +2220,14 @@ export function OnlineMatch({ session, start, subtitle, onExit }: Props) {
     if (!session.claimDraw()) setError("Disconnected from the game server.");
   };
 
+  // Same contract as abort and the claims: a frame that never left the
+  // socket says so. Resign used to drop the result on the floor, so a player
+  // who resigned while disconnected saw the confirm close as if it had
+  // worked and the game carry on (F085).
   const onResign = () => {
     if (!game || game.result) return;
-    session.resign();
+    setError(null);
+    if (!session.resign()) setError("Disconnected from the game server.");
   };
 
   // Abort: no confirm step -- it is only offered before one whole turn exists,
