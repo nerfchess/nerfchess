@@ -108,7 +108,16 @@ export async function notifyMessage(db: D1Database, from: SessionUser, toUserId:
 // are cleaned up server-side on the same horizon.
 export const CHALLENGE_TTL_MS = 30 * 60 * 1000;
 
-/** The exact bell link a direct challenge carries (see /api/challenges). */
+/** The exact bell link a direct challenge carries (see /api/challenges): the
+ *  invite route (/c/<code>, src/app/c/[code]), which opens the same join flow
+ *  in the lobby's Friends tab. */
 export function challengeHref(code: string): string {
-  return `/friend?code=${encodeURIComponent(code)}`;
+  return `/c/${encodeURIComponent(code)}`;
+}
+
+/** Every bell link a challenge with this code may carry: the current one and
+ *  the /friend?code= form stored before the invite route existed (that route
+ *  still redirects, so old links keep working). Used to clear the entry. */
+export function challengeHrefs(code: string): string[] {
+  return [challengeHref(code), `/friend?code=${encodeURIComponent(code)}`];
 }

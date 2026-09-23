@@ -135,6 +135,7 @@
     "test:arena-spectate": "cd arena-service && node build.mjs && node test/m3-spectate.mjs",
     "test:arena-parity": "node arena-service/test/parity.test.mjs",
     "sim:house-lane": "./node_modules/.bin/tsx scripts/sim-house-engine-lane.ts",
+    "test:challenge-href": "./node_modules/.bin/tsx scripts/polish/challenge-href-check.ts",
     "guard": "node scripts/polish/guard.mjs"
   },
   "dependencies": {

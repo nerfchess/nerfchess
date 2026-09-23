@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireUser, challengeHref, CHALLENGE_TTL_MS } from "@/lib/server/social";
+import { requireUser, challengeHrefs, CHALLENGE_TTL_MS } from "@/lib/server/social";
 import { apiError, guardJsonWrite } from "@/lib/server/request";
 
 export const dynamic = "force-dynamic";
@@ -62,8 +62,11 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
 // Exact link match: the old LIKE '%code=ID%' also cleared the bell entry of
 // any other challenge whose code started with this one (F096).
 async function markBellRead(db: D1Database, userId: string, code: string): Promise<void> {
+  const hrefs = challengeHrefs(code);
   await db
-    .prepare(`UPDATE notifications SET read = 1 WHERE user_id = ? AND type = 'challenge' AND href = ?`)
-    .bind(userId, challengeHref(code))
+    .prepare(
+      `UPDATE notifications SET read = 1 WHERE user_id = ? AND type = 'challenge' AND href IN (${hrefs.map(() => "?").join(", ")})`,
+    )
+    .bind(userId, ...hrefs)
     .run();
 }
