@@ -765,7 +765,7 @@ Defaults the integrator took so work is not blocked. Each one is reversible and 
 | Q | Default taken | Why |
 |---|---|---|
 | Q1 | Server knows the user before render via a small non-httpOnly display cookie (`nc_who`: username, avatar key, role, guest flag, signed by nothing and trusted for nothing but layout). The root layout reads it with `cookies()` and passes it to a SessionProvider, so the first paint has the final header shape. `/api/auth/me` stays the authority and corrects the hint. No D1 lookup per page. | Brief section 4 wants the server to know who you are; a D1 read per page view costs TTFB on every route, a hint cookie costs nothing and cannot grant access. |
-| Q4 | Public "players online" shows the real human count only, the same number the mod panel shows. The padding and synthetic curve are removed. | Brief 16: never inflate or seed a public count. |
+| Q4 | OWNER ANSWERED 2026-09-23: keep the bot padding and the public online figure exactly as they are (see OWNER DIRECTIVE 2). | Owner decision. |
 | Q5 | Human counts exclude house bots (is_bot / hp_ prefix), seed_ and polish_ prefixes. Written next to every number. | Brief 16 exclusion rule. |
 | Q7 | The privacy policy is rewritten to match what is actually collected and what email is sent; the date is bumped. Owner signs off before merge. | Brief 17.3 requires it and the current text is false (F175). |
 | Q2, Q3 | Guest behaviour unchanged. Counts report guests separately and exclude guests with zero games from active-user numbers. | Business decision; counting can be honest without changing it. |
@@ -782,6 +782,15 @@ Fleet mechanics (wave 1 on): agents share the main working tree with disjoint fi
 The owner asked for many card effects to become specific to each card, not generic board effects. This overrides the default "NO-CHANGE if already fine" bar for Tier C: a card play is weak if it could belong to another card. Every revamped play must show what that card actually does (the pieces and squares it touches, the rule it bends) through a motif unique to its name and theme (a walnut court looks like walnuts and a court, a winter court freezes the squares it names). Generic rings, sparks, flashes, pulses and whole-board washes are not a card's effect; they may be a small accent at most. Shared templates (GodDescent on 9 cards, GorgonIdol on 6, CelestialRing on 6, the mythic ladder's 3 scenes for 24 cards) get split into per-card scenes. The contract still holds: transform and opacity, no glow, no shadow, no blur, tokens, data-anim and reduced-motion gates, --fx-dur, the scene-complexity and anim-props guards, board legible throughout.
 
 Tier C is now worked by a dedicated lane (slices TC0 and TC-*, see SLICES). Slice K's ownership is NARROWED to: `scripts/audit-animations.ts`, `scripts/audit-scene-complexity.ts`, `scripts/check-vfx-coverage.cjs`, `scripts/audit-bespoke-coverage.cjs`, `docs/animation-registry.json`, and the families `effects/passive/*`, `effects/fruition/*`, `effects/clockraid/*`, `effects/vfx/*`, `effects/impact/*`, `effects/board3d/*` and the small plugin modules (casino, funny, gambling, meme, prank, stub, creator, personal). This row overrides any wider list in slice K's prompt. Slice K applies the card-specific directive to its families too.
+
+### OWNER DIRECTIVE 2026-09-23 (2): the house bots and the online count stay as they are
+
+The owner answered Q4: the bot personas and the padded public "players online" figure are intentional (they make the site feel alive) and must NOT be removed or reduced. This overrides INTEGRATOR DECISIONS Q4, brief section 16's "never inflate a public count", and any text in a slice prompt that says otherwise:
+
+- Slice H: do NOT change the public online count, the idle bot personas, the synthetic curve, the filler, or how bots appear in the lobby, TV or counts. F114 is DROPPED (owner decision). You may still expose an additional internal field with the real human count for the mod panel, as long as every public number is unchanged.
+- Slice G: the mod panel may show the real human numbers (clearly labelled "humans") next to the public figure, which stays as it is. Analytics exclusion of house bots (F117) is internal and still fine to fix, but do not change any public-facing number.
+- Slices B, D, E1, E2: do not change how the online figure, bot players or bot games are presented publicly.
+- House bots are to be IMPROVED, not reduced: a dedicated slice (HB) will work on bot quality (play, card use, timing, variety, reliability) after slice H finishes with worker.ts. Until then no slice changes bot behaviour.
 
 ## OWNER QUESTIONS
 
