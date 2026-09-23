@@ -1,0 +1,28 @@
+engine assertions (current)
+
+  ok  KING_CAPTURE_SCORE is exported and is 100000
+  ok  isKingCaptureScore is exported
+  ok  argmax path sets SearchStats.scoreCp
+  ok  sampling path sets SearchStats.scoreCp and depth
+  ok  an immediate king capture scores KING_CAPTURE_SCORE - 1
+  ok  pickAIMove reports the same king-capture score
+  ok  isKingCaptureScore draws the line at 90000
+  ok  a king lost on ply 2 scores -(KING_CAPTURE_SCORE - 2)
+  ok  king-capture magnitudes stay at or above the eval bar's 90000
+  ok  the faster of two king captures is chosen, sampling path
+  ok  the faster of two king captures is chosen, argmax path
+  ok  no stand-pat at an in-check leaf: depth 1 sees the back-rank capture
+  ok  the same through pickAIMove at depth 1
+  ok  a depth-1 timeout returns a king-safe move (argmax path)
+  ok  a depth-1 timeout returns a king-safe move (sampling path)
+  ok  a root move allowing an own-nerf loss in one is dropped
+  ok  when every move allows the loss, the filter keeps them all
+  ok  the opponent's nerf is never read by the search
+  ok  a move back into a game-history position scores as a draw with contempt
+  ok  a fresh position does not
+  ok  TT on and off give identical depth-4 root scores (27/27); nodes 1038642 -> 855952 (-18%)
+  ok  the fast attack test agrees with isInCheck (14400 checks)
+  ok  the incremental hash agrees with a from-scratch hash
+  ok  easy still returns a legal move
+
+house engine: OK

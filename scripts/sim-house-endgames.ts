@@ -3,6 +3,7 @@
  *
  *   ./node_modules/.bin/tsx scripts/sim-house-endgames.ts \
  *     --starts 10 --tiers 1350,1750 --defender-ms 80 --seed 1 [--engine current|baseline]
+ *     [--blunders off]
  *
  * Three families of won starts, `--starts` of each, seeded:
  *   kqk    king and queen against a bare king
@@ -182,6 +183,9 @@ async function main() {
   const defenderName = arg("defender-engine", engineName);
   const families = arg("families", "kqk,krk,krpkp").split(",") as Family[];
   const outFile = arg("out", "");
+  // --blunders off: the attacker never takes the pinned blunder roll, so the
+  // run measures the engine alone (the roll is bots.ts policy, HB1's).
+  const blundersOn = arg("blunders", "on") !== "off";
   const WINDOW = 50;
 
   const attackerAi = await loadEngine(engineName);
@@ -209,7 +213,7 @@ async function main() {
           const mover = g.board.turn;
           let mv;
           if (mover === attacker) {
-            if (rnd(10_000) < Math.round(prof.blunderChance * 10_000)) {
+            if (rnd(10_000) < Math.round(prof.blunderChance * 10_000) && blundersOn) {
               const all = legalMoves(g);
               const safe = all.filter((m) => !triggersOwnNerfLoss(g, m));
               const pool = safe.length ? safe : all;

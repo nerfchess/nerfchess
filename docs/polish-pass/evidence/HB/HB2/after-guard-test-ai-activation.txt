@@ -1,0 +1,5 @@
+bot activated-card play policy
+  ok  Queen's Rampage sweeps to h4 instead of the defended g4
+  ok  an undefended knight is still taken (sweep ends on g4)
+  ok  a sweep is fired for the pawns it eats in transit (ends on d7)
+bot activation policy: OK

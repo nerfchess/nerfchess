@@ -21,6 +21,8 @@
  *
  * Output: a table on stdout and, with --out, a JSON file. `--table` prints the
  * completed-depth table HB1 re-spaces the ladder from (budgets 25 to 1800).
+ * `--frozen` freezes Date.now inside each search, as a Cloudflare Worker does,
+ * so the node cap is the only stop and "ms" is the CPU of a capped search.
  */
 
 import { execFileSync } from "node:child_process";
@@ -200,6 +202,10 @@ async function main() {
   const sets = arg("sets", "mid,late").split(",");
   const outFile = arg("out", "");
   const table = flag("table");
+  // --frozen: Date.now stands still during each search, as it does inside a
+  // Cloudflare Worker, so only the node cap stops it and "ms" is the CPU a
+  // capped search costs on the Durable Object's local fallback (A25).
+  const frozen = flag("frozen");
 
   const engines: { name: string; ai: AiModule }[] = [];
   for (const e of engineNames) engines.push({ name: e, ai: await loadEngine(e) });
@@ -239,7 +245,16 @@ async function main() {
             const g = build(p);
             const st: Stats = { depth: 0, rootMoves: 0, nodes: 0 };
             const t0 = performance.now();
-            e.ai.pickAIMove(g, level as "medium" | "hard", budget, undefined, st);
+            const realNow = Date.now;
+            if (frozen) {
+              const at = realNow();
+              Date.now = () => at;
+            }
+            try {
+              e.ai.pickAIMove(g, level as "medium" | "hard", budget, undefined, st);
+            } finally {
+              Date.now = realNow;
+            }
             const ms = performance.now() - t0;
             const key = `${e.name}|${level}|${budget}`;
             if (!samples.has(key)) samples.set(key, []);
@@ -310,6 +325,7 @@ async function main() {
           head: execFileSync("git", ["rev-parse", "--short", "HEAD"], { encoding: "utf8" }).trim(),
           node: process.version,
           loadavg: os.loadavg(),
+          frozenClock: frozen,
           when: new Date().toISOString(),
           results,
         },

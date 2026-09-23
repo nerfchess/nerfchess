@@ -1,0 +1,19 @@
+what the search can see of amazon_army
+
+  root: 40 plain moves, 57 legal moves
+        17 of them granted by the card (c3d4 c3e5 c3d2 c3b4 ...)
+
+  ok  the card grants 17 moves, and only legalMoves() produces them
+  ply 2: the search generates 59 moves, the game allows 59
+        the card is still live (17 granted moves in the real game)
+
+  ok  the search sees all 17 card-granted moves at ply 2: negamax is buff-aware
+  expiry: granted moves visible at plies 0/2/4 = 17/17/17, at ply 6 = 0
+
+  ok  the augment expires with the card: live at plies 0/2/4, gone at ply 6, so a three-turn card is not searched as a permanent one
+  at 60ms: 40 root moves -> 57 (43% wider), depth 2 -> 1
+  ok  a 43% wider root at every ply costs 1 ply at the 60ms floor (depth 2 -> 1), within the measured 1
+  at 700ms: depth 3 -> 3 (medium's real budget)
+  ok  no depth is lost at 700ms, which was medium's whole budget before the deadline change doubled the label to 1400 (depth 3)
+
+search buff visibility: OK

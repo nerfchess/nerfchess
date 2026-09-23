@@ -16,8 +16,9 @@
  *   P4         a root move after which an opponent reply trips the mover's own
  *              nerf is dropped while an alternative exists, and the filter
  *              never consults the opponent's nerf
- *   P7         a move back into a position from the game history scores as a
- *              draw (with the configured contempt)
+ *   P7         a move into a position the game has already seen twice scores
+ *              as a draw (with the configured contempt); one seen once does
+ *              not
  *   P12        at a fixed depth with no deadline and the selective pruning off,
  *              the transposition table changes node counts and nothing else:
  *              identical root scores on the 27 bench positions
@@ -32,7 +33,9 @@
  * plays something else that judges at least 150cp worse. A position counts as
  * solved when the engine plays the harvested move or any move the fixed judge
  * (baseline, depth 4 overall, the harvest's own depth) scores within 50cp of
- * the harvested score.
+ * the harvested score. A second, deeper judge (baseline at --judge-depth after
+ * the move) scores the move and the solution at the same depth, because the
+ * shallow one marks a forced king capture it cannot see as a miss.
  */
 
 import { execFileSync } from "node:child_process";
@@ -343,14 +346,21 @@ async function assertions() {
     if (!rank || !tuning) {
       bad("rankRootMoves / getEngineTuning are not exported");
     } else {
-      const g = fromUci(["g1f3", "g8f6", "f3g1", "f6g8", "g1f3", "g8f6"]);
+      // Ng1 with the black knight on f6 and Black to move has been seen twice
+      // (plies 3 and 7), so f3g1 now makes it threefold.
+      const g = fromUci(["g1f3", "g8f6", "f3g1", "f6g8", "g1h3", "g8f6", "h3g1", "f6h5", "g1f3", "h5f6"]);
       const ranked = rank(g, "hard", BIG, 2);
       const back = ranked.find((r) => moveToUCI(r.move) === "f3g1");
       const e4 = ranked.find((r) => moveToUCI(r.move) === "e2e4");
       check(!!back && back.scoreCp === -tuning.contemptCp,
-        "a move back into a game-history position scores as a draw with contempt",
+        "a move into a position the game has seen twice scores as a draw with contempt",
         `f3g1 ${back?.scoreCp}, contempt ${tuning.contemptCp}`);
       check(!!e4 && e4.scoreCp !== -tuning.contemptCp, "a fresh position does not", `e2e4 ${e4?.scoreCp}`);
+      // Seen once only: the opponent is free to play on, so it is no draw.
+      const g1 = fromUci(["g1f3", "g8f6", "f3g1", "f6g8", "g1f3", "g8f6"]);
+      const once = rank(g1, "hard", BIG, 1).find((r) => moveToUCI(r.move) === "f3g1");
+      check(!!once && once.scoreCp !== -tuning.contemptCp,
+        "a position the game has seen only once is not scored as a draw", `f3g1 ${once?.scoreCp}`);
     }
   }
 
@@ -607,17 +617,24 @@ async function tactics() {
   const engines: { name: string; ai: AiModule }[] = [];
   for (const e of engineNames) engines.push({ name: e, ai: await loadEngine(e) });
 
+  // Two judges. The harvest's own (baseline, depth 3 after the move, so 4
+  // overall) is what the set was built with, but it is blind past its horizon:
+  // an engine that finds a forced king capture at ply 7 with another move is
+  // marked wrong by it. The deep judge (baseline, --judge-depth after the move,
+  // default 5, so 6 overall) scores the engine's move and the harvested
+  // solution at the same depth and counts the move when it is within 50cp.
+  const judgeDepth = Number(arg("judge-depth", "5"));
   const judged = new Map<string, number>();
-  const judgeMove = (t: Tactic, g: NerfGame, uci: string) => {
-    const key = `${t.id}|${uci}`;
+  const judgeMove = (t: Tactic, g: NerfGame, uci: string, depth: number) => {
+    const key = `${t.id}|${uci}|${depth}`;
     if (!judged.has(key)) {
       const m = moveFromUCI(g.board, uci)!;
-      judged.set(key, -judge.analyzeBoard(makeMove(g.board, m), BIG, 3).scoreCp);
+      judged.set(key, -judge.analyzeBoard(makeMove(g.board, m), BIG, depth).scoreCp);
     }
     return judged.get(key)!;
   };
 
-  type Row = { solved: number; n: number; depth: number; nodes: number };
+  type Row = { solved: number; deep: number; n: number; depth: number; nodes: number };
   const rows = new Map<string, Row>();
   for (let i = 0; i < set.length; i++) {
     const t = set[i];
@@ -628,11 +645,14 @@ async function tactics() {
         const st: Stats = { depth: 0, rootMoves: 0, nodes: 0 };
         const m = e.ai.pickAIMove(g, "hard", budget, undefined, st);
         const uci = m ? moveToUCI(m) : "";
-        const solved = uci === t.solution || (!!m && judgeMove(t, g, uci) >= t.solutionScore - 50);
+        const solved = uci === t.solution || (!!m && judgeMove(t, g, uci, 3) >= t.solutionScore - 50);
+        const deep =
+          uci === t.solution || (!!m && judgeMove(t, g, uci, judgeDepth) >= judgeMove(t, g, t.solution, judgeDepth) - 50);
         const key = `${e.name}|${budget}`;
-        const r = rows.get(key) ?? { solved: 0, n: 0, depth: 0, nodes: 0 };
+        const r = rows.get(key) ?? { solved: 0, deep: 0, n: 0, depth: 0, nodes: 0 };
         r.n++;
         r.solved += solved ? 1 : 0;
+        r.deep += deep ? 1 : 0;
         r.depth += st.depth;
         r.nodes += st.nodes ?? 0;
         rows.set(key, r);
@@ -648,10 +668,12 @@ async function tactics() {
         solved: r.solved,
         n: r.n,
         rate: +(r.solved / r.n).toFixed(3),
+        solvedDeepJudge: r.deep,
+        rateDeepJudge: +(r.deep / r.n).toFixed(3),
         meanDepth: +(r.depth / r.n).toFixed(2),
         meanNodes: Math.round(r.nodes / r.n),
       };
-      return `${e.name} ${r.solved}/${r.n} (${((100 * r.solved) / r.n).toFixed(0)}%) depth ${(r.depth / r.n).toFixed(2)} nodes ${Math.round(r.nodes / r.n)}`;
+      return `${e.name} ${r.solved}/${r.n} (${((100 * r.solved) / r.n).toFixed(0)}%) deep-judge ${r.deep}/${r.n} depth ${(r.depth / r.n).toFixed(2)} nodes ${Math.round(r.nodes / r.n)}`;
     });
     console.log(`  ${String(budget).padStart(4)}ms  ${cells.join("  |  ")}`);
   }
@@ -664,6 +686,7 @@ async function tactics() {
           script: "scripts/test-house-engine.ts --tactics",
           argv: process.argv.slice(2),
           baselineCommit: BASELINE_COMMIT,
+          judges: `solved: the harvest judge (baseline, depth 3 after the move); solvedDeepJudge: baseline at depth ${judgeDepth} after the move, against the solution at the same depth`,
           head: execFileSync("git", ["rev-parse", "--short", "HEAD"], { encoding: "utf8" }).trim(),
           loadavg: os.loadavg(),
           when: new Date().toISOString(),
