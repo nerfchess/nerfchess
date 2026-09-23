@@ -22,7 +22,7 @@ The Durable Object does not run under `next dev`, so worker-side fixes are cover
 | F083 | DONE | `realtime-rules-*.txt` | a36a943 | `seatedInLiveGame`: a watcher whose account holds a seat in the unfinished game gets no `schat` fan-out, an empty `spectatorChat` in `wstart`, and `seated_player` if it posts. |
 | F078 (H part) | DONE | `realtime-rules-*.txt` | a36a943 | The three clock checks use `clockWithin(..., CUSTOM_GAME_CLOCK / TOURNAMENT_CLOCK)` from slice F's `src/lib/clockBounds.ts`. |
 | F052, F053 (H part) | DONE | `realtime-rules-*.txt` | a36a943 | Player and spectator chat go through `cleanText(text, { maxChars: 200 })` instead of `.trim().slice(0, 200)`. |
-| F067 | DONE (reworked in review round 1) | `create-limit-before.txt`, `create-limit-review-before.txt`, `create-limit-review-after.txt` | 1309dab, see Review round 1 | `MatchCreateLimiter` (`socketGuard.ts`) for `create` and `playbot` (`too_many_games`): every account gets 20 new matches per 10 minutes. Only anonymous sockets and guest accounts, which can mint new identities for free, also share a bucket of 40 per client address; a full account is never limited by address. Both limits are checked before either is recorded, so a refused create uses up nothing. The address key is an unsalted 32-bit FNV-1a digest of `CF-Connecting-IP` on the in-memory socket attachment: it keeps the raw address out of the attachment but is reversible over IPv4, so it is not anonymisation. |
+| F067 | DONE (reworked in review round 1) | `create-limit-before.txt`, `create-limit-review-before.txt`, `create-limit-review-after.txt` | 1309dab, b76dae9 | `MatchCreateLimiter` (`socketGuard.ts`) for `create` and `playbot` (`too_many_games`): every account gets 20 new matches per 10 minutes. Only anonymous sockets and guest accounts, which can mint new identities for free, also share a bucket of 40 per client address; a full account is never limited by address. Both limits are checked before either is recorded, so a refused create uses up nothing. The address key is an unsalted 32-bit FNV-1a digest of `CF-Connecting-IP` on the in-memory socket attachment: it keeps the raw address out of the attachment but is reversible over IPv4, so it is not anonymisation. |
 | F091 | DONE | `test-realtime-rules.ts` (F091 checks) | 1309dab | `seeOppBuffs`, `godRerolls` and `lastClockAdjustAt` are written to the socket attachment when changed. |
 | F092 | DONE | `docs/game-server-protocol.md` | 1309dab | Added `abort`, `rematchCancel`, `playbot`, `schat` (both directions), `reveal`, `dtReroll`, `hb`, the god-panel frames, `create.rated` / `stacked` and clock bounds, the new takeback rule, frame limits and close codes, guard error codes, and the internal HTTP routes including `/mod/online` and the public `/healthz` contract. |
 | F069 | TODO (owner) | | | Needs Q19 (signed-in only spectator chat). Per-userId throttle and batching wait on it. |
@@ -44,7 +44,7 @@ Guards run after the changes: `test:clock-pause`, `test:spectator-sync`, `test:t
 
 ## Review round 1
 
-Blocking finding (F067 address bucket) and the nits, fixed in the review round 1 commit.
+Blocking finding (F067 address bucket) and the nits, fixed in b76dae9.
 
 | Item | Status | Evidence | Note |
 |---|---|---|---|
