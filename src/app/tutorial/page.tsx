@@ -98,8 +98,10 @@ export default function TutorialPage() {
       <SiteHeader />
       <section className="max-w-3xl mx-auto px-6 pt-4">
         <h1 className="page-title mt-1">House rules</h1>
-        <p className="mt-5 text-[16px] leading-[1.7] text-parchment-200">
-          Nerf Chess is chess, until it isn&apos;t. Five house rules are everything you need to know.
+        {/* Section ids are the targets of the HowTo steps in the JSON-LD above
+            (#modes, #rules, #cards, #win); they must stay on visible content (F245). */}
+        <p id="modes" className="mt-5 scroll-mt-4 text-[16px] leading-[1.7] text-parchment-200">
+          Nerf Chess is chess, until it isn&apos;t. Six house rules are everything you need to know.
           Everything else depends on your mode: in Nerf mode, your secret handicap and the hexes,
           boons, and items you draft; in Buff mode, the buff cards both players draft every 5 moves.
         </p>
@@ -123,22 +125,25 @@ export default function TutorialPage() {
             </LinkButton>
           </div>
         </div>
-        {/* The five house rules live in full in the guide; one line here keeps
+        {/* The six house rules live in full in the guide; one line here keeps
             the tutorial from restating them. */}
-        <div className="mt-9 plate p-5 sm:p-6">
-          <p className="text-[15px] leading-relaxed text-parchment-200">
+        <div id="rules" className="mt-9 scroll-mt-4 plate p-5 sm:p-6">
+          {/* #win: this line is where the page says how a game is won (no
+              checkmate, the king is captured). */}
+          <p id="win" className="scroll-mt-4 text-[15px] leading-relaxed text-parchment-200">
             No checkmate, a capturable king, secret nerfs, pre-filtered moves, Chebyshev
-            distances: read the five house rules in the{" "}
+            distances, and no king capture on a free move: read the six house rules in the{" "}
             <Link href="/guide/how-to-play" className="font-semibold text-gold-leaf hover:underline">
               how-to-play guide
             </Link>
             .
           </p>
         </div>
-        <div className="mt-14">
+        <div id="cards" className="mt-14 scroll-mt-4">
           <h2 className="font-display text-[1.35rem] font-medium">Nerf, buff, hex, boon</h2>
           <p className="mt-4 text-[15px] leading-[1.7] text-parchment-200">
-            Every card in the game is one of these four. The trick is who each one lands on: a nerf and
+            Nearly every card in the game is one of these four; the fifth type, items, are playful
+            one-use consumables drafted in both modes. The trick is who each one lands on: a nerf and
             a boon act on your side of the board, while a hex acts on your opponent&apos;s. Buffs belong
             to Buff mode; the other three shape a Nerf-mode game.
           </p>

@@ -243,3 +243,37 @@ test.describe("analysis deep links", () => {
     expect({ afterLine, start: html.includes(START) }).toEqual({ afterLine: true, start: false });
   });
 });
+
+test.describe("tutorial", () => {
+  // F245: the HowTo JSON-LD step URLs pointed at #modes, #rules, #cards and
+  // #win, none of which existed on the page.
+  test("every HowTo step fragment resolves to an element on the page", async ({ request }) => {
+    const html = await (await request.get("/tutorial")).text();
+    const blocks = [...html.matchAll(/<script type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
+    const fragments: string[] = [];
+    for (const raw of blocks) {
+      const data = JSON.parse(raw) as { "@type"?: string; step?: { url?: string }[] };
+      if (data["@type"] !== "HowTo") continue;
+      for (const step of data.step ?? []) {
+        const hash = step.url?.split("#")[1];
+        if (hash) fragments.push(hash);
+      }
+    }
+    expect(fragments.length).toBeGreaterThan(0);
+    const missing = fragments.filter((f) => !new RegExp(`\\sid="${f}"`).test(html));
+    expect(missing).toEqual([]);
+  });
+
+  // F172: the tutorial said five house rules; the guide (the source of truth)
+  // lists six.
+  test("the tutorial and the guide agree on the number of house rules", async ({ request }) => {
+    const tutorial = await (await request.get("/tutorial")).text();
+    const guide = await (await request.get("/guide/how-to-play")).text();
+    const guideRules = (guide.match(/<strong>\d+\. /g) ?? []).length;
+    expect(guideRules).toBe(6);
+    expect({ six: tutorial.includes("Six house rules"), five: /[Ff]ive house rules are/.test(tutorial) }).toEqual({
+      six: true,
+      five: false,
+    });
+  });
+});
