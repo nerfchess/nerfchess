@@ -29,7 +29,8 @@ export async function verifyTurnstile(token: string, remoteIp?: string | null): 
   if (remoteIp) form.append("remoteip", remoteIp);
 
   try {
-    const res = await fetch(SITEVERIFY_URL, { method: "POST", body: form });
+    // Bounded: a slow siteverify must fail the check, not hold the sign-up open.
+    const res = await fetch(SITEVERIFY_URL, { method: "POST", body: form, signal: AbortSignal.timeout(5000) });
     const data = (await res.json()) as { success?: boolean };
     return data.success === true;
   } catch {
