@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { refuseCrossSite } from "../_lib/sameOrigin";
+import { guardJsonWrite } from "@/lib/server/request";
 import { getDb, requestIsSecure } from "@/lib/server/db";
 import {
   createSession,
@@ -27,17 +27,12 @@ export const dynamic = "force-dynamic";
 const REGISTER_MAX_PER_IP = 10;
 
 export async function POST(request: Request) {
-  const refused = refuseCrossSite(request);
-  if (refused) return refused;
-  let body: { username?: unknown; password?: unknown; email?: unknown; turnstileToken?: unknown };
-  try {
-    body = await request.json();
-    // `null`, an array or a bare value parses fine and then crashed the
-    // field reads below with a 500 (F047): refuse anything but an object.
-    if (!body || typeof body !== "object" || Array.isArray(body)) throw new Error("not an object");
-  } catch {
-    return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
-  }
+  // Refuses cross-site browser requests (F046, login CSRF) and anything but
+  // a JSON object body under 16 KB (F047: `null` used to crash the field
+  // reads below with a 500). Shared with slice F: src/lib/server/request.ts.
+  const parsed = await guardJsonWrite(request);
+  if (parsed instanceof NextResponse) return parsed;
+  const body = parsed as { username?: unknown; password?: unknown; email?: unknown; turnstileToken?: unknown };
   // Bot check: no-op unless TURNSTILE_SECRET_KEY is configured.
   const turnstileToken = typeof body.turnstileToken === "string" ? body.turnstileToken : "";
   const humanOk = await verifyTurnstile(turnstileToken, request.headers.get("CF-Connecting-IP"));

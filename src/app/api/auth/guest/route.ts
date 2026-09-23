@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { refuseCrossSite } from "../_lib/sameOrigin";
+import { assertSameOrigin } from "@/lib/server/request";
 import { getDb, requestIsSecure } from "@/lib/server/db";
 import {
   createSession,
@@ -22,7 +22,9 @@ export const dynamic = "force-dynamic";
 // visitors can play rated games immediately. The password is an unknowable
 // random secret; registering later upgrades the same account in place.
 export async function POST(request: Request) {
-  const refused = refuseCrossSite(request);
+  // No body to read, but a cross-site page must not be able to mint a
+  // session or end one (F046). Shared rule: src/lib/server/request.ts.
+  const refused = assertSameOrigin(request);
   if (refused) return refused;
   const db = await getDb();
 
