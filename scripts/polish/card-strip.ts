@@ -79,6 +79,11 @@
 //                        NAME.similar.json: every pair of cards in the run
 //                        ranked by how alike their strips look (a triage
 //                        heuristic, the strips decide)
+//                        Per card it also leaves <name>.strike.png and
+//                        <name>.look.json, so batches can be ranked together:
+//   --sheet-from A,B --sheet NAME --out DIR   rebuild the sheet and ranking
+//                        over every card with sidecars in those folders (no
+//                        dev server needed)
 // Compare (no browser, no server)
 //   --compare A,B --out DIR   for every strip in both folders, write
 //                        DIR/<name>.vs.png with A's strip above B's (before
@@ -495,7 +500,7 @@ const OFF_WINDOW_MS = 4400;
  *  the capture waits for the server and tries once more. */
 async function captureRetry(...a: Parameters<typeof capture>): Promise<Capture> {
   const first = await capture(...a);
-  if (first.ok || !/net::ERR_|Target closed|ECONNREFUSED|Navigation timeout|Execution context was destroyed/i.test(first.error ?? "")) return first;
+  if (first.ok || !/net::ERR_|Target closed|ECONNREFUSED|Navigation timeout|Execution context was destroyed|waitForFunction: Timeout/i.test(first.error ?? "")) return first;
   console.log(`[card-strip] ${a[1].id}: ${first.error}; waiting for the dev server and retrying once`);
   await waitForServer();
   await warmRoutes(["/dev/plays"]);
@@ -609,6 +614,159 @@ function cosine(a: number[], b: number[]): number {
   return na && nb ? dot / Math.sqrt(na * nb) : 0;
 }
 
+/** Per-card sheet sidecars: the strike tile (board crop, 200px wide) and the
+ *  look vector, so a sheet can be rebuilt across several runs (--sheet-from)
+ *  and cards captured in separate batches can still be ranked together. */
+async function writeLook(
+  browser: Browser,
+  dir: string,
+  l: {
+    name: string;
+    id: string;
+    tier: number;
+    label: string;
+    strike: string;
+    clip: Rect;
+    v: number[];
+    tiles: { data: string; label: string }[];
+  },
+): Promise<void> {
+  const sharp = (await import("sharp")).default;
+  const small = async (data: string) =>
+    sharp(Buffer.from(await crop(browser, { data, ts: 0, width: 0, height: 0 }, l.clip), "base64"))
+      .resize({ width: SHEET_TILE })
+      .png()
+      .toBuffer({ resolveWithObject: true });
+  const strike = await small(l.strike);
+  fs.writeFileSync(
+    path.join(dir, `${l.name}.strike.png`),
+    await sharp(strike.data).png({ palette: true, colours: 96, effort: 8 }).toBuffer(),
+  );
+  // Every tile side by side, so a sheet built later can pick the moment where
+  // this card differs most from all the others (see writeSheet).
+  const row = await Promise.all(l.tiles.map((t) => small(t.data)));
+  const h = row[0].info.height;
+  const sprite = await sharp({ create: { width: SHEET_TILE * row.length, height: h, channels: 4, background: "#15171a" } })
+    .composite(row.map((r, i) => ({ input: r.data, top: 0, left: i * SHEET_TILE })))
+    .png({ palette: true, colours: 96, effort: 8 })
+    .toBuffer();
+  fs.writeFileSync(path.join(dir, `${l.name}.tiles.png`), sprite);
+  writeJson(path.join(dir, `${l.name}.look.json`), {
+    name: l.name,
+    id: l.id,
+    tier: l.tier,
+    label: l.label,
+    tileLabels: l.tiles.map((t) => t.label),
+    v: l.v.map((x) => Math.round(x * 10) / 10),
+  });
+}
+
+/** Sheet tile width in px. */
+const SHEET_TILE = 200;
+
+/** Contact sheet plus look-alike ranking over every card with sidecars in
+ *  `dirs`, highest tier first. */
+async function writeSheet(browser: Browser, name: string, dirs: string[], out: string): Promise<void> {
+  type Look = { name: string; tier: number; label: string; tileLabels?: string[]; v: number[]; png: string; sprite: string | null };
+  const looks: Look[] = [];
+  for (const d of dirs) {
+    for (const f of fs.readdirSync(d).filter((x) => x.endsWith(".look.json"))) {
+      const l = JSON.parse(fs.readFileSync(path.join(d, f), "utf8")) as Omit<Look, "png" | "sprite">;
+      const strike = path.join(d, `${l.name}.strike.png`);
+      if (!fs.existsSync(strike)) continue;
+      const sprite = path.join(d, `${l.name}.tiles.png`);
+      looks.push({ ...l, png: fs.readFileSync(strike).toString("base64"), sprite: fs.existsSync(sprite) ? sprite : null });
+    }
+  }
+  if (!looks.length) {
+    console.log(`[card-strip] no sheet sidecars (*.look.json) in ${dirs.map(rel).join(", ")}`);
+    return;
+  }
+  looks.sort((a, b) => b.tier - a.tier || a.name.localeCompare(b.name));
+  // The sheet shows each card at its most card-specific moment: the tile
+  // whose look is furthest from the average of all cards at the same tile.
+  // What every card shares (the wrapper's dim, ring and beam, the banner)
+  // cancels out, so a card whose own art peaks late is shown at that peak,
+  // and a card with nothing of its own shows its least generic frame.
+  const per = 24 * 24;
+  const sameLen = looks.filter((l) => l.v.length === looks[0].v.length);
+  const nTiles = looks[0].v.length / per;
+  const meanTile = Array.from({ length: nTiles }, (_, t) =>
+    Array.from({ length: per }, (_, k) => sameLen.reduce((a, l) => a + l.v[t * per + k], 0) / sameLen.length),
+  );
+  const sharp = (await import("sharp")).default;
+  for (const l of looks) {
+    if (!l.sprite || l.v.length !== looks[0].v.length || !l.tileLabels) continue;
+    let best = 0;
+    let bestE = -1;
+    for (let t = 0; t < nTiles; t++) {
+      let e = 0;
+      for (let k = 0; k < per; k++) e += (l.v[t * per + k] - meanTile[t][k]) ** 2;
+      if (e > bestE) {
+        bestE = e;
+        best = t;
+      }
+    }
+    // Look vectors start at the second tile (the first is the reference).
+    const tileIndex = best + 1;
+    const meta = await sharp(l.sprite).metadata();
+    const w = SHEET_TILE;
+    if ((meta.width ?? 0) < (tileIndex + 1) * w) continue;
+    const buf = await sharp(l.sprite).extract({ left: tileIndex * w, top: 0, width: w, height: meta.height ?? w }).png().toBuffer();
+    l.png = buf.toString("base64");
+    l.label = `${l.name} T${l.tier} ${l.tileLabels[tileIndex] ?? ""}`;
+  }
+  fs.mkdirSync(out, { recursive: true });
+  const png = await shrink(
+    await composeStrip(
+      browser,
+      looks.map((l) => ({ data: l.png, mime: "image/png" as const, label: l.label })),
+      {
+        columns: Math.min(6, looks.length),
+        title: `${name}: each card at its most card-specific moment (the tile furthest from what every card in the sheet shows then)`,
+      },
+    ),
+  );
+  const sheetPath = path.join(out, `${name}.sheet.png`);
+  fs.writeFileSync(sheetPath, png);
+  console.log(`[card-strip] ${rel(sheetPath)} (${looks.length} cards, ${Math.round(png.length / 1024)} KB)`);
+  // Look-alike triage: every pair by how parallel their look vectors are. A
+  // heuristic for where to look first, not a verdict: the strips decide.
+  const pairs: { a: string; b: string; similarity: number }[] = [];
+  for (let i = 0; i < looks.length; i++)
+    for (let j = i + 1; j < looks.length; j++)
+      pairs.push({ a: looks[i].name, b: looks[j].name, similarity: round(cosine(looks[i].v, looks[j].v), 3) });
+  pairs.sort((x, y) => y.similarity - x.similarity);
+  const nearest = Object.fromEntries(
+    looks.map((l) => {
+      const best = pairs.find((q) => q.a === l.name || q.b === l.name);
+      return [l.name, best ? { card: best.a === l.name ? best.b : best.a, similarity: best.similarity } : null];
+    }),
+  );
+  // Genericness: how close each card's look is to the average look of every
+  // card in the sheet. What all cards share (the cast wrapper's dim, ring and
+  // beam, the name banner) dominates the average, so a card whose own art
+  // adds little sits near it: "could belong to another card".
+  const dim = Math.min(...looks.map((l) => l.v.length));
+  const mean = Array.from({ length: dim }, (_, k) => looks.reduce((a, l) => a + l.v[k], 0) / looks.length);
+  const generic = looks
+    .map((l) => ({ card: l.name, tier: l.tier, closeness: round(cosine(l.v, mean), 3) }))
+    .sort((a, b) => b.closeness - a.closeness);
+  const simPath = writeJson(path.join(out, `${name}.similar.json`), {
+    method:
+      "cosine similarity of per-tile (tile minus pre-play tile) 24x24 grey thumbnails, standardised per tile; 1 = same look, near 0 = unrelated. Every tier 6+ bespoke card shares the cast wrapper's ring and beam (TC0-f), so expect a floor around 0.4",
+    cards: looks.length,
+    generic: {
+      method: "cosine similarity of the card's look vector to the mean look of all cards in this sheet; highest = least card-specific",
+      ranking: generic,
+    },
+    pairs: pairs.slice(0, 80),
+    nearest,
+  });
+  console.log(`[card-strip] ${rel(simPath)}; most alike: ${pairs.slice(0, 5).map((q) => `${q.a}~${q.b} ${q.similarity}`).join(", ")}`);
+  console.log(`[card-strip] least card-specific: ${generic.slice(0, 6).map((g) => `${g.card} ${g.closeness}`).join(", ")}`);
+}
+
 // ---------- main ----------
 
 async function main() {
@@ -617,6 +775,18 @@ async function main() {
   if (cmp.length) {
     if (cmp.length !== 2) throw new Error("--compare takes two folders: --compare before,after --out DIR");
     await compareDirs(path.resolve(cmp[0]), path.resolve(cmp[1]), path.resolve(argStr(args, "out", cmp[1])));
+    return;
+  }
+  const from = list(args.values.get("sheet-from"));
+  if (from.length) {
+    const name = args.values.get("sheet");
+    if (!name) throw new Error("--sheet-from needs --sheet NAME");
+    const browser = await launch();
+    try {
+      await writeSheet(browser, name, from.map((d) => path.resolve(d)), path.resolve(argStr(args, "out", from[0])));
+    } finally {
+      await browser.close();
+    }
     return;
   }
   const specsIn = loadSpecs(args);
@@ -667,9 +837,6 @@ async function main() {
   fs.mkdirSync(outDir, { recursive: true });
   const browser = await launch();
   const sheetName = args.values.get("sheet");
-  const sheet: { data: string; label: string }[] = [];
-  const looks: { name: string; v: number[] }[] = [];
-  let sheetClip: Rect | null = null;
   const summary: { id: string; png?: string; visualMs?: number; longFrames?: number; drive?: string; off?: string; error?: string }[] = [];
   try {
     for (const spec of specs) {
@@ -703,9 +870,16 @@ async function main() {
         fs.writeFileSync(pngPath, png);
         if (sheetName && combo === combos[0]) {
           const k = await peakTile(browser, tiles, cap.clip);
-          sheetClip ??= cap.clip;
-          sheet.push({ data: tiles[k].data, label: `${name} T${cap.info?.tier ?? "?"} ${tiles[k].label}` });
-          looks.push({ name, v: await lookVector(browser, tiles, cap.clip) });
+          await writeLook(browser, outDir, {
+            name,
+            id: spec.id,
+            tier: Number(cap.info?.tier ?? 0),
+            label: `${name} T${cap.info?.tier ?? "?"} ${tiles[k].label}`,
+            strike: tiles[k].data,
+            clip: cap.clip,
+            v: await lookVector(browser, tiles, cap.clip),
+            tiles,
+          });
         }
         writeJson(path.join(outDir, `${name}.json`), {
           id: spec.id,
@@ -789,40 +963,7 @@ async function main() {
       }
       summary.push(row);
     }
-    if (sheetName && sheet.length && sheetClip) {
-      const png = await shrink(
-        await composeStrip(browser, sheet, {
-          columns: Math.min(6, sheet.length),
-          clip: sheetClip,
-          scale: 200 / sheetClip.w,
-          title: `${sheetName}: each card at its strike (the tile furthest from the board before the play)`,
-        }),
-      );
-      const sheetPath = path.join(outDir, `${sheetName}.sheet.png`);
-      fs.writeFileSync(sheetPath, png);
-      console.log(`[card-strip] ${rel(sheetPath)} (${sheet.length} cards, ${Math.round(png.length / 1024)} KB)`);
-      // Look-alike triage: every pair of cards in this run by how parallel
-      // their look vectors are. A heuristic for where to look first, not a
-      // verdict: the strips decide.
-      const pairs: { a: string; b: string; similarity: number }[] = [];
-      for (let i = 0; i < looks.length; i++)
-        for (let j = i + 1; j < looks.length; j++)
-          pairs.push({ a: looks[i].name, b: looks[j].name, similarity: round(cosine(looks[i].v, looks[j].v), 3) });
-      pairs.sort((x, y) => y.similarity - x.similarity);
-      const nearest = Object.fromEntries(
-        looks.map((l) => {
-          const best = pairs.filter((q) => q.a === l.name || q.b === l.name)[0];
-          return [l.name, best ? { card: best.a === l.name ? best.b : best.a, similarity: best.similarity } : null];
-        }),
-      );
-      const simPath = writeJson(path.join(outDir, `${sheetName}.similar.json`), {
-        method:
-          "cosine similarity of per-tile (tile minus pre-play tile) 24x24 grey thumbnails, standardised per tile; 1 = same look, near 0 = unrelated",
-        pairs: pairs.slice(0, 60),
-        nearest,
-      });
-      console.log(`[card-strip] ${rel(simPath)}; most alike: ${pairs.slice(0, 5).map((q) => `${q.a}~${q.b} ${q.similarity}`).join(", ")}`);
-    }
+    if (sheetName) await writeSheet(browser, sheetName, [outDir], outDir);
   } finally {
     await browser.close();
   }
