@@ -1,0 +1,12 @@
+# before: next build of 2d175c9 on :3100 (next start)
+  1) [chromium] › e2e/polish/play-shell.spec.ts:34:7 › pre-hydration paint › /play paints the header, the intro and the card skeleton 
+    Error: expect(received).toBe(expected) // Object.is equality
+  2) [chromium] › e2e/polish/play-shell.spec.ts:42:7 › pre-hydration paint › /lobby paints the header, the title and the lobby skeleton 
+    Error: expect(received).toBe(expected) // Object.is equality
+  3) [chromium] › e2e/polish/play-shell.spec.ts:68:7 › tour note › a first-time visitor sees the note from the first paint and nothing moves 
+    Error: door tops: 143, 201
+    > 73 |     expect(new Set(ys).size, `door tops: ${[...new Set(ys)].join(", ")}`).toBe(1);
+  3 failed
+  2 passed (9.0s)
+# after: dev server with slice B changes
+  5 passed (9.5s)
