@@ -641,3 +641,136 @@ test.describe("/clubs directory", () => {
     await expect(page.getByText("Deep archive club")).toBeVisible({ timeout: 5000 });
   });
 });
+
+// ---------------------------------------------------------------------------
+// /leaderboard.
+
+function lbRows(n: number) {
+  return Array.from({ length: n }, (_, i) => ({
+    username: i === 59 ? "polish_user" : `player_${i}`,
+    avatar: null,
+    flair: null,
+    rating: 1900 - i * 5,
+    rd: 60,
+    games: 30,
+    wins: 10,
+    losses: 5,
+    draws: 1,
+    guest: i === 12,
+  }));
+}
+
+test.describe("/leaderboard", () => {
+  test.use({ storageState: polishAuthState("user") });
+
+  // F025: the skeleton sat 8px lower than the table, with shorter rows.
+  test("the skeleton has the table's geometry", async ({ page }) => {
+    let release: () => void = () => {};
+    const gate = new Promise<void>((r) => (release = r));
+    await page.route("**/api/leaderboard?**", async (route) => {
+      await gate;
+      await route.fulfill({ json: { category: "nerf", players: lbRows(20), me: null } });
+    });
+    await page.goto("/leaderboard");
+    const sk = page.locator("main div[aria-hidden].overflow-hidden").first();
+    await expect(sk).toBeVisible({ timeout: 60_000 });
+    const skGeo = await sk.evaluate((el) => {
+      const kids = [...el.children] as HTMLElement[];
+      return { top: el.getBoundingClientRect().top, head: kids[0].offsetHeight, row: kids[1].offsetHeight };
+    });
+    release();
+    const table = page.locator("main div.overflow-hidden.border-y").filter({ has: page.locator('a[id^="lb-rank-"]') });
+    await expect(table).toBeVisible();
+    const tGeo = await table.evaluate((el) => {
+      const kids = [...el.children] as HTMLElement[];
+      return { top: el.getBoundingClientRect().top, head: kids[0].offsetHeight, row: kids[1].offsetHeight };
+    });
+    expect(Math.abs(skGeo.top - tGeo.top)).toBeLessThanOrEqual(1);
+    expect(Math.abs(skGeo.head - tGeo.head)).toBeLessThanOrEqual(1);
+    expect(Math.abs(skGeo.row - tGeo.row)).toBeLessThanOrEqual(1);
+  });
+
+  // F162, F200: sentence-case chips; the jump scroll is instant when
+  // animations are off.
+  test("chips are sentence case and the jump obeys data-anim", async ({ page }) => {
+    await page.addInitScript(() => {
+      const w = window as unknown as { __sivArgs: unknown[] };
+      w.__sivArgs = [];
+      const orig = Element.prototype.scrollIntoView;
+      Element.prototype.scrollIntoView = function (arg?: boolean | ScrollIntoViewOptions) {
+        w.__sivArgs.push(arg);
+        return orig.call(this, arg);
+      };
+    });
+    await page.route("**/api/leaderboard?**", (route) =>
+      route.fulfill({ json: { category: "nerf", players: lbRows(70), me: { ...lbRows(70)[59], rank: 60 } } }),
+    );
+    await page.goto("/leaderboard");
+    const guest = page.getByText("Guest", { exact: true }).last();
+    await expect(guest).toBeVisible({ timeout: 60_000 });
+    expect(await guest.evaluate((el) => getComputedStyle(el).textTransform)).toBe("none");
+    await page.evaluate(() => (document.documentElement.dataset.anim = "off"));
+    await page.getByRole("button", { name: /Jump to my rank/ }).click();
+    await expect(page.locator("#lb-rank-60")).toBeVisible();
+    const args = await page.evaluate(() => (window as unknown as { __sivArgs: { behavior?: string }[] }).__sivArgs);
+    expect(args.length).toBeGreaterThan(0);
+    expect(args[args.length - 1]?.behavior).toBe("auto");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// /community.
+
+test.describe("/community", () => {
+  test.use({ storageState: polishAuthState("user") });
+
+  // F135: the online count was a live region re-announced on every poll.
+  // F014: the Friends card and the guest nudge waited for /me.
+  test("no live online count, and the Friends card does not wait for /me", async ({ page }) => {
+    await stampDisplayCookie(page);
+    await page.route("**/api/auth/me", async (route) => {
+      await new Promise((r) => setTimeout(r, 8000));
+      await route.continue();
+    });
+    await page.goto("/community");
+    await expect(page.getByRole("heading", { level: 1, name: "Community" })).toBeVisible({ timeout: 60_000 });
+    await expect(page.locator('[aria-live]').filter({ hasText: /online|Connecting/ })).toHaveCount(0);
+    await expect(page.getByText("Friends", { exact: true }).first()).toBeVisible({ timeout: 3000 });
+    await expect(page.getByText(/Sign in to add friends/)).toHaveCount(0);
+  });
+
+  // F169, F160: recent opponents say what the row does; the replay link is a
+  // 44px target on touch.
+  test("opponents read View profile and replay links are 44px on touch", async ({ browser }) => {
+    const ctx = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+      hasTouch: true,
+      isMobile: true,
+      storageState: polishAuthState("user"),
+    });
+    const page = await ctx.newPage();
+    const me = await (await page.request.get("/api/auth/me")).json();
+    const myId = me.user?.id ?? me.id;
+    await page.route("**/api/users/*/games?**", (route) =>
+      route.fulfill({
+        json: {
+          games: [
+            { id: "g1", white_user_id: myId, black_user_id: "opp1", white_name: "polish_user", black_name: "polish_mod", completed_at: Date.now() - 60_000 },
+          ],
+        },
+      }),
+    );
+    await page.route("**/api/community/recent", (route) =>
+      route.fulfill({
+        json: { games: [{ id: "g2", whiteName: "polish_mod", blackName: "polish_admin", winner: "draw", category: "nerf", rated: true, completedAt: Date.now() - 60_000 }] },
+      }),
+    );
+    await page.goto("/community");
+    await expect(page.getByText("View profile").first()).toBeVisible({ timeout: 60_000 });
+    await expect(page.getByText("Challenge", { exact: true })).toHaveCount(0);
+    const replay = page.getByRole("link", { name: /Replay polish_mod versus polish_admin/ });
+    const b = await replay.boundingBox();
+    expect(Math.round(b!.height)).toBeGreaterThanOrEqual(44);
+    await ctx.close();
+  });
+});

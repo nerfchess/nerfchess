@@ -7,7 +7,8 @@ import { Trophy } from "lucide-react";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { PlayerSearch } from "@/components/PlayerSearch";
 import { EmptyState } from "@/components/EmptyState";
-import { AccountUser, fetchMe } from "@/lib/authClient";
+import { useSession } from "@/lib/session/SessionProvider";
+import { motionOff } from "@/lib/settings";
 import { CategoryTabs } from "@/components/ratings/CategoryTabs";
 import { DEFAULT_CATEGORY, getCategory, type RatingCategoryId } from "@/lib/ratingCategories";
 import { isProvisionalRd, PROVISIONAL_RD } from "@/lib/ratingDisplay";
@@ -40,7 +41,10 @@ export default function LeaderboardPage() {
   const [page, setPage] = useState(0);
   const [rows, setRows] = useState<Row[] | null>(null);
   const [meRow, setMeRow] = useState<MeRow | null>(null);
-  const [me, setMe] = useState<AccountUser | null>(null);
+  // Who is looking, from the shared session (F014): the hint names the
+  // viewer's own row from the first render, with no page-level /me call.
+  const { display } = useSession();
+  const rankedViewer = !!display && !display.isGuest;
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   // Jump-to-me: a bumped nonce triggers the scroll effect after the page state
@@ -74,8 +78,6 @@ export default function LeaderboardPage() {
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : "Could not load the leaderboard.");
       }
-      const user = await fetchMe();
-      if (!cancelled) setMe(user ?? null);
     })();
     return () => {
       cancelled = true;
@@ -83,7 +85,7 @@ export default function LeaderboardPage() {
   }, [category, reloadKey]);
 
   const active = getCategory(category);
-  const isMeName = (name: string) => !!me && name.toLowerCase() === me.username.toLowerCase();
+  const isMeName = (name: string) => !!display && name.toLowerCase() === display.username.toLowerCase();
 
   // True rank comes from the full-standings position, so a filtered view still
   // shows each player's real place on the board.
@@ -108,7 +110,8 @@ export default function LeaderboardPage() {
     if (rank == null) return;
     const el = document.getElementById(`lb-rank-${rank}`);
     if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      // Instant when animations are off (F200): data-anim gates every motion.
+      el.scrollIntoView({ behavior: motionOff() ? "auto" : "smooth", block: "center" });
       pendingRankRef.current = null;
     }
   }, [jumpNonce, safePage, rows]);
@@ -133,11 +136,17 @@ export default function LeaderboardPage() {
 
         {/* Controls: search and the jump-to-me shortcut. */}
         <div className="mt-4 flex flex-wrap items-center gap-3">
-          {canJump && (
+          {/* While the standings load, a signed-in viewer's button holds
+              its place (hidden) so the search and table do not move down when
+              it appears (F014). An unranked viewer loses it with the skeleton
+              swap. */}
+          {(canJump || (rankedViewer && !rows && !error)) && (
             <Button tone="ghost"
-             
               onClick={jumpToMe}
-              className="ml-auto px-3 py-1.5 text-[13px]">
+              disabled={!canJump}
+              aria-hidden={!canJump || undefined}
+              tabIndex={canJump ? undefined : -1}
+              className={"ml-auto px-3 py-1.5 text-[13px]" + (canJump ? "" : " invisible")}>
               <Trophy size={13} aria-hidden />
               Jump to my rank
             </Button>
@@ -331,7 +340,7 @@ function LeaderboardRow({
         )}
         {row.guest && <MetaChip>Guest</MetaChip>}
         {mine && (
-          <span className="shrink-0 border border-[color:var(--edge-strong)] px-1.5 py-0.5 text-xs uppercase tracking-[0.06em] text-gold-leaf">
+          <span className="shrink-0 border border-[color:var(--edge-strong)] px-1.5 py-0.5 text-xs text-gold-leaf">
             You
           </span>
         )}
@@ -376,23 +385,30 @@ function LeaderboardRow({
 
 function MetaChip({ children }: { children: React.ReactNode }) {
   return (
-    <span className="shrink-0 border border-[color:var(--edge)] px-1.5 py-0.5 text-xs uppercase tracking-[0.06em] text-parchment-400">
+    <span className="shrink-0 border border-[color:var(--edge)] px-1.5 py-0.5 text-xs text-parchment-400">
       {children}
     </span>
   );
 }
 
+// Built on the table's own geometry (F025): the same top margin, the same
+// header row (padding and a text-line placeholder at the header's line
+// height) and rows at the table's 44px minimum, so the table lands where the
+// skeleton was.
 function LeaderboardSkeleton() {
   return (
-    <div className="mt-8 overflow-hidden border-y border-[color:var(--edge)]" aria-hidden>
-      <div className="border-b border-[color:var(--edge)] px-4 py-3">
-        <div className="skeleton h-3 w-40" />
+    <div className="mt-6 overflow-hidden border-y border-[color:var(--edge)]" aria-hidden>
+      <div className="flex items-center border-b border-[color:var(--edge)] px-3 py-3 text-xs sm:px-4">
+        <span className="skeleton inline-block w-40">&nbsp;</span>
       </div>
       {Array.from({ length: 10 }).map((_, i) => (
-        <div key={i} className="flex items-center gap-3 border-b border-[color:var(--edge)] px-4 py-2.5">
+        <div
+          key={i}
+          className="flex min-h-[44px] items-center gap-3 border-b border-[color:var(--edge)] px-3 py-2.5 text-sm sm:px-4"
+        >
           <div className="skeleton h-4 w-5" />
           <div className="skeleton h-6 w-6 rounded-full" />
-          <div className="skeleton h-4 flex-1" style={{ maxWidth: 160 }} />
+          <div className="skeleton h-4 max-w-[160px] flex-1" />
           <div className="skeleton h-4 w-12" />
         </div>
       ))}

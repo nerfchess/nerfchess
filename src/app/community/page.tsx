@@ -8,7 +8,7 @@ import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { ClubIcon } from "@/components/ClubIcon";
 import { ModeBadge } from "@/components/ModeBadge";
 import { useLobbySnapshot } from "@/lib/lobbyClient";
-import { AccountUser, fetchMe } from "@/lib/authClient";
+import { useSession } from "@/lib/session/SessionProvider";
 import { DEFAULT_CATEGORY, getCategory, isRatingCategoryId } from "@/lib/ratingCategories";
 import { isProvisionalRd } from "@/lib/ratingDisplay";
 import { countdownLabel, modeLabel } from "@/lib/tournaments";
@@ -112,7 +112,12 @@ function startsInLabel(startsAt: number): string {
 }
 
 export default function CommunityPage() {
-  const [me, setMe] = useState<AccountUser | null | undefined>(undefined);
+  // Who is looking, from the shared session (F014): the server hint decides
+  // the guest nudge and the Friends card on the first paint instead of both
+  // appearing once a page-level /me answers. The account id (for picking the
+  // opponent out of each game) comes from the full user when it lands.
+  const { user: me, display } = useSession();
+  const signedIn = !!display && !display.isGuest;
   const [top, setTop] = useState<TopPlayer[] | null>(null);
   const [active, setActive] = useState<ActivePlayer[] | null>(null);
   const [recent, setRecent] = useState<RecentGame[] | null>(null);
@@ -194,47 +199,58 @@ export default function CommunityPage() {
       loadTournaments();
     });
 
-    fetchMe().then((user) => {
-      if (cancelled) return;
-      setMe(user);
-      if (user && !user.isGuest) {
-        loadFriends();
-        fetch(`/api/users/${encodeURIComponent(user.username)}/games?limit=20`)
-          .then((res) => (res.ok ? res.json() : null))
-          .then((data) => {
-            if (cancelled || !data) return;
-            const games = (data as { games: OpponentGame[] }).games ?? [];
-            const seen = new Set<string>();
-            const list: Opponent[] = [];
-            for (const g of games) {
-              const iAmWhite = g.white_user_id === user.id;
-              const oppName = iAmWhite ? g.black_name : g.white_name;
-              const oppId = iAmWhite ? g.black_user_id : g.white_user_id;
-              const key = oppName.toLowerCase();
-              // Only real accounts (they have a profile to challenge); skip
-              // anonymous seats and any accidental self-match.
-              if (!oppId || oppId === user.id || seen.has(key)) continue;
-              seen.add(key);
-              list.push({ username: oppName, gameId: g.id, at: g.completed_at });
-              if (list.length >= 6) break;
-            }
-            setOpponents(list);
-          })
-          .catch(() => {});
-      } else {
-        setFriends([]);
-        setOpponents([]);
-      }
-    });
-
     return () => {
       cancelled = true;
     };
-  }, [loadTop, loadActive, loadRecent, loadClubs, loadTournaments, loadFriends]);
+  }, [loadTop, loadActive, loadRecent, loadClubs, loadTournaments]);
+
+  // Friends load as soon as the session says a real account is here.
+  useEffect(() => {
+    if (!signedIn) return;
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (!cancelled) loadFriends();
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [signedIn, loadFriends]);
+
+  // Recent opponents need the account id, so they wait for the full user.
+  const meId = me && !me.isGuest ? me.id : null;
+  const meName = me && !me.isGuest ? me.username : null;
+  useEffect(() => {
+    if (!meId || !meName) return;
+    let cancelled = false;
+    fetch(`/api/users/${encodeURIComponent(meName)}/games?limit=20`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (cancelled || !data) return;
+        const games = (data as { games: OpponentGame[] }).games ?? [];
+        const seen = new Set<string>();
+        const list: Opponent[] = [];
+        for (const g of games) {
+          const iAmWhite: boolean = g.white_user_id === meId;
+          const oppName = iAmWhite ? g.black_name : g.white_name;
+          const oppId: string | null = iAmWhite ? g.black_user_id : g.white_user_id;
+          const key = oppName.toLowerCase();
+          // Only real accounts (they have a profile); skip anonymous seats and
+          // any accidental self-match.
+          if (!oppId || oppId === meId || seen.has(key)) continue;
+          seen.add(key);
+          list.push({ username: oppName, gameId: g.id, at: g.completed_at });
+          if (list.length >= 6) break;
+        }
+        setOpponents(list);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [meId, meName]);
 
   const onlineCount = lobby ? lobby.players.length + lobby.anonymous : null;
   const topBoard = getCategory(DEFAULT_CATEGORY);
-  const signedIn = !!me && !me.isGuest;
 
   // Cross-reference friends with the live lobby snapshot for presence and a
   // Watch link when they are in a game right now.
@@ -260,9 +276,9 @@ export default function CommunityPage() {
         <div className="flex flex-wrap items-end justify-between gap-3">
           <h1 className="page-title">Community</h1>
           {/* One status pill, same border-chip treatment the lobby uses. */}
+          {/* Not a live region (F135): the count changes on every lobby
+              poll, and a screen reader would read each change out. */}
           <span
-            role="status"
-            aria-live="polite"
             className="flex items-center gap-2 border border-[color:var(--edge)] bg-[color:var(--bg-zebra)] px-3 py-1.5 text-xs text-parchment-300"
           >
             <span
@@ -281,7 +297,7 @@ export default function CommunityPage() {
         </div>
 
         {/* Guests: a compact sign-in nudge, then straight to the live content. */}
-        {me !== undefined && !signedIn && (
+        {display !== undefined && !signedIn && (
           <div className="mt-5 plate flex flex-col gap-3 border-gold/25 p-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-parchment-200">
               Sign in to add friends, join clubs, and track who you have played.
@@ -359,9 +375,11 @@ export default function CommunityPage() {
                           </span>
                           <span className="mt-0.5 block text-xs text-parchment-400">Last played {timeAgo(opp.at)}</span>
                         </span>
-                        <span className="inline-flex shrink-0 items-center gap-1.5 text-xs text-parchment-300 group-hover:text-gold-leaf">
-                          <Swords size={13} aria-hidden />
-                          Challenge
+                        {/* The row opens the profile, so it says so (F169);
+                            challenging happens from there. */}
+                        <span className="inline-flex shrink-0 items-center gap-1 text-xs text-parchment-300 group-hover:text-gold-leaf">
+                          View profile
+                          <ChevronRight size={13} aria-hidden />
                         </span>
                       </Link>
                     </li>
@@ -636,7 +654,7 @@ function TournamentRail({
                 in {startsInLabel(t.starts_at)}
               </span>
             ) : (
-              <span className="shrink-0 text-xs text-parchment-500">Soon</span>
+              <span className="shrink-0 text-xs text-parchment-400">Soon</span>
             )}
           </Link>
         </li>
@@ -664,12 +682,12 @@ function RecentGameRow({ game }: { game: RecentGame }) {
       <Link
         href={`/game/${game.id}`}
         aria-label={`Replay ${game.whiteName} versus ${game.blackName}`}
-        className="group inline-flex shrink-0 items-center gap-1.5 font-mono text-sm tabular-nums text-parchment-200 transition-colors hover:text-gold-leaf"
+        className="group -my-2 inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-end gap-1.5 font-mono text-sm tabular-nums text-parchment-200 transition-colors hover:text-gold-leaf [@media(pointer:fine)]:my-0 [@media(pointer:fine)]:min-h-0 [@media(pointer:fine)]:min-w-0"
       >
         {resultLabel(game.winner)}
         <ChevronRight
           size={14}
-          className="text-parchment-500 transition-all group-hover:translate-x-0.5 group-hover:text-gold-leaf"
+          className="text-parchment-400 transition-transform group-hover:translate-x-0.5 group-hover:text-gold-leaf"
           aria-hidden
         />
       </Link>
