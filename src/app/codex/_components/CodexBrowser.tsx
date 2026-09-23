@@ -346,14 +346,39 @@ export function CodexBrowser() {
             near-opaque ink surface keeps the content beneath from bleeding
             through. */}
         <div className="sticky top-0 z-30 -mx-6 mt-4 border-b border-[color:var(--edge)] bg-[color:var(--bg-base)] px-6 pb-3 pt-3">
-          <div role="tablist" aria-label="Card families" className="flex flex-wrap gap-1 border-b border-[color:var(--edge)]">
+          {/* WAI-ARIA tabs (F145): one tab stop (roving tabindex), arrows,
+              Home and End move and select, and each tab names the results
+              panel it controls. */}
+          <div
+            role="tablist"
+            aria-label="Card families"
+            className="flex flex-wrap gap-1 border-b border-[color:var(--edge)]"
+            onKeyDown={(e) => {
+              const i = LIBRARY_TABS.indexOf(tab);
+              const last = LIBRARY_TABS.length - 1;
+              const next =
+                e.key === "ArrowRight" ? (i === last ? 0 : i + 1)
+                : e.key === "ArrowLeft" ? (i === 0 ? last : i - 1)
+                : e.key === "Home" ? 0
+                : e.key === "End" ? last
+                : null;
+              if (next === null) return;
+              e.preventDefault();
+              switchTab(LIBRARY_TABS[next]);
+              document.getElementById(`codex-tab-${LIBRARY_TABS[next]}`)?.focus();
+            }}
+          >
             {LIBRARY_TABS.map((t) => {
               const selected = tab === t;
               return (
                 <button
                   key={t}
+                  id={`codex-tab-${t}`}
+                  type="button"
                   role="tab"
                   aria-selected={selected}
+                  aria-controls="codex-results"
+                  tabIndex={selected ? 0 : -1}
                   onClick={() => switchTab(t)}
                   // Same 44px floor and same `(pointer: fine)` step-down as
                   // every other navigation chip: px-3 py-2 left these tabs 35px
@@ -455,7 +480,7 @@ export function CodexBrowser() {
         {/* Results: the five async surface states. Loading and error are the
             engine import; empty is the no-match state (which offers to clear
             filters); the ready state is the windowed grid. */}
-        <div className="mt-4">
+        <div id="codex-results" role="tabpanel" aria-labelledby={`codex-tab-${tab}`} className="mt-4">
           {load === "loading" ? (
             <SkeletonRows />
           ) : load === "error" ? (

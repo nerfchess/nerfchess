@@ -277,3 +277,91 @@ test.describe("tutorial", () => {
     });
   });
 });
+
+test.describe("codex tabs", () => {
+  // F145: role=tab buttons with no roving tabindex, no arrow keys and no
+  // tabpanel for aria-controls to point at.
+  test("tabs follow the WAI-ARIA pattern", async ({ page }) => {
+    await page.goto("/codex");
+    const tabs = page.getByRole("tab");
+    await expect(tabs.first()).toBeVisible({ timeout: 60_000 });
+    const count = await tabs.count();
+    expect(count).toBeGreaterThan(1);
+    // One tab stop.
+    await expect(page.locator('[role="tab"][tabindex="0"]')).toHaveCount(1);
+    // aria-controls points at a real tabpanel.
+    const controls = await tabs.first().getAttribute("aria-controls");
+    expect(controls).toBeTruthy();
+    await expect(page.locator(`#${controls}[role="tabpanel"]`)).toHaveCount(1);
+    // Arrow keys move selection and focus.
+    const selected = page.locator('[role="tab"][aria-selected="true"]');
+    const before = await selected.textContent();
+    await selected.focus();
+    await page.keyboard.press("ArrowRight");
+    await expect(selected).not.toHaveText(before ?? "");
+    const focusedIsSelected = await page.evaluate(
+      () => document.activeElement?.getAttribute("aria-selected") === "true",
+    );
+    expect(focusedIsSelected).toBe(true);
+    await page.keyboard.press("Home");
+    await expect(tabs.first()).toHaveAttribute("aria-selected", "true");
+  });
+});
+
+// Every E1 content route at a 360px phone: no horizontal page scroll and
+// exactly one h1 (brief 5.5 and 5.6). /codex/build is left out: it only
+// redirects to /codex/suggest, which is in the list.
+const CONTENT_ROUTES = [
+  "/codex",
+  "/codex/buff/pawn_push",
+  "/codex/nerf/lucky",
+  "/codex/hex/heavy_boots",
+  "/codex/boon/extra_glance",
+  "/codex/suggest",
+  "/guide",
+  "/guide/how-to-play",
+  "/guide/nerf-mode",
+  "/guide/buff-mode",
+  "/guide/chess-with-power-ups",
+  "/guide/capture-the-king",
+  "/guide/chess-roguelike",
+  "/guide/chess-variants",
+  "/guide/glossary",
+  "/tutorial",
+  "/tutorial/walkthrough",
+  "/puzzles",
+  `/puzzles/${PUZZLE_ID}`,
+  "/analysis",
+  "/history",
+  "/updates",
+  "/about",
+  "/faq",
+  "/contact",
+  "/guidelines",
+  "/terms-of-service",
+  "/achievements",
+];
+
+test.describe("content routes at 360px", () => {
+  test.use({ viewport: { width: 360, height: 780 } });
+  for (const route of CONTENT_ROUTES) {
+    test(`${route} has no horizontal scroll and one h1`, async ({ page }) => {
+      await page.goto(route);
+      await page.waitForLoadState("load");
+      await page.waitForTimeout(1500);
+      const shape = await page.evaluate(() => {
+        const el = document.scrollingElement ?? document.documentElement;
+        const wide = [...document.querySelectorAll("body *")]
+          .filter((n) => {
+            const r = n.getBoundingClientRect();
+            return r.width > 0 && r.right > window.innerWidth + 1 && getComputedStyle(n).position !== "fixed";
+          })
+          .slice(0, 3)
+          .map((n) => `${n.tagName.toLowerCase()}.${String((n as HTMLElement).className).split(" ").slice(0, 3).join(".")}`);
+        return { scrollWidth: el.scrollWidth, h1: document.querySelectorAll("h1").length, wide };
+      });
+      expect(shape.scrollWidth, JSON.stringify(shape.wide)).toBeLessThanOrEqual(360);
+      expect(shape.h1).toBe(1);
+    });
+  }
+});

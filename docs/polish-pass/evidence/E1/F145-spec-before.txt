@@ -1,0 +1,5 @@
+  ✘  1 [chromium] › e2e/content-states.spec.ts:284:7 › codex tabs › tabs follow the WAI-ARIA pattern (20.0s)
+    Error: expect(locator).toHaveCount(expected) failed
+    Expected: 1
+    Received: 0
+  1 failed
