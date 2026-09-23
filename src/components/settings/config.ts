@@ -343,7 +343,7 @@ export const SECTIONS: SectionConfig[] = [
       {
         id: "customBg",
         label: "Custom background",
-        hint: "Upload an image or paste an http(s) URL, with an adjustable dim",
+        hint: "Upload an image or paste an https URL, with an adjustable dim",
         group: "Background",
         control: { kind: "customBg" },
       },

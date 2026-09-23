@@ -108,6 +108,7 @@
     "gen:og-assets": "node scripts/gen-og-assets.mjs",
     "gen:sitemap-dates": "tsx scripts/gen-sitemap-dates.ts",
     "test:email": "tsx scripts/polish/email-tests.ts",
+    "test:custom-bg-url": "./node_modules/.bin/tsx scripts/polish/custom-bg-url-test.ts",
     "test:headers": "tsx scripts/polish/headers-check.ts",
     "test:prepaint": "tsx scripts/check-prepaint.ts",
     "test:auth-safety": "tsx scripts/check-auth-safety.ts",

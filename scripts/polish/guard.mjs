@@ -36,6 +36,7 @@ export const CHEAP_GUARDS = [
   "test:text-input",
   "test:auth-safety:unit",
   "test:email",
+  "test:custom-bg-url",
 ];
 
 const filter = process.argv.slice(2);

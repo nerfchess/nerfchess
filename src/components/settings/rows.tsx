@@ -409,7 +409,7 @@ function SiteThemePicker({
 }
 
 /** Custom background: upload an image (stored device-local as a data URL) or
- *  paste an http(s) URL, plus a dim slider. Both inputs are validated before
+ *  paste an https URL, plus a dim slider. Both inputs are validated before
  *  anything persists, so the page background always degrades to the theme
  *  default. An upload wins over the URL until it's removed. */
 function CustomBackgroundControl({
@@ -526,7 +526,7 @@ function CustomBackgroundControl({
         )}
       </div>
       {invalid && (
-        <p className="text-[12px] text-oxblood-glow">Use a direct http(s) image link.</p>
+        <p className="text-[12px] text-oxblood-glow">Use a direct https image link.</p>
       )}
       <div className="flex min-h-[36px] items-center justify-between gap-3">
         <span className="text-[12px] text-parchment-400">Dim</span>

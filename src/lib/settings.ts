@@ -357,13 +357,15 @@ function bool(v: unknown, fallback: boolean): boolean {
 export const CUSTOM_BG_URL_MAX = 400;
 
 /** Validate a user-supplied background image URL. Returns the cleaned URL, or
- *  "" when the value is missing, not http(s), too long, or contains characters
+ *  "" when the value is missing, not https, too long, or contains characters
  *  that could break out of a CSS url() (quotes, backslashes, whitespace). */
 export function sanitizeCustomBgUrl(v: unknown): string {
   if (typeof v !== "string") return "";
   const url = v.trim();
   if (!url || url.length > CUSTOM_BG_URL_MAX) return "";
-  if (!/^https?:\/\//i.test(url)) return "";
+  // https only: an http image is mixed content the page can never load, and
+  // the CSP allows only https: images.
+  if (!/^https:\/\//i.test(url)) return "";
   if (/[\s"'\\<>()]/.test(url)) return "";
   return url;
 }
