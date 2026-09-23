@@ -29,6 +29,8 @@ export type ShiftSource = {
   text: string;
   prev: Rect | null;
   curr: Rect | null;
+  /** entered/left: the node had an empty rect before/after (no deltas then) */
+  change: "moved" | "entered" | "left";
   dx: number | null;
   dy: number | null;
   dw: number | null;

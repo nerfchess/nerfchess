@@ -34,8 +34,11 @@ export type HygieneReport = {
 };
 
 export function signature(s: string): string {
+  // Only the site's own origin is stripped: a third-party host (the arena
+  // service, fonts) is part of what the item means.
   return s
-    .replace(/https?:\/\/[^/\s]+/g, "")
+    .split(BASE)
+    .join("")
     .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, "<uuid>")
     .replace(/\b[0-9a-f]{16,}\b/gi, "<hex>")
     .replace(/\?[^\s"')]*/g, "?<q>")

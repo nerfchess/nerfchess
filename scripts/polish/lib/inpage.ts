@@ -15,6 +15,8 @@
 //   input      pointerdown / keydown / click times (so a strip knows t0)
 //   raf        rAF intervals while window.__polish.rafOn is true (dropped
 //              frame accounting for the strip tool)
+//   boxes      per-frame rect changes of the selectors in window.__polishWatch
+//              (see watchBoxes in probe.ts), for swaps the shift API misses
 //
 // Nothing here mutates the page. It only observes.
 // ---------------------------------------------------------------------------
@@ -73,15 +75,20 @@ export const PROBE_INIT = String.raw`(() => {
         var sources = (e.sources || []).map(function (s) {
           var d = describe(s.node);
           var a = rect(s.previousRect), b = rect(s.currentRect);
+          // An empty rect means the node entered or left the layout (or went
+          // display:none); a delta against 0,0 would read as a huge jump.
+          var empty = function (r) { return !r || (r.w === 0 && r.h === 0); };
+          var both = !empty(a) && !empty(b);
           return {
             selector: d.selector,
             text: d.text,
             prev: a,
             curr: b,
-            dx: a && b ? b.x - a.x : null,
-            dy: a && b ? b.y - a.y : null,
-            dw: a && b ? b.w - a.w : null,
-            dh: a && b ? b.h - a.h : null,
+            change: empty(a) ? "entered" : empty(b) ? "left" : "moved",
+            dx: both ? b.x - a.x : null,
+            dy: both ? b.y - a.y : null,
+            dw: both ? b.w - a.w : null,
+            dh: both ? b.h - a.h : null,
           };
         });
         P.shifts.push({
