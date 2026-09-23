@@ -61,16 +61,15 @@ export async function register(username: string, password: string, email?: strin
       turnstileToken: turnstileToken || undefined,
     }),
   );
-  resetSessionUser();
   void fetchMe();
   return who;
 }
 
 export async function login(username: string, password: string) {
   const who = await expectUser(await post("/api/auth/login", { username, password }));
-  // A different account now owns the tab: drop the old answer, then load the
-  // new one so every mounted consumer follows without a reload.
-  resetSessionUser();
+  // A different account now owns the tab: load it so every mounted consumer
+  // follows without a reload. The old answer stays on screen until the new
+  // one lands (dropping it first would fall back to the stale server hint).
   void fetchMe();
   return who;
 }
