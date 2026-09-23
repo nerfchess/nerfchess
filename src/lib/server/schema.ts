@@ -1,5 +1,7 @@
 /// <reference types="@cloudflare/workers-types" />
 
+import { EMAIL_SCHEMA_STATEMENTS } from "./emailSchema";
+
 // Canonical schema for the D1 database. Every statement is idempotent so the
 // schema can be ensured at runtime (dev, preview, and fresh deploys) as well as
 // applied via the wrangler migration in migrations/0001_init.sql, which must be
@@ -705,6 +707,9 @@ const ADDITIVE_COLUMNS: string[] = [
   // migrations/0042_metrics_indexes.sql.
   `CREATE INDEX IF NOT EXISTS idx_users_guest_created ON users(is_guest, created_at)`,
   `CREATE INDEX IF NOT EXISTS idx_reports_reporter ON reports(reporter_user_id, created_at DESC)`,
+  // Daily email: registered_at (stamped by triggers), email_opt_out and the
+  // email_sends exactly-once log. Mirrors migrations/0046_email.sql.
+  ...EMAIL_SCHEMA_STATEMENTS,
 ];
 
 // The additive pass is versioned by list length (the list is append-only) and

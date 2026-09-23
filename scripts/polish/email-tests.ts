@@ -115,6 +115,18 @@ const baseEnv = (db: D1Database): DailyJobEnv => ({
 async function main() {
   const now = Date.now();
 
+  // ------------------------------------------------ main schema pass carries email
+  {
+    // ensureSchema alone (no ensureEmailSchema) must create the email columns,
+    // table and triggers, since EMAIL_SCHEMA_STATEMENTS sit in ADDITIVE_COLUMNS.
+    const sqlite = new DatabaseSync(":memory:");
+    await ensureSchema(d1(sqlite));
+    const cols = (sqlite.prepare(`PRAGMA table_info(users)`).all() as { name: string }[]).map((c) => c.name);
+    const objs = (sqlite.prepare(`SELECT name FROM sqlite_master WHERE name IN ('email_sends', 'trg_users_registered_insert', 'trg_users_registered_upgrade')`).all() as { name: string }[]).map((r) => r.name).sort();
+    check("ensureSchema alone adds registered_at and email_opt_out", cols.includes("registered_at") && cols.includes("email_opt_out"), cols);
+    check("ensureSchema alone creates email_sends and both triggers", objs.length === 3, objs);
+  }
+
   // ------------------------------------------------ registered_at triggers
   {
     const { sqlite, db } = await freshDb();
