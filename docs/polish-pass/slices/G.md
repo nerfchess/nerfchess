@@ -10,7 +10,7 @@ Regression checks (both run against the shared dev server and local D1, seeded a
 - `./node_modules/.bin/tsx scripts/polish/mod-shots.ts --out FILE`: `/mod/stats` and the audit log with a Change disclosure open, at 390 and 1280: screenshots, horizontal overflow, console errors and the smallest computed font size of visible text in `<main>` (fails under 13px).
 - `./node_modules/.bin/tsx scripts/polish/metrics-sql-test.ts --out FILE`: the F117 before/after count on fixture games (old analytics query counts 4 seats, the shared human predicate counts 1) and EXPLAIN QUERY PLAN for every metrics and queue-health query (`evidence/G/metrics-sql-and-plans.json`).
 
-Commits: 1b36ae8 (audit log, player context, safety, UI), 9061981 (metrics.ts, analytics, stats, dashboard queue health), review round 1 fixes (see the section at the end).
+Commits: 1b36ae8 (audit log, player context, safety, UI), 9061981 (metrics.ts, analytics, stats, dashboard queue health), 1107e0d (review round 1 fixes, see the section at the end).
 
 ## Row updates
 
