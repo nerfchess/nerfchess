@@ -101,7 +101,7 @@ s.setProperty("--piece-anim-ms",String(held||speed==="off"?0:glide));
 if(p.zenMode===true)h.dataset.zen="on";else delete h.dataset.zen;
 s.setProperty("--fx-dur",String(fx));
 var bd=typeof p.customBgData==="string"&&p.customBgData&&p.customBgData.length<=D.bgDataMax&&/^data:image\\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(p.customBgData)?p.customBgData:"";
-var bu="";if(typeof p.customBgUrl==="string"){var u=p.customBgUrl.trim();if(u&&u.length<=D.bgUrlMax&&/^https?:\\/\\//i.test(u)&&!/[\\s"'\\\\<>()]/.test(u))bu=u;}
+var bu="";if(typeof p.customBgUrl==="string"){var u=p.customBgUrl.trim();if(u&&u.length<=D.bgUrlMax&&/^https:\\/\\//i.test(u)&&!/[\\s"'\\\\<>()]/.test(u))bu=u;}
 var bg=bd||bu;
 if(bg){h.dataset.customBg="on";s.setProperty("--custom-bg-url",'url("'+bg+'")');s.setProperty("--custom-bg-dim",String(dim));}
 else{delete h.dataset.customBg;s.removeProperty("--custom-bg-url");s.removeProperty("--custom-bg-dim");}
