@@ -569,59 +569,7 @@
 .ftp-eyelight { animation: ftp-eyelight calc(0.6s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 
-/* --- Mythic ladder: runeforge / hexweave / blessing ------------------------- */
-
-/* the anvil ring heats up, glows, cools */
-@keyframes ftp-anvilring {
-  0% { opacity: 0; transform: scale(0.7); }
-  30% { opacity: 1; transform: scale(1); }
-  80% { opacity: 0.7; transform: scale(1.02); }
-  100% { opacity: 0; transform: scale(1.05); }
-}
-.ftp-anvilring { animation: ftp-anvilring calc(1.6s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
-
-/* three hammer blows: drop, squash, rebound, then the finished rune lifts */
-@keyframes ftp-hammer {
-  0% { opacity: 0; transform: translateY(-60%) scale(0.7); }
-  10% { opacity: 1; transform: translateY(0) scale(1.08, 0.88); }
-  18% { transform: translateY(-6%) scale(1); }
-  32% { transform: translateY(0) scale(1.1, 0.86); }
-  40% { transform: translateY(-4%) scale(1); }
-  54% { transform: translateY(0) scale(1.12, 0.84); }
-  64% { transform: translateY(-8%) scale(1.04); }
-  86% { opacity: 1; transform: translateY(-14%) scale(1.06); }
-  100% { opacity: 0; transform: translateY(-24%) scale(1.02); }
-}
-.ftp-hammer { animation: ftp-hammer calc(1.5s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 0.35, 1) both; transform-origin: 50% 100%; }
-
-/* the dark disc slides across the sun and past */
-@keyframes ftp-eclipse {
-  0% { opacity: 0; transform: translateX(-90%) scale(0.9); }
-  30% { opacity: 1; transform: translateX(-20%) scale(1); }
-  60% { opacity: 1; transform: translateX(10%) scale(1.02); }
-  100% { opacity: 0; transform: translateX(90%) scale(0.95); }
-}
-.ftp-eclipse { animation: ftp-eclipse calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
-
-/* a thread draws from its corner toward the centre, then goes slack */
-@keyframes ftp-thread {
-  0% { opacity: 0; transform: rotate(var(--ang, 0deg)) scaleX(0); }
-  40% { opacity: 1; transform: rotate(var(--ang, 0deg)) scaleX(1); }
-  78% { opacity: 0.9; transform: rotate(var(--ang, 0deg)) scaleX(1.02); }
-  100% { opacity: 0; transform: rotate(var(--ang, 0deg)) scaleX(1.02); }
-}
-.ftp-thread { animation: ftp-thread calc(1.25s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
-
-/* the knot tightens: quick overshoot in, a tremble, then release */
-@keyframes ftp-knot {
-  0% { opacity: 0; transform: scale(1.6) rotate(20deg); }
-  30% { opacity: 1; transform: scale(0.92) rotate(-4deg); }
-  44% { transform: scale(1.04) rotate(2deg); }
-  58% { transform: scale(0.98) rotate(-1deg); }
-  84% { opacity: 1; transform: scale(1) rotate(0deg); }
-  100% { opacity: 0; transform: scale(1.06) rotate(0deg); }
-}
-.ftp-knot { animation: ftp-knot calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.2, 1.1, 0.3, 1) both; }
+/* --- Mythic ladder: shared petal ------------------------------------------- */
 
 /* a petal lifts away on its own vector and fades */
 @keyframes ftp-petal {
@@ -1486,6 +1434,177 @@
   100% { opacity: 0; transform: translateX(300%); }
 }
 .ftp-ws-sheen { animation: ftp-ws-sheen calc(0.6s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
+
+/* Shared small pop used by the tier 1 and 2 scenes' subjects */
+@keyframes ftp-lowpop {
+  0% { opacity: 0; transform: scale(0.5); }
+  24% { opacity: 1; transform: scale(1.1); }
+  36% { transform: scale(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1); }
+}
+
+/* Hearthbread: embers, a loaf proves, steam, the loaf opens into a pawn */
+@keyframes ftp-hb-hearth {
+  0% { opacity: 0; transform: scaleX(0.4); }
+  30% { opacity: 1; transform: scaleX(1); }
+  80% { opacity: 0.9; }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.ftp-hb-hearth { animation: ftp-hb-hearth calc(1.5s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+@keyframes ftp-hb-loaf {
+  0% { opacity: 0; transform: scale(0.6, 0.3); }
+  20% { opacity: 1; transform: scale(0.8, 0.5); }
+  60% { opacity: 1; transform: scale(1, 1); }
+  70% { opacity: 1; transform: scale(1.2, 0.8); }
+  82% { opacity: 0; transform: scale(1.4, 0.5); }
+  100% { opacity: 0; transform: scale(1.4, 0.5); }
+}
+.ftp-hb-loaf { animation: ftp-hb-loaf calc(1s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.6, 0.3, 1) both; transform-origin: 50% 100%; }
+
+@keyframes ftp-hb-steam {
+  0% { opacity: 0; transform: translateY(20%) scaleY(0.5); }
+  30% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-50%) scaleY(1.1); }
+}
+.ftp-hb-steam { animation: ftp-hb-steam calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+.ftp-hb-pawn { animation: ftp-lowpop calc(1s * var(--fx-dur, 1)) cubic-bezier(0.2, 1.1, 0.3, 1) both; transform-origin: 50% 100%; }
+
+/* Fogbank: fog over their half, four two-square diagonals, fog banks beyond */
+@keyframes ftp-fb-roll {
+  0% { opacity: 0; transform: translateX(-12%); }
+  30% { opacity: 1; }
+  80% { opacity: 0.8; }
+  100% { opacity: 0; transform: translateX(10%); }
+}
+.ftp-fb-roll { animation: ftp-fb-roll calc(1.8s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
+
+@keyframes ftp-fb-ray {
+  0% { opacity: 0; transform: rotate(var(--ang, 45deg)) scaleX(0); }
+  30% { opacity: 1; transform: rotate(var(--ang, 45deg)) scaleX(1); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(var(--ang, 45deg)) scaleX(1); }
+}
+.ftp-fb-ray { animation: ftp-fb-ray calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 0 50%; }
+
+@keyframes ftp-fb-bank {
+  0% { opacity: 0; transform: scale(0.4); }
+  30% { opacity: 1; transform: scale(1.1); }
+  80% { opacity: 0.9; transform: scale(1.2); }
+  100% { opacity: 0; transform: scale(1.3); }
+}
+.ftp-fb-bank { animation: ftp-fb-bank calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+.ftp-fb-bishop { animation: ftp-lowpop calc(1.5s * var(--fx-dur, 1)) cubic-bezier(0.2, 1.1, 0.3, 1) both; }
+
+/* Moonlit Stride: the moon, a beam on the knight, four straight moon-steps */
+@keyframes ftp-ms-moon {
+  0% { opacity: 0; transform: translateY(40%) rotate(-20deg); }
+  30% { opacity: 1; transform: translateY(0) rotate(0deg); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-10%) rotate(6deg); }
+}
+.ftp-ms-moon { animation: ftp-ms-moon calc(1.6s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+
+@keyframes ftp-ms-beam {
+  0% { opacity: 0; transform: scaleY(0); }
+  30% { opacity: 1; transform: scaleY(1); }
+  80% { opacity: 0.8; }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+.ftp-ms-beam { animation: ftp-ms-beam calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 70% 0; }
+
+.ftp-ms-knight { animation: ftp-lowpop calc(1.4s * var(--fx-dur, 1)) cubic-bezier(0.2, 1.1, 0.3, 1) both; }
+
+@keyframes ftp-ms-step {
+  0% { opacity: 0; transform: scale(0.3); }
+  30% { opacity: 1; transform: scale(1.12); }
+  44% { transform: scale(1); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1); }
+}
+.ftp-ms-step { animation: ftp-ms-step calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.2, 1.1, 0.3, 1) both; }
+
+/* Lanternlight: a lantern swings, a pool of light, eight two-square paths */
+@keyframes ftp-ll-lantern {
+  0% { opacity: 0; transform: translateY(-40%) rotate(0deg); }
+  20% { opacity: 1; transform: translateY(0) rotate(14deg); }
+  36% { transform: rotate(-10deg); }
+  52% { transform: rotate(6deg); }
+  68% { transform: rotate(-3deg); }
+  84% { opacity: 1; transform: rotate(0deg); }
+  100% { opacity: 0; transform: rotate(0deg); }
+}
+.ftp-ll-lantern { animation: ftp-ll-lantern calc(1.4s * var(--fx-dur, 1)) cubic-bezier(0.45, 0, 0.3, 1) both; transform-origin: 50% 0; }
+
+@keyframes ftp-ll-pool {
+  0% { opacity: 0; transform: scale(0.3); }
+  30% { opacity: 1; transform: scale(1); }
+  80% { opacity: 0.8; }
+  100% { opacity: 0; transform: scale(1.05); }
+}
+.ftp-ll-pool { animation: ftp-ll-pool calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+@keyframes ftp-ll-rays {
+  0% { opacity: 0; transform: scale(0.2); }
+  34% { opacity: 1; transform: scale(1); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1); }
+}
+.ftp-ll-rays { animation: ftp-ll-rays calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+.ftp-ll-crown { animation: ftp-lowpop calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.2, 1.1, 0.3, 1) both; }
+
+/* Glowmoss Ward: moss over the 3x3 patch round the king, tufts, fireflies */
+@keyframes ftp-gm-patch {
+  0% { opacity: 0; transform: scale(0.34); }
+  36% { opacity: 1; transform: scale(1); }
+  82% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1); }
+}
+.ftp-gm-patch { animation: ftp-gm-patch calc(1.6s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+
+@keyframes ftp-gm-tuft {
+  0% { opacity: 0; transform: scaleY(0); }
+  30% { opacity: 1; transform: scaleY(1); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+.ftp-gm-tuft { animation: ftp-gm-tuft calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.2, 1.1, 0.3, 1) both; transform-origin: 50% 100%; }
+
+.ftp-gm-crown { animation: ftp-lowpop calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.2, 1.1, 0.3, 1) both; }
+
+@keyframes ftp-gm-fly {
+  0% { opacity: 0; transform: translate(0, 0); }
+  30% { opacity: 1; transform: translate(60%, calc(var(--fx-side, 1) * -120%)); }
+  60% { opacity: 0.4; transform: translate(-40%, calc(var(--fx-side, 1) * -220%)); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: translate(40%, calc(var(--fx-side, 1) * -340%)); }
+}
+.ftp-gm-fly { animation: ftp-gm-fly calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.45, 0, 0.3, 1) both; }
+
+/* Thistledown: down drifts in, burrs catch on the knight, capture struck out */
+@keyframes ftp-td-down {
+  0% { opacity: 0; transform: translate(0, 0) rotate(0deg); }
+  20% { opacity: 1; }
+  100% { opacity: 0; transform: translate(900%, 60%) rotate(200deg); }
+}
+.ftp-td-down { animation: ftp-td-down calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.6, 0.4, 1) both; }
+
+.ftp-td-knight { animation: ftp-lowpop calc(1.4s * var(--fx-dur, 1)) cubic-bezier(0.2, 1.1, 0.3, 1) both; }
+
+@keyframes ftp-td-burr {
+  0% { opacity: 0; transform: translate(-300%, -100%) scale(0.6); }
+  40% { opacity: 1; transform: translate(0, 0) scale(1.2); }
+  52% { transform: scale(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1); }
+}
+.ftp-td-burr { animation: ftp-td-burr calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.6, 0.3, 1) both; }
+
+.ftp-td-nocap { animation: ftp-lowpop calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.2, 1.1, 0.3, 1) both; }
 
 /* ============================================================================
    Global animations-off guard: Settings toggles html[data-anim="off"], which
