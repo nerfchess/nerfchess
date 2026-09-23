@@ -1,0 +1,14 @@
+PASS  hx4_early_frost - pawn advances must be restricted: [20,28,30,31] -> [6,"blocked:d7d5"]
+PASS  hx4_hopscotch - light-square pawns must be restricted: [20,28,30,31] -> [14,"blocked:d7d5"]
+PASS  hx4_tea_break - pieces far from the king must be restricted: [20,28,30,31] -> [14,19,19,"blocked:d4d3"]
+PASS  hx4_hiccups - pieces past their own half must be restricted: [20,28,30,31] -> [20,28,30,29]
+PASS  hx4_matins_bell - queenside captures must be restricted: [20,29,33] -> [20,29,32]
+PASS  ov_paperwork_avalanche - a capturing piece must be frozen: [20,29,33] -> [20,29,31,"blocked:e4e3"]
+PASS  hx4_tar_flood - moves onto their third rank must be restricted: [20,28,30,31] -> [9,16,30,31]
+PASS  hx4_dead_calm - long slider moves must be restricted: [20,29,39,34] -> [20,25,27,34]
+PASS  ihatemyex clears the board down to the two kings - 32 pieces -> 2, 2 kings
+PASS  ihatemyex feeds nothing to the revive pools - capture pools total 0
+PASS  ihatemyex leaves the game playable - 5 legal moves remain
+PASS  harness self-check - a capture curse down a captureless line matches the control, so divergence is not automatic
+
+PASS: every card measurably affected the game.

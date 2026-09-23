@@ -23,6 +23,13 @@
  * completed-depth table HB1 re-spaces the ladder from (budgets 25 to 1800).
  * `--frozen` freezes Date.now inside each search, as a Cloudflare Worker does,
  * so the node cap is the only stop and "ms" is the CPU of a capped search.
+ * `--nerf <id>` gives both sides that nerf once the position is set up (the
+ * moves are replayed under plain rules, so no position is already lost), which
+ * is what makes the root nerf filter run: with the default unrestricted nerf
+ * it does nothing. The `hist` set cuts the late lines to plies 44 to 58, where
+ * a history-scanning checkLoss (Doomsday Clock's check clock runs from move 12
+ * to 29) has the most history to walk. The `random` set is seeded random play
+ * to the same plies, where checks are common and that check clock stays live.
  */
 
 import { execFileSync } from "node:child_process";
@@ -191,6 +198,7 @@ function summarize(xs: Sample[]) {
     maxDepth: depths[n - 1] ?? 0,
     meanNodes: Math.round(mean((s) => s.nodes)),
     meanMs: +mean((s) => s.ms).toFixed(1),
+    maxMs: +Math.max(0, ...xs.map((s) => s.ms)).toFixed(1),
     nodesPerMs: +(nodes / Math.max(1, ms)).toFixed(1),
   };
 }
@@ -206,10 +214,13 @@ async function main() {
   // Cloudflare Worker, so only the node cap stops it and "ms" is the CPU a
   // capped search costs on the Durable Object's local fallback (A25).
   const frozen = flag("frozen");
+  const nerfId = arg("nerf", "");
 
   const engines: { name: string; ai: AiModule }[] = [];
   for (const e of engineNames) engines.push({ name: e, ai: await loadEngine(e) });
   const { game, board } = await rules();
+  const nerf = nerfId ? (await import("../src/engine/nerfs/library")).getNerf(nerfId) : null;
+  if (nerfId && !nerf) throw new Error(`no nerf ${nerfId}`);
 
   const build = (p: Pos) => {
     let g = game.newGame(game.UNRESTRICTED_NERF, game.UNRESTRICTED_NERF, 7);
@@ -218,17 +229,49 @@ async function main() {
       if (!m) throw new Error(`${p.label}: illegal ${u}`);
       g = game.playMove(g, m);
     }
+    if (nerf) {
+      g.white = { ...g.white, nerf, state: nerf.init ? nerf.init(g.white.rng, "w") : {} };
+      g.black = { ...g.black, nerf, state: nerf.init ? nerf.init(g.black.rng, "b") : {} };
+    }
     return g;
   };
 
   const posSets: Record<string, Pos[]> = {};
   if (sets.includes("mid")) posSets.mid = midPositions();
   if (sets.includes("late")) posSets.late = await latePositions();
+  if (sets.includes("random")) {
+    // Seeded random play (no king captures) to plies 44 to 58: many more
+    // checks than engine play, so Doomsday Clock's check clock is usually
+    // live and its checkLoss replays the history on every reply the filter
+    // tries (the review round 1 case).
+    const out: Pos[] = [];
+    for (let seed = 1; out.length < 20 && seed < 2000; seed++) {
+      const rnd = xorshift(seed * 104729);
+      const n = 44 + 2 * (out.length % 8);
+      let g = game.newGame(game.UNRESTRICTED_NERF, game.UNRESTRICTED_NERF, 7);
+      const played: string[] = [];
+      while (played.length < n && !g.result) {
+        const ms = game.legalMoves(g).filter((m) => m.captured !== "k");
+        if (!ms.length) break;
+        const m = ms[rnd(ms.length)];
+        played.push(board.moveToUCI(m));
+        g = game.playMove(g, m);
+      }
+      if (played.length === n && !g.result) out.push({ label: `rand${seed}p${n}`, moves: played });
+    }
+    posSets.random = out;
+  }
+  if (sets.includes("hist")) {
+    posSets.hist = (await latePositions()).map((p, i) => {
+      const n = 44 + 2 * (i % 8);
+      return { label: `hist${i}p${n}`, moves: p.moves.slice(0, n) };
+    });
+  }
 
   // Warm the JIT on every engine: the first pass pays compilation no later
   // pass does.
   for (const e of engines) {
-    for (const p of posSets.mid?.slice(0, 3) ?? []) e.ai.pickAIMove(build(p), "hard", 60);
+    for (const p of (posSets.mid ?? Object.values(posSets)[0])?.slice(0, 3) ?? []) e.ai.pickAIMove(build(p), "hard", 60);
   }
 
   const results: Record<string, Record<string, Record<string, Record<string, ReturnType<typeof summarize>>>>> = {};
@@ -275,14 +318,14 @@ async function main() {
     `${((Date.now() - started) / 1000).toFixed(0)}s\n`);
   for (const [setName, byEngine] of Object.entries(results)) {
     console.log(`[${setName}]`);
-    console.log("level   budget  " + engineNames.map((e) => `${e.padEnd(10)} depth(min-max)  nodes     n/ms   ms`).join(" | "));
+    console.log("level   budget  " + engineNames.map((e) => `${e.padEnd(10)} depth(min-max)  nodes     n/ms   ms   max`).join(" | "));
     for (const level of levels) {
       for (const budget of budgets) {
         const cells = engineNames.map((e) => {
           const s = byEngine[e]?.[level]?.[String(budget)];
           if (!s) return "";
           return `${"".padEnd(10)} ${s.meanDepth.toFixed(2).padStart(5)} (${s.minDepth}-${s.maxDepth})    ` +
-            `${String(s.meanNodes).padStart(8)} ${s.nodesPerMs.toFixed(0).padStart(6)} ${s.meanMs.toFixed(0).padStart(5)}`;
+            `${String(s.meanNodes).padStart(8)} ${s.nodesPerMs.toFixed(0).padStart(6)} ${s.meanMs.toFixed(0).padStart(5)} ${s.maxMs.toFixed(0).padStart(5)}`;
         });
         console.log(`${level.padEnd(7)} ${String(budget).padStart(5)}ms ${cells.join(" | ")}`);
       }
@@ -326,6 +369,7 @@ async function main() {
           node: process.version,
           loadavg: os.loadavg(),
           frozenClock: frozen,
+          nerf: nerfId || null,
           when: new Date().toISOString(),
           results,
         },

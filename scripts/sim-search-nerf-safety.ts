@@ -2,7 +2,7 @@
  * HB2 (P4): does the bot walk into a loss its OWN nerf defines?
  *
  *   ./node_modules/.bin/tsx scripts/sim-search-nerf-safety.ts --positions 240 --budget 400 --seed 1 \
- *     [--arms baseline,current,current-noP4]
+ *     [--arms baseline,current,current-noP4] [--frozen]
  *   ./node_modules/.bin/tsx scripts/sim-search-nerf-safety.ts --ab --nerfs 8 --pairs 20 [--ab-budget 40]
  *
  * The search is blind to nerfs below the root: `isSelfLosing` drops a root move
@@ -225,6 +225,7 @@ async function positionMode() {
   const seed = Number(arg("seed", "1"));
   const armNames = arg("arms", "baseline,current,current-noP4").split(",");
   const outFile = arg("out", "");
+  const frozen = flag("frozen");
 
   let positions: PosRec[];
   if (fs.existsSync(POS_FILE) && !flag("regen")) {
@@ -257,7 +258,19 @@ async function positionMode() {
       const g = rebuild(p);
       const st = { depth: 0, rootMoves: 0, nodes: 0 };
       const t = performance.now();
-      const m = a.ai.pickAIMove(g, "hard", budget, undefined, st);
+      // --frozen: Date.now stands still, as on a Worker, so the filter and
+      // the search are bounded by nodes alone (A25).
+      const realNow = Date.now;
+      if (frozen) {
+        const at = realNow();
+        Date.now = () => at;
+      }
+      let m: ReturnType<typeof a.ai.pickAIMove>;
+      try {
+        m = a.ai.pickAIMove(g, "hard", budget, undefined, st);
+      } finally {
+        Date.now = realNow;
+      }
       const ms = performance.now() - t;
       const r = res.get(a.name)!;
       r.depth.push(st.depth);
@@ -276,7 +289,7 @@ async function positionMode() {
   const summary: Record<string, unknown> = {};
   console.log(
     `nerf safety: ${positions.length} positions (${atRisk} where some root move allows a loss in one), ` +
-      `hard@${budget}ms, ${((Date.now() - t0) / 1000).toFixed(0)}s, load ${os.loadavg().map((x) => x.toFixed(1)).join(" ")}`,
+      `hard@${budget}ms${frozen ? " (clock frozen)" : ""}, ${((Date.now() - t0) / 1000).toFixed(0)}s, load ${os.loadavg().map((x) => x.toFixed(1)).join(" ")}`,
   );
   for (const a of arms) {
     const r = res.get(a.name)!;

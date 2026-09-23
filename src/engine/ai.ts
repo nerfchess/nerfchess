@@ -759,7 +759,9 @@ function gameHistoryHashes(game: NerfGame): [Int32Array, Int32Array] | null {
       break;
     }
   }
-  if (from >= h.length) return null;
+  // A game position can only be seen twice with at least four reversible
+  // plies behind the root, so skip the replay (the whole history) otherwise.
+  if (h.length - from < 4) return null;
   const lo: number[] = [];
   const hi: number[] = [];
   let b = initialBoard();
@@ -1012,35 +1014,79 @@ export interface SearchStats {
 }
 
 /**
+ * What the root nerf filter charges against the search's node cap: a reply
+ * costs NERF_REPLY_COST nodes (its makeMove, the context and the checkLoss
+ * call) plus one node per move of game history, because makeContext walks
+ * the whole history and many checkLoss hooks scan or replay it (Doomsday
+ * Clock replays it with makeMove on every call). Each root move's reply
+ * generation is charged like a search node's. Calibrated with the clock
+ * frozen on Doomsday Clock positions at plies 40 to 52: at one node per
+ * history move a charged filter node costs about what a search node does, so
+ * the filter and the search together stay near the cap's CPU (at one per four
+ * the filter added 50 to 110ms per move at hard@80). For a cheap hook this
+ * overcharges, so at small budgets the filter can stop before it has seen
+ * every root move; the moves it did not reach are kept, and the nerf-safety
+ * sim still catches every at-risk position at hard@40 with a working clock
+ * and 27 of 28 at hard@25 with the clock frozen (review round 1 evidence).
+ */
+const NERF_REPLY_COST = 2;
+
+/**
  * Drop the root moves after which some opponent reply trips the mover's OWN
  * nerf (the last knight taken under "lose without a knight", an enemy pawn let
  * into your half under Hold Them Back), unless nothing else is left. The
  * search never applies nerfs below the root, so without this it walked into
  * those losses (P4). Replies come from generateMoves: the opponent's own nerf,
- * which may be hidden from this player, is never read. At most a quarter of
- * the budget goes here; moves not yet checked when it runs out are kept.
+ * which may be hidden from this player, is never read. A move that takes the
+ * king is always kept: the game ends there, before any reply.
+ *
+ * Bounded twice: by a quarter of the time budget, and by `allowance` nodes
+ * (a quarter of the node cap), because on a Worker the clock is frozen and
+ * only the node count moves. The nodes spent are returned so the caller can
+ * charge them to the search's own cap. Moves not yet checked when either runs
+ * out are kept.
  */
-function dropNerfLossInOne(game: NerfGame, moves: Move[], start: number, budget: number): Move[] {
-  if (!tuning.nerfSafety || moves.length < 2) return moves;
+function dropNerfLossInOne(
+  game: NerfGame,
+  moves: Move[],
+  start: number,
+  budget: number,
+): { moves: Move[]; spent: number } {
+  const none = { moves, spent: 0 };
+  if (!tuning.nerfSafety || moves.length < 2) return none;
   const me = game.board.turn;
   const slot = me === "w" ? game.white : game.black;
   const checkLoss = slot.nerf.checkLoss;
-  if (!checkLoss || game.buffs?.diff || nerfDisabled(game, me)) return moves;
+  if (!checkLoss || game.buffs?.diff || nerfDisabled(game, me)) return none;
   const opp: Color = me === "w" ? "b" : "w";
   const cap = budget > 0 ? budget / 4 : Infinity;
+  const allowance = budget > 0 ? (budget * 2 * NODES_PER_MS) / 4 : Infinity;
+  const replyCost = NERF_REPLY_COST + game.board.history.length;
+  let spent = 0;
   const kept: Move[] = [];
   for (let i = 0; i < moves.length; i++) {
-    if (Date.now() - start > cap) {
+    if (spent >= allowance || Date.now() - start > cap) {
       for (let j = i; j < moves.length; j++) kept.push(moves[j]);
       break;
     }
     const m = moves[i];
     const nb = makeMove(game.board, m);
+    spent += 1;
+    // Taking the king wins on the spot: no reply is ever played (P6).
+    if (m.captured === "k" || findKing(nb, opp) == null) {
+      kept.push(m);
+      continue;
+    }
     let loses = false;
     if (nb !== game.board) {
+      spent += GEN_COST;
       for (const r of generateMoves(nb)) {
+        // Out of allowance: the rest of this move's replies go unchecked,
+        // and the move is kept.
+        if (spent >= allowance) break;
         // A king capture ends the game on its own terms.
         if (nb.pieces[r.capturedSquare ?? r.to]?.type === "k") continue;
+        spent += replyCost;
         const nb2 = makeMove(nb, r);
         if (nb2 === nb) continue;
         // The tallies playMove updates before checkLossConditions runs.
@@ -1061,7 +1107,7 @@ function dropNerfLossInOne(game: NerfGame, moves: Move[], start: number, budget:
     }
     if (!loses) kept.push(m);
   }
-  return kept.length ? kept : moves;
+  return { moves: kept.length ? kept : moves, spent };
 }
 
 /**
@@ -1159,7 +1205,8 @@ export function pickAIMove(
   const maxDepth = weaken?.params.maxDepth ?? cfg.maxDepth;
   const extended = weaken?.params.extendedEval ?? cfg.extendedEval;
 
-  moves = dropNerfLossInOne(game, moves, start, budget);
+  const filtered = dropNerfLossInOne(game, moves, start, budget);
+  moves = filtered.moves;
   if (stats) stats.rootMoves = moves.length;
 
   // Sampling is only worth its extra cost (a full-window root pass) when it can
@@ -1171,6 +1218,8 @@ export function pickAIMove(
   // this is what lets every node BELOW the root see them too.
   const searchBuffs = buildSearchBuffs(game, maxDepth + QUIESCE_DEPTH + MAX_EXTENSIONS + 1);
   const { state, root } = setupState(game, extended, budget, searchBuffs, start);
+  // The filter's work comes out of the same node cap (A25).
+  state.nodes += filtered.spent;
 
   if (sampling && weaken) {
     const ranked = rankedRoot(root, moves, opp, maxDepth, state, stats);
@@ -1248,12 +1297,14 @@ export function rankRootMoves(
   if (!all.length) return [];
   const safe = all.filter((m) => !isSelfLosing(game, m));
   const start = Date.now();
-  const moves = dropNerfLossInOne(game, safe.length ? safe : all, start, budgetMs);
+  const filtered = dropNerfLossInOne(game, safe.length ? safe : all, start, budgetMs);
+  const moves = filtered.moves;
   const cfg = LEVELS[level];
   const maxDepth = depth ?? cfg.maxDepth;
   const me = game.board.turn;
   const searchBuffs = buildSearchBuffs(game, maxDepth + QUIESCE_DEPTH + MAX_EXTENSIONS + 1);
   const { state, root } = setupState(game, cfg.extendedEval, budgetMs, searchBuffs, start);
+  state.nodes += filtered.spent;
   return rankedRoot(root, moves, me === "w" ? "b" : "w", maxDepth, state, stats);
 }
 
@@ -1517,7 +1568,7 @@ function negamax(
   }
 
   // Generating and ordering the moves is the expensive half of a node, so it
-  // counts as one more (see NODE_COST below).
+  // is charged GEN_COST more nodes (see GEN_COST above).
   state.nodes += GEN_COST;
   const moves = orderMoves(genMoves(board, state, ply, spentMask), null, state, ply, ttMove);
   const alpha0 = alpha;

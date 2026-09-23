@@ -14,8 +14,10 @@
  *              search whose depth 1 never completes still returns a move that
  *              leaves the king safe
  *   P4         a root move after which an opponent reply trips the mover's own
- *              nerf is dropped while an alternative exists, and the filter
- *              never consults the opponent's nerf
+ *              nerf is dropped while an alternative exists, a move that takes
+ *              the king is never dropped, the filter never consults the
+ *              opponent's nerf, and with the clock frozen it stops at its node
+ *              allowance and charges it to the search's node count (A25)
  *   P7         a move into a position the game has already seen twice scores
  *              as a draw (with the configured contempt); one seen once does
  *              not
@@ -335,6 +337,58 @@ async function assertions() {
     const g3 = fromFen("4k3/8/8/3np3/4P3/8/8/4K3 w - - 0 1", hold, spy);
     ai.pickAIMove(g3, "hard", 100);
     check(touched === 0, "the opponent's nerf is never read by the search", `${touched} hook calls`);
+
+    // Rxa8 takes the king and ends the game. On the kingless board after it,
+    // ...e4 would put a black pawn in White's half, but no reply is ever
+    // played, so the filter must keep the capture (review round 1: f2d20b4
+    // dropped it and played Ne4).
+    const g4 = fromFen("k7/8/8/4p3/8/8/5N2/R3K3 w - - 0 1", hold);
+    for (const level of ["medium", "hard"] as const) {
+      const st: Stats = { depth: 0, rootMoves: 0 };
+      const m4 = ai.pickAIMove(g4, level, 300, undefined, st);
+      check(!!m4 && moveToUCI(m4) === "a1a8",
+        `a king capture survives the nerf filter (${level}, argmax)`, `played ${m4 && moveToUCI(m4)}, ${st.rootMoves} root moves`);
+    }
+    // rankRootMoves is the sampling path's full-window ranking.
+    const ranked4 = ai.rankRootMoves(g4, "hard", 300, 2);
+    check(ranked4.length > 0 && moveToUCI(ranked4[0].move) === "a1a8",
+      "rankRootMoves keeps the king capture and ranks it first", ranked4.slice(0, 3).map((r) => moveToUCI(r.move)).join(" "));
+
+    // A25: with the clock frozen (a Worker), the filter is bounded by nodes,
+    // not time. A checkLoss that never fires makes it try every reply, so the
+    // call count shows the bound. At a 5ms budget the cap is 10000 nodes and
+    // the filter may spend a quarter of it; each reply is charged 2 nodes plus
+    // one per move of history. f2d20b4 tried every reply (1484 here).
+    // Only the filter's calls are counted: they see the root plus two plies
+    // (the root self-loss check sees one).
+    let calls = 0;
+    const plies = LINES[0].length;
+    const counting: Nerf = {
+      ...UNRESTRICTED_NERF,
+      id: "counting",
+      checkLoss: (_s, ctx) => {
+        if (ctx.board.history.length === plies + 2) calls++;
+        return null;
+      },
+    };
+    const g5 = fromUci(LINES[0]);
+    g5.white = { ...g5.white, nerf: counting };
+    const allReplies = legalMoves(g5).reduce((a, m) => a + generateMoves(makeMove(g5.board, m)).length, 0);
+    const replyCost = 2 + g5.board.history.length;
+    const realNow = Date.now;
+    const at = realNow();
+    Date.now = () => at;
+    const st5: Stats = { depth: 0, rootMoves: 0 };
+    try {
+      ai.pickAIMove(g5, "hard", 5, undefined, st5);
+    } finally {
+      Date.now = realNow;
+    }
+    const bound = Math.ceil(2500 / replyCost) + 1;
+    check(calls > 0 && calls <= bound && calls < allReplies,
+      "frozen clock: the nerf filter stops at its node allowance", `${calls} checkLoss calls, bound ${bound}, ${allReplies} replies in all`);
+    check((st5.nodes ?? 0) >= calls * replyCost,
+      "frozen clock: the filter's nodes are charged to the search's node count", `nodes ${st5.nodes}, filter ${calls * replyCost}`);
   }
 
   // --- P7 -------------------------------------------------------------------

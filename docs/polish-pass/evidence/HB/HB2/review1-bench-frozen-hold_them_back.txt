@@ -1,0 +1,10 @@
+bench-house-search: 20 random positions, engines baseline vs f2d20b4 vs current (baseline = bbe4271), node v22.22.2, load 1.12 1.02 1.06, 40s
+
+[random]
+level   budget  baseline   depth(min-max)  nodes     n/ms   ms   max | f2d20b4    depth(min-max)  nodes     n/ms   ms   max | current    depth(min-max)  nodes     n/ms   ms   max
+medium     25ms             3.00 (3-3)        3365    231    15    52 |             3.00 (3-3)        6990    259    27    92 |             3.00 (3-3)        8524    458    19    65
+medium     80ms             3.00 (3-3)        3365    241    14    38 |             3.00 (3-3)        6990    250    28    91 |             3.00 (3-3)       10031    526    19    72
+hard       25ms             4.60 (3-6)       50001    233   215   313 |             6.65 (4-12)       41464    273   152   236 |             7.70 (3-12)       36192    307   118   204
+hard       80ms             5.40 (4-7)      160001    253   633   914 |             7.70 (4-12)      125065    296   423   592 |             8.60 (4-12)      102511    303   339   641
+
+wrote docs/polish-pass/evidence/HB/HB2/review1-bench-frozen-hold_them_back.json
