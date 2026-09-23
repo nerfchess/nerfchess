@@ -1,0 +1,181 @@
+{
+ "method": "cosine similarity of per-tile (tile minus pre-play tile) 24x24 grey thumbnails, standardised per tile; 1 = same look, near 0 = unrelated. Every tier 6+ bespoke card shares the cast wrapper's ring and beam (TC0-f), so expect a floor around 0.4",
+ "cards": 7,
+ "generic": {
+  "method": "cosine similarity of the card's look vector to the mean look of all cards in this sheet; highest = least card-specific",
+  "ranking": [
+   {
+    "card": "hw2_death_knell",
+    "tier": 8,
+    "closeness": 0.812
+   },
+   {
+    "card": "mass_freeze",
+    "tier": 7,
+    "closeness": 0.788
+   },
+   {
+    "card": "duelist",
+    "tier": 5,
+    "closeness": 0.765
+   },
+   {
+    "card": "world_lock",
+    "tier": 8,
+    "closeness": 0.738
+   },
+   {
+    "card": "twin_queens",
+    "tier": 7,
+    "closeness": 0.73
+   },
+   {
+    "card": "nova",
+    "tier": 6,
+    "closeness": 0.711
+   },
+   {
+    "card": "fm_eclipse_crown",
+    "tier": 8,
+    "closeness": 0.71
+   }
+  ]
+ },
+ "pairs": [
+  {
+   "a": "nova",
+   "b": "duelist",
+   "similarity": 0.62
+  },
+  {
+   "a": "hw2_death_knell",
+   "b": "mass_freeze",
+   "similarity": 0.589
+  },
+  {
+   "a": "hw2_death_knell",
+   "b": "twin_queens",
+   "similarity": 0.587
+  },
+  {
+   "a": "hw2_death_knell",
+   "b": "duelist",
+   "similarity": 0.587
+  },
+  {
+   "a": "fm_eclipse_crown",
+   "b": "world_lock",
+   "similarity": 0.579
+  },
+  {
+   "a": "mass_freeze",
+   "b": "nova",
+   "similarity": 0.568
+  },
+  {
+   "a": "mass_freeze",
+   "b": "twin_queens",
+   "similarity": 0.546
+  },
+  {
+   "a": "fm_eclipse_crown",
+   "b": "hw2_death_knell",
+   "similarity": 0.528
+  },
+  {
+   "a": "world_lock",
+   "b": "mass_freeze",
+   "similarity": 0.512
+  },
+  {
+   "a": "hw2_death_knell",
+   "b": "world_lock",
+   "similarity": 0.505
+  },
+  {
+   "a": "mass_freeze",
+   "b": "duelist",
+   "similarity": 0.484
+  },
+  {
+   "a": "hw2_death_knell",
+   "b": "nova",
+   "similarity": 0.47
+  },
+  {
+   "a": "twin_queens",
+   "b": "duelist",
+   "similarity": 0.47
+  },
+  {
+   "a": "world_lock",
+   "b": "twin_queens",
+   "similarity": 0.452
+  },
+  {
+   "a": "world_lock",
+   "b": "duelist",
+   "similarity": 0.443
+  },
+  {
+   "a": "fm_eclipse_crown",
+   "b": "mass_freeze",
+   "similarity": 0.441
+  },
+  {
+   "a": "fm_eclipse_crown",
+   "b": "twin_queens",
+   "similarity": 0.424
+  },
+  {
+   "a": "fm_eclipse_crown",
+   "b": "duelist",
+   "similarity": 0.416
+  },
+  {
+   "a": "world_lock",
+   "b": "nova",
+   "similarity": 0.383
+  },
+  {
+   "a": "twin_queens",
+   "b": "nova",
+   "similarity": 0.356
+  },
+  {
+   "a": "fm_eclipse_crown",
+   "b": "nova",
+   "similarity": 0.34
+  }
+ ],
+ "nearest": {
+  "fm_eclipse_crown": {
+   "card": "world_lock",
+   "similarity": 0.579
+  },
+  "hw2_death_knell": {
+   "card": "mass_freeze",
+   "similarity": 0.589
+  },
+  "world_lock": {
+   "card": "fm_eclipse_crown",
+   "similarity": 0.579
+  },
+  "mass_freeze": {
+   "card": "hw2_death_knell",
+   "similarity": 0.589
+  },
+  "twin_queens": {
+   "card": "hw2_death_knell",
+   "similarity": 0.587
+  },
+  "nova": {
+   "card": "duelist",
+   "similarity": 0.62
+  },
+  "duelist": {
+   "card": "nova",
+   "similarity": 0.62
+  }
+ }
+}
