@@ -3,11 +3,13 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useReducedMotion } from "@/lib/useReducedMotion";
+import { releaseAllLowTime } from "@/lib/lowTimeMotion";
 import { useMotionTempo, tempoScale } from "@/components/useMotionTempo";
 import { useModalChrome } from "@/lib/useModalChrome";
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -791,14 +793,22 @@ export function GameOver({
   // the reveal on the panel itself, where it cannot animate out of sight.
   const [rulesOpen, setRulesOpen] = useState(false);
   const primaryRef = useRef<HTMLButtonElement | null>(null);
-  const reduceMotion = useReducedMotion();
+  // Both motion reads look through the low-time hold: this panel exists
+  // because the game ended, which is what ends the hold, but it mounts in the
+  // same commit whose effects release it, so a plain read took the scramble's
+  // "off" as the whole ending's tempo (F204). The layout effect below lifts
+  // the hold before the first paint so the CSS beats agree with these.
+  const reduceMotion = useReducedMotion(undefined, { ignoreLowTimeHold: true });
+  useLayoutEffect(() => {
+    releaseAllLowTime();
+  }, []);
   // Tempo. `beat` multiplies every duration and delay in the ending, on both
   // sides of the CSS boundary: it is handed to the stylesheet as --beat and
   // used here for the framer springs, the rating count-up and the one timer.
   // Without it "fast" reached nothing in this panel — globals.css clamps
   // `transition-duration` only, which is not what a keyframe, a framer
   // transition or a requestAnimationFrame count-up is made of.
-  const tempo = useMotionTempo();
+  const tempo = useMotionTempo({ ignoreLowTimeHold: true });
   const beat = reduceMotion ? 0 : tempoScale(tempo);
   const choreograph = beat > 0;
   // The lid over the opponent's rule retires itself once its beat has played.
