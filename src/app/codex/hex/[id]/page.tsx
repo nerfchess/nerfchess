@@ -19,7 +19,8 @@ export function generateStaticParams() {
   return ALL_BUFFS.filter((b) => buffType(b) === "Hex").map((b) => ({ id: b.id }));
 }
 
-export function generateMetadata({ params }: { params: { id: string } }): Metadata {
+export async function generateMetadata(props: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const params = await props.params;
   const buff = BUFF_BY_ID[params.id];
   if (!buff || buffType(buff) !== "Hex") return {};
   const lead = `${buff.name} is a ${tierName(buff.tier)} hex in Nerf Chess: a curse you draft in Nerf mode and cast on your opponent.`;
@@ -35,7 +36,8 @@ export function generateMetadata({ params }: { params: { id: string } }): Metada
   };
 }
 
-export default function HexCardPage({ params }: { params: { id: string } }) {
+export default async function HexCardPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const buff = BUFF_BY_ID[params.id];
   if (!buff || buffType(buff) !== "Hex") notFound();
   return (

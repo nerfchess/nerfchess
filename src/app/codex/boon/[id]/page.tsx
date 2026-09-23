@@ -19,7 +19,8 @@ export function generateStaticParams() {
   return ALL_BUFFS.filter((b) => buffType(b) === "Boon").map((b) => ({ id: b.id }));
 }
 
-export function generateMetadata({ params }: { params: { id: string } }): Metadata {
+export async function generateMetadata(props: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const params = await props.params;
   const buff = BUFF_BY_ID[params.id];
   if (!buff || buffType(buff) !== "Boon") return {};
   const lead = `${buff.name} is a ${tierName(buff.tier)} boon in Nerf Chess: a relief card you draft in Nerf mode to soften your own secret handicap.`;
@@ -35,7 +36,8 @@ export function generateMetadata({ params }: { params: { id: string } }): Metada
   };
 }
 
-export default function BoonCardPage({ params }: { params: { id: string } }) {
+export default async function BoonCardPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const buff = BUFF_BY_ID[params.id];
   if (!buff || buffType(buff) !== "Boon") notFound();
   return (

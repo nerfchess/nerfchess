@@ -1,0 +1,15 @@
+static: scanned 252 files under src/app
+ok   /codex/hex/heavy_boots status=200 404marker=false h1="Heavy Boots"
+ok   /codex/hex/toll_gate status=200 404marker=false h1="Toll Gate"
+ok   /codex/boon/extra_glance status=200 404marker=false h1="Extra Glance"
+ok   /codex/boon/pawn_shield status=200 404marker=false h1="Pawn Shield"
+ok   /codex/buff/pawn_push status=200 404marker=false h1="Pawn Push"
+ok   /codex/buff/wazir_rook status=200 404marker=false h1="Wazir Rook"
+ok   /codex/buff/bn4_gum_drop status=200 404marker=false h1="Gum Drop"
+ok   /codex/buff/bn4_paper_crown status=200 404marker=false h1="Paper Crown"
+ok   /codex/nerf/lucky status=200 404marker=false h1="Lucky"
+ok   /codex/nerf/cess status=200 404marker=false h1="Cess"
+ok   /codex/hex/not_a_real_card_id status=200 expect 404
+ok   /codex/boon/not_a_real_card_id status=200 expect 404
+
+check-codex-routes: ok
