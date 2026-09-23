@@ -996,7 +996,11 @@ function GameOverPanel({
       opponentNerf && oppRevealed
         ? `Opponent rule: ${opponentNerf.name} (${opponentNerf.description})`
         : null,
-      typeof window !== "undefined" ? window.location.origin : "https://nerfchess.com",
+      // An online game shares its own page, which unfurls as a game card
+      // (the site root never could, so a shared result showed nothing of the
+      // game, F240); a local bot game has no public page and keeps the site.
+      (typeof window !== "undefined" ? window.location.origin : "https://nerfchess.com") +
+        (serverGameId ? `/game/${encodeURIComponent(serverGameId)}` : ""),
     ].filter(Boolean);
     const text = lines.join("\n");
     try {

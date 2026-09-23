@@ -1,0 +1,3 @@
+F240, e2e/polish/game-over-share.spec.ts (/dev/splash 'Online game over', clipboard path)
+Before: FAILED, shared text was 'Nerf Chess: White wins' + site origin only, no /game/devSplash01
+After: 1 passed; the shared text ends with <origin>/game/devSplash01. Local bot games (no serverGameId) keep the site origin.

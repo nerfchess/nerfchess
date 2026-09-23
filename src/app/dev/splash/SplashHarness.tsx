@@ -5,6 +5,7 @@ import { BoardSplashHost } from "@/components/BoardSplash";
 import type { AgainstRow } from "@/components/BuffDock";
 import { DraftRevealBanner } from "@/components/DraftOverlay";
 import { useSignatureQueue } from "@/components/effects/useSignatureQueue";
+import { GameOver } from "@/components/GameOver";
 
 // The signature queue on its own: three plays fired in one burst, with the
 // slot each one reaches and the busy flag stamped on the page, so its spacing
@@ -49,6 +50,7 @@ export function SplashHarness() {
   const [rows, setRows] = useState<AgainstRow[]>([]);
   const n = useRef(0);
   const [banner, setBanner] = useState(false);
+  const [over, setOver] = useState(false);
   const push = (name: string) => {
     n.current += 1;
     setRows((r) => [
@@ -75,9 +77,25 @@ export function SplashHarness() {
         <button type="button" className="btn-ghost" onClick={() => setBanner(true)}>
           Reveal banner
         </button>
+        <button type="button" className="btn-ghost" onClick={() => setOver(true)}>
+          Online game over
+        </button>
       </div>
       {banner && <TickingBanner onDone={() => setBanner(false)} />}
       <SigQueueProbe />
+      {over && (
+        // An online result as the live match mounts it, minus the socket.
+        <GameOver
+          result={{ winner: "w", reason: "resignation" }}
+          myColor="w"
+          serverGameId="devSplash01"
+          gameId="devSplash01"
+          spectator
+          onRematch={() => {}}
+          onNewGame={() => {}}
+          onDismiss={() => setOver(false)}
+        />
+      )}
       <div
         data-splash-stage
         className="relative mt-6 aspect-square w-full border border-[color:var(--edge)] bg-[var(--surface-panel)]"
