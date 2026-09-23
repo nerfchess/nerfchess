@@ -1,0 +1,8 @@
+part 1: 40 seeds x 2 colors, Buff-mode drafts, tiers 1350,1450,1550,1650, policy under test: houseChooseActivation
+  candidate: fires 164 (turn-costing 143), bad fires 0, unused activated cards per seat 0.44 (of which the gates had accepted 0.17), score 53.1% (95% CI 42.3%-63.7%)
+  today    : fires 112 (turn-costing 97), bad fires 17, unused activated cards per seat 0.30 (of which the gates had accepted 0.10), score 46.9% (95% CI 36.3%-57.7%)
+  results: king captured x75, ply cap x4, draw by threefold repetition x1  [52s]
+
+part 2: 200 same-tier offers x 40 personas (houseChooseActivation): personas disagree on the card in 177 (88.5%, 95% CI 83.3%-92.2%)
+  bank rate by offered tier: 1:11.9% 2:11.6% 3:9.6% 4:7.8% 5:5.1% 6:2.9% 7:0.9% 8:0.0%
+wrote /home/user/nerfchess/docs/polish-pass/evidence/HB/HB1/after-cards.json

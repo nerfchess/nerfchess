@@ -1,0 +1,10 @@
+1. existing houseStyle traits: 0 changed values across 900 personas (must be 0)
+2. repertoire legal: true; 8 distinct first moves over 60 personas
+3. resign: 1500+ within 6 own moves 98/100; 800-1200 median 32 own moves; level histories resigned 0; never-resign personas 62 (named by bio or name 3), resigned 0
+4. draws: dead-level accepted 20/20, winning accepted 0/20
+5. rematch acceptance: 800-1200 65.7%, 1350-1750 68.5%, 1900-2150 68.2%, 2400-2700 66.3%
+6. breaker: transitions ok, counts {"ok":1,"timeout":4,"error":1,"version":1,"rejected":1,"null":1}
+7. clock helpers ok; opening moves under 1.2s 100.0%
+8. cards: 28 positions where the engine's chooser would waste a turn with a piece hanging; houseChooseActivation fired that card 0 times. drafts: 20 checked, 0 invalid
+
+house policy helpers: OK

@@ -1,0 +1,7 @@
+blunder probe: 40 midgame positions, 2 forced blunders per tier, judge 1000ms
+   800: n=80 king hangs 0, CPL median 330 (IQR 110-416), >=900cp 0.0%, zero-loss 5.0%
+  1200: n=80 king hangs 0, CPL median 278 (IQR 47-370), >=900cp 0.0%, zero-loss 7.5%
+  1550: n=80 king hangs 0, CPL median 108 (IQR 20-319), >=900cp 0.0%, zero-loss 15.0%
+  1900: n=80 king hangs 0, CPL median 120 (IQR 44-366), >=900cp 0.0%, zero-loss 11.3%
+  pooled: n=320 king hangs 0, CPL median 249, >=900cp 0.0%; judge mean depth 5.08
+wrote /home/user/nerfchess/docs/polish-pass/evidence/HB/HB1/after-blunder.json

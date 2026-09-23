@@ -8,12 +8,36 @@
 // players (their accounts still hold "_flower" avatar preset ids as an
 // internal marker, but no visible mark is drawn from them anymore).
 
-import { pickAIMove, defaultSearchShape, type AILevel, type WeakenParams } from "../../engine/ai";
-import { moveToUCI } from "../../engine/board";
-import { legalMoves, type NerfGame } from "../../engine/game";
+import {
+  pickAIMove,
+  defaultSearchShape,
+  type AILevel,
+  type SearchStats,
+  type WeakenParams,
+} from "../../engine/ai";
+import {
+  attackedBy,
+  generateMoves,
+  initialBoard,
+  makeMove,
+  moveFromUCI,
+  moveToUCI,
+  positionKey,
+} from "../../engine/board";
+import {
+  activateBuff,
+  aiChooseBuffActivation,
+  aiDraftChoice,
+  deserializeGame,
+  gameInCheck,
+  legalMoves,
+  serializeGame,
+  type NerfGame,
+} from "../../engine/game";
 import { triggersOwnNerfLoss } from "../../engine/moveSafety";
-import type { DraftMode } from "../../engine/buff";
-import type { Color, Move } from "../../engine/types";
+import { aiCanUse, type BuffPick, type DraftMode } from "../../engine/buff";
+import { BUFF_BY_ID } from "../../engine/buffs/library";
+import type { BoardState, Color, Move, PieceType } from "../../engine/types";
 import { HOUSE_PFP_IDS, HOUSE_PFP_NAMES, HOUSE_PFP_PREFIX } from "../avatars";
 
 // Absolute ceiling for a house-player search running ON THE DO ITSELF (local
@@ -21,7 +45,7 @@ import { HOUSE_PFP_IDS, HOUSE_PFP_NAMES, HOUSE_PFP_PREFIX } from "../avatars";
 // Durable Object is single-threaded: while a search runs, no socket upgrade,
 // move, or lobby poll is answered. 80ms per action, paced 1-4s apart and
 // serialized (never two searches in one tick), keeps the thread effectively
-// free. Never raise this without load-testing the DO — it's the default
+// free. Never raise this without load-testing the DO, it's the default
 // ceiling every caller gets unless it explicitly passes a higher one (only
 // the OCI engine service does, since search there costs the DO nothing).
 export const HOUSE_SEARCH_CEILING_MS = 80;
@@ -85,11 +109,12 @@ export type HouseSkill =
   | 2600
   | 2700;
 
-// Baked per-tier profile. The weakening fields are OPTIONAL and every baked
-// tier below leaves them unset, so a fresh install resolves to topK:1 / no
-// noise — i.e. the exact pre-weakening search. Weakening is applied at runtime
-// as a moderator override (app_settings.house_skill_overrides), never baked, so
-// it reverts from the /mod dashboard in one click. See docs/bot-weakening-spec.md.
+// Baked per-tier profile. The weakening fields are OPTIONAL: the 1350+ tiers
+// leave them unset, so they resolve to topK:1 / no noise, the plain argmax
+// search, while the 800-1200 tiers bake their own shallow, sampled search.
+// Further weakening is applied at runtime as a moderator override
+// (app_settings.house_skill_overrides), so it reverts from the /mod dashboard in
+// one click. See docs/house-bots.md, "Moderator overrides".
 type SkillProfile = {
   level: AILevel;
   budgetMs: number;
@@ -119,21 +144,27 @@ export type ResolvedSkillProfile = {
 
 // 2026-07 strength uplift: every legacy tier's advertised rating moved up a
 // deterministic +300..400 (see houseSeedBase), so every tier's REAL strength
-// moves with it — more search budget, fewer outright blunders, deeper limits.
+// moves with it, more search budget, fewer outright blunders, deeper limits.
 // The DO local fallback still clamps to HOUSE_SEARCH_CEILING_MS, so these
 // budgets only bite on the OCI engine path; budgets stay within
 // WEAKEN_CLAMP.budgetMs and under the worker's 3000ms engine timeout
-// (nominal x1.0-1.1 measured wall time since the deadline change — see the
+// (nominal x1.0-1.1 measured wall time since the deadline change, see the
 // note above; it was x1.5-2.5 when these tiers were first sized).
 //
 // The 900-1200 tiers are new with the 2026-07 roster expansion: genuinely
 // beginner-strength bots (shallow search, baked move-quality noise, frequent
 // blunders) so low-rated humans finally have peers. Their displayed rating
-// matches their strength directly (no legacy uplift stack — see houseSeedBase).
+// matches their strength directly (no legacy uplift stack, see houseSeedBase).
 export const HOUSE_SKILL_PROFILES: Record<HouseSkill, SkillProfile> = {
-  800: { level: "easy", budgetMs: 24, blunderChance: 0.28, maxDepth: 2, topK: 7, temperatureCp: 320, evalNoiseCp: 150, extendedEval: false },
-  900: { level: "easy", budgetMs: 30, blunderChance: 0.22, maxDepth: 2, topK: 6, temperatureCp: 260, evalNoiseCp: 120, extendedEval: false },
-  1050: { level: "easy", budgetMs: 40, blunderChance: 0.16, maxDepth: 2, topK: 5, temperatureCp: 200, evalNoiseCp: 90, extendedEval: false },
+  // 800-1050 run the medium SAMPLED search at depth 1-2. They used to say
+  // level "easy", which pickAIMove answers with a noisy one-ply greedy pick
+  // BEFORE it ever reads maxDepth/topK/temperature/noise (dead config), and
+  // easy's own 22% Math.random move stacked on the house blunder: 44% / 39% /
+  // 34% random moves, and the king left en prise about 72% of the time when in
+  // check (scripts/sim-house-ladder.ts --probe check).
+  800: { level: "medium", budgetMs: 24, blunderChance: 0.28, maxDepth: 1, topK: 7, temperatureCp: 320, evalNoiseCp: 150, extendedEval: false },
+  900: { level: "medium", budgetMs: 30, blunderChance: 0.22, maxDepth: 1, topK: 6, temperatureCp: 260, evalNoiseCp: 120, extendedEval: false },
+  1050: { level: "medium", budgetMs: 40, blunderChance: 0.16, maxDepth: 1, topK: 4, temperatureCp: 150, evalNoiseCp: 70, extendedEval: false },
   1200: { level: "medium", budgetMs: 40, blunderChance: 0.12, maxDepth: 3, topK: 4, temperatureCp: 150, evalNoiseCp: 70, extendedEval: false },
   1350: { level: "medium", budgetMs: 120, blunderChance: 0.05 },
   1450: { level: "medium", budgetMs: 180, blunderChance: 0.035 },
@@ -174,8 +205,8 @@ export const HOUSE_SKILL_PROFILES: Record<HouseSkill, SkillProfile> = {
 // change reaches live games within a tick without a redeploy. Every numeric
 // field is clamped on the way in, and a missing/garbage field falls back to the
 // baked value field-by-field, so no stored value can drive the bots into a
-// broken (or thread-stalling) search — the worst a bad save does is default
-// strength. See docs/bot-weakening-spec.md §4-5.
+// broken (or thread-stalling) search, the worst a bad save does is default
+// strength. See docs/house-bots.md, "Moderator overrides".
 // ---------------------------------------------------------------------------
 
 // Inclusive clamp ranges for every tunable field. Exported so the engine
@@ -220,7 +251,7 @@ export function bakedResolvedProfile(skill: HouseSkill): ResolvedSkillProfile {
 // Apply a single untrusted patch object onto a resolved base, clamping every
 // numeric field and ignoring anything unrecognized. Shared by resolveSkillProfile
 // (moderator overrides, keyed by tier) and the engine service (a flat profile
-// the DO already resolved and sent). `level` is never overridable — it selects
+// the DO already resolved and sent). `level` is never overridable, it selects
 // eval terms/heuristics and is an engine concern, not a strength dial.
 function applyProfilePatch(base: ResolvedSkillProfile, patch: unknown): ResolvedSkillProfile {
   if (!patch || typeof patch !== "object") return base;
@@ -282,7 +313,7 @@ function weakenParamsOf(p: ResolvedSkillProfile): WeakenParams {
   };
 }
 
-/** Every house skill tier, ascending — the unit the dashboard and overrides map
+/** Every house skill tier, ascending, the unit the dashboard and overrides map
  * are keyed by. Derived from the profile map so it never drifts. */
 export const HOUSE_SKILLS: HouseSkill[] = (Object.keys(HOUSE_SKILL_PROFILES) as unknown[])
   .map(Number)
@@ -300,7 +331,7 @@ const WEAKEN_NUM_FIELDS = [
 ] as const;
 
 /** Sanitize an untrusted per-tier patch down to the recognized, clamped fields
- * actually present (sparse — the shape stored in the overrides map). Numeric
+ * actually present (sparse, the shape stored in the overrides map). Numeric
  * fields are clamped to WEAKEN_CLAMP; unknown keys and non-finite values are
  * dropped. Used by the /mod save path so stored overrides are always sane. */
 export function cleanSkillPatch(raw: unknown): Partial<SkillProfile> {
@@ -324,7 +355,7 @@ export function cleanSkillPatch(raw: unknown): Partial<SkillProfile> {
 // weaker, the 2100-2200 top band untouched (absent = baked).
 //
 // Calibration note (2026-07-12, scripts/sim-house-bots.ts --roundrobin + the
-// control run): mirror self-play SATURATES — two unweakened engines draw every
+// control run): mirror self-play SATURATES, two unweakened engines draw every
 // game, so any weakening flips draws into losses and even a mild topK:2/temp:60
 // tier scored ~4% against an unweakened peer. That test confirms direction and
 // monotonicity but cannot resolve the bands or predict strength vs HUMANS (who
@@ -338,7 +369,7 @@ export const WEAKENED_PRESET: Partial<Record<HouseSkill, Partial<SkillProfile>>>
   1550: { blunderChance: 0.05, maxDepth: 3, topK: 4, temperatureCp: 110, evalNoiseCp: 50, extendedEval: false },
   1750: { blunderChance: 0.03, maxDepth: 4, topK: 3, temperatureCp: 90, evalNoiseCp: 40, extendedEval: false, budgetMs: 120 },
   1900: { blunderChance: 0.02, maxDepth: 5, topK: 3, temperatureCp: 70, evalNoiseCp: 30, extendedEval: false, budgetMs: 150 },
-  // "worse": subtle — the odd inaccuracy, not a handicap match.
+  // "worse": subtle, the odd inaccuracy, not a handicap match.
   1950: { blunderChance: 0.005, maxDepth: 6, topK: 2, temperatureCp: 45, evalNoiseCp: 18 },
   2000: { blunderChance: 0.005, maxDepth: 7, topK: 2, temperatureCp: 35, evalNoiseCp: 14 },
   2050: { blunderChance: 0.005, maxDepth: 8, topK: 2, temperatureCp: 25, evalNoiseCp: 10 },
@@ -377,7 +408,7 @@ export type HousePersona = {
 // tier is derived from its own name hash against this table
 // (houseSkillForName), so it is stable forever and adding names later never
 // reshuffles anyone else. Every tuple in PERSONA_DEFS below carries the tier
-// this table produces, and scripts/audit-house-bots.ts asserts that agreement —
+// this table produces, and scripts/audit-house-bots.ts asserts that agreement,
 // so the declared numbers can never quietly drift from the curve.
 export const HOUSE_SKILL_WEIGHTS: ReadonlyArray<readonly [HouseSkill, number]> = [
   [800, 11], [900, 9], [1050, 9], [1200, 9], [1350, 8], [1450, 8], [1550, 8],
@@ -428,8 +459,8 @@ const PERSONA_DEFS: Array<[name: string, skill: HouseSkill]> = [
   ["riptide", 1200],
   ["KINGSLAYER", 1200],
   // 2100-2200
-  // (Three of this band's original handles read as obvious joke names —
-  // "Stickygamer123", "ilovewhitestickystuff", "ilovemysister" — and were
+  // (Three of this band's original handles read as obvious joke names,
+  // "Stickygamer123", "ilovewhitestickystuff", "ilovemysister", and were
   // rewritten to realistic chess-site handles. New names mean new hp_ user
   // ids, so worker.ts's houseSeededKey was bumped to v4; the old accounts
   // stay orphaned in the DB, harmless, same as the v3 renames.)
@@ -641,7 +672,7 @@ const PERSONA_DEFS: Array<[name: string, skill: HouseSkill]> = [
 // same varied register the legacy roster uses (name+number combos, opening
 // references, lowercase phrases, the occasional underscore) so the wave reads
 // like any other slice of the player base. Their displayed rating tracks
-// their tier directly (no legacy uplift stack — see houseSeedBase). Exactly
+// their tier directly (no legacy uplift stack, see houseSeedBase). Exactly
 // the even-index half (150 of 300) carries a short casual bio (EXPANSION_BIOS
 // below, one unique line each); the odd-index half stays blank, like real
 // users who never bothered. New names mean new hp_ ids: worker.ts's
@@ -1680,7 +1711,7 @@ function personaAvatar(name: string): string {
   );
 }
 
-// Short, generic, SFW blurbs — the kind a real player might jot on their profile.
+// Short, generic, SFW blurbs, the kind a real player might jot on their profile.
 // Deliberately name-agnostic (assigned by hash), so any bio fits any persona.
 // Roughly half the roster gets one (personaBio); the rest stay blank, like real
 // users where some wrote something and some never bothered. A moderator's bio
@@ -1880,7 +1911,7 @@ const HOUSE_BY_ID = new Map(HOUSE_ROSTER.map((p) => [p.userId, p]));
 
 // ---------------------------------------------------------------------------
 // Per-persona style. Two bots on the same skill tier should not play (or pace)
-// identically: each persona derives a stable style from its name — think tempo,
+// identically: each persona derives a stable style from its name, think tempo,
 // how often it fires a held buff, how willing it is to bank a draft, and an
 // aggression/risk lean that jitters the search's move-quality knobs. All
 // deterministic (name-hashed), so a persona plays the same "personality" every
@@ -1906,6 +1937,16 @@ export type HouseStyle = {
   /** Preferred reply to 1.e4 / 1.d4 as Black (UCI), tried when legal. */
   openingBlackVsE4: string;
   openingBlackVsD4: string;
+  // Traits added 2026-09-23 (slice HB). Each has its own hash salt, so every
+  // trait above keeps exactly the value it always had (asserted for all 900
+  // personas by scripts/test-house-policy.ts).
+  /** 0..1: how long this persona plays on in a lost position before it
+   * resigns. See houseResignDecision. */
+  resolve: number;
+  /** 0..1: how readily it takes a draw in a level position. */
+  drawAppetite: number;
+  /** 0.5..0.85: how often it says yes to a rematch. */
+  rematchAppetite: number;
 };
 
 const OPENING_WHITE = ["e2e4", "d2d4", "c2c4", "g1f3", "b2b3", "f2f4", "g2g3", "b1c3"];
@@ -1923,11 +1964,14 @@ export function houseStyle(persona: HousePersona): HouseStyle {
     openingWhite: OPENING_WHITE[h("openw", OPENING_WHITE.length)],
     openingBlackVsE4: OPENING_BLACK_E4[h("openbe", OPENING_BLACK_E4.length)],
     openingBlackVsD4: OPENING_BLACK_D4[h("openbd", OPENING_BLACK_D4.length)],
+    resolve: h("resolve", 101) / 100, // 0..1
+    drawAppetite: h("drawish", 101) / 100, // 0..1
+    rematchAppetite: 0.5 + h("rematch", 36) / 100, // 0.5..0.85
   };
 }
 
 /** Apply a persona's style to a resolved profile: aggressive personas search a
- * touch hotter (more temperature — sharper, riskier picks), cautious ones a
+ * touch hotter (more temperature, sharper, riskier picks), cautious ones a
  * touch colder, plus a small stable eval-noise jitter so same-tier personas
  * don't play move-for-move identical chess. Deterministic per persona; bounded
  * so it never leaves the sane clamp ranges. */
@@ -1935,6 +1979,12 @@ export function applyPersonaStyle(
   persona: HousePersona,
   profile: ResolvedSkillProfile,
 ): ResolvedSkillProfile {
+  // Argmax tiers (topK 1, no temperature, no noise) stay argmax. A jitter here
+  // used to switch them onto the full-window sampling search, which completes
+  // about a ply less at the same budget, so every styled 1350+ persona played
+  // weaker than its own tier. Their variety now comes from the opening
+  // repertoire (houseBookMove), which costs no search at all.
+  if (profile.topK <= 1 && profile.temperatureCp <= 0 && profile.evalNoiseCp <= 0) return profile;
   const style = houseStyle(persona);
   const tempJitter = Math.round((style.aggression - 0.5) * 60); // -30..+30
   const noiseJitter = nameHash(persona.name + "|noise") % 13; // 0..12
@@ -1947,7 +1997,7 @@ export function applyPersonaStyle(
 
 // House-bot presence has TWO tiers, both drawn as a ROTATING, DAY-VARYING window
 // of the full roster (same day offset, so the smaller set is always a
-// prefix of the larger — no persona is "playing" without also being "online"):
+// prefix of the larger, no persona is "playing" without also being "online"):
 //   • ACTIVE: the bots that actually seek, get picked up, and play filler.
 //     The moderator does not thin this set; lobby load is tuned via the
 //     concurrent house-GAMES target instead (HOUSE_GAMES_* / house_games).
@@ -1961,8 +2011,8 @@ export function applyPersonaStyle(
 // With the 2026-07 waves the roster is ~900 deep, and marking all of them
 // online at once would read as absurd (and be one). The ACTIVE window (bots
 // that seek / get picked up / play filler) breathes daily between 260 and 380
-// — comfortably above the seat budget the filler-games cap needs (2 seats x
-// HOUSE_GAMES_MAX = 280) plus pickup headroom — and the presence LIST shows at
+// comfortably above the seat budget the filler-games cap needs (2 seats x
+// HOUSE_GAMES_MAX = 280) plus pickup headroom, and the presence LIST shows at
 // most HOUSE_PRESENCE_LIST_MAX at a time. Both windows rotate daily
 // (houseWindowStart), so every persona cycles through availability over time:
 // a believable "some regulars are on tonight, some aren't" schedule.
@@ -2034,7 +2084,7 @@ export function dailyHouseCount(dayIndex: number): number {
 
 // The rotating window start for a day. Shared by the active and online windows so
 // the active set is always a prefix of the online set. The step is coprime with a
-// 210-deep roster (see HOUSE_WINDOW_STEP), so all offsets are visited over time —
+// 210-deep roster (see HOUSE_WINDOW_STEP), so all offsets are visited over time,
 // which is what guarantees EVERY persona rotates into the active window (and so
 // becomes eligible for filler games) rather than a fixed subset always playing.
 export const HOUSE_WINDOW_STEP = 31;
@@ -2063,7 +2113,7 @@ export function activeHouseRoster(count: number, dayIndex = 0): HousePersona[] {
 
 /** The ONLINE-presence personas for a day: the active window PLUS extra idle bots,
  * up to HOUSE_PRESENCE_LIST_MAX, sharing the same day offset so the active set is
- * a prefix. Used only for the lobby "online" LIST — the extra ones never
+ * a prefix. Used only for the lobby "online" LIST, the extra ones never
  * seek/play, and the shown COUNT comes from houseOnlineCount(), not from the
  * length of this list. */
 export function onlineHouseRoster(dayIndex = 0): HousePersona[] {
@@ -2079,7 +2129,7 @@ export function isHouseUserId(id: string | null | undefined): boolean {
 // (house_identity_overrides, migrations/0025 + 0028's bio column) and edited
 // from /mod/house by any moderator or admin.
 // Resolution is always `override ?? default`: a NULL column (or a missing row)
-// falls through to the baked persona constant (empty for bio — the roster no
+// falls through to the baked persona constant (empty for bio, the roster no
 // longer bakes a bio). The save route also writes the persona's users row, so
 // every surface that reads identity from the database (profiles, leaderboard,
 // lobby online list, seat attach) picks an edit up without a deploy; these
@@ -2130,7 +2180,7 @@ export async function loadHouseIdentityOverrides(
 }
 
 /** A persona's effective display identity: override ?? baked default. Bio falls
- * back to the persona's baked blurb (personaBio — set for ~45% of the roster,
+ * back to the persona's baked blurb (personaBio, set for ~45% of the roster,
  * null for the rest) when no staff override exists. */
 export function houseIdentity(
   persona: HousePersona,
@@ -2184,8 +2234,8 @@ export function pickHouseBotByDifficulty(
 // therefore biased toward the personas with the FEWEST games played
 // (weight ~ 1/(1+games)): a bot that is behind is picked more often, so counts
 // converge over time and no bot lingers at zero. Rotation of the daily active
-// window (houseWindowStart) is what eventually brings EVERY persona — including
-// ones outside today's window — into the free pool this picks from.
+// window (houseWindowStart) is what eventually brings EVERY persona, including
+// ones outside today's window, into the free pool this picks from.
 // ---------------------------------------------------------------------------
 
 // The second seat is kept within this many skill points of the first so a
@@ -2218,7 +2268,7 @@ function weightedFewestGamesIndex(
 /** Pick two DISTINCT personas for a bot-vs-bot filler game, both weighted toward
  * the fewest games played so games spread evenly across the roster over time,
  * with the second seat kept within a plausible skill band (HOUSE_FILLER_SKILL_
- * WINDOW) of the first. Pure — the caller supplies the free pool, a games lookup,
+ * WINDOW) of the first. Pure, the caller supplies the free pool, a games lookup,
  * and the RNG. Returns null when fewer than two personas are free. */
 export function pickHouseFillerPair(
   free: readonly HousePersona[],
@@ -2254,7 +2304,7 @@ function houseSeedBase(persona: HousePersona): number {
 /** A bot's Nerf and Buff ratings differ by up to ~100 (like a real player who is
  * stronger at one mode): a stable 0..50 spread applied +/- around the base, with a
  * per-persona direction, so the two modes sit symmetric about houseSeedBase and
- * never more than 100 apart. Deterministic — re-derived identically on every sync. */
+ * never more than 100 apart. Deterministic, re-derived identically on every sync. */
 export function houseSeedRatingForMode(persona: HousePersona, mode: DraftMode): number {
   const spread = nameHash(persona.name + "|spread") % 51; // 0..50
   const buffHigher = nameHash(persona.name + "|dir") % 2 === 0;
@@ -2269,7 +2319,7 @@ export function houseSeedRating(persona: HousePersona): number {
 }
 
 /** D1 allows at most 100 bound parameters per query, and the roster is 210
- * deep — so any `IN (...)` bound over the FULL roster always throws, and since
+ * deep, so any `IN (...)` bound over the FULL roster always throws, and since
  * every such call site catches defensively, the failure is silent: names fall
  * back to the baked persona constants and ratings to the seeds (the reported
  * "renamed a bot / rating moved, but the lobby's online list never updates").
@@ -2299,7 +2349,7 @@ async function batchInChunks(
 
 // House accounts seed as SETTLED ratings: RD 60 (a lichess-like floor for an
 // active regular; the human floor is RD_MIN 45) and volatility 0.06. They are
-// established residents of the ladder, not provisional accounts — a settled RD
+// established residents of the ladder, not provisional accounts, a settled RD
 // keeps their seeded numbers (and the roster's spread) stable instead of
 // letting the first few games fling them hundreds of points, and keeps a
 // provisional "?" off every bot profile. Never seed at or above
@@ -2320,7 +2370,7 @@ export async function ensureHouseUsers(db: D1Database): Promise<void> {
   const overrides = await loadHouseIdentityOverrides(db);
   const statements = HOUSE_ROSTER.flatMap((persona) => {
     const override = overrides.get(persona.userId);
-    // A hand-set rating override (rare here — the account usually predates any
+    // A hand-set rating override (rare here, the account usually predates any
     // edit) wins over the seed, so a rating saved before the row existed still
     // lands, mirroring how the identity override is applied.
     const base = override?.rating ?? houseSeedRating(persona);
@@ -2333,7 +2383,7 @@ export async function ensureHouseUsers(db: D1Database): Promise<void> {
         )
         .bind(persona.userId, identity.name, identity.name.toLowerCase(), "unusable", now, base, identity.avatar, identity.bio),
       // Nerf and Buff seed at DIFFERENT numbers (houseSeedRatingForMode), so a bot
-      // reads like a real player who is stronger in one mode than the other — but
+      // reads like a real player who is stronger in one mode than the other, but
       // a hand-set override collapses both modes to that one number.
       ...(["nerf", "buff"] as const).map((mode) => {
         const r = override?.rating ?? houseSeedRatingForMode(persona, mode);
@@ -2349,7 +2399,7 @@ export async function ensureHouseUsers(db: D1Database): Promise<void> {
   await batchInChunks(db, statements);
 }
 
-/** The number of personas in the current roster — the target account count. */
+/** The number of personas in the current roster, the target account count. */
 export const HOUSE_ROSTER_SIZE = HOUSE_ROSTER.length;
 
 /** How many of the CURRENT roster's accounts already exist in the users table.
@@ -2358,7 +2408,7 @@ export const HOUSE_ROSTER_SIZE = HOUSE_ROSTER.length;
  * cheap COUNT; the id list is the bounded roster size. Used to make seeding
  * self-healing: if this is below HOUSE_ROSTER_SIZE, personas are missing accounts
  * (a freshly grown roster, or a partial/failed prior seed) and ensureHouseUsers
- * must run to create them — the fix for "house bots with no account (ghosts)". */
+ * must run to create them, the fix for "house bots with no account (ghosts)". */
 export async function countSeededHouseUsers(db: D1Database): Promise<number> {
   try {
     // Chunked: the 210-id roster exceeds D1's bound-parameter cap in one IN().
@@ -2405,7 +2455,7 @@ export async function syncHouseRatings(db: D1Database): Promise<void> {
       // With a bio (staff override or the baked blurb), write it; otherwise clear
       // any leftover location-as-bio (older seed) and leave a real bio alone.
       // rd = MIN(rd, seed) settles any bot still carrying a wide seeded/legacy
-      // deviation (older deployments seeded RD 150 — provisional!) without
+      // deviation (older deployments seeded RD 150, provisional!) without
       // undoing a LOWER rd a bot earned by actually playing.
       identity.bio !== null
         ? db
@@ -2418,7 +2468,7 @@ export async function syncHouseRatings(db: D1Database): Promise<void> {
               `UPDATE users SET rating = ?, rd = MIN(rd, ${HOUSE_SEED_RD}), avatar = ?, bio = CASE WHEN bio = ? THEN NULL ELSE bio END WHERE id = ?`,
             )
             .bind(base, identity.avatar, persona.location, persona.userId),
-      // Re-point each mode bucket at its own per-mode number — or the hand-set
+      // Re-point each mode bucket at its own per-mode number, or the hand-set
       // override, which collapses both modes to one number (peak only ratchets up).
       ...(["nerf", "buff"] as const).map((mode) => {
         const r = override?.rating ?? houseSeedRatingForMode(persona, mode);
@@ -2434,7 +2484,7 @@ export async function syncHouseRatings(db: D1Database): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// The "OG NERFCHESS USERS" club — a big veteran club whose membership is a
+// The "OG NERFCHESS USERS" club, a big veteran club whose membership is a
 // large share of the house roster, so the clubs directory has one obviously
 // large, established club. Seeded idempotently (INSERT OR IGNORE) into the same
 // clubs/club_members tables a real club uses (migrations/0005), so it renders,
@@ -2442,7 +2492,7 @@ export async function syncHouseRatings(db: D1Database): Promise<void> {
 // in worker.ts behind a SELF-HEALING count (countOgClubMembers < expected), not
 // a one-shot key: a one-shot key that got set after a partial/empty seed (club
 // row created, membership never landed, or members referenced not-yet-created
-// ghost accounts) sticks forever and leaves the club permanently empty — the
+// ghost accounts) sticks forever and leaves the club permanently empty, the
 // exact failure the house *accounts* had before the countSeededHouseUsers fix.
 // Runs after ensureHouseUsers has guaranteed every persona's users row exists
 // (the FKs on clubs.owner_user_id and club_members.user_id require it).
@@ -2460,7 +2510,7 @@ const OG_CLUB_ICON = "Crown|gold";
  * the roster (plus the owner), so it reads as a large, long-established club.
  * Stable across deploys (name-hashed), and always includes the owner. */
 export function ogClubMembers(): { owner: HousePersona; members: HousePersona[] } {
-  // Owner: the highest advertised-rating persona (ties broken by name) — a
+  // Owner: the highest advertised-rating persona (ties broken by name), a
   // fitting "founder" for the veterans' club, and always present in the roster.
   const owner = [...HOUSE_ROSTER].sort(
     (a, b) => houseSeedRating(b) - houseSeedRating(a) || (a.name < b.name ? -1 : 1),
@@ -2474,19 +2524,19 @@ export function ogClubMembers(): { owner: HousePersona; members: HousePersona[] 
 /** Create (or ADOPT) the OG club and enroll its (large) house-bot membership.
  *
  * The target club is resolved by SLUG, not by our hardcoded id. `clubs.slug` is
- * NOT NULL UNIQUE (migrations/0005), so at most one club can hold OG_CLUB_SLUG —
+ * NOT NULL UNIQUE (migrations/0005), so at most one club can hold OG_CLUB_SLUG,
  * and that club may be one a REAL USER created with this exact slug before the
  * seed ever ran. When that happens, our own `INSERT OR IGNORE` keyed by
  * OG_CLUB_ID conflicts on the slug and is silently ignored, our id never gets a
- * row, and the old `WHERE id = OG_CLUB_ID` guard bailed — leaving the named
+ * row, and the old `WHERE id = OG_CLUB_ID` guard bailed, leaving the named
  * veterans' club permanently bot-less (the live bug). So instead:
  *   • If a club already holds the slug, ADOPT it: enroll the house personas into
  *     THAT club id as plain 'member' rows. We NEVER rewrite its owner, name,
- *     description, or icon — a user-made club keeps its own identity; adoption
+ *     description, or icon, a user-made club keeps its own identity; adoption
  *     only ADDS bot members. The existing owner's row is left untouched (and we
  *     skip inserting one for it, so it is never duplicated or downgraded).
  *   • If NO club holds the slug, create ours (id=OG_CLUB_ID, owner=apexpawn) and
- *     seed apexpawn as 'owner' plus the rest as 'member' — the original behavior.
+ *     seed apexpawn as 'owner' plus the rest as 'member', the original behavior.
  *
  * Idempotent: INSERT OR IGNORE throughout, so re-running never duplicates rows,
  * disturbs a membership a user joined, or overwrites a club's identity. Safe to
@@ -2524,7 +2574,7 @@ export async function ensureOgClub(db: D1Database): Promise<void> {
   const clubId = target.id;
   const clubOwnerId = target.owner_user_id;
   const statements = members
-    // Never write a membership row for the adopted club's existing owner — its
+    // Never write a membership row for the adopted club's existing owner, its
     // own owner row stays as-is (INSERT OR IGNORE would ignore a duplicate PK,
     // but skipping makes "no downgrade / no duplicate" explicit).
     .filter((p) => isOurClub || p.userId !== clubOwnerId)
@@ -2539,11 +2589,11 @@ export async function ensureOgClub(db: D1Database): Promise<void> {
 }
 
 /** How many members the OG club would actually render: club_members rows whose
- * user_id resolves to a LIVE users row — the same INNER JOIN the club detail
+ * user_id resolves to a LIVE users row, the same INNER JOIN the club detail
  * route uses, so this counts exactly what the page would show. The club is
  * resolved by SLUG first (mirroring the detail route and ensureOgClub), so this
- * measures whichever club holds OG_CLUB_SLUG — including a user-made club we
- * ADOPT — and therefore converges: once the bots are enrolled into that club the
+ * measures whichever club holds OG_CLUB_SLUG, including a user-made club we
+ * ADOPT, and therefore converges: once the bots are enrolled into that club the
  * count exceeds the expected membership and the self-healing gate stops re-
  * running. When NO club holds the slug yet, returns 0 so the seed runs and
  * creates it. Used to make OG-club seeding self-healing (mirrors
@@ -2797,8 +2847,8 @@ export const HOUSE_FILLER_SPAWN_BUFFER = 10;
 // ---------------------------------------------------------------------------
 // Moderator "Active games" target (app_settings.house_games).
 //
-// How many house-vs-house FILLER games to keep live at once — the games that
-// make the Watch tab / lobby look busy — pinned from the /mod slider in
+// How many house-vs-house FILLER games to keep live at once, the games that
+// make the Watch tab / lobby look busy, pinned from the /mod slider in
 // [HOUSE_GAMES_MIN, HOUSE_GAMES_MAX]. The game-server DO reads it per tick
 // (houseGamesTarget, cached ~15s) and clamps it against the live seat budget
 // (2 bots per filler game) before spawning, so a pin can never oversubscribe the
@@ -2849,46 +2899,54 @@ export function houseFillerSpawnDelayMs(
 // Pacing: how long a house player "thinks" before an action lands.
 // ---------------------------------------------------------------------------
 
-/** Move pacing: uniform 1-4s, with roughly 1 move in 10 tanking 6-10s. The
- * delay is clamped hard once the bot's own clock runs low so pacing can never
- * flag a bot that still has bank left.
+/** What the caller knows about the position and the clock when it asks for a
+ * think. Every field is optional: a caller that passes nothing gets pacing
+ * shaped by the time control and its own clock alone. */
+export type HouseThinkOptions = {
+  /** The game's increment, seconds. */
+  incrementSec?: number;
+  /** Wall time the search itself is expected to take after the think
+   * (houseExpectedSearchMs). Pacing gives way to it: the visible wait and the
+   * search together are what a human sees, and both come off the same clock. */
+  expectedSearchMs?: number;
+  /** 0-based count of this bot's own moves so far. The first five come fast,
+   * the way anyone plays the opening they know. */
+  ownMoveIndex?: number;
+  /** King-safe moves available (snapContext with { kingSafe: true }). One means
+   * the move is forced, and nobody tanks on a forced move. */
+  kingSafeMoves?: number;
+  /** Legal captures available to the bot: a cheap proxy for how sharp the
+   * position is, so the occasional long think lands where there is something
+   * to calculate. */
+  capturesAvailable?: number;
+};
+
+/** The pre-2026-09-23 pacing, kept byte for byte for filler games
+ * (thinkMultiplier > 1). The owner froze the TV and lobby filler, its pacing
+ * included, so bot-vs-bot games must draw exactly the same delays from the same
+ * RNG draws as before (scripts/sim-house-clock.ts checks 10k seeds against an
+ * embedded copy). Human games use houseThinkMs's shaped pacing below.
  *
- * `thinkMultiplier` (default 1) slows the BASE think for bot-vs-bot filler games
- * (worker.ts houseFillerThinkMultiplier), keeping 40+ of them affordable on the
- * single-threaded DO. It is applied to the base delay HERE, BEFORE the low-clock
- * clamps below, so a slowed filler bot is still bounded by its own remaining
- * clock and cannot overthink itself into a premature flag. (The multiply used to
- * live at the call site, AFTER the clamp, so it multiplied the clamp too -- a
- * filler bot's "safe" move could reach ~1.6x its remaining clock and it flagged
- * out within a handful of moves, collapsing steady-state concurrency far below
- * the floor.) */
-export function houseThinkMs(
+ * `thinkMultiplier` slows the BASE think for bot-vs-bot filler games, keeping
+ * 40+ of them affordable. It is applied BEFORE the low-clock clamps, so a slowed
+ * filler bot is still bounded by its own remaining clock and cannot overthink
+ * itself into a premature flag (it used to be applied after the clamp, which let
+ * a filler move reach about 1.6x the remaining clock). */
+function houseFillerThinkMs(
   random: (max: number) => number,
   myClockMs: number,
   timeSec: number,
-  thinkMultiplier = 1,
-  /** Persona tempo (houseStyle().tempo, 0.75-1.35): a stable per-bot pacing
-   * lean, applied with the filler multiplier BEFORE the low-clock clamps so a
-   * deliberate persona still can never overthink itself into a flag. */
-  tempo = 1,
+  thinkMultiplier: number,
+  tempo: number,
 ): number {
   const hasClock = timeSec > 0;
-  // Fast time controls (1+0, 2+1, 3+0 and the like, base <= 3 min): the bot
-  // answers snappily in 1-3s so a bullet/blitz game against a bot feels live and
-  // never drags. Slower controls keep the more humanlike, occasionally-longer
-  // think below.
   const fast = hasClock && timeSec <= 180;
   let delay: number;
   if (fast) delay = 1000 + random(2001); // 1-3s
   else if (random(10) < 9) delay = 1000 + random(3001); // 1-4s
   else delay = 6000 + random(4001); // 6-10s
-
-  // Filler pacing slows the base think, and the persona tempo leans it, but
-  // both are still bounded by the clock clamps below, so neither can cause a
-  // premature flag.
   if (thinkMultiplier > 1) delay = Math.round(delay * thinkMultiplier);
   if (tempo !== 1) delay = Math.round(delay * Math.max(0.5, Math.min(1.5, tempo)));
-
   if (hasClock) {
     if (myClockMs < 10_000) delay = Math.min(delay, 300 + random(501));
     else if (myClockMs < 25_000) delay = Math.min(delay, 700 + random(801));
@@ -2897,28 +2955,97 @@ export function houseThinkMs(
   return delay;
 }
 
+/** Shortest visible wait we ever ask for. The DO alarm lands no sooner than
+ * about 250-300ms anyway, so asking for less than this buys nothing. */
+const HOUSE_MIN_THINK_MS = 150;
+
+/**
+ * How long a house player waits before its move lands, facing a human.
+ *
+ * Shaped the way a person spends a clock, not as a flat 1-4 seconds:
+ *
+ *   - By time control, using the estimated game length (base + 40 x increment,
+ *     the way rating pools classify controls): 0.3-1.0s in 1+0, 0.4-1.4s in 2+1
+ *     and other bullet, 0.7-2.2s in 3+0 and 3+2, the familiar 1-4s from 5+0 up.
+ *     The 6-10 second tank only exists from 5+0 up, never in bullet or 3-minute
+ *     blitz, and it is weighted toward sharp positions (captures on the board).
+ *   - The first five own moves come in 0.3-1.1s: an opening is known, not
+ *     calculated. A forced move (one king-safe move) comes in 0.2-0.7s and is
+ *     never a long think.
+ *   - The wait gives way to the search: expectedSearchMs is subtracted, because
+ *     the human sees the two added together and both come off the bot's clock.
+ *   - The clock caps it: never more than a sixtieth of the remaining clock (a
+ *     25th for a long think), so a bot that is low speeds up the way a person
+ *     does instead of waiting its way into a flag. This is what the budget in
+ *     houseMoveBudgetMs assumes the think costs.
+ *
+ * Filler (`thinkMultiplier > 1`) keeps the exact pre-2026-09-23 function, see
+ * houseFillerThinkMs. The persona `tempo` (houseStyle().tempo, 0.75-1.35) leans
+ * every think the same way it always did.
+ */
+export function houseThinkMs(
+  random: (max: number) => number,
+  myClockMs: number,
+  timeSec: number,
+  thinkMultiplier = 1,
+  /** Persona tempo (houseStyle().tempo, 0.75-1.35): a stable per-bot pacing
+   * lean, applied BEFORE the clock caps so a deliberate persona still can never
+   * overthink itself into a flag. */
+  tempo = 1,
+  opts: HouseThinkOptions = {},
+): number {
+  if (thinkMultiplier > 1) return houseFillerThinkMs(random, myClockMs, timeSec, thinkMultiplier, tempo);
+  const hasClock = timeSec > 0;
+  const incSec = Math.max(0, opts.incrementSec ?? 0);
+  const estimatedSec = hasClock ? timeSec + 40 * incSec : Infinity;
+  const forced = opts.kingSafeMoves === 1;
+  const opening = opts.ownMoveIndex != null && opts.ownMoveIndex < 5;
+
+  let delay: number;
+  let long = false;
+  if (forced) delay = 200 + random(501); // 0.2-0.7s: nothing to think about
+  else if (opening) delay = 300 + random(801); // 0.3-1.1s
+  else if (estimatedSec < 120) delay = 300 + random(701); // 1+0: 0.3-1.0s
+  else if (estimatedSec < 180) delay = 400 + random(1001); // 2+1, 2+0: 0.4-1.4s
+  else if (estimatedSec < 300) delay = 700 + random(1501); // 3+0, 3+2: 0.7-2.2s
+  else {
+    // 5+0 and slower, and untimed games: 1-4s, with a long think now and then,
+    // more often when there is something to calculate.
+    const caps = opts.capturesAvailable;
+    const longPer1000 = caps == null ? 100 : caps === 0 ? 50 : caps === 1 ? 100 : 160;
+    if (random(1000) < longPer1000) {
+      long = true;
+      delay = 6000 + random(4001);
+    } else delay = 1000 + random(3001);
+  }
+
+  if (tempo !== 1) delay = Math.round(delay * Math.max(0.5, Math.min(1.5, tempo)));
+  if (opts.expectedSearchMs && opts.expectedSearchMs > 0) delay -= opts.expectedSearchMs;
+  if (hasClock) delay = Math.min(delay, Math.floor(myClockMs / (long ? 25 : 60)));
+  return Math.max(HOUSE_MIN_THINK_MS, Math.round(delay));
+}
+
 /**
  * The "I had that premoved" reply: a near-instant 120-350ms delay instead of the
  * normal think, played SOMETIMES and only when there was nothing to think about.
  *
  * Real players queue premoves, and the tell is unmistakable: the recapture comes
- * back before you have let go of the mouse. House bots never did this — every
- * move took at least a second, which is a giveaway in the other direction, and
- * the one place it reads worst is a trade, where a human answers instantly and a
- * bot sat there "thinking" about its only sensible move.
+ * back before you have let go of the mouse. The one place a slow bot reads worst
+ * is a trade, where a human answers instantly and the bot sat there "thinking"
+ * about its only sensible move.
  *
  * Returns a snap delay, or null to pace normally. Conditions, all required:
- *   - the opponent's last move was a CAPTURE on a square this bot can recapture
- *     (or the bot has exactly one legal move, which is the other case a human
- *     always premoves), and
+ *   - the opponent's last move was a CAPTURE on a square this bot can recapture,
+ *     or the move is forced: exactly one king-safe move (`kingSafeCount`, from
+ *     snapContext with { kingSafe: true }). `legalCount === 1` is kept for old
+ *     callers but essentially never happens, because legal moves are
+ *     pseudo-legal in this variant (a king may walk into capture);
  *   - the persona's own appetite roll comes up. Appetite is 0.15-0.50 per
  *     persona, so the same bot is consistently snappy or consistently
- *     deliberate, and no bot snaps EVERY time — a bot that always premoved the
- *     recapture would be as robotic as one that never did.
+ *     deliberate, and no bot snaps EVERY time.
  *
- * Deliberately NOT a strength change: the move still comes from the normal
- * search, with the same blunder roll. This only changes how long the bot waits
- * before playing it, so a snapped recapture can still be the wrong recapture.
+ * The delay only. Which move a snap plays is houseSnapMove (or, for callers
+ * that have not adopted it, the normal search).
  */
 export function houseSnapReplyMs(
   persona: HousePersona,
@@ -2928,11 +3055,14 @@ export function houseSnapReplyMs(
     capturedOn: number | null;
     /** Squares this bot could recapture on (the `to` of each of its legal captures). */
     myCaptureTargets: readonly number[];
-    /** How many legal moves this bot has. */
+    /** How many legal (pseudo-legal) moves this bot has. */
     legalCount: number;
+    /** How many of them keep the king safe. Present only when the caller asked
+     * snapContext for it; filler never does (its pacing is frozen). */
+    kingSafeCount?: number;
   },
 ): number | null {
-  const forced = opts.legalCount === 1;
+  const forced = opts.legalCount === 1 || opts.kingSafeCount === 1;
   const recapture =
     opts.capturedOn != null && opts.myCaptureTargets.includes(opts.capturedOn);
   if (!forced && !recapture) return null;
@@ -2949,23 +3079,30 @@ export function houseSnapReplyMs(
  * just captured, where, which squares this side could recapture on, and how many
  * legal moves it has.
  *
+ * With `{ kingSafe: true }` it also counts the king-safe moves (`kingSafeCount`),
+ * which is what makes the forced branch reachable. That costs one attack test
+ * per legal move, and it is opt-in on purpose: the arena calls this for TV
+ * filler, whose pacing the owner froze, so its answers must not change.
+ *
  * Kept beside houseSnapReplyMs (rather than duplicated in the DO and the arena)
- * so both callers ask the question the same way. Costs one legal-move
- * generation, so only call it where the position is already in hand.
+ * so both callers ask the question the same way.
  */
 export function snapContext(
   game: NerfGame,
   me: Color,
-): { capturedOn: number | null; myCaptureTargets: number[]; legalCount: number } {
+  options: { kingSafe?: boolean } = {},
+): { capturedOn: number | null; myCaptureTargets: number[]; legalCount: number; kingSafeCount?: number } {
   const history = game.board.history;
   const last = history.length ? history[history.length - 1] : null;
   const capturedOn = last && last.color !== me && last.captured ? last.to : null;
   const mine = legalMoves(game);
-  return {
+  const ctx: { capturedOn: number | null; myCaptureTargets: number[]; legalCount: number; kingSafeCount?: number } = {
     capturedOn,
     myCaptureTargets: capturedOn == null ? [] : mine.filter((m) => m.captured).map((m) => m.to),
     legalCount: mine.length,
   };
+  if (options.kingSafe) ctx.kingSafeCount = mine.filter((m) => !leavesKingCapturable(game, m)).length;
+  return ctx;
 }
 
 /** Draft pacing: 2-8s before a pick lands, comfortably inside the 15s
@@ -2974,7 +3111,7 @@ export function houseDraftThinkMs(random: (max: number) => number): number {
   return 2000 + random(6001);
 }
 
-// House social responses — accepting a friend request or a direct challenge —
+// House social responses, accepting a friend request or a direct challenge,
 // land after a short, humanlike beat rather than instantly: a bot that friended
 // or accepted you the millisecond you asked would read as a machine. ~8-20s
 // (centered near ~14s), jittered so a burst of requests never resolves in
@@ -2985,7 +3122,7 @@ export const HOUSE_SOCIAL_MAX_DELAY_MS = 20_000;
 /** The accept delay for one bot social action, ~8-20s, derived DETERMINISTICALLY
  * from a stable per-request seed (e.g. the request's ids + created_at). The
  * server polls pending requests rather than holding a timer, so the delay must
- * be the same on every tick — a fresh random each poll would keep moving the
+ * be the same on every tick, a fresh random each poll would keep moving the
  * finish line. Compare `now - requestedAt >= houseSocialDelayMs(seed)`. */
 export function houseSocialDelayMs(seed: string): number {
   const span = HOUSE_SOCIAL_MAX_DELAY_MS - HOUSE_SOCIAL_MIN_DELAY_MS + 1;
@@ -2996,28 +3133,430 @@ export function houseSocialDelayMs(seed: string): number {
 // Move selection.
 // ---------------------------------------------------------------------------
 
-/** Search budget for one house move: the resolved profile's budget, shrunk
- * when the clock runs low, and never above `ceilingMs` (default: the DO-safe
- * ceiling — pass a higher one only where the search can't stall a shared
- * thread, i.e. the OCI engine service). */
+/** The remote engine service's own ceiling (engine-service/server.ts
+ * REMOTE_SEARCH_CEILING_MS), the most any house search is ever given. */
+export const HOUSE_REMOTE_CEILING_MS = 1800;
+/** A planning estimate of the remote engine's round trip (worker to the OCI box
+ * and back, measured at about 500ms over the public path). Only used to budget:
+ * nothing waits on it. */
+export const HOUSE_REMOTE_RTT_ESTIMATE_MS = 500;
+/** How many more moves the budget plans for. A human with the clock in hand
+ * spends it as if the game had about thirty moves left. */
+const HOUSE_MOVES_TO_GO = 30;
+/** The smallest search a timed move gets (40ms once under 5s). Replaces the
+ * old flat 25ms under 30s, which turned every tier into a 1300 for most of a
+ * bullet game while leaving the visible think untouched. */
+const HOUSE_BUDGET_FLOOR_MS = 60;
+const HOUSE_BUDGET_FLOOR_LOW_MS = 40;
+
+/**
+ * Search budget for one house move, graded from the clock.
+ *
+ * Untimed: the tier's budget, capped at `ceilingMs`. Timed: what a player would
+ * spend on this move, remaining / 30 plus 0.7 x the increment, minus what the
+ * move costs besides the search (the visible think, which houseThinkMs caps at a
+ * sixtieth of the clock and the DO alarm floors at about 275ms, and the round
+ * trip when `ceilingMs` is above the DO ceiling, i.e. the remote engine), then
+ * capped by the tier's budget and the ceiling, and floored at 60ms (40ms under
+ * 5s). A bot low on time plays faster and a little weaker, gradually, instead
+ * of falling off a 25ms cliff at 30 seconds.
+ *
+ * `ceilingMs` defaults to the DO-safe ceiling; only the engine service passes a
+ * higher one, since search there costs the DO nothing. `incrementSec` is
+ * optional (older callers omit it and budget as if there were none, which only
+ * errs on the side of time).
+ */
 export function houseMoveBudgetMs(
   budgetMs: number,
   remainingClockMs?: number,
   ceilingMs: number = HOUSE_SEARCH_CEILING_MS,
+  incrementSec?: number,
 ): number {
-  let budget = Math.min(budgetMs, ceilingMs);
-  if (remainingClockMs != null && remainingClockMs < 30_000) budget = Math.min(budget, 25);
-  return Math.max(10, budget);
+  const cap = Math.max(10, Math.min(budgetMs, ceilingMs));
+  if (remainingClockMs == null) return cap;
+  const remote = ceilingMs > HOUSE_SEARCH_CEILING_MS;
+  const inc = Math.max(0, incrementSec ?? 0) * 1000;
+  const think = Math.max(275, remainingClockMs / 60);
+  const share =
+    remainingClockMs / HOUSE_MOVES_TO_GO + 0.7 * inc - think - (remote ? HOUSE_REMOTE_RTT_ESTIMATE_MS : 0);
+  const floor = Math.min(cap, remainingClockMs < 5000 ? HOUSE_BUDGET_FLOOR_LOW_MS : HOUSE_BUDGET_FLOOR_MS);
+  return Math.round(Math.max(floor, Math.min(cap, share)));
 }
 
-/** Pick the house player's move. Strength comes from the resolved profile's
- * budget, blunder probability, and move-quality weakening (topK/temperature/
- * noise). Pass `profile` to use a moderator-resolved strength (the DO does, per
- * move); omit it and the baked profile for the tier is used, so every existing
- * caller (DO local fallback, arena service, sim script) is unchanged.
- * `ceilingMs` defaults to the DO-safe cap; only the OCI engine service passes a
- * higher one, since search there costs the DO nothing.
- * Returns null only when the position has no legal move at all. */
+/** Wall time the search for this move is expected to take after the think:
+ * the graded budget, plus the round trip on the remote path. What a caller
+ * passes to houseThinkMs as `expectedSearchMs` so the visible wait gives way to
+ * the search (REQUEST R2). */
+export function houseExpectedSearchMs(
+  profileBudgetMs: number,
+  remainingClockMs: number | undefined,
+  remote: boolean,
+  incrementSec?: number,
+): number {
+  return remote
+    ? HOUSE_REMOTE_RTT_ESTIMATE_MS +
+        houseMoveBudgetMs(profileBudgetMs, remainingClockMs, HOUSE_REMOTE_CEILING_MS, incrementSec)
+    : houseMoveBudgetMs(profileBudgetMs, remainingClockMs, HOUSE_SEARCH_CEILING_MS, incrementSec);
+}
+
+/** How long the worker should wait for a remote move searched with `budgetMs`:
+ * the search plus a second of network, never more than the worker's historical
+ * 3000ms. A flat 3000ms charged every small bullet search three seconds of the
+ * bot's clock whenever the box hung (REQUEST R7). */
+export function houseEngineTimeoutMs(budgetMs: number): number {
+  return Math.min(3000, Math.max(0, budgetMs) + 1000);
+}
+
+/** Options for pickHouseMove. All optional and additive. */
+export type HouseMoveOptions = {
+  /** Seeds the opening repertoire when no persona is known (the engine service
+   * derives one from the match seed and the side to move), so a human game on
+   * the remote engine does not replay one line for the whole band. */
+  varietySeed?: number;
+  /** The game's increment, seconds, for the graded budget. */
+  incrementSec?: number;
+  /** Search diagnostics, filled by the engine when the move comes from a
+   * search (depth, root moves, nodes, and scoreCp where the engine reports it).
+   * Left at depth 0 when the move came from the repertoire, a blunder or a
+   * forced reply. */
+  stats?: SearchStats;
+};
+
+// ---------------------------------------------------------------------------
+// King safety.
+// ---------------------------------------------------------------------------
+
+/** True when, after `move`, the opponent could capture the mover's king
+ * (buff-aware, the same test the move-risk warning uses). A move that captures
+ * the enemy king ends the game and is never a hang. */
+function leavesKingCapturable(game: NerfGame, move: Move): boolean {
+  if (move.captured === "k") return false;
+  const me = game.board.turn;
+  return gameInCheck({ ...game, board: makeMove(game.board, move) }, me);
+}
+
+/** The small, tier-scaled chance that a beginner tier misses a check: when it
+ * fires and the bot is in check, the bot plays a check-blind move (it grabs
+ * material as if the check were not there). Every other tier, and every other
+ * move, is floored: no house move leaves the king capturable while a move that
+ * does not exists. An 800 that never missed a check would not be an 800 in a
+ * variant where the king is simply taken; one that missed most of them (the
+ * measured 73% before this floor) lost in a dozen moves and felt broken. */
+const HOUSE_CHECK_LEAK: Partial<Record<HouseSkill, number>> = { 800: 0.07, 900: 0.045 };
+
+const CP: Record<PieceType, number> = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 };
+
+/**
+ * A static, search-free score of `move` for the mover, in centipawns: material
+ * after the move, minus the best capture the opponent then has (a capture of a
+ * defended piece is charged the attacker it costs them). One and a half plies
+ * of looking, the way a hurried player looks. Used for the floor's fallback
+ * choice and for the shape of a blunder, never as the main move choice.
+ */
+function staticReply(game: NerfGame, move: Move): { score: number; threat: number } {
+  const me = game.board.turn;
+  const next = makeMove(game.board, move);
+  let material = 0;
+  for (let sq = 0; sq < 64; sq++) {
+    const pc = next.pieces[sq];
+    if (!pc || pc.type === "k") continue;
+    material += pc.color === me ? CP[pc.type] : -CP[pc.type];
+  }
+  const defended = attackedBy(next, me);
+  let worst = 0;
+  for (const reply of generateMoves(next)) {
+    if (!reply.captured) continue;
+    if (reply.captured === "k") return { score: material - CP.k, threat: CP.k };
+    const gain = defended.has(reply.to) ? CP[reply.captured] - CP[reply.piece] : CP[reply.captured];
+    if (gain > worst) worst = gain;
+  }
+  return { score: material - worst, threat: worst };
+}
+
+function staticReplyScore(game: NerfGame, move: Move): number {
+  return staticReply(game, move).score;
+}
+
+/** The floor: if `move` hangs the king and another move does not, replace it
+ * with the best king-safe move by the static score. Rare on the search path
+ * (the search already refuses a king hang unless every line loses), the rule
+ * everywhere else. */
+function kingSafetyFloor(game: NerfGame, all: Move[], move: Move): Move {
+  if (!leavesKingCapturable(game, move)) return move;
+  let safe = all.filter((m) => !leavesKingCapturable(game, m));
+  if (!safe.length) return move;
+  const nerfSafe = safe.filter((m) => !triggersOwnNerfLoss(game, m));
+  if (nerfSafe.length) safe = nerfSafe;
+  let best = safe[0];
+  let bestScore = -Infinity;
+  for (const m of safe) {
+    const sc = staticReplyScore(game, m);
+    if (sc > bestScore) {
+      bestScore = sc;
+      best = m;
+    }
+  }
+  return best;
+}
+
+/** What a beginner plays when it has not noticed the check: the juiciest
+ * capture in reach, or else any move. Deliberately blind to the reply. */
+function checkBlindMove(game: NerfGame, all: Move[], random: (max: number) => number): Move {
+  const nerfSafe = all.filter((m) => !triggersOwnNerfLoss(game, m));
+  const pool = nerfSafe.length ? nerfSafe : all;
+  let best = pool[0];
+  let bestScore = -Infinity;
+  for (const m of pool) {
+    const sc = (m.captured ? CP[m.captured] : 0) + random(120);
+    if (sc > bestScore) {
+      bestScore = sc;
+      best = m;
+    }
+  }
+  return best;
+}
+
+// ---------------------------------------------------------------------------
+// Blunders.
+// ---------------------------------------------------------------------------
+
+/** The loss window of a human-shaped blunder by tier, in centipawns of static
+ * score: beginners drop anything up to a rook, club players a piece, strong
+ * players a pawn or a piece to a tactic they did not see. */
+function blunderWindowCp(skill: HouseSkill): [number, number] {
+  if (skill <= 1050) return [100, 600];
+  if (skill <= 1450) return [100, 450];
+  return [80, 350];
+}
+
+/**
+ * A human-shaped blunder: a move a hurried look would pass, that loses
+ * something real. Candidates are the king-safe, own-nerf-safe moves; each is
+ * scored by staticReplyScore, and the blunder is drawn from the moves that lose
+ * between the tier's window bounds against the best of them (a piece left en
+ * prise, a defended pawn grabbed with the wrong piece, a threat ignored). When
+ * no move falls in the window, it is a shallow sampled search instead: a depth-1
+ * top-4 pick, the inaccuracy of someone who only looked at captures.
+ *
+ * It replaced a uniformly random legal move, which when in check hung the king
+ * about 88% of the time and otherwise dropped queens as readily as pawns.
+ */
+function houseBlunderMove(
+  game: NerfGame,
+  all: Move[],
+  skill: HouseSkill,
+  random: (max: number) => number,
+): Move | null {
+  const cands = all.filter((m) => !leavesKingCapturable(game, m) && !triggersOwnNerfLoss(game, m));
+  if (cands.length < 2) return null;
+  const scored = cands.map((m) => ({ m, ...staticReply(game, m) }));
+  let best = -Infinity;
+  for (const x of scored) if (x.score > best) best = x.score;
+  const [lo, hi] = blunderWindowCp(skill);
+  // A blunder leaves something to take: the opponent's best capture after the
+  // move must itself be worth the window's lower bound. Merely passing up a
+  // free pawn is a missed chance, not a blunder, and a real search often finds
+  // it was not free at all.
+  const pool = scored.filter((x) => x.threat >= lo && best - x.score >= lo && best - x.score <= hi);
+  if (pool.length) return pool[random(pool.length)].m;
+  const shallow = pickAIMove(game, "medium", 20, {
+    params: { maxDepth: 1, extendedEval: false, topK: 4, temperatureCp: 120, sampleWindowCp: 300, evalNoiseCp: 60 },
+    random,
+  });
+  return shallow && !leavesKingCapturable(game, shallow) ? shallow : null;
+}
+
+// ---------------------------------------------------------------------------
+// Opening repertoire.
+// ---------------------------------------------------------------------------
+
+/**
+ * Sound, mainstream opening lines, from the start position, in UCI. A persona
+ * (or, with no persona, a variety seed) weights them its own way, so the house
+ * plays many different openings instead of the search's single favourite
+ * (before this, every 1350+ bot opened 1.Nc3 on the remote engine). Costs no
+ * search at all: a book move is played instantly, and the search takes over
+ * the moment the game leaves the book. Every line starts with one of the
+ * persona pet openings in houseStyle, so a persona's first move and its book
+ * agree.
+ */
+const HOUSE_BOOK: readonly string[] = [
+  // 1.e4 e5
+  "e2e4 e7e5 g1f3 b8c6 f1c4 f8c5 c2c3 g8f6 d2d3 d7d6 e1g1 e8g8",
+  "e2e4 e7e5 g1f3 b8c6 f1c4 g8f6 d2d3 f8e7 e1g1 e8g8",
+  "e2e4 e7e5 g1f3 b8c6 f1b5 a7a6 b5a4 g8f6 e1g1 f8e7 f1e1 b7b5",
+  "e2e4 e7e5 g1f3 b8c6 d2d4 e5d4 f3d4 g8f6 d4c6 b7c6 e4e5 d8e7",
+  "e2e4 e7e5 g1f3 b8c6 b1c3 g8f6 f1b5 f8b4 e1g1 e8g8",
+  "e2e4 e7e5 g1f3 g8f6 f3e5 d7d6 e5f3 f6e4 d2d4 d6d5",
+  "e2e4 e7e5 g1f3 d7d6 d2d4 g8f6 b1c3 b8d7",
+  "e2e4 e7e5 b1c3 g8f6 f2f4 d7d5 f4e5 f6e4 g1f3 f8e7",
+  // 1.e4 c5
+  "e2e4 c7c5 g1f3 d7d6 d2d4 c5d4 f3d4 g8f6 b1c3 a7a6 c1e3 e7e5",
+  "e2e4 c7c5 g1f3 d7d6 d2d4 c5d4 f3d4 g8f6 b1c3 g7g6 c1e3 f8g7",
+  "e2e4 c7c5 g1f3 e7e6 d2d4 c5d4 f3d4 b8c6 b1c3 d8c7",
+  "e2e4 c7c5 g1f3 b8c6 f1b5 g7g6 e1g1 f8g7",
+  "e2e4 c7c5 c2c3 g8f6 e4e5 f6d5 d2d4 c5d4 g1f3 b8c6",
+  "e2e4 c7c5 b1c3 b8c6 g2g3 g7g6 f1g2 f8g7 d2d3 d7d6",
+  // 1.e4 e6, c6, d5, d6, g6, Nc6
+  "e2e4 e7e6 d2d4 d7d5 e4e5 c7c5 c2c3 b8c6 g1f3 d8b6",
+  "e2e4 e7e6 d2d4 d7d5 b1c3 f8b4 e4e5 c7c5 a2a3 b4c3 b2c3",
+  "e2e4 e7e6 d2d4 d7d5 b1d2 g8f6 e4e5 f6d7 f1d3 c7c5",
+  "e2e4 c7c6 d2d4 d7d5 b1c3 d5e4 c3e4 c8f5 e4g3 f5g6 g1f3 b8d7",
+  "e2e4 c7c6 d2d4 d7d5 e4e5 c8f5 g1f3 e7e6 f1e2 c6c5",
+  "e2e4 c7c6 d2d4 d7d5 e4d5 c6d5 f1d3 b8c6 c2c3 g8f6",
+  "e2e4 d7d5 e4d5 d8d5 b1c3 d5a5 d2d4 g8f6 g1f3 c8f5",
+  "e2e4 d7d6 d2d4 g8f6 b1c3 g7g6 g1f3 f8g7 f1e2 e8g8",
+  "e2e4 g7g6 d2d4 f8g7 b1c3 d7d6 g1f3 g8f6",
+  "e2e4 b8c6 d2d4 d7d5 e4e5 c8f5 g1f3 e7e6",
+  // 1.d4
+  "d2d4 d7d5 c2c4 e7e6 b1c3 g8f6 c1g5 f8e7 e2e3 e8g8 g1f3 h7h6",
+  "d2d4 d7d5 c2c4 c7c6 g1f3 g8f6 b1c3 d5c4 a2a4 c8f5",
+  "d2d4 d7d5 c2c4 d5c4 g1f3 g8f6 e2e3 e7e6 f1c4 c7c5",
+  "d2d4 d7d5 c1f4 g8f6 e2e3 e7e6 g1f3 c7c5 c2c3 b8c6",
+  "d2d4 g8f6 c1f4 g7g6 e2e3 f8g7 g1f3 e8g8",
+  "d2d4 g8f6 c2c4 g7g6 b1c3 f8g7 e2e4 d7d6 g1f3 e8g8 f1e2 e7e5",
+  "d2d4 g8f6 c2c4 e7e6 b1c3 f8b4 e2e3 e8g8 f1d3 d7d5",
+  "d2d4 g8f6 c2c4 e7e6 g1f3 b7b6 g2g3 c8b7 f1g2 f8e7",
+  "d2d4 g8f6 c2c4 g7g6 b1c3 d7d5 c4d5 f6d5 e2e4 d5c3 b2c3 f8g7",
+  "d2d4 g8f6 c2c4 c7c5 d4d5 e7e6 b1c3 e6d5 c4d5 d7d6",
+  "d2d4 f7f5 g2g3 g8f6 f1g2 e7e6 g1f3 f8e7 e1g1 e8g8",
+  "d2d4 e7e6 c2c4 g8f6 b1c3 f8b4",
+  "d2d4 g7g6 c2c4 f8g7 b1c3 d7d6 e2e4 g8f6",
+  "d2d4 c7c5 d4d5 e7e5 e2e4 d7d6 b1c3 g7g6",
+  "d2d4 d7d6 e2e4 g8f6 b1c3 g7g6 f2f4 f8g7",
+  "d2d4 b8c6 g1f3 d7d5 c2c4 c8g4",
+  // Flank openings
+  "c2c4 e7e5 b1c3 g8f6 g1f3 b8c6 g2g3 d7d5 c4d5 f6d5",
+  "c2c4 c7c5 b1c3 b8c6 g2g3 g7g6 f1g2 f8g7",
+  "c2c4 g8f6 b1c3 e7e6 e2e4 d7d5",
+  "g1f3 d7d5 g2g3 g8f6 f1g2 e7e6 e1g1 f8e7 d2d3 e8g8",
+  "g1f3 g8f6 c2c4 g7g6 b1c3 f8g7 e2e4 d7d6",
+  "f2f4 d7d5 g1f3 g8f6 e2e3 g7g6 b2b3 f8g7 c1b2 e8g8",
+  "b2b3 e7e5 c1b2 b8c6 e2e3 d7d5 f1b5 f8d6",
+  "g2g3 d7d5 f1g2 g8f6 g1f3 e7e6 e1g1 f8e7 d2d3 e8g8",
+  "b1c3 d7d5 e2e4 d5d4 c3e2 e7e5 e2g3 c8e6",
+  "b1c3 e7e5 e2e4 g8f6 f2f4 d7d5",
+];
+
+const HOUSE_BOOK_LINES: readonly string[][] = HOUSE_BOOK.map((line) => line.split(" "));
+
+/** How deep a tier follows the book, in plies. A beginner knows the first move
+ * or two of an opening; a master knows six. */
+function bookDepthPlies(skill: HouseSkill): number {
+  if (skill <= 900) return 4;
+  if (skill <= 1200) return 6;
+  if (skill <= 1450) return 8;
+  if (skill <= 1750) return 10;
+  return 12;
+}
+
+// Position key after each book prefix, built on first use: a line whose moves
+// do not replay legally from the start (a typo in the table) simply never
+// matches, and scripts/test-house-policy.ts asserts that none do.
+const bookKeyCache = new Map<string, string | null>();
+function bookPrefixKey(ucis: readonly string[]): string | null {
+  const id = ucis.join(" ");
+  if (bookKeyCache.has(id)) return bookKeyCache.get(id)!;
+  let board = initialBoard();
+  let key: string | null = null;
+  try {
+    for (const u of ucis) {
+      const m = moveFromUCI(board, u);
+      if (!m) throw new Error(u);
+      board = makeMove(board, m);
+    }
+    key = positionKey(board);
+  } catch {
+    key = null;
+  }
+  bookKeyCache.set(id, key);
+  return key;
+}
+
+/** True when every line of the book replays legally from the start. For the
+ * policy test. */
+export function houseBookIsLegal(): boolean {
+  return HOUSE_BOOK_LINES.every((line) => bookPrefixKey(line) != null);
+}
+
+/**
+ * The repertoire move for this position, or null. A persona follows the book
+ * about nine moves in ten while the game is on it (a person deviates now and
+ * then), weighting each line by a stable per-persona preference, so the same
+ * bot favours a few lines and different bots favour different ones. With no
+ * persona, `varietySeed` plays the same role. Only when the position is exactly
+ * the book's (a card or a nerf that moved a piece ends the book), the move is
+ * legal, keeps the king safe and does not trip the bot's own nerf.
+ */
+function houseBookMove(
+  game: NerfGame,
+  all: Move[],
+  skill: HouseSkill,
+  random: (max: number) => number,
+  persona?: HousePersona,
+  varietySeed?: number,
+): Move | null {
+  if (!persona && varietySeed == null) return null;
+  const history = game.board.history;
+  const ply = history.length;
+  if (ply >= bookDepthPlies(skill)) return null;
+  const played = history.map((m) => moveToUCI(m));
+  const lines: number[] = [];
+  for (let i = 0; i < HOUSE_BOOK_LINES.length; i++) {
+    const line = HOUSE_BOOK_LINES[i];
+    if (line.length <= ply) continue;
+    let ok = true;
+    for (let k = 0; k < ply && ok; k++) if (line[k] !== played[k]) ok = false;
+    if (ok) lines.push(i);
+  }
+  if (!lines.length) return null;
+  if (bookPrefixKey(played) !== positionKey(game.board)) return null;
+  if (random(100) >= 90) return null;
+  const key = persona ? persona.name : `seed:${varietySeed! >>> 0}`;
+  const weights = new Map<string, number>();
+  for (const i of lines) {
+    const next = HOUSE_BOOK_LINES[i][ply];
+    const w = 1 + (nameHash(`${key}|book|${i}`) % 4);
+    weights.set(next, (weights.get(next) ?? 0) + w);
+  }
+  const total = [...weights.values()].reduce((a, b) => a + b, 0);
+  let roll = random(total);
+  let chosen: string | null = null;
+  for (const [uci, w] of weights) {
+    roll -= w;
+    if (roll < 0) {
+      chosen = uci;
+      break;
+    }
+  }
+  if (!chosen) return null;
+  const move = all.find((m) => moveToUCI(m) === chosen);
+  if (!move || leavesKingCapturable(game, move) || triggersOwnNerfLoss(game, move)) return null;
+  return move;
+}
+
+// ---------------------------------------------------------------------------
+// The move.
+// ---------------------------------------------------------------------------
+
+/**
+ * Pick the house player's move. In order:
+ *
+ *   1. A king capture, when one is on the board: nobody misses that.
+ *   2. The persona's pet first move (70%, as before), then the opening
+ *      repertoire (houseBookMove) while the game is on book.
+ *   3. At 800 and 900 only, the small check leak (HOUSE_CHECK_LEAK).
+ *   4. The blunder roll (the profile's blunderChance, half as likely again
+ *      under 10 seconds): a human-shaped blunder (houseBlunderMove).
+ *   5. Otherwise the search, at the graded budget (houseMoveBudgetMs), with the
+ *      profile's depth and move-quality weakening.
+ *   6. The king-safety floor over whatever 4 or 5 chose.
+ *
+ * Pass `profile` for a moderator-resolved strength (the DO does, per move); omit
+ * it and the tier's baked profile is used. `ceilingMs` defaults to the DO-safe
+ * cap; only the engine service passes a higher one. `opts` is additive
+ * (HouseMoveOptions). Returns null only when there is no legal move at all.
+ */
 export function pickHouseMove(
   game: NerfGame,
   skill: HouseSkill,
@@ -3026,18 +3565,25 @@ export function pickHouseMove(
   ceilingMs?: number,
   profile?: ResolvedSkillProfile,
   persona?: HousePersona,
+  opts: HouseMoveOptions = {},
 ): Move | null {
   let p = profile ?? bakedResolvedProfile(skill);
-  // Persona style: a stable per-bot jitter on the search's move-quality knobs,
-  // so same-tier personas don't play move-for-move identical chess.
+  // Persona style: a stable per-bot jitter on the move-quality knobs of the
+  // sampled (weakened) tiers. Argmax tiers keep their full search; their
+  // variety comes from the repertoire, which costs no depth.
   if (persona) p = applyPersonaStyle(persona, p);
   const all = legalMoves(game);
   if (!all.length) return null;
+  const me = game.board.turn;
+
+  const kingWin = all.find((m) => m.captured === "k" && !triggersOwnNerfLoss(game, m));
+  if (kingWin) return kingWin;
+
   // Opening preference: on each side's FIRST move a persona usually (70%)
   // reaches for its pet opening when that move is legal, so different bots
-  // steer games into different structures instead of all converging on the
-  // search's one favorite line. Draft cards can rewrite the opening position,
-  // in which case the preferred square may be illegal and the search decides.
+  // steer games into different structures. Draft cards can rewrite the opening
+  // position, in which case the preferred move may be illegal and the book or
+  // the search decides.
   if (persona && game.board.history.length < 2 && random(10) < 7) {
     const style = houseStyle(persona);
     const last = game.board.history[0];
@@ -3051,16 +3597,30 @@ export function pickHouseMove(
         : null;
     if (preferred) {
       const move = all.find((m) => moveToUCI(m) === preferred);
-      if (move && !triggersOwnNerfLoss(game, move)) return move;
+      if (move && !triggersOwnNerfLoss(game, move) && !leavesKingCapturable(game, move)) return move;
     }
   }
-  if (random(10_000) < Math.round(p.blunderChance * 10_000)) {
-    const safe = all.filter((m) => !triggersOwnNerfLoss(game, m));
-    const moves = safe.length ? safe : all;
-    return moves[random(moves.length)];
+  const book = houseBookMove(game, all, skill, random, persona, opts.varietySeed);
+  if (book) return book;
+
+  const leak = HOUSE_CHECK_LEAK[skill] ?? 0;
+  if (leak > 0 && random(10_000) < Math.round(leak * 10_000) && gameInCheck(game, me)) {
+    return checkBlindMove(game, all, random);
   }
-  const budget = houseMoveBudgetMs(p.budgetMs, remainingClockMs, ceilingMs);
-  return pickAIMove(game, p.level, budget, { params: weakenParamsOf(p), random });
+
+  let move: Move | null = null;
+  const pressure = remainingClockMs != null && remainingClockMs < 10_000 ? 1.5 : 1;
+  // Time pressure can raise the chance up to one in two, and never lowers a
+  // profile's own (a probe forcing blunderChance 1 gets a blunder every move).
+  const blunderChance = Math.min(Math.max(p.blunderChance, 0.5), p.blunderChance * pressure);
+  if (random(10_000) < Math.round(blunderChance * 10_000)) {
+    move = houseBlunderMove(game, all, skill, random);
+  }
+  if (!move) {
+    const budget = houseMoveBudgetMs(p.budgetMs, remainingClockMs, ceilingMs, opts.incrementSec);
+    move = pickAIMove(game, p.level, budget, { params: weakenParamsOf(p), random }, opts.stats);
+  }
+  return move ? kingSafetyFloor(game, all, move) : null;
 }
 
 /** Opening nerf pick: between the two dealt options, prefer the lower tier
@@ -3070,4 +3630,568 @@ export function houseNerfPickIndex(tiers: [number, number], random: (max: number
   if (tiers[0] < tiers[1]) return 0;
   if (tiers[1] < tiers[0]) return 1;
   return random(2) as 0 | 1;
+}
+
+// ---------------------------------------------------------------------------
+// Behaviour helpers (slice HB, 2026-09-23). Pure decisions for the callers in
+// worker.ts and arena-service to wire in (docs/polish-pass/slices/HB.md,
+// REQUESTS R5-R11). Nothing here writes to a match or reaches a client: every
+// outcome is applied through the same frames a human's action produces.
+// ---------------------------------------------------------------------------
+
+/** Static material from `me`'s side, in centipawns, minus what `me` is about
+ * to lose when it is the opponent's move (their best capture, a defended
+ * piece charged the attacker it costs them). With `me` to move, threats can
+ * still be answered, so only material counts. */
+function boardReplyFor(board: BoardState, me: Color): { score: number; threat: number } {
+  let material = 0;
+  for (let sq = 0; sq < 64; sq++) {
+    const pc = board.pieces[sq];
+    if (!pc || pc.type === "k") continue;
+    material += pc.color === me ? CP[pc.type] : -CP[pc.type];
+  }
+  if (board.turn === me) return { score: material, threat: 0 };
+  const defended = attackedBy(board, me);
+  let worst = 0;
+  for (const reply of generateMoves(board)) {
+    if (!reply.captured) continue;
+    if (reply.captured === "k") return { score: material - CP.k, threat: CP.k };
+    const gain = defended.has(reply.to) ? CP[reply.captured] - CP[reply.piece] : CP[reply.captured];
+    if (gain > worst) worst = gain;
+  }
+  return { score: material - worst, threat: worst };
+}
+
+/** The material balance from `color`'s side, in centipawns. The fallback eval
+ * for the resign and draw helpers when no engine score is available (a local
+ * move, or a remote engine that predates scoreCp). */
+export function houseMaterialEvalCp(game: NerfGame, color: Color): number {
+  let material = 0;
+  for (let sq = 0; sq < 64; sq++) {
+    const pc = game.board.pieces[sq];
+    if (!pc || pc.type === "k") continue;
+    material += pc.color === color ? CP[pc.type] : -CP[pc.type];
+  }
+  return material;
+}
+
+// ---------------------------------------------------------------------------
+// Snap move.
+// ---------------------------------------------------------------------------
+
+/**
+ * The move a snap reply plays, with no search: the only king-safe move when
+ * there is exactly one, or the best recapture on the square the opponent just
+ * took on (by static exchange, cheapest recapturer on a tie). Null whenever it
+ * is not that simple: in check with a choice, no recapture, a recapture that
+ * loses material, or something clearly better elsewhere on the board. The
+ * caller then plays the normal search (REQUEST R11), so a snap is never worse
+ * than thinking.
+ *
+ * Played locally, it spares a snapped recapture the remote round trip, which
+ * is the whole point of a premove.
+ */
+export function houseSnapMove(game: NerfGame, color: Color): Move | null {
+  if (game.result || game.board.turn !== color) return null;
+  const all = legalMoves(game);
+  if (!all.length) return null;
+  const kingWin = all.find((m) => m.captured === "k" && !triggersOwnNerfLoss(game, m));
+  if (kingWin) return kingWin;
+  const safe = all.filter((m) => !leavesKingCapturable(game, m) && !triggersOwnNerfLoss(game, m));
+  if (safe.length === 1) return safe[0];
+  const history = game.board.history;
+  const last = history.length ? history[history.length - 1] : null;
+  if (!last || last.color === color || !last.captured) return null;
+  if (gameInCheck(game, color)) return null;
+  const recaptures = safe.filter((m) => m.captured && m.to === last.to);
+  if (!recaptures.length) return null;
+  let bestAny = -Infinity;
+  let best: Move | null = null;
+  let bestScore = -Infinity;
+  for (const m of safe) {
+    const sc = staticReplyScore(game, m);
+    if (sc > bestAny) bestAny = sc;
+    if (m.captured && m.to === last.to) {
+      if (sc > bestScore || (sc === bestScore && best && CP[m.piece] < CP[best.piece])) {
+        bestScore = sc;
+        best = m;
+      }
+    }
+  }
+  if (!best || bestScore < bestAny - 50) return null;
+  // Which piece recaptures is a judgement (a pawn recapture that wrecks the
+  // structure, a king that walks into the open), so the choice among them is a
+  // small search: depth 3 at most, a node count bounded by the depth even on
+  // the frozen-clock Durable Object, and taken only when it recaptures on that
+  // square. Anything else means the position is not a plain recapture.
+  const searched = pickAIMove(game, "hard", 25, {
+    params: { maxDepth: 3, extendedEval: true, topK: 1, temperatureCp: 0, sampleWindowCp: 0, evalNoiseCp: 0 },
+    random: () => 0,
+  });
+  if (!searched || !searched.captured || searched.to !== last.to) return null;
+  return leavesKingCapturable(game, searched) ? null : searched;
+}
+
+// ---------------------------------------------------------------------------
+// Card activation.
+// ---------------------------------------------------------------------------
+
+type HouseActivation = { buffIndex: number; picks: BuffPick[] };
+
+/** An own piece "hangs" when the opponent's best capture wins at least this
+ * much: any undefended minor or better, or a rook or queen taken by something
+ * cheaper. A lone pawn does not count. */
+const HOUSE_HANG_CP = 150;
+/** How much static material a turn-costing card may give up against the best
+ * plain move. */
+const HOUSE_CARD_SLACK_CP = 150;
+
+/** A copy of `game` whose `masked` buff indices read as already used, so the
+ * engine's first-qualifying-card chooser moves on to the next one. Shallow:
+ * only the instance objects it masks are new. */
+function maskedBuffView(game: NerfGame, color: Color, masked: ReadonlySet<number>): NerfGame {
+  const bs = game.buffs!;
+  const ps = bs.players[color];
+  return {
+    ...game,
+    buffs: {
+      ...bs,
+      players: {
+        ...bs.players,
+        [color]: { ...ps, buffs: ps.buffs.map((b, i) => (masked.has(i) ? { ...b, usedActivation: true } : b)) },
+      },
+    },
+  };
+}
+
+/**
+ * Which held card, if any, a house bot fires this turn instead of moving. It
+ * replaces the old persona coin plus aiChooseBuffActivation, which fired the
+ * FIRST card the engine's gates let through, on a position-blind coin (REQUEST
+ * R9). Measured before (scripts/sim-house-cards.ts): 17 to 19 of about 100
+ * turn-costing fires passed the turn while an own piece of 3 or more hung that
+ * a move would have saved; with this wrapper, 0.
+ *
+ *   1. Every card the engine's own gates accept (aiChooseBuffActivation, asked
+ *      again with the cards already found masked), up to four.
+ *   2. Each is tried on a detached copy of the game and scored statically. A
+ *      turn-costing card never fires while it leaves an own piece hanging
+ *      (the opponent's best capture wins HOUSE_HANG_CP or more) that some
+ *      plain move would have saved, and never gives up more than
+ *      HOUSE_CARD_SLACK_CP against the best plain move (staticReplyScore); a
+ *      card's worth is often not material, so it may cost a little. A free
+ *      action must not lose material.
+ *   3. The best of those by that margin (tier breaks ties), not the first.
+ *   4. The persona's activation appetite decides whether it fires now, rising
+ *      toward 0.9 as the board empties or the game runs long, at least 0.65
+ *      when the card does as well as the best move, and at least 0.85 when it
+ *      wins a minor piece or more over it, so cards stop dying in hand.
+ *
+ * `opts.bestMoveGainCp`, when the caller has an engine score for its best move
+ * (scoreCp minus the static eval, once the engine reports scoreCp), raises the
+ * bar for a turn-costing card to that gain.
+ */
+export function houseChooseActivation(
+  game: NerfGame,
+  color: Color,
+  persona: HousePersona,
+  random: (max: number) => number,
+  opts: { bestMoveGainCp?: number } = {},
+): HouseActivation | null {
+  const bs = game.buffs;
+  if (!bs || bs.diff || game.result || game.board.turn !== color) return null;
+  const found: HouseActivation[] = [];
+  const masked = new Set<number>();
+  for (let k = 0; k < 4; k++) {
+    const choice = aiChooseBuffActivation(masked.size ? maskedBuffView(game, color, masked) : game, color);
+    if (!choice || masked.has(choice.buffIndex)) break;
+    masked.add(choice.buffIndex);
+    found.push(choice);
+  }
+  if (!found.length) return null;
+
+  const all = legalMoves(game);
+  const safe = all.filter((m) => !leavesKingCapturable(game, m) && !triggersOwnNerfLoss(game, m));
+  let moveAlt = -Infinity;
+  let minThreat = Infinity;
+  for (const m of safe.length ? safe : all) {
+    const r = staticReply(game, m);
+    moveAlt = Math.max(moveAlt, r.score);
+    minThreat = Math.min(minThreat, r.threat);
+  }
+  const materialNow = houseMaterialEvalCp(game, color);
+  const ps = bs.players[color];
+
+  let best: { act: HouseActivation; margin: number; ranked: number } | null = null;
+  for (const act of found) {
+    const inst = ps.buffs[act.buffIndex];
+    const def = inst ? BUFF_BY_ID[inst.id] : undefined;
+    if (!def) continue;
+    const snap = deserializeGame(serializeGame(game));
+    if (!snap || !activateBuff(snap, color, act.buffIndex, act.picks)) continue;
+    if (snap.result) {
+      if (snap.result.winner === color) return act;
+      continue;
+    }
+    const reply = boardReplyFor(snap.board, color);
+    const after = reply.score;
+    const turnCosting = def.kind === "activated" && !def.freeAction;
+    let margin: number;
+    if (turnCosting) {
+      // Never pass the turn with a piece hanging that a move would have saved.
+      if (reply.threat >= HOUSE_HANG_CP && minThreat < HOUSE_HANG_CP) continue;
+      // Otherwise the card may cost a little against the best plain move (its
+      // value is often not material: a shield, a later threat), never more
+      // than a pawn and a half.
+      const bar = Math.max(moveAlt, materialNow + (opts.bestMoveGainCp ?? -Infinity));
+      margin = after - bar;
+      if (margin < -HOUSE_CARD_SLACK_CP) continue;
+    } else {
+      margin = after - materialNow;
+      if (margin < 0) continue;
+    }
+    const ranked = margin + (inst.tier as number) * 5;
+    if (!best || ranked > best.ranked) best = { act, margin, ranked };
+  }
+  if (!best) return null;
+
+  let piecesLeft = 0;
+  for (let sq = 0; sq < 64; sq++) {
+    const pc = game.board.pieces[sq];
+    if (pc && pc.type !== "k") piecesLeft += CP[pc.type] / 100;
+  }
+  const late = Math.max(
+    Math.max(0, Math.min(1, (58 - piecesLeft) / 40)),
+    Math.max(0, Math.min(1, (game.board.history.length - 40) / 60)),
+  );
+  const base = houseStyle(persona).activationChance;
+  let chance = base + (0.9 - base) * late;
+  // A card that does at least as well as the best move is played more often
+  // than not, and one that wins a minor piece or more almost always.
+  if (best.margin >= 0) chance = Math.max(chance, 0.65);
+  if (best.margin >= 250) chance = Math.max(chance, 0.85);
+  if (random(1000) >= Math.round(chance * 1000)) return null;
+  return best.act;
+}
+
+// ---------------------------------------------------------------------------
+// Drafts.
+// ---------------------------------------------------------------------------
+
+/** aiDraftChoice's own card score (usable + tier), reproduced so a lean can
+ * read which cards the engine treats as equally good. */
+function draftCardScore(card: { id: string; tier: number }): number {
+  const def = BUFF_BY_ID[card.id];
+  const usable =
+    !def || !def.implemented || def.category === "info"
+      ? 0
+      : aiCanUse(def)
+        ? 100
+        : def.kind === "activated"
+          ? 80
+          : 0;
+  return usable + card.tier;
+}
+
+/**
+ * A house bot's draft decision: pick an index, or bank the offer. It replaces
+ * aiDraftChoice plus the persona's flat bank roll (REQUEST R9), which drafted
+ * identically across the whole roster and banked as readily at tier 8 as at
+ * tier 1.
+ *
+ *   - The engine's choice stands whenever it banks (nothing usable) or when
+ *     the offer holds one clearly best card.
+ *   - Among usable cards of the chosen card's tier, the persona leans its own
+ *     way: a stable preference by card category (name-hashed), with a little
+ *     noise, so two bots of one tier draft differently.
+ *   - The persona's bankBias still decides whether to skip for a higher tier
+ *     next time, scaled down as the tier on offer rises: nobody banks a tier 8
+ *     card to hope for a better one. A banked offer is never banked again.
+ */
+export function houseDraftChoice(
+  game: NerfGame,
+  color: Color,
+  persona: HousePersona,
+  random: (max: number) => number,
+): { action: "pick"; index: number } | { action: "bank" } | null {
+  const offer = game.buffs?.players[color].offer;
+  if (!offer) return null;
+  const base = aiDraftChoice(game, color);
+  if (!base || base.action === "bank") return base;
+  const chosenTier = offer.cards[base.index].tier;
+  const tied = offer.cards
+    .map((card, i) => ({ card, i }))
+    .filter(({ card }) => card.tier === chosenTier && draftCardScore(card) - card.tier >= 80);
+  let index = base.index;
+  if (tied.length > 1) {
+    let bestLean = -Infinity;
+    for (const { card, i } of tied) {
+      const def = BUFF_BY_ID[card.id];
+      const lean =
+        (nameHash(`${persona.name}|lean|${def?.category ?? "none"}`) % 7) +
+        (draftCardScore(card) - card.tier === 100 ? 2 : 0) +
+        random(3);
+      if (lean > bestLean) {
+        bestLean = lean;
+        index = i;
+      }
+    }
+  }
+  if (!offer.banked) {
+    const maxTier = Math.max(...offer.cards.map((c) => c.tier));
+    const scale = Math.max(0, Math.min(1, (8 - maxTier) / 6));
+    const p = houseStyle(persona).bankBias * scale;
+    if (random(1000) < Math.round(p * 1000)) return { action: "bank" };
+  }
+  return { action: "pick", index };
+}
+
+// ---------------------------------------------------------------------------
+// Resign, draws, rematch.
+// ---------------------------------------------------------------------------
+
+/** Personas that never resign: the ones whose bio or name says so. A player
+ * whose profile reads "never resign, always suffer" and who then resigns is a
+ * trace. */
+const NEVER_RESIGN_BIO = /never resign|resigning is for other people/i;
+const NEVER_RESIGN_NAME = /nobodyresigns/i;
+/** Personas that are slow to take a draw. */
+const DRAW_AVERSE = /no_draws|draws feel like homework/i;
+
+export function houseNeverResigns(persona: HousePersona): boolean {
+  if (NEVER_RESIGN_NAME.test(persona.name)) return true;
+  const bio = personaBio(persona);
+  if (bio && NEVER_RESIGN_BIO.test(bio)) return true;
+  // Plenty of real players simply never resign, more of them among beginners.
+  const share = persona.skill < 1350 ? 25 : 8;
+  return nameHash(persona.name + "|noresign") % 100 < share;
+}
+
+/**
+ * Whether a house bot resigns now. `evalHistoryCp` holds the evaluation after
+ * each of the bot's own moves, from its side, oldest first (the engine's
+ * scoreCp, or houseMaterialEvalCp as a fallback). Shaped by tier and persona:
+ *
+ *   - 1500 and up: at -600 or worse for 2-6 straight own moves (the persona's
+ *     resolve), with no recovery inside that stretch, resigns (85% a move).
+ *   - 1350-1450: -750 for 4-9 moves.
+ *   - Below 1350: -900 for 10-20 moves, and only a third of the time even
+ *     then: beginners play it out.
+ *   - Never while the opponent is nearly flagging and the bot is well ahead on
+ *     the clock, and never for the personas that say they never resign.
+ *
+ * The delay is 1-4 seconds, and the resignation itself must go through the
+ * same end flow a human's does (REQUEST R6).
+ */
+export function houseResignDecision(
+  input: {
+    persona: HousePersona;
+    skill?: HouseSkill;
+    evalHistoryCp: readonly number[];
+    myClockMs?: number;
+    oppClockMs?: number;
+  },
+  random: (max: number) => number,
+): { resign: boolean; delayMs: number } {
+  const no = { resign: false, delayMs: 0 };
+  const { persona, evalHistoryCp: hist } = input;
+  const skill = input.skill ?? persona.skill;
+  if (!hist.length || houseNeverResigns(persona)) return no;
+  if (
+    input.oppClockMs != null &&
+    input.myClockMs != null &&
+    input.oppClockMs < 15_000 &&
+    input.myClockMs > input.oppClockMs * 1.5
+  ) {
+    return no;
+  }
+  const resolve = houseStyle(persona).resolve;
+  const [threshold, streakNeeded, perMove] =
+    skill >= 1500
+      ? [-600, 2 + Math.floor(resolve * 4.99), 850]
+      : skill >= 1350
+        ? [-750, 4 + Math.floor(resolve * 5.99), 700]
+        : [-900, 10 + Math.floor(resolve * 10.99), 330];
+  let streak = 0;
+  for (let i = hist.length - 1; i >= 0 && hist[i] <= threshold; i--) streak++;
+  if (streak < streakNeeded) return no;
+  const stretch = hist.slice(-streakNeeded);
+  if (stretch[stretch.length - 1] - Math.min(...stretch) > 150) return no;
+  if (random(1000) >= perMove) return no;
+  return { resign: true, delayMs: 1000 + random(3001) };
+}
+
+/** A dead-level position: no pawns, no rooks or queens, at most one minor
+ * piece a side. Neither side can win it. */
+export function houseDeadLevel(game: NerfGame): boolean {
+  const minors = { w: 0, b: 0 };
+  for (let sq = 0; sq < 64; sq++) {
+    const pc = game.board.pieces[sq];
+    if (!pc || pc.type === "k") continue;
+    if (pc.type === "p" || pc.type === "r" || pc.type === "q") return false;
+    minors[pc.color]++;
+  }
+  return minors.w <= 1 && minors.b <= 1;
+}
+
+function nonKingPieces(game: NerfGame): number {
+  let n = 0;
+  for (let sq = 0; sq < 64; sq++) {
+    const pc = game.board.pieces[sq];
+    if (pc && pc.type !== "k") n++;
+  }
+  return n;
+}
+
+/**
+ * The answer to a human's draw offer. A dead-level ending is always accepted.
+ * A position the bot is winning (+150 or better, by the engine's score or the
+ * material fallback) is always declined. A lost one is taken 90% of the time.
+ * In between, the persona's draw appetite decides, more readily in a thin
+ * endgame than in a full middlegame, and much less for the personas whose name
+ * or bio is against draws. The delay is 1.5-5 seconds; a decline uses today's
+ * drawDeclined frame (REQUEST R6).
+ */
+export function houseDrawDecision(
+  input: { persona: HousePersona; skill?: HouseSkill; game: NerfGame; color: Color; evalCp?: number },
+  random: (max: number) => number,
+): { accept: boolean; delayMs: number } {
+  const delayMs = 1500 + random(3501);
+  if (houseDeadLevel(input.game)) return { accept: true, delayMs };
+  const ev = input.evalCp ?? houseMaterialEvalCp(input.game, input.color);
+  if (ev >= 150) return { accept: false, delayMs };
+  if (ev <= -300) return { accept: random(100) < 90, delayMs };
+  const appetite = houseStyle(input.persona).drawAppetite;
+  const thin = nonKingPieces(input.game) <= 6;
+  let p = thin ? 0.3 + 0.6 * appetite : 0.1 + 0.3 * appetite;
+  const bio = personaBio(input.persona) ?? "";
+  if (DRAW_AVERSE.test(input.persona.name) || DRAW_AVERSE.test(bio)) p *= 0.2;
+  return { accept: random(1000) < Math.round(p * 1000), delayMs };
+}
+
+/** Whether a house bot offers a draw itself after its move: only in a
+ * dead-level ending, or a pawnless level one where nothing has been captured
+ * for 20 plies, and only sometimes (a bot that offers every move is a bot). */
+export function houseDrawOffer(
+  input: { persona: HousePersona; game: NerfGame; color: Color; evalCp?: number },
+  random: (max: number) => number,
+): boolean {
+  const { game } = input;
+  if (houseDeadLevel(game)) return random(100) < 60;
+  const ev = input.evalCp ?? houseMaterialEvalCp(game, input.color);
+  if (Math.abs(ev) >= 50) return false;
+  for (let sq = 0; sq < 64; sq++) if (game.board.pieces[sq]?.type === "p") return false;
+  if (game.board.halfmove < 20) return false;
+  return random(1000) < Math.round(houseStyle(input.persona).drawAppetite * 150);
+}
+
+/**
+ * The answer to a rematch request. Each persona has a stable rematch appetite
+ * (0.5-0.85); a bot that just lost wants its revenge a little more, one that
+ * just won a little less, and a game that barely started (under 10 plies) is
+ * less inviting. Answered after 2-6 seconds, through the frames a human
+ * accept or decline produces (REQUEST R5).
+ */
+export function houseRematchDecision(
+  persona: HousePersona,
+  result: "win" | "loss" | "draw",
+  plies: number,
+  random: (max: number) => number,
+): { accept: boolean; delayMs: number } {
+  let p = houseStyle(persona).rematchAppetite;
+  if (result === "loss") p += 0.05;
+  else if (result === "win") p -= 0.05;
+  if (plies < 10) p -= 0.1;
+  p = Math.max(0.4, Math.min(0.9, p));
+  return { accept: random(1000) < Math.round(p * 1000), delayMs: 2000 + random(4001) };
+}
+
+// ---------------------------------------------------------------------------
+// Remote engine circuit breaker.
+// ---------------------------------------------------------------------------
+
+export type HouseEngineOutcome = "ok" | "timeout" | "error" | "version" | "rejected" | "null";
+
+/**
+ * A per-isolate circuit breaker for the remote engine (REQUEST R7). Closed, it
+ * lets every request through. Two consecutive timeouts or errors (5xx, network)
+ * open it for 45 seconds, during which the caller skips the remote engine and
+ * searches locally at once instead of paying a timeout per move. After that it
+ * goes half-open and lets exactly one probe through: a healthy answer closes
+ * it, another failure re-opens it.
+ *
+ * A 409 (engine version drift), a rejected (illegal) move or a null move are
+ * fast, healthy answers from a live box, so they never open it. Keeps counts
+ * and an RTT moving average for a moderator-gated view only: never a public
+ * endpoint (a bot trace).
+ */
+export class HouseEngineBreaker {
+  private state: "closed" | "open" | "half-open" = "closed";
+  private failures = 0;
+  private openedAt = 0;
+  private probeInFlight = false;
+  private rttEma: number | null = null;
+  private readonly counts: Record<HouseEngineOutcome, number> = {
+    ok: 0,
+    timeout: 0,
+    error: 0,
+    version: 0,
+    rejected: 0,
+    null: 0,
+  };
+
+  constructor(
+    private readonly failuresToOpen = 2,
+    private readonly openMs = 45_000,
+  ) {}
+
+  /** May a remote request go out now? In half-open, only one at a time. */
+  allow(now: number): boolean {
+    if (this.state === "closed") return true;
+    if (this.state === "open") {
+      if (now - this.openedAt < this.openMs) return false;
+      this.state = "half-open";
+      this.probeInFlight = false;
+    }
+    if (this.probeInFlight) return false;
+    this.probeInFlight = true;
+    return true;
+  }
+
+  /** Record how a request ended. `rttMs` feeds the moving average on success. */
+  record(outcome: HouseEngineOutcome, now: number, rttMs?: number): void {
+    this.counts[outcome]++;
+    if (outcome === "timeout" || outcome === "error") {
+      this.failures++;
+      this.probeInFlight = false;
+      if (this.state === "half-open" || this.failures >= this.failuresToOpen) {
+        this.state = "open";
+        this.openedAt = now;
+      }
+      return;
+    }
+    this.failures = 0;
+    this.probeInFlight = false;
+    this.state = "closed";
+    if (outcome === "ok" && rttMs != null && Number.isFinite(rttMs)) {
+      this.rttEma = this.rttEma == null ? rttMs : Math.round(this.rttEma * 0.8 + rttMs * 0.2);
+    }
+  }
+
+  /** For a moderator-gated health view only. */
+  snapshot(now: number): {
+    state: "closed" | "open" | "half-open";
+    failures: number;
+    openRemainingMs: number;
+    rttEmaMs: number | null;
+    counts: Record<HouseEngineOutcome, number>;
+  } {
+    return {
+      state: this.state,
+      failures: this.failures,
+      openRemainingMs: this.state === "open" ? Math.max(0, this.openMs - (now - this.openedAt)) : 0,
+      rttEmaMs: this.rttEma,
+      counts: { ...this.counts },
+    };
+  }
 }

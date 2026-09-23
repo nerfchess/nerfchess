@@ -1,0 +1,4 @@
+house snap replies
+  forced branch: fired on 20 of 20 positions with exactly one king-safe move
+  houseSnapMove: on 50 recapture positions it plays the hard@400 move 46 times (92%), declines 3; across all candidates it answered 49, differing from hard@400 3 times; king-unsafe 0
+house snap replies: OK

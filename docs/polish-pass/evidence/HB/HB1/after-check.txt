@@ -1,0 +1,10 @@
+check probe: 30 in-check positions with a king-safe alternative, 10 picks each
+   800: king left capturable 6/300 = 2.0% (95% CI 0.9%-4.3%)  [0.4s]
+   900: king left capturable 3/300 = 1.0% (95% CI 0.3%-2.9%)  [0.3s]
+  1050: king left capturable 0/300 = 0.0% (95% CI 0.0%-1.3%)  [0.3s]
+  1200: king left capturable 0/300 = 0.0% (95% CI 0.0%-1.3%)  [9.0s]
+  1350: king left capturable 0/300 = 0.0% (95% CI 0.0%-1.3%)  [1.4s]
+  1450: king left capturable 0/300 = 0.0% (95% CI 0.0%-1.3%)  [1.5s]
+  1550: king left capturable 0/300 = 0.0% (95% CI 0.0%-1.3%)  [24.0s]
+  1650: king left capturable 0/300 = 0.0% (95% CI 0.0%-1.3%)  [24.0s]
+wrote /home/user/nerfchess/docs/polish-pass/evidence/HB/HB1/after-check.json
