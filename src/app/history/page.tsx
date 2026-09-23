@@ -17,6 +17,7 @@ import { TIER_LABEL } from "@/lib/tiers";
 import { useModalChrome } from "@/lib/useModalChrome";
 import { Button } from "@/components/ui/Button";
 import { LinkButton } from "@/components/ui/Button";
+import { HistoryRowsSkeleton } from "./_components/HistoryRowsSkeleton";
 
 type Filter = "all" | GameOutcome;
 
@@ -96,15 +97,20 @@ export default function HistoryPage() {
               }
             >
               {f.label}
-              <span className="ml-2 font-mono text-[12px] opacity-70 tabular-nums">
-                {counts[f.id]}
+              {/* Hidden, not zero, until the stored list is read: a row of
+                  "0" chips flashed before the real counts (F024). */}
+              <span
+                className={"ml-2 font-mono text-[12px] opacity-70 tabular-nums" + (games === null ? " invisible" : "")}
+                aria-hidden={games === null}
+              >
+                {games === null ? 0 : counts[f.id]}
               </span>
             </button>
           ))}
         </div>
 
         {games === null ? (
-          <div className="mt-8 text-parchment-400">Loading…</div>
+          <HistoryRowsSkeleton />
         ) : filtered.length === 0 ? (
           games.length === 0 ? (
             <EmptyState
@@ -112,8 +118,8 @@ export default function HistoryPage() {
               glyph={"♜"}
               title="No games yet"
               body="Play a game to start the record."
-              action={{ href: "/friend", label: "Play a Friend" }}
-              secondary={{ href: "/play", label: "Play vs Bot" }}
+              action={{ href: "/friend", label: "Play a friend" }}
+              secondary={{ href: "/play", label: "Play the bot" }}
             />
           ) : (
             <div className="mt-8 plate p-8 text-center">

@@ -145,3 +145,63 @@ test.describe("stats redirect", () => {
     await expect(page.getByRole("button", { name: "Retry" })).toBeVisible();
   });
 });
+
+test.describe("history", () => {
+  const GAME = {
+    id: "e1-replay",
+    endedAt: 1_700_000_000_000,
+    mode: "ai",
+    opponent: "Bot",
+    myColor: "w",
+    outcome: "win",
+    reason: "king captured",
+    rated: false,
+    moveCount: 4,
+    baseSec: 0,
+    incSec: 0,
+    ratingChange: null,
+    myNerf: { name: "Lucky", description: "A test rule line.", tier: 1 },
+    opponentNerf: null,
+    moves: ["e2e4", "e7e5", "g1f3", "b8c6"],
+  };
+  const OLD = { ...GAME, id: "e1-old", moves: undefined };
+
+  async function seed(page: import("@playwright/test").Page) {
+    await page.addInitScript(
+      `localStorage.setItem("dc:game-history-v1", ${JSON.stringify(JSON.stringify([GAME, OLD]))});`,
+    );
+  }
+
+  // F040: a missing entry was a hand-rolled page; it is the shared 404 panel.
+  test("a replay id not saved on this device uses the shared not-found panel", async ({ page }) => {
+    await page.goto("/history/not-a-saved-game");
+    await expect(page.getByRole("heading", { level: 1, name: "No saved game with that id" })).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole("link", { name: "Back to history" })).toBeVisible();
+    await expect(page.locator("h1")).toHaveCount(1);
+  });
+
+  test("a saved game without moves explains why and links back", async ({ page }) => {
+    await seed(page);
+    await page.goto("/history/e1-old");
+    await expect(page.getByRole("heading", { level: 1, name: "No moves recorded" })).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText("Replay unavailable")).toBeVisible();
+    await expect(page.getByText("404")).toHaveCount(0);
+  });
+
+  // F132: the replay had no h1.
+  test("the replay has exactly one h1", async ({ page }) => {
+    await seed(page);
+    await page.goto("/history/e1-replay");
+    await expect(page.getByRole("button", { name: /Copy PGN/ })).toBeVisible({ timeout: 30_000 });
+    await expect(page.locator("h1")).toHaveCount(1);
+    await expect(page.locator("h1")).toHaveText("Replay: You won against Bot");
+  });
+
+  // F024 and F177: counts are real once shown, CTAs are sentence case.
+  test("the empty list offers sentence-case actions", async ({ page }) => {
+    await page.goto("/history");
+    await expect(page.getByRole("link", { name: "Play a friend" })).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole("link", { name: "Play the bot" })).toBeVisible();
+    await expect(page.getByText("Loading…")).toHaveCount(0);
+  });
+});

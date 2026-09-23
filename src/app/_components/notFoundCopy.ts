@@ -59,6 +59,20 @@ export const NOT_FOUND_COPY = {
     action: { href: "/clubs", label: "Browse clubs" },
     secondary: { href: "/lobby", label: "Back to lobby" },
   },
+  historyGame: {
+    title: "No saved game with that id",
+    detail:
+      "Game history is kept on the device that played the game, and this one is not saved here. Games played on another device or browser show up there.",
+    action: { href: "/history", label: "Back to history" },
+    secondary: { href: "/lobby", label: "Back to lobby" },
+  },
+  historyNoMoves: {
+    title: "No moves recorded",
+    detail:
+      "This game was saved before move replays existed, so only its summary is available in your history.",
+    action: { href: "/history", label: "Back to history" },
+    secondary: { href: "/lobby", label: "Back to lobby" },
+  },
   page: {
     title: "That page is not here",
     detail:
@@ -88,6 +102,8 @@ export function notFoundKindForPath(pathname: string | null | undefined): NotFou
       return "puzzle";
     case "clubs":
       return "club";
+    case "history":
+      return "historyGame";
     default:
       return "page";
   }

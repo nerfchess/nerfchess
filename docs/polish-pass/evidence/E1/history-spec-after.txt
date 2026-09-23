@@ -1,0 +1,5 @@
+  ✓  1 [chromium] › e2e/content-states.spec.ts:176:7 › history › a replay id not saved on this device uses the shared not-found panel (1.4s)
+  ✓  2 [chromium] › e2e/content-states.spec.ts:183:7 › history › a saved game without moves explains why and links back (1.1s)
+  ✓  3 [chromium] › e2e/content-states.spec.ts:192:7 › history › the replay has exactly one h1 (1.2s)
+  ✓  4 [chromium] › e2e/content-states.spec.ts:201:7 › history › the empty list offers sentence-case actions (739ms)
+  4 passed (5.6s)

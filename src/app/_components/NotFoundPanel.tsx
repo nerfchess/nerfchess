@@ -19,12 +19,16 @@ export interface NotFoundLink {
 }
 
 export function NotFoundPanel({
+  eyebrow = "404",
   title,
   detail,
   action = { href: "/lobby", label: "Back to lobby" },
   secondary,
   suggestions,
 }: {
+  /** The caption above the title. "404" for a missing thing; a thing that
+   *  exists but cannot be shown (a replay with no moves) says so instead. */
+  eyebrow?: string;
   /** What is missing, as a short sentence. Sentence case (section 11). */
   title: string;
   /** One plain-words line on why the address might not resolve. */
@@ -39,7 +43,7 @@ export function NotFoundPanel({
   return (
     <main className="flex min-h-screen items-center justify-center px-5 py-10 sm:px-6">
       <div className="plate w-full max-w-md p-5 sm:p-6">
-        <div className="font-mono text-[12px] text-parchment-400">404</div>
+        <div className={`${eyebrow === "404" ? "font-mono " : ""}text-[12px] text-parchment-400`}>{eyebrow}</div>
         <h1 className="page-title mt-1">{title}</h1>
         <p className="mt-2 text-[13px] leading-relaxed text-parchment-300">{detail}</p>
 
