@@ -1,0 +1,4 @@
+  ✓  1 [chromium] › e2e/polish/social-routes.spec.ts:567:7 › /tournaments directory › the page does not commit every second when nothing counts down (9.0s)
+  ✓  2 [chromium] › e2e/polish/social-routes.spec.ts:598:7 › /tournaments directory › create form: time control group and joined clubs only (1.8s)
+  ✓  3 [chromium] › e2e/polish/social-routes.spec.ts:610:7 › /tournaments directory › phone: fields are 16px and rows keep start time and seats (1.9s)
+  3 passed (26.1s)

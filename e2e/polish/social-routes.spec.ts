@@ -516,3 +516,108 @@ test.describe("/inbox signed in", () => {
     await ctx.close();
   });
 });
+
+// ---------------------------------------------------------------------------
+// /tournaments directory. Lists are stubbed.
+
+function listRow(id: string, over: Record<string, unknown> = {}) {
+  return {
+    id,
+    name: `Event ${id}`,
+    description: "",
+    creator_user_id: "u1",
+    creator_name: "polish_mod",
+    club_id: null,
+    club_name: null,
+    format: "arena",
+    mode: "nerf",
+    rated: 0,
+    clock_time_sec: 180,
+    clock_increment_sec: 2,
+    duration_min: 60,
+    starts_at: null,
+    max_players: 16,
+    created_at: Date.now() - 86_400_000,
+    status: "upcoming",
+    players: 3,
+    ...over,
+  };
+}
+
+async function stubDirectory(page: Page, rows: unknown[]) {
+  await page.route("**/api/tournaments", (route) =>
+    route.request().method() === "GET" ? route.fulfill({ json: { tournaments: rows } }) : route.fallback(),
+  );
+  await page.route("**/api/clubs", (route) =>
+    route.fulfill({
+      json: {
+        clubs: [
+          { id: "joined1", slug: "mine", name: "My club", description: "", icon: "", owner_name: "x", created_at: 0, members: 3, joined: 1 },
+          { id: "other1", slug: "theirs", name: "Their club", description: "", icon: "", owner_name: "y", created_at: 0, members: 9, joined: 0 },
+        ],
+      },
+    }),
+  );
+}
+
+test.describe("/tournaments directory", () => {
+  test.use({ storageState: polishAuthState("user") });
+
+  // F110: the whole page re-rendered every second even with no countdown.
+  test("the page does not commit every second when nothing counts down", async ({ page }) => {
+    await page.addInitScript(() => {
+      const w = window as unknown as { __commits: number; __REACT_DEVTOOLS_GLOBAL_HOOK__?: unknown };
+      w.__commits = 0;
+      w.__REACT_DEVTOOLS_GLOBAL_HOOK__ = {
+        supportsFiber: true,
+        renderers: new Map(),
+        inject() {
+          return 1;
+        },
+        onCommitFiberRoot() {
+          w.__commits++;
+        },
+        onCommitFiberUnmount() {},
+        onPostCommitFiberRoot() {},
+        checkDCE() {},
+      };
+    });
+    await stubDirectory(page, [listRow("a"), listRow("b", { status: "finished", starts_at: Date.now() - 7_200_000 })]);
+    await page.goto("/tournaments");
+    await expect(page.getByText("Event a")).toBeVisible({ timeout: 60_000 });
+    await page.getByRole("button", { name: /New tournament/ }).click();
+    await page.waitForTimeout(1500);
+    const start = await page.evaluate(() => (window as unknown as { __commits: number }).__commits);
+    await page.waitForTimeout(4000);
+    const end = await page.evaluate(() => (window as unknown as { __commits: number }).__commits);
+    expect(end - start).toBeLessThanOrEqual(1);
+  });
+
+  // F150, F181: the time control is a named group; only joined clubs are
+  // offered and an unjoined ?club= prefill is not submitted.
+  test("create form: time control group and joined clubs only", async ({ page }) => {
+    await stubDirectory(page, [listRow("a")]);
+    await page.goto("/tournaments?club=other1");
+    await expect(page.getByText("Event a")).toBeVisible({ timeout: 60_000 });
+    await page.getByRole("button", { name: /New tournament/ }).click();
+    await expect(page.getByRole("group", { name: "Time control" })).toBeVisible();
+    const club = page.locator("#t-club");
+    await expect(club.locator("option")).toHaveText(["Open event", "My club"]);
+    await expect(club).toHaveValue("");
+  });
+
+  // F155, F156: 16px fields and the start time and seats on a phone.
+  test("phone: fields are 16px and rows keep start time and seats", async ({ browser }) => {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, storageState: polishAuthState("user") });
+    const page = await ctx.newPage();
+    await stubDirectory(page, [listRow("a", { starts_at: Date.now() + 3 * 3_600_000 })]);
+    await page.goto("/tournaments");
+    const row = page.getByRole("link", { name: /Event a/ });
+    await expect(row).toBeVisible({ timeout: 60_000 });
+    await expect(row.getByText(/^in 2h|^in 3h/).first()).toBeVisible();
+    await expect(row.getByText("3/16").first()).toBeVisible();
+    await page.getByRole("button", { name: /New tournament/ }).click();
+    expect(await page.locator("#t-name").evaluate((el) => getComputedStyle(el).fontSize)).toBe("16px");
+    await ctx.close();
+  });
+});

@@ -1,0 +1,16 @@
+  ✘  1 [chromium] › e2e/polish/social-routes.spec.ts:567:7 › /tournaments directory › the page does not commit every second when nothing counts down (1.3m)
+  ✘  2 [chromium] › e2e/polish/social-routes.spec.ts:598:7 › /tournaments directory › create form: time control group and joined clubs only (37.2s)
+  ✘  3 [chromium] › e2e/polish/social-routes.spec.ts:610:7 › /tournaments directory › phone: fields are 16px and rows keep start time and seats (17.0s)
+    Error: expect(locator).toBeVisible() failed
+    Expected: visible
+    Error: expect(locator).toBeVisible() failed
+    Expected: visible
+    Error: expect(locator).toBeVisible() failed
+    Expected: visible
+    Received: hidden
+  3 failed
+# rerun of test 1 after a cold compile timed out the first run:
+  ✘  1 [chromium] › e2e/polish/social-routes.spec.ts:567:7 › /tournaments directory › the page does not commit every second when nothing counts down (8.6s)
+    Expected: <= 1
+    Received:    8
+  1 failed
