@@ -77,6 +77,8 @@ Baselines captured 2026-09-23:
 - Flash (390x844): light theme changes 99.3 to 100% of the viewport after hydration on all section 4 routes (server paints dark). Dark: 43.6% on `/`, 45% on `/lobby`, 22-24% on `/play`, about 8% on `/profile` and game. Evidence: `evidence/flash/baseline-2026-09-23/`.
 - Section 4 sign-in bump (throttled, `evidence/section4-before/`): header account chip grows 175 to 310px and moves left 135px at 1280x800 (171 to 226px, 55px at 390x844, brand block shrinks 195 to 143px), 4 to 6s after hydration and 50-80ms after a later `/api/auth/me`. `/profile` swaps the site header for a profile skeleton header, then Achievements moves dy -117 (0.031) and the mobile profile plate dy +90 (0.0769). `/play` tour note shrinks 67 to 44px and moves the doors dy +58 (0.0518 mobile). `/lobby` live counter widens 191px and "Games to watch" shrinks 210 to 106px. `/` inserts a "0 players / 0 games" line (dy +60). Bot game: "Dealing the cards" 152x42 placeholder becomes a 588x434 draft panel (not scored by CLS). Throttled hydration lands at 8.2 to 15.2s.
 
+Dev server (from 2026-09-23 03:10 UTC): the shared server on :3000 now runs `next dev --webpack` with `NEXT_DIST_DIR=.next-wp` under a supervisor (`DEV_WEBPACK=1 scripts/dev-supervisor.sh`). Turbopack was OOM-killed every few minutes (11-12.5 GB) compiling `/dev/plays` and the bot game; webpack holds about 5 GB. First compiles are slower (a heavy route can take 50 s once), so a browser tool should wait for the page rather than time out at a few seconds. A watchdog kills the server above 9.5 GB and the supervisor restarts it.
+
 ## INVENTORY
 
 | Item | Count | How counted |
