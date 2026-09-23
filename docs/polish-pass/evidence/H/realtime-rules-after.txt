@@ -14,5 +14,8 @@
   ok  spectator chat goes through cleanText (F052, F053)
   ok  no clock bound literal is left in worker.ts (F078)
   ok  all three clock checks use src/lib/clockBounds.ts (F078)
+  ok  the see-opponent-buffs toggle survives a hibernation wake (F091)
+  ok  the infinite-rerolls toggle survives a hibernation wake (F091)
+  ok  the clock-adjust debounce survives a hibernation wake (F091)
 
 all realtime rule checks passed

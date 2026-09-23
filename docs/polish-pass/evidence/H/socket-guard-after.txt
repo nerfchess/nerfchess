@@ -19,6 +19,11 @@
   ok  one second later 10 more pass
   ok  a sustained flood is closed after about 200 drops (took 190)
   ok  5 frames a second for two minutes never drops
+  ok  socketGuard exports WindowLimiter and MATCH_CREATE_LIMITS (F067)
+  ok  a create loop gets 20 matches per window, not 1000 (got 20)
+  ok  another account is not affected
+  ok  the account can create again after the window
+  ok  the limiter's key map stays bounded (size 50)
   ok  found the ok:false /healthz bodies
   ok  no ok:false /healthz body carries error text or a stack
   ok  found the /healthz handler
@@ -33,6 +38,8 @@
   ok  the DO serves the internal /mod/online route
   ok  webSocketClose prunes per-socket throttle state
   ok  lastChatAt entries are deleted (F090)
+  ok  friend games and bot games both spend the create limit (F067)
+  ok  the address key is a digest, never the raw address
   ok  a superseded seat is closed with SEAT_SUPERSEDED_CLOSE (F082)
 
 all socket guard checks passed

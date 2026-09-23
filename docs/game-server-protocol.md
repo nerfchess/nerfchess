@@ -21,27 +21,50 @@ References:
 
 | Type | Data | Purpose |
 | --- | --- | --- |
-| `create` | `{ "timeSec": 600, "incrementSec": 5, "draft": true, "mode": "buff", "picksVisible": false, "invite": "name" }` | Create a waiting game as White. `draft`, `mode`, and `picksVisible` are optional and select the Draft ruleset (always casual). `mode` picks the section: `"nerf"` (opening nerf pick, hidden until game end, nerf-modifier buffs only on a slow cadence) or `"buff"` (no nerfs at all, nerf-modifier buffs excluded); omitted = the legacy merged rules. `invite` (optional, signed-in hosts only) reserves the Black seat for that username: the game is never listed as an open challenge and other joiners are rejected with `invite_only`. |
+| `create` | `{ "timeSec": 600, "incrementSec": 5, "draft": true, "mode": "buff", "picksVisible": false, "invite": "name", "stacked": false, "rated": false }` | Create a waiting game as White. The clock must be within `CUSTOM_GAME_CLOCK` (`src/lib/clockBounds.ts`: base 0 to 7200 s, increment 0 to 60 s) or the reply is `invalid_clock`. `rated: true` makes it a rated custom game; ratings only move when both seats are different accounts. `stacked` (draft only) gives the joiner +2 draft tiers. Each account and each client address may open a limited number of new games per ten minutes (`too_many_games`). `draft`, `mode`, and `picksVisible` are optional and select the Draft ruleset. `mode` picks the section: `"nerf"` (opening nerf pick, hidden until game end, nerf-modifier buffs only on a slow cadence) or `"buff"` (no nerfs at all, nerf-modifier buffs excluded); omitted = the legacy merged rules. `invite` (optional, signed-in hosts only) reserves the Black seat for that username: the game is never listed as an open challenge and other joiners are rejected with `invite_only`. |
 | `join` | `{ "id": "A2BCD" }` | Join an unstarted game as Black. |
 | `reconnect` | `{ "id": "A2BCD", "color": "w", "token": "..." }` | Resume a reserved seat after reload or a dropped socket. |
 | `move` | `{ "u": "e2e4", "ply": 0 }` | Submit a UCI move for server validation. |
 | `resign` | none | Resign the current game. |
+| `abort` | none | Abort a game before both sides have moved. |
 | `claimWin` / `claimDraw` | none | Abandonment claims: end a started, unfinished game once the opponent has been disconnected for 30+ seconds (server-checked; otherwise rejected with `no_claim`). Both end the match with reason "abandonment": `claimWin` awards the win to the caller, `claimDraw` makes it a draw. |
 | `drawOffer` / `drawAccept` / `drawDecline` | none | Draw negotiation. |
-| `takebackOffer` / `takebackAccept` / `takebackDecline` | none | Takeback negotiation (casual games only; rated games reject with `takeback_rated`). Accepting rewinds the offerer's last move, plus the reply if one was already played. |
-| `rematch` | none | Offer (or accept a pending) rematch once the game is over. |
+| `takebackOffer` / `takebackAccept` / `takebackDecline` | none | Takeback negotiation (casual, non-draft games only; rated games reject with `takeback_rated`, draft games with `takeback_draft`). The target is fixed when the offer is made: the offerer's last move, plus the reply if one was already played. Accepting rewinds to that ply even if the offerer has moved since. |
+| `rematch` / `rematchCancel` | none | Offer (or accept a pending) rematch once the game is over, or withdraw the offer. |
+| `playbot` | `{ "difficulty": "easy" \| "medium" \| "hard", "mode": "nerf" \| "buff", "timeSec", "incrementSec", "color": "w" \| "b" \| "random" }` | Signed-in only: start a rated draft game against a house player. Same clock bounds and creation limit as `create`. |
 | `queue` | `{ "pool": "3+2", "mode": "nerf" }` | Join a quick-pairing pool (signed-in sockets only). The queue runs two separate pools, `"nerf"` and `"buff"`; only players in the same mode (and time control) pair. An omitted or unknown `mode` falls back to `"buff"`, which is the pool older clients always queued into. Paired games are rated Draft games in the pool's mode, staking that mode's rating bucket. |
 | `queueCancel` | none | Leave the pairing pool. |
-| `chat` | `{ "text": "gg" }` | Send an in-game chat message (profanity is censored and flagged). |
+| `chat` | `{ "text": "gg" }` | Send an in-game chat message. The text goes through `cleanText` (`src/lib/textInput.ts`: NFC, invisible format and bidi characters removed, 200 code points); profanity is censored and flagged. One message per 500 ms per socket. |
+| `schat` | `{ "text": "nice" }` | Spectator chat, for sockets watching a game. Same sanitizer and throttle. A player of the live game (matched by account) cannot post it (`seated_player`) and never receives it, even when watching their own game from another window. |
+| `reveal` | none | Show my secret rule to the table (irreversible). |
 | `dtPick` | `{ "index": 0 }` | Draft games: take a card from my pending buff offer. |
 | `dtBank` | none | Draft games: skip my pending offer and bank +1 tier for the next draft. |
+| `dtReroll` | none | Draft games: spend a reroll on my pending offer. |
 | `dtUse` | `{ "buffIndex": 0, "picks": [{ "square": 28 }] }` | Draft games: activate a held buff with its collected targets. The server re-walks the buff's own target chain, so invalid targets are rejected. |
 | `dtTarget` | `{ "buffIndex": 0, "picks": [] }` | Draft games: ask for the buff's next target request; the server replies with `dtTargetReq`. |
 | `dtNerfPick` | `{ "index": 0 }` | Draft games: pick one of my two opening nerf options. Validated by index against the server-dealt options (0 or 1, never a nerf id); the game starts once both seats have picked. |
 | `watch` | `{ "id": "A2BCD" }` | Spectate a live game. |
 | `watchLeave` | none | Stop spectating. |
 | `lobby` | none | Request a lobby snapshot (online players + live games). |
-| `p` | none | Application heartbeat; server replies with `n`. |
+| `p` | none | Application heartbeat while seated or watching; the server runs a flag check and replies with `n`. |
+| `hb` | none | Idle heartbeat (lobby, queue). Answered by the platform's auto-response (`{"t":"hb"}`) without waking the game server; keep the frame byte-identical. |
+| `adjustOppClock` / `adminGrant` / `seeOppBuffs` / `godRerolls` | `{ "delta" }` / `{ "id" }` / `{ "on" }` / `{ "on" }` | Owner god-panel tools, server-gated to the god-panel accounts (`forbidden` otherwise). Every use is announced to the table. |
+
+### Frame limits and close codes
+
+Every inbound frame passes, in order, a per-socket token bucket (40 frames of
+burst, refilled at 10 per second; over it the frame is dropped with at most one
+`rate_limited` error per second, and a socket that keeps flooding is closed
+with code 1008), a size check (8192 bytes, `frame_too_large`), JSON parsing
+(`bad_json`) and a shape check (an object with a string `t` of 1 to 32
+characters, `bad_frame`). Handlers validate every field of `d` themselves.
+The limits live in `src/lib/server/socketGuard.ts` and `src/lib/socketProtocol.ts`.
+
+| Close code | Meaning | Client behaviour |
+| --- | --- | --- |
+| 4001 | Seat superseded: the same seat was claimed from another tab or device. | Do not auto-reconnect. `MPSession` emits `superseded` and takes the seat back only on `reclaim()` or when that tab is focused. |
+| 1008 | Too many messages. | Treated as an ordinary drop. |
+| 1000 | Game expired. | Treated as an ordinary drop. |
 
 ## Server Messages
 
@@ -64,9 +87,10 @@ References:
 | `lobby` | `{ "players", "anonymous", "games", "challenges", "seeks" }` | Lobby snapshot reply. Each live game and open challenge carries `draft` plus `mode` when the match runs a section (`"nerf"` or `"buff"`; omitted for legacy merged-rules matches). Each seek carries the `mode` of the pool it waits in, plus the seeker's rating in that mode's bucket; answering a seek must queue with the same `pool` and `mode`. Clients use `mode` to color-code listings (Nerf red, Buff blue) and render no badge when it is absent. |
 | `drawOffer` / `drawDeclined` / `rematchOffer` / `rematched` | negotiation events | |
 | `takebackOffer` / `takebackDeclined` | `{ "color" }` | Takeback negotiation events. Moving past an opponent's request declines it. |
-| `takeback` | `{ "by", "moves", "ply", "wc", "bc" }` | Accepted takeback: the authoritative rewound move list — rebuild the game from it (players and spectators). |
+| `takeback` | `{ "by", "moves", "ply", "wc", "bc" }` | Accepted takeback: the authoritative rewound move list; rebuild the game from it (players and spectators). |
 | `opponentGone` | none | Opponent websocket disconnected. |
-| `error` | `{ "code", "message" }` | Rejected request or illegal/stale move. |
+| `error` | `{ "code", "message" }` | Rejected request or illegal/stale move. Guard codes: `rate_limited`, `frame_too_large`, `bad_json`, `bad_frame`, `too_many_games`, `seated_player`, `invalid_clock`. |
+| `schat` | `{ "name", "text", "at" }` | Relayed spectator chat, to watchers only (never to the live game's players). |
 | `n` | optional clocks | Heartbeat reply. |
 
 The browser does not apply a submitted move until it receives `move` from the
@@ -81,7 +105,10 @@ returns `start` with the authoritative accepted move history (and a trailing
 grace period prevents normal reloads from immediately notifying the opponent.
 The client (`MPSession`) also reconnects automatically with backoff whenever a
 seated or spectating socket drops, and retries immediately when the tab becomes
-visible or the browser comes back online.
+visible or the browser comes back online. The one exception is close code 4001
+(see above): a seat taken over by another tab stays with that tab until this
+one is focused or calls `reclaim()`, so two tabs never pass the seat back and
+forth.
 
 Clocks have a start-of-game grace period: each side's first move gets 15 free
 seconds before its clock starts charging, so a slow page load never costs time.
@@ -138,3 +165,17 @@ This document describes the production server (`worker.ts`, a Cloudflare
 Durable Object). The standalone Node server in `server/` implements an older
 subset of this protocol (no queue, chat, spectate, or draft frames) and is
 only suitable for self-hosted classic friend games.
+
+## Internal HTTP routes
+
+Reachable only through the Durable Object stub from server code (the public
+worker forwards just the socket path, `/healthz`, `/api/lobby` and `/arena/*`):
+
+- `GET /live-game?userId=` : the started game a user occupies, for the profile card.
+- `POST /tournament/create-game` : a tournament board with both seats assigned. Clock bounds are `TOURNAMENT_CLOCK`.
+- `GET /mod/online` : `{ humans, humansOnline, guests, anonymousSockets, peakHumansToday, peakAt, peakDay, publicFigure, at }`. `humans` counts distinct signed-in accounts with an open socket, leaving out house bots (`hp_`), the seeded roster (`seed_`) and test accounts (`polish_`); guests are included and also counted in `guests`. `peakHumansToday` is the UTC day's maximum of `humans`, sampled at every socket connect. `publicFigure` is the unchanged public online number (`players.length + anonymous` on `/lobby`), echoed for comparison. For the mod panel only.
+
+`GET /healthz` is public: it reports counts and booleans (`db.lastError`,
+`house.tickError`, `house.seedError`, `house.lastDesync`,
+`house.lastEngineReject` are true when something failed), never error text,
+stacks, game ids or draft actions; those go to the worker log.

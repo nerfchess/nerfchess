@@ -556,8 +556,8 @@ export function clearOnlineSeat(gameId: string) {
 // The game this device is currently playing, so other tabs/pages (the home
 // page in particular) can offer a "return to your game" shortcut after the
 // player wanders off or closes the tab mid-game.
-const ACTIVE_GAME_KEY = "nerfchess.activeGame.v1";
-const ACTIVE_GAME_TTL_MS = 24 * 60 * 60 * 1000;
+export const ACTIVE_GAME_KEY = "nerfchess.activeGame.v1";
+export const ACTIVE_GAME_TTL_MS = 24 * 60 * 60 * 1000;
 
 export type ActiveGame = { id: string; at: number };
 

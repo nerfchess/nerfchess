@@ -58,6 +58,12 @@ async function main() {
   ok(!/timeSec > 7200/.test(worker), "no clock bound literal is left in worker.ts (F078)");
   ok((worker.match(/clockWithin\(timeSec, incrementSec, (CUSTOM_GAME_CLOCK|TOURNAMENT_CLOCK)\)/g) ?? []).length === 3, "all three clock checks use src/lib/clockBounds.ts (F078)");
 
+  const serializedAfter = (field: string) =>
+    new RegExp(`session\\.${field} = [^;]+;\\s*(//[^\\n]*\\n\\s*)*ws\\.serializeAttachment\\(session\\);`).test(worker);
+  ok(serializedAfter("seeOppBuffs"), "the see-opponent-buffs toggle survives a hibernation wake (F091)");
+  ok(serializedAfter("godRerolls"), "the infinite-rerolls toggle survives a hibernation wake (F091)");
+  ok(serializedAfter("lastClockAdjustAt"), "the clock-adjust debounce survives a hibernation wake (F091)");
+
   if (failures) {
     console.log(`\n${failures} failure(s)`);
     process.exit(1);

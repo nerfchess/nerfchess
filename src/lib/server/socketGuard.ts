@@ -78,3 +78,61 @@ export function spendFrame(budget: FrameBudget, now: number): "ok" | "drop" | "c
   budget.dropped += 1;
   return budget.dropped >= FRAME_BUDGET.closeAfterDropped ? "close" : "drop";
 }
+
+/**
+ * Sliding-window counter keyed by account or client, for actions that create
+ * durable state on the game server (a new match). In memory on the Durable
+ * Object: an isolate restart forgets it, which only ever lets a real player
+ * through. Keys are pruned as they empty so the map cannot grow without bound.
+ */
+export class WindowLimiter {
+  private hits = new Map<string, number[]>();
+  constructor(
+    private readonly limit: number,
+    private readonly windowMs: number,
+    private readonly maxKeys = 10_000,
+  ) {}
+
+  /** Record one hit for every key if all of them are under the limit.
+   *  Returns false (and records nothing) when any key is at the limit. */
+  take(keys: string[], now: number): boolean {
+    const from = now - this.windowMs;
+    const live = keys.map((key) => {
+      const kept = (this.hits.get(key) ?? []).filter((at) => at > from);
+      if (kept.length) this.hits.set(key, kept);
+      else this.hits.delete(key);
+      return kept;
+    });
+    if (live.some((list) => list.length >= this.limit)) return false;
+    if (this.hits.size + keys.length > this.maxKeys) this.sweep(from);
+    keys.forEach((key, i) => this.hits.set(key, [...live[i], now]));
+    return true;
+  }
+
+  size(): number {
+    return this.hits.size;
+  }
+
+  private sweep(from: number) {
+    for (const [key, list] of this.hits) {
+      const kept = list.filter((at) => at > from);
+      if (kept.length) this.hits.set(key, kept);
+      else this.hits.delete(key);
+    }
+    // Still full of live keys: drop the oldest half rather than grow.
+    if (this.hits.size > this.maxKeys) {
+      const drop = [...this.hits.keys()].slice(0, Math.floor(this.hits.size / 2));
+      for (const key of drop) this.hits.delete(key);
+    }
+  }
+}
+
+/** How many new matches one account or one client address may open per
+ *  window (F067). Generous for a person (a friend game every 30s for ten
+ *  minutes), fatal for a script opening sockets in a loop. The address limit
+ *  is higher because a school or office shares one address. */
+export const MATCH_CREATE_LIMITS = {
+  windowMs: 10 * 60 * 1000,
+  perAccount: 20,
+  perAddress: 40,
+} as const;

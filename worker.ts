@@ -113,7 +113,14 @@ import { categoryForTimeControl, isModeCategory, type RatingCategory } from "./s
 import { censorText, findProfanity } from "./src/lib/profanity";
 import { isGodPanelUser, INFINITE_REROLLS } from "./src/lib/godPanel";
 import { GLICKO_DEFAULT, glickoUpdatePair, isProvisional } from "./src/lib/glicko";
-import { checkClientFrame, newFrameBudget, spendFrame, type FrameBudget } from "./src/lib/server/socketGuard";
+import {
+  MATCH_CREATE_LIMITS,
+  WindowLimiter,
+  checkClientFrame,
+  newFrameBudget,
+  spendFrame,
+  type FrameBudget,
+} from "./src/lib/server/socketGuard";
 import { SEAT_SUPERSEDED_CLOSE, SOCKET_POLICY_CLOSE } from "./src/lib/socketProtocol";
 import { cleanText } from "./src/lib/textInput";
 import { CUSTOM_GAME_CLOCK, TOURNAMENT_CLOCK, clockWithin } from "./src/lib/clockBounds";
@@ -410,16 +417,19 @@ type SessionAttachment = {
   // The account is a guest (users.is_guest), read at upgrade. Only used to
   // split the internal human online count (/mod/online).
   guest?: boolean;
+  // FNV-1a digest of the client address at upgrade (never the address
+  // itself), the key for the per-address match-creation limit (F067).
+  addr?: string;
   // Chat mute (moderation): timestamp the mute expires, read at connect time.
   mutedUntil?: number;
   // Match id this socket spectates (mutually exclusive with a seat).
   watching?: string;
   // Debounce timestamp for the courtesy/owner clock-adjust buttons, so the
-  // +15s / -15s frames cannot be spammed. In-memory only (fine for a debounce).
+  // +15s / -15s frames cannot be spammed. Kept on the socket attachment so a hibernation wake keeps it.
   lastClockAdjustAt?: number;
   // Owner "see opponent buffs" toggle (god-panel accounts only, re-verified on
   // use): when set, this socket's dtState carries the OPPONENT's unmasked
-  // held-buff identities. Per-socket and in-memory, so it resets on reconnect and never
+  // held-buff identities. Per-socket (kept on the attachment across a hibernation wake), so it resets on reconnect and never
   // affects any other viewer's masking.
   seeOppBuffs?: boolean;
   // Owner "infinite rerolls" toggle (god-panel accounts only, re-verified on
@@ -427,7 +437,7 @@ type SessionAttachment = {
   // INFINITE_REROLLS sentinel (so the Reroll control always shows) and the
   // draft-reroll handler tops the real count back up so it never drains. A
   // video-scripting aid; the opponent's dtState still carries the seat's real
-  // count, so nothing is leaked. Per-socket and in-memory (resets on reconnect).
+  // count, so nothing is leaked. Per-socket, kept on the attachment across a hibernation wake (resets on reconnect).
   godRerolls?: boolean;
 };
 type QueueEntry = {
@@ -1160,6 +1170,22 @@ export class GameServer extends DurableObject<Env> {
   // wake starts every socket with a full bucket, which only ever errs toward
   // letting a real player through.
   private frameBudgets = new Map<WebSocket, FrameBudget>();
+  // New matches per account and per client address (F067): every friend game
+  // or bot game is a durable record the alarm and lobby passes scan, and a
+  // script could open sockets in a loop to create them without end.
+  private createsByAccount = new WindowLimiter(MATCH_CREATE_LIMITS.perAccount, MATCH_CREATE_LIMITS.windowMs);
+  private createsByAddress = new WindowLimiter(MATCH_CREATE_LIMITS.perAddress, MATCH_CREATE_LIMITS.windowMs);
+
+  // Spend one match creation for this socket's account and address. False
+  // means the caller must refuse (and has already been told why).
+  private allowMatchCreate(ws: WebSocket, session: SessionAttachment): boolean {
+    const now = Date.now();
+    const byAccount = session.userId ? this.createsByAccount.take([session.userId], now) : true;
+    const byAddress = byAccount && session.addr ? this.createsByAddress.take([session.addr], now) : byAccount;
+    if (byAccount && byAddress) return true;
+    error(ws, "too_many_games", "Too many new games in a short time. Try again in a few minutes.");
+    return false;
+  }
   private dbReady: Promise<boolean> | null = null;
   // Short-lived in-memory cache of the assembled lobby snapshot. Every client
   // polls the lobby roughly every 5s and each rebuild does a full match scan on
@@ -1752,6 +1778,8 @@ export class GameServer extends DurableObject<Env> {
     // Same-origin websocket upgrades carry the session cookie; attach the
     // account (if any) so queueing and rated games know who this socket is.
     const attachment: SessionAttachment = { id: crypto.randomUUID() };
+    const clientIp = request.headers.get("CF-Connecting-IP");
+    if (clientIp) attachment.addr = fnv1a(`addr:${clientIp}`);
     const db = await this.db();
     if (db) {
       try {
@@ -3693,6 +3721,7 @@ export class GameServer extends DurableObject<Env> {
     const invite =
       session.userId && typeof requested.invite === "string" ? requested.invite.trim().slice(0, 30) : "";
 
+    if (!this.allowMatchCreate(ws, session)) return;
     const id = await this.newCode();
     // Moderator card overrides: disabled nerfs leave the dealt pair, and the
     // draft-pool slice is frozen onto the match record (see cardOverrides).
@@ -6074,6 +6103,7 @@ export class GameServer extends DurableObject<Env> {
     }
     const db = await this.db();
     if (!db) return error(ws, "server_unconfigured", "Bot games are unavailable right now.");
+    if (!this.allowMatchCreate(ws, session)) return;
     // Personas already seated in a live game are unavailable; pick a free one in
     // the chosen difficulty band. loadLiveMatches is the bounded live-index read
     // the house tick already uses (never a match-table scan).
@@ -7895,6 +7925,9 @@ export class GameServer extends DurableObject<Env> {
     const now = Date.now();
     if (now - (session.lastClockAdjustAt ?? 0) < 500) return;
     session.lastClockAdjustAt = now;
+    // Persist per-socket state on the attachment so a hibernation wake keeps
+    // it (F091): the in-memory session map is rebuilt from attachments.
+    ws.serializeAttachment(session);
     // Bank the live clocks first so the delta lands on up-to-date values, and
     // keep charging the active player from now (mirrors a played move).
     this.bankClocks(match, now);
@@ -8040,6 +8073,7 @@ export class GameServer extends DurableObject<Env> {
     }
     const wasOn = !!session.seeOppBuffs;
     session.seeOppBuffs = Boolean((data as { on?: unknown } | undefined)?.on);
+    ws.serializeAttachment(session);
     // Refresh only this socket's dtState; draftStateFor unmasks the opponent's
     // held buffs when the flag is on and re-masks them when off. No other seat's
     // dtState changes.
@@ -8069,6 +8103,7 @@ export class GameServer extends DurableObject<Env> {
     }
     const wasOn = !!session.godRerolls;
     session.godRerolls = Boolean((data as { on?: unknown } | undefined)?.on);
+    ws.serializeAttachment(session);
     // Refresh only this socket's dtState so the inflated rerollsLeft (or the real
     // count once toggled off) reaches the owner's Reroll control immediately.
     const state = this.draftStateFor(

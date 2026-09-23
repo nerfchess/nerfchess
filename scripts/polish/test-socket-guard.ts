@@ -85,6 +85,26 @@ async function main() {
       if (spendFrame(steady, t) !== "ok") steadyDropped++;
     }
     ok(steadyDropped === 0, "5 frames a second for two minutes never drops");
+
+    // Match creation window (F067).
+    const g = guard as unknown as Record<string, unknown>;
+    const Limiter = g.WindowLimiter as
+      | (new (limit: number, windowMs: number, maxKeys?: number) => { take(keys: string[], now: number): boolean; size(): number })
+      | undefined;
+    const limits = g.MATCH_CREATE_LIMITS as { windowMs: number; perAccount: number; perAddress: number } | undefined;
+    ok(typeof Limiter === "function" && !!limits, "socketGuard exports WindowLimiter and MATCH_CREATE_LIMITS (F067)");
+    if (Limiter && limits) {
+      const lim = new Limiter(limits.perAccount, limits.windowMs);
+      let now = 5_000_000;
+      let allowed = 0;
+      for (let i = 0; i < 1000; i++) if (lim.take(["acct"], (now += 10))) allowed++;
+      ok(allowed === limits.perAccount, `a create loop gets ${limits.perAccount} matches per window, not 1000 (got ${allowed})`);
+      ok(lim.take(["other"], now), "another account is not affected");
+      ok(lim.take(["acct"], now + limits.windowMs + 1), "the account can create again after the window");
+      const small = new Limiter(1, 1000, 50);
+      for (let i = 0; i < 500; i++) small.take([`k${i}`], 1_000 + i * 10);
+      ok(small.size() <= 50, `the limiter's key map stays bounded (size ${small.size()})`);
+    }
   }
 
   // Part 2: worker.ts source checks.
@@ -111,6 +131,8 @@ async function main() {
   const closeBody = worker.slice(worker.indexOf("async webSocketClose("), worker.indexOf("async webSocketError("));
   ok(/forgetSocket\(ws\)/.test(closeBody), "webSocketClose prunes per-socket throttle state");
   ok(/this\.lastChatAt\.delete\(/.test(worker), "lastChatAt entries are deleted (F090)");
+  ok((worker.match(/if \(!this\.allowMatchCreate\(ws, session\)\) return;/g) ?? []).length === 2, "friend games and bot games both spend the create limit (F067)");
+  ok(/attachment\.addr = fnv1a\(/.test(worker), "the address key is a digest, never the raw address");
   ok(/SEAT_SUPERSEDED_CLOSE/.test(worker.slice(worker.indexOf("private async attachSession("))), "a superseded seat is closed with SEAT_SUPERSEDED_CLOSE (F082)");
 
   if (failures) {
