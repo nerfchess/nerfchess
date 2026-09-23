@@ -648,8 +648,28 @@ function splitReason(reason: string) {
 
 // The game-over chime fires once per finished game, not once per mount:
 // dismissing and reopening the result screen, or a reconnect replaying the
-// end frame, remounts this component and must stay silent.
+// end frame, remounts this component and must stay silent. The module Set
+// alone forgot everything on a hard reload, so reopening a finished game's
+// page rang the ending again (F218); the ledger also lives in sessionStorage
+// for the tab's lifetime. Storage can be blocked, so every access is guarded
+// and the Set still covers the session when it is.
 const playedGameOverKeys = new Set<string>();
+const VOICED_STORAGE_KEY = "nc:gameover-voiced";
+function alreadyVoiced(key: string): boolean {
+  if (playedGameOverKeys.has(key)) return true;
+  playedGameOverKeys.add(key);
+  try {
+    const raw = window.sessionStorage.getItem(VOICED_STORAGE_KEY);
+    const list: unknown = raw ? JSON.parse(raw) : [];
+    const keys = Array.isArray(list) ? list.filter((k): k is string => typeof k === "string") : [];
+    if (keys.includes(key)) return true;
+    // Bounded: the newest 50 endings are plenty for one tab.
+    window.sessionStorage.setItem(VOICED_STORAGE_KEY, JSON.stringify([...keys, key].slice(-50)));
+  } catch {
+    // Storage blocked or malformed: the in-memory Set above still applies.
+  }
+  return false;
+}
 
 // Count a figure from `from` up to `to` over a short beat, so the post-game
 // rating change reads as earned rather than snapping into place. Jumps straight
@@ -1036,10 +1056,7 @@ function GameOverPanel({
 
   useEffect(() => {
     const key = gameId ?? (startedAt != null ? `local:${startedAt}` : null);
-    if (key) {
-      if (playedGameOverKeys.has(key)) return;
-      playedGameOverKeys.add(key);
-    }
+    if (key && alreadyVoiced(key)) return;
     // The result screen is the one place that knows how the game ended from
     // THIS seat, so it voices the outcome rather than the neutral dong: a
     // rising fanfare for a win, a soft fall for a loss, an unresolved pair for
