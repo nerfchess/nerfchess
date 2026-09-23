@@ -1,0 +1,85 @@
+{
+ "id": "fm_moonlit_stride",
+ "url": "/dev/plays?id=fm_moonlit_stride&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "fm_moonlit_stride",
+  "name": "Moonlit Stride",
+  "tier": 2,
+  "category": "movement",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:fm_moonlit_stride",
+  "anchor": "cast",
+  "source": "empower",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 60,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, empower diff",
+  "castSq": "b1",
+  "targets": [
+   "b1",
+   "g1"
+  ],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2527,
+  "cssEndMs": 3447,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 48,
+  "infiniteAnimations": 7
+ },
+ "screencast": {
+  "framesInWindow": 201,
+  "maxGapMs": 344.3
+ },
+ "raf": {
+  "frames": 196,
+  "medianMs": 16.7,
+  "maxMs": 183.3,
+  "dropped": 24
+ },
+ "longAnimationFrames": {
+  "count": 2,
+  "worstMs": 156,
+  "totalBlockingMs": 125,
+  "entries": [
+   {
+    "atMs": -68,
+    "duration": 74,
+    "blocking": 19,
+    "scripts": []
+   },
+   {
+    "atMs": 36,
+    "duration": 156,
+    "blocking": 106,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  194,
+  493,
+  853,
+  1258,
+  1700,
+  2174,
+  2677
+ ],
+ "png": "docs/polish-pass/evidence/TC-fantasy/before/fm_moonlit_stride.png",
+ "pngBytes": 27483
+}

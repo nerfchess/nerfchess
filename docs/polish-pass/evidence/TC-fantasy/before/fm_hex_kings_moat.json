@@ -1,0 +1,6 @@
+{
+ "id": "fm_hex_kings_moat",
+ "url": "/dev/plays?id=fm_hex_kings_moat&bare=1",
+ "error": "page.evaluate: TypeError: Cannot read properties of undefined (reading 'play')",
+ "info": null
+}

@@ -1,0 +1,118 @@
+{
+ "id": "fm_hex_kings_moat",
+ "url": "/dev/plays?id=fm_hex_kings_moat&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "fm_hex_kings_moat",
+  "name": "King's Moat",
+  "tier": 7,
+  "category": "hex",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:fm_hex_kings_moat",
+  "anchor": "board",
+  "source": "blindfold",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 40,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, blindfold diff",
+  "castSq": "c7",
+  "targets": [
+   "c7",
+   "d7",
+   "e7"
+  ],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2567,
+  "cssEndMs": 3431,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 55,
+  "infiniteAnimations": 6
+ },
+ "screencast": {
+  "framesInWindow": 181,
+  "maxGapMs": 306.9
+ },
+ "raf": {
+  "frames": 186,
+  "medianMs": 16.7,
+  "maxMs": 99.9,
+  "dropped": 33
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 59,
+  "totalBlockingMs": 7,
+  "entries": [
+   {
+    "atMs": -52,
+    "duration": 59,
+    "blocking": 7,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  196,
+  501,
+  866,
+  1276,
+  1725,
+  2207,
+  2717
+ ],
+ "png": "docs/polish-pass/evidence/TC-fantasy/after/fm_hex_kings_moat.png",
+ "pngBytes": 34165,
+ "off": {
+  "url": "/dev/plays?id=fm_hex_kings_moat&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0.0015,
+  "endRegions": [
+   {
+    "x": 240,
+    "y": 72,
+    "w": 56,
+    "h": 48,
+    "cells": 17
+   },
+   {
+    "x": 128,
+    "y": 72,
+    "w": 56,
+    "h": 32,
+    "cells": 11
+   },
+   {
+    "x": 168,
+    "y": 104,
+    "w": 16,
+    "h": 16,
+    "cells": 3
+   },
+   {
+    "x": 264,
+    "y": 120,
+    "w": 16,
+    "h": 8,
+    "cells": 2
+   }
+  ],
+  "png": "docs/polish-pass/evidence/TC-fantasy/after/fm_hex_kings_moat.off.png"
+ }
+}

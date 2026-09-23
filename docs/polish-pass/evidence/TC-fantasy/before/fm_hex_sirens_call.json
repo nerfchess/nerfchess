@@ -1,0 +1,92 @@
+{
+ "id": "fm_hex_sirens_call",
+ "url": "/dev/plays?id=fm_hex_sirens_call&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "fm_hex_sirens_call",
+  "name": "Siren's Call",
+  "tier": 4,
+  "category": "hex",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:fm_hex_sirens_call",
+  "anchor": "cast",
+  "source": "walnut",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "engine",
+  "driveNote": "activated with 1 pick(s)",
+  "castSq": "d8",
+  "targets": [
+   "d8"
+  ],
+  "picks": [
+   "d8"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2514,
+  "cssEndMs": 3442,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 37,
+  "infiniteAnimations": 1
+ },
+ "screencast": {
+  "framesInWindow": 175,
+  "maxGapMs": 323.8
+ },
+ "raf": {
+  "frames": 166,
+  "medianMs": 16.7,
+  "maxMs": 133.3,
+  "dropped": 55
+ },
+ "longAnimationFrames": {
+  "count": 3,
+  "worstMs": 70,
+  "totalBlockingMs": 20,
+  "entries": [
+   {
+    "atMs": -55,
+    "duration": 66,
+    "blocking": 10,
+    "scripts": []
+   },
+   {
+    "atMs": 14,
+    "duration": 61,
+    "blocking": 10,
+    "scripts": []
+   },
+   {
+    "atMs": 848,
+    "duration": 70,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  193,
+  491,
+  849,
+  1252,
+  1691,
+  2163,
+  2664
+ ],
+ "png": "docs/polish-pass/evidence/TC-fantasy/before/fm_hex_sirens_call.png",
+ "pngBytes": 26648
+}

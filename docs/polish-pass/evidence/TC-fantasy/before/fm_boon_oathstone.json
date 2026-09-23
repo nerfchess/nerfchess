@@ -1,0 +1,76 @@
+{
+ "id": "fm_boon_oathstone",
+ "url": "/dev/plays?id=fm_boon_oathstone&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "fm_boon_oathstone",
+  "name": "Oathstone",
+  "tier": 4,
+  "category": "protection",
+  "mechanic": "instant",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:fm_boon_oathstone",
+  "anchor": "board",
+  "source": "shield",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 60,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2475,
+  "cssEndMs": 3477,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 88,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 164,
+  "maxGapMs": 376.1
+ },
+ "raf": {
+  "frames": 165,
+  "medianMs": 16.7,
+  "maxMs": 100,
+  "dropped": 54
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 67,
+  "totalBlockingMs": 17,
+  "entries": [
+   {
+    "atMs": -55,
+    "duration": 67,
+    "blocking": 17,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  190,
+  484,
+  836,
+  1233,
+  1667,
+  2132,
+  2625
+ ],
+ "png": "docs/polish-pass/evidence/TC-fantasy/before/fm_boon_oathstone.png",
+ "pngBytes": 25576
+}

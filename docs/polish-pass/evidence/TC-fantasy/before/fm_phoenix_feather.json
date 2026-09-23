@@ -1,0 +1,92 @@
+{
+ "id": "fm_phoenix_feather",
+ "url": "/dev/plays?id=fm_phoenix_feather&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "fm_phoenix_feather",
+  "name": "Phoenix Feather",
+  "tier": 5,
+  "category": "pieces",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:fm_phoenix_feather",
+  "anchor": "cast",
+  "source": "summon",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "stage",
+  "driveNote": "no valid use in this position, synthetic diff, summon diff",
+  "castSq": "d4",
+  "targets": [
+   "d4",
+   "c3",
+   "d3"
+  ],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2768,
+  "cssEndMs": 3454,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 66,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 182,
+  "maxGapMs": 327.3
+ },
+ "raf": {
+  "frames": 185,
+  "medianMs": 16.7,
+  "maxMs": 300,
+  "dropped": 34
+ },
+ "longAnimationFrames": {
+  "count": 3,
+  "worstMs": 68,
+  "totalBlockingMs": 37,
+  "entries": [
+   {
+    "atMs": -59,
+    "duration": 68,
+    "blocking": 12,
+    "scripts": []
+   },
+   {
+    "atMs": 13,
+    "duration": 66,
+    "blocking": 16,
+    "scripts": []
+   },
+   {
+    "atMs": 311,
+    "duration": 64,
+    "blocking": 9,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  211,
+  538,
+  930,
+  1371,
+  1853,
+  2370,
+  2918
+ ],
+ "png": "docs/polish-pass/evidence/TC-fantasy/before/fm_phoenix_feather.png",
+ "pngBytes": 25939
+}

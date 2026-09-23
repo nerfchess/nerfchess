@@ -1,0 +1,188 @@
+{
+ "id": "fm_boon_worldheart",
+ "url": "/dev/plays?id=fm_boon_worldheart&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "fm_boon_worldheart",
+  "name": "Worldheart",
+  "tier": 8,
+  "category": "tempo",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:fm_boon_worldheart",
+  "anchor": "cast",
+  "source": "rally",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 30,
+  "drive": "engine",
+  "driveNote": "activated, no targets",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2667,
+  "cssEndMs": 3620,
+  "settled": true,
+  "windowMs": 3871,
+  "cssAnimations": 71,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 161,
+  "maxGapMs": 347.7
+ },
+ "raf": {
+  "frames": 162,
+  "medianMs": 16.7,
+  "maxMs": 166.7,
+  "dropped": 73
+ },
+ "longAnimationFrames": {
+  "count": 4,
+  "worstMs": 108,
+  "totalBlockingMs": 133,
+  "entries": [
+   {
+    "atMs": -53,
+    "duration": 71,
+    "blocking": 15,
+    "scripts": []
+   },
+   {
+    "atMs": 54,
+    "duration": 99,
+    "blocking": 48,
+    "scripts": []
+   },
+   {
+    "atMs": 163,
+    "duration": 85,
+    "blocking": 27,
+    "scripts": []
+   },
+   {
+    "atMs": 1437,
+    "duration": 108,
+    "blocking": 43,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  204,
+  519,
+  897,
+  1323,
+  1789,
+  2288,
+  2817
+ ],
+ "png": "docs/polish-pass/evidence/TC-fantasy/after/fm_boon_worldheart.png",
+ "pngBytes": 35584,
+ "off": {
+  "url": "/dev/plays?id=fm_boon_worldheart&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0.0029,
+  "endRegions": [
+   {
+    "x": 240,
+    "y": 352,
+    "w": 24,
+    "h": 120,
+    "cells": 24
+   },
+   {
+    "x": 72,
+    "y": 400,
+    "w": 16,
+    "h": 16,
+    "cells": 3
+   },
+   {
+    "x": 16,
+    "y": 456,
+    "w": 16,
+    "h": 16,
+    "cells": 3
+   },
+   {
+    "x": 72,
+    "y": 456,
+    "w": 16,
+    "h": 16,
+    "cells": 3
+   },
+   {
+    "x": 360,
+    "y": 456,
+    "w": 16,
+    "h": 16,
+    "cells": 4
+   },
+   {
+    "x": 128,
+    "y": 400,
+    "w": 24,
+    "h": 8,
+    "cells": 3
+   },
+   {
+    "x": 184,
+    "y": 400,
+    "w": 24,
+    "h": 8,
+    "cells": 3
+   },
+   {
+    "x": 16,
+    "y": 400,
+    "w": 16,
+    "h": 8,
+    "cells": 2
+   },
+   {
+    "x": 304,
+    "y": 400,
+    "w": 16,
+    "h": 8,
+    "cells": 2
+   },
+   {
+    "x": 360,
+    "y": 400,
+    "w": 16,
+    "h": 8,
+    "cells": 2
+   },
+   {
+    "x": 416,
+    "y": 400,
+    "w": 16,
+    "h": 8,
+    "cells": 2
+   },
+   {
+    "x": 192,
+    "y": 456,
+    "w": 8,
+    "h": 16,
+    "cells": 2
+   }
+  ],
+  "png": "docs/polish-pass/evidence/TC-fantasy/after/fm_boon_worldheart.off.png"
+ }
+}

@@ -1,0 +1,110 @@
+{
+ "id": "fm_boon_lanternlight",
+ "url": "/dev/plays?id=fm_boon_lanternlight&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "fm_boon_lanternlight",
+  "name": "Lanternlight",
+  "tier": 1,
+  "category": "movement",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:fm_boon_lanternlight",
+  "anchor": "cast",
+  "source": "empower",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, empower diff",
+  "castSq": "b2",
+  "targets": [
+   "b2",
+   "c2",
+   "d2"
+  ],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2484,
+  "cssEndMs": 3472,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 62,
+  "infiniteAnimations": 16
+ },
+ "screencast": {
+  "framesInWindow": 192,
+  "maxGapMs": 374
+ },
+ "raf": {
+  "frames": 191,
+  "medianMs": 16.7,
+  "maxMs": 149.9,
+  "dropped": 30
+ },
+ "longAnimationFrames": {
+  "count": 5,
+  "worstMs": 85,
+  "totalBlockingMs": 62,
+  "entries": [
+   {
+    "atMs": -60,
+    "duration": 67,
+    "blocking": 16,
+    "scripts": []
+   },
+   {
+    "atMs": 30,
+    "duration": 85,
+    "blocking": 35,
+    "scripts": []
+   },
+   {
+    "atMs": 158,
+    "duration": 56,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 221,
+    "duration": 56,
+    "blocking": 0,
+    "scripts": [
+     {
+      "duration": 7,
+      "invoker": "PerformanceObserverCallback",
+      "source": ""
+     }
+    ]
+   },
+   {
+    "atMs": 950,
+    "duration": 65,
+    "blocking": 11,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  190,
+  485,
+  839,
+  1237,
+  1672,
+  2139,
+  2634
+ ],
+ "png": "docs/polish-pass/evidence/TC-fantasy/before/fm_boon_lanternlight.png",
+ "pngBytes": 28015
+}

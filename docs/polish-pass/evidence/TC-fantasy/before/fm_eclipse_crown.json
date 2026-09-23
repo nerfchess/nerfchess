@@ -1,0 +1,94 @@
+{
+ "id": "fm_eclipse_crown",
+ "url": "/dev/plays?id=fm_eclipse_crown&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "fm_eclipse_crown",
+  "name": "Eclipse Crown",
+  "tier": 8,
+  "category": "tempo",
+  "mechanic": "instant",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:fm_eclipse_crown",
+  "anchor": "board",
+  "source": "stun",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 30,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2675,
+  "cssEndMs": 3476,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 70,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 161,
+  "maxGapMs": 357.7
+ },
+ "raf": {
+  "frames": 158,
+  "medianMs": 16.7,
+  "maxMs": 183.3,
+  "dropped": 61
+ },
+ "longAnimationFrames": {
+  "count": 4,
+  "worstMs": 79,
+  "totalBlockingMs": 42,
+  "entries": [
+   {
+    "atMs": -64,
+    "duration": 79,
+    "blocking": 22,
+    "scripts": []
+   },
+   {
+    "atMs": 18,
+    "duration": 62,
+    "blocking": 9,
+    "scripts": []
+   },
+   {
+    "atMs": 623,
+    "duration": 62,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 1444,
+    "duration": 67,
+    "blocking": 11,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  204,
+  521,
+  900,
+  1327,
+  1794,
+  2294,
+  2825
+ ],
+ "png": "docs/polish-pass/evidence/TC-fantasy/before/fm_eclipse_crown.png",
+ "pngBytes": 36358
+}

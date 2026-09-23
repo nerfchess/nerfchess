@@ -1,0 +1,91 @@
+{
+ "id": "fm_boon_windrider",
+ "url": "/dev/plays?id=fm_boon_windrider&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "fm_boon_windrider",
+  "name": "Windrider",
+  "tier": 5,
+  "category": "movement",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:fm_boon_windrider",
+  "anchor": "cast",
+  "source": "empower",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 60,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, empower diff",
+  "castSq": "c1",
+  "targets": [
+   "c1",
+   "f1"
+  ],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2629,
+  "cssEndMs": 3445,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 44,
+  "infiniteAnimations": 7
+ },
+ "screencast": {
+  "framesInWindow": 204,
+  "maxGapMs": 309.3
+ },
+ "raf": {
+  "frames": 181,
+  "medianMs": 16.7,
+  "maxMs": 183.3,
+  "dropped": 37
+ },
+ "longAnimationFrames": {
+  "count": 2,
+  "worstMs": 139,
+  "totalBlockingMs": 78,
+  "entries": [
+   {
+    "atMs": -52,
+    "duration": 58,
+    "blocking": 3,
+    "scripts": []
+   },
+   {
+    "atMs": 103,
+    "duration": 139,
+    "blocking": 75,
+    "scripts": [
+     {
+      "duration": 9,
+      "invoker": "TimerHandler:setInterval",
+      "source": ""
+     }
+    ]
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  201,
+  512,
+  885,
+  1306,
+  1764,
+  2257,
+  2779
+ ],
+ "png": "docs/polish-pass/evidence/TC-fantasy/before/fm_boon_windrider.png",
+ "pngBytes": 26098
+}

@@ -1,0 +1,194 @@
+{
+ "id": "fm_eclipse_crown",
+ "url": "/dev/plays?id=fm_eclipse_crown&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "fm_eclipse_crown",
+  "name": "Eclipse Crown",
+  "tier": 8,
+  "category": "tempo",
+  "mechanic": "instant",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:fm_eclipse_crown",
+  "anchor": "board",
+  "source": "stun",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 30,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2612,
+  "cssEndMs": 3464,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 65,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 180,
+  "maxGapMs": 342.7
+ },
+ "raf": {
+  "frames": 164,
+  "medianMs": 16.7,
+  "maxMs": 116.6,
+  "dropped": 55
+ },
+ "longAnimationFrames": {
+  "count": 5,
+  "worstMs": 74,
+  "totalBlockingMs": 22,
+  "entries": [
+   {
+    "atMs": -63,
+    "duration": 74,
+    "blocking": 17,
+    "scripts": []
+   },
+   {
+    "atMs": 15,
+    "duration": 53,
+    "blocking": 1,
+    "scripts": []
+   },
+   {
+    "atMs": 141,
+    "duration": 51,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 257,
+    "duration": 50,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 1244,
+    "duration": 72,
+    "blocking": 4,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  200,
+  509,
+  880,
+  1298,
+  1754,
+  2243,
+  2762
+ ],
+ "png": "docs/polish-pass/evidence/TC-fantasy/after/fm_eclipse_crown.png",
+ "pngBytes": 32902,
+ "off": {
+  "url": "/dev/plays?id=fm_eclipse_crown&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0.0029,
+  "endRegions": [
+   {
+    "x": 240,
+    "y": 352,
+    "w": 24,
+    "h": 120,
+    "cells": 24
+   },
+   {
+    "x": 72,
+    "y": 400,
+    "w": 16,
+    "h": 16,
+    "cells": 3
+   },
+   {
+    "x": 16,
+    "y": 456,
+    "w": 16,
+    "h": 16,
+    "cells": 3
+   },
+   {
+    "x": 72,
+    "y": 456,
+    "w": 16,
+    "h": 16,
+    "cells": 3
+   },
+   {
+    "x": 360,
+    "y": 456,
+    "w": 16,
+    "h": 16,
+    "cells": 4
+   },
+   {
+    "x": 128,
+    "y": 400,
+    "w": 24,
+    "h": 8,
+    "cells": 3
+   },
+   {
+    "x": 184,
+    "y": 400,
+    "w": 24,
+    "h": 8,
+    "cells": 3
+   },
+   {
+    "x": 16,
+    "y": 400,
+    "w": 16,
+    "h": 8,
+    "cells": 2
+   },
+   {
+    "x": 304,
+    "y": 400,
+    "w": 16,
+    "h": 8,
+    "cells": 2
+   },
+   {
+    "x": 360,
+    "y": 400,
+    "w": 16,
+    "h": 8,
+    "cells": 2
+   },
+   {
+    "x": 416,
+    "y": 400,
+    "w": 16,
+    "h": 8,
+    "cells": 2
+   },
+   {
+    "x": 192,
+    "y": 456,
+    "w": 8,
+    "h": 16,
+    "cells": 2
+   }
+  ],
+  "png": "docs/polish-pass/evidence/TC-fantasy/after/fm_eclipse_crown.off.png"
+ }
+}

@@ -631,6 +631,340 @@
 }
 .ftp-petal { animation: ftp-petal calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
+/* --- Mythic ladder, per-card scenes (F223) ---------------------------------- */
+
+/* Board frame flipped so the caster's back rank is at the bottom (static). */
+.ftp-mine { transform: scaleY(var(--fx-side, 1)); }
+
+/* Worldheart: two beats, two moves, veins, a bulwark over your half */
+@keyframes ftp-wh-heart {
+  0% { opacity: 0; transform: scale(0.55); }
+  14% { opacity: 1; transform: scale(0.94); }
+  26% { transform: scale(0.9); }
+  30% { transform: scale(1.2); }
+  37% { transform: scale(0.96); }
+  48% { transform: scale(0.92); }
+  52% { transform: scale(1.26); }
+  60% { transform: scale(1); }
+  86% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.9); }
+}
+.ftp-wh-heart { animation: ftp-wh-heart calc(1.9s * var(--fx-dur, 1)) cubic-bezier(0.3, 0, 0.3, 1) both; }
+
+@keyframes ftp-wh-ecg {
+  0% { opacity: 0; transform: scaleX(0); }
+  12% { opacity: 1; }
+  60% { opacity: 1; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.ftp-wh-ecg { animation: ftp-wh-ecg calc(1.5s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 0 50%; }
+
+@keyframes ftp-wh-move {
+  0% { opacity: 0; transform: translate(0, 0) rotate(var(--rot, 0deg)) scale(0.5); }
+  18% { opacity: 1; transform: translate(calc(var(--dx, 0%) * 0.25), calc(var(--dy, 0%) * 0.25 * var(--fx-side, 1))) rotate(var(--rot, 0deg)) scale(1.15); }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--dx, 0%), calc(var(--dy, 0%) * var(--fx-side, 1))) rotate(var(--rot, 0deg)) scale(0.9); }
+}
+.ftp-wh-move { animation: ftp-wh-move calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+@keyframes ftp-wh-vein {
+  0% { opacity: 0; transform: rotate(calc(var(--ang, 90deg) * var(--fx-side, 1))) scaleX(0); }
+  20% { opacity: 1; }
+  55% { opacity: 1; transform: rotate(calc(var(--ang, 90deg) * var(--fx-side, 1))) scaleX(1); }
+  100% { opacity: 0; transform: rotate(calc(var(--ang, 90deg) * var(--fx-side, 1))) scaleX(1.04); }
+}
+.ftp-wh-vein { animation: ftp-wh-vein calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 0 50%; }
+
+@keyframes ftp-wh-ward {
+  0% { opacity: 0; transform: scaleY(0); }
+  30% { opacity: 1; transform: scaleY(1.03); }
+  40% { transform: scaleY(1); }
+  78% { opacity: 0.85; }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+.ftp-wh-ward { animation: ftp-wh-ward calc(1.4s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.25, 1) both; transform-origin: 50% 100%; }
+
+@keyframes ftp-wh-ember {
+  0% { opacity: 0; transform: translateY(0) scale(0.8); }
+  25% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 160%)) scale(0.5); }
+}
+.ftp-wh-ember { animation: ftp-wh-ember calc(1s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 1, 0.45) both; }
+
+/* Eclipse Crown: night over the enemy half, an eye closes, totality */
+@keyframes ftp-ec-night {
+  0% { opacity: 0; transform: scaleY(0.2); }
+  24% { opacity: 1; transform: scaleY(1); }
+  74% { opacity: 1; }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+.ftp-ec-night { animation: ftp-ec-night calc(2.2s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.8, 0.2, 1) both; transform-origin: 50% 0; }
+
+@keyframes ftp-ec-eye {
+  0% { opacity: 0; transform: scaleY(0.2); }
+  20% { opacity: 1; transform: scaleY(1); }
+  42% { transform: scaleY(1); }
+  58% { opacity: 1; transform: scaleY(0.06); }
+  80% { opacity: 0.8; transform: scaleY(0.06); }
+  100% { opacity: 0; transform: scaleY(0.06); }
+}
+.ftp-ec-eye { animation: ftp-ec-eye calc(1.7s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
+
+@keyframes ftp-ec-crown {
+  0% { opacity: 0; transform: translateY(-40%) scale(0.9); }
+  24% { opacity: 1; transform: translateY(0) scale(1); }
+  84% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-10%) scale(1.03); }
+}
+.ftp-ec-crown { animation: ftp-ec-crown calc(1.9s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.25, 1) both; }
+
+@keyframes ftp-ec-sun {
+  0% { opacity: 0; transform: scale(0.4); }
+  20% { opacity: 1; transform: scale(1); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.04); }
+}
+.ftp-ec-sun { animation: ftp-ec-sun calc(1.8s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+@keyframes ftp-ec-moon {
+  0% { opacity: 0; transform: translateX(-150%); }
+  14% { opacity: 1; }
+  46% { transform: translateX(0); }
+  72% { opacity: 1; transform: translateX(6%); }
+  100% { opacity: 0; transform: translateX(60%); }
+}
+.ftp-ec-moon { animation: ftp-ec-moon calc(1.4s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.7, 0.3, 1) both; }
+
+@keyframes ftp-ec-corona {
+  0% { opacity: 0; transform: scale(0.6) rotate(0deg); }
+  30% { opacity: 1; transform: scale(1.05) rotate(8deg); }
+  100% { opacity: 0; transform: scale(1.4) rotate(18deg); }
+}
+.ftp-ec-corona { animation: ftp-ec-corona calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+@keyframes ftp-ec-bead {
+  0% { opacity: 0; transform: scale(0.2); }
+  30% { opacity: 1; transform: scale(1.5); }
+  100% { opacity: 0; transform: scale(0.6); }
+}
+.ftp-ec-bead { animation: ftp-ec-bead calc(0.6s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+@keyframes ftp-ec-ward {
+  0% { opacity: 0; transform: scaleX(0); }
+  30% { opacity: 1; transform: scaleX(1); }
+  76% { opacity: 0.9; }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.ftp-ec-ward { animation: ftp-ec-ward calc(1.4s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 0; }
+
+/* Winter Court: frost creeps up your half from your back rank */
+@keyframes ftp-wc-breath {
+  0% { opacity: 0; transform: scaleX(0.3); }
+  40% { opacity: 1; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.ftp-wc-breath { animation: ftp-wc-breath calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+@keyframes ftp-wc-frost {
+  0% { opacity: 0; transform: scaleY(0); }
+  12% { opacity: 1; }
+  40% { transform: scaleY(1); }
+  76% { opacity: 1; transform: scaleY(1); }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+.ftp-wc-frost { animation: ftp-wc-frost calc(2.1s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.6, 0.3, 1) both; transform-origin: 50% 100%; }
+
+@keyframes ftp-wc-icicle {
+  0% { opacity: 0; transform: scaleY(0); }
+  30% { opacity: 1; transform: scaleY(1.1); }
+  42% { transform: scaleY(1); }
+  78% { opacity: 1; }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+.ftp-wc-icicle { animation: ftp-wc-icicle calc(1.5s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.25, 1) both; transform-origin: 50% 0; }
+
+@keyframes ftp-wc-flake {
+  0% { opacity: 0; transform: translateY(-60%) rotate(0deg) scale(0.6); }
+  25% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(80%) rotate(90deg) scale(1); }
+}
+.ftp-wc-flake { animation: ftp-wc-flake calc(1.4s * var(--fx-dur, 1)) cubic-bezier(0.3, 0, 0.5, 1) both; }
+
+@keyframes ftp-wc-glint {
+  0% { opacity: 0; transform: translateX(0); }
+  20% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(680%); }
+}
+.ftp-wc-glint { animation: ftp-wc-glint calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
+
+@keyframes ftp-wc-crown {
+  0% { opacity: 0; transform: translateY(40%) scaleY(0.2); }
+  30% { opacity: 1; transform: translateY(0) scaleY(1.08); }
+  42% { transform: translateY(0) scaleY(1); }
+  82% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-6%) scaleY(1); }
+}
+.ftp-wc-crown { animation: ftp-wc-crown calc(1.8s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.25, 1) both; transform-origin: 50% 100%; }
+
+/* Sunforge: sun, focused rays, anvil, hammer, pawn becomes knight */
+/* static: mirror the sky about the pawn when it stands in the top half */
+.ftp-sf-sky { transform: scaleY(clamp(-1, calc(var(--fx-oy, 1) * 100), 1)); }
+@keyframes ftp-sf-sun {
+  0% { opacity: 0; transform: translateY(40%) rotate(0deg) scale(0.7); }
+  20% { opacity: 1; transform: translateY(0) rotate(20deg) scale(1); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(0) rotate(70deg) scale(1); }
+}
+.ftp-sf-sun { animation: ftp-sf-sun calc(1.8s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+@keyframes ftp-sf-beam {
+  0% { opacity: 0; transform: scaleY(0); }
+  30% { opacity: 1; transform: scaleY(1); }
+  60% { opacity: 1; }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+.ftp-sf-beam { animation: ftp-sf-beam calc(1.2s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: 50% 0; }
+
+@keyframes ftp-sf-anvil {
+  0% { opacity: 0; transform: translateY(30%); }
+  20% { opacity: 1; transform: translateY(0); }
+  50% { transform: translateY(0); }
+  53% { transform: translateY(8%); }
+  60% { transform: translateY(0); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(0); }
+}
+.ftp-sf-anvil { animation: ftp-sf-anvil calc(1.6s * var(--fx-dur, 1)) cubic-bezier(0.3, 0, 0.3, 1) both; }
+
+@keyframes ftp-sf-pawn {
+  0% { opacity: 0; transform: scale(0.8); }
+  20% { opacity: 1; transform: scale(1); }
+  64% { opacity: 1; transform: scale(1); }
+  70% { opacity: 1; transform: scale(1.3, 0.5); }
+  84% { opacity: 0; transform: scale(1.4, 0.3); }
+  100% { opacity: 0; transform: scale(1.4, 0.3); }
+}
+.ftp-sf-pawn { animation: ftp-sf-pawn calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.3, 0, 0.3, 1) both; transform-origin: 50% 100%; }
+
+@keyframes ftp-sf-hammer {
+  0% { opacity: 0; transform: rotate(60deg); }
+  16% { opacity: 1; transform: rotate(70deg); }
+  34% { transform: rotate(84deg); }
+  45% { transform: rotate(0deg); }
+  54% { transform: rotate(10deg); }
+  76% { opacity: 1; transform: rotate(24deg); }
+  100% { opacity: 0; transform: rotate(40deg); }
+}
+.ftp-sf-hammer { animation: ftp-sf-hammer calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 0.35, 1) both; transform-origin: 100% 50%; }
+
+@keyframes ftp-sf-knight {
+  0% { opacity: 0; transform: translateY(24%) scale(0.3); }
+  28% { opacity: 1; transform: translateY(-4%) scale(1.14); }
+  42% { transform: translateY(0) scale(1); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(0) scale(1); }
+}
+.ftp-sf-knight { animation: ftp-sf-knight calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.2, 1.1, 0.3, 1) both; transform-origin: 50% 100%; }
+
+@keyframes ftp-sf-steam {
+  0% { opacity: 0; transform: translateY(0) scale(0.5); }
+  30% { opacity: 0.9; }
+  100% { opacity: 0; transform: translateY(-120%) scale(1.3); }
+}
+.ftp-sf-steam { animation: ftp-sf-steam calc(1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+/* King's Moat: water around the eight squares, bridge up, advances turned back */
+@keyframes ftp-km-seep {
+  0% { opacity: 0; transform: scale(0.4); }
+  40% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.05); }
+}
+.ftp-km-seep { animation: ftp-km-seep calc(1s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+@keyframes ftp-km-moat {
+  0% { opacity: 0; transform: scale(0.84); }
+  22% { opacity: 1; transform: scale(1); }
+  82% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1); }
+}
+.ftp-km-moat { animation: ftp-km-moat calc(2.1s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.25, 1) both; }
+
+@keyframes ftp-km-crown {
+  0% { opacity: 0; transform: translateY(20%) scale(0.6); }
+  24% { opacity: 1; transform: translateY(0) scale(1.08); }
+  36% { transform: scale(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1); }
+}
+.ftp-km-crown { animation: ftp-km-crown calc(1.9s * var(--fx-dur, 1)) cubic-bezier(0.2, 1.1, 0.3, 1) both; }
+
+@keyframes ftp-km-bridge {
+  0% { opacity: 0; transform: scaleY(1); }
+  16% { opacity: 1; transform: scaleY(1); }
+  56% { opacity: 1; transform: scaleY(0.1); }
+  100% { opacity: 0; transform: scaleY(0.1); }
+}
+.ftp-km-bridge { animation: ftp-km-bridge calc(1.1s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; transform-origin: 50% 0; }
+
+/* an advance runs at the water from outside and recoils at its edge */
+@keyframes ftp-km-turn {
+  0% { opacity: 0; transform: rotate(var(--ang, 0deg)) translateX(-380%); }
+  20% { opacity: 1; }
+  44% { transform: rotate(var(--ang, 0deg)) translateX(-232%); }
+  56% { opacity: 1; transform: rotate(var(--ang, 0deg)) translateX(-280%) scaleX(0.8); }
+  100% { opacity: 0; transform: rotate(var(--ang, 0deg)) translateX(-420%) scaleX(1); }
+}
+.ftp-km-turn { animation: ftp-km-turn calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.6, 0.3, 1) both; }
+
+@keyframes ftp-km-mist {
+  0% { opacity: 0; transform: translateX(-10%) scaleX(0.8); }
+  30% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(10%) scaleX(1.1); }
+}
+.ftp-km-mist { animation: ftp-km-mist calc(1.5s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
+
+/* Royal Road: carpet unrolls along your back rank from the chosen square */
+@keyframes ftp-rr-edge {
+  0% { opacity: 0; transform: scaleX(0.2); }
+  40% { opacity: 1; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.ftp-rr-edge { animation: ftp-rr-edge calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: calc(50% + var(--fx-ox, 0) * 12.5%) 50%; }
+
+@keyframes ftp-rr-carpet {
+  0% { opacity: 0; transform: scaleX(0); }
+  10% { opacity: 1; }
+  44% { transform: scaleX(1); }
+  80% { opacity: 1; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.ftp-rr-carpet { animation: ftp-rr-carpet calc(2s * var(--fx-dur, 1)) cubic-bezier(0.3, 0.6, 0.3, 1) both; transform-origin: calc(50% + var(--fx-ox, 0) * 12.5%) 50%; }
+
+@keyframes ftp-rr-step {
+  0% { opacity: 0; transform: scale(0.4); }
+  24% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1); }
+}
+.ftp-rr-step { animation: ftp-rr-step calc(0.8s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+@keyframes ftp-rr-banner {
+  0% { opacity: 0; transform: scaleY(0); }
+  30% { opacity: 1; transform: scaleY(1.06); }
+  40% { transform: scaleY(1); }
+  82% { opacity: 1; }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+.ftp-rr-banner { animation: ftp-rr-banner calc(1.3s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.25, 1) both; transform-origin: 50% 100%; }
+
+@keyframes ftp-rr-crown {
+  0% { opacity: 0; transform: translateY(-70%) scale(0.8); }
+  34% { opacity: 1; transform: translateY(4%) scale(1.06); }
+  46% { transform: translateY(0) scale(1); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(0) scale(1); }
+}
+.ftp-rr-crown { animation: ftp-rr-crown calc(1.4s * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.25, 1) both; }
+
 /* ============================================================================
    Global animations-off guard: Settings toggles html[data-anim="off"], which
    must silence every ftp-* layer outright (no first-frame flash).

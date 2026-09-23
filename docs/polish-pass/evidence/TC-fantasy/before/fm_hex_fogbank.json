@@ -1,0 +1,82 @@
+{
+ "id": "fm_hex_fogbank",
+ "url": "/dev/plays?id=fm_hex_fogbank&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "fm_hex_fogbank",
+  "name": "Fogbank",
+  "tier": 2,
+  "category": "hex",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:fm_hex_fogbank",
+  "anchor": "board",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 60,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, diff-less: no zone source, not an attack",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2326,
+  "cssEndMs": 3463,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 22,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 113,
+  "maxGapMs": 504.8
+ },
+ "raf": {
+  "frames": 183,
+  "medianMs": 16.7,
+  "maxMs": 100,
+  "dropped": 36
+ },
+ "longAnimationFrames": {
+  "count": 2,
+  "worstMs": 83,
+  "totalBlockingMs": 0,
+  "entries": [
+   {
+    "atMs": 1680,
+    "duration": 63,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 3097,
+    "duration": 83,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  179,
+  456,
+  789,
+  1163,
+  1572,
+  2011,
+  2476
+ ],
+ "png": "docs/polish-pass/evidence/TC-fantasy/before/fm_hex_fogbank.png",
+ "pngBytes": 29646
+}
