@@ -1,17 +1,47 @@
 import type { MetadataRoute } from "next";
 
-// Served at /robots.txt. Everything public is crawlable: traditional search
-// bots and AI / answer-engine crawlers are all explicitly welcomed. The major
-// crawlers are named individually as well as covered by the "*" rule, because
-// several answer-engine bots (GPTBot, Google-Extended, ...) only honor a block
-// addressed to their own user-agent, and an explicit allow is a clear signal
-// that this site wants to be indexed and cited. Only transient, user-specific
-// surfaces are excluded: they have no SEO value and waste crawl budget. A
-// plain-language description of the game for AI systems lives at /llms.txt.
-const DISALLOW = ["/api/", "/game", "/inbox", "/mod", "/friend", "/dev", "/profile/edit"];
+// Served at /robots.txt. Three groups, because a crawler obeys only the most
+// specific group that names it:
+//
+// 1. Link-preview bots (X, Facebook and Instagram, Slack, Discord, LinkedIn,
+//    WhatsApp, Telegram, Pinterest, Reddit and the embed services). They fetch
+//    one page when a person pastes a link, to draw the card. They may read
+//    game pages and invite links, which are exactly the links people paste:
+//    /game was disallowed for everyone, and X honours robots.txt, so a shared
+//    game or invite unfurled as a bare URL (F238). Those pages still carry
+//    noindex, so allowing the fetch does not put them in any index.
+// 2. Search engines and AI answer engines, named individually as well as by
+//    "*", because several (GPTBot, Google-Extended, ...) only honour a group
+//    addressed to their own user agent. Same rules as "*".
+// 3. Everyone else ("*").
+//
+// Blocked for all: the API, moderation, developer tools, private messages,
+// settings and the profile editor. Blocked for search only: games, the friend
+// shim and invite links (per-game, per-invite, noindex pages that would only
+// spend crawl budget). A plain description of the game for AI systems lives
+// at /llms.txt.
 
-// Search engines, then AI / answer-engine crawlers. Same permissive policy for
-// all of them.
+const PRIVATE = ["/api/", "/mod", "/dev", "/inbox", "/settings", "/profile/edit"];
+const SEARCH_DISALLOW = [...PRIVATE, "/game", "/friend", "/c/"];
+
+const UNFURL_BOTS = [
+  "Twitterbot",
+  "facebookexternalhit",
+  "Facebot",
+  "Slackbot",
+  "Slackbot-LinkExpanding",
+  "Discordbot",
+  "LinkedInBot",
+  "WhatsApp",
+  "TelegramBot",
+  "Pinterestbot",
+  "redditbot",
+  "Embedly",
+  "Iframely",
+  "SkypeUriPreview",
+  "Mastodon",
+];
+
 const NAMED_CRAWLERS = [
   "Googlebot",
   "Google-Extended",
@@ -44,8 +74,9 @@ const NAMED_CRAWLERS = [
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
-      { userAgent: "*", allow: "/", disallow: DISALLOW },
-      { userAgent: NAMED_CRAWLERS, allow: "/", disallow: DISALLOW },
+      { userAgent: UNFURL_BOTS, allow: "/", disallow: PRIVATE },
+      { userAgent: NAMED_CRAWLERS, allow: "/", disallow: SEARCH_DISALLOW },
+      { userAgent: "*", allow: "/", disallow: SEARCH_DISALLOW },
     ],
     sitemap: "https://nerfchess.com/sitemap.xml",
     host: "https://nerfchess.com",
