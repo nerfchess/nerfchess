@@ -434,14 +434,16 @@ export function PlayerSearch({ className = "", autoFocus = false }: { className?
       )}
 
       {showingRecent && (
-        <div
-          id={listId}
-          role="listbox"
-          aria-label="Recent searches"
-          className="absolute inset-x-0 top-full z-[70] mt-1 plate dropdown overflow-hidden shadow-2xl"
-        >
-          <p className="px-4 pt-2 pb-1">Recent</p>
-          <div className="divide-y divide-[color:var(--edge)]">
+        <div className="absolute inset-x-0 top-full z-[70] mt-1 plate dropdown overflow-hidden shadow-2xl">
+          {/* The caption sits outside the listbox, which may hold only
+              options (F150); the listbox is named by it. */}
+          <p id={`${listId}-caption`} className="px-4 pt-2 pb-1">Recent</p>
+          <div
+            id={listId}
+            role="listbox"
+            aria-labelledby={`${listId}-caption`}
+            className="divide-y divide-[color:var(--edge)]"
+          >
             {recent.map((item, i) => (
               <div key={item.username} className="relative flex items-center">
                 <button

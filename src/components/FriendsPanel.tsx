@@ -211,12 +211,12 @@ export function FriendsPanel({ bounded = false }: { bounded?: boolean } = {}) {
           <div className="mt-4 space-y-2" aria-hidden>
             {[0, 1, 2, 3].map((i) => (
               <div key={i} className="flex items-center gap-3">
-                <div className="h-9 w-9 shrink-0 animate-pulse rounded-full bg-[color:var(--bg-raised)] motion-reduce:animate-none" />
+                <div className="skeleton h-9 w-9 shrink-0 rounded-full" />
                 <div className="min-w-0 flex-1 space-y-1.5">
-                  <div className="h-3.5 w-1/3 animate-pulse rounded bg-[color:var(--bg-raised)] motion-reduce:animate-none" />
-                  <div className="h-2.5 w-1/4 animate-pulse rounded bg-white/[0.07] motion-reduce:animate-none" />
+                  <div className="skeleton h-3.5 w-1/3" />
+                  <div className="skeleton h-2.5 w-1/4" />
                 </div>
-                <div className="ml-auto h-8 w-16 shrink-0 animate-pulse rounded-none bg-[color:var(--bg-raised)] motion-reduce:animate-none" />
+                <div className="skeleton ml-auto h-8 w-16 shrink-0" />
               </div>
             ))}
             <span className="sr-only">Loading friends</span>
