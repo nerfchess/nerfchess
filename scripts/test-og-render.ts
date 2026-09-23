@@ -181,6 +181,7 @@ async function main() {
     }
   } finally {
     console.error = quiet;
+    g.caches = prevCaches;
   }
 
   // The key builder itself: every key stays under its own namespace, and a
@@ -188,7 +189,7 @@ async function main() {
   const renderMod = (await import("../src/lib/og/render")) as { ogCacheRequest?: (key: string) => Request | null };
   check(typeof renderMod.ogCacheRequest === "function", "render.ts exports ogCacheRequest, the one place a cache key becomes a URL");
   const ogCacheRequest = renderMod.ogCacheRequest ?? ((key: string) => new Request(`https://og-cache.nerfchess.com/v1/${key}`));
-  for (const bad of ["u/../game/ABCDE", "clubs/..", "tournaments/./x", "c//X", "", "../x"]) {
+  for (const bad of ["u/../game/ABCDE", "clubs/..", "tournaments/./x", "c//X", "", "../x", ".", "..", "/", "leaderboard/"]) {
     check(ogCacheRequest(bad) === null, `ogCacheRequest(${JSON.stringify(bad)}) refused`);
   }
   for (const [key, ns] of [
@@ -203,7 +204,59 @@ async function main() {
     const u = req ? new URL(req.url) : null;
     check(!!u && u.pathname.startsWith(`/v1/${ns}/`) && u.pathname.split("/").length === key.split("/").length + 2 && !u.hash && !u.search, `ogCacheRequest(${JSON.stringify(key)}) stays in ${ns}/ (got ${req?.url})`);
   }
-  g.caches = prevCaches;
+
+  // 7. The sanitiser must not switch caching off for a key production
+  //    builds (review round 2: "leaderboard", one segment, came back null,
+  //    so every crawler fetch re-queried the DB and re-rendered). Every key
+  //    shape the previews use maps to exactly /v1/<key>, the URL it had
+  //    before the sanitiser, so warm entries stay warm.
+  const productionKeys = [
+    "leaderboard",
+    "puzzles/daily/2026-09-23",
+    "puzzles/p-0042",
+    "codex/buff/lucky/0a1b2c3d",
+    "codex/nerf/cursed_pawn/deadbeef",
+    "game/ABCDE12",
+    "u/magnus_c",
+    "clubs/rook-lifters",
+    "tournaments/t_8f3a",
+    "c/K7Q2M9",
+  ];
+  for (const key of productionKeys) {
+    const req = ogCacheRequest(key);
+    check(!!req && new URL(req.url).pathname === `/v1/${key}`, `production key ${JSON.stringify(key)} is accepted as /v1/${key} (got ${req?.url ?? "null"})`);
+  }
+  // End to end: the previews that need no database still reach the edge
+  // cache under their production key (lookup, then store).
+  g.caches = { default: fakeCache };
+  try {
+    const routes = await import("../src/lib/og/routes");
+    const { puzzleImage, dailyPuzzleImage } = await import("../src/lib/og/puzzleImage");
+    const { codexImage } = await import("../src/lib/og/codexImage");
+    const { todaysPuzzle } = await import("../src/lib/seoPuzzles");
+    const today = todaysPuzzle();
+    const codexRow = allCardMeta()[0];
+    const [, , codexKind, codexId] = codexRow.path.split("/");
+    const e2e: [string, () => Promise<Response>, string][] = [
+      ["leaderboard", () => routes.leaderboardImage(), "/v1/leaderboard"],
+      ["codex", () => codexImage(codexKind as "buff" | "nerf", codexId), `/v1/codex/${codexKind}/${codexId}/`],
+    ];
+    if (today) {
+      e2e.push(["daily puzzle", () => dailyPuzzleImage(), `/v1/puzzles/daily/${today.key}`]);
+      e2e.push(["puzzle", () => puzzleImage(today.puzzle.id), `/v1/puzzles/${today.puzzle.id}`]);
+    }
+    console.error = () => {};
+    for (const [name, image, want] of e2e) {
+      touched.length = 0;
+      const res = await image();
+      const paths = touched.map((t) => new URL(t).pathname);
+      check(res.status === 200, `${name} preview answers 200`);
+      check(paths.length === 2 && paths.every((p) => (want.endsWith("/") ? p.startsWith(want) : p === want)), `${name} preview is edge-cached at ${want} (touched ${touched.join(", ") || "nothing"})`);
+    }
+  } finally {
+    console.error = quiet;
+    g.caches = prevCaches;
+  }
 
   console.log(`${checks - failures}/${checks} checks passed`);
   process.exit(failures ? 1 : 0);

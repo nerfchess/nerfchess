@@ -85,7 +85,9 @@ export async function gameImage(id: string) {
 // renders its "not found" card with no key, so it is never pinned either.
 
 export async function profileImage(username: string) {
-  const p = await profileSummary(username);
+  // The key needs only the found username, so this lookup skips the archive
+  // read (favourite cards); that runs inside build, on a cache miss only.
+  const p = await profileSummary(username, { cards: false });
   if (!p) {
     return ogImage(
       () => pageCard({ kicker: "Player", title: "Player not found", subtitle: "Find players on the Nerf Chess leaderboard and community pages." }),
@@ -93,7 +95,10 @@ export async function profileImage(username: string) {
     );
   }
   return ogImage(
-    () => profileCard({ username: p.username, avatar: p.avatar, ratings: p.ratings, games: p.games, topCards: p.topCards }),
+    async () => {
+      const full = (await profileSummary(p.username)) ?? p;
+      return profileCard({ username: full.username, avatar: full.avatar, ratings: full.ratings, games: full.games, topCards: full.topCards });
+    },
     OG_CACHE.slow,
     `u/${p.username.toLowerCase()}`,
   );

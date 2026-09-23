@@ -1,0 +1,3 @@
+FAIL  production key "leaderboard" is accepted as /v1/leaderboard (got null)
+FAIL  leaderboard preview is edge-cached at /v1/leaderboard (touched nothing)
+163/165 checks passed

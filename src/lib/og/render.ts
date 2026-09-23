@@ -95,15 +95,18 @@ export type OgRequest = {
   key?: string;
 };
 
-/** The edge-cache request for a key such as "game/ABCDE", or null when the
- *  key is unsafe. SECURITY: this is the only place a key becomes a URL. Each
- *  "/" segment is percent-encoded, so "#", "?", a backslash and "%2e" cannot end
- *  the path or turn into a dot segment, and an empty, "." or ".." segment is
- *  refused, so the URL parser can never fold one key into another
- *  namespace. Callers still build keys only from validated, found records. */
+/** The edge-cache request for a key such as "game/ABCDE" or "leaderboard",
+ *  or null when the key is unsafe. SECURITY: this is the only place a key
+ *  becomes a URL. Each "/" segment is percent-encoded, so "#", "?", a
+ *  backslash and "%2e" cannot end the path or turn into a dot segment, and an
+ *  empty, "." or ".." segment is refused, so the URL parser can never fold
+ *  one key into another namespace. Callers still build keys only from
+ *  validated, found records. */
 export function ogCacheRequest(key: string): Request | null {
   const parts = key.split("/");
-  if (parts.length < 2 || parts.some((s) => s === "" || s === "." || s === "..")) return null;
+  // One segment is a valid key ("leaderboard"); the empty key is one empty
+  // segment, so it is refused here too.
+  if (parts.some((s) => s === "" || s === "." || s === "..")) return null;
   try {
     const url = `https://og-cache.nerfchess.com/v1/${parts.map(encodeURIComponent).join("/")}`;
     // Belt and braces: the parsed URL must be exactly the one we wrote.
