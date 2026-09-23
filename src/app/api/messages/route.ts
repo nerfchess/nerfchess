@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/server/social";
+import { PRIVATE_NO_STORE } from "@/lib/server/request";
 
 export const dynamic = "force-dynamic";
 
@@ -70,7 +71,8 @@ export async function GET(request: Request) {
     for (const u of users.results) names.set(u.id, { username: u.username, avatar: u.avatar });
   }
 
-  return NextResponse.json({
+  return NextResponse.json(
+    {
     conversations: peers
       .filter((p) => names.has(p.peerId))
       .map((p) => ({
@@ -81,5 +83,7 @@ export async function GET(request: Request) {
         fromMe: p.fromMe,
         unread: p.unread,
       })),
-  });
+    },
+    { headers: { "Cache-Control": PRIVATE_NO_STORE } },
+  );
 }

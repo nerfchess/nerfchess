@@ -1,7 +1,22 @@
 import { NextResponse } from "next/server";
-import { requireUser, createNotification } from "@/lib/server/social";
+import {
+  requireUser,
+  createNotification,
+  hasPendingNotification,
+  mutedRefusal,
+  FRIEND_HREF,
+} from "@/lib/server/social";
+import { apiError, guardJsonWrite, PRIVATE_NO_STORE, rateLimit, tooManyRequests, usernameParam } from "@/lib/server/request";
 
 export const dynamic = "force-dynamic";
+
+// Friend requests ring another player's bell, so sending them is metered:
+// at most this many "request" actions per sender per hour (F058). Accepting,
+// declining and unfriending are not limited.
+const REQUEST_WINDOW_MS = 60 * 60 * 1000;
+const REQUEST_WINDOW_MAX = 20;
+
+const ACTIONS = new Set(["request", "accept", "decline", "remove"]);
 
 // Friendships are stored as ONE canonical row per pair (user_lo < user_hi by
 // id). These helpers order a pair and read the "other" side.
@@ -70,36 +85,39 @@ export async function GET(request: Request) {
     else outgoing.push(entry);
   }
 
-  return NextResponse.json({ friends, incoming, outgoing });
+  return NextResponse.json({ friends, incoming, outgoing }, { headers: { "Cache-Control": PRIVATE_NO_STORE } });
 }
 
 // POST { action, username }:
-//   request — send a friend request (or auto-accept if they already asked you)
-//   accept  — accept a pending incoming request
-//   decline — decline an incoming request / cancel an outgoing one / unfriend
+//   request: send a friend request (or auto-accept if they already asked you)
+//   accept:  accept a pending incoming request
+//   decline: decline an incoming request / cancel an outgoing one / unfriend
 export async function POST(request: Request) {
+  const body = await guardJsonWrite(request);
+  if (body instanceof NextResponse) return body;
   const guard = await requireUser(request);
   if (guard instanceof NextResponse) return guard;
   const { db, user } = guard;
 
-  let body: { action?: unknown; username?: unknown };
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
+  const action = typeof body.action === "string" && ACTIONS.has(body.action) ? body.action : "";
+  if (!action) return apiError(400, "Unknown action.");
+  const username = typeof body.username === "string" ? usernameParam(body.username) : null;
+  if (!username) return apiError(400, "A username is required.");
+
+  if (action === "request") {
+    // A muted player cannot reach another player's bell (same rule as DMs).
+    const muted = mutedRefusal(user, "send friend requests");
+    if (muted) return muted;
+    const limit = await rateLimit(db, `friendreq:${user.id}`, REQUEST_WINDOW_MAX, REQUEST_WINDOW_MS);
+    if (!limit.ok) return tooManyRequests("Too many friend requests. Try again later.", limit.retryAfterSec);
   }
-  const action = typeof body.action === "string" ? body.action : "";
-  const username = typeof body.username === "string" ? body.username.trim() : "";
-  if (!username) return NextResponse.json({ error: "A username is required." }, { status: 400 });
 
   const target = await db
     .prepare(`SELECT id, username FROM users WHERE username_lower = ?`)
-    .bind(username.toLowerCase())
+    .bind(username)
     .first<{ id: string; username: string }>();
-  if (!target) return NextResponse.json({ error: "No player with that name." }, { status: 404 });
-  if (target.id === user.id) {
-    return NextResponse.json({ error: "You cannot friend yourself." }, { status: 400 });
-  }
+  if (!target) return apiError(404, "No player with that name.");
+  if (target.id === user.id) return apiError(400, "You cannot friend yourself.");
 
   const { lo, hi } = pair(user.id, target.id);
   const existing = await db
@@ -111,26 +129,31 @@ export async function POST(request: Request) {
     if (existing?.status === "accepted") {
       return NextResponse.json({ ok: true, status: "accepted" });
     }
-    // They already asked you → accept instead of stacking a reverse request.
+    // They already asked you: accept instead of stacking a reverse request.
     if (existing?.status === "pending" && existing.requested_by === target.id) {
       await db
         .prepare(`UPDATE friendships SET status = 'accepted' WHERE user_lo = ? AND user_hi = ?`)
         .bind(lo, hi)
         .run();
-      await notifyFriend(db, target.id, user.id, user.username, "accepted your friend request");
+      await notifyFriend(db, target.id, user, "accepted your friend request");
       return NextResponse.json({ ok: true, status: "accepted" });
     }
     if (existing?.status === "pending") {
       return NextResponse.json({ ok: true, status: "pending" }); // already sent
     }
-    await db
+    // ON CONFLICT: two concurrent requests for the same pair used to race the
+    // read above and the second INSERT failed on the primary key with a 500.
+    const inserted = await db
       .prepare(
         `INSERT INTO friendships (user_lo, user_hi, requested_by, status, created_at)
-         VALUES (?, ?, ?, 'pending', ?)`,
+         VALUES (?, ?, ?, 'pending', ?)
+         ON CONFLICT(user_lo, user_hi) DO NOTHING`,
       )
       .bind(lo, hi, user.id, Date.now())
       .run();
-    await notifyFriend(db, target.id, user.id, user.username, "sent you a friend request");
+    if ((inserted.meta.changes ?? 0) > 0) {
+      await notifyFriend(db, target.id, user, "sent you a friend request");
+    }
     return NextResponse.json({ ok: true, status: "pending" });
   }
 
@@ -141,40 +164,38 @@ export async function POST(request: Request) {
         .prepare(`UPDATE friendships SET status = 'accepted' WHERE user_lo = ? AND user_hi = ?`)
         .bind(lo, hi)
         .run();
-      await notifyFriend(db, target.id, user.id, user.username, "accepted your friend request");
+      await notifyFriend(db, target.id, user, "accepted your friend request");
       return NextResponse.json({ ok: true, status: "accepted" });
     }
-    return NextResponse.json({ error: "No request to accept." }, { status: 404 });
+    return apiError(404, "No request to accept.");
   }
 
-  if (action === "decline" || action === "remove") {
-    // Covers declining an incoming request, cancelling an outgoing one, and
-    // unfriending — all just drop the single row.
-    await db
-      .prepare(`DELETE FROM friendships WHERE user_lo = ? AND user_hi = ?`)
-      .bind(lo, hi)
-      .run();
-    return NextResponse.json({ ok: true, status: "none" });
-  }
-
-  return NextResponse.json({ error: "Unknown action." }, { status: 400 });
+  // decline / remove: covers declining an incoming request, cancelling an
+  // outgoing one, and unfriending; all just drop the single row.
+  await db
+    .prepare(`DELETE FROM friendships WHERE user_lo = ? AND user_hi = ?`)
+    .bind(lo, hi)
+    .run();
+  return NextResponse.json({ ok: true, status: "none" });
 }
 
 async function notifyFriend(
-  db: Parameters<typeof createNotification>[0],
+  db: D1Database,
   toUserId: string,
-  actorId: string,
-  actor: string,
+  actor: { id: string; username: string },
   text: string,
 ): Promise<void> {
   try {
+    // One unread friend entry per actor: a request, cancel, request loop used
+    // to ring the bell every time (F058).
+    if (await hasPendingNotification(db, toUserId, actor, "message", FRIEND_HREF)) return;
     await createNotification(db, {
       userId: toUserId,
       type: "message",
-      actorName: actor,
-      actorId,
-      text: `${actor} ${text}`,
-      href: "/friend",
+      actorName: actor.username,
+      actorId: actor.id,
+      text: `${actor.username} ${text}`,
+      href: FRIEND_HREF,
     });
   } catch {
     // A missed notification must never fail the friendship write.
