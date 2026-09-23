@@ -119,6 +119,7 @@ File ownership for work waves. One slice owns a file for the whole wave. A slice
 | J game moments Tier B | Board, match, draft, game over | `src/components/Board.tsx`, `OnlineMatch.tsx`, `GameOver.tsx`, `ClockPill.tsx`, `BoardSplash.tsx`, `src/lib/lowTimeMotion.ts`, `src/lib/useReducedMotion.ts`, `src/components/useMotionTempo.ts`, `DraftOverlay.tsx` + `.css`, `DraftVault.tsx` + `.css`, `src/components/effects/useSignatureQueue.ts`, `fxZones.ts`, `cardEntrance.*`, `UseSpectacle.*`, `src/lib/sounds.ts` | Tier C play modules |
 | K card effects Tier C | Play modules, registry guards, review galleries | `src/components/effects/**` except files owned by J, `scripts/audit-animations.ts`, `scripts/audit-scene-complexity.ts`, `scripts/check-vfx-coverage.cjs`, `scripts/audit-bespoke-coverage.cjs`, `docs/animation-registry.json`, `src/app/dev/plays/*`, `src/app/dev/lab/*` | Board.tsx |
 | L side end + email | Config, CI, DX, email plumbing, daily cron | `next.config.mjs`, `public/_headers`, `wrangler.jsonc`, `package.json` scripts, `.gitignore`, `README.md`, `.github/*`, `.claude/*`, new `src/lib/server/email.ts`, the daily cron route | `worker.ts` default export (ask H to add `scheduled()`); `api/suggest` (slice F switches it to email.ts) |
+| HB house bots | Bot quality (owner request) | `src/lib/server/bots.ts`, `src/engine/ai.ts`, `engine-service/*`, `arena-service/*`, `docs/house-bots.md`, house-bot and search scripts | `worker.ts` (REQUESTS to H) |
 | TC0 gallery + strips | Tier C step 1 (F228) | `src/app/dev/plays/*`, `src/app/dev/lab/*`, new `scripts/polish/card-strip.ts` | play modules |
 | TC-god | godPlays, F221, F227 | `src/components/effects/godPlays.tsx` + `.css` | other play modules |
 | TC-fantasy | fantasyPlays mythic ladder, F223 | `src/components/effects/fantasyPlays.tsx` + `.css` | other play modules |
@@ -791,6 +792,8 @@ The owner answered Q4: the bot personas and the padded public "players online" f
 - Slice G: the mod panel may show the real human numbers (clearly labelled "humans") next to the public figure, which stays as it is. Analytics exclusion of house bots (F117) is internal and still fine to fix, but do not change any public-facing number.
 - Slices B, D, E1, E2: do not change how the online figure, bot players or bot games are presented publicly.
 - House bots are to be IMPROVED, not reduced: a dedicated slice (HB) will work on bot quality (play, card use, timing, variety, reliability) after slice H finishes with worker.ts. Until then no slice changes bot behaviour.
+
+House-bot ownership (added with OWNER DIRECTIVE 2): slice HB now owns `src/lib/server/bots.ts`, `src/engine/ai.ts`, `engine-service/*`, `arena-service/*`, `docs/house-bots.md` and the house-bot scripts (`scripts/audit-house-bots.ts`, `scripts/sim-house-bots.ts`, `scripts/test-house-snap.ts`, `scripts/gen-house-pfps.mjs`, search-buff and search-bias scripts). Slice H keeps `worker.ts` (including the bot orchestration code in it), `src/lib/multiplayer.ts`, the other `src/lib/server` realtime files and the rules files in `src/engine/*` other than `ai.ts`. HB sends worker.ts changes to H or the integrator as REQUESTS. This overrides slice H's prompt list.
 
 ## OWNER QUESTIONS
 
