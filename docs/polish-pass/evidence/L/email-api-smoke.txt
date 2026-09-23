@@ -1,0 +1,16 @@
+== signed out GET
+{"signedIn":false,"email":null,"hasEmail":false,"subscribed":false}
+== user GET
+{"signedIn":true,"guest":false,"email":null,"hasEmail":false,"subscribed":true}
+== user POST off
+{"signedIn":true,"guest":false,"email":null,"hasEmail":false,"subscribed":false}
+== user POST on
+{"signedIn":true,"guest":false,"email":null,"hasEmail":false,"subscribed":true}
+== cross-site POST
+{"error":"Cross-site request refused."} 403
+== bad body
+{"error":"subscribed must be true or false."} 400
+== unsubscribe bad token GET
+400
+== unsubscribe bad token POST one-click
+400
