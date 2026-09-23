@@ -53,6 +53,8 @@ import { Button } from "@/components/ui/Button";
 import { LinkButton } from "@/components/ui/Button";
 import { ProfileSkeleton } from "@/components/profile/ProfileSkeleton";
 import { NOT_FOUND_COPY } from "@/app/_components/notFoundCopy";
+import { NotFoundPanel } from "@/app/_components/NotFoundPanel";
+import { RouteError } from "@/components/ui/RouteError";
 
 type Relationship = "self" | "none" | "friends" | "incoming" | "outgoing";
 
@@ -275,59 +277,34 @@ function ProfileContent() {
     });
   };
 
-  // The two dead ends wear the site's shared panels (F030): the not-found
-  // words and layout of NotFoundPanel (the same copy /u/<name>/not-found.tsx
-  // and the root 404 use) and the RouteError layout with Retry. They are drawn
-  // here rather than by those components because both render their own
-  // <main>, and this page already sits inside one under the site header.
+  // The two dead ends are the site's shared panels (F030): NotFoundPanel with
+  // the same copy /u/<name>/not-found.tsx and the root 404 use, and RouteError
+  // with Retry. Both render as a <div> here, since this page already sits
+  // inside a <main> under the site header.
   if (missing) {
     const copy = NOT_FOUND_COPY.player;
     return (
-      <section className="flex justify-center px-5 py-10 sm:px-6">
-        <div className="plate w-full max-w-md p-5 sm:p-6">
-          <div className="font-mono text-[12px] text-parchment-400">404</div>
-          <h1 className="page-title mt-1">{copy.title}</h1>
-          <p className="mt-2 text-[13px] leading-relaxed text-parchment-300">{copy.detail}</p>
-          <div className="mt-5 flex flex-col gap-2 sm:flex-row">
-            <LinkButton tone="primary" href={copy.action.href}>
-              {copy.action.label}
-            </LinkButton>
-            {copy.secondary && (
-              <LinkButton tone="default" href={copy.secondary.href}>
-                {copy.secondary.label}
-              </LinkButton>
-            )}
-          </div>
-        </div>
-      </section>
+      <NotFoundPanel
+        as="div"
+        title={copy.title}
+        detail={copy.detail}
+        action={copy.action}
+        secondary={copy.secondary}
+      />
     );
   }
 
   if (loadError && !profile) {
     return (
-      <section className="flex justify-center px-5 py-10 sm:px-6">
-        <div className="plate w-full max-w-md p-5 sm:p-6" role="alert">
-          <div className="text-[12px] text-parchment-400">Something went wrong</div>
-          <h1 className="page-title mt-1">Could not load this profile</h1>
-          <p className="mt-2 text-[13px] leading-relaxed text-parchment-300">
-            The server did not answer. Check your connection and try again.
-          </p>
-          <div className="mt-5 flex flex-col gap-2 sm:flex-row">
-            <Button
-              tone="primary"
-              onClick={() => {
-                setLoadError(false);
-                setReloadTick((t) => t + 1);
-              }}
-            >
-              Retry
-            </Button>
-            <LinkButton tone="default" href="/lobby">
-              Back to lobby
-            </LinkButton>
-          </div>
-        </div>
-      </section>
+      <RouteError
+        as="div"
+        title="Could not load this profile"
+        detail="The server did not answer. Check your connection and try again."
+        retry={() => {
+          setLoadError(false);
+          setReloadTick((t) => t + 1);
+        }}
+      />
     );
   }
 

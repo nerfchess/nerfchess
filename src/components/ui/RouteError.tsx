@@ -30,8 +30,11 @@ export function RouteError({
   title,
   detail,
   back = { href: "/lobby", label: "Back to lobby" },
+  as: Tag = "main",
 }: {
-  error: Error & { digest?: string };
+  /** The thrown error, from an error boundary. A page drawing its own failed
+   *  state (a fetch that did not answer) has none to pass. */
+  error?: Error & { digest?: string };
   retry: () => void;
   /** What failed, as a short sentence fragment. Sentence case (section 11). */
   title: string;
@@ -39,20 +42,24 @@ export function RouteError({
   detail: string;
   /** The way out. Defaults to the lobby, which is the site's home base. */
   back?: { href: string; label: string };
+  /** The wrapper. "main" (the default) is a whole page centred in the
+   *  viewport; "div" is for a page that already renders its own <main> under
+   *  the site header, so the panel sits below the header instead. */
+  as?: "main" | "div";
 }) {
   useEffect(() => {
     // Surfaced for the browser console and any attached reporter. The digest
     // is the only handle a player can quote back, so it is shown below too.
-    console.error(error);
+    if (error) console.error(error);
   }, [error]);
 
   return (
-    <main className="flex min-h-screen items-center justify-center px-5 py-10 sm:px-6">
+    <Tag className={`flex ${Tag === "main" ? "min-h-screen " : ""}items-center justify-center px-5 py-10 sm:px-6`}>
       <div className="plate w-full max-w-md p-5 sm:p-6" role="alert">
         <div className="text-[12px] text-parchment-400">Something went wrong</div>
         <h1 className="page-title mt-1">{title}</h1>
         <p className="mt-2 text-[13px] leading-relaxed text-parchment-300">{detail}</p>
-        {error.digest && (
+        {error?.digest && (
           <p className="mt-2 font-mono text-[12px] text-parchment-500">
             Reference {error.digest}
           </p>
@@ -66,6 +73,6 @@ export function RouteError({
           </LinkButton>
         </div>
       </div>
-    </main>
+    </Tag>
   );
 }

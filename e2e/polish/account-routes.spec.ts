@@ -154,6 +154,29 @@ test.describe("public profile", () => {
     await expect(page.getByRole("link", { name: "Browse players" })).toBeVisible();
     expect(await page.locator("main").count()).toBe(1);
   });
+
+  // Slice C request 3: the load-error state is the shared RouteError (as a
+  // div, under the page's own <main>), and Retry fetches again.
+  test("a failed load shows the shared error panel and Retry refetches", async ({ page }) => {
+    // Every profile request fails until Retry is pressed (dev StrictMode runs
+    // the loading effect twice, so "fail the first call" is not enough).
+    let failing = true;
+    let calls = 0;
+    await page.route(`**/api/users/${OTHER}`, (route) => {
+      calls++;
+      return failing ? route.abort() : route.continue();
+    });
+    await page.goto(`/u/${OTHER}`);
+    const alert = page.getByRole("alert").filter({ hasText: "Could not load this profile" });
+    await expect(alert).toBeVisible();
+    await expect(alert.getByText("Something went wrong")).toBeVisible();
+    expect(await page.locator("main").count()).toBe(1);
+    const failedCalls = calls;
+    failing = false;
+    await alert.getByRole("button", { name: "Retry" }).click();
+    await expect(page.getByRole("heading", { level: 1, name: new RegExp(OTHER, "i") })).toBeVisible();
+    expect(calls).toBeGreaterThan(failedCalls);
+  });
 });
 
 // F035: a name that is not valid percent-encoding renders the not-found
