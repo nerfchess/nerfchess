@@ -71,16 +71,19 @@
 //                        what differs). The anim-off text fallback is up in
 //                        both early samples and gone by the end, by design
 //   --off-only           run only the off check
-//   --sheet NAME         also write <out>/NAME.sheet.png: one tile per card,
-//                        the frame of its strip that differs most from the
-//                        board before the play (its strike), six to a row.
-//                        Two cards whose tiles read the same are the generic
-//                        pairs the owner directive asks to split. Also writes
-//                        NAME.similar.json: every pair of cards in the run
-//                        ranked by how alike their strips look (a triage
-//                        heuristic, the strips decide)
-//                        Per card it also leaves <name>.strike.png and
-//                        <name>.look.json, so batches can be ranked together:
+//   --sheet NAME         also write <out>/NAME.sheet.png: one tile per card
+//                        of this run, six to a row, each at its most
+//                        card-specific moment (of the tiles where the card
+//                        draws at least half its peak, the one furthest from
+//                        what the other cards show then). Two cards whose
+//                        tiles read the same are the generic pairs the owner
+//                        directive asks to split. Also writes
+//                        NAME.similar.json: every pair of cards ranked by how
+//                        alike their strips look, and a genericness ranking
+//                        (a triage heuristic, the strips decide)
+//                        Per card it also leaves <name>.strike.png,
+//                        <name>.tiles.png and <name>.look.json (with per-tile
+//                        energy), so batches can be ranked together:
 //   --sheet-from A,B --sheet NAME --out DIR   rebuild the sheet and ranking
 //                        over every card with sidecars in those folders (no
 //                        dev server needed)
@@ -587,18 +590,65 @@ async function peakTile(browser: Browser, tiles: { data: string; label: string }
  * A card's look as one vector: for every tile after the first, what the play
  * drew on top of the resting board (tile minus the pre-play tile, 24x24 grey,
  * standardised so a board-wide dim cancels), concatenated in time order. Two
- * cards on the same template produce near-parallel vectors.
+ * cards on the same template produce near-parallel vectors. `energy` is the
+ * raw (un-standardised) mean absolute difference of each of those tiles:
+ * standardising scales a near-empty tile (the first one after the reference,
+ * the settled tail) up to full-size noise, so every consumer weights a tile by
+ * how much the card actually drew there (see weighted()).
  */
-async function lookVector(browser: Browser, tiles: { data: string }[], clip: Rect): Promise<number[]> {
+async function lookVector(browser: Browser, tiles: { data: string }[], clip: Rect): Promise<{ v: number[]; energy: number[] }> {
   const th = await thumbs(
     browser,
     tiles.map((t) => ({ data: t.data, ts: 0, width: 0, height: 0 })),
     clip,
     24,
   );
+  const v: number[] = [];
+  const energy: number[] = [];
+  for (let i = 1; i < th.length; i++) {
+    const d = th[i].map((x, k) => x - th[0][k]);
+    energy.push(d.reduce((a, x) => a + Math.abs(x), 0) / d.length);
+    v.push(...zscore(d));
+  }
+  return { v, energy };
+}
+
+/** Pixels per look-vector tile (24x24 grey). */
+const LOOK_PER = 24 * 24;
+
+/** Per-tile energy recomputed from a tiles sprite, for sidecars written
+ *  before look.json carried `energy`. Same measure as lookVector on the
+ *  board crop the sprite already holds. */
+async function spriteEnergy(sprite: string, nTiles: number): Promise<number[] | null> {
+  const sharp = (await import("sharp")).default;
+  const meta = await sharp(sprite).metadata();
+  const h = meta.height ?? 0;
+  if (!h || (meta.width ?? 0) < (nTiles + 1) * SHEET_TILE) return null;
+  const grey = async (i: number) =>
+    Array.from(
+      await sharp(sprite)
+        .extract({ left: i * SHEET_TILE, top: 0, width: SHEET_TILE, height: h })
+        .greyscale()
+        .resize(24, 24, { fit: "fill" })
+        .raw()
+        .toBuffer(),
+    );
+  const ref = await grey(0);
   const out: number[] = [];
-  for (let i = 1; i < th.length; i++) out.push(...zscore(th[i].map((v, k) => v - th[0][k])));
+  for (let i = 1; i <= nTiles; i++) {
+    const g = await grey(i);
+    out.push(g.reduce((a, x, k) => a + Math.abs(x - ref[k]), 0) / g.length);
+  }
   return out;
+}
+
+/** A look vector with each tile scaled by its energy relative to the card's
+ *  own peak, so tiles where the card drew almost nothing contribute almost
+ *  nothing (instead of standardised noise) to the sheet pick, the look-alike
+ *  pairs and the genericness ranking. */
+function weighted(v: number[], energy: number[]): number[] {
+  const peak = Math.max(...energy) || 1;
+  return v.map((x, i) => x * ((energy[Math.floor(i / LOOK_PER)] ?? 0) / peak));
 }
 
 function cosine(a: number[], b: number[]): number {
@@ -614,9 +664,10 @@ function cosine(a: number[], b: number[]): number {
   return na && nb ? dot / Math.sqrt(na * nb) : 0;
 }
 
-/** Per-card sheet sidecars: the strike tile (board crop, 200px wide) and the
- *  look vector, so a sheet can be rebuilt across several runs (--sheet-from)
- *  and cards captured in separate batches can still be ranked together. */
+/** Per-card sheet sidecars: the strike tile (board crop, 200px wide), every
+ *  tile as one sprite, and the look vector with its per-tile energy, so a
+ *  sheet can be rebuilt across several runs (--sheet-from) and cards captured
+ *  in separate batches can still be ranked together. */
 async function writeLook(
   browser: Browser,
   dir: string,
@@ -625,9 +676,10 @@ async function writeLook(
     id: string;
     tier: number;
     label: string;
-    strike: string;
+    strike: number;
     clip: Rect;
     v: number[];
+    energy: number[];
     tiles: { data: string; label: string }[];
   },
 ): Promise<void> {
@@ -637,14 +689,13 @@ async function writeLook(
       .resize({ width: SHEET_TILE })
       .png()
       .toBuffer({ resolveWithObject: true });
-  const strike = await small(l.strike);
-  fs.writeFileSync(
-    path.join(dir, `${l.name}.strike.png`),
-    await sharp(strike.data).png({ palette: true, colours: 96, effort: 8 }).toBuffer(),
-  );
   // Every tile side by side, so a sheet built later can pick the moment where
   // this card differs most from all the others (see writeSheet).
   const row = await Promise.all(l.tiles.map((t) => small(t.data)));
+  fs.writeFileSync(
+    path.join(dir, `${l.name}.strike.png`),
+    await sharp(row[l.strike].data).png({ palette: true, colours: 96, effort: 8 }).toBuffer(),
+  );
   const h = row[0].info.height;
   const sprite = await sharp({ create: { width: SHEET_TILE * row.length, height: h, channels: 4, background: "#15171a" } })
     .composite(row.map((r, i) => ({ input: r.data, top: 0, left: i * SHEET_TILE })))
@@ -657,6 +708,7 @@ async function writeLook(
     tier: l.tier,
     label: l.label,
     tileLabels: l.tiles.map((t) => t.label),
+    energy: l.energy.map((x) => Math.round(x * 100) / 100),
     v: l.v.map((x) => Math.round(x * 10) / 10),
   });
 }
@@ -664,18 +716,45 @@ async function writeLook(
 /** Sheet tile width in px. */
 const SHEET_TILE = 200;
 
+/** A tile is a sheet candidate only when the card drew at least this share of
+ *  its own peak energy there (below it the standardised diff is mostly noise). */
+const SHEET_MIN_ENERGY = 0.5;
+
 /** Contact sheet plus look-alike ranking over every card with sidecars in
- *  `dirs`, highest tier first. */
-async function writeSheet(browser: Browser, name: string, dirs: string[], out: string): Promise<void> {
-  type Look = { name: string; tier: number; label: string; tileLabels?: string[]; v: number[]; png: string; sprite: string | null };
+ *  `dirs` (only the names in `only` when given), highest tier first. */
+async function writeSheet(browser: Browser, name: string, dirs: string[], out: string, only?: Set<string>): Promise<void> {
+  type Look = {
+    name: string;
+    tier: number;
+    label: string;
+    tileLabels?: string[];
+    v: number[];
+    energy?: number[];
+    w: number[];
+    png: Buffer;
+    sprite: string | null;
+    pick: string;
+  };
   const looks: Look[] = [];
   for (const d of dirs) {
     for (const f of fs.readdirSync(d).filter((x) => x.endsWith(".look.json"))) {
-      const l = JSON.parse(fs.readFileSync(path.join(d, f), "utf8")) as Omit<Look, "png" | "sprite">;
+      const l = JSON.parse(fs.readFileSync(path.join(d, f), "utf8")) as Omit<Look, "png" | "sprite" | "w" | "pick">;
+      if (only && !only.has(l.name)) continue;
       const strike = path.join(d, `${l.name}.strike.png`);
       if (!fs.existsSync(strike)) continue;
       const sprite = path.join(d, `${l.name}.tiles.png`);
-      looks.push({ ...l, png: fs.readFileSync(strike).toString("base64"), sprite: fs.existsSync(sprite) ? sprite : null });
+      const hasSprite = fs.existsSync(sprite);
+      const nTiles = l.v.length / LOOK_PER;
+      const energy = l.energy ?? (hasSprite ? await spriteEnergy(sprite, nTiles) : null) ?? undefined;
+      looks.push({
+        ...l,
+        energy,
+        // No energy at all (an old sidecar without a sprite): unweighted.
+        w: energy ? weighted(l.v, energy) : l.v,
+        png: fs.readFileSync(strike),
+        sprite: hasSprite ? sprite : null,
+        pick: "strike (peakTile)",
+      });
     }
   }
   if (!looks.length) {
@@ -683,25 +762,31 @@ async function writeSheet(browser: Browser, name: string, dirs: string[], out: s
     return;
   }
   looks.sort((a, b) => b.tier - a.tier || a.name.localeCompare(b.name));
-  // The sheet shows each card at its most card-specific moment: the tile
-  // whose look is furthest from the average of all cards at the same tile.
-  // What every card shares (the wrapper's dim, ring and beam, the banner)
-  // cancels out, so a card whose own art peaks late is shown at that peak,
-  // and a card with nothing of its own shows its least generic frame.
-  const per = 24 * 24;
+  // The sheet shows each card at its most card-specific moment that the card
+  // actually draws: among the tiles where its own energy reaches
+  // SHEET_MIN_ENERGY of its peak, the one whose energy-weighted look is
+  // furthest from the average of the OTHER cards at the same tile. What every
+  // card shares (the wrapper's dim, ring and beam) cancels out; near-empty
+  // tiles (just after the reference, the settled tail) cannot win, because
+  // their weight is small and they fail the energy gate. A card with no
+  // energy data keeps its strike tile.
+  const nTiles = looks[0].v.length / LOOK_PER;
   const sameLen = looks.filter((l) => l.v.length === looks[0].v.length);
-  const nTiles = looks[0].v.length / per;
-  const meanTile = Array.from({ length: nTiles }, (_, t) =>
-    Array.from({ length: per }, (_, k) => sameLen.reduce((a, l) => a + l.v[t * per + k], 0) / sameLen.length),
-  );
+  const sum = Array.from({ length: nTiles * LOOK_PER }, (_, k) => sameLen.reduce((a, l) => a + l.w[k], 0));
   const sharp = (await import("sharp")).default;
   for (const l of looks) {
-    if (!l.sprite || l.v.length !== looks[0].v.length || !l.tileLabels) continue;
-    let best = 0;
+    if (!l.sprite || !l.energy || l.v.length !== looks[0].v.length || !l.tileLabels) continue;
+    const peak = Math.max(...l.energy);
+    const others = sameLen.length - 1;
+    let best = l.energy.indexOf(peak);
     let bestE = -1;
     for (let t = 0; t < nTiles; t++) {
+      if (l.energy[t] < SHEET_MIN_ENERGY * peak) continue;
       let e = 0;
-      for (let k = 0; k < per; k++) e += (l.v[t * per + k] - meanTile[t][k]) ** 2;
+      for (let k = t * LOOK_PER; k < (t + 1) * LOOK_PER; k++) {
+        const mean = others ? (sum[k] - l.w[k]) / others : 0;
+        e += (l.w[k] - mean) ** 2;
+      }
       if (e > bestE) {
         bestE = e;
         best = t;
@@ -710,32 +795,43 @@ async function writeSheet(browser: Browser, name: string, dirs: string[], out: s
     // Look vectors start at the second tile (the first is the reference).
     const tileIndex = best + 1;
     const meta = await sharp(l.sprite).metadata();
-    const w = SHEET_TILE;
-    if ((meta.width ?? 0) < (tileIndex + 1) * w) continue;
-    const buf = await sharp(l.sprite).extract({ left: tileIndex * w, top: 0, width: w, height: meta.height ?? w }).png().toBuffer();
-    l.png = buf.toString("base64");
+    if ((meta.width ?? 0) < (tileIndex + 1) * SHEET_TILE) continue;
+    l.png = await sharp(l.sprite).extract({ left: tileIndex * SHEET_TILE, top: 0, width: SHEET_TILE, height: meta.height ?? SHEET_TILE }).png().toBuffer();
     l.label = `${l.name} T${l.tier} ${l.tileLabels[tileIndex] ?? ""}`;
+    l.pick = `${l.tileLabels[tileIndex] ?? tileIndex} (energy ${round(l.energy[best] / (peak || 1), 2)} of peak)`;
+  }
+  // composeStrip sizes every tile from the first, so a batch captured at
+  // another --size or board clip is letterboxed to that size, not stretched.
+  const first = await sharp(looks[0].png).metadata();
+  const tw = first.width ?? SHEET_TILE;
+  const tht = first.height ?? SHEET_TILE;
+  for (const l of looks) {
+    const m = await sharp(l.png).metadata();
+    if (m.width === tw && m.height === tht) continue;
+    console.log(`[card-strip] ${l.name}: tile ${m.width}x${m.height} letterboxed to ${tw}x${tht}`);
+    l.png = await sharp(l.png).resize(tw, tht, { fit: "contain", background: "#15171a" }).png().toBuffer();
   }
   fs.mkdirSync(out, { recursive: true });
   const png = await shrink(
     await composeStrip(
       browser,
-      looks.map((l) => ({ data: l.png, mime: "image/png" as const, label: l.label })),
+      looks.map((l) => ({ data: l.png.toString("base64"), mime: "image/png" as const, label: l.label })),
       {
         columns: Math.min(6, looks.length),
-        title: `${name}: each card at its most card-specific moment (the tile furthest from what every card in the sheet shows then)`,
+        title: `${name}: each card at its most card-specific moment (of the tiles where it draws at least half its peak, the one furthest from what the other cards show then)`,
       },
     ),
   );
   const sheetPath = path.join(out, `${name}.sheet.png`);
   fs.writeFileSync(sheetPath, png);
   console.log(`[card-strip] ${rel(sheetPath)} (${looks.length} cards, ${Math.round(png.length / 1024)} KB)`);
-  // Look-alike triage: every pair by how parallel their look vectors are. A
-  // heuristic for where to look first, not a verdict: the strips decide.
+  // Look-alike triage: every pair by how parallel their energy-weighted look
+  // vectors are. A heuristic for where to look first, not a verdict: the
+  // strips decide.
   const pairs: { a: string; b: string; similarity: number }[] = [];
   for (let i = 0; i < looks.length; i++)
     for (let j = i + 1; j < looks.length; j++)
-      pairs.push({ a: looks[i].name, b: looks[j].name, similarity: round(cosine(looks[i].v, looks[j].v), 3) });
+      pairs.push({ a: looks[i].name, b: looks[j].name, similarity: round(cosine(looks[i].w, looks[j].w), 3) });
   pairs.sort((x, y) => y.similarity - x.similarity);
   const nearest = Object.fromEntries(
     looks.map((l) => {
@@ -744,20 +840,25 @@ async function writeSheet(browser: Browser, name: string, dirs: string[], out: s
     }),
   );
   // Genericness: how close each card's look is to the average look of every
-  // card in the sheet. What all cards share (the cast wrapper's dim, ring and
-  // beam, the name banner) dominates the average, so a card whose own art
-  // adds little sits near it: "could belong to another card".
-  const dim = Math.min(...looks.map((l) => l.v.length));
-  const mean = Array.from({ length: dim }, (_, k) => looks.reduce((a, l) => a + l.v[k], 0) / looks.length);
+  // OTHER card in the sheet (leave-one-out, so a card is not compared with
+  // itself). What all cards share (the cast wrapper's dim, ring and beam, the
+  // name banner) dominates that average, so a card whose own art adds little
+  // sits near it: "could belong to another card".
+  const dim = Math.min(...looks.map((l) => l.w.length));
+  const total = Array.from({ length: dim }, (_, k) => looks.reduce((a, l) => a + l.w[k], 0));
   const generic = looks
-    .map((l) => ({ card: l.name, tier: l.tier, closeness: round(cosine(l.v, mean), 3) }))
+    .map((l) => {
+      const rest = total.map((x, k) => (looks.length > 1 ? (x - l.w[k]) / (looks.length - 1) : 0));
+      return { card: l.name, tier: l.tier, closeness: round(cosine(l.w, rest), 3) };
+    })
     .sort((a, b) => b.closeness - a.closeness);
   const simPath = writeJson(path.join(out, `${name}.similar.json`), {
     method:
-      "cosine similarity of per-tile (tile minus pre-play tile) 24x24 grey thumbnails, standardised per tile; 1 = same look, near 0 = unrelated. Every tier 6+ bespoke card shares the cast wrapper's ring and beam (TC0-f), so expect a floor around 0.4",
+      "cosine similarity of per-tile (tile minus pre-play tile) 24x24 grey thumbnails, standardised per tile and then weighted by the tile's raw energy over the card's peak (so near-empty tiles count for little); 1 = same look, near 0 = unrelated. Every tier 6+ bespoke card shares the cast wrapper's ring and beam (TC0-f), so expect a floor well above 0",
     cards: looks.length,
+    sheetPicks: Object.fromEntries(looks.map((l) => [l.name, l.pick])),
     generic: {
-      method: "cosine similarity of the card's look vector to the mean look of all cards in this sheet; highest = least card-specific",
+      method: "cosine similarity of the card's weighted look vector to the mean weighted look of the other cards in this sheet (leave-one-out); highest = least card-specific",
       ranking: generic,
     },
     pairs: pairs.slice(0, 80),
@@ -837,6 +938,7 @@ async function main() {
   fs.mkdirSync(outDir, { recursive: true });
   const browser = await launch();
   const sheetName = args.values.get("sheet");
+  const sheetNames = new Set<string>();
   const summary: { id: string; png?: string; visualMs?: number; longFrames?: number; drive?: string; off?: string; error?: string }[] = [];
   try {
     for (const spec of specs) {
@@ -870,16 +972,18 @@ async function main() {
         fs.writeFileSync(pngPath, png);
         if (sheetName && combo === combos[0]) {
           const k = await peakTile(browser, tiles, cap.clip);
+          const look = await lookVector(browser, tiles, cap.clip);
           await writeLook(browser, outDir, {
             name,
             id: spec.id,
             tier: Number(cap.info?.tier ?? 0),
             label: `${name} T${cap.info?.tier ?? "?"} ${tiles[k].label}`,
-            strike: tiles[k].data,
+            strike: k,
             clip: cap.clip,
-            v: await lookVector(browser, tiles, cap.clip),
+            ...look,
             tiles,
           });
+          sheetNames.add(name);
         }
         writeJson(path.join(outDir, `${name}.json`), {
           id: spec.id,
@@ -963,7 +1067,8 @@ async function main() {
       }
       summary.push(row);
     }
-    if (sheetName) await writeSheet(browser, sheetName, [outDir], outDir);
+    // Only this run's cards: stale sidecars from earlier runs in --out stay out.
+    if (sheetName) await writeSheet(browser, sheetName, [outDir], outDir, sheetNames);
   } finally {
     await browser.close();
   }
