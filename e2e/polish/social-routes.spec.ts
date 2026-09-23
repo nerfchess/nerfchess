@@ -774,3 +774,20 @@ test.describe("/community", () => {
     await ctx.close();
   });
 });
+
+// ---------------------------------------------------------------------------
+// /friend.
+
+test.describe("/friend", () => {
+  // F037: /friend painted a headerless page, then redirected on the client.
+  test("redirects on the server and keeps the invite parameters", async ({ request }) => {
+    const res = await request.get("/friend?code=abc123&mode=nerf&junk=1", { maxRedirects: 0 });
+    expect([307, 308]).toContain(res.status());
+    const loc = new URL(res.headers()["location"], "http://localhost:3000");
+    expect(loc.pathname).toBe("/lobby");
+    expect(loc.searchParams.get("tab")).toBe("friends");
+    expect(loc.searchParams.get("code")).toBe("abc123");
+    expect(loc.searchParams.get("mode")).toBe("nerf");
+    expect(loc.searchParams.get("junk")).toBeNull();
+  });
+});

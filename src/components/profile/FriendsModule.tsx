@@ -342,7 +342,7 @@ function FriendRow({
         )}
         {presence.state === "online" && (
           <LinkButton tone="leaf"
-            href={`/friend?challenge=${encodeURIComponent(f.username)}`}
+            href={`/lobby?tab=friends&challenge=${encodeURIComponent(f.username)}`}
             className="px-3 text-[13px] font-semibold">
             <Swords size={14} strokeWidth={2.3} aria-hidden />
             Challenge

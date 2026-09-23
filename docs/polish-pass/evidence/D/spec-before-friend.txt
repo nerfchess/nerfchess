@@ -1,0 +1,4 @@
+  ✘  1 [chromium] › e2e/polish/social-routes.spec.ts:783:7 › /friend › redirects on the server and keeps the invite parameters (131ms)
+    Expected value: 200
+    Received array: [307, 308]
+  1 failed

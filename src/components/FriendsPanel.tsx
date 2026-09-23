@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/Button";
 import { LinkButton } from "@/components/ui/Button";
 
 // Friends list + add-a-friend + incoming/outgoing requests, with a one-tap
-// Challenge that deep-links into the friend-game flow (/friend?challenge=name),
+// Challenge that deep-links into the friend-game flow (/lobby?tab=friends&challenge=name),
 // which notifies the target and starts the game when they accept. Self-
 // contained: fetches /api/friends and posts actions there. Live presence is
 // read from the one shared lobby snapshot, so every row shows whether a friend
@@ -494,7 +494,7 @@ function FriendRow({
         )}
         {presence.state !== "in-game" && (
           <LinkButton tone="leaf"
-            href={`/friend?challenge=${encodeURIComponent(f.username)}`}
+            href={`/lobby?tab=friends&challenge=${encodeURIComponent(f.username)}`}
             aria-label={`Challenge ${f.username}`}
             className="min-w-[44px] px-3 text-[13px] font-semibold">
             <Swords size={14} strokeWidth={2.3} aria-hidden />

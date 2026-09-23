@@ -1,0 +1,2 @@
+  ✓  1 [chromium] › e2e/polish/social-routes.spec.ts:783:7 › /friend › redirects on the server and keeps the invite parameters (141ms)
+  1 passed (1.2s)
