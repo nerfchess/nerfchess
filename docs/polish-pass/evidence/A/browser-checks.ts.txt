@@ -1,0 +1,147 @@
+// Slice A browser checks: F140, F141, F008, F006, F002 and F256.
+import { chromium, type Page } from "@playwright/test";
+import fs from "node:fs";
+
+const BASE = "http://localhost:3000";
+const out: Record<string, unknown> = {};
+const auth = JSON.parse(fs.readFileSync("/home/user/nerfchess/.polish-auth/user.json", "utf8"));
+
+async function main() {
+  const browser = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome" });
+
+  // F141: Escape closes the account menu and focus returns to its trigger.
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, storageState: auth });
+    const page = await ctx.newPage();
+    await page.goto(BASE + "/leaderboard", { waitUntil: "load" });
+    await page.waitForResponse((r) => r.url().includes("/api/auth/me")).catch(() => {});
+    const trigger = page.locator('[data-menu-trigger="profile"]');
+    await trigger.click();
+    const openBefore = await trigger.getAttribute("aria-expanded");
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(200);
+    out.F141 = {
+      expandedWhenOpen: openBefore,
+      expandedAfterEscape: await trigger.getAttribute("aria-expanded"),
+      focusReturnedToTrigger: await page.evaluate(() => document.activeElement?.getAttribute("data-menu-trigger")),
+      challengesLabel: await page.locator('[data-menu-trigger="challenges"]').getAttribute("aria-label"),
+      challengesExpanded: await page.locator('[data-menu-trigger="challenges"]').getAttribute("aria-expanded"),
+      profileHasPopup: await trigger.getAttribute("aria-haspopup"),
+    };
+    await ctx.close();
+  }
+
+  // F140: the mobile menu takes focus, traps Tab, and returns focus on Escape.
+  {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, storageState: auth, hasTouch: true });
+    const page = await ctx.newPage();
+    await page.goto(BASE + "/leaderboard", { waitUntil: "load" });
+    const trigger = page.getByRole("button", { name: "Open menu" });
+    await trigger.click();
+    await page.waitForSelector('[data-testid="mobile-nav-panel"]');
+    await page.waitForTimeout(100);
+    const firstFocus = await page.evaluate(() => document.activeElement?.textContent?.trim());
+    const inside: boolean[] = [];
+    for (let i = 0; i < 40; i++) {
+      await page.keyboard.press("Tab");
+      inside.push(await page.evaluate(() => !!document.activeElement?.closest('[data-testid="mobile-nav-panel"]')));
+    }
+    await page.keyboard.press("Shift+Tab");
+    const shiftTabInside = await page.evaluate(() => !!document.activeElement?.closest('[data-testid="mobile-nav-panel"]'));
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(150);
+    out.F140 = {
+      firstFocus,
+      tabStayedInside40Presses: inside.every(Boolean),
+      shiftTabInside,
+      panelClosed: (await page.locator('[data-testid="mobile-nav-panel"]').count()) === 0,
+      focusBackOnTrigger: await page.evaluate(() => document.activeElement?.getAttribute("aria-label")),
+      menuSignedInAs: null as string | null,
+    };
+    await ctx.close();
+  }
+
+  // F008 and F002: saved rail width and light theme are on <html> before any script bundle runs.
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, storageState: auth });
+    await ctx.addInitScript(() => {
+      try {
+        localStorage.setItem("dc:rail-width", "400");
+        localStorage.setItem("dc:settings-v1", JSON.stringify({ siteTheme: "light", zenMode: false, animationSpeed: "fast" }));
+      } catch {}
+    });
+    const page = await ctx.newPage();
+    // Record <html> state at DOMContentLoaded, before hydration.
+    await page.addInitScript(() => {
+      document.addEventListener("DOMContentLoaded", () => {
+        const h = document.documentElement;
+        (window as unknown as { __dcl: unknown }).__dcl = {
+          theme: h.dataset.theme,
+          light: h.dataset.light,
+          anim: h.dataset.anim,
+          railW: h.style.getPropertyValue("--match-rail-w"),
+          bg: getComputedStyle(document.body).backgroundColor,
+        };
+      });
+    });
+    await page.goto(BASE + "/game?mode=nerf&difficulty=easy&color=w&t=0&inc=0&rated=0", { waitUntil: "load" });
+    await page.waitForTimeout(3000);
+    const railBox = await page.evaluate(() => {
+      const r = document.querySelector("aside.rail-panel");
+      return r ? Math.round(r.getBoundingClientRect().width) : null;
+    });
+    out.F002_F008 = {
+      atDOMContentLoaded: await page.evaluate(() => (window as unknown as { __dcl: unknown }).__dcl),
+      settled: await page.evaluate(() => ({
+        theme: document.documentElement.dataset.theme,
+        anim: document.documentElement.dataset.anim,
+        railW: document.documentElement.style.getPropertyValue("--match-rail-w"),
+      })),
+      railPanelWidth: railBox,
+    };
+    await ctx.close();
+  }
+
+  // F006: the nc_mode cookie preselects the mode in the server HTML.
+  {
+    const cookie = `nc_mode=nerf`;
+    const res = await fetch(BASE + "/play", { headers: { cookie } });
+    const html = await res.text();
+    const res2 = await fetch(BASE + "/play");
+    const html2 = await res2.text();
+    const pressed = (h: string) => (h.match(/aria-pressed="true"[^>]*>[^<]*<[^>]*>?[^<]*(Nerf|Buff)/) || [])[1] ?? null;
+    out.F006 = { withCookie: pressed(html), withoutCookie: pressed(html2), htmlBytes: html.length };
+  }
+
+  // F256: a signed-out load makes no /api/users/settings call.
+  {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const page = await ctx.newPage();
+    const calls: string[] = [];
+    page.on("request", (r) => {
+      const u = new URL(r.url());
+      if (u.pathname.startsWith("/api/")) calls.push(r.method() + " " + u.pathname);
+    });
+    const errors: string[] = [];
+    page.on("console", (m) => {
+      if (m.type() === "error") errors.push(m.text().slice(0, 160));
+    });
+    await page.goto(BASE + "/leaderboard", { waitUntil: "load" });
+    await page.waitForTimeout(5000);
+    out.F256_and_me_count = {
+      apiCalls: calls,
+      meCalls: calls.filter((c) => c.endsWith("/api/auth/me")).length,
+      settingsCalls: calls.filter((c) => c.includes("/api/users/settings")),
+      consoleErrors: errors,
+    };
+    await ctx.close();
+  }
+
+  await browser.close();
+  console.log(JSON.stringify(out, null, 1));
+}
+
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

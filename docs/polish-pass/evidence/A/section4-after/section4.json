@@ -1,0 +1,2796 @@
+{
+ "generatedAt": "2026-09-23T02:53:16.994Z",
+ "results": [
+  {
+   "route": "/",
+   "state": "1280x800|dark|full|user|throttled",
+   "loadMs": 35085,
+   "cls": 0.0038,
+   "total": 0.0038,
+   "marks": {
+    "dcl": 2020,
+    "firstPaint": 1904,
+    "fcp": 1904,
+    "load": 13227,
+    "hydrated": 13626,
+    "ttfb": 415
+   },
+   "firstAuthMeEnd": 14215,
+   "authMeCalls": 1,
+   "shifts": [
+    {
+     "t": 15116.5,
+     "value": 0.0038,
+     "hadRecentInput": false,
+     "sources": [
+      {
+       "selector": "main.min-h-screen.flex.flex-col > section.mx-auto.flex.w-full > div.order-2.mt-4.lg\\:order-3 > ul.divide-y.divide-\\[color\\:var(--edge)\\]",
+       "text": "Buff modeStack powers onto your own army.PlayNerf ...",
+       "prev": {
+        "x": 943,
+        "y": 291,
+        "w": 325,
+        "h": 117
+       },
+       "curr": {
+        "x": 943,
+        "y": 351,
+        "w": 325,
+        "h": 117
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": 60,
+       "dw": 0,
+       "dh": 0
+      },
+      {
+       "selector": "main.min-h-screen.flex.flex-col > section.mx-auto.flex.w-full > div.order-2.mt-4.lg\\:order-3 > p.mt-4.text-\\[13px\\].leading-snug",
+       "text": "Every five moves you draft a card. In Buff mode yo...",
+       "prev": {
+        "x": 943,
+        "y": 421,
+        "w": 320,
+        "h": 73
+       },
+       "curr": {
+        "x": 943,
+        "y": 481,
+        "w": 320,
+        "h": 72
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": 60,
+       "dw": 0,
+       "dh": -1
+      }
+     ],
+     "sinceHydratedMs": 1491,
+     "lastApiBefore": {
+      "url": "/api/community/recent",
+      "endedMsBefore": 318
+     }
+    }
+   ],
+   "boxMoves": []
+  },
+  {
+   "route": "/lobby",
+   "state": "1280x800|dark|full|user|throttled",
+   "loadMs": 15648,
+   "cls": 0.0089,
+   "total": 0.0089,
+   "marks": {
+    "dcl": 2063,
+    "firstPaint": 2096,
+    "fcp": 2096,
+    "load": 8435,
+    "hydrated": 8773,
+    "ttfb": 100
+   },
+   "firstAuthMeEnd": 9360,
+   "authMeCalls": 1,
+   "shifts": [
+    {
+     "t": 9998.1,
+     "value": 0.0086,
+     "hadRecentInput": false,
+     "sources": [
+      {
+       "selector": "header.mt-3.sm\\:mt-4 > div.flex.flex-wrap.items-center > div.flex.flex-wrap.items-center",
+       "text": "Live · 0 players0 waiting0 in play",
+       "prev": {
+        "x": 864,
+        "y": 74,
+        "w": 315,
+        "h": 30
+       },
+       "curr": {
+        "x": 877,
+        "y": 74,
+        "w": 302,
+        "h": 30
+       },
+       "change": "moved",
+       "dx": 13,
+       "dy": 0,
+       "dw": -13,
+       "dh": 0
+      },
+      {
+       "selector": "div#lobby-panel-play.space-y-5 > div.plate > button.flex.min-h-\\[44px\\].w-full > span.tabular-nums",
+       "text": "0 waiting",
+       "prev": {
+        "x": 790,
+        "y": 636,
+        "w": 10,
+        "h": 17
+       },
+       "curr": {
+        "x": 748,
+        "y": 636,
+        "w": 52,
+        "h": 17
+       },
+       "change": "moved",
+       "dx": -42,
+       "dy": 0,
+       "dw": 42,
+       "dh": 0
+      },
+      {
+       "selector": "section.max-w-7xl.mx-auto.px-5 > div.mt-5.grid.gap-5 > aside.h-fit.space-y-5.lg\\:sticky > div.plate",
+       "text": "Games to watch0No live games right now. Answer a c...",
+       "prev": {
+        "x": 839,
+        "y": 394,
+        "w": 340,
+        "h": 210
+       },
+       "curr": {
+        "x": 839,
+        "y": 296,
+        "w": 340,
+        "h": 106
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": -98,
+       "dw": 0,
+       "dh": -104
+      }
+     ],
+     "sinceHydratedMs": 1225,
+     "lastApiBefore": {
+      "url": "/api/lobby?fresh=596710582",
+      "endedMsBefore": 303
+     }
+    },
+    {
+     "t": 10578.6,
+     "value": 0.0003,
+     "hadRecentInput": false,
+     "sources": [
+      {
+       "selector": "div#lobby-panel-play.space-y-5 > div.plate > div.flex.flex-wrap.items-center > div.flex.items-stretch.gap-1[role=\"group\"]",
+       "text": "Buff1500Nerf1500",
+       "prev": {
+        "x": 676,
+        "y": 191,
+        "w": 136,
+        "h": 46
+       },
+       "curr": {
+        "x": 632,
+        "y": 191,
+        "w": 180,
+        "h": 46
+       },
+       "change": "moved",
+       "dx": -44,
+       "dy": 0,
+       "dw": 44,
+       "dh": 0
+      }
+     ],
+     "sinceHydratedMs": 1806,
+     "lastApiBefore": {
+      "url": "/api/users/settings",
+      "endedMsBefore": 3
+     }
+    }
+   ],
+   "boxMoves": [
+    {
+     "t": 2307,
+     "node": "header [1]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2307,
+     "node": "header > * [1]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2307,
+     "node": "header > * > * [2]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2307,
+     "node": "header > * > * [3]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2307,
+     "node": "header > * > * > * [2]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2307,
+     "node": "header > * > * > * [3]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2307,
+     "node": "main [1]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2307,
+     "node": "main > * [2]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2307,
+     "node": "main > * [3]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2307,
+     "node": "main > * > * [6]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2307,
+     "node": "main > * > * [7]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2307,
+     "node": "main > * > * [8]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2307,
+     "node": "main > * > * [9]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2307,
+     "node": "main > * > * [10]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2307,
+     "node": "main > * > * [11]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 9989,
+     "node": "header.mt-3.sm\\:mt-4 > div.flex.flex-wrap.items-center > div.flex.flex-wrap.items-center",
+     "text": "Live · 0 players0 waiting0 in play",
+     "kind": "moved",
+     "from": "864,74,315,30",
+     "to": "877,74,302,30",
+     "dx": 13,
+     "dw": -13
+    },
+    {
+     "t": 9989,
+     "node": "header.mt-3.sm\\:mt-4 > div.flex.flex-wrap.items-center > div.flex.flex-wrap.items-center > span.tabular-nums[role=\"status\"]",
+     "text": "Live · 0 players",
+     "kind": "moved",
+     "from": "864,74,111,29",
+     "to": "877,74,119,29",
+     "dx": 13,
+     "dw": 8
+    }
+   ]
+  },
+  {
+   "route": "/play",
+   "state": "1280x800|dark|full|user|throttled",
+   "loadMs": 18974,
+   "cls": 0,
+   "total": 0,
+   "marks": {
+    "dcl": 1920,
+    "firstPaint": 1940,
+    "fcp": 1940,
+    "hydrated": 12542,
+    "load": 12901,
+    "ttfb": 87
+   },
+   "firstAuthMeEnd": 13137,
+   "authMeCalls": 1,
+   "shifts": [],
+   "boxMoves": [
+    {
+     "t": 2206,
+     "node": "main [1]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2206,
+     "node": "main > * [2]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2206,
+     "node": "main > * [3]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2206,
+     "node": "main.min-h-screen > nav.site-nav > div.flex.min-w-0.items-center",
+     "text": "nerfchessPlayLobbyChallenge a friendPrac...",
+     "kind": "moved",
+     "from": "18,17,26,26",
+     "to": "18,2,588,54",
+     "dy": -15,
+     "dw": 562,
+     "dh": 28
+    },
+    {
+     "t": 2206,
+     "node": "main.min-h-screen > nav.site-nav > div.relative.flex.items-center",
+     "text": "polish_user",
+     "kind": "moved",
+     "from": "1165,16,98,28",
+     "to": "953,8,309,44",
+     "dx": -212,
+     "dy": -8,
+     "dw": 211,
+     "dh": 16
+    },
+    {
+     "t": 2206,
+     "node": "main.min-h-screen > nav.site-nav > button.disabled\\:cursor-not-allowed.disabled\\:opacity-40.\\[@media(pointer\\:fine)\\]\\:min-h-\\[36px\\]",
+     "text": "Exit zen (z)",
+     "kind": "moved",
+     "from": "367,78,546,52",
+     "to": "0,0,0,0",
+     "dx": -367,
+     "dy": -78,
+     "dw": -546,
+     "dh": -52
+    },
+    {
+     "t": 2206,
+     "node": "main.min-h-screen > section.max-w-2xl.mx-auto.px-6 > div.flex.flex-wrap.items-end",
+     "text": "Play the computerBuff, Nerf, or plain ch...",
+     "kind": "moved",
+     "from": "0,0,0,0",
+     "to": "367,78,546,52",
+     "dx": 367,
+     "dy": 78,
+     "dw": 546,
+     "dh": 52
+    },
+    {
+     "t": 2206,
+     "node": "main.min-h-screen > section.max-w-2xl.mx-auto.px-6 > script",
+     "text": "try{var s=window.localStorage;if(s.getIt...",
+     "kind": "moved",
+     "from": "367,143,546,44",
+     "to": "0,0,0,0",
+     "dx": -367,
+     "dy": -143,
+     "dw": -546,
+     "dh": -44
+    },
+    {
+     "t": 2206,
+     "node": "main.min-h-screen > section.max-w-2xl.mx-auto.px-6 > div.plate.\\[html\\[data-tour-nudge\\]_&\\]\\:flex[role=\"note\"]",
+     "text": "New here? Take the tour: a guided first ...",
+     "kind": "moved",
+     "from": "367,201,546,67",
+     "to": "367,143,546,44",
+     "dy": -58,
+     "dh": -23
+    },
+    {
+     "t": 2206,
+     "node": "main.min-h-screen > section.max-w-2xl.mx-auto.px-6 > a.plate",
+     "text": "Play onlineFind a real opponent in the l...",
+     "kind": "moved",
+     "from": "367,289,546,641",
+     "to": "367,201,546,67",
+     "dy": -88,
+     "dh": -574
+    },
+    {
+     "t": 2206,
+     "node": "main.min-h-screen > section.max-w-2xl.mx-auto.px-6 > div.plate",
+     "text": "Game typeBuffNerfPlain chessDraft buffs ...",
+     "kind": "moved",
+     "from": "0,0,0,0",
+     "to": "367,289,546,641",
+     "dx": 367,
+     "dy": 289,
+     "dw": 546,
+     "dh": 641
+    },
+    {
+     "t": 2206,
+     "node": "main > * > * [8]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2206,
+     "node": "main > * > * [9]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2206,
+     "node": "main > * > * [10]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2206,
+     "node": "main > * > * [11]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2206,
+     "node": "main > * > * [12]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2206,
+     "node": "main > * > * [13]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2206,
+     "node": "main > * > * [14]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2206,
+     "node": "main > * > * [15]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    }
+   ]
+  },
+  {
+   "route": "/profile",
+   "state": "1280x800|dark|full|user|throttled",
+   "loadMs": 57734,
+   "cls": 0.031,
+   "total": 0.031,
+   "marks": {
+    "dcl": 1903,
+    "firstPaint": 1928,
+    "fcp": 1928,
+    "load": 8639,
+    "hydrated": 8857,
+    "ttfb": 205
+   },
+   "firstAuthMeEnd": 9441,
+   "authMeCalls": 3,
+   "shifts": [
+    {
+     "t": 14963.2,
+     "value": 0.031,
+     "hadRecentInput": false,
+     "sources": [
+      {
+       "selector": "div#panel-activity > div.border-t.border-\\[color\\:var(--edge)\\].px-4",
+       "text": "Achievements0/102See all",
+       "prev": {
+        "x": 263,
+        "y": 555,
+        "w": 999,
+        "h": 69
+       },
+       "curr": {
+        "x": 263,
+        "y": 438,
+        "w": 999,
+        "h": 69
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": -117,
+       "dw": 0,
+       "dh": 0
+      },
+      {
+       "selector": "section.mx-auto.w-full.max-w-\\[1300px\\] > div.order-1.min-w-0.lg\\:order-2 > div.mt-4 > div.plate",
+       "text": "Friends",
+       "prev": {
+        "x": 262,
+        "y": 639,
+        "w": 1001,
+        "h": 161
+       },
+       "curr": {
+        "x": 262,
+        "y": 522,
+        "w": 1001,
+        "h": 278
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": -117,
+       "dw": 0,
+       "dh": 117
+      }
+     ],
+     "sinceHydratedMs": 6106,
+     "lastApiBefore": {
+      "url": "/api/leaderboard?category=nerf",
+      "endedMsBefore": 13
+     }
+    }
+   ],
+   "boxMoves": [
+    {
+     "t": 11661,
+     "node": "main.min-h-screen.pb-16 > section.mx-auto.max-w-6xl.px-5",
+     "text": "",
+     "kind": "moved",
+     "from": "-1,59,1,1",
+     "to": "136,60,1008,601",
+     "dx": 137,
+     "dy": 1,
+     "dw": 1007,
+     "dh": 600
+    },
+    {
+     "t": 11661,
+     "node": "main > * [2]",
+     "text": "",
+     "kind": "removed",
+     "from": "136,60,1008,425",
+     "to": "gone"
+    },
+    {
+     "t": 11661,
+     "node": "main.min-h-screen.pb-16 > div.flex.min-h-\\[48px\\].items-center > img.animate-pulse",
+     "text": "",
+     "kind": "moved",
+     "from": "18,2,588,54",
+     "to": "18,17,26,26",
+     "dy": 15,
+     "dw": -562,
+     "dh": -28
+    },
+    {
+     "t": 11661,
+     "node": "main.min-h-screen.pb-16 > div.flex.min-h-\\[48px\\].items-center > div.skeleton",
+     "text": "",
+     "kind": "moved",
+     "from": "953,8,309,44",
+     "to": "1165,16,98,28",
+     "dx": 212,
+     "dy": 8,
+     "dw": -211,
+     "dh": -16
+    },
+    {
+     "t": 11661,
+     "node": "main.min-h-screen.pb-16 > section.mx-auto.max-w-6xl.px-5 > div.flex.items-center.gap-4",
+     "text": "",
+     "kind": "moved",
+     "from": "0,0,0,0",
+     "to": "157,88,966,56",
+     "dx": 157,
+     "dy": 88,
+     "dw": 966,
+     "dh": 56
+    },
+    {
+     "t": 11661,
+     "node": "main.min-h-screen.pb-16 > section.mx-auto.max-w-6xl.px-5 > div.mt-6.grid.gap-3",
+     "text": "",
+     "kind": "moved",
+     "from": "157,88,966,48",
+     "to": "157,165,966,72",
+     "dy": 77,
+     "dh": 24
+    },
+    {
+     "t": 11661,
+     "node": "main.min-h-screen.pb-16 > section.mx-auto.max-w-6xl.px-5 > div.plate",
+     "text": "",
+     "kind": "moved",
+     "from": "157,157,966,72",
+     "to": "157,251,966,382",
+     "dy": 94,
+     "dh": 310
+    },
+    {
+     "t": 11661,
+     "node": "main > * > * [5]",
+     "text": "",
+     "kind": "removed",
+     "from": "157,250,966,79",
+     "to": "gone"
+    },
+    {
+     "t": 11661,
+     "node": "main > * > * [6]",
+     "text": "",
+     "kind": "removed",
+     "from": "157,343,966,114",
+     "to": "gone"
+    },
+    {
+     "t": 12814,
+     "node": "main.min-h-screen.pb-16",
+     "text": "nerfchessPlayLobbyChallenge a friendPrac...",
+     "kind": "resized",
+     "from": "0,0,1280,800",
+     "to": "0,0,1280,822",
+     "dh": 22
+    },
+    {
+     "t": 12814,
+     "node": "main.min-h-screen.pb-16 > section.mx-auto.max-w-6xl.px-5",
+     "text": "Player profile",
+     "kind": "resized",
+     "from": "136,60,1008,601",
+     "to": "136,60,1008,706",
+     "dh": 105
+    },
+    {
+     "t": 12814,
+     "node": "main.min-h-screen.pb-16 > nav.site-nav > div.flex.min-w-0.items-center",
+     "text": "nerfchessPlayLobbyChallenge a friendPrac...",
+     "kind": "moved",
+     "from": "18,17,26,26",
+     "to": "18,2,588,54",
+     "dy": -15,
+     "dw": 562,
+     "dh": 28
+    },
+    {
+     "t": 12814,
+     "node": "main.min-h-screen.pb-16 > nav.site-nav > div.relative.flex.items-center",
+     "text": "polish_user",
+     "kind": "moved",
+     "from": "1165,16,98,28",
+     "to": "953,8,309,44",
+     "dx": -212,
+     "dy": -8,
+     "dw": 211,
+     "dh": 16
+    },
+    {
+     "t": 12814,
+     "node": "main.min-h-screen.pb-16 > nav.site-nav > button.disabled\\:cursor-not-allowed.disabled\\:opacity-40.\\[@media(pointer\\:fine)\\]\\:min-h-\\[36px\\]",
+     "text": "Exit zen (z)",
+     "kind": "moved",
+     "from": "157,88,966,56",
+     "to": "0,0,0,0",
+     "dx": -157,
+     "dy": -88,
+     "dw": -966,
+     "dh": -56
+    },
+    {
+     "t": 12814,
+     "node": "main.min-h-screen.pb-16 > section.mx-auto.max-w-6xl.px-5 > h1.sr-only",
+     "text": "Player profile",
+     "kind": "moved",
+     "from": "157,165,966,72",
+     "to": "156,87,1,1",
+     "dx": -1,
+     "dy": -78,
+     "dw": -965,
+     "dh": -71
+    },
+    {
+     "t": 12814,
+     "node": "main.min-h-screen.pb-16 > section.mx-auto.max-w-6xl.px-5 > div.flex.items-center.gap-4",
+     "text": "",
+     "kind": "moved",
+     "from": "157,251,966,382",
+     "to": "157,88,966,72",
+     "dy": -163,
+     "dh": -310
+    },
+    {
+     "t": 12814,
+     "node": "main.min-h-screen.pb-16 > section.mx-auto.max-w-6xl.px-5 > div.mt-6.grid.gap-3",
+     "text": "",
+     "kind": "inserted",
+     "from": null,
+     "to": "157,181,966,100"
+    },
+    {
+     "t": 12814,
+     "node": "main.min-h-screen.pb-16 > section.mx-auto.max-w-6xl.px-5 > div.plate",
+     "text": "",
+     "kind": "inserted",
+     "from": null,
+     "to": "157,295,966,114"
+    },
+    {
+     "t": 12814,
+     "node": "main.min-h-screen.pb-16 > section.mx-auto.max-w-6xl.px-5 > div.plate",
+     "text": "",
+     "kind": "inserted",
+     "from": null,
+     "to": "157,437,966,301"
+    },
+    {
+     "t": 14198,
+     "node": "main.min-h-screen.pb-16",
+     "text": "nerfchessPlayLobbyChallenge a friendPrac...",
+     "kind": "resized",
+     "from": "0,0,1280,822",
+     "to": "0,0,1280,1013",
+     "dh": 191
+    },
+    {
+     "t": 14198,
+     "node": "main.min-h-screen.pb-16 > section.mx-auto.w-full.max-w-\\[1300px\\]",
+     "text": "Nerf1500?0 gamesBuff1500?0 games polish_...",
+     "kind": "moved",
+     "from": "136,60,1008,706",
+     "to": "0,60,1280,897",
+     "dx": -136,
+     "dw": 272,
+     "dh": 191
+    },
+    {
+     "t": 14198,
+     "node": "main.min-h-screen.pb-16 > section.mx-auto.w-full.max-w-\\[1300px\\] > aside.order-2.mt-4.lg\\:order-1",
+     "text": "Nerf1500?0 gamesBuff1500?0 games",
+     "kind": "moved",
+     "from": "156,87,1,1",
+     "to": "18,74,230,883",
+     "dx": -138,
+     "dy": -13,
+     "dw": 229,
+     "dh": 882
+    },
+    {
+     "t": 14198,
+     "node": "main.min-h-screen.pb-16 > section.mx-auto.w-full.max-w-\\[1300px\\] > div.order-1.min-w-0.lg\\:order-2",
+     "text": "polish_userAdd a bio0Games0Wins0Losses0D...",
+     "kind": "moved",
+     "from": "157,88,966,72",
+     "to": "262,74,1001,883",
+     "dx": 105,
+     "dy": -14,
+     "dw": 35,
+     "dh": 811
+    },
+    {
+     "t": 14198,
+     "node": "main > * > * [5]",
+     "text": "",
+     "kind": "removed",
+     "from": "157,181,966,100",
+     "to": "gone"
+    },
+    {
+     "t": 14198,
+     "node": "main > * > * [6]",
+     "text": "",
+     "kind": "removed",
+     "from": "157,295,966,114",
+     "to": "gone"
+    },
+    {
+     "t": 14198,
+     "node": "main > * > * [7]",
+     "text": "",
+     "kind": "removed",
+     "from": "157,437,966,301",
+     "to": "gone"
+    },
+    {
+     "t": 14953,
+     "node": "main.min-h-screen.pb-16",
+     "text": "nerfchessPlayLobbyChallenge a friendPrac...",
+     "kind": "resized",
+     "from": "0,0,1280,1013",
+     "to": "0,0,1280,896",
+     "dh": -117
+    },
+    {
+     "t": 14953,
+     "node": "main.min-h-screen.pb-16 > section.mx-auto.w-full.max-w-\\[1300px\\]",
+     "text": "Nerf1500?0 gamesBuff1500?0 gamesStatisti...",
+     "kind": "resized",
+     "from": "0,60,1280,897",
+     "to": "0,60,1280,780",
+     "dh": -117
+    },
+    {
+     "t": 14953,
+     "node": "main.min-h-screen.pb-16 > section.mx-auto.w-full.max-w-\\[1300px\\] > aside.order-2.mt-4.lg\\:order-1",
+     "text": "Nerf1500?0 gamesBuff1500?0 gamesStatisti...",
+     "kind": "resized",
+     "from": "18,74,230,883",
+     "to": "18,74,230,766",
+     "dh": -117
+    },
+    {
+     "t": 14953,
+     "node": "main.min-h-screen.pb-16 > section.mx-auto.w-full.max-w-\\[1300px\\] > div.order-1.min-w-0.lg\\:order-2",
+     "text": "polish_userAdd a bio0Games0Wins0Losses0D...",
+     "kind": "resized",
+     "from": "262,74,1001,883",
+     "to": "262,74,1001,766",
+     "dh": -117
+    },
+    {
+     "t": 15051,
+     "node": "main.min-h-screen.pb-16",
+     "text": "nerfchessPlayLobbyChallenge a friendPrac...",
+     "kind": "resized",
+     "from": "0,0,1280,896",
+     "to": "0,0,1280,907",
+     "dh": 11
+    },
+    {
+     "t": 15051,
+     "node": "main.min-h-screen.pb-16 > section.mx-auto.w-full.max-w-\\[1300px\\]",
+     "text": "Nerf1500?0 gamesBuff1500?0 gamesStatisti...",
+     "kind": "resized",
+     "from": "0,60,1280,780",
+     "to": "0,60,1280,791",
+     "dh": 11
+    },
+    {
+     "t": 15051,
+     "node": "main.min-h-screen.pb-16 > section.mx-auto.w-full.max-w-\\[1300px\\] > aside.order-2.mt-4.lg\\:order-1",
+     "text": "Nerf1500?0 gamesBuff1500?0 gamesStatisti...",
+     "kind": "resized",
+     "from": "18,74,230,766",
+     "to": "18,74,230,777",
+     "dh": 11
+    },
+    {
+     "t": 15051,
+     "node": "main.min-h-screen.pb-16 > section.mx-auto.w-full.max-w-\\[1300px\\] > div.order-1.min-w-0.lg\\:order-2",
+     "text": "polish_userAdd a bio0Games0Wins0Losses0D...",
+     "kind": "resized",
+     "from": "262,74,1001,766",
+     "to": "262,74,1001,777",
+     "dh": 11
+    },
+    {
+     "t": 17254,
+     "node": "main.min-h-screen.pb-16",
+     "text": "nerfchessPlayLobbyChallenge a friendPrac...",
+     "kind": "resized",
+     "from": "0,0,1280,907",
+     "to": "0,0,1280,896",
+     "dh": -11
+    },
+    {
+     "t": 17254,
+     "node": "main.min-h-screen.pb-16 > section.mx-auto.w-full.max-w-\\[1300px\\]",
+     "text": "Nerf1500?0 gamesBuff1500?0 gamesStatisti...",
+     "kind": "resized",
+     "from": "0,60,1280,791",
+     "to": "0,60,1280,780",
+     "dh": -11
+    },
+    {
+     "t": 17254,
+     "node": "main.min-h-screen.pb-16 > section.mx-auto.w-full.max-w-\\[1300px\\] > aside.order-2.mt-4.lg\\:order-1",
+     "text": "Nerf1500?0 gamesBuff1500?0 gamesStatisti...",
+     "kind": "resized",
+     "from": "18,74,230,777",
+     "to": "18,74,230,766",
+     "dh": -11
+    },
+    {
+     "t": 17254,
+     "node": "main.min-h-screen.pb-16 > section.mx-auto.w-full.max-w-\\[1300px\\] > div.order-1.min-w-0.lg\\:order-2",
+     "text": "polish_userAdd a bio0Games0Wins0Losses0D...",
+     "kind": "resized",
+     "from": "262,74,1001,777",
+     "to": "262,74,1001,766",
+     "dh": -11
+    },
+    {
+     "t": 18036,
+     "node": "main.min-h-screen.pb-16",
+     "text": "nerfchessPlayLobbyChallenge a friendPrac...",
+     "kind": "resized",
+     "from": "0,0,1280,896",
+     "to": "0,0,1280,907",
+     "dh": 11
+    },
+    {
+     "t": 18036,
+     "node": "main.min-h-screen.pb-16 > section.mx-auto.w-full.max-w-\\[1300px\\]",
+     "text": "Nerf1500?0 gamesBuff1500?0 gamesStatisti...",
+     "kind": "resized",
+     "from": "0,60,1280,780",
+     "to": "0,60,1280,791",
+     "dh": 11
+    },
+    {
+     "t": 18036,
+     "node": "main.min-h-screen.pb-16 > section.mx-auto.w-full.max-w-\\[1300px\\] > aside.order-2.mt-4.lg\\:order-1",
+     "text": "Nerf1500?0 gamesBuff1500?0 gamesStatisti...",
+     "kind": "resized",
+     "from": "18,74,230,766",
+     "to": "18,74,230,777",
+     "dh": 11
+    },
+    {
+     "t": 18036,
+     "node": "main.min-h-screen.pb-16 > section.mx-auto.w-full.max-w-\\[1300px\\] > div.order-1.min-w-0.lg\\:order-2",
+     "text": "polish_userAdd a bio0Games0Wins0Losses0D...",
+     "kind": "resized",
+     "from": "262,74,1001,766",
+     "to": "262,74,1001,777",
+     "dh": 11
+    }
+   ]
+  },
+  {
+   "route": "/game?mode=nerf&difficulty=easy&color=w&t=0&inc=0&rated=0",
+   "state": "1280x800|dark|full|user|throttled",
+   "loadMs": 23428,
+   "cls": 0,
+   "total": 0,
+   "marks": {
+    "dcl": 2012,
+    "firstPaint": 2020,
+    "fcp": 2020,
+    "hydrated": 16178,
+    "load": 18244,
+    "ttfb": 119
+   },
+   "firstAuthMeEnd": 16792,
+   "authMeCalls": 2,
+   "shifts": [],
+   "boxMoves": [
+    {
+     "t": 17877,
+     "node": "main.min-h-screen.flex.items-center > div.w-full.max-w-2xl",
+     "text": "Nerf draftChoose your handicapIt stays s...",
+     "kind": "moved",
+     "from": "564,379,152,42",
+     "to": "346,159,588,483",
+     "dx": -218,
+     "dy": -220,
+     "dw": 436,
+     "dh": 441
+    },
+    {
+     "t": 17877,
+     "node": "main.min-h-screen.flex.items-center > div.w-full.max-w-2xl > div.text-\\[12px\\].text-parchment-400.text-center",
+     "text": "Nerf draft",
+     "kind": "moved",
+     "from": "624,379,32,7",
+     "to": "346,159,588,18",
+     "dx": -278,
+     "dy": -220,
+     "dw": 556,
+     "dh": 11
+    },
+    {
+     "t": 17877,
+     "node": "main.min-h-screen.flex.items-center > div.w-full.max-w-2xl > h1.page-title",
+     "text": "Choose your handicap",
+     "kind": "moved",
+     "from": "564,397,152,25",
+     "to": "346,180,588,27",
+     "dx": -218,
+     "dy": -217,
+     "dw": 436,
+     "dh": 2
+    },
+    {
+     "t": 17877,
+     "node": "main.min-h-screen.flex.items-center > div.w-full.max-w-2xl > p.mt-2.text-sm.text-parchment-300",
+     "text": "It stays secret until the game ends.",
+     "kind": "inserted",
+     "from": null,
+     "to": "346,214,588,18"
+    },
+    {
+     "t": 17877,
+     "node": "main.min-h-screen.flex.items-center > div.w-full.max-w-2xl > div.mx-auto.mt-4.max-w-sm",
+     "text": "20",
+     "kind": "inserted",
+     "from": null,
+     "to": "472,246,336,18"
+    },
+    {
+     "t": 17877,
+     "node": "main.min-h-screen.flex.items-center > div.w-full.max-w-2xl > div.mt-6.grid.gap-4",
+     "text": "Pick this nerf, Passive. Active Volcano....",
+     "kind": "inserted",
+     "from": null,
+     "to": "346,285,588,321"
+    },
+    {
+     "t": 17877,
+     "node": "main.min-h-screen.flex.items-center > div.w-full.max-w-2xl > p.mt-5.text-center.text-\\[12px\\]",
+     "text": "Your opponent picks a nerf too. You will...",
+     "kind": "inserted",
+     "from": null,
+     "to": "346,623,588,18"
+    }
+   ]
+  },
+  {
+   "route": "/",
+   "state": "390x844|dark|full|user|throttled",
+   "loadMs": 26315,
+   "cls": 0.0007,
+   "total": 0.0007,
+   "marks": {
+    "dcl": 2004,
+    "firstPaint": 2020,
+    "fcp": 2020,
+    "load": 13265,
+    "hydrated": 13878,
+    "ttfb": 61
+   },
+   "firstAuthMeEnd": 14336,
+   "authMeCalls": 1,
+   "shifts": [
+    {
+     "t": 14880.9,
+     "value": 0.0007,
+     "hadRecentInput": false,
+     "sources": [
+      {
+       "selector": "section.mx-auto.flex.w-full > div.order-2.mt-4.lg\\:order-3 > a.\\[@media(pointer\\:fine)\\]\\:min-h-0 > span.block",
+       "text": "0 players",
+       "prev": {
+        "x": 11,
+        "y": 735,
+        "w": 369,
+        "h": 18
+       },
+       "curr": {
+        "x": 11,
+        "y": 735,
+        "w": 369,
+        "h": 18
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": 0,
+       "dw": 0,
+       "dh": 0
+      },
+      {
+       "selector": "section.mx-auto.flex.w-full > div.order-2.mt-4.lg\\:order-3 > a.\\[@media(pointer\\:fine)\\]\\:min-h-0 > span.block",
+       "text": "0 games in play",
+       "prev": {
+        "x": 11,
+        "y": 756,
+        "w": 369,
+        "h": 18
+       },
+       "curr": {
+        "x": 11,
+        "y": 756,
+        "w": 369,
+        "h": 18
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": 0,
+       "dw": 0,
+       "dh": 0
+      }
+     ],
+     "sinceHydratedMs": 1003,
+     "lastApiBefore": {
+      "url": "/api/community/recent",
+      "endedMsBefore": 455
+     }
+    }
+   ],
+   "boxMoves": [
+    {
+     "t": 13831,
+     "node": "main.min-h-screen.flex.flex-col",
+     "text": "nerfchessPlayLobbyChallenge a friendPrac...",
+     "kind": "resized",
+     "from": "0,0,390,2134",
+     "to": "0,0,390,2140",
+     "dh": 6
+    },
+    {
+     "t": 13831,
+     "node": "main.min-h-screen.flex.flex-col > section.mx-auto.flex.w-full",
+     "text": "Latest gamesCommunity »Live games appear...",
+     "kind": "resized",
+     "from": "0,48,390,1234",
+     "to": "0,48,390,1227",
+     "dh": -7
+    },
+    {
+     "t": 13831,
+     "node": "main.min-h-screen.flex.flex-col > section.mx-auto.mt-8.flex",
+     "text": "Latest updatesAll updates »5 Sept 2026A ...",
+     "kind": "moved",
+     "from": "0,1310,390,665",
+     "to": "0,1303,390,678",
+     "dy": -7,
+     "dh": 13
+    },
+    {
+     "t": 13831,
+     "node": "main.min-h-screen.flex.flex-col > footer.mx-auto.mt-12.w-full",
+     "text": "AboutFAQContactGuidelinesPrivacyTermsDis...",
+     "kind": "moved",
+     "from": "0,2016,390,118",
+     "to": "0,2023,390,118",
+     "dy": 7
+    },
+    {
+     "t": 13831,
+     "node": "main.min-h-screen.flex.flex-col > section.mx-auto.flex.w-full > div.order-3.mt-6.lg\\:order-1",
+     "text": "Latest gamesCommunity »",
+     "kind": "moved",
+     "from": "11,1010,369,272",
+     "to": "11,1003,369,272",
+     "dy": -7
+    },
+    {
+     "t": 13831,
+     "node": "main.min-h-screen.flex.flex-col > section.mx-auto.flex.w-full > div.order-2.mt-4.lg\\:order-3",
+     "text": "Nerf Chess: chess with power-ups, a free...",
+     "kind": "resized",
+     "from": "11,517,369,472",
+     "to": "11,517,369,465",
+     "dh": -7
+    },
+    {
+     "t": 13831,
+     "node": "main.min-h-screen.flex.flex-col > section.mx-auto.mt-8.flex > div.plate",
+     "text": "Latest updatesAll updates »5 Sept 2026A ...",
+     "kind": "moved",
+     "from": "11,1310,369,507",
+     "to": "11,1303,369,507",
+     "dy": -7
+    },
+    {
+     "t": 13831,
+     "node": "main.min-h-screen.flex.flex-col > section.mx-auto.mt-8.flex > div.mt-6.lg\\:mt-0",
+     "text": "Card of the dayCodex »",
+     "kind": "moved",
+     "from": "11,1837,369,137",
+     "to": "11,1830,369,150",
+     "dy": -7,
+     "dh": 13
+    },
+    {
+     "t": 13831,
+     "node": "main.min-h-screen.flex.flex-col > footer.mx-auto.mt-12.w-full > div.flex.flex-col.gap-3",
+     "text": "AboutFAQContactGuidelinesPrivacyTermsDis...",
+     "kind": "moved",
+     "from": "11,2016,369,65",
+     "to": "11,2023,369,65",
+     "dy": 7
+    },
+    {
+     "t": 13831,
+     "node": "main.min-h-screen.flex.flex-col > footer.mx-auto.mt-12.w-full > div.mt-2.flex.items-center",
+     "text": "Nerf Chess",
+     "kind": "moved",
+     "from": "11,2088,369,18",
+     "to": "11,2094,369,18",
+     "dy": 6
+    },
+    {
+     "t": 14641,
+     "node": "main.min-h-screen.flex.flex-col",
+     "text": "nerfchessPlayLobbyChallenge a friendPrac...",
+     "kind": "resized",
+     "from": "0,0,390,2140",
+     "to": "0,0,390,1918",
+     "dh": -222
+    },
+    {
+     "t": 14641,
+     "node": "main.min-h-screen.flex.flex-col > section.mx-auto.flex.w-full",
+     "text": "Latest gamesCommunity »No games finished...",
+     "kind": "resized",
+     "from": "0,48,390,1227",
+     "to": "0,48,390,1005",
+     "dh": -222
+    },
+    {
+     "t": 14641,
+     "node": "main.min-h-screen.flex.flex-col > section.mx-auto.mt-8.flex",
+     "text": "Latest updatesAll updates »5 Sept 2026A ...",
+     "kind": "moved",
+     "from": "0,1303,390,678",
+     "to": "0,1081,390,678",
+     "dy": -222
+    },
+    {
+     "t": 14641,
+     "node": "main.min-h-screen.flex.flex-col > footer.mx-auto.mt-12.w-full",
+     "text": "AboutFAQContactGuidelinesPrivacyTermsDis...",
+     "kind": "moved",
+     "from": "0,2023,390,118",
+     "to": "0,1801,390,118",
+     "dy": -222
+    },
+    {
+     "t": 14641,
+     "node": "main.min-h-screen.flex.flex-col > section.mx-auto.flex.w-full > div.order-3.mt-6.lg\\:order-1",
+     "text": "Latest gamesCommunity »No games finished...",
+     "kind": "resized",
+     "from": "11,1003,369,272",
+     "to": "11,1003,369,50",
+     "dh": -222
+    },
+    {
+     "t": 14641,
+     "node": "main.min-h-screen.flex.flex-col > section.mx-auto.mt-8.flex > div.plate",
+     "text": "Latest updatesAll updates »5 Sept 2026A ...",
+     "kind": "moved",
+     "from": "11,1303,369,507",
+     "to": "11,1081,369,507",
+     "dy": -222
+    },
+    {
+     "t": 14641,
+     "node": "main.min-h-screen.flex.flex-col > section.mx-auto.mt-8.flex > div.mt-6.lg\\:mt-0",
+     "text": "Card of the dayCodex »",
+     "kind": "moved",
+     "from": "11,1830,369,150",
+     "to": "11,1608,369,150",
+     "dy": -222
+    },
+    {
+     "t": 14641,
+     "node": "main.min-h-screen.flex.flex-col > footer.mx-auto.mt-12.w-full > div.flex.flex-col.gap-3",
+     "text": "AboutFAQContactGuidelinesPrivacyTermsDis...",
+     "kind": "moved",
+     "from": "11,2023,369,65",
+     "to": "11,1801,369,65",
+     "dy": -222
+    },
+    {
+     "t": 14641,
+     "node": "main.min-h-screen.flex.flex-col > footer.mx-auto.mt-12.w-full > div.mt-2.flex.items-center",
+     "text": "Nerf Chess",
+     "kind": "moved",
+     "from": "11,2094,369,18",
+     "to": "11,1872,369,18",
+     "dy": -222
+    },
+    {
+     "t": 17307,
+     "node": "main.min-h-screen.flex.flex-col",
+     "text": "nerfchessPlayLobbyChallenge a friendPrac...",
+     "kind": "resized",
+     "from": "0,0,390,1918",
+     "to": "0,0,390,1936",
+     "dh": 18
+    },
+    {
+     "t": 17307,
+     "node": "main.min-h-screen.flex.flex-col > section.mx-auto.mt-8.flex",
+     "text": "Latest updatesAll updates »5 Sept 2026A ...",
+     "kind": "resized",
+     "from": "0,1081,390,678",
+     "to": "0,1081,390,696",
+     "dh": 18
+    },
+    {
+     "t": 17307,
+     "node": "main.min-h-screen.flex.flex-col > footer.mx-auto.mt-12.w-full",
+     "text": "AboutFAQContactGuidelinesPrivacyTermsDis...",
+     "kind": "moved",
+     "from": "0,1801,390,118",
+     "to": "0,1818,390,118",
+     "dy": 17
+    },
+    {
+     "t": 17307,
+     "node": "main.min-h-screen.flex.flex-col > section.mx-auto.mt-8.flex > div.mt-6.lg\\:mt-0",
+     "text": "Card of the dayCodex »Hearth FrostBuff ·...",
+     "kind": "resized",
+     "from": "11,1608,369,150",
+     "to": "11,1608,369,168",
+     "dh": 18
+    },
+    {
+     "t": 17307,
+     "node": "main.min-h-screen.flex.flex-col > footer.mx-auto.mt-12.w-full > div.flex.flex-col.gap-3",
+     "text": "AboutFAQContactGuidelinesPrivacyTermsDis...",
+     "kind": "moved",
+     "from": "11,1801,369,65",
+     "to": "11,1818,369,65",
+     "dy": 17
+    },
+    {
+     "t": 17307,
+     "node": "main.min-h-screen.flex.flex-col > footer.mx-auto.mt-12.w-full > div.mt-2.flex.items-center",
+     "text": "Nerf Chess",
+     "kind": "moved",
+     "from": "11,1872,369,18",
+     "to": "11,1890,369,18",
+     "dy": 18
+    }
+   ]
+  },
+  {
+   "route": "/lobby",
+   "state": "390x844|dark|full|user|throttled",
+   "loadMs": 15580,
+   "cls": 0.0044,
+   "total": 0.0044,
+   "marks": {
+    "dcl": 1958,
+    "firstPaint": 1960,
+    "fcp": 1960,
+    "load": 8432,
+    "hydrated": 8779,
+    "ttfb": 116
+   },
+   "firstAuthMeEnd": 9363,
+   "authMeCalls": 1,
+   "shifts": [
+    {
+     "t": 10008.4,
+     "value": 0.0031,
+     "hadRecentInput": false,
+     "sources": [
+      {
+       "selector": "header.mt-3.sm\\:mt-4 > div.flex.flex-wrap.items-center > div.flex.flex-wrap.items-center",
+       "text": "Live · 0 players0 waiting0 in play",
+       "prev": {
+        "x": 262,
+        "y": 59,
+        "w": 111,
+        "h": 30
+       },
+       "curr": {
+        "x": 253,
+        "y": 59,
+        "w": 120,
+        "h": 30
+       },
+       "change": "moved",
+       "dx": -9,
+       "dy": 0,
+       "dw": 9,
+       "dh": 0
+      },
+      {
+       "selector": "div#lobby-panel-play.space-y-5 > div.plate > button.flex.min-h-\\[44px\\].w-full > span.tabular-nums",
+       "text": "0 waiting",
+       "prev": {
+        "x": 345,
+        "y": 649,
+        "w": 9,
+        "h": 17
+       },
+       "curr": {
+        "x": 303,
+        "y": 649,
+        "w": 51,
+        "h": 17
+       },
+       "change": "moved",
+       "dx": -42,
+       "dy": 0,
+       "dw": 42,
+       "dh": 0
+      },
+      {
+       "selector": "section.max-w-7xl.mx-auto.px-5 > div.mt-5.grid.gap-5 > aside.h-fit.space-y-5.lg\\:sticky > div.plate",
+       "text": "Games to watch0No live games right now. Answer a c...",
+       "prev": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0
+       },
+       "curr": {
+        "x": 18,
+        "y": 832,
+        "w": 355,
+        "h": 12
+       },
+       "change": "entered",
+       "dx": null,
+       "dy": null,
+       "dw": null,
+       "dh": null
+      }
+     ],
+     "sinceHydratedMs": 1229,
+     "lastApiBefore": {
+      "url": "/api/lobby?fresh=596710629",
+      "endedMsBefore": 335
+     }
+    },
+    {
+     "t": 10470.9,
+     "value": 0.0013,
+     "hadRecentInput": false,
+     "sources": [
+      {
+       "selector": "div#lobby-panel-play.space-y-5 > div.plate > div.flex.flex-wrap.items-center > div.flex.items-stretch.gap-1[role=\"group\"]",
+       "text": "Buff1500Nerf1500",
+       "prev": {
+        "x": 231,
+        "y": 172,
+        "w": 135,
+        "h": 46
+       },
+       "curr": {
+        "x": 187,
+        "y": 172,
+        "w": 179,
+        "h": 46
+       },
+       "change": "moved",
+       "dx": -44,
+       "dy": 0,
+       "dw": 44,
+       "dh": 0
+      }
+     ],
+     "sinceHydratedMs": 1692,
+     "lastApiBefore": {
+      "url": "/api/users/polish_user",
+      "endedMsBefore": 25
+     }
+    }
+   ],
+   "boxMoves": [
+    {
+     "t": 2237,
+     "node": "header [1]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2237,
+     "node": "header [2]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2237,
+     "node": "header > * [1]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2237,
+     "node": "header > * [2]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2237,
+     "node": "header > * > * [2]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2237,
+     "node": "header > * > * [3]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2237,
+     "node": "header > * > * [4]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2237,
+     "node": "header > * > * [5]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2237,
+     "node": "header > * > * > * [2]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2237,
+     "node": "header > * > * > * [3]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2237,
+     "node": "header > * > * > * [4]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2237,
+     "node": "header > * > * > * [5]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2237,
+     "node": "main [1]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2237,
+     "node": "main [2]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2237,
+     "node": "main > * [2]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2237,
+     "node": "main > * [3]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2237,
+     "node": "main > * [4]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2237,
+     "node": "main > * [5]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2237,
+     "node": "main.min-h-screen.pb-16 > nav.site-nav > div.flex.min-w-0.items-center",
+     "text": "nerfchessPlayLobbyChallenge a friendPrac...",
+     "kind": "moved",
+     "from": "7,11,26,26",
+     "to": "7,2,143,44",
+     "dy": -9,
+     "dw": 117,
+     "dh": 18
+    },
+    {
+     "t": 2237,
+     "node": "main.min-h-screen.pb-16 > nav.site-nav > div.relative.flex.items-center",
+     "text": "polish_user",
+     "kind": "moved",
+     "from": "285,10,98,28",
+     "to": "157,2,227,44",
+     "dx": -128,
+     "dy": -8,
+     "dw": 129,
+     "dh": 16
+    },
+    {
+     "t": 2237,
+     "node": "main.min-h-screen.pb-16 > nav.site-nav > button.disabled\\:cursor-not-allowed.disabled\\:opacity-40.\\[@media(pointer\\:fine)\\]\\:min-h-\\[36px\\]",
+     "text": "Exit zen (z)",
+     "kind": "moved",
+     "from": "18,59,355,30",
+     "to": "0,0,0,0",
+     "dx": -18,
+     "dy": -59,
+     "dw": -355,
+     "dh": -30
+    },
+    {
+     "t": 2237,
+     "node": "header.mt-3.sm\\:mt-4",
+     "text": "LobbyConnecting…waitingin play",
+     "kind": "moved",
+     "from": "18,103,355,44",
+     "to": "18,59,355,30",
+     "dy": -44,
+     "dh": -14
+    },
+    {
+     "t": 2237,
+     "node": "main.min-h-screen.pb-16 > section.max-w-7xl.mx-auto.px-5 > div.mt-4.flex.items-stretch[role=\"tablist\"]",
+     "text": "PlayWatch & Friends",
+     "kind": "moved",
+     "from": "18,164,355,976",
+     "to": "18,103,355,44",
+     "dy": -61,
+     "dh": -932
+    },
+    {
+     "t": 2237,
+     "node": "main.min-h-screen.pb-16 > section.max-w-7xl.mx-auto.px-5 > div.mt-5.grid.gap-5",
+     "text": "Quick pairingBuff?Nerf?1+0Bullet2+1Bulle...",
+     "kind": "moved",
+     "from": "0,0,0,0",
+     "to": "18,164,355,976",
+     "dx": 18,
+     "dy": 164,
+     "dw": 355,
+     "dh": 976
+    },
+    {
+     "t": 2237,
+     "node": "main > * > * [6]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2237,
+     "node": "main > * > * [7]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2237,
+     "node": "main > * > * [8]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2237,
+     "node": "main > * > * [9]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2237,
+     "node": "main > * > * [10]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2237,
+     "node": "main > * > * [11]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2237,
+     "node": "main > * > * [12]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2237,
+     "node": "main > * > * [13]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2237,
+     "node": "main > * > * [14]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2237,
+     "node": "main > * > * [15]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2237,
+     "node": "main > * > * [16]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 9999,
+     "node": "header.mt-3.sm\\:mt-4 > div.flex.flex-wrap.items-center > div.flex.flex-wrap.items-center",
+     "text": "Live · 0 players0 waiting0 in play",
+     "kind": "moved",
+     "from": "262,59,111,30",
+     "to": "253,59,119,30",
+     "dx": -9,
+     "dw": 8
+    },
+    {
+     "t": 9999,
+     "node": "header.mt-3.sm\\:mt-4 > div.flex.flex-wrap.items-center > div.flex.flex-wrap.items-center > span.tabular-nums[role=\"status\"]",
+     "text": "Live · 0 players",
+     "kind": "moved",
+     "from": "262,59,111,29",
+     "to": "253,59,119,29",
+     "dx": -9,
+     "dw": 8
+    },
+    {
+     "t": 9999,
+     "node": "main.min-h-screen.pb-16",
+     "text": "nerfchessPlayLobbyChallenge a friendPrac...",
+     "kind": "resized",
+     "from": "0,0,390,1196",
+     "to": "0,0,390,994",
+     "dh": -202
+    },
+    {
+     "t": 9999,
+     "node": "main.min-h-screen.pb-16 > section.max-w-7xl.mx-auto.px-5",
+     "text": "LobbyLive · 0 players0 waiting0 in playP...",
+     "kind": "resized",
+     "from": "0,59,390,1081",
+     "to": "0,59,390,879",
+     "dh": -202
+    },
+    {
+     "t": 9999,
+     "node": "main.min-h-screen.pb-16 > section.max-w-7xl.mx-auto.px-5 > div.mt-5.grid.gap-5",
+     "text": "Quick pairingBuff?Nerf?1+0Bullet2+1Bulle...",
+     "kind": "resized",
+     "from": "18,164,355,976",
+     "to": "18,164,355,774",
+     "dh": -202
+    }
+   ]
+  },
+  {
+   "route": "/play",
+   "state": "390x844|dark|full|user|throttled",
+   "loadMs": 19089,
+   "cls": 0,
+   "total": 0,
+   "marks": {
+    "dcl": 1989,
+    "firstPaint": 1876,
+    "fcp": 1876,
+    "hydrated": 12596,
+    "load": 12932,
+    "ttfb": 95
+   },
+   "firstAuthMeEnd": 13182,
+   "authMeCalls": 1,
+   "shifts": [],
+   "boxMoves": [
+    {
+     "t": 1892,
+     "node": "main.min-h-screen",
+     "text": "Play the computerBuff, Nerf, or plain ch...",
+     "kind": "resized",
+     "from": "0,0,390,844",
+     "to": "0,0,390,953",
+     "dh": 109
+    },
+    {
+     "t": 1892,
+     "node": "main.min-h-screen",
+     "text": "nerfchessPlayLobbyChallenge a friendPrac...",
+     "kind": "inserted",
+     "from": null,
+     "to": "0,0,0,0"
+    },
+    {
+     "t": 1892,
+     "node": "main.min-h-screen > section.mx-auto.max-w-2xl.px-6",
+     "text": "Play the computerBuff, Nerf, or plain ch...",
+     "kind": "resized",
+     "from": "0,48,390,145",
+     "to": "0,48,390,905",
+     "dh": 760
+    },
+    {
+     "t": 1892,
+     "node": "main.min-h-screen > nav.site-nav",
+     "text": "nerfchessPlayLobbyChallenge a friendPrac...",
+     "kind": "inserted",
+     "from": null,
+     "to": "0,0,0,0"
+    },
+    {
+     "t": 1892,
+     "node": "main.min-h-screen > section.max-w-2xl.mx-auto.px-6",
+     "text": "Play the computerBuff, Nerf, or plain ch...",
+     "kind": "inserted",
+     "from": null,
+     "to": "0,0,0,0"
+    },
+    {
+     "t": 1892,
+     "node": "main.min-h-screen > section.mx-auto.max-w-2xl.px-6 > a.plate",
+     "text": "Play onlineFind a real opponent in the l...",
+     "kind": "inserted",
+     "from": null,
+     "to": "21,189,348,67"
+    },
+    {
+     "t": 1892,
+     "node": "main.min-h-screen > section.mx-auto.max-w-2xl.px-6 > div.plate",
+     "text": "Game typeBuffNerfPlain chessBot strength...",
+     "kind": "inserted",
+     "from": null,
+     "to": "21,277,348,659"
+    },
+    {
+     "t": 1892,
+     "node": "main.min-h-screen > nav.site-nav > div.flex.min-w-0.items-center",
+     "text": "nerfchessPlayLobbyChallenge a friendPrac...",
+     "kind": "inserted",
+     "from": null,
+     "to": "0,0,0,0"
+    },
+    {
+     "t": 1892,
+     "node": "main.min-h-screen > nav.site-nav > div.relative.flex.items-center",
+     "text": "polish_user",
+     "kind": "inserted",
+     "from": null,
+     "to": "0,0,0,0"
+    },
+    {
+     "t": 1892,
+     "node": "main.min-h-screen > nav.site-nav > button.disabled\\:cursor-not-allowed.disabled\\:opacity-40.\\[@media(pointer\\:fine)\\]\\:min-h-\\[36px\\]",
+     "text": "Exit zen (z)",
+     "kind": "inserted",
+     "from": null,
+     "to": "0,0,0,0"
+    },
+    {
+     "t": 1892,
+     "node": "main.min-h-screen > section.max-w-2xl.mx-auto.px-6 > div.flex.flex-wrap.items-end",
+     "text": "Play the computerBuff, Nerf, or plain ch...",
+     "kind": "inserted",
+     "from": null,
+     "to": "0,0,0,0"
+    },
+    {
+     "t": 1892,
+     "node": "main.min-h-screen > section.max-w-2xl.mx-auto.px-6 > script",
+     "text": "try{var s=window.localStorage;if(s.getIt...",
+     "kind": "inserted",
+     "from": null,
+     "to": "0,0,0,0"
+    },
+    {
+     "t": 1892,
+     "node": "main.min-h-screen > section.max-w-2xl.mx-auto.px-6 > div.plate.\\[html\\[data-tour-nudge\\]_&\\]\\:flex[role=\"note\"]",
+     "text": "",
+     "kind": "inserted",
+     "from": null,
+     "to": "0,0,0,0"
+    },
+    {
+     "t": 1977,
+     "node": "main.min-h-screen > section.max-w-2xl.mx-auto.px-6 > a.plate",
+     "text": "Play onlineFind a real opponent in the l...",
+     "kind": "inserted",
+     "from": null,
+     "to": "0,0,0,0"
+    },
+    {
+     "t": 1977,
+     "node": "template#B:1",
+     "text": "",
+     "kind": "inserted",
+     "from": null,
+     "to": "0,0,0,0"
+    },
+    {
+     "t": 1977,
+     "node": "main.min-h-screen > section.max-w-2xl.mx-auto.px-6 > div.plate",
+     "text": "Game typeBuffNerfPlain chessBot strength...",
+     "kind": "inserted",
+     "from": null,
+     "to": "0,0,0,0"
+    },
+    {
+     "t": 2271,
+     "node": "main [1]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2271,
+     "node": "main > * [2]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2271,
+     "node": "main > * [3]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2271,
+     "node": "main.min-h-screen > nav.site-nav > div.flex.min-w-0.items-center",
+     "text": "nerfchessPlayLobbyChallenge a friendPrac...",
+     "kind": "moved",
+     "from": "7,11,26,26",
+     "to": "7,2,143,44",
+     "dy": -9,
+     "dw": 117,
+     "dh": 18
+    },
+    {
+     "t": 2271,
+     "node": "main.min-h-screen > nav.site-nav > div.relative.flex.items-center",
+     "text": "polish_user",
+     "kind": "moved",
+     "from": "285,10,98,28",
+     "to": "157,2,227,44",
+     "dx": -128,
+     "dy": -8,
+     "dw": 129,
+     "dh": 16
+    },
+    {
+     "t": 2271,
+     "node": "main.min-h-screen > nav.site-nav > button.disabled\\:cursor-not-allowed.disabled\\:opacity-40.\\[@media(pointer\\:fine)\\]\\:min-h-\\[36px\\]",
+     "text": "Exit zen (z)",
+     "kind": "moved",
+     "from": "21,66,348,52",
+     "to": "0,0,0,0",
+     "dx": -21,
+     "dy": -66,
+     "dw": -348,
+     "dh": -52
+    },
+    {
+     "t": 2271,
+     "node": "main.min-h-screen > section.max-w-2xl.mx-auto.px-6 > div.flex.flex-wrap.items-end",
+     "text": "Play the computerBuff, Nerf, or plain ch...",
+     "kind": "moved",
+     "from": "0,0,0,0",
+     "to": "21,66,348,52",
+     "dx": 21,
+     "dy": 66,
+     "dw": 348,
+     "dh": 52
+    },
+    {
+     "t": 2271,
+     "node": "main.min-h-screen > section.max-w-2xl.mx-auto.px-6 > script",
+     "text": "try{var s=window.localStorage;if(s.getIt...",
+     "kind": "moved",
+     "from": "21,131,348,44",
+     "to": "0,0,0,0",
+     "dx": -21,
+     "dy": -131,
+     "dw": -348,
+     "dh": -44
+    },
+    {
+     "t": 2271,
+     "node": "main.min-h-screen > section.max-w-2xl.mx-auto.px-6 > div.plate.\\[html\\[data-tour-nudge\\]_&\\]\\:flex[role=\"note\"]",
+     "text": "New here? Take the tour: a guided first ...",
+     "kind": "moved",
+     "from": "21,189,348,67",
+     "to": "21,131,348,44",
+     "dy": -58,
+     "dh": -23
+    },
+    {
+     "t": 2271,
+     "node": "main.min-h-screen > section.max-w-2xl.mx-auto.px-6 > a.plate",
+     "text": "Play onlineFind a real opponent in the l...",
+     "kind": "moved",
+     "from": "21,277,348,659",
+     "to": "21,189,348,67",
+     "dy": -88,
+     "dh": -592
+    },
+    {
+     "t": 2271,
+     "node": "main.min-h-screen > section.max-w-2xl.mx-auto.px-6 > div.plate",
+     "text": "Game typeBuffNerfPlain chessDraft buffs ...",
+     "kind": "moved",
+     "from": "0,0,0,0",
+     "to": "21,277,348,659",
+     "dx": 21,
+     "dy": 277,
+     "dw": 348,
+     "dh": 659
+    },
+    {
+     "t": 2271,
+     "node": "main > * > * [8]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2271,
+     "node": "main > * > * [9]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2271,
+     "node": "main > * > * [10]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2271,
+     "node": "main > * > * [11]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2271,
+     "node": "main > * > * [12]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2271,
+     "node": "main > * > * [13]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2271,
+     "node": "main > * > * [14]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    },
+    {
+     "t": 2271,
+     "node": "main > * > * [15]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,0,0,0",
+     "to": "gone"
+    }
+   ]
+  },
+  {
+   "route": "/profile",
+   "state": "390x844|dark|full|user|throttled",
+   "loadMs": 57759,
+   "cls": 0.0834,
+   "total": 0.0834,
+   "marks": {
+    "dcl": 1853,
+    "firstPaint": 1872,
+    "fcp": 2228,
+    "load": 8670,
+    "hydrated": 8912,
+    "ttfb": 106
+   },
+   "firstAuthMeEnd": 9496,
+   "authMeCalls": 2,
+   "shifts": [
+    {
+     "t": 14809.4,
+     "value": 0.0769,
+     "hadRecentInput": false,
+     "sources": [
+      {
+       "selector": "main.min-h-screen.pb-16 > section.mx-auto.w-full.max-w-\\[1300px\\] > div.order-1.min-w-0.lg\\:order-2 > div.plate",
+       "text": "polish_userAdd a bio0Games0Wins0Losses0DrawsEdit p...",
+       "prev": {
+        "x": 11,
+        "y": 201,
+        "w": 369,
+        "h": 643
+       },
+       "curr": {
+        "x": 11,
+        "y": 291,
+        "w": 369,
+        "h": 553
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": 90,
+       "dw": 0,
+       "dh": -90
+      },
+      {
+       "selector": "div#panel-activity > div.space-y-3.px-4.py-5 > div.skeleton > ::after",
+       "text": "",
+       "prev": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0
+       },
+       "curr": {
+        "x": 26,
+        "y": 758,
+        "w": 147,
+        "h": 28
+       },
+       "change": "entered",
+       "dx": null,
+       "dy": null,
+       "dw": null,
+       "dh": null
+      },
+      {
+       "selector": "div#panel-activity > div.space-y-3.px-4.py-5 > div.skeleton > ::after",
+       "text": "",
+       "prev": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0
+       },
+       "curr": {
+        "x": 26,
+        "y": 796,
+        "w": 147,
+        "h": 28
+       },
+       "change": "entered",
+       "dx": null,
+       "dy": null,
+       "dw": null,
+       "dh": null
+      },
+      {
+       "selector": "div#panel-activity > div.space-y-3.px-4.py-5 > div.skeleton > ::after",
+       "text": "",
+       "prev": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0
+       },
+       "curr": {
+        "x": 26,
+        "y": 835,
+        "w": 147,
+        "h": 9
+       },
+       "change": "entered",
+       "dx": null,
+       "dy": null,
+       "dw": null,
+       "dh": null
+      },
+      {
+       "selector": "div#panel-activity > div.space-y-3.px-4.py-5 > div.skeleton",
+       "text": "",
+       "prev": {
+        "x": 26,
+        "y": 783,
+        "w": 339,
+        "h": 28
+       },
+       "curr": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0
+       },
+       "change": "left",
+       "dx": null,
+       "dy": null,
+       "dw": null,
+       "dh": null
+      }
+     ],
+     "sinceHydratedMs": 5897,
+     "lastApiBefore": {
+      "url": "/api/users/polish_user/stats",
+      "endedMsBefore": 213
+     }
+    },
+    {
+     "t": 14841,
+     "value": 0.0065,
+     "hadRecentInput": false,
+     "sources": [
+      {
+       "selector": "div#panel-activity > div.border-t.border-\\[color\\:var(--edge)\\].px-4",
+       "text": "Achievements0/102See all",
+       "prev": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0
+       },
+       "curr": {
+        "x": 12,
+        "y": 802,
+        "w": 367,
+        "h": 42
+       },
+       "change": "entered",
+       "dx": null,
+       "dy": null,
+       "dw": null,
+       "dh": null
+      }
+     ],
+     "sinceHydratedMs": 5929,
+     "lastApiBefore": {
+      "url": "/api/leaderboard?category=buff",
+      "endedMsBefore": 0
+     }
+    }
+   ],
+   "boxMoves": [
+    {
+     "t": 11811,
+     "node": "main.min-h-screen.pb-16 > section.mx-auto.max-w-6xl.px-5",
+     "text": "",
+     "kind": "moved",
+     "from": "-1,47,1,1",
+     "to": "0,48,390,683",
+     "dx": 1,
+     "dy": 1,
+     "dw": 389,
+     "dh": 682
+    },
+    {
+     "t": 11811,
+     "node": "main > * [2]",
+     "text": "",
+     "kind": "removed",
+     "from": "0,48,390,514",
+     "to": "gone"
+    },
+    {
+     "t": 11811,
+     "node": "main.min-h-screen.pb-16 > div.flex.min-h-\\[48px\\].items-center > img.animate-pulse",
+     "text": "",
+     "kind": "moved",
+     "from": "7,2,143,44",
+     "to": "7,11,26,26",
+     "dy": 9,
+     "dw": -117,
+     "dh": -18
+    },
+    {
+     "t": 11811,
+     "node": "main.min-h-screen.pb-16 > div.flex.min-h-\\[48px\\].items-center > div.skeleton",
+     "text": "",
+     "kind": "moved",
+     "from": "157,2,227,44",
+     "to": "285,10,98,28",
+     "dx": 128,
+     "dy": 8,
+     "dw": -129,
+     "dh": -16
+    },
+    {
+     "t": 11811,
+     "node": "main.min-h-screen.pb-16 > section.mx-auto.max-w-6xl.px-5 > div.flex.items-center.gap-4",
+     "text": "",
+     "kind": "moved",
+     "from": "0,0,0,0",
+     "to": "18,76,355,56",
+     "dx": 18,
+     "dy": 76,
+     "dw": 355,
+     "dh": 56
+    },
+    {
+     "t": 11811,
+     "node": "main.min-h-screen.pb-16 > section.mx-auto.max-w-6xl.px-5 > div.mt-6.grid.gap-3",
+     "text": "",
+     "kind": "moved",
+     "from": "18,76,355,48",
+     "to": "18,153,355,155",
+     "dy": 77,
+     "dh": 107
+    },
+    {
+     "t": 11811,
+     "node": "main.min-h-screen.pb-16 > section.mx-auto.max-w-6xl.px-5 > div.plate",
+     "text": "",
+     "kind": "moved",
+     "from": "18,145,355,72",
+     "to": "18,322,355,382",
+     "dy": 177,
+     "dh": 310
+    },
+    {
+     "t": 11811,
+     "node": "main > * > * [5]",
+     "text": "",
+     "kind": "removed",
+     "from": "18,238,355,169",
+     "to": "gone"
+    },
+    {
+     "t": 11811,
+     "node": "main > * > * [6]",
+     "text": "",
+     "kind": "removed",
+     "from": "18,420,355,114",
+     "to": "gone"
+    },
+    {
+     "t": 12872,
+     "node": "main.min-h-screen.pb-16",
+     "text": "nerfchessPlayLobbyChallenge a friendPrac...",
+     "kind": "resized",
+     "from": "0,0,390,844",
+     "to": "0,0,390,921",
+     "dh": 77
+    },
+    {
+     "t": 12872,
+     "node": "main.min-h-screen.pb-16 > section.mx-auto.max-w-6xl.px-5",
+     "text": "Player profile",
+     "kind": "resized",
+     "from": "0,48,390,683",
+     "to": "0,48,390,817",
+     "dh": 134
+    },
+    {
+     "t": 12872,
+     "node": "main.min-h-screen.pb-16 > nav.site-nav > div.flex.min-w-0.items-center",
+     "text": "nerfchessPlayLobbyChallenge a friendPrac...",
+     "kind": "moved",
+     "from": "7,11,26,26",
+     "to": "7,2,143,44",
+     "dy": -9,
+     "dw": 117,
+     "dh": 18
+    },
+    {
+     "t": 12872,
+     "node": "main.min-h-screen.pb-16 > nav.site-nav > div.relative.flex.items-center",
+     "text": "polish_user",
+     "kind": "moved",
+     "from": "285,10,98,28",
+     "to": "157,2,227,44",
+     "dx": -128,
+     "dy": -8,
+     "dw": 129,
+     "dh": 16
+    },
+    {
+     "t": 12872,
+     "node": "main.min-h-screen.pb-16 > nav.site-nav > button.disabled\\:cursor-not-allowed.disabled\\:opacity-40.\\[@media(pointer\\:fine)\\]\\:min-h-\\[36px\\]",
+     "text": "Exit zen (z)",
+     "kind": "moved",
+     "from": "18,76,355,56",
+     "to": "0,0,0,0",
+     "dx": -18,
+     "dy": -76,
+     "dw": -355,
+     "dh": -56
+    },
+    {
+     "t": 12872,
+     "node": "main.min-h-screen.pb-16 > section.mx-auto.max-w-6xl.px-5 > h1.sr-only",
+     "text": "Player profile",
+     "kind": "moved",
+     "from": "18,153,355,155",
+     "to": "17,75,1,1",
+     "dx": -1,
+     "dy": -78,
+     "dw": -354,
+     "dh": -154
+    },
+    {
+     "t": 12872,
+     "node": "main.min-h-screen.pb-16 > section.mx-auto.max-w-6xl.px-5 > div.flex.items-center.gap-4",
+     "text": "",
+     "kind": "moved",
+     "from": "18,322,355,382",
+     "to": "18,76,355,72",
+     "dy": -246,
+     "dh": -310
+    },
+    {
+     "t": 12872,
+     "node": "main.min-h-screen.pb-16 > section.mx-auto.max-w-6xl.px-5 > div.mt-6.grid.gap-3",
+     "text": "",
+     "kind": "inserted",
+     "from": null,
+     "to": "18,169,355,211"
+    },
+    {
+     "t": 12872,
+     "node": "main.min-h-screen.pb-16 > section.mx-auto.max-w-6xl.px-5 > div.plate",
+     "text": "",
+     "kind": "inserted",
+     "from": null,
+     "to": "18,394,355,114"
+    },
+    {
+     "t": 12872,
+     "node": "main.min-h-screen.pb-16 > section.mx-auto.max-w-6xl.px-5 > div.plate",
+     "text": "",
+     "kind": "inserted",
+     "from": null,
+     "to": "18,536,355,301"
+    },
+    {
+     "t": 14121,
+     "node": "main.min-h-screen.pb-16",
+     "text": "nerfchessPlayLobbyChallenge a friendPrac...",
+     "kind": "resized",
+     "from": "0,0,390,921",
+     "to": "0,0,390,1279",
+     "dh": 358
+    },
+    {
+     "t": 14121,
+     "node": "main.min-h-screen.pb-16 > section.mx-auto.w-full.max-w-\\[1300px\\]",
+     "text": "Nerf1500?0 gamesBuff1500?0 games polish_...",
+     "kind": "resized",
+     "from": "0,48,390,817",
+     "to": "0,48,390,1175",
+     "dh": 358
+    },
+    {
+     "t": 14121,
+     "node": "main.min-h-screen.pb-16 > section.mx-auto.w-full.max-w-\\[1300px\\] > aside.order-2.mt-4.lg\\:order-1",
+     "text": "Nerf1500?0 gamesBuff1500?0 games",
+     "kind": "moved",
+     "from": "17,75,1,1",
+     "to": "11,76,369,125",
+     "dx": -6,
+     "dy": 1,
+     "dw": 368,
+     "dh": 124
+    },
+    {
+     "t": 14121,
+     "node": "main.min-h-screen.pb-16 > section.mx-auto.w-full.max-w-\\[1300px\\] > div.order-1.min-w-0.lg\\:order-2",
+     "text": "polish_userAdd a bio0Games0Wins0Losses0D...",
+     "kind": "moved",
+     "from": "18,76,355,72",
+     "to": "11,201,369,1022",
+     "dx": -7,
+     "dy": 125,
+     "dw": 14,
+     "dh": 950
+    },
+    {
+     "t": 14121,
+     "node": "main > * > * [5]",
+     "text": "",
+     "kind": "removed",
+     "from": "18,169,355,211",
+     "to": "gone"
+    },
+    {
+     "t": 14121,
+     "node": "main > * > * [6]",
+     "text": "",
+     "kind": "removed",
+     "from": "18,394,355,114",
+     "to": "gone"
+    },
+    {
+     "t": 14121,
+     "node": "main > * > * [7]",
+     "text": "",
+     "kind": "removed",
+     "from": "18,536,355,301",
+     "to": "gone"
+    },
+    {
+     "t": 14803,
+     "node": "main.min-h-screen.pb-16",
+     "text": "nerfchessPlayLobbyChallenge a friendPrac...",
+     "kind": "resized",
+     "from": "0,0,390,1279",
+     "to": "0,0,390,1369",
+     "dh": 90
+    },
+    {
+     "t": 14803,
+     "node": "main.min-h-screen.pb-16 > section.mx-auto.w-full.max-w-\\[1300px\\]",
+     "text": "Nerf1500?0 gamesBuff1500?0 gamesStatisti...",
+     "kind": "resized",
+     "from": "0,48,390,1175",
+     "to": "0,48,390,1265",
+     "dh": 90
+    },
+    {
+     "t": 14803,
+     "node": "main.min-h-screen.pb-16 > section.mx-auto.w-full.max-w-\\[1300px\\] > aside.order-2.mt-4.lg\\:order-1",
+     "text": "Nerf1500?0 gamesBuff1500?0 gamesStatisti...",
+     "kind": "resized",
+     "from": "11,76,369,125",
+     "to": "11,76,369,215",
+     "dh": 90
+    },
+    {
+     "t": 14803,
+     "node": "main.min-h-screen.pb-16 > section.mx-auto.w-full.max-w-\\[1300px\\] > div.order-1.min-w-0.lg\\:order-2",
+     "text": "polish_userAdd a bio0Games0Wins0Losses0D...",
+     "kind": "moved",
+     "from": "11,201,369,1022",
+     "to": "11,291,369,1022",
+     "dy": 90
+    },
+    {
+     "t": 14839,
+     "node": "main.min-h-screen.pb-16",
+     "text": "nerfchessPlayLobbyChallenge a friendPrac...",
+     "kind": "resized",
+     "from": "0,0,390,1369",
+     "to": "0,0,390,1285",
+     "dh": -84
+    },
+    {
+     "t": 14839,
+     "node": "main.min-h-screen.pb-16 > section.mx-auto.w-full.max-w-\\[1300px\\]",
+     "text": "Nerf1500?0 gamesBuff1500?0 gamesStatisti...",
+     "kind": "resized",
+     "from": "0,48,390,1265",
+     "to": "0,48,390,1181",
+     "dh": -84
+    },
+    {
+     "t": 14839,
+     "node": "main.min-h-screen.pb-16 > section.mx-auto.w-full.max-w-\\[1300px\\] > div.order-1.min-w-0.lg\\:order-2",
+     "text": "polish_userAdd a bio0Games0Wins0Losses0D...",
+     "kind": "resized",
+     "from": "11,291,369,1022",
+     "to": "11,291,369,938",
+     "dh": -84
+    }
+   ]
+  },
+  {
+   "route": "/game?mode=nerf&difficulty=easy&color=w&t=0&inc=0&rated=0",
+   "state": "390x844|dark|full|user|throttled",
+   "loadMs": 23532,
+   "cls": 0,
+   "total": 0,
+   "marks": {
+    "dcl": 1987,
+    "firstPaint": 2028,
+    "fcp": 2028,
+    "hydrated": 16254,
+    "load": 18246,
+    "ttfb": 83
+   },
+   "firstAuthMeEnd": 16842,
+   "authMeCalls": 2,
+   "shifts": [],
+   "boxMoves": [
+    {
+     "t": 18017,
+     "node": "main.min-h-screen.flex.items-center > div.w-full.max-w-2xl",
+     "text": "Nerf draftChoose your handicapIt stays s...",
+     "kind": "moved",
+     "from": "119,401,152,42",
+     "to": "14,141,362,562",
+     "dx": -105,
+     "dy": -260,
+     "dw": 210,
+     "dh": 520
+    },
+    {
+     "t": 18017,
+     "node": "main.min-h-screen.flex.items-center > div.w-full.max-w-2xl > div.text-\\[12px\\].text-parchment-400.text-center",
+     "text": "Nerf draft",
+     "kind": "moved",
+     "from": "179,401,32,7",
+     "to": "14,141,362,18",
+     "dx": -165,
+     "dy": -260,
+     "dw": 330,
+     "dh": 11
+    },
+    {
+     "t": 18017,
+     "node": "main.min-h-screen.flex.items-center > div.w-full.max-w-2xl > h1.page-title",
+     "text": "Choose your handicap",
+     "kind": "moved",
+     "from": "119,419,152,25",
+     "to": "14,163,362,27",
+     "dx": -105,
+     "dy": -256,
+     "dw": 210,
+     "dh": 2
+    },
+    {
+     "t": 18017,
+     "node": "main.min-h-screen.flex.items-center > div.w-full.max-w-2xl > p.mt-2.text-sm.text-parchment-300",
+     "text": "It stays secret until the game ends.",
+     "kind": "inserted",
+     "from": null,
+     "to": "14,196,362,18"
+    },
+    {
+     "t": 18017,
+     "node": "main.min-h-screen.flex.items-center > div.w-full.max-w-2xl > div.mx-auto.mt-4.max-w-sm",
+     "text": "20",
+     "kind": "inserted",
+     "from": null,
+     "to": "27,228,336,18"
+    },
+    {
+     "t": 18017,
+     "node": "main.min-h-screen.flex.items-center > div.w-full.max-w-2xl > div.mt-6.grid.gap-4",
+     "text": "Pick this nerf, Passive. Vertigo. Tier I...",
+     "kind": "inserted",
+     "from": null,
+     "to": "14,267,362,382"
+    },
+    {
+     "t": 18017,
+     "node": "main.min-h-screen.flex.items-center > div.w-full.max-w-2xl > p.mt-5.text-center.text-\\[12px\\]",
+     "text": "Your opponent picks a nerf too. You will...",
+     "kind": "inserted",
+     "from": null,
+     "to": "14,667,362,36"
+    }
+   ]
+  }
+ ]
+}
