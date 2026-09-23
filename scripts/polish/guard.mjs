@@ -37,6 +37,9 @@ export const CHEAP_GUARDS = [
   "test:auth-safety:unit",
   "test:email",
   "test:custom-bg-url",
+  "test:seat-superseded",
+  "test:socket-guard",
+  "test:realtime-rules",
 ];
 
 const filter = process.argv.slice(2);
