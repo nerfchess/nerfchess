@@ -1,0 +1,6 @@
+  ✓  1 [chromium] › e2e/polish/social-routes.spec.ts:441:7 › /inbox signed in › the inbox body does not wait for /api/auth/me (7.6s)
+  ✓  2 [chromium] › e2e/polish/social-routes.spec.ts:455:7 › /inbox signed in › the thread pins its pane without scrollIntoView (5.5s)
+  ✓  3 [chromium] › e2e/polish/social-routes.spec.ts:474:7 › /inbox signed in › the thread pane loads as the skeleton (3.4s)
+  ✓  4 [chromium] › e2e/polish/social-routes.spec.ts:488:7 › /inbox signed in › typing during a send is kept (7.9s)
+  ✓  5 [chromium] › e2e/polish/social-routes.spec.ts:508:7 › /inbox signed in › the composer is 16px on a phone (1.9s)
+  5 passed (36.1s)

@@ -5,7 +5,8 @@ import { useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { PlayerLink } from "@/components/PlayerLink";
-import { AccountUser, fetchMe } from "@/lib/authClient";
+import { useSession } from "@/lib/session/SessionProvider";
+import { FIELD_TEXT } from "@/components/social/fieldText";
 import { Button } from "@/components/ui/Button";
 import { LinkButton } from "@/components/ui/Button";
 import { PollConnectionBanner } from "@/components/ConnectionBanner";
@@ -16,7 +17,11 @@ type Thread = { peer: { username: string; avatar: string | null }; messages: Thr
 export default function ThreadPage() {
   const params = useParams<{ username: string }>();
   const username = String(params.username ?? "");
-  const [user, setUser] = useState<AccountUser | null | undefined>(undefined);
+  // Signed in or not, from the shared session (F014): the server hint decides
+  // between the thread and the sign-in prompt on the first paint, instead of
+  // an empty body until a page-level /me answers.
+  const { display } = useSession();
+  const signedIn = !!display;
   const [thread, setThread] = useState<Thread | null>(null);
   const [missing, setMissing] = useState(false);
   const [loadError, setLoadError] = useState(false);
@@ -32,22 +37,12 @@ export default function ThreadPage() {
   // design after the first successful load (see the poll below), which is
   // exactly the stale-live-state case the ConnectionBanner exists for.
   const [pollHealthy, setPollHealthy] = useState(true);
-  const bottomRef = useRef<HTMLDivElement | null>(null);
+  const paneRef = useRef<HTMLDivElement | null>(null);
   const stickToBottom = useRef(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetchMe().then((me) => {
-      if (!cancelled) setUser(me);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   // Load the thread, then poll it so replies appear without a refresh.
   useEffect(() => {
-    if (!user) return;
+    if (!signedIn) return;
     let cancelled = false;
     let loaded = false;
     let intervalId: number | undefined;
@@ -109,10 +104,14 @@ export default function ThreadPage() {
       cancelled = true;
       stop();
     };
-  }, [user, username, reloadKey]);
+  }, [signedIn, username, reloadKey]);
 
+  // Keep the pane pinned to the newest message by scrolling the pane itself
+  // (F018). scrollIntoView scrolls every scrollable ancestor too, so a poll
+  // that brought a new message could yank the whole window down to the pane.
   useEffect(() => {
-    if (stickToBottom.current) bottomRef.current?.scrollIntoView({ block: "end" });
+    const pane = paneRef.current;
+    if (pane && stickToBottom.current) pane.scrollTop = pane.scrollHeight;
   }, [thread]);
 
   const send = async () => {
@@ -131,7 +130,9 @@ export default function ThreadPage() {
         setError(data.error || "Could not send that message.");
         return;
       }
-      setDraft("");
+      // Only clear what was sent (F182): text typed while the send was in
+      // flight stays in the box.
+      setDraft((cur) => (cur.trim() === text ? "" : cur));
       stickToBottom.current = true;
       setThread((prev) =>
         prev ? { ...prev, messages: [...prev.messages, data.message!] } : prev,
@@ -182,7 +183,7 @@ export default function ThreadPage() {
           {!thread && !missing && <span className="text-[13px] text-parchment-400">{username}</span>}
         </div>
 
-        {user === null && (
+        {display === null && (
           <p className="text-parchment-300">
             <Link href={`/login?next=/inbox/${encodeURIComponent(username)}`} className="text-gold-leaf hover:underline">
               Sign in
@@ -192,7 +193,7 @@ export default function ThreadPage() {
         )}
         {missing && <p className="text-parchment-300">No player with that name.</p>}
 
-        {user && !missing && loadError && !thread && (
+        {signedIn && !missing && loadError && !thread && (
           <div className="plate flex flex-col items-start gap-3 p-4">
             <p className="text-[13px] text-parchment-300">
               We could not load this conversation. Check your connection and try again.
@@ -215,17 +216,27 @@ export default function ThreadPage() {
           </div>
         )}
 
-        {user && !missing && !(loadError && !thread) && (
+        {signedIn && !missing && !(loadError && !thread) && (
           <>
             <div
-              className="plate h-[50dvh] overflow-y-auto p-4"
+              ref={paneRef}
+              aria-busy={!thread || undefined}
+              className={"plate h-[50dvh] p-4 " + (thread ? "overflow-y-auto" : "overflow-hidden")}
               onScroll={(e) => {
                 const el = e.currentTarget;
                 stickToBottom.current = el.scrollTop + el.clientHeight >= el.scrollHeight - 40;
               }}
             >
               {!thread ? (
-                <p className="text-sm text-parchment-400">Loading messages…</p>
+                // The same bubbles as loading.tsx, not a "Loading messages…"
+                // line (F022).
+                <ul className="space-y-2" aria-label="Loading messages">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <li key={i} className={i % 2 === 1 ? "flex justify-end" : "flex"}>
+                      <div className={"skeleton h-10 " + (i % 2 === 1 ? "w-3/5" : "w-2/3")} />
+                    </li>
+                  ))}
+                </ul>
               ) : thread.messages.length === 0 ? (
                 <p className="text-sm text-parchment-400">No messages yet.</p>
               ) : (
@@ -249,7 +260,6 @@ export default function ThreadPage() {
                   ))}
                 </ul>
               )}
-              <div ref={bottomRef} />
             </div>
 
             <div className="mt-3 flex gap-2">
@@ -265,7 +275,7 @@ export default function ThreadPage() {
                 placeholder={`Message ${thread?.peer.username ?? username}`}
                 maxLength={1000}
                 aria-label={`Message ${thread?.peer.username ?? username}`}
-                className="min-h-[44px] min-w-0 flex-1 rounded-none border border-[color:var(--edge)] bg-[color:var(--bg-base)] px-4 py-3 text-[13px] text-parchment placeholder:text-parchment-500"
+                className={`min-h-[44px] min-w-0 flex-1 rounded-none border border-[color:var(--edge)] bg-[color:var(--bg-base)] px-4 py-3 ${FIELD_TEXT} text-parchment placeholder:text-parchment-500`}
               />
               <Button tone="leaf"
                 onClick={send}

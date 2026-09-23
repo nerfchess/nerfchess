@@ -412,3 +412,107 @@ test.describe("/clubs/[slug] owner on touch", () => {
     await expect(page.getByText("Hello club")).toBeVisible();
   });
 });
+
+// ---------------------------------------------------------------------------
+// /inbox and /inbox/[username]. The messages API is stubbed.
+
+function threadBody(n: number) {
+  const now = Date.now();
+  return {
+    peer: { username: "polish_mod", avatar: null },
+    messages: Array.from({ length: n }, (_, i) => ({
+      id: `m${i}`,
+      fromMe: i % 2 === 0,
+      text: `Message number ${i} with enough words to take a line or two in the pane.`,
+      at: now - (n - i) * 60_000,
+    })),
+  };
+}
+
+async function stampDisplayCookie(page: Page) {
+  await page.request.get("/api/auth/me");
+  expect((await page.context().cookies()).some((c) => c.name === "nc_who")).toBe(true);
+}
+
+test.describe("/inbox signed in", () => {
+  test.use({ storageState: polishAuthState("user") });
+
+  // F014: the whole body waited for the page's own /me call.
+  test("the inbox body does not wait for /api/auth/me", async ({ page }) => {
+    await stampDisplayCookie(page);
+    await page.route("**/api/messages", (route) => route.fulfill({ json: { conversations: [] } }));
+    await page.route("**/api/auth/me", async (route) => {
+      await new Promise((r) => setTimeout(r, 8000));
+      await route.continue();
+    });
+    await page.goto("/inbox");
+    await expect(page.getByRole("heading", { level: 1, name: "Inbox" })).toBeVisible({ timeout: 60_000 });
+    await expect(page.getByText("No conversations yet")).toBeVisible({ timeout: 3000 });
+  });
+
+  // F018: the pane was kept at the bottom with scrollIntoView, which also
+  // scrolls the window.
+  test("the thread pins its pane without scrollIntoView", async ({ page }) => {
+    await page.addInitScript(() => {
+      (window as unknown as { __siv: number }).__siv = 0;
+      const orig = Element.prototype.scrollIntoView;
+      Element.prototype.scrollIntoView = function (...args: Parameters<typeof orig>) {
+        (window as unknown as { __siv: number }).__siv++;
+        return orig.apply(this, args);
+      };
+    });
+    await page.route("**/api/messages/polish_mod", (route) => route.fulfill({ json: threadBody(20) }));
+    await page.goto("/inbox/polish_mod");
+    await expect(page.getByText("Message number 19")).toBeVisible({ timeout: 60_000 });
+    const pane = page.locator(".plate.h-\\[50dvh\\]");
+    const pinned = await pane.evaluate((el) => Math.abs(el.scrollHeight - el.clientHeight - el.scrollTop) < 2);
+    expect(pinned).toBe(true);
+    expect(await page.evaluate(() => (window as unknown as { __siv: number }).__siv)).toBe(0);
+  });
+
+  // F022: the pane said "Loading messages…" instead of the skeleton.
+  test("the thread pane loads as the skeleton", async ({ page }) => {
+    await page.route("**/api/messages/polish_mod", async (route) => {
+      await new Promise((r) => setTimeout(r, 4000));
+      await route.fulfill({ json: threadBody(2) });
+    });
+    await page.goto("/inbox/polish_mod");
+    // The page itself (loading.tsx has no h1), a moment into the 4s fetch.
+    await expect(page.getByRole("heading", { level: 1, name: /Conversation with/ })).toBeAttached({ timeout: 60_000 });
+    await page.waitForTimeout(1500);
+    await expect(page.getByText("Loading messages…")).toHaveCount(0);
+    await expect(page.locator("main .plate .skeleton").first()).toBeVisible();
+  });
+
+  // F182: text typed while a send was in flight was wiped.
+  test("typing during a send is kept", async ({ page }) => {
+    await page.route("**/api/messages/polish_mod", async (route) => {
+      if (route.request().method() === "POST") {
+        await new Promise((r) => setTimeout(r, 1500));
+        return route.fulfill({ json: { message: { id: "new1", fromMe: true, text: "first", at: Date.now() } } });
+      }
+      return route.fulfill({ json: threadBody(2) });
+    });
+    await page.goto("/inbox/polish_mod");
+    const input = page.getByRole("textbox", { name: /Message polish_mod/ });
+    await expect(input).toBeVisible({ timeout: 60_000 });
+    await expect(page.getByText("Message number 1")).toBeVisible();
+    await input.fill("first");
+    await input.press("Enter");
+    await input.fill("second thought");
+    await page.waitForTimeout(2500);
+    await expect(input).toHaveValue("second thought");
+  });
+
+  // F155: the composer was 13px on a phone.
+  test("the composer is 16px on a phone", async ({ browser }) => {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, storageState: polishAuthState("user") });
+    const page = await ctx.newPage();
+    await page.route("**/api/messages/polish_mod", (route) => route.fulfill({ json: threadBody(2) }));
+    await page.goto("/inbox/polish_mod");
+    const input = page.getByRole("textbox", { name: /Message polish_mod/ });
+    await expect(input).toBeVisible({ timeout: 60_000 });
+    expect(await input.evaluate((el) => getComputedStyle(el).fontSize)).toBe("16px");
+    await ctx.close();
+  });
+});

@@ -7,7 +7,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { EmptyState } from "@/components/EmptyState";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { PlayerSearch } from "@/components/PlayerSearch";
-import { AccountUser, fetchMe } from "@/lib/authClient";
+import { useSession } from "@/lib/session/SessionProvider";
 
 type Conversation = {
   username: string;
@@ -28,7 +28,11 @@ function formatWhen(at: number): string {
 }
 
 export default function InboxPage() {
-  const [user, setUser] = useState<AccountUser | null | undefined>(undefined);
+  // Signed in or not, from the shared session (F014): the server hint draws
+  // the search box and the list skeleton (or the sign-in line) on the first
+  // paint instead of an empty body until a page-level /me answers.
+  const { display } = useSession();
+  const signedIn = !!display;
   const [conversations, setConversations] = useState<Conversation[] | null>(null);
   // A failed conversations fetch shows a retry instead of an endless skeleton.
   const [loadError, setLoadError] = useState(false);
@@ -41,27 +45,23 @@ export default function InboxPage() {
   }, []);
 
   useEffect(() => {
+    if (!signedIn) return;
     let cancelled = false;
-    fetchMe().then((me) => {
-      if (cancelled) return;
-      setUser(me ?? null);
-      if (!me) return;
-      fetch("/api/messages")
-        .then((res) => {
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          return res.json() as Promise<{ conversations: Conversation[] }>;
-        })
-        .then((data) => {
-          if (!cancelled) setConversations(data.conversations);
-        })
-        .catch(() => {
-          if (!cancelled) setLoadError(true);
-        });
-    });
+    fetch("/api/messages")
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json() as Promise<{ conversations: Conversation[] }>;
+      })
+      .then((data) => {
+        if (!cancelled) setConversations(data.conversations);
+      })
+      .catch(() => {
+        if (!cancelled) setLoadError(true);
+      });
     return () => {
       cancelled = true;
     };
-  }, [reloadTick]);
+  }, [signedIn, reloadTick]);
 
   return (
     <main className="min-h-screen">
@@ -69,7 +69,7 @@ export default function InboxPage() {
       <section className="max-w-2xl mx-auto px-5 sm:px-6 py-8">
         <h1 className="page-title">Inbox</h1>
 
-        {user === null && (
+        {display === null && (
           <p className="mt-4 text-parchment-300">
             <Link href="/login?next=/inbox" className="text-gold-leaf hover:underline">
               Sign in
@@ -78,7 +78,7 @@ export default function InboxPage() {
           </p>
         )}
 
-        {user && (
+        {signedIn && (
           <>
             <div className="mt-5">
               <PlayerSearch className="max-w-sm" />
@@ -99,10 +99,12 @@ export default function InboxPage() {
               <ul className="mt-6 plate divide-y divide-[color:var(--edge)]" aria-hidden>
                 {Array.from({ length: 5 }).map((_, i) => (
                   <li key={i} className="flex items-center gap-3 px-4 py-3">
-                    <div className="h-9 w-9 shrink-0 bg-[color:var(--bg-raised)] animate-pulse" />
+                    {/* The shared .skeleton sweep, not a hand-rolled pulse
+                        (F026). */}
+                    <div className="skeleton h-9 w-9 shrink-0" />
                     <div className="min-w-0 flex-1">
-                      <div className="h-3 w-28 bg-white/[0.07] animate-pulse" />
-                      <div className="mt-2 h-2.5 w-44 max-w-full bg-[color:var(--bg-raised)] animate-pulse" />
+                      <div className="skeleton h-3 w-28" />
+                      <div className="skeleton mt-2 h-2.5 w-44 max-w-full" />
                     </div>
                   </li>
                 ))}

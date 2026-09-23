@@ -1,0 +1,19 @@
+  ✘  1 [chromium] › e2e/polish/social-routes.spec.ts:441:7 › /inbox signed in › the inbox body does not wait for /api/auth/me (23.8s)
+  ✘  2 [chromium] › e2e/polish/social-routes.spec.ts:455:7 › /inbox signed in › the thread pins its pane without scrollIntoView (11.5s)
+  ✓  3 [chromium] › e2e/polish/social-routes.spec.ts:474:7 › /inbox signed in › the thread pane loads as the skeleton (34.0s)
+  ✘  4 [chromium] › e2e/polish/social-routes.spec.ts:485:7 › /inbox signed in › typing during a send is kept (24.1s)
+  ✘  5 [chromium] › e2e/polish/social-routes.spec.ts:505:7 › /inbox signed in › the composer is 16px on a phone (2.2s)
+    Error: expect(locator).toBeVisible() failed
+    Expected: visible
+    Expected: true
+    Received: false
+    Error: expect(locator).toHaveValue(expected) failed
+    Expected: "second thought"
+    Received: ""
+    Expected: "16px"
+    Received: "13px"
+  4 failed
+  1 passed (1.7m)
+  ✘  1 [chromium] › e2e/polish/social-routes.spec.ts:474:7 › /inbox signed in › the thread pane loads as the skeleton (26.2s)
+    Error: expect(locator).toBeVisible() failed
+  1 failed
