@@ -217,3 +217,29 @@ test.describe("puzzle by id", () => {
     await expect(page.locator("h1")).toHaveCount(1);
   });
 });
+
+test.describe("analysis deep links", () => {
+  // F017: ?fen= and ?moves= were applied in a post-mount microtask, so the
+  // first render (the server HTML, and the first client paint) was the start
+  // position. The deep link is now the initial state.
+  const START = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+  const FEN = "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2";
+
+  function renderedHtml(html: string): string {
+    // Drop scripts (the RSC payload carries the URL, and with it the FEN).
+    return html.replace(/<script[\s\S]*?<\/script>/g, "");
+  }
+
+  test("?fen= is the first rendered position", async ({ request }) => {
+    const res = await request.get(`/analysis?fen=${encodeURIComponent(FEN)}`);
+    const html = renderedHtml(await res.text());
+    expect({ deepLink: html.includes(FEN), start: html.includes(START) }).toEqual({ deepLink: true, start: false });
+  });
+
+  test("?moves= is the first rendered line", async ({ request }) => {
+    const res = await request.get("/analysis?moves=e2e4,e7e5");
+    const html = renderedHtml(await res.text());
+    const afterLine = /rnbqkbnr\/pppp1ppp\/8\/4p3\/4P3\/8\/PPPP1PPP\/RNBQKBNR w KQkq/.test(html);
+    expect({ afterLine, start: html.includes(START) }).toEqual({ afterLine: true, start: false });
+  });
+});

@@ -2,6 +2,7 @@
 
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { AnalysisBodySkeleton } from "./_components/AnalysisSkeleton";
 import {
   ChevronFirst,
   ChevronLast,
@@ -64,61 +65,67 @@ function replayFrom(start: BoardState, moves: Move[], ply: number): BoardState {
 // with the rest of the scale, because three other surfaces needed them and a
 // second copy of a sigmoid is how two eval bars start disagreeing.
 
+interface DeepLink {
+  startBoard: BoardState;
+  customStart: boolean;
+  moves: Move[];
+  flipped: boolean;
+  truncatedAt: number | null;
+}
+
+/** The analysis board's opening state from its query string. A valid ?fen=
+ *  wins (and flips the board when black is to move); otherwise ?moves= is
+ *  replayed from the start until a move the plain board cannot reproduce. */
+function parseDeepLink(fen: string | null, uciList: string | null): DeepLink {
+  if (fen) {
+    const b = fenToBoard(fen);
+    if (b) {
+      return {
+        startBoard: b,
+        customStart: boardToFen(b) !== START_FEN,
+        moves: [],
+        flipped: b.turn === "b",
+        truncatedAt: null,
+      };
+    }
+  }
+  const start = initialBoard();
+  if (!uciList) return { startBoard: start, customStart: false, moves: [], flipped: false, truncatedAt: null };
+  let b = start;
+  const parsed: Move[] = [];
+  let stopped = false;
+  for (const uci of uciList.split(/[,\s]+/).filter(Boolean)) {
+    const m = generateMoves(b).find((x) => moveToUCI(x) === uci);
+    if (!m) {
+      stopped = true;
+      break;
+    }
+    parsed.push(m);
+    b = makeMove(b, m);
+  }
+  return { startBoard: start, customStart: false, moves: parsed, flipped: false, truncatedAt: stopped ? parsed.length : null };
+}
+
 function AnalysisInner() {
   const params = useSearchParams();
   // Dev preview of the board status language (lib/boardStatus): ?statusdemo=1
   // paints one square per status class on the start position.
   const statusDemo = process.env.NODE_ENV !== "production" && params.get("statusdemo") === "1";
-  const [startBoard, setStartBoard] = useState<BoardState>(() => initialBoard());
-  const [customStart, setCustomStart] = useState(false);
-  const [moves, setMoves] = useState<Move[]>([]);
-  const [viewPly, setViewPly] = useState(0);
-  const [flipped, setFlipped] = useState(false);
+  // Deep links: ?fen= loads a position, ?moves= replays a UCI list. Parsed
+  // once, synchronously, as the initial state: the old post-mount microtask
+  // painted the start position first and then swapped the board (F017).
+  const [deepLink] = useState(() => parseDeepLink(params.get("fen"), params.get("moves")));
+  const [startBoard, setStartBoard] = useState<BoardState>(deepLink.startBoard);
+  const [customStart, setCustomStart] = useState(deepLink.customStart);
+  const [moves, setMoves] = useState<Move[]>(deepLink.moves);
+  const [viewPly, setViewPly] = useState(deepLink.moves.length);
+  const [flipped, setFlipped] = useState(deepLink.flipped);
   const [engineOn, setEngineOn] = useState(true);
   const [fenInput, setFenInput] = useState("");
   const [fenError, setFenError] = useState(false);
   // Ply count at which a ?moves= deep link stopped replaying (a move the
   // plain board could not reproduce), or null when the whole line loaded.
-  const [truncatedAt, setTruncatedAt] = useState<number | null>(null);
-
-  // Deep links: ?fen= loads a position, ?moves= replays a UCI list.
-  useEffect(() => {
-    // Deferred off the synchronous effect body so the deep-link parse doesn't
-    // cascade a render inline; runs on the same tick, before paint.
-    queueMicrotask(() => {
-      const fen = params.get("fen");
-      const uciList = params.get("moves");
-      if (fen) {
-        const b = fenToBoard(fen);
-        if (b) {
-          setStartBoard(b);
-          setCustomStart(boardToFen(b) !== START_FEN);
-          setMoves([]);
-          setViewPly(0);
-          if (b.turn === "b") setFlipped(true);
-          return;
-        }
-      }
-      if (uciList) {
-        let b = initialBoard();
-        const parsed: Move[] = [];
-        let stopped = false;
-        for (const uci of uciList.split(/[,\s]+/).filter(Boolean)) {
-          const m = generateMoves(b).find((x) => moveToUCI(x) === uci);
-          if (!m) {
-            stopped = true;
-            break;
-          }
-          parsed.push(m);
-          b = makeMove(b, m);
-        }
-        setMoves(parsed);
-        setViewPly(parsed.length);
-        setTruncatedAt(stopped ? parsed.length : null);
-      }
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const [truncatedAt, setTruncatedAt] = useState<number | null>(deepLink.truncatedAt);
 
   const board = useMemo(() => replayFrom(startBoard, moves, viewPly), [startBoard, moves, viewPly]);
   const legal = useMemo(() => generateMoves(board), [board]);
@@ -502,10 +509,14 @@ function MoveReviewPanel({
           <p className="mt-2 text-sm text-parchment-300" role="status" aria-live="polite">
             Scoring position {review.scored} of {review.total}
           </p>
+          {/* The fill scales from the left on transform, never width (F191). */}
           <div className="mt-2 h-1.5 w-full overflow-hidden border border-[color:var(--edge)] bg-[color:var(--bg-base)]">
             <div
-              className="h-full bg-gold-leaf transition-[width] duration-150"
-              style={{ width: `${pct}%` }}
+              className="h-full w-full origin-left bg-gold-leaf"
+              style={{
+                transform: `scaleX(${pct / 100})`,
+                transition: "transform var(--dur-1) var(--ease-out)",
+              }}
             />
           </div>
         </>
@@ -588,7 +599,10 @@ export default function AnalysisPage() {
   return (
     <main className="min-h-screen">
       <SiteHeader active="/analysis" />
-      <Suspense>
+      {/* The body reads the query string, so it sits in a Suspense boundary;
+          its fallback is the body's own skeleton rather than nothing, which
+          is what a prerendered /analysis showed under the header (F019). */}
+      <Suspense fallback={<AnalysisBodySkeleton />}>
         <AnalysisInner />
       </Suspense>
     </main>

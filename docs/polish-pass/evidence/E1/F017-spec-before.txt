@@ -1,0 +1,16 @@
+  ✘  1 [chromium] › e2e/content-states.spec.ts:233:7 › analysis deep links › ?fen= is the first rendered position (188ms)
+  ✘  2 [chromium] › e2e/content-states.spec.ts:239:7 › analysis deep links › ?moves= is the first rendered line (114ms)
+    - Expected  - 2
+    + Received  + 2
+    -   "deepLink": true,
+    -   "start": false,
+    +   "deepLink": false,
+    +   "start": true,
+      239 |   test("?moves= is the first rendered line", async ({ request }) => {
+    - Expected  - 2
+    + Received  + 2
+    -   "afterLine": true,
+    -   "start": false,
+    +   "afterLine": false,
+    +   "start": true,
+  2 failed
