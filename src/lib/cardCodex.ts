@@ -91,6 +91,15 @@ export function tierName(tier: Tier): string {
   return `${TIER_ROMAN[tier]}. ${TIER_LABEL[tier]}`;
 }
 
+/** The tier as it reads inside a sentence, article included: "a Trivial
+ *  (tier I)", "an Easy (tier II)". tierName() is a label ("I. Trivial") and
+ *  produced "Lucky is a I. Trivial nerf" when dropped into prose (F174). */
+export function tierPhrase(tier: Tier): string {
+  const label = TIER_LABEL[tier];
+  const article = /^[aeiou]/i.test(label) ? "an" : "a";
+  return `${article} ${label} (tier ${TIER_ROMAN[tier]})`;
+}
+
 // One plain sentence per tier, so a card page can explain its own difficulty
 // band without the reader having to know the whole ladder.
 const TIER_MEANING: Record<number, string> = {
