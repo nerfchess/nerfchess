@@ -1,0 +1,85 @@
+{
+ "id": "hw3_effigy_of_dread",
+ "url": "/dev/plays?id=hw3_effigy_of_dread&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "hw3_effigy_of_dread",
+  "name": "Effigy of Dread",
+  "tier": 6,
+  "category": "hex",
+  "mechanic": "instant",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:hw3_effigy_of_dread",
+  "anchor": "board",
+  "source": "summon",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 60,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2380,
+  "cssEndMs": 3417,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 27,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 172,
+  "maxGapMs": 277.1
+ },
+ "raf": {
+  "frames": 213,
+  "medianMs": 16.7,
+  "maxMs": 33.4,
+  "dropped": 5
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 53,
+  "totalBlockingMs": 0,
+  "entries": [
+   {
+    "atMs": -47,
+    "duration": 53,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  183,
+  466,
+  806,
+  1189,
+  1606,
+  2055,
+  2530
+ ],
+ "png": "docs/polish-pass/evidence/TC-boon-curse/after/hw3_effigy_of_dread.png",
+ "pngBytes": 24120,
+ "off": {
+  "url": "/dev/plays?id=hw3_effigy_of_dread&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "docs/polish-pass/evidence/TC-boon-curse/after/hw3_effigy_of_dread.off.png"
+ }
+}

@@ -165,7 +165,6 @@ const FLOURISH_IMPACT: Record<string, ImpactSpec> = {
   toil: { l: 61, t: 54, s: 13, at: 880, man: "r", shock: true }, // the overloaded rook buckles and splits
   slowpoison: { l: 54, t: 46, s: 13, at: 1000, shock: true }, // the dose lands with a soft, awful thump
   jammedgate: { l: 51, t: 42, s: 14, at: 900, laser: true, shock: true }, // the portcullis slams down a light-column
-  powderkeg: { l: 44, t: 50, s: 16, at: 1080, shock: true }, // the keg's preview blast rocks the ground
   collapse: { l: 44, t: 54, s: 15, at: 780, man: "n", shock: true }, // a piece goes down with the caving floor
   /* BlightGarden */
   footprints: { l: 47, t: 62, s: 12, at: 920, shock: true }, // each print ices shut with a crack
@@ -177,7 +176,6 @@ const FLOURISH_IMPACT: Record<string, ImpactSpec> = {
   miasma: { l: 53, t: 50, s: 13, at: 1100, man: "n", shock: true }, // the third dose splits the sickened knight
   maw: { l: 55, t: 50, s: 14, at: 1000, man: "r", shock: true }, // the void's meal is torn in half
   wildfire: { l: 46, t: 46, s: 14, at: 940, laser: true, shock: true }, // the fire-column jumps piece to piece
-  effigy: { l: 44, t: 40, s: 14, at: 820, laser: true }, // dread-light hammers the effigy's post
   avalanche: { l: 50, t: 52, s: 16, at: 1060, shock: true }, // the slide slams into the sealed squares
   /* ChainWeb */
   twin: { l: 62, t: 58, s: 13, at: 940, shock: true }, // the sympathetic jerk cracks the far square
@@ -946,21 +944,6 @@ function OmenBell({ palette, glyph, lead, role, delayMs, flourish, aim }: Templa
           </span>
         </>
       )}
-      {/* wave3 Powder Keg — a lit keg on an empty square counts down to a blast */}
-      {flourish === "powderkeg" && (
-        <>
-          <span className="cwp-pop absolute block" style={{ left: "46%", top: "54%", width: "8%", height: "9%", animationDelay: `${delayMs + 620}ms` }}>
-            <svg viewBox="0 0 10 12" className="block h-full w-full" aria-hidden="true">
-              <rect x="1.4" y="3" width="7.2" height="8" rx="1" fill={tint(p0, 0.9)} stroke={tint(p1, 0.9)} strokeWidth="0.6" />
-              <path d="M5 3 C5.4 1.6 6.4 1 7 1.6" fill="none" stroke={tint(p2, 0.85)} strokeWidth="0.5" strokeLinecap="round" />
-            </svg>
-          </span>
-          <span className="cwp-flame absolute block" style={{ left: "56%", top: "42%", width: "4%", height: "5%", animationDelay: `${delayMs + 820}ms` }}>
-            <svg viewBox="0 0 8 10" className="block h-full w-full" aria-hidden="true"><path d="M4 0.8 C6 3 6.2 4.6 4 8 C1.8 4.6 2 3 4 0.8 Z" fill="#ff9d3d" /></svg>
-          </span>
-          <span className="cwp-scorch absolute block rounded-full" style={{ left: "38%", top: "48%", width: "24%", height: "24%", border: `2.5px solid ${tint(p1, 0.8)}`, animationDelay: `${delayMs + 1040}ms` }} />
-        </>
-      )}
       {/* wave3 Collapsing Floor — a chosen rank caves in, freezing what stands on it */}
       {flourish === "collapse" && (
         <>
@@ -1178,24 +1161,6 @@ function BlightGarden({ palette, glyph, lead, role, delayMs, flourish, aim }: Te
           {[42, 54].map((l, i) => (
             <span key={l} className="cwp-cinder absolute block" style={{ left: `${l}%`, top: "50%", width: "1.6%", height: "1.6%", "--dx": "30%", animationDelay: `${delayMs + 900 + i * 130}ms` } as CSSProperties}>
               <Mote color="#ff9d3d" />
-            </span>
-          ))}
-        </>
-      )}
-      {/* wave3 Effigy of Dread — a caster's effigy rises and bars the ring around it */}
-      {flourish === "effigy" && (
-        <>
-          <span className="cwp-rise absolute block" style={{ left: "46%", top: "44%", width: "8%", height: "16%", animationDelay: `${delayMs + 560}ms` }}>
-            <svg viewBox="0 0 8 16" className="block h-full w-full" aria-hidden="true">
-              <path d="M4 3.4 V14.8 M1 5.6 H7" stroke={tint(p2, 0.9)} strokeWidth="1" strokeLinecap="round" />
-              <circle cx="4" cy="2.4" r="1.4" fill={tint(p1, 0.9)} stroke={p0} strokeWidth="0.4" />
-            </svg>
-          </span>
-          {[
-            { l: 38, t: 40 }, { l: 58, t: 40 }, { l: 38, t: 58 }, { l: 58, t: 58 },
-          ].map((v, i) => (
-            <span key={i} className="cwp-spreadtile absolute block" style={{ left: `${v.l}%`, top: `${v.t}%`, width: "6%", height: "4.4%", animationDelay: `${delayMs + 820 + i * 90}ms` }}>
-              <svg viewBox="0 0 14 10" className="block h-full w-full" aria-hidden="true"><path d="M7 0.6 L13.4 5 L7 9.4 L0.6 5 Z" fill={tint(p0, 0.8)} stroke={tint(p1, 0.85)} strokeWidth="0.6" {...SJ} /></svg>
             </span>
           ))}
         </>
@@ -2521,6 +2486,137 @@ function DoomedVowScene({ lead, role, delayMs }: SceneProps) {
   );
 }
 
+/** A whole square: file `f` of the caster's rank `r` (BoardFrame %). */
+function hcCell(f: number, r: number): CSSProperties {
+  return { left: `${f * 12.5}%`, top: rankTop(r), width: "12.5%", height: "12.5%" };
+}
+
+/* --- Powder Keg: the keg rolls up from your side onto an empty square in
+   their half and sits there with a lit fuse and four pips (four turns, in
+   full view); the eight squares round it are marked as the blast; the enemy
+   knight and pawn in it are blown off, their king in it stays; and a reroll
+   die is yours. ---------------------------------------------------------- */
+const KEG: Palette = ["#3a3a40", "#ff9d3d", "#1c1c24"];
+function PowderKegScene({ lead, role, delayMs }: SceneProps) {
+  const [p0, p1, p2] = KEG;
+  if (role === "entrance") return <EntranceCut palette={KEG} glyph={GLYPH.hw3_time_bomb} delayMs={delayMs} />;
+  if (!lead) return <CurseHit palette={KEG} glyph={GLYPH.hw3_time_bomb} delayMs={delayMs} />;
+  const keg = (
+    <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+      <path d="M2.4 2.4 C1.6 4 1.6 6.6 2.4 8.4 H7.6 C8.4 6.6 8.4 4 7.6 2.4 Z" fill={p0} stroke={p1} strokeWidth="0.5" {...SJ} />
+      <path d="M2 4 H8 M2 6.8 H8" stroke={p1} strokeWidth="0.45" />
+      <path d="M5 2.4 C5 1.4 6 0.8 6.8 1.2" fill="none" stroke={p1} strokeWidth="0.45" strokeLinecap="round" />
+    </svg>
+  );
+  return (
+    <Stage>
+      <BoardFrame>
+        {/* tell: the keg rolls up from your side onto an empty square of theirs */}
+        <span className="cwp-tug absolute block" style={{ ...hcMan(3, 3), "--dx": "0%", "--dy": "calc(var(--fx-side, 1) * -238%)", animationDelay: dm(delayMs, 120), animationDuration: "calc(720ms * var(--fx-dur, 1))" } as CSSProperties}>
+          {keg}
+        </span>
+        {/* strike: it sits in full view, fuse lit, four pips for four turns */}
+        <span className="cwp-facein absolute block" style={{ ...hcMan(3, 5), animationDelay: dm(delayMs, 640), animationDuration: "calc(1500ms * var(--fx-dur, 1))" }}>{keg}</span>
+        <span className="cwp-flame absolute block" style={{ left: "45%", top: `calc(${rankTop(5)} + 0.4%)`, width: "3%", height: "3%", animationDelay: dm(delayMs, 700) }}>
+          <svg viewBox="0 0 6 6" className="block h-full w-full" aria-hidden="true">
+            <path d="M3 0.4 C4.6 2 5 3.6 3 5.6 C1 3.6 1.4 2 3 0.4 Z" fill={p1} />
+          </svg>
+        </span>
+        <span className="cwp-pop absolute block" style={{ left: "26%", width: "11%", top: `calc(${rankTop(5)} + 4.5%)`, height: "3.5%", animationDelay: dm(delayMs, 760) }}>
+          <svg viewBox="0 0 16 4" className="block h-full w-full" aria-hidden="true">
+            {[2, 6, 10, 14].map((cx) => <circle key={cx} cx={cx} cy="2" r="1.5" fill={p1} stroke={p2} strokeWidth="0.4" />)}
+          </svg>
+        </span>
+        {/* the blast: the eight squares round it */}
+        <span className="cwp-stamp absolute block" style={{ left: "25%", width: "37.5%", top: bandTop(4, 6), height: "37.5%", animationDelay: dm(delayMs, 900) }}>
+          <svg viewBox="0 0 30 30" className="block h-full w-full" aria-hidden="true">
+            <path d="M0.8 0.8 H29.2 V29.2 H0.8 Z M10 10 H20 V20 H10 Z" fill={tint(p1, 0.18)} fillRule="evenodd" stroke={p1} strokeWidth="0.6" strokeDasharray="2 1.4" />
+          </svg>
+        </span>
+        {/* the enemy knight and pawn in it are blown off the board */}
+        {[
+          { k: "n" as const, f: 2, r: 6, d: 1000 },
+          { k: "p" as const, f: 4, r: 6, d: 1060 },
+        ].map((v) => (
+          <span key={v.f} className="cwp-lift absolute block" style={{ ...hcMan(v.f, v.r), animationDelay: dm(delayMs, v.d) }}>
+            <Man kind={v.k} fill={p2} stroke={p1} />
+          </span>
+        ))}
+        {/* ...and their king in it stays */}
+        <span className="cwp-facein absolute block" style={{ ...hcCell(4, 4), animationDelay: dm(delayMs, 1060), animationDuration: "calc(1100ms * var(--fx-dur, 1))" }}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <path d={CHESSMAN.k} fill={p2} stroke={p1} strokeWidth="0.45" {...SJ} />
+            <circle cx="5" cy="5.4" r="4.6" fill="none" stroke={p1} strokeWidth="0.45" strokeDasharray="1.2 0.9" />
+          </svg>
+        </span>
+        {/* settle: a draft reroll is yours */}
+        <span className="cwp-pop absolute block" style={{ left: "88%", width: "8%", top: `calc(${rankTop(2)} + 2.5%)`, height: "8%", animationDelay: dm(delayMs, 1200) }}>
+          <svg viewBox="0 0 8 8" className="block h-full w-full" aria-hidden="true">
+            <rect x="0.6" y="0.6" width="6.8" height="6.8" rx="1.2" fill={p1} stroke={p2} strokeWidth="0.45" />
+            <circle cx="2.6" cy="2.6" r="0.7" fill={p2} />
+            <circle cx="5.4" cy="5.4" r="0.7" fill={p2} />
+          </svg>
+        </span>
+      </BoardFrame>
+    </Stage>
+  );
+}
+
+/* --- Effigy of Dread: the effigy rises on an empty square of their half and
+   the ring of eight squares round it is barred; an enemy knight leaping in
+   is thrown back, a pawn already inside walks out, six pips count its six
+   turns, and the effigy shudders with a crack: it can be smashed. ---------- */
+const EFFIGY: Palette = ["#1c2a1c", "#8faf4a", "#3a3a40"];
+function EffigyScene({ lead, role, delayMs }: SceneProps) {
+  const [p0, p1, p2] = EFFIGY;
+  if (role === "entrance") return <EntranceCut palette={EFFIGY} glyph={GLYPH.hw3_effigy_of_dread} delayMs={delayMs} />;
+  if (!lead) return <CurseHit palette={EFFIGY} glyph={GLYPH.hw3_effigy_of_dread} delayMs={delayMs} />;
+  const effigy = (fill: string) => (
+    <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+      <path d="M5 9.8 V4.6 M2 4.8 H8" stroke={p2} strokeWidth="0.8" strokeLinecap="round" />
+      <circle cx="5" cy="2.6" r="1.9" fill={fill} stroke={p0} strokeWidth="0.45" />
+      <path d="M4 2.3 L4.5 2.7 M6 2.3 L5.5 2.7 M4 3.5 C4.6 3.1 5.4 3.1 6 3.5" fill="none" stroke={p0} strokeWidth="0.4" strokeLinecap="round" />
+      <path d="M3 5 L3.8 8 H6.2 L7 5" fill={tint(fill, 0.7)} stroke={p0} strokeWidth="0.4" {...SJ} />
+    </svg>
+  );
+  return (
+    <Stage>
+      <BoardFrame>
+        {/* tell: the effigy rises on an empty square of their half */}
+        <span className="cwp-rise absolute block" style={{ ...hcCell(4, 5), animationDelay: dm(delayMs, 0), animationDuration: "calc(1700ms * var(--fx-dur, 1))" }}>{effigy(p1)}</span>
+        {/* strike: the ring of eight squares round it is barred */}
+        <span className="cwp-stamp absolute block" style={{ left: "37.5%", width: "37.5%", top: bandTop(4, 6), height: "37.5%", animationDelay: dm(delayMs, 300), animationDuration: "calc(1400ms * var(--fx-dur, 1))" }}>
+          <svg viewBox="0 0 30 30" className="block h-full w-full" aria-hidden="true">
+            <path d="M0.8 0.8 H29.2 V29.2 H0.8 Z M10 10 H20 V20 H10 Z" fill={tint(p0, 0.5)} fillRule="evenodd" stroke={p1} strokeWidth="0.7" strokeDasharray="1.4 1" />
+            <path d="M2 2 L8 8 M22 2 L28 8 M2 22 L8 28 M22 22 L28 28 M12 2 L18 8 M12 22 L18 28 M2 12 L8 18 M22 12 L28 18" stroke={tint(p1, 0.55)} strokeWidth="0.5" strokeLinecap="round" />
+          </svg>
+        </span>
+        {/* an enemy knight leaping in is thrown back */}
+        <span className="cwp-snapback absolute block" style={{ ...hcMan(1, 6), "--dx": "190%", "--dy": "0%", animationDelay: dm(delayMs, 520) } as CSSProperties}>
+          <Man kind="n" fill={p2} stroke={p1} />
+        </span>
+        {/* a pawn already inside may walk out */}
+        <span className="cwp-tug absolute block" style={{ ...hcMan(5, 4), "--dx": "140%", "--dy": "0%", animationDelay: dm(delayMs, 700) } as CSSProperties}>
+          <Man kind="p" fill={p2} stroke={p1} />
+        </span>
+        {/* six pips: it stands six of their turns */}
+        <span className="cwp-pop absolute block" style={{ left: "2%", width: "22%", top: `calc(${rankTop(5)} + 4.5%)`, height: "3.5%", animationDelay: dm(delayMs, 900) }}>
+          <svg viewBox="0 0 24 4" className="block h-full w-full" aria-hidden="true">
+            {[2, 6, 10, 14, 18, 22].map((cx) => <circle key={cx} cx={cx} cy="2" r="1.5" fill={p1} stroke={p0} strokeWidth="0.4" />)}
+          </svg>
+        </span>
+        {/* settle: the effigy shudders and cracks: it can be smashed */}
+        <span className="cwp-crack absolute block" style={{ ...hcCell(4, 5), animationDelay: dm(delayMs, 1160), animationDuration: "calc(900ms * var(--fx-dur, 1))" }}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <path d="M5.4 0.8 L4.6 2.4 L5.6 3.4 L4.8 4.6" fill="none" stroke={p1} strokeWidth="0.5" {...SJ} />
+          </svg>
+        </span>
+        <SettlePair color={tint(p1, 0.6)} delayMs={delayMs + 1300} />
+      </BoardFrame>
+    </Stage>
+  );
+}
+
 /* =============================================================================
    Glyphs — one 10x10 mini-emblem per card, drawn flat.
    ========================================================================== */
@@ -3305,10 +3401,10 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "clockice", source: "frozen",
     anchor: "cast",
   }, "jammedgate"),
-  hw3_time_bomb: G(OmenBell, ["#3a3a40", "#ff9d3d", "#1c1c24"], GLYPH.hw3_time_bomb, {
+  hw3_time_bomb: S(PowderKegScene, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "siege",
     anchor: "board",
-  }, "powderkeg"),
+  }),
   hw3_collapsing_floor: G(OmenBell, ["#4a4a52", "#c9cdd6", "#1c1c24"], GLYPH.hw3_collapsing_floor, {
     ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "clockice", source: "frozen",
     anchor: "board",
@@ -3345,10 +3441,10 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "shades",
     anchor: "aim",
   }, "wildfire"),
-  hw3_effigy_of_dread: G(BlightGarden, ["#1c2a1c", "#8faf4a", "#3a3a40"], GLYPH.hw3_effigy_of_dread, {
+  hw3_effigy_of_dread: S(EffigyScene, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "petrifiedforest", source: "summon",
     anchor: "board",
-  }, "effigy"),
+  }),
   hw3_avalanche: G(BlightGarden, ["#3a3a40", "#c9cdd6", "#8a94a8"], GLYPH.hw3_avalanche, {
     ordering: "sweep", staggerMs: 45, victims: "all", hasLead: true, sound: "shades",
     anchor: "board",
