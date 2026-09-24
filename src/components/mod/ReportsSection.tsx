@@ -8,7 +8,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import type { Report } from "./types";
-import { Empty, FilterChip, Loading, ModButton, ModLinkButton, Pill, postJson, when, whenShort } from "./ui";
+import { Empty, FilterChip, LoadFailed, Loading, ModButton, ModLinkButton, Pill, postJson, when, whenShort } from "./ui";
 
 export function ReportsSection({
   onHandled,
@@ -25,9 +25,18 @@ export function ReportsSection({
   // Failures used to vanish (the queue just reloaded); now each card says why.
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // A queue that never loaded says so (a list already on screen stays).
+  const [loadFailed, setLoadFailed] = useState(false);
+
   const load = useCallback(async () => {
-    const res = await fetch(`/api/mod/reports?status=${status === "open" ? "open" : "all"}`);
-    if (res.ok) setReports(((await res.json()) as { reports: Report[] }).reports);
+    try {
+      const res = await fetch(`/api/mod/reports?status=${status === "open" ? "open" : "all"}`);
+      if (!res.ok) throw new Error(String(res.status));
+      setReports(((await res.json()) as { reports: Report[] }).reports);
+      setLoadFailed(false);
+    } catch {
+      setLoadFailed(true);
+    }
   }, [status]);
 
   useEffect(() => {
@@ -71,7 +80,11 @@ export function ReportsSection({
       </div>
 
       {!reports ? (
-        <Loading what="reports" />
+        loadFailed ? (
+          <LoadFailed what="the report queue" onRetry={() => void load()} />
+        ) : (
+          <Loading what="reports" />
+        )
       ) : reports.length === 0 ? (
         <Empty>{status === "open" ? "Nothing in the queue." : "No reports have ever been filed."}</Empty>
       ) : (

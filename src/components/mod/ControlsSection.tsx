@@ -14,11 +14,11 @@ import { useEffect, useState } from "react";
 import type { HouseState, PresetMap, SkillTier } from "./types";
 import { ConfirmButton, ModButton, ModLinkButton, ModToggle, SectionHead } from "./ui";
 
-export function ControlsSection({ isOwner, isAdmin }: { isOwner: boolean; isAdmin: boolean }) {
+export function ControlsSection({ isOwner }: { isOwner: boolean }) {
   return (
     <div className="space-y-8">
       <HouseBotsControl />
-      <PersonasLink isAdmin={isAdmin} />
+      <PersonasLink />
       {isOwner && <GodPanelControl />}
       <NotificationsControl />
     </div>
@@ -41,6 +41,8 @@ function HouseBotsControl() {
   > | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
   const ingest = (data: HouseState) => {
     setEnabled(data.enabled);
@@ -52,15 +54,22 @@ function HouseBotsControl() {
   useEffect(() => {
     let cancelled = false;
     fetch("/api/mod/house")
-      .then((res) => (res.ok ? (res.json() as Promise<HouseState>) : null))
+      .then((res) => (res.ok ? (res.json() as Promise<HouseState>) : Promise.reject(new Error(String(res.status)))))
       .then((data) => {
-        if (!cancelled && data) ingest(data);
+        if (!cancelled) ingest(data);
       })
-      .catch(() => {});
+      .catch(() => {
+        if (!cancelled) setLoadFailed(true);
+      });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [attempt]);
+
+  const retryLoad = () => {
+    setLoadFailed(false);
+    setAttempt((n) => n + 1);
+  };
 
   const post = async (body: Record<string, unknown>) => {
     setSaving(true);
@@ -102,6 +111,14 @@ function HouseBotsControl() {
         }
       />
       {error && <p className="text-[13px] text-oxblood-glow">{error}</p>}
+      {loadFailed && (
+        <div role="alert" className="flex flex-wrap items-center gap-3 text-[13px] text-oxblood-glow">
+          <span>Could not load the house bot settings.</span>
+          <ModButton size="sm" onClick={retryLoad}>
+            Retry
+          </ModButton>
+        </div>
+      )}
 
       {/* Active games: how many house-vs-house filler games run at once — the
           games that keep the Watch tab / lobby looking busy. The slider pins a
@@ -115,7 +132,7 @@ function HouseBotsControl() {
             Filler games running
           </label>
           <span className="shrink-0 font-mono text-sm tabular-nums text-parchment-50">
-            {games ?? "…"}
+            {games ?? (loadFailed ? "-" : "…")}
             <span className="text-parchment-500"> / {bounds.max}</span>
           </span>
         </div>
@@ -136,16 +153,39 @@ function HouseBotsControl() {
         />
       </div>
 
-      {strength && (
-        <HouseStrengthEditor
-          state={strength}
-          saving={saving}
-          disabled={enabled === false}
-          onSave={post}
-        />
-      )}
+      {/* The tier editor is a disclosure, closed on load. Its summary line is
+          drawn from the first frame, so the settings arriving never push the
+          sections below down (it is about 780px tall at 1280 and 3,770px on a
+          phone, and mounting it after the fetch shifted the whole page). */}
+      <details data-strength-editor className="border-t border-[color:var(--edge)] pt-1">
+        <summary className="flex min-h-[44px] cursor-pointer items-center justify-between gap-3 text-[13px] text-parchment-400 sm:min-h-[32px]">
+          <span>Strength by tier</span>
+          <span className="text-parchment-500">{strengthSummary(strength, loadFailed)}</span>
+        </summary>
+        {strength ? (
+          <HouseStrengthEditor
+            state={strength}
+            saving={saving}
+            disabled={enabled === false}
+            onSave={post}
+          />
+        ) : (
+          <p className="pb-2 text-[13px] text-parchment-400">{loadFailed ? "Not loaded." : "Loading…"}</p>
+        )}
+      </details>
     </section>
   );
+}
+
+/** The tier editor's closed summary: whether any tier is tuned. */
+function strengthSummary(
+  strength: Pick<HouseState, "skillTiers"> | null,
+  failed: boolean,
+): string {
+  if (!strength) return failed ? "-" : "…";
+  const tuned = strength.skillTiers.filter((t) => t.overrides && Object.keys(t.overrides).length > 0).length;
+  const n = strength.skillTiers.length;
+  return tuned === 0 ? `${n} tiers, all default` : `${tuned} of ${n} tiers tuned`;
 }
 
 // The editable strength fields shown in the tier table. `pct` fields are stored
@@ -254,9 +294,8 @@ function HouseStrengthEditor({
   const anyOverride = skillTiers.some((t) => t.overrides && Object.keys(t.overrides).length > 0);
 
   return (
-    <div className={"border-t border-[color:var(--edge)] pt-3 " + (disabled ? "opacity-50" : "")}>
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="text-[13px] text-parchment-400">Strength by tier</span>
+    <div className={"pb-1 pt-1 " + (disabled ? "opacity-50" : "")}>
+      <div className="flex flex-wrap items-center justify-end gap-2">
         <div className="flex flex-wrap gap-1.5">
           <ConfirmButton
             size="sm"
@@ -394,8 +433,9 @@ function HouseStrengthEditor({
 
 // ---------------- personas ----------------
 
-function PersonasLink({ isAdmin }: { isAdmin: boolean }) {
-  if (!isAdmin) return null;
+// Every moderator can open the persona editor (F129: the page and
+// /api/mod/house/personas admit mods, not just admins).
+function PersonasLink() {
   return (
     <section className="plate p-4">
       <SectionHead

@@ -39,6 +39,7 @@ export interface ModUser {
 }
 
 export interface HistoryEntry {
+  id?: string;
   mod_name: string;
   target_kind?: string;
   target_ref?: string | null;

@@ -325,8 +325,11 @@ export function StatGrid({ items, cols = 4 }: { items: StatItem[]; cols?: 3 | 4 
         {items.map((it) => (
           <div key={it.label} className="flex items-center justify-between gap-3 px-3.5 py-2.5">
             <span className="min-w-0 text-[13px] leading-tight text-parchment-400">{it.label}</span>
-            <span className="shrink-0 text-right">
-              <span className={"font-display text-lg tabular-nums " + valueTone(it.tone)}>{it.value}</span>
+            {/* A fixed floor on the value column, and block children, so a
+                value that arrives after a placeholder ("…") does not move the
+                column's boxes sideways (GamesSection draws the grid early). */}
+            <span className="min-w-[45%] shrink-0 text-right">
+              <span className={"block font-display text-lg tabular-nums " + valueTone(it.tone)}>{it.value}</span>
               {it.sub && <span className="block text-[13px] leading-tight text-parchment-400">{it.sub}</span>}
             </span>
           </div>
@@ -397,6 +400,19 @@ export function Empty({ children }: { children: ReactNode }) {
 
 export function Loading({ what }: { what: string }) {
   return <p className="text-sm text-parchment-400">Loading {what}…</p>;
+}
+
+/** A section whose data did not load: says so and offers Retry, instead of
+ *  leaving "Loading…" up forever. */
+export function LoadFailed({ what, onRetry }: { what: string; onRetry: () => void }) {
+  return (
+    <div role="alert" className="plate flex flex-wrap items-center justify-center gap-3 px-4 py-8 text-sm text-parchment-200">
+      <span>Could not load {what}.</span>
+      <ModButton size="sm" onClick={onRetry}>
+        Retry
+      </ModButton>
+    </div>
+  );
 }
 
 export function RoleBadge({ role }: { role: string }) {

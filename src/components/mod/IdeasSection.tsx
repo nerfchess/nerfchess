@@ -8,7 +8,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ModeBadge } from "@/components/ModeBadge";
 import type { Suggestion } from "./types";
-import { Empty, FilterChip, Loading, Pill, when, whenShort } from "./ui";
+import { Empty, FilterChip, LoadFailed, Loading, Pill, when, whenShort } from "./ui";
 
 type Pool = "all" | "nerf" | "buff" | "boon";
 
@@ -20,12 +20,25 @@ function poolOf(s: Suggestion): Exclude<Pool, "all"> {
 export function IdeasSection() {
   const [suggestions, setSuggestions] = useState<Suggestion[] | null>(null);
   const [pool, setPool] = useState<Pool>("all");
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
-    fetch("/api/mod/suggestions").then(async (res) => {
-      if (res.ok) setSuggestions(((await res.json()) as { suggestions: Suggestion[] }).suggestions);
-    });
-  }, []);
+    let cancelled = false;
+    fetch("/api/mod/suggestions")
+      .then((res) =>
+        res.ok ? (res.json() as Promise<{ suggestions: Suggestion[] }>) : Promise.reject(new Error(String(res.status))),
+      )
+      .then((data) => {
+        if (!cancelled) setSuggestions(data.suggestions);
+      })
+      .catch(() => {
+        if (!cancelled) setFailed(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [attempt]);
 
   const counts = useMemo(() => {
     const c = { nerf: 0, buff: 0, boon: 0 };
@@ -33,6 +46,17 @@ export function IdeasSection() {
     return c;
   }, [suggestions]);
 
+  if (failed) {
+    return (
+      <LoadFailed
+        what="player ideas"
+        onRetry={() => {
+          setFailed(false);
+          setAttempt((n) => n + 1);
+        }}
+      />
+    );
+  }
   if (!suggestions) return <Loading what="player ideas" />;
   if (suggestions.length === 0) return <Empty>No card ideas have been submitted yet.</Empty>;
 

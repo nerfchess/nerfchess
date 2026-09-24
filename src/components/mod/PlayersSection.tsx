@@ -19,6 +19,7 @@ import {
   ConfirmButton,
   Empty,
   FilterChip,
+  LoadFailed,
   ModButton,
   Pill,
   RoleBadge,
@@ -60,6 +61,10 @@ export function PlayersSection({
   // either side. Applies to the default roster and to searches alike.
   const [filter, setFilter] = useState<UserFilter>("all");
   const [users, setUsers] = useState<ModUser[]>([]);
+  // A failed search used to read as "No players match that search."
+  const [searchFailed, setSearchFailed] = useState(false);
+  const [ctxFailed, setCtxFailed] = useState<string | null>(null);
+  const [ctxAttempt, setCtxAttempt] = useState(0);
   const [selected, setSelected] = useState<ModUser | null>(null);
   // Everything the detail shows is loaded by the selected player's id (F115):
   // it used to come from the search's exact-name match, so picking a player
@@ -86,10 +91,15 @@ export function PlayersSection({
       if (q.trim()) params.set("q", q.trim());
       if (filter !== "all") params.set("filter", filter);
       const qs = params.toString();
-      const res = await fetch(`/api/mod/users${qs ? `?${qs}` : ""}`);
-      if (!res.ok) return;
-      const data = (await res.json()) as { users: ModUser[] };
-      setUsers(data.users);
+      try {
+        const res = await fetch(`/api/mod/users${qs ? `?${qs}` : ""}`);
+        if (!res.ok) throw new Error(String(res.status));
+        const data = (await res.json()) as { users: ModUser[] };
+        setUsers(data.users);
+        setSearchFailed(false);
+      } catch {
+        setSearchFailed(true);
+      }
     },
     [filter],
   );
@@ -109,14 +119,19 @@ export function PlayersSection({
     if (!selectedId) return;
     let live = true;
     void (async () => {
-      const res = await fetch(`/api/mod/users?id=${encodeURIComponent(selectedId)}`);
-      if (!live || !res.ok) return;
-      setCtx((await res.json()) as ModUserContext);
+      try {
+        const res = await fetch(`/api/mod/users?id=${encodeURIComponent(selectedId)}`);
+        if (!res.ok) throw new Error(String(res.status));
+        const data = (await res.json()) as ModUserContext;
+        if (live) setCtx(data);
+      } catch {
+        if (live) setCtxFailed(selectedId);
+      }
     })();
     return () => {
       live = false;
     };
-  }, [selectedId]);
+  }, [selectedId, ctxAttempt]);
   const context = ctx && selected && ctx.user.id === selected.id ? ctx : null;
 
   useEffect(() => {
@@ -182,7 +197,9 @@ export function PlayersSection({
         <p className="text-[13px] text-parchment-400">Recent players</p>
       )}
 
-      {users.length === 0 ? (
+      {searchFailed ? (
+        <LoadFailed what="players" onRetry={() => void search(query)} />
+      ) : users.length === 0 ? (
         <Empty>{query.trim() ? "No players match that search." : "No players yet."}</Empty>
       ) : (
         <div className="plate divide-y divide-[color:var(--edge)]">
@@ -369,7 +386,20 @@ export function PlayersSection({
 
           {message && <p className="text-sm text-parchment-200">{message}</p>}
 
-          {!context ? (
+          {!context && ctxFailed === selected.id ? (
+            <div role="alert" className="flex flex-wrap items-center gap-3 border-t border-[color:var(--edge)] pt-4 text-sm text-parchment-200">
+              <span>Could not load this player&apos;s history.</span>
+              <ModButton
+                size="sm"
+                onClick={() => {
+                  setCtxFailed(null);
+                  setCtxAttempt((n) => n + 1);
+                }}
+              >
+                Retry
+              </ModButton>
+            </div>
+          ) : !context ? (
             <p className="border-t border-[color:var(--edge)] pt-4 text-sm text-parchment-400">Loading history…</p>
           ) : (
             <div className="grid gap-4 border-t border-[color:var(--edge)] pt-4 text-sm sm:grid-cols-2">

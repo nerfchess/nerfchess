@@ -62,6 +62,11 @@ export async function GET(request: Request) {
   const limit = Number.isFinite(rawLimit) ? Math.max(1, Math.min(100, Math.floor(rawLimit))) : 25;
   const rawBefore = Number(params.get("before"));
   const before = Number.isFinite(rawBefore) && rawBefore > 0 ? Math.floor(rawBefore) : null;
+  // The id tiebreak keeps games that ended in the same millisecond as the last
+  // row of a page on the next page instead of skipping them.
+  const beforeId = before ? (params.get("beforeId") ?? "").slice(0, 100) : "";
+  const cursorSql = !before ? "" : beforeId ? " AND (completed_at < ? OR (completed_at = ? AND id < ?))" : " AND completed_at < ?";
+  const cursorArgs: (string | number)[] = !before ? [] : beforeId ? [before, before, beforeId] : [before];
 
   const rows = await pgAll<ArchivedGameRow>(
     `SELECT id, white_user_id, black_user_id, white_name, black_name,
@@ -69,10 +74,10 @@ export async function GET(request: Request) {
             white_rating_before, white_rating_after, black_rating_before, black_rating_after,
             started_at, completed_at
      FROM games
-     WHERE ${HUMAN_GAME_SQL}${before ? " AND completed_at < ?" : ""}
-     ORDER BY completed_at DESC
+     WHERE ${HUMAN_GAME_SQL}${cursorSql}
+     ORDER BY completed_at DESC, id DESC
      LIMIT ?`,
-    before ? [before, limit] : [limit],
+    [...cursorArgs, limit],
   );
 
   // Split guests from members for every seat id whose shape alone (anon /
@@ -124,5 +129,6 @@ export async function GET(request: Request) {
     // Cursor for the next page: pass back as ?before=. Null when this page
     // came up short, i.e. the archive is exhausted.
     nextBefore: rows.length === limit ? rows[rows.length - 1].completed_at : null,
+    nextBeforeId: rows.length === limit ? rows[rows.length - 1].id : null,
   });
 }

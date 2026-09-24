@@ -16,6 +16,7 @@ import {
   ModLinkButton,
   Pill,
   StatGrid,
+  type StatItem,
   fmtDuration,
   when,
   whenShort,
@@ -70,10 +71,70 @@ function Seat({ seat }: { seat: ModGameSeat }) {
   );
 }
 
+type ArchivePage = { games: ModGame[]; nextBefore: number | null; nextBeforeId?: string | null };
+
+/** The stat tiles. Before the numbers arrive (or when they failed) every tile
+ *  is still drawn, with the same labels and sub lines, so nothing below moves. */
+function statItems(stats: GamesStats | null, failed: boolean): StatItem[] {
+  if (!stats) {
+    const v = failed ? "-" : "…";
+    const blank = "\u00a0";
+    return [
+      { label: "Human games today", value: v, sub: blank },
+      { label: "This week", value: v, sub: blank },
+      { label: "Avg. game (7d)", value: v, sub: blank },
+      { label: "Most played mode (7d)", value: v, sub: blank },
+      { label: "Humans today", value: v, sub: blank },
+      { label: "Guests created", value: v, sub: blank },
+      { label: "Last human game", value: v },
+    ];
+  }
+  return [
+    {
+      label: "Human games today",
+      value: String(stats.today.total),
+      sub: `${stats.today.humanVsHuman} vs humans · ${stats.today.humanVsHouse} vs house`,
+    },
+    {
+      label: "This week",
+      value: String(stats.week.total),
+      sub: `${stats.week.humanVsHuman} vs humans · ${stats.week.humanVsHouse} vs house`,
+    },
+    {
+      label: "Avg. game (7d)",
+      value: stats.averageGame.moves !== null ? `${stats.averageGame.moves} moves` : "-",
+      sub: fmtDuration(stats.averageGame.durationMs),
+    },
+    {
+      label: "Most played mode (7d)",
+      value: stats.topMode ? stats.topMode.label : "-",
+      sub: stats.topMode ? `${stats.topMode.games} games` : "no games yet",
+    },
+    {
+      label: "Humans today",
+      value: `${stats.humansToday.members + stats.humansToday.guests}`,
+      sub: `${stats.humansToday.members} members · ${stats.humansToday.guests} guests${
+        stats.humansToday.anonSeatGames > 0 ? ` · ${stats.humansToday.anonSeatGames} anon-seat games` : ""
+      }`,
+    },
+    {
+      label: "Guests created",
+      value: stats.guestsCreated ? `${stats.guestsCreated.today} today` : "-",
+      sub: stats.guestsCreated ? `${stats.guestsCreated.week} this week` : "\u00a0",
+    },
+    {
+      label: "Last human game",
+      value: stats.lastHumanGame ? whenShort(stats.lastHumanGame.completedAt) : "none yet",
+    },
+  ];
+}
+
 export function GamesSection() {
   const [stats, setStats] = useState<GamesStats | null>(null);
   const [games, setGames] = useState<ModGame[] | null>(null);
+  const [statsFailed, setStatsFailed] = useState(false);
   const [nextBefore, setNextBefore] = useState<number | null>(null);
+  const [nextBeforeId, setNextBeforeId] = useState<string | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const [failed, setFailed] = useState(false);
 
@@ -84,17 +145,20 @@ export function GamesSection() {
       .then((data) => {
         if (!cancelled) setStats(data);
       })
-      .catch(() => {});
+      .catch(() => {
+        if (!cancelled) setStatsFailed(true);
+      });
     fetch("/api/mod/games")
       .then((res) =>
         res.ok
-          ? (res.json() as Promise<{ games: ModGame[]; nextBefore: number | null }>)
+          ? (res.json() as Promise<ArchivePage>)
           : Promise.reject(),
       )
       .then((data) => {
         if (cancelled) return;
         setGames(data.games);
         setNextBefore(data.nextBefore);
+        setNextBeforeId(data.nextBeforeId ?? null);
       })
       .catch(() => {
         if (!cancelled) setFailed(true);
@@ -108,11 +172,13 @@ export function GamesSection() {
     if (nextBefore === null || loadingMore) return;
     setLoadingMore(true);
     try {
-      const res = await fetch(`/api/mod/games?before=${nextBefore}`);
+      const cursor = `before=${nextBefore}${nextBeforeId ? `&beforeId=${encodeURIComponent(nextBeforeId)}` : ""}`;
+      const res = await fetch(`/api/mod/games?${cursor}`);
       if (!res.ok) throw new Error();
-      const data = (await res.json()) as { games: ModGame[]; nextBefore: number | null };
+      const data = (await res.json()) as ArchivePage;
       setGames((prev) => [...(prev ?? []), ...data.games]);
       setNextBefore(data.nextBefore);
+      setNextBeforeId(data.nextBeforeId ?? null);
     } catch {
       // Leave the cursor as-is so the button can be tried again.
     } finally {
@@ -124,55 +190,10 @@ export function GamesSection() {
 
   return (
     <div className="space-y-6">
-      {stats && (
-        <StatGrid
-          cols={3}
-          items={[
-            {
-              label: "Human games today",
-              value: String(stats.today.total),
-              sub: `${stats.today.humanVsHuman} vs humans · ${stats.today.humanVsHouse} vs house`,
-            },
-            {
-              label: "This week",
-              value: String(stats.week.total),
-              sub: `${stats.week.humanVsHuman} vs humans · ${stats.week.humanVsHouse} vs house`,
-            },
-            {
-              label: "Avg. game (7d)",
-              value: stats.averageGame.moves !== null ? `${stats.averageGame.moves} moves` : "-",
-              sub: fmtDuration(stats.averageGame.durationMs),
-            },
-            {
-              label: "Most played mode (7d)",
-              value: stats.topMode ? stats.topMode.label : "-",
-              sub: stats.topMode ? `${stats.topMode.games} games` : undefined,
-            },
-            {
-              label: "Humans today",
-              value: `${stats.humansToday.members + stats.humansToday.guests}`,
-              sub: `${stats.humansToday.members} members · ${stats.humansToday.guests} guests${
-                stats.humansToday.anonSeatGames > 0
-                  ? ` · ${stats.humansToday.anonSeatGames} anon-seat games`
-                  : ""
-              }`,
-            },
-            ...(stats.guestsCreated
-              ? [
-                  {
-                    label: "Guests created",
-                    value: `${stats.guestsCreated.today} today`,
-                    sub: `${stats.guestsCreated.week} this week`,
-                  },
-                ]
-              : []),
-            {
-              label: "Last human game",
-              value: stats.lastHumanGame ? whenShort(stats.lastHumanGame.completedAt) : "none yet",
-            },
-          ]}
-        />
-      )}
+      {/* The grid is drawn from the first frame with placeholder values, so
+          the archive below does not move when the numbers arrive. */}
+      <StatGrid cols={3} items={statItems(stats, statsFailed)} />
+      {statsFailed && <p className="text-[13px] text-parchment-400">Could not load these numbers. Reload to try again.</p>}
 
       {!games ? (
         <Loading what="the archive" />

@@ -12,7 +12,7 @@
 import type { Buff } from "@/engine/buff";
 import type { Nerf } from "@/engine/nerf";
 import { useEffect, useState } from "react";
-import { Empty, FilterChip, Loading, Pill, SectionHead } from "./ui";
+import { Empty, FilterChip, LoadFailed, Loading, Pill, SectionHead } from "./ui";
 
 type FeedbackTotal = { up: number; down: number; last_at: number };
 type NerfFeedbackTotal = FeedbackTotal & { nerf_id: string };
@@ -25,6 +25,8 @@ export function NerfFeedbackSection() {
   const [totals, setTotals] = useState<NerfFeedbackTotal[] | null>(null);
   const [recent, setRecent] = useState<NerfFeedbackVote[]>([]);
   const [nerfs, setNerfs] = useState<Nerf[] | null>(null);
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -32,22 +34,39 @@ export function NerfFeedbackSection() {
       .then((res) =>
         res.ok
           ? (res.json() as Promise<{ totals: NerfFeedbackTotal[]; recent: NerfFeedbackVote[] }>)
-          : null,
+          : Promise.reject(new Error(String(res.status))),
       )
       .then((data) => {
-        if (cancelled || !data) return;
+        if (cancelled) return;
         setTotals(data.totals);
         setRecent(data.recent);
       })
-      .catch(() => {});
-    import("@/engine/nerfs/library").then((m) => {
-      if (!cancelled) setNerfs(m.ALL_NERFS);
-    });
+      .catch(() => {
+        if (!cancelled) setFailed(true);
+      });
+    import("@/engine/nerfs/library")
+      .then((m) => {
+        if (!cancelled) setNerfs(m.ALL_NERFS);
+      })
+      .catch(() => {
+        if (!cancelled) setFailed(true);
+      });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [attempt]);
 
+  if (failed) {
+    return (
+      <LoadFailed
+        what="nerf verdicts"
+        onRetry={() => {
+          setFailed(false);
+          setAttempt((n) => n + 1);
+        }}
+      />
+    );
+  }
   if (!totals || !nerfs) return <Loading what="nerf verdicts" />;
 
   const find = (id: string) => nerfs.find((n) => n.id === id);
@@ -78,6 +97,8 @@ export function BuffFeedbackSection() {
   const [totals, setTotals] = useState<BuffFeedbackTotal[] | null>(null);
   const [recent, setRecent] = useState<BuffFeedbackVote[]>([]);
   const [buffs, setBuffs] = useState<Record<string, Buff> | null>(null);
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -85,22 +106,39 @@ export function BuffFeedbackSection() {
       .then((res) =>
         res.ok
           ? (res.json() as Promise<{ totals: BuffFeedbackTotal[]; recent: BuffFeedbackVote[] }>)
-          : null,
+          : Promise.reject(new Error(String(res.status))),
       )
       .then((data) => {
-        if (cancelled || !data) return;
+        if (cancelled) return;
         setTotals(data.totals);
         setRecent(data.recent);
       })
-      .catch(() => {});
-    import("@/engine/buffs/library").then((m) => {
-      if (!cancelled) setBuffs(m.BUFF_BY_ID);
-    });
+      .catch(() => {
+        if (!cancelled) setFailed(true);
+      });
+    import("@/engine/buffs/library")
+      .then((m) => {
+        if (!cancelled) setBuffs(m.BUFF_BY_ID);
+      })
+      .catch(() => {
+        if (!cancelled) setFailed(true);
+      });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [attempt]);
 
+  if (failed) {
+    return (
+      <LoadFailed
+        what="buff verdicts"
+        onRetry={() => {
+          setFailed(false);
+          setAttempt((n) => n + 1);
+        }}
+      />
+    );
+  }
   if (!totals || !buffs) return <Loading what="buff verdicts" />;
 
   return (

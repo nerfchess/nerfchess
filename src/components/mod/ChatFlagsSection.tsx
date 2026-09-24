@@ -7,7 +7,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { ChatFlag } from "./types";
-import { ConfirmButton, Empty, FilterChip, Loading, ModButton, ModLinkButton, postJson, when, whenShort } from "./ui";
+import { ConfirmButton, Empty, FilterChip, LoadFailed, Loading, ModButton, ModLinkButton, postJson, when, whenShort } from "./ui";
 
 export function ChatFlagsSection({
   onHandled,
@@ -20,9 +20,18 @@ export function ChatFlagsSection({
   const [flags, setFlags] = useState<ChatFlag[] | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
 
+  // A list that never loaded says so (a list already on screen stays).
+  const [loadFailed, setLoadFailed] = useState(false);
+
   const load = useCallback(async () => {
-    const res = await fetch(`/api/mod/chat-flags${all ? "?all=1" : ""}`);
-    if (res.ok) setFlags(((await res.json()) as { flags: ChatFlag[] }).flags);
+    try {
+      const res = await fetch(`/api/mod/chat-flags${all ? "?all=1" : ""}`);
+      if (!res.ok) throw new Error(String(res.status));
+      setFlags(((await res.json()) as { flags: ChatFlag[] }).flags);
+      setLoadFailed(false);
+    } catch {
+      setLoadFailed(true);
+    }
   }, [all]);
 
   useEffect(() => {
@@ -76,7 +85,11 @@ export function ChatFlagsSection({
       </div>
 
       {!flags ? (
-        <Loading what="chat flags" />
+        loadFailed ? (
+          <LoadFailed what="chat flags" onRetry={() => void load()} />
+        ) : (
+          <Loading what="chat flags" />
+        )
       ) : flags.length === 0 ? (
         <Empty>{all ? "Nothing has ever been flagged." : "Nothing waiting to be reviewed."}</Empty>
       ) : (
