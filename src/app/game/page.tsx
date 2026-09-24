@@ -1867,21 +1867,27 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
     }
     setConfirmingDraw(false);
     setDrawOfferStatus("offering");
-    // Simple AI policy: accept if its material isn't ahead. Otherwise decline.
+    // Simple AI policy: accept unless it is ahead by more than 2 in material.
+    // The answer comes 800ms later, so it reads the live game through gameRef
+    // then: a move, mate, flag or resign inside the window must not be
+    // overwritten by a stale copy of the offer-time object.
     const vals: Record<string, number> = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
-    let mine = 0, theirs = 0;
-    for (const p of game.board.pieces) {
-      if (!p) continue;
-      const v = vals[p.type] ?? 0;
-      if (p.color === myColor) mine += v;
-      else theirs += v;
-    }
-    // AI accepts if it isn't ahead by more than 2.
-    const aiAhead = theirs - mine;
     window.setTimeout(() => {
-      if (aiAhead <= 2) {
-        game.result = { winner: "draw", reason: "draw by agreement" };
-        setGame({ ...game });
+      const current = gameRef.current;
+      if (!current || current.result) {
+        setDrawOfferStatus("idle");
+        return;
+      }
+      let mine = 0, theirs = 0;
+      for (const p of current.board.pieces) {
+        if (!p) continue;
+        const v = vals[p.type] ?? 0;
+        if (p.color === myColor) mine += v;
+        else theirs += v;
+      }
+      if (theirs - mine <= 2) {
+        current.result = { winner: "draw", reason: "draw by agreement" };
+        setGame({ ...current });
         setPremoves([]);
         setDrawOfferStatus("idle");
       } else {
@@ -2563,7 +2569,7 @@ function GamePage({ onRematch }: { onRematch: () => void }) {
         <Button tone="leaf"
          
           onClick={() => setShowResult(true)}
-          className={"fixed bottom-4 right-3 z-40 px-4 py-2 text-sm font-semibold shadow-xl sm:bottom-16 lg:bottom-4 " + TABLET_STACK_FAB}>
+          className={"fixed bottom-4 right-3 z-40 px-4 py-2 text-sm font-semibold sm:bottom-16 lg:bottom-4 " + TABLET_STACK_FAB}>
           Show result
         </Button>
       )}
