@@ -1,0 +1,400 @@
+{
+ "method": "cosine similarity of per-tile (tile minus pre-play tile) 24x24 grey thumbnails, standardised per tile and then weighted by the tile's raw energy over the card's peak (so near-empty tiles count for little); 1 = same look, near 0 = unrelated. Every tier 6+ bespoke card shares the cast wrapper's ring and beam (TC0-f), so expect a floor well above 0",
+ "cards": 11,
+ "sheetPicks": {
+  "bn4_flag_on_their_wall": "+627ms (energy 1 of peak)",
+  "bn4_hundred_year_lease": "+260ms (energy 0.96 of peak)",
+  "bn4_liberators_march": "+1147ms (energy 0.96 of peak)",
+  "bn4_meek_inherit": "+663ms (energy 1 of peak)",
+  "bn4_pact_of_the_dawn": "+674ms (energy 1 of peak)",
+  "bn4_queens_aegis": "+1147ms (energy 0.97 of peak)",
+  "bn4_royal_privilege": "+260ms (energy 1 of peak)",
+  "bn4_siege_mentality": "+1147ms (energy 0.99 of peak)",
+  "bn4_unequal_treaty": "+1147ms (energy 0.99 of peak)",
+  "bn4_year_of_jubilee": "+663ms (energy 0.91 of peak)",
+  "hx4_tithe_of_silence": "+1192ms (energy 0.95 of peak)"
+ },
+ "generic": {
+  "method": "cosine similarity of the card's weighted look vector to the mean weighted look of the other cards in this sheet (leave-one-out); highest = least card-specific",
+  "ranking": [
+   {
+    "card": "bn4_flag_on_their_wall",
+    "tier": 8,
+    "closeness": 0.848
+   },
+   {
+    "card": "bn4_queens_aegis",
+    "tier": 8,
+    "closeness": 0.815
+   },
+   {
+    "card": "bn4_liberators_march",
+    "tier": 8,
+    "closeness": 0.763
+   },
+   {
+    "card": "bn4_hundred_year_lease",
+    "tier": 8,
+    "closeness": 0.761
+   },
+   {
+    "card": "bn4_royal_privilege",
+    "tier": 8,
+    "closeness": 0.755
+   },
+   {
+    "card": "bn4_year_of_jubilee",
+    "tier": 8,
+    "closeness": 0.751
+   },
+   {
+    "card": "hx4_tithe_of_silence",
+    "tier": 8,
+    "closeness": 0.723
+   },
+   {
+    "card": "bn4_siege_mentality",
+    "tier": 8,
+    "closeness": 0.713
+   },
+   {
+    "card": "bn4_unequal_treaty",
+    "tier": 8,
+    "closeness": 0.712
+   },
+   {
+    "card": "bn4_meek_inherit",
+    "tier": 8,
+    "closeness": 0.676
+   },
+   {
+    "card": "bn4_pact_of_the_dawn",
+    "tier": 8,
+    "closeness": 0.594
+   }
+  ]
+ },
+ "pairs": [
+  {
+   "a": "bn4_flag_on_their_wall",
+   "b": "bn4_queens_aegis",
+   "similarity": 0.822
+  },
+  {
+   "a": "bn4_royal_privilege",
+   "b": "bn4_year_of_jubilee",
+   "similarity": 0.769
+  },
+  {
+   "a": "bn4_siege_mentality",
+   "b": "bn4_year_of_jubilee",
+   "similarity": 0.743
+  },
+  {
+   "a": "bn4_liberators_march",
+   "b": "bn4_year_of_jubilee",
+   "similarity": 0.706
+  },
+  {
+   "a": "bn4_flag_on_their_wall",
+   "b": "bn4_hundred_year_lease",
+   "similarity": 0.695
+  },
+  {
+   "a": "bn4_flag_on_their_wall",
+   "b": "hx4_tithe_of_silence",
+   "similarity": 0.681
+  },
+  {
+   "a": "bn4_flag_on_their_wall",
+   "b": "bn4_liberators_march",
+   "similarity": 0.678
+  },
+  {
+   "a": "bn4_flag_on_their_wall",
+   "b": "bn4_meek_inherit",
+   "similarity": 0.671
+  },
+  {
+   "a": "bn4_meek_inherit",
+   "b": "bn4_queens_aegis",
+   "similarity": 0.667
+  },
+  {
+   "a": "bn4_liberators_march",
+   "b": "bn4_queens_aegis",
+   "similarity": 0.666
+  },
+  {
+   "a": "bn4_hundred_year_lease",
+   "b": "bn4_unequal_treaty",
+   "similarity": 0.663
+  },
+  {
+   "a": "bn4_flag_on_their_wall",
+   "b": "bn4_unequal_treaty",
+   "similarity": 0.649
+  },
+  {
+   "a": "bn4_liberators_march",
+   "b": "bn4_royal_privilege",
+   "similarity": 0.648
+  },
+  {
+   "a": "bn4_flag_on_their_wall",
+   "b": "bn4_siege_mentality",
+   "similarity": 0.643
+  },
+  {
+   "a": "bn4_hundred_year_lease",
+   "b": "hx4_tithe_of_silence",
+   "similarity": 0.643
+  },
+  {
+   "a": "bn4_hundred_year_lease",
+   "b": "bn4_queens_aegis",
+   "similarity": 0.634
+  },
+  {
+   "a": "bn4_pact_of_the_dawn",
+   "b": "bn4_queens_aegis",
+   "similarity": 0.629
+  },
+  {
+   "a": "bn4_flag_on_their_wall",
+   "b": "bn4_royal_privilege",
+   "similarity": 0.623
+  },
+  {
+   "a": "bn4_queens_aegis",
+   "b": "hx4_tithe_of_silence",
+   "similarity": 0.622
+  },
+  {
+   "a": "bn4_hundred_year_lease",
+   "b": "bn4_year_of_jubilee",
+   "similarity": 0.616
+  },
+  {
+   "a": "bn4_royal_privilege",
+   "b": "bn4_siege_mentality",
+   "similarity": 0.616
+  },
+  {
+   "a": "bn4_flag_on_their_wall",
+   "b": "bn4_pact_of_the_dawn",
+   "similarity": 0.612
+  },
+  {
+   "a": "bn4_queens_aegis",
+   "b": "bn4_royal_privilege",
+   "similarity": 0.609
+  },
+  {
+   "a": "bn4_queens_aegis",
+   "b": "bn4_unequal_treaty",
+   "similarity": 0.605
+  },
+  {
+   "a": "bn4_hundred_year_lease",
+   "b": "bn4_liberators_march",
+   "similarity": 0.603
+  },
+  {
+   "a": "bn4_hundred_year_lease",
+   "b": "bn4_royal_privilege",
+   "similarity": 0.595
+  },
+  {
+   "a": "bn4_queens_aegis",
+   "b": "bn4_siege_mentality",
+   "similarity": 0.593
+  },
+  {
+   "a": "bn4_pact_of_the_dawn",
+   "b": "hx4_tithe_of_silence",
+   "similarity": 0.581
+  },
+  {
+   "a": "bn4_queens_aegis",
+   "b": "bn4_year_of_jubilee",
+   "similarity": 0.581
+  },
+  {
+   "a": "bn4_flag_on_their_wall",
+   "b": "bn4_year_of_jubilee",
+   "similarity": 0.572
+  },
+  {
+   "a": "bn4_meek_inherit",
+   "b": "bn4_unequal_treaty",
+   "similarity": 0.571
+  },
+  {
+   "a": "bn4_hundred_year_lease",
+   "b": "bn4_siege_mentality",
+   "similarity": 0.57
+  },
+  {
+   "a": "bn4_royal_privilege",
+   "b": "hx4_tithe_of_silence",
+   "similarity": 0.569
+  },
+  {
+   "a": "bn4_liberators_march",
+   "b": "bn4_siege_mentality",
+   "similarity": 0.566
+  },
+  {
+   "a": "bn4_liberators_march",
+   "b": "bn4_unequal_treaty",
+   "similarity": 0.56
+  },
+  {
+   "a": "bn4_liberators_march",
+   "b": "hx4_tithe_of_silence",
+   "similarity": 0.551
+  },
+  {
+   "a": "bn4_unequal_treaty",
+   "b": "bn4_year_of_jubilee",
+   "similarity": 0.545
+  },
+  {
+   "a": "bn4_unequal_treaty",
+   "b": "hx4_tithe_of_silence",
+   "similarity": 0.542
+  },
+  {
+   "a": "bn4_royal_privilege",
+   "b": "bn4_unequal_treaty",
+   "similarity": 0.537
+  },
+  {
+   "a": "bn4_siege_mentality",
+   "b": "bn4_unequal_treaty",
+   "similarity": 0.533
+  },
+  {
+   "a": "bn4_siege_mentality",
+   "b": "hx4_tithe_of_silence",
+   "similarity": 0.525
+  },
+  {
+   "a": "bn4_meek_inherit",
+   "b": "hx4_tithe_of_silence",
+   "similarity": 0.523
+  },
+  {
+   "a": "bn4_hundred_year_lease",
+   "b": "bn4_meek_inherit",
+   "similarity": 0.519
+  },
+  {
+   "a": "bn4_liberators_march",
+   "b": "bn4_meek_inherit",
+   "similarity": 0.518
+  },
+  {
+   "a": "bn4_year_of_jubilee",
+   "b": "hx4_tithe_of_silence",
+   "similarity": 0.518
+  },
+  {
+   "a": "bn4_liberators_march",
+   "b": "bn4_pact_of_the_dawn",
+   "similarity": 0.51
+  },
+  {
+   "a": "bn4_meek_inherit",
+   "b": "bn4_siege_mentality",
+   "similarity": 0.497
+  },
+  {
+   "a": "bn4_meek_inherit",
+   "b": "bn4_pact_of_the_dawn",
+   "similarity": 0.495
+  },
+  {
+   "a": "bn4_meek_inherit",
+   "b": "bn4_royal_privilege",
+   "similarity": 0.495
+  },
+  {
+   "a": "bn4_pact_of_the_dawn",
+   "b": "bn4_royal_privilege",
+   "similarity": 0.472
+  },
+  {
+   "a": "bn4_meek_inherit",
+   "b": "bn4_year_of_jubilee",
+   "similarity": 0.452
+  },
+  {
+   "a": "bn4_hundred_year_lease",
+   "b": "bn4_pact_of_the_dawn",
+   "similarity": 0.435
+  },
+  {
+   "a": "bn4_pact_of_the_dawn",
+   "b": "bn4_unequal_treaty",
+   "similarity": 0.427
+  },
+  {
+   "a": "bn4_pact_of_the_dawn",
+   "b": "bn4_year_of_jubilee",
+   "similarity": 0.348
+  },
+  {
+   "a": "bn4_pact_of_the_dawn",
+   "b": "bn4_siege_mentality",
+   "similarity": 0.308
+  }
+ ],
+ "nearest": {
+  "bn4_flag_on_their_wall": {
+   "card": "bn4_queens_aegis",
+   "similarity": 0.822
+  },
+  "bn4_hundred_year_lease": {
+   "card": "bn4_flag_on_their_wall",
+   "similarity": 0.695
+  },
+  "bn4_liberators_march": {
+   "card": "bn4_year_of_jubilee",
+   "similarity": 0.706
+  },
+  "bn4_meek_inherit": {
+   "card": "bn4_flag_on_their_wall",
+   "similarity": 0.671
+  },
+  "bn4_pact_of_the_dawn": {
+   "card": "bn4_queens_aegis",
+   "similarity": 0.629
+  },
+  "bn4_queens_aegis": {
+   "card": "bn4_flag_on_their_wall",
+   "similarity": 0.822
+  },
+  "bn4_royal_privilege": {
+   "card": "bn4_year_of_jubilee",
+   "similarity": 0.769
+  },
+  "bn4_siege_mentality": {
+   "card": "bn4_year_of_jubilee",
+   "similarity": 0.743
+  },
+  "bn4_unequal_treaty": {
+   "card": "bn4_hundred_year_lease",
+   "similarity": 0.663
+  },
+  "bn4_year_of_jubilee": {
+   "card": "bn4_royal_privilege",
+   "similarity": 0.769
+  },
+  "hx4_tithe_of_silence": {
+   "card": "bn4_flag_on_their_wall",
+   "similarity": 0.681
+  }
+ }
+}

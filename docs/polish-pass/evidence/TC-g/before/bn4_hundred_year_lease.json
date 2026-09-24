@@ -1,0 +1,82 @@
+{
+ "id": "bn4_hundred_year_lease",
+ "url": "/dev/plays?id=bn4_hundred_year_lease&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "bn4_hundred_year_lease",
+  "name": "Hundred-Year Lease",
+  "tier": 8,
+  "category": "nerf",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:bn4_hundred_year_lease",
+  "anchor": "board",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, diff-less: no zone source, not an attack",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 3385,
+  "cssEndMs": 3489,
+  "settled": false,
+  "windowMs": 3600,
+  "cssAnimations": 35,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 197,
+  "maxGapMs": 258.2
+ },
+ "raf": {
+  "frames": 199,
+  "medianMs": 16.7,
+  "maxMs": 50,
+  "dropped": 18
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 51,
+  "totalBlockingMs": 0,
+  "entries": [
+   {
+    "atMs": 11,
+    "duration": 51,
+    "blocking": 0,
+    "scripts": [
+     {
+      "duration": 5,
+      "invoker": "TimerHandler:setInterval",
+      "source": ""
+     }
+    ]
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  260,
+  663,
+  1147,
+  1691,
+  2286,
+  2924,
+  3600
+ ],
+ "png": "docs/polish-pass/evidence/TC-g/before/bn4_hundred_year_lease.png",
+ "pngBytes": 24601
+}

@@ -1,0 +1,78 @@
+{
+ "id": "bn4_pact_of_the_dawn",
+ "url": "/dev/plays?id=bn4_pact_of_the_dawn&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "bn4_pact_of_the_dawn",
+  "name": "Pact of the Dawn",
+  "tier": 8,
+  "category": "nerf",
+  "mechanic": "instant",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:bn4_pact_of_the_dawn",
+  "anchor": "board",
+  "source": "frozen",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 55,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2444,
+  "cssEndMs": 3466,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 36,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 203,
+  "maxGapMs": 255.1
+ },
+ "raf": {
+  "frames": 208,
+  "medianMs": 16.7,
+  "maxMs": 50,
+  "dropped": 10
+ },
+ "longAnimationFrames": {
+  "count": 0,
+  "worstMs": 0,
+  "totalBlockingMs": 0,
+  "entries": []
+ },
+ "tiles": [
+  0,
+  188,
+  478,
+  826,
+  1219,
+  1647,
+  2107,
+  2594
+ ],
+ "png": "docs/polish-pass/evidence/TC-g/after/bn4_pact_of_the_dawn.png",
+ "pngBytes": 29933,
+ "off": {
+  "url": "/dev/plays?id=bn4_pact_of_the_dawn&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "docs/polish-pass/evidence/TC-g/after/bn4_pact_of_the_dawn.off.png"
+ }
+}

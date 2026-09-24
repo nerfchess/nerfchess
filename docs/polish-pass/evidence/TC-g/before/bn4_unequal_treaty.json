@@ -1,0 +1,69 @@
+{
+ "id": "bn4_unequal_treaty",
+ "url": "/dev/plays?id=bn4_unequal_treaty&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "bn4_unequal_treaty",
+  "name": "The Unequal Treaty",
+  "tier": 8,
+  "category": "nerf",
+  "mechanic": "instant",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:bn4_unequal_treaty",
+  "anchor": "board",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "line",
+  "staggerMs": 55,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 3383,
+  "cssEndMs": 3500,
+  "settled": false,
+  "windowMs": 3600,
+  "cssAnimations": 36,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 204,
+  "maxGapMs": 272.9
+ },
+ "raf": {
+  "frames": 207,
+  "medianMs": 16.7,
+  "maxMs": 50,
+  "dropped": 11
+ },
+ "longAnimationFrames": {
+  "count": 0,
+  "worstMs": 0,
+  "totalBlockingMs": 0,
+  "entries": []
+ },
+ "tiles": [
+  0,
+  260,
+  663,
+  1147,
+  1691,
+  2286,
+  2924,
+  3600
+ ],
+ "png": "docs/polish-pass/evidence/TC-g/before/bn4_unequal_treaty.png",
+ "pngBytes": 22718
+}

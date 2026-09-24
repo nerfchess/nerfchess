@@ -19,6 +19,11 @@
 // a vault time lock; a tide dial; an appointment ribbon and seal; and an
 // ice-locked dial thawing.
 //
+// PER-CARD RULE SCENES (slice TC-g). The live tier 8 cards no longer lead
+// with a clock mechanism: each plays a scene of its own rule (the ranks,
+// pieces, turn counts and drafts it touches), see that section near the end.
+// Their old art survives only as the small target and entrance cuts.
+//
 // Contract: see the header of sigPlugins.tsx. Self-contained (own inline SVG,
 // own g01HourglassPlays.css), transform/opacity animations only, no import
 // from BoardEffects.tsx (cycle hazard), and only the SigPlugin / SigRole TYPES
@@ -292,15 +297,14 @@ function CrownJubileeScene({ role, delayMs }: SceneProps) {
 }
 
 /* =============================================================================
-   3. Flag on Their Wall (t8) — THE SUNDIAL. Tell: the shadow trembles at the
-   old hour. Strike: a flag is driven in as the gnomon and the shadow SNAPS
-   round the dial toward the far rank. Settle: the hour numerals settle, and
-   the shadow reaches on down the aim vector.
+   3. Flag on Their Wall (t8). Registered as FlagOnTheirWallRule (PER-CARD RULE SCENES, below),
+   whose lead draws the card's own rule. The target and entrance cuts here are the
+   small square-local icons this card has always had.
    ========================================================================== */
 
 const C_FW = { core: "#e0b45c", glow: "#fff4d6", deep: "#33270c" };
 
-function FlagOnTheirWallScene({ role, delayMs }: SceneProps) {
+function FlagOnTheirWallCuts({ role, delayMs }: SceneProps) {
   if (role === "target")
     return (
       <Sq>
@@ -316,22 +320,7 @@ function FlagOnTheirWallScene({ role, delayMs }: SceneProps) {
         <g className="g01-arrive-soft" style={dm(delayMs, 400)}><circle cx="20" cy="24" r="16" fill="none" stroke={C_FW.core} strokeWidth="1.4" strokeDasharray="3 3" /></g>
       </Sq>
     );
-  return (
-    <Aim>
-      <Wash tint="rgba(224,180,92,0.28)" delayMs={delayMs} />
-      <P x={50} y={54} w={22} h={22} cls="g01-tell" style={dm(delayMs, 0)}>
-        <svg viewBox="0 0 100 100" className="block h-full w-full"><circle cx="50" cy="50" r="44" fill="none" stroke={C_FW.core} strokeWidth="4" /><path d="M50 6v8M94 50h-8M50 94v-8M6 50h8" stroke={C_FW.core} strokeWidth="5" {...SJ} /></svg>
-      </P>
-      <P x={50} y={54} w={20} h={4} cls="g01-fw-snap" style={dm(delayMs, 170)}>
-        <svg viewBox="0 0 100 20" className="block h-full w-full" preserveAspectRatio="none"><path d="M0 4h100v12H0z" fill={C_FW.deep} opacity="0.85" /></svg>
-      </P>
-      <P x={50} y={47} w={7} h={17} cls="g01-fw-flag" style={dm(delayMs, 320)}>
-        <svg viewBox="0 0 40 100" className="block h-full w-full"><path d="M12 98V6" stroke={C_FW.glow} strokeWidth="6" {...SJ} /><path d="M12 8h24l-7 10 7 10H12z" fill={C_FW.core} stroke={C_FW.deep} strokeWidth="4" {...SJ} /></svg>
-      </P>
-      <P x={62} y={54} w={24} h={2} cls="g01-reach" style={sv({ background: C_FW.deep, transformOrigin: "0% 50%", ...dm(delayMs, 520) }, { "--g01-len": "calc(var(--fx-len, 3) / 3)" })} />
-      <Drift color={C_FW.glow} delayMs={delayMs + 660} n={4} />
-    </Aim>
-  );
+  return null;
 }
 
 /* =============================================================================
@@ -375,14 +364,14 @@ function GreatArmisticeScene({ role, delayMs }: SceneProps) {
 }
 
 /* =============================================================================
-   5. Hundred-Year Lease (t8) — THE WATER CLOCK BUNGED. Tell: the last drip
-   swells at the spout. Strike: a stoppered bung on a chain is driven home and
-   the drip stops dead. Settle: the held level glows and refuses to fall.
+   5. Hundred-Year Lease (t8). Registered as HundredYearLeaseRule (PER-CARD RULE SCENES, below),
+   whose lead draws the card's own rule. The target and entrance cuts here are the
+   small square-local icons this card has always had.
    ========================================================================== */
 
 const C_HL = { core: "#69c3d8", glow: "#eafaff", deep: "#0e2c36" };
 
-function HundredYearLeaseScene({ role, delayMs }: SceneProps) {
+function HundredYearLeaseCuts({ role, delayMs }: SceneProps) {
   if (role === "target")
     return (
       <Sq>
@@ -398,33 +387,18 @@ function HundredYearLeaseScene({ role, delayMs }: SceneProps) {
         <g className="g01-arrive-soft" style={dm(delayMs, 400)}><path d="M11 20h18" stroke={C_HL.core} strokeWidth="2.4" {...SJ} /></g>
       </Sq>
     );
-  return (
-    <Wide>
-      <Wash tint="rgba(105,195,216,0.28)" delayMs={delayMs} />
-      <P x={50} y={62} w={5} h={5} cls="g01-tell" style={{ background: C_HL.glow, borderRadius: "50%", ...dm(delayMs, 0) }} />
-      <P x={50} y={50} w={18} h={24} cls="g01-pop" style={dm(delayMs, 130)}>
-        <svg viewBox="0 0 80 110" className="block h-full w-full"><path d="M12 6h56v66a28 28 0 0 1-56 0z" fill={C_HL.deep} stroke={C_HL.core} strokeWidth="6" {...SJ} /><path d="M14 56h52" stroke={C_HL.core} strokeWidth="5" /></svg>
-      </P>
-      <P x={50} y={64} w={6} h={9} cls="g01-hl-plug" style={dm(delayMs, 330)}>
-        <svg viewBox="0 0 30 46" className="block h-full w-full"><path d="M6 44V12h18v32z" fill={C_HL.glow} stroke={C_HL.deep} strokeWidth="4" {...SJ} /><path d="M15 12V2" stroke={C_HL.core} strokeWidth="4" {...SJ} /></svg>
-      </P>
-      <P x={50} y={51} w={16} h={1.8} cls="g01-hl-level" style={{ background: C_HL.core, ...dm(delayMs, 520) }} />
-      <P x={50} y={44} w={26} h={1.4} cls="g01-lean" style={sv({ background: C_HL.glow, ...dm(delayMs, 660) }, { "--g01-lean": "calc(var(--fx-side, 1) * -280%)" })} />
-      <Drift color={C_HL.glow} delayMs={delayMs + 720} n={4} />
-    </Wide>
-  );
+  return null;
 }
 
 /* =============================================================================
-   6. Liberator's March (t8) — THE ESCAPEMENT FREED. Tell: the pallet grinds
-   against the tooth it is holding. Strike: the pallet lifts clear and the
-   escape wheel FREE-RUNS, teeth streaming past down the march vector. Settle:
-   the pallet drops back and one last tooth clicks.
+   6. Liberator's March (t8). Registered as LiberatorsMarchRule (PER-CARD RULE SCENES, below),
+   whose lead draws the card's own rule. The target and entrance cuts here are the
+   small square-local icons this card has always had.
    ========================================================================== */
 
 const C_LM = { core: "#d5b978", glow: "#fff4d6", deep: "#2e2410" };
 
-function LiberatorsMarchScene({ role, delayMs }: SceneProps) {
+function LiberatorsMarchCuts({ role, delayMs }: SceneProps) {
   if (role === "target")
     return (
       <Sq>
@@ -440,22 +414,7 @@ function LiberatorsMarchScene({ role, delayMs }: SceneProps) {
         <g className="g01-arrive-soft" style={dm(delayMs, 400)}><circle cx="20" cy="22" r="16" fill="none" stroke={C_LM.core} strokeWidth="1.4" /></g>
       </Sq>
     );
-  return (
-    <Aim>
-      <Wash tint="rgba(213,185,120,0.26)" delayMs={delayMs} />
-      <P x={44} y={52} w={20} h={20} cls="g01-tell" style={dm(delayMs, 0)}>
-        <svg viewBox="0 0 100 100" className="block h-full w-full"><circle cx="50" cy="50" r="42" fill={C_LM.deep} stroke={C_LM.core} strokeWidth="5" strokeDasharray="9 8" /><circle cx="50" cy="50" r="9" fill={C_LM.core} /></svg>
-      </P>
-      <P x={44} y={52} w={20} h={20} cls="g01-lm-wheel" style={dm(delayMs, 180)}>
-        <svg viewBox="0 0 100 100" className="block h-full w-full"><circle cx="50" cy="50" r="42" fill="none" stroke={C_LM.core} strokeWidth="5" strokeDasharray="9 8" /><path d="M50 12v12M88 50H76M50 88V76M12 50h12" stroke={C_LM.glow} strokeWidth="5" {...SJ} /></svg>
-      </P>
-      <P x={44} y={38} w={9} h={9} cls="g01-lm-pallet" style={dm(delayMs, 300)}>
-        <svg viewBox="0 0 50 50" className="block h-full w-full"><path d="M4 6l22 16-8 12-20-14z" fill={C_LM.glow} stroke={C_LM.deep} strokeWidth="4" {...SJ} /></svg>
-      </P>
-      {[0, 1, 2, 3].map((i) => (
-        <P key={i} x={58} y={52} w={3.4} h={3.4} cls="g01-fling" style={sv(dm(delayMs, 420 + i * 80), { "--g01-mx": `${200 + i * 90}%`, "--g01-my": "0%", "--g01-mr": "180deg" })} ><svg viewBox="0 0 20 20" className="block h-full w-full"><path d="M10 2l7 16H3z" fill={C_LM.core} stroke={C_LM.deep} strokeWidth="2" {...SJ} /></svg></P> ))} <P x={62} y={52} w={22} h={1.6} cls="g01-reach" style={sv({ background: C_LM.glow, transformOrigin: "0% 50%", ...dm(delayMs, 700) }, { "--g01-len": "calc(var(--fx-len, 3) / 3)" })} />
-    </Aim>
-  );
+  return null;
 }
 
 /* =============================================================================
@@ -505,15 +464,14 @@ function MaskedBallScene({ role, delayMs }: SceneProps) {
 }
 
 /* =============================================================================
-   8. The Meek Inherit (t8) — THE DRIVING WEIGHTS. A weight clock only runs
-   while a weight still has somewhere to fall. Tell: both chains creak. Strike:
-   the LIGHT weight sinks and the train turns; the heavy one is already on the
-   floor. Settle: the beam tips level and the train stalls.
+   8. The Meek Inherit (t8). Registered as MeekInheritRule (PER-CARD RULE SCENES, below),
+   whose lead draws the card's own rule. The target and entrance cuts here are the
+   small square-local icons this card has always had.
    ========================================================================== */
 
 const C_MI = { core: "#a8b8a0", glow: "#f6f2df", deep: "#1f2a1c" };
 
-function MeekInheritScene({ role, delayMs }: SceneProps) {
+function MeekInheritCuts({ role, delayMs }: SceneProps) {
   if (role === "target")
     return (
       <Sq>
@@ -529,26 +487,7 @@ function MeekInheritScene({ role, delayMs }: SceneProps) {
         <g className="g01-arrive-soft" style={dm(delayMs, 400)}><path d="M7 35h26" stroke={C_MI.glow} strokeWidth="2.2" {...SJ} /></g>
       </Sq>
     );
-  return (
-    <Wide>
-      <Wash tint="rgba(168,184,160,0.26)" delayMs={delayMs} />
-      <Band color="rgba(31,42,28,0.5)" delayMs={delayMs + 40} y={70} h={4} />
-      <P x={50} y={38} w={26} h={3} cls="g01-tell" style={{ background: C_MI.deep, ...dm(delayMs, 0) }} />
-      <P x={42} y={54} w={3} h={30} style={{ background: C_MI.core, opacity: 0.6 }} />
-      <P x={58} y={54} w={3} h={30} style={{ background: C_MI.core, opacity: 0.6 }} />
-      <P x={42} y={62} w={9} h={11} cls="g01-mi-weight" style={sv(dm(delayMs, 180), { "--g01-dy": "150%" })}>
-        <svg viewBox="0 0 44 54" className="block h-full w-full"><path d="M10 4h24l8 46H2z" fill={C_MI.glow} stroke={C_MI.deep} strokeWidth="4" {...SJ} /></svg>
-      </P>
-      <P x={58} y={66} w={11} h={13} cls="g01-pop" style={dm(delayMs, 140)}>
-        <svg viewBox="0 0 54 64" className="block h-full w-full"><path d="M12 4h30l10 56H2z" fill={C_MI.deep} stroke={C_MI.core} strokeWidth="4" {...SJ} /></svg>
-      </P>
-      <P x={50} y={38} w={22} h={22} cls="g01-mi-train" style={dm(delayMs, 380)}>
-        <svg viewBox="0 0 100 100" className="block h-full w-full"><circle cx="50" cy="50" r="34" fill="none" stroke={C_MI.glow} strokeWidth="5" strokeDasharray="7 9" /><path d="M50 22v28l18 10" fill="none" stroke={C_MI.core} strokeWidth="5" {...SJ} /></svg>
-      </P>
-      <P x={50} y={46} w={28} h={1.4} cls="g01-lean" style={sv({ background: C_MI.glow, ...dm(delayMs, 640) }, { "--g01-lean": "calc(var(--fx-side, 1) * -220%)" })} />
-      <Drift color={C_MI.glow} delayMs={delayMs + 700} n={4} />
-    </Wide>
-  );
+  return null;
 }
 
 /* =============================================================================
@@ -596,15 +535,14 @@ function MidasCharterScene({ role, delayMs }: SceneProps) {
 }
 
 /* =============================================================================
-   10. Pact of the Dawn (t8) — DAWN CALLED EARLY. Tell: the weathervane
-   cockerel turns into the wind. Strike: the night band is dragged off the
-   board and the sun disc is forced up over the horizon. Settle: the crow rolls
-   out in rings and the first light leans away from the caster.
+   10. Pact of the Dawn (t8). Registered as PactOfTheDawnRule (PER-CARD RULE SCENES, below),
+   whose lead draws the card's own rule. The target and entrance cuts here are the
+   small square-local icons this card has always had.
    ========================================================================== */
 
 const C_PD = { core: "#ffab5e", glow: "#fff3d8", deep: "#2b1a3c" };
 
-function PactOfTheDawnScene({ role, delayMs }: SceneProps) {
+function PactOfTheDawnCuts({ role, delayMs }: SceneProps) {
   if (role === "target")
     return (
       <Sq>
@@ -620,41 +558,18 @@ function PactOfTheDawnScene({ role, delayMs }: SceneProps) {
         <g className="g01-arrive-soft" style={dm(delayMs, 400)}><circle cx="20" cy="22" r="15" fill="none" stroke={C_PD.core} strokeWidth="1.6" /></g>
       </Sq>
     );
-  return (
-    <Wide>
-      <Wash tint="rgba(255,171,94,0.3)" delayMs={delayMs} />
-      <BoardFrame>
-        <span
-          className="g01-pd-night absolute block"
-          style={{ left: 0, top: 0, width: "100%", height: "56%", background: "rgba(43,26,60,0.72)", animationDelay: `${delayMs}ms` }}
-        />
-      </BoardFrame>
-      <Band color="rgba(255,171,94,0.55)" delayMs={delayMs + 120} y={54} h={2.4} />
-      <P x={50} y={41} w={11} h={20} cls="g01-tell" style={dm(delayMs, 0)}>
-        <svg viewBox="0 0 54 100" className="block h-full w-full"><path d="M22 96V34L34 8l6 16 12 6-14 10v56z" fill={C_PD.deep} stroke={C_PD.core} strokeWidth="5" {...SJ} /></svg>
-      </P>
-      <P x={50} y={56} w={19} h={19} cls="g01-pd-sun" style={dm(delayMs, 260)}>
-        <svg viewBox="0 0 100 100" className="block h-full w-full"><circle cx="50" cy="50" r="30" fill={C_PD.core} stroke={C_PD.glow} strokeWidth="5" /></svg>
-      </P>
-      <P x={50} y={41} w={26} h={12} cls="g01-pd-crow" style={dm(delayMs, 420)}>
-        <svg viewBox="0 0 120 56" className="block h-full w-full"><path d="M18 28q22-18 44 0t44 0" fill="none" stroke={C_PD.glow} strokeWidth="5" {...SJ} /></svg>
-      </P>
-      <P x={50} y={62} w={30} h={1.6} cls="g01-lean" style={sv({ background: C_PD.glow, ...dm(delayMs, 660) }, { "--g01-lean": "calc(var(--fx-side, 1) * -300%)" })} />
-      <Drift color={C_PD.glow} delayMs={delayMs + 720} n={4} />
-    </Wide>
-  );
+  return null;
 }
 
 /* =============================================================================
-   11. Queen's Aegis (t8) — THE ORRERY. Tell: the brass arm shudders on its
-   collar. Strike: the queen-planet swings a full orbit and the gear train
-   under it turns with her. Settle: she is locked into the ring, and while she
-   sits in it the whole train holds its rhythm.
+   11. Queen's Aegis (t8). Registered as QueensAegisRule (PER-CARD RULE SCENES, below),
+   whose lead draws the card's own rule. The target and entrance cuts here are the
+   small square-local icons this card has always had.
    ========================================================================== */
 
 const C_QA = { core: "#7fb8e6", glow: "#eef6ff", deep: "#132437" };
 
-function QueensAegisScene({ role, delayMs }: SceneProps) {
+function QueensAegisCuts({ role, delayMs }: SceneProps) {
   if (role === "target")
     return (
       <Sq>
@@ -670,40 +585,18 @@ function QueensAegisScene({ role, delayMs }: SceneProps) {
         <g className="g01-arrive-soft" style={dm(delayMs, 400)}><path d="M13 9l3 5 4-6 4 6 3-5" fill="none" stroke={C_QA.core} strokeWidth="2" {...SJ} /></g>
       </Sq>
     );
-  return (
-    <Wide>
-      <Wash tint="rgba(127,184,230,0.28)" delayMs={delayMs} />
-      <Rim color="rgba(127,184,230,0.5)" delayMs={delayMs + 60} />
-      <P x={50} y={52} w={26} h={13} cls="g01-tell" style={dm(delayMs, 0)}>
-        <svg viewBox="0 0 130 66" className="block h-full w-full"><ellipse cx="65" cy="33" rx="60" ry="27" fill="none" stroke={C_QA.core} strokeWidth="5" /></svg>
-      </P>
-      <P x={50} y={52} w={9} h={9} cls="g01-pop" style={dm(delayMs, 150)}>
-        <svg viewBox="0 0 50 50" className="block h-full w-full"><circle cx="25" cy="25" r="18" fill={C_QA.deep} stroke={C_QA.core} strokeWidth="5" /><path d="M12 20l4 8 9-12 9 12 4-8" fill="none" stroke={C_QA.glow} strokeWidth="4" {...SJ} /></svg>
-      </P>
-      <P x={50} y={52} w={26} h={13} cls="g01-qa-orbit" style={dm(delayMs, 300)}>
-        <span className="absolute block" style={{ left: "92%", top: "34%", width: "16%", height: "32%", borderRadius: "50%", background: C_QA.glow }} />
-      </P>
-      <P x={38} y={64} w={10} h={10} cls="g01-qa-gear" style={dm(delayMs, 460)}>
-        <svg viewBox="0 0 50 50" className="block h-full w-full"><circle cx="25" cy="25" r="19" fill="none" stroke={C_QA.core} strokeWidth="6" strokeDasharray="6 6" /></svg>
-      </P>
-      <P x={62} y={64} w={8} h={8} cls="g01-qa-gear" style={dm(delayMs, 540)}>
-        <svg viewBox="0 0 50 50" className="block h-full w-full"><circle cx="25" cy="25" r="19" fill="none" stroke={C_QA.glow} strokeWidth="6" strokeDasharray="6 6" /></svg>
-      </P>
-      <P x={50} y={44} w={24} h={1.4} cls="g01-lean" style={sv({ background: C_QA.glow, ...dm(delayMs, 680) }, { "--g01-lean": "calc(var(--fx-side, 1) * -240%)" })} />
-    </Wide>
-  );
+  return null;
 }
 
 /* =============================================================================
-   12. Royal Privilege (t8) — THE WINDING KEY. Tell: the key seats itself on
-   the square arbor. Strike: two hard turns, and the mainspring coil visibly
-   tightens under them. Settle: the ratchet clicks back a tooth and the two
-   bought turns glow on the barrel.
+   12. Royal Privilege (t8). Registered as RoyalPrivilegeRule (PER-CARD RULE SCENES, below),
+   whose lead draws the card's own rule. The target and entrance cuts here are the
+   small square-local icons this card has always had.
    ========================================================================== */
 
 const C_RP = { core: "#d9a3e6", glow: "#fff2e8", deep: "#2b1436" };
 
-function RoyalPrivilegeScene({ role, delayMs }: SceneProps) {
+function RoyalPrivilegeCuts({ role, delayMs }: SceneProps) {
   if (role === "target")
     return (
       <Sq>
@@ -719,32 +612,7 @@ function RoyalPrivilegeScene({ role, delayMs }: SceneProps) {
         <g className="g01-arrive-soft" style={dm(delayMs, 400)}><circle cx="20" cy="22" r="15" fill="none" stroke={C_RP.core} strokeWidth="1.5" /></g>
       </Sq>
     );
-  return (
-    <Wide>
-      <Wash tint="rgba(217,163,230,0.28)" delayMs={delayMs} />
-      <P x={50} y={52} w={22} h={22} cls="g01-tell" style={dm(delayMs, 0)}>
-        <svg viewBox="0 0 100 100" className="block h-full w-full"><circle cx="50" cy="50" r="44" fill={C_RP.deep} stroke={C_RP.core} strokeWidth="5" /></svg>
-      </P>
-      <P x={50} y={52} w={18} h={18} cls="g01-rp-coil" style={dm(delayMs, 180)}>
-        <svg viewBox="0 0 100 100" className="block h-full w-full">
-          <path
-            d="M50 12a38 38 0 1 1-26 66 30 30 0 1 0 20-52 22 22 0 1 1 14 40"
-            fill="none"
-            stroke={C_RP.glow}
-            strokeWidth="5"
-            {...SJ}
-          />
-        </svg>
-      </P>
-      <P x={50} y={52} w={10} h={16} cls="g01-rp-key" style={dm(delayMs, 340)}>
-        <svg viewBox="0 0 50 80" className="block h-full w-full"><circle cx="25" cy="20" r="14" fill="none" stroke={C_RP.core} strokeWidth="7" /><path d="M25 34v40M14 62h22" stroke={C_RP.core} strokeWidth="7" {...SJ} /></svg>
-      </P>
-      {[0, 1].map((i) => (
-        <P key={i} x={50} y={52} w={4} h={4} cls="g01-fling" style={sv(dm(delayMs, 540 + i * 110), { "--g01-mx": i === 0 ? "-330%" : "330%", "--g01-my": "-190%", "--g01-mr": "180deg", background: C_RP.glow, borderRadius: "50%" })} />
-      ))}
-      <P x={50} y={44} w={24} h={1.4} cls="g01-lean" style={sv({ background: C_RP.core, ...dm(delayMs, 700) }, { "--g01-lean": "calc(var(--fx-side, 1) * -260%)" })} />
-    </Wide>
-  );
+  return null;
 }
 
 /* =============================================================================
@@ -795,15 +663,14 @@ function RoyalWeScene({ role, delayMs }: SceneProps) {
 }
 
 /* =============================================================================
-   14. Siege Mentality (t8) — THE WATCH DRUM. Tell: the drumhead trembles under
-   the raised stick. Strike: the stick comes down, and three notches are burned
-   into the rim, one per turn bought back. Settle: the head rings itself flat
-   and the notches cool.
+   14. Siege Mentality (t8). Registered as SiegeMentalityRule (PER-CARD RULE SCENES, below),
+   whose lead draws the card's own rule. The target and entrance cuts here are the
+   small square-local icons this card has always had.
    ========================================================================== */
 
 const C_SM = { core: "#d98a5a", glow: "#ffe9cf", deep: "#331a0e" };
 
-function SiegeMentalityScene({ role, delayMs }: SceneProps) {
+function SiegeMentalityCuts({ role, delayMs }: SceneProps) {
   if (role === "target")
     return (
       <Sq>
@@ -819,37 +686,18 @@ function SiegeMentalityScene({ role, delayMs }: SceneProps) {
         <g className="g01-arrive-soft" style={dm(delayMs, 400)}><ellipse cx="20" cy="17" rx="17" ry="10" fill="none" stroke={C_SM.core} strokeWidth="1.6" /></g>
       </Sq>
     );
-  return (
-    <Wide>
-      <Wash tint="rgba(217,138,90,0.28)" delayMs={delayMs} />
-      <P x={50} y={58} w={24} h={16} cls="g01-tell" style={dm(delayMs, 0)}>
-        <svg viewBox="0 0 120 80" className="block h-full w-full"><ellipse cx="60" cy="24" rx="54" ry="20" fill={C_SM.deep} stroke={C_SM.core} strokeWidth="6" /><path d="M6 24v28a54 20 0 0 0 108 0V24" fill={C_SM.deep} stroke={C_SM.core} strokeWidth="6" {...SJ} /><path d="M14 30l18 26M46 22l18 32M78 22l18 30" stroke={C_SM.core} strokeWidth="4" {...SJ} /></svg>
-      </P>
-      <P x={62} y={40} w={18} h={16} cls="g01-sm-stick" style={dm(delayMs, 160)}>
-        <svg viewBox="0 0 90 80" className="block h-full w-full"><path d="M84 6L22 66" stroke={C_SM.glow} strokeWidth="8" {...SJ} /><circle cx="20" cy="68" r="9" fill={C_SM.glow} /></svg>
-      </P>
-      {[0, 1, 2].map((i) => (
-        <P key={i} x={42 + i * 8} y={52} w={2.6} h={5} cls="g01-sm-notch" style={{ background: C_SM.glow, animationDelay: `calc(${delayMs + 380}ms + var(--fx-index, 0) * 40ms + ${i * 90}ms)` }} />
-      ))}
-      <P x={50} y={58} w={30} h={20} cls="g01-flash" style={dm(delayMs, 360)}>
-        <svg viewBox="0 0 140 90" className="block h-full w-full"><ellipse cx="70" cy="30" rx="64" ry="24" fill="none" stroke={C_SM.glow} strokeWidth="5" /></svg>
-      </P>
-      <P x={50} y={44} w={26} h={1.4} cls="g01-lean" style={sv({ background: C_SM.glow, ...dm(delayMs, 660) }, { "--g01-lean": "calc(var(--fx-side, 1) * -240%)" })} />
-      <Drift color={C_SM.glow} delayMs={delayMs + 720} n={4} />
-    </Wide>
-  );
+  return null;
 }
 
 /* =============================================================================
-   15. The Unequal Treaty (t8) — TWO CANDLE CLOCKS. Tell: both wicks catch at
-   once, honestly enough. Strike: the flames take, and the near candle is a
-   head taller than the far one — ten hours against three. Settle: the short
-   one gutters out first and its wax sags over the shelf.
+   15. The Unequal Treaty (t8). Registered as UnequalTreatyRule (PER-CARD RULE SCENES, below),
+   whose lead draws the card's own rule. The target and entrance cuts here are the
+   small square-local icons this card has always had.
    ========================================================================== */
 
 const C_UT = { core: "#f0a05a", glow: "#fff2d2", deep: "#2f1a0c" };
 
-function UnequalTreatyScene({ role, delayMs }: SceneProps) {
+function UnequalTreatyCuts({ role, delayMs }: SceneProps) {
   if (role === "target")
     return (
       <Sq>
@@ -865,38 +713,18 @@ function UnequalTreatyScene({ role, delayMs }: SceneProps) {
         <g className="g01-arrive-soft" style={dm(delayMs, 400)}><path d="M6 36h28" stroke={C_UT.core} strokeWidth="2.2" {...SJ} /></g>
       </Sq>
     );
-  return (
-    <Wide>
-      <Wash tint="rgba(240,160,90,0.3)" delayMs={delayMs} />
-      <Band color="rgba(47,26,12,0.6)" delayMs={delayMs + 40} y={68} h={3.4} />
-      <P x={43} y={56} w={7} h={24} cls="g01-tell" style={dm(delayMs, 0)}>
-        <svg viewBox="0 0 34 110" className="block h-full w-full"><rect x="4" y="6" width="26" height="100" fill={C_UT.glow} stroke={C_UT.deep} strokeWidth="5" /><path d="M8 30h22M8 52h22M8 74h22" stroke={C_UT.deep} strokeWidth="3" /></svg>
-      </P>
-      <P x={57} y={62} w={7} h={13} cls="g01-pop" style={dm(delayMs, 120)}>
-        <svg viewBox="0 0 34 62" className="block h-full w-full"><rect x="4" y="6" width="26" height="52" fill={C_UT.glow} stroke={C_UT.deep} strokeWidth="5" /><path d="M8 26h22" stroke={C_UT.deep} strokeWidth="3" /></svg>
-      </P>
-      <P x={43} y={42} w={4.6} h={6} cls="g01-ut-flame-a" style={dm(delayMs, 230)}>
-        <svg viewBox="0 0 24 32" className="block h-full w-full"><path d="M12 2c6 8 2 11 2 14a6 6 0 0 1-12 0c0-5 6-6 10-14z" fill={C_UT.core} /></svg>
-      </P>
-      <P x={57} y={53} w={4.6} h={6} cls="g01-ut-flame-b" style={dm(delayMs, 300)}>
-        <svg viewBox="0 0 24 32" className="block h-full w-full"><path d="M12 2c6 8 2 11 2 14a6 6 0 0 1-12 0c0-5 6-6 10-14z" fill={C_UT.core} /></svg>
-      </P>
-      <P x={57} y={68} w={9} h={3} cls="g01-lean" style={sv({ background: C_UT.glow, borderRadius: "50%", ...dm(delayMs, 640) }, { "--g01-lean": "calc(var(--fx-side, 1) * -120%)" })} />
-      <Drift color={C_UT.glow} delayMs={delayMs + 700} n={4} />
-    </Wide>
-  );
+  return null;
 }
 
 /* =============================================================================
-   16. Year of Jubilee (t8) — THE CALENDAR WHEEL. Tell: the pawl lifts off the
-   toothed rim. Settle it and nothing moves; lift it and the wheel is free.
-   Strike: eighteen notches ratchet past under a ribbon marker. Settle: the
-   pawl drops back into a new tooth and the ribbon lies down.
+   16. Year of Jubilee (t8). Registered as YearOfJubileeRule (PER-CARD RULE SCENES, below),
+   whose lead draws the card's own rule. The target and entrance cuts here are the
+   small square-local icons this card has always had.
    ========================================================================== */
 
 const C_YJ = { core: "#8ed6a0", glow: "#f0ffe8", deep: "#123322" };
 
-function YearOfJubileeScene({ role, delayMs }: SceneProps) {
+function YearOfJubileeCuts({ role, delayMs }: SceneProps) {
   if (role === "target")
     return (
       <Sq>
@@ -912,25 +740,7 @@ function YearOfJubileeScene({ role, delayMs }: SceneProps) {
         <g className="g01-arrive-soft" style={dm(delayMs, 400)}><path d="M20 22v-8" stroke={C_YJ.core} strokeWidth="2.4" {...SJ} /></g>
       </Sq>
     );
-  return (
-    <Wide>
-      <Wash tint="rgba(142,214,160,0.28)" delayMs={delayMs} />
-      <Rim color="rgba(142,214,160,0.45)" delayMs={delayMs + 60} />
-      <P x={50} y={54} w={24} h={24} cls="g01-tell" style={dm(delayMs, 0)}>
-        <svg viewBox="0 0 100 100" className="block h-full w-full"><circle cx="50" cy="50" r="44" fill={C_YJ.deep} stroke={C_YJ.core} strokeWidth="5" strokeDasharray="6 9" /></svg>
-      </P>
-      <P x={50} y={54} w={20} h={20} cls="g01-yj-wheel" style={dm(delayMs, 170)}>
-        <svg viewBox="0 0 100 100" className="block h-full w-full"><circle cx="50" cy="50" r="38" fill="none" stroke={C_YJ.glow} strokeWidth="5" strokeDasharray="5 8" /><path d="M50 14v18M86 50H68M50 86V68M14 50h18" stroke={C_YJ.core} strokeWidth="5" {...SJ} /></svg>
-      </P>
-      <P x={50} y={38} w={7} h={8} cls="g01-yj-pawl" style={dm(delayMs, 300)}>
-        <svg viewBox="0 0 40 44" className="block h-full w-full"><path d="M20 42L6 8h28z" fill={C_YJ.glow} stroke={C_YJ.deep} strokeWidth="4" {...SJ} /></svg>
-      </P>
-      <P x={50} y={54} w={5} h={22} cls="g01-yj-ribbon" style={dm(delayMs, 460)}>
-        <svg viewBox="0 0 26 110" className="block h-full w-full"><path d="M4 2h18v88l-9-10-9 10z" fill={C_YJ.core} stroke={C_YJ.deep} strokeWidth="4" {...SJ} /></svg>
-      </P>
-      <P x={50} y={44} w={26} h={1.4} cls="g01-lean" style={sv({ background: C_YJ.glow, ...dm(delayMs, 660) }, { "--g01-lean": "calc(var(--fx-side, 1) * -250%)" })} />
-    </Wide>
-  );
+  return null;
 }
 
 /* =============================================================================
@@ -1067,15 +877,14 @@ function RoyalLockdownScene({ role, delayMs }: SceneProps) {
 }
 
 /* =============================================================================
-   20. Tithe of Silence (t8) — THE MUFFLED CLAPPER. Tell: the clapper draws
-   back to strike. Strike: a wrapped cloth is bound round it and the blow lands
-   on wool: the bell shakes hard and nothing comes out. Settle: two taxed
-   shouts leave as flattened, silent rings.
+   20. Tithe of Silence (t8). Registered as TitheOfSilenceRule (PER-CARD RULE SCENES, below),
+   whose lead draws the card's own rule. The target and entrance cuts here are the
+   small square-local icons this card has always had.
    ========================================================================== */
 
 const C_TS = { core: "#9fb0c9", glow: "#f4f0e4", deep: "#171f2c" };
 
-function TitheOfSilenceScene({ role, delayMs }: SceneProps) {
+function TitheOfSilenceCuts({ role, delayMs }: SceneProps) {
   if (role === "target")
     return (
       <Sq>
@@ -1091,26 +900,7 @@ function TitheOfSilenceScene({ role, delayMs }: SceneProps) {
         <g className="g01-arrive-soft" style={dm(delayMs, 400)}><path d="M7 9l26 26" stroke={C_TS.core} strokeWidth="2.2" {...SJ} /></g>
       </Sq>
     );
-  return (
-    <Wide>
-      <Wash tint="rgba(159,176,201,0.3)" delayMs={delayMs} />
-      <P x={50} y={50} w={19} h={19} cls="g01-tell" style={dm(delayMs, 0)}>
-        <svg viewBox="0 0 90 90" className="block h-full w-full"><path d="M45 8c24 0 30 20 30 42v24H15V50C15 28 21 8 45 8z" fill={C_TS.deep} stroke={C_TS.core} strokeWidth="6" {...SJ} /></svg>
-      </P>
-      <P x={50} y={60} w={5} h={9} cls="g01-ts-shake" style={dm(delayMs, 160)}>
-        <svg viewBox="0 0 26 46" className="block h-full w-full"><path d="M13 2v26" stroke={C_TS.core} strokeWidth="5" {...SJ} /><circle cx="13" cy="36" r="8" fill={C_TS.core} /></svg>
-      </P>
-      <P x={50} y={62} w={13} h={7} cls="g01-ts-cloth" style={dm(delayMs, 340)}>
-        <svg viewBox="0 0 70 36" className="block h-full w-full"><path d="M6 8q29 16 58 0l6 14q-35 20-70 0z" fill={C_TS.glow} stroke={C_TS.deep} strokeWidth="4" {...SJ} /></svg>
-      </P>
-      {[0, 1].map((i) => (
-        <P key={i} x={50} y={50} w={26} h={8} cls="g01-ts-mute" style={dm(delayMs, 500 + i * 130)}>
-          <svg viewBox="0 0 130 40" className="block h-full w-full" preserveAspectRatio="none"><ellipse cx="65" cy="20" rx="62" ry="16" fill="none" stroke={C_TS.glow} strokeWidth="4" strokeDasharray="8 10" /></svg>
-        </P>
-      ))}
-      <P x={50} y={42} w={24} h={1.4} cls="g01-lean" style={sv({ background: C_TS.glow, ...dm(delayMs, 700) }, { "--g01-lean": "calc(var(--fx-side, 1) * -260%)" })} />
-    </Wide>
-  );
+  return null;
 }
 
 /* =============================================================================
@@ -1683,6 +1473,596 @@ function SecondSpringScene({ role, delayMs }: SceneProps) {
 }
 
 /* =============================================================================
+   PER-CARD RULE SCENES (slice TC-g). The leads below replace the time-machine
+   metaphors these cards used to share with the rest of the batch: each one
+   draws what its own card does, on the ranks and pieces the rule names. They
+   are laid out on <Brd>, whose 0..100% is exactly the board, and read their
+   side from --fx-side (+1 when the caster sits at the bottom), so the caster's
+   back rank is rank 0 and the opponent's is rank 7 whichever way the board is
+   turned. Target and entrance cuts stay square-local, as before.
+   ========================================================================== */
+
+/** Chessman silhouettes on a 10 x 10 box, for the pieces a rule names. */
+const CHESSMAN = {
+  p: "M5 1.2 C6.2 1.2 7 2 7 3 C7 3.7 6.6 4.3 6 4.6 L7 8 H3 L4 4.6 C3.4 4.3 3 3.7 3 3 C3 2 3.8 1.2 5 1.2 Z M2.4 8.6 H7.6 V9.6 H2.4 Z",
+  r: "M2.6 1.4 H3.8 V2.6 H4.6 V1.4 H5.4 V2.6 H6.2 V1.4 H7.4 V3.8 H6.8 L7.2 7.6 H2.8 L3.2 3.8 H2.6 Z M2.2 8.4 H7.8 V9.6 H2.2 Z",
+  n: "M2.8 8.2 C2.8 5.4 3.8 4 5.4 3.2 L5 1.6 L6.4 2.6 L7.2 2.4 C7.9 3 8.1 4 7.7 4.9 L6.6 4.6 L6.2 4 C6.5 5.6 6.4 7 7 8.2 Z M2.4 8.8 H7.6 V9.8 H2.4 Z",
+  b: "M5 1 C6.4 2 7 3.4 7 4.6 C7 5.8 6.2 6.6 5 6.6 C3.8 6.6 3 5.8 3 4.6 C3 3.4 3.6 2 5 1 Z M3.4 7.2 H6.6 L7.2 8.2 H2.8 Z M2.2 8.8 H7.8 V9.8 H2.2 Z",
+  q: "M2.4 3.2 L3.4 5 L4.2 2.6 L5 4.6 L5.8 2.6 L6.6 5 L7.6 3.2 L7 7.4 H3 Z M2.6 8 H7.4 V9.2 H2.6 Z",
+  k: "M4.6 1 H5.4 V2 H6.4 V2.8 H5.4 V3.8 H4.6 V2.8 H3.6 V2 H4.6 Z M3.4 4.4 H6.6 L7.2 8 H2.8 Z M2.4 8.6 H7.6 V9.8 H2.4 Z",
+} as const;
+type Kind = keyof typeof CHESSMAN;
+
+function Man({ kind, fill, stroke }: { kind: Kind; fill: string; stroke: string }) {
+  return (
+    <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+      <path d={CHESSMAN[kind]} fill={fill} stroke={stroke} strokeWidth="0.45" {...SJ} />
+    </svg>
+  );
+}
+
+/** The board-true layer: 0..100% is exactly the board (a BoardFrame inside
+ *  the scene canvas, which is what its percentages resolve against). */
+function Brd({ children }: { children: ReactNode }) {
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        <span className="g01 absolute inset-0 block">{children}</span>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Centre of rank `r`, counted from the caster's back rank (0) to the
+ *  opponent's (7), as a board percentage. Fractions sit between ranks. */
+function rk(r: number): string {
+  return `calc(50% + var(--fx-side, 1) * ${(3.5 - r) * 12.5}%)`;
+}
+
+/** Centre of screen column `c` (0 is the left edge), as a board percentage. */
+function cl(c: number): string {
+  return `${(c + 0.5) * 12.5}%`;
+}
+
+/** The caster's king and queen files (e and d), whichever way the board is
+ *  turned: screen columns 4 and 3 with the caster at the bottom, 3 and 4 when
+ *  at the top. */
+const KING_X = "calc(50% + var(--fx-side, 1) * 6.25%)";
+const QUEEN_X = "calc(50% - var(--fx-side, 1) * 6.25%)";
+
+/** A prop centred on (x, y), `w` x `h` in board percent, starting at
+ *  `delayMs`. `v` carries the verb's own custom properties. */
+function Q({
+  x,
+  y,
+  w,
+  h,
+  cls,
+  delayMs,
+  v,
+  style,
+  children,
+}: {
+  x: string;
+  y: string;
+  w: number;
+  h: number;
+  cls: string;
+  delayMs: number;
+  v?: Record<string, string>;
+  style?: CSSProperties;
+  children?: ReactNode;
+}) {
+  return (
+    <span
+      className={`${cls} absolute block`}
+      style={
+        {
+          left: `calc(${x} - ${w / 2}%)`,
+          top: `calc(${y} - ${h / 2}%)`,
+          width: `${w}%`,
+          height: `${h}%`,
+          animationDelay: `${delayMs}ms`,
+          ...style,
+          ...v,
+        } as CSSProperties
+      }
+    >
+      {children}
+    </span>
+  );
+}
+
+/** The nerf itself: an iron cuff on the caster's side that springs open when
+ *  the card suspends it. The lid swings about its hinge on the left. */
+function NerfCuff({ x, y, c, delayMs, gd = "1.6s" }: { x: string; y: string; c: { core: string; glow: string; deep: string }; delayMs: number; gd?: string }) {
+  return (
+    <>
+      <Q x={x} y={y} w={9} h={9} cls="g01-r-in" delayMs={delayMs} v={{ "--gd": gd, "--s0": "0.8" }}>
+        <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+          <path d="M4 11a6 6 0 0 0 12 0" fill="none" stroke={c.deep} strokeWidth="4.4" {...SJ} />
+          <path d="M4 11a6 6 0 0 0 12 0" fill="none" stroke={c.core} strokeWidth="2.2" {...SJ} />
+          <path d="M10 17v2.4" stroke={c.core} strokeWidth="1.6" {...SJ} />
+        </svg>
+      </Q>
+      <Q x={x} y={y} w={9} h={9} cls="g01-r-open" delayMs={delayMs} v={{ "--gd": gd, "--ra": "-70deg" }} style={{ transformOrigin: "20% 55%" }}>
+        <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+          <path d="M4 11a6 6 0 0 1 12 0" fill="none" stroke={c.deep} strokeWidth="4.4" {...SJ} />
+          <path d="M4 11a6 6 0 0 1 12 0" fill="none" stroke={c.core} strokeWidth="2.2" {...SJ} />
+          <circle cx="16" cy="11" r="1.4" fill={c.glow} />
+        </svg>
+      </Q>
+    </>
+  );
+}
+
+/** `n` tally ticks across the board at rank `r`, from `x0`% to `x1`%: one per
+ *  turn the rule counts. The run takes about 420ms whatever `n` is. */
+function Tally({ n, r, x0 = 14, x1 = 86, color, delayMs, cls = "g01-r-pip", gd = "1.3s", h = 3.4 }: { n: number; r: number; x0?: number; x1?: number; color: string; delayMs: number; cls?: string; gd?: string; h?: number }) {
+  const step = n > 1 ? (x1 - x0) / (n - 1) : 0;
+  const w = Math.min(2.2, Math.max(0.7, step * 0.45));
+  return (
+    <>
+      {Array.from({ length: n }, (_, i) => (
+        <Q key={i} x={`${n > 1 ? x0 + i * step : (x0 + x1) / 2}%`} y={rk(r)} w={w} h={h} cls={cls} delayMs={delayMs + Math.round((i * 420) / Math.max(1, n - 1))} v={{ "--gd": gd }} style={{ background: color, borderRadius: "1px" }} />
+      ))}
+    </>
+  );
+}
+
+/** A turn token (a disc with a play mark) that the rule strikes through: a
+ *  turn skipped outright. */
+function SkipToken({ x, y, c, delayMs }: { x: string; y: string; c: { core: string; glow: string; deep: string }; delayMs: number }) {
+  return (
+    <>
+      <Q x={x} y={y} w={8} h={8} cls="g01-r-in" delayMs={delayMs} v={{ "--gd": "1.5s" }}>
+        <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+          <circle cx="10" cy="10" r="8" fill={c.deep} stroke={c.core} strokeWidth="1.6" />
+          <path d="M8 6.4l5 3.6-5 3.6z" fill={c.glow} />
+        </svg>
+      </Q>
+      <Q x={x} y={y} w={9} h={1.2} cls="g01-r-draw" delayMs={delayMs + 200} v={{ "--gd": "1.3s" }} style={{ background: c.glow, rotate: "-40deg" }} />
+    </>
+  );
+}
+
+/* --- hx4_tithe_of_silence ----------------------------------------------------
+   "Your opponent's next move passes freely. Then, for their following 6
+   turns, each of their first 2 checks against your king costs them their
+   following turn." A tithe box sits by the caster's king; along the
+   opponent's edge one open pip (the free move) and six turn pips are laid;
+   two checks are shouted down the board at the king, each one drops a coin in
+   the box and costs a turn token on their side. */
+function TitheOfSilenceRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <TitheOfSilenceCuts lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_TS;
+  return (
+    <Brd>
+      <Q x={KING_X} y={rk(0)} w={10} h={10} cls="g01-r-in" delayMs={delayMs} v={{ "--gd": "2s" }}>
+        <Man kind="k" fill={c.glow} stroke={c.deep} />
+      </Q>
+      <Q x={`calc(${KING_X} + 12.5%)`} y={rk(0.9)} w={10} h={8} cls="g01-r-stamp" delayMs={delayMs + 120} v={{ "--gd": "1.9s" }}>
+        <svg viewBox="0 0 24 20" className="block h-full w-full" aria-hidden="true">
+          <path d="M3 7h18v11H3z" fill={c.deep} stroke={c.core} strokeWidth="1.8" {...SJ} />
+          <path d="M2 5h20v3H2z" fill={c.core} />
+          <path d="M9 6.4h6" stroke={c.deep} strokeWidth="1.6" {...SJ} />
+        </svg>
+      </Q>
+      <Q x="14%" y={rk(7.6)} w={2.6} h={2.6} cls="g01-r-pip" delayMs={delayMs + 200} v={{ "--gd": "1.8s" }} style={{ border: `1.5px solid ${c.core}`, borderRadius: "50%" }} />
+      <Tally n={6} r={7.6} x0={24} x1={62} color={c.core} delayMs={delayMs + 260} gd="1.7s" h={2.6} />
+      {[0, 1].map((i) => (
+        <Q key={i} x={cl(i === 0 ? 2 : 6)} y={rk(4)} w={4} h={40} cls="g01-r-shout" delayMs={delayMs + 440 + i * 260} v={{ "--gd": "0.8s" }} style={{ scale: "1 var(--fx-side, 1)" }}>
+          <svg viewBox="0 0 10 100" className="block h-full w-full" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M5 2v90M1 84l4 12 4-12" fill="none" stroke={c.glow} strokeWidth="2.4" {...SJ} />
+          </svg>
+        </Q>
+      ))}
+      {[0, 1].map((i) => (
+        <Q key={`c${i}`} x={`calc(${KING_X} + 12.5%)`} y={rk(0.9)} w={3.6} h={3.6} cls="g01-r-go" delayMs={delayMs + 700 + i * 260} v={{ "--gd": "0.7s", "--tx0": "0%", "--ty0": "calc(var(--fx-side, 1) * -240%)", "--tx1": "0%", "--ty1": "0%" }} style={{ background: c.core, border: `1.5px solid ${c.deep}`, borderRadius: "50%" }} />
+      ))}
+      {[0, 1].map((i) => (
+        <SkipToken key={`s${i}`} x={`${74 + i * 12}%`} y={rk(7.4)} c={c} delayMs={delayMs + 760 + i * 260} />
+      ))}
+      <Q x={`calc(${KING_X} + 12.5%)`} y={rk(1.6)} w={9} h={6} cls="g01-r-lean" delayMs={delayMs + 1150} v={{ "--gd": "0.9s" }}>
+        <svg viewBox="0 0 24 16" className="block h-full w-full" aria-hidden="true">
+          <circle cx="8" cy="9" r="3.4" fill="none" stroke={C_TS.core} strokeWidth="1.4" /><circle cx="16" cy="6" r="2.4" fill="none" stroke={C_TS.glow} strokeWidth="1.2" />
+        </svg>
+      </Q>
+    </Brd>
+  );
+}
+
+/* --- bn4_flag_on_their_wall -------------------------------------------------
+   "While any piece of yours stands on your opponent's back rank, your nerf is
+   suspended." The opponent's back rank is drawn as a battlement; one of the
+   caster's pieces climbs to it and plants a flag; the nerf cuff on the
+   caster's own rank springs open for as long as the flag flies. */
+function FlagOnTheirWallRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <FlagOnTheirWallCuts lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_FW;
+  return (
+    <Brd>
+      <Q x="50%" y={rk(7)} w={100} h={12.5} cls="g01-r-draw" delayMs={delayMs} v={{ "--gd": "2s" }}>
+        <svg viewBox="0 0 160 20" className="block h-full w-full" preserveAspectRatio="none" aria-hidden="true">
+          <path d={`M0 20V8${Array.from({ length: 8 }, (_, i) => `h10v-6h10v6`).join("")}V20z`} fill="rgba(224,180,92,0.3)" stroke={c.core} strokeWidth="1.6" />
+        </svg>
+      </Q>
+      <Q x={cl(5)} y={rk(7)} w={10} h={10} cls="g01-r-go" delayMs={delayMs + 180} v={{ "--gd": "1.8s", "--tx0": "0%", "--ty0": "calc(var(--fx-side, 1) * 260%)", "--tx1": "0%", "--ty1": "0%" }}>
+        <Man kind="r" fill={c.glow} stroke={c.deep} />
+      </Q>
+      <Q x={`calc(${cl(5)} + 3%)`} y={rk(7.3)} w={8} h={12} cls="g01-r-up" delayMs={delayMs + 480} v={{ "--gd": "1.5s" }}>
+        <svg viewBox="0 0 20 36" className="block h-full w-full" aria-hidden="true">
+          <path d="M4 35V2" stroke={c.glow} strokeWidth="2.4" {...SJ} />
+        </svg>
+      </Q>
+      <Q x={`calc(${cl(5)} + 5.4%)`} y={rk(7.62)} w={6} h={4.4} cls="g01-r-wave" delayMs={delayMs + 620} v={{ "--gd": "1.35s" }} style={{ transformOrigin: "0% 50%" }}>
+        <svg viewBox="0 0 20 14" className="block h-full w-full" aria-hidden="true">
+          <path d="M1 1h18l-5 6 5 6H1z" fill={c.core} stroke={c.deep} strokeWidth="1.4" {...SJ} />
+        </svg>
+      </Q>
+      <NerfCuff x={cl(5)} y={rk(0)} c={c} delayMs={delayMs + 620} />
+      <Q x={cl(5)} y={rk(3.5)} w={1} h={70} cls="g01-r-in" delayMs={delayMs + 720} v={{ "--gd": "1.2s", "--s0": "1" }} style={{ background: `repeating-linear-gradient(180deg, ${c.core} 0 6px, transparent 6px 12px)` }} />
+    </Brd>
+  );
+}
+
+/* --- bn4_queens_aegis --------------------------------------------------------
+   "While your queen stands on the board, your nerf is suspended. Lose her,
+   and it returns." The caster's queen rises on her own square and lifts a
+   round shield; the nerf cuff under it springs open, chained to her, so it
+   holds only as long as she does. */
+function QueensAegisRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <QueensAegisCuts lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_QA;
+  return (
+    <Brd>
+      <Q x={QUEEN_X} y={rk(0)} w={11} h={11} cls="g01-r-up" delayMs={delayMs} v={{ "--gd": "2s" }}>
+        <Man kind="q" fill={c.glow} stroke={c.deep} />
+      </Q>
+      <Q x={QUEEN_X} y={rk(1.6)} w={20} h={20} cls="g01-r-stamp" delayMs={delayMs + 260} v={{ "--gd": "1.8s" }}>
+        <svg viewBox="0 0 40 40" className="block h-full w-full" aria-hidden="true">
+          <circle cx="20" cy="20" r="17" fill="rgba(127,184,230,0.35)" stroke={c.core} strokeWidth="2.6" />
+          <circle cx="20" cy="20" r="11" fill="none" stroke={c.glow} strokeWidth="1.2" />
+          <path d="M13 17l2.6 5 2-6 2.4 5 2.4-5 2 6 2.6-5-1.4 8H14.4z" fill={c.glow} stroke={c.deep} strokeWidth="1" {...SJ} />
+        </svg>
+      </Q>
+      <NerfCuff x={`calc(${QUEEN_X} - var(--fx-side, 1) * 25%)`} y={rk(0.5)} c={c} delayMs={delayMs + 520} />
+      <Q x={`calc(${QUEEN_X} - var(--fx-side, 1) * 12.5%)`} y={rk(0.5)} w={20} h={1} cls="g01-r-draw" delayMs={delayMs + 440} v={{ "--gd": "1.5s" }} style={{ background: `repeating-linear-gradient(90deg, ${c.core} 0 5px, transparent 5px 9px)` }} />
+      <Q x={QUEEN_X} y={rk(1.6)} w={26} h={26} cls="g01-r-lean" delayMs={delayMs + 900} v={{ "--gd": "1s" }}>
+        <svg viewBox="0 0 40 40" className="block h-full w-full" aria-hidden="true">
+          <path d="M20 2a18 18 0 0 1 18 18" fill="none" stroke={c.glow} strokeWidth="1.4" {...SJ} />
+        </svg>
+      </Q>
+    </Brd>
+  );
+}
+
+/* --- bn4_meek_inherit ---------------------------------------------------------
+   "Beginning after your opponent's next move, your nerf is suspended while
+   your opponent has at least as many pieces as you. Pull ahead in material,
+   and it wakes." A balance is hung over the halfway line: three meek pawns in
+   the caster's pan, four of the opponent's men in the other; the beam tips to
+   the heavier side, and the nerf cuff beneath the meek pan springs open. One
+   open pip first: it begins after their next move. */
+function MeekInheritRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <MeekInheritCuts lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_MI;
+  const theirs: Kind[] = ["r", "b", "n", "p"];
+  return (
+    <Brd>
+      <Q x="50%" y={rk(3.5)} w={3} h={16} cls="g01-r-in" delayMs={delayMs} v={{ "--gd": "2s", "--s0": "1", "--ty0": "20%" }} style={{ background: c.deep, borderRadius: "1px" }} />
+      <Q x="50%" y={rk(4.1)} w={66} h={30} cls="g01-r-tip" delayMs={delayMs + 120} v={{ "--gd": "1.9s", "--ra": "8deg" }} style={{ transformOrigin: "50% 20%" }}>
+        <span className="absolute block" style={{ left: 0, top: "18%", width: "100%", height: "4%", background: c.core, borderRadius: "999px" }} />
+        <span className="absolute block" style={{ left: "0%", top: "22%", width: "28%", height: "60%" }}>
+          <svg viewBox="0 0 30 40" className="block h-full w-full" aria-hidden="true"><path d="M15 0L2 26M15 0l13 26" stroke={c.core} strokeWidth="0.8" /><path d="M1 26h28q-2 8-14 8T1 26z" fill={c.core} stroke={c.deep} strokeWidth="1" /></svg>
+        </span>
+        <span className="absolute block" style={{ right: "0%", top: "22%", width: "28%", height: "60%" }}>
+          <svg viewBox="0 0 30 40" className="block h-full w-full" aria-hidden="true"><path d="M15 0L2 26M15 0l13 26" stroke={c.core} strokeWidth="0.8" /><path d="M1 26h28q-2 8-14 8T1 26z" fill={c.deep} stroke={c.core} strokeWidth="1" /></svg>
+        </span>
+      </Q>
+      {[0, 1, 2].map((i) => (
+        <Q key={i} x={`${21 + i * 4}%`} y={rk(4.1)} w={5} h={5} cls="g01-r-in" delayMs={delayMs + 260 + i * 70} v={{ "--gd": "1.7s", "--ty0": "-200%" }}>
+          <Man kind="p" fill={c.glow} stroke={c.deep} />
+        </Q>
+      ))}
+      {theirs.map((k, i) => (
+        <Q key={k} x={`${71 + i * 4}%`} y={rk(3.6)} w={5} h={5} cls="g01-r-go" delayMs={delayMs + 260 + i * 70} v={{ "--gd": "1.7s", "--tx0": "0%", "--ty0": "-200%", "--tx1": "0%", "--ty1": "40%" }}>
+          <Man kind={k} fill={c.deep} stroke={c.core} />
+        </Q>
+      ))}
+      <Q x="14%" y={rk(0.9)} w={2.6} h={2.6} cls="g01-r-pip" delayMs={delayMs + 200} v={{ "--gd": "1.8s" }} style={{ border: `1.5px solid ${c.core}`, borderRadius: "50%" }} />
+      <NerfCuff x="25%" y={rk(1.4)} c={c} delayMs={delayMs + 640} />
+      <Q x="25%" y={rk(2.2)} w={8} h={5} cls="g01-r-lean" delayMs={delayMs + 1250} v={{ "--gd": "0.9s" }}>
+        <svg viewBox="0 0 16 10" className="block h-full w-full" aria-hidden="true">
+          <path d="M3 8l5-6 5 6" fill="none" stroke={C_MI.glow} strokeWidth="1.4" {...SJ} />
+        </svg>
+      </Q>
+    </Brd>
+  );
+}
+
+/* --- bn4_unequal_treaty -------------------------------------------------------
+   "Your nerf is suspended for your next 10 turns; your opponent's is
+   suspended for their next 3." A treaty is unrolled on the halfway line and
+   sealed; both nerf cuffs spring open, one at each edge; ten turns are ticked
+   along the caster's rank and only three along the opponent's, and theirs
+   run out first. */
+function UnequalTreatyRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <UnequalTreatyCuts lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_UT;
+  return (
+    <Brd>
+      <Q x="50%" y={rk(3.5)} w={84} h={10} cls="g01-r-draw" delayMs={delayMs} v={{ "--gd": "2s" }}>
+        <svg viewBox="0 0 120 14" className="block h-full w-full" preserveAspectRatio="none" aria-hidden="true">
+          <rect x="3" y="2" width="114" height="10" fill={c.glow} stroke={c.core} strokeWidth="1.2" />
+          <path d="M12 5.6h40M12 8.6h34M68 5.6h40M72 8.6h36" stroke={c.core} strokeWidth="0.9" />
+        </svg>
+      </Q>
+      <Q x="50%" y={rk(3.5)} w={7} h={7} cls="g01-r-stamp" delayMs={delayMs + 300} v={{ "--gd": "1.7s" }}>
+        <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+          <circle cx="10" cy="10" r="8.6" fill={c.core} stroke={c.deep} strokeWidth="1.6" />
+          <path d="M5 10h10M10 5v10" stroke={c.deep} strokeWidth="1.6" {...SJ} />
+        </svg>
+      </Q>
+      <NerfCuff x="8%" y={rk(1.1)} c={c} delayMs={delayMs + 420} gd="1.7s" />
+      <NerfCuff x="8%" y={rk(5.9)} c={c} delayMs={delayMs + 460} gd="1.2s" />
+      <Tally n={10} r={1.1} x0={18} x1={88} color={c.core} delayMs={delayMs + 560} gd="1.5s" />
+      <Tally n={3} r={5.9} x0={18} x1={32} color={c.core} delayMs={delayMs + 560} cls="g01-r-dim" gd="1.1s" />
+      <Q x="50%" y={rk(3.5)} w={10} h={5} cls="g01-r-lean" delayMs={delayMs + 1200} v={{ "--gd": "0.9s" }}>
+        <svg viewBox="0 0 20 10" className="block h-full w-full" aria-hidden="true">
+          <path d="M8 1l-4 8M12 1l4 8" stroke={C_UT.core} strokeWidth="1.6" {...SJ} />
+        </svg>
+      </Q>
+    </Brd>
+  );
+}
+
+/** A die: a draft reroll. */
+function Die({ c }: { c: { core: string; glow: string; deep: string } }) {
+  return (
+    <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+      <rect x="3" y="3" width="14" height="14" rx="2" fill={c.glow} stroke={c.deep} strokeWidth="1.6" />
+      <circle cx="7" cy="7" r="1.5" fill={c.deep} /><circle cx="13" cy="13" r="1.5" fill={c.deep} /><circle cx="10" cy="10" r="1.5" fill={c.deep} />
+    </svg>
+  );
+}
+
+/** A draft card, face down. */
+function DraftCard({ c }: { c: { core: string; glow: string; deep: string } }) {
+  return (
+    <svg viewBox="0 0 14 20" className="block h-full w-full" aria-hidden="true">
+      <rect x="1" y="1" width="12" height="18" rx="2" fill={c.glow} stroke={c.deep} strokeWidth="1.4" />
+      <path d="M4 7l3-3 3 3-3 3z" fill={c.core} />
+    </svg>
+  );
+}
+
+/** A vertical run up the board from the caster's side, grown from its
+ *  caster-side end whichever way the board is turned. */
+const FROM_CASTER = "50% calc(50% + var(--fx-side, 1) * 50%)";
+
+/* --- bn4_hundred_year_lease ---------------------------------------------------
+   "After your opponent's next move, the lease begins: your nerf is suspended
+   for the 30 turns that follow." A lease deed is laid by the caster's rank
+   and sealed; one open pip on the opponent's side is the move the lease
+   waits for; then a key turns in the nerf cuff and thirty turns are ruled
+   off along the caster's second rank like a surveyor's tape. */
+function HundredYearLeaseRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <HundredYearLeaseCuts lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_HL;
+  return (
+    <Brd>
+      <Q x="72%" y={rk(0.4)} w={34} h={13} cls="g01-r-draw" delayMs={delayMs} v={{ "--gd": "2.1s" }}>
+        <svg viewBox="0 0 60 22" className="block h-full w-full" preserveAspectRatio="none" aria-hidden="true">
+          <rect x="2" y="2" width="56" height="18" fill={c.glow} stroke={c.core} strokeWidth="1.4" />
+          <path d="M8 7h34M8 11h40M8 15h26" stroke={c.core} strokeWidth="1" />
+        </svg>
+      </Q>
+      <Q x="84%" y={rk(0.2)} w={5.4} h={5.4} cls="g01-r-stamp" delayMs={delayMs + 260} v={{ "--gd": "1.8s" }} style={{ background: c.core, border: `2px solid ${c.deep}`, borderRadius: "50%" }} />
+      <Q x="50%" y={rk(6.5)} w={3} h={3} cls="g01-r-pip" delayMs={delayMs + 200} v={{ "--gd": "1s" }} style={{ border: `2px solid ${c.core}`, borderRadius: "50%" }} />
+      <Q x="50%" y={rk(6.5)} w={3} h={3} cls="g01-r-go" delayMs={delayMs + 520} v={{ "--gd": "0.6s", "--tx1": "0%", "--ty1": "calc(var(--fx-side, 1) * 1450%)" }} style={{ background: c.core, borderRadius: "50%" }} />
+      <NerfCuff x="22%" y={rk(0.3)} c={c} delayMs={delayMs + 560} gd="1.7s" />
+      <Q x="15%" y={rk(0.3)} w={8} h={4} cls="g01-r-turn" delayMs={delayMs + 520} v={{ "--gd": "1.1s" }} style={{ transformOrigin: "100% 50%" }}>
+        <svg viewBox="0 0 24 12" className="block h-full w-full" aria-hidden="true">
+          <circle cx="5" cy="6" r="4" fill="none" stroke={c.glow} strokeWidth="2" />
+          <path d="M9 6h13M18 6v4M21 6v3" stroke={c.glow} strokeWidth="2" {...SJ} />
+        </svg>
+      </Q>
+      <Tally n={30} r={1.3} x0={6} x1={94} color={c.core} delayMs={delayMs + 780} gd="1.3s" h={2.6} />
+    </Brd>
+  );
+}
+
+/* --- bn4_liberators_march -----------------------------------------------------
+   "Suspend your nerf for your next 18 turns. Each capture you make while it
+   is suspended gains you 1 draft reroll, up to 3." The nerf cuff breaks and
+   its chain falls away; a pawn carrying a banner marches up a file and takes
+   the piece in its way; that capture drops a die into the first of three
+   empty slots at the caster's edge. Eighteen turns are ticked along the rank. */
+function LiberatorsMarchRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <LiberatorsMarchCuts lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_LM;
+  return (
+    <Brd>
+      <NerfCuff x={cl(1)} y={rk(0.5)} c={c} delayMs={delayMs} gd="1.6s" />
+      {[0, 1, 2].map((i) => (
+        <Q key={i} x={`calc(${cl(1)} + ${3 + i * 3}%)`} y={rk(0.2)} w={3} h={2} cls="g01-r-part" delayMs={delayMs + 300 + i * 50} v={{ "--gd": "0.8s", "--tx1": `${60 + i * 50}%`, "--ty1": "calc(var(--fx-side, 1) * 220%)", "--r1": `${40 + i * 30}deg` }} style={{ border: `1.6px solid ${c.core}`, borderRadius: "999px" }} />
+      ))}
+      <Q x={cl(4)} y={rk(1)} w={10} h={10} cls="g01-r-go" delayMs={delayMs + 240} v={{ "--gd": "1.4s", "--tx1": "0%", "--ty1": "calc(var(--fx-side, 1) * -300%)" }}>
+        <Man kind="p" fill={c.glow} stroke={c.deep} />
+      </Q>
+      <Q x={`calc(${cl(4)} + 3%)`} y={rk(1.5)} w={6} h={9} cls="g01-r-go" delayMs={delayMs + 240} v={{ "--gd": "1.4s", "--tx1": "0%", "--ty1": "calc(var(--fx-side, 1) * -333%)" }}>
+        <svg viewBox="0 0 14 22" className="block h-full w-full" aria-hidden="true">
+          <path d="M2 21V1" stroke={c.deep} strokeWidth="1.6" {...SJ} />
+          <path d="M2 2h10v7l-5-2-5 2z" fill={c.core} stroke={c.deep} strokeWidth="1" {...SJ} />
+        </svg>
+      </Q>
+      <Q x={cl(4)} y={rk(4)} w={10} h={10} cls="g01-r-part" delayMs={delayMs + 1000} v={{ "--gd": "0.7s", "--tx1": "140%", "--ty1": "calc(var(--fx-side, 1) * -60%)", "--r1": "60deg" }}>
+        <Man kind="b" fill={c.deep} stroke={c.core} />
+      </Q>
+      {[0, 1, 2].map((i) => (
+        <Q key={`s${i}`} x={`${62 + i * 9}%`} y={rk(0.3)} w={6.4} h={6.4} cls="g01-r-in" delayMs={delayMs + 300 + i * 60} v={{ "--gd": "1.7s" }} style={{ border: `1.6px dashed ${c.core}`, borderRadius: "2px" }} />
+      ))}
+      <Q x="62%" y={rk(0.3)} w={6.4} h={6.4} cls="g01-r-stamp" delayMs={delayMs + 1080} v={{ "--gd": "0.9s" }}>
+        <Die c={c} />
+      </Q>
+      <Tally n={18} r={1.4} x0={10} x1={90} color={c.core} delayMs={delayMs + 420} gd="1.5s" h={2.4} />
+    </Brd>
+  );
+}
+
+/* --- bn4_pact_of_the_dawn -----------------------------------------------------
+   "Suspend your nerf for your next 12 turns, and every one of your captured
+   pawns returns at once to squares nearest your home rank. The most advanced
+   returning pawn cannot move until your opponent replies." The sun comes up
+   over the caster's edge and the fallen pawns rise out of it onto the squares
+   nearest home; the one furthest forward is pinned by a small lock for one
+   reply. The nerf cuff opens and twelve turns are ticked. */
+function PactOfTheDawnRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <PactOfTheDawnCuts lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_PD;
+  const back = [
+    { col: 1, r: 1 },
+    { col: 3, r: 1 },
+    { col: 6, r: 2 },
+  ];
+  return (
+    <Brd>
+      <Q x="50%" y={rk(-0.5)} w={60} h={30} cls="g01-r-up" delayMs={delayMs} v={{ "--gd": "2s" }} style={{ transformOrigin: FROM_CASTER }}>
+        <svg viewBox="0 0 60 30" className="block h-full w-full" aria-hidden="true">
+          <path d="M4 30a26 26 0 0 1 52 0z" fill="rgba(255,171,94,0.42)" stroke={c.core} strokeWidth="1.2" />
+        </svg>
+      </Q>
+      <Q x="50%" y={rk(0.4)} w={70} h={20} cls="g01-r-toll" delayMs={delayMs + 160} v={{ "--gd": "1.2s" }}>
+        <svg viewBox="0 0 70 20" className="block h-full w-full" aria-hidden="true">
+          <path d="M35 4v-3M15 10l-3-3M55 10l3-3M5 17l-4-1M65 17l4-1" stroke={c.glow} strokeWidth="1.4" {...SJ} />
+        </svg>
+      </Q>
+      {back.map((p, i) => (
+        <Q key={i} x={cl(p.col)} y={rk(p.r)} w={10} h={10} cls="g01-r-up" delayMs={delayMs + 300 + i * 110} v={{ "--gd": "1.6s" }} style={{ transformOrigin: FROM_CASTER }}>
+          <Man kind="p" fill={c.glow} stroke={c.deep} />
+        </Q>
+      ))}
+      <Q x={`calc(${cl(6)} + 3.4%)`} y={rk(2.3)} w={4.4} h={4.4} cls="g01-r-stamp" delayMs={delayMs + 720} v={{ "--gd": "1.1s" }}>
+        <svg viewBox="0 0 16 16" className="block h-full w-full" aria-hidden="true">
+          <path d="M5 7V5a3 3 0 0 1 6 0v2" fill="none" stroke={c.deep} strokeWidth="1.8" />
+          <rect x="3" y="7" width="10" height="8" rx="1" fill={c.core} stroke={c.deep} strokeWidth="1.2" />
+        </svg>
+      </Q>
+      <NerfCuff x={cl(7)} y={rk(0.4)} c={c} delayMs={delayMs + 540} />
+      <Tally n={12} r={3.2} x0={12} x1={88} color={c.core} delayMs={delayMs + 820} gd="1.2s" h={2.4} />
+      <Q x={cl(3)} y={rk(1.6)} w={20} h={8} cls="g01-r-lean" delayMs={delayMs + 1300} v={{ "--gd": "1s" }}>
+        <svg viewBox="0 0 40 16" className="block h-full w-full" aria-hidden="true">
+          <circle cx="6" cy="10" r="1.4" fill={C_PD.glow} /><circle cx="20" cy="5" r="1.2" fill={C_PD.core} /><circle cx="33" cy="11" r="1.4" fill={C_PD.glow} />
+        </svg>
+      </Q>
+    </Brd>
+  );
+}
+
+/* --- bn4_royal_privilege ------------------------------------------------------
+   "For the rest of the game, every time you move your queen, your nerf is
+   suspended for your next 2 turns. Your next 2 drafts are skipped." The
+   caster's queen strides up her file over a royal carpet; as she lands the
+   nerf cuff springs open and two turn pips are struck; the price is paid at
+   the caster's edge, where the next two draft cards are crossed out. */
+function RoyalPrivilegeRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <RoyalPrivilegeCuts lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_RP;
+  return (
+    <Brd>
+      <Q x={QUEEN_X} y={rk(2)} w={8} h={50} cls="g01-r-grow" delayMs={delayMs} v={{ "--gd": "1.9s" }} style={{ transformOrigin: FROM_CASTER, background: "rgba(217,163,230,0.3)", borderLeft: `2px solid ${c.core}`, borderRight: `2px solid ${c.core}` }} />
+      <Q x={QUEEN_X} y={rk(0)} w={11} h={11} cls="g01-r-go" delayMs={delayMs + 160} v={{ "--gd": "1.6s", "--tx1": "0%", "--ty1": "calc(var(--fx-side, 1) * -300%)" }}>
+        <Man kind="q" fill={c.glow} stroke={c.deep} />
+      </Q>
+      <NerfCuff x={`calc(${QUEEN_X} - var(--fx-side, 1) * 25%)`} y={rk(3)} c={c} delayMs={delayMs + 560} />
+      <Tally n={2} r={2.3} x0={20} x1={26} color={c.core} delayMs={delayMs + 700} gd="1.1s" />
+      {[0, 1].map((i) => (
+        <Q key={i} x={`${70 + i * 12}%`} y={rk(0.3)} w={8} h={11} cls="g01-r-in" delayMs={delayMs + 400 + i * 80} v={{ "--gd": "1.5s" }}>
+          <DraftCard c={c} />
+        </Q>
+      ))}
+      {[0, 1].map((i) => (
+        <Q key={`x${i}`} x={`${70 + i * 12}%`} y={rk(0.3)} w={11} h={1.2} cls="g01-r-draw" delayMs={delayMs + 780 + i * 90} v={{ "--gd": "1.1s" }} style={{ background: c.deep, rotate: "-56deg" }} />
+      ))}
+    </Brd>
+  );
+}
+
+/* --- bn4_siege_mentality ------------------------------------------------------
+   "For the rest of the game, whenever your opponent puts your king in check,
+   your nerf is suspended for your next 3 turns." A wall goes up round the
+   caster's king; a check is loosed at him from the opponent's side and sticks
+   in the wall; on the hit the nerf cuff springs open and three turns are
+   ticked. */
+function SiegeMentalityRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <SiegeMentalityCuts lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_SM;
+  return (
+    <Brd>
+      <Q x={KING_X} y={rk(0)} w={10} h={10} cls="g01-r-in" delayMs={delayMs} v={{ "--gd": "2s" }}>
+        <Man kind="k" fill={c.glow} stroke={c.deep} />
+      </Q>
+      <Q x={KING_X} y={rk(0.7)} w={37.5} h={8} cls="g01-r-grow" delayMs={delayMs + 120} v={{ "--gd": "1.9s" }} style={{ transformOrigin: FROM_CASTER }}>
+        <svg viewBox="0 0 60 12" className="block h-full w-full" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M0 12V4h6V0h6v4h6V0h6v4h6V0h6v4h6V0h6v4h6V0h6v12z" fill={c.core} stroke={c.deep} strokeWidth="1.2" />
+        </svg>
+      </Q>
+      <Q x={KING_X} y={rk(3)} w={3} h={34} cls="g01-r-shout" delayMs={delayMs + 300} v={{ "--gd": "0.7s" }} style={{ scale: "1 var(--fx-side, 1)" }}>
+        <svg viewBox="0 0 8 100" className="block h-full w-full" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M4 4v88" stroke={c.deep} strokeWidth="2" /><path d="M1 84l3 12 3-12z" fill={c.deep} /><path d="M1 4l3 6 3-6" fill="none" stroke={c.core} strokeWidth="1.4" />
+        </svg>
+      </Q>
+      <Q x={KING_X} y={rk(1.3)} w={14} h={4} cls="g01-r-stamp" delayMs={delayMs + 560} v={{ "--gd": "1s" }}>
+        <svg viewBox="0 0 30 8" className="block h-full w-full" aria-hidden="true">
+          <path d="M4 4l5-3M4 4l5 3M26 4l-5-3M26 4l-5 3M15 1v-1" stroke={c.glow} strokeWidth="1.4" {...SJ} />
+        </svg>
+      </Q>
+      <NerfCuff x={`calc(${KING_X} + var(--fx-side, 1) * 31%)`} y={rk(0.4)} c={c} delayMs={delayMs + 600} />
+      <Tally n={3} r={1.5} x0={70} x1={84} color={c.core} delayMs={delayMs + 760} gd="1.1s" />
+    </Brd>
+  );
+}
+
+/* --- bn4_year_of_jubilee ------------------------------------------------------
+   "Suspend your nerf for your next 25 turns. When it returns, gain 1 draft
+   reroll." A ram's horn is sounded from the caster's edge and the nerf cuff
+   springs open; twenty-five turns run out along the rank like a calendar,
+   and a die waits at the far end of them: the reroll that comes when the
+   nerf does. */
+function YearOfJubileeRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <YearOfJubileeCuts lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_YJ;
+  return (
+    <Brd>
+      <Q x="14%" y={rk(0.4)} w={18} h={10} cls="g01-r-up" delayMs={delayMs + 60} v={{ "--gd": "2s", "--r0": "-10deg" }} style={{ transformOrigin: "10% 90%" }}>
+        <svg viewBox="0 0 40 22" className="block h-full w-full" aria-hidden="true">
+          <path d="M3 18c6 2 16 1 24-6 4-3 6-7 9-10l2 2c-2 4-4 9-8 13-8 6-18 7-27 3z" fill={c.core} stroke={c.deep} strokeWidth="1.4" {...SJ} />
+          <path d="M9 17.6l1-3M15 16.8l1-3M21 14.6l1-3M26 11l1.4-2.6" stroke={c.deep} strokeWidth="1" />
+        </svg>
+      </Q>
+      {[0, 1, 2].map((i) => (
+        <Q key={i} x="31%" y={rk(1.4)} w={10 + i * 5} h={10 + i * 5} cls="g01-r-toll" delayMs={delayMs + 220 + i * 90} v={{ "--gd": "0.8s" }}>
+          <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+            <path d="M6 4q6 6 0 12" fill="none" stroke={c.glow} strokeWidth="1.6" {...SJ} />
+          </svg>
+        </Q>
+      ))}
+      <NerfCuff x="44%" y={rk(0.5)} c={c} delayMs={delayMs + 380} />
+      <Tally n={25} r={2} x0={8} x1={80} color={c.core} delayMs={delayMs + 560} gd="1.6s" h={2.6} />
+      <Q x="89%" y={rk(2)} w={7} h={7} cls="g01-r-stamp" delayMs={delayMs + 1040} v={{ "--gd": "1s" }}>
+        <Die c={c} />
+      </Q>
+      <Q x="31%" y={rk(1.4)} w={14} h={14} cls="g01-r-lean" delayMs={delayMs + 1300} v={{ "--gd": "1s" }}>
+        <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+          <path d="M5 5q6 5 0 10M10 3q7 7 0 14" fill="none" stroke={C_YJ.core} strokeWidth="1.2" {...SJ} />
+        </svg>
+      </Q>
+    </Brd>
+  );
+}
+
+/* =============================================================================
    Registry. Every `sound` is an existing SigSoundKey, every `source` an
    existing SigZone that the card's own rule really creates, and every card
    declares its anchor.
@@ -1695,7 +2075,9 @@ function S(Render: SigPlugin["Render"], config: SigPlugin["config"]): SigPlugin 
 /* =============================================================================
    FLAGSHIP IMPACT WAVE - the module-wide moment of real contact.
 
-   Every lead now lands one physical hit from the shared impact vocabulary
+   The per-card rule scenes have no entry here: a laser column and a split
+   clock dial are not what those cards do. Every other lead lands one
+   physical hit from the shared impact vocabulary
    (impact/impact.tsx), layered OVER the card's own scene: a column of borrowed time spears down out of the sky, the mechanism's own dial or bell is split in half, and the hour lands as a ground ring.
    Per card, the IMPACT spec picks the primitive combo, the glyph that is split
    in half, the tint (the card's own core color as an r-g-b triple) and the
@@ -1744,32 +2126,21 @@ const IMPACT: Record<string, G01Imp> = {
   // pendulum hangs just below stage centre), and the dial-glyph splits there.
   bn4_council_of_peace: { at: 460, rgb: "143 214 196", laser: true, shock: true, g: 2, q: "h", s: 12, y: 53 }, // t8 hero
   bn4_great_armistice: { at: 460, rgb: "159 198 232", laser: true, shock: true, g: 0, q: "h", s: 12 }, // t8 hero
-  bn4_hundred_year_lease: { at: 530, rgb: "105 195 216", laser: true, shock: true, g: 1, q: "h", s: 12 }, // t8 hero
   bn4_royal_we: { at: 570, rgb: "232 196 106", laser: true, shock: true, g: 0, q: "h", s: 12 }, // t8 hero
   hx4_royal_lockdown: { at: 630, rgb: "143 154 168", laser: true, shock: true, g: 2, q: "h", s: 12 }, // t8 hero
-  hx4_tithe_of_silence: { at: 465, rgb: "159 176 201", laser: true, shock: true, g: 2, q: "h", s: 12 }, // t8 hero
-  bn4_liberators_march: { at: 505, rgb: "213 185 120", laser: true, shock: true, g: 0, q: "h", s: 12 }, // t8 hero
   bn4_escape_artist: { at: 520, rgb: "227 163 163", laser: true, g: 0, q: "s" },
   bn4_jubilee: { at: 590, rgb: "240 201 106", shock: true, g: 1, q: "s" },
   bn4_keys_to_the_city: { at: 610, rgb: "132 201 196", laser: true, q: "s" },
-  bn4_royal_privilege: { at: 510, rgb: "217 163 230", laser: true, shock: true, g: 2, q: "h", s: 12 }, // t8 hero
   bn4_midas_charter: { at: 500, rgb: "242 193 75", laser: true, shock: true, g: 2, q: "h", s: 12 }, // t8 hero
-  bn4_year_of_jubilee: { at: 490, rgb: "142 214 160", laser: true, shock: true, g: 0, q: "h", s: 12 }, // t8 hero
   bn4_hundred_days: { at: 615, rgb: "229 143 122", laser: true, g: 0, q: "s" },
   bn4_debtors_holiday: { at: 655, rgb: "230 210 122", shock: true, g: 1, q: "s" },
   bn4_crown_jubilee: { at: 440, rgb: "255 200 97", laser: true, shock: true, g: 0, q: "h", s: 12 }, // t8 hero
-  bn4_meek_inherit: { at: 550, rgb: "168 184 160", laser: true, shock: true, g: 2, q: "h", s: 12 }, // t8 hero
-  bn4_unequal_treaty: { at: 565, rgb: "240 160 90", laser: true, shock: true, g: 2, q: "h", s: 12 }, // t8 hero
   bn4_grand_bargain: { at: 580, rgb: "201 178 240", laser: true, shock: true, q: "s" },
   bn4_patrons_favor: { at: 640, rgb: "224 120 143", laser: true, g: 0, q: "s" },
-  bn4_queens_aegis: { at: 555, rgb: "127 184 230", laser: true, shock: true, g: 1, q: "h", s: 12 }, // t8 hero
   bn4_masked_ball: { at: 595, rgb: "197 143 214", laser: true, shock: true, g: 0, q: "h", s: 12 }, // t8 hero
-  bn4_flag_on_their_wall: { at: 535, rgb: "224 180 92", laser: true, shock: true, g: 2, q: "h", s: 12 }, // t8 hero
-  bn4_siege_mentality: { at: 625, rgb: "217 138 90", laser: true, shock: true, g: 2, q: "h", s: 12 }, // t8 hero
   bn4_champions_rest: { at: 600, rgb: "134 194 166", laser: true, shock: true, q: "s" },
   bn4_half_moon_charter: { at: 600, rgb: "185 201 232", laser: true, g: 0, q: "s" },
   bn4_moonlit_reprieve: { at: 470, rgb: "143 182 224", shock: true, g: 1, q: "s" },
-  bn4_pact_of_the_dawn: { at: 575, rgb: "255 171 94", laser: true, shock: true, g: 0, q: "h", s: 12 }, // t8 hero
   bn4_second_spring: { at: 560, rgb: "143 219 168", shock: true, g: 2, q: "s" },
   hx4_debt_of_crowns: { at: 675, rgb: "201 160 106", laser: true, shock: true, g: 2, q: "h", s: 12 }, // t8 hero
   hx4_last_toll: { at: 430, rgb: "196 180 143", laser: true, shock: true, g: 0, q: "h", s: 12 }, // t8 hero
@@ -1835,7 +2206,7 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "radial", staggerMs: 55, victims: "all", hasLead: true,
     sound: "snooze", source: "shield", anchor: "board",
   }),
-  bn4_hundred_year_lease: S(HundredYearLeaseScene, {
+  bn4_hundred_year_lease: S(HundredYearLeaseRule, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true,
     sound: "clockice", anchor: "board",
   }),
@@ -1847,13 +2218,13 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "octagon", staggerMs: 60, victims: "all", hasLead: true,
     sound: "clockcage", anchor: "board",
   }),
-  hx4_tithe_of_silence: S(TitheOfSilenceScene, {
+  hx4_tithe_of_silence: S(TitheOfSilenceRule, {
     ordering: "radial", staggerMs: 55, victims: "all", hasLead: true,
     sound: "clockice", anchor: "board",
   }),
 
   // --- mechanisms let go: something free-runs ---
-  bn4_liberators_march: S(LiberatorsMarchScene, {
+  bn4_liberators_march: S(LiberatorsMarchRule, {
     ordering: "line", staggerMs: 55, victims: "all", hasLead: true,
     sound: "blitz", anchor: "board",
   }),
@@ -1871,7 +2242,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
 
   // --- mechanisms wound, bought or ratcheted forward ---
-  bn4_royal_privilege: S(RoyalPrivilegeScene, {
+  bn4_royal_privilege: S(RoyalPrivilegeRule, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true,
     sound: "blitz", anchor: "board",
   }),
@@ -1879,7 +2250,7 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true,
     sound: "blitz", anchor: "board",
   }),
-  bn4_year_of_jubilee: S(YearOfJubileeScene, {
+  bn4_year_of_jubilee: S(YearOfJubileeRule, {
     ordering: "radial", staggerMs: 50, victims: "all", hasLead: true,
     sound: "snooze", anchor: "board",
   }),
@@ -1897,11 +2268,11 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
 
   // --- mechanisms that measure two sides against each other ---
-  bn4_meek_inherit: S(MeekInheritScene, {
+  bn4_meek_inherit: S(MeekInheritRule, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true,
     sound: "snooze", anchor: "board",
   }),
-  bn4_unequal_treaty: S(UnequalTreatyScene, {
+  bn4_unequal_treaty: S(UnequalTreatyRule, {
     ordering: "line", staggerMs: 55, victims: "all", hasLead: true,
     sound: "clockcage", anchor: "board",
   }),
@@ -1915,7 +2286,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   }),
 
   // --- mechanisms tied to a body on the board ---
-  bn4_queens_aegis: S(QueensAegisScene, {
+  bn4_queens_aegis: S(QueensAegisRule, {
     ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true,
     sound: "clockice", anchor: "board",
   }),
@@ -1923,11 +2294,11 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "radial", staggerMs: 60, victims: ["n", "b"], hasLead: true,
     sound: "snooze", source: "shield", anchor: "cast",
   }),
-  bn4_flag_on_their_wall: S(FlagOnTheirWallScene, {
+  bn4_flag_on_their_wall: S(FlagOnTheirWallRule, {
     ordering: "line", staggerMs: 55, victims: "all", hasLead: true,
     sound: "clockcage", anchor: "board",
   }),
-  bn4_siege_mentality: S(SiegeMentalityScene, {
+  bn4_siege_mentality: S(SiegeMentalityRule, {
     ordering: "radial", staggerMs: 50, victims: "all", hasLead: true,
     sound: "clockcage", anchor: "board",
   }),
@@ -1945,7 +2316,7 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true,
     sound: "clockice", anchor: "board",
   }),
-  bn4_pact_of_the_dawn: S(PactOfTheDawnScene, {
+  bn4_pact_of_the_dawn: S(PactOfTheDawnRule, {
     ordering: "sweep", staggerMs: 55, victims: ["p"], hasLead: true,
     sound: "snooze", source: "frozen", anchor: "board",
   }),

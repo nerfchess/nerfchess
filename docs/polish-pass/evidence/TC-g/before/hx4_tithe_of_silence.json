@@ -1,0 +1,106 @@
+{
+ "id": "hx4_tithe_of_silence",
+ "url": "/dev/plays?id=hx4_tithe_of_silence&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "hx4_tithe_of_silence",
+  "name": "Tithe of Silence",
+  "tier": 8,
+  "category": "hex",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:hx4_tithe_of_silence",
+  "anchor": "board",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 55,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, diff-less: no zone source, not an attack",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 3591,
+  "cssEndMs": 3737,
+  "settled": true,
+  "windowMs": 3987,
+  "cssAnimations": 32,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 196,
+  "maxGapMs": 288.7
+ },
+ "raf": {
+  "frames": 205,
+  "medianMs": 16.7,
+  "maxMs": 266.7,
+  "dropped": 37
+ },
+ "longAnimationFrames": {
+  "count": 5,
+  "worstMs": 251,
+  "totalBlockingMs": 287,
+  "entries": [
+   {
+    "atMs": 17,
+    "duration": 251,
+    "blocking": 201,
+    "scripts": []
+   },
+   {
+    "atMs": 290,
+    "duration": 50,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 344,
+    "duration": 137,
+    "blocking": 86,
+    "scripts": [
+     {
+      "duration": 133,
+      "invoker": "http://localhost:3000/_next/static/chunks/_app-pages-browser_src_components_effe...",
+      "source": "/_next/static/chunks/_app-pages-browser_src_components_effects_board3d_engine3d_ts.js"
+     }
+    ]
+   },
+   {
+    "atMs": 1294,
+    "duration": 53,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 1809,
+    "duration": 73,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  270,
+  689,
+  1192,
+  1757,
+  2375,
+  3038,
+  3741
+ ],
+ "png": "docs/polish-pass/evidence/TC-g/before/hx4_tithe_of_silence.png",
+ "pngBytes": 24227
+}
