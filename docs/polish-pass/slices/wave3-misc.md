@@ -22,6 +22,18 @@ Evidence is in `docs/polish-pass/evidence/wave3/misc/` (`probe-before.json`, `pr
 
 How it was measured: the probe loads /leaderboard, caches each ladder's answer, then switches tabs with the answer held for 0, 60, 260, 600 and 1200ms. It times from the click to the skeleton entering, becoming visible (opacity above 0.05) and leaving. It does this twice.
 
+**Review fix, hard loads.** Review found that the hook started its clock in its layout effect, which on a hard load runs at hydration. On /leaderboard, /clubs, /tournaments, /inbox and the /community lists the skeleton is in the server HTML, so its CSS show-delay ran from first paint, often a second or more before hydration, and the hook then held content up to about 400ms more after the data arrived. The hook now detects that it is hydrating (`useSyncExternalStore` returns its server snapshot only in the hydrating render). For the loading spell that is already on at hydration, it starts the clock at the first-contentful-paint entry (else first-paint, else the time origin). Client-rendered skeletons (tab switches, client navigation, any later loading spell) still start at commit. `scripts/polish/misc-w3-hardload.mjs` (the reviewer's probe, with two rounds and a 600ms delay added) does a hard load of /leaderboard with the /api/leaderboard answer held for 0, 100, 200, 300 and 600ms. In every run the skeleton had been visible for 0.9 to 2.2s before the answer.
+
+| answer held | content after answer, before (`hardload-before.json`) | after (`hardload-after.json`) |
+|---|---|---|
+| 0ms | 411, 48ms | 23, 65ms |
+| 100ms | 364, 360ms | 33, 20ms |
+| 200ms | 245, 258ms | 32, 38ms |
+| 300ms | 103, 143ms | 34, 48ms |
+| 600ms | 46, 38ms | 43, 39ms |
+
+Regression check, tab switches after hydration (`probe-skeleton-hardfix.json`, `misc-w3-probe.ts --only skeletonHold`): 3 of 3 pass. Held 0 and 60ms, never visible. Held 260ms, visible 387ms and 378ms, so the minimum still holds. Held 600 and 1200ms, content 28-61ms after the answer. A hard load of /leaderboard, /community, /clubs, /tournaments and /inbox logs no hydration warning or page error.
+
 Not applied (sibling classes checked): route `loading.tsx` skeletons (codex card pages, /profile, /history route shells) are Suspense fallbacks that React removes. A hook cannot hold them, and they get the CSS delay only. The TV board skeleton is a status surface ("Tuning in…"), not a list waiting for data. /history's row skeleton waits on a localStorage read in a microtask, which always lands inside the show-delay, so it is never visible and a hold would do nothing. Still to do (client-driven, not in this pass): `u/[username]/page.tsx:314` (`!profile`, account slice), `/profile` (`account === undefined`), and the puzzle skeletons in `puzzles/_components/PuzzleStates.tsx`. Each is a one-line `useSkeletonHold` call like the ones above.
 
 **4. God panel.** The only way to see the section is to be an owner account. The probe presents the seeded admin as one by rewriting the `/api/auth/me` response in the browser context, and it mocks `/api/mod/god-panel` completely, so nothing was written. `ModToggle` got an optional `failed` prop, which shows "-" and the title "Could not load" instead of the loading "…". This matches the house bot settings' "-" on failure.

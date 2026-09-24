@@ -20,13 +20,21 @@
 // - Data after the skeleton showed: the skeleton stays until it has been on
 //   screen for SKELETON_MIN_MS, then the content replaces it. No 40ms flash.
 //
+// When the clock starts matters. A skeleton a client render puts in the page
+// starts its CSS show-delay when it commits, so the hook starts its clock in
+// the layout effect. A skeleton that came in the server HTML (a hard load of
+// /leaderboard, /clubs, /tournaments, /inbox, /community) started its delay at
+// first paint, often a second or more before hydration. For a loading spell
+// that is already on at hydration, the clock starts at first contentful paint,
+// so a skeleton that has already been up long enough is not held again.
+//
 // The swap happens before paint (layout effect), so a fast load never paints
 // one extra frame of the invisible skeleton. The hold only delays the swap;
 // the skeleton and the content are drawn at the same geometry by each caller,
 // so the hold never changes layout. Errors are not held: callers check their
 // error first.
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 
 /** Must match `--skeleton-delay` on `.skeleton` in globals.css. */
 export const SKELETON_DELAY_MS = 150;
@@ -38,6 +46,27 @@ const useIsoLayoutEffect = typeof window === "undefined" ? useEffect : useLayout
 const now = () => (typeof performance !== "undefined" ? performance.now() : Date.now());
 
 /**
+ * When the server HTML was first painted, on the performance.now() clock: the
+ * first-contentful-paint entry, else first-paint, else the time origin (the
+ * page has painted by the time it hydrates).
+ */
+function firstPaintAt(): number {
+  if (typeof performance === "undefined" || typeof performance.getEntriesByType !== "function") return 0;
+  const paints = performance.getEntriesByType("paint");
+  const fcp = paints.find((e) => e.name === "first-contentful-paint") ?? paints.find((e) => e.name === "first-paint");
+  return fcp ? fcp.startTime : 0;
+}
+
+const noSubscribe = () => () => {};
+/** True in the render that hydrates server HTML, false in a client render. */
+const useIsHydrating = () =>
+  useSyncExternalStore(
+    noSubscribe,
+    () => false,
+    () => true,
+  );
+
+/**
  * True while the caller should keep drawing its skeleton: while `loading`, and
  * after it, until a skeleton that became visible has been up SKELETON_MIN_MS.
  */
@@ -46,10 +75,18 @@ export function useSkeletonHold(loading: boolean): boolean {
   // When the current loading spell was committed (the skeleton went into the
   // page and its CSS show-delay started), or null.
   const startedAt = useRef<number | null>(null);
+  // Whether this instance mounted by hydrating server HTML. Read once: only the
+  // loading spell that is on at mount can have a server-rendered skeleton.
+  const hydrating = useIsHydrating();
+  const mountedHydrating = useRef<boolean | null>(null);
+  if (mountedHydrating.current === null) mountedHydrating.current = hydrating;
+  const firstSpell = useRef(true);
 
   useIsoLayoutEffect(() => {
+    const first = firstSpell.current;
+    firstSpell.current = false;
     if (loading) {
-      if (startedAt.current === null) startedAt.current = now();
+      if (startedAt.current === null) startedAt.current = first && mountedHydrating.current ? firstPaintAt() : now();
       setHeld(true);
       return undefined;
     }
