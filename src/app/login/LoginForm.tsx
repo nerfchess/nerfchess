@@ -6,7 +6,8 @@ import { useEffect, useRef, useState } from "react";
 import { login, register } from "@/lib/authClient";
 import { safeNextPath } from "@/lib/safeNext";
 import { SiteHeader } from "@/components/SiteHeader";
-import { Button } from "@/components/ui/Button";
+import { Button, LinkButton } from "@/components/ui/Button";
+import { useSession } from "@/lib/session/SessionProvider";
 
 // Public sitekey; when unset the widget is skipped and signup works as before.
 const TURNSTILE_SITEKEY = process.env.NEXT_PUBLIC_TURNSTILE_SITEKEY;
@@ -42,6 +43,12 @@ export function LoginForm({
   // Checked again here: the push below must never leave the site whatever
   // the caller passed (F041).
   const next = safeNextPath(nextParam);
+  // Read once, from the nc_who hint the first paint already has, so the
+  // notice below is in the server HTML. A session without the hint (older
+  // than the cookie) skips the notice on this load rather than inserting it
+  // above the form when /me answers; /me sets the hint for the next one.
+  const { display } = useSession();
+  const [signedInAs] = useState(() => (display && !display.isGuest ? display.username : null));
   const [tab, setTab] = useState<"login" | "register">(upgrading ? "register" : "login");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -136,6 +143,21 @@ export function LoginForm({
             Your guest rating, games, and member date carry over.
           </p>
         )}
+        {signedInAs && (
+          // A sign-in or a registration from here replaces the current
+          // session, so say whose it is first (wave 2 account 11).
+          <div className="mt-4 plate flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="min-w-0 text-[13px] text-parchment-300">
+              You are signed in as <span className="font-semibold text-parchment-100">{signedInAs}</span>.
+              Signing in below switches accounts.
+            </p>
+            <LinkButton tone="ghost"
+              href={next}
+              className="shrink-0 px-4 py-2 text-[13px]">
+              Continue as {signedInAs}
+            </LinkButton>
+          </div>
+        )}
 
         <div
           role="tablist"
@@ -210,11 +232,12 @@ export function LoginForm({
               onChange={(e) => setUsername(e.target.value)}
               autoComplete="username"
               maxLength={tab === "login" ? 254 : 20}
+              aria-describedby={tab === "register" ? "username-help" : undefined}
               className="w-full bg-[color:var(--bg-base)] border border-[color:var(--edge)] px-4 py-3 focus:border-[color:var(--edge-strong)] text-parchment placeholder:text-parchment-500"
               placeholder="knight_rider"
             />
             {tab === "register" && (
-              <p className="mt-1 text-[12px] text-parchment-400">
+              <p id="username-help" className="mt-1 text-[12px] text-parchment-400">
                 3-20 characters: letters, digits, underscores.
               </p>
             )}
@@ -249,9 +272,18 @@ export function LoginForm({
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete={tab === "login" ? "current-password" : "new-password"}
+              // The rule is a persistent help line tied to the field, not a
+              // placeholder that goes away on the first keystroke; minLength
+              // stops a short password before the round trip.
+              minLength={tab === "register" ? 8 : undefined}
+              aria-describedby={tab === "register" ? "password-help" : undefined}
               className="w-full bg-[color:var(--bg-base)] border border-[color:var(--edge)] px-4 py-3 focus:border-[color:var(--edge-strong)] text-parchment"
-              placeholder={tab === "register" ? "at least 8 characters" : ""}
             />
+            {tab === "register" && (
+              <p id="password-help" className="mt-1 text-[12px] text-parchment-400">
+                At least 8 characters.
+              </p>
+            )}
           </div>
           {tab === "register" && TURNSTILE_SITEKEY && (
             // Reserves the widget's box while api.js loads (F016): the

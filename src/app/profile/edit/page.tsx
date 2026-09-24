@@ -311,7 +311,7 @@ export default function EditProfilePage() {
           <EditProfileSections />
         ) : !account ? (
           <div className="mt-8 plate p-4 text-sm text-parchment-300">
-            <Link href="/login?next=/profile/edit" className="text-gold-leaf hover:underline">
+            <Link href="/login?next=/profile/edit" className="text-gold-leaf underline underline-offset-2">
               Sign in
             </Link>{" "}
             to customize your profile picture, flair, bio, and privacy.
@@ -471,7 +471,7 @@ export default function EditProfilePage() {
                   <p className="text-[13px] text-parchment-400">
                     <span className="font-display text-gold-leaf">Laurelled</span>, reserved for
                     players currently in the top 10 of a{" "}
-                    <Link href="/leaderboard" className="text-gold-leaf hover:underline">
+                    <Link href="/leaderboard" className="text-gold-leaf underline underline-offset-2">
                       leaderboard
                     </Link>
                     . Claim it while your rank holds.
