@@ -144,6 +144,9 @@ function ProfileContent() {
   // locally by the header's Add / Accept / Remove actions.
   const [rel, setRel] = useState<Relationship | null>(null);
   const [friendBusy, setFriendBusy] = useState(false);
+  // A refused or failed friend action rolls the button back; this line says
+  // why, so the click does not look like it did nothing (wave 2 account 9).
+  const [friendError, setFriendError] = useState<string | null>(null);
 
   // Client-side profile->profile navigation re-renders this component without a
   // remount: clear the previous player's state during render (React's sanctioned
@@ -363,6 +366,7 @@ function ProfileContent() {
 
   const addFriend = async () => {
           setFriendBusy(true);
+          setFriendError(null);
           setRel("outgoing");
           try {
             const r = await fetch("/api/friends", {
@@ -370,15 +374,20 @@ function ProfileContent() {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ action: "request", username: user.username }),
             });
-            if (!r.ok) setRel("none");
+            if (!r.ok) {
+              setRel("none");
+              setFriendError(await friendFailure(r, "The friend request was not sent."));
+            }
           } catch {
             setRel("none");
+            setFriendError(FRIEND_OFFLINE);
           } finally {
             setFriendBusy(false);
           }
   };
   const acceptFriend = async () => {
           setFriendBusy(true);
+          setFriendError(null);
           const prev = rel;
           setRel("friends");
           try {
@@ -387,15 +396,20 @@ function ProfileContent() {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ action: "accept", username: user.username }),
             });
-            if (!r.ok) setRel(prev);
+            if (!r.ok) {
+              setRel(prev);
+              setFriendError(await friendFailure(r, "The request was not accepted."));
+            }
           } catch {
             setRel(prev);
+            setFriendError(FRIEND_OFFLINE);
           } finally {
             setFriendBusy(false);
           }
   };
   const removeFriend = async () => {
           setFriendBusy(true);
+          setFriendError(null);
           const prev = rel;
           setRel("none");
           try {
@@ -404,9 +418,13 @@ function ProfileContent() {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ action: "remove", username: user.username }),
             });
-            if (!r.ok) setRel(prev);
+            if (!r.ok) {
+              setRel(prev);
+              setFriendError(await friendFailure(r, "The friend was not removed."));
+            }
           } catch {
             setRel(prev);
+            setFriendError(FRIEND_OFFLINE);
           } finally {
             setFriendBusy(false);
           }
@@ -478,6 +496,13 @@ function ProfileContent() {
               />
             </div>
           </div>
+          {/* Always in the DOM so the message is announced; no height when empty. */}
+          <p
+            role="status"
+            className={friendError ? "px-4 pb-3 text-right text-[13px] text-oxblood-glow sm:px-5" : undefined}
+          >
+            {friendError ?? ""}
+          </p>
 
           {/* Chart on the left, the facts on the right. */}
           <div className="grid border-t border-[color:var(--edge)] lg:grid-cols-[minmax(0,1fr)_300px]">
@@ -639,6 +664,13 @@ function StatCell({ value, label }: { value: number; label: string }) {
 
 // ---- Header -----------------------------------------------------------------
 
+// A stand-alone text link or button (not a link inside a sentence) still needs
+// a real hit area: 44px tall on coarse pointers, 24px (WCAG 2.5.8) on fine
+// ones. The negative margins give the extra height back, so the line keeps
+// its 20px of layout and nothing around it moves (wave 2 account 10).
+const BARE_TEXT_TARGET =
+  "-my-3 inline-flex min-h-[44px] items-center [@media(pointer:fine)]:-my-0.5 [@media(pointer:fine)]:min-h-[24px]";
+
 function ProfileHeader({
   user,
   liveGameId,
@@ -710,9 +742,11 @@ function ProfileHeader({
         </div>
         {user.bio && <BioText bio={user.bio} />}
         {!user.bio && isOwner && (
-          <Link href="/profile/edit" className="mt-1 inline-block text-[13px] text-[color:var(--accent)] no-underline hover:underline">
-            Add a bio
-          </Link>
+          <div className="mt-1">
+            <Link href="/profile/edit" className={"text-[13px] text-[color:var(--accent)] no-underline hover:underline " + BARE_TEXT_TARGET}>
+              Add a bio
+            </Link>
+          </div>
         )}
       </div>
       {placements.length > 0 && (
@@ -741,14 +775,16 @@ function BioText({ bio }: { bio: string }) {
         {bio}
       </p>
       {long && (
+        <div className="mt-1">
         <button
           type="button"
           aria-expanded={expanded}
           onClick={() => setExpanded((v) => !v)}
-          className="mt-1 text-[13px] text-gold-leaf hover:underline"
+          className={"text-[13px] text-gold-leaf hover:underline " + BARE_TEXT_TARGET}
         >
           {expanded ? "Less" : "More"}
         </button>
+        </div>
       )}
     </div>
   );
@@ -855,6 +891,20 @@ function HeaderActions({
   );
 }
 
+const FRIEND_OFFLINE = "Could not reach the server. Check your connection and try again.";
+
+/** The reason a friend action was refused, in words: the route's own error
+ *  text when it sends one (its 429 says how long to wait), else a generic
+ *  line for the status. */
+async function friendFailure(r: Response, fallback: string): Promise<string> {
+  try {
+    const body = (await r.json()) as { error?: unknown };
+    if (typeof body.error === "string" && body.error.trim()) return body.error;
+  } catch {}
+  if (r.status === 429) return "Too many friend requests for now. Try again later.";
+  return fallback;
+}
+
 // Share via the Web Share API, falling back to a clipboard copy. Returns true
 // when the fallback copied the link (so the caller can flash "Link copied");
 // false when the share sheet handled it or nothing could be done quietly.
@@ -929,6 +979,12 @@ function OverflowMenu({
   onReport: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  // Remove friend takes two presses: the first turns the item into a
+  // confirmation, the second acts. It sits next to Report in a small popover
+  // where a mis-tap is easy, and there is no undo (wave 2 account 8).
+  // Reset each time the menu opens, so a half-confirmed remove never waits
+  // behind a closed menu.
+  const [confirmRemove, setConfirmRemove] = useState(false);
   // "Link copied" flash for the Share item's clipboard fallback: the menu stays
   // open just long enough to confirm, then closes itself.
   const [copied, setCopied] = useState(false);
@@ -981,7 +1037,10 @@ function OverflowMenu({
       <button
         ref={triggerRef}
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => {
+          setConfirmRemove(false);
+          setOpen((v) => !v);
+        }}
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={`More actions for ${username}`}
@@ -1048,13 +1107,20 @@ function OverflowMenu({
               role="menuitem"
               disabled={friendBusy}
               onClick={() => {
+                if (!confirmRemove) {
+                  setConfirmRemove(true);
+                  return;
+                }
                 setOpen(false);
                 onRemoveFriend();
               }}
-              className="flex min-h-[44px] w-full items-center gap-2 rounded px-3 text-left font-display text-[13px] text-parchment-200 transition hover:bg-oxblood/15 hover:text-oxblood-glow disabled:opacity-50"
+              className={
+                "flex min-h-[44px] w-full items-center gap-2 rounded px-3 text-left font-display text-[13px] transition hover:bg-oxblood/15 hover:text-oxblood-glow disabled:opacity-50 " +
+                (confirmRemove ? "bg-oxblood/15 text-oxblood-glow" : "text-parchment-200")
+              }
             >
               <UserX size={15} strokeWidth={2.2} aria-hidden />
-              Remove friend
+              {confirmRemove ? `Remove ${username}? Press again` : "Remove friend"}
             </button>
           )}
         </div>
@@ -1703,7 +1769,7 @@ function BioSection({
                 setDraft(bio ?? "");
                 setEditing(true);
               }}
-              className="ml-2 text-gold-leaf hover:underline"
+              className={"ml-2 text-gold-leaf hover:underline " + BARE_TEXT_TARGET}
             >
               {bio ? "Edit" : "Add a bio"}
             </button>
