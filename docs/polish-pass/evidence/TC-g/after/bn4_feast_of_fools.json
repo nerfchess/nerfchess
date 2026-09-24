@@ -1,0 +1,85 @@
+{
+ "id": "bn4_feast_of_fools",
+ "url": "/dev/plays?id=bn4_feast_of_fools&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "bn4_feast_of_fools",
+  "name": "Feast of Fools",
+  "tier": 7,
+  "category": "draft",
+  "mechanic": "instant",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:bn4_feast_of_fools",
+  "anchor": "board",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2460,
+  "cssEndMs": 3483,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 22,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 206,
+  "maxGapMs": 152.2
+ },
+ "raf": {
+  "frames": 212,
+  "medianMs": 16.7,
+  "maxMs": 50,
+  "dropped": 6
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 54,
+  "totalBlockingMs": 0,
+  "entries": [
+   {
+    "atMs": -47,
+    "duration": 54,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  189,
+  481,
+  832,
+  1226,
+  1657,
+  2120,
+  2610
+ ],
+ "png": "docs/polish-pass/evidence/TC-g/after/bn4_feast_of_fools.png",
+ "pngBytes": 29528,
+ "off": {
+  "url": "/dev/plays?id=bn4_feast_of_fools&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "docs/polish-pass/evidence/TC-g/after/bn4_feast_of_fools.off.png"
+ }
+}

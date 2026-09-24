@@ -1,0 +1,102 @@
+{
+ "id": "bn4_eye_of_ages",
+ "url": "/dev/plays?id=bn4_eye_of_ages&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "bn4_eye_of_ages",
+  "name": "Eye of Ages",
+  "tier": 7,
+  "category": "info",
+  "mechanic": "instant",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:bn4_eye_of_ages",
+  "anchor": "board",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 55,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2461,
+  "cssEndMs": 3511,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 29,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 160,
+  "maxGapMs": 260.4
+ },
+ "raf": {
+  "frames": 199,
+  "medianMs": 16.7,
+  "maxMs": 116.7,
+  "dropped": 19
+ },
+ "longAnimationFrames": {
+  "count": 2,
+  "worstMs": 110,
+  "totalBlockingMs": 52,
+  "entries": [
+   {
+    "atMs": 601,
+    "duration": 56,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 932,
+    "duration": 110,
+    "blocking": 52,
+    "scripts": [
+     {
+      "duration": 99,
+      "invoker": "http://localhost:3000/_next/static/chunks/_app-pages-browser_src_components_effe...",
+      "source": "/_next/static/chunks/_app-pages-browser_src_components_effects_board3d_engine3d_ts.js"
+     },
+     {
+      "duration": 6,
+      "invoker": "TimerHandler:setInterval",
+      "source": ""
+     }
+    ]
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  189,
+  481,
+  832,
+  1227,
+  1658,
+  2120,
+  2611
+ ],
+ "png": "docs/polish-pass/evidence/TC-g/after/bn4_eye_of_ages.png",
+ "pngBytes": 28345,
+ "off": {
+  "url": "/dev/plays?id=bn4_eye_of_ages&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "docs/polish-pass/evidence/TC-g/after/bn4_eye_of_ages.off.png"
+ }
+}

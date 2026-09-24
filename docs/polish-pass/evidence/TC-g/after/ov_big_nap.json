@@ -1,0 +1,149 @@
+{
+ "id": "ov_big_nap",
+ "url": "/dev/plays?id=ov_big_nap&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "ov_big_nap",
+  "name": "The Big Nap",
+  "tier": 7,
+  "category": "tempo",
+  "mechanic": "instant",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:ov_big_nap",
+  "anchor": "board",
+  "source": "frozen",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 70,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2472,
+  "cssEndMs": 3461,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 118,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 173,
+  "maxGapMs": 346.4
+ },
+ "raf": {
+  "frames": 214,
+  "medianMs": 16.7,
+  "maxMs": 66.7,
+  "dropped": 5
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 86,
+  "totalBlockingMs": 30,
+  "entries": [
+   {
+    "atMs": -72,
+    "duration": 86,
+    "blocking": 30,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  190,
+  483,
+  835,
+  1232,
+  1665,
+  2129,
+  2622
+ ],
+ "png": "docs/polish-pass/evidence/TC-g/after/ov_big_nap.png",
+ "pngBytes": 31426,
+ "off": {
+  "url": "/dev/plays?id=ov_big_nap&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0.0031,
+  "endRegions": [
+   {
+    "x": 232,
+    "y": 16,
+    "w": 16,
+    "h": 56,
+    "cells": 9
+   },
+   {
+    "x": 232,
+    "y": 416,
+    "w": 16,
+    "h": 56,
+    "cells": 9
+   },
+   {
+    "x": 336,
+    "y": 16,
+    "w": 24,
+    "h": 16,
+    "cells": 6
+   },
+   {
+    "x": 392,
+    "y": 16,
+    "w": 24,
+    "h": 16,
+    "cells": 6
+   },
+   {
+    "x": 336,
+    "y": 416,
+    "w": 24,
+    "h": 16,
+    "cells": 6
+   },
+   {
+    "x": 392,
+    "y": 416,
+    "w": 24,
+    "h": 16,
+    "cells": 6
+   },
+   {
+    "x": 456,
+    "y": 16,
+    "w": 8,
+    "h": 16,
+    "cells": 2
+   },
+   {
+    "x": 56,
+    "y": 416,
+    "w": 8,
+    "h": 16,
+    "cells": 2
+   },
+   {
+    "x": 456,
+    "y": 416,
+    "w": 8,
+    "h": 16,
+    "cells": 2
+   }
+  ],
+  "png": "docs/polish-pass/evidence/TC-g/after/ov_big_nap.off.png"
+ }
+}
