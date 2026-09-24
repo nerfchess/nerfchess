@@ -324,8 +324,11 @@ async function regressions(ctx: Ctx) {
     await call("POST", "/api/challenges", { token: a.token, body: { to: b.name, code: "FZHREF", timeSec: 300, incrementSec: 0 } });
     await call("POST", "/api/challenges", { token: a.token, body: { to: b.name, code: "FZHREFX", timeSec: 300, incrementSec: 0 } });
     await call("POST", "/api/challenges/FZHREF", { token: b.token, body: { action: "declined" } });
-    const other = d1(`SELECT read FROM notifications WHERE user_id = '${b.id}' AND href = '/friend?code=FZHREFX'`);
+    // Challenge bells link to /c/<code> (challengeHref in src/lib/server/social.ts).
+    const other = d1(`SELECT read FROM notifications WHERE user_id = '${b.id}' AND href = '/c/FZHREFX'`);
     record("resolving one challenge leaves a longer code's bell alone", "F096", other.length === 1 && Number(other[0].read) === 0, JSON.stringify(other));
+    const own = d1(`SELECT read FROM notifications WHERE user_id = '${b.id}' AND href = '/c/FZHREF'`);
+    record("resolving a challenge marks its own bell read", "F096", own.length === 1 && Number(own[0].read) === 1, JSON.stringify(own));
 
     const statuses: number[] = [];
     for (let i = 0; i < 14; i++) {
