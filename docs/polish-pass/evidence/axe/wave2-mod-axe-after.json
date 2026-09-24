@@ -1,0 +1,65 @@
+{
+ "generatedAt": "2026-09-24T12:00:27.663Z",
+ "rows": [
+  {
+   "route": "/mod/stats",
+   "state": "360x780|dark|full|mod|normal",
+   "violations": []
+  },
+  {
+   "route": "/mod/stats",
+   "state": "360x780|light|full|mod|normal",
+   "violations": []
+  },
+  {
+   "route": "/mod/stats/all",
+   "state": "360x780|dark|full|mod|normal",
+   "violations": []
+  },
+  {
+   "route": "/mod/stats/all",
+   "state": "360x780|light|full|mod|normal",
+   "violations": []
+  },
+  {
+   "route": "/mod/stats/humans",
+   "state": "360x780|dark|full|mod|normal",
+   "violations": []
+  },
+  {
+   "route": "/mod/stats/humans",
+   "state": "360x780|light|full|mod|normal",
+   "violations": []
+  },
+  {
+   "route": "/mod",
+   "state": "360x780|dark|full|mod|normal",
+   "violations": []
+  },
+  {
+   "route": "/mod",
+   "state": "360x780|light|full|mod|normal",
+   "violations": []
+  },
+  {
+   "route": "/mod/cards",
+   "state": "360x780|dark|full|mod|normal",
+   "violations": []
+  },
+  {
+   "route": "/mod/cards",
+   "state": "360x780|light|full|mod|normal",
+   "violations": []
+  },
+  {
+   "route": "/mod/house",
+   "state": "360x780|dark|full|mod|normal",
+   "violations": []
+  },
+  {
+   "route": "/mod/house",
+   "state": "360x780|light|full|mod|normal",
+   "violations": []
+  }
+ ]
+}

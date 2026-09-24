@@ -1,0 +1,65 @@
+{
+ "generatedAt": "2026-09-24T12:02:55.347Z",
+ "rows": [
+  {
+   "route": "/mod#controls",
+   "state": "360x780|dark|full|mod|normal",
+   "violations": []
+  },
+  {
+   "route": "/mod#controls",
+   "state": "360x780|light|full|mod|normal",
+   "violations": []
+  },
+  {
+   "route": "/mod#controls",
+   "state": "1280x800|dark|full|mod|normal",
+   "violations": []
+  },
+  {
+   "route": "/mod#controls",
+   "state": "1280x800|light|full|mod|normal",
+   "violations": []
+  },
+  {
+   "route": "/mod#log",
+   "state": "360x780|dark|full|mod|normal",
+   "violations": []
+  },
+  {
+   "route": "/mod#log",
+   "state": "360x780|light|full|mod|normal",
+   "violations": []
+  },
+  {
+   "route": "/mod#log",
+   "state": "1280x800|dark|full|mod|normal",
+   "violations": []
+  },
+  {
+   "route": "/mod#log",
+   "state": "1280x800|light|full|mod|normal",
+   "violations": []
+  },
+  {
+   "route": "/mod#games",
+   "state": "360x780|dark|full|mod|normal",
+   "violations": []
+  },
+  {
+   "route": "/mod#games",
+   "state": "360x780|light|full|mod|normal",
+   "violations": []
+  },
+  {
+   "route": "/mod#games",
+   "state": "1280x800|dark|full|mod|normal",
+   "violations": []
+  },
+  {
+   "route": "/mod#games",
+   "state": "1280x800|light|full|mod|normal",
+   "violations": []
+  }
+ ]
+}

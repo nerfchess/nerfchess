@@ -1,0 +1,121 @@
+{
+  "base": "http://localhost:3000",
+  "at": "2026-09-24T12:10:21.087Z",
+  "checks": [
+    {
+      "id": "me 503 /mod: Retry shown",
+      "pass": true,
+      "detail": "nerfchess Play Watch Community Leaderboard Rules polish_mod Moderation Jump to… Ctrl K QUEUE Dashboard Reports Chat flags PEOPLE Players Audit log ACTIVITY Game archive Stats: all games Stats: humans CARDS Nerf verdicts Buff verdicts Player ideas Card editor SITE Controls House personas MODERATION C"
+    },
+    {
+      "id": "me 503 /mod: Retry recovers",
+      "pass": true,
+      "detail": "nerfchess Play Watch Community Leaderboard Rules polish_mod Moderation Jump to… Ctrl K QUEUE Dashboard Reports Chat flags PEOPLE Players Audit log ACTIVITY Game archive Stats: all games Stats: humans CARDS Nerf verdicts Buff verdicts Player ideas Card editor SITE Controls House personas MODERATION L"
+    },
+    {
+      "id": "me 503 /mod/cards: Retry shown",
+      "pass": true,
+      "detail": "nerfchess Play Watch Community Leaderboard Rules polish_mod Moderation Jump to… Ctrl K QUEUE Dashboard Reports Chat flags PEOPLE Players Audit log ACTIVITY Game archive Stats: all games Stats: humans CARDS Nerf verdicts Buff verdicts Player ideas Card editor SITE Controls House personas CARD EDITOR "
+    },
+    {
+      "id": "me 503 /mod/cards: Retry recovers",
+      "pass": true,
+      "detail": "nerfchess Play Watch Community Leaderboard Rules polish_mod Moderation Jump to… Ctrl K QUEUE Dashboard Reports Chat flags PEOPLE Players Audit log ACTIVITY Game archive Stats: all games Stats: humans CARDS Nerf verdicts Buff verdicts Player ideas Card editor SITE Controls House personas CARD EDITOR "
+    },
+    {
+      "id": "me 503 /mod/house: Retry shown",
+      "pass": true,
+      "detail": "nerfchess Play Watch Community Leaderboard Rules polish_mod Moderation Jump to… Ctrl K QUEUE Dashboard Reports Chat flags PEOPLE Players Audit log ACTIVITY Game archive Stats: all games Stats: humans CARDS Nerf verdicts Buff verdicts Player ideas Card editor SITE Controls House personas HOUSE BOTS C"
+    },
+    {
+      "id": "me 503 /mod/house: Retry recovers",
+      "pass": true,
+      "detail": "nerfchess Play Watch Community Leaderboard Rules polish_mod Moderation Jump to… Ctrl K QUEUE Dashboard Reports Chat flags PEOPLE Players Audit log ACTIVITY Game archive Stats: all games Stats: humans CARDS Nerf verdicts Buff verdicts Player ideas Card editor SITE Controls House personas HOUSE BOTS L"
+    },
+    {
+      "id": "me 503 /mod/stats/all: Retry shown",
+      "pass": true,
+      "detail": "nerfchess Play Watch Community Leaderboard Rules polish_mod Moderation Jump to… Ctrl K QUEUE Dashboard Reports Chat flags PEOPLE Players Audit log ACTIVITY Game archive Stats: all games Stats: humans CARDS Nerf verdicts Buff verdicts Player ideas Card editor SITE Controls House personas SITE STATIST"
+    },
+    {
+      "id": "me 503 /mod/stats/all: Retry recovers",
+      "pass": true,
+      "detail": "nerfchess Play Watch Community Leaderboard Rules polish_mod Moderation Jump to… Ctrl K QUEUE Dashboard Reports Chat flags PEOPLE Players Audit log ACTIVITY Game archive Stats: all games Stats: humans CARDS Nerf verdicts Buff verdicts Player ideas Card editor SITE Controls House personas SITE STATIST"
+    },
+    {
+      "id": "section #log API 500: error with Retry",
+      "pass": true,
+      "detail": "Could not load the audit log.\nRetry"
+    },
+    {
+      "id": "section #ideas API 500: error with Retry",
+      "pass": true,
+      "detail": "Could not load player ideas.\nRetry"
+    },
+    {
+      "id": "section #nerfs API 500: error with Retry",
+      "pass": true,
+      "detail": "Could not load nerf verdicts.\nRetry"
+    },
+    {
+      "id": "section #buffs API 500: error with Retry",
+      "pass": true,
+      "detail": "Could not load buff verdicts.\nRetry"
+    },
+    {
+      "id": "section #reports API 500: error with Retry",
+      "pass": true,
+      "detail": "Could not load the report queue.\nRetry"
+    },
+    {
+      "id": "section #chat API 500: error with Retry",
+      "pass": true,
+      "detail": "Could not load chat flags.\nRetry"
+    },
+    {
+      "id": "section #players API 500: error with Retry",
+      "pass": true,
+      "detail": "Could not load players.\nRetry"
+    },
+    {
+      "id": "section #controls API 500: error with Retry",
+      "pass": true,
+      "detail": "Could not load the house bot settings.\nRetry"
+    },
+    {
+      "id": "cards GET 500: error shown, no Edit buttons",
+      "pass": true,
+      "detail": "{\"ok\":true,\"editButtons\":0}"
+    },
+    {
+      "id": "cards POST aborted: notice, Save and Cancel enabled",
+      "pass": true,
+      "detail": "{\"notice\":1,\"saveEnabled\":true,\"cancelEnabled\":true,\"buttons\":[\"Cancel:enabled\",\"Save:enabled\"]}"
+    },
+    {
+      "id": "controls 360: Notifications dy 0 when the settings land; editor opens",
+      "pass": true,
+      "detail": "{\"dy\":0,\"sumBefore\":\"Strength by tier\\n…\",\"sumAfter\":\"Strength by tier\\n20 tiers, all default\",\"open\":true}"
+    },
+    {
+      "id": "controls 1280: Notifications dy 0 when the settings land; editor opens",
+      "pass": true,
+      "detail": "{\"dy\":0,\"sumBefore\":\"Strength by tier\\n…\",\"sumAfter\":\"Strength by tier\\n20 tiers, all default\",\"open\":true}"
+    },
+    {
+      "id": "controls: persona link shows for polish_mod",
+      "pass": true,
+      "detail": "{\"link\":1}"
+    },
+    {
+      "id": "house signed out: Sign in link, no personas fetch",
+      "pass": true,
+      "detail": "{\"href\":\"/login?next=%2Fmod%2Fhouse\",\"hits\":0}"
+    },
+    {
+      "id": "api: log pages without overlap, group and q answer 200, games has nextBeforeId",
+      "pass": true,
+      "detail": "{\"firstStatus\":200,\"firstCount\":21,\"hasNext\":false,\"secondCount\":null,\"overlap\":0,\"groupStatus\":200,\"groupCount\":0,\"qStatus\":200,\"gamesStatus\":200,\"gamesKeys\":[\"games\",\"nextBefore\",\"nextBeforeId\"],\"cursorMatches\":true,\"byNameOk\":true,\"groups\":{\"ban\":0,\"mute\":1,\"warn\":8,\"role\":0,\"queue\":12,\"config\":0}}"
+    }
+  ]
+}
