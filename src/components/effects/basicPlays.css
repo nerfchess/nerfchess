@@ -766,6 +766,19 @@
 }
 .bsp-r-fall { animation: bsp-r-fall calc(1.2s * var(--fx-dur, 1)) var(--ease-io) both; }
 
+/* Knocked over: the piece tips onto its side about its foot and lies there
+   (Clumsy Dash's dropped pawn). */
+@keyframes bsp-r-tip {
+  0% { opacity: 0; transform: rotate(0deg); }
+  14% { opacity: 1; transform: rotate(0deg); }
+  36% { transform: rotate(98deg); }
+  44% { transform: rotate(84deg); }
+  52% { transform: rotate(90deg); }
+  86% { opacity: 1; transform: rotate(90deg); }
+  100% { opacity: 0; transform: rotate(90deg); }
+}
+.bsp-r-tip { animation: bsp-r-tip calc(1.4s * var(--fx-dur, 1)) var(--ease-io) both; transform-origin: 50% 86%; }
+
 
 /* --- Animations off (Settings) ---------------------------------------------- */
 /* Defensive: the mounting layers already gate on the animations-off setting, but
