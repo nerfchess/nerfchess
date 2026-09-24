@@ -1,0 +1,303 @@
+{
+ "route": "/dev/motion",
+ "state": "1280x800|dark|fast|signed-out|normal",
+ "trigger": "module scripts/polish/i/tour-step.ts",
+ "t0Source": "pointerdown",
+ "duration": 1100,
+ "interval": 100,
+ "screencast": {
+  "framesInWindow": 58,
+  "maxGapMs": 66.2
+ },
+ "raf": {
+  "frames": 110,
+  "medianMs": 16.7,
+  "maxMs": 66.6,
+  "dropped": 14
+ },
+ "longAnimationFrames": [
+  {
+   "t": 13774,
+   "duration": 78,
+   "blocking": 17,
+   "renderStart": 13850,
+   "scripts": []
+  }
+ ],
+ "layoutShifts": [
+  {
+   "t": 13903.5,
+   "value": 0.11858695983886718,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.m-scrim.pointer-events-none.fixed > div.absolute.rounded-\\[2px\\]",
+     "text": "",
+     "prev": {
+      "x": 0,
+      "y": 28,
+      "w": 62,
+      "h": 62
+     },
+     "curr": {
+      "x": 0,
+      "y": 0,
+      "w": 953,
+      "h": 800
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": -28,
+     "dw": 891,
+     "dh": 738
+    },
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.plate.outline-none[role=\"dialog\"]",
+     "text": "Step oneSkip tourThe first targetA small box.Step ...",
+     "prev": {
+      "x": 0,
+      "y": 633,
+      "w": 356,
+      "h": 167
+     },
+     "curr": {
+      "x": 80,
+      "y": 581,
+      "w": 360,
+      "h": 170
+     },
+     "change": "moved",
+     "dx": 80,
+     "dy": -52,
+     "dw": 4,
+     "dh": 3
+    }
+   ]
+  },
+  {
+   "t": 13929.1,
+   "value": 0.19430742263793946,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.m-scrim.pointer-events-none.fixed > div.absolute.rounded-\\[2px\\]",
+     "text": "",
+     "prev": {
+      "x": 0,
+      "y": 0,
+      "w": 953,
+      "h": 800
+     },
+     "curr": {
+      "x": 0,
+      "y": 0,
+      "w": 1270,
+      "h": 800
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": 0,
+     "dw": 317,
+     "dh": 0
+    }
+   ]
+  },
+  {
+   "t": 13959.4,
+   "value": 0.09741411209106444,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.m-scrim.pointer-events-none.fixed > div.absolute.rounded-\\[2px\\]",
+     "text": "",
+     "prev": {
+      "x": 0,
+      "y": 0,
+      "w": 1270,
+      "h": 800
+     },
+     "curr": {
+      "x": 0,
+      "y": 0,
+      "w": 1270,
+      "h": 800
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": 0,
+     "dw": 0,
+     "dh": 0
+    }
+   ]
+  },
+  {
+   "t": 13978.4,
+   "value": 0.04943981170654297,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.m-scrim.pointer-events-none.fixed > div.absolute.rounded-\\[2px\\]",
+     "text": "",
+     "prev": {
+      "x": 0,
+      "y": 0,
+      "w": 1270,
+      "h": 800
+     },
+     "curr": {
+      "x": 0,
+      "y": 0,
+      "w": 1270,
+      "h": 800
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": 0,
+     "dw": 0,
+     "dh": 0
+    }
+   ]
+  },
+  {
+   "t": 14527.6,
+   "value": 0.00029852151870727537,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.plate.outline-none[role=\"dialog\"] > div.mt-4.flex.items-center > div.ml-auto.flex.items-center",
+     "text": "BackNext",
+     "prev": {
+      "x": 542,
+      "y": 577,
+      "w": 56,
+      "h": 40
+     },
+     "curr": {
+      "x": 474,
+      "y": 573,
+      "w": 124,
+      "h": 50
+     },
+     "change": "moved",
+     "dx": -68,
+     "dy": -4,
+     "dw": 68,
+     "dh": 10
+    }
+   ]
+  },
+  {
+   "t": 14557.5,
+   "value": 0.01880941390991211,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.m-scrim.pointer-events-none.fixed > div.absolute.rounded-\\[2px\\]",
+     "text": "",
+     "prev": {
+      "x": 0,
+      "y": 0,
+      "w": 1270,
+      "h": 800
+     },
+     "curr": {
+      "x": 0,
+      "y": 0,
+      "w": 1270,
+      "h": 800
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": 0,
+     "dw": 0,
+     "dh": 0
+    }
+   ]
+  },
+  {
+   "t": 14582.2,
+   "value": 0.02326650619506836,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.m-scrim.pointer-events-none.fixed > div.absolute.rounded-\\[2px\\]",
+     "text": "",
+     "prev": {
+      "x": 0,
+      "y": 0,
+      "w": 1270,
+      "h": 800
+     },
+     "curr": {
+      "x": 0,
+      "y": 0,
+      "w": 1270,
+      "h": 800
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": 0,
+     "dw": 0,
+     "dh": 0
+    }
+   ]
+  },
+  {
+   "t": 14626.3,
+   "value": 0.011711978912353515,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.m-scrim.pointer-events-none.fixed > div.absolute.rounded-\\[2px\\]",
+     "text": "",
+     "prev": {
+      "x": 0,
+      "y": 0,
+      "w": 1270,
+      "h": 800
+     },
+     "curr": {
+      "x": 0,
+      "y": 0,
+      "w": 1270,
+      "h": 800
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": 0,
+     "dw": 0,
+     "dh": 0
+    }
+   ]
+  },
+  {
+   "t": 14647.4,
+   "value": 0.0062011718750000005,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.m-scrim.pointer-events-none.fixed > div.absolute.rounded-\\[2px\\]",
+     "text": "",
+     "prev": {
+      "x": 0,
+      "y": 0,
+      "w": 1270,
+      "h": 800
+     },
+     "curr": {
+      "x": 0,
+      "y": 0,
+      "w": 1270,
+      "h": 800
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": 0,
+     "dw": 0,
+     "dh": 0
+    }
+   ]
+  }
+ ],
+ "png": "docs/polish-pass/evidence/I/after/tour-fast.png"
+}

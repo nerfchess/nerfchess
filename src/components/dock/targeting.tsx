@@ -172,7 +172,7 @@ export function TargetingBanner({
       {/* Your card is mid-use: a frosted glass chip with the card name, the
           current step, a picked-so-far counter, and clear Done / Cancel. Sits
           just BELOW the board's bottom edge so it never hides the squares the
-          player is aiming at. Blue marks the active card (yours — your buff),
+          player is aiming at. Blue marks the active card (yours, your buff),
           coral the back-out. */}
       <div className="glass-chip pointer-events-auto flex max-w-full items-center gap-2.5 border border-mode-buff/40 px-3.5 py-2">
         <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-mode-buffGlow" />

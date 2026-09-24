@@ -1,0 +1,401 @@
+{
+ "route": "/dev/motion",
+ "state": "1280x800|dark|fast|signed-out|normal",
+ "trigger": "module scripts/polish/i/tour-step.ts",
+ "t0Source": "pointerdown",
+ "duration": 1100,
+ "interval": 100,
+ "screencast": {
+  "framesInWindow": 66,
+  "maxGapMs": 27.1
+ },
+ "raf": {
+  "frames": 116,
+  "medianMs": 16.7,
+  "maxMs": 33.3,
+  "dropped": 2
+ },
+ "longAnimationFrames": [
+  {
+   "t": 4156,
+   "duration": 51,
+   "blocking": 0,
+   "renderStart": 4204,
+   "scripts": []
+  }
+ ],
+ "layoutShifts": [
+  {
+   "t": 4223.1,
+   "value": 0.0062587890625,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.plate.outline-none[role=\"dialog\"] > div.flex.items-baseline.justify-between > button.underline.decoration-parchment-500.underline-offset-2",
+     "text": "Skip tour",
+     "prev": {
+      "x": 1207,
+      "y": 652,
+      "w": 56,
+      "h": 20
+     },
+     "curr": {
+      "x": 279,
+      "y": 652,
+      "w": 56,
+      "h": 20
+     },
+     "change": "moved",
+     "dx": -928,
+     "dy": 0,
+     "dw": 0,
+     "dh": 0
+    },
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.plate.outline-none[role=\"dialog\"] > div.mt-4.flex.items-center > div.ml-auto.flex.items-center",
+     "text": "Next",
+     "prev": {
+      "x": 1201,
+      "y": 740,
+      "w": 66,
+      "h": 50
+     },
+     "curr": {
+      "x": 273,
+      "y": 740,
+      "w": 66,
+      "h": 50
+     },
+     "change": "moved",
+     "dx": -928,
+     "dy": 0,
+     "dw": 0,
+     "dh": 0
+    }
+   ]
+  },
+  {
+   "t": 4239.1,
+   "value": 0.02686913605928421,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.pointer-events-none.fixed.inset-0 > div.motion-safe\\:transition-all.motion-safe\\:duration-300",
+     "text": "",
+     "prev": {
+      "x": 0,
+      "y": 28,
+      "w": 62,
+      "h": 62
+     },
+     "curr": {
+      "x": 0,
+      "y": 0,
+      "w": 477,
+      "h": 561
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": -28,
+     "dw": 415,
+     "dh": 499
+    },
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.plate.outline-none[role=\"dialog\"]",
+     "text": "Step oneSkip tourThe first targetA small box.Step ...",
+     "prev": {
+      "x": 0,
+      "y": 624,
+      "w": 385,
+      "h": 176
+     },
+     "curr": {
+      "x": 51,
+      "y": 572,
+      "w": 418,
+      "h": 228
+     },
+     "change": "moved",
+     "dx": 51,
+     "dy": -52,
+     "dw": 33,
+     "dh": 52
+    }
+   ]
+  },
+  {
+   "t": 4255.5,
+   "value": 0.249560546875,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.pointer-events-none.fixed.inset-0 > div.motion-safe\\:transition-all.motion-safe\\:duration-300",
+     "text": "",
+     "prev": {
+      "x": 0,
+      "y": 0,
+      "w": 477,
+      "h": 561
+     },
+     "curr": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": 0,
+     "dw": 803,
+     "dh": 239
+    },
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.plate.outline-none[role=\"dialog\"]",
+     "text": "Step oneSkip tourThe first targetA small box.Step ...",
+     "prev": {
+      "x": 51,
+      "y": 572,
+      "w": 418,
+      "h": 228
+     },
+     "curr": {
+      "x": 156,
+      "y": 507,
+      "w": 418,
+      "h": 228
+     },
+     "change": "moved",
+     "dx": 105,
+     "dy": -65,
+     "dw": 0,
+     "dh": 0
+    }
+   ]
+  },
+  {
+   "t": 4277.4,
+   "value": 0.12647705078125,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.pointer-events-none.fixed.inset-0 > div.motion-safe\\:transition-all.motion-safe\\:duration-300",
+     "text": "",
+     "prev": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "curr": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": 0,
+     "dw": 0,
+     "dh": 0
+    }
+   ]
+  },
+  {
+   "t": 4293.2,
+   "value": 0.04462890625,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.pointer-events-none.fixed.inset-0 > div.motion-safe\\:transition-all.motion-safe\\:duration-300",
+     "text": "",
+     "prev": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "curr": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": 0,
+     "dw": 0,
+     "dh": 0
+    }
+   ]
+  },
+  {
+   "t": 4329.4,
+   "value": 0.0084716796875,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.pointer-events-none.fixed.inset-0 > div.motion-safe\\:transition-all.motion-safe\\:duration-300",
+     "text": "",
+     "prev": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "curr": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": 0,
+     "dw": 0,
+     "dh": 0
+    }
+   ]
+  },
+  {
+   "t": 4822.1,
+   "value": 0.00029852151870727537,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.plate.outline-none[role=\"dialog\"] > div.mt-4.flex.items-center > div.ml-auto.flex.items-center",
+     "text": "BackNext",
+     "prev": {
+      "x": 547,
+      "y": 577,
+      "w": 56,
+      "h": 40
+     },
+     "curr": {
+      "x": 479,
+      "y": 573,
+      "w": 124,
+      "h": 50
+     },
+     "change": "moved",
+     "dx": -68,
+     "dy": -4,
+     "dw": 68,
+     "dh": 10
+    }
+   ]
+  },
+  {
+   "t": 4859.4,
+   "value": 0.01875,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.pointer-events-none.fixed.inset-0 > div.motion-safe\\:transition-all.motion-safe\\:duration-300",
+     "text": "",
+     "prev": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "curr": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": 0,
+     "dw": 0,
+     "dh": 0
+    }
+   ]
+  },
+  {
+   "t": 4872.1,
+   "value": 0.02998046875,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.pointer-events-none.fixed.inset-0 > div.motion-safe\\:transition-all.motion-safe\\:duration-300",
+     "text": "",
+     "prev": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "curr": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": 0,
+     "dw": 0,
+     "dh": 0
+    }
+   ]
+  },
+  {
+   "t": 4894.4,
+   "value": 0.01497802734375,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.pointer-events-none.fixed.inset-0 > div.motion-safe\\:transition-all.motion-safe\\:duration-300",
+     "text": "",
+     "prev": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "curr": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": 0,
+     "dw": 0,
+     "dh": 0
+    }
+   ]
+  },
+  {
+   "t": 4913.4,
+   "value": 0.00546875,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.pointer-events-none.fixed.inset-0 > div.motion-safe\\:transition-all.motion-safe\\:duration-300",
+     "text": "",
+     "prev": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "curr": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": 0,
+     "dw": 0,
+     "dh": 0
+    }
+   ]
+  }
+ ],
+ "png": "docs/polish-pass/evidence/I/before/tour-fast.png"
+}

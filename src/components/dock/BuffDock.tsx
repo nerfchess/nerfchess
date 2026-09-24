@@ -4,16 +4,16 @@
 // The in-game dock, redesigned around progressive disclosure.
 //
 // Reading order, top to bottom:
-//   1. "Now"          — one line: when the next draft lands (DockNow).
-//   2. "Against you"  — a compact chip strip of every constraint currently
+//   1. "Now": one line: when the next draft lands (DockNow).
+//   2. "Against you": a compact chip strip of every constraint currently
 //                       limiting YOUR play, each chip one tap from its full
 //                       explanation (DockAgainstYou). Always visible when
 //                       non-empty: what is hurting you outranks everything.
-//   3. The hand       — ONE list under a You · Them filter (replacing the old
+//   3. The hand: ONE list under a You · Them filter (replacing the old
 //                       three-tab set): collapsed one-line rows, live cards
 //                       first, spent ones under a "Used" rule. Your view is
 //                       the default; the newest card flashes as it lands.
-//   4. "Recent plays" — the opponent's play ledger, folded behind a collapsed
+//   4. "Recent plays": the opponent's play ledger, folded behind a collapsed
 //                       disclosure at the foot instead of owning a tab.
 //
 // Held-buff visibility: FULLY PUBLIC HANDS (owner rule). The hidden-card
@@ -25,7 +25,6 @@ import { draftCardNoun } from "@/engine/buff";
 import { BUFF_BY_ID } from "@/engine/buffs/library";
 import { NerfGame, buffNextTarget } from "@/engine/game";
 import { Color } from "@/engine/types";
-import { useReducedMotion } from "@/lib/useReducedMotion";
 import { useDockHotkeys, useDockView } from "@/lib/dockView";
 import { ScrollText } from "lucide-react";
 import { useState } from "react";
@@ -55,7 +54,6 @@ interface Props {
 
 export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards, plays }: Props) {
   const finePointer = useFinePointer();
-  const reduceMotion = useReducedMotion();
   // Per-row expand/collapse, remembered for the whole game. Keyed by the
   // row's group key (owner + card + spent/nullified state, see groupRows),
   // which does not change while a countdown ticks.
@@ -168,14 +166,13 @@ export function BuffDock({ game, myColor, canAct, onStartUse, hideOpponentCards,
           hasTarget={owner === "mine" && !!buffNextTarget(game, myColor, r.i, [])}
           onStartUse={onStartUse}
           finePointer={finePointer}
-          reduceMotion={reduceMotion}
           flash={owner === "mine" && r.i === newestIndex}
         />
       );
     };
     return (
-      // A thin spine brackets each side in its own hue — blue for yours,
-      // coral for theirs — so ownership is unmistakable without a header.
+      // A thin spine brackets each side in its own hue, blue for yours,
+      // coral for theirs, so ownership is unmistakable without a header.
       <div
         className={
           "space-y-1 border-l pl-2 " + (owner === "mine" ? "border-mode-buff/30" : "border-coral/30")

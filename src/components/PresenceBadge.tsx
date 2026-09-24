@@ -23,7 +23,7 @@ export interface PresenceBadgeProps {
 
 // Presence chip: a status dot plus an ALWAYS-present text label (never
 // color-only, per the accessibility rules). In-game dots take the mode color;
-// searching pulses gold (static under reduced motion); online is verdigris;
+// searching pings gold (static with animations off); online is verdigris;
 // offline is a quiet gray with the last-seen time when known.
 export function PresenceBadge({ state, mode, lastSeenAt, className }: PresenceBadgeProps) {
   let dotClass = "bg-parchment-400";
@@ -55,9 +55,10 @@ export function PresenceBadge({ state, mode, lastSeenAt, className }: PresenceBa
     <span className={`inline-flex items-center gap-1.5 text-xs text-parchment-300 ${className ?? ""}`}>
       <span
         aria-hidden
-        className={`h-2 w-2 shrink-0 rounded-full ${dotClass}${
-          pulse ? " animate-pulse motion-reduce:animate-none" : ""
-        }`}
+        // Searching wears the site's one live dot (.dot-live in globals.css,
+        // gated by data-anim) instead of Tailwind's pulse, which followed the
+        // OS motion flag and ignored the in-app Animations switch.
+        className={`h-2 w-2 shrink-0 rounded-full ${dotClass}${pulse ? " dot-live" : ""}`}
       />
       {/* Sentence-case 12px label: the smallcaps micro-label pattern is
           retired sitewide (12px caption floor). */}

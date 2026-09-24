@@ -1,0 +1,834 @@
+{
+ "route": "/dev/motion",
+ "state": "1280x800|dark|full|signed-out|normal",
+ "trigger": "module scripts/polish/i/tour-step.ts",
+ "t0Source": "pointerdown",
+ "duration": 1100,
+ "interval": 100,
+ "screencast": {
+  "framesInWindow": 66,
+  "maxGapMs": 19.7
+ },
+ "raf": {
+  "frames": 111,
+  "medianMs": 16.7,
+  "maxMs": 16.8,
+  "dropped": 0
+ },
+ "longAnimationFrames": [],
+ "layoutShifts": [
+  {
+   "t": 7505.1,
+   "value": 0.14815232238769532,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.plate.outline-none[role=\"dialog\"]",
+     "text": "Step oneSkip tourThe first targetA small box.Step ...",
+     "prev": {
+      "x": 0,
+      "y": 624,
+      "w": 1280,
+      "h": 176
+     },
+     "curr": {
+      "x": 236,
+      "y": 458,
+      "w": 418,
+      "h": 227
+     },
+     "change": "moved",
+     "dx": 236,
+     "dy": -166,
+     "dw": -862,
+     "dh": 51
+    }
+   ]
+  },
+  {
+   "t": 7518.5,
+   "value": 0.00002883868217468262,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.pointer-events-none.fixed.inset-0 > div.motion-safe\\:transition-all.motion-safe\\:duration-300",
+     "text": "",
+     "prev": {
+      "x": 0,
+      "y": 28,
+      "w": 62,
+      "h": 62
+     },
+     "curr": {
+      "x": 0,
+      "y": 14,
+      "w": 82,
+      "h": 99
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": -14,
+     "dw": 20,
+     "dh": 37
+    }
+   ]
+  },
+  {
+   "t": 7534.4,
+   "value": 0.0003758847713470459,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.pointer-events-none.fixed.inset-0 > div.motion-safe\\:transition-all.motion-safe\\:duration-300",
+     "text": "",
+     "prev": {
+      "x": 0,
+      "y": 14,
+      "w": 82,
+      "h": 99
+     },
+     "curr": {
+      "x": 0,
+      "y": 0,
+      "w": 154,
+      "h": 195
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": -14,
+     "dw": 72,
+     "dh": 96
+    }
+   ]
+  },
+  {
+   "t": 7551.6,
+   "value": 0.002821475672721863,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.pointer-events-none.fixed.inset-0 > div.motion-safe\\:transition-all.motion-safe\\:duration-300",
+     "text": "",
+     "prev": {
+      "x": 0,
+      "y": 0,
+      "w": 154,
+      "h": 195
+     },
+     "curr": {
+      "x": 0,
+      "y": 0,
+      "w": 302,
+      "h": 363
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": 0,
+     "dw": 148,
+     "dh": 168
+    }
+   ]
+  },
+  {
+   "t": 7568,
+   "value": 0.01608022632598877,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.pointer-events-none.fixed.inset-0 > div.motion-safe\\:transition-all.motion-safe\\:duration-300",
+     "text": "",
+     "prev": {
+      "x": 0,
+      "y": 0,
+      "w": 302,
+      "h": 363
+     },
+     "curr": {
+      "x": 0,
+      "y": 0,
+      "w": 556,
+      "h": 652
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": 0,
+     "dw": 254,
+     "dh": 289
+    }
+   ]
+  },
+  {
+   "t": 7584.3,
+   "value": 0.04789815902709961,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.pointer-events-none.fixed.inset-0 > div.motion-safe\\:transition-all.motion-safe\\:duration-300",
+     "text": "",
+     "prev": {
+      "x": 0,
+      "y": 0,
+      "w": 556,
+      "h": 652
+     },
+     "curr": {
+      "x": 0,
+      "y": 0,
+      "w": 927,
+      "h": 800
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": 0,
+     "dw": 371,
+     "dh": 148
+    }
+   ]
+  },
+  {
+   "t": 7601.3,
+   "value": 0.07568359375,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.pointer-events-none.fixed.inset-0 > div.motion-safe\\:transition-all.motion-safe\\:duration-300",
+     "text": "",
+     "prev": {
+      "x": 0,
+      "y": 0,
+      "w": 927,
+      "h": 800
+     },
+     "curr": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": 0,
+     "dw": 353,
+     "dh": 0
+    }
+   ]
+  },
+  {
+   "t": 7619.3,
+   "value": 0.06710205078125,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.pointer-events-none.fixed.inset-0 > div.motion-safe\\:transition-all.motion-safe\\:duration-300",
+     "text": "",
+     "prev": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "curr": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": 0,
+     "dw": 0,
+     "dh": 0
+    }
+   ]
+  },
+  {
+   "t": 7634.7,
+   "value": 0.0525390625,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.pointer-events-none.fixed.inset-0 > div.motion-safe\\:transition-all.motion-safe\\:duration-300",
+     "text": "",
+     "prev": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "curr": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": 0,
+     "dw": 0,
+     "dh": 0
+    }
+   ]
+  },
+  {
+   "t": 7651.4,
+   "value": 0.0405029296875,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.pointer-events-none.fixed.inset-0 > div.motion-safe\\:transition-all.motion-safe\\:duration-300",
+     "text": "",
+     "prev": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "curr": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": 0,
+     "dw": 0,
+     "dh": 0
+    }
+   ]
+  },
+  {
+   "t": 7667.9,
+   "value": 0.0310302734375,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.pointer-events-none.fixed.inset-0 > div.motion-safe\\:transition-all.motion-safe\\:duration-300",
+     "text": "",
+     "prev": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "curr": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": 0,
+     "dw": 0,
+     "dh": 0
+    }
+   ]
+  },
+  {
+   "t": 7684.4,
+   "value": 0.02371826171875,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.pointer-events-none.fixed.inset-0 > div.motion-safe\\:transition-all.motion-safe\\:duration-300",
+     "text": "",
+     "prev": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "curr": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": 0,
+     "dw": 0,
+     "dh": 0
+    }
+   ]
+  },
+  {
+   "t": 7701.1,
+   "value": 0.018310546875,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.pointer-events-none.fixed.inset-0 > div.motion-safe\\:transition-all.motion-safe\\:duration-300",
+     "text": "",
+     "prev": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "curr": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": 0,
+     "dw": 0,
+     "dh": 0
+    }
+   ]
+  },
+  {
+   "t": 7717.9,
+   "value": 0.0138916015625,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.pointer-events-none.fixed.inset-0 > div.motion-safe\\:transition-all.motion-safe\\:duration-300",
+     "text": "",
+     "prev": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "curr": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": 0,
+     "dw": 0,
+     "dh": 0
+    }
+   ]
+  },
+  {
+   "t": 7734.5,
+   "value": 0.01025390625,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.pointer-events-none.fixed.inset-0 > div.motion-safe\\:transition-all.motion-safe\\:duration-300",
+     "text": "",
+     "prev": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "curr": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": 0,
+     "dw": 0,
+     "dh": 0
+    }
+   ]
+  },
+  {
+   "t": 7751.2,
+   "value": 0.0073486328125,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.pointer-events-none.fixed.inset-0 > div.motion-safe\\:transition-all.motion-safe\\:duration-300",
+     "text": "",
+     "prev": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "curr": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": 0,
+     "dw": 0,
+     "dh": 0
+    }
+   ]
+  },
+  {
+   "t": 7767.7,
+   "value": 0.004833984375,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.pointer-events-none.fixed.inset-0 > div.motion-safe\\:transition-all.motion-safe\\:duration-300",
+     "text": "",
+     "prev": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "curr": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": 0,
+     "dw": 0,
+     "dh": 0
+    }
+   ]
+  },
+  {
+   "t": 7784.4,
+   "value": 0.002685546875,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.pointer-events-none.fixed.inset-0 > div.motion-safe\\:transition-all.motion-safe\\:duration-300",
+     "text": "",
+     "prev": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "curr": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": 0,
+     "dw": 0,
+     "dh": 0
+    }
+   ]
+  },
+  {
+   "t": 8069.3,
+   "value": 0.00029852151870727537,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.plate.outline-none[role=\"dialog\"] > div.mt-4.flex.items-center > div.ml-auto.flex.items-center",
+     "text": "BackNext",
+     "prev": {
+      "x": 547,
+      "y": 577,
+      "w": 56,
+      "h": 40
+     },
+     "curr": {
+      "x": 479,
+      "y": 573,
+      "w": 124,
+      "h": 50
+     },
+     "change": "moved",
+     "dx": -68,
+     "dy": -4,
+     "dw": 68,
+     "dh": 10
+    }
+   ]
+  },
+  {
+   "t": 8085.2,
+   "value": 0.006601032257080078,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.plate.outline-none[role=\"dialog\"]",
+     "text": "Step twoSkip tourThe second targetA wide box.Step ...",
+     "prev": {
+      "x": 236,
+      "y": 458,
+      "w": 418,
+      "h": 227
+     },
+     "curr": {
+      "x": 313,
+      "y": 458,
+      "w": 418,
+      "h": 227
+     },
+     "change": "moved",
+     "dx": 77,
+     "dy": 0,
+     "dw": 0,
+     "dh": 0
+    }
+   ]
+  },
+  {
+   "t": 8134.4,
+   "value": 0.00316162109375,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.pointer-events-none.fixed.inset-0 > div.motion-safe\\:transition-all.motion-safe\\:duration-300",
+     "text": "",
+     "prev": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "curr": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": 0,
+     "dw": 0,
+     "dh": 0
+    }
+   ]
+  },
+  {
+   "t": 8151.3,
+   "value": 0.00540771484375,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.pointer-events-none.fixed.inset-0 > div.motion-safe\\:transition-all.motion-safe\\:duration-300",
+     "text": "",
+     "prev": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "curr": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": 0,
+     "dw": 0,
+     "dh": 0
+    }
+   ]
+  },
+  {
+   "t": 8167.9,
+   "value": 0.00791015625,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.pointer-events-none.fixed.inset-0 > div.motion-safe\\:transition-all.motion-safe\\:duration-300",
+     "text": "",
+     "prev": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "curr": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": 0,
+     "dw": 0,
+     "dh": 0
+    }
+   ]
+  },
+  {
+   "t": 8184.4,
+   "value": 0.00904541015625,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.pointer-events-none.fixed.inset-0 > div.motion-safe\\:transition-all.motion-safe\\:duration-300",
+     "text": "",
+     "prev": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "curr": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": 0,
+     "dw": 0,
+     "dh": 0
+    }
+   ]
+  },
+  {
+   "t": 8201.3,
+   "value": 0.00802001953125,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.pointer-events-none.fixed.inset-0 > div.motion-safe\\:transition-all.motion-safe\\:duration-300",
+     "text": "",
+     "prev": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "curr": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": 0,
+     "dw": 0,
+     "dh": 0
+    }
+   ]
+  },
+  {
+   "t": 8217.9,
+   "value": 0.00628662109375,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.pointer-events-none.fixed.inset-0 > div.motion-safe\\:transition-all.motion-safe\\:duration-300",
+     "text": "",
+     "prev": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "curr": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": 0,
+     "dw": 0,
+     "dh": 0
+    }
+   ]
+  },
+  {
+   "t": 8234.7,
+   "value": 0.00487060546875,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.pointer-events-none.fixed.inset-0 > div.motion-safe\\:transition-all.motion-safe\\:duration-300",
+     "text": "",
+     "prev": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "curr": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": 0,
+     "dw": 0,
+     "dh": 0
+    }
+   ]
+  },
+  {
+   "t": 8251.4,
+   "value": 0.00367431640625,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.pointer-events-none.fixed.inset-0 > div.motion-safe\\:transition-all.motion-safe\\:duration-300",
+     "text": "",
+     "prev": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "curr": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": 0,
+     "dw": 0,
+     "dh": 0
+    }
+   ]
+  },
+  {
+   "t": 8267.8,
+   "value": 0.00284423828125,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.pointer-events-none.fixed.inset-0 > div.motion-safe\\:transition-all.motion-safe\\:duration-300",
+     "text": "",
+     "prev": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "curr": {
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 800
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": 0,
+     "dw": 0,
+     "dh": 0
+    }
+   ]
+  }
+ ],
+ "png": "docs/polish-pass/evidence/I/before/tour-full.png"
+}

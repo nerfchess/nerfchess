@@ -580,7 +580,8 @@ function PickerDisclosure({
         </span>
         <ChevronDown
           aria-hidden
-          className={"h-4 w-4 shrink-0 text-parchment-400 transition-transform " + (expanded ? "rotate-180" : "")}
+          data-open={expanded}
+          className="m-chevron h-4 w-4 shrink-0 text-parchment-400"
         />
       </button>
       {expanded && <div className="mt-2">{children}</div>}

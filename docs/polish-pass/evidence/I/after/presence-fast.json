@@ -1,0 +1,27 @@
+{
+ "route": "/dev/motion",
+ "state": "1280x800|dark|fast|signed-out|normal",
+ "trigger": "hover [data-clip=presence]",
+ "t0Source": "node-clock",
+ "duration": 1950,
+ "interval": 150,
+ "clip": {
+  "x": 256,
+  "y": 563,
+  "w": 758,
+  "h": 32
+ },
+ "screencast": {
+  "framesInWindow": 113,
+  "maxGapMs": 66.9
+ },
+ "raf": {
+  "frames": 129,
+  "medianMs": 16.7,
+  "maxMs": 16.8,
+  "dropped": 0
+ },
+ "longAnimationFrames": [],
+ "layoutShifts": [],
+ "png": "docs/polish-pass/evidence/I/after/presence-fast.png"
+}

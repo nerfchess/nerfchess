@@ -39,8 +39,8 @@ import { acquireEvalWorker, releaseEvalWorker, requestEval } from "@/workers/eva
 //
 // Scheduling: the search runs in a worker (src/workers/evalWorker.ts), so it
 // costs the page no frames at all. It still climbs a ladder of budgets, but for
-// a different reason than it used to — a rough reading in 15ms and a good one a
-// third of a second later beats one reading that arrives late — rather than as
+// a different reason than it used to, a rough reading in 15ms and a good one a
+// third of a second later beats one reading that arrives late, rather than as
 // a way of slicing an unaffordable main-thread block into affordable pieces.
 //
 // Browsers without workers (and SSR) fall back to the old idle-callback ladder,
@@ -128,8 +128,8 @@ type IdleWindow = Window & {
 };
 
 /**
- * Runs the ladder over `board` — one rung per worker round-trip, or per idle
- * callback where there is no worker — publishing each rung's result as it
+ * Runs the ladder over `board`, one rung per worker round-trip, or per idle
+ * callback where there is no worker, publishing each rung's result as it
  * lands. Returns null until the first usable rung arrives and whenever the held
  * reading belongs to a different position: a score searched from the previous
  * board is not a weaker answer here, it is the wrong one, so it is withheld
@@ -385,7 +385,6 @@ export function EvalBar({
   const pct = result ? (exact ? evalPercent(cp) : evalBand(cp).percent) : 50;
   // White's share grows from whichever end white's pieces are on.
   const whiteAtBottom = orientation === "w";
-  const fillSide = whiteAtBottom ? "bottom-0" : "top-0";
   const labelSide = whiteAtBottom
     ? cp >= 0
       ? "bottom-0"
@@ -409,15 +408,19 @@ export function EvalBar({
       style={{ background: TRACK }}
     >
       <div
-        className={
-          "absolute inset-x-0 " +
-          fillSide +
-          // An exact reading slides; a banded one steps, and the step is the
-          // point. Snapping between seven positions is the visual promise that
-          // nothing finer than a band is being claimed.
-          (exact ? " transition-[height] duration-300" : " transition-[height] duration-150")
-        }
-        style={{ height: `${pct}%`, background: FILL }}
+        className="absolute inset-0"
+        style={{
+          // The fill is full height and scaled from white's edge, so a new
+          // reading moves on the compositor instead of re-laying out the bar
+          // every frame (it animated height). An exact reading slides; a
+          // banded one steps, and the step is the point: snapping between
+          // seven positions is the visual promise that nothing finer than a
+          // band is being claimed.
+          transform: `scaleY(${pct / 100})`,
+          transformOrigin: whiteAtBottom ? "bottom" : "top",
+          transition: `transform ${exact ? "var(--dur-3)" : "var(--dur-1)"} var(--ease-io)`,
+          background: FILL,
+        }}
       />
       {result && (
         <span
@@ -473,11 +476,15 @@ export function EvalStrip({
         style={{ background: TRACK }}
       >
         <div
-          className={
-            "absolute inset-y-0 left-0 " +
-            (exact ? "transition-[width] duration-300" : "transition-[width] duration-150")
-          }
-          style={{ width: `${pct}%`, background: FILL }}
+          className="absolute inset-0"
+          style={{
+            // Scaled from the left edge rather than animating width (see
+            // EvalBar): same slide, no layout per frame.
+            transform: `scaleX(${pct / 100})`,
+            transformOrigin: "left",
+            transition: `transform ${exact ? "var(--dur-3)" : "var(--dur-1)"} var(--ease-io)`,
+            background: FILL,
+          }}
         />
       </div>
       <p className="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-[13px] leading-snug">

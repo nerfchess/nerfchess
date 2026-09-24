@@ -11,8 +11,9 @@
 // Accessibility: the card is a role="dialog" (non-modal) that receives focus
 // on every step change; Back/Next/Skip are real buttons; arrow keys step the
 // tour and Escape skips it (captured, so they never double-drive the game's
-// own history-navigation shortcuts while the tour is up); reduced-motion
-// users get instant repositioning instead of the eased glide.
+// own history-navigation shortcuts while the tour is up). The spotlight never
+// tweens its geometry; each step's ring lands with the shared popover motion,
+// which stands down with the Animations setting.
 
 import {
   useEffect,
@@ -211,19 +212,33 @@ export function TourCoachOverlay({
   return (
     <>
       {/* Dimmer + spotlight. pointer-events-none: the game stays playable. */}
-      <div className="pointer-events-none fixed inset-0 z-[45]" aria-hidden>
+      {/* The dim fades in once with the tour (.m-scrim). The hole follows its
+          target without any tween: it used to glide top/left/width/height
+          (layout every frame, F191), which on the first step flew in from the
+          corner of the screen and during a scroll trailed its target. Each
+          step instead lands its ring on the new target with the popover
+          motion (.m-pop, keyed by step), so the move reads as "look here now"
+          and the dim itself never blinks. */}
+      <div className="m-scrim pointer-events-none fixed inset-0 z-[45]" aria-hidden>
         {rect ? (
           <div
-            className="absolute rounded-[2px] border border-gold/70 motion-safe:transition-all motion-safe:duration-300"
+            className="absolute rounded-[2px]"
             style={{
               top: rect.top - SPOT_PAD,
               left: rect.left - SPOT_PAD,
               width: rect.width + SPOT_PAD * 2,
               height: rect.height + SPOT_PAD * 2,
-              boxShadow:
-                "0 0 0 200vmax rgba(9, 8, 12, 0.72), 0 0 22px rgba(214, 178, 90, 0.28)",
+              // The dimmer: one spread that paints everything outside the
+              // hole. Static, and no gold halo (no glow, F161).
+              boxShadow: "0 0 0 200vmax rgba(9, 8, 12, 0.72)",
             }}
-          />
+          >
+            <div
+              key={step.id}
+              className="m-pop absolute inset-0 rounded-[2px] border border-gold/70"
+              style={{ "--m-origin": "center", "--m-dy": "0px" } as CSSProperties}
+            />
+          </div>
         ) : (
           <div className="absolute inset-0 bg-black/70" />
         )}
@@ -236,7 +251,7 @@ export function TourCoachOverlay({
         aria-describedby="tour-coach-body"
         tabIndex={-1}
         className={
-          "plate pointer-events-auto z-[46] px-5 py-4 shadow-xl outline-none " + cardPosClass
+          "m-pop plate pointer-events-auto z-[46] px-5 py-4 outline-none " + cardPosClass
         }
         style={cardStyle}
       >

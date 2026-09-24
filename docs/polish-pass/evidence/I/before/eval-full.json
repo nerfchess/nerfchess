@@ -1,0 +1,245 @@
+{
+ "route": "/dev/motion",
+ "state": "1280x800|dark|full|signed-out|normal",
+ "trigger": "click [data-testid=eval-swing]",
+ "t0Source": "pointerdown",
+ "duration": 480,
+ "interval": 40,
+ "clip": {
+  "x": 261,
+  "y": 367,
+  "w": 758,
+  "h": 184
+ },
+ "screencast": {
+  "framesInWindow": 29,
+  "maxGapMs": 19.7
+ },
+ "raf": {
+  "frames": 38,
+  "medianMs": 16.7,
+  "maxMs": 16.8,
+  "dropped": 0
+ },
+ "longAnimationFrames": [],
+ "layoutShifts": [
+  {
+   "t": 14734.1,
+   "value": 0.00028819459676742554,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "div.w-72 > div.mt-2 > p.mt-1.flex.flex-wrap > span.text-parchment-200",
+     "text": "White is clearly better",
+     "prev": {
+      "x": 334,
+      "y": 393,
+      "w": 32,
+      "h": 19
+     },
+     "curr": {
+      "x": 342,
+      "y": 393,
+      "w": 133,
+      "h": 19
+     },
+     "change": "moved",
+     "dx": 8,
+     "dy": 0,
+     "dw": 101,
+     "dh": 0
+    },
+    {
+     "selector": "div.w-72 > div.mt-2 > p.mt-1.flex.flex-wrap > span.text-\\[12px\\].text-parchment-500",
+     "text": "depth 8",
+     "prev": {
+      "x": 373,
+      "y": 394,
+      "w": 43,
+      "h": 18
+     },
+     "curr": {
+      "x": 481,
+      "y": 394,
+      "w": 44,
+      "h": 18
+     },
+     "change": "moved",
+     "dx": 108,
+     "dy": 0,
+     "dw": 1,
+     "dh": 0
+    }
+   ]
+  },
+  {
+   "t": 14793.5,
+   "value": 0.00000448465347290039,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "section.space-y-2 > div.flex.h-48.items-stretch > div.relative.w-6.shrink-0[role=\"img\"] > div.absolute.inset-x-0.bottom-0",
+     "text": "",
+     "prev": {
+      "x": 270,
+      "y": 456,
+      "w": 19,
+      "h": 86
+     },
+     "curr": {
+      "x": 270,
+      "y": 452,
+      "w": 19,
+      "h": 90
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": -4,
+     "dw": 0,
+     "dh": 4
+    }
+   ]
+  },
+  {
+   "t": 14814.4,
+   "value": 0.000006993114948272705,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "section.space-y-2 > div.flex.h-48.items-stretch > div.relative.w-6.shrink-0[role=\"img\"] > div.absolute.inset-x-0.bottom-0",
+     "text": "",
+     "prev": {
+      "x": 270,
+      "y": 452,
+      "w": 19,
+      "h": 90
+     },
+     "curr": {
+      "x": 270,
+      "y": 447,
+      "w": 19,
+      "h": 95
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": -5,
+     "dw": 0,
+     "dh": 5
+    }
+   ]
+  },
+  {
+   "t": 14827,
+   "value": 0.000008441340923309326,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "section.space-y-2 > div.flex.h-48.items-stretch > div.relative.w-6.shrink-0[role=\"img\"] > div.absolute.inset-x-0.bottom-0",
+     "text": "",
+     "prev": {
+      "x": 270,
+      "y": 447,
+      "w": 19,
+      "h": 95
+     },
+     "curr": {
+      "x": 270,
+      "y": 441,
+      "w": 19,
+      "h": 101
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": -6,
+     "dw": 0,
+     "dh": 6
+    }
+   ]
+  },
+  {
+   "t": 14846.9,
+   "value": 0.000007826852798461913,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "section.space-y-2 > div.flex.h-48.items-stretch > div.relative.w-6.shrink-0[role=\"img\"] > div.absolute.inset-x-0.bottom-0",
+     "text": "",
+     "prev": {
+      "x": 270,
+      "y": 441,
+      "w": 19,
+      "h": 101
+     },
+     "curr": {
+      "x": 270,
+      "y": 436,
+      "w": 19,
+      "h": 106
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": -5,
+     "dw": 0,
+     "dh": 5
+    }
+   ]
+  },
+  {
+   "t": 14860.8,
+   "value": 0.000006452918052673339,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "section.space-y-2 > div.flex.h-48.items-stretch > div.relative.w-6.shrink-0[role=\"img\"] > div.absolute.inset-x-0.bottom-0",
+     "text": "",
+     "prev": {
+      "x": 270,
+      "y": 436,
+      "w": 19,
+      "h": 106
+     },
+     "curr": {
+      "x": 270,
+      "y": 432,
+      "w": 19,
+      "h": 110
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": -4,
+     "dw": 0,
+     "dh": 4
+    }
+   ]
+  },
+  {
+   "t": 14878.4,
+   "value": 0.000005016469955444336,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "section.space-y-2 > div.flex.h-48.items-stretch > div.relative.w-6.shrink-0[role=\"img\"] > div.absolute.inset-x-0.bottom-0",
+     "text": "",
+     "prev": {
+      "x": 270,
+      "y": 432,
+      "w": 19,
+      "h": 110
+     },
+     "curr": {
+      "x": 270,
+      "y": 429,
+      "w": 19,
+      "h": 113
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": -3,
+     "dw": 0,
+     "dh": 3
+    }
+   ]
+  }
+ ],
+ "png": "docs/polish-pass/evidence/I/before/eval-full.png"
+}

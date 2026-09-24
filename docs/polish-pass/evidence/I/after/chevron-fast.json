@@ -1,0 +1,140 @@
+{
+ "route": "/dev/motion",
+ "state": "1280x800|dark|fast|signed-out|normal",
+ "trigger": "click [data-clip=dock] button[aria-expanded] >> nth=0",
+ "t0Source": "pointerdown",
+ "duration": 240,
+ "interval": 20,
+ "clip": {
+  "x": 256,
+  "y": 227,
+  "w": 296,
+  "h": 89
+ },
+ "screencast": {
+  "framesInWindow": 14,
+  "maxGapMs": 23.5
+ },
+ "raf": {
+  "frames": 26,
+  "medianMs": 16.7,
+  "maxMs": 16.8,
+  "dropped": 0
+ },
+ "longAnimationFrames": [],
+ "layoutShifts": [
+  {
+   "t": 3003.3,
+   "value": 0.02985066032409668,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > section.flex.items-center.gap-4",
+     "text": "Looking for a gameOnline",
+     "prev": {
+      "x": 264,
+      "y": 570,
+      "w": 742,
+      "h": 17
+     },
+     "curr": {
+      "x": 264,
+      "y": 664,
+      "w": 742,
+      "h": 17
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": 94,
+     "dw": 0,
+     "dh": 0
+    },
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > section.space-y-2 > div.w-80.space-y-1 > div.dock-card",
+     "text": "Pawn ShieldTurnII",
+     "prev": {
+      "x": 264,
+      "y": 274,
+      "w": 280,
+      "h": 34
+     },
+     "curr": {
+      "x": 264,
+      "y": 367,
+      "w": 280,
+      "h": 35
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": 93,
+     "dw": 0,
+     "dh": 1
+    },
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > section.space-y-2",
+     "text": "Start tour",
+     "prev": {
+      "x": 264,
+      "y": 615,
+      "w": 742,
+      "h": 123
+     },
+     "curr": {
+      "x": 264,
+      "y": 709,
+      "w": 742,
+      "h": 91
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": 94,
+     "dw": 0,
+     "dh": -32
+    },
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > section.space-y-2",
+     "text": "Swing the eval0.00.0Leveldepth 8No rules in play, ...",
+     "prev": {
+      "x": 264,
+      "y": 336,
+      "w": 742,
+      "h": 207
+     },
+     "curr": {
+      "x": 264,
+      "y": 430,
+      "w": 742,
+      "h": 207
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": 94,
+     "dw": 0,
+     "dh": 0
+    },
+    {
+     "selector": "div.w-72 > div.mt-2 > div.relative.h-2\\.5.w-full[role=\"img\"] > div.absolute.inset-0",
+     "text": "",
+     "prev": {
+      "x": 0,
+      "y": 0,
+      "w": 0,
+      "h": 0
+     },
+     "curr": {
+      "x": 300,
+      "y": 477,
+      "w": 125,
+      "h": 6
+     },
+     "change": "entered",
+     "dx": null,
+     "dy": null,
+     "dw": null,
+     "dh": null
+    }
+   ]
+  }
+ ],
+ "png": "docs/polish-pass/evidence/I/after/chevron-fast.png"
+}

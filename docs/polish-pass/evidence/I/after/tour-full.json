@@ -1,0 +1,78 @@
+{
+ "route": "/dev/motion",
+ "state": "1280x800|dark|full|signed-out|normal",
+ "trigger": "module scripts/polish/i/tour-step.ts",
+ "t0Source": "pointerdown",
+ "duration": 1100,
+ "interval": 100,
+ "screencast": {
+  "framesInWindow": 65,
+  "maxGapMs": 25.9
+ },
+ "raf": {
+  "frames": 111,
+  "medianMs": 16.7,
+  "maxMs": 33.3,
+  "dropped": 1
+ },
+ "longAnimationFrames": [],
+ "layoutShifts": [
+  {
+   "t": 3546.9,
+   "value": 0.00029852151870727537,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.plate.outline-none[role=\"dialog\"] > div.mt-4.flex.items-center > div.ml-auto.flex.items-center",
+     "text": "BackNext",
+     "prev": {
+      "x": 542,
+      "y": 577,
+      "w": 56,
+      "h": 40
+     },
+     "curr": {
+      "x": 474,
+      "y": 573,
+      "w": 124,
+      "h": 50
+     },
+     "change": "moved",
+     "dx": -68,
+     "dy": -4,
+     "dw": 68,
+     "dh": 10
+    }
+   ]
+  },
+  {
+   "t": 3562.6,
+   "value": 0.059686279296875,
+   "hadRecentInput": true,
+   "sources": [
+    {
+     "selector": "main.mx-auto.max-w-4xl.space-y-8 > div.m-scrim.pointer-events-none.fixed > div.absolute.rounded-\\[2px\\]",
+     "text": "",
+     "prev": {
+      "x": 0,
+      "y": 0,
+      "w": 1270,
+      "h": 800
+     },
+     "curr": {
+      "x": 0,
+      "y": 0,
+      "w": 1270,
+      "h": 800
+     },
+     "change": "moved",
+     "dx": 0,
+     "dy": 0,
+     "dw": 0,
+     "dh": 0
+    }
+   ]
+  }
+ ],
+ "png": "docs/polish-pass/evidence/I/after/tour-full.png"
+}

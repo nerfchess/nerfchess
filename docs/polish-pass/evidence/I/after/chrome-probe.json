@@ -1,0 +1,146 @@
+[
+ {
+  "id": "F009 scrollbar-gutter stable",
+  "mode": "normal",
+  "ok": true,
+  "got": "stable"
+ },
+ {
+  "id": "F194 one dock entrance",
+  "mode": "normal",
+  "ok": true,
+  "got": {
+   "names": [
+    "dock-arrive"
+   ],
+   "inlineTransform": "",
+   "opacity": "0.224679"
+  }
+ },
+ {
+  "id": "F190 presence dot on the data-anim gate",
+  "mode": "normal",
+  "ok": true,
+  "got": {
+   "cls": "h-2 w-2 shrink-0 rounded-full bg-gold-leaf dot-live",
+   "after": "dot-ping"
+  }
+ },
+ {
+  "id": "F195 notice on the shared toast motion",
+  "mode": "normal",
+  "ok": true,
+  "got": {
+   "opacity": "0.605525",
+   "anim": "m-toast-in"
+  }
+ },
+ {
+  "id": "F191 eval fill moves by transform",
+  "mode": "normal",
+  "ok": true,
+  "got": [
+   {
+    "prop": "transform",
+    "transform": "matrix(1, 0, 0, 0.501786, 0, 0)",
+    "dur": "0.32s"
+   },
+   {
+    "prop": "transform",
+    "transform": "matrix(0.501786, 0, 0, 1, 0, 0)",
+    "dur": "0.32s"
+   }
+  ]
+ },
+ {
+  "id": "F191 spotlight geometry does not tween",
+  "mode": "normal",
+  "ok": true,
+  "got": {
+   "prop": "all",
+   "dur": "0s",
+   "cls": "absolute rounded-[2px]"
+  }
+ },
+ {
+  "id": "F199 settings chevron on .m-chevron",
+  "mode": "normal",
+  "ok": true,
+  "got": {
+   "open": "true",
+   "rotate": "180deg",
+   "prop": "rotate"
+  }
+ },
+ {
+  "id": "F009 scrollbar-gutter stable",
+  "mode": "off",
+  "ok": true,
+  "got": "stable"
+ },
+ {
+  "id": "F194 dock row settled with motion off",
+  "mode": "off",
+  "ok": true,
+  "got": {
+   "names": [],
+   "inlineTransform": "",
+   "opacity": "1"
+  }
+ },
+ {
+  "id": "F190 presence dot on the data-anim gate",
+  "mode": "off",
+  "ok": true,
+  "got": {
+   "cls": "h-2 w-2 shrink-0 rounded-full bg-gold-leaf dot-live",
+   "after": "none"
+  }
+ },
+ {
+  "id": "F195 notice on the shared toast motion",
+  "mode": "off",
+  "ok": true,
+  "got": {
+   "opacity": "1",
+   "anim": "none"
+  }
+ },
+ {
+  "id": "F191 eval fill moves by transform",
+  "mode": "off",
+  "ok": true,
+  "got": [
+   {
+    "prop": "none",
+    "transform": "matrix(1, 0, 0, 0.731059, 0, 0)",
+    "dur": "0s"
+   },
+   {
+    "prop": "none",
+    "transform": "matrix(0.731059, 0, 0, 1, 0, 0)",
+    "dur": "0s"
+   }
+  ]
+ },
+ {
+  "id": "F191 spotlight geometry does not tween",
+  "mode": "off",
+  "ok": true,
+  "got": {
+   "prop": "none",
+   "dur": "0s",
+   "cls": "absolute rounded-[2px]"
+  }
+ },
+ {
+  "id": "F199 settings chevron on .m-chevron",
+  "mode": "off",
+  "ok": true,
+  "got": {
+   "open": "true",
+   "rotate": "180deg",
+   "prop": "none"
+  }
+ }
+]

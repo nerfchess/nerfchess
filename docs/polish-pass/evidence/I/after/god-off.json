@@ -1,0 +1,27 @@
+{
+ "route": "/dev/motion",
+ "state": "1280x800|dark|off|signed-out|normal",
+ "trigger": "click [data-testid=god-notice]",
+ "t0Source": "pointerdown",
+ "duration": 1800,
+ "interval": 75,
+ "clip": {
+  "x": 204,
+  "y": 52,
+  "w": 484,
+  "h": 176
+ },
+ "screencast": {
+  "framesInWindow": 3,
+  "maxGapMs": 1190.1
+ },
+ "raf": {
+  "frames": 119,
+  "medianMs": 16.7,
+  "maxMs": 16.8,
+  "dropped": 0
+ },
+ "longAnimationFrames": [],
+ "layoutShifts": [],
+ "png": "docs/polish-pass/evidence/I/after/god-off.png"
+}
