@@ -114,8 +114,8 @@ const BLUE_ACCENT_LIGHT: AccentDef = {
   accentHi: "#14589f",
   rgb: "27 120 208",
   rgbHi: "20 88 159",
-  // Nothing reads --accent-dim-rgb today (it is defined and aliased and never
-  // consumed), which is why this rung has never been re-pointed for paper.
+  // --accent-dim-rgb is the primary button fill (.btn-leaf in globals.css):
+  // white on this rung measures 6.84:1.
   rgbDim: "20 92 160",
 };
 

@@ -365,6 +365,10 @@ html[data-anim="fast"] { --tempo: 0.6; }
 .m-chevron { transition: rotate var(--dur-1) var(--ease-io); }
 .m-chevron[data-open="true"] { rotate: 180deg; }
 .m-chevron--quarter[data-open="true"] { rotate: 90deg; }
+/* A native <details> disclosure has no React state to stamp data-open with;
+   its own [open] attribute drives the same turn. */
+details[open] > summary .m-chevron { rotate: 180deg; }
+details[open] > summary .m-chevron--quarter { rotate: 90deg; }
 /* The backstop clamps durations but not delays, so a staggered child would
    otherwise sit invisible for its delay. Enters simply do not run. */
 html[data-anim="off"] :is(.m-pop, .m-scrim, .m-modal, .m-toast, .m-enter, .m-list > *):not([data-leaving]) {
@@ -581,8 +585,7 @@ button[class*="rounded"]:not([class*="rounded-full"]),
 [role="button"][class*="rounded"]:not([class*="rounded-full"]) { border-radius: var(--btn-roundness) !important; }
 /* A thumb switch is a pill with a round knob, the one button that is not a
    box. Opted into by class, since a few labelled toggles are still boxes. */
-button.settings-toggle,
-button.pill-switch { border-radius: 999px !important; }
+button.settings-toggle { border-radius: 999px !important; }
 
 body {
   font-family: var(--font-body), system-ui, sans-serif;
@@ -972,7 +975,12 @@ html[data-light] {
 .btn-gold,
 .btn-slab,
 .btn-glass--primary {
-  background: var(--accent);
+  /* The fill is the accent's dim rung, not the accent itself: a white 13-14px
+     label on --accent measures 3.27:1 (dark) and 2.79:1 (midnight), under AA.
+     The dim rung is the same hue one step down and clears 4.5:1 in every
+     scheme (5.25 dark, 4.73 midnight, 6.84 light). Links and focus rings keep
+     --accent; only the filled label needed the deeper ground. */
+  background: rgb(var(--accent-dim-rgb));
   color: var(--text-on-accent);
   border: 0;
   font-weight: 500;
@@ -989,7 +997,8 @@ html[data-light] {
 .btn-gold:hover:not(:disabled),
 .btn-slab:hover:not(:disabled),
 .btn-glass--primary:hover:not(:disabled) {
-  filter: brightness(1.15);
+  /* 1.08, not 1.15: the lift stays readable (4.62:1 on dark). */
+  filter: brightness(1.08);
 }
 .btn-leaf:disabled,
 .btn-cta:disabled,
@@ -1967,12 +1976,19 @@ html[data-anim="off"] .piece-treat {
 /* --- Skeleton placeholders (first-load shimmer) ---
    Flat, square blocks tinted onto the ink surface. A single light sweep passes
    across them; when animations are off in Settings the sweep is dropped and the
-   block holds as a static muted placeholder. */
+   block holds as a static muted placeholder.
+   Show-delay (F026): a block stays transparent for its first 150ms and then
+   fades in on --dur-1, so a load that resolves inside that window never
+   flashes a grey frame. Opacity only: the block keeps its box from the first
+   frame, so nothing shifts. The delay is not motion, so it holds with
+   Animations off too (the backstop clamps the fade, not the delay). */
 .skeleton {
+  --skeleton-delay: 150ms;
   position: relative;
   overflow: hidden;
   background: rgba(255, 255, 255, 0.055);
   border-radius: 0;
+  animation: m-fade-in calc(var(--dur-1) * var(--tempo)) var(--ease-out) var(--skeleton-delay) backwards;
 }
 .skeleton::after {
   content: "";
@@ -1985,7 +2001,8 @@ html[data-anim="off"] .piece-treat {
     rgba(255, 255, 255, 0.07) 50%,
     transparent 100%
   );
-  animation: skeleton-sweep 1.6s ease-in-out infinite;
+  /* One slow loop, on the house curve and the Animations tempo. */
+  animation: skeleton-sweep calc(1600ms * var(--tempo)) var(--ease-io) var(--skeleton-delay) infinite;
 }
 @keyframes skeleton-sweep {
   100% { transform: translateX(100%); }
