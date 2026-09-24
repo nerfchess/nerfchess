@@ -37,6 +37,11 @@
 // Most of these cards decorate pieces that STAY on the board, so they name the
 // zone they paint (`source: "frozen"`, `source: "stun"`, `source: "summon"`)
 // rather than the removal diff.
+//
+// PER-CARD RULE SCENES (slice TC-g). The Long Winter and Watchman's Whistle
+// lead with a scene of their own rule on the real board (see that section
+// before the impact wave); their frost tableaux survive only as the small
+// target and entrance cuts.
 
 import "./g09FrostPlays.css";
 
@@ -247,42 +252,7 @@ function LongWinterScene({ role, delayMs }: SceneProps) {
         </g>
       </Sq>
     );
-  return (
-    <BoardWideStage>
-      <Wash cls="g09-wash" tint="rgba(143,198,232,0.30)" base={delayMs} off={0} />
-      <P cls="g09-lw-sun" x={50} y={41} w={12} h={12} style={dm(delayMs, 120)}>
-        <svg viewBox="0 0 40 40" className="block h-full w-full">
-          <circle cx="20" cy="20" r="16" fill={C_LW.glow} opacity="0.45" />
-          <circle cx="20" cy="20" r="9" fill={C_LW.core} />
-        </svg>
-      </P>
-      <Band cls="g09-lw-horizon" color={C_LW.deep} y={50} h={1.4} base={delayMs} off={260} />
-      <Frame
-        cls="g09-lw-blanket"
-        style={{
-          ...dv(delayMs, 340, { "--g09-side": "var(--fx-side, 1)" }),
-          background: `linear-gradient(180deg, ${C_LW.glow} 0%, rgba(143,198,232,0.62) 46%, transparent 78%)`,
-        }}
-      />
-      {LW_FLAKES.map((x, i) => (
-        <BoardFrame key={i}>
-          <span
-            className="g09-lw-flake absolute block"
-            style={{
-              left: `${x}%`,
-              top: "-8%",
-              width: "3%",
-              height: "3%",
-              borderRadius: "50%",
-              background: C_LW.glow,
-              animationDelay: `${delayMs + i * 120 + 500}ms`,
-            }}
-          />
-        </BoardFrame>
-      ))}
-      <Motes cls="g09-mote" color={C_LW.core} base={delayMs} off={760} />
-    </BoardWideStage>
-  );
+  return null;
 }
 
 /* =============================================================================
@@ -2299,40 +2269,7 @@ function WatchmansWhistleScene({ role, delayMs }: SceneProps) {
         </g>
       </Sq>
     );
-  return (
-    <AimStage>
-      <Wash cls="g09-wash" tint="rgba(162,207,224,0.26)" base={delayMs} off={0} />
-      <P cls="g09-ww-lamp" x={40} y={44} w={8} h={11} style={dm(delayMs, 0)}>
-        <svg viewBox="0 0 40 56" className="block h-full w-full">
-          <path d="M14 6h12M20 6v6" stroke={C_WW.deep} strokeWidth="4" strokeLinecap="round" />
-          <path d="M8 50V22h24v28z" fill={C_WW.glow} stroke={C_WW.core} strokeWidth="4" strokeLinejoin="round" />
-        </svg>
-      </P>
-      <P cls="g09-ww-puff" x={46} y={52} w={9} h={9} style={dm(delayMs, 180)}>
-        <svg viewBox="0 0 40 40" className="block h-full w-full">
-          <path d="M6 26h16a6 6 0 0 1 0 12H12z" fill={C_WW.deep} stroke={C_WW.core} strokeWidth="3.4" strokeLinejoin="round" />
-        </svg>
-      </P>
-      <P
-        cls="g09-ww-cone"
-        x={62}
-        y={50}
-        w={30}
-        h={16}
-        style={{
-          ...dv(delayMs, 320, { "--g09-len": "var(--fx-len, 3)" }),
-          background: `linear-gradient(90deg, ${C_WW.glow}, rgba(162,207,224,0.35) 58%, transparent 92%)`,
-        }}
-      />
-      <P cls="g09-ww-strider" x={74} y={50} w={11} h={13} style={dm(delayMs, 520)}>
-        <svg viewBox="0 0 40 40" className="block h-full w-full">
-          <circle cx="20" cy="8" r="5" fill={C_WW.core} />
-          <path d="M20 13v12M20 25l-7 12M20 25l8 12M9 18l11 3 11-6" fill="none" stroke={C_WW.core} strokeWidth="3.4" strokeLinecap="round" />
-        </svg>
-      </P>
-      <Motes cls="g09-mote" color={C_WW.glow} base={delayMs} off={700} />
-    </AimStage>
-  );
+  return null;
 }
 
 /* =============================================================================
@@ -2644,6 +2581,200 @@ function S(Render: SigPlugin["Render"], config: SigPlugin["config"]): SigPlugin 
 }
 
 /* =============================================================================
+   PER-CARD RULE SCENES (slice TC-g). The Long Winter and Watchman's Whistle
+   no longer lead with a frost tableau and the shared impact column: each lead
+   plays its own rule on the real board (the pieces, squares and turn counts
+   it touches). Their old art survives only as the small target and entrance
+   cuts. Positions are board percentages from the caster's side: rank 0 is
+   the caster's back rank, 7 the opponent's.
+   ========================================================================== */
+
+const SJ = { strokeLinejoin: "round", strokeLinecap: "round" } as const;
+
+/** Chessman silhouettes on a 10 x 10 box, for the pieces a rule names. */
+const MEN = {
+  p: "M5 1.2 C6.2 1.2 7 2 7 3 C7 3.7 6.6 4.3 6 4.6 L7 8 H3 L4 4.6 C3.4 4.3 3 3.7 3 3 C3 2 3.8 1.2 5 1.2 Z M2.4 8.6 H7.6 V9.6 H2.4 Z",
+  r: "M2.6 1.4 H3.8 V2.6 H4.6 V1.4 H5.4 V2.6 H6.2 V1.4 H7.4 V3.8 H6.8 L7.2 7.6 H2.8 L3.2 3.8 H2.6 Z M2.2 8.4 H7.8 V9.6 H2.2 Z",
+  n: "M2.8 8.2 C2.8 5.4 3.8 4 5.4 3.2 L5 1.6 L6.4 2.6 L7.2 2.4 C7.9 3 8.1 4 7.7 4.9 L6.6 4.6 L6.2 4 C6.5 5.6 6.4 7 7 8.2 Z M2.4 8.8 H7.6 V9.8 H2.4 Z",
+  b: "M5 1 C6.4 2 7 3.4 7 4.6 C7 5.8 6.2 6.6 5 6.6 C3.8 6.6 3 5.8 3 4.6 C3 3.4 3.6 2 5 1 Z M3.4 7.2 H6.6 L7.2 8.2 H2.8 Z M2.2 8.8 H7.8 V9.8 H2.2 Z",
+  q: "M2.4 3.2 L3.4 5 L4.2 2.6 L5 4.6 L5.8 2.6 L6.6 5 L7.6 3.2 L7 7.4 H3 Z M2.6 8 H7.4 V9.2 H2.6 Z",
+  k: "M4.6 1 H5.4 V2 H6.4 V2.8 H5.4 V3.8 H4.6 V2.8 H3.6 V2 H4.6 Z M3.4 4.4 H6.6 L7.2 8 H2.8 Z M2.4 8.6 H7.6 V9.8 H2.4 Z",
+} as const;
+
+function Man({ kind, fill, stroke }: { kind: keyof typeof MEN; fill: string; stroke: string }) {
+  return (
+    <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+      <path d={MEN[kind]} fill={fill} stroke={stroke} strokeWidth="0.45" {...SJ} />
+    </svg>
+  );
+}
+
+/** The board-true layer: 0..100% is exactly the board. */
+function Brd({ children }: { children: ReactNode }) {
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        <span className="g09-rs absolute inset-0 block">{children}</span>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Centre of rank `r` from the caster's back rank (0) to the opponent's (7). */
+function rk(r: number): string {
+  return `calc(50% + var(--fx-side, 1) * ${(3.5 - r) * 12.5}%)`;
+}
+
+/** Centre of screen column `c` (0 is the left edge). */
+function cl(c: number): string {
+  return `${(c + 0.5) * 12.5}%`;
+}
+
+/** The king and queen files (e and d) seen from the caster's side. */
+const KING_X = "calc(50% + var(--fx-side, 1) * 6.25%)";
+const QUEEN_X = "calc(50% - var(--fx-side, 1) * 6.25%)";
+
+/** A prop centred on (x, y), `w` x `h` in board percent, from `delayMs`. */
+function Q({ x, y, w, h, cls, delayMs, v, style, children }: { x: string; y: string; w: number; h: number; cls: string; delayMs: number; v?: Record<string, string>; style?: CSSProperties; children?: ReactNode }) {
+  return (
+    <span
+      className={`${cls} absolute block`}
+      style={{ left: `calc(${x} - ${w / 2}%)`, top: `calc(${y} - ${h / 2}%)`, width: `${w}%`, height: `${h}%`, animationDelay: `${delayMs}ms`, ...style, ...v } as CSSProperties}
+    >
+      {children}
+    </span>
+  );
+}
+
+/** A ray drawn out of (x, y) at `angle` (rotation is static; the draw is scaleX). */
+function Ray({ x, y, len, angle, color, delayMs, gd = "1.2s" }: { x: string; y: string; len: number; angle: string; color: string; delayMs: number; gd?: string }) {
+  return (
+    <span
+      className="g09-r-draw absolute block"
+      style={{ left: x, top: `calc(${y} - 0.45%)`, width: `${len}%`, height: "0.9%", rotate: angle, transformOrigin: "0% 50%", background: `repeating-linear-gradient(90deg, ${color} 0 6px, transparent 6px 10px)`, animationDelay: `${delayMs}ms`, "--gd": gd } as CSSProperties}
+    />
+  );
+}
+
+/** `n` turn pips across rank `r`, from `x0`% to `x1`%: one per turn the rule counts. */
+function Pips({ n, r, x0, x1, color, delayMs, gd = "1.3s" }: { n: number; r: number; x0: number; x1: number; color: string; delayMs: number; gd?: string }) {
+  const step = n > 1 ? (x1 - x0) / (n - 1) : 0;
+  return (
+    <>
+      {Array.from({ length: n }, (_, i) => (
+        <Q key={i} x={`${x0 + i * step}%`} y={rk(r)} w={1.8} h={3.2} cls="g09-r-pip" delayMs={delayMs + i * 70} v={{ "--gd": gd }} style={{ background: color, borderRadius: "1px" }} />
+      ))}
+    </>
+  );
+}
+
+/** A square (or a run of squares) tinted for the length of a beat: the
+ *  squares the rule itself touches. */
+function Tint({ x, y, w = 12.5, h = 12.5, color, delayMs, gd = "1.6s", cls = "g09-r-in" }: { x: string; y: string; w?: number; h?: number; color: string; delayMs: number; gd?: string; cls?: string }) {
+  return <Q x={x} y={y} w={w} h={h} cls={cls} delayMs={delayMs} v={{ "--gd": gd, "--s0": "1" }} style={{ background: color }} />;
+}
+
+/** One file (12.5% of the board) in a prop's own width units. */
+const fileIn = (w: number): number => Math.round((12.5 / w) * 100);
+
+/** A six-armed ice crystal (a piece frozen where it stands). */
+function Crystal({ c }: { c: { core: string; glow: string; deep: string } }) {
+  return (
+    <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+      <path d="M10 2v16M3.1 6l13.8 8M3.1 14l13.8-8" stroke={c.deep} strokeWidth="3.4" {...SJ} />
+      <path d="M10 2v16M3.1 6l13.8 8M3.1 14l13.8-8" stroke={c.glow} strokeWidth="1.6" {...SJ} />
+      <path d="M8 3.6l2 1.6 2-1.6M8 16.4l2-1.6 2 1.6" fill="none" stroke={c.core} strokeWidth="1.1" {...SJ} />
+    </svg>
+  );
+}
+
+/* --- bn4_long_winter -------------------------------------------------------------
+   "Every enemy piece (their king excepted) is frozen for your opponent's next
+   2 turns, and your king cannot be captured on their next turn, unless your
+   king makes a capture, which ends that safety." Frost runs down over the
+   opponent's two home ranks and a crystal locks onto every square of their
+   army, left to right, except the king's, which stays clear; two turns are
+   ticked in front of them. On the caster's side an ice dome closes over the
+   king, with one turn ticked beside it. */
+const C_LWR = { core: "#8fc6e8", glow: "#f2f8ff", deep: "#0d2136" };
+
+function LongWinterRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <LongWinterScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_LWR;
+  const d = delayMs;
+  const army: Array<[number, number]> = [];
+  for (let r = 7; r >= 6; r--) for (let col = 0; col < 8; col++) if (!(r === 7 && col === 4)) army.push([col, r]);
+  return (
+    <Brd>
+      <Q x="50%" y={rk(6.5)} w={100} h={25} cls="g09-r-grow" delayMs={d} v={{ "--gd": "2.2s" }} style={{ background: "linear-gradient(180deg, rgba(143,198,232,0.42), rgba(143,198,232,0.22))", transformOrigin: "50% calc(50% - var(--fx-side, 1) * 50%)" }} />
+      {army.map(([col, r], i) => (
+        <Q key={`${col}-${r}`} x={cl(col)} y={rk(r)} w={8} h={8} cls="g09-r-pip" delayMs={d + 220 + i * 26} v={{ "--gd": "1.8s" }}>
+          <Crystal c={c} />
+        </Q>
+      ))}
+      <Q x={KING_X} y={rk(7)} w={12.5} h={12.5} cls="g09-r-in" delayMs={d + 300} v={{ "--gd": "1.7s", "--s0": "1" }} style={{ border: `2px dashed ${c.glow}` }} />
+      <Pips n={2} r={5.3} x0={47} x1={53} color={c.glow} delayMs={d + 760} gd="1.4s" />
+      <Q x={KING_X} y={rk(0.2)} w={14} h={11} cls="g09-r-up" delayMs={d + 900} v={{ "--gd": "1.4s" }}>
+        <svg viewBox="0 0 28 22" className="block h-full w-full" aria-hidden="true">
+          <path d="M2 21Q2 2 14 2T26 21" fill="rgba(143,198,232,0.3)" stroke={c.deep} strokeWidth="3.2" {...SJ} />
+          <path d="M2 21Q2 2 14 2T26 21" fill="none" stroke={c.glow} strokeWidth="1.5" {...SJ} />
+          <path d="M9 8l3 3M18 7l-2 4" stroke={c.glow} strokeWidth="1" {...SJ} />
+        </svg>
+      </Q>
+      <Q x={KING_X} y={rk(1.45)} w={1.8} h={3.2} cls="g09-r-pip" delayMs={d + 1120} v={{ "--gd": "1.1s" }} style={{ background: c.glow, borderRadius: "1px" }} />
+    </Brd>
+  );
+}
+
+/* --- hx4_watchmans_whistle ------------------------------------------------------
+   "For your opponent's next 5 turns, any piece of theirs that gives check to
+   your king is arrested on the spot and frozen for 2 of their turns. Kings
+   are never arrested." An enemy bishop slides to b4 and its check runs down
+   the diagonal at the caster's king; the watchman's whistle blows by the
+   king; the bishop is clapped in irons and iced where it stands, with its two
+   frozen turns ticked on it; five turns of watch are ticked across the
+   middle. */
+const C_WWR = { core: "#a2cfe0", glow: "#f4f8fb", deep: "#14273a" };
+
+function WatchmansWhistleRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <WatchmansWhistleScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_WWR;
+  const d = delayMs;
+  const sq = fileIn(11);
+  return (
+    <Brd>
+      <Q x={cl(1)} y={rk(3)} w={11} h={11} cls="g09-r-go" delayMs={d} v={{ "--gd": "0.8s", "--tx0": `${2 * sq}%`, "--ty0": `calc(var(--fx-side, 1) * ${-2 * sq}%)`, "--tx1": "0%", "--ty1": "0%" }}>
+        <Man kind="b" fill={c.deep} stroke={c.glow} />
+      </Q>
+      <Ray x={cl(1)} y={rk(3)} len={53} angle="calc(var(--fx-side, 1) * 45deg)" color={c.glow} delayMs={d + 380} gd="0.9s" />
+      <Q x={KING_X} y={rk(0)} w={12.5} h={12.5} cls="g09-r-in" delayMs={d + 400} v={{ "--gd": "1.3s", "--s0": "1" }} style={{ background: "rgba(162,207,224,0.4)" }} />
+      <Q x={`calc(${KING_X} + 10%)`} y={rk(1.1)} w={9} h={6} cls="g09-r-stamp" delayMs={d + 640} v={{ "--gd": "1.1s" }}>
+        <svg viewBox="0 0 24 14" className="block h-full w-full" aria-hidden="true">
+          <path d="M2 5h12a5 5 0 1 1-5 5H2z" fill={c.core} stroke={c.deep} strokeWidth="1.3" {...SJ} />
+          <circle cx="14" cy="10" r="1.6" fill={c.deep} />
+        </svg>
+      </Q>
+      <Q x={`calc(${KING_X} + 10%)`} y={rk(1.6)} w={12} h={7} cls="g09-r-toll" delayMs={d + 720} v={{ "--gd": "0.8s" }}>
+        <svg viewBox="0 0 24 12" className="block h-full w-full" aria-hidden="true"><path d="M5 10l2-6M12 9V2M19 10l-2-6" stroke={c.glow} strokeWidth="1.6" {...SJ} /></svg>
+      </Q>
+      <Q x={cl(1)} y={rk(3)} w={12.5} h={12.5} cls="g09-r-in" delayMs={d + 900} v={{ "--gd": "1.5s", "--s0": "1" }} style={{ background: "rgba(162,207,224,0.5)", border: `2px solid ${c.glow}` }} />
+      <Q x={cl(1)} y={rk(3)} w={11} h={11} cls="g09-r-in" delayMs={d + 900} v={{ "--gd": "1.5s", "--s0": "1" }}>
+        <Man kind="b" fill={c.deep} stroke={c.core} />
+      </Q>
+      <Q x={cl(1)} y={rk(2.75)} w={9} h={5} cls="g09-r-stamp" delayMs={d + 960} v={{ "--gd": "1.4s" }}>
+        <svg viewBox="0 0 24 12" className="block h-full w-full" aria-hidden="true">
+          <circle cx="7" cy="6" r="4" fill="none" stroke={c.glow} strokeWidth="2" />
+          <circle cx="17" cy="6" r="4" fill="none" stroke={c.glow} strokeWidth="2" />
+          <path d="M11 6h2" stroke={c.core} strokeWidth="2" {...SJ} />
+        </svg>
+      </Q>
+      <Pips n={2} r={3.45} x0={10.5} x1={14.5} color={c.glow} delayMs={d + 1120} gd="1.1s" />
+      <Pips n={5} r={4.5} x0={40} x1={60} color={c.core} delayMs={d + 1240} gd="1s" />
+    </Brd>
+  );
+}
+
+/* =============================================================================
    FLAGSHIP IMPACT WAVE - the module-wide moment of real contact.
 
    Every lead now lands one physical hit from the shared impact vocabulary
@@ -2691,7 +2822,6 @@ const IMP_GLYPHS: ReactNode[] = [
 ];
 
 const IMPACT: Record<string, G09Imp> = {
-  bn4_long_winter: { at: 420, rgb: "143 198 232", laser: true, g: 0, q: "h", s: 12 }, // t8 hero
   bn4_winter_garrison: { at: 465, rgb: "168 216 230", laser: true, g: 1, q: "h", s: 12 }, // t8 hero
   bn4_frozen_moat: { at: 440, rgb: "134 200 220", g: 1 },
   bn4_glacier_calving: { at: 470, rgb: "140 203 228", laser: true, g: 0, q: "s" },
@@ -2713,7 +2843,6 @@ const IMPACT: Record<string, G09Imp> = {
   hx4_great_glacier: { at: 735, rgb: "142 201 224", laser: true, g: 2, q: "h", s: 12 }, // t8 hero
   hx4_reapers_due: { at: 475, rgb: "143 192 198", laser: true, g: 2, q: "h", s: 12 }, // t8 hero
   hx4_winter_that_stays: { at: 570, rgb: "158 210 224", laser: true, g: 0, q: "h", s: 12 }, // t8 hero
-  hx4_watchmans_whistle: { at: 565, rgb: "162 207 224", laser: true, g: 1, q: "s" },
   hx4_wheel_of_ice: { at: 615, rgb: "147 206 222", g: 1 },
   hx4_glass_prison: { at: 780, rgb: "182 224 239", laser: true, g: 0, q: "h", s: 12 }, // t8 hero
   hx4_spiders_parlor: { at: 450, rgb: "176 214 228", laser: true, g: 2, q: "h", s: 12 }, // t8 hero
@@ -2779,7 +2908,7 @@ function withImpact(Base: SigPlugin["Render"], imp: G09Imp): SigPlugin["Render"]
 
 export const PLAYS: Record<string, SigPlugin> = {
   // --- the season arriving: washes and garrisons ---
-  bn4_long_winter: S(LongWinterScene, {
+  bn4_long_winter: S(LongWinterRule, {
     ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true,
     sound: "massfreeze", source: "frozen", anchor: "board",
   }),
@@ -2863,7 +2992,7 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "line", staggerMs: 65, victims: "all", hasLead: true,
     sound: "massfreeze", source: "frozen", anchor: "board",
   }),
-  hx4_watchmans_whistle: S(WatchmansWhistleScene, {
+  hx4_watchmans_whistle: S(WatchmansWhistleRule, {
     ordering: "line", staggerMs: 0, victims: "all", hasLead: true,
     sound: "clockice", source: "frozen", anchor: "aim",
   }),

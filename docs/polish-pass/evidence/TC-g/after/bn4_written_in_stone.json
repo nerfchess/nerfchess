@@ -1,0 +1,78 @@
+{
+ "id": "bn4_written_in_stone",
+ "url": "/dev/plays?id=bn4_written_in_stone&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "bn4_written_in_stone",
+  "name": "Written in Stone",
+  "tier": 8,
+  "category": "nerf",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:bn4_written_in_stone",
+  "anchor": "board",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "line",
+  "staggerMs": 60,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, diff-less: no zone source, not an attack",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2529,
+  "cssEndMs": 3473,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 50,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 158,
+  "maxGapMs": 259.8
+ },
+ "raf": {
+  "frames": 203,
+  "medianMs": 16.7,
+  "maxMs": 50,
+  "dropped": 15
+ },
+ "longAnimationFrames": {
+  "count": 0,
+  "worstMs": 0,
+  "totalBlockingMs": 0,
+  "entries": []
+ },
+ "tiles": [
+  0,
+  194,
+  494,
+  854,
+  1259,
+  1701,
+  2176,
+  2679
+ ],
+ "png": "docs/polish-pass/evidence/TC-g/after/bn4_written_in_stone.png",
+ "pngBytes": 29403,
+ "off": {
+  "url": "/dev/plays?id=bn4_written_in_stone&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "docs/polish-pass/evidence/TC-g/after/bn4_written_in_stone.off.png"
+ }
+}

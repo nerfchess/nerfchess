@@ -1,0 +1,104 @@
+{
+ "id": "bn4_long_winter",
+ "url": "/dev/plays?id=bn4_long_winter&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "bn4_long_winter",
+  "name": "The Long Winter",
+  "tier": 8,
+  "category": "tempo",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:bn4_long_winter",
+  "anchor": "board",
+  "source": "frozen",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 55,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, frozen diff",
+  "castSq": "c7",
+  "targets": [
+   "c7",
+   "d7",
+   "e7"
+  ],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2519,
+  "cssEndMs": 3441,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 47,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 163,
+  "maxGapMs": 62.9
+ },
+ "raf": {
+  "frames": 189,
+  "medianMs": 16.7,
+  "maxMs": 166.7,
+  "dropped": 31
+ },
+ "longAnimationFrames": {
+  "count": 4,
+  "worstMs": 164,
+  "totalBlockingMs": 119,
+  "entries": [
+   {
+    "atMs": -57,
+    "duration": 64,
+    "blocking": 10,
+    "scripts": []
+   },
+   {
+    "atMs": 9,
+    "duration": 72,
+    "blocking": 9,
+    "scripts": []
+   },
+   {
+    "atMs": 89,
+    "duration": 50,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 2820,
+    "duration": 164,
+    "blocking": 100,
+    "scripts": [
+     {
+      "duration": 148,
+      "invoker": "http://localhost:3000/_next/static/chunks/_app-pages-browser_src_components_effe...",
+      "source": "/_next/static/chunks/_app-pages-browser_src_components_effects_board3d_engine3d_ts.js"
+     }
+    ]
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  193,
+  492,
+  850,
+  1254,
+  1695,
+  2168,
+  2669
+ ],
+ "png": "docs/polish-pass/evidence/TC-g/before/bn4_long_winter.png",
+ "pngBytes": 31134
+}
