@@ -64,11 +64,7 @@
 //                   pierces the board, triple shockwave
 //
 // CARD -> TEMPLATE / PALETTE / GLYPH table (cards still on a shared template):
-//   GodDescent    : mind_empire (third eye)
-//   TitanRise     : fortress_realm (castle keep)
 //   ReaperSweep   : peace_of_the_grave (lily)
-//   CelestialRing : warp_sovereign (swap arrows)
-//   GorgonIdol    : crown_and_castle (crown atop turret)
 //   SkullStrike   : culling (skull, writ huge and BOWLED)
 //   PlanetAlign   : grand_conjunction (triple star as the syzygy sigil)
 // Every other card in PLAYS has a scene of its own (named <Card>Scene or an
@@ -127,7 +123,14 @@
 //   warp_cataclysm (four counted rifts, the king set aside), rift_storm (two
 //   blinks, two of theirs trade squares), grand_retreat (the army marches
 //   home, a blocked piece stays), full_rewind (five pieces play their moves
-//   backwards to home).
+//   backwards to home), mind_empire (a halo on the taken piece that slips
+//   the moment it captures), crown_and_castle (crown and turret shut in
+//   walnuts, one short step), fortress_realm (a walled 3x3, three shields,
+//   the king struck, then the walls lie flat), warp_sovereign (up to three
+//   counted swap loops, the third only dashed).
+// The other shared templates (GodDescent, TitanRise, SkyWrath, AbyssMaw,
+// HostMarch, CelestialRing, FrostTitan, ForgeColossus, GorgonIdol,
+// ChronoLord) no longer back any card; they are left in place for now.
 
 import "./godPlays.css";
 
@@ -900,28 +903,6 @@ function GodDescent({ palette, glyph, lead, delayMs, flourish, tier }: TemplateP
       <Boom delayMs={delayMs + 720} color={tint(p0, 0.8)} />
       {heavy(tier) && <Boom delayMs={delayMs + 850} color={tint(p2, 0.75)} thickness={2} />}
       {/* --- per-card flourishes ------------------------------------------- */}
-      {/* mind_empire: the third eye's beam pins one piece below — it dims,
-          then re-lights in the empire's colours. */}
-      {flourish === "mind_seize" && (
-        <>
-          <span className="absolute block" style={{ left: "47.5%", top: "24%", width: "5%", height: "30%" }}>
-            <span
-              className="gp-ray absolute inset-0 block"
-              style={{ background: `linear-gradient(180deg, ${tint(p0, 0.9)}, ${tint(p1, 0.35)} 70%, transparent)`, animationDelay: `${delayMs + 620}ms` }}
-            />
-          </span>
-          <span className="gp-snooze absolute block" style={{ left: "46%", top: "50%", width: "8%", height: "12%", animationDelay: `${delayMs + 560}ms` }}>
-            <Sil d={SIL.n} fill="#2b1218" stroke={tint(p1, 0.7)} />
-          </span>
-          <span className="gp-pop absolute block" style={{ left: "46%", top: "50%", width: "8%", height: "12%", animationDelay: `${delayMs + 1150}ms` }}>
-            <Sil d={SIL.n} fill={tint(p0, 0.9)} stroke={p2} />
-          </span>
-          <span
-            className="gp-gaze absolute block rounded-full"
-            style={{ left: "44%", top: "52%", width: "12%", height: "9%", border: `2.5px solid ${tint(p0, 0.85)}`, animationDelay: `${delayMs + 1200}ms` }}
-          />
-        </>
-      )}
       <Glint delayMs={delayMs + 1050} color={p1} />
       <Settle hex={p1} delayMs={delayMs + 1000} cy={58} />
     </Stage>
@@ -996,30 +977,6 @@ function TitanRise({ palette, glyph, lead, delayMs, flourish, tier }: TemplatePr
       <Boom delayMs={delayMs + 800} color={tint(p0, 0.8)} />
       {heavy(tier) && <Boom delayMs={delayMs + 930} color={tint(p2, 0.75)} thickness={2} />}
       {/* --- per-card flourishes ------------------------------------------- */}
-      {/* fortress_realm: battlement walls snap up around the chosen 3x3 zone,
-          a keep tower clicking into each corner. */}
-      {flourish === "keep_walls" && (
-        <>
-          <span className="gp-crack absolute block" style={{ left: "35%", top: "36%", width: "30%", height: "30%", animationDelay: `${delayMs + 760}ms` }}>
-            <svg viewBox="0 0 30 30" className="block h-full w-full" aria-hidden="true">
-              <rect x="1.5" y="1.5" width="27" height="27" fill={tint(p1, 0.12)} stroke={tint(p1, 0.95)} strokeWidth="1.2" />
-              <rect x="4.5" y="4.5" width="21" height="21" fill="none" stroke={tint(p2, 0.7)} strokeWidth="0.5" strokeDasharray="2 1.4" />
-            </svg>
-          </span>
-          {[
-            { l: 33, t: 34 },
-            { l: 62, t: 34 },
-            { l: 33, t: 62 },
-            { l: 62, t: 62 },
-          ].map((v, i) => (
-            <span key={i} className="gp-pod absolute block" style={{ left: `${v.l}%`, top: `${v.t}%`, width: "5%", height: "6.5%", animationDelay: `${delayMs + 900 + i * 90}ms` }}>
-              <svg viewBox="0 0 5 7" className="block h-full w-full" aria-hidden="true">
-                <path d="M0.8 7 V2 H1.8 V1 H2.2 V2 H2.8 V1 H3.2 V2 H4.2 V7 Z" fill={tint(p0, 0.95)} stroke={p2} strokeWidth="0.4" {...SJ} />
-              </svg>
-            </span>
-          ))}
-        </>
-      )}
       <Glint delayMs={delayMs + 1080} color={p1} left={48} top={22} />
       <Settle hex={p1} delayMs={delayMs + 1060} cy={62} />
     </Stage>
@@ -1476,37 +1433,6 @@ function CelestialRing({ palette, glyph, lead, delayMs, flourish, tier }: Templa
       <Boom delayMs={delayMs + 940} color={tint(p2, 0.8)} />
       {heavy(tier) && <Boom delayMs={delayMs + 1070} color={tint(p0, 0.75)} thickness={2} />}
       {/* --- per-card flourishes ------------------------------------------- */}
-      {/* warp_sovereign: three pairs of crossing swap-arrows inscribe around
-          the ring, a settle-dot marking each exchange as it lands. */}
-      {flourish === "triple_swap" && (
-        <>
-          {[
-            { l: 30, t: 30, d: 0 },
-            { l: 52, t: 42, d: 180 },
-            { l: 34, t: 56, d: 360 },
-          ].map((v, i) => (
-            <span key={i} className="gp-crack absolute block" style={{ left: `${v.l}%`, top: `${v.t}%`, width: "14%", height: "10%", animationDelay: `${delayMs + 560 + v.d}ms` }}>
-              <svg viewBox="0 0 14 10" className="block h-full w-full" aria-hidden="true">
-                <path d="M2 7 C2 3 6 1.4 10.6 2" fill="none" stroke={tint(p1, 0.95)} strokeWidth="0.8" strokeLinecap="round" />
-                <path d="M10 0.6 L12.4 2.2 L9.6 3.6 Z" fill={p1} />
-                <path d="M12 3 C12 7 8 8.6 3.4 8" fill="none" stroke={tint(p0, 0.95)} strokeWidth="0.8" strokeLinecap="round" />
-                <path d="M4 9.4 L1.6 7.8 L4.4 6.4 Z" fill={p0} />
-              </svg>
-            </span>
-          ))}
-          {[
-            { l: 30, t: 32 },
-            { l: 62, t: 44 },
-            { l: 46, t: 62 },
-          ].map((v, i) => (
-            <span
-              key={`d${i}`}
-              className="gp-glint absolute block rounded-full"
-              style={{ left: `${v.l}%`, top: `${v.t}%`, width: "2.4%", height: "2.4%", background: tint(p2, 0.95), animationDelay: `${delayMs + 900 + i * 180}ms` }}
-            />
-          ))}
-        </>
-      )}
       <Glint delayMs={delayMs + 1160} color={p1} left={47} top={46} />
       <Settle hex={p1} delayMs={delayMs + 1200} cy={50} />
     </Stage>
@@ -1770,33 +1696,6 @@ function GorgonIdol({ palette, glyph, lead, delayMs, flourish, tier }: TemplateP
       <Boom delayMs={delayMs + 860} color={tint(p0, 0.85)} />
       {heavy(tier) && <Boom delayMs={delayMs + 990} color={tint(p2, 0.7)} thickness={2} />}
       {/* --- per-card flourishes ------------------------------------------- */}
-      {/* crown_and_castle: queen and rooks come down already half-shelled —
-          three heavyweights setting like mortar where they land. */}
-      {flourish === "heavy_court" && (
-        <>
-          {[
-            { l: 33, sil: SIL.r, d: 0 },
-            { l: 46.5, sil: SIL.q, d: 160 },
-            { l: 60, sil: SIL.r, d: 320 },
-          ].map((v, i) => (
-            <span key={i} className="gp-pod absolute block" style={{ left: `${v.l}%`, top: "42%", width: "7.5%", height: "13%", animationDelay: `${delayMs + 600 + v.d}ms` }}>
-              <svg viewBox="0 0 10 14" className="block h-full w-full" aria-hidden="true">
-                <g transform="translate(0.5 0.5) scale(0.9)">
-                  <path d={v.sil} fill={tint(p2, 0.95)} stroke={p1} strokeWidth="0.5" {...SJ} />
-                </g>
-                <path d="M1.6 9 C1.6 5.6 8.4 5.6 8.4 9 L8 13.4 H2 Z" fill={tint("#c9b89a", 0.85)} stroke={p2} strokeWidth="0.5" {...SJ} />
-              </svg>
-            </span>
-          ))}
-          {[36, 63].map((l, i) => (
-            <span
-              key={`d${i}`}
-              className="gp-spark absolute block rounded-full"
-              style={{ left: `${l}%`, top: "53%", width: "2.2%", height: "2.2%", background: tint(p1, 0.7), "--dx": i ? "160%" : "-160%", "--dy": "-60%", "--rot": "0deg", animationDelay: `${delayMs + 900 + i * 200}ms` } as CSSProperties}
-            />
-          ))}
-        </>
-      )}
       <Glint delayMs={delayMs + 1140} color={p1} left={47} top={24} />
       <Settle hex={p1} delayMs={delayMs + 1130} cy={48} />
     </Stage>
@@ -6432,6 +6331,216 @@ function FullRewindScene({ palette, glyph, lead, delayMs }: TemplateProps) {
   );
 }
 
+/* --- mind_empire ------------------------------------------------------------------------------
+   "Take control of one enemy piece of any type below queen. Your control ends
+   the moment that piece makes a capture, and it returns to your opponent."
+   The cast square is the taken piece: a third eye opens on the caster's side
+   of it and a halo in the caster's colour settles round the square; then the
+   condition plays out as a ghost: a dashed capture stroke leaves the square,
+   and the halo snaps and slips back toward their side. Target cut: the halo
+   settles. */
+function HaloHit({ palette, delayMs }: { palette: Palette; delayMs: number }) {
+  const [p0, , p2] = palette;
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="gp-me-halo absolute block rounded-full" style={{ left: "6%", top: "6%", width: "88%", height: "88%", border: `2px solid ${tint(p0, 0.9)}`, animationDelay: dm(delayMs, 0) }} />
+      <span className="gp-me-dot absolute block rounded-full" style={{ left: "42%", top: "2%", width: "16%", height: "16%", background: p2, animationDelay: dm(delayMs, 160) }} />
+    </span>
+  );
+}
+function MindEmpireScene({ palette, lead, delayMs }: TemplateProps) {
+  const [p0, p1, p2] = palette;
+  if (!lead) return <HaloHit palette={palette} delayMs={delayMs} />;
+  const home = 50 - CELL / 2;
+  return (
+    <Stage quakeMs={delayMs + 440}>
+      <Rake delayMs={delayMs + 200} tone={tint(p0, 0.5)} lean="calc(var(--fx-ox, 0) * 2.4%)" tip="calc(var(--fx-oy, 0) * 1.5%)" cy={57} width={22} />
+      <span className="gp-me-eye absolute block" style={{ left: `${50 - 4.5}%`, top: `calc(50% + var(--fx-side, 1) * ${CELL * 1.1}% - 2.5%)`, width: "9%", height: "5%", animationDelay: dm(delayMs, 0) }}>
+        <svg viewBox="0 0 10 5" className="block h-full w-full" aria-hidden="true">
+          <path d="M0.6 2.5 C3 -0.2 7 -0.2 9.4 2.5 C7 5.2 3 5.2 0.6 2.5 Z" fill={tint(p1, 0.9)} stroke={p0} strokeWidth="0.5" {...SJ} />
+          <circle cx="5" cy="2.5" r="1.2" fill={p0} />
+        </svg>
+      </span>
+      <span className="gp-me-halo absolute block rounded-full" style={{ left: `${home - 0.4}%`, top: `${home - 0.4}%`, width: `${CELL + 0.8}%`, height: `${CELL + 0.8}%`, border: `2px solid ${tint(p0, 0.9)}`, animationDelay: dm(delayMs, 260) }} />
+      {/* ...until it captures: a ghost stroke, and the halo slips away */}
+      <span className="gp-me-ghost absolute block" style={{ left: `${50}%`, top: `${home - CELL}%`, width: `${CELL * 1.5}%`, height: `${CELL * 1.5}%`, animationDelay: dm(delayMs, 760) }}>
+        <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+          <path d="M1 9 L8.6 1.4 M6 1.4 H8.6 V4" fill="none" stroke={p2} strokeWidth="0.7" strokeDasharray="1 0.7" {...SJ} />
+        </svg>
+      </span>
+      <span className="gp-me-slip absolute block rounded-full" style={{ left: `${home - 0.4}%`, top: `${home - 0.4}%`, width: `${CELL + 0.8}%`, height: `${CELL + 0.8}%`, border: `2px dashed ${tint(p0, 0.7)}`, animationDelay: dm(delayMs, 980) }} />
+      <span
+        className="gp-afterglow absolute block rounded-full"
+        style={{ left: `${home - 3}%`, top: `${home - 3}%`, width: `${CELL + 6}%`, height: `${CELL + 6}%`, background: `radial-gradient(closest-side, ${tint(p0, 0.45)}, transparent)`, animationDelay: dm(delayMs, 1150) }}
+      />
+    </Stage>
+  );
+}
+
+/* --- crown_and_castle ------------------------------------------------------------------------
+   "Your opponent's queen and rooks turn to walnuts for 2 of their turns: a
+   walnut is so heavy it can only shuffle one square at a time." On their
+   side a crown and a castle turret each drop into an open walnut, the shells
+   snap shut on them, and a single short step is all either can make; two
+   pips. On each queen and rook (target cut) a carved nut closes with a
+   one-square cross and two pips. */
+function NutHit({ palette, delayMs }: { palette: Palette; delayMs: number }) {
+  const [p0, p1, p2] = palette;
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="gp-cc-nut absolute block" style={{ left: "16%", top: "12%", width: "68%", height: "76%", animationDelay: dm(delayMs, 0) }}>
+        <svg viewBox="0 0 10 11" className="block h-full w-full" aria-hidden="true">
+          <ellipse cx="5" cy="5.6" rx="4.2" ry="4.8" fill={tint(p2, 0.95)} stroke={tint(p1, 0.9)} strokeWidth="0.5" />
+          <path d="M5 0.8 V10.4 M3 5.6 H7 M5 3.6 V7.6" stroke={p0} strokeWidth="0.45" strokeLinecap="round" />
+        </svg>
+      </span>
+      {[0, 1].map((i) => (
+        <span key={i} className="gp-cc-pip absolute block rounded-full" style={{ left: `${36 + i * 18}%`, top: "86%", width: "11%", height: "11%", background: p0, animationDelay: dm(delayMs, 420 + i * 90) }} />
+      ))}
+    </span>
+  );
+}
+function CrownAndCastleScene({ palette, lead, delayMs }: TemplateProps) {
+  const [p0, p1, p2] = palette;
+  if (!lead) return <NutHit palette={palette} delayMs={delayMs} />;
+  const row = "calc(43.75% - var(--fx-side, 1) * 18.75%)";
+  return (
+    <Stage quakeMs={delayMs + 460}>
+      <Rake delayMs={delayMs + 160} tone={tint(p2, 0.5)} lean="calc(var(--fx-ox, 0) * 2.4%)" tip="calc(var(--fx-oy, 0) * 1.5%)" cy={57} width={24} />
+      <BoardFrame>
+        {[
+          { l: 34, d: "M1.4 7 V1.6 L3.5 3.6 L5 0.8 L6.5 3.6 L8.6 1.6 V7 Z" },
+          { l: 56, d: "M1.6 7.6 V1 H3.2 V2.4 H4.2 V1 H5.8 V2.4 H6.8 V1 H8.4 V7.6 Z" },
+        ].map((e, i) => (
+          <span key={i} className="gp-cc-drop absolute block" style={{ left: `${e.l + 2}%`, top: `calc(${row} + 1%)`, width: "6%", height: "5%", animationDelay: dm(delayMs, 80 + i * 120) }}>
+            <svg viewBox="0 0 10 8" className="block h-full w-full" aria-hidden="true">
+              <path d={e.d} fill={p0} stroke={p2} strokeWidth="0.5" {...SJ} />
+            </svg>
+          </span>
+        ))}
+        {[34, 56].map((l, i) =>
+          [
+            { cls: "gp-cc-shl", d: "M5 0.6 C2 0.6 0.8 3 0.8 6 C0.8 9 2.6 11 5 11.4 Z" },
+            { cls: "gp-cc-shr", d: "M5 0.6 C8 0.6 9.2 3 9.2 6 C9.2 9 7.4 11 5 11.4 Z" },
+          ].map((h) => (
+            <span key={`${l}${h.cls}`} className={`${h.cls} absolute block`} style={{ left: `${l}%`, top: row, width: "10%", height: "12.5%", animationDelay: dm(delayMs, 360 + i * 120) }}>
+              <svg viewBox="0 0 10 12" className="block h-full w-full" aria-hidden="true">
+                <path d={h.d} fill={tint(p2, 0.95)} stroke={tint(p1, 0.9)} strokeWidth="0.5" {...SJ} />
+              </svg>
+            </span>
+          )),
+        )}
+        {[34, 56].map((l, i) => (
+          <span key={`s${l}`} className="gp-cc-step absolute block" style={{ left: `${l - 1.25}%`, top: `calc(${row} - 3.75%)`, width: "12.5%", height: "20%", animationDelay: dm(delayMs, 760 + i * 80) }}>
+            <svg viewBox="0 0 10 16" className="block h-full w-full" aria-hidden="true">
+              <path d="M5 2 V0.6 M4.2 1.4 L5 0.6 L5.8 1.4 M5 14 V15.4 M4.2 14.6 L5 15.4 L5.8 14.6" fill="none" stroke={p0} strokeWidth="0.5" {...SJ} />
+            </svg>
+          </span>
+        ))}
+        {[0, 1].map((i) => (
+          <span key={`p${i}`} className="gp-cc-pip absolute block rounded-full" style={{ left: `${47.6 + i * 3.2}%`, top: `calc(${row} + 5.5%)`, width: "2.4%", height: "2.4%", background: p0, border: `1px solid ${p1}`, animationDelay: dm(delayMs, 980 + i * 100) }} />
+        ))}
+        <span
+          className="gp-afterglow absolute block rounded-full"
+          style={{ left: "30%", top: row, width: "40%", height: "12.5%", background: `radial-gradient(closest-side, ${tint(p0, 0.4)}, transparent)`, animationDelay: dm(delayMs, 1150) }}
+        />
+      </BoardFrame>
+    </Stage>
+  );
+}
+
+/* --- fortress_realm ----------------------------------------------------------------------------
+   "Pick a 3x3 zone: up to three of your pieces there, your king aside,
+   cannot be captured for your opponent's next turn, then the zone becomes
+   ordinary terrain." Walls rise round exactly the 3x3 block centred on the
+   chosen square with a tower at each corner; three cells inside take a
+   shield (up to three pieces) while a crown by the wall is struck (the king
+   aside); one pip; then the walls lie down flat into the floor. Target
+   cut: a small shield. */
+const FR_SHIELDS: [number, number][] = [[-1, 0], [0, 1], [1, -1]];
+function FortressRealmScene({ palette, lead, delayMs }: TemplateProps) {
+  const [p0, p1, p2] = palette;
+  if (!lead) return <AegisHit palette={palette} delayMs={delayMs} />;
+  const box = 50 - CELL * 1.5;
+  return (
+    <Stage quakeMs={delayMs + 420}>
+      <Rake delayMs={delayMs + 160} tone={tint(p1, 0.45)} lean="calc(var(--fx-ox, 0) * 2.4%)" tip="calc(var(--fx-oy, 0) * 1.5%)" cy={57} width={26} />
+      <span className="gp-fk-wall absolute block" style={{ left: `${box}%`, top: `${box}%`, width: `${CELL * 3}%`, height: `${CELL * 3}%`, border: `3px solid ${tint(p0, 0.95)}`, background: tint(p1, 0.12), animationDelay: dm(delayMs, 0) }} />
+      {[0, 1].flatMap((cx) =>
+        [0, 1].map((cy) => (
+          <span key={`${cx}${cy}`} className="gp-fk-tower absolute block" style={{ left: `${box + cx * CELL * 3 - 1.6}%`, top: `${box + cy * CELL * 3 - 1.6}%`, width: "3.2%", height: "3.2%", background: p0, border: `1px solid ${p2}`, animationDelay: dm(delayMs, 120 + (cx + cy) * 40) }} />
+        )),
+      )}
+      {FR_SHIELDS.map(([dx, dy], i) => (
+        <span key={i} className="gp-fk-shield absolute block" style={{ left: `${50 + dx * CELL - 1.8}%`, top: `${50 + dy * CELL - 2.2}%`, width: "3.6%", height: "4.4%", animationDelay: dm(delayMs, 360 + i * 90) }}>
+          <svg viewBox="0 0 10 12" className="block h-full w-full" aria-hidden="true">
+            <path d="M5 0.8 L9 2.2 V5.6 C9 8.4 7.2 10.2 5 11.2 C2.8 10.2 1 8.4 1 5.6 V2.2 Z" fill={tint(p1, 0.9)} stroke={p2} strokeWidth="0.7" {...SJ} />
+          </svg>
+        </span>
+      ))}
+      <span className="gp-fk-king absolute block" style={{ left: `${box + CELL * 3 + 0.6}%`, top: `${50 - 2.4}%`, width: "4%", height: "4.8%", animationDelay: dm(delayMs, 520) }}>
+        <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+          <path d={SIL.k} fill={tint(p2, 0.8)} stroke={p0} strokeWidth="0.5" {...SJ} />
+          <path d="M1.4 8.6 L8.6 1.4" stroke="#c94a5a" strokeWidth="1" strokeLinecap="round" />
+        </svg>
+      </span>
+      <span className="gp-fk-pip absolute block rounded-full" style={{ left: `${50 - 1.2}%`, top: `${box + CELL * 3 + 1}%`, width: "2.4%", height: "2.4%", background: p1, border: `1px solid ${p0}`, animationDelay: dm(delayMs, 760) }} />
+    </Stage>
+  );
+}
+
+/* --- warp_sovereign ---------------------------------------------------------------------------
+   "Swap up to three pairs of your pieces, once. Stop after any pair." Three
+   swap loops open one after another round the cast square, each counted in
+   dots; the third is only dashed (up to three, and you may stop after any
+   pair). Target cut on each picked square: two small arrows chase round it. */
+function SwapHit({ palette, delayMs }: { palette: Palette; delayMs: number }) {
+  const [p0, p1] = palette;
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="gp-ws-loop absolute block" style={{ left: "10%", top: "10%", width: "80%", height: "80%", animationDelay: dm(delayMs, 0) }}>
+        <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+          <path d="M2 4 A3.4 3.4 0 0 1 8 3.4 M8 6 A3.4 3.4 0 0 1 2 6.6 M8 3.4 L8.4 1.8 M8 3.4 L6.4 3 M2 6.6 L1.6 8.2 M2 6.6 L3.6 7" fill="none" stroke={p1} strokeWidth="0.7" {...SJ} />
+        </svg>
+      </span>
+      <span className="gp-me-dot absolute block rounded-full" style={{ left: "44%", top: "44%", width: "12%", height: "12%", background: p0, animationDelay: dm(delayMs, 200) }} />
+    </span>
+  );
+}
+function WarpSovereignScene({ palette, lead, delayMs }: TemplateProps) {
+  const [p0, p1, p2] = palette;
+  if (!lead) return <SwapHit palette={palette} delayMs={delayMs} />;
+  return (
+    <Stage quakeMs={delayMs + 420}>
+      <Rake delayMs={delayMs + 160} tone={tint(p0, 0.5)} lean="calc(var(--fx-ox, 0) * 2.4%)" tip="calc(var(--fx-oy, 0) * 1.5%)" cy={57} width={22} />
+      {[
+        { x: -1.6, dash: false },
+        { x: 0, dash: false },
+        { x: 1.6, dash: true },
+      ].map((p, i) => (
+        <span key={i} className="gp-ws-loop absolute block" style={{ left: `${50 + p.x * CELL - 4}%`, top: `calc(50% - var(--fx-side, 1) * ${CELL * 1.3}% - 4%)`, width: "8%", height: "8%", animationDelay: dm(delayMs, 80 + i * 200) }}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <path d="M2 4 A3.4 3.4 0 0 1 8 3.4 M8 6 A3.4 3.4 0 0 1 2 6.6 M8 3.4 L8.4 1.8 M8 3.4 L6.4 3 M2 6.6 L1.6 8.2 M2 6.6 L3.6 7" fill="none" stroke={p.dash ? tint(p1, 0.7) : p1} strokeWidth="0.8" strokeDasharray={p.dash ? "1 0.7" : undefined} {...SJ} />
+          </svg>
+        </span>
+      ))}
+      {[0, 1, 2].map((i) => (
+        <span key={`c${i}`} className="gp-wc-count absolute block" style={{ left: `${50 + (i - 1) * 1.6 * CELL - 2.4}%`, top: `calc(50% - var(--fx-side, 1) * ${CELL * 1.3}% + 4.6%)`, width: "4.8%", height: "1.6%", animationDelay: dm(delayMs, 200 + i * 200) }}>
+          <svg viewBox="0 0 12 4" className="block h-full w-full" aria-hidden="true">
+            {Array.from({ length: i + 1 }, (_, k) => (
+              <circle key={k} cx={6 - i * 1.5 + k * 3} cy="2" r="1.1" fill={p2} />
+            ))}
+          </svg>
+        </span>
+      ))}
+      <span
+        className="gp-afterglow absolute block rounded-full"
+        style={{ left: "40%", top: "40%", width: "20%", height: "20%", background: `radial-gradient(closest-side, ${tint(p0, 0.45)}, transparent)`, animationDelay: dm(delayMs, 900) }}
+      />
+    </Stage>
+  );
+}
+
 /* =============================================================================
    Glyphs — one small hand-drawn SVG per card, recognisable at a glance.
    All share a 0 0 10 10 viewBox so every template slot letterboxes them
@@ -7136,9 +7245,9 @@ export const PLAYS: Record<string, SigPlugin> = {
   transcendence: G(TranscendenceScene, ["#b98cff", "#ffd76a", "#fff4d6"], GLYPH.transcendence, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "coronation", anchor: "board",
   }),
-  mind_empire: G(GodDescent, ["#8f2bbf", "#e3d0ff", "#ffd76a"], GLYPH.mind_empire, {
+  mind_empire: G(MindEmpireScene, ["#8f2bbf", "#e3d0ff", "#ffd76a"], GLYPH.mind_empire, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades", anchor: "aim",
-  }, "mind_seize"),
+  }),
   mass_mind_control: G(MassMindControlScene, ["#c94ad1", "#12081f", "#6fe3ff"], GLYPH.mass_mind_control, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades", anchor: "aim",
   }),
@@ -7159,9 +7268,9 @@ export const PLAYS: Record<string, SigPlugin> = {
   sundering: G(SunderingScene, ["#5c5348", "#ff9d3d", "#d9d2c0"], GLYPH.sundering, {
     ordering: "sweep", staggerMs: 70, victims: "all", hasLead: true, sound: "cataclysm", source: "blindfold", anchor: "board",
   }),
-  fortress_realm: G(TitanRise, ["#8a94a8", "#5fc9b0", "#d9d2c0"], GLYPH.fortress_realm, {
+  fortress_realm: G(FortressRealmScene, ["#8a94a8", "#5fc9b0", "#d9d2c0"], GLYPH.fortress_realm, {
     ordering: "radial", staggerMs: 50, victims: "all", hasLead: true, sound: "cathedral", source: "shield", anchor: "cast",
-  }, "keep_walls"),
+  }),
   molten_heart: G(MoltenHeartScene, ["#ff5c1a", "#e6432c", "#3a1c12"], GLYPH.molten_heart, {
     ordering: "sweep", staggerMs: 70, victims: "all", hasLead: true, sound: "cataclysm", source: "blindfold", anchor: "cast",
   }),
@@ -7257,9 +7366,9 @@ export const PLAYS: Record<string, SigPlugin> = {
   warp_cataclysm: G(WarpCataclysmScene, ["#6fe3ff", "#8f6bff", "#fff4d6"], GLYPH.warp_cataclysm, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "clockcage", anchor: "aim",
   }),
-  warp_sovereign: G(CelestialRing, ["#8f6bff", "#ffd76a", "#e3d0ff"], GLYPH.warp_sovereign, {
+  warp_sovereign: G(WarpSovereignScene, ["#8f6bff", "#ffd76a", "#e3d0ff"], GLYPH.warp_sovereign, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "clockcage", anchor: "aim",
-  }, "triple_swap"),
+  }),
   nerf_reversal: G(NerfReversalScene, ["#a8e07f", "#8f6bff", "#fff4d6"], GLYPH.nerf_reversal, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "aegis", anchor: "cast",
   }),
@@ -7321,9 +7430,9 @@ export const PLAYS: Record<string, SigPlugin> = {
   chisel_curse: G(ChiselCurseScene, ["#b0a68f", "#8d8d94", "#e8dcc0"], GLYPH.chisel_curse, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "petrify", source: "walnut", anchor: "cast",
   }),
-  crown_and_castle: G(GorgonIdol, ["#ffd76a", "#8d8d94", "#8a6a4a"], GLYPH.crown_and_castle, {
+  crown_and_castle: G(CrownAndCastleScene, ["#ffd76a", "#8d8d94", "#8a6a4a"], GLYPH.crown_and_castle, {
     ordering: "sweep", staggerMs: 60, victims: ["q", "r"], hasLead: true, sound: "petrifiedforest", source: "walnut", anchor: "aim",
-  }, "heavy_court"),
+  }),
 
   /* --- ChronoLord ------------------------------------------------------------------- */
   full_rewind: G(FullRewindScene, ["#6fe3ff", "#ffd76a", "#2a2a38"], GLYPH.full_rewind, {

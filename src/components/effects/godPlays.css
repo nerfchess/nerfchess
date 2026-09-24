@@ -2741,6 +2741,89 @@
 }
 .gp-fr-frame { animation: gp-fr-frame calc(0.7s * var(--fx-dur, 1)) steps(4, end) both; }
 
+/* --- mind_empire: a halo that slips the moment it captures ------------------- */
+.gp-me-eye { animation: gp-sd-tag calc(1.4s * var(--fx-dur, 1)) var(--ease-out) both; }
+@keyframes gp-me-halo {
+  0% { opacity: 0; transform: scale(1.6); }
+  26% { opacity: 1; transform: scale(0.96); }
+  36% { transform: scale(1); }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1); }
+}
+.gp-me-halo { animation: gp-me-halo calc(1s * var(--fx-dur, 1)) var(--ease-out) both; }
+.gp-me-dot { animation: gp-pipin calc(0.9s * var(--fx-dur, 1)) var(--ease-spring) both; }
+@keyframes gp-me-ghost {
+  0% { opacity: 0; transform: scale(0.6); }
+  30% { opacity: 0.9; transform: scale(1); }
+  70% { opacity: 0.9; }
+  100% { opacity: 0; transform: scale(1); }
+}
+.gp-me-ghost { animation: gp-me-ghost calc(0.8s * var(--fx-dur, 1)) var(--ease-out) both; transform-origin: 0% 100%; }
+@keyframes gp-me-slip {
+  0% { opacity: 0; transform: translateY(0) scale(1); }
+  20% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * -120%)) scale(0.7); }
+}
+.gp-me-slip { animation: gp-me-slip calc(0.8s * var(--fx-dur, 1)) var(--ease-io) both; }
+
+/* --- crown_and_castle: crown and turret shut in walnuts ---------------------- */
+@keyframes gp-cc-drop {
+  0% { opacity: 0; transform: translateY(-160%); }
+  26% { opacity: 1; }
+  44% { transform: translateY(40%); }
+  56% { opacity: 1; transform: translateY(40%); }
+  70% { opacity: 0; transform: translateY(40%); }
+  100% { opacity: 0; transform: translateY(40%); }
+}
+.gp-cc-drop { animation: gp-cc-drop calc(1s * var(--fx-dur, 1)) var(--ease-io) both; }
+@keyframes gp-cc-shl {
+  0% { opacity: 0; transform: translateX(-40%) rotate(-24deg); }
+  22% { opacity: 1; }
+  40% { transform: translateX(0) rotate(0deg); }
+  84% { opacity: 1; transform: translateX(0) rotate(0deg); }
+  100% { opacity: 0; transform: translateX(0) rotate(0deg); }
+}
+.gp-cc-shl { animation: gp-cc-shl calc(1.3s * var(--fx-dur, 1)) var(--ease-spring) both; }
+@keyframes gp-cc-shr {
+  0% { opacity: 0; transform: translateX(40%) rotate(24deg); }
+  22% { opacity: 1; }
+  40% { transform: translateX(0) rotate(0deg); }
+  84% { opacity: 1; transform: translateX(0) rotate(0deg); }
+  100% { opacity: 0; transform: translateX(0) rotate(0deg); }
+}
+.gp-cc-shr { animation: gp-cc-shr calc(1.3s * var(--fx-dur, 1)) var(--ease-spring) both; }
+.gp-cc-step { animation: gp-gt-step calc(0.9s * var(--fx-dur, 1)) var(--ease-out) both; }
+.gp-cc-pip { animation: gp-pipin calc(0.9s * var(--fx-dur, 1)) var(--ease-spring) both; }
+.gp-cc-nut { animation: gp-sg-husk calc(1.1s * var(--fx-dur, 1)) var(--ease-spring) both; }
+
+/* --- fortress_realm: a walled 3x3, three shields, then flat ground ----------- */
+@keyframes gp-fk-wall {
+  0% { opacity: 0; transform: scale(1.15); }
+  20% { opacity: 1; transform: scale(1); }
+  70% { opacity: 1; transform: scaleY(1); }
+  100% { opacity: 0; transform: scaleY(0.2); }
+}
+.gp-fk-wall { animation: gp-fk-wall calc(1.7s * var(--fx-dur, 1)) var(--ease-io) both; }
+@keyframes gp-fk-tower {
+  0% { opacity: 0; transform: translateY(-80%); }
+  24% { opacity: 1; transform: translateY(0); }
+  66% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(40%) scaleY(0.3); }
+}
+.gp-fk-tower { animation: gp-fk-tower calc(1.6s * var(--fx-dur, 1)) var(--ease-io) both; }
+.gp-fk-shield { animation: gp-aa-mini calc(1.1s * var(--fx-dur, 1)) var(--ease-out) both; }
+.gp-fk-king { animation: gp-ds-skip calc(1s * var(--fx-dur, 1)) var(--ease-out) both; }
+.gp-fk-pip { animation: gp-pipin calc(0.9s * var(--fx-dur, 1)) var(--ease-spring) both; }
+
+/* --- warp_sovereign: up to three swap loops, stop after any ------------------ */
+@keyframes gp-ws-loop {
+  0% { opacity: 0; transform: rotate(-120deg) scale(0.6); }
+  30% { opacity: 1; transform: rotate(0deg) scale(1); }
+  78% { opacity: 1; transform: rotate(20deg); }
+  100% { opacity: 0; transform: rotate(30deg); }
+}
+.gp-ws-loop { animation: gp-ws-loop calc(1s * var(--fx-dur, 1)) var(--ease-out) both; }
+
 /* --- Animations off (Settings) ---------------------------------------------
    Mirror effects.css: the plays are pure flourish; the persistent state is the
    zone overlay, so when animations are off in Settings the whole spectacle is
