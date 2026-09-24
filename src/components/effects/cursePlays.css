@@ -451,10 +451,6 @@
   animation-delay: calc((var(--imp-delay, 0.4s) - 0.4s) * var(--fx-dur, 1));
 }
 
-/* --- Kill switch ------------------------------------------------------------
-   Settings animation toggle: park every cwp-* element outright. The cwp-impact
-   and cwp-quakebox wrappers match [class^="cwp-"], so their imp-* children go
-   dark with them (opacity 0 on the wrapper hides the subtree). */
 /* Doomed Vow (slice TC-boon-curse): their king walks in from --dx/--dy to
    the square beside the condemned piece and bows there (the rescue). */
 @keyframes cwp-kneel {
@@ -480,6 +476,10 @@
 }
 .cwp-notch { animation: cwp-notch calc(1.2s * var(--fx-dur, 1)) var(--ease-out) both; }
 
+/* --- Kill switch ------------------------------------------------------------
+   Settings animation toggle: park every cwp-* element outright. The cwp-impact
+   and cwp-quakebox wrappers match [class^="cwp-"], so their imp-* children go
+   dark with them (opacity 0 on the wrapper hides the subtree). */
 html[data-anim="off"] [class^="cwp-"],
 html[data-anim="off"] [class*=" cwp-"] {
   animation: none !important;
