@@ -1303,8 +1303,10 @@ function SaltHit({ palette, delayMs }: { palette: Palette; delayMs: number }) {
         className="gp-sx-grains absolute block"
         style={{ left: "6%", top: "calc(50% + var(--fx-side, 1) * 34%)", width: "88%", height: "14%", background: `linear-gradient(180deg, ${tint(OWN, 0.9)}, ${tint(p0, 0.6)})`, animationDelay: dm(delayMs, 0) }}
       />
-      <span className="gp-sx-balk absolute block" style={{ left: "22%", top: "18%", width: "56%", height: "56%", animationDelay: dm(delayMs, 120) }}>
-        <Sil d={SIL.p} fill={tint(p1, 0.35)} stroke={p0} />
+      <span className="gp-sx-hitpawn absolute block" style={{ left: "22%", top: "18%", width: "56%", height: "56%", animationDelay: dm(delayMs, 0) }}>
+        <span className="gp-sx-balk absolute inset-0 block" style={{ animationDelay: dm(delayMs, 120) }}>
+          <Sil d={SIL.p} fill={tint(p1, 0.35)} stroke={p0} />
+        </span>
       </span>
     </span>
   );

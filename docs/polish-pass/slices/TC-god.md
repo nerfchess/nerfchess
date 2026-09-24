@@ -97,6 +97,8 @@ Next for this slice: peace_of_the_grave once Board passes the king square; a loo
 
 Guards at the round 3 stop: tsc on godPlays, eslint, test:animations, test:scene-complexity (1 below the floor, baseline 2; the one is core god_knight, not this slice), test:anim-props, test:reduced-motion, check-vfx-coverage, check-sig-plugins, audit-bespoke-coverage, check-god-weight (68/68).
 
+Round 3 review fix: SaltHit, the target render of salted_earth, left its balking pawn at full opacity because gp-sx-balk only moves it. The pawn now sits inside a new gp-sx-hitpawn span (gp-r3-stand, 1.3s scaled by --fx-dur) that fades it out after the balk, so every track in the target render ends at opacity 0. The salted_earth strip has no targets (passive card, the target render is not captured), so no recapture was needed. Guards rerun after the fix: eslint on godPlays, test:animations, test:scene-complexity (1 below the floor, baseline 2), test:reduced-motion, test:anim-props, check-vfx-coverage, check-sig-plugins, audit-bespoke-coverage, all pass.
+
 Round 2 stopped at a clean commit after batch 7 (32 cards that round).
 
 ## REQUESTS

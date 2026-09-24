@@ -2417,6 +2417,8 @@
   100% { transform: translateY(0); }
 }
 .gp-sx-balk { animation: gp-sx-balk calc(0.9s * var(--fx-dur, 1)) var(--ease-io) both; }
+/* the target render: its balking pawn fades out after the balk, like the lead scene */
+.gp-sx-hitpawn { animation: gp-r3-stand calc(1.3s * var(--fx-dur, 1)) var(--ease-io) both; }
 @keyframes gp-sx-cellar {
   0% { opacity: 0; transform: translateX(0) rotate(-30deg); }
   8% { opacity: 1; }
