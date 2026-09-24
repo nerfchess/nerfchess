@@ -11,6 +11,7 @@ import { PlayIntro } from "./PlayIntro";
 import {
   BotStrengthLabel,
   formatTimeControl,
+  spokenDuration,
   Group,
   Pill,
   range,
@@ -134,6 +135,7 @@ function BotSetup() {
           value={baseSec}
           values={[0, ...TIME_STEPS_SEC]}
           display={baseSec === 0 ? "Unlimited" : formatTimeControl(baseSec)}
+          valueText={baseSec === 0 ? "Unlimited" : spokenDuration(baseSec)}
           formatEdgeLabel={formatTimeControl}
           onChange={setBaseSec}
         />
@@ -142,6 +144,7 @@ function BotSetup() {
           value={incrementSec}
           values={range(0, 30, 1)}
           display={String(incrementSec)}
+          valueText={spokenDuration(incrementSec)}
           disabled={baseSec === 0}
           onChange={setIncrementSec}
         />

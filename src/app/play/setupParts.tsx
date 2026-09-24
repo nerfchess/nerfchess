@@ -52,11 +52,23 @@ export function formatTimeControl(seconds: number) {
   return `${minutes}:${remainingSec.toString().padStart(2, "0")}`;
 }
 
+// How a screen reader should say a duration: "5 minutes", "1 minute 30
+// seconds", "15 seconds". The visible "5:00" is read as digits otherwise.
+export function spokenDuration(seconds: number) {
+  const minutes = Math.floor(seconds / 60);
+  const sec = seconds % 60;
+  const parts: string[] = [];
+  if (minutes) parts.push(`${minutes} minute${minutes === 1 ? "" : "s"}`);
+  if (sec || !minutes) parts.push(`${sec} second${sec === 1 ? "" : "s"}`);
+  return parts.join(" ");
+}
+
 export function TimeSlider({
   label,
   value,
   values,
   display,
+  valueText,
   disabled = false,
   loading = false,
   formatEdgeLabel = String,
@@ -66,6 +78,9 @@ export function TimeSlider({
   value: number;
   values: number[];
   display: string;
+  /** Spoken value for assistive tech; defaults to `display`. Without it the
+   *  range announces its step index ("9") instead of the time. */
+  valueText?: string;
   disabled?: boolean;
   /** Skeleton mode: same geometry, value hidden, input inert. */
   loading?: boolean;
@@ -93,6 +108,7 @@ export function TimeSlider({
         max={values.length - 1}
         step={1}
         value={index}
+        aria-valuetext={loading ? undefined : valueText ?? display}
         disabled={disabled || loading}
         onChange={(e) => onChange(values[Number(e.target.value)])}
         // A native range renders a 16px-tall box, which is a hard thing to
@@ -113,9 +129,12 @@ export function TimeSlider({
 }
 
 export function Group({ label, children }: { label: string; children: React.ReactNode }) {
+  // The label names the pill row, so "White" is announced as part of
+  // "Your color" rather than on its own (WCAG 1.3.1).
+  const labelId = useId();
   return (
-    <div>
-      <div className="mb-2 text-[12px] text-parchment-400">{label}</div>
+    <div role="group" aria-labelledby={labelId}>
+      <div id={labelId} className="mb-2 text-[12px] text-parchment-400">{label}</div>
       {/* Options fill the row edge to edge (Lichess's setup dialog), never a
           cluster of small pills floating in the left of a wide card. Columns
           are minmax(0, 1fr), not 1fr: a 1fr column cannot shrink below its
