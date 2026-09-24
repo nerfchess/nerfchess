@@ -52,30 +52,61 @@ async function expectUser(res: Response): Promise<{ id: string; username: string
   return { id: data.id!, username: data.username! };
 }
 
-export async function register(username: string, password: string, email?: string, turnstileToken?: string) {
-  const who = await expectUser(
-    await post("/api/auth/register", {
-      username,
-      password,
-      email: email || undefined,
-      turnstileToken: turnstileToken || undefined,
-    }),
-  );
-  void fetchMe();
-  return who;
+// Session writes from this tab run one at a time, in order: a guest mint, a
+// sign-in, a registration. Each response carries Set-Cookie for the session
+// and the display cookie, so two in flight at once let the later response
+// win, and on a first visit to /login the header's guest mint could land
+// after the sign-in and silently turn the new account back into that guest
+// (section 4: the next first paint drew the guest header).
+let sessionWrites: Promise<unknown> = Promise.resolve();
+
+function inOrder<T>(write: () => Promise<T>): Promise<T> {
+  const run = sessionWrites.then(write, write);
+  sessionWrites = run.catch(() => {});
+  return run;
 }
 
-export async function login(username: string, password: string) {
-  const who = await expectUser(await post("/api/auth/login", { username, password }));
-  // A different account now owns the tab: load it so every mounted consumer
-  // follows without a reload. The old answer stays on screen until the new
-  // one lands (dropping it first would fall back to the stale server hint).
+/**
+ * A different account now owns the tab: /me answers already in flight were
+ * asked with the old cookies, so they must not publish over the new account.
+ * Starts a fresh request whose answer every mounted consumer follows. The old
+ * answer stays on screen until then (dropping it first would fall back to the
+ * stale server hint).
+ */
+function accountChanged(): void {
+  meGeneration++;
+  mePromise = null;
   void fetchMe();
-  return who;
+}
+
+export function register(username: string, password: string, email?: string, turnstileToken?: string) {
+  return inOrder(async () => {
+    const who = await expectUser(
+      await post("/api/auth/register", {
+        username,
+        password,
+        email: email || undefined,
+        turnstileToken: turnstileToken || undefined,
+      }),
+    );
+    accountChanged();
+    return who;
+  });
+}
+
+export function login(username: string, password: string) {
+  return inOrder(async () => {
+    const who = await expectUser(await post("/api/auth/login", { username, password }));
+    accountChanged();
+    return who;
+  });
 }
 
 export async function logout(): Promise<void> {
   await post("/api/auth/logout", {});
+  // A /me asked before the logout would otherwise republish the old account.
+  meGeneration++;
+  mePromise = null;
   resetSessionUser(null);
 }
 
@@ -85,11 +116,14 @@ export async function logout(): Promise<void> {
  * so the caller does not actually know and should not act as if signed out.
  */
 let mePromise: Promise<AccountUser | null | undefined> | null = null;
+/** Bumped when the account changes; an answer from an older one is dropped. */
+let meGeneration = 0;
 
 export function fetchMe(): Promise<AccountUser | null | undefined> {
   // One request in flight at a time, shared by every caller. A caller that
   // arrives after it settles gets a fresh request (pollers want fresh data).
   if (mePromise) return mePromise;
+  const generation = meGeneration;
   const request = (async (): Promise<AccountUser | null | undefined> => {
     try {
       const res = await fetch("/api/auth/me");
@@ -104,7 +138,7 @@ export function fetchMe(): Promise<AccountUser | null | undefined> {
   mePromise = request;
   void request.then((user) => {
     if (mePromise === request) mePromise = null;
-    publishSessionUser(user);
+    if (generation === meGeneration) publishSessionUser(user);
   });
   return request;
 }
@@ -119,13 +153,18 @@ let guestPromise: Promise<AccountUser | null | undefined> | null = null;
  * throwaway one.
  */
 export async function ensureAccount(): Promise<AccountUser | null | undefined> {
+  const generation = meGeneration;
   const me = await fetchMe();
   if (me !== null) return me;
   if (!guestPromise) {
     guestPromise = (async () => {
       try {
-        const res = await post("/api/auth/guest", {});
-        if (!res.ok) return null;
+        // The signed-out answer is stale once a sign-in or registration has
+        // landed since it was asked: that account is the answer, no guest.
+        const res = await inOrder(() =>
+          generation === meGeneration ? post("/api/auth/guest", {}) : Promise.resolve(null),
+        );
+        if (res && !res.ok) return null;
         return await fetchMe();
       } catch {
         return null;
