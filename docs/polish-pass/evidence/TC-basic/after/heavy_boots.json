@@ -31,22 +31,22 @@
  },
  "stageError": null,
  "durationMs": {
-  "visualMs": 2316,
-  "cssEndMs": 3452,
+  "visualMs": 2303,
+  "cssEndMs": 3443,
   "settled": true,
   "windowMs": 3600,
-  "cssAnimations": 16,
+  "cssAnimations": 18,
   "infiniteAnimations": 0
  },
  "screencast": {
-  "framesInWindow": 168,
-  "maxGapMs": 320.9
+  "framesInWindow": 170,
+  "maxGapMs": 301.6
  },
  "raf": {
-  "frames": 215,
+  "frames": 216,
   "medianMs": 16.7,
-  "maxMs": 33.4,
-  "dropped": 3
+  "maxMs": 33.3,
+  "dropped": 1
  },
  "longAnimationFrames": {
   "count": 0,
@@ -56,16 +56,16 @@
  },
  "tiles": [
   0,
-  178,
-  454,
-  786,
-  1158,
-  1566,
-  2003,
-  2466
+  177,
+  452,
+  781,
+  1152,
+  1557,
+  1992,
+  2453
  ],
  "png": "docs/polish-pass/evidence/TC-basic/after/heavy_boots.png",
- "pngBytes": 16886,
+ "pngBytes": 19579,
  "off": {
   "url": "/dev/plays?id=heavy_boots&anim=off&bare=1",
   "pass": true,

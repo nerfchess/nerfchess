@@ -4216,9 +4216,11 @@ function UpdraftScene({ lead, role, delayMs }: RuleProps) {
   );
 }
 
-/** Heavy Boots (a nerf): iron boots are strapped on; the rook plods three
- *  squares and stops, and everything past three is struck out. Pawns walk as
- *  they always did. */
+/** Heavy Boots (a hex, tier 1): an iron boot drops onto an enemy pawn on its
+ *  home rank; weighed down, it plods ONE square, and the two-square step it
+ *  would have made is a dashed ghost that gets struck out; three pips for the
+ *  opponent's next three turns. Quicksand Patch bans the same step with a
+ *  swirl that swallows the landing square; here the weight is on the pawn. */
 const BOOTS: Palette = ["#95a0b5", "#d6a25a", "#2a3140"];
 function HeavyBootsScene({ lead, role, delayMs }: RuleProps) {
   if (role === "entrance" || !lead) return <RuleCut id="heavy_boots" pal={BOOTS} dev="padlock" fx="chain" role={role} delayMs={delayMs} />;
@@ -4227,22 +4229,28 @@ function HeavyBootsScene({ lead, role, delayMs }: RuleProps) {
   return (
     <BoardWideStage>
       <BoardFrame>
-        <Ly c="bsp-drop" at={d(0)} box={{ ...sq(0, 1), height: "6%", marginTop: "6.5%" }} len={dur(1000)}>
-          <svg viewBox="0 0 24 12" className="block h-full w-full" aria-hidden="true">
-            <path d="M3 1h5v6h6v4H3z M13 1h5v6h5v4H13z" fill={p0} stroke={p2} strokeWidth="0.9" {...SJ} />
-          </svg>
+        <Ly c="bsp-r-hold" at={d(260)} box={sq(3, 6)} len={dur(1300)} v={{ background: tint(p0, 0.35) }} />
+        <Ly c="bsp-r-hold" at={d(520)} box={sq(3, 5)} len={dur(1100)} v={{ border: `2px dashed ${p1}` }}>
+          <Man k="p" pal={BOOTS} foe ghost />
         </Ly>
-        <Ly c="bsp-drift" at={d(300)} box={{ ...sq(0, 1), width: "3%", height: "3%", marginLeft: "8%" }} v={{ "--dx": "220%", "--dy": "calc(var(--fx-side, 1) * 120%)", "--rot": "0deg", background: tint(p1, 0.7) }} />
-        <Ly c="bsp-r-move" at={d(260)} box={sq(0, 1)} len={dur(1500)} v={{ "--mx": 0, "--my": 3 }}>
-          <Man k="r" pal={BOOTS} />
+        <Ly c="bsp-r-move" at={d(0)} box={sq(3, 7)} len={dur(1700)} v={{ "--mx": 0, "--my": -1 }}>
+          <Man k="p" pal={BOOTS} foe />
+          <Ly c="bsp-drop" at={d(80)} box={{ left: "14%", top: "60%", width: "72%", height: "36%" }} len={dur(1500)}>
+            <svg viewBox="0 0 24 12" className="block h-full w-full" aria-hidden="true">
+              <path d="M2 1h6v6h5v4H2z M13 1h6v6h4v4H13z" fill={p0} stroke={p2} strokeWidth="1" {...SJ} />
+              <path d="M2 4h6 M13 4h6" stroke={p1} strokeWidth="0.9" />
+            </svg>
+          </Ly>
         </Ly>
-        <Ly c="bsp-facein" at={d(760)} box={area(0, 5, 1, 7)} len={dur(900)} v={{ borderLeft: `2px dashed ${p1}`, borderRight: `2px dashed ${p1}` }}>
-          <Nope color={p1} w={0.8} />
+        {[-1, 1].map((s) => (
+          <Ly key={s} c="bsp-drift" at={d(800)} len={dur(700)} box={{ ...sq(3, 6), width: "2.4%", height: "2.4%", marginLeft: "5%", marginTop: "9%" }} v={{ "--dx": `${s * 180}%`, "--dy": "0%", "--rot": "0deg", background: tint(p1, 0.8) }} />
+        ))}
+        <Ly c="bsp-stamp" at={d(760)} box={sq(3, 5)} len={dur(900)}>
+          <Nope color={p1} w={0.9} />
         </Ly>
-        <Ly c="bsp-r-move" at={d(400)} box={sq(3, 2)} len={dur(1300)} v={{ "--mx": 0, "--my": 2 }}>
-          <Man k="p" pal={BOOTS} />
+        <Ly c="bsp-stamp" at={d(960)} box={pipsBox(3, 58, 5)} len={dur(900)}>
+          <Pips n={3} fill={p1} stroke={p2} />
         </Ly>
-        <Ly c="bsp-r-hold" at={d(900)} box={sq(0, 4)} len={dur(900)} v={{ border: `2px solid ${p1}` }} />
       </BoardFrame>
     </BoardWideStage>
   );
