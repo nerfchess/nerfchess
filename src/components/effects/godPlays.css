@@ -2530,6 +2530,217 @@
 }
 .gp-qs-rise { animation: gp-qs-rise calc(1.1s * var(--fx-dur, 1)) var(--ease-out) both; transform-origin: 50% 100%; }
 
+/* --- sundering: three files barred, then they fall in ---------------------- */
+@keyframes gp-su-file {
+  0% { opacity: 0; transform: scaleX(0.2); }
+  20% { opacity: 1; transform: scaleX(1); }
+  56% { opacity: 1; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(0.1) translateY(4%); }
+}
+.gp-su-file { animation: gp-su-file calc(1.7s * var(--fx-dur, 1)) var(--ease-io) both; }
+@keyframes gp-su-crack {
+  0% { opacity: 0; transform: scaleY(0); }
+  30% { opacity: 1; transform: scaleY(1); }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+.gp-su-crack { animation: gp-su-crack calc(0.9s * var(--fx-dur, 1)) var(--ease-out) both; }
+@keyframes gp-su-rift {
+  0% { opacity: 0; transform: scaleY(0); }
+  28% { opacity: 1; transform: scaleY(1); }
+  78% { opacity: 0.9; }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+.gp-su-rift { animation: gp-su-rift calc(1.2s * var(--fx-dur, 1)) var(--ease-out) both; }
+.gp-su-wait { animation: gp-pipin calc(1.1s * var(--fx-dur, 1)) var(--ease-spring) both; }
+
+/* --- statue_garden: ivy, then a walnut husk; the first waits a move -------- */
+@keyframes gp-sg-ivy {
+  0% { opacity: 0; transform: scaleY(0); }
+  40% { opacity: 1; transform: scaleY(1); }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+.gp-sg-ivy { animation: gp-sg-ivy calc(1s * var(--fx-dur, 1)) var(--ease-out) both; transform-origin: 50% 100%; }
+@keyframes gp-sg-husk {
+  0% { opacity: 0; transform: scale(0.5); }
+  28% { opacity: 1; transform: scale(1.08); }
+  38% { transform: scale(1); }
+  82% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1); }
+}
+.gp-sg-husk { animation: gp-sg-husk calc(1.2s * var(--fx-dur, 1)) var(--ease-spring) both; }
+.gp-sg-pip { animation: gp-pipin calc(1s * var(--fx-dur, 1)) var(--ease-spring) both; }
+.gp-sg-wait { animation: gp-pipin calc(1.2s * var(--fx-dur, 1)) var(--ease-spring) both; }
+@keyframes gp-sg-arch {
+  0% { opacity: 0; transform: scaleY(0.3); }
+  26% { opacity: 1; transform: scaleY(1); }
+  82% { opacity: 1; }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+.gp-sg-arch { animation: gp-sg-arch calc(1.6s * var(--fx-dur, 1)) var(--ease-out) both; transform-origin: 50% 100%; }
+.gp-sg-step { animation: gp-gt-step calc(1s * var(--fx-dur, 1)) var(--ease-out) both; }
+
+/* --- everfrost_shard: the shard, and no entry on the eight around it -------- */
+@keyframes gp-ef-shard {
+  0% { opacity: 0; transform: translateY(-120%); }
+  26% { opacity: 1; }
+  36% { transform: translateY(0); }
+  82% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(0); }
+}
+.gp-ef-shard { animation: gp-ef-shard calc(1.5s * var(--fx-dur, 1)) var(--ease-io) both; }
+@keyframes gp-ef-no {
+  0% { opacity: 0; transform: scale(0.4); }
+  26% { opacity: 1; transform: scale(1.05); }
+  36% { transform: scale(1); }
+  80% { opacity: 0.9; }
+  100% { opacity: 0; transform: scale(1); }
+}
+.gp-ef-no { animation: gp-ef-no calc(1.1s * var(--fx-dur, 1)) var(--ease-out) both; }
+.gp-ef-pip { animation: gp-pipin calc(1s * var(--fx-dur, 1)) var(--ease-spring) both; }
+.gp-ef-case { animation: gp-fs-block calc(1.3s * var(--fx-dur, 1)) var(--ease-out) both; }
+
+/* --- endless_turn: a bonus move, no capture, so a second one waits ---------- */
+@keyframes gp-et-move {
+  0% { opacity: 0; transform: translateX(-40%); }
+  26% { opacity: 1; transform: translateX(0); }
+  82% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(0); }
+}
+.gp-et-move { animation: gp-et-move calc(1.6s * var(--fx-dur, 1)) var(--ease-out) both; }
+.gp-et-blades { animation: gp-hold calc(1.2s * var(--fx-dur, 1)) var(--ease-io) both; }
+.gp-et-strike { animation: gp-cd-strike calc(0.9s * var(--fx-dur, 1)) var(--ease-out) both; }
+.gp-et-wait { animation: gp-pipin calc(1s * var(--fx-dur, 1)) var(--ease-spring) both; }
+@keyframes gp-et-second {
+  0% { opacity: 0; transform: translateX(-30%); }
+  30% { opacity: 0.9; transform: translateX(0); }
+  80% { opacity: 0.9; }
+  100% { opacity: 0; transform: translateX(0); }
+}
+.gp-et-second { animation: gp-et-second calc(1.1s * var(--fx-dur, 1)) var(--ease-out) both; }
+
+/* --- warp_cataclysm: four rifts, the king set aside ------------------------- */
+@keyframes gp-wc-slit {
+  0% { opacity: 0; transform: scaleX(0); }
+  24% { opacity: 1; transform: scaleX(1.2); }
+  36% { transform: scaleX(1); }
+  74% { opacity: 1; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(0); }
+}
+.gp-wc-slit { animation: gp-wc-slit calc(1.1s * var(--fx-dur, 1)) var(--ease-io) both; }
+.gp-wc-count { animation: gp-pipin calc(1s * var(--fx-dur, 1)) var(--ease-spring) both; }
+@keyframes gp-wc-flash {
+  0% { opacity: 0; transform: scale(0.4); }
+  30% { opacity: 0.9; }
+  100% { opacity: 0; transform: scale(1.3); }
+}
+.gp-wc-flash { animation: gp-wc-flash calc(0.5s * var(--fx-dur, 1)) var(--ease-out) both; }
+.gp-wc-king { animation: gp-hold calc(1.6s * var(--fx-dur, 1)) var(--ease-io) both; }
+.gp-wc-bar { animation: gp-ts-gag calc(1.3s * var(--fx-dur, 1)) var(--ease-out) both; }
+@keyframes gp-wc-pawn {
+  0% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 60%)); }
+  24% { opacity: 1; }
+  44% { transform: translateY(calc(var(--fx-side, 1) * -20%)); }
+  60% { transform: translateY(calc(var(--fx-side, 1) * 50%)); }
+  84% { opacity: 1; transform: translateY(calc(var(--fx-side, 1) * 50%)); }
+  100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 50%)); }
+}
+.gp-wc-pawn { animation: gp-wc-pawn calc(1s * var(--fx-dur, 1)) var(--ease-io) both; }
+
+/* --- rift_storm: two blinks, and two of theirs trade squares ---------------- */
+@keyframes gp-rs-eye {
+  0% { opacity: 0; transform: rotate(0deg) scale(0.6); }
+  20% { opacity: 1; transform: rotate(-120deg) scale(1); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(-420deg) scale(1); }
+}
+.gp-rs-eye { animation: gp-rs-eye calc(1.6s * var(--fx-dur, 1)) var(--ease-io) both; }
+.gp-rs-blink { animation: gp-tr-shard calc(0.8s * var(--fx-dur, 1)) var(--ease-out) both; }
+@keyframes gp-rs-swapa {
+  0% { opacity: 0; transform: translate(0, 0); }
+  18% { opacity: 1; transform: translate(0, 0); }
+  34% { transform: translate(0, 0); }
+  50% { transform: translate(80%, -40%); }
+  66% { transform: translate(164%, 0); }
+  86% { opacity: 1; transform: translate(164%, 0); }
+  100% { opacity: 0; transform: translate(164%, 0); }
+}
+.gp-rs-swapa { animation: gp-rs-swapa calc(1.4s * var(--fx-dur, 1)) var(--ease-io) both; }
+@keyframes gp-rs-swapb {
+  0% { opacity: 0; transform: translate(0, 0); }
+  18% { opacity: 1; transform: translate(0, 0); }
+  34% { transform: translate(0, 0); }
+  50% { transform: translate(-80%, 40%); }
+  66% { transform: translate(-164%, 0); }
+  86% { opacity: 1; transform: translate(-164%, 0); }
+  100% { opacity: 0; transform: translate(-164%, 0); }
+}
+.gp-rs-swapb { animation: gp-rs-swapb calc(1.4s * var(--fx-dur, 1)) var(--ease-io) both; }
+.gp-rs-arcs { animation: gp-hold calc(1.2s * var(--fx-dur, 1)) var(--ease-io) both; }
+@keyframes gp-rs-bolt {
+  0% { opacity: 0; transform: scaleY(0); }
+  20% { opacity: 1; transform: scaleY(1); }
+  40% { opacity: 0.4; }
+  52% { opacity: 1; }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+.gp-rs-bolt { animation: gp-rs-bolt calc(0.6s * var(--fx-dur, 1)) var(--ease-out) both; transform-origin: 50% 0%; }
+
+/* --- grand_retreat: the army marches home, one blocked stays --------------- */
+@keyframes gp-gr-banner {
+  0% { opacity: 0; transform: scaleX(1); }
+  18% { opacity: 1; transform: scaleX(1); }
+  34% { transform: scaleX(-1); }
+  82% { opacity: 1; transform: scaleX(-1); }
+  100% { opacity: 0; transform: scaleX(-1); }
+}
+.gp-gr-banner { animation: gp-gr-banner calc(1.6s * var(--fx-dur, 1)) var(--ease-io) both; transform-origin: 18% 50%; }
+@keyframes gp-gr-march {
+  0% { opacity: 0; transform: translateY(0); }
+  16% { opacity: 1; transform: translateY(0); }
+  30% { transform: translateY(0); }
+  70% { transform: translateY(var(--gp-dy, 300%)); }
+  86% { opacity: 1; transform: translateY(var(--gp-dy, 300%)); }
+  100% { opacity: 0; transform: translateY(var(--gp-dy, 300%)); }
+}
+.gp-gr-march { animation: gp-gr-march calc(1.5s * var(--fx-dur, 1)) var(--ease-io) both; }
+@keyframes gp-gr-stay {
+  0% { opacity: 0; transform: translateY(0); }
+  16% { opacity: 1; }
+  36% { transform: translateY(0); }
+  44% { transform: translateY(calc(var(--fx-side, 1) * 14%)); }
+  52% { transform: translateY(0); }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(0); }
+}
+.gp-gr-stay { animation: gp-gr-stay calc(1.5s * var(--fx-dur, 1)) var(--ease-io) both; }
+.gp-gr-block { animation: gp-ts-gag calc(1s * var(--fx-dur, 1)) var(--ease-out) both; }
+
+/* --- full_rewind: five pieces play their moves backwards -------------------- */
+@keyframes gp-fr-dial {
+  0% { opacity: 0; transform: scale(0.7); }
+  20% { opacity: 1; transform: scale(1); }
+  82% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1); }
+}
+.gp-fr-dial { animation: gp-fr-dial calc(1.6s * var(--fx-dur, 1)) var(--ease-out) both; }
+@keyframes gp-fr-hand {
+  0% { opacity: 0; transform: rotate(0deg); }
+  14% { opacity: 1; }
+  80% { opacity: 1; transform: rotate(-720deg); }
+  100% { opacity: 0; transform: rotate(-720deg); }
+}
+.gp-fr-hand { animation: gp-fr-hand calc(1.3s * var(--fx-dur, 1)) var(--ease-io) both; transform-origin: 50% 100%; }
+@keyframes gp-fr-frame {
+  0% { opacity: 0; }
+  12% { opacity: 1; }
+  44% { opacity: 1; }
+  60% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.gp-fr-frame { animation: gp-fr-frame calc(0.7s * var(--fx-dur, 1)) steps(4, end) both; }
+
 /* --- Animations off (Settings) ---------------------------------------------
    Mirror effects.css: the plays are pure flourish; the persistent state is the
    zone overlay, so when animations are off in Settings the whole spectacle is

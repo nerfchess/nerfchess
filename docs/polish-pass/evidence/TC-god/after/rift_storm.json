@@ -1,0 +1,90 @@
+{
+ "id": "rift_storm",
+ "url": "/dev/plays?id=rift_storm&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "rift_storm",
+  "name": "Rift Storm",
+  "tier": 6,
+  "category": "movement",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:rift_storm",
+  "anchor": "aim",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 60,
+  "drive": "engine",
+  "driveNote": "activated with 6 pick(s)",
+  "castSq": "d2",
+  "targets": [
+   "d2",
+   "d3",
+   "e2",
+   "e3",
+   "d7",
+   "e7"
+  ],
+  "picks": [
+   "d2",
+   "d3",
+   "e2",
+   "e3",
+   "d7",
+   "e7"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2464,
+  "cssEndMs": 3485,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 28,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 210,
+  "maxGapMs": 149.4
+ },
+ "raf": {
+  "frames": 400,
+  "medianMs": 16.7,
+  "maxMs": 83.3,
+  "dropped": 10
+ },
+ "longAnimationFrames": {
+  "count": 0,
+  "worstMs": 0,
+  "totalBlockingMs": 0,
+  "entries": []
+ },
+ "tiles": [
+  0,
+  298,
+  759,
+  1312,
+  1934,
+  2614
+ ],
+ "png": "docs/polish-pass/evidence/TC-god/after/rift_storm.png",
+ "pngBytes": 14718,
+ "off": {
+  "url": "/dev/plays?id=rift_storm&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "docs/polish-pass/evidence/TC-god/after/rift_storm.off.png"
+ }
+}

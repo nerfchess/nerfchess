@@ -1,0 +1,90 @@
+{
+ "id": "statue_garden",
+ "url": "/dev/plays?id=statue_garden&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "statue_garden",
+  "name": "Statue Garden",
+  "tier": 6,
+  "category": "hex",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:statue_garden",
+  "anchor": "aim",
+  "source": "walnut",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 60,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, walnut diff",
+  "castSq": "b8",
+  "targets": [
+   "b8",
+   "c8",
+   "f8"
+  ],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2542,
+  "cssEndMs": 3594,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 105,
+  "infiniteAnimations": 3
+ },
+ "screencast": {
+  "framesInWindow": 192,
+  "maxGapMs": 95.1
+ },
+ "raf": {
+  "frames": 246,
+  "medianMs": 16.7,
+  "maxMs": 83.3,
+  "dropped": 31
+ },
+ "longAnimationFrames": {
+  "count": 2,
+  "worstMs": 65,
+  "totalBlockingMs": 4,
+  "entries": [
+   {
+    "atMs": -8,
+    "duration": 64,
+    "blocking": 0,
+    "scripts": [
+     {
+      "duration": 6,
+      "invoker": "http://localhost:3000/_next/static/chunks/_app-pages-browser_src_components_effe...",
+      "source": "/_next/static/chunks/_app-pages-browser_src_components_effects_passive_PassiveLayer_tsx.js"
+     }
+    ]
+   },
+   {
+    "atMs": 112,
+    "duration": 65,
+    "blocking": 4,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  307,
+  781,
+  1351,
+  1992,
+  2692
+ ],
+ "png": "docs/polish-pass/evidence/TC-god/before/statue_garden.png",
+ "pngBytes": 18453
+}

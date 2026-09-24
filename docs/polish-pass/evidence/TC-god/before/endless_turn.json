@@ -1,1 +1,98 @@
-{"id":"endless_turn","url":"/dev/plays?id=endless_turn&bare=1","anim":"full","fx":1,"info":{"id":"endless_turn","name":"Endless Turn","tier":6,"category":"tempo","mechanic":"activated","retired":false,"art":"plugin","visual":"x:endless_turn","anchor":"cast","source":"rally","hasLead":true,"ordering":"radial","staggerMs":60,"drive":"engine","driveNote":"activated, no targets","castSq":null,"targets":[],"picks":[],"side":"w","view":"w","anim":"normal","fx":1,"live":false,"artReady":true},"stageError":null,"durationMs":{"visualMs":2807,"cssEndMs":3745,"settled":true,"windowMs":3996,"cssAnimations":53,"infiniteAnimations":0},"screencast":{"framesInWindow":140,"maxGapMs":451.9},"raf":{"frames":180,"medianMs":16.7,"maxMs":216.6,"dropped":62},"longAnimationFrames":{"count":2,"worstMs":146,"totalBlockingMs":86,"entries":[{"atMs":12,"duration":52,"blocking":0,"scripts":[{"duration":7,"invoker":"TimerHandler:setInterval","source":""}]},{"atMs":73,"duration":146,"blocking":86,"scripts":[]}]},"tiles":[0,214,545,942,1389,1877,2401,2957],"png":"docs/polish-pass/evidence/TC-god/before/endless_turn.png","pngBytes":34813}
+{
+ "id": "endless_turn",
+ "url": "/dev/plays?id=endless_turn&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "endless_turn",
+  "name": "Endless Turn",
+  "tier": 6,
+  "category": "tempo",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:endless_turn",
+  "anchor": "cast",
+  "source": "rally",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 60,
+  "drive": "engine",
+  "driveNote": "activated, no targets",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2575,
+  "cssEndMs": 3753,
+  "settled": true,
+  "windowMs": 4003,
+  "cssAnimations": 51,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 206,
+  "maxGapMs": 58.8
+ },
+ "raf": {
+  "frames": 209,
+  "medianMs": 16.7,
+  "maxMs": 116.6,
+  "dropped": 34
+ },
+ "longAnimationFrames": {
+  "count": 3,
+  "worstMs": 124,
+  "totalBlockingMs": 94,
+  "entries": [
+   {
+    "atMs": 13,
+    "duration": 52,
+    "blocking": 0,
+    "scripts": [
+     {
+      "duration": 5,
+      "invoker": "TimerHandler:setInterval",
+      "source": ""
+     }
+    ]
+   },
+   {
+    "atMs": 80,
+    "duration": 124,
+    "blocking": 59,
+    "scripts": []
+   },
+   {
+    "atMs": 901,
+    "duration": 88,
+    "blocking": 35,
+    "scripts": [
+     {
+      "duration": 82,
+      "invoker": "http://localhost:3000/_next/static/chunks/_app-pages-browser_src_components_effe...",
+      "source": "/_next/static/chunks/_app-pages-browser_src_components_effects_board3d_engine3d_ts.js"
+     }
+    ]
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  310,
+  791,
+  1367,
+  2016,
+  2725
+ ],
+ "png": "docs/polish-pass/evidence/TC-god/before/endless_turn.png",
+ "pngBytes": 16437
+}

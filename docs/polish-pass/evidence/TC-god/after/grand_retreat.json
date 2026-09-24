@@ -1,21 +1,21 @@
 {
- "id": "endless_turn",
- "url": "/dev/plays?id=endless_turn&bare=1",
+ "id": "grand_retreat",
+ "url": "/dev/plays?id=grand_retreat&bare=1",
  "anim": "full",
  "fx": 1,
  "info": {
-  "id": "endless_turn",
-  "name": "Endless Turn",
+  "id": "grand_retreat",
+  "name": "Grand Retreat",
   "tier": 6,
-  "category": "tempo",
+  "category": "movement",
   "mechanic": "activated",
-  "retired": false,
+  "retired": true,
   "art": "plugin",
-  "visual": "x:endless_turn",
+  "visual": "x:grand_retreat",
   "anchor": "cast",
-  "source": "rally",
+  "source": "removal",
   "hasLead": true,
-  "ordering": "radial",
+  "ordering": "sweep",
   "staggerMs": 60,
   "drive": "engine",
   "driveNote": "activated, no targets",
@@ -31,22 +31,22 @@
  },
  "stageError": null,
  "durationMs": {
-  "visualMs": 2462,
-  "cssEndMs": 3479,
+  "visualMs": 2403,
+  "cssEndMs": 3459,
   "settled": true,
   "windowMs": 3600,
-  "cssAnimations": 25,
+  "cssAnimations": 27,
   "infiniteAnimations": 0
  },
  "screencast": {
-  "framesInWindow": 143,
-  "maxGapMs": 347.4
+  "framesInWindow": 170,
+  "maxGapMs": 299.7
  },
  "raf": {
-  "frames": 174,
+  "frames": 185,
   "medianMs": 16.7,
-  "maxMs": 116.7,
-  "dropped": 44
+  "maxMs": 100.1,
+  "dropped": 33
  },
  "longAnimationFrames": {
   "count": 0,
@@ -56,21 +56,21 @@
  },
  "tiles": [
   0,
-  297,
-  758,
-  1311,
-  1933,
-  2612
+  291,
+  741,
+  1281,
+  1889,
+  2553
  ],
- "png": "docs/polish-pass/evidence/TC-god/after/endless_turn.png",
- "pngBytes": 13947,
+ "png": "docs/polish-pass/evidence/TC-god/after/grand_retreat.png",
+ "pngBytes": 15290,
  "off": {
-  "url": "/dev/plays?id=endless_turn&anim=off&bare=1",
+  "url": "/dev/plays?id=grand_retreat&anim=off&bare=1",
   "pass": true,
   "instantChanged": 0,
   "instantRegions": [],
   "endChanged": 0,
   "endRegions": [],
-  "png": "docs/polish-pass/evidence/TC-god/after/endless_turn.off.png"
+  "png": "docs/polish-pass/evidence/TC-god/after/grand_retreat.off.png"
  }
 }

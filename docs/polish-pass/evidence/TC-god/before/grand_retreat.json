@@ -1,0 +1,86 @@
+{
+ "id": "grand_retreat",
+ "url": "/dev/plays?id=grand_retreat&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "grand_retreat",
+  "name": "Grand Retreat",
+  "tier": 6,
+  "category": "movement",
+  "mechanic": "activated",
+  "retired": true,
+  "art": "plugin",
+  "visual": "x:grand_retreat",
+  "anchor": "cast",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 60,
+  "drive": "engine",
+  "driveNote": "activated, no targets",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2563,
+  "cssEndMs": 3743,
+  "settled": true,
+  "windowMs": 3993,
+  "cssAnimations": 53,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 180,
+  "maxGapMs": 436.2
+ },
+ "raf": {
+  "frames": 187,
+  "medianMs": 16.7,
+  "maxMs": 250,
+  "dropped": 55
+ },
+ "longAnimationFrames": {
+  "count": 2,
+  "worstMs": 162,
+  "totalBlockingMs": 97,
+  "entries": [
+   {
+    "atMs": 11,
+    "duration": 61,
+    "blocking": 1,
+    "scripts": [
+     {
+      "duration": 9,
+      "invoker": "TimerHandler:setInterval",
+      "source": ""
+     }
+    ]
+   },
+   {
+    "atMs": 82,
+    "duration": 162,
+    "blocking": 96,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  309,
+  787,
+  1361,
+  2007,
+  2713
+ ],
+ "png": "docs/polish-pass/evidence/TC-god/before/grand_retreat.png",
+ "pngBytes": 17880
+}

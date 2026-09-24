@@ -1,0 +1,92 @@
+{
+ "id": "full_rewind",
+ "url": "/dev/plays?id=full_rewind&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "full_rewind",
+  "name": "Full Rewind",
+  "tier": 6,
+  "category": "tempo",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:full_rewind",
+  "anchor": "aim",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 60,
+  "drive": "engine",
+  "driveNote": "activated, no targets",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2651,
+  "cssEndMs": 3774,
+  "settled": true,
+  "windowMs": 4024,
+  "cssAnimations": 56,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 174,
+  "maxGapMs": 466.2
+ },
+ "raf": {
+  "frames": 203,
+  "medianMs": 16.7,
+  "maxMs": 116.6,
+  "dropped": 41
+ },
+ "longAnimationFrames": {
+  "count": 3,
+  "worstMs": 71,
+  "totalBlockingMs": 0,
+  "entries": [
+   {
+    "atMs": 10,
+    "duration": 71,
+    "blocking": 0,
+    "scripts": [
+     {
+      "duration": 24,
+      "invoker": "TimerHandler:setInterval",
+      "source": ""
+     }
+    ]
+   },
+   {
+    "atMs": 84,
+    "duration": 53,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 1258,
+    "duration": 50,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  319,
+  813,
+  1405,
+  2072,
+  2801
+ ],
+ "png": "docs/polish-pass/evidence/TC-god/before/full_rewind.png",
+ "pngBytes": 17648
+}

@@ -1,1 +1,124 @@
-{"id":"sundering","url":"/dev/plays?id=sundering&bare=1","anim":"full","fx":1,"info":{"id":"sundering","name":"Sundering","tier":6,"category":"protection","mechanic":"activated","retired":false,"art":"plugin","visual":"x:sundering","anchor":"board","source":"blindfold","hasLead":true,"ordering":"sweep","staggerMs":70,"drive":"engine","driveNote":"activated with 3 pick(s)","castSq":"d4","targets":["d4","e4","d5"],"picks":["d4","e4","d5"],"side":"w","view":"w","anim":"normal","fx":1,"live":false,"artReady":true},"stageError":null,"durationMs":{"visualMs":2900,"cssEndMs":3821,"settled":true,"windowMs":4071,"cssAnimations":158,"infiniteAnimations":0},"screencast":{"framesInWindow":156,"maxGapMs":387.7},"raf":{"frames":154,"medianMs":16.7,"maxMs":166.6,"dropped":97},"longAnimationFrames":{"count":11,"worstMs":159,"totalBlockingMs":380,"entries":[{"atMs":-95,"duration":117,"blocking":64,"scripts":[]},{"atMs":67,"duration":126,"blocking":58,"scripts":[{"duration":17,"invoker":"TimerHandler:setInterval","source":""}]},{"atMs":216,"duration":60,"blocking":9,"scripts":[]},{"atMs":278,"duration":159,"blocking":104,"scripts":[]},{"atMs":441,"duration":137,"blocking":77,"scripts":[{"duration":20,"invoker":"TimerHandler:setInterval","source":""}]},{"atMs":612,"duration":51,"blocking":0,"scripts":[]},{"atMs":688,"duration":62,"blocking":0,"scripts":[]},{"atMs":987,"duration":54,"blocking":0,"scripts":[]},{"atMs":1106,"duration":54,"blocking":0,"scripts":[]},{"atMs":1583,"duration":65,"blocking":0,"scripts":[]},{"atMs":2781,"duration":142,"blocking":68,"scripts":[]}]},"tiles":[0,221,562,972,1433,1937,2477,3050],"png":"docs/polish-pass/evidence/TC-god/after/sundering.png","pngBytes":29275}
+{
+ "id": "sundering",
+ "url": "/dev/plays?id=sundering&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "sundering",
+  "name": "Sundering",
+  "tier": 6,
+  "category": "protection",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:sundering",
+  "anchor": "board",
+  "source": "blindfold",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 70,
+  "drive": "engine",
+  "driveNote": "activated with 3 pick(s)",
+  "castSq": "d4",
+  "targets": [
+   "d4",
+   "e4",
+   "d5"
+  ],
+  "picks": [
+   "d4",
+   "e4",
+   "d5"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2530,
+  "cssEndMs": 3527,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 119,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 158,
+  "maxGapMs": 348.7
+ },
+ "raf": {
+  "frames": 194,
+  "medianMs": 16.7,
+  "maxMs": 83.4,
+  "dropped": 25
+ },
+ "longAnimationFrames": {
+  "count": 4,
+  "worstMs": 73,
+  "totalBlockingMs": 30,
+  "entries": [
+   {
+    "atMs": -55,
+    "duration": 68,
+    "blocking": 13,
+    "scripts": []
+   },
+   {
+    "atMs": 33,
+    "duration": 68,
+    "blocking": 17,
+    "scripts": []
+   },
+   {
+    "atMs": 420,
+    "duration": 73,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 2421,
+    "duration": 59,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  305,
+  778,
+  1345,
+  1983,
+  2680
+ ],
+ "png": "docs/polish-pass/evidence/TC-god/after/sundering.png",
+ "pngBytes": 16010,
+ "off": {
+  "url": "/dev/plays?id=sundering&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0.0062,
+  "endRegions": [
+   {
+    "x": 192,
+    "y": 16,
+    "w": 112,
+    "h": 456,
+    "cells": 82
+   },
+   {
+    "x": 256,
+    "y": 392,
+    "w": 8,
+    "h": 16,
+    "cells": 2
+   }
+  ],
+  "png": "docs/polish-pass/evidence/TC-god/after/sundering.off.png"
+ }
+}
