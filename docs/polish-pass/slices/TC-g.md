@@ -112,4 +112,6 @@ Guards at batch 6: all pass except test:scene-complexity, 3 below the floor agai
 
 Round 2, batch 7: the eight live tier 6 members of g43 and g44 (sheets `before/g43-g44-t6.sheet.png`, `after/g43-g44-t6.sheet.png`), all revamped. The before strips were taken by putting the two committed modules back for the capture and restoring the new ones after (only these two files). All guards pass at this batch, test:scene-complexity back at its baseline 2.
 
+Evidence budget at batch 7: `du -sh docs/polish-pass/evidence` reads 42M (the 25 MB line was already crossed before this round, by every slice's strips together); TC-g is 6.2M of it, about 75 KB per revamped card (before, after and off strips). The integrator should decide whether strips get smaller (`--frames 6 --tile 120`) or older ones are pruned before the next 32 cards add about 2.4 MB more.
+
 Stopped here, at a clean commit. Next: the other 32 live tier 6 members of g01..g44 (`card-strip.ts --module <g modules> --tier 6 --list`), by module: g26 (ancestral_shield, guardian_of_the_line, saints_procession), g41 (dead_calm, hall_of_mirrors, quagmire_march), g22 (hourglass_throne, tithe_of_time), g20, g05, g09, g10, g27, g28, g42, g15, g18, g01, g12, g25, g32.
