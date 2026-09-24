@@ -206,15 +206,15 @@ function delaysOf(body: string): number[] {
   const out: number[] = [0];
   // `${delayMs + 120}ms`, and the same with the offset from a data row.
   for (const m of body.matchAll(/\$\{[^}]*?\+\s*(\d+(?:\.\d+)?)\s*\}ms/g)) out.push(Number(m[1]));
-  // dm(delayMs, 120) — two-arg helper.
+  // dm(delayMs, 120): two-arg helper.
   for (const m of body.matchAll(/\b(?:dm|d)\(\s*\w+\s*,\s*(\d+(?:\.\d+)?)\s*\)/g)) {
     out.push(Number(m[1]));
   }
-  // d(delayMs + 120) and d(120) — single-arg helper taking an expression.
+  // d(delayMs + 120) and d(120): single-arg helper taking an expression.
   for (const m of body.matchAll(/\b(?:dm|d)\(\s*(?:\w+\s*\+\s*)?(\d+(?:\.\d+)?)\s*\)/g)) {
     out.push(Number(m[1]));
   }
-  // beat(0.34) / beat(0.34 + i * 0.09) — fractional beats.
+  // beat(0.34) / beat(0.34 + i * 0.09): fractional beats.
   for (const m of body.matchAll(/\bbeat\(\s*(\d+(?:\.\d+)?)/g)) out.push(Number(m[1]) * 1000);
   // delayMs={delayMs + 120} on a child component.
   for (const m of body.matchAll(/delayMs=\{[^}]*?\+\s*(\d+(?:\.\d+)?)\s*\}/g)) out.push(Number(m[1]));

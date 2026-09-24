@@ -1,5 +1,5 @@
 /**
- * audit-animations.ts — the tier 1-8 ANIMATION REGISTRY and its CI gate.
+ * audit-animations.ts: the tier 1-8 ANIMATION REGISTRY and its CI gate.
  *
  *   npm run test:animations            # verify (exit 1 on any violation)
  *   npm run test:animations -- --write # regenerate docs/animation-registry.json
@@ -8,7 +8,7 @@
  * Builds one registry entry for EVERY implemented tier 1-8 upgrade (buff, hex,
  * nerf) recording: name, tier, keep/redesign status, animation id, main object,
  * entrance style, motion path, particle type, board reaction, piece reaction,
- * persistent effect, sound family and ending effect — then uses the registry to
+ * persistent effect, sound family and ending effect, then uses the registry to
  * detect duplicated flagship animations.
  *
  * Sources of truth (never duplicated here, always read from the real tables):
@@ -29,7 +29,7 @@
  *       (buffs/hexes can no longer be uncovered: the generated pipeline is
  *       total, and its self-check enforces per-card uniqueness)
  *   F2  two upgrades whose flagship identity AND dressing (palette + emblem)
- *       are byte-identical — a true copy-paste duplicate
+ *       are byte-identical: a true copy-paste duplicate
  *   F3  the count of tier>=5 upgrades sharing a template without a structural
  *       flourish GREW past the committed baseline (scripts/anim-baseline.json).
  *       Shared low-tier machinery with per-card emblems is allowed (utility
@@ -174,7 +174,7 @@ function parsePlaysModule(fileBase: string): Map<string, PlayInfo> {
       });
       continue;
     }
-    m = chunk.match(/:\s*[A-Z]\(\s*(\w+),\s*\{/); // S(Scene, {...}) — scene per card
+    m = chunk.match(/:\s*[A-Z]\(\s*(\w+),\s*\{/); // S(Scene, {...}), scene per card
     if (m) {
       out.set(id, { ...base, template: m[1], bespokeScene: true });
       continue;
@@ -261,7 +261,7 @@ for (const mod of modules) {
 
 const entries: RegistryEntry[] = [];
 
-// Buffs and hexes (tier 1-8, implemented) — flagship is the play signature.
+// Buffs and hexes (tier 1-8, implemented): flagship is the play signature.
 const buffs = ALL_BUFFS.filter((b) => b.implemented && b.tier >= 1 && b.tier <= 8);
 for (const b of buffs) {
   const kind = b.category === "hex" ? "hex" : "buff";
@@ -342,7 +342,7 @@ for (const b of buffs) {
   });
 }
 
-// Nerfs (tier 1-8) — flagship is the passive reveal composition (the passive
+// Nerfs (tier 1-8): flagship is the passive reveal composition (the passive
 // effect language), which the coverage test already keeps unique per card.
 for (const n of PLAYABLE_NERFS.filter((n) => n.tier >= 1 && n.tier <= 8)) {
   const v = PASSIVE_REGISTRY.get(passiveKey("nerf", n.id));
@@ -391,7 +391,7 @@ for (const [, group] of byAnim) {
 }
 
 // F2: byte-identical dressing on a shared flagship (same template AND same
-// palette AND same emblem) — nothing distinguishes the two plays at all.
+// palette AND same emblem): nothing distinguishes the two plays at all.
 const exact = new Map<string, string[]>();
 for (const e of entries) {
   if (e.kind === "nerf") continue;
@@ -412,7 +412,7 @@ const sharedAll = entries.filter((e) => e.sharedFlagship);
 //
 // F1-F3 cannot see these. A generated signature's animId encodes family +
 // variant + both hues + rotation + glyph + finisher, so every generated card
-// looks UNIQUE to the duplicate detector and lands in the "keep" bucket — which
+// looks UNIQUE to the duplicate detector and lands in the "keep" bucket, which
 // is how a registry can report 2,330 cards keeping their flagship while a
 // thousand of them are one of 37 stock choreographies in a different colour.
 // Uniqueness was never the question for these; having art of their own was.
