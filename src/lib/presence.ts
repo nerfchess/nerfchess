@@ -46,7 +46,10 @@ const onForeground = () => {
 function startPolling() {
   if (pollTimer !== null || typeof window === "undefined") return;
   void poll();
-  pollTimer = window.setInterval(poll, POLL_MS);
+  // A hidden tab skips its ticks; onForeground polls once when it is shown.
+  pollTimer = window.setInterval(() => {
+    if (document.visibilityState !== "hidden") void poll();
+  }, POLL_MS);
   document.addEventListener("visibilitychange", onForeground);
   window.addEventListener("focus", onForeground);
 }

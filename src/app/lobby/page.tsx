@@ -235,11 +235,20 @@ function LobbyInner() {
     poll();
     // Poll a touch faster than before so a game that just ended drops out of the
     // Watch list quickly (the server already omits finished games; this shortens
-    // how long a just-ended board can still show).
-    const id = window.setInterval(poll, 3000);
+    // how long a just-ended board can still show). A hidden tab skips its ticks
+    // (a background lobby otherwise asked about 20 times a minute forever) and
+    // catches up with one poll the moment it is shown again.
+    const id = window.setInterval(() => {
+      if (document.visibilityState !== "hidden") void poll();
+    }, 3000);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void poll();
+    };
+    document.addEventListener("visibilitychange", onVisible);
     return () => {
       cancelled = true;
       window.clearInterval(id);
+      document.removeEventListener("visibilitychange", onVisible);
     };
   }, [reloadKey]);
 

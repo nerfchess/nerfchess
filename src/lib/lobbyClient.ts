@@ -108,7 +108,10 @@ function reschedule() {
   }
   if (ms !== timerMs) {
     if (timer !== null) window.clearInterval(timer);
-    timer = window.setInterval(() => void pollNow(), ms);
+    // Hidden tabs skip the tick; onForeground polls once when shown again.
+    timer = window.setInterval(() => {
+      if (document.visibilityState !== "hidden") void pollNow();
+    }, ms);
     timerMs = ms;
   }
 }

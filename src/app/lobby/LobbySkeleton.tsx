@@ -15,6 +15,7 @@
 
 import { LobbyWaysIn } from "./LobbyWaysIn";
 import { ModeSegmentSlots } from "./ModeSegment";
+import { QUEUE_POOL_OPTIONS, TimeCell } from "./TimeCell";
 
 // The same tab labels the page renders, so the row has the same widths.
 const TAB_LABELS = ["Play", "Watch & Friends"];
@@ -71,12 +72,25 @@ export function LobbySkeletonBody() {
                 <h2 className="font-display text-[15px] font-bold text-parchment-50">Quick pairing</h2>
                 <ModeSegmentSlots />
               </div>
-              <div className="mt-3 grid grid-cols-3 gap-1.5">
-                {Array.from({ length: 9 }).map((_, i) => (
-                  <span key={i} className="skeleton block min-h-[56px]" />
+              {/* The real nine tiles, as the page's first render draws them
+                  (3+2 selected until the saved pool is read). */}
+              <div aria-hidden className="pointer-events-none mt-3 grid grid-cols-3 gap-1.5">
+                {QUEUE_POOL_OPTIONS.map((option) => (
+                  <TimeCell key={option.pool} option={option} selected={option.pool === "3+2"} placeholder />
                 ))}
               </div>
               <span className="skeleton mt-3 hidden min-h-[52px] w-full sm:block" />
+            </div>
+            {/* The phone's sticky Find bar, at the page's geometry (QuickMatch
+                portals the real one on mount). Without it the bar arrived
+                after hydration as a 390x77 block, the largest late paint on
+                the phone lobby. Its label waits on the mode, so the button is
+                a skeleton block of the same 52px. */}
+            <div
+              aria-hidden
+              className="fixed inset-x-0 bottom-0 z-40 border-t border-[color:var(--edge)] bg-[color:var(--bg-panel)] px-4 pt-3 pb-[max(env(safe-area-inset-bottom),0.75rem)] sm:hidden"
+            >
+              <span className="skeleton block min-h-[52px] w-full" />
             </div>
             {/* The three other ways in: the real row, its two in-page
                 buttons disabled until the lobby is live. */}
