@@ -1592,32 +1592,6 @@ function LastStandScene({ lead, role, delayMs }: SceneProps) {
   );
 }
 
-/** From the Ashes — the fallen re-form up to a level line, embers rising. */
-function FromTheAshesScene({ lead, role, delayMs }: SceneProps) {
-  if (role === "entrance") return <EntranceCut palette={["#7a3a2a", "#ff9d3d", "#2b1208"]} glyph={GLYPH.bw3_from_the_ashes} delayMs={delayMs} />;
-  if (!lead) return <TargetHit palette={["#7a3a2a", "#ff9d3d", "#2b1208"]} glyph={GLYPH.bw3_from_the_ashes} delayMs={delayMs} />;
-  return (
-    <Stage quakeMs={delayMs + 1020}>
-      <Wash color="rgba(43,18,8,0.36)" delayMs={delayMs} />
-      {/* THE PHOENIX GROUND-BURST: the reborn rank punches up through the ash
-          crust together and the cinder floor heaves */}
-      <Impact atMs={delayMs + 1020} left={50} top={50} rgb="#ff9d3d" size={9} />
-      <span className="bwp-beam absolute block" style={{ left: "28%", top: "40%", width: "44%", height: "0.8%", background: "rgba(255,157,61,0.85)", transformOrigin: "0% 50%", animationDelay: `${delayMs + 320}ms` }} />
-      {(["p", "n", "b", "r"] as (keyof typeof CHESSMAN)[]).map((k, i) => (
-        <span key={k} className="bwp-rise absolute block" style={{ left: `${34 + i * 9}%`, top: "48%", width: "5.5%", height: "8.5%", animationDelay: `${delayMs + 480 + i * 150}ms` }}>
-          <Man kind={k} fill="#ffb877" stroke="#2b1208" />
-        </span>
-      ))}
-      {[36, 48, 60].map((l, i) => (
-        <span key={l} className="bwp-arc absolute block rounded-full" style={{ left: `${l}%`, top: "54%", width: "1.6%", height: "1.6%", background: "#ff9d3d", "--dx": `${(i - 1) * 40}%`, "--dy": "-150%", animationDelay: `${delayMs + 900 + i * 100}ms` } as CSSProperties} />
-      ))}
-      <Ring delayMs={delayMs + 1020} color="rgba(255,157,61,0.85)" />
-      <Ring delayMs={delayMs + 1240} color="rgba(122,58,42,0.5)" size={84} />
-      <EdgeGlow delayMs={delayMs + 1100} color="rgba(255,157,61,0.36)" />
-    </Stage>
-  );
-}
-
 /** Kingsguard Duel — two guards charge from before their kings, meet, and both
  * fall in one flash. */
 function KingsguardDuelScene({ lead, role, delayMs }: SceneProps) {
@@ -1660,41 +1634,6 @@ function KingsguardDuelScene({ lead, role, delayMs }: SceneProps) {
       <Ring delayMs={delayMs + 960} color="rgba(255,157,157,0.85)" />
       <Ring delayMs={delayMs + 1180} color="rgba(90,107,143,0.5)" size={84} />
       <EdgeGlow delayMs={delayMs + 1040} color="rgba(255,157,157,0.34)" />
-    </Stage>
-  );
-}
-
-/** King's Sanctuary — the king streaks to the safest corner, haloed in
- * sanctuary light. */
-function KingsSanctuaryScene({ lead, role, delayMs }: SceneProps) {
-  if (role === "entrance") return <EntranceCut palette={["#5a8fc0", "#dfe8ff", "#1c2a44"]} glyph={GLYPH.bw3_kings_sanctuary} delayMs={delayMs} />;
-  if (!lead) return <TargetHit palette={["#5a8fc0", "#dfe8ff", "#1c2a44"]} glyph={GLYPH.bw3_kings_sanctuary} delayMs={delayMs} />;
-  return (
-    <Stage quakeMs={delayMs + 1000}>
-      <Wash color="rgba(28,42,68,0.34)" delayMs={delayMs} />
-      {/* THE SANCTUARY SEAL: a column of consecrating light drives the dome
-          down over the corner and the flagstones jump */}
-      <Impact atMs={delayMs + 1000} left={66} top={49} rgb="#dfe8ff" laser size={8.5} />
-      {/* the leg: laid down the real source -> target vector, sized by --fx-len */}
-      <AimLeg color="rgba(223,232,255,0.85)" delayMs={delayMs + 300} />
-      {/* tell: sanctuary light kindles in the far corner before the king runs */}
-      <Tell color="rgba(223,232,255,0.45)" delayMs={delayMs + 230} left={56} top={38} size={22} />
-      {[36, 46, 56].map((t, i) => (
-        <Beam key={t} delayMs={delayMs + 200 + i * 70} color="rgba(223,232,255,0.5)" left={26} top={t} w={34 - i * 4} h={0.8} />
-      ))}
-      <span className="bwp-cross absolute block" style={{ left: "28%", top: "46%", width: "6.5%", height: "10%", "--dx": "300%", animationDelay: `${delayMs + 460}ms` } as CSSProperties}>
-        <Man kind="k" fill="#dfe8ff" stroke="#1c2a44" />
-      </span>
-      <span className="bwp-drop absolute block" style={{ left: "58%", top: "38%", width: "16%", height: "18%", animationDelay: `${delayMs + 820}ms` }}>
-        <svg viewBox="0 0 16 18" className="block h-full w-full" aria-hidden="true">
-          <path d="M1 17 C1 3 15 3 15 17" fill="rgba(90,143,192,0.16)" stroke="rgba(223,232,255,0.9)" strokeWidth="0.6" strokeDasharray="2 1.4" />
-        </svg>
-      </span>
-      <Glint delayMs={delayMs + 1080} color="#dfe8ff" left={64} top={44} />
-      <Glint delayMs={delayMs + 1180} color="#9fd8ff" left={68} top={50} size={2.4} />
-      <Ring delayMs={delayMs + 1000} color="rgba(223,232,255,0.85)" />
-      <Ring delayMs={delayMs + 1220} color="rgba(90,143,192,0.5)" size={84} />
-      <EdgeGlow delayMs={delayMs + 1080} color="rgba(223,232,255,0.36)" />
     </Stage>
   );
 }
@@ -2997,6 +2936,123 @@ function FuneralPyreScene({ lead, role, delayMs }: SceneProps) {
             </svg>
           </span>
         ))}
+      </BoardFrame>
+    </Stage>
+  );
+}
+
+/** From the Ashes: the dead rise only as far as even. Their count of
+ * non-king pieces stands as a tally on their side and yours, two short,
+ * on yours; out of the ash on your home rank a rook rises, then a knight,
+ * each adding a mark to your tally; the counts meet, the tallies are sealed
+ * level, and the bishop left in the ash stays down. */
+const ASHES: Palette = ["#7a3a2a", "#ff9d3d", "#2b1208"];
+function FromTheAshesScene({ lead, role, delayMs }: SceneProps) {
+  const [p0, p1, p2] = ASHES;
+  if (role === "entrance") return <EntranceCut palette={ASHES} glyph={GLYPH.bw3_from_the_ashes} delayMs={delayMs} />;
+  if (!lead) return <TargetHit palette={ASHES} glyph={GLYPH.bw3_from_the_ashes} delayMs={delayMs} />;
+  const tally = (n: number, stroke: string) => (
+    <svg viewBox="0 0 30 8" className="block h-full w-full" aria-hidden="true">
+      {Array.from({ length: n }, (_, i) => <path key={i} d={`M${2 + i * 4} 1 V7`} stroke={stroke} strokeWidth="1.1" strokeLinecap="round" />)}
+    </svg>
+  );
+  const risers = [
+    { k: "r" as const, f: 0, d: 380, tick: 22 },
+    { k: "n" as const, f: 1, d: 640, tick: 26 },
+  ];
+  return (
+    <Stage>
+      <BoardFrame>
+        {/* tell: the ash bed along your home rank, and the two tallies */}
+        <span className="bwp-hold absolute block" style={{ left: 0, width: "37.5%", top: rankTop(1), height: "12.5%", background: tint(p2, 0.72), border: `3px dashed ${p0}`, animationDelay: dm(delayMs, 0), animationDuration: "calc(1700ms * var(--fx-dur, 1))" }} />
+        <span className="bwp-hold absolute block" style={{ left: "58%", width: "40%", top: `calc(${rankTop(5)} + 2%)`, height: "8.5%", animationDelay: dm(delayMs, 100), animationDuration: "calc(1650ms * var(--fx-dur, 1))" }}>{tally(7, p2)}</span>
+        <span className="bwp-hold absolute block" style={{ left: "58%", width: "40%", top: `calc(${rankTop(4)} + 2%)`, height: "8.5%", animationDelay: dm(delayMs, 160), animationDuration: "calc(1600ms * var(--fx-dur, 1))" }}>{tally(5, p1)}</span>
+        {/* strike: out of the ash, strongest first, one at a time */}
+        {risers.map((v) => (
+          <span key={v.k} className="bwp-rise absolute block" style={{ ...manBox(v.f, 1), animationDelay: dm(delayMs, v.d), animationDuration: "calc(1150ms * var(--fx-dur, 1))" }}>
+            <Man kind={v.k} fill={p1} stroke={p2} />
+          </span>
+        ))}
+        {/* ...each one a mark on your tally */}
+        {risers.map((v) => (
+          <span key={v.tick} className="bwp-stamp absolute block" style={{ left: `${58 + (v.tick / 30) * 40 - 1}%`, width: "3%", top: `calc(${rankTop(4)} + 2%)`, height: "8.5%", animationDelay: dm(delayMs, v.d + 260) }}>
+            <svg viewBox="0 0 3 8" className="block h-full w-full" aria-hidden="true">
+              <path d="M1.5 1 V7" stroke={p1} strokeWidth="1.1" strokeLinecap="round" />
+            </svg>
+          </span>
+        ))}
+        {/* settle: level; the tallies are sealed and the rest stay in the ash */}
+        <span className="bwp-stamp absolute block" style={{ left: "48%", width: "8%", top: `calc(${rankTop(4)} + 7%)`, height: "8%", animationDelay: dm(delayMs, 1100) }}>
+          <svg viewBox="0 0 8 8" className="block h-full w-full" aria-hidden="true">
+            <path d="M1.6 3 H6.4 M1.6 5 H6.4" stroke={p1} strokeWidth="0.9" strokeLinecap="round" />
+          </svg>
+        </span>
+        <span className="bwp-sink absolute block" style={{ ...manBox(2, 1), animationDelay: dm(delayMs, 1080) }}>
+          <svg viewBox="0 0 10 12" className="block h-full w-full" aria-hidden="true">
+            <g fill={tint(p0, 0.7)} stroke={p2} strokeWidth="0.45" strokeDasharray="0.9 0.6" {...SJ}>{CHESSMAN.b}</g>
+          </svg>
+        </span>
+        {[6, 18].map((l, i) => (
+          <span key={l} className="bwp-glint absolute block" style={{ left: `${l}%`, top: rankTop(2), width: "3%", height: "3%", animationDelay: dm(delayMs, 1180 + i * 110) }}>
+            <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+              <path d="M5 0 L6.6 5 L5 10 L3.4 5 Z M0 5 L5 3.4 L10 5 L5 6.6 Z" fill={p1} />
+            </svg>
+          </span>
+        ))}
+      </BoardFrame>
+    </Stage>
+  );
+}
+
+/** King's Sanctuary: the king goes to the quietest corner of his home rank.
+ * Two enemy pieces stand near him; the empty home-rank square close to them
+ * is struck out, the one furthest from any of them is marked; the king makes
+ * the move there and a sanctuary arch comes down over him. */
+const SANCTUARY: Palette = ["#5a8fc0", "#dfe8ff", "#1c2a44"];
+function KingsSanctuaryScene({ lead, role, delayMs }: SceneProps) {
+  const [p0, p1, p2] = SANCTUARY;
+  if (role === "entrance") return <EntranceCut palette={SANCTUARY} glyph={GLYPH.bw3_kings_sanctuary} delayMs={delayMs} />;
+  if (!lead) return <TargetHit palette={SANCTUARY} glyph={GLYPH.bw3_kings_sanctuary} delayMs={delayMs} />;
+  return (
+    <Stage>
+      <BoardFrame>
+        {/* tell: the threats near the king are marked */}
+        {[
+          { k: "n" as const, f: 6, r: 3, d: 0 },
+          { k: "b" as const, f: 4, r: 4, d: 80 },
+        ].map((v) => (
+          <span key={v.k} className="bwp-hold absolute block" style={{ ...manBox(v.f, v.r), animationDelay: dm(delayMs, v.d), animationDuration: "calc(1500ms * var(--fx-dur, 1))" }}>
+            <Man kind={v.k} fill={p2} stroke={p1} />
+          </span>
+        ))}
+        {/* the empty home squares are weighed: near them, struck out... */}
+        <span className="bwp-facein absolute block" style={{ ...cellBox(6, 1), animationDelay: dm(delayMs, 300) }}>
+          <svg viewBox="0 0 12 12" className="block h-full w-full" aria-hidden="true">
+            <rect x="0.8" y="0.8" width="10.4" height="10.4" rx="0.8" fill="none" stroke={p1} strokeWidth="0.55" strokeDasharray="1.6 1.1" />
+            <path d="M2.6 2.6 L9.4 9.4 M9.4 2.6 L2.6 9.4" stroke={p0} strokeWidth="0.9" strokeLinecap="round" />
+          </svg>
+        </span>
+        {/* ...and the one furthest from them all, marked */}
+        <span className="bwp-stamp absolute block" style={{ ...cellBox(0, 1), animationDelay: dm(delayMs, 380), animationDuration: "calc(1100ms * var(--fx-dur, 1))" }}>
+          <svg viewBox="0 0 12 12" className="block h-full w-full" aria-hidden="true">
+            <rect x="0.8" y="0.8" width="10.4" height="10.4" rx="0.8" fill={tint(p0, 0.3)} stroke={p1} strokeWidth="0.7" />
+          </svg>
+        </span>
+        {/* strike: the king makes the move to it */}
+        <span className="bwp-arc absolute block" style={{ ...manBox(5, 2), "--dx": "-702%", "--dy": "calc(var(--fx-side, 1) * 117%)", animationDelay: dm(delayMs, 520), animationDuration: "calc(1100ms * var(--fx-dur, 1))" } as CSSProperties}>
+          <Man kind="k" fill={p1} stroke={p2} />
+        </span>
+        {/* settle: the sanctuary arch comes down over him */}
+        <span className="bwp-drop absolute block" style={{ ...cellBox(0, 1), animationDelay: dm(delayMs, 980) }}>
+          <svg viewBox="0 0 12 12" className="block h-full w-full" aria-hidden="true">
+            <path d="M1.4 11.4 V5.6 C1.4 0.8 10.6 0.8 10.6 5.6 V11.4" fill="none" stroke={p1} strokeWidth="0.7" strokeDasharray="1.6 1" {...SJ} />
+          </svg>
+        </span>
+        <span className="bwp-glint absolute block" style={{ left: "8%", top: rankTop(2), width: "3.4%", height: "3.4%", animationDelay: dm(delayMs, 1180) }}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <path d="M5 0 L6.6 5 L5 10 L3.4 5 Z M0 5 L5 3.4 L10 5 L5 6.6 Z" fill={p1} />
+          </svg>
+        </span>
       </BoardFrame>
     </Stage>
   );

@@ -1853,65 +1853,6 @@ function CrownOfThornsScene({ lead, role, delayMs }: SceneProps) {
   );
 }
 
-/* --- Pauper's Crown: the queen's crown lifts off, shatters to shards, and
-   rook battlements are stamped onto her brow in its place. ----------------- */
-const PAUPER: Palette = ["#1c1c2a", "#c94ad1", "#c9b89a"];
-function PauperCrownScene({ lead, role, delayMs }: SceneProps) {
-  const [p0, p1, p2] = PAUPER;
-  if (role === "entrance") return <EntranceCut palette={PAUPER} glyph={GLYPH.hw2_pauper_crown} delayMs={delayMs} />;
-  if (!lead) return <CurseHit palette={PAUPER} glyph={GLYPH.hw2_pauper_crown} delayMs={delayMs} />;
-  return (
-    // FLAGSHIP: the stage bucks when the battlements are stamped on
-    <Stage quakeAtMs={delayMs + 1120}>
-      <Wash color={tint(p0, 0.3)} delayMs={delayMs} />
-      <Tell color={tint(p1, 0.35)} delayMs={delayMs} left={42} top={30} />
-      {/* the deposing bolt: magenta light blasts the crown off her brow */}
-      <ImpactCell spec={{ l: 44, t: 28, s: 12, at: 620, laser: true, shock: true }} rgb="201 74 209" delayMs={delayMs} />
-      {/* her majesty, center stage and about to be greatly humbled */}
-      <span className="cwp-facein absolute block" style={{ left: "42%", top: "36%", width: "16%", height: "24%", animationDelay: `${delayMs + 200}ms` }}>
-        <Man kind="q" fill={tint(p1, 0.95)} stroke={p2} />
-      </span>
-      {/* the crown lifts away from her brow... */}
-      <span className="cwp-lift absolute block" style={{ left: "45%", top: "33%", width: "10%", height: "7%", animationDelay: `${delayMs + 560}ms` }}>
-        <svg viewBox="0 0 12 8" className="block h-full w-full" aria-hidden="true">
-          <path d="M1.4 6.6 V2 L3.8 4 L6 1 L8.2 4 L10.6 2 V6.6 Z" fill="#e8b04b" stroke="#8a6a3a" strokeWidth="0.5" {...SJ} />
-        </svg>
-      </span>
-      {/* ...and shatters into three golden shards */}
-      {[
-        { l: 47, t: 26, dx: "-220%", dy: "-120%", rot: "-160deg", d: 0 },
-        { l: 50, t: 25, dx: "40%", dy: "-220%", rot: "80deg", d: 70 },
-        { l: 53, t: 26, dx: "240%", dy: "-100%", rot: "200deg", d: 140 },
-      ].map((v, i) => (
-        <span key={i} className="cwp-spark absolute block" style={{ left: `${v.l}%`, top: `${v.t}%`, width: "2.2%", height: "2.2%", "--dx": v.dx, "--dy": v.dy, "--rot": v.rot, animationDelay: `${delayMs + 940 + v.d}ms` } as CSSProperties}>
-          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
-            <path d="M2 8 L5 1 L8 8 Z" fill="#e8b04b" stroke="#8a6a3a" strokeWidth="0.5" {...SJ} />
-          </svg>
-        </span>
-      ))}
-      {/* the battlements stamp down where the crown sat */}
-      <span className="cwp-stamp absolute block" style={{ left: "45.5%", top: "33.5%", width: "9%", height: "6%", animationDelay: `${delayMs + 1120}ms` }}>
-        <svg viewBox="0 0 12 7" className="block h-full w-full" aria-hidden="true">
-          <path d="M1.6 6.4 V1.2 H3.4 V2.8 H4.8 V1.2 H7.2 V2.8 H8.6 V1.2 H10.4 V6.4 Z" fill={tint(p2, 0.95)} stroke="#4a4036" strokeWidth="0.5" {...SJ} />
-        </svg>
-      </span>
-      {/* patched rags: humble stitches fade onto her gown */}
-      <span className="cwp-facein absolute block" style={{ left: "45%", top: "48%", width: "10%", height: "7%", animationDelay: `${delayMs + 1220}ms` }}>
-        <svg viewBox="0 0 12 8" className="block h-full w-full" aria-hidden="true">
-          <rect x="1.5" y="1.5" width="4" height="3.4" rx="0.6" fill="none" stroke={tint(p2, 0.85)} strokeWidth="0.5" strokeDasharray="1 0.7" />
-          <rect x="6.8" y="3.4" width="3.6" height="3" rx="0.6" fill="none" stroke={tint(p2, 0.85)} strokeWidth="0.5" strokeDasharray="1 0.7" />
-        </svg>
-      </span>
-      {/* the way back: one red glint — blood buys the crown again */}
-      <span className="cwp-glint absolute block" style={{ left: "58%", top: "42%", width: "2.8%", height: "3.2%", animationDelay: `${delayMs + 1380}ms` }}>
-        <svg viewBox="0 0 8 10" className="block h-full w-full" aria-hidden="true">
-          <path d="M4 0.8 C6 3.6 7 5.4 7 6.8 A3 3 0 1 1 1 6.8 C1 5.4 2 3.6 4 0.8 Z" fill="#c94a5a" />
-        </svg>
-      </span>
-      <SettlePair color={tint(p1, 0.7)} delayMs={delayMs + 1380} />
-    </Stage>
-  );
-}
 
 /* --- Beacon of Woe: the watchtower rises, the doom-flame catches, six
    count-runes ring it, and frost-light plays over the distant army. -------- */
@@ -2350,45 +2291,6 @@ function BloodTitheScene({ lead, role, delayMs }: SceneProps) {
   );
 }
 
-/* --- The Inverted Crown: every promoted pawn's crown flips to a tin knight's
-   helm, whatever they chose. ---------------------------------------------- */
-const INVERTED: Palette = ["#26262e", "#c9b89a", "#8faf4a"];
-function InvertedCrownScene({ lead, role, delayMs }: SceneProps) {
-  const [p0, p1, p2] = INVERTED;
-  if (role === "entrance") return <EntranceCut palette={INVERTED} glyph={GLYPH.hw3_inverted_crown} delayMs={delayMs} />;
-  if (!lead) return <CurseHit palette={INVERTED} glyph={GLYPH.hw3_inverted_crown} delayMs={delayMs} />;
-  return (
-    // FLAGSHIP: the coronation goes wrong with a physical CRACK
-    <Stage quakeAtMs={delayMs + 760}>
-      <Wash color={tint(p0, 0.32)} delayMs={delayMs} />
-      <Tell color={tint(p1, 0.34)} delayMs={delayMs} left={44} top={30} />
-      {/* the queen-that-would-be shatters in half over the promotion square,
-          gold shards flying, leaving the tin knight's helm underneath */}
-      <ImpactCell spec={{ l: 44, t: 28, s: 12, at: 760, man: "q", shock: true }} rgb="232 176 75" delayMs={delayMs} />
-      <span className="cwp-beam absolute block" style={{ left: "30%", top: "58%", width: "40%", height: "1.2%", background: tint(p1, 0.85), transformOrigin: "0% 50%", animationDelay: `${delayMs + 300}ms` }} />
-      <span className="cwp-rise absolute block" style={{ left: "46%", top: "46%", width: "6.5%", height: "11%", animationDelay: `${delayMs + 440}ms` }}>
-        <Man kind="p" fill={tint(p1, 0.9)} stroke={p0} />
-      </span>
-      <span className="absolute block" style={{ left: "44.5%", top: "30%", width: "10%", height: "10%" }}>
-        <span className="cwp-swapout absolute inset-0 block" style={{ animationDelay: `${delayMs + 760}ms` }}>
-          <svg viewBox="0 0 12 10" className="block h-full w-full" aria-hidden="true"><path d="M1.4 8 V2 L3.8 4 L6 1 L8.2 4 L10.6 2 V8 Z" fill="#e8b04b" stroke="#8a6a3a" strokeWidth="0.5" {...SJ} /></svg>
-        </span>
-        <span className="cwp-swapin absolute inset-0 block" style={{ animationDelay: `${delayMs + 760}ms` }}>
-          <Man kind="n" fill={tint(p2, 0.85)} stroke={p0} />
-        </span>
-      </span>
-      {[
-        { l: 46, t: 30, dx: "-160%", dy: "-90%", rot: "-120deg" },
-        { l: 52, t: 30, dx: "180%", dy: "-70%", rot: "140deg" },
-      ].map((v, i) => (
-        <span key={i} className="cwp-spark absolute block" style={{ left: `${v.l}%`, top: `${v.t}%`, width: "1.8%", height: "1.8%", "--dx": v.dx, "--dy": v.dy, "--rot": v.rot, animationDelay: `${delayMs + 940 + i * 90}ms` } as CSSProperties}>
-          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true"><path d="M2 8 L5 1 L8 8 Z" fill="#e8b04b" /></svg>
-        </span>
-      ))}
-      <SettlePair color={tint(p1, 0.7)} delayMs={delayMs + 1300} />
-    </Stage>
-  );
-}
 
 /* --- Doomed Vow (slice TC-boon-curse rule scene): the vow's cord binds the
    condemned piece on its own square, four candles light for the four turns
@@ -2612,6 +2514,113 @@ function EffigyScene({ lead, role, delayMs }: SceneProps) {
           </svg>
         </span>
         <SettlePair color={tint(p1, 0.6)} delayMs={delayMs + 1300} />
+      </BoardFrame>
+    </Stage>
+  );
+}
+
+/* --- Pauper's Crown: drawn as a chart on their side of the middle (clear of
+   the cast banner over their back ranks). Their queen has her crown lifted
+   off and comes up a rook with battlements on her brow; four pips count her
+   four turns; a dashed capture line runs along her rank, the way a rook
+   takes, and the crown drops back at its end: a capture undoes it early. -- */
+const PAUPER: Palette = ["#1c1c2a", "#c94ad1", "#c9b89a"];
+function PauperCrownScene({ lead, role, delayMs }: SceneProps) {
+  const [p0, p1, p2] = PAUPER;
+  if (role === "entrance") return <EntranceCut palette={PAUPER} glyph={GLYPH.hw2_pauper_crown} delayMs={delayMs} />;
+  if (!lead) return <CurseHit palette={PAUPER} glyph={GLYPH.hw2_pauper_crown} delayMs={delayMs} />;
+  const crown = (
+    <svg viewBox="0 0 12 8" className="block h-full w-full" aria-hidden="true">
+      <path d="M1.4 6.6 V2 L3.8 4 L6 1 L8.2 4 L10.6 2 V6.6 Z" fill="#e8b04b" stroke="#8a6a3a" strokeWidth="0.5" {...SJ} />
+    </svg>
+  );
+  const brow = { left: "40.25%", width: "9%", top: `calc(${rankTop(6)} - 2.5%)`, height: "5.5%" };
+  return (
+    <Stage>
+      <BoardFrame>
+        {/* tell: the crown lifts off her brow */}
+        <span className="cwp-lift absolute block" style={{ ...brow, animationDelay: dm(delayMs, 120) }}>{crown}</span>
+        {/* strike: the queen comes up a rook */}
+        <span className="absolute block" style={hcMan(3, 6)}>
+          <span className="cwp-swapout absolute inset-0 block" style={{ animationDelay: dm(delayMs, 300) }}>
+            <Man kind="q" fill={tint(p1, 0.95)} stroke={p0} />
+          </span>
+          <span className="cwp-swapin absolute inset-0 block" style={{ animationDelay: dm(delayMs, 300), animationDuration: "calc(1300ms * var(--fx-dur, 1))" }}>
+            <Man kind="r" fill={tint(p2, 0.95)} stroke={p0} />
+          </span>
+        </span>
+        {/* the battlements are stamped on where the crown sat */}
+        <span className="cwp-stamp absolute block" style={{ ...brow, animationDelay: dm(delayMs, 620) }}>
+          <svg viewBox="0 0 12 7" className="block h-full w-full" aria-hidden="true">
+            <path d="M1.6 6.4 V1.2 H3.4 V2.8 H4.8 V1.2 H7.2 V2.8 H8.6 V1.2 H10.4 V6.4 Z" fill={tint(p2, 0.95)} stroke="#4a4036" strokeWidth="0.5" {...SJ} />
+          </svg>
+        </span>
+        {/* four pips: four of their turns */}
+        <span className="cwp-pop absolute block" style={{ left: "32%", width: "18%", top: `calc(${rankTop(5)} + 4.5%)`, height: "3.5%", animationDelay: dm(delayMs, 820) }}>
+          <svg viewBox="0 0 16 4" className="block h-full w-full" aria-hidden="true">
+            {[2, 6, 10, 14].map((cx) => <circle key={cx} cx={cx} cy="2" r="1.5" fill={p1} stroke={p0} strokeWidth="0.4" />)}
+          </svg>
+        </span>
+        {/* settle: or until she captures (as a rook takes): the crown comes back */}
+        <span className="cwp-beam absolute block" style={{ left: "50%", width: "25%", top: `calc(${rankTop(6)} + 5.8%)`, height: "1%", background: `repeating-linear-gradient(90deg, ${p2} 0 6px, transparent 6px 10px)`, animationDelay: dm(delayMs, 980) }} />
+        <span className="cwp-stamp absolute block" style={{ ...hcCell(6, 6), animationDelay: dm(delayMs, 1060) }}>
+          <svg viewBox="0 0 12 12" className="block h-full w-full" aria-hidden="true">
+            <path d="M3 3 L9 9 M9 3 L3 9" stroke={p2} strokeWidth="0.8" strokeLinecap="round" />
+          </svg>
+        </span>
+        <span className="cwp-drop absolute block" style={{ left: "77.75%", width: "9%", top: `calc(${rankTop(6)} - 2.5%)`, height: "5.5%", animationDelay: dm(delayMs, 1140) }}>{crown}</span>
+        <SettlePair color={tint(p1, 0.6)} delayMs={delayMs + 1300} />
+      </BoardFrame>
+    </Stage>
+  );
+}
+
+/* --- The Inverted Crown: one of their pawns walks onto your first rank (its
+   last) to promote; the queen, rook and bishop it could choose are all struck
+   out; the crown over the square turns into a knight; six pips count the
+   curse's six turns. ------------------------------------------------------ */
+const INVERTED: Palette = ["#26262e", "#c9b89a", "#8faf4a"];
+function InvertedCrownScene({ lead, role, delayMs }: SceneProps) {
+  const [p0, p1, p2] = INVERTED;
+  if (role === "entrance") return <EntranceCut palette={INVERTED} glyph={GLYPH.hw3_inverted_crown} delayMs={delayMs} />;
+  if (!lead) return <CurseHit palette={INVERTED} glyph={GLYPH.hw3_inverted_crown} delayMs={delayMs} />;
+  const choices = [
+    { k: "q" as const, f: 2, d: 520 },
+    { k: "r" as const, f: 4, d: 590 },
+    { k: "b" as const, f: 5, d: 660 },
+  ];
+  return (
+    <Stage>
+      <BoardFrame>
+        {/* tell: their pawn walks onto its last rank, your first */}
+        <span className="cwp-kneel absolute block" style={{ ...hcMan(3, 1), "--dx": "0%", "--dy": "calc(var(--fx-side, 1) * -119%)", animationDelay: dm(delayMs, 100), animationDuration: "calc(1000ms * var(--fx-dur, 1))" } as CSSProperties}>
+          <Man kind="p" fill={p0} stroke={p1} />
+        </span>
+        {/* the choices it would take are offered on the next rank... */}
+        {choices.map((v) => (
+          <span key={v.k} className="cwp-facein absolute block" style={{ ...hcCell(v.f, 2), animationDelay: dm(delayMs, v.d), animationDuration: "calc(1150ms * var(--fx-dur, 1))" }}>
+            <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+              <path d={CHESSMAN[v.k]} fill={tint(p0, 0.8)} stroke={p1} strokeWidth="0.45" {...SJ} />
+              <path d="M1.4 8.6 L8.6 1.4" stroke={p2} strokeWidth="0.9" strokeLinecap="round" />
+            </svg>
+          </span>
+        ))}
+        {/* strike: ...and the crown over the square turns into a knight */}
+        <span className="absolute block" style={hcMan(3, 1)}>
+          <span className="cwp-swapout absolute inset-0 block" style={{ animationDelay: dm(delayMs, 760) }}>
+            <svg viewBox="0 0 12 10" className="block h-full w-full" aria-hidden="true"><path d="M1.4 8 V2 L3.8 4 L6 1 L8.2 4 L10.6 2 V8 Z" fill="#e8b04b" stroke="#8a6a3a" strokeWidth="0.5" {...SJ} /></svg>
+          </span>
+          <span className="cwp-swapin absolute inset-0 block" style={{ animationDelay: dm(delayMs, 760), animationDuration: "calc(1300ms * var(--fx-dur, 1))" }}>
+            <Man kind="n" fill={p0} stroke={p2} />
+          </span>
+        </span>
+        {/* settle: six pips, six of their turns */}
+        <span className="cwp-pop absolute block" style={{ left: "72%", width: "26%", top: `calc(${rankTop(3)} + 4.5%)`, height: "3.5%", animationDelay: dm(delayMs, 1080) }}>
+          <svg viewBox="0 0 24 4" className="block h-full w-full" aria-hidden="true">
+            {[2, 6, 10, 14, 18, 22].map((cx) => <circle key={cx} cx={cx} cy="2" r="1.5" fill={p2} stroke={p0} strokeWidth="0.4" />)}
+          </svg>
+        </span>
+        <SettlePair color={tint(p1, 0.7)} delayMs={delayMs + 1300} />
       </BoardFrame>
     </Stage>
   );
