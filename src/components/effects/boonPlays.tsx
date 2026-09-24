@@ -18,12 +18,12 @@
 //                 down (bargains, vows, court rules)
 //   FalconDash  — a falcon-comet streaks the crop behind speed lines
 //                 (raids, escapes, duels)
-// Every tier 7 and above card is a bespoke scene registered with S (its own
-// Render, no template), and so are a few lower-tier flagships. Every tier 6
-// and above card draws the rule itself in the "Rule scenes" block above the
-// card devices: the ranks, squares and pieces it touches, placed in
-// <BoardFrame> from the caster's side or on the cast square, with no wash,
-// shock ring, edge glow or impact composite.
+// Every live tier 4 and above card (and Martyrdom at tier 3) is a scene of
+// its own rule registered with S (no template), drawn in the "Rule scenes"
+// block above the card devices: the ranks, squares and pieces it touches,
+// placed in <BoardFrame> from the caster's side or on the cast square, with
+// no wash, shock ring, glow or impact composite. The templates below still
+// carry the tier 1 to 3 cards.
 
 // STAGING. Every card declares an anchor, so the scene happens where the card
 // was actually played. `Stage` is the shared <BoardWideStage>, which clamps
@@ -315,19 +315,6 @@ function Beam({
         animationDelay: `${delayMs}ms`,
       }}
     />
-  );
-}
-
-/** Board-edge glow — reserved for the tier 7-8 bespoke scenes' grandeur. It
- * means the BOARD's edge, so it lives inside <BoardFrame>. */
-function EdgeGlow({ delayMs, color }: { delayMs: number; color: string }) {
-  return (
-    <BoardFrame>
-      <span
-        className="bwp-edge absolute inset-0 block"
-        style={{ boxShadow: `inset 0 0 26px 9px ${color}`, animationDelay: `${delayMs}ms` }}
-      />
-    </BoardFrame>
   );
 }
 
@@ -1153,52 +1140,11 @@ function LastStandScene({ lead, role, delayMs }: SceneProps) {
       ))}
       <Ring delayMs={delayMs + 1000} color="rgba(255,233,176,0.85)" />
       <Ring delayMs={delayMs + 1220} color="rgba(90,107,143,0.5)" size={84} />
-      <EdgeGlow delayMs={delayMs + 1080} color="rgba(255,233,176,0.36)" />
     </Stage>
   );
 }
 
 
-/** Martyrdom — one friendly minor shatters and its light strikes two enemy
- * minors down in answer. */
-function MartyrdomScene({ lead, role, delayMs }: SceneProps) {
-  if (role === "entrance") return <EntranceCut palette={["#8a4a5a", "#ffd0d8", "#2b1820"]} glyph={GLYPH.bw3_martyrdom} delayMs={delayMs} />;
-  if (!lead) return <TargetHit palette={["#8a4a5a", "#ffd0d8", "#2b1820"]} glyph={GLYPH.bw3_martyrdom} delayMs={delayMs} />;
-  return (
-    <Stage quakeMs={delayMs + 920}>
-      <Wash color="rgba(43,24,32,0.34)" delayMs={delayMs} />
-      {/* THE ANSWERED SACRIFICE: the martyr's release column detonates where
-          it fell, splitting an enemy minor in the answering blast */}
-      <Impact
-        atMs={delayMs + 920}
-        left={33.5}
-        top={47}
-        rgb="#ffd0d8"
-        laser
-        glyph={<Man kind="n" fill="rgba(201,138,152,0.95)" stroke="#2b1820" />}
-      />
-      {/* the leg: laid down the real source -> target vector, sized by --fx-len */}
-      <AimLeg color="rgba(255,208,216,0.85)" delayMs={delayMs + 300} />
-      <span className="bwp-shatter absolute block" style={{ left: "45%", top: "44%", width: "8%", height: "12%", animationDelay: `${delayMs + 360}ms` }}>
-        <Man kind="n" fill="#ffd0d8" stroke="#2b1820" />
-      </span>
-      {[
-        { l: 30, dx: "-120%" },
-        { l: 62, dx: "120%" },
-      ].map((v, i) => (
-        <span key={i}>
-          <Beam delayMs={delayMs + 640 + i * 90} color="rgba(255,208,216,0.85)" left={48} top={49} w={22} h={1} rot={i ? "8deg" : "172deg"} />
-          <span className="bwp-shatter absolute block" style={{ left: `${v.l}%`, top: "42%", width: "6.5%", height: "10%", animationDelay: `${delayMs + 900 + i * 120}ms` }}>
-            <Man kind={i ? "b" : "n"} fill="#c98a98" stroke="#2b1820" />
-          </span>
-        </span>
-      ))}
-      <Ring delayMs={delayMs + 980} color="rgba(255,208,216,0.85)" />
-      <Ring delayMs={delayMs + 1200} color="rgba(138,74,90,0.5)" size={84} />
-      <EdgeGlow delayMs={delayMs + 1060} color="rgba(255,208,216,0.34)" />
-    </Stage>
-  );
-}
 
 
 
@@ -3886,6 +3832,60 @@ function PraetorianScene({ lead, role, delayMs }: SceneProps) {
             <path d="M5.4 1.6 L4.4 4.6 L5.8 6.4 L4.6 9.4" fill="none" stroke={p1} strokeWidth="0.5" {...SJ} />
           </svg>
         </span>
+      </BoardFrame>
+    </Stage>
+  );
+}
+
+/** Martyrdom: one of yours falls so one of theirs must. Your knight on c3 is
+ * chosen and falls, a palm laid on its empty square; the line of the answer
+ * runs from it to their bishop on f6, which is taken off the board; their
+ * rook and queen are struck out (only a knight or bishop may be taken). */
+const MARTYR: Palette = ["#8a4a5a", "#ffd0d8", "#2b1820"];
+function MartyrdomScene({ lead, role, delayMs }: SceneProps) {
+  const [p0, p1, p2] = MARTYR;
+  if (role === "entrance") return <EntranceCut palette={MARTYR} glyph={GLYPH.bw3_martyrdom} delayMs={delayMs} />;
+  if (!lead) return <TargetHit palette={MARTYR} glyph={GLYPH.bw3_martyrdom} delayMs={delayMs} />;
+  return (
+    <Stage>
+      <BoardFrame>
+        {/* tell: your knight on c3 is chosen */}
+        <span className="bwp-hold absolute block" style={{ ...manBox(2, 3), animationDelay: dm(delayMs, 0), animationDuration: "calc(600ms * var(--fx-dur, 1))" }}>
+          <Man kind="n" fill={p1} stroke={p2} />
+        </span>
+        {/* strike: it falls, and a palm is laid on its empty square */}
+        <span className="bwp-shatter absolute block" style={{ ...manBox(2, 3), animationDelay: dm(delayMs, 360) }}>
+          <Man kind="n" fill={p1} stroke={p2} />
+        </span>
+        <span className="bwp-rise absolute block" style={{ ...cellBox(2, 3), animationDelay: dm(delayMs, 620), animationDuration: "calc(1150ms * var(--fx-dur, 1))" }}>
+          <svg viewBox="0 0 12 12" className="block h-full w-full" aria-hidden="true">
+            <path d="M3 10.6 C5 8 7 5 9 1.6" fill="none" stroke={p0} strokeWidth="0.6" strokeLinecap="round" />
+            <path d="M4.4 8.4 L2.4 7.4 M5.4 7 L3.2 5.6 M6.4 5.4 L4.6 3.8 M7.4 3.8 L6 2.2 M5.2 8.8 L7 8.6 M6.2 7.2 L8.2 6.8 M7.2 5.6 L9.2 5 M8.2 3.8 L9.8 3.2" stroke={p1} strokeWidth="0.55" strokeLinecap="round" />
+          </svg>
+        </span>
+        {/* the answer runs from it to their bishop on f6... */}
+        <span className="absolute block" style={{ left: "31.25%", width: "37.5%", top: bandTop(3, 6), height: "50%", ...FLIP }}>
+          <span className="bwp-facein absolute inset-0 block" style={{ animationDelay: dm(delayMs, 520), animationDuration: "calc(900ms * var(--fx-dur, 1))" }}>
+            <svg viewBox="0 0 30 40" preserveAspectRatio="none" className="block h-full w-full" aria-hidden="true">
+              <path d="M0 35 L30 5" fill="none" stroke={p1} strokeWidth="0.8" strokeDasharray="2 1.4" />
+            </svg>
+          </span>
+        </span>
+        {/* ...which is taken off the board */}
+        <span className="bwp-sink absolute block" style={{ ...manBox(5, 6), animationDelay: dm(delayMs, 820) }}>
+          <Man kind="b" fill={p2} stroke={p1} />
+        </span>
+        {/* settle: only a knight or bishop may answer; their rook and queen are struck */}
+        {[
+          { k: "r" as const, f: 0, d: 1000 },
+          { k: "q" as const, f: 3, d: 1080 },
+        ].map((v) => (
+          <span key={v.k} className="bwp-stamp absolute block" style={{ ...cellBox(v.f, 8), animationDelay: dm(delayMs, v.d) }}>
+            <svg viewBox="0 0 10 12" className="block h-full w-full" aria-hidden="true">
+              <path d="M1.4 10.6 L8.6 1.4" stroke={p0} strokeWidth="1" strokeLinecap="round" />
+            </svg>
+          </span>
+        ))}
       </BoardFrame>
     </Stage>
   );

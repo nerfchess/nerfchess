@@ -1,0 +1,84 @@
+{
+ "id": "bw3_martyrdom",
+ "url": "/dev/plays?id=bw3_martyrdom&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "bw3_martyrdom",
+  "name": "Martyrdom",
+  "tier": 3,
+  "category": "attack",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:bw3_martyrdom",
+  "anchor": "aim",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 60,
+  "drive": "engine",
+  "driveNote": "activated with 2 pick(s)",
+  "castSq": "c1",
+  "targets": [
+   "c1",
+   "c8"
+  ],
+  "picks": [
+   "c1",
+   "c8"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2322,
+  "cssEndMs": 3457,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 27,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 174,
+  "maxGapMs": 257.2
+ },
+ "raf": {
+  "frames": 217,
+  "medianMs": 16.7,
+  "maxMs": 33.3,
+  "dropped": 1
+ },
+ "longAnimationFrames": {
+  "count": 0,
+  "worstMs": 0,
+  "totalBlockingMs": 0,
+  "entries": []
+ },
+ "tiles": [
+  0,
+  179,
+  456,
+  788,
+  1161,
+  1570,
+  2008,
+  2472
+ ],
+ "png": "docs/polish-pass/evidence/TC-boon-curse/after/bw3_martyrdom.png",
+ "pngBytes": 21703,
+ "off": {
+  "url": "/dev/plays?id=bw3_martyrdom&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "docs/polish-pass/evidence/TC-boon-curse/after/bw3_martyrdom.off.png"
+ }
+}

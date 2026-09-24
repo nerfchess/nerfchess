@@ -11,8 +11,8 @@
      state is carried by the card's own zone overlay, never by the play;
    - all bwp-* classes are hidden outright when animations are off in
      Settings (guard at the bottom of this file);
-   - whole plays land inside ~1.4-1.9s. Tier 7-8 bespoke scenes stack a
-     second, later shock ring plus a board-edge glow (bwp-edge) for scale.
+   - whole plays land inside ~1.4-1.9s. Tier 3 and above cards reworked as
+     rule scenes carry no wash, shock ring or glow; there is no glow class.
 
    DIRECTION. Five of these tracks read the board-geometry custom properties
    published on the effect wrapper (see effects/geometry.ts), so a boon points
@@ -48,14 +48,6 @@
   100% { opacity: 0; transform: scale(0.74); }
 }
 .bwp-tell { animation: bwp-tell calc(0.36s * var(--fx-dur, 1)) cubic-bezier(0.55, 0, 1, 0.45) both; }
-
-/* Board-edge glow — tier 7-8 grandeur only. */
-@keyframes bwp-edge {
-  0% { opacity: 0; transform: scale(0.92); }
-  35% { opacity: 1; transform: scale(1); }
-  100% { opacity: 0; transform: scale(1.03); }
-}
-.bwp-edge { animation: bwp-edge calc(0.9s * var(--fx-dur, 1)) cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* --- Arrivals ------------------------------------------------------------- */
 

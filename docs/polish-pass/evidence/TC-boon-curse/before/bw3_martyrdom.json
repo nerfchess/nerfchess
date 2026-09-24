@@ -1,0 +1,94 @@
+{
+ "id": "bw3_martyrdom",
+ "url": "/dev/plays?id=bw3_martyrdom&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "bw3_martyrdom",
+  "name": "Martyrdom",
+  "tier": 3,
+  "category": "attack",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:bw3_martyrdom",
+  "anchor": "aim",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 60,
+  "drive": "engine",
+  "driveNote": "activated with 2 pick(s)",
+  "castSq": "c1",
+  "targets": [
+   "c1",
+   "c8"
+  ],
+  "picks": [
+   "c1",
+   "c8"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 3149,
+  "cssEndMs": 3481,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 40,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 202,
+  "maxGapMs": 293
+ },
+ "raf": {
+  "frames": 202,
+  "medianMs": 16.7,
+  "maxMs": 216.6,
+  "dropped": 17
+ },
+ "longAnimationFrames": {
+  "count": 2,
+  "worstMs": 228,
+  "totalBlockingMs": 175,
+  "entries": [
+   {
+    "atMs": -53,
+    "duration": 58,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 843,
+    "duration": 228,
+    "blocking": 175,
+    "scripts": [
+     {
+      "duration": 223,
+      "invoker": "http://localhost:3000/_next/static/chunks/_app-pages-browser_src_components_effe...",
+      "source": "/_next/static/chunks/_app-pages-browser_src_components_effects_board3d_engine3d_ts.js"
+     }
+    ]
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  239,
+  608,
+  1051,
+  1550,
+  2095,
+  2679,
+  3299
+ ],
+ "png": "docs/polish-pass/evidence/TC-boon-curse/before/bw3_martyrdom.png",
+ "pngBytes": 29582
+}
