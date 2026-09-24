@@ -1,0 +1,98 @@
+{
+ "id": "hx4_glass_floor",
+ "url": "/dev/plays?id=hx4_glass_floor&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "hx4_glass_floor",
+  "name": "Glass Floor",
+  "tier": 7,
+  "category": "hex",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:hx4_glass_floor",
+  "anchor": "cast",
+  "source": "blindfold",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 45,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, blindfold diff",
+  "castSq": "c7",
+  "targets": [
+   "c7",
+   "d7",
+   "e7"
+  ],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2461,
+  "cssEndMs": 3419,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 56,
+  "infiniteAnimations": 6
+ },
+ "screencast": {
+  "framesInWindow": 189,
+  "maxGapMs": 99.3
+ },
+ "raf": {
+  "frames": 176,
+  "medianMs": 16.7,
+  "maxMs": 466.7,
+  "dropped": 42
+ },
+ "longAnimationFrames": {
+  "count": 3,
+  "worstMs": 444,
+  "totalBlockingMs": 397,
+  "entries": [
+   {
+    "atMs": -62,
+    "duration": 69,
+    "blocking": 6,
+    "scripts": []
+   },
+   {
+    "atMs": 1168,
+    "duration": 53,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 1594,
+    "duration": 444,
+    "blocking": 391,
+    "scripts": [
+     {
+      "duration": 438,
+      "invoker": "http://localhost:3000/_next/static/chunks/_app-pages-browser_src_components_effe...",
+      "source": "/_next/static/chunks/_app-pages-browser_src_components_effects_board3d_engine3d_ts.js"
+     }
+    ]
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  189,
+  481,
+  832,
+  1227,
+  1658,
+  2120,
+  2611
+ ],
+ "png": "docs/polish-pass/evidence/TC-g/before/hx4_glass_floor.png",
+ "pngBytes": 33589
+}

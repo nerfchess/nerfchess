@@ -1192,29 +1192,7 @@ function ArcheryButt({ role, delayMs }: SceneProps) {
       </Cut>
     );
   }
-  return (
-    <AimLead centred d={delayMs} frame={<><Wash tone="rgba(217,139,74,0.26)" d={70} /><Rim tone="rgba(255,240,212,0.28)" d={150} /></>}>
-      {/* tell: the range scribed out to where the shot could have gone */}
-      <L c="g44-tellline" d={90} s={{ ...lane(0.13), background: "#fff0d4" }} />
-      {/* the stock on the cast square */}
-      <V c="g44-bow-stock" d={190} s={box(2.4, 1.6, -0.2)}>
-        <path d="M3 11h13l5-3v8l-5-3H3z" fill="#2a1508" stroke="#d98b4a" strokeWidth="1.2" {...SJ} />
-        <path d="M16 4v16" stroke="#d98b4a" strokeWidth="1.4" strokeLinecap="round" />
-      </V>
-      {/* the bolt runs the real distance, once, before the rule lands */}
-      <L c="g44-run1" d={280} s={{ ...box(1, 0.22, 0.5), borderRadius: "999px", background: "linear-gradient(90deg, transparent, #fff0d4)" }} />
-      {/* strike: the butt is hauled the whole way in from the far square */}
-      <V c="g44-haul1" d={400} s={{ ...box(1, 1, 0.5), filter: "drop-shadow(0 0 5px #d98b4a)" }}>{butt}</V>
-      {/* and re-pegged at exactly one square out */}
-      <L c="g44-bow-peg" d={560} s={{ ...box(0.34, 1.6, 1), background: "linear-gradient(180deg, #2a1508, #d98b4a)", border: "1px solid #fff0d4" }} />
-      {/* everything past the peg is struck off the range */}
-      <L c="g44-bow-strike" d={620} s={{ ...seg(0.25, 1, 0.22), background: "repeating-linear-gradient(90deg, #2a1508 0 10%, transparent 10% 24%)" }} />
-      {/* settle: straw off the butt, thrown away from the caster */}
-      {R3.map((i) => (
-        <L key={i} c="g44-grit" d={700 + i * 45} s={{ ...box(0.34, 0.14, 1 + [0.2, -0.2, 0.5][i], [-0.4, 0.5, 0.1][i]), background: "#fff0d4", "--sx": ["150%", "-140%", "180%"][i], "--sy": "calc(var(--fx-side, 1) * -170%)" }} />
-      ))}
-    </AimLead>
-  );
+  return null;
 }
 
 /* =============================================================================
@@ -2886,6 +2864,86 @@ function PuppetCourtRule({ lead, role, delayMs }: SceneProps) {
   );
 }
 
+/** Centre of file `c` counted from the caster's left (0) as the caster sees it. */
+function fc(c: number): string {
+  return `calc(50% + var(--fx-side, 1) * ${(c - 3.5) * 12.5}%)`;
+}
+
+/** A dotted thread from square (c0, r0) to (c1, r1), drawn from its first end.
+ *  The angle turns half a circle with the side so the thread still starts at
+ *  (c0, r0) when the caster sits at the top. */
+function Thread({ c0, r0, c1, r1, color, delayMs, gd = "1.6s" }: { c0: number; r0: number; c1: number; r1: number; color: string; delayMs: number; gd?: string }) {
+  const dx = (c1 - c0) * 12.5;
+  const dy = -(r1 - r0) * 12.5;
+  const len = Math.hypot(dx, dy);
+  const deg = Math.round((Math.atan2(dy, dx) * 180) / Math.PI);
+  return <Ray x={fc(c0)} y={rk(r0)} len={len} angle={`calc(${deg}deg + (1 - var(--fx-side, 1)) * 90deg)`} color={color} delayMs={delayMs} gd={gd} />;
+}
+
+/** Half a turn when the caster sits at the top, so a pointed prop still points
+ *  the way the rule sends it. */
+const FLIP = "calc((1 - var(--fx-side, 1)) * 90deg)";
+
+/* --- hx4_crossbow_curfew -----------------------------------------------------------
+   "After your opponent's next move, for their following 4 turns they may only
+   capture from 1 square away. Long range kills are forbidden." An enemy
+   bishop on c5 with a crossbow at its shoulder lines up the long diagonal on
+   the caster's f2 pawn; the bolt flies, is stamped out two squares short and drops;
+   the eight squares round the bishop light as the only range it has left, and
+   the caster's pawn on d4, one square away, is the capture that still stands;
+   one open pip (their next move first) then four pips. */
+const C_CCR = { core: "#d98b4a", glow: "#fff0d4", deep: "#2a1508" };
+
+function CrossbowCurfewRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <ArcheryButt lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_CCR;
+  const d = delayMs;
+  const bolt = (
+    <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+      <path d="M3 3L15.4 15.4" stroke={c.glow} strokeWidth="2" {...SJ} />
+      <path d="M17.6 17.6l-6.4-1.6 4.8-4.8z" fill={c.core} stroke={c.deep} strokeWidth="0.8" {...SJ} />
+      <path d="M3 3l3.4 0.4M3 3l0.4 3.4" stroke={c.core} strokeWidth="1.4" {...SJ} />
+    </svg>
+  );
+  return (
+    <Brd>
+      <Q x={fc(2)} y={rk(4)} w={11} h={11} cls="g44-r-in" delayMs={d + 40} v={{ "--gd": "2.1s" }}>
+        <Man kind="b" fill={c.deep} stroke={c.core} />
+      </Q>
+      <Q x={`calc(${fc(2)} + 4%)`} y={`calc(${rk(4)} + 3%)`} w={7} h={5} cls="g44-r-stamp" delayMs={d + 140} v={{ "--gd": "1.1s" }} style={{ rotate: FLIP }}>
+        <svg viewBox="0 0 24 16" className="block h-full w-full" aria-hidden="true">
+          <path d="M2 8h16" stroke={c.deep} strokeWidth="2.6" {...SJ} />
+          <path d="M12 1.6q5 6.4 0 12.8" fill="none" stroke={c.core} strokeWidth="1.8" {...SJ} />
+          <path d="M12 1.6L7 8l5 6.4" fill="none" stroke={c.glow} strokeWidth="0.8" {...SJ} />
+          <path d="M18 8l4-2v4z" fill={c.glow} />
+        </svg>
+      </Q>
+      <Q x={fc(5)} y={rk(1)} w={10} h={10} cls="g44-r-pip" delayMs={d + 120} v={{ "--gd": "1.5s" }} style={{ border: `2px solid ${c.core}`, borderRadius: "50%" }} />
+      <Thread c0={2} r0={4} c1={5} r1={1} color={c.glow} delayMs={d + 200} gd="1.1s" />
+      <Q x={fc(4)} y={rk(2)} w={5} h={5} cls="g44-r-go" delayMs={d + 300} v={{ "--gd": "0.6s", "--tx0": "calc(var(--fx-side, 1) * -250%)", "--ty0": "calc(var(--fx-side, 1) * -250%)", "--tx1": "0%", "--ty1": "0%" }} style={{ rotate: FLIP }}>
+        {bolt}
+      </Q>
+      <Q x={fc(4)} y={rk(2)} w={5} h={5} cls="g44-r-part" delayMs={d + 740} v={{ "--gd": "0.7s", "--tx1": "30%", "--ty1": "calc(var(--fx-side, 1) * 90%)", "--r1": "70deg" }} style={{ rotate: FLIP }}>
+        {bolt}
+      </Q>
+      <Q x={fc(3.5)} y={rk(2.5)} w={8} h={8} cls="g44-r-stamp" delayMs={d + 640} v={{ "--gd": "1.1s" }}>
+        <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+          <path d="M4 4l12 12M16 4L4 16" stroke={c.core} strokeWidth="3" {...SJ} />
+          <path d="M4 4l12 12M16 4L4 16" stroke={c.deep} strokeWidth="1" {...SJ} />
+        </svg>
+      </Q>
+      <Tint x={fc(2)} y={rk(4)} w={37.5} h={37.5} color="rgba(217,139,74,0.26)" delayMs={d + 900} gd="1.5s" />
+      <Q x={fc(2)} y={rk(4)} w={37.5} h={37.5} cls="g44-r-in" delayMs={d + 900} v={{ "--gd": "1.5s", "--s0": "1.2" }} style={{ border: `2px dashed ${c.core}` }} />
+      <Q x={fc(3)} y={rk(3)} w={11} h={11} cls="g44-r-in" delayMs={d + 960} v={{ "--gd": "1.4s" }}>
+        <Man kind="p" fill={c.glow} stroke={c.deep} />
+      </Q>
+      <Thread c0={2} r0={4} c1={3} r1={3} color={c.core} delayMs={d + 1100} gd="1.2s" />
+      <Q x="60%" y={rk(5.2)} w={3} h={3} cls="g44-r-pip" delayMs={d + 1040} v={{ "--gd": "1.3s" }} style={{ border: `1.5px solid ${c.glow}`, borderRadius: "50%" }} />
+      <Pips n={4} r={5.2} x0={66} x1={84} color={c.core} delayMs={d + 1120} gd="1.3s" />
+      <Q x={fc(2)} y={rk(4.8)} w={24} h={2} cls="g44-r-lean" delayMs={d + 1600} v={{ "--gd": "0.9s" }} style={{ borderRadius: "999px", background: "rgba(217,139,74,0.5)" }} />
+    </Brd>
+  );
+}
 /* =============================================================================
    Registry. Two spaces of indent at object depth 1: the animation audit and
    check-sig-plugins.cjs parse this table as TEXT.
@@ -2958,7 +3016,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   },
   hx4_crossbow_curfew: {
     config: { ordering: "line", staggerMs: 60, victims: "all", hasLead: true, sound: "siege", anchor: "board" },
-    Render: ArcheryButt,
+    Render: CrossbowCurfewRule,
   },
   ov_portal_pair: {
     config: { ordering: "line", staggerMs: 60, victims: "all", hasLead: true, sound: "blitz", anchor: "board" },
@@ -3208,7 +3266,6 @@ const IMPACTS: Record<string, Imp> = {
   // the shutter GUTTERS the lantern: darkness lands like a weight
   hx4_lantern_out: { at: 600, tint: "#f0c46a", laser: true, shock: true, y: 48, s: 6.2 },
   // the curfew bolt thuds into the butt at the marked hour
-  hx4_crossbow_curfew: { at: 560, tint: "#d98b4a", laser: true, shock: true, y: 50, s: 5.6 },
   // both mouths gulp at once: the twin portal slams its rim
   ov_portal_pair: { at: 560, tint: "#7fe0d0", laser: true, shock: true, y: 50, s: 7.4 },
   // the ghost steps land: the LAST print strikes at full reach

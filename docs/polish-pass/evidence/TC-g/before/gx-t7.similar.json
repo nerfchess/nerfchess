@@ -1,0 +1,465 @@
+{
+ "method": "cosine similarity of per-tile (tile minus pre-play tile) 24x24 grey thumbnails, standardised per tile and then weighted by the tile's raw energy over the card's peak (so near-empty tiles count for little); 1 = same look, near 0 = unrelated. Every tier 6+ bespoke card shares the cast wrapper's ring and beam (TC0-f), so expect a floor well above 0",
+ "cards": 12,
+ "sheetPicks": {
+  "bn4_eye_of_ages": "+1277ms (energy 1 of peak)",
+  "bn4_feast_of_fools": "+821ms (energy 0.95 of peak)",
+  "bn4_harbor_queen": "+818ms (energy 0.83 of peak)",
+  "bn4_salt_in_the_wound": "+825ms (energy 1 of peak)",
+  "bn4_wardens_retirement": "+838ms (energy 1 of peak)",
+  "hx4_crossbow_curfew": "+824ms (energy 0.9 of peak)",
+  "hx4_glass_floor": "+481ms (energy 1 of peak)",
+  "hx4_muster_silence": "+484ms (energy 1 of peak)",
+  "hx4_veil_of_moths": "+818ms (energy 0.93 of peak)",
+  "ov_all_the_kings_men": "+1221ms (energy 1 of peak)",
+  "ov_big_nap": "+839ms (energy 1 of peak)",
+  "ov_patient_grift": "+816ms (energy 1 of peak)"
+ },
+ "generic": {
+  "method": "cosine similarity of the card's weighted look vector to the mean weighted look of the other cards in this sheet (leave-one-out); highest = least card-specific",
+  "ranking": [
+   {
+    "card": "bn4_harbor_queen",
+    "tier": 7,
+    "closeness": 0.914
+   },
+   {
+    "card": "bn4_feast_of_fools",
+    "tier": 7,
+    "closeness": 0.901
+   },
+   {
+    "card": "hx4_crossbow_curfew",
+    "tier": 7,
+    "closeness": 0.9
+   },
+   {
+    "card": "hx4_muster_silence",
+    "tier": 7,
+    "closeness": 0.891
+   },
+   {
+    "card": "hx4_veil_of_moths",
+    "tier": 7,
+    "closeness": 0.84
+   },
+   {
+    "card": "bn4_wardens_retirement",
+    "tier": 7,
+    "closeness": 0.814
+   },
+   {
+    "card": "bn4_eye_of_ages",
+    "tier": 7,
+    "closeness": 0.743
+   },
+   {
+    "card": "bn4_salt_in_the_wound",
+    "tier": 7,
+    "closeness": 0.724
+   },
+   {
+    "card": "hx4_glass_floor",
+    "tier": 7,
+    "closeness": 0.707
+   },
+   {
+    "card": "ov_big_nap",
+    "tier": 7,
+    "closeness": 0.663
+   },
+   {
+    "card": "ov_all_the_kings_men",
+    "tier": 7,
+    "closeness": 0.657
+   },
+   {
+    "card": "ov_patient_grift",
+    "tier": 7,
+    "closeness": 0.63
+   }
+  ]
+ },
+ "pairs": [
+  {
+   "a": "bn4_harbor_queen",
+   "b": "hx4_crossbow_curfew",
+   "similarity": 0.911
+  },
+  {
+   "a": "bn4_feast_of_fools",
+   "b": "bn4_harbor_queen",
+   "similarity": 0.905
+  },
+  {
+   "a": "hx4_crossbow_curfew",
+   "b": "hx4_muster_silence",
+   "similarity": 0.889
+  },
+  {
+   "a": "bn4_harbor_queen",
+   "b": "hx4_muster_silence",
+   "similarity": 0.885
+  },
+  {
+   "a": "bn4_feast_of_fools",
+   "b": "hx4_crossbow_curfew",
+   "similarity": 0.877
+  },
+  {
+   "a": "bn4_feast_of_fools",
+   "b": "hx4_muster_silence",
+   "similarity": 0.846
+  },
+  {
+   "a": "bn4_harbor_queen",
+   "b": "hx4_veil_of_moths",
+   "similarity": 0.843
+  },
+  {
+   "a": "bn4_feast_of_fools",
+   "b": "hx4_veil_of_moths",
+   "similarity": 0.833
+  },
+  {
+   "a": "hx4_crossbow_curfew",
+   "b": "hx4_veil_of_moths",
+   "similarity": 0.802
+  },
+  {
+   "a": "hx4_muster_silence",
+   "b": "hx4_veil_of_moths",
+   "similarity": 0.789
+  },
+  {
+   "a": "bn4_eye_of_ages",
+   "b": "hx4_muster_silence",
+   "similarity": 0.747
+  },
+  {
+   "a": "bn4_wardens_retirement",
+   "b": "hx4_crossbow_curfew",
+   "similarity": 0.744
+  },
+  {
+   "a": "bn4_eye_of_ages",
+   "b": "hx4_veil_of_moths",
+   "similarity": 0.739
+  },
+  {
+   "a": "bn4_harbor_queen",
+   "b": "bn4_wardens_retirement",
+   "similarity": 0.736
+  },
+  {
+   "a": "bn4_wardens_retirement",
+   "b": "hx4_muster_silence",
+   "similarity": 0.731
+  },
+  {
+   "a": "bn4_salt_in_the_wound",
+   "b": "bn4_wardens_retirement",
+   "similarity": 0.724
+  },
+  {
+   "a": "bn4_feast_of_fools",
+   "b": "bn4_wardens_retirement",
+   "similarity": 0.716
+  },
+  {
+   "a": "bn4_eye_of_ages",
+   "b": "bn4_harbor_queen",
+   "similarity": 0.709
+  },
+  {
+   "a": "bn4_eye_of_ages",
+   "b": "hx4_crossbow_curfew",
+   "similarity": 0.708
+  },
+  {
+   "a": "bn4_eye_of_ages",
+   "b": "bn4_feast_of_fools",
+   "similarity": 0.706
+  },
+  {
+   "a": "bn4_eye_of_ages",
+   "b": "bn4_salt_in_the_wound",
+   "similarity": 0.702
+  },
+  {
+   "a": "bn4_harbor_queen",
+   "b": "hx4_glass_floor",
+   "similarity": 0.695
+  },
+  {
+   "a": "hx4_glass_floor",
+   "b": "hx4_muster_silence",
+   "similarity": 0.682
+  },
+  {
+   "a": "hx4_crossbow_curfew",
+   "b": "hx4_glass_floor",
+   "similarity": 0.675
+  },
+  {
+   "a": "bn4_feast_of_fools",
+   "b": "hx4_glass_floor",
+   "similarity": 0.673
+  },
+  {
+   "a": "bn4_wardens_retirement",
+   "b": "ov_patient_grift",
+   "similarity": 0.67
+  },
+  {
+   "a": "bn4_salt_in_the_wound",
+   "b": "hx4_muster_silence",
+   "similarity": 0.664
+  },
+  {
+   "a": "bn4_feast_of_fools",
+   "b": "ov_all_the_kings_men",
+   "similarity": 0.663
+  },
+  {
+   "a": "bn4_wardens_retirement",
+   "b": "hx4_veil_of_moths",
+   "similarity": 0.655
+  },
+  {
+   "a": "hx4_glass_floor",
+   "b": "hx4_veil_of_moths",
+   "similarity": 0.653
+  },
+  {
+   "a": "bn4_salt_in_the_wound",
+   "b": "hx4_crossbow_curfew",
+   "similarity": 0.652
+  },
+  {
+   "a": "bn4_harbor_queen",
+   "b": "bn4_salt_in_the_wound",
+   "similarity": 0.635
+  },
+  {
+   "a": "bn4_feast_of_fools",
+   "b": "bn4_salt_in_the_wound",
+   "similarity": 0.63
+  },
+  {
+   "a": "hx4_crossbow_curfew",
+   "b": "ov_all_the_kings_men",
+   "similarity": 0.63
+  },
+  {
+   "a": "bn4_harbor_queen",
+   "b": "ov_all_the_kings_men",
+   "similarity": 0.625
+  },
+  {
+   "a": "bn4_harbor_queen",
+   "b": "ov_big_nap",
+   "similarity": 0.621
+  },
+  {
+   "a": "bn4_wardens_retirement",
+   "b": "ov_big_nap",
+   "similarity": 0.608
+  },
+  {
+   "a": "bn4_feast_of_fools",
+   "b": "ov_big_nap",
+   "similarity": 0.604
+  },
+  {
+   "a": "bn4_salt_in_the_wound",
+   "b": "hx4_veil_of_moths",
+   "similarity": 0.602
+  },
+  {
+   "a": "hx4_veil_of_moths",
+   "b": "ov_all_the_kings_men",
+   "similarity": 0.602
+  },
+  {
+   "a": "hx4_crossbow_curfew",
+   "b": "ov_big_nap",
+   "similarity": 0.601
+  },
+  {
+   "a": "hx4_veil_of_moths",
+   "b": "ov_big_nap",
+   "similarity": 0.593
+  },
+  {
+   "a": "hx4_muster_silence",
+   "b": "ov_all_the_kings_men",
+   "similarity": 0.591
+  },
+  {
+   "a": "bn4_wardens_retirement",
+   "b": "hx4_glass_floor",
+   "similarity": 0.59
+  },
+  {
+   "a": "bn4_feast_of_fools",
+   "b": "ov_patient_grift",
+   "similarity": 0.588
+  },
+  {
+   "a": "hx4_muster_silence",
+   "b": "ov_big_nap",
+   "similarity": 0.585
+  },
+  {
+   "a": "bn4_eye_of_ages",
+   "b": "bn4_wardens_retirement",
+   "similarity": 0.581
+  },
+  {
+   "a": "bn4_harbor_queen",
+   "b": "ov_patient_grift",
+   "similarity": 0.576
+  },
+  {
+   "a": "bn4_salt_in_the_wound",
+   "b": "hx4_glass_floor",
+   "similarity": 0.575
+  },
+  {
+   "a": "bn4_wardens_retirement",
+   "b": "ov_all_the_kings_men",
+   "similarity": 0.565
+  },
+  {
+   "a": "bn4_eye_of_ages",
+   "b": "hx4_glass_floor",
+   "similarity": 0.563
+  },
+  {
+   "a": "hx4_muster_silence",
+   "b": "ov_patient_grift",
+   "similarity": 0.559
+  },
+  {
+   "a": "hx4_crossbow_curfew",
+   "b": "ov_patient_grift",
+   "similarity": 0.552
+  },
+  {
+   "a": "bn4_salt_in_the_wound",
+   "b": "ov_patient_grift",
+   "similarity": 0.54
+  },
+  {
+   "a": "ov_all_the_kings_men",
+   "b": "ov_big_nap",
+   "similarity": 0.537
+  },
+  {
+   "a": "ov_big_nap",
+   "b": "ov_patient_grift",
+   "similarity": 0.523
+  },
+  {
+   "a": "ov_all_the_kings_men",
+   "b": "ov_patient_grift",
+   "similarity": 0.486
+  },
+  {
+   "a": "hx4_glass_floor",
+   "b": "ov_all_the_kings_men",
+   "similarity": 0.464
+  },
+  {
+   "a": "bn4_eye_of_ages",
+   "b": "ov_big_nap",
+   "similarity": 0.462
+  },
+  {
+   "a": "bn4_salt_in_the_wound",
+   "b": "ov_big_nap",
+   "similarity": 0.456
+  },
+  {
+   "a": "hx4_glass_floor",
+   "b": "ov_big_nap",
+   "similarity": 0.454
+  },
+  {
+   "a": "hx4_veil_of_moths",
+   "b": "ov_patient_grift",
+   "similarity": 0.441
+  },
+  {
+   "a": "bn4_eye_of_ages",
+   "b": "ov_all_the_kings_men",
+   "similarity": 0.416
+  },
+  {
+   "a": "bn4_eye_of_ages",
+   "b": "ov_patient_grift",
+   "similarity": 0.416
+  },
+  {
+   "a": "bn4_salt_in_the_wound",
+   "b": "ov_all_the_kings_men",
+   "similarity": 0.415
+  },
+  {
+   "a": "hx4_glass_floor",
+   "b": "ov_patient_grift",
+   "similarity": 0.413
+  }
+ ],
+ "nearest": {
+  "bn4_eye_of_ages": {
+   "card": "hx4_muster_silence",
+   "similarity": 0.747
+  },
+  "bn4_feast_of_fools": {
+   "card": "bn4_harbor_queen",
+   "similarity": 0.905
+  },
+  "bn4_harbor_queen": {
+   "card": "hx4_crossbow_curfew",
+   "similarity": 0.911
+  },
+  "bn4_salt_in_the_wound": {
+   "card": "bn4_wardens_retirement",
+   "similarity": 0.724
+  },
+  "bn4_wardens_retirement": {
+   "card": "hx4_crossbow_curfew",
+   "similarity": 0.744
+  },
+  "hx4_crossbow_curfew": {
+   "card": "bn4_harbor_queen",
+   "similarity": 0.911
+  },
+  "hx4_glass_floor": {
+   "card": "bn4_harbor_queen",
+   "similarity": 0.695
+  },
+  "hx4_muster_silence": {
+   "card": "hx4_crossbow_curfew",
+   "similarity": 0.889
+  },
+  "hx4_veil_of_moths": {
+   "card": "bn4_harbor_queen",
+   "similarity": 0.843
+  },
+  "ov_all_the_kings_men": {
+   "card": "bn4_feast_of_fools",
+   "similarity": 0.663
+  },
+  "ov_big_nap": {
+   "card": "bn4_harbor_queen",
+   "similarity": 0.621
+  },
+  "ov_patient_grift": {
+   "card": "bn4_wardens_retirement",
+   "similarity": 0.67
+  }
+ }
+}

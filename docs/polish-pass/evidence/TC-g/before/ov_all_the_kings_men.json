@@ -1,0 +1,69 @@
+{
+ "id": "ov_all_the_kings_men",
+ "url": "/dev/plays?id=ov_all_the_kings_men&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "ov_all_the_kings_men",
+  "name": "All the King's Men",
+  "tier": 7,
+  "category": "pieces",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:ov_all_the_kings_men",
+  "anchor": "cast",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 70,
+  "drive": "engine",
+  "driveNote": "activated, no targets",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2449,
+  "cssEndMs": 3471,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 40,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 163,
+  "maxGapMs": 318.9
+ },
+ "raf": {
+  "frames": 209,
+  "medianMs": 16.7,
+  "maxMs": 50,
+  "dropped": 9
+ },
+ "longAnimationFrames": {
+  "count": 0,
+  "worstMs": 0,
+  "totalBlockingMs": 0,
+  "entries": []
+ },
+ "tiles": [
+  0,
+  188,
+  479,
+  828,
+  1221,
+  1650,
+  2111,
+  2599
+ ],
+ "png": "docs/polish-pass/evidence/TC-g/before/ov_all_the_kings_men.png",
+ "pngBytes": 32772
+}

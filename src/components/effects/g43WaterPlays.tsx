@@ -1594,18 +1594,7 @@ function MusterSilenceScene({ role, delayMs }: SceneProps) {
       <L c="g43-hit2" l={30} t={56} w={40} h={24} d={260} st={{ borderRadius: "50%", border: "2px solid #a8b6a0" }} />
     </Cut>
   );
-  return (
-    <Lead d={delayMs} frame={<><Wash tone="rgba(168,182,160,0.24)" /><Rim tone="rgba(18,38,44,0.46)" /><Tide tone="rgba(18,38,44,0.5)" /></>}>
-      <L c="g43-lean" l={43} t={55} w={14} h={2} d={80} st={{ borderRadius: "999px", background: "rgba(18,38,44,0.65)" }} />
-      <V c="g43-ms-bell" l={44} t={40} w={12} h={14} d={240}>{dbell}</V>
-      <L c="g43-ms-air" l={46.6} t={46} w={6.8} h={5} d={380} st={{ background: "rgba(255,244,214,0.6)", transformOrigin: "50% 0%" }} />
-      <L c="g43-ms-hush" l={43} t={45} w={14} h={14} d={520} st={{ borderRadius: "50%", border: "2px solid #a8b6a0" }} />
-      <L c="g43-drift" l={41} t={52} w={18} h={4} d={620} st={{ background: "linear-gradient(180deg, rgba(168,182,160,0.55), transparent)" }} />
-      {[0, 1, 2, 3].map((i) => (
-        <L key={i} c="g43-motes" l={43 + i * 4} t={50} w={1.3} h={1.3} d={710} st={{ borderRadius: "50%", background: "#fff4d6" }} />
-      ))}
-    </Lead>
-  );
+  return null;
 }
 
 /* --- 34. Cornucopia (t8) — THE NET COMES UP ---------------------------------
@@ -2201,6 +2190,68 @@ function HavenLawRule({ lead, role, delayMs }: SceneProps) {
   );
 }
 
+/** Centre of file `c` counted from the caster's left (0) as the caster sees it. */
+function fc(c: number): string {
+  return `calc(50% + var(--fx-side, 1) * ${(c - 3.5) * 12.5}%)`;
+}
+
+/** A dotted thread from square (c0, r0) to (c1, r1), drawn from its first end.
+ *  The angle turns half a circle with the side so the thread still starts at
+ *  (c0, r0) when the caster sits at the top. */
+function Thread({ c0, r0, c1, r1, color, delayMs, gd = "1.6s" }: { c0: number; r0: number; c1: number; r1: number; color: string; delayMs: number; gd?: string }) {
+  const dx = (c1 - c0) * 12.5;
+  const dy = -(r1 - r0) * 12.5;
+  const len = Math.hypot(dx, dy);
+  const deg = Math.round((Math.atan2(dy, dx) * 180) / Math.PI);
+  return <Ray x={fc(c0)} y={rk(r0)} len={len} angle={`calc(${deg}deg + (1 - var(--fx-side, 1)) * 90deg)`} color={color} delayMs={delayMs} gd={gd} />;
+}
+
+/* --- hx4_muster_silence ------------------------------------------------------------
+   "For your opponent's next 2 turns, any piece of theirs that is defended by
+   another of their pieces may not move. Only the unguarded stragglers may act.
+   Their king is exempt." Guard threads are drawn between their men (knight to
+   pawn, queen to pawn, bishop to pawn); every guarded man is hushed, a lips
+   seal stamped on the ones the threads found and their squares gone dark; the
+   two rooks in the corners, guarded by nobody, stay lit and ready; the king
+   is ringed and left free; two turn pips. */
+const C_MSR = { core: "#a8b6a0", glow: "#fff4d6", deep: "#12262c" };
+
+function Hush({ c }: { c: typeof C_MSR }) {
+  return (
+    <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+      <circle cx="10" cy="10" r="8.4" fill={c.deep} stroke={c.core} strokeWidth="1.4" />
+      <path d="M5 11.4q5 2.6 10 0" fill="none" stroke={c.glow} strokeWidth="1.6" {...SJ} />
+      <path d="M10 4.4v11.2" stroke={c.glow} strokeWidth="2.2" {...SJ} />
+    </svg>
+  );
+}
+
+function MusterSilenceRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <MusterSilenceScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_MSR;
+  const d = delayMs;
+  const dark = "rgba(18,38,44,0.58)";
+  return (
+    <Brd>
+      <Thread c0={6} r0={7} c1={4} r1={6} color={c.glow} delayMs={d + 90} />
+      <Thread c0={3} r0={7} c1={3} r1={6} color={c.glow} delayMs={d + 170} />
+      <Thread c0={2} r0={7} c1={1} r1={6} color={c.glow} delayMs={d + 250} />
+      <Tint x="50%" y={rk(6)} w={100} color={dark} delayMs={d + 420} gd="2s" />
+      <Tint x={fc(2)} y={rk(7)} w={37.5} color={dark} delayMs={d + 470} gd="1.95s" />
+      <Tint x={fc(5.5)} y={rk(7)} w={25} color={dark} delayMs={d + 470} gd="1.95s" />
+      {[[4, 6], [3, 6], [1, 6], [6, 7]].map(([fx, fr], i) => (
+        <Q key={i} x={fc(fx)} y={rk(fr)} w={8.4} h={8.4} cls="g43-r-stamp" delayMs={d + 560 + i * 90} v={{ "--gd": "1.5s" }}>
+          <Hush c={c} />
+        </Q>
+      ))}
+      <Q x={fc(0)} y={rk(7)} w={11.5} h={11.5} cls="g43-r-pip" delayMs={d + 900} v={{ "--gd": "1.3s" }} style={{ border: `2px solid ${c.glow}`, borderRadius: "2px" }} />
+      <Q x={fc(7)} y={rk(7)} w={11.5} h={11.5} cls="g43-r-pip" delayMs={d + 960} v={{ "--gd": "1.25s" }} style={{ border: `2px solid ${c.glow}`, borderRadius: "2px" }} />
+      <Q x={KING_X} y={rk(7)} w={11} h={11} cls="g43-r-in" delayMs={d + 760} v={{ "--gd": "1.5s" }} style={{ border: `2px dashed ${c.core}`, borderRadius: "50%" }} />
+      <Pips n={2} r={4.7} x0={47} x1={53} color={c.glow} delayMs={d + 1040} gd="1.2s" />
+      <Q x="50%" y={rk(5.4)} w={30} h={2} cls="g43-r-lean" delayMs={d + 1500} v={{ "--gd": "0.9s" }} style={{ borderRadius: "999px", background: "rgba(168,182,160,0.55)" }} />
+    </Brd>
+  );
+}
 /* =============================================================================
    Registry. Every entry declares an anchor; every `sound` is an existing
    SigSoundKey. `source` is deliberately omitted throughout: these cards carry
@@ -2246,7 +2297,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   bn4_parade_polish: S(ParadePolishScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "vault", anchor: "cast" }),
   bn4_green_recruit: S(GreenRecruitScene, { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "aegis", anchor: "cast" }),
   ov_milkmans_round: S(MilkmansRoundScene, { ordering: "radial", staggerMs: 60, victims: ["p"], hasLead: true, sound: "dice", anchor: "cast" }),
-  hx4_muster_silence: S(MusterSilenceScene, { ordering: "octagon", staggerMs: 60, victims: "all", hasLead: true, sound: "cathedral", anchor: "board" }),
+  hx4_muster_silence: S(MusterSilenceRule, { ordering: "octagon", staggerMs: 60, victims: "all", hasLead: true, sound: "cathedral", anchor: "board" }),
   bn4_cornucopia: S(CornucopiaScene, { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "crownrain", anchor: "board" }),
   op_wet_floor_sign: S(WetFloorSignScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "slots", anchor: "cast" }),
   bn4_trade_secret: S(TradeSecretScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coinflip", anchor: "board" }),
@@ -2428,8 +2479,6 @@ const IMPACTS: Record<string, Imp> = {
   bn4_green_recruit: { at: 520, tint: "#96c86a", glyph: impGlyph(DROP, "#96c86a", "#24361f"), wet: true, y: 50 },
   // the milk churn tips off the cart: a white crash on the step
   ov_milkmans_round: { at: 460, tint: "#b6c6cf", laser: true, wet: true, y: 54, s: 7 },
-  // the muster is silenced: the signal drum hits the wet ground
-  hx4_muster_silence: { at: 520, tint: "#a8b6a0", laser: true, wet: true, y: 52, s: 6.6 },
   // the cornucopia UPENDS: the horn's flood hits the table
   bn4_cornucopia: { at: 600, tint: "#cbd8dd", laser: true, wet: true, y: 52, s: 8 },
   // the sign goes down and SO DOES SOMEONE: slapstick wet crash
