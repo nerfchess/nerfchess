@@ -1,0 +1,2381 @@
+{
+ "generatedAt": "2026-09-24T11:41:34.537Z",
+ "routes": [
+  "/about",
+  "/guide",
+  "/guide/buff-mode",
+  "/tutorial/first-game"
+ ],
+ "states": [
+  "390x844|dark|full|signed-out|normal",
+  "1280x800|dark|full|signed-out|normal"
+ ],
+ "probes": [
+  "cls",
+  "console"
+ ],
+ "summary": [
+  {
+   "route": "/about",
+   "state": "390x844|dark|full|signed-out|normal",
+   "status": 200,
+   "cls": 0.001,
+   "clsSum": 0.001,
+   "shiftsOver001": 0,
+   "topOffender": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+   "consoleErrors": 0,
+   "http4xx5xx": 0
+  },
+  {
+   "route": "/about",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "status": 200,
+   "cls": 0.0028,
+   "clsSum": 0.0032,
+   "shiftsOver001": 0,
+   "topOffender": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+   "consoleErrors": 0,
+   "http4xx5xx": 0
+  },
+  {
+   "route": "/guide",
+   "state": "390x844|dark|full|signed-out|normal",
+   "status": 200,
+   "cls": 0.001,
+   "clsSum": 0.0016,
+   "shiftsOver001": 0,
+   "topOffender": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+   "consoleErrors": 0,
+   "http4xx5xx": 0
+  },
+  {
+   "route": "/guide",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "status": 200,
+   "cls": 0.0029,
+   "clsSum": 0.0053,
+   "shiftsOver001": 0,
+   "topOffender": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+   "consoleErrors": 0,
+   "http4xx5xx": 0
+  },
+  {
+   "route": "/guide/buff-mode",
+   "state": "390x844|dark|full|signed-out|normal",
+   "status": 200,
+   "cls": 0.0685,
+   "clsSum": 0.0695,
+   "shiftsOver001": 1,
+   "topOffender": "section#the-draft-loop.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+   "consoleErrors": 0,
+   "http4xx5xx": 0
+  },
+  {
+   "route": "/guide/buff-mode",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "status": 200,
+   "cls": 0.0027,
+   "clsSum": 0.0042,
+   "shiftsOver001": 0,
+   "topOffender": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+   "consoleErrors": 0,
+   "http4xx5xx": 0
+  },
+  {
+   "route": "/tutorial/first-game",
+   "state": "390x844|dark|full|signed-out|normal",
+   "status": 200,
+   "cls": 0.0699,
+   "clsSum": 0.0699,
+   "shiftsOver001": 2,
+   "topOffender": "div.relative.min-w-0.w-full > div.min-w-0.w-full > div.plate > div.mt-5.flex.flex-col",
+   "consoleErrors": 0,
+   "http4xx5xx": 0
+  },
+  {
+   "route": "/tutorial/first-game",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "status": 200,
+   "cls": 0.0154,
+   "clsSum": 0.0246,
+   "shiftsOver001": 1,
+   "topOffender": "div.draft-col > div.relative.min-w-0.w-full > div.min-w-0.w-full > div.plate",
+   "consoleErrors": 0,
+   "http4xx5xx": 0
+  }
+ ],
+ "cells": [
+  {
+   "route": "/about",
+   "state": "390x844|dark|full|signed-out|normal",
+   "status": 200,
+   "loadMs": 21584,
+   "html": {
+    "theme": "dark",
+    "anim": "normal"
+   },
+   "cls": {
+    "cls": 0.001,
+    "total": 0.001,
+    "shiftCount": 1,
+    "inputShiftCount": 0,
+    "findings": [],
+    "offenders": [
+     {
+      "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+      "text": "GuestProudKibitzer ·Sign in",
+      "score": 0.001,
+      "count": 1,
+      "maxDy": 0,
+      "maxDx": -10,
+      "maxDh": 0,
+      "maxDw": 10
+     }
+    ],
+    "marks": {
+     "dcl": 13180,
+     "firstPaint": 13208,
+     "fcp": 13208,
+     "load": 13974,
+     "hydrated": 14060,
+     "ttfb": 13000
+    },
+    "api": [
+     {
+      "url": "/api/auth/me",
+      "start": 14053,
+      "end": 15806
+     },
+     {
+      "url": "/api/auth/guest",
+      "start": 15817,
+      "end": 17175
+     },
+     {
+      "url": "/api/auth/me",
+      "start": 17175,
+      "end": 17242
+     },
+     {
+      "url": "/api/users/settings",
+      "start": 17257,
+      "end": 19510
+     },
+     {
+      "url": "/api/users/ProudKibitzer/achievements",
+      "start": 17258,
+      "end": 19572
+     },
+     {
+      "url": "/api/notifications",
+      "start": 17259,
+      "end": 19513
+     },
+     {
+      "url": "/api/challenges",
+      "start": 17259,
+      "end": 19501
+     }
+    ],
+    "longFrames": {
+     "count": 2,
+     "worst": 425,
+     "totalBlocking": 441
+    },
+    "probeErrors": []
+   },
+   "console": {
+    "counts": {
+     "console-error": 0,
+     "react-warning": 0,
+     "console-warning": 8,
+     "pageerror": 0,
+     "http": 0,
+     "requestfailed": 0
+    },
+    "items": [
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     }
+    ],
+    "requests": 41,
+    "apiCalls": [
+     {
+      "method": "GET",
+      "url": "/api/auth/me",
+      "status": 200
+     },
+     {
+      "method": "POST",
+      "url": "/api/auth/guest",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/auth/me",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/challenges",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/users/settings",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/notifications",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/users/ProudKibitzer/achievements",
+      "status": 200
+     }
+    ]
+   }
+  },
+  {
+   "route": "/about",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "status": 200,
+   "loadMs": 3992,
+   "html": {
+    "theme": "dark",
+    "anim": "normal"
+   },
+   "cls": {
+    "cls": 0.0028,
+    "total": 0.0032,
+    "shiftCount": 2,
+    "inputShiftCount": 0,
+    "findings": [],
+    "offenders": [
+     {
+      "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+      "text": "GuestTrickyGecko66 ·Sign in",
+      "score": 0.0028,
+      "count": 1,
+      "maxDy": 0,
+      "maxDx": -215,
+      "maxDh": 0,
+      "maxDw": 215
+     },
+     {
+      "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.site-nav-brand > div.ml-2.hidden.items-center",
+      "text": "PlayLobbyChallenge a friendPractice vs computerDai...",
+      "score": 0.0001,
+      "count": 1,
+      "maxDy": 0,
+      "maxDx": -7,
+      "maxDh": 0,
+      "maxDw": -12
+     },
+     {
+      "selector": "li#joseph-leung.scroll-mt-20 > div.flex.flex-wrap.items-baseline > span.text-\\[13px\\].text-parchment-400",
+      "text": "Co-founder and Chief Executive Officer",
+      "score": 0.0001,
+      "count": 1,
+      "maxDy": 0,
+      "maxDx": -10,
+      "maxDh": 0,
+      "maxDw": -3
+     },
+     {
+      "selector": "li#timmy-chen.scroll-mt-20 > div.flex.flex-wrap.items-baseline > span.text-\\[13px\\].text-parchment-400",
+      "text": "Co-founder and Chief Technology Officer",
+      "score": 0.0001,
+      "count": 1,
+      "maxDy": 0,
+      "maxDx": -4,
+      "maxDh": 0,
+      "maxDw": -1
+     }
+    ],
+    "marks": {
+     "dcl": 473,
+     "firstPaint": 520,
+     "fcp": 520,
+     "load": 1269,
+     "hydrated": 1367,
+     "ttfb": 327
+    },
+    "api": [
+     {
+      "url": "/api/auth/me",
+      "start": 1360,
+      "end": 1376
+     },
+     {
+      "url": "/api/auth/guest",
+      "start": 1396,
+      "end": 1612
+     },
+     {
+      "url": "/api/auth/me",
+      "start": 1613,
+      "end": 1667
+     },
+     {
+      "url": "/api/users/settings",
+      "start": 1682,
+      "end": 1943
+     },
+     {
+      "url": "/api/users/TrickyGecko66/achievements",
+      "start": 1683,
+      "end": 1983
+     },
+     {
+      "url": "/api/notifications",
+      "start": 1684,
+      "end": 1988
+     },
+     {
+      "url": "/api/challenges",
+      "start": 1684,
+      "end": 1979
+     }
+    ],
+    "longFrames": {
+     "count": 2,
+     "worst": 432,
+     "totalBlocking": 427
+    },
+    "probeErrors": []
+   },
+   "console": {
+    "counts": {
+     "console-error": 0,
+     "react-warning": 0,
+     "console-warning": 8,
+     "pageerror": 0,
+     "http": 0,
+     "requestfailed": 0
+    },
+    "items": [
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     }
+    ],
+    "requests": 32,
+    "apiCalls": [
+     {
+      "method": "GET",
+      "url": "/api/auth/me",
+      "status": 200
+     },
+     {
+      "method": "POST",
+      "url": "/api/auth/guest",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/auth/me",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/users/settings",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/challenges",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/users/TrickyGecko66/achievements",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/notifications",
+      "status": 200
+     }
+    ]
+   }
+  },
+  {
+   "route": "/guide",
+   "state": "390x844|dark|full|signed-out|normal",
+   "status": 200,
+   "loadMs": 5746,
+   "html": {
+    "theme": "dark",
+    "anim": "normal"
+   },
+   "cls": {
+    "cls": 0.001,
+    "total": 0.0016,
+    "shiftCount": 2,
+    "inputShiftCount": 0,
+    "findings": [],
+    "offenders": [
+     {
+      "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+      "text": "GuestCunningFalcon33 ·Sign in",
+      "score": 0.001,
+      "count": 1,
+      "maxDy": 0,
+      "maxDx": -10,
+      "maxDh": 0,
+      "maxDw": 10
+     },
+     {
+      "selector": "section#the-short-answer.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+      "text": "Nerf mode is chess with secret rules. Before the f...",
+      "score": 0.0005,
+      "count": 1,
+      "maxDy": 0,
+      "maxDx": 0,
+      "maxDh": 0,
+      "maxDw": 0
+     }
+    ],
+    "marks": {
+     "dcl": 2044,
+     "firstPaint": 2060,
+     "fcp": 2060,
+     "load": 2834,
+     "hydrated": 2949,
+     "ttfb": 1893
+    },
+    "api": [
+     {
+      "url": "/api/auth/me",
+      "start": 2941,
+      "end": 3154
+     },
+     {
+      "url": "/api/auth/guest",
+      "start": 3165,
+      "end": 3359
+     },
+     {
+      "url": "/api/auth/me",
+      "start": 3359,
+      "end": 3413
+     },
+     {
+      "url": "/api/users/settings",
+      "start": 3428,
+      "end": 3690
+     },
+     {
+      "url": "/api/users/CunningFalcon33/achievements",
+      "start": 3429,
+      "end": 3742
+     },
+     {
+      "url": "/api/notifications",
+      "start": 3430,
+      "end": 3726
+     },
+     {
+      "url": "/api/challenges",
+      "start": 3430,
+      "end": 3710
+     }
+    ],
+    "longFrames": {
+     "count": 2,
+     "worst": 426,
+     "totalBlocking": 429
+    },
+    "probeErrors": []
+   },
+   "console": {
+    "counts": {
+     "console-error": 0,
+     "react-warning": 0,
+     "console-warning": 8,
+     "pageerror": 0,
+     "http": 0,
+     "requestfailed": 0
+    },
+    "items": [
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     }
+    ],
+    "requests": 32,
+    "apiCalls": [
+     {
+      "method": "GET",
+      "url": "/api/auth/me",
+      "status": 200
+     },
+     {
+      "method": "POST",
+      "url": "/api/auth/guest",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/auth/me",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/users/settings",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/challenges",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/notifications",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/users/CunningFalcon33/achievements",
+      "status": 200
+     }
+    ]
+   }
+  },
+  {
+   "route": "/guide",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "status": 200,
+   "loadMs": 3737,
+   "html": {
+    "theme": "dark",
+    "anim": "normal"
+   },
+   "cls": {
+    "cls": 0.0029,
+    "total": 0.0053,
+    "shiftCount": 2,
+    "inputShiftCount": 0,
+    "findings": [],
+    "offenders": [
+     {
+      "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+      "text": "GuestDizzyPuffin ·Sign in",
+      "score": 0.0024,
+      "count": 1,
+      "maxDy": 0,
+      "maxDx": -194,
+      "maxDh": 0,
+      "maxDw": 194
+     },
+     {
+      "selector": "section#the-short-answer.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+      "text": "Nerf Chess is an online chess variant with two gam...",
+      "score": 0.0011,
+      "count": 2,
+      "maxDy": 0,
+      "maxDx": 0,
+      "maxDh": 0,
+      "maxDw": 0
+     },
+     {
+      "selector": "div.mt-3.max-w-3xl.space-y-3 > p > span.relative.z-\\[1\\].inline > span.underline.decoration-dotted.decoration-parchment-500[role=\"button\"]",
+      "text": "draft",
+      "score": 0.0011,
+      "count": 2,
+      "maxDy": 0,
+      "maxDx": 0,
+      "maxDh": 0,
+      "maxDw": 0
+     },
+     {
+      "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.site-nav-brand > div.ml-2.hidden.items-center",
+      "text": "PlayLobbyChallenge a friendPractice vs computerDai...",
+      "score": 0.0006,
+      "count": 1,
+      "maxDy": 0,
+      "maxDx": -7,
+      "maxDh": 0,
+      "maxDw": -12
+     }
+    ],
+    "marks": {
+     "dcl": 261,
+     "firstPaint": 304,
+     "fcp": 304,
+     "load": 1053,
+     "hydrated": 1159,
+     "ttfb": 90
+    },
+    "api": [
+     {
+      "url": "/api/auth/me",
+      "start": 1162,
+      "end": 1173
+     },
+     {
+      "url": "/api/auth/guest",
+      "start": 1191,
+      "end": 1355
+     },
+     {
+      "url": "/api/auth/me",
+      "start": 1355,
+      "end": 1407
+     },
+     {
+      "url": "/api/users/settings",
+      "start": 1422,
+      "end": 1661
+     },
+     {
+      "url": "/api/users/DizzyPuffin/achievements",
+      "start": 1423,
+      "end": 1717
+     },
+     {
+      "url": "/api/notifications",
+      "start": 1424,
+      "end": 1719
+     },
+     {
+      "url": "/api/challenges",
+      "start": 1424,
+      "end": 1696
+     }
+    ],
+    "longFrames": {
+     "count": 2,
+     "worst": 433,
+     "totalBlocking": 449
+    },
+    "probeErrors": []
+   },
+   "console": {
+    "counts": {
+     "console-error": 0,
+     "react-warning": 0,
+     "console-warning": 8,
+     "pageerror": 0,
+     "http": 0,
+     "requestfailed": 0
+    },
+    "items": [
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     }
+    ],
+    "requests": 32,
+    "apiCalls": [
+     {
+      "method": "GET",
+      "url": "/api/auth/me",
+      "status": 200
+     },
+     {
+      "method": "POST",
+      "url": "/api/auth/guest",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/auth/me",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/users/settings",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/challenges",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/users/DizzyPuffin/achievements",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/notifications",
+      "status": 200
+     }
+    ]
+   }
+  },
+  {
+   "route": "/guide/buff-mode",
+   "state": "390x844|dark|full|signed-out|normal",
+   "status": 200,
+   "loadMs": 4798,
+   "html": {
+    "theme": "dark",
+    "anim": "normal"
+   },
+   "cls": {
+    "cls": 0.0685,
+    "total": 0.0695,
+    "shiftCount": 2,
+    "inputShiftCount": 0,
+    "findings": [
+     {
+      "t": 1231.5,
+      "value": 0.0685,
+      "hadRecentInput": false,
+      "sources": [
+       {
+        "selector": "section#the-draft-loop.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+        "text": "Every 5 of your own moves you receive an offer: tw...",
+        "prev": {
+         "x": 43,
+         "y": 363,
+         "w": 294,
+         "h": 44
+        },
+        "curr": {
+         "x": 43,
+         "y": 363,
+         "w": 294,
+         "h": 44
+        },
+        "change": "moved",
+        "dx": 0,
+        "dy": 0,
+        "dw": 0,
+        "dh": 0
+       },
+       {
+        "selector": "section#the-draft-loop.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+        "text": "Every 5 of your own moves you receive an offer: tw...",
+        "prev": {
+         "x": 43,
+         "y": 436,
+         "w": 294,
+         "h": 69
+        },
+        "curr": {
+         "x": 43,
+         "y": 436,
+         "w": 294,
+         "h": 69
+        },
+        "change": "moved",
+        "dx": 0,
+        "dy": 0,
+        "dw": 0,
+        "dh": 0
+       },
+       {
+        "selector": "div.mt-3.max-w-3xl.space-y-3 > p > span.relative.z-\\[1\\].inline > span.underline.decoration-dotted.decoration-parchment-500[role=\"button\"]",
+        "text": "buffs",
+        "prev": {
+         "x": 43,
+         "y": 485,
+         "w": 294,
+         "h": 20
+        },
+        "curr": {
+         "x": 43,
+         "y": 509,
+         "w": 294,
+         "h": 20
+        },
+        "change": "moved",
+        "dx": 0,
+        "dy": 24,
+        "dw": 0,
+        "dh": 0
+       },
+       {
+        "selector": "section#the-draft-loop.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+        "text": "Every 5 of your own moves you receive an offer: tw...",
+        "prev": {
+         "x": 43,
+         "y": 509,
+         "w": 294,
+         "h": 45
+        },
+        "curr": {
+         "x": 43,
+         "y": 509,
+         "w": 294,
+         "h": 45
+        },
+        "change": "moved",
+        "dx": 0,
+        "dy": 0,
+        "dw": 0,
+        "dh": 0
+       },
+       {
+        "selector": "section#the-draft-loop.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+        "text": "Every 5 of your own moves you receive an offer: tw...",
+        "prev": {
+         "x": 43,
+         "y": 534,
+         "w": 294,
+         "h": 93
+        },
+        "curr": {
+         "x": 43,
+         "y": 534,
+         "w": 294,
+         "h": 93
+        },
+        "change": "moved",
+        "dx": 0,
+        "dy": 0,
+        "dw": 0,
+        "dh": 0
+       }
+      ]
+     }
+    ],
+    "offenders": [
+     {
+      "selector": "section#the-draft-loop.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+      "text": "Every 5 of your own moves you receive an offer: tw...",
+      "score": 0.0548,
+      "count": 4,
+      "maxDy": 0,
+      "maxDx": 0,
+      "maxDh": 0,
+      "maxDw": 0
+     },
+     {
+      "selector": "div.mt-3.max-w-3xl.space-y-3 > p > span.relative.z-\\[1\\].inline > span.underline.decoration-dotted.decoration-parchment-500[role=\"button\"]",
+      "text": "buffs",
+      "score": 0.0137,
+      "count": 1,
+      "maxDy": 24,
+      "maxDx": 0,
+      "maxDh": 0,
+      "maxDw": 0
+     },
+     {
+      "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+      "text": "GuestBoldSquire ·Sign in",
+      "score": 0.001,
+      "count": 1,
+      "maxDy": 0,
+      "maxDx": -10,
+      "maxDh": 0,
+      "maxDw": 10
+     }
+    ],
+    "marks": {
+     "dcl": 1198,
+     "firstPaint": 1220,
+     "fcp": 1220,
+     "load": 1992,
+     "hydrated": 2098,
+     "ttfb": 1018
+    },
+    "api": [
+     {
+      "url": "/api/auth/me",
+      "start": 2101,
+      "end": 2303
+     },
+     {
+      "url": "/api/auth/guest",
+      "start": 2316,
+      "end": 2422
+     },
+     {
+      "url": "/api/auth/me",
+      "start": 2422,
+      "end": 2474
+     },
+     {
+      "url": "/api/users/settings",
+      "start": 2489,
+      "end": 2765
+     },
+     {
+      "url": "/api/users/BoldSquire/achievements",
+      "start": 2491,
+      "end": 2790
+     },
+     {
+      "url": "/api/notifications",
+      "start": 2492,
+      "end": 2793
+     },
+     {
+      "url": "/api/challenges",
+      "start": 2492,
+      "end": 2783
+     }
+    ],
+    "longFrames": {
+     "count": 2,
+     "worst": 441,
+     "totalBlocking": 470
+    },
+    "probeErrors": []
+   },
+   "console": {
+    "counts": {
+     "console-error": 0,
+     "react-warning": 0,
+     "console-warning": 8,
+     "pageerror": 0,
+     "http": 0,
+     "requestfailed": 0
+    },
+    "items": [
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     }
+    ],
+    "requests": 32,
+    "apiCalls": [
+     {
+      "method": "GET",
+      "url": "/api/auth/me",
+      "status": 200
+     },
+     {
+      "method": "POST",
+      "url": "/api/auth/guest",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/auth/me",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/users/settings",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/challenges",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/users/BoldSquire/achievements",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/notifications",
+      "status": 200
+     }
+    ]
+   }
+  },
+  {
+   "route": "/guide/buff-mode",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "status": 200,
+   "loadMs": 3813,
+   "html": {
+    "theme": "dark",
+    "anim": "normal"
+   },
+   "cls": {
+    "cls": 0.0027,
+    "total": 0.0042,
+    "shiftCount": 2,
+    "inputShiftCount": 0,
+    "findings": [],
+    "offenders": [
+     {
+      "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+      "text": "GuestFiercePawn16 ·Sign in",
+      "score": 0.0027,
+      "count": 1,
+      "maxDy": 0,
+      "maxDx": -212,
+      "maxDh": 0,
+      "maxDw": 212
+     },
+     {
+      "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.site-nav-brand > div.ml-2.hidden.items-center",
+      "text": "PlayLobbyChallenge a friendPractice vs computerDai...",
+      "score": 0.0003,
+      "count": 1,
+      "maxDy": 0,
+      "maxDx": -7,
+      "maxDh": 0,
+      "maxDw": -12
+     },
+     {
+      "selector": "section#tiers-from-trivial-to-unhinged.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+      "text": "Every card carries a tier from I to VIII: Trivial,...",
+      "score": 0.0003,
+      "count": 1,
+      "maxDy": 0,
+      "maxDx": 1,
+      "maxDh": 0,
+      "maxDw": -1
+     },
+     {
+      "selector": "section#the-draft-loop.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p > strong",
+      "text": "Passive",
+      "score": 0.0003,
+      "count": 1,
+      "maxDy": 0,
+      "maxDx": 1,
+      "maxDh": 0,
+      "maxDw": -1
+     },
+     {
+      "selector": "section#the-draft-loop.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+      "text": "Every 5 of your own moves you receive an offer: tw...",
+      "score": 0.0003,
+      "count": 1,
+      "maxDy": 0,
+      "maxDx": 1,
+      "maxDh": 0,
+      "maxDw": -1
+     },
+     {
+      "selector": "div.mt-3.max-w-3xl.space-y-3 > p > span.relative.z-\\[1\\].inline > span.underline.decoration-dotted.decoration-parchment-500[role=\"button\"]",
+      "text": "Banking",
+      "score": 0.0003,
+      "count": 1,
+      "maxDy": 0,
+      "maxDx": 1,
+      "maxDh": 0,
+      "maxDw": -1
+     }
+    ],
+    "marks": {
+     "dcl": 251,
+     "firstPaint": 304,
+     "fcp": 304,
+     "load": 1096,
+     "hydrated": 1202,
+     "ttfb": 88
+    },
+    "api": [
+     {
+      "url": "/api/auth/me",
+      "start": 1206,
+      "end": 1218
+     },
+     {
+      "url": "/api/auth/guest",
+      "start": 1236,
+      "end": 1455
+     },
+     {
+      "url": "/api/auth/me",
+      "start": 1456,
+      "end": 1507
+     },
+     {
+      "url": "/api/users/settings",
+      "start": 1522,
+      "end": 1766
+     },
+     {
+      "url": "/api/users/FiercePawn16/achievements",
+      "start": 1524,
+      "end": 1805
+     },
+     {
+      "url": "/api/notifications",
+      "start": 1524,
+      "end": 1807
+     },
+     {
+      "url": "/api/challenges",
+      "start": 1524,
+      "end": 1800
+     }
+    ],
+    "longFrames": {
+     "count": 2,
+     "worst": 465,
+     "totalBlocking": 483
+    },
+    "probeErrors": []
+   },
+   "console": {
+    "counts": {
+     "console-error": 0,
+     "react-warning": 0,
+     "console-warning": 8,
+     "pageerror": 0,
+     "http": 0,
+     "requestfailed": 0
+    },
+    "items": [
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     }
+    ],
+    "requests": 32,
+    "apiCalls": [
+     {
+      "method": "GET",
+      "url": "/api/auth/me",
+      "status": 200
+     },
+     {
+      "method": "POST",
+      "url": "/api/auth/guest",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/auth/me",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/users/settings",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/challenges",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/users/FiercePawn16/achievements",
+      "status": 200
+     },
+     {
+      "method": "GET",
+      "url": "/api/notifications",
+      "status": 200
+     }
+    ]
+   }
+  },
+  {
+   "route": "/tutorial/first-game",
+   "state": "390x844|dark|full|signed-out|normal",
+   "status": 200,
+   "loadMs": 28396,
+   "html": {
+    "theme": "dark",
+    "anim": "normal"
+   },
+   "cls": {
+    "cls": 0.0699,
+    "total": 0.0699,
+    "shiftCount": 5,
+    "inputShiftCount": 0,
+    "findings": [
+     {
+      "t": 27171.6,
+      "value": 0.0484,
+      "hadRecentInput": false,
+      "sources": [
+       {
+        "selector": "div.relative.min-w-0.w-full > div.min-w-0.w-full > div.plate > div.mt-5.flex.flex-col",
+        "text": "Pick a cardSkip & bank +1 tier next draft",
+        "prev": {
+         "x": 29,
+         "y": 553,
+         "w": 322,
+         "h": 91
+        },
+        "curr": {
+         "x": 0,
+         "y": 0,
+         "w": 0,
+         "h": 0
+        },
+        "change": "left",
+        "dx": null,
+        "dy": null,
+        "dw": null,
+        "dh": null
+       },
+       {
+        "selector": "div.min-w-0.w-full > div.plate > div.mt-5.flex.flex-col > button.disabled\\:cursor-not-allowed.disabled\\:opacity-40.\\[@media(pointer\\:fine)\\]\\:min-h-\\[40px\\]",
+        "text": "Pick a card",
+        "prev": {
+         "x": 24,
+         "y": 549,
+         "w": 332,
+         "h": 50
+        },
+        "curr": {
+         "x": 0,
+         "y": 0,
+         "w": 0,
+         "h": 0
+        },
+        "change": "left",
+        "dx": null,
+        "dy": null,
+        "dw": null,
+        "dh": null
+       },
+       {
+        "selector": "div.relative.min-w-0.w-full > div.min-w-0.w-full > div.plate > p.mt-2.text-center.text-\\[13px\\]",
+        "text": "Your reroll is saved for later drafts. The opening...",
+        "prev": {
+         "x": 29,
+         "y": 650,
+         "w": 322,
+         "h": 37
+        },
+        "curr": {
+         "x": 0,
+         "y": 0,
+         "w": 0,
+         "h": 0
+        },
+        "change": "left",
+        "dx": null,
+        "dy": null,
+        "dw": null,
+        "dh": null
+       },
+       {
+        "selector": "div.relative.min-w-0.w-full > div.min-w-0.w-full > div.plate > div.mt-4.border-t.border-\\[color\\:var(--edge)\\]",
+        "text": "Opponent's draft is hidden?",
+        "prev": {
+         "x": 29,
+         "y": 701,
+         "w": 322,
+         "h": 49
+        },
+        "curr": {
+         "x": 0,
+         "y": 0,
+         "w": 0,
+         "h": 0
+        },
+        "change": "left",
+        "dx": null,
+        "dy": null,
+        "dw": null,
+        "dh": null
+       }
+      ]
+     },
+     {
+      "t": 27984.8,
+      "value": 0.0156,
+      "hadRecentInput": false,
+      "sources": [
+       {
+        "selector": "div.min-w-0.w-full > div.plate > div.flex.items-center.justify-between > div.flex.min-w-0.items-center",
+        "text": "Opening pick20s",
+        "prev": {
+         "x": 29,
+         "y": 124,
+         "w": 221,
+         "h": 18
+        },
+        "curr": {
+         "x": 29,
+         "y": 120,
+         "w": 146,
+         "h": 26
+        },
+        "change": "moved",
+        "dx": 0,
+        "dy": -4,
+        "dw": -75,
+        "dh": 8
+       },
+       {
+        "selector": "div.relative.min-w-0.w-full > div.min-w-0.w-full > div.plate > div.draft-deal-grid",
+        "text": "Old Post Road. Movement, Passive. Tier I, Trivial....",
+        "prev": {
+         "x": 29,
+         "y": 229,
+         "w": 322,
+         "h": 521
+        },
+        "curr": {
+         "x": 29,
+         "y": 208,
+         "w": 322,
+         "h": 534
+        },
+        "change": "moved",
+        "dx": 0,
+        "dy": -21,
+        "dw": 0,
+        "dh": 13
+       },
+       {
+        "selector": "div.plate > div.draft-deal-grid > div.draft-fx > span.draft-fx__glow",
+        "text": "",
+        "prev": {
+         "x": 12,
+         "y": 217,
+         "w": 357,
+         "h": 319
+        },
+        "curr": {
+         "x": 12,
+         "y": 196,
+         "w": 357,
+         "h": 319
+        },
+        "change": "moved",
+        "dx": 0,
+        "dy": -21,
+        "dw": 0,
+        "dh": 0
+       },
+       {
+        "selector": "div.plate > div.draft-deal-grid > div.draft-fx > span.draft-fx__glow",
+        "text": "",
+        "prev": {
+         "x": 12,
+         "y": 489,
+         "w": 357,
+         "h": 261
+        },
+        "curr": {
+         "x": 12,
+         "y": 468,
+         "w": 357,
+         "h": 282
+        },
+        "change": "moved",
+        "dx": 0,
+        "dy": -21,
+        "dw": 0,
+        "dh": 21
+       }
+      ]
+     }
+    ],
+    "offenders": [
+     {
+      "selector": "div.relative.min-w-0.w-full > div.min-w-0.w-full > div.plate > div.mt-5.flex.flex-col",
+      "text": "Pick a cardSkip & bank +1 tier next draft",
+      "score": 0.0133,
+      "count": 2,
+      "maxDy": -20,
+      "maxDx": 0,
+      "maxDh": 0,
+      "maxDw": 0
+     },
+     {
+      "selector": "div.min-w-0.w-full > div.plate > div.mt-5.flex.flex-col > button.disabled\\:cursor-not-allowed.disabled\\:opacity-40.\\[@media(pointer\\:fine)\\]\\:min-h-\\[40px\\]",
+      "text": "Pick a card",
+      "score": 0.0133,
+      "count": 2,
+      "maxDy": -20,
+      "maxDx": 0,
+      "maxDh": 0,
+      "maxDw": 0
+     },
+     {
+      "selector": "div.relative.min-w-0.w-full > div.min-w-0.w-full > div.plate > p.mt-2.text-center.text-\\[13px\\]",
+      "text": "Your reroll is saved for later drafts. The opening...",
+      "score": 0.0133,
+      "count": 2,
+      "maxDy": -20,
+      "maxDx": 0,
+      "maxDh": 0,
+      "maxDw": 0
+     },
+     {
+      "selector": "div.relative.min-w-0.w-full > div.min-w-0.w-full > div.plate > div.mt-4.border-t.border-\\[color\\:var(--edge)\\]",
+      "text": "Opponent's draft is hidden?",
+      "score": 0.0133,
+      "count": 2,
+      "maxDy": -20,
+      "maxDx": 0,
+      "maxDh": 20,
+      "maxDw": 0
+     },
+     {
+      "selector": "div.plate > div.draft-deal-grid > div.draft-fx > span.draft-fx__glow",
+      "text": "",
+      "score": 0.0078,
+      "count": 2,
+      "maxDy": -21,
+      "maxDx": 0,
+      "maxDh": 21,
+      "maxDw": 0
+     },
+     {
+      "selector": "div.min-w-0.w-full > div.plate > div.flex.items-center.justify-between > div.flex.min-w-0.items-center",
+      "text": "Opening pick20s",
+      "score": 0.0039,
+      "count": 1,
+      "maxDy": -4,
+      "maxDx": 0,
+      "maxDh": 8,
+      "maxDw": -75
+     },
+     {
+      "selector": "div.relative.min-w-0.w-full > div.min-w-0.w-full > div.plate > div.draft-deal-grid",
+      "text": "Old Post Road. Movement, Passive. Tier I, Trivial....",
+      "score": 0.0039,
+      "count": 1,
+      "maxDy": -21,
+      "maxDx": 0,
+      "maxDh": 13,
+      "maxDw": 0
+     },
+     {
+      "selector": "div.relative.min-w-0.w-full > div.min-w-0.w-full > div.plate > div.mt-1.flex.justify-center",
+      "text": "Skip",
+      "score": 0.0012,
+      "count": 1,
+      "maxDy": -20,
+      "maxDx": 0,
+      "maxDh": 0,
+      "maxDw": 0
+     }
+    ],
+    "marks": {
+     "dcl": 23618,
+     "firstPaint": 23648,
+     "fcp": 23648,
+     "hydrated": 25084,
+     "load": 26123,
+     "ttfb": 23413
+    },
+    "api": [
+     {
+      "url": "/api/auth/me",
+      "start": 25077,
+      "end": 25308
+     }
+    ],
+    "longFrames": {
+     "count": 11,
+     "worst": 508,
+     "totalBlocking": 1357
+    },
+    "probeErrors": []
+   },
+   "console": {
+    "counts": {
+     "console-error": 0,
+     "react-warning": 0,
+     "console-warning": 33,
+     "pageerror": 0,
+     "http": 0,
+     "requestfailed": 0
+    },
+    "items": [
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "[.WebGL-0xe6c0010ae00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+      "sig": "[.WebGL-<n>xe<n>c<n>ae<n>]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+      "url": "/tutorial/first-game?difficulty=easy&color=w&t=0&inc=0&rated=0&mode=buff&tour=1"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     }
+    ],
+    "requests": 57,
+    "apiCalls": [
+     {
+      "method": "GET",
+      "url": "/api/auth/me",
+      "status": 200
+     }
+    ]
+   }
+  },
+  {
+   "route": "/tutorial/first-game",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "status": 200,
+   "loadMs": 4852,
+   "html": {
+    "theme": "dark",
+    "anim": "normal"
+   },
+   "cls": {
+    "cls": 0.0154,
+    "total": 0.0246,
+    "shiftCount": 3,
+    "inputShiftCount": 0,
+    "findings": [
+     {
+      "t": 2336.4,
+      "value": 0.0154,
+      "hadRecentInput": false,
+      "sources": [
+       {
+        "selector": "div.min-h-0.flex-1.space-y-2 > div.flex.gap-1.pt-1[role=\"tablist\"] > button.\\[@media(pointer\\:fine)\\]\\:min-h-0[role=\"tab\"] > kbd.\\[@media(hover\\:hover)\\]\\:inline",
+        "text": "t",
+        "prev": {
+         "x": 291,
+         "y": 185,
+         "w": 17,
+         "h": 16
+        },
+        "curr": {
+         "x": 297,
+         "y": 185,
+         "w": 17,
+         "h": 16
+        },
+        "change": "moved",
+        "dx": 6,
+        "dy": 0,
+        "dw": 0,
+        "dh": 0
+       },
+       {
+        "selector": "div.\\[@media(min-width\\:768px)_and_(max-width\\:1279\\.98px)_and_(orientation\\:portrait)\\]\\:overflow-visible.\\[@media(min-width\\:768px)_and_(max-width\\:1279\\.98px)_and_(orientation\\:portrait)\\]\\:pb-6 > div.match-grid.\\[@media(min-width\\:768px)_and_(max-width\\:1279\\.98px)_and_(orientation\\:portrait)\\]\\:grid-cols-\\[minmax(0,1fr)\\] > aside.rail-panel.\\[@media(min-width\\:768px)_and_(max-width\\:1279\\.98px)_and_(orientation\\:portrait)\\]\\:hidden.rail-lux > div.space-y-2",
+        "text": "YYou (1500)›Board keyCan't moveMovement limitedCan...",
+        "prev": {
+         "x": 58,
+         "y": 292,
+         "w": 301,
+         "h": 98
+        },
+        "curr": {
+         "x": 58,
+         "y": 532,
+         "w": 301,
+         "h": 98
+        },
+        "change": "moved",
+        "dx": 0,
+        "dy": 240,
+        "dw": 0,
+        "dh": 0
+       },
+       {
+        "selector": "div.\\[@media(min-width\\:768px)_and_(max-width\\:1279\\.98px)_and_(orientation\\:portrait)\\]\\:flex-col > div.\\[@media(min-width\\:768px)_and_(max-width\\:1279\\.98px)_and_(orientation\\:portrait)\\]\\:hidden > div.plate > div.shrink-0.mt-3.pt-3",
+        "text": "DrawResign",
+        "prev": {
+         "x": 0,
+         "y": 0,
+         "w": 0,
+         "h": 0
+        },
+        "curr": {
+         "x": 978,
+         "y": 527,
+         "w": 241,
+         "h": 61
+        },
+        "change": "entered",
+        "dx": null,
+        "dy": null,
+        "dw": null,
+        "dh": null
+       },
+       {
+        "selector": "div.match-grid.\\[@media(min-width\\:768px)_and_(max-width\\:1279\\.98px)_and_(orientation\\:portrait)\\]\\:grid-cols-\\[minmax(0,1fr)\\] > div.\\[@media(min-width\\:768px)_and_(max-width\\:1279\\.98px)_and_(orientation\\:portrait)\\]\\:flex-col > div.\\[@media(min-width\\:768px)_and_(max-width\\:1279\\.98px)_and_(orientation\\:portrait)\\]\\:hidden > div.zen-hide.flex.items-center",
+        "text": "Normal",
+        "prev": {
+         "x": 0,
+         "y": 0,
+         "w": 0,
+         "h": 0
+        },
+        "curr": {
+         "x": 970,
+         "y": 600,
+         "w": 252,
+         "h": 40
+        },
+        "change": "entered",
+        "dx": null,
+        "dy": null,
+        "dw": null,
+        "dh": null
+       }
+      ]
+     }
+    ],
+    "offenders": [
+     {
+      "selector": "div.draft-col > div.relative.min-w-0.w-full > div.min-w-0.w-full > div.plate",
+      "text": "Opening pick20sHideChoose a buffGarden Hedge. Move...",
+      "score": 0.0069,
+      "count": 1,
+      "maxDy": 11,
+      "maxDx": 0,
+      "maxDh": -22,
+      "maxDw": 0
+     },
+     {
+      "selector": "div.min-h-0.flex-1.space-y-2 > div.flex.gap-1.pt-1[role=\"tablist\"] > button.\\[@media(pointer\\:fine)\\]\\:min-h-0[role=\"tab\"] > kbd.\\[@media(hover\\:hover)\\]\\:inline",
+      "text": "t",
+      "score": 0.0038,
+      "count": 1,
+      "maxDy": 0,
+      "maxDx": 6,
+      "maxDh": 0,
+      "maxDw": 0
+     },
+     {
+      "selector": "div.\\[@media(min-width\\:768px)_and_(max-width\\:1279\\.98px)_and_(orientation\\:portrait)\\]\\:overflow-visible.\\[@media(min-width\\:768px)_and_(max-width\\:1279\\.98px)_and_(orientation\\:portrait)\\]\\:pb-6 > div.match-grid.\\[@media(min-width\\:768px)_and_(max-width\\:1279\\.98px)_and_(orientation\\:portrait)\\]\\:grid-cols-\\[minmax(0,1fr)\\] > aside.rail-panel.\\[@media(min-width\\:768px)_and_(max-width\\:1279\\.98px)_and_(orientation\\:portrait)\\]\\:hidden.rail-lux > div.space-y-2",
+      "text": "YYou (1500)›Board keyCan't moveMovement limitedCan...",
+      "score": 0.0038,
+      "count": 1,
+      "maxDy": 240,
+      "maxDx": 0,
+      "maxDh": 0,
+      "maxDw": 0
+     },
+     {
+      "selector": "div.\\[@media(min-width\\:768px)_and_(max-width\\:1279\\.98px)_and_(orientation\\:portrait)\\]\\:flex-col > div.\\[@media(min-width\\:768px)_and_(max-width\\:1279\\.98px)_and_(orientation\\:portrait)\\]\\:hidden > div.plate > div.shrink-0.mt-3.pt-3",
+      "text": "DrawResign",
+      "score": 0.0038,
+      "count": 1,
+      "maxDy": 0,
+      "maxDx": 0,
+      "maxDh": 0,
+      "maxDw": 0
+     },
+     {
+      "selector": "div.match-grid.\\[@media(min-width\\:768px)_and_(max-width\\:1279\\.98px)_and_(orientation\\:portrait)\\]\\:grid-cols-\\[minmax(0,1fr)\\] > div.\\[@media(min-width\\:768px)_and_(max-width\\:1279\\.98px)_and_(orientation\\:portrait)\\]\\:flex-col > div.\\[@media(min-width\\:768px)_and_(max-width\\:1279\\.98px)_and_(orientation\\:portrait)\\]\\:hidden > div.zen-hide.flex.items-center",
+      "text": "Normal",
+      "score": 0.0038,
+      "count": 1,
+      "maxDy": 0,
+      "maxDx": 0,
+      "maxDh": 0,
+      "maxDw": 0
+     },
+     {
+      "selector": "div.relative.min-w-0.w-full > div.min-w-0.w-full > div.plate > div.mt-5.flex.flex-col",
+      "text": "Pick a cardSkip & bank +1 tier next draft",
+      "score": 0.0006,
+      "count": 1,
+      "maxDy": -29,
+      "maxDx": 0,
+      "maxDh": 0,
+      "maxDw": 0
+     },
+     {
+      "selector": "div.min-w-0.w-full > div.plate > div.mt-5.flex.flex-col > button.disabled\\:cursor-not-allowed.disabled\\:opacity-40.\\[@media(pointer\\:fine)\\]\\:min-h-\\[40px\\]",
+      "text": "Pick a card",
+      "score": 0.0006,
+      "count": 1,
+      "maxDy": -29,
+      "maxDx": 0,
+      "maxDh": 0,
+      "maxDw": 0
+     },
+     {
+      "selector": "div.relative.min-w-0.w-full > div.min-w-0.w-full > div.plate > p.mt-2.text-center.text-\\[13px\\]",
+      "text": "Your reroll is saved for later drafts. The opening...",
+      "score": 0.0006,
+      "count": 1,
+      "maxDy": -29,
+      "maxDx": 0,
+      "maxDh": 0,
+      "maxDw": 0
+     }
+    ],
+    "marks": {
+     "dcl": 257,
+     "firstPaint": 292,
+     "fcp": 292,
+     "hydrated": 1676,
+     "load": 2830,
+     "ttfb": 71
+    },
+    "api": [
+     {
+      "url": "/api/auth/me",
+      "start": 1664,
+      "end": 1676
+     }
+    ],
+    "longFrames": {
+     "count": 11,
+     "worst": 475,
+     "totalBlocking": 1178
+    },
+    "probeErrors": []
+   },
+   "console": {
+    "counts": {
+     "console-error": 0,
+     "react-warning": 0,
+     "console-warning": 33,
+     "pageerror": 0,
+     "http": 0,
+     "requestfailed": 0
+    },
+    "items": [
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "[.WebGL-0xe6c0012c400]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+      "sig": "[.WebGL-<n>xe<n>c<n>c<n>]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+      "url": "/tutorial/first-game?difficulty=easy&color=w&t=0&inc=0&rated=0&mode=buff&tour=1"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     },
+     {
+      "kind": "console-warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "sig": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "url": "webpack-internal:///(app-pages-browser)/./src/lib/sounds.ts"
+     }
+    ],
+    "requests": 56,
+    "apiCalls": [
+     {
+      "method": "GET",
+      "url": "/api/auth/me",
+      "status": 200
+     }
+    ]
+   }
+  }
+ ]
+}

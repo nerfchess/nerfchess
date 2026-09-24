@@ -1,0 +1,45 @@
+{
+ "generatedAt": "2026-09-24T11:16:55.357Z",
+ "rows": [
+  {
+   "route": "/faq",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": []
+  },
+  {
+   "route": "/faq",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": []
+  },
+  {
+   "route": "/guide",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": []
+  },
+  {
+   "route": "/guide",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": []
+  },
+  {
+   "route": "/guide/buff-mode",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": []
+  },
+  {
+   "route": "/guide/buff-mode",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": []
+  },
+  {
+   "route": "/play",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": []
+  },
+  {
+   "route": "/play",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": []
+  }
+ ]
+}

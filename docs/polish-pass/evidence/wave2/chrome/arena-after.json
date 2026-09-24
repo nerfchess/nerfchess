@@ -1,0 +1,14 @@
+{
+ "/": {
+  "arenaRequests": 0,
+  "consoleErrors": []
+ },
+ "/lobby": {
+  "arenaRequests": 0,
+  "consoleErrors": []
+ },
+ "/tv": {
+  "arenaRequests": 0,
+  "consoleErrors": []
+ }
+}
