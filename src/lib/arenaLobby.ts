@@ -14,7 +14,16 @@
 import type { Color } from "@/engine/types";
 import type { MPLobby } from "./multiplayer";
 
-export const ARENA_URL = (process.env.NEXT_PUBLIC_ARENA_URL ?? "").trim().replace(/\/$/, "");
+// next.config.mjs bakes the production arena in as the default, which is right
+// for a build and wrong for `next dev`: a local lobby never lists production
+// arena games, so every poll was a wasted cross-origin call that fails outright
+// in a sandbox (a console error on every lobby-polling route, F255). In
+// development the production host is treated as unset; an explicit
+// non-production NEXT_PUBLIC_ARENA_URL (a local arena) still works.
+const PROD_ARENA = "https://arena.nerfchess.com";
+const RAW_ARENA_URL = (process.env.NEXT_PUBLIC_ARENA_URL ?? "").trim().replace(/\/$/, "");
+export const ARENA_URL =
+  process.env.NODE_ENV === "development" && RAW_ARENA_URL === PROD_ARENA ? "" : RAW_ARENA_URL;
 
 // Shape served by the arena's GET /lobby (arena-service/server.ts): its
 // ExternalGameMeta plus per-seat avatars and a live watcher count.

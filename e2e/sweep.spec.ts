@@ -1098,7 +1098,29 @@ for (const route of routes()) {
     // and that first hit can take the best part of a minute here; warming it
     // outside the matrix keeps a compile from being mistaken for a slow page.
     await page.goto("/", { waitUntil: "domcontentloaded", timeout: 120_000 });
-    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 120_000 }).catch(() => {});
+    // The warm-up used to swallow its own failure. The page then still sat on
+    // "/" from the line above, and the redirect check below recorded a dead
+    // dev server (restarted at its memory cap, ERR_CONNECTION_REFUSED) as
+    // "redirects to /; not swept separately", so the route silently left the
+    // matrix. One retry covers a restart in progress; a second failure is
+    // infrastructure and throws, the same rule as the per-theme loads below.
+    let warmErr: unknown = null;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        await page.goto(url, { waitUntil: "domcontentloaded", timeout: 120_000 });
+        warmErr = null;
+        break;
+      } catch (err) {
+        warmErr = err;
+        if (attempt === 0) await page.waitForTimeout(15_000);
+      }
+    }
+    if (warmErr) {
+      FINDINGS.length = mark;
+      throw new Error(
+        `${url}: warm-up navigation failed twice (${(warmErr as Error).message.split("\n")[0].slice(0, 120)}). Infrastructure, not a defect: check that the dev server is up. Route left unmeasured.`,
+      );
+    }
     await page.waitForTimeout(500);
 
     // A route that redirects (e.g. /codex/build, kept alive only so old links
