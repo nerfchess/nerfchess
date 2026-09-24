@@ -253,6 +253,7 @@ function AchievementCard({ a }: { a: AchievementView }) {
           })}
           {!a.unlocked && (
             <span
+              role="img"
               aria-label="Locked"
               title="Locked"
               className="absolute -bottom-0.5 -right-0.5 grid h-4 w-4 place-items-center rounded-full border"
