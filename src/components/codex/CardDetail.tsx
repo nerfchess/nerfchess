@@ -197,7 +197,7 @@ function RetiredNote({ id }: { id: string }) {
         <>
           {" "}
           See{" "}
-          <Link href={targetPath} className="text-gold-leaf hover:underline">
+          <Link href={targetPath} className="text-gold-leaf underline underline-offset-2">
             {target.name}
           </Link>{" "}
           instead.

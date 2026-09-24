@@ -82,7 +82,7 @@ export default function UpdatesPage() {
       <ul className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {UPDATES.map((u) => (
           <li key={u.anchor} id={u.anchor} className="plate flex flex-col p-4">
-            <time dateTime={u.date} className="text-[12px] uppercase tracking-[0.05em] text-brag">
+            <time dateTime={u.date} className="text-[12px] text-brag">
               {formatUpdateDate(u.date)}
             </time>
             <h2 className="mt-1 text-[16px] font-semibold text-parchment-50">{u.title}</h2>

@@ -329,7 +329,7 @@ function RuleLine({
       <div className={`mt-1 font-display text-base font-semibold leading-tight tier-${nerf.tier}`}>
         {nerf.name}
       </div>
-      <p className="mt-1 text-xs leading-snug text-parchment-200">{nerf.description}</p>
+      <p className="mt-1 text-[13px] leading-snug text-parchment-200">{nerf.description}</p>
     </div>
   );
 }

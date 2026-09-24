@@ -87,7 +87,6 @@ const BASELINE: string[] = [
   "src/components/DraftOverlay.tsx",
   "src/components/EffectPopover.tsx",
   // Ordinary chrome. These are the ones to fix first.
-  "src/app/updates/page.tsx",
   "src/components/FriendGame.tsx",
   "src/components/match/CommandRail.tsx",
   // Open Graph card rendering: an image, not a page.

@@ -7,7 +7,7 @@ export const metadata: Metadata = staticMeta("/privacy-policy");
 
 function ContactLink({ children }: { children: React.ReactNode }) {
   return (
-    <Link href="/contact" className="text-gold-leaf hover:underline">
+    <Link href="/contact" className="text-gold-leaf underline underline-offset-2">
       {children}
     </Link>
   );
@@ -133,7 +133,7 @@ export default function PrivacyPolicyPage() {
           Every email we send says who it is from, gives our mailing address and
           contact details, and has a one-click unsubscribe link. You can also turn
           email off, or back on, at any time under &ldquo;Emails from Nerf
-          Chess&rdquo; in <Link href="/settings" className="text-gold-leaf hover:underline">settings</Link>.
+          Chess&rdquo; in <Link href="/settings" className="text-gold-leaf underline underline-offset-2">settings</Link>.
           Once you unsubscribe we do not email you again.
         </p>
         <p>

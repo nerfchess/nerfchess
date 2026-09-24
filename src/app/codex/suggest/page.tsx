@@ -223,7 +223,7 @@ export default function SuggestRulePage() {
           <form onSubmit={submit} className="mt-7 plate p-5 sm:p-6 space-y-5">
             <div>
               <label className="text-[12px] text-parchment-400 mb-1 block" htmlFor="rule-name">
-                {cfg.nameLabel} <span className="opacity-60">(optional)</span>
+                {cfg.nameLabel} <span>(optional)</span>
               </label>
               <input
                 id="rule-name"
@@ -254,7 +254,7 @@ export default function SuggestRulePage() {
 
             <div>
               <label className="text-[12px] text-parchment-400 mb-1 block" htmlFor="rule-contact">
-                How to credit / reach you <span className="opacity-60">(optional)</span>
+                How to credit / reach you <span>(optional)</span>
               </label>
               <input
                 id="rule-contact"

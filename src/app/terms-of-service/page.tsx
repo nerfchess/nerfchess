@@ -7,7 +7,7 @@ export const metadata: Metadata = staticMeta("/terms-of-service");
 
 function ContactLink({ children }: { children: React.ReactNode }) {
   return (
-    <Link href="/contact" className="text-gold-leaf hover:underline">
+    <Link href="/contact" className="text-gold-leaf underline underline-offset-2">
       {children}
     </Link>
   );
@@ -95,7 +95,7 @@ export default function TermsOfServicePage() {
           agree not to post content that is illegal, hateful, harassing, sexually
           explicit, deceptive, or that infringes anyone&apos;s rights, and to follow
           our{" "}
-          <Link href="/guidelines" className="text-gold-leaf hover:underline">
+          <Link href="/guidelines" className="text-gold-leaf underline underline-offset-2">
             community guidelines
           </Link>
           .
@@ -157,7 +157,7 @@ export default function TermsOfServicePage() {
         <p>
           You may stop using the Service at any time and may request deletion of your
           account as described in our{" "}
-          <Link href="/privacy-policy" className="text-gold-leaf hover:underline">
+          <Link href="/privacy-policy" className="text-gold-leaf underline underline-offset-2">
             Privacy Policy
           </Link>
           . We may suspend or close accounts that break these Terms, harm other

@@ -50,7 +50,7 @@ export default function GuidelinesPage() {
           <li>
             Moderators review before acting, so a mistaken flag can always be reversed.
             If you believe an action against you was wrong, reply from the{" "}
-            <Link href="/contact" className="text-gold-leaf hover:underline">
+            <Link href="/contact" className="text-gold-leaf underline underline-offset-2">
               contact page
             </Link>
             .
