@@ -52,11 +52,13 @@ test("public profile: header, tabs switch and drive ?tab=, clean empty states", 
   expect(new URL(page.url()).searchParams.get("tab")).toBeNull();
 
   // Switch to Games: URL updates to ?tab=games and the archive-empty state shows
-  // cleanly (PG absent locally).
+  // cleanly (PG absent locally). Both panels stay mounted (the Activity one
+  // hidden), and both say "No games yet." for a new account, so scope to the
+  // Games panel.
   await gamesTab.click();
   await expect(gamesTab).toHaveAttribute("aria-selected", "true");
   await expect(page).toHaveURL(/\?tab=games$/);
-  await expect(page.getByText("No games yet.")).toBeVisible();
+  await expect(page.getByRole("tabpanel", { name: "Games" }).getByText("No games yet.")).toBeVisible();
 
   // Switch back to Activity: ?tab= is dropped again.
   await activityTab.click();
