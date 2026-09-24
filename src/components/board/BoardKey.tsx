@@ -34,7 +34,7 @@ export function BoardKeyDetails() {
           of labels. The summary is not: it is the disclosure control, so its
           own text sits at the 13px interactive floor. */}
       <summary className="inline-flex min-h-[44px] cursor-pointer select-none list-none items-center text-[13px] text-parchment-400 hover:text-parchment-200 [@media(pointer:fine)]:min-h-0">
-        <span className="mr-1 inline-block transition-transform group-open:rotate-90">›</span>
+        <span className="m-chevron m-chevron--quarter mr-1 inline-block">›</span>
         Board key
       </summary>
       <BoardKey className="mt-2" />

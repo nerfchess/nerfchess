@@ -106,7 +106,7 @@ function BannerPill({ phase, seconds }: { phase: Phase; seconds: number }) {
           aria-hidden
           className={
             "h-2 w-2 shrink-0 rounded-full " +
-            (lost ? "bg-oxblood-glow motion-safe:animate-pulse" : "bg-verdigris-glow")
+            (lost ? "dot-live bg-oxblood-glow" : "bg-verdigris-glow")
           }
         />
         {lost ? <span>Connection lost. Reconnecting… {seconds}s</span> : <span>Reconnected</span>}

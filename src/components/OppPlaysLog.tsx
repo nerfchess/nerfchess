@@ -263,7 +263,8 @@ export function OppPlaysDockSection({ plays }: { plays: OppPlay[] }) {
           aria-hidden
           size={12}
           strokeWidth={2.4}
-          className={"shrink-0 text-parchment-400 transition-transform duration-150 " + (open ? "rotate-90" : "")}
+          data-open={open}
+          className="m-chevron m-chevron--quarter shrink-0 text-parchment-400"
         />
         <History aria-hidden size={12} strokeWidth={2.2} className="shrink-0 text-parchment-400" />
         <span className="min-w-0 truncate text-[12px] text-parchment-400">Opponent played</span>
