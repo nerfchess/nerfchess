@@ -1979,8 +1979,10 @@ function ProwlersBellRule({ lead, role, delayMs }: SceneProps) {
    pieces pass freely." A wax seal is pressed on the file and a
    red line runs down it (shown on the e-file; the play's own cuts mark the
    file chosen); two turn pips. Their rook on b5 slides along the rank and
-   is stopped at the line; their queen slides down the file itself, which is
-   allowed; the caster's bishop crosses the line unhindered. */
+   stops on e5, on the line itself, which is allowed; the step on to f5,
+   across it, is barred; their queen slides down the file itself, which is
+   allowed; the caster's bishop runs c1 to g5, crossing the line on e3
+   unhindered and clear of the rook. */
 const C_SMR = { core: "#c8483a", glow: "#fff0dc", deep: "#2c0e0a" };
 
 function SealedMeridianRule({ lead, role, delayMs }: SceneProps) {
@@ -1997,16 +1999,16 @@ function SealedMeridianRule({ lead, role, delayMs }: SceneProps) {
       </Q>
       <Q x={fc(4)} y="50%" w={1.4} h={100} cls="g27-r-grow" delayMs={d + 160} v={{ "--gd": "2s" }} style={{ background: c.core, transformOrigin: "50% calc(50% - var(--fx-side, 1) * 50%)" }} />
       <Pips n={2} r={3.5} x0={45} x1={50} color={c.glow} delayMs={d + 420} gd="1.6s" />
-      <Q x={fc(1)} y={rk(4)} w={11} h={11} cls="g27-r-go" delayMs={d + 560} v={{ "--gd": "1s", "--tx0": "0%", "--ty0": "0%", "--tx1": `calc(var(--fx-side, 1) * ${2 * fileIn(11)}%)`, "--ty1": "0%" }}>
+      <Q x={fc(1)} y={rk(4)} w={11} h={11} cls="g27-r-go" delayMs={d + 560} v={{ "--gd": "1s", "--tx0": "0%", "--ty0": "0%", "--tx1": `calc(var(--fx-side, 1) * ${3 * fileIn(11)}%)`, "--ty1": "0%" }}>
         <Man kind="r" fill={c.deep} stroke={c.glow} />
       </Q>
-      <Q x={fc(4)} y={rk(4)} w={7} h={7} cls="g27-r-stamp" delayMs={d + 860} v={{ "--gd": "0.9s" }}>
+      <Q x={fc(5)} y={rk(4)} w={7} h={7} cls="g27-r-stamp" delayMs={d + 1140} v={{ "--gd": "0.9s" }}>
         <Bar c={c} />
       </Q>
       <Q x={fc(4)} y={rk(6)} w={11} h={11} cls="g27-r-go" delayMs={d + 900} v={{ "--gd": "1s", "--tx0": "0%", "--ty0": "0%", "--tx1": "0%", "--ty1": `calc(var(--fx-side, 1) * ${1 * fileIn(11)}%)` }}>
         <Man kind="q" fill={c.deep} stroke={c.glow} />
       </Q>
-      <Q x={fc(2)} y={rk(2)} w={11} h={11} cls="g27-r-go" delayMs={d + 1100} v={{ "--gd": "0.9s", "--tx0": "0%", "--ty0": "0%", "--tx1": `calc(var(--fx-side, 1) * ${4 * fileIn(11)}%)`, "--ty1": `calc(var(--fx-side, 1) * ${-4 * fileIn(11)}%)` }}>
+      <Q x={fc(2)} y={rk(0)} w={11} h={11} cls="g27-r-go" delayMs={d + 1100} v={{ "--gd": "0.9s", "--tx0": "0%", "--ty0": "0%", "--tx1": `calc(var(--fx-side, 1) * ${4 * fileIn(11)}%)`, "--ty1": `calc(var(--fx-side, 1) * ${-4 * fileIn(11)}%)` }}>
         <Man kind="b" fill={c.glow} stroke={c.deep} />
       </Q>
     </Brd>

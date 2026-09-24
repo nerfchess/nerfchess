@@ -35,31 +35,43 @@
  },
  "stageError": null,
  "durationMs": {
-  "visualMs": 2382,
-  "cssEndMs": 3454,
+  "visualMs": 2402,
+  "cssEndMs": 3476,
   "settled": true,
   "windowMs": 3600,
   "cssAnimations": 25,
   "infiniteAnimations": 0
  },
  "screencast": {
-  "framesInWindow": 165,
-  "maxGapMs": 298.4
+  "framesInWindow": 124,
+  "maxGapMs": 395.6
  },
  "raf": {
-  "frames": 214,
+  "frames": 202,
   "medianMs": 16.7,
-  "maxMs": 33.4,
-  "dropped": 4
+  "maxMs": 100,
+  "dropped": 15
  },
  "longAnimationFrames": {
-  "count": 1,
-  "worstMs": 61,
+  "count": 3,
+  "worstMs": 75,
   "totalBlockingMs": 0,
   "entries": [
    {
-    "atMs": 2455,
-    "duration": 61,
+    "atMs": 98,
+    "duration": 75,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 715,
+    "duration": 57,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 772,
+    "duration": 59,
     "blocking": 0,
     "scripts": []
    }
@@ -67,14 +79,14 @@
  },
  "tiles": [
   0,
-  288,
-  735,
-  1270,
-  1873,
-  2532
+  291,
+  741,
+  1281,
+  1888,
+  2552
  ],
  "png": "docs/polish-pass/evidence/TC-g/after/hx4_sealed_meridian.png",
- "pngBytes": 12338,
+ "pngBytes": 12804,
  "off": {
   "url": "/dev/plays?id=hx4_sealed_meridian&anim=off&bare=1",
   "pass": true,

@@ -132,7 +132,7 @@ Last batch, by module (before strips `before/<id>.png`, after strips `after/<id>
 | Card | Module | Scene |
 | --- | --- | --- |
 | hx4_prowlers_bell | g27 | The caster's half is ruled off and a bell hangs on each gate square of its third and fourth ranks; three pips; their knight lands on the empty c3 and the bell rings it back with a cross; their bishop takes on e2, a capture, and is let in. |
-| hx4_sealed_meridian | g27 | A wax seal is pressed on the file and a red line runs down it; two pips; their rook's slide across it is barred; their queen moves down the file itself; the caster's bishop crosses freely. |
+| hx4_sealed_meridian | g27 | A wax seal is pressed on the file and a red line runs down it; two pips; their rook slides b5 to e5 and stops on the file (allowed), and its step on to f5, across the line, is barred with a cross; their queen moves down the file itself; the caster's bishop runs c1 to g5, crossing the line on e3. |
 | hx4_gorgons_court | g28 | A gorgon's mask on the caster's flank looks at two of their pieces; the second one chosen turns to a walnut at once; the first makes its one move and then hardens; three pips. |
 | hx4_hunters_moon | g28 | A hunter's moon rises; four pips; their knight takes on d2 and hardens into a walnut on the square it took, with two pips for its two turns. |
 | bn4_stormcrossing | g42 | A bolt runs down the a-file; the caster's rook slides through its own a2 pawn to a5 and the bishop through d2 to g5, the pawns going pale as they are passed; each lands winded with a grey pip for the turn it sits out; three pips. |
@@ -151,3 +151,7 @@ Guards at this batch: test:animations, test:scene-complexity (2 below the floor,
 Strips in this batch use `--frames 6 --tile 120` to keep the evidence small (about 35 KB per card for before, after and off). `du -sh docs/polish-pass/evidence` reads 47M, over the 25 MB line; that was already true before this round and is left to the integrator.
 
 Where I stopped: every live tier 6 card in g01..g44 is done. Tier 5 and below in these modules has not been started.
+
+Review fix (round 3): Sealed Meridian's cross sat on e5, on the sealed file itself, after the rook stopped on d5, which said their rook could not even reach the file. The card lets their pieces move along the file, stop on it or leave it, and bars only crossing. The rook now slides b5 to e5 and stops on the file, and the cross lands on f5, the square beyond the line. The caster's bishop now starts on c1 (to g5, crossing on e3), so its diagonal no longer runs through the rook on e5. The after strip and its off check were retaken (off pass). All guards pass (test:scene-complexity 1 below the floor, baseline 2). `du -sh docs/polish-pass/evidence` reads 52M; this fix only replaced one strip.
+
+Where I stopped: every live tier 6 card in g01..g44 is done and the review's blocking finding is fixed. The non-blocking notes (Gorgon's Court thread delays, Puppeteer's Gala lead) are not addressed. Tier 5 and below in these modules has not been started.
