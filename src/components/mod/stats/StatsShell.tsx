@@ -8,9 +8,8 @@
 // Children render only once the mod check passes, so anything they fetch
 // (the stats payload, the lazy nerf library chunk) waits for the gate too.
 
-import Link from "next/link";
-import { useEffect, useState, type ReactNode } from "react";
-import { AccountUser, fetchMe } from "@/lib/authClient";
+import type { ReactNode } from "react";
+import { ModGateNotice, useModGate } from "@/components/mod/ModGate";
 import { ModShell } from "@/components/mod/ModShell";
 
 export function StatsShell({
@@ -22,27 +21,12 @@ export function StatsShell({
   subtitle: ReactNode;
   children: ReactNode;
 }) {
-  const [me, setMe] = useState<AccountUser | null | undefined>(undefined);
-
-  useEffect(() => {
-    fetchMe().then(setMe);
-  }, []);
-
-  const isMod = me && (me.role === "mod" || me.role === "admin");
+  const gate = useModGate();
 
   return (
-    <ModShell title={title} isAdmin={me?.role === "admin"}>
-      {me === undefined ? (
-        <p className="text-sm text-parchment-400">Loading…</p>
-      ) : !isMod ? (
-        <p className="text-parchment-200">
-          This page is for moderators.{" "}
-          {!me && (
-            <Link href="/login" className="text-parchment-50 hover:underline">
-              Sign in
-            </Link>
-          )}
-        </p>
+    <ModShell title={title} isAdmin={gate.isAdmin}>
+      {!gate.isMod ? (
+        <ModGateNotice gate={gate} />
       ) : (
         <>
           <p className="text-[13px] text-parchment-400">{subtitle}</p>

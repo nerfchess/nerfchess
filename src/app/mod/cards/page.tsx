@@ -9,9 +9,8 @@
 import type { Buff } from "@/engine/buff";
 import { isRetired } from "@/engine/retired";
 import type { Nerf } from "@/engine/nerf";
-import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import { AccountUser, fetchMe } from "@/lib/authClient";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { ModGateNotice, useModGate } from "@/components/mod/ModGate";
 import { ModShell } from "@/components/mod/ModShell";
 import { Button } from "@/components/ui/Button";
 import { useArmedPress } from "@/components/mod/ui";
@@ -89,8 +88,13 @@ function draftFrom(card: CodeCard, o: OverrideRow | undefined): Draft {
 }
 
 export default function ModCardsPage() {
-  const [me, setMe] = useState<AccountUser | null | undefined>(undefined);
+  const gate = useModGate();
+  const { isMod } = gate;
   const [overrides, setOverrides] = useState<Map<string, OverrideRow>>(new Map());
+  // The editor stays closed until the saved overrides are known: a draft built
+  // from an empty map would overwrite an override the table failed to show
+  // (for example re-enabling a disabled card).
+  const [overridesState, setOverridesState] = useState<"loading" | "ok" | "failed">("loading");
   // The code-defined catalog, built from the lazily imported card libraries so
   // the ~26k-line engine stays out of the initial /mod/cards bundle. Null until
   // the import resolves (only fetched once the mod check passes).
@@ -103,24 +107,33 @@ export default function ModCardsPage() {
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchMe().then(setMe);
+  const loadOverrides = useCallback(async () => {
+    try {
+      const res = await fetch("/api/mod/cards");
+      if (!res.ok) throw new Error(String(res.status));
+      const data = (await res.json()) as { overrides?: OverrideRow[] };
+      const map = new Map<string, OverrideRow>();
+      for (const o of data.overrides ?? []) map.set(`${o.kind}:${o.id}`, o);
+      setOverrides(map);
+      setOverridesState("ok");
+    } catch {
+      setOverridesState("failed");
+      setEditing(null);
+      setDraft(null);
+    }
   }, []);
 
-  const isMod = me && (me.role === "mod" || me.role === "admin");
-
-  const loadOverrides = async () => {
-    const res = await fetch("/api/mod/cards");
-    if (!res.ok) return;
-    const data = (await res.json()) as { overrides?: OverrideRow[] };
-    const map = new Map<string, OverrideRow>();
-    for (const o of data.overrides ?? []) map.set(`${o.kind}:${o.id}`, o);
-    setOverrides(map);
+  const retryOverrides = () => {
+    setOverridesState("loading");
+    void loadOverrides();
   };
 
   useEffect(() => {
-    if (isMod) void (async () => { await loadOverrides(); })();
-  }, [isMod]);
+    if (!isMod) return;
+    void (async () => {
+      await loadOverrides();
+    })();
+  }, [isMod, loadOverrides]);
 
   // Pull the card engine in its own async chunk once the mod check passes, then
   // assemble the code-defined catalog from it.
@@ -162,24 +175,30 @@ export default function ModCardsPage() {
     if (!draft) return;
     setBusy(true);
     const tier = draft.tier === "" ? null : Number(draft.tier);
-    const res = await fetch("/api/mod/cards", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        id: card.id,
-        kind: card.kind,
-        name: draft.name.trim() === "" ? null : draft.name.trim(),
-        description: draft.description.trim() === "" ? null : draft.description.trim(),
-        flavor: draft.flavor.trim() === "" ? null : draft.flavor.trim(),
-        tier,
-        enabled: draft.enabled,
-      }),
-    });
-    const data = (await res.json().catch(() => ({}))) as { error?: string };
-    setBusy(false);
-    if (!res.ok) {
-      setNotice(data.error ?? "Save failed.");
+    try {
+      const res = await fetch("/api/mod/cards", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: card.id,
+          kind: card.kind,
+          name: draft.name.trim() === "" ? null : draft.name.trim(),
+          description: draft.description.trim() === "" ? null : draft.description.trim(),
+          flavor: draft.flavor.trim() === "" ? null : draft.flavor.trim(),
+          tier,
+          enabled: draft.enabled,
+        }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) {
+        setNotice(data.error ?? "Save failed.");
+        return;
+      }
+    } catch {
+      setNotice("Save failed: the server did not answer. Your edit is still open.");
       return;
+    } finally {
+      setBusy(false);
     }
     setNotice(null);
     setEditing(null);
@@ -189,11 +208,17 @@ export default function ModCardsPage() {
 
   const reset = async (card: CodeCard) => {
     setBusy(true);
-    const res = await fetch(`/api/mod/cards?id=${encodeURIComponent(card.id)}&kind=${card.kind}`, { method: "DELETE" });
-    setBusy(false);
-    if (!res.ok) {
-      setNotice("Reset failed.");
+    try {
+      const res = await fetch(`/api/mod/cards?id=${encodeURIComponent(card.id)}&kind=${card.kind}`, { method: "DELETE" });
+      if (!res.ok) {
+        setNotice("Reset failed.");
+        return;
+      }
+    } catch {
+      setNotice("Reset failed: the server did not answer.");
       return;
+    } finally {
+      setBusy(false);
     }
     setNotice(null);
     setEditing(null);
@@ -202,19 +227,10 @@ export default function ModCardsPage() {
   };
 
   return (
-    <ModShell title="Card editor" isAdmin={me?.role === "admin"}>
+    <ModShell title="Card editor" isAdmin={gate.isAdmin}>
       <>
-        {me === undefined ? (
-          <div className="text-parchment-300">Loading…</div>
-        ) : !isMod ? (
-          <>
-                        <p className="mt-3 text-parchment-200">
-              This page is for moderators.{" "}
-              {!me && (
-                <Link href="/login" className="text-parchment-50 hover:underline">Sign in</Link>
-              )}
-            </p>
-          </>
+        {!isMod ? (
+          <ModGateNotice gate={gate} />
         ) : (
           <>
             
@@ -251,9 +267,23 @@ export default function ModCardsPage() {
               </label>
             </div>
 
-            {notice && <p className="mt-3 text-sm text-red-400">{notice}</p>}
+            {notice && (
+              <p role="alert" className="mt-3 text-sm text-red-400">
+                {notice}
+              </p>
+            )}
 
-            {!codeCards ? (
+            {overridesState === "failed" ? (
+              <div role="alert" className="mt-4 plate p-10 text-center text-sm text-parchment-200">
+                <p>
+                  Could not load the saved overrides. Editing is paused so a save cannot overwrite one
+                  that is not shown.
+                </p>
+                <Button size="sm" className="mt-3" onClick={retryOverrides}>
+                  Retry
+                </Button>
+              </div>
+            ) : !codeCards || overridesState === "loading" ? (
               <div className="mt-4 plate p-10 text-center text-parchment-400">
                 Loading the library…
               </div>

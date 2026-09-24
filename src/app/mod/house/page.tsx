@@ -8,9 +8,8 @@
 // identity cache refreshes within about a minute). Open to any moderator or
 // admin, matching the server-side authorization in /api/mod/house/personas.
 
-import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { AccountUser, fetchMe } from "@/lib/authClient";
+import { ModGateNotice, useModGate } from "@/components/mod/ModGate";
 import { ModShell } from "@/components/mod/ModShell";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { fileToDataUrl } from "@/lib/imageUpload";
@@ -44,7 +43,8 @@ function filtered(personas: PersonaView[], query: string): PersonaView[] {
 }
 
 export default function ModHousePage() {
-  const [me, setMe] = useState<AccountUser | null | undefined>(undefined);
+  const gate = useModGate();
+  const { isMod } = gate;
   const [data, setData] = useState<PersonasPayload | null>(null);
   const [failed, setFailed] = useState(false);
   // 900 personas with three controls each is too much DOM to mount at once:
@@ -52,25 +52,21 @@ export default function ModHousePage() {
   const [query, setQuery] = useState("");
   const [shown, setShown] = useState(PAGE);
 
+  // The roster is fetched only once the mod check passes, like the other mod
+  // pages: for anyone else it is a request that always fails.
   useEffect(() => {
-    fetchMe().then(setMe);
+    if (!isMod) return;
     fetch("/api/mod/house/personas")
       .then((res) => (res.ok ? (res.json() as Promise<PersonasPayload>) : Promise.reject()))
       .then(setData)
       .catch(() => setFailed(true));
-  }, []);
-
-  const isMod = me && (me.role === "mod" || me.role === "admin");
+  }, [isMod]);
 
   return (
-    <ModShell title="House bots" isAdmin={me?.role === "admin"}>
+    <ModShell title="House bots" isAdmin={gate.isAdmin}>
       <>
-        {me === undefined ? (
-          <div className="text-parchment-300">Loading…</div>
-        ) : !isMod ? (
-          <>
-                        <p className="mt-3 text-parchment-200">This page is for moderators.</p>
-          </>
+        {!isMod ? (
+          <ModGateNotice gate={gate} />
         ) : (
           <>
                         <p className="mt-3 max-w-2xl text-sm text-parchment-300">
