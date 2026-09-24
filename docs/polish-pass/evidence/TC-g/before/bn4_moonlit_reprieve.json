@@ -1,0 +1,76 @@
+{
+ "id": "bn4_moonlit_reprieve",
+ "url": "/dev/plays?id=bn4_moonlit_reprieve&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "bn4_moonlit_reprieve",
+  "name": "Moonlit Reprieve",
+  "tier": 7,
+  "category": "nerf",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:bn4_moonlit_reprieve",
+  "anchor": "board",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 55,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, diff-less: no zone source, not an attack",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2475,
+  "cssEndMs": 3481,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 26,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 191,
+  "maxGapMs": 118.7
+ },
+ "raf": {
+  "frames": 217,
+  "medianMs": 16.7,
+  "maxMs": 50,
+  "dropped": 3
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 53,
+  "totalBlockingMs": 0,
+  "entries": [
+   {
+    "atMs": -48,
+    "duration": 53,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  190,
+  484,
+  836,
+  1233,
+  1667,
+  2132,
+  2625
+ ],
+ "png": "docs/polish-pass/evidence/TC-g/before/bn4_moonlit_reprieve.png",
+ "pngBytes": 30231
+}

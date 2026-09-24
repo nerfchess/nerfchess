@@ -1,0 +1,235 @@
+{
+ "method": "cosine similarity of per-tile (tile minus pre-play tile) 24x24 grey thumbnails, standardised per tile and then weighted by the tile's raw energy over the card's peak (so near-empty tiles count for little); 1 = same look, near 0 = unrelated. Every tier 6+ bespoke card shares the cast wrapper's ring and beam (TC0-f), so expect a floor well above 0",
+ "cards": 8,
+ "sheetPicks": {
+  "bn4_champions_rest": "+1147ms (energy 1 of peak)",
+  "bn4_debtors_holiday": "+1147ms (energy 1 of peak)",
+  "bn4_escape_artist": "+1147ms (energy 0.91 of peak)",
+  "bn4_grand_bargain": "+1147ms (energy 1 of peak)",
+  "bn4_half_moon_charter": "+260ms (energy 1 of peak)",
+  "bn4_jubilee": "+1147ms (energy 1 of peak)",
+  "bn4_keys_to_the_city": "+1147ms (energy 1 of peak)",
+  "bn4_moonlit_reprieve": "+1233ms (energy 0.95 of peak)"
+ },
+ "generic": {
+  "method": "cosine similarity of the card's weighted look vector to the mean weighted look of the other cards in this sheet (leave-one-out); highest = least card-specific",
+  "ranking": [
+   {
+    "card": "bn4_escape_artist",
+    "tier": 7,
+    "closeness": 0.82
+   },
+   {
+    "card": "bn4_keys_to_the_city",
+    "tier": 7,
+    "closeness": 0.778
+   },
+   {
+    "card": "bn4_champions_rest",
+    "tier": 7,
+    "closeness": 0.743
+   },
+   {
+    "card": "bn4_jubilee",
+    "tier": 7,
+    "closeness": 0.733
+   },
+   {
+    "card": "bn4_debtors_holiday",
+    "tier": 7,
+    "closeness": 0.683
+   },
+   {
+    "card": "bn4_moonlit_reprieve",
+    "tier": 7,
+    "closeness": 0.642
+   },
+   {
+    "card": "bn4_grand_bargain",
+    "tier": 7,
+    "closeness": 0.614
+   },
+   {
+    "card": "bn4_half_moon_charter",
+    "tier": 7,
+    "closeness": 0.579
+   }
+  ]
+ },
+ "pairs": [
+  {
+   "a": "bn4_champions_rest",
+   "b": "bn4_keys_to_the_city",
+   "similarity": 0.854
+  },
+  {
+   "a": "bn4_jubilee",
+   "b": "bn4_keys_to_the_city",
+   "similarity": 0.736
+  },
+  {
+   "a": "bn4_debtors_holiday",
+   "b": "bn4_escape_artist",
+   "similarity": 0.671
+  },
+  {
+   "a": "bn4_escape_artist",
+   "b": "bn4_half_moon_charter",
+   "similarity": 0.667
+  },
+  {
+   "a": "bn4_champions_rest",
+   "b": "bn4_jubilee",
+   "similarity": 0.655
+  },
+  {
+   "a": "bn4_champions_rest",
+   "b": "bn4_escape_artist",
+   "similarity": 0.643
+  },
+  {
+   "a": "bn4_escape_artist",
+   "b": "bn4_keys_to_the_city",
+   "similarity": 0.641
+  },
+  {
+   "a": "bn4_escape_artist",
+   "b": "bn4_jubilee",
+   "similarity": 0.625
+  },
+  {
+   "a": "bn4_champions_rest",
+   "b": "bn4_debtors_holiday",
+   "similarity": 0.615
+  },
+  {
+   "a": "bn4_escape_artist",
+   "b": "bn4_moonlit_reprieve",
+   "similarity": 0.59
+  },
+  {
+   "a": "bn4_escape_artist",
+   "b": "bn4_grand_bargain",
+   "similarity": 0.565
+  },
+  {
+   "a": "bn4_debtors_holiday",
+   "b": "bn4_keys_to_the_city",
+   "similarity": 0.555
+  },
+  {
+   "a": "bn4_grand_bargain",
+   "b": "bn4_keys_to_the_city",
+   "similarity": 0.531
+  },
+  {
+   "a": "bn4_debtors_holiday",
+   "b": "bn4_jubilee",
+   "similarity": 0.52
+  },
+  {
+   "a": "bn4_grand_bargain",
+   "b": "bn4_moonlit_reprieve",
+   "similarity": 0.52
+  },
+  {
+   "a": "bn4_debtors_holiday",
+   "b": "bn4_half_moon_charter",
+   "similarity": 0.519
+  },
+  {
+   "a": "bn4_keys_to_the_city",
+   "b": "bn4_moonlit_reprieve",
+   "similarity": 0.513
+  },
+  {
+   "a": "bn4_grand_bargain",
+   "b": "bn4_jubilee",
+   "similarity": 0.501
+  },
+  {
+   "a": "bn4_jubilee",
+   "b": "bn4_moonlit_reprieve",
+   "similarity": 0.499
+  },
+  {
+   "a": "bn4_champions_rest",
+   "b": "bn4_moonlit_reprieve",
+   "similarity": 0.493
+  },
+  {
+   "a": "bn4_half_moon_charter",
+   "b": "bn4_moonlit_reprieve",
+   "similarity": 0.471
+  },
+  {
+   "a": "bn4_debtors_holiday",
+   "b": "bn4_moonlit_reprieve",
+   "similarity": 0.463
+  },
+  {
+   "a": "bn4_grand_bargain",
+   "b": "bn4_half_moon_charter",
+   "similarity": 0.458
+  },
+  {
+   "a": "bn4_half_moon_charter",
+   "b": "bn4_jubilee",
+   "similarity": 0.444
+  },
+  {
+   "a": "bn4_champions_rest",
+   "b": "bn4_grand_bargain",
+   "similarity": 0.426
+  },
+  {
+   "a": "bn4_debtors_holiday",
+   "b": "bn4_grand_bargain",
+   "similarity": 0.406
+  },
+  {
+   "a": "bn4_half_moon_charter",
+   "b": "bn4_keys_to_the_city",
+   "similarity": 0.358
+  },
+  {
+   "a": "bn4_champions_rest",
+   "b": "bn4_half_moon_charter",
+   "similarity": 0.325
+  }
+ ],
+ "nearest": {
+  "bn4_champions_rest": {
+   "card": "bn4_keys_to_the_city",
+   "similarity": 0.854
+  },
+  "bn4_debtors_holiday": {
+   "card": "bn4_escape_artist",
+   "similarity": 0.671
+  },
+  "bn4_escape_artist": {
+   "card": "bn4_debtors_holiday",
+   "similarity": 0.671
+  },
+  "bn4_grand_bargain": {
+   "card": "bn4_escape_artist",
+   "similarity": 0.565
+  },
+  "bn4_half_moon_charter": {
+   "card": "bn4_escape_artist",
+   "similarity": 0.667
+  },
+  "bn4_jubilee": {
+   "card": "bn4_keys_to_the_city",
+   "similarity": 0.736
+  },
+  "bn4_keys_to_the_city": {
+   "card": "bn4_champions_rest",
+   "similarity": 0.854
+  },
+  "bn4_moonlit_reprieve": {
+   "card": "bn4_escape_artist",
+   "similarity": 0.59
+  }
+ }
+}

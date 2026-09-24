@@ -1,0 +1,78 @@
+{
+ "id": "bn4_escape_artist",
+ "url": "/dev/plays?id=bn4_escape_artist&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "bn4_escape_artist",
+  "name": "Escape Artist",
+  "tier": 7,
+  "category": "nerf",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:bn4_escape_artist",
+  "anchor": "board",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, diff-less: no zone source, not an attack",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2427,
+  "cssEndMs": 3453,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 22,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 170,
+  "maxGapMs": 312.7
+ },
+ "raf": {
+  "frames": 217,
+  "medianMs": 16.7,
+  "maxMs": 33.3,
+  "dropped": 1
+ },
+ "longAnimationFrames": {
+  "count": 0,
+  "worstMs": 0,
+  "totalBlockingMs": 0,
+  "entries": []
+ },
+ "tiles": [
+  0,
+  186,
+  475,
+  821,
+  1211,
+  1636,
+  2093,
+  2577
+ ],
+ "png": "docs/polish-pass/evidence/TC-g/after/bn4_escape_artist.png",
+ "pngBytes": 29439,
+ "off": {
+  "url": "/dev/plays?id=bn4_escape_artist&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "docs/polish-pass/evidence/TC-g/after/bn4_escape_artist.off.png"
+ }
+}
