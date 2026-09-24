@@ -1,0 +1,73 @@
+{
+ "id": "hw3_time_bomb",
+ "url": "/dev/plays?id=hw3_time_bomb&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "hw3_time_bomb",
+  "name": "Powder Keg",
+  "tier": 6,
+  "category": "hex",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:hw3_time_bomb",
+  "anchor": "board",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "engine",
+  "driveNote": "activated with 1 pick(s)",
+  "castSq": "d5",
+  "targets": [
+   "d5"
+  ],
+  "picks": [
+   "d5"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2376,
+  "cssEndMs": 3464,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 34,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 171,
+  "maxGapMs": 303.4
+ },
+ "raf": {
+  "frames": 218,
+  "medianMs": 16.7,
+  "maxMs": 16.8,
+  "dropped": 0
+ },
+ "longAnimationFrames": {
+  "count": 0,
+  "worstMs": 0,
+  "totalBlockingMs": 0,
+  "entries": []
+ },
+ "tiles": [
+  0,
+  183,
+  466,
+  805,
+  1187,
+  1604,
+  2051,
+  2526
+ ],
+ "png": "docs/polish-pass/evidence/TC-boon-curse/before/hw3_time_bomb.png",
+ "pngBytes": 24416
+}

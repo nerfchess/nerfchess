@@ -1,0 +1,69 @@
+{
+ "id": "bw3_from_the_ashes",
+ "url": "/dev/plays?id=bw3_from_the_ashes&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "bw3_from_the_ashes",
+  "name": "From the Ashes",
+  "tier": 6,
+  "category": "pieces",
+  "mechanic": "instant",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:bw3_from_the_ashes",
+  "anchor": "board",
+  "source": "summon",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 60,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2402,
+  "cssEndMs": 3474,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 25,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 171,
+  "maxGapMs": 313
+ },
+ "raf": {
+  "frames": 215,
+  "medianMs": 16.7,
+  "maxMs": 33.4,
+  "dropped": 2
+ },
+ "longAnimationFrames": {
+  "count": 0,
+  "worstMs": 0,
+  "totalBlockingMs": 0,
+  "entries": []
+ },
+ "tiles": [
+  0,
+  185,
+  470,
+  813,
+  1199,
+  1620,
+  2073,
+  2552
+ ],
+ "png": "docs/polish-pass/evidence/TC-boon-curse/before/bw3_from_the_ashes.png",
+ "pngBytes": 29052
+}

@@ -202,8 +202,6 @@ const CUE: Record<string, ImpactCue> = {
   hallow: { at: 1100, left: 57.5, top: 57.5 },
 
   /* Reliquary */
-  // Spoils of War: THE TURNCOAT STRIP - the prisoner's grey coat is lasered off and shatters
-  defector: { at: 900, left: 59, top: 44.5, man: "r", laser: true },
   // Prisoner Exchange: THE HANDOVER SLAM - both crossings land on one chest-boom
   exchange: { at: 960, left: 50, top: 52 },
   // Highwayman's Toll: THE STAND-AND-DELIVER - the beam robs the hourglass mid-keel
@@ -232,8 +230,6 @@ const CUE: Record<string, ImpactCue> = {
   masks: { at: 1050, left: 49.5, top: 42 },
   // Alchemist's Trade: THE LEAD PRICE - the bishop paid away is beamed down to a pawn
   transmute: { at: 1060, left: 64, top: 44, man: "b", laser: true },
-  // Early Coronation: THE TRIPLE CROWNING - the coronet rank lands as one strike
-  coronet: { at: 1100, left: 49.5, top: 39 },
   // Standard Bearer: THE UNFURL SNAP - the standard cracks open at full height
   standard: { at: 1120, left: 66, top: 40 },
   // Heir Apparent: THE INHERITANCE FLASH - the heir's remaking cracks the forge floor
@@ -265,8 +261,6 @@ const CUE: Record<string, ImpactCue> = {
   stormcastle: { at: 960, left: 50, top: 56.5 },
   // Last Muster: THE GRAVE CALL - the mustered rank stamps up out of the ground
   muster: { at: 1010, left: 52.5, top: 54 },
-  // Funeral Pyre: THE PYRE BLAST - the chosen piece is taken by the flame column and split
-  pyre: { at: 960, left: 50.3, top: 49, man: "b", laser: true, rgb: "#ff9d3d" },
 };
 
 /** Full-board colour wash. Inside <BoardFrame>, so it is exactly the board at
@@ -743,18 +737,6 @@ function Reliquary({ palette, glyph, lead, role, delayMs, flourish, aim }: Templ
       <span className="bwp-gate absolute block" style={{ left: "45%", top: "30%", width: "10%", height: "22%", transformOrigin: "50% 100%", background: `linear-gradient(180deg, transparent, ${tint(p1, 0.5)})`, animationDelay: `${delayMs + 620}ms` }} />
       <span className="bwp-facein absolute block" style={{ left: "44.5%", top: "27%", width: "11%", height: "11%", animationDelay: `${delayMs + 720}ms` }}>{glyph}</span>
       <Ring delayMs={delayMs + 780} color={tint(p1, 0.8)} />
-      {/* bespoke: Spoils of War — the prisoner climbs out in enemy grey and
-          the crossfade turns his coat to your colors */}
-      {flourish === "defector" && (
-        <span className="absolute block" style={{ left: "56%", top: "40%", width: "6.5%", height: "10%" }}>
-          <span className="bwp-swapout absolute inset-0 block" style={{ animationDelay: `${delayMs + 700}ms` }}>
-            <Man kind="r" fill="#8a94a8" stroke="#3a3a40" />
-          </span>
-          <span className="bwp-swapin absolute inset-0 block" style={{ animationDelay: `${delayMs + 700}ms` }}>
-            <Man kind="r" fill={tint(p1, 0.98)} stroke={p2} />
-          </span>
-        </span>
-      )}
       {/* bespoke: Prisoner Exchange — two prisoners arc over the chest in
           opposite directions, each heading home */}
       {flourish === "exchange" && (
@@ -1012,24 +994,6 @@ function AstralAnvil({ palette, glyph, lead, role, delayMs, flourish, aim }: Tem
           </span>
         </>
       )}
-      {/* bespoke: Early Coronation — three little crowns drop onto a rank of
-          marching pawns well short of the far edge */}
-      {flourish === "coronet" && (
-        <>
-          {[36, 47, 58].map((l, i) => (
-            <span key={l} className="absolute block" style={{ left: `${l}%`, top: "36%", width: "5%", height: "7.5%" }}>
-              <span className="bwp-hold absolute inset-0 block" style={{ animationDelay: `${delayMs + 820 + i * 90}ms` }}>
-                <Man kind="p" fill={tint(p1, 0.95)} stroke={p2} />
-              </span>
-              <span className="bwp-rain absolute block" style={{ left: "18%", top: "-46%", width: "64%", height: "46%", animationDelay: `${delayMs + 920 + i * 90}ms` }}>
-                <svg viewBox="0 0 6 4" className="block h-full w-full" aria-hidden="true">
-                  <path d="M0.8 3.4 L1.2 1 L2.4 2.2 L3 0.6 L3.6 2.2 L4.8 1 L5.2 3.4 Z" fill="#ffd76a" stroke="#8a6a3a" strokeWidth="0.3" {...SJ} />
-                </svg>
-              </span>
-            </span>
-          ))}
-        </>
-      )}
       {/* bespoke: Standard Bearer — the pawn hoists a pole twice its height
           and the army's standard unfurls above the anvil */}
       {flourish === "standard" && (
@@ -1285,18 +1249,6 @@ function PactScroll({ palette, glyph, lead, role, delayMs, flourish, aim }: Temp
             </span>
           ))}
           <Glint delayMs={delayMs + 1160} color={tint(p1, 0.9)} left={50} top={46} size={2.4} />
-        </>
-      )}
-      {/* wave3 Funeral Pyre — a chosen piece ignites, a ring blast clears its neighbors */}
-      {flourish === "pyre" && (
-        <>
-          <span className="bwp-sink absolute block" style={{ left: "47%", top: "44%", width: "6.5%", height: "10%", animationDelay: `${delayMs + 700}ms` }}>
-            <Man kind="b" fill={tint(p1, 0.9)} stroke={p2} />
-          </span>
-          <span className="bwp-stamp absolute block rounded-full" style={{ left: "40%", top: "40%", width: "20%", height: "20%", border: `3px solid ${tint(p1, 0.9)}`, animationDelay: `${delayMs + 900}ms` }} />
-          {[38, 52, 60].map((l, i) => (
-            <span key={l} className="bwp-arc absolute block rounded-full" style={{ left: `${l}%`, top: "48%", width: "2%", height: "2%", background: "#ff9d3d", "--dx": `${(i - 1) * 130}%`, "--dy": "-120%", animationDelay: `${delayMs + 980 + i * 70}ms` } as CSSProperties} />
-          ))}
         </>
       )}
     </Stage>
@@ -2867,6 +2819,189 @@ function HighStakesScene({ lead, role, delayMs }: SceneProps) {
   );
 }
 
+/** Spoils of War: the finest captured piece defects. It stands in their
+ * revival pool (a tray on their side), its colours turn to yours, and it
+ * walks to an empty square on your home rank; an hourglass with a return
+ * arrow stays on its empty place in their pool (it rejoins it later), and a
+ * reroll die is yours. */
+const SPOILS: Palette = ["#8a6a3a", "#ffd76a", "#3a3026"];
+function SpoilsOfWarScene({ lead, role, delayMs }: SceneProps) {
+  const [p0, p1, p2] = SPOILS;
+  if (role === "entrance") return <EntranceCut palette={SPOILS} glyph={GLYPH.bw2_spoils_of_war} delayMs={delayMs} />;
+  if (!lead) return <TargetHit palette={SPOILS} glyph={GLYPH.bw2_spoils_of_war} delayMs={delayMs} />;
+  return (
+    <Stage>
+      <BoardFrame>
+        {/* tell: their revival pool, a tray at the edge of their side */}
+        <span className="bwp-hold absolute block" style={{ left: "1%", width: "36%", top: rankTop(6), height: "12.5%", background: tint(p2, 0.7), border: `3px dashed ${p0}`, animationDelay: dm(delayMs, 0), animationDuration: "calc(1700ms * var(--fx-dur, 1))" }} />
+        {/* the finest of the taken, a rook, in their colours... */}
+        <span className="absolute block" style={manBox(1, 6)}>
+          <span className="bwp-swapout absolute inset-0 block" style={{ animationDelay: dm(delayMs, 160), animationDuration: "calc(1000ms * var(--fx-dur, 1))" }}>
+            <Man kind="r" fill={p2} stroke={p0} />
+          </span>
+          {/* strike: ...turns its coat to yours */}
+          <span className="bwp-swapin absolute inset-0 block" style={{ animationDelay: dm(delayMs, 160), animationDuration: "calc(1000ms * var(--fx-dur, 1))" }}>
+            <Man kind="r" fill={p1} stroke={p2} />
+          </span>
+        </span>
+        {/* and walks to an empty square on your home rank */}
+        <span className="bwp-stepoff absolute block" style={{ ...manBox(1, 1), "--steps": 5, animationDelay: dm(delayMs, 560), animationDuration: "calc(1150ms * var(--fx-dur, 1))" } as CSSProperties}>
+          <Man kind="r" fill={p1} stroke={p2} />
+        </span>
+        <span className="bwp-stamp absolute block" style={{ ...cellBox(1, 1), animationDelay: dm(delayMs, 980) }}>
+          <svg viewBox="0 0 12 12" className="block h-full w-full" aria-hidden="true">
+            <rect x="0.8" y="0.8" width="10.4" height="10.4" rx="0.8" fill="none" stroke={p1} strokeWidth="0.7" strokeDasharray="1.8 1.2" />
+          </svg>
+        </span>
+        {/* its place in their pool waits with an hourglass: it rejoins later */}
+        <span className="bwp-facein absolute block" style={{ ...cellBox(1, 6), animationDelay: dm(delayMs, 820), animationDuration: "calc(1250ms * var(--fx-dur, 1))" }}>
+          <svg viewBox="0 0 12 12" className="block h-full w-full" aria-hidden="true">
+            <path d="M3.4 2 H8.6 M3.4 10 H8.6 M3.8 2 C3.8 4.6 8.2 4.6 8.2 6 C8.2 7.4 3.8 7.4 3.8 10 M8.2 2 C8.2 4.6 3.8 4.6 3.8 6 C3.8 7.4 8.2 7.4 8.2 10" fill="none" stroke={p1} strokeWidth="0.6" {...SJ} />
+            <path d="M10.4 8.4 C11.6 6 11 3.2 9.4 2.2 M9.4 2.2 L10.6 2 M9.4 2.2 L9.8 3.4" fill="none" stroke={p0} strokeWidth="0.55" {...SJ} />
+          </svg>
+        </span>
+        {/* settle: one draft reroll is yours */}
+        <span className="bwp-facein absolute block" style={{ left: "88%", width: "8%", top: `calc(${rankTop(2)} + 2.5%)`, height: "8%", animationDelay: dm(delayMs, 1120) }}>
+          <svg viewBox="0 0 8 8" className="block h-full w-full" aria-hidden="true">
+            <rect x="0.6" y="0.6" width="6.8" height="6.8" rx="1.2" fill={p1} stroke={p2} strokeWidth="0.45" />
+            <circle cx="2.6" cy="2.6" r="0.7" fill={p2} />
+            <circle cx="5.4" cy="5.4" r="0.7" fill={p2} />
+          </svg>
+        </span>
+        <span className="bwp-glint absolute block" style={{ left: "15%", top: `calc(${rankTop(1)} + 1%)`, width: "3.4%", height: "3.4%", animationDelay: dm(delayMs, 1220) }}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <path d="M5 0 L6.6 5 L5 10 L3.4 5 Z M0 5 L5 3.4 L10 5 L5 6.6 Z" fill={p1} />
+          </svg>
+        </span>
+      </BoardFrame>
+    </Stage>
+  );
+}
+
+/** Early Coronation: a modest crowning, once. The line along the foot of
+ * their second rank is drawn; a pawn of yours steps onto that rank; the three
+ * modest crowns are offered (rook, bishop, knight) with the queen struck out;
+ * the pawn comes up a knight; one pip, because it happens once. */
+const CORONET: Palette = ["#8a6a3a", "#ffe9b0", "#2a2216"];
+function EarlyCoronationScene({ lead, role, delayMs }: SceneProps) {
+  const [p0, p1, p2] = CORONET;
+  if (role === "entrance") return <EntranceCut palette={CORONET} glyph={GLYPH.bw2_early_coronation} delayMs={delayMs} />;
+  if (!lead) return <TargetHit palette={CORONET} glyph={GLYPH.bw2_early_coronation} delayMs={delayMs} />;
+  const offers = [
+    { k: "r" as const, f: 3, d: 520 },
+    { k: "b" as const, f: 4, d: 590 },
+    { k: "n" as const, f: 5, d: 660 },
+  ];
+  return (
+    <Stage>
+      <BoardFrame>
+        {/* tell: the crowning line along the foot of their second rank */}
+        <span className="bwp-beam absolute block" style={{ left: 0, width: "100%", top: `calc(${onRankLine(6, 1.4)} + var(--fx-side, 1) * 0.7%)`, height: "1.4%", background: `repeating-linear-gradient(90deg, ${p1} 0 8px, transparent 8px 13px)`, transformOrigin: "0% 50%", animationDelay: dm(delayMs, 0), animationDuration: "calc(1650ms * var(--fx-dur, 1))" }} />
+        {/* strike: a pawn of yours steps onto their second rank... */}
+        <span className="absolute block" style={manBox(6, 7)}>
+          <span className="bwp-stepoff absolute inset-0 block" style={{ "--steps": -1, animationDelay: dm(delayMs, 180), animationDuration: "calc(900ms * var(--fx-dur, 1))" } as CSSProperties}>
+            <Man kind="p" fill={p1} stroke={p2} />
+          </span>
+        </span>
+        {/* ...and the modest crowns are offered, the queen struck out */}
+        {offers.map((v) => (
+          <span key={v.k} className="bwp-facein absolute block" style={{ ...manBox(v.f, 6), animationDelay: dm(delayMs, v.d), animationDuration: "calc(1150ms * var(--fx-dur, 1))" }}>
+            <Man kind={v.k} fill={tint(p1, 0.9)} stroke={p0} />
+          </span>
+        ))}
+        <span className="bwp-facein absolute block" style={{ ...cellBox(2, 6), animationDelay: dm(delayMs, 730), animationDuration: "calc(1100ms * var(--fx-dur, 1))" }}>
+          <svg viewBox="0 0 10 12" className="block h-full w-full" aria-hidden="true">
+            <g fill={tint(p0, 0.6)} stroke={p1} strokeWidth="0.45" {...SJ}>{CHESSMAN.q}</g>
+            <path d="M1.4 10.6 L8.6 1.4" stroke={p2} strokeWidth="1" strokeLinecap="round" />
+          </svg>
+        </span>
+        {/* the pawn comes up a knight on the spot */}
+        <span className="absolute block" style={manBox(6, 7)}>
+          <span className="bwp-swapout absolute inset-0 block" style={{ animationDelay: dm(delayMs, 760) }}>
+            <Man kind="p" fill={p1} stroke={p2} />
+          </span>
+          <span className="bwp-swapin absolute inset-0 block" style={{ animationDelay: dm(delayMs, 760) }}>
+            <Man kind="n" fill={p1} stroke={p2} />
+          </span>
+        </span>
+        <span className="bwp-drop absolute block" style={{ left: "78%", width: "8%", top: `calc(${rankTop(7)} - 3%)`, height: "5%", animationDelay: dm(delayMs, 980) }}>
+          <svg viewBox="0 0 12 7" className="block h-full w-full" aria-hidden="true">
+            <path d="M1.6 6 V2.4 L4 4 L6 1.2 L8 4 L10.4 2.4 V6 Z" fill={p1} stroke={p2} strokeWidth="0.45" {...SJ} />
+          </svg>
+        </span>
+        {/* settle: once only, one pip */}
+        <span className="bwp-facein absolute block rounded-full" style={{ left: "90%", top: `calc(${rankTop(6)} + 4%)`, width: "4.5%", height: "4.5%", background: p1, border: `2px solid ${p0}`, animationDelay: dm(delayMs, 1160) }} />
+      </BoardFrame>
+    </Stage>
+  );
+}
+
+/** Funeral Pyre: one of your own is lit and takes its neighbours. A pyre is
+ * laid under your bishop and the eight squares round it are marked; the fire
+ * takes the bishop; the enemy knight and pawns beside it burn with it; an
+ * enemy rook under a shield and their king beside it both stand. */
+const PYRE: Palette = ["#8a3a1a", "#ff9d3d", "#2b1208"];
+function FuneralPyreScene({ lead, role, delayMs }: SceneProps) {
+  const [p0, p1, p2] = PYRE;
+  if (role === "entrance") return <EntranceCut palette={PYRE} glyph={GLYPH.bw3_funeral_pyre} delayMs={delayMs} />;
+  if (!lead) return <TargetHit palette={PYRE} glyph={GLYPH.bw3_funeral_pyre} delayMs={delayMs} />;
+  const burned = [
+    { k: "n" as const, f: 2, r: 6, d: 700 },
+    { k: "p" as const, f: 4, r: 6, d: 760 },
+    { k: "p" as const, f: 4, r: 5, d: 820 },
+  ];
+  return (
+    <Stage>
+      <BoardFrame>
+        {/* tell: the eight squares round your bishop are marked out */}
+        <span className="bwp-hold absolute block" style={{ left: "25%", width: "37.5%", top: bandTop(4, 6), height: "37.5%", background: tint(p0, 0.28), border: `3px dashed ${p1}`, animationDelay: dm(delayMs, 0), animationDuration: "calc(1650ms * var(--fx-dur, 1))" }} />
+        {/* the pyre is laid under your bishop */}
+        <span className="bwp-rise absolute block" style={{ ...manBox(3, 5), animationDelay: dm(delayMs, 120), animationDuration: "calc(900ms * var(--fx-dur, 1))" }}>
+          <svg viewBox="0 0 10 12" className="block h-full w-full" aria-hidden="true">
+            <g fill={p1} stroke={p2} strokeWidth="0.45" {...SJ}>{CHESSMAN.b}</g>
+            <path d="M1 11 L9 9.6 M1 9.6 L9 11" stroke={p0} strokeWidth="0.9" strokeLinecap="round" />
+          </svg>
+        </span>
+        {/* strike: the fire takes the bishop */}
+        <span className="bwp-gate absolute block" style={{ ...cellBox(3, 5), transformOrigin: "50% 100%", animationDelay: dm(delayMs, 460), animationDuration: "calc(950ms * var(--fx-dur, 1))" }}>
+          <svg viewBox="0 0 12 12" className="block h-full w-full" aria-hidden="true">
+            <path d="M6 0.8 C8.4 3.6 10.4 6 9.6 8.6 C9 10.6 7.6 11.4 6 11.4 C4.4 11.4 3 10.6 2.4 8.6 C1.8 6.6 3.2 5.2 4 3.6 C4.4 5 5 5.8 5.6 6 C5.4 4.2 5.6 2.4 6 0.8 Z" fill={tint(p1, 0.9)} stroke={p0} strokeWidth="0.45" {...SJ} />
+            <path d="M6 5.4 C7.4 7 7.6 8.6 7 9.8 C6.4 10.6 5.6 10.6 5 9.8 C4.6 8.8 5.4 7.2 6 5.4 Z" fill={tint(p1, 0.55)} />
+          </svg>
+        </span>
+        {/* ...and the enemy pieces beside it burn with it */}
+        {burned.map((v) => (
+          <span key={`${v.f}${v.r}`} className="bwp-shatter absolute block" style={{ ...manBox(v.f, v.r), animationDelay: dm(delayMs, v.d) }}>
+            <Man kind={v.k} fill={p2} stroke={p1} />
+          </span>
+        ))}
+        {/* a shielded enemy stands */}
+        <span className="bwp-stamp absolute block" style={{ ...cellBox(2, 4), animationDelay: dm(delayMs, 860) }}>
+          <svg viewBox="0 0 10 11" className="block h-full w-full" aria-hidden="true">
+            <path d={HEATER} fill={tint(p2, 0.55)} stroke={p1} strokeWidth="0.55" {...SJ} />
+            <g transform="translate(2.5 2.2) scale(0.5)" fill={p2} stroke={p1} strokeWidth="0.8" {...SJ}>{CHESSMAN.r}</g>
+          </svg>
+        </span>
+        {/* and so does their king */}
+        <span className="bwp-facein absolute block" style={{ ...cellBox(4, 4), animationDelay: dm(delayMs, 940), animationDuration: "calc(1100ms * var(--fx-dur, 1))" }}>
+          <svg viewBox="0 0 10 12" className="block h-full w-full" aria-hidden="true">
+            <g fill={p2} stroke={p1} strokeWidth="0.45" {...SJ}>{CHESSMAN.k}</g>
+            <circle cx="5" cy="6.2" r="4.6" fill="none" stroke={p1} strokeWidth="0.45" strokeDasharray="1.2 0.9" />
+          </svg>
+        </span>
+        {/* settle: embers drift off the ashes */}
+        {[36, 44].map((l, i) => (
+          <span key={l} className="bwp-glint absolute block" style={{ left: `${l}%`, top: `calc(${rankTop(5)} + 1%)`, width: "3%", height: "3%", animationDelay: dm(delayMs, 1160 + i * 110) }}>
+            <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+              <path d="M5 0 L6.6 5 L5 10 L3.4 5 Z M0 5 L5 3.4 L10 5 L5 6.6 Z" fill={p1} />
+            </svg>
+          </span>
+        ))}
+      </BoardFrame>
+    </Stage>
+  );
+}
+
 /* =============================================================================
    Card devices (glyphs) — one per card, drawn tiny inside the templates.
    ========================================================================== */
@@ -3540,10 +3675,10 @@ export const PLAYS: Record<string, SigPlugin> = {
   }, "rebirth"),
 
   /* --- Reliquary (spoils / exchanges / inheritances) ---------------------- */
-  bw2_spoils_of_war: G(Reliquary, ["#8a6a3a", "#ffd76a", "#3a3026"], GLYPH.bw2_spoils_of_war, {
+  bw2_spoils_of_war: S(SpoilsOfWarScene, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation", source: "summon",
     anchor: "cast",
-  }, "defector"),
+  }),
   bw2_prisoner_exchange: G(Reliquary, ["#c9b89a", "#ffe9b0", "#4a3a2a"], GLYPH.bw2_prisoner_exchange, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "cathedral", source: "summon",
     anchor: "cast",
@@ -3570,10 +3705,10 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "radial", staggerMs: 60, victims: ["n", "b", "r", "q"], hasLead: true, sound: "coronation",
     anchor: "aim",
   }, "transmute"),
-  bw2_early_coronation: G(AstralAnvil, ["#ffd76a", "#ffe9b0", "#8a6a3a"], GLYPH.bw2_early_coronation, {
+  bw2_early_coronation: S(EarlyCoronationScene, {
     ordering: "sweep", staggerMs: 55, victims: ["p"], hasLead: true, sound: "coronation",
     anchor: "cast",
-  }, "coronet"),
+  }),
   bw2_standard_bearer: G(AstralAnvil, ["#c94ad1", "#e3d0ff", "#5b2b8f"], GLYPH.bw2_standard_bearer, {
     ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "wall",
     anchor: "board",
@@ -3758,10 +3893,10 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "sweep", staggerMs: 55, victims: ["p"], hasLead: true, sound: "wall", source: "summon",
     anchor: "aim",
   }, "muster"),
-  bw3_funeral_pyre: G(PactScroll, ["#8a3a1a", "#ff9d3d", "#2b1208"], GLYPH.bw3_funeral_pyre, {
+  bw3_funeral_pyre: S(FuneralPyreScene, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "atomic",
     anchor: "board",
-  }, "pyre"),
+  }),
 
   /* --- Tier 7-8 bespoke scenes -------------------------------------------- */
   bw3_mummers_dance: S(MummersDanceScene, {
