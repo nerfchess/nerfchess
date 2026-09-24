@@ -19,10 +19,12 @@
 //                  shackle ring (binds, compulsions, ransoms)
 //   MidasVeil    — a gilded veil sweeps the ranks and figures gild one by
 //                  one where it passes (transferring / accumulating marks)
-// plus fully bespoke scenes (registered with S) for every tier 7 and above
-// card and a few lower-tier flagships, from Death Knell and The Hollow Crown
-// to Doomed Vow, whose scene draws its rule on the cast square (the cord,
-// four turn candles, the eight rescue squares, the king's rescue). The
+// plus fully bespoke scenes (registered with S) for every tier 6 and above
+// card and a few lower-tier flagships. The rule scenes (Doomed Vow, Curse
+// Engine, Hollow Crown, Pauper's Crown, Inverted Crown, Powder Keg, Effigy
+// of Dread) draw the squares and pieces the rule touches, as a chart on
+// their side of the middle where the cast banner would cover the real rank,
+// or on the cast square. The
 // CARD -> TEMPLATE / PALETTE / GLYPH table is the PLAYS registry at the
 // bottom of this file.
 

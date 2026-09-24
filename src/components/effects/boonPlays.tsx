@@ -19,12 +19,11 @@
 //   FalconDash  — a falcon-comet streaks the crop behind speed lines
 //                 (raids, escapes, duels)
 // Every tier 7 and above card is a bespoke scene registered with S (its own
-// Render, no template), and so are a few lower-tier flagships. The newest
-// ones (VantagePointScene, HomeGuardScene, DriveThemOutScene,
-// ReckoningScene, PretenderScene, CovenantScene) draw the rule itself: the
-// ranks, squares and pieces it touches, placed in <BoardFrame> from the
-// caster's side or on the cast square (see "Rule scenes" above the card
-// devices).
+// Render, no template), and so are a few lower-tier flagships. Every tier 6
+// and above card draws the rule itself in the "Rule scenes" block above the
+// card devices: the ranks, squares and pieces it touches, placed in
+// <BoardFrame> from the caster's side or on the cast square, with no wash,
+// shock ring, edge glow or impact composite.
 
 // STAGING. Every card declares an anchor, so the scene happens where the card
 // was actually played. `Stage` is the shared <BoardWideStage>, which clamps
