@@ -2,10 +2,10 @@
 // The newest commit date of each static route's source files, for <lastmod>.
 
 export const ROUTE_DATES: Record<string, string> = {
-  "/": "2026-09-23",
-  "/play": "2026-09-23",
-  "/lobby": "2026-09-23",
-  "/codex": "2026-09-23",
+  "/": "2026-09-24",
+  "/play": "2026-09-24",
+  "/lobby": "2026-09-24",
+  "/codex": "2026-09-24",
   "/tutorial": "2026-09-23",
   "/tutorial/walkthrough": "2026-09-23",
   "/tutorial/first-game": "2026-09-23",
@@ -20,16 +20,16 @@ export const ROUTE_DATES: Record<string, string> = {
   "/guide/glossary": "2026-09-23",
   "/about": "2026-09-23",
   "/faq": "2026-09-23",
-  "/leaderboard": "2026-09-23",
-  "/tournaments": "2026-09-23",
-  "/community": "2026-09-23",
-  "/clubs": "2026-09-23",
-  "/achievements": "2026-09-23",
+  "/leaderboard": "2026-09-24",
+  "/tournaments": "2026-09-24",
+  "/community": "2026-09-24",
+  "/clubs": "2026-09-24",
+  "/achievements": "2026-09-24",
   "/tv": "2026-09-23",
-  "/analysis": "2026-09-23",
-  "/codex/suggest": "2026-09-23",
+  "/analysis": "2026-09-24",
+  "/codex/suggest": "2026-09-24",
   "/contact": "2026-09-23",
-  "/guidelines": "2026-09-23",
-  "/privacy-policy": "2026-09-23",
-  "/terms-of-service": "2026-09-23"
+  "/guidelines": "2026-09-24",
+  "/privacy-policy": "2026-09-24",
+  "/terms-of-service": "2026-09-24"
 };
