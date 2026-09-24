@@ -1,0 +1,78 @@
+{
+ "id": "bn4_haven_law",
+ "url": "/dev/plays?id=bn4_haven_law&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "bn4_haven_law",
+  "name": "Haven Law",
+  "tier": 8,
+  "category": "protection",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:bn4_haven_law",
+  "anchor": "board",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "line",
+  "staggerMs": 70,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, diff-less: no zone source, not an attack",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2434,
+  "cssEndMs": 3474,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 25,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 170,
+  "maxGapMs": 258
+ },
+ "raf": {
+  "frames": 210,
+  "medianMs": 16.7,
+  "maxMs": 50.1,
+  "dropped": 8
+ },
+ "longAnimationFrames": {
+  "count": 0,
+  "worstMs": 0,
+  "totalBlockingMs": 0,
+  "entries": []
+ },
+ "tiles": [
+  0,
+  187,
+  476,
+  823,
+  1214,
+  1641,
+  2099,
+  2584
+ ],
+ "png": "docs/polish-pass/evidence/TC-g/after/bn4_haven_law.png",
+ "pngBytes": 33676,
+ "off": {
+  "url": "/dev/plays?id=bn4_haven_law&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "docs/polish-pass/evidence/TC-g/after/bn4_haven_law.off.png"
+ }
+}

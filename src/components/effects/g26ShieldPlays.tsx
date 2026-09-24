@@ -7,6 +7,10 @@
 // in, a bell of silence, an ancestor stepping in front, a wax seal hardening,
 // a velvet gallery rope clipping across, a wedge kicked under a door.
 //
+// PER-CARD RULE SCENES (slice TC-g). Age of Peace lead with a scene of
+// their own rule on the real board (see that section before the registry);
+// the old art survives only as the small target and entrance cuts.
+//
 // Contract: see the header of sigPlugins.tsx. Self-contained (own inline SVG,
 // own g26ShieldPlays.css), transform/opacity animations only, no imports from
 // BoardEffects.tsx, only the SigPlugin/SigRole TYPES from sigPlugins.tsx.
@@ -253,8 +257,6 @@ function ImpactHit({ d, imp }: { d: number; imp: ImpCue }) {
  * choreographed onto that card's own climax - position, beat, tint and
  * primitive combo all differ per card, so no two siblings land the same hit. */
 const IMP: Record<string, ImpCue> = {
-  // Age of Peace: THE PEACE SEALED - the accord lands as one column and the whole ground answers twice
-  bn4_age_of_peace: { at: 1040, x: 50, y: 48, rgb: "240 208 137", laser: true, boom: true, size: 9 },
   // Guardian of the Line: THE FAR POST LOCKED - the guard beam slams the end of the line shut
   bn4_guardian_of_the_line: { at: 1020, rgb: "143 166 196", laser: true, boom: true, far: true },
   // Saint's Procession: THE RELIQUARY SET DOWN - at the procession's end, with a double toll
@@ -369,35 +371,7 @@ function AgeOfPeaceScene({ role, delayMs }: SceneProps) {
       </Cut>
     );
   }
-  return (
-    <Lead imp={IMP.bn4_age_of_peace}
-      d={delayMs}
-      frame={
-        <>
-          <Wash tone="rgba(240,208,137,0.3)" />
-          <Rim tone="rgba(255,244,214,0.4)" />
-        </>
-      }
-    >
-      {[0, 1, 2, 3].map((i) => (
-        <P key={i} l={25} t={25} w={50} h={50} rot={`${i * 90}deg`}>
-          <V c="g26-ao-rib" d={120 + i * 80}><path d={AO_RIB} fill="none" stroke="#f0d089" strokeWidth="1.9" {...SJ} /></V>
-        </P>
-      ))}
-      <L c="g26-shaft" l={45} t={20} w={10} h={40} d={520} st={{ background: "linear-gradient(180deg, rgba(255,244,214,0.68), transparent)", transformOrigin: "50% 0%" }} />
-      <V c="g26-ao-key" l={44.5} t={39} w={11} h={11} d={470}>{keystone}</V>
-      <V c="g26-ao-dove" l={45} t={31} w={10} h={10} d={640}>{dove}</V>
-      <V c="g26-ao-olive" l={52} t={45} w={12} h={12} d={760}>
-        <g fill="none" stroke="#f0d089" strokeWidth="1.5" {...SJ}>
-          <path d="M3.5 20.5C8 16 14 12 20.5 11" />
-          <path d="M11 15.4c-1.2-2 0-4.2 2.2-4.4M16 12.2c-1.2-2 0-4.2 2.2-4.4" />
-        </g>
-      </V>
-      {[0, 1, 2].map((i) => (
-        <L key={i} c="g26-sift" l={41 + i * 7} t={43} w={1.5} h={1.5} d={720 + i * 120} st={{ borderRadius: "50%", background: "#fff4d6" }} />
-      ))}
-    </Lead>
-  );
+  return null;
 }
 
 /* --- 2. Guardian of the Line (t8) — THE SHIELD WALL -------------------------
@@ -1928,6 +1902,148 @@ function WetPaintScene({ role, delayMs }: SceneProps) {
 }
 
 /* =============================================================================
+   PER-CARD RULE SCENES (slice TC-g). Age of Peace no longer lead with the
+   module's prop and the shared impact hit: each lead plays its own rule on the
+   real board (the squares, pieces and turn counts it touches). The old art
+   survives only as the small target and entrance cuts. Positions are board
+   percentages from the caster's side: rank 0 is the caster's back rank, 7 the
+   opponent's.
+   ========================================================================== */
+
+/** Chessman silhouettes on a 10 x 10 box, for the pieces a rule names. */
+const MEN = {
+  p: "M5 1.2 C6.2 1.2 7 2 7 3 C7 3.7 6.6 4.3 6 4.6 L7 8 H3 L4 4.6 C3.4 4.3 3 3.7 3 3 C3 2 3.8 1.2 5 1.2 Z M2.4 8.6 H7.6 V9.6 H2.4 Z",
+  r: "M2.6 1.4 H3.8 V2.6 H4.6 V1.4 H5.4 V2.6 H6.2 V1.4 H7.4 V3.8 H6.8 L7.2 7.6 H2.8 L3.2 3.8 H2.6 Z M2.2 8.4 H7.8 V9.6 H2.2 Z",
+  n: "M2.8 8.2 C2.8 5.4 3.8 4 5.4 3.2 L5 1.6 L6.4 2.6 L7.2 2.4 C7.9 3 8.1 4 7.7 4.9 L6.6 4.6 L6.2 4 C6.5 5.6 6.4 7 7 8.2 Z M2.4 8.8 H7.6 V9.8 H2.4 Z",
+  b: "M5 1 C6.4 2 7 3.4 7 4.6 C7 5.8 6.2 6.6 5 6.6 C3.8 6.6 3 5.8 3 4.6 C3 3.4 3.6 2 5 1 Z M3.4 7.2 H6.6 L7.2 8.2 H2.8 Z M2.2 8.8 H7.8 V9.8 H2.2 Z",
+  q: "M2.4 3.2 L3.4 5 L4.2 2.6 L5 4.6 L5.8 2.6 L6.6 5 L7.6 3.2 L7 7.4 H3 Z M2.6 8 H7.4 V9.2 H2.6 Z",
+  k: "M4.6 1 H5.4 V2 H6.4 V2.8 H5.4 V3.8 H4.6 V2.8 H3.6 V2 H4.6 Z M3.4 4.4 H6.6 L7.2 8 H2.8 Z M2.4 8.6 H7.6 V9.8 H2.4 Z",
+} as const;
+
+function Man({ kind, fill, stroke }: { kind: keyof typeof MEN; fill: string; stroke: string }) {
+  return (
+    <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+      <path d={MEN[kind]} fill={fill} stroke={stroke} strokeWidth="0.45" {...SJ} />
+    </svg>
+  );
+}
+
+/** The board-true layer: 0..100% is exactly the board. */
+function Brd({ children }: { children: ReactNode }) {
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        <span className="g26-rs absolute inset-0 block">{children}</span>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Centre of rank `r` from the caster's back rank (0) to the opponent's (7). */
+function rk(r: number): string {
+  return `calc(50% + var(--fx-side, 1) * ${(3.5 - r) * 12.5}%)`;
+}
+
+/** Centre of screen column `c` (0 is the left edge). */
+function cl(c: number): string {
+  return `${(c + 0.5) * 12.5}%`;
+}
+
+/** The king and queen files (e and d) seen from the caster's side. */
+const KING_X = "calc(50% + var(--fx-side, 1) * 6.25%)";
+const QUEEN_X = "calc(50% - var(--fx-side, 1) * 6.25%)";
+
+/** A prop centred on (x, y), `w` x `h` in board percent, from `delayMs`. */
+function Q({ x, y, w, h, cls, delayMs, v, style, children }: { x: string; y: string; w: number; h: number; cls: string; delayMs: number; v?: Record<string, string>; style?: CSSProperties; children?: ReactNode }) {
+  return (
+    <span
+      className={`${cls} absolute block`}
+      style={{ left: `calc(${x} - ${w / 2}%)`, top: `calc(${y} - ${h / 2}%)`, width: `${w}%`, height: `${h}%`, animationDelay: `${delayMs}ms`, ...style, ...v } as CSSProperties}
+    >
+      {children}
+    </span>
+  );
+}
+
+/** A ray drawn out of (x, y) at `angle` (rotation is static; the draw is scaleX). */
+function Ray({ x, y, len, angle, color, delayMs, gd = "1.2s" }: { x: string; y: string; len: number; angle: string; color: string; delayMs: number; gd?: string }) {
+  return (
+    <span
+      className="g26-r-draw absolute block"
+      style={{ left: x, top: `calc(${y} - 0.45%)`, width: `${len}%`, height: "0.9%", rotate: angle, transformOrigin: "0% 50%", background: `repeating-linear-gradient(90deg, ${color} 0 6px, transparent 6px 10px)`, animationDelay: `${delayMs}ms`, "--gd": gd } as CSSProperties}
+    />
+  );
+}
+
+/** `n` turn pips across rank `r`, from `x0`% to `x1`%: one per turn the rule counts. */
+function Pips({ n, r, x0, x1, color, delayMs, gd = "1.3s" }: { n: number; r: number; x0: number; x1: number; color: string; delayMs: number; gd?: string }) {
+  const step = n > 1 ? (x1 - x0) / (n - 1) : 0;
+  return (
+    <>
+      {Array.from({ length: n }, (_, i) => (
+        <Q key={i} x={`${x0 + i * step}%`} y={rk(r)} w={1.8} h={3.2} cls="g26-r-pip" delayMs={delayMs + i * 70} v={{ "--gd": gd }} style={{ background: color, borderRadius: "1px" }} />
+      ))}
+    </>
+  );
+}
+
+/** A square (or a run of squares) tinted for the length of a beat: the
+ *  squares the rule itself touches. */
+function Tint({ x, y, w = 12.5, h = 12.5, color, delayMs, gd = "1.6s", cls = "g26-r-in" }: { x: string; y: string; w?: number; h?: number; color: string; delayMs: number; gd?: string; cls?: string }) {
+  return <Q x={x} y={y} w={w} h={h} cls={cls} delayMs={delayMs} v={{ "--gd": gd, "--s0": "1" }} style={{ background: color }} />;
+}
+
+/** One file (12.5% of the board) in a prop's own width units. */
+const fileIn = (w: number): number => Math.round((12.5 / w) * 100);
+
+/* --- bn4_age_of_peace ---------------------------------------------------------------
+   "For your opponent's next 3 turns, each of your pieces cannot be captured and
+   your king cannot be taken. A protected piece loses its protection once it
+   makes a capture." An olive sprig settles on every square of the caster's
+   army, rank by rank; three turn pips; then a knight breaks the peace, takes
+   a pawn on f3, and its own sprig falls away. */
+const C_APR = { core: "#f0d089", glow: "#fff4d6", deep: "#2a2415" };
+
+function Sprig({ c }: { c: { core: string; glow: string; deep: string } }) {
+  return (
+    <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+      <path d="M4 17Q10 12 16 3" fill="none" stroke={c.deep} strokeWidth="2.6" {...SJ} />
+      <path d="M4 17Q10 12 16 3" fill="none" stroke={c.core} strokeWidth="1.2" {...SJ} />
+      <path d="M8 13.4q-4-1-4-4.4 4 .4 4 4.4zM11.4 9.6q4 .2 5 3.6-4 .4-5-3.6zM12.6 7q-3-2.6-2-6 3 2.2 2 6z" fill={c.core} stroke={c.deep} strokeWidth="0.8" {...SJ} />
+    </svg>
+  );
+}
+
+function AgeOfPeaceRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <AgeOfPeaceScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_APR;
+  const d = delayMs;
+  const army: Array<[number, number]> = [];
+  for (let r = 0; r <= 1; r++) for (let col = 0; col < 8; col++) army.push([col, r]);
+  return (
+    <Brd>
+      {army.map(([col, r], i) => (
+        <Q key={`${col}-${r}`} x={`calc(${cl(col)} + 2.6%)`} y={`calc(${rk(r)} - 2.6%)`} w={8.5} h={8.5} cls="g26-r-pip" delayMs={d + 120 + (col + r * 2) * 40} v={{ "--gd": col === 6 && r === 0 ? "1.05s" : "2s" }}>
+          <Sprig c={c} />
+        </Q>
+      ))}
+      <Tint x="50%" y={rk(0.5)} w={100} h={25} color="rgba(240,208,137,0.22)" delayMs={d + 100} gd="2.1s" />
+      <Tint x={KING_X} y={rk(0)} color="rgba(240,208,137,0.4)" delayMs={d + 200} gd="1.9s" />
+      <Pips n={3} r={3.5} x0={45} x1={55} color={c.glow} delayMs={d + 700} gd="1.4s" />
+      <Q x={cl(5)} y={rk(2)} w={11} h={11} cls="g26-r-dim" delayMs={d + 400} v={{ "--gd": "1.3s" }}>
+        <Man kind="p" fill={c.deep} stroke={c.glow} />
+      </Q>
+      <Q x={cl(5)} y={rk(2)} w={11} h={11} cls="g26-r-go" delayMs={d + 900} v={{ "--gd": "1.2s", "--tx0": `${fileIn(11)}%`, "--ty0": `calc(var(--fx-side, 1) * ${2 * fileIn(11)}%)`, "--tx1": "0%", "--ty1": "0%" }}>
+        <Man kind="n" fill={c.glow} stroke={c.deep} />
+      </Q>
+      <Q x={`calc(${cl(6)} + 2.6%)`} y={`calc(${rk(0)} - 2.6%)`} w={8.5} h={8.5} cls="g26-r-part" delayMs={d + 1150} v={{ "--gd": "0.8s", "--tx1": "60%", "--ty1": "calc(var(--fx-side, 1) * 80%)", "--r1": "70deg" }}>
+        <Sprig c={c} />
+      </Q>
+    </Brd>
+  );
+}
+
+/* =============================================================================
    Registry. Every entry declares an anchor; every `sound` is an existing
    SigSoundKey. `source` is deliberately omitted throughout: these cards carry
    no removal diff, so their play is the cast lead on the square they were
@@ -1940,7 +2056,7 @@ function S(Render: SigPlugin["Render"], config: SigPlugin["config"]): SigPlugin 
 }
 
 export const PLAYS: Record<string, SigPlugin> = {
-  bn4_age_of_peace: S(AgeOfPeaceScene, { ordering: "radial", staggerMs: 55, victims: "all", hasLead: true, sound: "cathedral", anchor: "cast" }),
+  bn4_age_of_peace: S(AgeOfPeaceRule, { ordering: "radial", staggerMs: 55, victims: "all", hasLead: true, sound: "cathedral", anchor: "cast" }),
   bn4_guardian_of_the_line: S(GuardianOfTheLineScene, { ordering: "line", staggerMs: 60, victims: "all", hasLead: true, sound: "wall", anchor: "aim" }),
   bn4_saints_procession: S(SaintsProcessionScene, { ordering: "line", staggerMs: 70, victims: "all", hasLead: true, sound: "cathedral", anchor: "aim" }),
   bn4_warding_circle: S(WardingCircleScene, { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "aegis", anchor: "board" }),

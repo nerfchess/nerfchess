@@ -1,0 +1,85 @@
+{
+ "id": "ov_split_timeline",
+ "url": "/dev/plays?id=ov_split_timeline&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "ov_split_timeline",
+  "name": "Split the Timeline",
+  "tier": 8,
+  "category": "tempo",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:ov_split_timeline",
+  "anchor": "cast",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 65,
+  "drive": "engine",
+  "driveNote": "activated, no targets",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2566,
+  "cssEndMs": 3548,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 33,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 167,
+  "maxGapMs": 281.6
+ },
+ "raf": {
+  "frames": 202,
+  "medianMs": 16.7,
+  "maxMs": 99.9,
+  "dropped": 16
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 73,
+  "totalBlockingMs": 22,
+  "entries": [
+   {
+    "atMs": 42,
+    "duration": 73,
+    "blocking": 22,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  196,
+  501,
+  865,
+  1276,
+  1724,
+  2206,
+  2716
+ ],
+ "png": "docs/polish-pass/evidence/TC-g/after/ov_split_timeline.png",
+ "pngBytes": 34664,
+ "off": {
+  "url": "/dev/plays?id=ov_split_timeline&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "docs/polish-pass/evidence/TC-g/after/ov_split_timeline.off.png"
+ }
+}

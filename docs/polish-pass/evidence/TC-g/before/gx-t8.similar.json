@@ -1,0 +1,190 @@
+{
+ "method": "cosine similarity of per-tile (tile minus pre-play tile) 24x24 grey thumbnails, standardised per tile and then weighted by the tile's raw energy over the card's peak (so near-empty tiles count for little); 1 = same look, near 0 = unrelated. Every tier 6+ bespoke card shares the cast wrapper's ring and beam (TC0-f), so expect a floor well above 0",
+ "cards": 7,
+ "sheetPicks": {
+  "bn4_age_of_peace": "+825ms (energy 1 of peak)",
+  "bn4_hall_of_doors": "+500ms (energy 1 of peak)",
+  "bn4_haven_law": "+831ms (energy 0.79 of peak)",
+  "hx4_maze_of_thorns": "+830ms (energy 0.94 of peak)",
+  "hx4_puppet_court": "+849ms (energy 0.86 of peak)",
+  "ov_split_timeline": "+1285ms (energy 0.93 of peak)",
+  "ov_the_menu": "+823ms (energy 1 of peak)"
+ },
+ "generic": {
+  "method": "cosine similarity of the card's weighted look vector to the mean weighted look of the other cards in this sheet (leave-one-out); highest = least card-specific",
+  "ranking": [
+   {
+    "card": "bn4_haven_law",
+    "tier": 8,
+    "closeness": 0.925
+   },
+   {
+    "card": "hx4_maze_of_thorns",
+    "tier": 8,
+    "closeness": 0.89
+   },
+   {
+    "card": "hx4_puppet_court",
+    "tier": 8,
+    "closeness": 0.875
+   },
+   {
+    "card": "bn4_hall_of_doors",
+    "tier": 8,
+    "closeness": 0.838
+   },
+   {
+    "card": "ov_the_menu",
+    "tier": 8,
+    "closeness": 0.785
+   },
+   {
+    "card": "bn4_age_of_peace",
+    "tier": 8,
+    "closeness": 0.676
+   },
+   {
+    "card": "ov_split_timeline",
+    "tier": 8,
+    "closeness": 0.352
+   }
+  ]
+ },
+ "pairs": [
+  {
+   "a": "bn4_haven_law",
+   "b": "hx4_puppet_court",
+   "similarity": 0.886
+  },
+  {
+   "a": "bn4_haven_law",
+   "b": "hx4_maze_of_thorns",
+   "similarity": 0.873
+  },
+  {
+   "a": "bn4_haven_law",
+   "b": "ov_the_menu",
+   "similarity": 0.859
+  },
+  {
+   "a": "bn4_hall_of_doors",
+   "b": "hx4_puppet_court",
+   "similarity": 0.854
+  },
+  {
+   "a": "hx4_maze_of_thorns",
+   "b": "hx4_puppet_court",
+   "similarity": 0.85
+  },
+  {
+   "a": "bn4_hall_of_doors",
+   "b": "bn4_haven_law",
+   "similarity": 0.828
+  },
+  {
+   "a": "hx4_maze_of_thorns",
+   "b": "ov_the_menu",
+   "similarity": 0.798
+  },
+  {
+   "a": "bn4_hall_of_doors",
+   "b": "hx4_maze_of_thorns",
+   "similarity": 0.791
+  },
+  {
+   "a": "hx4_puppet_court",
+   "b": "ov_the_menu",
+   "similarity": 0.757
+  },
+  {
+   "a": "bn4_hall_of_doors",
+   "b": "ov_the_menu",
+   "similarity": 0.708
+  },
+  {
+   "a": "bn4_age_of_peace",
+   "b": "hx4_maze_of_thorns",
+   "similarity": 0.668
+  },
+  {
+   "a": "bn4_age_of_peace",
+   "b": "bn4_haven_law",
+   "similarity": 0.654
+  },
+  {
+   "a": "bn4_age_of_peace",
+   "b": "hx4_puppet_court",
+   "similarity": 0.637
+  },
+  {
+   "a": "bn4_age_of_peace",
+   "b": "bn4_hall_of_doors",
+   "similarity": 0.634
+  },
+  {
+   "a": "bn4_age_of_peace",
+   "b": "ov_the_menu",
+   "similarity": 0.592
+  },
+  {
+   "a": "bn4_haven_law",
+   "b": "ov_split_timeline",
+   "similarity": 0.392
+  },
+  {
+   "a": "hx4_maze_of_thorns",
+   "b": "ov_split_timeline",
+   "similarity": 0.375
+  },
+  {
+   "a": "bn4_hall_of_doors",
+   "b": "ov_split_timeline",
+   "similarity": 0.332
+  },
+  {
+   "a": "hx4_puppet_court",
+   "b": "ov_split_timeline",
+   "similarity": 0.33
+  },
+  {
+   "a": "bn4_age_of_peace",
+   "b": "ov_split_timeline",
+   "similarity": 0.254
+  },
+  {
+   "a": "ov_split_timeline",
+   "b": "ov_the_menu",
+   "similarity": 0.22
+  }
+ ],
+ "nearest": {
+  "bn4_age_of_peace": {
+   "card": "hx4_maze_of_thorns",
+   "similarity": 0.668
+  },
+  "bn4_hall_of_doors": {
+   "card": "hx4_puppet_court",
+   "similarity": 0.854
+  },
+  "bn4_haven_law": {
+   "card": "hx4_puppet_court",
+   "similarity": 0.886
+  },
+  "hx4_maze_of_thorns": {
+   "card": "bn4_haven_law",
+   "similarity": 0.873
+  },
+  "hx4_puppet_court": {
+   "card": "bn4_haven_law",
+   "similarity": 0.886
+  },
+  "ov_split_timeline": {
+   "card": "bn4_haven_law",
+   "similarity": 0.392
+  },
+  "ov_the_menu": {
+   "card": "bn4_haven_law",
+   "similarity": 0.859
+  }
+ }
+}

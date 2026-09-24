@@ -15,6 +15,10 @@
 // sprouting, lichen gluing a scabbard shut, a dandelion splitting the path, and
 // a yew hedge growing its own archway.
 //
+// PER-CARD RULE SCENES (slice TC-g). Maze of Thorns lead with a scene of
+// their own rule on the real board (see that section before the registry);
+// the old art survives only as the small target and entrance cuts.
+//
 // Contract: see the header of sigPlugins.tsx. Self-contained (own inline SVG,
 // own g27ThornPlays.css), transform/opacity animations only, no imports from
 // BoardEffects.tsx, only the SigPlugin / SigRole TYPES from sigPlugins.tsx.
@@ -267,8 +271,6 @@ const IMP: Record<string, ImpCue> = {
   hx4_echo_chamber: { at: 1020, x: 50, y: 49, rgb: "224 176 112", laser: true, glyph: 0, boom: true },
   // Iron Ring: THE RING DRIVEN HOME - the stake column slams in and the ring booms twice
   hx4_iron_ring: { at: 1040, x: 50, y: 50, rgb: "192 106 52", laser: true, glyph: 1, boom: true },
-  // Maze of Thorns: THE HEDGE SPEARS UP - a canted thorn column erupts and bursts the path
-  hx4_maze_of_thorns: { at: 1000, x: 51, y: 52, rgb: "95 154 82", laser: true, glyph: 0, boom: true, rot: -14 },
   // Sealed Meridian: THE MERIDIAN SEALED - one continent-sized column, two ground rings
   hx4_sealed_meridian: { at: 1060, x: 50, y: 47, rgb: "168 194 90", laser: true, boom: true, size: 9 },
   // Terraform: THE GROUND HEAVES - the terrain itself splits and resettles twice
@@ -488,22 +490,7 @@ function MazeOfThornsScene({ role, delayMs }: SceneProps) {
       </Cut>
     );
   }
-  return (
-    <Lead imp={IMP.hx4_maze_of_thorns} d={delayMs} frame={<Wash tone="rgba(95,154,82,0.3)" />}>
-      {MZ_WALLS.map(([l, t, w, h, rot], i) => (
-        <P key={i} l={l} t={t} w={w} h={h} rot={rot}>
-          <V c="g27-mz-wall" d={120 + i * 90} par="none">{wall}</V>
-        </P>
-      ))}
-      <V c="g27-mz-brier" l={41} t={38} w={18} h={18} d={520}>
-        <path d="M3 20C7 12 14 8 21 6M8 15l-3-2M13 11l-2-3M18 8l-1-3.4" fill="none" stroke="#fff2d0" strokeWidth="1.5" {...SJ} />
-      </V>
-      <V c="g27-mz-leap" l={43} t={34} w={11} h={14} d={600}><path d={KNIGHT} fill="#fff2d0" stroke="#1b2a17" strokeWidth="1" {...SJ} /></V>
-      {[0, 1, 2].map((i) => (
-        <L key={i} c="g27-drop" l={42 + i * 7} t={50} w={1.6} h={2.2} d={700} st={{ background: "#5f9a52" }} />
-      ))}
-    </Lead>
-  );
+  return null;
 }
 
 /* --- 4. Sealed Meridian (t8) — THE BAMBOO LINE ------------------------------
@@ -1757,6 +1744,146 @@ function GardenHedgeScene({ role, delayMs }: SceneProps) {
 }
 
 /* =============================================================================
+   PER-CARD RULE SCENES (slice TC-g). Maze of Thorns no longer lead with the
+   module's prop and the shared impact hit: each lead plays its own rule on the
+   real board (the squares, pieces and turn counts it touches). The old art
+   survives only as the small target and entrance cuts. Positions are board
+   percentages from the caster's side: rank 0 is the caster's back rank, 7 the
+   opponent's.
+   ========================================================================== */
+
+/** Chessman silhouettes on a 10 x 10 box, for the pieces a rule names. */
+const MEN = {
+  p: "M5 1.2 C6.2 1.2 7 2 7 3 C7 3.7 6.6 4.3 6 4.6 L7 8 H3 L4 4.6 C3.4 4.3 3 3.7 3 3 C3 2 3.8 1.2 5 1.2 Z M2.4 8.6 H7.6 V9.6 H2.4 Z",
+  r: "M2.6 1.4 H3.8 V2.6 H4.6 V1.4 H5.4 V2.6 H6.2 V1.4 H7.4 V3.8 H6.8 L7.2 7.6 H2.8 L3.2 3.8 H2.6 Z M2.2 8.4 H7.8 V9.6 H2.2 Z",
+  n: "M2.8 8.2 C2.8 5.4 3.8 4 5.4 3.2 L5 1.6 L6.4 2.6 L7.2 2.4 C7.9 3 8.1 4 7.7 4.9 L6.6 4.6 L6.2 4 C6.5 5.6 6.4 7 7 8.2 Z M2.4 8.8 H7.6 V9.8 H2.4 Z",
+  b: "M5 1 C6.4 2 7 3.4 7 4.6 C7 5.8 6.2 6.6 5 6.6 C3.8 6.6 3 5.8 3 4.6 C3 3.4 3.6 2 5 1 Z M3.4 7.2 H6.6 L7.2 8.2 H2.8 Z M2.2 8.8 H7.8 V9.8 H2.2 Z",
+  q: "M2.4 3.2 L3.4 5 L4.2 2.6 L5 4.6 L5.8 2.6 L6.6 5 L7.6 3.2 L7 7.4 H3 Z M2.6 8 H7.4 V9.2 H2.6 Z",
+  k: "M4.6 1 H5.4 V2 H6.4 V2.8 H5.4 V3.8 H4.6 V2.8 H3.6 V2 H4.6 Z M3.4 4.4 H6.6 L7.2 8 H2.8 Z M2.4 8.6 H7.6 V9.8 H2.4 Z",
+} as const;
+
+function Man({ kind, fill, stroke }: { kind: keyof typeof MEN; fill: string; stroke: string }) {
+  return (
+    <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+      <path d={MEN[kind]} fill={fill} stroke={stroke} strokeWidth="0.45" {...SJ} />
+    </svg>
+  );
+}
+
+/** The board-true layer: 0..100% is exactly the board. */
+function Brd({ children }: { children: ReactNode }) {
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        <span className="g27-rs absolute inset-0 block">{children}</span>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Centre of rank `r` from the caster's back rank (0) to the opponent's (7). */
+function rk(r: number): string {
+  return `calc(50% + var(--fx-side, 1) * ${(3.5 - r) * 12.5}%)`;
+}
+
+/** Centre of screen column `c` (0 is the left edge). */
+function cl(c: number): string {
+  return `${(c + 0.5) * 12.5}%`;
+}
+
+/** The king and queen files (e and d) seen from the caster's side. */
+const KING_X = "calc(50% + var(--fx-side, 1) * 6.25%)";
+const QUEEN_X = "calc(50% - var(--fx-side, 1) * 6.25%)";
+
+/** A prop centred on (x, y), `w` x `h` in board percent, from `delayMs`. */
+function Q({ x, y, w, h, cls, delayMs, v, style, children }: { x: string; y: string; w: number; h: number; cls: string; delayMs: number; v?: Record<string, string>; style?: CSSProperties; children?: ReactNode }) {
+  return (
+    <span
+      className={`${cls} absolute block`}
+      style={{ left: `calc(${x} - ${w / 2}%)`, top: `calc(${y} - ${h / 2}%)`, width: `${w}%`, height: `${h}%`, animationDelay: `${delayMs}ms`, ...style, ...v } as CSSProperties}
+    >
+      {children}
+    </span>
+  );
+}
+
+/** A ray drawn out of (x, y) at `angle` (rotation is static; the draw is scaleX). */
+function Ray({ x, y, len, angle, color, delayMs, gd = "1.2s" }: { x: string; y: string; len: number; angle: string; color: string; delayMs: number; gd?: string }) {
+  return (
+    <span
+      className="g27-r-draw absolute block"
+      style={{ left: x, top: `calc(${y} - 0.45%)`, width: `${len}%`, height: "0.9%", rotate: angle, transformOrigin: "0% 50%", background: `repeating-linear-gradient(90deg, ${color} 0 6px, transparent 6px 10px)`, animationDelay: `${delayMs}ms`, "--gd": gd } as CSSProperties}
+    />
+  );
+}
+
+/** `n` turn pips across rank `r`, from `x0`% to `x1`%: one per turn the rule counts. */
+function Pips({ n, r, x0, x1, color, delayMs, gd = "1.3s" }: { n: number; r: number; x0: number; x1: number; color: string; delayMs: number; gd?: string }) {
+  const step = n > 1 ? (x1 - x0) / (n - 1) : 0;
+  return (
+    <>
+      {Array.from({ length: n }, (_, i) => (
+        <Q key={i} x={`${x0 + i * step}%`} y={rk(r)} w={1.8} h={3.2} cls="g27-r-pip" delayMs={delayMs + i * 70} v={{ "--gd": gd }} style={{ background: color, borderRadius: "1px" }} />
+      ))}
+    </>
+  );
+}
+
+/** A square (or a run of squares) tinted for the length of a beat: the
+ *  squares the rule itself touches. */
+function Tint({ x, y, w = 12.5, h = 12.5, color, delayMs, gd = "1.6s", cls = "g27-r-in" }: { x: string; y: string; w?: number; h?: number; color: string; delayMs: number; gd?: string; cls?: string }) {
+  return <Q x={x} y={y} w={w} h={h} cls={cls} delayMs={delayMs} v={{ "--gd": gd, "--s0": "1" }} style={{ background: color }} />;
+}
+
+/** One file (12.5% of the board) in a prop's own width units. */
+const fileIn = (w: number): number => Math.round((12.5 / w) * 100);
+
+/* --- hx4_maze_of_thorns -----------------------------------------------------------
+   "Thorn hedges spring up across every lane: for your opponent's next 4 turns,
+   no piece of theirs may move more than 1 square, except knights, who leap
+   the hedges. Their king is exempt." Hedges spring up along the lines between
+   the middle ranks and files; an enemy rook tries to run down its file, is
+   held to one square with the rest of its run barred, and an enemy knight
+   leaps clean over the hedges; four turn pips. */
+const C_MTR = { core: "#5f9a52", glow: "#fff2d0", deep: "#1b2a17" };
+
+function MazeOfThornsRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <MazeOfThornsScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_MTR;
+  const d = delayMs;
+  const hedge = `repeating-linear-gradient(90deg, ${c.core} 0 5px, ${c.deep} 5px 6px, transparent 6px 8px)`;
+  const hedgeV = `repeating-linear-gradient(180deg, ${c.core} 0 5px, ${c.deep} 5px 6px, transparent 6px 8px)`;
+  const sq = fileIn(11);
+  return (
+    <Brd>
+      {[1.5, 2.5, 3.5, 4.5, 5.5].map((r, i) => (
+        <span key={r} className="g27-r-draw absolute block" style={{ left: "0%", top: `calc(${rk(r)} - 0.9%)`, width: "100%", height: "1.8%", background: hedge, animationDelay: `${d + i * 50}ms`, "--gd": "2.1s" } as CSSProperties} />
+      ))}
+      {[1, 2, 3, 4, 5, 6, 7].map((col, i) => (
+        <Q key={col} x={`${col * 12.5}%`} y={rk(3.5)} w={1.8} h={50} cls="g27-r-grow" delayMs={d + 120 + i * 40} v={{ "--gd": "2s" }} style={{ background: hedgeV }} />
+      ))}
+      <Q x={cl(0)} y={rk(5)} w={11} h={11} cls="g27-r-in" delayMs={d + 300} v={{ "--gd": "0.8s", "--s0": "1" }}>
+        <Man kind="r" fill={c.deep} stroke={c.glow} />
+      </Q>
+      <Q x={cl(0)} y={rk(3)} w={1.6} h={25} cls="g27-r-grow" delayMs={d + 520} v={{ "--gd": "1.2s" }} style={{ background: `repeating-linear-gradient(180deg, ${c.glow} 0 5px, transparent 5px 9px)`, transformOrigin: "50% calc(50% - var(--fx-side, 1) * 50%)" }} />
+      <Q x={cl(0)} y={rk(2.6)} w={9} h={9} cls="g27-r-stamp" delayMs={d + 780} v={{ "--gd": "1s" }}>
+        <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true"><path d="M4 4l12 12M16 4L4 16" stroke={c.glow} strokeWidth="2.6" {...SJ} /></svg>
+      </Q>
+      <Q x={cl(0)} y={rk(4)} w={11} h={11} cls="g27-r-go" delayMs={d + 1000} v={{ "--gd": "1.1s", "--tx0": "0%", "--ty0": `calc(var(--fx-side, 1) * ${-sq}%)`, "--tx1": "0%", "--ty1": "0%" }}>
+        <Man kind="r" fill={c.deep} stroke={c.glow} />
+      </Q>
+      <Q x={cl(5)} y={rk(3)} w={11} h={11} cls="g27-r-go" delayMs={d + 700} v={{ "--gd": "1.3s", "--tx0": `${sq}%`, "--ty0": `calc(var(--fx-side, 1) * ${-2 * sq}%)`, "--tx1": "0%", "--ty1": "0%" }}>
+        <Man kind="n" fill={c.glow} stroke={c.deep} />
+      </Q>
+      <Q x={cl(5.5)} y={rk(4)} w={12} h={14} cls="g27-r-in" delayMs={d + 760} v={{ "--gd": "0.9s" }}>
+        <svg viewBox="0 0 20 24" className="block h-full w-full" aria-hidden="true"><path d="M16 2Q20 14 6 22" fill="none" stroke={c.glow} strokeWidth="1.4" strokeDasharray="2 2" {...SJ} /></svg>
+      </Q>
+      <Pips n={4} r={6.5} x0={70} x1={82} color={c.glow} delayMs={d + 1150} gd="1.1s" />
+    </Brd>
+  );
+}
+
+/* =============================================================================
    Registry. Every entry declares an anchor; every `sound` is an existing
    SigSoundKey. `source` is deliberately omitted throughout: these cards carry
    no removal diff, so their play is the cast lead on the square they were
@@ -1771,7 +1898,7 @@ function S(Render: SigPlugin["Render"], config: SigPlugin["config"]): SigPlugin 
 export const PLAYS: Record<string, SigPlugin> = {
   hx4_echo_chamber: S(EchoChamberScene, { ordering: "radial", staggerMs: 70, victims: "all", hasLead: true, sound: "shades", anchor: "board" }),
   hx4_iron_ring: S(IronRingScene, { ordering: "octagon", staggerMs: 55, victims: "all", hasLead: true, sound: "wall", anchor: "board" }),
-  hx4_maze_of_thorns: S(MazeOfThornsScene, { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "petrifiedforest", anchor: "cast" }),
+  hx4_maze_of_thorns: S(MazeOfThornsRule, { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "petrifiedforest", anchor: "cast" }),
   hx4_sealed_meridian: S(SealedMeridianScene, { ordering: "file", staggerMs: 70, victims: "all", hasLead: true, sound: "wall", anchor: "board" }),
   ov_terraform: S(TerraformScene, { ordering: "radial", staggerMs: 80, victims: "all", hasLead: true, sound: "petrify", anchor: "board" }),
   bn4_sting_of_the_wasp: S(StingOfTheWaspScene, { ordering: "line", staggerMs: 55, victims: "all", hasLead: true, sound: "blitz", anchor: "aim" }),

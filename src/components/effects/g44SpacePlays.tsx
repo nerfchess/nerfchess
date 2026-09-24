@@ -12,6 +12,10 @@
 // ranks, a shelf aisle telescoping shorter, a staircase that returns to its
 // own foot.
 //
+// PER-CARD RULE SCENES (slice TC-g). Puppet Court lead with a scene of
+// their own rule on the real board (see that section before the registry);
+// the old art survives only as the small target and entrance cuts.
+//
 // Contract: see the header of sigPlugins.tsx. Self-contained (own inline SVG,
 // own g44SpacePlays.css), transform/opacity animations only, no imports from
 // BoardEffects.tsx (cycle hazard), only the SigPlugin / SigRole TYPES imported.
@@ -2611,25 +2615,7 @@ function LoopStair({ role, delayMs }: SceneProps) {
       </Cut>
     );
   }
-  return (
-    <Lead centred d={delayMs} frame={<><Wash tone="rgba(185,162,216,0.26)" d={70} /><Rim tone="rgba(255,241,226,0.28)" d={150} /></>}>
-      {/* tell: the first tread lights, and the strings above go slack */}
-      <L c="g44-tell" d={90} s={{ ...box(1.6, 0.3, -1.6, 1.6), borderRadius: "999px", background: "#1d1630" }} />
-      {/* four flights round the dais, each one climbing, in victim order */}
-      {R4.map((i) => (
-        <V key={i} c="g44-stair-flight" d={190 + i * 70} per={30} s={{ ...box(3.4, 1.6, 2.2 * Math.cos((i / 4) * 6.283), 2.2 * Math.sin((i / 4) * 6.283)), rotate: `${i * 90}deg` }}>{flight}</V>
-      ))}
-      {/* strike: the climber walks all four and is back at the bottom */}
-      <V c="g44-stair-climb" d={470} s={{ ...box(1.2, 1.6), filter: "drop-shadow(0 0 5px #b9a2d8)" }}>
-        <path d={KING} fill="#fff1e2" stroke="#1d1630" strokeWidth="1.1" {...SJ} />
-      </V>
-      {/* the throne, level with the foot of its own stair */}
-      <L c="g44-stair-level" d={570} s={{ ...box(5.6, 0.24, 0, -0.2), borderRadius: "999px", background: "linear-gradient(90deg, rgba(255,241,226,0.1), #fff1e2, rgba(255,241,226,0.1))" }} />
-      {/* the cut string falls past it all */}
-      <L c="g44-stair-string" d={640} s={{ ...box(0.1, 3.4, -0.9, -1.4), background: "#fff1e2" }} />
-      <L c="g44-dust" d={720} s={{ ...box(5, 2.6, 0, 1.6), borderRadius: "50%", background: "radial-gradient(circle, rgba(255,241,226,0.42), transparent 72%)" }} />
-    </Lead>
-  );
+  return null;
 }
 
 /* -----------------------------------------------------------------------------
@@ -2757,6 +2743,146 @@ function SecondController({ role, delayMs }: SceneProps) {
       <V c="g44-lp-release" d={800} s={at(1.1, 2, 2, -0.7)}>{hand}</V>
       <L c="g44-dust" d={860} s={{ ...at(1, 2.2, 1.2, 0.3), borderRadius: "50%", background: "radial-gradient(circle, rgba(255,237,201,0.5), transparent 72%)" }} />
     </AimLead>
+  );
+}
+
+/* =============================================================================
+   PER-CARD RULE SCENES (slice TC-g). Puppet Court no longer lead with the
+   module's prop and the shared impact hit: each lead plays its own rule on the
+   real board (the squares, pieces and turn counts it touches). The old art
+   survives only as the small target and entrance cuts. Positions are board
+   percentages from the caster's side: rank 0 is the caster's back rank, 7 the
+   opponent's.
+   ========================================================================== */
+
+/** Chessman silhouettes on a 10 x 10 box, for the pieces a rule names. */
+const MEN = {
+  p: "M5 1.2 C6.2 1.2 7 2 7 3 C7 3.7 6.6 4.3 6 4.6 L7 8 H3 L4 4.6 C3.4 4.3 3 3.7 3 3 C3 2 3.8 1.2 5 1.2 Z M2.4 8.6 H7.6 V9.6 H2.4 Z",
+  r: "M2.6 1.4 H3.8 V2.6 H4.6 V1.4 H5.4 V2.6 H6.2 V1.4 H7.4 V3.8 H6.8 L7.2 7.6 H2.8 L3.2 3.8 H2.6 Z M2.2 8.4 H7.8 V9.6 H2.2 Z",
+  n: "M2.8 8.2 C2.8 5.4 3.8 4 5.4 3.2 L5 1.6 L6.4 2.6 L7.2 2.4 C7.9 3 8.1 4 7.7 4.9 L6.6 4.6 L6.2 4 C6.5 5.6 6.4 7 7 8.2 Z M2.4 8.8 H7.6 V9.8 H2.4 Z",
+  b: "M5 1 C6.4 2 7 3.4 7 4.6 C7 5.8 6.2 6.6 5 6.6 C3.8 6.6 3 5.8 3 4.6 C3 3.4 3.6 2 5 1 Z M3.4 7.2 H6.6 L7.2 8.2 H2.8 Z M2.2 8.8 H7.8 V9.8 H2.2 Z",
+  q: "M2.4 3.2 L3.4 5 L4.2 2.6 L5 4.6 L5.8 2.6 L6.6 5 L7.6 3.2 L7 7.4 H3 Z M2.6 8 H7.4 V9.2 H2.6 Z",
+  k: "M4.6 1 H5.4 V2 H6.4 V2.8 H5.4 V3.8 H4.6 V2.8 H3.6 V2 H4.6 Z M3.4 4.4 H6.6 L7.2 8 H2.8 Z M2.4 8.6 H7.6 V9.8 H2.4 Z",
+} as const;
+
+function Man({ kind, fill, stroke }: { kind: keyof typeof MEN; fill: string; stroke: string }) {
+  return (
+    <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+      <path d={MEN[kind]} fill={fill} stroke={stroke} strokeWidth="0.45" {...SJ} />
+    </svg>
+  );
+}
+
+/** The board-true layer: 0..100% is exactly the board. */
+function Brd({ children }: { children: ReactNode }) {
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        <span className="g44-rs absolute inset-0 block">{children}</span>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Centre of rank `r` from the caster's back rank (0) to the opponent's (7). */
+function rk(r: number): string {
+  return `calc(50% + var(--fx-side, 1) * ${(3.5 - r) * 12.5}%)`;
+}
+
+/** Centre of screen column `c` (0 is the left edge). */
+function cl(c: number): string {
+  return `${(c + 0.5) * 12.5}%`;
+}
+
+/** The king and queen files (e and d) seen from the caster's side. */
+const KING_X = "calc(50% + var(--fx-side, 1) * 6.25%)";
+const QUEEN_X = "calc(50% - var(--fx-side, 1) * 6.25%)";
+
+/** A prop centred on (x, y), `w` x `h` in board percent, from `delayMs`. */
+function Q({ x, y, w, h, cls, delayMs, v, style, children }: { x: string; y: string; w: number; h: number; cls: string; delayMs: number; v?: Record<string, string>; style?: CSSProperties; children?: ReactNode }) {
+  return (
+    <span
+      className={`${cls} absolute block`}
+      style={{ left: `calc(${x} - ${w / 2}%)`, top: `calc(${y} - ${h / 2}%)`, width: `${w}%`, height: `${h}%`, animationDelay: `${delayMs}ms`, ...style, ...v } as CSSProperties}
+    >
+      {children}
+    </span>
+  );
+}
+
+/** A ray drawn out of (x, y) at `angle` (rotation is static; the draw is scaleX). */
+function Ray({ x, y, len, angle, color, delayMs, gd = "1.2s" }: { x: string; y: string; len: number; angle: string; color: string; delayMs: number; gd?: string }) {
+  return (
+    <span
+      className="g44-r-draw absolute block"
+      style={{ left: x, top: `calc(${y} - 0.45%)`, width: `${len}%`, height: "0.9%", rotate: angle, transformOrigin: "0% 50%", background: `repeating-linear-gradient(90deg, ${color} 0 6px, transparent 6px 10px)`, animationDelay: `${delayMs}ms`, "--gd": gd } as CSSProperties}
+    />
+  );
+}
+
+/** `n` turn pips across rank `r`, from `x0`% to `x1`%: one per turn the rule counts. */
+function Pips({ n, r, x0, x1, color, delayMs, gd = "1.3s" }: { n: number; r: number; x0: number; x1: number; color: string; delayMs: number; gd?: string }) {
+  const step = n > 1 ? (x1 - x0) / (n - 1) : 0;
+  return (
+    <>
+      {Array.from({ length: n }, (_, i) => (
+        <Q key={i} x={`${x0 + i * step}%`} y={rk(r)} w={1.8} h={3.2} cls="g44-r-pip" delayMs={delayMs + i * 70} v={{ "--gd": gd }} style={{ background: color, borderRadius: "1px" }} />
+      ))}
+    </>
+  );
+}
+
+/** A square (or a run of squares) tinted for the length of a beat: the
+ *  squares the rule itself touches. */
+function Tint({ x, y, w = 12.5, h = 12.5, color, delayMs, gd = "1.6s", cls = "g44-r-in" }: { x: string; y: string; w?: number; h?: number; color: string; delayMs: number; gd?: string; cls?: string }) {
+  return <Q x={x} y={y} w={w} h={h} cls={cls} delayMs={delayMs} v={{ "--gd": gd, "--s0": "1" }} style={{ background: color }} />;
+}
+
+/** One file (12.5% of the board) in a prop's own width units. */
+const fileIn = (w: number): number => Math.round((12.5 / w) * 100);
+
+/* --- hx4_puppet_court -------------------------------------------------------------
+   "Every officer's strings are cut: for your opponent's next 3 turns they may
+   move only pawns and their king. The first officer the strings would bind
+   may make one move, then it binds fully." A puppeteer's bar hangs in front
+   of their army with a string up to each officer on their back rank; the
+   strings are snipped and fall, and every officer's square goes dark, except
+   the knight that gets its one move to f6 first and then goes dark there;
+   their king and pawns stay lit; three turn pips. */
+const C_PCR = { core: "#b9a2d8", glow: "#fff1e2", deep: "#1d1630" };
+
+function PuppetCourtRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <LoopStair lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_PCR;
+  const d = delayMs;
+  const officers = [0, 1, 2, 3, 5, 7];
+  return (
+    <Brd>
+      <Q x="50%" y={rk(4.6)} w={96} h={1.8} cls="g44-r-draw" delayMs={d + 40} v={{ "--gd": "1.4s" }} style={{ background: c.core }} />
+      {[...officers, 6].map((col, i) => (
+        <Q key={col} x={cl(col)} y={rk(5.8)} w={0.7} h={30} cls="g44-r-in" delayMs={d + 80 + i * 30} v={{ "--gd": "0.95s", "--s0": "1" }} style={{ background: c.glow }} />
+      ))}
+      {[...officers, 6].map((col, i) => (
+        <Q key={col} x={cl(col)} y={rk(5.1)} w={0.7} h={12} cls="g44-r-part" delayMs={d + 900 + i * 30} v={{ "--gd": "0.7s", "--tx1": "0%", "--ty1": "calc(var(--fx-side, 1) * 60%)", "--r1": `${(i % 2 ? 1 : -1) * 25}deg` }} style={{ background: c.glow }} />
+      ))}
+      <Q x="50%" y={rk(5.1)} w={9} h={6} cls="g44-r-go" delayMs={d + 620} v={{ "--gd": "0.7s", "--tx0": "-460%", "--ty0": "0%", "--tx1": "460%", "--ty1": "0%" }}>
+        <svg viewBox="0 0 24 16" className="block h-full w-full" aria-hidden="true">
+          <circle cx="4" cy="4" r="3" fill="none" stroke={c.glow} strokeWidth="1.6" />
+          <circle cx="4" cy="12" r="3" fill="none" stroke={c.glow} strokeWidth="1.6" />
+          <path d="M6.4 5.6L22 11M6.4 10.4L22 5" stroke={c.glow} strokeWidth="1.6" {...SJ} />
+        </svg>
+      </Q>
+      {officers.map((col, i) => (
+        <Tint key={col} x={cl(col)} y={rk(7)} color="rgba(29,22,48,0.7)" delayMs={d + 980 + i * 40} gd="1.3s" />
+      ))}
+      <Q x={cl(5)} y={rk(5)} w={11} h={11} cls="g44-r-go" delayMs={d + 1000} v={{ "--gd": "0.8s", "--tx0": `${fileIn(11)}%`, "--ty0": `calc(var(--fx-side, 1) * ${-2 * fileIn(11)}%)`, "--tx1": "0%", "--ty1": "0%" }}>
+        <Man kind="n" fill={c.core} stroke={c.glow} />
+      </Q>
+      <Tint x={cl(5)} y={rk(5)} color="rgba(29,22,48,0.55)" delayMs={d + 1520} gd="0.9s" />
+      <Tint x={KING_X} y={rk(7)} color="rgba(255,241,226,0.3)" delayMs={d + 1000} gd="1.3s" />
+      <Tint x="50%" y={rk(6)} w={100} color="rgba(255,241,226,0.16)" delayMs={d + 1040} gd="1.2s" />
+      <Pips n={3} r={3.6} x0={45} x1={55} color={c.glow} delayMs={d + 1200} gd="1s" />
+    </Brd>
   );
 }
 
@@ -2936,7 +3062,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   },
   hx4_puppet_court: {
     config: { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "petrify", anchor: "board" },
-    Render: LoopStair,
+    Render: PuppetCourtRule,
   },
   ov_antigravity_gala: {
     config: { ordering: "radial", staggerMs: 60, victims: ["b", "r", "q"], hasLead: true, sound: "gacha", source: "empower", anchor: "cast" },
@@ -3133,8 +3259,6 @@ const IMPACTS: Record<string, Imp> = {
   bn4_quartermasters_lock: { at: 610, tint: "#cfd4dc", laser: true, shock: true, y: 52, s: 6.6 },
   // the gang chain is TESTED and a link gives: it snaps in half
   hx4_chain_gang: { at: 560, tint: "#a8b0bc", glyph: impGlyph(IG_LINK, "none", "#a8b0bc", 2.6), shock: true, y: 52 },
-  // the court is called to order: the puppet gavel from on high
-  hx4_puppet_court: { at: 640, tint: "#b9a2d8", laser: true, shock: true, y: 50, s: 6.8 },
   // the floor's grip is cut: the release ring booms out under the dancers
   ov_antigravity_gala: { at: 520, tint: "#b48fe8", shock: true, y: 54, s: 7.2 },
   // the pinch lands ON the borrowed piece, the full run away

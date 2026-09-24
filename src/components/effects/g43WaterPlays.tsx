@@ -10,6 +10,10 @@
 // net coming up full, a paper lantern set adrift, a pair of sea boots filling
 // on the tideline.
 //
+// PER-CARD RULE SCENES (slice TC-g). Haven Law lead with a scene of
+// their own rule on the real board (see that section before the registry);
+// the old art survives only as the small target and entrance cuts.
+//
 // Contract: see the header of sigPlugins.tsx. Self-contained (own inline SVG,
 // own g43WaterPlays.css), transform/opacity animations only, no imports from
 // BoardEffects.tsx, only the SigPlugin/SigRole TYPES from sigPlugins.tsx.
@@ -1213,23 +1217,7 @@ function HavenLawScene({ role, delayMs }: SceneProps) {
       <L c="g43-hitwave" l={10} t={76} w={80} h={4} d={260} st={{ borderRadius: "999px", background: "#16303c" }} />
     </Cut>
   );
-  return (
-    <Lead
-      d={delayMs}
-      frame={<><Wash tone="rgba(154,168,174,0.26)" /><Rim tone="rgba(22,48,60,0.45)" /><Tide tone="rgba(22,48,60,0.5)" /></>}
-      run={<L c="g43-run" l={50} t={48.6} w={30} h={2.6} d={160} st={{ background: "linear-gradient(90deg, #9aa8ae, rgba(154,168,174,0))", transformOrigin: "0% 50%", borderRadius: "999px" }} />}
-    >
-      <L c="g43-lean" l={42} t={54} w={16} h={2.2} d={80} st={{ borderRadius: "999px", background: "rgba(22,48,60,0.6)" }} />
-      {[0, 1, 2, 3].map((i) => (
-        <V key={i} c="g43-hl-block" l={43 + i * 4.6} t={46} w={5} h={4} d={240 + i * 100}>{block}</V>
-      ))}
-      <L c="g43-hl-burst" l={45} t={40} w={14} h={7} d={580} st={{ background: "radial-gradient(circle at 50% 100%, rgba(255,244,214,0.85), transparent 70%)", transformOrigin: "50% 100%" }} />
-      <L c="g43-hl-calm" l={40} t={51} w={20} h={3.4} d={660} st={{ background: "linear-gradient(180deg, rgba(154,168,174,0.6), transparent)" }} />
-      {[0, 1, 2].map((i) => (
-        <L key={i} c="g43-motes" l={45 + i * 4} t={53} w={1.2} h={1.2} d={720} st={{ borderRadius: "50%", background: "#fff4d6" }} />
-      ))}
-    </Lead>
-  );
+  return null;
 }
 
 /* --- 25. The King's Champion (t8) — THE FIGUREHEAD --------------------------
@@ -2085,6 +2073,135 @@ function LeviathanBelowScene({ role, delayMs }: SceneProps) {
 }
 
 /* =============================================================================
+   PER-CARD RULE SCENES (slice TC-g). Haven Law no longer lead with the
+   module's prop and the shared impact hit: each lead plays its own rule on the
+   real board (the squares, pieces and turn counts it touches). The old art
+   survives only as the small target and entrance cuts. Positions are board
+   percentages from the caster's side: rank 0 is the caster's back rank, 7 the
+   opponent's.
+   ========================================================================== */
+
+/** Chessman silhouettes on a 10 x 10 box, for the pieces a rule names. */
+const MEN = {
+  p: "M5 1.2 C6.2 1.2 7 2 7 3 C7 3.7 6.6 4.3 6 4.6 L7 8 H3 L4 4.6 C3.4 4.3 3 3.7 3 3 C3 2 3.8 1.2 5 1.2 Z M2.4 8.6 H7.6 V9.6 H2.4 Z",
+  r: "M2.6 1.4 H3.8 V2.6 H4.6 V1.4 H5.4 V2.6 H6.2 V1.4 H7.4 V3.8 H6.8 L7.2 7.6 H2.8 L3.2 3.8 H2.6 Z M2.2 8.4 H7.8 V9.6 H2.2 Z",
+  n: "M2.8 8.2 C2.8 5.4 3.8 4 5.4 3.2 L5 1.6 L6.4 2.6 L7.2 2.4 C7.9 3 8.1 4 7.7 4.9 L6.6 4.6 L6.2 4 C6.5 5.6 6.4 7 7 8.2 Z M2.4 8.8 H7.6 V9.8 H2.4 Z",
+  b: "M5 1 C6.4 2 7 3.4 7 4.6 C7 5.8 6.2 6.6 5 6.6 C3.8 6.6 3 5.8 3 4.6 C3 3.4 3.6 2 5 1 Z M3.4 7.2 H6.6 L7.2 8.2 H2.8 Z M2.2 8.8 H7.8 V9.8 H2.2 Z",
+  q: "M2.4 3.2 L3.4 5 L4.2 2.6 L5 4.6 L5.8 2.6 L6.6 5 L7.6 3.2 L7 7.4 H3 Z M2.6 8 H7.4 V9.2 H2.6 Z",
+  k: "M4.6 1 H5.4 V2 H6.4 V2.8 H5.4 V3.8 H4.6 V2.8 H3.6 V2 H4.6 Z M3.4 4.4 H6.6 L7.2 8 H2.8 Z M2.4 8.6 H7.6 V9.8 H2.4 Z",
+} as const;
+
+function Man({ kind, fill, stroke }: { kind: keyof typeof MEN; fill: string; stroke: string }) {
+  return (
+    <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+      <path d={MEN[kind]} fill={fill} stroke={stroke} strokeWidth="0.45" {...SJ} />
+    </svg>
+  );
+}
+
+/** The board-true layer: 0..100% is exactly the board. */
+function Brd({ children }: { children: ReactNode }) {
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        <span className="g43-rs absolute inset-0 block">{children}</span>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Centre of rank `r` from the caster's back rank (0) to the opponent's (7). */
+function rk(r: number): string {
+  return `calc(50% + var(--fx-side, 1) * ${(3.5 - r) * 12.5}%)`;
+}
+
+/** Centre of screen column `c` (0 is the left edge). */
+function cl(c: number): string {
+  return `${(c + 0.5) * 12.5}%`;
+}
+
+/** The king and queen files (e and d) seen from the caster's side. */
+const KING_X = "calc(50% + var(--fx-side, 1) * 6.25%)";
+const QUEEN_X = "calc(50% - var(--fx-side, 1) * 6.25%)";
+
+/** A prop centred on (x, y), `w` x `h` in board percent, from `delayMs`. */
+function Q({ x, y, w, h, cls, delayMs, v, style, children }: { x: string; y: string; w: number; h: number; cls: string; delayMs: number; v?: Record<string, string>; style?: CSSProperties; children?: ReactNode }) {
+  return (
+    <span
+      className={`${cls} absolute block`}
+      style={{ left: `calc(${x} - ${w / 2}%)`, top: `calc(${y} - ${h / 2}%)`, width: `${w}%`, height: `${h}%`, animationDelay: `${delayMs}ms`, ...style, ...v } as CSSProperties}
+    >
+      {children}
+    </span>
+  );
+}
+
+/** A ray drawn out of (x, y) at `angle` (rotation is static; the draw is scaleX). */
+function Ray({ x, y, len, angle, color, delayMs, gd = "1.2s" }: { x: string; y: string; len: number; angle: string; color: string; delayMs: number; gd?: string }) {
+  return (
+    <span
+      className="g43-r-draw absolute block"
+      style={{ left: x, top: `calc(${y} - 0.45%)`, width: `${len}%`, height: "0.9%", rotate: angle, transformOrigin: "0% 50%", background: `repeating-linear-gradient(90deg, ${color} 0 6px, transparent 6px 10px)`, animationDelay: `${delayMs}ms`, "--gd": gd } as CSSProperties}
+    />
+  );
+}
+
+/** `n` turn pips across rank `r`, from `x0`% to `x1`%: one per turn the rule counts. */
+function Pips({ n, r, x0, x1, color, delayMs, gd = "1.3s" }: { n: number; r: number; x0: number; x1: number; color: string; delayMs: number; gd?: string }) {
+  const step = n > 1 ? (x1 - x0) / (n - 1) : 0;
+  return (
+    <>
+      {Array.from({ length: n }, (_, i) => (
+        <Q key={i} x={`${x0 + i * step}%`} y={rk(r)} w={1.8} h={3.2} cls="g43-r-pip" delayMs={delayMs + i * 70} v={{ "--gd": gd }} style={{ background: color, borderRadius: "1px" }} />
+      ))}
+    </>
+  );
+}
+
+/** A square (or a run of squares) tinted for the length of a beat: the
+ *  squares the rule itself touches. */
+function Tint({ x, y, w = 12.5, h = 12.5, color, delayMs, gd = "1.6s", cls = "g43-r-in" }: { x: string; y: string; w?: number; h?: number; color: string; delayMs: number; gd?: string; cls?: string }) {
+  return <Q x={x} y={y} w={w} h={h} cls={cls} delayMs={delayMs} v={{ "--gd": gd, "--s0": "1" }} style={{ background: color }} />;
+}
+
+/** One file (12.5% of the board) in a prop's own width units. */
+const fileIn = (w: number): number => Math.round((12.5 / w) * 100);
+
+/* --- bn4_haven_law ----------------------------------------------------------------
+   "Beginning after your opponent's next move, nothing of yours standing in your
+   own half of the board can be captured for their next 3 turns." A breakwater
+   is built along the halfway line and the caster's four ranks behind it go
+   still as a harbour; one open pip (their next move comes first), then three
+   turn pips; an enemy capture loosed down a file into the harbour breaks on
+   the wall. */
+const C_HLR = { core: "#9aa8ae", glow: "#fff4d6", deep: "#16303c" };
+
+function HavenLawRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <HavenLawScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_HLR;
+  const d = delayMs;
+  return (
+    <Brd>
+      <Tint x="50%" y={rk(1.5)} w={100} h={50} color="rgba(154,168,174,0.42)" delayMs={d + 120} gd="2.2s" />
+      <span className="g43-r-draw absolute block" style={{ left: "0%", top: `calc(${rk(3.5)} - 1.3%)`, width: "100%", height: "2.6%", background: `repeating-linear-gradient(90deg, ${c.deep} 0 14px, ${c.core} 14px 16px)`, animationDelay: `${d}ms`, "--gd": "2.2s" } as CSSProperties} />
+      <span className="g43-r-draw absolute block" style={{ left: "0%", top: `calc(${rk(3.5)} - 1.9%)`, width: "100%", height: "0.6%", background: c.glow, animationDelay: `${d + 80}ms`, "--gd": "2.1s" } as CSSProperties} />
+      <Q x="8%" y={rk(3.1)} w={3} h={3} cls="g43-r-pip" delayMs={d + 420} v={{ "--gd": "1.6s" }} style={{ border: `1.5px solid ${c.glow}`, borderRadius: "50%" }} />
+      <Pips n={3} r={3.1} x0={14} x1={22} color={c.glow} delayMs={d + 520} gd="1.6s" />
+      <Q x={cl(5)} y={rk(5.2)} w={2} h={28} cls="g43-r-shout" delayMs={d + 640} v={{ "--gd": "0.6s" }} style={{ background: `linear-gradient(180deg, transparent, ${c.glow})` }} />
+      <Q x={cl(5)} y={rk(3.5)} w={10} h={6} cls="g43-r-stamp" delayMs={d + 980} v={{ "--gd": "1s" }}>
+        <svg viewBox="0 0 24 14" className="block h-full w-full" aria-hidden="true">
+          <path d="M3 12q3-8 6-2t6-2 6 2" fill="none" stroke={c.glow} strokeWidth="2" {...SJ} />
+          <path d="M6 3l2 3M12 1v4M18 3l-2 3" stroke={c.core} strokeWidth="1.5" {...SJ} />
+        </svg>
+      </Q>
+      <Q x={cl(5)} y={rk(2)} w={11} h={11} cls="g43-r-in" delayMs={d + 900} v={{ "--gd": "1.2s", "--s0": "1" }}>
+        <Man kind="n" fill={c.glow} stroke={c.deep} />
+      </Q>
+    </Brd>
+  );
+}
+
+/* =============================================================================
    Registry. Every entry declares an anchor; every `sound` is an existing
    SigSoundKey. `source` is deliberately omitted throughout: these cards carry
    no removal diff, so their play is the cast lead on the square they were
@@ -2120,7 +2237,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   hx4_dockmasters_fee: S(DockmastersFeeScene, { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "chips", anchor: "board" }),
   hx4_old_laws: S(TheOldLawsScene, { ordering: "radial", staggerMs: 70, victims: "all", hasLead: true, sound: "coronation", anchor: "board" }),
   hx4_command_paralysis: S(CommandParalysisScene, { ordering: "radial", staggerMs: 70, victims: "all", hasLead: true, sound: "clockice", anchor: "board" }),
-  bn4_haven_law: S(HavenLawScene, { ordering: "line", staggerMs: 70, victims: "all", hasLead: true, sound: "wall", anchor: "board" }),
+  bn4_haven_law: S(HavenLawRule, { ordering: "line", staggerMs: 70, victims: "all", hasLead: true, sound: "wall", anchor: "board" }),
   bn4_kings_champion: S(KingsChampionScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation", anchor: "cast" }),
   bn4_kings_own_wings: S(KingsOwnWingsScene, { ordering: "line", staggerMs: 60, victims: ["k"], hasLead: true, sound: "blitz", anchor: "aim" }),
   hx4_burden_of_command: S(BurdenOfCommandScene, { ordering: "radial", staggerMs: 60, victims: ["q"], hasLead: true, sound: "colossus", anchor: "board" }),
@@ -2295,8 +2412,6 @@ const IMPACTS: Record<string, Imp> = {
   hx4_old_laws: { at: 520, tint: "#b8b0a0", laser: true, wet: true, y: 50, s: 6.8 },
   // the order freezes mid-signal: the flag hits the water instead
   hx4_command_paralysis: { at: 520, tint: "#e6ddc6", laser: true, wet: true, y: 52, s: 6.2 },
-  // the haven chain drops across the mouth: harbor-bar crash
-  bn4_haven_law: { at: 580, tint: "#9aa8ae", laser: true, wet: true, y: 52, s: 8.2 },
   // the champion vaults the rail and lands in the surf, sword down
   bn4_kings_champion: { at: 460, tint: "#e6c46a", laser: true, wet: true, y: 54, s: 7.8 },
   // the king's wings skim and STRIKE at the escort point
