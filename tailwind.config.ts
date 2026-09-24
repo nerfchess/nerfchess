@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import plugin from "tailwindcss/plugin";
 
 export default {
   content: ["./src/**/*.{ts,tsx}"],
@@ -111,7 +112,7 @@ export default {
           DEFAULT: "#c9a227",
           glow: "#dcb84a",
         },
-        // mode identities: Nerf mode is red, Buff mode is blue — the same two
+        // mode identities: Nerf mode is red, Buff mode is blue, the same two
         // semantic accent tokens used for curses/danger (red) and powers/boons
         // (blue), so a mode always reads the same color everywhere.
         mode: {
@@ -130,6 +131,26 @@ export default {
         plate:
           "0 12px 40px -24px rgba(0,0,0,0.7), 0 1px 0 0 rgba(255,255,255,0.03) inset",
       },
+      // Motion vocabulary (design-system.md section 6). A bare `transition`,
+      // `transition-colors` or `transition-transform` (about 280 call sites)
+      // used Tailwind's own 150ms and cubic-bezier(0.4, 0, 0.2, 1); they now
+      // resolve to the site tokens in globals.css, so every hover and press
+      // moves on the same --dur-1 / --ease-out as the hand-written CSS (F188).
+      // `duration-1..3` and `ease-io` / `ease-spring` name the other tokens,
+      // and `ease-out` / `ease-in-out` map onto the house curves.
+      transitionDuration: {
+        DEFAULT: "var(--dur-1)",
+        1: "var(--dur-1)",
+        2: "var(--dur-2)",
+        3: "var(--dur-3)",
+      },
+      transitionTimingFunction: {
+        DEFAULT: "var(--ease-out)",
+        out: "var(--ease-out)",
+        "in-out": "var(--ease-io)",
+        io: "var(--ease-io)",
+        spring: "var(--ease-spring)",
+      },
       keyframes: {
         flicker: {
           "0%, 100%": { opacity: "1" },
@@ -139,15 +160,6 @@ export default {
           "0%, 100%": { transform: "rotate(0deg)" },
           "50%": { transform: "rotate(180deg)" },
         },
-        rise: {
-          "0%": { opacity: "0", transform: "translateY(14px)" },
-          "100%": { opacity: "1", transform: "translateY(0)" },
-        },
-        seal: {
-          "0%": { transform: "scale(0.6) rotate(-6deg)", opacity: "0" },
-          "70%": { transform: "scale(1.06) rotate(2deg)", opacity: "1" },
-          "100%": { transform: "scale(1) rotate(0deg)", opacity: "1" },
-        },
         bob: {
           "0%, 100%": { transform: "translateY(0)" },
           "50%": { transform: "translateY(-6px)" },
@@ -156,11 +168,24 @@ export default {
       animation: {
         flicker: "flicker 4.5s ease-in-out infinite",
         sigil: "sigil 60s linear infinite",
-        rise: "rise 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both",
-        seal: "seal 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) both",
         bob: "bob 4s ease-in-out infinite",
       },
     },
   },
-  plugins: [],
+  plugins: [
+    // The app's own motion gate as variants. Tailwind's motion-safe: and
+    // motion-reduce: read the OS prefers-reduced-motion query, which this app
+    // honours only when the player opts in to Follow system motion (default
+    // off); applyUiPrefs folds that opt-in, the in-app reduced motion switch
+    // and Animations: Off into html[data-anim="off"]. So the OS variants gave
+    // half-animated screens: a Tailwind pulse frozen by the OS while the card
+    // effects beside it played, or still pulsing with Animations off (F190).
+    // motion-on: and motion-off: follow data-anim; scripts/check-reduced-motion.cjs
+    // keeps the OS variants from coming back. (A plugin cannot redefine the
+    // core motion-safe name, hence the new names.)
+    plugin(({ addVariant }) => {
+      addVariant("motion-on", 'html:not([data-anim="off"]) &');
+      addVariant("motion-off", 'html[data-anim="off"] &');
+    }),
+  ],
 } satisfies Config;
