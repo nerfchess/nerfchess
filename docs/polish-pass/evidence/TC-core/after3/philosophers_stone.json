@@ -1,0 +1,124 @@
+{
+ "id": "philosophers_stone",
+ "url": "/dev/plays?id=philosophers_stone&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "philosophers_stone",
+  "name": "Philosopher's Stone",
+  "tier": 9,
+  "category": "pieces",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "core",
+  "visual": "transmute",
+  "anchor": "cast",
+  "source": "empower",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 140,
+  "drive": "engine",
+  "driveNote": "activated with 3 pick(s)",
+  "castSq": "d2",
+  "targets": [
+   "d2",
+   "e2",
+   "f2"
+  ],
+  "picks": [
+   "d2",
+   "e2",
+   "f2"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2726,
+  "cssEndMs": 3669,
+  "settled": true,
+  "windowMs": 3919,
+  "cssAnimations": 59,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 177,
+  "maxGapMs": 247.7
+ },
+ "raf": {
+  "frames": 180,
+  "medianMs": 16.7,
+  "maxMs": 166.7,
+  "dropped": 57
+ },
+ "longAnimationFrames": {
+  "count": 4,
+  "worstMs": 85,
+  "totalBlockingMs": 51,
+  "entries": [
+   {
+    "atMs": 9,
+    "duration": 58,
+    "blocking": 7,
+    "scripts": []
+   },
+   {
+    "atMs": 92,
+    "duration": 85,
+    "blocking": 34,
+    "scripts": []
+   },
+   {
+    "atMs": 1053,
+    "duration": 53,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 1535,
+    "duration": 73,
+    "blocking": 10,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  327,
+  835,
+  1443,
+  2128,
+  2876
+ ],
+ "png": "docs/polish-pass/evidence/TC-core/after3/philosophers_stone.png",
+ "pngBytes": 15265,
+ "off": {
+  "url": "/dev/plays?id=philosophers_stone&anim=off&bare=1",
+  "pass": false,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0.0899,
+  "endRegions": [
+   {
+    "x": 40,
+    "y": 32,
+    "w": 408,
+    "h": 64,
+    "cells": 402
+   },
+   {
+    "x": 216,
+    "y": 352,
+    "w": 48,
+    "h": 64,
+    "cells": 25
+   }
+  ],
+  "png": "docs/polish-pass/evidence/TC-core/after3/philosophers_stone.off.png"
+ }
+}

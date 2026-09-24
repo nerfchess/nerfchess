@@ -1,0 +1,98 @@
+{
+ "id": "mass_petrify",
+ "url": "/dev/plays?id=mass_petrify&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "mass_petrify",
+  "name": "Mass Petrify",
+  "tier": 9,
+  "category": "hex",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "core",
+  "visual": "masspetrify",
+  "anchor": "cast",
+  "source": "walnut",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 55,
+  "drive": "engine",
+  "driveNote": "activated with 5 pick(s)",
+  "castSq": "d7",
+  "targets": [
+   "d7",
+   "e7",
+   "f7",
+   "g7",
+   "f8"
+  ],
+  "picks": [
+   "d7",
+   "e7",
+   "f7",
+   "g7",
+   "f8"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2871,
+  "cssEndMs": 3460,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 89,
+  "infiniteAnimations": 3
+ },
+ "screencast": {
+  "framesInWindow": 166,
+  "maxGapMs": 339.9
+ },
+ "raf": {
+  "frames": 151,
+  "medianMs": 16.7,
+  "maxMs": 116.7,
+  "dropped": 68
+ },
+ "longAnimationFrames": {
+  "count": 3,
+  "worstMs": 84,
+  "totalBlockingMs": 52,
+  "entries": [
+   {
+    "atMs": -69,
+    "duration": 84,
+    "blocking": 25,
+    "scripts": []
+   },
+   {
+    "atMs": 114,
+    "duration": 84,
+    "blocking": 27,
+    "scripts": []
+   },
+   {
+    "atMs": 982,
+    "duration": 52,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  344,
+  877,
+  1516,
+  2235,
+  3021
+ ],
+ "png": "docs/polish-pass/evidence/TC-core/before3/mass_petrify.png",
+ "pngBytes": 29368
+}

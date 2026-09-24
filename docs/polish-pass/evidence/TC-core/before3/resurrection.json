@@ -1,0 +1,104 @@
+{
+ "id": "resurrection",
+ "url": "/dev/plays?id=resurrection&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "resurrection",
+  "name": "Resurrection",
+  "tier": 9,
+  "category": "pieces",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "core",
+  "visual": "resurrection",
+  "anchor": "board",
+  "source": "summon",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 80,
+  "drive": "engine",
+  "driveNote": "activated with 2 pick(s)",
+  "castSq": "d2",
+  "targets": [
+   "d2",
+   "d3"
+  ],
+  "picks": [
+   "d2",
+   "d3"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2638,
+  "cssEndMs": 3573,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 57,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 165,
+  "maxGapMs": 247
+ },
+ "raf": {
+  "frames": 164,
+  "medianMs": 16.7,
+  "maxMs": 166.6,
+  "dropped": 54
+ },
+ "longAnimationFrames": {
+  "count": 4,
+  "worstMs": 70,
+  "totalBlockingMs": 17,
+  "entries": [
+   {
+    "atMs": 15,
+    "duration": 60,
+    "blocking": 1,
+    "scripts": [
+     {
+      "duration": 8,
+      "invoker": "TimerHandler:setInterval",
+      "source": ""
+     }
+    ]
+   },
+   {
+    "atMs": 79,
+    "duration": 70,
+    "blocking": 16,
+    "scripts": []
+   },
+   {
+    "atMs": 2047,
+    "duration": 53,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 2263,
+    "duration": 55,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  317,
+  809,
+  1399,
+  2063,
+  2788
+ ],
+ "png": "docs/polish-pass/evidence/TC-core/before3/resurrection.png",
+ "pngBytes": 27473
+}

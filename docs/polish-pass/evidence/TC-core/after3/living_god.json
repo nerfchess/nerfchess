@@ -1,0 +1,120 @@
+{
+ "id": "living_god",
+ "url": "/dev/plays?id=living_god&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "living_god",
+  "name": "Living God",
+  "tier": 9,
+  "category": "movement",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "core",
+  "visual": "livinggod",
+  "anchor": "cast",
+  "source": "empower",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "engine",
+  "driveNote": "activated with 1 pick(s)",
+  "castSq": "d2",
+  "targets": [
+   "d2"
+  ],
+  "picks": [
+   "d2"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2772,
+  "cssEndMs": 3472,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 69,
+  "infiniteAnimations": 4
+ },
+ "screencast": {
+  "framesInWindow": 180,
+  "maxGapMs": 295.8
+ },
+ "raf": {
+  "frames": 174,
+  "medianMs": 16.7,
+  "maxMs": 133.3,
+  "dropped": 45
+ },
+ "longAnimationFrames": {
+  "count": 4,
+  "worstMs": 69,
+  "totalBlockingMs": 20,
+  "entries": [
+   {
+    "atMs": -52,
+    "duration": 57,
+    "blocking": 2,
+    "scripts": []
+   },
+   {
+    "atMs": 149,
+    "duration": 69,
+    "blocking": 18,
+    "scripts": []
+   },
+   {
+    "atMs": 1104,
+    "duration": 66,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 2957,
+    "duration": 56,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  333,
+  848,
+  1466,
+  2162,
+  2922
+ ],
+ "png": "docs/polish-pass/evidence/TC-core/after3/living_god.png",
+ "pngBytes": 17095,
+ "off": {
+  "url": "/dev/plays?id=living_god&anim=off&bare=1",
+  "pass": false,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0.0877,
+  "endRegions": [
+   {
+    "x": 40,
+    "y": 32,
+    "w": 408,
+    "h": 64,
+    "cells": 401
+   },
+   {
+    "x": 192,
+    "y": 360,
+    "w": 48,
+    "h": 48,
+    "cells": 14
+   }
+  ],
+  "png": "docs/polish-pass/evidence/TC-core/after3/living_god.off.png"
+ }
+}
