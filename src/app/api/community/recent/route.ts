@@ -1,44 +1,12 @@
 import { NextResponse } from "next/server";
-import { pgAll } from "@/lib/server/pg";
-import { categoryForTimeControl } from "@/lib/speed";
+import { queryRecentGames } from "@/lib/server/recentGames";
 import { PUBLIC_SHORT_CACHE } from "@/lib/server/request";
 
 export const dynamic = "force-dynamic";
 
-// The latest finished games, for the community hub's "Recent games" list.
-// Rows recorded before the category column existed fall back to the time
-// control, same as the profile rating history.
+// The latest finished games, for the community hub's "Recent games" list. The
+// query is shared with the /community server shell (src/lib/server/recentGames.ts).
 export async function GET() {
-  const games = await pgAll<{
-    id: string;
-    white_name: string;
-    black_name: string;
-    winner: "w" | "b" | "draw" | null;
-    reason: string;
-    rated: number;
-    category: string | null;
-    time_sec: number;
-    increment_sec: number;
-    completed_at: number;
-  }>(
-    `SELECT id, white_name, black_name, winner, reason, rated, category,
-            time_sec, increment_sec, completed_at
-     FROM games ORDER BY completed_at DESC LIMIT 12`,
-  );
-
-  return NextResponse.json(
-    {
-    games: games.map((game) => ({
-      id: game.id,
-      whiteName: game.white_name,
-      blackName: game.black_name,
-      winner: game.winner,
-      reason: game.reason,
-      rated: !!game.rated,
-      category: game.category ?? categoryForTimeControl(game.time_sec, game.increment_sec),
-      completedAt: game.completed_at,
-    })),
-    },
-    { headers: { "Cache-Control": PUBLIC_SHORT_CACHE } },
-  );
+  const games = await queryRecentGames();
+  return NextResponse.json({ games }, { headers: { "Cache-Control": PUBLIC_SHORT_CACHE } });
 }
