@@ -1,0 +1,465 @@
+{
+ "method": "cosine similarity of per-tile (tile minus pre-play tile) 24x24 grey thumbnails, standardised per tile and then weighted by the tile's raw energy over the card's peak (so near-empty tiles count for little); 1 = same look, near 0 = unrelated. Every tier 6+ bespoke card shares the cast wrapper's ring and beam (TC0-f), so expect a floor well above 0",
+ "cards": 12,
+ "sheetPicks": {
+  "bn4_diplomatic_pouch": "+808ms (energy 1 of peak)",
+  "bn4_double_pardon": "+467ms (energy 1 of peak)",
+  "bn4_hidden_clause": "+464ms (energy 1 of peak)",
+  "bn4_hollow_crown": "+468ms (energy 1 of peak)",
+  "bn4_long_holiday": "+472ms (energy 1 of peak)",
+  "bn4_ministers_seal": "+811ms (energy 0.84 of peak)",
+  "bn4_pillars_of_home": "+1210ms (energy 1 of peak)",
+  "bn4_quiet_coup": "+842ms (energy 1 of peak)",
+  "bn4_relief_column": "+813ms (energy 0.85 of peak)",
+  "bn4_rule_of_three": "+810ms (energy 0.6 of peak)",
+  "bn4_spymasters_leave": "+1211ms (energy 1 of peak)",
+  "bn4_tower_toll": "+817ms (energy 0.67 of peak)"
+ },
+ "generic": {
+  "method": "cosine similarity of the card's weighted look vector to the mean weighted look of the other cards in this sheet (leave-one-out); highest = least card-specific",
+  "ranking": [
+   {
+    "card": "bn4_rule_of_three",
+    "tier": 6,
+    "closeness": 0.863
+   },
+   {
+    "card": "bn4_ministers_seal",
+    "tier": 6,
+    "closeness": 0.84
+   },
+   {
+    "card": "bn4_relief_column",
+    "tier": 6,
+    "closeness": 0.814
+   },
+   {
+    "card": "bn4_diplomatic_pouch",
+    "tier": 6,
+    "closeness": 0.802
+   },
+   {
+    "card": "bn4_pillars_of_home",
+    "tier": 6,
+    "closeness": 0.787
+   },
+   {
+    "card": "bn4_tower_toll",
+    "tier": 6,
+    "closeness": 0.772
+   },
+   {
+    "card": "bn4_double_pardon",
+    "tier": 6,
+    "closeness": 0.766
+   },
+   {
+    "card": "bn4_hidden_clause",
+    "tier": 6,
+    "closeness": 0.708
+   },
+   {
+    "card": "bn4_quiet_coup",
+    "tier": 6,
+    "closeness": 0.688
+   },
+   {
+    "card": "bn4_hollow_crown",
+    "tier": 6,
+    "closeness": 0.645
+   },
+   {
+    "card": "bn4_long_holiday",
+    "tier": 6,
+    "closeness": 0.58
+   },
+   {
+    "card": "bn4_spymasters_leave",
+    "tier": 6,
+    "closeness": 0.535
+   }
+  ]
+ },
+ "pairs": [
+  {
+   "a": "bn4_diplomatic_pouch",
+   "b": "bn4_ministers_seal",
+   "similarity": 0.888
+  },
+  {
+   "a": "bn4_rule_of_three",
+   "b": "bn4_tower_toll",
+   "similarity": 0.802
+  },
+  {
+   "a": "bn4_relief_column",
+   "b": "bn4_rule_of_three",
+   "similarity": 0.791
+  },
+  {
+   "a": "bn4_double_pardon",
+   "b": "bn4_hidden_clause",
+   "similarity": 0.788
+  },
+  {
+   "a": "bn4_double_pardon",
+   "b": "bn4_rule_of_three",
+   "similarity": 0.782
+  },
+  {
+   "a": "bn4_ministers_seal",
+   "b": "bn4_rule_of_three",
+   "similarity": 0.758
+  },
+  {
+   "a": "bn4_hidden_clause",
+   "b": "bn4_long_holiday",
+   "similarity": 0.755
+  },
+  {
+   "a": "bn4_double_pardon",
+   "b": "bn4_relief_column",
+   "similarity": 0.742
+  },
+  {
+   "a": "bn4_relief_column",
+   "b": "bn4_tower_toll",
+   "similarity": 0.73
+  },
+  {
+   "a": "bn4_ministers_seal",
+   "b": "bn4_tower_toll",
+   "similarity": 0.723
+  },
+  {
+   "a": "bn4_diplomatic_pouch",
+   "b": "bn4_pillars_of_home",
+   "similarity": 0.719
+  },
+  {
+   "a": "bn4_double_pardon",
+   "b": "bn4_long_holiday",
+   "similarity": 0.719
+  },
+  {
+   "a": "bn4_ministers_seal",
+   "b": "bn4_pillars_of_home",
+   "similarity": 0.714
+  },
+  {
+   "a": "bn4_pillars_of_home",
+   "b": "bn4_relief_column",
+   "similarity": 0.71
+  },
+  {
+   "a": "bn4_diplomatic_pouch",
+   "b": "bn4_rule_of_three",
+   "similarity": 0.706
+  },
+  {
+   "a": "bn4_hollow_crown",
+   "b": "bn4_rule_of_three",
+   "similarity": 0.688
+  },
+  {
+   "a": "bn4_hollow_crown",
+   "b": "bn4_ministers_seal",
+   "similarity": 0.686
+  },
+  {
+   "a": "bn4_long_holiday",
+   "b": "bn4_pillars_of_home",
+   "similarity": 0.686
+  },
+  {
+   "a": "bn4_ministers_seal",
+   "b": "bn4_relief_column",
+   "similarity": 0.686
+  },
+  {
+   "a": "bn4_pillars_of_home",
+   "b": "bn4_rule_of_three",
+   "similarity": 0.681
+  },
+  {
+   "a": "bn4_diplomatic_pouch",
+   "b": "bn4_tower_toll",
+   "similarity": 0.672
+  },
+  {
+   "a": "bn4_quiet_coup",
+   "b": "bn4_spymasters_leave",
+   "similarity": 0.661
+  },
+  {
+   "a": "bn4_hollow_crown",
+   "b": "bn4_tower_toll",
+   "similarity": 0.66
+  },
+  {
+   "a": "bn4_double_pardon",
+   "b": "bn4_pillars_of_home",
+   "similarity": 0.653
+  },
+  {
+   "a": "bn4_hidden_clause",
+   "b": "bn4_pillars_of_home",
+   "similarity": 0.653
+  },
+  {
+   "a": "bn4_diplomatic_pouch",
+   "b": "bn4_relief_column",
+   "similarity": 0.651
+  },
+  {
+   "a": "bn4_diplomatic_pouch",
+   "b": "bn4_hollow_crown",
+   "similarity": 0.65
+  },
+  {
+   "a": "bn4_double_pardon",
+   "b": "bn4_tower_toll",
+   "similarity": 0.63
+  },
+  {
+   "a": "bn4_hidden_clause",
+   "b": "bn4_rule_of_three",
+   "similarity": 0.614
+  },
+  {
+   "a": "bn4_ministers_seal",
+   "b": "bn4_quiet_coup",
+   "similarity": 0.613
+  },
+  {
+   "a": "bn4_pillars_of_home",
+   "b": "bn4_tower_toll",
+   "similarity": 0.611
+  },
+  {
+   "a": "bn4_diplomatic_pouch",
+   "b": "bn4_quiet_coup",
+   "similarity": 0.596
+  },
+  {
+   "a": "bn4_hidden_clause",
+   "b": "bn4_quiet_coup",
+   "similarity": 0.596
+  },
+  {
+   "a": "bn4_hidden_clause",
+   "b": "bn4_relief_column",
+   "similarity": 0.589
+  },
+  {
+   "a": "bn4_hollow_crown",
+   "b": "bn4_relief_column",
+   "similarity": 0.58
+  },
+  {
+   "a": "bn4_double_pardon",
+   "b": "bn4_ministers_seal",
+   "similarity": 0.576
+  },
+  {
+   "a": "bn4_long_holiday",
+   "b": "bn4_relief_column",
+   "similarity": 0.575
+  },
+  {
+   "a": "bn4_ministers_seal",
+   "b": "bn4_spymasters_leave",
+   "similarity": 0.568
+  },
+  {
+   "a": "bn4_quiet_coup",
+   "b": "bn4_rule_of_three",
+   "similarity": 0.565
+  },
+  {
+   "a": "bn4_diplomatic_pouch",
+   "b": "bn4_double_pardon",
+   "similarity": 0.531
+  },
+  {
+   "a": "bn4_hollow_crown",
+   "b": "bn4_spymasters_leave",
+   "similarity": 0.53
+  },
+  {
+   "a": "bn4_long_holiday",
+   "b": "bn4_rule_of_three",
+   "similarity": 0.527
+  },
+  {
+   "a": "bn4_quiet_coup",
+   "b": "bn4_relief_column",
+   "similarity": 0.521
+  },
+  {
+   "a": "bn4_pillars_of_home",
+   "b": "bn4_quiet_coup",
+   "similarity": 0.516
+  },
+  {
+   "a": "bn4_diplomatic_pouch",
+   "b": "bn4_spymasters_leave",
+   "similarity": 0.51
+  },
+  {
+   "a": "bn4_quiet_coup",
+   "b": "bn4_tower_toll",
+   "similarity": 0.51
+  },
+  {
+   "a": "bn4_hollow_crown",
+   "b": "bn4_quiet_coup",
+   "similarity": 0.501
+  },
+  {
+   "a": "bn4_hidden_clause",
+   "b": "bn4_ministers_seal",
+   "similarity": 0.495
+  },
+  {
+   "a": "bn4_hidden_clause",
+   "b": "bn4_tower_toll",
+   "similarity": 0.484
+  },
+  {
+   "a": "bn4_diplomatic_pouch",
+   "b": "bn4_hidden_clause",
+   "similarity": 0.481
+  },
+  {
+   "a": "bn4_double_pardon",
+   "b": "bn4_quiet_coup",
+   "similarity": 0.475
+  },
+  {
+   "a": "bn4_hollow_crown",
+   "b": "bn4_pillars_of_home",
+   "similarity": 0.47
+  },
+  {
+   "a": "bn4_hidden_clause",
+   "b": "bn4_spymasters_leave",
+   "similarity": 0.439
+  },
+  {
+   "a": "bn4_rule_of_three",
+   "b": "bn4_spymasters_leave",
+   "similarity": 0.436
+  },
+  {
+   "a": "bn4_diplomatic_pouch",
+   "b": "bn4_long_holiday",
+   "similarity": 0.427
+  },
+  {
+   "a": "bn4_long_holiday",
+   "b": "bn4_tower_toll",
+   "similarity": 0.413
+  },
+  {
+   "a": "bn4_double_pardon",
+   "b": "bn4_hollow_crown",
+   "similarity": 0.404
+  },
+  {
+   "a": "bn4_long_holiday",
+   "b": "bn4_ministers_seal",
+   "similarity": 0.401
+  },
+  {
+   "a": "bn4_relief_column",
+   "b": "bn4_spymasters_leave",
+   "similarity": 0.401
+  },
+  {
+   "a": "bn4_spymasters_leave",
+   "b": "bn4_tower_toll",
+   "similarity": 0.4
+  },
+  {
+   "a": "bn4_long_holiday",
+   "b": "bn4_quiet_coup",
+   "similarity": 0.352
+  },
+  {
+   "a": "bn4_pillars_of_home",
+   "b": "bn4_spymasters_leave",
+   "similarity": 0.324
+  },
+  {
+   "a": "bn4_double_pardon",
+   "b": "bn4_spymasters_leave",
+   "similarity": 0.305
+  },
+  {
+   "a": "bn4_hidden_clause",
+   "b": "bn4_hollow_crown",
+   "similarity": 0.263
+  },
+  {
+   "a": "bn4_hollow_crown",
+   "b": "bn4_long_holiday",
+   "similarity": 0.157
+  },
+  {
+   "a": "bn4_long_holiday",
+   "b": "bn4_spymasters_leave",
+   "similarity": 0.087
+  }
+ ],
+ "nearest": {
+  "bn4_diplomatic_pouch": {
+   "card": "bn4_ministers_seal",
+   "similarity": 0.888
+  },
+  "bn4_double_pardon": {
+   "card": "bn4_hidden_clause",
+   "similarity": 0.788
+  },
+  "bn4_hidden_clause": {
+   "card": "bn4_double_pardon",
+   "similarity": 0.788
+  },
+  "bn4_hollow_crown": {
+   "card": "bn4_rule_of_three",
+   "similarity": 0.688
+  },
+  "bn4_long_holiday": {
+   "card": "bn4_hidden_clause",
+   "similarity": 0.755
+  },
+  "bn4_ministers_seal": {
+   "card": "bn4_diplomatic_pouch",
+   "similarity": 0.888
+  },
+  "bn4_pillars_of_home": {
+   "card": "bn4_diplomatic_pouch",
+   "similarity": 0.719
+  },
+  "bn4_quiet_coup": {
+   "card": "bn4_spymasters_leave",
+   "similarity": 0.661
+  },
+  "bn4_relief_column": {
+   "card": "bn4_rule_of_three",
+   "similarity": 0.791
+  },
+  "bn4_rule_of_three": {
+   "card": "bn4_tower_toll",
+   "similarity": 0.802
+  },
+  "bn4_spymasters_leave": {
+   "card": "bn4_quiet_coup",
+   "similarity": 0.661
+  },
+  "bn4_tower_toll": {
+   "card": "bn4_rule_of_three",
+   "similarity": 0.802
+  }
+ }
+}

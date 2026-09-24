@@ -1,0 +1,69 @@
+{
+ "id": "bn4_double_pardon",
+ "url": "/dev/plays?id=bn4_double_pardon&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "bn4_double_pardon",
+  "name": "Double Pardon",
+  "tier": 6,
+  "category": "nerf",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:bn4_double_pardon",
+  "anchor": "board",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 60,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, diff-less: no zone source, not an attack",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2386,
+  "cssEndMs": 3456,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 31,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 163,
+  "maxGapMs": 295.2
+ },
+ "raf": {
+  "frames": 208,
+  "medianMs": 16.7,
+  "maxMs": 66.7,
+  "dropped": 9
+ },
+ "longAnimationFrames": {
+  "count": 0,
+  "worstMs": 0,
+  "totalBlockingMs": 0,
+  "entries": []
+ },
+ "tiles": [
+  0,
+  183,
+  467,
+  808,
+  1191,
+  1610,
+  2060,
+  2536
+ ],
+ "png": "docs/polish-pass/evidence/TC-g/before/bn4_double_pardon.png",
+ "pngBytes": 23217
+}

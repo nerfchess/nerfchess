@@ -1,0 +1,69 @@
+{
+ "id": "bn4_spymasters_leave",
+ "url": "/dev/plays?id=bn4_spymasters_leave&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "bn4_spymasters_leave",
+  "name": "Spymaster's Leave",
+  "tier": 6,
+  "category": "nerf",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:bn4_spymasters_leave",
+  "anchor": "board",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "octagon",
+  "staggerMs": 50,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, diff-less: no zone source, not an attack",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2427,
+  "cssEndMs": 3467,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 32,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 153,
+  "maxGapMs": 317.1
+ },
+ "raf": {
+  "frames": 215,
+  "medianMs": 16.7,
+  "maxMs": 33.4,
+  "dropped": 3
+ },
+ "longAnimationFrames": {
+  "count": 0,
+  "worstMs": 0,
+  "totalBlockingMs": 0,
+  "entries": []
+ },
+ "tiles": [
+  0,
+  186,
+  475,
+  821,
+  1211,
+  1636,
+  2093,
+  2577
+ ],
+ "png": "docs/polish-pass/evidence/TC-g/before/bn4_spymasters_leave.png",
+ "pngBytes": 33120
+}
