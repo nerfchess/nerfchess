@@ -1,0 +1,76 @@
+{
+ "id": "bn4_fisherman_king",
+ "url": "/dev/plays?id=bn4_fisherman_king&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "bn4_fisherman_king",
+  "name": "Fisherman King",
+  "tier": 6,
+  "category": "movement",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:bn4_fisherman_king",
+  "anchor": "aim",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "line",
+  "staggerMs": 60,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, diff-less: no zone source, not an attack",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2416,
+  "cssEndMs": 3468,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 26,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 146,
+  "maxGapMs": 329.6
+ },
+ "raf": {
+  "frames": 211,
+  "medianMs": 16.7,
+  "maxMs": 50,
+  "dropped": 7
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 52,
+  "totalBlockingMs": 0,
+  "entries": [
+   {
+    "atMs": 2814,
+    "duration": 52,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  186,
+  473,
+  818,
+  1205,
+  1629,
+  2084,
+  2566
+ ],
+ "png": "docs/polish-pass/evidence/TC-g/before/bn4_fisherman_king.png",
+ "pngBytes": 23746
+}

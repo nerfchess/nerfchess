@@ -1,0 +1,69 @@
+{
+ "id": "ov_great_flood",
+ "url": "/dev/plays?id=ov_great_flood&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "ov_great_flood",
+  "name": "The Great Flood",
+  "tier": 6,
+  "category": "movement",
+  "mechanic": "instant",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:ov_great_flood",
+  "anchor": "cast",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 55,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2409,
+  "cssEndMs": 3480,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 28,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 166,
+  "maxGapMs": 343
+ },
+ "raf": {
+  "frames": 212,
+  "medianMs": 16.7,
+  "maxMs": 50.1,
+  "dropped": 6
+ },
+ "longAnimationFrames": {
+  "count": 0,
+  "worstMs": 0,
+  "totalBlockingMs": 0,
+  "entries": []
+ },
+ "tiles": [
+  0,
+  185,
+  472,
+  815,
+  1202,
+  1625,
+  2078,
+  2559
+ ],
+ "png": "docs/polish-pass/evidence/TC-g/before/ov_great_flood.png",
+ "pngBytes": 25621
+}

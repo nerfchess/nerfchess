@@ -1436,27 +1436,7 @@ function Pigeonholes({ role, delayMs }: SceneProps) {
       </Cut>
     );
   }
-  return (
-    <AimLead d={delayMs} frame={<Wash tone="rgba(169,184,232,0.26)" d={70} />}>
-      <L c="g44-tell" d={90} s={{ ...box(1.4, 1.4, 0, -0.2), borderRadius: "50%", background: "#1a1c33" }} />
-      {/* a rack on the cast square and its twin at the real far square */}
-      {R2.map((i) => (
-        <V key={i} c="g44-file-rack" d={190 + i * 70} s={at(i, 2.4, 2.6)}>{rack}</V>
-      ))}
-      {/* strike: the docket goes in one slot and comes out of the other rack */}
-      <L c="g44-file-post" d={340} s={{ ...at(0.08, 0.8, 0.55, -0.6), background: "#fff2e2", border: "1px solid #1a1c33" }} />
-      <L c="g44-run1" d={420} s={{ ...box(1, 0.5, 0.5, -0.6), background: "linear-gradient(90deg, rgba(255,242,226,0.1), #fff2e2)", border: "1px solid #1a1c33" }} />
-      {/* the misfiling stamp lands over the join */}
-      <V c="g44-file-stamp" d={560} s={{ ...at(0.5, 1.8, 1.8, 0.6), filter: "drop-shadow(0 0 4px #a9b8e8)" }}>
-        <circle cx="12" cy="12" r="9" fill="none" stroke="#fff2e2" strokeWidth="1.7" />
-        <path d="M6 16L18 8" stroke="#a9b8e8" strokeWidth="2" strokeLinecap="round" />
-      </V>
-      {/* settle: loose slips fluttering off the rack */}
-      {R3.map((i) => (
-        <L key={i} c="g44-grit" d={660 + i * 45} s={{ ...box(0.34, 0.24, [0.4, 1.2, 0.8][i], [0.8, 1, 1.3][i]), background: "#fff2e2", "--sx": ["140%", "-120%", "160%"][i], "--sy": "calc(var(--fx-side, 1) * -150%)" }} />
-      ))}
-    </AimLead>
-  );
+  return null;
 }
 
 /* -----------------------------------------------------------------------------
@@ -1490,25 +1470,7 @@ function SandTable({ role, delayMs }: SceneProps) {
       </Cut>
     );
   }
-  return (
-    <Lead d={delayMs} frame={<><Wash tone="rgba(216,181,106,0.26)" d={70} /><Rim tone="rgba(255,243,210,0.28)" d={150} /></>}>
-      {/* tell: the baton taps the edge of the table */}
-      <L c="g44-tell" d={90} s={{ ...box(1.6, 0.3, -1.8, 1.9), borderRadius: "999px", background: "#2b2210" }} />
-      {/* the sand bed itself */}
-      <L c="g44-sand-bed" d={190} s={{ ...box(6.4, 3.6, 0, 0.6), background: "linear-gradient(180deg, #d8b56a, #8a6f36)", border: "1px solid #2b2210" }} />
-      {/* strike: the cloth is dragged so the far end arrives under his hand */}
-      <L c="g44-sand-drag" d={320} s={{ ...box(6.4, 1, 0, -0.6), background: "repeating-linear-gradient(90deg, rgba(255,243,210,0.85) 0 6%, transparent 6% 18%)" }} />
-      {/* three flags lifted and replanted, in the real victim order */}
-      {R3.map((i) => (
-        <V key={i} c="g44-sand-flag" d={420 + i * 70} per={30} s={box(1.4, 2, -1.8 + i * 1.8, -0.4)}>{flag}</V>
-      ))}
-      {/* the baton sweeps the redrawn line */}
-      <L c="g44-sand-baton" d={600} s={{ ...box(4.4, 0.34, 0.4, 0.2), borderRadius: "999px", background: "linear-gradient(90deg, #2b2210, #fff3d2)" }} />
-      {/* the first piece is marked untouchable for a turn */}
-      <L c="g44-sand-mark" d={660} s={{ ...box(1.4, 1.4, -1.8, -0.4), borderRadius: "50%", border: "2px solid #fff3d2" }} />
-      <L c="g44-dust" d={730} s={{ ...box(5, 2.6, 0.4, 1.4), borderRadius: "50%", background: "radial-gradient(circle, rgba(255,243,210,0.42), transparent 72%)" }} />
-    </Lead>
-  );
+  return null;
 }
 
 /* -----------------------------------------------------------------------------
@@ -1603,29 +1565,7 @@ function Worldgate({ role, delayMs }: SceneProps) {
       </Cut>
     );
   }
-  return (
-    <AimLead d={delayMs} frame={<><Wash tone="rgba(143,216,255,0.28)" d={70} /><Rim tone="rgba(255,242,222,0.34)" d={150} /></>}>
-      {/* tell: the threshold is scribed across the run */}
-      <L c="g44-tellline" d={90} s={{ ...lane(0.14), background: "#fff2de" }} />
-      {/* the two leaves swing off the threshold */}
-      {R2.map((i) => (
-        <V key={i} c="g44-gate-leaf" d={200 + i * 60} s={{ ...box(2.4, 4.6, 0, i === 0 ? -2.3 : 2.3), scale: i === 0 ? "1 1" : "1 -1", "--gr": i === 0 ? "-64deg" : "64deg" }}>{leaf}</V>
-      ))}
-      {/* strike: what is behind the door is the far end of the board */}
-      <L c="g44-gate-beyond" d={360} s={{ ...box(3.2, 4.4), borderRadius: "2px", background: "radial-gradient(circle, #fff2de, rgba(16,26,51,0.95) 74%)" }} />
-      {/* the gap itself is walked out of the way */}
-      <L c="g44-fold" d={430} s={{ ...lane(0.5), background: "linear-gradient(90deg, rgba(143,216,255,0.9), rgba(255,242,222,0.15))" }} />
-      {/* three pieces cross the whole real distance at once */}
-      {R3.map((i) => (
-        <V key={i} c="g44-run1" d={500 + i * 60} per={30} s={{ ...box(1, 1.4, 0.5, [-1.2, 0, 1.2][i]) }}>
-          <path d={PAWN} fill="#8fd8ff" stroke="#101a33" strokeWidth="1.1" />
-        </V>
-      ))}
-      {/* the far side lights where they land */}
-      <L c="g44-gate-land" d={620} s={{ ...at(1, 2.4, 2.4), borderRadius: "50%", border: "2px solid #fff2de" }} />
-      <L c="g44-motes" d={720} s={{ ...box(4.6, 2.8, 1.4, 0.4), borderRadius: "50%", background: "radial-gradient(circle, rgba(255,242,222,0.42), transparent 72%)" }} />
-    </AimLead>
-  );
+  return null;
 }
 
 /* -----------------------------------------------------------------------------
@@ -2539,25 +2479,7 @@ function ChainGang({ role, delayMs }: SceneProps) {
       </Cut>
     );
   }
-  return (
-    <AimLead centred d={delayMs} frame={<Wash tone="rgba(168,176,188,0.26)" d={70} />}>
-      <L c="g44-tell" d={90} s={{ ...box(1.2, 0.5, 0.6, 0.5), borderRadius: "999px", background: "#171c24" }} />
-      {/* the chain run out the whole real distance */}
-      <L c="g44-chain-run" d={200} s={{ ...lane(0.7), background: LINKS, border: "1px solid #171c24" }} />
-      {/* the leg irons snap on in the real victim order */}
-      {R3.map((i) => (
-        <V key={i} c="g44-chain-iron" d={290 + i * 60} per={28} s={at(0.2 + i * 0.24, 1.2, 1, 0.9)}>{iron}</V>
-      ))}
-      {/* strike: the whole run is taken in to exactly one cell */}
-      <L c="g44-cinch" d={450} s={{ ...lane(0.7), background: LINKS }} />
-      {/* the one link the chains spare stays out at full length */}
-      <L c="g44-chain-spared" d={560} s={{ ...at(1, 1.4, 1.4), borderRadius: "50%", border: "2px solid #fff0d6" }} />
-      {/* settle: rust off the irons */}
-      {R3.map((i) => (
-        <L key={i} c="g44-grit" d={660 + i * 45} s={{ ...box(0.3, 0.14, [0.4, 0.9, 1.4][i], [-0.4, 0.6, 0.2][i]), background: "#fff0d6", "--sx": ["140%", "-140%", "160%"][i], "--sy": "calc(var(--fx-side, 1) * -160%)" }} />
-      ))}
-    </AimLead>
-  );
+  return null;
 }
 
 /* -----------------------------------------------------------------------------
@@ -2949,6 +2871,176 @@ function CrossbowCurfewRule({ lead, role, delayMs }: SceneProps) {
    check-sig-plugins.cjs parse this table as TEXT.
    ========================================================================== */
 
+/** A crossed-out mark: a move barred. */
+function Bar({ c }: { c: { core: string; glow: string; deep: string } }) {
+  return (
+    <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+      <path d="M4 4l12 12M16 4L4 16" stroke={c.deep} strokeWidth="3.4" {...SJ} />
+      <path d="M4 4l12 12M16 4L4 16" stroke={c.glow} strokeWidth="1.4" {...SJ} />
+    </svg>
+  );
+}
+
+/** A number disc: the order a rule takes things in. */
+function Num({ n, c }: { n: number; c: { core: string; glow: string; deep: string } }) {
+  return (
+    <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+      <circle cx="5" cy="5" r="4.4" fill={c.core} stroke={c.deep} strokeWidth="0.8" />
+      <text x="5" y="7.2" textAnchor="middle" fontSize="6" fontWeight="700" fill={c.deep}>{n}</text>
+    </svg>
+  );
+}
+
+/* --- ov_heavenly_bureaucracy -------------------------------------------------------
+   "Once within your next 8 turns: when an enemy move puts your king in check,
+   the check is misfiled and your king is relocated to a random empty square
+   that is not attacked." Eight pips mark the window; an enemy rook's check
+   runs down the e-file at the caster's king; a filing clerk's stamp comes
+   down on it (misfiled); the king fades off e1 and reappears on a safe empty
+   square (b3 here), a dashed trail between; the window's pips go out (once). */
+const C_HBR = { core: "#a9b8e8", glow: "#fff2e2", deep: "#1a1c33" };
+
+function HeavenlyBureaucracyRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <Pigeonholes lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_HBR;
+  const d = delayMs;
+  return (
+    <Brd>
+      <Pips n={8} r={2.4} x0={58} x1={90} color={c.core} delayMs={d + 20} gd="1.5s" />
+      <Q x={KING_X} y={rk(3.5)} w={11} h={11} cls="g44-r-in" delayMs={d + 120} v={{ "--gd": "1.4s", "--s0": "1" }}>
+        <Man kind="r" fill={c.deep} stroke={c.core} />
+      </Q>
+      <Q x={KING_X} y={rk(1.8)} w={1.6} h={24} cls="g44-r-shout" delayMs={d + 300} v={{ "--gd": "0.7s" }} style={{ background: `linear-gradient(180deg, transparent, ${c.glow})` }} />
+      <Q x={KING_X} y={rk(0.9)} w={10} h={6} cls="g44-r-stamp" delayMs={d + 620} v={{ "--gd": "1s" }}>
+        <svg viewBox="0 0 30 16" className="block h-full w-full" aria-hidden="true">
+          <rect x="1" y="1" width="28" height="14" rx="2" fill={c.glow} stroke={c.deep} strokeWidth="1.2" />
+          <path d="M5 5h14M5 8h18M5 11h10" stroke={c.core} strokeWidth="1" />
+          <path d="M20 4l6 8M26 4l-6 8" stroke="#c8506a" strokeWidth="1.6" {...SJ} />
+        </svg>
+      </Q>
+      <Q x={KING_X} y={rk(0)} w={11} h={11} cls="g44-r-dim" delayMs={d + 760} v={{ "--gd": "0.7s" }}>
+        <Man kind="k" fill={c.glow} stroke={c.deep} />
+      </Q>
+      <Thread c0={4} r0={0} c1={1} r1={2} color={c.core} delayMs={d + 900} gd="1s" />
+      <Q x={fc(1)} y={rk(2)} w={11} h={11} cls="g44-r-stamp" delayMs={d + 1020} v={{ "--gd": "1.2s" }}>
+        <Man kind="k" fill={c.glow} stroke={c.deep} />
+      </Q>
+      <Tint x={fc(1)} y={rk(2)} color="rgba(169,184,232,0.34)" delayMs={d + 1040} gd="1.2s" />
+      <Pips n={8} r={2.4} x0={58} x1={90} color={c.deep} delayMs={d + 1300} gd="0.9s" />
+    </Brd>
+  );
+}
+
+/* --- bn4_marshals_baton ------------------------------------------------------------
+   "Redraw the whole line: move up to 3 of your pieces (your king excepted) to
+   empty squares anywhere on the board. The first piece you move cannot be
+   captured on your opponent's next turn." The marshal's baton sweeps over the
+   caster's side; one after another, numbered 1, 2, 3, the g1 knight lifts to
+   e5, the c1 bishop to b5 and the d1 queen to g4; the first to move, the
+   knight, is ringed with a ward and one pip. */
+const C_MBR = { core: "#d8b56a", glow: "#fff3d2", deep: "#2b2210" };
+const MB_MOVES: { k: "n" | "b" | "q"; c0: number; c1: number; r1: number; at: number }[] = [
+  { k: "n", c0: 6, c1: 4, r1: 4, at: 260 },
+  { k: "b", c0: 2, c1: 1, r1: 4, at: 520 },
+  { k: "q", c0: 3, c1: 6, r1: 3, at: 780 },
+];
+
+function MarshalsBatonRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <SandTable lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_MBR;
+  const d = delayMs;
+  return (
+    <Brd>
+      <Q x="50%" y={rk(1.2)} w={30} h={3} cls="g44-r-draw" delayMs={d + 30} v={{ "--gd": "1.3s" }} style={{ rotate: "-12deg", background: `linear-gradient(90deg, ${c.deep} 0 12%, ${c.core} 12% 88%, ${c.deep} 88%)`, borderRadius: "999px" }} />
+      {MB_MOVES.map((m) => (
+        <Thread key={`t${m.k}`} c0={m.c0} r0={0} c1={m.c1} r1={m.r1} color={c.core} delayMs={d + m.at - 60} gd="1s" />
+      ))}
+      {MB_MOVES.map((m) => (
+        <Q key={`m${m.k}`} x={fc(m.c1)} y={rk(m.r1)} w={11} h={11} cls="g44-r-go" delayMs={d + m.at} v={{ "--gd": "1.7s", "--tx0": `calc(var(--fx-side, 1) * ${(m.c0 - m.c1) * 100}%)`, "--ty0": `calc(var(--fx-side, 1) * ${m.r1 * 100}%)`, "--tx1": "0%", "--ty1": "0%" }}>
+          <Man kind={m.k} fill={c.glow} stroke={c.deep} />
+        </Q>
+      ))}
+      {MB_MOVES.map((m, i) => (
+        <Q key={`n${m.k}`} x={`calc(${fc(m.c1)} + 4.4%)`} y={`calc(${rk(m.r1)} - 4.4%)`} w={4} h={4} cls="g44-r-pip" delayMs={d + m.at + 300} v={{ "--gd": "1.3s" }}>
+          <Num n={i + 1} c={c} />
+        </Q>
+      ))}
+      <Q x={fc(4)} y={rk(4)} w={14} h={14} cls="g44-r-pip" delayMs={d + 1100} v={{ "--gd": "1s" }} style={{ border: `2.5px solid ${c.core}`, borderRadius: "50%" }} />
+      <Q x={fc(4)} y={rk(5)} w={2.6} h={2.6} cls="g44-r-pip" delayMs={d + 1160} v={{ "--gd": "0.9s" }} style={{ background: c.glow, borderRadius: "50%" }} />
+    </Brd>
+  );
+}
+
+/* --- bn4_worldgate -----------------------------------------------------------------
+   "Open the great door: move up to 3 of your pieces (your king excepted) to
+   empty squares anywhere on the board, all at once." A great arched door
+   opens in the middle of the board; three of the caster's pieces (the b1
+   knight, the f1 bishop and the h1 rook) are drawn into it together and step
+   out of it together onto c6, f5 and h4, three squares lit in the same beat. */
+const C_WGR = { core: "#8fd8ff", glow: "#fff2de", deep: "#101a33" };
+const WG_MOVES: { k: "n" | "b" | "r"; c0: number; c1: number; r1: number }[] = [
+  { k: "n", c0: 1, c1: 2, r1: 5 },
+  { k: "b", c0: 5, c1: 5, r1: 4 },
+  { k: "r", c0: 7, c1: 7, r1: 3 },
+];
+
+function WorldgateRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <Worldgate lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_WGR;
+  const d = delayMs;
+  return (
+    <Brd>
+      <Q x="50%" y="50%" w={16} h={22} cls="g44-r-up" delayMs={d + 20} v={{ "--gd": "2.1s" }} style={{ background: c.deep, border: `2px solid ${c.core}`, borderRadius: "999px 999px 2px 2px" }} />
+      <Q x="46%" y="50%" w={8} h={22} cls="g44-r-open" delayMs={d + 240} v={{ "--gd": "1.8s", "--ra": "-70deg" }} style={{ transformOrigin: "0% 50%", background: c.core, border: `1px solid ${c.deep}`, borderRadius: "999px 0 0 2px" }} />
+      <Q x="54%" y="50%" w={8} h={22} cls="g44-r-open" delayMs={d + 240} v={{ "--gd": "1.8s", "--ra": "70deg" }} style={{ transformOrigin: "100% 50%", background: c.core, border: `1px solid ${c.deep}`, borderRadius: "0 999px 2px 0" }} />
+      {WG_MOVES.map((m) => (
+        <Q key={`i${m.k}`} x="50%" y="50%" w={10} h={10} cls="g44-r-go" delayMs={d + 520} v={{ "--gd": "0.7s", "--tx0": `calc(var(--fx-side, 1) * ${(m.c0 - 3.5) * 125}%)`, "--ty0": "calc(var(--fx-side, 1) * 437%)", "--tx1": "0%", "--ty1": "0%" }}>
+          <Man kind={m.k} fill={c.glow} stroke={c.deep} />
+        </Q>
+      ))}
+      {WG_MOVES.map((m) => (
+        <Q key={`o${m.k}`} x={fc(m.c1)} y={rk(m.r1)} w={11} h={11} cls="g44-r-go" delayMs={d + 960} v={{ "--gd": "1.2s", "--tx0": `calc(var(--fx-side, 1) * ${(3.5 - m.c1) * 114}%)`, "--ty0": `calc(var(--fx-side, 1) * ${(m.r1 - 3.5) * 114}%)`, "--tx1": "0%", "--ty1": "0%" }}>
+          <Man kind={m.k} fill={c.glow} stroke={c.deep} />
+        </Q>
+      ))}
+      {WG_MOVES.map((m) => (
+        <Tint key={`t${m.k}`} x={fc(m.c1)} y={rk(m.r1)} color="rgba(143,216,255,0.34)" delayMs={d + 1260} gd="1s" />
+      ))}
+    </Brd>
+  );
+}
+
+/* --- hx4_chain_gang ----------------------------------------------------------------
+   "On your opponent's next turn, every piece they own may move at most 1
+   square, except their single most valuable piece, which the chains spare.
+   King captures are always allowed." A chain is run along their army; their
+   f6 knight's usual leap to e4 is barred and only the eight squares round it
+   are left lit; the chain's link at the queen (d8, their most valuable) is
+   struck open and she is ringed free; one pip. */
+const C_CGR = { core: "#a8b0bc", glow: "#fff0d6", deep: "#171c24" };
+
+function ChainGangRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <ChainGang lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_CGR;
+  const d = delayMs;
+  return (
+    <Brd>
+      <Q x="50%" y={rk(6.5)} w={100} h={2.4} cls="g44-r-draw" delayMs={d + 20} v={{ "--gd": "2.1s" }} style={{ background: `repeating-linear-gradient(90deg, transparent 0 2px, ${c.core} 2px 12px, transparent 12px 14px)`, border: `1px solid ${c.deep}`, borderRadius: "999px" }} />
+      <Q x={fc(5)} y={rk(5)} w={11} h={11} cls="g44-r-in" delayMs={d + 200} v={{ "--gd": "1.9s", "--s0": "1" }}>
+        <Man kind="n" fill={c.deep} stroke={c.core} />
+      </Q>
+      <Thread c0={5} r0={5} c1={4} r1={3} color={c.glow} delayMs={d + 360} gd="1s" />
+      <Q x={fc(4)} y={rk(3)} w={7} h={7} cls="g44-r-stamp" delayMs={d + 600} v={{ "--gd": "1.2s" }}>
+        <Bar c={c} />
+      </Q>
+      <Q x={fc(5)} y={rk(5)} w={37.5} h={37.5} cls="g44-r-in" delayMs={d + 700} v={{ "--gd": "1.3s", "--s0": "1.1" }} style={{ border: `2px dashed ${c.glow}`, background: "rgba(255,240,214,0.12)" }} />
+      <Q x={QUEEN_X} y={rk(6.5)} w={5} h={5} cls="g44-r-part" delayMs={d + 900} v={{ "--gd": "0.8s", "--tx1": "0%", "--ty1": "calc(var(--fx-side, 1) * 200%)", "--r1": "60deg" }} style={{ border: `2px solid ${c.core}`, borderRadius: "40%" }} />
+      <Q x={QUEEN_X} y={rk(7)} w={13} h={13} cls="g44-r-pip" delayMs={d + 960} v={{ "--gd": "1.1s" }} style={{ border: `2.5px solid ${c.glow}`, borderRadius: "50%" }} />
+      <Q x="8%" y={rk(4.5)} w={3} h={3} cls="g44-r-pip" delayMs={d + 1100} v={{ "--gd": "1s" }} style={{ background: c.glow, borderRadius: "50%" }} />
+    </Brd>
+  );
+}
+
 export const PLAYS: Record<string, SigPlugin> = {
   hx4_deja_vu: {
     config: { ordering: "line", staggerMs: 60, victims: "all", hasLead: true, sound: "clockice", anchor: "aim" },
@@ -3036,11 +3128,11 @@ export const PLAYS: Record<string, SigPlugin> = {
   },
   ov_heavenly_bureaucracy: {
     config: { ordering: "line", staggerMs: 55, victims: ["k"], hasLead: true, sound: "vault", anchor: "aim" },
-    Render: Pigeonholes,
+    Render: HeavenlyBureaucracyRule,
   },
   bn4_marshals_baton: {
     config: { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "coronation", anchor: "cast" },
-    Render: SandTable,
+    Render: MarshalsBatonRule,
   },
   hx4_velvet_rope: {
     config: { ordering: "line", staggerMs: 55, victims: "all", hasLead: true, sound: "wall", anchor: "board" },
@@ -3048,7 +3140,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   },
   bn4_worldgate: {
     config: { ordering: "line", staggerMs: 60, victims: "all", hasLead: true, sound: "nova", anchor: "aim" },
-    Render: Worldgate,
+    Render: WorldgateRule,
   },
   hx4_choke_point: {
     config: { ordering: "octagon", staggerMs: 55, victims: "all", hasLead: true, sound: "siege", anchor: "cast" },
@@ -3116,7 +3208,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   },
   hx4_chain_gang: {
     config: { ordering: "line", staggerMs: 55, victims: "all", hasLead: true, sound: "siege", anchor: "board" },
-    Render: ChainGang,
+    Render: ChainGangRule,
   },
   hx4_puppet_court: {
     config: { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "petrify", anchor: "board" },
@@ -3274,14 +3366,8 @@ const IMPACTS: Record<string, Imp> = {
   bn4_faerie_door: { at: 520, tint: "#9ee0a6", laser: true, shock: true, aim: true, len: true, s: 6 },
   // the hammock drops its scholar: undignified full-weight thump
   ov_archmage_sabbatical: { at: 540, tint: "#e3c07f", laser: true, shock: true, aim: true, s: 7 },
-  // the heavenly stamp descends the pigeonhole rank and LANDS
-  ov_heavenly_bureaucracy: { at: 560, tint: "#a9b8e8", laser: true, shock: true, aim: true, s: 6.6 },
-  // the baton raps the sand table: the whole plan jolts
-  bn4_marshals_baton: { at: 600, tint: "#d8b56a", laser: true, shock: true, y: 52, s: 6.8 },
   // the velvet rope's brass post is SLAMMED into its socket
   hx4_velvet_rope: { at: 560, tint: "#d1607e", laser: true, shock: true, y: 54, s: 6.2 },
-  // the worldgate opens: an orbital lance grounds at the far mouth
-  bn4_worldgate: { at: 620, tint: "#8fd8ff", laser: true, shock: true, aim: true, len: true, s: 7 },
   // the hourglass waist CHOKES: the pinch strikes shut
   hx4_choke_point: { at: 640, tint: "#d9a15c", laser: true, shock: true, y: 50, s: 6 },
   // the zip teeth BITE shut: interlock boom down the seam
@@ -3314,8 +3400,6 @@ const IMPACTS: Record<string, Imp> = {
   hx4_hobble_strap: { at: 600, tint: "#b98a5a", laser: true, shock: true, y: 55, s: 6.2 },
   // the quartermaster's lock TURNS: the bolt drops like a girder
   bn4_quartermasters_lock: { at: 610, tint: "#cfd4dc", laser: true, shock: true, y: 52, s: 6.6 },
-  // the gang chain is TESTED and a link gives: it snaps in half
-  hx4_chain_gang: { at: 560, tint: "#a8b0bc", glyph: impGlyph(IG_LINK, "none", "#a8b0bc", 2.6), shock: true, y: 52 },
   // the floor's grip is cut: the release ring booms out under the dancers
   ov_antigravity_gala: { at: 520, tint: "#b48fe8", shock: true, y: 54, s: 7.2 },
   // the pinch lands ON the borrowed piece, the full run away

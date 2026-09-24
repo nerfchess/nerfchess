@@ -1,0 +1,78 @@
+{
+ "id": "ov_heavenly_bureaucracy",
+ "url": "/dev/plays?id=ov_heavenly_bureaucracy&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "ov_heavenly_bureaucracy",
+  "name": "Heavenly Bureaucracy",
+  "tier": 6,
+  "category": "protection",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:ov_heavenly_bureaucracy",
+  "anchor": "aim",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "line",
+  "staggerMs": 55,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, diff-less: no zone source, not an attack",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2421,
+  "cssEndMs": 3462,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 34,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 195,
+  "maxGapMs": 291.2
+ },
+ "raf": {
+  "frames": 231,
+  "medianMs": 16.7,
+  "maxMs": 16.8,
+  "dropped": 0
+ },
+ "longAnimationFrames": {
+  "count": 0,
+  "worstMs": 0,
+  "totalBlockingMs": 0,
+  "entries": []
+ },
+ "tiles": [
+  0,
+  186,
+  474,
+  819,
+  1208,
+  1632,
+  2088,
+  2571
+ ],
+ "png": "docs/polish-pass/evidence/TC-g/after/ov_heavenly_bureaucracy.png",
+ "pngBytes": 22162,
+ "off": {
+  "url": "/dev/plays?id=ov_heavenly_bureaucracy&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "docs/polish-pass/evidence/TC-g/after/ov_heavenly_bureaucracy.off.png"
+ }
+}

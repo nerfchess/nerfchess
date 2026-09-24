@@ -1,0 +1,111 @@
+{
+ "id": "bn4_worldgate",
+ "url": "/dev/plays?id=bn4_worldgate&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "bn4_worldgate",
+  "name": "Worldgate",
+  "tier": 6,
+  "category": "movement",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:bn4_worldgate",
+  "anchor": "aim",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "line",
+  "staggerMs": 60,
+  "drive": "engine",
+  "driveNote": "activated with 6 pick(s)",
+  "castSq": "d2",
+  "targets": [
+   "d2",
+   "d3",
+   "e2",
+   "e3",
+   "f2",
+   "f3"
+  ],
+  "picks": [
+   "d2",
+   "d3",
+   "e2",
+   "e3",
+   "f2",
+   "f3"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2440,
+  "cssEndMs": 3507,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 32,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 142,
+  "maxGapMs": 256.4
+ },
+ "raf": {
+  "frames": 198,
+  "medianMs": 16.7,
+  "maxMs": 66.7,
+  "dropped": 20
+ },
+ "longAnimationFrames": {
+  "count": 3,
+  "worstMs": 78,
+  "totalBlockingMs": 0,
+  "entries": [
+   {
+    "atMs": 20,
+    "duration": 51,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 1378,
+    "duration": 78,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 1899,
+    "duration": 77,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  187,
+  477,
+  825,
+  1217,
+  1644,
+  2103,
+  2590
+ ],
+ "png": "docs/polish-pass/evidence/TC-g/after/bn4_worldgate.png",
+ "pngBytes": 21257,
+ "off": {
+  "url": "/dev/plays?id=bn4_worldgate&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "docs/polish-pass/evidence/TC-g/after/bn4_worldgate.off.png"
+ }
+}

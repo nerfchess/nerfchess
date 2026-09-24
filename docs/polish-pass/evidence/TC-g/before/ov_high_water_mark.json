@@ -1,0 +1,88 @@
+{
+ "id": "ov_high_water_mark",
+ "url": "/dev/plays?id=ov_high_water_mark&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "ov_high_water_mark",
+  "name": "High Water Mark",
+  "tier": 6,
+  "category": "protection",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:ov_high_water_mark",
+  "anchor": "cast",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 70,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, diff-less: no zone source, not an attack",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2477,
+  "cssEndMs": 3526,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 25,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 188,
+  "maxGapMs": 77.8
+ },
+ "raf": {
+  "frames": 286,
+  "medianMs": 16.7,
+  "maxMs": 66.7,
+  "dropped": 11
+ },
+ "longAnimationFrames": {
+  "count": 2,
+  "worstMs": 56,
+  "totalBlockingMs": 0,
+  "entries": [
+   {
+    "atMs": -11,
+    "duration": 52,
+    "blocking": 0,
+    "scripts": [
+     {
+      "duration": 18,
+      "invoker": "http://localhost:3000/_next/static/chunks/_app-pages-browser_src_components_effe...",
+      "source": "/_next/static/chunks/_app-pages-browser_src_components_effects_passive_PassiveLayer_tsx.js"
+     }
+    ]
+   },
+   {
+    "atMs": 2327,
+    "duration": 56,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  190,
+  484,
+  837,
+  1234,
+  1668,
+  2133,
+  2627
+ ],
+ "png": "docs/polish-pass/evidence/TC-g/before/ov_high_water_mark.png",
+ "pngBytes": 24660
+}

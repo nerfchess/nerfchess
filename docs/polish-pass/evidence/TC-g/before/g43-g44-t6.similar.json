@@ -1,0 +1,235 @@
+{
+ "method": "cosine similarity of per-tile (tile minus pre-play tile) 24x24 grey thumbnails, standardised per tile and then weighted by the tile's raw energy over the card's peak (so near-empty tiles count for little); 1 = same look, near 0 = unrelated. Every tier 6+ bespoke card shares the cast wrapper's ring and beam (TC0-f), so expect a floor well above 0",
+ "cards": 8,
+ "sheetPicks": {
+  "bn4_cornucopia": "+465ms (energy 1 of peak)",
+  "bn4_fisherman_king": "+186ms (energy 1 of peak)",
+  "bn4_marshals_baton": "+491ms (energy 1 of peak)",
+  "bn4_worldgate": "+827ms (energy 0.87 of peak)",
+  "hx4_chain_gang": "+812ms (energy 0.73 of peak)",
+  "ov_great_flood": "+472ms (energy 1 of peak)",
+  "ov_heavenly_bureaucracy": "+478ms (energy 1 of peak)",
+  "ov_high_water_mark": "+1234ms (energy 0.77 of peak)"
+ },
+ "generic": {
+  "method": "cosine similarity of the card's weighted look vector to the mean weighted look of the other cards in this sheet (leave-one-out); highest = least card-specific",
+  "ranking": [
+   {
+    "card": "hx4_chain_gang",
+    "tier": 6,
+    "closeness": 0.916
+   },
+   {
+    "card": "ov_great_flood",
+    "tier": 6,
+    "closeness": 0.881
+   },
+   {
+    "card": "bn4_fisherman_king",
+    "tier": 6,
+    "closeness": 0.876
+   },
+   {
+    "card": "bn4_cornucopia",
+    "tier": 6,
+    "closeness": 0.869
+   },
+   {
+    "card": "ov_heavenly_bureaucracy",
+    "tier": 6,
+    "closeness": 0.861
+   },
+   {
+    "card": "ov_high_water_mark",
+    "tier": 6,
+    "closeness": 0.747
+   },
+   {
+    "card": "bn4_marshals_baton",
+    "tier": 6,
+    "closeness": 0.743
+   },
+   {
+    "card": "bn4_worldgate",
+    "tier": 6,
+    "closeness": 0.664
+   }
+  ]
+ },
+ "pairs": [
+  {
+   "a": "bn4_cornucopia",
+   "b": "bn4_fisherman_king",
+   "similarity": 0.888
+  },
+  {
+   "a": "bn4_fisherman_king",
+   "b": "hx4_chain_gang",
+   "similarity": 0.875
+  },
+  {
+   "a": "hx4_chain_gang",
+   "b": "ov_great_flood",
+   "similarity": 0.87
+  },
+  {
+   "a": "bn4_cornucopia",
+   "b": "hx4_chain_gang",
+   "similarity": 0.861
+  },
+  {
+   "a": "bn4_fisherman_king",
+   "b": "ov_great_flood",
+   "similarity": 0.853
+  },
+  {
+   "a": "hx4_chain_gang",
+   "b": "ov_heavenly_bureaucracy",
+   "similarity": 0.846
+  },
+  {
+   "a": "bn4_cornucopia",
+   "b": "ov_great_flood",
+   "similarity": 0.845
+  },
+  {
+   "a": "ov_great_flood",
+   "b": "ov_heavenly_bureaucracy",
+   "similarity": 0.808
+  },
+  {
+   "a": "bn4_fisherman_king",
+   "b": "ov_heavenly_bureaucracy",
+   "similarity": 0.804
+  },
+  {
+   "a": "bn4_marshals_baton",
+   "b": "bn4_worldgate",
+   "similarity": 0.775
+  },
+  {
+   "a": "bn4_cornucopia",
+   "b": "ov_heavenly_bureaucracy",
+   "similarity": 0.76
+  },
+  {
+   "a": "hx4_chain_gang",
+   "b": "ov_high_water_mark",
+   "similarity": 0.721
+  },
+  {
+   "a": "ov_heavenly_bureaucracy",
+   "b": "ov_high_water_mark",
+   "similarity": 0.708
+  },
+  {
+   "a": "bn4_fisherman_king",
+   "b": "ov_high_water_mark",
+   "similarity": 0.683
+  },
+  {
+   "a": "ov_great_flood",
+   "b": "ov_high_water_mark",
+   "similarity": 0.682
+  },
+  {
+   "a": "bn4_marshals_baton",
+   "b": "hx4_chain_gang",
+   "similarity": 0.677
+  },
+  {
+   "a": "bn4_cornucopia",
+   "b": "ov_high_water_mark",
+   "similarity": 0.674
+  },
+  {
+   "a": "bn4_marshals_baton",
+   "b": "ov_heavenly_bureaucracy",
+   "similarity": 0.67
+  },
+  {
+   "a": "bn4_marshals_baton",
+   "b": "ov_great_flood",
+   "similarity": 0.638
+  },
+  {
+   "a": "bn4_cornucopia",
+   "b": "bn4_marshals_baton",
+   "similarity": 0.616
+  },
+  {
+   "a": "bn4_fisherman_king",
+   "b": "bn4_marshals_baton",
+   "similarity": 0.615
+  },
+  {
+   "a": "bn4_worldgate",
+   "b": "hx4_chain_gang",
+   "similarity": 0.613
+  },
+  {
+   "a": "bn4_marshals_baton",
+   "b": "ov_high_water_mark",
+   "similarity": 0.583
+  },
+  {
+   "a": "bn4_worldgate",
+   "b": "ov_heavenly_bureaucracy",
+   "similarity": 0.583
+  },
+  {
+   "a": "bn4_worldgate",
+   "b": "ov_great_flood",
+   "similarity": 0.578
+  },
+  {
+   "a": "bn4_cornucopia",
+   "b": "bn4_worldgate",
+   "similarity": 0.562
+  },
+  {
+   "a": "bn4_fisherman_king",
+   "b": "bn4_worldgate",
+   "similarity": 0.532
+  },
+  {
+   "a": "bn4_worldgate",
+   "b": "ov_high_water_mark",
+   "similarity": 0.52
+  }
+ ],
+ "nearest": {
+  "bn4_cornucopia": {
+   "card": "bn4_fisherman_king",
+   "similarity": 0.888
+  },
+  "bn4_fisherman_king": {
+   "card": "bn4_cornucopia",
+   "similarity": 0.888
+  },
+  "bn4_marshals_baton": {
+   "card": "bn4_worldgate",
+   "similarity": 0.775
+  },
+  "bn4_worldgate": {
+   "card": "bn4_marshals_baton",
+   "similarity": 0.775
+  },
+  "hx4_chain_gang": {
+   "card": "bn4_fisherman_king",
+   "similarity": 0.875
+  },
+  "ov_great_flood": {
+   "card": "hx4_chain_gang",
+   "similarity": 0.87
+  },
+  "ov_heavenly_bureaucracy": {
+   "card": "hx4_chain_gang",
+   "similarity": 0.846
+  },
+  "ov_high_water_mark": {
+   "card": "hx4_chain_gang",
+   "similarity": 0.721
+  }
+ }
+}

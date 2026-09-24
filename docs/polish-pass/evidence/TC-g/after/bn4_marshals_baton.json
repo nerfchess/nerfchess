@@ -1,0 +1,107 @@
+{
+ "id": "bn4_marshals_baton",
+ "url": "/dev/plays?id=bn4_marshals_baton&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "bn4_marshals_baton",
+  "name": "Marshal's Baton",
+  "tier": 6,
+  "category": "movement",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:bn4_marshals_baton",
+  "anchor": "cast",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 60,
+  "drive": "engine",
+  "driveNote": "activated with 6 pick(s)",
+  "castSq": "d2",
+  "targets": [
+   "d2",
+   "d3",
+   "e2",
+   "e3",
+   "f2",
+   "f3"
+  ],
+  "picks": [
+   "d2",
+   "d3",
+   "e2",
+   "e3",
+   "f2",
+   "f3"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2470,
+  "cssEndMs": 3520,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 34,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 174,
+  "maxGapMs": 267.5
+ },
+ "raf": {
+  "frames": 213,
+  "medianMs": 16.7,
+  "maxMs": 66.6,
+  "dropped": 5
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 74,
+  "totalBlockingMs": 23,
+  "entries": [
+   {
+    "atMs": 23,
+    "duration": 74,
+    "blocking": 23,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  189,
+  483,
+  835,
+  1231,
+  1664,
+  2128,
+  2620
+ ],
+ "png": "docs/polish-pass/evidence/TC-g/after/bn4_marshals_baton.png",
+ "pngBytes": 23472,
+ "off": {
+  "url": "/dev/plays?id=bn4_marshals_baton&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0.0005,
+  "endRegions": [
+   {
+    "x": 240,
+    "y": 296,
+    "w": 8,
+    "h": 64,
+    "cells": 8
+   }
+  ],
+  "png": "docs/polish-pass/evidence/TC-g/after/bn4_marshals_baton.off.png"
+ }
+}
