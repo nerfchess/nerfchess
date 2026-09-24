@@ -1,18 +1,18 @@
 {
- "id": "total_atomic",
- "url": "/dev/plays?id=total_atomic&bare=1",
+ "id": "chain_atomic",
+ "url": "/dev/plays?id=chain_atomic&bare=1",
  "anim": "full",
  "fx": 1,
  "info": {
-  "id": "total_atomic",
-  "name": "Total Atomic",
+  "id": "chain_atomic",
+  "name": "Chain Atomic",
   "tier": 7,
   "category": "attack",
   "mechanic": "passive",
   "retired": false,
   "art": "plugin",
-  "visual": "x:total_atomic",
-  "anchor": "board",
+  "visual": "x:chain_atomic",
+  "anchor": "cast",
   "source": "removal",
   "hasLead": true,
   "ordering": "octagon",
@@ -35,43 +35,55 @@
  },
  "stageError": null,
  "durationMs": {
-  "visualMs": 2626,
-  "cssEndMs": 3565,
+  "visualMs": 2979,
+  "cssEndMs": 3558,
   "settled": true,
   "windowMs": 3600,
-  "cssAnimations": 46,
+  "cssAnimations": 48,
   "infiniteAnimations": 0
  },
  "screencast": {
-  "framesInWindow": 171,
-  "maxGapMs": 305.2
+  "framesInWindow": 190,
+  "maxGapMs": 285.4
  },
  "raf": {
-  "frames": 170,
+  "frames": 155,
   "medianMs": 16.7,
-  "maxMs": 166.7,
-  "dropped": 49
+  "maxMs": 416.7,
+  "dropped": 64
  },
  "longAnimationFrames": {
-  "count": 3,
-  "worstMs": 67,
-  "totalBlockingMs": 29,
+  "count": 4,
+  "worstMs": 103,
+  "totalBlockingMs": 70,
   "entries": [
    {
     "atMs": -57,
-    "duration": 67,
-    "blocking": 16,
+    "duration": 66,
+    "blocking": 9,
     "scripts": []
    },
    {
-    "atMs": 12,
-    "duration": 64,
-    "blocking": 13,
+    "atMs": 11,
+    "duration": 103,
+    "blocking": 53,
     "scripts": []
    },
    {
-    "atMs": 1258,
-    "duration": 52,
+    "atMs": 427,
+    "duration": 69,
+    "blocking": 8,
+    "scripts": [
+     {
+      "duration": 8,
+      "invoker": "TimerHandler:setInterval",
+      "source": ""
+     }
+    ]
+   },
+   {
+    "atMs": 571,
+    "duration": 50,
     "blocking": 0,
     "scripts": []
    }
@@ -79,21 +91,21 @@
  },
  "tiles": [
   0,
-  316,
-  806,
-  1393,
-  2054,
-  2776
+  356,
+  908,
+  1570,
+  2315,
+  3129
  ],
- "png": "docs/polish-pass/evidence/TC-god/after/total_atomic.png",
- "pngBytes": 14100,
+ "png": "docs/polish-pass/evidence/TC-god/after/chain_atomic.png",
+ "pngBytes": 16095,
  "off": {
-  "url": "/dev/plays?id=total_atomic&anim=off&bare=1",
+  "url": "/dev/plays?id=chain_atomic&anim=off&bare=1",
   "pass": true,
   "instantChanged": 0,
   "instantRegions": [],
   "endChanged": 0,
   "endRegions": [],
-  "png": "docs/polish-pass/evidence/TC-god/after/total_atomic.off.png"
+  "png": "docs/polish-pass/evidence/TC-god/after/chain_atomic.off.png"
  }
 }

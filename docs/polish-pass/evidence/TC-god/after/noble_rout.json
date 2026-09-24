@@ -1,22 +1,22 @@
 {
- "id": "salted_earth",
- "url": "/dev/plays?id=salted_earth&bare=1",
+ "id": "noble_rout",
+ "url": "/dev/plays?id=noble_rout&bare=1",
  "anim": "full",
  "fx": 1,
  "info": {
-  "id": "salted_earth",
-  "name": "Salted Earth",
-  "tier": 4,
+  "id": "noble_rout",
+  "name": "Noble Rout",
+  "tier": 7,
   "category": "hex",
   "mechanic": "passive",
   "retired": false,
   "art": "plugin",
-  "visual": "x:salted_earth",
-  "anchor": "board",
+  "visual": "x:noble_rout",
+  "anchor": "cast",
   "source": "removal",
   "hasLead": true,
   "ordering": "sweep",
-  "staggerMs": 70,
+  "staggerMs": 60,
   "drive": "stage",
   "driveNote": "passive: no use event, synthetic diff, diff-less: no zone source, not an attack",
   "castSq": null,
@@ -31,53 +31,46 @@
  },
  "stageError": null,
  "durationMs": {
-  "visualMs": 2340,
-  "cssEndMs": 3444,
+  "visualMs": 2437,
+  "cssEndMs": 3461,
   "settled": true,
   "windowMs": 3600,
-  "cssAnimations": 40,
+  "cssAnimations": 30,
   "infiniteAnimations": 0
  },
  "screencast": {
-  "framesInWindow": 160,
-  "maxGapMs": 299.9
+  "framesInWindow": 175,
+  "maxGapMs": 321.5
  },
  "raf": {
-  "frames": 213,
+  "frames": 198,
   "medianMs": 16.7,
-  "maxMs": 50,
-  "dropped": 4
+  "maxMs": 133.3,
+  "dropped": 19
  },
  "longAnimationFrames": {
-  "count": 1,
-  "worstMs": 51,
+  "count": 0,
+  "worstMs": 0,
   "totalBlockingMs": 0,
-  "entries": [
-   {
-    "atMs": 1470,
-    "duration": 51,
-    "blocking": 0,
-    "scripts": []
-   }
-  ]
+  "entries": []
  },
  "tiles": [
   0,
-  284,
-  723,
-  1249,
-  1842,
-  2490
+  295,
+  751,
+  1298,
+  1914,
+  2587
  ],
- "png": "docs/polish-pass/evidence/TC-god/after/salted_earth.png",
- "pngBytes": 13733,
+ "png": "docs/polish-pass/evidence/TC-god/after/noble_rout.png",
+ "pngBytes": 21341,
  "off": {
-  "url": "/dev/plays?id=salted_earth&anim=off&bare=1",
+  "url": "/dev/plays?id=noble_rout&anim=off&bare=1",
   "pass": true,
   "instantChanged": 0,
   "instantRegions": [],
   "endChanged": 0,
   "endRegions": [],
-  "png": "docs/polish-pass/evidence/TC-god/after/salted_earth.off.png"
+  "png": "docs/polish-pass/evidence/TC-god/after/noble_rout.off.png"
  }
 }

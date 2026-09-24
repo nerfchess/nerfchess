@@ -1,0 +1,83 @@
+{
+ "id": "phoenix_line",
+ "url": "/dev/plays?id=phoenix_line&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "phoenix_line",
+  "name": "Phoenix Line",
+  "tier": 7,
+  "category": "pieces",
+  "mechanic": "instant",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:phoenix_line",
+  "anchor": "aim",
+  "source": "summon",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 80,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2440,
+  "cssEndMs": 3459,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 31,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 167,
+  "maxGapMs": 315.6
+ },
+ "raf": {
+  "frames": 174,
+  "medianMs": 16.7,
+  "maxMs": 233.3,
+  "dropped": 43
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 257,
+  "totalBlockingMs": 177,
+  "entries": [
+   {
+    "atMs": 1496,
+    "duration": 257,
+    "blocking": 177,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  295,
+  752,
+  1300,
+  1916,
+  2590
+ ],
+ "png": "docs/polish-pass/evidence/TC-god/after/phoenix_line.png",
+ "pngBytes": 18924,
+ "off": {
+  "url": "/dev/plays?id=phoenix_line&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "docs/polish-pass/evidence/TC-god/after/phoenix_line.off.png"
+ }
+}

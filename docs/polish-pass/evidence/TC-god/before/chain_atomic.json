@@ -1,0 +1,78 @@
+{
+ "id": "chain_atomic",
+ "url": "/dev/plays?id=chain_atomic&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "chain_atomic",
+  "name": "Chain Atomic",
+  "tier": 7,
+  "category": "attack",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:chain_atomic",
+  "anchor": "cast",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "octagon",
+  "staggerMs": 70,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, removal diff",
+  "castSq": "c7",
+  "targets": [
+   "c7",
+   "d7",
+   "e7"
+  ],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2598,
+  "cssEndMs": 3626,
+  "settled": true,
+  "windowMs": 3877,
+  "cssAnimations": 78,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 220,
+  "maxGapMs": 283
+ },
+ "raf": {
+  "frames": 223,
+  "medianMs": 16.7,
+  "maxMs": 66.6,
+  "dropped": 12
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 73,
+  "totalBlockingMs": 19,
+  "entries": [
+   {
+    "atMs": -63,
+    "duration": 73,
+    "blocking": 19,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  313,
+  798,
+  1379,
+  2033,
+  2748
+ ],
+ "png": "docs/polish-pass/evidence/TC-god/before/chain_atomic.png",
+ "pngBytes": 18993
+}

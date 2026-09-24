@@ -1,0 +1,104 @@
+{
+ "id": "phoenix_line",
+ "url": "/dev/plays?id=phoenix_line&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "phoenix_line",
+  "name": "Phoenix Line",
+  "tier": 7,
+  "category": "pieces",
+  "mechanic": "instant",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:phoenix_line",
+  "anchor": "aim",
+  "source": "summon",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 80,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2746,
+  "cssEndMs": 3717,
+  "settled": true,
+  "windowMs": 3968,
+  "cssAnimations": 63,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 209,
+  "maxGapMs": 72.4
+ },
+ "raf": {
+  "frames": 299,
+  "medianMs": 16.7,
+  "maxMs": 350,
+  "dropped": 52
+ },
+ "longAnimationFrames": {
+  "count": 4,
+  "worstMs": 311,
+  "totalBlockingMs": 302,
+  "entries": [
+   {
+    "atMs": -15,
+    "duration": 53,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 77,
+    "duration": 135,
+    "blocking": 30,
+    "scripts": [
+     {
+      "duration": 58,
+      "invoker": "TimerHandler:setInterval",
+      "source": ""
+     }
+    ]
+   },
+   {
+    "atMs": 242,
+    "duration": 83,
+    "blocking": 31,
+    "scripts": []
+   },
+   {
+    "atMs": 3199,
+    "duration": 311,
+    "blocking": 241,
+    "scripts": [
+     {
+      "duration": 288,
+      "invoker": "http://localhost:3000/_next/static/chunks/_app-pages-browser_src_components_effe...",
+      "source": "/_next/static/chunks/_app-pages-browser_src_components_effects_board3d_engine3d_ts.js"
+     }
+    ]
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  330,
+  841,
+  1453,
+  2143,
+  2896
+ ],
+ "png": "docs/polish-pass/evidence/TC-god/before/phoenix_line.png",
+ "pngBytes": 14799
+}

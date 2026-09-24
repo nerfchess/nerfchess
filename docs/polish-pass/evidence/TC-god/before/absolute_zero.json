@@ -1,0 +1,90 @@
+{
+ "id": "absolute_zero",
+ "url": "/dev/plays?id=absolute_zero&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "absolute_zero",
+  "name": "Absolute Zero",
+  "tier": 8,
+  "category": "hex",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:absolute_zero",
+  "anchor": "board",
+  "source": "frozen",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 45,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, frozen diff",
+  "castSq": "c7",
+  "targets": [
+   "c7",
+   "d7",
+   "e7"
+  ],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2673,
+  "cssEndMs": 3527,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 97,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 176,
+  "maxGapMs": 404.9
+ },
+ "raf": {
+  "frames": 174,
+  "medianMs": 16.7,
+  "maxMs": 133.5,
+  "dropped": 45
+ },
+ "longAnimationFrames": {
+  "count": 3,
+  "worstMs": 79,
+  "totalBlockingMs": 30,
+  "entries": [
+   {
+    "atMs": -64,
+    "duration": 79,
+    "blocking": 25,
+    "scripts": []
+   },
+   {
+    "atMs": 19,
+    "duration": 56,
+    "blocking": 5,
+    "scripts": []
+   },
+   {
+    "atMs": 1168,
+    "duration": 54,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  321,
+  819,
+  1416,
+  2089,
+  2823
+ ],
+ "png": "docs/polish-pass/evidence/TC-god/before/absolute_zero.png",
+ "pngBytes": 25158
+}

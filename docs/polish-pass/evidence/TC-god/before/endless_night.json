@@ -1,0 +1,126 @@
+{
+ "id": "endless_night",
+ "url": "/dev/plays?id=endless_night&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "endless_night",
+  "name": "Endless Night",
+  "tier": 8,
+  "category": "hex",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:endless_night",
+  "anchor": "board",
+  "source": "slow",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 55,
+  "drive": "engine",
+  "driveNote": "activated with 4 pick(s)",
+  "castSq": "d7",
+  "targets": [
+   "d7",
+   "e7",
+   "f7",
+   "g7"
+  ],
+  "picks": [
+   "d7",
+   "e7",
+   "f7",
+   "g7"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2876,
+  "cssEndMs": 3768,
+  "settled": true,
+  "windowMs": 4019,
+  "cssAnimations": 90,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 200,
+  "maxGapMs": 250.8
+ },
+ "raf": {
+  "frames": 204,
+  "medianMs": 16.7,
+  "maxMs": 116.7,
+  "dropped": 42
+ },
+ "longAnimationFrames": {
+  "count": 7,
+  "worstMs": 100,
+  "totalBlockingMs": 82,
+  "entries": [
+   {
+    "atMs": -44,
+    "duration": 53,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 13,
+    "duration": 51,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 80,
+    "duration": 56,
+    "blocking": 5,
+    "scripts": []
+   },
+   {
+    "atMs": 139,
+    "duration": 62,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 201,
+    "duration": 100,
+    "blocking": 35,
+    "scripts": []
+   },
+   {
+    "atMs": 1329,
+    "duration": 52,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 3858,
+    "duration": 95,
+    "blocking": 42,
+    "scripts": [
+     {
+      "duration": 90,
+      "invoker": "http://localhost:3000/_next/static/chunks/_app-pages-browser_src_components_effe...",
+      "source": "/_next/static/chunks/_app-pages-browser_src_components_effects_board3d_engine3d_ts.js"
+     }
+    ]
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  345,
+  878,
+  1518,
+  2239,
+  3026
+ ],
+ "png": "docs/polish-pass/evidence/TC-god/before/endless_night.png",
+ "pngBytes": 26204
+}
