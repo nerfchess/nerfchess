@@ -1,0 +1,54 @@
+  ok  beginWatch returns true on a new id
+  ok  beginWatch is a no-op on the same id
+  ok  snapshot adopted
+  ok  baseline seq set from snapshot
+  ok  session replay version adopted
+  ok  seq 6 applies in order
+  ok  baseline advanced to 6
+  ok  duplicate seq dropped
+  ok  older seq dropped (no double-apply after reconnect)
+  ok  baseline unchanged after dupes
+  ok  future seq 8 buffered
+  ok  future seq 7 buffered
+  ok  seq 6 fills the gap
+  ok  buffer drains 6,7,8 in order
+  ok  baseline at 8, buffer empty
+  ok  no resync inside the window
+  ok  resync after the window elapses
+  ok  baseline dropped, buffer cleared on resync
+  ok  buffer overflow forces resync
+  ok  frame for another game dropped
+  ok  baseline untouched by a wrong-game frame
+  ok  bad schema version rejected
+  ok  replay-version drift rejected
+  ok  replay drift drops the baseline (forces resync)
+  ok  clock at the current seq still applies
+  ok  a second clock at the same seq is not deduped
+  ok  clock does not advance the applied seq
+  ok  newer snapshot replaces state wholesale
+  ok  older snapshot ignored (never rewinds)
+  ok  live frame before baseline is buffered, not applied
+  ok  snapshot drains the pre-buffered frame
+  ok  matching hash passes parity
+  ok  mismatched hash fails parity with diagnostic
+  ok  empty expected hash passes (legacy frame)
+  ok  switching game returns true
+  ok  switch clears seq + buffer
+  ok  endWatch clears everything
+  ok  a baseline at the live seq applies the next frame
+  ok  and buffers nothing
+  ok  a trailing baseline gaps on the next frame (the bug)
+  ok  the first frame after a bump applies
+  ok  a second frame reusing that seq is DROPPED (the bug)
+  ok  the same frame with its own seq applies
+  ok  and the trailing draft-state frame applies too
+  ok  each sequenced frame advanced the applied seq exactly once
+  ok  a healthy session is not stalled
+  ok  a newer schema is rejected
+  ok  and latches the session as protocol-stalled
+  ok  a stalled session does NOT ask for a resync (no loop)
+  ok  a replay drift still resyncs
+  ok  and is not treated as terminal
+  ok  switching game clears the stall
+
+SPECTATOR-SYNC: all checks passed

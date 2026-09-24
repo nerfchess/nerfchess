@@ -28,6 +28,10 @@ import {
   houseThinkMs,
 } from "../../src/lib/server/bots";
 import * as arenaRecord from "../../src/lib/server/arenaRecord";
+import { HOUSE_ROSTER, houseDrawDecision, houseMaterialEvalCp } from "../../src/lib/server/bots";
+import * as houseDraw from "../../src/lib/server/houseDraw";
+import { UNRESTRICTED_NERF, newGame, type NerfGame } from "../../src/engine/game";
+import type { Color, PieceType } from "../../src/engine/types";
 
 let failures = 0;
 function ok(cond: boolean, label: string) {
@@ -192,8 +196,111 @@ console.log("R6: resign and draws through the human paths");
   const due = body("  private async playHouseDue(");
   ok(/houseDrawDecision\(/.test(due) && /this\.broadcast\(match, "drawDeclined", \{ color: due\.color \}\)/.test(due), "a decline is today's drawDeclined frame");
   ok(/this\.broadcast\(match, "drawOffer", \{ color: due\.color \}\)/.test(due), "a bot's offer is the human drawOffer frame");
+  ok(/houseDrawRerollAllowed\(prior, \{ game, color: due\.color, own, lastEvalCp \}\)/.test(due), "a repeat offer goes through the decline memory first");
+  ok(/houseDrawAnswerEvalCp\(game, due\.color, lastEvalCp\)/.test(due) && !/evalCp: hist\[hist\.length - 1\]/.test(due), "the answer is taken on the position now, not the stale eval");
+  ok(/match\.houseDrawNo = \{/.test(due) && /houseDrawDeclineRecord\(prior,/.test(due), "a decline is remembered on the match");
   const after = body("  private houseAfterMoveDecision(");
   ok(/houseResignDecision\(/.test(after) && /if \(this\.isBotOnlyMatch\(match\)\) return;/.test(after), "resign decisions for human games only");
+}
+
+// ---------------------------------------------------------------------------
+console.log("R6: repeat draw offers and the answer's eval (review round 1)");
+{
+  const hd = houseDraw as Record<string, unknown>;
+  const reroll = hd.houseDrawRerollAllowed as typeof houseDraw.houseDrawRerollAllowed | undefined;
+  const answerEval = hd.houseDrawAnswerEvalCp as typeof houseDraw.houseDrawAnswerEvalCp | undefined;
+  const record = hd.houseDrawDeclineRecord as typeof houseDraw.houseDrawDeclineRecord | undefined;
+  ok(!!reroll && !!answerEval && !!record, "houseDraw.ts exports the gate, the eval and the record");
+  const seeded = (seed: number) => {
+    let x = (seed * 2654435761) >>> 0 || 1;
+    return (max: number) => {
+      x = (Math.imul(x, 1664525) + 1013904223) >>> 0;
+      return Math.floor((x / 2 ** 32) * max);
+    };
+  };
+  const place = (pieces: Record<string, string>, turn: Color): NerfGame => {
+    const g = newGame(UNRESTRICTED_NERF, UNRESTRICTED_NERF, 1);
+    g.board.pieces = new Array(64).fill(null);
+    for (const [sq, code] of Object.entries(pieces)) {
+      const idx = (Number(sq[1]) - 1) * 8 + (sq.charCodeAt(0) - 97);
+      g.board.pieces[idx] = { type: code.toLowerCase() as PieceType, color: code === code.toUpperCase() ? "w" : "b" };
+    }
+    g.board.turn = turn;
+    g.board.castling = { wk: false, wq: false, bk: false, bq: false };
+    g.board.history = [];
+    return g;
+  };
+  if (reroll && answerEval && record) {
+    // Full board, the bot (white) a pawn up: black's d7 pawn is gone.
+    const pawnUp = newGame(UNRESTRICTED_NERF, UNRESTRICTED_NERF, 1);
+    pawnUp.board.pieces[6 * 8 + 3] = null;
+    const personas = HOUSE_ROSTER.slice(0, 200);
+    const rng = seeded(11);
+    // Before: every offer was a fresh roll on +100.
+    let within5 = 0;
+    for (const persona of personas) {
+      for (let i = 0; i < 5; i++) {
+        if (houseDrawDecision({ persona, game: pawnUp, color: "w", evalCp: 100 }, rng).accept) {
+          within5++;
+          break;
+        }
+      }
+    }
+    console.log(`        without the memory: ${within5}/200 personas give a draw within five offers at +100`);
+    // After: the first offer is rolled; after a decline, 30 spammed offers on
+    // the unchanged position (same own-move count) are never accepted.
+    let firstAccept = 0;
+    let spamAccept = 0;
+    let spamRolled = 0;
+    for (const persona of personas) {
+      let memory: houseDraw.HouseDrawDecline | null = null;
+      for (let i = 0; i < 31; i++) {
+        const allowed = reroll(memory, { game: pawnUp, color: "w", own: 12, lastEvalCp: 100 });
+        if (!allowed) continue;
+        if (i > 0) spamRolled++;
+        const evalCp = answerEval(pawnUp, "w", 100);
+        if (houseDrawDecision({ persona, game: pawnUp, color: "w", evalCp }, rng).accept) {
+          if (i === 0) firstAccept++;
+          else spamAccept++;
+          break;
+        }
+        memory = record(memory, { game: pawnUp, color: "w", own: 12, evalCp });
+      }
+    }
+    console.log(`        with the memory: ${firstAccept}/200 accept the first offer, ${spamAccept} after a decline (${spamRolled} re-rolls)`);
+    ok(spamRolled === 0 && spamAccept === 0, "30 repeat offers on an unchanged position after a decline: none rolled, none accepted");
+    // The question reopens only when the position changes.
+    const mem = record(null, { game: pawnUp, color: "w", own: 12, evalCp: 100 });
+    ok(!reroll(mem, { game: pawnUp, color: "w", own: 21, lastEvalCp: 100 }), "9 more bot moves on the same eval: still declined");
+    ok(reroll(mem, { game: pawnUp, color: "w", own: 22, lastEvalCp: 100 }), "10 more bot moves: thought about again");
+    const mem2 = record(mem, { game: pawnUp, color: "w", own: 22, evalCp: 100 });
+    ok(!reroll(mem2, { game: pawnUp, color: "w", own: 41, lastEvalCp: 100 }) && reroll(mem2, { game: pawnUp, color: "w", own: 42, lastEvalCp: 100 }), "the gap doubles after a second decline");
+    ok(reroll(mem, { game: pawnUp, color: "w", own: 14, lastEvalCp: -10 }), "the bot's later eval fell 110cp: thought about again");
+    ok(!reroll(mem, { game: pawnUp, color: "w", own: 12, lastEvalCp: -10 }), "a low eval from before the decline does not reopen it");
+    const lostKnight = newGame(UNRESTRICTED_NERF, UNRESTRICTED_NERF, 1);
+    lostKnight.board.pieces[6 * 8 + 3] = null;
+    lostKnight.board.pieces[1] = null;
+    ok(reroll(mem, { game: lostKnight, color: "w", own: 13, lastEvalCp: 100 }), "the bot lost material since: thought about again");
+    // Stale eval: a level position, white (the bot) to move, and black has
+    // just hung its queen on d4 to the e3 pawn. The eval recorded after
+    // white's last move said 0, and the material still reads level.
+    const hung = place(
+      { e1: "K", d1: "Q", a1: "R", e3: "P", a2: "P", e8: "k", d4: "q", h8: "r", h7: "p", a7: "p" },
+      "w",
+    );
+    ok(houseMaterialEvalCp(hung, "w") === 0, "the hung-queen position reads level on material");
+    const fresh = answerEval(hung, "w", 0);
+    ok(fresh >= 150, `a human blunder since the bot's last eval is seen (fresh ${fresh}cp, stale 0)`);
+    let acceptHung = 0;
+    for (const persona of personas) if (houseDrawDecision({ persona, game: hung, color: "w", evalCp: fresh }, rng).accept) acceptHung++;
+    ok(acceptHung === 0, `no persona accepts a draw right after the human hung a queen (${acceptHung}/200)`);
+    const onHumanTurn = place(
+      { e1: "K", d1: "Q", a1: "R", e3: "P", a2: "P", e8: "k", d4: "q", h8: "r", h7: "p", a7: "p" },
+      "b",
+    );
+    ok(answerEval(onHumanTurn, "w", 40) === 40, "on the human's turn the eval recorded after the bot's move stands");
+    ok(answerEval(onHumanTurn, "w", undefined) === houseMaterialEvalCp(onHumanTurn, "w"), "with no eval kept, the material stands");
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -238,11 +345,11 @@ console.log("No bot tell reaches a client");
 {
   const lines = src.split("\n");
   const leaks = lines.filter(
-    (l) => /houseEval|houseDue|botSnap|houseEngineBreaker/.test(l) && /(broadcast|send|sendWatchers)\(|Response\.json\(\{ ok:/.test(l),
+    (l) => /houseEval|houseDue|houseDrawNo|botSnap|houseEngineBreaker/.test(l) && /(broadcast|send|sendWatchers)\(|Response\.json\(\{ ok:/.test(l),
   );
   ok(leaks.length === 0, "no server-only house field on a frame line");
   const start = body("  private sendStart(");
-  ok(start.length > 0 && !/houseEval|houseDue|botSnap/.test(start), "sendStart carries none of them");
+  ok(start.length > 0 && !/houseEval|houseDue|houseDrawNo|botSnap/.test(start), "sendStart carries none of them");
 }
 
 if (failures) {

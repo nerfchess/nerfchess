@@ -309,6 +309,13 @@ R11 in `docs/polish-pass/slices/HB.md`; the wiring is checked by
   as a draw by agreement, a decline is the `drawDeclined` frame. The bot may
   offer a draw itself in a dead-level ending (`houseDrawOffer`), with the
   `drawOffer` frame a person's offer sends.
+  The answer is taken on the position when it lands: if the human has moved
+  since the bot's last recorded eval, a short (150ms) search scores it, so a
+  blunder just played is seen. A decline is remembered (`houseDraw.ts`): a
+  repeat offer is declined again without a new roll until the position has
+  changed against the bot or thinned out (its material or a later eval down
+  100cp, four pieces off, a dead-level ending) or it has made 10 more moves
+  (20 after a second decline, and so on). Spamming offers cannot buy a draw.
 - A rematch request to a bot is answered by `houseRematchDecision` (50-85% by
   persona) after 2-6 seconds, only while the persona is in today's active
   roster and not seated in another game. Accept starts the colour-swapped

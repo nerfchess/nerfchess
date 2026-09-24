@@ -1,0 +1,11 @@
+1. existing houseStyle traits: 0 changed values across 900 personas (must be 0)
+2. repertoire legal: true; 8 distinct first moves over 60 personas
+3. resign: 1500+ within 6 own moves 98/100; 800-1200 median 32 own moves; level histories resigned 0; never-resign personas 62 (named by bio or name 3), resigned 0
+4. draws: dead-level accepted 20/20, winning accepted 0/20
+5. rematch acceptance: 800-1200 65.7%, 1350-1750 68.5%, 1900-2150 68.2%, 2400-2700 66.3%
+6. breaker: transitions ok, counts {"ok":1,"timeout":4,"error":1,"version":1,"rejected":1,"null":1}; an unrecorded probe expires after 10s
+7. clock helpers ok; opening moves under 1.2s 100.0%
+8. cards (houseChooseActivation): 20 positions where the engine's chooser would waste a turn with a piece hanging that a king-safe, nerf-safe move saves (2 more where no move saves it, not counted); the policy fired that card 0 times. drafts: 142 checked, 0 invalid
+   harvest trace (seed:ply:card, ! = fired): 0:23:escape_hatch 0:28:escape_hatch 0:75:escape_hatch 0:79:escape_hatch 2:27:moai_head 2:39:moai_head 2:43:moai_head 4:13:fly_swatter 4:29:fly_swatter 4:33:fly_swatter 4:37:fly_swatter 5:43:bn4_boundary_stones 5:49:bn4_boundary_stones 5:81:bn4_boundary_stones 5:87:bn4_boundary_stones 7:54:ov_locust_swarm 7:84:ov_locust_swarm 7:107:summoning_circle 8:64:bn4_cobblers_bench 8:78:bn4_cobblers_bench
+
+house policy helpers: OK

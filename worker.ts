@@ -96,6 +96,12 @@ import {
   chunkIds,
   type ResolvedSkillProfile,
 } from "./src/lib/server/bots";
+import {
+  houseDrawAnswerEvalCp,
+  houseDrawDeclineRecord,
+  houseDrawRerollAllowed,
+  type HouseDrawDecline,
+} from "./src/lib/server/houseDraw";
 import { resolveArenaSeat } from "./src/lib/server/arenaSeat";
 import {
   awaySeat,
@@ -389,9 +395,12 @@ type StoredMatch = {
   //     houseSnapMove locally instead of a search.
   //   houseDue: a timed house answer (resign, draw answer, draw offer) and
   //     when it lands; armBotAction folds it into botActAt.
+  //   houseDrawNo: a house seat's last draw decline (houseDraw.ts), so a
+  //     repeat offer on an unchanged position is declined without a new roll.
   houseEval?: Partial<Record<Color, number[]>>;
   botSnap?: boolean;
   houseDue?: { kind: "resign" | "drawAnswer" | "drawOffer"; color: Color; at: number } | null;
+  houseDrawNo?: Partial<Record<Color, HouseDrawDecline>>;
   // Replay checkpoint: a serialized game snapshot taken every few plies so the
   // play path (gameForPlay) resumes from mid-game instead of replaying every
   // move from ply 0 on each bot/human action (the O(n^2)-per-game cost that
@@ -4396,7 +4405,9 @@ export class GameServer extends DurableObject<Env> {
     match.drawOfferBy = session.color;
     // Offered to a house bot: it answers after a human-like 1.5-5s through
     // the same accept or drawDeclined path a person uses (HB.md R6). The
-    // decision itself is taken when the answer lands, on the position then.
+    // decision itself is taken when the answer lands, on the position then
+    // (playHouseDue), and a repeat offer after a decline is declined until
+    // the position has changed (houseDraw.ts).
     const botSeat: Color = session.color === "w" ? "b" : "w";
     if (match.bots?.[botSeat] && match.startedAt && (!match.houseDue || match.houseDue.kind === "drawOffer")) {
       match.houseDue = { kind: "drawAnswer", color: botSeat, at: Date.now() + 1500 + randomInt(3501) };
@@ -6092,13 +6103,24 @@ export class GameServer extends DurableObject<Env> {
     }
     if (persona && due.kind === "drawAnswer" && match.drawOfferBy && match.drawOfferBy !== due.color) {
       const hist = match.houseEval?.[due.color];
-      const answer = houseDrawDecision(
-        { persona, game, color: due.color, ...(hist?.length ? { evalCp: hist[hist.length - 1] } : {}) },
-        randomInt,
-      );
-      if (answer.accept) {
-        await this.acceptDrawSeat(match);
-        return;
+      const lastEvalCp = hist?.length ? hist[hist.length - 1] : undefined;
+      const own = this.movesByColor(match, due.color);
+      const prior = match.houseDrawNo?.[due.color];
+      // A decline is remembered: an offer on a position that has not changed
+      // is declined again without a new roll, so spamming offers cannot buy a
+      // draw. Otherwise the answer is taken on the position now (a fresh short
+      // search when the human has moved since the bot's last eval).
+      if (houseDrawRerollAllowed(prior, { game, color: due.color, own, lastEvalCp })) {
+        const evalCp = houseDrawAnswerEvalCp(game, due.color, lastEvalCp);
+        const answer = houseDrawDecision({ persona, game, color: due.color, evalCp }, randomInt);
+        if (answer.accept) {
+          await this.acceptDrawSeat(match);
+          return;
+        }
+        match.houseDrawNo = {
+          ...(match.houseDrawNo ?? {}),
+          [due.color]: houseDrawDeclineRecord(prior, { game, color: due.color, own, evalCp }),
+        };
       }
       match.drawOfferBy = null;
       this.armBotAction(match, game, now);
