@@ -1654,145 +1654,6 @@ function RestitutionScene({ lead, role, delayMs }: SceneProps) {
   );
 }
 
-/** The Long Truce — banners dip on both wings, the dove crosses the whole
- * field, and twin domes of quiet settle over the two armies. */
-function LongTruceScene({ lead, role, delayMs }: SceneProps) {
-  if (role === "entrance") return <EntranceCut palette={["#5fc9b0", "#e8fff7", "#1c3a32"]} glyph={GLYPH.bw2_long_truce} delayMs={delayMs} />;
-  if (!lead) return <TargetHit palette={["#5fc9b0", "#e8fff7", "#1c3a32"]} glyph={GLYPH.bw2_long_truce} delayMs={delayMs} />;
-  return (
-    <Stage quakeMs={delayMs + 1020}>
-      <Wash color="rgba(28,58,50,0.34)" delayMs={delayMs} />
-      {/* THE ARMISTICE STAMP: both armies ground their arms on one beat and
-          the field itself shudders into stillness */}
-      <Impact atMs={delayMs + 1020} left={50} top={44} rgb="#5fc9b0" size={9} />
-      {/* tell: the field draws one breath and the noise drops out of it */}
-      <Tell color="rgba(95,201,176,0.5)" delayMs={delayMs + 220} left={40} top={34} size={26} />
-      {/* the two war banners dip toward each other */}
-      {[
-        { l: 30, rot: "18deg", c: "#e8fff7" },
-        { l: 66, rot: "-18deg", c: "#9fd8ff" },
-      ].map((b, i) => (
-        <span key={i} className="bwp-drop absolute block" style={{ left: `${b.l}%`, top: "30%", width: "4.5%", height: "18%", rotate: b.rot, animationDelay: `${delayMs + 160 + i * 120}ms` }}>
-          <svg viewBox="0 0 5 18" className="block h-full w-full" aria-hidden="true">
-            <path d="M2.5 0.8 V17.2" stroke="#1c3a32" strokeWidth="0.8" strokeLinecap="round" />
-            <path d="M2.5 1.2 H4.8 L3.8 3.2 L4.8 5.2 H2.5 Z" fill={b.c} stroke="#1c3a32" strokeWidth="0.35" {...SJ} />
-          </svg>
-        </span>
-      ))}
-      {/* the dove crosses the whole field, olive sprig in tow */}
-      <span className="bwp-cross absolute block" style={{ left: "30%", top: "34%", width: "9%", height: "6.5%", "--dx": "360%", animationDelay: `${delayMs + 480}ms` } as CSSProperties}>
-        <svg viewBox="0 0 10 6" className="block h-full w-full" aria-hidden="true">
-          <path d="M1 3.4 C3 1.2 5.4 1 7.4 2.4 L9.2 1.8 L8.2 3.4 C6.2 5 3.2 5 1 3.4 Z" fill="#e8fff7" stroke="#1c3a32" strokeWidth="0.4" {...SJ} />
-          <path d="M4.6 2.2 C5.4 0.8 6.6 0.6 7.2 1.2" fill="none" stroke="#5fc9b0" strokeWidth="0.45" strokeLinecap="round" />
-        </svg>
-      </span>
-      {/* twin domes of stillness settle over both halves */}
-      {[27, 53].map((l, i) => (
-        <span key={l} className="bwp-rise absolute block" style={{ left: `${l}%`, top: "42%", width: "20%", height: "16%", animationDelay: `${delayMs + 820 + i * 140}ms` }}>
-          <svg viewBox="0 0 20 16" className="block h-full w-full" aria-hidden="true">
-            <path d="M1 15 C1 2 19 2 19 15" fill="rgba(95,201,176,0.18)" stroke="rgba(232,255,247,0.9)" strokeWidth="0.6" strokeDasharray="2 1.4" />
-          </svg>
-        </span>
-      ))}
-      <Glint delayMs={delayMs + 1200} color="#e8fff7" left={48} top={32} />
-      <Ring delayMs={delayMs + 1020} color="rgba(95,201,176,0.85)" />
-      <Ring delayMs={delayMs + 1240} color="rgba(232,255,247,0.55)" size={84} />
-      <EdgeGlow delayMs={delayMs + 1100} color="rgba(95,201,176,0.38)" />
-    </Stage>
-  );
-}
-
-/** The Great Return — the underworld gate opens on the horizon and the dead
- * of BOTH armies stream home in one long procession. */
-function GreatReturnScene({ lead, role, delayMs }: SceneProps) {
-  if (role === "entrance") return <EntranceCut palette={["#8f6bff", "#e3d0ff", "#12081f"]} glyph={GLYPH.bw2_great_return} delayMs={delayMs} />;
-  if (!lead) return <TargetHit palette={["#8f6bff", "#e3d0ff", "#12081f"]} glyph={GLYPH.bw2_great_return} delayMs={delayMs} />;
-  const procession: { k: keyof typeof CHESSMAN; dx: number; d: number; c: string; s: string }[] = [
-    { k: "q", dx: -240, d: 0, c: "#e3d0ff", s: "#5b2b8f" },
-    { k: "n", dx: -150, d: 140, c: "#e3d0ff", s: "#5b2b8f" },
-    { k: "p", dx: -70, d: 280, c: "#e3d0ff", s: "#5b2b8f" },
-    { k: "r", dx: 240, d: 70, c: "#9fd8ff", s: "#2c3e6b" },
-    { k: "b", dx: 150, d: 210, c: "#9fd8ff", s: "#2c3e6b" },
-  ];
-  return (
-    <Stage quakeMs={delayMs + 1000}>
-      <Wash color="rgba(18,8,31,0.4)" delayMs={delayMs} />
-      {/* THE GATE-BREACH: the underworld column blasts up between the pillars
-          and the whole horizon rocks as the dead pour through */}
-      <Impact atMs={delayMs + 1000} left={49} top={41} rgb="#8f6bff" laser size={9} />
-      {/* the gate: twin pillars and the pane of light between them */}
-      {[44, 54].map((l, i) => (
-        <span key={l} className="bwp-rise absolute block" style={{ left: `${l}%`, top: "30%", width: "2%", height: "22%", background: "rgba(143,107,255,0.95)", animationDelay: `${delayMs + 160 + i * 90}ms` }} />
-      ))}
-      <span className="bwp-gate absolute block" style={{ left: "46%", top: "31%", width: "8%", height: "20%", transformOrigin: "50% 100%", background: "linear-gradient(180deg, rgba(227,208,255,0.1), rgba(143,107,255,0.6))", animationDelay: `${delayMs + 420}ms` }} />
-      {/* the procession streams out both ways, each shade heading home */}
-      {procession.map((p, i) => (
-        <span key={i} className="bwp-march absolute block" style={{ left: "47.5%", top: "44%", width: "5.5%", height: "8.5%", "--dx": `${p.dx}%`, animationDelay: `${delayMs + 560 + p.d}ms` } as CSSProperties}>
-          <Man kind={p.k} fill={p.c} stroke={p.s} />
-        </span>
-      ))}
-      {/* grave-lights drifting up in their wake */}
-      {[36, 50, 62].map((l, i) => (
-        <Glint key={l} delayMs={delayMs + 1060 + i * 100} color="#e3d0ff" left={l} top={38 - i * 3} size={2.6} />
-      ))}
-      <Ring delayMs={delayMs + 1000} color="rgba(143,107,255,0.85)" />
-      <Ring delayMs={delayMs + 1220} color="rgba(227,208,255,0.55)" size={84} />
-      <EdgeGlow delayMs={delayMs + 1080} color="rgba(143,107,255,0.4)" />
-    </Stage>
-  );
-}
-
-/** Shadow Reserve — the smuggler opens the coat: three heavy pieces hang in
- * the lining, and two of your dealt futures burn away as the fee. */
-function ShadowReserveScene({ lead, role, delayMs }: SceneProps) {
-  if (role === "entrance") return <EntranceCut palette={["#3a3a40", "#c9cdd6", "#12081f"]} glyph={GLYPH.bw2_shadow_reserve} delayMs={delayMs} />;
-  if (!lead) return <TargetHit palette={["#3a3a40", "#c9cdd6", "#12081f"]} glyph={GLYPH.bw2_shadow_reserve} delayMs={delayMs} />;
-  return (
-    <Stage quakeMs={delayMs + 1060}>
-      <Wash color="rgba(18,8,31,0.42)" delayMs={delayMs} />
-      {/* THE CONTRABAND DROP: the smuggler slams the crate of majors down at
-          his feet hard enough to rattle the alley */}
-      <Impact atMs={delayMs + 1060} left={50} top={47} rgb="#c9cdd6" size={8.5} />
-      {/* the smuggler rises, hooded */}
-      <span className="bwp-rise absolute block" style={{ left: "40%", top: "28%", width: "20%", height: "30%", animationDelay: `${delayMs + 160}ms` }}>
-        <svg viewBox="0 0 20 30" className="block h-full w-full" aria-hidden="true">
-          <path d="M10 1.4 C14 1.4 16 4.6 16 8 L17.4 28.6 H2.6 L4 8 C4 4.6 6 1.4 10 1.4 Z" fill="#26262c" stroke="#8a94a8" strokeWidth="0.6" {...SJ} />
-          <path d="M6.6 7.4 C7.6 5 12.4 5 13.4 7.4 C12.4 9 7.6 9 6.6 7.4 Z" fill="#0d0d12" />
-        </svg>
-      </span>
-      {/* the coat flaps swing open */}
-      <span className="bwp-flapl absolute block" style={{ left: "41%", top: "36%", width: "9%", height: "20%", transformOrigin: "0% 6%", animationDelay: `${delayMs + 560}ms` }}>
-        <svg viewBox="0 0 9 20" className="block h-full w-full" preserveAspectRatio="none" aria-hidden="true">
-          <path d="M0.6 0.6 L8.4 3 L8.4 19.4 L0.6 19.4 Z" fill="#31313a" stroke="#8a94a8" strokeWidth="0.45" />
-        </svg>
-      </span>
-      <span className="bwp-flapr absolute block" style={{ left: "50%", top: "36%", width: "9%", height: "20%", transformOrigin: "100% 6%", animationDelay: `${delayMs + 560}ms` }}>
-        <svg viewBox="0 0 9 20" className="block h-full w-full" preserveAspectRatio="none" aria-hidden="true">
-          <path d="M8.4 0.6 L0.6 3 L0.6 19.4 L8.4 19.4 Z" fill="#31313a" stroke="#8a94a8" strokeWidth="0.45" />
-        </svg>
-      </span>
-      {/* the merchandise, hanging in the lining */}
-      {(["n", "b", "r"] as (keyof typeof CHESSMAN)[]).map((k, i) => (
-        <span key={k} className="bwp-facein absolute block" style={{ left: `${43 + i * 5}%`, top: "42%", width: "4.5%", height: "7%", animationDelay: `${delayMs + 820 + i * 130}ms` }}>
-          <Man kind={k} fill="#c9cdd6" stroke="#12081f" />
-        </span>
-      ))}
-      {/* the fee: two dealt futures slide away and gutter out */}
-      {[0, 1].map((i) => (
-        <span key={i} className="bwp-cross absolute block" style={{ left: `${33 - i * 3}%`, top: `${56 + i * 4}%`, width: "5%", height: "7.5%", rotate: `${-10 - i * 8}deg`, "--dx": "-220%", animationDelay: `${delayMs + 1000 + i * 140}ms` } as CSSProperties}>
-          <svg viewBox="0 0 6 9" className="block h-full w-full" aria-hidden="true">
-            <rect x="0.6" y="0.6" width="4.8" height="7.8" rx="0.8" fill="#3a3a40" stroke="#8a94a8" strokeWidth="0.4" />
-            <path d="M1.6 1.8 L4.4 7.2 M4.4 1.8 L1.6 7.2" stroke="#c94a3a" strokeWidth="0.45" strokeLinecap="round" />
-          </svg>
-        </span>
-      ))}
-      <Ring delayMs={delayMs + 1060} color="rgba(201,205,214,0.8)" />
-      <Ring delayMs={delayMs + 1260} color="rgba(138,148,168,0.5)" size={84} />
-      <EdgeGlow delayMs={delayMs + 1120} color="rgba(138,148,168,0.35)" />
-    </Stage>
-  );
-}
-
 /** The Eternal Keep — the home rank itself is raised into rampart and towers,
  * and the gate booms shut on forever. */
 function EternalKeepScene({ lead, role, delayMs }: SceneProps) {
@@ -2638,6 +2499,238 @@ function CovenantScene({ lead, role, delayMs }: SceneProps) {
           </span>
         ))}
       </BoardFrame>
+    </Stage>
+  );
+}
+
+/** The Great Return: the river gives back everything it was paid. It runs
+ * across the middle of the board, both home ranks are marked out, the fallen
+ * of BOTH sides climb out of it and walk home (yours to your first rank,
+ * theirs to their back rank), and your most valuable arrival, the queen, is
+ * rooted where she lands for one turn. */
+const RETURN: Palette = ["#8f6bff", "#e3d0ff", "#12081f"];
+function GreatReturnScene({ lead, role, delayMs }: SceneProps) {
+  const [p0, p1, p2] = RETURN;
+  if (role === "entrance") return <EntranceCut palette={RETURN} glyph={GLYPH.bw2_great_return} delayMs={delayMs} />;
+  if (!lead) return <TargetHit palette={RETURN} glyph={GLYPH.bw2_great_return} delayMs={delayMs} />;
+  const home = [
+    { k: "q" as const, f: 3, r: 1, steps: 3.5, fill: tint(p1, 0.95), stroke: p2, d: 320 },
+    { k: "n" as const, f: 6, r: 1, steps: 3.5, fill: tint(p1, 0.95), stroke: p2, d: 440 },
+    { k: "r" as const, f: 0, r: 8, steps: -3.5, fill: p2, stroke: p1, d: 380 },
+    { k: "b" as const, f: 5, r: 8, steps: -3.5, fill: p2, stroke: p1, d: 500 },
+  ];
+  return (
+    <Stage>
+      <BoardFrame>
+        {/* tell: the river runs across the middle of the board */}
+        <span className="bwp-beam absolute block" style={{ left: 0, width: "100%", top: "46.5%", height: "7%", transformOrigin: "0% 50%", animationDelay: dm(delayMs, 0), animationDuration: "calc(1700ms * var(--fx-dur, 1))" }}>
+          <svg viewBox="0 0 80 7" preserveAspectRatio="none" className="block h-full w-full" aria-hidden="true">
+            <path d="M0 1.6 C5 0.2 10 3 15 1.6 C20 0.2 25 3 30 1.6 C35 0.2 40 3 45 1.6 C50 0.2 55 3 60 1.6 C65 0.2 70 3 75 1.6 L80 1.2 V5.8 C75 7 70 4 65 5.4 C60 6.8 55 4 50 5.4 C45 6.8 40 4 35 5.4 C30 6.8 25 4 20 5.4 C15 6.8 10 4 5 5.4 L0 5.8 Z" fill={tint(p0, 0.55)} stroke={p1} strokeWidth="0.35" {...SJ} />
+          </svg>
+        </span>
+        {/* both home ranks are marked out: where the fallen are owed */}
+        {[1, 8].map((r, i) => (
+          <span key={r} className="bwp-hold absolute block" style={{ left: 0, width: "100%", top: rankTop(r), height: "12.5%", border: `3px dashed ${p1}`, background: tint(p0, 0.22), animationDelay: dm(delayMs, 120 + i * 60), animationDuration: "calc(1650ms * var(--fx-dur, 1))" }} />
+        ))}
+        {/* strike: the fallen of both sides climb out of the river and walk home */}
+        {home.map((v) => (
+          <span key={v.k} className="bwp-stepoff absolute block" style={{ ...manBox(v.f, v.r), "--steps": v.steps, animationDelay: dm(delayMs, v.d), animationDuration: "calc(1350ms * var(--fx-dur, 1))" } as CSSProperties}>
+            <Man kind={v.k} fill={v.fill} stroke={v.stroke} />
+          </span>
+        ))}
+        {/* settle: your most valuable arrival is rooted where she lands */}
+        <span className="bwp-gate absolute block" style={{ ...cellBox(3, 1), transformOrigin: "50% 100%", animationDelay: dm(delayMs, 1020), animationDuration: "calc(1000ms * var(--fx-dur, 1))" }}>
+          <svg viewBox="0 0 12 12" className="block h-full w-full" aria-hidden="true">
+            <path d="M3.4 11.6 C2.6 9.6 4.6 8.8 3.8 6.6 M8.6 11.6 C9.4 9.6 7.4 8.8 8.2 6.6 M6 11.6 C5.4 10 6.8 9.2 6.2 7.6 M1.2 11.6 C2.2 10.8 2.6 11 3.4 11.6 M10.8 11.6 C9.8 10.8 9.4 11 8.6 11.6" fill="none" stroke={p0} strokeWidth="0.8" {...SJ} />
+          </svg>
+        </span>
+        {/* ...for one turn: a single stone pip on her square */}
+        <span className="bwp-facein absolute block" style={{ left: "46%", top: `calc(${rankTop(1)} + 0.6%)`, width: "4.2%", height: "4.2%", animationDelay: dm(delayMs, 1160) }}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <circle cx="5" cy="5" r="4.2" fill={p2} stroke={p1} strokeWidth="0.7" />
+            <path d="M5 2.6 V7.4" stroke={p1} strokeWidth="1" strokeLinecap="round" />
+          </svg>
+        </span>
+        {[20, 76].map((l, i) => (
+          <span key={l} className="bwp-glint absolute block" style={{ left: `${l}%`, top: "48%", width: "3.4%", height: "3.4%", animationDelay: dm(delayMs, 1240 + i * 110) }}>
+            <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+              <path d="M5 0 L6.6 5 L5 10 L3.4 5 Z M0 5 L5 3.4 L10 5 L5 6.6 Z" fill={p1} />
+            </svg>
+          </span>
+        ))}
+      </BoardFrame>
+    </Stage>
+  );
+}
+
+/** A sword standing on file `f` in the middle of rank 4 (the caster's, tip
+ * toward the border) or rank 5 (theirs, tip toward the caster). */
+function truceBlade(f: number, theirs: boolean): CSSProperties {
+  const s = theirs ? -1 : 1;
+  return {
+    left: `${f * 12.5 + 3.25}%`,
+    width: "6%",
+    top: `calc(50% + ${s} * var(--fx-side, 1) * 6.25% - 5.25%)`,
+    height: "10.5%",
+    scale: `1 calc(${s} * var(--fx-side, 1))`,
+  };
+}
+
+/** The Long Truce: every blade is lowered for two turns. The two armies are
+ * each put under a dashed ward (no piece of either side can be taken), the
+ * swords raised at the border are laid flat, a herald from each side walks
+ * out with a white flag and meets at the middle, both kings are warded too,
+ * two turn pips stand by the heralds, and on your side your own nerf's
+ * shackle falls open for three turns. */
+const TRUCE: Palette = ["#5fc9b0", "#e8fff7", "#1c3a32"];
+function LongTruceScene({ lead, role, delayMs }: SceneProps) {
+  const [p0, p1, p2] = TRUCE;
+  if (role === "entrance") return <EntranceCut palette={TRUCE} glyph={GLYPH.bw2_long_truce} delayMs={delayMs} />;
+  if (!lead) return <TargetHit palette={TRUCE} glyph={GLYPH.bw2_long_truce} delayMs={delayMs} />;
+  const blades = [
+    { f: 1, theirs: false, lw: "84deg", d: 420 },
+    { f: 5, theirs: false, lw: "-84deg", d: 470 },
+    { f: 2, theirs: true, lw: "-84deg", d: 450 },
+    { f: 6, theirs: true, lw: "84deg", d: 500 },
+  ];
+  return (
+    <Stage>
+      <BoardFrame>
+        {/* tell: both armies are put under the truce's ward */}
+        {[
+          { lo: 1, hi: 2 },
+          { lo: 7, hi: 8 },
+        ].map((v, i) => (
+          <span key={v.lo} className="bwp-hold absolute block" style={{ left: 0, width: "100%", top: bandTop(v.lo, v.hi), height: "25%", background: tint(p0, 0.24), border: `3px dashed ${p1}`, animationDelay: dm(delayMs, i * 80), animationDuration: "calc(1750ms * var(--fx-dur, 1))" }} />
+        ))}
+        {/* the swords raised at the border... */}
+        {blades.map((v) => (
+          <span key={v.f} className="absolute block" style={truceBlade(v.f, v.theirs)}>
+            {/* ...are lowered and laid flat */}
+            <span className="bwp-lower absolute inset-0 block" style={{ transformOrigin: "50% 88%", "--lw": v.lw, animationDelay: dm(delayMs, v.d) } as CSSProperties}>
+              <svg viewBox="0 0 4 10" className="block h-full w-full" aria-hidden="true">
+                <path d="M2 0.4 L2.8 2.4 V7.6 H1.2 V2.4 Z" fill={v.theirs ? p2 : p1} stroke={v.theirs ? p1 : p2} strokeWidth="0.3" {...SJ} />
+                <path d="M0.4 7.8 H3.6 M2 7.8 V9.6" stroke={v.theirs ? p1 : p2} strokeWidth="0.5" strokeLinecap="round" />
+              </svg>
+            </span>
+          </span>
+        ))}
+        {/* strike: a herald from each side walks out to the middle with a white flag */}
+        {[
+          { f: 3, r: 4, steps: -1.5, fill: tint(p1, 0.95), stroke: p2, d: 260 },
+          { f: 4, r: 5, steps: 1.5, fill: p2, stroke: p1, d: 320 },
+        ].map((v) => (
+          <span key={v.f} className="bwp-stepoff absolute block" style={{ ...manBox(v.f, v.r), "--steps": v.steps, animationDelay: dm(delayMs, v.d), animationDuration: "calc(1350ms * var(--fx-dur, 1))" } as CSSProperties}>
+            <svg viewBox="0 0 10 12" className="block h-full w-full" aria-hidden="true">
+              <g fill={v.fill} stroke={v.stroke} strokeWidth="0.45" {...SJ}>{CHESSMAN.p}</g>
+              <path d="M7.6 11 V1" stroke={v.stroke} strokeWidth="0.5" strokeLinecap="round" />
+              <path d="M7.6 1.2 H10 V4.4 H7.6 Z" fill={p1} stroke={p2} strokeWidth="0.35" {...SJ} />
+            </svg>
+          </span>
+        ))}
+        {/* kings included: each king is warded where it stands */}
+        {[1, 8].map((r, i) => (
+          <span key={r} className="bwp-stamp absolute block" style={{ ...cellBox(4, r), animationDelay: dm(delayMs, 760 + i * 110) }}>
+            <svg viewBox="0 0 10 11" className="block h-full w-full" aria-hidden="true">
+              <path d={HEATER} fill={tint(p0, 0.3)} stroke={p1} strokeWidth="0.55" {...SJ} />
+              <path d="M3.4 6.2 V4 L4.3 4.9 L5 3.4 L5.7 4.9 L6.6 4 V6.2 Z" fill={p1} stroke={p2} strokeWidth="0.3" {...SJ} />
+            </svg>
+          </span>
+        ))}
+        {/* two turns: two pips by the heralds at the middle */}
+        <span className="bwp-facein absolute block" style={{ left: "26%", top: "46.5%", width: "10%", height: "7%", animationDelay: dm(delayMs, 940) }}>
+          <svg viewBox="0 0 10 7" className="block h-full w-full" aria-hidden="true">
+            {[2.6, 7.4].map((cx) => <circle key={cx} cx={cx} cy="3.5" r="2" fill={p1} stroke={p2} strokeWidth="0.5" />)}
+          </svg>
+        </span>
+        {/* settle: your own nerf's shackle falls open, three pips under it */}
+        <span className="bwp-facein absolute block" style={{ ...cellBox(7, 3), animationDelay: dm(delayMs, 1080), animationDuration: "calc(1200ms * var(--fx-dur, 1))" }}>
+          <svg viewBox="0 0 12 12" className="block h-full w-full" aria-hidden="true">
+            <path d="M3.6 6 V3.6 C3.6 1.2 8.4 1.2 8.4 3.6 V3.8" fill="none" stroke={p1} strokeWidth="0.8" {...SJ} />
+            <rect x="2.6" y="5" width="6.8" height="3.8" rx="0.8" fill={p0} stroke={p2} strokeWidth="0.5" />
+            {[3.6, 6, 8.4].map((cx) => <circle key={cx} cx={cx} cy="10.6" r="0.8" fill={p1} />)}
+          </svg>
+        </span>
+        {[16, 82].map((l, i) => (
+          <span key={l} className="bwp-glint absolute block" style={{ left: `${l}%`, top: "48%", width: "3.4%", height: "3.4%", animationDelay: dm(delayMs, 1240 + i * 110) }}>
+            <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+              <path d="M5 0 L6.6 5 L5 10 L3.4 5 Z M0 5 L5 3.4 L10 5 L5 6.6 Z" fill={p1} />
+            </svg>
+          </span>
+        ))}
+      </BoardFrame>
+    </Stage>
+  );
+}
+
+/** Shadow Reserve: the smuggler opens the coat. A knight, a bishop and a
+ * rook hang in the lining and slip into the pocket (not onto the board);
+ * three dashed shadows on empty squares nearby say each drops on a later
+ * turn, and two draft cards are struck and slide away (the two skipped
+ * drafts). */
+const SHADOW: Palette = ["#3a3a40", "#c9cdd6", "#12081f"];
+function ShadowReserveScene({ lead, role, delayMs }: SceneProps) {
+  const [p0, p1, p2] = SHADOW;
+  if (role === "entrance") return <EntranceCut palette={SHADOW} glyph={GLYPH.bw2_shadow_reserve} delayMs={delayMs} />;
+  if (!lead) return <TargetHit palette={SHADOW} glyph={GLYPH.bw2_shadow_reserve} delayMs={delayMs} />;
+  const wares = [
+    { k: "n" as const, dx: -0.5 },
+    { k: "b" as const, dx: 0 },
+    { k: "r" as const, dx: 0.5 },
+  ];
+  const drops = [
+    { k: "n" as const, dx: -2, dy: 1 },
+    { k: "b" as const, dx: 2, dy: 0 },
+    { k: "r" as const, dx: 1, dy: 2 },
+  ];
+  return (
+    <Stage>
+      {/* tell: the smuggler stands up, hooded, beside the cast square */}
+      <span className="bwp-rise absolute block" style={{ ...stageBox(0, -0.8, 2, 3), animationDelay: dm(delayMs, 0), animationDuration: "calc(1650ms * var(--fx-dur, 1))" }}>
+        <svg viewBox="0 0 20 30" className="block h-full w-full" aria-hidden="true">
+          <path d="M10 1.4 C14 1.4 16 4.6 16 8 L17.4 28.6 H2.6 L4 8 C4 4.6 6 1.4 10 1.4 Z" fill={p0} stroke={p1} strokeWidth="0.6" {...SJ} />
+          <path d="M6.6 7.4 C7.6 5 12.4 5 13.4 7.4 C12.4 9 7.6 9 6.6 7.4 Z" fill={p2} />
+        </svg>
+      </span>
+      {/* the coat swings open */}
+      {(["bwp-flapl", "bwp-flapr"] as const).map((cls, i) => (
+        <span key={cls} className={`${cls} absolute block`} style={{ ...stageBox(i ? 0.32 : -0.32, -0.35, 0.64, 1.9), transformOrigin: i ? "100% 6%" : "0% 6%", animationDelay: dm(delayMs, 300), animationDuration: "calc(1250ms * var(--fx-dur, 1))" }}>
+          <svg viewBox="0 0 9 20" className="block h-full w-full" preserveAspectRatio="none" aria-hidden="true">
+            <path d={i ? "M8.4 0.6 L0.6 3 L0.6 19.4 L8.4 19.4 Z" : "M0.6 0.6 L8.4 3 L8.4 19.4 L0.6 19.4 Z"} fill={tint(p0, 0.95)} stroke={p1} strokeWidth="0.45" />
+          </svg>
+        </span>
+      ))}
+      {/* strike: a knight, a bishop and a rook hang in the lining... */}
+      {wares.map((v, i) => (
+        <span key={v.k} className="bwp-facein absolute block" style={{ ...stageBox(v.dx, -0.4, 0.5, 0.75), animationDelay: dm(delayMs, 480 + i * 90) }}>
+          <Man kind={v.k} fill={p1} stroke={p2} />
+        </span>
+      ))}
+      {/* ...and slip down into the pocket, not onto the board */}
+      <span className="bwp-sink absolute block" style={{ ...stageBox(0, 0.25, 1.5, 0.75), animationDelay: dm(delayMs, 880) }}>
+        <svg viewBox="0 0 30 12" className="block h-full w-full" aria-hidden="true">
+          {wares.map((v, i) => (
+            <g key={v.k} transform={`translate(${i * 10} 0)`} fill={p1} stroke={p2} strokeWidth="0.45" {...SJ}>{CHESSMAN[v.k]}</g>
+          ))}
+        </svg>
+      </span>
+      {/* each drops onto an empty square on a later turn: three shadows wait */}
+      {drops.map((v, i) => (
+        <span key={v.k} className="bwp-facein absolute block" style={{ ...stageBox(v.dx, v.dy, 0.9, 1), animationDelay: dm(delayMs, 1040 + i * 90), animationDuration: "calc(1250ms * var(--fx-dur, 1))" }}>
+          <svg viewBox="0 0 10 12" className="block h-full w-full" aria-hidden="true">
+            <g fill={tint(p0, 0.85)} stroke={p1} strokeWidth="0.65" strokeDasharray="0.9 0.6" {...SJ}>{CHESSMAN[v.k]}</g>
+          </svg>
+        </span>
+      ))}
+      {/* settle: the fee, two draft cards struck and slid away */}
+      {[0, 1].map((i) => (
+        <span key={i} className="bwp-cross absolute block" style={{ ...stageBox(-1.7 - i * 0.35, 1.1 + i * 0.5, 0.65, 0.95), rotate: `${-10 - i * 8}deg`, "--dx": "-160%", animationDelay: dm(delayMs, 1160 + i * 120) } as CSSProperties}>
+          <svg viewBox="0 0 6 9" className="block h-full w-full" aria-hidden="true">
+            <rect x="0.6" y="0.6" width="4.8" height="7.8" rx="0.8" fill={p0} stroke={p1} strokeWidth="0.4" />
+            <path d="M1.6 1.8 L4.4 7.2 M4.4 1.8 L1.6 7.2" stroke={p1} strokeWidth="0.55" strokeLinecap="round" />
+          </svg>
+        </span>
+      ))}
     </Stage>
   );
 }

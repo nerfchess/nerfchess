@@ -427,6 +427,18 @@
 }
 .bwp-expel { animation: bwp-expel calc(0.95s * var(--fx-dur, 1)) var(--ease-io) both; }
 
+/* The Long Truce: a sword standing at the border is lowered and laid flat
+   (--lw picks which way it falls), then fades. */
+@keyframes bwp-lower {
+  0% { opacity: 0; transform: rotate(0deg); }
+  16% { opacity: 1; transform: rotate(0deg); }
+  36% { transform: rotate(0deg); }
+  66% { transform: rotate(var(--lw, 84deg)); }
+  84% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(var(--lw, 84deg)); }
+}
+.bwp-lower { animation: bwp-lower calc(1.3s * var(--fx-dur, 1)) var(--ease-io) both; }
+
 /* --- Global kill switch ----------------------------------------------------
    Settings animations-off parks every boon play outright. The FLAGSHIP impact
    composites (impact.css laser / shatter / shockwave) and the stage quake all
