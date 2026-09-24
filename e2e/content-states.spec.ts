@@ -122,7 +122,10 @@ test.describe("content route layout stability (390x844)", () => {
 test.describe("achievements states", () => {
   // A /me request that fails in transit (undefined) used to be read as signed
   // out, so a signed-in player on a flaky connection was told to sign in.
-  test("a failed session check offers Retry, not sign in", async ({ page }) => {
+  test("a failed session check offers Retry, not sign in", async ({ page, context }) => {
+    // A session cookie is what makes the page ask /me at all: since 253f4b4 a
+    // visit with no cookie paints the signed-out banner without asking.
+    await context.addCookies([{ name: "dc_session", value: "e2e-unreadable", url: "http://localhost:3000" }]);
     await page.route("**/api/auth/me", (route) => route.abort("internetdisconnected"));
     await page.goto("/achievements");
     await expect(page.getByText("Your progress could not load")).toBeVisible({ timeout: 30_000 });
