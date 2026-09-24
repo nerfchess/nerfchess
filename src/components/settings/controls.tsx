@@ -1,7 +1,7 @@
 "use client";
 
 // Reusable, presentational controls for the settings menu. None of these hold
-// application state — they take a value and an onChange. The carved-recess
+// application state: they take a value and an onChange. The carved-recess
 // styling (tracks, thumbs, hit areas) lives in SettingsPanel.css.
 
 import { ChevronDown } from "lucide-react";
@@ -59,10 +59,10 @@ export function Slider({
 }) {
   return (
     <div
-      className={
-        "flex w-full min-w-[8.5rem] max-w-[16rem] items-center gap-2.5 " +
-        (disabled ? "opacity-40" : "")
-      }
+      // Only the track dims when disabled. The readout is text the row still
+      // shows, and at opacity-40 it failed axe color-contrast on /settings
+      // (wave 2 account 4); the disabled input itself is exempt.
+      className="flex w-full min-w-[8.5rem] max-w-[16rem] items-center gap-2.5"
     >
       <input
         type="range"
@@ -79,7 +79,10 @@ export function Slider({
         // without touching the stylesheet's track and thumb geometry (both are
         // pseudo-elements, vertically centred in whatever box they are given).
         // The row it sits in is already min-h-[44px], so nothing moves.
-        className="settings-range min-h-[44px] w-full accent-gold-leaf [@media(pointer:fine)]:min-h-[24px]"
+        className={
+          "settings-range min-h-[44px] w-full accent-gold-leaf [@media(pointer:fine)]:min-h-[24px]" +
+          (disabled ? " opacity-40" : "")
+        }
       />
       <span className="w-10 shrink-0 text-right font-mono text-[12px] tabular-nums text-parchment-400">
         {format ? format(value) : value}
@@ -110,7 +113,7 @@ export function Select<T extends string>({
         // ui/Button applies to every size, and for the same reason. It used to
         // be a flat 36px, which measured 36px tall at 360 on the settings page
         // and in the panel alike, under the §10 floor. `(pointer: fine)`, never
-        // `sm:` — a tablet is a touch device on the far side of `sm`.
+        // `sm:`: a tablet is a touch device on the far side of `sm`.
         className="input-rune min-h-[44px] cursor-pointer appearance-none py-1.5 pl-3 pr-8 text-[13px] font-medium text-parchment-200 [&>option]:bg-ink-800 [@media(pointer:fine)]:min-h-[36px]"
       >
         {options.map((o) => (

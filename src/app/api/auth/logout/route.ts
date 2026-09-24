@@ -16,7 +16,13 @@ export async function POST(request: Request) {
     const db = await getDb();
     await deleteSession(db, token);
   }
-  const response = NextResponse.json({ ok: true });
+  // A plain HTML form post (no script, or a form elsewhere) gets a page to
+  // land on instead of a raw JSON body; fetch callers keep the JSON answer.
+  const type = request.headers.get("content-type") ?? "";
+  const formPost = /^(application\/x-www-form-urlencoded|multipart\/form-data)/i.test(type);
+  const response = formPost
+    ? new NextResponse(null, { status: 303, headers: { Location: "/" } })
+    : NextResponse.json({ ok: true });
   const secure = requestIsSecure(request);
   response.headers.append("Set-Cookie", sessionCookie(null, secure));
   response.headers.append("Set-Cookie", clearWhoCookie(secure));

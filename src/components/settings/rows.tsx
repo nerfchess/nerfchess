@@ -46,6 +46,8 @@ import { SettingRow } from "@/components/settings/SettingRow";
 import { EmailPrefsRow } from "@/components/settings/EmailPrefsRow";
 import { GhostButton, Select, Slider, Toggle } from "@/components/settings/controls";
 import { Button, LinkButton } from "@/components/ui/Button";
+import { logout } from "@/lib/authClient";
+import { useSession } from "@/lib/session/SessionProvider";
 // The carved-recess control styling (toggle track, range channel) is authored
 // once in this stylesheet. It used to be imported by the panel alone, which is
 // why the controls only looked right inside the modal; it belongs with the
@@ -68,7 +70,7 @@ export function useSettingsModel(): { settings: Settings; update: (patch: Partia
 
   // Subscribe only. The initial value is read during render above, so there is
   // nothing to catch up on here, and setState happens exclusively in the event
-  // callback — which is what an effect is for (and what
+  // callback, which is what an effect is for (and what
   // react-hooks/set-state-in-effect asks for).
   useEffect(() => {
     const sync = () => setSettings(loadSettings());
@@ -783,6 +785,28 @@ function PieceColorPicker({
 /** Account section: live actions where the platform supports them today,
  *  clearly-labelled placeholders for the rest so the section is ready to grow. */
 function AccountSettings() {
+  // display is known on the first paint (the nc_who hint). null means no
+  // session yet: the header mints a guest for that visitor, so it gets the
+  // guest row too. A guest has no password, so logging out would lose the
+  // account for good; the header menu already hides Sign out for guests.
+  const { display } = useSession();
+  const isGuest = display === null || !!display?.isGuest;
+  const [leaving, setLeaving] = useState(false);
+  const [logoutError, setLogoutError] = useState<string | null>(null);
+
+  const handleLogout = async () => {
+    if (leaving) return;
+    setLeaving(true);
+    setLogoutError(null);
+    try {
+      await logout();
+      window.location.assign("/");
+    } catch {
+      setLeaving(false);
+      setLogoutError("Could not log out. Check your connection and try again.");
+    }
+  };
+
   return (
     <div className="space-y-2">
       <div className="flex min-h-[44px] items-center justify-between gap-3 rounded-none border border-[color:var(--edge)] bg-[color:var(--bg-zebra)] p-2.5">
@@ -791,7 +815,7 @@ function AccountSettings() {
           <p className="text-[13px] text-parchment-400">Avatar, bio, and game history</p>
         </div>
         <LinkButton tone="ghost"
-          href="/profile"
+          href="/profile/edit"
           className="shrink-0 px-3 py-1.5 text-[13px]">
           Edit profile
         </LinkButton>
@@ -802,26 +826,53 @@ function AccountSettings() {
         { label: "Change password", hint: "Not available yet" },
         { label: "Log out of all devices", hint: "Coming soon" },
       ].map((item) => (
+        // Not controls, so no disabled styling: the badge says they are not
+        // here yet, and the text keeps full contrast (axe color-contrast at
+        // opacity-70, wave 2 account 4).
         <div
           key={item.label}
-          className="flex min-h-[44px] items-center justify-between gap-3 rounded-none border border-[color:var(--edge)] bg-transparent p-2.5 opacity-70"
+          className="flex min-h-[44px] items-center justify-between gap-3 rounded-none border border-[color:var(--edge)] bg-transparent p-2.5"
         >
           <div className="text-[13px] font-medium text-parchment-300">{item.label}</div>
           <span
             className="rune-badge shrink-0"
-            style={{ ["--badge-rgb" as string]: "152 145 127" }}
+            // The theme's primary text triple: the old 152 145 127 measured
+            // 4.26:1 on the row at 12px (axe, wave 2 account 4).
+            style={{ ["--badge-rgb" as string]: "var(--text-primary-rgb)" }}
           >
             {item.hint}
           </span>
         </div>
       ))}
-      <form action="/api/auth/logout" method="post">
-        <Button tone="danger"
-          type="submit"
-          className="w-full px-3 py-2 text-[13px] font-semibold">
-          Log out
-        </Button>
-      </form>
+      {isGuest ? (
+        <div className="flex min-h-[44px] flex-col gap-2 rounded-none border border-[color:var(--edge)] bg-[color:var(--bg-zebra)] p-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+          <div className="min-w-0">
+            <div className="text-[13px] font-medium text-parchment-100">Guest account</div>
+            <p className="text-[13px] text-parchment-400">
+              Create an account to keep your games and rating. A guest cannot sign back in.
+            </p>
+          </div>
+          <LinkButton tone="ghost"
+            href="/login?upgrade=1"
+            className="shrink-0 px-3 py-1.5 text-[13px]">
+            Create account
+          </LinkButton>
+        </div>
+      ) : (
+        <div>
+          <Button tone="danger"
+            type="button"
+            onClick={handleLogout}
+            disabled={leaving}
+            aria-busy={leaving || undefined}
+            className="w-full px-3 py-2 text-[13px] font-semibold">
+            {leaving ? "Logging out" : "Log out"}
+          </Button>
+          <p role="status" className={"text-[13px] text-oxblood-glow" + (logoutError ? " mt-1" : "")}>
+            {logoutError}
+          </p>
+        </div>
+      )}
     </div>
   );
 }
