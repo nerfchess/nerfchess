@@ -1,0 +1,120 @@
+  /faq  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  16406ms
+  /faq  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0396 (sum 0.042, 1 >0.01)  4276ms
+  /faq  360x780|dark|full|user|normal  HTTP 200  CLS 0.0025 (sum 0.0026, 0 >0.01)  3920ms
+  /faq  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0396 (sum 0.041, 1 >0.01)  4020ms
+  /guide/how-to-play  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0.0013 (sum 0.0025, 0 >0.01)  6906ms
+  /guide/how-to-play  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0121 (sum 0.0144, 1 >0.01)  4134ms
+  /guide/how-to-play  360x780|dark|full|user|normal  HTTP 200  CLS 0.0025 (sum 0.0037, 0 >0.01)  3966ms
+  /guide/how-to-play  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0121 (sum 0.0135, 1 >0.01)  4318ms
+  /terms-of-service  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0.0154 (sum 0.0168, 1 >0.01)  7941ms
+  /terms-of-service  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0027 (sum 0.0027, 0 >0.01)  2765ms
+  /terms-of-service  360x780|dark|full|user|normal  HTTP 200  CLS 0.0154 (sum 0.0179, 1 >0.01)  27492ms
+  /terms-of-service  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0027 (sum 0.0041, 0 >0.01)  8033ms
+  /tutorial  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0.0013 (sum 0.0013, 0 >0.01)  6866ms
+  /tutorial  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0352 (sum 0.0379, 1 >0.01)  55372ms
+  /tutorial  360x780|dark|full|user|normal  HTTP 200  CLS 0.0025 (sum 0.0025, 0 >0.01)  4075ms
+  /tutorial  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0366 (sum 0.0366, 1 >0.01)  3634ms
+  /updates  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0.0013 (sum 0.0013, 0 >0.01)  6578ms
+  /updates  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0028 (sum 0.0031, 0 >0.01)  3908ms
+  /updates  360x780|dark|full|user|normal  HTTP 200  CLS 0.0025 (sum 0.0025, 0 >0.01)  3655ms
+  /updates  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0014 (sum 0.0017, 0 >0.01)  2789ms
+  /guide/chess-roguelike  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0.0013 (sum 0.0019, 0 >0.01)  6617ms
+  /guide/chess-roguelike  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0934 (sum 0.096, 1 >0.01)  17637ms
+  /guide/chess-roguelike  360x780|dark|full|user|normal  HTTP 200  CLS 0.0025 (sum 0.0031, 0 >0.01)  4490ms
+  /guide/chess-roguelike  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0934 (sum 0.0948, 1 >0.01)  3944ms
+  /guide/chess-with-power-ups  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0.0013 (sum 0.0013, 0 >0.01)  7333ms
+  /guide/chess-with-power-ups  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.1081 (sum 0.1105, 1 >0.01)  4166ms
+  /guide/chess-with-power-ups  360x780|dark|full|user|normal  HTTP 200  CLS 0.0025 (sum 0.0025, 0 >0.01)  3839ms
+  /guide/chess-with-power-ups  1280x800|dark|full|user|normal  HTTP 200  CLS 0.1081 (sum 0.1095, 1 >0.01)  3990ms
+  /guide/nerf-mode  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0.0133 (sum 0.0146, 1 >0.01)  6189ms
+  /guide/nerf-mode  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0029 (sum 0.0044, 0 >0.01)  3848ms
+  /guide/nerf-mode  360x780|dark|full|user|normal  HTTP 200  CLS 0.0158 (sum 0.0158, 1 >0.01)  3674ms
+  /guide/nerf-mode  1280x800|dark|full|user|normal  HTTP 200  CLS 0.003 (sum 0.003, 0 >0.01)  3659ms
+  /guide/capture-the-king  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0.0141 (sum 0.0154, 1 >0.01)  6573ms
+  /guide/capture-the-king  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0049 (sum 0.0078, 0 >0.01)  3938ms
+  /guide/capture-the-king  360x780|dark|full|user|normal  HTTP 200  CLS 0.0166 (sum 0.0166, 1 >0.01)  3654ms
+  /guide/capture-the-king  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0049 (sum 0.0063, 0 >0.01)  8899ms
+  /guide/chess-variants  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0.0077 (sum 0.009, 0 >0.01)  23438ms
+  /guide/chess-variants  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0062 (sum 0.0091, 0 >0.01)  4637ms
+  /guide/chess-variants  360x780|dark|full|user|normal  HTTP 200  CLS 0.0077 (sum 0.0102, 0 >0.01)  8281ms
+  /guide/chess-variants  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0062 (sum 0.0076, 0 >0.01)  8172ms
+  /guide/glossary  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0.0013 (sum 0.0016, 0 >0.01)  11020ms
+  /guide/glossary  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0033 (sum 0.0039, 0 >0.01)  70055ms
+  /guide/glossary  360x780|dark|full|user|normal  HTTP 200  CLS 0.0025 (sum 0.0028, 0 >0.01)  4506ms
+  /guide/glossary  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0014 (sum 0.002, 0 >0.01)  5531ms
+  /privacy-policy  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0.0013 (sum 0.0019, 0 >0.01)  4164ms
+  /privacy-policy  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.003 (sum 0.0046, 0 >0.01)  4379ms
+  /privacy-policy  360x780|dark|full|user|normal  HTTP 200  CLS 0.0025 (sum 0.0031, 0 >0.01)  3957ms
+  /privacy-policy  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0016 (sum 0.003, 0 >0.01)  3971ms
+  /codex/buff/pawn_push  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0.0013 (sum 0.0017, 0 >0.01)  43093ms
+  /codex/buff/pawn_push  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0023 (sum 0.0031, 0 >0.01)  8923ms
+  /codex/buff/pawn_push  360x780|dark|full|user|normal  HTTP 200  CLS 0.0025 (sum 0.0025, 0 >0.01)  4921ms
+  /codex/buff/pawn_push  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0014 (sum 0.0017, 0 >0.01)  4102ms
+  /codex/boon/extra_glance  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  27850ms
+  /codex/boon/extra_glance  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0023 (sum 0.0031, 0 >0.01)  24380ms
+  /codex/boon/extra_glance  360x780|dark|full|user|normal  HTTP 200  CLS 0.0025 (sum 0.0025, 0 >0.01)  8293ms
+  /codex/boon/extra_glance  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0014 (sum 0.0017, 0 >0.01)  4666ms
+  /faq  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0.0013 (sum 0.0014, 0 >0.01)  15295ms
+  /faq  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0396 (sum 0.0424, 1 >0.01)  4618ms
+  /faq  360x780|dark|full|user|normal  HTTP 200  CLS 0.0025 (sum 0.0026, 0 >0.01)  3035ms
+  /faq  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0396 (sum 0.041, 1 >0.01)  2816ms
+  /guide/how-to-play  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0.0013 (sum 0.0025, 0 >0.01)  14226ms
+  /guide/how-to-play  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0121 (sum 0.0148, 1 >0.01)  4213ms
+  /guide/how-to-play  360x780|dark|full|user|normal  HTTP 200  CLS 0.0025 (sum 0.0037, 0 >0.01)  3996ms
+  /guide/how-to-play  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0121 (sum 0.0135, 1 >0.01)  5144ms
+  /terms-of-service  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0.0154 (sum 0.0168, 1 >0.01)  16114ms
+  /terms-of-service  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0029 (sum 0.0056, 0 >0.01)  4513ms
+  /terms-of-service  360x780|dark|full|user|normal  HTTP 200  CLS 0.0154 (sum 0.0179, 1 >0.01)  3690ms
+  /terms-of-service  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0041 (sum 0.0041, 0 >0.01)  9568ms
+  /tutorial  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0.0013 (sum 0.0013, 0 >0.01)  12347ms
+  /tutorial  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0352 (sum 0.0376, 1 >0.01)  4496ms
+  /tutorial  360x780|dark|full|user|normal  HTTP 200  CLS 0.0025 (sum 0.0025, 0 >0.01)  4191ms
+  /tutorial  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0352 (sum 0.0366, 1 >0.01)  4986ms
+  /updates  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0.0013 (sum 0.0013, 0 >0.01)  11815ms
+  /updates  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0028 (sum 0.0031, 0 >0.01)  4408ms
+  /updates  360x780|dark|full|user|normal  HTTP 200  CLS 0.0025 (sum 0.0025, 0 >0.01)  2683ms
+  /updates  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0014 (sum 0.0017, 0 >0.01)  4017ms
+  /guide/chess-roguelike  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0.0013 (sum 0.0019, 0 >0.01)  7878ms
+  /guide/chess-roguelike  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0934 (sum 0.0958, 1 >0.01)  4213ms
+  /guide/chess-roguelike  360x780|dark|full|user|normal  HTTP 200  CLS 0.0025 (sum 0.0031, 0 >0.01)  4225ms
+  /guide/chess-roguelike  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0934 (sum 0.0948, 1 >0.01)  3148ms
+  /guide/chess-with-power-ups  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0.0013 (sum 0.0013, 0 >0.01)  7038ms
+  /guide/chess-with-power-ups  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.1081 (sum 0.1112, 1 >0.01)  4418ms
+  /guide/chess-with-power-ups  360x780|dark|full|user|normal  HTTP 200  CLS 0.0025 (sum 0.0025, 0 >0.01)  3467ms
+  /guide/chess-with-power-ups  1280x800|dark|full|user|normal  HTTP 200  CLS 0.1081 (sum 0.1095, 1 >0.01)  2719ms
+  /guide/nerf-mode  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0.0133 (sum 0.0146, 1 >0.01)  4877ms
+  /guide/chess-variants  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0062 (sum 0.0091, 0 >0.01)  47684ms
+  /guide/chess-variants  360x780|dark|full|user|normal  HTTP 200  CLS 0.0077 (sum 0.0102, 0 >0.01)  5131ms
+  /guide/chess-variants  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0062 (sum 0.0076, 0 >0.01)  3862ms
+  /guide/glossary  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0.0002 (sum 0.0002, 0 >0.01)  29322ms
+  /guide/glossary  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0027 (sum 0.0033, 0 >0.01)  31520ms
+  /guide/glossary  360x780|dark|full|user|normal  HTTP 200  CLS 0.0025 (sum 0.0028, 0 >0.01)  14980ms
+  /guide/glossary  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0014 (sum 0.002, 0 >0.01)  4298ms
+  /privacy-policy  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0.0013 (sum 0.0019, 0 >0.01)  9790ms
+  /privacy-policy  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0024 (sum 0.004, 0 >0.01)  4426ms
+  /privacy-policy  360x780|dark|full|user|normal  HTTP 200  CLS 0.0025 (sum 0.0031, 0 >0.01)  3855ms
+  /privacy-policy  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0016 (sum 0.003, 0 >0.01)  3862ms
+  /codex/buff/pawn_push  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0 (sum 0, 0 >0.01)  57651ms
+  /codex/buff/pawn_push  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0027 (sum 0.0034, 0 >0.01)  10565ms
+  /codex/buff/pawn_push  360x780|dark|full|user|normal  HTTP 200  CLS 0.0025 (sum 0.0025, 0 >0.01)  4605ms
+  /codex/buff/pawn_push  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0014 (sum 0.0014, 0 >0.01)  3424ms
+  /codex/boon/extra_glance  360x780|dark|full|signed-out|normal  HTTP 200  CLS 0.0013 (sum 0.0017, 0 >0.01)  25891ms
+  /codex/boon/extra_glance  1280x800|dark|full|signed-out|normal  HTTP 200  CLS 0.0025 (sum 0.0033, 0 >0.01)  5421ms
+  /codex/boon/extra_glance  360x780|dark|full|user|normal  HTTP 200  CLS 0.0025 (sum 0.0025, 0 >0.01)  17662ms
+  /codex/boon/extra_glance  1280x800|dark|full|user|normal  HTTP 200  CLS 0.0014 (sum 0.0022, 0 >0.01)  12993ms
+  FAIL  /faq|1280x800|dark|full|signed-out|normal  CLS 0.0396  ceiling 0.01  top: section#what-are-the-two-modes.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p dy -24
+  FAIL  /faq|1280x800|dark|full|user|normal  CLS 0.0396  ceiling 0.01  top: section#what-are-the-two-modes.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p dy -24
+  debt  /guide/how-to-play|1280x800|dark|full|signed-out|normal  CLS 0.0121  ceiling 0.01  top: main.min-h-screen.pb-20 > nav.site-nav > div.site-nav-brand > div.ml-2.hidden.items-center dy 0
+  debt  /guide/how-to-play|1280x800|dark|full|user|normal  CLS 0.0121  ceiling 0.01  top: main.min-h-screen.pb-20 > nav.site-nav > div.site-nav-brand > div.ml-2.hidden.items-center dy 0
+  FAIL  /terms-of-service|360x780|dark|full|signed-out|normal  CLS 0.0154  ceiling 0.01  top: section#using-the-service.plate.scroll-mt-20 dy -24
+  FAIL  /terms-of-service|360x780|dark|full|user|normal  CLS 0.0154  ceiling 0.01  top: section#using-the-service.plate.scroll-mt-20 dy -24
+  FAIL  /tutorial|1280x800|dark|full|signed-out|normal  CLS 0.0352  ceiling 0.01  top: main.min-h-screen.pb-20 > nav.site-nav > div.site-nav-brand > div.ml-2.hidden.items-center dy 0
+  FAIL  /tutorial|1280x800|dark|full|user|normal  CLS 0.0352  ceiling 0.01  top: main.min-h-screen.pb-20 > nav.site-nav > div.site-nav-brand > div.ml-2.hidden.items-center dy 0
+  FAIL  /guide/chess-roguelike|1280x800|dark|full|signed-out|normal  CLS 0.0934  ceiling 0.01  top: section#escalating-power-like-a-run.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p dy -25
+  FAIL  /guide/chess-roguelike|1280x800|dark|full|user|normal  CLS 0.0934  ceiling 0.01  top: section#escalating-power-like-a-run.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p dy -25
+  FAIL  /guide/chess-with-power-ups|1280x800|dark|full|signed-out|normal  CLS 0.1081  ceiling 0.01  top: section#how-the-power-ups-work.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p dy 0
+  FAIL  /guide/chess-with-power-ups|1280x800|dark|full|user|normal  CLS 0.1081  ceiling 0.01  top: section#how-the-power-ups-work.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p dy 0
+  debt  /guide/nerf-mode|360x780|dark|full|signed-out|normal  CLS 0.0133  ceiling 0.01  top: section#how-a-nerf-mode-game-starts.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 dy -26
+  FAIL  /guide/nerf-mode|360x780|dark|full|user|normal  CLS 0.0158  ceiling 0.01  top: section#how-a-nerf-mode-game-starts.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 dy -26
+  debt  /guide/capture-the-king|360x780|dark|full|signed-out|normal  CLS 0.0141  ceiling 0.01  top: section#what-capture-the-king-means.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 dy -26
+  FAIL  /guide/capture-the-king|360x780|dark|full|user|normal  CLS 0.0166  ceiling 0.01  top: section#what-capture-the-king-means.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 dy -26
