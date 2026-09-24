@@ -374,7 +374,7 @@ export function PuzzleRunner({
             {puzzle.rule.description}
           </p>
           {ruleView.progress && (
-            <p className="mt-1.5 font-mono text-[12px] tabular-nums text-parchment-400">
+            <p className="mt-1.5 font-mono text-[13px] tabular-nums text-parchment-400">
               {ruleView.progress.label}
             </p>
           )}
@@ -411,7 +411,7 @@ export function PuzzleRunner({
             {GOAL[puzzle.format](puzzle)}
           </p>
           {puzzle.format !== "only-move" && phase === "play" && (
-            <p className="mt-1.5 font-mono text-[12px] tabular-nums text-parchment-400">
+            <p className="mt-1.5 font-mono text-[13px] tabular-nums text-parchment-400">
               {heroDone} of {heroPlies} moves played
             </p>
           )}

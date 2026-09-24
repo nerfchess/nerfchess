@@ -333,8 +333,10 @@ export function SiteHeader({ active }: { active?: string }) {
             a finger. A min-height (not padding) lifts it to the 44px floor
             without moving the mark or changing the 48/60px bar height, and it
             steps back down once there is a real pointer. `(pointer: fine)`,
-            never `sm:`: a 1024px tablet is a touch device. */}
-        <Logo className="min-h-[44px] [@media(pointer:fine)]:min-h-0" />
+            never `sm:`: a 1024px tablet is a touch device. The min-width
+            covers a narrow bar, where the word steps out of view (af0c696)
+            and the link would otherwise be the 34px mark alone. */}
+        <Logo className="min-h-[44px] min-w-[44px] [@media(pointer:fine)]:min-h-0 [@media(pointer:fine)]:min-w-0" />
         <div className="ml-2 hidden items-center font-body md:flex">
           {NAV_LINKS.map((link) =>
             link.menu ? (
