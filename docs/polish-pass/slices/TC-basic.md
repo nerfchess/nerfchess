@@ -8,8 +8,8 @@ Evidence: `docs/polish-pass/evidence/TC-basic/` (`before/<id>.png`, `after/<id>.
 
 | Row | Status | Evidence | Commit | Note |
 |---|---|---|---|---|
-| F225 | DONE | `before/` and `after/` strips for all 27 tier 5 and 6 cards in the module | bb42b1e | Every live tier 5 and 6 card in basicPlays (26, plus the heavy_boots nerf) left the tier 1-4 micro-templates for its own rule scene. No stopgap tier accent was needed: the cards no longer share a template at all. ww_high_ground already had its bespoke scene and is unchanged. |
-| Tier C family 7 (basicPlays) | PARTIAL | this file | bb42b1e | 63 cards moved to card-specific rule scenes: the 27 tier 5 and 6 cards and all 36 tier 1 cards. Tiers 2 to 4 (193 cards) still ride the templates; see where I stopped. |
+| F225 | DONE | `before/` and `after/` strips for all 26 tier 5 and 6 cards in the module | bb42b1e | Every live tier 5 and 6 card in basicPlays (26) left the tier 1-4 micro-templates for its own rule scene. No stopgap tier accent was needed: the cards no longer share a template at all. ww_high_ground already had its bespoke scene and is unchanged. |
+| Tier C family 7 (basicPlays) | PARTIAL | this file | bb42b1e | 63 cards moved to card-specific rule scenes: the 26 tier 5 and 6 cards and 37 tier 1 cards (the 36 first listed plus heavy_boots, which round 1 had wrongly counted as a tier 5 nerf). Tiers 2 to 4 (193 cards) still ride the templates; see where I stopped. |
 
 ## How the rule scenes work
 
@@ -62,7 +62,7 @@ Off check: `after/<id>.off.png`, pass means nothing arrives late with animations
 | ferz_king | T1 | REVAMPED | the king takes a two-square diagonal jump to an empty square, twice a game; the diagonal with an enemy on it is not his to take. | `before/ferz_king.png` | `after/ferz_king.png` | pass | bb42b1e |
 | ghost_pawn | T1 | REVAMPED | the pawn goes pale and walks two squares straight through the enemy piece in front of it, which is left untouched. | `before/ghost_pawn.png` | `after/ghost_pawn.png` | pass | bb42b1e |
 | half_step | T1 | REVAMPED | the pawn steps diagonally forward onto an empty square, with no capture (the enemy on the other diagonal is not taken); two charges. | `before/half_step.png` | `after/half_step.png` | pass | bb42b1e |
-| heavy_boots | T5 (nerf) | REVAMPED | iron boots are strapped on; the rook plods three squares and stops, and everything past three is struck out. Pawns walk as they always did. | `before/heavy_boots.png` | `after/heavy_boots.png` | pass | bb42b1e |
+| heavy_boots | T1 (buff, hex) | REVAMPED | an iron boot drops onto an enemy pawn on its home rank; weighed down it plods one square, the two-square step is a dashed ghost that is struck out, and three pips count the opponent's turns. Quicksand Patch (same ban, 2 turns) swallows the landing square instead; here the weight rides on the pawn. | `before/heavy_boots.png` | `after/heavy_boots.png` | pass | d203575 (bb42b1e drew the wrong rule) |
 | knock_knees | T1 | REVAMPED | the rim of the board is fenced off; an enemy knight's leap to the edge buckles and it is thrown back, three of their turns. | `before/knock_knees.png` | `after/knock_knees.png` | pass | bb42b1e |
 | little_leap | T1 | REVAMPED | the pawn springs over the single piece blocking it and lands on the square beyond; two charges. | `before/little_leap.png` | `after/little_leap.png` | pass | bb42b1e |
 | long_knight | T1 | REVAMPED | one knight makes two knight leaps in a single move; the first landing is only a stepping stone. | `before/long_knight.png` | `after/long_knight.png` | pass | bb42b1e |
@@ -89,7 +89,7 @@ Off check: `after/<id>.off.png`, pass means nothing arrives late with animations
 
 ## Guards (after the commit)
 
-tsc: no errors in basicPlays.tsx. eslint on basicPlays.tsx clean. test:scene-complexity PASS (0 below the floor; the first draft had 26 scenes short of a tell or a geometry-driven layer, all fixed in the scenes themselves, not in the guard), test:animations PASS (0 shared flagships), test:anim-props clean, test:reduced-motion OK, test:rounded OK, test:emdash OK, test:sound OK, check-vfx-coverage OK, check-sig-plugins OK (PLAYS order kept), audit-bespoke-coverage (0 on the generated fallback, via test:animations), test:passive-registry PASS. No guard was changed.
+tsc: no errors in basicPlays.tsx. eslint on basicPlays.tsx clean. test:scene-complexity PASS (at the baseline; the 2 scenes below the floor are the core SanctRiseBurst and GodKnightBurst from c95cd25, not basicPlays; the first draft had 26 scenes short of a tell or a geometry-driven layer, all fixed in the scenes themselves, not in the guard), test:animations PASS (0 shared flagships), test:anim-props reports nothing in basicPlays (it lists 2 stale baseline entries in fruition.css, another slice's), test:reduced-motion OK, test:rounded OK, test:emdash OK, test:sound OK, check-vfx-coverage OK, check-sig-plugins OK (PLAYS order kept), audit-bespoke-coverage (0 on the generated fallback, via test:animations), test:passive-registry PASS. No guard was changed.
 
 ## Where I stopped
 
@@ -98,4 +98,10 @@ Stopped at a clean commit (bb42b1e). Done: F225 (all tier 5 and 6 cards) and eve
 ## REQUESTS
 
 - Slice J (cast banner and CastEscalation): the name banner still sits across the opponent's ranks 7 and 8 for most of the play, and the tier 5+ cast ring still plays over every scene at about 200 to 500ms (visible in the after strips). Scenes whose rule lives on the opponent's back ranks (Drawbridge, Cold Open, Puck's Mischief, Statue Stable's walnuts, Disjunction's pocket, Hard Frost when cast on rank 7) are partly under the banner by the rule's nature.
-- Integrator: the ledger's "22 live T5-6" for basicPlays is 26 live tier 5 and 6 cards (plus ww_high_ground, already bespoke, and the tier 5 heavy_boots nerf, done here) by `card-strip.ts --module basicPlays --tier 6,5 --list`.
+- Integrator: the ledger's "22 live T5-6" for basicPlays is 26 live tier 5 and 6 cards (plus ww_high_ground, already bespoke) by `card-strip.ts --module basicPlays --tier 6,5 --list`.
+
+## Review round 1
+
+- Blocking, fixed in d203575: Heavy Boots. Plays are keyed by card id and fire for the BUFF of that id (BUFF_BY_ID), so the `heavy_boots` play belongs to the tier 1 hex in `src/engine/buffs/library.ts` ("Your opponent's pawns cannot double-step for their next 3 turns"), not the tier 5 nerf of the same id in `src/engine/nerfs/extras.ts`. The round 1 scene drew the nerf (a rook limited to three squares) and even showed a free pawn double-step. The new scene: an enemy pawn on its home rank gets an iron boot dropped onto it, plods one square (dust puffs on landing), the two-square destination shows a dashed ghost pawn that is struck out, and three pips sit beside it. Palette, device, config and sound are unchanged. After strip and off check recaptured (`after/heavy_boots.png`, `after/heavy_boots.off.png`, off pass); a 300px review strip confirmed the boot, the one-square step and the struck-out ghost read at a glance. The F225 and family 7 rows above are corrected: 26 tier 5 and 6 cards, 37 tier 1 cards.
+- Guards after d203575: tsc shows no basicPlays errors, eslint clean, test:scene-complexity PASS (at baseline 2, both core scenes), test:animations PASS, test:anim-props nothing in basicPlays, test:reduced-motion OK, test:rounded OK, test:emdash OK, test:sound OK, check-vfx-coverage OK, check-sig-plugins OK, test:passive-registry PASS. No guard changed.
+- Nits not taken this round (left for the tier 4 pass): Disjunction pocket ordinals under the 13px floor on phones, fixed screen files in board-frame scenes for a black caster, Duelist contrast on light squares.
