@@ -3013,10 +3013,11 @@ function WorldgateRule({ lead, role, delayMs }: SceneProps) {
 /* --- hx4_chain_gang ----------------------------------------------------------------
    "On your opponent's next turn, every piece they own may move at most 1
    square, except their single most valuable piece, which the chains spare.
-   King captures are always allowed." A chain is run along their army; their
-   f6 knight's usual leap to e4 is barred and only the eight squares round it
-   are left lit; the chain's link at the queen (d8, their most valuable) is
-   struck open and she is ringed free; one pip. */
+   King captures are always allowed." The limit is Chebyshev distance, so a
+   knight (always two away) cannot move at all. A chain is run along their
+   army; their e6 rook's long slide to e3 is barred, and only the one-square
+   step to e5 is left lit (dashed); the chain's link at the queen (d8, their
+   most valuable) is struck open and she is ringed free; one pip. */
 const C_CGR = { core: "#a8b0bc", glow: "#fff0d6", deep: "#171c24" };
 
 function ChainGangRule({ lead, role, delayMs }: SceneProps) {
@@ -3026,14 +3027,14 @@ function ChainGangRule({ lead, role, delayMs }: SceneProps) {
   return (
     <Brd>
       <Q x="50%" y={rk(6.5)} w={100} h={2.4} cls="g44-r-draw" delayMs={d + 20} v={{ "--gd": "2.1s" }} style={{ background: `repeating-linear-gradient(90deg, transparent 0 2px, ${c.core} 2px 12px, transparent 12px 14px)`, border: `1px solid ${c.deep}`, borderRadius: "999px" }} />
-      <Q x={fc(5)} y={rk(5)} w={11} h={11} cls="g44-r-in" delayMs={d + 200} v={{ "--gd": "1.9s", "--s0": "1" }}>
-        <Man kind="n" fill={c.deep} stroke={c.core} />
+      <Q x={fc(4)} y={rk(5)} w={11} h={11} cls="g44-r-in" delayMs={d + 200} v={{ "--gd": "1.9s", "--s0": "1" }}>
+        <Man kind="r" fill={c.deep} stroke={c.core} />
       </Q>
-      <Thread c0={5} r0={5} c1={4} r1={3} color={c.glow} delayMs={d + 360} gd="1s" />
-      <Q x={fc(4)} y={rk(3)} w={7} h={7} cls="g44-r-stamp" delayMs={d + 600} v={{ "--gd": "1.2s" }}>
+      <Thread c0={4} r0={5} c1={4} r1={2} color={c.glow} delayMs={d + 360} gd="1s" />
+      <Q x={fc(4)} y={rk(2)} w={7} h={7} cls="g44-r-stamp" delayMs={d + 600} v={{ "--gd": "1.2s" }}>
         <Bar c={c} />
       </Q>
-      <Q x={fc(5)} y={rk(5)} w={37.5} h={37.5} cls="g44-r-in" delayMs={d + 700} v={{ "--gd": "1.3s", "--s0": "1.1" }} style={{ border: `2px dashed ${c.glow}`, background: "rgba(255,240,214,0.12)" }} />
+      <Q x={fc(4)} y={rk(4)} w={12.5} h={12.5} cls="g44-r-in" delayMs={d + 700} v={{ "--gd": "1.3s", "--s0": "1.1" }} style={{ border: `2px dashed ${c.glow}`, background: "rgba(255,240,214,0.12)" }} />
       <Q x={QUEEN_X} y={rk(6.5)} w={5} h={5} cls="g44-r-part" delayMs={d + 900} v={{ "--gd": "0.8s", "--tx1": "0%", "--ty1": "calc(var(--fx-side, 1) * 200%)", "--r1": "60deg" }} style={{ border: `2px solid ${c.core}`, borderRadius: "40%" }} />
       <Q x={QUEEN_X} y={rk(7)} w={13} h={13} cls="g44-r-pip" delayMs={d + 960} v={{ "--gd": "1.1s" }} style={{ border: `2.5px solid ${c.glow}`, borderRadius: "50%" }} />
       <Q x="8%" y={rk(4.5)} w={3} h={3} cls="g44-r-pip" delayMs={d + 1100} v={{ "--gd": "1s" }} style={{ background: c.glow, borderRadius: "50%" }} />

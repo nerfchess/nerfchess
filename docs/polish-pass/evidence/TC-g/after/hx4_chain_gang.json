@@ -31,22 +31,22 @@
  },
  "stageError": null,
  "durationMs": {
-  "visualMs": 2362,
-  "cssEndMs": 3436,
+  "visualMs": 2382,
+  "cssEndMs": 3453,
   "settled": true,
   "windowMs": 3600,
   "cssAnimations": 19,
   "infiniteAnimations": 0
  },
  "screencast": {
-  "framesInWindow": 166,
-  "maxGapMs": 290.7
+  "framesInWindow": 204,
+  "maxGapMs": 71.8
  },
  "raf": {
-  "frames": 215,
+  "frames": 213,
   "medianMs": 16.7,
-  "maxMs": 33.4,
-  "dropped": 3
+  "maxMs": 50,
+  "dropped": 6
  },
  "longAnimationFrames": {
   "count": 0,
@@ -56,16 +56,16 @@
  },
  "tiles": [
   0,
-  182,
-  463,
-  800,
-  1180,
-  1595,
-  2040,
-  2512
+  183,
+  467,
+  807,
+  1189,
+  1608,
+  2056,
+  2532
  ],
  "png": "docs/polish-pass/evidence/TC-g/after/hx4_chain_gang.png",
- "pngBytes": 21367,
+ "pngBytes": 22006,
  "off": {
   "url": "/dev/plays?id=hx4_chain_gang&anim=off&bare=1",
   "pass": true,
