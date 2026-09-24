@@ -1,0 +1,100 @@
+{
+ "id": "checkmate_denial",
+ "url": "/dev/plays?id=checkmate_denial&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "checkmate_denial",
+  "name": "Checkmate Denial",
+  "tier": 7,
+  "category": "protection",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:checkmate_denial",
+  "anchor": "cast",
+  "source": "kingSafe",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, kingSafe diff",
+  "castSq": "e1",
+  "targets": [
+   "e1"
+  ],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2585,
+  "cssEndMs": 3547,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 60,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 206,
+  "maxGapMs": 49.4
+ },
+ "raf": {
+  "frames": 294,
+  "medianMs": 16.7,
+  "maxMs": 66.7,
+  "dropped": 17
+ },
+ "longAnimationFrames": {
+  "count": 3,
+  "worstMs": 66,
+  "totalBlockingMs": 3,
+  "entries": [
+   {
+    "atMs": 10,
+    "duration": 58,
+    "blocking": 1,
+    "scripts": [
+     {
+      "duration": 6,
+      "invoker": "TimerHandler:setInterval",
+      "source": ""
+     }
+    ]
+   },
+   {
+    "atMs": 100,
+    "duration": 66,
+    "blocking": 2,
+    "scripts": []
+   },
+   {
+    "atMs": 216,
+    "duration": 63,
+    "blocking": 0,
+    "scripts": [
+     {
+      "duration": 7,
+      "invoker": "TimerHandler:setInterval",
+      "source": ""
+     }
+    ]
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  311,
+  794,
+  1372,
+  2024,
+  2735
+ ],
+ "png": "docs/polish-pass/evidence/TC-god/before/checkmate_denial.png",
+ "pngBytes": 19339
+}

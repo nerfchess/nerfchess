@@ -1,0 +1,112 @@
+{
+ "id": "throne_and_silence",
+ "url": "/dev/plays?id=throne_and_silence&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "throne_and_silence",
+  "name": "Throne and Silence",
+  "tier": 7,
+  "category": "hex",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:throne_and_silence",
+  "anchor": "board",
+  "source": "stun",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 55,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, stun diff",
+  "castSq": "e8",
+  "targets": [
+   "e8"
+  ],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2515,
+  "cssEndMs": 3459,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 61,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 163,
+  "maxGapMs": 315.6
+ },
+ "raf": {
+  "frames": 169,
+  "medianMs": 16.7,
+  "maxMs": 433.3,
+  "dropped": 49
+ },
+ "longAnimationFrames": {
+  "count": 6,
+  "worstMs": 396,
+  "totalBlockingMs": 360,
+  "entries": [
+   {
+    "atMs": -52,
+    "duration": 57,
+    "blocking": 4,
+    "scripts": []
+   },
+   {
+    "atMs": 26,
+    "duration": 74,
+    "blocking": 23,
+    "scripts": []
+   },
+   {
+    "atMs": 486,
+    "duration": 59,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 721,
+    "duration": 52,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 791,
+    "duration": 396,
+    "blocking": 333,
+    "scripts": [
+     {
+      "duration": 379,
+      "invoker": "http://localhost:3000/_next/static/chunks/_app-pages-browser_src_components_effe...",
+      "source": "/_next/static/chunks/_app-pages-browser_src_components_effects_board3d_engine3d_ts.js"
+     }
+    ]
+   },
+   {
+    "atMs": 1271,
+    "duration": 53,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  303,
+  774,
+  1337,
+  1972,
+  2665
+ ],
+ "png": "docs/polish-pass/evidence/TC-god/before/throne_and_silence.png",
+ "pngBytes": 21596
+}
