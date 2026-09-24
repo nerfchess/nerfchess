@@ -1,0 +1,76 @@
+{
+ "id": "bw3_mummers_dance",
+ "url": "/dev/plays?id=bw3_mummers_dance&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "bw3_mummers_dance",
+  "name": "Mummers' Dance",
+  "tier": 4,
+  "category": "pieces",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:bw3_mummers_dance",
+  "anchor": "board",
+  "source": "empower",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 60,
+  "drive": "engine",
+  "driveNote": "activated, no targets",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2420,
+  "cssEndMs": 3506,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 52,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 174,
+  "maxGapMs": 282.1
+ },
+ "raf": {
+  "frames": 211,
+  "medianMs": 16.7,
+  "maxMs": 50,
+  "dropped": 8
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 57,
+  "totalBlockingMs": 2,
+  "entries": [
+   {
+    "atMs": -55,
+    "duration": 57,
+    "blocking": 2,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  186,
+  474,
+  819,
+  1207,
+  1632,
+  2087,
+  2570
+ ],
+ "png": "docs/polish-pass/evidence/TC-boon-curse/before/bw3_mummers_dance.png",
+ "pngBytes": 32982
+}

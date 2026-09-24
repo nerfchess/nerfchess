@@ -1,0 +1,85 @@
+{
+ "id": "bw3_double_down",
+ "url": "/dev/plays?id=bw3_double_down&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "bw3_double_down",
+  "name": "Double Down",
+  "tier": 4,
+  "category": "draft",
+  "mechanic": "instant",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:bw3_double_down",
+  "anchor": "board",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2344,
+  "cssEndMs": 3468,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 19,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 159,
+  "maxGapMs": 331.9
+ },
+ "raf": {
+  "frames": 210,
+  "medianMs": 16.7,
+  "maxMs": 83.3,
+  "dropped": 8
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 93,
+  "totalBlockingMs": 0,
+  "entries": [
+   {
+    "atMs": 88,
+    "duration": 93,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  180,
+  460,
+  795,
+  1172,
+  1584,
+  2025,
+  2494
+ ],
+ "png": "docs/polish-pass/evidence/TC-boon-curse/after/bw3_double_down.png",
+ "pngBytes": 18092,
+ "off": {
+  "url": "/dev/plays?id=bw3_double_down&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "docs/polish-pass/evidence/TC-boon-curse/after/bw3_double_down.off.png"
+ }
+}

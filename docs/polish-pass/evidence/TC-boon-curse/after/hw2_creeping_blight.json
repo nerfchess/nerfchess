@@ -1,0 +1,82 @@
+{
+ "id": "hw2_creeping_blight",
+ "url": "/dev/plays?id=hw2_creeping_blight&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "hw2_creeping_blight",
+  "name": "Creeping Blight",
+  "tier": 5,
+  "category": "hex",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:hw2_creeping_blight",
+  "anchor": "board",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 60,
+  "drive": "engine",
+  "driveNote": "activated with 1 pick(s)",
+  "castSq": "d5",
+  "targets": [
+   "d5"
+  ],
+  "picks": [
+   "d5"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2387,
+  "cssEndMs": 3462,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 26,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 168,
+  "maxGapMs": 335.5
+ },
+ "raf": {
+  "frames": 214,
+  "medianMs": 16.7,
+  "maxMs": 33.4,
+  "dropped": 4
+ },
+ "longAnimationFrames": {
+  "count": 0,
+  "worstMs": 0,
+  "totalBlockingMs": 0,
+  "entries": []
+ },
+ "tiles": [
+  0,
+  183,
+  468,
+  808,
+  1192,
+  1611,
+  2060,
+  2537
+ ],
+ "png": "docs/polish-pass/evidence/TC-boon-curse/after/hw2_creeping_blight.png",
+ "pngBytes": 22753,
+ "off": {
+  "url": "/dev/plays?id=hw2_creeping_blight&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "docs/polish-pass/evidence/TC-boon-curse/after/hw2_creeping_blight.off.png"
+ }
+}
