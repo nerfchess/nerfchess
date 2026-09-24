@@ -4,12 +4,15 @@ import { useEffect, useRef, useState } from "react";
 import { BoardSplashHost } from "@/components/BoardSplash";
 import type { AgainstRow } from "@/components/BuffDock";
 import { DraftRevealBanner } from "@/components/DraftOverlay";
+import { CastTextFallback } from "@/components/effects/BoardEffects";
 import { useSignatureQueue } from "@/components/effects/useSignatureQueue";
 import { GameOver } from "@/components/GameOver";
 
 // The signature queue on its own: three plays fired in one burst, with the
 // slot each one reaches and the busy flag stamped on the page, so its spacing
-// can be timed at each tempo without a live game.
+// can be timed at each tempo without a live game. The real anim-off text
+// fallback is keyed to the slot exactly as Board keys it, so what a player
+// with animations off can read of a burst is on the page too.
 function SigQueueProbe() {
   const { signatureCard, fire, busy } = useSignatureQueue();
   return (
@@ -24,6 +27,15 @@ function SigQueueProbe() {
       <span data-sig-slot={signatureCard?.id ?? ""} data-sig-busy={busy ? "1" : "0"}>
         {signatureCard ? `${signatureCard.id}${busy ? " (busy)" : ""}` : "idle"}
       </span>
+      <div className="relative h-16 w-64" data-sig-fallback-host>
+        {signatureCard && (
+          <CastTextFallback
+            key={`castfb-${signatureCard.key}`}
+            name={`Play ${signatureCard.id}`}
+            tier={1}
+          />
+        )}
+      </div>
     </div>
   );
 }
