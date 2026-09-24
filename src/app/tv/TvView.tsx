@@ -548,11 +548,14 @@ export function TvView({ modeFilter }: { modeFilter: DraftMode | null }) {
                   </div>
                 ) : (
                   /* First snapshot still loading: shimmer instead of a premature
-                     "nothing live" that flashes and then fills in. */
-                  <div className="space-y-2 p-3" aria-label="Loading live games">
-                    <div className="skeleton h-12 w-full" />
-                    <div className="skeleton h-12 w-full" />
-                    <div className="skeleton h-12 w-3/4" />
+                     "nothing live" that flashes and then fills in. A status
+                     region carries the name (wave 2): aria-label on a plain
+                     div is prohibited and was never announced. */
+                  <div role="status" className="space-y-2 p-3">
+                    <span className="sr-only">Loading live games</span>
+                    <div aria-hidden className="skeleton h-12 w-full" />
+                    <div aria-hidden className="skeleton h-12 w-full" />
+                    <div aria-hidden className="skeleton h-12 w-3/4" />
                   </div>
                 )
               ) : liveGames.length === 0 ? (

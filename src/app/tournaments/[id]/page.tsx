@@ -49,7 +49,12 @@ export default function TournamentDetailPage() {
   // join column on the first paint instead of an empty slot that fills in
   // once a page-level /me answers. The id (for "is this row me") comes from
   // the full user when it lands.
-  const { user, display } = useSession();
+  // `ensure` (wave 2): the header gives a first-time visitor a guest account,
+  // and guests can do everything this page offers. Without it the page read
+  // "signed out" while that mint ran and showed a sign-in prompt that turned
+  // into the guest view seconds later. Now the mint reads as unknown; only a
+  // failed mint (null) shows the sign-in prompt.
+  const { user, display } = useSession({ ensure: true });
   const meId = user?.id ?? null;
   const [error, setError] = useState<string | null>(null);
   // A 404 is a missing event, not a failed load: it gets the shared 404 copy
@@ -130,7 +135,12 @@ export default function TournamentDetailPage() {
     router.push(`/game/${encodeURIComponent(g.gameId)}`);
   }, [data?.myGame, router]);
 
+  // A ref guard, not only the disabled state: two presses in the same task
+  // both see busy as false (the F179 class).
+  const busyRef = useRef(false);
   const entry = async (action: "join" | "withdraw") => {
+    if (busyRef.current) return;
+    busyRef.current = true;
     setBusy(true);
     setError(null);
     try {
@@ -145,6 +155,7 @@ export default function TournamentDetailPage() {
     } catch (e) {
       setError(e instanceof Error ? e.message : "That didn't work.");
     } finally {
+      busyRef.current = false;
       setBusy(false);
     }
   };
@@ -226,9 +237,12 @@ export default function TournamentDetailPage() {
 
               {/* Join / withdraw */}
               <div className="flex flex-col items-end gap-1">
-                {display === undefined ? null : phase === "finished" ? (
+                {/* While the session is unknown (a first visit's guest mint)
+                    the Join button is drawn disabled, so the slot does not
+                    fill in late. */}
+                {phase === "finished" ? (
                   <span className="text-[12px] text-parchment-500">Event over</span>
-                ) : !display ? (
+                ) : display === null ? (
                   <LinkButton tone="leaf"
                     href={`/login?next=/tournaments/${encodeURIComponent(id)}`}
                     className="flex px-5 py-2.5 text-sm font-semibold">
@@ -244,7 +258,7 @@ export default function TournamentDetailPage() {
                 ) : (
                   <Button tone="cta"
                     onClick={() => entry("join")}
-                    disabled={busy}
+                    disabled={busy || !display}
                     className="flex px-6 py-2.5 text-sm font-semibold disabled:opacity-50">
                     <LogIn size={15} aria-hidden /> Join
                   </Button>
@@ -256,7 +270,7 @@ export default function TournamentDetailPage() {
             </div>
 
             {error && (
-              <div className="mt-5 plate border-oxblood-glow/60 bg-oxblood/15 px-4 py-3 text-sm text-parchment">
+              <div role="alert" className="mt-5 plate border-oxblood-glow/60 bg-oxblood/15 px-4 py-3 text-sm text-parchment">
                 {error}
               </div>
             )}

@@ -54,7 +54,12 @@ function ModeTag({ mode }: { mode: string }) {
 export default function TournamentsPage() {
   const router = useRouter();
   // Who is looking, from the shared session (F014).
-  const { display } = useSession();
+  // `ensure` (wave 2): the header gives a first-time visitor a guest account,
+  // and guests can do everything this page offers. Without it the page read
+  // "signed out" while that mint ran and showed a sign-in prompt that turned
+  // into the guest view seconds later. Now the mint reads as unknown; only a
+  // failed mint (null) shows the sign-in prompt.
+  const { display } = useSession({ ensure: true });
   const [clubs, setClubs] = useState<Club[]>([]);
   const [tournaments, setTournaments] = useState<TournamentListRow[]>([]);
   // The clock the sections bucket against. It does not tick every second
@@ -265,7 +270,7 @@ export default function TournamentsPage() {
           <form onSubmit={createTournament} className="mt-5 plate p-5">
             <div className="font-display text-xl text-parchment">Create tournament</div>
             {createError && (
-              <div className="mt-3 border border-oxblood-glow/60 bg-oxblood/15 px-3 py-2 text-[13px] text-parchment">
+              <div role="alert" className="mt-3 border border-oxblood-glow/60 bg-oxblood/15 px-3 py-2 text-[13px] text-parchment">
                 {createError}
               </div>
             )}
@@ -273,7 +278,7 @@ export default function TournamentsPage() {
               <p className="mt-4 text-sm text-parchment-400">Checking account…</p>
             ) : !display ? (
               <p className="mt-4 text-sm text-parchment-400">
-                <Link href="/login?next=/tournaments" className="text-gold-leaf hover:underline">
+                <Link href="/login?next=/tournaments" className="text-gold-leaf underline underline-offset-2">
                   Sign in
                 </Link>{" "}
                 to create a tournament.

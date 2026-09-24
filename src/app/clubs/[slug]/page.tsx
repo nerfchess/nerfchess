@@ -65,8 +65,15 @@ function ClubIconPicker({
   const [saveError, setSaveError] = useState<string | null>(null);
   const [uploaded, setUploaded] = useState<string | null>(isUploadedClubIcon(current) ? current : null);
   const fileRef = useRef<HTMLInputElement>(null);
+  // Remove asks once, inline, like deleting a post (F180).
+  const [confirmRemove, setConfirmRemove] = useState(false);
+  // A ref, not the state: two saves in the same task both read `saving` as
+  // false and would PATCH twice (the F179 class).
+  const savingRef = useRef(false);
 
   const save = async (value: string) => {
+    if (savingRef.current) return;
+    savingRef.current = true;
     setSaving(true);
     setSaveError(null);
     try {
@@ -82,6 +89,7 @@ function ClubIconPicker({
     } catch (e) {
       setSaveError(e instanceof Error ? e.message : "Could not save the icon.");
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   };
@@ -119,7 +127,7 @@ function ClubIconPicker({
             onClick={() => setIconName(e)}
             aria-label={`Icon ${e}`}
             aria-pressed={iconName === e}
-            className={`grid h-10 w-full cursor-pointer place-items-center border transition-colors ${
+            className={`grid h-[44px] w-full cursor-pointer place-items-center border transition-colors [@media(pointer:fine)]:h-10 ${
               iconName === e
                 ? "border-gold/70 bg-[color:var(--bg-raised)] text-gold-leaf"
                 : "border-[color:var(--edge)] bg-[color:var(--bg-base)] text-parchment-200 hover:border-[color:var(--edge-strong)] hover:bg-[color:var(--bg-raised)]"
@@ -139,7 +147,7 @@ function ClubIconPicker({
             aria-label={`Color ${c.label}`}
             aria-pressed={colorId === c.id}
             title={c.label}
-            className={`h-10 w-10 sm:h-8 sm:w-8 cursor-pointer rounded-full border-2 transition-[border-color] duration-150 hover:border-parchment-300 ${
+            className={`h-[44px] w-[44px] cursor-pointer rounded-full border-2 [@media(pointer:fine)]:h-8 [@media(pointer:fine)]:w-8 transition-[border-color] duration-150 hover:border-parchment-300 ${
               colorId === c.id ? "border-parchment-50" : "border-transparent"
             }`}
             style={{ background: c.hex }}
@@ -170,25 +178,40 @@ function ClubIconPicker({
 
       <div className="mt-5 flex flex-wrap items-center gap-2">
         <Button tone="leaf"
-         
           onClick={() => save(encodeClubIcon(iconName, colorId))}
-          disabled={saving}
+          loading={saving}
           className="px-4 py-2 text-sm font-semibold disabled:opacity-50">
-          {saving ? "Saving..." : "Save emblem"}
+          Save emblem
         </Button>
-        {(parsed || uploaded) && (
-          <Button tone="ghost"
-           
-            onClick={() => save("")}
-            disabled={saving}
-            className="px-4 py-2 text-sm disabled:opacity-50">
-            Remove icon
-          </Button>
-        )}
+        {(parsed || uploaded) &&
+          (confirmRemove ? (
+            <>
+              <Button tone="danger"
+                onClick={() => save("")}
+                loading={saving}
+                className="px-4 py-2 text-sm disabled:opacity-50">
+                Remove
+              </Button>
+              <Button tone="quiet" onClick={() => setConfirmRemove(false)} className="px-4 py-2 text-sm">
+                Keep icon
+              </Button>
+            </>
+          ) : (
+            <Button tone="ghost"
+              onClick={() => setConfirmRemove(true)}
+              disabled={saving}
+              className="px-4 py-2 text-sm disabled:opacity-50">
+              Remove icon
+            </Button>
+          ))}
         <Button tone="ghost" onClick={onClose} className="px-4 py-2 text-sm">
           Cancel
         </Button>
-        {saveError && <span className="text-sm text-oxblood-glow">{saveError}</span>}
+        {saveError && (
+          <span role="alert" className="text-sm text-oxblood-glow">
+            {saveError}
+          </span>
+        )}
       </div>
     </div>
   );
@@ -217,7 +240,12 @@ export default function ClubPage() {
   // Who is looking, from the shared session (F014): the server hint decides
   // the join and sign-in controls on the first paint. Anything that grants a
   // power (moderating, deleting someone's post) waits for the full user.
-  const { user: me, display } = useSession();
+  // `ensure` (wave 2): the header gives a first-time visitor a guest account,
+  // and guests can do everything this page offers. Without it the page read
+  // "signed out" while that mint ran and showed a sign-in prompt that turned
+  // into the guest view seconds later. Now the mint reads as unknown; only a
+  // failed mint (null) shows the sign-in prompt.
+  const { user: me, display } = useSession({ ensure: true });
   const [error, setError] = useState<string | null>(null);
   // A 404 is a missing club, not a failed load (F031).
   const [missing, setMissing] = useState(false);
@@ -268,7 +296,12 @@ export default function ClubPage() {
     };
   }, [load]);
 
+  // A ref guard, not only the disabled state: two presses in the same task
+  // both see busy as false (the F179 class).
+  const busyRef = useRef(false);
   const membership = async (action: "join" | "leave") => {
+    if (busyRef.current) return;
+    busyRef.current = true;
     setBusy(true);
     setError(null);
     try {
@@ -283,6 +316,7 @@ export default function ClubPage() {
     } catch (e) {
       setError(e instanceof Error ? e.message : "That didn't work.");
     } finally {
+      busyRef.current = false;
       setBusy(false);
     }
   };
@@ -400,10 +434,13 @@ export default function ClubPage() {
                     {parseClubIcon(club.icon) || isUploadedClubIcon(club.icon) ? "Change icon" : "Pick an icon"}
                   </Button>
                 )}
-                {display && !isMember && (
+                {/* Drawn while the session is still unknown too (disabled),
+                    so a first visit's guest mint does not insert the button
+                    into an empty row. */}
+                {display !== null && !isMember && (
                   <Button tone="leaf"
                     onClick={() => membership("join")}
-                    disabled={busy}
+                    disabled={busy || !display}
                     className="flex px-4 py-2 text-sm font-semibold disabled:opacity-50">
                     <LogIn size={14} aria-hidden /> Join club
                   </Button>
@@ -446,7 +483,7 @@ export default function ClubPage() {
             )}
 
             {error && (
-              <div className="mt-5 plate border-oxblood-glow/60 bg-oxblood/15 px-4 py-3 text-sm text-parchment">
+              <div role="alert" className="mt-5 plate border-oxblood-glow/60 bg-oxblood/15 px-4 py-3 text-sm text-parchment">
                 {error}
               </div>
             )}
@@ -541,7 +578,7 @@ export default function ClubPage() {
                     />
                     <div className="mt-2 flex items-center justify-between gap-2">
                       {postError ? (
-                        <span className="text-xs text-oxblood-glow">{postError}</span>
+                        <span role="alert" className="text-xs text-oxblood-glow">{postError}</span>
                       ) : (
                         <span className="text-[12px] text-parchment-500">Visible to everyone; members can post.</span>
                       )}
@@ -556,13 +593,13 @@ export default function ClubPage() {
                   </form>
                 ) : (
                   <p className="border-b border-[color:var(--edge)] px-5 py-3 text-sm text-parchment-400">
-                    {display ? (
+                    {display !== null ? (
                       "Join the club to post on its board."
                     ) : (
                       <>
                         <Link
                           href={`/login?next=${encodeURIComponent(`/clubs/${club.slug}`)}`}
-                          className="text-gold-leaf hover:underline"
+                          className="text-gold-leaf underline underline-offset-2"
                         >
                           Sign in
                         </Link>{" "}

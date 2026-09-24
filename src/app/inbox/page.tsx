@@ -31,8 +31,14 @@ export default function InboxPage() {
   // Signed in or not, from the shared session (F014): the server hint draws
   // the search box and the list skeleton (or the sign-in line) on the first
   // paint instead of an empty body until a page-level /me answers.
-  const { display } = useSession();
-  const signedIn = !!display;
+  // `ensure` (wave 2): a first-time visitor is being given a guest account by
+  // the header, and guests can message. Without it the page read "signed out"
+  // for the seconds the mint took and showed the sign-in line, then swapped
+  // it for the search view. While the answer is unknown the page draws the
+  // guest view's frame; only a failed mint (null) shows the sign-in line.
+  const { display } = useSession({ ensure: true });
+  const signedIn = display !== null;
+  const known = !!display;
   const [conversations, setConversations] = useState<Conversation[] | null>(null);
   // A failed conversations fetch shows a retry instead of an endless skeleton.
   const [loadError, setLoadError] = useState(false);
@@ -45,7 +51,7 @@ export default function InboxPage() {
   }, []);
 
   useEffect(() => {
-    if (!signedIn) return;
+    if (!known) return;
     let cancelled = false;
     fetch("/api/messages")
       .then((res) => {
@@ -61,7 +67,7 @@ export default function InboxPage() {
     return () => {
       cancelled = true;
     };
-  }, [signedIn, reloadTick]);
+  }, [known, reloadTick]);
 
   return (
     <main className="min-h-screen">
@@ -71,7 +77,7 @@ export default function InboxPage() {
 
         {display === null && (
           <p className="mt-4 text-parchment-300">
-            <Link href="/login?next=/inbox" className="text-gold-leaf hover:underline">
+            <Link href="/login?next=/inbox" className="text-gold-leaf underline underline-offset-2">
               Sign in
             </Link>{" "}
             to message other players.

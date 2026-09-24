@@ -9,6 +9,7 @@ import { PresenceBadge } from "./PresenceBadge";
 import { derivePresence, useLobbyFeed, type Presence, type PresenceState } from "@/lib/presence";
 import { Button } from "@/components/ui/Button";
 import { LinkButton } from "@/components/ui/Button";
+import { useSession } from "@/lib/session/SessionProvider";
 
 // Friends list + add-a-friend + incoming/outgoing requests, with a one-tap
 // Challenge that deep-links into the friend-game flow (/lobby?tab=friends&challenge=name),
@@ -72,7 +73,16 @@ function page<T>(items: T[], expanded: boolean): { shown: T[]; hidden: number } 
 export function FriendsPanel({ bounded = false }: { bounded?: boolean } = {}) {
   const [data, setData] = useState<FriendsData | null>(null);
   // undefined = still checking, false = signed out, true = signed in.
-  const [signedIn, setSignedIn] = useState<boolean | undefined>(undefined);
+  const [loadedSignedIn, setSignedIn] = useState<boolean | undefined>(undefined);
+  // Ask the session first (wave 2): the panel used to GET /api/friends on
+  // mount, so a first visit logged a 401 console error while the header was
+  // still minting the guest, and then kept the signed-out view for a guest
+  // who can in fact add friends. It now waits for the session (the header's
+  // guest mint included), loads once per account, and a failed mint (null)
+  // is the signed-out view with no request at all.
+  const { display } = useSession({ ensure: true });
+  const account = display ? display.username : display;
+  const signedIn = account === null ? false : loadedSignedIn;
   // Distinguishes "initial load in flight" (show a skeleton) from "initial load
   // failed" (show a retry), so a 5xx / offline first fetch never hangs on a
   // blank panel or an endless skeleton.
@@ -153,9 +163,10 @@ export function FriendsPanel({ bounded = false }: { bounded?: boolean } = {}) {
     // `load` only sets state after awaiting the fetch (never synchronously),
     // so this is the sanctioned fetch-on-mount pattern; the rule can't see
     // through the useCallback's await boundary.
+    if (!account) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
-  }, [load]);
+  }, [account, load]);
 
   const act = async (action: string, username: string) => {
     setBusy(true);
@@ -230,7 +241,7 @@ export function FriendsPanel({ bounded = false }: { bounded?: boolean } = {}) {
       <div className="plate p-4">
         <h2 className="font-display text-lg text-parchment">Friends</h2>
         <p className="mt-1 text-sm text-parchment-300">
-          <Link href="/login" className="text-gold-leaf hover:underline">
+          <Link href="/login" className="text-gold-leaf underline underline-offset-2">
             Sign in
           </Link>{" "}
           to add friends and challenge them in one tap.
@@ -344,7 +355,10 @@ export function FriendsPanel({ bounded = false }: { bounded?: boolean } = {}) {
         </Button>
       </form>
       {note && (
-        <p className={"mt-2 text-[12px] " + (note.kind === "ok" ? "text-verdigris-glow" : "text-oxblood-glow")}>
+        <p
+          role={note.kind === "ok" ? "status" : "alert"}
+          className={"mt-2 text-[12px] " + (note.kind === "ok" ? "text-verdigris-glow" : "text-oxblood-glow")}
+        >
           {note.text}
         </p>
       )}
@@ -453,7 +467,7 @@ function ShowAllToggle({
 // One accepted-friend row: identity + presence, a Watch link when they are in
 // a game, a Challenge when they are reachable, and a quiet Remove that only
 // turns cursed-red on hover. Row hover warms the surface and lights an ember
-// hairline — pointer devices only, so touch never gets a sticky hover.
+// hairline, pointer devices only, so touch never gets a sticky hover.
 function FriendRow({
   f,
   presence,

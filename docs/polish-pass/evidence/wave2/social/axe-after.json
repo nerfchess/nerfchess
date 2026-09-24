@@ -1,0 +1,265 @@
+{
+ "generatedAt": "2026-09-24T10:40:38.612Z",
+ "rows": [
+  {
+   "route": "/community",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".btn-leaf"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/community",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".btn-leaf"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/community",
+   "state": "390x844|dark|full|user|normal",
+   "violations": []
+  },
+  {
+   "route": "/community",
+   "state": "1280x800|dark|full|user|normal",
+   "violations": []
+  },
+  {
+   "route": "/tv",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".btn-leaf"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/tv",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".btn-leaf"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/tv",
+   "state": "390x844|dark|full|user|normal",
+   "violations": []
+  },
+  {
+   "route": "/tv",
+   "state": "1280x800|dark|full|user|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".btn-leaf"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/inbox",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": []
+  },
+  {
+   "route": "/inbox",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".btn-leaf"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/inbox",
+   "state": "390x844|dark|full|user|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".btn-leaf"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/inbox",
+   "state": "1280x800|dark|full|user|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".btn-leaf"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/clubs",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".btn-leaf"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/clubs",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".btn-leaf"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/clubs",
+   "state": "390x844|dark|full|user|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".btn-leaf"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/clubs",
+   "state": "1280x800|dark|full|user|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".btn-leaf"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/tournaments",
+   "state": "390x844|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".btn-leaf"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/tournaments",
+   "state": "1280x800|dark|full|signed-out|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".btn-leaf"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/tournaments",
+   "state": "390x844|dark|full|user|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".btn-leaf"
+     ]
+    }
+   ]
+  },
+  {
+   "route": "/tournaments",
+   "state": "1280x800|dark|full|user|normal",
+   "violations": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      ".btn-leaf"
+     ]
+    }
+   ]
+  }
+ ]
+}

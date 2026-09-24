@@ -20,8 +20,13 @@ export default function ThreadPage() {
   // Signed in or not, from the shared session (F014): the server hint decides
   // between the thread and the sign-in prompt on the first paint, instead of
   // an empty body until a page-level /me answers.
-  const { display } = useSession();
-  const signedIn = !!display;
+  // `ensure` (wave 2): a first-time visitor is being given a guest account by
+  // the header, and guests can message. Until that answer lands the pane draws
+  // its loading bubbles (the guest's eventual view) instead of the sign-in
+  // line; only a failed mint (null) shows the sign-in line.
+  const { display } = useSession({ ensure: true });
+  const signedIn = display !== null;
+  const known = !!display;
   const [thread, setThread] = useState<Thread | null>(null);
   const [missing, setMissing] = useState(false);
   const [loadError, setLoadError] = useState(false);
@@ -42,7 +47,7 @@ export default function ThreadPage() {
 
   // Load the thread, then poll it so replies appear without a refresh.
   useEffect(() => {
-    if (!signedIn) return;
+    if (!known) return;
     let cancelled = false;
     let loaded = false;
     let intervalId: number | undefined;
@@ -104,7 +109,7 @@ export default function ThreadPage() {
       cancelled = true;
       stop();
     };
-  }, [signedIn, username, reloadKey]);
+  }, [known, username, reloadKey]);
 
   // Keep the pane pinned to the newest message by scrolling the pane itself
   // (F018). scrollIntoView scrolls every scrollable ancestor too, so a poll
@@ -114,9 +119,13 @@ export default function ThreadPage() {
     if (pane && stickToBottom.current) pane.scrollTop = pane.scrollHeight;
   }, [thread]);
 
+  // A ref, not the state: two sends in the same task (a double Enter) both
+  // read `sending` as false and would POST the message twice (F179 class).
+  const sendingRef = useRef(false);
   const send = async () => {
     const text = draft.trim();
-    if (!text || sending) return;
+    if (!text || !known || sendingRef.current) return;
+    sendingRef.current = true;
     setSending(true);
     setError(null);
     try {
@@ -142,6 +151,7 @@ export default function ThreadPage() {
       // the send to fail silently as an unhandled rejection.
       setError("Could not send that message. Check your connection and try again.");
     } finally {
+      sendingRef.current = false;
       setSending(false);
     }
   };
@@ -185,7 +195,7 @@ export default function ThreadPage() {
 
         {display === null && (
           <p className="text-parchment-300">
-            <Link href={`/login?next=/inbox/${encodeURIComponent(username)}`} className="text-gold-leaf hover:underline">
+            <Link href={`/login?next=/inbox/${encodeURIComponent(username)}`} className="text-gold-leaf underline underline-offset-2">
               Sign in
             </Link>{" "}
             to read your messages.
@@ -279,12 +289,18 @@ export default function ThreadPage() {
               />
               <Button tone="leaf"
                 onClick={send}
-                disabled={!draft.trim() || sending}
+                disabled={!draft.trim() || sending || !known}
                 className="px-5 text-[13px] font-semibold disabled:opacity-50">
                 {sending ? "Sending…" : "Send"}
               </Button>
             </div>
-            {error && <p className="mt-2 text-sm text-oxblood-glow">{error}</p>}
+            {/* Announced (wave 2): a refused send was silent to a screen
+                reader. */}
+            {error && (
+              <p role="alert" className="mt-2 text-sm text-oxblood-glow">
+                {error}
+              </p>
+            )}
           </>
         )}
       </section>
