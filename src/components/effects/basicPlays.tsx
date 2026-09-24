@@ -7199,6 +7199,3256 @@ function SapperTeamScene({ lead, role, delayMs }: RuleProps) {
   );
 }
 
+/* --- Tier 3 rule scenes (round 3: these cards left the tier 1-4 templates) - */
+
+/** An anchor on its chain (Anchored Rooks). */
+function AnchorArt({ pal }: { pal: Palette }) {
+  const [p0, p1, p2] = pal;
+  return (
+    <svg viewBox="0 0 10 14" className="block h-full w-full" aria-hidden="true">
+      <path d="M5 0 V3.2" stroke={p0} strokeWidth="0.9" strokeDasharray="0.9 0.6" />
+      <circle cx="5" cy="4.2" r="1" fill="none" stroke={p1} strokeWidth="0.7" />
+      <path d="M5 5.2 V12.6 M3 6.8 H7 M1.4 9.6 C1.6 12.2 3.4 13.2 5 13.2 C6.6 13.2 8.4 12.2 8.6 9.6 M0.8 10.6 L1.4 9.4 L2.6 10.2 M9.2 10.6 L8.6 9.4 L7.4 10.2" fill="none" stroke={p2} strokeWidth="1.5" {...SJ} />
+      <path d="M5 5.2 V12.6 M3 6.8 H7 M1.4 9.6 C1.6 12.2 3.4 13.2 5 13.2 C6.6 13.2 8.4 12.2 8.6 9.6" fill="none" stroke={p1} strokeWidth="0.8" {...SJ} />
+    </svg>
+  );
+}
+
+/** Anchored Rooks: after their next move their rooks cannot move for their
+ *  following two turns. The hourglass runs out, an anchor drops onto each
+ *  enemy rook in its corner, and the one that tries to slide down its file is
+ *  held where it stands. */
+const ANCHORR: Palette = ["#6e7b8f", "#ffd76a", "#242c38"];
+function AnchoredRooksScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="anchored_rooks" pal={ANCHORR} dev="keystone" fx="chain" role={role} delayMs={delayMs} />;
+  const [, p1, p2] = ANCHORR;
+  const d = (n: number) => dm(delayMs, n);
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        {/* tell: after their next move */}
+        <Ly c="bsp-turn" at={d(0)} box={sqs(3.5, 6, 0.55)} len={dur(1000)}>
+          <Glass pal={ANCHORR} />
+        </Ly>
+        {/* their rooks in the corners */}
+        <Ly c="bsp-r-hold" at={d(40)} box={sq(7, 8)} len={dur(2100)}>
+          <Man k="r" pal={ANCHORR} foe />
+        </Ly>
+        {/* strike: an anchor drops onto each on its chain */}
+        {[0, 7].map((f, i) => (
+          <Ly key={f} c="bsp-drop" at={d(300 + i * 110)} box={{ ...sqs(f + (f ? -0.3 : 0.3), 7.9, 0.62), height: "10.9%" }} len={dur(1700)}>
+            <AnchorArt pal={ANCHORR} />
+          </Ly>
+        ))}
+        {/* the a-file rook tries to slide down its file and cannot leave */}
+        <Ly c="bsp-r-balk" at={d(60)} box={sq(0, 8)} len={dur(1900)} v={{ "--mx": 0, "--my": -2 }}>
+          <Man k="r" pal={ANCHORR} foe />
+        </Ly>
+        <Ly c="bsp-facein" at={d(980)} box={sqs(0, 6, 0.5)} len={dur(1000)}>
+          <Nope color={p1} w={0.9} />
+        </Ly>
+        {/* settle: two of their turns */}
+        <Ly c="bsp-stamp" at={d(1120)} box={pipsBox(2, 43.6, 6)} len={dur(900)}>
+          <Pips n={2} fill={p1} stroke={p2} />
+        </Ly>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** An eye, open (or, with `shut`, closed in a blink). */
+function EyeArt({ pal, shut }: { pal: Palette; shut?: boolean }) {
+  const [p0, p1, p2] = pal;
+  return (
+    <svg viewBox="0 0 10 6" className="block h-full w-full" aria-hidden="true">
+      {shut ? (
+        <path d="M0.8 3 C3 5.4 7 5.4 9.2 3 M2.4 4.2 L1.8 5.4 M5 4.8 V6 M7.6 4.2 L8.2 5.4" fill="none" stroke={p1} strokeWidth="0.7" {...SJ} />
+      ) : (
+        <>
+          <path d="M0.8 3 C3 0.4 7 0.4 9.2 3 C7 5.6 3 5.6 0.8 3 Z" fill={tint(p2, 0.9)} stroke={p1} strokeWidth="0.6" {...SJ} />
+          <circle cx="5" cy="3" r="1.4" fill={p0} />
+          <circle cx="5" cy="3" r="0.55" fill={p2} />
+        </>
+      )}
+    </svg>
+  );
+}
+
+/** Blink Army: two pawns blink out on the caster's 2nd rank and are two
+ *  squares ahead when the eye opens again; the 3rd rank between them is
+ *  never crossed. Once. */
+const BLINKA: Palette = ["#8f6bff", "#6fe3ff", "#1c1030"];
+function BlinkArmyScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="blink_army" pal={BLINKA} dev="candle" fx="prism" role={role} delayMs={delayMs} />;
+  const [p0] = BLINKA;
+  const d = (n: number) => dm(delayMs, n);
+  const files = [2, 5];
+  const eye = (f: number, r: number) => ({ ...sqs(f, r, 0.7), height: "5.2%", marginTop: "-3%" });
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        {/* tell: an eye over each pawn blinks shut */}
+        {files.map((f) => (
+          <Ly key={`e${f}`} c="bsp-blink" at={d(0)} box={eye(f, 2)} len={dur(700)}>
+            <EyeArt pal={BLINKA} shut />
+          </Ly>
+        ))}
+        {/* strike: in the blink the pawns are gone ... */}
+        {files.map((f) => (
+          <Ly key={`p${f}`} c="bsp-r-gone" at={d(80)} box={sq(f, 2)} len={dur(800)}>
+            <Man k="p" pal={BLINKA} />
+          </Ly>
+        ))}
+        {/* ... an afterimage flickers across two ranks ... */}
+        {files.map((f) => (
+          <Ly key={`a${f}`} c="bsp-r-move" at={d(200)} box={sqs(f, 2, 0.6)} len={dur(600)} v={{ "--mx": 0, "--my": 2 / 0.6 }}>
+            <Man k="p" pal={BLINKA} ghost />
+          </Ly>
+        ))}
+        {files.map((f) => (
+          <Ly key={`l${f}`} c="bsp-r-hold" at={d(200)} box={sq(f, 4)} len={dur(1500)} v={landing(p0)} />
+        ))}
+        {/* ... and they stand two squares ahead */}
+        {files.map((f) => (
+          <Ly key={`n${f}`} c="bsp-r-hold" at={d(560)} box={sq(f, 4)} len={dur(1400)}>
+            <Man k="p" pal={BLINKA} />
+          </Ly>
+        ))}
+        {/* settle: the eye opens on them */}
+        {files.map((f) => (
+          <Ly key={`o${f}`} c="bsp-blink" at={d(900)} box={eye(f, 4)} len={dur(1000)}>
+            <EyeArt pal={BLINKA} />
+          </Ly>
+        ))}
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** A horse's blinker flap, stitched leather (Blinkered Bishops). */
+function Blinker({ pal }: { pal: Palette }) {
+  const [p0, p1, p2] = pal;
+  return (
+    <svg viewBox="0 0 4 7" className="block h-full w-full" aria-hidden="true">
+      <path d="M0.6 0.6 H3.4 V5 C3.4 6.2 0.6 6.2 0.6 5 Z" fill={p2} stroke={p0} strokeWidth="0.35" {...SJ} />
+      <path d="M1.2 1.2 V4.8" stroke={p1} strokeWidth="0.3" strokeDasharray="0.5 0.4" />
+    </svg>
+  );
+}
+
+/** Blinkered Bishops: blinkers close on both enemy bishops, the long
+ *  diagonals they looked down go dark, and the one that starts down its
+ *  diagonal cannot. Two of their turns. */
+const BLINKB: Palette = ["#95a0b5", "#d6a25a", "#2a3140"];
+function BlinkeredBishopsScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="blinkered_bishops" pal={BLINKB} dev="sickle" fx="chain" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = BLINKB;
+  const d = (n: number) => dm(delayMs, n);
+  const flaps = (at: number) => (
+    <>
+      <Ly c="bsp-close-l" at={d(at)} box={{ left: "4%", top: "2%", width: "26%", height: "50%" }} len={dur(1500)}>
+        <Blinker pal={BLINKB} />
+      </Ly>
+      <Ly c="bsp-close-r" at={d(at)} box={{ left: "70%", top: "2%", width: "26%", height: "50%" }} len={dur(1500)}>
+        <Blinker pal={BLINKB} />
+      </Ly>
+    </>
+  );
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        {/* tell: the long diagonals each bishop sees */}
+        {[{ f: 2, a: 45 }, { f: 5, a: 135 }].map((b) => (
+          <Pin key={`g${b.f}`} box={{ ...sq(b.f, 8), transform: `rotate(calc(${b.a}deg * var(--fx-side, 1)))` }}>
+            <Ly c="bsp-beam" at={d(0)} box={{ left: "50%", top: "46%", width: "420%", height: "8%", background: `linear-gradient(90deg, ${tint(p1, 0.75)}, transparent)` }} len={dur(700)} />
+          </Pin>
+        ))}
+        {/* strike: blinkers close on them; one tries its diagonal and balks */}
+        <Ly c="bsp-r-hold" at={d(60)} box={sq(2, 8)} len={dur(2000)}>
+          <Man k="b" pal={BLINKB} foe />
+          {flaps(300)}
+        </Ly>
+        <Ly c="bsp-r-balk" at={d(80)} box={sq(5, 8)} len={dur(2000)} v={{ "--mx": 1, "--my": -1 }}>
+          <Man k="b" pal={BLINKB} foe />
+          {flaps(360)}
+        </Ly>
+        <Ly c="bsp-facein" at={d(1000)} box={sqs(6, 7, 0.5)} len={dur(1000)}>
+          <Nope color={p0} w={1} />
+        </Ly>
+        {/* settle: two of their turns */}
+        <Ly c="bsp-stamp" at={d(1140)} box={pipsBox(2, 43.6, 7)} len={dur(900)}>
+          <Pips n={2} fill={p1} stroke={p2} />
+        </Ly>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Board Quake: after their next move the ground splits across the middle
+ *  and every enemy pawn is thrown one square back toward its own side; the
+ *  pawn with its knight right behind it has nowhere to go and stays. */
+const QUAKEB: Palette = ["#a8763a", "#ffd76a", "#3a2a18"];
+const QUAKE_PUSHED = [
+  { f: 1, r: 5 },
+  { f: 3, r: 5 },
+  { f: 4, r: 6 },
+  { f: 6, r: 5 },
+];
+function BoardQuakeScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="board_quake" pal={QUAKEB} dev="lantern" fx="leap" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = QUAKEB;
+  const d = (n: number) => dm(delayMs, n);
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        {/* tell: after their next move, the fissure opens across the board */}
+        <Ly c="bsp-turn" at={d(0)} box={sqs(0, 3, 0.5)} len={dur(900)}>
+          <Glass pal={QUAKEB} />
+        </Ly>
+        <Ly c="bsp-unfurl" at={d(160)} box={{ left: 0, width: "100%", top: lineTop(4, 4), height: "4%" }} len={dur(1900)}>
+          <svg viewBox="0 0 80 4" preserveAspectRatio="none" className="block h-full w-full" aria-hidden="true">
+            <path d="M0 2 L6 0.8 L11 3 L18 1.2 L24 3.2 L31 0.9 L37 2.8 L44 1 L50 3.1 L57 1.1 L63 2.9 L70 0.8 L75 2.6 L80 1.6" fill="none" stroke={p2} strokeWidth="1.3" {...SJ} />
+            <path d="M0 2 L6 0.8 L11 3 L18 1.2 L24 3.2 L31 0.9 L37 2.8 L44 1 L50 3.1 L57 1.1 L63 2.9 L70 0.8 L75 2.6 L80 1.6" fill="none" stroke={p1} strokeWidth="0.45" {...SJ} />
+          </svg>
+        </Ly>
+        {/* strike: every enemy pawn is thrown one square back */}
+        {QUAKE_PUSHED.map((p, i) => (
+          <Ly key={`p${p.f}`} c="bsp-r-move" at={d(440 + i * 50)} box={sq(p.f, p.r)} len={dur(1500)} v={{ "--mx": 0, "--my": 1 }}>
+            <Man k="p" pal={QUAKEB} foe />
+          </Ly>
+        ))}
+        {/* the one with its knight behind it has nowhere to go */}
+        <Ly c="bsp-r-strain" at={d(460)} box={sq(2, 7)} len={dur(1500)}>
+          <Man k="p" pal={QUAKEB} foe />
+        </Ly>
+        <Ly c="bsp-r-hold" at={d(420)} box={sq(2, 8)} len={dur(1540)}>
+          <Man k="n" pal={QUAKEB} foe />
+        </Ly>
+        {/* settle: dust where they land */}
+        {QUAKE_PUSHED.map((p, i) => (
+          <Ly key={`u${p.f}`} c="bsp-drift" at={d(1000 + i * 50)} box={sqs(p.f, p.r + 0.62, 0.22)} len={dur(800)} v={{ "--dx": `${i % 2 ? 140 : -140}%`, "--dy": "0%", "--rot": "30deg", background: tint(p0, 0.8) }} />
+        ))}
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Break the Nerf: a hammer comes down on the caster's nerf shackle, it
+ *  splits and springs open, and the caster still has the move (a free
+ *  action) for their next three turns' reprieve. */
+const BREAKN: Palette = ["#ffcf4d", "#fff4d6", "#7a5c2e"];
+function BreakTheNerfScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="break_the_nerf" pal={BREAKN} dev="mirror" fx="bell" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = BREAKN;
+  const d = (n: number) => dm(delayMs, n);
+  const lock = { left: "31.25%", top: rankTop(2), width: "25%", height: "15%" };
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        {/* tell: the shackle, and the hammer raised over it */}
+        <Ly c="bsp-r-gone" at={d(0)} box={lock} len={dur(900)}>
+          <Shackle pal={BREAKN} />
+        </Ly>
+        <Ly c="bsp-swing" at={d(40)} box={{ left: "48%", top: `calc(${rankTop(2)} - 7%)`, width: "12.5%", height: "18%" }} len={dur(900)}>
+          <svg viewBox="0 0 10 14" className="block h-full w-full" aria-hidden="true">
+            <path d="M5 0.6 V9" stroke={p2} strokeWidth="1.1" strokeLinecap="round" />
+            <path d="M1.4 8.6 H8.6 V13 H1.4 Z" fill={p0} stroke={p2} strokeWidth="0.6" {...SJ} />
+          </svg>
+        </Ly>
+        {/* strike: it splits and springs open */}
+        {[-1, 1].map((s) => (
+          <Ly key={s} c="bsp-drift" at={d(420)} box={{ ...lock, left: `${31.25 + (s + 1) * 6.25}%`, width: "12.5%" }} len={dur(900)} v={{ "--dx": `${s * 70}%`, "--dy": "calc(var(--fx-side, 1) * 40%)", "--rot": `${s * 35}deg` }}>
+            <svg viewBox="0 0 10 12" className="block h-full w-full" aria-hidden="true">
+              <path d={s < 0 ? "M6 7 V4.6 C6 2.4 8 1.6 10 1.6" : "M0 1.6 C2 1.6 4 2.4 4 4.6 V7"} fill="none" stroke={p2} strokeWidth="1.4" strokeLinecap="round" />
+              <rect x={s < 0 ? 4 : 0} y="6.4" width="6" height="5" fill={p0} stroke={p2} strokeWidth="0.6" />
+            </svg>
+          </Ly>
+        ))}
+        {[0, 1, 2].map((i) => (
+          <Ly key={`c${i}`} c="bsp-glint" at={d(400 + i * 40)} box={sqs(3.2 + i * 0.3, 2.5 - (i % 2) * 0.3, 0.26)}>
+            <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+              <path d="M5 0.6 L6 4 L9.4 5 L6 6 L5 9.4 L4 6 L0.6 5 L4 4 Z" fill={p1} stroke={p2} strokeWidth="0.4" {...SJ} />
+            </svg>
+          </Ly>
+        ))}
+        {/* a free action: the caster still makes its move */}
+        <Ly c="bsp-r-hop" at={d(640)} box={sq(6, 1)} len={dur(1400)} v={{ "--mx": -1, "--my": 2 }}>
+          <Man k="n" pal={BREAKN} />
+        </Ly>
+        {/* settle: three of the caster's turns */}
+        <Ly c="bsp-stamp" at={d(1080)} box={pipsBox(3, 34, 3)} len={dur(900)}>
+          <Pips n={3} fill={p1} stroke={p2} />
+        </Ly>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** A folded dispatch with its wax seal (Burned Dispatches). */
+function Dispatch({ pal, sealColor }: { pal: Palette; sealColor: string }) {
+  const [p0, , p2] = pal;
+  return (
+    <svg viewBox="0 0 14 10" className="block h-full w-full" aria-hidden="true">
+      <rect x="0.8" y="0.8" width="12.4" height="8.4" fill={p0} stroke={p2} strokeWidth="0.5" />
+      <path d="M0.8 0.8 L7 5.6 L13.2 0.8" fill="none" stroke={p2} strokeWidth="0.5" {...SJ} />
+      <circle cx="7" cy="5.6" r="1.3" fill={sealColor} stroke={p2} strokeWidth="0.35" />
+    </svg>
+  );
+}
+
+/** Burned Dispatches: the dispatch carrying the opponent's next draft chars
+ *  from the bottom up, embers rising off it, and the two cards it carried
+ *  crumble with it; a reroll die is left for them in return. */
+const BURNED: Palette = ["#e8dcc0", "#8a6a3a", "#2c3e6b"];
+function BurnedDispatchesScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="burned_dispatches" pal={BURNED} dev="hourglass" fx="edict" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = BURNED;
+  const d = (n: number) => dm(delayMs, n);
+  const letter = { left: "34%", top: rankTop(7), width: "32%", height: "15%" };
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        {/* tell: their dispatch, and the two draft cards inside it */}
+        {[0, 1].map((i) => (
+          <Ly key={`k${i}`} c="bsp-r-gone" at={d(0)} box={{ ...sqs(2.5 + i * 2, 6, 0.9), width: "8%", marginLeft: "1.9%" }} len={dur(1500)}>
+            <DraftCard pal={BURNED} tier={2} />
+          </Ly>
+        ))}
+        <Ly c="bsp-r-gone" at={d(60)} box={letter} len={dur(1600)}>
+          <Dispatch pal={BURNED} sealColor={p1} />
+        </Ly>
+        {/* strike: the char climbs the page from its foot */}
+        <Ly c="bsp-grow" at={d(320)} box={letter} len={dur(1200)}>
+          <svg viewBox="0 0 14 10" preserveAspectRatio="none" className="block h-full w-full" aria-hidden="true">
+            <path d="M0.8 9.2 V5.4 L2.4 4.2 L3.6 5.6 L5.4 3.6 L7 5.2 L8.6 3.4 L10.4 5.4 L11.8 4 L13.2 5 V9.2 Z" fill={tint(p2, 0.92)} stroke={p1} strokeWidth="0.4" {...SJ} />
+          </svg>
+        </Ly>
+        {[0, 1, 2, 3].map((i) => (
+          <Ly key={`m${i}`} c="bsp-drift" at={d(460 + i * 80)} box={sqs(3 + i * 0.6, 7, 0.14)} len={dur(1000)} v={{ "--dx": `${(i % 2 ? 1 : -1) * 90}%`, "--dy": "calc(var(--fx-side, 1) * -520%)", "--rot": "45deg", background: tint(p0, 0.9), border: `1px solid ${p1}` }} />
+        ))}
+        {/* settle: a reroll die for them in return */}
+        <Ly c="bsp-r-move" at={d(1000)} box={sqs(4, 5, 0.5)} len={dur(1200)} v={{ "--mx": 2, "--my": 1 }}>
+          <Die pal={BURNED} />
+        </Ly>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Camel Knight: a camel's hump saddle drops onto the knight; beside its own
+ *  L it now takes the camel's longer three-by-one leap, counted in hoof
+ *  prints three up and one across. For the game. */
+const CAMELK: Palette = ["#bf9a68", "#f2e6d0", "#46381f"];
+function CamelKnightScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="camel_knight" pal={CAMELK} dev="bellows" fx="leap" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = CAMELK;
+  const d = (n: number) => dm(delayMs, n);
+  return (
+    <HStage>
+      {/* tell: the hump saddle */}
+      <Ly c="bsp-drop" at={d(0)} box={cellh(0, 0.28, 0.72)} len={dur(1700)}>
+        <svg viewBox="0 0 10 6" className="block h-full w-full" aria-hidden="true">
+          <path d="M0.8 5.4 C1.6 5.4 2 1 5 1 C8 1 8.4 5.4 9.2 5.4 Z" fill={p0} stroke={p2} strokeWidth="0.5" {...SJ} />
+          <path d="M2.4 4.2 H7.6" stroke={p1} strokeWidth="0.5" strokeDasharray="0.8 0.5" />
+        </svg>
+      </Ly>
+      {/* the knight's own L still stands */}
+      <Ly c="bsp-r-hold" at={d(120)} box={cellh(1, 2)} len={dur(1500)} v={{ border: `2px dashed ${tint(p1, 0.6)}` }} />
+      {/* hoof prints count out the camel's leap: three up, one across */}
+      {[{ x: 0, y: 1 }, { x: 0, y: 2 }, { x: 0, y: 3 }, { x: 1, y: 3 }].map((h, i) => (
+        <Ly key={`h${i}`} c="bsp-glint" at={d(220 + i * 90)} box={cellh(h.x, h.y, 0.3)} len={dur(1000)}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <path d="M2 8 C1 5 2.2 1.6 4.4 1.6 C4.8 4 4.6 6.6 4 8.6 Z M8 8 C9 5 7.8 1.6 5.6 1.6 C5.2 4 5.4 6.6 6 8.6 Z" fill={p2} stroke={p1} strokeWidth="0.4" {...SJ} />
+          </svg>
+        </Ly>
+      ))}
+      {/* strike: the camel leap */}
+      <Ly c="bsp-r-hold" at={d(400)} box={cellh(1, 3)} len={dur(1300)} v={landing(p0)} />
+      <Ly c="bsp-r-hop" at={d(560)} box={cellh(0, 0)} len={dur(1400)} v={{ "--mx": hx(1), "--my": 3 }}>
+        <Man k="n" pal={CAMELK} />
+      </Ly>
+      {/* settle: for the game */}
+      <Ly c="bsp-stamp" at={d(1120)} box={cellh(2.2, 2.4, 0.45)} len={dur(900)}>
+        <Ever color={p2} fill={p1} />
+      </Ly>
+    </HStage>
+  );
+}
+
+/** Cannon: a barrel is mounted on the chosen rook. It fires down its file
+ *  over the one piece in the way (its own pawn, the screen, untouched), the
+ *  shot lands on the first enemy beyond, and the rook jumps in to take it.
+ *  For the game. */
+const CANNON: Palette = ["#9a7a4a", "#e0d0b0", "#332918"];
+function CannonScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="cannon" pal={CANNON} dev="helm" fx="leap" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = CANNON;
+  const d = (n: number) => dm(delayMs, n);
+  return (
+    <HStage>
+      {/* tell: the barrel is mounted, pointing down the file */}
+      <Pin box={{ ...cellh(0, 0.42, 0.8), ...FLIP }}>
+        <Ly c="bsp-rise" at={d(0)} box={{ left: 0, top: 0, width: "100%", height: "100%" }} len={dur(1400)}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <path d="M3.4 9 L3.8 1.6 H6.2 L6.6 9 Z" fill={p2} stroke={p0} strokeWidth="0.5" {...SJ} />
+            <path d="M3.2 1.4 H6.8 M3.4 5 H6.6" stroke={p1} strokeWidth="0.6" strokeLinecap="round" />
+          </svg>
+        </Ly>
+      </Pin>
+      {/* the screen (its own pawn) and the target beyond it */}
+      <Ly c="bsp-r-hold" at={d(60)} box={cellh(0, 2)} len={dur(2000)}>
+        <Man k="p" pal={CANNON} />
+      </Ly>
+      <Ly c="bsp-r-gone" at={d(80)} box={cellh(0, 4)} len={dur(1200)}>
+        <Man k="b" pal={CANNON} foe />
+      </Ly>
+      {/* strike: the shot arcs over the screen and lands on the bishop */}
+      <Ly c="bsp-r-hop" at={d(260)} box={cellh(0, 0)} len={dur(800)} v={{ "--mx": 0, "--my": 4 }}>
+        <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+          <circle cx="5" cy="5" r="1.5" fill={p2} stroke={p1} strokeWidth="0.5" />
+        </svg>
+      </Ly>
+      {/* the rook jumps the screen to take its square */}
+      <Ly c="bsp-r-hop" at={d(640)} box={cellh(0, 0)} len={dur(1400)} v={{ "--mx": 0, "--my": 4 }}>
+        <Man k="r" pal={CANNON} />
+      </Ly>
+      {[-1, 1].map((s) => (
+        <Ly key={s} c="bsp-drift" at={d(620)} box={cellh(0.1 * s, 4.1, 0.2)} len={dur(800)} v={{ "--dx": `${s * 220}%`, "--dy": "-60%", "--rot": `${s * 60}deg`, background: tint(p0, 0.85) }} />
+      ))}
+      {/* settle: for the game */}
+      <Ly c="bsp-stamp" at={d(1180)} box={cellh(1.2, 3.2, 0.45)} len={dur(900)}>
+        <Ever color={p2} fill={p1} />
+      </Ly>
+    </HStage>
+  );
+}
+
+/** A footprint (Counterstep's two steps). */
+function Footprint({ fill, stroke }: { fill: string; stroke: string }) {
+  return (
+    <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+      <path d="M5 9.4 C3.4 9.4 3 7.6 3.4 5.6 C3.8 3.8 6.6 3.8 6.8 5.8 C7 7.6 6.6 9.4 5 9.4 Z" fill={fill} stroke={stroke} strokeWidth="0.4" />
+      <circle cx="3.6" cy="3" r="0.7" fill={fill} />
+      <circle cx="5" cy="2.4" r="0.7" fill={fill} />
+      <circle cx="6.4" cy="2.9" r="0.65" fill={fill} />
+    </svg>
+  );
+}
+
+/** Counterstep: their bishop takes a caster's pawn, and the caster answers
+ *  with two moves in a row: the knight steps in, then steps again and takes
+ *  the bishop, a footprint left at each step. Once. */
+const CSTEP: Palette = ["#d1663a", "#ffe9b0", "#3d2012"];
+function CounterstepScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="counterstep" pal={CSTEP} dev="drum" fx="muster" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = CSTEP;
+  const d = (n: number) => dm(delayMs, n);
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        {/* tell: their capture */}
+        <Ly c="bsp-r-gone" at={d(0)} box={sq(4, 4)} len={dur(800)}>
+          <Man k="p" pal={CSTEP} />
+        </Ly>
+        <Ly c="bsp-r-move" at={d(20)} box={sq(6, 6)} len={dur(2200)} v={{ "--mx": -2, "--my": -2 }}>
+          <Man k="b" pal={CSTEP} foe />
+        </Ly>
+        {/* strike: the first reply step ... */}
+        <Ly c="bsp-r-hop" at={d(460)} box={sq(1, 1)} len={dur(900)} v={{ "--mx": 1, "--my": 2 }}>
+          <Man k="n" pal={CSTEP} />
+        </Ly>
+        <Ly c="bsp-stamp" at={d(760)} box={sqs(2, 3, 0.36)} len={dur(1100)}>
+          <Footprint fill={p0} stroke={p2} />
+        </Ly>
+        {/* ... and the second, straight after, taking the bishop */}
+        <Ly c="bsp-r-hop" at={d(860)} box={sq(2, 3)} len={dur(1200)} v={{ "--mx": 2, "--my": 1 }}>
+          <Man k="n" pal={CSTEP} />
+        </Ly>
+        <Ly c="bsp-stamp" at={d(1260)} box={sqs(4, 4, 0.36)} len={dur(1000)}>
+          <Footprint fill={p1} stroke={p2} />
+        </Ly>
+        {/* settle: two moves in reply */}
+        <Ly c="bsp-stamp" at={d(1340)} box={pipsBox(2, 60, 3)} len={dur(900)}>
+          <Pips n={2} fill={p1} stroke={p2} />
+        </Ly>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Returned to Sender: the envelope bearing the opponent's next draft reaches
+ *  their side and bounces back, stamped with the return arrow; their draft
+ *  after it opens with three cards instead of two and a free reroll die. */
+const DEADL: Palette = ["#e8dcc0", "#8f2bbf", "#241a3a"];
+function ReturnedToSenderScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="dead_letter" pal={DEADL} dev="mask" fx="edict" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = DEADL;
+  const d = (n: number) => dm(delayMs, n);
+  const env = { left: "36%", top: rankTop(5), width: "28%", height: "12.5%" };
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        {/* tell: the envelope goes to them and bounces back */}
+        <Ly c="bsp-r-balk" at={d(0)} box={env} len={dur(1500)} v={{ "--mx": 0, "--my": 2 }}>
+          <Dispatch pal={DEADL} sealColor={p0} />
+        </Ly>
+        {/* strike: stamped return to sender */}
+        <Ly c="bsp-stamp" at={d(380)} box={sqs(3.5, 6.2, 0.66)} len={dur(1000)}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <circle cx="5" cy="5" r="4.2" fill={tint(p0, 0.6)} stroke={p1} strokeWidth="0.8" />
+            <path d="M7 6.6 C7 3.2 3.4 3 2.8 5 M2.8 5 L2.4 3.4 M2.8 5 L4.4 4.8" fill="none" stroke={p1} strokeWidth="0.9" {...SJ} />
+          </svg>
+        </Ly>
+        {/* their following draft: three cards and a free reroll */}
+        {[0, 1, 2].map((i) => (
+          <Ly key={`c${i}`} c="bsp-flip" at={d(900 + i * 90)} box={{ ...sqs(2.5 + i * 1.2, 7, 0.9), width: "8%", marginLeft: "1.9%" }} len={dur(1200)}>
+            <DraftCard pal={DEADL} tier={2} />
+          </Ly>
+        ))}
+        {/* settle: the reroll die */}
+        <Ly c="bsp-stamp" at={d(1200)} box={sqs(6.3, 7, 0.46)} len={dur(900)}>
+          <Die pal={DEADL} />
+        </Ly>
+        <Ly c="bsp-glint" at={d(1240)} box={sqs(6.6, 7.3, 0.24)}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <path d="M5 0.6 L6 4 L9.4 5 L6 6 L5 9.4 L4 6 L0.6 5 L4 4 Z" fill={p0} stroke={p2} strokeWidth="0.4" {...SJ} />
+          </svg>
+        </Ly>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Battering Line: a ram is swung up in front of the caster's pawn line and
+ *  the pawn behind it drives straight ahead into the enemy knight and takes
+ *  it, a capture a pawn never makes. Two of the caster's turns. */
+const BATTER: Palette = ["#a83a4a", "#ffd76a", "#2e1218"];
+function BatteringLineScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="double_step_army" pal={BATTER} dev="spear" fx="muster" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = BATTER;
+  const d = (n: number) => dm(delayMs, n);
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        {/* tell: the pawn line and the knight straight ahead of it */}
+        {[2, 4].map((f) => (
+          <Ly key={f} c="bsp-r-hold" at={d(0)} box={sq(f, 4)} len={dur(2000)}>
+            <Man k="p" pal={BATTER} />
+          </Ly>
+        ))}
+        <Ly c="bsp-r-gone" at={d(20)} box={sq(3, 5)} len={dur(1300)}>
+          <Man k="n" pal={BATTER} foe />
+        </Ly>
+        {/* the ram, iron head forward */}
+        <Ly c="bsp-r-move" at={d(160)} box={sqs(3, 4.5, 0.9)} len={dur(1200)} v={{ "--mx": 0, "--my": 0.35 }}>
+          <span className="block h-full w-full" style={FLIP}>
+            <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+              <path d="M4 10 V3 H6 V10 Z" fill={p0} stroke={p2} strokeWidth="0.5" {...SJ} />
+              <path d="M3.2 3.6 L3.6 1 H6.4 L6.8 3.6 Z" fill={p2} stroke={p1} strokeWidth="0.45" {...SJ} />
+              <path d="M4 6 H6 M4 8 H6" stroke={p1} strokeWidth="0.45" />
+            </svg>
+          </span>
+        </Ly>
+        {/* strike: the pawn drives straight ahead and takes */}
+        <Ly c="bsp-r-move" at={d(400)} box={sq(3, 4)} len={dur(1500)} v={{ "--mx": 0, "--my": 1 }}>
+          <Man k="p" pal={BATTER} />
+        </Ly>
+        {[-1, 1].map((s) => (
+          <Ly key={`s${s}`} c="bsp-drift" at={d(620)} box={sqs(3 + s * 0.2, 5.3, 0.2)} len={dur(800)} v={{ "--dx": `${s * 240}%`, "--dy": "calc(var(--fx-side, 1) * -120%)", "--rot": `${s * 70}deg`, background: tint(p1, 0.85) }} />
+        ))}
+        {/* settle: two of the caster's turns */}
+        <Ly c="bsp-stamp" at={d(1100)} box={pipsBox(2, 60, 5)} len={dur(900)}>
+          <Pips n={2} fill={p1} stroke={p2} />
+        </Ly>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Durian: the spiky king of fruits is lobbed onto an empty square and its
+ *  stench rises off the eight squares round it. The first enemy piece to try
+ *  still gets its one step into the ring; the next is turned back. Three of
+ *  their turns. */
+const DURIAN: Palette = ["#3f8f3f", "#a8e07f", "#1c4a1c"];
+function DurianScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="durian" pal={DURIAN} dev="acorn" fx="grove" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = DURIAN;
+  const d = (n: number) => dm(delayMs, n);
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        {/* tell: the durian is lobbed in */}
+        <Ly c="bsp-r-fall" at={d(0)} box={sq(3, 5)} len={dur(2000)} v={{ "--mx": 1 }}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <path d="M5 0.8 L5.8 2.2 L7.4 1.6 L7.4 3.2 L9 3.6 L8.2 5 L9.2 6.4 L7.6 6.8 L7.6 8.4 L6 8 L5 9.4 L4 8 L2.4 8.4 L2.4 6.8 L0.8 6.4 L1.8 5 L1 3.6 L2.6 3.2 L2.6 1.6 L4.2 2.2 Z" fill={p0} stroke={p2} strokeWidth="0.45" {...SJ} />
+            <path d="M5 2.6 V1.2" stroke={p2} strokeWidth="0.6" strokeLinecap="round" />
+            <circle cx="5" cy="5.2" r="1.8" fill={tint(p1, 0.8)} />
+          </svg>
+        </Ly>
+        {/* strike: the stench off the eight squares round it */}
+        <Ly c="bsp-r-hold" at={d(360)} box={area(2, 4, 3, 6)} len={dur(1700)}>
+          <svg viewBox="0 0 30 30" className="block h-full w-full" aria-hidden="true">
+            <path d="M1 1 H29 V29 H1 Z M11 11 V19 H19 V11 Z" fillRule="evenodd" fill={tint(p1, 0.22)} stroke={tint(p1, 0.7)} strokeWidth="0.5" strokeDasharray="1.2 1" />
+          </svg>
+        </Ly>
+        {[{ f: 2, r: 6 }, { f: 4.4, r: 6 }, { f: 2.2, r: 4 }, { f: 4.5, r: 4.2 }].map((w, i) => (
+          <Ly key={`w${i}`} c="bsp-lift" at={d(420 + i * 70)} box={sqs(w.f, w.r, 0.6)} len={dur(1500)}>
+            <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+              <path d="M3 9 C1.6 7.4 4.4 6.2 3 4.6 C1.8 3.2 4 2 3.2 0.8 M6.6 9 C5.2 7.4 8 6.2 6.6 4.6 C5.4 3.2 7.6 2 6.8 0.8" fill="none" stroke={p1} strokeWidth="0.7" {...SJ} />
+            </svg>
+          </Ly>
+        ))}
+        {/* the first piece caught still gets its one step in ... */}
+        <Ly c="bsp-r-hop" at={d(560)} box={sq(5, 7)} len={dur(1400)} v={{ "--mx": -1, "--my": -2 }}>
+          <Man k="n" pal={DURIAN} foe />
+        </Ly>
+        {/* ... after that the ring is sealed */}
+        <Ly c="bsp-r-balk" at={d(820)} box={sq(1, 7)} len={dur(1200)} v={{ "--mx": 1, "--my": -1 }}>
+          <Man k="b" pal={DURIAN} foe />
+        </Ly>
+        <Ly c="bsp-facein" at={d(1120)} box={sqs(2, 6, 0.5)} len={dur(900)}>
+          <Nope color={p2} w={1.1} />
+        </Ly>
+        {/* settle: three of their turns */}
+        <Ly c="bsp-stamp" at={d(1180)} box={pipsBox(3, 64, 4)} len={dur(900)}>
+          <Pips n={3} fill={p1} stroke={p2} />
+        </Ly>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Fork Guard: the knight leaps in with check, forking the king and a rook;
+ *  a shield settles on it, and the pawn that reaches to take it on the reply
+ *  is turned away. */
+const FORKG: Palette = ["#5fc9b0", "#ffd76a", "#1c4a3a"];
+function ForkGuardScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="fork_guard" pal={FORKG} dev="beehive" fx="ward" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = FORKG;
+  const d = (n: number) => dm(delayMs, n);
+  return (
+    <HStage>
+      {/* tell: the king and the rook it will fork */}
+      <Ly c="bsp-r-hold" at={d(0)} box={cellh(2, 4)} len={dur(2100)}>
+        <Man k="k" pal={FORKG} foe />
+      </Ly>
+      <Ly c="bsp-r-hold" at={d(30)} box={cellh(3, 3)} len={dur(2070)}>
+        <Man k="r" pal={FORKG} foe />
+      </Ly>
+      {/* strike: the knight leaps in with check ... */}
+      <Ly c="bsp-r-hop" at={d(160)} box={cellh(0, 0)} len={dur(1900)} v={{ "--mx": hx(1), "--my": 2 }}>
+        <Man k="n" pal={FORKG} />
+      </Ly>
+      {/* ... the two tines of the fork */}
+      <Ly c="bsp-r-hold" at={d(520)} box={cellh(2, 3, 3)} len={dur(1300)}>
+        <span className="block h-full w-full" style={{ scale: "var(--bsp-hx, 1) var(--fx-side, 1)" }}>
+          <svg viewBox="0 0 30 30" className="block h-full w-full" aria-hidden="true">
+            <path d="M5 25 L15 5 M5 25 L25 15" fill="none" stroke={p1} strokeWidth="1.1" strokeDasharray="2.2 1.4" {...SJ} />
+          </svg>
+        </span>
+      </Ly>
+      {/* a shield on the checking knight; the pawn reaching for it balks */}
+      <Ly c="bsp-settle" at={d(640)} box={cellh(1.35, 2.35, 0.5)} len={dur(1400)}>
+        <Ward pal={FORKG} />
+      </Ly>
+      <Ly c="bsp-r-balk" at={d(820)} box={cellh(2, 3)} len={dur(1200)} v={{ "--mx": hx(-1), "--my": -1 }}>
+        <Man k="p" pal={FORKG} foe />
+      </Ly>
+      {/* settle: turned away on the reply */}
+      <Ly c="bsp-facein" at={d(1160)} box={cellh(1.5, 2.5, 0.42)} len={dur(900)}>
+        <Nope color={p0} w={1.1} />
+      </Ly>
+      <Ly c="bsp-glint" at={d(1200)} box={cellh(0.7, 2.6, 0.26)}>
+        <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+          <path d="M5 0.6 L6 4 L9.4 5 L6 6 L5 9.4 L4 6 L0.6 5 L4 4 Z" fill={p1} stroke={p2} strokeWidth="0.4" {...SJ} />
+        </svg>
+      </Ly>
+    </HStage>
+  );
+}
+
+/** A frost fern, grown from its left edge (Frost, Frostbite). */
+function FrostFern({ color }: { color: string }) {
+  return (
+    <svg viewBox="0 0 10 10" preserveAspectRatio="none" className="block h-full w-full" aria-hidden="true">
+      <path d="M0 5 H9.4 M2 5 L3.4 2.6 M2 5 L3.4 7.4 M4.6 5 L6 3 M4.6 5 L6 7 M7 5 L8.2 3.6 M7 5 L8.2 6.4 M0 2 L2 3.4 M0 8 L2 6.6" fill="none" stroke={color} strokeWidth="0.55" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/** Frost: after their next move, frost ferns grow out from the edge two
+ *  enemy pieces share and seal both in for a turn each; the pawn beside them
+ *  is not touched and steps on. */
+const FROSTC: Palette = ["#6fc3e8", "#fff4d6", "#1d4560"];
+function FrostScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="frost" pal={FROSTC} dev="obelisk" fx="frost" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = FROSTC;
+  const d = (n: number) => dm(delayMs, n);
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        {/* tell: after their next move */}
+        <Ly c="bsp-turn" at={d(0)} box={sqs(1.5, 6, 0.5)} len={dur(900)}>
+          <Glass pal={FROSTC} />
+        </Ly>
+        {/* the pair, side by side */}
+        {[{ f: 3, k: "n" as ManKind }, { f: 4, k: "b" as ManKind }].map((m, i) => (
+          <Ly key={`m${m.f}`} c="bsp-r-strain" at={i ? d(100) : d(80)} box={sq(m.f, 6)} len={dur(2000)}>
+            <Man k={m.k} pal={FROSTC} foe />
+          </Ly>
+        ))}
+        {/* strike: the ferns grow outward from the edge they share */}
+        <Ly c="bsp-unfurl" at={d(320)} box={sq(4, 6)} len={dur(1500)}>
+          <FrostFern color={p1} />
+        </Ly>
+        <Pin box={{ ...sq(3, 6), transform: "scaleX(-1)" }}>
+          <Ly c="bsp-unfurl" at={d(360)} box={{ left: 0, top: 0, width: "100%", height: "100%" }} len={dur(1500)}>
+            <FrostFern color={p1} />
+          </Ly>
+        </Pin>
+        <Ly c="bsp-settle" at={d(560)} box={area(3, 6, 2, 6)} len={dur(1400)} v={{ background: tint(p0, 0.34), border: `2px solid ${p1}` }} />
+        {/* the pawn beside them is free */}
+        <Ly c="bsp-r-move" at={d(700)} box={sq(6, 7)} len={dur(1300)} v={{ "--mx": 0, "--my": -1 }}>
+          <Man k="p" pal={FROSTC} foe />
+        </Ly>
+        {/* settle: one turn each */}
+        {[3, 4].map((f, i) => (
+          <Ly key={`t${f}`} c="bsp-stamp" at={d(1100 + i * 80)} box={pipsBox(1, f * 12.5 + 4.6, 5)} len={dur(900)}>
+            <Pips n={1} fill={p1} stroke={p2} />
+          </Ly>
+        ))}
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Jaws of icicle teeth (Frostbite). */
+function IceJaw({ pal, lower }: { pal: Palette; lower?: boolean }) {
+  const [p0, p1, p2] = pal;
+  return (
+    <svg viewBox="0 0 10 4" className="block h-full w-full" aria-hidden="true">
+      <path d={lower ? "M0.4 4 H9.6 L8.6 0.6 L7.6 3 L6.4 0.4 L5 3 L3.6 0.4 L2.4 3 L1.4 0.6 Z" : "M0.4 0 H9.6 L8.6 3.4 L7.6 1 L6.4 3.6 L5 1 L3.6 3.6 L2.4 1 L1.4 3.4 Z"} fill={tint(p0, 0.9)} stroke={p2} strokeWidth="0.35" {...SJ} />
+      <path d={lower ? "M1 3.6 H9" : "M1 0.4 H9"} stroke={p1} strokeWidth="0.4" />
+    </svg>
+  );
+}
+
+/** Frostbite: the frost has its teeth in the chosen enemy piece. It runs on
+ *  its move and the jaws follow it, then snap shut where it stops and it is
+ *  frozen there for three of their turns. */
+const FROSTB: Palette = ["#aee2ff", "#cdeaff", "#2a5070"];
+function FrostbiteScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="frostbite" pal={FROSTB} dev="chalice" fx="frost" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = FROSTB;
+  const d = (n: number) => dm(delayMs, n);
+  return (
+    <HStage>
+      {/* tell: the piece runs on its move ... */}
+      <Ly c="bsp-r-move" at={d(0)} box={cellh(0, 0)} len={dur(1000)} v={{ "--mx": hx(2), "--my": 0 }}>
+        <Man k="r" pal={FROSTB} foe />
+      </Ly>
+      {/* ... and the frost follows it */}
+      {[0, 1, 2].map((i) => (
+        <Ly key={`f${i}`} c="bsp-glint" at={i ? d(180 + i * 90) : d(180)} box={cellh(i, -0.35, 0.3)}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <path d="M5 0.8 V9.2 M1.4 2.9 L8.6 7.1 M1.4 7.1 L8.6 2.9" stroke={p1} strokeWidth="1" strokeLinecap="round" />
+          </svg>
+        </Ly>
+      ))}
+      {/* strike: the jaws snap shut where it stopped */}
+      <Ly c="bsp-r-strain" at={d(560)} box={cellh(2, 0)} len={dur(1700)}>
+        <Man k="r" pal={FROSTB} foe />
+      </Ly>
+      <Ly c="bsp-drop" at={d(520)} box={{ ...cellh(2, 0), height: `${CELL * 0.44}%` }} len={dur(1600)}>
+        <IceJaw pal={FROSTB} />
+      </Ly>
+      <Ly c="bsp-rise" at={d(520)} box={{ ...cellh(2, 0), height: `${CELL * 0.44}%`, marginTop: `${CELL * 0.56}%` }} len={dur(1600)}>
+        <IceJaw pal={FROSTB} lower />
+      </Ly>
+      <Ly c="bsp-settle" at={d(700)} box={cellh(2, 0, 0.96)} len={dur(1400)} v={{ background: tint(p0, 0.35), border: `2px solid ${p1}` }} />
+      {/* settle: three of their turns */}
+      <Ly c="bsp-stamp" at={d(1100)} box={pipsAth(3, 1.6, 1.1)} len={dur(900)}>
+        <Pips n={3} fill={p1} stroke={p2} />
+      </Ly>
+    </HStage>
+  );
+}
+
+/** Gargoyles: stone wings fold round the chosen enemy bishop and it turns to
+ *  a gargoyle. Its long diagonal is struck out; it can only shuffle one
+ *  square. Three of their turns. */
+const GARG: Palette = ["#8d8d94", "#c9c9cf", "#3a3a40"];
+function GargoylesScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="gargoyles" pal={GARG} dev="acorn" fx="stone" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = GARG;
+  const d = (n: number) => dm(delayMs, n);
+  return (
+    <HStage>
+      {/* tell: stone wings unfold behind it */}
+      {[-1, 1].map((s) => (
+        <Pin key={`w${s}`} box={{ ...cellh(0.34 * s, 0.1, 0.8), transform: `scaleX(${s})` }}>
+          <Ly c="bsp-unfurl" at={d(0)} box={{ left: "30%", top: "8%", width: "70%", height: "55%" }} len={dur(2000)}>
+            <svg viewBox="0 0 10 8" className="block h-full w-full" aria-hidden="true">
+              <path d={WING} fill={p0} stroke={p2} strokeWidth="0.5" {...SJ} />
+            </svg>
+          </Ly>
+        </Pin>
+      ))}
+      {/* strike: the bishop, grey stone now, can only shuffle one square */}
+      <Ly c="bsp-r-move" at={d(360)} box={cellh(0, 0)} len={dur(1700)} v={{ "--mx": hx(1), "--my": -1 }}>
+        <Man k="b" pal={GARG} foe />
+      </Ly>
+      <Ly c="bsp-r-hold" at={d(300)} box={cellh(1, -1)} len={dur(1400)} v={landing(p1)} />
+      {/* its long diagonal is closed */}
+      {[2, 3].map((i) => (
+        <Ly key={`x${i}`} c="bsp-facein" at={d(620 + i * 80)} box={cellh(i, -i, 0.5)} len={dur(1000)}>
+          <Nope color={p1} w={0.9} />
+        </Ly>
+      ))}
+      {/* settle: three of their turns */}
+      <Ly c="bsp-stamp" at={d(1100)} box={pipsAth(3, -0.6, 1.2)} len={dur(900)}>
+        <Pips n={3} fill={p1} stroke={p2} />
+      </Ly>
+    </HStage>
+  );
+}
+
+/** A masquerade half mask (Glamour). */
+function FaeMask({ pal }: { pal: Palette }) {
+  const [p0, p1, p2] = pal;
+  return (
+    <svg viewBox="0 0 10 6" className="block h-full w-full" aria-hidden="true">
+      <path d="M0.4 1.2 C2.4 0.2 3.8 1.6 5 2.4 C6.2 1.6 7.6 0.2 9.6 1.2 C9.6 4 8 5.6 6.4 5 C5.6 4.6 5.4 4 5 4 C4.6 4 4.4 4.6 3.6 5 C2 5.6 0.4 4 0.4 1.2 Z" fill={p0} stroke={p2} strokeWidth="0.4" {...SJ} />
+      <ellipse cx="3" cy="2.8" rx="1.1" ry="0.7" fill={p2} />
+      <ellipse cx="7" cy="2.8" rx="1.1" ry="0.7" fill={p2} />
+      <path d="M0.4 1.2 L0 0.2 M9.6 1.2 L10 0.2" stroke={p1} strokeWidth="0.4" />
+    </svg>
+  );
+}
+
+/** Glamour: the courts trade changelings. A fae mask crosses from each pawn
+ *  to the other, and where they settle the enemy pawn stands in the caster's
+ *  colours and the caster's pawn in theirs; the caster's next reroll is
+ *  spent on it. */
+const GLAMOUR: Palette = ["#8f6bff", "#e3d0ff", "#141322"];
+function GlamourScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="glamour" pal={GLAMOUR} dev="inkpot" fx="ink" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = GLAMOUR;
+  const d = (n: number) => dm(delayMs, n);
+  const mask = (f: number, r: number) => ({ ...sqs(f, r, 0.7), height: "5.2%", marginTop: "0.6%" });
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        {/* tell: the two pawns as they were */}
+        <Ly c="bsp-r-gone" at={d(0)} box={sq(2, 4)} len={dur(1100)}>
+          <Man k="p" pal={GLAMOUR} />
+        </Ly>
+        <Ly c="bsp-r-gone" at={d(0)} box={sq(5, 5)} len={dur(1100)}>
+          <Man k="p" pal={GLAMOUR} foe />
+        </Ly>
+        {/* strike: a mask crosses from each to the other */}
+        <Ly c="bsp-r-move" at={d(200)} box={mask(2, 4)} len={dur(1100)} v={{ "--mx": 3 / 0.7, "--my": 12.5 / 5.2 }}>
+          <FaeMask pal={GLAMOUR} />
+        </Ly>
+        <Ly c="bsp-r-move" at={d(240)} box={mask(5, 5)} len={dur(1100)} v={{ "--mx": -3 / 0.7, "--my": -12.5 / 5.2 }}>
+          <FaeMask pal={GLAMOUR} />
+        </Ly>
+        {/* and each stands in the other side's colours */}
+        <Ly c="bsp-r-hold" at={d(760)} box={sq(2, 4)} len={dur(1300)}>
+          <Man k="p" pal={GLAMOUR} foe />
+        </Ly>
+        <Ly c="bsp-r-hold" at={d(780)} box={sq(5, 5)} len={dur(1300)}>
+          <Man k="p" pal={GLAMOUR} />
+        </Ly>
+        {/* settle: the reroll spent */}
+        <Ly c="bsp-r-gone" at={d(1000)} box={sqs(0.3, 2, 0.46)} len={dur(1000)}>
+          <Die pal={GLAMOUR} />
+        </Ly>
+        <Ly c="bsp-glint" at={d(820)} box={sqs(5.3, 5.5, 0.26)}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <path d="M5 0.6 L6 4 L9.4 5 L6 6 L5 9.4 L4 6 L0.6 5 L4 4 Z" fill={p1} stroke={p2} strokeWidth="0.4" {...SJ} />
+          </svg>
+        </Ly>
+        <Ly c="bsp-glint" at={d(860)} box={sqs(2.4, 4.5, 0.24)}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <path d="M5 0.6 L6 4 L9.4 5 L6 6 L5 9.4 L4 6 L0.6 5 L4 4 Z" fill={p0} stroke={p2} strokeWidth="0.4" {...SJ} />
+          </svg>
+        </Ly>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Gorgon's Glance: the gorgon's eye, snakes for lashes, opens on the
+ *  caster's edge and its gaze falls on the enemy knight that has come into
+ *  the caster's half, where it is strongest: the knight's shell closes for
+ *  four of their turns, not two. */
+const GORGON: Palette = ["#8a8478", "#e8dcc0", "#3c362c"];
+function GorgonsGlanceScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="gorgons_glance" pal={GORGON} dev="keystone" fx="stone" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = GORGON;
+  const d = (n: number) => dm(delayMs, n);
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        {/* tell: the caster's half, where the gaze is strongest */}
+        <Ly c="bsp-r-hold" at={d(0)} box={band(1, 4)} len={dur(1400)} v={{ background: tint(p0, 0.14), borderTop: `2px dashed ${tint(p1, 0.7)}`, borderBottom: `2px dashed ${tint(p1, 0.7)}` }} />
+        {/* the gorgon's eye opens, snakes for lashes */}
+        <Ly c="bsp-blink" at={d(80)} box={{ ...sqs(3, 1, 1.2), height: "9%" }} len={dur(1700)}>
+          <svg viewBox="0 0 10 7" className="block h-full w-full" aria-hidden="true">
+            <path d="M1.6 2.6 C1 1.2 2 0.6 1.4 0 M3.6 1.8 C3.2 0.8 4 0.4 3.6 0 M6.4 1.8 C6.8 0.8 6 0.4 6.4 0 M8.4 2.6 C9 1.2 8 0.6 8.6 0" fill="none" stroke={p2} strokeWidth="0.55" strokeLinecap="round" />
+            <path d="M0.6 4.4 C3 2 7 2 9.4 4.4 C7 6.8 3 6.8 0.6 4.4 Z" fill={p1} stroke={p2} strokeWidth="0.5" {...SJ} />
+            <ellipse cx="5" cy="4.4" rx="0.7" ry="1.5" fill={p2} />
+          </svg>
+        </Ly>
+        {/* strike: the gaze falls on the knight and it is shelled */}
+        <Ly c="bsp-grow" at={d(380)} box={{ ...sq(3, 2), left: "42.25%", width: "3%" }} len={dur(1000)} v={{ background: `linear-gradient(0deg, ${tint(p1, 0.8)}, transparent)`, scale: "1 var(--fx-side, 1)" }} />
+        <Ly c="bsp-r-strain" at={d(460)} box={sq(3, 3)} len={dur(1700)}>
+          <Man k="n" pal={GORGON} foe />
+        </Ly>
+        <Ly c="bsp-close-l" at={d(620)} box={{ ...sq(3, 3), width: "6.25%" }} len={dur(1500)}>
+          <svg viewBox="0 0 5 10" preserveAspectRatio="none" className="block h-full w-full" aria-hidden="true">
+            <path d="M5 0.6 C1.6 0.6 0.6 3.4 0.6 5.4 C0.6 8 2.6 9.4 5 9.4 Z" fill={tint(p0, 0.6)} stroke={p2} strokeWidth="0.5" />
+          </svg>
+        </Ly>
+        <Ly c="bsp-close-r" at={d(620)} box={{ ...sq(3, 3), width: "6.25%", marginLeft: "6.25%" }} len={dur(1500)}>
+          <svg viewBox="0 0 5 10" preserveAspectRatio="none" className="block h-full w-full" aria-hidden="true">
+            <path d="M0 0.6 C3.4 0.6 4.4 3.4 4.4 5.4 C4.4 8 2.4 9.4 0 9.4 Z" fill={tint(p0, 0.6)} stroke={p2} strokeWidth="0.5" />
+          </svg>
+        </Ly>
+        {/* settle: four of their turns, caught in the caster's half */}
+        <Ly c="bsp-stamp" at={d(1100)} box={pipsBox(4, 57, 3)} len={dur(900)}>
+          <Pips n={4} fill={p1} stroke={p2} />
+        </Ly>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Grasshopper: the chosen piece grows a grasshopper's long hind legs and
+ *  springs along its line over the first piece in the way, which is not
+ *  taken, landing on the empty square just beyond it. For the game. */
+const GRASSH: Palette = ["#7fc9e8", "#e3f6ff", "#1c3644"];
+function GrasshopperScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="grasshopper" pal={GRASSH} dev="gauntlet" fx="glint" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = GRASSH;
+  const d = (n: number) => dm(delayMs, n);
+  return (
+    <HStage>
+      {/* tell: the legs fold under the piece, antennae up */}
+      <Ly c="bsp-rise" at={d(0)} box={cellh(0, 0, 1.2)} len={dur(900)}>
+        <svg viewBox="0 0 12 12" className="block h-full w-full" aria-hidden="true">
+          <path d="M3 11 L1 7.4 L3.8 8.6 M9 11 L11 7.4 L8.2 8.6 M5 2.6 C4 1.4 3 0.8 2 0.8 M7 2.6 C8 1.4 9 0.8 10 0.8" fill="none" stroke={p0} strokeWidth="0.7" {...SJ} />
+        </svg>
+      </Ly>
+      {/* the piece in its line, which it will not take */}
+      <Ly c="bsp-r-hold" at={d(40)} box={cellh(0, 2)} len={dur(2100)}>
+        <Man k="p" pal={GRASSH} foe />
+      </Ly>
+      <Ly c="bsp-r-hold" at={d(200)} box={cellh(0, 3)} len={dur(1400)} v={landing(p0)} />
+      {/* strike: it springs over and lands just beyond */}
+      <Ly c="bsp-r-hop" at={d(380)} box={cellh(0, 0)} len={dur(1600)} v={{ "--mx": 0, "--my": 3 }}>
+        <Man k="q" pal={GRASSH} />
+      </Ly>
+      {[1, 2].map((i) => (
+        <Ly key={`a${i}`} c="bsp-glint" at={d(420 + i * 110)} box={cellh(0.3, i + 0.3, 0.26)}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <path d="M5 0.6 L6 4 L9.4 5 L6 6 L5 9.4 L4 6 L0.6 5 L4 4 Z" fill={p1} stroke={p2} strokeWidth="0.4" {...SJ} />
+          </svg>
+        </Ly>
+      ))}
+      {/* settle: for the game */}
+      <Ly c="bsp-stamp" at={d(1120)} box={cellh(1.2, 2.4, 0.45)} len={dur(900)}>
+        <Ever color={p2} fill={p1} />
+      </Ly>
+    </HStage>
+  );
+}
+
+/** Hard Reset: the power symbol over the opponent's most advanced pawn, and
+ *  it reboots, sent all the way back to its starting square; the pawns
+ *  behind it are left where they are. */
+const HRESET: Palette = ["#7fd8d8", "#eef8ff", "#1c4a52"];
+function HardResetScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="hard_reset" pal={HRESET} dev="mirror" fx="frost" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = HRESET;
+  const d = (n: number) => dm(delayMs, n);
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        {/* tell: the power symbol over their most advanced pawn */}
+        <Ly c="bsp-stamp" at={d(0)} box={sqs(4.3, 3.7, 0.5)} len={dur(1000)}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <circle cx="5" cy="5" r="4.4" fill={p2} />
+            <path d="M3.2 3.4 C1.6 4.8 2.4 7.8 5 7.8 C7.6 7.8 8.4 4.8 6.8 3.4 M5 2 V5" fill="none" stroke={p1} strokeWidth="0.9" strokeLinecap="round" />
+          </svg>
+        </Ly>
+        <Ly c="bsp-r-hold" at={d(20)} box={sq(2, 5)} len={dur(2000)}>
+          <Man k="p" pal={HRESET} foe />
+        </Ly>
+        <Ly c="bsp-r-hold" at={d(40)} box={sq(6, 6)} len={dur(1980)}>
+          <Man k="p" pal={HRESET} foe />
+        </Ly>
+        {/* its starting square */}
+        <Ly c="bsp-r-hold" at={d(200)} box={sq(4, 7)} len={dur(1600)} v={landing(p0)} />
+        {/* strike: it reboots to where it began */}
+        <Ly c="bsp-r-move" at={d(400)} box={sq(4, 3)} len={dur(1700)} v={{ "--mx": 0, "--my": 4 }}>
+          <Man k="p" pal={HRESET} foe />
+        </Ly>
+        {[4, 5, 6].map((r, i) => (
+          <Ly key={r} c="bsp-glint" at={d(560 + i * 70)} box={sqs(4, r, 0.26)}>
+            <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+              <rect x="1.4" y="3.4" width="7.2" height="3.2" fill={p1} stroke={p2} strokeWidth="0.4" />
+            </svg>
+          </Ly>
+        ))}
+        {/* settle: back on its home square */}
+        <Ly c="bsp-settlemark" at={d(1100)} box={sqs(4, 7, 0.4)} len={dur(900)}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <path d="M5 1.4 V5 M2.8 3 C1.2 4.4 1.8 8 5 8 C8.2 8 8.8 4.4 7.2 3" fill="none" stroke={p0} strokeWidth="0.9" strokeLinecap="round" />
+          </svg>
+        </Ly>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Hobbled Cavalry: after their next move a hobble rope loops round the
+ *  forelegs of each enemy knight and it turns to a walnut: the one that tries
+ *  its L cannot, and shuffles a single square instead. Two of their turns. */
+const HOBBLE: Palette = ["#7f8a94", "#d9d2c0", "#2e343a"];
+function HobbledCavalryScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="hobbled_cavalry" pal={HOBBLE} dev="anvil" fx="stone" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = HOBBLE;
+  const d = (n: number) => dm(delayMs, n);
+  const rope = (
+    <svg viewBox="0 0 10 4" className="block h-full w-full" aria-hidden="true">
+      <path d="M1 2 C1 0.4 4.4 0.4 5 2 C5.6 3.6 9 3.6 9 2 C9 0.4 5.6 0.4 5 2 C4.4 3.6 1 3.6 1 2 Z" fill="none" stroke={p1} strokeWidth="0.7" />
+      <path d="M5 2 L6 4" stroke={p0} strokeWidth="0.5" strokeLinecap="round" />
+    </svg>
+  );
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        {/* tell: after their next move */}
+        <Ly c="bsp-turn" at={d(0)} box={sqs(3.5, 7, 0.5)} len={dur(900)}>
+          <Glass pal={HOBBLE} />
+        </Ly>
+        {/* strike: the rope loops round each knight's legs */}
+        <Ly c="bsp-r-hold" at={d(40)} box={sq(1, 8)} len={dur(2000)}>
+          <Man k="n" pal={HOBBLE} foe />
+        </Ly>
+        {[1, 6].map((f, i) => (
+          <Ly key={`h${f}`} c="bsp-taut" at={d(260 + i * 90)} box={{ ...sqs(f, 8.1, 0.64), height: "3.2%", marginTop: "6.4%" }} len={dur(1600)}>
+            {rope}
+          </Ly>
+        ))}
+        {/* the other tries its L and balks, then shuffles one square */}
+        <Ly c="bsp-r-balk" at={d(420)} box={sq(6, 8)} len={dur(900)} v={{ "--mx": -1, "--my": -2 }}>
+          <Man k="n" pal={HOBBLE} foe />
+        </Ly>
+        <Ly c="bsp-facein" at={d(620)} box={sqs(5, 6, 0.5)} len={dur(900)}>
+          <Nope color={p1} w={0.9} />
+        </Ly>
+        <Ly c="bsp-r-move" at={d(1100)} box={sq(6, 8)} len={dur(1200)} v={{ "--mx": 0, "--my": -1 }}>
+          <Man k="n" pal={HOBBLE} foe />
+          <svg viewBox="0 0 10 10" className="absolute inset-0 block h-full w-full" aria-hidden="true">
+            <path d="M5 1.4 C8 1.4 8.8 4.2 8.8 5.6 C8.8 7.8 7 9 5 9 C3 9 1.2 7.8 1.2 5.6 C1.2 4.2 2 1.4 5 1.4 Z M5 1.6 V8.8" fill={tint(p0, 0.45)} stroke={p2} strokeWidth="0.5" />
+          </svg>
+        </Ly>
+        {/* settle: two of their turns */}
+        <Ly c="bsp-stamp" at={d(1260)} box={pipsBox(2, 43.6, 7)} len={dur(900)}>
+          <Pips n={2} fill={p1} stroke={p2} />
+        </Ly>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Knight to Nightrook: the knight's file opens both ways, a star at its far
+ *  end, and the knight slides straight up it like a rook, a distance no L
+ *  could cover, then back down. For the game. */
+const NROOK: Palette = ["#b58a5a", "#e8dcc0", "#4a3a26"];
+function KnightNightrookScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="knight_nightrook" pal={NROOK} dev="hourglass" fx="leap" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = NROOK;
+  const d = (n: number) => dm(delayMs, n);
+  return (
+    <HStage>
+      {/* tell: its file opens up and down */}
+      <Ly c="bsp-r-hold" at={d(0)} box={fileRail(0, -1, 5)} len={dur(1900)} v={{ background: tint(p0, 0.8) }} />
+      <Ly c="bsp-glint" at={d(120)} box={cellh(0, 5, 0.4)} len={dur(1100)}>
+        <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+          <path d="M5 0.6 L6.2 3.8 L9.6 3.9 L6.9 6 L7.9 9.4 L5 7.4 L2.1 9.4 L3.1 6 L0.4 3.9 L3.8 3.8 Z" fill={p1} stroke={p2} strokeWidth="0.4" {...SJ} />
+        </svg>
+      </Ly>
+      {/* strike: it slides straight up the file ... */}
+      <Ly c="bsp-r-move" at={d(260)} box={cellh(0, 0)} len={dur(1000)} v={{ "--mx": 0, "--my": 4 }}>
+        <Man k="n" pal={NROOK} />
+      </Ly>
+      {/* ... and back down it */}
+      <Ly c="bsp-r-move" at={d(900)} box={cellh(0, 4)} len={dur(1200)} v={{ "--mx": 0, "--my": -3 }}>
+        <Man k="n" pal={NROOK} />
+      </Ly>
+      <Ly c="bsp-r-hold" at={d(900)} box={cellh(0, 1)} len={dur(1100)} v={landing(p0)} />
+      {/* settle: for the game */}
+      <Ly c="bsp-stamp" at={d(1300)} box={cellh(1, 2.4, 0.45)} len={dur(900)}>
+        <Ever color={p2} fill={p1} />
+      </Ly>
+    </HStage>
+  );
+}
+
+/** Leaden Crown: after their next move a lead crown is set on the enemy
+ *  queen and she sinks under it. Her march toward the caster stops dead;
+ *  her slide along her own rank is as free as ever. Four of their turns. */
+const LEADEN: Palette = ["#a8763a", "#e8dcc0", "#3a2a1a"];
+function LeadenCrownScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="leaden_crown" pal={LEADEN} dev="lantern" fx="chain" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = LEADEN;
+  const d = (n: number) => dm(delayMs, n);
+  const crown = (
+    <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+      <path d={CROWN} fill={tint(p2, 0.95)} stroke={p0} strokeWidth="0.6" {...SJ} />
+      <path d="M1.6 7 H8.4" stroke={p1} strokeWidth="0.5" />
+    </svg>
+  );
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        {/* tell: after their next move, the crown comes down on her */}
+        <Ly c="bsp-turn" at={d(0)} box={sqs(1.5, 7, 0.5)} len={dur(900)}>
+          <Glass pal={LEADEN} />
+        </Ly>
+        <Ly c="bsp-plop" at={d(160)} box={sqs(3, 7.35, 0.62)} len={dur(900)}>
+          {crown}
+        </Ly>
+        {/* strike: she tries to march on the caster and cannot */}
+        <Ly c="bsp-r-balk" at={d(200)} box={sq(3, 7)} len={dur(1100)} v={{ "--mx": 0, "--my": -2 }}>
+          <Man k="q" pal={LEADEN} foe />
+        </Ly>
+        <Ly c="bsp-facein" at={d(560)} box={sqs(3, 5, 0.55)} len={dur(900)}>
+          <Nope color={p1} w={1} />
+        </Ly>
+        {/* her sideways slide is free */}
+        <Ly c="bsp-r-move" at={d(1060)} box={sq(3, 7)} len={dur(1300)} v={{ "--mx": 3, "--my": 0 }}>
+          <Man k="q" pal={LEADEN} foe />
+          <span className="absolute block" style={{ left: "19%", top: "-12%", width: "62%", height: "62%" }}>{crown}</span>
+        </Ly>
+        {/* settle: four of their turns */}
+        <Ly c="bsp-stamp" at={d(1260)} box={pipsBox(4, 37.2, 5)} len={dur(900)}>
+          <Pips n={4} fill={p1} stroke={p2} />
+        </Ly>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Magnet: a horseshoe magnet is set down by the caster's king and the enemy
+ *  bishop is dragged one square toward him along the field lines; their king
+ *  cannot be drawn. */
+const MAGNET: Palette = ["#95a0b5", "#d6a25a", "#2a3140"];
+function MagnetScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="magnet" pal={MAGNET} dev="torch" fx="chain" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = MAGNET;
+  const d = (n: number) => dm(delayMs, n);
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        {/* tell: the caster's king, and the magnet set down by him */}
+        <Ly c="bsp-r-hold" at={d(0)} box={sq(4, 1)} len={dur(2100)}>
+          <Man k="k" pal={MAGNET} />
+        </Ly>
+        <Ly c="bsp-plop" at={d(60)} box={sqs(4, 2, 0.8)} len={dur(1900)}>
+          <span className="block h-full w-full" style={FLIP}>
+            <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+              <path d="M2 9 V4.6 C2 0.6 8 0.6 8 4.6 V9 H5.8 V4.6 C5.8 3.6 4.2 3.6 4.2 4.6 V9 Z" fill={p0} stroke={p2} strokeWidth="0.5" {...SJ} />
+              <path d="M2 7.6 H4.2 M5.8 7.6 H8" stroke={p1} strokeWidth="1.2" />
+            </svg>
+          </span>
+        </Ly>
+        {/* strike: the field lines reach the bishop and draw it one square */}
+        {[0, 1, 2].map((i) => (
+          <Ly key={`f${i}`} c="bsp-r-move" at={d(260 + i * 120)} box={sqs(4, 4.6, 0.7 - i * 0.12)} len={dur(800)} v={{ "--mx": 0, "--my": -1.4 }}>
+            <svg viewBox="0 0 10 4" className="block h-full w-full" aria-hidden="true">
+              <path d="M0.8 3.4 C2 0.6 8 0.6 9.2 3.4" fill="none" stroke={p1} strokeWidth="0.6" strokeDasharray="1.2 0.8" />
+            </svg>
+          </Ly>
+        ))}
+        <Ly c="bsp-r-move" at={d(560)} box={sq(4, 5)} len={dur(1500)} v={{ "--mx": 0, "--my": -1 }}>
+          <Man k="b" pal={MAGNET} foe />
+        </Ly>
+        {/* their king cannot be drawn */}
+        <Ly c="bsp-r-strain" at={d(600)} box={sq(1, 6)} len={dur(1400)}>
+          <Man k="k" pal={MAGNET} foe />
+        </Ly>
+        {/* settle */}
+        <Ly c="bsp-facein" at={d(1100)} box={sqs(1.3, 6.3, 0.4)} len={dur(900)}>
+          <Nope color={p1} w={1} />
+        </Ly>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Mirror: a hand mirror stands on the border; the die picks one of the
+ *  opponent's unspent buffs, its reflection crosses the glass and the caster
+ *  holds a copy. Their locked-in upgrade casts no reflection. */
+const MIRRORC: Palette = ["#f0e2c4", "#4a7a5f", "#2c2416"];
+function MirrorScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="mirror" pal={MIRRORC} dev="dice" fx="edict" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = MIRRORC;
+  const d = (n: number) => dm(delayMs, n);
+  const card = (f: number, r: number) => ({ ...sqs(f, r, 0.9), width: "8%", marginLeft: "1.9%" });
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        {/* tell: their cards, one locked in; the die picks */}
+        <Ly c="bsp-r-hold" at={d(0)} box={card(2, 7)} len={dur(2000)}>
+          <DraftCard pal={MIRRORC} tier={3} />
+        </Ly>
+        <Ly c="bsp-r-hold" at={d(20)} box={card(5, 7)} len={dur(2000)}>
+          <DraftCard pal={MIRRORC} tier={2} lock />
+        </Ly>
+        <Ly c="bsp-turn" at={d(60)} box={sqs(3.5, 7, 0.46)} len={dur(900)}>
+          <Die pal={MIRRORC} />
+        </Ly>
+        {/* the mirror on the border */}
+        <Ly c="bsp-rise" at={d(120)} box={{ left: "40%", width: "20%", top: lineTop(4, 22), height: "22%" }} len={dur(1900)}>
+          <svg viewBox="0 0 10 11" className="block h-full w-full" aria-hidden="true">
+            <ellipse cx="5" cy="4.2" rx="3.6" ry="3.8" fill={tint(p0, 0.55)} stroke={p1} strokeWidth="0.7" />
+            <path d="M3.6 2.6 C4.2 1.8 5.2 1.6 6 1.9" fill="none" stroke={p0} strokeWidth="0.5" strokeLinecap="round" />
+            <path d="M4.3 8 H5.7 V10.8 H4.3 Z" fill={p1} stroke={p2} strokeWidth="0.35" />
+          </svg>
+        </Ly>
+        {/* strike: the picked card's reflection crosses to the caster */}
+        <Ly c="bsp-r-move" at={d(480)} box={card(2, 7)} len={dur(1300)} v={{ "--mx": 18.75 / 8, "--my": -62.5 / 11.25 }}>
+          <span className="block h-full w-full" style={{ opacity: 0.6 }}>
+            <DraftCard pal={MIRRORC} tier={3} />
+          </span>
+        </Ly>
+        {/* the locked one has no reflection */}
+        <Ly c="bsp-facein" at={d(700)} box={sqs(5, 6, 0.5)} len={dur(1000)}>
+          <Nope color={p1} w={1} />
+        </Ly>
+        {/* settle: the caster's copy */}
+        <Ly c="bsp-flip" at={d(1080)} box={card(3.5, 2)} len={dur(1100)}>
+          <DraftCard pal={MIRRORC} tier={3} />
+        </Ly>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Momentum: the caster's rook takes the knight and, carried on by its own
+ *  speed, slides on again at once, trailing speed lines; that second move may
+ *  not capture, so the pawn in its way is left. Once. */
+const MOMENT: Palette = ["#c05a2a", "#f7e3b0", "#361a0c"];
+function MomentumScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="momentum" pal={MOMENT} dev="torch" fx="muster" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = MOMENT;
+  const d = (n: number) => dm(delayMs, n);
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        {/* tell: the capture */}
+        <Ly c="bsp-r-gone" at={d(0)} box={sq(1, 5)} len={dur(800)}>
+          <Man k="n" pal={MOMENT} foe />
+        </Ly>
+        <Ly c="bsp-r-move" at={d(20)} box={sq(1, 1)} len={dur(900)} v={{ "--mx": 0, "--my": 4 }}>
+          <Man k="r" pal={MOMENT} />
+        </Ly>
+        {/* strike: carried on, it slides again at once */}
+        <Ly c="bsp-r-move" at={d(620)} box={sq(1, 5)} len={dur(1500)} v={{ "--mx": 3, "--my": 0 }}>
+          <Man k="r" pal={MOMENT} />
+        </Ly>
+        {[0, 1, 2].map((i) => (
+          <Ly key={`s${i}`} c="bsp-beam" at={d(760 + i * 40)} box={{ ...sq(1.6, 5, 2), height: "1.4%", marginTop: `${3.4 + i * 2.6}%` }} len={dur(700)} v={{ background: `linear-gradient(90deg, transparent, ${tint(i === 1 ? p1 : p0, 0.85)})` }} />
+        ))}
+        {/* the second move may not take: the pawn beyond is left */}
+        <Ly c="bsp-r-hold" at={d(640)} box={sq(5, 5)} len={dur(1400)}>
+          <Man k="p" pal={MOMENT} foe />
+        </Ly>
+        <Ly c="bsp-facein" at={d(1060)} box={sqs(4.55, 5, 0.42)} len={dur(900)}>
+          <Nope color={p1} w={1} />
+        </Ly>
+        {/* settle: once */}
+        <Ly c="bsp-stamp" at={d(1160)} box={pipsBox(1, 55, 4)} len={dur(900)}>
+          <Pips n={1} fill={p1} stroke={p2} />
+        </Ly>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** No Trespass: after their next move the four centre squares are roped
+ *  off under a truce sign; the enemy knight lunging to take the caster's pawn
+ *  standing there is turned back at the rope. Five of their turns. */
+const NOTRESP: Palette = ["#a88a3a", "#ffe9b0", "#2c2416"];
+function NoTrespassScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="no_trespass" pal={NOTRESP} dev="gauntlet" fx="lock" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = NOTRESP;
+  const d = (n: number) => dm(delayMs, n);
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        {/* tell: after their next move */}
+        <Ly c="bsp-turn" at={d(0)} box={sqs(1, 4.5, 0.5)} len={dur(900)}>
+          <Glass pal={NOTRESP} />
+        </Ly>
+        {/* the rope round the four centre squares, posts at the corners */}
+        <Ly c="bsp-settle" at={d(140)} box={area(3, 4, 2, 5)} len={dur(1900)}>
+          <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+            <path d="M1 1 C7 2.4 13 2.4 19 1 C17.6 7 17.6 13 19 19 C13 17.6 7 17.6 1 19 C2.4 13 2.4 7 1 1 Z" fill="none" stroke={p0} strokeWidth="0.8" />
+            {[[1, 1], [19, 1], [19, 19], [1, 19]].map(([x, y]) => (
+              <circle key={`${x}${y}`} cx={x} cy={y} r="1" fill={p2} stroke={p1} strokeWidth="0.4" />
+            ))}
+          </svg>
+        </Ly>
+        {/* the sign on its post */}
+        <Ly c="bsp-grow" at={d(260)} box={{ ...sqs(5.1, 5.4, 0.8) }} len={dur(1800)}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <path d="M5 4.4 V10" stroke={p2} strokeWidth="0.9" />
+            <path d="M1 0.8 H9 V5 H1 Z" fill={p1} stroke={p2} strokeWidth="0.5" />
+            <path d="M3 2.9 H7" stroke={p0} strokeWidth="0.9" strokeLinecap="round" />
+          </svg>
+        </Ly>
+        {/* strike: the caster's pawn in the centre; the knight lunges and is turned back */}
+        <Ly c="bsp-r-hold" at={d(40)} box={sq(4, 4)} len={dur(2000)}>
+          <Man k="p" pal={NOTRESP} />
+        </Ly>
+        <Ly c="bsp-r-balk" at={d(560)} box={sq(5, 6)} len={dur(1200)} v={{ "--mx": -1, "--my": -2 }}>
+          <Man k="n" pal={NOTRESP} foe />
+        </Ly>
+        <Ly c="bsp-facein" at={d(900)} box={sqs(4.3, 4.3, 0.4)} len={dur(900)}>
+          <Nope color={p1} w={1.1} />
+        </Ly>
+        {/* settle: five of their turns */}
+        <Ly c="bsp-stamp" at={d(1100)} box={pipsBox(5, 34, 3)} len={dur(900)}>
+          <Pips n={5} fill={p1} stroke={p2} />
+        </Ly>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** North Star: the fixed star rises over the caster's edge, a compass needle
+ *  swings round to it, and the caster's next draft turns up tier 4 cards. */
+const NSTAR: Palette = ["#6f8fd1", "#eef1f7", "#202b48"];
+function NorthStarScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="north_star" pal={NSTAR} dev="spool" fx="gaze" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = NSTAR;
+  const d = (n: number) => dm(delayMs, n);
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        {/* tell: the star rises */}
+        <Ly c="bsp-r-move" at={d(0)} box={sqs(3.5, 3.4, 0.9)} len={dur(2100)} v={{ "--mx": 0, "--my": 0.7 }}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <path d="M5 0.2 L5.9 4.1 L9.8 5 L5.9 5.9 L5 9.8 L4.1 5.9 L0.2 5 L4.1 4.1 Z" fill={p1} stroke={p2} strokeWidth="0.35" {...SJ} />
+            <path d="M5 2.6 L5.5 4.5 L7.4 5 L5.5 5.5 L5 7.4 L4.5 5.5 L2.6 5 L4.5 4.5 Z" fill={p0} />
+          </svg>
+        </Ly>
+        {/* the compass, its needle swinging round to the star */}
+        <Ly c="bsp-r-hold" at={d(80)} box={sqs(3.5, 2, 0.8)} len={dur(1900)}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <circle cx="5" cy="5" r="4.4" fill={tint(p2, 0.9)} stroke={p0} strokeWidth="0.6" />
+          </svg>
+        </Ly>
+        <Pin box={{ ...sqs(3.5, 2, 0.8), ...FLIP }}>
+          <Ly c="bsp-turn" at={d(160)} box={{ left: 0, top: 0, width: "100%", height: "100%", rotate: "-90deg" }} len={dur(1600)}>
+            <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+              <path d="M5 1.4 L6 5 L5 8.6 L4 5 Z" fill={p1} stroke={p2} strokeWidth="0.3" {...SJ} />
+              <path d="M5 1.4 L6 5 H4 Z" fill={p0} />
+            </svg>
+          </Ly>
+        </Pin>
+        {/* strike: the next draft's cards turn up tier 4 */}
+        {[0, 1].map((i) => (
+          <Ly key={`c${i}`} c="bsp-flip" at={i ? d(810) : d(700)} box={{ ...sqs(1.4 + i * 4.2, 3, 1), width: "9%", marginLeft: "1.75%" }} len={dur(1300)}>
+            <DraftCard pal={NSTAR} tier={4} />
+          </Ly>
+        ))}
+        {/* settle: a glint on each */}
+        {[0, 1].map((i) => (
+          <Ly key={`g${i}`} c="bsp-glint" at={i ? d(1190) : d(1100)} box={sqs(1.8 + i * 4.2, 3.4, 0.26)}>
+            <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+              <path d="M5 0.6 L6 4 L9.4 5 L6 6 L5 9.4 L4 6 L0.6 5 L4 4 Z" fill={p1} stroke={p2} strokeWidth="0.4" {...SJ} />
+            </svg>
+          </Ly>
+        ))}
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Overclock: a dial on the caster's side is pushed into the red and the
+ *  knights run fast: one leaps its L, the other takes a king's single step;
+ *  the added step may not capture, so the pawn beside it is left. Three of
+ *  the caster's turns. */
+const OVERCL: Palette = ["#b58a5a", "#e8dcc0", "#4a3a26"];
+function OverclockScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="overclock" pal={OVERCL} dev="anchor" fx="leap" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = OVERCL;
+  const d = (n: number) => dm(delayMs, n);
+  const dial = { left: "43.75%", top: rankTop(1.2), width: "12.5%", height: "8%" };
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        {/* tell: the dial, its needle pushed into the red */}
+        <Ly c="bsp-r-hold" at={d(0)} box={dial} len={dur(2000)}>
+          <svg viewBox="0 0 10 6" className="block h-full w-full" aria-hidden="true">
+            <path d="M0.6 5.6 A4.4 4.4 0 0 1 9.4 5.6 Z" fill={tint(p2, 0.9)} stroke={p0} strokeWidth="0.5" />
+            <path d="M7.4 2.2 A4.4 4.4 0 0 1 9.4 5.6" fill="none" stroke={p1} strokeWidth="0.9" />
+          </svg>
+        </Ly>
+        <Ly c="bsp-turn" at={d(100)} box={{ ...dial, width: "12.5%" }} len={dur(1500)} v={{ transformOrigin: "50% 93%", rotate: "-90deg" }}>
+          <svg viewBox="0 0 10 6" className="block h-full w-full" aria-hidden="true">
+            <path d="M5 5.6 V1.4" stroke={p1} strokeWidth="0.6" strokeLinecap="round" />
+          </svg>
+        </Ly>
+        {/* strike: one knight leaps its L ... */}
+        <Ly c="bsp-r-hop" at={d(400)} box={sq(1, 3)} len={dur(1400)} v={{ "--mx": 1, "--my": 2 }}>
+          <Man k="n" pal={OVERCL} />
+        </Ly>
+        {/* ... the other takes a king's one step */}
+        <Ly c="bsp-r-hold" at={d(520)} box={sq(6, 4)} len={dur(1300)} v={landing(p0)} />
+        <Ly c="bsp-r-move" at={d(560)} box={sq(5, 3)} len={dur(1400)} v={{ "--mx": 1, "--my": 1 }}>
+          <Man k="n" pal={OVERCL} />
+        </Ly>
+        {/* it may not take with that step */}
+        <Ly c="bsp-r-hold" at={d(560)} box={sq(4, 4)} len={dur(1400)}>
+          <Man k="p" pal={OVERCL} foe />
+        </Ly>
+        <Ly c="bsp-facein" at={d(960)} box={sqs(4, 4, 0.45)} len={dur(900)}>
+          <Nope color={p1} w={1} />
+        </Ly>
+        {/* settle: three of the caster's turns */}
+        <Ly c="bsp-stamp" at={d(1100)} box={pipsBox(3, 40.4, 2)} len={dur(900)}>
+          <Pips n={3} fill={p1} stroke={p2} />
+        </Ly>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Petrified Towers: the enemy rook turns to stone, cracks running up its
+ *  walls, and while it stands petrified their castling is struck out: the
+ *  king's two-square step toward it and the rook's hop are both refused. One
+ *  of their turns. */
+const PETTOW: Palette = ["#8d8d94", "#c9c9cf", "#3a3a40"];
+function PetrifiedTowersScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="petrified_towers" pal={PETTOW} dev="beehive" fx="stone" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = PETTOW;
+  const d = (n: number) => dm(delayMs, n);
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        {/* tell: the tower and the king it would castle with */}
+        <Ly c="bsp-r-hold" at={d(0)} box={sq(7, 8)} len={dur(2100)}>
+          <Man k="r" pal={PETTOW} foe />
+        </Ly>
+        {/* strike: stone creeps up its walls and cracks it */}
+        <Ly c="bsp-grow" at={d(160)} box={sqs(7, 8, 0.96)} len={dur(1800)} v={{ background: tint(p0, 0.55), border: `2px solid ${p2}` }}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <path d="M3 9.4 L3.8 6.8 L3 5 L4.2 2.6 M7 9.4 L6.2 7.4 L7.2 5.4 M5 1 L5.6 3" fill="none" stroke={p2} strokeWidth="0.45" {...SJ} />
+          </svg>
+        </Ly>
+        {/* castling refused: the king's step toward it balks */}
+        <Ly c="bsp-r-balk" at={d(520)} box={sq(4, 8)} len={dur(1300)} v={{ "--mx": 2, "--my": 0 }}>
+          <Man k="k" pal={PETTOW} foe />
+        </Ly>
+        <Ly c="bsp-r-hold" at={d(480)} box={{ ...sqs(5.5, 8, 1), width: "18%", height: "3%", marginTop: "4.75%" }} len={dur(1200)} v={{ borderTop: `2px dashed ${p1}` }} />
+        {[5, 6].map((f, i) => (
+          <Ly key={f} c="bsp-facein" at={d(860 + i * 80)} box={sqs(f, 8, 0.45)} len={dur(900)}>
+            <Nope color={p1} w={1} />
+          </Ly>
+        ))}
+        {/* settle: one of their turns */}
+        <Ly c="bsp-stamp" at={d(1100)} box={pipsBox(1, 91.7, 7)} len={dur(900)}>
+          <Pips n={1} fill={p1} stroke={p2} />
+        </Ly>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Phase Rook: the chosen rook turns half transparent and slides up its file
+ *  straight through its own pawn, which ripples and stays; along the rank,
+ *  two of its own in a row are one too many and it stops. For the game. */
+const PHASER: Palette = ["#a8e0e8", "#fff7de", "#274048"];
+function PhaseRookScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="phase_rook" pal={PHASER} dev="lantern" fx="glint" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = PHASER;
+  const d = (n: number) => dm(delayMs, n);
+  return (
+    <HStage>
+      {/* tell: its own pawn in the file */}
+      <Ly c="bsp-r-hold" at={d(0)} box={cellh(0, 2)} len={dur(2100)}>
+        <Man k="p" pal={PHASER} />
+      </Ly>
+      {/* strike: the rook, outline only, passes straight through it */}
+      <Ly c="bsp-r-move" at={d(200)} box={cellh(0, 0)} len={dur(1600)} v={{ "--mx": 0, "--my": 4 }}>
+        <Man k="r" pal={PHASER} ghost />
+      </Ly>
+      {[0, 1].map((i) => (
+        <Ly key={`w${i}`} c="bsp-unfurl" at={d(480 + i * 80)} box={{ ...cell(-0.5, 2), width: `${CELL * 2}%`, height: `${CELL * 0.2}%`, marginTop: `${CELL * (0.3 + i * 0.3)}%` }} len={dur(700)}>
+          <svg viewBox="0 0 20 2" preserveAspectRatio="none" className="block h-full w-full" aria-hidden="true">
+            <path d="M0 1 C2.5 0 5 2 7.5 1 C10 0 12.5 2 15 1 C17.5 0 20 1 20 1" fill="none" stroke={p0} strokeWidth="0.35" />
+          </svg>
+        </Ly>
+      ))}
+      <Ly c="bsp-r-hold" at={d(860)} box={cellh(0, 4)} len={dur(1100)} v={landing(p0)} />
+      {/* two of its own in a row: it cannot phase through both */}
+      {[1, 2].map((x) => (
+        <Ly key={`b${x}`} c="bsp-r-hold" at={d(300)} box={cellh(x, 0)} len={dur(1700)}>
+          <Man k={x === 1 ? "n" : "b"} pal={PHASER} />
+        </Ly>
+      ))}
+      <Ly c="bsp-facein" at={d(1000)} box={cellh(3, 0, 0.5)} len={dur(900)}>
+        <Nope color={p1} w={1} />
+      </Ly>
+      {/* settle: for the game */}
+      <Ly c="bsp-stamp" at={d(1160)} box={cellh(1.2, 3.4, 0.45)} len={dur(900)}>
+        <Ever color={p2} fill={p1} />
+      </Ly>
+    </HStage>
+  );
+}
+
+/** Piece Steal: the quill signs the enemy pawn over, the caster's ink runs
+ *  down it from the crown, and it stands in the caster's colours; the next
+ *  unused reroll pays for it. Once. */
+const PSTEAL: Palette = ["#6f5fd1", "#f0e8ff", "#100f1e"];
+function PieceStealScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="piece_steal" pal={PSTEAL} dev="quill" fx="ink" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = PSTEAL;
+  const d = (n: number) => dm(delayMs, n);
+  return (
+    <HStage>
+      {/* tell: the quill writes over the pawn */}
+      <Ly c="bsp-r-move" at={d(0)} box={cellh(-0.2, 0.7, 0.8)} len={dur(1100)} v={{ "--mx": hx(0.5), "--my": 0 }}>
+        <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+          <path d="M1.2 9 C2.6 5 5.4 2 9.2 0.8 C8.4 4 6 7 2.2 8.4 Z" fill={p1} stroke={p2} strokeWidth="0.45" {...SJ} />
+          <path d="M1.2 9 L4.4 5.4" stroke={p0} strokeWidth="0.5" />
+        </svg>
+      </Ly>
+      <Ly c="bsp-r-gone" at={d(40)} box={cellh(0, 0)} len={dur(1300)}>
+        <Man k="p" pal={PSTEAL} foe />
+      </Ly>
+      {/* strike: the ink runs down it and it is the caster's */}
+      <Ly c="bsp-drop" at={d(420)} box={cellh(0, 0, 0.9)} len={dur(900)}>
+        <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+          <path d="M2.6 0.8 H7.4 V5.4 C7.4 6.4 6.6 6.4 6.6 5.4 V4.6 C6.6 3.8 5.6 3.8 5.6 4.6 V7 C5.6 8 4.6 8 4.6 7 V4.2 C4.6 3.4 3.6 3.4 3.6 4.2 V5 C3.6 6 2.6 6 2.6 5 Z" fill={tint(p0, 0.85)} stroke={p2} strokeWidth="0.35" />
+        </svg>
+      </Ly>
+      <Ly c="bsp-r-hold" at={d(700)} box={cellh(0, 0)} len={dur(1400)}>
+        <Man k="p" pal={PSTEAL} />
+      </Ly>
+      {/* settle: the reroll spent */}
+      <Ly c="bsp-r-gone" at={d(900)} box={cellh(1.3, -0.6, 0.46)} len={dur(1000)}>
+        <Die pal={PSTEAL} />
+      </Ly>
+    </HStage>
+  );
+}
+
+/** Regenerate: after their next move, two of the caster's captured pawns
+ *  leave the captured tray for two empty squares of the caster's 2nd rank and
+ *  grow back whole there, a stitch mended across each. */
+const REGEN: Palette = ["#b0402e", "#e8eef7", "#2e120e"];
+function RegenerateScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="regenerate" pal={REGEN} dev="drum" fx="banner" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = REGEN;
+  const d = (n: number) => dm(delayMs, n);
+  const files = [2, 5];
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        {/* tell: after their next move; the captured tray at the edge */}
+        <Ly c="bsp-turn" at={d(0)} box={sqs(7, 3, 0.5)} len={dur(900)}>
+          <Glass pal={REGEN} />
+        </Ly>
+        <Ly c="bsp-r-hold" at={d(0)} box={{ ...sq(0, 3), width: "10%", height: "8%", marginTop: "2.25%", marginLeft: "1.25%" }} len={dur(1100)} v={{ background: tint(p2, 0.8), border: `1px solid ${p0}` }} />
+        {/* strike: two pawns come out of the tray to the empty squares ... */}
+        {files.map((f) => (
+          <Ly key={`l${f}`} c="bsp-r-hold" at={d(300)} box={sq(f, 2)} len={dur(1500)} v={landing(p1)} />
+        ))}
+        {files.map((f, i) => (
+          <Ly key={`t${f}`} c="bsp-r-move" at={i ? d(260) : d(160)} box={sq(0, 3)} len={dur(1000)} v={{ "--mx": f, "--my": -1 }}>
+            <Man k="p" pal={REGEN} ghost />
+          </Ly>
+        ))}
+        {/* ... and grow back whole on them */}
+        {files.map((f, i) => (
+          <Ly key={`g${f}`} c="bsp-grow" at={i ? d(640) : d(520)} box={sq(f, 2)} len={dur(1500)}>
+            <Man k="p" pal={REGEN} />
+          </Ly>
+        ))}
+        {/* settle: a mended stitch across each */}
+        {files.map((f, i) => (
+          <Ly key={`s${f}`} c="bsp-stamp" at={i ? d(1090) : d(1000)} box={sqs(f + 0.3, 2.3, 0.36)} len={dur(900)}>
+            <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+              <path d="M1.4 5 H8.6 M3 3.2 V6.8 M5 3.2 V6.8 M7 3.2 V6.8" stroke={p1} strokeWidth="0.9" strokeLinecap="round" />
+            </svg>
+          </Ly>
+        ))}
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Regroup: dashed outlines of the caster's advanced pawns appear on their
+ *  starting squares and the pawns fall back into them; the one whose home
+ *  square is taken by a bishop stays forward. Once. */
+const REGROUP: Palette = ["#9d7fff", "#7fd8d8", "#221440"];
+const REGROUP_PAWNS = [
+  { f: 1, r: 4 },
+  { f: 3, r: 5 },
+  { f: 6, r: 4 },
+];
+function RegroupScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="regroup" pal={REGROUP} dev="crown" fx="prism" role={role} delayMs={delayMs} />;
+  const [, p1, p2] = REGROUP;
+  const d = (n: number) => dm(delayMs, n);
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        {/* tell: the home squares call them back */}
+        {REGROUP_PAWNS.map((p, i) => (
+          <Ly key={`g${p.f}`} c="bsp-facein" at={d(i * 60)} box={sq(p.f, 2)} len={dur(1300)}>
+            <Man k="p" pal={REGROUP} ghost />
+          </Ly>
+        ))}
+        {/* strike: they fall back into them */}
+        {REGROUP_PAWNS.map((p, i) => (
+          <Ly key={`p${p.f}`} c="bsp-r-move" at={d(360 + i * 80)} box={sq(p.f, p.r)} len={dur(1600)} v={{ "--mx": 0, "--my": 2 - p.r }}>
+            <Man k="p" pal={REGROUP} />
+          </Ly>
+        ))}
+        {/* the pawn whose home square is taken stays forward */}
+        <Ly c="bsp-r-hold" at={d(120)} box={sq(4, 2)} len={dur(1900)}>
+          <Man k="b" pal={REGROUP} />
+        </Ly>
+        <Ly c="bsp-r-strain" at={d(400)} box={sq(4, 4)} len={dur(1600)}>
+          <Man k="p" pal={REGROUP} />
+        </Ly>
+        {/* settle: once */}
+        <Ly c="bsp-stamp" at={d(1120)} box={pipsBox(1, 48.4, 3)} len={dur(900)}>
+          <Pips n={1} fill={p1} stroke={p2} />
+        </Ly>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Reinforce: steel braces are bolted across the chosen piece, rivets and
+ *  all, and the enemy bishop that dives in to take it is thrown back. Three
+ *  of their turns. */
+const REINF: Palette = ["#8fb5e8", "#ffd76a", "#22304a"];
+function ReinforceScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="reinforce" pal={REINF} dev="padlock" fx="ward" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = REINF;
+  const d = (n: number) => dm(delayMs, n);
+  return (
+    <HStage>
+      {/* tell: the braces swing across it */}
+      {[-1, 1].map((s) => (
+        <Ly key={`b${s}`} c={s < 0 ? "bsp-close-l" : "bsp-close-r"} at={s < 0 ? d(0) : d(120)} box={cellh(0, 0, 1.04)} len={dur(2000)}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <path d={s < 0 ? "M1 1.6 L8.4 9 L9 8.4 L1.6 1 Z" : "M9 1.6 L1.6 9 L1 8.4 L8.4 1 Z"} fill={p0} stroke={p2} strokeWidth="0.35" />
+            <circle cx={s < 0 ? 1.8 : 8.2} cy="1.8" r="0.5" fill={p1} />
+            <circle cx={s < 0 ? 8.2 : 1.8} cy="8.2" r="0.5" fill={p1} />
+          </svg>
+        </Ly>
+      ))}
+      {/* strike: the bishop dives in and is thrown back */}
+      <Ly c="bsp-r-balk" at={d(420)} box={cellh(2, 2)} len={dur(1300)} v={{ "--mx": hx(-2), "--my": -2 }}>
+        <Man k="b" pal={REINF} foe />
+      </Ly>
+      <Ly c="bsp-glint" at={d(760)} box={cellh(0.6, 0.6, 0.3)}>
+        <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+          <path d="M5 0.6 L6 4 L9.4 5 L6 6 L5 9.4 L4 6 L0.6 5 L4 4 Z" fill={p1} stroke={p2} strokeWidth="0.4" {...SJ} />
+        </svg>
+      </Ly>
+      <Ly c="bsp-facein" at={d(900)} box={cellh(1, 1, 0.45)} len={dur(900)}>
+        <Nope color={p1} w={1} />
+      </Ly>
+      {/* settle: three of their turns */}
+      <Ly c="bsp-stamp" at={d(1100)} box={pipsAth(3, -0.9, -0.8)} len={dur(900)}>
+        <Pips n={3} fill={p1} stroke={p2} />
+      </Ly>
+    </HStage>
+  );
+}
+
+/** Screen: a folding screen opens round the bishop at its king's side, and
+ *  the enemy rook's shot along the rank is stopped by it; when the bishop
+ *  steps away from the king the screen folds and its ward is broken. Six of
+ *  the caster's turns. */
+const SCREENC: Palette = ["#5fc9b0", "#ffd76a", "#1c4a3a"];
+function ScreenScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="screen" pal={SCREENC} dev="anchor" fx="ward" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = SCREENC;
+  const d = (n: number) => dm(delayMs, n);
+  return (
+    <HStage>
+      {/* tell: its king beside it */}
+      <Ly c="bsp-r-hold" at={d(0)} box={cellh(-1, 0)} len={dur(2100)}>
+        <Man k="k" pal={SCREENC} />
+      </Ly>
+      {/* the screen unfolds round the bishop */}
+      <Ly c="bsp-unfurl" at={d(120)} box={cellh(0, 0, 1.1)} len={dur(1200)}>
+        <svg viewBox="0 0 12 10" className="block h-full w-full" aria-hidden="true">
+          <path d="M0.6 1 L4 2 V9.4 L0.6 8.4 Z M4 2 L8 1 V8.4 L4 9.4 Z M8 1 L11.4 2 V9.4 L8 8.4 Z" fill={tint(p0, 0.4)} stroke={p1} strokeWidth="0.45" {...SJ} />
+        </svg>
+      </Ly>
+      <Ly c="bsp-r-hold" at={d(40)} box={cellh(0, 0)} len={dur(1000)}>
+        <Man k="b" pal={SCREENC} />
+      </Ly>
+      {/* strike: the rook's shot along the rank is stopped */}
+      <Ly c="bsp-r-balk" at={d(360)} box={cellh(3, 0)} len={dur(1100)} v={{ "--mx": hx(-3), "--my": 0 }}>
+        <Man k="r" pal={SCREENC} foe />
+      </Ly>
+      <Ly c="bsp-settle" at={d(560)} box={cellh(0.35, 0.35, 0.5)} len={dur(800)}>
+        <Ward pal={SCREENC} />
+      </Ly>
+      {/* stepping away from the king, the ward breaks */}
+      <Ly c="bsp-r-move" at={d(1020)} box={cellh(0, 0)} len={dur(1200)} v={{ "--mx": hx(1), "--my": 1 }}>
+        <Man k="b" pal={SCREENC} />
+      </Ly>
+      <Ly c="bsp-facein" at={d(1300)} box={cellh(1.35, 1.35, 0.5)} len={dur(900)}>
+        <Ward pal={SCREENC} broken />
+      </Ly>
+      {/* settle: six of the caster's turns */}
+      <Ly c="bsp-stamp" at={d(1200)} box={pipsAth(6, -1, -0.8)} len={dur(900)}>
+        <Pips n={6} fill={p1} stroke={p2} />
+      </Ly>
+    </HStage>
+  );
+}
+
+/** A small candle and its flame (Seance, Suppress Magic). */
+function Candle({ pal, lit = true }: { pal: Palette; lit?: boolean }) {
+  const [p0, p1, p2] = pal;
+  return (
+    <svg viewBox="0 0 10 14" className="block h-full w-full" aria-hidden="true">
+      <path d="M3.4 6.4 H6.6 V13.4 H3.4 Z" fill={p1} stroke={p2} strokeWidth="0.45" />
+      {lit ? <path d="M5 0.6 C6.6 2.6 6.4 4.6 5 5.6 C3.6 4.6 3.4 2.6 5 0.6 Z" fill={p0} stroke={p2} strokeWidth="0.35" /> : <path d="M5 5.8 C4.4 4.4 5.8 3.6 5 2" fill="none" stroke={tint(p1, 0.7)} strokeWidth="0.4" />}
+    </svg>
+  );
+}
+
+/** Seance: candles are set round the caster's knight; its spirit rises out
+ *  of the square and crosses over, and the ghost of a captured rook comes
+ *  down into the square it left and stands there solid. The next unused
+ *  reroll is spent. */
+const SEANCE: Palette = ["#6fc494", "#fff7de", "#1a3826"];
+const SEANCE_CANDLES = [
+  { x: -0.62, y: 0.2 },
+  { x: 0.62, y: 0.2 },
+  { x: -0.4, y: -0.55 },
+  { x: 0.4, y: -0.55 },
+];
+function SeanceScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="seance" pal={SEANCE} dev="feather" fx="spirit" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = SEANCE;
+  const d = (n: number) => dm(delayMs, n);
+  return (
+    <HStage>
+      {/* tell: the candles of the circle */}
+      {SEANCE_CANDLES.map((c, i) => (
+        <Ly key={`c${i}`} c="bsp-rise" at={d(i * 50)} box={{ ...cellh(c.x, c.y, 0.34), height: `${CELL * 0.48}%` }} len={dur(2100)}>
+          <Candle pal={SEANCE} />
+        </Ly>
+      ))}
+      {/* strike: the knight's spirit rises and crosses over */}
+      <Ly c="bsp-r-gone" at={d(80)} box={cellh(0, 0)} len={dur(900)}>
+        <Man k="n" pal={SEANCE} />
+      </Ly>
+      <Ly c="bsp-r-move" at={d(360)} box={cellh(0, 0)} len={dur(1200)} v={{ "--mx": hx(0.4), "--my": 2 }}>
+        <Man k="n" pal={SEANCE} ghost />
+      </Ly>
+      {/* the captured rook's ghost comes down into the square and stands */}
+      <Ly c="bsp-r-move" at={d(560)} box={cellh(-0.4, 2)} len={dur(900)} v={{ "--mx": hx(0.4), "--my": -2 }}>
+        <Man k="r" pal={SEANCE} ghost />
+      </Ly>
+      <Ly c="bsp-r-hold" at={d(1000)} box={cellh(0, 0)} len={dur(1300)}>
+        <Man k="r" pal={SEANCE} />
+      </Ly>
+      {/* settle: the reroll spent */}
+      <Ly c="bsp-r-gone" at={d(1100)} box={cellh(1.4, -0.7, 0.44)} len={dur(900)}>
+        <Die pal={SEANCE} />
+      </Ly>
+      <Ly c="bsp-glint" at={d(1060)} box={cellh(0.3, 0.3, 0.26)}>
+        <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+          <path d="M5 0.6 L6 4 L9.4 5 L6 6 L5 9.4 L4 6 L0.6 5 L4 4 Z" fill={p1} stroke={p2} strokeWidth="0.4" {...SJ} />
+        </svg>
+      </Ly>
+      <Ly c="bsp-r-hold" at={d(40)} box={cellh(0, 0, 1.3)} len={dur(1800)} v={{ border: `1px dashed ${tint(p0, 0.8)}` }} />
+    </HStage>
+  );
+}
+
+/** Seized Axles: the wheels under each enemy rook rust fast with a chock
+ *  jammed against them; the rook that tries to roll sideways cannot, and
+ *  rolls straight down its own file instead. Four of their turns. */
+const AXLES: Palette = ["#6e7b8f", "#ffd76a", "#242c38"];
+function SeizedAxlesScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="seized_axles" pal={AXLES} dev="cairn" fx="chain" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = AXLES;
+  const d = (n: number) => dm(delayMs, n);
+  const wheels = (
+    <svg viewBox="0 0 10 4" className="absolute block" style={{ left: "10%", top: "74%", width: "80%", height: "32%" }} aria-hidden="true">
+      {[2.4, 7.6].map((x) => (
+        <g key={x}>
+          <circle cx={x} cy="2" r="1.6" fill={p2} stroke={p0} strokeWidth="0.4" />
+          <path d={`M${x - 1.2} 2 H${x + 1.2} M${x} 0.8 V3.2`} stroke={p0} strokeWidth="0.3" />
+        </g>
+      ))}
+      <path d="M4 3.8 L5 1.6 L6 3.8 Z" fill={p1} stroke={p2} strokeWidth="0.3" {...SJ} />
+    </svg>
+  );
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        {/* tell: their rooks on their wheels, a chock jammed in each */}
+        <Ly c="bsp-r-hold" at={d(0)} box={sq(7, 8)} len={dur(2100)}>
+          <Man k="r" pal={AXLES} foe />
+          {wheels}
+        </Ly>
+        {/* strike: one tries to roll sideways and cannot */}
+        <Ly c="bsp-r-balk" at={d(200)} box={sq(0, 6)} len={dur(1100)} v={{ "--mx": 3, "--my": 0 }}>
+          <Man k="r" pal={AXLES} foe />
+          {wheels}
+        </Ly>
+        <Ly c="bsp-facein" at={d(520)} box={sqs(2, 6, 0.5)} len={dur(900)}>
+          <Nope color={p1} w={1} />
+        </Ly>
+        {/* ... and rolls down its own file */}
+        <Ly c="bsp-r-hold" at={d(900)} box={fileRailB(0, 6, 3)} len={dur(1200)} v={{ background: tint(p0, 0.8) }} />
+        <Ly c="bsp-r-move" at={d(1000)} box={sq(0, 6)} len={dur(1300)} v={{ "--mx": 0, "--my": -3 }}>
+          <Man k="r" pal={AXLES} foe />
+          {wheels}
+        </Ly>
+        {/* settle: four of their turns */}
+        <Ly c="bsp-stamp" at={d(1200)} box={pipsBox(4, 37.2, 5)} len={dur(900)}>
+          <Pips n={4} fill={p1} stroke={p2} />
+        </Ly>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** A thin rail down screen file `f` between the caster's ranks `a` and `b`,
+ *  BoardFrame %. */
+function fileRailB(f: number, a: number, b: number): CSSProperties {
+  const lo = Math.min(a, b);
+  const hi = Math.max(a, b);
+  return { ...area(f, lo, 1, hi), left: `${f * 12.5 + 5.5}%`, width: "1.5%" };
+}
+
+/** Shielded Advance: the chosen pawn marches over the border into the enemy
+ *  half, and there a kite shield comes up in front of it; the enemy bishop
+ *  that strikes at it glances off. Six of the caster's turns. */
+const SHADV: Palette = ["#4fa3d1", "#dff7ff", "#173a52"];
+function ShieldedAdvanceScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="shielded_advance" pal={SHADV} dev="boot" fx="ward" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = SHADV;
+  const d = (n: number) => dm(delayMs, n);
+  return (
+    <HStage>
+      {/* tell: the border of the enemy half, just ahead */}
+      <Ly c="bsp-unfurl" at={d(0)} box={{ ...cell(-1.5, 0.5, 1), width: `${CELL * 4}%`, height: `${CELL * 0.1}%`, marginTop: `${CELL * 0.45}%` }} len={dur(1900)} v={{ background: tint(p1, 0.7) }} />
+      {/* the pawn marches across it */}
+      <Ly c="bsp-r-move" at={d(160)} box={cellh(0, 0)} len={dur(1900)} v={{ "--mx": 0, "--my": 1 }}>
+        <Man k="p" pal={SHADV} />
+      </Ly>
+      {/* strike: the kite shield comes up, and the bishop glances off */}
+      <Ly c="bsp-rise" at={d(600)} box={cellh(0.34, 1.2, 0.56)} len={dur(1400)}>
+        <svg viewBox="0 0 10 12" className="block h-full w-full" aria-hidden="true">
+          <path d="M5 0.6 C7.6 0.6 9.2 1.6 9.2 3.4 C9.2 7 7 9.6 5 11.4 C3 9.6 0.8 7 0.8 3.4 C0.8 1.6 2.4 0.6 5 0.6 Z" fill={tint(p0, 0.8)} stroke={p2} strokeWidth="0.5" />
+          <path d="M5 1.6 V10 M1.8 4 H8.2" stroke={p1} strokeWidth="0.55" />
+        </svg>
+      </Ly>
+      <Ly c="bsp-r-balk" at={d(760)} box={cellh(2, 3)} len={dur(1200)} v={{ "--mx": hx(-2), "--my": -2 }}>
+        <Man k="b" pal={SHADV} foe />
+      </Ly>
+      <Ly c="bsp-facein" at={d(1060)} box={cellh(1, 2, 0.45)} len={dur(900)}>
+        <Nope color={p1} w={1} />
+      </Ly>
+      {/* settle: six of the caster's turns */}
+      <Ly c="bsp-stamp" at={d(1180)} box={pipsAth(6, -1.1, -0.8)} len={dur(900)}>
+        <Pips n={6} fill={p1} stroke={p2} />
+      </Ly>
+    </HStage>
+  );
+}
+
+/** Sliding King: a bishop's mitre is set on the king's crown and he slides
+ *  three squares down a long diagonal as a bishop would, leaving a track.
+ *  Three of the caster's turns. */
+const SLIDEK: Palette = ["#9a7a4a", "#e0d0b0", "#332918"];
+function SlidingKingScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="sliding_king" pal={SLIDEK} dev="quill" fx="leap" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = SLIDEK;
+  const d = (n: number) => dm(delayMs, n);
+  const mitre = (
+    <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+      <path d="M2.6 8.6 C2.4 5 3.4 2.4 5 0.8 C6.6 2.4 7.6 5 7.4 8.6 Z" fill={p1} stroke={p2} strokeWidth="0.5" {...SJ} />
+      <path d="M5 2.6 V8.4 M3.4 5.2 H6.6" stroke={p0} strokeWidth="0.6" />
+    </svg>
+  );
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        {/* tell: the mitre comes down on the king */}
+        <Ly c="bsp-drop" at={d(0)} box={sqs(4, 1.42, 0.55)} len={dur(900)}>
+          {mitre}
+        </Ly>
+        {/* the long diagonal opens */}
+        <Pin box={{ ...sq(4, 1), transform: "rotate(calc(-135deg * var(--fx-side, 1)))" }}>
+          <Ly c="bsp-beam" at={d(200)} box={{ left: "50%", top: "46%", width: "430%", height: "8%", background: `linear-gradient(90deg, ${tint(p0, 0.8)}, transparent)` }} len={dur(1400)} />
+        </Pin>
+        {/* strike: he slides three squares down it */}
+        <Ly c="bsp-r-hold" at={d(420)} box={sq(1, 4)} len={dur(1300)} v={landing(p0)} />
+        <Ly c="bsp-r-move" at={d(480)} box={sq(4, 1)} len={dur(1600)} v={{ "--mx": -3, "--my": 3 }}>
+          <Man k="k" pal={SLIDEK} />
+          <span className="absolute block" style={{ left: "22%", top: "-30%", width: "56%", height: "56%" }}>{mitre}</span>
+        </Ly>
+        {/* settle: three of the caster's turns */}
+        <Ly c="bsp-stamp" at={d(1180)} box={pipsBox(3, 52, 2)} len={dur(900)}>
+          <Pips n={3} fill={p1} stroke={p2} />
+        </Ly>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Sown Salt: salt is scattered over the enemy pawns and white roots grip
+ *  them where they stand; the first to move gets its one escape step, and
+ *  after it every pawn is locked, even from capturing. Two of their turns. */
+const SALT: Palette = ["#9b59b6", "#c0e57f", "#221033"];
+const SALT_FILES = [1, 3, 4, 6];
+function SownSaltScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="sown_salt" pal={SALT} dev="hourglass" fx="curse" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = SALT;
+  const d = (n: number) => dm(delayMs, n);
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        {/* tell: the salt scattered over their pawns */}
+        {[0, 1, 2, 3, 4, 5].map((i) => (
+          <Ly key={`s${i}`} c="bsp-drift" at={d(i * 40)} box={sqs(1.2 + i * 0.9, 8, 0.12)} len={dur(900)} v={{ "--dx": `${(i % 2 ? 1 : -1) * 80}%`, "--dy": "calc(var(--fx-side, 1) * 700%)", "--rot": "90deg", background: "#f4efe6", border: `1px solid ${p2}` }} />
+        ))}
+        {/* strike: roots grip each pawn; the first escapes one step */}
+        {SALT_FILES.map((f, i) => (
+          <Ly key={`r${f}`} c="bsp-grow" at={d(320 + i * 50)} box={{ ...sqs(f, 7, 0.9), height: "4%", marginTop: "8%" }} len={dur(1700)}>
+            <svg viewBox="0 0 10 4" preserveAspectRatio="none" className="block h-full w-full" aria-hidden="true">
+              <path d="M2 0 C2 2 0.6 2.6 0.4 4 M5 0 V4 M8 0 C8 2 9.4 2.6 9.6 4 M3.6 0 C3.4 2 2.6 3 2.4 4 M6.4 0 C6.6 2 7.4 3 7.6 4" fill="none" stroke={p1} strokeWidth="0.5" strokeLinecap="round" />
+            </svg>
+          </Ly>
+        ))}
+        {SALT_FILES.slice(1).map((f) => (
+          <Ly key={`p${f}`} c="bsp-r-strain" at={d(360)} box={sq(f, 7)} len={dur(1800)}>
+            <Man k="p" pal={SALT} foe />
+          </Ly>
+        ))}
+        <Ly c="bsp-r-move" at={d(620)} box={sq(1, 7)} len={dur(1500)} v={{ "--mx": 0, "--my": -1 }}>
+          <Man k="p" pal={SALT} foe />
+        </Ly>
+        {/* after it, even a capture is refused */}
+        <Ly c="bsp-r-hold" at={d(600)} box={sq(5, 6)} len={dur(1500)}>
+          <Man k="n" pal={SALT} />
+        </Ly>
+        <Ly c="bsp-facein" at={d(1000)} box={sqs(5, 6, 0.46)} len={dur(900)}>
+          <Nope color={p0} w={1.1} />
+        </Ly>
+        {/* settle: two of their turns */}
+        <Ly c="bsp-stamp" at={d(1160)} box={pipsBox(2, 43.6, 5)} len={dur(900)}>
+          <Pips n={2} fill={p1} stroke={p2} />
+        </Ly>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Split March: a drumstick beats four times and four of the caster's pawns,
+ *  split across the board, each step up one square on its beat. Once. */
+const SPLITM: Palette = ["#d1663a", "#ffe9b0", "#3d2012"];
+const SPLIT_STEPS = [
+  { f: 0, at: 240 },
+  { f: 2, at: 350 },
+  { f: 5, at: 460 },
+  { f: 7, at: 570 },
+];
+function SplitMarchScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="split_march" pal={SPLITM} dev="buoy" fx="muster" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = SPLITM;
+  const d = (n: number) => dm(delayMs, n);
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        {/* tell: the drumstick beats out the four steps */}
+        <Ly c="bsp-swing" at={d(0)} box={sqs(3.5, 1, 0.7)} len={dur(1500)}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <path d="M5 0.6 V7" stroke={p2} strokeWidth="0.8" strokeLinecap="round" />
+            <circle cx="5" cy="7.6" r="1.4" fill={p0} stroke={p2} strokeWidth="0.4" />
+          </svg>
+        </Ly>
+        <Ly c="bsp-stamp" at={d(60)} box={pipsBox(4, 30, 1)} len={dur(1400)}>
+          <Pips n={4} fill={p1} stroke={p2} />
+        </Ly>
+        {/* strike: four pawns step up one, each on its beat */}
+        {SPLIT_STEPS.map((p) => (
+          <Ly key={`l${p.f}`} c="bsp-r-hold" at={d(p.at)} box={sq(p.f, 3)} len={dur(1300)} v={landing(tint(p0, 0.9))} />
+        ))}
+        {SPLIT_STEPS.map((p) => (
+          <Ly key={`p${p.f}`} c="bsp-r-move" at={d(p.at + 60)} box={sq(p.f, 2)} len={dur(1500)} v={{ "--mx": 0, "--my": 1 }}>
+            <Man k="p" pal={SPLITM} />
+          </Ly>
+        ))}
+        {/* settle: the fourth beat lands */}
+        <Ly c="bsp-glint" at={d(1100)} box={sqs(7.3, 3.4, 0.26)}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <path d="M5 0.6 L6 4 L9.4 5 L6 6 L5 9.4 L4 6 L0.6 5 L4 4 Z" fill={p1} stroke={p2} strokeWidth="0.4" {...SJ} />
+          </svg>
+        </Ly>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Stone Hooves: stone creeps up the enemy knight from its hooves; its L
+ *  leap is refused and it can only shuffle a single square, hooves grinding.
+ *  Three of their turns. */
+const STONEH: Palette = ["#7f8a94", "#d9d2c0", "#2e343a"];
+function StoneHoovesScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="stone_hooves" pal={STONEH} dev="cairn" fx="stone" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = STONEH;
+  const d = (n: number) => dm(delayMs, n);
+  return (
+    <HStage>
+      {/* tell: the knight, stone creeping up from its hooves */}
+      <Ly c="bsp-r-balk" at={d(0)} box={cellh(0, 0)} len={dur(1200)} v={{ "--mx": hx(1), "--my": -2 }}>
+        <Man k="n" pal={STONEH} foe />
+      </Ly>
+      <Ly c="bsp-grow" at={d(80)} box={{ ...cellh(0, 0, 0.8), height: `${CELL * 0.45}%`, marginTop: `${CELL * 0.35}%` }} len={dur(1100)} v={{ background: tint(p0, 0.7), borderTop: `2px solid ${p2}` }} />
+      {/* strike: its L is refused */}
+      <Ly c="bsp-facein" at={d(420)} box={cellh(1, -2, 0.5)} len={dur(900)}>
+        <Nope color={p1} w={1} />
+      </Ly>
+      {/* it shuffles one square, grit grinding off it */}
+      <Ly c="bsp-r-move" at={d(900)} box={cellh(0, 0)} len={dur(1300)} v={{ "--mx": hx(1), "--my": 0 }}>
+        <Man k="n" pal={STONEH} foe />
+        <span className="absolute block" style={{ left: "10%", top: "55%", width: "80%", height: "45%", background: tint(p0, 0.7), borderTop: `2px solid ${p2}` }} />
+      </Ly>
+      {[0, 1].map((i) => (
+        <Ly key={`g${i}`} c="bsp-drift" at={d(1100 + i * 60)} box={cellh(0.7, -0.4, 0.16)} len={dur(800)} v={{ "--dx": `${-120 - i * 80}%`, "--dy": "40%", "--rot": "60deg", background: p0 }} />
+      ))}
+      {/* settle: three of their turns */}
+      <Ly c="bsp-stamp" at={d(1200)} box={pipsAth(3, 0.5, 1)} len={dur(900)}>
+        <Pips n={3} fill={p1} stroke={p2} />
+      </Ly>
+    </HStage>
+  );
+}
+
+/** Tidal Push: the landing square is marked; after their next move a wave
+ *  curls up behind the chosen enemy bishop and carries it two squares in a
+ *  straight line onto it. Once. */
+const TIDAL: Palette = ["#a8763a", "#ffd76a", "#3a2a18"];
+function TidalPushScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="tidal_push" pal={TIDAL} dev="inkpot" fx="leap" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = TIDAL;
+  const d = (n: number) => dm(delayMs, n);
+  const wave = (
+    <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+      <path d="M0.4 9.6 C0.4 5 2.4 1.2 6.4 1.2 C8.6 1.2 9.6 2.6 9.2 4.2 C8.2 3 6.4 3.2 6 4.8 C5.6 6.6 7.4 7.2 8.6 6.6 C8 8.6 6 9.6 4 9.6 Z" fill={tint(p0, 0.7)} stroke={p2} strokeWidth="0.45" {...SJ} />
+      <path d="M2 8 C2.4 5.2 3.6 3.4 5.6 2.6" fill="none" stroke={p1} strokeWidth="0.45" strokeLinecap="round" />
+    </svg>
+  );
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        {/* tell: after their next move; the chosen landing square */}
+        <Ly c="bsp-turn" at={d(0)} box={sqs(0.6, 5, 0.5)} len={dur(900)}>
+          <Glass pal={TIDAL} />
+        </Ly>
+        <Ly c="bsp-r-hold" at={d(100)} box={sq(5, 5)} len={dur(1900)} v={landing(p0)} />
+        {/* strike: the wave curls up behind the bishop and carries it */}
+        <Ly c="bsp-r-move" at={d(360)} box={sq(2, 5)} len={dur(1500)} v={{ "--mx": 2, "--my": 0 }}>
+          {wave}
+        </Ly>
+        <Ly c="bsp-r-move" at={d(420)} box={sq(3, 5)} len={dur(1600)} v={{ "--mx": 2, "--my": 0 }}>
+          <Man k="b" pal={TIDAL} foe />
+        </Ly>
+        {/* settle: spray where it lands */}
+        {[0, 1, 2].map((i) => (
+          <Ly key={`s${i}`} c="bsp-drift" at={d(1040 + i * 50)} box={sqs(5.3, 5.4, 0.16)} len={dur(800)} v={{ "--dx": `${80 + i * 60}%`, "--dy": `calc(var(--fx-side, 1) * ${-150 - i * 60}%)`, "--rot": "45deg", background: tint(p1, 0.85) }} />
+        ))}
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Trade Up: the caster's bishop is taken, a coin spins up out of the square
+ *  it fell on, and a new pawn stands up in the caster's half; one of the two
+ *  trades is spent. */
+const TRADEUP: Palette = ["#9b6bd1", "#f2e0ff", "#1e1038"];
+function TradeUpScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="trade_up" pal={TRADEUP} dev="coin" fx="draw" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = TRADEUP;
+  const d = (n: number) => dm(delayMs, n);
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        {/* tell: the caster loses a bishop */}
+        <Ly c="bsp-r-gone" at={d(0)} box={sq(2, 4)} len={dur(900)}>
+          <Man k="b" pal={TRADEUP} />
+        </Ly>
+        <Ly c="bsp-r-move" at={d(20)} box={sq(2, 7)} len={dur(1400)} v={{ "--mx": 0, "--my": -3 }}>
+          <Man k="r" pal={TRADEUP} foe />
+        </Ly>
+        {/* strike: a coin spins up out of the square and across */}
+        <Ly c="bsp-r-hop" at={d(460)} box={sqs(2, 4, 0.5)} len={dur(1000)} v={{ "--mx": 6, "--my": -4 }}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <ellipse cx="5" cy="5" rx="3.6" ry="4.2" fill={p1} stroke={p2} strokeWidth="0.6" />
+            <path d="M5 2.6 V7.4 M3.8 3.8 H6.2" stroke={p0} strokeWidth="0.7" strokeLinecap="round" />
+          </svg>
+        </Ly>
+        {/* a new pawn stands up in the caster's half */}
+        <Ly c="bsp-grow" at={d(900)} box={sq(5, 2)} len={dur(1300)}>
+          <Man k="p" pal={TRADEUP} />
+        </Ly>
+        {/* settle: one of the two trades spent */}
+        <Ly c="bsp-r-hold" at={d(1000)} box={pipsBox(2, 60, 1)} len={dur(1000)}>
+          <Pips n={2} fill={p1} stroke={p2} />
+        </Ly>
+        <Ly c="bsp-r-gone" at={d(1100)} box={{ ...pipsBox(1, 60, 1) }} len={dur(900)}>
+          <Pips n={1} fill={p0} stroke={p2} />
+        </Ly>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Arcane Conduit: runes light along a channel cut two squares down the
+ *  rook's diagonal and the rook glides along it; it may not capture that way,
+ *  so the bishop at the channel's end is left. For the game. */
+const CONDUIT: Palette = ["#a8e0e8", "#fff7de", "#274048"];
+function ArcaneConduitScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="wa_arcane_conduit" pal={CONDUIT} dev="mask" fx="glint" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = CONDUIT;
+  const d = (n: number) => dm(delayMs, n);
+  const rune = (i: number) => (
+    <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+      <path d={["M5 1 V9 M5 3 L8 1 M5 5 L2 3", "M2 1 L5 9 L8 1 M3.2 4.4 H6.8", "M5 1 V9 M2 5 H8 M3 2 L7 8"][i % 3]} fill="none" stroke={p1} strokeWidth="0.9" {...SJ} />
+    </svg>
+  );
+  return (
+    <HStage>
+      {/* tell: the channel cut along the diagonal, runes lit along it */}
+      {[1, 2].map((i) => (
+        <Ly key={`r${i}`} c="bsp-facein" at={d(i * 90)} box={cellh(i, i, 0.4)} len={dur(1500)} v={{ background: tint(p2, 0.6), border: `1px solid ${p0}` }}>
+          {rune(i)}
+        </Ly>
+      ))}
+      {/* strike: the rook glides two squares down it */}
+      <Ly c="bsp-r-move" at={d(360)} box={cellh(0, 0)} len={dur(1600)} v={{ "--mx": hx(2), "--my": 2 }}>
+        <Man k="r" pal={CONDUIT} />
+      </Ly>
+      {/* a third rune: it may not take the other way */}
+      <Ly c="bsp-r-hold" at={d(300)} box={cellh(-1, 1)} len={dur(1600)}>
+        <Man k="b" pal={CONDUIT} foe />
+      </Ly>
+      <Ly c="bsp-facein" at={d(760)} box={cellh(-1, 1, 0.46)} len={dur(900)}>
+        <Nope color={p1} w={1} />
+      </Ly>
+      <Ly c="bsp-glint" at={d(900)} box={cellh(2.3, 2.3, 0.26)}>
+        {rune(0)}
+      </Ly>
+      {/* settle: for the game */}
+      <Ly c="bsp-stamp" at={d(1150)} box={cellh(0.2, 2.2, 0.45)} len={dur(900)}>
+        <Ever color={p2} fill={p1} />
+      </Ly>
+    </HStage>
+  );
+}
+
+/** Suppress Magic: a snuffer comes down over the candle on the opponent's
+ *  side; the draft-manipulation card is pulled from their offer, and the
+ *  card they do take arrives blank. */
+const SUPPRESS: Palette = ["#e0d0a8", "#c94a3a", "#2a3450"];
+function SuppressMagicScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="wa_suppress_magic" pal={SUPPRESS} dev="inkpot" fx="edict" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = SUPPRESS;
+  const d = (n: number) => dm(delayMs, n);
+  const card = (f: number, r: number) => ({ ...sqs(f, r, 0.9), width: "8%", marginLeft: "1.9%" });
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        {/* tell: their candle, and the snuffer coming down over it */}
+        <Ly c="bsp-r-gone" at={d(0)} box={{ ...sqs(3.5, 7, 0.5), height: "8.75%" }} len={dur(900)}>
+          <Candle pal={SUPPRESS} />
+        </Ly>
+        <Ly c="bsp-drop" at={d(160)} box={sqs(3.5, 7.3, 0.62)} len={dur(1200)}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <path d="M2.4 9.4 L5 3.4 L7.6 9.4 Z" fill={p1} stroke={p2} strokeWidth="0.5" {...SJ} />
+            <path d="M5 3.4 C5.6 1.4 7.6 0.8 9.6 1.2" fill="none" stroke={p2} strokeWidth="0.7" strokeLinecap="round" />
+          </svg>
+        </Ly>
+        <Ly c="bsp-lift" at={d(620)} box={{ ...sqs(3.5, 7.6, 0.4) }} len={dur(1000)}>
+          <Candle pal={SUPPRESS} lit={false} />
+        </Ly>
+        {/* strike: the draft-manipulation card is pulled from their offer */}
+        <Ly c="bsp-r-move" at={d(420)} box={card(5.5, 7)} len={dur(1200)} v={{ "--mx": 0, "--my": 1 / 0.9 }}>
+          <DraftCard pal={SUPPRESS} tier={3} />
+          <span className="absolute block" style={{ left: "20%", top: "18%", width: "60%", height: "44%" }}>
+            <Die pal={SUPPRESS} />
+          </span>
+        </Ly>
+        {/* settle: the card they take arrives blank */}
+        <Ly c="bsp-flip" at={d(1000)} box={card(1.5, 7)} len={dur(1100)}>
+          <DraftCard pal={SUPPRESS} tier={3} blank />
+        </Ly>
+        <Ly c="bsp-r-hold" at={d(20)} box={card(1.5, 7)} len={dur(1000)}>
+          <DraftCard pal={SUPPRESS} tier={3} />
+        </Ly>
+        <Ly c="bsp-glint" at={d(1060)} box={sqs(1.9, 7.35, 0.24)}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <path d="M5 0.6 L6 4 L9.4 5 L6 6 L5 9.4 L4 6 L0.6 5 L4 4 Z" fill={p0} stroke={p2} strokeWidth="0.4" {...SJ} />
+          </svg>
+        </Ly>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Transmute: an alchemist's circle is drawn under the caster's pawn, the
+ *  pawn melts down into it and a knight is drawn up out of it; one of the
+ *  caster's draft rerolls is spent. Once. */
+const TRANSM: Palette = ["#7fc9e8", "#e3f6ff", "#1c3644"];
+function TransmuteScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="wa_transmute" pal={TRANSM} dev="drum" fx="glint" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = TRANSM;
+  const d = (n: number) => dm(delayMs, n);
+  return (
+    <HStage>
+      {/* tell: the circle, a triangle inscribed */}
+      <Ly c="bsp-settle" at={d(0)} box={cellh(0, 0, 1.25)} len={dur(2100)}>
+        <svg viewBox="0 0 12 12" className="block h-full w-full" aria-hidden="true">
+          <circle cx="6" cy="6" r="5.4" fill="none" stroke={p0} strokeWidth="0.45" />
+          <path d="M6 1.2 L10.2 8.6 H1.8 Z" fill="none" stroke={p1} strokeWidth="0.4" {...SJ} />
+          <circle cx="6" cy="6.1" r="2.4" fill="none" stroke={p0} strokeWidth="0.35" strokeDasharray="0.8 0.6" />
+        </svg>
+      </Ly>
+      {/* strike: the pawn melts down, the knight is drawn up */}
+      <Ly c="bsp-r-gone" at={d(200)} box={cellh(0, 0)} len={dur(900)}>
+        <Man k="p" pal={TRANSM} />
+      </Ly>
+      <Ly c="bsp-grow" at={d(620)} box={cellh(0, 0)} len={dur(1400)}>
+        <Man k="n" pal={TRANSM} />
+      </Ly>
+      {[0, 1, 2].map((i) => (
+        <Ly key={`m${i}`} c="bsp-glint" at={d(560 + i * 90)} box={cellh(-0.35 + i * 0.35, 0.45 - (i % 2) * 0.2, 0.24)}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <path d="M5 0.6 L6 4 L9.4 5 L6 6 L5 9.4 L4 6 L0.6 5 L4 4 Z" fill={p1} stroke={p2} strokeWidth="0.4" {...SJ} />
+          </svg>
+        </Ly>
+      ))}
+      {/* settle: the reroll spent */}
+      <Ly c="bsp-r-move" at={d(1100)} box={cellh(1.4, -0.7, 0.44)} len={dur(900)} v={{ "--mx": 0, "--my": -1.4 }}>
+        <Die pal={TRANSM} />
+      </Ly>
+    </HStage>
+  );
+}
+
+/** Wall: a brick wall is built course by course on the chosen empty square,
+ *  and the enemy knight that leaps for it is thrown back off it. For the
+ *  game. */
+const WALLC: Palette = ["#6fc3e8", "#fff4d6", "#1d4560"];
+function WallScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="wall" pal={WALLC} dev="spear" fx="frost" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = WALLC;
+  const d = (n: number) => dm(delayMs, n);
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        {/* tell: the chosen empty square */}
+        <Ly c="bsp-r-hold" at={d(0)} box={sq(3, 5)} len={dur(900)} v={landing(p0)} />
+        {/* strike: three courses of brick go up, bottom first */}
+        {[0, 1, 2].map((i) => (
+          <Ly key={`c${i}`} c="bsp-drop" at={i ? d(140 + i * 140) : d(140)} box={{ ...sqs(3, 5, 0.9), height: "3.75%", marginTop: `${7.5 - i * 3.5}%` }} len={dur(1900 - i * 140)}>
+            <svg viewBox="0 0 12 4" preserveAspectRatio="none" className="block h-full w-full" aria-hidden="true">
+              <path d="M0.3 0.3 H11.7 V3.7 H0.3 Z" fill={tint(p0, 0.75)} stroke={p2} strokeWidth="0.3" />
+              <path d={i % 2 ? "M3 0.3 V3.7 M6 0.3 V3.7 M9 0.3 V3.7" : "M1.5 0.3 V3.7 M4.5 0.3 V3.7 M7.5 0.3 V3.7 M10.5 0.3 V3.7"} stroke={p2} strokeWidth="0.3" />
+            </svg>
+          </Ly>
+        ))}
+        {/* the enemy knight leaps for it and is thrown back */}
+        <Ly c="bsp-r-balk" at={d(700)} box={sq(4, 7)} len={dur(1200)} v={{ "--mx": -1, "--my": -2 }}>
+          <Man k="n" pal={WALLC} foe />
+        </Ly>
+        {[-1, 1].map((s) => (
+          <Ly key={`d${s}`} c="bsp-drift" at={d(980)} box={sqs(3.4 + s * 0.2, 5.7, 0.14)} len={dur(700)} v={{ "--dx": `${s * 220}%`, "--dy": "calc(var(--fx-side, 1) * -120%)", "--rot": "40deg", background: tint(p1, 0.85) }} />
+        ))}
+        {/* settle: for the game */}
+        <Ly c="bsp-stamp" at={d(1180)} box={sqs(2.3, 4.3, 0.45)} len={dur(900)}>
+          <Ever color={p2} fill={p1} />
+        </Ly>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** A flat warp portal, seen edge-on (Warp Step). */
+function Portal({ pal }: { pal: Palette }) {
+  const [p0, p1, p2] = pal;
+  return (
+    <svg viewBox="0 0 10 4" className="block h-full w-full" aria-hidden="true">
+      <ellipse cx="5" cy="2" rx="4.6" ry="1.6" fill={tint(p2, 0.9)} stroke={p0} strokeWidth="0.5" />
+      <ellipse cx="5" cy="2" rx="3" ry="0.9" fill="none" stroke={p1} strokeWidth="0.35" />
+    </svg>
+  );
+}
+
+/** Warp Step: a portal opens under the rook and another three squares up its
+ *  file; the rook sinks into one and rises out of the other, over the two
+ *  pieces between, which stay put. Once, and never a capture. */
+const WARPS: Palette = ["#8f6bff", "#6fe3ff", "#1c1030"];
+function WarpStepScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="warp_step" pal={WARPS} dev="obelisk" fx="prism" role={role} delayMs={delayMs} />;
+  const [p0] = WARPS;
+  const d = (n: number) => dm(delayMs, n);
+  const port = (r: number) => ({ ...sqs(2, r, 0.9), height: "4.5%", marginTop: "7.5%" });
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        {/* tell: the two portals open */}
+        <Ly c="bsp-unfurl" at={d(0)} box={port(2)} len={dur(1300)}>
+          <Portal pal={WARPS} />
+        </Ly>
+        <Ly c="bsp-unfurl" at={d(120)} box={port(5)} len={dur(1700)}>
+          <Portal pal={WARPS} />
+        </Ly>
+        {/* the pieces in between stay where they are */}
+        {[3, 4].map((r, i) => (
+          <Ly key={`b${r}`} c="bsp-r-hold" at={d(40 + i * 20)} box={sq(2, r)} len={dur(2000)}>
+            <Man k={r === 3 ? "p" : "b"} pal={WARPS} foe={r === 4} />
+          </Ly>
+        ))}
+        {/* strike: the rook sinks into one ... */}
+        <Ly c="bsp-r-gone" at={d(260)} box={sq(2, 2)} len={dur(900)}>
+          <Man k="r" pal={WARPS} />
+        </Ly>
+        {/* ... passes under the two, a faint outline ... */}
+        <Ly c="bsp-r-move" at={d(360)} box={sqs(2, 2, 0.7)} len={dur(800)} v={{ "--mx": 0, "--my": 3 / 0.7 }}>
+          <Man k="r" pal={WARPS} ghost />
+        </Ly>
+        {/* ... and rises out of the other */}
+        <Ly c="bsp-grow" at={d(760)} box={sq(2, 5)} len={dur(1300)}>
+          <Man k="r" pal={WARPS} />
+        </Ly>
+        {/* settle: the landing */}
+        <Ly c="bsp-r-hold" at={d(700)} box={sq(2, 5)} len={dur(1300)} v={landing(p0)} />
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** A speech bubble with an angry scribble in it (Wasted Hour, Backseat
+ *  Driver). */
+function Squabble({ pal, bang }: { pal: Palette; bang?: boolean }) {
+  const [p0, p1, p2] = pal;
+  return (
+    <svg viewBox="0 0 10 8" className="block h-full w-full" aria-hidden="true">
+      <path d="M1 0.8 H9 V5.4 H4.4 L2.6 7.4 V5.4 H1 Z" fill={p1} stroke={p2} strokeWidth="0.45" {...SJ} />
+      {bang ? <path d="M5 1.6 V3.6 M5 4.4 V4.6" stroke={p2} strokeWidth="0.8" strokeLinecap="round" /> : <path d="M2.2 3.2 C3 1.8 3.8 4.4 4.6 2.8 C5.4 1.4 6.2 4.4 7 2.8 C7.4 2.2 7.8 2.4 8 3" fill="none" stroke={p0} strokeWidth="0.55" strokeLinecap="round" />}
+    </svg>
+  );
+}
+
+/** Wasted Hour: after their next move the officers fall to arguing, speech
+ *  bubbles over their bishop and knight and a clock hand sweeping a full
+ *  hour; the knight that tries to move cannot, and only a pawn steps. One of
+ *  their turns. */
+const WASTEDH: Palette = ["#bf9c50", "#9fdcf0", "#362c1c"];
+function WastedHourScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="wasted_hour" pal={WASTEDH} dev="cogwheel" fx="clock" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = WASTEDH;
+  const d = (n: number) => dm(delayMs, n);
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        {/* tell: the clock face, its hand sweeping the hour */}
+        <Ly c="bsp-r-hold" at={d(0)} box={sqs(3.5, 6, 0.8)} len={dur(2000)}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <circle cx="5" cy="5" r="4.4" fill={tint(p2, 0.9)} stroke={p0} strokeWidth="0.6" />
+            <path d="M5 1 V1.8 M9 5 H8.2 M5 9 V8.2 M1 5 H1.8" stroke={p1} strokeWidth="0.5" />
+          </svg>
+        </Ly>
+        <Ly c="bsp-orbit" at={d(40)} box={sqs(3.5, 6, 0.8)} len={dur(1900)}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <path d="M5 5 V1.6" stroke={p1} strokeWidth="0.7" strokeLinecap="round" />
+          </svg>
+        </Ly>
+        {/* strike: the officers argue */}
+        <Ly c="bsp-r-hold" at={d(60)} box={sq(2, 8)} len={dur(2000)}>
+          <Man k="b" pal={WASTEDH} foe />
+        </Ly>
+        {[2, 5].map((f, i) => (
+          <Ly key={`q${f}`} c="bsp-pop" at={d(260 + i * 160)} box={{ ...sqs(f + 0.45, 8.55, 0.62) }} len={dur(1300)}>
+            <Squabble pal={WASTEDH} bang={i === 1} />
+          </Ly>
+        ))}
+        <Ly c="bsp-r-balk" at={d(560)} box={sq(5, 8)} len={dur(1200)} v={{ "--mx": 1, "--my": -2 }}>
+          <Man k="n" pal={WASTEDH} foe />
+        </Ly>
+        <Ly c="bsp-facein" at={d(880)} box={sqs(6, 6, 0.46)} len={dur(900)}>
+          <Nope color={p1} w={1} />
+        </Ly>
+        {/* only a pawn (or the king) moves */}
+        <Ly c="bsp-r-move" at={d(900)} box={sq(3, 7)} len={dur(1300)} v={{ "--mx": 0, "--my": -1 }}>
+          <Man k="p" pal={WASTEDH} foe />
+        </Ly>
+        {/* settle: one of their turns */}
+        <Ly c="bsp-stamp" at={d(1200)} box={pipsBox(1, 48.4, 4)} len={dur(900)}>
+          <Pips n={1} fill={p1} stroke={p2} />
+        </Ly>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Wazir Bishop: a vizier's turban is wound on the bishop and it takes a
+ *  single straight step, the wazir's move, marked on the four squares beside
+ *  it; its diagonals stay its own. For the game. */
+const WAZB: Palette = ["#bf9a68", "#f2e6d0", "#46381f"];
+function WazirBishopScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="wazir_bishop" pal={WAZB} dev="gauntlet" fx="leap" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = WAZB;
+  const d = (n: number) => dm(delayMs, n);
+  const turban = (
+    <svg viewBox="0 0 10 7" className="block h-full w-full" aria-hidden="true">
+      <path d="M0.8 5.4 C0.4 2.2 2.6 0.6 5 0.6 C7.4 0.6 9.6 2.2 9.2 5.4 C7 6.6 3 6.6 0.8 5.4 Z" fill={p1} stroke={p2} strokeWidth="0.45" {...SJ} />
+      <path d="M1.4 3.6 C3.6 2.6 6.4 4.6 8.8 3 M2 2.2 C4 1.6 6 3 8 1.8" fill="none" stroke={p0} strokeWidth="0.45" />
+      <circle cx="5" cy="3.2" r="0.6" fill={p0} stroke={p2} strokeWidth="0.25" />
+    </svg>
+  );
+  const plus = [
+    { x: 0, y: 1 },
+    { x: 1, y: 0 },
+    { x: 0, y: -1 },
+    { x: -1, y: 0 },
+  ];
+  return (
+    <HStage>
+      {/* tell: the turban wound on */}
+      <Ly c="bsp-drop" at={d(0)} box={{ ...cellh(0, 0.36, 0.66), height: `${CELL * 0.46}%` }} len={dur(900)}>
+        {turban}
+      </Ly>
+      {/* the wazir's four single steps */}
+      {plus.map((p, i) => (
+        <Ly key={`w${i}`} c="bsp-r-hold" at={i ? d(200 + i * 60) : d(200)} box={cellh(p.x, p.y, 0.86)} len={dur(1300)} v={{ border: `2px dashed ${tint(p0, 0.9)}` }} />
+      ))}
+      {/* strike: it takes the one straight step */}
+      <Ly c="bsp-r-move" at={d(520)} box={cellh(0, 0)} len={dur(1500)} v={{ "--mx": 0, "--my": 1 }}>
+        <Man k="b" pal={WAZB} />
+        <span className="absolute block" style={{ left: "17%", top: "-20%", width: "66%", height: "46%" }}>{turban}</span>
+      </Ly>
+      {/* settle: for the game */}
+      <Ly c="bsp-stamp" at={d(1120)} box={cellh(1.2, 1.8, 0.45)} len={dur(900)}>
+        <Ever color={p2} fill={p1} />
+      </Ly>
+    </HStage>
+  );
+}
+
+/** Wazir Rook: the vizier's crescent staff is planted beside the rook and it
+ *  takes a single diagonal step, marked on the four corner squares round it;
+ *  its straight lines stay its own. For the game. */
+const WAZR: Palette = ["#9fdcf0", "#ffe9b0", "#254452"];
+function WazirRookScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="wazir_rook" pal={WAZR} dev="boot" fx="glint" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = WAZR;
+  const d = (n: number) => dm(delayMs, n);
+  const corners = [
+    { x: 1, y: 1 },
+    { x: -1, y: 1 },
+    { x: 1, y: -1 },
+    { x: -1, y: -1 },
+  ];
+  return (
+    <HStage>
+      {/* tell: the crescent staff planted beside it */}
+      <Ly c="bsp-grow" at={d(0)} box={cellh(-0.52, 0.1, 0.9)} len={dur(2000)}>
+        <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+          <path d="M5 9.8 V3.4" stroke={p2} strokeWidth="0.8" strokeLinecap="round" />
+          <path d="M6.6 0.4 C4.4 0.6 3.4 2.6 4 4 C4.6 5.2 6.4 5.4 7.4 4.4 C6 4.6 4.8 3.4 5.4 2 C5.6 1.4 6 0.8 6.6 0.4 Z" fill={p1} stroke={p2} strokeWidth="0.35" {...SJ} />
+        </svg>
+      </Ly>
+      {/* the four diagonal single steps */}
+      {corners.map((c, i) => (
+        <Ly key={`c${i}`} c="bsp-r-hold" at={i ? d(200 + i * 60) : d(200)} box={cellh(c.x, c.y, 0.86)} len={dur(1300)} v={{ border: `2px dashed ${tint(p0, 0.9)}` }} />
+      ))}
+      {/* strike: it takes the diagonal step */}
+      <Ly c="bsp-r-move" at={d(520)} box={cellh(0, 0)} len={dur(1500)} v={{ "--mx": hx(1), "--my": 1 }}>
+        <Man k="r" pal={WAZR} />
+      </Ly>
+      <Ly c="bsp-glint" at={d(900)} box={cellh(1.3, 1.3, 0.26)}>
+        <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+          <path d="M5 0.6 L6 4 L9.4 5 L6 6 L5 9.4 L4 6 L0.6 5 L4 4 Z" fill={p1} stroke={p2} strokeWidth="0.4" {...SJ} />
+        </svg>
+      </Ly>
+      {/* settle: for the game */}
+      <Ly c="bsp-stamp" at={d(1120)} box={cellh(2.2, 1.4, 0.45)} len={dur(900)}>
+        <Ever color={p2} fill={p1} />
+      </Ly>
+    </HStage>
+  );
+}
+
+/** Backseat Driver: after their next move a megaphone on the caster's side
+ *  starts yelling at them; their knight starts to move and is waved off, and
+ *  a pawn is pushed instead. One of their turns. */
+const BACKSEAT: Palette = ["#8f6bff", "#8faf4a", "#1c1030"];
+function BackseatDriverScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="wc_backseat_driver" pal={BACKSEAT} dev="spool" fx="curse" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = BACKSEAT;
+  const d = (n: number) => dm(delayMs, n);
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        {/* tell: after their next move; the megaphone */}
+        <Ly c="bsp-turn" at={d(0)} box={sqs(0.5, 5, 0.5)} len={dur(900)}>
+          <Glass pal={BACKSEAT} />
+        </Ly>
+        <Ly c="bsp-swing" at={d(100)} box={sqs(1.5, 4, 0.9)} len={dur(1800)}>
+          <span className="block h-full w-full" style={FLIP}>
+            <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+              <path d="M3.4 9 V6.8 L1.4 1.6 H8.6 L6.6 6.8 V9 Z" fill={p0} stroke={p2} strokeWidth="0.5" {...SJ} />
+              <path d="M1 0.8 L0.2 0 M5 0.8 V0 M9 0.8 L9.8 0" stroke={p1} strokeWidth="0.6" strokeLinecap="round" />
+            </svg>
+          </span>
+        </Ly>
+        {/* strike: the shouting; the knight is waved off ... */}
+        <Ly c="bsp-pop" at={d(360)} box={sqs(2.4, 6.3, 0.7)} len={dur(1300)}>
+          <Squabble pal={BACKSEAT} bang />
+        </Ly>
+        <Ly c="bsp-r-balk" at={d(420)} box={sq(5, 8)} len={dur(1200)} v={{ "--mx": -1, "--my": -2 }}>
+          <Man k="n" pal={BACKSEAT} foe />
+        </Ly>
+        <Ly c="bsp-facein" at={d(760)} box={sqs(4, 6, 0.46)} len={dur(900)}>
+          <Nope color={p1} w={1} />
+        </Ly>
+        {/* ... and a pawn is pushed */}
+        <Ly c="bsp-r-move" at={d(860)} box={sq(3, 7)} len={dur(1300)} v={{ "--mx": 0, "--my": -1 }}>
+          <Man k="p" pal={BACKSEAT} foe />
+        </Ly>
+        {/* settle: one of their turns */}
+        <Ly c="bsp-stamp" at={d(1180)} box={pipsBox(1, 48.4, 4)} len={dur(900)}>
+          <Pips n={1} fill={p1} stroke={p2} />
+        </Ly>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Moonwalk: under a crescent moon the caster's pawn glides one square
+ *  straight backward, leaning forward all the way, glide marks behind it;
+ *  its backstep never captures, so the enemy piece behind the other pawn is
+ *  safe. Three of the caster's turns. */
+const MOONW: Palette = ["#c94a3a", "#ffd76a", "#3a1c16"];
+function MoonwalkScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="wc_moonwalk" pal={MOONW} dev="obelisk" fx="muster" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = MOONW;
+  const d = (n: number) => dm(delayMs, n);
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        {/* tell: the crescent moon */}
+        <Ly c="bsp-facein" at={d(0)} box={sqs(6.2, 5.3, 0.7)} len={dur(2100)}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <path d="M6.6 1 C3 1.4 1.4 4 1.8 6.4 C2.4 9 5.6 9.8 8 8.4 C5.2 8.2 3.6 5.8 4.4 3.4 C4.8 2.2 5.6 1.4 6.6 1 Z" fill={p1} stroke={p2} strokeWidth="0.4" {...SJ} />
+          </svg>
+        </Ly>
+        {/* strike: the pawn glides one square backward, leaning forward */}
+        <Ly c="bsp-r-move" at={d(260)} box={sq(3, 4)} len={dur(1700)} v={{ "--mx": 0, "--my": -1, rotate: "calc(var(--fx-side, 1) * 8deg)" }}>
+          <Man k="p" pal={MOONW} />
+        </Ly>
+        {[0, 1].map((i) => (
+          <Ly key={`g${i}`} c="bsp-drift" at={d(480 + i * 120)} box={{ ...sqs(3, 3.9 - i * 0.3, 0.5), height: "1%" }} len={dur(900)} v={{ "--dx": "0%", "--dy": "0%", "--rot": "0deg", background: tint(p0, 0.8) }} />
+        ))}
+        {/* a backstep never captures */}
+        <Ly c="bsp-r-hold" at={d(300)} box={sq(5, 3)} len={dur(1700)}>
+          <Man k="n" pal={MOONW} foe />
+        </Ly>
+        <Ly c="bsp-r-hold" at={d(300)} box={sq(5, 4)} len={dur(1700)}>
+          <Man k="p" pal={MOONW} />
+        </Ly>
+        <Ly c="bsp-facein" at={d(900)} box={sqs(5, 3, 0.46)} len={dur(900)}>
+          <Nope color={p1} w={1} />
+        </Ly>
+        {/* settle: three of the caster's turns */}
+        <Ly c="bsp-stamp" at={d(1160)} box={pipsBox(3, 18, 2)} len={dur(900)}>
+          <Pips n={3} fill={p1} stroke={p2} />
+        </Ly>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Red Tape: after their next move a length of tape is stretched across the
+ *  opponent's side under a stack of forms, and they sit out a turn; then the
+ *  tape snakes back across to the caster's side and the caster sits out the
+ *  turn after. */
+const REDTAPE: Palette = ["#ead9b8", "#5a6b8f", "#33261a"];
+function RedTapeScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="wc_red_tape" pal={REDTAPE} dev="padlock" fx="edict" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = REDTAPE;
+  const d = (n: number) => dm(delayMs, n);
+  const tape = (
+    <svg viewBox="0 0 80 4" preserveAspectRatio="none" className="block h-full w-full" aria-hidden="true">
+      <path d="M0 1 H80 V3 H0 Z" fill={p1} stroke={p2} strokeWidth="0.3" />
+      <path d="M4 2 H76" stroke={p0} strokeWidth="0.4" strokeDasharray="3 2" />
+    </svg>
+  );
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        {/* tell: after their next move; the stack of forms */}
+        <Ly c="bsp-turn" at={d(0)} box={sqs(0.4, 6, 0.5)} len={dur(900)}>
+          <Glass pal={REDTAPE} />
+        </Ly>
+        {[0, 1, 2].map((i) => (
+          <Ly key={`f${i}`} c="bsp-drop" at={d(80 + i * 70)} box={{ ...sqs(6.5, 7, 0.9), marginTop: `${-i * 1.2}%`, marginLeft: `${i * 0.6}%` }} len={dur(1900 - i * 70)}>
+            <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+              <path d="M1.6 1 H8.4 V9 H1.6 Z" fill={p0} stroke={p2} strokeWidth="0.4" />
+              <path d="M3 3 H7 M3 4.6 H7 M3 6.2 H5.6" stroke={p1} strokeWidth="0.4" />
+            </svg>
+          </Ly>
+        ))}
+        {/* strike: the tape across their side: they sit out a turn */}
+        <Ly c="bsp-taut" at={d(300)} box={{ left: "4%", width: "86%", top: lineTop(6, 3), height: "3%" }} len={dur(1100)}>
+          {tape}
+        </Ly>
+        <Ly c="bsp-stamp" at={d(560)} box={pipsBox(1, 48.4, 7)} len={dur(900)}>
+          <Pips n={1} fill={p1} stroke={p2} />
+        </Ly>
+        {/* then it snakes back across and the caster sits out the next */}
+        <Ly c="bsp-r-move" at={d(900)} box={{ left: "4%", width: "86%", top: lineTop(6, 3), height: "3%" }} len={dur(1300)} v={{ "--mx": 0, "--my": -4 * (12.5 / 3) }}>
+          {tape}
+        </Ly>
+        <Ly c="bsp-stamp" at={d(1160)} box={pipsBox(1, 48.4, 3)} len={dur(900)}>
+          <Pips n={1} fill={p0} stroke={p2} />
+        </Ly>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Stage Fright: the footlights come up in front of the enemy queen; she
+ *  steps onto her mark, freezes where she lands, and nervous drops fly off
+ *  her. One of their turns (two, as a walnut, if the move gave check). */
+const STAGEF: Palette = ["#7fd8d8", "#eef8ff", "#1c4a52"];
+function FootlightsFrightScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="wc_stage_fright" pal={STAGEF} dev="coin" fx="frost" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = STAGEF;
+  const d = (n: number) => dm(delayMs, n);
+  return (
+    <HStage>
+      {/* tell: the stage edge and its footlights */}
+      <Ly c="bsp-unfurl" at={d(0)} box={{ ...cell(-1, -1.5), width: `${CELL * 3}%`, height: `${CELL * 0.3}%`, marginTop: `${CELL * 0.1}%` }} len={dur(2100)}>
+        <svg viewBox="0 0 30 3" preserveAspectRatio="none" className="block h-full w-full" aria-hidden="true">
+          <path d="M0 2.2 H30" stroke={p2} strokeWidth="1" />
+          {[3, 9, 15, 21, 27].map((x) => (
+            <path key={x} d={`M${x - 1.6} 2 A1.6 1.6 0 0 1 ${x + 1.6} 2 Z`} fill={p1} stroke={p2} strokeWidth="0.3" />
+          ))}
+        </svg>
+      </Ly>
+      {/* her mark on the boards */}
+      <Ly c="bsp-r-hold" at={d(100)} box={cellh(0, -2, 0.6)} len={dur(1600)}>
+        <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+          <path d="M1 1 L9 9 M9 1 L1 9" stroke={p0} strokeWidth="1.2" strokeLinecap="round" />
+        </svg>
+      </Ly>
+      {/* strike: she steps onto it and freezes */}
+      <Ly c="bsp-r-move" at={d(260)} box={cellh(0, 0)} len={dur(900)} v={{ "--mx": 0, "--my": -2 }}>
+        <Man k="q" pal={STAGEF} foe />
+      </Ly>
+      <Ly c="bsp-r-strain" at={d(760)} box={cellh(0, -2)} len={dur(1400)}>
+        <Man k="q" pal={STAGEF} foe />
+      </Ly>
+      <Ly c="bsp-settle" at={d(820)} box={cellh(0, -2, 0.96)} len={dur(1300)} v={{ background: tint(p0, 0.35), border: `2px solid ${p1}` }} />
+      {[-1, 1].map((s) => (
+        <Ly key={`s${s}`} c="bsp-drift" at={d(940)} box={cellh(0.3 * s, -1.7, 0.16)} len={dur(800)} v={{ "--dx": `${s * 200}%`, "--dy": "-120%", "--rot": "0deg", background: tint(p1, 0.9), border: `1px solid ${p2}` }} />
+      ))}
+      {/* settle: one of their turns */}
+      <Ly c="bsp-stamp" at={d(1160)} box={pipsAth(1, 0.9, -2)} len={dur(900)}>
+        <Pips n={1} fill={p1} stroke={p2} />
+      </Ly>
+    </HStage>
+  );
+}
+
+const SEEDL_SPOTS = [
+  { x: 0, y: 0, at: 0 },
+  { x: 2, y: 1, at: 80 },
+];
+
+/** Seedlings: two seeds drop into empty squares of the caster's half and
+ *  take root; three of the caster's turns tick by and a pawn sprouts up out
+ *  of each. */
+const SEEDL: Palette = ["#6fae4a", "#e8fff7", "#243f14"];
+function SeedlingsScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="we_seedlings" pal={SEEDL} dev="sickle" fx="grove" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = SEEDL;
+  const d = (n: number) => dm(delayMs, n);
+  return (
+    <HStage>
+      {/* tell: the seeds fall into two empty squares */}
+      {SEEDL_SPOTS.map((s) => (
+        <Ly key={`s${s.x}`} c="bsp-r-fall" at={d(s.at)} box={cellh(s.x, s.y, 0.3)} len={dur(900)} v={{ "--mx": 0 }}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <path d="M5 1 C8 3 8 7 5 9 C2 7 2 3 5 1 Z" fill={p0} stroke={p2} strokeWidth="0.6" />
+          </svg>
+        </Ly>
+      ))}
+      {/* strike: they take root after the opponent's move, and sprout */}
+      {SEEDL_SPOTS.map((s) => (
+        <Ly key={`r${s.x}`} c="bsp-grow" at={s.at ? d(400) : d(320)} box={cellh(s.x, s.y, 0.6)} len={dur(1000)}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <path d="M5 9.6 V5 M5 6.6 C3.4 6.6 2 5.4 2 3.8 C3.8 3.8 5 5 5 6.6 M5 5 C5 3 6.4 1.6 8.4 1.6 C8.4 3.6 7 5 5 5" fill={tint(p0, 0.8)} stroke={p2} strokeWidth="0.45" {...SJ} />
+          </svg>
+        </Ly>
+      ))}
+      {/* three of the caster's turns */}
+      <Ly c="bsp-stamp" at={d(640)} box={pipsAth(3, 0.6, -0.8)} len={dur(900)}>
+        <Pips n={3} fill={p1} stroke={p2} />
+      </Ly>
+      {/* settle: a pawn stands on each square still empty */}
+      <Ly c="bsp-r-hold" at={d(1000)} box={cellh(0, 0)} len={dur(1200)} v={landing(p0)} />
+      {SEEDL_SPOTS.map((s) => (
+        <Ly key={`p${s.x}`} c="bsp-grow" at={d(1100 + s.at)} box={cellh(s.x, s.y)} len={dur(1100)}>
+          <Man k="p" pal={SEEDL} />
+        </Ly>
+      ))}
+    </HStage>
+  );
+}
+
+/** Static Field: the air on the opponent's side crackles. Their rook runs
+ *  four squares down its file, the static builds along its track, and it is
+ *  grounded, frozen where it lands; the knight's short hop draws no charge.
+ *  Three of their turns. */
+const STATICF: Palette = ["#7d8aa0", "#e3e9f2", "#1f2734"];
+function StaticFieldScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="we_static_field" pal={STATICF} dev="quill" fx="chain" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = STATICF;
+  const d = (n: number) => dm(delayMs, n);
+  const zig = (
+    <svg viewBox="0 0 4 40" preserveAspectRatio="none" className="block h-full w-full" aria-hidden="true">
+      <path d="M2 0 L3.4 5 L0.6 10 L3.4 15 L0.6 20 L3.4 25 L0.6 30 L3.4 35 L2 40" fill="none" stroke={p1} strokeWidth="0.5" {...SJ} />
+    </svg>
+  );
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        {/* tell: the rook runs four squares ... */}
+        <Ly c="bsp-r-move" at={d(0)} box={sq(2, 8)} len={dur(900)} v={{ "--mx": 0, "--my": -4 }}>
+          <Man k="r" pal={STATICF} foe />
+        </Ly>
+        {/* ... static crackling up its track */}
+        <Ly c="bsp-grow" at={d(240)} box={{ ...area(2, 5, 1, 8), left: "24%", width: "2.5%" }} len={dur(1000)} v={{ scale: "1 calc(var(--fx-side, 1) * -1)" }}>
+          {zig}
+        </Ly>
+        {/* strike: it is grounded where it lands */}
+        <Ly c="bsp-r-strain" at={d(620)} box={sq(2, 4)} len={dur(1500)}>
+          <Man k="r" pal={STATICF} foe />
+        </Ly>
+        <Ly c="bsp-stamp" at={d(640)} box={sqs(2.3, 3.7, 0.4)} len={dur(1300)}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <path d="M5 1 V5 M1.6 5 H8.4 M2.8 6.8 H7.2 M4 8.6 H6" stroke={p1} strokeWidth="0.9" strokeLinecap="round" />
+          </svg>
+        </Ly>
+        <Ly c="bsp-settle" at={d(700)} box={sqs(2, 4, 0.96)} len={dur(1300)} v={{ background: tint(p0, 0.35), border: `2px solid ${p1}` }} />
+        {/* the knight's short hop draws no charge */}
+        <Ly c="bsp-r-hop" at={d(900)} box={sq(6, 8)} len={dur(1300)} v={{ "--mx": -1, "--my": -2 }}>
+          <Man k="n" pal={STATICF} foe />
+        </Ly>
+        {/* settle: three of their turns */}
+        <Ly c="bsp-stamp" at={d(1200)} box={pipsBox(3, 40.4, 3)} len={dur(900)}>
+          <Pips n={3} fill={p1} stroke={p2} />
+        </Ly>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Will-o'-Wisp: a cold flame bobs up in front of the enemy knight and drifts
+ *  one square diagonally toward the caster; the knight follows it there. The
+ *  caster's next unused reroll is spent. */
+const WISP: Palette = ["#6fc494", "#fff7de", "#1a3826"];
+function WillOWispScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="will_o_wisp" pal={WISP} dev="mirror" fx="spirit" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = WISP;
+  const d = (n: number) => dm(delayMs, n);
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        {/* tell: the wisp bobs up in front of it and drifts on */}
+        <Ly c="bsp-r-move" at={d(0)} box={sqs(3, 6, 0.6)} len={dur(1600)} v={{ "--mx": -1 / 0.6, "--my": -1 / 0.6 }}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <path d="M5 0.6 C7.6 3.2 8.4 6 6.6 8.2 C5.6 9.4 4.4 9.4 3.4 8.2 C1.6 6 2.4 3.2 5 0.6 Z" fill={tint(p0, 0.7)} stroke={p1} strokeWidth="0.5" />
+            <path d="M5 4 C6 5.2 6 6.6 5 7.4 C4 6.6 4 5.2 5 4 Z" fill={p1} />
+          </svg>
+        </Ly>
+        <Ly c="bsp-r-hold" at={d(200)} box={sq(2, 5)} len={dur(1500)} v={landing(p0)} />
+        {/* strike: the knight follows it */}
+        <Ly c="bsp-r-move" at={d(520)} box={sq(3, 6)} len={dur(1500)} v={{ "--mx": -1, "--my": -1 }}>
+          <Man k="n" pal={WISP} foe />
+        </Ly>
+        {[0, 1].map((i) => (
+          <Ly key={`m${i}`} c="bsp-lift" at={d(700 + i * 120)} box={sqs(2.3 + i * 0.4, 5.5, 0.2)} len={dur(1000)} v={{ background: tint(p1, 0.8) }} />
+        ))}
+        {/* settle: the reroll spent */}
+        <Ly c="bsp-r-gone" at={d(1100)} box={sqs(0.4, 2, 0.46)} len={dur(900)}>
+          <Die pal={WISP} />
+        </Ly>
+        <Ly c="bsp-glint" at={d(1000)} box={sqs(2.4, 5.4, 0.24)}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <path d="M5 0.6 L6 4 L9.4 5 L6 6 L5 9.4 L4 6 L0.6 5 L4 4 Z" fill={p1} stroke={p2} strokeWidth="0.4" {...SJ} />
+          </svg>
+        </Ly>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Counter Charge: the enemy bishop takes the caster's knight, the first
+ *  capture, and at once three lances level at it from the caster's side; it
+ *  is frozen where it stands for its next two turns. */
+const CCHARGE: Palette = ["#6fc3e8", "#fff4d6", "#1d4560"];
+const CCHARGE_LANCES = [
+  { f: 1, r: 2, a: -45 },
+  { f: 3, r: 2, a: -90 },
+  { f: 5, r: 2, a: -135 },
+];
+function CounterChargeScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="ww_counter_charge" pal={CCHARGE} dev="gauntlet" fx="frost" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = CCHARGE;
+  const d = (n: number) => dm(delayMs, n);
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        {/* tell: the first capture */}
+        <Ly c="bsp-r-gone" at={d(0)} box={sq(3, 4)} len={dur(800)}>
+          <Man k="n" pal={CCHARGE} />
+        </Ly>
+        <Ly c="bsp-r-move" at={d(20)} box={sq(6, 7)} len={dur(900)} v={{ "--mx": -3, "--my": -3 }}>
+          <Man k="b" pal={CCHARGE} foe />
+        </Ly>
+        {/* strike: three lances level at the capturer */}
+        {CCHARGE_LANCES.map((l, i) => (
+          <Pin key={`l${l.f}`} box={{ ...sq(l.f, l.r), transform: `rotate(calc(${l.a}deg * var(--fx-side, 1)))` }}>
+            <Ly c="bsp-taut" at={d(420 + i * 70)} box={{ left: "50%", top: "44%", width: l.a === -90 ? "190%" : "270%", height: "12%" }} len={dur(1300)}>
+              <svg viewBox="0 0 20 2" preserveAspectRatio="none" className="block h-full w-full" aria-hidden="true">
+                <path d="M0 0.7 H16 V1.3 H0 Z" fill={p0} stroke={p2} strokeWidth="0.15" />
+                <path d="M16 0.2 L20 1 L16 1.8 Z" fill={p1} stroke={p2} strokeWidth="0.15" {...SJ} />
+              </svg>
+            </Ly>
+          </Pin>
+        ))}
+        {/* it is frozen where it stands */}
+        <Ly c="bsp-r-strain" at={d(700)} box={sq(3, 4)} len={dur(1500)}>
+          <Man k="b" pal={CCHARGE} foe />
+        </Ly>
+        <Ly c="bsp-settle" at={d(760)} box={sqs(3, 4, 0.96)} len={dur(1400)} v={{ background: tint(p0, 0.35), border: `2px solid ${p1}` }} />
+        {/* settle: two of its turns */}
+        <Ly c="bsp-stamp" at={d(1160)} box={pipsBox(2, 40.6, 6)} len={dur(900)}>
+          <Pips n={2} fill={p1} stroke={p2} />
+        </Ly>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Flank March: a pennon goes up on each of the caster's bishops and they
+ *  march a single straight step, one sideways round the flank and one
+ *  forward. It lasts up to three of the caster's turns, and ends the first
+ *  turn the caster does not take such a step. */
+const FLANKM: Palette = ["#c9a84c", "#fff2c9", "#4a3a22"];
+function FlankMarchScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="ww_flank_march" pal={FLANKM} dev="chalice" fx="leap" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = FLANKM;
+  const d = (n: number) => dm(delayMs, n);
+  const pennon = (
+    <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+      <path d="M2 10 V0.6" stroke={p2} strokeWidth="0.7" />
+      <path d="M2.2 0.8 L9.4 2.6 L2.2 4.6 Z" fill={p0} stroke={p2} strokeWidth="0.35" {...SJ} />
+    </svg>
+  );
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        {/* tell: the pennons go up */}
+        {[{ f: 2, r: 3 }, { f: 5, r: 3 }].map((b, i) => (
+          <Ly key={`p${b.f}`} c="bsp-unfurl" at={d(i * 80)} box={sqs(b.f + 0.36, b.r + 0.3, 0.5)} len={dur(900)}>
+            {pennon}
+          </Ly>
+        ))}
+        {/* strike: one steps sideways round the flank ... */}
+        <Ly c="bsp-r-move" at={d(300)} box={sq(2, 3)} len={dur(1600)} v={{ "--mx": -1, "--my": 0 }}>
+          <Man k="b" pal={FLANKM} />
+          <span className="absolute block" style={{ left: "58%", top: "-8%", width: "44%", height: "44%" }}>{pennon}</span>
+        </Ly>
+        <Ly c="bsp-r-hold" at={d(260)} box={sq(1, 3)} len={dur(1400)} v={landing(p0)} />
+        {/* ... the other one straight ahead */}
+        <Ly c="bsp-r-move" at={d(440)} box={sq(5, 3)} len={dur(1500)} v={{ "--mx": 0, "--my": 1 }}>
+          <Man k="b" pal={FLANKM} />
+          <span className="absolute block" style={{ left: "58%", top: "-8%", width: "44%", height: "44%" }}>{pennon}</span>
+        </Ly>
+        <Ly c="bsp-r-hold" at={d(400)} box={sq(5, 4)} len={dur(1400)} v={landing(p0)} />
+        {/* settle: up to three of the caster's turns */}
+        <Ly c="bsp-stamp" at={d(1100)} box={pipsBox(3, 40.4, 2)} len={dur(900)}>
+          <Pips n={3} fill={p1} stroke={p2} />
+        </Ly>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Forced Retreat: a marker is planted on the enemy knight; after their next
+ *  move the caster's king sounds the retreat along the line between them and
+ *  the knight is shoved one square straight away from him. Once. */
+const FRETREAT: Palette = ["#a8763a", "#ffd76a", "#3a2a18"];
+function ForcedRetreatScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="ww_forced_retreat" pal={FRETREAT} dev="crown" fx="leap" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = FRETREAT;
+  const d = (n: number) => dm(delayMs, n);
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        {/* tell: the marker on the knight; the hourglass */}
+        <Ly c="bsp-grow" at={d(0)} box={sqs(4.34, 4.3, 0.5)} len={dur(1000)}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <path d="M3 10 V1" stroke={p2} strokeWidth="0.8" />
+            <path d="M3.2 1 H9 L7.4 3 L9 5 H3.2 Z" fill={p1} stroke={p2} strokeWidth="0.4" {...SJ} />
+          </svg>
+        </Ly>
+        <Ly c="bsp-turn" at={d(60)} box={sqs(6.5, 4, 0.5)} len={dur(900)}>
+          <Glass pal={FRETREAT} />
+        </Ly>
+        {/* strike: the line from the caster's king, and the shove away */}
+        <Ly c="bsp-r-hold" at={d(20)} box={sq(4, 1)} len={dur(2000)}>
+          <Man k="k" pal={FRETREAT} />
+        </Ly>
+        <Ly c="bsp-grow" at={d(300)} box={{ ...area(4, 2, 1, 3), left: "49.25%", width: "1.5%" }} len={dur(1100)} v={{ background: `repeating-linear-gradient(0deg, ${tint(p1, 0.8)} 0 6px, transparent 6px 11px)`, scale: "1 var(--fx-side, 1)" }} />
+        <Ly c="bsp-r-move" at={d(480)} box={sq(4, 4)} len={dur(1600)} v={{ "--mx": 0, "--my": 1 }}>
+          <Man k="n" pal={FRETREAT} foe />
+        </Ly>
+        <Ly c="bsp-r-move" at={d(520)} box={sqs(4, 4.6, 0.6)} len={dur(1100)} v={{ "--mx": 0, "--my": 0.8 }}>
+          <span className="block h-full w-full" style={FLIP}>
+            <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+              <path d="M1.6 7 L5 3.4 L8.4 7 M1.6 9.4 L5 5.8 L8.4 9.4" fill="none" stroke={p0} strokeWidth="1.1" {...SJ} />
+            </svg>
+          </span>
+        </Ly>
+        {/* settle: once */}
+        <Ly c="bsp-stamp" at={d(1160)} box={pipsBox(1, 36, 5)} len={dur(900)}>
+          <Pips n={1} fill={p1} stroke={p2} />
+        </Ly>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Phalanx Advance: tall shields lock along the caster's pawn line, all but
+ *  the one at the spearhead, the most advanced pawn. An enemy pawn striking at
+ *  a shielded pawn glances off; the spearhead pawn stands bare. For the
+ *  game. */
+const PHADV: Palette = ["#a8e0e8", "#fff7de", "#274048"];
+function PhalanxAdvanceScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="ww_phalanx_advance" pal={PHADV} dev="caltrop" fx="glint" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = PHADV;
+  const d = (n: number) => dm(delayMs, n);
+  const line = [
+    { f: 1, r: 3 },
+    { f: 2, r: 3 },
+    { f: 4, r: 3 },
+  ];
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        {/* tell: the pawn line and its spearhead */}
+        {line.map((p, i) => (
+          <Ly key={`p${p.f}`} c="bsp-r-hold" at={d(i * 30)} box={sq(p.f, p.r)} len={dur(2100)}>
+            <Man k="p" pal={PHADV} />
+          </Ly>
+        ))}
+        <Ly c="bsp-r-hold" at={d(60)} box={sq(3, 4)} len={dur(2040)}>
+          <Man k="p" pal={PHADV} />
+        </Ly>
+        {/* strike: tall shields lock along the line, the spearhead bare */}
+        {line.map((p, i) => (
+          <Ly key={`s${p.f}`} c="bsp-rise" at={d(200 + i * 80)} box={{ ...sqs(p.f, p.r, 0.9), width: "7%", marginLeft: "4%" }} len={dur(1800)}>
+            <svg viewBox="0 0 6 10" preserveAspectRatio="none" className="block h-full w-full" aria-hidden="true">
+              <path d="M0.6 0.6 H5.4 V9.4 H0.6 Z" fill={tint(p0, 0.8)} stroke={p2} strokeWidth="0.4" />
+              <path d="M3 1.2 V8.8 M1 5 H5" stroke={p1} strokeWidth="0.5" />
+            </svg>
+          </Ly>
+        ))}
+        {/* an enemy pawn strikes at a shielded pawn and glances off */}
+        <Ly c="bsp-r-balk" at={d(640)} box={sq(1, 4)} len={dur(1200)} v={{ "--mx": 1, "--my": -1 }}>
+          <Man k="p" pal={PHADV} foe />
+        </Ly>
+        <Ly c="bsp-facein" at={d(940)} box={sqs(2, 3, 0.46)} len={dur(900)}>
+          <Nope color={p1} w={1} />
+        </Ly>
+        {/* settle: for the game */}
+        <Ly c="bsp-stamp" at={d(1160)} box={sqs(6, 3, 0.45)} len={dur(900)}>
+          <Ever color={p2} fill={p1} />
+        </Ly>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Pikemen: a long pike is lowered sideways in the pawn's hands and it takes
+ *  the enemy knight standing right beside it, one square sideways. For the
+ *  game. */
+const PIKEM: Palette = ["#d1663a", "#ffe9b0", "#3d2012"];
+function PikemenScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="ww_pikemen" pal={PIKEM} dev="kite" fx="muster" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = PIKEM;
+  const d = (n: number) => dm(delayMs, n);
+  return (
+    <HStage>
+      {/* tell: the pike lowered sideways */}
+      <Ly c="bsp-taut" at={d(0)} box={{ ...cellh(0.75, 0), width: `${CELL * 1.5}%`, marginLeft: `${-CELL * 0.25}%`, height: `${CELL * 0.2}%`, marginTop: `${CELL * 0.4}%`, scale: "var(--bsp-hx, 1) 1" }} len={dur(1100)}>
+        <svg viewBox="0 0 30 4" preserveAspectRatio="none" className="block h-full w-full" aria-hidden="true">
+          <path d="M0 1.6 H24 V2.4 H0 Z" fill={p0} stroke={p2} strokeWidth="0.2" />
+          <path d="M24 0.4 L30 2 L24 3.6 Z" fill={p1} stroke={p2} strokeWidth="0.25" {...SJ} />
+        </svg>
+      </Ly>
+      {/* strike: the knight beside it is taken, the pawn steps in */}
+      <Ly c="bsp-r-gone" at={d(40)} box={cellh(1, 0)} len={dur(1000)}>
+        <Man k="n" pal={PIKEM} foe />
+      </Ly>
+      <Ly c="bsp-r-move" at={d(420)} box={cellh(0, 0)} len={dur(1600)} v={{ "--mx": hx(1), "--my": 0 }}>
+        <Man k="p" pal={PIKEM} />
+      </Ly>
+      {/* it may also step sideways the other way onto an empty square */}
+      <Ly c="bsp-r-hold" at={d(300)} box={cellh(-1, 0)} len={dur(1400)} v={landing(tint(p1, 0.8))} />
+      {[-1, 1].map((s) => (
+        <Ly key={`s${s}`} c="bsp-drift" at={d(640)} box={cellh(1.1, 0.1 * s, 0.18)} len={dur(800)} v={{ "--dx": "calc(var(--bsp-hx, 1) * 200%)", "--dy": `${s * 160}%`, "--rot": "40deg", background: tint(p1, 0.85) }} />
+      ))}
+      {/* settle: for the game */}
+      <Ly c="bsp-stamp" at={d(1120)} box={cellh(0.6, -0.8, 0.45)} len={dur(900)}>
+        <Ever color={p2} fill={p1} />
+      </Ly>
+    </HStage>
+  );
+}
+
+/** Pontoon Bridge: planks are laid down the bishop's diagonal over its own
+ *  two pawns, and the bishop crosses the bridge to the empty square beyond.
+ *  Once. */
+const PONTOON: Palette = ["#bf9a68", "#f2e6d0", "#46381f"];
+function PontoonBridgeScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="ww_pontoon_bridge" pal={PONTOON} dev="mask" fx="leap" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = PONTOON;
+  const d = (n: number) => dm(delayMs, n);
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        {/* tell: its own two pieces in the way */}
+        {[2, 3].map((n, i) => (
+          <Ly key={`o${n}`} c="bsp-r-hold" at={d(i * 30)} box={sq(n, n)} len={dur(2100)}>
+            <Man k={n === 2 ? "p" : "n"} pal={PONTOON} />
+          </Ly>
+        ))}
+        {/* strike: the planks go down over them, pontoon by pontoon */}
+        <Pin box={{ ...sq(1, 1), transform: "rotate(calc(-45deg * var(--fx-side, 1)))" }}>
+          <Ly c="bsp-unfurl" at={d(200)} box={{ left: "50%", top: "32%", width: "424%", height: "36%" }} len={dur(1800)}>
+            <svg viewBox="0 0 40 4" preserveAspectRatio="none" className="block h-full w-full" aria-hidden="true">
+              <path d="M0 0.6 H40 M0 3.4 H40" stroke={p2} strokeWidth="0.4" />
+              {Array.from({ length: 10 }, (_, i) => (
+                <path key={i} d={`M${1 + i * 4} 0.4 H${3.4 + i * 4} V3.6 H${1 + i * 4} Z`} fill={tint(p0, 0.75)} stroke={p2} strokeWidth="0.25" />
+              ))}
+            </svg>
+          </Ly>
+        </Pin>
+        {/* the bishop crosses to the square beyond */}
+        <Ly c="bsp-r-hold" at={d(520)} box={sq(4, 4)} len={dur(1400)} v={landing(p1)} />
+        <Ly c="bsp-r-move" at={d(620)} box={sq(1, 1)} len={dur(1600)} v={{ "--mx": 3, "--my": 3 }}>
+          <Man k="b" pal={PONTOON} />
+        </Ly>
+        {/* settle: once */}
+        <Ly c="bsp-stamp" at={d(1180)} box={pipsBox(1, 55, 4)} len={dur(900)}>
+          <Pips n={1} fill={p1} stroke={p2} />
+        </Ly>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Regroup the Lines: a signal flag waves on the border and every caster's
+ *  piece standing in the enemy half falls back one square; the knight with
+ *  its own pawn right behind it has no room and holds. */
+const RELINES: Palette = ["#8468f0", "#c9f4ff", "#1a0f38"];
+const RELINES_BACK = [
+  { f: 1, r: 5, k: "p" as ManKind },
+  { f: 3, r: 6, k: "b" as ManKind },
+  { f: 6, r: 5, k: "r" as ManKind },
+];
+function RegroupLinesScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="ww_regroup_lines" pal={RELINES} dev="weathervane" fx="prism" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = RELINES;
+  const d = (n: number) => dm(delayMs, n);
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        {/* tell: the border, and the signal flag waving on it */}
+        <Ly c="bsp-unfurl" at={d(0)} box={{ left: 0, width: "100%", top: lineTop(4, 1), height: "1%" }} len={dur(1900)} v={{ background: tint(p1, 0.7) }} />
+        <Ly c="bsp-swing" at={d(80)} box={sqs(0, 4.5, 0.8)} len={dur(1400)}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <path d="M2 10 V0.6" stroke={p2} strokeWidth="0.7" />
+            <path d="M2.2 0.8 H9 V5.4 H2.2 Z" fill={p0} stroke={p2} strokeWidth="0.35" />
+            <path d="M2.2 0.8 L9 5.4" stroke={p1} strokeWidth="0.8" />
+          </svg>
+        </Ly>
+        {/* strike: each falls back one square */}
+        {RELINES_BACK.map((p, i) => (
+          <Ly key={`b${p.f}`} c="bsp-r-move" at={d(320 + i * 70)} box={sq(p.f, p.r)} len={dur(1600)} v={{ "--mx": 0, "--my": -1 }}>
+            <Man k={p.k} pal={RELINES} />
+          </Ly>
+        ))}
+        {/* the knight with its own pawn behind it holds */}
+        <Ly c="bsp-r-strain" at={d(360)} box={sq(4, 5)} len={dur(1600)}>
+          <Man k="n" pal={RELINES} />
+        </Ly>
+        <Ly c="bsp-r-hold" at={d(340)} box={sq(4, 4)} len={dur(1620)}>
+          <Man k="p" pal={RELINES} />
+        </Ly>
+        {/* settle: a chevron under each that fell back */}
+        {RELINES_BACK.map((p, i) => (
+          <Pin key={`c${p.f}`} box={{ ...sqs(p.f, p.r - 1.55, 0.44), ...FLIP }}>
+            <Ly c="bsp-stamp" at={d(1000 + i * 70)} box={{ left: 0, top: 0, width: "100%", height: "100%" }} len={dur(900)}>
+              <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+                <path d="M1.6 3.4 L5 6.8 L8.4 3.4" fill="none" stroke={p1} strokeWidth="1.4" {...SJ} />
+              </svg>
+            </Ly>
+          </Pin>
+        ))}
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Reserve Cavalry: the first time the caster loses a piece, the stable
+ *  doors on the caster's back rank swing open on the empty square nearest the
+ *  king's file and a knight rides out onto it. */
+const RESCAV: Palette = ["#b0402e", "#e8eef7", "#2e120e"];
+function ReserveCavalryScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="ww_reserve_cavalry" pal={RESCAV} dev="buckler" fx="banner" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = RESCAV;
+  const d = (n: number) => dm(delayMs, n);
+  const door = (
+    <svg viewBox="0 0 5 10" preserveAspectRatio="none" className="block h-full w-full" aria-hidden="true">
+      <path d="M0.4 0.4 H4.6 V9.6 H0.4 Z" fill={p0} stroke={p2} strokeWidth="0.35" />
+      <path d="M0.8 1 L4.2 9 M4.2 1 L0.8 9" stroke={p1} strokeWidth="0.3" />
+    </svg>
+  );
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        {/* tell: the line breaks: a caster's piece is taken */}
+        <Ly c="bsp-r-gone" at={d(0)} box={sq(3, 3)} len={dur(800)}>
+          <Man k="b" pal={RESCAV} />
+        </Ly>
+        <Ly c="bsp-r-move" at={d(20)} box={sq(3, 6)} len={dur(1100)} v={{ "--mx": 0, "--my": -3 }}>
+          <Man k="r" pal={RESCAV} foe />
+        </Ly>
+        {/* the caster's king, and the empty square beside it */}
+        <Ly c="bsp-r-hold" at={d(40)} box={sq(4, 1)} len={dur(2000)}>
+          <Man k="k" pal={RESCAV} />
+        </Ly>
+        {/* strike: the stable doors swing open */}
+        <Ly c="bsp-close-l" at={d(380)} box={{ ...sq(5, 1), width: "6.25%" }} len={dur(1600)}>
+          {door}
+        </Ly>
+        <Ly c="bsp-close-r" at={d(380)} box={{ ...sq(5, 1), width: "6.25%", marginLeft: "6.25%" }} len={dur(1600)}>
+          {door}
+        </Ly>
+        {/* the knight rides out onto the square */}
+        <Ly c="bsp-rise" at={d(760)} box={sq(5, 1)} len={dur(1300)}>
+          <Man k="n" pal={RESCAV} />
+        </Ly>
+        {[0, 1].map((i) => (
+          <Ly key={`u${i}`} c="bsp-drift" at={d(900 + i * 60)} box={sqs(5 + i * 0.5, 0.7, 0.18)} len={dur(800)} v={{ "--dx": `${(i ? 1 : -1) * 160}%`, "--dy": "0%", "--rot": "30deg", background: tint(p1, 0.8) }} />
+        ))}
+        {/* settle: once */}
+        <Ly c="bsp-stamp" at={d(1150)} box={pipsBox(1, 67.9, 2)} len={dur(900)}>
+          <Pips n={1} fill={p1} stroke={p2} />
+        </Ly>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** War Wagon: the bishop climbs into a covered wagon and rolls two squares
+ *  straight ahead, a move no bishop makes; the wagon cannot ram, so the pawn
+ *  straight ahead of it on the other line is left. For the game. */
+const WAGON: Palette = ["#9a7a4a", "#e0d0b0", "#332918"];
+function WarWagonScene({ lead, role, delayMs }: RuleProps) {
+  if (role === "entrance" || !lead) return <RuleCut id="ww_war_wagon" pal={WAGON} dev="mirror" fx="leap" role={role} delayMs={delayMs} />;
+  const [p0, p1, p2] = WAGON;
+  const d = (n: number) => dm(delayMs, n);
+  const wagon = (
+    <svg viewBox="0 0 10 10" className="absolute inset-0 block h-full w-full" aria-hidden="true">
+      <path d="M0.8 6.4 H9.2 V8 H0.8 Z" fill={p0} stroke={p2} strokeWidth="0.35" />
+      <path d="M1.4 6.4 C1.4 3.6 2.6 2.8 3 2.8 M8.6 6.4 C8.6 3.6 7.4 2.8 7 2.8" fill="none" stroke={p1} strokeWidth="0.5" />
+      {[2.6, 7.4].map((x) => (
+        <g key={x}>
+          <circle cx={x} cy="8.4" r="1.3" fill={p1} stroke={p2} strokeWidth="0.35" />
+          <path d={`M${x - 0.9} 8.4 H${x + 0.9} M${x} 7.5 V9.3`} stroke={p2} strokeWidth="0.25" />
+        </g>
+      ))}
+    </svg>
+  );
+  return (
+    <HStage>
+      {/* tell: the wagon rolls up under the bishop */}
+      <Ly c="bsp-r-move" at={d(0)} box={cellh(-1, 0)} len={dur(700)} v={{ "--mx": hx(1), "--my": 0 }}>
+        {wagon}
+      </Ly>
+      <Ly c="bsp-r-hold" at={d(20)} box={cellh(0, 0)} len={dur(700)}>
+        <Man k="b" pal={WAGON} />
+      </Ly>
+      {/* strike: it rolls two squares straight ahead */}
+      <Ly c="bsp-r-hold" at={d(360)} box={cellh(0, 2)} len={dur(1400)} v={landing(p0)} />
+      <Ly c="bsp-r-move" at={d(460)} box={cellh(0, 0)} len={dur(1600)} v={{ "--mx": 0, "--my": 2 }}>
+        <Man k="b" pal={WAGON} />
+        {wagon}
+      </Ly>
+      {/* it cannot ram: the pawn in its sideways path stays */}
+      <Ly c="bsp-r-hold" at={d(400)} box={cellh(1, 0)} len={dur(1600)}>
+        <Man k="p" pal={WAGON} foe />
+      </Ly>
+      <Ly c="bsp-facein" at={d(900)} box={cellh(1, 0, 0.46)} len={dur(900)}>
+        <Nope color={p1} w={1} />
+      </Ly>
+      {/* settle: for the game */}
+      <Ly c="bsp-stamp" at={d(1160)} box={cellh(1.2, 2.3, 0.45)} len={dur(900)}>
+        <Ever color={p2} fill={p1} />
+      </Ly>
+    </HStage>
+  );
+}
+
 /* =============================================================================
    Registry — CARD -> TEMPLATE / PALETTE / DEVICE, one entry per still-uncovered
    card.
@@ -7279,13 +10529,13 @@ export const PLAYS: Record<string, SigPlugin> = {
   // Bulwark (t2 protection)
   bulwark: B(SigilRing, ["#5fc9b0","#ffd76a","#1c4a3a"], "bulwark", { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "aegis", anchor: "cast", source: "shield" }, "chalice"),
   // Fork Guard (t2 protection)
-  fork_guard: B(SigilRing, ["#5fc9b0","#ffd76a","#1c4a3a"], "fork_guard", { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "aegis", anchor: "cast" }, "beehive"),
+  fork_guard: S(ForkGuardScene, { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "aegis", anchor: "cast" }),
   // Reinforce (t2 protection)
-  reinforce: B(SigilRing, ["#8fb5e8","#ffd76a","#22304a"], "reinforce", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis", anchor: "cast", source: "shield" }, "padlock"),
+  reinforce: S(ReinforceScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis", anchor: "cast", source: "shield" }),
   // Screen (t2 protection)
-  screen: B(SigilRing, ["#5fc9b0","#ffd76a","#1c4a3a"], "screen", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis", anchor: "cast" }, "anchor"),
+  screen: S(ScreenScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "aegis", anchor: "cast" }),
   // Shielded Advance (t2 protection)
-  shielded_advance: B(SigilRing, ["#4fa3d1","#dff7ff","#173a52"], "shielded_advance", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "aegis", anchor: "cast" }, "boot"),
+  shielded_advance: S(ShieldedAdvanceScene, { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "aegis", anchor: "cast" }),
   // Sidestep King (t2 protection)
   sidestep_king: B(SigilRing, ["#c9a84c","#e8fff7","#3a3026"], "sidestep_king", { ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "aegis", anchor: "cast", source: "kingSafe" }, "gauntlet"),
   // Chain Mail (t3 protection)
@@ -7339,9 +10589,9 @@ export const PLAYS: Record<string, SigPlugin> = {
   // Timid King (t2 hex)
   timid_king: B(RuneStamp, ["#6b4a8f","#a8e07f","#241436"], "timid_king", { ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "shades", anchor: "board" }, "brazier"),
   // Sown Salt (t3 hex)
-  sown_salt: B(RuneStamp, ["#9b59b6","#c0e57f","#221033"], "sown_salt", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "shades", anchor: "cast" }, "hourglass"),
+  sown_salt: S(SownSaltScene, { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "shades", anchor: "cast" }),
   // Backseat Driver (t3 hex)
-  wc_backseat_driver: B(RuneStamp, ["#8f6bff","#8faf4a","#1c1030"], "wc_backseat_driver", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "shades", anchor: "aim", source: "slow" }, "spool"),
+  wc_backseat_driver: S(BackseatDriverScene, { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "shades", anchor: "aim", source: "slow" }),
   // Atomic Captures (Small) (t4 attack)
   atomic_captures_small: B(RuneStamp, ["#8faf4a","#c9b0e8","#2f3a26"], "atomic_captures_small", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades", anchor: "board" }, "warhorn", true),
   // Hex Doll (t4 hex)
@@ -7371,26 +10621,26 @@ export const PLAYS: Record<string, SigPlugin> = {
   // Leaden Queen (t2 hex)
   leaden_queen: B(ChainLash, ["#6e7b8f","#ffd76a","#242c38"], "leaden_queen", { ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "wall", anchor: "board" }, "boot"),
   // Seized Axles (t2 hex)
-  seized_axles: B(ChainLash, ["#6e7b8f","#ffd76a","#242c38"], "seized_axles", { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "wall", anchor: "board" }, "cairn"),
+  seized_axles: S(SeizedAxlesScene, { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "wall", anchor: "board" }),
   // Short Leash (t2 hex)
   short_leash: B(ChainLash, ["#95a0b5","#d6a25a","#2a3140"], "short_leash", { ordering: "radial", staggerMs: 0, victims: ["b"], hasLead: true, sound: "wall", anchor: "board" }, "drum"),
   // Trench Line (t2 hex)
   trench_line: B(ChainLash, ["#6e7b8f","#ffd76a","#242c38"], "trench_line", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "wall", anchor: "board" }, "helm"),
   // Anchored Rooks (t3 hex)
-  anchored_rooks: B(ChainLash, ["#6e7b8f","#ffd76a","#242c38"], "anchored_rooks", { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "wall", anchor: "board" }, "keystone"),
+  anchored_rooks: S(AnchoredRooksScene, { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "wall", anchor: "board" }),
   // Blinkered Bishops (t3 hex)
-  blinkered_bishops: B(ChainLash, ["#95a0b5","#d6a25a","#2a3140"], "blinkered_bishops", { ordering: "radial", staggerMs: 0, victims: ["b"], hasLead: true, sound: "wall", anchor: "board" }, "sickle"),
+  blinkered_bishops: S(BlinkeredBishopsScene, { ordering: "radial", staggerMs: 0, victims: ["b"], hasLead: true, sound: "wall", anchor: "board" }),
   // Leaden Crown (t3 hex)
-  leaden_crown: B(ChainLash, ["#a8763a","#e8dcc0","#3a2a1a"], "leaden_crown", { ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "wall", anchor: "board" }, "lantern"),
+  leaden_crown: S(LeadenCrownScene, { ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "wall", anchor: "board" }),
   // Magnet (t3 item)
-  magnet: B(ChainLash, ["#95a0b5","#d6a25a","#2a3140"], "magnet", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall", anchor: "aim" }, "torch"),
+  magnet: S(MagnetScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall", anchor: "aim" }),
   // Pawn Nerf (t3 hex)
   pawn_nerf: S(PawnNerfScene, { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "wall", anchor: "aim" }),
   // Pin Breaker (t3 movement)
   // Spooked Steeds (t3 hex)
   spooked_steeds: B(ChainLash, ["#8a94a8","#c9cdd6","#2e3440"], "spooked_steeds", { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "wall", anchor: "board" }, "compass"),
   // Static Field (t3 protection)
-  we_static_field: B(ChainLash, ["#7d8aa0","#e3e9f2","#1f2734"], "we_static_field", { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "wall", anchor: "cast" }, "quill"),
+  we_static_field: S(StaticFieldScene, { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "wall", anchor: "cast" }),
   // Abandoned Post (t4 hex)
   abandoned_post: S(AbandonedPostScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "wall", anchor: "board" }),
   // Blockade (t4 tempo)
@@ -7406,15 +10656,15 @@ export const PLAYS: Record<string, SigPlugin> = {
   // Cold Snap (t1 hex)
   cold_snap: S(ColdSnapScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", anchor: "cast", source: "frozen" }),
   // Hard Reset (t2 hex)
-  hard_reset: B(ColdSnap, ["#7fd8d8","#eef8ff","#1c4a52"], "hard_reset", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", anchor: "aim", source: "frozen" }, "mirror"),
+  hard_reset: S(HardResetScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", anchor: "aim", source: "frozen" }),
   // Pinned Down (t2 hex)
   pinned_down: B(ColdSnap, ["#6fc3e8","#fff4d6","#1d4560"], "pinned_down", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", anchor: "cast", source: "frozen" }, "candle"),
   // Frost Nip (t2 tempo)
   we_frost_nip: B(ColdSnap, ["#8fb5e8","#dff7ff","#22304a"], "we_frost_nip", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", anchor: "board", source: "frozen" }, "thorn"),
   // Frost (t3 tempo)
-  frost: B(ColdSnap, ["#6fc3e8","#fff4d6","#1d4560"], "frost", { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "clockice", anchor: "aim", source: "frozen" }, "obelisk"),
+  frost: S(FrostScene, { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "clockice", anchor: "aim", source: "frozen" }),
   // Frostbite (t3 hex)
-  frostbite: B(ColdSnap, ["#aee2ff","#cdeaff","#2a5070"], "frostbite", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", anchor: "cast", source: "frozen" }, "chalice"),
+  frostbite: S(FrostbiteScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", anchor: "cast", source: "frozen" }),
   // Snap Freeze (t3 tempo)
   snap_freeze: S(SnapFreezeScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", anchor: "cast", source: "frozen" }),
   // Twist the Knife (t3 hex)
@@ -7422,13 +10672,13 @@ export const PLAYS: Record<string, SigPlugin> = {
   // Stasis Field (t3 tempo)
   wa_stasis_field: S(PhaseFieldScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", anchor: "aim", source: "frozen" }),
   // Wall (t3 tempo)
-  wall: B(ColdSnap, ["#6fc3e8","#fff4d6","#1d4560"], "wall", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", anchor: "board", source: "frozen" }, "spear"),
+  wall: S(WallScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", anchor: "board", source: "frozen" }),
   // Clumsy Dash (t3 tempo)
   wc_clumsy_dash: S(ClumsyDashScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", anchor: "cast", source: "frozen" }),
   // Slip on Ice (t3 tempo)
   wc_slip_on_ice: B(ColdSnap, ["#9fd8ff","#e8f8ff","#2c5a80"], "wc_slip_on_ice", { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "clockice", anchor: "cast", source: "frozen" }, "dice"),
   // Stage Fright (t3 hex)
-  wc_stage_fright: B(ColdSnap, ["#7fd8d8","#eef8ff","#1c4a52"], "wc_stage_fright", { ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "clockice", anchor: "cast" }, "coin"),
+  wc_stage_fright: S(FootlightsFrightScene, { ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "clockice", anchor: "cast" }),
   // Cascade Freeze (t4 tempo)
   cascade_freeze: S(CascadeFreezeScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", anchor: "board" }),
   // Cryostasis (t4 hex)
@@ -7440,19 +10690,19 @@ export const PLAYS: Record<string, SigPlugin> = {
   // Bind the Queen (t4 protection)
   wa_bind_the_queen: S(BindTheQueenScene, { ordering: "sweep", staggerMs: 60, victims: ["q"], hasLead: true, sound: "clockice", anchor: "board", source: "frozen" }),
   // Counter Charge (t4 tempo)
-  ww_counter_charge: B(ColdSnap, ["#6fc3e8","#fff4d6","#1d4560"], "ww_counter_charge", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", anchor: "aim" }, "gauntlet", true),
+  ww_counter_charge: S(CounterChargeScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockice", anchor: "aim" }),
 
   /* --- StoneShell -------------------------------------------------------- */
   // Gargoyles (t2 hex)
-  gargoyles: B(StoneShell, ["#8d8d94","#c9c9cf","#3a3a40"], "gargoyles", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "petrify", anchor: "cast", source: "walnut" }, "acorn"),
+  gargoyles: S(GargoylesScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "petrify", anchor: "cast", source: "walnut" }),
   // Stone Hooves (t2 hex)
-  stone_hooves: B(StoneShell, ["#7f8a94","#d9d2c0","#2e343a"], "stone_hooves", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "petrify", anchor: "cast", source: "walnut" }, "cairn"),
+  stone_hooves: S(StoneHoovesScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "petrify", anchor: "cast", source: "walnut" }),
   // Gorgon's Glance (t3 hex)
-  gorgons_glance: B(StoneShell, ["#8a8478","#e8dcc0","#3c362c"], "gorgons_glance", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "petrify", anchor: "board", source: "walnut" }, "keystone"),
+  gorgons_glance: S(GorgonsGlanceScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "petrify", anchor: "board", source: "walnut" }),
   // Hobbled Cavalry (t3 hex)
-  hobbled_cavalry: B(StoneShell, ["#7f8a94","#d9d2c0","#2e343a"], "hobbled_cavalry", { ordering: "sweep", staggerMs: 60, victims: ["n"], hasLead: true, sound: "petrifiedforest", anchor: "cast", source: "walnut" }, "anvil"),
+  hobbled_cavalry: S(HobbledCavalryScene, { ordering: "sweep", staggerMs: 60, victims: ["n"], hasLead: true, sound: "petrifiedforest", anchor: "cast", source: "walnut" }),
   // Petrified Towers (t3 hex)
-  petrified_towers: B(StoneShell, ["#8d8d94","#c9c9cf","#3a3a40"], "petrified_towers", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "petrify", anchor: "cast", source: "walnut" }, "beehive"),
+  petrified_towers: S(PetrifiedTowersScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "petrify", anchor: "cast", source: "walnut" }),
   // Granite Towers (t4 hex)
   granite_towers: B(StoneShell, ["#9a8f8a","#c9b89a","#3a322c"], "granite_towers", { ordering: "sweep", staggerMs: 60, victims: ["r"], hasLead: true, sound: "petrifiedforest", anchor: "cast", source: "walnut" }, "obelisk", true),
   // Ironbound Rook (t4 hex)
@@ -7484,15 +10734,15 @@ export const PLAYS: Record<string, SigPlugin> = {
   // Pawn Push (t2 movement)
   pawn_push: B(GlintArc, ["#8fd1ff","#ffd76a","#22405c"], "pawn_push", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "coronation", anchor: "aim", source: "empower" }, "anvil"),
   // Phase Rook (t2 movement)
-  phase_rook: B(GlintArc, ["#a8e0e8","#fff7de","#274048"], "phase_rook", { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "coronation", anchor: "aim", source: "empower" }, "lantern"),
+  phase_rook: S(PhaseRookScene, { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "coronation", anchor: "aim", source: "empower" }),
   // Reposition (t2 movement)
   reposition: B(GlintArc, ["#8fd1ff","#ffd76a","#22405c"], "reposition", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation", anchor: "cast", source: "empower" }, "helm"),
   // Wazir Rook (t2 movement)
-  wazir_rook: B(GlintArc, ["#9fdcf0","#ffe9b0","#254452"], "wazir_rook", { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "coronation", anchor: "aim", source: "empower" }, "boot"),
+  wazir_rook: S(WazirRookScene, { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "coronation", anchor: "aim", source: "empower" }),
   // Thunder Step (t2 movement)
   we_thunder_step: B(GlintArc, ["#8fd1ff","#ffd76a","#22405c"], "we_thunder_step", { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "coronation", anchor: "aim", source: "empower" }, "keystone"),
   // Grasshopper (t3 movement)
-  grasshopper: B(GlintArc, ["#7fc9e8","#e3f6ff","#1c3644"], "grasshopper", { ordering: "radial", staggerMs: 0, victims: ["p","n","b","r","q"], hasLead: true, sound: "coronation", anchor: "aim", source: "empower" }, "gauntlet"),
+  grasshopper: S(GrasshopperScene, { ordering: "radial", staggerMs: 0, victims: ["p","n","b","r","q"], hasLead: true, sound: "coronation", anchor: "aim", source: "empower" }),
   // Promote Now (t3 pieces)
   promote_now: S(PromoteNowScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation", anchor: "cast" }),
   // Queen's Echo (t3 movement)
@@ -7502,13 +10752,13 @@ export const PLAYS: Record<string, SigPlugin> = {
   // Vanguard (t3 pieces)
   vanguard: B(GlintArc, ["#8fd1ff","#ffd76a","#22405c"], "vanguard", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation", anchor: "cast" }, "inkpot"),
   // Transmute (t3 pieces)
-  wa_transmute: B(GlintArc, ["#7fc9e8","#e3f6ff","#1c3644"], "wa_transmute", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation", anchor: "aim" }, "drum"),
+  wa_transmute: S(TransmuteScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation", anchor: "aim" }),
   // Ball Lightning (t3 attack)
   we_ball_lightning: S(BallLightningScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation", anchor: "aim" }),
   // River Flow (t3 movement)
   we_riverflow: B(GlintArc, ["#6fe3ff","#fff4d6","#1c3a4a"], "we_riverflow", { ordering: "sweep", staggerMs: 60, victims: ["r"], hasLead: true, sound: "coronation", anchor: "aim", source: "empower" }, "buckler"),
   // Phalanx Advance (t3 movement)
-  ww_phalanx_advance: B(GlintArc, ["#a8e0e8","#fff7de","#274048"], "ww_phalanx_advance", { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "coronation", anchor: "cast", source: "empower" }, "caltrop"),
+  ww_phalanx_advance: S(PhalanxAdvanceScene, { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "coronation", anchor: "cast", source: "empower" }),
   // Changeling (t4 pieces)
   changeling: S(ChangelingScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation", anchor: "aim" }),
   // Kingslide (t4 movement)
@@ -7516,7 +10766,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   // Royal Decree (t4 movement)
   royal_decree: S(RoyalDecreeScene, { ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "coronation", anchor: "aim", source: "empower" }),
   // Arcane Conduit (t4 movement)
-  wa_arcane_conduit: B(GlintArc, ["#a8e0e8","#fff7de","#274048"], "wa_arcane_conduit", { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "coronation", anchor: "aim", source: "empower" }, "mask", true),
+  wa_arcane_conduit: S(ArcaneConduitScene, { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "coronation", anchor: "aim", source: "empower" }),
 
   /* --- HoofSpring -------------------------------------------------------- */
   // Bishop Polish (t1 movement)
@@ -7528,7 +10778,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   // Nudge (t1 attack)
   nudge: S(NudgeScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz", anchor: "aim" }),
   // Camel Knight (t2 movement)
-  camel_knight: B(HoofSpring, ["#bf9a68","#f2e6d0","#46381f"], "camel_knight", { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "blitz", anchor: "cast", source: "empower" }, "bellows"),
+  camel_knight: S(CamelKnightScene, { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "blitz", anchor: "cast", source: "empower" }),
   // Long Knight (t2 movement)
   long_knight: S(LongKnightScene, { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "blitz", anchor: "cast", source: "empower" }),
   // Mind Nudge (t2 attack)
@@ -7542,7 +10792,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   // Vault (t2 movement)
   vault: S(VaultScene, { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "blitz", anchor: "cast", source: "empower" }),
   // Wazir Bishop (t2 movement)
-  wazir_bishop: B(HoofSpring, ["#bf9a68","#f2e6d0","#46381f"], "wazir_bishop", { ordering: "radial", staggerMs: 0, victims: ["b"], hasLead: true, sound: "blitz", anchor: "aim", source: "empower" }, "gauntlet"),
+  wazir_bishop: S(WazirBishopScene, { ordering: "radial", staggerMs: 0, victims: ["b"], hasLead: true, sound: "blitz", anchor: "aim", source: "empower" }),
   // Kangaroo Hop (t2 movement)
   wc_kangaroo_hop: B(HoofSpring, ["#9a7a4a","#e0d0b0","#332918"], "wc_kangaroo_hop", { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "blitz", anchor: "aim", source: "empower" }, "toadstool"),
   // Updraft (t2 movement)
@@ -7550,35 +10800,35 @@ export const PLAYS: Record<string, SigPlugin> = {
   // Bishop to Archbishop (t3 movement)
   bishop_archbishop: S(ArchbishopScene, { ordering: "radial", staggerMs: 0, victims: ["b"], hasLead: true, sound: "blitz", anchor: "cast", source: "empower" }),
   // Board Quake (t3 attack)
-  board_quake: B(HoofSpring, ["#a8763a","#ffd76a","#3a2a18"], "board_quake", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz", anchor: "aim" }, "lantern"),
+  board_quake: S(BoardQuakeScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz", anchor: "aim" }),
   // Cannon (t3 movement)
-  cannon: B(HoofSpring, ["#9a7a4a","#e0d0b0","#332918"], "cannon", { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "blitz", anchor: "aim", source: "empower" }, "helm"),
+  cannon: S(CannonScene, { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "blitz", anchor: "aim", source: "empower" }),
   // Dragon Pawn (t3 movement)
   dragon_pawn: S(DragonPawnScene, { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "blitz", anchor: "cast", source: "empower" }),
   // Hunter Knight (t3 attack)
   hunter_knight: S(HunterKnightScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz", anchor: "aim" }),
   // Knight to Nightrook (t3 movement)
-  knight_nightrook: B(HoofSpring, ["#b58a5a","#e8dcc0","#4a3a26"], "knight_nightrook", { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "blitz", anchor: "aim", source: "empower" }, "hourglass"),
+  knight_nightrook: S(KnightNightrookScene, { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "blitz", anchor: "aim", source: "empower" }),
   // Overclock (t3 movement)
-  overclock: B(HoofSpring, ["#b58a5a","#e8dcc0","#4a3a26"], "overclock", { ordering: "sweep", staggerMs: 60, victims: ["n"], hasLead: true, sound: "blitz", anchor: "aim", source: "empower" }, "anchor"),
+  overclock: S(OverclockScene, { ordering: "sweep", staggerMs: 60, victims: ["n"], hasLead: true, sound: "blitz", anchor: "aim", source: "empower" }),
   // Rook to Chancellor (t3 movement)
   rook_chancellor: B(HoofSpring, ["#bf9a68","#f2e6d0","#46381f"], "rook_chancellor", { ordering: "radial", staggerMs: 0, victims: ["r"], hasLead: true, sound: "blitz", anchor: "cast", source: "empower" }, "compass"),
   // Sliding King (t3 movement)
-  sliding_king: B(HoofSpring, ["#9a7a4a","#e0d0b0","#332918"], "sliding_king", { ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "blitz", anchor: "aim", source: "empower" }, "quill"),
+  sliding_king: S(SlidingKingScene, { ordering: "radial", staggerMs: 0, victims: ["k"], hasLead: true, sound: "blitz", anchor: "aim", source: "empower" }),
   // Tidal Push (t3 attack)
-  tidal_push: B(HoofSpring, ["#a8763a","#ffd76a","#3a2a18"], "tidal_push", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz", anchor: "aim" }, "inkpot"),
+  tidal_push: S(TidalPushScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz", anchor: "aim" }),
   // Trampoline (t3 item)
   trampoline: B(HoofSpring, ["#bf9a68","#f2e6d0","#46381f"], "trampoline", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz", anchor: "aim" }, "buckler"),
   // Ghostwalk (t3 movement)
   wa_ghostwalk_bishop: B(HoofSpring, ["#a8763a","#ffd76a","#3a2a18"], "wa_ghostwalk_bishop", { ordering: "radial", staggerMs: 0, victims: ["b"], hasLead: true, sound: "blitz", anchor: "aim", source: "empower" }, "brazier"),
   // Flank March (t3 movement)
-  ww_flank_march: B(HoofSpring, ["#c9a84c","#fff2c9","#4a3a22"], "ww_flank_march", { ordering: "sweep", staggerMs: 60, victims: ["b"], hasLead: true, sound: "blitz", anchor: "aim", source: "empower" }, "chalice"),
+  ww_flank_march: S(FlankMarchScene, { ordering: "sweep", staggerMs: 60, victims: ["b"], hasLead: true, sound: "blitz", anchor: "aim", source: "empower" }),
   // Forced Retreat (t3 tempo)
-  ww_forced_retreat: B(HoofSpring, ["#a8763a","#ffd76a","#3a2a18"], "ww_forced_retreat", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz", anchor: "aim" }, "crown"),
+  ww_forced_retreat: S(ForcedRetreatScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz", anchor: "aim" }),
   // Pontoon Bridge (t3 movement)
-  ww_pontoon_bridge: B(HoofSpring, ["#bf9a68","#f2e6d0","#46381f"], "ww_pontoon_bridge", { ordering: "radial", staggerMs: 0, victims: ["r","b","q"], hasLead: true, sound: "blitz", anchor: "aim", source: "empower" }, "mask"),
+  ww_pontoon_bridge: S(PontoonBridgeScene, { ordering: "radial", staggerMs: 0, victims: ["r","b","q"], hasLead: true, sound: "blitz", anchor: "aim", source: "empower" }),
   // War Wagon (t3 movement)
-  ww_war_wagon: B(HoofSpring, ["#9a7a4a","#e0d0b0","#332918"], "ww_war_wagon", { ordering: "radial", staggerMs: 0, victims: ["b"], hasLead: true, sound: "blitz", anchor: "aim", source: "empower" }, "mirror"),
+  ww_war_wagon: S(WarWagonScene, { ordering: "radial", staggerMs: 0, victims: ["b"], hasLead: true, sound: "blitz", anchor: "aim", source: "empower" }),
   // Firecracker (t4 item)
   firecracker: B(HoofSpring, ["#a8763a","#ffd76a","#3a2a18"], "firecracker", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz", anchor: "aim" }, "sickle", true),
   // Giant Slayer (t4 attack)
@@ -7594,21 +10844,21 @@ export const PLAYS: Record<string, SigPlugin> = {
   // Steady March (t1 movement)
   steady_march: S(SteadyMarchScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "crownrain", anchor: "aim" }),
   // Counterstep (t2 tempo)
-  counterstep: B(PennantRaise, ["#d1663a","#ffe9b0","#3d2012"], "counterstep", { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "crownrain", anchor: "aim", source: "rally" }, "drum"),
+  counterstep: S(CounterstepScene, { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "crownrain", anchor: "aim", source: "rally" }),
   // Double Step Army (t2 movement)
-  double_step_army: B(PennantRaise, ["#a83a4a","#ffd76a","#2e1218"], "double_step_army", { ordering: "sweep", staggerMs: 60, victims: ["p"], hasLead: true, sound: "crownrain", anchor: "board", source: "empower" }, "spear"),
+  double_step_army: S(BatteringLineScene, { ordering: "sweep", staggerMs: 60, victims: ["p"], hasLead: true, sound: "crownrain", anchor: "board", source: "empower" }),
   // Pawn Storm (t2 movement)
   pawn_storm: B(PennantRaise, ["#c94a3a","#ffd76a","#3a1c16"], "pawn_storm", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "crownrain", anchor: "aim" }, "crown"),
   // Pikemen (t2 movement)
-  ww_pikemen: B(PennantRaise, ["#d1663a","#ffe9b0","#3d2012"], "ww_pikemen", { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "crownrain", anchor: "aim", source: "empower" }, "kite"),
+  ww_pikemen: S(PikemenScene, { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "crownrain", anchor: "aim", source: "empower" }),
   // Berolina Pawns (t3 movement)
   berolina_pawns: S(BerolinaPawnsScene, { ordering: "sweep", staggerMs: 60, victims: ["p"], hasLead: true, sound: "crownrain", anchor: "aim", source: "empower" }),
   // Momentum (t3 tempo)
-  momentum: B(PennantRaise, ["#c05a2a","#f7e3b0","#361a0c"], "momentum", { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "crownrain", anchor: "aim", source: "rally" }, "torch"),
+  momentum: S(MomentumScene, { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "crownrain", anchor: "aim", source: "rally" }),
   // Split March (t3 movement)
-  split_march: B(PennantRaise, ["#d1663a","#ffe9b0","#3d2012"], "split_march", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "crownrain", anchor: "aim" }, "buoy"),
+  split_march: S(SplitMarchScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "crownrain", anchor: "aim" }),
   // Moonwalk (t3 movement)
-  wc_moonwalk: B(PennantRaise, ["#c94a3a","#ffd76a","#3a1c16"], "wc_moonwalk", { ordering: "sweep", staggerMs: 60, victims: ["p"], hasLead: true, sound: "crownrain", anchor: "aim", source: "empower" }, "obelisk"),
+  wc_moonwalk: S(MoonwalkScene, { ordering: "sweep", staggerMs: 60, victims: ["p"], hasLead: true, sound: "crownrain", anchor: "aim", source: "empower" }),
   // Army Reversal (t4 movement)
   army_reversal: B(PennantRaise, ["#c94a3a","#ffd76a","#3a1c16"], "army_reversal", { ordering: "sweep", staggerMs: 60, victims: ["p"], hasLead: true, sound: "crownrain", anchor: "aim", source: "empower" }, "pylon", true),
   // Solstice (t4 tempo)
@@ -7626,17 +10876,17 @@ export const PLAYS: Record<string, SigPlugin> = {
   // Royal Duty (t3 hex)
   royal_duty: S(RoyalDutyScene, { ordering: "radial", staggerMs: 0, victims: ["p","n","b","r","q"], hasLead: true, sound: "snooze", anchor: "board" }),
   // Suppress Magic (t3 draft)
-  wa_suppress_magic: B(ScrollSnap, ["#e0d0a8","#c94a3a","#2a3450"], "wa_suppress_magic", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze", anchor: "board" }, "inkpot"),
+  wa_suppress_magic: S(SuppressMagicScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze", anchor: "board" }),
   // Red Tape (t3 tempo)
-  wc_red_tape: B(ScrollSnap, ["#ead9b8","#5a6b8f","#33261a"], "wc_red_tape", { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "snooze", anchor: "board", source: "slow" }, "padlock"),
+  wc_red_tape: S(RedTapeScene, { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "snooze", anchor: "board", source: "slow" }),
   // Burned Dispatches (t4 hex)
-  burned_dispatches: B(ScrollSnap, ["#e8dcc0","#8a6a3a","#2c3e6b"], "burned_dispatches", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze", anchor: "board" }, "hourglass", true),
+  burned_dispatches: S(BurnedDispatchesScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze", anchor: "board" }),
   // Chain Nullify (t4 draft)
   chain_nullify: B(ScrollSnap, ["#e0d0a8","#c94a3a","#2a3450"], "chain_nullify", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze", anchor: "board" }, "spool", true),
   // Dead Letter (t4 hex)
-  dead_letter: B(ScrollSnap, ["#e8dcc0","#8f2bbf","#241a3a"], "dead_letter", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze", anchor: "board" }, "mask", true),
+  dead_letter: S(ReturnedToSenderScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze", anchor: "board" }),
   // Mirror (t4 draft)
-  mirror: B(ScrollSnap, ["#f0e2c4","#4a7a5f","#2c2416"], "mirror", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze", anchor: "board" }, "dice", true),
+  mirror: S(MirrorScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze", anchor: "board" }),
   // Patch Notes (t4 hex)
   patch_notes: S(PatchNotesScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze", anchor: "board" }),
   // Suppress (t4 draft)
@@ -7650,7 +10900,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   // Prep (t1 draft)
   prep: B(CardFlick, ["#c9a0ff","#ffe9b0","#301c50"], "prep", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades", anchor: "board" }, "dice"),
   // Trade Up (t2 pieces)
-  trade_up: B(CardFlick, ["#9b6bd1","#f2e0ff","#1e1038"], "trade_up", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades", anchor: "board" }, "coin"),
+  trade_up: S(TradeUpScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades", anchor: "board" }),
   // Buff Thief (Minor) (t4 draft)
   buff_thief_minor: S(BuffThiefScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades", anchor: "board" }),
   // Hero's Journey (t4 draft)
@@ -7678,7 +10928,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   // Third Eye (t2 info)
   third_eye: B(EyeBlink, ["#6f8fd1","#eef1f7","#202b48"], "third_eye", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze", anchor: "board" }, "feather"),
   // North Star (t3 info)
-  north_star: B(EyeBlink, ["#6f8fd1","#eef1f7","#202b48"], "north_star", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze", anchor: "board" }, "spool"),
+  north_star: S(NorthStarScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze", anchor: "board" }),
   // Foresight (t3 info)
   wa_foresight: B(EyeBlink, ["#4a7a9f","#d0e8f7","#152636"], "wa_foresight", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze", anchor: "board" }, "dice"),
   // Mind Read (t4 info)
@@ -7704,7 +10954,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   // Bunker (t3 protection)
   bunker: B(KeyTurn, ["#b5924a","#f7e3b0","#332a1c"], "bunker", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage", anchor: "board" }, "keystone"),
   // No Trespass (t3 hex)
-  no_trespass: B(KeyTurn, ["#a88a3a","#ffe9b0","#2c2416"], "no_trespass", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage", anchor: "cast" }, "gauntlet"),
+  no_trespass: S(NoTrespassScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage", anchor: "cast" }),
   // Flypaper File (t4 hex)
   flypaper_file: S(FlypaperFileScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "clockcage", anchor: "board" }),
   // Sealed Gate (t4 hex)
@@ -7722,11 +10972,11 @@ export const PLAYS: Record<string, SigPlugin> = {
   // Reclaim the Fallen (t2 pieces)
   ww_reclaim_the_fallen: B(LanternLift, ["#5fae7f","#ffd76a","#16301f"], "ww_reclaim_the_fallen", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", anchor: "cast", source: "summon" }, "chalice"),
   // Seance (t3 pieces)
-  seance: B(LanternLift, ["#6fc494","#fff7de","#1a3826"], "seance", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", anchor: "aim", source: "summon" }, "feather"),
+  seance: S(SeanceScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", anchor: "aim", source: "summon" }),
   // Second Wind Major (t3 pieces)
   second_wind_major: S(SecondWindMajorScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", anchor: "board", source: "summon" }),
   // Will-o'-Wisp (t3 tempo)
-  will_o_wisp: B(LanternLift, ["#6fc494","#fff7de","#1a3826"], "will_o_wisp", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", anchor: "board", source: "frozen" }, "mirror"),
+  will_o_wisp: S(WillOWispScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", anchor: "board", source: "frozen" }),
   // Last Reserves (t3 pieces)
   ww_last_reserves: S(LastReservesScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", anchor: "cast", source: "summon" }),
   // Resurrect (t4 pieces)
@@ -7768,7 +11018,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   // Free Retreat (t1 tempo)
   // Rewind One (t3 tempo)
   // Wasted Hour (t3 hex)
-  wasted_hour: B(CogTick, ["#bf9c50","#9fdcf0","#362c1c"], "wasted_hour", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze", anchor: "board", source: "stun" }, "cogwheel"),
+  wasted_hour: S(WastedHourScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze", anchor: "board", source: "stun" }),
   // Lost Weekend (t4 hex)
   lost_weekend: S(LostWeekendScene, { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "clockcage", anchor: "board", source: "slow" }),
   // Borrowed Minute (t4 tempo)
@@ -7791,7 +11041,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   // Slack in the Chain (t2 nerf)
   slack_chain: B(BellToll, ["#ffe08a","#fffbef","#8a7038"], "slack_chain", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", anchor: "board" }, "feather"),
   // Break the Nerf (t3 nerf)
-  break_the_nerf: B(BellToll, ["#ffcf4d","#fff4d6","#7a5c2e"], "break_the_nerf", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", anchor: "board" }, "mirror"),
+  break_the_nerf: S(BreakTheNerfScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", anchor: "board" }),
   // Grace Period (t3 nerf)
   grace_period: S(GracePeriodScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "cathedral", anchor: "board" }),
   // Half Measure (t3 nerf)
@@ -7809,7 +11059,7 @@ export const PLAYS: Record<string, SigPlugin> = {
 
   /* --- LeafSpin ---------------------------------------------------------- */
   // Durian (t3 hex)
-  durian: B(LeafSpin, ["#3f8f3f","#a8e07f","#1c4a1c"], "durian", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "petrifiedforest", anchor: "board" }, "acorn"),
+  durian: S(DurianScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "petrifiedforest", anchor: "board" }),
   // Pixie Dust (t3 movement)
   pixie_dust: B(LeafSpin, ["#4a8f5f","#ffd76a","#173a24"], "pixie_dust", { ordering: "sweep", staggerMs: 60, victims: ["n"], hasLead: true, sound: "petrifiedforest", anchor: "aim", source: "empower" }, "toadstool"),
   // Seelie Blessing (t3 protection)
@@ -7819,7 +11069,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   // Creeping Roots (t3 protection)
   we_creeping_roots: S(CreepingRootsScene, { ordering: "radial", staggerMs: 0, victims: ["p"], hasLead: true, sound: "petrifiedforest", anchor: "board" }),
   // Seedlings (t3 pieces)
-  we_seedlings: B(LeafSpin, ["#6fae4a","#e8fff7","#243f14"], "we_seedlings", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "petrifiedforest", anchor: "cast" }, "sickle"),
+  we_seedlings: S(SeedlingsScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "petrifiedforest", anchor: "cast" }),
   // Faerie Ring (t4 hex)
   faerie_ring: S(FaerieRingScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "petrifiedforest", anchor: "board" }),
   // Puck's Mischief (t4 hex)
@@ -7835,7 +11085,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   // Recall (t2 movement)
   recall: B(PrismFlash, ["#7b5fe8","#aef0ff","#170c2e"], "recall", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz", anchor: "aim" }, "kite"),
   // Regroup the Lines (t2 movement)
-  ww_regroup_lines: B(PrismFlash, ["#8468f0","#c9f4ff","#1a0f38"], "ww_regroup_lines", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz", anchor: "aim" }, "weathervane"),
+  ww_regroup_lines: S(RegroupLinesScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz", anchor: "aim" }),
   // Guard Rotation (t3 movement)
   guard_rotation: S(GuardRotationScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz", anchor: "aim" }),
   // Blink (t3 movement)
@@ -7843,15 +11093,15 @@ export const PLAYS: Record<string, SigPlugin> = {
   // Warp Home (t3 movement)
   warp_home: B(PrismFlash, ["#9d7fff","#7fd8d8","#221440"], "warp_home", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz", anchor: "aim" }, "dice"),
   // Warp Step (t3 movement)
-  warp_step: B(PrismFlash, ["#8f6bff","#6fe3ff","#1c1030"], "warp_step", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz", anchor: "aim" }, "obelisk"),
+  warp_step: S(WarpStepScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz", anchor: "aim" }),
   // Blink Army (t4 movement)
-  blink_army: B(PrismFlash, ["#8f6bff","#6fe3ff","#1c1030"], "blink_army", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz", anchor: "aim" }, "candle", true),
+  blink_army: S(BlinkArmyScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz", anchor: "aim" }),
   // Grand Recall (t4 movement)
   grand_recall: B(PrismFlash, ["#9d7fff","#7fd8d8","#221440"], "grand_recall", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz", anchor: "aim" }, "buoy", true),
   // Mass Recall (t4 movement)
   mass_recall: S(MassRecallScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz", anchor: "board" }),
   // Regroup (t4 movement)
-  regroup: B(PrismFlash, ["#9d7fff","#7fd8d8","#221440"], "regroup", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz", anchor: "cast" }, "crown", true),
+  regroup: S(RegroupScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz", anchor: "cast" }),
   // Total Recall (t4 movement)
   total_recall: S(TotalRecallScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "blitz", anchor: "aim" }),
   // Fold Space (t4 movement)
@@ -7870,7 +11120,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   /* --- BannerMuster ------------------------------------------------------ */
   // Decoy (t2 protection)
   // Regenerate (t3 pieces)
-  regenerate: B(BannerMuster, ["#b0402e","#e8eef7","#2e120e"], "regenerate", { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "siege", anchor: "cast", source: "summon" }, "drum"),
+  regenerate: S(RegenerateScene, { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "siege", anchor: "cast", source: "summon" }),
   // Summon Knight (t3 pieces)
   summon_knight: S(SummonKnightScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "siege", anchor: "cast", source: "summon" }),
   // Conjured Scout (t3 pieces)
@@ -7884,14 +11134,14 @@ export const PLAYS: Record<string, SigPlugin> = {
   // Forward Observer (t4 pieces)
   ww_forward_observer: S(ForwardObserverScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "siege", anchor: "board", source: "summon" }),
   // Reserve Cavalry (t4 pieces)
-  ww_reserve_cavalry: B(BannerMuster, ["#b0402e","#e8eef7","#2e120e"], "ww_reserve_cavalry", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "siege", anchor: "cast", source: "summon" }, "buckler", true),
+  ww_reserve_cavalry: S(ReserveCavalryScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "siege", anchor: "cast", source: "summon" }),
 
   /* --- InkSplash --------------------------------------------------------- */
   // Shadow Step (t2 movement)
   // Glamour (t3 pieces)
-  glamour: B(InkSplash, ["#8f6bff","#e3d0ff","#141322"], "glamour", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades", anchor: "board" }, "inkpot"),
+  glamour: S(GlamourScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades", anchor: "board" }),
   // Piece Steal (t3 pieces)
-  piece_steal: B(InkSplash, ["#6f5fd1","#f0e8ff","#100f1e"], "piece_steal", { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades", anchor: "cast" }, "quill"),
+  piece_steal: S(PieceStealScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades", anchor: "cast" }),
   // Dominate (t4 pieces)
   wa_dominate_minor: S(DominateScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "shades", anchor: "cast" }),
   // Body Double (t4 pieces)
