@@ -1,0 +1,3657 @@
+{
+ "generatedAt": "2026-09-24T09:54:34.953Z",
+ "target": 0.01,
+ "runs": 2,
+ "rows": [
+  {
+   "key": "/faq|360x780|dark|full|signed-out|normal",
+   "best": 0,
+   "worst": 0.0013,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestFuzzyPawn ·Sign in",
+     "score": 0.0013,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -10,
+     "maxDh": 0,
+     "maxDw": 10
+    },
+    {
+     "selector": "div.mt-3.max-w-3xl.space-y-3 > p > span.relative.z-\\[1\\].inline > span.underline.decoration-dotted.decoration-parchment-500[role=\"button\"]",
+     "text": "draft",
+     "score": 0.0001,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/faq|1280x800|dark|full|signed-out|normal",
+   "best": 0.0396,
+   "worst": 0.0396,
+   "ceiling": 0.01,
+   "pass": false,
+   "overTarget": true,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "section#what-are-the-two-modes.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+     "text": "Nerf mode and Buff mode. In Nerf mode you pick a s...",
+     "score": 0.0159,
+     "count": 2,
+     "maxDy": -24,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 1
+    },
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.site-nav-brand > div.ml-2.hidden.items-center",
+     "text": "PlayLobbyChallenge a friendPractice vs computerDai...",
+     "score": 0.0079,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -7,
+     "maxDh": 0,
+     "maxDw": -12
+    },
+    {
+     "selector": "div.mt-3.max-w-3xl.space-y-3 > p > span.relative.z-\\[1\\].inline > span.underline.decoration-dotted.decoration-parchment-500[role=\"button\"]",
+     "text": "hex",
+     "score": 0.0079,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 1
+    },
+    {
+     "selector": "section#what-is-a-nerf.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+     "text": "A nerf is your secret rule in Nerf mode. It may re...",
+     "score": 0.0079,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    }
+   ],
+   "findings": [
+    {
+     "t": 365.8,
+     "value": 0.0396,
+     "hadRecentInput": false,
+     "sources": [
+      {
+       "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.site-nav-brand > div.ml-2.hidden.items-center",
+       "text": "PlayLobbyChallenge a friendPractice vs computerDai...",
+       "prev": {
+        "x": 195,
+        "y": 2,
+        "w": 430,
+        "h": 55
+       },
+       "curr": {
+        "x": 188,
+        "y": 2,
+        "w": 418,
+        "h": 55
+       },
+       "change": "moved",
+       "dx": -7,
+       "dy": 0,
+       "dw": -12,
+       "dh": 0
+      },
+      {
+       "selector": "div.mt-3.max-w-3xl.space-y-3 > p > span.relative.z-\\[1\\].inline > span.underline.decoration-dotted.decoration-parchment-500[role=\"button\"]",
+       "text": "hex",
+       "prev": {
+        "x": 139,
+        "y": 454,
+        "w": 672,
+        "h": 20
+       },
+       "curr": {
+        "x": 139,
+        "y": 454,
+        "w": 673,
+        "h": 20
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": 0,
+       "dw": 1,
+       "dh": 0
+      },
+      {
+       "selector": "section#what-are-the-two-modes.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+       "text": "Nerf mode and Buff mode. In Nerf mode you pick a s...",
+       "prev": {
+        "x": 139,
+        "y": 478,
+        "w": 672,
+        "h": 20
+       },
+       "curr": {
+        "x": 139,
+        "y": 454,
+        "w": 673,
+        "h": 20
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": -24,
+       "dw": 1,
+       "dh": 0
+      },
+      {
+       "selector": "section#what-are-the-two-modes.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+       "text": "Nerf mode and Buff mode. In Nerf mode you pick a s...",
+       "prev": {
+        "x": 139,
+        "y": 478,
+        "w": 672,
+        "h": 45
+       },
+       "curr": {
+        "x": 139,
+        "y": 478,
+        "w": 673,
+        "h": 45
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": 0,
+       "dw": 1,
+       "dh": 0
+      },
+      {
+       "selector": "section#what-is-a-nerf.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+       "text": "A nerf is your secret rule in Nerf mode. It may re...",
+       "prev": {
+        "x": 139,
+        "y": 653,
+        "w": 672,
+        "h": 20
+       },
+       "curr": {
+        "x": 139,
+        "y": 653,
+        "w": 672,
+        "h": 20
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": 0,
+       "dw": 0,
+       "dh": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "key": "/faq|360x780|dark|full|user|normal",
+   "best": 0.0025,
+   "worst": 0.0025,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "polish_user",
+     "score": 0.0025,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -55,
+     "maxDh": 0,
+     "maxDw": 55
+    },
+    {
+     "selector": "div.mt-3.max-w-3xl.space-y-3 > p > span.relative.z-\\[1\\].inline > span.underline.decoration-dotted.decoration-parchment-500[role=\"button\"]",
+     "text": "draft",
+     "score": 0.0001,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    },
+    {
+     "selector": "nav.site-nav > div.relative.flex.items-center > button.relic-unread > svg",
+     "text": "",
+     "score": 0,
+     "count": 1,
+     "maxDy": -6,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/faq|1280x800|dark|full|user|normal",
+   "best": 0.0396,
+   "worst": 0.0396,
+   "ceiling": 0.01,
+   "pass": false,
+   "overTarget": true,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "section#what-are-the-two-modes.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+     "text": "Nerf mode and Buff mode. In Nerf mode you pick a s...",
+     "score": 0.0159,
+     "count": 2,
+     "maxDy": -24,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 1
+    },
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.site-nav-brand > div.ml-2.hidden.items-center",
+     "text": "PlayLobbyChallenge a friendPractice vs computerDai...",
+     "score": 0.0079,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -7,
+     "maxDh": 0,
+     "maxDw": -12
+    },
+    {
+     "selector": "div.mt-3.max-w-3xl.space-y-3 > p > span.relative.z-\\[1\\].inline > span.underline.decoration-dotted.decoration-parchment-500[role=\"button\"]",
+     "text": "hex",
+     "score": 0.0079,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 1
+    },
+    {
+     "selector": "section#what-is-a-nerf.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+     "text": "A nerf is your secret rule in Nerf mode. It may re...",
+     "score": 0.0079,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    }
+   ],
+   "findings": [
+    {
+     "t": 378.7,
+     "value": 0.0396,
+     "hadRecentInput": false,
+     "sources": [
+      {
+       "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.site-nav-brand > div.ml-2.hidden.items-center",
+       "text": "PlayLobbyChallenge a friendPractice vs computerDai...",
+       "prev": {
+        "x": 195,
+        "y": 2,
+        "w": 430,
+        "h": 55
+       },
+       "curr": {
+        "x": 188,
+        "y": 2,
+        "w": 418,
+        "h": 55
+       },
+       "change": "moved",
+       "dx": -7,
+       "dy": 0,
+       "dw": -12,
+       "dh": 0
+      },
+      {
+       "selector": "div.mt-3.max-w-3xl.space-y-3 > p > span.relative.z-\\[1\\].inline > span.underline.decoration-dotted.decoration-parchment-500[role=\"button\"]",
+       "text": "hex",
+       "prev": {
+        "x": 139,
+        "y": 454,
+        "w": 672,
+        "h": 20
+       },
+       "curr": {
+        "x": 139,
+        "y": 454,
+        "w": 673,
+        "h": 20
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": 0,
+       "dw": 1,
+       "dh": 0
+      },
+      {
+       "selector": "section#what-are-the-two-modes.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+       "text": "Nerf mode and Buff mode. In Nerf mode you pick a s...",
+       "prev": {
+        "x": 139,
+        "y": 478,
+        "w": 672,
+        "h": 20
+       },
+       "curr": {
+        "x": 139,
+        "y": 454,
+        "w": 673,
+        "h": 20
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": -24,
+       "dw": 1,
+       "dh": 0
+      },
+      {
+       "selector": "section#what-are-the-two-modes.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+       "text": "Nerf mode and Buff mode. In Nerf mode you pick a s...",
+       "prev": {
+        "x": 139,
+        "y": 478,
+        "w": 672,
+        "h": 45
+       },
+       "curr": {
+        "x": 139,
+        "y": 478,
+        "w": 673,
+        "h": 45
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": 0,
+       "dw": 1,
+       "dh": 0
+      },
+      {
+       "selector": "section#what-is-a-nerf.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+       "text": "A nerf is your secret rule in Nerf mode. It may re...",
+       "prev": {
+        "x": 139,
+        "y": 653,
+        "w": 672,
+        "h": 20
+       },
+       "curr": {
+        "x": 139,
+        "y": 653,
+        "w": 672,
+        "h": 20
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": 0,
+       "dw": 0,
+       "dh": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "key": "/guide/how-to-play|360x780|dark|full|signed-out|normal",
+   "best": 0.0013,
+   "worst": 0.0013,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestPluckySkewer61 ·Sign in",
+     "score": 0.0013,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -10,
+     "maxDh": 0,
+     "maxDw": 10
+    },
+    {
+     "selector": "section#the-house-rules.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+     "text": "2. The king is a real piece. It can be captured li...",
+     "score": 0.0012,
+     "count": 2,
+     "maxDy": 0,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/guide/how-to-play|1280x800|dark|full|signed-out|normal",
+   "best": 0.0121,
+   "worst": 0.0121,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": true,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.site-nav-brand > div.ml-2.hidden.items-center",
+     "text": "PlayLobbyChallenge a friendPractice vs computerDai...",
+     "score": 0.004,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -7,
+     "maxDh": 0,
+     "maxDw": -12
+    },
+    {
+     "selector": "main.min-h-screen.pb-20 > section.mx-auto.max-w-\\[1100px\\].px-6 > div.mt-9.space-y-4",
+     "text": "{\"@context\":\"https://schema.org\",\"@graph\":[{\"@type...",
+     "score": 0.004,
+     "count": 1,
+     "maxDy": -24,
+     "maxDx": 0,
+     "maxDh": 24,
+     "maxDw": 0
+    },
+    {
+     "selector": "section#the-five-card-types.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+     "text": "Nerf: your secret handicap in Nerf mode, chosen fr...",
+     "score": 0.004,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    },
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestCalmStoat ·Sign in",
+     "score": 0.0023,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -188,
+     "maxDh": 0,
+     "maxDw": 188
+    }
+   ],
+   "findings": [
+    {
+     "t": 439.1,
+     "value": 0.0121,
+     "hadRecentInput": false,
+     "sources": [
+      {
+       "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.site-nav-brand > div.ml-2.hidden.items-center",
+       "text": "PlayLobbyChallenge a friendPractice vs computerDai...",
+       "prev": {
+        "x": 195,
+        "y": 2,
+        "w": 430,
+        "h": 55
+       },
+       "curr": {
+        "x": 188,
+        "y": 2,
+        "w": 418,
+        "h": 55
+       },
+       "change": "moved",
+       "dx": -7,
+       "dy": 0,
+       "dw": -12,
+       "dh": 0
+      },
+      {
+       "selector": "main.min-h-screen.pb-20 > section.mx-auto.max-w-\\[1100px\\].px-6 > div.mt-9.space-y-4",
+       "text": "{\"@context\":\"https://schema.org\",\"@graph\":[{\"@type...",
+       "prev": {
+        "x": 108,
+        "y": 215,
+        "w": 1049,
+        "h": 585
+       },
+       "curr": {
+        "x": 108,
+        "y": 191,
+        "w": 1049,
+        "h": 609
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": -24,
+       "dw": 0,
+       "dh": 24
+      },
+      {
+       "selector": "section#the-five-card-types.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+       "text": "Nerf: your secret handicap in Nerf mode, chosen fr...",
+       "prev": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0
+       },
+       "curr": {
+        "x": 139,
+        "y": 799,
+        "w": 672,
+        "h": 1
+       },
+       "change": "entered",
+       "dx": null,
+       "dy": null,
+       "dw": null,
+       "dh": null
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "key": "/guide/how-to-play|360x780|dark|full|user|normal",
+   "best": 0.0025,
+   "worst": 0.0025,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "polish_user",
+     "score": 0.0025,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -55,
+     "maxDh": 0,
+     "maxDw": 55
+    },
+    {
+     "selector": "section#the-house-rules.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+     "text": "2. The king is a real piece. It can be captured li...",
+     "score": 0.0012,
+     "count": 2,
+     "maxDy": 0,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    },
+    {
+     "selector": "nav.site-nav > div.relative.flex.items-center > button.relic-unread > svg",
+     "text": "",
+     "score": 0,
+     "count": 1,
+     "maxDy": -6,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/guide/how-to-play|1280x800|dark|full|user|normal",
+   "best": 0.0121,
+   "worst": 0.0121,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": true,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.site-nav-brand > div.ml-2.hidden.items-center",
+     "text": "PlayLobbyChallenge a friendPractice vs computerDai...",
+     "score": 0.004,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -7,
+     "maxDh": 0,
+     "maxDw": -12
+    },
+    {
+     "selector": "main.min-h-screen.pb-20 > section.mx-auto.max-w-\\[1100px\\].px-6 > div.mt-9.space-y-4",
+     "text": "{\"@context\":\"https://schema.org\",\"@graph\":[{\"@type...",
+     "score": 0.004,
+     "count": 1,
+     "maxDy": -24,
+     "maxDx": 0,
+     "maxDh": 24,
+     "maxDw": 0
+    },
+    {
+     "selector": "section#the-five-card-types.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+     "text": "Nerf: your secret handicap in Nerf mode, chosen fr...",
+     "score": 0.004,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    },
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "polish_user",
+     "score": 0.0014,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -135,
+     "maxDh": 0,
+     "maxDw": 135
+    }
+   ],
+   "findings": [
+    {
+     "t": 403.3,
+     "value": 0.0121,
+     "hadRecentInput": false,
+     "sources": [
+      {
+       "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.site-nav-brand > div.ml-2.hidden.items-center",
+       "text": "PlayLobbyChallenge a friendPractice vs computerDai...",
+       "prev": {
+        "x": 195,
+        "y": 2,
+        "w": 430,
+        "h": 55
+       },
+       "curr": {
+        "x": 188,
+        "y": 2,
+        "w": 418,
+        "h": 55
+       },
+       "change": "moved",
+       "dx": -7,
+       "dy": 0,
+       "dw": -12,
+       "dh": 0
+      },
+      {
+       "selector": "main.min-h-screen.pb-20 > section.mx-auto.max-w-\\[1100px\\].px-6 > div.mt-9.space-y-4",
+       "text": "{\"@context\":\"https://schema.org\",\"@graph\":[{\"@type...",
+       "prev": {
+        "x": 108,
+        "y": 215,
+        "w": 1049,
+        "h": 585
+       },
+       "curr": {
+        "x": 108,
+        "y": 191,
+        "w": 1049,
+        "h": 609
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": -24,
+       "dw": 0,
+       "dh": 24
+      },
+      {
+       "selector": "section#the-five-card-types.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+       "text": "Nerf: your secret handicap in Nerf mode, chosen fr...",
+       "prev": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0
+       },
+       "curr": {
+        "x": 139,
+        "y": 799,
+        "w": 672,
+        "h": 1
+       },
+       "change": "entered",
+       "dx": null,
+       "dy": null,
+       "dw": null,
+       "dh": null
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "key": "/terms-of-service|360x780|dark|full|signed-out|normal",
+   "best": 0.0154,
+   "worst": 0.0154,
+   "ceiling": 0.01,
+   "pass": false,
+   "overTarget": true,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "section#using-the-service.plate.scroll-mt-20",
+     "text": "Using the ServiceNerf Chess is provided free of ch...",
+     "score": 0.0154,
+     "count": 1,
+     "maxDy": -24,
+     "maxDx": 0,
+     "maxDh": 24,
+     "maxDw": 0
+    },
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestIronFalcon ·Sign in",
+     "score": 0.0013,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -10,
+     "maxDh": 0,
+     "maxDw": 10
+    }
+   ],
+   "findings": [
+    {
+     "t": 3439.7,
+     "value": 0.0154,
+     "hadRecentInput": false,
+     "sources": [
+      {
+       "selector": "section#using-the-service.plate.scroll-mt-20",
+       "text": "Using the ServiceNerf Chess is provided free of ch...",
+       "prev": {
+        "x": 21,
+        "y": 347,
+        "w": 308,
+        "h": 433
+       },
+       "curr": {
+        "x": 21,
+        "y": 323,
+        "w": 308,
+        "h": 457
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": -24,
+       "dw": 0,
+       "dh": 24
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "key": "/terms-of-service|1280x800|dark|full|signed-out|normal",
+   "best": 0.0027,
+   "worst": 0.0029,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestDashingKnight ·Sign in",
+     "score": 0.0029,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -218,
+     "maxDh": 0,
+     "maxDw": 218
+    },
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.site-nav-brand > div.ml-2.hidden.items-center",
+     "text": "PlayLobbyChallenge a friendPractice vs computerDai...",
+     "score": 0.0013,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -7,
+     "maxDh": 0,
+     "maxDw": -12
+    },
+    {
+     "selector": "section#your-account.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+     "text": "Creating an account requires only a username and a...",
+     "score": 0.0013,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/terms-of-service|360x780|dark|full|user|normal",
+   "best": 0.0154,
+   "worst": 0.0154,
+   "ceiling": 0.01,
+   "pass": false,
+   "overTarget": true,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "section#using-the-service.plate.scroll-mt-20",
+     "text": "Using the ServiceNerf Chess is provided free of ch...",
+     "score": 0.0154,
+     "count": 1,
+     "maxDy": -24,
+     "maxDx": 0,
+     "maxDh": 24,
+     "maxDw": 0
+    },
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "polish_user",
+     "score": 0.0025,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -55,
+     "maxDh": 0,
+     "maxDw": 55
+    },
+    {
+     "selector": "nav.site-nav > div.relative.flex.items-center > button.relic-unread > svg",
+     "text": "",
+     "score": 0,
+     "count": 1,
+     "maxDy": -6,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    }
+   ],
+   "findings": [
+    {
+     "t": 24898.7,
+     "value": 0.0154,
+     "hadRecentInput": false,
+     "sources": [
+      {
+       "selector": "section#using-the-service.plate.scroll-mt-20",
+       "text": "Using the ServiceNerf Chess is provided free of ch...",
+       "prev": {
+        "x": 21,
+        "y": 347,
+        "w": 308,
+        "h": 433
+       },
+       "curr": {
+        "x": 21,
+        "y": 323,
+        "w": 308,
+        "h": 457
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": -24,
+       "dw": 0,
+       "dh": 24
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "key": "/terms-of-service|1280x800|dark|full|user|normal",
+   "best": 0.0027,
+   "worst": 0.0041,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "polish_user",
+     "score": 0.0014,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -135,
+     "maxDh": 0,
+     "maxDw": 135
+    },
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.site-nav-brand > div.ml-2.hidden.items-center",
+     "text": "PlayLobbyChallenge a friendPractice vs computerDai...",
+     "score": 0.0013,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -7,
+     "maxDh": 0,
+     "maxDw": -12
+    },
+    {
+     "selector": "section#your-account.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+     "text": "Creating an account requires only a username and a...",
+     "score": 0.0013,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    },
+    {
+     "selector": "nav.site-nav > div.relative.flex.items-center > button.relic-unread > svg",
+     "text": "",
+     "score": 0,
+     "count": 1,
+     "maxDy": -6,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/tutorial|360x780|dark|full|signed-out|normal",
+   "best": 0.0013,
+   "worst": 0.0013,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestFierceFox31 ·Sign in",
+     "score": 0.0013,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -10,
+     "maxDh": 0,
+     "maxDw": 10
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/tutorial|1280x800|dark|full|signed-out|normal",
+   "best": 0.0352,
+   "worst": 0.0352,
+   "ceiling": 0.01,
+   "pass": false,
+   "overTarget": true,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.site-nav-brand > div.ml-2.hidden.items-center",
+     "text": "PlayLobbyChallenge a friendPractice vs computerDai...",
+     "score": 0.0088,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -7,
+     "maxDh": 0,
+     "maxDw": -12
+    },
+    {
+     "selector": "section.max-w-3xl.mx-auto.px-6 > div.plate > div.mt-5.flex.flex-wrap > a.disabled\\:cursor-not-allowed.disabled\\:opacity-40.\\[@media(pointer\\:fine)\\]\\:min-h-\\[40px\\]",
+     "text": "Interactive lessons",
+     "score": 0.0088,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": 5,
+     "maxDh": 0,
+     "maxDw": 2
+    },
+    {
+     "selector": "p#win.scroll-mt-4",
+     "text": "No checkmate, a capturable king, secret nerfs, pre...",
+     "score": 0.0088,
+     "count": 1,
+     "maxDy": 26,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    },
+    {
+     "selector": "p#win.scroll-mt-4 > a.font-semibold.text-gold-leaf.hover\\:underline",
+     "text": "how-to-play guide",
+     "score": 0.0088,
+     "count": 1,
+     "maxDy": -24,
+     "maxDx": 0,
+     "maxDh": -1,
+     "maxDw": 0
+    }
+   ],
+   "findings": [
+    {
+     "t": 43531.4,
+     "value": 0.0352,
+     "hadRecentInput": false,
+     "sources": [
+      {
+       "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.site-nav-brand > div.ml-2.hidden.items-center",
+       "text": "PlayLobbyChallenge a friendPractice vs computerDai...",
+       "prev": {
+        "x": 195,
+        "y": 2,
+        "w": 430,
+        "h": 55
+       },
+       "curr": {
+        "x": 188,
+        "y": 2,
+        "w": 418,
+        "h": 55
+       },
+       "change": "moved",
+       "dx": -7,
+       "dy": 0,
+       "dw": -12,
+       "dh": 0
+      },
+      {
+       "selector": "section.max-w-3xl.mx-auto.px-6 > div.plate > div.mt-5.flex.flex-wrap > a.disabled\\:cursor-not-allowed.disabled\\:opacity-40.\\[@media(pointer\\:fine)\\]\\:min-h-\\[40px\\]",
+       "text": "Interactive lessons",
+       "prev": {
+        "x": 491,
+        "y": 406,
+        "w": 153,
+        "h": 50
+       },
+       "curr": {
+        "x": 496,
+        "y": 406,
+        "w": 155,
+        "h": 50
+       },
+       "change": "moved",
+       "dx": 5,
+       "dy": 0,
+       "dw": 2,
+       "dh": 0
+      },
+      {
+       "selector": "p#win.scroll-mt-4",
+       "text": "No checkmate, a capturable king, secret nerfs, pre...",
+       "prev": {
+        "x": 342,
+        "y": 526,
+        "w": 586,
+        "h": 20
+       },
+       "curr": {
+        "x": 342,
+        "y": 552,
+        "w": 586,
+        "h": 20
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": 26,
+       "dw": 0,
+       "dh": 0
+      },
+      {
+       "selector": "p#win.scroll-mt-4 > a.font-semibold.text-gold-leaf.hover\\:underline",
+       "text": "how-to-play guide",
+       "prev": {
+        "x": 342,
+        "y": 576,
+        "w": 586,
+        "h": 45
+       },
+       "curr": {
+        "x": 342,
+        "y": 552,
+        "w": 586,
+        "h": 44
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": -24,
+       "dw": 0,
+       "dh": -1
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "key": "/tutorial|360x780|dark|full|user|normal",
+   "best": 0.0025,
+   "worst": 0.0025,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "polish_user",
+     "score": 0.0025,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -55,
+     "maxDh": 0,
+     "maxDw": 55
+    },
+    {
+     "selector": "nav.site-nav > div.relative.flex.items-center > button.relic-unread > svg",
+     "text": "",
+     "score": 0,
+     "count": 1,
+     "maxDy": -6,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/tutorial|1280x800|dark|full|user|normal",
+   "best": 0.0352,
+   "worst": 0.0366,
+   "ceiling": 0.01,
+   "pass": false,
+   "overTarget": true,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.site-nav-brand > div.ml-2.hidden.items-center",
+     "text": "PlayLobbyChallenge a friendPractice vs computerDai...",
+     "score": 0.0088,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -7,
+     "maxDh": 0,
+     "maxDw": -12
+    },
+    {
+     "selector": "section.max-w-3xl.mx-auto.px-6 > div.plate > div.mt-5.flex.flex-wrap > a.disabled\\:cursor-not-allowed.disabled\\:opacity-40.\\[@media(pointer\\:fine)\\]\\:min-h-\\[40px\\]",
+     "text": "Interactive lessons",
+     "score": 0.0088,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": 5,
+     "maxDh": 0,
+     "maxDw": 2
+    },
+    {
+     "selector": "p#win.scroll-mt-4",
+     "text": "No checkmate, a capturable king, secret nerfs, pre...",
+     "score": 0.0088,
+     "count": 1,
+     "maxDy": 26,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    },
+    {
+     "selector": "p#win.scroll-mt-4 > a.font-semibold.text-gold-leaf.hover\\:underline",
+     "text": "how-to-play guide",
+     "score": 0.0088,
+     "count": 1,
+     "maxDy": -24,
+     "maxDx": 0,
+     "maxDh": -1,
+     "maxDw": 0
+    }
+   ],
+   "findings": [
+    {
+     "t": 277,
+     "value": 0.0352,
+     "hadRecentInput": false,
+     "sources": [
+      {
+       "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.site-nav-brand > div.ml-2.hidden.items-center",
+       "text": "PlayLobbyChallenge a friendPractice vs computerDai...",
+       "prev": {
+        "x": 195,
+        "y": 2,
+        "w": 430,
+        "h": 55
+       },
+       "curr": {
+        "x": 188,
+        "y": 2,
+        "w": 418,
+        "h": 55
+       },
+       "change": "moved",
+       "dx": -7,
+       "dy": 0,
+       "dw": -12,
+       "dh": 0
+      },
+      {
+       "selector": "section.max-w-3xl.mx-auto.px-6 > div.plate > div.mt-5.flex.flex-wrap > a.disabled\\:cursor-not-allowed.disabled\\:opacity-40.\\[@media(pointer\\:fine)\\]\\:min-h-\\[40px\\]",
+       "text": "Interactive lessons",
+       "prev": {
+        "x": 491,
+        "y": 406,
+        "w": 153,
+        "h": 50
+       },
+       "curr": {
+        "x": 496,
+        "y": 406,
+        "w": 155,
+        "h": 50
+       },
+       "change": "moved",
+       "dx": 5,
+       "dy": 0,
+       "dw": 2,
+       "dh": 0
+      },
+      {
+       "selector": "p#win.scroll-mt-4",
+       "text": "No checkmate, a capturable king, secret nerfs, pre...",
+       "prev": {
+        "x": 342,
+        "y": 526,
+        "w": 586,
+        "h": 20
+       },
+       "curr": {
+        "x": 342,
+        "y": 552,
+        "w": 586,
+        "h": 20
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": 26,
+       "dw": 0,
+       "dh": 0
+      },
+      {
+       "selector": "p#win.scroll-mt-4 > a.font-semibold.text-gold-leaf.hover\\:underline",
+       "text": "how-to-play guide",
+       "prev": {
+        "x": 342,
+        "y": 576,
+        "w": 586,
+        "h": 45
+       },
+       "curr": {
+        "x": 342,
+        "y": 552,
+        "w": 586,
+        "h": 44
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": -24,
+       "dw": 0,
+       "dh": -1
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "key": "/updates|360x780|dark|full|signed-out|normal",
+   "best": 0.0013,
+   "worst": 0.0013,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "body.no-tap-highlight.font-body > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestShadyOcelot ·Sign in",
+     "score": 0.0013,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -10,
+     "maxDh": 0,
+     "maxDw": 10
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/updates|1280x800|dark|full|signed-out|normal",
+   "best": 0.0028,
+   "worst": 0.0028,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "body.no-tap-highlight.font-body > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestFeistySquire31 ·Sign in",
+     "score": 0.0028,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -217,
+     "maxDh": 0,
+     "maxDw": 217
+    },
+    {
+     "selector": "body.no-tap-highlight.font-body > nav.site-nav > div.site-nav-brand > div.ml-2.hidden.items-center",
+     "text": "PlayLobbyChallenge a friendPractice vs computerDai...",
+     "score": 0.0003,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -7,
+     "maxDh": 0,
+     "maxDw": -12
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/updates|360x780|dark|full|user|normal",
+   "best": 0.0025,
+   "worst": 0.0025,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "body.no-tap-highlight.font-body > nav.site-nav > div.relative.flex.items-center",
+     "text": "polish_user",
+     "score": 0.0025,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -55,
+     "maxDh": 0,
+     "maxDw": 55
+    },
+    {
+     "selector": "nav.site-nav > div.relative.flex.items-center > button.relic-unread > svg",
+     "text": "",
+     "score": 0,
+     "count": 1,
+     "maxDy": -6,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/updates|1280x800|dark|full|user|normal",
+   "best": 0.0014,
+   "worst": 0.0014,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "body.no-tap-highlight.font-body > nav.site-nav > div.relative.flex.items-center",
+     "text": "polish_user",
+     "score": 0.0014,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -135,
+     "maxDh": 0,
+     "maxDw": 135
+    },
+    {
+     "selector": "body.no-tap-highlight.font-body > nav.site-nav > div.site-nav-brand > div.ml-2.hidden.items-center",
+     "text": "PlayLobbyChallenge a friendPractice vs computerDai...",
+     "score": 0.0003,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -7,
+     "maxDh": 0,
+     "maxDw": -12
+    },
+    {
+     "selector": "nav.site-nav > div.relative.flex.items-center > button.relic-unread > svg",
+     "text": "",
+     "score": 0,
+     "count": 1,
+     "maxDy": -6,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/guide/chess-roguelike|360x780|dark|full|signed-out|normal",
+   "best": 0.0013,
+   "worst": 0.0013,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestGallantGopher65 ·Sign in",
+     "score": 0.0013,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -10,
+     "maxDh": 0,
+     "maxDw": 10
+    },
+    {
+     "selector": "div.mt-3.max-w-3xl.space-y-3 > p > span.relative.z-\\[1\\].inline > span.underline.decoration-dotted.decoration-parchment-500[role=\"button\"]",
+     "text": "Nerf",
+     "score": 0.0002,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    },
+    {
+     "selector": "section#chess-with-a-card-draft.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+     "text": "Every 5 of your own moves, Nerf Chess deals you a ...",
+     "score": 0.0002,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    },
+    {
+     "selector": "section#escalating-power-like-a-run.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+     "text": "What gives Nerf Chess its roguelike feel is the es...",
+     "score": 0.0002,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 1
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/guide/chess-roguelike|1280x800|dark|full|signed-out|normal",
+   "best": 0.0934,
+   "worst": 0.0934,
+   "ceiling": 0.01,
+   "pass": false,
+   "overTarget": true,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "section#escalating-power-like-a-run.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+     "text": "What gives Nerf Chess its roguelike feel is the es...",
+     "score": 0.056,
+     "count": 3,
+     "maxDy": -25,
+     "maxDx": 0,
+     "maxDh": 1,
+     "maxDw": 0
+    },
+    {
+     "selector": "section#chess-with-a-card-draft.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+     "text": "Every 5 of your own moves, Nerf Chess deals you a ...",
+     "score": 0.0373,
+     "count": 2,
+     "maxDy": 0,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    },
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestOddPangolin ·Sign in",
+     "score": 0.0026,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -207,
+     "maxDh": 0,
+     "maxDw": 207
+    }
+   ],
+   "findings": [
+    {
+     "t": 9774.7,
+     "value": 0.0934,
+     "hadRecentInput": false,
+     "sources": [
+      {
+       "selector": "section#escalating-power-like-a-run.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+       "text": "What gives Nerf Chess its roguelike feel is the es...",
+       "prev": {
+        "x": 139,
+        "y": 576,
+        "w": 672,
+        "h": 44
+       },
+       "curr": {
+        "x": 139,
+        "y": 576,
+        "w": 672,
+        "h": 44
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": 0,
+       "dw": 0,
+       "dh": 0
+      },
+      {
+       "selector": "section#escalating-power-like-a-run.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+       "text": "What gives Nerf Chess its roguelike feel is the es...",
+       "prev": {
+        "x": 139,
+        "y": 552,
+        "w": 672,
+        "h": 44
+       },
+       "curr": {
+        "x": 139,
+        "y": 552,
+        "w": 672,
+        "h": 44
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": 0,
+       "dw": 0,
+       "dh": 0
+      },
+      {
+       "selector": "section#escalating-power-like-a-run.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+       "text": "What gives Nerf Chess its roguelike feel is the es...",
+       "prev": {
+        "x": 139,
+        "y": 625,
+        "w": 672,
+        "h": 44
+       },
+       "curr": {
+        "x": 139,
+        "y": 600,
+        "w": 672,
+        "h": 45
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": -25,
+       "dw": 0,
+       "dh": 1
+      },
+      {
+       "selector": "section#chess-with-a-card-draft.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+       "text": "Every 5 of your own moves, Nerf Chess deals you a ...",
+       "prev": {
+        "x": 139,
+        "y": 304,
+        "w": 672,
+        "h": 44
+       },
+       "curr": {
+        "x": 139,
+        "y": 304,
+        "w": 672,
+        "h": 44
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": 0,
+       "dw": 0,
+       "dh": 0
+      },
+      {
+       "selector": "section#chess-with-a-card-draft.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+       "text": "Every 5 of your own moves, Nerf Chess deals you a ...",
+       "prev": {
+        "x": 139,
+        "y": 328,
+        "w": 672,
+        "h": 69
+       },
+       "curr": {
+        "x": 139,
+        "y": 328,
+        "w": 672,
+        "h": 69
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": 0,
+       "dw": 0,
+       "dh": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "key": "/guide/chess-roguelike|360x780|dark|full|user|normal",
+   "best": 0.0025,
+   "worst": 0.0025,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "polish_user",
+     "score": 0.0025,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -55,
+     "maxDh": 0,
+     "maxDw": 55
+    },
+    {
+     "selector": "div.mt-3.max-w-3xl.space-y-3 > p > span.relative.z-\\[1\\].inline > span.underline.decoration-dotted.decoration-parchment-500[role=\"button\"]",
+     "text": "Nerf",
+     "score": 0.0002,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    },
+    {
+     "selector": "section#chess-with-a-card-draft.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+     "text": "Every 5 of your own moves, Nerf Chess deals you a ...",
+     "score": 0.0002,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    },
+    {
+     "selector": "section#escalating-power-like-a-run.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+     "text": "What gives Nerf Chess its roguelike feel is the es...",
+     "score": 0.0002,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 1
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/guide/chess-roguelike|1280x800|dark|full|user|normal",
+   "best": 0.0934,
+   "worst": 0.0934,
+   "ceiling": 0.01,
+   "pass": false,
+   "overTarget": true,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "section#escalating-power-like-a-run.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+     "text": "What gives Nerf Chess its roguelike feel is the es...",
+     "score": 0.056,
+     "count": 3,
+     "maxDy": -25,
+     "maxDx": 0,
+     "maxDh": 1,
+     "maxDw": 0
+    },
+    {
+     "selector": "section#chess-with-a-card-draft.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+     "text": "Every 5 of your own moves, Nerf Chess deals you a ...",
+     "score": 0.0373,
+     "count": 2,
+     "maxDy": 0,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    },
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "polish_user",
+     "score": 0.0014,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -135,
+     "maxDh": 0,
+     "maxDw": 135
+    },
+    {
+     "selector": "nav.site-nav > div.relative.flex.items-center > button.relic-unread > svg",
+     "text": "",
+     "score": 0,
+     "count": 1,
+     "maxDy": -6,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    }
+   ],
+   "findings": [
+    {
+     "t": 446.5,
+     "value": 0.0934,
+     "hadRecentInput": false,
+     "sources": [
+      {
+       "selector": "section#escalating-power-like-a-run.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+       "text": "What gives Nerf Chess its roguelike feel is the es...",
+       "prev": {
+        "x": 139,
+        "y": 576,
+        "w": 672,
+        "h": 44
+       },
+       "curr": {
+        "x": 139,
+        "y": 576,
+        "w": 672,
+        "h": 44
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": 0,
+       "dw": 0,
+       "dh": 0
+      },
+      {
+       "selector": "section#escalating-power-like-a-run.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+       "text": "What gives Nerf Chess its roguelike feel is the es...",
+       "prev": {
+        "x": 139,
+        "y": 552,
+        "w": 672,
+        "h": 44
+       },
+       "curr": {
+        "x": 139,
+        "y": 552,
+        "w": 672,
+        "h": 44
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": 0,
+       "dw": 0,
+       "dh": 0
+      },
+      {
+       "selector": "section#escalating-power-like-a-run.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+       "text": "What gives Nerf Chess its roguelike feel is the es...",
+       "prev": {
+        "x": 139,
+        "y": 625,
+        "w": 672,
+        "h": 44
+       },
+       "curr": {
+        "x": 139,
+        "y": 600,
+        "w": 672,
+        "h": 45
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": -25,
+       "dw": 0,
+       "dh": 1
+      },
+      {
+       "selector": "section#chess-with-a-card-draft.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+       "text": "Every 5 of your own moves, Nerf Chess deals you a ...",
+       "prev": {
+        "x": 139,
+        "y": 304,
+        "w": 672,
+        "h": 44
+       },
+       "curr": {
+        "x": 139,
+        "y": 304,
+        "w": 672,
+        "h": 44
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": 0,
+       "dw": 0,
+       "dh": 0
+      },
+      {
+       "selector": "section#chess-with-a-card-draft.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+       "text": "Every 5 of your own moves, Nerf Chess deals you a ...",
+       "prev": {
+        "x": 139,
+        "y": 328,
+        "w": 672,
+        "h": 69
+       },
+       "curr": {
+        "x": 139,
+        "y": 328,
+        "w": 672,
+        "h": 69
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": 0,
+       "dw": 0,
+       "dh": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "key": "/guide/chess-with-power-ups|360x780|dark|full|signed-out|normal",
+   "best": 0.0013,
+   "worst": 0.0013,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestFuzzyJester ·Sign in",
+     "score": 0.0013,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -10,
+     "maxDh": 0,
+     "maxDw": 10
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/guide/chess-with-power-ups|1280x800|dark|full|signed-out|normal",
+   "best": 0.1081,
+   "worst": 0.1081,
+   "ceiling": 0.01,
+   "pass": false,
+   "overTarget": true,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "section#how-the-power-ups-work.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+     "text": "Power-ups get stronger as the game goes on. Every ...",
+     "score": 0.0648,
+     "count": 3,
+     "maxDy": 0,
+     "maxDx": 1,
+     "maxDh": 0,
+     "maxDw": -1
+    },
+    {
+     "selector": "section#is-there-a-chess-game-with-power-ups.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+     "text": "Yes. Nerf Chess is a browser-based chess variant b...",
+     "score": 0.0432,
+     "count": 2,
+     "maxDy": -24,
+     "maxDx": 0,
+     "maxDh": -1,
+     "maxDw": 0
+    },
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestPluckyOtter ·Sign in",
+     "score": 0.0025,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -198,
+     "maxDh": 0,
+     "maxDw": 198
+    }
+   ],
+   "findings": [
+    {
+     "t": 295.6,
+     "value": 0.1081,
+     "hadRecentInput": false,
+     "sources": [
+      {
+       "selector": "section#how-the-power-ups-work.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+       "text": "Power-ups get stronger as the game goes on. Every ...",
+       "prev": {
+        "x": 139,
+        "y": 635,
+        "w": 672,
+        "h": 45
+       },
+       "curr": {
+        "x": 139,
+        "y": 635,
+        "w": 672,
+        "h": 45
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": 0,
+       "dw": 0,
+       "dh": 0
+      },
+      {
+       "selector": "section#is-there-a-chess-game-with-power-ups.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+       "text": "Yes. Nerf Chess is a browser-based chess variant b...",
+       "prev": {
+        "x": 139,
+        "y": 279,
+        "w": 672,
+        "h": 45
+       },
+       "curr": {
+        "x": 139,
+        "y": 279,
+        "w": 672,
+        "h": 45
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": 0,
+       "dw": 0,
+       "dh": 0
+      },
+      {
+       "selector": "section#is-there-a-chess-game-with-power-ups.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+       "text": "Yes. Nerf Chess is a browser-based chess variant b...",
+       "prev": {
+        "x": 139,
+        "y": 328,
+        "w": 672,
+        "h": 69
+       },
+       "curr": {
+        "x": 139,
+        "y": 304,
+        "w": 672,
+        "h": 68
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": -24,
+       "dw": 0,
+       "dh": -1
+      },
+      {
+       "selector": "section#how-the-power-ups-work.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+       "text": "A power-up in Nerf Chess is called a buff. Buffs c...",
+       "prev": {
+        "x": 138,
+        "y": 527,
+        "w": 673,
+        "h": 45
+       },
+       "curr": {
+        "x": 139,
+        "y": 527,
+        "w": 672,
+        "h": 45
+       },
+       "change": "moved",
+       "dx": 1,
+       "dy": 0,
+       "dw": -1,
+       "dh": 0
+      },
+      {
+       "selector": "section#how-the-power-ups-work.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+       "text": "A power-up in Nerf Chess is called a buff. Buffs c...",
+       "prev": {
+        "x": 138,
+        "y": 503,
+        "w": 673,
+        "h": 44
+       },
+       "curr": {
+        "x": 139,
+        "y": 503,
+        "w": 672,
+        "h": 44
+       },
+       "change": "moved",
+       "dx": 1,
+       "dy": 0,
+       "dw": -1,
+       "dh": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "key": "/guide/chess-with-power-ups|360x780|dark|full|user|normal",
+   "best": 0.0025,
+   "worst": 0.0025,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "polish_user",
+     "score": 0.0025,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -55,
+     "maxDh": 0,
+     "maxDw": 55
+    },
+    {
+     "selector": "nav.site-nav > div.relative.flex.items-center > button.relic-unread > svg",
+     "text": "",
+     "score": 0,
+     "count": 1,
+     "maxDy": -6,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/guide/chess-with-power-ups|1280x800|dark|full|user|normal",
+   "best": 0.1081,
+   "worst": 0.1081,
+   "ceiling": 0.01,
+   "pass": false,
+   "overTarget": true,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "section#how-the-power-ups-work.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+     "text": "Power-ups get stronger as the game goes on. Every ...",
+     "score": 0.0648,
+     "count": 3,
+     "maxDy": 0,
+     "maxDx": 1,
+     "maxDh": 0,
+     "maxDw": -1
+    },
+    {
+     "selector": "section#is-there-a-chess-game-with-power-ups.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+     "text": "Yes. Nerf Chess is a browser-based chess variant b...",
+     "score": 0.0432,
+     "count": 2,
+     "maxDy": -24,
+     "maxDx": 0,
+     "maxDh": -1,
+     "maxDw": 0
+    },
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "polish_user",
+     "score": 0.0014,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -135,
+     "maxDh": 0,
+     "maxDw": 135
+    },
+    {
+     "selector": "nav.site-nav > div.relative.flex.items-center > button.relic-unread > svg",
+     "text": "",
+     "score": 0,
+     "count": 1,
+     "maxDy": -6,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    }
+   ],
+   "findings": [
+    {
+     "t": 383.7,
+     "value": 0.1081,
+     "hadRecentInput": false,
+     "sources": [
+      {
+       "selector": "section#how-the-power-ups-work.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+       "text": "Power-ups get stronger as the game goes on. Every ...",
+       "prev": {
+        "x": 139,
+        "y": 635,
+        "w": 672,
+        "h": 45
+       },
+       "curr": {
+        "x": 139,
+        "y": 635,
+        "w": 672,
+        "h": 45
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": 0,
+       "dw": 0,
+       "dh": 0
+      },
+      {
+       "selector": "section#is-there-a-chess-game-with-power-ups.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+       "text": "Yes. Nerf Chess is a browser-based chess variant b...",
+       "prev": {
+        "x": 139,
+        "y": 279,
+        "w": 672,
+        "h": 45
+       },
+       "curr": {
+        "x": 139,
+        "y": 279,
+        "w": 672,
+        "h": 45
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": 0,
+       "dw": 0,
+       "dh": 0
+      },
+      {
+       "selector": "section#is-there-a-chess-game-with-power-ups.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+       "text": "Yes. Nerf Chess is a browser-based chess variant b...",
+       "prev": {
+        "x": 139,
+        "y": 328,
+        "w": 672,
+        "h": 69
+       },
+       "curr": {
+        "x": 139,
+        "y": 304,
+        "w": 672,
+        "h": 68
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": -24,
+       "dw": 0,
+       "dh": -1
+      },
+      {
+       "selector": "section#how-the-power-ups-work.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+       "text": "A power-up in Nerf Chess is called a buff. Buffs c...",
+       "prev": {
+        "x": 138,
+        "y": 527,
+        "w": 673,
+        "h": 45
+       },
+       "curr": {
+        "x": 139,
+        "y": 527,
+        "w": 672,
+        "h": 45
+       },
+       "change": "moved",
+       "dx": 1,
+       "dy": 0,
+       "dw": -1,
+       "dh": 0
+      },
+      {
+       "selector": "section#how-the-power-ups-work.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+       "text": "A power-up in Nerf Chess is called a buff. Buffs c...",
+       "prev": {
+        "x": 138,
+        "y": 503,
+        "w": 673,
+        "h": 44
+       },
+       "curr": {
+        "x": 139,
+        "y": 503,
+        "w": 672,
+        "h": 44
+       },
+       "change": "moved",
+       "dx": 1,
+       "dy": 0,
+       "dw": -1,
+       "dh": 0
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "key": "/guide/nerf-mode|360x780|dark|full|signed-out|normal",
+   "best": 0.0133,
+   "worst": 0.0133,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": true,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "section#how-a-nerf-mode-game-starts.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3",
+     "text": "Before the first move, each player is shown two ne...",
+     "score": 0.0066,
+     "count": 1,
+     "maxDy": -26,
+     "maxDx": 0,
+     "maxDh": 26,
+     "maxDw": 0
+    },
+    {
+     "selector": "section#how-a-nerf-mode-game-starts.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+     "text": "The board enforces your rule for you: moves your n...",
+     "score": 0.0066,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    },
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestRustyFerret24 ·Sign in",
+     "score": 0.0013,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -10,
+     "maxDh": 0,
+     "maxDw": 10
+    }
+   ],
+   "findings": [
+    {
+     "t": 1825.1,
+     "value": 0.0133,
+     "hadRecentInput": false,
+     "sources": [
+      {
+       "selector": "section#how-a-nerf-mode-game-starts.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3",
+       "text": "Before the first move, each player is shown two ne...",
+       "prev": {
+        "x": 43,
+        "y": 387,
+        "w": 264,
+        "h": 393
+       },
+       "curr": {
+        "x": 43,
+        "y": 361,
+        "w": 264,
+        "h": 419
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": -26,
+       "dw": 0,
+       "dh": 26
+      },
+      {
+       "selector": "section#how-a-nerf-mode-game-starts.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+       "text": "The board enforces your rule for you: moves your n...",
+       "prev": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0
+       },
+       "curr": {
+        "x": 43,
+        "y": 763,
+        "w": 264,
+        "h": 17
+       },
+       "change": "entered",
+       "dx": null,
+       "dy": null,
+       "dw": null,
+       "dh": null
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "key": "/guide/nerf-mode|1280x800|dark|full|signed-out|normal",
+   "best": 0.0029,
+   "worst": 0.0029,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [
+    "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/guide/nerf-mode"
+   ],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestFeistyHerald53 ·Sign in",
+     "score": 0.0029,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -218,
+     "maxDh": 0,
+     "maxDw": 218
+    },
+    {
+     "selector": "section#the-hex-draft.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+     "text": "Nerf mode is not only about the opening handicaps....",
+     "score": 0.0008,
+     "count": 2,
+     "maxDy": 0,
+     "maxDx": 1,
+     "maxDh": 0,
+     "maxDw": -1
+    },
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.site-nav-brand > div.ml-2.hidden.items-center",
+     "text": "PlayLobbyChallenge a friendPractice vs computerDai...",
+     "score": 0.0004,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -7,
+     "maxDh": 0,
+     "maxDw": -12
+    },
+    {
+     "selector": "section#how-a-nerf-mode-game-starts.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+     "text": "The board enforces your rule for you: moves your n...",
+     "score": 0.0004,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/guide/nerf-mode|360x780|dark|full|user|normal",
+   "best": 0.0158,
+   "worst": 0.0158,
+   "ceiling": 0.01,
+   "pass": false,
+   "overTarget": true,
+   "errors": [
+    "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/guide/nerf-mode"
+   ],
+   "offenders": [
+    {
+     "selector": "section#how-a-nerf-mode-game-starts.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3",
+     "text": "Before the first move, each player is shown two ne...",
+     "score": 0.0066,
+     "count": 1,
+     "maxDy": -26,
+     "maxDx": 0,
+     "maxDh": 26,
+     "maxDw": 0
+    },
+    {
+     "selector": "section#how-a-nerf-mode-game-starts.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+     "text": "The board enforces your rule for you: moves your n...",
+     "score": 0.0066,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    },
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "polish_user",
+     "score": 0.0025,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -55,
+     "maxDh": 0,
+     "maxDw": 55
+    },
+    {
+     "selector": "nav.site-nav > div.relative.flex.items-center > button.relic-unread > svg",
+     "text": "",
+     "score": 0,
+     "count": 1,
+     "maxDy": -6,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    }
+   ],
+   "findings": [
+    {
+     "t": 295.9,
+     "value": 0.0133,
+     "hadRecentInput": false,
+     "sources": [
+      {
+       "selector": "section#how-a-nerf-mode-game-starts.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3",
+       "text": "Before the first move, each player is shown two ne...",
+       "prev": {
+        "x": 43,
+        "y": 387,
+        "w": 264,
+        "h": 393
+       },
+       "curr": {
+        "x": 43,
+        "y": 361,
+        "w": 264,
+        "h": 419
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": -26,
+       "dw": 0,
+       "dh": 26
+      },
+      {
+       "selector": "section#how-a-nerf-mode-game-starts.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+       "text": "The board enforces your rule for you: moves your n...",
+       "prev": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0
+       },
+       "curr": {
+        "x": 43,
+        "y": 763,
+        "w": 264,
+        "h": 17
+       },
+       "change": "entered",
+       "dx": null,
+       "dy": null,
+       "dw": null,
+       "dh": null
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "key": "/guide/nerf-mode|1280x800|dark|full|user|normal",
+   "best": 0.003,
+   "worst": 0.003,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [
+    "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/guide/nerf-mode"
+   ],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "polish_user",
+     "score": 0.0014,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -135,
+     "maxDh": 0,
+     "maxDw": 135
+    },
+    {
+     "selector": "section#the-hex-draft.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+     "text": "Nerf mode is not only about the opening handicaps....",
+     "score": 0.0008,
+     "count": 2,
+     "maxDy": 0,
+     "maxDx": 1,
+     "maxDh": 0,
+     "maxDw": -1
+    },
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.site-nav-brand > div.ml-2.hidden.items-center",
+     "text": "PlayLobbyChallenge a friendPractice vs computerDai...",
+     "score": 0.0004,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -7,
+     "maxDh": 0,
+     "maxDw": -12
+    },
+    {
+     "selector": "section#how-a-nerf-mode-game-starts.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+     "text": "The board enforces your rule for you: moves your n...",
+     "score": 0.0004,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/guide/capture-the-king|360x780|dark|full|signed-out|normal",
+   "best": 0.0141,
+   "worst": 0.0141,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": true,
+   "errors": [
+    "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/guide/capture-the-king"
+   ],
+   "offenders": [
+    {
+     "selector": "section#what-capture-the-king-means.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3",
+     "text": "In standard chess the game ends at checkmate, an a...",
+     "score": 0.007,
+     "count": 1,
+     "maxDy": -26,
+     "maxDx": 0,
+     "maxDh": -1,
+     "maxDw": 0
+    },
+    {
+     "selector": "section#the-king-becomes-a-real-piece.plate.scroll-mt-20",
+     "text": "The king becomes a real pieceBecause only capture ...",
+     "score": 0.007,
+     "count": 1,
+     "maxDy": -27,
+     "maxDx": 0,
+     "maxDh": 27,
+     "maxDw": 0
+    },
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestOddPatzer ·Sign in",
+     "score": 0.0013,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -10,
+     "maxDh": 0,
+     "maxDw": 10
+    }
+   ],
+   "findings": [
+    {
+     "t": 1873.5,
+     "value": 0.0141,
+     "hadRecentInput": false,
+     "sources": [
+      {
+       "selector": "section#what-capture-the-king-means.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3",
+       "text": "In standard chess the game ends at checkmate, an a...",
+       "prev": {
+        "x": 43,
+        "y": 360,
+        "w": 264,
+        "h": 366
+       },
+       "curr": {
+        "x": 43,
+        "y": 334,
+        "w": 264,
+        "h": 365
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": -26,
+       "dw": 0,
+       "dh": -1
+      },
+      {
+       "selector": "section#the-king-becomes-a-real-piece.plate.scroll-mt-20",
+       "text": "The king becomes a real pieceBecause only capture ...",
+       "prev": {
+        "x": 21,
+        "y": 762,
+        "w": 308,
+        "h": 18
+       },
+       "curr": {
+        "x": 21,
+        "y": 735,
+        "w": 308,
+        "h": 45
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": -27,
+       "dw": 0,
+       "dh": 27
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "key": "/guide/capture-the-king|1280x800|dark|full|signed-out|normal",
+   "best": 0.0049,
+   "worst": 0.0049,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [
+    "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/guide/capture-the-king"
+   ],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestMellowCastle32 ·Sign in",
+     "score": 0.003,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -224,
+     "maxDh": 0,
+     "maxDw": 224
+    },
+    {
+     "selector": "section#the-king-becomes-a-real-piece.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+     "text": "Because only capture ends the game, the king stops...",
+     "score": 0.0029,
+     "count": 3,
+     "maxDy": 0,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    },
+    {
+     "selector": "section#what-capture-the-king-means.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+     "text": "In standard chess the game ends at checkmate, an a...",
+     "score": 0.0019,
+     "count": 2,
+     "maxDy": 0,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/guide/capture-the-king|360x780|dark|full|user|normal",
+   "best": 0.0166,
+   "worst": 0.0166,
+   "ceiling": 0.01,
+   "pass": false,
+   "overTarget": true,
+   "errors": [
+    "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/guide/capture-the-king"
+   ],
+   "offenders": [
+    {
+     "selector": "section#what-capture-the-king-means.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3",
+     "text": "In standard chess the game ends at checkmate, an a...",
+     "score": 0.007,
+     "count": 1,
+     "maxDy": -26,
+     "maxDx": 0,
+     "maxDh": -1,
+     "maxDw": 0
+    },
+    {
+     "selector": "section#the-king-becomes-a-real-piece.plate.scroll-mt-20",
+     "text": "The king becomes a real pieceBecause only capture ...",
+     "score": 0.007,
+     "count": 1,
+     "maxDy": -27,
+     "maxDx": 0,
+     "maxDh": 27,
+     "maxDw": 0
+    },
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "polish_user",
+     "score": 0.0025,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -55,
+     "maxDh": 0,
+     "maxDw": 55
+    },
+    {
+     "selector": "nav.site-nav > div.relative.flex.items-center > button.relic-unread > svg",
+     "text": "",
+     "score": 0,
+     "count": 1,
+     "maxDy": -6,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    }
+   ],
+   "findings": [
+    {
+     "t": 270.7,
+     "value": 0.0141,
+     "hadRecentInput": false,
+     "sources": [
+      {
+       "selector": "section#what-capture-the-king-means.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3",
+       "text": "In standard chess the game ends at checkmate, an a...",
+       "prev": {
+        "x": 43,
+        "y": 360,
+        "w": 264,
+        "h": 366
+       },
+       "curr": {
+        "x": 43,
+        "y": 334,
+        "w": 264,
+        "h": 365
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": -26,
+       "dw": 0,
+       "dh": -1
+      },
+      {
+       "selector": "section#the-king-becomes-a-real-piece.plate.scroll-mt-20",
+       "text": "The king becomes a real pieceBecause only capture ...",
+       "prev": {
+        "x": 21,
+        "y": 762,
+        "w": 308,
+        "h": 18
+       },
+       "curr": {
+        "x": 21,
+        "y": 735,
+        "w": 308,
+        "h": 45
+       },
+       "change": "moved",
+       "dx": 0,
+       "dy": -27,
+       "dw": 0,
+       "dh": 27
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "key": "/guide/capture-the-king|1280x800|dark|full|user|normal",
+   "best": 0.0049,
+   "worst": 0.0049,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [
+    "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/guide/capture-the-king"
+   ],
+   "offenders": [
+    {
+     "selector": "section#the-king-becomes-a-real-piece.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+     "text": "Because only capture ends the game, the king stops...",
+     "score": 0.0029,
+     "count": 3,
+     "maxDy": 0,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    },
+    {
+     "selector": "section#what-capture-the-king-means.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+     "text": "In standard chess the game ends at checkmate, an a...",
+     "score": 0.0019,
+     "count": 2,
+     "maxDy": 0,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    },
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "polish_user",
+     "score": 0.0014,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -135,
+     "maxDh": 0,
+     "maxDw": 135
+    },
+    {
+     "selector": "nav.site-nav > div.relative.flex.items-center > button.relic-unread > svg",
+     "text": "",
+     "score": 0,
+     "count": 1,
+     "maxDy": -6,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/guide/chess-variants|360x780|dark|full|signed-out|normal",
+   "best": 0.0077,
+   "worst": 0.0077,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [
+    "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/guide/chess-variants"
+   ],
+   "offenders": [
+    {
+     "selector": "section#the-main-families-of-chess-variants.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+     "text": "Piece-economy benders. Crazyhouse lets you drop ca...",
+     "score": 0.0077,
+     "count": 2,
+     "maxDy": 25,
+     "maxDx": 0,
+     "maxDh": -24,
+     "maxDw": 0
+    },
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestLoyalLynx ·Sign in",
+     "score": 0.0013,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -10,
+     "maxDh": 0,
+     "maxDw": 10
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/guide/chess-variants|1280x800|dark|full|signed-out|normal",
+   "best": 0.0062,
+   "worst": 0.0062,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestCraftyPangolin ·Sign in",
+     "score": 0.0029,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -218,
+     "maxDh": 0,
+     "maxDw": 218
+    },
+    {
+     "selector": "section#the-main-families-of-chess-variants.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+     "text": "Piece-economy benders. Crazyhouse lets you drop ca...",
+     "score": 0.0025,
+     "count": 2,
+     "maxDy": 0,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    },
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.site-nav-brand > div.ml-2.hidden.items-center",
+     "text": "PlayLobbyChallenge a friendPractice vs computerDai...",
+     "score": 0.0012,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -7,
+     "maxDh": 0,
+     "maxDw": -12
+    },
+    {
+     "selector": "section#where-nerf-chess-sits.plate.scroll-mt-20",
+     "text": "Where Nerf Chess sitsNerf Chess belongs to the hid...",
+     "score": 0.0012,
+     "count": 1,
+     "maxDy": -24,
+     "maxDx": 0,
+     "maxDh": 24,
+     "maxDw": 0
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/guide/chess-variants|360x780|dark|full|user|normal",
+   "best": 0.0077,
+   "worst": 0.0077,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "section#the-main-families-of-chess-variants.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+     "text": "Piece-economy benders. Crazyhouse lets you drop ca...",
+     "score": 0.0077,
+     "count": 2,
+     "maxDy": 25,
+     "maxDx": 0,
+     "maxDh": -24,
+     "maxDw": 0
+    },
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "polish_user",
+     "score": 0.0025,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -55,
+     "maxDh": 0,
+     "maxDw": 55
+    },
+    {
+     "selector": "nav.site-nav > div.relative.flex.items-center > button.relic-unread > svg",
+     "text": "",
+     "score": 0,
+     "count": 1,
+     "maxDy": -6,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/guide/chess-variants|1280x800|dark|full|user|normal",
+   "best": 0.0062,
+   "worst": 0.0062,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "section#the-main-families-of-chess-variants.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+     "text": "Piece-economy benders. Crazyhouse lets you drop ca...",
+     "score": 0.0025,
+     "count": 2,
+     "maxDy": 0,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    },
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "polish_user",
+     "score": 0.0014,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -135,
+     "maxDh": 0,
+     "maxDw": 135
+    },
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.site-nav-brand > div.ml-2.hidden.items-center",
+     "text": "PlayLobbyChallenge a friendPractice vs computerDai...",
+     "score": 0.0012,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -7,
+     "maxDh": 0,
+     "maxDw": -12
+    },
+    {
+     "selector": "section#where-nerf-chess-sits.plate.scroll-mt-20",
+     "text": "Where Nerf Chess sitsNerf Chess belongs to the hid...",
+     "score": 0.0012,
+     "count": 1,
+     "maxDy": -24,
+     "maxDx": 0,
+     "maxDh": 24,
+     "maxDw": 0
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/guide/glossary|360x780|dark|full|signed-out|normal",
+   "best": 0.0002,
+   "worst": 0.0013,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestLoyalGopher78 ·Sign in",
+     "score": 0.0013,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -10,
+     "maxDh": 0,
+     "maxDw": 10
+    },
+    {
+     "selector": "section.mx-auto.max-w-\\[1100px\\].px-6 > div.mt-9.space-y-4 > div.flex.flex-wrap.gap-2 > a.motion-safe\\:transition-colors.\\[@media(pointer\\:fine)\\]\\:min-h-0",
+     "text": "Card types",
+     "score": 0.0002,
+     "count": 3,
+     "maxDy": 0,
+     "maxDx": -6,
+     "maxDh": 0,
+     "maxDw": -6
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/guide/glossary|1280x800|dark|full|signed-out|normal",
+   "best": 0.0027,
+   "worst": 0.0033,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestMellowBlunder73 ·Sign in",
+     "score": 0.0033,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -236,
+     "maxDh": 0,
+     "maxDw": 236
+    },
+    {
+     "selector": "section.mx-auto.max-w-\\[1100px\\].px-6 > div.mt-9.space-y-4 > div.flex.flex-wrap.gap-2 > a.motion-safe\\:transition-colors.\\[@media(pointer\\:fine)\\]\\:min-h-0",
+     "text": "Card types",
+     "score": 0.0005,
+     "count": 4,
+     "maxDy": 0,
+     "maxDx": -20,
+     "maxDh": 0,
+     "maxDw": -6
+    },
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.site-nav-brand > div.ml-2.hidden.items-center",
+     "text": "PlayLobbyChallenge a friendPractice vs computerDai...",
+     "score": 0.0001,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -7,
+     "maxDh": 0,
+     "maxDw": -12
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/guide/glossary|360x780|dark|full|user|normal",
+   "best": 0.0025,
+   "worst": 0.0025,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "polish_user",
+     "score": 0.0025,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -55,
+     "maxDh": 0,
+     "maxDw": 55
+    },
+    {
+     "selector": "section.mx-auto.max-w-\\[1100px\\].px-6 > div.mt-9.space-y-4 > div.flex.flex-wrap.gap-2 > a.motion-safe\\:transition-colors.\\[@media(pointer\\:fine)\\]\\:min-h-0",
+     "text": "Card types",
+     "score": 0.0002,
+     "count": 3,
+     "maxDy": 0,
+     "maxDx": -6,
+     "maxDh": 0,
+     "maxDw": -6
+    },
+    {
+     "selector": "nav.site-nav > div.relative.flex.items-center > button.relic-unread > svg",
+     "text": "",
+     "score": 0,
+     "count": 1,
+     "maxDy": -6,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/guide/glossary|1280x800|dark|full|user|normal",
+   "best": 0.0014,
+   "worst": 0.0014,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "polish_user",
+     "score": 0.0014,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -135,
+     "maxDh": 0,
+     "maxDw": 135
+    },
+    {
+     "selector": "section.mx-auto.max-w-\\[1100px\\].px-6 > div.mt-9.space-y-4 > div.flex.flex-wrap.gap-2 > a.motion-safe\\:transition-colors.\\[@media(pointer\\:fine)\\]\\:min-h-0",
+     "text": "Card types",
+     "score": 0.0005,
+     "count": 4,
+     "maxDy": 0,
+     "maxDx": -20,
+     "maxDh": 0,
+     "maxDw": -6
+    },
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.site-nav-brand > div.ml-2.hidden.items-center",
+     "text": "PlayLobbyChallenge a friendPractice vs computerDai...",
+     "score": 0.0001,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -7,
+     "maxDh": 0,
+     "maxDw": -12
+    },
+    {
+     "selector": "nav.site-nav > div.relative.flex.items-center > button.relic-unread > svg",
+     "text": "",
+     "score": 0,
+     "count": 1,
+     "maxDy": -6,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/privacy-policy|360x780|dark|full|signed-out|normal",
+   "best": 0.0013,
+   "worst": 0.0013,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestNobleHeron ·Sign in",
+     "score": 0.0013,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -10,
+     "maxDh": 0,
+     "maxDw": 10
+    },
+    {
+     "selector": "section#information-we-collect.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > ul.list-disc > li",
+     "text": "Your email address, if you add one when you regist...",
+     "score": 0.0006,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/privacy-policy|1280x800|dark|full|signed-out|normal",
+   "best": 0.0024,
+   "worst": 0.003,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestCunningLynx87 ·Sign in",
+     "score": 0.003,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -223,
+     "maxDh": 0,
+     "maxDw": 223
+    },
+    {
+     "selector": "section#information-we-collect.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > ul.list-disc > li",
+     "text": "Your email address, if you add one when you regist...",
+     "score": 0.0011,
+     "count": 2,
+     "maxDy": 0,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    },
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.site-nav-brand > div.ml-2.hidden.items-center",
+     "text": "PlayLobbyChallenge a friendPractice vs computerDai...",
+     "score": 0.0005,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -7,
+     "maxDh": 0,
+     "maxDw": -12
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/privacy-policy|360x780|dark|full|user|normal",
+   "best": 0.0025,
+   "worst": 0.0025,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "polish_user",
+     "score": 0.0025,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -55,
+     "maxDh": 0,
+     "maxDw": 55
+    },
+    {
+     "selector": "section#information-we-collect.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > ul.list-disc > li",
+     "text": "Your email address, if you add one when you regist...",
+     "score": 0.0006,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    },
+    {
+     "selector": "nav.site-nav > div.relative.flex.items-center > button.relic-unread > svg",
+     "text": "",
+     "score": 0,
+     "count": 1,
+     "maxDy": -6,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/privacy-policy|1280x800|dark|full|user|normal",
+   "best": 0.0016,
+   "worst": 0.0016,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "polish_user",
+     "score": 0.0014,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -135,
+     "maxDh": 0,
+     "maxDw": 135
+    },
+    {
+     "selector": "section#information-we-collect.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > ul.list-disc > li",
+     "text": "Your email address, if you add one when you regist...",
+     "score": 0.0011,
+     "count": 2,
+     "maxDy": 0,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    },
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.site-nav-brand > div.ml-2.hidden.items-center",
+     "text": "PlayLobbyChallenge a friendPractice vs computerDai...",
+     "score": 0.0005,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -7,
+     "maxDh": 0,
+     "maxDw": -12
+    },
+    {
+     "selector": "nav.site-nav > div.relative.flex.items-center > button.relic-unread > svg",
+     "text": "",
+     "score": 0,
+     "count": 1,
+     "maxDy": -6,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/codex/buff/pawn_push|360x780|dark|full|signed-out|normal",
+   "best": 0,
+   "worst": 0.0013,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestFriskyHerald ·Sign in",
+     "score": 0.0013,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -10,
+     "maxDh": 0,
+     "maxDw": 10
+    },
+    {
+     "selector": "main.min-h-screen.pb-20 > section.mx-auto.max-w-7xl.px-6 > p.mt-2.text-\\[15px\\].text-parchment-300",
+     "text": "Browse every card and rule. 732 buffs in this tab:...",
+     "score": 0.0004,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/codex/buff/pawn_push|1280x800|dark|full|signed-out|normal",
+   "best": 0.0023,
+   "worst": 0.0027,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestZestyWombat ·Sign in",
+     "score": 0.0027,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -212,
+     "maxDh": 0,
+     "maxDw": 212
+    },
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.site-nav-brand > div.ml-2.hidden.items-center",
+     "text": "PlayLobbyChallenge a friendPractice vs computerDai...",
+     "score": 0.0002,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -7,
+     "maxDh": 0,
+     "maxDw": -12
+    },
+    {
+     "selector": "main.min-h-screen.pb-20 > section.mx-auto.max-w-\\[1100px\\].px-6 > p.mt-3.max-w-3xl.text-\\[15px\\]",
+     "text": "On any turn, one of your pawns with two empty squa...",
+     "score": 0.0002,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    },
+    {
+     "selector": "section#how-it-works.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+     "text": "As a movement card, it changes how one of your pie...",
+     "score": 0.0002,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/codex/buff/pawn_push|360x780|dark|full|user|normal",
+   "best": 0.0025,
+   "worst": 0.0025,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "polish_user",
+     "score": 0.0025,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -55,
+     "maxDh": 0,
+     "maxDw": 55
+    },
+    {
+     "selector": "nav.site-nav > div.relative.flex.items-center > button.relic-unread > svg",
+     "text": "",
+     "score": 0,
+     "count": 1,
+     "maxDy": -6,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/codex/buff/pawn_push|1280x800|dark|full|user|normal",
+   "best": 0.0014,
+   "worst": 0.0014,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "polish_user",
+     "score": 0.0014,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -135,
+     "maxDh": 0,
+     "maxDw": 135
+    },
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.site-nav-brand > div.ml-2.hidden.items-center",
+     "text": "PlayLobbyChallenge a friendPractice vs computerDai...",
+     "score": 0.0003,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -7,
+     "maxDh": 0,
+     "maxDw": -12
+    },
+    {
+     "selector": "nav.site-nav > div.relative.flex.items-center > button.relic-unread > svg",
+     "text": "",
+     "score": 0,
+     "count": 1,
+     "maxDy": -6,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/codex/boon/extra_glance|360x780|dark|full|signed-out|normal",
+   "best": 0,
+   "worst": 0.0013,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestLoyalRook ·Sign in",
+     "score": 0.0013,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -10,
+     "maxDh": 0,
+     "maxDw": 10
+    },
+    {
+     "selector": "main.min-h-screen.pb-20 > section.mx-auto.max-w-7xl.px-6 > p.mt-2.text-\\[15px\\].text-parchment-300",
+     "text": "Browse every card and rule. 732 buffs in this tab:...",
+     "score": 0.0004,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/codex/boon/extra_glance|1280x800|dark|full|signed-out|normal",
+   "best": 0.0023,
+   "worst": 0.0025,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "GuestDaringRook ·Sign in",
+     "score": 0.0025,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -199,
+     "maxDh": 0,
+     "maxDw": 199
+    },
+    {
+     "selector": "section#how-it-works.plate.scroll-mt-20 > div.mt-3.max-w-3xl.space-y-3 > p",
+     "text": "You draft Extra Glance in Nerf mode. Instant: it t...",
+     "score": 0.0004,
+     "count": 2,
+     "maxDy": 0,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    },
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.site-nav-brand > div.ml-2.hidden.items-center",
+     "text": "PlayLobbyChallenge a friendPractice vs computerDai...",
+     "score": 0.0002,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -7,
+     "maxDh": 0,
+     "maxDw": -12
+    },
+    {
+     "selector": "main.min-h-screen.pb-20 > section.mx-auto.max-w-\\[1100px\\].px-6 > p.mt-3.max-w-3xl.text-\\[15px\\]",
+     "text": "See your opponent's nerf for the rest of the game,...",
+     "score": 0.0002,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/codex/boon/extra_glance|360x780|dark|full|user|normal",
+   "best": 0.0025,
+   "worst": 0.0025,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "polish_user",
+     "score": 0.0025,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -55,
+     "maxDh": 0,
+     "maxDw": 55
+    },
+    {
+     "selector": "nav.site-nav > div.relative.flex.items-center > button.relic-unread > svg",
+     "text": "",
+     "score": 0,
+     "count": 1,
+     "maxDy": -6,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    }
+   ],
+   "findings": []
+  },
+  {
+   "key": "/codex/boon/extra_glance|1280x800|dark|full|user|normal",
+   "best": 0.0014,
+   "worst": 0.0014,
+   "ceiling": 0.01,
+   "pass": true,
+   "overTarget": false,
+   "errors": [],
+   "offenders": [
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.relative.flex.items-center",
+     "text": "polish_user",
+     "score": 0.0014,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -135,
+     "maxDh": 0,
+     "maxDw": 135
+    },
+    {
+     "selector": "main.min-h-screen.pb-20 > nav.site-nav > div.site-nav-brand > div.ml-2.hidden.items-center",
+     "text": "PlayLobbyChallenge a friendPractice vs computerDai...",
+     "score": 0.0003,
+     "count": 1,
+     "maxDy": 0,
+     "maxDx": -7,
+     "maxDh": 0,
+     "maxDw": -12
+    },
+    {
+     "selector": "nav.site-nav > div.relative.flex.items-center > button.relic-unread > svg",
+     "text": "",
+     "score": 0,
+     "count": 1,
+     "maxDy": -6,
+     "maxDx": 0,
+     "maxDh": 0,
+     "maxDw": 0
+    }
+   ],
+   "findings": []
+  }
+ ]
+}
