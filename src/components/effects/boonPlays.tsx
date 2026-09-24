@@ -1464,58 +1464,6 @@ function FalconDash({ palette, glyph, lead, role, delayMs, flourish, aim }: Temp
    double shock ring, board-edge glow, no shared template machinery.
    ========================================================================== */
 
-/** Kingmaker's Pact — the unseen hand lowers an outsized crown onto a throne
- * built of dealt cards while the tier-pips climb and gold rains. */
-function KingmakerScene({ lead, role, delayMs }: SceneProps) {
-  if (role === "entrance") return <EntranceCut palette={["#c9a84c", "#ffd76a", "#2a1c08"]} glyph={GLYPH.bw2_kingmakers_pact} delayMs={delayMs} />;
-  if (!lead) return <TargetHit palette={["#c9a84c", "#ffd76a", "#2a1c08"]} glyph={GLYPH.bw2_kingmakers_pact} delayMs={delayMs} />;
-  return (
-    <Stage quakeMs={delayMs + 900}>
-      <Wash color="rgba(42,28,8,0.34)" delayMs={delayMs} />
-      {/* tell: the unseen hand's light gathers over the empty table */}
-      <Tell color="rgba(255,215,106,0.5)" delayMs={delayMs + 220} left={40} top={40} />
-      {/* THE CORONATION HAMMER: a pillar of kingmaking light drives the crown
-          onto the card-throne and the whole court quakes */}
-      <Impact atMs={delayMs + 900} left={50} top={40} rgb="#ffd76a" laser size={9} />
-      {/* the card-throne stacks itself */}
-      {[0, 1, 2].map((i) => (
-        <span key={i} className="bwp-rise absolute block" style={{ left: `${43 - i * 2.4}%`, top: `${56 - i * 5}%`, width: `${14 + i * 4.8}%`, height: "6%", animationDelay: `${delayMs + 160 + (2 - i) * 130}ms` }}>
-          <svg viewBox="0 0 16 5" className="block h-full w-full" preserveAspectRatio="none" aria-hidden="true">
-            <rect x="0.5" y="0.5" width="15" height="4" rx="0.9" fill="rgba(201,168,76,0.92)" stroke="#2a1c08" strokeWidth="0.4" />
-            <path d="M2.4 2.5 H13.6" stroke="#2a1c08" strokeWidth="0.35" strokeDasharray="1.2 0.9" />
-          </svg>
-        </span>
-      ))}
-      {/* the crown descends from beyond the top of the world */}
-      <span className="bwp-drop absolute block" style={{ left: "42%", top: "30%", width: "16%", height: "12%", animationDelay: `${delayMs + 560}ms` }}>
-        <svg viewBox="0 0 16 12" className="block h-full w-full" aria-hidden="true">
-          <path d="M2 10.4 L1.4 3.4 L5 6.2 L8 2 L11 6.2 L14.6 3.4 L14 10.4 Z" fill="#ffd76a" stroke="#8a6a3a" strokeWidth="0.6" {...SJ} />
-          <circle cx="8" cy="8" r="1" fill="#d6234f" />
-        </svg>
-      </span>
-      {/* the tier-pips climb — every future deal, one step higher */}
-      {[0, 1, 2, 3].map((i) => (
-        <Glint key={i} delayMs={delayMs + 760 + i * 110} color="#ffd76a" left={66} top={58 - i * 7} size={2.8 + i * 0.5} />
-      ))}
-      {/* the forfeited reroll die tumbles away off the pact */}
-      <span className="bwp-cross absolute block" style={{ left: "32%", top: "58%", width: "4.6%", height: "4.6%", "--dx": "-240%", animationDelay: `${delayMs + 880}ms` } as CSSProperties}>
-        <svg viewBox="0 0 6 6" className="block h-full w-full" aria-hidden="true">
-          <rect x="0.6" y="0.6" width="4.8" height="4.8" rx="1" fill="#e8dcc0" stroke="#4a3a22" strokeWidth="0.4" />
-          <circle cx="2" cy="2" r="0.5" fill="#4a3a22" />
-          <circle cx="4" cy="4" r="0.5" fill="#4a3a22" />
-        </svg>
-      </span>
-      {/* gold rain */}
-      {[34, 46, 58, 66].map((l, i) => (
-        <span key={l} className="bwp-rain absolute block rounded-full" style={{ left: `${l}%`, top: `${30 + (i % 2) * 6}%`, width: "1.8%", height: "1.8%", background: "#ffd76a", animationDelay: `${delayMs + 1020 + i * 80}ms` }} />
-      ))}
-      <Ring delayMs={delayMs + 900} color="rgba(255,215,106,0.85)" />
-      <Ring delayMs={delayMs + 1120} color="rgba(255,215,106,0.55)" size={84} />
-      <EdgeGlow delayMs={delayMs + 980} color="rgba(255,215,106,0.4)" />
-    </Stage>
-  );
-}
-
 /** Bolt Hole — check-rays close on the king, the wall opens its secret door,
  * and the king is simply not there anymore. */
 function BoltHoleScene({ lead, role, delayMs }: SceneProps) {
@@ -1560,96 +1508,6 @@ function BoltHoleScene({ lead, role, delayMs }: SceneProps) {
       <Ring delayMs={delayMs + 940} color="rgba(143,107,255,0.8)" />
       <Ring delayMs={delayMs + 1160} color="rgba(111,227,255,0.55)" size={84} />
       <EdgeGlow delayMs={delayMs + 1000} color="rgba(143,107,255,0.38)" />
-    </Stage>
-  );
-}
-
-/** Carnival of Masks — the carousel spins the whole court and hands every
- * piece back under somebody else's hat. */
-function CarnivalScene({ lead, role, delayMs }: SceneProps) {
-  if (role === "entrance") return <EntranceCut palette={["#c94ad1", "#ffd76a", "#2a1030"]} glyph={GLYPH.bw2_carnival_of_masks} delayMs={delayMs} />;
-  if (!lead) return <TargetHit palette={["#c94ad1", "#ffd76a", "#2a1030"]} glyph={GLYPH.bw2_carnival_of_masks} delayMs={delayMs} />;
-  const riders: { k: keyof typeof CHESSMAN; swap: keyof typeof CHESSMAN; l: number; t: number }[] = [
-    { k: "r", swap: "b", l: 46.75, t: 28 },
-    { k: "n", swap: "q", l: 64, t: 45 },
-    { k: "b", swap: "n", l: 46.75, t: 62 },
-    { k: "q", swap: "r", l: 29.5, t: 45 },
-  ];
-  return (
-    <Stage quakeMs={delayMs + 1040}>
-      <Wash color="rgba(42,16,48,0.36)" delayMs={delayMs} />
-      {/* THE CAROUSEL STOP: the ride brakes dead on one beat and the whole
-          swapped court lands at once with a ground-shock */}
-      <Impact atMs={delayMs + 1040} left={50} top={50} rgb="#c94ad1" size={10} />
-      {/* confetti */}
-      {["#ffd76a", "#6fe3ff", "#c94ad1", "#a8e07f", "#ff9d3d", "#e3d0ff"].map((c, i) => (
-        <span key={c} className="bwp-rain absolute block" style={{ left: `${32 + i * 7}%`, top: `${26 + (i % 3) * 4}%`, width: "1.6%", height: "2.4%", rotate: `${i * 50}deg`, background: c, animationDelay: `${delayMs + 160 + i * 90}ms` }} />
-      ))}
-      {/* the carousel ring turns */}
-      <span className="bwp-spin absolute block" style={{ left: "30%", top: "28%", width: "40%", height: "44%", animationDelay: `${delayMs + 320}ms` }}>
-        <svg viewBox="0 0 40 44" className="block h-full w-full" aria-hidden="true">
-          <ellipse cx="20" cy="22" rx="18" ry="20" fill="none" stroke="rgba(201,74,209,0.8)" strokeWidth="0.9" strokeDasharray="3 2.2" />
-        </svg>
-      </span>
-      {/* the riders: each fades out as itself and back in as another */}
-      {riders.map((r, i) => (
-        <span key={i} className="absolute block" style={{ left: `${r.l}%`, top: `${r.t}%`, width: "6.5%", height: "10%" }}>
-          <span className="bwp-swapout absolute inset-0 block" style={{ animationDelay: `${delayMs + 640 + i * 110}ms` }}>
-            <Man kind={r.k} fill="#e3d0ff" stroke="#2a1030" />
-          </span>
-          <span className="bwp-swapin absolute inset-0 block" style={{ animationDelay: `${delayMs + 640 + i * 110}ms` }}>
-            <Man kind={r.swap} fill="#ffd76a" stroke="#5b2b8f" />
-          </span>
-        </span>
-      ))}
-      {/* the ringmaster's mask presides */}
-      <span className="bwp-facein absolute block" style={{ left: "44%", top: "42%", width: "12%", height: "12%", animationDelay: `${delayMs + 560}ms` }}>{GLYPH.bw2_carnival_of_masks}</span>
-      <Ring delayMs={delayMs + 1040} color="rgba(201,74,209,0.85)" />
-      <Ring delayMs={delayMs + 1240} color="rgba(255,215,106,0.55)" size={84} />
-      <EdgeGlow delayMs={delayMs + 1100} color="rgba(201,74,209,0.4)" />
-    </Stage>
-  );
-}
-
-/** Restitution — the great scale descends tilted, the owed pieces march onto
- * the light pan, and the beam levels. */
-function RestitutionScene({ lead, role, delayMs }: SceneProps) {
-  if (role === "entrance") return <EntranceCut palette={["#c9b89a", "#ffd76a", "#3a3026"]} glyph={GLYPH.bw2_restitution} delayMs={delayMs} />;
-  if (!lead) return <TargetHit palette={["#c9b89a", "#ffd76a", "#3a3026"]} glyph={GLYPH.bw2_restitution} delayMs={delayMs} />;
-  return (
-    <Stage quakeMs={delayMs + 1060}>
-      <Wash color="rgba(58,48,38,0.34)" delayMs={delayMs} />
-      {/* the leg: laid down the real source -> target vector, sized by --fx-len */}
-      <AimLeg color="rgba(255,215,106,0.85)" delayMs={delayMs + 300} />
-      {/* THE VERDICT STRIKE: judgment light hammers the wronged pan the
-          instant the beam levels, and the courtroom floor jolts */}
-      <Impact atMs={delayMs + 1060} left={36} top={42} rgb="#ffd76a" laser />
-      {/* the pillar and the tilted beam */}
-      <span className="bwp-gate absolute block" style={{ left: "49.3%", top: "34%", width: "1.4%", height: "24%", transformOrigin: "50% 100%", background: "rgba(201,184,154,0.95)", animationDelay: `${delayMs + 160}ms` }} />
-      <span className="bwp-tip absolute block" style={{ left: "32%", top: "33%", width: "36%", height: "3%", transformOrigin: "50% 50%", animationDelay: `${delayMs + 420}ms` }}>
-        <svg viewBox="0 0 36 3" className="block h-full w-full" preserveAspectRatio="none" aria-hidden="true">
-          <rect x="0.5" y="0.9" width="35" height="1.2" rx="0.6" fill="#c9b89a" />
-        </svg>
-      </span>
-      {/* the two pans */}
-      {[33, 62].map((l, i) => (
-        <span key={l} className="bwp-drop absolute block" style={{ left: `${l}%`, top: "40%", width: "6%", height: "3%", animationDelay: `${delayMs + 520 + i * 90}ms` }}>
-          <svg viewBox="0 0 8 4" className="block h-full w-full" aria-hidden="true">
-            <path d="M0.6 0.6 C2 3.6 6 3.6 7.4 0.6 Z" fill={i === 0 ? "rgba(255,215,106,0.85)" : "rgba(201,184,154,0.8)"} stroke="#3a3026" strokeWidth="0.35" />
-          </svg>
-        </span>
-      ))}
-      {/* the owed pieces march to the light pan */}
-      {(["p", "n", "r"] as (keyof typeof CHESSMAN)[]).map((k, i) => (
-        <span key={k} className="bwp-march absolute block" style={{ left: `${22 + i * 2}%`, top: "50%", width: "5%", height: "8%", "--dx": `${170 - i * 34}%`, animationDelay: `${delayMs + 680 + i * 150}ms` } as CSSProperties}>
-          <Man kind={k} fill="#ffe9b0" stroke="#3a3026" />
-        </span>
-      ))}
-      <Glint delayMs={delayMs + 1140} color="#ffd76a" left={34} top={38} />
-      <Glint delayMs={delayMs + 1240} color="#ffe9b0" left={30} top={44} size={2.6} />
-      <Ring delayMs={delayMs + 1060} color="rgba(255,215,106,0.85)" />
-      <Ring delayMs={delayMs + 1260} color="rgba(201,184,154,0.5)" size={84} />
-      <EdgeGlow delayMs={delayMs + 1120} color="rgba(255,215,106,0.36)" />
     </Stage>
   );
 }
@@ -1778,45 +1636,6 @@ function LastStandScene({ lead, role, delayMs }: SceneProps) {
       <Ring delayMs={delayMs + 1000} color="rgba(255,233,176,0.85)" />
       <Ring delayMs={delayMs + 1220} color="rgba(90,107,143,0.5)" size={84} />
       <EdgeGlow delayMs={delayMs + 1080} color="rgba(255,233,176,0.36)" />
-    </Stage>
-  );
-}
-
-/** High Stakes — the whole offer table is swept toward the holder and the
- * forfeited reroll dice shatter mid-air. */
-function HighStakesScene({ lead, role, delayMs }: SceneProps) {
-  if (role === "entrance") return <EntranceCut palette={["#8a5a2a", "#ffd76a", "#2a1c08"]} glyph={GLYPH.bw3_high_stakes} delayMs={delayMs} />;
-  if (!lead) return <TargetHit palette={["#8a5a2a", "#ffd76a", "#2a1c08"]} glyph={GLYPH.bw3_high_stakes} delayMs={delayMs} />;
-  return (
-    <Stage quakeMs={delayMs + 880}>
-      <Wash color="rgba(42,28,8,0.34)" delayMs={delayMs} />
-      {/* THE ALL-IN HAMMER: the house light lasers the forfeited dice on the
-          felt and the whole table jumps */}
-      <Impact atMs={delayMs + 880} left={48} top={53} rgb="#ffd76a" laser />
-      {/* tell: the table lamp swells over the offer before the sweep */}
-      <Tell color="rgba(255,215,106,0.5)" delayMs={delayMs + 240} left={40} top={34} />
-      {[30, 42, 54, 64].map((l, i) => (
-        <span key={l} className="bwp-cross absolute block" style={{ left: `${l}%`, top: "30%", width: "6%", height: "9%", rotate: `${(i - 1.5) * 8}deg`, "--dx": "0%", "--dy": "160%", animationDelay: `${delayMs + 300 + i * 110}ms` } as CSSProperties}>
-          <svg viewBox="0 0 6 9" className="block h-full w-full" aria-hidden="true">
-            <rect x="0.6" y="0.6" width="4.8" height="7.8" rx="0.8" fill="#ffd76a" stroke="#2a1c08" strokeWidth="0.4" />
-            <circle cx="3" cy="4.5" r="1.1" fill="none" stroke="#2a1c08" strokeWidth="0.4" />
-          </svg>
-        </span>
-      ))}
-      {[38, 58].map((l, i) => (
-        <span key={l} className="bwp-shatter absolute block" style={{ left: `${l}%`, top: "52%", width: "5%", height: "5%", animationDelay: `${delayMs + 760 + i * 120}ms` }}>
-          <svg viewBox="0 0 8 8" className="block h-full w-full" aria-hidden="true">
-            <rect x="0.6" y="0.6" width="6.8" height="6.8" rx="1.2" fill="#e8dcc0" stroke="#4a3a22" strokeWidth="0.4" />
-            <circle cx="2.6" cy="2.6" r="0.7" fill="#4a3a22" />
-            <circle cx="5.4" cy="5.4" r="0.7" fill="#4a3a22" />
-          </svg>
-        </span>
-      ))}
-      <Glint delayMs={delayMs + 1000} color="#ffd76a" left={40} top={50} />
-      <Glint delayMs={delayMs + 1120} color="#ffd76a" left={60} top={50} />
-      <Ring delayMs={delayMs + 940} color="rgba(255,215,106,0.85)" />
-      <Ring delayMs={delayMs + 1160} color="rgba(138,90,42,0.5)" size={84} />
-      <EdgeGlow delayMs={delayMs + 1020} color="rgba(255,215,106,0.36)" />
     </Stage>
   );
 }
@@ -2759,6 +2578,290 @@ function HomecomingScene({ lead, role, delayMs }: SceneProps) {
             </svg>
           </span>
         ))}
+      </BoardFrame>
+    </Stage>
+  );
+}
+
+/** A dealt draft card (the offer), `mark` drawn on its face. */
+function DraftCard({ fill, stroke, mark }: { fill: string; stroke: string; mark?: ReactNode }) {
+  return (
+    <svg viewBox="0 0 6 9" className="block h-full w-full" aria-hidden="true">
+      <rect x="0.6" y="0.6" width="4.8" height="7.8" rx="0.8" fill={fill} stroke={stroke} strokeWidth="0.4" />
+      {mark ?? <circle cx="3" cy="4.5" r="1.1" fill="none" stroke={stroke} strokeWidth="0.4" />}
+    </svg>
+  );
+}
+
+/** A reroll die. */
+function RerollDie({ fill, stroke }: { fill: string; stroke: string }) {
+  return (
+    <svg viewBox="0 0 8 8" className="block h-full w-full" aria-hidden="true">
+      <rect x="0.6" y="0.6" width="6.8" height="6.8" rx="1.2" fill={fill} stroke={stroke} strokeWidth="0.45" />
+      <circle cx="2.6" cy="2.6" r="0.7" fill={stroke} />
+      <circle cx="5.4" cy="5.4" r="0.7" fill={stroke} />
+    </svg>
+  );
+}
+
+/** Restitution: the kinds are weighed. Their rooks and bishop stand on their
+ * side of a balance, yours on your side: two rooks against one, so the owed
+ * rook's empty place is marked and it walks home to your first rank, where it
+ * is rooted for one turn; one bishop against one is level, so none returns.
+ * The beam, tilted toward them, comes level. */
+const RESTITUTION: Palette = ["#c9b89a", "#ffd76a", "#3a3026"];
+function RestitutionScene({ lead, role, delayMs }: SceneProps) {
+  const [p0, p1, p2] = RESTITUTION;
+  if (role === "entrance") return <EntranceCut palette={RESTITUTION} glyph={GLYPH.bw2_restitution} delayMs={delayMs} />;
+  if (!lead) return <TargetHit palette={RESTITUTION} glyph={GLYPH.bw2_restitution} delayMs={delayMs} />;
+  const theirs: (keyof typeof CHESSMAN | null)[] = [null, "r", "r", null, null, "b", null, null];
+  const mine: (keyof typeof CHESSMAN | null)[] = [null, "r", null, null, null, "b", null, null];
+  return (
+    <Stage>
+      <BoardFrame>
+        {/* tell: the balance beam, tilted toward their side, across the middle */}
+        <span className="bwp-tip absolute block" style={{ left: "6%", width: "88%", top: "48.8%", height: "2.4%", transformOrigin: "50% 50%", animationDelay: dm(delayMs, 0), animationDuration: "calc(1700ms * var(--fx-dur, 1))" }}>
+          <svg viewBox="0 0 88 3" preserveAspectRatio="none" className="block h-full w-full" aria-hidden="true">
+            <rect x="0.5" y="0.7" width="87" height="1.6" rx="0.8" fill={p0} stroke={p2} strokeWidth="0.3" />
+            <circle cx="44" cy="1.5" r="1.3" fill={p1} stroke={p2} strokeWidth="0.3" />
+          </svg>
+        </span>
+        {/* the kinds are counted: theirs on their side, yours on yours */}
+        {[
+          { r: 6, kinds: theirs, fill: p2, stroke: p0, d: 180 },
+          { r: 3, kinds: mine, fill: tint(p1, 0.95), stroke: p2, d: 260 },
+        ].map((v) => (
+          <span key={v.r} className="bwp-facein absolute block" style={{ left: 0, width: "100%", top: rankTop(v.r), height: "12.5%", animationDelay: dm(delayMs, v.d), animationDuration: "calc(1400ms * var(--fx-dur, 1))" }}>
+            <RankRow kinds={v.kinds} fill={v.fill} stroke={v.stroke} />
+          </span>
+        ))}
+        {/* the verdicts: rooks outnumbered, bishops level */}
+        <span className="bwp-stamp absolute block" style={{ left: "12.5%", width: "75%", top: "43.75%", height: "12.5%", animationDelay: dm(delayMs, 460), animationDuration: "calc(1100ms * var(--fx-dur, 1))" }}>
+          <svg viewBox="0 0 60 10" className="block h-full w-full" aria-hidden="true">
+            <path d="M8 2.6 L14 5 L8 7.4" fill="none" stroke={p1} strokeWidth="0.9" {...SJ} />
+            <path d="M45 3.8 H51 M45 6.2 H51" stroke={p0} strokeWidth="0.9" strokeLinecap="round" />
+          </svg>
+        </span>
+        {/* strike: the owed rook's empty place is marked... */}
+        <span className="bwp-facein absolute block" style={{ ...manBox(2, 3), animationDelay: dm(delayMs, 580) }}>
+          <svg viewBox="0 0 10 12" className="block h-full w-full" aria-hidden="true">
+            <g fill="none" stroke={p1} strokeWidth="0.55" strokeDasharray="0.9 0.6" {...SJ}>{CHESSMAN.r}</g>
+          </svg>
+        </span>
+        {/* ...and it walks home to your first rank */}
+        <span className="bwp-stepoff absolute block" style={{ ...manBox(2, 1), "--steps": 2, animationDelay: dm(delayMs, 740), animationDuration: "calc(1200ms * var(--fx-dur, 1))" } as CSSProperties}>
+          <Man kind="r" fill={tint(p1, 0.95)} stroke={p2} />
+        </span>
+        {/* settle: rooted where it lands, one pip for one turn */}
+        <span className="bwp-gate absolute block" style={{ ...cellBox(2, 1), transformOrigin: "50% 100%", animationDelay: dm(delayMs, 1080), animationDuration: "calc(950ms * var(--fx-dur, 1))" }}>
+          <svg viewBox="0 0 12 12" className="block h-full w-full" aria-hidden="true">
+            <path d="M3.4 11.6 C2.6 9.6 4.6 8.8 3.8 6.6 M8.6 11.6 C9.4 9.6 7.4 8.8 8.2 6.6 M1.2 11.6 C2.2 10.8 2.6 11 3.4 11.6 M10.8 11.6 C9.8 10.8 9.4 11 8.6 11.6" fill="none" stroke={p0} strokeWidth="0.8" {...SJ} />
+            <circle cx="10" cy="2" r="1.4" fill={p2} stroke={p1} strokeWidth="0.45" />
+          </svg>
+        </span>
+        {[30, 66].map((l, i) => (
+          <span key={l} className="bwp-glint absolute block" style={{ left: `${l}%`, top: "47.5%", width: "3.4%", height: "3.4%", animationDelay: dm(delayMs, 1220 + i * 110) }}>
+            <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+              <path d="M5 0 L6.6 5 L5 10 L3.4 5 Z M0 5 L5 3.4 L10 5 L5 6.6 Z" fill={p1} />
+            </svg>
+          </span>
+        ))}
+      </BoardFrame>
+    </Stage>
+  );
+}
+
+/** Carnival of Masks: the caster's own army, king aside, is masked and
+ * shuffled. Masks come down on five pieces of the first two ranks and each
+ * comes up as another kind; the king stays himself, ringed; and a pawn mask
+ * that would land on the first rank is struck out (pawns never land there). */
+const CARNIVAL: Palette = ["#c94ad1", "#ffd76a", "#2a1030"];
+function CarnivalScene({ lead, role, delayMs }: SceneProps) {
+  const [p0, p1, p2] = CARNIVAL;
+  if (role === "entrance") return <EntranceCut palette={CARNIVAL} glyph={GLYPH.bw2_carnival_of_masks} delayMs={delayMs} />;
+  if (!lead) return <TargetHit palette={CARNIVAL} glyph={GLYPH.bw2_carnival_of_masks} delayMs={delayMs} />;
+  const swaps: { f: number; r: number; k: keyof typeof CHESSMAN; to: keyof typeof CHESSMAN; d: number }[] = [
+    { f: 1, r: 1, k: "n", to: "r", d: 200 },
+    { f: 2, r: 1, k: "b", to: "q", d: 270 },
+    { f: 3, r: 1, k: "q", to: "n", d: 340 },
+    { f: 2, r: 2, k: "p", to: "b", d: 410 },
+    { f: 6, r: 2, k: "p", to: "p", d: 480 },
+  ];
+  return (
+    <Stage>
+      <BoardFrame>
+        {/* tell: the caster's army is called to the carnival */}
+        <span className="bwp-hold absolute block" style={{ left: 0, width: "100%", top: bandTop(1, 2), height: "25%", background: tint(p0, 0.26), border: `3px dashed ${p1}`, animationDelay: dm(delayMs, 0), animationDuration: "calc(1750ms * var(--fx-dur, 1))" }} />
+        {/* a mask comes down on each piece... */}
+        {swaps.map((v, i) => (
+          <span key={`m${i}`} className="bwp-drop absolute block" style={{ left: `${v.f * 12.5 + 2.5}%`, width: "7.5%", top: `calc(${rankTop(v.r)} + 1.5%)`, height: "4.5%", animationDelay: dm(delayMs, v.d), animationDuration: "calc(900ms * var(--fx-dur, 1))" }}>
+            <svg viewBox="0 0 12 6" className="block h-full w-full" aria-hidden="true">
+              <path d="M0.6 1.2 C3 0.2 9 0.2 11.4 1.2 C11.4 4 9.6 5.4 7.6 5.2 L6 3.8 L4.4 5.2 C2.4 5.4 0.6 4 0.6 1.2 Z" fill={p0} stroke={p2} strokeWidth="0.4" {...SJ} />
+              <ellipse cx="3.6" cy="2.6" rx="1.1" ry="0.7" fill={p2} />
+              <ellipse cx="8.4" cy="2.6" rx="1.1" ry="0.7" fill={p2} />
+            </svg>
+          </span>
+        ))}
+        {/* strike: ...and it comes up wearing another's powers */}
+        {swaps.map((v, i) => (
+          <span key={`s${i}`} className="absolute block" style={manBox(v.f, v.r)}>
+            <span className="bwp-swapout absolute inset-0 block" style={{ animationDelay: dm(delayMs, v.d + 220) }}>
+              <Man kind={v.k} fill={tint(p1, 0.9)} stroke={p2} />
+            </span>
+            <span className="bwp-swapin absolute inset-0 block" style={{ animationDelay: dm(delayMs, v.d + 220) }}>
+              <Man kind={v.to} fill={p0} stroke={p1} />
+            </span>
+          </span>
+        ))}
+        {/* the king keeps his own face */}
+        <span className="bwp-stamp absolute block" style={{ ...cellBox(4, 1), animationDelay: dm(delayMs, 900) }}>
+          <svg viewBox="0 0 12 12" className="block h-full w-full" aria-hidden="true">
+            <circle cx="6" cy="6" r="5" fill="none" stroke={p1} strokeWidth="0.7" strokeDasharray="1.6 1" />
+          </svg>
+        </span>
+        {/* settle: a pawn's mask may not land on the first rank: struck out */}
+        <span className="bwp-facein absolute block" style={{ ...cellBox(6, 1), animationDelay: dm(delayMs, 1060), animationDuration: "calc(1150ms * var(--fx-dur, 1))" }}>
+          <svg viewBox="0 0 10 12" className="block h-full w-full" aria-hidden="true">
+            <g fill={tint(p0, 0.7)} stroke={p1} strokeWidth="0.45" {...SJ}>{CHESSMAN.p}</g>
+            <path d="M1.4 10.6 L8.6 1.4" stroke={p2} strokeWidth="1" strokeLinecap="round" />
+          </svg>
+        </span>
+        {[20, 74].map((l, i) => (
+          <span key={l} className="bwp-glint absolute block" style={{ left: `${l}%`, top: `calc(${rankTop(3)} + 4%)`, width: "3.4%", height: "3.4%", animationDelay: dm(delayMs, 1220 + i * 110) }}>
+            <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+              <path d="M5 0 L6.6 5 L5 10 L3.4 5 Z M0 5 L5 3.4 L10 5 L5 6.6 Z" fill={p1} />
+            </svg>
+          </span>
+        ))}
+      </BoardFrame>
+    </Stage>
+  );
+}
+
+/** Kingmaker's Pact: the draft is rigged a tier up. Three offers are dealt
+ * across the middle and each is raised one tier (a chevron climbs onto it);
+ * your reroll die breaks (forfeit now); four pips on their side count the
+ * pact's four turns; and their own reroll die is tied to the pact's seal by a
+ * cord that snaps (it ends the moment they reroll). */
+const KINGMAKER: Palette = ["#c9a84c", "#ffd76a", "#2a1c08"];
+function KingmakerScene({ lead, role, delayMs }: SceneProps) {
+  const [p0, p1, p2] = KINGMAKER;
+  if (role === "entrance") return <EntranceCut palette={KINGMAKER} glyph={GLYPH.bw2_kingmakers_pact} delayMs={delayMs} />;
+  if (!lead) return <TargetHit palette={KINGMAKER} glyph={GLYPH.bw2_kingmakers_pact} delayMs={delayMs} />;
+  const offers = [
+    { f: 2, d: 0 },
+    { f: 3.5, d: 90 },
+    { f: 5, d: 180 },
+  ];
+  return (
+    <Stage>
+      <BoardFrame>
+        {/* tell: three offers are dealt across the middle */}
+        {offers.map(({ f, d }) => (
+          <span key={f} className="bwp-rise absolute block" style={{ left: `${f * 12.5 + 1.5}%`, width: "9.5%", top: "37%", height: "15%", animationDelay: dm(delayMs, d), animationDuration: "calc(1750ms * var(--fx-dur, 1))" }}>
+            <DraftCard fill={tint(p0, 0.92)} stroke={p2} />
+          </span>
+        ))}
+        {/* strike: each offer is raised one tier */}
+        {offers.map(({ f, d }) => (
+          <span key={f} className="bwp-stepoff absolute block" style={{ left: `${f * 12.5 + 3.5}%`, width: "5.5%", top: "31%", height: "5%", "--steps": -0.8, animationDelay: dm(delayMs, d + 380), animationDuration: "calc(1200ms * var(--fx-dur, 1))" } as CSSProperties}>
+            <svg viewBox="0 0 8 5" className="block h-full w-full" aria-hidden="true">
+              <path d="M1 4.2 L4 1 L7 4.2" fill="none" stroke={p1} strokeWidth="1.1" {...SJ} />
+            </svg>
+          </span>
+        ))}
+        {/* your reroll die breaks: forfeited now */}
+        <span className="bwp-shatter absolute block" style={{ left: "4%", width: "7%", top: `calc(${rankTop(3)} + 3%)`, height: "7%", animationDelay: dm(delayMs, 640) }}>
+          <RerollDie fill={tint(p1, 0.9)} stroke={p2} />
+        </span>
+        {/* four pips on their side: the pact's four turns */}
+        <span className="bwp-facein absolute block" style={{ left: "25%", width: "50%", top: `calc(${rankTop(6)} + 3.5%)`, height: "5.5%", animationDelay: dm(delayMs, 820), animationDuration: "calc(1150ms * var(--fx-dur, 1))" }}>
+          <svg viewBox="0 0 40 5" className="block h-full w-full" aria-hidden="true">
+            {[5, 15, 25, 35].map((cx) => <circle key={cx} cx={cx} cy="2.5" r="1.8" fill={p1} stroke={p2} strokeWidth="0.4" />)}
+          </svg>
+        </span>
+        {/* settle: their reroll die, tied to the seal: the cord snaps */}
+        <span className="bwp-facein absolute block" style={{ left: "88%", width: "7%", top: `calc(${rankTop(6)} + 3%)`, height: "7%", animationDelay: dm(delayMs, 960) }}>
+          <RerollDie fill={p2} stroke={p1} />
+        </span>
+        <span className="bwp-beam absolute block" style={{ left: "81%", width: "7%", top: `calc(${rankTop(6)} + 6%)`, height: "0.9%", background: `repeating-linear-gradient(90deg, ${p1} 0 5px, transparent 5px 8px)`, transformOrigin: "0% 50%", animationDelay: dm(delayMs, 1020) }} />
+        <span className="bwp-stamp absolute block" style={{ left: "75%", width: "7%", top: `calc(${rankTop(6)} + 3%)`, height: "7%", animationDelay: dm(delayMs, 1100) }}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <circle cx="5" cy="5" r="4.2" fill={tint(p0, 0.95)} stroke={p2} strokeWidth="0.5" />
+            <path d="M5 1.2 L4.2 4 L5.8 6 L5 8.8" fill="none" stroke={p2} strokeWidth="0.6" {...SJ} />
+          </svg>
+        </span>
+        {[36, 62].map((l, i) => (
+          <span key={l} className="bwp-glint absolute block" style={{ left: `${l}%`, top: "32%", width: "3.4%", height: "3.4%", animationDelay: dm(delayMs, 1200 + i * 110) }}>
+            <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+              <path d="M5 0 L6.6 5 L5 10 L3.4 5 Z M0 5 L5 3.4 L10 5 L5 6.6 Z" fill={p1} />
+            </svg>
+          </span>
+        ))}
+      </BoardFrame>
+    </Stage>
+  );
+}
+
+/** High Stakes: sweep the table twice. Two drafts' offers are laid out and
+ * the house rake sweeps each whole row to the caster (every card kept); a
+ * third draft is struck out (skipped); and the reroll dice break under an
+ * infinity mark (forfeit forever). */
+const STAKES: Palette = ["#8a5a2a", "#ffd76a", "#2a1c08"];
+function HighStakesScene({ lead, role, delayMs }: SceneProps) {
+  const [p0, p1, p2] = STAKES;
+  if (role === "entrance") return <EntranceCut palette={STAKES} glyph={GLYPH.bw3_high_stakes} delayMs={delayMs} />;
+  if (!lead) return <TargetHit palette={STAKES} glyph={GLYPH.bw3_high_stakes} delayMs={delayMs} />;
+  const rows = [
+    { r: 6, d: 200 },
+    { r: 5, d: 480 },
+  ];
+  return (
+    <Stage>
+      <BoardFrame>
+        {/* tell: the felt is laid across the middle of the board */}
+        <span className="bwp-hold absolute block" style={{ left: "12.5%", width: "75%", top: bandTop(3, 6), height: "50%", background: tint(p0, 0.34), border: `3px dashed ${p1}`, animationDelay: dm(delayMs, 0), animationDuration: "calc(1700ms * var(--fx-dur, 1))" }} />
+        {/* strike: each draft's whole row of offers is swept to the caster */}
+        {rows.map((v) => (
+          <span key={v.r} className="bwp-stepoff absolute block" style={{ left: "25%", width: "50%", top: `calc(${rankTop(v.r)} + 1%)`, height: "10.5%", "--steps": 1.2, animationDelay: dm(delayMs, v.d), animationDuration: "calc(1100ms * var(--fx-dur, 1))" } as CSSProperties}>
+            <svg viewBox="0 0 30 9" className="block h-full w-full" aria-hidden="true">
+              {[1, 11, 21].map((x) => (
+                <g key={x}>
+                  <rect x={x + 1} y="0.6" width="5.6" height="7.8" rx="0.8" fill={p1} stroke={p2} strokeWidth="0.4" />
+                  <circle cx={x + 3.8} cy="4.5" r="1.1" fill="none" stroke={p2} strokeWidth="0.4" />
+                </g>
+              ))}
+            </svg>
+          </span>
+        ))}
+        {/* ...by the house rake, riding behind each row */}
+        {rows.map((v) => (
+          <span key={v.r} className="absolute block" style={{ left: "22%", width: "56%", top: `calc(${rankTop(v.r)} + 6.25% - var(--fx-side, 1) * 7%)`, height: "3%" }}>
+            <span className="bwp-stepoff absolute inset-0 block" style={{ "--steps": 4.3, animationDelay: dm(delayMs, v.d + 40), animationDuration: "calc(1100ms * var(--fx-dur, 1))" } as CSSProperties}>
+              <svg viewBox="0 0 56 3" preserveAspectRatio="none" className="block h-full w-full" aria-hidden="true">
+                <path d="M1 2.4 H55 M28 2.4 V0.4" stroke={p1} strokeWidth="0.9" strokeLinecap="round" />
+              </svg>
+            </span>
+          </span>
+        ))}
+        {/* a third draft is skipped besides: struck out */}
+        <span className="bwp-facein absolute block" style={{ left: "37.5%", width: "25%", top: `calc(${rankTop(3)} + 1.5%)`, height: "9.5%", animationDelay: dm(delayMs, 900), animationDuration: "calc(1150ms * var(--fx-dur, 1))" }}>
+          <svg viewBox="0 0 12 8" className="block h-full w-full" aria-hidden="true">
+            <rect x="3.6" y="0.8" width="4.8" height="6.4" rx="0.6" fill={tint(p0, 0.9)} stroke={p1} strokeWidth="0.4" />
+            <path d="M4.4 1.8 L7.6 6.2 M7.6 1.8 L4.4 6.2" stroke={p2} strokeWidth="0.7" strokeLinecap="round" />
+          </svg>
+        </span>
+        {/* settle: the reroll dice break, forfeit forever */}
+        {[1, 6].map((f, i) => (
+          <span key={f} className="bwp-shatter absolute block" style={{ left: `${f * 12.5 + 3}%`, width: "7%", top: `calc(${rankTop(3)} + 3%)`, height: "7%", animationDelay: dm(delayMs, 1040 + i * 90) }}>
+            <RerollDie fill={tint(p1, 0.9)} stroke={p2} />
+          </span>
+        ))}
+        <span className="bwp-facein absolute block" style={{ left: "87%", width: "11%", top: `calc(${rankTop(3)} + 3%)`, height: "6.5%", animationDelay: dm(delayMs, 1180) }}>
+          <svg viewBox="0 0 10 5" className="block h-full w-full" aria-hidden="true">
+            <path d="M5 2.5 C4 0.8 1.4 0.8 1.4 2.5 C1.4 4.2 4 4.2 5 2.5 C6 0.8 8.6 0.8 8.6 2.5 C8.6 4.2 6 4.2 5 2.5 Z" fill="none" stroke={p1} strokeWidth="0.7" {...SJ} />
+          </svg>
+        </span>
       </BoardFrame>
     </Stage>
   );
