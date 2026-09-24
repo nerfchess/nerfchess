@@ -27,7 +27,7 @@ export const STATIC_ROUTES: StaticRoute[] = [
   { path: "/", priority: 1, changeFrequency: "weekly", sources: ["src/app/page.tsx", "src/components/HeroTv.tsx"] },
   { path: "/play", priority: 0.9, changeFrequency: "monthly" },
   { path: "/lobby", priority: 0.9, changeFrequency: "monthly" },
-  { path: "/codex", priority: 0.9, changeFrequency: "weekly", sources: ["src/app/codex/page.tsx", "src/app/codex/_components/CodexBrowser.tsx"] },
+  { path: "/codex", priority: 0.9, changeFrequency: "weekly", sources: ["src/app/codex/(index)/page.tsx", "src/app/codex/_components/CodexBrowser.tsx"] },
   // The daily puzzle changes every day and needs no account, so it is the
   // strongest recurring-crawl target after the lobby; its lastmod is today.
   // Individual /puzzles/[id] pages are not listed: the corpus is regenerated

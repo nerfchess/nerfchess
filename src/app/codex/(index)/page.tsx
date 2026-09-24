@@ -1,6 +1,6 @@
-import { CodexBrowser } from "./_components/CodexBrowser";
-import { CODEX_COUNTS, CODEX_TIERS } from "./_components/codexCounts";
-import { codexStateFromQuery } from "./_components/codexData";
+import { CodexBrowser } from "../_components/CodexBrowser";
+import { CODEX_COUNTS, CODEX_TIERS } from "../_components/codexCounts";
+import { codexStateFromQuery } from "../_components/codexData";
 
 // The codex list is a client experience (instant search, filters, windowed
 // rows, expand-in-place). All of that lives in CodexBrowser; this route file

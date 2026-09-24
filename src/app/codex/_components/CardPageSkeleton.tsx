@@ -3,7 +3,7 @@
 //
 // All four render through InfoPageLayout, so they are one geometry: breadcrumb,
 // title, intro paragraph, then a stack of plate sections. Without this they
-// inherited /codex/loading.tsx, whose search bar over a nine-card grid is the
+// inherited /codex/(index)/loading.tsx, whose search bar over a nine-card grid is the
 // shape of the library, not of a card.
 //
 // A card page is prerendered, so this is usually a single frame. It still has
