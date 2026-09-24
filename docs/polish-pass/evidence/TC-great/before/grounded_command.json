@@ -1,0 +1,74 @@
+{
+ "id": "grounded_command",
+ "url": "/dev/plays?id=grounded_command&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "grounded_command",
+  "name": "Grounded Command",
+  "tier": 6,
+  "category": "hex",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:grounded_command",
+  "anchor": "cast",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 55,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, diff-less: no zone source, not an attack",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2461,
+  "cssEndMs": 3503,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 54,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 167,
+  "maxGapMs": 359.7
+ },
+ "raf": {
+  "frames": 213,
+  "medianMs": 16.7,
+  "maxMs": 66.6,
+  "dropped": 5
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 61,
+  "totalBlockingMs": 0,
+  "entries": [
+   {
+    "atMs": 56,
+    "duration": 61,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  297,
+  758,
+  1310,
+  1932,
+  2611
+ ],
+ "png": "docs/polish-pass/evidence/TC-great/before/grounded_command.png",
+ "pngBytes": 15472
+}

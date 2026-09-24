@@ -1,0 +1,78 @@
+{
+ "id": "the_big_chill",
+ "url": "/dev/plays?id=the_big_chill&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "the_big_chill",
+  "name": "The Big Chill",
+  "tier": 6,
+  "category": "hex",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:the_big_chill",
+  "anchor": "cast",
+  "source": "frozen",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 45,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, frozen diff",
+  "castSq": "c7",
+  "targets": [
+   "c7",
+   "d7",
+   "e7"
+  ],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2502,
+  "cssEndMs": 3459,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 58,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 174,
+  "maxGapMs": 327
+ },
+ "raf": {
+  "frames": 207,
+  "medianMs": 16.7,
+  "maxMs": 100,
+  "dropped": 12
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 64,
+  "totalBlockingMs": 13,
+  "entries": [
+   {
+    "atMs": -57,
+    "duration": 64,
+    "blocking": 13,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  302,
+  770,
+  1331,
+  1962,
+  2652
+ ],
+ "png": "docs/polish-pass/evidence/TC-great/after/the_big_chill.png",
+ "pngBytes": 12108
+}

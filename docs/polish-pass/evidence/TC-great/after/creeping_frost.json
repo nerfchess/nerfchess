@@ -1,0 +1,82 @@
+{
+ "id": "creeping_frost",
+ "url": "/dev/plays?id=creeping_frost&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "creeping_frost",
+  "name": "Creeping Frost",
+  "tier": 6,
+  "category": "hex",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:creeping_frost",
+  "anchor": "aim",
+  "source": "frozen",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 55,
+  "drive": "engine",
+  "driveNote": "activated with 3 pick(s)",
+  "castSq": "d7",
+  "targets": [
+   "d7",
+   "e7",
+   "f7"
+  ],
+  "picks": [
+   "d7",
+   "e7",
+   "f7"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2507,
+  "cssEndMs": 3457,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 50,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 196,
+  "maxGapMs": 315.3
+ },
+ "raf": {
+  "frames": 190,
+  "medianMs": 16.7,
+  "maxMs": 100,
+  "dropped": 29
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 63,
+  "totalBlockingMs": 8,
+  "entries": [
+   {
+    "atMs": -53,
+    "duration": 63,
+    "blocking": 8,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  303,
+  771,
+  1333,
+  1966,
+  2657
+ ],
+ "png": "docs/polish-pass/evidence/TC-great/after/creeping_frost.png",
+ "pngBytes": 11624
+}

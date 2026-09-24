@@ -1,0 +1,83 @@
+{
+ "id": "stone_riders",
+ "url": "/dev/plays?id=stone_riders&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "stone_riders",
+  "name": "Stone Riders",
+  "tier": 6,
+  "category": "hex",
+  "mechanic": "passive",
+  "retired": true,
+  "art": "plugin",
+  "visual": "x:stone_riders",
+  "anchor": "cast",
+  "source": "walnut",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 60,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, walnut diff",
+  "castSq": "b8",
+  "targets": [
+   "b8",
+   "g8"
+  ],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2597,
+  "cssEndMs": 3475,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 70,
+  "infiniteAnimations": 2
+ },
+ "screencast": {
+  "framesInWindow": 208,
+  "maxGapMs": 346
+ },
+ "raf": {
+  "frames": 199,
+  "medianMs": 16.7,
+  "maxMs": 149.9,
+  "dropped": 20
+ },
+ "longAnimationFrames": {
+  "count": 2,
+  "worstMs": 69,
+  "totalBlockingMs": 28,
+  "entries": [
+   {
+    "atMs": -58,
+    "duration": 69,
+    "blocking": 18,
+    "scripts": []
+   },
+   {
+    "atMs": 14,
+    "duration": 61,
+    "blocking": 10,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  313,
+  797,
+  1378,
+  2032,
+  2747
+ ],
+ "png": "docs/polish-pass/evidence/TC-great/before/stone_riders.png",
+ "pngBytes": 14191
+}

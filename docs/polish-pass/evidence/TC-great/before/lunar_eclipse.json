@@ -1,0 +1,86 @@
+{
+ "id": "lunar_eclipse",
+ "url": "/dev/plays?id=lunar_eclipse&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "lunar_eclipse",
+  "name": "Lunar Eclipse",
+  "tier": 6,
+  "category": "hex",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:lunar_eclipse",
+  "anchor": "cast",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 55,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, diff-less: no zone source, not an attack",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2477,
+  "cssEndMs": 3551,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 53,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 196,
+  "maxGapMs": 419.7
+ },
+ "raf": {
+  "frames": 202,
+  "medianMs": 16.7,
+  "maxMs": 83.3,
+  "dropped": 16
+ },
+ "longAnimationFrames": {
+  "count": 2,
+  "worstMs": 82,
+  "totalBlockingMs": 23,
+  "entries": [
+   {
+    "atMs": 15,
+    "duration": 53,
+    "blocking": 0,
+    "scripts": [
+     {
+      "duration": 6,
+      "invoker": "TimerHandler:setInterval",
+      "source": ""
+     }
+    ]
+   },
+   {
+    "atMs": 77,
+    "duration": 82,
+    "blocking": 23,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  299,
+  763,
+  1318,
+  1944,
+  2627
+ ],
+ "png": "docs/polish-pass/evidence/TC-great/before/lunar_eclipse.png",
+ "pngBytes": 18230
+}

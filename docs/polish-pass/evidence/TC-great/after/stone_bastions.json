@@ -1,0 +1,104 @@
+{
+ "id": "stone_bastions",
+ "url": "/dev/plays?id=stone_bastions&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "stone_bastions",
+  "name": "Stone Bastions",
+  "tier": 6,
+  "category": "hex",
+  "mechanic": "instant",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:stone_bastions",
+  "anchor": "cast",
+  "source": "walnut",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 60,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2644,
+  "cssEndMs": 3582,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 149,
+  "infiniteAnimations": 2
+ },
+ "screencast": {
+  "framesInWindow": 194,
+  "maxGapMs": 359.1
+ },
+ "raf": {
+  "frames": 452,
+  "medianMs": 16.7,
+  "maxMs": 200.1,
+  "dropped": 51
+ },
+ "longAnimationFrames": {
+  "count": 4,
+  "worstMs": 210,
+  "totalBlockingMs": 246,
+  "entries": [
+   {
+    "atMs": -7,
+    "duration": 90,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 99,
+    "duration": 144,
+    "blocking": 82,
+    "scripts": [
+     {
+      "duration": 6,
+      "invoker": "http://localhost:3000/_next/static/chunks/_app-pages-browser_src_components_effe...",
+      "source": "/_next/static/chunks/_app-pages-browser_src_components_effects_passive_PassiveLayer_tsx.js"
+     }
+    ]
+   },
+   {
+    "atMs": 1083,
+    "duration": 80,
+    "blocking": 29,
+    "scripts": []
+   },
+   {
+    "atMs": 2607,
+    "duration": 210,
+    "blocking": 135,
+    "scripts": [
+     {
+      "duration": 179,
+      "invoker": "http://localhost:3000/_next/static/chunks/_app-pages-browser_src_components_effe...",
+      "source": "/_next/static/chunks/_app-pages-browser_src_components_effects_board3d_engine3d_ts.js"
+     }
+    ]
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  318,
+  811,
+  1402,
+  2067,
+  2794
+ ],
+ "png": "docs/polish-pass/evidence/TC-great/after/stone_bastions.png",
+ "pngBytes": 12469
+}
