@@ -1,1 +1,131 @@
-{"id":"queen_storm","url":"/dev/plays?id=queen_storm&bare=1","anim":"full","fx":1,"info":{"id":"queen_storm","name":"Queen Storm","tier":7,"category":"pieces","mechanic":"activated","retired":false,"art":"plugin","visual":"x:queen_storm","anchor":"aim","source":"removal","hasLead":true,"ordering":"sweep","staggerMs":70,"drive":"engine","driveNote":"activated with 2 pick(s) (position: promotion-race)","castSq":"g7","targets":["g7","h6"],"picks":["g7","h6"],"side":"w","view":"w","anim":"normal","fx":1,"live":false,"artReady":true},"stageError":null,"durationMs":{"visualMs":2773,"cssEndMs":3708,"settled":true,"windowMs":3959,"cssAnimations":71,"infiniteAnimations":0},"screencast":{"framesInWindow":156,"maxGapMs":229.9},"raf":{"frames":143,"medianMs":16.7,"maxMs":216.7,"dropped":99},"longAnimationFrames":{"count":10,"worstMs":239,"totalBlockingMs":524,"entries":[{"atMs":-69,"duration":76,"blocking":26,"scripts":[]},{"atMs":42,"duration":105,"blocking":53,"scripts":[]},{"atMs":214,"duration":108,"blocking":50,"scripts":[{"duration":6,"invoker":"TimerHandler:setInterval","source":""}]},{"atMs":1008,"duration":61,"blocking":0,"scripts":[]},{"atMs":1100,"duration":164,"blocking":72,"scripts":[{"duration":119,"invoker":"http://localhost:3100/_next/static/webpack/webpack.70c154937ffccb75.hot-update.j...","source":"/_next/static/webpack/webpack.70c154937ffccb75.hot-update.js"}]},{"atMs":1328,"duration":110,"blocking":34,"scripts":[]},{"atMs":1443,"duration":80,"blocking":20,"scripts":[]},{"atMs":1613,"duration":239,"blocking":183,"scripts":[]},{"atMs":2170,"duration":150,"blocking":86,"scripts":[{"duration":131,"invoker":"http://localhost:3100/_next/static/chunks/_app-pages-browser_src_components_effe...","source":"/_next/static/chunks/_app-pages-browser_src_components_effects_board3d_engine3d_ts.js"}]},{"atMs":2413,"duration":56,"blocking":0,"scripts":[]}]},"tiles":[0,211,539,931,1373,1856,2374,2923],"png":"docs/polish-pass/evidence/TC-god/after/queen_storm.png","pngBytes":23976}
+{
+ "id": "queen_storm",
+ "url": "/dev/plays?id=queen_storm&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "queen_storm",
+  "name": "Queen Storm",
+  "tier": 7,
+  "category": "pieces",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:queen_storm",
+  "anchor": "aim",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 70,
+  "drive": "engine",
+  "driveNote": "activated with 2 pick(s) (position: promotion-race)",
+  "castSq": "g7",
+  "targets": [
+   "g7",
+   "h6"
+  ],
+  "picks": [
+   "g7",
+   "h6"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 3030,
+  "cssEndMs": 3975,
+  "settled": true,
+  "windowMs": 4226,
+  "cssAnimations": 38,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 163,
+  "maxGapMs": 162
+ },
+ "raf": {
+  "frames": 133,
+  "medianMs": 16.7,
+  "maxMs": 466.6,
+  "dropped": 130
+ },
+ "longAnimationFrames": {
+  "count": 8,
+  "worstMs": 405,
+  "totalBlockingMs": 520,
+  "entries": [
+   {
+    "atMs": -115,
+    "duration": 126,
+    "blocking": 76,
+    "scripts": []
+   },
+   {
+    "atMs": 40,
+    "duration": 405,
+    "blocking": 330,
+    "scripts": []
+   },
+   {
+    "atMs": 469,
+    "duration": 179,
+    "blocking": 114,
+    "scripts": []
+   },
+   {
+    "atMs": 909,
+    "duration": 58,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 1430,
+    "duration": 59,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 2206,
+    "duration": 174,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 2500,
+    "duration": 91,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 3926,
+    "duration": 51,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  362,
+  923,
+  1596,
+  2353,
+  3180
+ ],
+ "png": "docs/polish-pass/evidence/TC-god/after/queen_storm.png",
+ "pngBytes": 14309,
+ "off": {
+  "url": "/dev/plays?id=queen_storm&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "docs/polish-pass/evidence/TC-god/after/queen_storm.off.png"
+ }
+}

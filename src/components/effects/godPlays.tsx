@@ -67,17 +67,16 @@
 //   GodDescent    : mind_empire (third eye)
 //   TitanRise     : sundering (cracked pillars), fortress_realm (castle keep)
 //   SkyWrath      : chain_atomic (atom), total_atomic (triple-orbit atom),
-//                   rift_storm (jagged rift), queen_storm (crown over bolt)
-//   AbyssMaw      : total_plunder (overflowing chest), grand_nullify (null
-//                   circle)
+//                   rift_storm (jagged rift)
+//   AbyssMaw      : total_plunder (overflowing chest)
 //   ReaperSweep   : endless_night (crescent), peace_of_the_grave (lily)
 //   HostMarch     : grand_retreat (reversed banner), noble_rout (fleeing
 //                   banner)
 //   CelestialRing : warp_cataclysm (five-dot rift), warp_sovereign (swap
 //                   arrows)
 //   FrostTitan    : absolute_zero (zero in crystal), everfrost_shard (shard)
-//   ForgeColossus : ban_hammer (moderator gavel, comedic, huge), dragonslayer
-//                   (greatsword), leaden_limbs (kettlebell)
+//   ForgeColossus : ban_hammer (moderator gavel, comedic, huge), leaden_limbs
+//                   (kettlebell)
 //   GorgonIdol    : statue_garden (statue on plinth), crown_and_castle (crown
 //                   atop turret)
 //   ChronoLord    : full_rewind (ccw arrow), endless_turn (infinity),
@@ -125,7 +124,12 @@
 //   from the end ranks), nerf_reversal (the brand turns on itself, ten
 //   ticks, the own half warded one turn), glacial_tomb (ice on their home
 //   ranks but the king's square, three walnuts stay), frozen_solid (the
-//   freeze waits a move under an hourglass, reaches to the neighbour).
+//   freeze waits a move under an hourglass, reaches to the neighbour),
+//   dragonslayer (the old blade flies and a reroll is spent, the named
+//   piece split where it stands), grand_nullify (a wiper leaves their loose
+//   cards as outlines, the locked one holds, a reroll rolls away),
+//   queen_storm (the 4th-rank line, a queen then a rook, a third crown
+//   struck; the target cut reads the victim order).
 
 import "./godPlays.css";
 
@@ -1128,29 +1132,6 @@ function SkyWrath({ palette, glyph, lead, delayMs, flourish, tier }: TemplatePro
       <Boom delayMs={delayMs + 820} color={tint(p0, 0.8)} />
       {heavy(tier) && <Boom delayMs={delayMs + 950} color={tint(p1, 0.75)} thickness={2} />}
       {/* --- per-card flourishes ------------------------------------------- */}
-      {/* queen_storm: three pawns stand into the storm, a crown drops onto
-          each, and each flashes into a queen. */}
-      {flourish === "crown_rain" && (
-        <>
-          {[34, 47, 60].map((l, i) => (
-            <span key={i} className="gp-snooze absolute block" style={{ left: `${l}%`, top: "48%", width: "7%", height: "11%", animationDelay: `${delayMs + 560 + i * 90}ms` }}>
-              <Sil d={SIL.p} fill={tint(p2, 0.9)} stroke={p1} />
-            </span>
-          ))}
-          {[34.8, 47.8, 60.8].map((l, i) => (
-            <span key={`c${i}`} className="gp-capdrop absolute block" style={{ left: `${l}%`, top: "45.5%", width: "5.4%", height: "4.2%", animationDelay: `${delayMs + 800 + i * 130}ms` }}>
-              <svg viewBox="0 0 10 8" className="block h-full w-full" aria-hidden="true">
-                <path d="M1.4 7 V1.6 L3.5 3.6 L5 0.8 L6.5 3.6 L8.6 1.6 V7 Z" fill={p0} stroke={p1} strokeWidth="0.5" {...SJ} />
-              </svg>
-            </span>
-          ))}
-          {[34, 47, 60].map((l, i) => (
-            <span key={`q${i}`} className="gp-pop absolute block" style={{ left: `${l}%`, top: "47%", width: "7%", height: "12%", animationDelay: `${delayMs + 1150 + i * 130}ms` }}>
-              <Sil d={SIL.q} fill={tint(p0, 0.95)} stroke={p1} />
-            </span>
-          ))}
-        </>
-      )}
       <Glint delayMs={delayMs + 1080} color={p2} left={47} top={48} />
       <Settle hex={p2} delayMs={delayMs + 1080} cy={60} />
     </Stage>
@@ -1256,39 +1237,6 @@ function AbyssMaw({ palette, glyph, lead, delayMs, flourish, tier }: TemplatePro
       <Boom delayMs={delayMs + 900} color={tint(p0, 0.8)} />
       {heavy(tier) && <Boom delayMs={delayMs + 1030} color={tint(p1, 0.7)} thickness={2} />}
       {/* --- per-card flourishes ------------------------------------------- */}
-      {/* grand_nullify: the opponent's hanging buff-sigils are each slashed
-          through, and their dead husks are dragged down into the maw. */}
-      {flourish === "sigil_snuff" && (
-        <>
-          {[
-            { l: 34, t: 26 },
-            { l: 48, t: 22 },
-            { l: 62, t: 27 },
-          ].map((v, i) => (
-            <span key={i} className="gp-crack absolute block" style={{ left: `${v.l}%`, top: `${v.t}%`, width: "5.5%", height: "5.5%", animationDelay: `${delayMs + 380 + i * 110}ms` }}>
-              <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
-                <path d="M5 0.8 L9.2 5 L5 9.2 L0.8 5 Z" fill={tint(p1, 0.25)} stroke={tint(p1, 0.9)} strokeWidth="0.7" {...SJ} />
-                <path d="M2.6 7.4 L7.4 2.6" stroke={p0} strokeWidth="0.9" strokeLinecap="round" />
-              </svg>
-            </span>
-          ))}
-          {[
-            { dx: "-260%", dy: "-330%" },
-            { dx: "-30%", dy: "-420%" },
-            { dx: "230%", dy: "-310%" },
-          ].map((v, i) => (
-            <span
-              key={`m${i}`}
-              className="gp-mote absolute block"
-              style={{ left: "48.5%", top: "44%", width: "3%", height: "3%", "--dx": v.dx, "--dy": v.dy, animationDelay: `${delayMs + 900 + i * 120}ms` } as CSSProperties}
-            >
-              <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
-                <path d="M5 0.8 L9.2 5 L5 9.2 L0.8 5 Z" fill={tint(p0, 0.7)} stroke={tint(p1, 0.6)} strokeWidth="0.6" />
-              </svg>
-            </span>
-          ))}
-        </>
-      )}
       <Glint delayMs={delayMs + 1140} color={p0} left={47} top={42} />
       <Settle hex={p1} delayMs={delayMs + 1150} cy={47} />
     </Stage>
@@ -5993,6 +5941,213 @@ function FrozenSolidScene({ palette, lead, delayMs }: TemplateProps) {
   );
 }
 
+/** A die in a 0 0 10 10 box (a reroll). */
+function DieArt({ face, pip }: { face: string; pip: string }) {
+  return (
+    <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+      <rect x="0.8" y="0.8" width="8.4" height="8.4" rx="1.6" fill={face} stroke={pip} strokeWidth="0.7" />
+      <circle cx="3.2" cy="3.2" r="0.9" fill={pip} />
+      <circle cx="5" cy="5" r="0.9" fill={pip} />
+      <circle cx="6.8" cy="6.8" r="0.9" fill={pip} />
+    </svg>
+  );
+}
+
+/* --- dragonslayer ------------------------------------------------------------------------
+   "The old blade remembers its work: name one enemy rook or queen and it is
+   slain where it stands. Using it consumes your next unused reroll, if you
+   have one." The old greatsword lifts off the caster's side and flies at the
+   opponent's half point first, and the caster's reroll die is spent (it
+   cracks and fades). On the named piece (target cut) the blade drops point
+   down onto its square, a scale splits along its seam, and the two halves
+   fall away where it stands. */
+function SlayHit({ palette, delayMs }: { palette: Palette; delayMs: number }) {
+  const [p0, p1, p2] = palette;
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      {[
+        { cls: "gp-dg-halfl", d: "M5 0.6 L1 3 V7 L5 9.4 Z" },
+        { cls: "gp-dg-halfr", d: "M5 0.6 L9 3 V7 L5 9.4 Z" },
+      ].map((h) => (
+        <span key={h.cls} className={`${h.cls} absolute block`} style={{ left: "18%", top: "18%", width: "64%", height: "64%", animationDelay: dm(delayMs, 0) }}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <path d={h.d} fill={tint(p1, 0.55)} stroke={p1} strokeWidth="0.5" {...SJ} />
+          </svg>
+        </span>
+      ))}
+      <span className="gp-dg-drop absolute block" style={{ left: "38%", top: "-40%", width: "24%", height: "110%", animationDelay: dm(delayMs, 0) }}>
+        <svg viewBox="0 0 4 18" preserveAspectRatio="none" className="block h-full w-full" aria-hidden="true">
+          <path d="M2 17.6 L2.8 15.6 V4.6 H1.2 V15.6 Z" fill={p0} stroke={tint(p2, 0.9)} strokeWidth="0.3" {...SJ} />
+          <path d="M0.2 4.2 H3.8 M2 4.2 V1 M1.4 0.6 H2.6" stroke={p2} strokeWidth="0.6" strokeLinecap="round" />
+        </svg>
+      </span>
+    </span>
+  );
+}
+function DragonslayerScene({ palette, lead, delayMs }: TemplateProps) {
+  const [p0, p1, p2] = palette;
+  if (!lead) return <SlayHit palette={palette} delayMs={delayMs} />;
+  return (
+    <Stage quakeMs={delayMs + 480}>
+      <BoardFrame>
+        <span className="gp-dg-sword absolute block" style={{ left: "46%", top: "calc(50% + var(--fx-side, 1) * 18.75% - 12%)", width: "8%", height: "24%", animationDelay: dm(delayMs, 0) }}>
+          <svg viewBox="0 0 4 18" preserveAspectRatio="none" className="block h-full w-full" style={{ transform: "scaleY(calc(var(--fx-side, 1) * -1))" }} aria-hidden="true">
+            <path d="M2 17.6 L2.8 15.6 V4.6 H1.2 V15.6 Z" fill={p0} stroke={tint(p2, 0.9)} strokeWidth="0.3" {...SJ} />
+            <path d="M0.2 4.2 H3.8 M2 4.2 V1 M1.4 0.6 H2.6" stroke={p2} strokeWidth="0.6" strokeLinecap="round" />
+          </svg>
+        </span>
+        {/* a glint runs the edge as it goes */}
+        <span className="gp-dg-edge absolute block" style={{ left: "49.4%", top: "calc(50% + var(--fx-side, 1) * 18.75% - 8%)", width: "1.2%", height: "5%", background: tint("#fff4d6", 0.95), animationDelay: dm(delayMs, 160) }} />
+        {/* the reroll it costs */}
+        <span className="gp-dg-die absolute block" style={{ left: "70%", top: `calc(${EDGE.own} + 3%)`, width: "6%", height: "6%", animationDelay: dm(delayMs, 360) }}>
+          <DieArt face={tint("#fff4d6", 0.95)} pip={p1} />
+        </span>
+        <span className="gp-dg-x absolute block" style={{ left: "69.5%", top: `calc(${EDGE.own} + 2.5%)`, width: "7%", height: "7%", animationDelay: dm(delayMs, 640) }}>
+          <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+            <path d="M1.4 1.4 L8.6 8.6 M8.6 1.4 L1.4 8.6" stroke={p1} strokeWidth="1.2" strokeLinecap="round" />
+          </svg>
+        </span>
+        <span
+          className="gp-afterglow absolute block rounded-full"
+          style={{ left: "36%", top: "calc(50% - var(--fx-side, 1) * 18.75% - 8%)", width: "28%", height: "16%", background: `radial-gradient(closest-side, ${tint(p1, 0.4)}, transparent)`, animationDelay: dm(delayMs, 1100) }}
+        />
+      </BoardFrame>
+    </Stage>
+  );
+}
+
+/* --- grand_nullify -------------------------------------------------------------------------
+   "Cancel your opponent's unused and temporary buffs. Locked-in upgrades
+   resist. Using it consumes your next unused reroll, if any." The opponent's
+   buffs stand in a row: two unused (face down) and one temporary (an
+   hourglass badge), with a padlocked upgrade among them. A wiper sweeps the
+   row and every card it passes is left as a dashed outline, the padlocked
+   one staying whole; the caster's reroll die is rolled away and spent. */
+const GNL_CARDS = [
+  { l: 22, kind: "unused" },
+  { l: 36, kind: "temp" },
+  { l: 50, kind: "locked" },
+  { l: 64, kind: "unused" },
+] as const;
+function GrandNullifyScene({ palette, glyph, lead, delayMs }: TemplateProps) {
+  const [p0, p1, p2] = palette;
+  if (!lead) return <TargetHit palette={palette} glyph={glyph} delayMs={delayMs} />;
+  return (
+    <Stage quakeMs={delayMs + 560}>
+      <Rake delayMs={delayMs + 120} tone={tint(p1, 0.45)} lean="calc(var(--fx-ox, 0) * 2.4%)" tip="calc(var(--fx-oy, 0) * 1.5%)" cy={57} width={30} />
+      <BoardFrame>
+        {GNL_CARDS.map((c, i) =>
+          c.kind === "locked" ? (
+            <span key={i} className="gp-gnl-keep absolute block" style={{ left: `${c.l}%`, top: EDGE.enemy, width: "9%", height: "12.5%", animationDelay: dm(delayMs, 60 + i * 40) }}>
+              <CardArt face={tint(p2, 0.95)} edge={p0} locked={p1} />
+            </span>
+          ) : (
+            <span key={i} className="gp-gnl-card absolute block" style={{ left: `${c.l}%`, top: EDGE.enemy, width: "9%", height: "12.5%", animationDelay: dm(delayMs, 60 + i * 40), animationDuration: `calc(${700 + (c.l - 22) * 14}ms * var(--fx-dur, 1))` }}>
+              {c.kind === "unused" ? (
+                <svg viewBox="0 0 9 12" className="block h-full w-full" aria-hidden="true">
+                  <rect x="0.5" y="0.5" width="8" height="11" rx="1" fill="#2a2a38" stroke={p0} strokeWidth="0.6" />
+                  <path d="M1.6 1.6 L7.4 10.4 M7.4 1.6 L1.6 10.4" stroke={tint(p1, 0.6)} strokeWidth="0.35" />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 9 12" className="block h-full w-full" aria-hidden="true">
+                  <rect x="0.5" y="0.5" width="8" height="11" rx="1" fill={tint(p2, 0.9)} stroke={p0} strokeWidth="0.6" />
+                  <path d="M3 3 H6 M3 9 H6 M3.3 3 C3.3 5 5.7 5 5.7 6 C5.7 7 3.3 7 3.3 9 M5.7 3 C5.7 5 3.3 5 3.3 6 C3.3 7 5.7 7 5.7 9" fill="none" stroke={p1} strokeWidth="0.45" strokeLinecap="round" />
+                </svg>
+              )}
+            </span>
+          ),
+        )}
+        {GNL_CARDS.map((c, i) =>
+          c.kind === "locked" ? null : (
+            <span key={`o${i}`} className="gp-gnl-ghost absolute block" style={{ left: `${c.l}%`, top: EDGE.enemy, width: "9%", height: "12.5%", animationDelay: dm(delayMs, 700 + (c.l - 22) * 14) }}>
+              <svg viewBox="0 0 9 12" className="block h-full w-full" aria-hidden="true">
+                <rect x="0.5" y="0.5" width="8" height="11" rx="1" fill="none" stroke={tint(p0, 0.9)} strokeWidth="0.5" strokeDasharray="1 0.8" />
+              </svg>
+            </span>
+          ),
+        )}
+        <span className="gp-gnl-wiper absolute block" style={{ left: "18%", top: `calc(${EDGE.enemy} - 2%)`, width: "2%", height: "16.5%", background: `linear-gradient(180deg, transparent, ${p1}, transparent)`, animationDelay: dm(delayMs, 600) }} />
+        {/* the reroll it costs rolls away */}
+        <span className="gp-gnl-die absolute block" style={{ left: "47%", top: `calc(${EDGE.own} + 3%)`, width: "6%", height: "6%", animationDelay: dm(delayMs, 900) }}>
+          <DieArt face={tint(p2, 0.95)} pip={p1} />
+        </span>
+        <span
+          className="gp-afterglow absolute block rounded-full"
+          style={{ left: "46%", top: EDGE.enemy, width: "18%", height: "12.5%", background: `radial-gradient(closest-side, ${tint(p1, 0.4)}, transparent)`, animationDelay: dm(delayMs, 1250) }}
+        />
+      </BoardFrame>
+    </Stage>
+  );
+}
+
+/* --- queen_storm -------------------------------------------------------------------------
+   "Promote up to two of your pawns on your 4th rank or beyond: the first
+   becomes a queen, the second a rook. No two promotions are alike, so there
+   is no mass of queens." A line is scored along the caster's 4th rank and
+   the ground beyond it lights (where pawns qualify); over the first pawn a
+   storm cloud drops a queen's crown, then a rook's crenel, and a third crown
+   is struck out as it falls (no mass of queens). On each chosen pawn (target
+   cut) the pawn lifts away and the new piece stands up: a queen for the
+   first, a rook for the second, read from the victim order (--fx-index). */
+function PromoteHit({ palette, delayMs }: { palette: Palette; delayMs: number }) {
+  const [p0, p1, p2] = palette;
+  return (
+    <span className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+      <span className="gp-qs-pawn absolute block" style={{ left: "15%", top: "10%", width: "70%", height: "80%", animationDelay: dm(delayMs, 0) }}>
+        <Sil d={SIL.p} fill={tint(p2, 0.8)} stroke={p1} />
+      </span>
+      {/* first chosen: a queen; second: a rook */}
+      <span className="absolute block" style={{ left: "10%", top: "6%", width: "80%", height: "86%", opacity: "clamp(0, calc(1 - var(--fx-index, 0)), 1)" }}>
+        <span className="gp-qs-rise absolute inset-0 block" style={{ animationDelay: dm(delayMs, 260) }}>
+          <Sil d={SIL.q} fill={p0} stroke={p1} />
+        </span>
+      </span>
+      <span className="absolute block" style={{ left: "10%", top: "6%", width: "80%", height: "86%", opacity: "clamp(0, var(--fx-index, 0), 1)" }}>
+        <span className="gp-qs-rise absolute inset-0 block" style={{ animationDelay: dm(delayMs, 260) }}>
+          <Sil d={SIL.r} fill={p0} stroke={p1} />
+        </span>
+      </span>
+    </span>
+  );
+}
+function QueenStormScene({ palette, lead, delayMs }: TemplateProps) {
+  const [p0, p1, p2] = palette;
+  if (!lead) return <PromoteHit palette={palette} delayMs={delayMs} />;
+  return (
+    <Stage quakeMs={delayMs + 520}>
+      <BoardFrame>
+        {/* the caster's 4th rank, and everything beyond it */}
+        <span className="gp-qs-zone absolute block" style={{ left: "0%", top: "calc(18.75% - var(--fx-side, 1) * 18.75%)", width: "100%", height: "62.5%", background: `linear-gradient(calc(90deg + var(--fx-side, 1) * 90deg), ${tint(p1, 0.08)}, ${tint(p1, 0.24)})`, animationDelay: dm(delayMs, 0) }} />
+        <span className="gp-qs-line absolute block" style={{ left: "0%", top: "calc(50% + var(--fx-side, 1) * 12.5% - 0.6%)", width: "100%", height: "1.2%", background: tint(p0, 0.95), animationDelay: dm(delayMs, 60) }} />
+      </BoardFrame>
+      <Rake delayMs={delayMs + 260} tone={tint(p1, 0.5)} lean="calc(var(--fx-ox, 0) * 2.4%)" tip="calc(var(--fx-oy, 0) * 1.5%)" cy={57} width={22} />
+      <span className="gp-qs-cloud absolute block" style={{ left: "41%", top: "calc(50% - var(--fx-side, 1) * 9% - 4%)", width: "18%", height: "8%", animationDelay: dm(delayMs, 120) }}>
+        <svg viewBox="0 0 18 8" className="block h-full w-full" aria-hidden="true">
+          <path d="M3 7.4 C0.8 7.4 0.6 4.4 2.8 4.2 C2.8 1.6 6.4 0.8 7.6 3 C8.6 0.6 13 0.8 13.2 3.6 C15.8 3 17.6 5.4 15.6 7.4 Z" fill={tint(p1, 0.85)} stroke={p0} strokeWidth="0.5" {...SJ} />
+        </svg>
+      </span>
+      {[
+        { d: SIL.q, off: 380, cls: "gp-qs-fall" },
+        { d: SIL.r, off: 560, cls: "gp-qs-fall" },
+        { d: SIL.q, off: 740, cls: "gp-qs-struck" },
+      ].map((c, i) => (
+        <span key={i} className={`${c.cls} absolute block`} style={{ left: `${43.5 + i * 4.5}%`, top: "calc(50% - var(--fx-side, 1) * 7% - 3%)", width: "4.5%", height: "6%", animationDelay: dm(delayMs, c.off) }}>
+          <Sil d={c.d} fill={i === 2 ? tint(p2, 0.6) : p0} stroke={p1} />
+        </span>
+      ))}
+      <span className="gp-qs-x absolute block" style={{ left: "52.5%", top: "calc(50% - var(--fx-side, 1) * 7% - 3.4%)", width: "5.5%", height: "6.8%", animationDelay: dm(delayMs, 900) }}>
+        <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+          <path d="M1.4 1.4 L8.6 8.6 M8.6 1.4 L1.4 8.6" stroke="#c94a5a" strokeWidth="1.3" strokeLinecap="round" />
+        </svg>
+      </span>
+      <span
+        className="gp-afterglow absolute block rounded-full"
+        style={{ left: "40%", top: "40%", width: "20%", height: "20%", background: `radial-gradient(closest-side, ${tint(p0, 0.45)}, transparent)`, animationDelay: dm(delayMs, 1200) }}
+      />
+    </Stage>
+  );
+}
+
 /* =============================================================================
    Glyphs — one small hand-drawn SVG per card, recognisable at a glance.
    All share a 0 0 10 10 viewBox so every template slot letterboxes them
@@ -6749,9 +6904,9 @@ export const PLAYS: Record<string, SigPlugin> = {
   rift_storm: G(SkyWrath, ["#8f6bff", "#12081f", "#6fe3ff"], GLYPH.rift_storm, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "lightning", anchor: "aim",
   }),
-  queen_storm: G(SkyWrath, ["#ffd76a", "#b98cff", "#fff4d6"], GLYPH.queen_storm, {
+  queen_storm: G(QueenStormScene, ["#ffd76a", "#b98cff", "#fff4d6"], GLYPH.queen_storm, {
     ordering: "sweep", staggerMs: 70, victims: ["p"], hasLead: true, sound: "crownrain", anchor: "aim",
-  }, "crown_rain"),
+  }),
 
   /* --- AbyssMaw ------------------------------------------------------------- */
   buff_plunder: G(BuffPlunderScene, ["#ffd76a", "#8f2bbf", "#2a2a38"], GLYPH.buff_plunder, {
@@ -6760,9 +6915,9 @@ export const PLAYS: Record<string, SigPlugin> = {
   total_plunder: G(TotalPlunderScene, ["#ffd76a", "#1c0f18", "#c94ad1"], GLYPH.total_plunder, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "rampage", anchor: "board",
   }),
-  grand_nullify: G(AbyssMaw, ["#8a94a8", "#8f6bff", "#eef1f7"], GLYPH.grand_nullify, {
+  grand_nullify: G(GrandNullifyScene, ["#8a94a8", "#8f6bff", "#eef1f7"], GLYPH.grand_nullify, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades", anchor: "board",
-  }, "sigil_snuff"),
+  }),
   absolute_nullify: G(AbsoluteNullifyScene, ["#3a3a45", "#c94a5a", "#c9cdd6"], GLYPH.absolute_nullify, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "shades", anchor: "board",
   }),
@@ -6850,7 +7005,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   ban_hammer: G(BanHammerScene, ["#4fa3d1", "#8a94a8", "#ffd76a"], GLYPH.ban_hammer, {
     ordering: "sweep", staggerMs: 80, victims: ["n", "b", "r"], hasLead: true, sound: "siege", anchor: "board",
   }),
-  dragonslayer: G(ForgeColossus, ["#c9cdd6", "#d6234f", "#ffd76a"], GLYPH.dragonslayer, {
+  dragonslayer: G(DragonslayerScene, ["#c9cdd6", "#d6234f", "#ffd76a"], GLYPH.dragonslayer, {
     ordering: "radial", staggerMs: 0, victims: ["r", "q"], hasLead: true, sound: "siege", anchor: "board",
   }),
   world_lock: G(WorldLockScene, ["#8a94a8", "#4fa3d1", "#ffd76a"], GLYPH.world_lock, {

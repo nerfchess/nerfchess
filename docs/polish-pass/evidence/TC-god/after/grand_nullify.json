@@ -1,0 +1,83 @@
+{
+ "id": "grand_nullify",
+ "url": "/dev/plays?id=grand_nullify&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "grand_nullify",
+  "name": "Grand Nullify",
+  "tier": 7,
+  "category": "draft",
+  "mechanic": "instant",
+  "retired": true,
+  "art": "plugin",
+  "visual": "x:grand_nullify",
+  "anchor": "board",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 60,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2444,
+  "cssEndMs": 3466,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 25,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 166,
+  "maxGapMs": 341.1
+ },
+ "raf": {
+  "frames": 190,
+  "medianMs": 16.7,
+  "maxMs": 133.3,
+  "dropped": 30
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 66,
+  "totalBlockingMs": 2,
+  "entries": [
+   {
+    "atMs": 68,
+    "duration": 66,
+    "blocking": 2,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  295,
+  753,
+  1302,
+  1919,
+  2594
+ ],
+ "png": "docs/polish-pass/evidence/TC-god/after/grand_nullify.png",
+ "pngBytes": 20039,
+ "off": {
+  "url": "/dev/plays?id=grand_nullify&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "docs/polish-pass/evidence/TC-god/after/grand_nullify.off.png"
+ }
+}
