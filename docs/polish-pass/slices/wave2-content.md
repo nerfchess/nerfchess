@@ -77,11 +77,18 @@ server (:3000), Chromium 1194, dark, full motion.
 - link-in-text-block on `/community`, `/friend`, `/profile/edit`, `/mod`,
   `/mod/cards`, `/mod/stats`: slices D, C and G. The fix is the one used here:
   `underline underline-offset-2` at rest on links inside running text.
-- `scripts/check-codex-routes.ts` fails every detail page because the codex
-  `loading.tsx` skeleton streams an `<h1>Codex</h1>` ahead of the page's own
-  h1 and the script reads the first h1 in the raw HTML. The pages themselves
-  are correct (the live DOM has one h1). Not changed here; the checker should
-  read the last h1 or wait for the rendered DOM.
+- FIXED in 0d13e92 (review follow-up): `scripts/check-codex-routes.ts`
+  failed every detail page. Root cause: `src/app/codex/loading.tsx` rendered
+  the whole CodexBrowser shell (with `<h1>Codex</h1>`) and, sitting at the
+  codex segment, it was the Suspense fallback for every codex route, so its
+  shell was emitted in the server HTML of `/codex/{nerf,buff,hex,boon}/[id]`
+  ahead of the detail skeleton, and on a hard load could be painted before
+  the card. The checker was right. Fix: the index page and its skeleton moved
+  into the `src/app/codex/(index)` route group, so the browser skeleton wraps
+  only `/codex`; detail routes stream only their own `CardPageSkeleton`.
+  The checker is unchanged. After: check-codex-routes ok (10 cards, both 404
+  ids), detail HTML contains no `Codex</h1>`, `/codex`, `/codex?tab=hexes`
+  and `/codex/suggest` 200, `/codex/build` 308 as before.
 
 ## Checks run
 
