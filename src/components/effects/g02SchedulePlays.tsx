@@ -257,26 +257,7 @@ function WardensRetirementScene({ role, delayMs }: SceneProps) {
       </Cut>
     );
   }
-  return (
-    <Lead
-      d={delayMs}
-      frame={
-        <>
-          <L c="g02-veil" st={{ background: "rgba(9,14,22,0.4)" }} />
-          <Wash tone="rgba(159,191,216,0.28)" d={120} />
-        </>
-      }
-    >
-      <L c="g02-wr-hook" l={37} t={38} w={26} h={2} d={90} st={{ borderRadius: "999px", background: "#9fbfd8" }} />
-      {WR_HOOKS.map((i) => (
-        <L key={i} c="g02-wr-peg" l={38 + i * 5} t={40} w={1.4} h={3} d={180 + i * 70} st={{ borderRadius: "999px", background: "#fff4d6" }} />
-      ))}
-      <V c="g02-wr-ring" l={38} t={41} w={9} h={12} d={420}>{ring}</V>
-      <L c="g02-wr-plate" l={54} t={42} w={8} h={5} d={620} st={{ background: "#16202c", border: "1px solid #fff4d6" }} />
-      <L c="g02-leanshadow" l={40} t={55} w={20} h={3} d={660} st={{ borderRadius: "999px", background: "rgba(22,32,44,0.7)" }} />
-      <L c="g02-glint" l={56} t={40} w={2.2} h={2.2} d={740} st={{ borderRadius: "50%", background: "#fff4d6" }} />
-    </Lead>
-  );
+  return null;
 }
 
 /* --- 3. Iron Portcullis (t7) — THE COUNTER SHUTTER COMES DOWN ---------------
@@ -372,30 +353,7 @@ function PatientGriftScene({ role, delayMs }: SceneProps) {
       </Cut>
     );
   }
-  return (
-    <Lead
-      d={delayMs}
-      frame={
-        <>
-          <L c="g02-veil" st={{ background: "rgba(14,11,6,0.4)" }} />
-          <Wash tone="rgba(240,211,138,0.3)" d={120} />
-        </>
-      }
-    >
-      <L c="g02-pg-case" l={36} t={35} w={28} h={22} d={70} st={{ background: "rgba(34,28,16,0.72)", border: "1px solid #f0d38a" }} />
-      {PG_ROWS.map((i) => (
-        <V key={i} c="g02-pg-flap" l={37} t={37 + i * 6} w={26} h={6} d={180 + i * 130} st={{ transformOrigin: "50% 46%" }}>
-          {row(i === 2 ? "#fff4d6" : "#f0d38a")}
-        </V>
-      ))}
-      <L c="g02-pg-strike" l={38} t={40} w={24} h={1.4} d={560} st={{ borderRadius: "999px", background: "#221c10", transformOrigin: "0% 50%" }} />
-      <L c="g02-pg-land" l={38} t={49} w={24} h={5} d={660} st={{ background: "#fff4d6", border: "1px solid #221c10" }} />
-      <L c="g02-shaft" l={45} t={24} w={10} h={26} d={700} st={{ background: "linear-gradient(180deg, rgba(255,244,214,0.6), transparent)", transformOrigin: "50% 0%" }} />
-      {[0, 1, 2].map((i) => (
-        <L key={i} c="g02-sift" l={40 + i * 8} t={56} w={1.6} h={1.6} d={740 + i * 90} st={{ borderRadius: "50%", background: "#f0d38a" }} />
-      ))}
-    </Lead>
-  );
+  return null;
 }
 
 /* =============================================================================
@@ -1624,24 +1582,7 @@ function SaltInTheWoundScene({ role, delayMs }: SceneProps) {
       </Cut>
     );
   }
-  return (
-    <Lead
-      d={delayMs}
-      frame={
-        <>
-          <L c="g02-veil" st={{ background: "rgba(8,12,18,0.38)" }} />
-          <Wash tone="rgba(160,200,216,0.26)" d={110} />
-        </>
-      }
-    >
-      <L c="g02-si-column" l={44} t={34} w={11} h={24} d={80} st={{ background: "#fff3d4", border: "1px solid #142430" }} />
-      <V c="g02-si-brush" l={55} t={32} w={8} h={12} d={240}>{brush}</V>
-      <L c="g02-si-strip" l={45} t={36} w={9} h={20} d={430} st={{ background: "#a0c8d8", transformOrigin: "50% 0%" }} />
-      <L c="g02-si-smooth" l={44} t={38} w={11} h={2} d={580} st={{ background: "linear-gradient(90deg, transparent, #fff3d4, transparent)" }} />
-      <L c="g02-si-tear" l={45} t={55} w={9} h={4} d={680} st={{ background: "#fff3d4", border: "1px solid #142430", transformOrigin: "0% 0%" }} />
-      <L c="g02-leanshadow" l={42} t={60} w={16} h={3} d={720} st={{ borderRadius: "999px", background: "rgba(20,36,48,0.62)" }} />
-    </Lead>
-  );
+  return null;
 }
 
 /* --- 31. Scapegoat (t5) — THE NAME STRUCK OFF THE ROLL ----------------------
@@ -1795,9 +1736,7 @@ const IMP_GLYPHS: ReactNode[] = [
 
 const IMPACT: Record<string, G02Imp> = {
   bn4_uphill_battle: { at: 420, rgb: "232 201 135", shock: true, g: 0, q: "s" },
-  bn4_wardens_retirement: { at: 480, rgb: "159 191 216", laser: true, shock: true, q: "s" },
   hx4_iron_portcullis: { at: 530, rgb: "184 178 162", shock: true, g: 1, q: "h" },
-  ov_patient_grift: { at: 570, rgb: "240 211 138", shock: true, q: "s" },
   bn4_diplomatic_pouch: { at: 610, rgb: "196 152 106", laser: true, g: 2, q: "s" },
   bn4_double_pardon: { at: 465, rgb: "216 161 92", shock: true, g: 2, q: "s" },
   bn4_guards_change: { at: 500, rgb: "143 184 154", shock: true, g: 0, q: "s" },
@@ -1823,7 +1762,6 @@ const IMPACT: Record<string, G02Imp> = {
   bn4_retraining: { at: 615, rgb: "127 176 216", shock: true, g: 1, q: "h" },
   bn4_royal_household: { at: 540, rgb: "184 164 92", shock: true, q: "s" },
   bn4_royal_writ: { at: 655, rgb: "220 192 106", laser: true, g: 2, q: "s" },
-  bn4_salt_in_the_wound: { at: 640, rgb: "160 200 216", shock: true, g: 2, q: "s" },
   bn4_scapegoat: { at: 645, rgb: "200 136 106", shock: true, g: 0, q: "s" },
   bn4_veterans_pension: { at: 545, rgb: "182 160 208", laser: true, shock: true, q: "s" },
 };
@@ -1877,11 +1815,321 @@ function withImpact(Base: SigPlugin["Render"], imp: G02Imp): SigPlugin["Render"]
   return ImpactLead;
 }
 
+/* =============================================================================
+   PER-CARD RULE SCENES (slice TC-g). The cards below lead with a scene of their
+   own rule on the real board (the squares, pieces and turn counts it touches)
+   instead of the module's prop and the shared impact hit; the old art survives
+   only as the small target and entrance cuts. Positions are board percentages
+   from the caster's side: rank 0 is the caster's back rank, 7 the opponent's.
+   ========================================================================== */
+
+/** Chessman silhouettes on a 10 x 10 box, for the pieces a rule names. */
+const MEN = {
+  p: "M5 1.2 C6.2 1.2 7 2 7 3 C7 3.7 6.6 4.3 6 4.6 L7 8 H3 L4 4.6 C3.4 4.3 3 3.7 3 3 C3 2 3.8 1.2 5 1.2 Z M2.4 8.6 H7.6 V9.6 H2.4 Z",
+  r: "M2.6 1.4 H3.8 V2.6 H4.6 V1.4 H5.4 V2.6 H6.2 V1.4 H7.4 V3.8 H6.8 L7.2 7.6 H2.8 L3.2 3.8 H2.6 Z M2.2 8.4 H7.8 V9.6 H2.2 Z",
+  n: "M2.8 8.2 C2.8 5.4 3.8 4 5.4 3.2 L5 1.6 L6.4 2.6 L7.2 2.4 C7.9 3 8.1 4 7.7 4.9 L6.6 4.6 L6.2 4 C6.5 5.6 6.4 7 7 8.2 Z M2.4 8.8 H7.6 V9.8 H2.4 Z",
+  b: "M5 1 C6.4 2 7 3.4 7 4.6 C7 5.8 6.2 6.6 5 6.6 C3.8 6.6 3 5.8 3 4.6 C3 3.4 3.6 2 5 1 Z M3.4 7.2 H6.6 L7.2 8.2 H2.8 Z M2.2 8.8 H7.8 V9.8 H2.2 Z",
+  q: "M2.4 3.2 L3.4 5 L4.2 2.6 L5 4.6 L5.8 2.6 L6.6 5 L7.6 3.2 L7 7.4 H3 Z M2.6 8 H7.4 V9.2 H2.6 Z",
+  k: "M4.6 1 H5.4 V2 H6.4 V2.8 H5.4 V3.8 H4.6 V2.8 H3.6 V2 H4.6 Z M3.4 4.4 H6.6 L7.2 8 H2.8 Z M2.4 8.6 H7.6 V9.8 H2.4 Z",
+} as const;
+
+function Man({ kind, fill, stroke }: { kind: keyof typeof MEN; fill: string; stroke: string }) {
+  return (
+    <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+      <path d={MEN[kind]} fill={fill} stroke={stroke} strokeWidth="0.45" {...SJ} />
+    </svg>
+  );
+}
+
+/** The board-true layer: 0..100% is exactly the board. */
+function Brd({ children }: { children: ReactNode }) {
+  return (
+    <BoardWideStage>
+      <BoardFrame>
+        <span className="g02-rs absolute inset-0 block">{children}</span>
+      </BoardFrame>
+    </BoardWideStage>
+  );
+}
+
+/** Centre of rank `r` from the caster's back rank (0) to the opponent's (7). */
+function rk(r: number): string {
+  return `calc(50% + var(--fx-side, 1) * ${(3.5 - r) * 12.5}%)`;
+}
+
+/** Centre of screen column `c` (0 is the left edge). */
+function cl(c: number): string {
+  return `${(c + 0.5) * 12.5}%`;
+}
+
+/** The king and queen files (e and d) seen from the caster's side. */
+const KING_X = "calc(50% + var(--fx-side, 1) * 6.25%)";
+const QUEEN_X = "calc(50% - var(--fx-side, 1) * 6.25%)";
+
+/** A prop centred on (x, y), `w` x `h` in board percent, from `delayMs`. */
+function Q({ x, y, w, h, cls, delayMs, v, style, children }: { x: string; y: string; w: number; h: number; cls: string; delayMs: number; v?: Record<string, string>; style?: CSSProperties; children?: ReactNode }) {
+  return (
+    <span
+      className={`${cls} absolute block`}
+      style={{ left: `calc(${x} - ${w / 2}%)`, top: `calc(${y} - ${h / 2}%)`, width: `${w}%`, height: `${h}%`, animationDelay: `${delayMs}ms`, ...style, ...v } as CSSProperties}
+    >
+      {children}
+    </span>
+  );
+}
+
+/** A ray drawn out of (x, y) at `angle` (rotation is static; the draw is scaleX). */
+function Ray({ x, y, len, angle, color, delayMs, gd = "1.2s" }: { x: string; y: string; len: number; angle: string; color: string; delayMs: number; gd?: string }) {
+  return (
+    <span
+      className="g02-r-draw absolute block"
+      style={{ left: x, top: `calc(${y} - 0.45%)`, width: `${len}%`, height: "0.9%", rotate: angle, transformOrigin: "0% 50%", background: `repeating-linear-gradient(90deg, ${color} 0 6px, transparent 6px 10px)`, animationDelay: `${delayMs}ms`, "--gd": gd } as CSSProperties}
+    />
+  );
+}
+
+/** `n` turn pips across rank `r`, from `x0`% to `x1`%: one per turn the rule counts. */
+function Pips({ n, r, x0, x1, color, delayMs, gd = "1.3s" }: { n: number; r: number; x0: number; x1: number; color: string; delayMs: number; gd?: string }) {
+  const step = n > 1 ? (x1 - x0) / (n - 1) : 0;
+  return (
+    <>
+      {Array.from({ length: n }, (_, i) => (
+        <Q key={i} x={`${x0 + i * step}%`} y={rk(r)} w={1.8} h={3.2} cls="g02-r-pip" delayMs={delayMs + i * 70} v={{ "--gd": gd }} style={{ background: color, borderRadius: "1px" }} />
+      ))}
+    </>
+  );
+}
+
+/** A square (or a run of squares) tinted for the length of a beat: the
+ *  squares the rule itself touches. */
+function Tint({ x, y, w = 12.5, h = 12.5, color, delayMs, gd = "1.6s", cls = "g02-r-in" }: { x: string; y: string; w?: number; h?: number; color: string; delayMs: number; gd?: string; cls?: string }) {
+  return <Q x={x} y={y} w={w} h={h} cls={cls} delayMs={delayMs} v={{ "--gd": gd, "--s0": "1" }} style={{ background: color }} />;
+}
+
+/** One file (12.5% of the board) in a prop's own width units. */
+const fileIn = (w: number): number => Math.round((12.5 / w) * 100);
+
+/** Centre of file `c` counted from the caster's left (0) as the caster sees it. */
+function fc(c: number): string {
+  return `calc(50% + var(--fx-side, 1) * ${(c - 3.5) * 12.5}%)`;
+}
+
+/** A dotted thread from square (c0, r0) to (c1, r1), drawn from its first end.
+ *  The angle turns half a circle with the side so the thread still starts at
+ *  (c0, r0) when the caster sits at the top. */
+function Thread({ c0, r0, c1, r1, color, delayMs, gd = "1.6s" }: { c0: number; r0: number; c1: number; r1: number; color: string; delayMs: number; gd?: string }) {
+  const dx = (c1 - c0) * 12.5;
+  const dy = -(r1 - r0) * 12.5;
+  const len = Math.hypot(dx, dy);
+  const deg = Math.round((Math.atan2(dy, dx) * 180) / Math.PI);
+  return <Ray x={fc(c0)} y={rk(r0)} len={len} angle={`calc(${deg}deg + (1 - var(--fx-side, 1)) * 90deg)`} color={color} delayMs={delayMs} gd={gd} />;
+}
+
+/** Half a turn when the caster sits at the top, so a pointed prop still points
+ *  the way the rule sends it. */
+const FLIP = "calc((1 - var(--fx-side, 1)) * 90deg)";
+
+type Pal = { core: string; glow: string; deep: string };
+
+/** The nerf itself: an iron cuff on the caster's side that springs open when
+ *  the card suspends it. The lid swings about its hinge on the left. */
+function NerfCuff({ x, y, c, delayMs, gd = "1.6s" }: { x: string; y: string; c: Pal; delayMs: number; gd?: string }) {
+  return (
+    <>
+      <Q x={x} y={y} w={9} h={9} cls="g02-r-in" delayMs={delayMs} v={{ "--gd": gd, "--s0": "0.8" }}>
+        <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+          <path d="M4 11a6 6 0 0 0 12 0" fill="none" stroke={c.deep} strokeWidth="4.4" {...SJ} />
+          <path d="M4 11a6 6 0 0 0 12 0" fill="none" stroke={c.core} strokeWidth="2.2" {...SJ} />
+          <path d="M10 17v2.4" stroke={c.core} strokeWidth="1.6" {...SJ} />
+        </svg>
+      </Q>
+      <Q x={x} y={y} w={9} h={9} cls="g02-r-open" delayMs={delayMs} v={{ "--gd": gd, "--ra": "-70deg" }} style={{ transformOrigin: "20% 55%" }}>
+        <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+          <path d="M4 11a6 6 0 0 1 12 0" fill="none" stroke={c.deep} strokeWidth="4.4" {...SJ} />
+          <path d="M4 11a6 6 0 0 1 12 0" fill="none" stroke={c.core} strokeWidth="2.2" {...SJ} />
+          <circle cx="16" cy="11" r="1.4" fill={c.glow} />
+        </svg>
+      </Q>
+    </>
+  );
+}
+
+/** `n` tally ticks across rank `r`, from `x0`% to `x1`%: one per turn the rule
+ *  counts. The run takes about 420ms whatever `n` is. */
+function Tally({ n, r, x0, x1, color, delayMs, gd = "1.3s" }: { n: number; r: number; x0: number; x1: number; color: string; delayMs: number; gd?: string }) {
+  const step = n > 1 ? (x1 - x0) / (n - 1) : 0;
+  const w = Math.min(2.2, Math.max(0.7, step * 0.45));
+  return (
+    <>
+      {Array.from({ length: n }, (_, i) => (
+        <Q key={i} x={`${x0 + i * step}%`} y={rk(r)} w={w} h={3.4} cls="g02-r-pip" delayMs={delayMs + Math.round((i * 420) / Math.max(1, n - 1))} v={{ "--gd": gd }} style={{ background: color, borderRadius: "1px" }} />
+      ))}
+    </>
+  );
+}
+
+/** A draft card: face down, or face up with a tier mark. */
+function DraftCard({ c, tier }: { c: Pal; tier?: string }) {
+  return (
+    <svg viewBox="0 0 14 20" className="block h-full w-full" aria-hidden="true">
+      <rect x="1" y="1" width="12" height="18" rx="2" fill={tier ? c.core : c.glow} stroke={c.deep} strokeWidth="1.4" />
+      {tier ? (
+        <text x="7" y="12.6" textAnchor="middle" fontSize="6" fontWeight="700" fill={c.deep}>{tier}</text>
+      ) : (
+        <path d="M4 7l3-3 3 3-3 3z" fill={c.core} />
+      )}
+    </svg>
+  );
+}
+
+/* --- bn4_salt_in_the_wound ---------------------------------------------------------
+   "Suspend your nerf for your next 12 turns. When it returns, take 20 seconds
+   from your opponent's clock." The cuff on the caster's edge springs open and
+   twelve ticks run along the caster's rank; at the end of the run the cuff
+   shuts again and, at that moment, a salt cellar tips over the opponent's
+   clock at their edge: a third of its dial (twenty seconds of the minute) is
+   cut out and falls away as grains spill onto it. */
+const C_SIW = { core: "#a0c8d8", glow: "#fff3d4", deep: "#142430" };
+
+function SaltInTheWoundRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <SaltInTheWoundScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_SIW;
+  const d = delayMs;
+  return (
+    <Brd>
+      <NerfCuff x="8%" y={rk(1.3)} c={c} delayMs={d + 60} gd="1.3s" />
+      <Tally n={12} r={1.3} x0={17} x1={90} color={c.glow} delayMs={d + 280} gd="1.9s" />
+      <Q x="8%" y={rk(1.3)} w={9} h={9} cls="g02-r-stamp" delayMs={d + 1100} v={{ "--gd": "1.1s" }}>
+        <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+          <circle cx="10" cy="11" r="6" fill="none" stroke={c.deep} strokeWidth="4.4" />
+          <circle cx="10" cy="11" r="6" fill="none" stroke={c.core} strokeWidth="2.2" />
+        </svg>
+      </Q>
+      <Q x="78%" y={rk(4.9)} w={16} h={16} cls="g02-r-in" delayMs={d + 700} v={{ "--gd": "1.6s" }}>
+        <svg viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+          <circle cx="12" cy="12" r="10" fill={c.glow} stroke={c.deep} strokeWidth="1.6" />
+          <path d="M12 12V4.4" stroke={c.deep} strokeWidth="1.6" {...SJ} />
+          <path d="M12 2.6v1.6M21.4 12h-1.6M12 21.4v-1.6M2.6 12h1.6" stroke={c.deep} strokeWidth="1.2" {...SJ} />
+        </svg>
+      </Q>
+      <Q x="78%" y={rk(4.9)} w={16} h={16} cls="g02-r-part" delayMs={d + 1320} v={{ "--gd": "0.8s", "--tx1": "calc(var(--fx-side, 1) * 30%)", "--ty1": "calc(var(--fx-side, 1) * -50%)", "--r1": "40deg" }}>
+        <svg viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+          <path d="M12 12V2A10 10 0 0 1 20.66 7z" fill={c.core} stroke={c.deep} strokeWidth="1.2" {...SJ} />
+        </svg>
+      </Q>
+      <Q x="86%" y={rk(6.1)} w={7} h={9} cls="g02-r-in" delayMs={d + 1000} v={{ "--gd": "1.1s", "--r0": "0deg" }} style={{ rotate: "150deg" }}>
+        <svg viewBox="0 0 14 20" className="block h-full w-full" aria-hidden="true">
+          <path d="M3 7q0-4 4-4t4 4v10H3z" fill={c.glow} stroke={c.deep} strokeWidth="1.2" {...SJ} />
+          <circle cx="5.6" cy="5" r="0.7" fill={c.deep} /><circle cx="8.4" cy="5" r="0.7" fill={c.deep} /><circle cx="7" cy="3.8" r="0.7" fill={c.deep} />
+        </svg>
+      </Q>
+      {[0, 1, 2, 3, 4].map((i) => (
+        <Q key={i} x={`${80 + i * 1.6}%`} y={rk(5.7)} w={0.9} h={0.9} cls="g02-r-go" delayMs={d + 1180 + i * 40} v={{ "--gd": "0.7s", "--tx0": "0%", "--ty0": "0%", "--tx1": `${(i - 2) * 60}%`, "--ty1": "calc(var(--fx-side, 1) * 500%)" }} style={{ background: c.glow, borderRadius: "1px" }} />
+      ))}
+      <Q x="78%" y={rk(3.6)} w={10} h={4.4} cls="g02-r-stamp" delayMs={d + 1380} v={{ "--gd": "0.9s" }}>
+        <svg viewBox="0 0 30 12" className="block h-full w-full" aria-hidden="true">
+          <text x="15" y="9.4" textAnchor="middle" fontSize="9" fontWeight="700" fill={c.glow} stroke={c.deep} strokeWidth="0.4">-20s</text>
+        </svg>
+      </Q>
+    </Brd>
+  );
+}
+
+/* --- bn4_wardens_retirement --------------------------------------------------------
+   "Suspend your nerf for your next 4 turns. For your opponent's next 4 turns,
+   every capture you make suspends it for 2 more of your turns; this clause
+   ends after two such captures." The warden's key ring is hung up on its peg
+   at the caster's edge, the cuff springs open and four ticks are struck; then
+   a knight takes on e5 and two more ticks are added, a bishop takes on f7 and
+   two more again; after the second capture the clause is shut with a bar. */
+const C_WRR = { core: "#9fbfd8", glow: "#fff4d6", deep: "#16202c" };
+
+function WardensRetirementRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <WardensRetirementScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_WRR;
+  const d = delayMs;
+  return (
+    <Brd>
+      <Q x="88%" y={rk(0.9)} w={3} h={8} cls="g02-r-up" delayMs={d + 20} v={{ "--gd": "2.2s" }} style={{ background: c.deep, borderRadius: "1px" }} />
+      <Q x="88%" y={rk(1.2)} w={9} h={9} cls="g02-r-go" delayMs={d + 80} v={{ "--gd": "2.1s", "--tx0": "-160%", "--ty0": "calc(var(--fx-side, 1) * -120%)", "--tx1": "0%", "--ty1": "0%" }}>
+        <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+          <circle cx="10" cy="7" r="4.4" fill="none" stroke={c.core} strokeWidth="1.8" />
+          <path d="M8 11v7M8 15h2.6M8 17.4h2" stroke={c.glow} strokeWidth="1.4" {...SJ} />
+          <path d="M12.4 10.4v6M12.4 14.4h2" stroke={c.core} strokeWidth="1.4" {...SJ} />
+        </svg>
+      </Q>
+      <NerfCuff x="8%" y={rk(1.2)} c={c} delayMs={d + 240} gd="2.1s" />
+      <Pips n={4} r={1.2} x0={16} x1={28} color={c.glow} delayMs={d + 420} gd="2s" />
+      <Q x={fc(4)} y={rk(4)} w={11} h={11} cls="g02-r-part" delayMs={d + 760} v={{ "--gd": "0.7s", "--tx1": "40%", "--ty1": "calc(var(--fx-side, 1) * -60%)", "--r1": "35deg" }}>
+        <Man kind="p" fill={c.deep} stroke={c.core} />
+      </Q>
+      <Q x={fc(4)} y={rk(4)} w={11} h={11} cls="g02-r-go" delayMs={d + 560} v={{ "--gd": "1.3s", "--tx0": "calc(var(--fx-side, 1) * 100%)", "--ty0": "calc(var(--fx-side, 1) * 200%)", "--tx1": "0%", "--ty1": "0%" }}>
+        <Man kind="n" fill={c.glow} stroke={c.deep} />
+      </Q>
+      <Pips n={2} r={1.2} x0={33} x1={37} color={c.core} delayMs={d + 860} gd="1.5s" />
+      <Q x={fc(5)} y={rk(6)} w={11} h={11} cls="g02-r-go" delayMs={d + 900} v={{ "--gd": "1.1s", "--tx0": "calc(var(--fx-side, 1) * -300%)", "--ty0": "calc(var(--fx-side, 1) * 300%)", "--tx1": "0%", "--ty1": "0%" }}>
+        <Man kind="b" fill={c.glow} stroke={c.deep} />
+      </Q>
+      <Pips n={2} r={1.2} x0={42} x1={46} color={c.core} delayMs={d + 1260} gd="1.2s" />
+      <Q x="50%" y={rk(1.2)} w={1.4} h={7} cls="g02-r-stamp" delayMs={d + 1440} v={{ "--gd": "1s" }} style={{ background: c.deep, border: `1px solid ${c.glow}` }} />
+      <Q x="30%" y={rk(2)} w={32} h={2} cls="g02-r-lean" delayMs={d + 1600} v={{ "--gd": "0.8s" }} style={{ borderRadius: "999px", background: "rgba(159,191,216,0.5)" }} />
+    </Brd>
+  );
+}
+
+/* --- ov_patient_grift --------------------------------------------------------------
+   "Fold twice to win the pot: your next 2 drafts are skipped, and the draft
+   after them is dealt from tier 8." Three draft hands are dealt face down at
+   the caster's edge; the first two are folded (turned over, pushed in and
+   dimmed); the pot of chips in the middle slides to the third hand, which
+   turns up marked VIII. */
+const C_PGR = { core: "#f0d38a", glow: "#fff4d6", deep: "#221c10" };
+
+function PatientGriftRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <PatientGriftScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_PGR;
+  const d = delayMs;
+  const xs = [28, 50, 72];
+  return (
+    <Brd>
+      <Tint x="50%" y={rk(1.4)} w={76} h={22} color="rgba(34,28,16,0.5)" delayMs={d + 20} gd="2.3s" />
+      {xs.slice(0, 2).map((x, i) => (
+        <Q key={i} x={`${x}%`} y={rk(1.4)} w={10} h={14} cls="g02-r-dim" delayMs={d + 80 + i * 90} v={{ "--gd": "1.9s" }}>
+          <DraftCard c={c} />
+        </Q>
+      ))}
+      {xs.slice(0, 2).map((x, i) => (
+        <Q key={i} x={`${x}%`} y={rk(1.4)} w={9} h={9} cls="g02-r-stamp" delayMs={d + 420 + i * 180} v={{ "--gd": "1.5s" }}>
+          <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+            <path d="M4 4l12 12M16 4L4 16" stroke={c.deep} strokeWidth="3.6" {...SJ} />
+            <path d="M4 4l12 12M16 4L4 16" stroke={c.core} strokeWidth="1.6" {...SJ} />
+          </svg>
+        </Q>
+      ))}
+      <Q x={`${xs[2]}%`} y={rk(1.4)} w={10} h={14} cls="g02-r-in" delayMs={d + 140} v={{ "--gd": "0.9s" }}>
+        <DraftCard c={c} />
+      </Q>
+      {[0, 1, 2, 3].map((i) => (
+        <Q key={i} x={`${47 + (i % 2) * 5}%`} y={`calc(${rk(3.4)} - ${i * 1.2}%)`} w={5} h={3} cls="g02-r-go" delayMs={d + 760 + i * 50} v={{ "--gd": "1.3s", "--tx0": "0%", "--ty0": "0%", "--tx1": "440%", "--ty1": "calc(var(--fx-side, 1) * 480%)" }}>
+          <svg viewBox="0 0 20 12" className="block h-full w-full" aria-hidden="true">
+            <ellipse cx="10" cy="6" rx="9" ry="4.6" fill={c.core} stroke={c.deep} strokeWidth="1.2" />
+            <ellipse cx="10" cy="6" rx="4.4" ry="2.2" fill="none" stroke={c.glow} strokeWidth="1" strokeDasharray="1.6 1.2" />
+          </svg>
+        </Q>
+      ))}
+      <Q x={`${xs[2]}%`} y={rk(1.4)} w={10} h={14} cls="g02-r-stamp" delayMs={d + 1080} v={{ "--gd": "1.2s" }}>
+        <DraftCard c={c} tier="VIII" />
+      </Q>
+      <Q x={`${xs[2]}%`} y={rk(2.6)} w={16} h={2} cls="g02-r-lean" delayMs={d + 1500} v={{ "--gd": "0.8s" }} style={{ borderRadius: "999px", background: "rgba(240,211,138,0.55)" }} />
+    </Brd>
+  );
+}
+
 export const PLAYS: Record<string, SigPlugin> = {
   bn4_uphill_battle: S(UphillBattleScene, { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "clockcage", anchor: "board" }),
-  bn4_wardens_retirement: S(WardensRetirementScene, { ordering: "file", staggerMs: 70, victims: "all", hasLead: true, sound: "clockcage", anchor: "board" }),
+  bn4_wardens_retirement: S(WardensRetirementRule, { ordering: "file", staggerMs: 70, victims: "all", hasLead: true, sound: "clockcage", anchor: "board" }),
   hx4_iron_portcullis: S(IronPortcullisScene, { ordering: "octagon", staggerMs: 55, victims: "all", hasLead: true, sound: "clockice", anchor: "board" }),
-  ov_patient_grift: S(PatientGriftScene, { ordering: "file", staggerMs: 80, victims: "all", hasLead: true, sound: "blitz", anchor: "board" }),
+  ov_patient_grift: S(PatientGriftRule, { ordering: "file", staggerMs: 80, victims: "all", hasLead: true, sound: "blitz", anchor: "board" }),
   bn4_diplomatic_pouch: S(DiplomaticPouchScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze", anchor: "board" }),
   bn4_double_pardon: S(DoublePardonScene, { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "cathedral", anchor: "board" }),
   bn4_guards_change: S(GuardsChangeScene, { ordering: "file", staggerMs: 70, victims: "all", hasLead: true, sound: "clockcage", anchor: "board" }),
@@ -1907,7 +2155,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   bn4_retraining: S(RetrainingScene, { ordering: "radial", staggerMs: 0, victims: ["n", "b"], hasLead: true, sound: "clockice", anchor: "cast" }),
   bn4_royal_household: S(RoyalHouseholdScene, { ordering: "radial", staggerMs: 0, victims: ["q"], hasLead: true, sound: "cathedral", anchor: "board" }),
   bn4_royal_writ: S(RoyalWritScene, { ordering: "radial", staggerMs: 60, victims: ["k"], hasLead: true, sound: "cathedral", anchor: "cast" }),
-  bn4_salt_in_the_wound: S(SaltInTheWoundScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze", anchor: "board" }),
+  bn4_salt_in_the_wound: S(SaltInTheWoundRule, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze", anchor: "board" }),
   bn4_scapegoat: S(ScapegoatScene, { ordering: "line", staggerMs: 70, victims: ["n", "b"], hasLead: true, sound: "clockice", anchor: "aim" }),
   bn4_veterans_pension: S(VeteransPensionScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "snooze", anchor: "board" }),
 };
