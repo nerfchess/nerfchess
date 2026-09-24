@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { ChevronDown, Lock, Trophy } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { fetchMe } from "@/lib/authClient";
+import { useSession } from "@/lib/session/SessionProvider";
 import { achievementIcon } from "@/lib/achievementIcons";
 import { RARITY_ASC, RARITY_THEME } from "@/lib/achievementTheme";
 import { achievementToastsDisabled, setAchievementToastsDisabled } from "@/components/AchievementToast";
@@ -415,11 +416,17 @@ function CardSkeleton() {
   return <div className="skeleton h-[132px]" aria-hidden />;
 }
 
-function AchievementsContent() {
+function AchievementsContent({ noSession }: { noSession: boolean }) {
   const searchParams = useSearchParams();
   const requested = searchParams.get("u");
   const [data, setData] = useState<AchievementsResponse | null>(null);
-  const [state, setState] = useState<LoadState>("loading");
+  // A visit with no session cookie is known to be signed out on the first
+  // paint, so the sign-in banner renders with the page instead of arriving
+  // above the wall after /me answers and pushing it down (wave 2 account 1).
+  // The header mints a guest for this visitor in the background; a brand new
+  // guest has nothing unlocked, so the locked wall and the banner are right.
+  const signedOutAtPaint = noSession && !requested;
+  const [state, setState] = useState<LoadState>(signedOutAtPaint ? "signin" : "loading");
   const [filter, setFilter] = useState<RarityFilter>("all");
   // Bumped by Retry to re-run the fetch effect (same recovery pattern as the
   // homepage's LiveActivity, without a full page reload).
@@ -429,6 +436,7 @@ function AchievementsContent() {
     let cancelled = false;
     (async () => {
       let username = requested;
+      if (!username && signedOutAtPaint) return;
       if (!username) {
         const me = await fetchMe();
         if (cancelled) return;
@@ -462,7 +470,7 @@ function AchievementsContent() {
     return () => {
       cancelled = true;
     };
-  }, [requested, reloadKey]);
+  }, [requested, reloadKey, signedOutAtPaint]);
 
   return (
     <AchievementsBody
@@ -623,6 +631,10 @@ function AchievementsBody({
 const noop = () => {};
 
 export default function AchievementsPage() {
+  // Read once: the header's guest mint changes display a moment later, and
+  // the page must keep the state it painted with.
+  const { display } = useSession();
+  const [noSession] = useState(() => display === null);
   // The site header and the page frame sit outside the Suspense boundary that
   // useSearchParams needs; the fallback is the body in its loading state. The
   // old fallback was an empty <main>, so the prerendered page had no header,
@@ -643,7 +655,7 @@ export default function AchievementsPage() {
             />
           }
         >
-          <AchievementsContent />
+          <AchievementsContent noSession={noSession} />
         </Suspense>
       </section>
     </main>
