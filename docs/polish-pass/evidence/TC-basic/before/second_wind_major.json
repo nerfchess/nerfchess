@@ -1,0 +1,80 @@
+{
+ "id": "second_wind_major",
+ "url": "/dev/plays?id=second_wind_major&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "second_wind_major",
+  "name": "Second Wind Major",
+  "tier": 5,
+  "category": "pieces",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:second_wind_major",
+  "anchor": "board",
+  "source": "summon",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "stage",
+  "driveNote": "no valid use in this position, synthetic diff, summon diff",
+  "castSq": "d4",
+  "targets": [
+   "d4",
+   "c3",
+   "d3"
+  ],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2500,
+  "cssEndMs": 3461,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 65,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 167,
+  "maxGapMs": 46.5
+ },
+ "raf": {
+  "frames": 199,
+  "medianMs": 16.7,
+  "maxMs": 83.3,
+  "dropped": 20
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 87,
+  "totalBlockingMs": 33,
+  "entries": [
+   {
+    "atMs": -70,
+    "duration": 87,
+    "blocking": 33,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  192,
+  488,
+  844,
+  1245,
+  1683,
+  2152,
+  2650
+ ],
+ "png": "docs/polish-pass/evidence/TC-basic/before/second_wind_major.png",
+ "pngBytes": 23264
+}

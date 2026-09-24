@@ -1,0 +1,78 @@
+{
+ "id": "extra_glance",
+ "url": "/dev/plays?id=extra_glance&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "extra_glance",
+  "name": "Extra Glance",
+  "tier": 1,
+  "category": "info",
+  "mechanic": "instant",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:extra_glance",
+  "anchor": "board",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2309,
+  "cssEndMs": 3447,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 14,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 168,
+  "maxGapMs": 317.6
+ },
+ "raf": {
+  "frames": 217,
+  "medianMs": 16.7,
+  "maxMs": 33.3,
+  "dropped": 1
+ },
+ "longAnimationFrames": {
+  "count": 0,
+  "worstMs": 0,
+  "totalBlockingMs": 0,
+  "entries": []
+ },
+ "tiles": [
+  0,
+  178,
+  453,
+  783,
+  1155,
+  1561,
+  1997,
+  2459
+ ],
+ "png": "docs/polish-pass/evidence/TC-basic/after/extra_glance.png",
+ "pngBytes": 20960,
+ "off": {
+  "url": "/dev/plays?id=extra_glance&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "docs/polish-pass/evidence/TC-basic/after/extra_glance.off.png"
+ }
+}

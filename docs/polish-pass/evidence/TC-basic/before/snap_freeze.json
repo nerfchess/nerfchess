@@ -1,0 +1,106 @@
+{
+ "id": "snap_freeze",
+ "url": "/dev/plays?id=snap_freeze&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "snap_freeze",
+  "name": "Snap Freeze",
+  "tier": 1,
+  "category": "tempo",
+  "mechanic": "instant",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:snap_freeze",
+  "anchor": "cast",
+  "source": "frozen",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2336,
+  "cssEndMs": 3475,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 33,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 137,
+  "maxGapMs": 323.3
+ },
+ "raf": {
+  "frames": 184,
+  "medianMs": 16.7,
+  "maxMs": 99.9,
+  "dropped": 34
+ },
+ "longAnimationFrames": {
+  "count": 6,
+  "worstMs": 90,
+  "totalBlockingMs": 23,
+  "entries": [
+   {
+    "atMs": 849,
+    "duration": 63,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 952,
+    "duration": 51,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 1440,
+    "duration": 60,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 1642,
+    "duration": 72,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 1715,
+    "duration": 89,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 2077,
+    "duration": 90,
+    "blocking": 23,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  180,
+  458,
+  792,
+  1168,
+  1578,
+  2019,
+  2486
+ ],
+ "png": "docs/polish-pass/evidence/TC-basic/before/snap_freeze.png",
+ "pngBytes": 23824
+}

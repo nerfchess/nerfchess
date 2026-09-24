@@ -1,0 +1,79 @@
+{
+ "id": "we_updraft",
+ "url": "/dev/plays?id=we_updraft&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "we_updraft",
+  "name": "Updraft",
+  "tier": 1,
+  "category": "movement",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:we_updraft",
+  "anchor": "aim",
+  "source": "empower",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, empower diff",
+  "castSq": "b1",
+  "targets": [
+   "b1",
+   "g1"
+  ],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2245,
+  "cssEndMs": 3417,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 47,
+  "infiniteAnimations": 7
+ },
+ "screencast": {
+  "framesInWindow": 214,
+  "maxGapMs": 289.4
+ },
+ "raf": {
+  "frames": 215,
+  "medianMs": 16.7,
+  "maxMs": 50.1,
+  "dropped": 4
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 62,
+  "totalBlockingMs": 8,
+  "entries": [
+   {
+    "atMs": -55,
+    "duration": 62,
+    "blocking": 8,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  173,
+  441,
+  763,
+  1125,
+  1521,
+  1945,
+  2395
+ ],
+ "png": "docs/polish-pass/evidence/TC-basic/before/we_updraft.png",
+ "pngBytes": 29430
+}

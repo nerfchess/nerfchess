@@ -1,0 +1,78 @@
+{
+ "id": "snap_freeze",
+ "url": "/dev/plays?id=snap_freeze&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "snap_freeze",
+  "name": "Snap Freeze",
+  "tier": 1,
+  "category": "tempo",
+  "mechanic": "instant",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:snap_freeze",
+  "anchor": "cast",
+  "source": "frozen",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2312,
+  "cssEndMs": 3435,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 14,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 170,
+  "maxGapMs": 298.2
+ },
+ "raf": {
+  "frames": 217,
+  "medianMs": 16.7,
+  "maxMs": 33.3,
+  "dropped": 1
+ },
+ "longAnimationFrames": {
+  "count": 0,
+  "worstMs": 0,
+  "totalBlockingMs": 0,
+  "entries": []
+ },
+ "tiles": [
+  0,
+  178,
+  454,
+  784,
+  1157,
+  1563,
+  1999,
+  2462
+ ],
+ "png": "docs/polish-pass/evidence/TC-basic/after/snap_freeze.png",
+ "pngBytes": 17299,
+ "off": {
+  "url": "/dev/plays?id=snap_freeze&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "docs/polish-pass/evidence/TC-basic/after/snap_freeze.off.png"
+ }
+}

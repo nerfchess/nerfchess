@@ -1,0 +1,113 @@
+{
+ "id": "stage_fright",
+ "url": "/dev/plays?id=stage_fright&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "stage_fright",
+  "name": "Promotion Anxiety",
+  "tier": 1,
+  "category": "hex",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:stage_fright",
+  "anchor": "cast",
+  "source": "slow",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, slow diff",
+  "castSq": "c7",
+  "targets": [
+   "c7",
+   "d7",
+   "e7"
+  ],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2560,
+  "cssEndMs": 3416,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 48,
+  "infiniteAnimations": 12
+ },
+ "screencast": {
+  "framesInWindow": 174,
+  "maxGapMs": 304.3
+ },
+ "raf": {
+  "frames": 174,
+  "medianMs": 16.7,
+  "maxMs": 166.6,
+  "dropped": 45
+ },
+ "longAnimationFrames": {
+  "count": 5,
+  "worstMs": 149,
+  "totalBlockingMs": 218,
+  "entries": [
+   {
+    "atMs": -65,
+    "duration": 73,
+    "blocking": 18,
+    "scripts": []
+   },
+   {
+    "atMs": 13,
+    "duration": 51,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 92,
+    "duration": 85,
+    "blocking": 25,
+    "scripts": []
+   },
+   {
+    "atMs": 531,
+    "duration": 149,
+    "blocking": 88,
+    "scripts": []
+   },
+   {
+    "atMs": 833,
+    "duration": 137,
+    "blocking": 87,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  196,
+  499,
+  863,
+  1273,
+  1721,
+  2201,
+  2710
+ ],
+ "png": "docs/polish-pass/evidence/TC-basic/after/stage_fright.png",
+ "pngBytes": 17954,
+ "off": {
+  "url": "/dev/plays?id=stage_fright&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0.0001,
+  "endRegions": [],
+  "png": "docs/polish-pass/evidence/TC-basic/after/stage_fright.off.png"
+ }
+}

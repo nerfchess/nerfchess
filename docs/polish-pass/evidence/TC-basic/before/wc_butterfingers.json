@@ -1,0 +1,76 @@
+{
+ "id": "wc_butterfingers",
+ "url": "/dev/plays?id=wc_butterfingers&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "wc_butterfingers",
+  "name": "Butterfingers",
+  "tier": 5,
+  "category": "protection",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:wc_butterfingers",
+  "anchor": "board",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, diff-less: no zone source, not an attack",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2415,
+  "cssEndMs": 3487,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 30,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 165,
+  "maxGapMs": 345.4
+ },
+ "raf": {
+  "frames": 214,
+  "medianMs": 16.7,
+  "maxMs": 33.3,
+  "dropped": 4
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 54,
+  "totalBlockingMs": 4,
+  "entries": [
+   {
+    "atMs": 8,
+    "duration": 54,
+    "blocking": 4,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  185,
+  473,
+  817,
+  1205,
+  1629,
+  2083,
+  2565
+ ],
+ "png": "docs/polish-pass/evidence/TC-basic/before/wc_butterfingers.png",
+ "pngBytes": 22582
+}

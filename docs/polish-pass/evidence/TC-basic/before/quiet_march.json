@@ -1,0 +1,80 @@
+{
+ "id": "quiet_march",
+ "url": "/dev/plays?id=quiet_march&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "quiet_march",
+  "name": "Quiet March",
+  "tier": 1,
+  "category": "movement",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:quiet_march",
+  "anchor": "aim",
+  "source": "empower",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, empower diff",
+  "castSq": "b2",
+  "targets": [
+   "b2",
+   "c2",
+   "d2"
+  ],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2390,
+  "cssEndMs": 3429,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 68,
+  "infiniteAnimations": 19
+ },
+ "screencast": {
+  "framesInWindow": 206,
+  "maxGapMs": 98.4
+ },
+ "raf": {
+  "frames": 213,
+  "medianMs": 16.7,
+  "maxMs": 50,
+  "dropped": 7
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 70,
+  "totalBlockingMs": 15,
+  "entries": [
+   {
+    "atMs": -61,
+    "duration": 70,
+    "blocking": 15,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  184,
+  468,
+  809,
+  1193,
+  1613,
+  2063,
+  2540
+ ],
+ "png": "docs/polish-pass/evidence/TC-basic/before/quiet_march.png",
+ "pngBytes": 27643
+}

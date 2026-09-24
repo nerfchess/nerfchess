@@ -1,0 +1,142 @@
+{
+ "id": "statue_stable",
+ "url": "/dev/plays?id=statue_stable&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "statue_stable",
+  "name": "Statue Stable",
+  "tier": 5,
+  "category": "hex",
+  "mechanic": "instant",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:statue_stable",
+  "anchor": "cast",
+  "source": "walnut",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 60,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2487,
+  "cssEndMs": 3441,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 46,
+  "infiniteAnimations": 2
+ },
+ "screencast": {
+  "framesInWindow": 201,
+  "maxGapMs": 324.6
+ },
+ "raf": {
+  "frames": 201,
+  "medianMs": 16.7,
+  "maxMs": 66.6,
+  "dropped": 19
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 82,
+  "totalBlockingMs": 25,
+  "entries": [
+   {
+    "atMs": -70,
+    "duration": 82,
+    "blocking": 25,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  191,
+  486,
+  840,
+  1239,
+  1674,
+  2142,
+  2637
+ ],
+ "png": "docs/polish-pass/evidence/TC-basic/after/statue_stable.png",
+ "pngBytes": 22589,
+ "off": {
+  "url": "/dev/plays?id=statue_stable&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0.002,
+  "endRegions": [
+   {
+    "x": 88,
+    "y": 24,
+    "w": 24,
+    "h": 32,
+    "cells": 10
+   },
+   {
+    "x": 376,
+    "y": 24,
+    "w": 16,
+    "h": 32,
+    "cells": 7
+   },
+   {
+    "x": 400,
+    "y": 8,
+    "w": 16,
+    "h": 16,
+    "cells": 3
+   },
+   {
+    "x": 72,
+    "y": 456,
+    "w": 16,
+    "h": 16,
+    "cells": 3
+   },
+   {
+    "x": 360,
+    "y": 456,
+    "w": 16,
+    "h": 16,
+    "cells": 4
+   },
+   {
+    "x": 120,
+    "y": 8,
+    "w": 8,
+    "h": 16,
+    "cells": 2
+   },
+   {
+    "x": 72,
+    "y": 56,
+    "w": 8,
+    "h": 16,
+    "cells": 2
+   },
+   {
+    "x": 360,
+    "y": 56,
+    "w": 16,
+    "h": 8,
+    "cells": 2
+   }
+  ],
+  "png": "docs/polish-pass/evidence/TC-basic/after/statue_stable.off.png"
+ }
+}

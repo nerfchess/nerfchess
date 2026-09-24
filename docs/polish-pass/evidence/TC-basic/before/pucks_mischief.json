@@ -1,0 +1,80 @@
+{
+ "id": "pucks_mischief",
+ "url": "/dev/plays?id=pucks_mischief&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "pucks_mischief",
+  "name": "Puck's Mischief",
+  "tier": 5,
+  "category": "hex",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:pucks_mischief",
+  "anchor": "board",
+  "source": "slow",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 60,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, slow diff",
+  "castSq": "d8",
+  "targets": [
+   "d8",
+   "h8",
+   "a8"
+  ],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2418,
+  "cssEndMs": 3438,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 63,
+  "infiniteAnimations": 15
+ },
+ "screencast": {
+  "framesInWindow": 202,
+  "maxGapMs": 334.4
+ },
+ "raf": {
+  "frames": 209,
+  "medianMs": 16.7,
+  "maxMs": 83.3,
+  "dropped": 11
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 94,
+  "totalBlockingMs": 39,
+  "entries": [
+   {
+    "atMs": -84,
+    "duration": 94,
+    "blocking": 39,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  186,
+  473,
+  818,
+  1206,
+  1631,
+  2086,
+  2568
+ ],
+ "png": "docs/polish-pass/evidence/TC-basic/before/pucks_mischief.png",
+ "pngBytes": 26948
+}

@@ -1,0 +1,78 @@
+{
+ "id": "walnut_shell",
+ "url": "/dev/plays?id=walnut_shell&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "walnut_shell",
+  "name": "Walnut Shell",
+  "tier": 1,
+  "category": "item",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:walnut_shell",
+  "anchor": "cast",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "engine",
+  "driveNote": "activated, no targets",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2359,
+  "cssEndMs": 3468,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 21,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 168,
+  "maxGapMs": 314
+ },
+ "raf": {
+  "frames": 214,
+  "medianMs": 16.7,
+  "maxMs": 33.4,
+  "dropped": 4
+ },
+ "longAnimationFrames": {
+  "count": 0,
+  "worstMs": 0,
+  "totalBlockingMs": 0,
+  "entries": []
+ },
+ "tiles": [
+  0,
+  181,
+  462,
+  799,
+  1179,
+  1593,
+  2038,
+  2509
+ ],
+ "png": "docs/polish-pass/evidence/TC-basic/after/walnut_shell.png",
+ "pngBytes": 19082,
+ "off": {
+  "url": "/dev/plays?id=walnut_shell&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "docs/polish-pass/evidence/TC-basic/after/walnut_shell.off.png"
+ }
+}

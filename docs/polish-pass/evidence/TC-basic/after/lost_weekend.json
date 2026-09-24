@@ -1,0 +1,85 @@
+{
+ "id": "lost_weekend",
+ "url": "/dev/plays?id=lost_weekend&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "lost_weekend",
+  "name": "Lost Weekend",
+  "tier": 5,
+  "category": "hex",
+  "mechanic": "instant",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:lost_weekend",
+  "anchor": "board",
+  "source": "slow",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 60,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2411,
+  "cssEndMs": 3484,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 23,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 170,
+  "maxGapMs": 274.9
+ },
+ "raf": {
+  "frames": 212,
+  "medianMs": 16.7,
+  "maxMs": 50.1,
+  "dropped": 6
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 55,
+  "totalBlockingMs": 0,
+  "entries": [
+   {
+    "atMs": 15,
+    "duration": 55,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  185,
+  472,
+  816,
+  1203,
+  1626,
+  2080,
+  2561
+ ],
+ "png": "docs/polish-pass/evidence/TC-basic/after/lost_weekend.png",
+ "pngBytes": 19551,
+ "off": {
+  "url": "/dev/plays?id=lost_weekend&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "docs/polish-pass/evidence/TC-basic/after/lost_weekend.off.png"
+ }
+}

@@ -1,0 +1,78 @@
+{
+ "id": "deep_breath",
+ "url": "/dev/plays?id=deep_breath&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "deep_breath",
+  "name": "Deep Breath",
+  "tier": 1,
+  "category": "nerf",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:deep_breath",
+  "anchor": "board",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "engine",
+  "driveNote": "activated, no targets",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2302,
+  "cssEndMs": 3439,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 21,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 168,
+  "maxGapMs": 297.6
+ },
+ "raf": {
+  "frames": 213,
+  "medianMs": 16.7,
+  "maxMs": 50,
+  "dropped": 4
+ },
+ "longAnimationFrames": {
+  "count": 0,
+  "worstMs": 0,
+  "totalBlockingMs": 0,
+  "entries": []
+ },
+ "tiles": [
+  0,
+  177,
+  452,
+  781,
+  1152,
+  1557,
+  1991,
+  2452
+ ],
+ "png": "docs/polish-pass/evidence/TC-basic/after/deep_breath.png",
+ "pngBytes": 20806,
+ "off": {
+  "url": "/dev/plays?id=deep_breath&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "docs/polish-pass/evidence/TC-basic/after/deep_breath.off.png"
+ }
+}

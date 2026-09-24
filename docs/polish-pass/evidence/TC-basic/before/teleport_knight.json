@@ -1,0 +1,85 @@
+{
+ "id": "teleport_knight",
+ "url": "/dev/plays?id=teleport_knight&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "teleport_knight",
+  "name": "Teleport Knight",
+  "tier": 1,
+  "category": "movement",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:teleport_knight",
+  "anchor": "aim",
+  "source": "empower",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, empower diff",
+  "castSq": "b1",
+  "targets": [
+   "b1",
+   "g1"
+  ],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2407,
+  "cssEndMs": 3428,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 45,
+  "infiniteAnimations": 5
+ },
+ "screencast": {
+  "framesInWindow": 201,
+  "maxGapMs": 311.5
+ },
+ "raf": {
+  "frames": 206,
+  "medianMs": 16.7,
+  "maxMs": 66.6,
+  "dropped": 13
+ },
+ "longAnimationFrames": {
+  "count": 2,
+  "worstMs": 70,
+  "totalBlockingMs": 23,
+  "entries": [
+   {
+    "atMs": -62,
+    "duration": 70,
+    "blocking": 15,
+    "scripts": []
+   },
+   {
+    "atMs": 27,
+    "duration": 58,
+    "blocking": 8,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  185,
+  471,
+  815,
+  1201,
+  1624,
+  2077,
+  2557
+ ],
+ "png": "docs/polish-pass/evidence/TC-basic/before/teleport_knight.png",
+ "pngBytes": 25156
+}

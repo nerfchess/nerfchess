@@ -1,0 +1,86 @@
+{
+ "id": "cold_snap",
+ "url": "/dev/plays?id=cold_snap&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "cold_snap",
+  "name": "Cold Snap",
+  "tier": 1,
+  "category": "hex",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:cold_snap",
+  "anchor": "cast",
+  "source": "frozen",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "engine",
+  "driveNote": "activated with 1 pick(s)",
+  "castSq": "d7",
+  "targets": [
+   "d7"
+  ],
+  "picks": [
+   "d7"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2304,
+  "cssEndMs": 3431,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 41,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 175,
+  "maxGapMs": 286.5
+ },
+ "raf": {
+  "frames": 181,
+  "medianMs": 16.7,
+  "maxMs": 66.6,
+  "dropped": 38
+ },
+ "longAnimationFrames": {
+  "count": 2,
+  "worstMs": 81,
+  "totalBlockingMs": 8,
+  "entries": [
+   {
+    "atMs": -52,
+    "duration": 61,
+    "blocking": 8,
+    "scripts": []
+   },
+   {
+    "atMs": 2109,
+    "duration": 81,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  177,
+  452,
+  782,
+  1153,
+  1558,
+  1993,
+  2454
+ ],
+ "png": "docs/polish-pass/evidence/TC-basic/before/cold_snap.png",
+ "pngBytes": 24221
+}

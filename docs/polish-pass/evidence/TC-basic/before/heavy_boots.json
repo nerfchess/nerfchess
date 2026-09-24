@@ -1,0 +1,88 @@
+{
+ "id": "heavy_boots",
+ "url": "/dev/plays?id=heavy_boots&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "heavy_boots",
+  "name": "Heavy Boots",
+  "tier": 1,
+  "category": "hex",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:heavy_boots",
+  "anchor": "board",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, diff-less: no zone source, not an attack",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2354,
+  "cssEndMs": 3479,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 33,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 166,
+  "maxGapMs": 604.8
+ },
+ "raf": {
+  "frames": 256,
+  "medianMs": 16.7,
+  "maxMs": 50.1,
+  "dropped": 6
+ },
+ "longAnimationFrames": {
+  "count": 2,
+  "worstMs": 67,
+  "totalBlockingMs": 0,
+  "entries": [
+   {
+    "atMs": -4,
+    "duration": 51,
+    "blocking": 0,
+    "scripts": [
+     {
+      "duration": 5,
+      "invoker": "TimerHandler:setInterval",
+      "source": ""
+     }
+    ]
+   },
+   {
+    "atMs": 52,
+    "duration": 67,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  181,
+  461,
+  798,
+  1176,
+  1590,
+  2034,
+  2504
+ ],
+ "png": "docs/polish-pass/evidence/TC-basic/before/heavy_boots.png",
+ "pngBytes": 20639
+}

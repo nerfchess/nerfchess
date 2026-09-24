@@ -1,0 +1,118 @@
+{
+ "id": "hard_frost",
+ "url": "/dev/plays?id=hard_frost&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "hard_frost",
+  "name": "Hard Frost",
+  "tier": 5,
+  "category": "hex",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:hard_frost",
+  "anchor": "aim",
+  "source": "frozen",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 60,
+  "drive": "engine",
+  "driveNote": "activated with 2 pick(s)",
+  "castSq": "d7",
+  "targets": [
+   "d7",
+   "e7"
+  ],
+  "picks": [
+   "d7",
+   "e7"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2498,
+  "cssEndMs": 3419,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 36,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 176,
+  "maxGapMs": 273
+ },
+ "raf": {
+  "frames": 202,
+  "medianMs": 16.7,
+  "maxMs": 133.3,
+  "dropped": 17
+ },
+ "longAnimationFrames": {
+  "count": 2,
+  "worstMs": 155,
+  "totalBlockingMs": 84,
+  "entries": [
+   {
+    "atMs": -46,
+    "duration": 52,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 2553,
+    "duration": 155,
+    "blocking": 84,
+    "scripts": [
+     {
+      "duration": 6,
+      "invoker": "FrameRequestCallback",
+      "source": ""
+     }
+    ]
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  191,
+  488,
+  844,
+  1244,
+  1681,
+  2151,
+  2648
+ ],
+ "png": "docs/polish-pass/evidence/TC-basic/after/hard_frost.png",
+ "pngBytes": 27595,
+ "off": {
+  "url": "/dev/plays?id=hard_frost&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0.0011,
+  "endRegions": [
+   {
+    "x": 216,
+    "y": 72,
+    "w": 32,
+    "h": 56,
+    "cells": 13
+   },
+   {
+    "x": 272,
+    "y": 72,
+    "w": 24,
+    "h": 16,
+    "cells": 6
+   }
+  ],
+  "png": "docs/polish-pass/evidence/TC-basic/after/hard_frost.off.png"
+ }
+}

@@ -1,0 +1,90 @@
+{
+ "id": "duelist",
+ "url": "/dev/plays?id=duelist&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "duelist",
+  "name": "Duelist",
+  "tier": 5,
+  "category": "protection",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:duelist",
+  "anchor": "cast",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "engine",
+  "driveNote": "activated with 1 pick(s)",
+  "castSq": "d2",
+  "targets": [
+   "d2"
+  ],
+  "picks": [
+   "d2"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2365,
+  "cssEndMs": 3465,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 23,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 170,
+  "maxGapMs": 320.5
+ },
+ "raf": {
+  "frames": 216,
+  "medianMs": 16.7,
+  "maxMs": 50,
+  "dropped": 2
+ },
+ "longAnimationFrames": {
+  "count": 0,
+  "worstMs": 0,
+  "totalBlockingMs": 0,
+  "entries": []
+ },
+ "tiles": [
+  0,
+  182,
+  463,
+  801,
+  1182,
+  1597,
+  2042,
+  2515
+ ],
+ "png": "docs/polish-pass/evidence/TC-basic/after/duelist.png",
+ "pngBytes": 21375,
+ "off": {
+  "url": "/dev/plays?id=duelist&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0.0002,
+  "endRegions": [
+   {
+    "x": 240,
+    "y": 352,
+    "w": 8,
+    "h": 24,
+    "cells": 3
+   }
+  ],
+  "png": "docs/polish-pass/evidence/TC-basic/after/duelist.off.png"
+ }
+}

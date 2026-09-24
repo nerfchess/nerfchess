@@ -678,6 +678,95 @@
 .bsp-x-seam { animation: bsp-x-seam calc(0.95s * var(--fx-dur, 1)) cubic-bezier(0.65, 0, 0.35, 1) both; }
 
 
+/* --- Rule scenes (slice TC-basic) -------------------------------------------
+   The per-card rule scenes in basicPlays.tsx draw the pieces and squares a
+   rule touches. Every layer box is one square, so a translate of 100% is one
+   square: --mx counts files, --my counts ranks FORWARD (away from the caster)
+   and is signed by --fx-side, so a move reads right for either player. All
+   tracks are one-shots that end at opacity 0, like the rest of the module. */
+
+/* Presence: a marked square, a band or a standing piece holds, then goes. */
+@keyframes bsp-r-hold {
+  0% { opacity: 0; transform: scale(0.94); }
+  16% { opacity: 1; transform: scale(1); }
+  82% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1); }
+}
+.bsp-r-hold { animation: bsp-r-hold calc(1.6s * var(--fx-dur, 1)) var(--ease-out) both; }
+
+/* A piece moves --mx files and --my ranks and stays there. */
+@keyframes bsp-r-move {
+  0% { opacity: 0; transform: translate(0, 0); }
+  14% { opacity: 1; transform: translate(0, 0); }
+  52% { transform: translate(calc(var(--mx, 0) * 100%), calc(var(--my, 0) * var(--fx-side, 1) * -100%)); }
+  84% { opacity: 1; transform: translate(calc(var(--mx, 0) * 100%), calc(var(--my, 0) * var(--fx-side, 1) * -100%)); }
+  100% { opacity: 0; transform: translate(calc(var(--mx, 0) * 100%), calc(var(--my, 0) * var(--fx-side, 1) * -100%)); }
+}
+.bsp-r-move { animation: bsp-r-move calc(1.4s * var(--fx-dur, 1)) var(--ease-io) both; }
+
+/* A leap: the same trip over an arc, the piece lifted at the top of it. */
+@keyframes bsp-r-hop {
+  0% { opacity: 0; transform: translate(0, 0) scale(1); }
+  14% { opacity: 1; transform: translate(0, 0) scale(1); }
+  33% { transform: translate(calc(var(--mx, 0) * 50%), calc(var(--my, 0) * var(--fx-side, 1) * -50% - 60%)) scale(1.16); }
+  52% { transform: translate(calc(var(--mx, 0) * 100%), calc(var(--my, 0) * var(--fx-side, 1) * -100%)) scale(1); }
+  84% { opacity: 1; transform: translate(calc(var(--mx, 0) * 100%), calc(var(--my, 0) * var(--fx-side, 1) * -100%)) scale(1); }
+  100% { opacity: 0; transform: translate(calc(var(--mx, 0) * 100%), calc(var(--my, 0) * var(--fx-side, 1) * -100%)) scale(1); }
+}
+.bsp-r-hop { animation: bsp-r-hop calc(1.4s * var(--fx-dur, 1)) var(--ease-io) both; }
+
+/* Refused: the piece starts toward --mx/--my, stops short and is thrown back
+   to where it stood (the move the rule forbids). */
+@keyframes bsp-r-balk {
+  0% { opacity: 0; transform: translate(0, 0); }
+  14% { opacity: 1; transform: translate(0, 0); }
+  40% { transform: translate(calc(var(--mx, 0) * 55%), calc(var(--my, 0) * var(--fx-side, 1) * -55%)); }
+  48% { transform: translate(calc(var(--mx, 0) * 60%), calc(var(--my, 0) * var(--fx-side, 1) * -60%)); }
+  62% { transform: translate(calc(var(--mx, 0) * -8%), calc(var(--my, 0) * var(--fx-side, 1) * 8%)); }
+  74% { transform: translate(0, 0); }
+  86% { opacity: 1; transform: translate(0, 0); }
+  100% { opacity: 0; transform: translate(0, 0); }
+}
+.bsp-r-balk { animation: bsp-r-balk calc(1.2s * var(--fx-dur, 1)) var(--ease-out) both; }
+
+/* Removed: it stands, then twists and shrinks out of its square. */
+@keyframes bsp-r-gone {
+  0% { opacity: 0; transform: scale(1) rotate(0deg); }
+  14% { opacity: 1; transform: scale(1) rotate(0deg); }
+  52% { opacity: 1; transform: scale(1) rotate(0deg); }
+  70% { opacity: 0.7; transform: scale(1.1) rotate(-6deg); }
+  100% { opacity: 0; transform: scale(0.3) rotate(10deg); }
+}
+.bsp-r-gone { animation: bsp-r-gone calc(1.2s * var(--fx-dur, 1)) var(--ease-io) both; }
+
+/* Held: the piece strains on the spot (frozen, bound, tied). */
+@keyframes bsp-r-strain {
+  0% { opacity: 0; transform: translateX(0) rotate(0deg); }
+  16% { opacity: 1; transform: translateX(0) rotate(0deg); }
+  30% { transform: translateX(-5%) rotate(-3deg); }
+  38% { transform: translateX(5%) rotate(3deg); }
+  46% { transform: translateX(-4%) rotate(-2deg); }
+  54% { transform: translateX(3%) rotate(1deg); }
+  62% { transform: translateX(0) rotate(0deg); }
+  86% { opacity: 1; transform: translateX(0) rotate(0deg); }
+  100% { opacity: 0; transform: translateX(0) rotate(0deg); }
+}
+.bsp-r-strain { animation: bsp-r-strain calc(1.6s * var(--fx-dur, 1)) var(--ease-io) both; }
+
+/* Falling in from the far side of the board (away from the caster), --mx
+   squares across, landing with a squash. */
+@keyframes bsp-r-fall {
+  0% { opacity: 0; transform: translate(calc(var(--mx, 3) * 100%), calc(var(--fx-side, 1) * -300%)) scale(0.6); }
+  12% { opacity: 1; }
+  40% { transform: translate(0, 0) scale(1); }
+  48% { transform: translate(0, 3%) scale(1.06, 0.94); }
+  56% { transform: translate(0, 0) scale(1); }
+  86% { opacity: 1; transform: translate(0, 0) scale(1); }
+  100% { opacity: 0; transform: translate(0, 0) scale(1); }
+}
+.bsp-r-fall { animation: bsp-r-fall calc(1.2s * var(--fx-dur, 1)) var(--ease-io) both; }
+
+
 /* --- Animations off (Settings) ---------------------------------------------- */
 /* Defensive: the mounting layers already gate on the animations-off setting, but
    if one ever mounts anyway, every bsp-* element hides outright. */
