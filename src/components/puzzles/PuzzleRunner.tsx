@@ -379,7 +379,7 @@ export function PuzzleRunner({
             </p>
           )}
           {ruleView.hint && (
-            <p className="mt-1.5 text-[12px] text-parchment-300">{ruleView.hint.text}</p>
+            <p className="mt-1.5 text-[13px] text-parchment-300">{ruleView.hint.text}</p>
           )}
         </div>
 
