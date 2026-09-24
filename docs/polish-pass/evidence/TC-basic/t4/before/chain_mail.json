@@ -1,0 +1,94 @@
+{
+ "id": "chain_mail",
+ "url": "/dev/plays?id=chain_mail&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "chain_mail",
+  "name": "Chain Mail",
+  "tier": 4,
+  "category": "protection",
+  "mechanic": "instant",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:chain_mail",
+  "anchor": "board",
+  "source": "shield",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 60,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2500,
+  "cssEndMs": 3506,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 54,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 190,
+  "maxGapMs": 83.9
+ },
+ "raf": {
+  "frames": 193,
+  "medianMs": 16.7,
+  "maxMs": 133.3,
+  "dropped": 31
+ },
+ "longAnimationFrames": {
+  "count": 4,
+  "worstMs": 136,
+  "totalBlockingMs": 153,
+  "entries": [
+   {
+    "atMs": -91,
+    "duration": 136,
+    "blocking": 86,
+    "scripts": []
+   },
+   {
+    "atMs": 58,
+    "duration": 51,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 132,
+    "duration": 117,
+    "blocking": 67,
+    "scripts": []
+   },
+   {
+    "atMs": 687,
+    "duration": 60,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  192,
+  488,
+  844,
+  1245,
+  1683,
+  2152,
+  2650
+ ],
+ "png": "../../../tmp/claude-0/-home-user-nerfchess/ee610421-243f-5b03-97db-996cfbf5c124/scratchpad/before/chain_mail.png",
+ "pngBytes": 22698
+}

@@ -1,0 +1,98 @@
+{
+ "id": "flypaper_file",
+ "url": "/dev/plays?id=flypaper_file&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "flypaper_file",
+  "name": "Flypaper File",
+  "tier": 4,
+  "category": "hex",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:flypaper_file",
+  "anchor": "board",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "engine",
+  "driveNote": "activated with 1 pick(s)",
+  "castSq": "d4",
+  "targets": [
+   "d4"
+  ],
+  "picks": [
+   "d4"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2533,
+  "cssEndMs": 3624,
+  "settled": true,
+  "windowMs": 3874,
+  "cssAnimations": 81,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 164,
+  "maxGapMs": 310.2
+ },
+ "raf": {
+  "frames": 213,
+  "medianMs": 16.7,
+  "maxMs": 133.3,
+  "dropped": 22
+ },
+ "longAnimationFrames": {
+  "count": 4,
+  "worstMs": 122,
+  "totalBlockingMs": 73,
+  "entries": [
+   {
+    "atMs": -52,
+    "duration": 57,
+    "blocking": 1,
+    "scripts": []
+   },
+   {
+    "atMs": 77,
+    "duration": 122,
+    "blocking": 72,
+    "scripts": []
+   },
+   {
+    "atMs": 675,
+    "duration": 54,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 1470,
+    "duration": 53,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  194,
+  494,
+  855,
+  1260,
+  1704,
+  2179,
+  2683
+ ],
+ "png": "../../../tmp/claude-0/-home-user-nerfchess/ee610421-243f-5b03-97db-996cfbf5c124/scratchpad/before/flypaper_file.png",
+ "pngBytes": 22203
+}

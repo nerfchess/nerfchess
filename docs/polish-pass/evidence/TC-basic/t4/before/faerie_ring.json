@@ -1,0 +1,110 @@
+{
+ "id": "faerie_ring",
+ "url": "/dev/plays?id=faerie_ring&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "faerie_ring",
+  "name": "Faerie Ring",
+  "tier": 4,
+  "category": "hex",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:faerie_ring",
+  "anchor": "board",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "engine",
+  "driveNote": "activated with 1 pick(s)",
+  "castSq": "d4",
+  "targets": [
+   "d4"
+  ],
+  "picks": [
+   "d4"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2459,
+  "cssEndMs": 3582,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 81,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 161,
+  "maxGapMs": 176.8
+ },
+ "raf": {
+  "frames": 193,
+  "medianMs": 16.7,
+  "maxMs": 133.3,
+  "dropped": 31
+ },
+ "longAnimationFrames": {
+  "count": 5,
+  "worstMs": 183,
+  "totalBlockingMs": 196,
+  "entries": [
+   {
+    "atMs": -79,
+    "duration": 89,
+    "blocking": 38,
+    "scripts": []
+   },
+   {
+    "atMs": 44,
+    "duration": 110,
+    "blocking": 59,
+    "scripts": []
+   },
+   {
+    "atMs": 972,
+    "duration": 52,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 1602,
+    "duration": 57,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 3038,
+    "duration": 183,
+    "blocking": 99,
+    "scripts": [
+     {
+      "duration": 147,
+      "invoker": "http://localhost:3000/_next/static/chunks/_app-pages-browser_src_components_effe...",
+      "source": "/_next/static/chunks/_app-pages-browser_src_components_effects_board3d_engine3d_ts.js"
+     }
+    ]
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  189,
+  481,
+  831,
+  1226,
+  1657,
+  2119,
+  2609
+ ],
+ "png": "../../../tmp/claude-0/-home-user-nerfchess/ee610421-243f-5b03-97db-996cfbf5c124/scratchpad/before/faerie_ring.png",
+ "pngBytes": 23713
+}

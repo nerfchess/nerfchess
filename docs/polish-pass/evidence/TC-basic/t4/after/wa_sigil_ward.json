@@ -1,0 +1,104 @@
+{
+ "id": "wa_sigil_ward",
+ "url": "/dev/plays?id=wa_sigil_ward&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "wa_sigil_ward",
+  "name": "Sigil Ward",
+  "tier": 4,
+  "category": "protection",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:wa_sigil_ward",
+  "anchor": "cast",
+  "source": "shield",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "engine",
+  "driveNote": "activated with 1 pick(s)",
+  "castSq": "d2",
+  "targets": [
+   "d2"
+  ],
+  "picks": [
+   "d2"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2332,
+  "cssEndMs": 3406,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 27,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 172,
+  "maxGapMs": 276.5
+ },
+ "raf": {
+  "frames": 215,
+  "medianMs": 16.7,
+  "maxMs": 50,
+  "dropped": 3
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 58,
+  "totalBlockingMs": 1,
+  "entries": [
+   {
+    "atMs": -51,
+    "duration": 58,
+    "blocking": 1,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  179,
+  457,
+  791,
+  1166,
+  1576,
+  2016,
+  2482
+ ],
+ "png": "../../../tmp/claude-0/-home-user-nerfchess/ee610421-243f-5b03-97db-996cfbf5c124/scratchpad/after/wa_sigil_ward.png",
+ "pngBytes": 21979,
+ "off": {
+  "url": "/dev/plays?id=wa_sigil_ward&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0.0007,
+  "endRegions": [
+   {
+    "x": 232,
+    "y": 352,
+    "w": 16,
+    "h": 64,
+    "cells": 9
+   },
+   {
+    "x": 184,
+    "y": 400,
+    "w": 24,
+    "h": 8,
+    "cells": 3
+   }
+  ],
+  "png": "../../../tmp/claude-0/-home-user-nerfchess/ee610421-243f-5b03-97db-996cfbf5c124/scratchpad/after/wa_sigil_ward.off.png"
+ }
+}

@@ -1,0 +1,107 @@
+{
+ "id": "wa_bind_the_queen",
+ "url": "/dev/plays?id=wa_bind_the_queen&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "wa_bind_the_queen",
+  "name": "Bind the Queen",
+  "tier": 4,
+  "category": "protection",
+  "mechanic": "instant",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:wa_bind_the_queen",
+  "anchor": "board",
+  "source": "frozen",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 60,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2385,
+  "cssEndMs": 3442,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 51,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 173,
+  "maxGapMs": 301.6
+ },
+ "raf": {
+  "frames": 215,
+  "medianMs": 16.7,
+  "maxMs": 49.9,
+  "dropped": 3
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 64,
+  "totalBlockingMs": 9,
+  "entries": [
+   {
+    "atMs": -55,
+    "duration": 64,
+    "blocking": 9,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  183,
+  467,
+  808,
+  1191,
+  1610,
+  2059,
+  2535
+ ],
+ "png": "../../../tmp/claude-0/-home-user-nerfchess/ee610421-243f-5b03-97db-996cfbf5c124/scratchpad/after/wa_bind_the_queen.png",
+ "pngBytes": 21895,
+ "off": {
+  "url": "/dev/plays?id=wa_bind_the_queen&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0.0019,
+  "endRegions": [
+   {
+    "x": 216,
+    "y": 16,
+    "w": 32,
+    "h": 112,
+    "cells": 22
+   },
+   {
+    "x": 272,
+    "y": 72,
+    "w": 24,
+    "h": 16,
+    "cells": 6
+   },
+   {
+    "x": 160,
+    "y": 72,
+    "w": 16,
+    "h": 16,
+    "cells": 4
+   }
+  ],
+  "png": "../../../tmp/claude-0/-home-user-nerfchess/ee610421-243f-5b03-97db-996cfbf5c124/scratchpad/after/wa_bind_the_queen.off.png"
+ }
+}

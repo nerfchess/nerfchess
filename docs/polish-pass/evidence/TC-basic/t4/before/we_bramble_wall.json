@@ -1,0 +1,88 @@
+{
+ "id": "we_bramble_wall",
+ "url": "/dev/plays?id=we_bramble_wall&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "we_bramble_wall",
+  "name": "Bramble Wall",
+  "tier": 4,
+  "category": "protection",
+  "mechanic": "instant",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:we_bramble_wall",
+  "anchor": "board",
+  "source": "frozen",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 60,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2381,
+  "cssEndMs": 3449,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 37,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 172,
+  "maxGapMs": 51.8
+ },
+ "raf": {
+  "frames": 205,
+  "medianMs": 16.7,
+  "maxMs": 199.9,
+  "dropped": 16
+ },
+ "longAnimationFrames": {
+  "count": 2,
+  "worstMs": 199,
+  "totalBlockingMs": 179,
+  "entries": [
+   {
+    "atMs": -64,
+    "duration": 89,
+    "blocking": 30,
+    "scripts": []
+   },
+   {
+    "atMs": 3374,
+    "duration": 199,
+    "blocking": 149,
+    "scripts": [
+     {
+      "duration": 197,
+      "invoker": "http://localhost:3000/_next/static/chunks/_app-pages-browser_src_components_effe...",
+      "source": "/_next/static/chunks/_app-pages-browser_src_components_effects_board3d_engine3d_ts.js"
+     }
+    ]
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  183,
+  466,
+  806,
+  1189,
+  1607,
+  2055,
+  2531
+ ],
+ "png": "../../../tmp/claude-0/-home-user-nerfchess/ee610421-243f-5b03-97db-996cfbf5c124/scratchpad/before2/we_bramble_wall.png",
+ "pngBytes": 25286
+}

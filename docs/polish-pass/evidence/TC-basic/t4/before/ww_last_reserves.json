@@ -1,0 +1,69 @@
+{
+ "id": "ww_last_reserves",
+ "url": "/dev/plays?id=ww_last_reserves&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "ww_last_reserves",
+  "name": "Last Reserves",
+  "tier": 4,
+  "category": "pieces",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:ww_last_reserves",
+  "anchor": "cast",
+  "source": "summon",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "engine",
+  "driveNote": "activated, no targets",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2327,
+  "cssEndMs": 3452,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 35,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 170,
+  "maxGapMs": 307.3
+ },
+ "raf": {
+  "frames": 218,
+  "medianMs": 16.7,
+  "maxMs": 16.8,
+  "dropped": 0
+ },
+ "longAnimationFrames": {
+  "count": 0,
+  "worstMs": 0,
+  "totalBlockingMs": 0,
+  "entries": []
+ },
+ "tiles": [
+  0,
+  179,
+  456,
+  789,
+  1164,
+  1573,
+  2012,
+  2477
+ ],
+ "png": "../../../tmp/claude-0/-home-user-nerfchess/ee610421-243f-5b03-97db-996cfbf5c124/scratchpad/before2/ww_last_reserves.png",
+ "pngBytes": 24702
+}

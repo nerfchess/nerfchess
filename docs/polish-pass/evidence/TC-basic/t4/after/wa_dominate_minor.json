@@ -1,0 +1,104 @@
+{
+ "id": "wa_dominate_minor",
+ "url": "/dev/plays?id=wa_dominate_minor&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "wa_dominate_minor",
+  "name": "Dominate",
+  "tier": 4,
+  "category": "pieces",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:wa_dominate_minor",
+  "anchor": "cast",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "engine",
+  "driveNote": "activated with 1 pick(s)",
+  "castSq": "c8",
+  "targets": [
+   "c8"
+  ],
+  "picks": [
+   "c8"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2341,
+  "cssEndMs": 3480,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 31,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 174,
+  "maxGapMs": 291.2
+ },
+ "raf": {
+  "frames": 216,
+  "medianMs": 16.7,
+  "maxMs": 33.4,
+  "dropped": 4
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 54,
+  "totalBlockingMs": 4,
+  "entries": [
+   {
+    "atMs": -51,
+    "duration": 54,
+    "blocking": 4,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  180,
+  459,
+  794,
+  1170,
+  1582,
+  2023,
+  2491
+ ],
+ "png": "../../../tmp/claude-0/-home-user-nerfchess/ee610421-243f-5b03-97db-996cfbf5c124/scratchpad/after/wa_dominate_minor.png",
+ "pngBytes": 20344,
+ "off": {
+  "url": "/dev/plays?id=wa_dominate_minor&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0.0025,
+  "endRegions": [
+   {
+    "x": 136,
+    "y": 16,
+    "w": 40,
+    "h": 48,
+    "cells": 17
+   },
+   {
+    "x": 128,
+    "y": 16,
+    "w": 16,
+    "h": 16,
+    "cells": 3
+   }
+  ],
+  "png": "../../../tmp/claude-0/-home-user-nerfchess/ee610421-243f-5b03-97db-996cfbf5c124/scratchpad/after/wa_dominate_minor.off.png"
+ }
+}

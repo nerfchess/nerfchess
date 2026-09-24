@@ -1,0 +1,76 @@
+{
+ "id": "wa_bind_the_queen",
+ "url": "/dev/plays?id=wa_bind_the_queen&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "wa_bind_the_queen",
+  "name": "Bind the Queen",
+  "tier": 4,
+  "category": "protection",
+  "mechanic": "instant",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:wa_bind_the_queen",
+  "anchor": "board",
+  "source": "frozen",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 60,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2401,
+  "cssEndMs": 3441,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 67,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 172,
+  "maxGapMs": 308.4
+ },
+ "raf": {
+  "frames": 213,
+  "medianMs": 16.7,
+  "maxMs": 49.9,
+  "dropped": 5
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 67,
+  "totalBlockingMs": 11,
+  "entries": [
+   {
+    "atMs": -57,
+    "duration": 67,
+    "blocking": 11,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  184,
+  470,
+  813,
+  1198,
+  1620,
+  2072,
+  2551
+ ],
+ "png": "../../../tmp/claude-0/-home-user-nerfchess/ee610421-243f-5b03-97db-996cfbf5c124/scratchpad/before2/wa_bind_the_queen.png",
+ "pngBytes": 24374
+}

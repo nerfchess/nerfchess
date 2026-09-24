@@ -1,0 +1,89 @@
+{
+ "id": "dragon_pawn",
+ "url": "/dev/plays?id=dragon_pawn&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "dragon_pawn",
+  "name": "Dragon Pawn",
+  "tier": 4,
+  "category": "movement",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:dragon_pawn",
+  "anchor": "cast",
+  "source": "empower",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "engine",
+  "driveNote": "activated with 1 pick(s)",
+  "castSq": "d2",
+  "targets": [
+   "d2"
+  ],
+  "picks": [
+   "d2"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2377,
+  "cssEndMs": 3409,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 31,
+  "infiniteAnimations": 6
+ },
+ "screencast": {
+  "framesInWindow": 209,
+  "maxGapMs": 238.8
+ },
+ "raf": {
+  "frames": 209,
+  "medianMs": 16.7,
+  "maxMs": 33.4,
+  "dropped": 9
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 63,
+  "totalBlockingMs": 3,
+  "entries": [
+   {
+    "atMs": -57,
+    "duration": 63,
+    "blocking": 3,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  183,
+  466,
+  805,
+  1187,
+  1604,
+  2052,
+  2527
+ ],
+ "png": "../../../tmp/claude-0/-home-user-nerfchess/ee610421-243f-5b03-97db-996cfbf5c124/scratchpad/after/dragon_pawn.png",
+ "pngBytes": 20522,
+ "off": {
+  "url": "/dev/plays?id=dragon_pawn&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0.0001,
+  "endRegions": [],
+  "png": "../../../tmp/claude-0/-home-user-nerfchess/ee610421-243f-5b03-97db-996cfbf5c124/scratchpad/after/dragon_pawn.off.png"
+ }
+}

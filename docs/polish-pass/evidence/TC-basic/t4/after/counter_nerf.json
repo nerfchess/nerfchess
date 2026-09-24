@@ -1,0 +1,78 @@
+{
+ "id": "counter_nerf",
+ "url": "/dev/plays?id=counter_nerf&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "counter_nerf",
+  "name": "Counter-Nerf",
+  "tier": 4,
+  "category": "nerf",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:counter_nerf",
+  "anchor": "aim",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, diff-less: no zone source, not an attack",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2356,
+  "cssEndMs": 3463,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 17,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 156,
+  "maxGapMs": 346.3
+ },
+ "raf": {
+  "frames": 212,
+  "medianMs": 16.7,
+  "maxMs": 50.1,
+  "dropped": 5
+ },
+ "longAnimationFrames": {
+  "count": 0,
+  "worstMs": 0,
+  "totalBlockingMs": 0,
+  "entries": []
+ },
+ "tiles": [
+  0,
+  181,
+  462,
+  798,
+  1177,
+  1591,
+  2035,
+  2506
+ ],
+ "png": "../../../tmp/claude-0/-home-user-nerfchess/ee610421-243f-5b03-97db-996cfbf5c124/scratchpad/after/counter_nerf.png",
+ "pngBytes": 18655,
+ "off": {
+  "url": "/dev/plays?id=counter_nerf&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "../../../tmp/claude-0/-home-user-nerfchess/ee610421-243f-5b03-97db-996cfbf5c124/scratchpad/after/counter_nerf.off.png"
+ }
+}

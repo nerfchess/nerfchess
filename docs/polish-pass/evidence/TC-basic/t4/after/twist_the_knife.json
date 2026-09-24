@@ -1,0 +1,125 @@
+{
+ "id": "twist_the_knife",
+ "url": "/dev/plays?id=twist_the_knife&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "twist_the_knife",
+  "name": "Twist the Knife",
+  "tier": 4,
+  "category": "hex",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:twist_the_knife",
+  "anchor": "aim",
+  "source": "slow",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 60,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, slow diff",
+  "castSq": "c7",
+  "targets": [
+   "c7",
+   "d7",
+   "e7"
+  ],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2369,
+  "cssEndMs": 3440,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 44,
+  "infiniteAnimations": 6
+ },
+ "screencast": {
+  "framesInWindow": 214,
+  "maxGapMs": 310.8
+ },
+ "raf": {
+  "frames": 217,
+  "medianMs": 16.7,
+  "maxMs": 50,
+  "dropped": 3
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 69,
+  "totalBlockingMs": 16,
+  "entries": [
+   {
+    "atMs": -58,
+    "duration": 69,
+    "blocking": 16,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  182,
+  464,
+  803,
+  1183,
+  1599,
+  2046,
+  2519
+ ],
+ "png": "../../../tmp/claude-0/-home-user-nerfchess/ee610421-243f-5b03-97db-996cfbf5c124/scratchpad/after/twist_the_knife.png",
+ "pngBytes": 20804,
+ "off": {
+  "url": "/dev/plays?id=twist_the_knife&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0.0005,
+  "endRegions": [
+   {
+    "x": 256,
+    "y": 72,
+    "w": 24,
+    "h": 16,
+    "cells": 4
+   },
+   {
+    "x": 144,
+    "y": 72,
+    "w": 16,
+    "h": 8,
+    "cells": 2
+   },
+   {
+    "x": 128,
+    "y": 96,
+    "w": 8,
+    "h": 16,
+    "cells": 2
+   },
+   {
+    "x": 248,
+    "y": 96,
+    "w": 8,
+    "h": 16,
+    "cells": 2
+   },
+   {
+    "x": 152,
+    "y": 120,
+    "w": 16,
+    "h": 8,
+    "cells": 2
+   }
+  ],
+  "png": "../../../tmp/claude-0/-home-user-nerfchess/ee610421-243f-5b03-97db-996cfbf5c124/scratchpad/after/twist_the_knife.off.png"
+ }
+}

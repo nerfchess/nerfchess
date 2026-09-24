@@ -1,0 +1,12 @@
+{
+ "id": "we_ancient_grove",
+ "off": {
+  "url": "/dev/plays?id=we_ancient_grove&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "../../../tmp/claude-0/-home-user-nerfchess/ee610421-243f-5b03-97db-996cfbf5c124/scratchpad/after4/we_ancient_grove.off.png"
+ }
+}

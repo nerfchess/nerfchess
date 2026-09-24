@@ -1,0 +1,79 @@
+{
+ "id": "board_lock",
+ "url": "/dev/plays?id=board_lock&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "board_lock",
+  "name": "Board Lock",
+  "tier": 4,
+  "category": "tempo",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:board_lock",
+  "anchor": "board",
+  "source": "slow",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 60,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, slow diff",
+  "castSq": "h8",
+  "targets": [
+   "h8",
+   "a8"
+  ],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2332,
+  "cssEndMs": 3423,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 43,
+  "infiniteAnimations": 4
+ },
+ "screencast": {
+  "framesInWindow": 206,
+  "maxGapMs": 288.9
+ },
+ "raf": {
+  "frames": 210,
+  "medianMs": 16.7,
+  "maxMs": 50.1,
+  "dropped": 8
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 60,
+  "totalBlockingMs": 6,
+  "entries": [
+   {
+    "atMs": -54,
+    "duration": 60,
+    "blocking": 6,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  179,
+  457,
+  791,
+  1166,
+  1576,
+  2016,
+  2482
+ ],
+ "png": "../../../tmp/claude-0/-home-user-nerfchess/ee610421-243f-5b03-97db-996cfbf5c124/scratchpad/before/board_lock.png",
+ "pngBytes": 24493
+}

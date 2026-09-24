@@ -1,0 +1,685 @@
+{
+ "method": "cosine similarity of per-tile (tile minus pre-play tile) 24x24 grey thumbnails, standardised per tile and then weighted by the tile's raw energy over the card's peak (so near-empty tiles count for little); 1 = same look, near 0 = unrelated. Every tier 6+ bespoke card shares the cast wrapper's ring and beam (TC0-f), so expect a floor well above 0",
+ "cards": 27,
+ "sheetPicks": {
+  "summon_knight": "+469ms (energy 1 of peak)",
+  "timely_lull": "+1164ms (energy 0.95 of peak)",
+  "total_recall": "+789ms (energy 0.68 of peak)",
+  "twin_knights": "+463ms (energy 1 of peak)",
+  "twist_the_knife": "+477ms (energy 1 of peak)",
+  "wa_bind_the_queen": "+813ms (energy 0.84 of peak)",
+  "wa_blink": "+758ms (energy 0.69 of peak)",
+  "wa_borrowed_minute": "+472ms (energy 1 of peak)",
+  "wa_conjure_bishop": "+1188ms (energy 0.81 of peak)",
+  "wa_dominate_minor": "+183ms (energy 0.71 of peak)",
+  "wa_mind_read": "+806ms (energy 0.99 of peak)",
+  "wa_sigil_ward": "+787ms (energy 0.82 of peak)",
+  "wa_stasis_field": "+471ms (energy 1 of peak)",
+  "warding_circle": "+800ms (energy 0.86 of peak)",
+  "warp_reign": "+464ms (energy 1 of peak)",
+  "wc_clumsy_dash": "+492ms (energy 0.98 of peak)",
+  "wc_lost_and_found": "+463ms (energy 1 of peak)",
+  "we_ancient_grove": "+181ms (energy 0.93 of peak)",
+  "we_backdraft": "+790ms (energy 0.93 of peak)",
+  "we_bramble_wall": "+466ms (energy 1 of peak)",
+  "we_creeping_roots": "+805ms (energy 0.73 of peak)",
+  "we_undertow": "+461ms (energy 1 of peak)",
+  "ww_defectors": "+788ms (energy 0.88 of peak)",
+  "ww_field_fortification": "+810ms (energy 0.63 of peak)",
+  "ww_forward_observer": "+802ms (energy 0.95 of peak)",
+  "ww_last_reserves": "+789ms (energy 0.68 of peak)",
+  "ww_sapper_team": "+463ms (energy 1 of peak)"
+ },
+ "generic": {
+  "method": "cosine similarity of the card's weighted look vector to the mean weighted look of the other cards in this sheet (leave-one-out); highest = least card-specific",
+  "ranking": [
+   {
+    "card": "we_creeping_roots",
+    "tier": 4,
+    "closeness": 0.946
+   },
+   {
+    "card": "ww_last_reserves",
+    "tier": 4,
+    "closeness": 0.921
+   },
+   {
+    "card": "ww_field_fortification",
+    "tier": 4,
+    "closeness": 0.918
+   },
+   {
+    "card": "total_recall",
+    "tier": 4,
+    "closeness": 0.917
+   },
+   {
+    "card": "twin_knights",
+    "tier": 4,
+    "closeness": 0.91
+   },
+   {
+    "card": "wa_borrowed_minute",
+    "tier": 4,
+    "closeness": 0.893
+   },
+   {
+    "card": "warding_circle",
+    "tier": 4,
+    "closeness": 0.892
+   },
+   {
+    "card": "we_ancient_grove",
+    "tier": 4,
+    "closeness": 0.89
+   },
+   {
+    "card": "wa_sigil_ward",
+    "tier": 4,
+    "closeness": 0.883
+   },
+   {
+    "card": "summon_knight",
+    "tier": 4,
+    "closeness": 0.878
+   },
+   {
+    "card": "wc_lost_and_found",
+    "tier": 4,
+    "closeness": 0.874
+   },
+   {
+    "card": "we_bramble_wall",
+    "tier": 4,
+    "closeness": 0.872
+   },
+   {
+    "card": "we_undertow",
+    "tier": 4,
+    "closeness": 0.866
+   },
+   {
+    "card": "wa_blink",
+    "tier": 4,
+    "closeness": 0.863
+   },
+   {
+    "card": "wa_mind_read",
+    "tier": 4,
+    "closeness": 0.853
+   },
+   {
+    "card": "warp_reign",
+    "tier": 4,
+    "closeness": 0.838
+   },
+   {
+    "card": "ww_defectors",
+    "tier": 4,
+    "closeness": 0.802
+   },
+   {
+    "card": "ww_forward_observer",
+    "tier": 4,
+    "closeness": 0.8
+   },
+   {
+    "card": "timely_lull",
+    "tier": 4,
+    "closeness": 0.771
+   },
+   {
+    "card": "we_backdraft",
+    "tier": 4,
+    "closeness": 0.746
+   },
+   {
+    "card": "wa_dominate_minor",
+    "tier": 4,
+    "closeness": 0.745
+   },
+   {
+    "card": "wa_bind_the_queen",
+    "tier": 4,
+    "closeness": 0.738
+   },
+   {
+    "card": "ww_sapper_team",
+    "tier": 4,
+    "closeness": 0.736
+   },
+   {
+    "card": "wa_conjure_bishop",
+    "tier": 4,
+    "closeness": 0.716
+   },
+   {
+    "card": "wa_stasis_field",
+    "tier": 4,
+    "closeness": 0.71
+   },
+   {
+    "card": "twist_the_knife",
+    "tier": 4,
+    "closeness": 0.561
+   },
+   {
+    "card": "wc_clumsy_dash",
+    "tier": 4,
+    "closeness": 0.284
+   }
+  ]
+ },
+ "pairs": [
+  {
+   "a": "total_recall",
+   "b": "ww_last_reserves",
+   "similarity": 0.916
+  },
+  {
+   "a": "we_creeping_roots",
+   "b": "ww_last_reserves",
+   "similarity": 0.914
+  },
+  {
+   "a": "wc_lost_and_found",
+   "b": "we_ancient_grove",
+   "similarity": 0.909
+  },
+  {
+   "a": "we_creeping_roots",
+   "b": "ww_field_fortification",
+   "similarity": 0.909
+  },
+  {
+   "a": "total_recall",
+   "b": "we_creeping_roots",
+   "similarity": 0.901
+  },
+  {
+   "a": "warding_circle",
+   "b": "we_creeping_roots",
+   "similarity": 0.901
+  },
+  {
+   "a": "twin_knights",
+   "b": "we_creeping_roots",
+   "similarity": 0.883
+  },
+  {
+   "a": "ww_field_fortification",
+   "b": "ww_last_reserves",
+   "similarity": 0.88
+  },
+  {
+   "a": "total_recall",
+   "b": "ww_field_fortification",
+   "similarity": 0.878
+  },
+  {
+   "a": "twin_knights",
+   "b": "ww_field_fortification",
+   "similarity": 0.869
+  },
+  {
+   "a": "we_ancient_grove",
+   "b": "we_creeping_roots",
+   "similarity": 0.869
+  },
+  {
+   "a": "we_bramble_wall",
+   "b": "we_creeping_roots",
+   "similarity": 0.869
+  },
+  {
+   "a": "summon_knight",
+   "b": "twin_knights",
+   "similarity": 0.862
+  },
+  {
+   "a": "wa_borrowed_minute",
+   "b": "we_creeping_roots",
+   "similarity": 0.862
+  },
+  {
+   "a": "total_recall",
+   "b": "twin_knights",
+   "similarity": 0.86
+  },
+  {
+   "a": "warding_circle",
+   "b": "ww_last_reserves",
+   "similarity": 0.86
+  },
+  {
+   "a": "twin_knights",
+   "b": "ww_last_reserves",
+   "similarity": 0.857
+  },
+  {
+   "a": "wc_lost_and_found",
+   "b": "we_undertow",
+   "similarity": 0.848
+  },
+  {
+   "a": "wc_lost_and_found",
+   "b": "we_creeping_roots",
+   "similarity": 0.845
+  },
+  {
+   "a": "summon_knight",
+   "b": "we_creeping_roots",
+   "similarity": 0.842
+  },
+  {
+   "a": "total_recall",
+   "b": "warding_circle",
+   "similarity": 0.839
+  },
+  {
+   "a": "twin_knights",
+   "b": "wa_borrowed_minute",
+   "similarity": 0.839
+  },
+  {
+   "a": "summon_knight",
+   "b": "ww_last_reserves",
+   "similarity": 0.838
+  },
+  {
+   "a": "twin_knights",
+   "b": "we_ancient_grove",
+   "similarity": 0.837
+  },
+  {
+   "a": "wa_borrowed_minute",
+   "b": "ww_field_fortification",
+   "similarity": 0.837
+  },
+  {
+   "a": "warding_circle",
+   "b": "ww_field_fortification",
+   "similarity": 0.837
+  },
+  {
+   "a": "total_recall",
+   "b": "wa_borrowed_minute",
+   "similarity": 0.836
+  },
+  {
+   "a": "we_ancient_grove",
+   "b": "ww_last_reserves",
+   "similarity": 0.835
+  },
+  {
+   "a": "wa_mind_read",
+   "b": "we_creeping_roots",
+   "similarity": 0.833
+  },
+  {
+   "a": "total_recall",
+   "b": "wa_mind_read",
+   "similarity": 0.832
+  },
+  {
+   "a": "wa_borrowed_minute",
+   "b": "ww_last_reserves",
+   "similarity": 0.832
+  },
+  {
+   "a": "summon_knight",
+   "b": "ww_field_fortification",
+   "similarity": 0.831
+  },
+  {
+   "a": "wa_sigil_ward",
+   "b": "we_creeping_roots",
+   "similarity": 0.83
+  },
+  {
+   "a": "we_ancient_grove",
+   "b": "ww_forward_observer",
+   "similarity": 0.83
+  },
+  {
+   "a": "summon_knight",
+   "b": "wc_lost_and_found",
+   "similarity": 0.829
+  },
+  {
+   "a": "total_recall",
+   "b": "we_bramble_wall",
+   "similarity": 0.829
+  },
+  {
+   "a": "twin_knights",
+   "b": "warding_circle",
+   "similarity": 0.829
+  },
+  {
+   "a": "summon_knight",
+   "b": "we_ancient_grove",
+   "similarity": 0.826
+  },
+  {
+   "a": "we_creeping_roots",
+   "b": "we_undertow",
+   "similarity": 0.826
+  },
+  {
+   "a": "summon_knight",
+   "b": "total_recall",
+   "similarity": 0.824
+  },
+  {
+   "a": "total_recall",
+   "b": "wa_sigil_ward",
+   "similarity": 0.823
+  },
+  {
+   "a": "total_recall",
+   "b": "we_undertow",
+   "similarity": 0.823
+  },
+  {
+   "a": "wc_lost_and_found",
+   "b": "ww_last_reserves",
+   "similarity": 0.822
+  },
+  {
+   "a": "total_recall",
+   "b": "we_ancient_grove",
+   "similarity": 0.821
+  },
+  {
+   "a": "we_ancient_grove",
+   "b": "ww_field_fortification",
+   "similarity": 0.821
+  },
+  {
+   "a": "wa_blink",
+   "b": "wa_sigil_ward",
+   "similarity": 0.819
+  },
+  {
+   "a": "wa_mind_read",
+   "b": "ww_last_reserves",
+   "similarity": 0.818
+  },
+  {
+   "a": "wa_sigil_ward",
+   "b": "ww_field_fortification",
+   "similarity": 0.818
+  },
+  {
+   "a": "warding_circle",
+   "b": "we_bramble_wall",
+   "similarity": 0.818
+  },
+  {
+   "a": "wa_borrowed_minute",
+   "b": "warding_circle",
+   "similarity": 0.817
+  },
+  {
+   "a": "we_bramble_wall",
+   "b": "ww_last_reserves",
+   "similarity": 0.817
+  },
+  {
+   "a": "wa_borrowed_minute",
+   "b": "wa_sigil_ward",
+   "similarity": 0.815
+  },
+  {
+   "a": "wa_sigil_ward",
+   "b": "ww_last_reserves",
+   "similarity": 0.814
+  },
+  {
+   "a": "warding_circle",
+   "b": "we_ancient_grove",
+   "similarity": 0.814
+  },
+  {
+   "a": "total_recall",
+   "b": "wc_lost_and_found",
+   "similarity": 0.813
+  },
+  {
+   "a": "twin_knights",
+   "b": "wc_lost_and_found",
+   "similarity": 0.813
+  },
+  {
+   "a": "twin_knights",
+   "b": "we_undertow",
+   "similarity": 0.812
+  },
+  {
+   "a": "we_undertow",
+   "b": "ww_last_reserves",
+   "similarity": 0.812
+  },
+  {
+   "a": "we_bramble_wall",
+   "b": "ww_field_fortification",
+   "similarity": 0.81
+  },
+  {
+   "a": "summon_knight",
+   "b": "wa_borrowed_minute",
+   "similarity": 0.809
+  },
+  {
+   "a": "twin_knights",
+   "b": "we_bramble_wall",
+   "similarity": 0.809
+  },
+  {
+   "a": "wa_blink",
+   "b": "we_creeping_roots",
+   "similarity": 0.808
+  },
+  {
+   "a": "wc_lost_and_found",
+   "b": "ww_field_fortification",
+   "similarity": 0.808
+  },
+  {
+   "a": "wa_borrowed_minute",
+   "b": "we_ancient_grove",
+   "similarity": 0.806
+  },
+  {
+   "a": "total_recall",
+   "b": "wa_blink",
+   "similarity": 0.805
+  },
+  {
+   "a": "twin_knights",
+   "b": "wa_sigil_ward",
+   "similarity": 0.805
+  },
+  {
+   "a": "warp_reign",
+   "b": "we_creeping_roots",
+   "similarity": 0.804
+  },
+  {
+   "a": "wa_sigil_ward",
+   "b": "we_undertow",
+   "similarity": 0.803
+  },
+  {
+   "a": "summon_knight",
+   "b": "we_undertow",
+   "similarity": 0.801
+  },
+  {
+   "a": "summon_knight",
+   "b": "warding_circle",
+   "similarity": 0.8
+  },
+  {
+   "a": "total_recall",
+   "b": "warp_reign",
+   "similarity": 0.799
+  },
+  {
+   "a": "twin_knights",
+   "b": "wa_blink",
+   "similarity": 0.799
+  },
+  {
+   "a": "wc_lost_and_found",
+   "b": "ww_forward_observer",
+   "similarity": 0.798
+  },
+  {
+   "a": "wa_mind_read",
+   "b": "ww_field_fortification",
+   "similarity": 0.797
+  },
+  {
+   "a": "wa_sigil_ward",
+   "b": "warding_circle",
+   "similarity": 0.797
+  },
+  {
+   "a": "we_creeping_roots",
+   "b": "ww_forward_observer",
+   "similarity": 0.797
+  },
+  {
+   "a": "wa_mind_read",
+   "b": "warding_circle",
+   "similarity": 0.794
+  },
+  {
+   "a": "we_undertow",
+   "b": "ww_field_fortification",
+   "similarity": 0.794
+  },
+  {
+   "a": "summon_knight",
+   "b": "wa_blink",
+   "similarity": 0.792
+  },
+  {
+   "a": "summon_knight",
+   "b": "we_bramble_wall",
+   "similarity": 0.792
+  }
+ ],
+ "nearest": {
+  "summon_knight": {
+   "card": "twin_knights",
+   "similarity": 0.862
+  },
+  "timely_lull": {
+   "card": "we_creeping_roots",
+   "similarity": 0.774
+  },
+  "total_recall": {
+   "card": "ww_last_reserves",
+   "similarity": 0.916
+  },
+  "twin_knights": {
+   "card": "we_creeping_roots",
+   "similarity": 0.883
+  },
+  "twist_the_knife": {
+   "card": "timely_lull",
+   "similarity": 0.644
+  },
+  "wa_bind_the_queen": {
+   "card": "ww_last_reserves",
+   "similarity": 0.788
+  },
+  "wa_blink": {
+   "card": "wa_sigil_ward",
+   "similarity": 0.819
+  },
+  "wa_borrowed_minute": {
+   "card": "we_creeping_roots",
+   "similarity": 0.862
+  },
+  "wa_conjure_bishop": {
+   "card": "ww_field_fortification",
+   "similarity": 0.718
+  },
+  "wa_dominate_minor": {
+   "card": "wa_borrowed_minute",
+   "similarity": 0.729
+  },
+  "wa_mind_read": {
+   "card": "we_creeping_roots",
+   "similarity": 0.833
+  },
+  "wa_sigil_ward": {
+   "card": "we_creeping_roots",
+   "similarity": 0.83
+  },
+  "wa_stasis_field": {
+   "card": "wa_blink",
+   "similarity": 0.745
+  },
+  "warding_circle": {
+   "card": "we_creeping_roots",
+   "similarity": 0.901
+  },
+  "warp_reign": {
+   "card": "we_creeping_roots",
+   "similarity": 0.804
+  },
+  "wc_clumsy_dash": {
+   "card": "wa_stasis_field",
+   "similarity": 0.391
+  },
+  "wc_lost_and_found": {
+   "card": "we_ancient_grove",
+   "similarity": 0.909
+  },
+  "we_ancient_grove": {
+   "card": "wc_lost_and_found",
+   "similarity": 0.909
+  },
+  "we_backdraft": {
+   "card": "ww_field_fortification",
+   "similarity": 0.687
+  },
+  "we_bramble_wall": {
+   "card": "we_creeping_roots",
+   "similarity": 0.869
+  },
+  "we_creeping_roots": {
+   "card": "ww_last_reserves",
+   "similarity": 0.914
+  },
+  "we_undertow": {
+   "card": "wc_lost_and_found",
+   "similarity": 0.848
+  },
+  "ww_defectors": {
+   "card": "we_creeping_roots",
+   "similarity": 0.764
+  },
+  "ww_field_fortification": {
+   "card": "we_creeping_roots",
+   "similarity": 0.909
+  },
+  "ww_forward_observer": {
+   "card": "we_ancient_grove",
+   "similarity": 0.83
+  },
+  "ww_last_reserves": {
+   "card": "total_recall",
+   "similarity": 0.916
+  },
+  "ww_sapper_team": {
+   "card": "ww_field_fortification",
+   "similarity": 0.695
+  }
+ }
+}

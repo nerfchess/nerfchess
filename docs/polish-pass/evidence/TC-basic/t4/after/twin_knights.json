@@ -1,0 +1,96 @@
+{
+ "id": "twin_knights",
+ "url": "/dev/plays?id=twin_knights&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "twin_knights",
+  "name": "Twin Knights",
+  "tier": 4,
+  "category": "movement",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:twin_knights",
+  "anchor": "cast",
+  "source": "empower",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 60,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, empower diff",
+  "castSq": "b1",
+  "targets": [
+   "b1",
+   "g1"
+  ],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2362,
+  "cssEndMs": 3413,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 43,
+  "infiniteAnimations": 11
+ },
+ "screencast": {
+  "framesInWindow": 214,
+  "maxGapMs": 300.3
+ },
+ "raf": {
+  "frames": 215,
+  "medianMs": 16.7,
+  "maxMs": 33.4,
+  "dropped": 3
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 58,
+  "totalBlockingMs": 3,
+  "entries": [
+   {
+    "atMs": -52,
+    "duration": 58,
+    "blocking": 3,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  182,
+  463,
+  800,
+  1180,
+  1595,
+  2040,
+  2512
+ ],
+ "png": "../../../tmp/claude-0/-home-user-nerfchess/ee610421-243f-5b03-97db-996cfbf5c124/scratchpad/after/twin_knights.png",
+ "pngBytes": 21108,
+ "off": {
+  "url": "/dev/plays?id=twin_knights&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0.0005,
+  "endRegions": [
+   {
+    "x": 120,
+    "y": 432,
+    "w": 8,
+    "h": 16,
+    "cells": 2
+   }
+  ],
+  "png": "../../../tmp/claude-0/-home-user-nerfchess/ee610421-243f-5b03-97db-996cfbf5c124/scratchpad/after/twin_knights.off.png"
+ }
+}

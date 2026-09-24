@@ -1,0 +1,80 @@
+{
+ "id": "hunter_knight",
+ "url": "/dev/plays?id=hunter_knight&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "hunter_knight",
+  "name": "Hunter Knight",
+  "tier": 4,
+  "category": "attack",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:hunter_knight",
+  "anchor": "aim",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, removal diff",
+  "castSq": "c7",
+  "targets": [
+   "c7",
+   "d7",
+   "e7"
+  ],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2344,
+  "cssEndMs": 3417,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 40,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 173,
+  "maxGapMs": 276.7
+ },
+ "raf": {
+  "frames": 216,
+  "medianMs": 16.7,
+  "maxMs": 33.4,
+  "dropped": 3
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 54,
+  "totalBlockingMs": 2,
+  "entries": [
+   {
+    "atMs": -48,
+    "duration": 54,
+    "blocking": 2,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  180,
+  460,
+  795,
+  1172,
+  1584,
+  2025,
+  2494
+ ],
+ "png": "../../../tmp/claude-0/-home-user-nerfchess/ee610421-243f-5b03-97db-996cfbf5c124/scratchpad/before/hunter_knight.png",
+ "pngBytes": 23029
+}

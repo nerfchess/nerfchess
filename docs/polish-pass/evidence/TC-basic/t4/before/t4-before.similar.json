@@ -1,0 +1,805 @@
+{
+ "method": "cosine similarity of per-tile (tile minus pre-play tile) 24x24 grey thumbnails, standardised per tile and then weighted by the tile's raw energy over the card's peak (so near-empty tiles count for little); 1 = same look, near 0 = unrelated. Every tier 6+ bespoke card shares the cast wrapper's ring and beam (TC0-f), so expect a floor well above 0",
+ "cards": 39,
+ "sheetPicks": {
+  "abandoned_post": "+797ms (energy 0.87 of peak)",
+  "berolina_pawns": "+183ms (energy 0.87 of peak)",
+  "bishop_archbishop": "+183ms (energy 0.77 of peak)",
+  "blockade": "+457ms (energy 1 of peak)",
+  "board_lock": "+791ms (energy 0.81 of peak)",
+  "bodyguard": "+1155ms (energy 0.85 of peak)",
+  "buff_thief_minor": "+815ms (energy 1 of peak)",
+  "cascade_freeze": "+1187ms (energy 0.72 of peak)",
+  "chain_mail": "+844ms (energy 1 of peak)",
+  "coffee": "+492ms (energy 1 of peak)",
+  "counter_nerf": "+797ms (energy 0.65 of peak)",
+  "cryostasis": "+799ms (energy 0.86 of peak)",
+  "dragon_pawn": "+808ms (energy 0.56 of peak)",
+  "faerie_ring": "+831ms (energy 0.93 of peak)",
+  "flypaper_file": "+1260ms (energy 0.96 of peak)",
+  "giant_slayer": "+819ms (energy 0.8 of peak)",
+  "grace_period": "+797ms (energy 0.77 of peak)",
+  "guard_rotation": "+461ms (energy 1 of peak)",
+  "heavy_shackles": "+1173ms (energy 0.89 of peak)",
+  "hex_doll": "+1131ms (energy 0.72 of peak)",
+  "hunter_knight": "+180ms (energy 0.76 of peak)",
+  "immobilizer": "+473ms (energy 1 of peak)",
+  "iron_bishop": "+802ms (energy 0.9 of peak)",
+  "iron_wall": "+778ms (energy 0.81 of peak)",
+  "kingslide": "+469ms (energy 1 of peak)",
+  "mass_recall": "+464ms (energy 1 of peak)",
+  "minor_recall": "+459ms (energy 1 of peak)",
+  "patch_notes": "+796ms (energy 1 of peak)",
+  "pawn_nerf": "+1168ms (energy 0.83 of peak)",
+  "phalanx": "+754ms (energy 0.91 of peak)",
+  "phantom_rook": "+180ms (energy 0.89 of peak)",
+  "recast": "+1112ms (energy 0.84 of peak)",
+  "royal_decree": "+479ms (energy 1 of peak)",
+  "royal_duty": "+825ms (energy 1 of peak)",
+  "scout": "+739ms (energy 1 of peak)",
+  "sealed_gate": "+798ms (energy 1 of peak)",
+  "seelie_blessing": "+181ms (energy 0.76 of peak)",
+  "solstice": "+749ms (energy 0.7 of peak)",
+  "stone_clergy": "+462ms (energy 1 of peak)"
+ },
+ "generic": {
+  "method": "cosine similarity of the card's weighted look vector to the mean weighted look of the other cards in this sheet (leave-one-out); highest = least card-specific",
+  "ranking": [
+   {
+    "card": "solstice",
+    "tier": 4,
+    "closeness": 0.925
+   },
+   {
+    "card": "giant_slayer",
+    "tier": 4,
+    "closeness": 0.92
+   },
+   {
+    "card": "seelie_blessing",
+    "tier": 4,
+    "closeness": 0.912
+   },
+   {
+    "card": "counter_nerf",
+    "tier": 4,
+    "closeness": 0.908
+   },
+   {
+    "card": "hex_doll",
+    "tier": 4,
+    "closeness": 0.906
+   },
+   {
+    "card": "recast",
+    "tier": 4,
+    "closeness": 0.893
+   },
+   {
+    "card": "royal_decree",
+    "tier": 4,
+    "closeness": 0.893
+   },
+   {
+    "card": "phantom_rook",
+    "tier": 4,
+    "closeness": 0.89
+   },
+   {
+    "card": "berolina_pawns",
+    "tier": 4,
+    "closeness": 0.889
+   },
+   {
+    "card": "grace_period",
+    "tier": 4,
+    "closeness": 0.889
+   },
+   {
+    "card": "iron_bishop",
+    "tier": 4,
+    "closeness": 0.882
+   },
+   {
+    "card": "abandoned_post",
+    "tier": 4,
+    "closeness": 0.878
+   },
+   {
+    "card": "dragon_pawn",
+    "tier": 4,
+    "closeness": 0.877
+   },
+   {
+    "card": "buff_thief_minor",
+    "tier": 4,
+    "closeness": 0.875
+   },
+   {
+    "card": "pawn_nerf",
+    "tier": 4,
+    "closeness": 0.875
+   },
+   {
+    "card": "bishop_archbishop",
+    "tier": 4,
+    "closeness": 0.872
+   },
+   {
+    "card": "guard_rotation",
+    "tier": 4,
+    "closeness": 0.859
+   },
+   {
+    "card": "hunter_knight",
+    "tier": 4,
+    "closeness": 0.856
+   },
+   {
+    "card": "heavy_shackles",
+    "tier": 4,
+    "closeness": 0.822
+   },
+   {
+    "card": "mass_recall",
+    "tier": 4,
+    "closeness": 0.821
+   },
+   {
+    "card": "cascade_freeze",
+    "tier": 4,
+    "closeness": 0.815
+   },
+   {
+    "card": "scout",
+    "tier": 4,
+    "closeness": 0.814
+   },
+   {
+    "card": "board_lock",
+    "tier": 4,
+    "closeness": 0.808
+   },
+   {
+    "card": "blockade",
+    "tier": 4,
+    "closeness": 0.807
+   },
+   {
+    "card": "stone_clergy",
+    "tier": 4,
+    "closeness": 0.807
+   },
+   {
+    "card": "kingslide",
+    "tier": 4,
+    "closeness": 0.804
+   },
+   {
+    "card": "cryostasis",
+    "tier": 4,
+    "closeness": 0.789
+   },
+   {
+    "card": "iron_wall",
+    "tier": 4,
+    "closeness": 0.789
+   },
+   {
+    "card": "immobilizer",
+    "tier": 4,
+    "closeness": 0.788
+   },
+   {
+    "card": "faerie_ring",
+    "tier": 4,
+    "closeness": 0.787
+   },
+   {
+    "card": "sealed_gate",
+    "tier": 4,
+    "closeness": 0.781
+   },
+   {
+    "card": "minor_recall",
+    "tier": 4,
+    "closeness": 0.771
+   },
+   {
+    "card": "phalanx",
+    "tier": 4,
+    "closeness": 0.77
+   },
+   {
+    "card": "patch_notes",
+    "tier": 4,
+    "closeness": 0.759
+   },
+   {
+    "card": "bodyguard",
+    "tier": 4,
+    "closeness": 0.747
+   },
+   {
+    "card": "chain_mail",
+    "tier": 4,
+    "closeness": 0.737
+   },
+   {
+    "card": "flypaper_file",
+    "tier": 4,
+    "closeness": 0.679
+   },
+   {
+    "card": "royal_duty",
+    "tier": 4,
+    "closeness": 0.64
+   },
+   {
+    "card": "coffee",
+    "tier": 4,
+    "closeness": 0.257
+   }
+  ]
+ },
+ "pairs": [
+  {
+   "a": "abandoned_post",
+   "b": "heavy_shackles",
+   "similarity": 0.974
+  },
+  {
+   "a": "heavy_shackles",
+   "b": "pawn_nerf",
+   "similarity": 0.969
+  },
+  {
+   "a": "abandoned_post",
+   "b": "pawn_nerf",
+   "similarity": 0.965
+  },
+  {
+   "a": "counter_nerf",
+   "b": "grace_period",
+   "similarity": 0.939
+  },
+  {
+   "a": "buff_thief_minor",
+   "b": "recast",
+   "similarity": 0.937
+  },
+  {
+   "a": "kingslide",
+   "b": "royal_decree",
+   "similarity": 0.931
+  },
+  {
+   "a": "cascade_freeze",
+   "b": "cryostasis",
+   "similarity": 0.929
+  },
+  {
+   "a": "blockade",
+   "b": "heavy_shackles",
+   "similarity": 0.918
+  },
+  {
+   "a": "blockade",
+   "b": "pawn_nerf",
+   "similarity": 0.916
+  },
+  {
+   "a": "dragon_pawn",
+   "b": "seelie_blessing",
+   "similarity": 0.912
+  },
+  {
+   "a": "phantom_rook",
+   "b": "seelie_blessing",
+   "similarity": 0.891
+  },
+  {
+   "a": "abandoned_post",
+   "b": "blockade",
+   "similarity": 0.89
+  },
+  {
+   "a": "cascade_freeze",
+   "b": "immobilizer",
+   "similarity": 0.887
+  },
+  {
+   "a": "giant_slayer",
+   "b": "hex_doll",
+   "similarity": 0.881
+  },
+  {
+   "a": "berolina_pawns",
+   "b": "seelie_blessing",
+   "similarity": 0.876
+  },
+  {
+   "a": "bishop_archbishop",
+   "b": "dragon_pawn",
+   "similarity": 0.874
+  },
+  {
+   "a": "giant_slayer",
+   "b": "seelie_blessing",
+   "similarity": 0.871
+  },
+  {
+   "a": "counter_nerf",
+   "b": "giant_slayer",
+   "similarity": 0.87
+  },
+  {
+   "a": "counter_nerf",
+   "b": "solstice",
+   "similarity": 0.869
+  },
+  {
+   "a": "recast",
+   "b": "solstice",
+   "similarity": 0.866
+  },
+  {
+   "a": "giant_slayer",
+   "b": "solstice",
+   "similarity": 0.865
+  },
+  {
+   "a": "iron_bishop",
+   "b": "seelie_blessing",
+   "similarity": 0.864
+  },
+  {
+   "a": "grace_period",
+   "b": "solstice",
+   "similarity": 0.863
+  },
+  {
+   "a": "bishop_archbishop",
+   "b": "seelie_blessing",
+   "similarity": 0.861
+  },
+  {
+   "a": "giant_slayer",
+   "b": "royal_decree",
+   "similarity": 0.86
+  },
+  {
+   "a": "hex_doll",
+   "b": "iron_bishop",
+   "similarity": 0.86
+  },
+  {
+   "a": "giant_slayer",
+   "b": "iron_bishop",
+   "similarity": 0.856
+  },
+  {
+   "a": "berolina_pawns",
+   "b": "giant_slayer",
+   "similarity": 0.855
+  },
+  {
+   "a": "dragon_pawn",
+   "b": "royal_decree",
+   "similarity": 0.855
+  },
+  {
+   "a": "hex_doll",
+   "b": "hunter_knight",
+   "similarity": 0.854
+  },
+  {
+   "a": "phantom_rook",
+   "b": "solstice",
+   "similarity": 0.854
+  },
+  {
+   "a": "berolina_pawns",
+   "b": "phantom_rook",
+   "similarity": 0.853
+  },
+  {
+   "a": "hex_doll",
+   "b": "seelie_blessing",
+   "similarity": 0.852
+  },
+  {
+   "a": "royal_decree",
+   "b": "seelie_blessing",
+   "similarity": 0.85
+  },
+  {
+   "a": "bishop_archbishop",
+   "b": "phantom_rook",
+   "similarity": 0.848
+  },
+  {
+   "a": "seelie_blessing",
+   "b": "solstice",
+   "similarity": 0.848
+  },
+  {
+   "a": "cryostasis",
+   "b": "immobilizer",
+   "similarity": 0.846
+  },
+  {
+   "a": "recast",
+   "b": "scout",
+   "similarity": 0.844
+  },
+  {
+   "a": "dragon_pawn",
+   "b": "phantom_rook",
+   "similarity": 0.842
+  },
+  {
+   "a": "royal_decree",
+   "b": "solstice",
+   "similarity": 0.841
+  },
+  {
+   "a": "berolina_pawns",
+   "b": "bishop_archbishop",
+   "similarity": 0.839
+  },
+  {
+   "a": "dragon_pawn",
+   "b": "guard_rotation",
+   "similarity": 0.839
+  },
+  {
+   "a": "counter_nerf",
+   "b": "royal_decree",
+   "similarity": 0.838
+  },
+  {
+   "a": "berolina_pawns",
+   "b": "guard_rotation",
+   "similarity": 0.837
+  },
+  {
+   "a": "giant_slayer",
+   "b": "grace_period",
+   "similarity": 0.837
+  },
+  {
+   "a": "hex_doll",
+   "b": "solstice",
+   "similarity": 0.837
+  },
+  {
+   "a": "berolina_pawns",
+   "b": "solstice",
+   "similarity": 0.835
+  },
+  {
+   "a": "hex_doll",
+   "b": "royal_decree",
+   "similarity": 0.835
+  },
+  {
+   "a": "cascade_freeze",
+   "b": "grace_period",
+   "similarity": 0.834
+  },
+  {
+   "a": "berolina_pawns",
+   "b": "royal_decree",
+   "similarity": 0.833
+  },
+  {
+   "a": "bishop_archbishop",
+   "b": "guard_rotation",
+   "similarity": 0.833
+  },
+  {
+   "a": "counter_nerf",
+   "b": "hex_doll",
+   "similarity": 0.832
+  },
+  {
+   "a": "abandoned_post",
+   "b": "solstice",
+   "similarity": 0.83
+  },
+  {
+   "a": "pawn_nerf",
+   "b": "solstice",
+   "similarity": 0.83
+  },
+  {
+   "a": "guard_rotation",
+   "b": "seelie_blessing",
+   "similarity": 0.829
+  },
+  {
+   "a": "berolina_pawns",
+   "b": "dragon_pawn",
+   "similarity": 0.826
+  },
+  {
+   "a": "iron_bishop",
+   "b": "royal_decree",
+   "similarity": 0.826
+  },
+  {
+   "a": "dragon_pawn",
+   "b": "solstice",
+   "similarity": 0.825
+  },
+  {
+   "a": "phantom_rook",
+   "b": "recast",
+   "similarity": 0.823
+  },
+  {
+   "a": "abandoned_post",
+   "b": "cascade_freeze",
+   "similarity": 0.821
+  },
+  {
+   "a": "cascade_freeze",
+   "b": "pawn_nerf",
+   "similarity": 0.821
+  },
+  {
+   "a": "dragon_pawn",
+   "b": "giant_slayer",
+   "similarity": 0.821
+  },
+  {
+   "a": "guard_rotation",
+   "b": "phantom_rook",
+   "similarity": 0.82
+  },
+  {
+   "a": "hex_doll",
+   "b": "phantom_rook",
+   "similarity": 0.82
+  },
+  {
+   "a": "bishop_archbishop",
+   "b": "solstice",
+   "similarity": 0.819
+  },
+  {
+   "a": "guard_rotation",
+   "b": "solstice",
+   "similarity": 0.818
+  },
+  {
+   "a": "bishop_archbishop",
+   "b": "grace_period",
+   "similarity": 0.817
+  },
+  {
+   "a": "cascade_freeze",
+   "b": "counter_nerf",
+   "similarity": 0.817
+  },
+  {
+   "a": "dragon_pawn",
+   "b": "grace_period",
+   "similarity": 0.817
+  },
+  {
+   "a": "abandoned_post",
+   "b": "grace_period",
+   "similarity": 0.815
+  },
+  {
+   "a": "counter_nerf",
+   "b": "dragon_pawn",
+   "similarity": 0.815
+  },
+  {
+   "a": "bishop_archbishop",
+   "b": "royal_decree",
+   "similarity": 0.814
+  },
+  {
+   "a": "buff_thief_minor",
+   "b": "scout",
+   "similarity": 0.814
+  },
+  {
+   "a": "hex_doll",
+   "b": "recast",
+   "similarity": 0.814
+  },
+  {
+   "a": "counter_nerf",
+   "b": "seelie_blessing",
+   "similarity": 0.813
+  },
+  {
+   "a": "dragon_pawn",
+   "b": "iron_bishop",
+   "similarity": 0.813
+  },
+  {
+   "a": "recast",
+   "b": "seelie_blessing",
+   "similarity": 0.813
+  },
+  {
+   "a": "buff_thief_minor",
+   "b": "solstice",
+   "similarity": 0.811
+  },
+  {
+   "a": "giant_slayer",
+   "b": "hunter_knight",
+   "similarity": 0.811
+  },
+  {
+   "a": "hunter_knight",
+   "b": "seelie_blessing",
+   "similarity": 0.811
+  }
+ ],
+ "nearest": {
+  "abandoned_post": {
+   "card": "heavy_shackles",
+   "similarity": 0.974
+  },
+  "berolina_pawns": {
+   "card": "seelie_blessing",
+   "similarity": 0.876
+  },
+  "bishop_archbishop": {
+   "card": "dragon_pawn",
+   "similarity": 0.874
+  },
+  "blockade": {
+   "card": "heavy_shackles",
+   "similarity": 0.918
+  },
+  "board_lock": {
+   "card": "recast",
+   "similarity": 0.799
+  },
+  "bodyguard": {
+   "card": "buff_thief_minor",
+   "similarity": 0.764
+  },
+  "buff_thief_minor": {
+   "card": "recast",
+   "similarity": 0.937
+  },
+  "cascade_freeze": {
+   "card": "cryostasis",
+   "similarity": 0.929
+  },
+  "chain_mail": {
+   "card": "giant_slayer",
+   "similarity": 0.74
+  },
+  "coffee": {
+   "card": "bodyguard",
+   "similarity": 0.401
+  },
+  "counter_nerf": {
+   "card": "grace_period",
+   "similarity": 0.939
+  },
+  "cryostasis": {
+   "card": "cascade_freeze",
+   "similarity": 0.929
+  },
+  "dragon_pawn": {
+   "card": "seelie_blessing",
+   "similarity": 0.912
+  },
+  "faerie_ring": {
+   "card": "giant_slayer",
+   "similarity": 0.777
+  },
+  "flypaper_file": {
+   "card": "hex_doll",
+   "similarity": 0.678
+  },
+  "giant_slayer": {
+   "card": "hex_doll",
+   "similarity": 0.881
+  },
+  "grace_period": {
+   "card": "counter_nerf",
+   "similarity": 0.939
+  },
+  "guard_rotation": {
+   "card": "dragon_pawn",
+   "similarity": 0.839
+  },
+  "heavy_shackles": {
+   "card": "abandoned_post",
+   "similarity": 0.974
+  },
+  "hex_doll": {
+   "card": "giant_slayer",
+   "similarity": 0.881
+  },
+  "hunter_knight": {
+   "card": "hex_doll",
+   "similarity": 0.854
+  },
+  "immobilizer": {
+   "card": "cascade_freeze",
+   "similarity": 0.887
+  },
+  "iron_bishop": {
+   "card": "seelie_blessing",
+   "similarity": 0.864
+  },
+  "iron_wall": {
+   "card": "iron_bishop",
+   "similarity": 0.781
+  },
+  "kingslide": {
+   "card": "royal_decree",
+   "similarity": 0.931
+  },
+  "mass_recall": {
+   "card": "bishop_archbishop",
+   "similarity": 0.778
+  },
+  "minor_recall": {
+   "card": "solstice",
+   "similarity": 0.747
+  },
+  "patch_notes": {
+   "card": "abandoned_post",
+   "similarity": 0.769
+  },
+  "pawn_nerf": {
+   "card": "heavy_shackles",
+   "similarity": 0.969
+  },
+  "phalanx": {
+   "card": "giant_slayer",
+   "similarity": 0.763
+  },
+  "phantom_rook": {
+   "card": "seelie_blessing",
+   "similarity": 0.891
+  },
+  "recast": {
+   "card": "buff_thief_minor",
+   "similarity": 0.937
+  },
+  "royal_decree": {
+   "card": "kingslide",
+   "similarity": 0.931
+  },
+  "royal_duty": {
+   "card": "patch_notes",
+   "similarity": 0.683
+  },
+  "scout": {
+   "card": "recast",
+   "similarity": 0.844
+  },
+  "sealed_gate": {
+   "card": "berolina_pawns",
+   "similarity": 0.743
+  },
+  "seelie_blessing": {
+   "card": "dragon_pawn",
+   "similarity": 0.912
+  },
+  "solstice": {
+   "card": "counter_nerf",
+   "similarity": 0.869
+  },
+  "stone_clergy": {
+   "card": "hex_doll",
+   "similarity": 0.809
+  }
+ }
+}

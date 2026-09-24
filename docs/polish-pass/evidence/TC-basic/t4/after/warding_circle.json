@@ -1,0 +1,80 @@
+{
+ "id": "warding_circle",
+ "url": "/dev/plays?id=warding_circle&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "warding_circle",
+  "name": "Warding Circle",
+  "tier": 4,
+  "category": "protection",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:warding_circle",
+  "anchor": "board",
+  "source": "kingSafe",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, kingSafe diff",
+  "castSq": "e1",
+  "targets": [
+   "e1"
+  ],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2324,
+  "cssEndMs": 3447,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 17,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 170,
+  "maxGapMs": 301.9
+ },
+ "raf": {
+  "frames": 217,
+  "medianMs": 16.7,
+  "maxMs": 16.8,
+  "dropped": 0
+ },
+ "longAnimationFrames": {
+  "count": 0,
+  "worstMs": 0,
+  "totalBlockingMs": 0,
+  "entries": []
+ },
+ "tiles": [
+  0,
+  179,
+  456,
+  788,
+  1162,
+  1571,
+  2009,
+  2474
+ ],
+ "png": "../../../tmp/claude-0/-home-user-nerfchess/ee610421-243f-5b03-97db-996cfbf5c124/scratchpad/after2/warding_circle.png",
+ "pngBytes": 22000,
+ "off": {
+  "url": "/dev/plays?id=warding_circle&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "../../../tmp/claude-0/-home-user-nerfchess/ee610421-243f-5b03-97db-996cfbf5c124/scratchpad/after2/warding_circle.off.png"
+ }
+}

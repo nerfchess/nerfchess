@@ -1,0 +1,159 @@
+{
+ "id": "iron_wall",
+ "url": "/dev/plays?id=iron_wall&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "iron_wall",
+  "name": "Iron Wall",
+  "tier": 4,
+  "category": "protection",
+  "mechanic": "instant",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:iron_wall",
+  "anchor": "cast",
+  "source": "shield",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 60,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2855,
+  "cssEndMs": 3477,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 86,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 181,
+  "maxGapMs": 396.7
+ },
+ "raf": {
+  "frames": 169,
+  "medianMs": 16.7,
+  "maxMs": 433.3,
+  "dropped": 52
+ },
+ "longAnimationFrames": {
+  "count": 4,
+  "worstMs": 395,
+  "totalBlockingMs": 467,
+  "entries": [
+   {
+    "atMs": -85,
+    "duration": 135,
+    "blocking": 85,
+    "scripts": []
+   },
+   {
+    "atMs": 55,
+    "duration": 83,
+    "blocking": 20,
+    "scripts": []
+   },
+   {
+    "atMs": 141,
+    "duration": 395,
+    "blocking": 344,
+    "scripts": [
+     {
+      "duration": 386,
+      "invoker": "http://localhost:3000/_next/static/chunks/_app-pages-browser_src_components_effe...",
+      "source": "/_next/static/chunks/_app-pages-browser_src_components_effects_board3d_engine3d_ts.js"
+     }
+    ]
+   },
+   {
+    "atMs": 561,
+    "duration": 72,
+    "blocking": 18,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  217,
+  554,
+  957,
+  1412,
+  1908,
+  2440,
+  3005
+ ],
+ "png": "../../../tmp/claude-0/-home-user-nerfchess/ee610421-243f-5b03-97db-996cfbf5c124/scratchpad/after/iron_wall.png",
+ "pngBytes": 18493,
+ "off": {
+  "url": "/dev/plays?id=iron_wall&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0.0016,
+  "endRegions": [
+   {
+    "x": 240,
+    "y": 416,
+    "w": 24,
+    "h": 56,
+    "cells": 14
+   },
+   {
+    "x": 16,
+    "y": 456,
+    "w": 16,
+    "h": 16,
+    "cells": 3
+   },
+   {
+    "x": 72,
+    "y": 456,
+    "w": 16,
+    "h": 16,
+    "cells": 3
+   },
+   {
+    "x": 360,
+    "y": 456,
+    "w": 16,
+    "h": 16,
+    "cells": 4
+   },
+   {
+    "x": 192,
+    "y": 456,
+    "w": 8,
+    "h": 16,
+    "cells": 2
+   },
+   {
+    "x": 304,
+    "y": 456,
+    "w": 16,
+    "h": 8,
+    "cells": 2
+   },
+   {
+    "x": 416,
+    "y": 456,
+    "w": 16,
+    "h": 8,
+    "cells": 2
+   }
+  ],
+  "png": "../../../tmp/claude-0/-home-user-nerfchess/ee610421-243f-5b03-97db-996cfbf5c124/scratchpad/after/iron_wall.off.png"
+ }
+}

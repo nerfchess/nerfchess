@@ -1,0 +1,78 @@
+{
+ "id": "timely_lull",
+ "url": "/dev/plays?id=timely_lull&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "timely_lull",
+  "name": "Timely Lull",
+  "tier": 4,
+  "category": "nerf",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:timely_lull",
+  "anchor": "board",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "engine",
+  "driveNote": "activated, no targets",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2317,
+  "cssEndMs": 3457,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 26,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 171,
+  "maxGapMs": 296.6
+ },
+ "raf": {
+  "frames": 216,
+  "medianMs": 16.7,
+  "maxMs": 33.3,
+  "dropped": 1
+ },
+ "longAnimationFrames": {
+  "count": 0,
+  "worstMs": 0,
+  "totalBlockingMs": 0,
+  "entries": []
+ },
+ "tiles": [
+  0,
+  178,
+  455,
+  786,
+  1159,
+  1566,
+  2004,
+  2467
+ ],
+ "png": "../../../tmp/claude-0/-home-user-nerfchess/ee610421-243f-5b03-97db-996cfbf5c124/scratchpad/after/timely_lull.png",
+ "pngBytes": 28997,
+ "off": {
+  "url": "/dev/plays?id=timely_lull&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "../../../tmp/claude-0/-home-user-nerfchess/ee610421-243f-5b03-97db-996cfbf5c124/scratchpad/after/timely_lull.off.png"
+ }
+}

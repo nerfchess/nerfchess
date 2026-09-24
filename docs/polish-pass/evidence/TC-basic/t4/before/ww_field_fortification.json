@@ -1,0 +1,86 @@
+{
+ "id": "ww_field_fortification",
+ "url": "/dev/plays?id=ww_field_fortification&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "ww_field_fortification",
+  "name": "Field Fortification",
+  "tier": 4,
+  "category": "movement",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:ww_field_fortification",
+  "anchor": "board",
+  "source": "empower",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 60,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, empower diff",
+  "castSq": "b2",
+  "targets": [
+   "b2",
+   "c2",
+   "d2"
+  ],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2394,
+  "cssEndMs": 3430,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 58,
+  "infiniteAnimations": 10
+ },
+ "screencast": {
+  "framesInWindow": 204,
+  "maxGapMs": 105.5
+ },
+ "raf": {
+  "frames": 205,
+  "medianMs": 16.7,
+  "maxMs": 66.6,
+  "dropped": 15
+ },
+ "longAnimationFrames": {
+  "count": 2,
+  "worstMs": 90,
+  "totalBlockingMs": 33,
+  "entries": [
+   {
+    "atMs": -81,
+    "duration": 90,
+    "blocking": 33,
+    "scripts": []
+   },
+   {
+    "atMs": 321,
+    "duration": 65,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  184,
+  469,
+  810,
+  1195,
+  1615,
+  2066,
+  2544
+ ],
+ "png": "../../../tmp/claude-0/-home-user-nerfchess/ee610421-243f-5b03-97db-996cfbf5c124/scratchpad/before2/ww_field_fortification.png",
+ "pngBytes": 29318
+}

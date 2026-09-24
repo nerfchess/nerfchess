@@ -1,0 +1,86 @@
+{
+ "id": "iron_bishop",
+ "url": "/dev/plays?id=iron_bishop&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "iron_bishop",
+  "name": "Iron Bishop",
+  "tier": 4,
+  "category": "protection",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:iron_bishop",
+  "anchor": "cast",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "engine",
+  "driveNote": "activated with 1 pick(s)",
+  "castSq": "c1",
+  "targets": [
+   "c1"
+  ],
+  "picks": [
+   "c1"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2366,
+  "cssEndMs": 3502,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 35,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 173,
+  "maxGapMs": 84.5
+ },
+ "raf": {
+  "frames": 216,
+  "medianMs": 16.7,
+  "maxMs": 50,
+  "dropped": 5
+ },
+ "longAnimationFrames": {
+  "count": 2,
+  "worstMs": 53,
+  "totalBlockingMs": 0,
+  "entries": [
+   {
+    "atMs": -47,
+    "duration": 53,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 325,
+    "duration": 51,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  182,
+  464,
+  802,
+  1182,
+  1597,
+  2043,
+  2516
+ ],
+ "png": "../../../tmp/claude-0/-home-user-nerfchess/ee610421-243f-5b03-97db-996cfbf5c124/scratchpad/before/iron_bishop.png",
+ "pngBytes": 30918
+}

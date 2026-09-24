@@ -1,0 +1,80 @@
+{
+ "id": "berolina_pawns",
+ "url": "/dev/plays?id=berolina_pawns&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "berolina_pawns",
+  "name": "Berolina Pawns",
+  "tier": 4,
+  "category": "movement",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:berolina_pawns",
+  "anchor": "aim",
+  "source": "empower",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 60,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, empower diff",
+  "castSq": "b2",
+  "targets": [
+   "b2",
+   "c2",
+   "d2"
+  ],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2379,
+  "cssEndMs": 3418,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 58,
+  "infiniteAnimations": 10
+ },
+ "screencast": {
+  "framesInWindow": 208,
+  "maxGapMs": 238.6
+ },
+ "raf": {
+  "frames": 213,
+  "medianMs": 16.7,
+  "maxMs": 50.1,
+  "dropped": 6
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 69,
+  "totalBlockingMs": 13,
+  "entries": [
+   {
+    "atMs": -61,
+    "duration": 69,
+    "blocking": 13,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  183,
+  466,
+  806,
+  1188,
+  1606,
+  2054,
+  2529
+ ],
+ "png": "../../../tmp/claude-0/-home-user-nerfchess/ee610421-243f-5b03-97db-996cfbf5c124/scratchpad/before/berolina_pawns.png",
+ "pngBytes": 27022
+}

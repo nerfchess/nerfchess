@@ -1,0 +1,132 @@
+{
+ "id": "berolina_pawns",
+ "url": "/dev/plays?id=berolina_pawns&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "berolina_pawns",
+  "name": "Berolina Pawns",
+  "tier": 4,
+  "category": "movement",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:berolina_pawns",
+  "anchor": "aim",
+  "source": "empower",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 60,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, empower diff",
+  "castSq": "b2",
+  "targets": [
+   "b2",
+   "c2",
+   "d2"
+  ],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2373,
+  "cssEndMs": 3427,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 48,
+  "infiniteAnimations": 10
+ },
+ "screencast": {
+  "framesInWindow": 215,
+  "maxGapMs": 303.2
+ },
+ "raf": {
+  "frames": 216,
+  "medianMs": 16.7,
+  "maxMs": 66.6,
+  "dropped": 3
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 69,
+  "totalBlockingMs": 14,
+  "entries": [
+   {
+    "atMs": -61,
+    "duration": 69,
+    "blocking": 14,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  182,
+  465,
+  804,
+  1185,
+  1602,
+  2049,
+  2523
+ ],
+ "png": "../../../tmp/claude-0/-home-user-nerfchess/ee610421-243f-5b03-97db-996cfbf5c124/scratchpad/after/berolina_pawns.png",
+ "pngBytes": 26224,
+ "off": {
+  "url": "/dev/plays?id=berolina_pawns&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0.0012,
+  "endRegions": [
+   {
+    "x": 176,
+    "y": 360,
+    "w": 32,
+    "h": 24,
+    "cells": 6
+   },
+   {
+    "x": 72,
+    "y": 360,
+    "w": 24,
+    "h": 24,
+    "cells": 6
+   },
+   {
+    "x": 112,
+    "y": 376,
+    "w": 16,
+    "h": 32,
+    "cells": 5
+   },
+   {
+    "x": 232,
+    "y": 384,
+    "w": 8,
+    "h": 24,
+    "cells": 3
+   },
+   {
+    "x": 80,
+    "y": 392,
+    "w": 8,
+    "h": 16,
+    "cells": 2
+   },
+   {
+    "x": 192,
+    "y": 392,
+    "w": 8,
+    "h": 16,
+    "cells": 2
+   }
+  ],
+  "png": "../../../tmp/claude-0/-home-user-nerfchess/ee610421-243f-5b03-97db-996cfbf5c124/scratchpad/after/berolina_pawns.off.png"
+ }
+}

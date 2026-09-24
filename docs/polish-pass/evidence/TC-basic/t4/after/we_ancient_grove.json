@@ -1,0 +1,80 @@
+{
+ "id": "we_ancient_grove",
+ "url": "/dev/plays?id=we_ancient_grove&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "we_ancient_grove",
+  "name": "Ancient Grove",
+  "tier": 4,
+  "category": "pieces",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:we_ancient_grove",
+  "anchor": "cast",
+  "source": "summon",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "stage",
+  "driveNote": "no valid use in this position, synthetic diff, summon diff",
+  "castSq": "d4",
+  "targets": [
+   "d4",
+   "c3",
+   "d3"
+  ],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2326,
+  "cssEndMs": 3415,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 52,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 209,
+  "maxGapMs": 282.4
+ },
+ "raf": {
+  "frames": 216,
+  "medianMs": 16.7,
+  "maxMs": 33.4,
+  "dropped": 2
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 55,
+  "totalBlockingMs": 1,
+  "entries": [
+   {
+    "atMs": -49,
+    "duration": 55,
+    "blocking": 1,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  179,
+  456,
+  789,
+  1163,
+  1572,
+  2011,
+  2476
+ ],
+ "png": "../../../tmp/claude-0/-home-user-nerfchess/ee610421-243f-5b03-97db-996cfbf5c124/scratchpad/after2/we_ancient_grove.png",
+ "pngBytes": 20628
+}

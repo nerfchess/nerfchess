@@ -1,0 +1,78 @@
+{
+ "id": "recast",
+ "url": "/dev/plays?id=recast&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "recast",
+  "name": "Recast",
+  "tier": 4,
+  "category": "draft",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:recast",
+  "anchor": "board",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, diff-less: no zone source, not an attack",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2225,
+  "cssEndMs": 3461,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 19,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 143,
+  "maxGapMs": 335.5
+ },
+ "raf": {
+  "frames": 209,
+  "medianMs": 16.7,
+  "maxMs": 66.6,
+  "dropped": 9
+ },
+ "longAnimationFrames": {
+  "count": 0,
+  "worstMs": 0,
+  "totalBlockingMs": 0,
+  "entries": []
+ },
+ "tiles": [
+  0,
+  172,
+  438,
+  757,
+  1116,
+  1508,
+  1929,
+  2375
+ ],
+ "png": "../../../tmp/claude-0/-home-user-nerfchess/ee610421-243f-5b03-97db-996cfbf5c124/scratchpad/after/recast.png",
+ "pngBytes": 20162,
+ "off": {
+  "url": "/dev/plays?id=recast&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "../../../tmp/claude-0/-home-user-nerfchess/ee610421-243f-5b03-97db-996cfbf5c124/scratchpad/after/recast.off.png"
+ }
+}
