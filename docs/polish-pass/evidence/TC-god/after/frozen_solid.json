@@ -1,0 +1,97 @@
+{
+ "id": "frozen_solid",
+ "url": "/dev/plays?id=frozen_solid&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "frozen_solid",
+  "name": "Frozen Solid",
+  "tier": 7,
+  "category": "hex",
+  "mechanic": "activated",
+  "retired": true,
+  "art": "plugin",
+  "visual": "x:frozen_solid",
+  "anchor": "aim",
+  "source": "frozen",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 45,
+  "drive": "engine",
+  "driveNote": "activated with 2 pick(s)",
+  "castSq": "d7",
+  "targets": [
+   "d7",
+   "e7"
+  ],
+  "picks": [
+   "d7",
+   "e7"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2665,
+  "cssEndMs": 3419,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 36,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 160,
+  "maxGapMs": 270.3
+ },
+ "raf": {
+  "frames": 170,
+  "medianMs": 16.7,
+  "maxMs": 150,
+  "dropped": 49
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 54,
+  "totalBlockingMs": 2,
+  "entries": [
+   {
+    "atMs": 164,
+    "duration": 54,
+    "blocking": 2,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  321,
+  817,
+  1412,
+  2083,
+  2815
+ ],
+ "png": "docs/polish-pass/evidence/TC-god/after/frozen_solid.png",
+ "pngBytes": 14938,
+ "off": {
+  "url": "/dev/plays?id=frozen_solid&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0.0004,
+  "endRegions": [
+   {
+    "x": 272,
+    "y": 72,
+    "w": 24,
+    "h": 16,
+    "cells": 6
+   }
+  ],
+  "png": "docs/polish-pass/evidence/TC-god/after/frozen_solid.off.png"
+ }
+}

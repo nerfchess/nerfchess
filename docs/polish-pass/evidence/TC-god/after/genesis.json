@@ -1,1 +1,76 @@
-{"id":"genesis","url":"/dev/plays?id=genesis&bare=1","anim":"full","fx":1,"info":{"id":"genesis","name":"Genesis","tier":7,"category":"pieces","mechanic":"activated","retired":false,"art":"plugin","visual":"x:genesis","anchor":"board","source":"removal","hasLead":true,"ordering":"radial","staggerMs":60,"drive":"engine","driveNote":"activated, no targets","castSq":null,"targets":[],"picks":[],"side":"w","view":"w","anim":"normal","fx":1,"live":false,"artReady":true},"stageError":null,"durationMs":{"visualMs":2714,"cssEndMs":3769,"settled":true,"windowMs":4019,"cssAnimations":60,"infiniteAnimations":0},"screencast":{"framesInWindow":154,"maxGapMs":211.8},"raf":{"frames":169,"medianMs":16.7,"maxMs":133.3,"dropped":78},"longAnimationFrames":{"count":7,"worstMs":128,"totalBlockingMs":214,"entries":[{"atMs":-95,"duration":102,"blocking":39,"scripts":[]},{"atMs":26,"duration":97,"blocking":46,"scripts":[]},{"atMs":146,"duration":128,"blocking":67,"scripts":[]},{"atMs":483,"duration":75,"blocking":0,"scripts":[]},{"atMs":1406,"duration":112,"blocking":62,"scripts":[{"duration":109,"invoker":"http://localhost:3100/_next/static/chunks/_app-pages-browser_src_components_effe...","source":"/_next/static/chunks/_app-pages-browser_src_components_effects_board3d_engine3d_ts.js"}]},{"atMs":1987,"duration":58,"blocking":0,"scripts":[]},{"atMs":2131,"duration":50,"blocking":0,"scripts":[]}]},"tiles":[0,207,528,912,1345,1818,2326,2864],"png":"docs/polish-pass/evidence/TC-god/after/genesis.png","pngBytes":29654}
+{
+ "id": "genesis",
+ "url": "/dev/plays?id=genesis&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "genesis",
+  "name": "Genesis",
+  "tier": 7,
+  "category": "pieces",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:genesis",
+  "anchor": "board",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 60,
+  "drive": "engine",
+  "driveNote": "activated, no targets",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2458,
+  "cssEndMs": 3491,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 32,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 176,
+  "maxGapMs": 340.1
+ },
+ "raf": {
+  "frames": 210,
+  "medianMs": 16.7,
+  "maxMs": 50,
+  "dropped": 7
+ },
+ "longAnimationFrames": {
+  "count": 0,
+  "worstMs": 0,
+  "totalBlockingMs": 0,
+  "entries": []
+ },
+ "tiles": [
+  0,
+  297,
+  757,
+  1309,
+  1930,
+  2608
+ ],
+ "png": "docs/polish-pass/evidence/TC-god/after/genesis.png",
+ "pngBytes": 18917,
+ "off": {
+  "url": "/dev/plays?id=genesis&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "docs/polish-pass/evidence/TC-god/after/genesis.off.png"
+ }
+}

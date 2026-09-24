@@ -1,1 +1,98 @@
-{"id":"genesis","url":"/dev/plays?id=genesis&bare=1","anim":"full","fx":1,"info":{"id":"genesis","name":"Genesis","tier":7,"category":"pieces","mechanic":"activated","retired":false,"art":"plugin","visual":"x:genesis","anchor":"board","source":"removal","hasLead":true,"ordering":"radial","staggerMs":60,"drive":"engine","driveNote":"activated, no targets","castSq":null,"targets":[],"picks":[],"side":"w","view":"w","anim":"normal","fx":1,"live":false,"artReady":true},"stageError":null,"durationMs":{"visualMs":2676,"cssEndMs":3735,"settled":true,"windowMs":3985,"cssAnimations":62,"infiniteAnimations":0},"screencast":{"framesInWindow":167,"maxGapMs":493.9},"raf":{"frames":191,"medianMs":16.7,"maxMs":166.8,"dropped":51},"longAnimationFrames":{"count":4,"worstMs":163,"totalBlockingMs":107,"entries":[{"atMs":10,"duration":60,"blocking":9,"scripts":[]},{"atMs":80,"duration":163,"blocking":98,"scripts":[]},{"atMs":460,"duration":55,"blocking":0,"scripts":[]},{"atMs":1643,"duration":60,"blocking":0,"scripts":[]}]},"tiles":[0,204,521,900,1328,1794,2295,2826],"png":"docs/polish-pass/evidence/TC-god/before/genesis.png","pngBytes":39906}
+{
+ "id": "genesis",
+ "url": "/dev/plays?id=genesis&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "genesis",
+  "name": "Genesis",
+  "tier": 7,
+  "category": "pieces",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:genesis",
+  "anchor": "board",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 60,
+  "drive": "engine",
+  "driveNote": "activated, no targets",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2643,
+  "cssEndMs": 3696,
+  "settled": true,
+  "windowMs": 3946,
+  "cssAnimations": 60,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 181,
+  "maxGapMs": 457.1
+ },
+ "raf": {
+  "frames": 198,
+  "medianMs": 16.7,
+  "maxMs": 216.7,
+  "dropped": 42
+ },
+ "longAnimationFrames": {
+  "count": 3,
+  "worstMs": 173,
+  "totalBlockingMs": 182,
+  "entries": [
+   {
+    "atMs": 22,
+    "duration": 60,
+    "blocking": 3,
+    "scripts": [
+     {
+      "duration": 7,
+      "invoker": "TimerHandler:setInterval",
+      "source": ""
+     }
+    ]
+   },
+   {
+    "atMs": 92,
+    "duration": 117,
+    "blocking": 56,
+    "scripts": []
+   },
+   {
+    "atMs": 492,
+    "duration": 173,
+    "blocking": 123,
+    "scripts": [
+     {
+      "duration": 169,
+      "invoker": "http://localhost:3000/_next/static/chunks/_app-pages-browser_src_components_effe...",
+      "source": "/_next/static/chunks/_app-pages-browser_src_components_effects_board3d_engine3d_ts.js"
+     }
+    ]
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  318,
+  811,
+  1401,
+  2067,
+  2793
+ ],
+ "png": "docs/polish-pass/evidence/TC-god/before/genesis.png",
+ "pngBytes": 21018
+}

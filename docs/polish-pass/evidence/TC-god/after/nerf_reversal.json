@@ -1,0 +1,174 @@
+{
+ "id": "nerf_reversal",
+ "url": "/dev/plays?id=nerf_reversal&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "nerf_reversal",
+  "name": "Nerf Reversal",
+  "tier": 7,
+  "category": "nerf",
+  "mechanic": "instant",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:nerf_reversal",
+  "anchor": "cast",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 60,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2644,
+  "cssEndMs": 3628,
+  "settled": true,
+  "windowMs": 3878,
+  "cssAnimations": 53,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 173,
+  "maxGapMs": 117.5
+ },
+ "raf": {
+  "frames": 220,
+  "medianMs": 16.7,
+  "maxMs": 150,
+  "dropped": 28
+ },
+ "longAnimationFrames": {
+  "count": 2,
+  "worstMs": 95,
+  "totalBlockingMs": 56,
+  "entries": [
+   {
+    "atMs": -54,
+    "duration": 65,
+    "blocking": 12,
+    "scripts": []
+   },
+   {
+    "atMs": 63,
+    "duration": 95,
+    "blocking": 44,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  318,
+  811,
+  1402,
+  2067,
+  2794
+ ],
+ "png": "docs/polish-pass/evidence/TC-god/after/nerf_reversal.png",
+ "pngBytes": 21412,
+ "off": {
+  "url": "/dev/plays?id=nerf_reversal&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0.0029,
+  "endRegions": [
+   {
+    "x": 240,
+    "y": 352,
+    "w": 24,
+    "h": 120,
+    "cells": 24
+   },
+   {
+    "x": 72,
+    "y": 400,
+    "w": 16,
+    "h": 16,
+    "cells": 3
+   },
+   {
+    "x": 16,
+    "y": 456,
+    "w": 16,
+    "h": 16,
+    "cells": 3
+   },
+   {
+    "x": 72,
+    "y": 456,
+    "w": 16,
+    "h": 16,
+    "cells": 3
+   },
+   {
+    "x": 360,
+    "y": 456,
+    "w": 16,
+    "h": 16,
+    "cells": 4
+   },
+   {
+    "x": 128,
+    "y": 400,
+    "w": 24,
+    "h": 8,
+    "cells": 3
+   },
+   {
+    "x": 184,
+    "y": 400,
+    "w": 24,
+    "h": 8,
+    "cells": 3
+   },
+   {
+    "x": 16,
+    "y": 400,
+    "w": 16,
+    "h": 8,
+    "cells": 2
+   },
+   {
+    "x": 304,
+    "y": 400,
+    "w": 16,
+    "h": 8,
+    "cells": 2
+   },
+   {
+    "x": 360,
+    "y": 400,
+    "w": 16,
+    "h": 8,
+    "cells": 2
+   },
+   {
+    "x": 416,
+    "y": 400,
+    "w": 16,
+    "h": 8,
+    "cells": 2
+   },
+   {
+    "x": 192,
+    "y": 456,
+    "w": 8,
+    "h": 16,
+    "cells": 2
+   }
+  ],
+  "png": "docs/polish-pass/evidence/TC-god/after/nerf_reversal.off.png"
+ }
+}

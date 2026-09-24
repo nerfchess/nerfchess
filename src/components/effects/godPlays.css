@@ -2248,6 +2248,159 @@
 .gp-ah-star { animation: gp-ah-star calc(0.9s * var(--fx-dur, 1)) var(--ease-out) both; }
 .gp-ah-pip { animation: gp-pipin calc(1s * var(--fx-dur, 1)) var(--ease-spring) both; }
 
+/* --- genesis: the tide washes the marks away, the opening stands up -------- */
+@keyframes gp-gn-mark {
+  0% { opacity: 0; transform: scale(1); }
+  14% { opacity: 1; }
+  84% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.5) rotate(20deg); }
+}
+.gp-gn-mark { animation: gp-gn-mark calc(0.6s * var(--fx-dur, 1)) var(--ease-io) both; }
+@keyframes gp-gn-tide {
+  0% { opacity: 0; transform: translateY(0); }
+  10% { opacity: 1; }
+  86% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * -560%)); }
+}
+.gp-gn-tide { animation: gp-gn-tide calc(1.1s * var(--fx-dur, 1)) var(--ease-io) both; }
+@keyframes gp-gn-rank {
+  0% { opacity: 0; transform: scaleY(0.1); }
+  28% { opacity: 1; transform: scaleY(1.08); }
+  38% { transform: scaleY(1); }
+  82% { opacity: 1; }
+  100% { opacity: 0; transform: scaleY(1); }
+}
+.gp-gn-rank { animation: gp-gn-rank calc(1.3s * var(--fx-dur, 1)) var(--ease-out) both; transform-origin: 50% 100%; }
+.gp-gn-pip { animation: gp-pipin calc(1s * var(--fx-dur, 1)) var(--ease-spring) both; }
+
+/* --- total_warp: the army folds into portals, the king stays --------------- */
+@keyframes gp-tw-fold {
+  0% { opacity: 0; transform: scaleY(1); }
+  14% { opacity: 1; transform: scaleY(1); }
+  36% { opacity: 1; transform: scaleY(1); }
+  56% { opacity: 0; transform: scaleY(0.05); }
+  100% { opacity: 0; transform: scaleY(0.05); }
+}
+.gp-tw-fold { animation: gp-tw-fold calc(1.3s * var(--fx-dur, 1)) var(--ease-io) both; transform-origin: 50% 70%; }
+@keyframes gp-tw-portals {
+  0% { opacity: 0; transform: scaleY(0.2); }
+  30% { opacity: 1; transform: scaleY(1.4); }
+  60% { opacity: 1; transform: scaleY(1); }
+  100% { opacity: 0; transform: scaleY(0.1); }
+}
+.gp-tw-portals { animation: gp-tw-portals calc(0.9s * var(--fx-dur, 1)) var(--ease-io) both; }
+.gp-tw-king { animation: gp-hold calc(2s * var(--fx-dur, 1)) var(--ease-io) both; }
+.gp-tw-ring { animation: gp-cd-safe calc(1.3s * var(--fx-dur, 1)) var(--ease-out) both; }
+.gp-tw-bar { animation: gp-wl-score calc(1.2s * var(--fx-dur, 1)) var(--ease-out) both; }
+.gp-tw-nopawn { animation: gp-ds-skip calc(1.1s * var(--fx-dur, 1)) var(--ease-out) both; }
+@keyframes gp-tw-gate {
+  0% { opacity: 0; transform: scaleY(0.1); }
+  26% { opacity: 1; transform: scaleY(1); }
+  74% { opacity: 1; transform: scaleY(1); }
+  100% { opacity: 0; transform: scaleY(0.1); }
+}
+.gp-tw-gate { animation: gp-tw-gate calc(1s * var(--fx-dur, 1)) var(--ease-io) both; }
+@keyframes gp-tw-spin {
+  0% { opacity: 0; transform: rotate(0deg) scale(0.4); }
+  30% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(540deg) scale(1.1); }
+}
+.gp-tw-spin { animation: gp-tw-spin calc(0.9s * var(--fx-dur, 1)) var(--ease-out) both; }
+
+/* --- nerf_reversal: the brand turns on itself, the half is warded ---------- */
+@keyframes gp-nr-brand {
+  0% { opacity: 0; transform: scale(0.7); }
+  16% { opacity: 1; transform: scale(1); }
+  60% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.4); }
+}
+.gp-nr-brand { animation: gp-nr-brand calc(1.5s * var(--fx-dur, 1)) var(--ease-io) both; }
+@keyframes gp-nr-flip {
+  0% { transform: rotate(0deg); }
+  40% { transform: rotate(180deg); }
+  52% { transform: rotate(168deg); }
+  60%, 100% { transform: rotate(180deg); }
+}
+.gp-nr-flip { animation: gp-nr-flip calc(0.9s * var(--fx-dur, 1)) var(--ease-io) both; }
+@keyframes gp-nr-ticks {
+  0% { opacity: 0; transform: scaleX(0); }
+  30% { opacity: 1; transform: scaleX(1); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.gp-nr-ticks { animation: gp-nr-ticks calc(1.1s * var(--fx-dur, 1)) var(--ease-out) both; transform-origin: 0% 50%; }
+.gp-nr-ward { animation: gp-hold calc(1.4s * var(--fx-dur, 1)) var(--ease-io) both; }
+.gp-nr-edge { animation: gp-wl-score calc(1.3s * var(--fx-dur, 1)) var(--ease-out) both; }
+.gp-nr-pip { animation: gp-pipin calc(1s * var(--fx-dur, 1)) var(--ease-spring) both; }
+
+/* --- glacial_tomb: ice over their home ranks, three walnuts stay ------------ */
+@keyframes gp-gt-ice {
+  0% { opacity: 0; transform: scale(1.06); }
+  18% { opacity: 1; transform: scale(1); }
+  52% { opacity: 1; transform: translateY(0); }
+  72% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * -30%)); }
+  100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * -30%)); }
+}
+.gp-gt-ice { animation: gp-gt-ice calc(1.6s * var(--fx-dur, 1)) var(--ease-io) both; }
+@keyframes gp-gt-king {
+  0% { opacity: 0; }
+  20% { opacity: 1; }
+  60% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.gp-gt-king { animation: gp-gt-king calc(1.3s * var(--fx-dur, 1)) var(--ease-io) both; }
+.gp-gt-pip { animation: gp-pipin calc(0.8s * var(--fx-dur, 1)) var(--ease-spring) both; }
+@keyframes gp-gt-nut {
+  0% { opacity: 0; transform: scale(0.4); }
+  26% { opacity: 1; transform: scale(1.1); }
+  36% { transform: scale(1); }
+  82% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1); }
+}
+.gp-gt-nut { animation: gp-gt-nut calc(1.2s * var(--fx-dur, 1)) var(--ease-spring) both; }
+@keyframes gp-gt-step {
+  0% { opacity: 0; transform: scale(0.5); }
+  30% { opacity: 1; transform: scale(1); }
+  78% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1); }
+}
+.gp-gt-step { animation: gp-gt-step calc(1s * var(--fx-dur, 1)) var(--ease-out) both; }
+.gp-gt-pip2 { animation: gp-pipin calc(0.9s * var(--fx-dur, 1)) var(--ease-spring) both; }
+
+/* --- frozen_solid: the freeze waits a move; the neighbour goes too ---------- */
+@keyframes gp-fs-corner {
+  0% { opacity: 0; transform: translate(-60%, -60%); }
+  24% { opacity: 1; }
+  56% { transform: translate(0, 0); }
+  82% { opacity: 1; transform: translate(0, 0); }
+  100% { opacity: 0; transform: translate(0, 0); }
+}
+.gp-fs-corner { animation: gp-fs-corner calc(1.6s * var(--fx-dur, 1)) var(--ease-out) both; }
+.gp-fs-wait { animation: gp-hold calc(1.4s * var(--fx-dur, 1)) var(--ease-io) both; }
+@keyframes gp-fs-reach {
+  0% { opacity: 0; transform: scaleX(0); }
+  34% { opacity: 1; transform: scaleX(1); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+.gp-fs-reach { animation: gp-fs-reach calc(1.1s * var(--fx-dur, 1)) var(--ease-out) both; }
+@keyframes gp-fs-escape {
+  0% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * -30%)); }
+  30% { opacity: 0.9; transform: translateY(0); }
+  76% { opacity: 0.9; }
+  100% { opacity: 0; transform: translateY(0); }
+}
+.gp-fs-escape { animation: gp-fs-escape calc(1s * var(--fx-dur, 1)) var(--ease-out) both; }
+@keyframes gp-fs-block {
+  0% { opacity: 0; transform: scale(1.4); }
+  24% { opacity: 1; transform: scale(0.96); }
+  34% { transform: scale(1); }
+  82% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1); }
+}
+.gp-fs-block { animation: gp-fs-block calc(1.3s * var(--fx-dur, 1)) var(--ease-out) both; }
+.gp-fs-pip { animation: gp-pipin calc(1s * var(--fx-dur, 1)) var(--ease-spring) both; }
+
 /* --- Animations off (Settings) ---------------------------------------------
    Mirror effects.css: the plays are pure flourish; the persistent state is the
    zone overlay, so when animations are off in Settings the whole spectacle is
