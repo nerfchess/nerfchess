@@ -3,22 +3,8 @@
  "target": 0.01,
  "tolerance": 0.005,
  "ceilings": {
-  "/|390x844|dark|full|signed-out|normal": 0.014,
-  "/|390x844|dark|full|user|normal": 0.015,
-  "/codex|1280x800|dark|full|signed-out|normal": 0.022,
-  "/codex|1280x800|dark|full|user|normal": 0.021,
-  "/codex|390x844|dark|full|signed-out|normal": 0.046,
-  "/codex|390x844|dark|full|user|normal": 0.046,
-  "/lobby|1280x800|dark|full|signed-out|normal": 0.022,
-  "/lobby|1280x800|dark|full|user|normal": 0.019,
-  "/lobby|390x844|dark|full|signed-out|normal": 0.018,
-  "/play|1280x800|dark|full|signed-out|normal": 0.019,
-  "/play|1280x800|dark|full|user|normal": 0.018,
-  "/play|390x844|dark|full|signed-out|normal": 0.053,
-  "/play|390x844|dark|full|user|normal": 0.054,
-  "/profile|1280x800|dark|full|signed-out|normal": 0.037,
-  "/profile|1280x800|dark|full|user|normal": 0.034,
-  "/profile|390x844|dark|full|signed-out|normal": 0.086,
-  "/profile|390x844|dark|full|user|normal": 0.088
+  "/codex|1280x800|dark|full|signed-out|normal": 0.019,
+  "/codex|1280x800|dark|full|user|normal": 0.019,
+  "/lobby|1280x800|dark|full|user|normal": 0.013
  }
 }
