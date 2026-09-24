@@ -201,8 +201,10 @@ function CountTable({ title, rows }: { title: string; rows: DayCount[] }) {
 
 function GamesTable({ days }: { days: Metrics["games"]["daily"] }) {
   const rows = [...days].reverse().slice(0, 14);
+  // Focusable so a keyboard user can scroll it sideways on a phone (axe
+  // scrollable-region-focusable); the table has no controls of its own.
   return (
-    <div className="plate overflow-x-auto">
+    <div className="plate overflow-x-auto" tabIndex={0} role="region" aria-label="Games per day">
       <table className="w-full min-w-[520px] text-left text-[13px] tabular-nums">
         <thead>
           <tr className="text-parchment-400">

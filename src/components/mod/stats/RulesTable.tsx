@@ -87,7 +87,7 @@ export function RulesTable({ rows }: { rows: NerfRow[] }) {
       )}
       <p className="mt-3 text-[13px] text-parchment-400">
         Win rate is how often the player holding that rule won the game. Curious what a
-        rule does? Look it up in the <Link href="/codex" className="text-parchment-50 hover:underline">Codex</Link>.
+        rule does? Look it up in the <Link href="/codex" className="text-parchment-50 underline underline-offset-2">Codex</Link>.
       </p>
     </div>
   );
