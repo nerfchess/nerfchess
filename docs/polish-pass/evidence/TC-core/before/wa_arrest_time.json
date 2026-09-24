@@ -1,0 +1,84 @@
+{
+ "id": "wa_arrest_time",
+ "url": "/dev/plays?id=wa_arrest_time&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "wa_arrest_time",
+  "name": "Arrest the Hour",
+  "tier": 3,
+  "category": "tempo",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "core",
+  "visual": "deepglacier",
+  "anchor": "cast",
+  "source": "frozen",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 50,
+  "drive": "engine",
+  "driveNote": "activated with 1 pick(s)",
+  "castSq": "d8",
+  "targets": [
+   "d8"
+  ],
+  "picks": [
+   "d8"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2436,
+  "cssEndMs": 3440,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 38,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 162,
+  "maxGapMs": 292
+ },
+ "raf": {
+  "frames": 195,
+  "medianMs": 16.7,
+  "maxMs": 100.1,
+  "dropped": 24
+ },
+ "longAnimationFrames": {
+  "count": 2,
+  "worstMs": 68,
+  "totalBlockingMs": 16,
+  "entries": [
+   {
+    "atMs": -50,
+    "duration": 57,
+    "blocking": 1,
+    "scripts": []
+   },
+   {
+    "atMs": 33,
+    "duration": 68,
+    "blocking": 15,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  294,
+  751,
+  1298,
+  1913,
+  2586
+ ],
+ "png": "docs/polish-pass/evidence/TC-core/before/wa_arrest_time.png",
+ "pngBytes": 13354
+}

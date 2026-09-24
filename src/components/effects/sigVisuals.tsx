@@ -947,44 +947,59 @@ function BlitzBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
   // whole crop (palette wash + the card's own motif writ large + a shockwave
   // past the board edges) instead of a square-local pop.
   if (lead) {
-    // God-tier pass — THE STORM MARSHAL: a colossal winged war-god of speed
-    // drops out of a gold-white sky, a fistful of strike-bolts raking the crop
-    // beneath him — four moves, four cracks — before the concussion rings.
+    // TC-core: EXTRA MOVE draws its rule. "Take two moves in a row, once.
+    // You cannot capture the king on the bonus move: your opponent replies
+    // first." Both start squares are marked; your knight jumps out (one pip,
+    // move one) and before anything answers your bishop runs out as well
+    // (two pips, move two), each landing under a small bolt. From the bishop a line reaches their king and is
+    // struck: the bonus move cannot take the king.
+    const bolt = (
+      <svg viewBox="0 0 10 14" className="block h-full w-full" aria-hidden="true">
+        <path d="M6.4 0.8 L1.6 7.6 H5 L3.6 13.2 L8.4 5.8 H5 Z" fill="#ffe796" stroke="#8a6414" strokeWidth="0.7" {...TC_SJ} />
+      </svg>
+    );
+    const MOVES = [
+      { kind: "knight" as const, f: 2, r: 3, df: -1, dr: -2, pips: 1, d: 0 },
+      { kind: "bishop" as const, f: 5, r: 4, df: -3, dr: -3, pips: 2, d: 520 },
+    ];
     return (
-      <GodEvent
-        tell={<SigTell delayMs={delayMs + 70} color="#8a6414" />}
-        settle={<SigSettle delayMs={delayMs + 520} color="#8a6414" />}
-        wash="rgba(255,246,200,0.24)"
-        rays="rgba(255,220,130,0.85)"
-        boom="rgba(255,200,90,0.85)"
-        flare="rgba(255,243,201,0.8)"
-        delayMs={delayMs}
-        figure={
-          <svg viewBox="0 0 44 44" className="h-full w-full" aria-hidden="true">
-            {/* swept war-wings */}
-            <path d="M14 16 C7 12 3 13 1 17 C6 18 9 20 12 23 Z" fill="rgba(255,231,150,0.8)" stroke="#8a6414" strokeWidth="0.9" strokeLinejoin="round" />
-            <path d="M30 16 C37 12 41 13 43 17 C38 18 35 20 32 23 Z" fill="rgba(255,231,150,0.8)" stroke="#8a6414" strokeWidth="0.9" strokeLinejoin="round" />
-            {/* the marshal: crested helm, war-coat */}
-            <path d="M19 6 L22 2 L25 6 Z" fill="#e6432c" stroke="#7a1a10" strokeWidth="0.7" strokeLinejoin="round" />
-            <circle cx="22" cy="10" r="3.2" fill="#ffe9b0" stroke="#8a6414" strokeWidth="0.8" />
-            <path d="M22 14 C18.5 14 17 17 16.5 21 L13 42 H31 L27.5 21 C27 17 25.5 14 22 14 Z" fill="rgba(230,67,44,0.85)" stroke="#7a1a10" strokeWidth="1" strokeLinejoin="round" />
-            {/* the fistful of bolts hurled down */}
-            <path d="M16 26 L11 34 L14 34 L9 42 M28 26 L33 34 L30 34 L35 42" fill="none" stroke="#ffe9b0" strokeWidth="1.6" strokeLinejoin="round" />
-          </svg>
-        }
-      >
-        {/* the four raking strike-bolts under him */}
-        <span className="fx-sig-streak absolute left-[26%] top-[38%] block h-[26%] w-[48%]" style={{ animationDelay: `${delayMs + 260}ms` }}>
-          <svg viewBox="0 0 48 32" className="h-full w-full" aria-hidden="true">
-            <g stroke="#e6bf6a" strokeWidth="2.2" strokeLinejoin="round" fill="none">
-              <path d="M4 4 L14 12 L10 14 L20 22" />
-              <path d="M16 2 L26 10 L22 12 L32 20" />
-              <path d="M28 6 L38 14 L34 16 L44 24" />
-            </g>
-            <path d="M10 24 L20 28 L16 29 L26 31" stroke="#fff3c9" strokeWidth="1.4" strokeLinejoin="round" fill="none" />
-          </svg>
-        </span>
-      </GodEvent>
+      <BoardWideStage>
+        <BoardFrame>
+          {MOVES.map((m) => (
+            <React.Fragment key={m.kind}>
+              <span
+                className="fx-tc-arrive absolute block"
+                style={{ ...tcSq(m.f, m.r, 0.76), "--tc-dx": `${m.df * 132}%`, "--tc-dy": `calc(var(--fx-side, 1) * ${-m.dr * 132}%)`, animationDelay: dm(delayMs, m.d) } as React.CSSProperties}
+              >
+                <TcGlyph kind={m.kind} fill="#f4efe4" stroke="#8a6414" />
+              </span>
+              <span className="fx-tc-slam absolute block" style={{ ...tcSq(m.f, m.r, 0.5), left: `${m.f * 12.5 + 8.5}%`, top: `calc(${rankTop(m.r)} - 0.5%)`, animationDelay: dm(delayMs, m.d + 300) }}>
+                {bolt}
+              </span>
+              {Array.from({ length: m.pips }, (_, k) => (
+                <span
+                  key={k}
+                  className="fx-tc-pip absolute block rounded-full"
+                  style={{ left: `${m.f * 12.5 + 5.25 + (k - (m.pips - 1) / 2) * 3}%`, top: `calc(${rankTop(m.r)} + 10.6%)`, width: "2%", height: "2%", background: "#ffe796", border: "1px solid #8a6414", animationDelay: dm(delayMs, m.d + 380 + k * 90) }}
+                />
+              ))}
+            </React.Fragment>
+          ))}
+          {/* the two start squares, marked before either move */}
+          <span className="fx-tc-hold absolute block rounded-[3px]" style={{ ...tcSq(1, 1, 0.86), border: "1.5px dashed #ffe796", animationDelay: dm(delayMs, 120) }} />
+          <span className="fx-tc-hold absolute block rounded-[3px]" style={{ ...tcSq(2, 1, 0.86), border: "1.5px dashed #ffe796", animationDelay: dm(delayMs, 200) }} />
+          <span className="fx-tc-hold absolute block" style={{ ...tcSq(7, 6, 0.72), animationDelay: dm(delayMs, 900) }}>
+            <TcGlyph kind="king" fill="#3a3440" stroke="#e6dcc6" />
+          </span>
+          <span className="absolute block" style={{ left: "68.75%", top: `calc(${rankTop(4)} + 6.25%)`, width: "17.7%", height: "0.8%", transformOrigin: "0% 50%", transform: "rotate(calc(var(--fx-side, 1) * -45deg))" }}>
+            <span className="fx-tc-wipex absolute inset-0 block" style={{ transformOrigin: "0% 50%", background: "repeating-linear-gradient(90deg, #ffe796 0 10%, transparent 10% 18%)", animationDelay: dm(delayMs, 1000) }} />
+          </span>
+          <span
+            className="fx-tc-strike absolute block"
+            style={{ left: "74%", top: `calc(${rankTop(5)} + 6%)`, width: "8%", height: "1%", background: "#e6432c", "--tc-rot": "40deg", animationDelay: dm(delayMs, 1250) } as React.CSSProperties}
+          />
+        </BoardFrame>
+      </BoardWideStage>
     );
   }
   return (
@@ -2057,32 +2072,49 @@ function DeepGlacierBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
   // whole crop (palette wash + the card's own motif writ large + a shockwave
   // past the board edges) instead of a square-local pop.
   if (lead) {
-    // God-tier pass — THE GLACIER TITAN: cold light wells up out of the board
-    // and a colossal slab-shouldered titan of veined glacier ice grinds up
-    // over the crop, flash-flaring as its mass sets with twin rime shockwaves.
+    // TC-core: ARREST TIME draws its rule. "Freeze one enemy rook or queen
+    // for 3 of their turns." Their rook stands on the square and a clock face
+    // comes up behind it; the hand starts round and stops dead. Manacles
+    // close on the rook from both sides and ice sets over it; three pips,
+    // three of their turns. A queen glyph beside it shows the other piece
+    // this may take, and a pawn is struck: only a rook or a queen.
     return (
-      <GodEvent
-        tell={<SigTell delayMs={delayMs + 70} color="#e6f6ff" />}
-        settle={<SigSettle delayMs={delayMs + 520} color="#e6f6ff" />}
-        wash="rgba(176,220,245,0.26)"
-        rays="rgba(224,246,255,0.75)"
-        boom="rgba(224,246,255,0.85)"
-        flare="rgba(235,250,255,0.7)"
-        sparkFill="#e6f6ff"
-        sparkStroke="#82bcdf"
-        motion="rise"
-        delayMs={delayMs}
-        figure={
-          <svg viewBox="0 0 40 44" className="h-full w-full" aria-hidden="true">
-            {/* the glacier titan: faceted slab body, jagged berg shoulders */}
-            <path d="M8 44 L6 26 L2 22 L9 18 L12 8 L20 3 L28 9 L31 18 L38 22 L34 26 L32 44 Z" fill="rgba(176,220,245,0.55)" stroke="rgba(224,246,255,0.9)" strokeWidth="1.3" strokeLinejoin="round" />
-            {/* crack veins running its face */}
-            <path d="M14 10 L18 18 L13 24 L18 34 M26 11 L22 18 L27 24 L23 36" fill="none" stroke="rgba(235,250,255,0.75)" strokeWidth="1.1" strokeLinejoin="round" />
-            {/* cold sunk eyes */}
-            <path d="M16 15 H18.5 M21.5 15 H24" stroke="#3f6f9f" strokeWidth="1.4" strokeLinecap="round" />
-          </svg>
-        }
-      />
+      <BoardWideStage>
+        <span className="fx-tc-hold absolute block rounded-full" style={{ ...tcFwdBox(0, 0.9, 0.9), border: "2px solid #82bcdf", background: "rgba(230,246,255,0.5)", animationDelay: dm(delayMs, 0) }} />
+        <span
+          className="fx-tc-sweep absolute block"
+          style={{ left: `${50 - 0.35}%`, top: `calc(${50 - TC_CELL * 0.36}% - var(--fx-side, 1) * ${TC_CELL * 0.9}%)`, width: "0.7%", height: `${TC_CELL * 0.36}%`, background: "#2f5b78", "--tc-turn": "110deg", animationDelay: dm(delayMs, 120) } as React.CSSProperties}
+        />
+        <span className="fx-tc-hold absolute block" style={{ ...tcCellBox(0, 0, 0.74), animationDelay: dm(delayMs, 60) }}>
+          <TcGlyph kind="rook" fill="#3a3440" stroke="#e6f6ff" />
+        </span>
+        {[-1, 1].map((s) => (
+          <span
+            key={s}
+            className="fx-tc-arrive absolute block"
+            style={{ ...tcCellBox(s * 0.34, 0.1, 0.42), "--tc-dx": `${s * 160}%`, "--tc-dy": "0%", animationDelay: dm(delayMs, 520) } as React.CSSProperties}
+          >
+            <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
+              <circle cx="5" cy="5" r="3.6" fill="none" stroke="#9aa6b2" strokeWidth="1.4" />
+              <circle cx="5" cy="5" r="3.6" fill="none" stroke="#3a4450" strokeWidth="0.4" />
+            </svg>
+          </span>
+        ))}
+        <span className="fx-tc-slam absolute block rounded-[3px]" style={{ ...tcCellBox(0, 0, 0.94), border: "2px solid #e6f6ff", background: "rgba(176,220,245,0.38)", animationDelay: dm(delayMs, 860) }} />
+        {[-1, 0, 1].map((k, i) => (
+          <span key={k} className="fx-tc-pip absolute block rounded-full" style={{ ...tcFwdBox(k * 0.34, -0.72, 0.22), background: "#e6f6ff", border: "1px solid #4f86a8", animationDelay: dm(delayMs, 1100 + i * 110) }} />
+        ))}
+        <span className="fx-tc-hold absolute block" style={{ ...tcCellBox(1.6, 0, 0.56), animationDelay: dm(delayMs, 1250) }}>
+          <TcGlyph kind="queen" fill="#3a3440" stroke="#b6ddf2" />
+        </span>
+        <span className="fx-tc-hold absolute block" style={{ ...tcCellBox(-1.6, 0, 0.5), animationDelay: dm(delayMs, 1250) }}>
+          <TcGlyph kind="pawn" fill="#3a3440" stroke="#8c8c92" />
+        </span>
+        <span
+          className="fx-tc-strike absolute block"
+          style={{ ...tcCellBox(-1.6, 0, 0.7), height: "0.8%", top: `${50 - 0.4}%`, background: "#82bcdf", "--tc-rot": "-40deg", animationDelay: dm(delayMs, 1400) } as React.CSSProperties}
+        />
+      </BoardWideStage>
     );
   }
   return (
@@ -12148,48 +12180,52 @@ function DugInBurst({ lead, delayMs }: { lead: boolean; delayMs: number }) {
     </svg>
   );
   if (lead) {
-    // God-tier pass — THE PATRON SAINT OF SANDBAGS: trench-light heaves up
-    // out of the ground and a COLOSSAL helmeted sapper god rises behind the
-    // parapet, entrenching spade shouldered, dust rolling off the works — an
-    // equally epic, equally deadpan dig-in with twin olive shockwaves.
+    // TC-core: I LOVE ABS draws its rule. "Brace your core. Every one of your
+    // pieces standing in the central 16 squares becomes uncapturable for your
+    // opponent's next 2 turns." The central four by four is drawn as a six
+    // pack, eight pads that flex in pairs. Your three pieces standing inside
+    // it are ringed in a guard and a capture thrown at one bounces off; your
+    // rook just outside the core gets nothing. Two pips: two turns.
+    const PADS = [0, 1, 2, 3].flatMap((row) => [0, 1].map((col) => ({ row, col })));
     return (
-      <GodEvent
-        wash="rgba(124,138,74,0.22)"
-        rays="rgba(176,160,114,0.6)"
-        boom="rgba(124,138,74,0.85)"
-        flare="rgba(176,160,114,0.6)"
-        sparkFill="#b0a072"
-        sparkStroke="#5c5138"
-        motion="rise"
-        delayMs={delayMs}
-        figure={
-          <svg viewBox="0 0 40 44" className="h-full w-full" aria-hidden="true">
-            {/* the great brodie helmet */}
-            <path d="M8 14 C8 6 14 2 20 2 C26 2 32 6 32 14 Z" fill="#7c8a4a" stroke="#3a4022" strokeWidth="1.2" strokeLinejoin="round" />
-            <path d="M5 14 H35" stroke="#3a4022" strokeWidth="1.8" strokeLinecap="round" />
-            {/* the sapper's mud-caked greatcoat, half dug-in */}
-            <path d="M11 44 L11 26 C11 20 15 16 20 16 C25 16 29 20 29 26 L29 44 Z" fill="rgba(92,81,56,0.92)" stroke="#3a4022" strokeWidth="1.1" strokeLinejoin="round" />
-            <path d="M15 20 H18 M22 20 H25" stroke="#e8e2d2" strokeWidth="1.2" strokeLinecap="round" />
-            <path d="M13 30 H27 M14 36 H26" stroke="rgba(58,64,34,0.6)" strokeWidth="0.8" fill="none" />
-            {/* the shouldered entrenching spade */}
-            <path d="M29 24 L37 14" stroke="#8a6a4a" strokeWidth="1.6" strokeLinecap="round" />
-            <path d="M36 15 C39 12 40 9 38 7 C36 7.5 34 9.5 33 12.5 Z" fill="#c9d2dc" stroke="#4a5560" strokeWidth="0.9" strokeLinejoin="round" />
-            {/* the parapet at its waist */}
-            <g fill="#b0a072" stroke="#5c5138" strokeWidth="0.8" strokeLinejoin="round">
-              <rect x="2" y="38" width="11" height="6" rx="2.6" />
-              <rect x="27" y="38" width="11" height="6" rx="2.6" />
-              <rect x="8" y="32" width="11" height="6" rx="2.6" />
-              <rect x="21" y="32" width="11" height="6" rx="2.6" />
-            </g>
-          </svg>
-        }
-      >
-        {/* the works thrown up across the central band */}
-        <span className="fx-sig-brick absolute left-[26%] bottom-[32%] block h-[10%] w-[48%]" style={{ animationDelay: `${delayMs + 200}ms` }}>
-          {sandbags}
-        </span>
-        <span className="fx-sig-ash absolute left-[28%] bottom-[30%] block h-[6%] w-[44%] rounded-full" style={{ background: "rgba(176,160,114,0.5)", animationDelay: `${delayMs + 420}ms` }} />
-      </GodEvent>
+      <BoardWideStage>
+        <BoardFrame>
+          {PADS.map((p) => (
+            <span
+              key={`${p.row}-${p.col}`}
+              className="fx-tc-slam absolute block rounded-[30%]"
+              style={{ left: `${25 + p.col * 25 + 1}%`, top: `calc(${rankTop(6 - p.row)} + 1%)`, width: "23%", height: "10.5%", border: "2px solid #b0a072", background: "rgba(124,138,74,0.22)", animationDelay: dm(delayMs, p.row * 110) }}
+            />
+          ))}
+          {[
+            { kind: "knight" as const, f: 3, r: 3 },
+            { kind: "pawn" as const, f: 4, r: 4 },
+            { kind: "bishop" as const, f: 2, r: 5 },
+          ].map((p, i) => (
+            <React.Fragment key={p.kind}>
+              <span className="fx-tc-rise absolute block" style={{ ...tcSq(p.f, p.r, 0.72), animationDelay: dm(delayMs, 420 + i * 80) }}>
+                <TcGlyph kind={p.kind} fill="#f4efe4" stroke="#5c5138" />
+              </span>
+              <span className="fx-tc-ward absolute block rounded-full" style={{ ...tcSq(p.f, p.r, 0.96), border: "2px solid #d8cc98", animationDelay: dm(delayMs, 640 + i * 80) }} />
+            </React.Fragment>
+          ))}
+          <span
+            className="fx-tc-glance absolute block"
+            style={{ ...tcSq(2, 5, 0.5), "--tc-dx": "150%", "--tc-dy": "calc(var(--fx-side, 1) * -150%)", animationDelay: dm(delayMs, 1000) } as React.CSSProperties}
+          >
+            <svg viewBox="0 0 10 10" className="block h-full w-full" style={{ transform: "scale(-1, var(--fx-side, 1))" }} aria-hidden="true">
+              <path d="M1 1 L8 8" stroke="#5c5138" strokeWidth="0.9" strokeLinecap="round" />
+              <path d="M8.8 8.8 L6.4 7.6 L7.6 6.4 Z" fill="#e3ecf4" stroke="#5b6672" strokeWidth="0.4" {...TC_SJ} />
+            </svg>
+          </span>
+          <span className="fx-tc-hold absolute block" style={{ ...tcSq(7, 3, 0.66), animationDelay: dm(delayMs, 600) }}>
+            <TcGlyph kind="rook" fill="#b8b09a" stroke="#5c5138" />
+          </span>
+          {[0, 1].map((k) => (
+            <span key={k} className="fx-tc-pip absolute block rounded-full" style={{ left: `${47 + k * 3.4}%`, top: `calc(${rankTop(2)} + 5.2%)`, width: "2.2%", height: "2.2%", background: "#d8cc98", border: "1px solid #5c5138", animationDelay: dm(delayMs, 1250 + k * 110) }} />
+          ))}
+        </BoardFrame>
+      </BoardWideStage>
     );
   }
   return (
