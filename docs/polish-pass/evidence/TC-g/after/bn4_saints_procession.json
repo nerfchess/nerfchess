@@ -1,0 +1,91 @@
+{
+ "id": "bn4_saints_procession",
+ "url": "/dev/plays?id=bn4_saints_procession&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "bn4_saints_procession",
+  "name": "Saint's Procession",
+  "tier": 6,
+  "category": "protection",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:bn4_saints_procession",
+  "anchor": "aim",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "line",
+  "staggerMs": 70,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, diff-less: no zone source, not an attack",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2531,
+  "cssEndMs": 3561,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 35,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 207,
+  "maxGapMs": 86.6
+ },
+ "raf": {
+  "frames": 242,
+  "medianMs": 16.7,
+  "maxMs": 83.3,
+  "dropped": 9
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 90,
+  "totalBlockingMs": 20,
+  "entries": [
+   {
+    "atMs": 23,
+    "duration": 90,
+    "blocking": 20,
+    "scripts": [
+     {
+      "duration": 5,
+      "invoker": "TimerHandler:setInterval",
+      "source": ""
+     }
+    ]
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  194,
+  494,
+  854,
+  1259,
+  1702,
+  2177,
+  2681
+ ],
+ "png": "docs/polish-pass/evidence/TC-g/after/bn4_saints_procession.png",
+ "pngBytes": 13016,
+ "off": {
+  "url": "/dev/plays?id=bn4_saints_procession&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "docs/polish-pass/evidence/TC-g/after/bn4_saints_procession.off.png"
+ }
+}

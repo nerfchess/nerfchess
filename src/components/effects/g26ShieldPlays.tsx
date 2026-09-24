@@ -2043,6 +2043,206 @@ function AgeOfPeaceRule({ lead, role, delayMs }: SceneProps) {
   );
 }
 
+/** Centre of file `c` counted from the caster's left (the board turns half a
+ *  circle with the side, so a scene reads the same from either seat). */
+function fc(c: number): string {
+  return `calc(50% + var(--fx-side, 1) * ${(c - 3.5) * 12.5}%)`;
+}
+
+/** A dotted thread from square (c0, r0) to (c1, r1), drawn from its first end. */
+function Thread({ c0, r0, c1, r1, color, delayMs, gd = "1.6s" }: { c0: number; r0: number; c1: number; r1: number; color: string; delayMs: number; gd?: string }) {
+  const dx = (c1 - c0) * 12.5;
+  const dy = -(r1 - r0) * 12.5;
+  const len = Math.hypot(dx, dy);
+  const deg = Math.round((Math.atan2(dy, dx) * 180) / Math.PI);
+  return <Ray x={fc(c0)} y={rk(r0)} len={len} angle={`calc(${deg}deg + (1 - var(--fx-side, 1)) * 90deg)`} color={color} delayMs={delayMs} gd={gd} />;
+}
+
+/** A barred move: a cross stamped where it would have landed. */
+function Bar({ c }: { c: { glow: string; deep: string } }) {
+  return (
+    <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+      <path d="M4 4l12 12M16 4L4 16" stroke={c.deep} strokeWidth="3.4" {...SJ} />
+      <path d="M4 4l12 12M16 4L4 16" stroke={c.glow} strokeWidth="1.4" {...SJ} />
+    </svg>
+  );
+}
+
+/** A caster square's corner badge (x, y is the square's centre). */
+const corner = (x: string, y: string): [string, string] => [`calc(${x} + 2.8%)`, `calc(${y} - 2.8%)`];
+
+/* --- bn4_ancestral_shield -----------------------------------------------------------
+   "After your opponent's next move, none of your pieces can be captured for
+   your opponent's next 2 turns." Their pawn makes its one free move first
+   (e7 to e5, one grey pip for it); only then does an heirloom frame close
+   round the caster's two ranks and a kite shield hang on every square of the
+   army, rank by rank; two turn pips; their queen lunges from h4 at f2 and
+   the shield on f2 takes it, the queen falls back, and a faint ancestor
+   lifts off the square. */
+const C_ASR = { core: "#c8b4e0", glow: "#fff4d6", deep: "#221733" };
+
+function Kite({ c }: { c: typeof C_ASR }) {
+  return (
+    <svg viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+      <path d="M12 2.5l8 4v6.6c0 4.4-3.6 7.4-8 8.4-4.4-1-8-4-8-8.4V6.5z" fill={c.core} stroke={c.deep} strokeWidth="1.6" {...SJ} />
+      <path d="M12 5.4v13M6.6 9.4h10.8" stroke={c.glow} strokeWidth="1.3" {...SJ} />
+    </svg>
+  );
+}
+
+function AncestralShieldRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <AncestralShieldScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_ASR;
+  const d = delayMs;
+  const army: Array<[number, number]> = [];
+  for (let r = 0; r <= 1; r++) for (let col = 0; col < 8; col++) army.push([col, r]);
+  return (
+    <Brd>
+      <Q x={fc(4)} y={rk(6)} w={11} h={11} cls="g26-r-go" delayMs={d + 40} v={{ "--gd": "1s", "--tx0": "0%", "--ty0": "0%", "--tx1": "0%", "--ty1": `calc(var(--fx-side, 1) * ${2 * fileIn(11)}%)` }}>
+        <Man kind="p" fill={c.deep} stroke={c.glow} />
+      </Q>
+      <Pips n={1} r={3.5} x0={50} x1={50} color="rgba(255,244,214,0.5)" delayMs={d + 120} gd="0.9s" />
+      <Q x="50%" y={rk(0.5)} w={99} h={25} cls="g26-r-in" delayMs={d + 480} v={{ "--gd": "1.9s", "--s0": "1.06" }} style={{ border: `2px solid ${c.core}`, borderRadius: "2px", background: "rgba(34,23,51,0.16)" }} />
+      {army.map(([col, r], i) => {
+        const [x, y] = corner(fc(col), rk(r));
+        const hit = col === 5 && r === 1;
+        return (
+          <Q key={`${col}-${r}`} x={x} y={y} w={hit ? 9 : 7} h={hit ? 9 : 7} cls="g26-r-pip" delayMs={d + 560 + i * 30} v={{ "--gd": "1.9s" }}>
+            <Kite c={c} />
+          </Q>
+        );
+      })}
+      <Pips n={2} r={3.5} x0={47} x1={53} color={c.glow} delayMs={d + 900} gd="1.4s" />
+      <Q x={fc(7)} y={rk(3)} w={11} h={11} cls="g26-r-dim" delayMs={d + 1000} v={{ "--gd": "1.2s" }}>
+        <Man kind="q" fill={c.deep} stroke={c.glow} />
+      </Q>
+      <Thread c0={7} r0={3} c1={5.4} r1={1.4} color={c.glow} delayMs={d + 1120} gd="0.8s" />
+      <Q x={fc(5)} y={rk(1)} w={13} h={13} cls="g26-r-stamp" delayMs={d + 1280} v={{ "--gd": "0.9s" }}>
+        <Kite c={c} />
+      </Q>
+      <Q x={fc(5)} y={rk(1.3)} w={9} h={12} cls="g26-r-lean" delayMs={d + 1500} v={{ "--gd": "1s" }}>
+        <svg viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+          <path d="M12 3.4c2.6 0 4 2 4 4.6L15.4 22H8.6L8 8c0-2.6 1.4-4.6 4-4.6z" fill={c.core} opacity="0.7" />
+        </svg>
+      </Q>
+    </Brd>
+  );
+}
+
+/* --- bn4_guardian_of_the_line -------------------------------------------------------
+   "Beginning after your opponent's next move, your queen cannot be captured
+   while she stands beside your king, for the rest of the game." The king's
+   ring of neighbouring squares is marked out; a short gilt chain ties the
+   queen on d1 to the king on e1 and a tower shield plants on her square; a
+   bishop's shot from a4 stops dead at the shield. Then the queen walks out
+   to h5, off the king's ring, and her shield falls away: the guard holds
+   only while she keeps the line. */
+const C_GLR = { core: "#8fa6c4", glow: "#fff2dc", deep: "#1b2431" };
+
+function Tower({ c }: { c: typeof C_GLR }) {
+  return (
+    <svg viewBox="0 0 24 24" className="block h-full w-full" aria-hidden="true">
+      <path d={GL_TOWER} fill={c.core} stroke={c.deep} strokeWidth="1.6" {...SJ} />
+      <path d="M8 7h8M8 11h8" stroke={c.glow} strokeWidth="1.2" {...SJ} />
+    </svg>
+  );
+}
+
+function GuardianOfTheLineRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <GuardianOfTheLineScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_GLR;
+  const d = delayMs;
+  const ring: Array<[number, number]> = [[3, 0], [5, 0], [3, 1], [4, 1], [5, 1]];
+  const [qx, qy] = corner(fc(3), rk(0));
+  return (
+    <Brd>
+      {ring.map(([col, r], i) => (
+        <Tint key={`${col}-${r}`} x={fc(col)} y={rk(r)} color="rgba(143,166,196,0.46)" delayMs={d + 60 + i * 40} gd="2.1s" />
+      ))}
+      <Q x={fc(4)} y={rk(0)} w={12.5} h={12.5} cls="g26-r-in" delayMs={d + 40} v={{ "--gd": "2.2s", "--s0": "1" }} style={{ border: `2px solid ${c.glow}`, borderRadius: "2px" }} />
+      <Q x={fc(3.5)} y={rk(0)} w={7} h={3.4} cls="g26-r-draw" delayMs={d + 260} v={{ "--gd": "1.2s" }}>
+        <svg viewBox="0 0 28 12" className="block h-full w-full" aria-hidden="true">
+          <path d="M2 6h6M20 6h6" stroke={c.glow} strokeWidth="2.2" {...SJ} />
+          <rect x="7" y="2.4" width="7" height="7.2" rx="3.6" fill="none" stroke={c.glow} strokeWidth="2" />
+          <rect x="14" y="2.4" width="7" height="7.2" rx="3.6" fill="none" stroke={c.core} strokeWidth="2" />
+        </svg>
+      </Q>
+      <Q x={qx} y={qy} w={8} h={8} cls="g26-r-stamp" delayMs={d + 380} v={{ "--gd": "1.2s" }}>
+        <Tower c={c} />
+      </Q>
+      <Q x={fc(0)} y={rk(3)} w={11} h={11} cls="g26-r-dim" delayMs={d + 440} v={{ "--gd": "1.1s" }}>
+        <Man kind="b" fill={c.deep} stroke={c.glow} />
+      </Q>
+      <Thread c0={0} r0={3} c1={2.5} r1={0.5} color={c.glow} delayMs={d + 560} gd="0.7s" />
+      <Q x={fc(2.6)} y={rk(0.6)} w={6} h={6} cls="g26-r-stamp" delayMs={d + 720} v={{ "--gd": "0.7s" }}>
+        <Bar c={c} />
+      </Q>
+      <Q x={fc(3)} y={rk(0)} w={11} h={11} cls="g26-r-go" delayMs={d + 980} v={{ "--gd": "1.1s", "--tx0": "0%", "--ty0": "0%", "--tx1": `calc(var(--fx-side, 1) * ${4 * fileIn(11)}%)`, "--ty1": `calc(var(--fx-side, 1) * ${-4 * fileIn(11)}%)` }}>
+        <Man kind="q" fill={c.glow} stroke={c.deep} />
+      </Q>
+      <Q x={qx} y={qy} w={8} h={8} cls="g26-r-part" delayMs={d + 1340} v={{ "--gd": "0.8s", "--tx1": "-40%", "--ty1": "calc(var(--fx-side, 1) * 90%)", "--r1": "-60deg" }}>
+        <Tower c={c} />
+      </Q>
+    </Brd>
+  );
+}
+
+/* --- bn4_saints_procession ----------------------------------------------------------
+   "For your opponent's next 2 turns, none of your pieces can be captured and
+   your king cannot be taken. The blessing ends the moment one of your pieces
+   makes a capture." A canopy of candle bearers walks the caster's back rank
+   from one side to the other, and a halo lights over each piece as it
+   passes (the king's the largest); two turn pips; then the caster's bishop
+   on c4 takes on f7 and every halo on the board goes out at once, candles snuffed:
+   one capture ends the whole blessing, not one piece's share. */
+const C_SPR = { core: "#e6c46a", glow: "#fff4d6", deep: "#2b2110" };
+
+function Halo({ c }: { c: typeof C_SPR }) {
+  return (
+    <svg viewBox="0 0 20 10" className="block h-full w-full" aria-hidden="true">
+      <ellipse cx="10" cy="5" rx="8" ry="3" fill="none" stroke={c.deep} strokeWidth="2.8" />
+      <ellipse cx="10" cy="5" rx="8" ry="3" fill="none" stroke={c.core} strokeWidth="1.4" />
+    </svg>
+  );
+}
+
+function SaintsProcessionRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <SaintsProcessionScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_SPR;
+  const d = delayMs;
+  const army: Array<[number, number]> = [];
+  for (let col = 0; col < 8; col++) for (let r = 0; r <= 1; r++) army.push([col, r]);
+  return (
+    <Brd>
+      <Q x={fc(0)} y={rk(0.5)} w={12.5} h={9} cls="g26-r-go" delayMs={d + 40} v={{ "--gd": "1.5s", "--tx0": "calc(var(--fx-side, 1) * -60%)", "--ty0": "0%", "--tx1": "calc(var(--fx-side, 1) * 700%)", "--ty1": "0%" }}>
+        <svg viewBox="0 0 24 18" className="block h-full w-full" aria-hidden="true">
+          <path d="M2 7h20l-2.6-4.5H4.6z" fill={c.core} stroke={c.deep} strokeWidth="1.2" {...SJ} />
+          <path d="M4 7v10M20 7v10" stroke={c.core} strokeWidth="1.4" {...SJ} />
+          <path d="M9 13c1 -2 1 -3 1 -4 1 1 1 2 1 4zM14 13c1 -2 1 -3 1 -4 1 1 1 2 1 4z" fill={c.glow} />
+        </svg>
+      </Q>
+      {army.map(([col, r]) => {
+        const king = col === 4 && r === 0;
+        return (
+          <Q key={`${col}-${r}`} x={fc(col)} y={`calc(${rk(r)} - 4.4%)`} w={king ? 10 : 7.5} h={king ? 5 : 3.8} cls="g26-r-dim" delayMs={d + 140 + col * 100 + r * 30} v={{ "--gd": `${Math.round((1360 - 140 - col * 100 - r * 30) / 0.46)}ms` }}>
+            <Halo c={c} />
+          </Q>
+        );
+      })}
+      <Pips n={2} r={3.5} x0={47} x1={53} color={c.glow} delayMs={d + 700} gd="1.2s" />
+      <Q x={fc(2)} y={rk(3)} w={11} h={11} cls="g26-r-go" delayMs={d + 820} v={{ "--gd": "0.9s", "--tx0": "0%", "--ty0": "0%", "--tx1": `calc(var(--fx-side, 1) * ${3 * fileIn(11)}%)`, "--ty1": `calc(var(--fx-side, 1) * ${-3 * fileIn(11)}%)` }}>
+        <Man kind="b" fill={c.glow} stroke={c.deep} />
+      </Q>
+      <Q x={fc(5)} y={rk(6)} w={11} h={11} cls="g26-r-part" delayMs={d + 1330} v={{ "--gd": "0.7s", "--tx1": "50%", "--ty1": "calc(var(--fx-side, 1) * -60%)", "--r1": "50deg" }}>
+        <Man kind="p" fill={c.deep} stroke={c.glow} />
+      </Q>
+      {[0, 1, 2].map((i) => (
+        <Q key={`w${i}`} x={fc(1.5 + i * 2.5)} y={rk(1.1)} w={2.6} h={4} cls="g26-r-lean" delayMs={d + 1360 + i * 60} v={{ "--gd": "0.9s" }} style={{ background: "rgba(255,244,214,0.55)", borderRadius: "50% 50% 40% 40%" }} />
+      ))}
+    </Brd>
+  );
+}
+
 /* =============================================================================
    Registry. Every entry declares an anchor; every `sound` is an existing
    SigSoundKey. `source` is deliberately omitted throughout: these cards carry
@@ -2057,11 +2257,11 @@ function S(Render: SigPlugin["Render"], config: SigPlugin["config"]): SigPlugin 
 
 export const PLAYS: Record<string, SigPlugin> = {
   bn4_age_of_peace: S(AgeOfPeaceRule, { ordering: "radial", staggerMs: 55, victims: "all", hasLead: true, sound: "cathedral", anchor: "cast" }),
-  bn4_guardian_of_the_line: S(GuardianOfTheLineScene, { ordering: "line", staggerMs: 60, victims: "all", hasLead: true, sound: "wall", anchor: "aim" }),
-  bn4_saints_procession: S(SaintsProcessionScene, { ordering: "line", staggerMs: 70, victims: "all", hasLead: true, sound: "cathedral", anchor: "aim" }),
+  bn4_guardian_of_the_line: S(GuardianOfTheLineRule, { ordering: "line", staggerMs: 60, victims: "all", hasLead: true, sound: "wall", anchor: "aim" }),
+  bn4_saints_procession: S(SaintsProcessionRule, { ordering: "line", staggerMs: 70, victims: "all", hasLead: true, sound: "cathedral", anchor: "aim" }),
   bn4_warding_circle: S(WardingCircleScene, { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "aegis", anchor: "board" }),
   ov_plot_armor: S(PlotArmorScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "coronation", anchor: "cast" }),
-  bn4_ancestral_shield: S(AncestralShieldScene, { ordering: "radial", staggerMs: 65, victims: "all", hasLead: true, sound: "shades", anchor: "board" }),
+  bn4_ancestral_shield: S(AncestralShieldRule, { ordering: "radial", staggerMs: 65, victims: "all", hasLead: true, sound: "shades", anchor: "board" }),
   bn4_shieldmaidens: S(ShieldmaidensScene, { ordering: "octagon", staggerMs: 55, victims: "all", hasLead: true, sound: "wall", anchor: "cast" }),
   bn4_bodyguard_detail: S(BodyguardDetailScene, { ordering: "octagon", staggerMs: 50, victims: ["k", "p", "n", "b", "r", "q"], hasLead: true, sound: "aegis", anchor: "board" }),
   bn4_color_guard: S(ColorGuardScene, { ordering: "file", staggerMs: 90, victims: ["p"], hasLead: true, sound: "coronation", anchor: "board" }),

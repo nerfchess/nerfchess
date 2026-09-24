@@ -2297,6 +2297,176 @@ function VeilOfMothsRule({ lead, role, delayMs }: SceneProps) {
   );
 }
 
+/** A barred move: a cross stamped where it would have landed. */
+function Bar({ c }: { c: { glow: string; deep: string } }) {
+  return (
+    <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+      <path d="M4 4l12 12M16 4L4 16" stroke={c.deep} strokeWidth="3.4" {...SJ} />
+      <path d="M4 4l12 12M16 4L4 16" stroke={c.glow} strokeWidth="1.4" {...SJ} />
+    </svg>
+  );
+}
+
+/* --- hx4_dead_calm -----------------------------------------------------------------
+   "The wind dies: for your opponent's next 2 turns, their bishops, rooks and
+   queen may slide at most 1 square. The first piece the calm would rein in
+   may slide freely once, then it binds fully." A pennant flies over each of
+   their five sliders on the back rank while three gusts cross the board;
+   the gusts thin out and every pennant falls slack. Their bishop on c5 is
+   first: it still rides the last of the wind all the way to a3. Their rook on
+   h6 is next: it drops anchor, its slide to h3 is barred and only h5, one
+   square on, is lit. Two turn pips. */
+const C_DCR = { core: "#ffcf8a", glow: "#fff2dc", deep: "#2a1f14" };
+
+function Pennant({ c, slack }: { c: typeof C_DCR; slack?: boolean }) {
+  return (
+    <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+      <path d="M4 2v17" stroke={c.deep} strokeWidth="1.8" {...SJ} />
+      {slack ? (
+        <path d="M4.6 3c1.6 3 1.2 6 -0.2 10l2.6-1c.8-3.4.6-6.4-.8-9z" fill={c.core} stroke={c.deep} strokeWidth="0.9" {...SJ} />
+      ) : (
+        <path d="M4.6 3l13 3.6-13 3.6z" fill={c.core} stroke={c.deep} strokeWidth="0.9" {...SJ} />
+      )}
+    </svg>
+  );
+}
+
+function DeadCalmRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <DeadCalmScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_DCR;
+  const d = delayMs;
+  const sliders = [0, 2, 3, 5, 7];
+  return (
+    <Brd>
+      {[0, 1, 2].map((i) => (
+        <Q key={`g${i}`} x={`${10 + i * 12}%`} y={rk(3.2 + i * 1.3)} w={60} h={1.2} cls="g41-r-draw" delayMs={d + 20 + i * 90} v={{ "--gd": "0.9s" }} style={{ background: `linear-gradient(90deg, transparent, ${c.glow} 30%, transparent)`, left: `${4 + i * 12}%` }} />
+      ))}
+      {sliders.map((col, i) => (
+        <Q key={`f${col}`} x={`calc(${fc(col)} + 2.6%)`} y={`calc(${rk(7)} + var(--fx-side, 1) * 2.6%)`} w={7} h={7} cls="g41-r-wave" delayMs={d + 60 + i * 30} v={{ "--gd": "0.75s" }}>
+          <Pennant c={c} />
+        </Q>
+      ))}
+      {sliders.map((col, i) => (
+        <Q key={`s${col}`} x={`calc(${fc(col)} + 2.6%)`} y={`calc(${rk(7)} + var(--fx-side, 1) * 2.6%)`} w={7} h={7} cls="g41-r-in" delayMs={d + 700 + i * 40} v={{ "--gd": "1.6s", "--s0": "1", "--ty0": "-30%" }}>
+          <Pennant c={c} slack />
+        </Q>
+      ))}
+      <Q x={fc(2)} y={rk(4)} w={11} h={11} cls="g41-r-go" delayMs={d + 380} v={{ "--gd": "1s", "--tx0": "0%", "--ty0": "0%", "--tx1": `calc(var(--fx-side, 1) * ${-2 * fileIn(11)}%)`, "--ty1": `calc(var(--fx-side, 1) * ${2 * fileIn(11)}%)` }}>
+        <Man kind="b" fill={c.deep} stroke={c.glow} />
+      </Q>
+      <Thread c0={2.3} r0={4.3} c1={0.3} r1={2.3} color={c.glow} delayMs={d + 400} gd="0.9s" />
+      <Q x={fc(7)} y={rk(5)} w={11} h={11} cls="g41-r-in" delayMs={d + 820} v={{ "--gd": "1.3s", "--s0": "1" }}>
+        <Man kind="r" fill={c.deep} stroke={c.glow} />
+      </Q>
+      <Q x={`calc(${fc(7)} - 3%)`} y={`calc(${rk(5)} + var(--fx-side, 1) * 3%)`} w={5} h={5} cls="g41-r-stamp" delayMs={d + 920} v={{ "--gd": "1.2s" }}>
+        <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+          <path d="M10 3v14M6 7h8M3.6 12.4c1 3 3.6 4.6 6.4 4.6s5.4-1.6 6.4-4.6" fill="none" stroke={c.deep} strokeWidth="3.4" {...SJ} />
+          <path d="M10 3v14M6 7h8M3.6 12.4c1 3 3.6 4.6 6.4 4.6s5.4-1.6 6.4-4.6" fill="none" stroke={c.core} strokeWidth="1.6" {...SJ} />
+        </svg>
+      </Q>
+      <Thread c0={7} r0={4.5} c1={7} r1={2.2} color={c.glow} delayMs={d + 1000} gd="0.8s" />
+      <Tint x={fc(7)} y={rk(4)} color="rgba(255,207,138,0.42)" delayMs={d + 1100} gd="1.1s" />
+      <Q x={fc(7)} y={rk(2)} w={7} h={7} cls="g41-r-stamp" delayMs={d + 1160} v={{ "--gd": "0.9s" }}>
+        <Bar c={c} />
+      </Q>
+      <Pips n={2} r={3.5} x0={47} x1={53} color={c.glow} delayMs={d + 1200} gd="1.1s" />
+    </Brd>
+  );
+}
+
+/* --- hx4_hall_of_mirrors -----------------------------------------------------------
+   "For your opponent's next 3 turns, every piece must land on a square of the
+   same color it started from. Knights, whose every leap changes color, cannot
+   move at all. Their king is exempt." Mirror panes stand up on their two
+   knights and each is barred with a cross; their rook on a6 (a light square)
+   sees its reflection on a4, the next light square down the file, and slides
+   there, while a5 (dark) is barred; their king on e8 is ringed free. Three
+   turn pips. */
+const C_HMR = { core: "#d8e4f0", glow: "#fff2dc", deep: "#1c2430" };
+
+function Pane({ c }: { c: typeof C_HMR }) {
+  return (
+    <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+      <rect x="2" y="2" width="16" height="16" rx="1.4" fill="rgba(216,228,240,0.34)" stroke={c.core} strokeWidth="1.4" />
+      <path d="M5 13l8-8M8 16l8-8" stroke={c.glow} strokeWidth="1" {...SJ} />
+    </svg>
+  );
+}
+
+function HallOfMirrorsRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <HallOfMirrorsHexScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_HMR;
+  const d = delayMs;
+  return (
+    <Brd>
+      {[1, 6].map((col, i) => (
+        <Q key={`p${col}`} x={fc(col)} y={rk(7)} w={12} h={12} cls="g41-r-up" delayMs={d + 40 + i * 70} v={{ "--gd": "1.9s" }}>
+          <Pane c={c} />
+        </Q>
+      ))}
+      {[1, 6].map((col, i) => (
+        <Q key={`x${col}`} x={fc(col)} y={rk(7)} w={7} h={7} cls="g41-r-stamp" delayMs={d + 300 + i * 70} v={{ "--gd": "1.4s" }}>
+          <Bar c={c} />
+        </Q>
+      ))}
+      <Q x={fc(4)} y={rk(7)} w={12.5} h={12.5} cls="g41-r-in" delayMs={d + 360} v={{ "--gd": "1.6s", "--s0": "1.15" }} style={{ border: `2px solid ${c.glow}`, borderRadius: "50%" }} />
+      <Q x={fc(0)} y={rk(5)} w={11} h={11} cls="g41-r-go" delayMs={d + 500} v={{ "--gd": "1.5s", "--tx0": "0%", "--ty0": "0%", "--tx1": "0%", "--ty1": `calc(var(--fx-side, 1) * ${2 * fileIn(11)}%)` }}>
+        <Man kind="r" fill={c.deep} stroke={c.glow} />
+      </Q>
+      <Q x={fc(0)} y={rk(3)} w={12} h={12} cls="g41-r-in" delayMs={d + 560} v={{ "--gd": "1.5s", "--s0": "1" }}>
+        <Pane c={c} />
+      </Q>
+      <Q x={fc(0)} y={rk(3)} w={9} h={9} cls="g41-r-dim" delayMs={d + 620} v={{ "--gd": "1s" }}>
+        <span className="block h-full w-full" style={{ transform: "scaleY(-1)" }}>
+          <Man kind="r" fill="rgba(216,228,240,0.6)" stroke={c.deep} />
+        </span>
+      </Q>
+      <Q x={fc(0)} y={rk(4)} w={7} h={7} cls="g41-r-stamp" delayMs={d + 700} v={{ "--gd": "1.1s" }}>
+        <Bar c={c} />
+      </Q>
+      <Pips n={3} r={3.5} x0={45} x1={55} color={c.glow} delayMs={d + 1150} gd="1.1s" />
+    </Brd>
+  );
+}
+
+/* --- hx4_quagmire_march ------------------------------------------------------------
+   "Your half of the board turns to bog: your opponent's next move passes
+   freely, then for their following 3 turns, any piece of theirs standing in
+   your half may move at most 1 square. Their king is exempt." The caster's
+   four ranks go to mud from the home edge up, bubbles rising through it; one
+   grey pip for the free move, then three; their rook on d4, standing in the
+   bog, sinks a little in a ring of ripples, its slide to d1 is barred and only
+   d3, one square on, is lit. */
+const C_QMR = { core: "#8a734a", glow: "#f3e2bd", deep: "#231a0e" };
+const QM_BUBBLES: Array<[number, number]> = [[0.8, 0.6], [2.6, 2.2], [5.4, 1.1], [6.8, 2.9], [1.6, 3.1], [4.4, 0.4], [7.2, 1.2]];
+
+function QuagmireMarchRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <QuagmireMarchScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_QMR;
+  const d = delayMs;
+  return (
+    <Brd>
+      <Q x="50%" y={rk(1.5)} w={100} h={50} cls="g41-r-grow" delayMs={d + 40} v={{ "--gd": "2.3s" }} style={{ background: "rgba(110,88,50,0.42)", transformOrigin: "50% calc(50% + var(--fx-side, 1) * 50%)" }} />
+      {QM_BUBBLES.map(([col, r], i) => (
+        <Q key={`b${i}`} x={fc(col)} y={rk(r)} w={2.6} h={2.6} cls="g41-r-toll" delayMs={d + 300 + i * 90} v={{ "--gd": "0.9s" }} style={{ border: `1.5px solid ${c.glow}`, borderRadius: "50%" }} />
+      ))}
+      <Pips n={1} r={4.5} x0={50} x1={50} color="rgba(243,226,189,0.5)" delayMs={d + 360} gd="0.9s" />
+      <Pips n={3} r={4.5} x0={45} x1={55} color={c.glow} delayMs={d + 760} gd="1.3s" />
+      <Q x={fc(3)} y={rk(3)} w={11} h={11} cls="g41-r-in" delayMs={d + 600} v={{ "--gd": "1.5s", "--s0": "1", "--ty0": "calc(var(--fx-side, 1) * -14%)" }}>
+        <Man kind="r" fill={c.deep} stroke={c.glow} />
+      </Q>
+      {[0, 1].map((i) => (
+        <Q key={`r${i}`} x={fc(3)} y={`calc(${rk(3)} + var(--fx-side, 1) * 4%)`} w={11} h={4} cls="g41-r-toll" delayMs={d + 720 + i * 180} v={{ "--gd": "1s" }} style={{ border: `1.5px solid ${c.glow}`, borderRadius: "50%" }} />
+      ))}
+      <Thread c0={3} r0={2.5} c1={3} r1={0.2} color={c.glow} delayMs={d + 960} gd="0.8s" />
+      <Tint x={fc(3)} y={rk(2)} color="rgba(243,226,189,0.4)" delayMs={d + 1060} gd="1.1s" />
+      <Q x={fc(3)} y={rk(0)} w={7} h={7} cls="g41-r-stamp" delayMs={d + 1120} v={{ "--gd": "0.9s" }}>
+        <Bar c={c} />
+      </Q>
+    </Brd>
+  );
+}
+
 export const PLAYS: Record<string, SigPlugin> = {
   ov_loading_screen_tip: S(LoadingTipScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "slots", anchor: "board" }),
   ov_second_opinion: S(SecondOpinionScene, { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "clockice", anchor: "board" }),
@@ -2319,7 +2489,7 @@ export const PLAYS: Record<string, SigPlugin> = {
   hx4_broken_compass: S(BrokenCompassScene, { ordering: "radial", staggerMs: 55, victims: "all", hasLead: true, sound: "wheel", anchor: "cast" }),
   hx4_moth_plague: S(MothPlagueScene, { ordering: "radial", staggerMs: 70, victims: ["p", "n", "b", "r", "q"], hasLead: true, sound: "petrifiedforest", anchor: "cast" }),
   hx4_waste_not: S(WasteNotScene, { ordering: "radial", staggerMs: 55, victims: "all", hasLead: true, sound: "clockcage", anchor: "board" }),
-  hx4_quagmire_march: S(QuagmireMarchScene, { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "petrifiedforest", anchor: "board" }),
+  hx4_quagmire_march: S(QuagmireMarchRule, { ordering: "sweep", staggerMs: 60, victims: "all", hasLead: true, sound: "petrifiedforest", anchor: "board" }),
   hx4_veil_of_moths: S(VeilOfMothsRule, { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "massfreeze", anchor: "board" }),
   hx4_sated_blades: S(SatedBladesScene, { ordering: "radial", staggerMs: 65, victims: "all", hasLead: true, sound: "atomic", anchor: "board" }),
   hx4_severed_lines: S(SeveredLinesScene, { ordering: "line", staggerMs: 55, victims: "all", hasLead: true, sound: "extinction", anchor: "board" }),
@@ -2330,13 +2500,13 @@ export const PLAYS: Record<string, SigPlugin> = {
   ov_hall_of_mirrors: S(HallOfMirrorsBuffScene, { ordering: "line", staggerMs: 65, victims: ["r"], hasLead: true, sound: "vault", anchor: "board" }),
   ov_duplicate_glitch: S(DuplicateGlitchScene, { ordering: "radial", staggerMs: 0, victims: "all", hasLead: true, sound: "bust", anchor: "board" }),
   hx4_ironglass_mirror: S(IronglassMirrorScene, { ordering: "octagon", staggerMs: 60, victims: "all", hasLead: true, sound: "massfreeze", anchor: "cast" }),
-  hx4_hall_of_mirrors: S(HallOfMirrorsHexScene, { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "cataclysm", anchor: "board" }),
+  hx4_hall_of_mirrors: S(HallOfMirrorsRule, { ordering: "radial", staggerMs: 60, victims: "all", hasLead: true, sound: "cataclysm", anchor: "board" }),
   bn4_third_wind: S(ThirdWindScene, { ordering: "line", staggerMs: 60, victims: "all", hasLead: true, sound: "blitz", anchor: "board" }),
   ov_tornado: S(TornadoScene, { ordering: "line", staggerMs: 55, victims: "all", hasLead: true, sound: "rampage", anchor: "board" }),
   bn4_wind_up_knight: S(WindUpKnightScene, { ordering: "radial", staggerMs: 0, victims: ["n"], hasLead: true, sound: "wheel", anchor: "cast" }),
   ov_feng_shui_plot: S(FengShuiPlotScene, { ordering: "octagon", staggerMs: 60, victims: "all", hasLead: true, sound: "aegis", anchor: "cast" }),
   ov_hostile_takeover: S(HostileTakeoverScene, { ordering: "line", staggerMs: 60, victims: "all", hasLead: true, sound: "siege", anchor: "aim" }),
-  hx4_dead_calm: S(DeadCalmScene, { ordering: "radial", staggerMs: 60, victims: ["b", "r", "q"], hasLead: true, sound: "snooze", anchor: "board" }),
+  hx4_dead_calm: S(DeadCalmRule, { ordering: "radial", staggerMs: 60, victims: ["b", "r", "q"], hasLead: true, sound: "snooze", anchor: "board" }),
   ov_living_board: S(LivingBoardScene, { ordering: "octagon", staggerMs: 60, victims: "all", hasLead: true, sound: "nova", anchor: "cast" }),
   hx4_tidal_wall: S(TidalWallScene, { ordering: "sweep", staggerMs: 55, victims: "all", hasLead: true, sound: "wall", anchor: "board" }),
   ov_ninth_rank: S(NinthRankScene, { ordering: "line", staggerMs: 60, victims: "all", hasLead: true, sound: "nova", anchor: "aim" }),

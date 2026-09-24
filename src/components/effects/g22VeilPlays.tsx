@@ -1725,6 +1725,129 @@ function BigNapRule({ lead, role, delayMs }: SceneProps) {
   );
 }
 
+/** A clock face with one hand, and a short time label beside a prop. */
+function Dial({ c }: { c: { core: string; glow: string; deep: string } }) {
+  return (
+    <svg viewBox="0 0 20 20" className="block h-full w-full" aria-hidden="true">
+      <circle cx="10" cy="10" r="8" fill={c.deep} stroke={c.core} strokeWidth="1.6" />
+      <path d="M10 4.4V10l3.6 2.2" fill="none" stroke={c.glow} strokeWidth="1.6" {...SJ} />
+    </svg>
+  );
+}
+
+function Label({ text, c }: { text: string; c: { glow: string; deep: string } }) {
+  return (
+    <svg viewBox="0 0 40 16" className="block h-full w-full" aria-hidden="true">
+      <rect x="1" y="1" width="38" height="14" rx="3" fill={c.deep} />
+      <text x="20" y="12" textAnchor="middle" fontSize="11" fontWeight="700" fill={c.glow}>{text}</text>
+    </svg>
+  );
+}
+
+/* --- bn4_hourglass_throne ----------------------------------------------------------
+   "Add 60 seconds to your clock and steal 30 more from your opponent's. In
+   untimed games nothing changes hands." A throne-backed hourglass stands up
+   in front of the caster's king and its lower bulb fills a first measure
+   (+1:00); a dial opens in front of their king, drops to -0:30, and a stream
+   of sand runs down the board out of it into the throne, which fills a
+   second measure (+0:30). */
+const C_HTR = { core: "#e3b661", glow: "#fff4dc", deep: "#2e2210" };
+const HT_GRAINS = [0, 1, 2, 3, 4, 5];
+
+function HourglassThroneRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <HourglassThroneScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_HTR;
+  const d = delayMs;
+  return (
+    <Brd>
+      <Q x={fc(4)} y={rk(2.5)} w={16} h={24} cls="g22-r-up" delayMs={d + 30} v={{ "--gd": "2.3s" }}>
+        <svg viewBox="0 0 24 36" className="block h-full w-full" aria-hidden="true">
+          <path d="M3 34V9l4.5-5 4.5 4 4.5-4 4.5 5v25" fill="none" stroke={c.deep} strokeWidth="3.2" {...SJ} />
+          <path d="M3 34V9l4.5-5 4.5 4 4.5-4 4.5 5v25" fill="none" stroke={c.core} strokeWidth="1.4" {...SJ} />
+          <path d="M6.5 11h11L12 21l5.5 10h-11L12 21z" fill="rgba(46,34,16,0.55)" stroke={c.glow} strokeWidth="1.2" {...SJ} />
+          <path d="M5 11h14M5 31h14" stroke={c.core} strokeWidth="1.8" {...SJ} />
+        </svg>
+      </Q>
+      <Q x={fc(4)} y={`calc(${rk(2.5)} + var(--fx-side, 1) * 6.4%)`} w={7} h={3.4} cls="g22-r-grow" delayMs={d + 260} v={{ "--gd": "2s" }} style={{ background: c.core, clipPath: "polygon(0 100%, 100% 100%, 64% 0, 36% 0)", transformOrigin: "50% calc(50% + var(--fx-side, 1) * 50%)" }} />
+      <Q x={`calc(${fc(4)} + var(--fx-side, 1) * 14%)`} y={rk(2)} w={10} h={4} cls="g22-r-in" delayMs={d + 300} v={{ "--gd": "1.1s" }}>
+        <Label text="+1:00" c={c} />
+      </Q>
+      <Q x={fc(4)} y={rk(5)} w={9} h={9} cls="g22-r-in" delayMs={d + 420} v={{ "--gd": "1.6s" }}>
+        <Dial c={c} />
+      </Q>
+      <Q x={`calc(${fc(4)} + var(--fx-side, 1) * 12%)`} y={rk(5)} w={10} h={4} cls="g22-r-stamp" delayMs={d + 560} v={{ "--gd": "1.3s" }}>
+        <Label text="-0:30" c={c} />
+      </Q>
+      {HT_GRAINS.map((i) => (
+        <Q key={i} x={fc(4)} y={rk(4.5)} w={1.6} h={1.6} cls="g22-r-go" delayMs={d + 640 + i * 70} v={{ "--gd": "0.7s", "--tx0": "0%", "--ty0": "0%", "--tx1": "0%", "--ty1": `calc(var(--fx-side, 1) * ${Math.round(1.1 * fileIn(1.6))}%)` }} style={{ background: c.core, borderRadius: "50%" }} />
+      ))}
+      <Q x={fc(4)} y={`calc(${rk(2.5)} + var(--fx-side, 1) * 4.2%)`} w={4.6} h={2} cls="g22-r-grow" delayMs={d + 1000} v={{ "--gd": "1.3s" }} style={{ background: c.glow, clipPath: "polygon(0 100%, 100% 100%, 70% 0, 30% 0)", transformOrigin: "50% calc(50% + var(--fx-side, 1) * 50%)" }} />
+      <Q x={`calc(${fc(4)} + var(--fx-side, 1) * 14%)`} y={rk(3)} w={10} h={4} cls="g22-r-in" delayMs={d + 1060} v={{ "--gd": "1.1s" }}>
+        <Label text="+0:30" c={c} />
+      </Q>
+      <Q x={fc(4)} y={rk(3.8)} w={10} h={2} cls="g22-r-lean" delayMs={d + 1500} v={{ "--gd": "0.8s" }} style={{ borderRadius: "999px", background: "rgba(227,182,97,0.4)" }} />
+    </Brd>
+  );
+}
+
+/* --- bn4_tithe_of_time -------------------------------------------------------------
+   "Suspend your nerf for your next 9 turns, and steal 20 seconds from your
+   opponent's clock. In untimed games only the suspension applies." A
+   padlock on the caster's king (the nerf) springs open and nine tally
+   strokes are scored across the caster's side, one per suspended turn; a
+   tithe plate is passed up the board to a dial in front of their king,
+   which gives up -0:20, and the plate comes back carrying a coin marked 20. */
+const C_TTR = { core: "#a9b4bc", glow: "#fff4e2", deep: "#1b2026" };
+
+function TitheOfTimeRule({ lead, role, delayMs }: SceneProps) {
+  if (role !== "lead") return <TitheOfTimeScene lead={lead} role={role} delayMs={delayMs} />;
+  const c = C_TTR;
+  const d = delayMs;
+  const plate = (coin: boolean) => (
+    <svg viewBox="0 0 24 14" className="block h-full w-full" aria-hidden="true">
+      <ellipse cx="12" cy="9" rx="10" ry="3.6" fill={c.core} stroke={c.deep} strokeWidth="1.4" />
+      {coin ? (
+        <>
+          <circle cx="12" cy="6" r="4.6" fill={c.glow} stroke={c.deep} strokeWidth="1.2" />
+          <text x="12" y="8" textAnchor="middle" fontSize="5.4" fontWeight="700" fill={c.deep}>20</text>
+        </>
+      ) : null}
+    </svg>
+  );
+  return (
+    <Brd>
+      <Q x={`calc(${fc(4)} + 3%)`} y={`calc(${rk(0)} - 1.2%)`} w={6} h={5} cls="g22-r-in" delayMs={d + 40} v={{ "--gd": "1.9s", "--s0": "1.3" }}>
+        <svg viewBox="0 0 20 16" className="block h-full w-full" aria-hidden="true">
+          <rect x="3" y="3" width="14" height="12" rx="2" fill={c.core} stroke={c.deep} strokeWidth="1.6" />
+          <circle cx="10" cy="9" r="1.8" fill={c.deep} />
+        </svg>
+      </Q>
+      <Q x={`calc(${fc(4)} + 3%)`} y={`calc(${rk(0)} - 4.4%)`} w={4.4} h={4} cls="g22-r-open" delayMs={d + 40} v={{ "--gd": "1.9s", "--ra": "-80deg" }} style={{ transformOrigin: "10% 100%" }}>
+        <svg viewBox="0 0 14 12" className="block h-full w-full" aria-hidden="true">
+          <path d="M2 12V6a5 5 0 0 1 10 0v6" fill="none" stroke={c.deep} strokeWidth="3.4" {...SJ} />
+          <path d="M2 12V6a5 5 0 0 1 10 0v6" fill="none" stroke={c.glow} strokeWidth="1.5" {...SJ} />
+        </svg>
+      </Q>
+      {Array.from({ length: 9 }, (_, i) => (
+        <Q key={`t${i}`} x={`${30 + i * 5 + (i > 3 ? 2 : 0)}%`} y={rk(2.5)} w={1.1} h={5} cls="g22-r-pip" delayMs={d + 360 + i * 45} v={{ "--gd": "1.8s" }} style={{ background: c.glow, borderRadius: "1px", rotate: i === 4 ? "58deg" : "8deg" }} />
+      ))}
+      <Q x={fc(4)} y={rk(5)} w={9} h={9} cls="g22-r-in" delayMs={d + 480} v={{ "--gd": "1.6s" }}>
+        <Dial c={c} />
+      </Q>
+      <Q x={fc(3)} y={rk(1.6)} w={9} h={5.4} cls="g22-r-go" delayMs={d + 520} v={{ "--gd": "0.8s", "--tx0": "0%", "--ty0": "0%", "--tx1": "0%", "--ty1": `calc(var(--fx-side, 1) * ${-3 * fileIn(5.4)}%)` }}>
+        {plate(false)}
+      </Q>
+      <Q x={`calc(${fc(4)} + var(--fx-side, 1) * 12%)`} y={rk(5)} w={10} h={4} cls="g22-r-stamp" delayMs={d + 860} v={{ "--gd": "1.2s" }}>
+        <Label text="-0:20" c={c} />
+      </Q>
+      <Q x={fc(3)} y={rk(4.6)} w={9} h={5.4} cls="g22-r-go" delayMs={d + 1000} v={{ "--gd": "0.9s", "--tx0": "0%", "--ty0": "0%", "--tx1": "0%", "--ty1": `calc(var(--fx-side, 1) * ${3 * fileIn(5.4)}%)` }}>
+        {plate(true)}
+      </Q>
+      <Q x={fc(3)} y={rk(1.3)} w={8} h={2} cls="g22-r-lean" delayMs={d + 1560} v={{ "--gd": "0.8s" }} style={{ borderRadius: "999px", background: "rgba(169,180,188,0.45)" }} />
+    </Brd>
+  );
+}
+
 export const PLAYS: Record<string, SigPlugin> = {
   hx4_great_waltz: S(GreatWaltzScene, {
     ordering: "radial", staggerMs: 60, victims: "all", hasLead: true,
@@ -1754,11 +1877,11 @@ export const PLAYS: Record<string, SigPlugin> = {
     ordering: "radial", staggerMs: 70, victims: ["n", "b", "r", "q"], hasLead: true,
     sound: "snooze", source: "frozen", anchor: "board",
   }),
-  bn4_hourglass_throne: S(HourglassThroneScene, {
+  bn4_hourglass_throne: S(HourglassThroneRule, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true,
     sound: "clockice", anchor: "board",
   }),
-  bn4_tithe_of_time: S(TitheOfTimeScene, {
+  bn4_tithe_of_time: S(TitheOfTimeRule, {
     ordering: "radial", staggerMs: 0, victims: "all", hasLead: true,
     sound: "shades", anchor: "board",
   }),

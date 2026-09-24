@@ -1,0 +1,78 @@
+{
+ "id": "hx4_hall_of_mirrors",
+ "url": "/dev/plays?id=hx4_hall_of_mirrors&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "hx4_hall_of_mirrors",
+  "name": "Hall of Mirrors",
+  "tier": 6,
+  "category": "hex",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:hx4_hall_of_mirrors",
+  "anchor": "board",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 60,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, diff-less: no zone source, not an attack",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2371,
+  "cssEndMs": 3458,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 31,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 205,
+  "maxGapMs": 313.9
+ },
+ "raf": {
+  "frames": 212,
+  "medianMs": 16.7,
+  "maxMs": 33.4,
+  "dropped": 5
+ },
+ "longAnimationFrames": {
+  "count": 0,
+  "worstMs": 0,
+  "totalBlockingMs": 0,
+  "entries": []
+ },
+ "tiles": [
+  0,
+  182,
+  465,
+  803,
+  1184,
+  1601,
+  2047,
+  2521
+ ],
+ "png": "docs/polish-pass/evidence/TC-g/after/hx4_hall_of_mirrors.png",
+ "pngBytes": 14364,
+ "off": {
+  "url": "/dev/plays?id=hx4_hall_of_mirrors&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "docs/polish-pass/evidence/TC-g/after/hx4_hall_of_mirrors.off.png"
+ }
+}
