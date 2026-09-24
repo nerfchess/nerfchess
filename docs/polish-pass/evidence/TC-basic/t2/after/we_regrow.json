@@ -1,0 +1,93 @@
+{
+ "id": "we_regrow",
+ "url": "/dev/plays?id=we_regrow&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "we_regrow",
+  "name": "Regrow",
+  "tier": 2,
+  "category": "pieces",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:we_regrow",
+  "anchor": "cast",
+  "source": "summon",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "stage",
+  "driveNote": "no valid use in this position, synthetic diff, summon diff",
+  "castSq": "d4",
+  "targets": [
+   "d4",
+   "c3",
+   "d3"
+  ],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2195,
+  "cssEndMs": 3416,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 51,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 169,
+  "maxGapMs": 283.2
+ },
+ "raf": {
+  "frames": 211,
+  "medianMs": 16.7,
+  "maxMs": 50,
+  "dropped": 7
+ },
+ "longAnimationFrames": {
+  "count": 2,
+  "worstMs": 54,
+  "totalBlockingMs": 0,
+  "entries": [
+   {
+    "atMs": -48,
+    "duration": 54,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 591,
+    "duration": 50,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  267,
+  681,
+  1177,
+  1735,
+  2345
+ ],
+ "png": "docs/polish-pass/evidence/TC-basic/t2/after/we_regrow.png",
+ "pngBytes": 11781,
+ "off": {
+  "url": "/dev/plays?id=we_regrow&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "docs/polish-pass/evidence/TC-basic/t2/after/we_regrow.off.png"
+ }
+}

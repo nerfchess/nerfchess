@@ -1,0 +1,82 @@
+{
+ "id": "trampoline",
+ "url": "/dev/plays?id=trampoline&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "trampoline",
+  "name": "Trampoline",
+  "tier": 2,
+  "category": "item",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:trampoline",
+  "anchor": "aim",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "engine",
+  "driveNote": "activated with 2 pick(s)",
+  "castSq": "d2",
+  "targets": [
+   "d2",
+   "d3"
+  ],
+  "picks": [
+   "d2",
+   "d3"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2335,
+  "cssEndMs": 3455,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 22,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 166,
+  "maxGapMs": 246.9
+ },
+ "raf": {
+  "frames": 216,
+  "medianMs": 16.7,
+  "maxMs": 33.4,
+  "dropped": 1
+ },
+ "longAnimationFrames": {
+  "count": 0,
+  "worstMs": 0,
+  "totalBlockingMs": 0,
+  "entries": []
+ },
+ "tiles": [
+  0,
+  283,
+  721,
+  1247,
+  1839,
+  2485
+ ],
+ "png": "docs/polish-pass/evidence/TC-basic/t2/after/trampoline.png",
+ "pngBytes": 10931,
+ "off": {
+  "url": "/dev/plays?id=trampoline&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "docs/polish-pass/evidence/TC-basic/t2/after/trampoline.off.png"
+ }
+}

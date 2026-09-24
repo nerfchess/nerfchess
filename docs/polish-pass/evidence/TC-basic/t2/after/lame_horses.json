@@ -1,0 +1,76 @@
+{
+ "id": "lame_horses",
+ "url": "/dev/plays?id=lame_horses&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "lame_horses",
+  "name": "Lame Horses",
+  "tier": 2,
+  "category": "hex",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:lame_horses",
+  "anchor": "board",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, diff-less: no zone source, not an attack",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2333,
+  "cssEndMs": 3454,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 15,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 166,
+  "maxGapMs": 339
+ },
+ "raf": {
+  "frames": 216,
+  "medianMs": 16.7,
+  "maxMs": 33.4,
+  "dropped": 3
+ },
+ "longAnimationFrames": {
+  "count": 0,
+  "worstMs": 0,
+  "totalBlockingMs": 0,
+  "entries": []
+ },
+ "tiles": [
+  0,
+  283,
+  721,
+  1246,
+  1837,
+  2483
+ ],
+ "png": "docs/polish-pass/evidence/TC-basic/t2/after/lame_horses.png",
+ "pngBytes": 10451,
+ "off": {
+  "url": "/dev/plays?id=lame_horses&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "docs/polish-pass/evidence/TC-basic/t2/after/lame_horses.off.png"
+ }
+}

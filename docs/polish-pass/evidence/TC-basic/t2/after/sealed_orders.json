@@ -1,0 +1,83 @@
+{
+ "id": "sealed_orders",
+ "url": "/dev/plays?id=sealed_orders&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "sealed_orders",
+  "name": "Sealed Orders",
+  "tier": 2,
+  "category": "hex",
+  "mechanic": "instant",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:sealed_orders",
+  "anchor": "board",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2334,
+  "cssEndMs": 3440,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 15,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 202,
+  "maxGapMs": 92
+ },
+ "raf": {
+  "frames": 216,
+  "medianMs": 16.7,
+  "maxMs": 66.7,
+  "dropped": 4
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 72,
+  "totalBlockingMs": 0,
+  "entries": [
+   {
+    "atMs": 315,
+    "duration": 72,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  283,
+  721,
+  1246,
+  1838,
+  2484
+ ],
+ "png": "docs/polish-pass/evidence/TC-basic/t2/after/sealed_orders.png",
+ "pngBytes": 10647,
+ "off": {
+  "url": "/dev/plays?id=sealed_orders&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "docs/polish-pass/evidence/TC-basic/t2/after/sealed_orders.off.png"
+ }
+}

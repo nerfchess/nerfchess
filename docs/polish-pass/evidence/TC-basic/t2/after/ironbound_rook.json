@@ -1,0 +1,111 @@
+{
+ "id": "ironbound_rook",
+ "url": "/dev/plays?id=ironbound_rook&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "ironbound_rook",
+  "name": "Ironbound Rook",
+  "tier": 2,
+  "category": "hex",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:ironbound_rook",
+  "anchor": "board",
+  "source": "walnut",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "engine",
+  "driveNote": "activated with 1 pick(s)",
+  "castSq": "a8",
+  "targets": [
+   "a8"
+  ],
+  "picks": [
+   "a8"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2524,
+  "cssEndMs": 3613,
+  "settled": true,
+  "windowMs": 3863,
+  "cssAnimations": 22,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 175,
+  "maxGapMs": 603.8
+ },
+ "raf": {
+  "frames": 248,
+  "medianMs": 16.7,
+  "maxMs": 166.7,
+  "dropped": 21
+ },
+ "longAnimationFrames": {
+  "count": 3,
+  "worstMs": 138,
+  "totalBlockingMs": 115,
+  "entries": [
+   {
+    "atMs": 20,
+    "duration": 138,
+    "blocking": 66,
+    "scripts": []
+   },
+   {
+    "atMs": 164,
+    "duration": 60,
+    "blocking": 0,
+    "scripts": [
+     {
+      "duration": 13,
+      "invoker": "http://localhost:3000/_next/static/chunks/_app-pages-browser_src_components_effe...",
+      "source": "/_next/static/chunks/_app-pages-browser_src_components_effects_passive_PassiveLayer_tsx.js"
+     }
+    ]
+   },
+   {
+    "atMs": 3535,
+    "duration": 101,
+    "blocking": 49,
+    "scripts": [
+     {
+      "duration": 97,
+      "invoker": "http://localhost:3000/_next/static/chunks/_app-pages-browser_src_components_effe...",
+      "source": "/_next/static/chunks/_app-pages-browser_src_components_effects_board3d_engine3d_ts.js"
+     }
+    ]
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  304,
+  776,
+  1342,
+  1978,
+  2674
+ ],
+ "png": "docs/polish-pass/evidence/TC-basic/t2/after/ironbound_rook.png",
+ "pngBytes": 10477,
+ "off": {
+  "url": "/dev/plays?id=ironbound_rook&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "docs/polish-pass/evidence/TC-basic/t2/after/ironbound_rook.off.png"
+ }
+}

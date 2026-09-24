@@ -1,0 +1,101 @@
+{
+ "id": "long_castle_anywhere",
+ "url": "/dev/plays?id=long_castle_anywhere&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "long_castle_anywhere",
+  "name": "Long Castle Anywhere",
+  "tier": 2,
+  "category": "movement",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:long_castle_anywhere",
+  "anchor": "board",
+  "source": "empower",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 60,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, empower diff",
+  "castSq": "a1",
+  "targets": [
+   "a1",
+   "h1"
+  ],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2376,
+  "cssEndMs": 3415,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 39,
+  "infiniteAnimations": 11
+ },
+ "screencast": {
+  "framesInWindow": 215,
+  "maxGapMs": 276.6
+ },
+ "raf": {
+  "frames": 216,
+  "medianMs": 16.7,
+  "maxMs": 33.3,
+  "dropped": 2
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 56,
+  "totalBlockingMs": 2,
+  "entries": [
+   {
+    "atMs": -50,
+    "duration": 56,
+    "blocking": 2,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  288,
+  733,
+  1267,
+  1869,
+  2526
+ ],
+ "png": "docs/polish-pass/evidence/TC-basic/t2/after/long_castle_anywhere.png",
+ "pngBytes": 11784,
+ "off": {
+  "url": "/dev/plays?id=long_castle_anywhere&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0.0003,
+  "instantRegions": [],
+  "endChanged": 0.0045,
+  "endRegions": [
+   {
+    "x": 24,
+    "y": 424,
+    "w": 40,
+    "h": 40,
+    "cells": 19
+   },
+   {
+    "x": 424,
+    "y": 424,
+    "w": 40,
+    "h": 40,
+    "cells": 18
+   }
+  ],
+  "png": "docs/polish-pass/evidence/TC-basic/t2/after/long_castle_anywhere.off.png"
+ }
+}

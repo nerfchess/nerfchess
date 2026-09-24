@@ -1,0 +1,86 @@
+{
+ "id": "wa_camel_rider",
+ "url": "/dev/plays?id=wa_camel_rider&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "wa_camel_rider",
+  "name": "Camel Rider",
+  "tier": 2,
+  "category": "movement",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:wa_camel_rider",
+  "anchor": "aim",
+  "source": "empower",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, empower diff",
+  "castSq": "b1",
+  "targets": [
+   "b1",
+   "g1"
+  ],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2359,
+  "cssEndMs": 3417,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 40,
+  "infiniteAnimations": 11
+ },
+ "screencast": {
+  "framesInWindow": 215,
+  "maxGapMs": 289
+ },
+ "raf": {
+  "frames": 217,
+  "medianMs": 16.7,
+  "maxMs": 33.4,
+  "dropped": 2
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 53,
+  "totalBlockingMs": 1,
+  "entries": [
+   {
+    "atMs": -48,
+    "duration": 53,
+    "blocking": 1,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  286,
+  728,
+  1259,
+  1856,
+  2509
+ ],
+ "png": "docs/polish-pass/evidence/TC-basic/t2/after/wa_camel_rider.png",
+ "pngBytes": 12227,
+ "off": {
+  "url": "/dev/plays?id=wa_camel_rider&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0.0005,
+  "endRegions": [],
+  "png": "docs/polish-pass/evidence/TC-basic/t2/after/wa_camel_rider.off.png"
+ }
+}

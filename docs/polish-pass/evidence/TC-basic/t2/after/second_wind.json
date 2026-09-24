@@ -1,0 +1,87 @@
+{
+ "id": "second_wind",
+ "url": "/dev/plays?id=second_wind&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "second_wind",
+  "name": "Second Wind",
+  "tier": 2,
+  "category": "pieces",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:second_wind",
+  "anchor": "cast",
+  "source": "summon",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "stage",
+  "driveNote": "no valid use in this position, synthetic diff, summon diff",
+  "castSq": "d4",
+  "targets": [
+   "d4",
+   "c3",
+   "d3"
+  ],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2395,
+  "cssEndMs": 3431,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 53,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 208,
+  "maxGapMs": 490.9
+ },
+ "raf": {
+  "frames": 226,
+  "medianMs": 16.7,
+  "maxMs": 33.4,
+  "dropped": 7
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 51,
+  "totalBlockingMs": 0,
+  "entries": [
+   {
+    "atMs": 1770,
+    "duration": 51,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  290,
+  739,
+  1277,
+  1883,
+  2545
+ ],
+ "png": "docs/polish-pass/evidence/TC-basic/t2/after/second_wind.png",
+ "pngBytes": 10795,
+ "off": {
+  "url": "/dev/plays?id=second_wind&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "docs/polish-pass/evidence/TC-basic/t2/after/second_wind.off.png"
+ }
+}

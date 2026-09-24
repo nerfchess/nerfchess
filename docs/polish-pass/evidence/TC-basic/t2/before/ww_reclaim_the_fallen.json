@@ -1,0 +1,78 @@
+{
+ "id": "ww_reclaim_the_fallen",
+ "url": "/dev/plays?id=ww_reclaim_the_fallen&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "ww_reclaim_the_fallen",
+  "name": "Reclaim the Fallen",
+  "tier": 2,
+  "category": "pieces",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:ww_reclaim_the_fallen",
+  "anchor": "cast",
+  "source": "summon",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, summon diff",
+  "castSq": "d4",
+  "targets": [
+   "d4",
+   "c3",
+   "d3"
+  ],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2358,
+  "cssEndMs": 3432,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 65,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 167,
+  "maxGapMs": 291.2
+ },
+ "raf": {
+  "frames": 216,
+  "medianMs": 16.7,
+  "maxMs": 33.4,
+  "dropped": 2
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 58,
+  "totalBlockingMs": 4,
+  "entries": [
+   {
+    "atMs": -51,
+    "duration": 58,
+    "blocking": 4,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  286,
+  728,
+  1258,
+  1856,
+  2508
+ ],
+ "png": "docs/polish-pass/evidence/TC-basic/t2/before/ww_reclaim_the_fallen.png",
+ "pngBytes": 12708
+}

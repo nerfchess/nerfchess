@@ -1,0 +1,67 @@
+{
+ "id": "prep",
+ "url": "/dev/plays?id=prep&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "prep",
+  "name": "Prep",
+  "tier": 2,
+  "category": "draft",
+  "mechanic": "instant",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:prep",
+  "anchor": "board",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2190,
+  "cssEndMs": 3444,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 27,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 169,
+  "maxGapMs": 300.8
+ },
+ "raf": {
+  "frames": 216,
+  "medianMs": 16.7,
+  "maxMs": 33.2,
+  "dropped": 1
+ },
+ "longAnimationFrames": {
+  "count": 0,
+  "worstMs": 0,
+  "totalBlockingMs": 0,
+  "entries": []
+ },
+ "tiles": [
+  0,
+  266,
+  679,
+  1174,
+  1731,
+  2340
+ ],
+ "png": "docs/polish-pass/evidence/TC-basic/t2/before/prep.png",
+ "pngBytes": 12524
+}

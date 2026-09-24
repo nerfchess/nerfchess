@@ -1,0 +1,127 @@
+{
+ "id": "banana_peel",
+ "url": "/dev/plays?id=banana_peel&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "banana_peel",
+  "name": "Banana Peel",
+  "tier": 2,
+  "category": "item",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:banana_peel",
+  "anchor": "cast",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "engine",
+  "driveNote": "activated with 2 pick(s)",
+  "castSq": "d4",
+  "targets": [
+   "d4",
+   "e4"
+  ],
+  "picks": [
+   "d4",
+   "e4"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2446,
+  "cssEndMs": 3548,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 26,
+  "infiniteAnimations": 2
+ },
+ "screencast": {
+  "framesInWindow": 121,
+  "maxGapMs": 250.8
+ },
+ "raf": {
+  "frames": 165,
+  "medianMs": 16.7,
+  "maxMs": 133.4,
+  "dropped": 53
+ },
+ "longAnimationFrames": {
+  "count": 6,
+  "worstMs": 98,
+  "totalBlockingMs": 34,
+  "entries": [
+   {
+    "atMs": 14,
+    "duration": 98,
+    "blocking": 34,
+    "scripts": []
+   },
+   {
+    "atMs": 359,
+    "duration": 57,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 886,
+    "duration": 53,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 947,
+    "duration": 53,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 1826,
+    "duration": 60,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 1967,
+    "duration": 60,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  296,
+  754,
+  1303,
+  1921,
+  2596
+ ],
+ "png": "docs/polish-pass/evidence/TC-basic/t2/after/banana_peel.png",
+ "pngBytes": 9486,
+ "off": {
+  "url": "/dev/plays?id=banana_peel&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0.0003,
+  "endRegions": [
+   {
+    "x": 240,
+    "y": 352,
+    "w": 8,
+    "h": 24,
+    "cells": 3
+   }
+  ],
+  "png": "docs/polish-pass/evidence/TC-basic/t2/after/banana_peel.off.png"
+ }
+}
