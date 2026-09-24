@@ -1,0 +1,24 @@
+{
+  "settingsGuest": {
+    "logoutButtons": 0,
+    "createAccount": "/login?upgrade=1",
+    "editProfileHref": "/profile/edit"
+  },
+  "tmpRegister": 200,
+  "settingsUserBefore": {
+    "logoutButtons": 1
+  },
+  "settingsUserAfter": {
+    "url": "http://localhost:3000/",
+    "bodyIsJson": false,
+    "me": {
+      "user": null
+    }
+  },
+  "logoutRoute": {
+    "formStatus": 303,
+    "formLocation": "/",
+    "jsonStatus": 200,
+    "jsonType": "application/json"
+  }
+}

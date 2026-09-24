@@ -1,0 +1,22 @@
+{
+  "addBio": {
+    "w": 57.6,
+    "h": 24,
+    "y": 345
+  },
+  "removeFriend": {
+    "afterOne": {
+      "label": "Remove polish_fb_f5qrm? Press again",
+      "menuOpen": 1,
+      "friendsBadge": 2
+    },
+    "failed": {
+      "status": "Too many requests. Try again in a minute.",
+      "friendsBadge": 2
+    },
+    "removed": {
+      "friendsBadge": 1,
+      "addFriend": 1
+    }
+  }
+}

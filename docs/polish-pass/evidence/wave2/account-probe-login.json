@@ -1,0 +1,52 @@
+{
+  "loginReal": {
+    "tabs": {
+      "w": 308,
+      "h": 53,
+      "y": 124
+    },
+    "tab": {
+      "w": 147.8,
+      "h": 44,
+      "y": 128
+    },
+    "plate": {
+      "w": 308,
+      "h": 338,
+      "y": 191
+    },
+    "firstField": {
+      "w": 264,
+      "h": 67.3,
+      "y": 213
+    },
+    "submit": {
+      "w": 264,
+      "h": 40,
+      "y": 375
+    },
+    "google": {
+      "w": 264,
+      "h": 45.5,
+      "y": 461
+    },
+    "notice": 0
+  },
+  "registerForm": {
+    "passwordDescribedBy": "password-help",
+    "passwordMinLength": "8",
+    "placeholder": null,
+    "help": "At least 8 characters."
+  },
+  "loginSignedIn": {
+    "h1": "Welcome back",
+    "notice": "You are signed in as polish_user. Signing in below switches accounts.",
+    "continueHref": "/",
+    "continueBox": {
+      "w": 278,
+      "h": 40,
+      "y": 181
+    }
+  },
+  "note": "Skeleton geometry is in account-login-skeleton-{before,after}.json"
+}
