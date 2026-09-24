@@ -1,0 +1,80 @@
+{
+ "id": "fingertip_maltese",
+ "url": "/dev/plays?id=fingertip_maltese&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "fingertip_maltese",
+  "name": "Fingertip Maltese",
+  "tier": 7,
+  "category": "attack",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:fingertip_maltese",
+  "anchor": "cast",
+  "source": "frozen",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "engine",
+  "driveNote": "activated with 1 pick(s)",
+  "castSq": "d7",
+  "targets": [
+   "d7"
+  ],
+  "picks": [
+   "d7"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2473,
+  "cssEndMs": 3529,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 54,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 207,
+  "maxGapMs": 286.2
+ },
+ "raf": {
+  "frames": 214,
+  "medianMs": 16.7,
+  "maxMs": 33.3,
+  "dropped": 4
+ },
+ "longAnimationFrames": {
+  "count": 1,
+  "worstMs": 57,
+  "totalBlockingMs": 1,
+  "entries": [
+   {
+    "atMs": -49,
+    "duration": 57,
+    "blocking": 1,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  190,
+  483,
+  836,
+  1232,
+  1665,
+  2130,
+  2623
+ ],
+ "png": "docs/polish-pass/evidence/K/before/fingertip_maltese.png",
+ "pngBytes": 33034
+}

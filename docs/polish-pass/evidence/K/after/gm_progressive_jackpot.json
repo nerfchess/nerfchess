@@ -1,0 +1,103 @@
+{
+ "id": "gm_progressive_jackpot",
+ "url": "/dev/plays?id=gm_progressive_jackpot&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "gm_progressive_jackpot",
+  "name": "Progressive Jackpot",
+  "tier": 6,
+  "category": "pieces",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:gm_progressive_jackpot",
+  "anchor": "cast",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, diff-less: no zone source, not an attack",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2923,
+  "cssEndMs": 3728,
+  "settled": true,
+  "windowMs": 3979,
+  "cssAnimations": 21,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 191,
+  "maxGapMs": 201.3
+ },
+ "raf": {
+  "frames": 214,
+  "medianMs": 16.7,
+  "maxMs": 100,
+  "dropped": 27
+ },
+ "longAnimationFrames": {
+  "count": 4,
+  "worstMs": 88,
+  "totalBlockingMs": 53,
+  "entries": [
+   {
+    "atMs": 202,
+    "duration": 65,
+    "blocking": 15,
+    "scripts": []
+   },
+   {
+    "atMs": 592,
+    "duration": 51,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 2423,
+    "duration": 88,
+    "blocking": 38,
+    "scripts": []
+   },
+   {
+    "atMs": 2512,
+    "duration": 60,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  222,
+  566,
+  979,
+  1444,
+  1951,
+  2496,
+  3073
+ ],
+ "png": "docs/polish-pass/evidence/K/after/gm_progressive_jackpot.png",
+ "pngBytes": 27515,
+ "off": {
+  "url": "/dev/plays?id=gm_progressive_jackpot&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "docs/polish-pass/evidence/K/after/gm_progressive_jackpot.off.png"
+ }
+}

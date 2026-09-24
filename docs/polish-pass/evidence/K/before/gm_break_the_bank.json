@@ -1,0 +1,94 @@
+{
+ "id": "gm_break_the_bank",
+ "url": "/dev/plays?id=gm_break_the_bank&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "gm_break_the_bank",
+  "name": "Break the Bank",
+  "tier": 7,
+  "category": "pieces",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:gm_break_the_bank",
+  "anchor": "cast",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "engine",
+  "driveNote": "activated, no targets",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2717,
+  "cssEndMs": 4069,
+  "settled": true,
+  "windowMs": 4320,
+  "cssAnimations": 40,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 205,
+  "maxGapMs": 261.1
+ },
+ "raf": {
+  "frames": 238,
+  "medianMs": 16.7,
+  "maxMs": 83.3,
+  "dropped": 23
+ },
+ "longAnimationFrames": {
+  "count": 4,
+  "worstMs": 79,
+  "totalBlockingMs": 40,
+  "entries": [
+   {
+    "atMs": 28,
+    "duration": 79,
+    "blocking": 29,
+    "scripts": []
+   },
+   {
+    "atMs": 127,
+    "duration": 51,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 3245,
+    "duration": 71,
+    "blocking": 11,
+    "scripts": []
+   },
+   {
+    "atMs": 3370,
+    "duration": 52,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  207,
+  528,
+  913,
+  1347,
+  1820,
+  2328,
+  2867
+ ],
+ "png": "docs/polish-pass/evidence/K/before/gm_break_the_bank.png",
+ "pngBytes": 27391
+}

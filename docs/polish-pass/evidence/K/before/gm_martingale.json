@@ -1,0 +1,69 @@
+{
+ "id": "gm_martingale",
+ "url": "/dev/plays?id=gm_martingale&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "gm_martingale",
+  "name": "Martingale",
+  "tier": 6,
+  "category": "pieces",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:gm_martingale",
+  "anchor": "cast",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "engine",
+  "driveNote": "activated, no targets",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2546,
+  "cssEndMs": 3834,
+  "settled": true,
+  "windowMs": 4084,
+  "cssAnimations": 26,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 207,
+  "maxGapMs": 321.7
+ },
+ "raf": {
+  "frames": 243,
+  "medianMs": 16.7,
+  "maxMs": 33.4,
+  "dropped": 4
+ },
+ "longAnimationFrames": {
+  "count": 0,
+  "worstMs": 0,
+  "totalBlockingMs": 0,
+  "entries": []
+ },
+ "tiles": [
+  0,
+  195,
+  497,
+  859,
+  1267,
+  1712,
+  2189,
+  2696
+ ],
+ "png": "docs/polish-pass/evidence/K/before/gm_martingale.png",
+ "pngBytes": 27120
+}

@@ -1,0 +1,101 @@
+{
+ "id": "gm_the_last_bet",
+ "url": "/dev/plays?id=gm_the_last_bet&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "gm_the_last_bet",
+  "name": "The Last Bet",
+  "tier": 8,
+  "category": "pieces",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:gm_the_last_bet",
+  "anchor": "cast",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "engine",
+  "driveNote": "activated with 1 pick(s)",
+  "castSq": "d1",
+  "targets": [
+   "d1"
+  ],
+  "picks": [
+   "d1"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2846,
+  "cssEndMs": 3967,
+  "settled": true,
+  "windowMs": 4218,
+  "cssAnimations": 39,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 201,
+  "maxGapMs": 517.9
+ },
+ "raf": {
+  "frames": 230,
+  "medianMs": 16.7,
+  "maxMs": 66.7,
+  "dropped": 25
+ },
+ "longAnimationFrames": {
+  "count": 3,
+  "worstMs": 64,
+  "totalBlockingMs": 7,
+  "entries": [
+   {
+    "atMs": -45,
+    "duration": 55,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 29,
+    "duration": 62,
+    "blocking": 7,
+    "scripts": []
+   },
+   {
+    "atMs": 610,
+    "duration": 64,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  217,
+  552,
+  954,
+  1407,
+  1902,
+  2433,
+  2996
+ ],
+ "png": "docs/polish-pass/evidence/K/after/gm_the_last_bet.png",
+ "pngBytes": 29952,
+ "off": {
+  "url": "/dev/plays?id=gm_the_last_bet&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0,
+  "endRegions": [],
+  "png": "docs/polish-pass/evidence/K/after/gm_the_last_bet.off.png"
+ }
+}

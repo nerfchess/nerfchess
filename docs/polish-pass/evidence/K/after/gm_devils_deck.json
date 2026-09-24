@@ -1,0 +1,99 @@
+{
+ "id": "gm_devils_deck",
+ "url": "/dev/plays?id=gm_devils_deck&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "gm_devils_deck",
+  "name": "Devil's Deck",
+  "tier": 7,
+  "category": "item",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:gm_devils_deck",
+  "anchor": "cast",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 0,
+  "drive": "engine",
+  "driveNote": "activated, no targets",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 3448,
+  "cssEndMs": 3986,
+  "settled": true,
+  "windowMs": 4237,
+  "cssAnimations": 47,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 212,
+  "maxGapMs": 285.6
+ },
+ "raf": {
+  "frames": 246,
+  "medianMs": 16.7,
+  "maxMs": 66.6,
+  "dropped": 10
+ },
+ "longAnimationFrames": {
+  "count": 2,
+  "worstMs": 56,
+  "totalBlockingMs": 4,
+  "entries": [
+   {
+    "atMs": -45,
+    "duration": 54,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 48,
+    "duration": 56,
+    "blocking": 4,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  260,
+  663,
+  1146,
+  1690,
+  2284,
+  2922,
+  3598
+ ],
+ "png": "docs/polish-pass/evidence/K/after/gm_devils_deck.png",
+ "pngBytes": 27122,
+ "off": {
+  "url": "/dev/plays?id=gm_devils_deck&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0.0005,
+  "endRegions": [
+   {
+    "x": 392,
+    "y": 416,
+    "w": 24,
+    "h": 16,
+    "cells": 6
+   }
+  ],
+  "png": "docs/polish-pass/evidence/K/after/gm_devils_deck.off.png"
+ }
+}
