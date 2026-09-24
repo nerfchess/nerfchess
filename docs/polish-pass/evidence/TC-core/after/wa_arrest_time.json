@@ -35,39 +35,46 @@
  },
  "stageError": null,
  "durationMs": {
-  "visualMs": 2432,
-  "cssEndMs": 3405,
+  "visualMs": 2394,
+  "cssEndMs": 3416,
   "settled": true,
   "windowMs": 3600,
-  "cssAnimations": 30,
+  "cssAnimations": 28,
   "infiniteAnimations": 0
  },
  "screencast": {
-  "framesInWindow": 198,
-  "maxGapMs": 274.3
+  "framesInWindow": 197,
+  "maxGapMs": 276.1
  },
  "raf": {
-  "frames": 213,
+  "frames": 215,
   "medianMs": 16.7,
-  "maxMs": 49.9,
-  "dropped": 5
+  "maxMs": 33.3,
+  "dropped": 3
  },
  "longAnimationFrames": {
-  "count": 0,
-  "worstMs": 0,
+  "count": 1,
+  "worstMs": 55,
   "totalBlockingMs": 0,
-  "entries": []
+  "entries": [
+   {
+    "atMs": -50,
+    "duration": 55,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
  },
  "tiles": [
   0,
-  294,
-  749,
-  1296,
-  1910,
-  2582
+  290,
+  738,
+  1277,
+  1882,
+  2544
  ],
  "png": "docs/polish-pass/evidence/TC-core/after/wa_arrest_time.png",
- "pngBytes": 10566,
+ "pngBytes": 10004,
  "off": {
   "url": "/dev/plays?id=wa_arrest_time&anim=off&bare=1",
   "pass": true,

@@ -2073,11 +2073,13 @@ function DeepGlacierBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
   // past the board edges) instead of a square-local pop.
   if (lead) {
     // TC-core: ARREST TIME draws its rule. "Freeze one enemy rook or queen
-    // for 3 of their turns." Their rook stands on the square and a clock face
-    // comes up behind it; the hand starts round and stops dead. Manacles
-    // close on the rook from both sides and ice sets over it; three pips,
-    // three of their turns. A queen glyph beside it shows the other piece
-    // this may take, and a pawn is struck: only a rook or a queen.
+    // for 3 of their turns." No glyph is painted on the target: the real
+    // rook or queen shows through a clock face whose hand starts round and
+    // stops dead. Manacles close on it from both sides and ice sets over it;
+    // three pips, three of their turns. The "only a rook or a queen" note is
+    // a small tag on the clock's far rim (a rook and a queen side by side,
+    // a struck pawn after them), sized and framed as a label so it never
+    // reads as a piece on a neighbouring square.
     return (
       <BoardWideStage>
         <span className="fx-tc-hold absolute block rounded-full" style={{ ...tcFwdBox(0, 0.9, 0.9), border: "2px solid #82bcdf", background: "rgba(230,246,255,0.5)", animationDelay: dm(delayMs, 0) }} />
@@ -2085,9 +2087,6 @@ function DeepGlacierBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
           className="fx-tc-sweep absolute block"
           style={{ left: `${50 - 0.35}%`, top: `calc(${50 - TC_CELL * 0.36}% - var(--fx-side, 1) * ${TC_CELL * 0.9}%)`, width: "0.7%", height: `${TC_CELL * 0.36}%`, background: "#2f5b78", "--tc-turn": "110deg", animationDelay: dm(delayMs, 120) } as React.CSSProperties}
         />
-        <span className="fx-tc-hold absolute block" style={{ ...tcCellBox(0, 0, 0.74), animationDelay: dm(delayMs, 60) }}>
-          <TcGlyph kind="rook" fill="#3a3440" stroke="#e6f6ff" />
-        </span>
         {[-1, 1].map((s) => (
           <span
             key={s}
@@ -2104,15 +2103,19 @@ function DeepGlacierBurst({ lead, delayMs }: { lead: boolean; delayMs: number })
         {[-1, 0, 1].map((k, i) => (
           <span key={k} className="fx-tc-pip absolute block rounded-full" style={{ ...tcFwdBox(k * 0.34, -0.72, 0.22), background: "#e6f6ff", border: "1px solid #4f86a8", animationDelay: dm(delayMs, 1100 + i * 110) }} />
         ))}
-        <span className="fx-tc-hold absolute block" style={{ ...tcCellBox(1.6, 0, 0.56), animationDelay: dm(delayMs, 1250) }}>
-          <TcGlyph kind="queen" fill="#3a3440" stroke="#b6ddf2" />
-        </span>
-        <span className="fx-tc-hold absolute block" style={{ ...tcCellBox(-1.6, 0, 0.5), animationDelay: dm(delayMs, 1250) }}>
-          <TcGlyph kind="pawn" fill="#3a3440" stroke="#8c8c92" />
+        <span
+          className="fx-tc-hold absolute flex items-center justify-center gap-[6%] rounded-full"
+          style={{ ...tcFwdBox(0, 0.8, 0.34), left: `${50 - TC_CELL * 0.6}%`, width: `${TC_CELL * 1.2}%`, background: "rgba(230,246,255,0.92)", border: "1px solid #4f86a8", animationDelay: dm(delayMs, 1250) }}
+        >
+          {(["rook", "queen", "pawn"] as const).map((kind) => (
+            <span key={kind} className="block h-[86%] w-[22%]">
+              <TcGlyph kind={kind} fill={kind === "pawn" ? "#8c8c92" : "#3a3440"} stroke="#e6f6ff" />
+            </span>
+          ))}
         </span>
         <span
           className="fx-tc-strike absolute block"
-          style={{ ...tcCellBox(-1.6, 0, 0.7), height: "0.8%", top: `${50 - 0.4}%`, background: "#82bcdf", "--tc-rot": "-40deg", animationDelay: dm(delayMs, 1400) } as React.CSSProperties}
+          style={{ left: `${50 + TC_CELL * 0.19}%`, width: `${TC_CELL * 0.3}%`, height: "0.5%", top: `calc(${50 - 0.25}% - var(--fx-side, 1) * ${TC_CELL * 0.8}%)`, background: "#2f5b78", "--tc-rot": "-40deg", animationDelay: dm(delayMs, 1400) } as React.CSSProperties}
         />
       </BoardWideStage>
     );
