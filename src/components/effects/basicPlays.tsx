@@ -6163,10 +6163,25 @@ function TotalRecallScene({ lead, role, delayMs }: RuleProps) {
   );
 }
 
-/** Twin Knights: under the crescent both knights become nightriders, each
- *  carrying its leap on in the same direction for a second jump in one move;
- *  for the game. */
+/** Twin Knights: under the crescent both knights become nightrooks for the
+ *  game: each keeps its L leap and also slides straight like a rook. The
+ *  cast knight (b1) leaps to c3 and slides up the open c-file; its twin five
+ *  files over (g1) leaps to f3 and slides along the third rank. */
 const TWINK: Palette = ["#9a7a4a", "#e0d0b0", "#332918"];
+/** A straight rook track up file `dx` from rank `a` to rank `b`, mirrored. */
+function fileRail(dx: number, a: number, b: number): CSSProperties {
+  const c = cellh(dx, (a + b) / 2);
+  const w = CELL * 0.12;
+  const h = Math.abs(b - a) * CELL;
+  return { left: `calc(${c.left} + ${(CELL - w) / 2}%)`, width: `${w}%`, top: `calc(${c.top} + ${(CELL - h) / 2}%)`, height: `${h}%` };
+}
+/** A straight rook track along rank `dy` from file `a` to file `b`, mirrored. */
+function rankRail(dy: number, a: number, b: number): CSSProperties {
+  const c = cellh((a + b) / 2, dy);
+  const w = Math.abs(b - a) * CELL;
+  const h = CELL * 0.12;
+  return { left: `calc(${c.left} + ${(CELL - w) / 2}%)`, width: `${w}%`, top: `calc(${c.top} + ${(CELL - h) / 2}%)`, height: `${h}%` };
+}
 function TwinKnightsScene({ lead, role, delayMs }: RuleProps) {
   if (role === "entrance" || !lead) return <RuleCut id="twin_knights" pal={TWINK} dev="beehive" fx="leap" role={role} delayMs={delayMs} />;
   const [p0, p1, p2] = TWINK;
@@ -6174,31 +6189,38 @@ function TwinKnightsScene({ lead, role, delayMs }: RuleProps) {
   return (
     <HStage>
       {/* tell: the crescent over the pair */}
-      <Ly c="bsp-facein" at={d(0)} box={cellh(0, 2, 0.7)} len={dur(1900)}>
+      <Ly c="bsp-facein" at={d(0)} box={cellh(3, 4.3, 0.6)} len={dur(2200)}>
         <svg viewBox="0 0 10 10" className="block h-full w-full" aria-hidden="true">
           <path d="M6.6 1 C3 1.4 1.4 4 1.8 6.4 C2.4 9 5.6 9.8 8 8.4 C5.2 8.2 3.6 5.8 4.4 3.4 C4.8 2.2 5.6 1.4 6.6 1 Z" fill={p1} stroke={p2} strokeWidth="0.4" {...SJ} />
         </svg>
       </Ly>
-      {/* strike: each knight leaps, and leaps again the same way */}
-      <Ly c="bsp-r-hop" at={d(260)} box={cellh(-1, 0)} len={dur(900)} v={{ "--mx": hx(-1), "--my": 2 }}>
+      {/* strike: each knight keeps its L leap ... */}
+      <Ly c="bsp-r-hop" at={d(200)} box={cellh(0, 0)} len={dur(900)} v={{ "--mx": hx(1), "--my": 2 }}>
         <Man k="n" pal={TWINK} />
       </Ly>
-      <Ly c="bsp-r-hop" at={d(320)} box={cellh(1, 0)} len={dur(900)} v={{ "--mx": hx(1), "--my": 2 }}>
+      <Ly c="bsp-r-hop" at={d(300)} box={cellh(5, 0)} len={dur(900)} v={{ "--mx": hx(-1), "--my": 2 }}>
         <Man k="n" pal={TWINK} />
       </Ly>
-      {[-1, 1].map((s, i) => (
-        <Ly key={`b${s}`} c="bsp-r-hop" at={d(660 + i * 60)} box={cellh(2 * s, 2)} len={dur(1300)} v={{ "--mx": hx(s), "--my": 2 }}>
-          <Man k="n" pal={TWINK} />
-        </Ly>
-      ))}
-      {[-1, 1].map((s) => (
-        <Ly key={`l${s}`} c="bsp-r-hold" at={d(500)} box={cellh(3 * s, 4)} len={dur(1300)} v={landing(p0)} />
-      ))}
-      {[-1, 1].map((s) => (
-        <Ly key={`d${s}`} c="bsp-drift" at={d(1000)} box={cellh(3 * s, 3.6, 0.2)} len={dur(800)} v={{ "--dx": `${s * 160}%`, "--dy": "calc(var(--fx-side, 1) * 60%)", "--rot": "0deg", background: tint(p1, 0.8) }} />
-      ))}
+      {/* ... then slides straight like a rook: up the file, along the rank */}
+      <Ly c="bsp-r-hold" at={d(620)} box={fileRail(1, 2, 5)} len={dur(1400)} v={{ background: tint(p0, 0.8) }} />
+      <Ly c="bsp-r-move" at={d(640)} box={cellh(1, 2)} len={dur(1400)} v={{ "--mx": 0, "--my": 3 }}>
+        <Man k="n" pal={TWINK} />
+      </Ly>
+      <Ly c="bsp-r-hold" at={d(760)} box={rankRail(2, 4, 2)} len={dur(1400)} v={{ background: tint(p0, 0.8) }} />
+      <Ly c="bsp-r-move" at={d(780)} box={cellh(4, 2)} len={dur(1400)} v={{ "--mx": hx(-2), "--my": 0 }}>
+        <Man k="n" pal={TWINK} />
+      </Ly>
+      <Ly c="bsp-r-hold" at={d(900)} box={cellh(1, 5)} len={dur(1100)} v={landing(p0)} />
+      <Ly c="bsp-r-hold" at={d(1040)} box={cellh(2, 2)} len={dur(1100)} v={landing(p0)} />
+      {/* each stop wears a small rook: a knight that also moves as a rook */}
+      <Ly c="bsp-stamp" at={d(1180)} box={cellh(1.55, 5.45, 0.42)} len={dur(1100)}>
+        <Man k="r" pal={TWINK} />
+      </Ly>
+      <Ly c="bsp-stamp" at={d(1300)} box={cellh(1.45, 2.45, 0.42)} len={dur(1000)}>
+        <Man k="r" pal={TWINK} />
+      </Ly>
       {/* settle: for the game */}
-      <Ly c="bsp-stamp" at={d(1100)} box={cellh(0, -0.6, 0.45)} len={dur(900)}>
+      <Ly c="bsp-stamp" at={d(1500)} box={cellh(3.5, 5.6, 0.45)} len={dur(900)}>
         <Ever color={p2} fill={p1} />
       </Ly>
     </HStage>

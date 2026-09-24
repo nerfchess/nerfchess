@@ -34,54 +34,66 @@
  },
  "stageError": null,
  "durationMs": {
-  "visualMs": 2362,
-  "cssEndMs": 3413,
+  "visualMs": 2385,
+  "cssEndMs": 3430,
   "settled": true,
   "windowMs": 3600,
-  "cssAnimations": 43,
+  "cssAnimations": 45,
   "infiniteAnimations": 11
  },
  "screencast": {
-  "framesInWindow": 214,
-  "maxGapMs": 300.3
+  "framesInWindow": 201,
+  "maxGapMs": 162.7
  },
  "raf": {
-  "frames": 215,
+  "frames": 195,
   "medianMs": 16.7,
-  "maxMs": 33.4,
-  "dropped": 3
+  "maxMs": 166.6,
+  "dropped": 24
  },
  "longAnimationFrames": {
-  "count": 1,
-  "worstMs": 58,
-  "totalBlockingMs": 3,
+  "count": 2,
+  "worstMs": 141,
+  "totalBlockingMs": 104,
   "entries": [
    {
-    "atMs": -52,
-    "duration": 58,
-    "blocking": 3,
+    "atMs": -67,
+    "duration": 76,
+    "blocking": 19,
     "scripts": []
+   },
+   {
+    "atMs": 3238,
+    "duration": 141,
+    "blocking": 85,
+    "scripts": [
+     {
+      "duration": 133,
+      "invoker": "http://localhost:3000/_next/static/chunks/_app-pages-browser_src_components_effe...",
+      "source": "/_next/static/chunks/_app-pages-browser_src_components_effects_board3d_engine3d_ts.js"
+     }
+    ]
    }
   ]
  },
  "tiles": [
   0,
-  182,
-  463,
-  800,
-  1180,
-  1595,
-  2040,
-  2512
+  183,
+  467,
+  808,
+  1191,
+  1610,
+  2059,
+  2535
  ],
- "png": "../../../tmp/claude-0/-home-user-nerfchess/ee610421-243f-5b03-97db-996cfbf5c124/scratchpad/after/twin_knights.png",
- "pngBytes": 21108,
+ "png": "docs/polish-pass/evidence/TC-basic/t4/after/twin_knights.png",
+ "pngBytes": 21540,
  "off": {
   "url": "/dev/plays?id=twin_knights&anim=off&bare=1",
   "pass": true,
   "instantChanged": 0,
   "instantRegions": [],
-  "endChanged": 0.0005,
+  "endChanged": 0.0002,
   "endRegions": [
    {
     "x": 120,
@@ -91,6 +103,6 @@
     "cells": 2
    }
   ],
-  "png": "../../../tmp/claude-0/-home-user-nerfchess/ee610421-243f-5b03-97db-996cfbf5c124/scratchpad/after/twin_knights.off.png"
+  "png": "docs/polish-pass/evidence/TC-basic/t4/after/twin_knights.off.png"
  }
 }
