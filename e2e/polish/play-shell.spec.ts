@@ -17,14 +17,18 @@ import { expect, test, type Page } from "@playwright/test";
 // The header band at the top of the paint: the real SiteHeader (a production
 // hard load, where the Suspense fallback prerenders under it) or the route's
 // header skeleton (next dev, where loading.tsx is what paints before the
-// streamed page is swapped in). Either way a full-height bar at the top.
+// streamed page is swapped in). Either way a full-height bar at the top that
+// spans the page. The page is the root element's box, not its clientWidth: the
+// root reserves the scrollbar's lane (scrollbar-gutter: stable, F009), and
+// headless Chromium hides scrollbars, so clientWidth still reports the whole
+// viewport while the layout, and the header with it, is the gutter narrower.
 async function paintsHeaderBand(page: Page): Promise<boolean> {
   return page.evaluate(() => {
     const main = document.querySelector("main");
     const first = main && Array.from(main.children).find((el) => el.getBoundingClientRect().height > 0);
     if (!first) return false;
     const r = first.getBoundingClientRect();
-    return r.top === 0 && r.height >= 48 && r.width === document.documentElement.clientWidth;
+    return r.top === 0 && r.height >= 48 && r.width === document.documentElement.getBoundingClientRect().width;
   });
 }
 
