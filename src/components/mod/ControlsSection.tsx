@@ -459,19 +459,30 @@ function GodPanelControl() {
   const [enabled, setEnabled] = useState<boolean | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // A failed GET used to leave the switch on its unknown state for good; it
+  // now says so and offers Retry, like the house bot settings above.
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
     fetch("/api/mod/god-panel")
-      .then((res) => (res.ok ? (res.json() as Promise<{ enabled: boolean }>) : null))
+      .then((res) => (res.ok ? (res.json() as Promise<{ enabled: boolean }>) : Promise.reject()))
       .then((data) => {
-        if (!cancelled && data) setEnabled(data.enabled);
+        if (!cancelled) setEnabled(data.enabled);
       })
-      .catch(() => {});
+      .catch(() => {
+        if (!cancelled) setLoadFailed(true);
+      });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [attempt]);
+
+  const retryLoad = () => {
+    setLoadFailed(false);
+    setAttempt((n) => n + 1);
+  };
 
   const toggle = async () => {
     if (enabled === null || saving) return;
@@ -499,9 +510,17 @@ function GodPanelControl() {
         title="God panel"
         blurb="Your in-game card-summon panel. Hidden by default so it never gets in the way; switch it on and it mounts in your next draft game. Only you can see or use it."
         actionsInline
-        actions={<ModToggle label="God panel" on={enabled} busy={saving} onToggle={toggle} />}
+        actions={<ModToggle label="God panel" on={enabled} busy={saving} failed={loadFailed} onToggle={toggle} />}
       />
       {error && <p className="mt-2 text-[13px] text-oxblood-glow">{error}</p>}
+      {loadFailed && (
+        <div role="alert" className="mt-2 flex flex-wrap items-center gap-3 text-[13px] text-oxblood-glow">
+          <span>Could not load the god panel setting.</span>
+          <ModButton size="sm" onClick={retryLoad}>
+            Retry
+          </ModButton>
+        </div>
+      )}
     </section>
   );
 }

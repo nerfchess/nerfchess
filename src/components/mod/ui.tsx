@@ -157,12 +157,15 @@ export function ModToggle({
   on,
   busy,
   disabled,
+  failed,
   onToggle,
   label,
 }: {
   on: boolean | null;
   busy?: boolean;
   disabled?: boolean;
+  /** The state could not be loaded: shows "-" instead of the loading "…". */
+  failed?: boolean;
   onToggle: () => void;
   label: string;
 }) {
@@ -176,13 +179,13 @@ export function ModToggle({
         aria-label={label}
         disabled={unknown || busy || disabled}
         onClick={onToggle}
-        title={unknown ? "Loading…" : on ? `${label} is on. Click to turn off.` : `${label} is off. Click to turn on.`}
+        title={unknown ? (failed ? "Could not load" : "Loading…") : on ? `${label} is on. Click to turn off.` : `${label} is off. Click to turn on.`}
         className="settings-toggle"
       >
         <span aria-hidden className="settings-toggle__thumb" />
       </button>
       <span className={"text-[13px] " + (unknown ? "text-parchment-400" : on ? "text-parchment-100" : "text-parchment-400")}>
-        {unknown ? "…" : busy ? "Saving…" : on ? "On" : "Off"}
+        {unknown ? (failed ? "-" : "…") : busy ? "Saving…" : on ? "On" : "Off"}
       </span>
     </span>
   );
