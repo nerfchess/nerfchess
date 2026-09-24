@@ -33,7 +33,7 @@
 // reducer only ever reads ids, versions, a seq, a timestamp, and a public hash.
 
 import type { SpectatorEnvelope, SpectatorEnvelopeType } from "@/lib/multiplayer";
-import { PUBLIC_SNAPSHOT_VERSION } from "@/engine/game";
+import { PUBLIC_SNAPSHOT_VERSION } from "@/engine/snapshotVersion";
 
 /** One live frame: the server header plus the (public) payload body the header
  *  describes. The payload is opaque here; the caller interprets it by env.type. */

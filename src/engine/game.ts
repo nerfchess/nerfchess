@@ -30,6 +30,7 @@ import {
 } from "./fxEvents";
 import { Nerf, NerfState, GameContext, Tier } from "./nerf";
 import { RNG } from "./rng";
+import { PUBLIC_SNAPSHOT_VERSION } from "./snapshotVersion";
 import { BoardState, Color, FILE, Move, PieceType, RANK, SQ, Square, squareName } from "./types";
 
 export interface PlayerSlot {
@@ -246,7 +247,8 @@ export function deserializeGame(snap: GameSnapshot): NerfGame | null {
 // PUBLIC_SNAPSHOT_VERSION is independent of GAME_SNAPSHOT_VERSION and of the
 // worker's REPLAY_VERSION. A client that sees an unrecognized schemaVersion
 // rejects the frame (a later stage) rather than rendering a wrong board.
-export const PUBLIC_SNAPSHOT_VERSION = 1;
+// The value lives in ./snapshotVersion (a leaf the client can import alone).
+export { PUBLIC_SNAPSHOT_VERSION };
 
 export type SpectatorPhase = "active" | "draftPaused" | "chessDiff" | "over";
 

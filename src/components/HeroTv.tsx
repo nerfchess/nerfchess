@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { HeroBoard } from "./HeroBoard";
 import { PlayerAvatar } from "./PlayerAvatar";
 import { useLobbySnapshot } from "@/lib/lobbyClient";
-import { featuredBoard } from "@/lib/spectate/featuredBoard";
+import { replayUci } from "@/lib/gameReview";
+import type { FeaturedDraft } from "@/lib/spectate/featuredDraft";
 import { useArchiveReplay } from "@/lib/spectate/useArchiveReplay";
 import { useFeaturedTune } from "@/lib/spectate/useFeaturedTune";
 import { clockLabel } from "@/lib/tournaments";
@@ -17,6 +18,39 @@ import type { Color } from "@/engine/types";
 // live games the channel keeps running: a random archived game reruns move by
 // move (badged REPLAY), then the next one; the static demo position only
 // appears before anything has ever been played.
+type DraftBuilder = typeof import("@/lib/draftOnline").buildSpectatorDraftGame;
+
+// The hero's board: featuredBoard (lib/spectate/featuredBoard.ts) without the
+// static draft engine. A live draft game rebuilds through
+// buildSpectatorDraftGame so card rewrites show, but that import pulls the
+// rules engine and both card libraries (about 1.4MB) into the home page's
+// first load for a board that is an archive rerun most of the time. So the
+// builder is fetched only when a live draft game is on the hero, and the
+// moves-only replay stands in until it arrives (a card rewrite can lag by
+// that one chunk load, never the moves).
+function useHeroBoard(live: boolean, shownMoves: string[], draft: FeaturedDraft) {
+  const [build, setBuild] = useState<DraftBuilder | null>(null);
+  const needsDraft = live && draft.draft;
+  useEffect(() => {
+    if (!needsDraft || build) return;
+    let cancelled = false;
+    void import("@/lib/draftOnline").then((m) => {
+      if (!cancelled) setBuild(() => m.buildSpectatorDraftGame);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [needsDraft, build]);
+  return useMemo(() => {
+    if (needsDraft && build) {
+      const g = build(shownMoves, draft.dtActions, draft.dtState, draft.mode);
+      return { board: g.board, history: g.board.history };
+    }
+    const replayed = replayUci(shownMoves);
+    return { board: replayed.board, history: replayed.history };
+  }, [needsDraft, build, shownMoves, draft]);
+}
+
 export function HeroTv() {
   const router = useRouter();
   const lobby = useLobbySnapshot(10000);
@@ -43,10 +77,7 @@ export function HeroTv() {
     () => (live ? moves : replay.moves),
     [live, moves, replay.moves],
   );
-  const { board, history } = useMemo(
-    () => featuredBoard(live, shownMoves, draft),
-    [live, shownMoves, draft],
-  );
+  const { board, history } = useHeroBoard(live, shownMoves, draft);
   const lastMove = history[history.length - 1] ?? null;
 
   const shownId = live ? streamId : replay.game?.id ?? null;

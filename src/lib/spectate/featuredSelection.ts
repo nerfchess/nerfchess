@@ -9,7 +9,7 @@
 // the single definition of "which candidate do we feature" and "is this
 // watch-start a healthy game", shared by the hook and the test suite.
 
-import { PUBLIC_SNAPSHOT_VERSION } from "@/engine/game";
+import { PUBLIC_SNAPSHOT_VERSION } from "@/engine/snapshotVersion";
 
 /** Health verdict for a resolved watch-start (or a structured watch reject). */
 export type WatchHealth = "ok" | "unavailable" | "incompatible_version";
