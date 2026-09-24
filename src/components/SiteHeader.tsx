@@ -14,6 +14,7 @@ import { PlayerSearch } from "@/components/PlayerSearch";
 import { SettingsPanel } from "@/components/SettingsPanel";
 import { logout } from "@/lib/authClient";
 import { useSession } from "@/lib/session/SessionProvider";
+import { useExitPresence } from "@/lib/useExitPresence";
 import { playChallenge } from "@/lib/sounds";
 import { Button } from "@/components/ui/Button";
 import { LinkButton } from "@/components/ui/Button";
@@ -149,6 +150,13 @@ export function SiteHeader({ active }: { active?: string }) {
   // decides anything that needs the real account.
   const { user, display, setUser } = useSession({ ensure: true });
   const [menu, setMenu] = useState<Menu>(null);
+  // Each dropdown stays mounted for its mirrored exit (.m-pop[data-leaving]);
+  // switching menus lets the old one leave while the new one enters.
+  const searchPop = useExitPresence(menu === "search");
+  const challengesPop = useExitPresence(menu === "challenges");
+  const bellPop = useExitPresence(menu === "bell");
+  const profilePop = useExitPresence(menu === "profile");
+  const leavingAttr = (p: { leaving: boolean }) => (p.leaving ? "" : undefined);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [notifications, setNotifications] = useState<HeaderNotification[]>([]);
   const [unread, setUnread] = useState(0);
@@ -334,10 +342,12 @@ export function SiteHeader({ active }: { active?: string }) {
                 >
                   {link.label}
                 </Link>
-                {/* No opacity fade: the menu pops in fully solid so the labels
-                    never read as half-transparent text mid-transition. */}
-                <div className="invisible absolute left-0 top-full z-40 w-56 group-focus-within:visible group-hover:visible">
-                  <div className="site-nav-pop py-1">
+                {/* Shown by display, not visibility, so the shared popover
+                    enter (.m-pop) replays each time it opens. No exit: moving
+                    the pointer across the bar would otherwise stack a leaving
+                    menu under the next one. */}
+                <div className="absolute left-0 top-full z-40 hidden w-56 group-focus-within:block group-hover:block">
+                  <div className="m-pop m-pop--start site-nav-pop py-1">
                     {link.menu.map((item) => (
                       <Link
                         key={item.href}
@@ -390,13 +400,13 @@ export function SiteHeader({ active }: { active?: string }) {
           >
             <Search size={22} strokeWidth={1.6} />
           </button>
-          {menu === "search" && (
+          {searchPop.mounted && (
             // Below lg: a full-width dropdown UNDER the bar (fixed inset-x/top),
             // so the field can never roll off the left edge or cover the inline
             // nav links (which appear at md and would sit under a leftward
             // rollout at tablet widths). Wide desktop (lg+): the lichess-style
             // field that rolls out to the LEFT of the search icon.
-            <div className="header-search-panel fixed inset-x-3 top-[3.9rem] z-40 [&_input]:bg-ink-800 sm:top-[3.9rem] lg:absolute lg:inset-x-auto lg:right-full lg:top-1/2 lg:mr-1 lg:-translate-y-1/2">
+            <div data-leaving={leavingAttr(searchPop)} className="header-search-panel m-pop fixed inset-x-3 top-[3.9rem] z-40 [&_input]:bg-ink-800 sm:top-[3.9rem] lg:absolute lg:inset-x-auto lg:right-full lg:top-1/2 lg:mr-1 lg:-translate-y-1/2">
               <PlayerSearch autoFocus />
             </div>
           )}
@@ -419,8 +429,8 @@ export function SiteHeader({ active }: { active?: string }) {
               <Swords size={22} strokeWidth={1.6} />
               <Badge n={challenges.length} />
             </button>
-            {menu === "challenges" && (
-              <div className="absolute right-0 top-full z-40 mt-2 w-80 max-w-[calc(100vw-1.5rem)] site-nav-pop">
+            {challengesPop.mounted && (
+              <div data-leaving={leavingAttr(challengesPop)} className="m-pop m-pop--end absolute right-0 top-full z-40 mt-2 w-80 max-w-[calc(100vw-1.5rem)] site-nav-pop">
                 <div className="border-b border-[color:var(--edge)] px-4 py-2.5 text-[12px] text-parchment-400">
                   Challenges
                 </div>
@@ -476,8 +486,8 @@ export function SiteHeader({ active }: { active?: string }) {
               {unread > 0 && <span aria-hidden className="relic-orbit" />}
               <Badge n={unread} />
             </button>
-            {menu === "bell" && (
-              <div className="absolute right-0 top-full z-40 mt-2 w-80 max-w-[calc(100vw-1.5rem)] site-nav-pop">
+            {bellPop.mounted && (
+              <div data-leaving={leavingAttr(bellPop)} className="m-pop m-pop--end absolute right-0 top-full z-40 mt-2 w-80 max-w-[calc(100vw-1.5rem)] site-nav-pop">
                 <div className="flex items-center justify-between border-b border-[color:var(--edge)] px-4 py-2.5">
                   <span className="text-[12px] text-parchment-400">Notifications</span>
                   {unread > 0 && (
@@ -562,7 +572,12 @@ export function SiteHeader({ active }: { active?: string }) {
                 // here. The button may shrink TO 44 but never past it, and the
                 // name inside truncates to let it.
                 className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-2 px-2 py-1.5 text-[14px] text-parchment-200 transition-colors hover:bg-[color:var(--bg-hover)] hover:text-parchment-50"
+                // Disclosure, not an ARIA menu: the panel is a list of plain
+                // buttons in the tab order with no arrow-key roving, so
+                // aria-haspopup="menu" would promise keyboard behaviour it
+                // does not have. aria-controls names the panel it opens.
                 aria-expanded={menu === "profile"}
+                aria-controls="site-account-menu"
               >
                 {/* The name is dead weight at phone widths and can collide with
                     the wordmark; the avatar alone opens the menu there. Guests
@@ -594,12 +609,12 @@ export function SiteHeader({ active }: { active?: string }) {
                 </>
               )}
             </div>
-            {menu === "profile" && (
+            {profilePop.mounted && (
               // max-w alongside the fixed width for the same reason the two
               // w-80 dropdowns above carry one: html,body{overflow-x:clip}
               // means an over-wide popover is silently clipped, not scrollable,
               // so at 320px the right-anchored menu would lose its left edge.
-              <div className="absolute right-0 top-full z-40 mt-2 w-56 max-w-[calc(100vw-1.5rem)] site-nav-pop py-1">
+              <div id="site-account-menu" data-leaving={leavingAttr(profilePop)} className="m-pop m-pop--end absolute right-0 top-full z-40 mt-2 w-56 max-w-[calc(100vw-1.5rem)] site-nav-pop py-1">
                 {display.isGuest && (
                   <>
                     <div className="px-4 pb-1 pt-2 text-[12px] leading-snug text-parchment-400">

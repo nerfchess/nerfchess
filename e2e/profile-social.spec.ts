@@ -127,8 +127,10 @@ test("desktop navigation: sections present, History/Achievements only in the acc
   await expect(nav.getByRole("link", { name: "History", exact: true })).toHaveCount(0);
   await expect(nav.getByRole("link", { name: "Achievements", exact: true })).toHaveCount(0);
 
-  // They live in the account menu instead (rendered as menu buttons).
-  await nav.locator('button[aria-haspopup="menu"]').click();
+  // They live in the account menu instead (a disclosure of plain buttons, so
+  // the trigger carries aria-expanded and aria-controls, not aria-haspopup).
+  await nav.getByRole("button", { name: /account menu/i }).click();
+  await expect(nav.getByRole("button", { name: /account menu/i })).toHaveAttribute("aria-expanded", "true");
   await expect(nav.getByRole("button", { name: "Game history" })).toBeVisible();
   await expect(nav.getByRole("button", { name: "Achievements" })).toBeVisible();
 });
