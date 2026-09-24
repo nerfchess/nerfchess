@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { PlayerSearch } from "@/components/PlayerSearch";
 import { useSession } from "@/lib/session/SessionProvider";
+import { useSkeletonHold } from "@/components/ui/useSkeletonHold";
 
 type Conversation = {
   username: string;
@@ -43,6 +44,8 @@ export default function InboxPage() {
   // A failed conversations fetch shows a retry instead of an endless skeleton.
   const [loadError, setLoadError] = useState(false);
   const [reloadTick, setReloadTick] = useState(0);
+  // The list skeleton stays a minimum time once shown (brief section 5.2).
+  const held = useSkeletonHold(!conversations && !loadError);
 
   const retry = useCallback(() => {
     setLoadError(false);
@@ -101,7 +104,7 @@ export default function InboxPage() {
                 body="Check your connection and try again."
                 action={{ onClick: retry, label: "Retry" }}
               />
-            ) : !conversations ? (
+            ) : !conversations || held ? (
               <ul className="mt-6 plate divide-y divide-[color:var(--edge)]" aria-hidden>
                 {Array.from({ length: 5 }).map((_, i) => (
                   <li key={i} className="flex items-center gap-3 px-4 py-3">

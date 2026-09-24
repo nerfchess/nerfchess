@@ -10,6 +10,7 @@ import { derivePresence, useLobbyFeed, type Presence, type PresenceState } from 
 import { Button } from "@/components/ui/Button";
 import { LinkButton } from "@/components/ui/Button";
 import { useSession } from "@/lib/session/SessionProvider";
+import { useSkeletonHold } from "@/components/ui/useSkeletonHold";
 
 // Friends list + add-a-friend + incoming/outgoing requests, with a one-tap
 // Challenge that deep-links into the friend-game flow (/lobby?tab=friends&challenge=name),
@@ -87,6 +88,8 @@ export function FriendsPanel({ bounded = false }: { bounded?: boolean } = {}) {
   // failed" (show a retry), so a 5xx / offline first fetch never hangs on a
   // blank panel or an endless skeleton.
   const [loadFailed, setLoadFailed] = useState(false);
+  // The roster skeleton stays a minimum time once shown (brief section 5.2).
+  const held = useSkeletonHold(signedIn === undefined && !loadFailed);
   const [addName, setAddName] = useState("");
   const [filter, setFilter] = useState("");
   const [busy, setBusy] = useState(false);
@@ -200,7 +203,7 @@ export function FriendsPanel({ bounded = false }: { bounded?: boolean } = {}) {
     }
   };
 
-  if (signedIn === undefined) {
+  if (signedIn === undefined || held) {
     // Initial load. A network/5xx failure gets a retry; otherwise a themed
     // skeleton that mirrors the roster rows (no blank panel, no spinner text).
     return (

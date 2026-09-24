@@ -11,6 +11,7 @@ import { ChevronRight, Plus, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { LinkButton } from "@/components/ui/Button";
 import { SearchInput } from "@/components/ui/SearchInput";
+import { useSkeletonHold } from "@/components/ui/useSkeletonHold";
 
 interface Club {
   id: string;
@@ -48,6 +49,8 @@ export default function ClubsPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  // The list skeleton stays a minimum time once shown (brief section 5.2).
+  const held = useSkeletonHold(loading);
 
   const load = async () => {
     const res = await fetch("/api/clubs");
@@ -259,7 +262,7 @@ export default function ClubsPage() {
             <div className="border-b border-[color:var(--edge)] px-5 py-3 text-[12px] font-medium text-parchment-400">
               {query ? `${filtered.length} match${filtered.length === 1 ? "" : "es"}` : "All clubs"}
             </div>
-            {loading ? (
+            {(loading || held) && !loadError ? (
               <ul className="divide-y divide-[color:var(--edge)]" aria-hidden>
                 {Array.from({ length: 4 }).map((_, i) => (
                   <li key={i} className="flex items-center gap-4 px-5 py-4">

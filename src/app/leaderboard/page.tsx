@@ -15,6 +15,7 @@ import { isProvisionalRd, PROVISIONAL_RD } from "@/lib/ratingDisplay";
 import { laurelTier } from "@/lib/laurels";
 import { LaurelBadge } from "@/components/LaurelBadge";
 import { Button } from "@/components/ui/Button";
+import { useSkeletonHold } from "@/components/ui/useSkeletonHold";
 import { LinkButton } from "@/components/ui/Button";
 
 interface Row {
@@ -45,6 +46,8 @@ export default function LeaderboardPage() {
   // viewer's own row from the first render, with no page-level /me call.
   const { display } = useSession();
   const [error, setError] = useState<string | null>(null);
+  // The table skeleton stays a minimum time once shown (brief section 5.2).
+  const held = useSkeletonHold(!rows && !error);
   const [reloadKey, setReloadKey] = useState(0);
   // Jump-to-me: a bumped nonce triggers the scroll effect after the page state
   // settles; the target rank rides on a ref so the effect never calls setState.
@@ -113,7 +116,7 @@ export default function LeaderboardPage() {
       el.scrollIntoView({ behavior: motionOff() ? "auto" : "smooth", block: "center" });
       pendingRankRef.current = null;
     }
-  }, [jumpNonce, safePage, rows]);
+  }, [jumpNonce, safePage, rows, held]);
 
   const jumpToMe = () => {
     if (!meRow) return;
@@ -171,10 +174,10 @@ export default function LeaderboardPage() {
         )}
 
         {/* Loading: skeleton in the final table geometry, no full-page spinner. */}
-        {!rows && !error && <LeaderboardSkeleton />}
+        {(!rows || held) && !error && <LeaderboardSkeleton />}
 
         {/* Empty: one sentence and one action, sized to content. */}
-        {rows && rows.length === 0 && !error && (
+        {rows && !held && rows.length === 0 && !error && (
           <EmptyState
             className="mt-8"
             icon={Trophy}
@@ -184,7 +187,7 @@ export default function LeaderboardPage() {
           />
         )}
 
-        {rows && rows.length > 0 && (
+        {rows && !held && rows.length > 0 && (
           <>
             {/* The standings: an open list on hairline dividers (no heavy plate),
                 so rank, name, and rating carry the hierarchy on their own. */}

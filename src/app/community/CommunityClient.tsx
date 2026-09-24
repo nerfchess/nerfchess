@@ -14,6 +14,7 @@ import { isProvisionalRd } from "@/lib/ratingDisplay";
 import { countdownLabel, modeLabel } from "@/lib/tournaments";
 import type { MPLobbyGame } from "@/lib/multiplayer";
 import { Button } from "@/components/ui/Button";
+import { useSkeletonHold } from "@/components/ui/useSkeletonHold";
 import { LinkButton } from "@/components/ui/Button";
 
 // The community hub: friends who are around, who you have just played, the
@@ -273,6 +274,16 @@ export default function CommunityClient({ initialRecent }: { initialRecent: Rece
   const sortedFriends = friends
     ? [...friends].sort((a, b) => rankPresence(a.username) - rankPresence(b.username))
     : null;
+  // Each list keeps its skeleton a minimum time once it has shown, so a list
+  // that lands just after the show-delay does not pop (brief section 5.2).
+  const hold = {
+    friends: useSkeletonHold(!friends && !err.friends),
+    recent: useSkeletonHold(!recent && !err.recent),
+    top: useSkeletonHold(!top && !err.top),
+    clubs: useSkeletonHold(!clubs && !err.clubs),
+    active: useSkeletonHold(!active && !err.active),
+    tournaments: useSkeletonHold(!tournaments && !err.tournaments),
+  };
 
   return (
     <main className="min-h-screen pb-16">
@@ -338,7 +349,7 @@ export default function CommunityClient({ initialRecent }: { initialRecent: Rece
                 <ListReserve slots="friends">
                 {err.friends ? (
                   <SectionError onRetry={loadFriends} />
-                ) : !sortedFriends ? (
+                ) : !sortedFriends || hold.friends ? (
                   <ListSkeleton slots="friends" />
                 ) : sortedFriends.length === 0 ? (
                   <InlineEmpty
@@ -388,7 +399,7 @@ export default function CommunityClient({ initialRecent }: { initialRecent: Rece
               <ListReserve slots="recent">
               {err.recent ? (
                 <SectionError onRetry={loadRecent} />
-              ) : !recent ? (
+              ) : !recent || hold.recent ? (
                 <ListSkeleton slots="recent" />
               ) : recent.length === 0 ? (
                 <InlineEmpty
@@ -448,7 +459,7 @@ export default function CommunityClient({ initialRecent }: { initialRecent: Rece
               <ListReserve slots="rank">
               {err.top ? (
                 <RailError onRetry={loadTop} />
-              ) : !top ? (
+              ) : !top || hold.top ? (
                 <ListSkeleton slots="rank" />
               ) : top.length === 0 ? (
                 <EmptyRail>
@@ -485,7 +496,7 @@ export default function CommunityClient({ initialRecent }: { initialRecent: Rece
               <ListReserve slots="clubs">
               {err.clubs ? (
                 <RailError onRetry={loadClubs} />
-              ) : !clubs ? (
+              ) : !clubs || hold.clubs ? (
                 <ListSkeleton slots="clubs" />
               ) : clubs.length === 0 ? (
                 <EmptyRail>
@@ -524,7 +535,7 @@ export default function CommunityClient({ initialRecent }: { initialRecent: Rece
               action={{ href: "/tournaments", label: "All events" }}
             >
               <ListReserve slots="events">
-                <TournamentRail tournaments={tournaments} error={!!err.tournaments} onRetry={loadTournaments} />
+                <TournamentRail tournaments={tournaments} held={hold.tournaments} error={!!err.tournaments} onRetry={loadTournaments} />
               </ListReserve>
             </RailCard>
 
@@ -532,7 +543,7 @@ export default function CommunityClient({ initialRecent }: { initialRecent: Rece
               <ListReserve slots="rank">
               {err.active ? (
                 <RailError onRetry={loadActive} />
-              ) : !active ? (
+              ) : !active || hold.active ? (
                 <ListSkeleton slots="rank" />
               ) : active.length === 0 ? (
                 <EmptyRail>No games in the last 7 days. Be the first.</EmptyRail>
@@ -652,15 +663,17 @@ function RailCard({
 
 function TournamentRail({
   tournaments,
+  held,
   error,
   onRetry,
 }: {
   tournaments: Tournament[] | null;
+  held: boolean;
   error: boolean;
   onRetry: () => void;
 }) {
   if (error) return <RailError onRetry={onRetry} />;
-  if (!tournaments) return <ListSkeleton slots="events" />;
+  if (!tournaments || held) return <ListSkeleton slots="events" />;
   const live = tournaments
     .filter((t) => t.phase !== "finished")
     .sort((a, b) => {

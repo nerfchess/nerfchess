@@ -18,6 +18,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Plus, Trophy, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { LinkButton } from "@/components/ui/Button";
+import { useSkeletonHold } from "@/components/ui/useSkeletonHold";
 
 interface Club {
   id: string;
@@ -88,6 +89,8 @@ export default function TournamentsPage() {
   const [createError, setCreateError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [loading, setLoading] = useState(true);
+  // The directory skeleton stays a minimum time once shown (brief section 5.2).
+  const held = useSkeletonHold(loading);
 
   const load = async () => {
     const [tournamentRes, clubRes] = await Promise.all([fetch("/api/tournaments"), fetch("/api/clubs")]);
@@ -451,7 +454,7 @@ export default function TournamentsPage() {
 
         {/* Directory: in progress, starting soon, finished */}
         <div className="mt-6 min-w-0 space-y-4">
-          {loading ? (
+          {(loading || held) && !error ? (
             <div className="plate overflow-hidden">
               <div className="border-b border-[color:var(--edge)] px-5 py-3 text-[12px] font-medium text-parchment-400">
                 Loading events
