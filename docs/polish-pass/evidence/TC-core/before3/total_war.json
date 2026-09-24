@@ -1,0 +1,122 @@
+{
+ "id": "total_war",
+ "url": "/dev/plays?id=total_war&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "total_war",
+  "name": "Total War",
+  "tier": 10,
+  "category": "attack",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "core",
+  "visual": "totalwar",
+  "anchor": "board",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 45,
+  "drive": "engine",
+  "driveNote": "activated with 5 pick(s)",
+  "castSq": "d7",
+  "targets": [
+   "d7",
+   "e7",
+   "f7",
+   "g7",
+   "f8"
+  ],
+  "picks": [
+   "d7",
+   "e7",
+   "f7",
+   "g7",
+   "f8"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2964,
+  "cssEndMs": 3657,
+  "settled": true,
+  "windowMs": 3908,
+  "cssAnimations": 96,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 157,
+  "maxGapMs": 378.4
+ },
+ "raf": {
+  "frames": 149,
+  "medianMs": 16.7,
+  "maxMs": 316.6,
+  "dropped": 90
+ },
+ "longAnimationFrames": {
+  "count": 6,
+  "worstMs": 182,
+  "totalBlockingMs": 203,
+  "entries": [
+   {
+    "atMs": -50,
+    "duration": 60,
+    "blocking": 10,
+    "scripts": []
+   },
+   {
+    "atMs": 12,
+    "duration": 55,
+    "blocking": 4,
+    "scripts": []
+   },
+   {
+    "atMs": 170,
+    "duration": 107,
+    "blocking": 51,
+    "scripts": []
+   },
+   {
+    "atMs": 305,
+    "duration": 71,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 441,
+    "duration": 182,
+    "blocking": 131,
+    "scripts": []
+   },
+   {
+    "atMs": 805,
+    "duration": 58,
+    "blocking": 7,
+    "scripts": [
+     {
+      "duration": 25,
+      "invoker": "TimerHandler:setInterval",
+      "source": ""
+     }
+    ]
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  355,
+  904,
+  1563,
+  2304,
+  3114
+ ],
+ "png": "../../../tmp/claude-0/-home-user-nerfchess/ee610421-243f-5b03-97db-996cfbf5c124/scratchpad/tccore3/before/total_war.png",
+ "pngBytes": 24525
+}

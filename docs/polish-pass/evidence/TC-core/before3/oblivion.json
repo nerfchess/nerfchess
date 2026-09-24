@@ -1,0 +1,122 @@
+{
+ "id": "oblivion",
+ "url": "/dev/plays?id=oblivion&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "oblivion",
+  "name": "Oblivion",
+  "tier": 10,
+  "category": "attack",
+  "mechanic": "activated",
+  "retired": false,
+  "art": "core",
+  "visual": "oblivionwipe",
+  "anchor": "board",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 45,
+  "drive": "engine",
+  "driveNote": "activated with 5 pick(s)",
+  "castSq": "d7",
+  "targets": [
+   "d7",
+   "e7",
+   "f7",
+   "g7",
+   "f8"
+  ],
+  "picks": [
+   "d7",
+   "e7",
+   "f7",
+   "g7",
+   "f8"
+  ],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2638,
+  "cssEndMs": 3643,
+  "settled": true,
+  "windowMs": 3894,
+  "cssAnimations": 94,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 187,
+  "maxGapMs": 104.6
+ },
+ "raf": {
+  "frames": 181,
+  "medianMs": 16.7,
+  "maxMs": 133.3,
+  "dropped": 57
+ },
+ "longAnimationFrames": {
+  "count": 5,
+  "worstMs": 125,
+  "totalBlockingMs": 135,
+  "entries": [
+   {
+    "atMs": -60,
+    "duration": 71,
+    "blocking": 21,
+    "scripts": []
+   },
+   {
+    "atMs": 14,
+    "duration": 62,
+    "blocking": 0,
+    "scripts": [
+     {
+      "duration": 16,
+      "invoker": "TimerHandler:setInterval",
+      "source": ""
+     }
+    ]
+   },
+   {
+    "atMs": 100,
+    "duration": 105,
+    "blocking": 48,
+    "scripts": []
+   },
+   {
+    "atMs": 2907,
+    "duration": 59,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 2965,
+    "duration": 125,
+    "blocking": 66,
+    "scripts": [
+     {
+      "duration": 113,
+      "invoker": "http://localhost:3000/_next/static/chunks/_app-pages-browser_src_components_effe...",
+      "source": "/_next/static/chunks/_app-pages-browser_src_components_effects_board3d_engine3d_ts.js"
+     }
+    ]
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  317,
+  809,
+  1399,
+  2063,
+  2788
+ ],
+ "png": "../../../tmp/claude-0/-home-user-nerfchess/ee610421-243f-5b03-97db-996cfbf5c124/scratchpad/tccore3/before/oblivion.png",
+ "pngBytes": 27428
+}

@@ -1,0 +1,92 @@
+{
+ "id": "grand_army",
+ "url": "/dev/plays?id=grand_army&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "grand_army",
+  "name": "Grand Army",
+  "tier": 10,
+  "category": "pieces",
+  "mechanic": "instant",
+  "retired": false,
+  "art": "core",
+  "visual": "grandarmy",
+  "anchor": "cast",
+  "source": "summon",
+  "hasLead": true,
+  "ordering": "sweep",
+  "staggerMs": 80,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2688,
+  "cssEndMs": 3592,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 58,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 169,
+  "maxGapMs": 272.9
+ },
+ "raf": {
+  "frames": 163,
+  "medianMs": 16.7,
+  "maxMs": 183.3,
+  "dropped": 57
+ },
+ "longAnimationFrames": {
+  "count": 4,
+  "worstMs": 83,
+  "totalBlockingMs": 36,
+  "entries": [
+   {
+    "atMs": 13,
+    "duration": 60,
+    "blocking": 9,
+    "scripts": []
+   },
+   {
+    "atMs": 76,
+    "duration": 72,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 1455,
+    "duration": 83,
+    "blocking": 27,
+    "scripts": []
+   },
+   {
+    "atMs": 2259,
+    "duration": 51,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  323,
+  824,
+  1424,
+  2100,
+  2838
+ ],
+ "png": "../../../tmp/claude-0/-home-user-nerfchess/ee610421-243f-5b03-97db-996cfbf5c124/scratchpad/tccore3/before/grand_army.png",
+ "pngBytes": 24550
+}

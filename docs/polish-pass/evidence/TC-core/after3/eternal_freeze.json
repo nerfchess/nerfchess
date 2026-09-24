@@ -1,0 +1,192 @@
+{
+ "id": "eternal_freeze",
+ "url": "/dev/plays?id=eternal_freeze&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "eternal_freeze",
+  "name": "Eternal Freeze",
+  "tier": 9,
+  "category": "tempo",
+  "mechanic": "instant",
+  "retired": false,
+  "art": "core",
+  "visual": "permafrost",
+  "anchor": "cast",
+  "source": "frozen",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 65,
+  "drive": "engine",
+  "driveNote": "instant: resolves when acquired",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "w",
+  "view": "w",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2699,
+  "cssEndMs": 3524,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 97,
+  "infiniteAnimations": 7
+ },
+ "screencast": {
+  "framesInWindow": 169,
+  "maxGapMs": 314.8
+ },
+ "raf": {
+  "frames": 152,
+  "medianMs": 16.7,
+  "maxMs": 116.6,
+  "dropped": 67
+ },
+ "longAnimationFrames": {
+  "count": 5,
+  "worstMs": 125,
+  "totalBlockingMs": 68,
+  "entries": [
+   {
+    "atMs": -67,
+    "duration": 82,
+    "blocking": 26,
+    "scripts": []
+   },
+   {
+    "atMs": 611,
+    "duration": 81,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 2186,
+    "duration": 50,
+    "blocking": 0,
+    "scripts": []
+   },
+   {
+    "atMs": 2290,
+    "duration": 125,
+    "blocking": 42,
+    "scripts": []
+   },
+   {
+    "atMs": 3402,
+    "duration": 79,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  324,
+  827,
+  1430,
+  2108,
+  2849
+ ],
+ "png": "docs/polish-pass/evidence/TC-core/after3/eternal_freeze.png",
+ "pngBytes": 16066,
+ "off": {
+  "url": "/dev/plays?id=eternal_freeze&anim=off&bare=1",
+  "pass": true,
+  "instantChanged": 0,
+  "instantRegions": [],
+  "endChanged": 0.0063,
+  "endRegions": [
+   {
+    "x": 88,
+    "y": 24,
+    "w": 24,
+    "h": 32,
+    "cells": 10
+   },
+   {
+    "x": 144,
+    "y": 24,
+    "w": 24,
+    "h": 32,
+    "cells": 9
+   },
+   {
+    "x": 200,
+    "y": 24,
+    "w": 24,
+    "h": 32,
+    "cells": 9
+   },
+   {
+    "x": 320,
+    "y": 24,
+    "w": 24,
+    "h": 32,
+    "cells": 8
+   },
+   {
+    "x": 32,
+    "y": 32,
+    "w": 24,
+    "h": 24,
+    "cells": 8
+   },
+   {
+    "x": 432,
+    "y": 32,
+    "w": 24,
+    "h": 24,
+    "cells": 7
+   },
+   {
+    "x": 376,
+    "y": 24,
+    "w": 16,
+    "h": 32,
+    "cells": 7
+   },
+   {
+    "x": 240,
+    "y": 16,
+    "w": 8,
+    "h": 56,
+    "cells": 7
+   },
+   {
+    "x": 8,
+    "y": 56,
+    "w": 24,
+    "h": 16,
+    "cells": 4
+   },
+   {
+    "x": 120,
+    "y": 56,
+    "w": 24,
+    "h": 16,
+    "cells": 4
+   },
+   {
+    "x": 56,
+    "y": 8,
+    "w": 16,
+    "h": 16,
+    "cells": 3
+   },
+   {
+    "x": 168,
+    "y": 8,
+    "w": 16,
+    "h": 16,
+    "cells": 3
+   }
+  ],
+  "png": "docs/polish-pass/evidence/TC-core/after3/eternal_freeze.off.png"
+ }
+}
