@@ -540,7 +540,7 @@ export function FriendGameSetup({ showFriends = true }: { showFriends?: boolean 
                 }}
                 className={
                   "!min-h-[52px] flex-col !gap-0.5 !px-1 !py-2" +
-                  (on ? " !border-2 !border-solid !border-[color:var(--accent)] text-[color:var(--accent)]" : "")
+                  (on ? " !border-2 !border-solid !border-[color:var(--accent)] text-[color:var(--accent-hi)]" : "")
                 }
               >
                 <span className="font-mono text-base leading-none tabular-nums">{t.label}</span>
@@ -680,10 +680,11 @@ function ModeChoice({
     mode === "nerf"
       ? selected
         ? "border-mode-nerf bg-mode-nerf/20 text-mode-nerfGlow ring-2 ring-inset ring-mode-nerf"
-        : "border-mode-nerf/30 bg-mode-nerf/5 text-mode-nerfGlow/80 hover:border-mode-nerf/60 hover:bg-mode-nerf/10"
+        : // Full-strength label: at /80 the unselected Nerf text measured 3.68:1.
+          "border-mode-nerf/30 bg-mode-nerf/5 text-mode-nerfGlow hover:border-mode-nerf/60 hover:bg-mode-nerf/10"
       : selected
         ? "border-mode-buff bg-mode-buff/20 text-mode-buffGlow ring-2 ring-inset ring-mode-buff"
-        : "border-mode-buff/30 bg-mode-buff/5 text-mode-buffGlow/80 hover:border-mode-buff/60 hover:bg-mode-buff/10";
+        : "border-mode-buff/30 bg-mode-buff/5 text-mode-buffGlow hover:border-mode-buff/60 hover:bg-mode-buff/10";
   return (
     <button
       type="button"
@@ -734,7 +735,9 @@ function StakeButton({
       className={
         "min-h-[44px] px-3 py-2 border transition-colors duration-150 text-[14px] font-medium " +
         (selected
-          ? "border-2 border-[color:var(--accent)] bg-[color:var(--bg-raised)] text-[color:var(--accent)]"
+          ? // The label takes the -hi emphasis rung: --accent text on the raised
+            // fill measured 4.08:1 dark and 4.25:1 light (wave 3 contrast).
+            "border-2 border-[color:var(--accent)] bg-[color:var(--bg-raised)] text-[color:var(--accent-hi)]"
           : "border-[color:var(--edge)] bg-[color:var(--bg-raised)] text-parchment-200 hover:border-[color:var(--edge-strong)] hover:text-parchment-50")
       }
     >

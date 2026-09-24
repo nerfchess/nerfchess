@@ -180,7 +180,8 @@ function RarityFilterRow({
               style={{ background: theme.color, opacity: on ? 1 : 0.55 }}
             />
             {RARITY_LABEL[r]}
-            <span className="font-mono tabular-nums" style={{ opacity: 0.85 }}>
+            {/* No opacity: at 0.85 the count fell under AA on paper (wave 3). */}
+            <span className="font-mono tabular-nums">
               {earned}/{total}
             </span>
           </button>
@@ -692,7 +693,9 @@ function UnlockPopupToggle() {
           "min-h-[44px] rounded-none border px-3 py-1 text-[13px] transition-colors [@media(pointer:fine)]:min-h-[36px] " +
           (off
             ? "border-[color:var(--edge)] text-parchment-400 hover:border-[color:var(--edge-strong)]"
-            : "border-verdigris-glow/50 bg-verdigris/10 text-verdigris-glow")
+            : // No green wash under the label: on paper the /10 tint took the
+              // green text to 4.50:1, on the AA line (wave 3 contrast).
+              "border-verdigris-glow/50 text-verdigris-glow")
         }
       >
         {off ? "Off, turn on" : "On, turn off"}

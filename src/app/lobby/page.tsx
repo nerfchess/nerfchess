@@ -1044,7 +1044,7 @@ function ModeFilter({
             "min-h-[44px] px-4 py-1 text-[13px] font-medium transition-colors [@media(pointer:fine)]:min-h-[34px] " +
             (i > 0 ? "border-l border-[color:var(--edge)] " : "") +
             (value === o.id
-              ? "bg-[color:var(--accent)] text-[color:var(--text-on-accent)]"
+              ? "bg-[rgb(var(--accent-dim-rgb))] text-[color:var(--text-on-accent)]"
               : "text-parchment-300 hover:text-parchment-50")
           }
         >

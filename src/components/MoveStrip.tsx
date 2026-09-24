@@ -107,7 +107,7 @@ export function MoveStrip({
                   // this strip is how you scrub a game on a phone.
                   "min-h-[44px] min-w-[44px] justify-center px-1.5 tabular-nums transition-colors [@media(pointer:fine)]:min-w-0 " +
                   (selected
-                    ? "bg-[color:var(--accent)] text-[color:var(--text-on-accent)]"
+                    ? "bg-[rgb(var(--accent-dim-rgb))] text-[color:var(--text-on-accent)]"
                     : "text-parchment-100 active:bg-white/[0.06] disabled:opacity-40")
                 }
               >

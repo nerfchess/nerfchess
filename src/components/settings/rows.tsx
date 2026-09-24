@@ -757,7 +757,10 @@ function PieceColorPicker({
           The {design.label} set has its own colours. Pick the Nerf Chess design above to use these.
         </p>
       )}
-      <div className={"grid grid-cols-2 gap-2 " + (inert ? "opacity-60" : "")}>
+      {/* Only the swatches dim while a Lichess set is chosen. The buttons stay
+          live and their labels are text, so they keep full contrast: at
+          opacity-60 on the grid the labels fell under AA (wave 3 contrast). */}
+      <div className="grid grid-cols-2 gap-2">
         {(Object.keys(PIECE_COLORS) as PieceColor[]).map((k) => {
           const t = PIECE_COLORS[k];
           const selected = value === k;
@@ -772,7 +775,9 @@ function PieceColorPicker({
               }
             >
               {selected && <SelectedGem />}
-              <PiecePairSwatch look={t} />
+              <span className={"flex shrink-0" + (inert ? " opacity-60" : "")}>
+                <PiecePairSwatch look={t} />
+              </span>
               <span className="font-display text-[13px] text-parchment">{t.label}</span>
             </button>
           );

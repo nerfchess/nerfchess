@@ -94,7 +94,9 @@ const BLUE_ACCENT_MIDNIGHT: AccentDef = {
   accentHi: "#6db2f5",
   rgb: "76 159 240",
   rgbHi: "109 178 245",
-  rgbDim: "51 118 186",
+  // The dark scheme's dim rung: it is the .btn-leaf fill, and 51 118 186 let
+  // the hover lift drop the white label to 4.17:1. Here: 5.25 rest, 4.63 hover.
+  rgbDim: "42 111 176",
 };
 
 // `accentHi` is the EMPHASIS step off `accent` (hover, the active label, the

@@ -408,7 +408,10 @@ html[data-theme="midnight"] {
   --accent-gold-hi: #6db2f5;
   --accent-gold-rgb: 76 159 240;
   --accent-gold-hi-rgb: 109 178 245;
-  --accent-gold-dim-rgb: 51 118 186;
+  /* The dark scheme's dim rung, not a lighter navy one: 51 118 186 held the
+     white .btn-leaf label at 4.73:1 but its hover lift fell to 4.17:1. On this
+     rung rest is 5.25:1 and hover 4.63:1 (wave 3 contrast). */
+  --accent-gold-dim-rgb: 42 111 176;
   --accent-buff: #6aa8e0;
   --accent-buff-hi: #92c1ea;
   --accent-buff-rgb: 106 168 224;
@@ -465,13 +468,21 @@ html[data-theme="light"] {
      Same meanings, same hues. */
   --accent-nerf: #c0413b;
   --accent-nerf-rgb: 192 65 59;
-  --accent-nerf-hi-rgb: 209 88 82;
+  /* The mode -hi rungs step DOWN on paper for the same reason as the gold one
+     above: text-mode-nerfGlow / buffGlow are the mode labels (ModeBadge, the
+     header's Nerf TV), and the old lighter steps measured 4.02:1 and 4.26:1 on
+     white, under AA at 12-13px. Nerf takes the existing scorched deep rung
+     (8.37 white, 6.98 page), Buff the paper gold-hi blue (7.18, 5.98). */
+  --accent-nerf-hi-rgb: 138 46 44;
   --accent-buff: #2b6aa0;
   --accent-buff-rgb: 43 106 160;
-  --accent-buff-hi-rgb: 58 127 187;
+  --accent-buff-hi-rgb: 20 88 159;
   --accent-positive: #4c7a1c;
   --accent-positive-rgb: 76 122 28;
-  --accent-positive-hi-rgb: 98 153 36;
+  /* Steps down onto the base green for the same reason as the mode rungs:
+     text-verdigris-glow on paper measured 3.44:1 on white. The base measures
+     5.11:1 (wave 3 contrast). */
+  --accent-positive-hi-rgb: 76 122 28;
   --text-on-accent: #ffffff;
   --c-metal-top: hsl(0 0% 96%);
   --c-metal-bottom: hsl(0 0% 93%);
@@ -978,7 +989,7 @@ html[data-light] {
   /* The fill is the accent's dim rung, not the accent itself: a white 13-14px
      label on --accent measures 3.27:1 (dark) and 2.79:1 (midnight), under AA.
      The dim rung is the same hue one step down and clears 4.5:1 in every
-     scheme (5.25 dark, 4.73 midnight, 6.84 light). Links and focus rings keep
+     scheme (5.25 dark and midnight, 6.84 light). Links and focus rings keep
      --accent; only the filled label needed the deeper ground. */
   background: rgb(var(--accent-dim-rgb));
   color: var(--text-on-accent);
@@ -997,7 +1008,8 @@ html[data-light] {
 .btn-gold:hover:not(:disabled),
 .btn-slab:hover:not(:disabled),
 .btn-glass--primary:hover:not(:disabled) {
-  /* 1.08, not 1.15: the lift stays readable (4.62:1 on dark). */
+  /* 1.08, not 1.15: the lift stays readable (4.63:1 dark and midnight,
+     6.12:1 light). */
   filter: brightness(1.08);
 }
 .btn-leaf:disabled,

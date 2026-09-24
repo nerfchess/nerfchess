@@ -42,7 +42,9 @@ export function ModeSegment({
       className="font-semibold"
     >
       {label}
-      <span className="font-mono text-[12px] font-normal tabular-nums opacity-80">
+      {/* Full strength: at opacity-80 the rating on the primary fill measured
+          3.98:1 at 12px (wave 3 contrast). Mono and weight set it apart. */}
+      <span className="font-mono text-[12px] font-normal tabular-nums">
         {pending ? <span aria-hidden className="skeleton inline-block w-[4ch]">&nbsp;</span> : (rating ?? "?")}
       </span>
     </Button>
