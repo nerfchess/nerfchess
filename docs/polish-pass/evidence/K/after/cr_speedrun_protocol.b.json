@@ -1,0 +1,88 @@
+{
+ "id": "cr_speedrun_protocol",
+ "url": "/dev/plays?id=cr_speedrun_protocol&side=b&bare=1",
+ "anim": "full",
+ "fx": 1,
+ "info": {
+  "id": "cr_speedrun_protocol",
+  "name": "Danya's Speedrun",
+  "tier": 8,
+  "category": "tempo",
+  "mechanic": "passive",
+  "retired": false,
+  "art": "plugin",
+  "visual": "x:cr_speedrun_protocol",
+  "anchor": "board",
+  "source": "removal",
+  "hasLead": true,
+  "ordering": "radial",
+  "staggerMs": 40,
+  "drive": "stage",
+  "driveNote": "passive: no use event, synthetic diff, diff-less: no zone source, not an attack",
+  "castSq": null,
+  "targets": [],
+  "picks": [],
+  "side": "b",
+  "view": "b",
+  "anim": "normal",
+  "fx": 1,
+  "live": false,
+  "artReady": true
+ },
+ "stageError": null,
+ "durationMs": {
+  "visualMs": 2611,
+  "cssEndMs": 3552,
+  "settled": true,
+  "windowMs": 3600,
+  "cssAnimations": 34,
+  "infiniteAnimations": 0
+ },
+ "screencast": {
+  "framesInWindow": 192,
+  "maxGapMs": 266.6
+ },
+ "raf": {
+  "frames": 196,
+  "medianMs": 16.7,
+  "maxMs": 66.7,
+  "dropped": 22
+ },
+ "longAnimationFrames": {
+  "count": 2,
+  "worstMs": 54,
+  "totalBlockingMs": 0,
+  "entries": [
+   {
+    "atMs": 15,
+    "duration": 54,
+    "blocking": 0,
+    "scripts": [
+     {
+      "duration": 7,
+      "invoker": "TimerHandler:setInterval",
+      "source": ""
+     }
+    ]
+   },
+   {
+    "atMs": 91,
+    "duration": 52,
+    "blocking": 0,
+    "scripts": []
+   }
+  ]
+ },
+ "tiles": [
+  0,
+  200,
+  509,
+  880,
+  1297,
+  1753,
+  2242,
+  2761
+ ],
+ "png": "docs/polish-pass/evidence/K/after/cr_speedrun_protocol.b.png",
+ "pngBytes": 29776
+}

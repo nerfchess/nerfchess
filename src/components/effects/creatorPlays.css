@@ -802,48 +802,115 @@
 /* Speedrun green on a dark rail: the splits are ahead and staying ahead.
  * Palette: split green #7ef29a / warm white #fff4d6 / charcoal #182420. */
 
-/* The split-timer rail, sliding in along the board edge. */
-.cpl-run-rail {
+/* The play is staged on the real board (BoardFrame: 0..100% is exactly the
+   board), because the card is a rule over the opponent's whole camp and a
+   one-square crop could only ever show a stopwatch. */
+.cpl-runb {
   position: absolute;
-  left: 3%;
-  top: 12%;
-  width: 17%;
-  height: 76%;
-  border-radius: 1px;
-  background: linear-gradient(180deg, rgb(24 36 32 / 0.85), rgb(24 36 32 / 0.6));
-  border: 1px solid rgb(126 242 154 / 0.5);
-  opacity: 0;
-  transform: translateX(-60%);
-  animation: cpl-run-rail calc(460ms * var(--fx-dur, 1)) cubic-bezier(0.2, 0.9, 0.2, 1) both;
-}
-@keyframes cpl-run-rail {
-  0% { opacity: 0; transform: translateX(-60%); }
-  70% { opacity: 1; transform: translateX(3%); }
-  100% { opacity: 0.95; transform: translateX(0); }
+  inset: 0;
+  display: block;
+  pointer-events: none;
 }
 
-/* Green splits ticking on one by one: the run is ahead on every one.
-   Four readouts stacked in one square is the tightest thing in this file: the
-   scene hands them --cpl-y at 20/35/50/65%, a 15% pitch, which is 6.7px on a
-   44.8px square. That was already less than the 8px line they used to be
-   (they overlapped by ~2.9px on a phone). The calc re-spreads the same four
-   values over 3/25.5/48/70.5%, a 22.5% pitch, which is 10.1px on a phone and
-   19.6px at 1440, so the stack is looser at 12px than it was at 8px, and the
-   last readout ends inside the square instead of past it. */
-.cpl-run-split {
+/* The opponent's half under the run. --fx-side is +1 when the caster sits at
+   the bottom, so their camp is the top half then and the bottom half when the
+   caster is drawn on top. */
+.cpl-runb-band {
   position: absolute;
-  left: 5.5%;
-  top: calc(var(--cpl-y, 30%) * 1.5 - 27%);
-  font-size: 12px;
+  left: 0;
+  width: 100%;
+  top: calc((1 - var(--fx-side, 1)) * 25%);
+  height: 50%;
+  background: linear-gradient(
+    calc(90deg - var(--fx-side, 1) * 90deg),
+    rgb(24 36 32 / 0.58),
+    rgb(24 36 32 / 0.22)
+  );
+  border-radius: 7px;
+  opacity: 0;
+  animation: cpl-runb-band calc(1900ms * var(--fx-dur, 1)) var(--ease-io, cubic-bezier(0.65, 0, 0.35, 1)) both;
+}
+@keyframes cpl-runb-band {
+  0% { opacity: 0; }
+  14% { opacity: 1; }
+  78% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* Forward chevrons, one per file, starting on the opponent's third rank and
+   marching one square toward the caster: forward is the only way out. The
+   rest transform is the landed square, so the still frame (motion off) shows
+   them already pushed, pointing the right way for either seat. */
+.cpl-runb-chev {
+  position: absolute;
+  left: calc(var(--cpl-file, 0) * 12.5% + 1.75%);
+  top: calc(50% - var(--fx-side, 1) * 18.75% - 4.5%);
+  width: 9%;
+  height: 9%;
+  opacity: 0;
+  transform: translateY(calc(var(--fx-side, 1) * 138.9%)) scaleY(var(--fx-side, 1));
+  animation: cpl-runb-chev calc(1150ms * var(--fx-dur, 1)) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
+}
+.cpl-runb-chev svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+@keyframes cpl-runb-chev {
+  0% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * -30%)) scaleY(var(--fx-side, 1)); }
+  18% { opacity: 1; transform: translateY(0) scaleY(var(--fx-side, 1)); }
+  52% { opacity: 1; transform: translateY(calc(var(--fx-side, 1) * 138.9%)) scaleY(var(--fx-side, 1)); }
+  84% { opacity: 1; transform: translateY(calc(var(--fx-side, 1) * 138.9%)) scaleY(var(--fx-side, 1)); }
+  100% { opacity: 0; transform: translateY(calc(var(--fx-side, 1) * 150%)) scaleY(var(--fx-side, 1)); }
+}
+
+/* The split rail on the board's right edge, sliding in from outside. */
+.cpl-runb-rail {
+  position: absolute;
+  left: 88%;
+  top: 8%;
+  width: 11%;
+  height: 84%;
+  border-radius: 7px;
+  background: rgb(24 36 32 / 0.72);
+  border: 1px solid rgb(126 242 154 / 0.55);
+  opacity: 0;
+  animation: cpl-runb-rail calc(1700ms * var(--fx-dur, 1)) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
+}
+@keyframes cpl-runb-rail {
+  0% { opacity: 0; transform: translateX(40%); }
+  16% { opacity: 1; transform: translateX(0); }
+  82% { opacity: 1; transform: translateX(0); }
+  100% { opacity: 0; transform: translateX(0); }
+}
+
+/* The escalating splits, one per held turn: +2s, +3s ... +7s, each ticking in
+   a beat after the last and every one green. 13px is the text floor. */
+.cpl-runb-split {
+  position: absolute;
+  left: 88%;
+  width: 11%;
+  top: calc(12% + var(--cpl-row, 0) * 13%);
+  text-align: center;
+  font-size: 13px;
   color: #7ef29a;
   opacity: 0;
-  transform: translateX(-30%);
-  animation: cpl-run-split calc(380ms * var(--fx-dur, 1)) cubic-bezier(0.2, 1.2, 0.3, 1) both;
+  animation: cpl-runb-split calc(1400ms * var(--fx-dur, 1)) var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
 }
-@keyframes cpl-run-split {
+@keyframes cpl-runb-split {
   0% { opacity: 0; transform: translateX(-30%) scale(0.7); }
-  55% { opacity: 1; transform: translateX(4%) scale(1.1); }
-  100% { opacity: 0.95; transform: translateX(0) scale(1); }
+  14% { opacity: 1; transform: translateX(4%) scale(1.1); }
+  24% { opacity: 1; transform: translateX(0) scale(1); }
+  80% { opacity: 1; transform: translateX(0) scale(1); }
+  100% { opacity: 0; transform: translateX(0) scale(1); }
+}
+
+html[data-anim="off"] .cpl-runb * {
+  animation: none !important;
+  opacity: 1;
+}
+html[data-anim="off"] .cpl-runb-band {
+  opacity: 0.7;
 }
 
 /* The stopwatch pins in like a stamp. */
@@ -855,25 +922,6 @@
   0% { opacity: 0; transform: scale(0.7) rotate(-14deg); }
   70% { opacity: 1; transform: scale(1.05) rotate(4deg); }
   100% { opacity: 1; transform: scale(1) rotate(0deg); }
-}
-
-/* Two speed lines raking forward: the run never stops moving. */
-.cpl-run-line {
-  position: absolute;
-  left: 18%;
-  top: var(--cpl-y, 50%);
-  width: 76%;
-  height: 3px;
-  border-radius: 2px;
-  background: linear-gradient(90deg, transparent, rgb(126 242 154 / 0.85) 45%, rgb(255 244 214 / 0.9) 58%, transparent);
-  opacity: 0;
-  transform: translateX(-35%) scaleX(0.6);
-  animation: cpl-run-rake calc(460ms * var(--fx-dur, 1)) cubic-bezier(0.3, 0.05, 0.2, 1) both;
-}
-@keyframes cpl-run-rake {
-  0% { opacity: 0; transform: translateX(-35%) scaleX(0.6); }
-  35% { opacity: 1; }
-  100% { opacity: 0; transform: translateX(35%) scaleX(1); }
 }
 
 /* --- Chat Picks: Creator vs Chat ------------------------------------------- */

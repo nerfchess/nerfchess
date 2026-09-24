@@ -24,6 +24,7 @@ import "./creatorPlays.css";
 
 import type { CSSProperties, ReactNode } from "react";
 import type { SigPlugin, SigRole } from "./sigPlugins";
+import { BoardFrame, BoardWideStage } from "./stage";
 
 /** Inline animation-delay: every choreography offset flows through this. */
 const d = (ms: number): CSSProperties => ({ animationDelay: `${ms}ms` });
@@ -315,11 +316,12 @@ function FamilyNightScene({ role, delayMs }: SceneProps) {
   );
 }
 
-/** DANYA'S SPEEDRUN. Tell: a short countdown dim. Strike: a split-timer rail
- * slides in along the board edge and four splits tick on one after another,
- * every one of them green (the run is AHEAD), while the stopwatch mark pins in
- * and two speed lines rake forward. Settle: the green pace-glow eases off; the
- * pressure does not. */
+/** DANYA'S SPEEDRUN. For six turns the opponent may only capture, check or
+ * push a pawn, and every held turn pays the caster more time (2s, 3s, 4s...).
+ * Tell: the opponent's half dims under the run. Strike: forward chevrons march
+ * every file of their camp one square toward the caster, and a split rail on
+ * the board edge ticks +2s to +7s. Settle: the green eases off; the pressure
+ * does not. */
 function SpeedrunScene({ role, delayMs }: SceneProps) {
   if (role === "entrance") {
     // The run starts NOW: a two-dip countdown dim (tell), the stopwatch
@@ -341,26 +343,50 @@ function SpeedrunScene({ role, delayMs }: SceneProps) {
       </Stage>
     );
   }
+  // The play shows the rule itself across the real board: the opponent's half
+  // goes under the run (tell), a column of forward chevrons marches every file
+  // of their camp one square toward the caster (only forward moves, captures
+  // and checks are legal now), and a split rail on the board edge pays out the
+  // escalating splits, +2s through +7s, one per held turn (strike). The
+  // stopwatch pins on the anchor square and the green eases off (settle).
   return (
-    <Stage className="cpl-run">
-      <Tell delayMs={delayMs} hue="126 242 154" />
-      <span className="cpl-run-rail" style={d(delayMs + 220)} />
-      {["-0:02", "-0:03", "-0:04", "-0:05"].map((split, i) => (
-        <span
-          key={split}
-          className="cpl-run-split"
-          style={dv(delayMs + 340 + i * 110, { "--cpl-y": `${20 + i * 15}%` })}
-        >
-          {split}
+    <>
+      <Stage className="cpl-run">
+        <Tell delayMs={delayMs} hue="126 242 154" />
+        <span className="cpl-run-star" style={d(delayMs + 260)}>
+          <Star id="cr_speedrun_protocol" mark={MARK_TIMER} />
         </span>
-      ))}
-      <span className="cpl-run-star" style={d(delayMs + 300)}>
-        <Star id="cr_speedrun_protocol" mark={MARK_TIMER} />
-      </span>
-      <span className="cpl-run-line" style={dv(delayMs + 640, { "--cpl-y": "30%" })} />
-      <span className="cpl-run-line" style={dv(delayMs + 700, { "--cpl-y": "64%" })} />
-      <Settle delayMs={delayMs + 1100} hue="126 242 154" />
-    </Stage>
+        <Settle delayMs={delayMs + 1180} hue="126 242 154" />
+      </Stage>
+      <BoardWideStage>
+        <BoardFrame>
+          <span className="cpl-runb">
+            <span className="cpl-runb-band" style={d(delayMs + 60)} />
+            {Array.from({ length: 8 }, (_, i) => (
+              <span
+                key={i}
+                className="cpl-runb-chev"
+                style={dv(delayMs + 380 + Math.abs(i - 3.5) * 46, { "--cpl-file": String(i) })}
+              >
+                <svg viewBox="0 0 20 20" aria-hidden="true">
+                  <path d="M4 5l6 6 6-6M4 11l6 6 6-6" fill="none" stroke="#7ef29a" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </span>
+            ))}
+            <span className="cpl-runb-rail" style={d(delayMs + 220)} />
+            {[2, 3, 4, 5, 6, 7].map((sec, i) => (
+              <span
+                key={sec}
+                className="cpl-run-split cpl-runb-split"
+                style={dv(delayMs + 460 + i * 110, { "--cpl-row": String(i) })}
+              >
+                +{sec}s
+              </span>
+            ))}
+          </span>
+        </BoardFrame>
+      </BoardWideStage>
+    </>
   );
 }
 
